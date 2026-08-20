@@ -488,3 +488,113 @@ html[data-act="walk"] .rcf-fab {
       0 0 26px rgba(5, 12, 21, .8);
   }
 }
+
+/* ── Анкета на пульте: читаемость важнее прозрачности ────────
+   Приёмка поймала три вещи разом: сквозь поля светил трёхмерный
+   пульт (яркая бирюза и розовые диоды под текстом), строка согласия
+   почти пропадала, а кнопка отправки выглядела отключённой.
+
+   Голограмма голограммой, но заполняет форму живой человек. Поэтому
+   в акте пульта поля получают плотное дно, а кнопка - полную силу
+   фирменной заливки. Стекло и свечение вокруг остаются: проекция
+   читается по рамке, сканлайнам и лучу, а не по тому, насколько
+   плохо видно текст. */
+html[data-act="console"] .field input,
+html[data-act="console"] .field textarea,
+html[data-act="console"] .field select,
+html.rc-inside .field input,
+html.rc-inside .field textarea,
+html.rc-inside .field select {
+  background: rgba(var(--int-deep-rgb, 5,12,21), .88);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+}
+html[data-act="console"] .field input::placeholder,
+html[data-act="console"] .field textarea::placeholder {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .62);
+  /* Плейсхолдер длиннее поля обрезался посреди слова: показываем,
+     что текст продолжается, вместо рваного хвоста */
+  text-overflow: ellipsis;
+}
+html[data-act="console"] .consent,
+html[data-act="console"] .form-card label,
+html.rc-inside .consent,
+html.rc-inside .form-card label {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+}
+html[data-act="console"] .form-card .btn-p,
+html.rc-inside .form-card .btn-p {
+  background: var(--grad);
+  color: #fff;
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 14px 34px -16px rgba(10, 88, 151, .9),
+              0 0 30px -12px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+
+/* Поле «Задача» обрезало третью строку подсказки ровно пополам -
+   даём ему высоту под три строки целиком */
+html[data-act="console"] .field textarea,
+html.rc-inside .field textarea { min-height: 108px; }
+
+/* Подпись «Как к вам обращаться» переносится в две строки, и парное
+   поле уезжало вниз - выравниваем пары по нижней кромке подписи */
+@media (max-width: 900px) {
+  .form-2 { align-items: end; }
+  .form-2 .field label { min-height: 2.6em; display: flex; align-items: flex-end; }
+}
+
+/* Чекбокс согласия: цель под палец, а не под курсор */
+@media (hover: none) and (pointer: coarse) {
+  .consent input[type="checkbox"] { width: 26px; height: 26px; }
+}
+
+/* ── Кольцо рубки: панель со спины не двоит текст ─────────────
+   Приёмка увидела у боковой карточки перевёрнутую копию текста -
+   это была панель с другой стороны круга, просвечивавшая сквозь
+   свою. Обратная сторона проекции зрителю не нужна: гасим её
+   совсем, а не полупрозрачностью, иначе призрак остаётся. */
+html.rc-inside .cin-ring > .cin-item {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ── Карта маршрута: подписи должны читаться и на телефоне ────
+   Карта масштабируется под ширину, и заданные в ней двенадцать
+   пикселей превращались на экране в восемь - названия узлов
+   сливались в кашу, тем более поверх новой строчной развёртки
+   прибора. На узком экране развёртку снимаем, а подписи делаем
+   плотнее и ярче: прибор обязан читаться, иначе он не прибор. */
+@media (max-width: 760px) {
+  html.w3-on:not([data-theme="light"]) #route .viz-card {
+    background:
+      linear-gradient(180deg,
+        rgba(var(--int-cyan-rgb, 66,178,220), .07),
+        rgba(var(--int-deep-rgb, 5,12,21), .55));
+  }
+  #route .topo text,
+  #route svg text {
+    font-size: 15px;
+    font-weight: 600;
+    fill: rgba(226, 232, 240, .95);
+    paint-order: stroke;
+    stroke: rgba(5, 12, 21, .85);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+}
+
+/* Подвал в финальном кадре: он нужен по закону, но в кадре фильма
+   это строка мелкого текста поверх пульта. Опускаем её под окно
+   кабины и приглушаем - читается, но кадр не перебивает. */
+html.rc-cab-on #epilogue .legal {
+  position: relative;
+  z-index: 1;
+  opacity: .42;
+  font-size: 10.5px;
+  margin-top: clamp(24px, 5vh, 56px);
+}
+html.rc-cab-on #epilogue .legal a { color: rgba(var(--int-lit-rgb, 207,233,245), .7); }
+
+/* Тэглайн логотипа в светлой теме почти пропадал: серое по белому */
+html[data-theme="light"] .logo img { filter: contrast(1.12) saturate(1.05); }

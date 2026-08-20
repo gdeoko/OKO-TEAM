@@ -58,6 +58,16 @@ pSmooth = pTarget;
    Показываем не чаще двух раз за визит и только если человек
    действительно завис в начале страницы, а не дочитал до конца. */
 function hint() {
+  /* На первом экране уже стоит своя подсказка прокрутки, и две
+     сразу читались как ошибка вёрстки: одна плашка поверх карточек,
+     вторая у края. Пока видна статичная - свою не показываем. */
+  try {
+    var own = doc.querySelector(".scroll-hint");
+    if (own && getComputedStyle(own).display !== "none") {
+      var r = own.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < innerHeight) return;
+    }
+  } catch (eH) {}
   if (reduced || hintShown >= 2 || pSmooth > 0.9) return;
   try {
     var seen = parseInt(sessionStorage.getItem("rc_hint") || "0", 10);
