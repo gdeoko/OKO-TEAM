@@ -263,9 +263,17 @@ html.cut-fire .rc-shine::after {
     rgba(255, 214, 150, .5) 0%, rgba(255, 150, 70, .18) 34%, transparent 70%);
   animation: cutFire 1s cubic-bezier(.2,.7,.3,1) forwards;
 }
+/* Нагрев обшивки. Сплошная тёплая заливка на пол-кадра давала
+   охристо-болотную пелену поверх синего космоса и вымывала подписи
+   карточек - приёмка поймала это первым же кадром. Настоящий нагрев
+   виден не пятном, а раскалённой кромкой: узкая полоса у верхнего
+   среза кадра, куда набегает атмосфера. */
 html.cut-heat .rc-shine::after {
-  background: radial-gradient(ellipse 92% 70% at 50% 34%,
-    rgba(255, 120, 70, .42) 0%, rgba(200, 60, 40, .16) 40%, transparent 74%);
+  background: linear-gradient(180deg,
+    rgba(255, 138, 74, .5) 0%,
+    rgba(226, 84, 48, .22) 6%,
+    rgba(180, 60, 40, .07) 13%,
+    transparent 22%);
   animation: cutHeat 1.1s ease-out forwards;
 }
 html.cut-hit .rc-shine::after {
@@ -288,11 +296,6 @@ html.cut-hit .rc-shine::after {
   14%  { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-3%); }
 }
-/* Склейки видны и там, где сам свет корабля притушен: это отдельный
-   момент сценария, а не продолжение подсветки */
-html.cut-fire .rc-shine,
-html.cut-heat .rc-shine,
-html.cut-hit .rc-shine { opacity: 1; }
 
 /* ── Свет корабля на странице ────────────────────────────────
    Отблеск факела там, где корабль сейчас в кадре. Позицию берём
@@ -332,6 +335,27 @@ html[data-theme="light"] .rc-shine {
     radial-gradient(circle 24vmax at var(--rocket-x, 50%) var(--rocket-y, 50%),
       rgba(120, 160, 210, .16) 0%, transparent 66%);
 }
+/* Склейки видны и там, где сам свет корабля притушен, и в светлой
+   теме тоже. Правило стоит ПОСЛЕ темы намеренно: приёмка поймала,
+   что при равной силе селекторов тема перебивала вспышку, и на
+   светлом фоне переходы просто не читались. Заодно снимаем плавный
+   переход - вспышка обязана быть мгновенной, иначе она не успевает
+   проявиться до снятия класса (это ловилось на телефоне). */
+html.cut-fire .rc-shine,
+html.cut-heat .rc-shine,
+html.cut-hit .rc-shine {
+  opacity: 1;
+  transition: none;
+}
+/* На светлом фоне складывать свет нельзя - выходит грязь. Там
+   вспышка работает затемнением, как настоящая тень от пламени. */
+html[data-theme="light"].cut-fire .rc-shine,
+html[data-theme="light"].cut-heat .rc-shine,
+html[data-theme="light"].cut-hit .rc-shine {
+  mix-blend-mode: multiply;
+  opacity: .5;
+}
+
 @media (prefers-reduced-motion: reduce) { .rc-shine { display: none; } }
 
 /* Вспышка света из люка на стыке «проём - салон»: тёплый свет

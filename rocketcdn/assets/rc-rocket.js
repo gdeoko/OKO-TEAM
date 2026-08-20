@@ -3925,6 +3925,22 @@ Rocket.prototype.quake = function (dt) {
   root.classList.remove("rc-quake");
 };
 
+/* Тряска принадлежит одному моменту сценария - касанию грунта.
+   На обратном ходу она залипала: класс держался от эпилога до самой
+   посадки, и кадр мелко дрожал там, где корабль давно стоит. Смена
+   акта снимает её принудительно, кроме собственно посадки. */
+addEventListener("rc:act", function (e) {
+  var a = e && e.detail && e.detail.act;
+  if (a === "landing" || a === "walk") return;
+  var root2 = document.documentElement;
+  if (root2.classList.contains("rc-quake")) {
+    root2.classList.remove("rc-quake");
+    root2.style.setProperty("--rc-shake", "0");
+    root2.style.setProperty("--rc-shake-x", "0px");
+    root2.style.setProperty("--rc-shake-y", "0px");
+  }
+});
+
 /* Экранное положение ракеты уходит в CSS-переменные. По ним чипы
    разлетаются от пролёта, счётчики стартуют, карточки подсвечиваются:
    трёхмерная сцена и плоский интерфейс живут в одном пространстве. */
@@ -3936,8 +3952,16 @@ Rocket.prototype.publish = function () {
   var h = this.canvas.clientHeight || innerHeight;
   var x = (v.x * 0.5 + 0.5) * w;
   var y = (-v.y * 0.5 + 0.5) * h;
-  /* near: 1 когда ракета близко к камере, 0 когда далеко */
-  var near = Math.max(0, Math.min(1, (v.z + 1) * 0.5));
+  /* Близость корабля к зрителю. Раньше её брали из глубины в
+     координатах отсечения ((z+1)/2), но эта величина нелинейна и у
+     перспективной камеры почти всегда упирается в единицу: наружу
+     уходили числа порядка 0.005, и свет корабля на странице был
+     фактически выключен - приёмка поймала это замером.
+
+     Берём честное расстояние в мире: вплотную это восемь единиц,
+     дальше тридцати четырёх корабль уже точка. */
+  var dist = this.cam.position.distanceTo(this.pivot.position);
+  var near = 1 - Math.max(0, Math.min(1, (34 - dist) / 26));
   var st = document.documentElement.style;
   st.setProperty("--rocket-x", Math.round(x) + "px");
   st.setProperty("--rocket-y", Math.round(y) + "px");

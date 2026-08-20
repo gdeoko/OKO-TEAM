@@ -143,10 +143,20 @@ html.rc-cab-on main.w3-stage {
   /* Текст поверх переплёта: слой кабины стоит на z-index 2 */
   z-index: 3;
 }
-html.rc-cab-on #contact .wrap,
+/* Ширину меняем только у финального титра. У секции заявки её
+   трогать нельзя: форма перестраивается, высота документа
+   схлопывается на тысячу пикселей, и браузер зажимает позицию -
+   человека отбрасывает назад ровно в акте пульта, а сам акт можно
+   проскочить целиком. Приёмка поймала и прыжок, и проскок. */
 html.rc-cab-on #epilogue .wrap {
   width: min(var(--cab-win-w, 76%), 1040px);
   margin-inline: auto;
+}
+/* Анкету вместо сужения просто отодвигаем от переплёта кабины -
+   раскладка при этом не меняется, высота документа стоит на месте */
+html.rc-cab-on #contact .wrap {
+  padding-left: max(var(--pad, 16px), calc(var(--cab-x0, 12%) * .6));
+  padding-right: max(var(--pad, 16px), calc(var(--cab-x0, 12%) * .6));
 }
 /* Окно кабины смещено вверх относительно середины экрана (снизу
    панель с приборами), и центр содержимого обязан идти за ним -
@@ -372,4 +382,109 @@ html.rc-cab-on #epilogue .legal {
   font-size: 11px;
   margin-top: clamp(18px, 4vh, 42px);
   gap: 8px 14px;
+}
+
+/* ═══ Свет внутри корабля не зависит от темы сайта ═══════════
+   Приёмка показала, что в светлой теме вся вторая половина фильма
+   разваливается: тёмный текст на тёмном интерьере, серая заплатка
+   рубки поверх белой страницы, в финале вместо космоса светлая
+   плита. И это не набор мелких промахов, а одна ошибка по сути.
+
+   Тема сайта - это освещение помещения, в котором лежит страница. А
+   с момента посадки страница лежит не на столе, а внутри корабля,
+   где горит бортовой свет и за окном космос. Там светлой темы быть
+   не может физически - как не может её быть ночью на улице.
+
+   Поэтому в актах внутри корабля палитра переключается на бортовую
+   независимо от выбора человека, а на выходе возвращается. Выбор
+   темы при этом не теряется: он снова действует, стоит отлистать
+   назад к разделам сайта. */
+html[data-theme="light"].rc-inside,
+html[data-theme="light"][data-act="landing"],
+html[data-theme="light"][data-act="walk"],
+html[data-theme="light"][data-act="cabin"],
+html[data-theme="light"][data-act="manual"],
+html[data-theme="light"][data-act="console"],
+html[data-theme="light"][data-act="egress"] {
+  --bg:        #050C15;
+  --bg-2:      #091320;
+  --bg-3:      #0D1B2C;
+  --surface:   rgba(255,255,255,.035);
+  --surface-2: rgba(255,255,255,.055);
+  --line:      rgba(226,232,240,.10);
+  --line-2:    rgba(226,232,240,.17);
+  --tx:        #E2E8F0;
+  --tx-2:      rgba(226,232,240,.72);
+  --tx-3:      rgba(226,232,240,.6);
+  --head-bg:   rgba(5,12,21,.72);
+  --rcd-baked: rgba(6, 14, 25, .72);
+  --pill-bg:   rgba(255,255,255,.06);
+  --pill-line: rgba(226,232,240,.16);
+  --pill-off:  rgba(226,232,240,.62);
+  --pill-hover: #E2E8F0;
+  color-scheme: dark;
+}
+/* Переход между освещением делаем не мгновенным: смена палитры
+   посреди кадра читается миганием, а нам нужен въезд в тень борта */
+html[data-theme="light"] body,
+html[data-theme="light"] .card,
+html[data-theme="light"] .faq,
+html[data-theme="light"] .form-card {
+  transition: background-color .6s linear, color .6s linear,
+              border-color .6s linear;
+}
+/* Фон страницы внутри корабля - сам корабль, а не белый лист */
+html[data-theme="light"].rc-inside body,
+html[data-theme="light"][data-act="egress"] body,
+html[data-theme="light"][data-act="console"] body { background: #050C15; }
+
+/* ── Плавающие кнопки не лезут в кадр фильма ─────────────────
+   Приёмка нашла их поверх вопросов справочника, поверх карточек
+   коридора и поверх строки согласия в анкете. Кнопка «наверх» и
+   «Полёт» полезны на страничных разделах, но в кадре кино это две
+   плашки поверх сцены. В актах фильма убираем обе - выйти вверх
+   человек может прокруткой, а полёт ждёт его в финале. */
+html[data-act="landing"] .totop,
+html[data-act="walk"] .totop,
+html[data-act="cabin"] .totop,
+html[data-act="manual"] .totop,
+html[data-act="console"] .totop,
+html[data-act="egress"] .totop,
+html[data-act="cabin"] .rcf-fab,
+html[data-act="manual"] .rcf-fab,
+html[data-act="console"] .rcf-fab,
+html[data-act="landing"] .rcf-fab,
+html[data-act="walk"] .rcf-fab {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity .4s linear;
+}
+
+/* ── Посадка на телефоне: кадр очищается так же, как на ПК ────
+   На широком экране в этом акте карточки уже расступались, а на
+   телефоне оставались под корпусом: корабль закрывал заголовок и
+   ленту кейсов, текст читался кусками по краям обшивки. Требование
+   владельца - одинаково хорошо на обоих экранах, значит и здесь
+   кадр обязан очищаться. */
+@media (max-width: 900px) {
+  html[data-act="landing"] #cases .hs-view,
+  html[data-act="landing"] #cases .hs-bar {
+    opacity: calc(1 - var(--rc-app, 0) * 1.8);
+    filter: blur(calc(var(--rc-app, 0) * 4px));
+    transition: opacity .4s linear, filter .4s linear;
+  }
+  html[data-act="landing"] #cases .hs-head,
+  html[data-act="landing"] #included .sec-head {
+    transform: translateY(calc(var(--rc-app, 0) * -22vh));
+  }
+  /* Титр над кораблём получает свою подложку: на светлой обшивке
+     белый текст без неё пропадает начисто */
+  html[data-act="landing"] #cases .hs-head .sec-h,
+  html[data-act="walk"] #cases .hs-head .sec-h,
+  html[data-act="landing"] #included .sec-head .sec-h,
+  html[data-act="walk"] #included .sec-head .sec-h {
+    text-shadow:
+      0 2px 10px rgba(5, 12, 21, .95),
+      0 0 26px rgba(5, 12, 21, .8);
+  }
 }
