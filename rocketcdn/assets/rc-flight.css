@@ -466,6 +466,12 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   transition: opacity .8s var(--ease), transform .3s var(--ease);
 }
 .rc-flight.has-cab .rcf-cab { opacity: 1; }
+/* Бесшовный старт из финала: рамка кабины уже стоит перед глазами
+   человека, она же остаётся в игре - и проявляться ей неоткуда.
+   Восьмая доля секунды перехода читалась провалом: кабина исчезала
+   и возвращалась. Здесь она просто продолжается. */
+.rc-flight.rcf-seam .rcf-cab { transition: none; }
+.rc-flight.rcf-seam.has-cab .rcf-cab { opacity: 1; }
 
 /* Стеновой тон поверх корпуса кабины.
    Фильтр правит температуру, но числа палитры в него не подставить,

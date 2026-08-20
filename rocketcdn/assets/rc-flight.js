@@ -472,6 +472,24 @@ function buildUI() {
   bindControls();
 }
 
+/* Картинку кабины держим прогретой заранее: к финалу она уже
+   показана на сайте, но если человек нажал «Полёт» из середины
+   страницы, у игры она была бы холодной, и первый кадр вышел бы
+   без рамки. */
+var cabWarm = null;
+function warmCab() {
+  if (cabWarm) return;
+  cabWarm = new Image();
+  cabWarm.decoding = "async";
+  cabWarm.src = innerHeight > innerWidth
+    ? "assets/gen/cockpit-tall.webp"
+    : "assets/gen/cockpit-wide.webp";
+}
+addEventListener("rc:act", function (e) {
+  var a = e && e.detail && e.detail.act;
+  if (a === "walk" || a === "cabin" || a === "console" || a === "egress") warmCab();
+});
+
 function cabSrc() {
   if (!ui.cab) return;
   var want = innerHeight > innerWidth ? "assets/gen/cockpit-tall.webp" : "assets/gen/cockpit-wide.webp";
