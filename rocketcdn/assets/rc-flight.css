@@ -55,6 +55,20 @@
   opacity: 1; visibility: visible;
   transition: opacity .7s var(--ease);
 }
+/* Стык из финала обязан быть бесшовным: человек уже сидит в этой
+   кабине, перед этим же остеклением, и «проявление» игры поверх
+   сайта выдаёт подмену - на полсекунды видны два кадра сразу.
+   Из акта отлёта включаем игру мгновенно: рамка на экране уже
+   стоит, меняется только то, что за стеклом. */
+html[data-act="egress"] .rc-flight.on {
+  transition: none;
+}
+/* И сам сайт под ней гасим сразу, а не ждём конца проявления */
+html[data-act="egress"].rc-flying #rocketCanvas,
+html[data-act="egress"].rc-flying .rc-cockpit {
+  opacity: 0 !important;
+  transition: opacity .25s linear;
+}
 .rcf-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* ── Оптика остекления ───────────────────────────────────────
