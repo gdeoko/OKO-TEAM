@@ -1181,8 +1181,11 @@ function buildWorld() {
   var eBody = new T.Mesh(
     new T.SphereGeometry(60, tiny ? 48 : 64, tiny ? 36 : 48),
     new T.MeshPhongMaterial({
-      map: tex("assets/space/earth-day.jpg"),
-      emissiveMap: tex("assets/space/earth-night.jpg"),
+      /* Карты в webp, а не в jpg с png: те же снимки весят на
+         полтора мегабайта меньше, и вход в игру на телефоне
+         перестаёт ждать загрузку двух мегабайт текстур. */
+      map: tex("assets/space/earth-day.webp"),
+      emissiveMap: tex("assets/space/earth-night.webp"),
       emissive: new T.Color(0xffd9a0), emissiveIntensity: 1.05,
       specular: new T.Color(0x223344), shininess: 14
     })
@@ -1202,7 +1205,7 @@ function buildWorld() {
   var clouds = new T.Mesh(
     new T.SphereGeometry(61.2, tiny ? 48 : 64, tiny ? 36 : 48),
     new T.MeshLambertMaterial({
-      map: tex("assets/space/clouds.png"),
+      map: tex("assets/space/clouds.webp"),
       transparent: true, opacity: 0.55, depthWrite: false
     })
   );
@@ -1212,7 +1215,7 @@ function buildWorld() {
   /* ── Луна ── */
   var moon = new T.Mesh(
     new T.SphereGeometry(16, 40, 28),
-    new T.MeshPhongMaterial({ map: tex("assets/space/moon.jpg"), shininess: 2 })
+    new T.MeshPhongMaterial({ map: tex("assets/space/moon.webp"), shininess: 2 })
   );
   moon.position.set(300, 40, -190);
   scene.add(moon);
