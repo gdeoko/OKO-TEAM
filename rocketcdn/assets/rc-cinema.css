@@ -71,12 +71,12 @@ html:not(.rc-reduced) .cin-ring {
      соседний экран уходил за кромку кадра, а не наезжал на
      читаемый: угол между экранами задаёт сцена (сорок пять
      градусов), значит развести их можно только радиусом. */
-  --cab-r: 1100px;
+  --cab-r: 545px;
   --cab-w: min(560px, 46vw);
   position: relative;
   display: block;
   height: calc(var(--cab-h) * 2);
-  perspective: 1400px;
+  perspective: var(--cab-p, 620px);
   perspective-origin: 50% 50%;
   transform-style: preserve-3d;
 }
@@ -177,9 +177,9 @@ html:not(.rc-reduced) .cin-world > .cin-item.cin-front {
   }
   html:not(.rc-reduced) .cin-ring {
     --cab-h: clamp(160px, 24vh, 240px);
-    --cab-r: 760px;
-    --cab-w: min(86vw, 400px);
-    perspective: 900px;
+    --cab-r: 378px;
+    --cab-w: min(86vw, 300px);
+    perspective: var(--cab-p, 508px);
   }
   /* Раньше здесь эффекты снимались начисто, и телефон получал
      плоскую плитку вместо голограммы. Владелец сказал прямо: на ПК

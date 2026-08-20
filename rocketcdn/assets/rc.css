@@ -842,7 +842,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 /* ── Адаптив ──────────────────────────────────────────────── */
 @media (max-width: 1080px) {
   .g-4 { grid-template-columns: repeat(2, 1fr) }
-  .hero-globe { right: -30%; width: min(880px, 96vw); opacity: .55 }
+  .hero-globe { right: -30%; width: min(880px, 96vw); opacity: .86 }
   .infra { grid-template-columns: 1fr }
   .ftr-top { grid-template-columns: 1fr 1fr }
 }
@@ -1038,9 +1038,27 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
     position: absolute; left: 50%; top: 46%;
     transform: translate(-50%, -50%);
     width: 128vw; max-width: none; margin: 0;
-    opacity: .40; z-index: 0;
+    /* Владелец сказал прямо: «в hero планета почти прозрачная, нужно
+       нормально, как раньше». Так и было: сорок процентов - это не
+       планета за спиной, а водяной знак. Читаемость текста держим не
+       тем, что гасим сцену, а подложкой под самими буквами (ниже) -
+       тогда и планета видна, и заголовок читается. */
+    opacity: .84; z-index: 0;
   }
   .hero .wrap { position: relative; z-index: 2; }
+  /* Мягкая тень кадра ровно под текстом первого экрана: планета за
+     ней остаётся плотной, а строки не ложатся на сетку меридианов */
+  .hero .hero-in::before {
+    content: '';
+    position: absolute;
+    inset: -7% -9% -5% -9%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 82% 64% at 42% 46%,
+      rgba(3, 9, 17, .80) 0%,
+      rgba(3, 9, 17, .46) 56%,
+      transparent 84%);
+  }
   .logo img { height: 26px; }
   .hdr-act { gap: 6px; }
   /* Кнопка шапки ужимается по кеглю, а высоту держит min-height -

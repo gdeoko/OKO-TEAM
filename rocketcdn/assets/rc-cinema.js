@@ -256,6 +256,11 @@ function pin(act) {
   var state = 0;
   if (tail < line) state = 2;
   else if (top0 <= line) state = 1;
+  /* Мы уже внутри корабля, а блок надёжности ещё не доехал до своей
+     линии. Комната при этом обязана стоять в кадре: владелец просил,
+     чтобы экраны были видны уже в проёме дверей и подходили вместе с
+     их открытием. Держим кольцо закреплённым с самого входа. */
+  else if (root.classList.contains("rc-inside")) state = 1;
 
   if (state !== act.pinState) {
     act.pinState = state;
@@ -284,7 +289,22 @@ function cabin(act) {
      стоят. Углы экранов расставлены при сборке и не меняются, так
      что разъехаться им не с чем - ни друг с другом, ни со стенами
      объёмной рубки: поворот у них общий, взятый у её камеры. */
-  CSSVAR(act.world, "--cab-turn", (-turn * DEG).toFixed(2) + "deg");
+  /* Знак поворота и знак угла экрана согласованы со сценой. В CSS
+     поворот вокруг вертикали идёт в другую сторону, чем в геометрии
+     рубки: без согласования комната оказывалась зеркальной - первый
+     экран стоял слева, хотя панель на стене справа. */
+  CSSVAR(act.world, "--cab-turn", (turn * DEG).toFixed(2) + "deg");
+
+  /* Экраны подходят вместе с открытием дверей. Владелец описал это
+     дословно: «карточки внутри дверей... появляются как голограмма и
+     приближаются вместе с ракетой с одновременным открытием
+     дверей». Пока створки сомкнуты, комната отодвинута назад и в
+     проёме видны дальние мелкие экраны; створки расходятся - и она
+     подходит на своё место. Одно число на всю комнату: разъехаться
+     экранам не с чем. */
+  var eIn = (V && V.enter) ? V.enter() : 1;
+  var backPx = Math.round((1 - eIn) * (phone ? 420 : 620));
+  CSSVAR(act.world, "--cab-back", backPx + "px");
 
   var deg = root.getAttribute("data-degrade");
   var soft = !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";
@@ -455,6 +475,44 @@ function shelf(act) {
 /* Салон разворачивать можно не всегда: при просьбе меньше движения
    и на устройстве, которое уже не тянет, страница обязана остаться
    обычной сеткой. Класс снимается вместе с раскладкой. */
+/* ── Комната из вёрстки повторяет комнату из объёма ──────────
+   Экраны стоят на стеновых панелях рубки, и стоять они обязаны не
+   «примерно там же», а ровно там. Для этого вёрстке нужна не
+   красивая перспектива, а та же самая: тот же радиус стены, тот же
+   отход камеры от центра, тот же угол объектива.
+
+   Пересчёт простой. В объёме точка стены на азимуте A уходит от
+   середины кадра на f * R * sin A / (R * cos A + d), где f - фокус
+   в пикселях, R - радиус стены, d - отход камеры. В вёрстке та же
+   точка уходит на P * Rc * sin A / (P - Rc * (1 - cos A)). Обе
+   формулы совпадают при Rc = k * R и P = k * (R + d), где
+   k = f / (R + d) - это и есть масштаб «пикселей на метр».
+
+   Отсюда же берётся ширина экрана: панель на стене шириной 1,9 м,
+   значит на экране она k * 1,9 пикселей. Не «примерно карточка», а
+   ровно панель. */
+function roomFit(ring) {
+  if (!ring) return;
+  var V = iv();
+  var gm = (V && V.geom) ? V.geom() : null;
+  var rWall = gm ? gm.rWall : 2.52;
+  var dolly = gm ? gm.dolly : (phone ? 0.86 : 0.34);
+  var fov = gm ? gm.fov : (phone ? 84 : 72);
+  var panel = gm ? gm.panel : 1.9;
+
+  var f = (innerHeight / 2) / Math.tan(fov * Math.PI / 360);
+  var k = f / (rWall + dolly);
+  var rc = k * rWall;
+  var pp = k * (rWall + dolly);
+  /* Панель уже кадра быть обязана, но и втискивать её в полоску
+     нельзя: на очень узком экране держим разумный нижний предел */
+  var w = Math.max(innerWidth * 0.62, Math.min(k * panel, innerWidth * 0.92));
+
+  CSSVAR(ring, "--cab-r", Math.round(rc) + "px");
+  CSSVAR(ring, "--cab-p", Math.round(pp) + "px");
+  CSSVAR(ring, "--cab-w", Math.round(w) + "px");
+}
+
 function cabinAllowed() {
   return !reduced && !root.classList.contains("rc-reduced") &&
     root.getAttribute("data-degrade") !== "3";
@@ -491,7 +549,13 @@ function collect() {
     if (head && !head._cabHome) {
       head._cabHome = { parent: head.parentNode, next: head.nextSibling };
     }
-    var cards = [].slice.call(ring.querySelectorAll(".card"));
+    /* Заголовок из выборки исключаем нарочно. На втором проходе он
+       уже лежит в кольце и сам помечен классом card - без этого
+       фильтра он попадал в список дважды, углы съезжали на один
+       шаг, и первый экран оказывался не перед входящим, а сбоку. */
+    var cards = [].slice.call(ring.querySelectorAll(".card")).filter(function (el) {
+      return el !== head;
+    });
     var on = cabinAllowed() && cards.length > 1;
     if (head) {
       if (on) {
@@ -555,12 +619,13 @@ function collect() {
       cards.forEach(function (el, ci) {
         var a = (planC && planC.rel && planC.rel[ci] !== undefined)
           ? planC.rel[ci] : (ci + 0.5) * stepC;
-        CSSVAR(el, "--cin-slot", (a * DEG).toFixed(2) + "deg");
+        CSSVAR(el, "--cin-slot", (-a * DEG).toFixed(2) + "deg");
         CSSDEL(el, "--cin-x");
         CSSDEL(el, "--cin-y");
         CSSDEL(el, "--cin-z");
         CSSDEL(el, "--cin-rot");
       });
+      roomFit(ring);
       acts.push({ sec: rel, kind: "cabin", items: cards, ring: ring,
         world: world,
         wrap: ring.parentNode,
@@ -636,6 +701,10 @@ function frame() {
     a = acts[i];
     a.rect = BOX(a.sec);
     a.live = a.rect.bottom > -200 && a.rect.top < innerHeight + 200;
+    /* Салон живёт с момента входа в корабль, а не с момента, когда
+       его блок доехал до кадра: комната стоит вокруг нас всё время,
+       пока мы внутри. */
+    if (a.kind === "cabin" && root.classList.contains("rc-inside")) a.live = true;
     /* Кольцо салона считаем всегда, даже когда блок далеко. Оно
        единственное здесь держится в кадре само по себе, и если
        перестать за ним следить на прыжке прокрутки - по якорю или

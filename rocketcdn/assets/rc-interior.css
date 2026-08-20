@@ -104,14 +104,26 @@ html[data-theme="light"].rc-rocket-parked.has-rocket #rocketCanvas {
     repeating-linear-gradient(0deg, rgba(226,232,240,.05) 0 2px, transparent 2px 26px);
 }
 .rc-lock-l { left: 0; }
-/* Проход: обшивка тамбура наезжает на зрителя ровно настолько,
-   насколько камера уже вошла внутрь. */
+/* Проход. Владелец описал этот кадр дословно: «при открытии внутри
+   должен уже быть виден салон, а не появляться после вспышки».
+
+   Раньше створки только наезжали на зрителя, а салон открывался
+   тем, что весь слой разом гас, - отсюда и ощущение вспышки, за
+   которой «вдруг» оказалась комната. Теперь они расходятся: салон
+   уже нарисован за ними и открывается ровно настолько, насколько
+   разошлась дверь. Заодно обшивка по-прежнему наезжает - камера в
+   этот момент действительно едет вперёд, и одно движение не
+   отменяет другое. */
 .rc-int-lock.on .rc-lock-l {
-  transform: scale(calc(1 + var(--int-enter, 0) * .16));
+  transform:
+    translateX(calc(var(--int-enter, 0) * -104%))
+    scale(calc(1 + var(--int-enter, 0) * .16));
   transform-origin: 22% 50%;
 }
 .rc-int-lock.on .rc-lock-r {
-  transform: scale(calc(1 + var(--int-enter, 0) * .16));
+  transform:
+    translateX(calc(var(--int-enter, 0) * 104%))
+    scale(calc(1 + var(--int-enter, 0) * .16));
   transform-origin: 78% 50%;
 }
 /* Уплотнители: пока створки сомкнуты, по стыку идёт живая полоса
@@ -119,13 +131,16 @@ html[data-theme="light"].rc-rocket-parked.has-rocket #rocketCanvas {
    а не зависшую страницу. */
 .rc-int-lock::after {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+  /* Полоса света живёт на стыке: створки разошлись - её уже нет,
+     иначе посреди открытого салона висел бы светящийся шов */
+  opacity: calc(1 - var(--int-enter, 0) * 3);
   width: calc(3px + var(--int-enter, 0) * 26px);
   transform: translateX(-50%);
   background: linear-gradient(180deg, transparent, var(--cyan), rgba(138,89,246,.8), transparent);
   opacity: 0; animation: rcSeal 1.1s ease-in-out infinite;
   filter: blur(calc(var(--int-enter, 0) * 6px));
 }
-.rc-int-lock.on::after { opacity: .9; }
+.rc-int-lock.on::after { opacity: calc((1 - var(--int-enter, 0) * 3) * .9); }
 @keyframes rcSeal {
   0%, 100% { filter: brightness(.7); transform: translateX(-50%) scaleY(.92) }
   50%      { filter: brightness(1.5); transform: translateX(-50%) scaleY(1) }

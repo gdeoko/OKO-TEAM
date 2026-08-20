@@ -1293,12 +1293,63 @@ function buildRocket(C, env) {
   P( 2.62, 0.08);
   P( 2.72, 0.00);          /* остриё */
 
-  var body = new T.Mesh(
-    new T.LatheGeometry(pts, C.radial),
+  /* ── Проём люка вырезан в самой обшивке ───────────────────
+     Раньше корпус был сплошным телом вращения, а люк - накладкой
+     поверх него: рама, створки и стена салона лежали НА обшивке.
+     Пока створки закрыты, разницы не видно, но стоит им разъехаться,
+     и под ними оказывается всё тот же сплошной борт. Владелец видел
+     ровно это: «двери открываются, а салона не видно».
+
+     Поэтому пояс корпуса на высоте люка строим с вырезом: обшивка
+     идёт по кругу везде, кроме сектора проёма. В вырезе стоит рама,
+     за ней - стена салона, и через открытые створки её действительно
+     видно. Верх и низ корпуса остаются целыми телами вращения. */
+  var DOOR_Y = 0.10, DOOR_H = 1.34, DOOR_HALF = 0.62;
+  var beltA = DOOR_Y - DOOR_H / 2, beltB = DOOR_Y + DOOR_H / 2;
+
+  /* Кусок профиля между двумя высотами, с точками ровно на границах:
+     без них шов между поясом и соседями расходится на глаз */
+  function slice(list, y0, y1) {
+    var out = [], i, a, bp, t;
+    function at(y) {
+      for (var q = 1; q < list.length; q++) {
+        var p0 = list[q - 1], p1 = list[q];
+        if ((y >= p0.y && y <= p1.y) || (y <= p0.y && y >= p1.y)) {
+          var dy = p1.y - p0.y;
+          t = dy === 0 ? 0 : (y - p0.y) / dy;
+          return new T.Vector2(p0.x + (p1.x - p0.x) * t, y);
+        }
+      }
+      return null;
+    }
+    var s0 = at(y0), s1 = at(y1);
+    if (s0) out.push(s0);
+    for (i = 0; i < list.length; i++) {
+      if (list[i].y > y0 && list[i].y < y1) out.push(list[i]);
+    }
+    if (s1) out.push(s1);
+    return out;
+  }
+
+  var hullParts = [];
+  var low = slice(pts, -2.30, beltA);
+  var high = slice(pts, beltB, 2.72);
+  /* Пояс: обшивка везде, кроме сектора проёма. Отсчёт угла у
+     LatheGeometry и у цилиндров створок один и тот же (ноль на +Z),
+     поэтому вырез и рама совпадают без подгонки. */
+  var cut = DOOR_HALF * 1.07;
+  var belt = slice(pts, beltA, beltB);
+  hullParts.push(new T.Mesh(new T.LatheGeometry(low, C.radial), hullMat));
+  hullParts.push(new T.Mesh(new T.LatheGeometry(high, C.radial), hullMat));
+  hullParts.push(new T.Mesh(
+    new T.LatheGeometry(belt, C.radial, cut, Math.PI * 2 - cut * 2),
     hullMat
-  );
-  body.geometry.computeVertexNormals();
-  root.add(body);
+  ));
+  var body = hullParts[0];
+  for (var hp = 0; hp < hullParts.length; hp++) {
+    hullParts[hp].geometry.computeVertexNormals();
+    root.add(hullParts[hp]);
+  }
 
   /* Носовой конус потемнее, чтобы читался силуэт */
   var tipMat = new T.MeshStandardMaterial({
@@ -1412,47 +1463,139 @@ function buildRocket(C, env) {
    Перспектива, масштаб и наклон достаются даром, потому что всё
    это живёт внутри ракеты и подчиняется ей. */
 function cabinTexture() {
-  var W = 512, H = 512;
+  /* Что человек видит в открытом люке. Владелец сформулировал так:
+     «двери открываются, и там уже салон видно». Значит в проёме
+     должен читаться не тёмный прямоугольник, а комната: свет с
+     потолка, приборы на дальней стене, решётчатый пол, глубина.
+
+     Всё это рисуем в текстуре, а не геометрией, по одной причине:
+     проём живёт полтора десятка кадров прокрутки, и держать ради
+     него вторую сцену - значит отдать бюджет, на котором потом
+     поднимется настоящая рубка. Текстура крупная (1024), потому что
+     на подходе проём занимает почти весь экран и мелкая мылилась. */
+  var W = 1024, H = 1024;
   var c = document.createElement("canvas");
   c.width = W; c.height = H;
   var x = c.getContext("2d");
 
-  /* Глубина салона: дальняя стена светлее пола и потолка */
+  /* Глубина: потолок и пол темнее, полоса дальней стены светлее -
+     именно этот перепад и читается как «там комната», а не панель */
   var bg = x.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0.00, "#050C15");
-  bg.addColorStop(0.30, "#0C1F33");
-  bg.addColorStop(0.58, "#14314C");
-  bg.addColorStop(1.00, "#040A12");
+  /* Тон тот же, что у настоящей рубки (rc-interior, COL.wall):
+     человек входит в ту самую комнату, которую увидел в проёме, и
+     разъехаться они по цвету не имеют права. */
+  bg.addColorStop(0.00, "#0A1624");
+  bg.addColorStop(0.16, "#14293E");
+  bg.addColorStop(0.42, "#1C3E5C");
+  bg.addColorStop(0.62, "#173247");
+  bg.addColorStop(0.86, "#0D1B28");
+  bg.addColorStop(1.00, "#070F18");
   x.fillStyle = bg;
   x.fillRect(0, 0, W, H);
 
-  /* Продольные панели дальней стены */
-  x.strokeStyle = "rgba(126,166,200,.16)";
+  /* Боковые ниши: они сходятся к середине и дают перспективу.
+     Без них стена плоская, сколько её ни свети. */
+  function niche(cx, w, dark) {
+    var g1 = x.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+    g1.addColorStop(0, dark ? "rgba(4,10,18,.85)" : "rgba(4,10,18,.55)");
+    g1.addColorStop(0.5, "rgba(30,64,94,.30)");
+    g1.addColorStop(1, dark ? "rgba(4,10,18,.85)" : "rgba(4,10,18,.55)");
+    x.fillStyle = g1;
+    x.fillRect(cx - w / 2, H * 0.14, w, H * 0.70);
+  }
+  niche(W * 0.10, W * 0.20, true);
+  niche(W * 0.90, W * 0.20, true);
+  niche(W * 0.30, W * 0.16, false);
+  niche(W * 0.70, W * 0.16, false);
+
+  /* Продольные рёбра обшивки */
+  x.strokeStyle = "rgba(140,186,222,.20)";
+  x.lineWidth = 3;
+  for (var i = 1; i < 9; i++) {
+    x.beginPath();
+    x.moveTo((i / 9) * W, H * 0.14);
+    x.lineTo((i / 9) * W, H * 0.84);
+    x.stroke();
+  }
+
+  /* Пояс приборов на дальней стене: он и есть «салон», а не склад.
+     Экраны разной яркости - ряд одинаковых читается орнаментом. */
+  x.fillStyle = "rgba(20,52,80,.85)";
+  x.fillRect(0, H * 0.20, W, H * 0.17);
+  x.fillStyle = "rgba(66,178,220,.28)";
+  x.fillRect(0, H * 0.20, W, 3);
+  x.fillRect(0, H * 0.37 - 3, W, 3);
+  for (i = 0; i < 14; i++) {
+    var sx = W * (0.035 + i * 0.069);
+    var lit = (i % 4 === 0) ? 0.92 : (i % 3 === 0 ? 0.62 : 0.34);
+    x.fillStyle = "rgba(96,206,255," + lit + ")";
+    x.fillRect(sx, H * 0.225, W * 0.055, H * 0.055);
+    /* строки данных на экране */
+    x.fillStyle = "rgba(10,26,42,.55)";
+    for (var r = 0; r < 3; r++) {
+      x.fillRect(sx + W * 0.007, H * (0.233 + r * 0.015), W * 0.034, H * 0.007);
+    }
+    x.fillStyle = "rgba(155,232,255,.55)";
+    x.fillRect(sx, H * 0.290, W * 0.055, 2);
+  }
+
+  /* Кресла у дальней стены: два тёмных силуэта с подсветкой по
+     спинке. Одна деталь, но именно она превращает отсек в салон. */
+  function seat(cx) {
+    x.fillStyle = "rgba(6,14,24,.92)";
+    x.beginPath();
+    x.moveTo(cx - W * 0.062, H * 0.84);
+    x.lineTo(cx - W * 0.048, H * 0.58);
+    x.lineTo(cx + W * 0.048, H * 0.58);
+    x.lineTo(cx + W * 0.062, H * 0.84);
+    x.closePath();
+    x.fill();
+    x.strokeStyle = "rgba(66,178,220,.42)";
+    x.lineWidth = 2;
+    x.beginPath();
+    x.moveTo(cx - W * 0.046, H * 0.60);
+    x.lineTo(cx + W * 0.046, H * 0.60);
+    x.stroke();
+  }
+  seat(W * 0.34);
+  seat(W * 0.66);
+
+  /* Решётка пола с бликом от потолочной панели */
+  x.strokeStyle = "rgba(150,190,225,.16)";
   x.lineWidth = 2;
-  for (var i = 1; i < 7; i++) {
-    x.beginPath(); x.moveTo((i / 7) * W, H * 0.16); x.lineTo((i / 7) * W, H * 0.86); x.stroke();
+  for (i = 0; i < 12; i++) {
+    var yy = H * (0.82 + i * 0.014);
+    x.beginPath(); x.moveTo(0, yy); x.lineTo(W, yy); x.stroke();
   }
-  /* Пояс приборов: ряд ламп и экранов в глубине */
-  x.fillStyle = "rgba(66,178,220,.20)";
-  x.fillRect(0, H * 0.44, W, H * 0.10);
-  for (i = 0; i < 9; i++) {
-    x.fillStyle = i % 3 === 0 ? "rgba(155,232,255,.85)" : "rgba(66,178,220,.55)";
-    x.fillRect(W * (0.08 + i * 0.10), H * 0.465, W * 0.045, H * 0.028);
+  for (i = 0; i <= 10; i++) {
+    var fx = W * (i / 10);
+    x.beginPath();
+    x.moveTo(W * 0.5 + (fx - W * 0.5) * 0.55, H * 0.82);
+    x.lineTo(fx, H);
+    x.stroke();
   }
-  /* Тёплый свет потолочной панели, ради которого проём и светится */
-  var lamp = x.createRadialGradient(W / 2, H * 0.20, 0, W / 2, H * 0.20, W * 0.6);
-  lamp.addColorStop(0, "rgba(255,214,160,.42)");
-  lamp.addColorStop(0.45, "rgba(120,170,210,.14)");
+
+  /* Тёплый свет потолочной панели - ради него проём и светится.
+     Он же связывает кадр с лампой в проёме (rc-rocket, doorOpen).
+     Держим его сдержанным: залитый светом потолок делал салон
+     похожим на пустую белую комнату, а не на рубку корабля. */
+  var lamp = x.createRadialGradient(W / 2, H * 0.10, 0, W / 2, H * 0.10, W * 0.62);
+  lamp.addColorStop(0, "rgba(255,220,175,.34)");
+  lamp.addColorStop(0.35, "rgba(120,170,210,.12)");
   lamp.addColorStop(1, "rgba(0,0,0,0)");
   x.fillStyle = lamp;
   x.fillRect(0, 0, W, H);
-  /* Решётка пола */
-  x.strokeStyle = "rgba(150,190,225,.13)";
-  x.lineWidth = 1;
-  for (i = 0; i < 10; i++) {
-    var yy = H * (0.86 + i * 0.016);
-    x.beginPath(); x.moveTo(0, yy); x.lineTo(W, yy); x.stroke();
-  }
+
+  /* Светящаяся полоса потолка: узкая, но она задаёт «верх» */
+  var strip = x.createLinearGradient(0, H * 0.10, 0, H * 0.14);
+  strip.addColorStop(0, "rgba(255,236,208,.58)");
+  strip.addColorStop(1, "rgba(255,236,208,0)");
+  x.fillStyle = strip;
+  x.fillRect(W * 0.16, H * 0.10, W * 0.68, H * 0.04);
+
+  /* Виньетки здесь нарочно нет. Она гасила края рисунка, а в проём
+     человек смотрит именно на края: середина стены уходит за
+     створки. С виньеткой салон читался тёмным пятном. */
 
   var tex = new T.CanvasTexture(c);
   tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
@@ -1569,10 +1712,22 @@ function buildDoor(C, env, hullMat) {
      когда мы зайдём». */
   var cabTex = cabinTexture();
   cabTex.wrapS = T.RepeatWrapping;
-  cabTex.repeat.x = 1.6;                 /* панели не растягиваются по дуге */
+  /* Стена салона гнётся на сто тридцать пять градусов, а в кадр
+     проёма попадает от силы сорок пять: при полном развороте
+     текстуры человек видел бы её треть - кусок стены без единого
+     прибора. Показываем в проёме середину рисунка целиком. */
+  cabTex.repeat.x = 1;
+  cabTex.offset.x = 0;
   var cabin = new T.Mesh(
-    new T.CylinderGeometry(R * 0.46, R * 0.46, HH * 1.06, seg, 1, true, -HALF * 1.9, HALF * 3.8),
-    new T.MeshBasicMaterial({ map: cabTex, side: T.BackSide, toneMapped: false })
+    /* Стена салона шире самого проёма - иначе по его краям видно
+       мимо неё, в пустое нутро корпуса, и салон читается узкой
+       полоской посреди темноты. Радиус подобран так, чтобы дальняя
+       стенка перекрывала проём с запасом на любой ракурс. */
+    new T.CylinderGeometry(R * 0.86, R * 0.86, HH * 1.10, seg, 1, true, -HALF * 1.9, HALF * 3.8),
+    /* Двусторонний нарочно. Односторонняя стенка рисуется только с
+       изнанки, а в проём мы смотрим снаружи корабля - и видели
+       сквозь неё космос вместо салона. */
+    new T.MeshBasicMaterial({ map: cabTex, side: T.DoubleSide, toneMapped: false })
   );
   cabin.position.y = Y;
   cabin.renderOrder = 1;
@@ -1580,7 +1735,7 @@ function buildDoor(C, env, hullMat) {
   /* Пол тамбура: без него в проёме видна только стена, и глубины
      не читается. Тёмная решётка с бликом даёт понять, что там объём */
   var floor = new T.Mesh(
-    new T.CircleGeometry(R * 0.46, seg),
+    new T.CircleGeometry(R * 0.86, seg),
     new T.MeshBasicMaterial({ color: 0x0A1726, toneMapped: false })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -1592,32 +1747,61 @@ function buildDoor(C, env, hullMat) {
   lamp.position.set(0, Y + 0.3, R * 0.1);
   group.add(lamp);
 
-  /* 2. Рама проёма: тёмная обвязка, по которой ходят створки */
+  /* 2. Косяки проёма. Раньше здесь стоял цилиндрический сектор во
+     всю ширину люка - и он же был главной ошибкой всей сцены: при
+     двусторонней отрисовке ближняя к зрителю половина этого сектора
+     рисовалась поверх всего и закрывала проём наглухо. Створки
+     разъезжались, а за ними по-прежнему была ровная тёмная стенка -
+     ровно то, на что владелец и жаловался.
+
+     Настоящий люк обрамляют косяки: две вертикальные стойки по
+     сторонам и два пояска сверху и снизу. Середина проёма остаётся
+     открытой, и сквозь неё виден салон. */
   var frameMat = new T.MeshStandardMaterial({
     color: 0x6E829A, metalness: 0.92, roughness: 0.28, envMap: env, envMapIntensity: 1.6, side: T.DoubleSide
   });
-  var frame = new T.Mesh(
-    new T.CylinderGeometry(R * 0.995, R * 0.995, HH, seg, 1, true, -HALF * 1.07, HALF * 2.14),
-    frameMat
-  );
-  frame.position.y = Y;
-  group.add(frame);
-  /* Уплотнитель по контуру проёма: тонкая тёмная кромка между рамой
-     и створками. Без неё дверь сливается с бортом, с ней - читается
-     как настоящий люк с притвором. */
-  /* Цвет уплотнителя раньше был почти чёрным, и в кадре по контуру
-     двери шла жирная тёмная рамка - именно она и делала люк похожим
-     на приклеенный прямоугольник. Настоящий притвор темнее обшивки,
-     но не чёрный, и полоса его видна тонкой. */
+  var jambW = 0.075;                    /* ширина стойки, радиан */
+  function jamb(start) {
+    var m = new T.Mesh(
+      new T.CylinderGeometry(R * 0.995, R * 0.995, HH, Math.max(3, Math.round(seg * 0.14)), 1, true,
+        start, jambW),
+      frameMat
+    );
+    m.position.y = Y;
+    return m;
+  }
+  group.add(jamb(-HALF * 1.07));
+  group.add(jamb(HALF * 1.07 - jambW));
+  /* Пояски: короткие по высоте сегменты во всю ширину проёма */
+  function ledge(yy) {
+    var m = new T.Mesh(
+      new T.CylinderGeometry(R * 0.995, R * 0.995, HH * 0.045, seg, 1, true,
+        -HALF * 1.07, HALF * 2.14),
+      frameMat
+    );
+    m.position.y = yy;
+    return m;
+  }
+  group.add(ledge(Y + HH * 0.5));
+  group.add(ledge(Y - HH * 0.5));
+
+  /* Уплотнитель по контуру: тонкая тёмная кромка между косяком и
+     створкой. Без неё дверь сливается с бортом, с ней читается
+     настоящий люк с притвором. Он тоже идёт только по краям. */
   var sealMat = new T.MeshStandardMaterial({
     color: 0x3A4E67, metalness: 0.7, roughness: 0.5, envMap: env, side: T.DoubleSide
   });
-  var seal = new T.Mesh(
-    new T.CylinderGeometry(R * 0.999, R * 0.999, HH * 0.978, seg, 1, true, -HALF * 1.014, HALF * 2.028),
-    sealMat
-  );
-  seal.position.y = Y;
-  group.add(seal);
+  function sealJamb(start) {
+    var m = new T.Mesh(
+      new T.CylinderGeometry(R * 0.999, R * 0.999, HH * 0.978, Math.max(3, Math.round(seg * 0.1)), 1, true,
+        start, jambW * 0.42),
+      sealMat
+    );
+    m.position.y = Y;
+    return m;
+  }
+  group.add(sealJamb(-HALF * 1.014));
+  group.add(sealJamb(HALF * 1.014 - jambW * 0.42));
 
   /* 3. Створки: тот же цилиндр, что и борт, потому и читаются
      обшивкой этого корабля, а не панелью поверх кадра. Материал
@@ -3320,7 +3504,7 @@ Rocket.prototype.steamStep = function (dt) {
   }
   /* Дымка из проёма идёт, пока дверь открыта. На слабом устройстве её
      нет: там дорога каждая полупрозрачная точка. */
-  if (!this.C.weak && dk > 0.12 && S) {
+  if (!this.C.weak && dk > 0.12 && dk < 0.58 && S) {
     this._hazeT = (this._hazeT || 0) + dt;
     while (this._hazeT > 0.11) { this._hazeT -= 0.11; this.steamEmit(1, 1); }
   } else this._hazeT = 0;
@@ -3346,6 +3530,15 @@ Rocket.prototype.steamStep = function (dt) {
   /* Прозрачность ведёт дверь, но у посадочного выброса своей двери
      нет - он виден в полную силу, пока корабль стоит на площадке */
   var vis = Math.max(Math.min(1, dk * 14), this._padSteam ? 1 : 0);
+  /* Пар отрабатывает своё в начале открытия и уходит до того, как
+     кадр займёт проём. Владелец сказал прямо: «двери открываются, и
+     там уже салон видно» - а видно его было плохо именно из-за
+     клуба, висевшего перед самым люком. Сброс давления при этом
+     остаётся: он и должен быть в первой половине хода створок. */
+  if (!this._padSteam) {
+    var clearK = (dk - 0.42) / 0.34;
+    if (clearK > 0) vis *= 1 - (clearK > 1 ? 1 : clearK);
+  }
   var alive = 0, onGnd = 0;
 
   for (var i = 0; i < S.n; i++) {
@@ -3550,7 +3743,30 @@ Rocket.prototype.doorOpen = function (dt) {
 
          Подход же доходит до единицы честно: он и есть «мы дошли
          вплотную». Дверь начинает идти с трёх четвертей подхода. */
-      var raw = (this.appK - 0.72) / 0.26;
+      /* Ход створок ведёт положение салона на странице, а не доля
+         подхода. Подход последнюю четверть проходит за полтораста
+         пикселей прокрутки, и весь эпизод входа - щель, две
+         голограммы в ней, их чтение и растворение - укладывался в
+         пару щелчков колеса: владелец видел не открытие двери, а
+         мигание. Отрезок же до салона - это честный экран
+         прокрутки, и на нём всё успевает произойти.
+
+         Подход при этом остаётся условием: пока корабль не встал
+         вплотную, створки не трогаются с места. */
+      var relEl = this._relEl;
+      if (!relEl || !relEl.isConnected) relEl = this._relEl = document.getElementById("reliability");
+      var raw = 0;
+      if (relEl) {
+        var rTop = BOX(relEl).top;
+        var h = this.ch();
+        var s0 = h * 1.35, s1 = h * 0.30;
+        raw = (s0 - rTop) / (s0 - s1);
+      } else {
+        raw = (this.appK - 0.72) / 0.26;
+      }
+      /* Затвор подходом: створки не смеют разъехаться, пока корабль
+         ещё идёт к нам */
+      raw = Math.min(raw, Math.max(0, (this.appK - 0.62) / 0.22));
       goal = raw < 0 ? 0 : raw > 1 ? 1 : raw;
     } else if (sc.act === "cabin") {
       goal = 1;
@@ -3587,13 +3803,17 @@ Rocket.prototype.doorOpen = function (dt) {
        дверью: к моменту передачи сцены рубке кадр уже залит тёплым
        светом, и подмену физически не видно. Переменную читает
        rc-world.css, слой лежит поверх страницы. */
-    /* Долю засвета читает только сам слой засвета: пишем ему, а не
-       корню документа - запись на корне помечает устаревшим стиль
-       всего дерева, а зовём мы её каждый кадр створок. */
+    /* Засвета на входе больше нет. Владелец сказал прямо: «не должно
+       быть какой-то вспышки, сделай бесшовно и кинематографично».
+       Вспышка и была тем, что прикрывало подмену сцены, - и она же
+       читалась как склейка: кадр вспыхивал, и «вдруг» оказывался
+       салон. Теперь подмену прикрывают створки тамбура, которые
+       расходятся, открывая уже нарисованный салон (rc-interior).
+       Слой засвета оставлен погашенным: им пользуется только этот
+       момент, а держать его на нуле дешевле, чем пересобирать. */
     var gEl = this._glowEl;
     if (!gEl || !gEl.isConnected) gEl = this._glowEl = document.querySelector(".rc-hatch-glow");
-    if (gEl) V(gEl, "--hatch-glow",
-      (Math.max(0, this.doorK - 0.30) / 0.7 * this.appK).toFixed(2));
+    if (gEl) V(gEl, "--hatch-glow", "0");
   }
   /* Проход открыт и кадр закрыт корпусом - можно отдавать сцену
      интерьеру. Флаг читает rc-interior: подмена случается под
@@ -3645,7 +3865,15 @@ Rocket.prototype.doorOpen = function (dt) {
     }
   }
 
-  var deep = this.doorK > 0.58 && this.appK > 0.8;
+/* Порог передачи сцены рубке. Сценарий входа задан владельцем и
+     идёт по доле раскрытия люка: до 0.55 в щели проступают две
+     голограммы из салона, до 0.85 они читаются, к единице тают
+     вместе с наездом (rc-gate). Значит сцену меняем в самом конце,
+     когда карточки уже растаяли, а проём накрыл кадр целиком: в
+     этот момент и снаружи, и внутри кадр - тёмная труба люка, и
+     подмена не видна ничем. Ни вспышки, ни вторых створок для этого
+     не нужно. */
+  var deep = this.doorK > 0.97 && this.appK > 0.86;
   if (deep !== this._deep) {
     this._deep = deep;
     document.documentElement.classList.toggle("rc-in-hatch", deep);
@@ -3811,10 +4039,29 @@ Rocket.prototype.layout = function (p, dt) {
      иначе проём уедет за корпус ровно тогда, когда мы к нему
      подошли. Вне подхода вращение продолжается как жило. */
   if (app > 0.02) {
+    /* Люк обязан смотреть на камеру, а не «примерно вперёд».
+       Раньше корпус доворачивался к ближайшему полному обороту
+       вокруг своей оси - и это было неверно: ось корабля ставит
+       кватернион по касательной маршрута, а вокруг неё азимут
+       выходит любой. Из-за этого проём с салоном уезжал за корпус
+       ровно тогда, когда мы к нему подходили, и человек упирался в
+       гладкий борт.
+
+       Считаем честно: берём камеру в системе корабля и разворачиваем
+       корпус так, чтобы люк (он смотрит по локальной оси Z) встал
+       к ней лицом. */
     var ry = this.craft.rotation.y;
     var tau = Math.PI * 2;
-    var near = Math.round(ry / tau) * tau;             /* ближний «люк на нас» */
-    this.craft.rotation.y = ry + (near - ry) * Math.min(1, (dt || 0.016) * (1.2 + app * 6));
+    var cl = this._camLoc || (this._camLoc = new T.Vector3());
+    cl.copy(this.cam.position);
+    this.pivot.updateMatrixWorld();
+    this.pivot.worldToLocal(cl);
+    var want = Math.atan2(cl.x, cl.z);
+    /* Ближайший эквивалент по кругу: иначе корпус разворачивается
+       через всю окружность на ровном месте */
+    while (want - ry > Math.PI) want -= tau;
+    while (ry - want > Math.PI) want += tau;
+    this.craft.rotation.y = ry + (want - ry) * Math.min(1, (dt || 0.016) * (1.2 + app * 6));
   } else {
     this.craft.rotation.y += 0.004;
   }
@@ -4291,6 +4538,36 @@ Rocket.prototype.start = function () {
   this.running = true;
   this._last = 0;
   this._raf = requestAnimationFrame(this.tick.bind(this));
+};
+
+/* Где сейчас люк на экране. Нужна только для проверок: по этой точке
+   видно, попадает ли проём в кадр на подходе - на глаз по скриншоту
+   это не определить, а от неё зависит весь эпизод входа. */
+Rocket.prototype.doorSpot = function () {
+  var d = this.rocket && this.rocket.door;
+  if (!d || !this.cam) return null;
+  var v = this._tmpDS || (this._tmpDS = new T.Vector3());
+  v.set(0, d.y || 0, 0);
+  d.group.localToWorld(v);
+  v.project(this.cam);
+  /* Куда смотрит люк и не отвёрнут ли он от камеры */
+  var n = this._tmpDN || (this._tmpDN = new T.Vector3());
+  n.set(0, 0, 1);
+  d.group.getWorldDirection ? d.group.getWorldDirection(n) : n.set(0, 0, 1);
+  var wp = this._tmpDW || (this._tmpDW = new T.Vector3());
+  wp.set(0, d.y || 0, 0);
+  d.group.localToWorld(wp);
+  var toCam = this._tmpDC || (this._tmpDC = new T.Vector3());
+  toCam.copy(this.cam.position).sub(wp).normalize();
+  return {
+    x: +((v.x * 0.5 + 0.5) * this.cw()).toFixed(0),
+    y: +((-v.y * 0.5 + 0.5) * this.ch()).toFixed(0),
+    z: +v.z.toFixed(3),
+    s: +(this._sNow || 1).toFixed(2),
+    ry: +((this.craft ? this.craft.rotation.y : 0)).toFixed(2),
+    лицом: +n.dot(toCam).toFixed(2),
+    d: +this.cam.position.distanceTo(wp).toFixed(2)
+  };
 };
 
 Rocket.prototype.stop = function () {
