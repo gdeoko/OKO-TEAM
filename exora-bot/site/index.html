@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="build" content="exora-site-v1" />
+<title>Exora — обмен USDT и рублей</title>
+<meta name="description" content="Exora: обмен USDT на рубли и обратно. Курс с биржи, проверка кошелька по AML до перевода, живой оператор на каждой заявке." />
+<meta name="theme-color" content="#04070E" />
+<link rel="icon" href="/assets/favicon.ico" sizes="any" />
+<meta property="og:title" content="Exora — обмен USDT и рублей" />
+<meta property="og:description" content="Курс с биржи, AML-проверка кошелька до перевода, живой оператор на каждой заявке." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://exoraexchange.ru/" />
+<style>
+  :root{
+    --bg-0:#04070E; --bg-1:#0A0F1C;
+    --glass:rgba(18,24,36,0.62); --glass-hi:rgba(28,36,52,0.78);
+    --line:rgba(255,255,255,0.09); --line-hi:rgba(255,255,255,0.18);
+    --text:#F8FAFC; --muted:rgba(248,250,252,0.62); --dim:rgba(248,250,252,0.36);
+    --brand:#5ED29C; --brand-2:#3FBF86; --brand-glow:rgba(94,210,156,0.4);
+    --cyan:#5AC8FF; --purple:#A78BFA;
+    --radius:20px; --radius-lg:26px; --radius-sm:14px;
+    --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg-0);color:var(--text);font-family:var(--font);
+    -webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden;
+  }
+  .bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  .bg::before{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(900px 620px at 78% -8%, rgba(94,210,156,.17), transparent 62%),
+      radial-gradient(760px 560px at 8% 8%, rgba(90,200,255,.12), transparent 60%),
+      radial-gradient(700px 700px at 50% 108%, rgba(167,139,250,.10), transparent 62%),
+      linear-gradient(180deg,#04070E 0%,#070C16 45%,#04070E 100%);
+  }
+  .bg::after{
+    content:"";position:absolute;inset:0;opacity:.35;
+    background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 30%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 30%,transparent 75%);
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    background:rgba(4,7,14,.72);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;gap:14px;height:66px}
+  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--text)}
+  .brand svg{width:32px;height:32px;display:block}
+  .brand b{font-size:18px;letter-spacing:.14em;font-weight:700}
+  .nav-links{margin-left:auto;display:flex;gap:26px;align-items:center}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:14.5px;transition:color .15s}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{
+    display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#04140C;
+    font-weight:650;font-size:14.5px;text-decoration:none;white-space:nowrap;
+    box-shadow:0 6px 24px rgba(94,210,156,.28);transition:transform .15s,box-shadow .15s;
+  }
+  .nav-cta:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(94,210,156,.38)}
+  .nav-cta svg{width:17px;height:17px}
+  @media (max-width:760px){ .nav-links{display:none} }
+
+  .hero{padding:78px 0 64px;text-align:center}
+  .badge{
+    display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border-radius:999px;
+    border:1px solid var(--line-hi);background:var(--glass);font-size:13px;color:var(--muted);
+    margin-bottom:26px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--brand);
+    box-shadow:0 0 0 0 var(--brand-glow);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 var(--brand-glow)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  h1{font-size:clamp(34px,6.4vw,60px);line-height:1.08;letter-spacing:-.025em;font-weight:760;margin-bottom:20px}
+  h1 .grad{background:linear-gradient(120deg,var(--brand) 0%,var(--cyan) 55%,var(--purple) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(15.5px,2.1vw,19px);color:var(--muted);max-width:610px;margin:0 auto 34px}
+  .hero-cta{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;padding:15px 30px;border-radius:999px;
+    font-weight:650;font-size:15.5px;text-decoration:none;transition:transform .15s,box-shadow .15s,border-color .15s;
+  }
+  .btn svg{width:19px;height:19px}
+  .btn-p{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#04140C;
+    box-shadow:0 10px 34px rgba(94,210,156,.3)}
+  .btn-p:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(94,210,156,.42)}
+  .btn-s{background:var(--glass);border:1px solid var(--line-hi);color:var(--text)}
+  .btn-s:hover{border-color:var(--brand);transform:translateY(-2px)}
+
+  .rate-card{
+    margin:52px auto 0;max-width:660px;border-radius:var(--radius-lg);
+    border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(22px);
+    -webkit-backdrop-filter:blur(22px);padding:26px 24px;box-shadow:0 24px 70px rgba(0,0,0,.42);
+  }
+  .rate-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
+  .rate-head span{font-size:12.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+  .rate-src{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+  .rate-grid{display:grid;grid-template-columns:1fr 1px 1fr;gap:20px;align-items:center}
+  .rate-cell{text-align:center}
+  .rate-cell .lbl{font-size:12.5px;color:var(--dim);margin-bottom:7px}
+  .rate-cell .val{font-size:clamp(25px,4.4vw,33px);font-weight:730;letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums}
+  .rate-cell .cur{font-size:13px;color:var(--muted);margin-top:3px}
+  .rate-sep{background:var(--line);height:52px;width:1px}
+  .rate-foot{margin-top:20px;padding-top:17px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;font-size:13px;color:var(--muted);gap:12px;flex-wrap:wrap}
+  .buy{color:var(--brand)} .sell{color:var(--cyan)}
+
+  section{padding:66px 0}
+  .sec-title{font-size:clamp(25px,3.6vw,34px);font-weight:720;letter-spacing:-.02em;
+    margin-bottom:12px;text-align:center}
+  .sec-sub{color:var(--muted);text-align:center;max-width:560px;margin:0 auto 42px;font-size:15.5px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:17px}
+  .card{
+    border-radius:var(--radius);border:1px solid var(--line);background:var(--glass);
+    padding:26px 23px;transition:border-color .2s,transform .2s;
+  }
+  .card:hover{border-color:var(--line-hi);transform:translateY(-3px)}
+  .ic{
+    width:46px;height:46px;border-radius:var(--radius-sm);display:grid;place-items:center;
+    background:linear-gradient(135deg,rgba(94,210,156,.16),rgba(90,200,255,.1));
+    border:1px solid rgba(94,210,156,.22);margin-bottom:17px;
+  }
+  .ic svg{width:22px;height:22px;stroke:var(--brand);fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .card h3{font-size:17.5px;font-weight:660;margin-bottom:9px;letter-spacing:-.01em}
+  .card p{color:var(--muted);font-size:14.5px}
+
+  .steps{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:17px}
+  .step{border-radius:var(--radius);border:1px solid var(--line);background:var(--glass);padding:26px 23px;position:relative}
+  .step::before{
+    counter-increment:s;content:counter(s);
+    position:absolute;top:22px;right:22px;font-size:42px;font-weight:760;line-height:1;
+    color:rgba(94,210,156,.13);
+  }
+  .step h3{font-size:16.5px;font-weight:660;margin-bottom:9px;padding-right:44px}
+  .step p{color:var(--muted);font-size:14.5px}
+
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:17px;
+    border-radius:var(--radius-lg);border:1px solid var(--line);background:var(--glass);padding:32px 26px}
+  .fact{text-align:center}
+  .fact .n{font-size:clamp(24px,3.6vw,31px);font-weight:740;letter-spacing:-.02em;
+    background:linear-gradient(120deg,var(--brand),var(--cyan));-webkit-background-clip:text;
+    background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+  .fact .t{font-size:13.5px;color:var(--muted);margin-top:6px}
+
+  .cta-band{
+    border-radius:var(--radius-lg);border:1px solid rgba(94,210,156,.22);padding:48px 30px;text-align:center;
+    background:linear-gradient(135deg,rgba(94,210,156,.12),rgba(90,200,255,.07));
+  }
+  .cta-band h2{font-size:clamp(23px,3.4vw,31px);font-weight:720;letter-spacing:-.02em;margin-bottom:12px}
+  .cta-band p{color:var(--muted);margin-bottom:28px;max-width:490px;margin-left:auto;margin-right:auto}
+
+  footer{border-top:1px solid var(--line);padding:42px 0 52px;margin-top:60px}
+  .foot{display:flex;gap:26px;flex-wrap:wrap;justify-content:space-between;align-items:flex-start}
+  .foot-brand{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .foot-brand svg{width:28px;height:28px}
+  .foot-brand b{letter-spacing:.14em;font-size:16px}
+  .foot p{color:var(--dim);font-size:13.5px;max-width:390px}
+  .foot-links{display:flex;flex-direction:column;gap:10px}
+  .foot-links a{color:var(--muted);text-decoration:none;font-size:14px}
+  .foot-links a:hover{color:var(--brand)}
+  .foot-note{margin-top:32px;padding-top:22px;border-top:1px solid var(--line);
+    color:var(--dim);font-size:12.5px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/">
+      <svg viewBox="0 0 512 512" role="img" aria-label="Exora">
+        <g transform="translate(256 256)">
+          <g fill="#2E8B57">
+            <rect x="-124" y="-124" width="96" height="96" rx="11" transform="rotate(45 -76 -76)"/>
+            <rect x="28" y="-124" width="96" height="96" rx="11" transform="rotate(45 76 -76)"/>
+            <rect x="-124" y="28" width="96" height="96" rx="11" transform="rotate(45 -76 76)"/>
+            <rect x="28" y="28" width="96" height="96" rx="11" transform="rotate(45 76 76)"/>
+          </g>
+          <rect x="-19" y="-19" width="38" height="38" rx="5" transform="rotate(45)" fill="#8FE3A6"/>
+        </g>
+      </svg>
+      <b>EXORA</b>
+    </a>
+    <nav class="nav-links">
+      <a href="#how">Как это работает</a>
+      <a href="#why">Почему мы</a>
+      <a href="#limits">Условия</a>
+    </nav>
+    <a class="nav-cta" href="https://t.me/exorappbot" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M21.9 4.3 18.8 19c-.2 1-.9 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13 2 11.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1.4z"/>
+      </svg>
+      Открыть обмен
+    </a>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div class="badge"><span class="dot"></span> Курс обновляется с биржи в реальном времени</div>
+  <h1>Обмен USDT и рублей<br /><span class="grad">без сюрпризов в курсе</span></h1>
+  <p class="lead">
+    Заявка оформляется в Telegram за минуту. Кошелёк проверяется по AML до того, как вы
+    отправите средства. Курс и комиссия видны заранее и не меняются задним числом.
+  </p>
+  <div class="hero-cta">
+    <a class="btn btn-p" href="https://t.me/exorappbot" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M21.9 4.3 18.8 19c-.2 1-.9 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13 2 11.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1.4z"/>
+      </svg>
+      Создать заявку
+    </a>
+    <a class="btn btn-s" href="#how">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>
+      </svg>
+      Как это работает
+    </a>
+  </div>
+
+  <div class="rate-card">
+    <div class="rate-head">
+      <span>Текущий курс</span>
+      <span class="rate-src">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/>
+        </svg>
+        <span id="src">загрузка</span>
+      </span>
+    </div>
+    <div class="rate-grid">
+      <div class="rate-cell">
+        <div class="lbl">Продаём USDT</div>
+        <div class="val buy" id="buy">—</div>
+        <div class="cur">рублей за 1 USDT</div>
+      </div>
+      <div class="rate-sep"></div>
+      <div class="rate-cell">
+        <div class="lbl">Покупаем USDT</div>
+        <div class="val sell" id="sell">—</div>
+        <div class="cur">рублей за 1 USDT</div>
+      </div>
+    </div>
+    <div class="rate-foot">
+      <span>Лимит одной заявки</span>
+      <span id="lim">—</span>
+    </div>
+  </div>
+</div>
+
+<section id="why" class="wrap">
+  <h2 class="sec-title">Почему через нас</h2>
+  <p class="sec-sub">Четыре вещи, которые в обменниках чаще всего идут не так. У нас они закрыты.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3.4v5c0 4.5-3.1 8.6-7.5 9.6-4.4-1-7.5-5.1-7.5-9.6v-5L12 3z"/><path d="M9.2 12.2l2 2 3.6-3.9"/></svg></div>
+      <h3>AML до перевода</h3>
+      <p>Адрес проверяется по чёрным спискам и истории до того, как деньги ушли. Для адресов
+         формата 0x проверяем и Ethereum, и BSC, показываем худший результат из двух.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5.5-5.5 3.5 3.5L21 6"/><path d="M21 11V6h-5"/></svg></div>
+      <h3>Курс с биржи</h3>
+      <p>Берём котировку Binance, запасной источник CoinGecko. Если биржи молчат, заявка
+         не создаётся по выдуманному числу, курс ставит оператор вручную.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c.6-3.7 3.8-5.6 7.5-5.6s6.9 1.9 7.5 5.6"/></svg></div>
+      <h3>Живой оператор</h3>
+      <p>Каждую заявку ведёт человек, а не автоответчик. Ответ по заявке в рабочее время
+         занимает 5 до 15 минут.</p>
+    </div>
+    <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="2.4"/><path d="M8 10.5V7.4A4 4 0 0 1 16 7.4v3.1"/><path d="M12 14.5v2.4"/></svg></div>
+      <h3>История сделок</h3>
+      <p>Каждый обмен остаётся в вашей истории со статусом и временем. Прогресс заявки
+         виден только её владельцу и оператору.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="wrap">
+  <h2 class="sec-title">Как проходит обмен</h2>
+  <p class="sec-sub">От первого сообщения до зачисления обычно проходит меньше получаса.</p>
+  <div class="steps">
+    <div class="step">
+      <h3>Открываете приложение</h3>
+      <p>Заходите в бот Exora в Telegram и нажимаете кнопку обмена. Регистрация не нужна,
+         аккаунт Telegram и есть ваш вход.</p>
+    </div>
+    <div class="step">
+      <h3>Считаете сумму</h3>
+      <p>Выбираете направление и сеть, вводите сумму. Курс, комиссия и итог к получению
+         пересчитываются сразу, до отправки заявки.</p>
+    </div>
+    <div class="step">
+      <h3>Проходите AML</h3>
+      <p>Указываете кошелёк, он проверяется автоматически. Если адрес рискованный, вы
+         узнаете об этом до перевода, а не после.</p>
+    </div>
+    <div class="step">
+      <h3>Получаете средства</h3>
+      <p>Оператор подтверждает заявку и присылает реквизиты. После перевода средства уходят
+         встречным платежом, статус виден в приложении.</p>
+    </div>
+  </div>
+</section>
+
+<section id="limits" class="wrap">
+  <div class="facts">
+    <div class="fact"><div class="n" id="f-min">—</div><div class="t">Минимальная заявка, USDT</div></div>
+    <div class="fact"><div class="n" id="f-max">—</div><div class="t">Максимум за раз, USDT</div></div>
+    <div class="fact"><div class="n">4</div><div class="t">Сети: TRC20, ERC20, BEP20, TON</div></div>
+    <div class="fact"><div class="n">5-15</div><div class="t">Минут до ответа оператора</div></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="cta-band">
+    <h2>Посчитать обмен</h2>
+    <p>Калькулятор, AML-проверка и история заявок живут внутри Telegram. Ничего
+       устанавливать не нужно.</p>
+    <a class="btn btn-p" href="https://t.me/exorappbot" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M21.9 4.3 18.8 19c-.2 1-.9 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.7 13 2 11.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1.4z"/>
+      </svg>
+      Открыть Exora в Telegram
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="foot-brand">
+          <svg viewBox="0 0 512 512" role="img" aria-label="Exora">
+            <g transform="translate(256 256)">
+              <g fill="#2E8B57">
+                <rect x="-124" y="-124" width="96" height="96" rx="11" transform="rotate(45 -76 -76)"/>
+                <rect x="28" y="-124" width="96" height="96" rx="11" transform="rotate(45 76 -76)"/>
+                <rect x="-124" y="28" width="96" height="96" rx="11" transform="rotate(45 -76 76)"/>
+                <rect x="28" y="28" width="96" height="96" rx="11" transform="rotate(45 76 76)"/>
+              </g>
+              <rect x="-19" y="-19" width="38" height="38" rx="5" transform="rotate(45)" fill="#8FE3A6"/>
+            </g>
+          </svg>
+          <b>EXORA</b>
+        </div>
+        <p>Обмен USDT и рублей с проверкой кошелька по AML и живым оператором на каждой заявке.</p>
+      </div>
+      <div class="foot-links">
+        <a href="https://t.me/exorappbot" target="_blank" rel="noopener">Бот обмена</a>
+        <a href="/miniapp/">Приложение</a>
+        <a href="#how">Как это работает</a>
+        <a href="#limits">Лимиты</a>
+      </div>
+    </div>
+    <div class="foot-note">
+      Exora, обмен цифровых активов. Курс, комиссия и лимиты отображаются до создания заявки
+      и фиксируются в момент её подтверждения оператором. Сервис не оказывает услуг по
+      хранению средств. Реквизиты юридического лица и полные условия обслуживания
+      публикуются в приложении.
+    </div>
+  </div>
+</footer>
+
+<script>
+  var API = "https://api.exoraexchange.ru";
+  function nf(x, d){ return Number(x).toLocaleString("ru-RU", {minimumFractionDigits:d, maximumFractionDigits:d}); }
+  function ctrl(ms){ var c = new AbortController(); setTimeout(function(){ c.abort(); }, ms); return c.signal; }
+  fetch(API + "/api/public/config", { cache:"no-store", signal: ctrl(8000) })
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){
+      document.getElementById("buy").textContent  = nf(d.rate_buy, 2);
+      document.getElementById("sell").textContent = nf(d.rate_sell, 2);
+      document.getElementById("src").textContent  = d.rate_source || "курс дня";
+      document.getElementById("lim").textContent  = nf(d.min_usdt,0) + " - " + nf(d.max_usdt,0) + " USDT";
+      document.getElementById("f-min").textContent = nf(d.min_usdt,0);
+      document.getElementById("f-max").textContent = nf(d.max_usdt,0);
+    })
+    .catch(function(){
+      document.getElementById("src").textContent = "курс уточняйте у оператора";
+      ["buy","sell","lim","f-min","f-max"].forEach(function(id){
+        document.getElementById(id).textContent = "по запросу";
+      });
+    });
+</script>
+</body>
+</html>

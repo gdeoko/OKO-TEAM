@@ -9,9 +9,13 @@
 | Что | URL |
 |---|---|
 | Бот | https://t.me/exorappbot |
-| Mini-app | https://exora-app.higgsfield.app/miniapp/ |
-| Панель | https://exora-app.higgsfield.app/admin/ |
-| API | https://okoteam.top/exora-api/ |
+| Сайт | https://exoraexchange.ru/ |
+| Mini-app | https://exoraexchange.ru/miniapp/ |
+| Панель | https://exoraexchange.ru/admin/ |
+| API | https://api.exoraexchange.ru/ |
+
+Прежние адреса на `exora-app.higgsfield.app` и `okoteam.top/exora-api` остаются
+рабочими как резерв, но бот и фронтенд ходят уже на домен клиента.
 
 ## Как устроено
 
@@ -84,18 +88,24 @@ vexec "echo '$BOT_B64' | base64 -d > /opt/oko-poster/exora-bot/bot.py"
 vexec 'pkill -f "python.*/opt/oko-poster/exora-bot/bot\.py"'   # cron поднимет заново
 ```
 
-**Mini-app и панель** (Higgsfield, website_id `17b4361d-8f22-4ecd-8c3f-4f98fad6f12d`):
+**Сайт, mini-app и панель** — статика на том же VPS, каталог `/var/www/exora`,
+nginx-конфиг `/etc/nginx/sites-available/exora-site`:
 
 ```bash
-# website_repo_access → клонировать репо сайта
-cp exora-bot/miniapp/index.html <repo>/app/public/miniapp/index.html
-cp exora-bot/admin/index.html   <repo>/app/public/admin/index.html
-git add -A && git commit -m "exora: update" && git push origin main
-# затем deploy_website
+vexec "/opt/oko-poster/cfg/wh/rx.sh 'cp /opt/oko-poster/cfg/wh/dist/miniapp.html /var/www/exora/miniapp/index.html'"
 ```
 
-Версия правится в `<meta name="build">` — по ней проверяется, что прод обновился.
-CDN кэширует статику: проверять с `?v=<timestamp>`.
+Файлы кладутся в `/opt/oko-poster/cfg/wh/dist/` (доступно пользователю `okoposter`),
+оттуда root-обёрткой `rx.sh` копируются в `/var/www/exora`. Версия правится в
+`<meta name="build">` — по ней проверяется, что прод обновился.
+
+Копия сайта лежит и на хостинге клиента (FTP `deploy@s139.webhost1.ru`,
+каталог `/www/exoraexchange.ru`), но домен смотрит на VPS: на shared-хостинге
+Webhost1 SSL-виртхост не поднимается, панель выпускает только самоподписанный
+сертификат, а Telegram mini-app без валидного HTTPS не работает.
+
+Прежняя площадка (Higgsfield, website_id `17b4361d-8f22-4ecd-8c3f-4f98fad6f12d`)
+осталась как резерв и больше не обновляется.
 
 ## Бренд
 
@@ -107,10 +117,27 @@ CDN кэширует статику: проверять с `?v=<timestamp>`.
 
 В интерфейсе — только SVG-иконки, без эмодзи.
 
+## Домен клиента
+
+Домен `exoraexchange.ru` куплен у Webhost1 (аккаунт `angel110604@mail.ru`,
+заказ #274444), DNS-зона там же, NS `ns1-ns2.webhost1.com`, `ns3-ns4.webhost1.org`.
+
+| Запись | Куда | Что обслуживает |
+|---|---|---|
+| `exoraexchange.ru` A | 104.171.132.45 | сайт, mini-app, панель (VPS) |
+| `www` A | 104.171.132.45 | редирект на основной домен |
+| `api` A | 104.171.132.45 | REST API бота |
+| `ftp`, `mail`, `smtp`, `pop` | 91.236.136.29 | хостинг Webhost1 (почта, FTP) |
+
+Сертификаты Let's Encrypt на VPS: `exoraexchange.ru` (плюс `www`) и
+`api.exoraexchange.ru`, продление автоматическое. Для основного домена проверка
+идёт через DNS: хук `/opt/oko-poster/cfg/wh/dns_hook.sh` кладёт TXT-запись
+через API панели Webhost1, потому что nginx хостинга не отдаёт `/.well-known/`.
+
 ## Осталось сделать
 
-- [ ] Домен клиента → перенести mini-app и панель, обновить `EXORA_MINIAPP_URL`,
-      `EXORA_ADMIN_URL` и `API` в обоих HTML
 - [ ] Реквизиты кошельков компании — заполнить в панели (поля есть, пустые)
 - [ ] Юридические тексты под конкретное юрлицо
-- [ ] Регулярный бэкап `data/exora.sqlite`
+- [ ] Почта на домене (`mail.exoraexchange.ru` уже указывает на хостинг клиента)
+- [ ] Решить судьбу хостинга Webhost1: либо добиваться от поддержки рабочего
+      SSL и возвращать сайт туда, либо использовать его под почту и резерв

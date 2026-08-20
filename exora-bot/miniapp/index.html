@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Exora — обмен криптовалют</title>
 <meta name="theme-color" content="#04070E" />
-<meta name="build" content="exora-miniapp-v11" />
+<meta name="build" content="exora-miniapp-v12" />
 <link rel="manifest" href="/exora.webmanifest" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -610,7 +610,7 @@
   <!-- Фоновое видео весит 5 МБ и лежит под затемнением. Грузим его только там,
        где это не бьёт по трафику клиента: адрес подставляется скриптом ниже. -->
   <video class="bg-video" muted loop playsinline preload="none"
-         data-src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260423_161253_c72b1869-400f-45ed-ac0c-52f68c2ed5bd.mp4"></video>
+         data-src="/assets/bg.mp4"></video>
   <canvas class="bg-canvas" id="bgCanvas"></canvas>
   <div class="bg-overlay"></div>
   <div class="bg-grain"></div>
@@ -1112,7 +1112,7 @@
 
     <div class="faq-cat">Безопасность</div>
     <div class="faq-item"><div class="faq-q">Как убедиться, что вы не мошенники?<span class="plus">+</span></div>
-      <div class="faq-a"><div class="faq-a-in">Работаем через договор. Отзывы: <a href="https://t.me/okoreviews">@okoreviews</a>. Кейсы: <a href="https://t.me/okocase">@okocase</a>. За каждой заявкой — живой оператор.</div></div>
+      <div class="faq-a"><div class="faq-a-in">Работаем по договору, каждая заявка ведётся живым оператором и остаётся в истории обменов. Курс, лимиты и комиссия видны до создания заявки и не меняются задним числом. Любой кошелёк проверяется по AML до перевода средств. Вопросы по конкретной сделке — оператору в поддержку.</div></div>
     </div>
     <div class="faq-item"><div class="faq-q">Что если я ошибся в адресе?<span class="plus">+</span></div>
       <div class="faq-a"><div class="faq-a-in">До подтверждения оператором можно отменить заявку. Если средства уже переведены на неверный адрес — возврат невозможен. Всегда проверяйте адрес и сеть перед переводом.</div></div>
@@ -1182,7 +1182,7 @@
 
   // Постоянный HTTPS-адрес API. Раньше здесь стоял одноразовый cloudflared-туннель:
   // при любом рестарте он получал новый адрес, и AML вместе со статусами заявок умирал молча.
-  const API = "https://okoteam.top/exora-api";
+  const API = "https://api.exoraexchange.ru";
   const SUPPORT_URL = "https://t.me/c333crypto";
 
   // fetch без ограничения по времени может висеть бесконечно: при блокировке или

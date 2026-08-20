@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Exora Admin</title>
-<meta name="build" content="exora-admin-v7" />
+<meta name="build" content="exora-admin-v8" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
@@ -416,7 +416,7 @@ try { tg && tg.ready(); tg && tg.expand(); } catch(_){}
 
 /* API config — hardcoded default + optional ?api= override */
 const API_META = document.querySelector('meta[name="exora-api"]');
-const DEFAULT_API = 'https://okoteam.top/exora-api';
+const DEFAULT_API = 'https://api.exoraexchange.ru';
 const qs = new URLSearchParams(location.search);
 const API_BASE = qs.get('api') || (API_META && API_META.content) || DEFAULT_API;
 
