@@ -531,51 +531,77 @@ html[data-theme="light"] .mq {
    стеклянной: сквозь неё видно, что мы внутри той же сцены.
 
    Одинаково на телефоне и на мониторе: меняются только отступы. */
-html[data-act="walk"] #cases .hs-head,
-html[data-act="walk"] #cases .case-card,
-html[data-act="walk"] #cases .card,
-html[data-act="cabin"] #reliability .sec-head,
-html[data-act="cabin"] #reliability .card,
-html[data-act="manual"] #faq .sec-head,
-html[data-act="manual"] #faq .faq-i {
-  background: rgba(6, 14, 24, .78);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+/* Пока корабль занимает кадр, он стоит поверх страницы (см. правило
+   подхода выше) - и текст оказывается под обшивкой. Поднять сами
+   планшеты нельзя: контент живёт внутри main с трансформом камеры,
+   а это свой контекст наложения, и z-index потомков с холстом уже
+   не сравнивается. Поэтому в таких кадрах опускаем холст.
+
+   Исключение - собственно вход в люк: там корабль обязан идти
+   поверх, и текста в кадре по сценарию нет. */
+html.rc-hull:not(.rc-approach) #rocketCanvas { z-index: 0 !important; }
+
+/* Планшеты с текстом обязаны быть выше него: иначе подложка есть,
+   а буквы всё равно под обшивкой. */
+html.rc-hull:not(.rc-approach) #cases .hs-head,
+html.rc-hull:not(.rc-approach) #cases .hs-view,
+html.rc-hull:not(.rc-approach) #reliability .sec-head,
+html.rc-hull:not(.rc-approach) #reliability .grid,
+html.rc-hull:not(.rc-approach) #included .sec-head,
+html.rc-hull:not(.rc-approach) #included .inc-grid,
+html.rc-hull:not(.rc-approach) #faq .sec-head,
+html.rc-hull:not(.rc-approach) #faq .faq {
+  position: relative;
+  z-index: 7;
+}
+
+html.rc-hull:not(.rc-approach) #cases .hs-head,
+html.rc-hull:not(.rc-approach) #cases .case-card,
+html.rc-hull:not(.rc-approach) #cases .card,
+html.rc-hull:not(.rc-approach) #reliability .sec-head,
+html.rc-hull:not(.rc-approach) #reliability .card,
+html.rc-hull:not(.rc-approach) #included .sec-head,
+html.rc-hull:not(.rc-approach) #faq .sec-head,
+html.rc-hull:not(.rc-approach) #faq .faq-i {
+  background: rgba(5, 11, 19, .93);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   border-radius: var(--r-md, 16px);
   box-shadow:
     0 18px 46px rgba(0, 0, 0, .38),
     inset 0 1px 0 rgba(var(--int-cyan-rgb, 66, 178, 220), .18);
   transition: background .5s var(--ease), box-shadow .5s var(--ease);
 }
-html[data-act="walk"] #cases .hs-head,
-html[data-act="cabin"] #reliability .sec-head,
-html[data-act="manual"] #faq .sec-head {
+html.rc-hull:not(.rc-approach) #cases .hs-head,
+html.rc-hull:not(.rc-approach) #reliability .sec-head,
+html.rc-hull:not(.rc-approach) #included .sec-head,
+html.rc-hull:not(.rc-approach) #faq .sec-head {
   padding: clamp(14px, 2.4vw, 22px) clamp(16px, 2.6vw, 26px);
 }
 /* Тексту на планшете подложка уже не нужна - снимаем тень букв,
    иначе она читается грязью на ровном фоне */
-html[data-act="walk"] #cases .sec-h,
-html[data-act="walk"] #cases .sec-p,
-html[data-act="walk"] #cases .sec-tag,
-html[data-act="cabin"] #reliability .sec-h,
-html[data-act="cabin"] #reliability .sec-p,
-html[data-act="cabin"] #reliability .sec-tag,
-html[data-act="cabin"] #reliability .card h3,
-html[data-act="cabin"] #reliability .card p,
-html[data-act="manual"] #faq .sec-h,
-html[data-act="manual"] #faq .sec-p,
-html[data-act="manual"] #faq .sec-tag { text-shadow: none; }
+html.rc-hull:not(.rc-approach) #cases .sec-h,
+html.rc-hull:not(.rc-approach) #cases .sec-p,
+html.rc-hull:not(.rc-approach) #cases .sec-tag,
+html.rc-hull:not(.rc-approach) #reliability .sec-h,
+html.rc-hull:not(.rc-approach) #reliability .sec-p,
+html.rc-hull:not(.rc-approach) #reliability .sec-tag,
+html.rc-hull:not(.rc-approach) #reliability .card h3,
+html.rc-hull:not(.rc-approach) #reliability .card p,
+html.rc-hull:not(.rc-approach) #faq .sec-h,
+html.rc-hull:not(.rc-approach) #faq .sec-p,
+html.rc-hull:not(.rc-approach) #faq .sec-tag { text-shadow: none; }
 
 /* Светлая тема внутри этих кадров - тот же бортовой свет: снаружи
    день, внутри корабля своя лампа, и это честнее белого листа */
-html[data-theme="light"][data-act="walk"] #cases .hs-head,
-html[data-theme="light"][data-act="walk"] #cases .case-card,
-html[data-theme="light"][data-act="walk"] #cases .card,
-html[data-theme="light"][data-act="cabin"] #reliability .sec-head,
-html[data-theme="light"][data-act="cabin"] #reliability .card,
-html[data-theme="light"][data-act="manual"] #faq .sec-head,
-html[data-theme="light"][data-act="manual"] #faq .faq-i {
-  background: rgba(247, 250, 253, .90);
+html[data-theme="light"].rc-hull:not(.rc-approach) #cases .hs-head,
+html[data-theme="light"].rc-hull:not(.rc-approach) #cases .case-card,
+html[data-theme="light"].rc-hull:not(.rc-approach) #cases .card,
+html[data-theme="light"].rc-hull:not(.rc-approach) #reliability .sec-head,
+html[data-theme="light"].rc-hull:not(.rc-approach) #reliability .card,
+html[data-theme="light"].rc-hull:not(.rc-approach) #faq .sec-head,
+html[data-theme="light"].rc-hull:not(.rc-approach) #faq .faq-i {
+  background: rgba(247, 250, 253, .95);
   box-shadow:
     0 18px 46px rgba(9, 19, 32, .16),
     inset 0 1px 0 rgba(66, 178, 220, .22);
