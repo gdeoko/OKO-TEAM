@@ -166,8 +166,12 @@ g.RC_GL = {
     sc.async = false;
     sc.onload = function () { load(i + 1); };
     sc.onerror = function () {
-      /* Не дотянулись - живём без объёма, страница целая */
+      /* Не дотянулись - живём без объёма, страница целая. Класс тот
+         же, что и при осознанном отказе: без него кнопка «Полёт в
+         открытый космос» остаётся на экране живой на вид и мёртвой
+         на деле - нажатие не делает ничего. */
       g.RC_GL.want3d = false;
+      document.documentElement.classList.add("rc-no3d");
       fire("rc:no3d");
     };
     document.head.appendChild(sc);

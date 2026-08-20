@@ -22,6 +22,13 @@
 (function (g) {
 "use strict";
 
+/* Переменные оформления пишем через общий кэш: даже на локальном
+   элементе запись помечает устаревшим его поддерево, а зовём мы её
+   из каждого кадра по всем карточкам. Пишем только изменившееся. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
+
 var doc = document, root = doc.documentElement;
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
@@ -143,13 +150,13 @@ reg({
     /* Пишем переменные, а не transform: те же заголовки участвуют в
        параллаксе слоёв единого мира (rc-world), и инлайновый
        transform стёр бы их глубину. Мир складывает оба сдвига сам. */
-    el.style.setProperty("--rc-fx", (-dx / d * push).toFixed(2) + "px");
-    el.style.setProperty("--rc-fy", (-dy / d * push * 0.45).toFixed(2) + "px");
+    V(el, "--rc-fx", (-dx / d * push).toFixed(2) + "px");
+    V(el, "--rc-fy", (-dy / d * push * 0.45).toFixed(2) + "px");
     el.style.opacity = (1 - p * 0.18).toFixed(3);
   },
   rest: function (el) {
-    el.style.setProperty("--rc-fx", "0px");
-    el.style.setProperty("--rc-fy", "0px");
+    V(el, "--rc-fx", "0px");
+    V(el, "--rc-fy", "0px");
     el.style.opacity = "";
   },
   settle: function (el) { this.rest(el); }
@@ -162,12 +169,12 @@ reg({
   radius: 380,
   hit: function (el, p, dx, dy) {
     var side = dx > 0 ? 1 : -1;
-    el.style.setProperty("--jet", p.toFixed(3));
-    el.style.setProperty("--jet-rot", (side * p * 1.8).toFixed(2) + "deg");
+    V(el, "--jet", p.toFixed(3));
+    V(el, "--jet-rot", (side * p * 1.8).toFixed(2) + "deg");
   },
   rest: function (el) {
-    el.style.setProperty("--jet", "0");
-    el.style.setProperty("--jet-rot", "0deg");
+    V(el, "--jet", "0");
+    V(el, "--jet-rot", "0deg");
   },
   settle: function (el) { this.rest(el); }
 });
@@ -178,12 +185,12 @@ reg({
   sel: ".prod-card",
   radius: 300,
   hit: function (el, p, dx, dy) {
-    el.style.setProperty("--tilt", (-(dx > 0 ? 1 : -1) * p * 3.6).toFixed(2) + "deg");
-    el.style.setProperty("--lift", (p * 4).toFixed(2) + "px");
+    V(el, "--tilt", (-(dx > 0 ? 1 : -1) * p * 3.6).toFixed(2) + "deg");
+    V(el, "--lift", (p * 4).toFixed(2) + "px");
   },
   rest: function (el) {
-    el.style.setProperty("--tilt", "0deg");
-    el.style.setProperty("--lift", "0px");
+    V(el, "--tilt", "0deg");
+    V(el, "--lift", "0px");
   },
   settle: function (el) { this.rest(el); }
 });
@@ -193,9 +200,9 @@ reg({
   key: "head",
   sel: ".sec-h",
   radius: 330,
-  hit: function (el, p) { el.style.setProperty("--under", p.toFixed(3)); },
-  rest: function (el) { el.style.setProperty("--under", "0"); },
-  settle: function (el) { el.style.setProperty("--under", "0"); }
+  hit: function (el, p) { V(el, "--under", p.toFixed(3)); },
+  rest: function (el) { V(el, "--under", "0"); },
+  settle: function (el) { V(el, "--under", "0"); }
 });
 
 /* ── 7. Шаги маршрута щёлкают отсечками при проходе ───────── */
@@ -219,10 +226,10 @@ reg({
   sel: ".case:not(.step)",
   radius: 260,
   hit: function (el, p, dx) {
-    el.style.setProperty("--drag", ((dx > 0 ? -1 : 1) * p * 5).toFixed(2) + "px");
+    V(el, "--drag", ((dx > 0 ? -1 : 1) * p * 5).toFixed(2) + "px");
   },
-  rest: function (el) { el.style.setProperty("--drag", "0px"); },
-  settle: function (el) { el.style.setProperty("--drag", "0px"); }
+  rest: function (el) { V(el, "--drag", "0px"); },
+  settle: function (el) { V(el, "--drag", "0px"); }
 });
 
 /* ── 9. Девять пунктов: галочки по световым дорожкам ──────────

@@ -47,13 +47,35 @@ function svg(name, cls) {
 window.RC_ICO = svg;
 
 /* ═══ Состояние ══════════════════════════════════════════ */
+/* Хранилище отбирают: приватный режим, жёсткая блокировка cookie,
+   webview без storage, переполненная квота. Без обёртки первая же
+   брошенная ошибка роняет весь модуль - а он строит контент всех
+   разделов, поэтому страница остаётся пустой. Помним выбор в
+   памяти вкладки, если диск недоступен. */
+var MEM = {};
+function lsGet(k) {
+  try { var v = localStorage.getItem(k); return v == null ? MEM[k] : v; }
+  catch (e) { return MEM[k]; }
+}
+function lsSet(k, v) {
+  MEM[k] = v;
+  try { localStorage.setItem(k, v); } catch (e) {}
+}
+
 var state = {
-  lang:  localStorage.getItem("rc_lang") || "ru",
-  theme: localStorage.getItem("rc_theme") || "dark",
+  lang:  lsGet("rc_lang") || "ru",
+  theme: lsGet("rc_theme") || "dark",
   region: null,
   query: "",
   content: null
 };
+/* Ключ в адресе сильнее запомненного выбора: по нему поисковик и
+   любой, кто прислал ссылку, попадают сразу на нужный язык. На него
+   же ссылаются hreflang-альтернативы в шапке документа. */
+try {
+  var qLang = (location.search.match(/[?&]lang=(ru|en)\b/i) || [])[1];
+  if (qLang) state.lang = qLang.toLowerCase();
+} catch (e) {}
 if (state.lang !== "en") state.lang = "ru";
 
 /* Перевод по ключу. Служебный ключ на экран не выходит никогда.
@@ -101,8 +123,14 @@ function blocks() {
 
 /* ═══ Аналитика ══════════════════════════════════════════ */
 var track = (function () {
-  var sid = sessionStorage.getItem("rc_sid");
-  if (!sid) { sid = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem("rc_sid", sid); }
+  /* Тот же случай, что и с localStorage: недоступное хранилище
+     не должно уносить с собой аналитику и весь модуль следом */
+  var sid = "";
+  try { sid = sessionStorage.getItem("rc_sid") || ""; } catch (e) {}
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try { sessionStorage.setItem("rc_sid", sid); } catch (e2) {}
+  }
   var queue = [], timer = null, sent = {};
   function flush() {
     if (!queue.length) return;
@@ -133,7 +161,7 @@ window.addEventListener("error", function (e) {
 function applyTheme(v, silent) {
   state.theme = v;
   document.documentElement.setAttribute("data-theme", v);
-  localStorage.setItem("rc_theme", v);
+  lsSet("rc_theme", v);
   var m = $('meta[name="theme-color"]');
   if (m) m.setAttribute("content", v === "light" ? "#F3F7FB" : "#050C15");
   /* Фирменная пилюля: кругляш едет к выбранной половине */
@@ -154,7 +182,7 @@ function applyLang(v, silent) {
   state.lang = v;
   /* Разметка тоже пишет число через атрибут, а не цифрами */
   $$("[data-nodes]").forEach(function (el) { el.textContent = nodesCount(); });
-  localStorage.setItem("rc_lang", v);
+  lsSet("rc_lang", v);
   document.documentElement.lang = v;
   $$("[data-i18n]").forEach(function (el) {
     var k = el.getAttribute("data-i18n");
@@ -520,8 +548,26 @@ function countUp(el) {
 }
 
 /* ═══ Формы ══════════════════════════════════════════════ */
+/* Подпись ошибки связываем с полем: без aria-describedby чтение с
+   экрана видит красную рамку, но не знает, что именно не так, а
+   без aria-invalid не понимает даже, что поле забраковано. */
+var errSeq = 0;
+function bindErr(field, wrap, bad) {
+  var msg = wrap && wrap.querySelector ? wrap.querySelector(".err") : null;
+  if (bad) {
+    field.setAttribute("aria-invalid", "true");
+    if (msg) {
+      if (!msg.id) msg.id = "rcerr" + (++errSeq);
+      field.setAttribute("aria-describedby", msg.id);
+    }
+  } else {
+    field.removeAttribute("aria-invalid");
+    field.removeAttribute("aria-describedby");
+  }
+}
+
 function validate(form) {
-  var ok = true;
+  var ok = true, first = null;
   $$("[required]", form).forEach(function (f) {
     var wrap = f.closest(".field") || f.parentNode, val = (f.value || "").trim(), bad = false;
     if (f.type === "checkbox") bad = !f.checked;
@@ -529,8 +575,13 @@ function validate(form) {
     else if (f.dataset.kind === "contact") bad = !(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(val) || (val.replace(/\D/g, "").length >= 10));
     else if (f.dataset.kind === "phone") bad = val.replace(/\D/g, "").length < 10;
     if (wrap.classList) wrap.classList.toggle("bad", bad);
-    if (bad) ok = false;
+    bindErr(f, wrap, bad);
+    if (bad) { ok = false; if (!first) first = f; }
   });
+  /* Курсор сам встаёт в первое незаполненное поле: на телефоне
+     ошибка может оказаться выше кадра, и человек видит только то,
+     что кнопка «не работает» */
+  if (first && first.focus) { try { first.focus(); } catch (e) {} }
   return ok;
 }
 
@@ -574,6 +625,7 @@ function wireForm(form, kind) {
     f.addEventListener("input", function () {
       var w = f.closest(".field");
       if (w) w.classList.remove("bad");
+      bindErr(f, w, false);
     });
   });
 }
@@ -648,10 +700,50 @@ function boot() {
      решает CSS; здесь мы лишь ставим класс. */
   var mcta = $("#mcta");
   var secs = $$("section[id]");
+  /* Ссылки меню и высоту документа кэшируем: раньше обработчик на
+     каждое событие прокрутки писал стиль, потом читал scrollHeight и
+     границы шестнадцати секций, потом снова искал ссылки в DOM.
+     Такое чередование записи и чтения заставляет браузер пересчитать
+     вёрстку по два десятка раз за событие - на приёмке это отдельной
+     строкой вышло в подтормаживание прокрутки.
+
+     Теперь всё чтение живёт в одном кадре, высота документа
+     обновляется по изменению размеров, а не покадрово. */
+  var navLinks = $$(".nav a");
+  var docH = 0, curSec = "", schedH = 0;
+  function measure() {
+    docH = document.documentElement.scrollHeight - innerHeight;
+  }
+  measure();
+  addEventListener("resize", measure, { passive: true });
+  if (window.ResizeObserver) {
+    try {
+      new ResizeObserver(function () {
+        /* Высота меняется пачками (карточки, ленты, шрифты):
+           пересчитываем один раз в конце кадра */
+        if (schedH) return;
+        schedH = requestAnimationFrame(function () { schedH = 0; measure(); });
+      }).observe(document.body);
+    } catch (e) {}
+  }
+
+  var pend = 0;
   function onScroll() {
+    if (pend) return;
+    pend = requestAnimationFrame(read);
+  }
+  function read() {
+    pend = 0;
     var y = window.scrollY || 0;
-    var h = document.documentElement.scrollHeight - innerHeight;
-    var ratio = h > 0 ? y / h : 0;
+    var ratio = docH > 0 ? y / docH : 0;
+
+    /* Сначала читаем всё, что нужно прочитать */
+    var cur = "";
+    for (var i = 0; i < secs.length; i++) {
+      if (secs[i].getBoundingClientRect().top <= 120) cur = secs[i].id;
+    }
+
+    /* И только потом пишем */
     if (prog) prog.style.width = (ratio * 100).toFixed(2) + "%";
     if (hdr) {
       hdr.classList.toggle("stuck", y > 8);
@@ -661,21 +753,22 @@ function boot() {
     if (mcta) mcta.classList.toggle("on", y > innerHeight * 0.9);
     lastY = y;
 
+    if (cur !== curSec) {
+      curSec = cur;
+      for (var k = 0; k < navLinks.length; k++) {
+        navLinks[k].classList.toggle("act", navLinks[k].getAttribute("href") === "#" + cur);
+      }
+    }
+
     /* Глубина прочтения - в аналитику, по четвертям */
     var d = Math.round(ratio * 100);
     if (d > maxScroll) {
       maxScroll = d;
       [25, 50, 75, 95].forEach(function (m) { if (d >= m) track("scroll", String(m), true); });
     }
-
-    var cur = "";
-    secs.forEach(function (s) { if (s.getBoundingClientRect().top <= 120) cur = s.id; });
-    $$(".nav a").forEach(function (a) {
-      a.classList.toggle("act", a.getAttribute("href") === "#" + cur);
-    });
   }
   window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  read();
   if (toTop) toTop.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
 
   /* Счётчики */
@@ -744,14 +837,62 @@ function boot() {
   wireForm($("#leadForm"), "lead");
   wireForm($("#cbForm"), "callback");
 
-  /* Окно обратного звонка */
+  /* Окно обратного звонка.
+
+     Клавиатурой оно раньше не работало: фокус оставался на странице
+     под затемнением и гулял по ней сквозь окно. Здесь три вещи -
+     фокус уходит на первое видимое поле (первым в разметке стоит
+     ловушка для ботов с tabindex="-1", её брать нельзя), обход по
+     Tab заперт внутри окна, а страница под ним помечена inert. */
   var modal = $("#cbModal");
+  var modalBack = null;   /* куда вернуть фокус после закрытия */
+
+  function focusables(box) {
+    return $$('a[href], button:not([disabled]), input:not([disabled]), ' +
+      'select:not([disabled]), textarea:not([disabled]), [tabindex]', box)
+      .filter(function (el) {
+        return el.tabIndex >= 0 && el.offsetWidth > 0 && el.offsetHeight > 0;
+      });
+  }
+
   function setModal(on) {
     if (!modal) return;
     modal.classList.toggle("on", on);
     document.body.style.overflow = on ? "hidden" : "";
-    if (on) { track("open", "callback"); setTimeout(function () { var i = $("input", modal); if (i) i.focus(); }, 260); }
+
+    /* Страница под окном перестаёт существовать для клавиатуры и
+       для чтения с экрана - так же, как это сделано у шторки меню */
+    $$("body > *").forEach(function (el) {
+      if (el === modal || el.tagName === "SCRIPT") return;
+      if (on) { el.setAttribute("inert", ""); el.setAttribute("aria-hidden", "true"); }
+      else { el.removeAttribute("inert"); el.removeAttribute("aria-hidden"); }
+    });
+
+    if (on) {
+      modalBack = document.activeElement;
+      track("open", "callback");
+      setTimeout(function () {
+        var f = focusables(modal);
+        if (f.length) f[0].focus();
+      }, 260);
+    } else if (modalBack && modalBack.focus) {
+      try { modalBack.focus(); } catch (e) {}
+      modalBack = null;
+    }
   }
+
+  /* Замок обхода: с последнего элемента Tab возвращает на первый */
+  if (modal) {
+    modal.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+      var f = focusables(modal);
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+
   $$(".js-callback").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); setModal(true); }); });
   $$(".js-modal-close").forEach(function (b) { b.addEventListener("click", function () { setModal(false); }); });
   if (modal) modal.addEventListener("click", function (e) { if (e.target === modal) setModal(false); });

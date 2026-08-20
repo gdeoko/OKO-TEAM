@@ -26,6 +26,13 @@
 "use strict";
 
 var doc = document, root = doc.documentElement;
+
+/* Переменные оформления публикуем через общий кэш: запись на корне
+   документа инвалидирует стиль всему дереву, а зовём мы её каждый
+   кадр. Пишем только то, что действительно изменилось. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
@@ -69,19 +76,18 @@ function src() {
   var want = tall() ? "assets/gen/cockpit-tall.webp" : "assets/gen/cockpit-wide.webp";
   if (want !== srcNow) { srcNow = want; img.setAttribute("src", want); }
   var w = tall() ? WIN_TALL : WIN_WIDE, s = tall() ? SCR_TALL : SCR_WIDE;
-  var st = root.style;
   /* Границы остекления отдаём в проценты окна: вёрстка ставит по ним
      свои отступы и не заезжает под переплёт кабины */
-  st.setProperty("--cab-x0", (w.x0 * 100).toFixed(2) + "%");
-  st.setProperty("--cab-x1", (w.x1 * 100).toFixed(2) + "%");
-  st.setProperty("--cab-y0", (w.y0 * 100).toFixed(2) + "%");
-  st.setProperty("--cab-y1", (w.y1 * 100).toFixed(2) + "%");
-  st.setProperty("--cab-win-w", ((w.x1 - w.x0) * 100).toFixed(2) + "%");
-  st.setProperty("--cab-win-h", ((w.y1 - w.y0) * 100).toFixed(2) + "%");
-  st.setProperty("--cab-scr-x", (s.x * 100).toFixed(2) + "%");
-  st.setProperty("--cab-scr-y", (s.y * 100).toFixed(2) + "%");
-  st.setProperty("--cab-scr-w", (s.w * 100).toFixed(2) + "%");
-  st.setProperty("--cab-scr-h", (s.h * 100).toFixed(2) + "%");
+  V(root, "--cab-x0", (w.x0 * 100).toFixed(2) + "%");
+  V(root, "--cab-x1", (w.x1 * 100).toFixed(2) + "%");
+  V(root, "--cab-y0", (w.y0 * 100).toFixed(2) + "%");
+  V(root, "--cab-y1", (w.y1 * 100).toFixed(2) + "%");
+  V(root, "--cab-win-w", ((w.x1 - w.x0) * 100).toFixed(2) + "%");
+  V(root, "--cab-win-h", ((w.y1 - w.y0) * 100).toFixed(2) + "%");
+  V(root, "--cab-scr-x", (s.x * 100).toFixed(2) + "%");
+  V(root, "--cab-scr-y", (s.y * 100).toFixed(2) + "%");
+  V(root, "--cab-scr-w", (s.w * 100).toFixed(2) + "%");
+  V(root, "--cab-scr-h", (s.h * 100).toFixed(2) + "%");
 }
 
 /* Сколько кабины в кадре сейчас. Это не выключатель, а наезд:
@@ -124,7 +130,6 @@ function thCon() {
    двигается камера, а не панель: экранную точку берём у самой
    рубки (project), поэтому пульт не может «разъехаться» со стенами. */
 function place(conK) {
-  var stl = root.style;
   var I = g.RC_INTERIOR;
   var tx = 0, rot = 0, vis = 1;
 
@@ -140,14 +145,14 @@ function place(conK) {
     rot = -(1 - conK) * 26;
   }
 
-  stl.setProperty("--cab-tx", tx.toFixed(2) + "%");
-  stl.setProperty("--cab-rot", rot.toFixed(2) + "deg");
+  V(root, "--cab-tx", tx.toFixed(2) + "%");
+  V(root, "--cab-rot", rot.toFixed(2) + "deg");
   /* В салоне панель дальше и мельче, на подъезде вырастает в кадр */
-  stl.setProperty("--cab-sc", (0.52 + conK * 0.62).toFixed(3));
+  V(root, "--cab-sc", (0.52 + conK * 0.62).toFixed(3));
   /* Обрезка сверху: в салоне видна только нижняя часть картинки -
      сам пульт с экранами. Остекление и потолочные балки приходят,
      когда мы уже сели за него; иначе в углу висела бы рамка. */
-  stl.setProperty("--cab-top", (62 - conK * 62).toFixed(1) + "%");
+  V(root, "--cab-top", (62 - conK * 62).toFixed(1) + "%");
   return vis;
 }
 
@@ -189,7 +194,7 @@ function frame() {
   watchdog();
   goal = want();
   if (goal <= 0 && k < 0.002) {
-    if (pub !== 0) { pub = 0; root.style.setProperty("--cab-k", "0"); root.classList.remove("rc-cab-on"); }
+    if (pub !== 0) { pub = 0; V(root, "--cab-k", "0"); root.classList.remove("rc-cab-on"); }
     return;
   }
   build();
@@ -206,7 +211,7 @@ function frame() {
   var cr = Math.round(conK * 100) / 100;
   if (r === pub && cr === conPub) return;
   pub = r; conPub = cr;
-  root.style.setProperty("--cab-k", String(r));
+  V(root, "--cab-k", String(r));
   /* Класс «мы за пультом» ставим по подъезду, а не по прозрачности:
      содержимое садится в остекление только когда кабина уже стала
      кадром, а не пока она стоит в углу комнаты */

@@ -8,24 +8,30 @@
 <meta name="description" content="Rocket CDN объединяет собственную инфраструктуру и глобальное edge-покрытие: 218 точек присутствия, три собственных ЦОД, SLA 99,9% и пропускная способность более 3 Тбит/с по России.">
 <meta name="keywords" content="CDN, сеть доставки контента, стриминг, видеохостинг, edge, дата-центр, защита от DDoS, облако, Rocket CDN">
 <link rel="canonical" href="https://rocketcdn.ru/">
+<!-- Английская версия живёт на том же адресе: язык выбирается ключом -->
+<link rel="alternate" hreflang="ru" href="https://rocketcdn.ru/">
+<link rel="alternate" hreflang="en" href="https://rocketcdn.ru/?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://rocketcdn.ru/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Rocket CDN">
 <meta property="og:locale" content="ru_RU">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:title" content="Rocket CDN - доставка контента на сверхскорости">
 <meta property="og:description" content="Глобальная сеть доставки контента: 218 точек присутствия, собственные ЦОД в Москве, Алматы и Праге, SLA 99,9%.">
 <meta property="og:url" content="https://rocketcdn.ru/">
-<meta property="og:image" content="https://rocketcdn.ru/assets/gen/og.webp">
-<meta property="og:image:type" content="image/webp">
-<meta property="og:image:type" content="image/png">
+<!-- Карточка ссылки: jpeg, а не webp. VK и часть клиентов Telegram
+     webp-превью не рисуют вовсе, и ссылка уходит без картинки -->
+<meta property="og:image" content="https://rocketcdn.ru/assets/gen/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Rocket CDN - доставка контента на сверхскорости: 218 точек присутствия, 3 собственных ЦОД, SLA 99,9%">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Rocket CDN - доставка контента на сверхскорости">
 <meta name="twitter:description" content="Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.">
-<meta name="twitter:image" content="https://rocketcdn.ru/assets/gen/og.webp">
+<meta name="twitter:image" content="https://rocketcdn.ru/assets/gen/og.jpg">
 <meta name="twitter:image:alt" content="Rocket CDN - доставка контента на сверхскорости: 218 точек присутствия, 3 собственных ЦОД, SLA 99,9%">
 
 <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -95,17 +101,38 @@ img,svg,canvas{max-width:100%}
 <link rel="stylesheet" href="assets/rc-adapt.css?v=1786961400">
 <link rel="stylesheet" href="assets/rc-depth.css?v=1786962839">
 <link rel="stylesheet" href="assets/rc-cinema.css?v=1787133657">
-<link rel="stylesheet" href="assets/rc-console.css?v=1786968343">
-<link rel="stylesheet" href="assets/rc-flight.css?v=1">
-<link rel="stylesheet" href="assets/rc-airlock.css?v=1787133657">
-<link rel="stylesheet" href="assets/rc-landing.css?v=1">
-<link rel="stylesheet" href="assets/rc-gate.css?v=1">
-<link rel="stylesheet" href="assets/rc-holo.css?v=1">
+
 <link rel="stylesheet" href="assets/rc-world.css?v=1787133657">
-<link rel="stylesheet" href="assets/rc-cockpit.css?v=1">
+
 <link rel="stylesheet" href="assets/rc-hud.css?v=1">
+<link rel="stylesheet" href="assets/rc-rail.css?v=1">
+<!-- Оформление рубки, пульта, шлюза и игры нужно не раньше, чем
+     человек дойдёт до корабля. В критическом пути оно держало
+     первый экран лишние сотни килобайт, поэтому грузится
+     параллельно и применяется сразу по готовности. -->
+<link rel="stylesheet" href="assets/rc-flight.css?v=1" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-console.css?v=1786968343" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-cockpit.css?v=1" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-holo.css?v=1" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-airlock.css?v=1787133657" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-gate.css?v=1" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-landing.css?v=1" media="print" onload="this.media='all';this.onload=null">
+<noscript>
+<link rel="stylesheet" href="assets/rc-flight.css?v=1">
+<link rel="stylesheet" href="assets/rc-console.css?v=1786968343">
+<link rel="stylesheet" href="assets/rc-cockpit.css?v=1">
+<link rel="stylesheet" href="assets/rc-holo.css?v=1">
+<link rel="stylesheet" href="assets/rc-airlock.css?v=1787133657">
+<link rel="stylesheet" href="assets/rc-gate.css?v=1">
+<link rel="stylesheet" href="assets/rc-landing.css?v=1">
+</noscript>
+
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
      успеют занять контексты, которых на слабом устройстве и так мало -->
+<!-- Кэш переменных оформления: сцены пишут состояние на корне
+     документа каждый кадр, и без него браузер пересчитывает стиль
+     всего дерева впустую. Подключается до всех сцен -->
+<script src="assets/rc-var.js?v=1"></script>
 <script src="assets/rc-fallback.js?v=1786953470"></script>
 
 <!-- ══ Заставка «Старт» ═════════════════════════════════════════════
@@ -142,7 +169,6 @@ html[data-theme="light"] .rc-load{background:#070F1A}
    объёмного слоя. */
 (function (g, d) {
   "use strict";
-
 
   /* ── Модель ракеты ───────────────────────────────────────────
      Строим один раз при запуске: тело вращения из колец плюс
@@ -1217,7 +1243,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
       <form class="form-card rv rv-d1" id="leadForm" novalidate
             action="api.php?action=lead" method="post" accept-charset="UTF-8">
-        <div class="form-msg"></div>
+        <div class="form-msg" role="status" aria-live="polite"></div>
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="vh">
         <div class="form-2">
           <div class="field">
@@ -1316,7 +1342,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
     <p class="sub" data-i18n="cb.p">Оставьте номер, инженер перезвонит и ответит на вопросы.</p>
     <form id="cbForm" novalidate
           action="api.php?action=callback" method="post" accept-charset="UTF-8">
-      <div class="form-msg"></div>
+      <div class="form-msg" role="status" aria-live="polite"></div>
       <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="vh">
       <div class="field">
         <label for="cbName" data-i18n="ct.name">Как к вам обращаться</label>
@@ -1355,30 +1381,31 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
 </button>
 
-<script src="assets/rc-space.js?v=1787133657"></script>
-<script src="assets/rc-sound.js?v=1786957029"></script>
-<script src="assets/rc-music.js?v=1"></script>
-<script src="assets/rc-geo.js?v=1786957117"></script>
-<script src="assets/rc-i18n.js?v=1787133657"></script>
-<script src="assets/rc-globe.js?v=1786650096"></script>
-<script src="assets/rc-app.js?v=1787133657"></script>
-<script src="assets/rc-fill.js?v=1786963530"></script>
-<script src="assets/rc-viz.js?v=1786960815"></script>
-<script src="assets/rc-motion.js?v=1787133657"></script>
-<script src="assets/rc-scene.js?v=1787133657"></script>
-<script src="assets/rc-holo.js?v=1"></script>
-<script src="assets/rc-gate.js?v=1"></script>
-<script src="assets/rc-world.js?v=1787133657"></script>
-<script src="assets/rc-vidbg.js?v=1"></script>
-<script src="assets/rc-airlock.js?v=1787133657"></script>
-<script src="assets/rc-hooks.js?v=1786967928"></script>
-<script src="assets/rc-depth.js?v=1786959953"></script>
-<script src="assets/rc-cinema.js?v=1787133657"></script>
-<script src="assets/rc-console.js?v=1786968373"></script>
-<script src="assets/rc-cockpit.js?v=1"></script>
+<script defer src="assets/rc-space.js?v=1787133657"></script>
+<script defer src="assets/rc-sound.js?v=1786957029"></script>
+<script defer src="assets/rc-music.js?v=1"></script>
+<script defer src="assets/rc-geo.js?v=1786957117"></script>
+<script defer src="assets/rc-i18n.js?v=1787133657"></script>
+<script defer src="assets/rc-globe.js?v=1786650096"></script>
+<script defer src="assets/rc-app.js?v=1787133657"></script>
+<script defer src="assets/rc-fill.js?v=1786963530"></script>
+<script defer src="assets/rc-viz.js?v=1786960815"></script>
+<script defer src="assets/rc-motion.js?v=1787133657"></script>
+<script defer src="assets/rc-scene.js?v=1787133657"></script>
+<script defer src="assets/rc-holo.js?v=1"></script>
+<script defer src="assets/rc-gate.js?v=1"></script>
+<script defer src="assets/rc-world.js?v=1787133657"></script>
+<script defer src="assets/rc-vidbg.js?v=1"></script>
+<script defer src="assets/rc-airlock.js?v=1787133657"></script>
+<script defer src="assets/rc-hooks.js?v=1786967928"></script>
+<script defer src="assets/rc-depth.js?v=1786959953"></script>
+<script defer src="assets/rc-cinema.js?v=1787133657"></script>
+<script defer src="assets/rc-console.js?v=1786968373"></script>
+<script defer src="assets/rc-cockpit.js?v=1"></script>
+<script defer src="assets/rc-rail.js?v=1"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
-<script src="assets/rc-gl.js?v=1787133657"></script>
+<script defer src="assets/rc-gl.js?v=1787133657"></script>
 <script defer src="assets/rc-scroll.js?v=1786957602"></script>
 </body>
 </html>

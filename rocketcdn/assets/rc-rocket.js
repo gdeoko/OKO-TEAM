@@ -15,6 +15,13 @@
 if (!g.THREE) return;
 var T = g.THREE;
 
+/* Публикация переменных оформления идёт через общий кэш: запись на
+   корне документа помечает устаревшим стиль всего дерева, а мы
+   зовём её из каждого кадра. Пишем только изменившееся. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
+
 /* ── Возможности устройства ──────────────────────────────── */
 function caps() {
   var w = innerWidth, mob = w < 760;
@@ -3521,7 +3528,7 @@ Rocket.prototype.doorOpen = function (dt) {
        дверью: к моменту передачи сцены рубке кадр уже залит тёплым
        светом, и подмену физически не видно. Переменную читает
        rc-world.css, слой лежит поверх страницы. */
-    document.documentElement.style.setProperty("--hatch-glow",
+    V(document.documentElement, "--hatch-glow",
       (Math.max(0, this.doorK - 0.30) / 0.7 * this.appK).toFixed(3));
   }
   /* Проход открыт и кадр закрыт корпусом - можно отдавать сцену
@@ -3554,7 +3561,7 @@ Rocket.prototype.doorOpen = function (dt) {
   var appR = Math.round(this.appK * 100) / 100;
   if (appR !== this._appPub) {
     this._appPub = appR;
-    document.documentElement.style.setProperty("--rc-app", String(appR));
+    V(document.documentElement, "--rc-app", String(appR));
   }
 
   var deep = this.doorK > 0.58 && this.appK > 0.8;
@@ -3949,9 +3956,9 @@ Rocket.prototype.quake = function (dt) {
     var oy = (Math.sin(t * 47 + 1.7) * 0.65 + Math.sin(t * 22 + 0.4) * 0.35) * s;
     this.cam.position.x = ox * 0.22;
     this.cam.position.y = oy * 0.17;
-    root.style.setProperty("--rc-shake", s.toFixed(3));
-    root.style.setProperty("--rc-shake-x", (ox * 8).toFixed(2) + "px");
-    root.style.setProperty("--rc-shake-y", (oy * 6).toFixed(2) + "px");
+    V(root, "--rc-shake", s.toFixed(3));
+    V(root, "--rc-shake-x", (ox * 8).toFixed(2) + "px");
+    V(root, "--rc-shake-y", (oy * 6).toFixed(2) + "px");
     if (!this._quakeOn) { this._quakeOn = 1; root.classList.add("rc-quake"); }
     return;
   }
@@ -3960,9 +3967,9 @@ Rocket.prototype.quake = function (dt) {
   this._shake = 0;
   this.cam.position.x = 0;
   this.cam.position.y = 0;
-  root.style.setProperty("--rc-shake", "0");
-  root.style.setProperty("--rc-shake-x", "0px");
-  root.style.setProperty("--rc-shake-y", "0px");
+  V(root, "--rc-shake", "0");
+  V(root, "--rc-shake-x", "0px");
+  V(root, "--rc-shake-y", "0px");
   root.classList.remove("rc-quake");
 };
 
@@ -3976,9 +3983,9 @@ addEventListener("rc:act", function (e) {
   var root2 = document.documentElement;
   if (root2.classList.contains("rc-quake")) {
     root2.classList.remove("rc-quake");
-    root2.style.setProperty("--rc-shake", "0");
-    root2.style.setProperty("--rc-shake-x", "0px");
-    root2.style.setProperty("--rc-shake-y", "0px");
+    V(root2, "--rc-shake", "0");
+    V(root2, "--rc-shake-x", "0px");
+    V(root2, "--rc-shake-y", "0px");
   }
 });
 
@@ -4003,10 +4010,10 @@ Rocket.prototype.publish = function () {
      дальше тридцати четырёх корабль уже точка. */
   var dist = this.cam.position.distanceTo(this.pivot.position);
   var near = 1 - Math.max(0, Math.min(1, (34 - dist) / 26));
-  var st = document.documentElement.style;
-  st.setProperty("--rocket-x", Math.round(x) + "px");
-  st.setProperty("--rocket-y", Math.round(y) + "px");
-  st.setProperty("--rocket-near", (1 - near).toFixed(3));
+  var rt = document.documentElement;
+  V(rt, "--rocket-x", Math.round(x) + "px");
+  V(rt, "--rocket-y", Math.round(y) + "px");
+  V(rt, "--rocket-near", (1 - near).toFixed(3));
   g.RC_ROCKET_POS = { x: x, y: y, near: 1 - near, orb: this.orbK };
 };
 

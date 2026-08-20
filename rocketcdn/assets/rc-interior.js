@@ -38,6 +38,13 @@
 "use strict";
 
 var doc = document, root = doc.documentElement;
+
+/* Переменные оформления публикуем через общий кэш: запись на корне
+   документа инвалидирует стиль всему дереву, а зовём мы её каждый
+   кадр. Пишем только то, что действительно изменилось. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
 var T = null;                    /* three.js, появляется вместе с объёмным слоем */
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
@@ -80,12 +87,12 @@ function hex6(n) {
    сборки сцены: оформление секции контактов обязано быть в тон даже
    если объёмный слой ещё не поднялся или не поднимется вовсе. */
 function paintCSS() {
-  var s = root.style, k, v;
+  var k, v;
   for (k in COL) {
     if (!COL.hasOwnProperty(k)) continue;
     v = COL[k];
-    s.setProperty("--int-" + k, hex6(v));
-    s.setProperty("--int-" + k + "-rgb",
+    V(root, "--int-" + k, hex6(v));
+    V(root, "--int-" + k + "-rgb",
       ((v >> 16) & 255) + "," + ((v >> 8) & 255) + "," + (v & 255));
   }
 }
@@ -1361,7 +1368,7 @@ function setProgress(p) {
   var dRest = restDolly();
   st.dollyT = dRest + (1.7 - dRest) * (1 - eIn);
   st.fovT = fovTamb() + eIn * (fovIn() - fovTamb());
-  root.style.setProperty("--int-enter", eIn.toFixed(3));
+  V(root, "--int-enter", eIn.toFixed(3));
 
   /* Доля подхода к пульту: ноль - камера ещё стоит в центре рубки,
      единица - доехала вплотную к приборной панели. Этим же числом
@@ -1370,7 +1377,7 @@ function setProgress(p) {
      камеры: одно движение, а не два независимых. */
   var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_CON - P_TURN)) : 0;
   st.con = con;
-  root.style.setProperty("--int-con", con.toFixed(3));
+  V(root, "--int-con", con.toFixed(3));
 
   /* Отъезд от пульта. По сценарию клиента после анкеты камера идёт
      назад, анкета растворяется голограммой, и в кадре остаётся
@@ -1379,7 +1386,7 @@ function setProgress(p) {
      и разгорается надпись старта. */
   var back = p > P_CON ? Math.min(1, (p - P_CON) / Math.max(1e-4, P_OUT - P_CON)) : 0;
   st.back = back;
-  root.style.setProperty("--int-out", back.toFixed(3));
+  V(root, "--int-out", back.toFixed(3));
 
   if (!st.shown) return;
 
@@ -1477,14 +1484,13 @@ function project(th, h) {
    надёжности, ими же пользуется rc-interior.css. */
 function publish() {
   if (!T || !st.built) return;
-  var s = root.style;
   for (var i = 0; i < anchors.length; i++) {
     var pr = project(anchors[i].th, H_WALL);
-    s.setProperty("--int-anchor-" + i + "-x", (pr.x * 100).toFixed(2) + "%");
-    s.setProperty("--int-anchor-" + i + "-y", (pr.y * 100).toFixed(2) + "%");
-    s.setProperty("--int-anchor-" + i + "-v", pr.v.toFixed(3));
+    V(root, "--int-anchor-" + i + "-x", (pr.x * 100).toFixed(2) + "%");
+    V(root, "--int-anchor-" + i + "-y", (pr.y * 100).toFixed(2) + "%");
+    V(root, "--int-anchor-" + i + "-v", pr.v.toFixed(3));
   }
-  s.setProperty("--int-yaw", (st.yaw * 57.2958).toFixed(1) + "deg");
+  V(root, "--int-yaw", (st.yaw * 57.2958).toFixed(1) + "deg");
 }
 
 /* ── Кадр ────────────────────────────────────────────────── */

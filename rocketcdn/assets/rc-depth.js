@@ -31,6 +31,16 @@
 (function (g) {
 "use strict";
 
+/* Переменные оформления пишем через общий кэш: даже на локальном
+   элементе запись помечает устаревшим его поддерево, а зовём мы её
+   из каждого кадра по всем карточкам. Пишем только изменившееся. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
+var D = (g.RC_VAR && g.RC_VAR.del) || function (el, n) {
+  if (el && el.style) el.style.removeProperty(n);
+};
+
 var doc = document, root = doc.documentElement;
 
 /* ── Кого поднимаем в объём ─────────────────────────────────
@@ -185,7 +195,7 @@ function rows() {
     el.classList.add("rcd-row");
     /* Восемь ступеней - потолок: полсекунды ожидания это уже не
        премиальность, а тормоза. */
-    el.style.setProperty("--rcd-i", String(idx > 8 ? 8 : idx));
+    V(el, "--rcd-i", String(idx > 8 ? 8 : idx));
   }
 }
 
@@ -283,7 +293,7 @@ function frame(dt) {
         ryT = dx * RY;
         tzT += 26;
         liftT = -LIFT;
-        rec.el.style.setProperty("--rcd-gl", (118 + dx * 55).toFixed(0) + "deg");
+        V(rec.el, "--rcd-gl", (118 + dx * 55).toFixed(0) + "deg");
       }
       /* Собственное парение: медленный синус, у соседей своя фаза.
          Раньше это делали keyframes, но их нельзя остановить на
@@ -325,18 +335,17 @@ function frame(dt) {
     if (!wantLive && rest) {
       if (rec.wrote) {
         rec.wrote = 0;
-        rec.el.style.removeProperty("--rcd-rx");
-        rec.el.style.removeProperty("--rcd-ry");
-        rec.el.style.removeProperty("--rcd-tz");
-        rec.el.style.removeProperty("--rcd-lift");
+        D(rec.el, "--rcd-rx");
+        D(rec.el, "--rcd-ry");
+        D(rec.el, "--rcd-tz");
+        D(rec.el, "--rcd-lift");
       }
     } else {
       rec.wrote = 1;
-      var s = rec.el.style;
-      s.setProperty("--rcd-rx", rec.rx.toFixed(2) + "deg");
-      s.setProperty("--rcd-ry", rec.ry.toFixed(2) + "deg");
-      s.setProperty("--rcd-tz", rec.tz.toFixed(1) + "px");
-      s.setProperty("--rcd-lift", rec.lift.toFixed(1) + "px");
+      V(rec.el, "--rcd-rx", rec.rx.toFixed(2) + "deg");
+      V(rec.el, "--rcd-ry", rec.ry.toFixed(2) + "deg");
+      V(rec.el, "--rcd-tz", rec.tz.toFixed(1) + "px");
+      V(rec.el, "--rcd-lift", rec.lift.toFixed(1) + "px");
     }
 
     /* Разлёт слоёв и параллакс. Пишем через порог, а не каждый
@@ -344,12 +353,12 @@ function frame(dt) {
     var kT = rec.kT;
     if (Math.abs(kT - rec.kw) > 0.01) {
       rec.kw = kT;
-      rec.el.style.setProperty("--rcd-k", kT.toFixed(2));
+      V(rec.el, "--rcd-k", kT.toFixed(2));
     }
     var yT = fast ? 0 : -rec.p * PAR;
     if (Math.abs(yT - rec.yw) > 0.25) {
       rec.yw = yT;
-      rec.el.style.setProperty("--rcd-y", yT.toFixed(1) + "px");
+      V(rec.el, "--rcd-y", yT.toFixed(1) + "px");
     }
   }
 
@@ -359,7 +368,7 @@ function frame(dt) {
     var hy = fast ? 0 : -rec.p * PAR * 0.55 * rec.k;
     if (Math.abs(hy - rec.yw) > 0.25) {
       rec.yw = hy;
-      rec.el.style.setProperty("--rcd-y", hy.toFixed(1) + "px");
+      V(rec.el, "--rcd-y", hy.toFixed(1) + "px");
     }
   }
 }
@@ -397,13 +406,13 @@ function stop() {
   if (off) return;
   off = true;
   for (var i = 0; i < cards.length; i++) {
-    var s = cards[i].el.style;
-    s.removeProperty("--rcd-rx"); s.removeProperty("--rcd-ry");
-    s.removeProperty("--rcd-tz"); s.removeProperty("--rcd-lift");
-    s.removeProperty("--rcd-y");  s.removeProperty("--rcd-k");
+    var ce = cards[i].el;
+    D(ce, "--rcd-rx"); D(ce, "--rcd-ry");
+    D(ce, "--rcd-tz"); D(ce, "--rcd-lift");
+    D(ce, "--rcd-y");  D(ce, "--rcd-k");
     cards[i].el.classList.remove("rcd-live");
   }
-  for (i = 0; i < heads.length; i++) heads[i].el.style.removeProperty("--rcd-y");
+  for (i = 0; i < heads.length; i++) D(heads[i].el, "--rcd-y");
   if (io) io.disconnect();
   if (ioHead) ioHead.disconnect();
 }
@@ -430,11 +439,10 @@ function boot() {
           rec.kw = rec.yw = 999;
           rec.live = false; rec.wrote = 0;
           rec.el.classList.remove("rcd-live");
-          var s = rec.el.style;
-          s.removeProperty("--rcd-rx"); s.removeProperty("--rcd-ry");
-          s.removeProperty("--rcd-tz"); s.removeProperty("--rcd-lift");
-          s.setProperty("--rcd-k", "0");
-          s.setProperty("--rcd-y", "0px");
+          D(rec.el, "--rcd-rx"); D(rec.el, "--rcd-ry");
+          D(rec.el, "--rcd-tz"); D(rec.el, "--rcd-lift");
+          V(rec.el, "--rcd-k", "0");
+          V(rec.el, "--rcd-y", "0px");
         }
       }
     }, { rootMargin: "14% 0px" });
@@ -448,7 +456,7 @@ function boot() {
         else if (at >= 0) {
           headsVis.splice(at, 1);
           rec.yw = 999;
-          rec.el.style.setProperty("--rcd-y", "0px");
+          V(rec.el, "--rcd-y", "0px");
         }
       }
     }, { rootMargin: "10% 0px" });

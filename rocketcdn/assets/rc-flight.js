@@ -220,10 +220,28 @@ var uniIdx = 0;
 /* ── Оверлей ─────────────────────────────────────────────────
    DOM собирается один раз при первом открытии: кнопка полёта не
    должна ничего стоить тем, кто её не нажал. */
+/* Замок страницы на время полёта. Список тот же, что у окна
+   обратного звонка: прямые дети body, кроме самого оверлея. */
+function inertPage(on) {
+  var kids = doc.body ? doc.body.children : [];
+  for (var i = 0; i < kids.length; i++) {
+    var el = kids[i];
+    if (el === ui.wrap || el.tagName === "SCRIPT") continue;
+    if (on) { el.setAttribute("inert", ""); el.setAttribute("aria-hidden", "true"); }
+    else { el.removeAttribute("inert"); el.removeAttribute("aria-hidden"); }
+  }
+}
+
 function buildUI() {
   if (ui.wrap) return;
   var w = doc.createElement("div");
   w.className = "rc-flight";
+  /* Полёт занимает весь экран, значит это диалог: без роли чтение с
+     экрана считает его обычным куском страницы и продолжает водить
+     фокус по разделам сайта под ним */
+  w.setAttribute("role", "dialog");
+  w.setAttribute("aria-modal", "true");
+  w.setAttribute("aria-label", RU ? "Полёт по сети Rocket CDN" : "Rocket CDN network flight");
   /* Цели навигации: по ним корабль умеет долетать сам. Отметки p
      подставляются после сборки мира из честных позиций на дуге. */
   var NAV = [
@@ -951,9 +969,32 @@ function buildWorld() {
   /* Сглаживание нужно и на телефоне: без него кромки планет и
      корпуса кабины пилятся, и картинка сразу читается дешевле, чем
      на мониторе. Отключаем только на действительно слабом железе. */
+  /* Игра занимает весь экран, значит на время полёта она и есть
+     главная сцена: берём место в общем бюджете контекстов и, если
+     не хватило, просим вспомогательные уступить. Без этого учёта
+     мы держали четвёртый контекст сверх потолка, и на iOS браузер
+     молча отбирал его у нас - холст чернел навсегда. */
+  if (g.RC_GL && g.RC_GL.take) { try { g.RC_GL.take(true); } catch (e) {} }
+
   var r = new T.WebGLRenderer({ canvas: ui.cv, antialias: !tiny, alpha: false, powerPreference: "high-performance" });
   r.setPixelRatio(Math.min(g.devicePixelRatio || 1, tiny ? 1.1 : (mob ? 1.45 : 2)));
   r.setClearColor(0x02050c, 1);
+
+  /* Страховка на случай, если контекст всё же отберут: выходим из
+     полёта на страницу и забываем собранный мир, чтобы следующий
+     заход построил его заново, а не показывал чёрный кадр. */
+  if (g.RC_GL && g.RC_GL.guard) {
+    try {
+      g.RC_GL.guard(ui.cv, function () {
+        F.built = false;
+        F.glSlot = false;
+        if (F.open) close();
+      }, function () {
+        if (ui.cv) ui.cv.style.opacity = "";
+      });
+    } catch (e2) {}
+  }
+  F.glSlot = true;
 
   var scene = new T.Scene();
   var portrait = innerHeight > innerWidth;
@@ -967,7 +1008,33 @@ function buildWorld() {
   scene.add(sun);
 
   var L = new T.TextureLoader();
-  function tex(p) { var t = L.load(p); t.anisotropy = 4; return t; }
+
+  /* Карты планет лежат в двух видах: webp вдвое легче исходного
+     снимка при той же картинке, а jpg/png остаётся запасным путём
+     для браузеров без webp. Вход в игру на телефоне стоил 2,4 МБ
+     одних только текстур - теперь 1,1 МБ. */
+  var WEBP = (function () {
+    try {
+      var c = doc.createElement("canvas");
+      c.width = c.height = 1;
+      return c.toDataURL("image/webp").indexOf("data:image/webp") === 0;
+    } catch (e) { return false; }
+  })();
+
+  function tex(p) {
+    var src = p;
+    if (WEBP) src = p.replace(/\.(jpg|png)$/, ".webp");
+    /* Промахнулись мимо webp - молча возвращаемся к исходнику,
+       игра не имеет права остаться без карты планеты */
+    var t = L.load(src, null, null, src === p ? null : function () {
+      var f = L.load(p);
+      f.anisotropy = 4;
+      t.image = f.image;
+      t.needsUpdate = true;
+    });
+    t.anisotropy = 4;
+    return t;
+  }
 
   /* Небо: панорама Млечного Пути на дальней сфере + звёзды точками.
      Панорама даёт глубину и «дорогое» небо, точки - искры и
@@ -2696,6 +2763,9 @@ function open() {
 
   root.classList.add("rc-flying");
   ui.wrap.classList.add("on");
+  /* Страница под полётом перестаёт существовать для клавиатуры и
+     чтения с экрана: иначе Tab уводит из кабины в список городов */
+  inertPage(true);
   size();
 
   /* Сцены сайта спят, музыка встаёт в полный рост */
@@ -2713,6 +2783,7 @@ function close() {
   if (F.raf) cancelAnimationFrame(F.raf);
   root.classList.remove("rc-flying");
   ui.wrap.classList.remove("on");
+  inertPage(false);
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: false } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(false); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(false); } catch (e) {} }

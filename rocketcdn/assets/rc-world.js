@@ -28,6 +28,13 @@
 
 var doc = document, root = doc.documentElement;
 
+/* Переменные оформления публикуем через общий кэш: запись на корне
+   документа инвалидирует стиль всему дереву, а зовём мы её каждый
+   кадр. Пишем только то, что действительно изменилось. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
+
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
@@ -242,8 +249,7 @@ function frame() {
   cam.z = cam.dive * 60;
   g.RC_WORLD = cam;
 
-  var stl = root.style;
-  stl.setProperty("--w3-shift", (dx * 0.55).toFixed(2) + "px");
+  V(root, "--w3-shift", (dx * 0.55).toFixed(2) + "px");
 
   /* Один трансформ на весь кадр. Точка масштабирования - центр
      видимого окна, чтобы наезд шёл «в глубину кадра», а не от

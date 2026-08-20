@@ -25,6 +25,12 @@
 (function (g) {
 "use strict";
 
+/* Переменные оформления публикуем через общий кэш: запись на корне
+   документа инвалидирует стиль всему дереву. Пишем изменившееся. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
+
 var doc = document, root = doc.documentElement;
 
 /* Порядок актов - это и есть фильм. Каждому назначена секция
@@ -109,7 +115,7 @@ function frame() {
     } catch (e) {}
   }
   /* Долю акта отдаём переменной: по ней CSS смешивает состояния */
-  root.style.setProperty("--act-k", curK.toFixed(3));
+  V(root, "--act-k", curK.toFixed(3));
 }
 
 var api = {

@@ -12,6 +12,12 @@
 (function (g) {
 "use strict";
 
+/* Переменные оформления публикуем через общий кэш: запись на корне
+   документа инвалидирует стиль всему дереву. Пишем изменившееся. */
+var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+  if (el && el.style) el.style.setProperty(n, v);
+};
+
 var KEY = "rcdn.sound";
 var HINT = "rcdn.soundHintSeen";
 var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -513,7 +519,7 @@ function bind() {
   setInterval(function () {
     if (!snd.on) return;
     var e = snd.energy();
-    document.documentElement.style.setProperty("--snd-e", e.toFixed(2));
+    V(document.documentElement, "--snd-e", e.toFixed(2));
   }, 110);
 
   /* Первый жест человека. Прокрутка на айфоне разрешением не считается,

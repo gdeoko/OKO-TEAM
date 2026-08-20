@@ -50,7 +50,9 @@ function build() {
   if (el) return el;
   el = doc.createElement("audio");
   el.loop = true;
-  el.preload = "auto";
+  /* Метаданные хватает, чтобы трек был готов начаться: сами данные
+     браузер дотянет по ходу немого прогона */
+  el.preload = "metadata";
   el.volume = 0;
   el.muted = true;                    /* немой старт разрешён везде */
   el.setAttribute("playsinline", "");
@@ -280,7 +282,40 @@ g.RC_MUSIC = {
   }
 };
 
-if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", boot);
-else boot();
+/* Полкилобайта на человека, который звук так и не включит - дорого:
+   тема весит 513 КБ и качалась у всех подряд ещё до первого касания
+   экрана. Немой прогон остаётся (он и даёт мгновенный звук после
+   жеста), но заводим его не раньше, чем видно вовлечение: касание,
+   клавиша или уход с первого экрана. На экономии трафика и режиме
+   «сберечь данные» тема не поднимается вообще.
+
+   Страховка на десять секунд нужна тому, кто просто читает первый
+   экран и потом сразу жмёт звук - он не должен ждать загрузки. */
+function armBoot() {
+  if (off()) return;
+  try {
+    var c = navigator.connection;
+    if (c && (c.saveData || /(^|-)(2g)$/.test(c.effectiveType || ""))) return;
+  } catch (e) {}
+
+  var done = false;
+  function go() {
+    if (done) return;
+    done = true;
+    removeEventListener("pointerdown", go);
+    removeEventListener("keydown", go);
+    removeEventListener("scroll", onScr);
+    boot();
+  }
+  function onScr() { if ((scrollY || 0) > innerHeight * 0.5) go(); }
+
+  addEventListener("pointerdown", go, { passive: true, once: true });
+  addEventListener("keydown", go, { once: true });
+  addEventListener("scroll", onScr, { passive: true });
+  setTimeout(go, 10000);
+}
+
+if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", armBoot);
+else armBoot();
 
 })(window);
