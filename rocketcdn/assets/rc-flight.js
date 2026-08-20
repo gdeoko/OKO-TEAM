@@ -2719,6 +2719,27 @@ function close() {
   if (g.RC_track) g.RC_track("flight", "close p=" + F.p.toFixed(2));
 }
 
+/* Приглашение в полёт после успешной заявки. Не окно и не
+   перехват кадра: строка с кнопкой прямо под формой, там, где
+   человек сейчас смотрит. Появляется один раз. */
+function offerFlight() {
+  var box = doc.querySelector("#contact .form-card");
+  if (!box || doc.querySelector(".rcf-after")) return;
+  var el = doc.createElement("div");
+  el.className = "rcf-after";
+  el.innerHTML =
+    "<b>" + (RU ? "Заявка принята" : "Request received") + "</b>" +
+    "<span>" + (RU
+      ? "Инженер свяжется с вами в рабочее время. А пока - можно облететь сеть."
+      : "An engineer will contact you. Meanwhile, you can fly the network.") + "</span>" +
+    '<button type="button" class="rcf-after-btn">' +
+      (RU ? "Облететь сеть" : "Fly the network") + "</button>";
+  box.appendChild(el);
+  var b = el.querySelector(".rcf-after-btn");
+  if (b) b.addEventListener("click", function () { open(); });
+  requestAnimationFrame(function () { el.classList.add("on"); });
+}
+
 /* ── Кнопки запуска ──────────────────────────────────────────
    Плавающая кнопка появляется после первого экрана и живёт до
    конца страницы: клиент просил вход в полёт из любого места. */
@@ -2744,8 +2765,14 @@ function launchers() {
     if (show !== seen) { seen = show; fab.classList.toggle("on", show); }
   }, { passive: true });
 
-  /* Сценарий клиента: заявка отправлена - экран пульта гаснет,
-     и корабль отправляется в демо-облёт сам. */
+  /* Заявка отправлена. Раньше отсюда через полторы секунды сам
+     собой открывался полёт во весь экран - и человек, только что
+     оставивший рабочую заявку в рабочее время, получал игру, которой
+     не просил. Приёмка справедливо назвала это ошибкой: кульминация
+     тратилась на развлечение вместо подтверждения.
+
+     Теперь предлагаем, а не запускаем: на экране пульта появляется
+     приглашение с кнопкой. Захочет - полетит. */
   var form = doc.querySelector("#contact form");
   if (form) form.addEventListener("submit", function () {
     var msg = form.querySelector(".form-msg");
@@ -2754,7 +2781,7 @@ function launchers() {
       if (++tries > 40) { clearInterval(wait); return; }
       if (msg && msg.className.indexOf("ok") >= 0) {
         clearInterval(wait);
-        setTimeout(open, 1600);
+        setTimeout(offerFlight, 1200);
       }
     }, 250);
   });

@@ -1057,3 +1057,53 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   box-shadow: inset 0 -3px 0 -1px currentColor;
 }
 .rcf-uni button.locked:hover { opacity: .72; }
+
+/* ── Приглашение в полёт после заявки ────────────────────────
+   Раньше игра открывалась сама через полторы секунды после
+   отправки. Человек, оставивший рабочую заявку, получал во весь
+   экран космос, которого не просил. Теперь на его месте - короткое
+   подтверждение и предложение, от которого легко отказаться. */
+.rcf-after {
+  margin-top: 18px;
+  padding: 16px 18px;
+  display: grid; gap: 8px; justify-items: start;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .45);
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .05) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .10),
+      rgba(var(--int-deep-rgb, 5,12,21), .5));
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
+}
+.rcf-after.on { opacity: 1; transform: none; }
+.rcf-after b {
+  font: 700 15px/1.2 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .04em;
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+}
+.rcf-after span {
+  font: 400 13px/1.45 var(--f-body, "Golos Text", sans-serif);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .8);
+}
+.rcf-after-btn {
+  margin-top: 4px;
+  padding: 11px 20px;
+  font: 700 13px/1 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .08em;
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  background: linear-gradient(158deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .3),
+    rgba(var(--int-hull-rgb, 10,21,36), .9));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .6);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.rcf-after-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px -8px rgba(var(--int-cyan-rgb, 66,178,220), .9);
+}

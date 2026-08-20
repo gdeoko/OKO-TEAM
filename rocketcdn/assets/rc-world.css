@@ -459,3 +459,25 @@ html[data-theme="light"] .epi-btn svg { color: #0A5897; }
 }
 html[data-degrade="3"] main.w3-stage,
 html[data-degrade="3"] .w3-lay { transform: none !important; translate: none !important; }
+
+/* Второй путь из финала: заявка рядом с кнопкой полёта. Держим её
+   вторичной по весу - кино заканчивается стартом, но человек,
+   который пришёл за услугой, не должен искать, куда нажать. */
+.epi-alt {
+  margin-top: 14px;
+  display: inline-block;
+  padding: 10px 20px;
+  font: 600 13.5px/1 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .06em;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .82);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .38);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: color .25s var(--ease), border-color .25s var(--ease), background .25s var(--ease);
+}
+.epi-alt:hover {
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .75);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .10);
+}
+html[data-theme="light"]:not(.rc-cab-on) .epi-alt { color: var(--tx-2); border-color: var(--line-2); }
