@@ -781,6 +781,53 @@ function padTexture(weak) {
 
    Один холст, одна плоскость, один вызов отрисовки. Края уводим в
    прозрачность, иначе квадрат местности читается ковриком. */
+/* Равнина до горизонта. Рисуем не «землю с деталями», а именно
+   даль: у площадки грунт ещё читается, к краю он тонет в холодной
+   дымке и без шва переходит в космос. Резкая кромка сразу выдавала
+   бы, что планета кончается в десяти метрах от опор. */
+function plainTexture(weak) {
+  var S = weak ? 256 : 512;
+  var c = document.createElement("canvas");
+  c.width = c.height = S;
+  var x = c.getContext("2d");
+  var m = S / 2;
+
+  var g1 = x.createRadialGradient(m, m, m * 0.05, m, m, m);
+  /* Плотность держим почти до самого края: камера стоит низко, и
+     равнина в кадре сжата перспективой в узкую полосу у горизонта.
+     Если гасить её с середины, от земли не остаётся ничего и
+     площадка снова висит в звёздах. */
+  g1.addColorStop(0.00, "rgba(42,60,82,.96)");
+  g1.addColorStop(0.45, "rgba(34,50,70,.94)");
+  g1.addColorStop(0.74, "rgba(26,40,58,.86)");
+  g1.addColorStop(0.90, "rgba(18,29,44,.52)");
+  g1.addColorStop(1.00, "rgba(12,20,32,0)");
+  x.fillStyle = g1;
+  x.fillRect(0, 0, S, S);
+
+  /* Неровности: пятна светлее и темнее, крупные и мягкие - вблизи их
+     не разглядывают, а издали именно они не дают равнине читаться
+     залитым цветом */
+  var i, a, r, px, py, sp;
+  for (i = 0; i < (weak ? 22 : 54); i++) {
+    a = Math.random() * Math.PI * 2;
+    r = m * (0.14 + Math.random() * 0.82);
+    px = m + Math.cos(a) * r;
+    py = m + Math.sin(a) * r;
+    var rad = S * (0.03 + Math.random() * 0.09);
+    var lit = Math.random() < 0.45;
+    sp = x.createRadialGradient(px, py, 0, px, py, rad);
+    sp.addColorStop(0, lit ? "rgba(96,126,160,.16)" : "rgba(8,14,24,.22)");
+    sp.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = sp;
+    x.beginPath(); x.arc(px, py, rad, 0, Math.PI * 2); x.fill();
+  }
+
+  var tex = new T.CanvasTexture(c);
+  tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
+  return tex;
+}
+
 function terrainTexture(weak) {
   var S = weak ? 256 : 512;
   var c = document.createElement("canvas");
@@ -2859,6 +2906,22 @@ Rocket.prototype.ground = function () {
   grp.add(soil);
   this._padSoil = soil;
 
+  /* Дальняя равнина. Ближний грунт кончался почти сразу за бортиком,
+     и площадка висела в звёздах: корабль садился в космосе, а не на
+     планету. Эта плоскость в девять раз шире и уходит в дымку -
+     появляется земля до горизонта, а вместе с ней и масштаб. Стоит
+     она те же четыре вершины и один вызов отрисовки. */
+  var farMat = new T.MeshBasicMaterial({
+    map: plainTexture(C.weak), transparent: true, depthWrite: false,
+    toneMapped: false, opacity: 0
+  });
+  var far = new T.Mesh(new T.PlaneGeometry(PAD_SIZE * 9, PAD_SIZE * 9), farMat);
+  far.rotation.x = -Math.PI / 2;
+  far.position.y = -PAD_LIFT - 0.02;
+  far.renderOrder = 0;
+  grp.add(far);
+  this._padFar = far;
+
   /* Бортик: цилиндр без крышек между уровнем грунта и настилом.
      Он и есть весь секрет объёма - у площадки становится видна
      ТОЛЩИНА, и она перестаёт быть наклейкой на пустоте. */
@@ -3019,6 +3082,10 @@ Rocket.prototype.groundStep = function (dt) {
   if (this._padSoil) {
     this._padSoil.visible = degradeStep < 3;
     this._padSoil.material.opacity = vis * 0.85;
+  }
+  if (this._padFar) {
+    this._padFar.visible = degradeStep < 3;
+    this._padFar.material.opacity = vis * 0.92;
   }
   if (this._padKerb) this._padKerb.material.opacity = vis * 0.95;
 
@@ -3792,6 +3859,19 @@ Rocket.prototype.doorOpen = function (dt) {
        Теперь левая идёт влево, правая вправо, щель раскрывается от
        стыка - и паром из этой щели есть чему бить. */
     var open = this.doorK * d.half * 2.05;
+    /* Расцепление замков. Настоящий люк не начинает ехать вбок из
+       плоскости борта: сперва створки отходят наружу на пару
+       сантиметров, освобождая притвор, и только потом уезжают по
+       обшивке. Без этого движения дверь читается картинкой, которая
+       просто разъехалась. Отход берём по радиусу - створка и есть
+       кусок цилиндра, растянуть её от оси проще и честнее, чем
+       двигать в плоскости.
+
+       Отход набирается в первые полтора десятка процентов хода и
+       дальше держится: створка едет по борту уже отжатой. */
+    var pop = 1 + Math.min(1, this.doorK / 0.14) * 0.022;
+    d.l.scale.set(pop, 1, pop);
+    d.r.scale.set(pop, 1, pop);
     d.l.rotation.y = -open;
     d.r.rotation.y = open;
     /* Свет салона разгорается в щели раньше самих створок:
@@ -4089,8 +4169,18 @@ Rocket.prototype.layout = function (p, dt) {
      трогать нельзя: от него зависит, закроет ли корпус кадр к
      моменту передачи сцены рубке. */
   var near = Math.min(1, app * 1.6);
+  /* Посадка - кульминация наружного акта, и корабль на ней обязан
+     занимать кадр. Прежние двенадцать процентов роста давали
+     фигурку в треть высоты экрана посреди звёзд: событие было, а
+     кино не было. Теперь корпус подрастает заметно, а вместе с
+     дальней равниной под опорами появляется и масштаб - видно, что
+     садится большая машина, а не игрушка.
+
+     Верхний предел держит подход: к нему корабль и так вырастает во
+     весь кадр, и складывать оба роста нельзя - камера провалится
+     внутрь обшивки. */
   var lndS = 1 + (this.landK || 0) *
-    ((this.C.mobile ? 0.12 : -0.20) * (1 - near) + 0.12 * near);
+    ((this.C.mobile ? 0.62 : 0.34) * (1 - near) + 0.12 * near);
   /* Подход растит корпус сильнее прежнего: аудит показал, что при
      полном подходе корабль занимал всего треть ширины кадра и был
      виден целиком, от носа до стабилизаторов. Это читается «стоит
