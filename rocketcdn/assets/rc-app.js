@@ -948,7 +948,18 @@ function boot() {
         if (!modal.classList.contains("on")) return;
         var vis = getComputedStyle(modal).visibility !== "hidden";
         var f = vis ? focusables(modal) : [];
-        if (f.length) { f[0].focus(); return; }
+        if (f.length) {
+          /* Целимся в первое поле ввода, а не в крестик: человек
+             открыл окно, чтобы оставить номер, - курсор должен уже
+             стоять там, где он будет писать */
+          var field = null;
+          for (var k = 0; k < f.length; k++) {
+            var tag = f[k].tagName;
+            if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") { field = f[k]; break; }
+          }
+          (field || f[0]).focus();
+          return;
+        }
         if (++tries < 120) requestAnimationFrame(aim);
       })();
     } else if (modalBack && modalBack.focus) {

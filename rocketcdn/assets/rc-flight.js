@@ -128,6 +128,23 @@ function TOTAL_MARKS() {
   return n;
 }
 
+/* Сколько всего мест, где можно развернуть узел. Считаем ровно те,
+   на орбите которых включается кнопка: пять тел родного маршрута,
+   звёздные системы чужих вселенных и их планеты. Раньше знаменатель
+   у «Сети» брался от «Исследовано» - множества разные, и счётчик мог
+   уйти за свой же предел, а «сеть развёрнута полностью» достигалась
+   только через это переполнение. */
+function NET_TOTAL() {
+  var n = 5;                        /* Земля, Луна, Марс, Сатурн, дыра */
+  for (var u = 1; u < UNIVERSES.length; u++) {
+    n += UNIVERSES[u].sys.length;
+    for (var s = 0; s < UNIVERSES[u].sys.length; s++) {
+      n += UNIVERSES[u].sys[s].planets.length;
+    }
+  }
+  return n;
+}
+
 function paintProgress() {
   if (!ui.prog) return;
   var got = Object.keys(explored).length, total = TOTAL_MARKS();
@@ -152,7 +169,7 @@ var UNIVERSES = [
   { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM", tag: "SOL",
     sky: 0x9db4cc, amb: 0x3a4a68, neb: [0x42b2dc, 0x8a59f6], sun: 0xfff2dc,
     stars: [0xcfe9f5, 0x8fb7ff, 0xffe9c9],
-    about: RU ? "наша система, 8 тел маршрута" : "our system, 8 waypoints",
+    about: RU ? "родная система, весь маршрут" : "home system, the full route",
     sys: [] },
 
   { name: RU ? "ВСЕЛЕННАЯ RV-2" : "UNIVERSE RV-2", tag: "RV-2",
@@ -1852,8 +1869,8 @@ function netCount() { return Object.keys(net).length; }
 
 function netPaint() {
   if (!ui.net) return;
-  var n = netCount(), total = TOTAL_MARKS();
-  ui.net.textContent = (RU ? "Сеть " : "Network ") + n + "/" + total;
+  var n = netCount(), total = NET_TOTAL();
+  ui.net.textContent = (RU ? "Сеть " : "Network ") + Math.min(n, total) + "/" + total;
   ui.net.classList.toggle("full", n >= total);
 }
 
@@ -1936,7 +1953,7 @@ function deployNode() {
       setTimeout(function () { if (g.RC_SOUND.blip) g.RC_SOUND.blip(880); }, 180);
     } catch (e2) {}
   }
-  if (netCount() >= TOTAL_MARKS()) {
+  if (netCount() >= NET_TOTAL()) {
     setTimeout(function () {
       say(RU ? "СЕТЬ РАЗВЁРНУТА ПОЛНОСТЬЮ · ВСЕ МИРЫ НА СВЯЗИ" : "NETWORK COMPLETE", 4200);
     }, 2800);
@@ -2776,6 +2793,19 @@ function open() {
 
   F.open = true;
   F.p = 0; F.v = 0; F.last = 0;
+
+  /* Возвращаемся домой. Раньше выход из чужой вселенной оставлял
+     uniIdx и F.away как есть: человек заходил снова, читал брифинг
+     про Землю, Луну и Марс, а вокруг были пески RV-2, и в панели не
+     было ни «Земли», ни «Домой». Маршрут начинается от Земли -
+     значит и мир должен быть родной. */
+  if (uniIdx !== 0 && !uniBusy) {
+    uniIdx = 0;
+    F.away = false;
+    F.orbit = null;
+    if (W3) { try { applyUniverse(0); } catch (e) {} }
+    try { systemNav(); } catch (e2) {}
+  }
   /* Карта миссии нужна тому, кто нажал «Полёт» посреди страницы:
      он ещё не в корабле, и ему надо объяснить, куда он попал.
 
@@ -2843,7 +2873,7 @@ function offerFlight() {
   el.innerHTML =
     "<b>" + (RU ? "Заявка принята" : "Request received") + "</b>" +
     "<span>" + (RU
-      ? "Инженер свяжется с вами в рабочее время. А пока - можно облететь сеть."
+      ? "Инженер свяжется с вами в ближайшее время. А пока - можно облететь сеть."
       : "An engineer will contact you. Meanwhile, you can fly the network.") + "</span>" +
     '<button type="button" class="rcf-after-btn">' +
       (RU ? "Облететь сеть" : "Fly the network") + "</button>";
