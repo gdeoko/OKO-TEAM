@@ -19,7 +19,12 @@ function fill(t, blocks) {
   /* Иконки в статичной разметке */
   $$("[data-ico]").forEach(function (el) {
     var name = el.getAttribute("data-ico");
-    if (el.querySelector("svg")) return;
+    /* Проверяем именно первого ребёнка, а не «есть ли где-то внутри
+       svg»: в строке контакта теперь живёт кнопка копирования со
+       своим знаком, и по старой проверке иконка самой строки не
+       рисовалась вовсе - у половины пунктов её просто не было. */
+    var first = el.firstElementChild;
+    if (first && first.tagName.toLowerCase() === "svg") return;
     el.insertAdjacentHTML("afterbegin", svg(name));
   });
 

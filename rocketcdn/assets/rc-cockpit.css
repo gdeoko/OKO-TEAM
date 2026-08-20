@@ -510,11 +510,20 @@ html.rc-inside .field select {
   color: rgba(var(--int-lit-rgb, 234,246,252), 1);
 }
 html[data-act="console"] .field input::placeholder,
-html[data-act="console"] .field textarea::placeholder {
+html[data-act="console"] .field textarea::placeholder,
+html.rc-inside .field input::placeholder,
+html.rc-inside .field textarea::placeholder {
   color: rgba(var(--int-lit-rgb, 207,233,245), .62);
   /* Плейсхолдер длиннее поля обрезался посреди слова: показываем,
      что текст продолжается, вместо рваного хвоста */
   text-overflow: ellipsis;
+}
+html[data-act="console"] .field select,
+html.rc-inside .field select,
+html[data-act="console"] .field select option,
+html.rc-inside .field select option {
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  background-color: rgba(var(--int-deep-rgb, 5,12,21), 1);
 }
 html[data-act="console"] .consent,
 html[data-act="console"] .form-card label,

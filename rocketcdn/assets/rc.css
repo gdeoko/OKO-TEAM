@@ -889,6 +889,9 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   z-index: 1; pointer-events: none;
   opacity: 0; transition: opacity 1.2s var(--ease);
 }
+/* Прозрачностью холста правит сцена: она считает, наехал ли корпус
+   на строки, и сама выставляет её в стиле элемента. Здесь только
+   начальные значения для первого кадра. */
 .has-rocket #rocketCanvas { opacity: 1; }
 [data-theme="light"] #rocketCanvas { opacity: 0; }
 [data-theme="light"].has-rocket #rocketCanvas { opacity: .92; }

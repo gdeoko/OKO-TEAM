@@ -1368,7 +1368,7 @@ function setProgress(p) {
   var dRest = restDolly();
   st.dollyT = dRest + (1.7 - dRest) * (1 - eIn);
   st.fovT = fovTamb() + eIn * (fovIn() - fovTamb());
-  V(root, "--int-enter", eIn.toFixed(3));
+  V(root, "--int-enter", eIn.toFixed(2));
 
   /* Доля подхода к пульту: ноль - камера ещё стоит в центре рубки,
      единица - доехала вплотную к приборной панели. Этим же числом
@@ -1377,7 +1377,7 @@ function setProgress(p) {
      камеры: одно движение, а не два независимых. */
   var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_CON - P_TURN)) : 0;
   st.con = con;
-  V(root, "--int-con", con.toFixed(3));
+  V(root, "--int-con", con.toFixed(2));
 
   /* Отъезд от пульта. По сценарию клиента после анкеты камера идёт
      назад, анкета растворяется голограммой, и в кадре остаётся
@@ -1386,7 +1386,7 @@ function setProgress(p) {
      и разгорается надпись старта. */
   var back = p > P_CON ? Math.min(1, (p - P_CON) / Math.max(1e-4, P_OUT - P_CON)) : 0;
   st.back = back;
-  V(root, "--int-out", back.toFixed(3));
+  V(root, "--int-out", back.toFixed(2));
 
   if (!st.shown) return;
 
@@ -1482,16 +1482,17 @@ function project(th, h) {
    Переменные --int-anchor-N-x / -y / -v объявлены для всех
    восьми панелей. Первые четыре - те, на которых стоят карточки
    надёжности, ими же пользуется rc-interior.css. */
-function publish() {
-  if (!T || !st.built) return;
-  for (var i = 0; i < anchors.length; i++) {
-    var pr = project(anchors[i].th, H_WALL);
-    V(root, "--int-anchor-" + i + "-x", (pr.x * 100).toFixed(2) + "%");
-    V(root, "--int-anchor-" + i + "-y", (pr.y * 100).toFixed(2) + "%");
-    V(root, "--int-anchor-" + i + "-v", pr.v.toFixed(3));
-  }
-  V(root, "--int-yaw", (st.yaw * 57.2958).toFixed(1) + "deg");
-}
+/* Экранные точки панелей раньше уезжали в двадцать пять переменных
+   на корне документа - каждый кадр, для всех восьми стен сразу.
+   Их не читает никто: кинематограф берёт те же числа напрямую через
+   RC_INTERIOR.project(), а вёрстка обходится долями акта. Двадцать
+   пять записей на :root в кадре означали двадцать пять пересчётов
+   стиля всему дереву впустую, и это была самая дорогая строка сцены.
+
+   Функция оставлена как точка расширения: если разметке однажды
+   понадобится встать на конкретную панель, публиковать надо будет
+   ровно её, а не все восемь. */
+function publish() {}
 
 /* ── Кадр ────────────────────────────────────────────────── */
 function tick(ts) {

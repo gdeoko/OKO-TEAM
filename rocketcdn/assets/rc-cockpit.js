@@ -78,16 +78,16 @@ function src() {
   var w = tall() ? WIN_TALL : WIN_WIDE, s = tall() ? SCR_TALL : SCR_WIDE;
   /* Границы остекления отдаём в проценты окна: вёрстка ставит по ним
      свои отступы и не заезжает под переплёт кабины */
-  V(root, "--cab-x0", (w.x0 * 100).toFixed(2) + "%");
-  V(root, "--cab-x1", (w.x1 * 100).toFixed(2) + "%");
-  V(root, "--cab-y0", (w.y0 * 100).toFixed(2) + "%");
-  V(root, "--cab-y1", (w.y1 * 100).toFixed(2) + "%");
-  V(root, "--cab-win-w", ((w.x1 - w.x0) * 100).toFixed(2) + "%");
-  V(root, "--cab-win-h", ((w.y1 - w.y0) * 100).toFixed(2) + "%");
-  V(root, "--cab-scr-x", (s.x * 100).toFixed(2) + "%");
-  V(root, "--cab-scr-y", (s.y * 100).toFixed(2) + "%");
-  V(root, "--cab-scr-w", (s.w * 100).toFixed(2) + "%");
-  V(root, "--cab-scr-h", (s.h * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-x0", (w.x0 * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-x1", (w.x1 * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-y0", (w.y0 * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-y1", (w.y1 * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-win-w", ((w.x1 - w.x0) * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-win-h", ((w.y1 - w.y0) * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-scr-x", (s.x * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-scr-y", (s.y * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-scr-w", (s.w * 100).toFixed(2) + "%");
+  V(layer || root, "--cab-scr-h", (s.h * 100).toFixed(2) + "%");
 }
 
 /* Сколько кабины в кадре сейчас. Это не выключатель, а наезд:
@@ -145,14 +145,14 @@ function place(conK) {
     rot = -(1 - conK) * 26;
   }
 
-  V(root, "--cab-tx", tx.toFixed(2) + "%");
-  V(root, "--cab-rot", rot.toFixed(2) + "deg");
+  V(layer || root, "--cab-tx", tx.toFixed(2) + "%");
+  V(layer || root, "--cab-rot", rot.toFixed(2) + "deg");
   /* В салоне панель дальше и мельче, на подъезде вырастает в кадр */
-  V(root, "--cab-sc", (0.52 + conK * 0.62).toFixed(3));
+  V(layer || root, "--cab-sc", (0.52 + conK * 0.62).toFixed(3));
   /* Обрезка сверху: в салоне видна только нижняя часть картинки -
      сам пульт с экранами. Остекление и потолочные балки приходят,
      когда мы уже сели за него; иначе в углу висела бы рамка. */
-  V(root, "--cab-top", (62 - conK * 62).toFixed(1) + "%");
+  V(layer || root, "--cab-top", (62 - conK * 62).toFixed(1) + "%");
   return vis;
 }
 
@@ -194,7 +194,7 @@ function frame() {
   watchdog();
   goal = want();
   if (goal <= 0 && k < 0.002) {
-    if (pub !== 0) { pub = 0; V(root, "--cab-k", "0"); root.classList.remove("rc-cab-on"); }
+    if (pub !== 0) { pub = 0; V(layer || root, "--cab-k", "0"); root.classList.remove("rc-cab-on"); }
     return;
   }
   build();
@@ -211,7 +211,7 @@ function frame() {
   var cr = Math.round(conK * 100) / 100;
   if (r === pub && cr === conPub) return;
   pub = r; conPub = cr;
-  V(root, "--cab-k", String(r));
+  V(layer || root, "--cab-k", String(r));
   /* Класс «мы за пультом» ставим по подъезду, а не по прозрачности:
      содержимое садится в остекление только когда кабина уже стала
      кадром, а не пока она стоит в углу комнаты */

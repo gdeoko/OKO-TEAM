@@ -115,7 +115,7 @@ function frame() {
     } catch (e) {}
   }
   /* Долю акта отдаём переменной: по ней CSS смешивает состояния */
-  V(root, "--act-k", curK.toFixed(3));
+  V(root, "--act-k", curK.toFixed(2));
 }
 
 var api = {

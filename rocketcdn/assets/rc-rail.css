@@ -132,7 +132,22 @@ html.rc-inside .rail-nav { opacity: 0; }
 .contact-list a:focus-within .copy-btn,
 .copy-btn:focus-visible { opacity: 1; transform: none; }
 .copy-btn:hover { color: var(--accent-tx); border-color: var(--accent-tx); }
-.copy-btn svg { width: 14px; height: 14px; color: inherit; }
+/* Знак копирования - два наложенных листа, рисуется маской: внутри
+   строки контакта не должно быть второго svg, иначе строка считает,
+   что её собственная иконка уже стоит */
+.copy-btn::before {
+  content: ''; width: 14px; height: 14px; background: currentColor;
+  -webkit-mask: var(--copy-ico) center / contain no-repeat;
+  mask: var(--copy-ico) center / contain no-repeat;
+}
+.copy-btn.done::before {
+  -webkit-mask-image: var(--check-ico);
+  mask-image: var(--check-ico);
+}
+:root {
+  --copy-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E");
+  --check-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5 10-11'/%3E%3C/svg%3E");
+}
 .copy-btn.done {
   color: var(--accent-tx); border-color: var(--accent-tx);
   box-shadow: 0 0 0 3px rgba(66, 178, 220, .16);
@@ -141,7 +156,7 @@ html.rc-inside .rail-nav { opacity: 0; }
 /* На телефоне наведения нет: кнопка видна всегда и крупнее пальца */
 @media (hover: none), (max-width: 900px) {
   .copy-btn { opacity: .85; transform: none; width: 34px; height: 34px; }
-  .copy-btn svg { width: 16px; height: 16px; }
+  .copy-btn::before { width: 16px; height: 16px; }
 }
 
 /* ═══ Подтверждение действия ════════════════════════════════
@@ -218,3 +233,47 @@ html.rc-inside .consent.bad { color: #F87171 !important; }
   outline: 2px solid #F87171; outline-offset: 2px; border-radius: 3px;
 }
 .consent.bad a { color: inherit; }
+
+/* ═══ Флажок согласия ═══════════════════════════════════════
+   Системный флажок в тёмной теме рисуется сплошным белым, а в
+   светлой - сплошным тёмным квадратом: приёмка прочитала оба как
+   «галочка уже стоит». Рисуем сами: пустой контур, пока не
+   отмечено, фирменная заливка с галочкой - когда отмечено. */
+.consent input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 18px; height: 18px; margin-top: 1px; flex: none;
+  border: 1.5px solid var(--line-2); border-radius: 5px;
+  background: transparent; cursor: pointer;
+  display: grid; place-items: center;
+  transition: border-color .18s var(--ease), background .18s var(--ease);
+}
+.consent input[type="checkbox"]:hover { border-color: var(--accent-tx); }
+.consent input[type="checkbox"]::before {
+  content: ''; width: 11px; height: 11px;
+  background: #fff; transform: scale(0);
+  transition: transform .16s var(--ease);
+  -webkit-mask: var(--check-ico) center / contain no-repeat;
+  mask: var(--check-ico) center / contain no-repeat;
+}
+.consent input[type="checkbox"]:checked {
+  background: var(--grad); border-color: transparent;
+}
+.consent input[type="checkbox"]:checked::before { transform: scale(1); }
+.consent.bad input[type="checkbox"] { border-color: #F87171; }
+
+@media (max-width: 900px) {
+  /* Палец крупнее курсора: увеличиваем цель, рисунок тот же */
+  .consent input[type="checkbox"] { width: 22px; height: 22px; }
+  .consent input[type="checkbox"]::before { width: 14px; height: 14px; }
+}
+
+/* ═══ Светлая тема: подсказки в полях ═══════════════════════
+   Приёмка замерила ~2:1 у плейсхолдеров и у выбранного значения
+   списка на белом фоне. Подсказка обязана читаться, а выбранное
+   значение - это вообще данные, а не подсказка. */
+html[data-theme="light"] .field input::placeholder,
+html[data-theme="light"] .field textarea::placeholder,
+html[data-theme="light"] .search input::placeholder {
+  color: rgba(9, 19, 32, .58);
+}
+html[data-theme="light"] .field select { color: var(--tx); }

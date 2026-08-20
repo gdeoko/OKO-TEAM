@@ -481,3 +481,102 @@ html[data-degrade="3"] .w3-lay { transform: none !important; translate: none !im
   background: rgba(var(--int-cyan-rgb, 66,178,220), .10);
 }
 html[data-theme="light"]:not(.rc-cab-on) .epi-alt { color: var(--tx-2); border-color: var(--line-2); }
+
+/* ═══ Читаемость поверх корабля ═════════════════════════════
+   Корабль летит за контентом, но яркий корпус за буквами съедает
+   контраст: приёмка замерила 2,3:1 на подсказках и 4,0:1 на теле
+   карточек там, где под ними проходит ракета.
+
+   Доля перекрытия приходит из сцены (--rk-veil). По ней сам корабль
+   приглушается, а текст в это же время получает мягкую подложку -
+   ровно настолько, насколько она нужна. Ни на телефоне, ни на
+   мониторе ничего не выключается: меняется только плотность. */
+.sec-h, .sec-p, .sec-tag, .hero h1, .hero .lead,
+.viz-card h3, .card h3, .card p, .dc h4, .step h3 {
+  text-shadow:
+    0 1px 10px rgba(3, 8, 14, calc(var(--rk-veil, 0) * .55)),
+    0 0 26px rgba(3, 8, 14, calc(var(--rk-veil, 0) * .40));
+}
+html[data-theme="light"] .sec-h, html[data-theme="light"] .sec-p,
+html[data-theme="light"] .sec-tag, html[data-theme="light"] .hero h1,
+html[data-theme="light"] .hero .lead, html[data-theme="light"] .viz-card h3,
+html[data-theme="light"] .card h3, html[data-theme="light"] .card p,
+html[data-theme="light"] .dc h4, html[data-theme="light"] .step h3 {
+  text-shadow:
+    0 1px 10px rgba(243, 247, 251, calc(var(--rk-veil, 0) * .70)),
+    0 0 26px rgba(243, 247, 251, calc(var(--rk-veil, 0) * .55));
+}
+
+/* Подсказки поверх сцены - самое слабое место по контрасту:
+   их подложка нужна всегда, а не только под кораблём */
+.scroll-hint, .rack-hint, .g3-legend, .mq {
+  text-shadow: 0 1px 8px rgba(3, 8, 14, .85), 0 0 20px rgba(3, 8, 14, .6);
+}
+html[data-theme="light"] .scroll-hint,
+html[data-theme="light"] .rack-hint,
+html[data-theme="light"] .g3-legend,
+html[data-theme="light"] .mq {
+  text-shadow: 0 1px 8px rgba(243, 247, 251, .9), 0 0 20px rgba(243, 247, 251, .7);
+}
+
+/* ═══ Бортовой планшет ══════════════════════════════════════
+   Три раздела сценарно попадают в кадры, где корабль по замыслу
+   занимает экран: «Сценарии» - это проход к трапу, «Надёжность» -
+   салон, «Вопросы» - бортовой справочник. Уменьшать корабль там
+   нельзя: мы к нему идём, он и есть сцена.
+
+   Поэтому текст в этих актах ложится не прямо на обшивку, а на
+   свою поверхность - как данные на бортовом экране. Подложка
+   плотная ровно настолько, чтобы буквы читались, и остаётся
+   стеклянной: сквозь неё видно, что мы внутри той же сцены.
+
+   Одинаково на телефоне и на мониторе: меняются только отступы. */
+html[data-act="walk"] #cases .hs-head,
+html[data-act="walk"] #cases .case-card,
+html[data-act="walk"] #cases .card,
+html[data-act="cabin"] #reliability .sec-head,
+html[data-act="cabin"] #reliability .card,
+html[data-act="manual"] #faq .sec-head,
+html[data-act="manual"] #faq .faq-i {
+  background: rgba(6, 14, 24, .78);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  border-radius: var(--r-md, 16px);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, .38),
+    inset 0 1px 0 rgba(var(--int-cyan-rgb, 66, 178, 220), .18);
+  transition: background .5s var(--ease), box-shadow .5s var(--ease);
+}
+html[data-act="walk"] #cases .hs-head,
+html[data-act="cabin"] #reliability .sec-head,
+html[data-act="manual"] #faq .sec-head {
+  padding: clamp(14px, 2.4vw, 22px) clamp(16px, 2.6vw, 26px);
+}
+/* Тексту на планшете подложка уже не нужна - снимаем тень букв,
+   иначе она читается грязью на ровном фоне */
+html[data-act="walk"] #cases .sec-h,
+html[data-act="walk"] #cases .sec-p,
+html[data-act="walk"] #cases .sec-tag,
+html[data-act="cabin"] #reliability .sec-h,
+html[data-act="cabin"] #reliability .sec-p,
+html[data-act="cabin"] #reliability .sec-tag,
+html[data-act="cabin"] #reliability .card h3,
+html[data-act="cabin"] #reliability .card p,
+html[data-act="manual"] #faq .sec-h,
+html[data-act="manual"] #faq .sec-p,
+html[data-act="manual"] #faq .sec-tag { text-shadow: none; }
+
+/* Светлая тема внутри этих кадров - тот же бортовой свет: снаружи
+   день, внутри корабля своя лампа, и это честнее белого листа */
+html[data-theme="light"][data-act="walk"] #cases .hs-head,
+html[data-theme="light"][data-act="walk"] #cases .case-card,
+html[data-theme="light"][data-act="walk"] #cases .card,
+html[data-theme="light"][data-act="cabin"] #reliability .sec-head,
+html[data-theme="light"][data-act="cabin"] #reliability .card,
+html[data-theme="light"][data-act="manual"] #faq .sec-head,
+html[data-theme="light"][data-act="manual"] #faq .faq-i {
+  background: rgba(247, 250, 253, .90);
+  box-shadow:
+    0 18px 46px rgba(9, 19, 32, .16),
+    inset 0 1px 0 rgba(66, 178, 220, .22);
+}

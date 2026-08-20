@@ -1072,7 +1072,10 @@ function boot() {
       b.type = "button";
       b.className = "copy-btn";
       b.setAttribute("aria-label", t("ct.copy", "Скопировать") + ": " + val);
-      b.innerHTML = svg("check");
+      /* Знак рисуем фоном через маску, а не вложенным svg: строка
+         контакта сама подставляет свою иконку первым ребёнком и
+         ориентируется на разметку внутри */
+      b.setAttribute("data-copy", "");
       b.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();

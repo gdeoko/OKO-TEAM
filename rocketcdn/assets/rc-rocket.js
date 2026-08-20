@@ -3529,7 +3529,7 @@ Rocket.prototype.doorOpen = function (dt) {
        светом, и подмену физически не видно. Переменную читает
        rc-world.css, слой лежит поверх страницы. */
     V(document.documentElement, "--hatch-glow",
-      (Math.max(0, this.doorK - 0.30) / 0.7 * this.appK).toFixed(3));
+      (Math.max(0, this.doorK - 0.30) / 0.7 * this.appK).toFixed(2));
   }
   /* Проход открыт и кадр закрыт корпусом - можно отдавать сцену
      интерьеру. Флаг читает rc-interior: подмена случается под
@@ -3664,6 +3664,56 @@ Rocket.prototype.layout = function (p, dt) {
     }
   }
 
+  /* ── Коридор чтения ─────────────────────────────────────────
+     Приёмка поймала главное: корабль шёл прямо по строкам. На
+     телефоне он закрывал сразу четыре заголовка подряд, на мониторе
+     проходил сквозь карточки продуктов и кольцо «99,9%».
+
+     Разводим это двумя средствами сразу, одинаковыми на всех
+     устройствах - меняется только запас по краям, потому что поля
+     кадра у телефона и монитора разной ширины.
+
+     Первое: если сбоку есть свободное поле, корабль мягко уходит в
+     него. Второе: насколько он всё же остался над колонкой, ровно
+     настолько кадр его и приглушает - долю публикуем в CSS.
+
+     Не трогаем ни виток вокруг шара, ни посадку, ни подход к люку,
+     ни пролог: там положение корабля - часть сцены, и любой сдвиг
+     ломает то, к чему мы идём. */
+  var lock = Math.max(this.orbK || 0, app, (this.landK || 0), dk || 0);
+  if (lock < 0.2 && !(scAct && scAct.act === "pad")) {
+    var vw = this.canvas.clientWidth || innerWidth;
+    /* Полуширина читаемой колонки в пикселях: та же, что у вёрстки */
+    var colHalf = Math.min(vw * 0.5, 600) * 0.92;
+    var edge = Math.max(0, vw * 0.5 - colHalf);   /* свободное поле */
+
+    var pr = this._corrV || (this._corrV = new T.Vector3());
+    pr.copy(pos).project(this.cam);
+    var sx = (pr.x * 0.5 + 0.5) * vw;
+    var off = sx - vw * 0.5;
+    var over = 1 - Math.min(1, Math.abs(off) / Math.max(1, colHalf));
+
+    if (pr.z < 1) {
+      /* Сколько мира приходится на пиксель на глубине корабля */
+      var dist = Math.abs(this.cam.position.z - pos.z) || 1;
+      var worldW = 2 * Math.tan(this.cam.fov * Math.PI / 360) * dist * this.cam.aspect;
+      var perPx = worldW / vw;
+
+      /* Смещение храним отдельно и ведём к цели плавно: сама
+         позиция каждый кадр берётся заново с кривой маршрута, и
+         разовая поправка в неё не накапливается - корабль так и
+         оставался посреди строк. */
+      var side = off >= 0 ? 1 : -1;
+      var wantPx = over > 0.001 ? side * (colHalf + edge * 0.5) - off : 0;
+      var cur = this._corrX || 0;
+      var to = wantPx * perPx * (1 - lock / 0.2);
+      this._corrX = cur + (to - cur) * (dt ? Math.min(1, dt * 3.2) : 0.06);
+      pos.x += this._corrX;
+
+    }
+  }
+  if (lock >= 0.2) { this._corrX = (this._corrX || 0) * 0.86; }
+
   this.pivot.position.copy(pos);
 
   /* Нос смотрит вдоль движения. На орбите доворачиваем резче,
@@ -3718,7 +3768,36 @@ Rocket.prototype.layout = function (p, dt) {
      виден целиком, от носа до стабилизаторов. Это читается «стоит
      вдалеке», а не «мы подошли вплотную». К единице подхода борт с
      люком обязан выходить за все четыре края. */
-  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 3.9) * (1 + dk * dk * 1.25);
+  /* ── Кадр фильма и кадр чтения ─────────────────────────────
+     Приёмка прислала снимок телефона: корпус во весь экран, а
+     поверх него четыре заголовка подряд. Дело не в прозрачности -
+     корабль шириной в экран не может не мешать буквам.
+
+     Поэтому у сцены два состояния. В кинематографических актах
+     (старт, набор высоты, вход в атмосферу, посадка, подход к люку)
+     корабль остаётся героем кадра и крупным - там текста почти нет.
+     В актах, где человек читает, он отходит вглубь: остаётся тем же
+     кораблём того же мира, просто дальше от нас.
+
+     Разница по устройствам только в величине шага: на мониторе есть
+     поля, куда его можно отвести, на телефоне их нет. */
+  var CINE = {
+    pad: 1, ignite: 1, climb: 1, clouds: 1, reentry: 1,
+    landing: 1, walk: 1, egress: 1
+  };
+  var scS = g.RC_SCENE;
+  var readAct = scS && !CINE[scS.act] ? 1 : 0;
+  var readGoal = 1 - readAct * (this.C.mobile ? 0.46 : 0.16);
+  /* Ведём плавно: резкий скачок масштаба на границе актов виден
+     как рывок корпуса */
+  this._readS = this._readS == null ? readGoal
+              : this._readS + (readGoal - this._readS) * Math.min(1, (dt || 0.016) * 2.4);
+  /* Подход к люку и посадка возвращают полный размер независимо от
+     акта: там мы идём к самому кораблю */
+  var full = Math.max(app, (this.landK || 0), dk || 0);
+  var readS = this._readS + (1 - this._readS) * Math.min(1, full * 1.5);
+
+  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 3.9) * (1 + dk * dk * 1.25) * readS;
   this._sNow = sNow;
   this.pivot.scale.setScalar(sNow);
 };
@@ -3745,7 +3824,23 @@ Rocket.prototype.veil = function (dt) {
     var h = this.canvas.clientHeight || innerHeight;
     var cx = (v.x * 0.5 + 0.5) * w;
     var cy = (-v.y * 0.5 + 0.5) * h;
-    var rad = Math.min(w, h) * (this.C.mobile ? 0.20 : 0.17);
+    /* Радиус проверки раньше был долей экрана - и это была ошибка:
+       у корабля, занявшего экран целиком, центр далеко от собственных
+       краёв, поэтому строки, лежащие прямо на корпусе, в проверку не
+       попадали. Считаем честный экранный радиус самого корпуса. */
+    if (this._hullR == null) {
+      var box = new T.Box3().setFromObject(this.craft);
+      var sph = box.getBoundingSphere(new T.Sphere());
+      this._hullR = sph.radius || 1.4;
+    }
+    var rWorld = this._hullR * (this._sNow || 1);
+    var edgeV = this._tmpD.copy(this.pivot.position);
+    edgeV.y += rWorld;
+    edgeV.project(this.cam);
+    var rad = Math.abs((-edgeV.y * 0.5 + 0.5) * h - cy);
+    /* Немного меньше габарита: у самой кромки корпус уже прозрачен
+       от бликов, и слишком широкая мерка гасила бы корабль всегда */
+    rad = Math.max(Math.min(w, h) * 0.12, rad * 0.82);
     var rr = rad * rad;
     var list = this.readables();
     var hit = false;
@@ -3782,6 +3877,10 @@ Rocket.prototype.veil = function (dt) {
   if (!moved && !occMoved && light === this._wasLight) return;
   this._wasLight = light;
   this.canvas.style.opacity = (this._veil * this.occl * (light ? 0.92 : 1)).toFixed(3);
+  /* Насколько корабль сейчас уступил тексту - по этой доле вёрстка
+     подкладывает под буквы мягкую тень. Одно число на оба средства,
+     считает его тот, кто честно смотрит на пересечение со строками. */
+  V(document.documentElement, "--rk-veil", (1 - this._veil).toFixed(2));
 };
 
 /* Тяга по актам. Двигатель не может гудеть одинаково на старте и в
@@ -3956,9 +4055,9 @@ Rocket.prototype.quake = function (dt) {
     var oy = (Math.sin(t * 47 + 1.7) * 0.65 + Math.sin(t * 22 + 0.4) * 0.35) * s;
     this.cam.position.x = ox * 0.22;
     this.cam.position.y = oy * 0.17;
-    V(root, "--rc-shake", s.toFixed(3));
-    V(root, "--rc-shake-x", (ox * 8).toFixed(2) + "px");
-    V(root, "--rc-shake-y", (oy * 6).toFixed(2) + "px");
+    V(root, "--rc-shake", s.toFixed(2));
+    V(root, "--rc-shake-x", (ox * 8).toFixed(1) + "px");
+    V(root, "--rc-shake-y", (oy * 6).toFixed(1) + "px");
     if (!this._quakeOn) { this._quakeOn = 1; root.classList.add("rc-quake"); }
     return;
   }
@@ -4010,10 +4109,17 @@ Rocket.prototype.publish = function () {
      дальше тридцати четырёх корабль уже точка. */
   var dist = this.cam.position.distanceTo(this.pivot.position);
   var near = 1 - Math.max(0, Math.min(1, (34 - dist) / 26));
-  var rt = document.documentElement;
-  V(rt, "--rocket-x", Math.round(x) + "px");
-  V(rt, "--rocket-y", Math.round(y) + "px");
-  V(rt, "--rocket-near", (1 - near).toFixed(3));
+  /* Пишем на сам слой свечения, а не на корень документа: эти три
+     числа меняются каждый кадр, а читает их одна-единственная
+     подложка. Запись на :root помечала устаревшим стиль всему
+     дереву - на приёмке это была заметная доля пересчёта. */
+  var shine = this._shineEl;
+  if (!shine) {
+    shine = this._shineEl = document.querySelector(".rc-shine") || document.documentElement;
+  }
+  V(shine, "--rocket-x", Math.round(x) + "px");
+  V(shine, "--rocket-y", Math.round(y) + "px");
+  V(shine, "--rocket-near", (1 - near).toFixed(2));
   g.RC_ROCKET_POS = { x: x, y: y, near: 1 - near, orb: this.orbK };
 };
 
