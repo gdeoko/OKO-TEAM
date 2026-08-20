@@ -43,8 +43,16 @@
   height: var(--cab-win-h, 66%);
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* На широком экране голограмма стоит у левого края остекления, а
+     не посреди него: за стеклом Земля, и закрывать её панелью
+     нельзя - владелец просил именно этот кадр, «космос с Землёй как
+     в игре». На телефоне окна на две колонки не хватает, там
+     голограмма занимает его целиком. */
+  justify-content: flex-start;
   pointer-events: none;
+}
+@media (max-width: 760px) {
+  .rc-desk .dsk-win { justify-content: center; }
 }
 .rc-desk.dsk-on .dsk-win { pointer-events: auto; }
 
@@ -55,7 +63,8 @@
   /* На широком экране остекление кабины шире, чем нужно тексту:
      строка вопроса в тысячу двести пикселей не читается, а кнопки
      растягиваются в полосы. Экран занимает середину окна. */
-  width: min(100%, 720px);
+  width: min(100%, 46vw, 560px);
+  height: 100%;
   max-height: 100%;
   padding: clamp(12px, 2.2vh, 22px) clamp(12px, 2.4vw, 24px);
   overflow: hidden;
@@ -64,11 +73,15 @@
   gap: clamp(8px, 1.4vh, 14px);
   border-radius: clamp(10px, 1.6vw, 20px);
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
+  /* Подложка почти прозрачна: это проекция на стекле, а не панель
+     поверх кадра. Космос и Земля обязаны читаться сквозь неё. */
   background:
     linear-gradient(168deg,
       rgba(var(--int-cyan-rgb, 66,178,220), .10),
-      rgba(6, 16, 28, .58) 46%,
-      rgba(6, 16, 28, .72));
+      rgba(6, 16, 28, .34) 46%,
+      rgba(6, 16, 28, .46));
+  backdrop-filter: blur(2px) saturate(1.15);
+  -webkit-backdrop-filter: blur(2px) saturate(1.15);
   box-shadow:
     inset 0 1px 0 rgba(226,232,240,.18),
     0 0 42px -14px rgba(var(--int-cyan-rgb, 66,178,220), .75);
@@ -101,13 +114,6 @@
   opacity: .8;
 }
 
-.rc-desk .dsk-body {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(6px, 1.1vh, 12px);
-  min-height: 0;
-}
 .rc-desk .dsk-slot {
   position: relative;
   /* Форма длиннее окна остекления, и вылезать за переплёт ей нельзя:
@@ -117,14 +123,29 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.rc-desk .dsk-body { flex: 0 0 auto; }
+/* Тело голограммы тянется на всю высоту остекления: справочник
+   сверху, приборный ряд внизу. Раньше блок сжимался по содержимому,
+   и кнопки повисали посреди стекла - владелец назвал это «блоки все
+   кривые». */
+.rc-desk .dsk-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.1vh, 12px);
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
-/* Две кнопки сверху - ровно как просил владелец: сначала действие,
-   потом вопросы. Они и есть главное на этом экране. */
+/* Приборный ряд под справочником: две кнопки заявки в строку и
+   пусковая на всю ширину под ними. Ряд прижат к низу голограммы -
+   так же, как на настоящем пульте под стеклом. */
 .rc-desk .dsk-acts {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(6px, 1vw, 10px);
+  margin-top: auto;
+  padding-top: clamp(8px, 1.4vh, 14px);
+  border-top: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
 }
 .rc-desk .dsk-b {
   font: 600 clamp(11px, 1.55vh, 14px)/1.2 var(--f-sans, inherit);
@@ -158,9 +179,14 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Последняя строка не должна обрываться на полуслове: если список
+     не влез, он гаснет к нижнему краю и ясно, что дальше есть ещё */
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
 }
 .rc-desk .dsk-q {
   display: block;
@@ -273,34 +299,56 @@
    доступный с клавиатуры блок - это ловушка для фокуса. Формы к
    этому моменту уже переехали на экран панели и остаются доступны. */
 html.rc-inside:not(.rc-reduced) #faq > .wrap,
-html.rc-inside:not(.rc-reduced) #contact > .wrap {
+html.rc-inside:not(.rc-reduced) #contact > .wrap,
+html.rc-inside:not(.rc-reduced) #epilogue > .wrap {
   visibility: hidden;
 }
-/* Правовая строка подвала - тоже часть страницы, а не кабины: пока
-   на остеклении горит экран панели, она просвечивать не должна */
-html.rc-start-on .legal { opacity: 1; }
-html.rc-inside:not(.rc-start-on):not(.rc-reduced) .legal {
-  opacity: 0;
-  transition: opacity .4s linear;
-}
+/* Эпилог тоже уехал на стекло. Раньше он оставался отдельным
+   экраном: камера отъезжала от пульта, и поверх кадра всплывали
+   титр, кнопка полёта и правовая строка подвала - владелец назвал
+   это «политика конфиденциальности и всякая другая хрень подвала
+   поверх налеплено криво», и был прав. Внутри корабля подвала нет:
+   в кабине есть остекление, пульт и кнопка старта на нём. Высоту
+   секции при этом сохраняем (видимость, а не display): по ней идёт
+   последний отрезок прокрутки, на котором горит панель. */
 
 /* Просьба меньше движения или упрощённый режим - и всё возвращается
    на свои места: обычные разделы, обычная форма, никакой панели */
 html.rc-reduced .rc-desk { display: none; }
 
-/* ── Титр старта приходит на смену экрану ────────────────────
-   Владелец описал переход одной фразой: «она глитчем исчезает, и
-   глитчем появляется уже надпись старта игры». Класс на корне
-   ставит rc-desk.js в тот момент, когда камера пошла назад от
-   пульта - то есть ровно тогда, когда экран панели гаснет. */
-@keyframes dskStart {
-  0%   { opacity: 0; clip-path: inset(46% 0 46% 0); transform: translate3d(0,0,0) scaleY(.4); }
-  18%  { opacity: 1; clip-path: inset(8% 0 62% 0);  transform: translate3d(-6px,0,0) scaleY(1.05); }
-  32%  { opacity: .5; clip-path: inset(58% 0 10% 0); transform: translate3d(5px,0,0) scaleY(.96); }
-  46%  { opacity: 1; clip-path: inset(22% 0 34% 0); transform: translate3d(-3px,0,0) scaleY(1.02); }
-  60%  { opacity: .8; clip-path: inset(0 0 72% 0);  transform: translate3d(2px,0,0) scaleY(1); }
-  100% { opacity: 1; clip-path: inset(0 0 0 0);     transform: translate3d(0,0,0) scaleY(1); }
+/* ── Кнопка старта на пульте ─────────────────────────────────
+   Полёт больше не отдельный титр в конце страницы, а тумблер на
+   приборной панели: «список вопросов, две кнопки и кнопка полёта в
+   космос». Поэтому кнопка живёт в том же ряду, что и заявка, но
+   выглядит иначе - это единственное на панели действие, которое
+   уводит из кабины. */
+.dsk-b-fly {
+  grid-column: 1 / -1;
+  background: linear-gradient(100deg,
+    rgba(var(--int-cyan-rgb, 66 178 220), .22),
+    rgba(var(--int-vio-rgb, 150 92 220), .18)) !important;
+  border-color: rgba(var(--int-cyan-rgb, 66 178 220), .6) !important;
+  color: #eaf6ff !important;
+  letter-spacing: .1em;
 }
-html.rc-start-on:not(.rc-reduced) .epi-holo {
-  animation: dskStart .62s steps(1, end) 1;
+.dsk-b-fly svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 7px; }
+.dsk-b-fly:hover { filter: brightness(1.22); }
+
+/* Запал старта: у самого дна страницы голограмма начинает рваться
+   чаще и ярче - кадр предупреждает, что сейчас будет полёт */
+@keyframes dskArm {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: .5; }
+}
+.rc-desk.dsk-arm .dsk-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66 178 220), 0) 0%,
+    rgba(var(--int-cyan-rgb, 66 178 220), .55) 48%,
+    rgba(var(--int-cyan-rgb, 66 178 220), 0) 100%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: dskArm .28s linear infinite;
 }

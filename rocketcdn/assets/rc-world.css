@@ -668,19 +668,23 @@ html[data-theme="light"].rc-hull:not(.rc-approach) #faq .faq-i {
    потому что main - родитель всей страницы. Раздел читает своё
    значение сам, наследовать его некому. */
 @property --rc-clear { syntax: "<number>"; inherits: false; initial-value: 0; }
-html[data-act="landing"] main.w3-stage > *,
-html[data-act="walk"] main.w3-stage > * {
+/* Очистка не привязана к акту, и это принципиально. Пока правило
+   висело на двух актах, между ними оставалась щель: корабль уже шёл
+   на посадку и занимал кадр, а акт ещё назывался «маршрут» - и
+   заголовок соседнего раздела спокойно читался прямо по корпусу.
+   Владелец прислал ровно такой кадр. Долю очистки ведёт сам корабль
+   (rc-rocket), вне посадки она ноль, поэтому лишнего правило не
+   погасит нигде. */
+main.w3-stage > * {
   opacity: calc(1 - var(--rc-clear, 0));
   transition: opacity .45s linear;
 }
 /* Ниже площадки не должно быть видно «продолжения»: подвал и
    правовая строка уходят вместе со всем остальным */
-html[data-act="landing"] .legal,
-html[data-act="walk"] .legal { opacity: calc(1 - var(--rc-clear, 0)); }
+.legal { opacity: calc(1 - var(--rc-clear, 0)); }
 
 /* Пока кадр чистится, по нему нельзя попасть пальцем в невидимое */
-html[data-act="landing"] main.w3-stage > *,
-html[data-act="walk"] main.w3-stage > * {
+main.w3-stage > * {
   pointer-events: auto;
 }
 html[data-act="landing"][data-clear="1"] main.w3-stage > *,

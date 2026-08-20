@@ -299,21 +299,6 @@ html.rc-flying body { overflow: hidden; }
 .rcf-close:hover { border-color: rgba(var(--int-cyan-rgb, 66,178,220), .8); box-shadow: 0 0 24px -6px rgba(var(--int-cyan-rgb, 66,178,220), .7); }
 .rcf-close svg { width: 18px; height: 18px; }
 
-.rcf-return {
-  position: absolute; left: 50%; bottom: clamp(60px, 14vh, 130px);
-  transform: translateX(-50%) translateY(14px);
-  padding: 14px 30px;
-  font-family: var(--f-body, "Golos Text", sans-serif);
-  font-size: 14px; letter-spacing: .08em;
-  color: var(--int-deep, #050C15);
-  background: linear-gradient(135deg, var(--int-cyan, #42B2DC), var(--rcf-cy-hi, #7BD1EC));
-  border: 0; border-radius: 999px;
-  cursor: pointer;
-  opacity: 0; pointer-events: none;
-  transition: opacity .6s var(--ease), transform .6s var(--ease);
-  box-shadow: 0 0 40px -8px rgba(var(--int-cyan-rgb, 66,178,220), .9);
-}
-.rcf-return.on { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 
 .rcf-fade {
   position: absolute; inset: 0; pointer-events: none;
@@ -478,13 +463,17 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   transform: translateY(calc(var(--rcf-g, 0) * 1px));
   transition: opacity .8s var(--ease), transform .3s var(--ease);
 }
-.rc-flight.has-cab .rcf-cab { opacity: 1; }
+.rc-flight.has-cab .rcf-cab { opacity: calc(1 - var(--rcf-away, 0)); }
+
+/* Свободный обзор: пока мышь тянут, курсор показывает, что кадр
+   схвачен рукой */
+.rc-flight.rcf-drag { cursor: grabbing; }
 /* Бесшовный старт из финала: рамка кабины уже стоит перед глазами
    человека, она же остаётся в игре - и проявляться ей неоткуда.
    Восьмая доля секунды перехода читалась провалом: кабина исчезала
    и возвращалась. Здесь она просто продолжается. */
 .rc-flight.rcf-seam .rcf-cab { transition: none; }
-.rc-flight.rcf-seam.has-cab .rcf-cab { opacity: 1; }
+.rc-flight.rcf-seam.has-cab .rcf-cab { opacity: calc(1 - var(--rcf-away, 0)); }
 
 /* Стеновой тон поверх корпуса кабины.
    Фильтр правит температуру, но числа палитры в него не подставить,
@@ -860,7 +849,9 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-brief {
   position: absolute; inset: 0;
   display: grid; place-items: center;
-  background: radial-gradient(ellipse 70% 60% at 50% 46%, rgba(var(--int-deep-rgb, 5,12,21), .25), rgba(var(--int-deep-rgb, 5,12,21), .78));
+  /* Затемнение мягче прежнего: карта миссии не должна гасить космос
+     за стеклом - человек уже в кабине и обязан видеть, куда попал */
+  background: radial-gradient(ellipse 74% 64% at 50% 46%, rgba(var(--int-deep-rgb, 5,12,21), .10), rgba(var(--int-deep-rgb, 5,12,21), .55));
   opacity: 1; visibility: visible;
   transition: opacity .6s var(--ease), visibility 0s;
   z-index: 4;
@@ -1125,4 +1116,239 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-after-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 30px -8px rgba(var(--int-cyan-rgb, 66,178,220), .9);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Режим сцены: кабина игры служит финалом сайта
+
+   «Панель не та, которая в игре, я говорил - та панель (рамка),
+   которая в игре, 1:1 она же в ракете, и фон тот же, космос с
+   Землёй как в игре 1:1». Здесь это и сделано: в финале страницы
+   работает ровно этот слой, тот же корпус кабины и тот же мир.
+   Отличие одно - приборов нет и корабль стоит.
+
+   Страница под слоем обязана листаться: подъезд к пульту ведёт
+   прокрутка, а не тяга. Поэтому слой в этом режиме не ловит ни
+   палец, ни колесо - всё уходит странице, а нажимать надо по
+   голограмме, и она лежит отдельным слоем выше.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight.rcf-stage {
+  pointer-events: none;
+  touch-action: auto;
+  cursor: default;
+  /* Ниже голограммы пульта (.rc-desk, z-index 4) быть нельзя: слой
+     занимает весь кадр и рисует космос. Но и поверх шапки сайта ему
+     тоже не место - в финале она уже спрятана. */
+  z-index: 3;
+  background: transparent;
+}
+/* Приборов в режиме сцены нет: корабль стоит, лететь некуда, а
+   владелец просил именно чистый кадр - «без текста, без ничего» */
+.rc-flight.rcf-stage .rcf-hud,
+.rc-flight.rcf-stage .rcf-uni,
+.rc-flight.rcf-stage .rcf-auto,
+.rc-flight.rcf-stage .rcf-close,
+.rc-flight.rcf-stage .rcf-brief,
+.rc-flight.rcf-stage .rcf-deploy,
+.rc-flight.rcf-stage .rcf-holo {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* Появление кабины в кадре идёт вместе с подъездом, а не по таймеру:
+   доля та же, что двигает камеру */
+.rc-flight.rcf-stage { opacity: clamp(0, calc(var(--rcf-stage, 0) / .28), 1); }
+
+/* Пока идёт режим сцены, объёмная рубка сайта уходит: два корабля в
+   одном кадре - это и есть шов, которого быть не должно */
+html.rc-stage .rc-int-canvas,
+html.rc-stage .rc-int-air { opacity: 0 !important; transition: opacity .5s linear; }
+html.rc-stage #spaceBg { opacity: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   Приборная плита: один узел вместо наклеек по углам
+
+   «Кнопки развернуть узел, сканировать и так далее - все они
+   наклеены не красиво, не часть интерфейса, ещё и криво». Верно:
+   счётчики стояли в левом нижнем углу, скорость в правом, пуск узла
+   висел посреди кадра, а панель навигации уезжала за нижнюю кромку.
+
+   Теперь это одна плита в три колонки - счётчики, навигация,
+   скорость, - и она стоит в нише пульта, нарисованной на самой
+   картинке кабины. Ничего не висит отдельно и ничего не обрезается.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-deck {
+  left: 50%;
+  /* Ниша приборов на картинке кабины начинается примерно на 78%
+     высоты. Плиту сажаем в неё, а не к самому низу экрана: там её
+     срезала кромка кадра. */
+  bottom: clamp(10px, 2.2vh, 26px);
+  display: grid;
+  grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr);
+  align-items: center;
+  gap: clamp(10px, 2vw, 26px);
+  max-width: min(96vw, 1120px);
+  padding: clamp(8px, 1.2vh, 13px) clamp(12px, 1.6vw, 20px);
+}
+.rc-flight .rcf-gauges {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-self: start;
+}
+.rc-flight .rcf-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+/* Счётчики и скорость внутри плиты стоят на своих местах, а не
+   абсолютом по кадру */
+.rc-flight .rcf-deck .rcf-prog,
+.rc-flight .rcf-deck .rcf-net,
+.rc-flight .rcf-deck .rcf-speed {
+  position: static;
+  left: auto; right: auto; bottom: auto; top: auto;
+  transform: none;
+}
+.rc-flight .rcf-deck .rcf-speed {
+  justify-self: end;
+  text-align: right;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+/* Навигация в одну строку с переносом только на узком экране */
+.rc-flight .rcf-deck .rcf-nav {
+  max-width: min(660px, 68vw);
+}
+/* Пуск узла - кнопка того же ряда, а не плашка посреди кадра */
+.rc-flight .rcf-deck .rcf-deploy {
+  position: static;
+  transform: none;
+  margin: 0;
+  padding: 8px 18px;
+  font-size: 10.5px;
+  display: none;
+}
+.rc-flight .rcf-deck .rcf-deploy.on {
+  display: inline-block;
+  transform: none;
+}
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-deck {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    bottom: clamp(8px, 1.6vh, 18px);
+    padding: 8px 10px 10px;
+    max-width: 96vw;
+  }
+  .rc-flight .rcf-gauges { flex-direction: row; gap: 12px; justify-self: center; }
+  .rc-flight .rcf-deck .rcf-speed { justify-self: center; }
+  .rc-flight .rcf-deck .rcf-nav { max-width: 92vw; }
+}
+
+/* ── Досье объекта: голограмма на стекле ─────────────────────
+   Тот же материал, что у панели вопросов в финале сайта: почти
+   прозрачная подложка, циановая кромка, развёртка строк. Это не
+   окно интерфейса поверх игры, а проекция на остеклении кабины -
+   ровно как просил владелец. */
+.rcf-dos {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(.94);
+  width: min(560px, 78vw);
+  max-height: 74vh;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s var(--ease, ease), transform .3s var(--ease, ease);
+}
+.rcf-dos.on { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.rcf-dos-in {
+  position: relative;
+  padding: clamp(14px, 2.4vh, 22px) clamp(14px, 2vw, 22px) clamp(12px, 2vh, 18px);
+  border-radius: 14px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  background: linear-gradient(168deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .12),
+    rgba(6, 16, 28, .55) 46%,
+    rgba(6, 16, 28, .68));
+  backdrop-filter: blur(3px) saturate(1.2);
+  -webkit-backdrop-filter: blur(3px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgba(226,232,240,.16),
+              0 0 56px -16px rgba(var(--int-cyan-rgb, 66,178,220), .9);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.4vh, 13px);
+  max-height: 74vh;
+  overflow: hidden;
+}
+.rcf-dos-x {
+  position: absolute; right: 8px; top: 8px;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .4);
+  background: rgba(6,16,28,.5);
+  color: var(--int-lit, #CFE9F5);
+  cursor: pointer;
+}
+.rcf-dos-x svg { width: 15px; height: 15px; }
+.rcf-dos-h {
+  font-family: var(--f-head, "Bebas Neue", sans-serif);
+  font-size: clamp(19px, 3.2vh, 27px);
+  letter-spacing: .1em;
+  color: var(--int-lit, #CFE9F5);
+  text-shadow: 0 0 18px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  padding-right: 38px;
+}
+.rcf-dos-map {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .3);
+  /* Строка сканера пробегает по снимку: карта снимается сейчас, а
+     не лежала заранее */
+  mask-image: linear-gradient(180deg, #000 0 100%);
+}
+.rcf-dos.on .rcf-dos-map { animation: rcfDosScan 2.6s linear infinite; }
+@keyframes rcfDosScan {
+  0%   { filter: brightness(1) contrast(1.05); }
+  48%  { filter: brightness(1.16) contrast(1.12); }
+  100% { filter: brightness(1) contrast(1.05); }
+}
+.rcf-dos-p {
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: clamp(11.5px, 1.6vh, 14px);
+  line-height: 1.5;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .88);
+  margin: 0;
+}
+.rcf-dos-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .26);
+}
+.rcf-dos-facts span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rcf-dos-facts i {
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-style: normal;
+  font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .95);
+}
+.rcf-dos-facts b {
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: clamp(11px, 1.5vh, 13px); font-weight: 600;
+  color: var(--int-lit, #CFE9F5);
+}
+.rcf-dos-facts b.ok { color: #35E08F; }
+@media (max-width: 760px) {
+  .rcf-dos { width: 90vw; top: 42%; }
+  .rcf-dos-facts { grid-template-columns: 1fr 1fr; }
 }

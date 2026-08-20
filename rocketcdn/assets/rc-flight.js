@@ -93,7 +93,18 @@ var F = {
   open: false, built: false,
   p: 0, v: 0, look: { x: 0, y: 0, tx: 0, ty: 0 },
   last: 0, raf: null, shake: 0,
-  auto: true, goal: null,
+  /* Автопилот выключен по умолчанию. Владелец сказал прямо: «убери
+     автоматический запуск полёта, это же игра, а не экскурсия» -
+     корабль стоит и ждёт руки, пока человек сам не даст тягу или не
+     выберет кино в брифинге. */
+  auto: false, goal: null,
+  /* Режим сцены. Кабина игры служит финалом сайта: тот же корпус, то
+     же остекление, тот же космос за ним - «та панель (рамка), которая
+     в игре, 1:1 она же в ракете». В этом режиме мир построен и
+     нарисован, но корабль стоит: ни тяги, ни приборов, ни управления,
+     а страница под ним продолжает листаться. Скролл доводит кадр до
+     ракурса старта, и оттуда игра начинается без единой склейки. */
+  stage: false, stageK: 0,
   /* away - мы в чужой вселенной: там нет режиссёрской дуги, движение
      идёт облётами систем и планет, и маршрут родной системы не
      должен утягивать камеру обратно */
@@ -315,7 +326,7 @@ function buildUI() {
     navHtml += '<button type="button" data-goal="' + NAV[ni].id + '">' + NAV[ni].t + "</button>";
   }
   navHtml += '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' + (RU ? "Сканер" : "Scanner") + "</button>";
-  navHtml += '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="true">' + (RU ? "Авто" : "Auto") + "</button>";
+  navHtml += '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' + (RU ? "Авто" : "Auto") + "</button>";
 
   var uniHtml = "";
   for (var ui2 = 0; ui2 < UNIVERSES.length; ui2++) {
@@ -339,21 +350,50 @@ function buildUI() {
     '<img class="rcf-cab" alt="" aria-hidden="true" decoding="async">' +
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
-      '<div class="rcf-deck"><div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div></div>' +
+      /* Приборная плита собрана одним узлом: слева счётчики, в
+         середине навигация и пуск узла, справа скорость. Раньше всё
+         это висело по углам кадра отдельными наклейками, и владелец
+         сказал прямо: «кнопки развернуть узел, сканировать и так
+         далее - все они наклеены не красиво, не часть интерфейса, ещё
+         и криво». Теперь это одна панель, и она стоит в нише пульта
+         на самой картинке кабины. */
+      '<div class="rcf-deck">' +
+        '<div class="rcf-gauges">' +
+          '<div class="rcf-prog"></div>' +
+          '<div class="rcf-net"></div>' +
+        '</div>' +
+        '<div class="rcf-mid">' +
+          '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
+          '<button type="button" class="rcf-deploy"></button>' +
+        '</div>' +
+        '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+      '</div>' +
       '<div class="rcf-uni" role="menu"><i>' + (RU ? "КУДА ПРЫГАЕМ" : "JUMP TO") + '</i>' + uniHtml + '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
-        ? (RU ? "Ведите пальцем вверх - тяга, в сторону - взгляд" : "Swipe up to thrust, sideways to look")
-        : (RU ? "Колесо или свайп - тяга. Мышь - взгляд." : "Scroll or swipe to thrust. Mouse to look.")) + '</div>' +
-      '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+        ? (RU ? "Палец вверх - тяга. Палец вбок - обзор на 360" : "Swipe up to thrust, sideways for 360 look")
+        : (RU ? "Колесо - тяга. Зажмите и тяните мышь - обзор на 360" : "Wheel to thrust. Drag with the mouse for a 360 look")) + '</div>' +
       '<div class="rcf-info" role="status"></div>' +
-      '<div class="rcf-prog"></div>' +
-      '<div class="rcf-net"></div>' +
-      '<button type="button" class="rcf-deploy"></button>' +
+      /* Досье объекта: голограмма на стекле, ровно та же по духу, что
+         и панель вопросов в финале сайта. «По точкам планет добавить
+         возможность нажатия сканирования, и выходит видео/фото карты
+         Земли голограммой... всё это внутри корабля, голограммы на
+         стекле, как в панели управления». */
+      '<div class="rcf-dos" hidden>' +
+        '<div class="rcf-dos-in">' +
+          '<button type="button" class="rcf-dos-x" aria-label="' + (RU ? "Закрыть досье" : "Close") + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+          '</button>' +
+          '<b class="rcf-dos-h"></b>' +
+          '<canvas class="rcf-dos-map" width="640" height="320"></canvas>' +
+          '<p class="rcf-dos-p"></p>' +
+          '<div class="rcf-dos-facts"></div>' +
+        '</div>' +
+      '</div>' +
       '<div class="rcf-lock" aria-hidden="true"><b></b><b></b><b></b><b></b><span></span></div>' +
     '</div>' +
     '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
-    '<button type="button" class="rcf-auto" aria-pressed="true">' +
+    '<button type="button" class="rcf-auto" aria-pressed="false">' +
       '<i></i><span>' + (RU ? "Автопилот" : "Autopilot") + '</span>' +
     '</button>' +
     '<div class="rcf-brief">' +
@@ -369,7 +409,6 @@ function buildUI() {
     '<button type="button" class="rcf-close" aria-label="' + (RU ? "Выйти из полёта" : "Exit flight") + '">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
     '</button>' +
-    '<button type="button" class="rcf-return">' + (RU ? "Вернуться на сайт" : "Back to the site") + '</button>' +
     '<div class="rcf-fade"></div>';
   doc.body.appendChild(w);
   ui.wrap = w;
@@ -381,8 +420,13 @@ function buildUI() {
   ui.hint = w.querySelector(".rcf-hint");
   ui.speed = w.querySelector(".rcf-speed b");
   ui.auto = w.querySelector(".rcf-auto");
-  ui.ret = w.querySelector(".rcf-return");
   ui.info = w.querySelector(".rcf-info");
+  ui.dos = w.querySelector(".rcf-dos");
+  ui.dosH = w.querySelector(".rcf-dos-h");
+  ui.dosMap = w.querySelector(".rcf-dos-map");
+  ui.dosP = w.querySelector(".rcf-dos-p");
+  ui.dosF = w.querySelector(".rcf-dos-facts");
+  w.querySelector(".rcf-dos-x").addEventListener("click", function () { dosClose(); });
   ui.brief = w.querySelector(".rcf-brief");
   ui.uni = w.querySelector(".rcf-uni");
   ui.autoKey = w.querySelector(".rcf-auto-key");
@@ -416,7 +460,6 @@ function buildUI() {
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
   });
   w.querySelector(".rcf-close").addEventListener("click", close);
-  ui.ret.addEventListener("click", close);
   ui.auto.addEventListener("click", function () {
     setAuto(!F.auto);
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
@@ -440,6 +483,9 @@ function buildUI() {
   });
   ui.nav.addEventListener("click", function (e) {
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
+    /* Взялся за приборы - карта миссии больше не нужна. Раньше она
+       оставалась висеть поперёк кадра поверх выбранного курса. */
+    if (F.brief) { F.brief = false; if (ui.brief) ui.brief.classList.add("off"); }
     var ak = e.target.closest("button[data-autokey]");
     if (ak) {
       setAuto(!F.auto);
@@ -496,6 +542,140 @@ function cabSrc() {
   if (ui.cab.getAttribute("src") !== want) ui.cab.setAttribute("src", want);
 }
 
+/* ── Досье объекта: скан на стекле ───────────────────────────
+   Нажатие по телу в кадре снимает с него карту. Не подпись в углу,
+   а настоящий разбор: развёртка поверхности, снятая с той же
+   текстуры, которой планета нарисована в мире, поверх неё сетка
+   координат, отметки узлов сети и бегущая строка сканера.
+
+   Для Земли это буквально карта мира голограммой - то, что владелец
+   и просил: «ближе подлетать к Земле, видеть города, раскрывать типа
+   карты мира, какие-то фотки голограммой показывать».
+
+   Досье не отдельный экран: оно живёт в остеклении кабины, тем же
+   материалом, что и панель вопросов в финале сайта. */
+var dosT = 0, dosName = "";
+
+function dosClose() {
+  if (!ui.dos) return;
+  ui.dos.classList.remove("on");
+  dosName = "";
+  if (dosT) { clearTimeout(dosT); dosT = 0; }
+  dosT = setTimeout(function () { dosT = 0; if (ui.dos) ui.dos.hidden = true; }, 340);
+}
+
+/* Развёртка поверхности. Источник - карта самого тела: у планет это
+   тот же canvas, которым они покрашены в мире, поэтому досье и
+   объект не могут разойтись. Если карты нет (звезда, галактика),
+   рисуем спектральную полосу - и это честно: снимать с них нечего. */
+function dosPaint(obj, name) {
+  var cv = ui.dosMap;
+  if (!cv) return;
+  var x = cv.getContext("2d"), W = cv.width, H = cv.height, i;
+  x.clearRect(0, 0, W, H);
+  var map = obj && obj.material && obj.material.map;
+  var img = map && map.image;
+  var drew = false;
+  if (img && (img.width || img.naturalWidth)) {
+    try { x.drawImage(img, 0, 0, W, H); drew = true; } catch (e) {}
+  }
+  if (!drew) {
+    var gr = x.createLinearGradient(0, 0, W, H);
+    gr.addColorStop(0, "#071a2c");
+    gr.addColorStop(0.5, "#0d3d63");
+    gr.addColorStop(1, "#1b1030");
+    x.fillStyle = gr; x.fillRect(0, 0, W, H);
+    for (i = 0; i < 400; i++) {
+      x.fillStyle = "rgba(207,233,245," + (0.1 + Math.random() * 0.5).toFixed(2) + ")";
+      x.fillRect(Math.random() * W, Math.random() * H, 1.4, 1.4);
+    }
+  }
+  /* Голограмма, а не фотография: карта уходит в циан и развёртку */
+  x.globalCompositeOperation = "multiply";
+  x.fillStyle = "rgba(120,200,240,.85)";
+  x.fillRect(0, 0, W, H);
+  x.globalCompositeOperation = "screen";
+  x.fillStyle = "rgba(20,70,110,.5)";
+  x.fillRect(0, 0, W, H);
+  x.globalCompositeOperation = "source-over";
+
+  /* Сетка координат */
+  x.strokeStyle = "rgba(159,224,246,.28)";
+  x.lineWidth = 1;
+  for (i = 1; i < 8; i++) {
+    x.beginPath(); x.moveTo(W * i / 8, 0); x.lineTo(W * i / 8, H); x.stroke();
+  }
+  for (i = 1; i < 4; i++) {
+    x.beginPath(); x.moveTo(0, H * i / 4); x.lineTo(W, H * i / 4); x.stroke();
+  }
+  /* Отметки узлов сети: у Земли они настоящие, у прочих тел это
+     точки, которые ещё предстоит развернуть */
+  var marks = name.indexOf("ЗЕМЛ") === 0 || name.indexOf("EARTH") === 0 ? 16 : 6;
+  for (i = 0; i < marks; i++) {
+    var mx = W * (0.08 + (i * 0.137) % 0.84);
+    var my = H * (0.2 + ((i * 0.31) % 0.6));
+    x.strokeStyle = "rgba(207,233,245,.85)";
+    x.beginPath(); x.arc(mx, my, 5, 0, 6.283); x.stroke();
+    x.fillStyle = "rgba(66,178,220,.9)";
+    x.beginPath(); x.arc(mx, my, 2, 0, 6.283); x.fill();
+  }
+  /* Развёртка строк - тот же приём, что у голограммы пульта */
+  x.fillStyle = "rgba(5,12,21,.22)";
+  for (i = 0; i < H; i += 3) x.fillRect(0, i, W, 1);
+  /* Уголки рамки */
+  x.strokeStyle = "rgba(66,178,220,.9)"; x.lineWidth = 2;
+  var c = 22;
+  var corners = [[0,0,1,1],[W,0,-1,1],[0,H,1,-1],[W,H,-1,-1]];
+  for (i = 0; i < 4; i++) {
+    var q = corners[i];
+    x.beginPath();
+    x.moveTo(q[0] + q[2] * c, q[1]);
+    x.lineTo(q[0], q[1]);
+    x.lineTo(q[0], q[1] + q[3] * c);
+    x.stroke();
+  }
+}
+
+function dosOpen(obj, info) {
+  if (!ui.dos || !info) return;
+  var parts = info.split(" · ");
+  var name = parts[0] || info;
+  if (dosName === name && ui.dos.classList.contains("on")) return;
+  dosName = name;
+  if (dosT) { clearTimeout(dosT); dosT = 0; }
+  ui.dos.hidden = false;
+  ui.dosH.textContent = name;
+  ui.dosP.textContent = parts.slice(1).join(" · ") || (RU ? "Данных в бортовом справочнике нет." : "No data on board.");
+  dosPaint(obj, name);
+
+  /* Три показателя: удаление, состояние узла и доля исследованного.
+     Числа берём из самого мира, а не выдумываем: расстояние честно
+     считается от камеры. */
+  var facts = "";
+  var dist = null;
+  try {
+    if (obj && W3 && obj.getWorldPosition) {
+      var wp = new g.THREE.Vector3();
+      obj.getWorldPosition(wp);
+      dist = Math.round(W3.cam.position.distanceTo(wp) * 1000);
+    }
+  } catch (e) {}
+  if (dist !== null) {
+    facts += '<span><i>' + (RU ? "УДАЛЕНИЕ" : "RANGE") + '</i><b>' +
+      (dist > 9999 ? (dist / 1000).toFixed(1) + (RU ? " тыс. км" : "k km") : dist + (RU ? " км" : " km")) + '</b></span>';
+  }
+  var inNet = !!net[name];
+  facts += '<span><i>' + (RU ? "УЗЕЛ СЕТИ" : "NETWORK") + '</i><b class="' + (inNet ? "ok" : "") + '">' +
+    (inNet ? (RU ? "развёрнут" : "deployed") : (RU ? "не развёрнут" : "not deployed")) + '</b></span>';
+  facts += '<span><i>' + (RU ? "ИССЛЕДОВАНО" : "EXPLORED") + '</i><b>' +
+    Object.keys(explored).length + " / " + TOTAL_MARKS() + '</b></span>';
+  ui.dosF.innerHTML = facts;
+
+  requestAnimationFrame(function () { if (ui.dos) ui.dos.classList.add("on"); });
+  noteExplored(name);
+  if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+}
+
 /* ── Автопилот и навигация ───────────────────────────────────
    Автопилот держит крейсерскую тягу: корабль сам плывёт по всему
    маршруту, человек только смотрит по сторонам. Любое своё усилие
@@ -519,6 +699,17 @@ function manual() {
   F.orbit = null;
   if (F.brief) { F.brief = false; if (ui.brief) ui.brief.classList.add("off"); }
   hideHint();
+}
+
+/* Пределы обзора. По горизонту предела нет вовсе - это и есть
+   обещанные 360 градусов, угол просто держим в отрезке от минус до
+   плюс пи, чтобы возврат на курс шёл коротким путём, а не через
+   полный оборот. По вертикали упор нужен: за макушкой и под килем
+   картинка переворачивается, и человек теряет горизонт. */
+function clampLook() {
+  while (F.look.tx > Math.PI) { F.look.tx -= Math.PI * 2; F.look.x -= Math.PI * 2; }
+  while (F.look.tx < -Math.PI) { F.look.tx += Math.PI * 2; F.look.x += Math.PI * 2; }
+  F.look.ty = Math.max(-1.05, Math.min(1.05, F.look.ty));
 }
 
 /* ── Звёздные системы чужих вселенных ────────────────────────
@@ -1722,34 +1913,97 @@ function bindControls() {
     manual();
   }, { passive: false });
 
-  var tY = null, tX = null;
+  /* ── Свободный обзор ────────────────────────────────
+     «Добавь возможность на 360 крутить пальцем или мышкой в космосе
+     смотреть, чтобы обзор был» - дословно. Обзор здесь двух родов,
+     и путать их нельзя:
+
+       лёгкий - курсор просто ходит по экрану, картинка отзывается
+                на пару градусов. Это ощущение живой камеры.
+       полный - палец ведут по стеклу или мышь тянут с зажатой
+                кнопкой. Тогда угол копится без предела: можно
+                обернуться назад и посмотреть, откуда прилетели.
+
+     Полный обзор не сбрасывается сам по себе - человек сам решает,
+     когда вернуться на курс. Возвращает его тяга: дал газ - взгляд
+     плавно сходится к направлению полёта, как у настоящего пилота.
+
+     Жест на телефоне делится по первому движению: повели больше
+     вверх-вниз - это тяга, больше вбок - это обзор. Иначе каждый
+     свайп разгонял бы корабль заодно с поворотом головы. */
+  var tY = null, tX = null, tAxis = 0, tSum = 0;
   w.addEventListener("touchstart", function (e) {
-    if (e.touches.length) { tY = e.touches[0].clientY; tX = e.touches[0].clientX; }
+    if (e.touches.length) { tY = e.touches[0].clientY; tX = e.touches[0].clientX; tAxis = 0; tSum = 0; }
   }, { passive: true });
   w.addEventListener("touchmove", function (e) {
     e.preventDefault();
     if (!e.touches.length) return;
     var y = e.touches[0].clientY, x = e.touches[0].clientX;
     if (tY !== null) {
-      F.v += (tY - y) * 0.00016;
-      manual();
-      F.look.tx += (x - tX) * 0.004;
-      F.look.tx = Math.max(-0.5, Math.min(0.5, F.look.tx));
+      var dy = tY - y, dx = x - tX;
+      tSum += Math.abs(dx) + Math.abs(dy);
+      /* Ось выбираем один раз за жест и только когда движение
+         стало заметным: на первых двух пикселях направление случайно */
+      if (!tAxis && tSum > 14) tAxis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 1 : 2;
+      if (tAxis === 1) {
+        F.look.tx += dx * 0.006;
+        F.look.ty += dy * 0.0022;
+        F.free = true;
+        clampLook();
+      } else if (tAxis === 2) {
+        F.v += dy * 0.00016;
+        manual();
+      }
     }
     tY = y; tX = x;
     hideHint();
   }, { passive: false });
-  w.addEventListener("touchend", function () { tY = tX = null; F.look.tx *= 0.4; }, { passive: true });
+  w.addEventListener("touchend", function () { tY = tX = null; tAxis = 0; }, { passive: true });
 
+  var drag = false, dX = 0, dY = 0;
   w.addEventListener("pointermove", function (e) {
     if (e.pointerType === "touch") return;
-    F.look.tx = (e.clientX / innerWidth - 0.5) * 0.66;
-    F.look.ty = (e.clientY / innerHeight - 0.5) * 0.4;
     F.mx = (e.clientX / innerWidth) * 2 - 1;
     F.my = -(e.clientY / innerHeight) * 2 + 1;
+    if (drag) {
+      F.look.tx += (e.clientX - dX) * 0.005;
+      F.look.ty += (e.clientY - dY) * 0.0032;
+      dX = e.clientX; dY = e.clientY;
+      F.free = true;
+      clampLook();
+      hideHint();
+      return;
+    }
+    /* Пока кнопка не зажата, свободный угол не трогаем: иначе,
+       обернувшись назад, человек терял бы обзор от любого
+       движения мыши */
+    if (!F.free) {
+      F.look.tx = (e.clientX / innerWidth - 0.5) * 0.5;
+      F.look.ty = (e.clientY / innerHeight - 0.5) * 0.3;
+    }
   }, { passive: true });
   /* На тачскрине справочник вызывает касание */
+  /* Нажатие и перетаскивание - разные жесты одной кнопки. Досье
+     открывает только чистое нажатие: если между нажатием и отпуском
+     палец прошёл больше нескольких пикселей, это был обзор, и карту
+     снимать не надо. */
+  var downX = 0, downY = 0, downOK = false;
   w.addEventListener("pointerdown", function (e) {
+    F.mx = (e.clientX / innerWidth) * 2 - 1;
+    F.my = -(e.clientY / innerHeight) * 2 + 1;
+    downX = e.clientX; downY = e.clientY;
+    downOK = !(e.target.closest && e.target.closest(".rcf-hud, .rcf-dos, .rcf-uni, button, a"));
+    if (e.pointerType !== "touch" && downOK) {
+      drag = true; dX = e.clientX; dY = e.clientY;
+      w.classList.add("rcf-drag");
+    }
+  }, { passive: true });
+  addEventListener("pointerup", function (e) {
+    drag = false;
+    if (ui.wrap) ui.wrap.classList.remove("rcf-drag");
+    if (!downOK || !F.open) return;
+    var moved = Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY);
+    if (moved > 7) return;
     F.mx = (e.clientX / innerWidth) * 2 - 1;
     F.my = -(e.clientY / innerHeight) * 2 + 1;
     F.pick = true;
@@ -2297,6 +2551,10 @@ function frame(ts) {
      чужом рукаве маршрутной кривой нет, а F.p остаётся там, где его
      бросили: без этой проверки в чужой вселенной внезапно включался
      звёздный туннель и корабль сам набирал крейсерскую тягу. */
+  /* В режиме сцены корабль стоит у Земли: ни разгона, ни автопилота,
+     ни целей. Двигается только доля подъезда, и её ведёт прокрутка
+     страницы, а не тяга. */
+  if (F.stage) { F.v = 0; F.p = 0; F.goal = null; F.auto = false; F.orbit = null; F.brief = false; }
   var jumpZone = !F.away &&
     (W3.at ? (F.p > W3.at.jump0 && F.p < W3.at.jump1) : (F.p > 0.74 && F.p < 0.86));
   if (jumpZone && F.v < 0.11) F.v += (0.11 - F.v) * Math.min(1, dt * 2);
@@ -2446,15 +2704,57 @@ function frame(ts) {
   w3.baseQ.slerp(w3.tmpQ, Math.min(1, dt * 3.2));
   w3.cam.quaternion.copy(w3.baseQ);
 
-  /* Взгляд человека поверх автопилота */
+  /* Взгляд человека поверх автопилота.
+
+     Если человек развернулся свободным обзором и после этого дал
+     тягу, взгляд сам сходится к направлению полёта - тем быстрее,
+     чем сильнее газ. Так и ведёт себя пилот: осмотрелся, взялся за
+     ручку - смотрит по курсу. Без этого возврата единственным
+     способом выпрямиться было бы столь же аккуратно докрутить
+     мышь обратно, а это работа, а не игра. */
+  if (F.free) {
+    var pull = Math.abs(F.v) * 2.4;
+    if (F.goal || F.auto || F.orbit) pull = Math.max(pull, 0.9);
+    if (pull > 0.01) {
+      var kk = Math.min(1, dt * pull);
+      F.look.tx += (0 - F.look.tx) * kk;
+      F.look.ty += (0 - F.look.ty) * kk;
+      if (Math.abs(F.look.tx) < 0.02 && Math.abs(F.look.ty) < 0.02) {
+        F.look.tx = F.look.ty = 0;
+        F.free = false;
+      }
+    }
+  }
   F.look.x += (F.look.tx - F.look.x) * Math.min(1, dt * 5);
   F.look.y += (F.look.ty - F.look.y) * Math.min(1, dt * 5);
   w3.cam.rotateY(-F.look.x);
   w3.cam.rotateX(-F.look.y);
+  /* Отвернулись сильно - рамка кабины уходит: смотреть на переплёт
+     остекления, когда голова повёрнута назад, неоткуда. Доля идёт в
+     CSS, гасит рамку сама вёрстка. */
+  var away = Math.min(1, Math.max(0, (Math.abs(F.look.x) - 0.42) / 0.5));
+  if (Math.abs(away - (F.awayPub || 0)) > 0.02) {
+    F.awayPub = away;
+    ui.wrap.style.setProperty("--rcf-away", away.toFixed(2));
+  }
   /* Портрет: окно кокпита выше середины экрана, и цель, посаженная
      в геометрический центр, пряталась под нижнюю раму. Лёгкий
      наклон камеры вниз поднимает цель в стекло. */
   if (innerHeight > innerWidth) w3.cam.rotateX(-0.042);
+
+  /* Подъезд в режиме сцены. Владелец описал этот проход дословно:
+     «она после 360 чуть дальше камера ракурс, и по скроллу без текста
+     мы приближаемся, пока ракурс не станет такой, как в старте игры».
+     Значит доля подъезда не двигает корабль по маршруту - она только
+     отводит камеру назад по её же оси взгляда. На единице отвода нет
+     совсем: кадр в точности тот, с которого начинается полёт. */
+  if (F.stage) {
+    var backK = 1 - (F.stageK || 0);
+    if (backK > 0.002) {
+      w3.tmpB.set(0, 0, 1).applyQuaternion(w3.cam.quaternion);
+      w3.cam.position.addScaledVector(w3.tmpB, backK * 26);
+    }
+  }
 
   var speed = Math.abs(F.v);
 
@@ -2626,10 +2926,17 @@ function frame(ts) {
     if (!frame._ray) frame._ray = new T.Raycaster();
     frame._ray.setFromCamera({ x: F.mx, y: F.my }, w3.cam);
     var hits = frame._ray.intersectObjects(w3.pickables || [], false);
-    var info = null;
+    var info = null, hitObj = null;
     for (var hi = 0; hi < hits.length; hi++) {
-      if (hits[hi].object.userData && hits[hi].object.userData.info) { info = hits[hi].object.userData.info; break; }
+      if (hits[hi].object.userData && hits[hi].object.userData.info) {
+        info = hits[hi].object.userData.info; hitObj = hits[hi].object; break;
+      }
     }
+    /* Нажали по телу - снимаем с него карту. Наведение по-прежнему
+       только подписывает; досье открывает именно нажатие, иначе оно
+       выскакивало бы от каждого движения мыши. */
+    if (F.pick && info && hitObj) dosOpen(hitObj, info);
+    else if (F.pick && !info) dosClose();
     if (info !== frame._info) {
       frame._info = info;
       if (info) {
@@ -2789,7 +3096,6 @@ function frame(ts) {
   /* На перелёте между системами табло показывает настоящий ход:
      иначе при варпе счётчик стоял на месте, хотя мимо летит космос */
   ui.speed.textContent = String(Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9));
-  ui.ret.classList.toggle("on", F.p > 0.965);
 
   /* Звук идёт за тягой */
   if (g.RC_SOUND && g.RC_SOUND.flightLevel) {
@@ -2801,7 +3107,12 @@ function frame(ts) {
 
 /* ── Вход и выход ────────────────────────────────────────────ы */
 function open() {
-  if (F.open) return;
+  /* Из режима сцены игра не открывается заново - она просыпается.
+     Мир, камера и кабина уже в кадре, добавляются только приборы,
+     управление и ход корабля. Именно поэтому между сайтом и игрой
+     нет ни вспышки, ни перезагрузки, ни смены картинки. */
+  var fromStage = F.stage;
+  if (F.open && !fromStage) return;
   if (!g.THREE) {
     /* Объёмный слой ещё не доехал: дожидаемся и пробуем снова */
     var once = function () { removeEventListener("rc:3d", once); open(); };
@@ -2824,7 +3135,14 @@ function open() {
   }
 
   F.open = true;
-  F.p = 0; F.v = 0; F.last = 0;
+  if (fromStage) {
+    F.stage = false;
+    F.stageK = 0;
+    ui.wrap.classList.remove("rcf-stage");
+    root.classList.remove("rc-stage");
+  } else {
+    F.p = 0; F.v = 0; F.last = 0;
+  }
 
   /* Возвращаемся домой. Раньше выход из чужой вселенной оставлял
      uniIdx и F.away как есть: человек заходил снова, читал брифинг
@@ -2848,7 +3166,7 @@ function open() {
      карточку с двумя кнопками значит рвать сцену ровно там, где
      она должна склеиться. Поэтому в акте отлёта брифинга нет -
      корабль просто трогается на автопилоте. */
-  var seamless = root.getAttribute("data-act") === "egress";
+  var seamless = fromStage || root.getAttribute("data-act") === "egress";
   /* Бесшовный старт из финала: сайтовая кабина стоит на своём
      масштабе, и игра обязана принять кадр в том же виде. Готовность
      рамки проверяем ещё раз - между сборкой интерфейса и открытием
@@ -2864,8 +3182,10 @@ function open() {
   paintProgress();
   netPaint();
   netButton();
-  setAuto(true);
-  F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
+  /* Автопилот не включается сам: «убери автоматический запуск полёта,
+     это же игра, а не экскурсия». Кино включается кнопкой. */
+  setAuto(false);
+  if (!fromStage) { F.look.x = F.look.y = F.look.tx = F.look.ty = 0; F.free = false; }
   hintHidden = false;
   if (ui.hint) ui.hint.classList.remove("off");
   /* Подсказка про управление своё говорит один раз. Раньше она
@@ -2895,9 +3215,11 @@ function open() {
 function close() {
   if (!F.open) return;
   F.open = false;
-  if (F.raf) cancelAnimationFrame(F.raf);
-  root.classList.remove("rc-flying");
-  ui.wrap.classList.remove("on");
+  F.stage = false;
+  F.stageK = 0;
+  if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
+  root.classList.remove("rc-flying", "rc-stage");
+  ui.wrap.classList.remove("on", "rcf-stage");
   inertPage(false);
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: false } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(false); } catch (e) {} }
@@ -2975,8 +3297,82 @@ function launchers() {
   });
 }
 
+/* ── Кабина как финал сайта ──────────────────────────────────
+   Раньше финал рисовала своя трёхмерная рубка: свой корпус, своё
+   остекление, своя нарисованная планета. Получались два разных
+   корабля подряд - один на сайте, другой в игре, и владелец увидел
+   это сразу: «панель не та, которая в игре, я говорил - та панель
+   (рамка), которая в игре, 1:1 она же в ракете, и фон тот же, космос
+   с Землёй как в игре 1:1».
+
+   Теперь финал и игра - буквально один слой. Тот же корпус кабины,
+   тот же мир, та же Земля, та же камера. Разница ровно в двух вещах:
+   в режиме сцены корабль стоит и приборов на стекле нет, а по нажатию
+   старта они зажигаются и корабль трогается. Никакой склейки между
+   сайтом и игрой не существует - её нечему разделять.
+
+   Доля k ведёт подъезд: 0 - камера отведена назад (кадр «панель чуть
+   дальше»), 1 - ровно ракурс старта полёта. */
+function stage(k) {
+  k = k < 0 ? 0 : k > 1 ? 1 : k;
+  if (k <= 0.002) { stageOff(); return; }
+  if (F.open && !F.stage) return;            /* игра уже идёт - не мешаем */
+  if (!g.THREE) {
+    /* Объёмный слой ещё грузится: попробуем, когда доедет */
+    if (!stage._wait) {
+      stage._wait = 1;
+      addEventListener("rc:3d", function once () {
+        removeEventListener("rc:3d", once);
+        stage._wait = 0;
+        if (F.stageK > 0.002) stage(F.stageK);
+      });
+    }
+    F.stageK = k;
+    return;
+  }
+  buildUI();
+  if (!F.built) {
+    try { W3 = buildWorld(); } catch (e) {
+      try { console.error("rc-flight: мир сцены не собрался -", e); } catch (e2) {}
+      return;
+    }
+    F.built = true;
+  }
+  F.stageK = k;
+  if (ui.wrap) ui.wrap.style.setProperty("--rcf-stage", k.toFixed(3));
+  if (F.stage) return;
+
+  F.stage = true;
+  F.open = true;                              /* кадр рисуется тем же циклом */
+  F.p = 0; F.v = 0; F.last = 0;
+  F.away = false;
+  F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
+  F.free = false;
+  cabSrc();
+  if (ui.cab) {
+    if (ui.cab.complete && ui.cab.naturalWidth) ui.wrap.classList.add("has-cab");
+    else ui.cab.onload = function () { if (ui.wrap) ui.wrap.classList.add("has-cab"); };
+  }
+  ui.wrap.classList.add("on", "rcf-stage");
+  /* Класс на корне гасит трёхмерную рубку сайта: два корабля в одном
+     кадре - это и есть тот самый шов, ради которого всё затевалось */
+  root.classList.add("rc-stage");
+  size();
+  if (!F.raf) F.raf = requestAnimationFrame(frame);
+}
+
+function stageOff() {
+  F.stageK = 0;
+  if (!F.stage) return;
+  F.stage = false;
+  F.open = false;
+  if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
+  if (ui.wrap) ui.wrap.classList.remove("on", "rcf-stage");
+  root.classList.remove("rc-stage");
+}
+
 g.RC_FLIGHT = {
-  open: open, close: close,
+  open: open, close: close, stage: stage,
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);

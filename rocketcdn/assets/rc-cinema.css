@@ -73,6 +73,7 @@ html:not(.rc-reduced) .cin-ring {
      градусов), значит развести их можно только радиусом. */
   --cab-r: 545px;
   --cab-w: min(560px, 46vw);
+  --cab-h-scr: clamp(210px, 26vh, 280px);
   position: relative;
   display: block;
   height: calc(var(--cab-h) * 2);
@@ -138,6 +139,12 @@ html:not(.rc-reduced) .cin-world > .cin-item {
   margin-left: calc(var(--cab-w) / -2);
   height: auto;
   z-index: var(--cin-zi, 1);
+  /* Одна высота на все экраны. Владелец попросил прямо: «сделай
+     одного размера». Экраны стоят по кругу на одинаковых панелях, и
+     разная высота выдавала в них карточки сайта, а не приборы
+     корабля. Текст внутри выравнивается по центру, длинный
+     прокручивается - лишь бы рамка была одна. */
+  height: var(--cab-h-scr, 230px);
   transform:
     translateY(-50%)
     translateY(var(--cin-up, 0px))
@@ -145,6 +152,10 @@ html:not(.rc-reduced) .cin-world > .cin-item {
     translateZ(calc(var(--cab-r) * -1))
     scale(var(--cin-s, 1))
     scaleY(var(--cin-sy, 1)) !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
   opacity: var(--cin-vis, 1);
   filter: blur(var(--cin-blur, 0px));
   /* Трансформацию ведёт кадр, а не переход: любой transition на
@@ -179,6 +190,7 @@ html:not(.rc-reduced) .cin-world > .cin-item.cin-front {
     --cab-h: clamp(160px, 24vh, 240px);
     --cab-r: 378px;
     --cab-w: min(86vw, 300px);
+    --cab-h-scr: clamp(200px, 27vh, 260px);
     perspective: var(--cab-p, 508px);
   }
   /* Раньше здесь эффекты снимались начисто, и телефон получал

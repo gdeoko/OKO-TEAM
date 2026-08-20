@@ -152,18 +152,35 @@ Globe.prototype.draw = function (dt) {
   c.fillStyle = halo;
   c.beginPath(); c.arc(cx, cy, R * 1.42, 0, TAU); c.fill();
 
+  /* Тело шара непрозрачно. Раньше край уходил в полупрозрачность, и
+     сквозь планету просвечивал фон страницы - владелец увидел это
+     сразу: «планета полупрозрачная, не полноценная». Планета -
+     тело, а не витраж: сквозь неё не видно ничего. */
   var body = c.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
   if (this.theme === "light") {
-    body.addColorStop(0, "rgba(255,255,255,.95)");
-    body.addColorStop(0.7, "rgba(226,232,240,.75)");
-    body.addColorStop(1, "rgba(200,213,228,.55)");
+    body.addColorStop(0, "#FFFFFF");
+    body.addColorStop(0.62, "#E4EDF6");
+    body.addColorStop(1, "#C2D2E4");
   } else {
-    body.addColorStop(0, "rgba(19,42,66,.92)");
-    body.addColorStop(0.72, "rgba(9,19,32,.92)");
-    body.addColorStop(1, "rgba(4,10,18,.96)");
+    body.addColorStop(0, "#16324D");
+    body.addColorStop(0.68, "#0A1A2B");
+    body.addColorStop(1, "#050D18");
   }
   c.fillStyle = body;
   c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+
+  /* Терминатор: противоположная свету сторона уходит в тень. Один
+     этот полумесяц и делает круг шаром - без него плоская заливка
+     читается наклейкой, сколько её ни подкрашивай. */
+  var term = c.createRadialGradient(cx - R * 0.42, cy - R * 0.46, R * 0.12, cx + R * 0.16, cy + R * 0.2, R * 1.18);
+  term.addColorStop(0, "rgba(0,0,0,0)");
+  term.addColorStop(0.58, this.theme === "light" ? "rgba(46,72,102,.05)" : "rgba(0,0,0,.16)");
+  term.addColorStop(1, this.theme === "light" ? "rgba(28,48,74,.34)" : "rgba(0,0,0,.62)");
+  c.save();
+  c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.clip();
+  c.fillStyle = term;
+  c.fillRect(cx - R, cy - R, R * 2, R * 2);
+  c.restore();
 
   /* Сетка меридианов и параллелей */
   c.strokeStyle = P.grid; c.lineWidth = 1;

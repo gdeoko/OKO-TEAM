@@ -58,8 +58,41 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 var TAU = Math.PI * 2;
 /* Угол, на котором в рубке стоит приборная панель. Он же публикуется
    для слоя кабины (rc-cockpit), чтобы картинка пульта и поворот
-   камеры считались от одного числа и не могли разъехаться. */
-var TH_CON = -0.62;
+   камеры считались от одного числа и не могли разъехаться.
+
+   Ровно минус сорок пять градусов - это шов между седьмой и восьмой
+   стеновыми панелями. Так пост управления встаёт не поверх стены, а
+   вместо двух её плит: обе они не строятся, в оболочке на их месте
+   вырезан проём, и в проёме стоит остекление. Раньше угол был
+   произвольным (-0.62), панель приходилась на середину плиты, и
+   пульт неизбежно оказывался наклейкой поверх стеллажа. */
+var TH_CON = -Math.PI / 4;
+
+/* Проём остекления: половина угла и высота пояса, в котором в
+   оболочке нет стены. Всё, что связано с носовым окном - вырез в
+   обшивке, стекло, рама, пропуск плит и стойки - считается из этих
+   четырёх чисел, поэтому окно и дыра под него не могут разъехаться. */
+var WIN_HALF = 0.60;             /* 34 градуса в каждую сторону от TH_CON */
+var WIN_Y0 = 1.12;               /* низ проёма над полом */
+var WIN_Y1 = 2.62;               /* верх проёма */
+var R_SHELL = 2.6;               /* радиус обшивки: окно лежит в ней заподлицо */
+
+/* Азимут (наша система: точка th лежит в R sin th, y, -R cos th) в
+   угол цилиндра three.js (там точка лежит в r sin O, y, r cos O).
+   Ровно один минус разницы, но без него вырез в обшивке оказывается
+   в противоположном углу комнаты. */
+function thetaOf(th) { return Math.PI - th; }
+
+/* Попадает ли азимут в проём. Нормализуем разницу в отрезок
+   (-пи, пи]: угол пульта отрицательный, а углы плит растут от нуля
+   до полного круга, и без нормализации восьмая плита в проём не
+   попадала. */
+function inWindow(th, pad) {
+  var d = th - TH_CON;
+  while (d > Math.PI) d -= TAU;
+  while (d < -Math.PI) d += TAU;
+  return Math.abs(d) < WIN_HALF + (pad || 0);
+}
 
 /* ── Палитра рубки: единственный источник цвета ───────────────
    Раньше объёмная рубка, снимок пульта и стили формы красились
@@ -259,7 +292,11 @@ function measure() {
      на входе - клиент справедливо сказал, что так не бывает: пульт
      это предмет обстановки, а не интерфейс поверх кадра. */
   KNOT.push([P_TURN, TAU + TH_CON]);
-  KNOT.push([P_CON, TAU + TH_CON + 0.05]);
+  /* Раньше на подъезде камера ещё чуть доворачивалась (плюс три
+     градуса). На плоской стене это не читалось, а с настоящим
+     носовым окном - сразу: проём уезжал вбок, и голограмма вставала
+     не по центру кадра. Подъезд идёт строго по оси окна. */
+  KNOT.push([P_CON, TAU + TH_CON]);
 
   /* Узлы обязаны идти строго по возрастанию: иначе на коротком
      блоке камера дёрнется назад посреди сектора. */
@@ -298,6 +335,7 @@ var st = {
 
 var cv = null, rend = null, scene = null, cam = null, grp = null;
 var lamp = null, planet = null, halo = null, diodes = [], anchors = [], lock = null;
+var skyMesh = null;              /* небо за бортом: видно только сквозь проём */
 var deskLight = null, winMesh = null, air = null;
 /* Мелочь, которую снимают на слабых машинах: балки, поручень,
    световые пятна. Собираем в один список, чтобы гасить одним махом. */
@@ -621,27 +659,152 @@ function envTex() {
 }
 
 /* Планета за остеклением: тот же вид, что и в наружной сцене */
-function planetTex() {
-  var c = doc.createElement("canvas");
-  c.width = 512; c.height = 512;
-  var x = c.getContext("2d");
-  var gr = x.createLinearGradient(0, 0, 0, 512);
-  gr.addColorStop(0, "#0A5897");
-  gr.addColorStop(0.55, "#0B2B4A");
-  gr.addColorStop(1, hex6(COL.deep));
-  x.fillStyle = gr; x.fillRect(0, 0, 512, 512);
-  /* Материки точками, как на глобусе сайта */
-  x.fillStyle = "rgba(66,178,220,.55)";
-  for (var i = 0; i < 2600; i++) {
-    var px = Math.random() * 512, py = Math.random() * 512;
-    var n = Math.sin(px * 0.04) * Math.cos(py * 0.03) + Math.sin(py * 0.017);
-    if (n < 0.35) continue;
-    x.fillRect(px, py, 2, 2);
+/* Небо за бортом. Раньше космоса в рубке не было вовсе: окно
+   заливалось цветом, и за стеклом стояла пустота цвета тумана.
+   Теперь это настоящая сфера вокруг корабля - редкие звёзды разной
+   яркости, млечная полоса наискось и два далёких пылевых облака.
+   Полоса важнее звёзд: без неё небо читается шумом, а с ней у
+   космоса появляется верх и низ. */
+function skyTex() {
+  if (texCache.sky) return texCache.sky;
+  /* Две тысячи по горизонтали - не роскошь: сфера неба стоит в
+     сорока метрах, а смотрим мы на неё в упор через остекление, и
+     на тысяче пикселей звёзды разъезжались видимыми квадратами. */
+  var W = 2048, H = 1024;
+  var c = cnv(W, H), x = c.getContext("2d");
+  x.fillStyle = "#02040a"; x.fillRect(0, 0, W, H);
+  var i;
+
+  /* Млечная полоса: широкий мягкий пояс поперёк неба */
+  x.save();
+  x.translate(W / 2, H / 2);
+  x.rotate(-0.32);
+  var mg = x.createLinearGradient(0, -H * 0.26, 0, H * 0.26);
+  mg.addColorStop(0, "rgba(20,40,72,0)");
+  mg.addColorStop(0.42, "rgba(48,84,132,.36)");
+  mg.addColorStop(0.5, "rgba(126,164,206,.30)");
+  mg.addColorStop(0.58, "rgba(48,84,132,.36)");
+  mg.addColorStop(1, "rgba(20,40,72,0)");
+  x.fillStyle = mg;
+  x.fillRect(-W, -H * 0.26, W * 2, H * 0.52);
+  /* Пылевые прожилки внутри полосы: тёмные разрывы делают её
+     галактикой, а не подкрашенным прямоугольником */
+  x.fillStyle = "rgba(3,6,14,.55)";
+  for (i = 0; i < 26; i++) {
+    var dw = 60 + Math.random() * 260, dh = 6 + Math.random() * 22;
+    x.beginPath();
+    x.ellipse(-W / 2 + Math.random() * W, (Math.random() - 0.5) * H * 0.3, dw, dh, Math.random() * 0.5 - 0.25, 0, 6.283);
+    x.fill();
   }
-  /* Огни ночных городов */
-  x.fillStyle = "rgba(207,233,245,.85)";
-  for (i = 0; i < 90; i++) x.fillRect(Math.random() * 512, Math.random() * 512, 1.5, 1.5);
-  return new T.CanvasTexture(c);
+  x.restore();
+
+  /* Далёкие туманности: два холодных пятна на сложении */
+  var neb = [[W * 0.22, H * 0.36, "rgba(66,140,220,.20)"], [W * 0.74, H * 0.62, "rgba(150,92,220,.16)"]];
+  for (i = 0; i < neb.length; i++) {
+    var ng = x.createRadialGradient(neb[i][0], neb[i][1], 4, neb[i][0], neb[i][1], H * 0.3);
+    ng.addColorStop(0, neb[i][2]);
+    ng.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = ng;
+    x.fillRect(0, 0, W, H);
+  }
+
+  /* Звёзды тремя величинами: пыль, обычные и десяток ярких с
+     крестовыми лучами - глаз цепляется именно за них */
+  x.fillStyle = "rgba(180,205,232,.5)";
+  for (i = 0; i < 4200; i++) x.fillRect(Math.random() * W, Math.random() * H, 1.1, 1.1);
+  x.fillStyle = "rgba(226,240,252,.9)";
+  for (i = 0; i < 900; i++) x.fillRect(Math.random() * W, Math.random() * H, 1.8, 1.8);
+  for (i = 0; i < 26; i++) {
+    var sx = Math.random() * W, sy = Math.random() * H, r = 5 + Math.random() * 7;
+    var sg = x.createRadialGradient(sx, sy, 0, sx, sy, r);
+    sg.addColorStop(0, "rgba(255,255,255,.95)");
+    sg.addColorStop(0.35, "rgba(190,220,255,.35)");
+    sg.addColorStop(1, "rgba(190,220,255,0)");
+    x.fillStyle = sg;
+    x.beginPath(); x.arc(sx, sy, r, 0, 6.283); x.fill();
+    x.strokeStyle = "rgba(226,240,252,.45)"; x.lineWidth = 0.8;
+    x.beginPath();
+    x.moveTo(sx - r * 1.6, sy); x.lineTo(sx + r * 1.6, sy);
+    x.moveTo(sx, sy - r * 1.6); x.lineTo(sx, sy + r * 1.6);
+    x.stroke();
+  }
+  texCache.sky = new T.CanvasTexture(c);
+  return texCache.sky;
+}
+
+function planetTex() {
+  if (texCache.planet) return texCache.planet;
+  /* Планета стоит близко к окну и занимает половину проёма, поэтому
+     карта нужна крупная: на пятистах пикселях у неё не было ни
+     береговой линии, ни облаков - одна размытая заливка. */
+  var S = 1024, H = 512;
+  var c = cnv(S, H), x = c.getContext("2d");
+  var i;
+  var gr = x.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, "#0a3157");
+  gr.addColorStop(0.24, "#0a4a80");
+  gr.addColorStop(0.55, "#08223c");
+  gr.addColorStop(1, hex6(COL.deep));
+  x.fillStyle = gr; x.fillRect(0, 0, S, H);
+
+  /* Материки: не точками, а пятнами. Точки читались шумом, а глазу
+     нужен контур - он и отличает планету от крашеного шара. */
+  function land(cx, cy, rx, ry, rot, fill) {
+    x.save();
+    x.translate(cx, cy); x.rotate(rot);
+    x.beginPath();
+    var n = 22;
+    for (var k = 0; k <= n; k++) {
+      var a = k / n * Math.PI * 2;
+      var w = 0.66 + 0.34 * (Math.sin(a * 3 + cx) * 0.5 + Math.sin(a * 5 + cy) * 0.5 + 1) / 2;
+      var px = Math.cos(a) * rx * w, py = Math.sin(a) * ry * w;
+      if (!k) x.moveTo(px, py); else x.lineTo(px, py);
+    }
+    x.closePath();
+    x.fillStyle = fill;
+    x.fill();
+    x.restore();
+  }
+  var conts = [
+    [S * 0.16, H * 0.36, S * 0.10, H * 0.16, 0.3],
+    [S * 0.30, H * 0.62, S * 0.07, H * 0.13, -0.4],
+    [S * 0.52, H * 0.30, S * 0.13, H * 0.14, 0.2],
+    [S * 0.61, H * 0.58, S * 0.08, H * 0.15, 0.7],
+    [S * 0.80, H * 0.40, S * 0.11, H * 0.17, -0.2],
+    [S * 0.90, H * 0.70, S * 0.06, H * 0.09, 0.5]
+  ];
+  for (i = 0; i < conts.length; i++) {
+    land(conts[i][0], conts[i][1], conts[i][2], conts[i][3], conts[i][4], "#123f4a");
+    land(conts[i][0], conts[i][1], conts[i][2] * 0.82, conts[i][3] * 0.8, conts[i][4], "#1a5a52");
+  }
+  /* Полярные шапки: без них шар не читается шаром */
+  var pg = x.createLinearGradient(0, 0, 0, H * 0.09);
+  pg.addColorStop(0, "rgba(214,232,248,.55)");
+  pg.addColorStop(1, "rgba(226,240,252,0)");
+  x.fillStyle = pg; x.fillRect(0, 0, S, H * 0.09);
+  pg = x.createLinearGradient(0, H, 0, H * 0.91);
+  pg.addColorStop(0, "rgba(214,232,248,.55)");
+  pg.addColorStop(1, "rgba(226,240,252,0)");
+  x.fillStyle = pg; x.fillRect(0, H * 0.91, S, H * 0.09);
+
+  /* Облачные завихрения поверх: мягкие светлые дуги */
+  x.globalAlpha = 0.17;
+  x.fillStyle = "#dceaf6";
+  for (i = 0; i < 110; i++) {
+    var cx2 = Math.random() * S, cy2 = Math.random() * H;
+    var rx2 = 14 + Math.random() * 70, ry2 = 5 + Math.random() * 16;
+    x.beginPath();
+    x.ellipse(cx2, cy2, rx2, ry2, Math.random() * 1.2 - 0.6, 0, 6.283);
+    x.fill();
+  }
+  x.globalAlpha = 1;
+
+  /* Огни ночных городов вдоль побережий */
+  x.fillStyle = "rgba(255,214,160,.75)";
+  for (i = 0; i < 260; i++) x.fillRect(Math.random() * S, H * 0.12 + Math.random() * H * 0.76, 1.4, 1.4);
+
+  texCache.planet = new T.CanvasTexture(c);
+  return texCache.planet;
 }
 
 /* ── Сборка рубки ──────────────────────────────────────────
@@ -764,13 +927,36 @@ function build() {
     blending: T.AdditiveBlending, depthWrite: false, fog: false
   });
 
-  /* ── Оболочка ─────────────────────────────────────────── */
-  var shell = new T.Mesh(
-    new T.CylinderGeometry(2.6, 2.6, 3.4, tiny ? 28 : 44, 1, true),
-    shellMat
-  );
-  shell.position.y = 1.7;
-  grp.add(shell);
+  /* ── Оболочка ───────────────────────────────────────────
+     Обшивка идёт тремя поясами, а не одной трубой. Средний пояс -
+     на высоте окна - обрывается у проёма: в носу рубки настоящая
+     дыра в борту, и сквозь неё виден космос. Именно этого не
+     хватало раньше: пульт с окном рисовался поверх сплошной стены,
+     и владелец справедливо назвал это «панель поверх салона».
+
+     Нижний и верхний пояса замкнуты кругом: проём начинается на
+     высоте пояса приборов и заканчивается под кабельной трассой,
+     как в настоящей кабине. */
+  var segAll = tiny ? 28 : 44;
+  /* Стена начинается там, где вырез кончается, и идёт по кругу до
+     его другого края: у цилиндра three.js угол растёт в другую
+     сторону, чем наш азимут, поэтому старт берётся от дальнего
+     края окна. */
+  var gapA = thetaOf(TH_CON - WIN_HALF);
+  var gapLen = WIN_HALF * 2;
+  var shellBand = function (y0, y1, thetaStart, thetaLength) {
+    var sg = Math.max(4, Math.round(segAll * (thetaLength / TAU)));
+    var mesh = new T.Mesh(
+      new T.CylinderGeometry(R_SHELL, R_SHELL, y1 - y0, sg, 1, true, thetaStart, thetaLength),
+      shellMat
+    );
+    mesh.position.y = (y0 + y1) / 2;
+    grp.add(mesh);
+    return mesh;
+  };
+  shellBand(0, WIN_Y0, 0, TAU);                     /* пояс под окном */
+  shellBand(WIN_Y1, 3.4, 0, TAU);                   /* пояс над окном */
+  shellBand(WIN_Y0, WIN_Y1, gapA, TAU - gapLen);    /* пояс окна: с вырезом */
 
   /* ── Настил ───────────────────────────────────────────────
      Решётка, а под ней провал: пол получает толщину. Металличность
@@ -880,6 +1066,10 @@ function build() {
   var strutLit = new T.PlaneGeometry(0.03, 1.9);
   for (i = 0; i < PANELS; i++) {
     th = i * STEP;
+    /* Стойка на азимуте пульта пришлась бы ровно посреди окна и
+       перечеркнула бы космос пополам. Соседние две стоят по краям
+       проёма и работают его косяками. */
+    if (inWindow(th, -0.12)) continue;
     var col = new T.Group();
     m = new T.Mesh(strutGeo, steelMat);
     m.position.set(0, 0, -2.48);
@@ -924,6 +1114,12 @@ function build() {
 
   for (i = 0; i < PANELS; i++) {
     th = (i + 0.5) * STEP;
+    /* Две плиты приходятся на носовой проём: их не строим вовсе.
+       Обе они были глухими стеллажами (i >= 5), содержимого мы не
+       теряем - карточки живут на первых пяти. Якорь всё равно
+       заводим: кинематограф спрашивает по номеру, и пропуск в
+       списке сдвинул бы все следующие панели на шаг. */
+    if (inWindow(th, 0.02)) { anchors.push({ obj: null, th: th }); continue; }
     var pan = new T.Group();
     /* Плита утоплена глубже стены: у ниши появляется дно */
     var face = new T.Mesh(faceGeo, i < 5 ? panelMat : rackMat);
@@ -1078,54 +1274,102 @@ function build() {
      комнаты, и на подъезде камера смотрела мимо мебели. Теперь угол
      объявлен один раз и им пользуются оба слоя. */
   var con = new T.Group();
+  /* Точка на азимуте th лежит в (R sin th, h, -R cos th), а
+     содержимое группы стоит на её локальном минус Z. Чтобы это
+     локальное «вперёд» встало ИМЕННО на азимут TH_CON, группу надо
+     повернуть на минус TH_CON: у поворота группы и у нашей
+     азимутальной записи разные знаки. С прямым знаком пульт
+     оказывался зеркально, в противоположном углу комнаты, и камера
+     на подъезде упиралась в стеллажи. */
   con.rotation.y = -TH_CON;
   grp.add(con);
 
-  /* Остекление рубки: главный источник холодного света в кадре.
-     Стекло светится на просвет, тем же тоном, что и направленный
-     свет из окна. Тёмной плитой оно быть не имеет права - именно
-     из-за неё нос корабля превращался в чёрный прямоугольник. */
+  /* ── Носовое остекление ───────────────────────────────────
+     Окно теперь не плита перед стеной, а сама стена: гнутое стекло
+     сидит в вырезе обшивки заподлицо, на том же радиусе. Поэтому за
+     ним настоящий космос сцены, а не подложка, и никакого «окошка,
+     поверх которого наполовину появляется панель» быть уже не
+     может - панель стоит В этом стекле.
+
+     Материал держим почти прозрачным: стекло обязано читаться
+     бликом и лёгкой холодной вуалью, а не тонировкой. */
   var win = new T.Mesh(
-    new T.PlaneGeometry(2.9, 1.35, 1, 1),
-    new T.MeshBasicMaterial({ color: COL.lit, transparent: true, opacity: 0.1,
-      blending: T.AdditiveBlending, depthWrite: false, fog: false })
+    new T.CylinderGeometry(R_SHELL - 0.008, R_SHELL - 0.008, WIN_Y1 - WIN_Y0,
+      tiny ? 10 : 16, 1, true, gapA - gapLen, gapLen),
+    new T.MeshBasicMaterial({ color: COL.lit, transparent: true, opacity: 0.035,
+      blending: T.AdditiveBlending, depthWrite: false, side: T.BackSide, fog: false })
   );
-  win.position.set(0, 1.85, -2.45);
-  con.add(win);
+  win.position.y = (WIN_Y0 + WIN_Y1) / 2;
+  grp.add(win);
   winMesh = win;
 
-  /* Фаска остекления: тонкая циановая рамка по контуру. Тот же
-     приём, что у экрана анкеты в секции контактов - когда камера
-     доезжает до носа, рамка окна и рамка экрана стоят рядом и
-     читаются одним прибором, а не двумя разными картинками. */
-  var fasciaMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.42, fog: false });
-  var fh = new T.PlaneGeometry(3.02, 0.014);
-  var fv = new T.PlaneGeometry(0.014, 1.44);
-  var fPos = [[0, 2.53, fh], [0, 1.17, fh], [-1.51, 1.85, fv], [1.51, 1.85, fv]];
-  for (i = 0; i < fPos.length; i++) {
-    var fm = new T.Mesh(fPos[i][2], fasciaMat);
-    fm.position.set(fPos[i][0], fPos[i][1], -2.43);
-    con.add(fm);
+  /* Рама проёма: гнутые пороги сверху и снизу и два вертикальных
+     косяка по краям. Именно рама и превращает вырез в окно - без
+     неё борт выглядит оторванным куском обшивки. */
+  var frameMat = new T.MeshStandardMaterial({
+    color: 0x2b3a4a, roughness: 0.38, metalness: METAL * 0.8,
+    side: T.DoubleSide, envMapIntensity: ENVI
+  });
+  var fasciaMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.5, side: T.BackSide, fog: false });
+  var sillArc = function (y, h, litMat) {
+    var seg = new T.Mesh(
+      new T.CylinderGeometry(R_SHELL - 0.03, R_SHELL - 0.03, h, tiny ? 10 : 16, 1, true,
+        gapA - gapLen, gapLen),
+      litMat || frameMat
+    );
+    seg.position.y = y;
+    grp.add(seg);
+    return seg;
+  };
+  sillArc(WIN_Y0 - 0.055, 0.12);                 /* порожек под стеклом */
+  sillArc(WIN_Y1 + 0.055, 0.12);                 /* козырёк над стеклом */
+  sillArc(WIN_Y0 + 0.012, 0.016, fasciaMat);     /* холодная кромка по низу */
+  sillArc(WIN_Y1 - 0.012, 0.016, fasciaMat);     /* и по верху */
+
+  /* Косяки: короткие вертикальные коробы по краям проёма */
+  var jambGeo = new T.BoxGeometry(0.14, WIN_Y1 - WIN_Y0 + 0.2, 0.2);
+  for (i = 0; i < 2; i++) {
+    var jm = new T.Mesh(jambGeo, frameMat);
+    var jth = TH_CON + (i ? WIN_HALF : -WIN_HALF);
+    jm.position.set((R_SHELL - 0.06) * Math.sin(jth), (WIN_Y0 + WIN_Y1) / 2, -(R_SHELL - 0.06) * Math.cos(jth));
+    jm.rotation.y = -jth;
+    grp.add(jm);
   }
 
-  /* Планета за остеклением. Туман рубки на неё не действует: это
-     воздух помещения, а планета снаружи. Раньше туман её съедал, и
-     за окном оставалось мутное пятно. */
+  /* ── Космос за бортом ─────────────────────────────────────
+     Небо и планета живут в мире рубки, а не в группе пульта: они
+     снаружи корабля, и поворачиваться вместе с мебелью не должны.
+     Туман помещения на них не действует - это воздух каюты, а за
+     стеклом воздуха нет. */
+  var sky = new T.Mesh(
+    new T.SphereGeometry(46, tiny ? 16 : 24, tiny ? 12 : 16),
+    new T.MeshBasicMaterial({ map: skyTex(), side: T.BackSide, fog: false })
+  );
+  grp.add(sky);
+  skyMesh = sky;
+
+  /* Планета за остеклением. Стоит ровно на азимуте окна и чуть
+     ниже линии взгляда: так она попадает в нижнюю треть проёма -
+     тот самый кадр, с которого начинается полёт. */
   planet = new T.Mesh(
-    new T.SphereGeometry(7.5, tiny ? 18 : 28, tiny ? 14 : 20),
+    new T.SphereGeometry(11.5, tiny ? 24 : 36, tiny ? 16 : 26),
     new T.MeshBasicMaterial({ map: planetTex(), fog: false })
   );
-  planet.position.set(0.6, -3.6, -13);
-  con.add(planet);
+  /* Отодвинута дальше и увеличена: угловой размер тот же, а вот
+     детализация выросла вчетверо - вблизи стекла шар в семь метров
+     превращался в размытое пятно без границы. */
+  var pd = 34;
+  planet.position.set(pd * Math.sin(TH_CON) + 1.4, -8.2, -pd * Math.cos(TH_CON));
+  grp.add(planet);
 
   /* Атмосферный ободок планеты */
   halo = new T.Mesh(
-    new T.SphereGeometry(7.85, 20, 14),
+    new T.SphereGeometry(12.0, 24, 16),
     new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.16,
       side: T.BackSide, blending: T.AdditiveBlending, fog: false })
   );
   halo.position.copy(planet.position);
-  con.add(halo);
+  grp.add(halo);
 
   /* Пульт под остеклением */
   /* Столешница остаётся тёмной, но с собственным слабым свечением и
@@ -1472,19 +1716,25 @@ function setProgress(p) {
        только начало пути - камера стартует не из центра, а из
        позиции покоя. */
     st.dollyT = dRest + (-1.02 - dRest) * ec;
-    st.pitchT = -0.17 * ec;
+    st.pitchT = (phone ? -0.08 : -0.13) * ec;
     st.fovT = fovIn() + ec * 6;
   }
 
-  /* Отъезд: камера уходит от пульта назад и поднимает взгляд к
-     остеклению. Кадр при этом не пустеет - стены рубки в эту
-     минуту гаснут (rc-cockpit.css), и вперёд выходит космос за
-     стеклом вместе с рамкой кабины. */
+  /* Плато. Раньше здесь камера отъезжала назад, и владелец
+     справедливо сказал, что так эпизод разваливается: «при кликах
+     там камера уже не двигается, она в старте игры ракурс стоит,
+     просто голограмма как на компьютере меняется». Пока человек
+     листает последний отрезок страницы, кадр обязан стоять
+     неподвижно - это рабочее место, за ним сидят и нажимают
+     кнопки, а не проезжают мимо. Двигается только изображение на
+     стекле, и двигается оно от руки, а не от прокрутки.
+
+     Сам отрезок при этом не бесполезен: его доля (--int-out) - это
+     запал старта. У самого дна страницы по нему рвётся голограмма
+     и открывается полёт. */
   if (back > 0) {
-    var eb = 0.5 - 0.5 * Math.cos(Math.PI * back);
-    st.dollyT = -1.02 + eb * 3.1;
-    st.pitchT = -0.17 * (1 - eb);
-    st.fovT = (fovIn() + 6) - eb * 14;
+    st.dollyT = -1.02;
+    st.fovT = fovIn() + 6;
   }
 
   /* Щелчок фиксации: камера встала напротив очередной панели */
@@ -1541,6 +1791,64 @@ function project(th, h) {
   return out;
 }
 
+/* ── Экранный прямоугольник остекления пульта ────────────────
+   Голограмма вопросов и форм стоит НА стекле кабины, а не поверх
+   кадра. Значит вёрстке нужно знать, где это стекло сейчас на
+   экране: четыре его угла, спроецированные той же камерой, что
+   рисует саму рубку. Тогда экран панели не может от неё уехать - у
+   них одна геометрия на двоих, а не два похожих движения.
+
+   Считаем в системе группы пульта (она повёрнута на TH_CON), потом
+   переводим в мировую и проецируем вручную - штатная проекция у
+   точки за спиной возвращает зеркальный адрес. */
+var wTmp = null, wOut = { ok: false };
+function conScreen() {
+  wOut.ok = false;
+  if (!st.built || !cam) return wOut;
+  if (!wTmp) wTmp = new T.Vector3();
+  cam.updateMatrixWorld();
+
+  /* Окно гнутое, поэтому четырёх углов мало: середина дуги на
+     экране выше и шире краёв. Берём пояс точек по дуге на верхней
+     и нижней кромке и описываем вокруг них прямоугольник - это и
+     есть место голограммы. Точек ровно семь на кромку: меньше -
+     и середина выпуклости теряется, больше - лишняя работа в кадре.
+
+     Дугу берём чуть уже самого проёма (запас COIN), чтобы
+     голограмма не наползала на косяки рамы. */
+  var COIN = 0.90;
+  var N = 7, i, j;
+  var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9, dMin = 1e9, seen = 0, total = 0;
+  var f = 1 / Math.tan(cam.fov * Math.PI / 360);
+  var ys = [WIN_Y0 + 0.09, WIN_Y1 - 0.09];
+  var rr = R_SHELL - 0.02;
+  for (j = 0; j < ys.length; j++) {
+    for (i = 0; i < N; i++) {
+      var th = TH_CON + (-1 + 2 * i / (N - 1)) * WIN_HALF * COIN;
+      total++;
+      wTmp.set(rr * Math.sin(th), ys[j], -rr * Math.cos(th));
+      wTmp.applyMatrix4(cam.matrixWorldInverse);
+      var d = -wTmp.z;
+      if (d < 0.05) continue;                     /* точка за спиной */
+      seen++;
+      if (d < dMin) dMin = d;
+      var nx = (wTmp.x / d) * f / cam.aspect;
+      var ny = (wTmp.y / d) * f;
+      var sx = nx * 0.5 + 0.5, sy = -ny * 0.5 + 0.5;
+      if (sx < minX) minX = sx;
+      if (sx > maxX) maxX = sx;
+      if (sy < minY) minY = sy;
+      if (sy > maxY) maxY = sy;
+    }
+  }
+  if (seen < total) return wOut;                  /* окно видно не целиком */
+  wOut.ok = true;
+  wOut.x = minX; wOut.y = minY;
+  wOut.w = maxX - minX; wOut.h = maxY - minY;
+  wOut.d = dMin;
+  return wOut;
+}
+
 /* ── Якоря: экранные точки панелей уходят в CSS ────────────
    Переменные --int-anchor-N-x / -y / -v объявлены для всех
    восьми панелей. Первые четыре - те, на которых стоят карточки
@@ -1561,8 +1869,10 @@ function publish() {}
 function tick(ts) {
   raf = requestAnimationFrame(tick);
   if (!st.shown || doc.hidden) return;
-  /* В демо-полёте рубка спит: весь кадровый бюджет у космоса */
-  if (root.classList.contains("rc-flying")) { lastTs = 0; return; }
+  /* В полёте и в режиме сцены рубка спит: кадр держит кабина игры,
+     и рисовать второй корабль поверх неё незачем - это лишний
+     контекст WebGL в каждом кадре и тот самый шов в картинке. */
+  if (root.classList.contains("rc-flying") || root.classList.contains("rc-stage")) { lastTs = 0; return; }
 
   /* Держим ту же частоту, что и весь сайт: в простое двадцать */
   var min = g.RC_MOTION ? g.RC_MOTION.minFrame() : 16;
@@ -1634,7 +1944,7 @@ function tick(ts) {
   if (Math.abs(st.conL - st.con) > 0.002) {
     st.conL += (st.con - st.conL) * kY;
     if (deskLight) deskLight.intensity = 0.85 + st.conL * 1.7;
-    if (winMesh) winMesh.material.opacity = 0.1 + st.conL * 0.1;
+    if (winMesh) winMesh.material.opacity = 0.03 + st.conL * 0.035;
   }
 
   if (Math.abs(st.fov - st.fovT) > 0.05) {
@@ -1807,6 +2117,10 @@ g.RC_INTERIOR = {
 
   /* Экранная точка панели: доли ширины и высоты кадра */
   project: project,
+
+  /* Где сейчас остекление пульта на экране: доли кадра. По нему
+     вёрстка ставит голограмму ровно на стекло. */
+  screen: conScreen,
 
   /* Доля прохода внутрь: ноль - створки сомкнуты и мы ещё в люке,
      единица - мы в центре рубки. По ней кинематограф подводит

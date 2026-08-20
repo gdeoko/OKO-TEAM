@@ -47,7 +47,7 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
    права переноситься втрое. Владелец просил «сразу несколько
    вопросов» - показываем те, что задают чаще, остальные остаются в
    разделе для тех, кто листает страницу без корабля. */
-function qLimit() { return innerWidth < 760 ? 5 : 7; }
+function qLimit() { return innerWidth < 760 ? 4 : 7; }
 
 var layer = null;      /* .rc-desk - сам экран */
 var body = null;       /* .dsk-body - сменное содержимое */
@@ -153,19 +153,33 @@ var qCache = [];
 function fillMenu() {
   homeForms();
   qCache = questions();
-  var h = '<div class="dsk-acts">' +
-    '<button type="button" class="dsk-b dsk-b-call" data-go="call">' +
-      esc(t("cta.callback", "Перезвоните мне")) + '</button>' +
-    '<button type="button" class="dsk-b dsk-b-lead" data-go="lead">' +
-      esc(t("ct.send", "Отправить заявку")) + '</button>' +
-    '</div>' +
-    '<div class="dsk-title">' + esc(t("faq.h", "Коротко о главном")) + '</div>' +
+  /* Порядок как на настоящем пульте: справочник наверху, на стекле,
+     действия внизу, под рукой. Владелец перечислил их именно так -
+     «список вопросов, две кнопки (обратный звонок, зарегистрироваться)
+     и кнопка полёта в космос». */
+  var h = '<div class="dsk-title">' + esc(t("faq.h", "Коротко о главном")) + '</div>' +
     '<ul class="dsk-qs">';
   for (var i = 0; i < qCache.length; i++) {
     h += '<li><button type="button" class="dsk-q" data-q="' + i + '">' +
       '<span>' + esc(qCache[i].q) + '</span></button></li>';
   }
-  h += '</ul>';
+  h += '</ul>' +
+    '<div class="dsk-acts">' +
+      '<button type="button" class="dsk-b dsk-b-call" data-go="call">' +
+        esc(t("cta.callback", "Перезвоните мне")) + '</button>' +
+      '<button type="button" class="dsk-b dsk-b-lead" data-go="lead">' +
+        esc(t("ct.send", "Отправить заявку")) + '</button>' +
+      /* Третья кнопка - выход в космос. Она в том же ряду и на том же
+         стекле: полёт по сценарию не отдельная страница, а действие с
+         этого самого пульта. */
+      '<button type="button" class="dsk-b dsk-b-fly" data-go="fly">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>' +
+        '<path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>' +
+        '<path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>' +
+        '<b>' + esc(t("epi.btn", "Начать полёт")) + '</b></button>' +
+    '</div>';
   body.innerHTML = h;
   body.hidden = false;
   slot.hidden = true;
@@ -253,6 +267,33 @@ function fillForm(kind) {
   moveForm(form);
 }
 
+/* ── Старт полёта ────────────────────────────────────────────
+   Один вход в игру на оба способа: и кнопка на пульте, и прокрутка
+   до самого дна. Изображение на стекле сначала рвётся, и только
+   потом открывается космос - владелец описал именно этот порядок:
+   «глитч, вопросы и кнопки пропадают, и игра запускается».
+
+   Флаг fired держит предохранитель: закрыв игру крестиком, человек
+   возвращается ровно в ту же точку прокрутки, и без флага полёт
+   открывался бы снова тем же кадром. Снимается флаг только когда
+   человек отлистал заметно вверх (см. frame). */
+var fired = false;
+function launch() {
+  if (fired) return;
+  var F = g.RC_FLIGHT;
+  if (!F || !F.open) return;
+  fired = true;
+  if (layer) {
+    layer.classList.add("dsk-glitch");
+    layer.classList.remove("dsk-arm");
+  }
+  snd("uiClick");
+  setTimeout(function () {
+    if (layer) layer.classList.remove("dsk-glitch");
+    try { F.open(); } catch (e) {}
+  }, 320);
+}
+
 /* ── Рука человека ──────────────────────────────────────────── */
 function onClick(e) {
   var tgt = e.target;
@@ -262,6 +303,7 @@ function onClick(e) {
     if (to === "menu") swap("menu", fillMenu);
     else if (to === "call") swap("call", function () { fillForm("call"); });
     else if (to === "lead") swap("lead", function () { fillForm("lead"); });
+    else if (to === "fly") launch();
     return;
   }
   var q = tgt.closest ? tgt.closest(".dsk-q") : null;
@@ -288,18 +330,33 @@ function frame() {
   var con = I && I.con ? I.con() : 0;
   var back = I && I.back ? I.back() : 0;
 
+  /* Кабину финала показывает сама игра: тот же слой, тот же корпус,
+     тот же космос. Доля подъезда идёт туда напрямую - на нуле камера
+     отведена назад, на единице стоит ровно в ракурсе старта. */
+  var FL = g.RC_FLIGHT;
+  if (FL && FL.stage && !root.classList.contains("rc-flying")) {
+    var sk = Math.max(0, Math.min(1, (con - 0.12) / 0.72));
+    try { FL.stage(sk); } catch (e) {}
+  }
+
   /* Экран разгорается вместе с подъездом к пульту и уходит, как
      только камера двинулась назад: дальше кадр принадлежит надписи
      старта. Порог подъезда не нулевой - пока панель стоит в своём
      углу комнаты, она пустая, как и просил владелец. */
   var k = Math.max(0, Math.min(1, (con - 0.34) / 0.5));
-  /* Экран не растворяется постепенно: как только камера пошла назад
-     от пульта, изображение рвётся и пропадает. Кадр после этого
-     принадлежит титру старта, и они не имеют права быть в кадре
-     вдвоём - иначе вместо смены сцены получается наложение. Титр
-     начинает разгораться позже (см. --epi-k в rc-cockpit.css), в
-     промежутке остекление стоит пустым. */
-  var on = k > 0.02 && back < 0.16;
+  /* Камера доехала - и дальше стоит. Экран горит весь последний
+     отрезок страницы: это рабочее место, с которого нажимают
+     кнопки, а не кадр, мимо которого проезжают. Гаснет он ровно
+     один раз - в момент старта полёта. */
+  var on = k > 0.02 && !root.classList.contains("rc-flying");
+
+  /* Запал: у самого дна голограмма рвётся чаще, а на последних
+     процентах прокрутки открывается полёт. Предохранитель снимаем,
+     когда человек отлистал вверх - иначе игра открывалась бы снова
+     сразу после того, как её закрыли крестиком. */
+  if (back < 0.55) fired = false;
+  if (layer) layer.classList.toggle("dsk-arm", on && back > 0.72 && !fired);
+  if (on && back > 0.94) launch();
 
   if (on && !layer) {
     if (!build()) return;
@@ -314,25 +371,42 @@ function frame() {
     V(layer, "--dsk-k", String(r));
   }
 
-  /* Постановка кадра: те же числа, что у самой кабины */
-  var C = g.RC_COCKPIT;
-  var gm = C && C.geom ? C.geom() : null;
-  if (gm) {
-    V(layer, "--cab-tx", gm.tx.toFixed(2) + "%");
-    V(layer, "--cab-rot", gm.rot.toFixed(2) + "deg");
-    V(layer, "--cab-sc", gm.sc.toFixed(3));
-    V(layer, "--cab-x0", (gm.x0 * 100).toFixed(2) + "%");
-    V(layer, "--cab-y0", (gm.y0 * 100).toFixed(2) + "%");
-    V(layer, "--cab-win-w", ((gm.x1 - gm.x0) * 100).toFixed(2) + "%");
-    V(layer, "--cab-win-h", ((gm.y1 - gm.y0) * 100).toFixed(2) + "%");
-  }
-  /* Экран погас - кадр переходит титру старта, и переход этот тоже
-     глитчем: владелец описал его одной фразой - «она глитчем
-     исчезает, и глитчем появляется уже надпись старта игры». */
-  var lit = back > 0.2;
-  if (lit !== root.classList.contains("rc-start-on")) {
-    root.classList.toggle("rc-start-on", lit);
-  }
+  /* ── Голограмма стоит в остеклении кабины ───────────────────
+     Место берём у самой рамки кабины - той картинки корпуса, что
+     рисует игра. Раньше место считалось от трёхмерной рубки сайта, и
+     это было полбеды: сама рубка была ДРУГИМ кораблём. Владелец
+     сказал прямо - «та панель (рамка), которая в игре, 1:1 она же в
+     ракете». Теперь корпус один на оба эпизода, значит и окно у них
+     одно, и считать его надо от него.
+
+     Картинка выводится по object-fit: cover, поэтому доли окна из
+     файла надо пересчитать в доли кадра с учётом обрезки. */
+  var tall = innerHeight > innerWidth;
+  /* Границы остекления внутри файла кабины, доли картинки. Замерены
+     по её альфа-каналу: за этими краями идёт корпус. */
+  var iw = tall ? 768 : 1344, ih = tall ? 1344 : 768;
+  var fx0 = tall ? 0.150 : 0.075, fx1 = tall ? 0.850 : 0.925;
+  var fy0 = tall ? 0.125 : 0.095, fy1 = tall ? 0.790 : 0.755;
+  var sCov = Math.max(innerWidth / iw, innerHeight / ih);
+  var dw = iw * sCov, dh = ih * sCov;
+  var ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
+  var x0 = (ox + fx0 * dw) / innerWidth, x1 = (ox + fx1 * dw) / innerWidth;
+  var y0 = (oy + fy0 * dh) / innerHeight, y1 = (oy + fy1 * dh) / innerHeight;
+  /* Остекление шире кадра - берём его видимую часть: иначе
+     голограмма центруется по окну, которого на экране уже нет */
+  if (x0 < 0.03) x0 = 0.03;
+  if (x1 > 0.97) x1 = 0.97;
+  if (y0 < 0.05) y0 = 0.05;
+  if (y1 > 0.95) y1 = 0.95;
+  var pad = 0.03;
+  var px = (x1 - x0) * pad, py = (y1 - y0) * pad;
+  V(layer, "--cab-tx", "0%");
+  V(layer, "--cab-rot", "0deg");
+  V(layer, "--cab-sc", "1");
+  V(layer, "--cab-x0", ((x0 + px) * 100).toFixed(2) + "%");
+  V(layer, "--cab-y0", ((y0 + py) * 100).toFixed(2) + "%");
+  V(layer, "--cab-win-w", ((x1 - x0 - px * 2) * 100).toFixed(2) + "%");
+  V(layer, "--cab-win-h", ((y1 - y0 - py * 2) * 100).toFixed(2) + "%");
 
   var o = on ? 1 : 0;
   if (o !== onPub) {
