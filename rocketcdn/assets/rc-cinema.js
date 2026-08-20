@@ -269,7 +269,7 @@ function pin(act) {
 
 function cabin(act) {
   var items = act.items, n = items.length;
-  if (!n || !act.stage) return;
+  if (!n || !act.world) return;
 
   var V = iv();
   var plan = V ? V.plan() : null;
@@ -278,32 +278,23 @@ function cabin(act) {
     return (plan && plan.rel && plan.rel[i] !== undefined) ? plan.rel[i] : (i + 0.5) * step;
   };
   var turn = turnOf(V, act, n, step);
-  var placed = !!(V && V.live());
 
-  var cx = act.stage.left + act.stage.width / 2;
-  var cy = act.stage.top + act.stage.height / 2;
-  var R = phone ? 460 : 780;
-  /* Разлёт по горизонтали. На телефоне карточка шириной почти во
-     весь экран, и прежний предел уводил её край далеко за кадр:
-     соседняя панель кольца наезжала на читаемую и обрезалась
-     краем экрана. Теперь уходит ровно настолько, чтобы читалось
-     кольцо, но текст не резался. */
-  var maxX = innerWidth * (phone ? 0.44 : 0.78);
-  var front = phone ? 0.34 : FRONT;
+  /* ── Один поворот на всю комнату ──────────────────────────
+     Здесь и есть весь салон: комната поворачивается, экраны в ней
+     стоят. Углы экранов расставлены при сборке и не меняются, так
+     что разъехаться им не с чем - ни друг с другом, ни со стенами
+     объёмной рубки: поворот у них общий, взятый у её камеры. */
+  CSSVAR(act.world, "--cab-turn", (-turn * DEG).toFixed(2) + "deg");
+
   var deg = root.getAttribute("data-degrade");
-  var soft = !phone && !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";
-  /* Экраны собраны разметкой один раз, при сборке акта. Если слоёв
-     нет, писать переменные проектора некуда и незачем. */
+  var soft = !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";
+  var dcOK = soft;
   var holo = !!act.holo;
-  /* Распад развёртки на уходе телефону по карману: это одна маска,
-     а не фильтр. Поэтому у него отдельное разрешение, не общее с
-     размытием. Перемотка и слабое устройство его всё же снимают. */
-  var dcOK = !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";
+  var front = phone ? 0.34 : FRONT;
 
-  /* Ближайшая к центру карточка - та, которую сейчас читают.
-     Она никогда не мутнеет, чем бы ни занималась остальная сцена. */
-  var best = -1, bestA = 99;
-  var i, rel, ax;
+  /* Ближайший к взгляду экран - тот, который сейчас читают. Он
+     никогда не мутнеет, чем бы ни занималась остальная сцена. */
+  var best = -1, bestA = 99, i, ax, rel;
   for (i = 0; i < n; i++) {
     ax = Math.abs(wrap(slotOf(i) - turn));
     if (ax < bestA) { bestA = ax; best = i; }
@@ -311,65 +302,31 @@ function cabin(act) {
 
   for (i = 0; i < n; i++) {
     var el = items[i];
-    var slot = slotOf(i);
-    rel = wrap(slot - turn);
+    rel = wrap(slotOf(i) - turn);
     ax = Math.abs(rel);
 
-    /* Экранное место панели. У точки за спиной адреса нет, там
-       берём геометрию кольца: карточку всё равно не видно. */
-    var tx = R * Math.sin(rel), ty = 0;
-    if (placed) {
-      var pr = V.project(slot);
-      if (pr.d > 0.3 && pr.v > 0 && ax < 1.3) {
-        tx = pr.x * innerWidth - cx;
-        /* По вертикали слушаемся стены только наполовину и в
-           пределах полосы: строчку читают на своём месте, а не
-           там, куда её увела перспектива. */
-        ty = clamp((pr.y * innerHeight - cy) * 0.45, -innerHeight * 0.1, innerHeight * 0.1);
-      }
-    }
-    tx = clamp(tx, -maxX, maxX);
-    var tz = R * (Math.cos(rel) - 1);
-
-    /* Ровно перед зрителем поворот сходит в ноль: читаемая
-       карточка не имеет права быть отвёрнутой. */
-    var rot = ax < front ? rel * (ax / front) : rel;
-
-    /* Соседняя панель на узком экране гаснет быстрее: боковое поле
-       там нулевое, экранная точка упирается в кламп, и две карточки
-       съезжались в одну точку - приёмка сняла кадр, где текст
-       соседки читается прямо поверх читаемой. Кольцо остаётся тем
-       же, просто соседей мы отпускаем раньше. */
-    var vis = ax <= front ? 1 : clamp(1 - (ax - front) / (phone ? 0.34 : 0.98), 0, 1);
+    /* Прозрачность считаем от угла, а не от места на экране: место
+       у экрана своё и постоянное, меняется только то, насколько он
+       отвёрнут от взгляда. За плечом экран не нужен вовсе. */
+    var vis = ax <= front ? 1 : clamp(1 - (ax - front) / (phone ? 0.62 : 0.98), 0, 1);
     if (i === best) vis = Math.max(vis, 0.92);
-    /* И последняя страховка от наложения: если соседка всё же
-       оказалась вплотную к читаемой, она уходит совсем */
-    if (phone && i !== best && Math.abs(tx) < innerWidth * 0.55) vis = Math.min(vis, 0.08);
 
-    CSSVAR(el, "--cin-x", Math.round(tx) + "px");
-    CSSVAR(el, "--cin-y", Math.round(ty) + "px");
-    CSSVAR(el, "--cin-z", tz.toFixed(0) + "px");
-    CSSVAR(el, "--cin-rot", (rot * DEG).toFixed(1) + "deg");
     CSSVAR(el, "--cin-vis", vis.toFixed(2));
     CSSVAR(el, "--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(1) + "px");
     CSSVAR(el, "--cin-zi", String(Math.round(600 - ax * 170)));
 
     /* ── Голограмма: яркость проектора и распад развёртки ─────
-       Яркость считаем от угла, а не от прозрачности: экран
-       разгорается, пока подъезжает к линии чтения, и делает это
-       заметно раньше, чем перестаёт быть полупрозрачным. */
+       Яркость считаем от угла: экран разгорается, пока подъезжает
+       к линии чтения, и делает это заметно раньше, чем перестаёт
+       быть полупрозрачным. */
     if (holo) {
       var lit = clamp(1 - ax / (front * 1.7), 0, 1);
       CSSVAR(el, "--cin-lit", lit.toFixed(2));
 
       /* Уход за плечо. Проектор не гаснет прозрачностью: у него
          рвётся развёртка, полосы утоньшаются, и в самом хвосте
-         картинка схлопывается по вертикали. Схлоп начинаем только
-         в конце, иначе текст плющило бы ещё на читаемом экране. */
+         картинка схлопывается по вертикали. */
       var dec = dcOK ? clamp(1 - vis / 0.72, 0, 1) : 0;
-      /* Схлоп по вертикали идёт только в самом хвосте и только там,
-         где эффекты не урезаны: плющить текст, который ещё читают,
-         нельзя ни на каком устройстве. */
       var sy = soft ? 1 - clamp((dec - 0.58) / 0.42, 0, 1) * 0.68 : 1;
       CSSVAR(el, "--cin-dec", dec.toFixed(2));
       CSSVAR(el, "--cin-sy", sy.toFixed(2));
@@ -552,6 +509,29 @@ function collect() {
        кадре. Точка схода живёт на самом кольце. */
     rel.classList.toggle("cin-cabin", on);
     ring.classList.toggle("cin-ring", on);
+
+    /* ── Комната ──────────────────────────────────────────────
+       Экраны переезжают внутрь отдельного слоя. Он и есть комната:
+       поворачивается целиком, а экраны в нём стоят на своих точках.
+       Без этого слоя поворот пришлось бы раздавать каждому экрану
+       отдельно, и они снова разъехались бы - именно это владелец и
+       назвал «карточка исчезает и появляется справа».
+
+       Слой живёт только пока живёт салон: выключили - экраны
+       возвращаются в обычную сетку блока, ровно туда, где стояли. */
+    var world = ring.querySelector(":scope > .cin-world");
+    if (on) {
+      if (!world) {
+        world = doc.createElement("div");
+        world.className = "cin-world";
+        ring.appendChild(world);
+      }
+      cards.forEach(function (el) { if (el.parentNode !== world) world.appendChild(el); });
+    } else if (world) {
+      cards.forEach(function (el) { if (el.parentNode === world) ring.appendChild(el); });
+      ring.removeChild(world);
+      world = null;
+    }
     /* Длина трека прокрутки считается из числа панелей, а правило
        живёт на обёртке блока - переменную ставим на секцию, иначе
        она до обёртки не дойдёт. */
@@ -565,7 +545,24 @@ function collect() {
     ring.classList.remove("cin-pin", "cin-pin-end");
     if (on) {
       holoHand();
+      /* Угол каждого экрана ставим здесь, один раз. Дальше он не
+         меняется никогда: экран стоит на стене, а не ездит по
+         кадру. Расписание углов даёт сцена - то же самое, по
+         которому поворачивается объёмная рубка. */
+      var vPlan = iv();
+      var planC = vPlan ? vPlan.plan() : null;
+      var stepC = planC ? planC.step : TAU / 8;
+      cards.forEach(function (el, ci) {
+        var a = (planC && planC.rel && planC.rel[ci] !== undefined)
+          ? planC.rel[ci] : (ci + 0.5) * stepC;
+        CSSVAR(el, "--cin-slot", (a * DEG).toFixed(2) + "deg");
+        CSSDEL(el, "--cin-x");
+        CSSDEL(el, "--cin-y");
+        CSSDEL(el, "--cin-z");
+        CSSDEL(el, "--cin-rot");
+      });
       acts.push({ sec: rel, kind: "cabin", items: cards, ring: ring,
+        world: world,
         wrap: ring.parentNode,
         ringOff: ring.offsetTop,
         ringH: ring.getBoundingClientRect().height,
@@ -648,12 +645,6 @@ function frame() {
     if (!a.live) continue;
     if (a.kind === "shelf") {
       a.rects = a.items.map(BOX);
-    } else if (a.kind === "cabin") {
-      /* Кольцо держится в кадре само (fixed), поэтому его место
-         кэшу не поддаётся - спрашиваем браузер. Это одно чтение
-         на кадр и оно идёт до всех записей, поэтому вёрстку не
-         пересчитывает. */
-      a.stage = a.ring.getBoundingClientRect();
     } else if (a.kind === "directory") {
       a.hostRect = BOX(a.host);
       a.rects = a.items.map(BOX);
@@ -664,7 +655,15 @@ function frame() {
     a = acts[i];
     if (!a.live) continue;
     if (a.kind === "cabin") { cabin(a); continue; }
-    if (a.kind === "directory") { directory(a); continue; }
+    if (a.kind === "directory") {
+      /* Внутри корабля справочника в кадре нет: вопросы живут на
+         экране приборной панели (rc-desk), а сам раздел спрятан -
+         он остался только для длины прокрутки. Считать его поворот
+         в этот момент незачем. */
+      if (root.classList.contains("rc-inside")) continue;
+      directory(a);
+      continue;
+    }
     if (fast) continue;
     var p = pass(a.rect);
     if (a.kind === "tunnel") tunnel(a, p);

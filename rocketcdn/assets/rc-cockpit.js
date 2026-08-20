@@ -38,6 +38,9 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 
 var layer = null, img = null, raf = null;
 var k = 0, goal = 0, pub = -1, conPub = -1, srcNow = "";
+/* Те же числа, что уходят в переменные оформления: слой экрана
+   панели повторяет ими постановку кадра кабины */
+var txNow = 0, rotNow = 0, scNow = 1;
 
 /* Окно остекления в долях кадра. Числа сняты с самих файлов:
    у портретной кабины переплёт шире, у ландшафтной стойки уходят
@@ -56,7 +59,9 @@ function build() {
   if (layer) return;
   layer = doc.createElement("div");
   layer.className = "rc-cockpit";
-  layer.setAttribute("aria-hidden", "true");
+  /* Скрывать от чтения с экрана весь слой нельзя: внутри него живёт
+     экран приборной панели с вопросами и формами, а aria-hidden с
+     предка потомку уже не отменить. Прячем только украшения. */
   /* Блик стекла и обод остекления рисуем сами: на картинке их нет,
      а без них космос за окном выглядит вырезанным по контуру, а не
      увиденным сквозь стекло */
@@ -64,8 +69,10 @@ function build() {
      кабина, сверху блик стекла. Космос рисует холст звёзд, но в
      финале одних точек мало - за окном должна читаться даль, а не
      чёрный прямоугольник, поэтому под кабиной лежит своя дымка. */
-  layer.innerHTML = '<i class="cab-void"></i><img class="cab-img" alt="" decoding="async">' +
-                    '<i class="cab-beam"></i><i class="cab-glass"></i>';
+  layer.innerHTML = '<i class="cab-void" aria-hidden="true"></i>' +
+                    '<img class="cab-img" alt="" aria-hidden="true" decoding="async">' +
+                    '<i class="cab-beam" aria-hidden="true"></i>' +
+                    '<i class="cab-glass" aria-hidden="true"></i>';
   doc.body.appendChild(layer);
   img = layer.querySelector(".cab-img");
   src();
@@ -155,6 +162,7 @@ function place(conK) {
     rot = -(1 - conK) * 26;
   }
 
+  txNow = tx; rotNow = rot;
   V(layer || root, "--cab-tx", tx.toFixed(2) + "%");
   V(layer || root, "--cab-rot", rot.toFixed(2) + "deg");
   /* В салоне панель дальше и мельче, на подъезде вырастает в кадр.
@@ -173,6 +181,7 @@ function place(conK) {
   } catch (e) {}
   var sc = 0.52 + conK * 0.62;
   sc = sc + (1 - sc) * outK;
+  scNow = sc;
   V(layer || root, "--cab-sc", sc.toFixed(3));
   /* Обрезка сверху: в салоне видна только нижняя часть картинки -
      сам пульт с экранами. Остекление и потолочные балки приходят,
@@ -260,7 +269,18 @@ if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", boot)
 else boot();
 
 g.RC_COCKPIT = {
-  state: function () { return { доля: +k.toFixed(2), есть: !!layer, файл: srcNow }; }
+  state: function () { return { доля: +k.toFixed(2), есть: !!layer, файл: srcNow }; },
+
+  /* Геометрия кадра кабины числами. Её спрашивает экран приборной
+     панели: он лежит отдельным слоем (над содержимым страницы, иначе
+     по вопросам нельзя попасть пальцем), а стоять обязан ровно там
+     же, где стоит сама кабина. Читать вычисленный стиль ради этого
+     нельзя - любой такой вопрос в кадре заставляет браузер
+     пересчитать стиль всего документа. */
+  geom: function () {
+    var w = tall() ? WIN_TALL : WIN_WIDE;
+    return { k: k, x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1, tx: txNow, rot: rotNow, sc: scNow };
+  }
 };
 
 })(window);

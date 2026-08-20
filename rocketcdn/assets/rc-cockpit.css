@@ -290,6 +290,7 @@ html.rc-cab-on .epi-holo > * { position: relative; z-index: 1; }
 html.rc-cab-on .epi-holo .sec-tag,
 html.rc-cab-on .epi-holo .sec-h,
 html.rc-cab-on .epi-holo .sec-p,
+html.rc-cab-on .epi-holo .epi-alt,
 html.rc-cab-on .epi-holo .epi-btn {
   opacity: var(--epi-k, 1);
   transition: opacity .5s linear;
@@ -332,14 +333,14 @@ html.rc-cab-on .epi-btn {
 /* Экраны рубки внутри кабины становятся уже: остекление съедает по
    седьмой части кадра с каждой стороны, и панель прежней ширины
    уезжала под переплёт - строка обрывалась на полуслове. */
-html.rc-cab-on .cin-ring > .cin-item { width: min(430px, 62vw); }
+html.rc-cab-on .cin-ring { --cab-w: min(430px, 62vw); }
 @media (max-width: 900px) {
   /* Внутри корабля панель уже не может быть во всю ширину экрана:
      она стоит на стене под углом, и её край при повороте уходит за
      обрез кадра - строка обрывалась на полуслове. Сужаем на весь
      эпизод рубки, а не только у пульта. */
-  html.rc-inside .cin-ring > .cin-item { width: min(74vw, 300px); }
-  html.rc-cab-on .cin-ring > .cin-item { width: min(66vw, 290px); }
+  html.rc-inside .cin-ring { --cab-w: min(74vw, 300px); }
+  html.rc-cab-on .cin-ring { --cab-w: min(66vw, 290px); }
 }
 
 /* Заголовок раздела внутри корабля - это надпись в рубке, а не
@@ -569,7 +570,7 @@ html.rc-inside .field textarea { min-height: 108px; }
    это была панель с другой стороны круга, просвечивавшая сквозь
    свою. Обратная сторона проекции зрителю не нужна: гасим её
    совсем, а не полупрозрачностью, иначе призрак остаётся. */
-html.rc-inside .cin-ring > .cin-item {
+html.rc-inside .cin-world > .cin-item {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
