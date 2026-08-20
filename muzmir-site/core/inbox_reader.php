@@ -433,7 +433,7 @@ function inbox_pdf_text(string $file): string {
 /** Кого мы знаем по адресу: учреждение, ведомство, участника. */
 function inbox_identify(string $email): array {
     $e = mb_strtolower(trim($email));
-    $out = ['inst_id' => 0, 'ministry_id' => 0, 'user_id' => 0];
+    $out = ['inst_id' => 0, 'ministry_id' => 0, 'user_id' => 0, 'inst_by_domain' => false];
     if ($e === '') return $out;
     try {
         $i = one("SELECT id FROM institutions WHERE LOWER(email)=? LIMIT 1", [$e]);
@@ -458,7 +458,53 @@ function inbox_identify(string $email): array {
             } catch (\Throwable $e3) { /* тихо */ }
         }
     }
+
+    // ТО ЖЕ САМОЕ ДЛЯ УЧРЕЖДЕНИЙ.
+    //
+    // Школа отвечает с личного ящика завуча или с общего адреса «приёмная», а
+    // письмо уходило на адрес из справочника. Строгое сравнение такой ответ
+    // теряет: письмо есть, а в карточке учреждения пусто — и партнёрка выглядит
+    // мёртвой при живых ответах. Домен берём только служебный: по mail.ru или
+    // gmail.com опознавать нельзя, там за одним доменом тысячи разных людей.
+    if (!$out['inst_id'] && str_contains($e, '@')) {
+        $dom = substr($e, strpos($e, '@') + 1);
+        // Публичные почтовики отпадают сразу: за mail.ru стоят тысячи разных
+        // людей. Крупные организации с собственным доменом — тоже: у Почты
+        // России в справочнике есть один адрес, и по домену russianpost.ru с ним
+        // связывались все уведомления об отправлениях, хотя школа тут ни при чём.
+        $stop = '~^(mail|gmail|yandex|bk|list|inbox|rambler|ya|internet|hotmail|outlook|icloud'
+              . '|russianpost|pochta|sberbank|gosuslugi|vk|ok|microsoft|google|apple)\.~i';
+        if ($dom !== '' && !preg_match($stop, $dom)) {
+            try {
+                // Домен должен принадлежать ровно одному учреждению. Если их
+                // несколько (общий домен района), непонятно, кому засчитать ответ.
+                $cnt = (int) scalar("SELECT COUNT(*) FROM institutions WHERE LOWER(email) LIKE ?", ['%@' . $dom]);
+                if ($cnt === 1) {
+                    $i2 = one("SELECT id FROM institutions WHERE LOWER(email) LIKE ? LIMIT 1", ['%@' . $dom]);
+                    if ($i2) { $out['inst_id'] = (int) $i2['id']; $out['inst_by_domain'] = true; }
+                }
+            } catch (\Throwable $e4) { /* тихо */ }
+        }
+    }
     return $out;
+}
+
+/**
+ * ОТМЕТИТЬ, ЧТО УЧРЕЖДЕНИЕ ОТВЕТИЛО.
+ *
+ * Колонка replied_at была в таблице с самого начала и не заполнялась ни разу: за
+ * 20 тысяч приглашений в админке стояло «ответили: 0», хотя ответы приходили.
+ * Отметка ставится один раз — по первому живому письму; служебные, автоответы и
+ * отбойники сюда не попадают, их отсеивает вызывающий код.
+ */
+function inbox_mark_inst_replied(int $instId, string $when = ''): void {
+    if ($instId <= 0) return;
+    try {
+        $cur = one("SELECT replied_at FROM institutions WHERE id=?", [$instId]);
+        if (!$cur || trim((string) ($cur['replied_at'] ?? '')) !== '') return;
+        $ts = trim($when) !== '' ? $when : date('Y-m-d H:i:s');
+        q("UPDATE institutions SET replied_at=? WHERE id=?", [$ts, $instId]);
+    } catch (\Throwable $e) { /* тихо: отметка не важнее письма */ }
 }
 
 /**
@@ -515,6 +561,15 @@ function inbox_scan(string $alias, int $days = 14): array {
             $kind   = inbox_is_service($from) ? 'service'
                     : inbox_classify($alias, (string) $m['subject'], (string) $m['text'], $isAuto);
             $who    = inbox_identify($from);
+
+            // СВЯЗЬ ПО ДОМЕНУ — ТОЛЬКО ДЛЯ ЖИВЫХ ПИСЕМ.
+            // Догадка по домену помогает поймать ответ школы с соседнего ящика,
+            // но она же цепляет к учреждению каждое уведомление робота с того же
+            // домена. Роботам догадка не положена: связываем их лишь при точном
+            // совпадении адреса.
+            if (!empty($who['inst_by_domain']) && ($isAuto || $kind === 'service' || $kind === 'bounce')) {
+                $who['inst_id'] = 0;
+            }
 
             // РЕШАЕТ ОТПРАВИТЕЛЬ, А НЕ ЯЩИК.
             // В приложенном к обращению PDF учреждениям написано «согласие
@@ -594,6 +649,12 @@ function inbox_scan(string $alias, int $days = 14): array {
                     'user_id'     => $who['user_id'],
                     'received_at' => (string) $m['date'],
                 ]);
+                // Живой ответ учреждения виден в его карточке сразу, а не после
+                // ручного разбора почты. Роботов и отбойники не считаем ответом.
+                $liveReply = !$isAuto && !in_array($kind, ['service', 'bounce', 'auto'], true);
+                if ($who['inst_id'] > 0 && $liveReply) {
+                    inbox_mark_inst_replied($who['inst_id'], (string) $m['date']);
+                }
                 $res['new']++;
             } catch (\Throwable $e) { $res['errors']++; }
         }

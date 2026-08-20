@@ -240,7 +240,15 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
             $path = !empty($c['regulation_pdf']) && is_file($c['regulation_pdf'])
                 ? $c['regulation_pdf']
                 : null;
-            if ($path === null || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'docx') {
+            // ЭТАЛОН НОВЕЕ ФАЙЛА — СОБИРАЕМ ЗАНОВО.
+            // Иначе после правки правил PDF показывал новый пункт, а скачанный
+            // DOCX — старый текст, и два документа одного конкурса расходились.
+            $etalonTs = 0;
+            foreach (glob(BASE_PATH . '/docs/polozheniya/etalon_*.docx') ?: [] as $eFile) {
+                $etalonTs = max($etalonTs, (int) @filemtime($eFile));
+            }
+            if ($path === null || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'docx'
+                || (int) @filemtime($path) < $etalonTs) {
                 require_once BASE_PATH . '/core/regulation_gen.php';
                 $path = regulation_generate((int)$c['id']);
             }

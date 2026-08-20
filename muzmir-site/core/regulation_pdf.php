@@ -20,11 +20,23 @@ function regulation_pdf_cache_key(array $c): string {
     // при переносе запуска положение обязано пересобраться (иначе останется старая шапка).
     $approve = trim((string) ($c['launched_at'] ?? '')) !== '' ? (string) $c['launched_at']
              : (string) ($c['start_date'] ?? '');
+    /* ПРАВКА ЭТАЛОНА ОБЯЗАНА ДОЕХАТЬ ДО УЖЕ ОТКРЫТЫХ КОНКУРСОВ.
+     *
+     * Ключ считался только по полям конкурса, а текст положения живёт в эталоне.
+     * Допишешь новый пункт правил — у открытых конкурсов поля не изменились, ключ
+     * прежний, и участник продолжает скачивать вчерашнее положение без этого
+     * пункта. Берём время последней правки эталонов: изменился текст — PDF
+     * пересобирается сам, без ручной чистки кэша. */
+    $etalonTs = 0;
+    foreach (glob(BASE_PATH . '/docs/polozheniya/etalon_*.docx') ?: [] as $e) {
+        $etalonTs = max($etalonTs, (int) @filemtime($e));
+    }
     return md5(implode('|', [
         (string) ($c['name'] ?? ''), (string) ($c['end_date'] ?? ''),
         (string) ($c['results_date'] ?? ''), (string) ($c['type'] ?? ''),
         (string) ($c['is_paid'] ?? ''),
         date('01.m.Y', strtotime($approve) ?: time()),
+        'etalon:' . $etalonTs,
         'soffice-v2-approve-date',
     ]));
 }
