@@ -302,6 +302,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
     $extra  = trim(input('extra_diploma'));
     if ($extra === '__custom__') $extra = trim(input('extra_custom'));
     $jcomment = trim(input('jury_comment'));
+
+    /* ФОНОГРАММА СНИЖАЕТ ЗВАНИЕ ДО ДИПЛОМАНТА — П. 8.7 ПОЛОЖЕНИЯ.
+     *
+     * Правило одинаково во всех конкурсах и записано в документе, который читает
+     * участник, поэтому оно исполняется здесь, а не остаётся на память жюри:
+     * отмеченная фонограмма опускает лауреатское звание до дипломанта первой
+     * степени. Дипломантские звания и «участник» не трогаем — они и так ниже. */
+    if (input('phonogram') === '1' && $result !== '') {
+        $ladder = RESULT_PRESETS();                       // от высшего к низшему
+        $cap    = '';
+        foreach ($ladder as $rp) { if (mb_strpos($rp, 'ДИПЛОМАНТ') === 0) { $cap = $rp; break; } }
+        $iCur = array_search($result, $ladder, true);
+        $iCap = array_search($cap, $ladder, true);
+        if ($cap !== '' && $iCur !== false && $iCap !== false && $iCur < $iCap) {
+            $result = $cap;
+            flash('Звание снижено до «' . $cap . '»: номер исполнен под фонограмму (п. 8.7 положения).', 'success');
+        }
+    }
+
     if ($appId && in_array($result, RESULT_PRESETS(), true)) {
         $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
         if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
@@ -874,6 +893,21 @@ if ($id = (int) input('id')) {
               </label>
             <?php endforeach; ?>
           </div>
+          <?php /* ФОНОГРАММА — ПОТОЛОК ДИПЛОМАНТА (п. 8.7 положения).
+                   Правило записано в положении всех конкурсов, значит решение не
+                   на усмотрение: лауреатское звание под фонограмму участник вправе
+                   оспорить нашим же документом. Отметка ставится здесь, а звание
+                   опускается при сохранении — вместе с пометкой в служебных
+                   заметках, чтобы потом было видно, почему снижено. */ ?>
+          <label style="display:flex;gap:9px;align-items:flex-start;margin-top:12px;padding:11px 13px;
+                        border:1px solid #f0dfae;background:#fff8e6;border-radius:11px;cursor:pointer">
+            <input type="checkbox" name="phonogram" value="1" style="margin-top:3px">
+            <span class="small">
+              <b style="color:#8B6F1F">Использована фонограмма</b> (согласно номинации)<br>
+              Звание будет снижено до дипломанта — п. 8.7 положения. Минусовка как аккомпанемент
+              к живому пению и музыка к танцевальному или цирковому номеру сюда не относятся.
+            </span>
+          </label>
           <div class="field" style="margin-top:10px">
             <label>Дополнительный диплом (необязательно)</label>
             <select name="extra_diploma" id="extraSel">
