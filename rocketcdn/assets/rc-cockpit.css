@@ -369,6 +369,12 @@ html.rc-inside #faq .sec-head .sec-p {
 html[data-act="landing"] .mcta,
 html[data-act="walk"] .mcta,
 html.rc-inside .mcta,
+/* Признак «мы внутри» приходит на кадр-другой позже самого акта,
+   и на этом стыке панель успевала мигнуть поверх сцены */
+html[data-act="cabin"] .mcta,
+html[data-act="manual"] .mcta,
+html[data-act="console"] .mcta,
+html.rc-hull .mcta,
 html[data-act="egress"] .mcta {
   opacity: 0;
   pointer-events: none;
