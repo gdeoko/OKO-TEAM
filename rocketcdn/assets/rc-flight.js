@@ -4580,8 +4580,18 @@ function stageCam(dt) {
     C.frame.material.opacity = fo;
     C.frame.visible = fo > 0.01;
   }
-  /* Свет пульта разгорается вместе с подходом */
+  /* Свет пульта разгорается вместе с подходом, а общий свет
+     помещения к концу подъезда гаснет. Это не приём ради приёма:
+     когда человек садится за панель, кадр обязан принадлежать
+     остеклению и космосу за ним, а не подсвеченным стенам за
+     спиной. Заодно уходит светлая полоска стены, которая иначе
+     видна по краю корпуса. */
+  var dim = Math.max(0, Math.min(1, (ek - 0.55) / 0.4));
   if (C.deskLight) C.deskLight.intensity = 0.9 + ek * 1.9;
+  if (C.hemi) C.hemi.intensity = 1.45 * (1 - dim * 0.92);
+  if (C.ceilL) C.ceilL.intensity = 1.35 * (1 - dim * 0.95);
+  if (C.warmL) C.warmL.intensity = 1.7 * (1 - dim * 0.95);
+  if (C.lamp) C.lamp.intensity = 2.6 * (1 - dim * 0.55);
   /* Диоды дышат */
   if (C.diodes && !ui.wrap.classList.contains("rcf-fast")) {
     for (var i = 0; i < C.diodes.length; i++) {

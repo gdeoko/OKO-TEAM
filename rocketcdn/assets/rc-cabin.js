@@ -605,7 +605,8 @@ function build(T, opts) {
   grp.add(lamp.target);
   /* Заполняющий держит дальнюю половину помещения: без него за
      спиной выходит чёрная дыра вместо комнаты */
-  grp.add(new T.HemisphereLight(0x3a5f80, 0x0c1826, 1.45));
+  var hemi = new T.HemisphereLight(0x3a5f80, 0x0c1826, 1.45);
+  grp.add(hemi);
   /* Плафон под потолком - настоящий источник, а не только пятно:
      по нему на стенах читается спад яркости сверху вниз, и цилиндр
      перестаёт быть ровно закрашенной трубой */
@@ -625,6 +626,9 @@ function build(T, opts) {
     diodes: diodes,
     frame: frame,
     lamp: lamp,
+    hemi: hemi,
+    ceilL: ceilL,
+    warmL: warmL,
     deskLight: deskLight,
     R: R_WALL, H: H_ROOM, eye: EYE,
     winY: (WIN_Y0 + WIN_Y1) / 2,
