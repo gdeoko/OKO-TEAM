@@ -67,8 +67,29 @@ function pab_variant(int $instId): string {
  * ответили письмом и сколько стали партнёрами. Открытия и доставку берём из
  * отчётов сервиса рассылки по адресу учреждения.
  */
-function pab_stats(): array {
+function pab_stats(bool $fresh = false): array {
     pab_migrate();
+
+    /* СЧИТАЕМ РАЗ В ДЕСЯТЬ МИНУТ, А НЕ НА КАЖДЫЙ ОТКРЫТЫЙ РАЗДЕЛ.
+     *
+     * Подсчёт идёт по трём таблицам разом: полторы тысячи учреждений, тридцать
+     * тысяч событий доставки, двадцать три тысячи посещений. Это восемнадцать
+     * секунд — столько раздел «Партнёры» и не открывался. Цифры сравнения писем
+     * меняются за часы, а не за секунды, поэтому держим последний расчёт и
+     * обновляем его не чаще чем раз в десять минут. */
+    $ttl = 600;
+    if (!$fresh) {
+        try {
+            $raw = (string) (function_exists('setting') ? setting('partner_ab_stats', '') : '');
+            if ($raw !== '') {
+                $c = json_decode($raw, true);
+                if (is_array($c) && (time() - (int) ($c['at'] ?? 0)) < $ttl && !empty($c['data'])) {
+                    return (array) $c['data'];
+                }
+            }
+        } catch (\Throwable $e) { /* считаем заново */ }
+    }
+
     $out = [];
     foreach (['a', 'b'] as $v) {
         $ids = [];
@@ -89,14 +110,36 @@ function pab_stats(): array {
             $row['opened']    = (int) scalar("SELECT COUNT(DISTINCT e.email) FROM mail_events e
                                                JOIN institutions i ON mb_lower(i.email)=mb_lower(e.email)
                                               WHERE i.id IN ($in) AND e.status='opened'");
-            // Заход на страницу согласия виден по адресу вида /partner-join?i=<id>.
-            $visited = 0;
-            foreach ($ids as $id) {
-                $visited += (int) scalar("SELECT COUNT(*) FROM site_events WHERE path LIKE ?", ['%partner-join?i=' . $id . '%']) > 0 ? 1 : 0;
+            /* ЗАХОДЫ СЧИТАЕМ ОДНИМ ЗАПРОСОМ, А НЕ ПО ОДНОМУ НА УЧРЕЖДЕНИЕ.
+             *
+             * Здесь стоял цикл: на каждое учреждение свой запрос с LIKE по
+             * журналу посещений. При 1359 учреждениях в сравнении это 1359
+             * запросов LIKE по таблице в двадцать три тысячи строк — раздел
+             * «Партнёры» переставал открываться вовсе. Берём все заходы на
+             * страницу согласия разом и разбираем номера в памяти. */
+            static $visits = null;
+            if ($visits === null) {
+                $visits = [];
+                try {
+                    // Своя переменная: снаружи $v — это вариант письма, и затирать
+                    // её строкой журнала нельзя, иначе второй вариант не посчитается.
+                    foreach (all("SELECT path FROM site_events WHERE path LIKE '%partner-join%'") as $ev) {
+                        if (preg_match('~partner-join\?i=(\d+)~', (string) $ev['path'], $mv)) {
+                            $visits[(int) $mv[1]] = true;
+                        }
+                    }
+                } catch (\Throwable $e) { $visits = []; }
             }
+            $visited = 0;
+            foreach ($ids as $id) if (isset($visits[$id])) $visited++;
             $row['visited'] = $visited;
         } catch (\Throwable $e) { /* показываем то, что посчиталось */ }
         $out[$v] = $row;
     }
+    try {
+        if (function_exists('set_setting')) {
+            set_setting('partner_ab_stats', json_encode(['at' => time(), 'data' => $out], JSON_UNESCAPED_UNICODE));
+        }
+    } catch (\Throwable $e) { /* кэш не важнее ответа */ }
     return $out;
 }
