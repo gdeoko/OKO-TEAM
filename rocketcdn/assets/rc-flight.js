@@ -426,6 +426,7 @@ function buildUI() {
          приборная панель. */
       '<div class="rcf-mis"></div>' +
       '<div class="rcf-fail" role="status"></div>' +
+      '<div class="rcf-netlist" aria-hidden="true"></div>' +
       '<div class="rcf-bars">' +
         '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
         '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
@@ -487,6 +488,7 @@ function buildUI() {
   ui.info = w.querySelector(".rcf-info");
   ui.mis = w.querySelector(".rcf-mis");
   ui.fail = w.querySelector(".rcf-fail");
+  ui.netList = w.querySelector(".rcf-netlist");
   ui.bars = w.querySelector(".rcf-bars");
   ui.enTx = w.querySelector(".rcf-bar-en u");
   ui.huTx = w.querySelector(".rcf-bar-hull u");
@@ -3553,6 +3555,7 @@ function frame(ts) {
     trafFrame(dt);
     failTick(ts);
     failPaint();
+    netList();
     radarFrame(w3, ts);
   }
 
@@ -3901,6 +3904,41 @@ function courseFrame(w3, ts) {
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
                        : (RU ? "РУЧНОЙ" : "MANUAL");
+}
+
+/* ── Консоль сети ────────────────────────────────────────────
+   Счётчик «сеть 4/34» говорил, сколько узлов развёрнуто, но не
+   говорил каких - а это и есть главный результат игры. Список на
+   правой консоли показывает построенную сеть целиком: где узел
+   стоит, где идёт авария, куда просят трафик.
+
+   Список короткий и сам себя обновляет только при изменениях:
+   каждый кадр перебирать разметку незачем. */
+var netListKey = "";
+function netList() {
+  if (!ui.netList) return;
+  var names = Object.keys(net);
+  var key = names.join(",") + "|" + (fail ? fail.name : "") + "|" + (req ? req.name : "");
+  if (key === netListKey) return;
+  netListKey = key;
+  if (!names.length) {
+    ui.netList.innerHTML = '<i>' + (RU ? "СЕТЬ ПУСТА" : "NO NODES") + '</i>';
+    return;
+  }
+  var h = '<i>' + (RU ? "УЗЛЫ СЕТИ" : "NODES") + '</i>';
+  /* Больше шести строк на консоли не помещается, а сеть может
+     вырасти до трёх десятков: показываем последние - те, что
+     человек только что построил, и отдельной строкой остаток. */
+  var show = names.slice(-6);
+  for (var i = 0; i < show.length; i++) {
+    var nm = show[i];
+    var cls = fail && fail.name === nm ? "down" : (req && req.name === nm ? "want" : "ok");
+    h += '<span class="' + cls + '">' + nm + '</span>';
+  }
+  if (names.length > show.length) {
+    h += '<span class="more">+' + (names.length - show.length) + '</span>';
+  }
+  ui.netList.innerHTML = h;
 }
 
 /* ── Восстановление сети после возвращения ───────────────────
