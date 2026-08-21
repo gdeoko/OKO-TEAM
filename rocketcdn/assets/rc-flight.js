@@ -433,8 +433,10 @@ function buildUI() {
       '<div class="rcf-uni" role="menu"><i>' + (RU ? "КУДА ПРЫГАЕМ" : "JUMP TO") + '</i>' + uniHtml + '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
-        ? (RU ? "Палец вверх - тяга. Палец вбок - обзор на 360" : "Swipe up to thrust, sideways for 360 look")
-        : (RU ? "Колесо - тяга. Зажмите и тяните мышь - обзор на 360" : "Wheel to thrust. Drag with the mouse for a 360 look")) + '</div>' +
+        ? (RU ? "Палец вверх - тяга, вбок - обзор на 360, щипок - приблизить"
+              : "Swipe up to thrust, sideways to look, pinch to zoom")
+        : (RU ? "Колесо - тяга. Тяните мышь - обзор на 360. Shift с колесом - приблизить"
+              : "Wheel to thrust, drag to look, shift+wheel to zoom")) + '</div>' +
       '<div class="rcf-info" role="status"></div>' +
       /* Досье объекта: голограмма на стекле, ровно та же по духу, что
          и панель вопросов в финале сайта. «По точкам планет добавить
@@ -2210,6 +2212,14 @@ function bindControls() {
 
   w.addEventListener("wheel", function (e) {
     e.preventDefault();
+    /* С шифтом колесо приближает, а не разгоняет. Зум нужен там,
+       где тяга бесполезна: разглядеть кольца Сатурна с орбиты, не
+       врезаясь в них. Держим его отдельно от объектива сцены -
+       обратно он всегда возвращается сам. */
+    if (e.shiftKey) {
+      F.zoom = Math.max(0, Math.min(1, (F.zoom || 0) - e.deltaY * 0.0012));
+      return;
+    }
     F.v += e.deltaY * 0.0001;
     manual();
   }, { passive: false });
@@ -2232,12 +2242,28 @@ function bindControls() {
      Жест на телефоне делится по первому движению: повели больше
      вверх-вниз - это тяга, больше вбок - это обзор. Иначе каждый
      свайп разгонял бы корабль заодно с поворотом головы. */
-  var tY = null, tX = null, tAxis = 0, tSum = 0;
+  var tY = null, tX = null, tAxis = 0, tSum = 0, pinch = 0;
+  function pinchDist(e) {
+    var a = e.touches[0], b = e.touches[1];
+    var dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
   w.addEventListener("touchstart", function (e) {
+    /* Два пальца - щипок: приближает, а не разгоняет. Тот же зум,
+       что на ПК даёт шифт с колесом. */
+    if (e.touches.length > 1) { pinch = pinchDist(e); return; }
+    pinch = 0;
     if (e.touches.length) { tY = e.touches[0].clientY; tX = e.touches[0].clientX; tAxis = 0; tSum = 0; }
   }, { passive: true });
   w.addEventListener("touchmove", function (e) {
     e.preventDefault();
+    if (e.touches.length > 1) {
+      var d2 = pinchDist(e);
+      if (pinch) F.zoom = Math.max(0, Math.min(1, (F.zoom || 0) + (d2 - pinch) * 0.004));
+      pinch = d2;
+      hideHint();
+      return;
+    }
     if (!e.touches.length) return;
     var y = e.touches[0].clientY, x = e.touches[0].clientX;
     if (tY !== null) {
@@ -2259,7 +2285,7 @@ function bindControls() {
     tY = y; tX = x;
     hideHint();
   }, { passive: false });
-  w.addEventListener("touchend", function () { tY = tX = null; tAxis = 0; }, { passive: true });
+  w.addEventListener("touchend", function () { tY = tX = null; tAxis = 0; pinch = 0; }, { passive: true });
 
   var drag = false, dX = 0, dY = 0;
   w.addEventListener("pointermove", function (e) {
@@ -2516,10 +2542,14 @@ function netMark(pos, name) {
   if (!W3) return;
   var s = new T.Sprite(new T.SpriteMaterial({
     map: glowSprite(64, "rgba(159,224,246,1)", "rgba(66,178,220,0)"),
-    transparent: true, depthWrite: false, blending: T.AdditiveBlending
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+    opacity: 0.8
   }));
   s.position.copy(pos);
-  s.scale.setScalar(26);
+  /* Метка узла мельче прежней втрое. Раньше она была размером с
+     половину планеты и закрывала собой то самое тело, на котором
+     стоит: в кадре оставалось белое пятно вместо Земли. */
+  s.scale.setScalar(6);
   s.userData.info = (RU ? "УЗЕЛ СЕТИ · " : "NETWORK NODE · ") + name;
   W3.scene.add(s);
   netNodes.push({ s: s, p: pos.clone(), name: name });
@@ -2567,6 +2597,7 @@ function deployNode() {
   netBeamT = 0.65;
 
   netMark(F.orbit.c, name);
+  trafBuild();
   netPaint();
   netButton();
 
@@ -3138,7 +3169,11 @@ function frame(ts) {
     var jp = Math.max(0, Math.min(1, (F.p - w3.at.jump0) / Math.max(0.001, w3.at.jump1 - w3.at.jump0)));
     jf = jp < 0.74 ? -22 * (jp / 0.74) : 30 * Math.pow(1 - (jp - 0.74) / 0.26, 2);
   }
-  var fovGoal = (W3.fov0 || 72) + speed * 46 + jf;
+  /* Зум держится, пока им пользуются, и медленно стекает обратно:
+     кадр не должен остаться увеличенным навсегда, но и сбрасываться
+     рывком, едва отпустили пальцы, тоже не должен. */
+  if (F.zoom > 0.001) F.zoom = Math.max(0, F.zoom - dt * 0.06);
+  var fovGoal = (W3.fov0 || 72) * (1 - (F.zoom || 0) * 0.55) + speed * 46 + jf;
   w3.cam.fov += (fovGoal - w3.cam.fov) * Math.min(1, dt * 4);
   w3.cam.updateProjectionMatrix();
 
@@ -3221,7 +3256,7 @@ function frame(ts) {
   }
   /* Узлы дышат: сеть живая, по ней идёт трафик */
   for (var nn = 0; nn < netNodes.length; nn++) {
-    netNodes[nn].s.scale.setScalar(24 + Math.sin(ts * 0.003 + nn) * 5);
+    netNodes[nn].s.scale.setScalar(6 + Math.sin(ts * 0.003 + nn) * 1.5);
   }
 
   /* ── Голограммы над объектами ──────────────────────────────
@@ -3515,6 +3550,7 @@ function frame(ts) {
     barsFrame(ts);
     courseFrame(w3, ts);
     missionFrame(ts);
+    trafFrame(dt);
     failTick(ts);
     failPaint();
     radarFrame(w3, ts);
@@ -3550,6 +3586,7 @@ function open() {
       return;
     }
     F.built = true;
+    netRestore();
   }
 
   F.open = true;
@@ -3864,6 +3901,102 @@ function courseFrame(w3, ts) {
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
                        : (RU ? "РУЧНОЙ" : "MANUAL");
+}
+
+/* ── Восстановление сети после возвращения ───────────────────
+   Журнал узлов живёт в браузере, а метки в сцене - нет: закрыл
+   вкладку, вернулся, и счётчик показывал прежнюю сеть, а в кадре её
+   не было. Развёрнутые узлы обязаны стоять там же, где их
+   оставили, иначе прогресс существует только на бумаге.
+
+   Ставим их сразу после сборки мира, по именам из журнала. */
+function netRestore() {
+  if (!W3 || !netNodes) return;
+  if (netNodes.length) return;
+  var map = {
+    earth: W3.earth, moon: W3.moon, mars: W3.mars, saturn: W3.saturn,
+    sun: W3.sun, mercury: W3.mercury, venus: W3.venus,
+    jupiter: W3.jupiter, uranus: W3.uranus, neptune: W3.neptune
+  };
+  var any = false;
+  for (var key in map) {
+    if (!map[key]) continue;
+    var nm = GOAL_NAMES[key];
+    if (!nm || !net[nm]) continue;
+    netMark(map[key].position, nm);
+    any = true;
+  }
+  if (any) trafBuild();
+}
+
+/* ── Трафик между узлами ─────────────────────────────────────
+   Линии связи показывали, что узлы соединены, но сеть от этого не
+   выглядела работающей: связь есть, а движения по ней нет. Между
+   тем вся игра про доставку контента, и трафик - её главное
+   содержание.
+
+   Теперь по линиям идут пакеты: светящиеся точки бегут от узла к
+   узлу и вспыхивают на прибытии. Дороже это не стоит почти ничего -
+   одна точечная система на всю сеть, координаты которой
+   пересчитываются раз в кадр из уже посчитанных отрезков.
+
+   Чем больше узлов, тем плотнее движение: сеть, которую человек
+   построил, видно по её нагрузке. */
+var traf = null, trafN = 0, trafSeg = [];
+
+function trafBuild() {
+  var T = g.THREE;
+  if (!W3) return;
+  if (traf) { W3.scene.remove(traf); traf = null; }
+  trafSeg = [];
+  for (var i = 0; i < netNodes.length; i++) {
+    for (var j = i + 1; j < netNodes.length; j++) {
+      if (netNodes[i].p.distanceTo(netNodes[j].p) > 1400) continue;
+      trafSeg.push([netNodes[i].p, netNodes[j].p]);
+    }
+  }
+  if (!trafSeg.length) return;
+  /* По три пакета на связь: меньше не читается движением, больше
+     превращается в сплошную нитку */
+  trafN = Math.min(96, trafSeg.length * 3);
+  var pos = new Float32Array(trafN * 3);
+  var geo = new T.BufferGeometry();
+  geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+  traf = new T.Points(geo, new T.PointsMaterial({
+    color: 0xbfe9ff, size: 7, sizeAttenuation: true,
+    map: glowSprite(32, "rgba(220,245,255,1)", "rgba(120,200,240,0)"),
+    transparent: true, opacity: 0.95, depthWrite: false,
+    blending: T.AdditiveBlending
+  }));
+  traf.userData.t = new Float32Array(trafN);
+  traf.userData.seg = new Uint16Array(trafN);
+  for (var k = 0; k < trafN; k++) {
+    traf.userData.seg[k] = k % trafSeg.length;
+    traf.userData.t[k] = Math.random();
+  }
+  traf.frustumCulled = false;
+  W3.scene.add(traf);
+}
+
+function trafFrame(dt) {
+  if (!traf || !trafSeg.length) return;
+  var pos = traf.geometry.attributes.position.array;
+  var tt = traf.userData.t, sg = traf.userData.seg;
+  for (var k = 0; k < trafN; k++) {
+    tt[k] += dt * (0.14 + (k % 5) * 0.035);
+    if (tt[k] > 1) {
+      tt[k] -= 1;
+      /* На прибытии пакет уходит на другую связь: движение по сети
+         должно выглядеть маршрутизацией, а не каруселью */
+      sg[k] = (sg[k] + 1 + (k % 3)) % trafSeg.length;
+    }
+    var a = trafSeg[sg[k]][0], b = trafSeg[sg[k]][1];
+    var u = tt[k];
+    pos[k * 3] = a.x + (b.x - a.x) * u;
+    pos[k * 3 + 1] = a.y + (b.y - a.y) * u;
+    pos[k * 3 + 2] = a.z + (b.z - a.z) * u;
+  }
+  traf.geometry.attributes.position.needsUpdate = true;
 }
 
 /* ── Происшествия в сети ─────────────────────────────────────
@@ -4465,6 +4598,7 @@ function stage(k) {
       return;
     }
     F.built = true;
+    netRestore();
   }
   F.stageK = k;
   if (ui.wrap) ui.wrap.style.setProperty("--rcf-stage", k.toFixed(3));
