@@ -231,15 +231,27 @@ ob_start(); ?>
      выглядел так, будто автоматическая оценка длинные не берёт вовсе.
      Один запрос на весь список: разборы берём пачкой, а не по строке. */
   $agHints = [];
+  $agFails = [];
   if ($toGrade) {
       $ids = implode(',', array_map(static fn($r) => (int) $r['id'], $toGrade));
       try {
-          foreach (all("SELECT application_id, title, total FROM grading_runs
+          foreach (all("SELECT application_id, title, total, reject_hint FROM grading_runs
                          WHERE status='ok' AND application_id IN ($ids)
                       ORDER BY id ASC") as $g) {
               $agHints[(int) $g['application_id']] = $g;   // последний разбор перекрывает ранний
           }
       } catch (\Throwable $e) { $agHints = []; }
+      /* Запись не открылась — в списке это видно так же прямо, как подсказка:
+         иначе работа выглядит необработанной и её ждут неделями. */
+      try {
+          foreach (all("SELECT application_id, COUNT(*) n, MAX(error) err FROM grading_runs
+                         WHERE status='failed' AND application_id IN ($ids)
+                      GROUP BY application_id") as $g) {
+              $aid = (int) $g['application_id'];
+              if (isset($agHints[$aid])) continue;
+              $agFails[$aid] = $g;
+          }
+      } catch (\Throwable $e) { $agFails = []; }
   }
   ?>
   <div class="card" style="margin-bottom:16px">
@@ -261,9 +273,22 @@ ob_start(); ?>
             <td class="small"><?= h((string)$a['work_title']) ?></td>
             <td class="small"><?= h(date('d.m.y H:i', strtotime((string)$a['created_at']))) ?></td>
             <td class="small">
-              <?php $hint = $agHints[(int) $a['id']] ?? null; if ($hint): ?>
+              <?php
+              /* Нарушение положения читается как отказ, а не как низкая оценка:
+                 в списке это видно сразу, вместе с пунктом. */
+              $hint = $agHints[(int) $a['id']] ?? null;
+              $rej  = $hint ? trim((string) ($hint['reject_hint'] ?? '')) : '';
+              if ($rej !== ''): ?>
+                <span style="color:#8B2F2F;font-weight:700">Отклонить</span>
+                <div class="small" style="color:#8B2F2F;opacity:.85;line-height:1.3"><?= h(mb_substr(strtok($rej, "\n"), 0, 60)) ?></div>
+              <?php elseif ($hint): ?>
                 <span style="color:#39618f;font-weight:600"><?= h((string) $hint['title']) ?></span>
                 <span class="muted"> · <?= number_format((float) $hint['total'], 1, ',', ' ') ?></span>
+              <?php elseif (!empty($agFails[(int) $a['id']])): $f = $agFails[(int) $a['id']]; ?>
+                <span style="color:#8B6F1F;font-weight:600">Запись недоступна</span>
+                <div class="small" style="color:#8B6F1F;opacity:.85;line-height:1.3">
+                  <?= h(mb_substr(preg_replace('~^запись не получена:\s*~u', '', (string) $f['err']) ?: '', 0, 54)) ?>
+                </div>
               <?php else: ?>
                 <span class="muted">—</span>
               <?php endif; ?>

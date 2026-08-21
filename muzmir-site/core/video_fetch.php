@@ -145,13 +145,19 @@ function vf_direct_link(string $url): array {
                     $fold = json_decode(vf_http(
                         'https://cloud.mail.ru/api/v2/folder?weblink=' . rawurlencode($weblink) . '&api=2',
                         ['timeout' => 20])['body'], true);
-                    foreach ((array) ($fold['body']['list'] ?? []) as $it) {
-                        if (($it['kind'] ?? '') !== 'file') continue;
-                        if (!preg_match('~\.(mp4|mov|m4v|webm|mkv|avi)$~i', (string) ($it['name'] ?? ''))) continue;
-                        $body = $it;
-                        $weblink .= '/' . ltrim((string) ($it['name'] ?? ''), '/');
-                        $status = 200;
-                        break;
+                    /* В папке ищем сначала запись, потом изображение: по
+                       изобразительному искусству и фотографии участник кладёт
+                       туда снимок работы, и раньше такая ссылка считалась
+                       пустой — «нет видео» означало «нечего оценивать». */
+                    foreach (['~\.(mp4|mov|m4v|webm|mkv|avi)$~i', '~\.(jpe?g|png|webp|heic|heif|bmp|tiff?)$~i'] as $mask) {
+                        foreach ((array) ($fold['body']['list'] ?? []) as $it) {
+                            if (($it['kind'] ?? '') !== 'file') continue;
+                            if (!preg_match($mask, (string) ($it['name'] ?? ''))) continue;
+                            $body = $it;
+                            $weblink .= '/' . ltrim((string) ($it['name'] ?? ''), '/');
+                            $status = 200;
+                            break 2;
+                        }
                     }
                 }
                 if ($status !== 200 || !$body) {
@@ -164,7 +170,13 @@ function vf_direct_link(string $url): array {
                 $host = (string) ($disp['body']['weblink_get'][0]['url'] ?? '');
                 if ($host === '') return $fail('Облако Mail.ru: сервер раздачи не отвечает');
 
-                return ['ok' => true, 'url' => rtrim($host, '/') . '/' . $weblink,
+                /* ИМЯ ФАЙЛА В АДРЕСЕ НАДО КОДИРОВАТЬ.
+                   Работы называют по-человечески: «Ансимова Дарья 14 Натюрморт.jpg».
+                   Кириллица и пробелы в адресе — это не адрес: curl отвечает
+                   «Malformed input to a URL function» и не качает ничего. Кодируем
+                   каждый кусок пути отдельно, чтобы косые черты остались целыми. */
+                $encoded = implode('/', array_map('rawurlencode', explode('/', $weblink)));
+                return ['ok' => true, 'url' => rtrim($host, '/') . '/' . $encoded,
                         'name' => (string) ($body['name'] ?? 'video.mp4'),
                         'size' => (int) ($body['size'] ?? 0), 'why' => ''];
             }
@@ -253,7 +265,12 @@ function vf_download(string $url, int $appId = 0): array {
     $link  = vf_direct_link($url);
     if (!$link['ok']) return ['ok' => false, 'path' => '', 'size' => 0, 'why' => $link['why']];
 
-    $ext  = preg_match('~\.(mp4|mov|m4v|webm|mkv|m3u8)~i', $link['name'], $m) ? mb_strtolower($m[1]) : 'mp4';
+    /* Расширение берём по имени файла: раньше всё, что не видео, называлось
+       mp4, и снимок рисунка уезжал в ffmpeg как «битая запись». */
+    $ext = 'mp4';
+    if (preg_match('~\.(mp4|mov|m4v|webm|mkv|m3u8|jpe?g|png|webp|heic|heif|bmp|tiff?)~i', $link['name'], $m)) {
+        $ext = mb_strtolower($m[1]);
+    }
     $path = vf_dir() . '/app' . ($appId > 0 ? $appId : 0) . '_' . substr(md5($url), 0, 8) . '.' . $ext;
     if (is_file($path) && filesize($path) > 100000) {
         return ['ok' => true, 'path' => $path, 'size' => (int) filesize($path), 'why' => ''];

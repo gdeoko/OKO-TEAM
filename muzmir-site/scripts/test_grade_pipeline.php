@@ -114,6 +114,15 @@ echo "\n4. ФОНОГРАММА СНИЖАЕТ ЗВАНИЕ (п. 8.7)\n";
 $a4 = $mk($short, $submitted);
 $r4 = grade_apply_result($a4, 'ЛАУРЕАТ I СТЕПЕНИ', ['source' => 'jury', 'phonogram' => true]);
 $check('лауреат снижен до дипломанта', $r4['result'] === 'ДИПЛОМАНТ I СТЕПЕНИ', $r4['result']);
+$cm4 = (string) (scalar("SELECT jury_comment FROM applications WHERE id=?", [$a4]) ?? '');
+$check('участнику написано, за что снижено',
+       mb_strpos($cm4, 'Оценка снижена до Дипломанта за использование голосовой фонограммы') !== false
+    && mb_strpos($cm4, '8.7') !== false, mb_substr($cm4, 0, 70));
+// Повторное сохранение не должно дублировать пометку.
+grade_apply_result($a4, 'ЛАУРЕАТ I СТЕПЕНИ', ['source' => 'jury', 'phonogram' => true]);
+$cm4b = (string) (scalar("SELECT jury_comment FROM applications WHERE id=?", [$a4]) ?? '');
+$check('пометка не задваивается при повторном сохранении',
+       mb_substr_count($cm4b, 'голосовой фонограммы') === 1, 'встретилась ' . mb_substr_count($cm4b, 'голосовой фонограммы') . ' раза');
 $a5 = $mk($short, $submitted);
 $r5 = grade_apply_result($a5, 'ДИПЛОМАНТ II СТЕПЕНИ', ['source' => 'jury', 'phonogram' => true]);
 $check('дипломантское звание не поднимается', $r5['result'] === 'ДИПЛОМАНТ II СТЕПЕНИ', $r5['result']);

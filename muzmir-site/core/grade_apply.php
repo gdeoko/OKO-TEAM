@@ -61,6 +61,7 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
     /* ФОНОГРАММА — ПОТОЛОК ДИПЛОМАНТА (п. 8.7 положения, одинаково во всех
        конкурсах). Правило записано в документе, который читает участник, поэтому
        исполняется здесь, а не остаётся на память тому, кто ставит звание. */
+    $phonoNote = '';
     if (!empty($opt['phonogram']) && $result !== '') {
         $cap = '';
         foreach ($ladder as $rp) { if (mb_strpos($rp, 'ДИПЛОМАНТ') === 0) { $cap = $rp; break; } }
@@ -69,6 +70,15 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
         if ($cap !== '' && $iCur !== false && $iCap !== false && $iCur < $iCap) {
             $result = $cap;
             $out['msg'] = 'Звание снижено до «' . $cap . '»: номер под фонограмму (п. 8.7 положения). ';
+            /* ПРИЧИНА СНИЖЕНИЯ ДОЛЖНА БЫТЬ ВИДНА УЧАСТНИКУ.
+             *
+             * Звание опускалось молча: в заявке стояло «дипломант», и человек,
+             * рассчитывавший на лауреата, не понимал, что произошло, — а спросить
+             * было не у кого, потому что нигде не написано. Формулировка идёт
+             * первой строкой в комментарии жюри: он уходит в письме с результатом
+             * и виден в личном кабинете. */
+            $phonoNote = 'Оценка снижена до Дипломанта за использование голосовой фонограммы '
+                       . '(Пункт положения конкурса 8.7).';
         }
     }
     if (!in_array($result, $ladder, true)) { $out['msg'] .= 'звание не из списка'; return $out; }
@@ -76,6 +86,11 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
 
     $extra    = trim((string) ($opt['extra_diploma'] ?? ($cur['extra_diploma'] ?? '')));
     $jcomment = trim((string) ($opt['jury_comment'] ?? ($cur['jury_comment'] ?? '')));
+    // Пометка о фонограмме ставится первой строкой и только один раз — повторное
+    // сохранение итога не должно её дублировать.
+    if ($phonoNote !== '' && mb_strpos($jcomment, 'голосовой фонограммы') === false) {
+        $jcomment = $phonoNote . ($jcomment !== '' ? "\n\n" . $jcomment : '');
+    }
     $source   = (string) ($opt['source'] ?? 'jury');
 
     $comp = one("SELECT results_mode, is_paid FROM competitions WHERE id=?", [(int) $cur['competition_id']]);

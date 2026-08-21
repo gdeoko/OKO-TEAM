@@ -309,17 +309,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
      * участник, поэтому оно исполняется здесь, а не остаётся на память жюри:
      * отмеченная фонограмма опускает лауреатское звание до дипломанта первой
      * степени. Дипломантские звания и «участник» не трогаем — они и так ниже. */
-    if (input('phonogram') === '1' && $result !== '') {
-        $ladder = RESULT_PRESETS();                       // от высшего к низшему
-        $cap    = '';
-        foreach ($ladder as $rp) { if (mb_strpos($rp, 'ДИПЛОМАНТ') === 0) { $cap = $rp; break; } }
-        $iCur = array_search($result, $ladder, true);
-        $iCap = array_search($cap, $ladder, true);
-        if ($cap !== '' && $iCur !== false && $iCap !== false && $iCur < $iCap) {
-            $result = $cap;
-            flash('Звание снижено до «' . $cap . '»: номер исполнен под фонограмму (п. 8.7 положения).', 'success');
-        }
-    }
+    // Снижение выполняет grade_apply_result: там же, где оно выполняется для
+    // автоматической аттестации, и там же дописывается причина в комментарий
+    // участнику — иначе звание опускалось молча и человек не понимал, за что.
+    $phonogram = input('phonogram') === '1';
 
     if ($appId && in_array($result, RESULT_PRESETS(), true)) {
         $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
@@ -345,6 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
             'send_mode'     => $sendMode,
             'send_at'       => trim(input('send_at')),
             'source'        => 'jury',
+            'phonogram'     => $phonogram,
         ]);
         if (!$ap['ok']) {
             flash('Не удалось сохранить итог: ' . $ap['msg'], 'error');
@@ -772,6 +766,30 @@ if ($id = (int) input('id')) {
             $agFlags = (array) json_decode((string) ($agRun['red_flags'] ?? '[]'), true);
             $agConf  = (float) ($agRun['confidence'] ?? 0);
         ?>
+          <?php $agRej = trim((string) ($agRun['reject_hint'] ?? '')); ?>
+          <?php if ($agRej !== ''): ?>
+            <?php /* НАРУШЕНИЕ ПОЛОЖЕНИЯ — ОТКАЗ, А НЕ ЗВАНИЕ.
+                     Причина уже написана словами положения и с номером пункта:
+                     кнопка переносит её в форму отклонения ниже, чтобы человеку
+                     осталось только согласиться или поправить. */ ?>
+            <div style="margin:0 0 14px;padding:13px 15px;border:1px solid #EBC7C7;background:#FDF1F1;border-radius:12px">
+              <div class="small" style="text-transform:uppercase;letter-spacing:.06em;color:#8B2F2F;margin-bottom:6px">
+                Рекомендация: отклонить · нарушение положения
+              </div>
+              <div style="font-size:14px;line-height:1.6;color:#3a2a2a;white-space:pre-line"><?= h($agRej) ?></div>
+              <button type="button" class="btn btn--ghost btn--sm" style="margin-top:10px;border-color:#c98b8b;color:#8B2F2F"
+                      data-ag-reject="<?= h($agRej) ?>" onclick="agReject(this)">Подставить причину в отклонение</button>
+            </div>
+            <script>
+            function agReject(b){
+              var t=b.getAttribute('data-ag-reject');
+              var ta=document.querySelector('textarea[name=reject_reason]');
+              if(ta){ ta.value=t; ta.focus();
+                var box=ta.closest('form')||ta.closest('.card');
+                if(box&&box.scrollIntoView) box.scrollIntoView({behavior:'smooth',block:'center'}); }
+            }
+            </script>
+          <?php endif; ?>
           <div style="margin:0 0 14px;padding:13px 15px;border:1px solid #cfe0f5;background:#f4f8fd;border-radius:12px">
             <div class="small" style="text-transform:uppercase;letter-spacing:.06em;color:#39618f;margin-bottom:6px">
               Подсказка аттестации · разбор от <?= h(date('d.m.Y H:i', strtotime((string) $agRun['created_at']))) ?>
@@ -1101,15 +1119,31 @@ ob_start(); ?>
    Иначе о том, что работа уже разобрана машиной, узнаёшь только открыв её. Один
    запрос на весь список: разборы берём пачкой, а не по строке. */
 $agHints = [];
+$agFails = [];
 if ($rows) {
     $ids = implode(',', array_map(static fn($r) => (int) $r['id'], $rows));
     try {
-        foreach (all("SELECT application_id, title, total, confidence FROM grading_runs
+        foreach (all("SELECT application_id, title, total, confidence, reject_hint FROM grading_runs
                        WHERE status='ok' AND application_id IN ($ids)
                     ORDER BY id ASC") as $g) {
             $agHints[(int) $g['application_id']] = $g;      // последний разбор перекрывает ранний
         }
     } catch (\Throwable $e) { $agHints = []; }
+    /* ЗАПИСЬ НЕ ОТКРЫВАЕТСЯ — ЭТО ТОЖЕ РЕЗУЛЬТАТ.
+       Работы, чью запись не удалось получить (закрытый доступ, удалённое видео,
+       мёртвая ссылка), в списке выглядели как необработанные: подсказки нет, и
+       непонятно, ждать её или уже разбираться руками. Показываем прямо: запись
+       недоступна и по какой причине — дальше это работа человека, он напишет
+       участнику или отклонит по пункту положения. */
+    try {
+        foreach (all("SELECT application_id, COUNT(*) n, MAX(error) err FROM grading_runs
+                       WHERE status='failed' AND application_id IN ($ids)
+                    GROUP BY application_id") as $g) {
+            $aid = (int) $g['application_id'];
+            if (isset($agHints[$aid])) continue;      // разбор всё-таки удался позже
+            $agFails[$aid] = $g;
+        }
+    } catch (\Throwable $e) { $agFails = []; }
 }
 ?>
 <div class="table-wrap">
@@ -1133,9 +1167,26 @@ if ($rows) {
           <td class="small"><?= h($a['work_title']) ?></td>
           <td class="small"><?= h(date('d.m.y H:i', strtotime((string)$a['created_at']))) ?></td>
           <td class="small">
-            <?php $hint = $agHints[(int) $a['id']] ?? null; if ($hint): ?>
+            <?php
+            /* Нарушение положения — это отказ, а не низкая оценка, и в списке
+               оно должно читаться именно так. Раньше здесь стояло «ТРЕБУЕТ
+               ПРОВЕРКИ»: жюри видело, что что-то не так, но шло разбираться
+               заново. Теперь сразу видно, что рекомендуется отклонить и по
+               какому пункту. */
+            $hint = $agHints[(int) $a['id']] ?? null;
+            $rej  = $hint ? trim((string) ($hint['reject_hint'] ?? '')) : '';
+            if ($rej !== ''): ?>
+              <span style="color:#8B2F2F;font-weight:700">Отклонить</span>
+              <div class="small" style="color:#8B2F2F;opacity:.85;line-height:1.3"><?= h(mb_substr(strtok($rej, "\n"), 0, 64)) ?></div>
+            <?php elseif ($hint): ?>
               <span style="color:#39618f;font-weight:600"><?= h((string) $hint['title']) ?></span>
               <span class="muted"> · <?= number_format((float) $hint['total'], 1, ',', ' ') ?></span>
+            <?php elseif (!empty($agFails[(int) $a['id']])): $f = $agFails[(int) $a['id']]; ?>
+              <span style="color:#8B6F1F;font-weight:600">Запись недоступна</span>
+              <div class="small" style="color:#8B6F1F;opacity:.85;line-height:1.3">
+                <?= h(mb_substr(preg_replace('~^запись не получена:\s*~u', '', (string) $f['err']) ?: '', 0, 58)) ?>
+                <?= (int) $f['n'] > 1 ? ' · попыток ' . (int) $f['n'] : '' ?>
+              </div>
             <?php else: ?>
               <span class="muted">—</span>
             <?php endif; ?>

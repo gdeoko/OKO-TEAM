@@ -64,6 +64,14 @@ function ag_migrate(): void {
         try { db()->exec("ALTER TABLE grading_runs ADD COLUMN level_guess TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         try { db()->exec("ALTER TABLE grading_runs ADD COLUMN extra_award TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         try { db()->exec("ALTER TABLE grading_runs ADD COLUMN extra_award_why TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+        /* РЕКОМЕНДАЦИЯ ОТКЛОНИТЬ.
+           Формальное нарушение положения — это не низкая оценка, а отказ. Раньше
+           такая работа получала звание «ТРЕБУЕТ ПРОВЕРКИ» и уходила в общий
+           список: жюри видело, что что-то не так, но не знало, что именно и по
+           какому пункту, и заново разбиралось само. Теперь разбор сразу называет
+           пункт положения и то, что увидел, — решение остаётся за человеком, но
+           оно готово к одному нажатию. */
+        try { db()->exec("ALTER TABLE grading_runs ADD COLUMN reject_hint TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         db()->exec("CREATE INDEX IF NOT EXISTS idx_gr_app ON grading_runs(application_id)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_gr_status ON grading_runs(status)");
         db()->exec("CREATE TABLE IF NOT EXISTS grading_rubrics (
@@ -190,6 +198,22 @@ function ag_prepare_media(string $path): array {
     $bad = static fn(string $w): array => ['ok' => false, 'video' => '', 'audio' => '', 'seconds' => 0, 'why' => $w];
     if (!is_file($path)) return $bad('файл записи не найден');
 
+    /* РАБОТА МОЖЕТ БЫТЬ КАРТИНКОЙ, А НЕ ЗАПИСЬЮ.
+     *
+     * По изобразительному искусству, декоративно-прикладному творчеству и
+     * фотографии участник присылает не видео, а изображение: снимок рисунка,
+     * поделки, фотоработы. Конвейер же требовал видеодорожку и звук — ffmpeg
+     * на картинке возвращал «Output file does not contain any stream», и весь
+     * разбор считался неудачным. Из 47 работ по изобразительному искусству
+     * оценённой оказалась одна: остальные молча висели «в очереди».
+     *
+     * Изображение отдаётся модели как есть, без ffmpeg: она разбирает рисунок
+     * не хуже, чем видеозапись номера, а звука там нет и быть не должно. */
+    if (preg_match('~\.(jpe?g|png|webp|heic|heif|bmp|tiff?)$~i', $path)) {
+        return ['ok' => true, 'video' => '', 'audio' => '', 'image' => $path,
+                'seconds' => 0, 'why' => ''];
+    }
+
     $maxSec = max(60, (int) (function_exists('setting') ? setting('grade_video_max_sec', '900') : 900));
     $dur    = vf_duration($path);
     $stem   = preg_replace('~\.[a-z0-9]+$~i', '', $path);
@@ -215,7 +239,7 @@ function ag_prepare_media(string $path): array {
     if (!$okV && !$okA) return $bad('запись не читается: ' . mb_substr(implode(' ', array_slice($o1 ?: $o2 ?: [], 0, 2)), 0, 200));
 
     return ['ok' => true, 'video' => $okV ? $video : '', 'audio' => $okA ? $audio : '',
-            'seconds' => $dur, 'why' => ''];
+            'image' => '', 'seconds' => $dur, 'why' => ''];
 }
 
 /**
@@ -287,10 +311,21 @@ function ag_upload(string $file, string $mime, string $key): array {
 }
 
 /** Промпт аттестации: роль, рубрика, требования к ответу. */
-function ag_prompt(array $app, array $rubric, array $pitch = []): string {
+function ag_prompt(array $app, array $rubric, array $pitch = [], bool $isImage = false): string {
     $L = [];
     $L[] = 'Ты профессор профильной кафедры и член жюри международных конкурсов по этому направлению: за плечами консерваторское или академическое образование, собственная исполнительская практика и годы работы в жюри, где решения приходится защищать перед коллегами.';
-    $L[] = 'Тебе прислали конкурсную запись. Разбери её так, как разбирают на профессиональном прослушивании: сначала факты (что слышно и видно), потом оценка, и только потом слова для участника.';
+    /* РАБОТА МОЖЕТ БЫТЬ РИСУНКОМ, А НЕ ЗАПИСЬЮ.
+       По изобразительному и декоративно-прикладному искусству, фотографии
+       участник присылает изображение. Задание, написанное для видеозаписи,
+       требовало от модели привязки ко времени, разбора звука и проверки на
+       монтаж внутри исполнения — на картинке всё это бессмысленно, и разбор
+       возвращался пустым. */
+    if ($isImage) {
+        $L[] = 'Тебе прислали конкурсную работу ИЗОБРАЖЕНИЕМ: это рисунок, изделие или фотография, а не видеозапись. Звука и движения здесь нет и быть не должно — разбирай саму работу.';
+        $L[] = 'Разбирай так, как разбирают на просмотре: сначала факты (что именно изображено, техника, материал, как построено), потом оценка, и только потом слова для участника.';
+    } else {
+        $L[] = 'Тебе прислали конкурсную запись. Разбери её так, как разбирают на профессиональном прослушивании: сначала факты (что слышно и видно), потом оценка, и только потом слова для участника.';
+    }
     $L[] = '';
     $L[] = 'ЗАЯВКА';
     $L[] = '  номинация: ' . (string) ($app['nomination'] ?? '');
@@ -301,9 +336,25 @@ function ag_prompt(array $app, array $rubric, array $pitch = []): string {
     $L[] = '  участник: ' . (string) ($app['is_group'] ? ($app['group_name'] ?? '') : ($app['full_name'] ?? ''));
     $L[] = '';
     $L[] = 'СНАЧАЛА ФОРМАЛЬНАЯ ПРОВЕРКА. По каждому пункту ответь true или false и объясни, если false:';
-    foreach (gr_formal_checks() as $k => $text) $L[] = '  ' . $k . ': ' . $text;
+    if ($isImage) {
+        // Те же ключи, что и у записи: разбор дальше по коду ждёт именно их.
+        // Смысл переписан под изображение, иначе «нет звука на всём протяжении»
+        // и «нет склеек внутри исполнения» превращают любой рисунок в нарушение.
+        $L[] = '  playable: изображение открывается, работа видна целиком и её можно рассмотреть.';
+        $L[] = '  one_piece: это одна конкурсная работа, а не коллаж из нескольких разных работ.';
+        $L[] = '  participant: работа выглядит выполненной заявленным участником (соответствует заявленному возрасту и уровню).';
+        $L[] = '  nomination: работа соответствует заявленной номинации и направлению.';
+        $L[] = '  formation: соответствует заявленному: индивидуальная работа или коллективная.';
+        $L[] = '  integrity: это авторская работа, а не срисовка чужого произведения, не раскраска и не распечатка.';
+        $L[] = '  no_overdub: работа не собрана в редакторе из готовых изображений и не сгенерирована нейросетью.';
+        $L[] = '  duration: снимок пригоден для оценки: работа в кадре целиком, без сильных бликов и перекосов.';
+    } else {
+        foreach (gr_formal_checks() as $k => $text) $L[] = '  ' . $k . ': ' . $text;
+    }
     $L[] = '';
-    $L[] = 'ЗАТЕМ ОЦЕНКА ПО КРИТЕРИЯМ. Каждому критерию поставь балл от 0 до 100 и напиши обоснование из ДВУХ-ТРЁХ конкретных наблюдений с привязкой ко времени записи (например «0:42 срыв дыхания в конце фразы»). Без привязки к конкретным местам оценка не принимается.';
+    $L[] = $isImage
+        ? 'ЗАТЕМ ОЦЕНКА ПО КРИТЕРИЯМ. Каждому критерию поставь балл от 0 до 100 и напиши обоснование из ДВУХ-ТРЁХ конкретных наблюдений с привязкой к месту на работе (например «в левом верхнем углу перспектива завалена», «тени положены одним тоном»). Без привязки к конкретным местам оценка не принимается.'
+        : 'ЗАТЕМ ОЦЕНКА ПО КРИТЕРИЯМ. Каждому критерию поставь балл от 0 до 100 и напиши обоснование из ДВУХ-ТРЁХ конкретных наблюдений с привязкой ко времени записи (например «0:42 срыв дыхания в конце фразы»). Без привязки к конкретным местам оценка не принимается.';
     foreach ((array) ($rubric['criteria'] ?? []) as $key => $c) {
         $L[] = '';
         $L[] = '  [' . $key . '] ' . $c['title'] . ' (вес ' . $c['weight'] . ')';
@@ -518,7 +569,14 @@ function ag_grade_application(int $appId, array $opt = []): array {
     // функцию и повторяется, когда мы переходим к следующему ключу.
     $uploadAll = static function (string $key) use ($media): array {
         $parts = [];
-        foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg']] as [$f, $mime]) {
+        // Картинка вместо записи: у работ по изобразительному искусству,
+        // прикладному творчеству и фотографии дорожек нет вовсе.
+        $img = (string) ($media['image'] ?? '');
+        $mimeImg = $img !== '' ? (['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+                                   'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif',
+                                   'bmp' => 'image/bmp', 'tif' => 'image/tiff', 'tiff' => 'image/tiff']
+                                  [mb_strtolower(pathinfo($img, PATHINFO_EXTENSION))] ?? 'image/jpeg') : '';
+        foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg'], [$img, $mimeImg]] as [$f, $mime]) {
             if ($f === '' || !is_file($f)) continue;
             $up = ag_upload($f, $mime, $key);
             if (!$up['ok']) continue;
@@ -526,14 +584,16 @@ function ag_grade_application(int $appId, array $opt = []): array {
         }
         return $parts;
     };
-    $uploaded = array_values(array_filter([$media['video'], $media['audio']], 'is_file'));
+    $uploaded = array_values(array_filter([$media['video'], $media['audio'], (string) ($media['image'] ?? '')], 'is_file'));
 
     // 4. Спрашиваем.
     $rubric = gr_rubric_for((string) ($app['nomination'] ?? ''), (string) ($app['subgroup'] ?? ''));
     // ЗАМЕР СТРОЯ. Высоту звука модель оценивает ненадёжно, поэтому интонацию
     // мы измеряем сами и кладём в запрос как факт (см. scripts/pitch_check.py).
-    $pitch = ag_pitch_measure((string) $media['audio']);
-    $prompt = ag_prompt($app, $rubric, $pitch);
+    // Замер строя нужен там, где есть звук. У рисунка его нет, и запускать
+    // питч-трекер на пустоте незачем.
+    $pitch = trim((string) ($media['audio'] ?? '')) !== '' ? ag_pitch_measure((string) $media['audio']) : [];
+    $prompt = ag_prompt($app, $rubric, $pitch, trim((string) ($media['image'] ?? '')) !== '');
     $mkBody = static function (array $parts) use ($prompt): array {
         $parts[] = ['text' => $prompt];
         return [
@@ -782,7 +842,51 @@ function ag_grade_application(int $appId, array $opt = []): array {
         'red_flags'     => json_encode(array_values((array) ($out['red_flags'] ?? [])), JSON_UNESCAPED_UNICODE),
         'seconds'       => round(microtime(true) - $t0, 1),
     ];
-    try { update('grading_runs', $upd, 'id=:id', ['id' => $runId]); } catch (\Throwable $e) {}
+    /* СБОЙ ЗАПИСИ НЕ ДОЛЖЕН БЫТЬ НЕМЫМ.
+     *
+     * Раньше здесь стоял пустой catch. Когда сохранение падало, разбор всё равно
+     * возвращал звание и балл, а в базе запись оставалась в состоянии «new» — со
+     * стороны это выглядело как «оценка не работает», хотя работало всё, кроме
+     * одной строки. Теперь причина видна и в самой записи, и в журнале. */
+    try {
+        update('grading_runs', $upd, 'id=:id', ['id' => $runId]);
+    } catch (\Throwable $e) {
+        $why = 'разбор получен, но не сохранён: ' . mb_substr($e->getMessage(), 0, 300);
+        error_log('ag_grade_application(' . $appId . '): ' . $why);
+        try { q("UPDATE grading_runs SET status='failed', error=? WHERE id=?", [$why, $runId]); } catch (\Throwable $e2) {}
+        return ['ok' => false, 'run_id' => $runId, 'total' => 0.0, 'title' => '', 'why' => $why];
+    }
+
+    /* ГОТОВАЯ ПРИЧИНА ОТКЛОНЕНИЯ — СРАЗУ, А НЕ ПОТОМ.
+     *
+     * Если положение нарушено, работе не звание нужно, а отказ. Считаем причину
+     * здесь же, словами положения и с номером пункта, и кладём в разбор: в
+     * списке жюри увидит «отклонить» вместо непонятного «требует проверки», а в
+     * карточке причина уже подставлена в форму. Само отклонение не происходит:
+     * в режиме подсказки решает человек, в полном автомате — cron/ai_grade. */
+    if ($formalFail) {
+        try {
+            $runRow = one("SELECT * FROM grading_runs WHERE id=?", [$runId]);
+            $compRow = one("SELECT c.* FROM competitions c
+                             JOIN applications a ON a.competition_id = c.id WHERE a.id=?", [$appId]);
+            [$doReject, $reason] = ag_auto_reject((array) $runRow, (array) $compRow);
+            // Даже когда до автоматического отказа не дотягивает (мало уверенности
+            // или нарушение из спорных), причину показать полезно: человеку она
+            // экономит разбор, а решение всё равно его.
+            if (!$doReject && $reason === '') {
+                $names = [];
+                foreach (gr_formal_checks() as $k => $text) {
+                    if (array_key_exists($k, $formal) && $formal[$k] === false) $names[] = $text;
+                }
+                $issues = (array) ($formal['issues'] ?? []);
+                $reason = $names ? ('Нарушение требований к конкурсному материалу: ' . implode(' ', $names)) : '';
+                if ($reason !== '' && $issues) $reason .= "\n\nЧто именно: " . mb_substr(implode('; ', array_map('strval', $issues)), 0, 400);
+            }
+            if ($reason !== '') {
+                update('grading_runs', ['reject_hint' => mb_substr($reason, 0, 900)], 'id=:id', ['id' => $runId]);
+            }
+        } catch (\Throwable $e) { /* подсказка не важнее разбора */ }
+    }
 
     return ['ok' => true, 'run_id' => $runId, 'total' => $total, 'title' => $title, 'why' => ''];
 }
