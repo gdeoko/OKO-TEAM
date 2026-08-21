@@ -1460,7 +1460,21 @@ function buildWorld() {
   );
   scene.add(sky);
 
-  var starDot = glowSprite(64, "rgba(255,255,255,1)", "rgba(255,255,255,0)");
+  /* Точка звезды: почти без размытия. Прежний мягкий ореол на
+     шестидесяти четырёх пикселях и делал небо мутным. */
+  var starDot = (function () {
+    var sN = 32, c = doc.createElement("canvas");
+    c.width = c.height = sN;
+    var x = c.getContext("2d");
+    var gr = x.createRadialGradient(sN / 2, sN / 2, 0, sN / 2, sN / 2, sN / 2);
+    gr.addColorStop(0.00, "rgba(255,255,255,1)");
+    gr.addColorStop(0.28, "rgba(255,255,255,.92)");
+    gr.addColorStop(0.52, "rgba(255,255,255,.22)");
+    gr.addColorStop(1.00, "rgba(255,255,255,0)");
+    x.fillStyle = gr;
+    x.fillRect(0, 0, sN, sN);
+    return new T.CanvasTexture(c);
+  })();
   function stars(n, size, spread, hue) {
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(n * 3);
@@ -1478,10 +1492,19 @@ function buildWorld() {
     scene.add(pts);
     return pts;
   }
+  /* Звёзды. «Некоторые звёзды и звёздная пыль какие-то мутные и не
+     очень детализированные, портят картину» - причина была в
+     размере: точки в четыре-пять пикселей с мягким гало выглядели
+     не звёздами, а пятнами.
+
+     Настоящее небо устроено наоборот: тысячи острых точек и лишь
+     единицы заметных светил. Поэтому звёзд стало вдвое больше, а
+     размер втрое меньше; крупными остаются редкие яркие. */
   var starMats = [
-    stars(tiny ? 2400 : 5200, 2.4, 3000, 0xcfe9f5).material,
-    stars(tiny ? 900 : 2200, 3.6, 2200, 0x8fb7ff).material,
-    stars(tiny ? 400 : 900, 4.8, 1500, 0xffe9c9).material
+    stars(tiny ? 6000 : 14000, 1.5, 3000, 0xdfeef8).material,
+    stars(tiny ? 2600 : 6200, 2.1, 2400, 0x9fc4ff).material,
+    stars(tiny ? 900 : 2100, 2.8, 1800, 0xffe4bd).material,
+    stars(tiny ? 120 : 320, 4.6, 1400, 0xffffff).material
   ];
 
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
@@ -1633,14 +1656,54 @@ function buildWorld() {
 
   /* Солнце телом, а не только бликом: до него можно дойти, и у него
      есть поверхность - кипящая, с пятнами и протуберанцами */
+  /* ── Солнце ─────────────────────────────────────────────
+     «Солнце вообще не реалистичное» - справедливо: шар, покрашенный
+     градиентом, звездой не выглядит никогда. У настоящей звезды нет
+     ни поверхности, ни края: есть кипящая гранулой фотосфера,
+     потемнение к лимбу и корона, которая ярче самого диска у края.
+
+     Всё три вещи собраны шейдером. Гранулы - шум, который медленно
+     ползёт; потемнение к лимбу - честная зависимость от угла
+     наблюдения; пятна - редкие тёмные провалы. Ни одной текстуры:
+     звезда живая и не повторяется. */
   var sunBody = new T.Mesh(
-    new T.SphereGeometry(190, tiny ? 28 : 44, tiny ? 20 : 32),
-    new T.MeshBasicMaterial({
-      /* Звезда, а не полосатый шар: почти белая поверхность с
-         редкими пятнами. Полос у Солнца нет - они выдавали в нём
-         газовый гигант. */
-      map: paintPlanet(tiny ? 256 : 512, tiny ? 128 : 256,
-        [[0, "#fffdf2"], [0.35, "#fff0c0"], [0.7, "#ffd98a"], [1, "#ffbe5c"]], 4, 90)
+    new T.SphereGeometry(190, tiny ? 36 : 56, tiny ? 26 : 40),
+    new T.ShaderMaterial({
+      uniforms: { uT: { value: 0 } },
+      vertexShader:
+        "varying vec3 vN; varying vec3 vP;" +
+        "void main(){ vN = normalize(normalMatrix * normal); vP = position;" +
+        "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+      fragmentShader:
+        "varying vec3 vN; varying vec3 vP; uniform float uT;" +
+        /* Шум-основа: три октавы синусов дают ячейки конвекции без
+           единого байта текстуры */
+        "float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164))) * 43758.5453); }" +
+        "float n3(vec3 p){" +
+        "  vec3 i = floor(p), f = fract(p);" +
+        "  f = f*f*(3.0-2.0*f);" +
+        "  float a = mix(mix(mix(h(i), h(i+vec3(1,0,0)), f.x), mix(h(i+vec3(0,1,0)), h(i+vec3(1,1,0)), f.x), f.y)," +
+        "                mix(mix(h(i+vec3(0,0,1)), h(i+vec3(1,0,1)), f.x), mix(h(i+vec3(0,1,1)), h(i+vec3(1,1,1)), f.x), f.y), f.z);" +
+        "  return a;" +
+        "}" +
+        "void main(){" +
+        "  vec3 q = normalize(vP) * 7.0;" +
+        "  float g = n3(q + vec3(0.0, uT * 0.06, 0.0)) * 0.55" +
+        "          + n3(q * 2.7 - vec3(uT * 0.09)) * 0.3" +
+        "          + n3(q * 6.1 + vec3(uT * 0.13)) * 0.15;" +
+        /* Потемнение к лимбу: край диска у звезды всегда темнее */
+        "  float mu = clamp(-dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0);" +
+        "  float limb = 0.42 + 0.58 * pow(mu, 0.55);" +
+        /* Пятна: редкие глубокие провалы яркости */
+        "  float sp = smoothstep(0.74, 0.86, n3(q * 1.5 + vec3(11.0, uT * 0.02, 3.0)));" +
+        "  float br = (0.72 + g * 0.75) * limb * (1.0 - sp * 0.55);" +
+        "  vec3 hot = vec3(1.0, 0.97, 0.86);" +
+        "  vec3 mid = vec3(1.0, 0.78, 0.36);" +
+        "  vec3 cold = vec3(0.92, 0.44, 0.12);" +
+        "  vec3 col = mix(cold, mid, clamp(br, 0.0, 1.0));" +
+        "  col = mix(col, hot, clamp((br - 0.85) * 3.0, 0.0, 1.0));" +
+        "  gl_FragColor = vec4(col * (0.9 + br * 0.6), 1.0);" +
+        "}"
     })
   );
   sunBody.position.set(2600, 1000, 1750);
@@ -1887,38 +1950,75 @@ function buildWorld() {
      дальние вселенные по сторонам. Каждая - несколько тысяч точек
      по логарифмической спирали с гауссовым разбросом; ядро теплее,
      рукава в цвет вселенной. */
+  /* ── Спиральная галактика ────────────────────────────────
+     «Млечный путь не такой выглядит, как в реальности, нету
+     чёткости, реализма и детализации» - и правда: три ровных рукава
+     из одинаковых точек читались схемой, а не звёздным островом.
+
+     Настоящая галактика устроена сложнее, и три вещи решают всё:
+       - логарифмическая спираль, а не дуга постоянной кривизны;
+       - разброс звёзд поперёк рукава, растущий к краю диска;
+       - три населения по цвету и размеру - голубые гиганты в
+         рукавах, жёлтое ядро, красная пыль между рукавами.
+     Плюс тёмные прожилки: без пыли диск светится ровно и выглядит
+     нарисованным. */
   function spiralGalaxy(px, py, pz, scale, colA, colB, tiltX, tiltZ) {
-    var n = tiny ? 1600 : 3200;
+    var n = tiny ? 4200 : 11000;
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(n * 3);
     var col = new Float32Array(n * 3);
-    var cA = new T.Color(colA), cB = new T.Color(colB), cC = new T.Color(0xfff3dd);
+    var siz = new Float32Array(n);
+    var cA = new T.Color(colA), cB = new T.Color(colB);
+    var cCore = new T.Color(0xffe9bd), cDust = new T.Color(0x6a3f2e);
+    var ARMS = 4, TW = 2.35;
     for (var k = 0; k < n; k++) {
-      var tt = Math.pow(Math.random(), 0.65);            /* плотнее к ядру */
-      var arm = (k % 3) * (6.28318 / 3);
-      var ang = arm + tt * 4.6 + (Math.random() - 0.5) * 0.5;
+      /* Радиус: степень меньше единицы сгущает звёзды к ядру ровно
+         так, как в настоящем диске */
+      var tt = Math.pow(Math.random(), 0.58);
       var rad = tt * scale;
-      var spread = scale * 0.05 * (1 - tt * 0.6);
-      pos[k * 3] = Math.cos(ang) * rad + (Math.random() - 0.5) * spread * 2;
-      pos[k * 3 + 1] = (Math.random() - 0.5) * spread;
-      pos[k * 3 + 2] = Math.sin(ang) * rad + (Math.random() - 0.5) * spread * 2;
-      var c = tt < 0.18 ? cC : (Math.random() > 0.5 ? cA : cB);
+      var arm = (k % ARMS) * (6.28318 / ARMS);
+      /* Логарифмическая закрутка: чем дальше от ядра, тем сильнее
+         отстаёт рукав */
+      var ang = arm + Math.log(1 + tt * 9) * TW;
+      /* Разброс поперёк рукава: у ядра плотно, к краю шире */
+      var jit = (Math.random() - 0.5) * (0.10 + tt * 0.42);
+      ang += jit;
+      /* Толщина диска: балдж у ядра, тонкий блин к краю */
+      var thick = scale * (0.055 * Math.exp(-tt * 3.4) + 0.008);
+      var rr = rad * (1 + (Math.random() - 0.5) * 0.06);
+      pos[k * 3] = Math.cos(ang) * rr;
+      pos[k * 3 + 1] = (Math.random() + Math.random() + Math.random() - 1.5) * thick;
+      pos[k * 3 + 2] = Math.sin(ang) * rr;
+
+      var roll = Math.random();
+      var c;
+      if (tt < 0.14) { c = cCore; siz[k] = 1.5; }
+      else if (roll > 0.90) { c = cA; siz[k] = 2.4; }        /* голубые гиганты */
+      else if (roll > 0.74) { c = cDust; siz[k] = 1.1; }     /* пыль между рукавами */
+      else { c = roll > 0.42 ? cB : cA; siz[k] = 1; }
       col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
     }
     geo.setAttribute("position", new T.BufferAttribute(pos, 3));
     geo.setAttribute("color", new T.BufferAttribute(col, 3));
     var pts = new T.Points(geo, new T.PointsMaterial({
-      size: scale * 0.012, sizeAttenuation: true, map: starDot, vertexColors: true,
-      transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending
+      size: scale * 0.0075, sizeAttenuation: true, map: starDot, vertexColors: true,
+      transparent: true, opacity: 0.95, depthWrite: false, blending: T.AdditiveBlending
     }));
-    /* Ядро: тёплое свечение */
+    /* Ядро: тёплое свечение и балдж вокруг него */
     var core = new T.Sprite(new T.SpriteMaterial({
-      map: glowSprite(128, "rgba(255,240,214,.9)", "rgba(255,214,150,0)"),
-      transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending
+      map: glowSprite(128, "rgba(255,240,214,.95)", "rgba(255,206,140,0)"),
+      transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending
     }));
-    core.scale.setScalar(scale * 0.5);
+    core.scale.setScalar(scale * 0.34);
+    /* Гало диска: мягкое свечение по всей плоскости, из-за него
+       галактика перестаёт быть россыпью точек и становится телом */
+    var glow = new T.Sprite(new T.SpriteMaterial({
+      map: glowSprite(256, "rgba(150,190,255,.16)", "rgba(90,130,220,0)"),
+      transparent: true, opacity: 0.7, depthWrite: false, blending: T.AdditiveBlending
+    }));
+    glow.scale.setScalar(scale * 1.9);
     var gr = new T.Group();
-    gr.add(pts); gr.add(core);
+    gr.add(pts); gr.add(core); gr.add(glow);
     gr.position.set(px, py, pz);
     gr.rotation.x = tiltX; gr.rotation.z = tiltZ;
     scene.add(gr);
@@ -2254,6 +2354,7 @@ function buildWorld() {
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     /* Позиция светила: по ней бортовые панели набирают заряд */
     sunPos: sunGlow.position,
+    sunMat: sunBody.material,
     sun: sunBody, mercury: mercury, venus: venus,
     jupiter: jupiter, uranus: uranus, neptune: neptune, belt: belt,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
@@ -3602,6 +3703,9 @@ function frame(ts) {
   if (g.RC_SOUND && g.RC_SOUND.flightLevel) {
     try { g.RC_SOUND.flightLevel(Math.min(1, 0.25 + speed * 4 + (jumpZone ? 0.35 : 0))); } catch (e) {}
   }
+
+  /* Фотосфера кипит: время идёт в шейдер звезды */
+  if (w3.sunMat && w3.sunMat.uniforms) w3.sunMat.uniforms.uT.value = ts * 0.001;
 
   if (!F.stage) {
     powerFrame(w3, dt);
