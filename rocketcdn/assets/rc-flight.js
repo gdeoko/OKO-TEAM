@@ -1191,29 +1191,128 @@ function goTo(id) {
 /* ── Процедурные текстуры ────────────────────────────────────
    Марс, Сатурн и кольца рисуются на холсте: до них в кадре далеко,
    а лишние мегабайты и лишние запросы полёту ни к чему. */
-function paintPlanet(w, h, base, bands, noise) {
+/* ── Карта планеты ───────────────────────────────────────────
+   «Планеты не все реалистичные» - справедливо: ровный градиент с
+   парой полос и точками читается крашеным шаром, а не миром.
+
+   Настоящую поверхность делают три вещи, и все три здесь есть:
+     - фрактальный шум в несколько октав, а не случайные пятна: он
+       даёт материки у каменных планет и вихри у газовых;
+     - широтная зональность - полярные шапки, экваториальный пояс,
+       разная яркость по широте;
+     - мелкая деталь поверх крупной, чтобы поверхность не рассыпалась
+       на пиксели при подлёте вплотную.
+
+   Тип задаётся снаружи: rocky - каменная с кратерами, gas -
+   газовый гигант с поясами и вихрями, ice - ледяная с прожилками. */
+function fbm2(x, y, oct, seed) {
+  var v = 0, a = 0.5, f = 1;
+  for (var i = 0; i < oct; i++) {
+    /* Дешёвый градиентный шум на синусах: без таблиц и без выделений
+       памяти в цикле, а рисунок получается неповторяющимся */
+    var sx = x * f + seed * 7.3, sy = y * f + seed * 3.1;
+    v += a * (Math.sin(sx) * Math.cos(sy * 1.37) +
+              Math.sin(sx * 2.11 + sy * 0.71) * 0.6 +
+              Math.cos(sy * 1.83 - sx * 0.53) * 0.4) / 2;
+    a *= 0.52; f *= 2.07;
+  }
+  return v;
+}
+
+function paintPlanet(w, h, base, bands, noise, kind, seed) {
+  kind = kind || "rocky";
+  seed = seed || 1;
   var c = doc.createElement("canvas");
   c.width = w; c.height = h;
   var x = c.getContext("2d");
+
+  /* Основа: широтный градиент из переданной палитры */
   var grd = x.createLinearGradient(0, 0, 0, h);
   for (var i = 0; i < base.length; i++) grd.addColorStop(base[i][0], base[i][1]);
   x.fillStyle = grd; x.fillRect(0, 0, w, h);
-  /* Полосы: полупрозрачные горизонтальные ленты разной толщины */
-  for (i = 0; i < bands; i++) {
-    var y = Math.random() * h, bh = 2 + Math.random() * (h * 0.06);
-    x.fillStyle = "rgba(" + (Math.random() > 0.5 ? "255,255,255" : "0,0,0") + "," + (0.03 + Math.random() * 0.08).toFixed(3) + ")";
-    x.fillRect(0, y, w, bh);
+
+  var img = x.getImageData(0, 0, w, h);
+  var d = img.data;
+  var SX = kind === "gas" ? 3.2 : 6.5;      /* газовые вытянуты по долготе */
+  var SY = kind === "gas" ? 14 : 6.5;
+  for (var py = 0; py < h; py++) {
+    var lat = py / h;                        /* 0 - северный полюс */
+    var polar = Math.pow(Math.abs(lat - 0.5) * 2, 2.6);
+    for (var px = 0; px < w; px++) {
+      var u = px / w;
+      var n = fbm2(u * SX * Math.PI * 2, lat * SY, kind === "gas" ? 4 : 5, seed);
+      /* Газовому гиганту добавляем закрутку поясов: сдвиг по долготе
+         зависит от широты, и полосы перестают быть прямыми */
+      if (kind === "gas") {
+        n += fbm2(u * 9 * Math.PI * 2 + Math.sin(lat * 9) * 2.2, lat * 26, 3, seed + 5) * 0.45;
+      }
+      /* Контраст рельефа. У каменных он выше: на настоящей
+         поверхности светлые нагорья и тёмные равнины отличаются
+         заметно, и без этого шар выходит ровно-оранжевым. */
+      var k = n * (kind === "gas" ? 0.26 : 0.46);
+      /* Полярные шапки: у каменных и ледяных светлеет к полюсам */
+      if (kind !== "gas") k += polar * 0.30;
+      var o = (py * w + px) * 4;
+      var m = 1 + k;
+      d[o] = Math.max(0, Math.min(255, d[o] * m));
+      d[o + 1] = Math.max(0, Math.min(255, d[o + 1] * m));
+      d[o + 2] = Math.max(0, Math.min(255, d[o + 2] * m * (kind === "ice" ? 1.03 : 1)));
+    }
   }
-  /* Шум: точки-кратеры и разводы */
-  for (i = 0; i < noise; i++) {
-    var nx = Math.random() * w, ny = Math.random() * h, r = 1 + Math.random() * 7;
-    var gr2 = x.createRadialGradient(nx, ny, 0, nx, ny, r);
-    gr2.addColorStop(0, "rgba(0,0,0," + (0.04 + Math.random() * 0.12).toFixed(3) + ")");
-    gr2.addColorStop(1, "rgba(0,0,0,0)");
-    x.fillStyle = gr2; x.beginPath(); x.arc(nx, ny, r, 0, 6.283); x.fill();
+  x.putImageData(img, 0, 0);
+
+  /* Кратеры каменных: кольцевой вал и тень внутри */
+  if (kind === "rocky") {
+    for (i = 0; i < noise; i++) {
+      var cx = Math.random() * w, cy = h * 0.08 + Math.random() * h * 0.84;
+      /* Размер кратера по степенному закону: мелких на порядок
+         больше, чем крупных - как на настоящей поверхности. Прежняя
+         степень давала слишком много одинаково крупных лунок. */
+      var r = 1.2 + Math.pow(Math.random(), 3.6) * (w * 0.018);
+      var g2 = x.createRadialGradient(cx - r * 0.25, cy - r * 0.25, 0, cx, cy, r);
+      g2.addColorStop(0, "rgba(0,0,0,.16)");
+      g2.addColorStop(0.72, "rgba(0,0,0,.07)");
+      g2.addColorStop(0.92, "rgba(255,255,255,.12)");
+      g2.addColorStop(1, "rgba(255,255,255,0)");
+      x.fillStyle = g2;
+      x.beginPath(); x.arc(cx, cy, r, 0, 6.283); x.fill();
+    }
   }
+  /* Вихри газовых: вытянутые овалы вдоль поясов */
+  if (kind === "gas") {
+    for (i = 0; i < bands; i++) {
+      var vx = Math.random() * w, vy = h * 0.12 + Math.random() * h * 0.76;
+      var rx = w * (0.01 + Math.random() * 0.045), ry = rx * (0.24 + Math.random() * 0.3);
+      var lite = Math.random() > 0.45;
+      var g3 = x.createRadialGradient(vx, vy, 0, vx, vy, rx);
+      g3.addColorStop(0, lite ? "rgba(255,244,224,.30)" : "rgba(60,32,16,.28)");
+      g3.addColorStop(1, "rgba(0,0,0,0)");
+      x.fillStyle = g3;
+      x.save(); x.translate(vx, vy); x.scale(1, ry / rx); x.translate(-vx, -vy);
+      x.beginPath(); x.arc(vx, vy, rx, 0, 6.283); x.fill();
+      x.restore();
+    }
+  }
+  /* Прожилки ледяных: тонкие светлые трещины */
+  if (kind === "ice") {
+    x.strokeStyle = "rgba(226,244,255,.22)";
+    for (i = 0; i < bands; i++) {
+      x.lineWidth = 0.6 + Math.random();
+      x.beginPath();
+      var lx = Math.random() * w, ly = Math.random() * h;
+      x.moveTo(lx, ly);
+      for (var st = 0; st < 5; st++) {
+        lx += (Math.random() - 0.5) * w * 0.13;
+        ly += (Math.random() - 0.5) * h * 0.09;
+        x.lineTo(lx, ly);
+      }
+      x.stroke();
+    }
+  }
+
   var t = new g.THREE.CanvasTexture(c);
-  t.anisotropy = 4;
+  t.anisotropy = 8;
+  if (g.THREE.SRGBColorSpace) t.colorSpace = g.THREE.SRGBColorSpace;
   return t;
 }
 
@@ -1602,7 +1701,7 @@ function buildWorld() {
     var body = new T.Mesh(
       new T.SphereGeometry(r, tiny ? 24 : 42, tiny ? 16 : 30),
       new T.MeshPhongMaterial({
-        map: paintPlanet(tiny ? 256 : 512, tiny ? 128 : 256, base, bands, noise),
+        map: paintPlanet(tiny ? 512 : 1024, tiny ? 256 : 512, base, bands, noise, opt.kind, opt.seed),
         shininess: opt.shine || 6,
         emissive: new T.Color(opt.emis || 0x000000),
         emissiveIntensity: opt.emisI || 0
@@ -1730,14 +1829,15 @@ function buildWorld() {
   scene.add(halo2);
 
   var mercury = makePlanet(12, [470, 200, 690],
-    [[0, "#b9a795"], [0.5, "#8e7d6d"], [1, "#5f5348"]], 6, 260,
-    { info: RU ? "МЕРКУРИЙ · год длиннее суток · без атмосферы" : "MERCURY · no atmosphere" });
+    [[0, "#c9b7a3"], [0.5, "#8e7d6d"], [1, "#5a4e44"]], 6, 700,
+    { kind: "rocky", seed: 3,
+      info: RU ? "МЕРКУРИЙ · год длиннее суток · без атмосферы" : "MERCURY · no atmosphere" });
   var venus = makePlanet(28, [190, 110, 360],
-    [[0, "#f6e2b0"], [0.45, "#e0bf7a"], [1, "#b2864a"]], 16, 120,
-    { atm: 0xf0d79a, info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
+    [[0, "#f9e9c2"], [0.45, "#e0bf7a"], [1, "#a87f46"]], 26, 60,
+    { kind: "gas", seed: 8, atm: 0xf0d79a, warm: 0xffd9a0, info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
   var jupiter = makePlanet(122, [1130, -50, -1180],
-    [[0, "#e8d6b8"], [0.28, "#c99f6e"], [0.52, "#e3cba6"], [0.74, "#b07f52"], [1, "#dcc19c"]], 34, 90,
-    { atm: 0xe8cfa6, info: RU ? "ЮПИТЕР · Большое красное пятно старше телескопа" : "JUPITER" });
+    [[0, "#efdfc4"], [0.22, "#c99f6e"], [0.44, "#e8d3ae"], [0.62, "#a97648"], [0.8, "#e2c9a4"], [1, "#c9a276"]], 44, 40,
+    { kind: "gas", seed: 17, atm: 0xe8cfa6, warm: 0xffc98a, info: RU ? "ЮПИТЕР · Большое красное пятно старше телескопа" : "JUPITER" });
   /* Большое красное пятно: узнаваемая примета, без неё Юпитер
      читается просто полосатым шаром */
   var spot = new T.Mesh(
@@ -1746,12 +1846,12 @@ function buildWorld() {
   );
   jupiter.add(spot);
   var uranus = makePlanet(66, [1790, 390, -1430],
-    [[0, "#cdeff2"], [0.5, "#9fd8e0"], [1, "#7ab6c4"]], 10, 60,
-    { atm: 0x9fe0ee, info: RU ? "УРАН · лежит на боку · ось наклонена на 98 градусов" : "URANUS" });
+    [[0, "#dbf5f7"], [0.5, "#9fd8e0"], [1, "#74aebd"]], 22, 40,
+    { kind: "ice", seed: 23, atm: 0x9fe0ee, warm: 0xbfe8f5, info: RU ? "УРАН · лежит на боку · ось наклонена на 98 градусов" : "URANUS" });
   uranus.rotation.z = 1.7;
   var neptune = makePlanet(62, [2090, 250, -1930],
-    [[0, "#7fa8f0"], [0.5, "#4a72c8"], [1, "#2b4c96"]], 14, 70,
-    { atm: 0x6f9bf0, info: RU ? "НЕПТУН · ветер до 2100 км/ч · самый быстрый в системе" : "NEPTUNE" });
+    [[0, "#8fb4f6"], [0.5, "#3f68c4"], [1, "#22407f"]], 30, 40,
+    { kind: "gas", seed: 31, atm: 0x6f9bf0, warm: 0x9fc0ff, info: RU ? "НЕПТУН · ветер до 2100 км/ч · самый быстрый в системе" : "NEPTUNE" });
 
   /* Пояс астероидов между Марсом и Юпитером: облако мелких точек по
      дуге. Точками, а не телами - их тысячи, и каждая отдельным
@@ -1811,7 +1911,7 @@ function buildWorld() {
   var mars = new T.Mesh(
     new T.SphereGeometry(30, 44, 30),
     new T.MeshPhongMaterial({
-      map: paintPlanet(512, 256, [[0, "#9c4a2a"], [0.35, "#c96f3b"], [0.6, "#b35a30"], [1, "#7c3a20"]], 6, 520),
+      map: paintPlanet(tiny ? 512 : 1024, tiny ? 256 : 512, [[0, "#e8d6c8"], [0.16, "#c96f3b"], [0.5, "#a8502a"], [0.78, "#8c3f22"], [1, "#e2cfc2"]], 8, 900, "rocky", 41),
       shininess: 4
     })
   );
@@ -1823,7 +1923,7 @@ function buildWorld() {
   saturn.add(new T.Mesh(
     new T.SphereGeometry(46, 48, 34),
     new T.MeshPhongMaterial({
-      map: paintPlanet(512, 256, [[0, "#c3a06b"], [0.3, "#e0c188"], [0.55, "#cfa970"], [0.8, "#e8d09a"], [1, "#ad8a58"]], 40, 60),
+      map: paintPlanet(tiny ? 512 : 1024, tiny ? 256 : 512, [[0, "#e8d3a4"], [0.26, "#e0c188"], [0.5, "#c9a56d"], [0.74, "#eedaab"], [1, "#b5905c"]], 46, 34, "gas", 53),
       shininess: 6
     })
   ));
