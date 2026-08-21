@@ -226,6 +226,12 @@ function screenTex(T, rec, tiny) {
 
   var t = new T.CanvasTexture(c);
   if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  /* Экран смотрит на нас изнанкой цилиндра, а изнанка переворачивает
+     развёртку по горизонтали - текст читался зеркально. Отражаем
+     карту заранее, и на стене она встаёт как надо. */
+  t.wrapS = T.RepeatWrapping;
+  t.repeat.x = -1;
+  t.offset.x = 1;
   return t;
 }
 
@@ -396,35 +402,53 @@ function build(T, opts) {
      тёплой лампой под ним. */
   var recs = grab();
   var screens = [];
-  var faceGeo = new T.PlaneGeometry(1.86, 1.4);
-  var hoodGeo = new T.BoxGeometry(1.98, 0.1, 0.3);
-  var lampGeo = new T.PlaneGeometry(1.64, 0.03);
+  /* Экран гнётся по обшивке, а не висит плоской доской. Причина не
+     в красоте: плоская плита шириной почти в два метра углами
+     выходит за цилиндр стены, и стена закрывает ей края - именно
+     поэтому у каждого экрана срезалось начало строки. Гнутый лежит
+     по стене целиком, до последнего пикселя.
+
+     Дуга считается из ширины: сколько метров надо показать, столько
+     градусов и берём на радиусе стены. */
+  /* На телефоне кадр узкий и высокий: экран того же размера, что на
+     мониторе, оставляет сверху и снизу пустые пояса стены. Берём
+     шире и выше - тогда он заполняет кадр так же, как на широком
+     экране, и читать его не мельче. */
+  var SCR_W = tiny ? 2.32 : 1.92, SCR_H = tiny ? 1.78 : 1.42;
+  var scrR = R_WALL - 0.035;
+  var scrArc = SCR_W / scrR;
+  var hoodArc = (SCR_W + 0.22) / (R_WALL - 0.14);
   for (i = 1; i <= 7; i++) {
     th = azOf(i);
-    var pan = new T.Group();
     var tex = screenTex(T, recs[i - 1], tiny);
-    var face = new T.Mesh(faceGeo, new T.MeshBasicMaterial({ map: tex, fog: false }));
-    face.position.set(0, 0, -(R_WALL - 0.03));
-    pan.add(face);
-    /* Козырёк и порожек: у плиты появляются верх и низ, и она
-       перестаёт быть наклейкой на стене */
-    m = new T.Mesh(hoodGeo, caseMat);
-    m.position.set(0, 0.79, -(R_WALL - 0.17));
-    pan.add(m);
-    m = new T.Mesh(hoodGeo, caseMat);
-    m.position.set(0, -0.79, -(R_WALL - 0.15));
-    pan.add(m);
+    var face = new T.Mesh(
+      new T.CylinderGeometry(scrR, scrR, SCR_H, tiny ? 8 : 14, 1, true,
+        thetaOf(th) - scrArc / 2, scrArc),
+      new T.MeshBasicMaterial({ map: tex, side: T.BackSide, fog: false })
+    );
+    face.position.y = EYE + 0.06;
+    grp.add(face);
+
+    /* Козырёк и порожек - тоже дуги: прямые короба у краёв ниши
+       отходили от стены и висели в воздухе */
+    function arcBar(y, h, r, mat) {
+      var b = new T.Mesh(
+        new T.CylinderGeometry(r, r, h, tiny ? 8 : 14, 1, true,
+          thetaOf(th) - hoodArc / 2, hoodArc),
+        mat
+      );
+      b.position.y = y;
+      grp.add(b);
+      return b;
+    }
+    arcBar(EYE + 0.92, 0.12, R_WALL - 0.13, caseMat);
+    arcBar(EYE - 0.80, 0.11, R_WALL - 0.11, caseMat);
     /* Тёплая лампа под козырьком: весь остальной свет холодный, и
        без этой ноты кадр синеет целиком */
-    m = new T.Mesh(lampGeo, new T.MeshBasicMaterial({
-      color: 0xffd8b4, transparent: true, opacity: 0.4, fog: false
+    arcBar(EYE + 0.84, 0.028, R_WALL - 0.2, new T.MeshBasicMaterial({
+      color: 0xffd8b4, transparent: true, opacity: 0.45, side: T.BackSide, fog: false
     }));
-    m.position.set(0, 0.72, -(R_WALL - 0.13));
-    pan.add(m);
 
-    pan.rotation.y = -th;
-    pan.position.y = EYE + 0.06;
-    grp.add(pan);
     screens.push({ obj: face, th: th, tex: tex, i: i });
   }
 
