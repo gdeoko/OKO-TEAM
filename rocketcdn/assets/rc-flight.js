@@ -410,7 +410,7 @@ function buildUI() {
             '<li><i>' + (RU ? "ОБЗОР" : "LOOK") + '</i><span>' +
               (RU ? "Зажмите и тяните мышь, на телефоне - палец вбок. Обзор на все 360"
                   : "Drag the mouse or swipe sideways for a full 360 look") + '</span></li>' +
-            '<li><i>' + (RU ? "ПРИБЛИЗИТЬ" : "ZOOM") + '</i><span>' +
+            '<li><i>' + (RU ? "ЗУМ" : "ZOOM") + '</i><span>' +
               (RU ? "Shift с колесом, на телефоне - щипок двумя пальцами"
                   : "Shift with the wheel, or pinch on a phone") + '</span></li>' +
             '<li><i>' + (RU ? "КУРС" : "COURSE") + '</i><span>' +

@@ -2311,7 +2311,14 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 
 @media (max-width: 760px) {
   .rc-flight .rcf-stop-key b { display: none; }
-  .rc-flight .rcf-help li { grid-template-columns: 78px 1fr; gap: 9px; }
+  /* На телефоне справка компактнее: иначе шесть строк не влезают в
+     окно и последняя обрывается */
+  .rc-flight .rcf-help li { grid-template-columns: 66px 1fr; gap: 8px; padding-bottom: 6px; }
+  .rc-flight .rcf-help ul { gap: 6px; }
+  .rc-flight .rcf-help li i { font-size: 8px; letter-spacing: .1em; }
+  .rc-flight .rcf-help li span { font-size: 11px; line-height: 1.4; }
+  .rc-flight .rcf-help b { font-size: 19px; margin-bottom: 10px; }
+  .rc-flight .rcf-help-in { padding: 14px 14px 16px; }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2396,7 +2403,18 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-dos { display: grid; place-items: center; }
 .rc-flight .rcf-dos-in { width: min(92%, 520px); max-height: 92%; overflow-y: auto; }
-.rc-flight .rcf-help-in { width: min(92%, 520px); max-height: 92%; }
+.rc-flight .rcf-help-in {
+  width: min(92%, 520px);
+  max-height: 92%;
+  /* Если список не влез, он гаснет к нижней кромке: понятно, что
+     дальше есть ещё, и строка не обрывается на полуслове */
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+}
+/* Пока открыта справка, метки объектов гаснут: читать поверх них
+   нельзя, а спорить двум слоям на одном стекле незачем */
+.rc-flight:has(.rcf-help.on) .rc-holo,
+.rc-flight:has(.rcf-dos.on) .rc-holo { opacity: .12; transition: opacity .25s linear; }
 .rc-flight .rcf-menu {
   left: 50%;
   bottom: auto;
