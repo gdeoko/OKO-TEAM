@@ -1670,7 +1670,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
     right: auto !important;
     transform: translateX(-50%);
     top: auto !important;
-    bottom: calc(var(--cab-dh, 17%) + 10px) !important;
+    bottom: 12px !important;
     width: min(92vw, 380px);
     padding: 7px 11px 9px;
   }
@@ -2405,7 +2405,12 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   height: var(--cab-wh, 68%);
   border-radius: clamp(10px, 2vw, 28px);
   overflow: hidden;
+  /* Сброс базового сдвига на полразмера: без него окно, получив
+     новые left/top, продолжало уезжать влево-вверх - владелец
+     видел «окна кривые слева» при каждом скане планеты */
+  transform: none !important;
 }
+.rc-flight .rcf-dos.on { transform: none !important; }
 .rc-flight .rcf-dos { display: grid; place-items: center; }
 .rc-flight .rcf-dos-in { width: min(92%, 520px); max-height: 92%; overflow-y: auto; }
 .rc-flight .rcf-help-in {
@@ -2434,12 +2439,12 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight.rcf-modal .rcf-netlist { opacity: .16; transition: opacity .25s linear; }
 .rc-flight .rcf-menu {
   left: 50%;
-  bottom: auto;
-  top: calc(var(--cab-wy, 8%) + var(--cab-wh, 68%) - 8px);
-  transform: translateX(-50%) translateY(-100%);
-  max-height: calc(var(--cab-wh, 68%) - 16px);
+  top: auto;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(86px, 11vh, 112px));
+  transform: translateX(-50%);
+  max-height: min(58vh, 520px);
 }
-.rc-flight .rcf-menu.on { transform: translateX(-50%) translateY(-100%); }
+.rc-flight .rcf-menu.on { transform: translateX(-50%); }
 
 /* Виньетка снята. «Виньетка и затемнения по краям смотрится
    ужасно» - и правда: подложка съедала углы кадра и делала картинку
@@ -2472,3 +2477,389 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-hud .rcf-netlist { display: none; }
   .rc-flight .rcf-hud .rcf-cap { font-size: 10px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Плита приборов, окончательная сборка
+
+   Требования владельца дословно: панель НЕ прозрачная (корпус
+   корабля не может просвечивать), высота не больше десятой доли
+   экрана, кнопки ровные, всё по местам. Ниже перекрываются все
+   прежние правила плиты - это последнее слово по ней.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-deck {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: min(97vw, 1180px);
+  height: auto;
+  min-height: 0;
+  top: auto;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(8px, 1.6vh, 18px));
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 18px);
+  padding: clamp(7px, 1vh, 10px) clamp(10px, 1.4vw, 18px);
+  border-radius: 14px;
+  /* Металл, не стекло: плотная непрозрачная плита с холодной
+     кромкой сверху - интерфейс вшит в корпус, космос сквозь него
+     не просвечивает */
+  background:
+    linear-gradient(180deg, #17293c 0%, #0d1b2b 42%, #081221 100%);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .30);
+  border-top-color: rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.14),
+    0 14px 34px -12px rgba(0,0,0,.95),
+    0 0 34px -14px rgba(var(--int-cyan-rgb, 66,178,220), .5);
+}
+.rc-flight .rcf-deck::before { display: none; }
+.rc-flight .rcf-left,
+.rc-flight .rcf-right { display: flex; align-items: center; gap: clamp(7px, 1vw, 12px); }
+.rc-flight .rcf-radar {
+  width: clamp(44px, 5.6vh, 58px);
+  height: clamp(44px, 5.6vh, 58px);
+}
+.rc-flight .rcf-left .rcf-gauges { display: flex; flex-direction: column; gap: 2px; }
+.rc-flight .rcf-deck .rcf-prog,
+.rc-flight .rcf-deck .rcf-net { display: block; position: static; font-size: 9px; letter-spacing: .12em; }
+
+/* Клавиши: один ряд, одна высота, одна ширина иконки */
+.rc-flight .rcf-keys { flex: 0 1 auto; }
+.rc-flight .rcf-keys button {
+  height: clamp(36px, 4.6vh, 44px);
+  padding: 0 clamp(9px, 1.1vw, 15px);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Тяга: горизонтальный ползунок в один рост с клавишами */
+.rc-flight .rcf-thr {
+  width: clamp(84px, 9vw, 128px);
+  height: clamp(36px, 4.6vh, 44px);
+  border-radius: 10px;
+  cursor: ew-resize;
+}
+.rc-flight .rcf-thr-fill {
+  left: 0; top: 0; bottom: 0;
+  right: auto;
+  height: 100%;
+  width: 0%;
+  border-radius: 9px 0 0 9px;
+  background: linear-gradient(90deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .5),
+    rgba(var(--int-cyan-rgb, 66,178,220), .95));
+  transition: width .08s linear;
+}
+.rc-flight .rcf-thr b {
+  position: absolute; left: 50%; top: 50%; bottom: auto;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  letter-spacing: .22em;
+  color: rgba(226,240,252,.85);
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
+  pointer-events: none;
+}
+.rc-flight .rcf-deck .rcf-speed {
+  position: static;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 7ch;
+  justify-content: flex-end;
+}
+.rc-flight .rcf-deck .rcf-speed b { font-size: clamp(15px, 2.2vh, 19px); }
+
+/* Пуск узла над плитой, по центру, не перекрывая клавиш */
+.rc-flight .rcf-deck .rcf-deploy {
+  bottom: calc(100% + 8px);
+}
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-deck {
+    max-width: 97vw;
+    gap: 6px;
+    padding: 6px 8px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  }
+  .rc-flight .rcf-radar { display: none; }
+  .rc-flight .rcf-left .rcf-gauges { display: none; }
+  .rc-flight .rcf-keys button { height: 38px; padding: 0 9px; }
+  .rc-flight .rcf-thr { width: 66px; height: 38px; }
+  .rc-flight .rcf-deck .rcf-speed { min-width: 0; }
+  .rc-flight .rcf-deck .rcf-speed span { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Борт: панель управления как часть корпуса
+
+   Последняя редакция панели, перекрывает все прежние правила.
+   Непрозрачный металл во всю ширину экрана, прижат к низу без
+   скруглений по бокам - это борт корабля, а не карточка. Внутри
+   два ряда: табло и органы управления.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-deck {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  border-radius: 0;
+  border: 0;
+  border-top: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  background:
+    linear-gradient(180deg, #182a3e 0%, #101f30 26%, #0a1626 62%, #060f1c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.16),
+    inset 0 14px 24px -18px rgba(var(--int-cyan-rgb, 66,178,220), .35),
+    0 -16px 40px -18px rgba(0,0,0,.9);
+}
+/* Верхний ряд: табло. Тонкая тёмная лента с ячейками-дисплеями */
+.rc-flight .rcf-d-top {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(10px, 2.2vw, 34px);
+  padding: 5px clamp(10px, 2vw, 26px) 4px;
+  background: rgba(3, 9, 17, .55);
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .16);
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  min-height: 24px;
+}
+.rc-flight .rcf-d-cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.rc-flight .rcf-d-cell i {
+  font-style: normal;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+.rc-flight .rcf-d-cell .rcf-net,
+.rc-flight .rcf-d-cell .rcf-prog {
+  position: static;
+  display: inline;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .95);
+  text-shadow: none;
+}
+.rc-flight .rcf-d-course .rcf-c-goal {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  color: var(--int-cyan, #42B2DC);
+}
+.rc-flight .rcf-d-course .rcf-c-dist {
+  text-decoration: none;
+  font-size: 10.5px;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .8);
+}
+.rc-flight .rcf-d-course .rcf-c-mode {
+  font-style: normal;
+  font-size: 9px; font-weight: 700; letter-spacing: .16em;
+  color: rgba(var(--int-vio-rgb, 138,89,246), .95);
+}
+/* Ячейки заряда и корпуса: короткая шкала-термометр и число */
+.rc-flight .rcf-bars { gap: 14px; }
+.rc-flight .rcf-d-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rc-flight .rcf-d-meter b {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .14em;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+.rc-flight .rcf-d-meter s {
+  text-decoration: none;
+  width: 44px; height: 5px;
+  border-radius: 3px;
+  background: rgba(207,233,245,.14);
+  overflow: hidden;
+  display: inline-block;
+}
+.rc-flight .rcf-d-meter s i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--int-cyan, #42B2DC), #7fd8fa);
+  border-radius: 3px;
+}
+.rc-flight .rcf-bar-en s i { width: var(--en, 100%); }
+.rc-flight .rcf-bar-hull s i { width: var(--hull, 100%); background: linear-gradient(90deg, #35E08F, #a0ffd2); }
+.rc-flight .rcf-bars.low .rcf-bar-en s i { background: linear-gradient(90deg, #ff8a4c, #ffd08a); }
+.rc-flight .rcf-bars.hurt .rcf-bar-hull s i { background: linear-gradient(90deg, #ff5a5a, #ffb0b0); }
+.rc-flight .rcf-d-meter u {
+  text-decoration: none;
+  font-size: 10px; font-weight: 700;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .9);
+  min-width: 3ch;
+}
+
+/* Нижний ряд: органы управления */
+.rc-flight .rcf-d-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.4vw, 18px);
+  padding: clamp(7px, 1vh, 10px) clamp(10px, 2vw, 26px);
+}
+.rc-flight .rcf-d-main .rcf-radar {
+  width: clamp(40px, 5.2vh, 52px);
+  height: clamp(40px, 5.2vh, 52px);
+  flex: none;
+}
+/* Клавиши: физические, с фаской и тенью нажатия */
+.rc-flight .rcf-keys { overflow: visible; }
+.rc-flight .rcf-keys button {
+  height: clamp(36px, 4.4vh, 42px);
+  padding: 0 clamp(9px, 1.1vw, 14px);
+  border-radius: 9px;
+  border: 1px solid rgba(6, 13, 22, .9);
+  background: linear-gradient(180deg, #22384e 0%, #15263a 48%, #0d1b2c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.2),
+    inset 0 -2px 0 rgba(0,0,0,.55),
+    0 2px 5px rgba(0,0,0,.6);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+}
+.rc-flight .rcf-keys button:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.1),
+    inset 0 2px 6px rgba(0,0,0,.6);
+}
+.rc-flight .rcf-keys button:hover,
+.rc-flight .rcf-keys button.cur,
+.rc-flight .rcf-keys button[aria-pressed="true"] {
+  color: #fff;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.24),
+    inset 0 -2px 0 rgba(0,0,0,.55),
+    0 0 16px -4px rgba(var(--int-cyan-rgb, 66,178,220), .9);
+}
+.rc-flight .rcf-shot {
+  width: auto;
+  height: clamp(36px, 4.4vh, 42px);
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(6, 13, 22, .9);
+  background: linear-gradient(180deg, #22384e 0%, #15263a 48%, #0d1b2c 100%);
+  box-shadow: inset 0 1px 0 rgba(207,233,245,.2), inset 0 -2px 0 rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.6);
+}
+/* Тяга и скорость в том же ряду */
+.rc-flight .rcf-d-main .rcf-thr {
+  width: clamp(84px, 9vw, 128px);
+  height: clamp(36px, 4.4vh, 42px);
+  border-radius: 9px;
+  border: 1px solid rgba(6, 13, 22, .9);
+  background: linear-gradient(180deg, #0a1523, #071019);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.7);
+  cursor: ew-resize;
+  flex: none;
+}
+.rc-flight .rcf-d-main .rcf-speed {
+  position: static;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 7ch;
+  justify-content: flex-end;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+}
+.rc-flight .rcf-d-main .rcf-speed b { font-size: clamp(15px, 2.1vh, 19px); }
+.rc-flight .rcf-d-main .rcf-deploy {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 34px);
+  transform: translateX(-50%);
+}
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-top { gap: 10px; padding: 4px 8px 3px; }
+  .rc-flight .rcf-d-seen { display: none; }
+  .rc-flight .rcf-d-meter u { display: none; }
+  .rc-flight .rcf-d-meter s { width: 30px; }
+  .rc-flight .rcf-d-course .rcf-c-mode { display: none; }
+  .rc-flight .rcf-d-main { gap: 6px; padding: 6px 8px; }
+  .rc-flight .rcf-d-main .rcf-radar { display: none; }
+  .rc-flight .rcf-keys button { height: 38px; padding: 0 9px; }
+  .rc-flight .rcf-d-main .rcf-thr { width: 64px; height: 38px; }
+  .rc-flight .rcf-d-main .rcf-speed { min-width: 0; }
+  .rc-flight .rcf-d-main .rcf-speed span { display: none; }
+}
+
+/* Ячейка заряда и корпуса наследовала старое правило .rcf-bars с
+   position:absolute на весь кадр - возвращаем её в строй табло */
+.rc-flight .rcf-d-top .rcf-bars {
+  position: static;
+  inset: auto;
+  width: auto;
+  height: auto;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Скрытое меню не имеет права ловить клики. Вложенному списку
+   рукавов выше возвращали visibility:visible, а visibility у
+   ребёнка ПЕРЕБИВАЕТ hidden родителя: невидимое меню съедало
+   нажатия по центру окна - сканер планет не срабатывал. */
+.rc-flight .rcf-menu:not(.on),
+.rc-flight .rcf-menu:not(.on) * {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ширина досье: жёстко, поверх всех прежних объявлений - карта в
+   тысячу пикселей на весь кадр читалась не прибором, а плакатом */
+.rc-flight .rcf-dos-in {
+  width: min(560px, 92%) !important;
+  max-height: 94% !important;
+}
+
+/* Карта в досье не выше трети окна: иначе описание и показатели
+   уезжали за нижнюю кромку рамки */
+.rc-flight .rcf-dos-map {
+  max-height: clamp(120px, 34vh, 190px);
+  object-fit: cover;
+}
+
+/* ── Кнопки прозрачны: их железо рисует скин панели ──────────
+   Корпус каждой клавиши, паз тяги и обод радара нарисованы в
+   самой текстуре панели (deckSkin) - DOM здесь только зона нажатия
+   с чёткой иконкой и подсветка состояния. */
+.rc-flight .rcf-keys button,
+.rc-flight .rcf-shot,
+.rc-flight .rcf-d-main .rcf-thr {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.rc-flight .rcf-keys button:hover,
+.rc-flight .rcf-keys button.cur,
+.rc-flight .rcf-keys button[aria-pressed="true"] {
+  color: #fff;
+  border-color: transparent !important;
+  box-shadow: 0 0 18px -4px rgba(var(--int-cyan-rgb, 66,178,220), .9) !important;
+  text-shadow: 0 0 8px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+.rc-flight .rcf-keys button:active { transform: translateY(1px); }
+.rc-flight .rcf-d-top {
+  background: transparent;
+  border-bottom: 0;
+}
+.rc-flight .rcf-deck { border-top: 0; background-color: #0a1626; }

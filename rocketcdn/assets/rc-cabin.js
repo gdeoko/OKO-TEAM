@@ -148,10 +148,13 @@ function screenTex(T, rec, tiny) {
   var W = tiny ? 512 : 768, H = tiny ? 384 : 576;
   var c = cnv(W, H), x = c.getContext("2d"), i;
 
+  /* Подложка полупрозрачная: голограмма светится, а не глушит
+     стену за собой. Текст при этом читается - контраст держат
+     кромка и общее затемнение. */
   var gr = x.createLinearGradient(0, 0, W * 0.4, H);
-  gr.addColorStop(0, "#0d2135");
-  gr.addColorStop(0.55, "#08192a");
-  gr.addColorStop(1, "#050f1c");
+  gr.addColorStop(0, "rgba(13,33,53,.78)");
+  gr.addColorStop(0.55, "rgba(8,25,42,.72)");
+  gr.addColorStop(1, "rgba(5,15,28,.80)");
   x.fillStyle = gr; x.fillRect(0, 0, W, H);
 
   /* Пятно от лампы ниши сверху */
@@ -420,24 +423,39 @@ function build(T, opts) {
 
      Дуга считается из ширины: сколько метров надо показать, столько
      градусов и берём на радиусе стены. */
-  /* На телефоне кадр узкий и высокий: экран того же размера, что на
-     мониторе, оставляет сверху и снизу пустые пояса стены. Берём
-     шире и выше - тогда он заполняет кадр так же, как на широком
-     экране, и читать его не мельче. */
-  var SCR_W = tiny ? 2.32 : 1.92, SCR_H = tiny ? 1.78 : 1.42;
-  var scrR = R_WALL - 0.035;
+  /* Один размер на все экраны. Прежняя растяжка на телефоне до 2.32
+     давала дугу в целый сектор: экран налезал на швы и на окно -
+     владелец видел «за рамки входят». Читаемость на телефоне даёт
+     камера (подъезд ближе), а не растяжка стены. */
+  var SCR_W = 1.86, SCR_H = 1.42;
+  var scrR = R_WALL - 0.14;
   var scrArc = SCR_W / scrR;
   var hoodArc = (SCR_W + 0.22) / (R_WALL - 0.14);
   for (i = 1; i <= 7; i++) {
     th = azOf(i);
     var tex = screenTex(T, recs[i - 1], tiny);
+    /* Проекция, а не плита: экран оторван от стены на десяток
+       сантиметров, полупрозрачен - за ним читается обшивка, - и
+       подсвечен сзади мягким конусом. Это и отличает голограмму от
+       «прибитой к салону карточки». */
     var face = new T.Mesh(
       new T.CylinderGeometry(scrR, scrR, SCR_H, tiny ? 8 : 14, 1, true,
         thetaOf(th) - scrArc / 2, scrArc),
-      new T.MeshBasicMaterial({ map: tex, side: T.BackSide, fog: false })
+      new T.MeshBasicMaterial({ map: tex, side: T.BackSide, fog: false,
+        transparent: true, opacity: 0.92, depthWrite: false })
     );
     face.position.y = EYE + 0.06;
+    face.renderOrder = 6;
     grp.add(face);
+    /* Свечение за экраном: луч проектора, упавший на стену */
+    var back = new T.Mesh(
+      new T.CylinderGeometry(scrR + 0.07, scrR + 0.07, SCR_H + 0.22, tiny ? 8 : 12, 1, true,
+        thetaOf(th) - scrArc * 0.58, scrArc * 1.16),
+      new T.MeshBasicMaterial({ color: 0x2b8fc4, side: T.BackSide, fog: false,
+        transparent: true, opacity: 0.10, blending: T.AdditiveBlending, depthWrite: false })
+    );
+    back.position.y = EYE + 0.06;
+    grp.add(back);
 
     /* Козырёк и порожек - тоже дуги: прямые короба у краёв ниши
        отходили от стены и висели в воздухе */
@@ -640,11 +658,13 @@ function build(T, opts) {
      половину, иначе за спиной выходит чёрная дыра вместо комнаты.
      Контровой тёплый обводит стойки по кромке. Свет пульта
      разгорается на подходе. */
-  var lamp = new T.DirectionalLight(0xcfe9f5, 2.6);
-  lamp.position.set(0, 2.4, -7);
-  lamp.target.position.set(0, 1.2, 0);
+  /* Точечный с ограниченным радиусом вместо направленного:
+     направленный - бесконечный, он подкрашивал Землю и планеты
+     всего мира, и владелец видел «нереалистичный космос». Этот
+     гаснет в десяти метрах - ровно размер салона. */
+  var lamp = new T.PointLight(0xcfe9f5, 2.4, 10, 1.5);
+  lamp.position.set(0, 2.3, -(R_WALL - 0.7));
   grp.add(lamp);
-  grp.add(lamp.target);
   /* Заполняющий держит дальнюю половину помещения: без него за
      спиной выходит чёрная дыра вместо комнаты */
   var hemi = new T.HemisphereLight(0x3a5f80, 0x0c1826, 1.45);

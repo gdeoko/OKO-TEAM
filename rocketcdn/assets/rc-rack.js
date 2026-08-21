@@ -395,7 +395,14 @@ Rack.prototype.frame = function (dt) {
 };
 
 Rack.prototype.tick = function (ts) {
-  if (document.documentElement.classList.contains("rc-flying")) { this._last = 0; return; }
+  /* Сон внутри корабля и в полёте, без обрыва цикла: прежний выход
+     при полёте убивал отрисовку насовсем */
+  var rc = document.documentElement.classList;
+  if (rc.contains("rc-inside") || rc.contains("rc-flying")) {
+    this._last = 0;
+    this._raf = requestAnimationFrame(this.tick.bind(this));
+    return;
+  }
   if (!this.running) return;
   this._raf = requestAnimationFrame(this.tick.bind(this));
   var dt = this._last ? Math.min(0.05, (ts - this._last) / 1000) : 0.016;

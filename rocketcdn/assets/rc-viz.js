@@ -197,6 +197,13 @@ function wave(box) {
 
   function frame() {
     if (!running) return;
+    /* Внутри корабля и в полёте волна спит: секция всё равно не
+       видна, а холст на телефоне стоит кадра */
+    var rc = document.documentElement.classList;
+    if (rc.contains("rc-inside") || rc.contains("rc-flying")) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
     tm += 0.032;
     /* Складываем несколько синусов и лёгкий шум - выглядит как живой трафик */
     var v = 0.52

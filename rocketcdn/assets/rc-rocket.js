@@ -2288,7 +2288,10 @@ Rocket.prototype.bind = function () {
     rt = setTimeout(function () { self.resize(); }, 160);
   });
   document.addEventListener("visibilitychange", function () {
-    document.hidden ? self.stop() : self.start();
+    /* Будим только если ракета не запаркована: раньше переключение
+       вкладки поднимало её поверх салона */
+    if (document.hidden) { self.stop(); return; }
+    if (!document.documentElement.classList.contains("rc-rocket-parked")) self.start();
   });
 };
 
@@ -4043,6 +4046,22 @@ Rocket.prototype.layout = function (p, dt) {
   var pos = this.path.getPointAt(p, this._tmpA);
   var tan = this.path.getTangentAt(p, this._tmpB).normalize();
 
+  /* Петля маршрута нарисована под широкий кадр: размах по X до 7.2
+     при видимой полуширине телефона около 3.2 на этой глубине -
+     корабль БОЛЬШУЮ часть пути был за кадром, и владелец видел
+     «исчез, потом вылетел слева». Сжимаем петлю к видимому полю:
+     полуширина кадра на средней глубине минус запас на сам корпус. */
+  if (this._fitX == null || this._fitW !== this.cw()) {
+    this._fitW = this.cw();
+    var halfH = Math.tan((this.cam.fov * Math.PI / 180) / 2) * (this.cam.position.z + 5.6);
+    var halfW = halfH * (this._fitW / Math.max(1, this.ch()));
+    this._fitX = Math.max(0.34, Math.min(1, (halfW - 1.3) / 7.2));
+    /* По вертикали запас меньше: кадр телефона высокий */
+    this._fitY = Math.max(0.6, Math.min(1, (halfH - 1.2) / 5.4));
+  }
+  pos.x *= this._fitX;
+  pos.y *= this._fitY;
+
   var orb = this.orbit(dt || 0.016);
   var k = this.orbK;
   if (orb && k > 0.001) {
@@ -4082,13 +4101,22 @@ Rocket.prototype.layout = function (p, dt) {
      заголовка, чтобы текст остался слева. К концу акта хватка
      отпускает, и корабль уходит на свою траекторию. */
   var scAct = g.RC_SCENE;
-  if (scAct && scAct.act === "pad" && app < 0.01 && (this.landK || 0) < 0.01) {
+  /* Хватка пролога отпускает по прогрессу страницы, а не по смене
+     акта: жёсткий гейт act==="pad" обрывал притяжку в один кадр, и
+     корабль прыгал из точки героя на кривую - владелец видел ровно
+     этот скачок. Теперь хватка тает плавно на первых процентах
+     прокрутки, в какой бы акт они ни попали. */
+  if (scAct && (scAct.act === "pad" || p < 0.075) && app < 0.01 && (this.landK || 0) < 0.01) {
     /* Хватка держится почти весь акт и отпускает только на его
        исходе. Прежняя формула слабела линейно с самого начала, а на
        телефоне доля акта уже при нетронутой странице равна 0.58:
        герой оказывался притянут лишь на пятую часть пути и всё
        равно висел за краем кадра. */
-    var padK = 1 - Math.max(0, Math.min(1, ((scAct.k || 0) - 0.72) / 0.28));
+    /* Затухание по доле СТРАНИЦЫ: ноль хватки приходит на 6-7
+       процентах прокрутки с плавным синусным сходом - производная
+       на границе нулевая, скачка нет */
+    var padRaw = 1 - Math.max(0, Math.min(1, (p - 0.012) / 0.06));
+    var padK = padRaw * padRaw * (3 - 2 * padRaw);
     if (padK > 0.01) {
       var pw = this.cw();
       var ph = this.ch();
@@ -4146,6 +4174,10 @@ Rocket.prototype.layout = function (p, dt) {
      ни пролог: там положение корабля - часть сцены, и любой сдвиг
      ломает то, к чему мы идём. */
   var lock = Math.max(this.orbK || 0, app, (this.landK || 0), dk || 0);
+  /* Отвод ведём ВСЕГДА одним демпфером: раньше вне условий поправка
+     замирала на последнем значении и на границе героя картинку рвало
+     скачком. Теперь меняется только цель, ход всегда плавный. */
+  var corrGoal = 0;
   if (lock < 0.2 && !(scAct && scAct.act === "pad")) {
     var vw = this.cw();
     /* Полуширина читаемой колонки в пикселях: та же, что у вёрстки */
@@ -4180,20 +4212,16 @@ Rocket.prototype.layout = function (p, dt) {
       if (off > colHalf * 0.25) side = 1;
       else if (off < -colHalf * 0.25) side = -1;
       this._corrSide = side;
-      /* Отвод мягкий и ограниченный. Маршрут теперь и сам идёт по
-         полям кадра, поэтому выталкивать корпус к самому краю не
-         нужно - достаточно подвинуть его настолько, чтобы он не
-         стоял поверх строки. */
       var maxPx = vw * 0.26;
       var wantPx = over > 0.001 ? side * over * maxPx : 0;
-      var cur = this._corrX || 0;
-      var to = wantPx * perPx * (1 - lock / 0.2);
-      this._corrX = cur + (to - cur) * (dt ? Math.min(1, dt * 1.6) : 0.03);
-      pos.x += this._corrX;
-
+      corrGoal = wantPx * perPx * (1 - lock / 0.2);
     }
   }
-  if (lock >= 0.2) { this._corrX = (this._corrX || 0) * 0.86; }
+  /* Один экспоненциальный демпфер на все состояния: скорость схода
+     не зависит от кадровой частоты */
+  var ck = 1 - Math.exp(-(dt || 0.016) * 2.2);
+  this._corrX = (this._corrX || 0) + (corrGoal - (this._corrX || 0)) * ck;
+  pos.x += this._corrX;
 
   this.pivot.position.copy(pos);
 
@@ -4202,7 +4230,11 @@ Rocket.prototype.layout = function (p, dt) {
   this._q.setFromUnitVectors(this._up, tan);
   /* На подходе доворот почти мгновенный: корпус, к двери которого
      мы идём, обязан стоять вертикально даже при резком скролле */
-  this.pivot.quaternion.slerp(this._q, Math.min(1, 0.22 + k * 0.4 + app * 0.65));
+  /* Доля довода из времени кадра, а не постоянная: на 30 кадрах
+     прежняя константа крутила корпус вдвое медленней и корабль
+     "плыл" за маршрутом */
+  var qk = 1 - Math.exp(-(dt || 0.016) * (9 + k * 18 + app * 30));
+  this.pivot.quaternion.slerp(this._q, Math.min(1, qk));
 
   /* Крен по горизонтальной составляющей; у борта корабль ровный */
   this.craft.rotation.z = -tan.x * 0.55 * (1 - (this.appK || 0));
@@ -4235,13 +4267,16 @@ Rocket.prototype.layout = function (p, dt) {
     while (ry - want > Math.PI) want += tau;
     this.craft.rotation.y = ry + (want - ry) * Math.min(1, (dt || 0.016) * (1.2 + app * 6));
   } else {
-    this.craft.rotation.y += 0.004;
+    /* За секунду, не за кадр: на разных частотах скорость одна */
+    this.craft.rotation.y += 0.24 * (dt || 0.016);
   }
 
   /* Дальние участки пути делаем мельче, ближние крупнее.
      Вокруг планеты ракета идёт мельче: она «далеко», и только в таком
      масштабе виток читается витком, а не пролётом корабля через кадр. */
-  var s = this.C.mobile ? 0.66 : 1.12;
+  /* Маршрут теперь сжат в кадр, и корабль на телефоне можно держать
+     крупнее: прежние 0.66 давали спичку на фоне неба */
+  var s = this.C.mobile ? 0.88 : 1.12;
   /* Подход растит корпус: к единице подхода борт с люком занимает
      кадр, а открытая дверь наезжает проёмом на зрителя - это и есть
      вход внутрь, без склейки и без вторых ворот поверх сцены. */
@@ -4455,7 +4490,8 @@ addEventListener("rc:act", function (e) {
 });
 
 Rocket.prototype.setProgress = function (p, velocity) {
-  this.progress = p;
+  this._progGoal = p;
+  if (this.progress == null) this.progress = p;
   var a = Math.abs(velocity || 0);
   /* Скорость прокрутки добавляет к тяге акта, но не заменяет её */
   this.power = Math.max(0.28, Math.min(1, actThrust * 0.72 + 0.18 + a * 0.04));
@@ -4469,6 +4505,16 @@ Rocket.prototype.frame = function (dt) {
   this.time += dt;
   var t = this.time;
 
+  /* Прокрутка приходит рывками колеса; корабль идёт за ней с
+     коротким демпфером и не дёргается на каждом зубце */
+  if (this._progGoal != null) {
+    var pk = 1 - Math.exp(-dt * 9);
+    var dgap = this._progGoal - this.progress;
+    /* Переход через ноль петли: идём коротким путём */
+    if (dgap > 0.5) dgap -= 1;
+    if (dgap < -0.5) dgap += 1;
+    this.progress = ((this.progress + dgap * pk) % 1 + 1) % 1;
+  }
   this.layout(this.progress, dt);
 
   /* Покачивание в состоянии покоя */
@@ -4684,7 +4730,15 @@ Rocket.prototype.publish = function () {
 };
 
 Rocket.prototype.tick = function (ts) {
-  if (document.documentElement.classList.contains("rc-flying")) { this._last = 0; return; }
+  /* В полёте и в салоне ракета снаружи не нужна, но цикл не умирает:
+     прежний выход без перепланирования оставлял канвас мёртвым после
+     возвращения из игры. Тик без отрисовки почти бесплатен. */
+  var rcl = document.documentElement.classList;
+  if (rcl.contains("rc-flying") || rcl.contains("rc-rocket-parked")) {
+    this._last = 0;
+    this._raf = requestAnimationFrame(this.tick.bind(this));
+    return;
+  }
   if (!this.running) return;
   this._raf = requestAnimationFrame(this.tick.bind(this));
 

@@ -658,3 +658,20 @@
     mask-image: none;
   }
 }
+
+/* ── Дальняя метка - только имя ──────────────────────────────
+   Пока объект не «зажжён» приближением, стеклянная плашка не
+   рисуется вовсе: пустые заготовки-рамки посреди окна владелец
+   справедливо назвал кривыми окнами. У дальней метки остаются
+   маркер и имя, стекло с описанием приходит вместе с .on. */
+.rch-tag:not(.on) .rch-glass,
+.rch-tag:not(.on) .rch-info,
+.rch-tag:not(.on) .rch-sub {
+  opacity: 0 !important;
+  transition: opacity .25s var(--h-ease);
+}
+.rch-tag.on .rch-glass,
+.rch-tag.on .rch-info,
+.rch-tag.on .rch-sub {
+  transition: opacity .25s var(--h-ease);
+}

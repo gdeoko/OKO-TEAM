@@ -468,7 +468,15 @@ Globe3D.prototype.frame = function (dt) {
 };
 
 Globe3D.prototype.tick = function (ts) {
-  if (document.documentElement.classList.contains("rc-flying")) { this._last = 0; return; }
+  /* Прежний выход при полёте обрывал цикл насовсем: вернувшись из
+     игры, человек видел мёртвый глобус. Сон с самопробуждением:
+     тик перепланируется, отрисовка пропускается. */
+  var rc = document.documentElement.classList;
+  if (rc.contains("rc-inside") || rc.contains("rc-flying")) {
+    this._last = 0;
+    this._raf = requestAnimationFrame(this.tick.bind(this));
+    return;
+  }
   if (!this.running) return;
   this._raf = requestAnimationFrame(this.tick.bind(this));
   var dt = this._last ? Math.min(0.05, (ts - this._last) / 1000) : 0.016;

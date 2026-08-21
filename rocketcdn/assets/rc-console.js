@@ -345,6 +345,8 @@ function place() {
 
 function loop(ts) {
   if (doc.hidden) { last = 0; return false; }
+  /* Внутри корабля секция контактов скрыта, её экран спит */
+  if (root.classList.contains("rc-inside") || root.classList.contains("rc-flying")) { last = 0; return false; }
   var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
   last = ts;
 

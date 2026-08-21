@@ -161,7 +161,7 @@ function TOTAL_MARKS() {
    уйти за свой же предел, а «сеть развёрнута полностью» достигалась
    только через это переполнение. */
 function NET_TOTAL() {
-  var n = 5;                        /* Земля, Луна, Марс, Сатурн, дыра */
+  var n = 11;                        /* Земля, Луна, Марс, Сатурн, дыра */
   for (var u = 1; u < UNIVERSES.length; u++) {
     n += UNIVERSES[u].sys.length;
     for (var s = 0; s < UNIVERSES[u].sys.length; s++) {
@@ -174,7 +174,7 @@ function NET_TOTAL() {
 function paintProgress() {
   if (!ui.prog) return;
   var got = Object.keys(explored).length, total = TOTAL_MARKS();
-  ui.prog.textContent = (RU ? "Исследовано " : "Explored ") + Math.min(got, total) + "/" + total;
+  ui.prog.textContent = Math.min(got, total) + "/" + total;
   ui.prog.classList.toggle("full", got >= total);
 }
 
@@ -402,9 +402,6 @@ function buildUI() {
          далее - все они наклеены не красиво, не часть интерфейса, ещё
          и криво». Теперь это одна панель, и она стоит в нише пульта
          на самой картинке кабины. */
-      '<div class="rcf-course"><span class="rcf-c-goal">—</span>' +
-        '<i></i><span class="rcf-c-dist">—</span>' +
-        '<i></i><span class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</span></div>' +
       /* Боковые стойки: слева заряд, справа целостность корпуса.
          Столбики стоят на скошенных боковинах, где на самом рисунке
          кабины идут приборные панели. */
@@ -442,10 +439,6 @@ function buildUI() {
           '</ul>' +
         '</div>' +
       '</div>' +
-      '<div class="rcf-bars">' +
-        '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
-        '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
-      '</div>' +
       '<div class="rcf-menu" role="menu">' +
         '<div class="rcf-menu-h"><i>' + (RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM") + '</i></div>' +
         '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
@@ -478,79 +471,73 @@ function buildUI() {
       '</div>' +
       '<div class="rcf-lock" aria-hidden="true"><b></b><b></b><b></b><b></b><span></span></div>' +
     '</div>' +
+        /* ── Панель управления: нижний борт корабля ──────────
+           Не карточка поверх кадра, а сам борт: непрозрачный металл
+           во всю ширину, и в него вшиты все приборы. Верхняя строка
+           панели - табло (сеть, открытые объекты, курс, дистанция,
+           режим, заряд и корпус), нижняя - физические клавиши,
+           ползунок тяги и скорость. Владелец сформулировал точно:
+           «кнопки должны быть частью панели, реальной панели, а не
+           карточки поверх картинки». */
         '<div class="rcf-deck">' +
-        /* Левая консоль: обзор системы. Круглый экран с орбитами,
-           телами и кораблём в середине - по нему сразу видно, где мы
-           и куда идти. Раньше на этом месте висели две строчки
-           счётчиков, и это была единственная «карта» в игре. */
-        '<div class="rcf-left">' +
-          '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
-          '<div class="rcf-gauges">' +
-            '<div class="rcf-prog"></div>' +
-            '<div class="rcf-net"></div>' +
+          '<div class="rcf-d-top">' +
+            '<span class="rcf-d-cell"><i>' + (RU ? "СЕТЬ" : "NET") + '</i><span class="rcf-net">0/34</span></span>' +
+            '<span class="rcf-d-cell rcf-d-seen"><i>' + (RU ? "ОТКРЫТО" : "SEEN") + '</i><span class="rcf-prog">0/32</span></span>' +
+            '<span class="rcf-d-cell rcf-d-course"><i>' + (RU ? "КУРС" : "COURSE") + '</i>' +
+              '<span class="rcf-c-goal">—</span><u class="rcf-c-dist">—</u>' +
+              '<em class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</em></span>' +
+            '<span class="rcf-d-cell rcf-bars">' +
+              '<span class="rcf-d-meter rcf-bar-en"><b>' + (RU ? "ЗАРЯД" : "PWR") + '</b><s><i></i></s><u>100</u></span>' +
+              '<span class="rcf-d-meter rcf-bar-hull"><b>' + (RU ? "КОРПУС" : "HULL") + '</b><s><i></i></s><u>100</u></span>' +
+            '</span>' +
+          '</div>' +
+          '<div class="rcf-d-main">' +
+            '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
+            '<div class="rcf-keys">' +
+              '<button type="button" class="rcf-navkey" aria-expanded="false">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
+                '<b>' + (RU ? "КУРС" : "COURSE") + '</b><u></u>' +
+              '</button>' +
+              '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
+                '<path d="M3 12h18"/></svg>' +
+                '<b>' + (RU ? "СКАН" : "SCAN") + '</b></button>' +
+              '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
+                '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
+              '<button type="button" class="rcf-stop-key" aria-label="' + (RU ? "Полная остановка" : "Full stop") + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
+                '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
+              '<button type="button" class="rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
+                '<path d="M12 17.2h.01"/></svg>' +
+              '</button>' +
+              '<button type="button" class="rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
+              '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
+              '<i class="rcf-thr-fill"></i>' +
+              '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
+            '</div>' +
+            '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+            '<button type="button" class="rcf-deploy"></button>' +
           '</div>' +
         '</div>' +
-        '<div class="rcf-mid">' +
-          '<div class="rcf-keys">' +
-            '<button type="button" class="rcf-navkey" aria-expanded="false">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
-              '<b>' + (RU ? "КУРС" : "COURSE") + '</b><u></u>' +
-            '</button>' +
-            '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
-              '<path d="M3 12h18"/></svg>' +
-              '<b>' + (RU ? "СКАНЕР" : "SCAN") + '</b></button>' +
-            '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
-              '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
-            /* Стоп. Без него единственным способом остановиться было
-               довести рычаг тяги до нуля вручную и ждать, пока
-               инерция стечёт - на телефоне это неудобно вдвойне. */
-            '<button type="button" class="rcf-stop-key" aria-label="' + (RU ? "Полная остановка" : "Full stop") + '">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
-              '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
-            /* Справка: что здесь вообще делать. Раньше об этом
-               говорила одна строка подсказки, которая гасла через
-               семь секунд и больше не возвращалась. */
-            '<button type="button" class="rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
-              '<path d="M12 17.2h.01"/></svg>' +
-            '</button>' +
-          '</div>' +
-          '<button type="button" class="rcf-deploy"></button>' +
-        '</div>' +
-        /* Правая консоль: тяга и скорость. Рычаг тянут пальцем или
-           мышью, и это принципиально: человек не жмёт интерфейс, он
-           двигает ручку и чувствует, как корабль набирает ход. */
-        '<div class="rcf-right">' +
-          '<button type="button" class="rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-            '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>' +
-          '</button>' +
-          '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
-            '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
-            '<i class="rcf-thr-fill"></i>' +
-            '<i class="rcf-thr-grip"></i>' +
-            '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
-          '</div>' +
-          '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
-        '</div>' +
-    '</div>' +
-      /* Курсовая строка на верхней перемычке корпуса: цель, до неё,
-         режим. Ровно то место, где в кабине и положено быть
-         курсовому табло. */
-'<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
+    '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
     '<button type="button" class="rcf-auto" aria-pressed="false">' +
       '<i></i><span>' + (RU ? "Автопилот" : "Autopilot") + '</span>' +
     '</button>' +
@@ -649,6 +636,23 @@ function buildUI() {
     });
   }
   ui.autoKey = w.querySelector(".rcf-auto-key");
+  /* Клавиши панели слушают клики напрямую: прежний делегат висел на
+     списке целей, и СКАН с АВТО были мёртвыми - главная жалоба
+     «функционала нет вообще» начиналась с этого */
+  if (ui.autoKey) ui.autoKey.addEventListener("click", function () {
+    setAuto(!F.auto);
+    deckSkinSoon();
+    if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+  });
+  ui.scanKey = w.querySelector(".rcf-scan-key");
+  if (ui.scanKey) ui.scanKey.addEventListener("click", function () {
+    F.scan = !F.scan;
+    ui.scanKey.setAttribute("aria-pressed", F.scan ? "true" : "false");
+    ui.scanKey.classList.toggle("cur", F.scan);
+    if (!F.scan && ui.lock) ui.lock.classList.remove("on");
+    deckSkinSoon();
+    if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+  });
   ui.prog = w.querySelector(".rcf-prog");
   ui.net = w.querySelector(".rcf-net");
   ui.deploy = w.querySelector(".rcf-deploy");
@@ -696,7 +700,12 @@ function buildUI() {
       if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND, 180); } catch (e3) {} }
       return;
     }
-    ui.uni.classList.remove("on");
+    /* Прыгаем: закрываем ОБЩЕЕ меню курса - список рукавов теперь
+       живёт внутри него, и прежний remove с внутреннего блока меню
+       не убирал */
+    if (ui.menu) ui.menu.classList.remove("on");
+    if (ui.navKey) { ui.navKey.setAttribute("aria-expanded", "false"); ui.navKey.classList.remove("cur"); }
+    modalMark();
     if (want !== uniIdx) jumpUniverse(want);
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
   });
@@ -725,6 +734,9 @@ function buildUI() {
       var pa = sy.getAttribute("data-pl");
       goSystem(parseInt(sy.getAttribute("data-sys"), 10),
                pa === null ? undefined : parseInt(pa, 10));
+      if (ui.menu) ui.menu.classList.remove("on");
+      if (ui.navKey) { ui.navKey.setAttribute("aria-expanded", "false"); ui.navKey.classList.remove("cur"); }
+      modalMark();
       var all = ui.nav.querySelectorAll("button");
       for (var q = 0; q < all.length; q++) all[q].classList.remove("cur");
       sy.classList.add("cur");
@@ -882,7 +894,7 @@ function dosOpen(obj, info) {
     if (obj && W3 && obj.getWorldPosition) {
       var wp = new g.THREE.Vector3();
       obj.getWorldPosition(wp);
-      dist = Math.round(W3.cam.position.distanceTo(wp) * 1000);
+      dist = Math.round(W3.cam.position.distanceTo(wp) * 106);
     }
   } catch (e) {}
   if (dist !== null) {
@@ -1129,8 +1141,13 @@ function systemNav() {
   if (!ui.nav) return;
   var u = UNIVERSES[uniIdx], html = "";
   if (uniIdx === 0) {
-    var NAV = [["earth", RU ? "Земля" : "Earth"], ["moon", RU ? "Луна" : "Moon"],
-               ["mars", RU ? "Марс" : "Mars"], ["saturn", RU ? "Сатурн" : "Saturn"],
+    /* Родная система в полном составе: прежние семь кнопок прятали
+       шесть тел, к которым уже можно летать */
+    var NAV = [["sun", RU ? "Солнце" : "Sun"], ["mercury", RU ? "Меркурий" : "Mercury"],
+               ["venus", RU ? "Венера" : "Venus"], ["earth", RU ? "Земля" : "Earth"],
+               ["moon", RU ? "Луна" : "Moon"], ["mars", RU ? "Марс" : "Mars"],
+               ["jupiter", RU ? "Юпитер" : "Jupiter"], ["saturn", RU ? "Сатурн" : "Saturn"],
+               ["uranus", RU ? "Уран" : "Uranus"], ["neptune", RU ? "Нептун" : "Neptune"],
                ["hole", RU ? "Дыра" : "Hole"], ["galaxy", RU ? "Галактика" : "Galaxy"],
                ["home", RU ? "Домой" : "Home"]];
     for (var i = 0; i < NAV.length; i++) {
@@ -1139,22 +1156,19 @@ function systemNav() {
   } else {
     for (var s = 0; s < u.sys.length; s++) {
       html += '<button type="button" data-sys="' + s + '">' + u.sys[s].name + "</button>";
-      /* Планеты системы идут следом отдельными кнопками: клиент
-         просил «куча систем планет, по которым можно путешествовать» */
       for (var p = 0; p < u.sys[s].planets.length; p++) {
         html += '<button type="button" class="rcf-pl" data-sys="' + s + '" data-pl="' + p + '">' +
                 u.sys[s].planets[p].name + "</button>";
       }
     }
-    html += '<button type="button" data-goal="galaxy">' + (RU ? "Галактика" : "Galaxy") + "</button>";
+    /* Из чужого рукава дорога одна - домой: кнопка «Галактика» здесь
+       вела в никуда, маршрутной кривой в рукаве нет */
+    html += '<button type="button" data-goal="home">' + (RU ? "Домой, в Солнечную" : "Home") + "</button>";
   }
-  html += '<button type="button" class="rcf-scan-key" data-scan aria-pressed="' +
-          (F.scan ? "true" : "false") + '">' + (RU ? "Сканер" : "Scanner") + "</button>";
-  html += '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="' +
-          (F.auto ? "true" : "false") + '">' + (RU ? "Авто" : "Auto") + "</button>";
+  /* Дубли СКАН и АВТО в меню не нужны: настоящие клавиши живут на
+     панели и слушают клики напрямую. Дубли перехватывали ссылки
+     ui.scanKey/autoKey, и клавиши панели умирали. */
   ui.nav.innerHTML = html;
-  ui.scanKey = ui.wrap.querySelector(".rcf-scan-key");
-  ui.autoKey = ui.wrap.querySelector(".rcf-auto-key");
 }
 
 /* Перелёт к системе или к её планете. Внутри чужой вселенной
@@ -1205,8 +1219,8 @@ function goSystem(si, pi) {
 /* Прыжок между вселенными: белая вспышка, за ней мир уже другой */
 var uniBusy = false;
 function jumpUniverse(want) {
-  F.jumps = (F.jumps || 0) + 1;
   if (uniBusy || !W3) return;
+  F.jumps = (F.jumps || 0) + 1;
   uniBusy = true;
   uniIdx = (want === undefined) ? (uniIdx + 1) % UNIVERSES.length : want;
   if (ui.fade) { ui.fade.style.transition = "opacity .45s"; ui.fade.style.opacity = "1"; }
@@ -1263,6 +1277,8 @@ var ORBITS = {
 
 function goTo(id) {
   if (!W3 || !W3.at) return;
+  /* Из чужого рукава «Домой» - это прыжок в родную систему */
+  if (uniIdx !== 0 && id === "home") { jumpUniverse(0); return; }
   F.goalId = id;
   if (id === "galaxy") {
     /* Галактика - точка на маршруте, а выбор рукава живёт в общем
@@ -1585,7 +1601,10 @@ function buildWorld() {
   if (g.RC_GL && g.RC_GL.take) { try { g.RC_GL.take(true); } catch (e) {} }
 
   var r = new T.WebGLRenderer({ canvas: ui.cv, antialias: !tiny, alpha: false, powerPreference: "high-performance" });
-  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, tiny ? 1.1 : (mob ? 1.45 : 2)));
+  /* Плотность пикселей: на телефоне 1.2 вместо 1.45 - это минус
+     треть работы растеризатора, а на плотном экране глаз разницы
+     не видит. Чёткость HUD не страдает: он в DOM. */
+  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, tiny ? 1.0 : (mob ? 1.2 : 1.8)));
   r.setClearColor(0x02050c, 1);
 
   /* Страховка на случай, если контекст всё же отберут: выходим из
@@ -1697,11 +1716,15 @@ function buildWorld() {
      Настоящее небо устроено наоборот: тысячи острых точек и лишь
      единицы заметных светил. Поэтому звёзд стало вдвое больше, а
      размер втрое меньше; крупными остаются редкие яркие. */
+  /* Тёплый слой был третьим по счёту и давал тысячи бежевых точек
+     размером под три пикселя - владелец назвал их «бежевые звёзды
+     как баг», и по делу. Настоящее небо белое с голубизной, тёплых
+     звёзд единицы. */
   var starMats = [
-    stars(tiny ? 6000 : 14000, 1.5, 3000, 0xdfeef8).material,
-    stars(tiny ? 2600 : 6200, 2.1, 2400, 0x9fc4ff).material,
-    stars(tiny ? 900 : 2100, 2.8, 1800, 0xffe4bd).material,
-    stars(tiny ? 120 : 320, 4.6, 1400, 0xffffff).material
+    stars(tiny ? 6000 : 14000, 1.4, 3000, 0xe8f2fa).material,
+    stars(tiny ? 2600 : 6200, 1.9, 2400, 0xa8c8f2).material,
+    stars(tiny ? 260 : 620, 2.2, 1800, 0xf6e3c2).material,
+    stars(tiny ? 120 : 320, 3.6, 1400, 0xffffff).material
   ];
 
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
@@ -1965,9 +1988,11 @@ function buildWorld() {
     bp[bi * 3 + 2] = -1020 + Math.sin(ba) * br;
   }
   beltGeo.setAttribute("position", new T.BufferAttribute(bp, 3));
+  /* Астероиды не светятся: тёмный мелкий гравий, читается роем
+     камней, а не бежевой пылью */
   var belt = new T.Points(beltGeo, new T.PointsMaterial({
-    color: 0xa89c8c, size: 3.4, sizeAttenuation: true, map: starDot,
-    transparent: true, opacity: 0.85, depthWrite: false
+    color: 0x5a6470, size: 2.0, sizeAttenuation: true, map: starDot,
+    transparent: true, opacity: 0.7, depthWrite: false
   }));
   scene.add(belt);
 
@@ -2167,7 +2192,11 @@ function buildWorld() {
     var col = new Float32Array(n * 3);
     var siz = new Float32Array(n);
     var cA = new T.Color(colA), cB = new T.Color(colB);
-    var cCore = new T.Color(0xffe9bd), cDust = new T.Color(0x6a3f2e);
+    /* Ядро тёпло-жёлтое, как у настоящих спиралей, а вот пыль
+       больше не светится кирпичом: владелец увидел её как «бежевые
+       звёзды, как баг». Пыль тёмная и холодная - она пригашивает
+       рукав, а не красит его в бежевый. */
+    var cCore = new T.Color(0xffe9c4), cDust = new T.Color(0x1c2836);
     var ARMS = 4, TW = 2.35;
     for (var k = 0; k < n; k++) {
       /* Радиус: степень меньше единицы сгущает звёзды к ядру ровно
@@ -2191,8 +2220,8 @@ function buildWorld() {
       var roll = Math.random();
       var c;
       if (tt < 0.14) { c = cCore; siz[k] = 1.5; }
-      else if (roll > 0.90) { c = cA; siz[k] = 2.4; }        /* голубые гиганты */
-      else if (roll > 0.74) { c = cDust; siz[k] = 1.1; }     /* пыль между рукавами */
+      else if (roll > 0.92) { c = cA; siz[k] = 2.2; }        /* голубые гиганты */
+      else if (roll > 0.84) { c = cDust; siz[k] = 1.0; }     /* тёмная пыль */
       else { c = roll > 0.42 ? cB : cA; siz[k] = 1; }
       col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
     }
@@ -2210,11 +2239,13 @@ function buildWorld() {
     core.scale.setScalar(scale * 0.34);
     /* Гало диска: мягкое свечение по всей плоскости, из-за него
        галактика перестаёт быть россыпью точек и становится телом */
+    /* Гало сжато вдвое и вдвое бледнее: на масштабе 1.9 оно
+       накрывало полнеба мутным пятном и съедало резкость рукавов */
     var glow = new T.Sprite(new T.SpriteMaterial({
-      map: glowSprite(256, "rgba(150,190,255,.16)", "rgba(90,130,220,0)"),
-      transparent: true, opacity: 0.7, depthWrite: false, blending: T.AdditiveBlending
+      map: glowSprite(256, "rgba(150,190,255,.09)", "rgba(90,130,220,0)"),
+      transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending
     }));
-    glow.scale.setScalar(scale * 1.9);
+    glow.scale.setScalar(scale * 1.05);
     var gr = new T.Group();
     gr.add(pts); gr.add(core); gr.add(glow);
     gr.position.set(px, py, pz);
@@ -2282,7 +2313,9 @@ function buildWorld() {
 
   var milky = spiralGalaxy(1150, 80, -2080, 950, 0x9fd8ef, 0x8fb7ff, 0.9, 0.3);
   var gal2 = spiralGalaxy(-2800, -500, -1600, 680, 0xb08cff, 0x8a59f6, 1.15, -0.4);
-  var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xffd9a6, 0xff9d6b, 0.75, 0.55);
+  /* Все три спирали холодные: белые и голубоватые рукава, тёплое
+     только ядро. Прежняя оранжевая читалась грязным пятном. */
+  var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xd8e8f6, 0x9fb8d8, 0.75, 0.55);
   milky.children[1].userData.info = RU ? "МЛЕЧНЫЙ ПУТЬ · 200 млрд звёзд · виден с Земли 10 000 лет" : "MILKY WAY · 200B stars";
   gal2.children[1].userData.info = RU ? "ГАЛАКТИКА RV-2 · неизведанная вселенная" : "GALAXY RV-2 · uncharted universe";
   gal3.children[1].userData.info = RU ? "ГАЛАКТИКА RC-3 · открыта Rocket CDN" : "GALAXY RC-3 · discovered by Rocket CDN";
@@ -2515,7 +2548,13 @@ function buildWorld() {
     { o: belt1, name: RU ? "АСТЕРОИДНЫЙ ПОЯС" : "ASTEROID BELT", key: "belt" },
     { o: milky, name: RU ? "МЛЕЧНЫЙ ПУТЬ" : "MILKY WAY", key: "milky" },
     { o: gal2, name: "RV-2", key: "gal2" },
-    { o: gal3, name: "RC-3", key: "gal3" }
+    { o: gal3, name: "RC-3", key: "gal3" },
+    { o: sunBody, name: RU ? "СОЛНЦЕ" : "SUN", key: "sun" },
+    { o: mercury, name: RU ? "МЕРКУРИЙ" : "MERCURY", key: "mercury" },
+    { o: venus, name: RU ? "ВЕНЕРА" : "VENUS", key: "venus" },
+    { o: jupiter, name: RU ? "ЮПИТЕР" : "JUPITER", key: "jupiter" },
+    { o: uranus, name: RU ? "УРАН" : "URANUS", key: "uranus" },
+    { o: neptune, name: RU ? "НЕПТУН" : "NEPTUNE", key: "neptune" }
   ];
 
   /* ── Твёрдые тела ────────────────────────────────────────────
@@ -2531,7 +2570,15 @@ function buildWorld() {
     { o: mars,   r: 30, name: RU ? "МАРС" : "MARS" },
     { o: saturn, r: 46, ring: 116, name: RU ? "САТУРН" : "SATURN" },
     { o: hole,   r: 30, hole: true, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE" }
-  ];
+  ,
+    /* Новые тела системы: сквозь Солнце и гигантов корабль тоже не
+       летает - обходит, как Марс и Сатурн */
+    { o: sunBody, r: 205, name: RU ? "СОЛНЦЕ" : "SUN" },
+    { o: mercury, r: 15, name: RU ? "МЕРКУРИЙ" : "MERCURY" },
+    { o: venus, r: 32, name: RU ? "ВЕНЕРА" : "VENUS" },
+    { o: jupiter, r: 130, name: RU ? "ЮПИТЕР" : "JUPITER" },
+    { o: uranus, r: 70, name: RU ? "УРАН" : "URANUS" },
+    { o: neptune, r: 66, name: RU ? "НЕПТУН" : "NEPTUNE" }];
 
   /* Оптика и шлейф - украшение, а не механика. На просьбе меньше
      движения и на упрощённых режимах страницы их просто нет: игра
@@ -2709,6 +2756,7 @@ function hideHint() {
 
 function size() {
   if (!W3 || !F.open) return;
+  deckSkinSoon();
   var w = innerWidth, h = innerHeight;
   W3.r.setSize(w, h, false);
   W3.cam.aspect = w / h;
@@ -2747,17 +2795,19 @@ function cabGeom() {
      ней. Приборы обязаны быть на экране на любом устройстве. */
   var d0 = px(0.06, tall ? 0.815 : 0.795);
   var d1 = px(0.94, tall ? 0.985 : 0.985);
-  var MINX = 0.015, MAXX = 0.985, MAXY = 0.995;
+  var MINX = 0.015, MAXX = 0.985, MAXY = 0.99;
   if (d0[0] < MINX) d0[0] = MINX;
   if (d1[0] > MAXX) d1[0] = MAXX;
   if (d1[1] > MAXY) d1[1] = MAXY;
-  /* Высота пояса не больше четверти кадра и не меньше девяти
-     процентов: в первом случае приборы съедают окно, во втором в
-     них не помещаются клавиши */
+  /* Высота пояса приборов - не больше одиннадцати процентов кадра.
+     Владелец мерил на глаз и был прав: прежние двадцать шесть
+     процентов съедали четверть экрана, и панель закрывала космос,
+     ради которого всё построено. Одиннадцати хватает на один ряд
+     ровных клавиш - больше плите и не положено. */
   var dh = d1[1] - d0[1];
-  if (dh > 0.26) { d0[1] = d1[1] - 0.26; dh = 0.26; }
-  if (dh < 0.11) { d0[1] = d1[1] - 0.11; }
-  if (d0[1] < 0.6) d0[1] = 0.6;
+  if (dh > 0.11) { d0[1] = d1[1] - 0.11; dh = 0.11; }
+  if (dh < 0.075) { d0[1] = d1[1] - 0.075; }
+  if (d0[1] < 0.72) d0[1] = 0.72;
   var S = ui.wrap.style;
   S.setProperty("--cab-wx", (w0[0] * 100).toFixed(2) + "%");
   S.setProperty("--cab-wy", (w0[1] * 100).toFixed(2) + "%");
@@ -2890,7 +2940,7 @@ function netCount() { return Object.keys(net).length; }
 function netPaint() {
   if (!ui.net) return;
   var n = netCount(), total = NET_TOTAL();
-  ui.net.textContent = (RU ? "Сеть " : "Network ") + Math.min(n, total) + "/" + total;
+  ui.net.textContent = Math.min(n, total) + "/" + total;
   ui.net.classList.toggle("full", n >= total);
 }
 
@@ -3026,7 +3076,9 @@ function reqPick() {
      планеты текущего рукава */
   var list = [];
   if (uniIdx === 0) {
-    var names = [GOAL_NAMES.earth, GOAL_NAMES.moon, GOAL_NAMES.mars, GOAL_NAMES.saturn];
+    var names = [GOAL_NAMES.earth, GOAL_NAMES.moon, GOAL_NAMES.mars, GOAL_NAMES.saturn,
+                 GOAL_NAMES.mercury, GOAL_NAMES.venus, GOAL_NAMES.jupiter,
+                 GOAL_NAMES.uranus, GOAL_NAMES.neptune, GOAL_NAMES.hole];
     for (var i = 0; i < names.length; i++) if (!net[names[i]]) list.push({ name: names[i] });
   } else {
     var u = UNIVERSES[uniIdx];
@@ -3295,6 +3347,13 @@ function holoFrame(w3, ts) {
 function frame(ts) {
   if (!F.open) return;
   F.raf = requestAnimationFrame(frame);
+  /* В режиме сцены кадр стоит: камера едет только за прокруткой, и
+     тридцати кадров хватает с запасом. Полные шестьдесят жгли
+     телефон ровно там, где человек читает вопросы. */
+  if (F.stage) {
+    if (F._stageT && ts - F._stageT < 32) return;
+    F._stageT = ts;
+  }
   var dt = F.last ? Math.min(0.05, (ts - F.last) / 1000) : 0.016;
   F.last = ts;
   var T = g.THREE, w3 = W3;
@@ -3340,8 +3399,12 @@ function frame(ts) {
     var cruise = jumpZone ? 0.11 : 0.03;
     F.v += (cruise - F.v) * Math.min(1, dt * 0.55);
   } else {
-    /* Ручной режим: тяга набирается щелчками и сама затухает */
-    F.v *= Math.pow(0.14, dt);
+    /* Ручной режим. Ползунок тяги держит ход: отпустил на половине -
+       идём на половине, как у настоящего РУД. Колесо и свайп дают
+       импульс поверх, который сам стекает к уровню ползунка. */
+    var thr = F.thr || 0;
+    var hold = thr * thr * 0.26;
+    F.v = hold + (F.v - hold) * Math.pow(0.14, dt);
   }
   F.v = Math.max(-0.2, Math.min(0.3, F.v));
   F.p += F.v * dt;
@@ -3789,7 +3852,21 @@ function frame(ts) {
           else if (g.RC_SOUND.blip) g.RC_SOUND.blip(90, 0.9, "sawtooth", 0.05);
         } catch (e) {}
       }
-      say(RU ? "ПРОБОЙ · МЛЕЧНЫЙ ПУТЬ ПОЗАДИ" : "BREACH · MILKY WAY BEHIND", 2600);
+      /* Пробой не декорация: на вспышке корабль реально уходит в
+         первый открытый чужой рукав. Раньше туннель, вспышка и
+         надпись были, а прыжка НЕ БЫЛО - владелец назвал это
+         «других вселенных по факту нету», и был прав. */
+      var nxt = 0;
+      for (var qi = 1; qi < UNIVERSES.length; qi++) {
+        var uu3 = UNIVERSES[qi];
+        if (!uu3.need || netCount() >= uu3.need) { nxt = qi; break; }
+      }
+      if (nxt > 0 && uniIdx === 0) {
+        say((RU ? "ПРОБОЙ · РУКАВ " : "BREACH · ") + UNIVERSES[nxt].name, 2800);
+        setTimeout(function () { jumpUniverse(nxt); }, 480);
+      } else {
+        say(RU ? "ПРОБОЙ · МЛЕЧНЫЙ ПУТЬ ПОЗАДИ" : "BREACH · MILKY WAY BEHIND", 2600);
+      }
     }
   } else if (F.jBang || F.jFlash) {
     F.jBang = false;
@@ -3913,10 +3990,15 @@ function frame(ts) {
   ui.bar.style.width = (F.p * 100).toFixed(1) + "%";
   /* На перелёте между системами табло показывает настоящий ход:
      иначе при варпе счётчик стоял на месте, хотя мимо летит космос */
-  ui.speed.textContent = String(Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9));
+  var spdV = Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9);
+  if (spdV !== F._spdPub) {
+    F._spdPub = spdV;
+    ui.speed.textContent = String(spdV);
+  }
 
   /* Звук идёт за тягой */
-  if (g.RC_SOUND && g.RC_SOUND.flightLevel) {
+  if (g.RC_SOUND && g.RC_SOUND.flightLevel && !F.stage && ts - (F._sndT || 0) > 120) {
+    F._sndT = ts;
     try { g.RC_SOUND.flightLevel(Math.min(1, 0.25 + speed * 4 + (jumpZone ? 0.35 : 0))); } catch (e) {}
   }
 
@@ -4038,6 +4120,7 @@ function open() {
 
   root.classList.add("rc-flying");
   ui.wrap.classList.add("on");
+  deckSkinSoon();
   /* Страница под полётом перестаёт существовать для клавиатуры и
      чтения с экрана: иначе Tab уводит из кабины в список городов */
   inertPage(true);
@@ -4049,7 +4132,9 @@ function open() {
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(true); } catch (e) {} }
   if (g.RC_track) g.RC_track("flight", "open");
 
-  F.raf = requestAnimationFrame(frame);
+  /* Из режима сцены цикл уже работает: второй rAF-контур давал
+     двойной рендер каждого кадра - «всё лагает после старта» */
+  if (!F.raf) F.raf = requestAnimationFrame(frame);
 }
 
 function close() {
@@ -4391,7 +4476,8 @@ function netRestore() {
   var map = {
     earth: W3.earth, moon: W3.moon, mars: W3.mars, saturn: W3.saturn,
     sun: W3.sun, mercury: W3.mercury, venus: W3.venus,
-    jupiter: W3.jupiter, uranus: W3.uranus, neptune: W3.neptune
+    jupiter: W3.jupiter, uranus: W3.uranus, neptune: W3.neptune,
+    hole: W3.hole
   };
   var any = false;
   for (var key in map) {
@@ -4514,6 +4600,15 @@ function failTick(ts) {
       /* Не успели: узел выбывает из сети */
       delete net[fail.name];
       try { localStorage.setItem(NET_KEY, JSON.stringify(net)); } catch (e) {}
+      /* Метка узла уходит из мира вместе с записью: раньше спрайт
+         оставался висеть, и сеть на глаз не менялась */
+      for (var fi = netNodes.length - 1; fi >= 0; fi--) {
+        if (netNodes[fi].name === fail.name) {
+          if (W3) W3.scene.remove(netNodes[fi].s);
+          netNodes.splice(fi, 1);
+        }
+      }
+      trafBuild();
       say((RU ? "УЗЕЛ ПОТЕРЯН · " : "NODE LOST · ") + fail.name, 3200);
       if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(140, 0.7, "sawtooth", 0.04); } catch (e) {} }
       fail = null;
@@ -4645,7 +4740,10 @@ function projBuild(w3) {
   cone.position.y = -0.115;
   cone.rotation.x = Math.PI;
   proj.add(cone);
-  proj.position.set(0, -0.245, -0.86);
+  /* Ниже и мельче: проекция стоит над плитой приборов, а не висит
+     посреди остекления поверх настоящей цели */
+  proj.position.set(0, -0.34, -0.86);
+  proj.scale.setScalar(0.72);
   proj.renderOrder = 20;
   w3.cam.add(proj);
   if (!w3.cam.parent) w3.scene.add(w3.cam);
@@ -4708,8 +4806,22 @@ function powerFrame(w3, dt) {
 
   /* Свет звезды. Солнце стоит далеко и ярко, у чужих систем свои
      светила - берём ближайшее из тех, что в кадре мира. */
-  if (w3.sunPos) {
-    var d = cam.distanceTo(w3.sunPos);
+  var srcPos = w3.sunPos;
+  if (uniIdx !== 0) {
+    /* В чужом рукаве панели заряжает его звезда: берём ближайшую
+       систему текущей вселенной */
+    var pk2 = built[uniIdx];
+    if (pk2 && pk2.root && pk2.root.children.length) {
+      var bd2 = 1e9, bo2 = null;
+      for (var ps = 0; ps < pk2.root.children.length; ps++) {
+        var dd2 = cam.distanceTo(pk2.root.children[ps].position);
+        if (dd2 < bd2) { bd2 = dd2; bo2 = pk2.root.children[ps]; }
+      }
+      if (bo2) srcPos = bo2.position;
+    }
+  }
+  if (srcPos) {
+    var d = cam.distanceTo(srcPos);
     if (d < 2600) gain += (1 - d / 2600) * 3.4;
   }
   /* Дыра: приливная нагрузка на корпус */
@@ -4758,6 +4870,166 @@ function barsFrame(ts) {
   if (ui.wrap) ui.wrap.classList.toggle("rcf-alarm", F.warn > 0.25);
 }
 
+/* ── Скин панели: железо рисуется одним холстом ──────────────
+   Требование владельца буквально: «кнопки должны быть не наклейкой,
+   а частью панели управления». Значит корпуса клавиш, паз тяги,
+   обод радара и стекло табло обязаны быть нарисованы В САМОЙ
+   панели - одной текстурой, с общим металлом, общими бликами и
+   общей фаской.
+
+   Как это устроено. DOM-кнопки остаются прозрачными зонами нажатия
+   (плюс чёткие SVG-иконки), а их «железо» рисует этот холст: он
+   спрашивает у каждой кнопки её фактическое место и рисует корпус
+   ровно там. Рисунок и зона нажатия не могут разъехаться - у них
+   один источник координат. Пересборка только на resize, в кадре
+   этот код не живёт. */
+function deckSkin() {
+  var deck = ui.wrap && ui.wrap.querySelector(".rcf-deck");
+  if (!deck) return;
+  var dr = deck.getBoundingClientRect();
+  if (dr.width < 10 || dr.height < 10) { return; }
+  var dpr = Math.min(2, g.devicePixelRatio || 1);
+  var W = Math.round(dr.width * dpr), H = Math.round(dr.height * dpr);
+  var c = doc.createElement("canvas");
+  c.width = W; c.height = H;
+  var x = c.getContext("2d");
+  x.scale(dpr, dpr);
+  var w = dr.width, h = dr.height;
+
+  /* Металл: вертикальный градиент + горизонтальная шлифовка */
+  var gr = x.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, "#1b2f44");
+  gr.addColorStop(0.16, "#142639");
+  gr.addColorStop(0.55, "#0c1a2b");
+  gr.addColorStop(1, "#060e1a");
+  x.fillStyle = gr;
+  x.fillRect(0, 0, w, h);
+  var i;
+  for (i = 0; i < h; i += 2) {
+    x.fillStyle = "rgba(255,255,255," + (0.006 + 0.014 * Math.abs(Math.sin(i * 1.7))).toFixed(3) + ")";
+    x.fillRect(0, i, w, 1);
+  }
+  /* Редкие царапины и заклёпки по нижней кромке */
+  for (i = 0; i < w; i += 90) {
+    x.fillStyle = "rgba(0,0,0,.25)";
+    x.fillRect(i + (i * 7 % 40), h * 0.2 + (i * 13 % 30), 26, 1);
+  }
+  for (i = 26; i < w - 20; i += 120) {
+    x.fillStyle = "rgba(9,17,28,.9)";
+    x.beginPath(); x.arc(i, h - 7, 2.2, 0, 6.283); x.fill();
+    x.fillStyle = "rgba(180,210,235,.16)";
+    x.beginPath(); x.arc(i - 0.7, h - 7.7, 1, 0, 6.283); x.fill();
+  }
+  /* Верхняя фаска: светлое ребро и циановая нить */
+  x.fillStyle = "rgba(190,220,245,.20)";
+  x.fillRect(0, 0, w, 1);
+  x.fillStyle = "rgba(66,178,220,.75)";
+  x.fillRect(0, 1, w, 1);
+  var glow = x.createLinearGradient(0, 2, 0, 16);
+  glow.addColorStop(0, "rgba(66,178,220,.20)");
+  glow.addColorStop(1, "rgba(66,178,220,0)");
+  x.fillStyle = glow;
+  x.fillRect(0, 2, w, 14);
+
+  function rr(px, py, pw, ph, r) {
+    x.beginPath();
+    x.moveTo(px + r, py);
+    x.arcTo(px + pw, py, px + pw, py + ph, r);
+    x.arcTo(px + pw, py + ph, px, py + ph, r);
+    x.arcTo(px, py + ph, px, py, r);
+    x.arcTo(px, py, px + pw, py, r);
+    x.closePath();
+  }
+  function inset(px, py, pw, ph, r) {
+    /* Утопленная ниша: тёмный паз с нижним светлым ребром */
+    rr(px - 3, py - 3, pw + 6, ph + 6, r + 3);
+    x.fillStyle = "rgba(4,10,18,.85)";
+    x.fill();
+    x.fillStyle = "rgba(190,220,245,.10)";
+    x.fillRect(px - 3, py + ph + 2, pw + 6, 1);
+  }
+  function keyCap(px, py, pw, ph, on) {
+    inset(px, py, pw, ph, 9);
+    /* Кэп клавиши: металл чуть светлее панели, верх ярче */
+    var kg = x.createLinearGradient(0, py, 0, py + ph);
+    kg.addColorStop(0, on ? "#2c4a66" : "#233b53");
+    kg.addColorStop(0.5, on ? "#1b3450" : "#152941");
+    kg.addColorStop(1, "#0d1c2e");
+    rr(px, py, pw, ph, 8);
+    x.fillStyle = kg;
+    x.fill();
+    x.strokeStyle = "rgba(5,11,19,.95)";
+    x.lineWidth = 1;
+    x.stroke();
+    x.fillStyle = "rgba(207,233,245,.20)";
+    x.fillRect(px + 2, py + 1, pw - 4, 1);
+    x.fillStyle = "rgba(0,0,0,.5)";
+    x.fillRect(px + 2, py + ph - 2, pw - 4, 2);
+  }
+
+  var zones = deck.querySelectorAll(".rcf-keys button, .rcf-shot");
+  for (i = 0; i < zones.length; i++) {
+    var b = zones[i].getBoundingClientRect();
+    keyCap(b.left - dr.left, b.top - dr.top, b.width, b.height,
+      zones[i].classList.contains("cur") || zones[i].getAttribute("aria-pressed") === "true");
+  }
+  /* Паз тяги: утопленный слот с насечками хода */
+  var thr = deck.querySelector(".rcf-thr");
+  if (thr) {
+    var tb = thr.getBoundingClientRect();
+    var tx = tb.left - dr.left, ty = tb.top - dr.top;
+    inset(tx, ty, tb.width, tb.height, 9);
+    rr(tx, ty, tb.width, tb.height, 8);
+    x.fillStyle = "#050c15";
+    x.fill();
+    for (i = 1; i < 8; i++) {
+      x.fillStyle = "rgba(120,160,190,.22)";
+      x.fillRect(tx + tb.width * i / 8, ty + 4, 1, tb.height - 8);
+    }
+  }
+  /* Обод радара: металлическое кольцо вокруг живого экрана */
+  var rad = deck.querySelector(".rcf-radar");
+  if (rad && rad.offsetParent) {
+    var rb2 = rad.getBoundingClientRect();
+    var cx = rb2.left - dr.left + rb2.width / 2;
+    var cy = rb2.top - dr.top + rb2.height / 2;
+    var rad2 = rb2.width / 2;
+    var ring = x.createLinearGradient(0, cy - rad2, 0, cy + rad2);
+    ring.addColorStop(0, "#2e4a66");
+    ring.addColorStop(1, "#0b1826");
+    x.strokeStyle = ring;
+    x.lineWidth = 5;
+    x.beginPath(); x.arc(cx, cy, rad2 + 3.5, 0, 6.283); x.stroke();
+    x.strokeStyle = "rgba(66,178,220,.4)";
+    x.lineWidth = 1;
+    x.beginPath(); x.arc(cx, cy, rad2 + 6.6, 0, 6.283); x.stroke();
+  }
+  /* Стекло табло: утопленная тёмная полоса под верхний ряд */
+  var top = deck.querySelector(".rcf-d-top");
+  if (top) {
+    var pb = top.getBoundingClientRect();
+    var py2 = pb.top - dr.top, ph2 = pb.height;
+    var mg = x.createLinearGradient(0, py2, 0, py2 + ph2);
+    mg.addColorStop(0, "rgba(2,7,14,.92)");
+    mg.addColorStop(1, "rgba(6,15,26,.85)");
+    x.fillStyle = mg;
+    x.fillRect(0, py2, w, ph2);
+    x.fillStyle = "rgba(66,178,220,.22)";
+    x.fillRect(0, py2 + ph2 - 1, w, 1);
+    /* Блик стекла */
+    x.fillStyle = "rgba(200,230,250,.05)";
+    x.fillRect(0, py2, w, 2);
+  }
+
+  deck.style.backgroundImage = "url(" + c.toDataURL("image/png") + ")";
+  deck.style.backgroundSize = "100% 100%";
+}
+var skinT = 0;
+function deckSkinSoon() {
+  clearTimeout(skinT);
+  skinT = setTimeout(deckSkin, 120);
+}
+
 /* ── Рычаг тяги ──────────────────────────────────────────────
    Настоящая ручка, а не кнопка. Тянут её пальцем или мышью, и
    корабль набирает ход ровно настолько, насколько её сдвинули.
@@ -4772,9 +5044,12 @@ function bindThrottle() {
   if (!el) return;
   var drag = false;
 
-  function setFromY(clientY) {
+  function setFromY(clientX) {
+    /* Рычаг лежит горизонтально: в плите высотой в десятую долю
+       кадра вертикальному ходу просто нет места, а горизонтальный
+       читается как ползунок тяги на настоящих пультах */
     var r = el.getBoundingClientRect();
-    var t = 1 - (clientY - r.top) / Math.max(1, r.height);
+    var t = (clientX - r.left) / Math.max(1, r.width);
     t = t < 0 ? 0 : t > 1 ? 1 : t;
     F.thr = t;
     /* Ход корабля берём не линейно: у самой ручки должен быть
@@ -4786,7 +5061,7 @@ function bindThrottle() {
   }
   function paintThrottle() {
     var t = F.thr || 0;
-    if (ui.thrFill) ui.thrFill.style.height = (t * 100).toFixed(1) + "%";
+    if (ui.thrFill) ui.thrFill.style.width = (t * 100).toFixed(1) + "%";
     el.setAttribute("aria-valuenow", Math.round(t * 100));
     el.classList.toggle("live", t > 0.02);
   }
@@ -4795,16 +5070,16 @@ function bindThrottle() {
   el.addEventListener("pointerdown", function (e) {
     drag = true;
     try { el.setPointerCapture(e.pointerId); } catch (er) {}
-    setFromY(e.clientY);
+    setFromY(e.clientX);
     e.preventDefault();
   });
-  el.addEventListener("pointermove", function (e) { if (drag) setFromY(e.clientY); });
+  el.addEventListener("pointermove", function (e) { if (drag) setFromY(e.clientX); });
   el.addEventListener("pointerup", function () { drag = false; });
   el.addEventListener("pointercancel", function () { drag = false; });
   el.addEventListener("keydown", function (e) {
     var d = 0;
-    if (e.key === "ArrowUp") d = 0.08;
-    else if (e.key === "ArrowDown") d = -0.08;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") d = 0.08;
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") d = -0.08;
     else return;
     e.preventDefault();
     F.thr = Math.max(0, Math.min(1, (F.thr || 0) + d));
@@ -4852,13 +5127,28 @@ function radarFrame(w3, ts) {
 
   /* Тела системы. Масштаб логарифмический: иначе Земля и дыра не
      помещаются на один экран - между ними тысячи единиц. */
-  var bodies = [
-    { o: w3.earth, c: "#5fd0ef", n: "З" },
-    { o: w3.moon, c: "#c8d8e6", n: "Л" },
-    { o: w3.mars, c: "#e08a5a", n: "М" },
-    { o: w3.saturn, c: "#e6c98a", n: "С" },
-    { o: w3.hole, c: "#a974f5", n: "Д" }
-  ];
+  var bodies;
+  if (uniIdx === 0) {
+    bodies = [
+      { o: w3.sun, c: "#ffd166", n: "С" },
+      { o: w3.earth, c: "#5fd0ef", n: "З" },
+      { o: w3.moon, c: "#c8d8e6", n: "Л" },
+      { o: w3.mars, c: "#e08a5a", n: "М" },
+      { o: w3.jupiter, c: "#e0b98a", n: "Ю" },
+      { o: w3.saturn, c: "#e6c98a", n: "Ст" },
+      { o: w3.hole, c: "#a974f5", n: "Д" }
+    ];
+  } else {
+    /* В чужом рукаве радар показывает ЕГО системы, а не родную:
+       прежний список рисовал Землю, которой в кадре нет */
+    bodies = [];
+    var pk = built[uniIdx];
+    if (pk && pk.root) {
+      for (var bs = 0; bs < pk.root.children.length && bodies.length < 7; bs++) {
+        bodies.push({ o: pk.root.children[bs], c: "#9fd8ef", n: String(bs + 1) });
+      }
+    }
+  }
   var cam = w3.cam.position;
   for (i = 0; i < bodies.length; i++) {
     var b = bodies[i];
@@ -5015,16 +5305,20 @@ function stageCam(dt) {
   var I = g.RC_INTERIOR;
   var yawT = (I && I.yaw) ? I.yaw() : 0;
   var k = F.stageK || 0;
-  var ek = 0.5 - 0.5 * Math.cos(Math.PI * k);    /* мягкий подъезд */
-  /* У самого конца подъезда доводим до единицы жёстко. Косинус
-     подходит к ней асимптотически, и на девяноста девяти сотых
-     камера стояла в паре сантиметров от точки старта - в кадре это
-     давало едва заметный сдвиг планеты в момент перехода. */
-  if (k > 0.965) ek = 1;
+  /* Косинус перенормирован так, чтобы приходить ровно в единицу на
+     0.96 доли с нулевой скоростью: прежняя жёсткая ступенька в конце
+     давала видимый толчок кадра при переходе в игру */
+  var kk = Math.min(1, k / 0.96);
+  var ek = 0.5 - 0.5 * Math.cos(Math.PI * kk);
 
   /* Оборот сходится к нулю по мере подъезда: в конце камера
      смотрит строго в окно, иначе проём уедет вбок */
-  var yaw = yawT * (1 - ek);
+  /* ГЛАВНЫЙ источник дёрганого финала. Оборот в rc-interior сходится
+     к ПОЛНОМУ кругу (TAU), а прежняя формула гасила yaw к нулю - на
+     подъезде камера раскручивалась обратно на все триста шестьдесят
+     градусов. Теперь довод идёт по короткой дуге к полному кругу:
+     та же точка обзора, но без обратного вращения. */
+  var yaw = yawT + (Math.PI * 2 - yawT) * ek;
   F.stageYaw = yaw;
 
   /* Дыхание: человек не штатив. На подъезде затухает - там кадр
@@ -5042,7 +5336,8 @@ function stageCam(dt) {
 
   /* Поворот: пока идёт оборот - свой азимут, к финалу сходимся к
      ориентации первого кадра полёта, вместе с её наклоном */
-  C.eTmp.set(0, C.yaw0 - yaw + drift, 0);
+  var pit = (I && I.pitch) ? I.pitch() : 0;
+  C.eTmp.set(pit * (1 - ek), C.yaw0 - yaw + drift, 0);
   C.qTmp.setFromEuler(C.eTmp);
   w3.cam.quaternion.copy(C.qTmp).slerp(C.q1, ek * ek);
 
@@ -5083,8 +5378,8 @@ function stageCam(dt) {
     /* Отражение ярче, когда за стеклом светло: на ночной стороне
        стекло почти чистое */
     var lit = w3.earth ? Math.max(0, Math.min(1, 1 - w3.cam.position.distanceTo(w3.earth.position) / 400)) : 0.4;
-    C.refl.material.opacity = 0.03 + lit * 0.055;
-    if (C.reflLip) C.reflLip.material.opacity = 0.09 + lit * 0.12;
+    C.refl.material.opacity = 0.08 + lit * 0.10;
+    if (C.reflLip) C.reflLip.material.opacity = 0.16 + lit * 0.16;
   }
 
   /* Гул к пульту чуть плотнее: приборы просыпаются */

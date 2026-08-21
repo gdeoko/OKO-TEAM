@@ -334,6 +334,16 @@ Globe.prototype.draw = function (dt) {
 };
 
 Globe.prototype.tick = function (ts) {
+  /* Внутри корабля и в полёте наружные сцены спят: кадр держит мир
+     игры, и каждый лишний холст на телефоне стоит рывка. Цикл не
+     умирает - тик без отрисовки почти бесплатен, зато на выходе из
+     корабля глобус просыпается сам, без внешнего пинка. */
+  var rc = document.documentElement.classList;
+  if (rc.contains("rc-inside") || rc.contains("rc-flying")) {
+    this._last = 0;
+    this._raf = requestAnimationFrame(this.tick.bind(this));
+    return;
+  }
   if (!this.running) return;
   var dt = this._last ? Math.min(0.05, (ts - this._last) / 1000) : 0.016;
   this._last = ts;
