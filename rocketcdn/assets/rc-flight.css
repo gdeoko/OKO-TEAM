@@ -1673,3 +1673,42 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 @media (max-width: 760px) {
   .rc-flight .rcf-shot { width: 26px; height: 26px; }
 }
+
+/* ── Табло аварии ────────────────────────────────────────────
+   Узел упал, до него надо долететь. Строка стоит под курсовой, а
+   кадр по краям тревожно пульсирует: это событие, а не подсказка. */
+.rc-flight .rcf-fail {
+  position: absolute;
+  left: 50%;
+  top: clamp(64px, 12.4vh, 108px);
+  transform: translateX(-50%);
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: clamp(9.5px, 1.3vh, 12px);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #ffd7d7;
+  background: rgba(60, 8, 8, .62);
+  border: 1px solid rgba(255, 90, 90, .55);
+  box-shadow: 0 0 26px -8px rgba(255, 70, 70, .9);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s linear;
+  white-space: nowrap;
+}
+.rc-flight .rcf-fail.on { opacity: 1; }
+@keyframes rcfOutage {
+  0%, 100% { opacity: .1; }
+  50%      { opacity: .32; }
+}
+.rc-flight.rcf-outage::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  box-shadow: inset 0 0 110px -40px rgba(255, 90, 90, .9);
+  animation: rcfOutage 1.6s ease-in-out infinite;
+}
+.rc-flight.rcf-stage .rcf-fail { opacity: 0 !important; }

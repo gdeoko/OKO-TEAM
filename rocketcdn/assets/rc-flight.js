@@ -425,6 +425,7 @@ function buildUI() {
          Стоит у левого борта, где на корпусе кабины идёт вертикальная
          приборная панель. */
       '<div class="rcf-mis"></div>' +
+      '<div class="rcf-fail" role="status"></div>' +
       '<div class="rcf-bars">' +
         '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
         '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
@@ -483,6 +484,7 @@ function buildUI() {
   ui.auto = w.querySelector(".rcf-auto");
   ui.info = w.querySelector(".rcf-info");
   ui.mis = w.querySelector(".rcf-mis");
+  ui.fail = w.querySelector(".rcf-fail");
   ui.bars = w.querySelector(".rcf-bars");
   ui.enTx = w.querySelector(".rcf-bar-en u");
   ui.huTx = w.querySelector(".rcf-bar-hull u");
@@ -3513,6 +3515,8 @@ function frame(ts) {
     barsFrame(ts);
     courseFrame(w3, ts);
     missionFrame(ts);
+    failTick(ts);
+    failPaint();
     radarFrame(w3, ts);
   }
 
@@ -3860,6 +3864,78 @@ function courseFrame(w3, ts) {
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
                        : (RU ? "РУЧНОЙ" : "MANUAL");
+}
+
+/* ── Происшествия в сети ─────────────────────────────────────
+   Запросы трафика показывали, куда нужен узел, но ничем не грозили:
+   не успел - и ладно. Напряжения в игре от этого не было совсем.
+
+   Авария другое дело. Развёрнутый узел падает, сеть теряет
+   участок, и до него надо долететь и поднять его заново - за
+   отведённое время. Не успел - узел выбывает, счётчик сети падает,
+   и его придётся разворачивать с нуля.
+
+   Аварии начинаются, только когда в сети есть что ронять: на
+   пустой сети это была бы не игра, а наказание за то, что ещё не
+   успел начать. */
+var fail = null, failNext = 0;
+
+function failPick() {
+  var keys = Object.keys(net);
+  if (keys.length < 2) return null;
+  return keys[Math.floor((performance.now() / 1301) % keys.length)];
+}
+
+function failTick(ts) {
+  if (F.stage || F.brief) return;
+
+  /* Идёт авария: следим за временем и за тем, дошли ли мы */
+  if (fail) {
+    if (F.orbit && F.orbit.name === fail.name) {
+      /* Пришли вовремя - узел поднят, заряд не тратится: это
+         восстановление, а не новое строительство */
+      say((RU ? "УЗЕЛ ПОДНЯТ · " : "NODE RESTORED · ") + fail.name, 2600);
+      if (g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
+      F.saved = (F.saved || 0) + 1;
+      fail = null;
+      failNext = ts + 52000;
+      netPaint();
+      return;
+    }
+    if (ts > fail.until) {
+      /* Не успели: узел выбывает из сети */
+      delete net[fail.name];
+      try { localStorage.setItem(NET_KEY, JSON.stringify(net)); } catch (e) {}
+      say((RU ? "УЗЕЛ ПОТЕРЯН · " : "NODE LOST · ") + fail.name, 3200);
+      if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(140, 0.7, "sawtooth", 0.04); } catch (e) {} }
+      fail = null;
+      failNext = ts + 64000;
+      netPaint();
+      netButton();
+      return;
+    }
+    /* Обратный отсчёт на табло аварии */
+    if (ui.fail) {
+      var left = Math.max(0, Math.round((fail.until - ts) / 1000));
+      ui.fail.textContent = (RU ? "АВАРИЯ · " : "OUTAGE · ") + fail.name + " · " + left + (RU ? " с" : "s");
+    }
+    return;
+  }
+
+  if (ts < failNext) return;
+  var pick = failPick();
+  if (!pick) { failNext = ts + 30000; return; }
+  fail = { name: pick, until: ts + 46000 };
+  say((RU ? "АВАРИЯ НА УЗЛЕ · " : "NODE DOWN · ") + pick +
+      (RU ? " · выйдите на его орбиту" : " · reach its orbit"), 4200);
+  if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(320, 0.5, "square", 0.03); } catch (e) {} }
+}
+
+function failPaint() {
+  if (!ui.fail) return;
+  var on = !!fail;
+  if (on !== ui.fail.classList.contains("on")) ui.fail.classList.toggle("on", on);
+  if (ui.wrap) ui.wrap.classList.toggle("rcf-outage", on);
 }
 
 /* ── Снимок из кабины ────────────────────────────────────────
