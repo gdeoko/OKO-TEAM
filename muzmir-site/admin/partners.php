@@ -146,6 +146,48 @@ ob_start(); ?>
   Учреждения-Информационные партнёры. Приглашение идёт двумя каналами: письмом на официальный ящик и обращением в сообщения сообщества ВКонтакте. В обоих стоит одна и та же именная ссылка согласия, поэтому учреждение принимает партнёрство само, одним нажатием, без ответного письма и без действий оператора. Кнопка «Принять» в карточке нужна для ручных случаев (согласие пришло по телефону или письмом).
 </p>
 
+<?php
+/* СРАВНЕНИЕ ДВУХ ПИСЕМ.
+   Официальное обращение на бланке за двадцать тысяч отправок дало ноль
+   партнёров. Половина учреждений теперь получает короткое письмо, где ответить
+   нужно одним словом. Здесь видно, что из этого выходит: спорить о письмах
+   бессмысленно, считать — нет. */
+$ab = [];
+if (is_file(BASE_PATH . '/core/partner_ab.php')) {
+    require_once BASE_PATH . '/core/partner_ab.php';
+    if (function_exists('pab_stats')) { try { $ab = pab_stats(); } catch (\Throwable $e) { $ab = []; } }
+}
+$abTotal = (int) (($ab['a']['n'] ?? 0) + ($ab['b']['n'] ?? 0));
+?>
+<?php if ($abTotal > 0): ?>
+<div class="card" style="margin:0 0 16px;padding:14px 16px">
+  <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+    Сравнение писем · А — официальное обращение, Б — короткое с ответом словом
+  </div>
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Письмо</th><th>Учреждений</th><th>Отправлено</th><th>Доставлено</th><th>Открыли</th><th>Зашли на согласие</th><th>Ответили</th><th>Стали партнёром</th></tr></thead>
+    <tbody>
+      <?php foreach (['a' => 'А — официальное', 'b' => 'Б — короткое'] as $k => $label): $r = $ab[$k] ?? []; ?>
+        <tr>
+          <td><b><?= h($label) ?></b></td>
+          <td><?= (int) ($r['n'] ?? 0) ?></td>
+          <td><?= (int) ($r['sent'] ?? 0) ?></td>
+          <td><?= (int) ($r['delivered'] ?? 0) ?></td>
+          <td><?= (int) ($r['opened'] ?? 0) ?></td>
+          <td><?= (int) ($r['visited'] ?? 0) ?></td>
+          <td><?= (int) ($r['replied'] ?? 0) ?></td>
+          <td><b style="color:<?= (int) ($r['partners'] ?? 0) > 0 ? '#1E7A46' : '#8892B0' ?>"><?= (int) ($r['partners'] ?? 0) ?></b></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <p class="small muted" style="margin:10px 0 0">
+    Вариант закреплён за учреждением навсегда: повторное письмо приходит тем же, иначе сравнивать было бы нечего.
+    Судить стоит по последнему столбцу, а не по открытиям: открывают оба, решает — ответ.
+  </p>
+</div>
+<?php endif; ?>
+
 <div class="card" style="margin:0 0 16px;padding:14px 16px">
   <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:baseline">
     <div><span class="small muted">приглашено письмами</span><br><b style="font-size:1.15rem"><?= number_format($chan['письма'], 0, '.', ' ') ?></b></div>

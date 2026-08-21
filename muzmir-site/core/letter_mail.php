@@ -310,6 +310,17 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
     if (!function_exists('partner_join_url') && is_file(BASE_PATH . '/core/partner.php')) {
         require_once BASE_PATH . '/core/partner.php';
     }
+    /* СРАВНИВАЕМ ДВА ПИСЬМА.
+       Двадцать тысяч официальных обращений дали шесть заходов на страницу
+       согласия и ни одного партнёра: письмо открывают и не отвечают. Половина
+       учреждений получает короткое письмо, где ответить нужно одним словом в
+       ответном письме — привычным для школы действием. Что сработает, покажут
+       цифры (core/partner_ab.php), а не спор о вкусе. */
+    if (is_file(BASE_PATH . '/core/partner_ab.php')) require_once BASE_PATH . '/core/partner_ab.php';
+    if (function_exists('pab_variant') && pab_variant((int) ($inst['id'] ?? 0)) === 'b'
+        && function_exists('lm_mail_institution_short')) {
+        return lm_mail_institution_short($inst, $number, $comps, $unsubUrl);
+    }
     $fio  = trim((string) ($inst['director'] ?? ''));
     $org  = (string) ($inst['name'] ?? '');
     $base = rtrim((string) cfgv('base_url', ''), '/');
@@ -498,6 +509,91 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
  *
  * @return array{subject:string, html:string, pdf:string}
  */
+/**
+ * КОРОТКОЕ ПИСЬМО УЧРЕЖДЕНИЮ — ВАРИАНТ «Б» СРАВНЕНИЯ.
+ *
+ * Официальное обращение написано правильно и по всем правилам делопроизводства:
+ * бланк, исходящий номер, перечень конкурсов, реквизиты. Двадцать тысяч таких
+ * писем дали шесть заходов на страницу согласия и ни одного партнёра — значит
+ * правильность тут не помогает.
+ *
+ * Здесь другая ставка. Письмо читает не директор, а секретарь или завуч между
+ * двумя делами: у него нет времени на лист А4 и нет привычки нажимать кнопки
+ * внутри письма, зато ответить на письмо он умеет и делает это по десять раз в
+ * день. Поэтому: три коротких абзаца, одна выгода, один вопрос и один способ
+ * ответить — словом «СОГЛАСНЫ». Кнопка остаётся, но второй, а не первой.
+ *
+ * Исходящий номер сохраняем: без него письмо от организации читается как
+ * реклама, и его нельзя зарегистрировать входящим.
+ */
+function lm_mail_institution_short(array $inst, string $number, array $comps, string $unsubUrl = ''): array {
+    if (!function_exists('partner_join_url') && is_file(BASE_PATH . '/core/partner.php')) {
+        require_once BASE_PATH . '/core/partner.php';
+    }
+    $fio    = trim((string) ($inst['director'] ?? ''));
+    $org    = (string) ($inst['name'] ?? '');
+    $instId = (int) ($inst['id'] ?? 0);
+    $base   = rtrim((string) cfgv('base_url', ''), '/');
+    $no     = trim((string) ($inst['partner_no'] ?? ''));
+    $pSlug  = trim((string) ($inst['partner_slug'] ?? ''));
+    $dl     = ol_deadline($comps);
+    $dlRu   = $dl !== '' ? (function_exists('ru_date') ? ru_date($dl) : date('d.m.Y', strtotime($dl))) : '';
+    $free   = false;
+    foreach ($comps as $c) { if ((int) ($c['is_paid'] ?? 0) === 0) { $free = true; break; } }
+
+    $inner  = lm_p('<b>' . h(lm_salut($fio)) . '</b>', 'font-size:17px;margin-bottom:14px');
+
+    $inner .= lm_p('Культурный центр «Музыкальный Мир» приглашает учреждение к информационному '
+        . 'партнёрству. Ваши обучающиеся участвуют в дистанционных конкурсах'
+        . ($free ? ', в том числе бесплатных' : '') . ', а педагоги за подготовку участников '
+        . 'получают благодарственные письма и дипломы кураторов — <b>без заказа и без оплаты</b>.');
+
+    $inner .= lm_callout('<b>Что требуется от учреждения: ничего.</b> Договор не подписывается, '
+        . 'отчётность не ведётся, платежей нет, отказаться можно в любой момент одним письмом. '
+        . 'Партнёрство уже оформлено на Ваше учреждение'
+        . ($no !== '' ? ', номер <b>' . h($no) . '</b>' : '') . ' — остаётся подтвердить.');
+
+    // ГЛАВНОЕ ДЕЙСТВИЕ — ОТВЕТ ПИСЬМОМ. Оно стоит первым и выделено, потому что в
+    // школе это привычнее нажатия кнопки в письме.
+    $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 18px">'
+            . '<tr><td style="background:#F2F7FF;border:1px solid #CFE0F5;border-radius:12px;padding:16px 20px;'
+            . 'font:16px/1.6 Arial,sans-serif;color:' . MM_INK . '">'
+            . '<b style="color:' . MM_NAVY . '">Чтобы подтвердить, ответьте на это письмо одним словом: СОГЛАСНЫ.</b>'
+            . '<div style="margin-top:6px;font-size:14px;color:' . MM_MUTED . '">Этого достаточно: мы оформим '
+            . 'партнёрство и пришлём сертификат, персональную ссылку учреждения и доступ в кабинет.</div>'
+            . '</td></tr></table>';
+
+    if ($instId > 0 && function_exists('partner_join_url')) {
+        $inner .= mm_email_btn(partner_join_url($instId), 'Или подтвердить одним нажатием', 'navy');
+    }
+
+    if ($dlRu !== '') {
+        $inner .= lm_p('Приём заявок текущего сезона — до <b>' . h($dlRu) . '</b>.'
+            . ($pSlug !== '' ? ' Персональная ссылка учреждения для заявок: <a href="' . h($base . '/p/' . $pSlug)
+              . '" style="color:#8B6F1F">' . h($base . '/p/' . $pSlug) . '</a>.' : ''),
+            'font-size:14px;color:#4a4a55');
+    }
+
+    $inner .= lm_p('Исходящий №' . h($number) . ' от ' . h(function_exists('ru_date') ? ru_date(date('Y-m-d')) : date('d.m.Y'))
+        . '. Положения конкурсов и образцы наградных документов — на официальном сайте '
+        . '<a href="' . h($base) . '" style="color:#8B6F1F">' . h((string) cfgv('domain', 'музыкальный-мир.рф')) . '</a>.',
+        'font-size:13px;color:' . MM_MUTED);
+
+    $html = mm_email_layout($inner, [
+        'vip'             => false,
+        'preheader'       => 'Ответьте словом «СОГЛАСНЫ» — партнёрство оформлено, педагогам благодарности бесплатно.',
+        'unsubscribe_url' => $unsubUrl,
+        'audience_note'   => 'Письмо направлено на официальный адрес учреждения, опубликованный в открытых источниках.',
+    ]);
+
+    $subj = ($fio !== '' ? lm_name_only($fio) . ', п' : 'П') . 'артнёрство с центром: подтвердите одним словом'
+          . ' (исх. №' . $number . ')';
+
+    // Бланк-вложение здесь не собираем намеренно: короткое письмо тем и коротко,
+    // что не требует открывать документ, чтобы понять, о чём речь.
+    return ['subject' => $subj, 'html' => $html, 'pdf' => ''];
+}
+
 function lm_mail_thanks(array $inst, string $number, int $works = 0, array $teachers = []): array {
     $fio  = trim((string) ($inst['director'] ?? ''));
     $org  = (string) ($inst['name'] ?? '');
