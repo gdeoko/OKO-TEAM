@@ -156,7 +156,7 @@ if (!$rows) {
     exit(0);
 }
 
-$done = $applied = $held = $failed = 0;
+$done = $applied = $held = $failed = $rejected = 0;
 foreach ($rows as $r) {
     $appId = (int) $r['id'];
     $res = ag_grade_application($appId);
@@ -173,6 +173,33 @@ foreach ($rows as $r) {
     cron_log(JOB, sprintf('заявка %d: %.1f балла → %s (уверенность %.2f)%s',
         $appId, (float) $run['total'], (string) $run['title'], (float) $run['confidence'],
         $can ? '' : ' — человеку: ' . $why));
+
+    /* НАРУШЕНИЕ ПОЛОЖЕНИЯ — ЭТО ОТКАЗ, А НЕ ОЖИДАНИЕ.
+     *
+     * Работа с монтажом, с наложенным студийным вокалом, с несколькими номерами
+     * в одной заявке или не той номинации по положению не может получить звание.
+     * Такие заявки копились в очереди к человеку, и участник неделями ждал
+     * результата, которого не будет. В полном автомате они отклоняются сразу:
+     * с причиной словами положения, с возвратом оргвзноса и письмом о том, как
+     * исправить и подать заново. Список нарушений намеренно узкий, а порог
+     * уверенности высокий — см. ag_auto_reject. */
+    if (!$dry && $mode === 'auto' && !$can) {
+        $compRow = one("SELECT c.* FROM competitions c JOIN applications a ON a.competition_id=c.id WHERE a.id=?", [$appId]);
+        [$doReject, $reason] = ag_auto_reject((array) $run, (array) $compRow);
+        if ($doReject) {
+            require_once BASE_PATH . '/core/grade_apply.php';
+            $rj = grade_reject_application($appId, $reason, 'ai');
+            if ($rj['ok']) {
+                q("UPDATE grading_runs SET applied=1, applied_at=? WHERE id=?", [date('Y-m-d H:i:s'), (int) $run['id']]);
+                $rejected++;
+                cron_log(JOB, "заявка $appId: отклонена по положению — " . mb_substr(strtok($reason, "\n"), 0, 160)
+                              . ' ' . $rj['msg']);
+                if ($pause > 0) sleep($pause);
+                continue;
+            }
+            cron_log(JOB, "заявка $appId: отклонить не удалось — " . $rj['msg']);
+        }
+    }
 
     if ($dry || $mode !== 'auto' || !$can) {
         if (!$can) $held++;
@@ -222,8 +249,8 @@ foreach ($rows as $r) {
     if ($pause > 0) sleep($pause);
 }
 
-cron_log(JOB, sprintf('режим %s: оценено %d, применено %d, отдано человеку %d, не удалось %d',
-    $mode, $done, $applied, $held, $failed));
+cron_log(JOB, sprintf('режим %s: оценено %d, применено %d, отклонено по положению %d, отдано человеку %d, не удалось %d',
+    $mode, $done, $applied, $rejected, $held, $failed));
 
 /* Работы, которые ждут человека, не должны лежать молча: раз в сутки владелец
    получает сводку, иначе «полный автомат» превращается в тихую очередь. */

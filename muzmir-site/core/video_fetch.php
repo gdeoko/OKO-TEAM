@@ -111,25 +111,62 @@ function vf_direct_link(string $url): array {
             // серверов clocloNN, и какой именно сегодня рабочий, сообщает
             // отдельная ручка dispatcher. Зашитый хост живёт неделю, потом
             // перестаёт отвечать, поэтому спрашиваем адрес каждый раз.
+            /* СПРАШИВАЕМ ОБЛАКО О ФАЙЛЕ, А НЕ КАЧАЕМ ЕГО НА ПРОБУ.
+             *
+             * Прежний порядок был такой: взять адрес у dispatcher и скачать по
+             * нему первые байты, чтобы убедиться, что это файл. На деле выходило
+             * иначе. Первым в списке шёл weblink_view — а он отвечает 403
+             * Forbidden, и проверка проваливалась. Второй адрес, weblink_get,
+             * файл отдаёт, но проверка требовала скачать больше ста килобайт за
+             * 25 секунд, а конкурсные записи весят по гигабайту: соединение не
+             * успевало, и рабочая ссылка тоже считалась мёртвой.
+             *
+             * Из-за этого 43 заявки — почти все работы, залитые в Облако, — не
+             * оценивались вовсе: «ссылка закрыта или файл не отдаётся» при живой
+             * и открытой ссылке.
+             *
+             * У облака есть ручка, которая по публичной ссылке отдаёт имя, размер
+             * и признак «файл существует» одним небольшим JSON. Её и спрашиваем:
+             * это быстро, честно отличает закрытую ссылку от рабочей и заодно даёт
+             * размер — а значит слишком тяжёлую запись мы отсеем до скачивания, а
+             * не после получаса ожидания. */
             if (preg_match('~cloud\.mail\.ru/public/([^/?#]+)/([^?#]+)~i', $url, $m)) {
                 $weblink = $m[1] . '/' . ltrim($m[2], '/');
-                $hosts   = [];
-                $disp = json_decode(vf_http('https://cloud.mail.ru/api/v2/dispatcher?api=2', ['timeout' => 20])['body'], true);
-                foreach (['weblink_view', 'weblink_get'] as $k) {
-                    $h = (string) ($disp['body'][$k][0]['url'] ?? '');
-                    if ($h !== '') $hosts[] = rtrim($h, '/') . '/';
-                }
-                $hosts[] = 'https://cloud.mail.ru/weblink/view/';
-                foreach ($hosts as $host) {
-                    $try  = $host . $weblink;
-                    $head = vf_http($try, ['timeout' => 25]);
-                    // Проверяем не только код: облако на закрытую ссылку отвечает
-                    // страницей входа с кодом 200, а это не файл.
-                    $looksHtml = str_contains(mb_strtolower(mb_substr($head['body'], 0, 400)), '<html');
-                    if ($head['code'] === 200 && !$looksHtml && strlen($head['body']) > 100000) {
-                        return ['ok' => true, 'url' => $try, 'name' => basename($m[2]), 'size' => 0, 'why' => ''];
+
+                $info = json_decode(vf_http(
+                    'https://cloud.mail.ru/api/v2/file?weblink=' . rawurlencode($weblink) . '&api=2',
+                    ['timeout' => 20])['body'], true);
+                $body = is_array($info) ? ($info['body'] ?? []) : [];
+                $status = (int) ($info['status'] ?? 0);
+
+                // Публичная ссылка может вести на папку с одним файлом внутри —
+                // участники так тоже делают. Тогда берём из неё первый видеофайл.
+                if ($status !== 200 || ($body['kind'] ?? '') !== 'file') {
+                    $fold = json_decode(vf_http(
+                        'https://cloud.mail.ru/api/v2/folder?weblink=' . rawurlencode($weblink) . '&api=2',
+                        ['timeout' => 20])['body'], true);
+                    foreach ((array) ($fold['body']['list'] ?? []) as $it) {
+                        if (($it['kind'] ?? '') !== 'file') continue;
+                        if (!preg_match('~\.(mp4|mov|m4v|webm|mkv|avi)$~i', (string) ($it['name'] ?? ''))) continue;
+                        $body = $it;
+                        $weblink .= '/' . ltrim((string) ($it['name'] ?? ''), '/');
+                        $status = 200;
+                        break;
                     }
                 }
+                if ($status !== 200 || !$body) {
+                    return $fail('Облако Mail.ru: ссылка закрыта или файл удалён');
+                }
+
+                $disp = json_decode(vf_http('https://cloud.mail.ru/api/v2/dispatcher?api=2', ['timeout' => 20])['body'], true);
+                // weblink_get — единственный адрес, который реально отдаёт файл по
+                // публичной ссылке; weblink_view отвечает 403.
+                $host = (string) ($disp['body']['weblink_get'][0]['url'] ?? '');
+                if ($host === '') return $fail('Облако Mail.ru: сервер раздачи не отвечает');
+
+                return ['ok' => true, 'url' => rtrim($host, '/') . '/' . $weblink,
+                        'name' => (string) ($body['name'] ?? 'video.mp4'),
+                        'size' => (int) ($body['size'] ?? 0), 'why' => ''];
             }
             return $fail('Облако Mail.ru: ссылка закрыта или файл не отдаётся');
 
@@ -216,15 +253,51 @@ function vf_download(string $url, int $appId = 0): array {
     $link  = vf_direct_link($url);
     if (!$link['ok']) return ['ok' => false, 'path' => '', 'size' => 0, 'why' => $link['why']];
 
-    if ($link['size'] > 0 && $link['size'] > $maxMb * 1024 * 1024) {
-        return ['ok' => false, 'path' => '', 'size' => $link['size'],
-                'why' => 'запись больше ' . $maxMb . ' МБ (' . round($link['size'] / 1048576) . ' МБ)'];
-    }
-
     $ext  = preg_match('~\.(mp4|mov|m4v|webm|mkv|m3u8)~i', $link['name'], $m) ? mb_strtolower($m[1]) : 'mp4';
     $path = vf_dir() . '/app' . ($appId > 0 ? $appId : 0) . '_' . substr(md5($url), 0, 8) . '.' . $ext;
     if (is_file($path) && filesize($path) > 100000) {
         return ['ok' => true, 'path' => $path, 'size' => (int) filesize($path), 'why' => ''];
+    }
+
+    /* ТЯЖЁЛАЯ ЗАПИСЬ — НЕ ПОВОД ОТКАЗАТЬ УЧАСТНИКУ.
+     *
+     * Здесь стоял отказ: файл больше лимита — заявка не оценивается. А снимают
+     * теперь телефоном в высоком разрешении, и четырёхминутный номер весит
+     * гигабайт: по одному только Облаку Mail.ru таких работ четверть. Жюри такую
+     * запись смотрит спокойно — значит и мы обязаны.
+     *
+     * Берём из потока первые N минут (grade_video_max_sec) прямо на лету:
+     * ffmpeg читает файл по сети и пишет ровно тот кусок, который всё равно
+     * уходит на аттестацию. Гигабайт на диск не ложится, а номер сохраняется
+     * целиком — конкурсные выступления короче этого предела. */
+    $tooBig = $link['size'] > 0 && $link['size'] > $maxMb * 1024 * 1024;
+    if ($tooBig && $ext !== 'm3u8') {
+        $secs = (int) (function_exists('setting') ? setting('grade_video_max_sec', '900') : 900);
+        $out  = preg_replace('~\.[a-z0-9]+$~i', '', $path) . '_cut.mp4';
+        if (is_file($out) && filesize($out) > 100000) {
+            return ['ok' => true, 'path' => $out, 'size' => (int) filesize($out), 'why' => ''];
+        }
+        $cmd = 'ffmpeg -y -loglevel error -user_agent ' . escapeshellarg('Mozilla/5.0 (compatible; MuzmirGrader/1.0)')
+             . ' -i ' . escapeshellarg($link['url'])
+             . ' -t ' . max(60, $secs)
+             . ' -c copy -movflags +faststart ' . escapeshellarg($out) . ' 2>&1';
+        @exec($cmd, $o1, $rc1);
+        // Не всякий контейнер режется копированием потока — тогда пережимаем.
+        if (($rc1 !== 0 || !is_file($out) || filesize($out) < 100000)) {
+            @unlink($out);
+            $cmd2 = 'ffmpeg -y -loglevel error -user_agent ' . escapeshellarg('Mozilla/5.0 (compatible; MuzmirGrader/1.0)')
+                  . ' -i ' . escapeshellarg($link['url'])
+                  . ' -t ' . max(60, $secs)
+                  . ' -vf scale=-2:720 -c:v libx264 -preset veryfast -crf 26 -c:a aac -b:a 128k '
+                  . escapeshellarg($out) . ' 2>&1';
+            @exec($cmd2, $o2, $rc2);
+        }
+        if (is_file($out) && filesize($out) > 100000) {
+            return ['ok' => true, 'path' => $out, 'size' => (int) filesize($out), 'why' => ''];
+        }
+        @unlink($out);
+        return ['ok' => false, 'path' => '', 'size' => $link['size'],
+                'why' => 'запись больше ' . $maxMb . ' МБ (' . round($link['size'] / 1048576) . ' МБ) и не режется потоком'];
     }
 
     // Плейлист качаем не курлом, а ffmpeg: иначе на диск ляжет текстовый файл.

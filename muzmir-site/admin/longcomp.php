@@ -223,19 +223,52 @@ ob_start(); ?>
   ?>
 
   <!-- СПИСОК 1: НА АТТЕСТАЦИИ -->
+  <?php
+  /* ОЧЕРЕДЬ ДЛИННОГО КОНКУРСА — ТАКАЯ ЖЕ, КАК У КОРОТКИХ.
+     Здесь стоял сокращённый список из трёх колонок, без даты подачи, без статуса
+     и без подсказки аттестации. Подсказки при этом считались: по «Величию России»
+     их было 250 при 444 заявках — просто показать их было негде, и раздел
+     выглядел так, будто автоматическая оценка длинные не берёт вовсе.
+     Один запрос на весь список: разборы берём пачкой, а не по строке. */
+  $agHints = [];
+  if ($toGrade) {
+      $ids = implode(',', array_map(static fn($r) => (int) $r['id'], $toGrade));
+      try {
+          foreach (all("SELECT application_id, title, total FROM grading_runs
+                         WHERE status='ok' AND application_id IN ($ids)
+                      ORDER BY id ASC") as $g) {
+              $agHints[(int) $g['application_id']] = $g;   // последний разбор перекрывает ранний
+          }
+      } catch (\Throwable $e) { $agHints = []; }
+  }
+  ?>
   <div class="card" style="margin-bottom:16px">
     <div class="section-title" style="margin-bottom:8px"><h3>На аттестации <span class="badge badge--muted"><?= count($toGrade) ?></span></h3></div>
     <?php if (!$toGrade): ?>
       <p class="muted small">Все заявки оценены.</p>
     <?php else: ?>
     <div class="table-wrap"><table class="tbl">
-      <thead><tr><th>ФИО / коллектив</th><th>Конкурсный номер</th><th>Страна / город</th><th style="width:280px">Действия</th></tr></thead>
+      <thead><tr>
+        <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Подсказка</th><th>Статус</th><th style="width:280px">Действия</th>
+      </tr></thead>
       <tbody>
         <?php foreach ($toGrade as $a): ?>
           <tr>
-            <td><?= h($whoName($a)) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span></td>
+            <td><b><?= h($whoName($a)) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
+              <div class="small muted"><?= h((string)$a['number']) ?><?php $pl = $whoPlace($a); echo $pl !== '' ? ' · ' . h($pl) : ''; ?></div>
+            </td>
+            <td class="small"><?= h((string)$current['name']) ?></td>
             <td class="small"><?= h((string)$a['work_title']) ?></td>
-            <td class="small"><?= h($whoPlace($a)) ?></td>
+            <td class="small"><?= h(date('d.m.y H:i', strtotime((string)$a['created_at']))) ?></td>
+            <td class="small">
+              <?php $hint = $agHints[(int) $a['id']] ?? null; if ($hint): ?>
+                <span style="color:#39618f;font-weight:600"><?= h((string) $hint['title']) ?></span>
+                <span class="muted"> · <?= number_format((float) $hint['total'], 1, ',', ' ') ?></span>
+              <?php else: ?>
+                <span class="muted">—</span>
+              <?php endif; ?>
+            </td>
+            <td><span class="badge badge--<?= h((string)$a['status']) ?>"><?= h(app_status_ru((string)$a['status'])) ?></span></td>
             <td style="white-space:nowrap"><?= $rowActions($a) ?></td>
           </tr>
         <?php endforeach; ?>

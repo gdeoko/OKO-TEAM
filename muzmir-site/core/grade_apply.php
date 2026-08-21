@@ -188,3 +188,105 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
                         : 'Итог сохранён, результат уйдёт ' . ($resultSendAt !== '' ? date('d.m.Y H:i', strtotime($resultSendAt)) : 'по расписанию') . '.');
     return $out;
 }
+
+/**
+ * ОТКЛОНЕНИЕ ЗАЯВКИ — ОДИН ПУТЬ ДЛЯ ЖЮРИ И ДЛЯ АВТОМАТА.
+ *
+ * Отклонение — это не «поставить статус». За ним тянется всё остальное: снять
+ * наградные документы, вернуть учреждению партнёрскую скидку, вернуть оргвзнос
+ * платной заявки и написать участнику, что именно нарушено и как подать заново.
+ * Пропусти любой шаг — и человек останется без денег, с висящим дипломом или без
+ * объяснения, за что его сняли с конкурса.
+ *
+ * Поэтому порядок один и тот же, кем бы решение ни принималось.
+ *
+ * @param string $reason  причина 1:1 из положения (см. REJECT_REASONS)
+ * @param string $source  'jury' | 'ai'
+ * @return array{ok:bool,msg:string,mailed:bool,refunded:int,refund_error:string}
+ */
+function grade_reject_application(int $appId, string $reason, string $source = 'jury'): array {
+    $out = ['ok' => false, 'msg' => '', 'mailed' => false, 'refunded' => 0, 'refund_error' => ''];
+    $reason = trim($reason);
+    if ($appId <= 0 || $reason === '') { $out['msg'] = 'нужны заявка и причина'; return $out; }
+
+    $a = one("SELECT a.*, c.name comp FROM applications a
+               LEFT JOIN competitions c ON c.id = a.competition_id WHERE a.id=?", [$appId]);
+    if (!$a) { $out['msg'] = 'заявка не найдена'; return $out; }
+    if ((string) ($a['status'] ?? '') === 'rejected') { $out['ok'] = true; $out['msg'] = 'заявка уже отклонена'; return $out; }
+
+    update('applications', ['status' => 'rejected', 'reject_reason' => $reason], 'id=:wid', ['wid' => $appId]);
+
+    // Наградные документы отклонённой работы снимаются целиком: файлы, записи
+    // реестра и письмо из очереди, если оно ещё не ушло.
+    require_once BASE_PATH . '/core/diploma_sync.php';
+    dsync_drop($appId, 'заявка отклонена: ' . mb_substr($reason, 0, 80));
+
+    // Партнёрская скидка возвращается учреждению: участия не будет.
+    if (is_file(BASE_PATH . '/core/partner.php')) require_once BASE_PATH . '/core/partner.php';
+    if (function_exists('partner_release_promo')) partner_release_promo($appId);
+
+    // Оргвзнос платной заявки возвращается автоматически (п. 7.6.1 положения).
+    $refunded = false;
+    if ((int) ($a['is_paid'] ?? 0) === 1) {
+        require_once BASE_PATH . '/core/payments.php';
+        try {
+            $r = refund_application($appId, $reason);
+            if (!empty($r['ok']) && (int) ($r['amount'] ?? 0) > 0) {
+                $refunded = true;
+                $out['refunded'] = (int) $r['amount'];
+            } elseif (!empty($r['error'])) {
+                $out['refund_error'] = (string) $r['error'];
+            }
+        } catch (\Throwable $e) { $out['refund_error'] = $e->getMessage(); }
+    }
+
+    // Письмо участнику: причина, возврат и приглашение подать заново.
+    if (trim((string) $a['email']) !== '' && is_file(BASE_PATH . '/core/result_mail.php')) {
+        require_once BASE_PATH . '/core/result_mail.php';
+        try {
+            $name  = trim((string) $a['full_name']);
+            $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+            $comp  = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: ['name' => (string) $a['comp']];
+            $card  = rm_mail_app_card((array) $a, (array) $comp);
+            $extraRows = rm_card_row('Форма исполнения', (string) ($a['formation'] ?? ''))
+                       . rm_card_row('Подраздел',        (string) ($a['subgroup'] ?? ''))
+                       . rm_card_row('Город',            (string) ($a['city'] ?? ''))
+                       . rm_card_row('E-mail',           (string) ($a['email'] ?? ''))
+                       . rm_card_row('Телефон',          (string) ($a['phone'] ?? ''))
+                       . rm_card_row('Ссылка на видео',  (string) ($a['video_url'] ?? ''));
+            if ($extraRows !== '') {
+                $card = preg_replace('~</table>\s*</td></tr></table>~', $extraRows . '</table></td></tr></table>', $card, 1);
+            }
+            $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;line-height:1.3;font-weight:700;color:' . RM_NAVY . ';">Заявка №' . h((string) $a['number']) . ' не принята к участию</h1>'
+                . '<p style="margin:0 0 14px;">' . $hello . '</p>'
+                . '<p style="margin:0 0 18px;">К сожалению, Оргкомитет не может допустить Вашу заявку на конкурс «' . h((string) $a['comp']) . '» по указанной ниже причине. Ниже — полный состав Вашей заявки для сверки.</p>'
+                . $card
+                . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:14px;">'
+                . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения (пункт положения 1:1)</div>'
+                . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
+                . '<p style="margin:0 0 14px;">Это не отказ навсегда, пожалуйста, устраните причину отклонения и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации!</p>'
+                . ($refunded
+                    ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#EAF7EF;border:1px solid #BFE6CC;border-radius:14px;">'
+                      . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1E7A44;margin-bottom:6px;">Возврат средств</div>'
+                      . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">Оргвзнос <b>' . $out['refunded'] . ' ₽</b> возвращён в полном объёме на ту же карту или способ оплаты. Зачисление обычно занимает до 3 рабочих дней (срок зависит от банка).</div></td></tr></table>'
+                    : '<p style="margin:0 0 4px;color:' . RM_MUTED . ';font-size:13px;">Если был внесён оргвзнос, он возвращается в полном объёме (п. 7.6.1 положения).</p>')
+                . rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($comp['slug'] ?? ''))), 'Подать заявку заново');
+            $html = rm_mail_layout($inner, 'Заявка №' . (string) $a['number'] . ': устраните причину и подайте заявку заново — мы с радостью примем её к аттестации.');
+            $out['mailed'] = mail_queue((string) $a['email'], $name,
+                'Заявка №' . (string) $a['number'] . ' — устраните причину и подайте заново', $html) > 0;
+        } catch (\Throwable $e) { /* письмо не должно ломать отклонение */ }
+    }
+
+    require_once BASE_PATH . '/core/app_status.php';
+    app_status_sync($appId);
+    if (function_exists('audit')) {
+        audit('application_reject', 'application', $appId, ['reason' => $reason, 'source' => $source]);
+    }
+
+    $out['ok']  = true;
+    $out['msg'] = 'Заявка отклонена.'
+        . ($out['mailed'] ? ' Участнику отправлено письмо с причиной и предложением подать заново.' : '')
+        . ($out['refunded'] > 0 ? ' Возврат ' . $out['refunded'] . ' ₽ отправлен в ЮKassa.' : '')
+        . ($out['refund_error'] !== '' ? ' ВНИМАНИЕ: автовозврат не прошёл (' . $out['refund_error'] . ') — верните вручную в ЛК ЮKassa.' : '');
+    return $out;
+}

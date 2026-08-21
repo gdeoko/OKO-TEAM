@@ -150,6 +150,40 @@ $check('до отправки письма заявка не показана к
        (string) ($st['code'] ?? '') !== 'graded' || true, (string) ($st['code'] ?? ''));
 printf("      состояние в кабинете: %s\n", (string) ($st['label'] ?? $st['code'] ?? '?'));
 
+/* ── 8. Отклонение по нарушению положения ────────────────────────────────── */
+echo "\n8. ОТКЛОНЕНИЕ ПО ПОЛОЖЕНИЮ\n";
+require_once BASE_PATH . '/core/ai_grader.php';
+
+// Что автомат отклоняет сам, а что оставляет человеку.
+$mkRun = static fn(array $formal, float $conf): array =>
+    ['formal' => json_encode($formal, JSON_UNESCAPED_UNICODE), 'confidence' => $conf];
+
+[$r8a] = ag_auto_reject($mkRun(['integrity' => false, 'issues' => ['склейка на 0:42']], 0.93), (array) $short);
+$check('монтаж внутри номера — отклоняется', $r8a === true);
+[$r8b] = ag_auto_reject($mkRun(['one_piece' => false, 'issues' => ['два номера подряд']], 0.9), (array) $short);
+$check('несколько номеров в одной заявке — отклоняется', $r8b === true);
+[$r8c] = ag_auto_reject($mkRun(['integrity' => false, 'issues' => []], 0.6), (array) $short);
+$check('при низкой уверенности не отклоняется', $r8c === false);
+[$r8d] = ag_auto_reject($mkRun(['formation' => false, 'issues' => ['похоже на трио']], 0.95), (array) $short);
+$check('спорное (состав) остаётся человеку', $r8d === false);
+[$r8e] = ag_auto_reject($mkRun(['duration' => false, 'issues' => []], 0.95), (array) $short);
+$check('продолжительность остаётся человеку', $r8e === false);
+[$r8f, $why8] = ag_auto_reject($mkRun(['integrity' => false, 'issues' => ['склейка на 0:42']], 0.93), (array) $short);
+$check('причина названа пунктом положения', $r8f && mb_strpos($why8, 'п. 8.') !== false, mb_substr($why8, 0, 60));
+$check('в причине сказано, что именно увидели', mb_strpos($why8, 'склейка на 0:42') !== false);
+
+// Само отклонение: статус, причина, письмо участнику.
+$a8 = $mk($short, $submitted);
+q("UPDATE applications SET is_paid=0 WHERE id=?", [$a8]);   // без оплаты — возврат не трогаем
+$rj = grade_reject_application($a8, $why8, 'ai');
+$check('заявка отклонена', $rj['ok'], $rj['msg']);
+$row8 = one("SELECT status, reject_reason FROM applications WHERE id=?", [$a8]);
+$check('статус «отклонена»', (string) $row8['status'] === 'rejected', (string) $row8['status']);
+$check('причина сохранена в заявке', trim((string) $row8['reject_reason']) !== '');
+$check('участнику подготовлено письмо', $rj['mailed'] === true);
+$rj2 = grade_reject_application($a8, $why8, 'ai');
+$check('повторное отклонение не дублирует письмо', $rj2['ok'] && $rj2['mailed'] === false);
+
 /* ── Уборка ──────────────────────────────────────────────────────────────── */
 echo "\nУБОРКА\n";
 $del = 0;
@@ -157,6 +191,9 @@ foreach ($made as $id) {
     q("DELETE FROM diplomas WHERE application_id=?", [$id]);
     q("DELETE FROM grading_runs WHERE application_id=?", [$id]);
     q("DELETE FROM jury_assignments WHERE application_id=?", [$id]);
+    q("DELETE FROM grade_feedback WHERE application_id=?", [$id]);
+    // Письма проверочных заявок из очереди убираем: наружу они уходить не должны.
+    try { q("DELETE FROM mail_queue WHERE status='queued' AND subject LIKE ?", ['%TEST-%']); } catch (\Throwable $e) {}
     q("DELETE FROM applications WHERE id=?", [$id]);
     $del++;
 }
