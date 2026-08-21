@@ -589,6 +589,38 @@ function build(T, opts) {
     grp.add(frame);
   }
 
+  /* ── Отражение приборов в остеклении ────────────────────
+     Стекло, в котором ничего не отражается, читается дырой в
+     борту. На настоящем остеклении всегда стоит слабый двойник
+     приборной панели - он и говорит глазу, что перед ним стекло, а
+     не пустой проём.
+
+     Плоскость висит в самом проёме, светится сложением и почти
+     прозрачна: отражение должно угадываться, а не спорить с
+     космосом за окном. */
+  var refl = new T.Mesh(
+    new T.CylinderGeometry(R_WALL - 0.05, R_WALL - 0.05, (WIN_Y1 - WIN_Y0) * 0.5,
+      tiny ? 8 : 14, 1, true, gapA - gapLen, gapLen),
+    new T.MeshBasicMaterial({
+      color: 0x7fc4e6, transparent: true, opacity: 0.055,
+      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false, fog: false
+    })
+  );
+  refl.position.y = WIN_Y0 + (WIN_Y1 - WIN_Y0) * 0.24;
+  grp.add(refl);
+  /* Полоса от световой линии пульта: она отражается ярче всего,
+     потому что ближе всех к стеклу */
+  var reflLip = new T.Mesh(
+    new T.CylinderGeometry(R_WALL - 0.06, R_WALL - 0.06, 0.05,
+      tiny ? 8 : 14, 1, true, gapA - gapLen * 0.7, gapLen * 0.7),
+    new T.MeshBasicMaterial({
+      color: 0x9fe0f6, transparent: true, opacity: 0.16,
+      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false, fog: false
+    })
+  );
+  reflLip.position.y = WIN_Y0 + 0.34;
+  grp.add(reflLip);
+
   /* ── Свет помещения ─────────────────────────────────────
      Ламп ровно четыре и больше не будет: каждая лишняя это лишний
      проход по всем материалам сцены в каждом кадре, а салон живёт
@@ -626,6 +658,8 @@ function build(T, opts) {
     diodes: diodes,
     frame: frame,
     lamp: lamp,
+    refl: refl,
+    reflLip: reflLip,
     hemi: hemi,
     ceilL: ceilL,
     warmL: warmL,

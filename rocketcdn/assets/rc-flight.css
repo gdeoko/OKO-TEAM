@@ -1770,3 +1770,96 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 @media (max-width: 760px) {
   .rc-flight .rcf-netlist { display: none; }
 }
+
+/* ── Карточка пилота: итог полёта ────────────────────────────
+   Игра должна чем-то заканчиваться. Лист с итогом выезжает, когда
+   сеть замкнута во всех рукавах, и предлагает сохранить кадр. */
+.rc-flight .rcf-pilot {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%,
+    rgba(var(--int-deep-rgb, 5,12,21), .35), rgba(var(--int-deep-rgb, 5,12,21), .82));
+  opacity: 0;
+  transition: opacity .5s var(--ease, ease);
+  pointer-events: none;
+}
+.rc-flight .rcf-pilot.on { opacity: 1; pointer-events: auto; }
+.rc-flight .rcf-pilot-in {
+  width: min(560px, 88vw);
+  padding: clamp(20px, 3.4vh, 34px) clamp(20px, 3vw, 34px);
+  border-radius: 16px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  background: linear-gradient(168deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .14),
+    rgba(6, 16, 28, .84));
+  backdrop-filter: blur(6px) saturate(1.2);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  box-shadow: 0 0 90px -22px rgba(var(--int-cyan-rgb, 66,178,220), 1);
+  text-align: center;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+}
+.rc-flight .rcf-pilot i {
+  display: block;
+  font-style: normal;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .3em;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .95);
+}
+.rc-flight .rcf-pilot b {
+  display: block;
+  margin: 8px 0 16px;
+  font-family: var(--f-head, "Bebas Neue", sans-serif);
+  font-size: clamp(26px, 5vh, 42px);
+  letter-spacing: .1em;
+  color: var(--int-lit, #CFE9F5);
+  text-shadow: 0 0 26px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+.rc-flight .rcf-pilot-g {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
+}
+.rc-flight .rcf-pilot-g span {
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .62);
+}
+.rc-flight .rcf-pilot-g u {
+  text-decoration: none;
+  font-size: clamp(18px, 3.2vh, 26px);
+  font-weight: 700;
+  color: var(--int-lit, #CFE9F5);
+}
+.rc-flight .rcf-pilot p {
+  margin: 14px 0 18px;
+  font-size: clamp(11.5px, 1.6vh, 14px);
+  line-height: 1.55;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .84);
+}
+.rc-flight .rcf-pilot-b { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.rc-flight .rcf-pilot-b button {
+  padding: 11px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 700 12px/1 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--int-lit, #CFE9F5);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .6);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .16);
+}
+.rc-flight .rcf-pilot-b button:first-child {
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .4),
+    rgba(var(--int-cyan-rgb, 66,178,220), .2));
+}
+.rc-flight .rcf-pilot-b button:hover { filter: brightness(1.2); }
+@media (max-width: 760px) {
+  .rc-flight .rcf-pilot-g { grid-template-columns: 1fr 1fr; }
+}

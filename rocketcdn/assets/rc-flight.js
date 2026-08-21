@@ -3556,6 +3556,7 @@ function frame(ts) {
     failTick(ts);
     failPaint();
     netList();
+    pilotCard();
     radarFrame(w3, ts);
   }
 
@@ -3904,6 +3905,56 @@ function courseFrame(w3, ts) {
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
                        : (RU ? "РУЧНОЙ" : "MANUAL");
+}
+
+/* ── Карточка пилота ─────────────────────────────────────────
+   Игра должна чем-то заканчиваться, иначе она не игра, а катание.
+   Когда сеть замкнута, корабль выдаёт лист с итогом: сколько миров
+   открыто, сколько узлов развёрнуто, сколько запросов закрыто и
+   аварий отбито. Это и есть повод сохранить кадр и показать его
+   кому-то - тот самый след, ради которого стоило летать.
+
+   Лист собирается один раз и лежит, пока его не закроют: пересчёт
+   на каждом кадре здесь не нужен, итог уже подведён. */
+var pilotShown = false;
+
+function pilotCard() {
+  if (pilotShown || !ui.wrap) return;
+  if (netCount() < NET_TOTAL()) return;
+  pilotShown = true;
+
+  var el = doc.createElement("div");
+  el.className = "rcf-pilot";
+  var rank = RU ? "КОМАНДИР СЕТИ" : "NETWORK COMMANDER";
+  el.innerHTML =
+    '<div class="rcf-pilot-in">' +
+      '<i>' + (RU ? "ПОЛЁТ ЗАВЕРШЁН" : "MISSION COMPLETE") + '</i>' +
+      '<b>' + rank + '</b>' +
+      '<div class="rcf-pilot-g">' +
+        '<span><u>' + netCount() + '</u>' + (RU ? "узлов сети" : "nodes") + '</span>' +
+        '<span><u>' + Object.keys(explored).length + '</u>' + (RU ? "объектов открыто" : "explored") + '</span>' +
+        '<span><u>' + (F.served || 0) + '</u>' + (RU ? "запросов закрыто" : "surges served") + '</span>' +
+        '<span><u>' + (F.saved || 0) + '</u>' + (RU ? "аварий отбито" : "outages fixed") + '</span>' +
+      '</div>' +
+      '<p>' + (RU
+        ? "Сеть Rocket CDN замкнута во всех рукавах. Так же она работает и у нас: контент доходит до человека с ближайшего узла, где бы он ни был."
+        : "The Rocket CDN network is complete.") + '</p>' +
+      '<div class="rcf-pilot-b">' +
+        '<button type="button" data-act="shot">' + (RU ? "Сохранить кадр" : "Save frame") + '</button>' +
+        '<button type="button" data-act="close">' + (RU ? "Продолжить полёт" : "Keep flying") + '</button>' +
+      '</div>' +
+    '</div>';
+  ui.wrap.appendChild(el);
+  el.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("[data-act]") : null;
+    if (!b) return;
+    if (b.getAttribute("data-act") === "shot") { shoot(); return; }
+    el.classList.remove("on");
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+  });
+  requestAnimationFrame(function () { el.classList.add("on"); });
+  if (g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
+  if (g.RC_track) g.RC_track("flight", "complete " + netCount());
 }
 
 /* ── Консоль сети ────────────────────────────────────────────
@@ -4586,12 +4637,44 @@ function stageCam(dt) {
      остеклению и космосу за ним, а не подсвеченным стенам за
      спиной. Заодно уходит светлая полоска стены, которая иначе
      видна по краю корпуса. */
+  /* ── Салон красит то, что за окном ────────────────────────
+     Свет из остекления не выдуман: за ним Земля, и она отражает на
+     стены голубое. Берём направление на планету и её расстояние -
+     чем ближе, тем сильнее подсвет, и тем заметнее холодная нота на
+     дальней половине помещения.
+
+     Это ровно то, чего не хватало прежней рубке: там свет из окна
+     был постоянным, и комната не реагировала на мир вокруг. */
+  if (C.lamp && w3.earth) {
+    var d = w3.cam.position.distanceTo(w3.earth.position);
+    var near = Math.max(0, Math.min(1, 1 - (d - 60) / 420));
+    C.lamp.intensity = (1.5 + near * 1.9) * (1 - Math.max(0, Math.min(1, (ek - 0.55) / 0.4)) * 0.55);
+    /* Тон от планеты: у Земли он холодный синий, к её ночной
+       стороне уходит в фиолет */
+    C.lamp.color.setRGB(0.55 + near * 0.18, 0.72 + near * 0.16, 0.95);
+  }
+  if (C.refl) {
+    /* Отражение ярче, когда за стеклом светло: на ночной стороне
+       стекло почти чистое */
+    var lit = w3.earth ? Math.max(0, Math.min(1, 1 - w3.cam.position.distanceTo(w3.earth.position) / 400)) : 0.4;
+    C.refl.material.opacity = 0.03 + lit * 0.055;
+    if (C.reflLip) C.reflLip.material.opacity = 0.09 + lit * 0.12;
+  }
+
+  /* Гул к пульту чуть плотнее: приборы просыпаются */
+  if (g.RC_SOUND && g.RC_SOUND.flightLevel) {
+    var lvl = 0.12 + ek * 0.1;
+    if (Math.abs(lvl - (F.humLvl || 0)) > 0.02) {
+      F.humLvl = lvl;
+      try { g.RC_SOUND.flightLevel(lvl); } catch (e) {}
+    }
+  }
+
   var dim = Math.max(0, Math.min(1, (ek - 0.55) / 0.4));
   if (C.deskLight) C.deskLight.intensity = 0.9 + ek * 1.9;
   if (C.hemi) C.hemi.intensity = 1.45 * (1 - dim * 0.92);
   if (C.ceilL) C.ceilL.intensity = 1.35 * (1 - dim * 0.95);
   if (C.warmL) C.warmL.intensity = 1.7 * (1 - dim * 0.95);
-  if (C.lamp) C.lamp.intensity = 2.6 * (1 - dim * 0.55);
   /* Диоды дышат */
   if (C.diodes && !ui.wrap.classList.contains("rcf-fast")) {
     for (var i = 0; i < C.diodes.length; i++) {
@@ -4655,6 +4738,15 @@ function stage(k) {
   F.stage = true;
   F.open = true;                              /* кадр рисуется тем же циклом */
   cabinBuild();
+  /* Гул корабля в салоне. Тише, чем в полёте: двигатель на холостом,
+     работает вентиляция и приборы. Без него помещение читается
+     картинкой - в кино корабль всегда слышно. */
+  if (g.RC_SOUND) {
+    try {
+      if (g.RC_SOUND.flight) g.RC_SOUND.flight(true);
+      if (g.RC_SOUND.flightLevel) g.RC_SOUND.flightLevel(0.13);
+    } catch (e) {}
+  }
   F.p = 0; F.v = 0; F.last = 0;
   F.away = false;
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
@@ -4676,6 +4768,8 @@ function stageOff() {
   F.stageK = 0;
   if (!F.stage) return;
   cabinDrop();
+  /* Вышли из корабля назад по странице - гул смолкает */
+  if (g.RC_SOUND && g.RC_SOUND.flight && !F.open) { try { g.RC_SOUND.flight(false); } catch (e) {} }
   F.stage = false;
   F.open = false;
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
@@ -4693,6 +4787,8 @@ g.RC_FLIGHT = {
     };
   },
   /* Для проверки: поставить корабль в точку маршрута */
+  /* Для проверки финала: показать карточку пилота принудительно */
+  _pilot: function () { pilotShown = false; var t = NET_TOTAL; NET_TOTAL = function () { return netCount(); }; pilotCard(); NET_TOTAL = t; },
   _set: function (v) { F.p = Math.max(0, Math.min(1, v)); F.goal = null; F.orbit = null; },
   _dbg: function () {
     if (!W3) return null;
