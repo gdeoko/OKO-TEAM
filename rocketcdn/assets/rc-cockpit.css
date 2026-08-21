@@ -627,3 +627,11 @@ html[data-theme="light"] .logo img { filter: contrast(1.12) saturate(1.05); }
 @media (min-width: 901px) {
   html[data-act="pad"] #rocketCanvas { z-index: 2; }
 }
+
+/* На телефоне корабль тоже стоит ПЕРЕД контентом первого экрана.
+   Правило подъёма было только для широких экранов, и на мобильном
+   ракета оказывалась под слоем героя: владелец видел, что её нет.
+   Затемнение под текстом (veil) остаётся - буквы читаются. */
+@media (max-width: 900px) {
+  html[data-act="pad"] #rocketCanvas { z-index: 2; }
+}
