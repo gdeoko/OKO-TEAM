@@ -291,8 +291,12 @@
 
   /* Три дата-центра встают в две колонки: третий занимает нижний
      ряд целиком, чтобы ряд не выглядел оборванным */
-  .dc-grid { grid-template-columns: repeat(2, 1fr); margin-top: clamp(14px, 2.6vw, 28px); }
-  .dc-grid > .dc:last-child:nth-child(3) { grid-column: 1 / -1; }
+  /* Три площадки в одну колонку. В две они вставали разной высоты
+     (у Москвы текст короче, у Алматы длиннее), а третья растягивалась
+     на всю ширину - ряд читался сломанным. Владелец назвал это
+     «карточки разных размеров и формы, не красиво, как баг». */
+  .dc-grid { grid-template-columns: 1fr; margin-top: clamp(14px, 2.6vw, 28px); }
+  .dc-grid > .dc:last-child:nth-child(3) { grid-column: auto; }
   .dc { padding: 13px 15px; }
   .dc h4 { font-size: var(--fs-8); margin: 4px 0 2px; }
   .dc p { font-size: var(--fs-2); line-height: var(--lh-tight); }

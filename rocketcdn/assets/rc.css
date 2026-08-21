@@ -687,7 +687,10 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .tag-soon   { background: var(--surface-2); color: var(--tx-3); border: 1px solid var(--line); }
 .node-empty { padding: 26px; text-align: center; color: var(--tx-3); font-size: var(--fs-4); }
 
-.dc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); margin-top: clamp(28px, 4vw, 48px); }
+/* Площадки одной высоты в ряду: карточка тянется на всю ячейку, а
+   не по своему тексту - иначе соседние стоят ступеньками */
+.dc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); margin-top: clamp(28px, 4vw, 48px); align-items: stretch; }
+.dc-grid > .dc { height: 100%; }
 .dc {
   position: relative; padding: var(--card-pad); border-radius: var(--r-md);
   border: 1px solid var(--line); background: var(--surface); overflow: hidden;
