@@ -2863,3 +2863,511 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   border-bottom: 0;
 }
 .rc-flight .rcf-deck { border-top: 0; background-color: #0a1626; }
+
+/* ═══════════════════════════════════════════════════════════
+   ПУЛЬТ КОРАБЛЯ — окончательная сборка
+
+   Панель встроена в нишу консоли на рисунке кабины и наклонена
+   перспективой: клавиши лежат НА плоскости пульта, уходящей от
+   зрителя, а не полосой поверх кадра. Всё железо (гнёзда клавиш,
+   паз тяги, обод радара, стекло табло) рисует deckSkin в текстуру
+   самой панели — DOM даёт только зоны нажатия и иконки.
+   Этот блок перекрывает все прежние правила панели.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-deck {
+  position: absolute;
+  left: var(--cab-dx, 4%);
+  top: var(--cab-dy, 78%);
+  width: var(--cab-dw, 92%);
+  height: var(--cab-dh, 21%);
+  right: auto;
+  bottom: auto;
+  transform: none;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  /* Глубина сцены: чем меньше число, тем сильнее сходятся линии */
+  perspective: 900px;
+  perspective-origin: 50% 100%;
+  overflow: visible;
+  z-index: 6;
+}
+.rc-flight .rcf-deck::before { display: none; }
+
+/* Плоскость пульта: наклонена от зрителя, низ на месте */
+.rc-flight .rcf-d-face {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 132%;
+  transform-origin: 50% 100%;
+  transform: rotateX(31deg);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px 16px 8px 8px;
+  /* Подложка ставится скриптом (deckSkin) как текстура железа;
+     этот цвет — основа на случай, если скин ещё не построен */
+  background-color: #0c1a2b;
+  background-size: 100% 100%;
+  box-shadow:
+    0 -22px 46px -20px rgba(0, 0, 0, .95),
+    0 0 60px -26px rgba(var(--int-cyan-rgb, 66, 178, 220), .55);
+}
+
+/* Верхняя лента табло */
+.rc-flight .rcf-d-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.4vw, 36px);
+  padding: clamp(4px, .8vh, 8px) clamp(12px, 2.4vw, 34px);
+  background: transparent;
+  border: 0;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+}
+.rc-flight .rcf-d-top .rcf-d-cell {
+  position: static;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  width: auto;
+  height: auto;
+  inset: auto;
+  pointer-events: auto;
+}
+.rc-flight .rcf-d-cell i {
+  font-style: normal;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: rgba(var(--int-cyan-rgb, 66, 178, 220), .85);
+}
+.rc-flight .rcf-d-cell .rcf-net,
+.rc-flight .rcf-d-cell .rcf-prog {
+  position: static;
+  display: inline;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: rgba(var(--int-lit-rgb, 207, 233, 245), .96);
+  text-shadow: 0 0 8px rgba(var(--int-cyan-rgb, 66, 178, 220), .45);
+}
+.rc-flight .rcf-d-course .rcf-c-goal {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  color: var(--int-cyan, #42B2DC);
+}
+.rc-flight .rcf-d-course .rcf-c-dist {
+  text-decoration: none; font-size: 10.5px;
+  color: rgba(var(--int-lit-rgb, 207, 233, 245), .82);
+}
+.rc-flight .rcf-d-course .rcf-c-mode {
+  font-style: normal; font-size: 9px; font-weight: 700; letter-spacing: .15em;
+  color: rgba(var(--int-vio-rgb, 138, 89, 246), .95);
+}
+.rc-flight .rcf-d-top .rcf-bars {
+  position: static; inset: auto; width: auto; height: auto;
+  display: inline-flex; align-items: center; gap: 14px; pointer-events: auto;
+}
+.rc-flight .rcf-d-meter { display: inline-flex; align-items: center; gap: 5px; }
+.rc-flight .rcf-d-meter b {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .14em;
+  color: rgba(var(--int-cyan-rgb, 66, 178, 220), .85);
+}
+.rc-flight .rcf-d-meter s {
+  text-decoration: none; display: inline-block;
+  width: 46px; height: 5px; border-radius: 3px;
+  background: rgba(3, 9, 17, .9);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .8);
+  overflow: hidden;
+}
+.rc-flight .rcf-d-meter s i {
+  display: block; height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--int-cyan, #42B2DC), #8fe4ff);
+  box-shadow: 0 0 8px rgba(var(--int-cyan-rgb, 66, 178, 220), .8);
+}
+.rc-flight .rcf-bar-en s i { width: var(--en, 100%); }
+.rc-flight .rcf-bar-hull s i {
+  width: var(--hull, 100%);
+  background: linear-gradient(90deg, #35E08F, #a6ffd6);
+  box-shadow: 0 0 8px rgba(53, 224, 143, .7);
+}
+.rc-flight .rcf-bars.low .rcf-bar-en s i { background: linear-gradient(90deg, #ff8a4c, #ffd08a); }
+.rc-flight .rcf-bars.hurt .rcf-bar-hull s i { background: linear-gradient(90deg, #ff5a5a, #ffb0b0); }
+.rc-flight .rcf-d-meter u {
+  text-decoration: none; min-width: 3ch;
+  font-size: 10px; font-weight: 700;
+  color: rgba(var(--int-lit-rgb, 207, 233, 245), .92);
+}
+
+/* Рабочая плоскость: три отсека */
+.rc-flight .rcf-d-main {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 1.6vw, 26px);
+  padding: 0 clamp(12px, 2.4vw, 34px) clamp(6px, 1.2vh, 12px);
+  min-height: 0;
+}
+.rc-flight .rcf-d-bay {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, .9vw, 12px);
+}
+.rc-flight .rcf-d-work { flex: 1 1 auto; justify-content: center; }
+.rc-flight .rcf-d-col { display: flex; flex-direction: column; gap: 5px; }
+.rc-flight .rcf-d-row { display: flex; gap: 5px; }
+.rc-flight .rcf-d-main .rcf-radar {
+  width: clamp(46px, 6.4vh, 66px);
+  height: clamp(46px, 6.4vh, 66px);
+  flex: none;
+  display: block;
+}
+
+/* Клавиша: гнездо рисует скин, здесь — зона, иконка и подпись */
+.rc-flight .rcf-key {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: clamp(38px, 5vh, 50px);
+  min-width: clamp(46px, 5.4vw, 66px);
+  padding: 0 clamp(6px, .8vw, 11px);
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(var(--int-lit-rgb, 207, 233, 245), .9);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .16s ease, transform .08s ease, filter .16s ease;
+}
+.rc-flight .rcf-key svg {
+  width: clamp(15px, 2.1vh, 19px);
+  height: clamp(15px, 2.1vh, 19px);
+  flex: none;
+}
+.rc-flight .rcf-key b {
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.rc-flight .rcf-key:hover { color: #fff; }
+.rc-flight .rcf-key:active { transform: translateY(1.5px); }
+.rc-flight .rcf-key.cur,
+.rc-flight .rcf-key[aria-pressed="true"],
+.rc-flight .rcf-key[aria-expanded="true"] {
+  color: #fff;
+  filter: drop-shadow(0 0 7px rgba(var(--int-cyan-rgb, 66, 178, 220), .95));
+}
+.rc-flight .rcf-key.rcf-mini {
+  min-width: 0;
+  width: clamp(28px, 3.2vh, 34px);
+  height: clamp(28px, 3.2vh, 34px);
+  padding: 0;
+  border-radius: 7px;
+}
+.rc-flight .rcf-key.rcf-mini svg { width: 14px; height: 14px; }
+.rc-flight .rcf-fire-key { color: rgba(255, 176, 120, .95); }
+.rc-flight .rcf-fire-key:hover { color: #ffd0a8; }
+
+/* Узел доступен только на орбите — гаснет, но остаётся на панели:
+   пустое гнездо на настоящем пульте тоже никуда не девается */
+.rc-flight .rcf-deploy {
+  position: static;
+  transform: none;
+  opacity: .35;
+  pointer-events: none;
+}
+.rc-flight .rcf-deploy.on { opacity: 1; pointer-events: auto; }
+
+/* Рычаг тяги: горизонтальный, в пазу */
+.rc-flight .rcf-d-main .rcf-thr {
+  position: relative;
+  width: clamp(92px, 10vw, 140px);
+  height: clamp(38px, 5vh, 50px);
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+  cursor: ew-resize;
+  flex: none;
+  overflow: hidden;
+}
+.rc-flight .rcf-thr-fill {
+  position: absolute;
+  left: 3px; top: 3px; bottom: 3px; right: auto;
+  width: 0%;
+  height: auto;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(var(--int-cyan-rgb, 66, 178, 220), .45),
+    rgba(var(--int-cyan-rgb, 66, 178, 220), .95));
+  box-shadow: 0 0 14px rgba(var(--int-cyan-rgb, 66, 178, 220), .7);
+  transition: width .08s linear;
+}
+.rc-flight .rcf-thr b {
+  position: absolute; left: 50%; top: 50%; bottom: auto;
+  transform: translate(-50%, -50%);
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 8.5px; font-weight: 700; letter-spacing: .2em;
+  color: rgba(226, 240, 252, .92);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+  pointer-events: none;
+}
+.rc-flight .rcf-d-main .rcf-speed {
+  position: static;
+  display: flex; align-items: baseline; gap: 3px;
+  justify-content: flex-end;
+  min-width: 6.5ch;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+}
+.rc-flight .rcf-d-main .rcf-speed b {
+  font-size: clamp(14px, 2vh, 18px);
+  color: rgba(var(--int-lit-rgb, 207, 233, 245), .98);
+  text-shadow: 0 0 10px rgba(var(--int-cyan-rgb, 66, 178, 220), .5);
+}
+.rc-flight .rcf-d-main .rcf-speed span {
+  font-size: 8px; letter-spacing: .14em;
+  color: rgba(var(--int-cyan-rgb, 66, 178, 220), .8);
+}
+
+/* Меню курса поднимается над пультом */
+.rc-flight .rcf-menu {
+  bottom: calc(var(--cab-dh, 21%) + 10px);
+}
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-face { transform: rotateX(26deg); height: 126%; }
+  .rc-flight .rcf-d-top { gap: 10px; padding: 3px 8px; }
+  .rc-flight .rcf-d-seen { display: none; }
+  .rc-flight .rcf-d-meter u { display: none; }
+  .rc-flight .rcf-d-meter s { width: 28px; }
+  .rc-flight .rcf-d-course .rcf-c-mode { display: none; }
+  .rc-flight .rcf-d-main { gap: 6px; padding: 0 7px 5px; }
+  .rc-flight .rcf-d-main .rcf-radar { display: none; }
+  .rc-flight .rcf-d-nav .rcf-map-key { display: none; }
+  .rc-flight .rcf-key { height: 40px; min-width: 40px; padding: 0 5px; gap: 1px; }
+  .rc-flight .rcf-key b { font-size: 7px; letter-spacing: .08em; }
+  .rc-flight .rcf-key.rcf-mini { width: 26px; height: 26px; }
+  .rc-flight .rcf-d-main .rcf-thr { width: 62px; height: 40px; }
+  .rc-flight .rcf-d-main .rcf-speed { min-width: 0; }
+  .rc-flight .rcf-d-main .rcf-speed span { display: none; }
+  .rc-flight .rcf-zoom-in, .rc-flight .rcf-zoom-out { display: none; }
+}
+
+/* ── Пульт: железо только под блоками ────────────────────────
+   Панель не должна закрывать нарисованную консоль корабля - она
+   должна В НЕЁ ВСТРАИВАТЬСЯ. Поэтому плоскость прозрачна, а скин
+   рисует только ниши отсеков, гнёзда клавиш, паз тяги и стекло
+   табло. Между блоками видна сама консоль кабины с её экранами. */
+.rc-flight .rcf-d-face {
+  background-color: transparent;
+  box-shadow: none;
+  /* Наклон заметнее: плоскость реально уходит от зрителя */
+  transform: rotateX(38deg);
+  height: 138%;
+}
+.rc-flight .rcf-deck { perspective: 620px; }
+
+/* Отсеки прижаты к краям и центру, ширина по содержимому */
+.rc-flight .rcf-d-work { flex: 0 0 auto; }
+.rc-flight .rcf-d-main { justify-content: space-between; align-items: flex-end; padding-bottom: clamp(10px, 2vh, 20px); }
+.rc-flight .rcf-d-nav, .rc-flight .rcf-d-drive { flex: 0 0 auto; align-items: flex-end; }
+
+/* Узел - клавиша пульта, а не всплывающая кнопка */
+.rc-flight .rcf-key.rcf-deploy {
+  position: static;
+  left: auto; bottom: auto;
+  transform: none;
+  padding: 0 clamp(6px, .8vw, 11px);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  opacity: .34;
+  pointer-events: none;
+}
+.rc-flight .rcf-key.rcf-deploy.on {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  box-shadow: none;
+}
+.rc-flight .rcf-key.rcf-deploy.on::after { display: none; }
+
+/* Скорость над зумом, не поперёк него */
+.rc-flight .rcf-d-drive .rcf-d-col { align-items: flex-end; gap: 4px; }
+.rc-flight .rcf-d-main .rcf-speed { justify-content: flex-end; }
+
+/* ── Посадка блоков на консоль ───────────────────────────────
+   Вставки садятся на плоские участки нарисованной консоли, не
+   упираясь в нижнюю кромку кадра, а рабочий блок стоит ровно по
+   центру - там, где у корабля главный пульт. */
+.rc-flight .rcf-d-main {
+  position: relative;
+  align-items: center;
+  padding: clamp(8px, 1.6vh, 16px) clamp(18px, 3vw, 46px) clamp(22px, 4.4vh, 46px);
+}
+.rc-flight .rcf-d-work {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.rc-flight .rcf-d-nav, .rc-flight .rcf-d-drive { align-items: center; }
+
+/* Табло читается как стекло приборной ленты */
+.rc-flight .rcf-d-top {
+  padding: clamp(5px, 1vh, 9px) clamp(14px, 2.6vw, 38px);
+  margin: 0 clamp(10px, 2vw, 26px);
+}
+.rc-flight .rcf-d-cell i { color: rgba(var(--int-cyan-rgb, 66,178,220), .92); }
+.rc-flight .rcf-d-cell .rcf-net,
+.rc-flight .rcf-d-cell .rcf-prog,
+.rc-flight .rcf-d-course .rcf-c-goal { font-size: 11.5px; }
+
+/* Скорость - крупное табло хода над клавишами зума */
+.rc-flight .rcf-d-main .rcf-speed b {
+  font-size: clamp(16px, 2.4vh, 21px);
+  letter-spacing: .02em;
+}
+
+/* Узел - обычная клавиша пульта: старое правило прятало её до
+   выхода на орбиту (display:none), и в ряду зияла дыра. Гнездо
+   на настоящем пульте не исчезает - оно гаснет. */
+.rc-flight .rcf-key.rcf-deploy,
+.rc-flight .rcf-deck .rcf-key.rcf-deploy {
+  display: inline-flex !important;
+  position: static !important;
+  left: auto; bottom: auto;
+  transform: none !important;
+  margin: 0;
+  padding: 0 clamp(6px, .8vw, 11px);
+  white-space: nowrap;
+  font-size: inherit;
+}
+
+/* ── Раскладка пульта: сетка без трансформаций ───────────────
+   Центральный блок центрировался через translate(-50%), а скин
+   железа меряет геометрию ДО трансформаций - гнёзда уезжали от
+   клавиш. Три колонки сетки дают тот же центр, но честными
+   координатами, и рисунок ложится точно под кнопки. */
+.rc-flight .rcf-d-main {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: clamp(10px, 2vw, 30px);
+  padding: clamp(6px, 1.2vh, 12px) clamp(20px, 3.4vw, 54px) clamp(30px, 6vh, 62px);
+}
+.rc-flight .rcf-d-work {
+  position: static;
+  left: auto; top: auto;
+  transform: none;
+  grid-column: 2;
+}
+.rc-flight .rcf-d-nav { grid-column: 1; justify-self: start; }
+.rc-flight .rcf-d-drive { grid-column: 3; justify-self: end; }
+
+/* Плоскость выше и наклон мягче: подписи клавиш обязаны читаться */
+.rc-flight .rcf-d-face { transform: rotateX(32deg); height: 152%; }
+.rc-flight .rcf-deck { perspective: 700px; }
+
+/* ── Пульт на телефоне ───────────────────────────────────────
+   Узкий кадр не держит три полноценных отсека: табло сжимаем до
+   главного, правый отсек оставляем рычагу тяги, скорость уходит
+   в ленту к остальным цифрам. Ничего не обрезается. */
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-main {
+    grid-template-columns: auto 1fr auto;
+    gap: 6px;
+    padding: 4px 6px clamp(16px, 3.4vh, 30px);
+  }
+  .rc-flight .rcf-d-top {
+    gap: 8px;
+    padding: 3px 6px;
+    margin: 0 4px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .rc-flight .rcf-d-top .rcf-d-cell { flex: 0 1 auto; min-width: 0; }
+  .rc-flight .rcf-d-cell i { font-size: 7.5px; letter-spacing: .1em; }
+  .rc-flight .rcf-d-cell .rcf-net,
+  .rc-flight .rcf-d-cell .rcf-prog,
+  .rc-flight .rcf-d-course .rcf-c-goal { font-size: 10px; }
+  .rc-flight .rcf-d-meter b { font-size: 7.5px; letter-spacing: .06em; }
+  .rc-flight .rcf-d-meter s { width: 22px; height: 4px; }
+  .rc-flight .rcf-d-top .rcf-bars { gap: 8px; }
+
+  .rc-flight .rcf-d-work { gap: 4px; }
+  .rc-flight .rcf-key { height: 38px; min-width: 38px; padding: 0 4px; }
+  .rc-flight .rcf-key svg { width: 15px; height: 15px; }
+  .rc-flight .rcf-key b { font-size: 6.5px; letter-spacing: .05em; }
+  .rc-flight .rcf-d-main .rcf-thr { width: 54px; height: 38px; }
+  .rc-flight .rcf-thr b { font-size: 7px; letter-spacing: .1em; }
+  /* Скорость и справка живут в ленте, не в отсеке хода */
+  .rc-flight .rcf-d-drive .rcf-d-col { display: none; }
+  .rc-flight .rcf-d-face { transform: rotateX(24deg); height: 142%; }
+}
+/* Совсем узкие экраны: подпись клавиш прячем, остаются иконки */
+@media (max-width: 400px) {
+  .rc-flight .rcf-key b { display: none; }
+  .rc-flight .rcf-key { min-width: 34px; height: 36px; }
+}
+/* Дубль скорости в ленте только на узком экране */
+.rc-flight .rcf-d-spd { display: none; }
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-spd { display: inline-flex; }
+  .rc-flight .rcf-d-spd .rcf-speed { position: static; display: inline-flex; align-items: baseline; gap: 2px; }
+  .rc-flight .rcf-d-spd .rcf-speed b { font-size: 11px; font-weight: 700; color: rgba(var(--int-lit-rgb,207,233,245),.96); }
+  .rc-flight .rcf-d-spd .rcf-speed span { font-size: 7px; color: rgba(var(--int-cyan-rgb,66,178,220),.8); }
+}
+
+/* Справка и снимок остаются и на телефоне: без справки человек не
+   узнает управление, а снимок - то, ради чего в игру возвращаются.
+   Ставим их столбиком рядом с рычагом тяги. */
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-drive .rcf-d-col { display: flex; }
+  .rc-flight .rcf-d-drive .rcf-d-col .rcf-speed { display: none; }
+  .rc-flight .rcf-d-drive .rcf-d-row { flex-direction: column; gap: 3px; }
+  .rc-flight .rcf-key.rcf-mini { width: 24px; height: 17px; border-radius: 5px; }
+  .rc-flight .rcf-key.rcf-mini svg { width: 12px; height: 12px; }
+}
+
+/* Подсказка управления не залезает на карточку задания */
+.rc-flight .rcf-hint {
+  bottom: calc(var(--cab-dh, 21%) + clamp(70px, 12vh, 116px));
+}
+@media (max-width: 760px) {
+  .rc-flight .rcf-hint { bottom: calc(var(--cab-dh, 21%) + 96px); }
+}
+
+/* Подсказка управления и карточка задания делят низ окна: раньше
+   обе стояли на одной строке и текст наезжал на текст. Задание
+   прижато к нижней кромке остекления, подсказка встаёт над ним. */
+.rc-flight .rcf-hint {
+  bottom: auto;
+  top: calc(var(--cab-wy, 8%) + var(--cab-wh, 68%) - clamp(112px, 15vh, 150px));
+}
+@media (max-width: 760px) {
+  .rc-flight .rcf-hint {
+    top: calc(var(--cab-wy, 8%) + var(--cab-wh, 68%) - 128px);
+    bottom: auto;
+  }
+}
+.rc-flight .rcf-hint { bottom: auto !important; height: auto; }

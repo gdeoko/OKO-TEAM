@@ -479,62 +479,112 @@ function buildUI() {
            ползунок тяги и скорость. Владелец сформулировал точно:
            «кнопки должны быть частью панели, реальной панели, а не
            карточки поверх картинки». */
+        /* ── ПУЛЬТ КОРАБЛЯ ──────────────────────────────────
+           Не полоса поверх кадра, а сама консоль. Панель встроена в
+           нишу пульта на рисунке кабины и наклонена перспективой,
+           как настоящая приборная доска: клавиши лежат НА плоскости
+           консоли, между её экранами. Владелец повторил трижды -
+           «кнопки должны быть частью панели, а не наклейкой».
+
+           Три блока, как на любом реальном пульте:
+             левый  - навигация (радар, курс, карта сети);
+             центр  - работа (скан, узел, залп, авто, стоп);
+             правый - ход (рычаг тяги, скорость, обзор, снимок).
+           Железо всех гнёзд рисует deckSkin одной текстурой. */
         '<div class="rcf-deck">' +
-          '<div class="rcf-d-top">' +
-            '<span class="rcf-d-cell"><i>' + (RU ? "СЕТЬ" : "NET") + '</i><span class="rcf-net">0/34</span></span>' +
-            '<span class="rcf-d-cell rcf-d-seen"><i>' + (RU ? "ОТКРЫТО" : "SEEN") + '</i><span class="rcf-prog">0/32</span></span>' +
-            '<span class="rcf-d-cell rcf-d-course"><i>' + (RU ? "КУРС" : "COURSE") + '</i>' +
-              '<span class="rcf-c-goal">—</span><u class="rcf-c-dist">—</u>' +
-              '<em class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</em></span>' +
-            '<span class="rcf-d-cell rcf-bars">' +
-              '<span class="rcf-d-meter rcf-bar-en"><b>' + (RU ? "ЗАРЯД" : "PWR") + '</b><s><i></i></s><u>100</u></span>' +
-              '<span class="rcf-d-meter rcf-bar-hull"><b>' + (RU ? "КОРПУС" : "HULL") + '</b><s><i></i></s><u>100</u></span>' +
-            '</span>' +
-          '</div>' +
-          '<div class="rcf-d-main">' +
-            '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
-            '<div class="rcf-keys">' +
-              '<button type="button" class="rcf-navkey" aria-expanded="false">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
-                '<b>' + (RU ? "КУРС" : "COURSE") + '</b><u></u>' +
-              '</button>' +
-              '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
-                '<path d="M3 12h18"/></svg>' +
-                '<b>' + (RU ? "СКАН" : "SCAN") + '</b></button>' +
-              '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
-                '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
-              '<button type="button" class="rcf-stop-key" aria-label="' + (RU ? "Полная остановка" : "Full stop") + '">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
-                '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
-              '<button type="button" class="rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
-                '<path d="M12 17.2h.01"/></svg>' +
-              '</button>' +
-              '<button type="button" class="rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>' +
-              '</button>' +
+          '<div class="rcf-d-face">' +
+            /* Верхняя лента: бортовое табло */
+            '<div class="rcf-d-top">' +
+              '<span class="rcf-d-cell"><i>' + (RU ? "СЕТЬ" : "NET") + '</i><span class="rcf-net">0/34</span></span>' +
+              '<span class="rcf-d-cell rcf-d-seen"><i>' + (RU ? "ОТКРЫТО" : "SEEN") + '</i><span class="rcf-prog">0/32</span></span>' +
+              '<span class="rcf-d-cell rcf-d-course"><i>' + (RU ? "КУРС" : "COURSE") + '</i>' +
+                '<span class="rcf-c-goal">—</span><u class="rcf-c-dist">—</u>' +
+                '<em class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</em></span>' +
+              '<span class="rcf-d-cell rcf-d-spd"><i>' + (RU ? "ХОД" : "SPD") + '</i><span class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></span></span>' +
+              '<span class="rcf-d-cell rcf-bars">' +
+                '<span class="rcf-d-meter rcf-bar-en"><b>' + (RU ? "ЗАРЯД" : "PWR") + '</b><s><i></i></s><u>100</u></span>' +
+                '<span class="rcf-d-meter rcf-bar-hull"><b>' + (RU ? "КОРПУС" : "HULL") + '</b><s><i></i></s><u>100</u></span>' +
+              '</span>' +
             '</div>' +
-            '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
-              '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
-              '<i class="rcf-thr-fill"></i>' +
-              '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
+            '<div class="rcf-d-main">' +
+              /* ЛЕВЫЙ БЛОК: куда идём */
+              '<div class="rcf-d-bay rcf-d-nav">' +
+                '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
+                '<div class="rcf-d-col">' +
+                  '<button type="button" class="rcf-key rcf-navkey" aria-expanded="false">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                    '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
+                    '<b>' + (RU ? "КУРС" : "COURSE") + '</b></button>' +
+                  '<button type="button" class="rcf-key rcf-map-key" aria-label="' + (RU ? "Карта сети" : "Network map") + '">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                    '<path d="M9 4L3.5 6.2v13.3L9 17.3l6 2.4 5.5-2.2V4.2L15 6.4z"/><path d="M9 4v13.3M15 6.4v13.3"/></svg>' +
+                    '<b>' + (RU ? "СЕТЬ" : "NET") + '</b></button>' +
+                '</div>' +
+              '</div>' +
+              /* ЦЕНТР: работа с миром */
+              '<div class="rcf-d-bay rcf-d-work">' +
+                '<button type="button" class="rcf-key rcf-scan-key" data-scan aria-pressed="false">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                  '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
+                  '<path d="M3 12h18"/></svg>' +
+                  '<b>' + (RU ? "СКАН" : "SCAN") + '</b></button>' +
+                '<button type="button" class="rcf-key rcf-deploy">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                  '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>' +
+                  '<path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>' +
+                  '<b>' + (RU ? "УЗЕЛ" : "NODE") + '</b></button>' +
+                '<button type="button" class="rcf-key rcf-fire-key" data-act="shot">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                  '<circle cx="12" cy="12" r="7.5"/><path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4"/>' +
+                  '<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>' +
+                  '<b>' + (RU ? "ЗАЛП" : "FIRE") + '</b></button>' +
+                '<button type="button" class="rcf-key rcf-auto-key" data-autokey aria-pressed="false">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                  '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
+                  '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
+                '<button type="button" class="rcf-key rcf-stop-key">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                  '<rect x="6.5" y="6.5" width="11" height="11" rx="2"/></svg>' +
+                  '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
+              '</div>' +
+              /* ПРАВЫЙ БЛОК: ход корабля */
+              '<div class="rcf-d-bay rcf-d-drive">' +
+                '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
+                  '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
+                  '<i class="rcf-thr-fill"></i>' +
+                  '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
+                '</div>' +
+                '<div class="rcf-d-col">' +
+                  '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+                  '<div class="rcf-d-row">' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-zoom-in" aria-label="' + (RU ? "Приблизить" : "Zoom in") + '">' +
+                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                      'stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/>' +
+                      '<path d="M15.4 15.4L21 21M10.5 7.6v5.8M7.6 10.5h5.8"/></svg></button>' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-zoom-out" aria-label="' + (RU ? "Отдалить" : "Zoom out") + '">' +
+                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                      'stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/>' +
+                      '<path d="M15.4 15.4L21 21M7.6 10.5h5.8"/></svg></button>' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
+                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+                      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                      '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg></button>' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
+                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                      '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
+                      '<path d="M12 17.2h.01"/></svg></button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
             '</div>' +
-            '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
-            '<button type="button" class="rcf-deploy"></button>' +
           '</div>' +
         '</div>' +
     '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
@@ -564,7 +614,10 @@ function buildUI() {
   ui.nav = w.querySelector(".rcf-nav");
   ui.bar = w.querySelector(".rcf-track i");
   ui.hint = w.querySelector(".rcf-hint");
-  ui.speed = w.querySelector(".rcf-speed b");
+  /* Скорость показана в двух местах: в отсеке хода и в ленте
+     табло (на телефоне отсек ужимается). Пишем в обе. */
+  ui.speedAll = w.querySelectorAll(".rcf-speed b");
+  ui.speed = ui.speedAll[0];
   ui.auto = w.querySelector(".rcf-auto");
   ui.info = w.querySelector(".rcf-info");
   ui.mis = w.querySelector(".rcf-mis");
@@ -657,6 +710,30 @@ function buildUI() {
   ui.net = w.querySelector(".rcf-net");
   ui.deploy = w.querySelector(".rcf-deploy");
   ui.deploy.addEventListener("click", function () { deployNode(); });
+  /* Остальные клавиши пульта. Все слушают клик напрямую: делегат
+     на списке целей их не видел, и половина пульта была мертва. */
+  var fireK = w.querySelector(".rcf-fire-key");
+  if (fireK) fireK.addEventListener("click", function () { shoot(); });
+  var stopK = w.querySelector(".rcf-stop-key");
+  if (stopK) stopK.addEventListener("click", function () {
+    F.thr = 0; F.v = 0; F.goalId = null; setAuto(false);
+    if (ui.thrFill) ui.thrFill.style.width = "0%";
+    say(RU ? "ПОЛНЫЙ СТОП" : "FULL STOP", 1400);
+  });
+  var mapK = w.querySelector(".rcf-map-key");
+  if (mapK) mapK.addEventListener("click", function () {
+    if (ui.netList) ui.netList.classList.toggle("on");
+    mapK.classList.toggle("cur", ui.netList && ui.netList.classList.contains("on"));
+    deckSkinSoon();
+  });
+  var zIn = w.querySelector(".rcf-zoom-in");
+  if (zIn) zIn.addEventListener("click", function () {
+    F.zoom = Math.min(1, (F.zoom || 0) + 0.22);
+  });
+  var zOut = w.querySelector(".rcf-zoom-out");
+  if (zOut) zOut.addEventListener("click", function () {
+    F.zoom = Math.max(0, (F.zoom || 0) - 0.22);
+  });
   ui.lock = w.querySelector(".rcf-lock");
   ui.lockCap = ui.lock.querySelector("span");
   ui.scanKey = w.querySelector(".rcf-scan-key");
@@ -1431,15 +1508,25 @@ function paintPlanet(w, h, base, bands, noise, kind, seed) {
 }
 
 function paintRing() {
+  /* Кольца с честной структурой: широкая щель Кассини на двух
+     третях радиуса, узкая щель Энке ближе к краю и спад плотности
+     к обоим краям. Прежняя ровная гребёнка без щелей читалась
+     полосатым блином. */
   var c = doc.createElement("canvas");
   c.width = 512; c.height = 32;
   var x = c.getContext("2d");
   for (var i = 0; i < 512; i++) {
     var d = i / 512;
-    var a = 0.15 + 0.75 * Math.pow(Math.abs(Math.sin(d * 40) * Math.sin(d * 9)), 1.6);
+    var a = 0.10 + 0.72 * Math.pow(Math.abs(Math.sin(d * 40) * Math.sin(d * 9)), 1.4);
+    /* Щель Кассини: почти пустой пояс */
+    var cas = Math.abs(d - 0.66) / 0.035;
+    if (cas < 1) a *= 0.06 + 0.20 * cas;
+    /* Щель Энке: тонкая */
+    var enc = Math.abs(d - 0.905) / 0.012;
+    if (enc < 1) a *= 0.15 + 0.4 * enc;
     if (d < 0.06 || d > 0.97) a *= d < 0.06 ? d / 0.06 : (1 - d) / 0.03;
-    var tone = 200 + Math.round(35 * Math.sin(d * 23));
-    x.fillStyle = "rgba(" + tone + "," + (tone - 25) + "," + (tone - 55) + "," + a.toFixed(3) + ")";
+    var tone = 205 + Math.round(30 * Math.sin(d * 23));
+    x.fillStyle = "rgba(" + tone + "," + (tone - 22) + "," + (tone - 50) + "," + a.toFixed(3) + ")";
     x.fillRect(i, 0, 1, 32);
   }
   var t = new g.THREE.CanvasTexture(c);
@@ -1672,7 +1759,7 @@ function buildWorld() {
      параллакс, которого у панорамы нет. */
   var sky = new T.Mesh(
     new T.SphereGeometry(4200, 48, 28),
-    new T.MeshBasicMaterial({ map: skyTexture(mob), side: T.BackSide, color: 0x9db4cc })
+    new T.MeshBasicMaterial({ map: skyTexture(mob), side: T.BackSide, color: 0xd8e2ee })
   );
   scene.add(sky);
 
@@ -1691,6 +1778,11 @@ function buildWorld() {
     x.fillRect(0, 0, sN, sN);
     return new T.CanvasTexture(c);
   })();
+  /* Оболочки звёзд собраны в группу, и группа едет за камерой:
+     прибитые к началу координат, они редели и растягивались на
+     дальнем конце маршрута - у дыры небо стояло полупустым */
+  var starShell = new T.Group();
+  scene.add(starShell);
   function stars(n, size, spread, hue) {
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(n * 3);
@@ -1705,7 +1797,7 @@ function buildWorld() {
       transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending
     });
     var pts = new T.Points(geo, m);
-    scene.add(pts);
+    starShell.add(pts);
     return pts;
   }
   /* Звёзды. «Некоторые звёзды и звёздная пыль какие-то мутные и не
@@ -1739,10 +1831,13 @@ function buildWorld() {
   /* Туманности: несколько мягких пятен в фирменных цветах */
   var nebT = glowSprite(256, "rgba(66,178,220,.32)", "rgba(66,178,220,0)");
   var nebV = glowSprite(256, "rgba(138,89,246,.28)", "rgba(138,89,246,0)");
-  var nebs = [[-1400, 500, -2400, 2600, nebT], [1900, -300, -1500, 2100, nebV], [600, 800, 2200, 2400, nebT], [-2100, -600, 1400, 1900, nebV]];
+  /* Туманности вдвое меньше и бледнее: прежние масштабы в две с
+     половиной тысячи при дистанции до камеры в те же тысячи
+     накрывали полкадра мутной пеленой и гасили звёзды */
+  var nebs = [[-1400, 500, -2400, 1300, nebT], [1900, -300, -1500, 1050, nebV], [600, 800, 2200, 1200, nebT], [-2100, -600, 1400, 950, nebV]];
   var nebSprites = [];
   for (var i = 0; i < nebs.length; i++) {
-    var sp = new T.Sprite(new T.SpriteMaterial({ map: nebs[i][4], transparent: true, opacity: 0.5, depthWrite: false }));
+    var sp = new T.Sprite(new T.SpriteMaterial({ map: nebs[i][4], transparent: true, opacity: 0.3, depthWrite: false, blending: T.AdditiveBlending }));
     sp.position.set(nebs[i][0], nebs[i][1], nebs[i][2]);
     sp.scale.setScalar(nebs[i][3]);
     scene.add(sp);
@@ -1934,20 +2029,24 @@ function buildWorld() {
   /* Корона в два слоя: плотный ободок у самой поверхности и
      широкое гало вокруг. Один слой давал ровный жёлтый круг, и
      звезда читалась плоской наклейкой. */
-  var corona = new T.Mesh(
-    new T.SphereGeometry(208, 28, 20),
-    new T.MeshBasicMaterial({ color: 0xffe3a8, transparent: true, opacity: 0.42,
-      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false })
-  );
-  corona.position.copy(sunBody.position);
-  scene.add(corona);
-  var halo2 = new T.Mesh(
-    new T.SphereGeometry(310, 24, 18),
-    new T.MeshBasicMaterial({ color: 0xffb45c, transparent: true, opacity: 0.14,
-      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false })
-  );
-  halo2.position.copy(sunBody.position);
-  scene.add(halo2);
+  /* Корона спрайтами со спадом к краю: сферы с равномерной
+     прозрачностью рисовали вокруг звезды плоские жёлтые кольца -
+     владелец справедливо назвал такое солнце нереалистичным.
+     У настоящей короны яркость падает от лимба наружу. */
+  var corIn = new T.Sprite(new T.SpriteMaterial({
+    map: glowSprite(256, "rgba(255,236,190,.9)", "rgba(255,180,90,0)"),
+    transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending
+  }));
+  corIn.scale.setScalar(560);
+  corIn.position.copy(sunBody.position);
+  scene.add(corIn);
+  var corOut = new T.Sprite(new T.SpriteMaterial({
+    map: glowSprite(256, "rgba(255,190,110,.5)", "rgba(255,140,60,0)"),
+    transparent: true, opacity: 0.55, depthWrite: false, blending: T.AdditiveBlending
+  }));
+  corOut.scale.setScalar(1150);
+  corOut.position.copy(sunBody.position);
+  scene.add(corOut);
 
   var mercury = makePlanet(12, [470, 200, 690],
     [[0, "#c9b7a3"], [0.5, "#8e7d6d"], [1, "#5a4e44"]], 6, 700,
@@ -2144,7 +2243,7 @@ function buildWorld() {
   );
   hole.add(lens);
 
-  var halo = new T.Sprite(new T.SpriteMaterial({ map: glowSprite(256, "rgba(255,140,50,.32)", "rgba(255,80,20,0)"), transparent: true, opacity: 0.5, depthWrite: false }));
+  var halo = new T.Sprite(new T.SpriteMaterial({ map: glowSprite(256, "rgba(255,140,50,.32)", "rgba(255,80,20,0)"), transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending }));
   halo.scale.setScalar(380);
   hole.add(halo);
   hole.position.set(2140, -160, -2380);
@@ -2599,6 +2698,7 @@ function buildWorld() {
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     /* Позиция светила: по ней бортовые панели набирают заряд */
     sunPos: sunGlow.position,
+    starShell: starShell,
     sunMat: sunBody.material,
     sun: sunBody, mercury: mercury, venus: venus,
     jupiter: jupiter, uranus: uranus, neptune: neptune, belt: belt,
@@ -2795,19 +2895,19 @@ function cabGeom() {
      ней. Приборы обязаны быть на экране на любом устройстве. */
   var d0 = px(0.06, tall ? 0.815 : 0.795);
   var d1 = px(0.94, tall ? 0.985 : 0.985);
-  var MINX = 0.015, MAXX = 0.985, MAXY = 0.99;
+  var MINX = 0.015, MAXX = 0.985, MAXY = 1;
   if (d0[0] < MINX) d0[0] = MINX;
   if (d1[0] > MAXX) d1[0] = MAXX;
   if (d1[1] > MAXY) d1[1] = MAXY;
-  /* Высота пояса приборов - не больше одиннадцати процентов кадра.
-     Владелец мерил на глаз и был прав: прежние двадцать шесть
-     процентов съедали четверть экрана, и панель закрывала космос,
-     ради которого всё построено. Одиннадцати хватает на один ряд
-     ровных клавиш - больше плите и не положено. */
+  /* Ниша - это ВСЯ консоль корабля на рисунке кабины, от нижней
+     кромки остекления до низа кадра. Панель управления встраивается
+     внутрь неё, а не кладётся полосой поверх: клавиши обязаны
+     лежать на наклонной плоскости пульта, между уже нарисованными
+     экранами, как настоящее железо. Высоту не режем - режем только
+     если консоль вылезла за кадр. */
   var dh = d1[1] - d0[1];
-  if (dh > 0.11) { d0[1] = d1[1] - 0.11; dh = 0.11; }
-  if (dh < 0.075) { d0[1] = d1[1] - 0.075; }
-  if (d0[1] < 0.72) d0[1] = 0.72;
+  if (dh < 0.10) { d0[1] = d1[1] - 0.10; }
+  if (d0[1] < 0.63) d0[1] = 0.63;
   var S = ui.wrap.style;
   S.setProperty("--cab-wx", (w0[0] * 100).toFixed(2) + "%");
   S.setProperty("--cab-wy", (w0[1] * 100).toFixed(2) + "%");
@@ -2951,7 +3051,13 @@ function netButton() {
   var here = F.orbit && F.orbit.name;
   var can = !!here && !net[here];
   ui.deploy.classList.toggle("on", can);
-  if (can) ui.deploy.textContent = (RU ? "Развернуть узел · " : "Deploy node · ") + here;
+  /* Правим ТОЛЬКО подпись: textContent затирал иконку и превращал
+     клавишу в пустой прямоугольник */
+  var dc = ui.deploy.querySelector("b");
+  if (dc) dc.textContent = RU ? "УЗЕЛ" : "NODE";
+  ui.deploy.setAttribute("title", can
+    ? (RU ? "Развернуть узел сети: " : "Deploy node: ") + here
+    : (RU ? "Узел ставится на орбите тела" : "Deploy in orbit"));
 }
 
 function netMark(pos, name) {
@@ -3993,7 +4099,8 @@ function frame(ts) {
   var spdV = Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9);
   if (spdV !== F._spdPub) {
     F._spdPub = spdV;
-    ui.speed.textContent = String(spdV);
+    var sv = String(spdV);
+    for (var qi2 = 0; qi2 < ui.speedAll.length; qi2++) ui.speedAll[qi2].textContent = sv;
   }
 
   /* Звук идёт за тягой */
@@ -4001,6 +4108,11 @@ function frame(ts) {
     F._sndT = ts;
     try { g.RC_SOUND.flightLevel(Math.min(1, 0.25 + speed * 4 + (jumpZone ? 0.35 : 0))); } catch (e) {}
   }
+
+  /* Небо и звёзды бесконечны: сфера фона и оболочки точек едут за
+     камерой - на дальнем конце маршрута небо больше не редеет */
+  if (w3.sky) w3.sky.position.copy(w3.cam.position);
+  if (w3.starShell) w3.starShell.position.copy(w3.cam.position);
 
   /* Фотосфера кипит: время идёт в шейдер звезды */
   if (w3.sunMat && w3.sunMat.uniforms) w3.sunMat.uniforms.uT.value = ts * 0.001;
@@ -4885,53 +4997,34 @@ function barsFrame(ts) {
    этот код не живёт. */
 function deckSkin() {
   var deck = ui.wrap && ui.wrap.querySelector(".rcf-deck");
-  if (!deck) return;
-  var dr = deck.getBoundingClientRect();
-  if (dr.width < 10 || dr.height < 10) { return; }
+  var face = deck && deck.querySelector(".rcf-d-face");
+  if (!face) return;
+  /* Меряем в СОБСТВЕННЫХ координатах плоскости, а не экранных:
+     панель наклонена перспективой, и getBoundingClientRect вернул бы
+     уже спроецированный прямоугольник - рисунок железа разъехался бы
+     с зонами нажатия. offsetLeft/offsetTop дают геометрию до
+     трансформации, поэтому текстура ложится точно под клавиши. */
+  var w = face.offsetWidth, h = face.offsetHeight;
+  if (w < 20 || h < 20) return;
   var dpr = Math.min(2, g.devicePixelRatio || 1);
-  var W = Math.round(dr.width * dpr), H = Math.round(dr.height * dpr);
   var c = doc.createElement("canvas");
-  c.width = W; c.height = H;
+  c.width = Math.round(w * dpr);
+  c.height = Math.round(h * dpr);
   var x = c.getContext("2d");
   x.scale(dpr, dpr);
-  var w = dr.width, h = dr.height;
 
-  /* Металл: вертикальный градиент + горизонтальная шлифовка */
-  var gr = x.createLinearGradient(0, 0, 0, h);
-  gr.addColorStop(0, "#1b2f44");
-  gr.addColorStop(0.16, "#142639");
-  gr.addColorStop(0.55, "#0c1a2b");
-  gr.addColorStop(1, "#060e1a");
-  x.fillStyle = gr;
-  x.fillRect(0, 0, w, h);
-  var i;
-  for (i = 0; i < h; i += 2) {
-    x.fillStyle = "rgba(255,255,255," + (0.006 + 0.014 * Math.abs(Math.sin(i * 1.7))).toFixed(3) + ")";
-    x.fillRect(0, i, w, 1);
+  function ownX(el) {
+    var v = 0;
+    while (el && el !== face) { v += el.offsetLeft; el = el.offsetParent; }
+    return v;
   }
-  /* Редкие царапины и заклёпки по нижней кромке */
-  for (i = 0; i < w; i += 90) {
-    x.fillStyle = "rgba(0,0,0,.25)";
-    x.fillRect(i + (i * 7 % 40), h * 0.2 + (i * 13 % 30), 26, 1);
+  function ownY(el) {
+    var v = 0;
+    while (el && el !== face) { v += el.offsetTop; el = el.offsetParent; }
+    return v;
   }
-  for (i = 26; i < w - 20; i += 120) {
-    x.fillStyle = "rgba(9,17,28,.9)";
-    x.beginPath(); x.arc(i, h - 7, 2.2, 0, 6.283); x.fill();
-    x.fillStyle = "rgba(180,210,235,.16)";
-    x.beginPath(); x.arc(i - 0.7, h - 7.7, 1, 0, 6.283); x.fill();
-  }
-  /* Верхняя фаска: светлое ребро и циановая нить */
-  x.fillStyle = "rgba(190,220,245,.20)";
-  x.fillRect(0, 0, w, 1);
-  x.fillStyle = "rgba(66,178,220,.75)";
-  x.fillRect(0, 1, w, 1);
-  var glow = x.createLinearGradient(0, 2, 0, 16);
-  glow.addColorStop(0, "rgba(66,178,220,.20)");
-  glow.addColorStop(1, "rgba(66,178,220,0)");
-  x.fillStyle = glow;
-  x.fillRect(0, 2, w, 14);
-
   function rr(px, py, pw, ph, r) {
+    r = Math.min(r, pw / 2, ph / 2);
     x.beginPath();
     x.moveTo(px + r, py);
     x.arcTo(px + pw, py, px + pw, py + ph, r);
@@ -4940,89 +5033,183 @@ function deckSkin() {
     x.arcTo(px, py, px + pw, py, r);
     x.closePath();
   }
-  function inset(px, py, pw, ph, r) {
-    /* Утопленная ниша: тёмный паз с нижним светлым ребром */
-    rr(px - 3, py - 3, pw + 6, ph + 6, r + 3);
-    x.fillStyle = "rgba(4,10,18,.85)";
+
+  /* ── Корпус консоли ─────────────────────────────────────
+     Металл темнеет к дальнему краю: плоскость уходит от зрителя,
+     и верх обязан быть в тени, иначе панель читается плоской
+     наклейкой, а не физической поверхностью. */
+  /* Корпус целиком НЕ заливаем: панель встраивается в уже
+     нарисованную консоль кабины, и сплошная плита закрыла бы её
+     экраны. Железо рисуем только там, где стоят приборы. */
+  var i;
+  /* Ниши отсеков и их обвязка */
+  var bays = face.querySelectorAll(".rcf-d-bay");
+  for (i = 0; i < bays.length; i++) {
+    var bx = ownX(bays[i]), bw = bays[i].offsetWidth;
+    var by = ownY(bays[i]), bh = bays[i].offsetHeight;
+    /* Отсек - металлическая вставка в консоль: плита с фаской,
+       шлифовкой и тенью под ней. Именно она делает клавиши частью
+       корабля, а не наклейкой поверх картинки. */
+    var pad = 11;
+    var pg2 = x.createLinearGradient(0, by - pad, 0, by + bh + pad);
+    pg2.addColorStop(0, "rgba(28,48,68,.97)");
+    pg2.addColorStop(0.42, "rgba(19,35,52,.97)");
+    pg2.addColorStop(1, "rgba(9,19,32,.97)");
+    rr(bx - pad, by - pad, bw + pad * 2, bh + pad * 2, 13);
+    x.fillStyle = pg2;
     x.fill();
+    x.strokeStyle = "rgba(4,10,18,.95)";
+    x.lineWidth = 1.4;
+    x.stroke();
+    /* Шлифовка внутри вставки */
+    x.save();
+    rr(bx - pad, by - pad, bw + pad * 2, bh + pad * 2, 13);
+    x.clip();
+    for (var li = by - pad; li < by + bh + pad; li += 2) {
+      x.fillStyle = "rgba(255,255,255," + (0.005 + 0.013 * Math.abs(Math.sin(li * 1.7))).toFixed(3) + ")";
+      x.fillRect(bx - pad, li, bw + pad * 2, 1);
+    }
+    x.restore();
+    /* Верхняя фаска и нижнее ребро */
+    x.fillStyle = "rgba(200,228,248,.20)";
+    x.fillRect(bx - pad + 4, by - pad + 1, bw + pad * 2 - 8, 1);
     x.fillStyle = "rgba(190,220,245,.10)";
-    x.fillRect(px - 3, py + ph + 2, pw + 6, 1);
+    x.fillRect(bx - pad + 4, by + bh + pad - 2, bw + pad * 2 - 8, 1);
+    /* Винты по углам отсека */
+    var sc2 = [[bx - pad + 5, by - pad + 5], [bx + bw + pad - 5, by - pad + 5],
+               [bx - pad + 5, by + bh + pad - 5], [bx + bw + pad - 5, by + bh + pad - 5]];
+    for (var si = 0; si < sc2.length; si++) {
+      x.fillStyle = "rgba(6,13,22,.95)";
+      x.beginPath(); x.arc(sc2[si][0], sc2[si][1], 2.1, 0, 6.283); x.fill();
+      x.fillStyle = "rgba(180,210,235,.18)";
+      x.beginPath(); x.arc(sc2[si][0] - 0.6, sc2[si][1] - 0.7, 0.9, 0, 6.283); x.fill();
+    }
   }
-  function keyCap(px, py, pw, ph, on) {
-    inset(px, py, pw, ph, 9);
-    /* Кэп клавиши: металл чуть светлее панели, верх ярче */
+
+  /* ── Стекло табло ──────────────────────────────────────── */
+  var top = face.querySelector(".rcf-d-top");
+  if (top) {
+    var ty = ownY(top), th = top.offsetHeight;
+    var mg = x.createLinearGradient(0, ty, 0, ty + th);
+    mg.addColorStop(0, "rgba(2,7,14,.9)");
+    mg.addColorStop(1, "rgba(6,16,28,.78)");
+    x.fillStyle = mg;
+    rr(10, ty, w - 20, th, 7);
+    x.fill();
+    x.strokeStyle = "rgba(66,178,220,.24)";
+    x.lineWidth = 1;
+    x.stroke();
+    x.fillStyle = "rgba(200,230,250,.06)";
+    x.fillRect(12, ty + 1, w - 24, 2);
+  }
+
+  /* ── Гнёзда клавиш ─────────────────────────────────────── */
+  function keyCap(px, py, pw, ph, on, warm) {
+    /* Гнездо: тёмный паз под кэпом */
+    rr(px - 2.5, py - 2.5, pw + 5, ph + 5, 11);
+    x.fillStyle = "rgba(3,9,16,.9)";
+    x.fill();
+    /* Кэп: металл, верх ярче, низ в тени - клавиша выступает */
     var kg = x.createLinearGradient(0, py, 0, py + ph);
-    kg.addColorStop(0, on ? "#2c4a66" : "#233b53");
-    kg.addColorStop(0.5, on ? "#1b3450" : "#152941");
-    kg.addColorStop(1, "#0d1c2e");
-    rr(px, py, pw, ph, 8);
+    if (on) {
+      kg.addColorStop(0, warm ? "#4a3524" : "#27506c");
+      kg.addColorStop(0.52, warm ? "#33241a" : "#173b57");
+      kg.addColorStop(1, warm ? "#1d140e" : "#0d2438");
+    } else {
+      kg.addColorStop(0, "#26405a");
+      kg.addColorStop(0.52, "#182d44");
+      kg.addColorStop(1, "#0e1e30");
+    }
+    rr(px, py, pw, ph, 9);
     x.fillStyle = kg;
+    x.fill();
+    x.strokeStyle = on
+      ? "rgba(" + (warm ? "255,170,110" : "120,210,245") + ",.85)"
+      : "rgba(5,11,19,.95)";
+    x.lineWidth = on ? 1.3 : 1;
+    x.stroke();
+    /* Блик по верхней фаске и тень у основания */
+    x.fillStyle = "rgba(207,233,245,.22)";
+    x.fillRect(px + 3, py + 1, pw - 6, 1);
+    x.fillStyle = "rgba(0,0,0,.45)";
+    x.fillRect(px + 3, py + ph - 2, pw - 6, 2);
+    if (on) {
+      /* Подсвеченная клавиша светит в паз вокруг себя */
+      x.save();
+      x.shadowColor = warm ? "rgba(255,170,110,.9)" : "rgba(66,178,220,.9)";
+      x.shadowBlur = 14;
+      rr(px, py, pw, ph, 9);
+      x.strokeStyle = "rgba(0,0,0,0)";
+      x.stroke();
+      x.restore();
+    }
+  }
+
+  var keys = face.querySelectorAll(".rcf-key");
+  for (i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (!k.offsetWidth) continue;
+    keyCap(ownX(k), ownY(k), k.offsetWidth, k.offsetHeight,
+      k.classList.contains("cur") ||
+      k.getAttribute("aria-pressed") === "true" ||
+      k.getAttribute("aria-expanded") === "true",
+      k.classList.contains("rcf-fire-key"));
+  }
+
+  /* ── Паз рычага тяги ───────────────────────────────────── */
+  var thr = face.querySelector(".rcf-thr");
+  if (thr && thr.offsetWidth) {
+    var tx = ownX(thr), ty2 = ownY(thr), tw = thr.offsetWidth, th2 = thr.offsetHeight;
+    rr(tx - 2.5, ty2 - 2.5, tw + 5, th2 + 5, 11);
+    x.fillStyle = "rgba(3,9,16,.9)";
+    x.fill();
+    rr(tx, ty2, tw, th2, 9);
+    x.fillStyle = "#060f1b";
     x.fill();
     x.strokeStyle = "rgba(5,11,19,.95)";
     x.lineWidth = 1;
     x.stroke();
-    x.fillStyle = "rgba(207,233,245,.20)";
-    x.fillRect(px + 2, py + 1, pw - 4, 1);
+    /* Насечки хода по верхней кромке паза */
+    for (i = 1; i < 8; i++) {
+      x.fillStyle = "rgba(130,175,205,.26)";
+      x.fillRect(tx + tw * i / 8, ty2 + 3, 1, 4);
+    }
     x.fillStyle = "rgba(0,0,0,.5)";
-    x.fillRect(px + 2, py + ph - 2, pw - 4, 2);
+    x.fillRect(tx + 3, ty2 + 1, tw - 6, 2);
   }
 
-  var zones = deck.querySelectorAll(".rcf-keys button, .rcf-shot");
-  for (i = 0; i < zones.length; i++) {
-    var b = zones[i].getBoundingClientRect();
-    keyCap(b.left - dr.left, b.top - dr.top, b.width, b.height,
-      zones[i].classList.contains("cur") || zones[i].getAttribute("aria-pressed") === "true");
-  }
-  /* Паз тяги: утопленный слот с насечками хода */
-  var thr = deck.querySelector(".rcf-thr");
-  if (thr) {
-    var tb = thr.getBoundingClientRect();
-    var tx = tb.left - dr.left, ty = tb.top - dr.top;
-    inset(tx, ty, tb.width, tb.height, 9);
-    rr(tx, ty, tb.width, tb.height, 8);
-    x.fillStyle = "#050c15";
-    x.fill();
-    for (i = 1; i < 8; i++) {
-      x.fillStyle = "rgba(120,160,190,.22)";
-      x.fillRect(tx + tb.width * i / 8, ty + 4, 1, tb.height - 8);
+  /* ── Обод радара ───────────────────────────────────────── */
+  var rad = face.querySelector(".rcf-radar");
+  if (rad && rad.offsetWidth) {
+    var cx = ownX(rad) + rad.offsetWidth / 2;
+    var cy = ownY(rad) + rad.offsetHeight / 2;
+    var rr2 = rad.offsetWidth / 2;
+    x.fillStyle = "rgba(3,9,16,.92)";
+    x.beginPath(); x.arc(cx, cy, rr2 + 7, 0, 6.283); x.fill();
+    var ring = x.createLinearGradient(0, cy - rr2, 0, cy + rr2);
+    ring.addColorStop(0, "#33526f");
+    ring.addColorStop(0.5, "#1c3247");
+    ring.addColorStop(1, "#0a1725");
+    x.strokeStyle = ring;
+    x.lineWidth = 5.5;
+    x.beginPath(); x.arc(cx, cy, rr2 + 4, 0, 6.283); x.stroke();
+    x.strokeStyle = "rgba(66,178,220,.45)";
+    x.lineWidth = 1;
+    x.beginPath(); x.arc(cx, cy, rr2 + 1.4, 0, 6.283); x.stroke();
+    /* Насечки по ободу - как на настоящем компасе */
+    for (i = 0; i < 12; i++) {
+      var a2 = i * Math.PI / 6;
+      x.strokeStyle = "rgba(160,200,225,.3)";
+      x.lineWidth = 1;
+      x.beginPath();
+      x.moveTo(cx + Math.cos(a2) * (rr2 + 2), cy + Math.sin(a2) * (rr2 + 2));
+      x.lineTo(cx + Math.cos(a2) * (rr2 + 6), cy + Math.sin(a2) * (rr2 + 6));
+      x.stroke();
     }
   }
-  /* Обод радара: металлическое кольцо вокруг живого экрана */
-  var rad = deck.querySelector(".rcf-radar");
-  if (rad && rad.offsetParent) {
-    var rb2 = rad.getBoundingClientRect();
-    var cx = rb2.left - dr.left + rb2.width / 2;
-    var cy = rb2.top - dr.top + rb2.height / 2;
-    var rad2 = rb2.width / 2;
-    var ring = x.createLinearGradient(0, cy - rad2, 0, cy + rad2);
-    ring.addColorStop(0, "#2e4a66");
-    ring.addColorStop(1, "#0b1826");
-    x.strokeStyle = ring;
-    x.lineWidth = 5;
-    x.beginPath(); x.arc(cx, cy, rad2 + 3.5, 0, 6.283); x.stroke();
-    x.strokeStyle = "rgba(66,178,220,.4)";
-    x.lineWidth = 1;
-    x.beginPath(); x.arc(cx, cy, rad2 + 6.6, 0, 6.283); x.stroke();
-  }
-  /* Стекло табло: утопленная тёмная полоса под верхний ряд */
-  var top = deck.querySelector(".rcf-d-top");
-  if (top) {
-    var pb = top.getBoundingClientRect();
-    var py2 = pb.top - dr.top, ph2 = pb.height;
-    var mg = x.createLinearGradient(0, py2, 0, py2 + ph2);
-    mg.addColorStop(0, "rgba(2,7,14,.92)");
-    mg.addColorStop(1, "rgba(6,15,26,.85)");
-    x.fillStyle = mg;
-    x.fillRect(0, py2, w, ph2);
-    x.fillStyle = "rgba(66,178,220,.22)";
-    x.fillRect(0, py2 + ph2 - 1, w, 1);
-    /* Блик стекла */
-    x.fillStyle = "rgba(200,230,250,.05)";
-    x.fillRect(0, py2, w, 2);
-  }
 
-  deck.style.backgroundImage = "url(" + c.toDataURL("image/png") + ")";
-  deck.style.backgroundSize = "100% 100%";
+  face.style.backgroundImage = "url(" + c.toDataURL("image/png") + ")";
+  face.style.backgroundSize = "100% 100%";
 }
 var skinT = 0;
 function deckSkinSoon() {
