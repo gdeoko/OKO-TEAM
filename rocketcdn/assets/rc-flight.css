@@ -1649,3 +1649,27 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
     padding: 8px 11px 10px;
   }
 }
+
+/* Кнопка снимка: маленький прибор на правой консоли, рядом с тягой */
+.rc-flight .rcf-shot {
+  width: clamp(28px, 3.4vh, 40px);
+  height: clamp(28px, 3.4vh, 40px);
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  cursor: pointer;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .9);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .45);
+  background: linear-gradient(180deg, rgba(20,40,61,.85), rgba(8,20,34,.95));
+  transition: color .18s linear, border-color .18s linear, box-shadow .18s linear;
+}
+.rc-flight .rcf-shot svg { width: 58%; height: 58%; }
+.rc-flight .rcf-shot:hover {
+  color: #fff;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .9);
+  box-shadow: 0 0 20px -4px rgba(var(--int-cyan-rgb, 66,178,220), .9);
+}
+@media (max-width: 760px) {
+  .rc-flight .rcf-shot { width: 26px; height: 26px; }
+}

@@ -398,6 +398,11 @@ function buildUI() {
            мышью, и это принципиально: человек не жмёт интерфейс, он
            двигает ручку и чувствует, как корабль набирает ход. */
         '<div class="rcf-right">' +
+          '<button type="button" class="rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>' +
+          '</button>' +
           '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
             '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
             '<i class="rcf-thr-fill"></i>' +
@@ -486,6 +491,8 @@ function buildUI() {
   ui.cMode = w.querySelector(".rcf-c-mode");
   ui.radar = w.querySelector(".rcf-radar");
   ui.thr = w.querySelector(".rcf-thr");
+  var shotBtn = w.querySelector(".rcf-shot");
+  if (shotBtn) shotBtn.addEventListener("click", shoot);
   ui.thrFill = w.querySelector(".rcf-thr-fill");
   bindThrottle();
   ui.dos = w.querySelector(".rcf-dos");
@@ -1461,9 +1468,26 @@ function buildWorld() {
     new T.SphereGeometry(61.9, 48, 36),
     new T.ShaderMaterial({
       transparent: true, side: T.BackSide, depthWrite: false,
-      uniforms: {},
-      vertexShader: "varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-      fragmentShader: "varying vec3 vN; void main(){ float f = pow(0.66 - dot(vN, vec3(0.0,0.0,-1.0)), 4.0); gl_FragColor = vec4(0.32,0.62,0.95, f * 0.62); }"
+      /* У Земли рассеяние заметнее всего: плотная атмосфера, и на
+         терминаторе идёт настоящий закатный поясок. Считаем так же,
+         как у прочих планет, только ярче. */
+      blending: T.AdditiveBlending,
+      uniforms: { uSun: { value: new T.Vector3(1, 0.35, 0.6).normalize() } },
+      vertexShader:
+        "varying vec3 vN; varying vec3 vW;" +
+        "void main(){ vN = normalize(normalMatrix * normal);" +
+        "  vW = normalize(mat3(modelMatrix) * normal);" +
+        "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+      fragmentShader:
+        "varying vec3 vN; varying vec3 vW; uniform vec3 uSun;" +
+        "void main(){" +
+        "  float rim = pow(clamp(0.70 - dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0), 3.2);" +
+        "  float lit = clamp(dot(vW, uSun) * 0.5 + 0.5, 0.0, 1.0);" +
+        "  float term = pow(1.0 - abs(dot(vW, uSun)), 7.0);" +
+        "  vec3 col = mix(vec3(0.10,0.26,0.52), vec3(0.34,0.66,1.0), lit);" +
+        "  col = mix(col, vec3(1.0,0.60,0.34), term * 0.7);" +
+        "  gl_FragColor = vec4(col, rim * (0.2 + lit * 0.8));" +
+        "}"
     })
   );
   earth.add(atm);
@@ -1491,6 +1515,7 @@ function buildWorld() {
      мелко.
 
      Все они процедурные - ни одного лишнего килобайта на загрузку. */
+  var atmShells = [];
   function makePlanet(r, pos, base, bands, noise, opt) {
     opt = opt || {};
     var body = new T.Mesh(
@@ -1506,16 +1531,44 @@ function buildWorld() {
     scene.add(body);
     if (opt.info) body.userData.info = opt.info;
     if (opt.atm) {
+      /* Атмосфера считается честно, а не ровным ободком по контуру.
+         Две вещи делают её живой: рассеяние ярче там, куда падает
+         свет (сторона, повёрнутая к звезде, светится сильнее), и
+         тёплый подмес у терминатора - это тот самый красный поясок,
+         по которому глаз узнаёт закат с орбиты. Направление на
+         светило приходит извне, поэтому у каждой планеты ободок
+         повёрнут в свою сторону, а не одинаково у всех. */
       var a = new T.Mesh(
-        new T.SphereGeometry(r * 1.06, tiny ? 20 : 32, tiny ? 14 : 22),
+        new T.SphereGeometry(r * 1.075, tiny ? 22 : 36, tiny ? 16 : 26),
         new T.ShaderMaterial({
           transparent: true, side: T.BackSide, depthWrite: false,
-          uniforms: { uC: { value: new T.Color(opt.atm) } },
-          vertexShader: "varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-          fragmentShader: "varying vec3 vN; uniform vec3 uC; void main(){ float f = pow(0.7 - dot(vN, vec3(0.0,0.0,-1.0)), 3.4); gl_FragColor = vec4(uC, f * 0.55); }"
+          blending: T.AdditiveBlending,
+          uniforms: {
+            uC: { value: new T.Color(opt.atm) },
+            uWarm: { value: new T.Color(opt.warm || 0xffb37a) },
+            uSun: { value: new T.Vector3(1, 0.35, 0.6).normalize() }
+          },
+          vertexShader:
+            "varying vec3 vN; varying vec3 vW;" +
+            "void main(){ vN = normalize(normalMatrix * normal);" +
+            "  vW = normalize(mat3(modelMatrix) * normal);" +
+            "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+          fragmentShader:
+            "varying vec3 vN; varying vec3 vW; uniform vec3 uC; uniform vec3 uWarm; uniform vec3 uSun;" +
+            "void main(){" +
+            "  float rim = pow(clamp(0.72 - dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0), 3.0);" +
+            "  float lit = clamp(dot(vW, uSun) * 0.5 + 0.5, 0.0, 1.0);" +
+            /* Терминатор: узкая полоса на границе света и тени */
+            "  float term = pow(1.0 - abs(dot(vW, uSun)), 8.0);" +
+            "  vec3 col = mix(uC * 0.35, uC, lit);" +
+            "  col = mix(col, uWarm, term * 0.65);" +
+            "  gl_FragColor = vec4(col, rim * (0.22 + lit * 0.72));" +
+            "}"
         })
       );
       body.add(a);
+      body.userData.atm = a;
+      atmShells.push({ mesh: a, body: body });
     }
     return body;
   }
@@ -1713,6 +1766,40 @@ function buildWorld() {
   );
   photon.rotation.x = Math.PI / 2.5;
   hole.add(photon);
+  /* ── Линзирование ──────────────────────────────────────
+     Главная примета чёрной дыры на снимках - не сам диск, а его
+     обратная сторона, поднятая гравитацией над горизонтом. Свет
+     оттуда огибает шар и приходит к нам сверху и снизу, из-за чего
+     диск выглядит замкнутой аркой, а не плоским кольцом.
+
+     Честно считать ход луча здесь нечем: это второй проход по всем
+     пикселям, а сцена живёт на телефоне. Но результат воспроизводим
+     точно - вторым диском тем же шейдером, повёрнутым поперёк
+     первого. Глаз читает ровно то же самое: свет, загнутый вокруг
+     горизонта. */
+  var arc = new T.Mesh(diskGeo, diskMat);
+  arc.rotation.x = Math.PI / 2.5;
+  arc.rotation.y = Math.PI / 2;
+  hole.add(arc);
+
+  /* Провал вокруг горизонта: у самой дыры фон гаснет, а не просто
+     закрывается чёрным шаром. Тень падает мягко, по френелю. */
+  var lens = new T.Mesh(
+    new T.SphereGeometry(74, 32, 24),
+    new T.ShaderMaterial({
+      transparent: true, side: T.BackSide, depthWrite: false,
+      uniforms: {},
+      vertexShader: "varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+      fragmentShader:
+        "varying vec3 vN;" +
+        "void main(){" +
+        "  float f = pow(clamp(dot(vN, vec3(0.0,0.0,-1.0)) + 0.35, 0.0, 1.0), 2.2);" +
+        "  gl_FragColor = vec4(0.0, 0.0, 0.0, f * 0.86);" +
+        "}"
+    })
+  );
+  hole.add(lens);
+
   var halo = new T.Sprite(new T.SpriteMaterial({ map: glowSprite(256, "rgba(255,140,50,.32)", "rgba(255,80,20,0)"), transparent: true, opacity: 0.5, depthWrite: false }));
   halo.scale.setScalar(380);
   hole.add(halo);
@@ -3422,6 +3509,7 @@ function frame(ts) {
 
   if (!F.stage) {
     powerFrame(w3, dt);
+    projFrame(w3, dt);
     barsFrame(ts);
     courseFrame(w3, ts);
     missionFrame(ts);
@@ -3772,6 +3860,151 @@ function courseFrame(w3, ts) {
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
                        : (RU ? "РУЧНОЙ" : "MANUAL");
+}
+
+/* ── Снимок из кабины ────────────────────────────────────────
+   Кнопка на правой консоли: кадр из окна вместе с корпусом корабля
+   и показателями, готовый к сохранению. Стоит она дёшево, а даёт
+   человеку то, ради чего он и полетел - свою картинку из космоса.
+
+   Кадр собираем заново, а не тянем из буфера: без сохранения буфера
+   рисования браузер отдаёт пустой холст, а включать сохранение ради
+   одной кнопки значит платить памятью в каждом кадре. Поэтому
+   рисуем сцену тут же и сразу снимаем. */
+function shoot() {
+  if (!W3 || !F.open) return;
+  var T = g.THREE;
+  try {
+    W3.r.render(W3.scene, W3.cam);
+    var src = W3.r.domElement;
+    var W = src.width, H = src.height;
+    var c = doc.createElement("canvas");
+    c.width = W; c.height = H;
+    var x = c.getContext("2d");
+    x.drawImage(src, 0, 0);
+    /* Корпус кабины поверх: снимок должен выглядеть так же, как
+       кадр, который человек видел */
+    if (ui.cab && ui.cab.complete && ui.cab.naturalWidth) {
+      var iw = ui.cab.naturalWidth, ih = ui.cab.naturalHeight;
+      var sc = Math.max(W / iw, H / ih);
+      x.drawImage(ui.cab, (W - iw * sc) / 2, (H - ih * sc) / 2, iw * sc, ih * sc);
+    }
+    /* Подпись: где сняли и сколько узлов в сети на тот момент */
+    var pad = Math.round(W * 0.03);
+    x.font = "700 " + Math.round(W * 0.017) + "px 'Golos Text', system-ui, sans-serif";
+    x.fillStyle = "rgba(226,238,252,.95)";
+    x.textBaseline = "bottom";
+    var where = (ui.cGoal && ui.cGoal.textContent !== "—") ? ui.cGoal.textContent
+              : (RU ? "ОТКРЫТЫЙ КОСМОС" : "DEEP SPACE");
+    x.fillText("ROCKET CDN · " + where + " · " +
+      (RU ? "УЗЛОВ " : "NODES ") + netCount() + "/" + NET_TOTAL(), pad, H - pad);
+
+    var url = c.toDataURL("image/png");
+    var a = doc.createElement("a");
+    a.href = url;
+    a.download = "rocketcdn-" + where.toLowerCase().replace(/[^a-zа-я0-9]+/gi, "-") + ".png";
+    doc.body.appendChild(a);
+    a.click();
+    setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 400);
+    say(RU ? "СНИМОК СОХРАНЁН" : "SNAPSHOT SAVED", 1800);
+    if (g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
+    if (g.RC_track) g.RC_track("flight", "shot");
+  } catch (e) {
+    say(RU ? "СНИМОК НЕ УДАЛСЯ" : "SNAPSHOT FAILED", 1800);
+  }
+}
+
+/* ── Проекция цели над пультом ───────────────────────────────
+   Маленький шар текущей цели крутится над приборной нишей, в двух
+   обручах, как в рубке из кино. Это не украшение: пока цель далеко,
+   она в кадре точкой, и понять, куда идёшь, нельзя. Проекция
+   показывает её крупно и всё время.
+
+   Собрана из самого мира: берём карту того же тела, к которому идём,
+   поэтому проекция не может показать не то. Висит она на камере,
+   значит держится в кадре при любом манёвре - как настоящий прибор,
+   а не как объект, мимо которого пролетают. */
+var proj = null, projFor = "";
+
+function projBuild(w3) {
+  if (proj || !w3) return;
+  var T = g.THREE;
+  proj = new T.Group();
+  var ball = new T.Mesh(
+    new T.SphereGeometry(0.055, 22, 16),
+    new T.MeshBasicMaterial({ color: 0x8fd8f2, transparent: true, opacity: 0.9 })
+  );
+  proj.add(ball);
+  proj.userData.ball = ball;
+  /* Два обруча под углом: по ним читается объём и вращение */
+  var ringMat = new T.MeshBasicMaterial({
+    color: 0x5fc8ef, transparent: true, opacity: 0.5,
+    blending: T.AdditiveBlending, depthWrite: false
+  });
+  var r1 = new T.Mesh(new T.TorusGeometry(0.082, 0.0022, 4, 44), ringMat);
+  r1.rotation.x = Math.PI / 2.2;
+  proj.add(r1);
+  var r2 = new T.Mesh(new T.TorusGeometry(0.098, 0.0018, 4, 44), ringMat);
+  r2.rotation.x = Math.PI / 2.6;
+  r2.rotation.z = 0.6;
+  proj.add(r2);
+  proj.userData.rings = [r1, r2];
+  /* Конус проектора снизу: проекция стоит над панелью, а не висит
+     в воздухе сама по себе */
+  var cone = new T.Mesh(
+    new T.ConeGeometry(0.075, 0.16, 18, 1, true),
+    new T.MeshBasicMaterial({
+      color: 0x5fc8ef, transparent: true, opacity: 0.13,
+      side: T.DoubleSide, blending: T.AdditiveBlending, depthWrite: false
+    })
+  );
+  cone.position.y = -0.115;
+  cone.rotation.x = Math.PI;
+  proj.add(cone);
+  proj.position.set(0, -0.245, -0.86);
+  proj.renderOrder = 20;
+  w3.cam.add(proj);
+  if (!w3.cam.parent) w3.scene.add(w3.cam);
+}
+
+function projFrame(w3, dt) {
+  if (F.stage) { if (proj) proj.visible = false; return; }
+  projBuild(w3);
+  if (!proj) return;
+  /* Цель: та, к которой идём, или та, вокруг которой кружим */
+  var id = F.goalId || (F.orbit && F.orbit.name ? "orbit" : "");
+  var body = null;
+  if (F.orbit && F.orbit.name) {
+    for (var k in GOAL_NAMES) {
+      if (GOAL_NAMES[k] === F.orbit.name) { id = k; break; }
+    }
+  }
+  if (id && id !== "galaxy" && id !== "home") body = w3[id === "hole" ? "hole" : id];
+  proj.visible = !!body;
+  if (!body) { projFor = ""; return; }
+
+  if (projFor !== id) {
+    projFor = id;
+    /* Карту берём у самого тела: если у него сложная группа, ищем
+       первый меш с картой - так проекция всегда показывает то же,
+       что видно за стеклом */
+    var src = body.material && body.material.map ? body.material.map : null;
+    if (!src && body.children) {
+      for (var c = 0; c < body.children.length; c++) {
+        if (body.children[c].material && body.children[c].material.map) {
+          src = body.children[c].material.map; break;
+        }
+      }
+    }
+    var bm = proj.userData.ball.material;
+    bm.map = src || null;
+    bm.color.set(src ? 0xffffff : 0x8fd8f2);
+    bm.opacity = src ? 0.92 : 0.85;
+    bm.needsUpdate = true;
+  }
+  proj.userData.ball.rotation.y += dt * 0.55;
+  proj.userData.rings[0].rotation.z += dt * 0.4;
+  proj.userData.rings[1].rotation.z -= dt * 0.28;
 }
 
 /* ── Бортовые системы: расход и восполнение ──────────────────
