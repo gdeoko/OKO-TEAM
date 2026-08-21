@@ -110,14 +110,19 @@ if ($video !== '') {
     if (empty($errors['video_url'])) {
         if (is_file(BASE_PATH . '/core/link_check.php')) require_once BASE_PATH . '/core/link_check.php';
         if (function_exists('video_verify')) {
-            $vr = video_verify($video);
+            /* Номинацию читаем здесь же: по изобразительному искусству и
+               фотографии работа присылается изображением, и проверка ссылки
+               должна об этом знать — иначе она требует видео там, где видео не
+               бывает. Полная сверка номинации со справочником идёт ниже. */
+            $nomForLink = trim((string) input('nomination'));
+            $vr = video_verify($video, $nomForLink);
             // Площадка не ответила — пробуем ещё раз, прежде чем пропускать.
             // Одна секундная заминка на стороне ВК или Диска не должна
             // превращаться в непроверенную заявку, за которой потом кто-то
             // ходит руками.
             if ((string) ($vr['state'] ?? '') === 'unknown') {
                 usleep(400000);
-                $second = video_verify($video);
+                $second = video_verify($video, $nomForLink);
                 if ((string) ($second['state'] ?? '') !== 'unknown') $vr = $second;
             }
             if (!($vr['ok'] ?? false)) $errors['video_url'] = (string)($vr['reason'] ?? 'Ссылка не прошла проверку.');
@@ -146,7 +151,7 @@ if ($video !== '') {
                 // Заявку можно подать сразу на несколько конкурсов: проверяем
                 // каждый, потому что занятость ссылки считается внутри конкурса.
                 foreach ($comps as $cCheck) {
-                    $lu = lu_check($video, (int) $cCheck['id']);
+                    $lu = lu_check($video, (int) $cCheck['id'], 0, $nomForLink);
                     if (!$lu['ok']) {
                         $errors['video_url'] = count($comps) > 1
                             ? '«' . (string) $cCheck['name'] . '»: ' . $lu['reason']
