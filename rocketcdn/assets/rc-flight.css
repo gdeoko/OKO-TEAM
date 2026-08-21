@@ -1585,7 +1585,16 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-bar { bottom: clamp(80px, 20vh, 150px); height: clamp(56px, 12vh, 110px); width: 7px; }
   .rc-flight .rcf-bar-en { left: 6px; }
   .rc-flight .rcf-bar-hull { right: 6px; }
-  .rc-flight .rcf-course { font-size: 8.5px; gap: 8px; }
+  /* Курсовая строка уходит под титр: на узком экране они стояли в
+     одной точке и наезжали друг на друга. Имя цели там же не нужно -
+     его показывает клавиша «Курс». */
+  .rc-flight .rcf-course {
+    font-size: 8.5px;
+    gap: 8px;
+    top: clamp(58px, 11vh, 92px);
+  }
+  .rc-flight .rcf-c-goal { display: none; }
+  .rc-flight .rcf-course i:first-of-type { display: none; }
 }
 
 /* ── Текущее задание ─────────────────────────────────────────
@@ -1890,9 +1899,20 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
    ═══════════════════════════════════════════════════════════ */
 .rc-flight .rcf-keys {
   display: flex;
-  gap: clamp(6px, 1vw, 12px);
+  gap: clamp(4px, 1vw, 12px);
   align-items: stretch;
+  justify-content: center;
+  /* На узком телефоне пять клавиш в строку не помещаются, и левая
+     уезжала за кромку кадра. Ряд сжимается и, если совсем тесно,
+     листается пальцем - но ни одна клавиша не оказывается за
+     экраном. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 2px;
 }
+.rc-flight .rcf-keys::-webkit-scrollbar { display: none; }
+.rc-flight .rcf-keys button { flex: 0 0 auto; }
 .rc-flight .rcf-keys button {
   display: flex;
   align-items: center;
@@ -2007,6 +2027,16 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 @media (max-width: 760px) {
   .rc-flight .rcf-keys button b { display: none; }
   .rc-flight .rcf-keys .rcf-navkey b { display: inline; }
+  .rc-flight .rcf-keys button { padding: 8px 9px; gap: 5px; }
+}
+/* Совсем узкий экран: у кнопки курса остаётся только цель, подпись
+   уходит - иначе ряд не влезает даже с прокруткой */
+@media (max-width: 400px) {
+  .rc-flight .rcf-keys .rcf-navkey b { display: none; }
+  .rc-flight .rcf-keys button { padding: 8px 7px; }
+  .rc-flight .rcf-keys .rcf-navkey u { max-width: 8ch; }
+}
+@media (max-width: 760px) {
   .rc-flight .rcf-menu { width: 94vw; max-height: 52vh; }
   .rc-flight .rcf-menu .rcf-nav { grid-template-columns: repeat(3, 1fr); }
   .rc-flight .rcf-menu .rcf-uni { grid-template-columns: 1fr; }
