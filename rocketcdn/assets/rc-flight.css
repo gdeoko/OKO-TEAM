@@ -2414,7 +2414,16 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 /* Пока открыта справка, метки объектов гаснут: читать поверх них
    нельзя, а спорить двум слоям на одном стекле незачем */
 .rc-flight:has(.rcf-help.on) .rc-holo,
+.rc-flight:has(.rcf-menu.on) .rc-holo,
 .rc-flight:has(.rcf-dos.on) .rc-holo { opacity: .12; transition: opacity .25s linear; }
+/* И задание со списком сети тоже уступают: на одном стекле в один
+   момент читается что-то одно */
+.rc-flight:has(.rcf-help.on) .rcf-mis,
+.rc-flight:has(.rcf-menu.on) .rcf-mis,
+.rc-flight:has(.rcf-dos.on) .rcf-mis,
+.rc-flight:has(.rcf-help.on) .rcf-netlist,
+.rc-flight:has(.rcf-menu.on) .rcf-netlist,
+.rc-flight:has(.rcf-dos.on) .rcf-netlist { opacity: .16; transition: opacity .25s linear; }
 .rc-flight .rcf-menu {
   left: 50%;
   bottom: auto;
