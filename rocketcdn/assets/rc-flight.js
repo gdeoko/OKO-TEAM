@@ -416,6 +416,23 @@ function buildUI() {
               'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
               '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
               '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
+            /* Стоп. Без него единственным способом остановиться было
+               довести рычаг тяги до нуля вручную и ждать, пока
+               инерция стечёт - на телефоне это неудобно вдвойне. */
+            '<button type="button" class="rcf-stop-key" aria-label="' + (RU ? "Полная остановка" : "Full stop") + '">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
+              '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
+            /* Справка: что здесь вообще делать. Раньше об этом
+               говорила одна строка подсказки, которая гасла через
+               семь секунд и больше не возвращалась. */
+            '<button type="button" class="rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
+              '<path d="M12 17.2h.01"/></svg>' +
+            '</button>' +
           '</div>' +
           '<button type="button" class="rcf-deploy"></button>' +
         '</div>' +
@@ -452,6 +469,34 @@ function buildUI() {
       '<div class="rcf-mis"></div>' +
       '<div class="rcf-fail" role="status"></div>' +
       '<div class="rcf-netlist" aria-hidden="true"></div>' +
+      '<div class="rcf-help" role="dialog" aria-modal="false">' +
+        '<div class="rcf-help-in">' +
+          '<button type="button" class="rcf-help-x" aria-label="' + (RU ? "Закрыть" : "Close") + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+          '</button>' +
+          '<b>' + (RU ? "КАК ЛЕТАТЬ" : "HOW TO FLY") + '</b>' +
+          '<ul>' +
+            '<li><i>' + (RU ? "ХОД" : "THRUST") + '</i><span>' +
+              (RU ? "Тяните рычаг справа, крутите колесо или ведите пальцем вверх"
+                  : "Drag the lever, use the wheel or swipe up") + '</span></li>' +
+            '<li><i>' + (RU ? "ОБЗОР" : "LOOK") + '</i><span>' +
+              (RU ? "Зажмите и тяните мышь, на телефоне - палец вбок. Обзор на все 360"
+                  : "Drag the mouse or swipe sideways for a full 360 look") + '</span></li>' +
+            '<li><i>' + (RU ? "ПРИБЛИЗИТЬ" : "ZOOM") + '</i><span>' +
+              (RU ? "Shift с колесом, на телефоне - щипок двумя пальцами"
+                  : "Shift with the wheel, or pinch on a phone") + '</span></li>' +
+            '<li><i>' + (RU ? "КУРС" : "COURSE") + '</i><span>' +
+              (RU ? "Кнопка «Курс» внизу: все планеты системы и прыжок в другие рукава"
+                  : "The Course key: every body plus the jump to other arms") + '</span></li>' +
+            '<li><i>' + (RU ? "СКАН" : "SCAN") + '</i><span>' +
+              (RU ? "Нажмите по телу в окне - корабль снимет с него карту"
+                  : "Tap a body to scan it") + '</span></li>' +
+            '<li><i>' + (RU ? "УЗЛЫ" : "NODES") + '</i><span>' +
+              (RU ? "На орбите тела разверните узел сети. Узлы держат трафик и открывают новые рукава"
+                  : "In orbit deploy a node. Nodes carry traffic and unlock arms") + '</span></li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>' +
       '<div class="rcf-bars">' +
         '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
         '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
@@ -520,6 +565,36 @@ function buildUI() {
   ui.mis = w.querySelector(".rcf-mis");
   ui.fail = w.querySelector(".rcf-fail");
   ui.netList = w.querySelector(".rcf-netlist");
+  ui.help = w.querySelector(".rcf-help");
+  var helpKey = w.querySelector(".rcf-help-key");
+  if (helpKey) {
+    helpKey.addEventListener("click", function () {
+      var on = !ui.help.classList.contains("on");
+      ui.help.classList.toggle("on", on);
+      helpKey.classList.toggle("cur", on);
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    });
+  }
+  var helpX = w.querySelector(".rcf-help-x");
+  if (helpX) helpX.addEventListener("click", function () {
+    ui.help.classList.remove("on");
+    if (helpKey) helpKey.classList.remove("cur");
+  });
+  var stopKey = w.querySelector(".rcf-stop-key");
+  if (stopKey) {
+    stopKey.addEventListener("click", function () {
+      /* Полная остановка: тяга в ноль, цель снята, рычаг опущен.
+         Орбиту не трогаем - на ней стоять и надо. */
+      F.v = 0;
+      F.thr = 0;
+      F.goal = null;
+      F.goalId = null;
+      if (F.auto) setAuto(false);
+      if (F.paintThrottle) F.paintThrottle();
+      say(RU ? "ПОЛНАЯ ОСТАНОВКА" : "FULL STOP", 1600);
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    });
+  }
   ui.bars = w.querySelector(".rcf-bars");
   ui.enTx = w.querySelector(".rcf-bar-en u");
   ui.huTx = w.querySelector(".rcf-bar-hull u");
