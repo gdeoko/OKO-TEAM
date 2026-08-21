@@ -1469,6 +1469,9 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
     padding: 6px 8px;
   }
   .rc-flight .rcf-left .rcf-gauges { display: none; }
+  /* Радар на телефоне уходит: экран узкий, и кругляш съедал место у
+     клавиш, ради которых плита и существует. Курс виден в меню. */
+  .rc-flight .rcf-radar { display: none; }
   .rc-flight .rcf-deck .rcf-nav { max-width: 100%; }
   .rc-flight .rcf-radar { width: 52px; height: 52px; }
   .rc-flight .rcf-thr { width: 22px; height: 52px; }
@@ -1641,13 +1644,22 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight.rcf-stage .rcf-mis { opacity: 0 !important; }
 
 @media (max-width: 760px) {
+  /* На телефоне задание уходит вниз, к приборам. Сверху идёт
+     курсовая строка, и две надписи в одной точке кадра читались
+     кашей - владелец увидел именно это наложение. */
   .rc-flight .rcf-mis {
-    left: 50%;
+    left: 50% !important;
+    right: auto !important;
     transform: translateX(-50%);
-    top: clamp(58px, 10vh, 96px);
-    width: min(84vw, 340px);
-    padding: 8px 11px 10px;
+    top: auto !important;
+    bottom: calc(var(--cab-dh, 17%) + 10px) !important;
+    width: min(92vw, 380px);
+    padding: 7px 11px 9px;
   }
+  .rc-flight .rcf-mis span { display: none; }
+  .rc-flight .rcf-mis i { margin-top: 6px; }
+  /* Меню открывается выше задания, чтобы не спорить с ним */
+  .rc-flight .rcf-menu { bottom: calc(var(--cab-dh, 19%) + 58px); }
 }
 
 /* Кнопка снимка: маленький прибор на правой консоли, рядом с тягой */
@@ -1862,4 +1874,314 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-pilot-b button:hover { filter: brightness(1.2); }
 @media (max-width: 760px) {
   .rc-flight .rcf-pilot-g { grid-template-columns: 1fr 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Меню курса: одна кнопка вместо ряда из тринадцати
+
+   Ряд не помещался никуда: на телефоне было видно две кнопки, и до
+   Млечного Пути с чужими рукавами человек просто не мог добраться.
+   Теперь на плите три клавиши - курс, сканер, автопилот, - а всё
+   остальное живёт в меню, которое открывается над ними.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-keys {
+  display: flex;
+  gap: clamp(6px, 1vw, 12px);
+  align-items: stretch;
+}
+.rc-flight .rcf-keys button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: clamp(7px, 1.1vh, 11px) clamp(10px, 1.3vw, 16px);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .9);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
+  background: linear-gradient(180deg, rgba(20,40,61,.9), rgba(8,20,34,.96));
+  transition: color .18s linear, border-color .18s linear, box-shadow .18s linear;
+  white-space: nowrap;
+}
+.rc-flight .rcf-keys button svg { width: 15px; height: 15px; flex: none; }
+.rc-flight .rcf-keys button b {
+  font-size: clamp(9.5px, 1.25vh, 11.5px);
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+.rc-flight .rcf-keys button u {
+  text-decoration: none;
+  font-size: clamp(9px, 1.2vh, 11px);
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--int-cyan, #42B2DC);
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-flight .rcf-keys button:hover,
+.rc-flight .rcf-keys button.cur,
+.rc-flight .rcf-keys button[aria-pressed="true"] {
+  color: #fff;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .95);
+  box-shadow: 0 0 20px -5px rgba(var(--int-cyan-rgb, 66,178,220), .95);
+}
+
+/* Само меню: сетка целей и рукавов, открывается над плитой */
+.rc-flight .rcf-menu {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--cab-dh, 19%) + clamp(6px, 1.4vh, 16px));
+  transform: translateX(-50%) translateY(12px);
+  width: min(620px, 92vw);
+  max-height: 56vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(12px, 1.8vh, 18px);
+  border-radius: 14px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
+  background: linear-gradient(170deg, rgba(10,21,36,.96), rgba(5,12,21,.98));
+  box-shadow: 0 30px 70px -22px rgba(0,0,0,.96), 0 0 46px -18px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .28s var(--ease), transform .28s var(--ease), visibility 0s linear .28s;
+  z-index: 6;
+}
+.rc-flight .rcf-menu.on {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity .28s var(--ease), transform .28s var(--ease);
+}
+.rc-flight .rcf-menu-h {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 4px 0 8px;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+}
+.rc-flight .rcf-menu-h:not(:first-child) { margin-top: 16px; }
+.rc-flight .rcf-menu-h i {
+  font-style: normal;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .2em;
+  color: var(--int-cyan, #42B2DC);
+}
+.rc-flight .rcf-menu-h span {
+  font-size: 10px;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .5);
+}
+/* Цели сеткой: на любом экране всё видно целиком */
+.rc-flight .rcf-menu .rcf-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+  max-width: none;
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
+  padding: 0;
+}
+.rc-flight .rcf-menu .rcf-nav button {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+.rc-flight .rcf-menu .rcf-uni {
+  position: static;
+  transform: none;
+  opacity: 1; visibility: visible; pointer-events: auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.rc-flight .rcf-menu .rcf-uni button { margin: 0; }
+.rc-flight.rcf-stage .rcf-menu { opacity: 0 !important; visibility: hidden !important; }
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-keys button b { display: none; }
+  .rc-flight .rcf-keys .rcf-navkey b { display: inline; }
+  .rc-flight .rcf-menu { width: 94vw; max-height: 52vh; }
+  .rc-flight .rcf-menu .rcf-nav { grid-template-columns: repeat(3, 1fr); }
+  .rc-flight .rcf-menu .rcf-uni { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Единый материал голограммы
+
+   «Все всплывающие окна с описаниями выбиваются из стиля и должны
+   появляться как голограмма из панели управления, как часть всего
+   3D мира» - верно, и это касается всего: досье, задания, меню,
+   списка сети, титров, брифинга.
+
+   Материал один на всё: почти прозрачное стекло, циановая кромка,
+   развёртка строк, уголки рамки и появление разрывом изображения.
+   Ничего не «выезжает» и не «всплывает» - проекция включается.
+   ═══════════════════════════════════════════════════════════ */
+@keyframes rcfHoloIn {
+  0%   { opacity: 0; clip-path: inset(46% 0 46% 0); filter: brightness(2.4) saturate(.4); }
+  16%  { opacity: 1; clip-path: inset(6% 0 62% 0);  filter: brightness(1.6) saturate(1.6); }
+  32%  { opacity: .6; clip-path: inset(58% 0 8% 0); filter: brightness(1.9) saturate(.7); }
+  48%  { opacity: 1; clip-path: inset(18% 0 34% 0); filter: brightness(1.3) saturate(1.3); }
+  64%  { opacity: .85; clip-path: inset(0 0 70% 0); filter: none; }
+  100% { opacity: 1; clip-path: inset(0 0 0 0);     filter: none; }
+}
+/* Общий материал не трогает способ позиционирования: задание и
+   список сети стоят абсолютом по кадру, и объявленный здесь relative
+   сбрасывал им координаты - блок улетал за верхнюю кромку. */
+.rc-flight .rcf-dos-in,
+.rc-flight .rcf-brief-card,
+.rc-flight .rcf-pilot-in { position: relative; }
+.rc-flight .rcf-menu,
+.rc-flight .rcf-dos-in,
+.rc-flight .rcf-mis,
+.rc-flight .rcf-netlist,
+.rc-flight .rcf-brief-card,
+.rc-flight .rcf-pilot-in {
+  /* Стекло проекции: сквозь него читается космос, а не глухая плита */
+  background:
+    linear-gradient(168deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .13),
+      rgba(6, 16, 28, .52) 46%,
+      rgba(6, 16, 28, .62)) !important;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .45) !important;
+  backdrop-filter: blur(4px) saturate(1.2);
+  -webkit-backdrop-filter: blur(4px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 rgba(226,232,240,.16),
+    0 0 46px -16px rgba(var(--int-cyan-rgb, 66,178,220), .85) !important;
+}
+/* Развёртка строк по всей поверхности проекции */
+.rc-flight .rcf-menu::before,
+.rc-flight .rcf-dos-in::before,
+.rc-flight .rcf-mis::before,
+.rc-flight .rcf-netlist::before,
+.rc-flight .rcf-brief-card::before,
+.rc-flight .rcf-pilot-in::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: repeating-linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .07) 0 1.4px,
+    transparent 1.4px 3.4px);
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+/* Уголки рамки: проекция собрана лучом, у неё есть габарит */
+.rc-flight .rcf-menu::after,
+.rc-flight .rcf-dos-in::after,
+.rc-flight .rcf-mis::after,
+.rc-flight .rcf-netlist::after,
+.rc-flight .rcf-pilot-in::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  border-radius: inherit;
+  -webkit-mask-image:
+    linear-gradient(90deg, #000 0 18px, transparent 18px calc(100% - 18px), #000 calc(100% - 18px) 100%),
+    linear-gradient(180deg, #000 0 18px, transparent 18px calc(100% - 18px), #000 calc(100% - 18px) 100%);
+  mask-image:
+    linear-gradient(90deg, #000 0 18px, transparent 18px calc(100% - 18px), #000 calc(100% - 18px) 100%),
+    linear-gradient(180deg, #000 0 18px, transparent 18px calc(100% - 18px), #000 calc(100% - 18px) 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  z-index: 1;
+}
+.rc-flight .rcf-menu > *,
+.rc-flight .rcf-dos-in > *,
+.rc-flight .rcf-mis > *,
+.rc-flight .rcf-netlist > *,
+.rc-flight .rcf-pilot-in > * { position: relative; z-index: 2; }
+
+/* Включение проекции: разрыв изображения, а не выезд */
+.rc-flight .rcf-menu.on,
+.rc-flight .rcf-dos.on .rcf-dos-in,
+.rc-flight .rcf-pilot.on .rcf-pilot-in {
+  animation: rcfHoloIn .46s steps(1, end) 1;
+}
+.rc-flight .rcf-mis.rcf-flick,
+.rc-flight .rcf-netlist.rcf-flick {
+  animation: rcfHoloIn .38s steps(1, end) 1;
+}
+
+/* Титр сцены тоже проекция, а не системное уведомление поверх кадра.
+   «Сверху какое-то всплывающее окно, оно выбивается по стилю, ни
+   голограмма ни часть, а просто всплывающее уведомление поверх» -
+   было именно так. */
+.rc-flight .rcf-cap {
+  padding: 6px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  background: linear-gradient(168deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .12),
+    rgba(6, 16, 28, .5));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 0 30px -12px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+
+/* ── Корпус по краям кадра ───────────────────────────────────
+   «Панель управления на мобильном прозрачная по краям - как он
+   может просвечивать внутри корабля? Только впереди, где окно.
+   По краям и по углам не должно быть прозрачным».
+
+   Верно: рисунок кабины выводится по object-fit: cover, и на узком
+   экране его боковины уходят за кадр - по краям остаётся голый
+   космос. Подкладываем корпус: тёмная обшивка по периметру,
+   плотная в углах и сходящая на нет к середине окна. */
+.rc-flight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    /* Боковины */
+    linear-gradient(90deg,
+      rgba(4, 11, 20, .98) 0%,
+      rgba(6, 15, 26, .72) 4%,
+      rgba(6, 15, 26, 0) 11%),
+    linear-gradient(270deg,
+      rgba(4, 11, 20, .98) 0%,
+      rgba(6, 15, 26, .72) 4%,
+      rgba(6, 15, 26, 0) 11%),
+    /* Верх и низ */
+    linear-gradient(180deg,
+      rgba(4, 11, 20, .95) 0%,
+      rgba(6, 15, 26, .5) 3%,
+      rgba(6, 15, 26, 0) 9%),
+    linear-gradient(0deg,
+      rgba(4, 11, 20, .98) 0%,
+      rgba(6, 15, 26, .6) 6%,
+      rgba(6, 15, 26, 0) 16%);
+}
+/* В режиме сцены корпус настоящий, трёхмерный: подложка не нужна */
+.rc-flight.rcf-stage::before { display: none; }
+
+@media (max-width: 760px) {
+  /* На телефоне боковины уходят за кадр сильнее - подложка шире */
+  .rc-flight::before {
+    background:
+      linear-gradient(90deg,
+        rgba(4, 11, 20, 1) 0%,
+        rgba(5, 13, 23, .88) 6%,
+        rgba(6, 15, 26, 0) 17%),
+      linear-gradient(270deg,
+        rgba(4, 11, 20, 1) 0%,
+        rgba(5, 13, 23, .88) 6%,
+        rgba(6, 15, 26, 0) 17%),
+      linear-gradient(180deg,
+        rgba(4, 11, 20, .98) 0%,
+        rgba(6, 15, 26, .6) 4%,
+        rgba(6, 15, 26, 0) 11%),
+      linear-gradient(0deg,
+        rgba(4, 11, 20, 1) 0%,
+        rgba(5, 13, 23, .8) 8%,
+        rgba(6, 15, 26, 0) 20%);
+  }
 }

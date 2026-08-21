@@ -342,12 +342,19 @@ function buildUI() {
     { id: "galaxy", t: RU ? "Галактика" : "Galaxy" },
     { id: "home", t: RU ? "Домой" : "Home" }
   ];
+  /* Ряд из тринадцати кнопок не помещался никуда: на телефоне было
+     видно две, и до Млечного Пути и чужих рукавов человек просто не
+     мог добраться. Владелец сказал прямо: «я так и не понял, как
+     перейти в Млечный путь и в другие вселенные, панель управления
+     и кнопки меню недоработанные, всё обрезано».
+
+     Поэтому вместо ряда - одна кнопка курса и меню под ней. В меню
+     всё сразу: тела системы, дальние цели и рукава чужих вселенных,
+     разложенные сеткой. Ничего не обрезается ни на каком экране. */
   var navHtml = "";
   for (var ni = 0; ni < NAV.length; ni++) {
     navHtml += '<button type="button" data-goal="' + NAV[ni].id + '">' + NAV[ni].t + "</button>";
   }
-  navHtml += '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' + (RU ? "Сканер" : "Scanner") + "</button>";
-  navHtml += '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' + (RU ? "Авто" : "Auto") + "</button>";
 
   var uniHtml = "";
   for (var ui2 = 0; ui2 < UNIVERSES.length; ui2++) {
@@ -391,7 +398,25 @@ function buildUI() {
           '</div>' +
         '</div>' +
         '<div class="rcf-mid">' +
-          '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
+          '<div class="rcf-keys">' +
+            '<button type="button" class="rcf-navkey" aria-expanded="false">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
+              '<b>' + (RU ? "КУРС" : "COURSE") + '</b><u></u>' +
+            '</button>' +
+            '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
+              '<path d="M3 12h18"/></svg>' +
+              '<b>' + (RU ? "СКАНЕР" : "SCAN") + '</b></button>' +
+            '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
+              '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
+          '</div>' +
           '<button type="button" class="rcf-deploy"></button>' +
         '</div>' +
         /* Правая консоль: тяга и скорость. Рычаг тянут пальцем или
@@ -431,7 +456,13 @@ function buildUI() {
         '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
         '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
       '</div>' +
-      '<div class="rcf-uni" role="menu"><i>' + (RU ? "КУДА ПРЫГАЕМ" : "JUMP TO") + '</i>' + uniHtml + '</div>' +
+      '<div class="rcf-menu" role="menu">' +
+        '<div class="rcf-menu-h"><i>' + (RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM") + '</i></div>' +
+        '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
+        '<div class="rcf-menu-h"><i>' + (RU ? "ДРУГИЕ РУКАВА" : "OTHER ARMS") + '</i>' +
+          '<span>' + (RU ? "гиперпрыжок через Млечный Путь" : "hyperjump") + '</span></div>' +
+        '<div class="rcf-uni">' + uniHtml + '</div>' +
+      '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
         ? (RU ? "Палец вверх - тяга, вбок - обзор на 360, щипок - приблизить"
@@ -509,6 +540,18 @@ function buildUI() {
   w.querySelector(".rcf-dos-x").addEventListener("click", function () { dosClose(); });
   ui.brief = w.querySelector(".rcf-brief");
   ui.uni = w.querySelector(".rcf-uni");
+  ui.menu = w.querySelector(".rcf-menu");
+  ui.navKey = w.querySelector(".rcf-navkey");
+  ui.navKeyTx = w.querySelector(".rcf-navkey u");
+  if (ui.navKey) {
+    ui.navKey.addEventListener("click", function () {
+      var on = !ui.menu.classList.contains("on");
+      ui.menu.classList.toggle("on", on);
+      ui.navKey.setAttribute("aria-expanded", on ? "true" : "false");
+      ui.navKey.classList.toggle("cur", on);
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    });
+  }
   ui.autoKey = w.querySelector(".rcf-auto-key");
   ui.prog = w.querySelector(".rcf-prog");
   ui.net = w.querySelector(".rcf-net");
@@ -593,6 +636,10 @@ function buildUI() {
     }
     var b = e.target.closest("button[data-goal]");
     if (!b) return;
+    /* Цель выбрана - меню закрывается: держать его открытым поверх
+       кадра незачем, курс уже задан */
+    if (ui.menu) { ui.menu.classList.remove("on"); }
+    if (ui.navKey) { ui.navKey.setAttribute("aria-expanded", "false"); ui.navKey.classList.remove("cur"); }
     goTo(b.getAttribute("data-goal"));
   });
   bindControls();
@@ -1120,8 +1167,13 @@ function goTo(id) {
   if (!W3 || !W3.at) return;
   F.goalId = id;
   if (id === "galaxy") {
-    /* Список вселенных: человек выбирает, куда прыгать */
-    if (ui.uni) ui.uni.classList.toggle("on");
+    /* Галактика - точка на маршруте, а выбор рукава живёт в общем
+       меню курса: два разных списка на одну задачу только путали */
+    var pg = (W3.at.jump0 + W3.at.jump1) / 2;
+    F.auto = false;
+    F.goal = pg;
+    F.goalName = RU ? "МЛЕЧНЫЙ ПУТЬ" : "MILKY WAY";
+    hideHint();
     return;
   }
   var p = id === "earth" ? 0.02
@@ -3117,7 +3169,12 @@ function frame(ts) {
   /* Отвернулись сильно - рамка кабины уходит: смотреть на переплёт
      остекления, когда голова повёрнута назад, неоткуда. Доля идёт в
      CSS, гасит рамку сама вёрстка. */
-  var away = Math.min(1, Math.max(0, (Math.abs(F.look.x) - 0.42) / 0.5));
+  /* Панель не имеет права исчезать совсем. Владелец поймал это:
+     «в какой-то момент панель управления вообще исчезает». Корпус
+     корабля никуда не девается оттого, что пилот повернул голову -
+     он лишь уходит из поля зрения по краям. Поэтому доля отворота
+     ограничена: рамка бледнеет, но остаётся. */
+  var away = Math.min(0.42, Math.max(0, (Math.abs(F.look.x) - 0.85) / 1.1));
   if (Math.abs(away - (F.awayPub || 0)) > 0.02) {
     F.awayPub = away;
     ui.wrap.style.setProperty("--rcf-away", away.toFixed(2));
@@ -3864,6 +3921,11 @@ function missionFrame(ts) {
   var first = misId === "";
   misId = key;
   ui.mis.classList.remove("full");
+  /* Смена задания - тоже включение проекции: контент не подменяется
+     тихо, изображение рвётся и собирается заново */
+  ui.mis.classList.remove("rcf-flick");
+  void ui.mis.offsetWidth;
+  ui.mis.classList.add("rcf-flick");
   ui.mis.innerHTML =
     '<b>' + esc(m.t) + '</b>' +
     '<span>' + esc(m.h) + '</span>' +
@@ -3901,6 +3963,7 @@ function courseFrame(w3, ts) {
          : Math.round(d) + (RU ? " км" : " km");
   }
   ui.cGoal.textContent = name;
+  if (ui.navKeyTx) ui.navKeyTx.textContent = name === "—" ? (RU ? "не задан" : "none") : name;
   ui.cDist.textContent = dist;
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
@@ -3989,6 +4052,9 @@ function netList() {
   if (names.length > show.length) {
     h += '<span class="more">+' + (names.length - show.length) + '</span>';
   }
+  ui.netList.classList.remove("rcf-flick");
+  void ui.netList.offsetWidth;
+  ui.netList.classList.add("rcf-flick");
   ui.netList.innerHTML = h;
 }
 
