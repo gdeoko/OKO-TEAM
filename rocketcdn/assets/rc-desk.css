@@ -51,15 +51,6 @@
   justify-content: flex-start;
   pointer-events: none;
 }
-@media (max-width: 760px) {
-  .rc-desk .dsk-win { justify-content: center; }
-  /* На телефоне окно кабины узкое, и делить его на две колонки
-     нечем: голограмма занимает его целиком, иначе кнопки режутся
-     пополам, а строки переносятся втрое */
-  .rc-desk .dsk-frame { width: 100%; }
-  .rc-desk .dsk-acts { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .rc-desk .dsk-b { padding: 9px 4px; font-size: clamp(10.5px, 1.5vh, 13px); }
-}
 .rc-desk.dsk-on .dsk-win { pointer-events: auto; }
 
 /* Сама голограмма. Не карточка на фоне, а изображение, собранное
@@ -94,6 +85,17 @@
   /* Голограмма собрана лучом снизу: масштаб по вертикали идёт от
      основания, а не от середины - так экран «вырастает» из панели */
   transform-origin: 50% 100%;
+}
+
+/* Телефон. Блок стоит ПОСЛЕ основного правила нарочно: медиазапрос
+   не поднимает вес селектора, и объявленная ниже ширина в 46vw
+   перебивала его - голограмма на телефоне оставалась в четверть
+   кадра, хотя окно кабины занимает почти всю ширину. */
+@media (max-width: 760px) {
+  .rc-desk .dsk-win { justify-content: center; }
+  .rc-desk .dsk-frame { width: 100%; }
+  .rc-desk .dsk-acts { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .rc-desk .dsk-b { padding: 9px 4px; font-size: clamp(10.5px, 1.5vh, 13px); }
 }
 
 /* Развёртка луча: тонкие строки, по которым и видно, что это
