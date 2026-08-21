@@ -252,6 +252,62 @@ $gfb = gfb_stats();
   <?php endif; ?>
 </div>
 
+<?php
+/* ЧТО МАШИНА РАЗГЛЯДЕЛА СВЕРХ ПРИВЫЧНОГО.
+   Жюри выдаёт четыре формулировки дополнительного диплома — не потому, что
+   других качеств не бывает, а потому что в потоке берутся привычные слова.
+   Разбор предлагает свои, и владелец просил их не ограничивать. Здесь видно,
+   какие появились: это готовые формулировки для бланка и заодно подсказка,
+   чего центр в своих работах до сих пор не называл. */
+$agKnown = [];
+try {
+    foreach (all("SELECT DISTINCT mb_upper(TRIM(extra_diploma)) t FROM applications
+                   WHERE COALESCE(extra_diploma,'')<>''") as $r) $agKnown[(string) $r['t']] = true;
+} catch (\Throwable $e) { $agKnown = []; }
+$agNew = [];
+try {
+    foreach (all("SELECT mb_upper(TRIM(extra_award)) t, COUNT(*) c, MAX(id) last_id
+                    FROM grading_runs
+                   WHERE status='ok' AND COALESCE(extra_award,'')<>''
+                GROUP BY t ORDER BY c DESC, last_id DESC LIMIT 30") as $r) {
+        if (isset($agKnown[(string) $r['t']])) continue;
+        $agNew[] = $r;
+    }
+} catch (\Throwable $e) { $agNew = []; }
+?>
+<?php if ($agNew): ?>
+<div class="card">
+  <h3 style="margin:0 0 8px">Новые формулировки дополнительных дипломов</h3>
+  <p class="small muted" style="margin:0 0 12px">
+    Их предложил разбор — в решениях жюри таких ещё не было. Формулировка печатается на бланке как есть,
+    поэтому смотреть стоит: то, что машина называет точнее, обычно и есть настоящая причина отметить работу.
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <?php foreach ($agNew as $r): ?>
+      <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #cfe0f5;
+                   background:#f4f8fd;border-radius:999px;font-size:13px;color:#17307A">
+        <b><?= h((string) $r['t']) ?></b>
+        <span class="muted" style="font-weight:400"><?= (int) $r['c'] ?></span>
+      </span>
+    <?php endforeach; ?>
+  </div>
+  <?php
+  $ex = null;
+  try {
+      $ex = one("SELECT g.extra_award, g.extra_award_why, a.number, a.full_name, a.nomination
+                   FROM grading_runs g JOIN applications a ON a.id=g.application_id
+                  WHERE g.status='ok' AND mb_upper(TRIM(g.extra_award))=?
+               ORDER BY g.id DESC LIMIT 1", [(string) $agNew[0]['t']]);
+  } catch (\Throwable $e) { $ex = null; }
+  if ($ex): ?>
+    <p class="small" style="margin:12px 0 0;color:#4a4a55">
+      Например, <b><?= h((string) $ex['extra_award']) ?></b> — заявка <?= h((string) $ex['number']) ?>,
+      <?= h((string) ($ex['nomination'] ?? '')) ?>: <?= h(mb_substr((string) $ex['extra_award_why'], 0, 240)) ?>
+    </p>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
+
 <div class="card">
   <h3 style="margin:0 0 10px">Настройки</h3>
   <form method="post" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
