@@ -156,6 +156,11 @@
   border-top: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
 }
 .rc-desk .dsk-b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: clamp(38px, 5.2vh, 48px);
   font: 600 clamp(11px, 1.55vh, 14px)/1.2 var(--f-sans, inherit);
   letter-spacing: .01em;
   padding: clamp(8px, 1.3vh, 13px) 6px;
@@ -197,11 +202,13 @@
   mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
 }
 .rc-desk .dsk-q {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 9px;
   width: 100%;
   text-align: left;
   cursor: pointer;
-  padding: clamp(7px, 1.1vh, 11px) 2px;
+  padding: clamp(7px, 1.1vh, 11px) 4px;
   border: 0;
   border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .18);
   background: transparent;
@@ -209,10 +216,21 @@
   font: 500 clamp(11px, 1.5vh, 14px)/1.35 var(--f-sans, inherit);
   transition: color .18s linear, padding-left .18s linear;
 }
-.rc-desk .dsk-q:hover {
-  color: var(--int-lit, #e2eefc);
-  padding-left: 8px;
+/* Метка строки: маленький ромб слева, как на приборной панели.
+   Без неё строки читались просто списком, а не пунктами бортового
+   справочника. */
+.rc-desk .dsk-q::before {
+  content: "";
+  width: 5px; height: 5px;
+  flex: none;
+  transform: rotate(45deg);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+  box-shadow: 0 0 7px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  transition: transform .18s linear, background .18s linear;
 }
+.rc-desk .dsk-q span { flex: 1 1 auto; min-width: 0; }
+.rc-desk .dsk-q:hover { color: var(--int-lit, #e2eefc); }
+.rc-desk .dsk-q:hover::before { transform: rotate(45deg) scale(1.4); background: #eaf6ff; }
 
 .rc-desk .dsk-a {
   font: 400 clamp(11px, 1.5vh, 14px)/1.5 var(--f-sans, inherit);
@@ -253,9 +271,27 @@
 .rc-desk .dsk-slot select,
 .rc-desk .dsk-slot textarea {
   font-size: clamp(12px, 1.5vh, 15px);
-  padding: clamp(6px, 1vh, 10px) 10px;
-  background: rgba(4, 12, 22, .55);
-  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  padding: clamp(9px, 1.4vh, 13px) 12px;
+  border-radius: 10px;
+  background: rgba(4, 12, 22, .62);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  transition: border-color .18s linear, box-shadow .18s linear;
+}
+.rc-desk .dsk-slot input:focus,
+.rc-desk .dsk-slot textarea:focus,
+.rc-desk .dsk-slot select:focus {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .9);
+  box-shadow: 0 0 0 3px rgba(var(--int-cyan-rgb, 66,178,220), .16);
+  outline: none;
+}
+/* Кнопка отправки анкеты - того же роста, что клавиши панели */
+.rc-desk .dsk-slot button[type="submit"],
+.rc-desk .dsk-slot .btn {
+  width: 100%;
+  min-height: clamp(40px, 5.4vh, 50px);
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
 }
 .rc-desk .dsk-slot textarea { min-height: clamp(48px, 8vh, 90px); }
 .rc-desk .dsk-slot .field { margin-bottom: clamp(5px, .9vh, 10px); }
@@ -339,7 +375,8 @@ html.rc-reduced .rc-desk { display: none; }
   color: #eaf6ff !important;
   letter-spacing: .1em;
 }
-.dsk-b-fly svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 7px; }
+.dsk-b-fly svg { width: 17px; height: 17px; flex: none; }
+.dsk-b-fly b { font-weight: 700; }
 .dsk-b-fly:hover { filter: brightness(1.22); }
 
 /* Запал старта: у самого дна страницы голограмма начинает рваться

@@ -49,7 +49,11 @@ var R_WALL = 3.05;               /* радиус обшивки */
 var H_ROOM = 4.2;                /* высота помещения */
 var EYE = 1.62;                  /* высота глаз над настилом */
 var SECT = TAU / 8;              /* сектор */
-var WIN_HALF = 0.62;             /* половина проёма остекления */
+/* Половина проёма. Ровно один сектор из восьми и ни градусом
+   больше: при 0.62 края соседних экранов заезжали на остекление -
+   владелец увидел это первым пунктом, «экраны заходят поверх окон».
+   Теперь между кромкой окна и краем экрана остаётся зазор. */
+var WIN_HALF = 0.40;
 var WIN_Y0 = 1.02;               /* низ проёма */
 var WIN_Y1 = 2.86;               /* верх проёма */
 
@@ -134,6 +138,12 @@ function cnv(w, h) {
 /* Экран стены. Рисуем не карточку сайта, а бортовой дисплей:
    тёмное стекло, светящаяся кромка, метка раздела, заголовок и
    строки. Развёртка и уголки делают его прибором, а не картинкой. */
+/* Фирменный шрифт сайта. Держим его одной строкой: канвас рисует
+   текст мгновенно, и если шрифт ещё не подгружен, подставится
+   системный - именно поэтому экраны выглядели «простыми». Ниже,
+   после готовности шрифтов, текстуры перерисовываются. */
+var FONT = "'Golos Text', 'Manrope', system-ui, -apple-system, sans-serif";
+
 function screenTex(T, rec, tiny) {
   var W = tiny ? 512 : 768, H = tiny ? 384 : 576;
   var c = cnv(W, H), x = c.getContext("2d"), i;
@@ -154,7 +164,7 @@ function screenTex(T, rec, tiny) {
 
   /* Метка раздела */
   x.fillStyle = "#5fc8ef";
-  x.font = "600 " + Math.round(W * 0.028) + "px 'Golos Text', system-ui, sans-serif";
+  x.font = "700 " + Math.round(W * 0.026) + "px " + FONT;
   x.textBaseline = "top";
   var tag = (rec.tag || "").toUpperCase();
   var sp = "";
@@ -164,7 +174,7 @@ function screenTex(T, rec, tiny) {
 
   /* Заголовок */
   x.fillStyle = "#eaf4ff";
-  x.font = "700 " + Math.round(W * 0.068) + "px 'Golos Text', system-ui, sans-serif";
+  x.font = "800 " + Math.round(W * 0.082) + "px " + FONT;
   var hy = PAD + W * 0.085;
   var words = String(rec.h || "").split(" "), line = "", maxW = W - PAD * 2;
   for (i = 0; i < words.length; i++) {
@@ -182,7 +192,7 @@ function screenTex(T, rec, tiny) {
   x.fillRect(PAD, hy + W * 0.012, W - PAD * 2, 1);
 
   /* Строки: каждая с точкой-маркером */
-  x.font = "500 " + Math.round(W * 0.042) + "px 'Golos Text', system-ui, sans-serif";
+  x.font = "500 " + Math.round(W * 0.040) + "px " + FONT;
   var ly = hy + W * 0.055;
   var lines = rec.lines || [];
   for (i = 0; i < lines.length && ly < H - PAD; i++) {
@@ -651,6 +661,23 @@ function build(T, opts) {
   var deskLight = new T.PointLight(0x5fc8ef, 1.1, 7);
   deskLight.position.set(0, WIN_Y0 + 0.4, -(R_WALL - 1.1));
   grp.add(deskLight);
+
+  /* Шрифт мог не успеть загрузиться к моменту первой отрисовки:
+     тогда текст лёг системной гарнитурой и экран выглядел чужим.
+     Как только шрифты готовы, карты собираются заново. */
+  if (doc.fonts && doc.fonts.ready && doc.fonts.ready.then) {
+    doc.fonts.ready.then(function () {
+      for (var si = 0; si < screens.length; si++) {
+        var sc = screens[si];
+        var nt = screenTex(T, recs[sc.i - 1], tiny);
+        var old = sc.obj.material.map;
+        sc.obj.material.map = nt;
+        sc.obj.material.needsUpdate = true;
+        sc.tex = nt;
+        if (old && old.dispose) old.dispose();
+      }
+    });
+  }
 
   return {
     group: grp,
