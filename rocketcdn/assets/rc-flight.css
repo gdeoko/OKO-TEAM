@@ -1152,6 +1152,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
    он часть помещения и виден только в проёме. Плоская подхватывает
    кадр в момент старта полёта, когда совпадает с ней в точности. */
 .rc-flight.rcf-stage .rcf-cab { opacity: 0 !important; }
+/* Плита приборов вынесена из слоя окна, и прежнее правило про
+   режим сцены её больше не касалось: в финале сайта под голограммой
+   вопросов зажигались клавиши полёта. Перечисляем её явно. */
+.rc-flight.rcf-stage .rcf-deck,
 .rc-flight.rcf-stage .rcf-hud,
 .rc-flight.rcf-stage .rcf-uni,
 .rc-flight.rcf-stage .rcf-auto,
@@ -2443,6 +2447,16 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
     linear-gradient(270deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 2.2%),
     linear-gradient(0deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 2.6%) !important;
 }
+/* В режиме сцены кромка чуть плотнее: там за корпусом стоят стены
+   салона, и по самому краю они просвечивали светлой полосой */
+.rc-flight.rcf-stage::before {
+  background:
+    linear-gradient(90deg, rgba(4, 11, 20, .96) 0%, rgba(6, 15, 26, 0) 4.5%),
+    linear-gradient(270deg, rgba(4, 11, 20, .96) 0%, rgba(6, 15, 26, 0) 4.5%),
+    linear-gradient(180deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 3.5%),
+    linear-gradient(0deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 3%) !important;
+}
+
 @media (max-width: 760px) {
   .rc-flight::before {
     background:
