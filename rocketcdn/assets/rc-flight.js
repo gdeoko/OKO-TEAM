@@ -385,78 +385,6 @@ function buildUI() {
          далее - все они наклеены не красиво, не часть интерфейса, ещё
          и криво». Теперь это одна панель, и она стоит в нише пульта
          на самой картинке кабины. */
-      '<div class="rcf-deck">' +
-        /* Левая консоль: обзор системы. Круглый экран с орбитами,
-           телами и кораблём в середине - по нему сразу видно, где мы
-           и куда идти. Раньше на этом месте висели две строчки
-           счётчиков, и это была единственная «карта» в игре. */
-        '<div class="rcf-left">' +
-          '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
-          '<div class="rcf-gauges">' +
-            '<div class="rcf-prog"></div>' +
-            '<div class="rcf-net"></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="rcf-mid">' +
-          '<div class="rcf-keys">' +
-            '<button type="button" class="rcf-navkey" aria-expanded="false">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
-              '<b>' + (RU ? "КУРС" : "COURSE") + '</b><u></u>' +
-            '</button>' +
-            '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
-              '<path d="M3 12h18"/></svg>' +
-              '<b>' + (RU ? "СКАНЕР" : "SCAN") + '</b></button>' +
-            '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
-              '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
-            /* Стоп. Без него единственным способом остановиться было
-               довести рычаг тяги до нуля вручную и ждать, пока
-               инерция стечёт - на телефоне это неудобно вдвойне. */
-            '<button type="button" class="rcf-stop-key" aria-label="' + (RU ? "Полная остановка" : "Full stop") + '">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
-              '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
-            /* Справка: что здесь вообще делать. Раньше об этом
-               говорила одна строка подсказки, которая гасла через
-               семь секунд и больше не возвращалась. */
-            '<button type="button" class="rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
-              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-              '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
-              '<path d="M12 17.2h.01"/></svg>' +
-            '</button>' +
-          '</div>' +
-          '<button type="button" class="rcf-deploy"></button>' +
-        '</div>' +
-        /* Правая консоль: тяга и скорость. Рычаг тянут пальцем или
-           мышью, и это принципиально: человек не жмёт интерфейс, он
-           двигает ручку и чувствует, как корабль набирает ход. */
-        '<div class="rcf-right">' +
-          '<button type="button" class="rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
-            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-            '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>' +
-          '</button>' +
-          '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
-            '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
-            '<i class="rcf-thr-fill"></i>' +
-            '<i class="rcf-thr-grip"></i>' +
-            '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
-          '</div>' +
-          '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
-        '</div>' +
-      '</div>' +
-      /* Курсовая строка на верхней перемычке корпуса: цель, до неё,
-         режим. Ровно то место, где в кабине и положено быть
-         курсовому табло. */
       '<div class="rcf-course"><span class="rcf-c-goal">—</span>' +
         '<i></i><span class="rcf-c-dist">—</span>' +
         '<i></i><span class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</span></div>' +
@@ -533,7 +461,79 @@ function buildUI() {
       '</div>' +
       '<div class="rcf-lock" aria-hidden="true"><b></b><b></b><b></b><b></b><span></span></div>' +
     '</div>' +
-    '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
+        '<div class="rcf-deck">' +
+        /* Левая консоль: обзор системы. Круглый экран с орбитами,
+           телами и кораблём в середине - по нему сразу видно, где мы
+           и куда идти. Раньше на этом месте висели две строчки
+           счётчиков, и это была единственная «карта» в игре. */
+        '<div class="rcf-left">' +
+          '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
+          '<div class="rcf-gauges">' +
+            '<div class="rcf-prog"></div>' +
+            '<div class="rcf-net"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="rcf-mid">' +
+          '<div class="rcf-keys">' +
+            '<button type="button" class="rcf-navkey" aria-expanded="false">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
+              '<b>' + (RU ? "КУРС" : "COURSE") + '</b><u></u>' +
+            '</button>' +
+            '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
+              '<path d="M3 12h18"/></svg>' +
+              '<b>' + (RU ? "СКАНЕР" : "SCAN") + '</b></button>' +
+            '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="false">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
+              '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
+            /* Стоп. Без него единственным способом остановиться было
+               довести рычаг тяги до нуля вручную и ждать, пока
+               инерция стечёт - на телефоне это неудобно вдвойне. */
+            '<button type="button" class="rcf-stop-key" aria-label="' + (RU ? "Полная остановка" : "Full stop") + '">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<rect x="6" y="6" width="12" height="12" rx="2"/></svg>' +
+              '<b>' + (RU ? "СТОП" : "STOP") + '</b></button>' +
+            /* Справка: что здесь вообще делать. Раньше об этом
+               говорила одна строка подсказки, которая гасла через
+               семь секунд и больше не возвращалась. */
+            '<button type="button" class="rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+              'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
+              '<path d="M12 17.2h.01"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<button type="button" class="rcf-deploy"></button>' +
+        '</div>' +
+        /* Правая консоль: тяга и скорость. Рычаг тянут пальцем или
+           мышью, и это принципиально: человек не жмёт интерфейс, он
+           двигает ручку и чувствует, как корабль набирает ход. */
+        '<div class="rcf-right">' +
+          '<button type="button" class="rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>' +
+          '</button>' +
+          '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
+            '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
+            '<i class="rcf-thr-fill"></i>' +
+            '<i class="rcf-thr-grip"></i>' +
+            '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
+          '</div>' +
+          '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+        '</div>' +
+    '</div>' +
+      /* Курсовая строка на верхней перемычке корпуса: цель, до неё,
+         режим. Ровно то место, где в кабине и положено быть
+         курсовому табло. */
+'<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
     '<button type="button" class="rcf-auto" aria-pressed="false">' +
       '<i></i><span>' + (RU ? "Автопилот" : "Autopilot") + '</span>' +
     '</button>' +
@@ -555,6 +555,7 @@ function buildUI() {
   ui.wrap = w;
   ui.cv = w.querySelector(".rcf-cv");
   ui.cab = w.querySelector(".rcf-cab");
+  ui.hud = w.querySelector(".rcf-hud");
   ui.cap = w.querySelector(".rcf-cap");
   ui.nav = w.querySelector(".rcf-nav");
   ui.bar = w.querySelector(".rcf-track i");
@@ -3047,7 +3048,11 @@ function holoSetup() {
   if (holoReady || !g.RC_HOLO || !ui.wrap) return;
   holoReady = true;
   try {
-    g.RC_HOLO.init(ui.wrap);
+    /* Метки объектов живут на стекле, а не поверх всей кабины: слой
+       вкладывается в приборы окна и обрезается его границами. Иначе
+       подпись планеты вылезала на корпус, чего в корабле быть не
+       может. */
+    g.RC_HOLO.init(ui.hud || ui.wrap);
     g.RC_HOLO.onPick(function (id) {
       /* Клик по голограмме - это курс на объект. Ровно то, чего
          ждёшь от метки в кабине: ткнул и полетел. */

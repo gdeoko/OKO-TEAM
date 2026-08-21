@@ -2313,3 +2313,117 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-stop-key b { display: none; }
   .rc-flight .rcf-help li { grid-template-columns: 78px 1fr; gap: 9px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Окно корабля - граница для всего
+
+   «У нас типа панель = окно корабля = экран с голограммами, за
+   рамки панели надписи в корабль не могут попадать, накладываться.
+   И чтобы окна и надписи друг на друга не накладывались тоже.»
+
+   Значит у приборов ровно две области, и третьей быть не может:
+     - остекление: всё, что светится на стекле - титры, задание,
+       список сети, метки, досье, справка, меню;
+     - ниша корпуса: плита с клавишами, радар, тяга, скорость.
+
+   Ниже слой приборов приводится к границам остекления и обрезается
+   по ним. Ни одна надпись физически не может выйти на корпус.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-hud {
+  left: var(--cab-wx, 6%);
+  top: var(--cab-wy, 8%);
+  right: auto;
+  bottom: auto;
+  width: var(--cab-ww, 88%);
+  height: var(--cab-wh, 68%);
+  overflow: hidden;
+  /* Скругление по форме остекления: свет проекции не должен
+     доходить до самых углов рамы */
+  border-radius: clamp(10px, 2vw, 28px);
+}
+
+/* Раскладка на стекле: три пояса сверху вниз, без пересечений.
+   Каждый элемент знает свою полосу и не заходит в чужую. */
+.rc-flight .rcf-hud .rcf-cap {
+  top: 8px;
+  max-width: 92%;
+  white-space: normal;
+  text-align: center;
+}
+.rc-flight .rcf-hud .rcf-course {
+  top: auto;
+  bottom: 8px;
+  left: 50%;
+}
+.rc-flight .rcf-hud .rcf-mis {
+  left: 10px;
+  right: auto;
+  top: 52px;
+  bottom: auto;
+  width: min(46%, 280px);
+}
+.rc-flight .rcf-hud .rcf-netlist {
+  right: 10px;
+  left: auto;
+  top: 52px;
+  width: min(34%, 170px);
+}
+.rc-flight .rcf-hud .rcf-fail {
+  top: 44px;
+  bottom: auto;
+}
+.rc-flight .rcf-hud .rcf-hint {
+  /* Над курсовой строкой, а не на ней: два текста в одной точке
+     кадра снова читались кашей */
+  bottom: 30px;
+  max-width: 86%;
+}
+.rc-flight .rcf-hud .rcf-course { bottom: 6px; }
+.rc-flight .rcf-hud .rcf-prog,
+.rc-flight .rcf-hud .rcf-net { display: none; }
+
+/* Досье, справка и меню тоже живут на стекле и обрезаются им */
+.rc-flight .rcf-dos,
+.rc-flight .rcf-help {
+  left: var(--cab-wx, 6%);
+  top: var(--cab-wy, 8%);
+  right: auto;
+  bottom: auto;
+  width: var(--cab-ww, 88%);
+  height: var(--cab-wh, 68%);
+  border-radius: clamp(10px, 2vw, 28px);
+  overflow: hidden;
+}
+.rc-flight .rcf-dos { display: grid; place-items: center; }
+.rc-flight .rcf-dos-in { width: min(92%, 520px); max-height: 92%; overflow-y: auto; }
+.rc-flight .rcf-help-in { width: min(92%, 520px); max-height: 92%; }
+.rc-flight .rcf-menu {
+  left: 50%;
+  bottom: auto;
+  top: calc(var(--cab-wy, 8%) + var(--cab-wh, 68%) - 8px);
+  transform: translateX(-50%) translateY(-100%);
+  max-height: calc(var(--cab-wh, 68%) - 16px);
+}
+.rc-flight .rcf-menu.on { transform: translateX(-50%) translateY(-100%); }
+
+/* Виньетка снята. «Виньетка и затемнения по краям смотрится
+   ужасно» - и правда: подложка съедала углы кадра и делала картинку
+   грязной. Корпус на рисунке и так непрозрачен, а по самой кромке
+   достаточно тонкой тени, чтобы кадр не обрывался в пустоту. */
+.rc-flight::before {
+  background:
+    linear-gradient(90deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 2.2%),
+    linear-gradient(270deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 2.2%),
+    linear-gradient(0deg, rgba(4, 11, 20, .9) 0%, rgba(6, 15, 26, 0) 2.6%) !important;
+}
+@media (max-width: 760px) {
+  .rc-flight::before {
+    background:
+      linear-gradient(90deg, rgba(4, 11, 20, .95) 0%, rgba(6, 15, 26, 0) 4%),
+      linear-gradient(270deg, rgba(4, 11, 20, .95) 0%, rgba(6, 15, 26, 0) 4%),
+      linear-gradient(0deg, rgba(4, 11, 20, .95) 0%, rgba(6, 15, 26, 0) 5%) !important;
+  }
+  .rc-flight .rcf-hud .rcf-mis { width: min(64%, 240px); top: 46px; }
+  .rc-flight .rcf-hud .rcf-netlist { display: none; }
+  .rc-flight .rcf-hud .rcf-cap { font-size: 10px; }
+}
