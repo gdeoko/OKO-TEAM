@@ -4734,7 +4734,8 @@ Rocket.prototype.tick = function (ts) {
      прежний выход без перепланирования оставлял канвас мёртвым после
      возвращения из игры. Тик без отрисовки почти бесплатен. */
   var rcl = document.documentElement.classList;
-  if (rcl.contains("rc-flying") || rcl.contains("rc-rocket-parked")) {
+  if (rcl.contains("rc-flying") || rcl.contains("rc-inside") ||
+      rcl.contains("rc-rocket-parked")) {
     this._last = 0;
     this._raf = requestAnimationFrame(this.tick.bind(this));
     return;

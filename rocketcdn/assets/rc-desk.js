@@ -90,6 +90,9 @@ function build() {
   layer.innerHTML =
     '<div class="dsk-win">' +
       '<div class="dsk-frame">' +
+        /* Уголковые метки проекции: те же, что у меток в игре -
+           интерфейс корабля один на весь мир */
+        '<div class="dsk-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' +
         '<i class="dsk-scan" aria-hidden="true"></i>' +
         '<i class="dsk-beam" aria-hidden="true"></i>' +
         '<div class="dsk-body"></div>' +

@@ -3371,3 +3371,24 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   }
 }
 .rc-flight .rcf-hint { bottom: auto !important; height: auto; }
+
+/* Дубль скорости в ленте нужен только на телефоне: правило с
+   меньшей специфичностью проигрывало общему стилю ячеек табло */
+.rc-flight .rcf-d-top .rcf-d-spd { display: none; }
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-top .rcf-d-spd { display: inline-flex; }
+}
+
+/* Подсказку поднимаем только там, где она мешала - на телефоне
+   карточка задания стоит внизу окна. На широком экране задание
+   слева вверху, и подсказке место у нижней кромки остекления. */
+.rc-flight .rcf-hint {
+  top: auto;
+  bottom: calc(100% - var(--cab-wy, 8%) - var(--cab-wh, 68%) + 22px) !important;
+}
+@media (max-width: 760px) {
+  .rc-flight .rcf-hint {
+    top: calc(var(--cab-wy, 8%) + var(--cab-wh, 68%) - 128px);
+    bottom: auto !important;
+  }
+}

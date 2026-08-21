@@ -2697,7 +2697,7 @@ function buildWorld() {
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     /* Позиция светила: по ней бортовые панели набирают заряд */
-    sunPos: sunGlow.position,
+    sunPos: sunGlow.position, corIn: corIn, corOut: corOut,
     starShell: starShell,
     sunMat: sunBody.material,
     sun: sunBody, mercury: mercury, venus: venus,
@@ -4242,6 +4242,7 @@ function open() {
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: true } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(true); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(true); } catch (e) {} }
+  stageLite(false);
   if (g.RC_track) g.RC_track("flight", "open");
 
   /* Из режима сцены цикл уже работает: второй rAF-контур давал
@@ -5664,6 +5665,13 @@ function stage(k) {
     if (ui.cab.complete && ui.cab.naturalWidth) ui.wrap.classList.add("has-cab");
     else ui.cab.onload = function () { if (ui.wrap) ui.wrap.classList.add("has-cab"); };
   }
+  /* ── Разгрузка салона ────────────────────────────────────
+     Из окна корабля виден только ближний космос: Земля, Луна и
+     звёзды. Дальние галактики, туманности, пояс астероидов и
+     планеты-гиганты в кадр не попадают, но честно рендерятся -
+     и именно на них уходил кадр в финале сайта. Гасим их на время
+     салона и возвращаем при старте полёта. */
+  stageLite(true);
   ui.wrap.classList.add("on", "rcf-stage");
   /* Класс на корне гасит трёхмерную рубку сайта: два корабля в одном
      кадре - это и есть тот самый шов, ради которого всё затевалось */
@@ -5672,7 +5680,32 @@ function stage(k) {
   if (!F.raf) F.raf = requestAnimationFrame(frame);
 }
 
+/* Тяжёлые дальние слои мира: в салоне они не видны из окна, а
+   стоят дороже всего остального вместе взятого */
+function stageLite(on) {
+  if (!W3) return;
+  var far = [W3.milky, W3.gal2, W3.gal3, W3.nebSprites, W3.belt1, W3.belt2,
+             W3.jupiter, W3.uranus, W3.neptune, W3.mercury, W3.venus,
+             W3.hole, W3.comet, W3.saturn, W3.mars,
+             /* Солнце дороже всех: его поверхность считает шейдер
+                конвекции на каждый пиксель. Из окна салона звезда
+                не видна - она за кормой. */
+             W3.sun, W3.sunGlow, W3.corIn, W3.corOut];
+  for (var i = 0; i < far.length; i++) {
+    var o = far[i];
+    if (!o) continue;
+    if (o.length) { for (var j = 0; j < o.length; j++) if (o[j]) o[j].visible = !on; }
+    else o.visible = !on;
+  }
+  /* Плотность пикселей в салоне ниже: кадр статичный, камера едет
+     по прокрутке, и разница на глаз не видна */
+  if (W3.r) W3.r.setPixelRatio(on
+    ? Math.min(1, g.devicePixelRatio || 1)
+    : Math.min(g.devicePixelRatio || 1, tiny ? 1.0 : (innerWidth < 760 ? 1.2 : 1.8)));
+}
+
 function stageOff() {
+  stageLite(false);
   F.stageK = 0;
   if (!F.stage) return;
   cabinDrop();

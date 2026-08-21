@@ -209,6 +209,10 @@ function power() {
 function frame() {
   raf = requestAnimationFrame(frame);
   if (doc.hidden || !stage) return;
+  /* Сила ноль - мир не участвует в кадре вообще (салон, полёт,
+     форма). Раньше он всё равно считал позиции и рисовал слои,
+     хотя ни один его пиксель не был виден. */
+  if (power() <= 0) return;
 
   /* Стоим и указатель замер - считаем реже, мир только дышит */
   var y = g.pageYOffset || doc.documentElement.scrollTop || 0;

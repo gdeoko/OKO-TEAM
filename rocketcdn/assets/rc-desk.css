@@ -401,3 +401,63 @@ html.rc-reduced .rc-desk { display: none; }
   pointer-events: none;
   animation: dskArm .28s linear infinite;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Голограмма финала: бортовой прибор, а не белая плита
+
+   На экране она читалась светлым прямоугольником поверх кадра.
+   У проекции корабля обязаны быть свои приметы: срезанный угол,
+   уголковые метки по углам, строчная развёртка и мягкое свечение
+   кромки. Те же приметы носят метки в игре - интерфейс один.
+   ═══════════════════════════════════════════════════════════ */
+.rc-desk .dsk-frame {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .58);
+  box-shadow:
+    inset 0 0 40px -14px rgba(var(--int-cyan-rgb, 66,178,220), .55),
+    0 0 44px -16px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  /* Срезанный верхний угол - опознавательный знак приборной
+     графики: прямоугольник читается веб-карточкой */
+  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+/* Строчная развёртка проекции */
+.rc-desk .dsk-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg,
+    rgba(150, 220, 250, .05) 0 1px,
+    rgba(0, 0, 0, 0) 1px 3px);
+  mix-blend-mode: screen;
+  z-index: 2;
+}
+/* Уголковые метки: прибор наведён и держит цель */
+.rc-desk .dsk-frame > .dsk-corners {
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  z-index: 3;
+}
+.rc-desk .dsk-corners i {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 0 solid rgba(var(--int-cyan-rgb, 66,178,220), .95);
+}
+.rc-desk .dsk-corners i:nth-child(1) { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
+.rc-desk .dsk-corners i:nth-child(2) { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; }
+.rc-desk .dsk-corners i:nth-child(3) { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
+.rc-desk .dsk-corners i:nth-child(4) { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+
+/* Заголовок проекции: метка раздела, как на экранах салона */
+.rc-desk .dsk-title {
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .95);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
+}

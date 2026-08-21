@@ -152,9 +152,9 @@ function screenTex(T, rec, tiny) {
      стену за собой. Текст при этом читается - контраст держат
      кромка и общее затемнение. */
   var gr = x.createLinearGradient(0, 0, W * 0.4, H);
-  gr.addColorStop(0, "rgba(13,33,53,.78)");
-  gr.addColorStop(0.55, "rgba(8,25,42,.72)");
-  gr.addColorStop(1, "rgba(5,15,28,.80)");
+  gr.addColorStop(0, "rgba(13,33,53,.46)");
+  gr.addColorStop(0.55, "rgba(8,25,42,.38)");
+  gr.addColorStop(1, "rgba(5,15,28,.48)");
   x.fillStyle = gr; x.fillRect(0, 0, W, H);
 
   /* Пятно от лампы ниши сверху */
@@ -214,13 +214,26 @@ function screenTex(T, rec, tiny) {
         w2 = parts[k];
       } else w2 = pr;
     }
-    if (w2) x.fillText(w2, PAD + W * 0.05, yy);
+    if (w2 && yy < H - PAD * 1.2) x.fillText(w2, PAD + W * 0.05, yy);
     ly = yy + W * 0.072;
+    /* Не начинаем строку, которой не хватит места: обрезанный
+       хвост текста на стене читается как брак */
+    if (ly > H - PAD * 1.6) break;
   }
 
   /* Развёртка строк: дисплей, а не плакат */
-  x.fillStyle = "rgba(5,14,26,.30)";
-  for (i = 0; i < H; i += 4) x.fillRect(0, i, W, 1.4);
+  /* Развёртка заметнее: строчная сетка - главный признак того,
+     что перед нами луч проектора, а не наклеенная панель */
+  x.fillStyle = "rgba(5,14,26,.42)";
+  for (i = 0; i < H; i += 4) x.fillRect(0, i, W, 1.6);
+  /* Горизонтальная полоса подсветки, как у живого дисплея */
+  var bandY = H * 0.34;
+  var bg2 = x.createLinearGradient(0, bandY - H * 0.1, 0, bandY + H * 0.1);
+  bg2.addColorStop(0, "rgba(95,200,239,0)");
+  bg2.addColorStop(0.5, "rgba(95,200,239,.06)");
+  bg2.addColorStop(1, "rgba(95,200,239,0)");
+  x.fillStyle = bg2;
+  x.fillRect(0, bandY - H * 0.1, W, H * 0.2);
 
   /* Кромка и уголки */
   x.strokeStyle = "rgba(95,200,239,.55)"; x.lineWidth = 3;
@@ -316,12 +329,18 @@ function build(T, opts) {
 
   var hull = hullTex(T);
   hull.repeat.set(6, 1);
-  var wallMat = new T.MeshStandardMaterial({
-    map: hull, side: T.BackSide, roughness: 0.66, metalness: 0.28,
+  /* Салон освещается физически, но материал берём дешёвый.
+     MeshPhongMaterial - полноценный PBR: он считает микрофасеты
+     и окружение на каждый пиксель, и пять ламп салона умножали эту
+     работу впятеро. На телефоне это и был главный тормоз финальной
+     сцены. Phong с бликом даёт ту же картинку интерьера в разы
+     дешевле: сталь читается сталью, обшивка обшивкой. */
+  var wallMat = new T.MeshPhongMaterial({
+    map: hull, side: T.BackSide,
     color: 0x93aac2
   });
-  var steel = new T.MeshStandardMaterial({ color: 0x3d4c5d, roughness: 0.42, metalness: 0.86 });
-  var caseMat = new T.MeshStandardMaterial({ color: 0x1b2c3f, roughness: 0.8, metalness: 0.16 });
+  var steel = new T.MeshPhongMaterial({ color: 0x3d4c5d, shininess: 46, specular: 0x6f8296 });
+  var caseMat = new T.MeshPhongMaterial({ color: 0x1b2c3f, shininess: 12, specular: 0x223447 });
   var litCyan = new T.MeshBasicMaterial({ color: 0x5fc8ef, transparent: true, opacity: 0.75, fog: false });
   var litSoft = new T.MeshBasicMaterial({ color: 0x9fe0f6, transparent: true, opacity: 0.3,
     blending: T.AdditiveBlending, depthWrite: false, fog: false });
@@ -349,7 +368,7 @@ function build(T, opts) {
   /* ── Настил и потолок ───────────────────────────────────── */
   var floor = new T.Mesh(
     new T.CircleGeometry(R_WALL, tiny ? 34 : 52),
-    new T.MeshStandardMaterial({ map: deckTex(T), roughness: 0.82, metalness: 0.28, color: 0xa8bccf })
+    new T.MeshPhongMaterial({ map: deckTex(T), shininess: 14, specular: 0x2c3d4f, color: 0xa8bccf })
   );
   floor.rotation.x = -Math.PI / 2;
   grp.add(floor);
@@ -366,7 +385,7 @@ function build(T, opts) {
 
   var ceil = new T.Mesh(
     new T.CircleGeometry(R_WALL, tiny ? 30 : 46),
-    new T.MeshStandardMaterial({ color: 0x0f1e2e, roughness: 0.92, metalness: 0.2, side: T.BackSide })
+    new T.MeshPhongMaterial({ color: 0x0f1e2e, shininess: 6, side: T.BackSide })
   );
   ceil.rotation.x = -Math.PI / 2;
   ceil.position.y = H_ROOM;
@@ -427,7 +446,7 @@ function build(T, opts) {
      давала дугу в целый сектор: экран налезал на швы и на окно -
      владелец видел «за рамки входят». Читаемость на телефоне даёт
      камера (подъезд ближе), а не растяжка стены. */
-  var SCR_W = 1.86, SCR_H = 1.42;
+  var SCR_W = 1.72, SCR_H = 1.34;
   var scrR = R_WALL - 0.14;
   var scrArc = SCR_W / scrR;
   var hoodArc = (SCR_W + 0.22) / (R_WALL - 0.14);
@@ -442,7 +461,7 @@ function build(T, opts) {
       new T.CylinderGeometry(scrR, scrR, SCR_H, tiny ? 8 : 14, 1, true,
         thetaOf(th) - scrArc / 2, scrArc),
       new T.MeshBasicMaterial({ map: tex, side: T.BackSide, fog: false,
-        transparent: true, opacity: 0.92, depthWrite: false })
+        transparent: true, opacity: 0.86, depthWrite: false })
     );
     face.position.y = EYE + 0.06;
     face.renderOrder = 6;
@@ -452,7 +471,7 @@ function build(T, opts) {
       new T.CylinderGeometry(scrR + 0.07, scrR + 0.07, SCR_H + 0.22, tiny ? 8 : 12, 1, true,
         thetaOf(th) - scrArc * 0.58, scrArc * 1.16),
       new T.MeshBasicMaterial({ color: 0x2b8fc4, side: T.BackSide, fog: false,
-        transparent: true, opacity: 0.10, blending: T.AdditiveBlending, depthWrite: false })
+        transparent: true, opacity: 0.16, blending: T.AdditiveBlending, depthWrite: false })
     );
     back.position.y = EYE + 0.06;
     grp.add(back);
@@ -481,8 +500,8 @@ function build(T, opts) {
   }
 
   /* ── Рама остекления ────────────────────────────────────── */
-  var frameMat = new T.MeshStandardMaterial({
-    color: 0x27394b, roughness: 0.36, metalness: 0.82, side: T.DoubleSide
+  var frameMat = new T.MeshPhongMaterial({
+    color: 0x27394b, side: T.DoubleSide
   });
   function arc(y, h, mat) {
     var s = new T.Mesh(
@@ -532,7 +551,7 @@ function build(T, opts) {
   /* Кабельные трассы поясом под потолком и спуски на стойки:
      вертикаль связывает потолок со стеной, и верх кадра перестаёт
      висеть отдельно */
-  var cableMat = new T.MeshStandardMaterial({ color: 0x0e1c2a, roughness: 0.95, metalness: 0.1 });
+  var cableMat = new T.MeshPhongMaterial({ color: 0x0e1c2a, shininess: 4 });
   for (i = 0; i < (tiny ? 1 : 2); i++) {
     m = new T.Mesh(new T.TorusGeometry(R_WALL - 0.1, 0.055 + i * 0.018, 5, tiny ? 26 : 38), cableMat);
     m.rotation.x = Math.PI / 2;
@@ -551,7 +570,7 @@ function build(T, opts) {
 
   /* Вентиляционные решётки в плинтусе: мелочь, но именно такие
      мелочи в нижнем поясе объясняют, что помещение рабочее */
-  var ventMat = new T.MeshStandardMaterial({ color: 0x4d5f72, roughness: 0.9, metalness: 0.25 });
+  var ventMat = new T.MeshPhongMaterial({ color: 0x4d5f72, shininess: 10, specular: 0x2a3a4a });
   var ventGeo = new T.PlaneGeometry(0.86, 0.26);
   for (i = 0; i < (tiny ? 2 : 4); i++) {
     th = azOf(i * 2) + SECT / 2;
@@ -565,8 +584,8 @@ function build(T, opts) {
      Пульт неглубокий и прижат к носу: всё, что торчит вбок,
      попадает в кадр ещё в салоне и режет обзор поперёк. */
   var con = new T.Group();
-  var desk = new T.Mesh(new T.BoxGeometry(3.1, 0.14, 0.86), new T.MeshStandardMaterial({
-    color: 0x16283a, roughness: 0.3, metalness: 0.66
+  var desk = new T.Mesh(new T.BoxGeometry(3.1, 0.14, 0.86), new T.MeshPhongMaterial({
+    color: 0x16283a
   }));
   desk.position.set(0, WIN_Y0 - 0.16, -(R_WALL - 0.62));
   desk.rotation.x = -0.2;
@@ -678,7 +697,10 @@ function build(T, opts) {
   var warmL = new T.PointLight(0xa974f5, 1.7, 9, 1.6);
   warmL.position.set(1.6, 2.6, 1.9);
   grp.add(warmL);
-  var deskLight = new T.PointLight(0x5fc8ef, 1.1, 7);
+  /* Четыре источника вместо пяти: подсветка пульта повторяла
+     потолочную, а каждый источник умножает стоимость шейдера
+     всех материалов сцены разом */
+  var deskLight = new T.PointLight(0x5fc8ef, 1.5, 7);
   deskLight.position.set(0, WIN_Y0 + 0.4, -(R_WALL - 1.1));
   grp.add(deskLight);
 
