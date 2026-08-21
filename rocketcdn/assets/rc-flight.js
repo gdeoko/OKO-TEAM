@@ -2417,6 +2417,14 @@ function holoTotal() {
 
 var holoSeen = -1;
 function holoFrame(w3, ts) {
+  /* В салоне подписей объектов быть не должно: мы ещё не в полёте,
+     а сидим в корабле, и метки «ЛУНА», «МАРС» поверх стен читаются
+     чужим слоем поверх помещения. Они зажигаются вместе с
+     остальными приборами - в момент старта. */
+  if (F.stage) {
+    if (holoReady && g.RC_HOLO && g.RC_HOLO.clear) { try { g.RC_HOLO.clear(); } catch (e) {} }
+    return;
+  }
   holoSetup();
   if (!holoReady) return;
 
@@ -2742,19 +2750,12 @@ function frame(ts) {
      наклон камеры вниз поднимает цель в стекло. */
   if (innerHeight > innerWidth) w3.cam.rotateX(-0.042);
 
-  /* Подъезд в режиме сцены. Владелец описал этот проход дословно:
-     «она после 360 чуть дальше камера ракурс, и по скроллу без текста
-     мы приближаемся, пока ракурс не станет такой, как в старте игры».
-     Значит доля подъезда не двигает корабль по маршруту - она только
-     отводит камеру назад по её же оси взгляда. На единице отвода нет
-     совсем: кадр в точности тот, с которого начинается полёт. */
-  if (F.stage) {
-    var backK = 1 - (F.stageK || 0);
-    if (backK > 0.002) {
-      w3.tmpB.set(0, 0, 1).applyQuaternion(w3.cam.quaternion);
-      w3.cam.position.addScaledVector(w3.tmpB, backK * 26);
-    }
-  }
+  /* В режиме сцены постановку кадра целиком ведёт салон: камера
+     стоит внутри корабля, обходит его взглядом и подступает к
+     остеклению. Всё, что насчитано выше - маршрут, взгляд, крен,
+     тряска - к салону отношения не имеет, поэтому положение и
+     поворот переписываются здесь начисто. */
+  if (F.stage && cabin) stageCam(dt);
 
   var speed = Math.abs(F.v);
 
@@ -3140,6 +3141,10 @@ function open() {
     F.stageK = 0;
     ui.wrap.classList.remove("rcf-stage");
     root.classList.remove("rc-stage");
+    /* Салон уходит из сцены ровно в тот кадр, когда его корпус в
+       проёме совпал с плоской рамкой полёта: подмены не видно, а
+       геометрия комнаты больше не тратит ни кадра. */
+    cabinDrop();
   } else {
     F.p = 0; F.v = 0; F.last = 0;
   }
@@ -3220,6 +3225,7 @@ function close() {
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
   root.classList.remove("rc-flying", "rc-stage");
   ui.wrap.classList.remove("on", "rcf-stage");
+  cabinDrop();
   inertPage(false);
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: false } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(false); } catch (e) {} }
@@ -3297,6 +3303,146 @@ function launchers() {
   });
 }
 
+/* ── Салон корабля внутри мира игры ──────────────────────────
+   Строится один раз и стоит вокруг точки, с которой начинается
+   полёт. Собственной сцены у салона нет и быть не может: именно
+   две сцены и порождали подмену, которую владелец назвал сменой
+   «нарисованного на такое».
+
+   Место салона выведено из финала, а не подобрано: в конце
+   подъезда камера обязана оказаться ровно в точке старта полёта,
+   на расстоянии CAM_WIN от остекления. Отсюда центр помещения
+   лежит позади этой точки на (радиус минус CAM_WIN), а его ноль
+   азимута смотрит туда же, куда камера в первом кадре полёта.
+   Тогда последний кадр салона и первый кадр игры - один и тот же
+   кадр, и склеивать нечего. */
+var cabin = null;
+var CAM_WIN = 1.42;              /* от глаз до остекления в финале */
+
+function cabinBuild() {
+  if (cabin || !W3 || !g.RC_CABIN) return cabin;
+  var T = g.THREE;
+  var portrait = innerHeight > innerWidth;
+  /* Плоскость корпуса в проёме подбираем так, чтобы на финальном
+     ракурсе она проецировалась ровно во весь кадр - тогда подмена
+     её плоской рамкой в момент старта не видна ничем. */
+  var fovR = W3.fov0 * Math.PI / 180;
+  /* Корпус стоит НЕ в самом проёме, а на шаг внутрь помещения, и
+     это не произвол. Плоскость шириной во весь кадр, поставленная у
+     стены, углами вылезает за цилиндр обшивки - и стена закрывает
+     ей края. Отсюда щели по бокам, которые и были видны. На метре с
+     небольшим от глаз углы укладываются внутрь радиуса, а сам
+     корпус по-прежнему закрывает кадр целиком. */
+  var dist = 0.92;
+  /* Запас в четверть: края корпуса обязаны уходить за границы кадра,
+     иначе между ними и стенами салона остаётся щель. Больше брать
+     нельзя - углы плоскости вылезут за цилиндр обшивки, и стена
+     закроет их сама. */
+  var fh = 2 * Math.tan(fovR / 2) * dist * 1.24;
+  var fw = fh * (innerWidth / Math.max(1, innerHeight));
+  cabin = g.RC_CABIN.build(T, {
+    tiny: innerWidth < 760,
+    cabSrc: portrait ? "assets/gen/cockpit-tall.webp" : "assets/gen/cockpit-wide.webp",
+    cabW: fw, cabH: fh, cabZ: dist, camWin: CAM_WIN
+  });
+
+  /* Куда смотрит камера в первом кадре полёта */
+  var p0 = W3.path.getPointAt(0);
+  var look0 = (W3.looks && W3.looks[0] && W3.looks[0].at) ? W3.looks[0].at : new T.Vector3(0, 0, 0);
+  var dir = new T.Vector3().subVectors(look0, p0);
+  var yaw0 = Math.atan2(dir.x, -dir.z);        /* азимут этого направления */
+  var flat = new T.Vector3(dir.x, 0, dir.z).normalize();
+
+  cabin.group.rotation.y = yaw0;
+  /* Центр помещения позади финальной точки: вперёд по взгляду до
+     стены остаётся ровно CAM_WIN */
+  var back = cabin.R - CAM_WIN;
+  cabin.center = new T.Vector3(
+    p0.x - flat.x * back,
+    p0.y - cabin.eye,                          /* пол под глазами */
+    p0.z - flat.z * back
+  );
+  cabin.group.position.copy(cabin.center);
+  cabin.yaw0 = yaw0;
+  cabin.p0 = p0.clone();
+  /* Ориентация камеры в финале - та же, что в первом кадре полёта */
+  var m = new T.Matrix4().lookAt(p0, look0, new T.Vector3(0, 1, 0));
+  cabin.q1 = new T.Quaternion().setFromRotationMatrix(m);
+  cabin.qTmp = new T.Quaternion();
+  cabin.eTmp = new T.Euler(0, 0, 0, "YXZ");
+  cabin.vTmp = new T.Vector3();
+  W3.scene.add(cabin.group);
+  return cabin;
+}
+
+function cabinDrop() {
+  if (!cabin || !W3) return;
+  W3.scene.remove(cabin.group);
+  cabin = null;
+}
+
+/* Постановка кадра в салоне.
+
+   Оборот ведёт прокрутка страницы: доля приходит из сцены сайта,
+   которая знает, где какой раздел. Камера не летает по комнате -
+   она стоит в середине и поворачивается, а к концу подступает к
+   остеклению. Экраны при этом не двигаются вовсе: они часть стен,
+   и «наверх ничто не уходит», как и требовалось. */
+function stageCam(dt) {
+  var C = cabin, T = g.THREE, w3 = W3;
+  var I = g.RC_INTERIOR;
+  var yawT = (I && I.yaw) ? I.yaw() : 0;
+  var k = F.stageK || 0;
+  var ek = 0.5 - 0.5 * Math.cos(Math.PI * k);    /* мягкий подъезд */
+
+  /* Оборот сходится к нулю по мере подъезда: в конце камера
+     смотрит строго в окно, иначе проём уедет вбок */
+  var yaw = yawT * (1 - ek);
+  F.stageYaw = yaw;
+
+  /* Дыхание: человек не штатив. На подъезде затухает - там кадр
+     обязан встать намертво. */
+  F.stageT = (F.stageT || 0) + dt;
+  var calm = 1 - ek;
+  var drift = Math.sin(F.stageT / 5.5) * 0.02 * calm;
+  var bob = Math.sin(F.stageT / 3.2) * 0.012 * calm;
+
+  /* Положение: от середины помещения к финальной точке */
+  var eyeY = C.center.y + C.eye + bob;
+  C.vTmp.set(C.center.x, eyeY, C.center.z);
+  C.vTmp.lerp(C.p0, ek);
+  w3.cam.position.copy(C.vTmp);
+
+  /* Поворот: пока идёт оборот - свой азимут, к финалу сходимся к
+     ориентации первого кадра полёта, вместе с её наклоном */
+  C.eTmp.set(0, C.yaw0 - yaw + drift, 0);
+  C.qTmp.setFromEuler(C.eTmp);
+  w3.cam.quaternion.copy(C.qTmp).slerp(C.q1, ek * ek);
+
+  if (w3.cam.fov !== w3.fov0) { w3.cam.fov = w3.fov0; w3.cam.updateProjectionMatrix(); }
+
+  /* Корпус кабины в проёме проявляется к концу подъезда: до этого
+     мы видим сам проём и настоящую раму, а рисунок корпуса
+     подхватывает кадр ровно там, где совпадает с плоской рамкой
+     полёта. Опережать нельзя - иначе он повиснет в воздухе. */
+  if (C.frame) {
+    var fo = Math.max(0, Math.min(1, (ek - 0.62) / 0.34));
+    C.frame.material.opacity = fo;
+    C.frame.visible = fo > 0.01;
+  }
+  /* Свет пульта разгорается вместе с подходом */
+  if (C.deskLight) C.deskLight.intensity = 0.9 + ek * 1.9;
+  /* Диоды дышат */
+  if (C.diodes && !ui.wrap.classList.contains("rcf-fast")) {
+    for (var i = 0; i < C.diodes.length; i++) {
+      var d = C.diodes[i];
+      var b = 0.55 + 0.45 * Math.sin(F.stageT * 1.7 + d.userData.ph);
+      d.material.transparent = true;
+      d.material.opacity = b;
+    }
+  }
+}
+
 /* ── Кабина как финал сайта ──────────────────────────────────
    Раньше финал рисовала своя трёхмерная рубка: свой корпус, своё
    остекление, своя нарисованная планета. Получались два разных
@@ -3314,8 +3460,11 @@ function launchers() {
    Доля k ведёт подъезд: 0 - камера отведена назад (кадр «панель чуть
    дальше»), 1 - ровно ракурс старта полёта. */
 function stage(k) {
-  k = k < 0 ? 0 : k > 1 ? 1 : k;
-  if (k <= 0.002) { stageOff(); return; }
+  /* Отрицательная доля - команда убрать салон совсем. Ноль это не
+     «выключено», а «вошли, но ещё не подступили к панели»: салон в
+     этот момент как раз и нужен целиком. */
+  if (k == null || k < 0) { stageOff(); return; }
+  k = k > 1 ? 1 : k;
   if (F.open && !F.stage) return;            /* игра уже идёт - не мешаем */
   if (!g.THREE) {
     /* Объёмный слой ещё грузится: попробуем, когда доедет */
@@ -3344,6 +3493,7 @@ function stage(k) {
 
   F.stage = true;
   F.open = true;                              /* кадр рисуется тем же циклом */
+  cabinBuild();
   F.p = 0; F.v = 0; F.last = 0;
   F.away = false;
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
@@ -3364,6 +3514,7 @@ function stage(k) {
 function stageOff() {
   F.stageK = 0;
   if (!F.stage) return;
+  cabinDrop();
   F.stage = false;
   F.open = false;
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
@@ -3373,6 +3524,13 @@ function stageOff() {
 
 g.RC_FLIGHT = {
   open: open, close: close, stage: stage,
+  state: function () {
+    return {
+      сцена: !!F.stage, подъезд: +(F.stageK || 0).toFixed(2),
+      салон: !!cabin, оборот: F.stage ? +((F.stageYaw || 0) * 57.3).toFixed(0) : null,
+      полёт: !!F.open && !F.stage
+    };
+  },
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);

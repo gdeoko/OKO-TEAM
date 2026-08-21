@@ -170,6 +170,10 @@ paintCSS();
    справочник с вопросами, остальные держат стену, чтобы при
    обороте в кадре не было глухого места. */
 var PANELS = 8;
+/* Азимут, на котором мы оказываемся, переступив порог: между
+   первым экраном и остеклением, чтобы кадр входа не упирался ни в
+   текст, ни в окно */
+var ENTER_AZ = 0.35;
 var STEP = TAU / PANELS;         /* сорок пять градусов на остановку */
 var R_WALL = 2.52;               /* радиус, на котором висят панели */
 var H_WALL = 1.75;               /* высота их центра над полом */
@@ -246,57 +250,39 @@ function measure() {
   g.RC_LAND_AT = P_LOCK;
 
   /* ── Узлы оборота ──────────────────────────────────────────
-     Карточки надёжности разложены по своему блоку, справочник
-     вопросов - по своему, остаток оборота уходит на подход к
-     пульту. Считаем от настоящих прямоугольников: правка текста
-     сдвигает узлы вместе с содержимым, а не ломает раскладку. */
-  var n = relCards();
-  PLAN.n = n;
+     Владелец описал этот проход по шагам: «зашли на 20 градусов,
+     повернулись вокруг до 350, и на 360 стоит та самая панель чуть
+     дальше, мы приближаемся к ней».
+
+     Так и разложено. Вход смотрит между экранами - на двадцати
+     градусах, чтобы первый кадр внутри не упирался в текст. Дальше
+     семь остановок по числу экранов на стенах: сорок пять, девяносто
+     и так до трёхсот пятнадцати. Ноль азимута занят остеклением, и
+     круг замыкается ровно на нём - на трёхстах шестидесяти.
+
+     Остановки раскладываем по отрезку от входа до конца оборота
+     равномерно. Раньше они считались от прямоугольников разделов, и
+     это было верно, пока экраны были карточками сайта. Теперь экраны
+     стоят на стенах салона и от вёрстки не зависят: их семь всегда, и
+     делить между ними надо не разделы, а прокрутку. */
+  PLAN.n = 7;
   PLAN.rel = [];
-  /* Отступы сверху и снизу не декоративные. Кольцо карточек
-     держится в середине кадра не весь блок, а пока обёртка идёт
-     мимо: до и после этого оно едет вместе со страницей. Узлы
-     обязаны уложиться внутрь этого отрезка, иначе последняя
-     панель встаёт напротив человека уже после того, как кольцо
-     отпустили, и текст читается на отъезжающей стене. */
-  var relA = (relTop + innerHeight * 0.22) / maxS;
-  var relB = (relBot - innerHeight * 0.85) / maxS;
-  if (relB - relA < 0.004) relB = relA + 0.004;
-
-  KNOT = [[P_IN, 0]];
-  for (var i = 0; i < n; i++) {
-    var a = (i + 0.5) * STEP;
+  KNOT = [[P_IN, ENTER_AZ]];
+  var span = Math.max(0.004, P_TURN - P_IN);
+  for (var i = 1; i <= 7; i++) {
+    var a = i * STEP;
     PLAN.rel.push(a);
-    KNOT.push([relA + ((i + 0.5) / n) * (relB - relA), a]);
+    /* Первую остановку не ставим сразу у входа: между порогом и
+       первым экраном должен остаться шаг, иначе человек не успевает
+       понять, что вошёл в помещение. */
+    KNOT.push([P_IN + span * (0.10 + 0.78 * (i - 0.5) / 7), a]);
   }
-
-  PLAN.faq = (n + 0.5) * STEP;
-  if (faq) {
-    var fb = faq.getBoundingClientRect();
-    var fTop = fb.top + y, fBot = fb.bottom + y;
-    KNOT.push([(fTop + (fBot - fTop) * 0.35 - innerHeight * 0.15) / maxS, PLAN.faq]);
-    /* Круг обязан замкнуться ДО подхода к пульту: раньше последняя
-       четверть оборота доигрывалась уже в акте пульта, и два
-       движения накладывались друг на друга - зритель не получал ни
-       законченного оборота, ни спокойного подхода к панели. */
-    KNOT.push([(fBot - innerHeight * 0.55) / maxS, TAU]);
-  }
-
+  PLAN.faq = 5 * STEP;
+  /* Конец оборота: почти замкнули круг, окно уже показалось справа */
+  KNOT.push([P_TURN, TAU - 0.175]);
+  /* Подъезд идёт строго по оси окна */
+  KNOT.push([P_CON, TAU]);
   PLAN.con = TAU;
-  /* В акте пульта камера уже никуда не поворачивается: она только
-     подступает к панели (этим занимается dolly ниже) */
-  /* Круг замыкается не на направлении входа, а на пульте: он стоит
-     в своём углу рубки (TH_CON), и человек, обойдя салон взглядом,
-     доворачивается именно к нему. Раньше оборот заканчивался ровно
-     там же, откуда начался, и панель оказывалась перед глазами уже
-     на входе - клиент справедливо сказал, что так не бывает: пульт
-     это предмет обстановки, а не интерфейс поверх кадра. */
-  KNOT.push([P_TURN, TAU + TH_CON]);
-  /* Раньше на подъезде камера ещё чуть доворачивалась (плюс три
-     градуса). На плоской стене это не читалось, а с настоящим
-     носовым окном - сразу: проём уезжал вбок, и голограмма вставала
-     не по центру кадра. Подъезд идёт строго по оси окна. */
-  KNOT.push([P_CON, TAU + TH_CON]);
 
   /* Узлы обязаны идти строго по возрастанию: иначе на коротком
      блоке камера дёрнется назад посреди сектора. */
@@ -818,656 +804,31 @@ function planetTex() {
    и жгутов) заменены на кольца и трубки с малым числом сегментов,
    поэтому набор деталей вырос, а вершин стало не больше: место
    освободили, а не добавили. */
+/* ── Сцена отдана миру игры ──────────────────────────────────
+   Здесь раньше строилась вся рубка: обшивка, восемь панелей,
+   иллюминаторы, пульт, планета за стеклом - отдельная трёхмерная
+   сцена со своим холстом и своим контекстом. Именно она и была
+   вторым кораблём, из-за которого в финале происходила подмена
+   «нарисованного на настоящее».
+
+   Теперь салон строит rc-cabin внутри мира полёта, и корабль на
+   весь эпизод один. Этому модулю осталась его настоящая работа -
+   счёт: где начинается вход, как идёт оборот, когда камера
+   подступает к панели. Числа те же, что и были, их читают и
+   вёрстка, и сцена игры. */
 function build() {
-  if (st.built || !T) return;
-
-  var i, j, m, th;
-
-  cv = doc.createElement("canvas");
-  cv.id = "intCanvas";
-  cv.className = "rc-int-canvas";
-  cv.setAttribute("aria-hidden", "true");
-  doc.body.appendChild(cv);
-
-  /* Воздух рубки: плоский слой поверх холста. Он делает то, чего
-     трёхмерная сцена дёшево не умеет - виньетку по углам кадра и
-     тёплый подмес в нижней трети, там где работает свет пульта.
-     Полноценно это считается только постобработкой, а она стоит
-     второго прохода по всем пикселям; здесь тот же результат берёт
-     один композитный слой браузера. */
-  air = doc.createElement("i");
-  air.className = "rc-int-air";
-  air.setAttribute("aria-hidden", "true");
-  doc.body.appendChild(air);
-
-  rend = new T.WebGLRenderer({ canvas: cv, antialias: !phone, alpha: true, powerPreference: "high-performance" });
-    /* Рубка - самая дорогая сцена на странице: цилиндр, панели,
-     иллюминаторы и планета за окном. Считать её в два пикселя на
-     точку незачем, разницы на глаз нет, а кадры она забирает
-     целиком. Полтора пикселя на мониторе, один с четвертью на
-     телефоне. */
-  rend.setPixelRatio(Math.min(tiny ? 1.0 : (phone ? 1.45 : 1.6), g.devicePixelRatio || 1));
-  rend.setSize(innerWidth, innerHeight, false);
-  if (rend.outputColorSpace !== undefined) rend.outputColorSpace = T.SRGBColorSpace;
-  rend.toneMapping = T.ACESFilmicToneMapping;
-  rend.toneMappingExposure = 0.94;
-
-  scene = new T.Scene();
-  /* Туман плотнее прежнего в два с половиной раза. Раньше он стоял
-     на 0.055 и на трёх метрах давал три процента - то есть не делал
-     ничего, и дальняя стена была ровно такой же яркой, как ближняя.
-     Именно поэтому рубка читалась плоской картинкой: у неё не было
-     воздушной перспективы. Теперь на дальней стене четверть тумана,
-     на ближней десятая часть, и глубина появляется сама. */
-  scene.fog = new T.FogExp2(COL.deep, phone ? 0.115 : 0.135);
-
-  /* Входим с узким углом: в тамбуре тесно. Внутри угол раскрывается
-     (на телефоне сильнее, см. fovIn), и человек физически чувствует,
-     что вышел из щели в помещение. */
-  st.fov = st.fovT = fovTamb();
-  cam = new T.PerspectiveCamera(st.fov, innerWidth / innerHeight, 0.1, 60);
-  cam.position.set(0, EYE, st.dolly);
-
-  grp = new T.Group();
-  scene.add(grp);
-
-  /* Карта окружения для металла. Если её собрать не удалось (старый
-     драйвер, отказ PMREM), металл гасим до полуматового: чёрных
-     зеркал в кадре быть не должно. */
-  var hasEnv = false;
-  try {
-    var pm = new T.PMREMGenerator(rend);
-    var et = envTex();
-    scene.environment = pm.fromEquirectangular(et).texture;
-    pm.dispose(); et.dispose();
-    hasEnv = true;
-  } catch (e) {}
-  var METAL = hasEnv ? 0.9 : 0.42;
-  var ENVI = 0.5;
-
-  /* ── Общие материалы ──────────────────────────────────────
-     Материалов ровно столько, сколько в рубке настоящих веществ:
-     крашеный металл обшивки, полированный металл набора, матовый
-     пластик приборов, стекло, резина уплотнителей и чистый свет.
-     Каждый переиспользуется всеми деталями своего вещества - лишний
-     материал это лишняя компиляция шейдера на слабом телефоне. */
-  var hull = hullTex();
-  hull.repeat.set(7, 1);
-  var shellMat = new T.MeshStandardMaterial({
-    map: hull, side: T.BackSide, roughness: 0.8, metalness: 0.3,
-    color: 0x8296ab, envMapIntensity: ENVI * 0.6
-  });
-  /* Полированный набор: стойки, балки, рамы. Ему и достаётся блик */
-  var steelMat = new T.MeshStandardMaterial({
-    color: 0x3c4956, roughness: 0.45, metalness: METAL, envMapIntensity: ENVI * 0.85
-  });
-  /* Матовый корпусный пластик: козырьки ниш, короба */
-  var caseMat = new T.MeshStandardMaterial({
-    color: COL.wall, roughness: 0.82, metalness: 0.12,
-    emissive: COL.emis, emissiveIntensity: 0.1, envMapIntensity: ENVI * 0.4
-  });
-  /* Резина уплотнителей: она не блестит вовсе, и именно поэтому
-     рядом с ней металл читается металлом */
-  var rubberMat = new T.MeshStandardMaterial({
-    color: 0x0a1119, roughness: 1, metalness: 0
-  });
-  /* Чистый свет: лампы, кромки, полосы. Один материал на цвет */
-  var litCyan = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.62, fog: false });
-  var litWarm = new T.MeshBasicMaterial({ color: 0xffd9b8, transparent: true, opacity: 0.26, fog: false });
-  var litEdge = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.24, fog: false });
-  /* Пятна света: сложение, без записи в буфер глубины, иначе они
-     срежут всё, что окажется за ними */
-  var pool = poolTex();
-  var poolWarm = new T.MeshBasicMaterial({
-    map: pool, color: 0xffb07a, transparent: true, opacity: 0.44,
-    blending: T.AdditiveBlending, depthWrite: false, fog: false
-  });
-  var poolCool = new T.MeshBasicMaterial({
-    map: pool, color: COL.lit, transparent: true, opacity: 0.32,
-    blending: T.AdditiveBlending, depthWrite: false, fog: false
-  });
-
-  /* ── Оболочка ───────────────────────────────────────────
-     Обшивка идёт тремя поясами, а не одной трубой. Средний пояс -
-     на высоте окна - обрывается у проёма: в носу рубки настоящая
-     дыра в борту, и сквозь неё виден космос. Именно этого не
-     хватало раньше: пульт с окном рисовался поверх сплошной стены,
-     и владелец справедливо назвал это «панель поверх салона».
-
-     Нижний и верхний пояса замкнуты кругом: проём начинается на
-     высоте пояса приборов и заканчивается под кабельной трассой,
-     как в настоящей кабине. */
-  var segAll = tiny ? 28 : 44;
-  /* Стена начинается там, где вырез кончается, и идёт по кругу до
-     его другого края: у цилиндра three.js угол растёт в другую
-     сторону, чем наш азимут, поэтому старт берётся от дальнего
-     края окна. */
-  var gapA = thetaOf(TH_CON - WIN_HALF);
-  var gapLen = WIN_HALF * 2;
-  var shellBand = function (y0, y1, thetaStart, thetaLength) {
-    var sg = Math.max(4, Math.round(segAll * (thetaLength / TAU)));
-    var mesh = new T.Mesh(
-      new T.CylinderGeometry(R_SHELL, R_SHELL, y1 - y0, sg, 1, true, thetaStart, thetaLength),
-      shellMat
-    );
-    mesh.position.y = (y0 + y1) / 2;
-    grp.add(mesh);
-    return mesh;
-  };
-  shellBand(0, WIN_Y0, 0, TAU);                     /* пояс под окном */
-  shellBand(WIN_Y1, 3.4, 0, TAU);                   /* пояс над окном */
-  shellBand(WIN_Y0, WIN_Y1, gapA, TAU - gapLen);    /* пояс окна: с вырезом */
-
-  /* ── Настил ───────────────────────────────────────────────
-     Решётка, а под ней провал: пол получает толщину. Металличность
-     держим низкой - мокрого блеска на техническом настиле не бывает,
-     а вот сухой рассеянный отклик есть. */
-  var floor = new T.Mesh(
-    new T.CircleGeometry(2.6, tiny ? 36 : 52),
-    new T.MeshStandardMaterial({
-      map: deckTex(), roughness: 0.88, metalness: 0.34,
-      color: 0x6d7f93, envMapIntensity: ENVI * 0.5
-    })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  grp.add(floor);
-
-  /* Технический люк в середине настила: у пола появляется центр, и
-     круг перестаёт быть бесконечным полем решётки */
-  var hatch = new T.Mesh(new T.CircleGeometry(0.66, 22), steelMat);
-  hatch.rotation.x = -Math.PI / 2;
-  hatch.position.y = 0.014;
-  grp.add(hatch);
-  m = new T.Mesh(new T.RingGeometry(0.66, 0.71, 22), litCyan);
-  m.rotation.x = -Math.PI / 2;
-  m.position.y = 0.016;
-  grp.add(m);
-
-  /* Световая полоса по периметру пола. Главная линия всей рубки:
-     она обводит помещение по низу и тем самым объявляет его форму.
-     Без неё пол и стена сходились в чёрный шов, и круг не читался. */
-  var rim = new T.Mesh(new T.RingGeometry(2.42, 2.52, tiny ? 36 : 52), new T.MeshBasicMaterial({
-    color: 0x9fd4ea, transparent: true, opacity: 0.42, fog: false
-  }));
-  rim.rotation.x = -Math.PI / 2;
-  rim.position.y = 0.02;
-  grp.add(rim);
-
-  /* Разлив от полосы на настил: свет обязан куда-то ложиться */
-  var spill = new T.Mesh(new T.RingGeometry(1.85, 2.5, tiny ? 28 : 40), new T.MeshBasicMaterial({
-    color: COL.cyan, transparent: true, opacity: 0.17,
-    blending: T.AdditiveBlending, depthWrite: false, fog: false
-  }));
-  spill.rotation.x = -Math.PI / 2;
-  spill.position.y = 0.024;
-  grp.add(spill);
-  fine.push(spill);
-
-  /* ── Потолок с рёбрами ────────────────────────────────────
-     Ребристый потолок нужен не ради ребёр. Он даёт кадру верхнюю
-     границу: балки сходятся к середине и работают линиями схода,
-     по которым глаз мгновенно понимает, что стоит в круглой
-     комнате, а не смотрит на изогнутую картинку. */
-  var ceil = new T.Mesh(
-    new T.CircleGeometry(2.6, tiny ? 28 : 44),
-    new T.MeshStandardMaterial({
-      color: 0x16273a, roughness: 0.9, metalness: 0.22, side: T.BackSide,
-      envMapIntensity: ENVI * 0.3
-    })
-  );
-  ceil.rotation.x = -Math.PI / 2;
-  ceil.position.y = 3.4;
-  grp.add(ceil);
-
-  var beams = tiny ? 6 : 10;
-  var beamGeo = new T.BoxGeometry(0.13, 0.17, 2.34);
-  for (i = 0; i < beams; i++) {
-    m = new T.Mesh(beamGeo, steelMat);
-    m.position.set(0, 3.22, 0);
-    m.rotation.y = i / beams * TAU;
-    m.translateZ(-1.24);
-    grp.add(m);
-    fine.push(m);
-  }
-
-  /* Обод под потолком: балки обязаны на что-то опираться */
-  m = new T.Mesh(new T.TorusGeometry(2.46, 0.055, 4, tiny ? 26 : 36), steelMat);
-  m.rotation.x = Math.PI / 2;
-  m.position.y = 3.14;
-  grp.add(m);
-
-  /* Потолочный плафон: единственный источник верхнего света в кадре.
-     Сам он не светит (настоящих ламп у нас пять), но глаз обязан
-     видеть, откуда идёт верхний свет, иначе градиент на стенах
-     выглядит покраской, а не освещением. */
-  m = new T.Mesh(new T.CircleGeometry(0.82, 20), new T.MeshBasicMaterial({
-    color: COL.lit, transparent: true, opacity: 0.62, fog: false
-  }));
-  m.rotation.x = Math.PI / 2;
-  m.position.y = 3.36;
-  grp.add(m);
-
-  m = new T.Mesh(new T.CircleGeometry(2.3, tiny ? 20 : 30), new T.MeshBasicMaterial({
-    map: poolTex(), color: 0x86b6d4, transparent: true, opacity: 0.3,
-    blending: T.AdditiveBlending, depthWrite: false, fog: false
-  }));
-  m.rotation.x = Math.PI / 2;
-  m.position.y = 3.33;
-  grp.add(m);
-  fine.push(m);
-
-  /* ── Силовые стойки между панелями ────────────────────────
-     Стоят на швах круга и выступают внутрь. Это самая полезная
-     деталь всей рубки: при повороте они проходят у самого объектива
-     и едут заметно быстрее дальней стены. Такой параллакс глаз
-     читает как «я нахожусь внутри», и никакая текстура его не
-     заменит. */
-  var strutGeo = new T.BoxGeometry(0.125, 2.36, 0.22);
-  var strutLit = new T.PlaneGeometry(0.03, 1.9);
-  for (i = 0; i < PANELS; i++) {
-    th = i * STEP;
-    /* Стойка на азимуте пульта пришлась бы ровно посреди окна и
-       перечеркнула бы космос пополам. Соседние две стоят по краям
-       проёма и работают его косяками. */
-    if (inWindow(th, -0.12)) continue;
-    var col = new T.Group();
-    m = new T.Mesh(strutGeo, steelMat);
-    m.position.set(0, 0, -2.48);
-    col.add(m);
-    /* Световая нитка по внутреннему ребру стойки */
-    var nl = new T.Mesh(strutLit, litEdge);
-    nl.position.set(0, 0, -2.365);
-    col.add(nl);
-    col.rotation.y = -th;
-    col.position.y = 1.72;
-    grp.add(col);
-  }
-
-  /* ── Ниши со стеновыми панелями ───────────────────────────
-     Панель теперь не приклеена к стене, а утоплена в нишу: над ней
-     козырёк, под козырьком тёплая лампа, от лампы на плите пятно
-     света. Три предмета вместо одного, и панель получает глубину -
-     раньше это был просто светлый прямоугольник на светлой стене.
-
-     Угол панели совпадает с поворотом камеры, при котором человек
-     стоит к ней лицом: панель номер i живёт на (i + 0.5) * 45
-     градусов. Из-за этого карточке достаточно знать свой номер,
-     чтобы встать на своё место.
-
-     Три знака минус в rotation.y - не опечатка: камера смотрит
-     вдоль минус Z и вращается на минус yaw, поэтому стена, чтобы
-     оказаться напротив, обязана повернуться в другую сторону. */
-  var panelMat = new T.MeshStandardMaterial({
-    map: screenTex(), color: 0xdfe9f2, roughness: 0.5, metalness: 0.32,
-    emissive: COL.emis, emissiveIntensity: 0.5, envMapIntensity: ENVI * 0.5
-  });
-  /* Свободные панели круга закрыты приборными стойками: глухой
-     стены при обороте быть не должно, а вешать туда нечего */
-  var rackMat = new T.MeshStandardMaterial({
-    map: rackTex(), roughness: 0.66, metalness: 0.3,
-    emissive: 0x0d2a40, emissiveIntensity: 0.8, envMapIntensity: ENVI * 0.5
-  });
-  var faceGeo = new T.PlaneGeometry(1.9, 1.42);
-  var lampGeo = new T.PlaneGeometry(1.62, 0.028);
-  var hoodGeo = new T.BoxGeometry(2.0, 0.1, 0.24);
-  var poolGeo = new T.PlaneGeometry(1.94, 1.5);
-
-  for (i = 0; i < PANELS; i++) {
-    th = (i + 0.5) * STEP;
-    /* Две плиты приходятся на носовой проём: их не строим вовсе.
-       Обе они были глухими стеллажами (i >= 5), содержимого мы не
-       теряем - карточки живут на первых пяти. Якорь всё равно
-       заводим: кинематограф спрашивает по номеру, и пропуск в
-       списке сдвинул бы все следующие панели на шаг. */
-    if (inWindow(th, 0.02)) { anchors.push({ obj: null, th: th }); continue; }
-    var pan = new T.Group();
-    /* Плита утоплена глубже стены: у ниши появляется дно */
-    var face = new T.Mesh(faceGeo, i < 5 ? panelMat : rackMat);
-    face.position.set(0, 0, -R_WALL);
-    pan.add(face);
-
-    /* Козырёк ниши. Он выступает в помещение на 12 сантиметров и
-       прячет лампу: источник виден только по своему свету, как в
-       настоящем интерьере. */
-    var hood = new T.Mesh(hoodGeo, caseMat);
-    hood.position.set(0, 0.79, -R_WALL + 0.16);
-    pan.add(hood);
-
-    /* Порожек снизу. Пара «козырёк плюс порожек» и делает нишу
-       нишей: у плиты появляются верх и низ, и она перестаёт быть
-       наклейкой на стене. */
-    var sill = new T.Mesh(hoodGeo, caseMat);
-    sill.position.set(0, -0.79, -R_WALL + 0.13);
-    pan.add(sill);
-
-    /* Тёплая лампа под козырьком. Тёплая нарочно: весь остальной
-       свет в рубке холодный, и без этой ноты кадр синеет целиком */
-    var lampStrip = new T.Mesh(lampGeo, litWarm);
-    lampStrip.position.set(0, 0.71, -R_WALL + 0.1);
-    pan.add(lampStrip);
-
-    /* Пятно от лампы на плите: свет обязан лечь на поверхность */
-    var pl = new T.Mesh(poolGeo, i < 5 ? poolWarm : poolCool);
-    pl.position.set(0, 0.06, -R_WALL + 0.012);
-    pan.add(pl);
-    fine.push(pl);
-
-    pan.rotation.y = -th;
-    pan.position.y = H_WALL;
-    grp.add(pan);
-    anchors.push({ obj: face, th: th });
-  }
-
-  /* ── Иллюминаторы ─────────────────────────────────────────
-     Раньше это была плоская картинка планеты и кольцо поверх неё:
-     дырка в стене, а не окно. Теперь у окна есть настоящая толщина -
-     труба в борту, стекло в её глубине, рама с болтами снаружи и
-     резиновый уплотнитель по стыку. Толщина и решает: по ней глаз
-     понимает, что стена не бумажная.
-
-     Стоят на швах, где нет ни панели, ни пульта. */
-  var glassMat = new T.MeshBasicMaterial({ map: portTex(), color: 0xc6d8e4, fog: false });
-  var bezelMat = new T.MeshStandardMaterial({
-    map: bezelTex(), roughness: 0.3, metalness: METAL * 0.85,
-    envMapIntensity: ENVI * 1.1
-  });
-  var tubeGeo = new T.CylinderGeometry(0.43, 0.43, 0.22, tiny ? 16 : 22, 1, true);
-  var portA = [STEP * 2, STEP * 4, STEP * 6];
-  for (i = 0; i < portA.length; i++) {
-    var port = new T.Group();
-    /* Труба проёма: смотрим в неё изнутри, значит нужна изнанка */
-    var tube = new T.Mesh(tubeGeo, new T.MeshStandardMaterial({
-      color: 0x46586b, roughness: 0.45, metalness: METAL * 0.7,
-      side: T.DoubleSide, envMapIntensity: ENVI * 0.9
-    }));
-    tube.rotation.x = Math.PI / 2;
-    tube.position.set(0, 0, -2.44);
-    port.add(tube);
-
-    /* Стекло сидит в глубине обечайки, а не заподлицо с её краем */
-    var glass = new T.Mesh(new T.CircleGeometry(0.43, tiny ? 16 : 22), glassMat);
-    glass.position.set(0, 0, -2.555);
-    port.add(glass);
-
-    /* Рама с болтами по внутреннему краю обечайки */
-    var bez = new T.Mesh(new T.RingGeometry(0.43, 0.59, tiny ? 18 : 24), bezelMat);
-    bez.position.set(0, 0, -2.32);
-    port.add(bez);
-
-    /* Уплотнитель по стыку рамы с обечайкой */
-    var seal = new T.Mesh(new T.TorusGeometry(0.44, 0.032, 4, tiny ? 14 : 18), rubberMat);
-    seal.position.set(0, 0, -2.33);
-    port.add(seal);
-
-    /* Подсветка проёма изнутри: холодная кромка вокруг стекла */
-    var glow = new T.Mesh(new T.RingGeometry(0.38, 0.43, tiny ? 16 : 22), litEdge);
-    glow.position.set(0, 0, -2.54);
-    port.add(glow);
-
-    port.rotation.y = -portA[i];
-    port.position.y = 2.02;
-    grp.add(port);
-  }
-
-  /* ── Кабельные трассы ─────────────────────────────────────
-     Жгуты идут поясом под потолком и спускаются на стойки. Спуски
-     важнее самих жгутов: вертикаль связывает потолок со стеной, и
-     верх кадра перестаёт висеть отдельно. */
-  var cableMat = new T.MeshStandardMaterial({
-    color: 0x101c2a, roughness: 0.95, metalness: 0.1, envMapIntensity: ENVI * 0.3
-  });
-  for (i = 0; i < (tiny ? 1 : 2); i++) {
-    m = new T.Mesh(new T.TorusGeometry(2.44, 0.055 + i * 0.016, 4, tiny ? 24 : 34), cableMat);
-    m.rotation.x = Math.PI / 2;
-    m.position.y = 3.0 - i * 0.11;
-    grp.add(m);
-  }
-  if (!phone) {
-    var dropGeo = new T.BoxGeometry(0.07, 0.86, 0.07);
-    for (i = 0; i < 4; i++) {
-      var drop = new T.Group();
-      m = new T.Mesh(dropGeo, cableMat);
-      m.position.set(0.14, 0, -2.5);
-      drop.add(m);
-      drop.rotation.y = -(i * STEP * 2);
-      drop.position.y = 2.52;
-      grp.add(drop);
-      fine.push(drop);
-    }
-  }
-
-  /* ── Поручень ─────────────────────────────────────────────
-     Идёт кольцом на высоте руки, в полуметре ниже панелей. Он тоже
-     работает на параллакс: ближняя его дуга проходит перед камерой
-     и режет кадр по низу, а дальняя видна далеко за спиной. */
-  if (!phone) {
-    var rail = new T.Mesh(new T.TorusGeometry(2.4, 0.035, 4, 42), steelMat);
-    rail.rotation.x = Math.PI / 2;
-    rail.position.y = 1.02;
-    grp.add(rail);
-    fine.push(rail);
-  }
-
-  /* ── Вентиляция ───────────────────────────────────────────
-     Решётки стоят в плинтусе, между стойками. Мелочь, но именно
-     такие мелочи в нижнем поясе объясняют, что комната рабочая. */
-  var ventMat = new T.MeshStandardMaterial({
-    map: ventTex(), roughness: 0.9, metalness: 0.25, color: 0x5c6d7e,
-    envMapIntensity: ENVI * 0.3
-  });
-  var ventGeo = new T.PlaneGeometry(0.8, 0.24);
-  for (i = 0; i < (tiny ? 2 : 4); i++) {
-    var vt = new T.Group();
-    m = new T.Mesh(ventGeo, ventMat);
-    m.position.set(0, 0, -2.57);
-    vt.add(m);
-    vt.rotation.y = -((i + 0.5) * STEP * 2);
-    vt.position.y = 0.44;
-    grp.add(vt);
-  }
-
-  /* ── Угол пульта ──────────────────────────────────────────
-     Вся обстановка поста управления живёт в одной группе, повёрнутой
-     на TH_CON. Раньше стойка, столешница и остекление стояли на
-     нуле, а слой кабины (rc-cockpit) считал своё место от TH_CON:
-     пульт в объёме и пульт на картинке стояли в разных углах одной
-     комнаты, и на подъезде камера смотрела мимо мебели. Теперь угол
-     объявлен один раз и им пользуются оба слоя. */
-  var con = new T.Group();
-  /* Точка на азимуте th лежит в (R sin th, h, -R cos th), а
-     содержимое группы стоит на её локальном минус Z. Чтобы это
-     локальное «вперёд» встало ИМЕННО на азимут TH_CON, группу надо
-     повернуть на минус TH_CON: у поворота группы и у нашей
-     азимутальной записи разные знаки. С прямым знаком пульт
-     оказывался зеркально, в противоположном углу комнаты, и камера
-     на подъезде упиралась в стеллажи. */
-  con.rotation.y = -TH_CON;
-  grp.add(con);
-
-  /* ── Носовое остекление ───────────────────────────────────
-     Окно теперь не плита перед стеной, а сама стена: гнутое стекло
-     сидит в вырезе обшивки заподлицо, на том же радиусе. Поэтому за
-     ним настоящий космос сцены, а не подложка, и никакого «окошка,
-     поверх которого наполовину появляется панель» быть уже не
-     может - панель стоит В этом стекле.
-
-     Материал держим почти прозрачным: стекло обязано читаться
-     бликом и лёгкой холодной вуалью, а не тонировкой. */
-  var win = new T.Mesh(
-    new T.CylinderGeometry(R_SHELL - 0.008, R_SHELL - 0.008, WIN_Y1 - WIN_Y0,
-      tiny ? 10 : 16, 1, true, gapA - gapLen, gapLen),
-    new T.MeshBasicMaterial({ color: COL.lit, transparent: true, opacity: 0.035,
-      blending: T.AdditiveBlending, depthWrite: false, side: T.BackSide, fog: false })
-  );
-  win.position.y = (WIN_Y0 + WIN_Y1) / 2;
-  grp.add(win);
-  winMesh = win;
-
-  /* Рама проёма: гнутые пороги сверху и снизу и два вертикальных
-     косяка по краям. Именно рама и превращает вырез в окно - без
-     неё борт выглядит оторванным куском обшивки. */
-  var frameMat = new T.MeshStandardMaterial({
-    color: 0x2b3a4a, roughness: 0.38, metalness: METAL * 0.8,
-    side: T.DoubleSide, envMapIntensity: ENVI
-  });
-  var fasciaMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.5, side: T.BackSide, fog: false });
-  var sillArc = function (y, h, litMat) {
-    var seg = new T.Mesh(
-      new T.CylinderGeometry(R_SHELL - 0.03, R_SHELL - 0.03, h, tiny ? 10 : 16, 1, true,
-        gapA - gapLen, gapLen),
-      litMat || frameMat
-    );
-    seg.position.y = y;
-    grp.add(seg);
-    return seg;
-  };
-  sillArc(WIN_Y0 - 0.055, 0.12);                 /* порожек под стеклом */
-  sillArc(WIN_Y1 + 0.055, 0.12);                 /* козырёк над стеклом */
-  sillArc(WIN_Y0 + 0.012, 0.016, fasciaMat);     /* холодная кромка по низу */
-  sillArc(WIN_Y1 - 0.012, 0.016, fasciaMat);     /* и по верху */
-
-  /* Косяки: короткие вертикальные коробы по краям проёма */
-  var jambGeo = new T.BoxGeometry(0.14, WIN_Y1 - WIN_Y0 + 0.2, 0.2);
-  for (i = 0; i < 2; i++) {
-    var jm = new T.Mesh(jambGeo, frameMat);
-    var jth = TH_CON + (i ? WIN_HALF : -WIN_HALF);
-    jm.position.set((R_SHELL - 0.06) * Math.sin(jth), (WIN_Y0 + WIN_Y1) / 2, -(R_SHELL - 0.06) * Math.cos(jth));
-    jm.rotation.y = -jth;
-    grp.add(jm);
-  }
-
-  /* ── Космос за бортом ─────────────────────────────────────
-     Небо и планета живут в мире рубки, а не в группе пульта: они
-     снаружи корабля, и поворачиваться вместе с мебелью не должны.
-     Туман помещения на них не действует - это воздух каюты, а за
-     стеклом воздуха нет. */
-  var sky = new T.Mesh(
-    new T.SphereGeometry(46, tiny ? 16 : 24, tiny ? 12 : 16),
-    new T.MeshBasicMaterial({ map: skyTex(), side: T.BackSide, fog: false })
-  );
-  grp.add(sky);
-  skyMesh = sky;
-
-  /* Планета за остеклением. Стоит ровно на азимуте окна и чуть
-     ниже линии взгляда: так она попадает в нижнюю треть проёма -
-     тот самый кадр, с которого начинается полёт. */
-  planet = new T.Mesh(
-    new T.SphereGeometry(11.5, tiny ? 24 : 36, tiny ? 16 : 26),
-    new T.MeshBasicMaterial({ map: planetTex(), fog: false })
-  );
-  /* Отодвинута дальше и увеличена: угловой размер тот же, а вот
-     детализация выросла вчетверо - вблизи стекла шар в семь метров
-     превращался в размытое пятно без границы. */
-  var pd = 34;
-  planet.position.set(pd * Math.sin(TH_CON) + 1.4, -8.2, -pd * Math.cos(TH_CON));
-  grp.add(planet);
-
-  /* Атмосферный ободок планеты */
-  halo = new T.Mesh(
-    new T.SphereGeometry(12.0, 24, 16),
-    new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.16,
-      side: T.BackSide, blending: T.AdditiveBlending, fog: false })
-  );
-  halo.position.copy(planet.position);
-  grp.add(halo);
-
-  /* Пульт под остеклением */
-  /* Столешница остаётся тёмной, но с собственным слабым свечением и
-     заметным глянцем: свет из окна обязан скользить по ней длинным
-     бликом, это и делает её столешницей, а не крашеной доской. */
-  var deskMat = new T.MeshStandardMaterial({
-    color: COL.hull, roughness: 0.32, metalness: 0.62,
-    emissive: COL.emis, emissiveIntensity: 0.14, envMapIntensity: ENVI * 1.1
-  });
-  var desk = new T.Mesh(new T.BoxGeometry(2.6, 0.12, 0.75), deskMat);
-  desk.position.set(0, 1.02, -2.05);
-  desk.rotation.x = -0.22;
-  con.add(desk);
-
-  /* ── Приборная стойка ──────────────────────────────────────
-     Нужна ради стыка салона с секцией контактов. Раньше в акте
-     пульта низ кадра занимал голый пол, и анкета висела над
-     пустотой: кадр не был похож на пульт, и раздел читался
-     отдельной картинкой.
-
-     Стойка нарочно неглубокая и прижата к носу. Первая попытка
-     была вдвое крупнее, с боковыми тумбами, и всё сломала: из
-     центра рубки эти тумбы вставали чёрными глыбами поперёк
-     салона. Правило простое - мебель обязана работать только в
-     последней четверти оборота и не лезть в кадр, когда камера
-     стоит у карточек надёжности. */
-  var riser = new T.Mesh(new T.BoxGeometry(3.05, 0.84, 0.46), caseMat);
-  riser.position.set(0, 0.44, -2.26);
-  con.add(riser);
-
-  /* Боковых тумб и крыльев здесь нарочно нет. Их пробовали дважды:
-     всё, что торчит вбок от пульта, попадает в кадр ещё в салоне,
-     ловит направленный свет из окна плашмя и превращается в светлые
-     клинья поперёк карточек надёжности. Борта кадра держат стены и
-     стойки рубки, им мебель для этого не нужна. */
-
-  /* Световая полоса по переднему ребру пульта. Это и есть тот
-     нижний свет, который в секции контактов подсвечивает экран
-     анкеты снизу: источник один, поэтому подсветка формы читается
-     как свет от панели, а не как декоративное свечение карточки.
-     Полоса одна: вторая, по низу стойки, давала в салоне две
-     параллельные линии и читалась дорожной разметкой, а не пультом. */
-  var lip = new T.Mesh(new T.BoxGeometry(2.62, 0.018, 0.022), litCyan);
-  lip.position.set(0, 1.05, -1.66);
-  con.add(lip);
-
-  /* Диоды на пульте: дышат от общего таймера с фазовым сдвигом */
-  var dGeo = new T.SphereGeometry(0.022, 6, 4);
-  for (i = 0; i < (tiny ? 10 : 18); i++) {
-    var warm = i % 3 === 0;
-    var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? COL.vio : COL.cyan, fog: false }));
-    d.position.set(-1.1 + (i % 9) * 0.26, 1.09 + (i > 8 ? 0.06 : 0), -2.16 + (i > 8 ? 0.16 : 0));
-    d.userData.ph = i * 0.7;
-    con.add(d);
-    diodes.push(d);
-  }
-
-  /* ── Свет ─────────────────────────────────────────────────
-     Ламп ровно пять и больше не будет: каждая лишняя это лишний
-     проход по всем материалам сцены на каждом кадре, а рубка живёт
-     в одном контексте на слабом телефоне. Поэтому постановочный
-     свет собран не из ламп, а из ролей.
-
-     Ключевой - холодный из остекления. Заполняющий - отражённый от
-     планеты, он держит дальнюю половину рубки, иначе за спиной
-     выходит чёрная дыра вместо помещения. Контровой тёплый стоит за
-     спиной и обводит стойки по кромке: без него полированный набор
-     сливается со стеной. Свет пульта разгорается на подходе (см.
-     tick). А лужи от ламп в нишах и полоса по полу - не лампы, а
-     нарисованные пятна: света они не считают, но глаз видит именно
-     их и достраивает освещение сам. */
-  lamp = new T.DirectionalLight(COL.lit, 2.5);
-  lamp.position.set(-0.8, 2.6, -4);
-  con.add(lamp);
-  con.add(lamp.target);
-  lamp.target.position.set(0, 1.2, 0);
-
-  var LB = tiny ? 1.2 : 1;
-  scene.add(new T.HemisphereLight(0x27435c, 0x060d16, 0.82 * LB));
-  scene.add(new T.AmbientLight(0x223247, 0.56 * LB));
-
-  /* Контровой тёплый: стоит высоко за спиной входа и обводит
-     кромки. Он же единственная тёплая лампа в холодной комнате. */
-  var warmL = new T.PointLight(COL.vio, 1.7, 8.5, 1.6);
-  warmL.position.set(1.5, 2.5, 1.7);
-  scene.add(warmL);
-
-  /* Свет пульта. Стоит низко, у самой стойки: это он ложится на
-     приборы снизу и тем же цветом подсвечивает экран анкеты.
-     Держим лампу на отлёте от столешницы: вплотную она выжигала
-     переднее ребро пульта в белый клин, и в салоне этот клин
-     перечёркивал кольцо карточек. */
-  deskLight = new T.PointLight(COL.cyan, 0.85, 6.5);
-  deskLight.position.set(0, 1.42, -1.95);
-  con.add(deskLight);
-
+  if (st.built) return;
   st.built = true;
-  try { dispatchEvent(new CustomEvent("rc:interior-ready")); } catch (e) {}
+}
+
+/* Салон и есть сцена игры: включаем её слой в режиме стоянки.
+   Доля подъезда идёт отдельно (см. setProgress), а здесь только
+   факт присутствия: вошли - салон в кадре целиком. */
+function scene3d(on, k) {
+  var F = g.RC_FLIGHT;
+  if (!F || !F.stage) return;
+  if (root.classList.contains("rc-flying")) return;
+  try { F.stage(on ? (k || 0) : -1); } catch (e) {}
 }
 
 /* ── Тамбур ──────────────────────────────────────────────────
@@ -1500,40 +861,23 @@ function lockHide() {
   setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 460);
 }
 
-/* ── Показать и спрятать ─────────────────────────────────── */
-function takeSlot() {
-  if (st.slot) return true;
-  if (g.RC_GL && g.RC_GL.take) {
-    if (g.RC_GL.take(true)) { st.slot = true; return true; }
-    /* Свободного слота нет. Наружная сцена нам его отдаст: по
-       сценарию в этот момент мы уже внутри ракеты и снаружи
-       смотреть не на что. */
-    if (g.RC_ROCKET) {
-      try {
-        g.RC_ROCKET.stop();
-        root.classList.add("rc-rocket-parked");
-        g.RC_GL.give();
-      } catch (e) {}
-      if (g.RC_GL.take(true)) { st.slot = true; return true; }
-    }
-    return false;
-  }
-  st.slot = true;
-  return true;
-}
-
+/* ── Показать и спрятать ───────────────────────────────────
+   Своего холста у салона больше нет, значит и делить бюджет
+   контекстов не с кем: сцена одна, и она принадлежит игре. Здесь
+   осталось только переключение самого эпизода - мы внутри корабля
+   или снаружи. Наружная сцена при входе паркуется: смотреть на
+   ракету снаружи, сидя в ней, не на что. */
 function show() {
   if (st.shown || st.dead) return;
-  if (!takeSlot()) return;
   build();
-  if (!st.built) return;
   st.shown = true;
   root.classList.add("rc-inside");
-  if (cv) cv.classList.add("on");
-  if (air) air.classList.add("on");
   if (g.RC_ROCKET && !root.classList.contains("rc-rocket-parked")) {
     try { g.RC_ROCKET.stop(); root.classList.add("rc-rocket-parked"); } catch (e) {}
   }
+  /* Салон появляется в мире игры тем же кадром, в котором мы
+     переступили порог: подмены нет, потому что подменять нечего */
+  scene3d(true, 0);
   lastTs = 0;
   if (!raf) raf = requestAnimationFrame(tick);
 }
@@ -1542,9 +886,8 @@ function hide() {
   if (!st.shown) return;
   st.shown = false;
   root.classList.remove("rc-inside");
-  if (cv) cv.classList.remove("on");
-  if (air) air.classList.remove("on");
   if (raf) { cancelAnimationFrame(raf); raf = null; }
+  scene3d(false);
   /* Возвращаем наружную сцену: человек листает назад, и ракета
      обязана снова оказаться на месте. */
   if (g.RC_ROCKET && root.classList.contains("rc-rocket-parked")) {
@@ -1685,6 +1028,10 @@ function setProgress(p) {
   var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_CON - P_TURN)) : 0;
   st.con = con;
   pub("--int-con", con.toFixed(2));
+  /* Долю подъезда отдаём сцене напрямую: по ней камера в салоне
+     идёт от середины помещения к остеклению и приходит ровно в ту
+     точку, с которой начинается полёт. */
+  if (st.shown) scene3d(true, con);
 
   /* Отъезд от пульта. По сценарию клиента после анкеты камера идёт
      назад, анкета растворяется голограммой, и в кадре остаётся
@@ -1769,26 +1116,12 @@ if (!phone) {
    Возвращаем доли экрана (0..1), расстояние в метрах, масштаб
    относительно опорного и запас читаемости v: единица - панель в
    середине кадра, ноль - ушла за край или за спину. */
-var vTmp = null;
-function project(th, h) {
-  var out = { x: 0.5, y: 0.5, d: 99, s: 0.5, v: 0 };
-  if (!st.built || !cam) return out;
-  if (!vTmp) vTmp = new T.Vector3();
-  cam.updateMatrixWorld();
-  vTmp.set(R_WALL * Math.sin(th), h === undefined ? H_WALL : h, -R_WALL * Math.cos(th));
-  vTmp.applyMatrix4(cam.matrixWorldInverse);
-  var d = -vTmp.z;
-  out.d = d;
-  if (d < 0.15) return out;                      /* за спиной: адреса нет */
-  var f = 1 / Math.tan(cam.fov * Math.PI / 360);
-  var ndcX = (vTmp.x / d) * f / cam.aspect;
-  var ndcY = (vTmp.y / d) * f;
-  out.x = ndcX * 0.5 + 0.5;
-  out.y = -ndcY * 0.5 + 0.5;
-  out.s = (R_WALL + EYE * 0.25) / d;
-  var edge = Math.abs(ndcX);
-  out.v = edge > 1.6 ? 0 : (edge < 0.55 ? 1 : (1.6 - edge) / 1.05);
-  return out;
+/* Экранных адресов панелей больше нет и быть не может: панели
+   живут в мире игры, а не в своей сцене. Функция оставлена
+   заглушкой - её ещё спрашивают старые слои (кино, снимок кабины),
+   и пустой ответ для них означает «встань по-своему». */
+function project() {
+  return { x: 0.5, y: 0.5, d: 99, s: 0.5, v: 0 };
 }
 
 /* ── Экранный прямоугольник остекления пульта ────────────────
@@ -1801,53 +1134,11 @@ function project(th, h) {
    Считаем в системе группы пульта (она повёрнута на TH_CON), потом
    переводим в мировую и проецируем вручную - штатная проекция у
    точки за спиной возвращает зеркальный адрес. */
-var wTmp = null, wOut = { ok: false };
-function conScreen() {
-  wOut.ok = false;
-  if (!st.built || !cam) return wOut;
-  if (!wTmp) wTmp = new T.Vector3();
-  cam.updateMatrixWorld();
-
-  /* Окно гнутое, поэтому четырёх углов мало: середина дуги на
-     экране выше и шире краёв. Берём пояс точек по дуге на верхней
-     и нижней кромке и описываем вокруг них прямоугольник - это и
-     есть место голограммы. Точек ровно семь на кромку: меньше -
-     и середина выпуклости теряется, больше - лишняя работа в кадре.
-
-     Дугу берём чуть уже самого проёма (запас COIN), чтобы
-     голограмма не наползала на косяки рамы. */
-  var COIN = 0.90;
-  var N = 7, i, j;
-  var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9, dMin = 1e9, seen = 0, total = 0;
-  var f = 1 / Math.tan(cam.fov * Math.PI / 360);
-  var ys = [WIN_Y0 + 0.09, WIN_Y1 - 0.09];
-  var rr = R_SHELL - 0.02;
-  for (j = 0; j < ys.length; j++) {
-    for (i = 0; i < N; i++) {
-      var th = TH_CON + (-1 + 2 * i / (N - 1)) * WIN_HALF * COIN;
-      total++;
-      wTmp.set(rr * Math.sin(th), ys[j], -rr * Math.cos(th));
-      wTmp.applyMatrix4(cam.matrixWorldInverse);
-      var d = -wTmp.z;
-      if (d < 0.05) continue;                     /* точка за спиной */
-      seen++;
-      if (d < dMin) dMin = d;
-      var nx = (wTmp.x / d) * f / cam.aspect;
-      var ny = (wTmp.y / d) * f;
-      var sx = nx * 0.5 + 0.5, sy = -ny * 0.5 + 0.5;
-      if (sx < minX) minX = sx;
-      if (sx > maxX) maxX = sx;
-      if (sy < minY) minY = sy;
-      if (sy > maxY) maxY = sy;
-    }
-  }
-  if (seen < total) return wOut;                  /* окно видно не целиком */
-  wOut.ok = true;
-  wOut.x = minX; wOut.y = minY;
-  wOut.w = maxX - minX; wOut.h = maxY - minY;
-  wOut.d = dMin;
-  return wOut;
-}
+var wOut = { ok: false };
+/* Место голограммы на стекле теперь считает сама панель - по
+   корпусу кабины, общему у финала и полёта. Здесь возвращаем
+   «не знаю», и вёрстка берёт свою мерку. */
+function conScreen() { return wOut; }
 
 /* ── Якоря: экранные точки панелей уходят в CSS ────────────
    Переменные --int-anchor-N-x / -y / -v объявлены для всех
@@ -1866,153 +1157,49 @@ function conScreen() {
 function publish() {}
 
 /* ── Кадр ────────────────────────────────────────────────── */
+/* ── Кадр: демпфер оборота ───────────────────────────────────
+   Рисовать здесь больше нечего - салон рисует мир игры. Осталось
+   одно, но важное: сгладить оборот. Прокрутка приходит рывками, и
+   если отдать её сцене как есть, камера в салоне будет дёргаться.
+   Здесь она догоняет цель по экспоненте, а сцена берёт готовое
+   число через RC_INTERIOR.yaw(). */
 function tick(ts) {
   raf = requestAnimationFrame(tick);
   if (!st.shown || doc.hidden) return;
-  /* В полёте и в режиме сцены рубка спит: кадр держит кабина игры,
-     и рисовать второй корабль поверх неё незачем - это лишний
-     контекст WebGL в каждом кадре и тот самый шов в картинке. */
-  if (root.classList.contains("rc-flying") || root.classList.contains("rc-stage")) { lastTs = 0; return; }
+  if (root.classList.contains("rc-flying")) { lastTs = 0; return; }
 
-  /* Держим ту же частоту, что и весь сайт: в простое двадцать */
   var min = g.RC_MOTION ? g.RC_MOTION.minFrame() : 16;
   if (lastTs && ts - lastTs < min - 1) return;
   var dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
   lastTs = ts;
 
   var fast = root.classList.contains("rc-fast");
-  /* Пока человек печатает, рубка стоит. Гасить её нельзя: экран
-     анкеты - часть этой же комнаты, и если комната выцветет, форма
-     снова станет карточкой поверх чужого фона. Поэтому не гасим, а
-     останавливаем: дрейф и дыхание диодов замирают, кадр держится. */
-  var typing = root.classList.contains("rc-form-active");
-
-  /* Демпфер: резкая прокрутка не должна вертеть рубку рывками.
-     Коэффициент считаем от времени кадра, а не от кадра как
-     такового: в простое сайт роняет частоту до двадцати, и на
-     постоянном коэффициенте камера доезжала бы втрое дольше -
-     человек уже читает, а стена ещё едет. На перемотке постоянную
-     укорачиваем, иначе камера отстаёт от содержимого и карточки
-     повисают на пустой стене. */
+  /* На перемотке демпфер укорачиваем: иначе камера отстаёт от
+     содержимого и экран повисает на пустой стене */
   var kY = 1 - Math.exp(-dt / (fast ? 0.06 : 0.17));
   st.yaw += (st.yawT + (fast ? 0 : st.yawOff) - st.yaw) * kY;
   st.pitch += ((fast ? 0 : st.pitchT) - st.pitch) * kY;
-  st.dolly += (st.dollyT - st.dolly) * kY;
-  if (!typing) st.drift += dt;
 
-  /* ── Дыхание камеры ────────────────────────────────────────
-     Человек не штатив: он дышит, переминается и заваливает голову
-     в сторону поворота. Три эти мелочи и отличают проезд в кино от
-     разворота модели в просмотрщике.
-
-     Периоды нарочно разные и несоизмеримые (6, 4.3 и 3.1 секунды):
-     совпадай они, движение сложилось бы в заметную качку. Амплитуды
-     мелкие: дыхание должно чувствоваться, а не читаться.
-
-     На перемотке и пока человек печатает всё это выключено - там
-     любое лишнее движение мешает. */
-  var calm = fast || typing;
-  var drift = calm ? 0 : Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
-  var sway  = calm ? 0 : Math.sin(st.drift / 4.3) * 0.035; /* шаг вбок: 3.5 см */
-  var bob   = calm ? 0 : Math.sin(st.drift / 3.1) * 0.016; /* вдох-выдох по высоте */
-
-  /* Крен на повороте. Считаем от настоящей угловой скорости камеры,
-     а не от прокрутки: камера отстаёт от прокрутки на демпфере, и
-     крен, снятый с прокрутки, приходил бы раньше самого поворота. */
-  var vYaw = dt > 0 ? (st.yaw - st.yawPrev) / dt : 0;
-  st.yawPrev = st.yaw;
-  var rollT = calm ? 0 : Math.max(-0.03, Math.min(0.03, vYaw * 0.045));
-  st.roll += (rollT - st.roll) * (1 - Math.exp(-dt / 0.28));
-
-  cam.rotation.order = "YXZ";
-  cam.rotation.y = -st.yaw + drift;
-  cam.rotation.x = st.pitch;
-  cam.rotation.z = st.roll;
-
-  /* Камера едет по своей оси взгляда: в тамбуре она далеко позади
-     центра, внутри отходит на шаг от оси (см. restDolly - именно
-     этот шаг и даёт параллакс), у пульта подступает вплотную.
-     Боковое дыхание кладём поперёк взгляда, иначе оно просто
-     добавлялось бы к проезду и не читалось. */
-  var sx = -Math.sin(st.yaw), sz = Math.cos(st.yaw);
-  cam.position.set(sx * st.dolly + sz * sway, EYE + bob, sz * st.dolly - sx * sway);
-
-  /* Свет пульта разгорается вместе с подходом камеры. Тем же числом
-     (--int-con) разгорается экран анкеты в CSS: свет в кадре и свет
-     под формой - это буквально один источник, поэтому секция
-     контактов не выпадает из рубки ни по яркости, ни по тону. */
-  if (Math.abs(st.conL - st.con) > 0.002) {
-    st.conL += (st.con - st.conL) * kY;
-    if (deskLight) deskLight.intensity = 0.85 + st.conL * 1.7;
-    if (winMesh) winMesh.material.opacity = 0.03 + st.conL * 0.035;
-  }
-
-  if (Math.abs(st.fov - st.fovT) > 0.05) {
-    st.fov += (st.fovT - st.fov) * 0.1;
-    cam.fov = st.fov;
-    cam.updateProjectionMatrix();
-  }
-
-  /* Диоды дышат от одного таймера с фазовым сдвигом */
-  if (!fast && !typing) {
-    for (var i = 0; i < diodes.length; i++) {
-      var d = diodes[i];
-      var b = 0.55 + 0.45 * Math.sin(st.drift * 1.6 + d.userData.ph);
-      d.material.opacity = b;
-      d.material.transparent = true;
-      d.scale.setScalar(0.85 + b * 0.35);
+  /* Щелчок фиксации: камера встала напротив очередного экрана */
+  var stop = Math.floor(st.yawT / STEP);
+  if (stop !== st.stop) {
+    if (st.stop >= 0 && !fast) {
+      var s4 = snd();
+      if (s4 && s4.blip) { try { s4.blip(560 + (stop % 4) * 55); } catch (e) {} }
     }
-    /* Планета медленно едет за окном */
-    if (planet) planet.rotation.y += dt * 0.02;
+    st.stop = stop;
   }
-
-  publish();
-  rend.render(scene, cam);
 }
 
-/* ── Размер и потеря контекста ───────────────────────────── */
 addEventListener("resize", function () {
-  var was = phone;
   phone = innerWidth < 760;
-  if (!rend) return;
-  cam.aspect = innerWidth / innerHeight;
-  cam.updateProjectionMatrix();
-  rend.setSize(innerWidth, innerHeight, false);
-  /* Поворот телефона меняет не только пропорции кадра, но и всю
-     постановку: угол объектива и расстояние до стены у вертикального
-     и горизонтального кадра разные. Пересчитываем цели той же
-     функцией, что и прокрутка, чтобы не заводить второй источник. */
-  if (was !== phone) {
-    if (scene && scene.fog) scene.fog.density = tiny ? 0.1 : 0.135;
-    setProgress(st.p);
-  }
+  /* Размер холста держит сцена игры: салон живёт в ней */
 }, { passive: true });
 
-function dispose() {
-  st.dead = true;
-  hide();
-  if (raf) cancelAnimationFrame(raf);
-  raf = null;
-  if (rend) { try { rend.dispose(); } catch (e) {} }
-  if (cv && cv.parentNode) cv.parentNode.removeChild(cv);
-  if (air && air.parentNode) air.parentNode.removeChild(air);
-  if (st.slot && g.RC_GL) { g.RC_GL.give(); st.slot = false; }
-  st.built = false;
-}
-
-/* ── Точка входа ─────────────────────────────────────────── */
 function boot() {
   if (reduced || root.classList.contains("rc-reduced")) return;
   T = g.THREE;
   if (!T) return;
-  if (g.RC_GL) {
-    g.RC_GL.guard(cv, function () {
-      st.shown = false;
-      root.classList.remove("rc-inside");
-    }, function () {
-      if (st.p >= P_IN && st.p < P_OUT) show();
-    });
-  }
   measure();
   doc.addEventListener("rc:lang", function () { setTimeout(measure, 200); });
   addEventListener("resize", function () { setTimeout(measure, 250); }, { passive: true });
@@ -2038,50 +1225,13 @@ function boot() {
    пикселей, на второй гасим планету за окном и её ободок, на
    третьей рубка не поднимается вовсе - вместо кино человек
    получает обычную страницу, но без рывков. */
+/* Качеством салона теперь распоряжается сцена игры: он часть её
+   мира, и снижать разрешение отдельно ему нечем. Ступень нужна
+   только для того, чтобы на самом слабом устройстве не поднимать
+   объём вовсе. */
 addEventListener("rc:degrade", function (e) {
   var step = (e && e.detail && e.detail.step) || 0;
-  try {
-    /* Ступень теперь ходит в обе стороны, поэтому обработчик не
-       «снимает лишнее», а описывает состояние целиком: всё, что было
-       выключено на низком качестве, обязано вернуться, когда телефон
-       справился. Иначе один тяжёлый отрезок навсегда оставлял бы
-       комнату без планеты за окном. */
-    var full = step < 2;
-    for (var j = 0; j < fine.length; j++) fine[j].visible = full;
-    if (planet) planet.visible = step < 3;
-    if (halo) halo.visible = step < 3;
-    if (air) air.classList.toggle("flat", step >= 3);
-    if (scene && scene.fog) scene.fog.density = step >= 2 ? 0.09 : (phone ? 0.115 : 0.135);
-    if (rend && step === 0) {
-      rend.setPixelRatio(Math.min(tiny ? 1.0 : (phone ? 1.45 : 1.6), g.devicePixelRatio || 1));
-    }
-    /* Первая ступень трогает только число пикселей. Это честный
-       рычаг: он не убирает из кадра ни одной детали, ни одного
-       блика - картинка та же, просто считается в меньшем разрешении,
-       чего на плотном экране телефона глаз почти не различает. */
-    if (step >= 1 && rend) rend.setPixelRatio(1);
-    /* Вторая ступень снимает мелочь, которую в движении не видно:
-       спуски жгутов, отдельные световые пятна. Силовой набор, ниши,
-       иллюминаторы и планета за окном остаются - это и есть комната,
-       ради которой всё делалось. */
-    if (step >= 2) {
-      for (var i = 0; i < fine.length; i++) fine[i].visible = false;
-      if (scene && scene.fog) scene.fog.density = 0.09;
-    }
-    /* Третья ступень раньше означала «рубки нет»: кино просто
-       выключалось, и владелец на своём телефоне видел вместо фильма
-       обычную страницу с кораблём поверх текста. Так нельзя. Сцена
-       остаётся всегда - на последней ступени она лишь считается в
-       половинном разрешении и без дальней планеты. Сценарий важнее
-       любых украшений: вход в корабль, оборот и пульт обязаны
-       доиграться на любом устройстве. */
-    if (step >= 3) {
-      if (rend) rend.setPixelRatio(Math.min(1, (g.devicePixelRatio || 1) * 0.75));
-      if (planet) planet.visible = false;
-      if (halo) halo.visible = false;
-      if (air) air.classList.add("flat");
-    }
-  } catch (err) {}
+  st.degrade = step;
 });
 
 addEventListener("rc:3d", boot);
@@ -2092,7 +1242,9 @@ g.RC_INTERIOR = {
   show: show,
   hide: hide,
   setProgress: setProgress,
-  dispose: dispose,
+  /* Освобождать больше нечего: холст и геометрия принадлежат миру
+     игры, и убирает их он сам */
+  dispose: function () { hide(); },
   ready: function () { return st.built; },
 
   /* Единственный источник правды о повороте. Кинематограф берёт
@@ -2163,8 +1315,7 @@ g.RC_INTERIOR = {
       узлов: KNOT.length,
       /* Цена кадра: по этим двум числам видно, не разъелась ли рубка
          сверх бюджета. Считает сам рендерер, гадать не нужно. */
-      треугольников: rend ? rend.info.render.triangles : 0,
-      вызовов: rend ? rend.info.render.calls : 0,
+      ступень: st.degrade || 0,
       /* Пороги входа: по ним видно, почему салон показался или нет */
       доля: +st.p.toFixed(3), порог_вход: +P_IN.toFixed(3),
       порог_выход: +P_OUT.toFixed(3), мёртв: st.dead

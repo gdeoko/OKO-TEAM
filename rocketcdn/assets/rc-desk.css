@@ -53,6 +53,12 @@
 }
 @media (max-width: 760px) {
   .rc-desk .dsk-win { justify-content: center; }
+  /* На телефоне окно кабины узкое, и делить его на две колонки
+     нечем: голограмма занимает его целиком, иначе кнопки режутся
+     пополам, а строки переносятся втрое */
+  .rc-desk .dsk-frame { width: 100%; }
+  .rc-desk .dsk-acts { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .rc-desk .dsk-b { padding: 9px 4px; font-size: clamp(10.5px, 1.5vh, 13px); }
 }
 .rc-desk.dsk-on .dsk-win { pointer-events: auto; }
 

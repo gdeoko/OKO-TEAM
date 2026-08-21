@@ -151,8 +151,11 @@ g.RC_GL = {
 
   /* rc-planets стоит перед игрой: она строит по нему миры чужих
      вселенных. Библиотека процедурная, картинок не тянет. */
+  /* rc-cabin стоит перед игрой: салон корабля строится внутри её
+     мира, а не отдельной сценой - иначе между сайтом и полётом
+     остаётся подмена одного корабля другим. */
   var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js",
-               "rc-interior.js", "rc-planets.js", "rc-flight.js"];
+               "rc-interior.js", "rc-planets.js", "rc-cabin.js", "rc-flight.js"];
   var started = false;
 
   function load(i) {
