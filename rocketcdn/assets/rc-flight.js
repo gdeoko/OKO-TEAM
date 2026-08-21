@@ -358,15 +358,33 @@ function buildUI() {
          и криво». Теперь это одна панель, и она стоит в нише пульта
          на самой картинке кабины. */
       '<div class="rcf-deck">' +
-        '<div class="rcf-gauges">' +
-          '<div class="rcf-prog"></div>' +
-          '<div class="rcf-net"></div>' +
+        /* Левая консоль: обзор системы. Круглый экран с орбитами,
+           телами и кораблём в середине - по нему сразу видно, где мы
+           и куда идти. Раньше на этом месте висели две строчки
+           счётчиков, и это была единственная «карта» в игре. */
+        '<div class="rcf-left">' +
+          '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
+          '<div class="rcf-gauges">' +
+            '<div class="rcf-prog"></div>' +
+            '<div class="rcf-net"></div>' +
+          '</div>' +
         '</div>' +
         '<div class="rcf-mid">' +
           '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
           '<button type="button" class="rcf-deploy"></button>' +
         '</div>' +
-        '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+        /* Правая консоль: тяга и скорость. Рычаг тянут пальцем или
+           мышью, и это принципиально: человек не жмёт интерфейс, он
+           двигает ручку и чувствует, как корабль набирает ход. */
+        '<div class="rcf-right">' +
+          '<div class="rcf-thr" role="slider" aria-label="' + (RU ? "Тяга" : "Thrust") +
+            '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">' +
+            '<i class="rcf-thr-fill"></i>' +
+            '<i class="rcf-thr-grip"></i>' +
+            '<b>' + (RU ? "ТЯГА" : "THRUST") + '</b>' +
+          '</div>' +
+          '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+        '</div>' +
       '</div>' +
       '<div class="rcf-uni" role="menu"><i>' + (RU ? "КУДА ПРЫГАЕМ" : "JUMP TO") + '</i>' + uniHtml + '</div>' +
       '<div class="rcf-track"><i></i></div>' +
@@ -421,6 +439,10 @@ function buildUI() {
   ui.speed = w.querySelector(".rcf-speed b");
   ui.auto = w.querySelector(".rcf-auto");
   ui.info = w.querySelector(".rcf-info");
+  ui.radar = w.querySelector(".rcf-radar");
+  ui.thr = w.querySelector(".rcf-thr");
+  ui.thrFill = w.querySelector(".rcf-thr-fill");
+  bindThrottle();
   ui.dos = w.querySelector(".rcf-dos");
   ui.dosH = w.querySelector(".rcf-dos-h");
   ui.dosMap = w.querySelector(".rcf-dos-map");
@@ -2033,6 +2055,46 @@ function size() {
   W3.r.setSize(w, h, false);
   W3.cam.aspect = w / h;
   W3.cam.updateProjectionMatrix();
+  cabGeom();
+}
+
+/* ── Приборы садятся в ниши корпуса ──────────────────────────
+   На рисунке кабины уже нарисованы консоли: левая, центральная,
+   правая и боковые стойки. Раньше приборы висели по углам кадра
+   сами по себе, и владелец сказал прямо: «кнопки развернуть узел,
+   сканировать и так далее - все они наклеены не красиво, не часть
+   интерфейса, ещё и криво».
+
+   Здесь рисунок и разметка договариваются о местах. Доли ниш
+   замерены по самому файлу; корпус выводится по object-fit: cover,
+   поэтому доли пересчитываются в кадр с учётом обрезки и уходят в
+   CSS-переменные. Приборы встают в ниши на любом экране, а не
+   «примерно снизу». */
+function cabGeom() {
+  if (!ui.wrap) return;
+  var tall = innerHeight > innerWidth;
+  var iw = tall ? 768 : 1344, ih = tall ? 1344 : 768;
+  var sc = Math.max(innerWidth / iw, innerHeight / ih);
+  var dw = iw * sc, dh = ih * sc;
+  var ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
+  function px(fx, fy) {
+    return [(ox + fx * dw) / innerWidth, (oy + fy * dh) / innerHeight];
+  }
+  /* Остекление */
+  var w0 = px(tall ? 0.150 : 0.075, tall ? 0.125 : 0.095);
+  var w1 = px(tall ? 0.850 : 0.925, tall ? 0.790 : 0.755);
+  /* Пояс приборов под остеклением */
+  var d0 = px(0.06, tall ? 0.815 : 0.795);
+  var d1 = px(0.94, tall ? 0.985 : 0.985);
+  var S = ui.wrap.style;
+  S.setProperty("--cab-wx", (w0[0] * 100).toFixed(2) + "%");
+  S.setProperty("--cab-wy", (w0[1] * 100).toFixed(2) + "%");
+  S.setProperty("--cab-ww", ((w1[0] - w0[0]) * 100).toFixed(2) + "%");
+  S.setProperty("--cab-wh", ((w1[1] - w0[1]) * 100).toFixed(2) + "%");
+  S.setProperty("--cab-dx", (d0[0] * 100).toFixed(2) + "%");
+  S.setProperty("--cab-dy", (d0[1] * 100).toFixed(2) + "%");
+  S.setProperty("--cab-dw", ((d1[0] - d0[0]) * 100).toFixed(2) + "%");
+  S.setProperty("--cab-dh", ((d1[1] - d0[1]) * 100).toFixed(2) + "%");
 }
 
 /* ── Кадр ────────────────────────────────────────────────────ы */
@@ -3103,6 +3165,8 @@ function frame(ts) {
     try { g.RC_SOUND.flightLevel(Math.min(1, 0.25 + speed * 4 + (jumpZone ? 0.35 : 0))); } catch (e) {}
   }
 
+  if (!F.stage) radarFrame(w3, ts);
+
   w3.r.render(w3.scene, w3.cam);
 }
 
@@ -3301,6 +3365,138 @@ function launchers() {
       }
     }, 250);
   });
+}
+
+/* ── Рычаг тяги ──────────────────────────────────────────────
+   Настоящая ручка, а не кнопка. Тянут её пальцем или мышью, и
+   корабль набирает ход ровно настолько, насколько её сдвинули.
+   Разница с колесом принципиальная: колесо это интерфейс, ручка -
+   орган управления. Человек за ней чувствует машину.
+
+   Ручка не пружинит обратно: отпустил на половине - идём на
+   половине. Ноль внизу, полный ход вверху; можно уйти и в минус,
+   это торможение. */
+function bindThrottle() {
+  var el = ui.thr;
+  if (!el) return;
+  var drag = false;
+
+  function setFromY(clientY) {
+    var r = el.getBoundingClientRect();
+    var t = 1 - (clientY - r.top) / Math.max(1, r.height);
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    F.thr = t;
+    /* Ход корабля берём не линейно: у самой ручки должен быть
+       чувствительный участок на малых значениях, иначе первый же
+       сантиметр отправляет корабль в разгон */
+    F.v = t * t * 0.26;
+    manual();
+    paintThrottle();
+  }
+  function paintThrottle() {
+    var t = F.thr || 0;
+    if (ui.thrFill) ui.thrFill.style.height = (t * 100).toFixed(1) + "%";
+    el.setAttribute("aria-valuenow", Math.round(t * 100));
+    el.classList.toggle("live", t > 0.02);
+  }
+  F.paintThrottle = paintThrottle;
+
+  el.addEventListener("pointerdown", function (e) {
+    drag = true;
+    try { el.setPointerCapture(e.pointerId); } catch (er) {}
+    setFromY(e.clientY);
+    e.preventDefault();
+  });
+  el.addEventListener("pointermove", function (e) { if (drag) setFromY(e.clientY); });
+  el.addEventListener("pointerup", function () { drag = false; });
+  el.addEventListener("pointercancel", function () { drag = false; });
+  el.addEventListener("keydown", function (e) {
+    var d = 0;
+    if (e.key === "ArrowUp") d = 0.08;
+    else if (e.key === "ArrowDown") d = -0.08;
+    else return;
+    e.preventDefault();
+    F.thr = Math.max(0, Math.min(1, (F.thr || 0) + d));
+    F.v = F.thr * F.thr * 0.26;
+    manual();
+    paintThrottle();
+  });
+}
+
+/* ── Радар системы ───────────────────────────────────────────
+   Обзор сверху: корабль в середине, тела на своих орбитах, цель
+   подсвечена. Считаем от настоящих позиций мира, поэтому радар не
+   может соврать. Рисуем восемь раз в секунду - чаще незачем, а
+   каждый кадр это лишний проход по холсту. */
+var radarT = 0;
+function radarFrame(w3, ts) {
+  var cv = ui.radar;
+  if (!cv || ts - radarT < 120) return;
+  radarT = ts;
+  var x = cv.getContext("2d");
+  var W = cv.width, H = cv.height, R = W / 2 - 6;
+  var cx = W / 2, cy = H / 2, i;
+  x.clearRect(0, 0, W, H);
+
+  /* Сетка: концентрические круги и перекрестье */
+  x.strokeStyle = "rgba(95,200,239,.22)"; x.lineWidth = 1;
+  for (i = 1; i <= 3; i++) {
+    x.beginPath(); x.arc(cx, cy, R * i / 3, 0, Math.PI * 2); x.stroke();
+  }
+  x.beginPath();
+  x.moveTo(cx - R, cy); x.lineTo(cx + R, cy);
+  x.moveTo(cx, cy - R); x.lineTo(cx, cy + R);
+  x.stroke();
+
+  /* Развёртка: луч обегает круг */
+  var a = (ts * 0.0009) % (Math.PI * 2);
+  var sg = x.createConicGradient ? null : null;
+  x.save();
+  x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
+  x.strokeStyle = "rgba(120,225,255,.55)"; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(cx, cy);
+  x.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+  x.stroke();
+  x.restore();
+
+  /* Тела системы. Масштаб логарифмический: иначе Земля и дыра не
+     помещаются на один экран - между ними тысячи единиц. */
+  var bodies = [
+    { o: w3.earth, c: "#5fd0ef", n: "З" },
+    { o: w3.moon, c: "#c8d8e6", n: "Л" },
+    { o: w3.mars, c: "#e08a5a", n: "М" },
+    { o: w3.saturn, c: "#e6c98a", n: "С" },
+    { o: w3.hole, c: "#a974f5", n: "Д" }
+  ];
+  var cam = w3.cam.position;
+  for (i = 0; i < bodies.length; i++) {
+    var b = bodies[i];
+    if (!b.o) continue;
+    var dx = b.o.position.x - cam.x, dz = b.o.position.z - cam.z;
+    var d = Math.sqrt(dx * dx + dz * dz);
+    if (d < 0.001) continue;
+    var rr = Math.log10(1 + d) / Math.log10(1 + 4200) * R;
+    if (rr > R) rr = R;
+    var ang = Math.atan2(dx, -dz);
+    var px = cx + Math.sin(ang) * rr, py = cy - Math.cos(ang) * rr;
+    x.fillStyle = b.c;
+    x.beginPath(); x.arc(px, py, 4.2, 0, Math.PI * 2); x.fill();
+    x.fillStyle = "rgba(226,238,252,.75)";
+    x.font = "600 10px 'Golos Text', system-ui, sans-serif";
+    x.fillText(b.n, px + 6, py + 3.5);
+  }
+
+  /* Корабль в середине, нос по курсу */
+  var dir = w3.tmpB.set(0, 0, -1).applyQuaternion(w3.cam.quaternion);
+  var ha = Math.atan2(dir.x, -dir.z);
+  x.save();
+  x.translate(cx, cy);
+  x.rotate(ha);
+  x.fillStyle = "#eaf6ff";
+  x.beginPath();
+  x.moveTo(0, -8); x.lineTo(5, 6); x.lineTo(0, 3); x.lineTo(-5, 6);
+  x.closePath(); x.fill();
+  x.restore();
 }
 
 /* ── Салон корабля внутри мира игры ──────────────────────────

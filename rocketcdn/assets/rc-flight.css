@@ -1181,19 +1181,29 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
    скорость, - и она стоит в нише пульта, нарисованной на самой
    картинке кабины. Ничего не висит отдельно и ничего не обрезается.
    ═══════════════════════════════════════════════════════════ */
+/* Плита садится ровно в нишу приборов, нарисованную на корпусе:
+   её место приходит числами из cabGeom, а не подбирается на глаз */
 .rc-flight .rcf-deck {
-  left: 50%;
-  /* Ниша приборов на картинке кабины начинается примерно на 78%
-     высоты. Плиту сажаем в неё, а не к самому низу экрана: там её
-     срезала кромка кадра. */
-  bottom: clamp(10px, 2.2vh, 26px);
+  left: var(--cab-dx, 4%);
+  top: var(--cab-dy, 80%);
+  bottom: auto;
+  width: var(--cab-dw, 92%);
+  height: var(--cab-dh, 19%);
+  transform: none;
   display: grid;
-  grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(10px, 2vw, 26px);
-  max-width: min(96vw, 1120px);
-  padding: clamp(8px, 1.2vh, 13px) clamp(12px, 1.6vw, 20px);
+  gap: clamp(8px, 1.6vw, 22px);
+  padding: clamp(6px, 1vh, 12px) clamp(10px, 1.4vw, 18px);
+  /* Плита не рисует себе фона: фон уже нарисован на корпусе.
+     Остаётся лёгкое свечение приборов снизу вверх. */
+  background: linear-gradient(0deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .07), transparent 72%);
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
 }
+.rc-flight .rcf-deck::before { display: none; }
 .rc-flight .rcf-gauges {
   display: flex;
   flex-direction: column;
@@ -1356,4 +1366,106 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 @media (max-width: 760px) {
   .rcf-dos { width: 90vw; top: 42%; }
   .rcf-dos-facts { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Консоли по бортам плиты ─────────────────────────────────
+   Слева обзор системы, справа тяга и скорость. Обе садятся в ниши,
+   нарисованные на корпусе: приборы часть кабины, а не наклейки. */
+.rc-flight .rcf-left {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1vw, 14px);
+  justify-self: start;
+  min-width: 0;
+}
+.rc-flight .rcf-radar {
+  width: clamp(70px, 9.5vh, 118px);
+  height: clamp(70px, 9.5vh, 118px);
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .45);
+  background: radial-gradient(circle at 50% 50%, rgba(6,20,34,.9), rgba(3,10,18,.95));
+  box-shadow: inset 0 0 22px rgba(var(--int-cyan-rgb, 66,178,220), .22);
+}
+.rc-flight .rcf-right {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.1vw, 16px);
+  justify-self: end;
+  min-width: 0;
+}
+
+/* Рычаг тяги: настоящая ручка, которую тянут. Ход по вертикали,
+   заливка снизу показывает текущее положение, рукоятка едет по
+   пазу. Никаких кнопок - орган управления. */
+.rc-flight .rcf-thr {
+  position: relative;
+  width: clamp(26px, 3vh, 38px);
+  height: clamp(58px, 8.4vh, 104px);
+  flex: none;
+  border-radius: 999px;
+  cursor: ns-resize;
+  touch-action: none;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  background: linear-gradient(180deg, rgba(3,10,18,.9), rgba(8,22,36,.95));
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.8);
+  overflow: hidden;
+}
+.rc-flight .rcf-thr-fill {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 0%;
+  background: linear-gradient(0deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .85),
+    rgba(var(--int-vio-rgb, 138,89,246), .6));
+  transition: height .08s linear;
+}
+.rc-flight .rcf-thr-grip {
+  position: absolute; left: 3px; right: 3px;
+  bottom: calc(var(--thr, 0%) );
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #dbe9f7, #8ea6bd);
+  box-shadow: 0 2px 6px rgba(0,0,0,.85);
+  pointer-events: none;
+  display: none;
+}
+.rc-flight .rcf-thr b {
+  /* Подпись внутри паза: снаружи её срезала кромка ниши */
+  position: absolute; left: 50%; bottom: 5px;
+  transform: translateX(-50%) rotate(-90deg);
+  transform-origin: 50% 100%;
+  font: 700 8.5px/1 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .16em;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .9);
+  white-space: nowrap;
+}
+.rc-flight .rcf-thr.live { box-shadow: inset 0 2px 8px rgba(0,0,0,.8), 0 0 20px -4px rgba(var(--int-cyan-rgb, 66,178,220), .9); }
+.rc-flight .rcf-thr:focus-visible { outline: 2px solid var(--int-cyan, #42B2DC); outline-offset: 2px; }
+
+/* Навигация в один ряд: перенос читался поломкой панели */
+.rc-flight .rcf-deck .rcf-nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+  /* Края ряда растворяются: если кнопки не влезли, обрез читается
+     продолжением списка, а не срезанной кнопкой */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  padding: 0 6px;
+}
+.rc-flight .rcf-deck .rcf-nav::-webkit-scrollbar { display: none; }
+.rc-flight .rcf-deck .rcf-nav button { white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-deck {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .rc-flight .rcf-left .rcf-gauges { display: none; }
+  .rc-flight .rcf-deck .rcf-nav { max-width: 100%; }
+  .rc-flight .rcf-radar { width: 52px; height: 52px; }
+  .rc-flight .rcf-thr { width: 22px; height: 52px; }
+  .rc-flight .rcf-right .rcf-speed b { font-size: 15px; }
 }
