@@ -416,6 +416,10 @@ function buildUI() {
       /* Боковые стойки: слева заряд, справа целостность корпуса.
          Столбики стоят на скошенных боковинах, где на самом рисунке
          кабины идут приборные панели. */
+      /* Текущее задание: одна строка с целью и полоской прогресса.
+         Стоит у левого борта, где на корпусе кабины идёт вертикальная
+         приборная панель. */
+      '<div class="rcf-mis"></div>' +
       '<div class="rcf-bars">' +
         '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
         '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
@@ -473,6 +477,7 @@ function buildUI() {
   ui.speed = w.querySelector(".rcf-speed b");
   ui.auto = w.querySelector(".rcf-auto");
   ui.info = w.querySelector(".rcf-info");
+  ui.mis = w.querySelector(".rcf-mis");
   ui.bars = w.querySelector(".rcf-bars");
   ui.enTx = w.querySelector(".rcf-bar-en u");
   ui.huTx = w.querySelector(".rcf-bar-hull u");
@@ -1042,6 +1047,7 @@ function goSystem(si, pi) {
 /* Прыжок между вселенными: белая вспышка, за ней мир уже другой */
 var uniBusy = false;
 function jumpUniverse(want) {
+  F.jumps = (F.jumps || 0) + 1;
   if (uniBusy || !W3) return;
   uniBusy = true;
   uniIdx = (want === undefined) ? (uniIdx + 1) % UNIVERSES.length : want;
@@ -1519,8 +1525,11 @@ function buildWorld() {
   var sunBody = new T.Mesh(
     new T.SphereGeometry(190, tiny ? 28 : 44, tiny ? 20 : 32),
     new T.MeshBasicMaterial({
+      /* Звезда, а не полосатый шар: почти белая поверхность с
+         редкими пятнами. Полос у Солнца нет - они выдавали в нём
+         газовый гигант. */
       map: paintPlanet(tiny ? 256 : 512, tiny ? 128 : 256,
-        [[0, "#fff4c8"], [0.4, "#ffd166"], [0.75, "#ff9f2e"], [1, "#ff7a18"]], 30, 220)
+        [[0, "#fffdf2"], [0.35, "#fff0c0"], [0.7, "#ffd98a"], [1, "#ffbe5c"]], 4, 90)
     })
   );
   sunBody.position.set(2600, 1000, 1750);
@@ -1528,13 +1537,23 @@ function buildWorld() {
                              : "SUN · 1.39M km wide";
   scene.add(sunBody);
   /* Корона: сложение поверх поверхности, чтобы край не был резаным */
+  /* Корона в два слоя: плотный ободок у самой поверхности и
+     широкое гало вокруг. Один слой давал ровный жёлтый круг, и
+     звезда читалась плоской наклейкой. */
   var corona = new T.Mesh(
-    new T.SphereGeometry(215, 28, 20),
-    new T.MeshBasicMaterial({ color: 0xffc46a, transparent: true, opacity: 0.28,
+    new T.SphereGeometry(208, 28, 20),
+    new T.MeshBasicMaterial({ color: 0xffe3a8, transparent: true, opacity: 0.42,
       side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false })
   );
   corona.position.copy(sunBody.position);
   scene.add(corona);
+  var halo2 = new T.Mesh(
+    new T.SphereGeometry(310, 24, 18),
+    new T.MeshBasicMaterial({ color: 0xffb45c, transparent: true, opacity: 0.14,
+      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false })
+  );
+  halo2.position.copy(sunBody.position);
+  scene.add(halo2);
 
   var mercury = makePlanet(12, [470, 200, 690],
     [[0, "#b9a795"], [0.5, "#8e7d6d"], [1, "#5f5348"]], 6, 260,
@@ -2465,7 +2484,7 @@ function deployNode() {
   /* Узел закрыл висящий запрос - это и есть победа в игре: трафик
      пришёл туда, где его ждали */
   var closed = req && req.name === name;
-  if (closed) req = null;
+  if (closed) { req = null; F.served = (F.served || 0) + 1; }
   say((closed ? (RU ? "ЗАПРОС ЗАКРЫТ · " : "REQUEST SERVED · ")
               : (RU ? "УЗЕЛ РАЗВЁРНУТ · " : "NODE DEPLOYED · ")) + name + " · " +
       (RU ? "в сети " : "in network ") + netCount(), 2600);
@@ -3405,6 +3424,7 @@ function frame(ts) {
     powerFrame(w3, dt);
     barsFrame(ts);
     courseFrame(w3, ts);
+    missionFrame(ts);
     radarFrame(w3, ts);
   }
 
@@ -3606,6 +3626,121 @@ function launchers() {
       }
     }, 250);
   });
+}
+
+/* ── Цепочка заданий ─────────────────────────────────────────
+   «Функционал после подлёта какой-то добавь, ну логика игры, зачем
+   мы подлетаем, что делаем» - вопрос по существу. Раньше игра
+   умела всё сразу и не просила ничего: лети куда хочешь,
+   разворачивай что хочешь, конца нет.
+
+   Теперь есть цепочка. Каждый шаг объясняет, зачем мы летим к
+   очередному телу, и открывает следующий. Задания не выдуманы
+   поверх игры - они собраны из того, что в ней и так происходит:
+   осмотреть тело, развернуть узел, закрыть запрос трафика, уйти в
+   другой рукав. Просто теперь это порядок, а не набор кнопок.
+
+   Прогресс живёт вместе с остальным журналом исследователя: закрыл
+   вкладку, вернулся - продолжаешь с того же места. */
+function netCountAll() { return Object.keys(net).length; }
+
+var MISSIONS = [
+  {
+    id: "look",
+    t: RU ? "Осмотреться" : "Look around",
+    h: RU ? "Наведитесь на любое тело и нажмите по нему - корабль снимет карту"
+          : "Tap any body to scan it",
+    done: function () { return Object.keys(explored).length >= 2; },
+    now: function () { return Object.keys(explored).length; },
+    goalN: 2
+  },
+  {
+    id: "first",
+    t: RU ? "Первый узел сети" : "First network node",
+    h: RU ? "Выйдите на орбиту любого тела и разверните узел"
+          : "Enter orbit and deploy a node",
+    done: function () { return netCountAll() >= 1; },
+    now: netCountAll, goalN: 1
+  },
+  {
+    id: "three",
+    t: RU ? "Опорная тройка" : "Three nodes",
+    h: RU ? "Три узла держат сеть при отказе любого одного"
+          : "Three nodes keep the network alive",
+    done: function () { return netCountAll() >= 3; },
+    now: netCountAll, goalN: 3
+  },
+  {
+    id: "req",
+    t: RU ? "Закрыть запрос трафика" : "Serve a traffic surge",
+    h: RU ? "Когда придёт запрос, разверните узел на названном теле"
+          : "Deploy a node where the surge asks",
+    done: function () { return F.served >= 1; },
+    now: function () { return F.served || 0; }, goalN: 1
+  },
+  {
+    id: "system",
+    t: RU ? "Своя система" : "Own the system",
+    h: RU ? "Шесть узлов - и Солнечная система ваша целиком"
+          : "Six nodes across the system",
+    done: function () { return netCountAll() >= 6; },
+    now: netCountAll, goalN: 6
+  },
+  {
+    id: "jump",
+    t: RU ? "Уйти в другой рукав" : "Jump to another arm",
+    h: RU ? "Гиперпрыжок через Млечный Путь: кнопка «Галактика»"
+          : "Hyperjump through the Milky Way",
+    done: function () { return uniIdx !== 0 || (F.jumps || 0) >= 1; },
+    now: function () { return (F.jumps || 0); }, goalN: 1
+  },
+  {
+    id: "all",
+    t: RU ? "Сеть без границ" : "Network everywhere",
+    h: RU ? "Развернуть узлы во всех открытых мирах" : "Deploy nodes everywhere",
+    done: function () { return netCountAll() >= NET_TOTAL(); },
+    now: netCountAll, goalN: 0
+  }
+];
+
+function missionNow() {
+  for (var i = 0; i < MISSIONS.length; i++) {
+    if (!MISSIONS[i].done()) return MISSIONS[i];
+  }
+  return null;
+}
+
+var misT = 0, misId = "";
+function missionFrame(ts) {
+  if (!ui.mis || ts - misT < 500) return;
+  misT = ts;
+  var m = missionNow();
+  if (!m) {
+    if (misId !== "done") {
+      misId = "done";
+      ui.mis.innerHTML = '<b>' + (RU ? "СЕТЬ ЗАМКНУТА" : "NETWORK COMPLETE") + '</b>' +
+        '<span>' + (RU ? "Все миры на связи. Дальше - свободный полёт." : "All worlds online.") + '</span>';
+      ui.mis.classList.add("full");
+    }
+    return;
+  }
+  var need = m.goalN || NET_TOTAL();
+  var have = Math.min(need, m.now());
+  var key = m.id + ":" + have;
+  if (key === misId) return;
+  var first = misId === "";
+  misId = key;
+  ui.mis.classList.remove("full");
+  ui.mis.innerHTML =
+    '<b>' + esc(m.t) + '</b>' +
+    '<span>' + esc(m.h) + '</span>' +
+    '<i><u style="width:' + Math.round(have / need * 100) + '%"></u></i>' +
+    '<em>' + have + " / " + need + '</em>';
+  if (!first && g.RC_SOUND && g.RC_SOUND.uiHover) { try { g.RC_SOUND.uiHover(); } catch (e) {} }
+}
+
+function esc(v) {
+  return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /* ── Курсовая строка ─────────────────────────────────────────

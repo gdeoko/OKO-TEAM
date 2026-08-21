@@ -1580,3 +1580,72 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-bar-hull { right: 6px; }
   .rc-flight .rcf-course { font-size: 8.5px; gap: 8px; }
 }
+
+/* ── Текущее задание ─────────────────────────────────────────
+   Одна строка: что делаем, зачем и сколько осталось. Стоит у
+   левого борта, на вертикальной приборной панели корпуса - там же,
+   где в кабине и положено висеть полётному заданию. */
+.rc-flight .rcf-mis {
+  position: absolute;
+  left: clamp(30px, 4.4vw, 68px);
+  top: clamp(64px, 12vh, 118px);
+  width: clamp(180px, 22vw, 290px);
+  padding: 10px 13px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  background: linear-gradient(165deg, rgba(var(--int-cyan-rgb, 66,178,220), .1), rgba(5, 14, 26, .62));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  pointer-events: none;
+  box-shadow: 0 0 34px -14px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+.rc-flight .rcf-mis b {
+  display: block;
+  font-size: clamp(11px, 1.5vh, 13px);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--int-cyan, #42B2DC);
+  margin-bottom: 3px;
+}
+.rc-flight .rcf-mis span {
+  display: block;
+  font-size: clamp(10px, 1.35vh, 12px);
+  line-height: 1.4;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .82);
+}
+.rc-flight .rcf-mis i {
+  display: block;
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: rgba(var(--int-lit-rgb, 207,233,245), .16);
+  overflow: hidden;
+}
+.rc-flight .rcf-mis u {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--int-cyan, #42B2DC), var(--int-vio, #8A59F6));
+  transition: width .5s var(--ease, ease);
+}
+.rc-flight .rcf-mis em {
+  display: block;
+  margin-top: 5px;
+  font-size: 9.5px;
+  font-style: normal;
+  letter-spacing: .16em;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .6);
+}
+.rc-flight .rcf-mis.full { border-color: rgba(53,224,143,.55); }
+.rc-flight .rcf-mis.full b { color: #35E08F; }
+.rc-flight.rcf-stage .rcf-mis { opacity: 0 !important; }
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-mis {
+    left: 50%;
+    transform: translateX(-50%);
+    top: clamp(58px, 10vh, 96px);
+    width: min(84vw, 340px);
+    padding: 8px 11px 10px;
+  }
+}
