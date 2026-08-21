@@ -1341,6 +1341,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .3);
   /* Строка сканера пробегает по снимку: карта снимается сейчас, а
      не лежала заранее */
+  -webkit-mask-image: linear-gradient(180deg, #000 0 100%);
   mask-image: linear-gradient(180deg, #000 0 100%);
 }
 .rcf-dos.on .rcf-dos-map { animation: rcfDosScan 2.6s linear infinite; }
@@ -2419,7 +2420,8 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
    нельзя, а спорить двум слоям на одном стекле незачем */
 .rc-flight:has(.rcf-help.on) .rc-holo,
 .rc-flight:has(.rcf-menu.on) .rc-holo,
-.rc-flight:has(.rcf-dos.on) .rc-holo { opacity: .12; transition: opacity .25s linear; }
+.rc-flight:has(.rcf-dos.on) .rc-holo,
+.rc-flight.rcf-modal .rc-holo { opacity: .12; transition: opacity .25s linear; }
 /* И задание со списком сети тоже уступают: на одном стекле в один
    момент читается что-то одно */
 .rc-flight:has(.rcf-help.on) .rcf-mis,
@@ -2427,7 +2429,9 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight:has(.rcf-dos.on) .rcf-mis,
 .rc-flight:has(.rcf-help.on) .rcf-netlist,
 .rc-flight:has(.rcf-menu.on) .rcf-netlist,
-.rc-flight:has(.rcf-dos.on) .rcf-netlist { opacity: .16; transition: opacity .25s linear; }
+.rc-flight:has(.rcf-dos.on) .rcf-netlist,
+.rc-flight.rcf-modal .rcf-mis,
+.rc-flight.rcf-modal .rcf-netlist { opacity: .16; transition: opacity .25s linear; }
 .rc-flight .rcf-menu {
   left: 50%;
   bottom: auto;

@@ -328,6 +328,7 @@ section { position: relative; padding: var(--sec) 0; }
 .btn-g {
   background: var(--surface); color: var(--tx);
   border: 1px solid var(--line-2); backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .btn-g:hover { border-color: var(--cyan); background: var(--surface-2); transform: translateY(-2px); }
 /* Три размера кнопки - три высоты, и ни одной промежуточной */
@@ -434,6 +435,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   padding-top: env(safe-area-inset-top, 0px);
   background: var(--head-bg); backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
   border-bottom: 1px solid transparent;
   transition: border-color var(--fast), background var(--fast), transform .4s var(--ease);
 }
@@ -566,6 +568,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;
   border-radius: var(--r-full); background: var(--surface); border: 1px solid var(--line);
   font-size: var(--fs-2); font-weight: 600; line-height: var(--lh-cap); color: var(--tx-2); backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .chip b { color: var(--tx); font-weight: 700; }
 .dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--lk-ok); box-shadow: 0 0 0 0 rgba(52,211,153,.6); animation: pulse 2.2s infinite; flex: none; }
@@ -819,6 +822,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .modal {
   position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: var(--pad);
   background: rgba(3,8,14,.72); backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   opacity: 0; visibility: hidden; transition: opacity .3s var(--ease), visibility .3s;
 }
 .modal.on { opacity: 1; visibility: visible; }

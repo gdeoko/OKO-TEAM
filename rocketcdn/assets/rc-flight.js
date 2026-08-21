@@ -300,6 +300,19 @@ var UNIVERSES = [
 ];
 var uniIdx = 0;
 
+/* Пометка «на стекле открыто окно». Правила, которые гасят метки и
+   задание под меню, справкой и досье, написаны через :has(). В
+   Safari он появился только в версии 15.4, и на телефонах постарше
+   фон под окном не тускнел. Класс на слое делает то же самое
+   везде - это запасной путь, а не замена. */
+function modalMark() {
+  if (!ui.wrap) return;
+  var on = (ui.menu && ui.menu.classList.contains("on")) ||
+           (ui.help && ui.help.classList.contains("on")) ||
+           (ui.dos && ui.dos.classList.contains("on"));
+  ui.wrap.classList.toggle("rcf-modal", !!on);
+}
+
 /* ── Оверлей ─────────────────────────────────────────────────
    DOM собирается один раз при первом открытии: кнопка полёта не
    должна ничего стоить тем, кто её не нажал. */
@@ -577,6 +590,7 @@ function buildUI() {
       var on = !ui.help.classList.contains("on");
       ui.help.classList.toggle("on", on);
       helpKey.classList.toggle("cur", on);
+      modalMark();
       if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
     });
   }
@@ -584,6 +598,7 @@ function buildUI() {
   if (helpX) helpX.addEventListener("click", function () {
     ui.help.classList.remove("on");
     if (helpKey) helpKey.classList.remove("cur");
+    modalMark();
   });
   var stopKey = w.querySelector(".rcf-stop-key");
   if (stopKey) {
@@ -629,6 +644,7 @@ function buildUI() {
       ui.menu.classList.toggle("on", on);
       ui.navKey.setAttribute("aria-expanded", on ? "true" : "false");
       ui.navKey.classList.toggle("cur", on);
+      modalMark();
       if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
     });
   }
@@ -720,6 +736,7 @@ function buildUI() {
        кадра незачем, курс уже задан */
     if (ui.menu) { ui.menu.classList.remove("on"); }
     if (ui.navKey) { ui.navKey.setAttribute("aria-expanded", "false"); ui.navKey.classList.remove("cur"); }
+    modalMark();
     goTo(b.getAttribute("data-goal"));
   });
   bindControls();
@@ -766,6 +783,7 @@ var dosT = 0, dosName = "";
 function dosClose() {
   if (!ui.dos) return;
   ui.dos.classList.remove("on");
+  modalMark();
   dosName = "";
   if (dosT) { clearTimeout(dosT); dosT = 0; }
   dosT = setTimeout(function () { dosT = 0; if (ui.dos) ui.dos.hidden = true; }, 340);
@@ -878,7 +896,7 @@ function dosOpen(obj, info) {
     Object.keys(explored).length + " / " + TOTAL_MARKS() + '</b></span>';
   ui.dosF.innerHTML = facts;
 
-  requestAnimationFrame(function () { if (ui.dos) ui.dos.classList.add("on"); });
+  requestAnimationFrame(function () { if (ui.dos) { ui.dos.classList.add("on"); modalMark(); } });
   noteExplored(name);
   if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
 }

@@ -170,6 +170,7 @@ html.rc-inside .rail-nav { opacity: 0; }
   background: var(--bg-2); color: var(--tx);
   font-size: var(--fs-3); line-height: var(--lh-cap); text-align: center;
   box-shadow: var(--shadow); backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   opacity: 0; pointer-events: none;
   transition: opacity .26s var(--ease), transform .26s var(--ease);
 }

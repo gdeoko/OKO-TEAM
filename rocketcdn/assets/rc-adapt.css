@@ -505,6 +505,7 @@ body { min-height: 100vh; min-height: 100svh; }
   .mcta { background: var(--bg); }
   .modal { background: rgba(3, 8, 14, .93); }
   .chip { backdrop-filter: none; }
+  -webkit-backdrop-filter: none;
   .sec-head::before, .hero-in::before, .hs-head::before { background: var(--read-veil-2); }
 }
 
