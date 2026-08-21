@@ -32,6 +32,10 @@
 "use strict";
 
 var doc = document, root = doc.documentElement;
+/* Режим приёмки: включается признаком в адресе и открывает пару
+   служебных ходов. В обычной сборке они молчат. */
+var DBG = false;
+try { DBG = /[?&]rcdbg=1/.test(location.search); } catch (e) {}
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
@@ -5190,10 +5194,19 @@ g.RC_FLIGHT = {
       полёт: !!F.open && !F.stage
     };
   },
-  /* Для проверки: поставить корабль в точку маршрута */
-  /* Для проверки финала: показать карточку пилота принудительно */
-  _pilot: function () { pilotShown = false; var t = NET_TOTAL; NET_TOTAL = function () { return netCount(); }; pilotCard(); NET_TOTAL = t; },
-  _set: function (v) { F.p = Math.max(0, Math.min(1, v)); F.goal = null; F.orbit = null; },
+  /* Служебные ходы приёмки: поставить корабль в любую точку маршрута
+     и вызвать финал, не проходя игру целиком. Стоят за признаком в
+     адресе (?rcdbg=1) - в обычной сборке молчат. */
+  _pilot: function () {
+    if (!DBG) return;
+    pilotShown = false;
+    var t = NET_TOTAL; NET_TOTAL = function () { return netCount(); };
+    pilotCard(); NET_TOTAL = t;
+  },
+  _set: function (v) {
+    if (!DBG) return;
+    F.p = Math.max(0, Math.min(1, v)); F.goal = null; F.orbit = null;
+  },
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);
