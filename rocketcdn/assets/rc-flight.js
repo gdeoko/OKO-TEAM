@@ -105,6 +105,17 @@ var F = {
      а страница под ним продолжает листаться. Скролл доводит кадр до
      ракурса старта, и оттуда игра начинается без единой склейки. */
   stage: false, stageK: 0,
+  /* ── Бортовые системы ──────────────────────────────────────
+     Ресурсы у корабля появились не ради счётчиков. Без них игра
+     была катанием: лететь можно куда угодно, разворачивать узлы
+     бесконечно, и ни одно решение ничего не стоило.
+
+     Теперь стоит. Энергия уходит на прыжок, развёртывание и
+     сканирование, а копится у светил - у звезды панели набирают
+     заряд быстрее всего. Целостность падает при опасных сближениях.
+     Это и есть цена решений: лететь ли к дыре, тратить ли заряд на
+     дальний узел или приберечь его на прыжок. */
+  en: 100, enMax: 100, hull: 100, warn: 0,
   /* away - мы в чужой вселенной: там нет режиссёрской дуги, движение
      идёт облётами систем и планет, и маршрут родной системы не
      должен утягивать камеру обратно */
@@ -312,11 +323,21 @@ function buildUI() {
   w.setAttribute("aria-label", RU ? "Полёт по сети Rocket CDN" : "Rocket CDN network flight");
   /* Цели навигации: по ним корабль умеет долетать сам. Отметки p
      подставляются после сборки мира из честных позиций на дуге. */
+  /* Полная система: все восемь планет, Солнце, Луна и дыра.
+     «Почему в солнечной системе нету подлёта ко всем 8 планетам
+     существующим плюс солнце?» - теперь есть, и к каждому телу
+     ведёт своя кнопка. Ряд прокручивается, если не влезает. */
   var NAV = [
+    { id: "sun", t: RU ? "Солнце" : "Sun" },
+    { id: "mercury", t: RU ? "Меркурий" : "Mercury" },
+    { id: "venus", t: RU ? "Венера" : "Venus" },
     { id: "earth", t: RU ? "Земля" : "Earth" },
     { id: "moon", t: RU ? "Луна" : "Moon" },
     { id: "mars", t: RU ? "Марс" : "Mars" },
+    { id: "jupiter", t: RU ? "Юпитер" : "Jupiter" },
     { id: "saturn", t: RU ? "Сатурн" : "Saturn" },
+    { id: "uranus", t: RU ? "Уран" : "Uranus" },
+    { id: "neptune", t: RU ? "Нептун" : "Neptune" },
     { id: "hole", t: RU ? "Дыра" : "Hole" },
     { id: "galaxy", t: RU ? "Галактика" : "Galaxy" },
     { id: "home", t: RU ? "Домой" : "Home" }
@@ -386,6 +407,19 @@ function buildUI() {
           '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
         '</div>' +
       '</div>' +
+      /* Курсовая строка на верхней перемычке корпуса: цель, до неё,
+         режим. Ровно то место, где в кабине и положено быть
+         курсовому табло. */
+      '<div class="rcf-course"><span class="rcf-c-goal">—</span>' +
+        '<i></i><span class="rcf-c-dist">—</span>' +
+        '<i></i><span class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</span></div>' +
+      /* Боковые стойки: слева заряд, справа целостность корпуса.
+         Столбики стоят на скошенных боковинах, где на самом рисунке
+         кабины идут приборные панели. */
+      '<div class="rcf-bars">' +
+        '<div class="rcf-bar rcf-bar-en"><i></i><b>' + (RU ? "ЗАРЯД" : "POWER") + '</b><u></u></div>' +
+        '<div class="rcf-bar rcf-bar-hull"><i></i><b>' + (RU ? "КОРПУС" : "HULL") + '</b><u></u></div>' +
+      '</div>' +
       '<div class="rcf-uni" role="menu"><i>' + (RU ? "КУДА ПРЫГАЕМ" : "JUMP TO") + '</i>' + uniHtml + '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
@@ -439,6 +473,12 @@ function buildUI() {
   ui.speed = w.querySelector(".rcf-speed b");
   ui.auto = w.querySelector(".rcf-auto");
   ui.info = w.querySelector(".rcf-info");
+  ui.bars = w.querySelector(".rcf-bars");
+  ui.enTx = w.querySelector(".rcf-bar-en u");
+  ui.huTx = w.querySelector(".rcf-bar-hull u");
+  ui.cGoal = w.querySelector(".rcf-c-goal");
+  ui.cDist = w.querySelector(".rcf-c-dist");
+  ui.cMode = w.querySelector(".rcf-c-mode");
   ui.radar = w.querySelector(".rcf-radar");
   ui.thr = w.querySelector(".rcf-thr");
   ui.thrFill = w.querySelector(".rcf-thr-fill");
@@ -1036,6 +1076,9 @@ function jumpUniverse(want) {
 
 var GOAL_NAMES = {
   earth: RU ? "ЗЕМЛЯ" : "EARTH", moon: RU ? "ЛУНА" : "MOON",
+  sun: RU ? "СОЛНЦЕ" : "SUN", mercury: RU ? "МЕРКУРИЙ" : "MERCURY",
+  venus: RU ? "ВЕНЕРА" : "VENUS", jupiter: RU ? "ЮПИТЕР" : "JUPITER",
+  uranus: RU ? "УРАН" : "URANUS", neptune: RU ? "НЕПТУН" : "NEPTUNE",
   mars: RU ? "МАРС" : "MARS", saturn: RU ? "САТУРН" : "SATURN",
   hole: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
   galaxy: RU ? "ГАЛАКТИКА" : "GALAXY", home: RU ? "ДОМОЙ" : "HOME"
@@ -1048,7 +1091,10 @@ var GOAL_NAMES = {
    собственный манёвр уклонения начнёт отталкивать от цели. */
 var ORBITS = {
   earth: { r: 128, y: 30 }, moon: { r: 42, y: 10 }, mars: { r: 68, y: 16 },
-  saturn: { r: 168, y: 48 }, hole: { r: 200, y: 32 }
+  saturn: { r: 168, y: 48 }, hole: { r: 200, y: 32 },
+  /* Остальные тела системы: к каждому можно выйти на виток */
+  sun: { r: 460, y: 90 }, mercury: { r: 34, y: 8 }, venus: { r: 62, y: 14 },
+  jupiter: { r: 250, y: 60 }, uranus: { r: 140, y: 34 }, neptune: { r: 132, y: 30 }
 };
 
 function goTo(id) {
@@ -1425,6 +1471,115 @@ function buildWorld() {
   earth.add(clouds);
   scene.add(earth);
 
+  /* ── Остальная Солнечная система ────────────────────────
+     «Где 4 вселенные, почему в солнечной системе нету подлёта ко
+     всем 8 планетам существующим плюс солнце?» - вопрос прямой и
+     справедливый. Маршрут вёл мимо Земли, Луны, Марса и Сатурна, а
+     остальные тела в мире попросту отсутствовали.
+
+     Теперь система полная. Планеты стоят не по маршруту, а вокруг
+     него - к каждой можно долететь вручную, и каждая читается
+     собственным телом с высоты. Размеры сжаты относительно
+     настоящих (иначе Юпитер занял бы полкадра там, где нужен
+     Сатурн), но порядок сохранён: газовые гиганты крупно, каменные
+     мелко.
+
+     Все они процедурные - ни одного лишнего килобайта на загрузку. */
+  function makePlanet(r, pos, base, bands, noise, opt) {
+    opt = opt || {};
+    var body = new T.Mesh(
+      new T.SphereGeometry(r, tiny ? 24 : 42, tiny ? 16 : 30),
+      new T.MeshPhongMaterial({
+        map: paintPlanet(tiny ? 256 : 512, tiny ? 128 : 256, base, bands, noise),
+        shininess: opt.shine || 6,
+        emissive: new T.Color(opt.emis || 0x000000),
+        emissiveIntensity: opt.emisI || 0
+      })
+    );
+    body.position.set(pos[0], pos[1], pos[2]);
+    scene.add(body);
+    if (opt.info) body.userData.info = opt.info;
+    if (opt.atm) {
+      var a = new T.Mesh(
+        new T.SphereGeometry(r * 1.06, tiny ? 20 : 32, tiny ? 14 : 22),
+        new T.ShaderMaterial({
+          transparent: true, side: T.BackSide, depthWrite: false,
+          uniforms: { uC: { value: new T.Color(opt.atm) } },
+          vertexShader: "varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+          fragmentShader: "varying vec3 vN; uniform vec3 uC; void main(){ float f = pow(0.7 - dot(vN, vec3(0.0,0.0,-1.0)), 3.4); gl_FragColor = vec4(uC, f * 0.55); }"
+        })
+      );
+      body.add(a);
+    }
+    return body;
+  }
+
+  /* Солнце телом, а не только бликом: до него можно дойти, и у него
+     есть поверхность - кипящая, с пятнами и протуберанцами */
+  var sunBody = new T.Mesh(
+    new T.SphereGeometry(190, tiny ? 28 : 44, tiny ? 20 : 32),
+    new T.MeshBasicMaterial({
+      map: paintPlanet(tiny ? 256 : 512, tiny ? 128 : 256,
+        [[0, "#fff4c8"], [0.4, "#ffd166"], [0.75, "#ff9f2e"], [1, "#ff7a18"]], 30, 220)
+    })
+  );
+  sunBody.position.set(2600, 1000, 1750);
+  sunBody.userData.info = RU ? "СОЛНЦЕ · 1,39 млн км · источник всей энергии системы"
+                             : "SUN · 1.39M km wide";
+  scene.add(sunBody);
+  /* Корона: сложение поверх поверхности, чтобы край не был резаным */
+  var corona = new T.Mesh(
+    new T.SphereGeometry(215, 28, 20),
+    new T.MeshBasicMaterial({ color: 0xffc46a, transparent: true, opacity: 0.28,
+      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false })
+  );
+  corona.position.copy(sunBody.position);
+  scene.add(corona);
+
+  var mercury = makePlanet(12, [470, 200, 690],
+    [[0, "#b9a795"], [0.5, "#8e7d6d"], [1, "#5f5348"]], 6, 260,
+    { info: RU ? "МЕРКУРИЙ · год длиннее суток · без атмосферы" : "MERCURY · no atmosphere" });
+  var venus = makePlanet(28, [190, 110, 360],
+    [[0, "#f6e2b0"], [0.45, "#e0bf7a"], [1, "#b2864a"]], 16, 120,
+    { atm: 0xf0d79a, info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
+  var jupiter = makePlanet(122, [1130, -50, -1180],
+    [[0, "#e8d6b8"], [0.28, "#c99f6e"], [0.52, "#e3cba6"], [0.74, "#b07f52"], [1, "#dcc19c"]], 34, 90,
+    { atm: 0xe8cfa6, info: RU ? "ЮПИТЕР · Большое красное пятно старше телескопа" : "JUPITER" });
+  /* Большое красное пятно: узнаваемая примета, без неё Юпитер
+     читается просто полосатым шаром */
+  var spot = new T.Mesh(
+    new T.SphereGeometry(118 * 0.99, 20, 16, 0.6, 0.55, 1.35, 0.34),
+    new T.MeshPhongMaterial({ color: 0xd06a44, shininess: 4 })
+  );
+  jupiter.add(spot);
+  var uranus = makePlanet(66, [1790, 390, -1430],
+    [[0, "#cdeff2"], [0.5, "#9fd8e0"], [1, "#7ab6c4"]], 10, 60,
+    { atm: 0x9fe0ee, info: RU ? "УРАН · лежит на боку · ось наклонена на 98 градусов" : "URANUS" });
+  uranus.rotation.z = 1.7;
+  var neptune = makePlanet(62, [2090, 250, -1930],
+    [[0, "#7fa8f0"], [0.5, "#4a72c8"], [1, "#2b4c96"]], 14, 70,
+    { atm: 0x6f9bf0, info: RU ? "НЕПТУН · ветер до 2100 км/ч · самый быстрый в системе" : "NEPTUNE" });
+
+  /* Пояс астероидов между Марсом и Юпитером: облако мелких точек по
+     дуге. Точками, а не телами - их тысячи, и каждая отдельным
+     объектом стоила бы кадра. */
+  var beltGeo = new T.BufferGeometry();
+  var bn = tiny ? 900 : 2600;
+  var bp = new Float32Array(bn * 3);
+  for (var bi = 0; bi < bn; bi++) {
+    var ba = Math.random() * Math.PI * 2;
+    var br = 320 + Math.random() * 190;
+    bp[bi * 3] = 880 + Math.cos(ba) * br;
+    bp[bi * 3 + 1] = -110 + (Math.random() - 0.5) * 80;
+    bp[bi * 3 + 2] = -1020 + Math.sin(ba) * br;
+  }
+  beltGeo.setAttribute("position", new T.BufferAttribute(bp, 3));
+  var belt = new T.Points(beltGeo, new T.PointsMaterial({
+    color: 0xa89c8c, size: 3.4, sizeAttenuation: true, map: starDot,
+    transparent: true, opacity: 0.85, depthWrite: false
+  }));
+  scene.add(belt);
+
   /* ── Луна ── */
   var moon = new T.Mesh(
     new T.SphereGeometry(16, 40, 28),
@@ -1611,7 +1766,10 @@ function buildWorld() {
   mars.userData.info = RU ? "МАРС · в телескоп впервые разглядел Галилей, 1610" : "MARS · first seen through a telescope by Galileo, 1610";
   saturn.userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
   hole.children[0].userData.info = RU ? "ЧЁРНАЯ ДЫРА · первый снимок - M87*, 2019" : "BLACK HOLE · first image - M87*, 2019";
-  var pickables = [eBody, moon, mars, saturn.children[0], hole.children[0]];
+  /* Новые тела тоже отзываются на нажатие: по каждому можно снять
+     карту, иначе половина системы остаётся немой */
+  var pickables = [eBody, moon, mars, saturn.children[0], hole.children[0],
+                   sunBody, mercury, venus, jupiter, uranus, neptune];
   for (var rj = 0; rj < relaySprites.length; rj++) pickables.push(relaySprites[rj]);
   saturn.children[0].userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
 
@@ -1830,7 +1988,16 @@ function buildWorld() {
     moon: nearestP(moon.position),
     mars: nearestP(mars.position),
     saturn: nearestP(saturn.position),
-    hole: nearestP(hole.position)
+    hole: nearestP(hole.position),
+    /* Новые тела стоят в стороне от режиссёрской дуги, поэтому их
+       отметка - ближайшая точка маршрута. Корабль подходит на
+       дистанцию видимости, а дальше выходит на виток вокруг тела. */
+    sun: nearestP(sunBody.position),
+    mercury: nearestP(mercury.position),
+    venus: nearestP(venus.position),
+    jupiter: nearestP(jupiter.position),
+    uranus: nearestP(uranus.position),
+    neptune: nearestP(neptune.position)
   };
   AT.jump0 = Math.min(0.86, AT.hole + 0.05);
   AT.jump1 = Math.min(0.9, AT.jump0 + 0.27);
@@ -1921,6 +2088,10 @@ function buildWorld() {
     nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb, mob: mob,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
+    /* Позиция светила: по ней бортовые панели набирают заряд */
+    sunPos: sunGlow.position,
+    sun: sunBody, mercury: mercury, venus: venus,
+    jupiter: jupiter, uranus: uranus, neptune: neptune, belt: belt,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
   };
 }
@@ -2271,6 +2442,9 @@ function deployNode() {
   if (!W3 || !F.orbit || !F.orbit.name) return;
   var name = F.orbit.name;
   if (net[name]) return;
+  /* Узел стоит заряда: это и делает выбор выбором - на дальний
+     рубеж или на прыжок, но не на всё сразу */
+  if (!spend(14, RU ? "развёртывание узла" : "node deploy")) return;
   net[name] = 1;
   try { localStorage.setItem(NET_KEY, JSON.stringify(net)); } catch (e) {}
 
@@ -2835,7 +3009,10 @@ function frame(ts) {
      мешать целиться. */
   var nearHole = Math.max(0, 1 - w3.cam.position.distanceTo(w3.hole.position) / 500);
   var thrust = Math.min(0.34, speed * 1.9);
-  F.shake += ((jumpZone ? 1 : 0) * 0.8 + nearHole * 0.7 + thrust - F.shake) * Math.min(1, dt * 3);
+  /* Дрожь корпуса к пробою нарастает вдвое: машина работает на
+     пределе, и кадр обязан это показывать */
+  var jShake = jumpZone ? (0.7 + (F.jFlash || 0) * 1.5) : 0;
+  F.shake += (jShake + nearHole * 0.7 + thrust - F.shake) * Math.min(1, dt * 3);
   if (F.shake > 0.02) {
     w3.cam.rotateZ(Math.sin(ts * 0.021) * 0.004 * F.shake);
     w3.cam.position.x += Math.sin(ts * 0.037) * 0.5 * F.shake;
@@ -2843,7 +3020,17 @@ function frame(ts) {
   }
 
   /* Поле зрения дышит от скорости */
-  var fovGoal = (W3.fov0 || 72) + speed * 46 + (jumpZone ? 14 : 0);
+  /* Объектив на прыжке. Раньше он просто раскрывался - и разгон
+     читался «поехали быстрее». Настоящий пробой сначала СЖИМАЕТ
+     кадр (длинный фокус, стенки туннеля сходятся), а на выходе
+     разжимает его с перелётом - именно этот рывок и ощущается как
+     «выскочили». */
+  var jf = 0;
+  if (jumpZone && w3.at) {
+    var jp = Math.max(0, Math.min(1, (F.p - w3.at.jump0) / Math.max(0.001, w3.at.jump1 - w3.at.jump0)));
+    jf = jp < 0.74 ? -22 * (jp / 0.74) : 30 * Math.pow(1 - (jp - 0.74) / 0.26, 2);
+  }
+  var fovGoal = (W3.fov0 || 72) + speed * 46 + jf;
   w3.cam.fov += (fovGoal - w3.cam.fov) * Math.min(1, dt * 4);
   w3.cam.updateProjectionMatrix();
 
@@ -3034,12 +3221,61 @@ function frame(ts) {
          фиолет - видно, что летим уже по другому рукаву */
       jm.color.setRGB(0.62 - jk * 0.2, 0.85 - jk * 0.35, 0.94);
     }
-    F.jz = ((F.jz || 0) + dt * (420 + jk * 900)) % 300;
-    var stretch = 1 + Math.sin(jk * Math.PI) * 1.5;
+    F.jz = ((F.jz || 0) + dt * (420 + jk * 1500)) % 300;
+    /* Растяжение полос идёт не ровной синусоидой, а с изломом на
+       трёх четвертях: свет мимо стекла разгоняется до самого выхода
+       и только там обрывается. Прежняя гладкая дуга читалась
+       «полетели и вернулись», а не «пробили пространство». */
+    var stretch = 1 + Math.pow(Math.sin(Math.min(1, jk * 1.18) * Math.PI), 0.7) * 3.4;
     w3.jump.position.copy(w3.cam.position);
     w3.jump.quaternion.copy(w3.cam.quaternion);
-    w3.jump.scale.set(1, 1, stretch);
+    w3.jump.scale.set(1 - jk * 0.35, 1 - jk * 0.35, stretch);
     w3.jump.translateZ(F.jz);
+  }
+
+  /* ── Прыжок как событие ──────────────────────────────────
+     «Скачок эффект доработать реалистичнее между Млечным Путём и
+     вселенными» - и правда, раньше это были только полосы. Настоящий
+     переход собран из четырёх вещей, и все они идут по одной доле:
+
+       разгон   - кадр сжимается, объектив уходит в длинный фокус,
+                  корпус начинает бить дрожью;
+       пробой   - на трёх четвертях идёт вспышка, короткая и злая;
+       выход    - кадр разжимается обратно с перелётом, звёзды
+                  успокаиваются, вспышка гаснет;
+       звук     - нарастающий гул, обрыв на вспышке, тишина после.
+
+     Ни один из этих слоёв сам по себе не работает: сжатие без
+     вспышки читается лагом, вспышка без сжатия - морганием. */
+  var jNow = jumpZone ? Math.max(0, Math.min(1,
+    (F.p - (w3.at ? w3.at.jump0 : 0.585)) /
+    Math.max(0.001, (w3.at ? w3.at.jump1 - w3.at.jump0 : 0.27)))) : -1;
+  if (jNow >= 0) {
+    /* Вспышка пробоя: узкое окно у трёх четвертей пути */
+    var flash = Math.max(0, 1 - Math.abs(jNow - 0.74) / 0.07);
+    F.jFlash = flash * flash;
+    if (ui.fade) {
+      ui.fade.style.transition = "none";
+      ui.fade.style.background =
+        "radial-gradient(circle at 50% 50%, rgba(226,244,255," + (F.jFlash * 0.95).toFixed(3) +
+        "), rgba(150,200,255," + (F.jFlash * 0.5).toFixed(3) + ") 45%, rgba(10,20,40,0) 78%)";
+      ui.fade.style.opacity = F.jFlash > 0.01 ? "1" : "0";
+    }
+    /* Звук пробоя ровно один раз за прыжок */
+    if (F.jFlash > 0.5 && !F.jBang) {
+      F.jBang = true;
+      if (g.RC_SOUND) {
+        try {
+          if (g.RC_SOUND.hyper) g.RC_SOUND.hyper();
+          else if (g.RC_SOUND.blip) g.RC_SOUND.blip(90, 0.9, "sawtooth", 0.05);
+        } catch (e) {}
+      }
+      say(RU ? "ПРОБОЙ · МЛЕЧНЫЙ ПУТЬ ПОЗАДИ" : "BREACH · MILKY WAY BEHIND", 2600);
+    }
+  } else if (F.jBang || F.jFlash) {
+    F.jBang = false;
+    F.jFlash = 0;
+    if (ui.fade) { ui.fade.style.background = ""; ui.fade.style.opacity = "0"; }
   }
 
   /* ── Шлейф двигателя ──
@@ -3165,7 +3401,12 @@ function frame(ts) {
     try { g.RC_SOUND.flightLevel(Math.min(1, 0.25 + speed * 4 + (jumpZone ? 0.35 : 0))); } catch (e) {}
   }
 
-  if (!F.stage) radarFrame(w3, ts);
+  if (!F.stage) {
+    powerFrame(w3, dt);
+    barsFrame(ts);
+    courseFrame(w3, ts);
+    radarFrame(w3, ts);
+  }
 
   w3.r.render(w3.scene, w3.cam);
 }
@@ -3365,6 +3606,104 @@ function launchers() {
       }
     }, 250);
   });
+}
+
+/* ── Курсовая строка ─────────────────────────────────────────
+   Куда идём, сколько осталось и в каком режиме. Расстояние честное:
+   считается от камеры до цели и переводится в километры по тому же
+   масштабу, в котором построен мир (Земля - шестьдесят единиц на
+   двенадцать с половиной тысяч километров). */
+var courseT = 0;
+var KM_PER_UNIT = 12742 / 120;          /* диаметр Земли на её размер в мире */
+function courseFrame(w3, ts) {
+  if (!ui.cGoal || ts - courseT < 220) return;
+  courseT = ts;
+  var name = "—", dist = "—";
+  var tgt = null;
+  if (F.orbit && F.orbit.name) { name = F.orbit.name; tgt = F.orbit.c; }
+  else if (F.goalId) {
+    name = GOAL_NAMES[F.goalId] || F.goalId;
+    var o = w3[F.goalId === "hole" ? "hole" : F.goalId];
+    if (o) tgt = o.position;
+  }
+  if (tgt) {
+    var d = w3.cam.position.distanceTo(tgt) * KM_PER_UNIT;
+    dist = d > 1e6 ? (d / 1e6).toFixed(1) + (RU ? " млн км" : "M km")
+         : d > 1e3 ? Math.round(d / 1e3) + (RU ? " тыс. км" : "k km")
+         : Math.round(d) + (RU ? " км" : " km");
+  }
+  ui.cGoal.textContent = name;
+  ui.cDist.textContent = dist;
+  ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
+                       : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")
+                       : (RU ? "РУЧНОЙ" : "MANUAL");
+}
+
+/* ── Бортовые системы: расход и восполнение ──────────────────
+   Энергия копится от светил: чем ближе звезда, тем быстрее заряд.
+   Это не условность, а понятная логика - панели корабля работают
+   от света. У чёрной дыры наоборот: корпус нагружается приливом, и
+   целостность падает. Оба процесса медленные, чтобы решение
+   «подойти ближе» имело цену, но не убивало за секунду.
+
+   Числа держим в узде: заряд не уходит в минус и не переливается
+   через край, целостность не опускается ниже четверти - игра не
+   должна заканчиваться тупиком, из которого нет выхода. */
+function powerFrame(w3, dt) {
+  if (F.stage) return;
+  var cam = w3.cam.position;
+  var gain = 0.55;                       /* фон: реактор корабля */
+
+  /* Свет звезды. Солнце стоит далеко и ярко, у чужих систем свои
+     светила - берём ближайшее из тех, что в кадре мира. */
+  if (w3.sunPos) {
+    var d = cam.distanceTo(w3.sunPos);
+    if (d < 2600) gain += (1 - d / 2600) * 3.4;
+  }
+  /* Дыра: приливная нагрузка на корпус */
+  var risk = 0;
+  if (w3.hole) {
+    var dh = cam.distanceTo(w3.hole.position);
+    if (dh < 420) {
+      risk = 1 - dh / 420;
+      F.hull = Math.max(25, F.hull - risk * risk * 9 * dt);
+      gain -= risk * 2.2;
+    }
+  }
+  F.warn = risk;
+  F.en = Math.max(0, Math.min(F.enMax, F.en + gain * dt));
+  /* Целостность восстанавливается сама, но втрое медленнее, чем
+     теряется: ремонт всегда дороже поломки */
+  if (risk < 0.02 && F.hull < 100) F.hull = Math.min(100, F.hull + 1.1 * dt);
+}
+
+/* Списать заряд. Возвращает false, если не хватило - тогда
+   действие не выполняется, а на табло идёт короткое сообщение.
+   Молчаливого отказа быть не должно: человек обязан понимать,
+   почему кнопка не сработала. */
+function spend(cost, what) {
+  if (F.en >= cost) { F.en -= cost; return true; }
+  say((RU ? "НЕ ХВАТАЕТ ЗАРЯДА · " : "NOT ENOUGH POWER · ") +
+      Math.round(F.en) + "/" + cost + (what ? " · " + what : ""), 2200);
+  if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(180, 0.35, "sawtooth", 0.02); } catch (e) {} }
+  return false;
+}
+
+/* Отрисовка бортовых стоек. Столбики стоят на скошенных боковинах
+   корпуса - там, где на рисунке кабины и нарисованы приборы. */
+var barsT = 0;
+function barsFrame(ts) {
+  if (!ui.bars || ts - barsT < 160) return;
+  barsT = ts;
+  var en = F.en / F.enMax, hu = F.hull / 100;
+  ui.bars.style.setProperty("--en", (en * 100).toFixed(1) + "%");
+  ui.bars.style.setProperty("--hull", (hu * 100).toFixed(1) + "%");
+  ui.bars.classList.toggle("low", en < 0.22);
+  ui.bars.classList.toggle("hurt", hu < 0.6);
+  if (ui.enTx) ui.enTx.textContent = Math.round(F.en);
+  if (ui.huTx) ui.huTx.textContent = Math.round(F.hull);
+  /* Сигнальная лампа сближения: горит, когда корпус под нагрузкой */
+  if (ui.wrap) ui.wrap.classList.toggle("rcf-alarm", F.warn > 0.25);
 }
 
 /* ── Рычаг тяги ──────────────────────────────────────────────
@@ -3727,6 +4066,8 @@ g.RC_FLIGHT = {
       полёт: !!F.open && !F.stage
     };
   },
+  /* Для проверки: поставить корабль в точку маршрута */
+  _set: function (v) { F.p = Math.max(0, Math.min(1, v)); F.goal = null; F.orbit = null; },
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);

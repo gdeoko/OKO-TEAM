@@ -1237,19 +1237,24 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-deck .rcf-nav {
   max-width: min(660px, 68vw);
 }
-/* Пуск узла - кнопка того же ряда, а не плашка посреди кадра */
+/* Пуск узла стоит НАД рядом навигации, а не в нём: в ряду он
+   закрывал кнопки целей, и до половины системы было не дотянуться */
 .rc-flight .rcf-deck .rcf-deploy {
-  position: static;
-  transform: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
   margin: 0;
-  padding: 8px 18px;
+  padding: 8px 20px;
   font-size: 10.5px;
+  white-space: nowrap;
   display: none;
 }
 .rc-flight .rcf-deck .rcf-deploy.on {
   display: inline-block;
-  transform: none;
+  transform: translateX(-50%);
 }
+.rc-flight .rcf-mid { position: relative; }
 
 @media (max-width: 760px) {
   .rc-flight .rcf-deck {
@@ -1468,4 +1473,110 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-radar { width: 52px; height: 52px; }
   .rc-flight .rcf-thr { width: 22px; height: 52px; }
   .rc-flight .rcf-right .rcf-speed b { font-size: 15px; }
+}
+
+/* ── Курсовая строка на верхней перемычке ────────────────────
+   Куда идём, сколько осталось, в каком режиме. Место выбрано не
+   случайно: на рисунке кабины это перемычка над остеклением, где в
+   настоящих кораблях и стоит курсовое табло. */
+.rc-flight .rcf-course {
+  position: absolute;
+  left: 50%;
+  /* Под титром сцены, а не на нём: два текста в одной строке
+     читались кашей */
+  top: clamp(42px, 8.2vh, 78px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.4vw, 18px);
+  padding: 4px clamp(10px, 1.4vw, 18px);
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: clamp(9px, 1.25vh, 11.5px);
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+  text-shadow: 0 1px 3px rgba(2,6,12,.95), 0 0 14px rgba(var(--int-cyan-rgb, 66,178,220), .4);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.rc-flight .rcf-course i {
+  width: 1px; height: 11px;
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+.rc-flight .rcf-c-goal { color: var(--int-cyan, #42B2DC); }
+.rc-flight .rcf-c-mode { color: rgba(var(--int-vio-rgb, 138,89,246), 1); }
+
+/* ── Бортовые стойки: заряд и корпус ─────────────────────────
+   Столбики на скошенных боковинах корпуса - там, где на рисунке
+   кабины идут вертикальные приборные панели. Заряд слева, корпус
+   справа: разнесены нарочно, чтобы взгляд не путал их. */
+.rc-flight .rcf-bars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.rc-flight .rcf-bar {
+  position: absolute;
+  bottom: clamp(90px, 22vh, 210px);
+  width: clamp(8px, 1vw, 12px);
+  height: clamp(70px, 15vh, 150px);
+  border-radius: 999px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .4);
+  background: rgba(3, 10, 18, .78);
+  overflow: hidden;
+}
+.rc-flight .rcf-bar-en { left: clamp(10px, 2.2vw, 34px); }
+.rc-flight .rcf-bar-hull { right: clamp(10px, 2.2vw, 34px); }
+.rc-flight .rcf-bar i {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(0deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .95),
+    rgba(var(--int-lit-rgb, 207,233,245), .8));
+  transition: height .25s linear, background .3s linear;
+}
+.rc-flight .rcf-bar-en i { height: var(--en, 100%); }
+.rc-flight .rcf-bar-hull i {
+  height: var(--hull, 100%);
+  background: linear-gradient(0deg, rgba(53,224,143,.95), rgba(160,255,210,.8));
+}
+.rc-flight .rcf-bars.low .rcf-bar-en i { background: linear-gradient(0deg, #ff8a4c, #ffd08a); }
+.rc-flight .rcf-bars.hurt .rcf-bar-hull i { background: linear-gradient(0deg, #ff5a5a, #ffb0b0); }
+.rc-flight .rcf-bar b {
+  position: absolute; left: 50%; bottom: -15px;
+  text-shadow: 0 1px 3px rgba(2,6,12,.95);
+  transform: translateX(-50%);
+  font: 700 8px/1 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .14em;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .85);
+}
+.rc-flight .rcf-bar u {
+  position: absolute; left: 50%; top: -16px;
+  transform: translateX(-50%);
+  font: 700 10px/1 var(--f-body, "Golos Text", sans-serif);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .95);
+  text-decoration: none;
+  text-shadow: 0 1px 3px rgba(2,6,12,.95);
+}
+
+/* Сигнальная лампа сближения: корпус под нагрузкой, и кадр об этом
+   говорит - красная кромка по краям, как аварийное освещение */
+@keyframes rcfAlarm {
+  0%, 100% { opacity: .18; }
+  50%      { opacity: .5; }
+}
+.rc-flight.rcf-alarm::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: inset 0 0 130px -30px rgba(255, 70, 70, .95);
+  animation: rcfAlarm .9s ease-in-out infinite;
+}
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-bar { bottom: clamp(80px, 20vh, 150px); height: clamp(56px, 12vh, 110px); width: 7px; }
+  .rc-flight .rcf-bar-en { left: 6px; }
+  .rc-flight .rcf-bar-hull { right: 6px; }
+  .rc-flight .rcf-course { font-size: 8.5px; gap: 8px; }
 }
