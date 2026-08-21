@@ -193,6 +193,41 @@ $check('участнику подготовлено письмо', $rj['mailed']
 $rj2 = grade_reject_application($a8, $why8, 'ai');
 $check('повторное отклонение не дублирует письмо', $rj2['ok'] && $rj2['mailed'] === false);
 
+/* ── 9. Одна ссылка — одна заявка в конкурсе ─────────────────────────────── */
+echo "\n9. УНИКАЛЬНОСТЬ ССЫЛКИ\n";
+require_once BASE_PATH . '/core/link_unique.php';
+
+$linkA = 'https://rutube.ru/video/testlink-' . substr((string) microtime(true), -6) . '/';
+$a9 = $mk($short, $submitted);
+q("UPDATE applications SET video_url=?, status='new' WHERE id=?", [$linkA, $a9]);
+
+$c9 = lu_check($linkA, (int) $short['id']);
+$check('повтор той же ссылки в конкурсе не принимается', $c9['ok'] === false, $c9['reason']);
+$check('в отказе назван пункт положения', mb_strpos((string) $c9['reason'], '8.1') !== false);
+
+if ($long) {
+    $c9b = lu_check($linkA, (int) $long['id']);
+    $check('та же работа на другой конкурс принимается', $c9b['ok'] === true, (string) $c9b['reason']);
+}
+
+// Отклонённая заявка ссылку не занимает: человек исправляет причину и подаёт заново.
+q("UPDATE applications SET status='rejected' WHERE id=?", [$a9]);
+$c9c = lu_check($linkA, (int) $short['id']);
+$check('после отклонения ту же ссылку можно подать заново', $c9c['ok'] === true, (string) $c9c['reason']);
+q("UPDATE applications SET status='new' WHERE id=?", [$a9]);
+
+// Нормализация: те же адреса с разным хвостом считаются одной ссылкой.
+$check('«?list=» и слэш в конце не делают ссылку новой',
+       lu_norm('https://vkvideo.ru/video1_2?list=xx') === lu_norm('https://vkvideo.ru/video1_2/'));
+$check('utm-метки не делают ссылку новой',
+       lu_norm('https://rutube.ru/video/a/') === lu_norm('https://www.rutube.ru/video/a?utm_source=vk'));
+$check('разные работы остаются разными',
+       lu_norm('https://rutube.ru/video/a/') !== lu_norm('https://rutube.ru/video/b/'));
+
+// Видеохостинг папкой не считается — иначе запретили бы половину заявок.
+$f9 = lu_is_folder('https://vkvideo.ru/video287677756_456240157');
+$check('страница видео не принимается за папку', empty($f9['folder']));
+
 /* ── Уборка ──────────────────────────────────────────────────────────────── */
 echo "\nУБОРКА\n";
 $del = 0;

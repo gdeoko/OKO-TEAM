@@ -553,6 +553,34 @@ function ag_grade_application(int $appId, array $opt = []): array {
 
     $runId = (int) insert('grading_runs', ['application_id' => $appId, 'model' => ag_model(), 'status' => 'new']);
 
+    /* ПАПКА — ЭТО НЕ КОНКУРСНАЯ РАБОТА.
+     *
+     * Загрузчик умеет брать из папки первый подходящий файл, и для одиночной
+     * работы это удобно. Но школа искусств прислала 37 заявок на разных детей с
+     * одной ссылкой на общую папку: оценка взяла бы первый рисунок и присвоила
+     * его всем тридцати семи. Это хуже, чем не оценить вовсе, — тридцать шесть
+     * человек получили бы звание за чужую работу.
+     *
+     * Поэтому папка с несколькими файлами до разбора не доходит: заявка уходит
+     * человеку с готовой причиной (п. 8.1 положения — одна заявка, один
+     * материал). Папка с одним файлом разбирается как обычно: там работа одна и
+     * понятно какая. */
+    if (is_file(BASE_PATH . '/core/link_unique.php')) {
+        require_once BASE_PATH . '/core/link_unique.php';
+        if (function_exists('lu_is_folder')) {
+            $fold = lu_is_folder($url);
+            if (!empty($fold['folder'])) {
+                $why = (string) $fold['why'] . ' Одна заявка — один конкурсный материал (п. 8.1 положения): '
+                     . 'нужна ссылка на саму работу этого участника.';
+                try {
+                    q("UPDATE grading_runs SET status='failed', error=?, reject_hint=? WHERE id=?",
+                      [mb_substr($why, 0, 500), mb_substr($why, 0, 900), $runId]);
+                } catch (\Throwable $e) {}
+                return ['ok' => false, 'run_id' => $runId, 'total' => 0.0, 'title' => '', 'why' => $why];
+            }
+        }
+    }
+
     // 1. Достаём запись.
     $dl = vf_download($url, $appId);
     if (!$dl['ok']) return $bad('запись не получена: ' . $dl['why'], $runId);
