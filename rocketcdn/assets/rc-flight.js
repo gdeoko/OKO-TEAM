@@ -415,7 +415,6 @@ function buildUI() {
        обновляет: --rcf-warp (разгон), --rcf-glow и --rcf-gx/--rcf-gy
        (блик от светила). Никакого постпроцессинга. */
     '<div class="rcf-fx" aria-hidden="true"><i class="rcf-glare"></i></div>' +
-    '<img class="rcf-cab" alt="" aria-hidden="true" decoding="async">' +
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
       /* Приборная плита собрана одним узлом: слева счётчики, в
@@ -765,16 +764,8 @@ function buildUI() {
   ui.fade = w.querySelector(".rcf-fade");
   ui.fx = w.querySelector(".rcf-fx");
 
-  /* Рамка кабины: своя для альбома и своя для портрета */
-  cabSrc();
-  /* Картинка кабины та же, что на сайте, и к моменту старта она уже
-     в кэше браузера: событие load по кэшированной картинке может и
-     не прийти, а даже если придёт - позже первого кадра игры.
-     Приёмка это и поймала: полторы десятых секунды кадр был без
-     рамки, вместо неё пустой космос. Проверяем готовность сразу. */
-  if (ui.cab.complete && ui.cab.naturalWidth) w.classList.add("has-cab");
-  ui.cab.addEventListener("load", function () { w.classList.add("has-cab"); });
-  ui.cab.addEventListener("error", function () { w.classList.remove("has-cab"); });
+  /* The cockpit shell is rendered by RC_CABIN in the WebGL scene.
+     No image is warmed or faded in here: that fade was a scene swap. */
 
   ui.brief.addEventListener("click", function (e) {
     var b = e.target.closest("button[data-mode]");
@@ -856,28 +847,10 @@ function buildUI() {
   bindControls();
 }
 
-/* Картинку кабины держим прогретой заранее: к финалу она уже
-   показана на сайте, но если человек нажал «Полёт» из середины
-   страницы, у игры она была бы холодной, и первый кадр вышел бы
-   без рамки. */
-var cabWarm = null;
-function warmCab() {
-  if (cabWarm) return;
-  cabWarm = new Image();
-  cabWarm.decoding = "async";
-  cabWarm.src = innerHeight > innerWidth
-    ? "assets/gen/cockpit-tall-v2.webp"
-    : "assets/gen/cockpit-wide-v2.webp";
-}
-addEventListener("rc:act", function (e) {
-  var a = e && e.detail && e.detail.act;
-  if (a === "walk" || a === "cabin" || a === "console" || a === "egress") warmCab();
-});
-
+/* Compatibility no-op for old call sites. The cockpit is geometry;
+   loading a portrait/wide image would reintroduce the seam. */
 function cabSrc() {
-  if (!ui.cab) return;
-  var want = innerHeight > innerWidth ? "assets/gen/cockpit-tall-v2.webp" : "assets/gen/cockpit-wide-v2.webp";
-  if (ui.cab.getAttribute("src") !== want) ui.cab.setAttribute("src", want);
+  return;
 }
 
 /* ── Досье объекта: скан на стекле ───────────────────────────
@@ -3978,15 +3951,24 @@ function frame(ts) {
     /* Нажали по телу - снимаем с него карту. Наведение по-прежнему
        только подписывает; досье открывает именно нажатие, иначе оно
        выскакивало бы от каждого движения мыши. */
-    if (F.pick && info && hitObj) dosOpen(hitObj, info);
+    if (F.pick && info && hitObj) {
+      dosOpen(hitObj, info);
+      F.infoUntil = ts + 4200;
+      hideHint();
+    }
     else if (F.pick && !info) dosClose();
-    if (info !== frame._info) {
-      frame._info = info;
-      if (info) {
-        ui.info.textContent = info;
+    /* A phone has no hover. Treating the resting centre reticle as a
+       mouse made the Earth card open by itself and collide with the
+       control hint. Mobile cards now exist only after a real tap and
+       remain long enough to read. Desktop keeps deliberate hover. */
+    var shownInfo = info && (innerWidth >= 760 || ts < (F.infoUntil || 0)) ? info : null;
+    if (shownInfo !== frame._info) {
+      frame._info = shownInfo;
+      if (shownInfo) {
+        ui.info.textContent = shownInfo;
         ui.info.classList.add("on");
         if (ui.cap && ui.cap.parentNode) ui.cap.parentNode.classList.add("has-info");
-        noteExplored(info.split(" ")[0]);
+        noteExplored(shownInfo.split(" ")[0]);
         if (g.RC_SOUND) { try { (g.RC_SOUND.uiHover || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
       }
       else {
@@ -4269,6 +4251,10 @@ function open() {
     netRestore();
   }
 
+  /* Direct launch and scroll launch use the same physical cabin.
+     Previously a direct launch skipped RC_CABIN and exposed the
+     cockpit image; that made two entry paths lead to two ships. */
+  cabinBuild();
   F.open = true;
   if (fromStage) {
     F.stage = false;
@@ -4282,6 +4268,8 @@ function open() {
     ui.wrap.classList.add("rcf-native-cab");
   } else {
     F.p = 0; F.v = 0; F.last = 0;
+    cabinFlightMode();
+    ui.wrap.classList.add("rcf-native-cab");
   }
 
   /* Возвращаемся домой. Раньше выход из чужой вселенной оставлял
@@ -5497,45 +5485,10 @@ var CAM_WIN = 1.42;              /* от глаз до остекления в �
 function cabinBuild() {
   if (cabin || !W3 || !g.RC_CABIN) return cabin;
   var T = g.THREE;
-  var portrait = innerHeight > innerWidth;
-  /* Плоскость корпуса в проёме подбираем так, чтобы на финальном
-     ракурсе она проецировалась ровно во весь кадр - тогда подмена
-     её плоской рамкой в момент старта не видна ничем. */
-  var fovR = W3.fov0 * Math.PI / 180;
-  /* Корпус стоит НЕ в самом проёме, а на шаг внутрь помещения, и
-     это не произвол. Плоскость шириной во весь кадр, поставленная у
-     стены, углами вылезает за цилиндр обшивки - и стена закрывает
-     ей края. Отсюда щели по бокам, которые и были видны. На метре с
-     небольшим от глаз углы укладываются внутрь радиуса, а сам
-     корпус по-прежнему закрывает кадр целиком. */
-  var dist = 0.92;
-  /* Плоская рамка полёта выводится по object-fit: cover, то есть
-     показывает не всю картинку, а её середину, обрезая лишнее по
-     длинной стороне. Трёхмерный корпус обязан повторять ровно это,
-     иначе в момент старта картинка дёргается - именно эту подмену
-     владелец и ловил третьим пунктом.
-
-     Считаем как cover: берём то измерение кадра, которого не
-     хватает, и растягиваем плоскость по пропорциям самой картинки.
-     Тогда 3D-корпус и плоская рамка совпадают пиксель в пиксель. */
-  var iw = portrait ? 768 : 1344, ih = portrait ? 1344 : 768;
-  var frameH = 2 * Math.tan(fovR / 2) * dist;          /* высота кадра в мире */
-  var frameW = frameH * (innerWidth / Math.max(1, innerHeight));
-  var fh, fw;
-  if (iw / ih >= innerWidth / Math.max(1, innerHeight)) {
-    /* Картинка шире кадра: cover упирается в высоту */
-    fh = frameH;
-    fw = fh * (iw / ih);
-  } else {
-    /* Кадр шире картинки: cover упирается в ширину */
-    fw = frameW;
-    fh = fw * (ih / iw);
-  }
-  cabin = g.RC_CABIN.build(T, {
-    tiny: innerWidth < 760,
-    cabSrc: portrait ? "assets/gen/cockpit-tall-v2.webp" : "assets/gen/cockpit-wide-v2.webp",
-    cabW: fw, cabH: fh, cabZ: dist, camWin: CAM_WIN
-  });
+  /* RC_CABIN is the shell. There is deliberately no portrait/wide
+     image option anymore; camera aspect changes projection only, not
+     the physical ship around it. */
+  cabin = g.RC_CABIN.build(T, { tiny: innerWidth < 760 });
 
   /* Куда смотрит камера в первом кадре полёта */
   var p0 = W3.path.getPointAt(0);
@@ -5554,24 +5507,6 @@ function cabinBuild() {
     p0.z - flat.z * back
   );
   cabin.group.position.copy(cabin.center);
-  /* Корпус кабины переезжает НА КАМЕРУ. Стоя в помещении, он висел
-     по горизонту салона, а камера в финале смотрит с наклоном - и
-     плоская рамка полёта, которая всегда центрирована по кадру,
-     оказывалась смещённой относительно него на десяток пикселей.
-     Именно это двоение владелец и называл подменой рисованной
-     панели на настоящую.
-
-     На камере корпус занимает ровно то же место, что плоская рамка,
-     при любом наклоне и на любом экране. Виден он только у окна:
-     прозрачность ведёт доля подъезда. */
-  if (cabin.frame) {
-    cabin.group.remove(cabin.frame);
-    cabin.frame.position.set(0, 0, -dist);
-    cabin.frame.rotation.set(0, 0, 0);
-    cabin.frame.renderOrder = 18;
-    W3.cam.add(cabin.frame);
-    if (!W3.cam.parent) W3.scene.add(W3.cam);
-  }
   cabin.yaw0 = yaw0;
   cabin.p0 = p0.clone();
   /* Ориентация камеры в финале - та же, что в первом кадре полёта */
