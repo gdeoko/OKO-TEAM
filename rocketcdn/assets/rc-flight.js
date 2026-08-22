@@ -1231,6 +1231,16 @@ function showHome(on) {
   for (var i = 0; i < list.length; i++) if (list[i]) list[i].visible = on;
 }
 
+/* A galaxy is a destination, not wallpaper. Keeping every arm live
+   at once made the Solar System render two invisible transparent
+   particle fields and broke the spatial logic of the jump. */
+function showGalaxyField(i) {
+  if (!W3) return;
+  if (W3.milky) W3.milky.visible = i === 0;
+  if (W3.gal2) W3.gal2.visible = i === 1;
+  if (W3.gal3) W3.gal3.visible = i >= 2;
+}
+
 function applyUniverse(i) {
   if (!W3) return;
   var T = g.THREE, u = UNIVERSES[i % UNIVERSES.length];
@@ -1239,6 +1249,7 @@ function applyUniverse(i) {
   for (var b in built) if (built.hasOwnProperty(b)) built[b].root.visible = (+b === i);
   if (i > 0) buildUniverse(i).root.visible = true;
   showHome(i === 0);
+  showGalaxyField(i);
   W3.sky.material.color.set(u.sky);
   W3.amb.color.set(u.amb);
   W3.sunGlow.material.color = new T.Color(u.sun);
@@ -1606,12 +1617,17 @@ function paintRing() {
    объявлен внутри сборки мира, а читался и в текстуре неба - при
    первом же обращении сборка падала с «tiny is not defined», ошибку
    глотал try/catch, и кнопка «Начать полёт» выглядела мёртвой. */
-var tiny = false, qualityHint = 0;
+var tiny = false, qualityHint = 0, particleBudget = false;
 try {
   qualityHint = parseInt(root.getAttribute("data-quality-hint") || g.RC_QUALITY_HINT || "0", 10) || 0;
   tiny = qualityHint >= 2 || (navigator.deviceMemory || 4) <= 2 ||
          (navigator.hardwareConcurrency || 4) <= 2;
-} catch (eTiny) { tiny = false; }
+  /* A narrow high-DPR screen is fill-rate limited even when the CPU
+     reports eight cores. Keep all planets, materials and motion, but
+     spend fewer transparent star fragments; the procedural sky map
+     preserves the apparent density between the real parallax stars. */
+  particleBudget = tiny || innerWidth < 760 || qualityHint >= 1;
+} catch (eTiny) { tiny = false; particleBudget = innerWidth < 760; }
 
 function skyTexture(mob) {
   /* Размер скромный: текстура натянута на сферу радиусом 4200, и в
@@ -1871,7 +1887,7 @@ function buildWorld() {
      размером под три пикселя - владелец назвал их «бежевые звёзды
      как баг», и по делу. Настоящее небо белое с голубизной, тёплых
      звёзд единицы. */
-  var starScale = tiny ? 0.43 : (qualityHint ? 0.72 : 1);
+  var starScale = tiny ? 0.43 : (particleBudget ? 0.55 : (qualityHint ? 0.72 : 1));
   var starMats = [
     stars(Math.round(14000 * starScale), 1.4, 3000, 0xe8f2fa).material,
     stars(Math.round(6200 * starScale), 1.9, 2400, 0xa8c8f2).material,
@@ -2137,7 +2153,7 @@ function buildWorld() {
      дуге. Точками, а не телами - их тысячи, и каждая отдельным
      объектом стоила бы кадра. */
   var beltGeo = new T.BufferGeometry();
-  var bn = tiny ? 900 : 2600;
+  var bn = tiny ? 900 : (particleBudget ? 1400 : 2600);
   var bp = new Float32Array(bn * 3);
   for (var bi = 0; bi < bn; bi++) {
     var ba = Math.random() * Math.PI * 2;
@@ -2311,7 +2327,7 @@ function buildWorld() {
 
   /* ── Гиперпрыжок: пучок линий, вытянутых навстречу ── */
   var jump = (function () {
-    var nLines = tiny ? 220 : 420;
+    var nLines = tiny ? 220 : (particleBudget ? 280 : 420);
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(nLines * 6);
     for (var k = 0; k < nLines; k++) {
@@ -2345,7 +2361,7 @@ function buildWorld() {
      Плюс тёмные прожилки: без пыли диск светится ровно и выглядит
      нарисованным. */
   function spiralGalaxy(px, py, pz, scale, colA, colB, tiltX, tiltZ) {
-    var n = tiny ? 4200 : 11000;
+    var n = tiny ? 4200 : (particleBudget ? 5200 : 11000);
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(n * 3);
     var col = new Float32Array(n * 3);
@@ -2475,6 +2491,12 @@ function buildWorld() {
   /* Все три спирали холодные: белые и голубоватые рукава, тёплое
      только ядро. Прежняя оранжевая читалась грязным пятном. */
   var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xd8e8f6, 0x9fb8d8, 0.75, 0.55);
+  /* Only the current arm is physically present. Rendering all three
+     transparent galaxies behind Earth cost tens of thousands of
+     fragments and also contradicted the navigation: other arms are
+     reached through a jump, not visible beside the Solar System. */
+  gal2.visible = false;
+  gal3.visible = false;
   milky.children[1].userData.info = RU ? "МЛЕЧНЫЙ ПУТЬ · спиральная галактика · наша Солнечная система находится в рукаве Ориона" : "MILKY WAY · barred spiral galaxy · the Solar System lies in the Orion Spur";
   gal2.children[1].userData.info = RU ? "МЕСТНЫЙ РУКАВ · PROXIMA · TRAPPIST-1 · LHS 1140" : "LOCAL ARM · PROXIMA · TRAPPIST-1 · LHS 1140";
   gal3.children[1].userData.info = RU ? "ПОЛЯ KEPLER И TESS · подтверждённые экзопланетные системы" : "KEPLER AND TESS FIELDS · confirmed exoplanet systems";
@@ -2486,7 +2508,7 @@ function buildWorld() {
      заворачиваются по модулю куба относительно камеры - облако
      бесконечно, а точек всего три сотни. */
   var dust = (function () {
-    var nD = tiny ? 160 : 320, SIDE = 140;
+    var nD = tiny ? 160 : (particleBudget ? 220 : 320), SIDE = 140;
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(nD * 3);
     for (var k = 0; k < nD * 3; k++) pos[k] = (Math.random() - 0.5) * SIDE;
@@ -2518,7 +2540,7 @@ function buildWorld() {
      Цвет раздаём вершинам: свежая искра почти белая, остывающая
      оранжевая, догорающая тёмно-красная. Один общий цвет превращает
      шлейф в конфетти. */
-  var washN = tiny ? 90 : 220;
+  var washN = tiny ? 90 : (particleBudget ? 140 : 220);
   var wash = (function () {
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(washN * 3);
@@ -2583,8 +2605,8 @@ function buildWorld() {
     scene.add(pts);
     return pts;
   }
-  var belt1 = beltLayer(tiny ? 500 : 1100, 3.4, 230, 0x9a8f80);
-  var belt2 = beltLayer(tiny ? 260 : 600, 6.5, 160, 0xb8a890);
+  var belt1 = beltLayer(tiny ? 500 : (particleBudget ? 700 : 1100), 3.4, 230, 0x9a8f80);
+  var belt2 = beltLayer(tiny ? 260 : (particleBudget ? 360 : 600), 6.5, 160, 0xb8a890);
 
   /* ── Маршрут ──
      Кривая проходит через все сцены и заворачивает домой. Взгляд
@@ -5765,6 +5787,7 @@ function stageLite(on) {
     if (o.length) { for (var j = 0; j < o.length; j++) if (o[j]) o[j].visible = !on; }
     else o.visible = !on;
   }
+  if (!on) showGalaxyField(uniIdx);
   /* Плотность пикселей в салоне ниже: кадр статичный, камера едет
      по прокрутке, и разница на глаз не видна */
   if (W3.r) {
