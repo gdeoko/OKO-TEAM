@@ -617,7 +617,7 @@ function buildUI() {
     '<div class="rcf-brief">' +
       '<div class="rcf-brief-card">' +
         '<b>' + (RU ? "ГОТОВ К СТАРТУ" : "READY FOR LAUNCH") + '</b>' +
-        '<p>' + (RU ? "Маршрут: Земля - Луна - Марс - Сатурн - чёрная дыра - гиперпрыжок через Млечный Путь - домой. Панель внизу ведёт к любой цели, наведение рассказывает об объектах." : "Route: Earth - Moon - Mars - Saturn - black hole - hyperjump - home.") + '</p>' +
+        '<p>' + (RU ? "Маршрут: Земля → Луна → Марс → Сатурн → Млечный Путь. Курс, тяга и системы корабля уже встроены в нижний пульт." : "Route: Earth → Moon → Mars → Saturn → Milky Way. Course, thrust and ship systems are built into the lower console.") + '</p>' +
         '<div class="rcf-brief-btns">' +
           '<button type="button" data-mode="auto">' + (RU ? "Автополёт" : "Autopilot") + '<span>' + (RU ? "смотреть как кино" : "watch as a movie") + '</span></button>' +
           '<button type="button" data-mode="manual">' + (RU ? "Ручное управление" : "Manual") + '<span>' + (RU ? "колесо и свайп - тяга" : "scroll to thrust") + '</span></button>' +
