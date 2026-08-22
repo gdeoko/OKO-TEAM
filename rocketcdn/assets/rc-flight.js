@@ -1335,7 +1335,11 @@ function goSystem(si, pi) {
     name = pl.name;
     /* Три с небольшим радиуса: планета заполняет кадр, но целиком
        помещается в окно кокпита и её видно шаром, а не стеной */
-    r = pl.r * 3.4; y = pl.r * 0.8;
+    /* A portrait viewport has a much narrower horizontal FOV than a
+       desktop cockpit. Keep the complete limb inside the glazing on
+       phones instead of cropping every large world at both sides. */
+    r = pl.r * (innerHeight > innerWidth ? 4.5 : 3.4);
+    y = pl.r * 0.8;
   }
   F.away = true;
   F.auto = false;
@@ -2017,8 +2021,40 @@ function buildWorld() {
 
      Все они процедурные - ни одного лишнего килобайта на загрузку. */
   var atmShells = [];
+  var solarLive = [];
   function makePlanet(r, pos, base, bands, noise, opt) {
     opt = opt || {};
+    /* Use the same procedural material system as the exoplanets for
+       the home Solar System. Its colour, bump, specular, atmosphere
+       and cloud maps are derived from one seeded 3D height field, so
+       surface relief follows the terminator instead of looking like
+       paint on a smooth ball. Low detail still means a 512px material
+       set and independent cloud motion; it protects the first frame,
+       not the realism or the game logic. */
+    if (g.RC_PLANETS && g.RC_PLANETS.make) {
+      try {
+        var rcKind = opt.rcKind || opt.kind || "rocky";
+        var midPal = base[Math.floor(base.length * .5)] || base[0];
+        var tintHex = new T.Color(midPal[1]).getHex();
+        var made = g.RC_PLANETS.make(rcKind, {
+          radius: r, seed: (opt.seed || 1) * 977 + 41, tint: tintHex,
+          rings: false, moons: 0, detail: "low",
+          atmosphere: !!opt.atm,
+          clouds: rcKind === "gas" || rcKind === "toxic"
+        });
+        made.group.position.set(pos[0], pos[1], pos[2]);
+        made.group.userData.info = opt.info || "";
+        made.group.userData.pick = made.body;
+        made.group.userData.rcPlanet = made;
+        if (made.body) made.body.userData.info = opt.info || "";
+        scene.add(made.group);
+        if (made.setSunPosition) made.setSunPosition(sunBody.position);
+        solarLive.push(made);
+        return made.group;
+      } catch (ePlanet) {
+        /* Keep the previous colour-map sphere as a safe fallback. */
+      }
+    }
     var body = new T.Mesh(
       new T.SphereGeometry(r, tiny ? 24 : 42, tiny ? 16 : 30),
       new T.MeshPhongMaterial({
@@ -2159,7 +2195,7 @@ function buildWorld() {
       info: RU ? "МЕРКУРИЙ · год длиннее суток · без атмосферы" : "MERCURY · no atmosphere" });
   var venus = makePlanet(28, [190, 110, 360],
     [[0, "#f9e9c2"], [0.45, "#e0bf7a"], [1, "#a87f46"]], 26, 60,
-    { kind: "gas", seed: 8, atm: 0xf0d79a, warm: 0xffd9a0, info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
+    { kind: "gas", rcKind: "toxic", seed: 8, atm: 0xf0d79a, warm: 0xffd9a0, info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
   var jupiter = makePlanet(122, [1130, -50, -1180],
     [[0, "#efdfc4"], [0.22, "#c99f6e"], [0.44, "#e8d3ae"], [0.62, "#a97648"], [0.8, "#e2c9a4"], [1, "#c9a276"]], 44, 40,
     { kind: "gas", seed: 17, atm: 0xe8cfa6, warm: 0xffc98a, info: RU ? "ЮПИТЕР · Большое красное пятно старше телескопа" : "JUPITER" });
@@ -2169,7 +2205,8 @@ function buildWorld() {
     new T.SphereGeometry(118 * 0.99, 20, 16, 0.6, 0.55, 1.35, 0.34),
     new T.MeshPhongMaterial({ color: 0xd06a44, shininess: 4 })
   );
-  jupiter.add(spot);
+  var jSpin = jupiter.userData && jupiter.userData.rcPlanet && jupiter.userData.rcPlanet.spinGroup;
+  (jSpin || jupiter).add(spot);
   var uranus = makePlanet(66, [1790, 390, -1430],
     [[0, "#dbf5f7"], [0.5, "#9fd8e0"], [1, "#74aebd"]], 22, 40,
     { kind: "ice", seed: 23, atm: 0x9fe0ee, warm: 0xbfe8f5, info: RU ? "УРАН · лежит на боку · ось наклонена на 98 градусов" : "URANUS" });
@@ -2195,8 +2232,8 @@ function buildWorld() {
   /* Астероиды не светятся: тёмный мелкий гравий, читается роем
      камней, а не бежевой пылью */
   var belt = new T.Points(beltGeo, new T.PointsMaterial({
-    color: 0x5a6470, size: 2.0, sizeAttenuation: true, map: starDot,
-    transparent: true, opacity: 0.7, depthWrite: false
+    color: 0x525a63, size: 1.0, sizeAttenuation: false, map: starDot,
+    transparent: true, opacity: 0.52, depthWrite: false
   }));
   scene.add(belt);
 
@@ -2465,8 +2502,10 @@ function buildWorld() {
   hole.children[0].userData.info = RU ? "ЧЁРНАЯ ДЫРА · первый снимок - M87*, 2019" : "BLACK HOLE · first image - M87*, 2019";
   /* Новые тела тоже отзываются на нажатие: по каждому можно снять
      карту, иначе половина системы остаётся немой */
+  function planetPick(o) { return o && o.userData && o.userData.pick ? o.userData.pick : o; }
   var pickables = [eBody, moon, mars, saturn.children[0], hole.children[0],
-                   sunBody, mercury, venus, jupiter, uranus, neptune];
+                   sunBody, planetPick(mercury), planetPick(venus), planetPick(jupiter),
+                   planetPick(uranus), planetPick(neptune)];
   for (var rj = 0; rj < relaySprites.length; rj++) pickables.push(relaySprites[rj]);
   saturn.children[0].userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
 
@@ -2667,14 +2706,17 @@ function buildWorld() {
     }
     geo.setAttribute("position", new T.BufferAttribute(pos, 3));
     var pts = new T.Points(geo, new T.PointsMaterial({
-      color: color, size: size, sizeAttenuation: true, map: starDot,
-      transparent: true, opacity: 0.8, depthWrite: false
+      /* Belt grains are positional cues, not luminous stars. Fixed
+         pixel size keeps a near grain from blooming into a white
+         translucent disc across a planet during an orbital shot. */
+      color: color, size: size, sizeAttenuation: false, map: starDot,
+      transparent: true, opacity: 0.58, depthWrite: false
     }));
     scene.add(pts);
     return pts;
   }
-  var belt1 = beltLayer(tiny ? 500 : (particleBudget ? 700 : 1100), 3.4, 230, 0x9a8f80);
-  var belt2 = beltLayer(tiny ? 260 : (particleBudget ? 360 : 600), 6.5, 160, 0xb8a890);
+  var belt1 = beltLayer(tiny ? 500 : (particleBudget ? 700 : 1100), 1.0, 230, 0x575a5c);
+  var belt2 = beltLayer(tiny ? 260 : (particleBudget ? 360 : 600), 1.55, 160, 0x766d63);
 
   /* Points describe the enormous belt; these instanced rocks are the
      nearby bodies the camera can actually pass. Every instance owns
@@ -2891,7 +2933,7 @@ function buildWorld() {
     sunPos: sunGlow.position, corIn: corIn, corOut: corOut,
     starShell: starShell,
     sunMat: sunBody.material,
-    sun: sunBody, mercury: mercury, venus: venus,
+    sun: sunBody, mercury: mercury, venus: venus, solarLive: solarLive,
     jupiter: jupiter, uranus: uranus, neptune: neptune, belt: belt,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
   };
@@ -3465,6 +3507,21 @@ function holoList(w3) {
     out.push({ id: "h-mars", o: w3.mars, title: RU ? "МАРС" : "MARS",
                sub: RU ? "ХОЛОДНЫЙ КЭШ" : "COLD CACHE", kind: "planet", goal: "mars",
                info: RU ? "Дальний рубеж сети. Задержка до Земли - 3 до 22 минут." : "Far edge of the network." });
+    out.push({ id: "h-mercury", o: w3.mercury, title: RU ? "МЕРКУРИЙ" : "MERCURY",
+               sub: RU ? "БЕЗ АТМОСФЕРЫ" : "AIRLESS", kind: "planet", goal: "mercury",
+               info: RU ? "Обожжённый каменный мир у самого Солнца." : "A scorched rocky world nearest the Sun." });
+    out.push({ id: "h-venus", o: w3.venus, title: RU ? "ВЕНЕРА" : "VENUS",
+               sub: RU ? "460 °C · 92 БАР" : "460 C · 92 BAR", kind: "warn", goal: "venus",
+               info: RU ? "Облака серной кислоты · давление в 92 раза выше земного." : "Sulphuric-acid clouds · 92 times Earth's pressure." });
+    out.push({ id: "h-jupiter", o: w3.jupiter, title: RU ? "ЮПИТЕР" : "JUPITER",
+               sub: RU ? "ГАЗОВЫЙ ГИГАНТ" : "GAS GIANT", kind: "planet", goal: "jupiter",
+               info: RU ? "Полосы облаков, вихри и Большое красное пятно." : "Cloud bands, vortices and the Great Red Spot." });
+    out.push({ id: "h-uranus", o: w3.uranus, title: RU ? "УРАН" : "URANUS",
+               sub: RU ? "ОСЬ 98°" : "98 DEG TILT", kind: "planet", goal: "uranus",
+               info: RU ? "Ледяной гигант вращается почти лёжа на боку." : "An ice giant rotating almost on its side." });
+    out.push({ id: "h-neptune", o: w3.neptune, title: RU ? "НЕПТУН" : "NEPTUNE",
+               sub: RU ? "ВЕТЕР 2100 КМ/Ч" : "2100 KM/H WINDS", kind: "planet", goal: "neptune",
+               info: RU ? "Самые быстрые ветры среди планет Солнечной системы." : "The fastest planetary winds in the Solar System." });
     out.push({ id: "h-saturn", o: w3.saturn, title: RU ? "САТУРН" : "SATURN",
                sub: RU ? "КОЛЬЦА · 282 000 КМ" : "RINGS", kind: "planet", goal: "saturn",
                info: RU ? "Кольца шириной в семь Земель, толщиной в десять метров." : "Rings seven Earths wide, ten metres thick." });
@@ -3602,6 +3659,14 @@ function holoFrame(w3, ts) {
        Дальше этого рубежа метку честнее не показывать вовсе. */
     var vis = w3.tmpA.z < 1 && dist < 1900 &&
               w3.tmpA.x > -1.05 && w3.tmpA.x < 1.05 && w3.tmpA.y > -1.05 && w3.tmpA.y < 1.05;
+    /* On orbit the planet is the subject of the shot. Foreign labels
+       projected across its disc read as UI corruption (a distant
+       black-hole marker used to sit on Jupiter). Keep only the active
+       body's hologram until the pilot leaves the orbit. */
+    if (F.orbit) {
+      if (uniIdx === 0 && F.goalId && rec.goal !== F.goalId) vis = false;
+      else if (uniIdx !== 0 && rec.title !== F.orbit.name) vis = false;
+    }
     var sx = (w3.tmpA.x * 0.5 + 0.5) * innerWidth;
     var sy = (-w3.tmpA.y * 0.5 + 0.5) * innerHeight;
     /* Крупное тело вплотную: его центр уходит за край кадра, а сама
@@ -3737,7 +3802,8 @@ function frame(ts) {
         /* Имя берём читаемое: оно уходит и в титры, и на кнопку
            развёртывания узла, где «moon» вместо «ЛУНА» смотрелось
            отладочным мусором */
-        F.orbit = { c: tgt.position, r: ob.r, y: ob.y, a: null,
+        var fitR = ob.r * (innerHeight > innerWidth ? 1.72 : 1);
+        F.orbit = { c: tgt.position, r: fitR, y: ob.y, a: null,
                     name: GOAL_NAMES[F.goalId] || F.goalId };
         if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e2) {} }
       }
@@ -3996,6 +4062,13 @@ function frame(ts) {
   w3.moon.rotation.y += dt * 0.012;
   w3.mars.rotation.y += dt * 0.022;
   w3.saturn.rotation.y += dt * 0.03;
+  if (w3.solarLive) {
+    for (var sli = 0; sli < w3.solarLive.length; sli++) {
+      if (w3.solarLive[sli] && w3.solarLive[sli].update) {
+        w3.solarLive[sli].update(dt, w3.cam.position);
+      }
+    }
+  }
   w3.hole.rotation.y += dt * 0.14;
   w3.diskMat.uniforms.uT.value = ts * 0.001;
   w3.sky.rotation.y += dt * 0.0025;
@@ -6073,6 +6146,11 @@ g.RC_FLIGHT = {
     F.p = Math.max(0, Math.min(1, p));
     F.v = 0;
     return F.p;
+  },
+  _go: function (id) {
+    if (!DBG || !F.open) return null;
+    goTo(id);
+    return { id: F.goalId, p: F.goal, name: F.goalName };
   },
   jump: function (i) { jumpUniverse(i); return uniIdx; },
   /* Сколько всего рисуется: вершины, точки, вызовы отрисовки.
