@@ -2798,6 +2798,10 @@ function bindControls() {
   var w = ui.wrap;
 
   w.addEventListener("wheel", function (e) {
+    /* В режиме финальной сцены это всё ещё прокрутка сайта. Обёртка
+       не должна съедать колесо даже если жест начался за кадр до
+       переключения stage. */
+    if (F.stage) return;
     e.preventDefault();
     /* С шифтом колесо приближает, а не разгоняет. Зум нужен там,
        где тяга бесполезна: разглядеть кольца Сатурна с орбиты, не
@@ -2836,6 +2840,7 @@ function bindControls() {
     return Math.sqrt(dx * dx + dy * dy);
   }
   w.addEventListener("touchstart", function (e) {
+    if (F.stage) { tY = tX = null; tAxis = 0; pinch = 0; return; }
     /* Два пальца - щипок: приближает, а не разгоняет. Тот же зум,
        что на ПК даёт шифт с колесом. */
     if (e.touches.length > 1) { pinch = pinchDist(e); return; }
@@ -2843,6 +2848,7 @@ function bindControls() {
     if (e.touches.length) { tY = e.touches[0].clientY; tX = e.touches[0].clientX; tAxis = 0; tSum = 0; }
   }, { passive: true });
   w.addEventListener("touchmove", function (e) {
+    if (F.stage) return;
     e.preventDefault();
     if (e.touches.length > 1) {
       var d2 = pinchDist(e);
@@ -5620,7 +5626,15 @@ function stageCam(dt) {
      подъезде камера раскручивалась обратно на все триста шестьдесят
      градусов. Теперь довод идёт по короткой дуге к полному кругу:
      та же точка обзора, но без обратного вращения. */
-  var yaw = yawT + (Math.PI * 2 - yawT) * ek;
+  /* Финал и игра используют один и тот же пилотский ракурс. Старый
+     круговой обход заставлял зрителя смотреть на пустые синие стены,
+     а к старту внезапно подменял их настоящей приборной рамой. Теперь
+     мы остаёмся лицом к остеклению с самого шага через люк; движение
+     сохраняется как очень небольшой параллакс головы, а не как тур
+     по декорации. Это тот же 3D-мир и та же камера, с которой через
+     секунду начинается управление кораблём. */
+  var survey = Math.sin(yawT) * (1 - ek) * 0.055;
+  var yaw = Math.PI * 2 + survey;
   F.stageYaw = yaw;
 
   /* Дыхание: человек не штатив. На подъезде затухает - там кадр
@@ -5639,7 +5653,7 @@ function stageCam(dt) {
   /* Поворот: пока идёт оборот - свой азимут, к финалу сходимся к
      ориентации первого кадра полёта, вместе с её наклоном */
   var pit = (I && I.pitch) ? I.pitch() : 0;
-  C.eTmp.set(pit * (1 - ek), C.yaw0 - yaw + drift, 0);
+  C.eTmp.set(pit * (1 - ek) * 0.18, C.yaw0 - yaw + drift, 0);
   C.qTmp.setFromEuler(C.eTmp);
   w3.cam.quaternion.copy(C.qTmp).slerp(C.q1, ek * ek);
 
@@ -5650,9 +5664,13 @@ function stageCam(dt) {
      подхватывает кадр ровно там, где совпадает с плоской рамкой
      полёта. Опережать нельзя - иначе он повиснет в воздухе. */
   if (C.frame) {
-    var fo = Math.max(0, Math.min(1, (ek - 0.62) / 0.34));
+    /* Корпус, в который встроена игровая консоль, виден сразу после
+       входа. Раньше opacity=0 до 62% подъезда и человек несколько
+       экранов видел другой, схематичный салон — это и воспринималось
+       как подмена панели. */
+    var fo = 0.94 + ek * 0.06;
     C.frame.material.opacity = fo;
-    C.frame.visible = fo > 0.01;
+    C.frame.visible = true;
   }
   /* Свет пульта разгорается вместе с подходом, а общий свет
      помещения к концу подъезда гаснет. Это не приём ради приёма:

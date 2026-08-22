@@ -214,9 +214,16 @@ function measure() {
   var conBox = con.getBoundingClientRect();
   var relTop = relBox.top + y, relBot = relBox.bottom + y;
   var conTop = conBox.top + y, conBot = conBox.bottom + y;
+  var faqTop = relTop;
+  if (faq) faqTop = faq.getBoundingClientRect().top + y;
 
-  /* Люк начинает закрываться за половину экрана до блока надёжности */
-  P_IN   = Math.max(0.05, Math.min(0.95, (relTop - innerHeight * 0.45) / maxS));
+  /* Надёжность — ещё полноценный раздел сайта: человек обязан
+     дочитать его до конца. В прежней версии вход начинался у его
+     верхней кромки, поэтому блок исчезал посреди чтения, а ракета
+     оказывалась поверх карточек. Порог переносим к справочнику:
+     сначала заканчивается раздел, затем открывается люк, и только
+     потом вопросы становятся голограммой на стекле корабля. */
+  P_IN   = Math.max(0.05, Math.min(0.95, (faqTop - innerHeight * 0.38) / maxS));
   P_LOCK = Math.max(0.03, P_IN - (innerHeight * 0.4) / maxS);
   P_TURN = Math.max(P_IN + 0.02, Math.min(0.985, (conTop - innerHeight * 0.4) / maxS));
   /* Подход к пульту заканчивается вместе с формой: дальше по
@@ -326,7 +333,12 @@ var st = {
   dolly: 1.7, dollyT: 1.7, fov: 58, fovT: 58, stop: -1, con: 0, conL: 0,
   back: 0,                       /* доля отъезда от пульта в финале */
   roll: 0, yawPrev: 0,           /* крен камеры на повороте */
-  sLock: false, sIn: false
+  sLock: false, sIn: false,
+  /* Критические переключатели входа/выхода читают настоящий скролл,
+     а не его сглаженную копию. Иначе при движении назад кабина ещё
+     несколько кадров считала, что человек едет вперёд, и люк
+     оставался защёлкнутым навсегда. */
+  raw: 0, rawPrev: 0, dir: 0, pIn0: null
 };
 
 var cv = null, rend = null, scene = null, cam = null, grp = null;
@@ -895,7 +907,8 @@ function show() {
 function hide() {
   if (!st.shown) return;
   st.shown = false;
-  root.classList.remove("rc-inside");
+  root.classList.remove("rc-inside", "rc-deep-inside");
+  st.pIn0 = null;
   if (raf) { cancelAnimationFrame(raf); raf = null; }
   scene3d(false);
   /* Возвращаем наружную сцену: человек листает назад, и ракета
@@ -908,6 +921,17 @@ function hide() {
 /* ── Прогресс ─────────────────────────────────────────────── */
 function setProgress(p) {
   st.p = p;
+
+  /* Motion deliberately damps the visual camera, but a state machine
+     must never be damped. Read the physical scrollbar for direction
+     and threshold decisions; keep `p` for camera interpolation. */
+  var maxRaw = Math.max(1, DOCH() - innerHeight);
+  var rawP = Math.max(0, Math.min(1,
+    (g.pageYOffset || doc.documentElement.scrollTop || 0) / maxRaw));
+  var dRaw = rawP - st.rawPrev;
+  if (Math.abs(dRaw) > 0.00003) st.dir = dRaw < 0 ? -1 : 1;
+  st.rawPrev = rawP;
+  st.raw = rawP;
 
   if (p >= P_PREP && !st.built && T) build();
 
@@ -925,6 +949,17 @@ function setProgress(p) {
      сам не пересчитает. Поэтому наружные акты снимают флаг сами -
      иначе из салона нельзя было бы выйти скроллом назад. */
   var sc = g.RC_SCENE;
+  /* Назад выходим по положению страницы, а не по RC_DOOR. Внутри
+     внешняя ракета припаркована и её дверь закономерно не обновляет
+     RC_DOOR — именно поэтому прежняя проверка застревала. Небольшой
+     гистерезис оставляет время увидеть обратный проход через люк и
+     исключает дребезг на границе. */
+  var exitBand = Math.max(0.0015, (P_IN - P_LOCK) * 0.12);
+  var reverseExit = st.shown && st.dir < 0 && rawP <= P_LOCK + exitBand;
+  if (reverseExit) {
+    root.classList.remove("rc-in-hatch");
+    hatch = false;
+  }
   /* Снимаем флаг только на обратном ходу - когда люк закрывается.
      Раньше он снимался в любом наружном акте, и вход не случался
      вовсе: люк успевал распахнуться настежь, пока кадр ещё держал
@@ -949,6 +984,7 @@ function setProgress(p) {
   var ready = hasRocket
     ? (hatch || (st.shown && innerAct) || (innerAct && p >= P_IN))
     : (p >= P_LOCK);
+  if (reverseExit) ready = false;
 
   if (ready && p < P_IN) {
     /* Вторых дверей быть не должно - владелец сказал прямо: «двойные
@@ -989,6 +1025,13 @@ function setProgress(p) {
     if (st.shown) hide();
     if (p < P_LOCK) { st.sLock = false; st.sIn = false; st.stop = -1; }
   }
+
+  /* Шапка и плавающие кнопки принадлежат странице снаружи. После
+     того как человек переступил порог, они уходят за верхнюю кромку
+     кабины; при первом же обратном движении возвращаются вместе с
+     наружной сценой. */
+  root.classList.toggle("rc-deep-inside",
+    !!st.shown && rawP > P_IN + Math.max(0.001, (P_TURN - P_IN) * 0.035));
 
   /* Вход: створки перекрывают кадр, а камера в это время едет
      вперёд из тамбура в центр рубки и раскрывает объектив. */
@@ -1228,6 +1271,20 @@ function boot() {
     var max = Math.max(1, DOCH() - innerHeight);
     setProgress((g.pageYOffset || 0) / max);
   }, { passive: true });
+
+  /* BFCache/возврат во вкладку может восстановить scrollTop без
+     события scroll. Синхронизируем сцену немедленно, чтобы старый
+     класс кабины не блокировал страницу после возврата назад. */
+  addEventListener("pageshow", function () {
+    var max = Math.max(1, DOCH() - innerHeight);
+    setProgress((g.pageYOffset || 0) / max);
+  }, { passive: true });
+  doc.addEventListener("visibilitychange", function () {
+    if (!doc.hidden) {
+      var max = Math.max(1, DOCH() - innerHeight);
+      setProgress((g.pageYOffset || 0) / max);
+    }
+  }, { passive: true });
 }
 
 /* Ступени качества. Общий сторож кадров в rc-motion.js считает
@@ -1331,6 +1388,7 @@ g.RC_INTERIOR = {
       ступень: st.degrade || 0,
       /* Пороги входа: по ним видно, почему салон показался или нет */
       доля: +st.p.toFixed(3), порог_вход: +P_IN.toFixed(3),
+      физическая_доля: +st.raw.toFixed(3), направление: st.dir,
       порог_выход: +P_OUT.toFixed(3), мёртв: st.dead
     };
   }

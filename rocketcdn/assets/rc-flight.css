@@ -3748,3 +3748,174 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-brief-card p { margin: 5px auto 7px; font-size: 9.5px; }
   .rc-flight .rcf-brief-btns button { padding: 6px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   P6 REAL-DEVICE ACCEPTANCE · one windscreen, reversible scroll
+
+   These rules intentionally live last. Earlier iterations positioned
+   dialogs in viewport coordinates even though they already lived
+   inside .rcf-hud. On a 360–393px device that applied the windscreen
+   offset twice and cropped the first/last columns. Every projected
+   surface now uses the HUD as its sole coordinate system.
+   ═══════════════════════════════════════════════════════════ */
+
+/* During the web finale the page owns vertical gestures, including a
+   gesture that began one frame before the cabin became active. */
+.rc-flight.rcf-stage,
+.rc-flight.rcf-stage * {
+  pointer-events: none !important;
+  touch-action: pan-y !important;
+}
+
+/* A website header cannot float inside a closed spacecraft. It leaves
+   only after the threshold is crossed and returns on reverse scroll. */
+html.rc-deep-inside .hdr {
+  opacity: 0 !important;
+  visibility: hidden;
+  pointer-events: none !important;
+  transform: translate3d(0, -110%, 0) !important;
+  transition: opacity .22s linear, transform .36s cubic-bezier(.2,.8,.2,1), visibility 0s linear .36s;
+}
+html.rc-deep-inside .totop,
+html.rc-deep-inside .mcta,
+html.rc-deep-inside .rcf-fab {
+  opacity: 0 !important;
+  visibility: hidden;
+  pointer-events: none !important;
+}
+
+/* HUD is the physical glass boundary. Child projections never receive
+   a second set of viewport offsets. */
+.rc-flight .rcf-hud > .rcf-menu {
+  inset: clamp(38px, 7%, 58px) 8px 8px 8px !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: clamp(9px, 1.5vh, 14px) !important;
+  transform: translate3d(0, 7px, 0) !important;
+  border-radius: 9px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--int-cyan-rgb,66,178,220),.55) rgba(4,12,22,.4);
+  contain: layout paint;
+}
+.rc-flight .rcf-hud > .rcf-menu.on {
+  transform: translate3d(0, 0, 0) !important;
+}
+.rc-flight .rcf-menu .rcf-menu-h {
+  position: sticky;
+  top: -1px;
+  z-index: 2;
+  padding: 5px 2px 6px;
+  margin: 0 0 7px;
+  background: linear-gradient(180deg, rgba(6,17,29,.98) 74%, rgba(6,17,29,0));
+}
+.rc-flight .rcf-menu .rcf-menu-h:not(:first-child) { margin-top: 12px; }
+.rc-flight .rcf-menu .rcf-menu-h span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rc-flight .rcf-hud > .rcf-dos,
+.rc-flight .rcf-hud > .rcf-help {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  transform: none !important;
+  overflow: hidden !important;
+}
+.rc-flight .rcf-hud > .rcf-dos.on,
+.rc-flight .rcf-hud > .rcf-help.on { transform: none !important; }
+.rc-flight .rcf-dos-in,
+.rc-flight .rcf-help-in {
+  width: min(94%, 560px) !important;
+  max-width: calc(100% - 12px) !important;
+  max-height: calc(100% - 12px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+/* Flight task is a readout, not a floating card over the console. */
+.rc-flight .rcf-hud > .rcf-mis {
+  left: 10px !important;
+  right: auto !important;
+  top: clamp(42px, 8%, 66px) !important;
+  bottom: auto !important;
+  width: min(44%, 260px) !important;
+  max-height: 92px;
+  transform: none !important;
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .rc-flight .rcf-hud > .rcf-menu {
+    inset: 36px 6px 6px !important;
+    padding: 8px !important;
+  }
+  .rc-flight .rcf-menu .rcf-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px;
+  }
+  .rc-flight .rcf-menu .rcf-uni {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px;
+  }
+  .rc-flight .rcf-menu .rcf-nav button,
+  .rc-flight .rcf-menu .rcf-uni button {
+    min-width: 0;
+    min-height: 38px;
+    padding: 6px 4px;
+    white-space: normal;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+  .rc-flight .rcf-menu-h i { font-size: 8.5px; letter-spacing: .14em; }
+  .rc-flight .rcf-menu-h span { font-size: 8px; }
+
+  .rc-flight .rcf-hud > .rcf-mis {
+    left: 7px !important;
+    top: 40px !important;
+    width: min(66%, 220px) !important;
+    max-height: 52px;
+    padding: 6px 8px 7px;
+    border-radius: 7px;
+  }
+  .rc-flight .rcf-hud > .rcf-mis b {
+    margin: 0;
+    font-size: 9px;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rc-flight .rcf-hud > .rcf-mis span { display: none !important; }
+  .rc-flight .rcf-hud > .rcf-mis i { margin-top: 4px; height: 2px; }
+  .rc-flight .rcf-hud > .rcf-mis em { margin-top: 3px; font-size: 7.5px; line-height: 1; }
+
+  .rc-flight .rcf-dos-in,
+  .rc-flight .rcf-help-in {
+    width: calc(100% - 10px) !important;
+    max-width: calc(100% - 10px) !important;
+    max-height: calc(100% - 10px) !important;
+    padding: 10px !important;
+  }
+  .rc-flight .rcf-dos-map { max-height: 34%; object-fit: contain; }
+  .rc-flight .rcf-dos-p { font-size: 10px; line-height: 1.35; }
+  .rc-flight .rcf-dos-facts { gap: 4px; }
+}
+
+@media (max-width: 380px), (max-height: 650px) {
+  .rc-flight .rcf-hud > .rcf-menu { top: 32px !important; }
+  .rc-flight .rcf-menu .rcf-nav button,
+  .rc-flight .rcf-menu .rcf-uni button { min-height: 34px; font-size: 8px; }
+  .rc-flight .rcf-menu .rcf-menu-h:not(:first-child) { margin-top: 8px; }
+  .rc-flight .rcf-hud > .rcf-mis { top: 34px !important; max-height: 48px; }
+}

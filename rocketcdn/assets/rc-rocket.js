@@ -4135,8 +4135,19 @@ Rocket.prototype.layout = function (p, dt) {
          владелец справедливо сказал, что ракета «просто исчезает».
          Опускаем к правому краю на треть высоты - там она входит
          целиком, рядом с глобусом и над карточками. */
-      var pxA = this.C.mobile ? pw * 0.90 : pw * 0.84;
-      var pyA = this.C.mobile ? ph * 0.27 : ph * 0.66;
+      /* Hero is a launch shot, not a scale tween. Across its first
+         scroll segment the craft draws a readable S-curve: leaves the
+         right rail, crosses toward the globe, then banks back into the
+         global page spline. The endpoints remain in the existing safe
+         zones, so headings and CTAs stay readable on a 360px phone. */
+      var hp = Math.max(0, Math.min(1, p / 0.075));
+      var arch = Math.sin(Math.PI * hp);
+      var pxA = this.C.mobile
+        ? pw * (0.88 - arch * 0.23 - hp * 0.07)
+        : pw * (0.84 - arch * 0.20 - hp * 0.05);
+      var pyA = this.C.mobile
+        ? ph * (0.31 - arch * 0.13 + hp * 0.22)
+        : ph * (0.64 - arch * 0.17 + hp * 0.10);
       this.toWorld(pxA, pyA, -0.2, this._padP || (this._padP = new T.Vector3()));
       pos.lerp(this._padP, padK * 0.92);
       tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)),
