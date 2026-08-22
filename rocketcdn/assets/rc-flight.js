@@ -3547,6 +3547,43 @@ function holoFrame(w3, ts) {
   }
 }
 
+/* Physical response of the WebGL console. Accessible DOM buttons are
+   only transparent hit targets; their actual alloy caps live in
+   RC_CABIN and depress under the pilot's finger. */
+function physicalControlsFrame(ts, dt) {
+  if (!cabin || !cabin.controlCaps || !ui.wrap) return;
+  if (!physicalControlsFrame.nodes) {
+    physicalControlsFrame.nodes = [
+      ui.wrap.querySelector(".rcf-navkey"),
+      ui.wrap.querySelector(".rcf-scan-key"),
+      ui.wrap.querySelector(".rcf-deploy"),
+      ui.wrap.querySelector(".rcf-fire-key"),
+      ui.wrap.querySelector(".rcf-auto-key"),
+      ui.wrap.querySelector(".rcf-stop-key"),
+      ui.wrap.querySelector(".rcf-thr")
+    ];
+  }
+  for (var pi = 0; pi < cabin.controlCaps.length; pi++) {
+    var cap3 = cabin.controlCaps[pi], el3 = physicalControlsFrame.nodes[pi];
+    if (!cap3) continue;
+    var active = false;
+    if (el3) {
+      active = el3.matches(":active") || el3.classList.contains("cur") ||
+        el3.classList.contains("live") || el3.getAttribute("aria-pressed") === "true" ||
+        el3.getAttribute("aria-expanded") === "true";
+    }
+    var home = cap3.userData.homeY || 0;
+    var goalY = home - (active ? 0.038 : 0);
+    cap3.position.y += (goalY - cap3.position.y) * Math.min(1, dt * (active ? 18 : 9));
+    if (cap3.material && cap3.material.emissive) {
+      var base = pi === 3 ? 0x1a0802 : 0x02090d;
+      var live = pi === 3 ? 0x8a2308 : 0x0a4257;
+      cap3.material.emissive.setHex(active ? live : base);
+      cap3.material.emissiveIntensity = active ? 0.82 : 0.16 + Math.sin(ts * 0.0014 + cap3.userData.ph) * 0.025;
+    }
+  }
+}
+
 function frame(ts) {
   if (!F.open) return;
   F.raf = requestAnimationFrame(frame);
@@ -4240,6 +4277,7 @@ function frame(ts) {
     radarFrame(w3, ts);
   }
 
+  physicalControlsFrame(ts, dt);
   w3.r.render(w3.scene, w3.cam);
 }
 
