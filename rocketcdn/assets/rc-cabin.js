@@ -271,18 +271,27 @@ function hullTex(T) {
   /* Три пояса: светлее у потолка, рабочий в середине, тёмный
      плинтус. Ровная заливка читалась бы трубой в обоях - у стены
      обязаны быть верх и низ, иначе цилиндр не собирается в комнату. */
-  gr.addColorStop(0, "#24405b");
-  gr.addColorStop(0.30, "#2a4864");
-  gr.addColorStop(0.70, "#1e3a52");
-  gr.addColorStop(1, "#13253a");
+  gr.addColorStop(0, "#26323d");
+  gr.addColorStop(0.30, "#1d2934");
+  gr.addColorStop(0.70, "#121d27");
+  gr.addColorStop(1, "#080e14");
   x.fillStyle = gr; x.fillRect(0, 0, W, H);
+  /* Separate plates catch slightly different exposure. Keeping the
+     variation under ten percent avoids the tiled blue-wall look while
+     preserving one draw call for the entire cylindrical hull. */
+  for (i = 0; i < 8; i++) {
+    for (var pj = 0; pj < 4; pj++) {
+      x.fillStyle = (i + pj) % 3 === 0 ? "rgba(155,176,193,.035)" : "rgba(0,4,8,.055)";
+      x.fillRect(i * W / 8 + 3, pj * H / 4 + 3, W / 8 - 6, H / 4 - 6);
+    }
+  }
   /* Тёмный пояс у самого низа: тень от настила на стену */
   var sh = x.createLinearGradient(0, H * 0.78, 0, H);
   sh.addColorStop(0, "rgba(6,14,24,0)");
   sh.addColorStop(1, "rgba(6,14,24,.72)");
   x.fillStyle = sh; x.fillRect(0, H * 0.78, W, H * 0.22);
   /* Швы листов */
-  x.strokeStyle = "rgba(6,14,24,.75)"; x.lineWidth = 2;
+  x.strokeStyle = "rgba(1,5,9,.88)"; x.lineWidth = 3;
   for (i = 0; i <= 8; i++) {
     x.beginPath(); x.moveTo(i * W / 8, 0); x.lineTo(i * W / 8, H); x.stroke();
   }
@@ -290,11 +299,25 @@ function hullTex(T) {
     x.beginPath(); x.moveTo(0, i * H / 4); x.lineTo(W, i * H / 4); x.stroke();
   }
   /* Заклёпки по швам */
-  x.fillStyle = "rgba(180,205,230,.22)";
+  x.fillStyle = "rgba(180,196,208,.19)";
   for (i = 0; i < 8; i++) {
     for (var j = 0; j < 12; j++) {
-      x.beginPath(); x.arc(i * W / 8 + 4, j * H / 12 + 8, 1.6, 0, TAU); x.fill();
+      x.beginPath(); x.arc(i * W / 8 + 5, j * H / 12 + 8, 1.45, 0, TAU); x.fill();
     }
+  }
+  /* Seeded hairline wear: the cabin remains identical between the
+     exterior threshold and flight and never reshuffles on reload. */
+  var seed = 7727;
+  function rnd() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+  x.lineCap = "round";
+  for (i = 0; i < 170; i++) {
+    var sx = rnd() * W, sy = rnd() * H, sl = 3 + rnd() * 31;
+    x.strokeStyle = "rgba(205,219,228," + (0.018 + rnd() * 0.05).toFixed(3) + ")";
+    x.lineWidth = 0.4 + rnd() * 0.7;
+    x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + sl, sy + (rnd() - 0.5) * 2.5); x.stroke();
   }
   var t = new T.CanvasTexture(c);
   t.wrapS = t.wrapT = T.RepeatWrapping;
@@ -305,17 +328,29 @@ function hullTex(T) {
 /* Настил: решётка с проступью */
 function deckTex(T) {
   var S = 256, c = cnv(S, S), x = c.getContext("2d"), i;
-  x.fillStyle = "#16283a"; x.fillRect(0, 0, S, S);
-  x.strokeStyle = "rgba(140,175,205,.20)"; x.lineWidth = 2;
+  var bg = x.createLinearGradient(0, 0, S, S);
+  bg.addColorStop(0, "#18222b"); bg.addColorStop(0.55, "#0b1219"); bg.addColorStop(1, "#05090d");
+  x.fillStyle = bg; x.fillRect(0, 0, S, S);
+  /* Recessed service bays under the raised grid. */
+  for (i = 0; i < 8; i++) {
+    for (var j = 0; j < 8; j++) {
+      x.fillStyle = (i + j) % 2 ? "rgba(0,3,6,.54)" : "rgba(35,47,58,.25)";
+      x.fillRect(i * S / 8 + 4, j * S / 8 + 4, S / 8 - 8, S / 8 - 8);
+    }
+  }
+  x.strokeStyle = "rgba(125,145,160,.26)"; x.lineWidth = 2;
   for (i = 0; i <= 8; i++) {
     x.beginPath(); x.moveTo(i * S / 8, 0); x.lineTo(i * S / 8, S); x.stroke();
     x.beginPath(); x.moveTo(0, i * S / 8); x.lineTo(S, i * S / 8); x.stroke();
   }
-  x.fillStyle = "rgba(95,200,239,.10)";
-  for (i = 0; i < 40; i++) x.fillRect(Math.random() * S, Math.random() * S, 3, 3);
+  x.fillStyle = "rgba(175,190,200,.18)";
+  for (i = 0; i < 48; i++) x.fillRect((i * 47) % S, (i * 83) % S, 1.5, 1.5);
+  /* Two restrained guidance strips replace the luminous blue carpet. */
+  x.fillStyle = "rgba(95,200,239,.12)";
+  x.fillRect(S * 0.12, 0, 2, S); x.fillRect(S * 0.88, 0, 2, S);
   var t = new T.CanvasTexture(c);
   t.wrapS = t.wrapT = T.RepeatWrapping;
-  t.repeat.set(6, 6);
+  t.repeat.set(4, 4);
   if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
   return t;
 }
