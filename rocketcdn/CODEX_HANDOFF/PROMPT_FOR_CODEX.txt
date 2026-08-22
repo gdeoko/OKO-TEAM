@@ -1,0 +1,12 @@
+Открой ZIP RocketCDN_Codex_Package_2026-08-22 и продолжи работу только над Rocket CDN.
+
+Сначала полностью прочитай README_START_HERE.md, AGENTS.md, CODEX_MASTER_HANDOFF.md, ACCESS_RUNBOOK.md и LAUNCH_CHECKLIST.md. Затем подключись к GitHub, открой gdeoko/OKO-TEAM PR #7 и получи свежий head ветки claude/rocket-cdn-website-admin-x5482k. Не считай snapshot в ZIP более свежим, чем remote.
+
+Не работай над другими проектами репозитория. Не читай и не используй secrets.env.b64. Не проси и не выводи значения паролей, токенов, API-ключей или private SSH keys; используй подключённые connector/browser/SSH-agent sessions и проверяй только факт доступа.
+
+Главные требования: сайт, полёт, игра, ракета, люк и кабина — один реалистичный интерактивный 3D motion-мир; никакого вклеивания картинок поверх 3D; одна геометрия ракеты; бесшовный forward/reverse вход; физический WebGL-пульт; чистый космос; адаптивный LOD без отключения 3D на обычном mobile; никаких наложений, лагов и обрезаний.
+
+Не начинай с новых генераций. Сначала сравни fresh head с live, собери полный asset manifest, подключись к VPS read-only, пройди desktop/mobile forward+reverse и составь список только воспроизводимых defects. Исправляй по одному defect до доказанного pass с A/B и десятиуровневым аудитом. Новые GPT Image 2/Runway/ElevenLabs генерации запускай только для подтверждённого gap и после явного разрешения владельца на платный batch.
+
+PR остаётся draft, пока не закрыт весь LAUNCH_CHECKLIST.md.
+
