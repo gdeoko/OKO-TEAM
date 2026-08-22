@@ -20,15 +20,15 @@ var T = g.THREE;
    from a white rocket into an unrelated blue room. Geometry may use
    a cheaper shader on mobile, but albedo/emission stay identical. */
 var SHIP = g.RC_SHIP_STYLE = g.RC_SHIP_STYLE || {
-  deep: 0x050c15,
-  hull: 0x17283a,
-  wall: 0x2b4056,
-  panel: 0x101d2b,
-  steel: 0x6e829a,
+  deep: 0x02060a,
+  hull: 0x101923,
+  wall: 0x182633,
+  panel: 0x060d14,
+  steel: 0x566675,
   cyan: 0x5fc8ef,
   cyanSoft: 0x9fe0f6,
   violet: 0xa974f5,
-  warm: 0xffd2a0
+  warm: 0xffa85c
 };
 
 /* Публикация переменных оформления идёт через общий кэш: запись на
@@ -1516,14 +1516,15 @@ function buildRocket(C, env) {
   winGroup.position.set(0, 1.06, 0.60);
   root.add(winGroup);
 
-  /* Тонкие светящиеся полосы по корпусу */
+  /* Тонкие светящиеся полосы по корпусу. Верхняя пересекает пояс
+     люка, поэтому у неё свой материал: при открытии она гаснет и не
+     продолжает бортовую графику прямо сквозь пустой проём. */
   var glowMat = new T.MeshBasicMaterial({ color: 0x5FD0F5, transparent: true, opacity: 0.62 });
-  [[-1.28, 0.615], [0.30, 0.645]].forEach(function (r) {
-    var strip = new T.Mesh(new T.TorusGeometry(r[1] + 0.004, 0.012, 6, C.radial), glowMat);
-    strip.rotation.x = Math.PI / 2;
-    strip.position.y = r[0];
-    root.add(strip);
-  });
+  var hatchBandMat = new T.MeshBasicMaterial({ color: 0x5FD0F5, transparent: true, opacity: 0.62 });
+  var stripLow = new T.Mesh(new T.TorusGeometry(0.619, 0.012, 6, C.radial), glowMat);
+  stripLow.rotation.x = Math.PI / 2; stripLow.position.y = -1.28; root.add(stripLow);
+  var stripHatch = new T.Mesh(new T.TorusGeometry(0.649, 0.012, 6, C.radial), hatchBandMat);
+  stripHatch.rotation.x = Math.PI / 2; stripHatch.position.y = 0.30; root.add(stripHatch);
 
   var door = buildDoor(C, env, hullMat);
   root.add(door.group);
@@ -1533,7 +1534,8 @@ function buildRocket(C, env) {
   var gear = buildGear(C, env);
   root.add(gear.group);
 
-  return { root: root, body: body, glass: glass, glowMat: glowMat, door: door, gear: gear };
+  return { root: root, body: body, glass: glass, glowMat: glowMat,
+    hatchBandMat: hatchBandMat, door: door, gear: gear };
 }
 
 /* ── Люк в борту ─────────────────────────────────────────────
@@ -1781,6 +1783,92 @@ function doorTexture(right) {
   return tex;
 }
 
+/* Material maps are allowed to describe a surface; they never replace
+   the scene. These three deterministic canvases provide albedo,
+   roughness and shallow normal relief for the same real meshes below.
+   Panel seams, fasteners and abrasion therefore stay locked to the
+   airlock while the camera crosses it instead of sliding like a photo. */
+function airlockMetalMaps() {
+  var S = 512, al = document.createElement("canvas");
+  var ro = document.createElement("canvas"), bu = document.createElement("canvas");
+  al.width = al.height = ro.width = ro.height = bu.width = bu.height = S;
+  var a = al.getContext("2d"), r = ro.getContext("2d"), b = bu.getContext("2d");
+  var seed = 1949;
+  function rnd() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+
+  var base = a.createLinearGradient(0, 0, 0, S);
+  base.addColorStop(0, "#667482");
+  base.addColorStop(0.42, "#34414e");
+  base.addColorStop(0.78, "#202a34");
+  base.addColorStop(1, "#111820");
+  a.fillStyle = base; a.fillRect(0, 0, S, S);
+  r.fillStyle = "#c4c4c4"; r.fillRect(0, 0, S, S);
+  b.fillStyle = "#808080"; b.fillRect(0, 0, S, S);
+
+  /* Large manufactured plates. The double seam has a bright worn
+     lip and a dark recess, which survives at a distance as real depth. */
+  var i, x, y;
+  for (i = 1; i < 8; i++) {
+    x = i * S / 8;
+    a.fillStyle = "rgba(3,8,13,.72)"; a.fillRect(x - 2, 0, 3, S);
+    a.fillStyle = "rgba(205,224,238,.12)"; a.fillRect(x + 1, 0, 1, S);
+    r.fillStyle = "#929292"; r.fillRect(x - 2, 0, 4, S);
+    b.fillStyle = "#626262"; b.fillRect(x - 2, 0, 3, S);
+    b.fillStyle = "#929292"; b.fillRect(x + 1, 0, 1, S);
+  }
+  for (i = 1; i < 5; i++) {
+    y = i * S / 5;
+    a.fillStyle = "rgba(3,8,13,.62)"; a.fillRect(0, y - 2, S, 3);
+    a.fillStyle = "rgba(210,228,240,.09)"; a.fillRect(0, y + 1, S, 1);
+    r.fillStyle = "#969696"; r.fillRect(0, y - 2, S, 4);
+    b.fillStyle = "#606060"; b.fillRect(0, y - 2, S, 3);
+    b.fillStyle = "#929292"; b.fillRect(0, y + 1, S, 1);
+  }
+
+  /* Fasteners are part of the relief map, not luminous decoration. */
+  for (i = 0; i < 64; i++) {
+    x = (i % 8) * S / 8 + 7;
+    y = Math.floor(i / 8) * S / 8 + 7;
+    a.fillStyle = "rgba(214,224,232,.24)";
+    a.beginPath(); a.arc(x, y, 3.1, 0, Math.PI * 2); a.fill();
+    a.fillStyle = "rgba(5,9,13,.75)";
+    a.beginPath(); a.arc(x - 0.8, y + 0.8, 1.5, 0, Math.PI * 2); a.fill();
+    b.fillStyle = "#b8b8b8"; b.beginPath(); b.arc(x, y, 3, 0, Math.PI * 2); b.fill();
+    r.fillStyle = "#787878"; r.beginPath(); r.arc(x, y, 3, 0, Math.PI * 2); r.fill();
+  }
+
+  /* Directional abrasion and fingerprints around the working height.
+     All marks are seeded, so a reload cannot reshuffle the ship. */
+  a.lineCap = r.lineCap = b.lineCap = "round";
+  for (i = 0; i < 190; i++) {
+    x = rnd() * S; y = rnd() * S;
+    var len = 5 + rnd() * 42, alpha = 0.025 + rnd() * 0.07;
+    a.strokeStyle = "rgba(224,235,242," + alpha.toFixed(3) + ")";
+    a.lineWidth = 0.45 + rnd() * 0.9;
+    a.beginPath(); a.moveTo(x, y); a.lineTo(x + len, y + (rnd() - 0.5) * 3); a.stroke();
+    r.strokeStyle = "rgba(95,95,95,.22)"; r.lineWidth = 1;
+    r.beginPath(); r.moveTo(x, y); r.lineTo(x + len, y); r.stroke();
+    b.strokeStyle = rnd() > 0.5 ? "#868686" : "#787878"; b.lineWidth = 0.7;
+    b.beginPath(); b.moveTo(x, y); b.lineTo(x + len, y); b.stroke();
+  }
+  var grime = a.createLinearGradient(0, S * 0.55, 0, S);
+  grime.addColorStop(0, "rgba(2,5,8,0)");
+  grime.addColorStop(1, "rgba(2,5,8,.48)");
+  a.fillStyle = grime; a.fillRect(0, S * 0.55, S, S * 0.45);
+
+  function tex(c, srgb) {
+    var t = new T.CanvasTexture(c);
+    t.wrapS = t.wrapT = T.RepeatWrapping;
+    t.anisotropy = 8;
+    if (srgb && T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+    return t;
+  }
+  return { map: tex(al, true), rough: tex(ro, false), bump: tex(bu, false) };
+}
+
 /* Real geometry behind the exterior hatch. The previous version put
    a painted blue room on a curved canvas and then replaced it with
    the flight cabin. This compact pressure tunnel is made from the
@@ -1790,40 +1878,109 @@ function doorTexture(right) {
 function buildAirlockInterior(env, R, HH, Y, seg) {
   var group = new T.Group();
   var q = Math.max(5, Math.round(seg * 0.55));
+  function roundedSlab(w, h, d, radius, bevel) {
+    var s = new T.Shape(), x0 = -w * 0.5, y0 = -h * 0.5;
+    var rr = Math.min(radius, w * 0.24, h * 0.24);
+    s.moveTo(x0 + rr, y0);
+    s.lineTo(x0 + w - rr, y0); s.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + rr);
+    s.lineTo(x0 + w, y0 + h - rr); s.quadraticCurveTo(x0 + w, y0 + h, x0 + w - rr, y0 + h);
+    s.lineTo(x0 + rr, y0 + h); s.quadraticCurveTo(x0, y0 + h, x0, y0 + h - rr);
+    s.lineTo(x0, y0 + rr); s.quadraticCurveTo(x0, y0, x0 + rr, y0);
+    var bb = Math.min(bevel, w * 0.12, h * 0.20, d * 0.22);
+    var geo = new T.ExtrudeGeometry(s, {
+      depth: d, steps: 1, curveSegments: q,
+      bevelEnabled: true, bevelSegments: 1, bevelSize: bb, bevelThickness: bb
+    });
+    geo.center();
+    return geo;
+  }
+  var maps = airlockMetalMaps();
   var shellMat = new T.MeshStandardMaterial({
-    color: SHIP.wall, metalness: 0.78, roughness: 0.34,
-    envMap: env, envMapIntensity: 1.15
+    color: 0x9aa6af, map: maps.map, roughnessMap: maps.rough,
+    bumpMap: maps.bump, bumpScale: 0.012,
+    metalness: 0.82, roughness: 0.58,
+    envMap: env, envMapIntensity: 0.92
   });
   var darkMat = new T.MeshStandardMaterial({
-    color: SHIP.panel, metalness: 0.62, roughness: 0.42,
-    envMap: env, envMapIntensity: 0.85
+    color: 0x26313a, map: maps.map, roughnessMap: maps.rough,
+    bumpMap: maps.bump, bumpScale: 0.009,
+    metalness: 0.68, roughness: 0.72,
+    envMap: env, envMapIntensity: 0.68
   });
   var steelMat = new T.MeshStandardMaterial({
     color: SHIP.steel, metalness: 0.9, roughness: 0.24,
-    envMap: env, envMapIntensity: 1.45
+    envMap: env, envMapIntensity: 1.12
   });
-  var cyan = new T.MeshBasicMaterial({ color: SHIP.cyan, toneMapped: false });
+  var gasketMat = new T.MeshStandardMaterial({
+    color: 0x020508, metalness: 0.08, roughness: 0.93,
+    envMap: env, envMapIntensity: 0.22
+  });
+  var glassMat = new T.MeshStandardMaterial({
+    color: 0x02070b, metalness: 0.18, roughness: 0.12,
+    envMap: env, envMapIntensity: 1.35,
+    emissive: 0x03131d, emissiveIntensity: 0.48
+  });
+  var grateMat = new T.MeshStandardMaterial({
+    color: 0x18222b, metalness: 0.86, roughness: 0.48,
+    envMap: env, envMapIntensity: 0.72
+  });
   var cyanSoft = new T.MeshBasicMaterial({
-    color: SHIP.cyanSoft, transparent: true, opacity: 0.62,
+    color: SHIP.cyanSoft, transparent: true, opacity: 0.34,
     blending: T.AdditiveBlending, depthWrite: false, toneMapped: false
   });
-  var violet = new T.MeshBasicMaterial({ color: SHIP.violet, toneMapped: false });
 
   /* Rear pressure bulkhead: a real surface with depth and bevel-like
      reinforcement, not a texture pretending to be a room. */
   var bulk = new T.Mesh(new T.BoxGeometry(R * 1.52, HH * 0.92, 0.085), shellMat);
   bulk.position.set(0, Y, -R * 0.58);
   group.add(bulk);
+  var bulkInset = new T.Mesh(roundedSlab(R * 1.31, HH * 0.72, 0.052, R * 0.055, 0.009), darkMat);
+  bulkInset.position.set(0, Y, -R * 0.526);
+  group.add(bulkInset);
+  /* The shadow gap around the inset is a rubber pressure seal. It
+     gives the rear wall three readable depth planes without a bevel
+     shader or an extra full-screen texture. */
+  var insetTop = new T.Mesh(new T.BoxGeometry(R * 1.38, 0.028, 0.032), gasketMat);
+  insetTop.position.set(0, Y + HH * 0.385, -R * 0.496);
+  group.add(insetTop);
+  var insetBottom = insetTop.clone(); insetBottom.position.y = Y - HH * 0.385; group.add(insetBottom);
+  for (var side = -1; side <= 1; side += 2) {
+    var insetSide = new T.Mesh(new T.BoxGeometry(0.028, HH * 0.79, 0.032), gasketMat);
+    insetSide.position.set(side * R * 0.69, Y, -R * 0.496);
+    group.add(insetSide);
+  }
 
   /* Floor and ceiling continue through the hatch. Longitudinal rails
      provide parallax during the first-person camera move. */
-  var floor = new T.Mesh(new T.BoxGeometry(R * 1.55, 0.055, R * 1.36), darkMat);
+  var floor = new T.Mesh(new T.BoxGeometry(R * 1.55, 0.055, R * 1.36), gasketMat);
   floor.position.set(0, Y - HH * 0.49, 0.02);
   group.add(floor);
-  var ceil = floor.clone();
+  var ceil = new T.Mesh(new T.BoxGeometry(R * 1.55, 0.07, R * 1.36), darkMat);
   ceil.position.y = Y + HH * 0.49;
   group.add(ceil);
-  for (var side = -1; side <= 1; side += 2) {
+
+  /* Actual raised grating. Two instanced sets cost two draw calls but
+     create moving occlusion and specular parallax under the camera. */
+  var longBars = new T.InstancedMesh(new T.BoxGeometry(0.025, 0.018, R * 1.28), grateMat, 7);
+  var matrix = new T.Matrix4();
+  for (var gi = 0; gi < 7; gi++) {
+    matrix.makeTranslation((gi - 3) * R * 0.19, Y - HH * 0.455, 0.02);
+    longBars.setMatrixAt(gi, matrix);
+  }
+  longBars.instanceMatrix.needsUpdate = true; group.add(longBars);
+  var crossBars = new T.InstancedMesh(new T.BoxGeometry(R * 1.43, 0.016, 0.022), grateMat, 7);
+  for (gi = 0; gi < 7; gi++) {
+    matrix.makeTranslation(0, Y - HH * 0.452, R * (0.55 - gi * 0.18));
+    crossBars.setMatrixAt(gi, matrix);
+  }
+  crossBars.instanceMatrix.needsUpdate = true; group.add(crossBars);
+
+  /* Side liners close the tunnel physically. Their leading edges sit
+     behind the exterior jamb, so the exterior silhouette never grows. */
+  for (side = -1; side <= 1; side += 2) {
+    var liner = new T.Mesh(new T.BoxGeometry(0.06, HH * 0.88, R * 1.28), darkMat);
+    liner.position.set(side * R * 0.735, Y, 0.015);
+    group.add(liner);
     var rail = new T.Mesh(new T.BoxGeometry(0.045, 0.035, R * 1.30), steelMat);
     rail.position.set(side * R * 0.58, Y - HH * 0.455, 0.02);
     group.add(rail);
@@ -1832,18 +1989,31 @@ function buildAirlockInterior(env, R, HH, Y, seg) {
   /* Three structural hoops define actual depth. Their dimensions are
      deliberately shared with the hatch opening, so no edge can float
      outside the ship silhouette on narrow mobile crops. */
-  for (var zi = 0; zi < 3; zi++) {
-    var z = R * (0.31 - zi * 0.38);
-    var top = new T.Mesh(new T.BoxGeometry(R * 1.50, 0.055, 0.055), steelMat);
+  var hoopTopGeo = roundedSlab(R * 1.50, 0.055, 0.055, 0.014, 0.007);
+  var hoopPostGeo = roundedSlab(0.055, HH * 0.91, 0.055, 0.014, 0.007);
+  var gusGeo = roundedSlab(R * 0.25, 0.038, 0.045, 0.009, 0.005);
+  for (var zi = 0; zi < 4; zi++) {
+    var z = R * (0.36 - zi * 0.28);
+    var top = new T.Mesh(hoopTopGeo, steelMat);
     top.position.set(0, Y + HH * 0.455, z);
     group.add(top);
     var bottom = top.clone();
     bottom.position.y = Y - HH * 0.455;
     group.add(bottom);
     for (side = -1; side <= 1; side += 2) {
-      var post = new T.Mesh(new T.BoxGeometry(0.055, HH * 0.91, 0.055), steelMat);
+      var post = new T.Mesh(hoopPostGeo, steelMat);
       post.position.set(side * R * 0.72, Y, z);
       group.add(post);
+    }
+    /* Short diagonal gussets make each hoop structural rather than a
+       rectangular neon outline. */
+    if (zi < 3) {
+      for (side = -1; side <= 1; side += 2) {
+        var gus = new T.Mesh(gusGeo, steelMat);
+        gus.position.set(side * R * 0.61, Y + HH * 0.375, z - 0.002);
+        gus.rotation.z = side * 0.72;
+        group.add(gus);
+      }
     }
   }
 
@@ -1851,34 +2021,104 @@ function buildAirlockInterior(env, R, HH, Y, seg) {
      recessed into a metal socket; none of them is painted into the
      bulkhead. This is the visual seed continued by the main flight
      console after the camera reaches the cockpit. */
-  var consoleBox = new T.Mesh(new T.BoxGeometry(R * 1.05, HH * 0.30, 0.11), darkMat);
-  consoleBox.position.set(0, Y - HH * 0.06, -R * 0.50);
+  var consoleBox = new T.Mesh(roundedSlab(R * 1.12, HH * 0.31, 0.12, R * 0.055, 0.014), shellMat);
+  consoleBox.position.set(0, Y - HH * 0.055, -R * 0.47);
   group.add(consoleBox);
-  var screen = new T.Mesh(new T.PlaneGeometry(R * 0.82, HH * 0.12), cyanSoft);
-  screen.position.set(0, Y + HH * 0.005, -R * 0.438);
+  var screenBezel = new T.Mesh(roundedSlab(R * 0.86, HH * 0.115, 0.035, R * 0.026, 0.006), gasketMat);
+  screenBezel.position.set(0, Y + HH * 0.005, -R * 0.395);
+  group.add(screenBezel);
+  var screen = new T.Mesh(new T.PlaneGeometry(R * 0.76, HH * 0.079), glassMat);
+  screen.position.set(0, Y + HH * 0.005, -R * 0.360);
   group.add(screen);
-  for (var bi = 0; bi < 5; bi++) {
-    var key = new T.Mesh(new T.BoxGeometry(R * 0.13, HH * 0.055, 0.035), bi === 3 ? violet : cyan);
-    key.position.set((bi - 2) * R * 0.165, Y - HH * 0.125, -R * 0.432);
-    group.add(key);
+  /* Sparse telemetry lines live below the glass. A solid cyan card
+     looked like a pasted web button; narrow emitters look like an
+     instrument whose pixels are actually inside the panel. */
+  var indicators = [];
+  var teleMat = new T.MeshStandardMaterial({
+    color: 0x071019, emissive: SHIP.cyan, emissiveIntensity: 1.2,
+    metalness: 0.05, roughness: 0.36, toneMapped: false
+  });
+  for (var ti = 0; ti < 3; ti++) {
+    var tele = new T.Mesh(new T.BoxGeometry(R * (0.58 - ti * 0.10), 0.008, 0.006), teleMat);
+    tele.position.set(-R * 0.07, Y + HH * (0.030 - ti * 0.024), -R * 0.342);
+    group.add(tele);
   }
+  indicators.push(teleMat);
+  var keyCapMat = new T.MeshStandardMaterial({
+    color: 0x46545f, metalness: 0.78, roughness: 0.24,
+    envMap: env, envMapIntensity: 1.1
+  });
+  var keyLampMat = new T.MeshStandardMaterial({
+    color: 0x071017, emissive: SHIP.cyanSoft, emissiveIntensity: 0.72,
+    metalness: 0.18, roughness: 0.34, toneMapped: false
+  });
+  var keyActiveMat = new T.MeshStandardMaterial({
+    color: 0x180b05, emissive: 0xff783a, emissiveIntensity: 0.96,
+    metalness: 0.20, roughness: 0.34, toneMapped: false
+  });
+  var socketGeo = new T.CylinderGeometry(R * 0.067, R * 0.067, 0.028, 14);
+  var capGeo = new T.CylinderGeometry(R * 0.044, R * 0.048, 0.021, 16);
+  var ringGeo = new T.TorusGeometry(R * 0.052, R * 0.0065, 5, 18);
+  for (var bi = 0; bi < 5; bi++) {
+    var socket = new T.Mesh(socketGeo, steelMat);
+    socket.position.set((bi - 2) * R * 0.17, Y - HH * 0.126, -R * 0.390);
+    socket.rotation.x = Math.PI * 0.5;
+    group.add(socket);
+    var key = new T.Mesh(capGeo, keyCapMat);
+    key.position.set(socket.position.x, socket.position.y, -R * 0.361);
+    key.rotation.x = Math.PI * 0.5;
+    group.add(key);
+    var ring = new T.Mesh(ringGeo, bi === 3 ? keyActiveMat : keyLampMat);
+    ring.position.set(socket.position.x, socket.position.y, -R * 0.342);
+    group.add(ring);
+  }
+  var domeGeo = new T.SphereGeometry(R * 0.027, 10, 6);
+  var domes = new T.InstancedMesh(domeGeo, keyCapMat, 5);
+  var domeQ = new T.Quaternion(), domeS = new T.Vector3(1, 1, 0.42), domeP = new T.Vector3();
+  for (bi = 0; bi < 5; bi++) {
+    domeP.set((bi - 2) * R * 0.17, Y - HH * 0.126, -R * 0.322);
+    matrix.compose(domeP, domeQ, domeS); domes.setMatrixAt(bi, matrix);
+  }
+  domes.instanceMatrix.needsUpdate = true; group.add(domes);
+  indicators.push(keyLampMat, keyActiveMat);
+
+  /* Eight cold fastener heads pin the console to the bulkhead. They
+     share one geometry/material and therefore remain one draw call. */
+  var boltGeo = new T.CylinderGeometry(0.012, 0.012, 0.009, 8);
+  var bolts = new T.InstancedMesh(boltGeo, steelMat, 8);
+  var boltQ = new T.Quaternion().setFromEuler(new T.Euler(Math.PI * 0.5, 0, 0));
+  var boltS = new T.Vector3(1, 1, 1), boltP = new T.Vector3();
+  for (var bo = 0; bo < 8; bo++) {
+    var bx = bo % 2 ? R * 0.51 : -R * 0.51;
+    var by = Y + (Math.floor(bo / 2) - 1.5) * HH * 0.085;
+    boltP.set(bx, by, -R * 0.370);
+    matrix.compose(boltP, boltQ, boltS); bolts.setMatrixAt(bo, matrix);
+  }
+  bolts.instanceMatrix.needsUpdate = true; group.add(bolts);
 
   /* Light comes from physical strips mounted in the ceiling and
      console. One short-range lamp lights the door edge without
      leaking onto the whole exterior model. */
   for (var li = -1; li <= 1; li += 2) {
-    var strip = new T.Mesh(new T.BoxGeometry(R * 0.48, 0.022, 0.035), cyanSoft);
-    strip.position.set(li * R * 0.37, Y + HH * 0.455, -R * 0.08);
+    var strip = new T.Mesh(new T.BoxGeometry(R * 0.34, 0.018, 0.028), cyanSoft);
+    strip.position.set(li * R * 0.39, Y + HH * 0.452, -R * 0.12);
     group.add(strip);
+    var warmMat = new T.MeshBasicMaterial({
+      color: SHIP.warm, transparent: true, opacity: 0.46,
+      toneMapped: false, blending: T.AdditiveBlending, depthWrite: false
+    });
+    var practical = new T.Mesh(new T.BoxGeometry(0.022, HH * 0.18, 0.025), warmMat);
+    practical.position.set(li * R * 0.69, Y - HH * 0.30, -R * 0.14);
+    group.add(practical);
   }
   var lamp = new T.PointLight(SHIP.warm, 0, 3.2, 2);
   lamp.position.set(0, Y + HH * 0.22, R * 0.02);
   group.add(lamp);
-  var cabinLight = new T.PointLight(SHIP.cyanSoft, 0.72, 2.2, 1.6);
-  cabinLight.position.set(0, Y, -R * 0.24);
+  var cabinLight = new T.PointLight(SHIP.cyanSoft, 0.78, 2.2, 1.7);
+  cabinLight.position.set(0, Y + HH * 0.14, -R * 0.20);
   group.add(cabinLight);
 
-  return { group: group, lamp: lamp, bulkhead: bulk, console: consoleBox };
+  return { group: group, lamp: lamp, bulkhead: bulk, console: consoleBox, indicators: indicators };
 }
 
 function buildDoor(C, env, hullMat) {
@@ -1997,7 +2237,8 @@ function buildDoor(C, env, hullMat) {
      руками во второе место файла */
   return {
     group: group, l: lTurn, r: rTurn, lamp: lamp, cabin: cabin,
-    edgeMat: edgeMat, y: Y, half: HALF, rad: R, hh: HH
+    edgeMat: edgeMat, indicators: airlock.indicators,
+    y: Y, half: HALF, rad: R, hh: HH
   };
 }
 
@@ -4060,6 +4301,27 @@ Rocket.prototype.doorOpen = function (dt) {
     var lit = Math.min(1, this.doorK * 2.4);
     d.lamp.intensity = lit * 2.6;
     d.edgeMat.opacity = 0.35 + (1 - this.doorK) * 0.55;
+    if (this.rocket.hatchBandMat) {
+      var bandK = Math.max(0, Math.min(1, (this.doorK - 0.04) / 0.22));
+      bandK = bandK * bandK * (3 - 2 * bandK);
+      this.rocket.hatchBandMat.opacity = 0.62 * (1 - bandK);
+    }
+    /* Neither landing exhaust nor pressure haze may survive in the
+       open aperture. Beyond 42% travel the viewer is looking into the
+       room; any camera-facing particle there becomes a white bug. */
+    if (this.doorK > 0.42 && (this._steamAlive || this._padSteam)) {
+      this._padSteam = 0;
+      this.steamClear();
+    }
+    /* The service console is alive before take-off. Pulse only the
+       emissive channel of its physical pixels; no DOM overlay and no
+       texture swap can drift away from the panel during the walk. */
+    if (d.indicators && d.indicators.length) {
+      var airT = (g.performance && performance.now ? performance.now() : Date.now()) * 0.001;
+      d.indicators[0].emissiveIntensity = 1.05 + Math.sin(airT * 2.1) * 0.18;
+      d.indicators[1].emissiveIntensity = 0.72 + Math.sin(airT * 1.35 + 0.8) * 0.10;
+      d.indicators[2].emissiveIntensity = 0.94 + Math.sin(airT * 0.82 + 2.2) * 0.16;
+    }
     /* Засвет от лампы в проёме идёт наружу и растёт вместе с
        дверью: к моменту передачи сцены рубке кадр уже залит тёплым
        светом, и подмену физически не видно. Переменную читает
