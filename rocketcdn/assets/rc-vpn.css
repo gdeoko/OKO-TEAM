@@ -105,6 +105,20 @@ html[data-product="vpn"] .rc-flight .rc-vpn-projector img {
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+/* A projector is a cockpit control only while the windscreen is free.
+   Its transparent circular hit area used to sit above the navigation
+   hologram (z-index 9 versus 6) and silently steal taps from targets
+   such as “Galaxy”. Hide the hit area whenever another projected
+   surface owns the glass; it returns as soon as that surface closes. */
+.rc-flight:has(.rcf-menu.on) > .rc-vpn-projector,
+.rc-flight:has(.rcf-dos.on) > .rc-vpn-projector,
+.rc-flight:has(.rcf-help.on) > .rc-vpn-projector,
+.rc-flight:has(.rcf-brief:not(.off)) > .rc-vpn-projector {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 .rc-vpn-projector-scan {
   position: absolute;
   inset: 8%;
