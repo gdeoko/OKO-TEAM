@@ -326,6 +326,10 @@ function build(T, opts) {
   var tiny = !!opts.tiny;
   var grp = new T.Group();
   var i, m, th;
+  var style = g.RC_SHIP_STYLE || {
+    panel: 0x101d2b, steel: 0x6e829a,
+    cyan: 0x5fc8ef, cyanSoft: 0x9fe0f6, violet: 0xa974f5
+  };
 
   var hull = hullTex(T);
   hull.repeat.set(6, 1);
@@ -339,10 +343,10 @@ function build(T, opts) {
     map: hull, side: T.BackSide,
     color: 0x93aac2
   });
-  var steel = new T.MeshPhongMaterial({ color: 0x3d4c5d, shininess: 46, specular: 0x6f8296 });
-  var caseMat = new T.MeshPhongMaterial({ color: 0x1b2c3f, shininess: 12, specular: 0x223447 });
-  var litCyan = new T.MeshBasicMaterial({ color: 0x5fc8ef, transparent: true, opacity: 0.75, fog: false });
-  var litSoft = new T.MeshBasicMaterial({ color: 0x9fe0f6, transparent: true, opacity: 0.3,
+  var steel = new T.MeshPhongMaterial({ color: style.steel, shininess: 46, specular: 0x6f8296 });
+  var caseMat = new T.MeshPhongMaterial({ color: style.panel, shininess: 12, specular: 0x223447 });
+  var litCyan = new T.MeshBasicMaterial({ color: style.cyan, transparent: true, opacity: 0.75, fog: false });
+  var litSoft = new T.MeshBasicMaterial({ color: style.cyanSoft, transparent: true, opacity: 0.3,
     blending: T.AdditiveBlending, depthWrite: false, fog: false });
 
   /* ── Обшивка тремя поясами ──────────────────────────────
@@ -611,30 +615,11 @@ function build(T, opts) {
   }
   grp.add(con);
 
-  /* ── Корпус кабины в проёме ─────────────────────────────
-     Та же картинка, что рамка в полёте, натянутая на плоскость в
-     проёме. Смысл в стыке: когда подъезд заканчивается, эта
-     плоскость проецируется ровно в тот же прямоугольник, что и
-     плоская рамка игры, и подмена одного другим не видна ничем.
-     Ставится снаружи, сразу за проёмом, чтобы её края уходили за
-     косяки, а не висели в воздухе. */
+  /* The cockpit shell is geometry above: wall bands, frame, window
+     ribs and console. A camera-facing cockpit image used to sit here
+     and was the last visible scene swap. Keep the public slot null so
+     older flight code remains compatible without drawing a plane. */
   var frame = null;
-  if (opts.cabSrc) {
-    var ldr = new T.TextureLoader();
-    var ct = ldr.load(opts.cabSrc);
-    if (T.SRGBColorSpace) ct.colorSpace = T.SRGBColorSpace;
-    var fw = opts.cabW || 7.6, fh = opts.cabH || 4.34;
-    frame = new T.Mesh(new T.PlaneGeometry(fw, fh), new T.MeshBasicMaterial({
-      map: ct, transparent: true, depthWrite: false, fog: false, opacity: 0
-    }));
-    /* Ставим по глазам, а не по середине проёма: корпус обязан
-       закрыть кадр ровно так же, как плоская рамка полёта, а она
-       центрирована по кадру. Глубину задаёт сцена - от неё же взят
-       размер плоскости. */
-    var fz = (R_WALL - (opts.camWin || 1.42)) + (opts.cabZ || 1.05);
-    frame.position.set(0, EYE, -fz);
-    grp.add(frame);
-  }
 
   /* ── Отражение приборов в остеклении ────────────────────
      Стекло, в котором ничего не отражается, читается дырой в
