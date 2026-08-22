@@ -2502,6 +2502,45 @@ function buildWorld() {
   gal3.children[1].userData.info = RU ? "ПОЛЯ KEPLER И TESS · подтверждённые экзопланетные системы" : "KEPLER AND TESS FIELDS · confirmed exoplanet systems";
   pickables.push(milky.children[1], gal2.children[1], gal3.children[1]);
 
+  /* ── World-locked galactic volume ───────────────────────
+     The far sky sphere supplies astronomical scale, but it cannot
+     translate relative to the cockpit. A sparse oblique volume of
+     actual 3D points occupies the Local/Orion arm in world space.
+     During a camera move its nearer grains cross the farther ones:
+     the Milky Way is therefore a place the ship moves through, not
+     a photograph glued behind the planets. Fixed pixel-size points
+     also guarantee that no grain can swell into the white blobs the
+     mobile audit exposed. */
+  var galacticVolume = (function () {
+    var nG = tiny ? 950 : (particleBudget ? 1650 : 3200);
+    var geo = new T.BufferGeometry();
+    var pos = new Float32Array(nG * 3), col = new Float32Array(nG * 3);
+    var cCold = new T.Color(0x6f9fc1), cBlue = new T.Color(0xa7c9df), cDim = new T.Color(0x35495e);
+    var seedG = 81641;
+    function rg() { seedG = (seedG * 1664525 + 1013904223) >>> 0; return seedG / 4294967296; }
+    for (var gv = 0; gv < nG; gv++) {
+      var along = (rg() - .5) * 7600;
+      var across = (rg() + rg() + rg() - 1.5) * 820;
+      var thick = (rg() + rg() + rg() - 1.5) * 240;
+      /* Thirty-degree Orion-arm tilt in all three axes. */
+      pos[gv * 3] = along * .82 + across * .48;
+      pos[gv * 3 + 1] = thick + along * .10;
+      pos[gv * 3 + 2] = along * -.46 + across * .86 - 850;
+      var rollG = rg(), cc = rollG > .88 ? cBlue : (rollG < .22 ? cDim : cCold);
+      var fadeG = .42 + rg() * .58;
+      col[gv * 3] = cc.r * fadeG; col[gv * 3 + 1] = cc.g * fadeG; col[gv * 3 + 2] = cc.b * fadeG;
+    }
+    geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new T.BufferAttribute(col, 3));
+    var pts = new T.Points(geo, new T.PointsMaterial({
+      size: 1.15, sizeAttenuation: false, map: starDot, vertexColors: true,
+      transparent: true, opacity: .40, depthWrite: false, blending: T.AdditiveBlending
+    }));
+    pts.frustumCulled = false;
+    scene.add(pts);
+    return pts;
+  })();
+
   /* ── Пыль у стекла ──
      Куб мелких частиц, вечно висящий вокруг камеры: кадр никогда
      не бывает мёртвым, а скорость читается кожей. Частицы
@@ -2608,6 +2647,41 @@ function buildWorld() {
   var belt1 = beltLayer(tiny ? 500 : (particleBudget ? 700 : 1100), 3.4, 230, 0x9a8f80);
   var belt2 = beltLayer(tiny ? 260 : (particleBudget ? 360 : 600), 6.5, 160, 0xb8a890);
 
+  /* Points describe the enormous belt; these instanced rocks are the
+     nearby bodies the camera can actually pass. Every instance owns
+     a position, asymmetric scale and angular velocity. They cast a
+     changing silhouette in cabin light while remaining one draw call
+     on mobile. */
+  var rockField = (function () {
+    var count = tiny ? 10 : (particleBudget ? 18 : 34);
+    var mesh = new T.InstancedMesh(
+      new T.IcosahedronGeometry(1, 1),
+      new T.MeshPhongMaterial({ color: 0x403c39, shininess: 8, specular: 0x625c55 }),
+      count
+    );
+    var A = new T.Vector3(760, -120, -900), B = new T.Vector3(1350, 210, -1000);
+    var items = [], mm = new T.Matrix4(), qq = new T.Quaternion(), ee = new T.Euler(), ss = new T.Vector3();
+    var seedR = 27191;
+    function rr() { seedR = (seedR * 1664525 + 1013904223) >>> 0; return seedR / 4294967296; }
+    for (var ri = 0; ri < count; ri++) {
+      var tR = .08 + rr() * .84;
+      var pR = A.clone().lerp(B, tR);
+      var aR = rr() * 6.283, dR = 42 + rr() * 150;
+      pR.x += Math.cos(aR) * dR; pR.y += (rr() - .5) * 126; pR.z += Math.sin(aR) * dR;
+      var baseR = 1.2 + Math.pow(rr(), 1.8) * 7.5;
+      var itR = { p: pR, rx: rr() * 6.283, ry: rr() * 6.283, rz: rr() * 6.283,
+        sx: (rr() - .5) * .28, sy: (rr() - .5) * .23, sz: (rr() - .5) * .19,
+        s: new T.Vector3(baseR * (.7 + rr() * .7), baseR * (.55 + rr() * .65), baseR * (.65 + rr() * .8)) };
+      ee.set(itR.rx, itR.ry, itR.rz); qq.setFromEuler(ee); ss.copy(itR.s); mm.compose(itR.p, qq, ss);
+      mesh.setMatrixAt(ri, mm); items.push(itR);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.userData.items = items;
+    mesh.userData.matrix = mm; mesh.userData.quaternion = qq; mesh.userData.euler = ee;
+    scene.add(mesh);
+    return mesh;
+  })();
+
   /* ── Маршрут ──
      Кривая проходит через все сцены и заворачивает домой. Взгляд
      ведут точки интереса: у каждого отрезка своя цель, между ними
@@ -2620,7 +2694,12 @@ function buildWorld() {
     new T.Vector3(-130, 22, 10),
     new T.Vector3(-40, 34, 170),
     new T.Vector3(180, 52, 60),          /* отход от Земли */
-    new T.Vector3(312, 58, -110),        /* мимо Луны, с запасом над ней */
+    /* The Catmull curve bows inward between control points. The old
+       nominal 80-unit clearance became 43 at the actual spline and
+       entered the conservative collision envelope. Raise the fly-by
+       over the lunar north pole: the Moon still fills the window but
+       the hull now clears its safety corridor as well as its surface. */
+    new T.Vector3(318, 105, -78),
     new T.Vector3(430, -10, -400),
     /* К Марсу дуга шла напролом: замер показал сближение до 14
        единиц при радиусе планеты 30, то есть корабль проходил
@@ -2774,7 +2853,8 @@ function buildWorld() {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     bodies: bodies,
     milky: milky, gal2: gal2, gal3: gal3,
-    comet: comet, sat: sat, belt1: belt1, belt2: belt2, dust: dust, wash: wash, washN: washN,
+    comet: comet, sat: sat, belt1: belt1, belt2: belt2, rockField: rockField,
+    galacticVolume: galacticVolume, dust: dust, wash: wash, washN: washN,
     nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb, mob: mob,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
@@ -3870,6 +3950,22 @@ function frame(ts) {
   w3.sky.rotation.y += dt * 0.0025;
   if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
   if (w3.belt1) { w3.belt1.rotation.y += dt * 0.0012; w3.belt2.rotation.y -= dt * 0.0009; }
+
+  /* Nearby belt rocks rotate independently. Updating at ~15 Hz is
+     visually continuous at their angular speed and avoids rebuilding
+     instance matrices on every 60 Hz frame. */
+  if (w3.rockField && ts - (frame._rockT || 0) > 66) {
+    frame._rockT = ts;
+    var rf = w3.rockField, its = rf.userData.items;
+    var rm = rf.userData.matrix, rq = rf.userData.quaternion, re = rf.userData.euler;
+    for (var rfi = 0; rfi < its.length; rfi++) {
+      var ir = its[rfi];
+      ir.rx += ir.sx * .066; ir.ry += ir.sy * .066; ir.rz += ir.sz * .066;
+      re.set(ir.rx, ir.ry, ir.rz); rq.setFromEuler(re);
+      rm.compose(ir.p, rq, ir.s); rf.setMatrixAt(rfi, rm);
+    }
+    rf.instanceMatrix.needsUpdate = true;
+  }
 
   /* Пыль заворачивается вокруг камеры: частица, отставшая больше
      чем на полкуба, перекладывается на другую сторону */
@@ -5812,7 +5908,8 @@ function stage(k) {
    стоят дороже всего остального вместе взятого */
 function stageLite(on) {
   if (!W3) return;
-  var far = [W3.milky, W3.gal2, W3.gal3, W3.nebSprites, W3.belt1, W3.belt2,
+  var far = [W3.milky, W3.gal2, W3.gal3, W3.nebSprites, W3.galacticVolume,
+             W3.belt1, W3.belt2, W3.rockField,
              W3.jupiter, W3.uranus, W3.neptune, W3.mercury, W3.venus,
              W3.hole, W3.comet, W3.saturn, W3.mars,
              /* Солнце дороже всех: его поверхность считает шейдер
