@@ -35,29 +35,40 @@ var wantsCalm = false;
 try { wantsCalm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
 /* ── Причина вторая: устройство не потянет ────────────────── */
-function weakDevice() {
-  var cpu = navigator.hardwareConcurrency || 4;
-  var mem = navigator.deviceMemory || 4;
-  if (cpu <= 4 && mem <= 2) return true;
-  if (mem <= 1) return true;
-  /* Режим экономии трафика - это явная просьба человека, её слушаем.
-     А вот оценку скорости канала (effectiveType) больше не слушаем:
-     под VPN и в роуминге браузер объявляет «2g» на вполне живом
-     канале, и сайт превращался в раскадровку у человека с обычным
-     интернетом. К тому же скорость канала ничего не говорит о том,
-     потянет ли устройство сцену: она уже загружена и считается на
-     месте, сеть ей больше не нужна. */
-  var c = navigator.connection;
-  if (c && c.saveData) return true;
-  /* Нет даже первой версии WebGL - объёма не будет по определению */
+function webglAvailable() {
   try {
     var t = doc.createElement("canvas");
-    if (!(t.getContext("webgl2") || t.getContext("webgl"))) return true;
-  } catch (e) { return true; }
-  return false;
+    return !!(t.getContext("webgl2") || t.getContext("webgl"));
+  } catch (e) { return false; }
 }
 
-if (wantsCalm || weakDevice()) on();
+/* Слабое устройство больше не лишается фильма. Этот сигнал задаёт
+   только стартовый LOD: renderer снижает pixel ratio, частицы и
+   частоту дорогих симуляций, но ракета, кабина и полёт остаются. */
+function qualityHint() {
+  var cpu = navigator.hardwareConcurrency || 4;
+  var mem = navigator.deviceMemory || 4;
+  var c = navigator.connection;
+  if (mem <= 1 || cpu <= 2) return 3;
+  if (mem <= 2 || cpu <= 4 || (c && c.saveData)) return 2;
+  if (mem <= 4 || cpu <= 6) return 1;
+  return 0;
+}
+
+var qHint = qualityHint();
+g.RC_QUALITY_HINT = qHint;
+g.RC_CALM_MOTION = wantsCalm;
+root.setAttribute("data-quality-hint", String(qHint));
+root.classList.toggle("rc-adaptive-3d", qHint > 0);
+root.classList.toggle("rc-calm-motion", wantsCalm);
+
+/* Единственный жёсткий предел — браузер физически не умеет WebGL.
+   В этом случае остаётся контентный fallback. Для всех WebGL-
+   устройств объёмный фильм загружается независимо от CPU/RAM. */
+if (!webglAvailable()) {
+  root.classList.add("rc-no-webgl");
+  on();
+}
 
 /* Заряда здесь больше нет, и это исправление ошибки, а не отказ от
    заботы о батарее. Правило «меньше двадцати процентов - показываем
@@ -114,6 +125,70 @@ function storyboard() {
   });
 }
 
+/* A browser with no WebGL cannot render the realtime cabin, but it
+   can still keep the finale in motion. The plate is loaded only as
+   the epilogue approaches the viewport and is paused when it leaves,
+   so this path costs nothing during the main page journey. Weak
+   devices that do have WebGL never enter this branch. */
+var fallbackFlight = null;
+function fallbackMotion() {
+  if (fallbackFlight || !root.classList.contains("rc-no-webgl")) return;
+  var epi = doc.getElementById("epilogue");
+  if (!epi) return;
+
+  var v = doc.createElement("video");
+  v.className = "rc-fallback-flight";
+  v.muted = true;
+  v.loop = true;
+  v.autoplay = true;
+  v.playsInline = true;
+  v.preload = "none";
+  v.setAttribute("aria-hidden", "true");
+  v.setAttribute("tabindex", "-1");
+  epi.insertBefore(v, epi.firstChild);
+  fallbackFlight = v;
+
+  var started = false, portrait = null, resizeT = 0;
+  function source() {
+    var p = innerHeight > innerWidth;
+    var webm = !!(v.canPlayType && v.canPlayType('video/webm; codecs="vp9"'));
+    var stem = "assets/gen/cockpit-flight-" + (p ? "mobile" : "wide") + "-v2";
+    return { p: p, src: stem + (webm ? ".webm" : ".mp4"), poster: stem + "-poster.webp" };
+  }
+  function pick() {
+    var s = source();
+    if (portrait === s.p && v.getAttribute("src")) return;
+    portrait = s.p;
+    v.poster = s.poster;
+    v.src = s.src;
+    if (started) {
+      var play = v.play();
+      if (play && play.catch) play.catch(function () {});
+    }
+  }
+  function start() {
+    started = true;
+    pick();
+    var play = v.play();
+    if (play && play.catch) play.catch(function () {});
+  }
+
+  if ("IntersectionObserver" in g) {
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        if (e.isIntersecting) start();
+        else if (started) v.pause();
+      });
+    }, { rootMargin: "35% 0px", threshold: 0.01 });
+    io.observe(epi);
+  } else start();
+
+  addEventListener("resize", function () {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(function () { if (started) pick(); }, 180);
+  }, { passive: true });
+}
+
 /* ═══ Хуки без ракеты ═══════════════════════════════════════
    В фильме счётчики, отсечки и галочки дёргает ракета. Здесь их
    дёргает появление в поле зрения. Ничего не имеет права
@@ -166,6 +241,7 @@ function access() {
 
 function boot() {
   storyboard();
+  fallbackMotion();
   seeing();
   access();
   if (root.classList.contains("rc-reduced") && g.RC_HOOKS && g.RC_HOOKS.settleAll) {

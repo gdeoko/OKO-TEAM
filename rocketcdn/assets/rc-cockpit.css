@@ -218,10 +218,18 @@ html[data-act="console"] #rocketCanvas {
    заявки целиком (её хвост просвечивал над остеклением), а шапка
    теряет свою полосу и размытие: сверху обязан быть корпус корабля,
    а не панель сайта. */
-html[data-act="egress"] #contact,
-html[data-act="egress"] #epilogue > .wrap {
+html[data-act="egress"] #contact {
   opacity: 0;
   pointer-events: none;
+  transition: opacity .5s linear;
+}
+/* Финальный CTA — часть приборного стекла, а не хвост страницы.
+   Прежний общий селектор давал полностью чёрный финал. */
+html[data-act="egress"] #epilogue > .wrap,
+html.rc-reduced[data-act="egress"] #epilogue > .wrap {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto;
   transition: opacity .5s linear;
 }
 html[data-act="egress"] .hdr {

@@ -36,6 +36,16 @@ $RC = [
     'tg_topic_form'  => '',       /* id темы «Формы» */
     'tg_topic_error' => '',       /* id темы «Ошибки» */
     'tg_topic_stat'  => '',       /* id темы «Аналитика» */
+    'tg_username'    => 'rocket_cdn_bot',
+
+    /* Реферальный розыгрыш. Бот должен быть администратором канала,
+       иначе Telegram не гарантирует проверку getChatMember. Значения
+       боевого канала задаются только в config.local.php. */
+    'contest_active'      => false,
+    'contest_title'       => 'Розыгрыш RocketVPN',
+    'contest_channel'     => '',  /* @username или числовой id канала */
+    'contest_channel_url' => '',  /* публичная ссылка https://t.me/... */
+    'contest_top_prizes'  => 3,
 
     /* Аналитика */
     'report_hour' => 9,           /* час ежедневного отчёта, МСК */
@@ -61,6 +71,7 @@ define('RC_STATS',  RC_DATA . '/stats');
 define('RC_LEADS',  RC_DATA . '/leads.json');
 define('RC_CONTENT',RC_DATA . '/content.json');
 define('RC_STATE',  RC_DATA . '/bot_state.json');
+define('RC_CONTEST',RC_DATA . '/contest.json');
 define('RC_LOG',    RC_DATA . '/errors.log');
 
 foreach ([RC_DATA, RC_STATS] as $dir) {

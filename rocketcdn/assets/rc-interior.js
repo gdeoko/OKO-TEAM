@@ -1207,7 +1207,7 @@ addEventListener("resize", function () {
 }, { passive: true });
 
 function boot() {
-  if (reduced || root.classList.contains("rc-reduced")) return;
+  if (root.classList.contains("rc-reduced")) return;
   T = g.THREE;
   if (!T) return;
   measure();
@@ -1309,8 +1309,8 @@ g.RC_INTERIOR = {
 
   /* Можно ли сейчас вешать содержимое на стены */
   live: function () {
-    return !!(st.built && st.shown && !root.classList.contains("rc-reduced") &&
-      root.getAttribute("data-degrade") !== "3");
+    /* Even the deepest adaptive tier keeps the cabin alive. */
+    return !!(st.built && st.shown && !root.classList.contains("rc-reduced"));
   },
 
   /* Пересчитать пороги: кинематограф меняет высоту блока

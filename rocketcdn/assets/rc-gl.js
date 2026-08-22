@@ -123,8 +123,8 @@ g.RC_GL = {
   })();
 
   function ok3d() {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-    if (g.RC_GL.budget() < 2) return false;
+    /* Motion preference and device class select LOD, never remove the
+       movie. Runtime 3D is unavailable only when WebGL itself is. */
     try {
       var c = document.createElement("canvas");
       return !!(c.getContext("webgl2") || c.getContext("webgl"));
@@ -144,7 +144,7 @@ g.RC_GL = {
     /* Ждём, пока подпишутся, и сообщаем: объёмного слоя не будет.
        Класс на документе прячет всё, что без объёма не работает:
        кнопки полёта не должны обещать то, чего не случится. */
-    document.documentElement.classList.add("rc-no3d");
+    document.documentElement.classList.add("rc-no3d", "rc-no-webgl");
     setTimeout(function () { fire("rc:no3d"); }, 0);
     return;
   }
@@ -158,32 +158,43 @@ g.RC_GL = {
                "rc-interior.js", "rc-planets.js", "rc-cabin.js", "rc-flight.js"];
   var started = false;
 
-  function load(i) {
-    if (i >= FILES.length) {
-      g.RC_GL.ready3d = true;
-      fire("rc:3d");
-      return;
+  function loadAll() {
+    /* Preserve dependency execution order while starting every
+       network request in one task, removing the eight-request
+       waterfall without changing the module contract. */
+    var left = FILES.length;
+    var failed = false;
+    function ready() {
+      left--;
+      if (!left && !failed) {
+        g.RC_GL.ready3d = true;
+        fire("rc:3d");
+      }
     }
-    var sc = document.createElement("script");
-    sc.src = base + FILES[i] + ver;
-    sc.async = false;
-    sc.onload = function () { load(i + 1); };
-    sc.onerror = function () {
-      /* Не дотянулись - живём без объёма, страница целая. Класс тот
-         же, что и при осознанном отказе: без него кнопка «Полёт в
-         открытый космос» остаётся на экране живой на вид и мёртвой
-         на деле - нажатие не делает ничего. */
+    function fail(file) {
+      if (failed) return;
+      failed = true;
       g.RC_GL.want3d = false;
       document.documentElement.classList.add("rc-no3d");
+      try { console.error("rc-gl: 3D module failed:", file); } catch (e) {}
       fire("rc:no3d");
-    };
-    document.head.appendChild(sc);
+    }
+    for (var i = 0; i < FILES.length; i++) {
+      (function (file) {
+        var sc = document.createElement("script");
+        sc.src = base + file + ver;
+        sc.async = false;
+        sc.onload = ready;
+        sc.onerror = function () { fail(file); };
+        document.head.appendChild(sc);
+      })(FILES[i]);
+    }
   }
 
   function go() {
     if (started) return;
     started = true;
-    load(0);
+    loadAll();
   }
 
   /* На быстром канале тянем сразу: ракета нужна с первых секунд, а

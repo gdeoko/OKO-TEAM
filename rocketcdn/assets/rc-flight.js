@@ -147,7 +147,10 @@ function noteExplored(name) {
    маршрута плюс все планеты чужих вселенных - иначе счётчик замирал
    на «10/10», хотя миров стало втрое больше. */
 function TOTAL_MARKS() {
-  var n = 11;                       /* тела и объекты родной системы */
+  /* Родной сектор: Солнце, восемь планет, Луна, дыра, комета,
+     спутник, пояс и три галактические цели. Прежние 11 обрезали
+     журнал на 11/11, хотя сканер честно видел семнадцать объектов. */
+  var n = 17;
   for (var u = 1; u < UNIVERSES.length; u++) {
     for (var s = 0; s < UNIVERSES[u].sys.length; s++) n += UNIVERSES[u].sys[s].planets.length;
   }
@@ -155,7 +158,7 @@ function TOTAL_MARKS() {
 }
 
 /* Сколько всего мест, где можно развернуть узел. Считаем ровно те,
-   на орбите которых включается кнопка: пять тел родного маршрута,
+   на орбите которых включается кнопка: одиннадцать тел родного маршрута,
    звёздные системы чужих вселенных и их планеты. Раньше знаменатель
    у «Сети» брался от «Исследовано» - множества разные, и счётчик мог
    уйти за свой же предел, а «сеть развёрнута полностью» достигалась
@@ -195,106 +198,126 @@ var UNIVERSES = [
   { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM", tag: "SOL",
     sky: 0x9db4cc, amb: 0x3a4a68, neb: [0x42b2dc, 0x8a59f6], sun: 0xfff2dc,
     stars: [0xcfe9f5, 0x8fb7ff, 0xffe9c9],
-    about: RU ? "родная система, весь маршрут" : "home system, the full route",
+    about: RU ? "8 планет, Луна, Солнце и Млечный Путь" : "8 planets, Moon, Sun and Milky Way",
+    source: "NASA Solar System Exploration",
     sys: [] },
 
-  { name: RU ? "ВСЕЛЕННАЯ RV-2" : "UNIVERSE RV-2", tag: "RV-2",
-    sky: 0xa08cd8, amb: 0x4a3468, neb: [0x8a59f6, 0xd06bff], sun: 0xe8d4ff,
-    stars: [0xe2d4ff, 0xb08cff, 0xffc9ec],
-    about: RU ? "фиолетовый рукав, три обитаемые системы" : "violet arm, three systems",
+  /* Дальние зоны — не выдуманные параллельные вселенные, а реальные
+     каталожные системы нашей Галактики. Это важная поправка к
+     реализму: подтверждённых планет из других вселенных наука не
+     знает, зато NASA Exoplanet Archive содержит тысячи миров
+     Млечного Пути. В игре оставляем четыре навигационных пространства,
+     но подписываем их честно — как сектора и поля наблюдений. */
+  { name: RU ? "МЕСТНЫЙ РУКАВ · EXO-1" : "LOCAL ARM · EXO-1", tag: "EXO-1",
+    sky: 0x8da9d8, amb: 0x344868, neb: [0x477fd4, 0x8059d8], sun: 0xe5efff,
+    stars: [0xe9f4ff, 0xa8c8ff, 0xffdcc6],
+    about: RU ? "реальные системы в пределах 50 световых лет" : "real systems within 50 light-years",
+    source: "NASA Exoplanet Archive",
     sys: [
-      { id: "vega", name: RU ? "ВЕГА-RV" : "VEGA-RV", star: 0xd6c4ff, seed: 1741,
+      { id: "proxima", name: "PROXIMA CENTAURI", star: 0xff8d72, seed: 1741,
         at: [520, 120, -420],
         planets: [
-          { kind: "terran", r: 54, dist: 210, tint: 0x7fb8e8, clouds: true,
-            name: RU ? "АУРА" : "AURA", info: RU ? "океан и один материк, узел сети" : "ocean world, network node" },
-          { kind: "gas", r: 86, dist: 420, rings: true, tint: 0xb79bff,
-            name: RU ? "ЛИЛОВЫЙ ГИГАНТ" : "VIOLET GIANT", info: RU ? "кольца из льда, 62 спутника" : "ice rings, 62 moons" },
-          { kind: "ice", r: 38, dist: 620, tint: 0xcfe4ff,
-            name: RU ? "СТУЖА" : "FROST", info: RU ? "минус 214, подлёдный океан" : "-214C, subglacial ocean" }
+          { kind: "terran", r: 51, dist: 220, tint: 0xb87458, clouds: true,
+            name: "PROXIMA b", info: RU ? "подтверждённый мир · 4,24 светового года · орбита 11,2 суток" : "confirmed · 4.24 light-years · 11.2-day orbit" },
+          { kind: "rocky", r: 31, dist: 355, tint: 0x8b7468,
+            name: "PROXIMA d", info: RU ? "субземля у красного карлика · орбита 5,1 суток" : "sub-Earth · 5.1-day orbit" }
         ] },
-      { id: "orion", name: RU ? "ОРИОН-RV" : "ORION-RV", star: 0xffd9f2, seed: 9032,
+      { id: "trappist", name: "TRAPPIST-1", star: 0xff7a62, seed: 9032,
         at: [-620, -80, -980],
         planets: [
-          { kind: "toxic", r: 46, dist: 190, tint: 0xd8ff8f,
-            name: RU ? "ЯД" : "TOXIN", info: RU ? "плотная атмосфера, кислотные дожди" : "dense acid atmosphere" },
-          { kind: "rocky", r: 32, dist: 330, tint: 0x9c9186,
-            name: RU ? "ОСКОЛОК" : "SHARD", info: RU ? "разбита древним ударом" : "shattered by an ancient impact" },
-          { kind: "ocean", r: 58, dist: 520, tint: 0x4fa8d8,
-            name: RU ? "ГЛУБИНА" : "DEEP", info: RU ? "сплошной океан, глубина 90 км" : "all ocean, 90 km deep" }
+          { kind: "rocky", r: 43, dist: 190, tint: 0x9d7867,
+            name: "TRAPPIST-1 e", info: RU ? "землеразмерная каменная планета в обитаемой зоне" : "Earth-sized rocky world in the habitable zone" },
+          { kind: "ice", r: 46, dist: 330, tint: 0x8daab9, clouds: true,
+            name: "TRAPPIST-1 f", info: RU ? "одна из семи подтверждённых планет системы" : "one of seven confirmed planets" },
+          { kind: "ocean", r: 50, dist: 510, tint: 0x557f9c, clouds: true,
+            name: "TRAPPIST-1 g", info: RU ? "внешняя часть обитаемой зоны · около 40 световых лет" : "outer habitable zone · about 40 light-years" }
         ] },
-      { id: "lyra", name: RU ? "ЛИРА-RV" : "LYRA-RV", star: 0xffe8c9, seed: 4488,
+      { id: "lhs1140", name: "LHS 1140", star: 0xff9a78, seed: 4488,
         at: [180, 260, -1520],
         planets: [
-          { kind: "desert", r: 44, dist: 200, tint: 0xe0b978,
-            name: RU ? "ПЕСКИ" : "SANDS", info: RU ? "бури на полгода" : "storms last half a year" },
-          { kind: "terran", r: 50, dist: 380, tint: 0x8fd8a0, clouds: true,
-            name: RU ? "ЗЕЛЁНАЯ" : "GREEN", info: RU ? "леса на весь материк" : "forest continent" }
+          { kind: "terran", r: 58, dist: 220, tint: 0x648c9f, clouds: true,
+            name: "LHS 1140 b", info: RU ? "суперземля в обитаемой зоне красного карлика" : "habitable-zone super-Earth" },
+          { kind: "rocky", r: 34, dist: 390, tint: 0x927b6d,
+            name: "LHS 1140 c", info: RU ? "внутренняя каменная планета подтверждённой системы" : "confirmed inner rocky planet" }
         ] }
     ] },
 
-  { name: RU ? "ВСЕЛЕННАЯ RC-3" : "UNIVERSE RC-3", tag: "RC-3",
-    sky: 0xd8b48c, amb: 0x684a34, neb: [0xffb066, 0xff7a4d], sun: 0xffe0b0,
-    stars: [0xffe9cf, 0xffc98f, 0xc9e2ff],
-    about: RU ? "янтарный рукав, горячие миры" : "amber arm, hot worlds",
+  { name: RU ? "ПОЛЕ KEPLER · EXO-2" : "KEPLER FIELD · EXO-2", tag: "EXO-2",
+    sky: 0xb08ca8, amb: 0x583852, neb: [0xc06ac7, 0x6f66d9], sun: 0xffd8bf,
+    stars: [0xffeee2, 0xd2c5ff, 0x9fc9ff],
+    about: RU ? "реальные многопланетные системы телескопа Kepler" : "real multi-planet Kepler systems",
+    source: "NASA Exoplanet Archive",
     sys: [
-      { id: "forge", name: RU ? "ГОРН-RC" : "FORGE-RC", star: 0xffb066, seed: 7711,
+      { id: "kepler90", name: "KEPLER-90", star: 0xffd6a8, seed: 7711,
         at: [480, -160, -520],
         planets: [
-          { kind: "lava", r: 48, dist: 180, tint: 0xff6a2a,
-            name: RU ? "КУЗНЯ" : "FORGE", info: RU ? "кора не остывает, разломы светятся" : "crust never cools" },
-          { kind: "rocky", r: 36, dist: 320, tint: 0xb08060,
-            name: RU ? "ШЛАК" : "SLAG", info: RU ? "выжжена звездой дотла" : "burnt bare by its star" },
-          { kind: "gas", r: 92, dist: 560, tint: 0xffc98f, rings: true,
-            name: RU ? "ЯНТАРЬ" : "AMBER", info: RU ? "шторм шириной в три Земли" : "storm three Earths wide" }
+          { kind: "rocky", r: 38, dist: 180, tint: 0xb48b70,
+            name: "KEPLER-90 d", info: RU ? "одна из восьми подтверждённых планет системы" : "one of eight confirmed planets" },
+          { kind: "gas", r: 78, dist: 360, tint: 0xd6b58a,
+            name: "KEPLER-90 g", info: RU ? "газовый гигант во внешней части системы" : "outer-system gas giant" },
+          { kind: "gas", r: 92, dist: 570, tint: 0xc89470, rings: true,
+            name: "KEPLER-90 h", info: RU ? "самая дальняя из восьми известных планет" : "outermost of eight known planets" }
         ] },
-      { id: "ember", name: RU ? "УГОЛЬ-RC" : "EMBER-RC", star: 0xff8f5a, seed: 2205,
+      { id: "kepler62", name: "KEPLER-62", star: 0xffc98f, seed: 2205,
         at: [-540, 140, -1120],
         planets: [
-          { kind: "desert", r: 52, dist: 220, tint: 0xd98f5a,
-            name: RU ? "ЖАРА" : "SCORCH", info: RU ? "день длиной в 40 суток" : "a 40-day long day" },
-          { kind: "ice", r: 40, dist: 430, tint: 0xa8d8ff,
-            name: RU ? "ТЕНЬ" : "SHADE", info: RU ? "вечная ночная сторона" : "the eternal night side" }
+          { kind: "lava", r: 32, dist: 170, tint: 0xb86a4f,
+            name: "KEPLER-62 b", info: RU ? "горячая внутренняя суперземля" : "hot inner super-Earth" },
+          { kind: "terran", r: 52, dist: 340, tint: 0x6b9f82, clouds: true,
+            name: "KEPLER-62 e", info: RU ? "суперземля в обитаемой зоне" : "habitable-zone super-Earth" },
+          { kind: "ice", r: 55, dist: 540, tint: 0x93b9ce, clouds: true,
+            name: "KEPLER-62 f", info: RU ? "внешняя суперземля в обитаемой зоне" : "outer habitable-zone super-Earth" }
         ] },
-      { id: "core", name: RU ? "ЯДРО-RC" : "CORE-RC", star: 0xfff0d0, seed: 6613,
+      { id: "kepler186", name: "KEPLER-186", star: 0xffa47e, seed: 6613,
         at: [260, -280, -1680],
         planets: [
-          { kind: "terran", r: 56, dist: 240, tint: 0xd8a86a, clouds: true,
-            name: RU ? "ОХРА" : "OCHRE", info: RU ? "красные степи, дата-центр на полюсе" : "red steppes, polar datacenter" },
-          { kind: "gas", r: 78, dist: 460, tint: 0xff9a5a,
-            name: RU ? "ПЛАМЯ" : "FLAME", info: RU ? "полосы кипят на глазах" : "bands boil visibly" },
-          { kind: "lava", r: 42, dist: 640, tint: 0xff4a2a,
-            name: RU ? "ГОРНИЛО" : "CRUCIBLE", info: RU ? "приливной разогрев от соседа" : "tidal heating from its neighbour" }
+          { kind: "rocky", r: 34, dist: 190, tint: 0x9a7568,
+            name: "KEPLER-186 c", info: RU ? "короткопериодическая каменная планета" : "short-period rocky world" },
+          { kind: "desert", r: 41, dist: 350, tint: 0xb28c68,
+            name: "KEPLER-186 e", info: RU ? "четвёртая подтверждённая планета системы" : "fourth confirmed planet in the system" },
+          { kind: "terran", r: 47, dist: 540, tint: 0x6e9278, clouds: true,
+            name: "KEPLER-186 f", info: RU ? "первая землеразмерная планета, найденная в обитаемой зоне" : "first Earth-size planet found in a habitable zone" }
         ] }
     ] },
 
-  /* Четвёртая вселенная закрыта, пока сеть не дотянется до шести
-     миров. Это и есть цель игры: не «полетать», а довести сеть
-     дальше, чем она доставала до вас. Награда честная - за ней
-     новый рукав с мирами, которых больше нигде нет. */
-  { name: RU ? "ВСЕЛЕННАЯ RX-4" : "UNIVERSE RX-4", tag: "RX-4",
-    sky: 0x8cd8c0, amb: 0x2a5a4c, neb: [0x35e08f, 0x42b2dc], sun: 0xd8fff0,
-    stars: [0xd6fff0, 0x8ff0c9, 0xc9e2ff],
-    about: RU ? "изумрудный рукав, открыт за шесть узлов сети" : "emerald arm, unlocked by six nodes",
+  /* Финальный сектор закрыт шестью узлами: награда открывает ещё
+     девять реальных каталожных миров, а не перекрашенную копию. */
+  { name: RU ? "ПОЛЕ TESS · EXO-3" : "TESS FIELD · EXO-3", tag: "EXO-3",
+    sky: 0x79b8b0, amb: 0x27554f, neb: [0x31c9a2, 0x428bdc], sun: 0xd7fff2,
+    stars: [0xe1fff7, 0x8fe8d2, 0xc9e2ff],
+    about: RU ? "реальные миры TESS · открывается за шесть узлов" : "real TESS worlds · unlocks at six nodes",
+    source: "NASA Exoplanet Archive",
     need: 6,
     sys: [
-      { id: "verd", name: RU ? "ВЕРДА-RX" : "VERDA-RX", star: 0x9ff0c9, seed: 3312,
+      { id: "toi700", name: "TOI-700", star: 0xff9a78, seed: 3312,
         at: [420, 180, -560],
         planets: [
-          { kind: "ocean", r: 62, dist: 230, tint: 0x35c8a0,
-            name: RU ? "ИЗУМРУД" : "EMERALD", info: RU ? "цветущий океан, вода светится ночью" : "blooming ocean, glowing at night" },
-          { kind: "terran", r: 52, dist: 400, tint: 0x7fd8a8, clouds: true,
-            name: RU ? "ПОЛЯНА" : "GLADE", info: RU ? "материк-сад, узел стоит на орбите" : "garden continent, orbital node" },
-          { kind: "ice", r: 44, dist: 610, tint: 0xbff0ff,
-            name: RU ? "ЗЕРКАЛО" : "MIRROR", info: RU ? "ледяная кора отражает свою звезду" : "ice crust mirrors its star" }
+          { kind: "rocky", r: 38, dist: 190, tint: 0x9e796a,
+            name: "TOI-700 c", info: RU ? "подтверждённая внутренняя планета системы TESS" : "confirmed inner TESS planet" },
+          { kind: "terran", r: 49, dist: 350, tint: 0x629589, clouds: true,
+            name: "TOI-700 d", info: RU ? "землеразмерная планета в обитаемой зоне" : "Earth-size habitable-zone planet" },
+          { kind: "terran", r: 45, dist: 520, tint: 0x78a598, clouds: true,
+            name: "TOI-700 e", info: RU ? "землеразмерная планета на внутреннем краю обитаемой зоны" : "Earth-size world near the inner habitable zone" }
         ] },
-      { id: "helix", name: RU ? "СПИРАЛЬ-RX" : "HELIX-RX", star: 0xd8fff0, seed: 8844,
+      { id: "toi270", name: "TOI-270", star: 0xff8d72, seed: 8844,
         at: [-480, -120, -1260],
         planets: [
-          { kind: "gas", r: 96, dist: 300, tint: 0x6fe0c0, rings: true,
-            name: RU ? "ВИХРЬ" : "VORTEX", info: RU ? "кольца из живого льда" : "rings of living ice" },
-          { kind: "rocky", r: 34, dist: 520, tint: 0x8fa89c,
-            name: RU ? "ЯКОРЬ" : "ANCHOR", info: RU ? "первый узел за пределами трёх рукавов" : "first node beyond three arms" }
+          { kind: "rocky", r: 41, dist: 180, tint: 0x987469,
+            name: "TOI-270 b", info: RU ? "каменистая суперземля · орбита 3,4 суток" : "rocky super-Earth · 3.4-day orbit" },
+          { kind: "gas", r: 61, dist: 340, tint: 0x6ca6ad,
+            name: "TOI-270 c", info: RU ? "мини-нептун · орбита 5,7 суток" : "mini-Neptune · 5.7-day orbit" },
+          { kind: "gas", r: 57, dist: 520, tint: 0x5d8fa8,
+            name: "TOI-270 d", info: RU ? "мини-нептун · орбита 11,4 суток" : "mini-Neptune · 11.4-day orbit" }
+        ] },
+      { id: "cancri55", name: "55 CANCRI", star: 0xffd5a3, seed: 2917,
+        at: [260, 250, -1740],
+        planets: [
+          { kind: "lava", r: 47, dist: 180, tint: 0xd65f3b,
+            name: "55 CANCRI e", info: RU ? "ультрагорячая суперземля с орбитой менее суток" : "ultra-hot super-Earth with a sub-day orbit" },
+          { kind: "gas", r: 70, dist: 380, tint: 0xb39777,
+            name: "55 CANCRI f", info: RU ? "газовый гигант в многопланетной системе" : "gas giant in a multi-planet system" },
+          { kind: "gas", r: 94, dist: 610, tint: 0xc4a083, rings: true,
+            name: "55 CANCRI d", info: RU ? "дальняя планета системы у солнцеподобной звезды" : "outer planet around a Sun-like star" }
         ] }
     ] }
 ];
@@ -442,8 +465,8 @@ function buildUI() {
       '<div class="rcf-menu" role="menu">' +
         '<div class="rcf-menu-h"><i>' + (RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM") + '</i></div>' +
         '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
-        '<div class="rcf-menu-h"><i>' + (RU ? "ДРУГИЕ РУКАВА" : "OTHER ARMS") + '</i>' +
-          '<span>' + (RU ? "гиперпрыжок через Млечный Путь" : "hyperjump") + '</span></div>' +
+        '<div class="rcf-menu-h"><i>' + (RU ? "РЕАЛЬНЫЕ ЭКЗОСИСТЕМЫ" : "REAL EXOPLANET SYSTEMS") + '</i>' +
+          '<span>' + (RU ? "каталог NASA · прыжок через Млечный Путь" : "NASA catalog · Milky Way jump") + '</span></div>' +
         '<div class="rcf-uni">' + uniHtml + '</div>' +
       '</div>' +
       '<div class="rcf-track"><i></i></div>' +
@@ -495,8 +518,8 @@ function buildUI() {
           '<div class="rcf-d-face">' +
             /* Верхняя лента: бортовое табло */
             '<div class="rcf-d-top">' +
-              '<span class="rcf-d-cell"><i>' + (RU ? "СЕТЬ" : "NET") + '</i><span class="rcf-net">0/34</span></span>' +
-              '<span class="rcf-d-cell rcf-d-seen"><i>' + (RU ? "ОТКРЫТО" : "SEEN") + '</i><span class="rcf-prog">0/32</span></span>' +
+              '<span class="rcf-d-cell"><i>' + (RU ? "СЕТЬ" : "NET") + '</i><span class="rcf-net">0/' + NET_TOTAL() + '</span></span>' +
+              '<span class="rcf-d-cell rcf-d-seen"><i>' + (RU ? "ОТКРЫТО" : "SEEN") + '</i><span class="rcf-prog">0/' + TOTAL_MARKS() + '</span></span>' +
               '<span class="rcf-d-cell rcf-d-course"><i>' + (RU ? "КУРС" : "COURSE") + '</i>' +
                 '<span class="rcf-c-goal">—</span><u class="rcf-c-dist">—</u>' +
                 '<em class="rcf-c-mode">' + (RU ? "РУЧНОЙ" : "MANUAL") + '</em></span>' +
@@ -841,8 +864,8 @@ function warmCab() {
   cabWarm = new Image();
   cabWarm.decoding = "async";
   cabWarm.src = innerHeight > innerWidth
-    ? "assets/gen/cockpit-tall.webp"
-    : "assets/gen/cockpit-wide.webp";
+    ? "assets/gen/cockpit-tall-v2.webp"
+    : "assets/gen/cockpit-wide-v2.webp";
 }
 addEventListener("rc:act", function (e) {
   var a = e && e.detail && e.detail.act;
@@ -851,7 +874,7 @@ addEventListener("rc:act", function (e) {
 
 function cabSrc() {
   if (!ui.cab) return;
-  var want = innerHeight > innerWidth ? "assets/gen/cockpit-tall.webp" : "assets/gen/cockpit-wide.webp";
+  var want = innerHeight > innerWidth ? "assets/gen/cockpit-tall-v2.webp" : "assets/gen/cockpit-wide-v2.webp";
   if (ui.cab.getAttribute("src") !== want) ui.cab.setAttribute("src", want);
 }
 
@@ -868,6 +891,31 @@ function cabSrc() {
    Досье не отдельный экран: оно живёт в остеклении кабины, тем же
    материалом, что и панель вопросов в финале сайта. */
 var dosT = 0, dosName = "";
+
+/* Научный слой бортового справочника. Размеры и периоды здесь —
+   свойства реальных тел, а не расстояние в условных единицах
+   игровой сцены. Это отделяет физику мира от режиссёрского масштаба:
+   Юпитер может стоять ближе ради красивого облёта, но досье всё
+   равно показывает его настоящий диаметр и орбитальный период. */
+var SOLAR_SCI = {
+  "СОЛНЦЕ":   { en: "SUN",       type: RU ? "звезда G2V" : "G2V star", diameter: "1 392 700 km", period: RU ? "оборот ~25–35 суток" : "~25–35 day rotation", text: RU ? "Фотосфера, грануляция, пятна и корона; в ней сосредоточено 99,86% массы системы." : "Photosphere, granulation, sunspots and corona; 99.86% of the Solar System's mass." },
+  "МЕРКУРИЙ": { en: "MERCURY",   type: RU ? "каменная планета" : "rocky planet", diameter: "4 879 km", period: RU ? "88 земных суток" : "88 Earth days", text: RU ? "Ближайшая к Солнцу планета: почти без атмосферы, с резко контрастными температурами." : "Closest planet to the Sun, with almost no atmosphere and extreme temperatures." },
+  "ВЕНЕРА":   { en: "VENUS",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 104 km", period: RU ? "224,7 суток" : "224.7 days", text: RU ? "Плотная атмосфера CO₂ и облака серной кислоты создают сильнейший парниковый эффект." : "A dense CO₂ atmosphere and sulfuric-acid clouds drive an extreme greenhouse effect." },
+  "ЗЕМЛЯ":    { en: "EARTH",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 742 km", period: RU ? "365,26 суток" : "365.26 days", text: RU ? "Океанический мир с азотно-кислородной атмосферой, магнитосферой и единственной известной биосферой." : "An ocean world with a nitrogen-oxygen atmosphere, magnetosphere and the only known biosphere." },
+  "ЛУНА":     { en: "MOON",      type: RU ? "естественный спутник" : "natural satellite", diameter: "3 475 km", period: RU ? "27,3 суток" : "27.3 days", text: RU ? "Приливно захваченный спутник Земли; средняя дистанция до Земли — 384 400 км." : "Earth's tidally locked satellite, at a mean distance of 384,400 km." },
+  "МАРС":     { en: "MARS",      type: RU ? "каменная планета" : "rocky planet", diameter: "6 779 km", period: RU ? "687 суток" : "687 days", text: RU ? "Холодный пустынный мир с тонкой атмосферой CO₂, полярными шапками и крупнейшим вулканом системы." : "A cold desert world with a thin CO₂ atmosphere, polar caps and the Solar System's largest volcano." },
+  "ЮПИТЕР":   { en: "JUPITER",   type: RU ? "газовый гигант" : "gas giant", diameter: "139 820 km", period: RU ? "11,86 года" : "11.86 years", text: RU ? "Крупнейшая планета системы; Большое красное пятно — долговечный атмосферный вихрь." : "The largest planet; the Great Red Spot is a long-lived atmospheric vortex." },
+  "САТУРН":   { en: "SATURN",    type: RU ? "газовый гигант" : "gas giant", diameter: "116 460 km", period: RU ? "29,45 года" : "29.45 years", text: RU ? "Система колец состоит главным образом из частиц водяного льда размером от пыли до глыб." : "Its rings are made mostly of water-ice particles ranging from dust to boulders." },
+  "УРАН":     { en: "URANUS",    type: RU ? "ледяной гигант" : "ice giant", diameter: "50 724 km", period: RU ? "84 года" : "84 years", text: RU ? "Ось вращения наклонена примерно на 98°, поэтому планета фактически вращается на боку." : "Its axial tilt is about 98°, so the planet effectively rotates on its side." },
+  "НЕПТУН":   { en: "NEPTUNE",   type: RU ? "ледяной гигант" : "ice giant", diameter: "49 244 km", period: RU ? "164,8 года" : "164.8 years", text: RU ? "Самая дальняя планета; в атмосфере наблюдаются самые быстрые ветры Солнечной системы." : "The farthest planet, with the fastest winds observed in the Solar System." }
+};
+function solarScience(name) {
+  var up = String(name || "").toUpperCase();
+  for (var k in SOLAR_SCI) {
+    if (up === k || up === SOLAR_SCI[k].en) return SOLAR_SCI[k];
+  }
+  return null;
+}
 
 function dosClose() {
   if (!ui.dos) return;
@@ -954,12 +1002,14 @@ function dosOpen(obj, info) {
   if (!ui.dos || !info) return;
   var parts = info.split(" · ");
   var name = parts[0] || info;
+  var science = solarScience(name);
   if (dosName === name && ui.dos.classList.contains("on")) return;
   dosName = name;
   if (dosT) { clearTimeout(dosT); dosT = 0; }
   ui.dos.hidden = false;
   ui.dosH.textContent = name;
-  ui.dosP.textContent = parts.slice(1).join(" · ") || (RU ? "Данных в бортовом справочнике нет." : "No data on board.");
+  ui.dosP.textContent = science ? science.text :
+    (parts.slice(1).join(" · ") || (RU ? "Данных в бортовом справочнике нет." : "No data on board."));
   dosPaint(obj, name);
 
   /* Три показателя: удаление, состояние узла и доля исследованного.
@@ -983,6 +1033,11 @@ function dosOpen(obj, info) {
     (inNet ? (RU ? "развёрнут" : "deployed") : (RU ? "не развёрнут" : "not deployed")) + '</b></span>';
   facts += '<span><i>' + (RU ? "ИССЛЕДОВАНО" : "EXPLORED") + '</i><b>' +
     Object.keys(explored).length + " / " + TOTAL_MARKS() + '</b></span>';
+  if (science) {
+    facts += '<span><i>' + (RU ? "КЛАСС" : "CLASS") + '</i><b>' + science.type + '</b></span>';
+    facts += '<span><i>' + (RU ? "ДИАМЕТР" : "DIAMETER") + '</i><b>' + science.diameter + '</b></span>';
+    facts += '<span><i>' + (RU ? "ПЕРИОД" : "PERIOD") + '</i><b>' + science.period + '</b></span>';
+  }
   ui.dosF.innerHTML = facts;
 
   requestAnimationFrame(function () { if (ui.dos) { ui.dos.classList.add("on"); modalMark(); } });
@@ -1185,7 +1240,10 @@ function buildUniverse(i) {
    висит посреди фиолетового рукава */
 function showHome(on) {
   if (!W3) return;
-  var list = [W3.earth, W3.moon, W3.mars, W3.saturn, W3.hole, W3.comet, W3.sat, W3.belt1, W3.belt2];
+  var list = [W3.earth, W3.moon, W3.mars, W3.saturn, W3.hole, W3.comet,
+              W3.sat, W3.belt1, W3.belt2, W3.sun, W3.sunGlow, W3.corIn,
+              W3.corOut, W3.mercury, W3.venus, W3.jupiter, W3.uranus,
+              W3.neptune];
   for (var i = 0; i < list.length; i++) if (list[i]) list[i].visible = on;
 }
 
@@ -1548,9 +1606,10 @@ function paintRing() {
    объявлен внутри сборки мира, а читался и в текстуре неба - при
    первом же обращении сборка падала с «tiny is not defined», ошибку
    глотал try/catch, и кнопка «Начать полёт» выглядела мёртвой. */
-var tiny = false;
+var tiny = false, qualityHint = 0;
 try {
-  tiny = (navigator.deviceMemory || 4) <= 2 ||
+  qualityHint = parseInt(root.getAttribute("data-quality-hint") || g.RC_QUALITY_HINT || "0", 10) || 0;
+  tiny = qualityHint >= 2 || (navigator.deviceMemory || 4) <= 2 ||
          (navigator.hardwareConcurrency || 4) <= 2;
 } catch (eTiny) { tiny = false; }
 
@@ -1812,11 +1871,12 @@ function buildWorld() {
      размером под три пикселя - владелец назвал их «бежевые звёзды
      как баг», и по делу. Настоящее небо белое с голубизной, тёплых
      звёзд единицы. */
+  var starScale = tiny ? 0.43 : (qualityHint ? 0.72 : 1);
   var starMats = [
-    stars(tiny ? 6000 : 14000, 1.4, 3000, 0xe8f2fa).material,
-    stars(tiny ? 2600 : 6200, 1.9, 2400, 0xa8c8f2).material,
-    stars(tiny ? 260 : 620, 2.2, 1800, 0xf6e3c2).material,
-    stars(tiny ? 120 : 320, 3.6, 1400, 0xffffff).material
+    stars(Math.round(14000 * starScale), 1.4, 3000, 0xe8f2fa).material,
+    stars(Math.round(6200 * starScale), 1.9, 2400, 0xa8c8f2).material,
+    stars(Math.round(620 * starScale), 2.2, 1800, 0xf6e3c2).material,
+    stars(Math.round(320 * starScale), 3.6, 1400, 0xffffff).material
   ];
 
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
@@ -2415,9 +2475,9 @@ function buildWorld() {
   /* Все три спирали холодные: белые и голубоватые рукава, тёплое
      только ядро. Прежняя оранжевая читалась грязным пятном. */
   var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xd8e8f6, 0x9fb8d8, 0.75, 0.55);
-  milky.children[1].userData.info = RU ? "МЛЕЧНЫЙ ПУТЬ · 200 млрд звёзд · виден с Земли 10 000 лет" : "MILKY WAY · 200B stars";
-  gal2.children[1].userData.info = RU ? "ГАЛАКТИКА RV-2 · неизведанная вселенная" : "GALAXY RV-2 · uncharted universe";
-  gal3.children[1].userData.info = RU ? "ГАЛАКТИКА RC-3 · открыта Rocket CDN" : "GALAXY RC-3 · discovered by Rocket CDN";
+  milky.children[1].userData.info = RU ? "МЛЕЧНЫЙ ПУТЬ · спиральная галактика · наша Солнечная система находится в рукаве Ориона" : "MILKY WAY · barred spiral galaxy · the Solar System lies in the Orion Spur";
+  gal2.children[1].userData.info = RU ? "МЕСТНЫЙ РУКАВ · PROXIMA · TRAPPIST-1 · LHS 1140" : "LOCAL ARM · PROXIMA · TRAPPIST-1 · LHS 1140";
+  gal3.children[1].userData.info = RU ? "ПОЛЯ KEPLER И TESS · подтверждённые экзопланетные системы" : "KEPLER AND TESS FIELDS · confirmed exoplanet systems";
   pickables.push(milky.children[1], gal2.children[1], gal3.children[1]);
 
   /* ── Пыль у стекла ──
@@ -2646,8 +2706,8 @@ function buildWorld() {
     { o: sat, name: "RC-SAT", key: "sat" },
     { o: belt1, name: RU ? "АСТЕРОИДНЫЙ ПОЯС" : "ASTEROID BELT", key: "belt" },
     { o: milky, name: RU ? "МЛЕЧНЫЙ ПУТЬ" : "MILKY WAY", key: "milky" },
-    { o: gal2, name: "RV-2", key: "gal2" },
-    { o: gal3, name: "RC-3", key: "gal3" },
+    { o: gal2, name: RU ? "ПОЛЕ KEPLER" : "KEPLER FIELD", key: "gal2" },
+    { o: gal3, name: RU ? "ПОЛЕ TESS" : "TESS FIELD", key: "gal3" },
     { o: sunBody, name: RU ? "СОЛНЦЕ" : "SUN", key: "sun" },
     { o: mercury, name: RU ? "МЕРКУРИЙ" : "MERCURY", key: "mercury" },
     { o: venus, name: RU ? "ВЕНЕРА" : "VENUS", key: "venus" },
@@ -2879,7 +2939,11 @@ function size() {
 function cabGeom() {
   if (!ui.wrap) return;
   var tall = innerHeight > innerWidth;
-  var iw = tall ? 768 : 1344, ih = tall ? 1344 : 768;
+  /* The v2 cockpit plates are generated as a matched 941 x 1672 /
+     1672 x 941 pair. Use their real dimensions here: object-fit
+     geometry based on the retired 768 / 1344 plates displaced the
+     hit areas from the machined sockets, especially on tall phones. */
+  var iw = tall ? 941 : 1672, ih = tall ? 1672 : 941;
   var sc = Math.max(innerWidth / iw, innerHeight / ih);
   var dw = iw * sc, dh = ih * sc;
   var ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
@@ -2887,14 +2951,18 @@ function cabGeom() {
     return [(ox + fx * dw) / innerWidth, (oy + fy * dh) / innerHeight];
   }
   /* Остекление */
-  var w0 = px(tall ? 0.150 : 0.075, tall ? 0.125 : 0.095);
-  var w1 = px(tall ? 0.850 : 0.925, tall ? 0.790 : 0.755);
+  var w0 = px(tall ? 0.140 : 0.090, tall ? 0.070 : 0.070);
+  var w1 = px(tall ? 0.860 : 0.910, tall ? 0.800 : 0.660);
   /* Пояс приборов под остеклением. Доли зажимаем в границы кадра:
      на вытянутых экранах (планшет в портрете, узкий телефон) ниша
      корпуса уходит за нижнюю кромку и за боковины, и плита вместе с
      ней. Приборы обязаны быть на экране на любом устройстве. */
-  var d0 = px(0.06, tall ? 0.815 : 0.795);
-  var d1 = px(0.94, tall ? 0.985 : 0.985);
+  /* Active controls occupy only the factory socket belt. The cabin
+     body itself remains in the image; DOM never paints a second
+     dashboard over it. Both variants keep the interactive belt at
+     roughly ten percent of viewport height. */
+  var d0 = px(tall ? 0.035 : 0.145, tall ? 0.855 : 0.760);
+  var d1 = px(tall ? 0.965 : 0.855, tall ? 0.955 : 0.860);
   var MINX = 0.015, MAXX = 0.985, MAXY = 1;
   if (d0[0] < MINX) d0[0] = MINX;
   if (d1[0] > MAXX) d1[0] = MAXX;
@@ -2905,9 +2973,10 @@ function cabGeom() {
      лежать на наклонной плоскости пульта, между уже нарисованными
      экранами, как настоящее железо. Высоту не режем - режем только
      если консоль вылезла за кадр. */
-  var dh = d1[1] - d0[1];
-  if (dh < 0.10) { d0[1] = d1[1] - 0.10; }
-  if (d0[1] < 0.63) d0[1] = 0.63;
+  var deckH = d1[1] - d0[1];
+  if (deckH < 0.085) d0[1] = d1[1] - 0.085;
+  if (deckH > 0.105) d0[1] = d1[1] - 0.105;
+  if (d0[1] < 0.70) d0[1] = 0.70;
   var S = ui.wrap.style;
   S.setProperty("--cab-wx", (w0[0] * 100).toFixed(2) + "%");
   S.setProperty("--cab-wy", (w0[1] * 100).toFixed(2) + "%");
@@ -3457,7 +3526,10 @@ function frame(ts) {
      тридцати кадров хватает с запасом. Полные шестьдесят жгли
      телефон ровно там, где человек читает вопросы. */
   if (F.stage) {
-    if (F._stageT && ts - F._stageT < 32) return;
+    /* Shared cadence keeps the premium finale at 60 fps when the
+       device can sustain it, instead of forcing a 30 fps ceiling. */
+    var stageMin = g.RC_MOTION ? g.RC_MOTION.minFrame() : 16;
+    if (F._stageT && ts - F._stageT < stageMin - 1) return;
     F._stageT = ts;
   }
   var dt = F.last ? Math.min(0.05, (ts - F.last) / 1000) : 0.016;
@@ -4173,7 +4245,8 @@ function open() {
     /* Салон уходит из сцены ровно в тот кадр, когда его корпус в
        проёме совпал с плоской рамкой полёта: подмены не видно, а
        геометрия комнаты больше не тратит ни кадра. */
-    cabinDrop();
+    cabinFlightMode();
+    ui.wrap.classList.add("rcf-native-cab");
   } else {
     F.p = 0; F.v = 0; F.last = 0;
   }
@@ -4257,7 +4330,7 @@ function close() {
   F.stageK = 0;
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
   root.classList.remove("rc-flying", "rc-stage");
-  ui.wrap.classList.remove("on", "rcf-stage");
+  ui.wrap.classList.remove("on", "rcf-stage", "rcf-native-cab");
   cabinDrop();
   inertPage(false);
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: false } })); } catch (e) {}
@@ -4396,9 +4469,9 @@ var MISSIONS = [
   },
   {
     id: "jump",
-    t: RU ? "Уйти в другой рукав" : "Jump to another arm",
-    h: RU ? "Гиперпрыжок через Млечный Путь: кнопка «Галактика»"
-          : "Hyperjump through the Milky Way",
+    t: RU ? "Открыть экзопланетный сектор" : "Reach an exoplanet sector",
+    h: RU ? "Гиперпрыжок через Млечный Путь: выберите сектор в меню «Курс»"
+          : "Use Course to hyperjump through the Milky Way",
     done: function () { return uniIdx !== 0 || (F.jumps || 0) >= 1; },
     now: function () { return (F.jumps || 0); }, goalN: 1
   },
@@ -5423,7 +5496,7 @@ function cabinBuild() {
   }
   cabin = g.RC_CABIN.build(T, {
     tiny: innerWidth < 760,
-    cabSrc: portrait ? "assets/gen/cockpit-tall.webp" : "assets/gen/cockpit-wide.webp",
+    cabSrc: portrait ? "assets/gen/cockpit-tall-v2.webp" : "assets/gen/cockpit-wide-v2.webp",
     cabW: fw, cabH: fh, cabZ: dist, camWin: CAM_WIN
   });
 
@@ -5474,10 +5547,20 @@ function cabinBuild() {
   return cabin;
 }
 
+function cabinFlightMode() {
+  if (!cabin || !W3 || cabin.flightMode) return;
+  cabin.flightMode = true;
+  /* Preserve the physical cabin and bind it to the flight camera.
+     The old hand-off deleted it and revealed cockpit.webp. */
+  W3.cam.attach(cabin.group);
+  cabin.group.updateMatrixWorld(true);
+}
+
 function cabinDrop() {
   if (!cabin || !W3) return;
   if (cabin.frame && cabin.frame.parent) cabin.frame.parent.remove(cabin.frame);
-  W3.scene.remove(cabin.group);
+  if (cabin.group && cabin.group.parent) cabin.group.parent.remove(cabin.group);
+  if (ui && ui.wrap) ui.wrap.classList.remove("rcf-native-cab");
   cabin = null;
 }
 
@@ -5646,6 +5729,7 @@ function stage(k) {
 
   F.stage = true;
   F.open = true;                              /* кадр рисуется тем же циклом */
+  if (ui.wrap) ui.wrap.classList.remove("rcf-native-cab");
   cabinBuild();
   /* Гул корабля в салоне. Тише, чем в полёте: двигатель на холостом,
      работает вентиляция и приборы. Без него помещение читается
@@ -5699,10 +5783,20 @@ function stageLite(on) {
   }
   /* Плотность пикселей в салоне ниже: кадр статичный, камера едет
      по прокрутке, и разница на глаз не видна */
-  if (W3.r) W3.r.setPixelRatio(on
-    ? Math.min(1, g.devicePixelRatio || 1)
-    : Math.min(g.devicePixelRatio || 1, tiny ? 1.0 : (innerWidth < 760 ? 1.2 : 1.8)));
+  if (W3.r) {
+    var dpr = g.devicePixelRatio || 1;
+    var step = parseInt(root.getAttribute("data-degrade") || "0", 10) || 0;
+    var hint = parseInt(root.getAttribute("data-quality-hint") || "0", 10) || 0;
+    var cap = on ? 1.15 : (tiny ? 1.0 : (innerWidth < 760 ? 1.35 : 1.8));
+    cap -= Math.max(step, hint > 1 ? hint - 1 : 0) * 0.16;
+    W3.r.setPixelRatio(Math.max(0.72, Math.min(dpr, cap)));
+  }
 }
+
+/* Adaptive quality changes resolution and distant effects only. */
+addEventListener("rc:degrade", function () {
+  if (W3) stageLite(!!F.stage);
+});
 
 function stageOff() {
   stageLite(false);

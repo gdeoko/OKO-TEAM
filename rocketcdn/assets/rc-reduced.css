@@ -122,3 +122,40 @@ html.rc-fast .viz-card,
 html.rc-fast .dc,
 html.rc-fast .prod-card { transition: none !important; rotate: 0deg !important; }
 html.rc-hyper #rocketCanvas { filter: blur(1.5px); }
+
+
+/* Motion-safe 3D: preference calms repetition, never removes the
+   rocket, cockpit, world or flight controls. */
+html.rc-calm-motion .rc-pkt-layer,
+html.rc-calm-motion .sep-line i { display: none; }
+html.rc-calm-motion .float-3d { animation-duration: 12s !important; }
+html.rc-calm-motion #rocketCanvas,
+html.rc-calm-motion .rc-flight,
+html.rc-calm-motion .rc-cockpit { visibility: visible !important; }
+
+/* True no-WebGL fallback: retain a moving physical cockpit instead
+   of the blank egress frame. It is a background only; the real CTA
+   and legal links remain ordinary accessible HTML above it. */
+html.rc-reduced.rc-no-webgl #epilogue {
+  position: relative;
+  overflow: hidden;
+  background: #050c15;
+}
+html.rc-reduced.rc-no-webgl #epilogue > .rc-fallback-flight {
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: .9;
+}
+html.rc-reduced.rc-no-webgl #epilogue > .wrap {
+  position: relative;
+  z-index: 2;
+  opacity: 1 !important;
+  visibility: visible !important;
+}

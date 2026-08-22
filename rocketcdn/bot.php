@@ -38,6 +38,7 @@ function menu_admin() {
         [['text' => 'Аналитика'], ['text' => 'Заявки']],
         [['text' => 'Состояние'], ['text' => 'Тексты сайта']],
         [['text' => 'Сеть'], ['text' => 'Мини-приложение', 'web_app' => ['url' => $GLOBALS['APP_URL']]]],
+        [['text' => '🚀 Розыгрыш'], ['text' => 'Топ рефералов']],
         [['text' => 'Настройки'], ['text' => 'Помощь']],
     ], 'resize_keyboard' => true, 'is_persistent' => true];
 }
@@ -46,6 +47,7 @@ function menu_user() {
         [['text' => 'О сервисе'], ['text' => 'Продукты']],
         [['text' => 'Инфраструктура'], ['text' => 'Мини-приложение', 'web_app' => ['url' => $GLOBALS['APP_URL']]]],
         [['text' => 'Подключение'], ['text' => 'Поддержка']],
+        [['text' => '🚀 Розыгрыш']],
     ], 'resize_keyboard' => true, 'is_persistent' => true];
 }
 function menu_for($uid) { return is_admin($uid) ? menu_admin() : menu_user(); }
@@ -56,6 +58,211 @@ function say($chat, $text, $uid = null, $inline = null, $topic = null) {
     if ($inline) $p['reply_markup'] = ['inline_keyboard' => $inline];
     elseif ($uid !== null) $p['reply_markup'] = menu_for($uid);
     return rc_tg('sendMessage', $p);
+}
+
+/* ── Реферальный розыгрыш RocketVPN ───────────────────────
+   Участник засчитывается только после проверки подписки через
+   getChatMember. Персональная ссылка ведёт в этого же бота; балл
+   начисляется пригласившему один раз, когда новый человек впервые
+   подтверждает участие. Самореферал и повторное нажатие ничего не
+   добавляют. Хранилище JSON подходит текущей архитектуре проекта и
+   обновляется под той же файловой блокировкой, что заявки. */
+function contest_enabled() {
+    return (bool)rc_cfg('contest_active') && (string)rc_cfg('contest_channel') !== '';
+}
+
+function contest_code($uid) {
+    $secret = (string)rc_cfg('admin_key', 'rocketcdn');
+    return strtoupper(substr(hash_hmac('sha256', 'contest:' . (string)$uid, $secret), 0, 10));
+}
+
+function contest_bot_link($code = '') {
+    $bot = preg_replace('~[^a-z0-9_]~i', '', (string)rc_cfg('tg_username', 'rocket_cdn_bot'));
+    return 'https://t.me/' . $bot . ($code !== '' ? '?start=ref_' . rawurlencode($code) : '?start=contest');
+}
+
+function contest_name($from) {
+    $name = trim((string)($from['first_name'] ?? '') . ' ' . (string)($from['last_name'] ?? ''));
+    if ($name === '' && !empty($from['username'])) $name = '@' . $from['username'];
+    if ($name === '') $name = 'участник';
+    return mb_substr($name, 0, 80);
+}
+
+function contest_remember_ref($uid, $code) {
+    $code = strtoupper(preg_replace('~[^A-F0-9]~', '', (string)$code));
+    if ($code === '') return;
+    rc_json_update(RC_CONTEST, function ($d) use ($uid, $code) {
+        $d['users'] = $d['users'] ?? [];
+        $d['pending'] = $d['pending'] ?? [];
+        if (!isset($d['users'][(string)$uid])) $d['pending'][(string)$uid] = $code;
+        return $d;
+    });
+}
+
+function contest_member($uid) {
+    $channel = (string)rc_cfg('contest_channel');
+    if ($channel === '') return [false, 'channel'];
+    $r = rc_tg('getChatMember', ['chat_id' => $channel, 'user_id' => (int)$uid]);
+    if (empty($r['ok']) || empty($r['result'])) return [false, 'check'];
+    $m = $r['result'];
+    $status = (string)($m['status'] ?? '');
+    $ok = in_array($status, ['creator', 'administrator', 'member'], true)
+       || ($status === 'restricted' && !empty($m['is_member']));
+    return [$ok, $ok ? 'ok' : 'subscribe'];
+}
+
+function contest_join($uid, $from) {
+    $created = false; $credited = false; $reason = '';
+    $result = rc_json_update(RC_CONTEST, function ($d) use ($uid, $from, &$created, &$credited, &$reason) {
+        $d['users'] = $d['users'] ?? [];
+        $d['pending'] = $d['pending'] ?? [];
+        $key = (string)$uid;
+        if (isset($d['users'][$key])) {
+            $reason = 'exists';
+            return $d;
+        }
+
+        $code = contest_code($uid);
+        $refCode = strtoupper((string)($d['pending'][$key] ?? ''));
+        $inviter = null;
+        if ($refCode !== '' && $refCode !== $code) {
+            foreach ($d['users'] as $rid => $row) {
+                if (strtoupper((string)($row['code'] ?? '')) === $refCode && (string)$rid !== $key) {
+                    $inviter = (string)$rid;
+                    break;
+                }
+            }
+        }
+
+        $d['users'][$key] = [
+            'code'       => $code,
+            'name'       => contest_name($from),
+            'username'   => mb_substr((string)($from['username'] ?? ''), 0, 64),
+            'joined_at'  => date('Y-m-d H:i:s'),
+            'invited_by' => $inviter,
+        ];
+        unset($d['pending'][$key]);
+        $created = true;
+        $credited = $inviter !== null;
+        $reason = 'joined';
+        return $d;
+    });
+    return ['ok' => is_array($result), 'created' => $created, 'credited' => $credited, 'reason' => $reason];
+}
+
+function contest_points($data, $uid) {
+    $n = 0;
+    foreach ((array)($data['users'] ?? []) as $row) {
+        if ((string)($row['invited_by'] ?? '') === (string)$uid) $n++;
+    }
+    return $n;
+}
+
+function contest_ranked($data) {
+    $rows = [];
+    foreach ((array)($data['users'] ?? []) as $uid => $row) {
+        $row['uid'] = (string)$uid;
+        $row['points'] = contest_points($data, $uid);
+        $rows[] = $row;
+    }
+    usort($rows, function ($a, $b) {
+        $ap = (int)($a['points'] ?? 0); $bp = (int)($b['points'] ?? 0);
+        if ($ap !== $bp) return $bp <=> $ap;
+        return strcmp((string)($a['joined_at'] ?? ''), (string)($b['joined_at'] ?? ''));
+    });
+    return $rows;
+}
+
+function contest_top_text($limit = 10, $admin = false) {
+    $d = rc_json_read(RC_CONTEST, []);
+    $rows = contest_ranked($d);
+    $s = "<b>Топ приглашений · RocketVPN</b>\n\n";
+    if (!$rows) return $s . "Участников пока нет.";
+    $i = 0;
+    foreach ($rows as $row) {
+        if ($i >= $limit) break;
+        $medal = $i === 0 ? '🥇' : ($i === 1 ? '🥈' : ($i === 2 ? '🥉' : '·'));
+        $name = htmlspecialchars((string)($row['name'] ?? 'участник'));
+        $s .= $medal . ' ' . $name . ' — <b>' . (int)$row['points'] . "</b>";
+        if ($admin) $s .= ' <code>' . htmlspecialchars((string)$row['uid']) . '</code>';
+        $s .= "\n";
+        $i++;
+    }
+    $s .= "\nПервые " . max(1, (int)rc_cfg('contest_top_prizes', 3)) . " участника получают гарантированные призы.";
+    return $s;
+}
+
+/* Перед фиксацией призов подписка проверяется повторно. Человек,
+   который вошёл, набрал баллы и вышел из канала, не занимает место
+   у тех, кто выполнил условие до конца. */
+function contest_winners_text($limit) {
+    $rows = contest_ranked(rc_json_read(RC_CONTEST, []));
+    $limit = max(1, (int)$limit);
+    $out = "<b>Гарантированные победители</b>\n\n";
+    $won = 0; $skipped = 0;
+    foreach ($rows as $row) {
+        list($ok, $why) = contest_member((int)$row['uid']);
+        /* Не фиксируем ошибочный рейтинг при недоступном Telegram API
+           или неверно заданном канале. Это безопаснее, чем молча
+           принять техническую ошибку за отписку участника. */
+        if (!$ok && ($why === 'check' || $why === 'channel')) {
+            return $out
+                 . "Проверка подписок сейчас недоступна. Победители не зафиксированы; "
+                 . "проверьте канал и права бота, затем повторите команду.";
+        }
+        if (!$ok) { $skipped++; continue; }
+        $won++;
+        $out .= ($won === 1 ? '🥇' : ($won === 2 ? '🥈' : '🥉'))
+              . ' ' . htmlspecialchars((string)($row['name'] ?? 'участник'))
+              . ' — <b>' . (int)$row['points'] . '</b> '
+              . '<code>' . htmlspecialchars((string)$row['uid']) . "</code>\n";
+        if ($won >= $limit) break;
+    }
+    if (!$won) $out .= "Пока нет участников с подтверждённой подпиской.\n";
+    if ($skipped) $out .= "\nНе прошли повторную проверку подписки: {$skipped}.";
+    return $out;
+}
+
+function contest_card($uid) {
+    $title = htmlspecialchars((string)rc_cfg('contest_title', 'Розыгрыш RocketVPN'));
+    if (!contest_enabled()) {
+        $text = "<b>{$title}</b>\n\nРозыгрыш готов к запуску, но канал подписки ещё не включён.";
+        if (is_admin($uid)) {
+            $text .= "\n\nВ <code>config.local.php</code> задайте "
+                  . "<code>contest_active</code>, <code>contest_channel</code> и <code>contest_channel_url</code>.";
+        }
+        return [$text, []];
+    }
+
+    $d = rc_json_read(RC_CONTEST, []);
+    $row = $d['users'][(string)$uid] ?? null;
+    $channelUrl = (string)rc_cfg('contest_channel_url');
+    $topN = max(1, (int)rc_cfg('contest_top_prizes', 3));
+    $kb = [];
+    if ($row) {
+        $points = contest_points($d, $uid);
+        $rank = 0; $ranked = contest_ranked($d);
+        foreach ($ranked as $i => $one) if ((string)$one['uid'] === (string)$uid) { $rank = $i + 1; break; }
+        $link = contest_bot_link((string)$row['code']);
+        $text = "<b>{$title}</b>\n\n✅ Вы участвуете.\n"
+              . "Приглашено подтверждённых участников: <b>{$points}</b>\n"
+              . ($rank ? "Место сейчас: <b>{$rank}</b>\n" : '')
+              . "\nВаша персональная ссылка:\n<code>" . htmlspecialchars($link) . "</code>\n\n"
+              . "Баллы начисляются только после того, как приглашённый подпишется на канал и нажмёт «Участвую». "
+              . "Топ-{$topN} получает гарантированные призы.";
+        $kb[] = [['text' => 'Обновить статус', 'callback_data' => 'contest_status'],
+                  ['text' => 'Топ участников', 'callback_data' => 'contest_top']];
+    } else {
+        $text = "<b>{$title}</b>\n\n"
+              . "1. Подпишитесь на канал.\n"
+              . "2. Нажмите «Участвую» — бот проверит подписку.\n"
+              . "3. Получите персональную ссылку и приглашайте друзей.\n\n"
+              . "Каждый подтверждённый участник по вашей ссылке даёт <b>+1</b>. "
+              . "Топ-{$topN} получает гарантированные призы.";
+        if ($channelUrl !== '') $kb[] = [['text' => 'Подписаться на канал', 'url' => $channelUrl]];
+        $kb[] = [['text' => '🚀 Участвую', 'callback_data' => 'contest_join']];
+    }
+    return [$text, $kb];
 }
 
 function save_binding($k, $v) {
@@ -122,6 +329,9 @@ function txt_help($uid) {
             . "/health - состояние площадки\n"
             . "/texts - правка текстов сайта прямо здесь\n"
             . "/report - собрать дневной отчёт сейчас\n"
+            . "/contest - состояние реферального розыгрыша\n"
+            . "/contest_top - таблица приглашений\n"
+            . "/contest_winners - гарантированный топ победителей\n"
             . "/undo - отменить последнюю правку текста\n\n"
             . "Нижнее меню открывает те же разделы кнопками.";
     }
@@ -349,6 +559,47 @@ for ($loop = 0; $loop < 6; $loop++) {
             $mid  = $cq['message']['message_id'] ?? 0;
             $data = $cq['data'] ?? '';
             rc_tg('answerCallbackQuery', ['callback_query_id' => $cq['id']]);
+
+            /* Розыгрыш доступен гостям, поэтому обрабатывается до
+               административного фильтра остальных callback-кнопок. */
+            if (strpos($data, 'contest_') === 0) {
+                if ($data === 'contest_join') {
+                    if (!contest_enabled()) {
+                        list($tx, $kb) = contest_card($uid);
+                        say($chat, $tx, null, $kb);
+                        continue;
+                    }
+                    list($member, $why) = contest_member($uid);
+                    if (!$member) {
+                        $tx = $why === 'subscribe'
+                            ? "Подписка пока не найдена. Подпишитесь на канал и нажмите «Участвую» ещё раз."
+                            : "Не удалось проверить подписку. Убедитесь, что бот добавлен администратором канала, и повторите.";
+                        $kb = [];
+                        $url = (string)rc_cfg('contest_channel_url');
+                        if ($url !== '') $kb[] = [['text' => 'Подписаться на канал', 'url' => $url]];
+                        $kb[] = [['text' => 'Проверить ещё раз', 'callback_data' => 'contest_join']];
+                        say($chat, $tx, null, $kb);
+                        continue;
+                    }
+                    $joined = contest_join($uid, $cq['from'] ?? []);
+                    list($tx, $kb) = contest_card($uid);
+                    if (!empty($joined['created'])) {
+                        $tx = "✅ Подписка подтверждена. Участие активировано.\n\n" . $tx;
+                    }
+                    say($chat, $tx, null, $kb);
+                    continue;
+                }
+                if ($data === 'contest_status') {
+                    list($tx, $kb) = contest_card($uid);
+                    say($chat, $tx, null, $kb);
+                    continue;
+                }
+                if ($data === 'contest_top') {
+                    say($chat, contest_top_text(10, false), null,
+                        [[['text' => 'Моя ссылка', 'callback_data' => 'contest_status']]]);
+                    continue;
+                }
+            }
             if (!is_admin($uid)) continue;
 
             if (preg_match('~^lead_(work|done)_(\w+)$~', $data, $m)) {
@@ -445,6 +696,9 @@ for ($loop = 0; $loop < 6; $loop++) {
         if ($isGroup) continue;
 
         if ($cmd === '/start') {
+            if (preg_match('~^ref_([A-F0-9]{6,16})$~i', $arg, $rm)) {
+                contest_remember_ref($uid, $rm[1]);
+            }
             $hi = is_admin($uid)
                 ? "<b>Rocket CDN</b>\nПанель управления сайтом.\n\nНижнее меню открывает аналитику, заявки и данные сети. Мини-приложение показывает сайт прямо в Телеграме."
                 : "<b>Rocket CDN</b>\n<i>Fast. Reliable. Global.</i>\n\nГлобальная сеть доставки контента. Выберите раздел в меню внизу или откройте мини-приложение.";
@@ -453,6 +707,10 @@ for ($loop = 0; $loop < 6; $loop++) {
             rc_tg('sendMessage', ['chat_id' => $chat, 'text' => $hi, 'parse_mode' => 'HTML',
                                   'reply_markup' => menu_for($uid)]);
             say($chat, 'Быстрый доступ:', null, $inline);
+            if ($arg === 'contest' || preg_match('~^ref_[A-F0-9]{6,16}$~i', $arg)) {
+                list($ctx, $ckb) = contest_card($uid);
+                say($chat, $ctx, null, $ckb);
+            }
             continue;
         }
 
@@ -466,6 +724,12 @@ for ($loop = 0; $loop < 6; $loop++) {
             continue;
         }
         if ($text === 'Поддержка')                        { say($chat, txt_support(), $uid); continue; }
+        if ($text === '🚀 Розыгрыш' || $text === 'Розыгрыш') {
+            list($ctx, $ckb) = contest_card($uid);
+            say($chat, $ctx, null, $ckb);
+            continue;
+        }
+        if ($text === 'Топ рефералов') { say($chat, contest_top_text(10, is_admin($uid)), $uid); continue; }
         if ($text === 'Мини-приложение') {
             say($chat, 'Мини-приложение открывается кнопкой в меню внизу.', null,
                 [[['text' => 'Открыть', 'web_app' => ['url' => $APP_URL]]]]);
@@ -494,6 +758,25 @@ for ($loop = 0; $loop < 6; $loop++) {
         if ($cmd === '/leads' || $text === 'Заявки') { say($chat, leads_text(8), $uid); continue; }
 
         if ($cmd === '/health' || $text === 'Состояние') { say($chat, health_text(), $uid); continue; }
+
+        if ($cmd === '/contest') {
+            list($ctx, $ckb) = contest_card($uid);
+            $d = rc_json_read(RC_CONTEST, []);
+            $ctx .= "\n\nУчастников: <b>" . count((array)($d['users'] ?? [])) . "</b>"
+                  . "\nКанал: <code>" . htmlspecialchars((string)rc_cfg('contest_channel', 'не задан')) . "</code>"
+                  . "\nАктивен: <b>" . (contest_enabled() ? 'да' : 'нет') . "</b>";
+            say($chat, $ctx, null, $ckb);
+            continue;
+        }
+        if ($cmd === '/contest_top') {
+            say($chat, contest_top_text(20, true), $uid);
+            continue;
+        }
+        if ($cmd === '/contest_winners') {
+            $n = max(1, (int)rc_cfg('contest_top_prizes', 3));
+            say($chat, contest_winners_text($n), $uid);
+            continue;
+        }
 
         if ($cmd === '/report') {
             /* Принудительный отчёт: расписание в 9:00 это не сдвигает,

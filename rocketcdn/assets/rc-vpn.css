@@ -1,0 +1,337 @@
+/* RocketVPN — тот же физический корабль, другой голографический контур */
+
+.rc-vpn-entry {
+  width: 100%;
+  min-height: 66px;
+  margin: 7px 0 12px;
+  padding: 8px 11px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 11px;
+  color: var(--tx);
+  text-align: left;
+  border: 1px solid rgba(88, 145, 255, .28);
+  border-radius: 15px;
+  background:
+    linear-gradient(110deg, rgba(36, 80, 154, .16), rgba(7, 17, 31, .72)),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(117, 173, 255, .025) 3px 4px);
+  box-shadow: inset 0 1px rgba(255,255,255,.05), 0 10px 32px rgba(2, 10, 25, .18);
+  cursor: pointer;
+}
+.rc-vpn-entry-mark {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: radial-gradient(circle, rgba(91, 139, 255, .14), transparent 70%);
+}
+.rc-vpn-entry img { width: 46px; height: 46px; object-fit: contain; }
+.rc-vpn-entry > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; }
+.rc-vpn-entry b { font-size: 14px; letter-spacing: .03em; }
+.rc-vpn-entry i { color: var(--tx-2); font-size: 11px; font-style: normal; line-height: 1.25; }
+.rc-vpn-entry em {
+  width: 9px;
+  height: 9px;
+  border: 1px solid #6d94ff;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(88, 136, 255, .55);
+}
+.rc-vpn-entry.on {
+  border-color: rgba(110, 156, 255, .66);
+  box-shadow: inset 0 0 28px rgba(58, 100, 205, .14), 0 0 24px rgba(55, 102, 218, .12);
+}
+.rc-vpn-entry.on em { background: #7ca1ff; box-shadow: 0 0 18px #628aff; }
+
+/* Невидимая зона правого проектора. В режиме CDN она лишь добавляет
+   фокус и подпись доступности поверх уже нарисованной голограммы;
+   изображение RocketVPN появляется только после переключения. */
+.rc-flight .rc-vpn-projector {
+  position: absolute;
+  z-index: 9;
+  top: max(12%, calc(var(--cab-wy, 7%) + 3%));
+  right: max(3.5%, calc(100% - var(--cab-wx, 9%) - var(--cab-ww, 82%) + 2%));
+  width: clamp(88px, 12vw, 148px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: rgba(191, 226, 255, .82);
+  background: transparent;
+  opacity: .62;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 0 8px rgba(64, 135, 255, .18));
+  transition: opacity .22s linear, filter .22s linear, transform .22s ease;
+}
+.rc-flight .rc-vpn-projector:hover,
+.rc-flight .rc-vpn-projector:focus-visible {
+  opacity: 1;
+  filter: drop-shadow(0 0 18px rgba(70, 142, 255, .48));
+  outline: 1px solid rgba(125, 176, 255, .72);
+  outline-offset: 4px;
+}
+.rc-flight .rc-vpn-projector img {
+  position: absolute;
+  inset: 7%;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  opacity: 0;
+  transform: perspective(240px) rotateY(-10deg) scale(.84);
+  filter: saturate(1.2) contrast(1.08) drop-shadow(0 0 8px rgba(94, 133, 255, .55));
+  transition: opacity .24s linear, transform .42s cubic-bezier(.18,.7,.16,1);
+}
+html[data-product="vpn"] .rc-flight .rc-vpn-projector {
+  opacity: .95;
+  filter: drop-shadow(0 0 18px rgba(70, 142, 255, .62));
+}
+html[data-product="vpn"] .rc-flight .rc-vpn-projector img {
+  opacity: .88;
+  transform: perspective(240px) rotateY(-7deg) scale(1);
+  animation: rcVpnFloat 4.2s ease-in-out infinite;
+}
+.rc-flight .rc-vpn-projector b {
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: max-content;
+  max-width: 140px;
+  transform: translateX(-50%);
+  color: rgba(172, 211, 255, .74);
+  font: 600 7px/1.2 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rc-vpn-projector-scan {
+  position: absolute;
+  inset: 8%;
+  border: 1px solid rgba(102, 165, 255, .24);
+  border-radius: 50%;
+  opacity: 0;
+}
+html[data-product="vpn"] .rc-vpn-projector-scan {
+  opacity: 1;
+  animation: rcVpnRadar 2.6s linear infinite;
+}
+
+/* Голограмма остаётся внутри остекления. Clip-path задаёт форму
+   проекции, угловые линии и сканирование читаются как свет, а не
+   как ещё одна карточка интерфейса. */
+.rc-flight .rc-vpn-holo {
+  position: absolute;
+  z-index: 18;
+  left: 50%;
+  top: clamp(76px, 14vh, 150px);
+  width: min(76vw, 540px);
+  max-height: min(58vh, 540px);
+  transform: translate(-50%, 12px) perspective(900px) rotateX(3deg) scale(.96);
+  opacity: 0;
+  pointer-events: none;
+  color: #dcecff;
+  filter: drop-shadow(0 24px 44px rgba(0, 5, 18, .46)) drop-shadow(0 0 20px rgba(66, 132, 255, .22));
+  transition: opacity .24s linear, transform .34s cubic-bezier(.18,.72,.18,1);
+}
+.rc-flight .rc-vpn-holo.on {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0) perspective(900px) rotateX(0) scale(1);
+}
+.rc-vpn-holo-in {
+  position: relative;
+  overflow: auto;
+  max-height: min(58vh, 540px);
+  padding: clamp(17px, 2.4vw, 28px);
+  border: 1px solid rgba(103, 164, 255, .6);
+  background:
+    linear-gradient(140deg, rgba(12, 31, 66, .91), rgba(4, 12, 27, .86)),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(151, 194, 255, .035) 3px 4px);
+  box-shadow:
+    inset 0 0 0 1px rgba(199, 226, 255, .08),
+    inset 0 0 44px rgba(55, 102, 218, .12);
+  clip-path: polygon(18px 0, calc(100% - 42px) 0, 100% 42px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 42px 100%, 0 calc(100% - 42px), 0 18px);
+}
+.rc-vpn-holo-in::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0 48%, rgba(111, 171, 255, .08) 50%, transparent 52%),
+    repeating-linear-gradient(0deg, transparent 0 5px, rgba(255,255,255,.025) 5px 6px);
+  background-size: 170% 100%, auto;
+  animation: rcVpnSweep 4.5s linear infinite;
+}
+.rc-vpn-holo-in > * { position: relative; z-index: 1; }
+.rc-vpn-x {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  right: 12px;
+  width: 31px;
+  height: 31px;
+  border: 1px solid rgba(124, 174, 255, .38);
+  border-radius: 8px;
+  color: #cfe3ff;
+  background: rgba(8, 22, 47, .72);
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+}
+.rc-vpn-brand {
+  display: grid;
+  grid-template-columns: clamp(64px, 10vw, 96px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(12px, 2.4vw, 22px);
+}
+.rc-vpn-brand img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 0 13px rgba(93, 139, 255, .52));
+}
+.rc-vpn-brand span { display: grid; gap: 5px; min-width: 0; }
+.rc-vpn-brand i,
+.rc-vpn-brand u {
+  color: rgba(158, 200, 255, .72);
+  font: 600 clamp(7px, .75vw, 10px)/1.2 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .16em;
+  text-decoration: none;
+}
+.rc-vpn-brand b {
+  font: 650 clamp(24px, 4.2vw, 44px)/.96 "Golos Text", system-ui, sans-serif;
+  letter-spacing: -.035em;
+  text-shadow: 0 0 24px rgba(89, 137, 255, .34);
+}
+.rc-vpn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 16px 0 13px;
+}
+.rc-vpn-grid span {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(116, 169, 255, .2);
+  background: rgba(18, 43, 86, .36);
+  display: grid;
+  gap: 4px;
+}
+.rc-vpn-grid i {
+  color: rgba(161, 203, 255, .64);
+  font: 600 8px/1 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .14em;
+}
+.rc-vpn-grid b { font-size: 12px; font-weight: 600; }
+.rc-vpn-grid b.ok { color: #79e0bc; }
+.rc-vpn-holo p {
+  margin: 0;
+  color: rgba(222, 237, 255, .75);
+  font-size: clamp(11px, 1.3vw, 14px);
+  line-height: 1.48;
+}
+.rc-vpn-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 15px;
+}
+.rc-vpn-actions a,
+.rc-vpn-actions button {
+  min-height: 38px;
+  padding: 8px 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(113, 170, 255, .38);
+  border-radius: 7px;
+  color: #eaf3ff;
+  background: linear-gradient(140deg, rgba(55, 100, 200, .34), rgba(10, 28, 59, .5));
+  font: 600 10px/1.2 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .05em;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+}
+.rc-vpn-actions button { grid-column: 1 / -1; color: rgba(215, 230, 250, .68); }
+.rc-vpn-actions a:hover,
+.rc-vpn-actions button:hover { border-color: rgba(139, 187, 255, .72); background-color: rgba(48, 89, 170, .26); }
+
+/* Пока проекция открыта, на стекле нет каши из трёх окон. */
+.rc-flight.rcf-vpn-open .rcf-menu,
+.rc-flight.rcf-vpn-open .rcf-dos,
+.rc-flight.rcf-vpn-open .rcf-help,
+.rc-flight.rcf-vpn-open .rcf-mis,
+.rc-flight.rcf-vpn-open .rcf-info,
+.rc-flight.rcf-vpn-open .rcf-netlist {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Короткая электронная помеха принадлежит только брендовому сигналу:
+   геометрия кабины, текст сайта и кнопки не дёргаются. */
+html.rc-product-glitch .rc-vpn-projector,
+html.rc-product-glitch .rc-vpn-entry-mark,
+html.rc-product-glitch .rc-vpn-brand img {
+  animation: rcVpnGlitch .16s steps(2, end) 4;
+}
+
+@keyframes rcVpnGlitch {
+  0%   { transform: translate(0) skewX(0); filter: hue-rotate(0deg) drop-shadow(0 0 4px #679bff); }
+  25%  { transform: translate(3px,-1px) skewX(4deg); filter: hue-rotate(35deg) drop-shadow(-4px 0 #52d6ff); }
+  50%  { transform: translate(-2px,2px) skewX(-3deg); filter: hue-rotate(-28deg) drop-shadow(4px 0 #8a59f6); }
+  75%  { transform: translate(1px,-2px) skewX(2deg); }
+  100% { transform: translate(0) skewX(0); }
+}
+@keyframes rcVpnFloat {
+  0%,100% { transform: perspective(240px) rotateY(-7deg) translateY(0) scale(1); }
+  50% { transform: perspective(240px) rotateY(-5deg) translateY(-3px) scale(1.015); }
+}
+@keyframes rcVpnRadar {
+  from { transform: rotate(0deg) scale(.9); box-shadow: inset 12px 0 22px rgba(80, 148, 255, .16); }
+  to { transform: rotate(360deg) scale(1); box-shadow: inset 12px 0 22px rgba(80, 148, 255, .16); }
+}
+@keyframes rcVpnSweep { from { background-position: 170% 0, 0 0; } to { background-position: -70% 0, 0 0; } }
+
+@media (max-width: 760px) {
+  .rc-flight .rc-vpn-projector {
+    top: max(9%, calc(var(--cab-wy, 7%) + 2%));
+    right: 2.5%;
+    width: clamp(68px, 22vw, 94px);
+  }
+  .rc-flight .rc-vpn-projector b { display: none; }
+  .rc-flight .rc-vpn-holo {
+    top: max(58px, calc(var(--cab-wy, 7%) + 5%));
+    width: min(88vw, 470px);
+    max-height: min(62vh, calc(var(--cab-wh, 72%) - 16px));
+  }
+  .rc-vpn-holo-in {
+    max-height: min(62vh, calc(var(--cab-wh, 72%) - 16px));
+    padding: 15px;
+  }
+  .rc-vpn-brand { grid-template-columns: 62px minmax(0, 1fr); gap: 10px; }
+  .rc-vpn-brand b { font-size: clamp(23px, 8vw, 34px); }
+  .rc-vpn-grid { gap: 4px; margin: 11px 0 10px; }
+  .rc-vpn-grid span { padding: 7px 6px; }
+  .rc-vpn-grid b { font-size: 9px; }
+  .rc-vpn-grid i { font-size: 6px; }
+  .rc-vpn-actions { grid-template-columns: 1fr; }
+  .rc-vpn-actions button { grid-column: auto; }
+}
+
+@media (max-width: 390px), (max-height: 650px) {
+  .rc-vpn-brand { grid-template-columns: 48px minmax(0, 1fr); }
+  .rc-vpn-brand i { display: none; }
+  .rc-vpn-holo p { font-size: 10px; line-height: 1.35; }
+  .rc-vpn-actions { margin-top: 10px; }
+  .rc-vpn-actions a,
+  .rc-vpn-actions button { min-height: 33px; padding: 6px; font-size: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-product="vpn"] .rc-flight .rc-vpn-projector img,
+  html[data-product="vpn"] .rc-vpn-projector-scan,
+  .rc-vpn-holo-in::before { animation-duration: 10s; }
+}
