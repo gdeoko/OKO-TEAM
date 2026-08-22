@@ -5858,7 +5858,12 @@ function stageOff() {
   F.open = false;
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
   if (ui.wrap) ui.wrap.classList.remove("on", "rcf-stage");
-  root.classList.remove("rc-stage");
+  /* Reverse scrolling is an unconditional return to the website.
+     Clear a stray flying flag and release inert content as a safety
+     net even if another frame promoted the stage to flight while the
+     exit gesture was already in progress. */
+  root.classList.remove("rc-stage", "rc-flying");
+  inertPage(false);
 }
 
 g.RC_FLIGHT = {

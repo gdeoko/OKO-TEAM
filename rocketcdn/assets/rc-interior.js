@@ -849,7 +849,11 @@ function build() {
 function scene3d(on, k) {
   var F = g.RC_FLIGHT;
   if (!F || !F.stage) return;
-  if (root.classList.contains("rc-flying")) return;
+  /* A running game must not be replaced by the scroll-stage, but an
+     OFF command is always authoritative. The previous unconditional
+     guard also swallowed stage(-1), leaving the fixed flight canvas
+     over the page after reverse scrolling. */
+  if (on && root.classList.contains("rc-flying")) return;
   try { F.stage(on ? (k || 0) : -1); } catch (e) {}
 }
 
