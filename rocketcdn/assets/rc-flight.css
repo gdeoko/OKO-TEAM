@@ -3801,6 +3801,7 @@ html.rc-deep-inside .rcf-fab {
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--int-cyan-rgb,66,178,220),.55) rgba(4,12,22,.4);
   contain: layout paint;
+  z-index: 30 !important;
 }
 .rc-flight .rcf-hud > .rcf-menu.on {
   transform: translate3d(0, 0, 0) !important;
@@ -3830,6 +3831,7 @@ html.rc-deep-inside .rcf-fab {
   max-height: none !important;
   transform: none !important;
   overflow: hidden !important;
+  z-index: 30 !important;
 }
 .rc-flight .rcf-hud > .rcf-dos.on,
 .rc-flight .rcf-hud > .rcf-help.on { transform: none !important; }
@@ -3841,6 +3843,19 @@ html.rc-deep-inside .rcf-fab {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
+}
+
+/* Background telemetry remains visible as faint ship ambience, but
+   it cannot own hit targets while a foreground hologram is open.
+   Some of its descendants intentionally enable pointer events for
+   planet inspection, so disabling only the parent is insufficient. */
+.rc-flight:has(.rcf-menu.on) .rc-holo,
+.rc-flight:has(.rcf-menu.on) .rc-holo *,
+.rc-flight:has(.rcf-dos.on) .rc-holo,
+.rc-flight:has(.rcf-dos.on) .rc-holo *,
+.rc-flight:has(.rcf-help.on) .rc-holo,
+.rc-flight:has(.rcf-help.on) .rc-holo * {
+  pointer-events: none !important;
 }
 
 /* Flight task is a readout, not a floating card over the console. */
