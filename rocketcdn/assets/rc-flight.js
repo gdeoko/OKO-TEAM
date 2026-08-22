@@ -1904,20 +1904,49 @@ function buildWorld() {
   sunGlow.scale.setScalar(900);
   scene.add(sunGlow);
 
-  /* Туманности: несколько мягких пятен в фирменных цветах */
+  /* ── Volumetric nebulae ────────────────────────────────
+     The previous four Sprite objects always faced the camera, so a
+     turn exposed them as flat translucent stains. These clouds are
+     curved 3D filaments made from many restrained particles. Their
+     points keep world coordinates and cross one another under camera
+     translation; fixed screen size prevents a near particle becoming
+     a soft white disc on mobile. */
   var nebT = glowSprite(256, "rgba(66,178,220,.32)", "rgba(66,178,220,0)");
   var nebV = glowSprite(256, "rgba(138,89,246,.28)", "rgba(138,89,246,0)");
-  /* Туманности вдвое меньше и бледнее: прежние масштабы в две с
-     половиной тысячи при дистанции до камеры в те же тысячи
-     накрывали полкадра мутной пеленой и гасили звёзды */
+  /* Each row is a physical centre and volume radius, not a billboard
+     scale. The clouds remain separated from the flight corridor. */
   var nebs = [[-1400, 500, -2400, 1300, nebT], [1900, -300, -1500, 1050, nebV], [600, 800, 2200, 1200, nebT], [-2100, -600, 1400, 950, nebV]];
   var nebSprites = [];
+  var seedN = 63017;
+  function rndN() { seedN = (seedN * 1664525 + 1013904223) >>> 0; return seedN / 4294967296; }
   for (var i = 0; i < nebs.length; i++) {
-    var sp = new T.Sprite(new T.SpriteMaterial({ map: nebs[i][4], transparent: true, opacity: 0.3, depthWrite: false, blending: T.AdditiveBlending }));
-    sp.position.set(nebs[i][0], nebs[i][1], nebs[i][2]);
-    sp.scale.setScalar(nebs[i][3]);
-    scene.add(sp);
-    nebSprites.push(sp);
+    var nNeb = tiny ? 90 : (particleBudget ? 145 : 250);
+    var ng = new T.BufferGeometry(), np = new Float32Array(nNeb * 3);
+    var radN = nebs[i][3], phaseN = i * 1.73;
+    for (var ni = 0; ni < nNeb; ni++) {
+      var uN = rndN() * 2 - 1;
+      var spineX = uN * radN * .48;
+      var spineY = Math.sin(uN * 3.2 + phaseN) * radN * .12;
+      var spineZ = Math.cos(uN * 2.45 - phaseN) * radN * .16;
+      var widthN = radN * (.045 + Math.abs(uN) * .055);
+      var ga = rndN() + rndN() + rndN() - 1.5;
+      var gb = rndN() + rndN() + rndN() - 1.5;
+      var gc = rndN() + rndN() + rndN() - 1.5;
+      np[ni * 3] = spineX + ga * widthN;
+      np[ni * 3 + 1] = spineY + gb * widthN * .72;
+      np[ni * 3 + 2] = spineZ + gc * widthN;
+    }
+    ng.setAttribute("position", new T.BufferAttribute(np, 3));
+    var cloud = new T.Points(ng, new T.PointsMaterial({
+      map: nebs[i][4], color: i % 2 ? 0x8a59f6 : 0x42b2dc,
+      size: tiny ? 5.4 : 6.8, sizeAttenuation: false,
+      transparent: true, opacity: .085, depthWrite: false,
+      blending: T.AdditiveBlending
+    }));
+    cloud.position.set(nebs[i][0], nebs[i][1], nebs[i][2]);
+    cloud.rotation.set((i - 1.5) * .18, i * .43, (i % 2 ? -.24 : .21));
+    scene.add(cloud);
+    nebSprites.push(cloud);
   }
 
   /* ── Земля ── */
@@ -3730,6 +3759,17 @@ function frame(ts) {
     F.v = hold + (F.v - hold) * Math.pow(0.14, dt);
   }
   F.v = Math.max(-0.2, Math.min(0.3, F.v));
+  /* Camera mass. The ship follows the collision-safe spline exactly,
+     while the pilot's head and optical rig lag acceleration by less
+     than one world unit. This creates a cinematic sense of weight
+     without moving the hull through a planet or introducing scroll
+     latency. A critically damped approach prevents the old snap on
+     throttle release. */
+  var prevV = F._prevV === undefined ? F.v : F._prevV;
+  var accelV = (F.v - prevV) / Math.max(.008, dt);
+  F._prevV = F.v;
+  var surgeGoal = F.stage ? 0 : Math.max(-.72, Math.min(.72, -accelV * 2.1));
+  F.camSurge = (F.camSurge || 0) + (surgeGoal - (F.camSurge || 0)) * Math.min(1, dt * 4.6);
   F.p += F.v * dt;
   if (F.p < 0) { F.p = 0; F.v = 0; }
   if (F.p > 1) { F.p = 1; F.v = 0; }
@@ -3894,6 +3934,17 @@ function frame(ts) {
      поворот переписываются здесь начисто. */
   if (F.stage && cabin) stageCam(dt);
 
+  /* Apply the inertial offset in camera-local coordinates after the
+     autopilot orientation is solved. The physical cabin is attached
+     to this camera, so frame, console and pilot move as one rigid
+     assembly and the outside world alone supplies the parallax. */
+  if (!F.stage && Math.abs(F.camSurge || 0) > .0005) {
+    w3.tmpB.set(0, -Math.abs(F.camSurge) * .035, F.camSurge);
+    w3.tmpB.applyQuaternion(w3.cam.quaternion);
+    w3.cam.position.add(w3.tmpB);
+    w3.cam.rotateX(-F.camSurge * .006);
+  }
+
   var speed = Math.abs(F.v);
 
   /* Крен в вираж. Настоящий пилот не поворачивает плашмя: он кладёт
@@ -3949,6 +4000,13 @@ function frame(ts) {
   w3.diskMat.uniforms.uT.value = ts * 0.001;
   w3.sky.rotation.y += dt * 0.0025;
   if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
+  if (w3.nebSprites) {
+    for (var nbi = 0; nbi < w3.nebSprites.length; nbi++) {
+      var nb = w3.nebSprites[nbi];
+      nb.rotation.y += dt * (nbi % 2 ? -.0011 : .0008);
+      nb.rotation.z += dt * (nbi % 2 ? .00035 : -.00028);
+    }
+  }
   if (w3.belt1) { w3.belt1.rotation.y += dt * 0.0012; w3.belt2.rotation.y -= dt * 0.0009; }
 
   /* Nearby belt rocks rotate independently. Updating at ~15 Hz is
