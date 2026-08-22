@@ -15,6 +15,22 @@
 if (!g.THREE) return;
 var T = g.THREE;
 
+/* One ship, one material language. Both the exterior airlock and
+   the flight cabin read this palette, so the threshold cannot turn
+   from a white rocket into an unrelated blue room. Geometry may use
+   a cheaper shader on mobile, but albedo/emission stay identical. */
+var SHIP = g.RC_SHIP_STYLE = g.RC_SHIP_STYLE || {
+  deep: 0x050c15,
+  hull: 0x17283a,
+  wall: 0x2b4056,
+  panel: 0x101d2b,
+  steel: 0x6e829a,
+  cyan: 0x5fc8ef,
+  cyanSoft: 0x9fe0f6,
+  violet: 0xa974f5,
+  warm: 0xffd2a0
+};
+
 /* Публикация переменных оформления идёт через общий кэш: запись на
    корне документа помечает устаревшим стиль всего дерева, а мы
    зовём её из каждого кадра. Пишем только изменившееся. */
@@ -1765,6 +1781,106 @@ function doorTexture(right) {
   return tex;
 }
 
+/* Real geometry behind the exterior hatch. The previous version put
+   a painted blue room on a curved canvas and then replaced it with
+   the flight cabin. This compact pressure tunnel is made from the
+   same metal, panel and emission palette as RC_CABIN. It lives in
+   the rocket scene, inherits the rocket transform and remains
+   volumetric from the first visible crack to the camera crossing. */
+function buildAirlockInterior(env, R, HH, Y, seg) {
+  var group = new T.Group();
+  var q = Math.max(5, Math.round(seg * 0.55));
+  var shellMat = new T.MeshStandardMaterial({
+    color: SHIP.wall, metalness: 0.78, roughness: 0.34,
+    envMap: env, envMapIntensity: 1.15
+  });
+  var darkMat = new T.MeshStandardMaterial({
+    color: SHIP.panel, metalness: 0.62, roughness: 0.42,
+    envMap: env, envMapIntensity: 0.85
+  });
+  var steelMat = new T.MeshStandardMaterial({
+    color: SHIP.steel, metalness: 0.9, roughness: 0.24,
+    envMap: env, envMapIntensity: 1.45
+  });
+  var cyan = new T.MeshBasicMaterial({ color: SHIP.cyan, toneMapped: false });
+  var cyanSoft = new T.MeshBasicMaterial({
+    color: SHIP.cyanSoft, transparent: true, opacity: 0.62,
+    blending: T.AdditiveBlending, depthWrite: false, toneMapped: false
+  });
+  var violet = new T.MeshBasicMaterial({ color: SHIP.violet, toneMapped: false });
+
+  /* Rear pressure bulkhead: a real surface with depth and bevel-like
+     reinforcement, not a texture pretending to be a room. */
+  var bulk = new T.Mesh(new T.BoxGeometry(R * 1.52, HH * 0.92, 0.085), shellMat);
+  bulk.position.set(0, Y, -R * 0.58);
+  group.add(bulk);
+
+  /* Floor and ceiling continue through the hatch. Longitudinal rails
+     provide parallax during the first-person camera move. */
+  var floor = new T.Mesh(new T.BoxGeometry(R * 1.55, 0.055, R * 1.36), darkMat);
+  floor.position.set(0, Y - HH * 0.49, 0.02);
+  group.add(floor);
+  var ceil = floor.clone();
+  ceil.position.y = Y + HH * 0.49;
+  group.add(ceil);
+  for (var side = -1; side <= 1; side += 2) {
+    var rail = new T.Mesh(new T.BoxGeometry(0.045, 0.035, R * 1.30), steelMat);
+    rail.position.set(side * R * 0.58, Y - HH * 0.455, 0.02);
+    group.add(rail);
+  }
+
+  /* Three structural hoops define actual depth. Their dimensions are
+     deliberately shared with the hatch opening, so no edge can float
+     outside the ship silhouette on narrow mobile crops. */
+  for (var zi = 0; zi < 3; zi++) {
+    var z = R * (0.31 - zi * 0.38);
+    var top = new T.Mesh(new T.BoxGeometry(R * 1.50, 0.055, 0.055), steelMat);
+    top.position.set(0, Y + HH * 0.455, z);
+    group.add(top);
+    var bottom = top.clone();
+    bottom.position.y = Y - HH * 0.455;
+    group.add(bottom);
+    for (side = -1; side <= 1; side += 2) {
+      var post = new T.Mesh(new T.BoxGeometry(0.055, HH * 0.91, 0.055), steelMat);
+      post.position.set(side * R * 0.72, Y, z);
+      group.add(post);
+    }
+  }
+
+  /* Embedded service console. The display and five keys are geometry
+     recessed into a metal socket; none of them is painted into the
+     bulkhead. This is the visual seed continued by the main flight
+     console after the camera reaches the cockpit. */
+  var consoleBox = new T.Mesh(new T.BoxGeometry(R * 1.05, HH * 0.30, 0.11), darkMat);
+  consoleBox.position.set(0, Y - HH * 0.06, -R * 0.50);
+  group.add(consoleBox);
+  var screen = new T.Mesh(new T.PlaneGeometry(R * 0.82, HH * 0.12), cyanSoft);
+  screen.position.set(0, Y + HH * 0.005, -R * 0.438);
+  group.add(screen);
+  for (var bi = 0; bi < 5; bi++) {
+    var key = new T.Mesh(new T.BoxGeometry(R * 0.13, HH * 0.055, 0.035), bi === 3 ? violet : cyan);
+    key.position.set((bi - 2) * R * 0.165, Y - HH * 0.125, -R * 0.432);
+    group.add(key);
+  }
+
+  /* Light comes from physical strips mounted in the ceiling and
+     console. One short-range lamp lights the door edge without
+     leaking onto the whole exterior model. */
+  for (var li = -1; li <= 1; li += 2) {
+    var strip = new T.Mesh(new T.BoxGeometry(R * 0.48, 0.022, 0.035), cyanSoft);
+    strip.position.set(li * R * 0.37, Y + HH * 0.455, -R * 0.08);
+    group.add(strip);
+  }
+  var lamp = new T.PointLight(SHIP.warm, 0, 3.2, 2);
+  lamp.position.set(0, Y + HH * 0.22, R * 0.02);
+  group.add(lamp);
+  var cabinLight = new T.PointLight(SHIP.cyanSoft, 0.72, 2.2, 1.6);
+  cabinLight.position.set(0, Y, -R * 0.24);
+  group.add(cabinLight);
+
+  return { group: group, lamp: lamp, bulkhead: bulk, console: consoleBox };
+}
+
 function buildDoor(C, env, hullMat) {
   var group = new T.Group();
 
@@ -1775,46 +1891,13 @@ function buildDoor(C, env, hullMat) {
   var HALF = 0.62;             /* половина угла проёма, радиан */
   var seg = Math.max(10, Math.round(C.radial / 4));
 
-  /* 1. Салон за проёмом: изогнутая стена внутри корпуса. Она видна
-     ещё до открытия сквозь щель, и это ровно то, что просили -
-     «салон внутри ракеты сразу издалека виден такой, какой будет,
-     когда мы зайдём». */
-  var cabTex = cabinTexture();
-  cabTex.wrapS = T.RepeatWrapping;
-  /* Стена салона гнётся на сто тридцать пять градусов, а в кадр
-     проёма попадает от силы сорок пять: при полном развороте
-     текстуры человек видел бы её треть - кусок стены без единого
-     прибора. Показываем в проёме середину рисунка целиком. */
-  cabTex.repeat.x = 1;
-  cabTex.offset.x = 0;
-  var cabin = new T.Mesh(
-    /* Стена салона шире самого проёма - иначе по его краям видно
-       мимо неё, в пустое нутро корпуса, и салон читается узкой
-       полоской посреди темноты. Радиус подобран так, чтобы дальняя
-       стенка перекрывала проём с запасом на любой ракурс. */
-    new T.CylinderGeometry(R * 0.86, R * 0.86, HH * 1.10, seg, 1, true, -HALF * 1.9, HALF * 3.8),
-    /* Двусторонний нарочно. Односторонняя стенка рисуется только с
-       изнанки, а в проём мы смотрим снаружи корабля - и видели
-       сквозь неё космос вместо салона. */
-    new T.MeshBasicMaterial({ map: cabTex, side: T.DoubleSide, toneMapped: false })
-  );
-  cabin.position.y = Y;
-  cabin.renderOrder = 1;
-  group.add(cabin);
-  /* Пол тамбура: без него в проёме видна только стена, и глубины
-     не читается. Тёмная решётка с бликом даёт понять, что там объём */
-  var floor = new T.Mesh(
-    new T.CircleGeometry(R * 0.86, seg),
-    new T.MeshBasicMaterial({ color: 0x0A1726, toneMapped: false })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = Y - HH * 0.5;
-  group.add(floor);
-
-  /* Тёплая лампа в проёме: свет ложится на кромки створок */
-  var lamp = new T.PointLight(0xFFD2A0, 0, 3.2, 2);
-  lamp.position.set(0, Y + 0.3, R * 0.1);
-  group.add(lamp);
+  /* 1. The visible room behind the hatch is now real geometry in
+     this rocket scene. There is no canvas room and therefore no
+     possible image swap at the threshold. */
+  var airlock = buildAirlockInterior(env, R, HH, Y, seg);
+  group.add(airlock.group);
+  var cabin = airlock.group;
+  var lamp = airlock.lamp;
 
   /* 2. Косяки проёма. Раньше здесь стоял цилиндрический сектор во
      всю ширину люка - и он же был главной ошибкой всей сцены: при
@@ -2819,6 +2902,12 @@ Rocket.prototype.touchdown = function (dt) {
       this._padRest = (this._padRest || 0) + dt * (this.C.weak ? 34 : 78) * this._padSteam;
       var pn = Math.floor(this._padRest);
       if (pn > 0) { this._padRest -= pn; this.steamEmit(pn, 3); }
+    } else if (this._padSteam > 0 && tt >= 0.95) {
+      /* The landing burst is an event, not permanent weather. A
+         stale truthy flag kept white steam sprites alive all the way
+         into the hatch and made them look like broken star dust. */
+      this._padSteam = 0;
+      this._padRest = 0;
     }
   }
 
@@ -3682,7 +3771,7 @@ Rocket.prototype.steamStep = function (dt) {
      клуба, висевшего перед самым люком. Сброс давления при этом
      остаётся: он и должен быть в первой половине хода створок. */
   if (!this._padSteam) {
-    var clearK = (dk - 0.42) / 0.34;
+    var clearK = (dk - 0.18) / 0.24;
     if (clearK > 0) vis *= 1 - (clearK > 1 ? 1 : clearK);
   }
   var alive = 0, onGnd = 0;
@@ -3926,6 +4015,19 @@ Rocket.prototype.doorOpen = function (dt) {
   this.doorK = prev + (goal - prev) * s;
   if (this.doorK < 0.001) this.doorK = 0;
   g.RC_DOOR = this.doorK;
+  var doorClear = this.doorK > 0.24;
+  if (doorClear !== this._doorClear) {
+    this._doorClear = doorClear;
+    document.documentElement.classList.toggle("rc-door-open", doorClear);
+    /* Landing dust belongs outside, below the hull. If it survives
+       into the aperture it becomes camera-facing white blobs inside
+       the tunnel. Finish the touchdown event before the viewer can
+       see through the pressure door. */
+    if (doorClear) {
+      this.dustClear();
+      this.debrisClear();
+    }
+  }
 
   var d = this.rocket.door;
   if (d) {
