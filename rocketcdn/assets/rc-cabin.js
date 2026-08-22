@@ -355,6 +355,64 @@ function deckTex(T) {
   return t;
 }
 
+/* Brushed flight-console alloy. This is a material map on the real
+   beveled mesh, not a picture of a console: seams and wear therefore
+   keep the correct parallax, lighting and silhouette while the camera
+   moves. One small shared canvas is enough for colour and micro-bump. */
+function consoleTex(T) {
+  var W = 512, H = 160, c = cnv(W, H), x = c.getContext("2d"), i;
+  var bg = x.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#26333d"); bg.addColorStop(0.46, "#111a22");
+  bg.addColorStop(1, "#070c11");
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  /* Machined longitudinal grain, intentionally sub-pixel and quiet. */
+  for (i = 0; i < H; i += 2) {
+    x.fillStyle = i % 6 ? "rgba(188,210,221,.018)" : "rgba(0,3,6,.12)";
+    x.fillRect(0, i, W, 1);
+  }
+  /* Separate service cassettes rather than one featureless slab. */
+  x.strokeStyle = "rgba(132,170,188,.20)"; x.lineWidth = 1;
+  for (i = 1; i < 7; i++) {
+    var sx = Math.round(i * W / 7) + 0.5;
+    x.beginPath(); x.moveTo(sx, 18); x.lineTo(sx, H - 14); x.stroke();
+  }
+  x.strokeStyle = "rgba(0,0,0,.72)"; x.lineWidth = 3;
+  x.strokeRect(5.5, 5.5, W - 11, H - 11);
+  x.strokeStyle = "rgba(118,205,231,.16)"; x.lineWidth = 1;
+  x.strokeRect(8.5, 8.5, W - 17, H - 17);
+  var seed = 24991;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+  for (i = 0; i < 120; i++) {
+    var y = 12 + rnd() * (H - 24), xx = rnd() * W, len = 4 + rnd() * 38;
+    x.strokeStyle = "rgba(214,227,234," + (0.018 + rnd() * .045).toFixed(3) + ")";
+    x.lineWidth = .35 + rnd() * .55;
+    x.beginPath(); x.moveTo(xx, y); x.lineTo(Math.min(W, xx + len), y + (rnd() - .5)); x.stroke();
+  }
+  var t = new T.CanvasTexture(c);
+  if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  return t;
+}
+
+/* A machined slab for objects that must catch real cabin light. The
+   canvas deck skin remains useful for lettering, but it cannot create
+   silhouette, parallax or a contact shadow. These beveled meshes can. */
+function roundedDeckGeo(T, w, h, d, radius) {
+  var s = new T.Shape(), x0 = -w * 0.5, y0 = -h * 0.5;
+  var rr = Math.min(radius, w * 0.23, h * 0.23);
+  s.moveTo(x0 + rr, y0);
+  s.lineTo(x0 + w - rr, y0); s.quadraticCurveTo(x0 + w, y0, x0 + w, y0 + rr);
+  s.lineTo(x0 + w, y0 + h - rr); s.quadraticCurveTo(x0 + w, y0 + h, x0 + w - rr, y0 + h);
+  s.lineTo(x0 + rr, y0 + h); s.quadraticCurveTo(x0, y0 + h, x0, y0 + h - rr);
+  s.lineTo(x0, y0 + rr); s.quadraticCurveTo(x0, y0, x0 + rr, y0);
+  var bb = Math.min(0.025, w * 0.08, h * 0.12, d * 0.22);
+  var g0 = new T.ExtrudeGeometry(s, {
+    depth: d, steps: 1, curveSegments: 5,
+    bevelEnabled: true, bevelSegments: 2, bevelSize: bb, bevelThickness: bb
+  });
+  g0.center();
+  return g0;
+}
+
 /* ── Сборка ───────────────────────────────────────────────── */
 function build(T, opts) {
   opts = opts || {};
@@ -632,6 +690,79 @@ function build(T, opts) {
   var riser = new T.Mesh(new T.BoxGeometry(3.4, WIN_Y0 - 0.24, 0.5), caseMat);
   riser.position.set(0, (WIN_Y0 - 0.24) / 2, -(R_WALL - 0.42));
   con.add(riser);
+
+  /* ── Physical pilot console ──────────────────────────────
+     The interactive HTML carries accessible labels and hit areas,
+     but the object seen by the camera is here: a beveled alloy bed,
+     seven recessed sockets and seven separate keycaps. The cabin is
+     later attached to the flight camera, so this hardware and the
+     pilot move as one rigid system through every turn and jump. */
+  var pilotRig = new T.Group();
+  pilotRig.position.set(0, WIN_Y0 - 0.15, -(R_WALL - 0.60));
+  pilotRig.rotation.x = -0.20;
+  var consoleSkin = consoleTex(T);
+  var deckMetal = new T.MeshPhongMaterial({
+    map: consoleSkin, bumpMap: consoleSkin, bumpScale: 0.018,
+    color: 0x73808a, shininess: 42, specular: 0x718b9a
+  });
+  var socketMetal = new T.MeshPhongMaterial({
+    color: 0x03080d, shininess: 18, specular: 0x18242d
+  });
+  var capMetal = new T.MeshPhongMaterial({
+    color: 0x33424e, shininess: 74, specular: 0x8ba0ae
+  });
+  var fireMetal = new T.MeshPhongMaterial({
+    color: 0x41271d, shininess: 64, specular: 0xd48a5c
+  });
+  var pilotDeck = new T.Mesh(roundedDeckGeo(T, 3.28, 0.90, 0.14, 0.10), deckMetal);
+  pilotDeck.rotation.x = -Math.PI * 0.5;
+  pilotRig.add(pilotDeck);
+
+  var socketGeo = roundedDeckGeo(T, 0.405, 0.43, 0.072, 0.065);
+  var capGeo = roundedDeckGeo(T, 0.325, 0.34, 0.090, 0.055);
+  var controlCaps = [];
+  for (var ci = 0; ci < 7; ci++) {
+    var cx = (ci - 3) * 0.43;
+    var socket = new T.Mesh(socketGeo, socketMetal);
+    socket.rotation.x = -Math.PI * 0.5;
+    socket.position.set(cx, 0.10, 0.075);
+    pilotRig.add(socket);
+    var capMat = (ci === 3 ? fireMetal : capMetal).clone();
+    capMat.emissive = new T.Color(ci === 3 ? 0x1a0802 : 0x02090d);
+    capMat.emissiveIntensity = 0.16;
+    var cap = new T.Mesh(capGeo, capMat);
+    cap.rotation.x = -Math.PI * 0.5;
+    cap.position.set(cx, 0.162, 0.075);
+    cap.userData.homeY = cap.position.y;
+    cap.userData.ph = ci * 0.64;
+    pilotRig.add(cap);
+    controlCaps.push(cap);
+  }
+
+  /* Telemetry glass is a separate inset along the far edge. The DOM
+     numbers sit over this dark physical recess instead of floating on
+     the star field. */
+  var teleSocket = new T.Mesh(roundedDeckGeo(T, 3.00, 0.13, 0.055, 0.038), socketMetal);
+  teleSocket.rotation.x = -Math.PI * 0.5;
+  teleSocket.position.set(0, 0.105, -0.325);
+  pilotRig.add(teleSocket);
+  var teleGlass = new T.Mesh(roundedDeckGeo(T, 2.84, 0.072, 0.025, 0.025), new T.MeshBasicMaterial({
+    color: 0x0d2a38, transparent: true, opacity: 0.64, fog: false
+  }));
+  teleGlass.rotation.x = -Math.PI * 0.5;
+  teleGlass.position.set(0, 0.142, -0.325);
+  pilotRig.add(teleGlass);
+
+  var screwGeo = new T.SphereGeometry(0.025, 8, 5);
+  var screws = new T.InstancedMesh(screwGeo, steel, 8);
+  var sm = new T.Matrix4(), sq = new T.Quaternion(), ss = new T.Vector3(1, 0.42, 1), sp = new T.Vector3();
+  for (var sc = 0; sc < 8; sc++) {
+    sp.set(sc % 2 ? 1.53 : -1.53, 0.11, (Math.floor(sc / 2) - 1.5) * 0.22);
+    sm.compose(sp, sq, ss); screws.setMatrixAt(sc, sm);
+  }
+  screws.instanceMatrix.needsUpdate = true;
+  pilotRig.add(screws);
+  con.add(pilotRig);
   /* Световая полоса по переднему ребру: тот же нижний свет, что
      подсвечивает голограмму панели */
   var lip = new T.Mesh(new T.BoxGeometry(3.06, 0.022, 0.026), litCyan);
@@ -753,6 +884,9 @@ function build(T, opts) {
     ceilL: ceilL,
     warmL: warmL,
     deskLight: deskLight,
+    pilotDeck: pilotDeck,
+    controlCaps: controlCaps,
+    pilotRig: pilotRig,
     R: R_WALL, H: H_ROOM, eye: EYE,
     winY: (WIN_Y0 + WIN_Y1) / 2,
     winHalf: WIN_HALF
