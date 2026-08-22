@@ -672,6 +672,8 @@ function buildUI() {
       F.thr = 0;
       F.goal = null;
       F.goalId = null;
+      F.goalName = null;
+      courseText(null);
       if (F.auto) setAuto(false);
       if (F.paintThrottle) F.paintThrottle();
       say(RU ? "ПОЛНАЯ ОСТАНОВКА" : "FULL STOP", 1600);
@@ -739,7 +741,7 @@ function buildUI() {
   if (fireK) fireK.addEventListener("click", function () { shoot(); });
   var stopK = w.querySelector(".rcf-stop-key");
   if (stopK) stopK.addEventListener("click", function () {
-    F.thr = 0; F.v = 0; F.goalId = null; setAuto(false);
+    F.thr = 0; F.v = 0; F.goal = null; F.goalId = null; F.goalName = null; courseText(null); setAuto(false);
     if (ui.thrFill) ui.thrFill.style.width = "0%";
     say(RU ? "ПОЛНЫЙ СТОП" : "FULL STOP", 1400);
   });
@@ -1053,7 +1055,13 @@ function dosOpen(obj, info) {
    у места назначения. */
 function setAuto(on) {
   F.auto = !!on;
-  if (on) { F.goal = null; if (F.orbit) { F.rejoin = 1; F.orbit = null; } }
+  if (on) {
+    F.goal = null;
+    F.goalId = null;
+    F.goalName = null;
+    courseText(null);
+    if (F.orbit) { F.rejoin = 1; F.orbit = null; }
+  }
   if (ui.auto) ui.auto.setAttribute("aria-pressed", F.auto ? "true" : "false");
   if (ui.autoKey) {
     ui.autoKey.setAttribute("aria-pressed", F.auto ? "true" : "false");
@@ -1064,6 +1072,9 @@ function setAuto(on) {
 function manual() {
   if (F.auto) setAuto(false);
   F.goal = null;
+  F.goalId = null;
+  F.goalName = null;
+  courseText(null);
   if (F.orbit) F.rejoin = 1;
   F.orbit = null;
   if (F.brief) { F.brief = false; if (ui.brief) ui.brief.classList.add("off"); }
@@ -1345,7 +1356,10 @@ function goSystem(si, pi) {
   F.away = true;
   F.auto = false;
   F.goal = null;
+  F.goalId = null;
+  F.goalName = name;
   F.orbit = { c: c, r: r, y: y, a: null, name: name };
+  courseText(name);
   noteExplored(name);
   say((RU ? "КУРС · " : "COURSE · ") + name, 2200);
   if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
@@ -1410,6 +1424,17 @@ var ORBITS = {
   jupiter: { r: 250, y: 60 }, uranus: { r: 140, y: 34 }, neptune: { r: 132, y: 30 }
 };
 
+/* Курс должен появляться в табло в тот же клик, а не ждать
+   очередного 220-миллисекундного цикла телеметрии. На быстром
+   переходе «Галактика → EXO» прежняя задержка выглядела как
+   непринятая команда: в строке оставалось «—», хотя корабль уже
+   менял траекторию. */
+function courseText(name) {
+  var value = name || "—";
+  if (ui.cGoal) ui.cGoal.textContent = value;
+  if (ui.navKeyTx) ui.navKeyTx.textContent = value === "—" ? (RU ? "не задан" : "none") : value;
+}
+
 function goTo(id) {
   if (!W3 || !W3.at) return;
   /* Из чужого рукава «Домой» - это прыжок в родную систему */
@@ -1422,6 +1447,7 @@ function goTo(id) {
     F.auto = false;
     F.goal = pg;
     F.goalName = RU ? "МЛЕЧНЫЙ ПУТЬ" : "MILKY WAY";
+    courseText(F.goalName);
     hideHint();
     return;
   }
@@ -1434,6 +1460,7 @@ function goTo(id) {
   if (ui.auto) ui.auto.setAttribute("aria-pressed", "false");
   F.goal = p;
   F.goalName = GOAL_NAMES[id] || null;
+  courseText(F.goalName);
   hideHint();
 }
 
@@ -4282,6 +4309,10 @@ function open() {
   ui.wrap.classList.toggle("rcf-seam", seamless);
   F.brief = !seamless;
   F.orbit = null;
+  F.goal = null;
+  F.goalId = null;
+  F.goalName = null;
+  courseText(null);
   if (ui.brief) ui.brief.classList.toggle("off", seamless);
   F.scan = false;
   if (ui.scanKey) { ui.scanKey.classList.remove("cur"); ui.scanKey.setAttribute("aria-pressed", "false"); }
@@ -4542,8 +4573,8 @@ function courseFrame(w3, ts) {
   var name = "—", dist = "—";
   var tgt = null;
   if (F.orbit && F.orbit.name) { name = F.orbit.name; tgt = F.orbit.c; }
-  else if (F.goalId) {
-    name = GOAL_NAMES[F.goalId] || F.goalId;
+  else if (F.goalId || F.goalName) {
+    name = F.goalName || GOAL_NAMES[F.goalId] || F.goalId;
     var o = w3[F.goalId === "hole" ? "hole" : F.goalId];
     if (o) tgt = o.position;
   }
@@ -5845,6 +5876,7 @@ g.RC_FLIGHT = {
   },
   state: function () {
     return { открыт: F.open, собран: F.built, p: +F.p.toFixed(3), v: +F.v.toFixed(5),
+             вселенная: uniIdx, цель: F.goalId || F.goalName || null,
              отметки: W3 && W3.at ? W3.at : null };
   },
   /* Отладочные рычаги для автопроверок: поставить корабль в нужную
