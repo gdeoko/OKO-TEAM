@@ -159,3 +159,73 @@ html.rc-reduced.rc-no-webgl #epilogue > .wrap {
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* No-WebGL is a hardware exception, not a cheap static version.
+   The same eight film plates become full-width moving scene windows:
+   no card border, no pasted-photo radius and no black 34% fade. Only
+   the plate currently near the viewport is animated. */
+html.rc-reduced.rc-no-webgl .rc-frame {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: clamp(280px, 43vw, 620px);
+  margin: 0 0 clamp(34px, 5vw, 76px);
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #071321;
+  box-shadow: 0 24px 90px -52px rgba(68, 221, 255, .62);
+}
+html.rc-reduced.rc-no-webgl .rc-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 48%;
+  transform: translate3d(-1.2%, 0, 0) scale(1.045);
+  filter: saturate(1.09) contrast(1.08) brightness(1.06);
+  will-change: transform;
+  animation-name: rc-fallback-drift !important;
+  animation-duration: 18s !important;
+  animation-timing-function: ease-in-out !important;
+  animation-iteration-count: infinite !important;
+  animation-direction: alternate !important;
+  animation-play-state: paused !important;
+}
+html.rc-reduced.rc-no-webgl .rc-frame.rc-live img {
+  animation-play-state: running !important;
+}
+html.rc-reduced.rc-no-webgl .rc-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent 3%, rgba(83, 230, 255, .62) 28%, rgba(191, 121, 255, .48) 72%, transparent 97%);
+  box-shadow: 0 0 24px rgba(67, 219, 255, .34);
+  pointer-events: none;
+}
+html.rc-reduced.rc-no-webgl .rc-frame::after {
+  inset: auto 0 0;
+  height: 14%;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--bg) 72%, transparent));
+}
+html.rc-reduced.rc-no-webgl .rc-frame-04 img,
+html.rc-reduced.rc-no-webgl .rc-frame-05 img {
+  filter: saturate(1.18) contrast(1.1) brightness(1.15);
+}
+@keyframes rc-fallback-drift {
+  0% { transform: translate3d(-1.2%, 0, 0) scale(1.045); }
+  55% { transform: translate3d(.4%, -.45%, 0) scale(1.07); }
+  100% { transform: translate3d(1.25%, .25%, 0) scale(1.055); }
+}
+@media (max-width: 680px) {
+  html.rc-reduced.rc-no-webgl .rc-frame {
+    height: clamp(220px, 71vw, 350px);
+    margin-bottom: clamp(26px, 8vw, 48px);
+  }
+  html.rc-reduced.rc-no-webgl .rc-frame img { object-position: 50% 50%; }
+  html.rc-reduced.rc-no-webgl .rc-frame-01 img,
+  html.rc-reduced.rc-no-webgl .rc-frame-02 img,
+  html.rc-reduced.rc-no-webgl .rc-frame-07 img { object-position: 58% 50%; }
+}

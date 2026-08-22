@@ -107,21 +107,32 @@ var FRAMES = [
 
 function storyboard() {
   if (!root.classList.contains("rc-reduced")) return;
+  var frameWatcher = null;
+  if ("IntersectionObserver" in g) {
+    frameWatcher = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        e.target.classList.toggle("rc-live", e.isIntersecting);
+      });
+    }, { rootMargin: "18% 0px", threshold: 0.04 });
+  }
   FRAMES.forEach(function (f) {
     var sec = doc.getElementById(f[0]);
     if (!sec || sec._rcFrame) return;
     sec._rcFrame = 1;
     var box = doc.createElement("div");
-    box.className = "rc-frame";
+    box.className = "rc-frame rc-frame-" + f[1];
+    box.setAttribute("aria-hidden", "true");
     var img = doc.createElement("img");
     img.loading = "lazy";
     img.decoding = "async";
     img.width = 1600; img.height = 900;
-    img.alt = f[2];
+    img.alt = "";
     img.src = "assets/storyboard/" + f[1] + ".webp";
     img.onerror = function () { box.style.display = "none"; };
     box.appendChild(img);
     sec.insertBefore(box, sec.firstChild);
+    if (frameWatcher) frameWatcher.observe(box);
+    else box.classList.add("rc-live");
   });
 }
 
