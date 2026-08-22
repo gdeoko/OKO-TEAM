@@ -36,6 +36,18 @@ var doc = document, root = doc.documentElement;
    служебных ходов. В обычной сборке они молчат. */
 var DBG = false;
 try { DBG = /[?&]rcdbg=1/.test(location.search); } catch (e) {}
+
+/* Preserve one horizontal cockpit framing on tall phones. A fixed
+   84° vertical lens made a 390×844 viewport crop much more of the
+   ship than 390×650, so the same physical console ran off both
+   edges. Landscape keeps the cinematic 72° lens. */
+function baseViewFov(w, h) {
+  if (h <= w) return 72;
+  var aspect = w / Math.max(1, h);
+  var halfHorizontal = 28.4 * Math.PI / 180;
+  var vertical = Math.atan(Math.tan(halfHorizontal) / aspect) * 360 / Math.PI;
+  return Math.max(84, Math.min(103, vertical));
+}
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
@@ -1790,8 +1802,7 @@ function buildWorld() {
   F.glSlot = true;
 
   var scene = new T.Scene();
-  var portrait = innerHeight > innerWidth;
-  var FOV0 = portrait ? 84 : 72;
+  var FOV0 = baseViewFov(innerWidth, innerHeight);
   var cam = new T.PerspectiveCamera(FOV0, 1, 0.1, 9000);
 
   var amb = new T.AmbientLight(0x3a4a68, 0.85);
@@ -3099,6 +3110,8 @@ function size() {
   var w = innerWidth, h = innerHeight;
   W3.r.setSize(w, h, false);
   W3.cam.aspect = w / h;
+  W3.fov0 = baseViewFov(w, h);
+  W3.cam.fov = W3.fov0;
   W3.cam.updateProjectionMatrix();
   cabGeom();
 }
@@ -3734,7 +3747,12 @@ function physicalControlsFrame(ts, dt) {
       ui.wrap.querySelector(".rcf-fire-key"),
       ui.wrap.querySelector(".rcf-auto-key"),
       ui.wrap.querySelector(".rcf-stop-key"),
-      ui.wrap.querySelector(".rcf-thr")
+      ui.wrap.querySelector(".rcf-thr"),
+      ui.wrap.querySelector(".rcf-map-key"),
+      ui.wrap.querySelector(".rcf-zoom-in"),
+      ui.wrap.querySelector(".rcf-zoom-out"),
+      ui.wrap.querySelector(".rcf-shot"),
+      ui.wrap.querySelector(".rcf-help-key")
     ];
   }
   for (var pi = 0; pi < cabin.controlCaps.length; pi++) {
@@ -3755,7 +3773,47 @@ function physicalControlsFrame(ts, dt) {
       cap3.material.emissive.setHex(active ? live : base);
       cap3.material.emissiveIntensity = active ? 0.82 : 0.16 + Math.sin(ts * 0.0014 + cap3.userData.ph) * 0.025;
     }
+    /* The mesh owns appearance; the DOM owns semantics and touch.
+       Project the latter onto the former so there is never a second,
+       separately laid-out button row on top of the console. */
+    if (el3 && W3 && W3.cam) {
+      if (!physicalControlsFrame.p) {
+        physicalControlsFrame.p = new g.THREE.Vector3();
+        physicalControlsFrame.a = new g.THREE.Vector3();
+        physicalControlsFrame.b = new g.THREE.Vector3();
+        physicalControlsFrame.c = new g.THREE.Vector3();
+        physicalControlsFrame.d = new g.THREE.Vector3();
+      }
+      cap3.updateWorldMatrix(true, false);
+      var pp = physicalControlsFrame.p, pa = physicalControlsFrame.a;
+      var pb = physicalControlsFrame.b, pc = physicalControlsFrame.c, pd = physicalControlsFrame.d;
+      cap3.getWorldPosition(pp); pp.project(W3.cam);
+      var hw3 = cap3.userData.halfW || 0.1625;
+      var hh3 = cap3.userData.halfH || 0.17;
+      pa.set(-hw3, 0, 0); cap3.localToWorld(pa); pa.project(W3.cam);
+      pb.set(hw3, 0, 0); cap3.localToWorld(pb); pb.project(W3.cam);
+      pc.set(0, -hh3, 0); cap3.localToWorld(pc); pc.project(W3.cam);
+      pd.set(0, hh3, 0); cap3.localToWorld(pd); pd.project(W3.cam);
+      var sx3 = (pp.x * 0.5 + 0.5) * innerWidth;
+      var sy3 = (-pp.y * 0.5 + 0.5) * innerHeight;
+      var sw3 = Math.abs(pb.x - pa.x) * innerWidth * 0.5;
+      var sh3 = Math.abs(pd.y - pc.y) * innerHeight * 0.5;
+      el3.classList.add("rcf-phys-hit");
+      el3.style.setProperty("--rcf-phys-x", sx3.toFixed(2) + "px");
+      el3.style.setProperty("--rcf-phys-y", sy3.toFixed(2) + "px");
+      var minHit3 = cap3.userData.hit || 40;
+      /* Inline important owns the final projection. Legacy layout
+         rules intentionally hide or translate map/zoom controls on
+         small screens; once those controls have physical meshes,
+         applying those old transforms would displace the hit volume. */
+      el3.style.setProperty("display", "block", "important");
+      el3.style.setProperty("position", "fixed", "important");
+      el3.style.setProperty("transform", "translate(-50%, -50%)", "important");
+      el3.style.setProperty("--rcf-phys-w", Math.max(minHit3, sw3 * 1.12).toFixed(2) + "px");
+      el3.style.setProperty("--rcf-phys-h", Math.max(minHit3, sh3 * 1.22).toFixed(2) + "px");
+    }
   }
+  if (cabin.syncControlGlyphs) cabin.syncControlGlyphs();
 }
 
 function frame(ts) {
@@ -5775,7 +5833,10 @@ function cabinBuild() {
   /* RC_CABIN is the shell. There is deliberately no portrait/wide
      image option anymore; camera aspect changes projection only, not
      the physical ship around it. */
-  cabin = g.RC_CABIN.build(T, { tiny: innerWidth < 760 });
+  cabin = g.RC_CABIN.build(T, {
+    tiny: innerWidth < 760,
+    aspect: innerWidth / Math.max(1, innerHeight)
+  });
 
   /* Куда смотрит камера в первом кадре полёта */
   var p0 = W3.path.getPointAt(0);
@@ -6151,6 +6212,46 @@ g.RC_FLIGHT = {
     if (!DBG || !F.open) return null;
     goTo(id);
     return { id: F.goalId, p: F.goal, name: F.goalName };
+  },
+  /* Project the real WebGL keycaps into screen space and compare them
+     with their accessible DOM hit targets. Debug builds use this to
+     keep the physical console and touch geometry in one coordinate
+     system on every viewport; the public URL exposes nothing. */
+  _controls: function () {
+    if (!DBG || !W3 || !cabin || !cabin.controlCaps) return null;
+    W3.cam.updateMatrixWorld(true);
+    var nodes = physicalControlsFrame.nodes || [], out = [];
+    var p = new g.THREE.Vector3(), left = new g.THREE.Vector3(), right = new g.THREE.Vector3();
+    for (var i = 0; i < cabin.controlCaps.length; i++) {
+      var cap = cabin.controlCaps[i], el = nodes[i], rect = el ? el.getBoundingClientRect() : null;
+      cap.updateWorldMatrix(true, false);
+      cap.getWorldPosition(p); p.project(W3.cam);
+      var halfW = cap.userData.halfW || 0.1625;
+      left.set(-halfW, 0, 0); cap.localToWorld(left); left.project(W3.cam);
+      right.set(halfW, 0, 0); cap.localToWorld(right); right.project(W3.cam);
+      var x = (p.x * 0.5 + 0.5) * innerWidth;
+      var y = (-p.y * 0.5 + 0.5) * innerHeight;
+      var w = Math.abs(right.x - left.x) * innerWidth * 0.5;
+      var hx = rect ? rect.left + rect.width * 0.5 : null;
+      var hy = rect ? rect.top + rect.height * 0.5 : null;
+      out.push({
+        i: i, cap: [Math.round(x), Math.round(y), Math.round(w)],
+        hit: rect ? [Math.round(hx), Math.round(hy), Math.round(rect.width), Math.round(rect.height)] : null,
+        delta: rect ? [Math.round(hx - x), Math.round(hy - y)] : null
+      });
+    }
+    return out;
+  },
+  _interaction: function () {
+    if (!DBG) return null;
+    return {
+      scan: !!F.scan, auto: !!F.auto,
+      zoom: +(F.zoom || 0).toFixed(3), thrust: +(F.thr || 0).toFixed(3),
+      menu: !!(ui.menu && ui.menu.classList.contains("on")),
+      map: !!(ui.netList && ui.netList.classList.contains("on")),
+      help: !!(ui.help && ui.help.classList.contains("on")),
+      caption: ui.cap ? ui.cap.textContent : ""
+    };
   },
   jump: function (i) { jumpUniverse(i); return uniIdx; },
   /* Сколько всего рисуется: вершины, точки, вызовы отрисовки.
