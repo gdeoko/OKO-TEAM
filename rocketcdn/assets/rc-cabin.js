@@ -54,8 +54,12 @@ var SECT = TAU / 8;              /* сектор */
    владелец увидел это первым пунктом, «экраны заходят поверх окон».
    Теперь между кромкой окна и краем экрана остаётся зазор. */
 var WIN_HALF = 0.40;
-var WIN_Y0 = 1.02;               /* низ проёма */
-var WIN_Y1 = 2.86;               /* верх проёма */
+/* Tall panoramic flight glass: the earlier 1.84 m slit left a third
+   of portrait screens as an empty dark wall. The 2.70 m opening is
+   the same physical window on every device and gives the pilot the
+   intended film-frame view without replacing the cabin model. */
+var WIN_Y0 = 0.48;               /* низ проёма */
+var WIN_Y1 = 3.18;               /* верх проёма */
 
 /* Азимут sector i лежит на i * 45 градусов. Ноль - окно. */
 function azOf(i) { return i * SECT; }
@@ -393,6 +397,97 @@ function consoleTex(T) {
   return t;
 }
 
+/* Back-lit engravings for the physical keycaps. These are textures on
+   meshes which share every cabin transform and every key depression;
+   unlike DOM icons they cannot drift away from the alloy beneath. */
+function controlGlyphTex(T, idx) {
+  var S = 256, c = cnv(S, S), x = c.getContext("2d");
+  var warm = idx === 3;
+  x.clearRect(0, 0, S, S);
+  x.strokeStyle = warm ? "rgba(255,174,112,.98)" : "rgba(157,225,249,.96)";
+  x.fillStyle = x.strokeStyle;
+  x.lineWidth = 11;
+  x.lineCap = "round";
+  x.lineJoin = "round";
+  x.shadowColor = warm ? "rgba(255,91,33,.90)" : "rgba(52,184,235,.88)";
+  x.shadowBlur = 18;
+  x.save();
+  x.translate(S * 0.5, 102);
+  if (idx === 0) {
+    x.beginPath(); x.arc(0, 0, 48, 0, TAU); x.stroke();
+    x.beginPath(); x.moveTo(18, -27); x.lineTo(3, 16); x.lineTo(-28, 31); x.lineTo(-12, -11); x.closePath(); x.stroke();
+  } else if (idx === 1) {
+    x.beginPath();
+    x.moveTo(-48, -18); x.lineTo(-48, -43); x.lineTo(-23, -43);
+    x.moveTo(23, -43); x.lineTo(48, -43); x.lineTo(48, -18);
+    x.moveTo(48, 18); x.lineTo(48, 43); x.lineTo(23, 43);
+    x.moveTo(-23, 43); x.lineTo(-48, 43); x.lineTo(-48, 18); x.stroke();
+    x.beginPath(); x.moveTo(-30, 0); x.lineTo(30, 0); x.stroke();
+  } else if (idx === 2) {
+    x.beginPath(); x.arc(0, 0, 22, 0, TAU); x.stroke();
+    x.beginPath(); x.moveTo(0, -52); x.lineTo(0, -25); x.moveTo(0, 25); x.lineTo(0, 52);
+    x.moveTo(-52, 0); x.lineTo(-25, 0); x.moveTo(25, 0); x.lineTo(52, 0); x.stroke();
+  } else if (idx === 3) {
+    x.beginPath(); x.arc(0, 0, 42, 0, TAU); x.stroke();
+    x.beginPath(); x.arc(0, 0, 9, 0, TAU); x.fill();
+    x.beginPath(); x.moveTo(0, -59); x.lineTo(0, -38); x.moveTo(0, 38); x.lineTo(0, 59);
+    x.moveTo(-59, 0); x.lineTo(-38, 0); x.moveTo(38, 0); x.lineTo(59, 0); x.stroke();
+  } else if (idx === 4) {
+    x.beginPath(); x.arc(0, 0, 20, 0, TAU); x.stroke();
+    x.beginPath(); x.moveTo(0, -53); x.lineTo(0, -24); x.moveTo(0, 24); x.lineTo(0, 53);
+    x.moveTo(-53, 0); x.lineTo(-24, 0); x.moveTo(24, 0); x.lineTo(53, 0); x.stroke();
+    x.font = "800 25px " + FONT; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("A", 0, 1);
+  } else if (idx === 5) {
+    x.strokeRect(-38, -38, 76, 76);
+  } else if (idx === 6) {
+    for (var bi = 0; bi < 4; bi++) {
+      var bh = 30 + bi * 15, bx = -43 + bi * 29;
+      x.fillRect(bx, 42 - bh, 13, bh);
+    }
+  } else if (idx === 7) {
+    x.beginPath(); x.moveTo(-48, -28); x.lineTo(-10, -42); x.lineTo(28, -20);
+    x.lineTo(45, 28); x.lineTo(7, 42); x.lineTo(-32, 20); x.closePath(); x.stroke();
+    x.beginPath(); x.moveTo(-10, -42); x.lineTo(7, 42); x.moveTo(28, -20); x.lineTo(-32, 20); x.stroke();
+  } else if (idx === 8 || idx === 9) {
+    x.beginPath(); x.arc(-6, -5, 36, 0, TAU); x.stroke();
+    x.beginPath(); x.moveTo(20, 22); x.lineTo(53, 54); x.stroke();
+    x.beginPath(); x.moveTo(-27, -5); x.lineTo(15, -5);
+    if (idx === 8) { x.moveTo(-6, -26); x.lineTo(-6, 16); }
+    x.stroke();
+  } else if (idx === 10) {
+    x.beginPath(); x.moveTo(-48, -23); x.lineTo(-20, -23); x.lineTo(-10, -37);
+    x.lineTo(29, -37); x.lineTo(40, -23); x.lineTo(48, -23); x.lineTo(48, 38);
+    x.lineTo(-48, 38); x.closePath(); x.stroke();
+    x.beginPath(); x.arc(0, 7, 20, 0, TAU); x.stroke();
+  } else {
+    x.font = "800 92px " + FONT; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("?", 0, 0);
+  }
+  x.restore();
+  if (idx < 7) {
+    var labels = ["NAV", "SCAN", "NODE", "FIRE", "AUTO", "STOP", "THR"];
+    x.shadowBlur = 10;
+    x.font = "800 27px " + FONT;
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText(labels[idx], S * 0.5, 207);
+  }
+  var t = new T.CanvasTexture(c);
+  if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  return t;
+}
+
+function controlGlyphAtlas(T) {
+  var cell = 256, cols = 4, rows = 3;
+  var c = cnv(cell * cols, cell * rows), x = c.getContext("2d");
+  for (var i = 0; i < 12; i++) {
+    var one = controlGlyphTex(T, i);
+    x.drawImage(one.image, (i % cols) * cell, Math.floor(i / cols) * cell);
+    if (one.dispose) one.dispose();
+  }
+  var t = new T.CanvasTexture(c);
+  if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  return t;
+}
+
 /* A machined slab for objects that must catch real cabin light. The
    canvas deck skin remains useful for lettering, but it cannot create
    silhouette, parallax or a contact shadow. These beveled meshes can. */
@@ -417,6 +512,7 @@ function roundedDeckGeo(T, w, h, d, radius) {
 function build(T, opts) {
   opts = opts || {};
   var tiny = !!opts.tiny;
+  var aspect = opts.aspect || (innerWidth / Math.max(1, innerHeight));
   var grp = new T.Group();
   var i, m, th;
   var style = g.RC_SHIP_STYLE || {
@@ -681,14 +777,16 @@ function build(T, opts) {
      Пульт неглубокий и прижат к носу: всё, что торчит вбок,
      попадает в кадр ещё в салоне и режет обзор поперёк. */
   var con = new T.Group();
-  var desk = new T.Mesh(new T.BoxGeometry(3.1, 0.14, 0.86), new T.MeshPhongMaterial({
+  var deskY = tiny ? 0.61 : 0.86;
+  var desk = new T.Mesh(new T.BoxGeometry(3.1, 0.14, tiny ? 0.66 : 0.86), new T.MeshPhongMaterial({
     color: 0x16283a
   }));
-  desk.position.set(0, WIN_Y0 - 0.16, -(R_WALL - 0.62));
+  desk.position.set(0, deskY, -(R_WALL - 0.62));
   desk.rotation.x = -0.2;
   con.add(desk);
-  var riser = new T.Mesh(new T.BoxGeometry(3.4, WIN_Y0 - 0.24, 0.5), caseMat);
-  riser.position.set(0, (WIN_Y0 - 0.24) / 2, -(R_WALL - 0.42));
+  var riserH = tiny ? 0.49 : 0.78;
+  var riser = new T.Mesh(new T.BoxGeometry(3.4, riserH, 0.5), caseMat);
+  riser.position.set(0, riserH / 2, -(R_WALL - 0.42));
   con.add(riser);
 
   /* ── Physical pilot console ──────────────────────────────
@@ -698,7 +796,14 @@ function build(T, opts) {
      later attached to the flight camera, so this hardware and the
      pilot move as one rigid system through every turn and jump. */
   var pilotRig = new T.Group();
-  pilotRig.position.set(0, WIN_Y0 - 0.15, -(R_WALL - 0.60));
+  /* The former 3.28 m slab sat only 0.8 m from the pilot and projected
+     to 1344 px on a 390 px phone. Keep the same detailed geometry but
+     at an 82 cm physical width. Portrait and landscape use different
+     eye framing, so only the mounting height compensates for FOV. */
+  pilotRig.scale.set(0.22, 0.25, 0.25);
+  var pilotY = 1.02;
+  if (tiny) pilotY = Math.max(0.68, Math.min(0.87, 0.16 + aspect * 1.17));
+  pilotRig.position.set(0, pilotY, -(R_WALL - 0.60));
   pilotRig.rotation.x = -0.20;
   var consoleSkin = consoleTex(T);
   var deckMetal = new T.MeshPhongMaterial({
@@ -714,19 +819,22 @@ function build(T, opts) {
   var fireMetal = new T.MeshPhongMaterial({
     color: 0x41271d, shininess: 64, specular: 0xd48a5c
   });
-  var pilotDeck = new T.Mesh(roundedDeckGeo(T, 3.28, 0.90, 0.14, 0.10), deckMetal);
+  var pilotDeck = new T.Mesh(roundedDeckGeo(T, 3.65, 0.96, 0.14, 0.10), deckMetal);
   pilotDeck.rotation.x = -Math.PI * 0.5;
   pilotRig.add(pilotDeck);
 
   var socketGeo = roundedDeckGeo(T, 0.405, 0.43, 0.072, 0.065);
   var capGeo = roundedDeckGeo(T, 0.325, 0.34, 0.090, 0.055);
-  var controlCaps = [];
+  var controlCaps = [], controlSockets = [], controlGlyphs = [];
+  var socketInstances = new T.InstancedMesh(socketGeo, socketMetal, 7);
+  var socketM = new T.Matrix4();
+  var socketQ = new T.Quaternion().setFromEuler(new T.Euler(-Math.PI * 0.5, 0, 0));
+  var socketS = new T.Vector3(1, 1, 1), socketP = new T.Vector3();
   for (var ci = 0; ci < 7; ci++) {
     var cx = (ci - 3) * 0.43;
-    var socket = new T.Mesh(socketGeo, socketMetal);
-    socket.rotation.x = -Math.PI * 0.5;
-    socket.position.set(cx, 0.10, 0.075);
-    pilotRig.add(socket);
+    socketP.set(cx, 0.10, 0.075);
+    socketM.compose(socketP, socketQ, socketS);
+    socketInstances.setMatrixAt(ci, socketM);
     var capMat = (ci === 3 ? fireMetal : capMetal).clone();
     capMat.emissive = new T.Color(ci === 3 ? 0x1a0802 : 0x02090d);
     capMat.emissiveIntensity = 0.16;
@@ -735,18 +843,100 @@ function build(T, opts) {
     cap.position.set(cx, 0.162, 0.075);
     cap.userData.homeY = cap.position.y;
     cap.userData.ph = ci * 0.64;
+    cap.userData.halfW = 0.1625;
+    cap.userData.halfH = 0.17;
+    cap.userData.hit = 40;
     pilotRig.add(cap);
     controlCaps.push(cap);
   }
+  socketInstances.instanceMatrix.needsUpdate = true;
+  pilotRig.add(socketInstances);
+  controlSockets.push(socketInstances);
+
+  /* Five auxiliary commands are small physical switches at the
+     console shoulders: network map on the left, zoom/camera/help on
+     the right. Their DOM versions remain only as projected hit zones. */
+  var auxGeo = roundedDeckGeo(T, 0.19, 0.13, 0.070, 0.032);
+  var auxSocketGeo = roundedDeckGeo(T, 0.245, 0.178, 0.055, 0.041);
+  var auxAt = [
+    [-1.29, -0.38],
+    [1.38, -0.28], [1.70, -0.28], [1.38, 0.28], [1.70, 0.28]
+  ];
+  var auxSockets = new T.InstancedMesh(auxSocketGeo, socketMetal, auxAt.length);
+  for (var ai = 0; ai < auxAt.length; ai++) {
+    socketP.set(auxAt[ai][0], 0.105, auxAt[ai][1]);
+    socketM.compose(socketP, socketQ, socketS);
+    auxSockets.setMatrixAt(ai, socketM);
+    var auxMat = capMetal.clone();
+    auxMat.emissive = new T.Color(0x02090d);
+    auxMat.emissiveIntensity = 0.16;
+    var aux = new T.Mesh(auxGeo, auxMat);
+    aux.rotation.x = -Math.PI * 0.5;
+    aux.position.set(auxAt[ai][0], 0.158, auxAt[ai][1]);
+    aux.userData.homeY = aux.position.y;
+    aux.userData.ph = (7 + ai) * 0.64;
+    aux.userData.halfW = 0.095;
+    aux.userData.halfH = 0.065;
+    aux.userData.hit = 26;
+    pilotRig.add(aux);
+    controlCaps.push(aux);
+  }
+  auxSockets.instanceMatrix.needsUpdate = true;
+  pilotRig.add(auxSockets);
+  controlSockets.push(auxSockets);
+
+  /* One atlas, one instanced draw. Twelve separate CanvasTextures and
+     twelve plane meshes looked identical but added eleven avoidable
+     draw calls and doubled texture memory on phones. */
+  var glyphGeo = new T.PlaneGeometry(1, 1);
+  var glyphIndex = new Float32Array(controlCaps.length);
+  for (var gi = 0; gi < glyphIndex.length; gi++) glyphIndex[gi] = gi;
+  glyphGeo.setAttribute("glyphIndex", new T.InstancedBufferAttribute(glyphIndex, 1));
+  var glyphAtlas = controlGlyphAtlas(T);
+  var glyphMat = new T.ShaderMaterial({
+    uniforms: { uMap: { value: glyphAtlas } },
+    vertexShader:
+      "attribute float glyphIndex; varying vec2 vGlyphUv;" +
+      "void main(){float col=mod(glyphIndex,4.0);float row=floor(glyphIndex/4.0);" +
+      "vGlyphUv=vec2((uv.x+col)/4.0,(uv.y+(2.0-row))/3.0);" +
+      "gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}",
+    fragmentShader:
+      "uniform sampler2D uMap; varying vec2 vGlyphUv;" +
+      "void main(){vec4 c=texture2D(uMap,vGlyphUv);if(c.a<0.025)discard;gl_FragColor=c;}",
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    fog: false
+  });
+  var glyphMesh = new T.InstancedMesh(glyphGeo, glyphMat, controlCaps.length);
+  glyphMesh.frustumCulled = false;
+  var glyphLocal = [], glyphMatrix = new T.Matrix4();
+  var glyphQ = new T.Quaternion(), glyphPos = new T.Vector3(), glyphScale = new T.Vector3();
+  for (gi = 0; gi < controlCaps.length; gi++) {
+    var mainGlyph = gi < 7;
+    glyphPos.set(0, 0, mainGlyph ? 0.061 : 0.052);
+    glyphScale.set(mainGlyph ? 0.215 : 0.13, mainGlyph ? 0.185 : 0.10, 1);
+    glyphLocal[gi] = new T.Matrix4().compose(glyphPos, glyphQ, glyphScale);
+  }
+  function syncControlGlyphs() {
+    for (var gmi = 0; gmi < controlCaps.length; gmi++) {
+      controlCaps[gmi].updateMatrix();
+      glyphMatrix.copy(controlCaps[gmi].matrix).multiply(glyphLocal[gmi]);
+      glyphMesh.setMatrixAt(gmi, glyphMatrix);
+    }
+    glyphMesh.instanceMatrix.needsUpdate = true;
+  }
+  syncControlGlyphs();
+  pilotRig.add(glyphMesh);
+  controlGlyphs.push(glyphMesh);
 
   /* Telemetry glass is a separate inset along the far edge. The DOM
      numbers sit over this dark physical recess instead of floating on
      the star field. */
-  var teleSocket = new T.Mesh(roundedDeckGeo(T, 3.00, 0.13, 0.055, 0.038), socketMetal);
+  var teleSocket = new T.Mesh(roundedDeckGeo(T, 3.30, 0.13, 0.055, 0.038), socketMetal);
   teleSocket.rotation.x = -Math.PI * 0.5;
   teleSocket.position.set(0, 0.105, -0.325);
   pilotRig.add(teleSocket);
-  var teleGlass = new T.Mesh(roundedDeckGeo(T, 2.84, 0.072, 0.025, 0.025), new T.MeshBasicMaterial({
+  var teleGlass = new T.Mesh(roundedDeckGeo(T, 3.12, 0.072, 0.025, 0.025), new T.MeshBasicMaterial({
     color: 0x0d2a38, transparent: true, opacity: 0.64, fog: false
   }));
   teleGlass.rotation.x = -Math.PI * 0.5;
@@ -757,7 +947,7 @@ function build(T, opts) {
   var screws = new T.InstancedMesh(screwGeo, steel, 8);
   var sm = new T.Matrix4(), sq = new T.Quaternion(), ss = new T.Vector3(1, 0.42, 1), sp = new T.Vector3();
   for (var sc = 0; sc < 8; sc++) {
-    sp.set(sc % 2 ? 1.53 : -1.53, 0.11, (Math.floor(sc / 2) - 1.5) * 0.22);
+    sp.set(sc % 2 ? 1.72 : -1.72, 0.11, (Math.floor(sc / 2) - 1.5) * 0.22);
     sm.compose(sp, sq, ss); screws.setMatrixAt(sc, sm);
   }
   screws.instanceMatrix.needsUpdate = true;
@@ -797,26 +987,28 @@ function build(T, opts) {
      прозрачна: отражение должно угадываться, а не спорить с
      космосом за окном. */
   var refl = new T.Mesh(
-    new T.CylinderGeometry(R_WALL - 0.05, R_WALL - 0.05, (WIN_Y1 - WIN_Y0) * 0.5,
+    new T.CylinderGeometry(R_WALL - 0.05, R_WALL - 0.05, 0.035,
       tiny ? 8 : 14, 1, true, gapA - gapLen, gapLen),
     new T.MeshBasicMaterial({
-      color: 0x7fc4e6, transparent: true, opacity: 0.055,
-      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false, fog: false
+      color: 0x3f7187, transparent: true, opacity: 0.028,
+      side: T.BackSide, depthWrite: false, fog: false
     })
   );
-  refl.position.y = WIN_Y0 + (WIN_Y1 - WIN_Y0) * 0.24;
+  refl.position.y = WIN_Y0 + (WIN_Y1 - WIN_Y0) * 0.54;
+  refl.rotation.z = -0.035;
   grp.add(refl);
   /* Полоса от световой линии пульта: она отражается ярче всего,
      потому что ближе всех к стеклу */
   var reflLip = new T.Mesh(
-    new T.CylinderGeometry(R_WALL - 0.06, R_WALL - 0.06, 0.05,
+    new T.CylinderGeometry(R_WALL - 0.06, R_WALL - 0.06, 0.018,
       tiny ? 8 : 14, 1, true, gapA - gapLen * 0.7, gapLen * 0.7),
     new T.MeshBasicMaterial({
-      color: 0x9fe0f6, transparent: true, opacity: 0.16,
-      side: T.BackSide, blending: T.AdditiveBlending, depthWrite: false, fog: false
+      color: 0x5f9db7, transparent: true, opacity: 0.045,
+      side: T.BackSide, depthWrite: false, fog: false
     })
   );
   reflLip.position.y = WIN_Y0 + 0.34;
+  reflLip.rotation.z = 0.022;
   grp.add(reflLip);
 
   /* ── Свет помещения ─────────────────────────────────────
@@ -852,7 +1044,7 @@ function build(T, opts) {
      потолочную, а каждый источник умножает стоимость шейдера
      всех материалов сцены разом */
   var deskLight = new T.PointLight(0x5fc8ef, 1.5, 7);
-  deskLight.position.set(0, WIN_Y0 + 0.4, -(R_WALL - 1.1));
+  deskLight.position.set(0, 1.42, -(R_WALL - 1.1));
   grp.add(deskLight);
 
   /* Шрифт мог не успеть загрузиться к моменту первой отрисовки:
@@ -886,6 +1078,9 @@ function build(T, opts) {
     deskLight: deskLight,
     pilotDeck: pilotDeck,
     controlCaps: controlCaps,
+    controlSockets: controlSockets,
+    controlGlyphs: controlGlyphs,
+    syncControlGlyphs: syncControlGlyphs,
     pilotRig: pilotRig,
     R: R_WALL, H: H_ROOM, eye: EYE,
     winY: (WIN_Y0 + WIN_Y1) / 2,
