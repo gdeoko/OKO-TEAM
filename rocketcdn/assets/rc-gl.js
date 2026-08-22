@@ -111,7 +111,17 @@ g.RC_GL = {
      её всем ссылкам, и объёмный слой обязан подчиняться тому же
      правилу, иначе браузер отдаст из кеша старую ракету к новой
      странице. */
+  /* Dynamic modules used to load without a version even when rc-gl
+     itself was cache-busted. Returning visitors therefore kept a
+     week-old rocket/flight file and saw bugs already fixed on the
+     server. Propagate this loader's version to every scene module;
+     vendor Three.js remains stable and keeps its long cache. */
   var ver = "";
+  try {
+    var bootSrc = document.currentScript && document.currentScript.src;
+    var bootVer = bootSrc && new URL(bootSrc, location.href).searchParams.get("v");
+    if (bootVer) ver = "?v=" + encodeURIComponent(bootVer);
+  } catch (eVer) {}
   var base = (function () {
     var me = document.currentScript;
     if (me && me.src) {
@@ -182,7 +192,7 @@ g.RC_GL = {
     for (var i = 0; i < FILES.length; i++) {
       (function (file) {
         var sc = document.createElement("script");
-        sc.src = base + file + ver;
+        sc.src = base + file + (file.indexOf("vendor/") === 0 ? "" : ver);
         sc.async = false;
         sc.onload = ready;
         sc.onerror = function () { fail(file); };
