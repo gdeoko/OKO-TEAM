@@ -3944,3 +3944,49 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight .rcf-menu .rcf-menu-h:not(:first-child) { margin-top: 8px; }
   .rc-flight .rcf-hud > .rcf-mis { top: 34px !important; max-height: 48px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   P6I · THE CONSOLE IS A 3D OBJECT
+
+   RC_CABIN now supplies the alloy bed, recesses, keycaps and screws.
+   This layer keeps only accessible hit areas, glyphs and telemetry.
+   No opaque DOM plate is allowed to cover the WebGL hardware.
+   ═══════════════════════════════════════════════════════════ */
+.rc-flight .rcf-deck,
+.rc-flight .rcf-d-face {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+.rc-flight .rcf-deck .rcf-key {
+  background: rgba(4, 10, 16, .025) !important;
+  border-color: rgba(170, 218, 238, .10) !important;
+  box-shadow: none !important;
+  color: rgba(var(--int-lit-rgb,207,233,245),.90);
+  text-shadow: 0 1px 2px #000, 0 0 7px rgba(var(--int-cyan-rgb,66,178,220),.18);
+}
+.rc-flight .rcf-deck .rcf-key::before {
+  border-color: rgba(205, 235, 247, .045) !important;
+}
+.rc-flight .rcf-deck .rcf-key:active {
+  transform: translateY(2px) !important;
+  background: rgba(0, 5, 9, .18) !important;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.42) !important;
+}
+.rc-flight .rcf-deck .rcf-key.cur,
+.rc-flight .rcf-deck .rcf-key[aria-pressed="true"],
+.rc-flight .rcf-deck .rcf-key[aria-expanded="true"] {
+  background: radial-gradient(ellipse at 50% 55%, rgba(66,178,220,.20), transparent 72%) !important;
+  border-color: rgba(126,221,250,.28) !important;
+  box-shadow: 0 0 12px rgba(66,178,220,.15) !important;
+}
+.rc-flight .rcf-deck .rcf-fire-key {
+  background: radial-gradient(ellipse at 50% 55%, rgba(255,125,69,.12), transparent 72%) !important;
+  border-color: rgba(255,158,102,.16) !important;
+}
+.rc-flight .rcf-d-main .rcf-thr,
+.rc-flight .rcf-d-top {
+  background: rgba(2, 7, 12, .06) !important;
+  border-color: rgba(112, 188, 216, .08) !important;
+  box-shadow: none !important;
+}
