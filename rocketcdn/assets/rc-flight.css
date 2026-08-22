@@ -3990,3 +3990,102 @@ html.rc-deep-inside .rcf-fab {
   border-color: rgba(112, 188, 216, .08) !important;
   box-shadow: none !important;
 }
+
+/* P6M · one projected control, not a DOM copy above a 3D key.
+   The real illuminated engraving now lives on the keycap mesh. The
+   element below is only its accessible touch volume, kept slightly
+   larger than the visible cap for a reliable 40 px mobile target. */
+.rc-flight .rcf-deck .rcf-phys-hit {
+  position: fixed !important;
+  left: var(--rcf-phys-x) !important;
+  top: var(--rcf-phys-y) !important;
+  width: var(--rcf-phys-w) !important;
+  height: var(--rcf-phys-h) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  text-shadow: none !important;
+  z-index: 14 !important;
+  touch-action: manipulation;
+}
+.rc-flight .rcf-deck .rcf-key.rcf-deploy.rcf-phys-hit {
+  position: fixed !important;
+  left: var(--rcf-phys-x) !important;
+  top: var(--rcf-phys-y) !important;
+}
+.rc-flight .rcf-deck .rcf-key.rcf-phys-hit,
+.rc-flight .rcf-deck .rcf-thr.rcf-phys-hit {
+  transform: translate(-50%, -50%) !important;
+}
+.rc-flight .rcf-deck .rcf-phys-hit::before,
+.rc-flight .rcf-deck .rcf-phys-hit > * {
+  display: none !important;
+}
+.rc-flight .rcf-deck .rcf-phys-hit:active,
+.rc-flight .rcf-deck .rcf-phys-hit.cur,
+.rc-flight .rcf-deck .rcf-phys-hit[aria-pressed="true"],
+.rc-flight .rcf-deck .rcf-phys-hit[aria-expanded="true"] {
+  transform: translate(-50%, -50%) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* P6M · non-overlapping windscreen projection. Status, mission and
+   the transient flight hint occupy three explicit glass bands. */
+.rc-flight .rcf-hud .rcf-cap {
+  top: 7px !important;
+  max-width: 62% !important;
+  padding: 6px 14px !important;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(9px, 1.1vw, 12px) !important;
+  line-height: 1.2;
+}
+.rc-flight .rcf-hud > .rcf-mis {
+  top: 45px !important;
+}
+.rc-flight .rcf-hud .rcf-hint {
+  top: auto !important;
+  bottom: 10px !important;
+  left: 50% !important;
+  width: auto !important;
+  max-width: 80% !important;
+  padding: 5px 10px;
+  transform: translateX(-50%) !important;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center !important;
+  font-size: clamp(8px, 1vw, 10px) !important;
+  letter-spacing: .08em;
+  background: linear-gradient(90deg, transparent, rgba(10,35,52,.42) 14%, rgba(10,35,52,.42) 86%, transparent);
+  border-top: 1px solid rgba(116,214,244,.16);
+  border-bottom: 1px solid rgba(116,214,244,.10);
+  text-shadow: 0 0 8px rgba(66,178,220,.45);
+}
+@media (max-width: 760px) {
+  .rc-flight .rcf-hud .rcf-cap {
+    max-width: 58% !important;
+    padding: 5px 10px !important;
+    font-size: 8.5px !important;
+  }
+  .rc-flight .rcf-hud > .rcf-mis {
+    top: 39px !important;
+    width: min(58%, 205px) !important;
+  }
+  .rc-flight .rcf-hud .rcf-hint {
+    bottom: 7px !important;
+    max-width: 88% !important;
+    padding: 4px 8px;
+    font-size: 8px !important;
+  }
+}
