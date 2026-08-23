@@ -4162,3 +4162,57 @@ html.rc-deep-inside .rcf-fab {
    рамой и уезжает вместе с ней. Плоский двойник поверх давал два
    логотипа сразу - убираем его там, где работает настоящая рубка. */
 .rc-flight.rcf-native-cab .rcf-holo { display: none; }
+
+/* ══════════════════════════════════════════════════════════
+   Разметка при настоящей рубке
+
+   Приборная плита разметки родилась, когда корпус кабины был
+   картинкой: она рисовала себе табло, радар, рычаг и скорость
+   поверх рисунка. Теперь всё это стоит железом в мире (rc-console),
+   и разметка обязана уступить: у неё остаются только невидимые
+   области попадания на клавишах и бортовое табло.
+
+   Иначе в кадре два радара, две скорости и два табло - именно то,
+   что заказчик называет «накладываются одно на другое».
+   ══════════════════════════════════════════════════════════ */
+/* Плита не рисует ни фона, ни наклона: под ней настоящая доска */
+.rc-flight.rcf-native-cab .rcf-d-face {
+  transform: none;
+  height: 100%;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+/* Радар, рычаг и скорость сняты: их место заняли живые приборы */
+.rc-flight.rcf-native-cab .rcf-radar,
+.rc-flight.rcf-native-cab .rcf-d-main .rcf-speed,
+.rc-flight.rcf-native-cab .rcf-d-main .rcf-thr::after,
+.rc-flight.rcf-native-cab .rcf-d-bay { background: none !important; border: 0 !important; box-shadow: none !important; }
+.rc-flight.rcf-native-cab .rcf-radar { display: none !important; }
+.rc-flight.rcf-native-cab .rcf-d-main .rcf-speed { display: none !important; }
+
+/* Бортовое табло переезжает на стекло, к верхней кромке.
+
+   На раскосой плите оно оказывалось у самой кромки остекления и
+   читалось наполовину. Табло это то, что пилот смотрит первым,
+   значит ему место на стекле сверху - как на референсах кабины. */
+.rc-flight.rcf-native-cab .rcf-d-top {
+  position: fixed;
+  left: var(--cab-wx, 6%);
+  top: var(--cab-wy, 8%);
+  width: var(--cab-ww, 88%);
+  z-index: 15;
+  padding: 4px clamp(8px, 1.4vw, 18px);
+  background: linear-gradient(180deg, rgba(4, 12, 22, .62), rgba(4, 12, 22, .18));
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66, 178, 220), .22);
+  border-radius: clamp(8px, 1.4vw, 16px) clamp(8px, 1.4vw, 16px) 0 0;
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+/* Титры уходят под табло. Табло переехало к верхней кромке стекла,
+   и надпись о теле легла ровно на него - две строки в одном месте
+   читаются мусором, а не приборами. */
+.rc-flight.rcf-native-cab .rcf-hud .rcf-cap {
+  top: clamp(30px, 4.2vh, 44px) !important;
+}
