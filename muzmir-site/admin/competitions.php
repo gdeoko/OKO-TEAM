@@ -431,10 +431,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Положение (DOCX из эталона) пересобирается автоматически при каждом
         // создании/сохранении конкурса. Ошибка генерации не роняет сохранение.
+        //
+        // СВОЁ ПОЛОЖЕНИЕ АВТОГЕНЕРАЦИЯ НЕ ТРОГАЕТ. Если владелец загрузил файл
+        // вручную, любое сохранение конкурса затирало бы его эталоном — а он для
+        // того и загружен, что эталон не подходит.
+        $custom = (int) (scalar("SELECT COALESCE(regulation_custom,0) FROM competitions WHERE id=?", [(int) $id]) ?? 0);
         try {
+            if ($custom === 1) {
+                flash('Положение оставлено как есть — для этого конкурса загружен свой файл.', 'info');
+                throw new \DomainException('custom');   // мимо генерации, но без ошибки в журнал
+            }
             require_once BASE_PATH . '/core/regulation_gen.php';
             regulation_generate((int) $id);
             audit('regulation_generate', 'competition', $id);
+        } catch (\DomainException $e) {
+            // своё положение — ничего не делаем
         } catch (\Throwable $e) {
             error_log('regulation_generate(' . $id . ') failed: ' . $e->getMessage());
             flash('Конкурс сохранён, но положение не сгенерировалось: ' . $e->getMessage(), 'warning');
@@ -477,6 +488,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int) input('id');
         try {
             require_once BASE_PATH . '/core/regulation_gen.php';
+            // Возврат к эталону снимает признак «своё положение»: владелец сознательно
+            // отказывается от загруженного файла в пользу автогенерации.
+            try { update('competitions', ['regulation_custom' => 0], 'id=:wid', ['wid' => $id]); } catch (\Throwable $e) {}
             regulation_generate($id);
             audit('regulation_generate', 'competition', $id);
             flash('Положение перегенерировано по эталону.', 'success');
@@ -484,6 +498,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Не удалось сгенерировать положение: ' . $e->getMessage(), 'error');
         }
         admin_redirect('competitions', ['action' => 'edit', 'id' => $id]);
+    }
+
+    /* ---------- СВОЁ ПОЛОЖЕНИЕ ФАЙЛОМ ----------
+     *
+     * Автогенерация закрывает обычный случай, но не все. Положение бывает
+     * согласовано с ведомством, свёрстано дизайнером или просто отличается от
+     * эталона так, что подстановкой названий и дат не обойтись. Раньше на такой
+     * случай оставалось только править эталон — а он общий для всех конкурсов.
+     *
+     * Загруженный файл ЗАМЕЩАЕТ автогенерацию: положение конкурса — то, что
+     * выложил владелец, и перезаписывать его при сохранении нельзя.
+     */
+    if ($do === 'upload_regulation') {
+        $id = (int) input('id');
+        $c  = $id ? one("SELECT * FROM competitions WHERE id=?", [$id]) : null;
+        if (!$c) { flash('Конкурс не найден.', 'error'); admin_redirect('competitions'); }
+        $back = ['action' => 'edit', 'id' => $id];
+
+        $f = $_FILES['regulation_file'] ?? null;
+        if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            flash('Выберите файл положения.', 'error'); admin_redirect('competitions', $back);
+        }
+        if ((int) ($f['error'] ?? 1) !== UPLOAD_ERR_OK) {
+            // Самая частая причина — файл больше upload_max_filesize в php.ini.
+            flash('Файл не загрузился (код ' . (int) $f['error'] . '). Проверьте размер файла.', 'error');
+            admin_redirect('competitions', $back);
+        }
+        if ((int) $f['size'] > 25 * 1024 * 1024) {
+            flash('Файл больше 25 МБ. Сожмите документ.', 'error'); admin_redirect('competitions', $back);
+        }
+
+        // Тип берём ПО СОДЕРЖИМОМУ, а не по имени: расширение подделывается, а в
+        // публичной папке лежит то, что скачает любой участник.
+        $ext  = strtolower(pathinfo((string) $f['name'], PATHINFO_EXTENSION));
+        $head = (string) @file_get_contents((string) $f['tmp_name'], false, null, 0, 8);
+        $isPdf  = str_starts_with($head, '%PDF');
+        $isDocx = str_starts_with($head, "PK\x03\x04");          // docx — это zip
+        if (!in_array($ext, ['pdf', 'docx'], true) || (!$isPdf && !$isDocx)
+            || ($ext === 'pdf' && !$isPdf) || ($ext === 'docx' && !$isDocx)) {
+            flash('Положение принимается только файлом PDF или DOCX.', 'error');
+            admin_redirect('competitions', $back);
+        }
+
+        $slug = trim((string) ($c['slug'] ?? '')) !== '' ? (string) $c['slug'] : ('competition-' . $id);
+        $dir  = BASE_PATH . '/public/uploads/regulations';
+        if (!is_dir($dir)) @mkdir($dir, 0775, true);
+        $dest = $dir . '/' . $slug . '.' . $ext;
+
+        if (!@move_uploaded_file((string) $f['tmp_name'], $dest)) {
+            flash('Не удалось сохранить файл на сервер.', 'error'); admin_redirect('competitions', $back);
+        }
+        @chmod($dest, 0664);
+
+        // Старый PDF и его кэш-ключ убираем: иначе участник продолжит скачивать
+        // прежний документ — именно так 23.08 положение с ценой 500 ₽ пережило
+        // смену цены на 1000 ₽.
+        if ($ext === 'docx') { @unlink($dir . '/' . $slug . '.pdf.key'); }
+        else                 { @unlink($dir . '/' . $slug . '.pdf.key'); }
+
+        update('competitions', ['regulation_pdf' => $dest, 'regulation_custom' => 1], 'id=:wid', ['wid' => $id]);
+        audit('regulation_upload', 'competition', $id, ['file' => basename($dest), 'size' => (int) $f['size']]);
+        flash('Положение загружено: ' . basename($dest) . '. Автогенерация для этого конкурса отключена — '
+            . 'чтобы вернуть эталон, нажмите «Перегенерировать положение».', 'success');
+        admin_redirect('competitions', $back);
     }
 }
 
@@ -767,21 +845,41 @@ if ($action === 'edit') {
           </div>
           <div>
             <?php if ($id): ?>
-              <div class="field"><label>Положение о конкурсе (DOCX из эталона)</label>
+              <?php $isCustom = (int) ($c['regulation_custom'] ?? 0) === 1; ?>
+              <div class="field"><label>Положение о конкурсе</label>
                 <p class="small muted" style="margin:0 0 12px">
                   <?php if ($c['regulation_pdf']): ?>
-                    Готово: <b><?= h(basename($c['regulation_pdf'])) ?></b>
+                    <?= $isCustom ? 'Загружен свой файл' : 'Собрано из эталона' ?>:
+                    <b><?= h(basename($c['regulation_pdf'])) ?></b>
+                    <?php if ($isCustom): ?>
+                      <br><span style="color:var(--a-navy)">Автогенерация для этого конкурса выключена — файл не перезаписывается при сохранении.</span>
+                    <?php endif; ?>
                   <?php else: ?>
                     Ещё не сгенерировано (создастся автоматически при сохранении).
                   <?php endif; ?>
                 </p>
                 <div class="toolbar" style="margin:0">
-                  <button class="btn btn--navy btn--sm" formaction="<?= url('/admin/') ?>" name="do" value="regenerate"><?= admin_icon('download') ?>Перегенерировать положение</button>
+                  <button class="btn btn--navy btn--sm" formaction="<?= url('/admin/') ?>" name="do" value="regenerate"><?= admin_icon('download') ?><?= $isCustom ? 'Вернуть эталон' : 'Перегенерировать положение' ?></button>
                   <?php if ($c['regulation_pdf']): ?>
                     <a class="btn btn--ghost btn--sm" href="<?= h(url(str_replace(BASE_PATH.'/public','',$c['regulation_pdf']))) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Открыть файл</a>
                   <?php endif; ?>
                 </div>
-                <div class="hint" style="margin-top:10px">Положение собирается 1:1 из эталона (платный/бесплатный), подставляются только название, даты и тематика «Свободная». Пересобирается автоматически при каждом сохранении.</div>
+                <div class="hint" style="margin-top:10px">Положение собирается 1:1 из эталона (платный/бесплатный), подставляются название, даты, тематика «Свободная» и сумма оргвзноса из поля «Цена». Пересобирается при каждом сохранении.</div>
+
+                <!-- СВОЙ ФАЙЛ ПОЛОЖЕНИЯ -->
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--a-line)">
+                  <label style="display:block;margin-bottom:6px">Загрузить своё положение файлом</label>
+                  <input type="file" name="regulation_file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                         style="display:block;margin-bottom:8px">
+                  <button class="btn btn--ghost btn--sm" formaction="<?= url('/admin/') ?>" name="do" value="upload_regulation" formnovalidate>
+                    <?= admin_icon('upload') ?? admin_icon('download') ?>Загрузить файл
+                  </button>
+                  <div class="hint" style="margin-top:8px">
+                    PDF или DOCX, до 25 МБ. Нужен, когда положение согласовано с ведомством или свёрстано отдельно и эталон не подходит.
+                    Загруженный файл заменяет автогенерацию: он не перезапишется при сохранении конкурса.
+                    Вернуть эталон — кнопкой выше.
+                  </div>
+                </div>
               </div>
             <?php else: ?>
               <p class="small muted">Генерация положения станет доступна после первого сохранения конкурса.</p>

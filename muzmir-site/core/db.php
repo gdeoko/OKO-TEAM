@@ -369,6 +369,9 @@ function db_migrate(PDO $pdo): void {
         ['competitions', 'launched',            'INTEGER DEFAULT 0'],
         ['competitions', 'launched_at',         'TEXT'],
         ['competitions', 'results_published_at','TEXT'],
+        // Положение загружено владельцем файлом, а не собрано из эталона. Такое
+        // автогенерация не трогает: его для того и загрузили, что эталон не подошёл.
+        ['competitions', 'regulation_custom',   'INTEGER DEFAULT 0'],
         ['competitions', 'duration',            "TEXT DEFAULT 'long'"],
 
         // Заявка: аттестация, сроки отправки результата, служебные поля жюри.
