@@ -417,7 +417,7 @@ function frame() {
      файла надо пересчитать в доли кадра с учётом обрезки. */
   var tall = innerHeight > innerWidth;
   var x0, x1, y0, y1;
-  var CON = g.RC_CONSOLE, last = CON && CON.last;
+  var CON = g.RC_PANEL, last = CON && CON.last;
   if (last && last.safe) {
     /* Границы берём у настоящей рамы.
 

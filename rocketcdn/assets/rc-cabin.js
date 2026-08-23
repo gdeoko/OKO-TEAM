@@ -57,7 +57,7 @@ var SECT = TAU / 8;              /* сектор */
    кадра, и проём обязан быть шире её внешней кромки на всех
    устройствах, иначе из-под рамы покажется кромка обшивки. Числа
    там же и посчитаны - под телефон 390x932 и монитор 21:9. */
-var CON = (typeof window !== "undefined" && window.RC_CONSOLE) || null;
+var CON = (typeof window !== "undefined" && window.RC_PANEL) || null;
 var WIN_HALF = CON ? CON.WIN_HALF : 0.43;
 var WIN_Y0 = CON ? CON.WIN_Y0 : 0.17;   /* низ проёма */
 var WIN_Y1 = CON ? CON.WIN_Y1 : 3.06;   /* верх проёма */
@@ -690,9 +690,19 @@ function build(T, opts) {
     grp.add(mesh);
     return mesh;
   }
-  band(0, WIN_Y0, 0, TAU);
-  band(WIN_Y1, H_ROOM, 0, TAU);
-  band(WIN_Y0, WIN_Y1, gapA, TAU - gapLen);
+  /* Три пояса обшивки держим списком.
+
+     В полёте их надо гасить. Причина геометрическая: камера сидит в
+     носу, в двух с лишним метрах от оси, и по краям кадра обшивка
+     оказывается ближе к глазу, чем рама пульта. Она перекрывала раму
+     двумя синеватыми полосами вдоль левого и правого края экрана -
+     ровно там, где рама обязана доходить до кромки. Разглядывать
+     обшивку в полёте всё равно некому: перед пилотом рама и космос. */
+  var walls = [
+    band(0, WIN_Y0, 0, TAU),
+    band(WIN_Y1, H_ROOM, 0, TAU),
+    band(WIN_Y0, WIN_Y1, gapA, TAU - gapLen)
+  ];
 
   /* ── Настил и потолок ───────────────────────────────────── */
   var floor = new T.Mesh(
@@ -901,15 +911,15 @@ function build(T, opts) {
   var controlCaps = [], controlSockets = [], controlGlyphs = [];
   var cassettes = [];
   var pilotRig = new T.Group();
-  if (g.RC_CONSOLE) {
-    console3 = g.RC_CONSOLE.build(T, {
+  if (g.RC_PANEL) {
+    console3 = g.RC_PANEL.build(T, {
       width: innerWidth, height: innerHeight, tiny: tiny,
       fov: opts.fov || 72, ru: doc.documentElement.lang !== "en"
     });
     con.add(console3.group);
     controlCaps = console3.caps;
-    pilotRig = console3.keyRig;
-    if (console3.legends) controlGlyphs.push(console3.legends);
+    /* Приёмка меряет наклон и место пульта по этому узлу */
+    pilotRig = console3.deck || console3.group;
   }
   function syncControlGlyphs() {}
   var diodes = [];
@@ -1050,6 +1060,7 @@ function build(T, opts) {
     controlGlyphs: controlGlyphs,
     syncControlGlyphs: syncControlGlyphs,
     pilotRig: pilotRig,
+    walls: walls,
     R: R_WALL, H: H_ROOM, eye: EYE,
     winY: (WIN_Y0 + WIN_Y1) / 2,
     winHalf: WIN_HALF

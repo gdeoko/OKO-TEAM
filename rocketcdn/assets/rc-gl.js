@@ -167,9 +167,19 @@ g.RC_GL = {
   /* rc-real стоит сразу за библиотекой: он даёт остальным модулям
      физические материалы, окружение для отражений и плёнку. Без
      него они соберутся по-старому и просто останутся плоскими. */
+  /* gen/cab/meta.js это паспорт рубки: контур окна, поля рамы,
+     клавиши и карта глубины, снятые с фотореального кадра
+     инструментами в tools/. Он идёт файлом рядом с кодом, а не
+     отдельным запросом, чтобы рама строилась первым же кадром: при
+     подгрузке в сторону сцена успевала подняться раньше него и
+     собирала раму по запасным числам, а потом дёргалась. */
   var FILES = ["vendor/three.min.js", "rc-real.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js",
-               "rc-interior.js", "rc-planets.js", "rc-console.js", "rc-cabin.js",
+               "rc-interior.js", "rc-planets.js", "gen/cab/meta.js", "rc-panel.js", "rc-cabin.js",
                "rc-flight.js"];
+  /* Без чего объёмного слоя нет вовсе. Паспорт рубки сюда не входит:
+     без него рама соберётся по запасным числам, и это лучше, чем
+     страница без корабля. */
+  var SOFT = { "gen/cab/meta.js": 1 };
   var started = false;
 
   function loadAll() {
@@ -199,7 +209,14 @@ g.RC_GL = {
         sc.src = base + file + (file.indexOf("vendor/") === 0 ? "" : ver);
         sc.async = false;
         sc.onload = ready;
-        sc.onerror = function () { fail(file); };
+        sc.onerror = function () {
+          if (SOFT[file]) {
+            try { console.warn("rc-gl: нет паспорта рубки:", file); } catch (e2) {}
+            ready();
+            return;
+          }
+          fail(file);
+        };
         document.head.appendChild(sc);
       })(FILES[i]);
     }

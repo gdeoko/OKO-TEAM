@@ -3269,7 +3269,7 @@ function cabGeom() {
      окне, окно = экран с голограммами». Значит ни одно всплывающее
      окно не имеет права заехать на раму - ни на телефоне, ни на
      широком мониторе. */
-  var C = g.RC_CONSOLE;
+  var C = g.RC_PANEL;
   var last = C && C.last;
   /* Берём вписанный прямоугольник, а не габарит проёма: проём
      восьмиугольный, и по габариту всплывающее окно заезжало бы на
@@ -3892,9 +3892,14 @@ function physicalControlsFrame(ts, dt) {
         el3.classList.contains("live") || el3.getAttribute("aria-pressed") === "true" ||
         el3.getAttribute("aria-expanded") === "true";
     }
-    var home = cap3.userData.homeY || 0;
-    var goalY = home - (active ? 0.038 : 0);
-    cap3.position.y += (goalY - cap3.position.y) * Math.min(1, dt * (active ? 18 : 9));
+    /* Ход клавиши считает сам пульт.
+
+       Здесь стояло движение по вертикали на четыре сантиметра, и это
+       было верно, пока крышки лежали на горизонтальной полке. Теперь
+       они смотрят в лицо пилоту, и «вниз» для них - это от него, а не
+       к настилу. Направление знает геометрия, поэтому отсюда уходит
+       только сам признак нажатия. */
+    cap3.userData["нажата"] = active ? 1 : 0;
     if (cap3.material && cap3.material.emissive) {
       /* Свечение клавиши тянем интенсивностью, а не цветом. Лицо
          клавиши это снимок с собственным рисунком, и подмена цвета
@@ -3980,7 +3985,7 @@ function keyHintFrame() {
   if (!cap) return;
   if (keyHintFrame.idx !== over) {
     keyHintFrame.idx = over;
-    var names = g.RC_CONSOLE && cabin.console3 ? null : null;
+    var names = g.RC_PANEL && cabin.console3 ? null : null;
     void names;
     if (ui.keyhintName) ui.keyhintName.textContent = capName(over);
     if (ui.keyhintText) ui.keyhintText.textContent = cap.userData.hint || "";
@@ -3994,7 +3999,7 @@ function keyHintFrame() {
   v.project(W3.cam);
   var sx = (v.x * 0.5 + 0.5) * innerWidth;
   var sy = (-v.y * 0.5 + 0.5) * innerHeight;
-  var C = g.RC_CONSOLE, sf = C && C.last ? C.last.safe : null;
+  var C = g.RC_PANEL, sf = C && C.last ? C.last.safe : null;
   var lo = sf ? (1 + sf.l) / 2 * innerWidth : innerWidth * 0.14;
   var hi = sf ? (1 + sf.r) / 2 * innerWidth : innerWidth * 0.86;
   var bot = sf ? (1 - sf.b) / 2 * innerHeight : innerHeight * 0.80;
@@ -6071,7 +6076,7 @@ var cabin = null;
    рама пульта не сходилась по низу. С 0.86 проём закрывает кадр на
    любом устройстве. Значение общее с rc-console: оба модуля строят
    геометрию от одной точки проектирования. */
-var CAM_WIN = (g.RC_CONSOLE && g.RC_CONSOLE.CAM_WIN) || 0.86;
+var CAM_WIN = (g.RC_PANEL && g.RC_PANEL.CAM_WIN) || 0.86;
 
 function cabinBuild() {
   if (cabin || !W3 || !g.RC_CABIN) return cabin;
@@ -6146,12 +6151,24 @@ function cabinFlightMode() {
      Наклон рамы обнуляем: в полёте направление взгляда задаёт сама
      камера, и поправка, нужная при подъезде в салоне, здесь увела
      бы раму вверх. */
-  var C = g.RC_CONSOLE;
+  var C = g.RC_PANEL;
   if (cabin.console3 && cabin.console3.setPitch) cabin.console3.setPitch(0);
-  cabin.group.position.set(0, -(C ? C.EYE : cabin.eye),
-                           (C ? C.R - C.CAM_WIN : cabin.R - CAM_WIN));
+  /* Радиус остекления зовётся R_WALL. Здесь стояло C.R - имя из
+     прошлой рамы, которой больше нет. Оно молча давало undefined,
+     сдвиг по глубине становился NaN, и весь салон вылетал из
+     мира: рама была собрана, лежала в сцене, была видима, а на
+     экране её не было. Приёмка это и показала - мировое положение
+     оболочки NaN при исправной камере. */
+  var rWall = C && C.R_WALL ? C.R_WALL : (C && C.R ? C.R : cabin.R);
+  var camWin = C && C.CAM_WIN ? C.CAM_WIN : CAM_WIN;
+  cabin.group.position.set(0, -(C ? C.EYE : cabin.eye), rWall - camWin);
   cabin.group.quaternion.identity();
   cabin.group.scale.set(1, 1, 1);
+  /* Обшивку гасим: по краям кадра она ближе к глазу, чем рама, и
+     перекрывала её полосами вдоль левого и правого края. */
+  if (cabin.walls) {
+    for (var wi = 0; wi < cabin.walls.length; wi++) cabin.walls[wi].visible = false;
+  }
   W3.cam.add(cabin.group);
   cabin.group.updateMatrixWorld(true);
 }
@@ -6587,6 +6604,10 @@ g.RC_FLIGHT = {
     if (!DBG) return;
     F.p = Math.max(0, Math.min(1, v)); F.goal = null; F.orbit = null;
   },
+  /* Камера сцены наружу: приёмка проецирует ею кромки рамы и
+     проверяет, что рама вообще попала в кадр. Стоит за признаком в
+     адресе, как и остальные служебные ходы. */
+  _cam: function () { return DBG && W3 ? W3.cam : null; },
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);
