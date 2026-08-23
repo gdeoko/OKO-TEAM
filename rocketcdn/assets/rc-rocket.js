@@ -558,13 +558,13 @@ function buildGear(C, env) {
   var dampGeo = new T.CylinderGeometry(0.115, 0.135, 0.17, C.weak ? 6 : 10);
 
   var strutMat = new T.MeshStandardMaterial({
-    color: 0xC3D1DF, metalness: 0.86, roughness: 0.27, envMap: env, envMapIntensity: 1.5
+    color: 0x9AA4AF, metalness: 0.84, roughness: 0.33, envMap: env, envMapIntensity: 1.2
   });
   /* Шток намеренно зеркальнее всего остального: полированный
      хромированный цилиндр - самая узнаваемая деталь любой опоры, и
      блик на нём с ходом ноги ползёт, то есть выдаёт движение */
   var rodMat = new T.MeshStandardMaterial({
-    color: 0xB6C7D8, metalness: 1.0, roughness: 0.06, envMap: env, envMapIntensity: 2.6
+    color: 0xAEB6BE, metalness: 1.0, roughness: 0.10, envMap: env, envMapIntensity: 1.9
   });
   var footMat = new T.MeshStandardMaterial({
     color: 0x24384E, metalness: 0.55, roughness: 0.58, envMap: env, envMapIntensity: 0.9
@@ -1471,7 +1471,10 @@ function buildRocket(C, env) {
 
   /* Носовой конус потемнее, чтобы читался силуэт */
   var tipMat = new T.MeshStandardMaterial({
-    color: 0x2C6190, metalness: 0.80, roughness: 0.19, envMap: env, envMapIntensity: 2.0
+    /* Стабилизаторы: тот же гунметал, что корпус. Ярко-синий с
+       зеркальной шероховатостью 0.19 читался пластиковым крылом от
+       игрушечной ракеты - на телефоне это было заметнее всего. */
+    color: 0x3E4650, metalness: 0.55, roughness: 0.46, envMap: env, envMapIntensity: 1.1
   });
   var tipPts = [];
   tipPts.push(new T.Vector2(0.001, 1.95));
@@ -1520,7 +1523,7 @@ function buildRocket(C, env) {
      заметнее градиент от корня к кромке. Матовость поднимаем чуть выше
      зеркальной - лакированный металл, а не хром. */
   var finMat = new T.MeshStandardMaterial({
-    color: 0x2A72AA, metalness: 0.84, roughness: 0.28, envMap: env, envMapIntensity: 2.0
+    color: 0x44505C, metalness: 0.60, roughness: 0.44, envMap: env, envMapIntensity: 1.15
   });
   for (var f = 0; f < 3; f++) {
     var finPivot = new T.Group();
@@ -1535,7 +1538,11 @@ function buildRocket(C, env) {
   var winGroup = new T.Group();
   var ring = new T.Mesh(
     new T.TorusGeometry(0.235, 0.055, 10, 28),
-    new T.MeshStandardMaterial({ color: 0xE6EEF7, metalness: 1, roughness: 0.16, envMap: env })
+    /* Обтекатель носа: сталь, а не белое зеркало. Металличность в
+       единицу означает, что собственного тона у детали нет и она
+       показывает только отражение - на светлом фоне это выглядело
+       белым пластиком. */
+    new T.MeshStandardMaterial({ color: 0x8A939E, metalness: 0.78, roughness: 0.30, envMap: env })
   );
   var glass = new T.Mesh(
     new T.CircleGeometry(0.215, 28),

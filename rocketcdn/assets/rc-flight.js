@@ -6312,6 +6312,38 @@ function stageOff() {
 /* Ширина пульта на экране, в долях кадра. Считаем по габаритам
    пилотской стойки: восемь углов коробки проецируем в кадр и берём
    размах по горизонтали. */
+/* Кассеты панели: сколько их, какая доля кадра у каждой и попала
+   ли она в кадр вообще. */
+function cabinCassettes() {
+  if (!W3 || !cabin || !cabin.cassettes) return null;
+  var T = g.THREE, out = [];
+  if (!cabinCassettes.b) { cabinCassettes.b = new T.Box3(); cabinCassettes.v = new T.Vector3(); }
+  for (var i = 0; i < cabin.cassettes.length; i++) {
+    var m = cabin.cassettes[i];
+    try {
+      var box = cabinCassettes.b.setFromObject(m);
+      var v = cabinCassettes.v, lo = 1e9, hi = -1e9, loY = 1e9, hiY = -1e9, front = 0;
+      for (var k = 0; k < 8; k++) {
+        v.set(k & 1 ? box.max.x : box.min.x, k & 2 ? box.max.y : box.min.y, k & 4 ? box.max.z : box.min.z);
+        v.project(W3.cam);
+        if (v.z <= 1) front++;
+        if (v.x < lo) lo = v.x; if (v.x > hi) hi = v.x;
+        if (v.y < loY) loY = v.y; if (v.y > hiY) hiY = v.y;
+      }
+      var mm = m.material;
+      out.push({ имя: m.userData.id, вкадре: front > 0,
+                 картаЕсть: !!(mm && mm.map),
+                 картаГотова: !!(mm && mm.map && mm.map.image && mm.map.image.width),
+                 размерКарты: (mm && mm.map && mm.map.image && mm.map.image.width) ? (mm.map.image.width + 'x' + mm.map.image.height) : 'нет',
+                 мирY: +m.getWorldPosition(new T.Vector3()).y.toFixed(2),
+                 ширина: +(((hi - lo) / 2)).toFixed(3),
+                 высота: +(((hiY - loY) / 2)).toFixed(3),
+                 виден: m.visible });
+    } catch (e) {}
+  }
+  return out;
+}
+
 function consoleShare() {
   if (!W3 || !cabin || !cabin.pilotRig) return null;
   var T = g.THREE;
@@ -6374,6 +6406,24 @@ g.RC_FLIGHT = {
                 салоне она заметно меньше, чем в полёте, человек
                 видит подмену, даже когда геометрия честно одна. */
              пультДоля: consoleShare(),
+             /* Приёмка кассет: сколько собралось и видно ли их в
+                кадре. Пульт заказчик забраковал дважды, поэтому
+                величина измеряется, а не оценивается на глаз. */
+             кассеты: cabinCassettes(),
+             /* Геометрия кадра пульта: без этих чисел нельзя понять,
+                почему панель видна ребром - камера ниже неё или
+                наклон мал. */
+             ракурс: (function () {
+               if (!W3 || !cabin || !cabin.pilotRig) return null;
+               var T2 = g.THREE, wp = new T2.Vector3();
+               cabin.pilotRig.getWorldPosition(wp);
+               var dy = W3.cam.position.y - wp.y;
+               var dz = Math.abs(W3.cam.position.z - wp.z);
+               return { камераY: +W3.cam.position.y.toFixed(2), пультY: +wp.y.toFixed(2),
+                        превышение: +dy.toFixed(2), удаление: +dz.toFixed(2),
+                        уголСверху: +(Math.atan2(dy, dz) * 57.3).toFixed(1),
+                        наклонПульта: +(-cabin.pilotRig.rotation.x * 57.3).toFixed(1) };
+             })(),
              отметки: W3 && W3.at ? W3.at : null };
   },
   /* Отладочные рычаги для автопроверок: поставить корабль в нужную

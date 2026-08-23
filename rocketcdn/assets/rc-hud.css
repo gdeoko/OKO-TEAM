@@ -34,6 +34,17 @@ html.w3-on:not([data-theme="light"]) #kpi .kpi {
   padding: 2px;
 }
 
+/* ── Подложка приборных блоков ────────────────────────────────
+   Была полупрозрачной, и сквозь неё светила ракета: в первом экране
+   корабль проходит ровно по карточкам показателей, и заказчик увидел
+   «ракета поверх текста». Порядок слоёв при этом был правильным -
+   холст корабля лежит ниже вёрстки. Дело было в том, что фон самой
+   карточки прозрачен на две трети, а корабль в прологе намеренно не
+   притухает: он герой первого кадра.
+
+   Уплотняем подложку до непрозрачной. Приборный вид сохраняется:
+   его держат рамка, полосы развёртки, внутренний блик и свечение по
+   контуру, а не то, что сквозь прибор виден космос. */
 html.w3-on:not([data-theme="light"]) #kpi .kpi > div {
   position: relative;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .26);
@@ -44,7 +55,8 @@ html.w3-on:not([data-theme="light"]) #kpi .kpi > div {
       transparent 2px 4px),
     linear-gradient(180deg,
       rgba(var(--int-cyan-rgb, 66,178,220), .08),
-      rgba(var(--int-deep-rgb, 5,12,21), .42));
+      rgba(var(--int-deep-rgb, 5,12,21), .97)),
+    linear-gradient(180deg, rgb(var(--int-deep-rgb, 5,12,21)), rgb(var(--int-deep-rgb, 5,12,21)));
   box-shadow:
     inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .12),
     0 0 34px -18px rgba(var(--int-cyan-rgb, 66,178,220), .8);
@@ -62,7 +74,8 @@ html.w3-on:not([data-theme="light"]) #kpi .kpi > div:hover {
       transparent 2px 4px),
     linear-gradient(180deg,
       rgba(var(--int-cyan-rgb, 66,178,220), .13),
-      rgba(var(--int-deep-rgb, 5,12,21), .46));
+      rgba(var(--int-deep-rgb, 5,12,21), .97)),
+    linear-gradient(180deg, rgb(var(--int-deep-rgb, 5,12,21)), rgb(var(--int-deep-rgb, 5,12,21)));
   box-shadow:
     inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .18),
     0 0 44px -14px rgba(var(--int-cyan-rgb, 66,178,220), .95);
@@ -123,7 +136,8 @@ html.w3-on:not([data-theme="light"]) #route .viz-card {
       transparent 2px 4px),
     linear-gradient(180deg,
       rgba(var(--int-cyan-rgb, 66,178,220), .07),
-      rgba(var(--int-deep-rgb, 5,12,21), .5));
+      rgba(var(--int-deep-rgb, 5,12,21), .96)),
+    linear-gradient(180deg, rgb(var(--int-deep-rgb, 5,12,21)), rgb(var(--int-deep-rgb, 5,12,21)));
   box-shadow:
     inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .12),
     0 0 50px -22px rgba(var(--int-cyan-rgb, 66,178,220), .85);
