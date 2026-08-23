@@ -205,11 +205,16 @@ function regulation_generate(int $competitionId): string {
         // прописью, с пробелом перед ₽ и без — заменяем все написания.
         $price = (int) ($c['price'] ?? 0);
         if ($price > 0 && $price !== 500) {
+            // Разряды разделяем ПРОБЕЛОМ — «1 000 ₽», как принято в русских
+            // документах. Точка в этой роли читается как десятичная: «1.000» можно
+            // понять и как одну целую, а сумма в положении спорной быть не должна.
+            // Пропись в скобках снимает любые сомнения окончательно.
+            $num   = number_format($price, 0, ',', ' ');
             $words = reg_rub_words($price);
             $priceHits = 0;
             foreach (['500 ₽ (пятьсот рублей)', '500₽ (пятьсот рублей)'] as $old) {
                 $sep = mb_strpos($old, '₽') === 3 ? '' : ' ';
-                $new = $price . $sep . '₽ (' . $words . ')';
+                $new = $num . $sep . '₽ (' . $words . ')';
                 $xml = reg_para_text_replace($xml, '500', $old, $new, $priceHits);
             }
             $misc += $priceHits;

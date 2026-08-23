@@ -31,13 +31,20 @@ function regulation_pdf_cache_key(array $c): string {
     foreach (glob(BASE_PATH . '/docs/polozheniya/etalon_*.docx') ?: [] as $e) {
         $etalonTs = max($etalonTs, (int) @filemtime($e));
     }
+    /* ЦЕНА ТОЖЕ В КЛЮЧЕ.
+     *
+     * Её здесь не было, и оргвзнос в PDF застревал намертво. Владелец поднял
+     * «Мировые Таланты» с 500 до 1000 ₽, DOCX пересобрался с новой суммой — а PDF
+     * остался прежним, потому что ключ считался без цены. Участник скачивал со
+     * страницы конкурса именно PDF и читал там старые 500 ₽: на сайте одна сумма,
+     * в документе, по которому он платит, другая. */
     return md5(implode('|', [
         (string) ($c['name'] ?? ''), (string) ($c['end_date'] ?? ''),
         (string) ($c['results_date'] ?? ''), (string) ($c['type'] ?? ''),
-        (string) ($c['is_paid'] ?? ''),
+        (string) ($c['is_paid'] ?? ''), (string) ($c['price'] ?? ''),
         date('01.m.Y', strtotime($approve) ?: time()),
         'etalon:' . $etalonTs,
-        'soffice-v2-approve-date',
+        'soffice-v3-price',
     ]));
 }
 
