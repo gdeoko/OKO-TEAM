@@ -427,6 +427,12 @@ function buildUI() {
        обновляет: --rcf-warp (разгон), --rcf-glow и --rcf-gx/--rcf-gy
        (блик от светила). Никакого постпроцессинга. */
     '<div class="rcf-fx" aria-hidden="true"><i class="rcf-glare"></i></div>' +
+    /* Голограмма подсказки: наведи на клавишу и увидишь, что даст
+       нажатие. Это прямой ответ на замечание заказчика «хуй
+       поймёшь что за кнопки и зачем они»: подпись на клавише
+       называет команду, голограмма объясняет последствие. Живёт
+       она на стекле, а не на раме - окно у нас и есть экран. */
+    '<div class="rcf-keyhint" aria-hidden="true"><b></b><span></span></div>' +
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
       /* Приборная плита собрана одним узлом: слева счётчики, в
@@ -648,6 +654,9 @@ function buildUI() {
   ui.nav = w.querySelector(".rcf-nav");
   ui.bar = w.querySelector(".rcf-track i");
   ui.hint = w.querySelector(".rcf-hint");
+  ui.keyhint = w.querySelector(".rcf-keyhint");
+  ui.keyhintName = ui.keyhint ? ui.keyhint.querySelector("b") : null;
+  ui.keyhintText = ui.keyhint ? ui.keyhint.querySelector("span") : null;
   /* Скорость показана в двух местах: в отсеке хода и в ленте
      табло (на телефоне отсек ужимается). Пишем в обе. */
   ui.speedAll = w.querySelectorAll(".rcf-speed b");
@@ -3922,12 +3931,76 @@ function physicalControlsFrame(ts, dt) {
   }
   if (cabin.syncControlGlyphs) cabin.syncControlGlyphs();
   frameMeasure();
+  keyHintFrame();
   /* Живые приборы рамы: лестница тяги, дежурные диоды, дыхание
      световодов. Неподвижная рама читается декорацией, сколько её
      ни фактурь. */
   if (cabin.console3 && cabin.console3.update) {
     cabin.console3.update(ts, dt, { speed: Math.max(0, Math.min(1, (F.v || 0) / 1.6)) });
   }
+}
+
+/* Голограмма подсказки над клавишей.
+
+   Держим её на стекле и всегда ВНУТРИ проёма: заезжать на раму
+   всплывающему нельзя, это прямое требование заказчика. Если
+   подсказка не помещается над клавишей, она уходит вбок к
+   середине - но за кромку стекла не выходит никогда. */
+function keyHintFrame() {
+  if (!ui.keyhint || !cabin || !cabin.controlCaps) return;
+  var nodes = physicalControlsFrame.nodes;
+  if (!nodes) return;
+  var over = -1, i;
+  for (i = 0; i < nodes.length; i++) {
+    var el = nodes[i];
+    if (!el) continue;
+    try {
+      if (el.matches(":hover") || el.matches(":focus-visible")) { over = i; break; }
+    } catch (e) {}
+  }
+  if (over < 0) {
+    if (keyHintFrame.on) { ui.keyhint.classList.remove("on"); keyHintFrame.on = false; }
+    return;
+  }
+  var cap = cabin.controlCaps[over];
+  if (!cap) return;
+  if (keyHintFrame.idx !== over) {
+    keyHintFrame.idx = over;
+    var names = g.RC_CONSOLE && cabin.console3 ? null : null;
+    void names;
+    if (ui.keyhintName) ui.keyhintName.textContent = capName(over);
+    if (ui.keyhintText) ui.keyhintText.textContent = cap.userData.hint || "";
+  }
+  /* Кладём по проекции самой клавиши, а не по разметке: клавиша это
+     железо в мире, и подсказка обязана стоять над ней, а не над её
+     двойником из разметки. */
+  if (!keyHintFrame.v) keyHintFrame.v = new g.THREE.Vector3();
+  var v = keyHintFrame.v;
+  cap.getWorldPosition(v);
+  v.project(W3.cam);
+  var sx = (v.x * 0.5 + 0.5) * innerWidth;
+  var sy = (-v.y * 0.5 + 0.5) * innerHeight;
+  var C = g.RC_CONSOLE, sf = C && C.last ? C.last.safe : null;
+  var lo = sf ? (1 + sf.l) / 2 * innerWidth : innerWidth * 0.14;
+  var hi = sf ? (1 + sf.r) / 2 * innerWidth : innerWidth * 0.86;
+  var bot = sf ? (1 - sf.b) / 2 * innerHeight : innerHeight * 0.80;
+  var w2 = ui.keyhint.offsetWidth || 220, h2 = ui.keyhint.offsetHeight || 60;
+  var x = Math.max(lo + w2 / 2 + 6, Math.min(hi - w2 / 2 - 6, sx));
+  var y = Math.min(bot - h2 / 2 - 8, sy - h2 * 1.15);
+  ui.keyhint.style.setProperty("--kh-x", x.toFixed(1) + "px");
+  ui.keyhint.style.setProperty("--kh-y", y.toFixed(1) + "px");
+  if (!keyHintFrame.on) { ui.keyhint.classList.add("on"); keyHintFrame.on = true; }
+}
+
+/* Имя команды для подсказки. Берём из тех же списков, что печатаются
+   на лицах клавиш, иначе подпись и подсказка разойдутся. */
+function capName(i) {
+  var ru = doc.documentElement.lang !== "en";
+  var main = ru ? ["КУРС", "СКАН", "УЗЕЛ", "ЗАЛП", "АВТО", "СТОП", "ТЯГА"]
+                : ["COURSE", "SCAN", "NODE", "FIRE", "AUTO", "STOP", "THRUST"];
+  var aux = ru ? ["СЕТЬ", "БЛИЖЕ", "ДАЛЬШЕ", "КАДР", "СПРАВКА"]
+               : ["MAP", "ZOOM IN", "ZOOM OUT", "FRAME", "HELP"];
+  return i < 7 ? main[i] : (aux[i - 7] || "");
 }
 
 function frame(ts) {
@@ -6041,9 +6114,31 @@ function cabinBuild() {
 function cabinFlightMode() {
   if (!cabin || !W3 || cabin.flightMode) return;
   cabin.flightMode = true;
-  /* Preserve the physical cabin and bind it to the flight camera.
-     The old hand-off deleted it and revealed cockpit.webp. */
-  W3.cam.attach(cabin.group);
+  /* Подвешиваем салон к камере ЯВНЫМИ числами, а не сохранением
+     мирового положения.
+
+     Было attach: он оставляет салон там, где тот стоял в мире, и
+     дальше салон едет с камерой. Это верно ровно в одном случае -
+     если в момент привязки камера уже стоит в пилотском кресле.
+     При прямом запуске («Начать полёт» с сайта) она там не стоит:
+     кадр ещё не считался. Салон прилипал со случайным сдвигом, и в
+     игре рубки не было вовсе - тот самый разрыв между сайтом и
+     игрой, о котором говорил заказчик.
+
+     Здесь сдвиг задан из тех же констант, по которым построена
+     рама: глаз пилота на высоте EYE, до остекления CAM_WIN. Салон
+     садится ровно так, как задумано, при любом входе.
+
+     Наклон рамы обнуляем: в полёте направление взгляда задаёт сама
+     камера, и поправка, нужная при подъезде в салоне, здесь увела
+     бы раму вверх. */
+  var C = g.RC_CONSOLE;
+  if (cabin.console3 && cabin.console3.setPitch) cabin.console3.setPitch(0);
+  cabin.group.position.set(0, -(C ? C.EYE : cabin.eye),
+                           (C ? C.R - C.CAM_WIN : cabin.R - CAM_WIN));
+  cabin.group.quaternion.identity();
+  cabin.group.scale.set(1, 1, 1);
+  W3.cam.add(cabin.group);
   cabin.group.updateMatrixWorld(true);
 }
 
@@ -6389,6 +6484,13 @@ function frameMeasure() {
   var T = g.THREE;
   if (!frameMeasure.v) frameMeasure.v = new T.Vector3();
   var C3 = cabin.console3, pr = C3.probe, v = frameMeasure.v, out = [], i;
+  /* Матрицы обновляем сами: замер идёт до отрисовки кадра, и в
+     полёте, где салон подвешен к камере, они ещё не пересчитаны -
+     тогда все четыре точки садились в середину кадра и замер
+     показывал ровные пятьдесят процентов. */
+  W3.cam.updateMatrixWorld();
+  W3.cam.matrixWorldInverse.copy(W3.cam.matrixWorld).invert();
+  C3.inner3.updateWorldMatrix(true, false);
   for (i = 0; i < pr.length; i++) {
     v.copy(pr[i]);
     C3.inner3.localToWorld(v);

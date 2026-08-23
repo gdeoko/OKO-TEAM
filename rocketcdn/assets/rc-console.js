@@ -797,8 +797,8 @@ function build(T, o) {
     var geo = capUv(T, capGeo(T, hw * 2, hh * 2, capThick, Math.min(hw, hh) * 0.20), cell);
     var mat = new T.MeshStandardMaterial({
       map: atlasTex, emissiveMap: atlasTex,
-      emissive: new T.Color(0xffffff), emissiveIntensity: 0.12,
-      roughness: 0.44, metalness: 0.5, envMapIntensity: 0.8
+      emissive: new T.Color(0xffffff), emissiveIntensity: 0.055,
+      roughness: 0.46, metalness: 0.58, envMapIntensity: 0.7
     });
     var mesh = new T.Mesh(geo, mat);
     var w = proj.at(T, sx, sy, d);
@@ -809,7 +809,7 @@ function build(T, o) {
     mesh.userData.hit = Math.max(40, Math.max(wPx, hPx) * 1.05);
     mesh.userData.ph = caps.length * 0.64;
     mesh.userData.hint = hint;
-    mesh.userData.baseEmissive = 0.12;
+    mesh.userData.baseEmissive = 0.055;
     keyRig.add(mesh);
     caps.push(mesh);
     return mesh;
@@ -835,13 +835,13 @@ function build(T, o) {
      приборной доски свободен под блок команд, стойки несут
      служебные тумблеры. */
   var L = portrait ? {
-    row: 0.885, x0: 0.180, x1: 0.820, capH: 0.062,
-    aux: [[0.066, 0.330], [0.066, 0.420], [0.934, 0.300], [0.934, 0.390], [0.934, 0.480]],
-    auxH: 0.036
+    row: 0.876, x0: 0.215, x1: 0.785, capH: 0.048,
+    aux: [[0.066, 0.330], [0.066, 0.415], [0.934, 0.300], [0.934, 0.385], [0.934, 0.470]],
+    auxH: 0.030
   } : {
-    row: 0.893, x0: 0.320, x1: 0.680, capH: 0.115,
-    aux: [[0.068, 0.395], [0.068, 0.520], [0.932, 0.355], [0.932, 0.475], [0.932, 0.595]],
-    auxH: 0.066
+    row: 0.888, x0: 0.348, x1: 0.652, capH: 0.088,
+    aux: [[0.068, 0.400], [0.068, 0.510], [0.932, 0.365], [0.932, 0.475], [0.932, 0.585]],
+    auxH: 0.054
   };
   var capH = L.capH * H;
   var keyPx = capH / CAP_RATIO;
@@ -1012,6 +1012,69 @@ function build(T, o) {
   mod(MOD.speed, drawSpeed, 6);
   api.mods = mods;
 
+  /* ── Голограмма марки над проектором ────────────────────
+     На приборной доске стоят два проекционных гнезда с хромовым
+     ободом, и оба светят вверх пустым конусом. Заказчик заметил
+     это сразу: «справа нету голограммного логотипа». Ставим марку
+     корабля в правый конус - она собрана лучом, поэтому висит
+     строчной развёрткой, чуть дрожит и медленно дышит. */
+  var holo = null;
+  (function () {
+    var HL = portrait ? [0.800, 0.690, 0.165] : [0.842, 0.688, 0.090];
+    var hx = fx(HL[0]), hy = fy(HL[1]);
+    var d = depthAt(hx, hy);
+    var wPx = HL[2] * W, hPx = wPx * (320 / 343);
+    var hw = ndcOfPx(wPx / 2, "x") * proj.th * d;
+    var hh = ndcOfPx(hPx / 2, "y") * proj.tv * d;
+    var cw = 256, chh = Math.round(256 * 320 / 343);
+    var c = cnv(cw, chh), cx2 = c.getContext("2d");
+    var tex2 = new T.CanvasTexture(c);
+    if (T.SRGBColorSpace) tex2.colorSpace = T.SRGBColorSpace;
+    var geo = new T.PlaneGeometry(hw * 2, hh * 2);
+    geo.rotateX(-Math.PI / 2);
+    var mat = new T.MeshBasicMaterial({
+      map: tex2, transparent: true, opacity: 0.0,
+      blending: T.AdditiveBlending, depthWrite: false, fog: false
+    });
+    holo = new T.Mesh(geo, mat);
+    var w2 = proj.at(T, hx, hy, d);
+    holo.position.set(w2.x, w2.z + 0.030, -w2.y);
+    holo.renderOrder = 8;
+    keyRig.add(holo);
+
+    var mark = new Image();
+    mark.onload = function () { holo.userData.img = mark; };
+    mark.src = "assets/mark.webp";
+
+    holo.userData.draw = function (t) {
+      var x2 = cx2;
+      x2.clearRect(0, 0, cw, chh);
+      var img2 = holo.userData.img;
+      if (!img2) return;
+      /* Марку берём по альфе и перекрашиваем в холодный: голограмма
+         не бывает цветной печатью, она светится одним лучом. */
+      x2.save();
+      x2.globalCompositeOperation = "source-over";
+      x2.drawImage(img2, 0, 0, cw, chh);
+      x2.globalCompositeOperation = "source-in";
+      var gr = x2.createLinearGradient(0, 0, 0, chh);
+      gr.addColorStop(0, "rgba(150,236,255,.95)");
+      gr.addColorStop(0.55, "rgba(90,205,245,.80)");
+      gr.addColorStop(1, "rgba(60,170,225,.62)");
+      x2.fillStyle = gr;
+      x2.fillRect(0, 0, cw, chh);
+      /* Строчная развёртка и бегущий срез: изображение собрано
+         лучом, а не напечатано */
+      x2.globalCompositeOperation = "destination-out";
+      for (var yy = (t * 26) % 4; yy < chh; yy += 4) x2.fillRect(0, yy, cw, 1.2);
+      var cut = ((t * 0.42) % 1.6) * chh - chh * 0.3;
+      x2.fillRect(0, cut, cw, chh * 0.035);
+      x2.restore();
+      tex2.needsUpdate = true;
+    };
+  })();
+  api.holo = holo;
+
   /* ── Свет рамы ──────────────────────────────────────────
      Два коротких источника за отбортовкой. Дальность жёстко
      ограничена: пульт обязан светиться сам, но подкрашивать Землю
@@ -1104,6 +1167,16 @@ function build(T, o) {
        читается наклейкой, лёгкое колебание - работающим железом. */
     matFrame.emissiveIntensity = 0.78 + Math.sin(t * 0.6) * 0.035;
     var speed = tele && typeof tele.speed === "number" ? tele.speed : 0;
+    if (holo && holo.userData.draw) {
+      holo.userData.draw(t);
+      /* Дрожь и дыхание: ровно горящая голограмма читается
+         наклейкой, а не лучом */
+      holo.material.opacity = 0.80 + Math.sin(t * 1.7) * 0.08 +
+        (Math.sin(t * 21.3) > 0.94 ? -0.22 : 0);
+      holo.position.z = holo.userData.z0 !== undefined
+        ? holo.userData.z0 + Math.sin(t * 0.9) * 0.004
+        : (holo.userData.z0 = holo.position.z, holo.position.z);
+    }
     for (var mi = 0; mi < mods.length; mi++) {
       var M = mods[mi];
       if (ts - M.last < M.every) continue;

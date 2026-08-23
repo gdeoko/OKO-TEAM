@@ -383,16 +383,32 @@ function frame() {
      Картинка выводится по object-fit: cover, поэтому доли окна из
      файла надо пересчитать в доли кадра с учётом обрезки. */
   var tall = innerHeight > innerWidth;
-  /* Границы остекления внутри файла кабины, доли картинки. Замерены
-     по её альфа-каналу: за этими краями идёт корпус. */
-  var iw = tall ? 768 : 1344, ih = tall ? 1344 : 768;
-  var fx0 = tall ? 0.150 : 0.075, fx1 = tall ? 0.850 : 0.925;
-  var fy0 = tall ? 0.125 : 0.095, fy1 = tall ? 0.790 : 0.755;
-  var sCov = Math.max(innerWidth / iw, innerHeight / ih);
-  var dw = iw * sCov, dh = ih * sCov;
-  var ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
-  var x0 = (ox + fx0 * dw) / innerWidth, x1 = (ox + fx1 * dw) / innerWidth;
-  var y0 = (oy + fy0 * dh) / innerHeight, y1 = (oy + fy1 * dh) / innerHeight;
+  var x0, x1, y0, y1;
+  var CON = g.RC_CONSOLE, last = CON && CON.last;
+  if (last && last.safe) {
+    /* Границы берём у настоящей рамы.
+
+       Раньше они считались по долям снятой плоской картинки кабины
+       (768x1344), и после перехода на трёхмерную рубку разошлись:
+       голограмма стала шире проёма и полезла на стойки. Заказчик
+       написал коротко: «окна выходят за рамки накладываются на эту
+       рамку». Теперь окно у голограммы и окно у рамы это буквально
+       одно окно - вписанный прямоугольник проёма. */
+    var sf = last.safe;
+    x0 = (1 + sf.l) / 2; x1 = (1 + sf.r) / 2;
+    y0 = (1 - sf.t) / 2; y1 = (1 - sf.b) / 2;
+  } else {
+    /* Запасной путь: доли старой плоской кабины, если трёхмерная
+       рубка не поднялась. */
+    var iw = tall ? 768 : 1344, ih = tall ? 1344 : 768;
+    var fx0 = tall ? 0.150 : 0.075, fx1 = tall ? 0.850 : 0.925;
+    var fy0 = tall ? 0.125 : 0.095, fy1 = tall ? 0.790 : 0.755;
+    var sCov = Math.max(innerWidth / iw, innerHeight / ih);
+    var dw = iw * sCov, dh = ih * sCov;
+    var ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
+    x0 = (ox + fx0 * dw) / innerWidth; x1 = (ox + fx1 * dw) / innerWidth;
+    y0 = (oy + fy0 * dh) / innerHeight; y1 = (oy + fy1 * dh) / innerHeight;
+  }
   /* Остекление шире кадра - берём его видимую часть: иначе
      голограмма центруется по окну, которого на экране уже нет */
   if (x0 < 0.03) x0 = 0.03;

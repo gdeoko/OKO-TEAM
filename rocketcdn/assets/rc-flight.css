@@ -4089,3 +4089,67 @@ html.rc-deep-inside .rcf-fab {
     font-size: 8px !important;
   }
 }
+
+/* ── Голограмма подсказки над клавишей ────────────────────────
+   Заказчик сформулировал требование дословно: «чтобы человек
+   понимал если он сюда нажмёт то появится это». Подпись на клавише
+   называет команду, а эта голограмма объясняет последствие.
+
+   Живёт она на стекле и никогда не заезжает на раму: положение
+   считает rc-flight по проекции самой клавиши и зажимает во
+   вписанный прямоугольник проёма. Отсюда только внешний вид. */
+.rc-flight .rcf-keyhint {
+  position: fixed;
+  left: 0; top: 0;
+  transform: translate(-50%, -50%) translate(var(--kh-x, 50vw), var(--kh-y, 60vh)) scale(.94);
+  z-index: 26;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .16s ease, transform .16s cubic-bezier(.22,.9,.3,1);
+  max-width: min(320px, 62vw);
+  padding: 9px 13px 10px;
+  border: 1px solid rgba(126, 220, 255, .42);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(10,28,42,.86), rgba(6,18,30,.80));
+  box-shadow: 0 0 0 1px rgba(126,220,255,.10) inset,
+              0 10px 34px rgba(0, 0, 0, .55),
+              0 0 22px rgba(79, 200, 240, .16);
+  color: #d6eefb;
+  font: 500 12.5px/1.35 var(--rcf-font, 'Golos Text', system-ui, sans-serif);
+  text-align: left;
+}
+.rc-flight .rcf-keyhint.on {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate(var(--kh-x, 50vw), var(--kh-y, 60vh)) scale(1);
+}
+/* Строчная развёртка: голограмма собрана лучом, а не напечатана */
+.rc-flight .rcf-keyhint::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(126, 220, 255, .055) 0 1px,
+    rgba(126, 220, 255, 0) 1px 3px);
+  mix-blend-mode: screen;
+}
+.rc-flight .rcf-keyhint b {
+  display: block;
+  margin-bottom: 3px;
+  color: #9fe6ff;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(79, 200, 240, .55);
+}
+.rc-flight .rcf-keyhint span {
+  display: block;
+  color: rgba(214, 238, 251, .88);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-flight .rcf-keyhint { transition: opacity .12s linear; }
+}
