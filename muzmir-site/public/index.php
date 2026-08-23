@@ -233,6 +233,17 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
                 header('Content-Type: application/pdf');
                 header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
                 header('Content-Length: ' . (string) strlen($pdfData));
+                // ПОЛОЖЕНИЕ НЕ КЭШИРУЕМ.
+                //
+                // Адрес у документа постоянный, а содержимое меняется: оргвзнос,
+                // сроки приёма, пункты правил. Браузер и промежуточные прокси
+                // держали прежний файл, и владелец, открыв ссылку после смены цены
+                // с 500 на 1000 ₽, снова видел 500 — при том, что сервер отдавал
+                // уже новый документ. Участник в этот момент читает сумму, по
+                // которой платит, поэтому свежесть здесь важнее экономии трафика.
+                header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+                header('Pragma: no-cache');
+                header('ETag: "' . md5($pdfData) . '"');
                 echo $pdfData;
                 exit;
             }
