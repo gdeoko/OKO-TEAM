@@ -1168,10 +1168,21 @@ function nl_box_gap_sec(string $box = ''): int {
 
         $cap = nl_service_cap_today();
         if ($cap <= 0) return 30;
-        $hFrom  = (int) setting('nl_window_hour_from', '9');
-        $hTo    = (int) setting('nl_window_hour_to',  '18');
-        $window = max(1, ($hTo - $hFrom) * 3600);
-        // Девять десятых окна: последний час оставляем в запас на повторы и заминки.
+        $hFrom = (int) setting('nl_window_hour_from', '9');
+        $hTo   = (int) setting('nl_window_hour_to',  '18');
+
+        // Считаем по ОСТАТКУ дня, а не по полному окну.
+        //
+        // Норма дневная, но день редко начинается в свой первый час: рассылку
+        // включают в обед, крон восстанавливается после простоя. Если делить
+        // норму на полное окно, то к вечеру половина дневной нормы остаётся
+        // неотправленной — темп был рассчитан на время, которого уже не было.
+        // Делим на то, что реально осталось до закрытия окна.
+        $left = strtotime(date('Y-m-d ') . sprintf('%02d:00:00', $hTo)) - time();
+        $full = max(1, ($hTo - $hFrom) * 3600);
+        $window = ($left > 600 && $left < $full) ? $left : $full;
+
+        // Девять десятых: хвост оставляем в запас на повторы и заминки.
         return max(2, min(120, (int) floor($window * 0.9 / $cap)));
     }
     return max(5, (int) setting('nl_box_gap_sec', '150'));
