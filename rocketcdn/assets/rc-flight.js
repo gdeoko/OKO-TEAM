@@ -3281,7 +3281,15 @@ function cabGeom() {
   var ww = (sf.r - sf.l) / 2 - pad * 2;
   var wy = (1 - sf.t) / 2 + pad;
   var wh = (sf.t - sf.b) / 2 - pad * 2;
-  var dy = (1 + ib) / 2;
+  /* Доля кадра сверху вниз, а не доля NDC.
+
+     Тут стоял (1 + ib) / 2, и это переворачивало плиту: нижняя
+     кромка проёма лежит в NDC на минус 0.6, что в долях кадра
+     сверху даёт 0.8, а формула давала 0.2. Приборная плита
+     разметки садилась на пятую часть сверху и растягивалась во всю
+     ширину поперёк окна - та самая лента, которая шла по космосу и
+     заезжала на стойки. */
+  var dy = (1 - ib) / 2;
   var dh = 1 - dy;
   var S = ui.wrap.style;
   S.setProperty("--cab-wx", (wx * 100).toFixed(2) + "%");
@@ -3292,6 +3300,12 @@ function cabGeom() {
   S.setProperty("--cab-dy", (dy * 100).toFixed(2) + "%");
   S.setProperty("--cab-dw", "100%");
   S.setProperty("--cab-dh", (dh * 100).toFixed(2) + "%");
+  /* Контур проёма готовой строкой: слои, растянутые на весь кадр
+     (метки тел, титры), режутся по нему и не выходят на раму. */
+  if (last && last.clip) {
+    S.setProperty("--cab-clip", last.clip);
+    doc.documentElement.style.setProperty("--cab-clip", last.clip);
+  }
 }
 
 /* ── Кадр ────────────────────────────────────────────────────ы */

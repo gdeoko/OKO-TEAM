@@ -1146,7 +1146,28 @@ function build(T, o) {
     safe.t = midY + (safe.t - midY) * 0.965;
   }
   api.safe = safe;
-  RC.last = { inner: inner, safe: safe };
+  RC.last = { inner: inner, safe: safe, clip: null };
+
+  /* Контур проёма в долях кадра, готовой строкой для clip-path.
+
+     Прямоугольник тут не годится: проём восьмиугольный, и по
+     габариту голограмма всё равно ложится на срезанные углы рамы.
+     Отдаём сам контур, слегка поджатый внутрь, - тогда ни одна
+     метка, ни одна надпись физически не может выйти на железо. */
+  api.clipPath = function (inset) {
+    var k = 1 - (inset === undefined ? 0.012 : inset);
+    var cxm = (inner.l + inner.r) / 2, cym = (inner.b + inner.t) / 2;
+    var parts = [];
+    for (var ci = 0; ci < Rin.length; ci++) {
+      var px2 = cxm + (Rin[ci].x - cxm) * k;
+      var py2 = cym + (Rin[ci].y - cym) * k;
+      parts.push(((px2 + 1) / 2 * 100).toFixed(2) + "% " +
+                 ((1 - py2) / 2 * 100).toFixed(2) + "%");
+    }
+    return "polygon(" + parts.join(",") + ")";
+  };
+
+  RC.last.clip = api.clipPath();
 
   api.windowRect = function () {
     return { x: (safe.l + 1) / 2, y: (1 - safe.t) / 2,

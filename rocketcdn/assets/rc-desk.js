@@ -56,6 +56,7 @@ var state = "menu";
 var swapT = 0, glitchT = 0;
 var raf = null, kPub = -1, onPub = -1;
 var homeLead = null, homeCall = null;
+var lastBoxH = 0;
 
 function t(key, fallback) {
   try {
@@ -186,6 +187,24 @@ function fillMenu() {
   body.innerHTML = h;
   body.hidden = false;
   slot.hidden = true;
+  trimQs();
+}
+
+/* Список подрезаем по факту, а не по формуле.
+
+   Раньше число вопросов задавалось наперёд: семь на мониторе,
+   четыре на телефоне. С новой рамой проём стал меньше, и нижний
+   вопрос обрезался кромкой голограммы - обрубок строки читается
+   браком, а не «прокрутите ниже». Меряем настоящую высоту и
+   снимаем лишние строки, пока список не встанет целиком. */
+function trimQs() {
+  var ul = body && body.querySelector(".dsk-qs");
+  if (!ul) return;
+  var guard = 0;
+  while (ul.scrollHeight > ul.clientHeight + 2 &&
+         ul.children.length > 2 && guard++ < 16) {
+    ul.removeChild(ul.lastElementChild);
+  }
 }
 
 function fillAnswer(i) {
@@ -424,6 +443,17 @@ function frame() {
   V(layer, "--cab-y0", ((y0 + py) * 100).toFixed(2) + "%");
   V(layer, "--cab-win-w", ((x1 - x0 - px * 2) * 100).toFixed(2) + "%");
   V(layer, "--cab-win-h", ((y1 - y0 - py * 2) * 100).toFixed(2) + "%");
+  /* Список подрезается заново, когда меняется высота окна.
+
+     Первый раз меню собирается ещё до того, как рама опубликовала
+     свои границы: коробка тогда шире, и подрезка ничего не снимает.
+     Когда границы приходят, коробка ужимается, и нижняя строка
+     снова обрезается кромкой. Ловим изменение высоты и подрезаем. */
+  var boxH = Math.round((y1 - y0 - py * 2) * innerHeight);
+  if (Math.abs(boxH - (lastBoxH || 0)) > 4) {
+    lastBoxH = boxH;
+    if (state === "menu") trimQs();
+  }
 
   var o = on ? 1 : 0;
   if (o !== onPub) {
