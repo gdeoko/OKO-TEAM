@@ -173,7 +173,33 @@ function vk_cb_ack_then_process(string $type): void {
             return;
         }
         // Рабочее время: если оставался «нерабочий» вопрос — снимаем флаг, ответим сейчас.
-        if ((int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) === 1) {
+        // НОЧНОЙ ВОПРОС НЕ ТЕРЯЕМ.
+        //
+        // Раньше флаг просто снимался, и бот отвечал только на утреннее сообщение.
+        // Если человек написал вопрос ночью, а утром добавил «ну что там?» — на
+        // ночной вопрос не отвечал никто и никогда: крон уже не видел флага, а бот
+        // отвечал на последнюю реплику. Вопрос пропадал.
+        //
+        // Теперь при снятии флага собираем всё, что человек написал с момента
+        // ночного шаблона, и отвечаем на это вместе с новым сообщением.
+        $offhoursTail = '';
+        $__d = chat_dialog_get($sessionKey);
+        if ((int) ($__d['pending_offhours'] ?? 0) === 1) {
+            $since = trim((string) ($__d['offhours_at'] ?? ''));
+            if ($since !== '') {
+                try {
+                    $prev = all("SELECT text FROM chat_messages
+                                  WHERE session_key=? AND role='user' AND TRIM(COALESCE(text,''))<>''
+                                    AND created_at >= ? ORDER BY id ASC LIMIT 10", [$sessionKey, $since]);
+                    $q = [];
+                    foreach ($prev as $p) {
+                        $t = trim((string) $p['text']);
+                        // Текущее сообщение в подборку не берём — оно и так в $text.
+                        if ($t !== '' && $t !== trim($text)) $q[] = $t;
+                    }
+                    if ($q) $offhoursTail = implode(' ', $q);
+                } catch (\Throwable $e) { $offhoursTail = ''; }
+            }
             chat_dialog_set($sessionKey, ['pending_offhours' => 0]);
         }
 
@@ -207,7 +233,10 @@ function vk_cb_ack_then_process(string $type): void {
         // как только он подтвердит личность почтой или телефоном из заявки.
         $GLOBALS['chat_vk_peer'] = $peer;
         $ctx  = $vkUid ? chat_user_context($vkUid) : '';
-        $hint = ($text !== '') ? chat_context_from_dialogue($sessionKey, $text) : '';
+        // Вопросы, заданные ночью, идут в «мозг» вместе с утренним сообщением —
+        // иначе ответ пришёл бы только на последнюю реплику, см. выше.
+        $askText = $offhoursTail !== '' ? trim($offhoursTail . ' ' . $text) : $text;
+        $hint = ($askText !== '') ? chat_context_from_dialogue($sessionKey, $askText) : '';
         $GLOBALS['chat_user_ctx'] = $hint !== '' ? trim($ctx . "\n" . $hint) : $ctx;
         $closing = false; $short = false;
 
@@ -226,7 +255,10 @@ function vk_cb_ack_then_process(string $type): void {
             $reply = chat_repeat_reply($rep, $name);
             $short = true;
         } else {
-            $core  = chat_brain_reply($text, $sessionKey, null, 'vk');
+            // $askText = ночные вопросы + текущее сообщение (см. выше). Обычно он
+            // равен $text; отличается только в первое утреннее сообщение после
+            // ночного обращения — тогда бот отвечает и на то, что спрашивали ночью.
+            $core  = chat_brain_reply($askText, $sessionKey, null, 'vk');
             // Задача 1 (ВК): вопрос про результат/диплом + несколько действующих заявок и
             // номер не назван → пронумерованный список заявок (клавиатур нет — цифрами/номерами).
             if ($vkUid) {
