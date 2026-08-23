@@ -199,10 +199,24 @@ function fillMenu() {
    снимаем лишние строки, пока список не встанет целиком. */
 function trimQs() {
   var ul = body && body.querySelector(".dsk-qs");
-  if (!ul) return;
+  if (!ul || !qCache) return;
+  /* Список СОБИРАЕТСЯ заново, а не только подрезается.
+
+     Прошлый заход умел одно - снимать лишние строки. Стоило разок
+     померить список в момент, когда коробка была меньше настоящей
+     (голограмма собирается раньше, чем рама публикует границы), и
+     он навсегда оставался в две строки, даже когда места хватало на
+     пять. Поэтому сначала кладём все вопросы, потом снимаем ровно
+     столько, сколько не влезло. */
+  var h = "";
+  for (var i = 0; i < qCache.length; i++) {
+    h += '<li><button type="button" class="dsk-q" data-q="' + i + '">' +
+      '<span>' + esc(qCache[i].q) + '</span></button></li>';
+  }
+  ul.innerHTML = h;
   var guard = 0;
   while (ul.scrollHeight > ul.clientHeight + 2 &&
-         ul.children.length > 2 && guard++ < 16) {
+         ul.children.length > 1 && guard++ < 16) {
     ul.removeChild(ul.lastElementChild);
   }
 }

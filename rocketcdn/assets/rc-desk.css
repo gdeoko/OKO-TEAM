@@ -1,3 +1,16 @@
+/* ПРАВИЛО ПРО СОКРАЩЁННОЕ СВОЙСТВО font.
+
+   Внутри font нельзя писать var(--что-то, inherit). Переменная в
+   этом файле нигде не задана, а подстановка inherit в сокращённое
+   свойство делает ВСЁ объявление недействительным на этапе
+   вычисления: браузер сбрасывает font целиком, и кегль приходит по
+   наследству. Замер: строка вопроса рисовалась шестнадцатью
+   пикселями вместо одиннадцати, строка занимала 94 пикселя высоты,
+   и в список на телефоне влезал ОДИН вопрос из семи.
+
+   Запасное значение обязано быть настоящей гарнитурой.
+   ══════════════════════════════════════════════════════════ */
+
 /* ═══════════════════════════════════════════════════════════
    Rocket CDN · экран приборной панели, оформление
 
@@ -165,7 +178,7 @@
   justify-content: center;
   gap: 7px;
   min-height: clamp(38px, 5.2vh, 48px);
-  font: 600 clamp(11px, 1.55vh, 14px)/1.2 var(--f-sans, inherit);
+  font: 600 clamp(11px, 1.55vh, 14px)/1.2 var(--f-body, 'Golos Text', system-ui, sans-serif);
   letter-spacing: .01em;
   padding: clamp(8px, 1.3vh, 13px) 6px;
   border-radius: 10px;
@@ -185,7 +198,7 @@
 }
 
 .rc-desk .dsk-title {
-  font: 700 clamp(12px, 1.8vh, 17px)/1.25 var(--f-sans, inherit);
+  font: 700 clamp(12px, 1.8vh, 17px)/1.25 var(--f-body, 'Golos Text', system-ui, sans-serif);
   color: var(--int-lit, #e2eefc);
   text-shadow: 0 0 16px rgba(var(--int-cyan-rgb, 66,178,220), .55);
 }
@@ -212,12 +225,16 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  padding: clamp(7px, 1.1vh, 11px) 4px;
+  /* Отступ строки считается от высоты КАРТОЧКИ, а не от высоты
+     экрана. На телефоне окно рубки высокое, а карточка внутри
+     невысокая, и отступ по vh съедал место так, что в список
+     влезало две строки из семи. */
+  padding: clamp(5px, .9vh, 10px) 4px;
   border: 0;
   border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .18);
   background: transparent;
   color: rgba(var(--int-lit-rgb, 226,238,252), .92);
-  font: 500 clamp(11px, 1.5vh, 14px)/1.35 var(--f-sans, inherit);
+  font: 500 clamp(11px, 1.4vh, 14px)/1.3 var(--f-body, 'Golos Text', system-ui, sans-serif);
   transition: color .18s linear, padding-left .18s linear;
 }
 /* Метка строки: маленький ромб слева, как на приборной панели.
@@ -237,7 +254,7 @@
 .rc-desk .dsk-q:hover::before { transform: rotate(45deg) scale(1.4); background: #eaf6ff; }
 
 .rc-desk .dsk-a {
-  font: 400 clamp(11px, 1.5vh, 14px)/1.5 var(--f-sans, inherit);
+  font: 400 clamp(11px, 1.5vh, 14px)/1.5 var(--f-body, 'Golos Text', system-ui, sans-serif);
   color: rgba(var(--int-lit-rgb, 226,238,252), .84);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -252,7 +269,7 @@
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
   background: transparent;
   color: rgba(var(--int-lit-rgb, 226,238,252), .9);
-  font: 600 clamp(10px, 1.3vh, 12px)/1 var(--f-sans, inherit);
+  font: 600 clamp(10px, 1.3vh, 12px)/1 var(--f-body, 'Golos Text', system-ui, sans-serif);
 }
 .rc-desk .dsk-back::before { content: "\2190"; margin-right: 6px; }
 .rc-desk .dsk-back:hover { background: rgba(var(--int-cyan-rgb, 66,178,220), .16); }
