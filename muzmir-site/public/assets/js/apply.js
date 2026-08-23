@@ -463,9 +463,19 @@
     // Одна сорвавшаяся проверка не должна пропускать закрытую ссылку дальше:
     // пробуем второй раз, и только потом отдаём решение серверу при отправке.
     var attempt = 0;
+    // НОМИНАЦИЮ ШЛЁМ ВМЕСТЕ СО ССЫЛКОЙ.
+    //
+    // По изобразительному искусству и фотографии конкурсная работа — снимок, а не
+    // видеозапись. Сервер это умеет учитывать, но только если знает номинацию;
+    // без неё живая проверка отвергала фотографию работы прямо в форме, и
+    // художница не могла пройти дальше шага «Номер».
+    var nomEl = $('#nomination') || $('[name="nomination"]');
+    var nom = nomEl ? (nomEl.value || '').trim() : '';
     var ask = function () {
       attempt++;
-      return fetch(CFG.videoCheck + '?url=' + encodeURIComponent(v), { headers: { 'X-Requested-With': 'fetch' }, signal: ctrl ? ctrl.signal : undefined })
+      return fetch(CFG.videoCheck + '?url=' + encodeURIComponent(v)
+                   + (nom ? '&nomination=' + encodeURIComponent(nom) : ''),
+                   { headers: { 'X-Requested-With': 'fetch' }, signal: ctrl ? ctrl.signal : undefined })
         .then(function (r) { return r.json(); })
         .catch(function (e) {
           if (attempt < 2) return new Promise(function (res) { setTimeout(res, 700); }).then(ask);
