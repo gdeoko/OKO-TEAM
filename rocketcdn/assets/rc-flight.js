@@ -1805,10 +1805,32 @@ function buildWorld() {
   var FOV0 = baseViewFov(innerWidth, innerHeight);
   var cam = new T.PerspectiveCamera(FOV0, 1, 0.1, 9000);
 
-  var amb = new T.AmbientLight(0x3a4a68, 0.85);
+  /* Рассеянный свет придавлен с 0.85 до 0.16.
+
+     Ровный свет со всех сторон - это отсутствие света. Он поднимает
+     теневые стороны до уровня освещённых, и объём исчезает: планета
+     показывает материки там, где у неё ночь, металл теряет блик,
+     углы перестают темнеть. Именно поэтому кадр читался макетом.
+
+     Заполнение теперь даёт окружение (scene.environment): оно
+     цветное и направленное, то есть тень от Земли синеватая, а от
+     бортовых ламп тёплая, как в жизни. */
+  var amb = new T.AmbientLight(0x3a4a68, 0.34);
   scene.add(amb);
+  /* Светило стояло за спиной у камеры, и Земля из окна была всегда
+     дневная - зелёно-синий шар, который заказчик справедливо назвал
+     школьным глобусом. На всех присланных референсах солнце за
+     планетой: к нам обращена ночная сторона с огнями городов, по
+     краю идёт тонкий раскалённый ободок атмосферы, а кабина тонет
+     в тени и держится на своих лампах. Это же и физически честнее:
+     корабль на ночной стороне орбиты.
+
+     Уводим солнце за Землю и вбок, чтобы получить не затмение, а
+     серп: часть диска остаётся в свету, терминатор проходит по
+     кадру. По этому же вектору каждый кадр считаются и огни
+     городов, и закатный поясок (см. earthSunFrame). */
   var sun = new T.DirectionalLight(0xfff2dc, 1.6);
-  sun.position.set(2600, 1000, 1750);
+  sun.position.set(-1450, 980, -2600);
   scene.add(sun);
 
   var L = new T.TextureLoader();
@@ -1968,21 +1990,66 @@ function buildWorld() {
   var earth = new T.Group();
   var eBody = new T.Mesh(
     new T.SphereGeometry(60, tiny ? 48 : 64, tiny ? 36 : 48),
-    new T.MeshPhongMaterial({
-      /* Карты в webp, а не в jpg с png: те же снимки весят на
-         полтора мегабайта меньше, и вход в игру на телефоне
-         перестаёт ждать загрузку двух мегабайт текстур. */
-      map: tex("assets/space/earth-day.webp"),
-      emissiveMap: tex("assets/space/earth-night.webp"),
-      emissive: new T.Color(0xffd9a0), emissiveIntensity: 1.05,
-      specular: new T.Color(0x223344), shininess: 14
-    })
+    (function () {
+      /* Земля переехала с Phong на Standard, и вместе с этим
+         починилась ночная сторона.
+
+         Огни городов лежали в карте свечения с постоянной силой,
+         то есть горели и там, где сейчас полдень. На кадре это
+         читалось как мутная плёнка поверх океанов, а ночной
+         стороны не было вовсе: планета выглядела школьным
+         глобусом. На всех девяти референсах заказчика Земля
+         показана ровно наоборот - тёмный шар с золотой сеткой
+         огней по побережьям и тонкий голубой ободок атмосферы.
+
+         Чиним по-честному: подмешиваем в шейдер множитель по
+         углу между нормалью и направлением на солнце. Где солнце
+         светит - огней нет, на терминаторе они разгораются,
+         на ночной стороне горят в полную силу. Плюс вода теперь
+         бликует, а суша нет: шероховатость берём из той же
+         дневной карты, где океан тёмный.
+
+         Карты в webp: те же снимки весят на полтора мегабайта
+         меньше, и вход в игру на телефоне не ждёт загрузку двух
+         мегабайт текстур. */
+      var dayMap = tex("assets/space/earth-day.webp");
+      var m = new T.MeshStandardMaterial({
+        map: dayMap,
+        roughnessMap: dayMap,
+        roughness: 1.0,
+        metalness: 0.0,
+        emissiveMap: tex("assets/space/earth-night.webp"),
+        emissive: new T.Color(0xffc978),
+        emissiveIntensity: 2.35
+      });
+      m.onBeforeCompile = function (sh) {
+        sh.uniforms.uSunDir = { value: new T.Vector3(0.82, 0.28, 0.50).normalize() };
+        m.userData.sh = sh;
+        sh.vertexShader = sh.vertexShader
+          .replace("#include <common>", "#include <common>\nvarying vec3 vSunN;")
+          .replace("#include <begin_vertex>",
+            "#include <begin_vertex>\nvSunN = normalize(mat3(modelMatrix) * normal);");
+        sh.fragmentShader = sh.fragmentShader
+          .replace("#include <common>",
+            "#include <common>\nvarying vec3 vSunN;\nuniform vec3 uSunDir;")
+          /* Океан гладкий, суша матовая: на дневной карте вода
+             тёмная, поэтому яркость и есть шероховатость */
+          .replace("#include <roughnessmap_fragment>",
+            "#include <roughnessmap_fragment>\n" +
+            "float landLum = dot(texture2D(roughnessMap, vRoughnessMapUv).rgb, vec3(0.299,0.587,0.114));\n" +
+            "roughnessFactor = mix(0.18, 0.92, smoothstep(0.10, 0.42, landLum));")
+          /* Огни городов только там, где ночь */
+          .replace("#include <emissivemap_fragment>",
+            "#include <emissivemap_fragment>\n" +
+            "float sunDot = dot(normalize(vSunN), uSunDir);\n" +
+            "totalEmissiveRadiance *= smoothstep(0.14, -0.22, sunDot);");
+      };
+      return m;
+    })()
   );
   earth.add(eBody);
   /* Атмосфера: подсвеченный ободок изнутри наружу */
-  var atm = new T.Mesh(
-    new T.SphereGeometry(61.9, 48, 36),
-    new T.ShaderMaterial({
+  var atmMat = new T.ShaderMaterial({
       transparent: true, side: T.BackSide, depthWrite: false,
       /* У Земли рассеяние заметнее всего: плотная атмосфера, и на
          терминаторе идёт настоящий закатный поясок. Считаем так же,
@@ -2004,8 +2071,11 @@ function buildWorld() {
         "  col = mix(col, vec3(1.0,0.60,0.34), term * 0.7);" +
         "  gl_FragColor = vec4(col, rim * (0.2 + lit * 0.8));" +
         "}"
-    })
-  );
+    });
+  /* Ободок атмосферы отдельным материалом: его направление на
+     солнце обновляется каждый кадр вместе с ночной стороной, иначе
+     закатный поясок стоит на месте, пока планета поворачивается. */
+  var atm = new T.Mesh(new T.SphereGeometry(61.9, 48, 36), atmMat);
   earth.add(atm);
   var clouds = new T.Mesh(
     new T.SphereGeometry(61.2, tiny ? 48 : 64, tiny ? 36 : 48),
@@ -2930,15 +3000,37 @@ function buildWorld() {
   var wantFx = !reduced &&
     (parseInt(root.getAttribute("data-degrade") || "0", 10) || 0) < 2;
 
+  /* ── Слой реализма ────────────────────────────────────────
+     Сцена получает окружение: панораму с солнцем, Землёй и полосой
+     Галактики. Без неё металлу нечего отражать, и любая обшивка
+     выглядит залитой цветом. Композер поверх даёт то, чем кадр
+     кино отличается от вывода отладчика: кривую, свечение ламп,
+     виньетку и зерно. На слабом устройстве свечение отпадает само,
+     мир при этом остаётся - выключать 3D ради скорости нельзя. */
+  var post = null;
+  if (g.RC_REAL) {
+    try {
+      var envTex = g.RC_REAL.env(T, r, true);
+      if (envTex) { scene.environment = envTex; }
+      /* Экспозиция чуть ниже единицы и глубокая виньетка: на
+         референсах кадр тёмный, свет собран в пятна, а не размазан
+         по всей площади. Ровно освещённая сцена читается макетом. */
+      post = g.RC_REAL.post(T, r, {
+        exposure: 1.14, bloom: 0.66, bloomLow: 0.40,
+        threshold: 0.66, vignette: 1.22, grain: 0.020, aberration: 2.2
+      });
+    } catch (eReal) { post = null; }
+  }
+
   return {
-    fx: wantFx,
+    fx: wantFx, post: post,
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     bodies: bodies,
     milky: milky, gal2: gal2, gal3: gal3,
     comet: comet, sat: sat, belt1: belt1, belt2: belt2, rockField: rockField,
     galacticVolume: galacticVolume, dust: dust, wash: wash, washN: washN,
     nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb, mob: mob,
-    earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
+    earth: earth, atmMat: atmMat, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     /* Позиция светила: по ней бортовые панели набирают заряд */
     sunPos: sunGlow.position, corIn: corIn, corOut: corOut,
@@ -3109,6 +3201,7 @@ function size() {
   deckSkinSoon();
   var w = innerWidth, h = innerHeight;
   W3.r.setSize(w, h, false);
+  if (W3.post) { try { W3.post.setSize(w, h); } catch (e) {} }
   W3.cam.aspect = w / h;
   W3.fov0 = baseViewFov(w, h);
   W3.cam.fov = W3.fov0;
@@ -4563,7 +4656,37 @@ function frame(ts) {
   }
 
   physicalControlsFrame(ts, dt);
-  w3.r.render(w3.scene, w3.cam);
+  earthSunFrame(w3);
+  if (w3.post) w3.post.render(w3.scene, w3.cam, ts);
+  else w3.r.render(w3.scene, w3.cam);
+}
+
+/* ── Куда светит солнце на Земле ─────────────────────────────
+   Ночная сторона обязана совпадать с настоящим светилом сцены, а
+   не с числом, вбитым в шейдер. Иначе корабль летит вокруг
+   планеты, тени на корпусе едут, а огни городов стоят на месте -
+   и весь кадр разваливается.
+
+   Берём вектор от планеты к солнцу в мировых координатах и отдаём
+   его шейдеру. Тот же вектор красит ободок атмосферы, поэтому
+   закатный поясок ложится ровно на терминатор. */
+function earthSunFrame(w3) {
+  if (!w3 || !w3.earth || !w3.sunPos) return;
+  var body = w3.earth.children && w3.earth.children[0];
+  var mat = body && body.material;
+  var sh = mat && mat.userData && mat.userData.sh;
+  if (!sh && !w3.atmMat) return;
+  if (!earthSunFrame.v) {
+    earthSunFrame.v = new g.THREE.Vector3();
+    earthSunFrame.e = new g.THREE.Vector3();
+  }
+  var v = earthSunFrame.v, e = earthSunFrame.e;
+  w3.earth.getWorldPosition(e);
+  v.copy(w3.sunPos).sub(e).normalize();
+  if (sh && sh.uniforms.uSunDir) sh.uniforms.uSunDir.value.copy(v);
+  if (w3.atmMat && w3.atmMat.uniforms && w3.atmMat.uniforms.uSun) {
+    w3.atmMat.uniforms.uSun.value.copy(v);
+  }
 }
 
 /* ── Вход и выход ────────────────────────────────────────────ы */
@@ -5210,7 +5333,10 @@ function shoot() {
   if (!W3 || !F.open) return;
   var T = g.THREE;
   try {
-    W3.r.render(W3.scene, W3.cam);
+    /* Снимок собираем тем же путём, что и кадр на экране: иначе
+       человек сохранит картинку без плёнки и не узнает её. */
+    if (W3.post) W3.post.render(W3.scene, W3.cam, performance.now());
+    else W3.r.render(W3.scene, W3.cam);
     var src = W3.r.domElement;
     var W = src.width, H = src.height;
     var c = doc.createElement("canvas");
@@ -5927,10 +6053,24 @@ function stageCam(dt) {
   var drift = Math.sin(F.stageT / 5.5) * 0.02 * calm;
   var bob = Math.sin(F.stageT / 3.2) * 0.012 * calm;
 
-  /* Положение: от середины помещения к финальной точке */
+  /* Положение: от места у входа к рабочей точке пилота.
+
+     Замер приёмки: пульт занимал 13,6% ширины кадра в салоне и
+     43,8% в игре. Втрое - это уже не «та же панель под другим
+     углом», это две разные вещи, и заказчик прочитал финал как
+     подмену: сначала схематичный пультик из точек, потом внезапно
+     настоящая консоль.
+
+     Панель одна и была, вопрос был только в расстоянии. Начинаем
+     подъезд не из середины помещения, а с половины пути: панель
+     сразу читается той самой, а ход вперёд остаётся - он и должен
+     ощущаться шагом к рабочему месту, а не перелётом через зал. */
+  /* Камера стоит там, где стояла: заказчик держит кадр за космосом,
+     панель живёт у нижнего края. Подъезд ведёт сценарий, а не мы. */
+  var START = 0;
   var eyeY = C.center.y + C.eye + bob;
   C.vTmp.set(C.center.x, eyeY, C.center.z);
-  C.vTmp.lerp(C.p0, ek);
+  C.vTmp.lerp(C.p0, START + (1 - START) * ek);
   w3.cam.position.copy(C.vTmp);
 
   /* Поворот: пока идёт оборот - свой азимут, к финалу сходимся к
@@ -6161,15 +6301,39 @@ function stageOff() {
   inertPage(false);
 }
 
+/* Ширина пульта на экране, в долях кадра. Считаем по габаритам
+   пилотской стойки: восемь углов коробки проецируем в кадр и берём
+   размах по горизонтали. */
+function consoleShare() {
+  if (!W3 || !cabin || !cabin.pilotRig) return null;
+  var T = g.THREE;
+  if (!consoleShare.box) {
+    consoleShare.box = new T.Box3();
+    consoleShare.v = new T.Vector3();
+  }
+  try {
+    var box = consoleShare.box.setFromObject(cabin.pilotRig);
+    if (!isFinite(box.min.x) || box.isEmpty()) return null;
+    var v = consoleShare.v, lo = 1e9, hi = -1e9;
+    for (var i = 0; i < 8; i++) {
+      v.set(i & 1 ? box.max.x : box.min.x,
+            i & 2 ? box.max.y : box.min.y,
+            i & 4 ? box.max.z : box.min.z);
+      v.project(W3.cam);
+      if (v.z > 1) continue;              /* за спиной камеры */
+      if (v.x < lo) lo = v.x;
+      if (v.x > hi) hi = v.x;
+    }
+    if (hi < lo) return 0;
+    return +(((hi - lo) / 2)).toFixed(3);
+  } catch (e) { return null; }
+}
+
 g.RC_FLIGHT = {
   open: open, close: close, stage: stage,
-  state: function () {
-    return {
-      сцена: !!F.stage, подъезд: +(F.stageK || 0).toFixed(2),
-      салон: !!cabin, оборот: F.stage ? +((F.stageYaw || 0) * 57.3).toFixed(0) : null,
-      полёт: !!F.open && !F.stage
-    };
-  },
+  /* Раньше здесь стоял второй ключ state. В объекте побеждает
+     последний, поэтому этот молчал, и приёмка читала не то, что
+     думала. Сведено в один ниже. */
   /* Служебные ходы приёмки: поставить корабль в любую точку маршрута
      и вызвать финал, не проходя игру целиком. Стоят за признаком в
      адресе (?rcdbg=1) - в обычной сборке молчат. */
@@ -6195,6 +6359,13 @@ g.RC_FLIGHT = {
   state: function () {
     return { открыт: F.open, собран: F.built, p: +F.p.toFixed(3), v: +F.v.toFixed(5),
              вселенная: uniIdx, цель: F.goalId || F.goalName || null,
+             сцена: !!F.stage, подъезд: +(F.stageK || 0).toFixed(2), салон: !!cabin,
+             /* Доля ширины кадра, которую занимает пульт. Заказчик
+                потребовал одну и ту же панель на сайте и в игре,
+                поэтому величина стала предметом приёмки: если в
+                салоне она заметно меньше, чем в полёте, человек
+                видит подмену, даже когда геометрия честно одна. */
+             пультДоля: consoleShare(),
              отметки: W3 && W3.at ? W3.at : null };
   },
   /* Отладочные рычаги для автопроверок: поставить корабль в нужную

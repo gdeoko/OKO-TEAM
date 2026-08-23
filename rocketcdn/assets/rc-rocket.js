@@ -128,26 +128,47 @@ function hullTexture() {
   c.width = W; c.height = H;
   var x = c.getContext("2d");
 
-  /* Светлый металл с продольным градиентом */
+  /* Обшивка: обработанный гунметал, а не белая эмаль.
+
+     Так было не всегда. Раньше здесь лежал почти белый градиент, и
+     ракета читалась игрушкой из магазина: белый глянец плюс синяя
+     полоса. Разбор по референсам заказчика показал причину. Для
+     металла цвет в текстуре - это не «какой он на вид», а сколько
+     света он отражает; у стали это средне-тёмный серо-синий.
+     Поставь туда белый - и получишь зеркало, залитое белилами,
+     сколько ни правь шероховатость. Тон опустили до стали, а всё
+     остальное (блики, объём, отражения) теперь делает свет.
+
+     Фирменные кольца и знаки не трогаем: они и должны быть яркими
+     пятнами на тёмном корпусе, как на брендбуке. */
   var base = x.createLinearGradient(0, 0, W, 0);
-  base.addColorStop(0.00, "#C9D6E4");
-  base.addColorStop(0.22, "#F4F8FC");
-  base.addColorStop(0.50, "#DDE6F0");
-  base.addColorStop(0.78, "#F7FAFD");
-  base.addColorStop(1.00, "#C9D6E4");
+  base.addColorStop(0.00, "#3A3F46");
+  base.addColorStop(0.22, "#5C636C");
+  base.addColorStop(0.50, "#464C54");
+  base.addColorStop(0.78, "#626972");
+  base.addColorStop(1.00, "#3A3F46");
   x.fillStyle = base;
   x.fillRect(0, 0, W, H);
 
-  /* Мелкая фактура металла */
+  /* Шлифовка: борозды вдоль корпуса. Именно она отличает
+     обработанный металл от заливки одним тоном. */
   for (var i = 0; i < 3400; i++) {
-    x.globalAlpha = 0.025 + Math.random() * 0.045;
-    x.fillStyle = Math.random() > 0.5 ? "#FFFFFF" : "#A9BACD";
+    x.globalAlpha = 0.030 + Math.random() * 0.055;
+    x.fillStyle = Math.random() > 0.5 ? "#7C8B9C" : "#1A222C";
     x.fillRect(Math.random() * W, Math.random() * H, 1 + Math.random() * 4, 1);
+  }
+  /* Следы работы: потёртости у стыков и осевшая копоть снизу */
+  for (i = 0; i < 130; i++) {
+    x.globalAlpha = 0.05 + Math.random() * 0.10;
+    x.fillStyle = Math.random() > 0.45 ? "#0E141C" : "#8A99AB";
+    var wx = Math.random() * W, wy = Math.random() * H;
+    var ww = 6 + Math.random() * 48, wh = 2 + Math.random() * 10;
+    x.fillRect(wx, wy, ww, wh);
   }
   x.globalAlpha = 1;
 
   /* Продольные швы обшивки */
-  x.strokeStyle = "rgba(120,142,168,.30)";
+  x.strokeStyle = "rgba(12,18,28,.55)";
   x.lineWidth = 2;
   for (i = 0; i < 8; i++) {
     var px = (i / 8) * W;
@@ -1346,16 +1367,28 @@ function buildRocket(C, env) {
      карта только меньше: её считают один раз при сборке, на кадр
      это не влияет совсем. */
   var bumpS = C.tiny ? 0 : (C.mobile ? 320 : 512);
+  /* Физика обшивки. Здесь стояла металличность в единицу, и это
+     сбивало весь корпус.
+
+     У чистого металла собственного цвета нет: то, что мы называем
+     его цветом, целиком приходит из отражения. Значит корпус
+     показывал не сталь, а окружение - отсюда ровный синий налив по
+     всей длине, сколько ни правь текстуру. Плюс карта металличности
+     была назначена картой шероховатости: затёртые места становились
+     самыми металлическими, то есть ровно наоборот.
+
+     Обшивка корабля - крашеный металл, а не зеркало. Металличность
+     опускаем до трети: тогда работает и собственный тон покрытия,
+     и отражение, а шероховатость решает, где поверхность блестит,
+     а где съедена работой. */
   var hullMat = new T.MeshStandardMaterial({
     map: hullTexture(),
     roughnessMap: hullRough(C.weak ? 256 : 512),
-    metalnessMap: null,
-    metalness: 1.0,
+    metalness: 0.38,
     roughness: 1.0,
     envMap: env,
-    envMapIntensity: 1.75
+    envMapIntensity: 1.05
   });
-  hullMat.metalnessMap = hullMat.roughnessMap;
   if (bumpS) {
     hullMat.normalMap = bumpToNormal(hullBump(bumpS), 2.6);
     hullMat.normalScale = new T.Vector2(0.85, 0.85);
@@ -1710,11 +1743,14 @@ function doorTexture(right) {
      так обе половинки гарантированно совпадают по стыку */
   if (right) { x.translate(W, 0); x.scale(-1, 1); }
 
+  /* Створка шлюза - тот же металл, что корпус: одна конструкция
+     не может быть из двух разных материалов. Тон держим на полтона
+     светлее обшивки, чтобы проём читался как проём. */
   var base = x.createLinearGradient(0, 0, W, 0);
-  base.addColorStop(0.00, "#AFC0D2");
-  base.addColorStop(0.30, "#EDF3F9");
-  base.addColorStop(0.62, "#D7E1EC");
-  base.addColorStop(1.00, "#9FB2C6");
+  base.addColorStop(0.00, "#323E4D");
+  base.addColorStop(0.30, "#546375");
+  base.addColorStop(0.62, "#3E4B5B");
+  base.addColorStop(1.00, "#2A3542");
   x.fillStyle = base;
   x.fillRect(0, 0, W, H);
 

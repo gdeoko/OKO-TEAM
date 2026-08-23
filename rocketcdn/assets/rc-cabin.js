@@ -800,6 +800,12 @@ function build(T, opts) {
      to 1344 px on a 390 px phone. Keep the same detailed geometry but
      at an 82 cm physical width. Portrait and landscape use different
      eye framing, so only the mounting height compensates for FOV. */
+  /* Размер пульта - договорённость с заказчиком, а не вкус:
+     панель занимает край кадра, остальное отдано космосу. Пробовали
+     поднять её до метра, чтобы «читалась настоящей» - заказчик
+     отклонил сразу: «не более 10% по краям, 90% обзор космоса».
+     Дешёвый вид лечится материалом и подсветкой, а не габаритом,
+     поэтому размер вернулся, а работа ушла в поверхность. */
   pilotRig.scale.set(0.22, 0.25, 0.25);
   var pilotY = 1.02;
   if (tiny) pilotY = Math.max(0.68, Math.min(0.87, 0.16 + aspect * 1.17));
@@ -1024,26 +1030,31 @@ function build(T, opts) {
      направленный - бесконечный, он подкрашивал Землю и планеты
      всего мира, и владелец видел «нереалистичный космос». Этот
      гаснет в десяти метрах - ровно размер салона. */
-  var lamp = new T.PointLight(0xcfe9f5, 2.4, 10, 1.5);
+  /* Свет в салоне. На референсах кадр тёмный, но приборы и стены
+     у ламп читаются: свет собран в пятна, а не размазан. Общий
+     рассеянный в сцене придавлен намеренно, поэтому вся яркость
+     салона держится на этих источниках - их подняли, чтобы панель
+     не тонула. */
+  var lamp = new T.PointLight(0xcfe9f5, 3.4, 12, 1.4);
   lamp.position.set(0, 2.3, -(R_WALL - 0.7));
   grp.add(lamp);
   /* Заполняющий держит дальнюю половину помещения: без него за
      спиной выходит чёрная дыра вместо комнаты */
-  var hemi = new T.HemisphereLight(0x3a5f80, 0x0c1826, 1.45);
+  var hemi = new T.HemisphereLight(0x3a5f80, 0x0c1826, 1.05);
   grp.add(hemi);
   /* Плафон под потолком - настоящий источник, а не только пятно:
      по нему на стенах читается спад яркости сверху вниз, и цилиндр
      перестаёт быть ровно закрашенной трубой */
-  var ceilL = new T.PointLight(0xbfe6f7, 1.35, 9.5, 1.4);
+  var ceilL = new T.PointLight(0xbfe6f7, 1.85, 10.5, 1.3);
   ceilL.position.set(0, H_ROOM - 0.5, 0);
   grp.add(ceilL);
-  var warmL = new T.PointLight(0xa974f5, 1.7, 9, 1.6);
+  var warmL = new T.PointLight(0xffb066, 2.1, 9, 1.5);
   warmL.position.set(1.6, 2.6, 1.9);
   grp.add(warmL);
   /* Четыре источника вместо пяти: подсветка пульта повторяла
      потолочную, а каждый источник умножает стоимость шейдера
      всех материалов сцены разом */
-  var deskLight = new T.PointLight(0x5fc8ef, 1.5, 7);
+  var deskLight = new T.PointLight(0x7fd6f5, 2.6, 7);
   deskLight.position.set(0, 1.42, -(R_WALL - 1.1));
   grp.add(deskLight);
 
@@ -1062,6 +1073,42 @@ function build(T, opts) {
         if (old && old.dispose) old.dispose();
       }
     });
+  }
+
+  /* ── Салон переходит на физические материалы ──────────────
+     Здесь раньше стоял Phong. В комментарии выше он был назван
+     полноценным PBR, и это была ошибка: Phong знает только цвет
+     и блик, поэтому обшивка выглядела крашеным пластиком. Standard
+     считает металличность, шероховатость и отражение окружения,
+     а карты снимают равномерность: появляются шлифовка, царапины
+     и осевшая пыль. Формы не трогаем, меняется только ответ
+     поверхности на свет.
+
+     Светящиеся элементы (Basic) остаются как есть: это лампы и
+     голограммы, физика им не нужна, а свечение им даёт композер. */
+  if (g.RC_REAL) {
+    try {
+      g.RC_REAL.upgradeTree(T, grp, function (mesh, mat) {
+        var c = mat.color ? mat.color.getHex() : 0;
+        /* Остекление: гладкое, почти зеркальное, слабый рельеф */
+        if (mat.transparent && mat.opacity < 0.9) {
+          return { kind: "glass", roughness: 0.08, metalness: 0.10, normalScale: 0.12, envMapIntensity: 1.5, repeat: 1 };
+        }
+        /* Пол и палуба: матовые, затёртые ногами */
+        if (c === 0xa8bccf || mesh === pilotDeck) {
+          return { kind: "deck", roughness: 0.62, metalness: 0.42, normalScale: 0.75, envMapIntensity: 0.7, repeat: 5 };
+        }
+        /* Рама окна и несущий металл: полированный, ловит блики */
+        if (c === style.steel || c === 0x4d5f72) {
+          return { kind: "hull", roughness: 0.29, metalness: 0.92, normalScale: 0.5, envMapIntensity: 1.6, repeat: 3 };
+        }
+        /* Клавиши и корпуса приборов: полуматовый крашеный металл */
+        if (c === style.panel || c === 0x0f1e2e || c === 0x0e1c2a) {
+          return { kind: "panel", roughness: 0.55, metalness: 0.66, normalScale: 0.62, envMapIntensity: 0.9, repeat: 4 };
+        }
+        return { kind: "hull", roughness: 0.44, metalness: 0.78, normalScale: 0.55, envMapIntensity: 1.15, repeat: 3 };
+      });
+    } catch (eUp) {}
   }
 
   return {
