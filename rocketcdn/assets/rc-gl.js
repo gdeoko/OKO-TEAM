@@ -168,7 +168,8 @@ g.RC_GL = {
      физические материалы, окружение для отражений и плёнку. Без
      него они соберутся по-старому и просто останутся плоскими. */
   var FILES = ["vendor/three.min.js", "rc-real.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js",
-               "rc-interior.js", "rc-planets.js", "rc-cabin.js", "rc-flight.js"];
+               "rc-interior.js", "rc-planets.js", "rc-console.js", "rc-cabin.js",
+               "rc-flight.js"];
   var started = false;
 
   function loadAll() {

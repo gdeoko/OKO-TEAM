@@ -53,13 +53,14 @@ var SECT = TAU / 8;              /* сектор */
    больше: при 0.62 края соседних экранов заезжали на остекление -
    владелец увидел это первым пунктом, «экраны заходят поверх окон».
    Теперь между кромкой окна и краем экрана остаётся зазор. */
-var WIN_HALF = 0.40;
-/* Tall panoramic flight glass: the earlier 1.84 m slit left a third
-   of portrait screens as an empty dark wall. The 2.70 m opening is
-   the same physical window on every device and gives the pilot the
-   intended film-frame view without replacing the cabin model. */
-var WIN_Y0 = 0.48;               /* низ проёма */
-var WIN_Y1 = 3.18;               /* верх проёма */
+/* Размер проёма задаёт rc-console: рама пульта считается по долям
+   кадра, и проём обязан быть шире её внешней кромки на всех
+   устройствах, иначе из-под рамы покажется кромка обшивки. Числа
+   там же и посчитаны - под телефон 390x932 и монитор 21:9. */
+var CON = (typeof window !== "undefined" && window.RC_CONSOLE) || null;
+var WIN_HALF = CON ? CON.WIN_HALF : 0.43;
+var WIN_Y0 = CON ? CON.WIN_Y0 : 0.17;   /* низ проёма */
+var WIN_Y1 = CON ? CON.WIN_Y1 : 3.06;   /* верх проёма */
 
 /* Азимут sector i лежит на i * 45 градусов. Ноль - окно. */
 function azOf(i) { return i * SECT; }
@@ -827,35 +828,12 @@ function build(T, opts) {
     screens.push({ obj: face, th: th, tex: tex, i: i });
   }
 
-  /* ── Рама остекления ────────────────────────────────────── */
-  var frameMat = new T.MeshPhongMaterial({
-    color: 0x27394b, side: T.DoubleSide
-  });
-  function arc(y, h, mat) {
-    var s = new T.Mesh(
-      new T.CylinderGeometry(R_WALL - 0.03, R_WALL - 0.03, h, tiny ? 10 : 16, 1, true,
-        gapA - gapLen, gapLen),
-      mat || frameMat
-    );
-    s.position.y = y;
-    grp.add(s);
-    return s;
-  }
-  arc(WIN_Y0 - 0.06, 0.13);
-  arc(WIN_Y1 + 0.06, 0.13);
-  arc(WIN_Y0 + 0.015, 0.02, new T.MeshBasicMaterial({ color: 0x5fc8ef, transparent: true, opacity: 0.6, side: T.BackSide, fog: false }));
-  arc(WIN_Y1 - 0.015, 0.02, new T.MeshBasicMaterial({ color: 0x5fc8ef, transparent: true, opacity: 0.6, side: T.BackSide, fog: false }));
-
-  /* Косяки по краям проёма */
-  var jambGeo = new T.BoxGeometry(0.16, WIN_Y1 - WIN_Y0 + 0.24, 0.24);
-  for (i = 0; i < 2; i++) {
-    var jm = new T.Mesh(jambGeo, frameMat);
-    var jth = i ? WIN_HALF : -WIN_HALF;
-    jm.position.copy(at(jth, R_WALL - 0.08, (WIN_Y0 + WIN_Y1) / 2, T));
-    jm.rotation.y = -jth;
-    grp.add(jm);
-  }
-
+  /* ── Рама остекления ──────────────────────────────────────
+     Собственной рамы у проёма больше нет: её роль взяла на себя
+     рама пульта (rc-console). Она идёт по кругу - балка сверху,
+     стойки по бокам, приборная плита снизу, косынки в углах - и
+     закрывает кромку обшивки со всех сторон. Двойная окантовка
+     тут только спорила бы сама с собой и ловила z-конфликт. */
   /* ── Обстановка помещения ───────────────────────────────
      Поручень, кабельные трассы и вентиляция стоят не ради красоты.
      Ближняя дуга поручня проходит перед объективом и едет заметно
@@ -908,322 +886,33 @@ function build(T, opts) {
     grp.add(vt);
   }
 
-  /* ── Приборная ниша под окном ───────────────────────────
-     Пульт неглубокий и прижат к носу: всё, что торчит вбок,
-     попадает в кадр ещё в салоне и режет обзор поперёк. */
+  /* ── Пульт: рама вокруг остекления ──────────────────────
+     Пульт собирается отдельным модулем и по долям кадра, а не по
+     метрам. Причина простая: раньше он был плитой под окном, и на
+     телефоне она занимала весь низ кадра, а на мониторе почти
+     пропадала. Теперь балка, стойки, плита и косынки встают в
+     одинаковую долю на любом устройстве, а окно живёт внутри рамы.
+
+     Заказчик сформулировал требование дословно: «она должна быть
+     по кругу как рамка сверху справа снизу слева». Здесь оно и
+     выполняется. */
   var con = new T.Group();
-  var deskY = tiny ? 0.61 : 0.86;
-  var desk = new T.Mesh(new T.BoxGeometry(3.1, 0.14, tiny ? 0.66 : 0.86), new T.MeshPhongMaterial({
-    color: 0x16283a
-  }));
-  desk.position.set(0, deskY, -(R_WALL - 0.62));
-  desk.rotation.x = -0.2;
-  con.add(desk);
-  var riserH = tiny ? 0.49 : 0.78;
-  var riser = new T.Mesh(new T.BoxGeometry(3.4, riserH, 0.5), caseMat);
-  riser.position.set(0, riserH / 2, -(R_WALL - 0.42));
-  con.add(riser);
-
-  /* ── Physical pilot console ──────────────────────────────
-     The interactive HTML carries accessible labels and hit areas,
-     but the object seen by the camera is here: a beveled alloy bed,
-     seven recessed sockets and seven separate keycaps. The cabin is
-     later attached to the flight camera, so this hardware and the
-     pilot move as one rigid system through every turn and jump. */
-  var pilotRig = new T.Group();
-  /* The former 3.28 m slab sat only 0.8 m from the pilot and projected
-     to 1344 px on a 390 px phone. Keep the same detailed geometry but
-     at an 82 cm physical width. Portrait and landscape use different
-     eye framing, so only the mounting height compensates for FOV. */
-  /* Размер пульта - договорённость с заказчиком, а не вкус:
-     панель занимает край кадра, остальное отдано космосу. Пробовали
-     поднять её до метра, чтобы «читалась настоящей» - заказчик
-     отклонил сразу: «не более 10% по краям, 90% обзор космоса».
-     Дешёвый вид лечится материалом и подсветкой, а не габаритом,
-     поэтому размер вернулся, а работа ушла в поверхность. */
-  pilotRig.scale.set(0.22, 0.25, 0.25);
-  var pilotY = 1.02;
-  if (tiny) pilotY = Math.max(0.68, Math.min(0.87, 0.16 + aspect * 1.17));
-  pilotRig.position.set(0, pilotY, -(R_WALL - 0.60));
-  /* Наклон панели к пилоту. Было одиннадцать градусов - почти
-     плашмя, и с высоты глаз панель сжималась в полоску: любая
-     деталь на ней превращалась в нитку. На референсах заказчика
-     консоль поднята к лицу примерно на тридцать, как в самолёте и
-     в кабине корабля. Тогда кассеты видно, а не угадываешь. */
-  /* Знак наклона. Он был отрицательным, и это разворачивало панель
-     от пилота к окну: столешница показывала себя остеклению, а нам
-     доставалось ребро. Проверяется на бумаге - настил уже повёрнут
-     на минус девяносто, и отрицательная добавка уводит нормаль в
-     минус по Z, то есть прочь от кресла. Плюс наклоняет к лицу, как
-     и должно быть у приборной панели. */
-  pilotRig.rotation.x = 0.42;
-  var consoleSkin = consoleTex(T);
-  var deckMetal = new T.MeshPhongMaterial({
-    map: consoleSkin, bumpMap: consoleSkin, bumpScale: 0.018,
-    color: 0x73808a, shininess: 42, specular: 0x718b9a
-  });
-  var socketMetal = new T.MeshPhongMaterial({
-    color: 0x03080d, shininess: 18, specular: 0x18242d
-  });
-  var capMetal = new T.MeshPhongMaterial({
-    color: 0x33424e, shininess: 74, specular: 0x8ba0ae
-  });
-  var fireMetal = new T.MeshPhongMaterial({
-    color: 0x41271d, shininess: 64, specular: 0xd48a5c
-  });
-  var pilotDeck = new T.Mesh(roundedDeckGeo(T, 3.65, 0.96, 0.14, 0.10), deckMetal);
-  pilotDeck.rotation.x = -Math.PI * 0.5;
-  pilotRig.add(pilotDeck);
-
-  /* ── Органы управления ───────────────────────────────────────
-     Семь команд стоят каждая в своей зоне, а не в один ряд поперёк
-     всей панели. Ряд одинаковых клавиш и был тем, что заказчик
-     назвал «хуй поймёшь, что за кнопки»: одинаковые квадраты без
-     смысловой группировки не читаются, сколько их ни подписывай.
-
-     Теперь так же, как в кабине: курс живёт на кассете навигации,
-     четыре рабочие команды - сеткой два на два на кассете команд,
-     тяга на своей кассете с рычагом, залп под крышкой на своей.
-     Рука запоминает место, а не надпись.
-
-     Порядок в массиве менять нельзя: rc-flight сопоставляет
-     клавиши с кнопками разметки строго по индексу -
-     курс, скан, узел, залп, авто, стоп, тяга. */
-  var KEYS = [
-    { x: -1.34, z:  0.20, s: 0.78 },   /* 0 курс, на кассете навигации */
-    { x: -0.60, z: -0.06, s: 0.72 },   /* 1 скан */
-    { x: -0.24, z: -0.06, s: 0.72 },   /* 2 узел */
-    { x:  1.10, z:  0.20, s: 0.86 },   /* 3 залп, отдельная кассета */
-    { x: -0.60, z:  0.16, s: 0.72 },   /* 4 авто */
-    { x: -0.24, z:  0.16, s: 0.72 },   /* 5 стоп */
-    { x:  0.44, z:  0.26, s: 0.80 }    /* 6 тяга, у своего рычага */
-  ];
-  var socketGeo = roundedDeckGeo(T, 0.405, 0.43, 0.072, 0.065);
-  var capGeo = roundedDeckGeo(T, 0.325, 0.34, 0.090, 0.055);
+  var console3 = null;
   var controlCaps = [], controlSockets = [], controlGlyphs = [];
-  /* Гнёзд под клавиши больше нет отдельной геометрией: у каждой
-     кассеты своё гнездо уже в фактуре, с фаской и тенью. Свои
-     поверх ложились чёрными брусками и закрывали рисунок. */
-  var socketInstances = new T.InstancedMesh(socketGeo, socketMetal, KEYS.length);
-  var socketM = new T.Matrix4();
-  var socketQ = new T.Quaternion().setFromEuler(new T.Euler(-Math.PI * 0.5, 0, 0));
-  var socketS = new T.Vector3(1, 1, 1), socketP = new T.Vector3();
-  for (var ci = 0; ci < KEYS.length; ci++) {
-    var K = KEYS[ci];
-    socketS.set(K.s * 0.5, 0.35, K.s * 0.5);
-    socketP.set(K.x, 0.0955, K.z);
-    socketM.compose(socketP, socketQ, socketS);
-    socketInstances.setMatrixAt(ci, socketM);
-    var capMat = (ci === 3 ? fireMetal : capMetal).clone();
-    capMat.emissive = new T.Color(ci === 3 ? 0x1a0802 : 0x02090d);
-    capMat.emissiveIntensity = 0.16;
-    var cap = new T.Mesh(capGeo, capMat);
-    cap.rotation.x = -Math.PI * 0.5;
-    /* Клавиша сидит в гнезде кассеты, а не стоит на ней столбом:
-       высота хода у настоящей клавиши миллиметры, а не сантиметры. */
-    cap.scale.set(K.s * 0.46, 0.34, K.s * 0.46);
-    cap.position.set(K.x, 0.1105, K.z);
-    cap.userData.homeY = cap.position.y;
-    cap.userData.ph = ci * 0.64;
-    cap.userData.halfW = 0.1625 * K.s * 0.46;
-    cap.userData.halfH = 0.17 * K.s * 0.46;
-    cap.userData.hit = 40;
-    pilotRig.add(cap);
-    controlCaps.push(cap);
-  }
-  socketInstances.instanceMatrix.needsUpdate = true;
-  pilotRig.add(socketInstances);
-  controlSockets.push(socketInstances);
-
-  /* Five auxiliary commands are small physical switches at the
-     console shoulders: network map on the left, zoom/camera/help on
-     the right. Their DOM versions remain only as projected hit zones. */
-  var auxGeo = roundedDeckGeo(T, 0.19, 0.13, 0.070, 0.032);
-  var auxSocketGeo = roundedDeckGeo(T, 0.245, 0.178, 0.055, 0.041);
-  var auxAt = [
-    [-1.29, -0.38],
-    [1.38, -0.28], [1.70, -0.28], [1.38, 0.28], [1.70, 0.28]
-  ];
-  var auxSockets = new T.InstancedMesh(auxSocketGeo, socketMetal, auxAt.length);
-  for (var ai = 0; ai < auxAt.length; ai++) {
-    socketP.set(auxAt[ai][0], 0.105, auxAt[ai][1]);
-    socketM.compose(socketP, socketQ, socketS);
-    auxSockets.setMatrixAt(ai, socketM);
-    var auxMat = capMetal.clone();
-    auxMat.emissive = new T.Color(0x02090d);
-    auxMat.emissiveIntensity = 0.16;
-    var aux = new T.Mesh(auxGeo, auxMat);
-    aux.rotation.x = -Math.PI * 0.5;
-    aux.position.set(auxAt[ai][0], 0.158, auxAt[ai][1]);
-    aux.userData.homeY = aux.position.y;
-    aux.userData.ph = (7 + ai) * 0.64;
-    aux.userData.halfW = 0.095;
-    aux.userData.halfH = 0.065;
-    aux.userData.hit = 26;
-    pilotRig.add(aux);
-    controlCaps.push(aux);
-  }
-  auxSockets.instanceMatrix.needsUpdate = true;
-  pilotRig.add(auxSockets);
-  controlSockets.push(auxSockets);
-
-  /* ── Кассеты приборной панели ────────────────────────────────
-     Панель собрана из пяти утопленных кассет, как в настоящей
-     кабине и как на референсах заказчика. Каждая кассета - своя
-     плита с фаской и своим содержимым: слева навигация с врезанным
-     экраном и тумблерами, дальше сетка команд, по центру рычаг
-     тяги, справа залп под откидной крышкой и служебный блок с
-     решёткой.
-
-     Откуда фактура. Кассеты сгенерированы фотореалистично
-     (ChatGPT, промпты в rocketcdn/prompts/panel-*.txt, по три
-     варианта на узел, победители отобраны контактным листом) и
-     положены картой на геометрию. Это не «картинка вместо мира»:
-     форма настоящая, утоплена, ловит свет и отражения, а
-     сгенерированное даёт мелочь, которую руками рисовать
-     бессмысленно - винты, гравировку, светодиодные полосы,
-     потёртости.
-
-     Крупных подписей над клавишами больше нет. Их пробовали:
-     заказчик отклонил сразу («дешёвая, плоская, нарисованная»).
-     На референсах подписи мелкие, гравированные рядом с органом
-     управления, и они уже входят в фактуру кассеты. */
-  var CASS = [
-    { id: "nav",     x: -1.34, w: 0.86, h: 0.54, tex: "nav" },
-    { id: "cmd",     x: -0.42, w: 0.92, h: 0.54, tex: "cmd" },
-    { id: "thrust",  x:  0.44, w: 0.72, h: 0.58, tex: "thrust" },
-    { id: "fire",    x:  1.10, w: 0.60, h: 0.54, tex: "fire" },
-    { id: "service", x:  1.62, w: 0.42, h: 0.50, tex: "service" }
-  ];
-  var cassLoader = new T.TextureLoader();
   var cassettes = [];
-  for (var qi = 0; qi < CASS.length; qi++) {
-    var q = CASS[qi];
-    var qTex = cassLoader.load("assets/gen/panel/" + q.tex + ".webp");
-    if (T.SRGBColorSpace) qTex.colorSpace = T.SRGBColorSpace;
-    qTex.anisotropy = 8;
-    /* Приборная кассета светится сама. Это не приём ради красоты:
-       на снимке уже есть подсвеченные клавиши, светодиоды и экран,
-       и если положить его обычным цветом, в тёмном салоне кассета
-       уходит в чёрное - что и произошло на первом прогоне.
-
-       Металличность низкая нарочно: у крашеной приборной панели
-       собственный тон важнее отражения, иначе она снова показывает
-       не себя, а окружение. */
-    var qMat = new T.MeshStandardMaterial({
-      map: qTex, roughness: 0.55, metalness: 0.16,
-      emissiveMap: qTex, emissive: new T.Color(0xffffff), emissiveIntensity: 0.22,
-      envMapIntensity: 0.7
+  var pilotRig = new T.Group();
+  if (g.RC_CONSOLE) {
+    console3 = g.RC_CONSOLE.build(T, {
+      width: innerWidth, height: innerHeight, tiny: tiny,
+      fov: opts.fov || 72, ru: doc.documentElement.lang !== "en"
     });
-    /* Высота посадки. Первый заход клал кассеты на 0.0755 и они
-       исчезали: настил толще, чем кажется по вызову. У выдавленной
-       геометрии к глубине 0.14 добавляется фаска по 0.025 с каждой
-       стороны, итого 0.19, и после центрирования верх плиты лежит
-       на 0.095. Кассеты просто оказывались внутри неё.
-
-       Отдельных рамок больше нет: у каждой сгенерированной кассеты
-       своя окантовка с фаской и винтами уже в фактуре, и вторая
-       рамка поверх только спорила бы с ней и ловила z-конфликт. */
-    var qMesh = new T.Mesh(new T.PlaneGeometry(q.w, q.h), qMat);
-    qMesh.rotation.x = -Math.PI * 0.5;
-    qMesh.position.set(q.x, 0.0985, 0.02);
-    qMesh.userData.id = q.id;
-    pilotRig.add(qMesh);
-    cassettes.push(qMesh);
+    con.add(console3.group);
+    controlCaps = console3.caps;
+    pilotRig = console3.keyRig;
+    if (console3.legends) controlGlyphs.push(console3.legends);
   }
-
-  /* Табличек у вспомогательных тумблеров нет намеренно. Их пробовали
-     поставить такими же бортиками, но переключатель на плече пульта
-     занимает на экране десяток пикселей, и подпись рядом с ним
-     превращалась в белое пятно: светящийся текст на этом размере
-     сливается в один блик. Названия этих пяти команд человек видит
-     подсказкой при наведении (атрибут title на их DOM-двойниках),
-     а бортик оставлен главным семи. */
-
-  /* One atlas, one instanced draw. Twelve separate CanvasTextures and
-     twelve plane meshes looked identical but added eleven avoidable
-     draw calls and doubled texture memory on phones. */
-  var glyphGeo = new T.PlaneGeometry(1, 1);
-  var glyphIndex = new Float32Array(controlCaps.length);
-  for (var gi = 0; gi < glyphIndex.length; gi++) glyphIndex[gi] = gi;
-  glyphGeo.setAttribute("glyphIndex", new T.InstancedBufferAttribute(glyphIndex, 1));
-  var glyphAtlas = controlGlyphAtlas(T);
-  var glyphMat = new T.ShaderMaterial({
-    uniforms: { uMap: { value: glyphAtlas } },
-    vertexShader:
-      "attribute float glyphIndex; varying vec2 vGlyphUv;" +
-      "void main(){float col=mod(glyphIndex,4.0);float row=floor(glyphIndex/4.0);" +
-      "vGlyphUv=vec2((uv.x+col)/4.0,(uv.y+(2.0-row))/3.0);" +
-      "gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}",
-    fragmentShader:
-      "uniform sampler2D uMap; varying vec2 vGlyphUv;" +
-      "void main(){vec4 c=texture2D(uMap,vGlyphUv);if(c.a<0.025)discard;gl_FragColor=c;}",
-    transparent: true, depthWrite: false, blending: T.AdditiveBlending,
-    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-    fog: false
-  });
-  var glyphMesh = new T.InstancedMesh(glyphGeo, glyphMat, controlCaps.length);
-  glyphMesh.frustumCulled = false;
-  var glyphLocal = [], glyphMatrix = new T.Matrix4();
-  var glyphQ = new T.Quaternion(), glyphPos = new T.Vector3(), glyphScale = new T.Vector3();
-  for (gi = 0; gi < controlCaps.length; gi++) {
-    var mainGlyph = gi < 7;
-    glyphPos.set(0, 0, mainGlyph ? 0.061 : 0.052);
-    glyphScale.set(mainGlyph ? 0.215 : 0.13, mainGlyph ? 0.185 : 0.10, 1);
-    glyphLocal[gi] = new T.Matrix4().compose(glyphPos, glyphQ, glyphScale);
-  }
-  function syncControlGlyphs() {
-    for (var gmi = 0; gmi < controlCaps.length; gmi++) {
-      controlCaps[gmi].updateMatrix();
-      glyphMatrix.copy(controlCaps[gmi].matrix).multiply(glyphLocal[gmi]);
-      glyphMesh.setMatrixAt(gmi, glyphMatrix);
-    }
-    glyphMesh.instanceMatrix.needsUpdate = true;
-  }
-  syncControlGlyphs();
-  pilotRig.add(glyphMesh);
-  controlGlyphs.push(glyphMesh);
-
-  /* Telemetry glass is a separate inset along the far edge. The DOM
-     numbers sit over this dark physical recess instead of floating on
-     the star field. */
-  var teleSocket = new T.Mesh(roundedDeckGeo(T, 3.30, 0.13, 0.055, 0.038), socketMetal);
-  teleSocket.rotation.x = -Math.PI * 0.5;
-  teleSocket.position.set(0, 0.105, -0.325);
-  pilotRig.add(teleSocket);
-  var teleGlass = new T.Mesh(roundedDeckGeo(T, 3.12, 0.072, 0.025, 0.025), new T.MeshBasicMaterial({
-    color: 0x0d2a38, transparent: true, opacity: 0.64, fog: false
-  }));
-  teleGlass.rotation.x = -Math.PI * 0.5;
-  teleGlass.position.set(0, 0.142, -0.325);
-  pilotRig.add(teleGlass);
-
-  var screwGeo = new T.SphereGeometry(0.025, 8, 5);
-  var screws = new T.InstancedMesh(screwGeo, steel, 8);
-  var sm = new T.Matrix4(), sq = new T.Quaternion(), ss = new T.Vector3(1, 0.42, 1), sp = new T.Vector3();
-  for (var sc = 0; sc < 8; sc++) {
-    sp.set(sc % 2 ? 1.72 : -1.72, 0.11, (Math.floor(sc / 2) - 1.5) * 0.22);
-    sm.compose(sp, sq, ss); screws.setMatrixAt(sc, sm);
-  }
-  screws.instanceMatrix.needsUpdate = true;
-  pilotRig.add(screws);
-  con.add(pilotRig);
-  /* Световая полоса по переднему ребру: тот же нижний свет, что
-     подсвечивает голограмму панели */
-  var lip = new T.Mesh(new T.BoxGeometry(3.06, 0.022, 0.026), litCyan);
-  lip.position.set(0, WIN_Y0 - 0.09, -(R_WALL - 1.02));
-  con.add(lip);
-  /* Диоды приборов: дышат от общего таймера */
+  function syncControlGlyphs() {}
   var diodes = [];
-  var dGeo = new T.SphereGeometry(0.028, 6, 5);
-  for (i = 0; i < (tiny ? 12 : 22); i++) {
-    var warm = i % 4 === 0;
-    var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? 0xa974f5 : 0x5fc8ef, fog: false }));
-    d.position.set(-1.32 + (i % 11) * 0.265, WIN_Y0 - 0.1 + (i > 10 ? 0.07 : 0), -(R_WALL - 0.74) + (i > 10 ? 0.2 : 0));
-    d.userData.ph = i * 0.7;
-    con.add(d);
-    diodes.push(d);
-  }
   grp.add(con);
 
   /* The cockpit shell is geometry above: wall bands, frame, window
@@ -1232,39 +921,16 @@ function build(T, opts) {
      older flight code remains compatible without drawing a plane. */
   var frame = null;
 
-  /* ── Отражение приборов в остеклении ────────────────────
-     Стекло, в котором ничего не отражается, читается дырой в
-     борту. На настоящем остеклении всегда стоит слабый двойник
-     приборной панели - он и говорит глазу, что перед ним стекло, а
-     не пустой проём.
+  /* Отражение приборов в остеклении снято.
 
-     Плоскость висит в самом проёме, светится сложением и почти
-     прозрачна: отражение должно угадываться, а не спорить с
-     космосом за окном. */
-  var refl = new T.Mesh(
-    new T.CylinderGeometry(R_WALL - 0.05, R_WALL - 0.05, 0.035,
-      tiny ? 8 : 14, 1, true, gapA - gapLen, gapLen),
-    new T.MeshBasicMaterial({
-      color: 0x3f7187, transparent: true, opacity: 0.028,
-      side: T.BackSide, depthWrite: false, fog: false
-    })
-  );
-  refl.position.y = WIN_Y0 + (WIN_Y1 - WIN_Y0) * 0.54;
-  refl.rotation.z = -0.035;
-  grp.add(refl);
-  /* Полоса от световой линии пульта: она отражается ярче всего,
-     потому что ближе всех к стеклу */
-  var reflLip = new T.Mesh(
-    new T.CylinderGeometry(R_WALL - 0.06, R_WALL - 0.06, 0.018,
-      tiny ? 8 : 14, 1, true, gapA - gapLen * 0.7, gapLen * 0.7),
-    new T.MeshBasicMaterial({
-      color: 0x5f9db7, transparent: true, opacity: 0.045,
-      side: T.BackSide, depthWrite: false, fog: false
-    })
-  );
-  reflLip.position.y = WIN_Y0 + 0.34;
-  reflLip.rotation.z = 0.022;
-  grp.add(reflLip);
+     Задумка была верной - стекло, в котором ничего не отражается,
+     читается дырой в борту. Но исполнение было плоским: две
+     светящиеся дуги поперёк проёма читались синими полосами по
+     космосу, и это первое, что видно на любом снимке финальной
+     сцены. Настоящее отражение приборной доски даёт сама рама
+     (rc-console): у неё физический материал с отражением
+     окружения, и стекло получает блик от неё честно. */
+  var refl = null, reflLip = null;
 
   /* ── Свет помещения ─────────────────────────────────────
      Ламп ровно четыре и больше не будет: каждая лишняя это лишний
@@ -1307,24 +973,10 @@ function build(T, opts) {
   deskLight.position.set(0, 1.42, -(R_WALL - 1.1));
   grp.add(deskLight);
 
-  /* ── Свет на приборную панель ────────────────────────────────
-     Панель освещать было нечем. Общий свет салона идёт сверху и
-     сбоку, а приборная плоскость смотрит вверх - на неё падал
-     только скользящий отсвет, и кассеты уходили в чёрное. На
-     кадре это выглядело так, будто их нет вовсе, хотя геометрия
-     собиралась и в кадр попадала: замер приёмки показывал все
-     пять на месте.
-
-     Ставим два источника прямо над консолью, как в кабине: тёплый
-     рабочий свет на панель и холодная подсветка со стороны окна,
-     чтобы металл кассет держал два разных блика и читался
-     объёмным, а не залитым одним тоном. */
-  var panelWarm = new T.PointLight(0xffc890, 2.9, 2.6, 1.7);
-  panelWarm.position.set(-0.34, pilotY + 0.44, -(R_WALL - 0.60) + 0.30);
-  grp.add(panelWarm);
-  var panelCool = new T.PointLight(0x9fd8f2, 2.2, 2.4, 1.8);
-  panelCool.position.set(0.46, pilotY + 0.40, -(R_WALL - 0.60) - 0.16);
-  grp.add(panelCool);
+  /* Свет пульта переехал в rc-console вместе с самим пультом: рама
+     светит собой (световоды по кромке) и двумя короткими
+     источниками за отбортовкой. Держать их здесь, привязанными к
+     координатам снятой плиты, было нечем. */
 
   /* Шрифт мог не успеть загрузиться к моменту первой отрисовки:
      тогда текст лёг системной гарнитурой и экран выглядел чужим.
@@ -1363,7 +1015,7 @@ function build(T, opts) {
           return { kind: "glass", roughness: 0.08, metalness: 0.10, normalScale: 0.12, envMapIntensity: 1.5, repeat: 1 };
         }
         /* Пол и палуба: матовые, затёртые ногами */
-        if (c === 0xa8bccf || mesh === pilotDeck) {
+        if (c === 0xa8bccf) {
           return { kind: "deck", roughness: 0.62, metalness: 0.42, normalScale: 0.75, envMapIntensity: 0.7, repeat: 5 };
         }
         /* Рама окна и несущий металл: полированный, ловит блики */
@@ -1392,7 +1044,7 @@ function build(T, opts) {
     ceilL: ceilL,
     warmL: warmL,
     deskLight: deskLight,
-    pilotDeck: pilotDeck,
+    console3: console3,
     controlCaps: controlCaps,
     controlSockets: controlSockets,
     controlGlyphs: controlGlyphs,

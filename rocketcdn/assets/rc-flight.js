@@ -2020,7 +2020,14 @@ function buildWorld() {
         metalness: 0.0,
         emissiveMap: tex("assets/space/earth-night.webp"),
         emissive: new T.Color(0xffc978),
-        emissiveIntensity: 2.35
+        emissiveIntensity: 2.35,
+        /* Окружение планету почти не трогает. Панорама сцены яркая и
+           светит со всех сторон разом: с полной силой она поднимала
+           теневую половину до уровня освещённой, и Земля выходила
+           дневной в любом положении корабля - сколько ни двигай
+           светило. Форму шара должно задавать одно солнце, как в
+           жизни, а окружение оставим металлу корабля. */
+        envMapIntensity: 0.05
       });
       m.onBeforeCompile = function (sh) {
         sh.uniforms.uSunDir = { value: new T.Vector3(0.82, 0.28, 0.50).normalize() };
@@ -2047,6 +2054,19 @@ function buildWorld() {
              драйверах он давал ноль, на других единицу, и ночная
              сторона то не зажигалась вовсе, то светила по всему
              шару. */
+          /* Дневная карта гаснет там, где ночь.
+
+             Одного направленного света мало: общий рассеянный свет
+             сцены поднимает теневую половину, и материки видны там,
+             где у планеты глубокая ночь. В жизни ночная сторона не
+             освещена ничем, кроме собственных огней, поэтому гасим
+             сам цвет поверхности по тому же углу, по которому
+             зажигаются города. Терминатор при этом остаётся мягким,
+             а не режет шар пополам линейкой. */
+          .replace("#include <map_fragment>",
+            "#include <map_fragment>\n" +
+            "float sunN = dot(normalize(vSunN), uSunDir);\n" +
+            "diffuseColor.rgb *= mix(0.045, 1.0, smoothstep(-0.30, 0.16, sunN));")
           .replace("#include <emissivemap_fragment>",
             "#include <emissivemap_fragment>\n" +
             "float sunDot = dot(normalize(vSunN), uSunDir);\n" +
@@ -3031,7 +3051,7 @@ function buildWorld() {
   }
 
   return {
-    fx: wantFx, post: post,
+    fx: wantFx, post: post, sunLight: sun,
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     bodies: bodies,
     milky: milky, gal2: gal2, gal3: gal3,
@@ -3231,54 +3251,38 @@ function size() {
    «примерно снизу». */
 function cabGeom() {
   if (!ui.wrap) return;
-  var tall = innerHeight > innerWidth;
-  /* The v2 cockpit plates are generated as a matched 941 x 1672 /
-     1672 x 941 pair. Use their real dimensions here: object-fit
-     geometry based on the retired 768 / 1344 plates displaced the
-     hit areas from the machined sockets, especially on tall phones. */
-  var iw = tall ? 941 : 1672, ih = tall ? 1672 : 941;
-  var sc = Math.max(innerWidth / iw, innerHeight / ih);
-  var dw = iw * sc, dh = ih * sc;
-  var ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
-  function px(fx, fy) {
-    return [(ox + fx * dw) / innerWidth, (oy + fy * dh) / innerHeight];
-  }
-  /* Остекление */
-  var w0 = px(tall ? 0.140 : 0.090, tall ? 0.070 : 0.070);
-  var w1 = px(tall ? 0.860 : 0.910, tall ? 0.800 : 0.660);
-  /* Пояс приборов под остеклением. Доли зажимаем в границы кадра:
-     на вытянутых экранах (планшет в портрете, узкий телефон) ниша
-     корпуса уходит за нижнюю кромку и за боковины, и плита вместе с
-     ней. Приборы обязаны быть на экране на любом устройстве. */
-  /* Active controls occupy only the factory socket belt. The cabin
-     body itself remains in the image; DOM never paints a second
-     dashboard over it. Both variants keep the interactive belt at
-     roughly ten percent of viewport height. */
-  var d0 = px(tall ? 0.035 : 0.145, tall ? 0.855 : 0.760);
-  var d1 = px(tall ? 0.965 : 0.855, tall ? 0.955 : 0.860);
-  var MINX = 0.015, MAXX = 0.985, MAXY = 1;
-  if (d0[0] < MINX) d0[0] = MINX;
-  if (d1[0] > MAXX) d1[0] = MAXX;
-  if (d1[1] > MAXY) d1[1] = MAXY;
-  /* Ниша - это ВСЯ консоль корабля на рисунке кабины, от нижней
-     кромки остекления до низа кадра. Панель управления встраивается
-     внутрь неё, а не кладётся полосой поверх: клавиши обязаны
-     лежать на наклонной плоскости пульта, между уже нарисованными
-     экранами, как настоящее железо. Высоту не режем - режем только
-     если консоль вылезла за кадр. */
-  var deckH = d1[1] - d0[1];
-  if (deckH < 0.085) d0[1] = d1[1] - 0.085;
-  if (deckH > 0.105) d0[1] = d1[1] - 0.105;
-  if (d0[1] < 0.70) d0[1] = 0.70;
+  /* Границы берём у настоящей рамы, а не у пропорций отменённого
+     рисунка кабины. rc-console строит раму по долям кадра и знает
+     свои кромки точно, поэтому голограмма ложится ровно внутрь
+     стекла на любом экране.
+
+     Требование заказчика дословно: «все окна надписи и тд = как на
+     окне, окно = экран с голограммами». Значит ни одно всплывающее
+     окно не имеет права заехать на раму - ни на телефоне, ни на
+     широком мониторе. */
+  var C = g.RC_CONSOLE;
+  var last = C && C.last;
+  /* Берём вписанный прямоугольник, а не габарит проёма: проём
+     восьмиугольный, и по габариту всплывающее окно заезжало бы на
+     срезанные углы рамы. */
+  var sf = last ? last.safe : { l: -0.78, r: 0.78, b: -0.66, t: 0.90 };
+  var ib = last ? last.inner.b : -0.66;
+  var pad = 0.012;
+  var wx = (1 + sf.l) / 2 + pad;
+  var ww = (sf.r - sf.l) / 2 - pad * 2;
+  var wy = (1 - sf.t) / 2 + pad;
+  var wh = (sf.t - sf.b) / 2 - pad * 2;
+  var dy = (1 + ib) / 2;
+  var dh = 1 - dy;
   var S = ui.wrap.style;
-  S.setProperty("--cab-wx", (w0[0] * 100).toFixed(2) + "%");
-  S.setProperty("--cab-wy", (w0[1] * 100).toFixed(2) + "%");
-  S.setProperty("--cab-ww", ((w1[0] - w0[0]) * 100).toFixed(2) + "%");
-  S.setProperty("--cab-wh", ((w1[1] - w0[1]) * 100).toFixed(2) + "%");
-  S.setProperty("--cab-dx", (d0[0] * 100).toFixed(2) + "%");
-  S.setProperty("--cab-dy", (d0[1] * 100).toFixed(2) + "%");
-  S.setProperty("--cab-dw", ((d1[0] - d0[0]) * 100).toFixed(2) + "%");
-  S.setProperty("--cab-dh", ((d1[1] - d0[1]) * 100).toFixed(2) + "%");
+  S.setProperty("--cab-wx", (wx * 100).toFixed(2) + "%");
+  S.setProperty("--cab-wy", (wy * 100).toFixed(2) + "%");
+  S.setProperty("--cab-ww", (ww * 100).toFixed(2) + "%");
+  S.setProperty("--cab-wh", (wh * 100).toFixed(2) + "%");
+  S.setProperty("--cab-dx", "0%");
+  S.setProperty("--cab-dy", (dy * 100).toFixed(2) + "%");
+  S.setProperty("--cab-dw", "100%");
+  S.setProperty("--cab-dh", (dh * 100).toFixed(2) + "%");
 }
 
 /* ── Кадр ────────────────────────────────────────────────────ы */
@@ -3869,10 +3873,12 @@ function physicalControlsFrame(ts, dt) {
     var goalY = home - (active ? 0.038 : 0);
     cap3.position.y += (goalY - cap3.position.y) * Math.min(1, dt * (active ? 18 : 9));
     if (cap3.material && cap3.material.emissive) {
-      var base = pi === 3 ? 0x1a0802 : 0x02090d;
-      var live = pi === 3 ? 0x8a2308 : 0x0a4257;
-      cap3.material.emissive.setHex(active ? live : base);
-      cap3.material.emissiveIntensity = active ? 0.82 : 0.16 + Math.sin(ts * 0.0014 + cap3.userData.ph) * 0.025;
+      /* Свечение клавиши тянем интенсивностью, а не цветом. Лицо
+         клавиши это снимок с собственным рисунком, и подмена цвета
+         свечения красит его целиком - иконка теряет форму. */
+      var base3 = cap3.userData.baseEmissive || 0.30;
+      var goalE = active ? base3 * 2.6 : base3 + Math.sin(ts * 0.0014 + cap3.userData.ph) * 0.045;
+      cap3.material.emissiveIntensity += (goalE - cap3.material.emissiveIntensity) * Math.min(1, dt * 12);
     }
     /* The mesh owns appearance; the DOM owns semantics and touch.
        Project the latter onto the former so there is never a second,
@@ -3915,6 +3921,13 @@ function physicalControlsFrame(ts, dt) {
     }
   }
   if (cabin.syncControlGlyphs) cabin.syncControlGlyphs();
+  frameMeasure();
+  /* Живые приборы рамы: лестница тяги, дежурные диоды, дыхание
+     световодов. Неподвижная рама читается декорацией, сколько её
+     ни фактурь. */
+  if (cabin.console3 && cabin.console3.update) {
+    cabin.console3.update(ts, dt, { speed: Math.max(0, Math.min(1, (F.v || 0) / 1.6)) });
+  }
 }
 
 function frame(ts) {
@@ -4690,7 +4703,13 @@ function earthSunFrame(w3) {
   }
   var v = earthSunFrame.v, e = earthSunFrame.e;
   w3.earth.getWorldPosition(e);
-  v.copy(w3.sunPos).sub(e).normalize();
+  /* Направление берём у настоящего источника света сцены. Раньше
+     брали позицию декоративного шара солнца, а освещает планету
+     направленный свет, стоящий в другом месте: ночная сторона
+     считалась от одного вектора, а тени ложились от другого, и на
+     кадре Земля выходила дневной при любом положении корабля. */
+  var src = w3.sunLight ? w3.sunLight.position : w3.sunPos;
+  v.copy(src).normalize();
   if (sh && sh.uniforms.uSunDir) sh.uniforms.uSunDir.value.copy(v);
   if (w3.atmMat && w3.atmMat.uniforms && w3.atmMat.uniforms.uSun) {
     w3.atmMat.uniforms.uSun.value.copy(v);
@@ -5959,7 +5978,13 @@ function radarFrame(w3, ts) {
    Тогда последний кадр салона и первый кадр игры - один и тот же
    кадр, и склеивать нечего. */
 var cabin = null;
-var CAM_WIN = 1.42;              /* от глаз до остекления в финале */
+/* От глаз до остекления в финале. Было 1.42, и на телефоне с
+   вертикальным полем зрения под сто градусов нижняя кромка проёма
+   уходила ниже настила - окно физически не могло закрыть кадр, и
+   рама пульта не сходилась по низу. С 0.86 проём закрывает кадр на
+   любом устройстве. Значение общее с rc-console: оба модуля строят
+   геометрию от одной точки проектирования. */
+var CAM_WIN = (g.RC_CONSOLE && g.RC_CONSOLE.CAM_WIN) || 0.86;
 
 function cabinBuild() {
   if (cabin || !W3 || !g.RC_CABIN) return cabin;
@@ -5969,7 +5994,11 @@ function cabinBuild() {
      the physical ship around it. */
   cabin = g.RC_CABIN.build(T, {
     tiny: innerWidth < 760,
-    aspect: innerWidth / Math.max(1, innerHeight)
+    aspect: innerWidth / Math.max(1, innerHeight),
+    /* Раму пульта строит проекция, поэтому ей нужно то же самое
+       поле зрения, с которым потом будет рендериться кадр. Иначе
+       рама встанет по чужим долям и её кромка уедет с экрана. */
+    fov: W3.fov0
   });
 
   /* Куда смотрит камера в первом кадре полёта */
@@ -5992,6 +6021,14 @@ function cabinBuild() {
   cabin.yaw0 = yaw0;
   cabin.p0 = p0.clone();
   /* Ориентация камеры в финале - та же, что в первом кадре полёта */
+  /* Наклон взгляда в финале. Помещение стоит ровно по азимуту, но
+     маршрут в первой точке идёт с подъёмом, и камера смотрит выше
+     горизонта. Рама пульта собирается по долям кадра от оси
+     взгляда, поэтому этот наклон обязан дойти до неё: без него
+     верхняя балка уходила из кадра, а нижняя подтягивалась. */
+  var pitch0 = Math.asin(Math.max(-1, Math.min(1, dir.y / Math.max(1e-6, dir.length()))));
+  if (cabin.console3 && cabin.console3.setPitch) cabin.console3.setPitch(pitch0);
+  cabin.pitch0 = pitch0;
   var m = new T.Matrix4().lookAt(p0, look0, new T.Vector3(0, 1, 0));
   cabin.q1 = new T.Quaternion().setFromRotationMatrix(m);
   cabin.qTmp = new T.Quaternion();
@@ -6344,6 +6381,53 @@ function cabinCassettes() {
   return out;
 }
 
+/* Доли кадра, занятые рамой пульта, замеренные проекцией.
+   Возвращает, сколько процентов кадра съедает каждая сторона:
+   договорённость с заказчиком - не более десяти-пятнадцати. */
+function frameMeasure() {
+  if (!W3 || !cabin || !cabin.console3 || !cabin.console3.probe) return;
+  var T = g.THREE;
+  if (!frameMeasure.v) frameMeasure.v = new T.Vector3();
+  var C3 = cabin.console3, pr = C3.probe, v = frameMeasure.v, out = [], i;
+  for (i = 0; i < pr.length; i++) {
+    v.copy(pr[i]);
+    C3.inner3.localToWorld(v);
+    v.project(W3.cam);
+    out.push({ x: v.x, y: v.y });
+  }
+  /* Клавиши меряем по краям ряда: подпись обязана лежать внутри
+     кадра целиком, а не упираться в нижнюю кромку. */
+  var lo = 1e9, hi = -1e9, capL = 1e9, capR = -1e9;
+  for (i = 0; i < C3.caps.length && i < 7; i++) {
+    var cap = C3.caps[i];
+    var hw = cap.userData.halfW, hh = cap.userData.halfH;
+    var corners = [[-hw, -hh], [hw, hh]];
+    for (var k = 0; k < 2; k++) {
+      v.set(corners[k][0], 0, -corners[k][1]);
+      cap.localToWorld(v);
+      v.project(W3.cam);
+      if (v.y < lo) lo = v.y;
+      if (v.y > hi) hi = v.y;
+      if (v.x < capL) capL = v.x;
+      if (v.x > capR) capR = v.x;
+    }
+  }
+  cabin._share = {
+    низ: +((1 + out[0].y) / 2 * 100).toFixed(1),
+    верх: +((1 - out[1].y) / 2 * 100).toFixed(1),
+    лево: +((1 + out[2].x) / 2 * 100).toFixed(1),
+    право: +((1 - out[3].x) / 2 * 100).toFixed(1),
+    клавишиНиз: +((1 + lo) / 2 * 100).toFixed(1),
+    клавишиВерх: +((1 - hi) / 2 * 100).toFixed(1),
+    клавишаPx: +(Math.abs(capR - capL) / 7 * innerWidth / 2).toFixed(0),
+    срезано: lo < -1 || hi > 1 || capL < -1 || capR > 1
+  };
+}
+
+function frameShare() {
+  return (cabin && cabin._share) || null;
+}
+
 function consoleShare() {
   if (!W3 || !cabin || !cabin.pilotRig) return null;
   var T = g.THREE;
@@ -6406,6 +6490,11 @@ g.RC_FLIGHT = {
                 салоне она заметно меньше, чем в полёте, человек
                 видит подмену, даже когда геометрия честно одна. */
              пультДоля: consoleShare(),
+             /* Доли кадра, которые рама реально занимает на экране.
+                Меряем проекцией живой камерой, а не расчётом при
+                сборке: между ними стоят наклон взгляда, поле
+                зрения и подъезд, и разошлись они уже дважды. */
+             рама: frameShare(),
              /* Приёмка кассет: сколько собралось и видно ли их в
                 кадре. Пульт заказчик забраковал дважды, поэтому
                 величина измеряется, а не оценивается на глаз. */

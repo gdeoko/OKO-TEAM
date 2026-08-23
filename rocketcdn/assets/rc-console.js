@@ -1,426 +1,1147 @@
-/* ═══════════════════════════════════════════════════════════
-   Rocket CDN · пульт: последняя сцена фильма
+/* rc-console.js — рама пульта вокруг остекления.
 
-   Сценарий заканчивается тем, что человек, осмотрев рубку,
-   подходит к панели управления и оставляет заявку. До сих пор
-   этот момент был обычной формой на фоне: обрыв, который владелец
-   и назвал «резким переходом».
+   Зачем отдельный файл. Раньше пульт был плитой под окном: полоса
+   железа внизу кадра и семь одинаковых квадратов на ней. Заказчик
+   прочитал это одним словом - «не похоже на панель», и был прав.
+   В кабине корабля пульт идёт по кругу: балка сверху, стойки по
+   бокам, приборная плита снизу, косынки в углах. Окно живёт внутри
+   этой рамы, а не над полоской.
 
-   Здесь пульт становится сценой. Снимок панели сделан в фирменной
-   палитре и лежит фоном за формой, а поверх него живёт тонкий слой
-   рисования: индикаторы дышат, по кромке идёт блик, у края бежит
-   строка телеметрии. Никакого видеофайла - кадры считаются на
-   месте, поэтому вес сцены равен весу одной картинки.
+   Главная идея модуля. Рама строится не в метрах, а в долях кадра.
+   Для каждой точки периметра мы знаем, куда она обязана попасть на
+   экране, и уже оттуда считаем мировые координаты. Поэтому на любом
+   устройстве рама занимает одинаковую долю: около одиннадцати
+   процентов снизу и около шести сверху и по бокам, остальное отдано
+   космосу. Ни на телефоне, ни на широком мониторе она не уползает
+   и не режется.
 
-   Подход к пульту привязан к прокрутке: пока человек листает от
-   рубки к форме, камера едет вперёд, панель растёт и выходит из
-   расфокуса. Останавливаемся ровно тогда, когда форма готова к
-   заполнению - дальше сцена замирает и не мешает вводу.
-
-   Правила те же, что во всём фильме: прокрутку не перехватываем,
-   при просьбе меньше движения показываем статичный кадр, на
-   слабом устройстве не поднимаемся вовсе, а форма работает
-   всегда и при любом раскладе.
-   ═══════════════════════════════════════════════════════════ */
+   Откуда фактура. Снимки сгенерированы фотореалистично (ChatGPT,
+   промпты в rocketcdn/prompts/frame-*.txt и keys-row.txt, по три
+   варианта на узел). Целиком снимок на полосу натянуть нельзя: у
+   полосы пропорция пятнадцать к одному, у снимка полтора к одному,
+   и всё содержимое сплющивается. Поэтому режем узкие ленты, близкие
+   по пропорции к тому, что реально видно, и кладём их с честной
+   кратностью. Крупные узлы - клавиши, экраны, решётки - стоят
+   отдельной геометрией и ловят настоящий свет. */
 (function (g) {
 "use strict";
 
-/* ── Дозор вместо кадра ──────────────────────────────────────
-   Модуль, которому сейчас нечего делать, не должен занимать место
-   в очереди кадров: на телефоне таких «спящих» циклов набиралось
-   больше десятка, и каждый стоил браузеру входа в JS.
+var doc = document;
+var TAU = Math.PI * 2;
 
-   Пока работа есть - обычный кадровый цикл. Как только её нет
-   тридцать кадров подряд, переходим на редкий дозор: проверяем
-   четыре раза в секунду и просыпаемся мгновенно, едва появится
-   повод. Глазу разницы нет, а очередь кадров разгружается. */
-function idler(step, awake) {
-  var raf = 0, timer = 0, empty = 0, live = true;
+/* ── Точка проектирования ─────────────────────────────────
+   Всё считается от глаза пилота в конце подъезда: он смотрит
+   строго по минус Z, глаза на 1.62, до остекления 0.86. Это
+   расстояние выбрано не на глаз: при прежних 1.42 на телефоне с
+   вертикальным полем зрения в сто градусов нижний край проёма
+   уходил ниже настила, то есть окно физически не могло закрыть
+   кадр. С 0.86 проём закрывает кадр на любом устройстве. */
+var EYE = 1.62;
+var R_WALL = 3.05;
+var CAM_WIN = 0.86;
 
-  function frame(ts) {
-    raf = 0;
-    var busy = step(ts) !== false;
-    empty = busy ? 0 : empty + 1;
-    if (empty > 8) { live = false; nap(); return; }
-    raf = requestAnimationFrame(frame);
-  }
-  function nap() {
-    if (timer) return;
-    timer = setInterval(function () {
-      if (doc.hidden) return;
-      if (!awake || awake()) { clearInterval(timer); timer = 0; empty = 0; live = true; start(); }
-    }, 250);
-  }
-  function start() {
-    if (raf || !live) return;
-    raf = requestAnimationFrame(frame);
-  }
-  /* Будить цикл на каждое движение колеса нельзя: именно во время
-     прокрутки эти модули чаще всего и не нужны, а просыпались они
-     ровно тогда. Пробуждение решает только собственная проверка -
-     она идёт четыре раза в секунду и опоздать не может: и шлюз, и
-     пульт въезжают в кадр постепенно. */
-  start();
-  return { wake: function () { empty = 0; if (!live) { live = true; if (timer) { clearInterval(timer); timer = 0; } start(); } } };
+/* Проём в обшивке. Считан под самый широкий случай (телефон 390x932
+   и монитор 21:9) с запасом: край проёма обязан лежать за рамой,
+   иначе из-под неё покажется кромка обшивки. */
+var WIN_Y0 = 0.17;
+var WIN_Y1 = 3.06;
+var WIN_HALF = 0.43;
+
+/* Доли кадра, которые занимает рама. Договорённость с заказчиком:
+   «не более 10-15% по краям, 90% обзор космоса». Низ шире - он
+   несёт клавиши; верх и бока узкие. */
+/* Габарит проёма берётся из самого контура (см. SHAPE): считать
+   его дважды - в промпте и в коде - значит гарантированно
+   разойтись. Эти три числа остаются справочными для разметки
+   сайта и пересчитываются при сборке. */
+var F_BOTTOM = 0.660;
+var F_TOP = 0.900;
+var F_SIDE = 0.780;
+
+/* Глубины колец от глаза, метры. */
+var D_LIP = 0.500;      /* кромка отбортовки - ближе всего к пилоту */
+var D_FACE = 0.545;     /* лицевая плита */
+var D_OUT = 0.700;      /* внешняя кромка плиты, уже за кадром */
+
+var TEX = "assets/gen/panel/";
+
+/* ── Проекция ──────────────────────────────────────────── */
+function Proj(fovDeg, aspect) {
+  this.tv = Math.tan(fovDeg * Math.PI / 360);
+  this.th = this.tv * aspect;
+  this.cz = -(R_WALL - CAM_WIN);
 }
-
-var doc = document, root = doc.documentElement;
-var reduced = false;
-try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
-
-var sec = null, layer = null, img = null, cv = null, x = null;
-var t = 0, last = 0, ready = false, shown = false;
-var p = 0, pShow = 0;
-
-/* Индикаторы панели: доли от размера картинки. Координаты сняты с
-   самого снимка, поэтому огоньки садятся ровно на кнопки. */
-var LAMPS = [
-  [0.34, 0.63], [0.36, 0.63], [0.38, 0.63], [0.40, 0.63],
-  [0.34, 0.67], [0.36, 0.67], [0.38, 0.67], [0.40, 0.67],
-  [0.63, 0.63], [0.65, 0.63], [0.67, 0.63],
-  [0.84, 0.68], [0.86, 0.68], [0.88, 0.68],
-  [0.11, 0.70], [0.13, 0.70], [0.15, 0.70],
-  [0.33, 0.40], [0.36, 0.40], [0.39, 0.40],
-  [0.60, 0.40], [0.62, 0.40]
-];
-
-function build() {
-  if (layer || !sec) return;
-  layer = doc.createElement("div");
-  layer.className = "rc-console";
-  layer.setAttribute("aria-hidden", "true");
-
-  img = doc.createElement("img");
-  img.src = "assets/gen/console.webp";
-  img.alt = "";
-  img.decoding = "async";
-  img.loading = "lazy";
-  img.width = 1344; img.height = 768;
-
-  cv = doc.createElement("canvas");
-  cv.className = "rc-console-live";
-
-  layer.appendChild(img);
-  layer.appendChild(cv);
-  sec.insertBefore(layer, sec.firstChild);
-  /* Ролик подхода тянем не сразу: полмегабайта видео не должны
-     ехать раньше первого экрана. Наблюдатель заводит его за
-     полтора-два экрана до пульта - к подходу кадры уже готовы. */
-  if ("IntersectionObserver" in g) {
-    var vio = new IntersectionObserver(function (es) {
-      for (var i = 0; i < es.length; i++) {
-        if (es[i].isIntersecting) { vidBuild(); vio.disconnect(); break; }
-      }
-    }, { rootMargin: "1800px 0px" });
-    vio.observe(sec);
-  } else {
-    vidBuild();
-  }
-
-  img.onload = function () {
-    ready = true;
-    layer.classList.add("on");
-    size();
-  };
-  img.onerror = function () {
-    /* Снимка нет - если есть ролик, сцена живёт им; нет и ролика -
-       убираем слой целиком, форма от этого не страдает */
-    if (vid && vidOk) return;
-    if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
-    layer = null;
-  };
-  x = cv.getContext("2d");
-}
-
-/* ── Подход к пульту: кадры видео идут за прокруткой ──────────
-   Снимок панели оживлён в видео: камера подъезжает к пульту, а в
-   иллюминаторе выходит планета. Ролик не проигрывается сам по
-   себе - его ведёт прокрутка, кадр в кадр. Человек листает вниз,
-   и это буквально его собственный шаг к панели: остановился -
-   встало и изображение.
-
-   Ролик закодирован так, что каждый кадр ключевой: перемотка в
-   любую точку мгновенная, без подгрузки соседних кадров. Иначе
-   скольжение по времени превращается в рывки.
-
-   Перематываем не чаще двенадцати раз в секунду и только когда
-   цель ушла дальше кадра - иначе декодер захлёбывается на запросах
-   и как раз получаются те подтормаживания, на которые жаловались.
-   На узком экране берём вдвое меньший файл. */
-var vid = null, vidOk = false, vidAt = 0, vidWant = 0, seekAt = 0, seeking = false;
-
-function vidBuild() {
-  if (vid || !layer) return;
-  /* Слабое устройство или просьба меньше движения - остаёмся на
-     статичном снимке, он и так хорош */
-  if (reduced || root.getAttribute("data-degrade") === "3") return;
-
-  var small = innerWidth < 900 || (g.devicePixelRatio || 1) < 1.2;
-  vid = doc.createElement("video");
-  /* H.264 понимают все браузеры, где этот сайт вообще открывают, и
-     он вдвое легче. Запасной webm нужен ровно для сборок Chromium
-     без проприетарных кодеков - в них mp4 просто не проигрывается,
-     а сцена обрываться не должна. */
-  var mp4 = "";
-  try { mp4 = vid.canPlayType('video/mp4; codecs="avc1.4d401f"'); } catch (e) {}
-  vid.className = "rc-console-vid";
-  vid.muted = true;
-  vid.defaultMuted = true;
-  vid.playsInline = true;
-  vid.setAttribute("playsinline", "");
-  vid.setAttribute("muted", "");
-  vid.setAttribute("aria-hidden", "true");
-  vid.preload = "auto";
-  vid.disablePictureInPicture = true;
-  vid.controls = false;
-  /* mp4 отдаём везде, где он играет: для этого ролика h264 плотнее
-     vp9 - тот же кадр в webm выходил на 61% тяжелее. webm остаётся
-     запасным путём для браузеров без h264. */
-  vid.src = mp4 ? (small ? "assets/gen/console-640.mp4" : "assets/gen/console-960.mp4")
-                : "assets/gen/console-640.webm";
-
-  vid.addEventListener("loadedmetadata", function () {
-    vidOk = vid.duration > 0.5;
-    if (vidOk) {
-      layer.classList.add("has-vid");
-      /* Сцена больше не ждёт снимок: кадр даёт ролик. Снимок грузится
-         лениво и на быстрой прокрутке легко опаздывает - привязывать
-         к нему показ всей панели значит иногда не показать её вовсе. */
-      ready = true;
-      layer.classList.add("on");
-      size();
-    }
-    /* Первый кадр надо вытащить принудительно: без этого на части
-       браузеров видео остаётся пустым до первого проигрывания. */
-    try { vid.currentTime = 0.01; } catch (e) {}
-  });
-  vid.addEventListener("seeked", function () { seeking = false; });
-  vid.addEventListener("error", function () {
-    vidOk = false;
-    if (vid && vid.parentNode) vid.parentNode.removeChild(vid);
-    vid = null;
-    if (layer) layer.classList.remove("has-vid");
-  });
-
-  layer.insertBefore(vid, cv);
-}
-
-/* Ведём кадр за прокруткой: доля подхода p - это и есть время
-   ролика. Держим небольшое отставание, чтобы движение выглядело
-   как ход камеры, а не как рывок мыши. */
-function vidSeek(ts) {
-  if (!vid || !vidOk) return;
-  var dur = vid.duration || 6;
-  vidWant = Math.max(0, Math.min(0.985, p)) * dur;
-  vidAt += (vidWant - vidAt) * 0.18;
-  if (seeking || ts - seekAt < 82) return;
-  if (Math.abs(vid.currentTime - vidAt) < dur / 90) return;
-  seekAt = ts;
-  seeking = true;
-  try { vid.currentTime = vidAt; } catch (e) { seeking = false; }
-}
-
-function size() {
-  if (!cv || !layer) return;
-  var r = layer.getBoundingClientRect();
-  var k = Math.min(2, g.devicePixelRatio || 1);
-  var w = Math.round((r.width || innerWidth) * k);
-  var h = Math.round((r.height || innerHeight * 0.6) * k);
-  if (w < 8 || h < 8) return;
-  if (cv.width !== w) cv.width = w;
-  if (cv.height !== h) cv.height = h;
-}
-
-/* ── Живой слой ──────────────────────────────────────────────
-   Индикаторы дышат от общего таймера с фазовым сдвигом, по
-   верхней кромке панели идёт блик, у правого края бежит тонкая
-   строка телеметрии. Всё в фирменных цветах и очень тихо: пульт
-   не должен спорить с формой, стоящей поверх него. */
-function frame(dt) {
-  if (!x || !cv || !ready) return;
-  size();
-  var W = cv.width, H = cv.height;
-  if (W < 8 || H < 8) return;
-  x.clearRect(0, 0, W, H);
-
-  var i, l, ph, b;
-
-  /* Под видео своих огней рисовать нельзя: камера едет, а точки
-     сняты с неподвижного кадра и поехали бы мимо кнопок. Там
-     панель светится сама, а от нас нужен только отклик на
-     человека - тёплое пятно под рукой и вспышка при отправке. */
-  if (vid && vidOk) {
-    if (hoverX >= 0) {
-      var hx = hoverX * W, hy = hoverY * H, hr = Math.max(60, W * 0.12);
-      var hg = x.createRadialGradient(hx, hy, 0, hx, hy, hr);
-      hg.addColorStop(0, "rgba(66,178,220,.16)");
-      hg.addColorStop(0.55, "rgba(138,89,246,.07)");
-      hg.addColorStop(1, "rgba(66,178,220,0)");
-      x.fillStyle = hg;
-      x.beginPath(); x.arc(hx, hy, hr, 0, 6.283); x.fill();
-    }
-    if (flash > 0.01) {
-      x.fillStyle = "rgba(207,233,245," + (flash * 0.20).toFixed(3) + ")";
-      x.fillRect(0, 0, W, H);
-      flash *= 0.9;
-    }
-    x.fillStyle = "rgba(66,178,220,.42)";
-    for (i = 0; i < 12; i++) {
-      var vy = H * (0.30 + i * 0.028);
-      var vl = W * (0.010 + 0.016 * Math.abs(Math.sin(t * 0.8 + i * 1.7)));
-      x.fillRect(W * 0.965 - vl, vy, vl, Math.max(1, H * 0.003));
-    }
-    return;
-  }
-
-  /* Индикаторы */
-  for (i = 0; i < LAMPS.length; i++) {
-    l = LAMPS[i];
-    ph = i * 0.9;
-    b = 0.35 + 0.65 * Math.pow(Math.max(0, Math.sin(t * 1.4 + ph)), 2);
-    /* Ближе к курсору - ярче: панель чувствует руку */
-    if (hoverX >= 0) {
-      var hd = Math.sqrt((l[0] - hoverX) * (l[0] - hoverX) + (l[1] - hoverY) * (l[1] - hoverY));
-      if (hd < 0.22) b = Math.min(1.35, b + (0.22 - hd) * 3.4);
-    }
-    if (flash > 0.01) b = Math.min(1.6, b + flash * 1.2);
-    var lx = l[0] * W, ly = l[1] * H;
-    var rad = Math.max(2, W * 0.0042) * (0.7 + b * 0.6);
-    var gr = x.createRadialGradient(lx, ly, 0, lx, ly, rad * 3.2);
-    var col = i % 5 === 0 ? "138,89,246" : "66,178,220";
-    gr.addColorStop(0, "rgba(" + col + "," + (0.75 * b).toFixed(3) + ")");
-    gr.addColorStop(1, "rgba(" + col + ",0)");
-    x.fillStyle = gr;
-    x.beginPath(); x.arc(lx, ly, rad * 3.2, 0, 6.283); x.fill();
-  }
-
-  if (flash > 0.001) flash *= 0.93;
-
-  /* Блик по кромке панели: медленно уезжает слева направо */
-  var bx = ((t * 0.11) % 1.4 - 0.2) * W;
-  var bg = x.createLinearGradient(bx - W * 0.18, 0, bx + W * 0.18, 0);
-  bg.addColorStop(0, "rgba(207,233,245,0)");
-  bg.addColorStop(0.5, "rgba(207,233,245,.16)");
-  bg.addColorStop(1, "rgba(207,233,245,0)");
-  x.fillStyle = bg;
-  x.fillRect(0, H * 0.33, W, H * 0.035);
-
-  /* Строка телеметрии у правого края: короткие штрихи разной длины */
-  x.fillStyle = "rgba(66,178,220,.5)";
-  for (i = 0; i < 14; i++) {
-    var ty = H * (0.42 + i * 0.021);
-    var len = W * (0.012 + 0.02 * Math.abs(Math.sin(t * 0.9 + i * 1.7)));
-    x.fillRect(W * 0.955 - len, ty, len, Math.max(1, H * 0.0035));
-  }
-}
-
-/* ── Подход к пульту ─────────────────────────────────────────
-   Пока блок контактов идёт через кадр, камера едет вперёд: панель
-   растёт, выходит из расфокуса и слегка опускается, будто человек
-   подошёл и сел. У самой формы движение останавливается. */
-function place() {
-  if (!layer || !sec) return;
-  var r = sec.getBoundingClientRect();
-  var h = innerHeight;
-  var raw = (h - r.top) / (h + Math.min(r.height, h * 1.4));
-  p = raw < 0 ? 0 : (raw > 1 ? 1 : raw);
-  /* Мягкое приближение: 0 - панель далеко и мягкая, 1 - вплотную */
-  var k = p < 0.72 ? p / 0.72 : 1;
-  k = k * k * (3 - 2 * k);
-  pShow += (k - pShow) * 0.12;
-
-  layer.style.setProperty("--con-scale", (1.02 + pShow * 0.16).toFixed(4));
-  layer.style.setProperty("--con-y", ((0.5 - pShow) * -34).toFixed(1) + "px");
-  layer.style.setProperty("--con-blur", ((1 - pShow) * 5).toFixed(2) + "px");
-  layer.style.setProperty("--con-vis", (0.25 + pShow * 0.75).toFixed(3));
-
-  root.classList.toggle("rc-console-near", pShow > 0.55);
-
-  var live = r.bottom > -200 && r.top < h + 200;
-  if (live !== shown) {
-    shown = live;
-    layer.classList.toggle("live", live);
-  }
-}
-
-function loop(ts) {
-  if (doc.hidden) { last = 0; return false; }
-  /* Внутри корабля секция контактов скрыта, её экран спит */
-  if (root.classList.contains("rc-inside") || root.classList.contains("rc-flying")) { last = 0; return false; }
-  var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
-  last = ts;
-
-  place();
-  if (!shown) return false;
-  vidSeek(ts);
-  /* На стоящей странице хватает пятнадцати кадров: пульт только
-     дышит, гнать шестьдесят ради этого незачем. */
-  t += dt;
-  if (root.classList.contains("rc-fast")) return;
-  if (ts - (loop._at || 0) < 62) return;
-  loop._at = ts;
-  frame(dt);
-}
-
-/* ── Живая панель ────────────────────────────────────────────
-   Пульт отзывается на человека: под курсором ближайшие индикаторы
-   разгораются, при отправке заявки по панели проходит вспышка.
-   Это дешёвые вещи, но именно они превращают картинку в прибор. */
-var hoverX = -1, hoverY = -1, flash = 0;
-
-function watch() {
-  if (!sec) return;
-  sec.addEventListener("pointermove", function (e) {
-    if (!layer) return;
-    var r = layer.getBoundingClientRect();
-    hoverX = (e.clientX - r.left) / Math.max(1, r.width);
-    hoverY = (e.clientY - r.top) / Math.max(1, r.height);
-  }, { passive: true });
-  sec.addEventListener("pointerleave", function () { hoverX = hoverY = -1; }, { passive: true });
-
-  /* Отправка заявки: панель отвечает вспышкой и щелчком */
-  var form = sec.querySelector("form");
-  if (form) form.addEventListener("submit", function () {
-    flash = 1;
-    if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(520); } catch (e) {} }
-  });
-
-  /* Пока человек в поле, экран считается включённым: рамка ярче */
-  doc.addEventListener("focusin", function (e) {
-    if (sec.contains(e.target)) root.classList.add("rc-console-near");
-  }, true);
-}
-
-function boot() {
-  if (reduced || root.classList.contains("rc-reduced")) return;
-  if (root.getAttribute("data-degrade") === "3") return;
-  sec = doc.getElementById("contact");
-  if (!sec) return;
-  build();
-  watch();
-  /* Пульт живёт только в своём разделе. Вне его цикл уходит в
-     дозор: просыпается от прокрутки и от собственной проверки
-     четыре раза в секунду. */
-  idler(loop, function () { return shown; });
-}
-
-addEventListener("resize", function () { setTimeout(size, 200); }, { passive: true });
-addEventListener("rc:degrade", function (e) {
-  var step = (e && e.detail && e.detail.step) || 0;
-  if (step >= 3 && layer) { layer.classList.remove("on"); }
-});
-
-if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 300); });
-else setTimeout(boot, 300);
-
-g.RC_CONSOLE = {
-  state: function () {
-    return {
-      собрана: !!layer, готова: ready, видна: shown, подход: pShow.toFixed(2),
-      ролик: !!vid, кадры: vidOk, время: vid ? +vid.currentTime.toFixed(2) : null,
-      цель: +vidAt.toFixed(2), перемотка: seeking, доля: +p.toFixed(2)
-    };
-  }
+/* Точка, которая попадёт в (sx, sy) кадра на удалении d по оси взгляда */
+Proj.prototype.at = function (T, sx, sy, d) {
+  return new T.Vector3(sx * this.th * d, EYE + sy * this.tv * d, this.cz - d);
 };
+/* Та же точка, но доведённая до обшивки */
+Proj.prototype.wall = function (T, sx, sy) {
+  var dx = sx * this.th;
+  var a = 1 + dx * dx, b = -2 * this.cz, c = this.cz * this.cz - R_WALL * R_WALL;
+  var disc = b * b - 4 * a * c;
+  var t = (-b + Math.sqrt(disc > 0 ? disc : 0)) / (2 * a);
+  return this.at(T, sx, sy, t);
+};
+
+/* ── Контур фонаря ─────────────────────────────────────────
+   Контур снят с самого снимка рубки, а не придуман кодом. Скрипт
+   tools/shape.py находит на снимке чёрный проём, обводит его и
+   кладёт сюда список вершин в долях снимка (ноль слева и сверху).
+   Пока снимок не снят, работает восьмиугольник по тем же долям,
+   что заказаны в промпте: одиннадцать процентов по бокам, пять
+   сверху, семнадцать снизу, углы срезаны под сорок пять.
+
+   Смысл ровно один: геометрия обязана совпасть с рисунком до
+   пикселя. Тогда снимок ложится на железо один в один, и не
+   бывает ни щели между рамой и проёмом, ни куска рубки, залезшего
+   на космос. */
+var SHAPE = {
+  wide: [
+    [0.8738,0.4994], [0.8744,0.6003], [0.8394,0.6845], [0.8031,0.7561],
+    [0.7550,0.7995], [0.6913,0.7995], [0.6469,0.7995], [0.6125,0.7995],
+    [0.5850,0.7995], [0.5606,0.7995], [0.5394,0.7995], [0.5194,0.7995],
+    [0.5000,0.7995], [0.4806,0.7995], [0.4606,0.7995], [0.4394,0.7995],
+    [0.4150,0.7995], [0.3875,0.7995], [0.3531,0.7995], [0.3088,0.7995],
+    [0.2450,0.7995], [0.1963,0.7561], [0.1606,0.6845], [0.1256,0.6003],
+    [0.1256,0.4994], [0.1256,0.3985], [0.1275,0.2950], [0.1669,0.2171],
+    [0.2019,0.1481], [0.2537,0.1137], [0.3113,0.1137], [0.3550,0.1137],
+    [0.3906,0.1137], [0.4219,0.1137], [0.4494,0.1137], [0.4750,0.1137],
+    [0.5000,0.1124], [0.5250,0.1137], [0.5506,0.1137], [0.5781,0.1137],
+    [0.6088,0.1137], [0.6450,0.1137], [0.6887,0.1137], [0.7462,0.1137],
+    [0.7975,0.1481], [0.8331,0.2171], [0.8725,0.2950], [0.8738,0.3985]
+  ],
+  tall: [
+    [0.8638,0.4997], [0.8638,0.5196], [0.8650,0.5406], [0.8650,0.5631],
+    [0.8650,0.5877], [0.8662,0.6176], [0.8675,0.6537], [0.8413,0.6862],
+    [0.7913,0.7114], [0.7362,0.7391], [0.6750,0.7727], [0.5925,0.7936],
+    [0.5000,0.7941], [0.4075,0.7936], [0.3250,0.7727], [0.2637,0.7391],
+    [0.2087,0.7114], [0.1588,0.6857], [0.1325,0.6537], [0.1350,0.6171],
+    [0.1350,0.5877], [0.1350,0.5631], [0.1363,0.5406], [0.1363,0.5196],
+    [0.1363,0.4997], [0.1363,0.4798], [0.1363,0.4589], [0.1363,0.4364],
+    [0.1363,0.4117], [0.1363,0.3829], [0.1363,0.3473], [0.1350,0.3002],
+    [0.1338,0.2342], [0.1688,0.1645], [0.2587,0.1226], [0.3738,0.1001],
+    [0.5000,0.1011], [0.6250,0.1006], [0.7388,0.1268], [0.8313,0.1645],
+    [0.8675,0.2326], [0.8650,0.3002], [0.8650,0.3468], [0.8650,0.3824],
+    [0.8650,0.4112], [0.8638,0.4364], [0.8638,0.4589], [0.8638,0.4798]
+  ]
+};
+
+/* Доли снимка в доли кадра. Снимок снят кадром целиком, поэтому
+   перевод прямой: ноль-один в минус-один-один, ось Y вверх.
+   Порядок обхода разворачиваем: в координатах картинки ось Y
+   смотрит вниз, и после переворота обход из против часовой
+   становится по часовой, а вся сборка лент рассчитана на первый. */
+function shapeNdc(pts) {
+  var out = [];
+  for (var i = pts.length - 1; i >= 0; i--) {
+    out.push({ x: pts[i][0] * 2 - 1, y: 1 - pts[i][1] * 2, side: "f" });
+  }
+  return out;
+}
+
+/* Скруглённый многоугольник: по прямой участку - равномерные
+   отсчёты, в вершине - дуга. Радиус в долях кадра приводим к
+   пикселям по каждой оси отдельно, иначе на широком мониторе
+   круглая фаска становится овальной. */
+function roundPoly(pts, W, H, nEdge, nArc) {
+  var out = [], n = pts.length, i, k;
+  var A = W / H;
+  function sub(a, b) { return { x: a.x - b.x, y: a.y - b.y }; }
+  function norm(v) {
+    /* длину меряем в пикселях, чтобы фаска была одинаковой на глаз */
+    var L = Math.hypot(v.x * A, v.y);
+    return { x: v.x / (L || 1), y: v.y / (L || 1), L: L };
+  }
+  for (i = 0; i < n; i++) {
+    var p = pts[i], pPrev = pts[(i - 1 + n) % n], pNext = pts[(i + 1) % n];
+    var dIn = norm(sub(p, pPrev)), dOut = norm(sub(pNext, p));
+    var r = Math.min(p.r, dIn.L * 0.45, dOut.L * 0.45);
+    var a = { x: p.x - dIn.x * r, y: p.y - dIn.y * r };
+    var b = { x: p.x + dOut.x * r, y: p.y + dOut.y * r };
+    /* прямая от конца прошлой дуги до начала этой */
+    var prev = pts[(i - 1 + n) % n];
+    var dPrev = norm(sub(p, prev));
+    var rPrev = Math.min(prev.r, dPrev.L * 0.45);
+    var startX = prev.x + dPrev.x * rPrev, startY = prev.y + dPrev.y * rPrev;
+    for (k = 0; k < nEdge; k++) {
+      var t = k / nEdge;
+      out.push({ x: startX + (a.x - startX) * t, y: startY + (a.y - startY) * t, side: p.side });
+    }
+    /* дуга квадратичной кривой через вершину: дешевле дуги и
+       визуально не отличается на такой фаске */
+    for (k = 0; k <= nArc; k++) {
+      var u = k / nArc, iu = 1 - u;
+      out.push({
+        x: iu * iu * a.x + 2 * iu * u * p.x + u * u * b.x,
+        y: iu * iu * a.y + 2 * iu * u * p.y + u * u * b.y,
+        side: p.side
+      });
+    }
+  }
+  return out;
+}
+
+/* Внешнее кольцо. За кромкой кадра форма никого не волнует, важно
+   одно: каждая точка обязана выйти за край, иначе между рамой и
+   обшивкой покажется щель. Разводим по лучу от середины. */
+function outerRing(inner, push) {
+  var out = [];
+  for (var i = 0; i < inner.length; i++) {
+    var p = inner[i];
+    var m = Math.max(Math.abs(p.x), Math.abs(p.y)) || 1;
+    var k = Math.max(1 + push, (1 + push) / m);
+    out.push({ x: p.x * k, y: p.y * k, side: p.side });
+  }
+  return out;
+}
+
+/* Где отрезок от внутренней точки к внешней пересекает край кадра.
+   Нужно, чтобы лицевая плита ровно заканчивалась на кромке экрана:
+   всё, что дальше, зритель не видит, и текстуру туда тянуть нельзя. */
+function edgeLambda(px, py, qx, qy) {
+  var best = 1, lam;
+  if (qx !== px) {
+    lam = ((qx > px ? 1 : -1) - px) / (qx - px);
+    if (lam > 0 && lam < best && Math.abs(py + (qy - py) * lam) <= 1.0002) best = lam;
+  }
+  if (qy !== py) {
+    lam = ((qy > py ? 1 : -1) - py) / (qy - py);
+    if (lam > 0 && lam < best && Math.abs(px + (qx - px) * lam) <= 1.0002) best = lam;
+  }
+  return best;
+}
+
+/* ── Полосы между двумя кольцами ───────────────────────────
+   Кольца идут точка в точку, поэтому лента собирается тривиально.
+   Группы (низ, бока, верх, углы) режем по метке стороны: у каждой
+   своя фактура и своя кратность. */
+function strip(T, A, B, uvA, uvB, groups) {
+  /* groups: [{sides:[...], mat, repeat}] */
+  var n = A.length;
+  var out = [];
+  for (var gi = 0; gi < groups.length; gi++) {
+    var G = groups[gi];
+    var idx = [];
+    for (var i = 0; i < n; i++) {
+      var j = (i + 1) % n;
+      if (G.sides.indexOf(A[i].side) >= 0 || G.sides.indexOf(A[j].side) >= 0) idx.push(i);
+    }
+    if (!idx.length) continue;
+    /* разбиваем на непрерывные куски (левая сторона может обернуться) */
+    var runs = [], cur = [idx[0]];
+    for (i = 1; i < idx.length; i++) {
+      if (idx[i] === idx[i - 1] + 1) cur.push(idx[i]);
+      else { runs.push(cur); cur = [idx[i]]; }
+    }
+    runs.push(cur);
+    for (var ri = 0; ri < runs.length; ri++) {
+      var run = runs[ri];
+      var pos = [], uv = [], ind = [];
+      /* длина по дуге для честной кратности рисунка */
+      var len = [0], total = 0;
+      for (i = 0; i < run.length; i++) {
+        var k = run[i], k1 = (k + 1) % n;
+        if (i > 0) {
+          var p0 = A[run[i - 1]], p1 = A[k];
+          total += Math.hypot(p1.x - p0.x, p1.y - p0.y);
+          len.push(total);
+        }
+        void k1;
+      }
+      var last = run[run.length - 1], lastNext = (last + 1) % n;
+      var pe = A[last], pn = A[lastNext];
+      total += Math.hypot(pn.x - pe.x, pn.y - pe.y);
+      len.push(total);
+      var rep = G.repeat || 1;
+      /* Развёртка ленты.
+
+         Вдоль ленты идёт длина по дуге, поперёк - ширина полосы.
+         Но снимок бывает и вертикальным: стойка снята портретом,
+         и если положить её как есть, рисунок ложится набок и
+         размазывается в полосы. Поэтому у группы есть swap - он
+         меняет оси местами, - и flip, который переворачивает
+         поперечную ось: у верхней балки световод обязан оказаться
+         со стороны окна, а не у кромки кадра. */
+      var vA = G.flip ? uvB : uvA, vB = G.flip ? uvA : uvB;
+      for (i = 0; i <= run.length; i++) {
+        var ii = i < run.length ? run[i] : lastNext;
+        var a = A[ii], b = B[ii];
+        pos.push(a.w.x, a.w.y, a.w.z);
+        pos.push(b.w.x, b.w.y, b.w.z);
+        if (G.ndcUv) {
+          /* Развёртка по долям кадра.
+
+             Это и есть «один в один». Снимок рубки снят с той же
+             точки, с которой смотрит пилот, поэтому каждая точка
+             геометрии обязана взять из него ровно тот пиксель, в
+             который она попадает на экране. Никакой кратности,
+             никакого разворота осей, ничего не растягивается: где
+             на снимке болт, там болт и на железе. */
+          uv.push((a.n.x + 1) / 2, (a.n.y + 1) / 2);
+          uv.push((b.n.x + 1) / 2, (b.n.y + 1) / 2);
+        } else {
+          var u = (total > 0 ? len[i] / total : 0) * rep;
+          if (G.swap) uv.push(vA, u, vB, u);
+          else uv.push(u, vA, u, vB);
+        }
+      }
+      /* Обход строго один на всю раму. Периметр идёт против часовой
+         стрелки в долях кадра, внутреннее кольцо всегда A, внешнее
+         всегда B - при таком порядке нормаль смотрит на пилота.
+         Обратный порядок отбраковывался как задняя грань, и вся
+         рама пропадала из кадра при живой геометрии. */
+      for (i = 0; i < run.length; i++) {
+        var v0 = i * 2, v1 = v0 + 1, v2 = v0 + 2, v3 = v0 + 3;
+        ind.push(v0, v1, v2, v1, v3, v2);
+      }
+      var geo = new T.BufferGeometry();
+      geo.setAttribute("position", new T.Float32BufferAttribute(pos, 3));
+      geo.setAttribute("uv", new T.Float32BufferAttribute(uv, 2));
+      geo.setIndex(ind);
+      geo.computeVertexNormals();
+      out.push(new T.Mesh(geo, G.mat));
+    }
+  }
+  return out;
+}
+
+/* ── Полотно ──────────────────────────────────────────────── */
+function cnv(w, h) {
+  var c = doc.createElement("canvas");
+  c.width = w; c.height = h;
+  return c;
+}
+
+var FONT = "'Golos Text', 'Manrope', system-ui, -apple-system, sans-serif";
+
+/* Команды пульта. Порядок менять нельзя: rc-flight сопоставляет
+   клавиши с кнопками разметки строго по индексу. */
+var CMD = {
+  ru: ["КУРС", "СКАН", "УЗЕЛ", "ЗАЛП", "АВТО", "СТОП", "ТЯГА"],
+  en: ["COURSE", "SCAN", "NODE", "FIRE", "AUTO", "STOP", "THRUST"],
+  auxRu: ["СЕТЬ", "БЛИЖЕ", "ДАЛЬШЕ", "КАДР", "СПРАВКА"],
+  auxEn: ["MAP", "ZOOM IN", "ZOOM OUT", "FRAME", "HELP"]
+};
+/* Что человек получит, нажав. Это и есть ответ на «хуй поймёшь,
+   что за кнопки»: подсказка всплывает голограммой на стекле. */
+var HINT = {
+  ru: [
+    "выбрать цель и проложить маршрут",
+    "просветить сектор, показать узлы сети",
+    "развернуть узел в этой точке",
+    "залп по помехе перед кораблём",
+    "автопилот ведёт корабль сам",
+    "сброс тяги, полная остановка",
+    "прибавить ход"
+  ],
+  en: [
+    "pick a target and plot the route",
+    "sweep the sector, reveal network nodes",
+    "deploy a node at this point",
+    "fire at the obstruction ahead",
+    "autopilot flies the ship",
+    "cut thrust, full stop",
+    "add speed"
+  ],
+  auxRu: ["карта сети", "приблизить", "отдалить", "снимок кадра", "как играть"],
+  auxEn: ["network map", "zoom in", "zoom out", "capture frame", "how to play"]
+};
+
+/* Лица вспомогательных клавиш рисуем сами: на снимке их нет, а
+   стиль обязан совпасть - тёмное стекло, тонкая рамка, холодная
+   гравировка. */
+function auxFace(x, S, idx) {
+  x.save();
+  x.translate(S * 0.5, S * 0.5);
+  var grd = x.createLinearGradient(0, -S * 0.5, 0, S * 0.5);
+  grd.addColorStop(0, "#1b2530");
+  grd.addColorStop(0.5, "#101820");
+  grd.addColorStop(1, "#0a1016");
+  x.fillStyle = grd;
+  x.beginPath();
+  var rr = S * 0.13, hs = S * 0.40;
+  x.moveTo(-hs + rr, -hs);
+  x.arcTo(hs, -hs, hs, hs, rr);
+  x.arcTo(hs, hs, -hs, hs, rr);
+  x.arcTo(-hs, hs, -hs, -hs, rr);
+  x.arcTo(-hs, -hs, hs, -hs, rr);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = "rgba(120,150,170,.55)";
+  x.lineWidth = S * 0.014;
+  x.stroke();
+  x.strokeStyle = "rgba(150,225,255,.95)";
+  x.fillStyle = x.strokeStyle;
+  x.shadowColor = "rgba(60,190,240,.9)";
+  x.shadowBlur = S * 0.06;
+  x.lineWidth = S * 0.032;
+  x.lineCap = "round";
+  x.lineJoin = "round";
+  var u = S * 0.19;
+  x.beginPath();
+  if (idx === 0) {                       /* карта сети */
+    x.moveTo(-u, -u * 0.7); x.lineTo(0, -u * 0.2); x.lineTo(u, -u * 0.9);
+    x.lineTo(u, u * 0.7); x.lineTo(0, u); x.lineTo(-u, u * 0.5); x.closePath();
+    x.moveTo(0, -u * 0.2); x.lineTo(0, u);
+    x.stroke();
+  } else if (idx === 1 || idx === 2) {   /* приблизить, отдалить */
+    x.arc(-u * 0.15, -u * 0.15, u * 0.72, 0, TAU); x.stroke();
+    x.beginPath();
+    x.moveTo(u * 0.38, u * 0.38); x.lineTo(u * 1.0, u * 1.0); x.stroke();
+    x.beginPath();
+    x.moveTo(-u * 0.62, -u * 0.15); x.lineTo(u * 0.32, -u * 0.15);
+    if (idx === 1) { x.moveTo(-u * 0.15, -u * 0.62); x.lineTo(-u * 0.15, u * 0.32); }
+    x.stroke();
+  } else if (idx === 3) {                /* снимок кадра */
+    x.moveTo(-u, -u * 0.45); x.lineTo(-u * 0.45, -u * 0.45); x.lineTo(-u * 0.24, -u * 0.78);
+    x.lineTo(u * 0.44, -u * 0.78); x.lineTo(u * 0.62, -u * 0.45); x.lineTo(u, -u * 0.45);
+    x.lineTo(u, u * 0.8); x.lineTo(-u, u * 0.8); x.closePath(); x.stroke();
+    x.beginPath(); x.arc(0, u * 0.14, u * 0.4, 0, TAU); x.stroke();
+  } else {                               /* как играть */
+    x.font = "800 " + Math.round(S * 0.34) + "px " + FONT;
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("?", 0, S * 0.02);
+  }
+  x.restore();
+}
+
+/* Атлас лиц клавиш.
+
+   Подпись живёт на самом лице, а не на отдельной табличке под ним.
+   Табличку пробовали: при доле кадра в одиннадцать процентов она
+   выходит ростом в двадцать пикселей, слово в неё влезает, но
+   читается хуже, чем то же слово под иконкой на самой клавише.
+   Плюс отдельная плита это ещё один проход отрисовки и ещё один
+   шанс на z-конфликт.
+
+   Ячейка не квадратная: сверху квадратное лицо со снимка, снизу
+   полоса с гравировкой. Пропорция ячейки и пропорция клавиши
+   совпадают один в один, иначе иконка сплющится. */
+var CELL_W = 256, CELL_H = 332, CELL_COLS = 4, CELL_ROWS = 4;
+var CAP_RATIO = CELL_H / CELL_W;
+
+function faceAtlas(T, img, ru) {
+  var c = cnv(CELL_W * CELL_COLS, CELL_H * CELL_ROWS), x = c.getContext("2d");
+  x.fillStyle = "#0a0d11";
+  x.fillRect(0, 0, c.width, c.height);
+  var names = (ru ? CMD.ru : CMD.en).concat(ru ? CMD.auxRu : CMD.auxEn);
+  var i, cx, cy;
+  for (i = 0; i < 12; i++) {
+    cx = (i % CELL_COLS) * CELL_W;
+    cy = Math.floor(i / CELL_COLS) * CELL_H;
+    x.save();
+    x.translate(cx, cy);
+    if (i < 7 && img) {
+      var cw = img.width / 7;
+      x.drawImage(img, i * cw, 0, cw, img.height, 0, 0, CELL_W, CELL_W);
+    } else if (i >= 7) {
+      auxFace(x, CELL_W, i - 7);
+    } else {
+      x.fillStyle = "#101820";
+      x.fillRect(0, 0, CELL_W, CELL_W);
+    }
+    /* Полоса подписи: тёмный анодированный металл, слово выбито
+       штампом - тёмный оттиск и светлая фаска на пиксель выше. */
+    var bh = CELL_H - CELL_W;
+    var gb = x.createLinearGradient(0, CELL_W, 0, CELL_H);
+    gb.addColorStop(0, "#1c242c");
+    gb.addColorStop(0.42, "#131a21");
+    gb.addColorStop(1, "#0b1015");
+    x.fillStyle = gb;
+    x.fillRect(0, CELL_W, CELL_W, bh);
+    x.fillStyle = "rgba(150,180,200,.22)";
+    x.fillRect(0, CELL_W, CELL_W, 2);
+    var txt = names[i] || "";
+    /* Кегль подбираем замером, а не формулой от числа букв: у
+       «СПРАВКА» и «ДАЛЬШЕ» надпись вылезала за клавишу и обрезалась
+       кромкой кадра. Уменьшаем, пока строка не встанет в ширину. */
+    var size = 54;
+    x.textAlign = "center";
+    x.textBaseline = "middle";
+    var lim = CELL_W * 0.88;
+    do {
+      x.font = "800 " + size + "px " + FONT;
+      if (x.measureText(txt).width <= lim) break;
+      size -= 2;
+    } while (size > 18);
+    var by = CELL_W + bh * 0.54;
+    x.fillStyle = "rgba(3,6,9,.92)";
+    x.fillText(txt, CELL_W / 2, by + 2);
+    x.fillStyle = i === 3 ? "rgba(255,198,142,.95)" : "rgba(202,228,244,.94)";
+    x.fillText(txt, CELL_W / 2, by);
+    x.restore();
+  }
+  /* ячейка 12: боковины и донце клавиши */
+  cx = (12 % CELL_COLS) * CELL_W;
+  cy = Math.floor(12 / CELL_COLS) * CELL_H;
+  var gg = x.createLinearGradient(cx, cy, cx, cy + CELL_H);
+  gg.addColorStop(0, "#39424c");
+  gg.addColorStop(0.45, "#1d242c");
+  gg.addColorStop(1, "#10161c");
+  x.fillStyle = gg;
+  x.fillRect(cx, cy, CELL_W, CELL_H);
+  var t = new T.CanvasTexture(c);
+  if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
+/* Скруглённая коробка: лицо смотрит в плюс Y, толщина по Y.
+   Развёртку правим руками - у выдавленной геометрии координаты
+   идут в метрах, и рисунок на ней повторяется. */
+function capGeo(T, w, h, d, r) {
+  var s = new T.Shape();
+  var hw = w / 2 - r, hh = h / 2 - r;
+  s.moveTo(-hw - r, -hh);
+  s.lineTo(-hw - r, hh);
+  s.quadraticCurveTo(-hw - r, hh + r, -hw, hh + r);
+  s.lineTo(hw, hh + r);
+  s.quadraticCurveTo(hw + r, hh + r, hw + r, hh);
+  s.lineTo(hw + r, -hh);
+  s.quadraticCurveTo(hw + r, -hh - r, hw, -hh - r);
+  s.lineTo(-hw, -hh - r);
+  s.quadraticCurveTo(-hw - r, -hh - r, -hw - r, -hh);
+  var geo = new T.ExtrudeGeometry(s, {
+    depth: d, bevelEnabled: true, bevelSegments: 2, steps: 1,
+    bevelSize: Math.min(0.012, r * 0.4), bevelThickness: Math.min(0.010, d * 0.35),
+    curveSegments: 4
+  });
+  geo.translate(0, 0, -d / 2);
+  geo.rotateX(-Math.PI / 2);          /* лицо смотрит вверх по Y */
+  return geo;
+}
+
+/* Развёртка клавиши: лицо в свою ячейку атласа, всё остальное - в
+   тёмную. Так одна клавиша это один материал и один вызов отрисовки. */
+function capUv(T, geo, cell) {
+  geo.computeBoundingBox();
+  var pos = geo.attributes.position, uv = geo.attributes.uv;
+  var box = geo.boundingBox;
+  var minX = box.min.x, maxX = box.max.x, minZ = box.min.z, maxZ = box.max.z;
+  var top = box.max.y - 1e-4;
+  var cw = 1 / CELL_COLS, ch = 1 / CELL_ROWS;
+  var fx = (cell % CELL_COLS) * cw, fy = 1 - (Math.floor(cell / CELL_COLS) + 1) * ch;
+  var dx = (12 % CELL_COLS) * cw, dy = 1 - (Math.floor(12 / CELL_COLS) + 1) * ch;
+  for (var i = 0; i < pos.count; i++) {
+    var px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i);
+    if (py >= top) {
+      var u = (px - minX) / (maxX - minX);
+      var v = 1 - (pz - minZ) / (maxZ - minZ);
+      uv.setXY(i, fx + u * cw, fy + v * ch);
+    } else {
+      uv.setXY(i, dx + cw * 0.5, dy + ch * 0.5);
+    }
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
+/* ── Сборка ──────────────────────────────────────────────── */
+var RC = { last: null };
+
+function portraitOf(W, H) { return H > W; }
+
+function build(T, o) {
+  o = o || {};
+  var W = o.width || (g.innerWidth || 1280);
+  var H = o.height || (g.innerHeight || 720);
+  var tiny = !!o.tiny;
+  var proj = new Proj(o.fov || 72, W / Math.max(1, H));
+  var ru = o.ru !== false;
+
+  /* Рама висит на оси взгляда, а не на полу помещения.
+
+     Точка сборки одна - глаз пилота. Но камера в конце подъезда
+     смотрит не строго по горизонту: она нацелена туда же, куда
+     смотрит первый кадр полёта, а маршрут в этой точке идёт с
+     небольшим подъёмом. Помещение при этом стоит ровно, и без
+     поправки рама уезжала вверх: верхняя балка почти покидала
+     кадр, нижняя подтягивалась. Поэтому рама сидит на шарнире в
+     точке глаза и поворачивается вместе с взглядом, а комната
+     остаётся на своих ногах. */
+  var pivot = new T.Group();
+  pivot.position.set(0, EYE, -(R_WALL - CAM_WIN));
+  var grp = new T.Group();
+  grp.position.set(0, -EYE, R_WALL - CAM_WIN);
+  pivot.add(grp);
+  var api = {
+    group: pivot, inner3: grp, proj: proj,
+    caps: [], legends: null, lights: [], anim: [],
+    /* Наклон взгляда приходит из полёта: только он знает, куда
+       нацелен первый кадр. */
+    setPitch: function (rad) { pivot.rotation.x = rad || 0; }
+  };
+
+  /* Внутренний контур - то, что человек считает окном */
+  var sh = portraitOf(W, H) ? SHAPE.tall : SHAPE.wide;
+  var inner = { l: 1, r: -1, b: 1, t: -1 };
+  for (var si = 0; si < sh.length; si++) {
+    var nx = sh[si][0] * 2 - 1, ny = 1 - sh[si][1] * 2;
+    if (nx < inner.l) inner.l = nx;
+    if (nx > inner.r) inner.r = nx;
+    if (ny < inner.b) inner.b = ny;
+    if (ny > inner.t) inner.t = ny;
+  }
+  /* Внешний уводим за кадр: между кромкой экрана и обшивкой рама
+     не обязана быть красивой, её никто не видит */
+  var outer = { l: -1.26, r: 1.26, b: -1.30, t: 1.28 };
+  api.inner = inner;
+
+  /* Радиус угла. Было 0.115 от меньшей стороны - рама читалась
+     рамкой телевизора, а не кабиной: угол съедал треть боковой
+     стойки. На референсах угол острый, со сварной косынкой. */
+  var nEdge = tiny ? 4 : 7, nArc = tiny ? 3 : 4;
+  var portrait = H > W;
+  /* Контур снят с самого снимка, скруглять его нечем и незачем:
+     фаски углов там уже нарисованы. */
+  var Rin = shapeNdc(portrait ? SHAPE.tall : SHAPE.wide);
+  void nEdge; void nArc;
+  api.portrait = portrait;
+  /* Ширина отбортовки со световодом. Была 0.020 доли кадра - на
+     мониторе это тридцать пикселей светящейся трубы по всему
+     периметру, и она забивала фактуру рамы целиком. Настоящий
+     световод в кабине это тонкая линия. */
+  var expand = 0.009;
+  /* Лицевая плита начинается сразу за кромкой: каждую точку
+     контура отодвигаем наружу по лучу ровно на ширину отбортовки.
+     Через outerRing это делать нельзя - он ещё и выталкивает всё
+     за край кадра, и отбортовка разрасталась во всю раму. */
+  var Rface = Rin.map(function (p) {
+    var m = Math.hypot(p.x, p.y) || 1;
+    var k = 1 + expand / m;
+    return { x: p.x * k, y: p.y * k, side: p.side };
+  });
+  var Rout = outerRing(Rin, 0.34);
+
+  var i, n = Rin.length;
+  var Alip = [], Aface = [], Aedge = [], Aout = [], Awall = [], Aback = [];
+  for (i = 0; i < n; i++) {
+    var a = Rin[i], f = Rface[i], q = Rout[i];
+    Alip.push({ side: a.side, n: { x: a.x, y: a.y }, w: proj.at(T, a.x, a.y, D_LIP) });
+    Aback.push({ side: a.side, n: { x: a.x, y: a.y }, w: proj.at(T, a.x, a.y, D_LIP + 0.075) });
+    Aface.push({ side: f.side, n: { x: f.x, y: f.y }, w: proj.at(T, f.x, f.y, D_FACE) });
+    var lam = edgeLambda(f.x, f.y, q.x, q.y);
+    var ex = f.x + (q.x - f.x) * lam, ey = f.y + (q.y - f.y) * lam;
+    Aedge.push({ side: f.side, n: { x: ex, y: ey },
+                 w: proj.at(T, ex, ey, D_FACE + (D_OUT - D_FACE) * lam), lam: lam });
+    Aout.push({ side: q.side, n: { x: q.x, y: q.y }, w: proj.at(T, q.x, q.y, D_OUT) });
+    Awall.push({ side: q.side, n: { x: q.x, y: q.y }, w: proj.wall(T, q.x, q.y) });
+  }
+
+  /* ── Материалы ──────────────────────────────────────────── */
+  var loader = new T.TextureLoader();
+  function tex(name, repX, repY) {
+    var t = loader.load(TEX + name);
+    if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+    /* Повтор по обеим осям. Была зажата вторая: у боковой стойки
+       после разворота развёртки повторяться обязана именно она, и
+       всё, что за единицей, превращалось в растянутый последний
+       ряд пикселей - ту самую полосу-мазок. */
+    t.wrapS = T.RepeatWrapping;
+    t.wrapT = T.RepeatWrapping;
+    t.anisotropy = tiny ? 4 : 8;
+    t.repeat.set(repX || 1, repY || 1);
+    return t;
+  }
+  /* Одна фактура на всю раму - снимок рубки целиком.
+
+     Пять отдельных лент с кусками снимков были ошибкой: у каждой
+     своя кратность, свой разворот, свои швы, и вместе они читались
+     набором наклеек. Заказчик сказал это прямо: «есть разница
+     между тем что ты делаешь, и как в реальности выглядит». Есть.
+     Поэтому теперь рубка снимается одним кадром с точки пилота, а
+     геометрия берёт из неё пиксели по своим же долям кадра. Швов
+     не бывает по построению. */
+  var ckName = portrait ? "cockpit-tall.webp" : "cockpit-wide.webp";
+  var ckTex = tex(ckName, 1, 1);
+  ckTex.wrapS = ckTex.wrapT = T.ClampToEdgeWrapping;
+  var matFrame = new T.MeshStandardMaterial({
+    map: ckTex, roughness: 0.56, metalness: 0.52,
+    /* Отражение окружения придавлено: панорама салона яркая, и на
+       единице она заливала рубку ровным голубым, съедая её
+       собственный контраст. Раме нужен блик, а не заливка. */
+    envMapIntensity: 0.32, side: T.DoubleSide,
+    /* Свет на снимке уже стоит - лампы, световоды, блики. Салон
+       тёмный, поэтому большую часть яркости рама берёт из своего
+       же снимка, а лампы салона добавляют объём и живой отклик на
+       поворот головы. */
+    emissiveMap: ckTex, emissive: new T.Color(0xffffff), emissiveIntensity: 0.78
+  });
+  api.frameMat = matFrame;
+
+  var matEdge = new T.MeshStandardMaterial({
+    color: 0x11161c, roughness: 0.52, metalness: 0.86, envMapIntensity: 1.0,
+    side: T.DoubleSide
+  });
+
+  /* Кратность рисунка: считаем из настоящего размера полосы на
+     экране, иначе лента растянется и снимок превратится в кашу. */
+  var bandBottomPx = (1 + inner.b) * H / 2;
+  var bandTopPx = (1 - inner.t) * H / 2;
+  var bandSidePx = (1 + inner.l) * W / 2;
+
+  /* ── Лицевая плита ──────────────────────────────────────── */
+  /* Стойка и скос идут одной фактурой: на референсах это одна
+     деталь, которая от пояса уходит внутрь к балке. Отдельная
+     угловая косынка на длинном скосе растягивалась в мазок. */
+  var faces = strip(T, Aface, Aedge, 1, 0, [
+    { sides: ["f"], mat: matFrame, ndcUv: true }
+  ]);
+  for (i = 0; i < faces.length; i++) grp.add(faces[i]);
+
+  /* Плечо и юбка: за кадром, но обязаны быть - без них рама висит
+     плоской наклейкой, а на подъезде видно, что она без толщины. */
+  var ALL = ["f"];
+  var shoulder = strip(T, Aedge, Aout, 0, 1, [{ sides: ALL, mat: matEdge, repeat: 1 }]);
+  for (i = 0; i < shoulder.length; i++) grp.add(shoulder[i]);
+  var skirt = strip(T, Aout, Awall, 0, 1, [{ sides: ALL, mat: matEdge, repeat: 1 }]);
+  for (i = 0; i < skirt.length; i++) grp.add(skirt[i]);
+
+  /* ── Отбортовка со световодом ───────────────────────────
+     Кромка рамы у настоящей кабины светится: сверху тёплый,
+     по бокам холодный. Это единственная линия, которая держит
+     силуэт рамы на фоне космоса. */
+  /* Световод по всей кромке холодный. Тёплую ноту оставляем
+     только вдоль верхней балки узкой полосой: на референсах
+     заказчика кабина цианово-синяя, тёплый янтарь спорил с
+     космосом и тянул кадр в коричневое. */
+  /* Отбортовка кромки. Светящейся трубы больше нет: на снимке
+     рубки световоды уже стоят там, где им положено, и вторая
+     подсветка поверх спорила бы с ней. Здесь остаётся узкая фаска
+     тёмного металла - она держит силуэт проёма и ловит блик от
+     ламп салона. */
+  var lip = strip(T, Alip, Aface, 0.5, 0.5, [{ sides: ["f"], mat: matEdge }]);
+
+  /* Возврат кромки к стеклу: без него рама с косого ракурса
+     показывает открытый торец */
+  var ret = strip(T, Aback, Alip, 0, 1, [{ sides: ALL, mat: matEdge, repeat: 1 }]);
+  for (i = 0; i < ret.length; i++) grp.add(ret[i]);
+
+  /* ── Органы управления ──────────────────────────────────
+     Ставим их не «примерно снизу», а ровно туда, где на снимке
+     рубки для них есть место: семь команд в центральный блок
+     приборной доски, пять служебных на стойки. Координаты заданы
+     в долях снимка, поэтому железо и рисунок совпадают на любом
+     экране без подгонки.
+
+     Клавиша повёрнута к пилоту и стоит в гнезде. Нажатие уводит её
+     вглубь, свечение поднимается - это тот самый отклик, без
+     которого панель читается картинкой. */
+  var keyRig = new T.Group();
+  keyRig.rotation.x = Math.PI / 2;      /* локальный +Y смотрит на пилота */
+  grp.add(keyRig);
+  api.keyRig = keyRig;
+
+  var atlasTex = faceAtlas(T, null, ru);
+  api.atlasTex = atlasTex;
+  var im = new Image();
+  im.onload = function () {
+    var fresh = faceAtlas(T, im, ru);
+    atlasTex.image = fresh.image;
+    atlasTex.needsUpdate = true;
+  };
+  im.src = TEX + "fr-keys.webp";
+
+  function ndcOfPx(px, axis) { return px / (axis === "x" ? W / 2 : H / 2); }
+  /* Доля снимка в долю кадра */
+  function fx(u) { return u * 2 - 1; }
+  function fy(v) { return 1 - v * 2; }
+
+  /* Глубина точки рамы по её доле кадра.
+
+     Лицевая плита идёт от контура проёма наружу, поэтому глубина
+     точки зависит от того, насколько далеко она ушла от контура по
+     своему лучу. Радиус контура в нужную сторону берём пересечением
+     луча с многоугольником - контур снят со снимка и правильным
+     кругом не описывается. */
+  function innerRadius(dx, dy) {
+    var best = 0;
+    for (var k = 0; k < Rin.length; k++) {
+      var a = Rin[k], b = Rin[(k + 1) % Rin.length];
+      var ex = b.x - a.x, ey = b.y - a.y;
+      var den = dx * ey - dy * ex;
+      if (Math.abs(den) < 1e-9) continue;
+      var tt = (a.x * ey - a.y * ex) / den;
+      if (tt <= 0) continue;
+      var px2 = dx * tt, py2 = dy * tt;
+      var sAlong = Math.abs(ex) > Math.abs(ey) ? (px2 - a.x) / ex : (py2 - a.y) / ey;
+      if (sAlong < -0.001 || sAlong > 1.001) continue;
+      if (tt > best) best = tt;
+    }
+    return best || 1;
+  }
+  function depthAt(sx, sy) {
+    var m = Math.hypot(sx, sy);
+    if (m < 1e-6) return D_FACE;
+    var ux = sx / m, uy = sy / m;
+    var rIn = innerRadius(ux, uy);
+    /* Внешнее кольцо выталкивается не по радиусу, а до квадрата
+       кадра - иначе по диагонали остаётся щель. Считать его как
+       rIn * 1.34 было ошибкой: по вертикали радиус выходил вдвое
+       меньше настоящего, глубина уезжала на десяток сантиметров, и
+       клавиши проваливались за лицевую плиту. */
+    var mMax = Math.max(Math.abs(ux), Math.abs(uy)) * rIn;
+    var rOut = rIn * Math.max(1.34, 1.34 / (mMax || 1));
+    var lam = (m - rIn) / Math.max(1e-6, rOut - rIn);
+    return D_FACE + (D_OUT - D_FACE) * Math.max(0, Math.min(1, lam));
+  }
+
+  var capThick = 0.014;
+  var caps = api.caps;
+
+  function addKey(cell, sx, sy, wPx, hPx, hint) {
+    var d = depthAt(sx, sy);
+    var hw = ndcOfPx(wPx / 2, "x") * proj.th * d;
+    var hh = ndcOfPx(hPx / 2, "y") * proj.tv * d;
+    var geo = capUv(T, capGeo(T, hw * 2, hh * 2, capThick, Math.min(hw, hh) * 0.20), cell);
+    var mat = new T.MeshStandardMaterial({
+      map: atlasTex, emissiveMap: atlasTex,
+      emissive: new T.Color(0xffffff), emissiveIntensity: 0.12,
+      roughness: 0.44, metalness: 0.5, envMapIntensity: 0.8
+    });
+    var mesh = new T.Mesh(geo, mat);
+    var w = proj.at(T, sx, sy, d);
+    mesh.position.set(w.x, w.z + 0.010, -w.y);
+    mesh.userData.homeY = mesh.position.y;
+    mesh.userData.halfW = hw;
+    mesh.userData.halfH = hh;
+    mesh.userData.hit = Math.max(40, Math.max(wPx, hPx) * 1.05);
+    mesh.userData.ph = caps.length * 0.64;
+    mesh.userData.hint = hint;
+    mesh.userData.baseEmissive = 0.12;
+    keyRig.add(mesh);
+    caps.push(mesh);
+    return mesh;
+  }
+
+  var socketGeo = null, socketMat = new T.MeshStandardMaterial({
+    color: 0x090d11, roughness: 0.46, metalness: 0.9, envMapIntensity: 0.7
+  });
+  function addSocket(sx, sy, wPx, hPx) {
+    var d = depthAt(sx, sy);
+    var hw = ndcOfPx(wPx * 0.60, "x") * proj.th * d;
+    var hh = ndcOfPx(hPx * 0.60, "y") * proj.tv * d;
+    if (!socketGeo) socketGeo = capGeo(T, 2, 2, 0.5, 0.22);
+    var m = new T.Mesh(socketGeo, socketMat);
+    var w = proj.at(T, sx, sy, d);
+    m.position.set(w.x, w.z + 0.004, -w.y);
+    m.scale.set(hw, 0.020, hh);
+    keyRig.add(m);
+    return m;
+  }
+
+  /* Раскладка в долях снимка. Замерена по самому снимку: центр
+     приборной доски свободен под блок команд, стойки несут
+     служебные тумблеры. */
+  var L = portrait ? {
+    row: 0.885, x0: 0.180, x1: 0.820, capH: 0.062,
+    aux: [[0.066, 0.330], [0.066, 0.420], [0.934, 0.300], [0.934, 0.390], [0.934, 0.480]],
+    auxH: 0.036
+  } : {
+    row: 0.893, x0: 0.320, x1: 0.680, capH: 0.115,
+    aux: [[0.068, 0.395], [0.068, 0.520], [0.932, 0.355], [0.932, 0.475], [0.932, 0.595]],
+    auxH: 0.066
+  };
+  var capH = L.capH * H;
+  var keyPx = capH / CAP_RATIO;
+  var pitchNdc = (L.x1 - L.x0) / 6;
+  var hints = ru ? HINT.ru : HINT.en;
+  for (i = 0; i < 7; i++) {
+    var kx = fx(L.x0 + pitchNdc * i), ky = fy(L.row);
+    addSocket(kx, ky, keyPx * 1.10, capH * 1.06);
+    addKey(i, kx, ky, keyPx, capH, hints[i]);
+  }
+  api.keyPx = keyPx;
+  api.capH = capH;
+
+  var auxH = L.auxH * H, auxW = auxH / CAP_RATIO;
+  var auxHints = ru ? HINT.auxRu : HINT.auxEn;
+  /* Порядок служебных обязан совпасть с разметкой: карта, ближе,
+     дальше, кадр, справка. */
+  for (i = 0; i < 5; i++) {
+    var ax = fx(L.aux[i][0]), ay = fy(L.aux[i][1]);
+    addSocket(ax, ay, auxW * 1.12, auxH * 1.08);
+    addKey(7 + i, ax, ay, auxW, auxH, auxHints[i]);
+  }
+  api.auxW = auxW;
+
+  /* ── Приборные модули ───────────────────────────────────
+     Раньше на этом месте была голая полоса металла, и заказчик
+     сравнил её со старой рубкой не в нашу пользу. На его
+     референсах приборка плотная: круглый радар слева, экраны
+     телеметрии, рычаг тяги и крупная скорость справа. Всё это
+     живое - радар метёт сектор, числа меняются, рычаг ходит со
+     скоростью корабля.
+
+     Модуль это плоскость на лицевой плите, повёрнутая к пилоту,
+     с полотном вместо картинки. Полотно перерисовываем редко
+     (радар двенадцать раз в секунду, телеметрия четыре), иначе
+     каждый кадр уходил бы в заливку. */
+  var mods = [];
+  function addModule(sx, sy, wPx, hPx, draw, fps) {
+    var d = depthAt(sx, sy);
+    var hw = ndcOfPx(wPx / 2, "x") * proj.th * d;
+    var hh = ndcOfPx(hPx / 2, "y") * proj.tv * d;
+    var cw = Math.max(64, Math.min(512, Math.round(wPx * 2)));
+    var chh = Math.max(48, Math.min(512, Math.round(hPx * 2)));
+    var c = cnv(cw, chh);
+    var t = new T.CanvasTexture(c);
+    if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+    t.anisotropy = tiny ? 2 : 4;
+    var geo = new T.PlaneGeometry(hw * 2, hh * 2);
+    geo.rotateX(-Math.PI / 2);
+    var mat = new T.MeshStandardMaterial({
+      map: t, emissiveMap: t, emissive: new T.Color(0xffffff), emissiveIntensity: 0.62,
+      roughness: 0.30, metalness: 0.1, envMapIntensity: 0.5, fog: false
+    });
+    var m = new T.Mesh(geo, mat);
+    var w = proj.at(T, sx, sy, d);
+    /* Экран выносим вперёд на два сантиметра. Четыре миллиметра
+       не хватало: лицевая плита в этой точке считается по линейной
+       доле, а лежит по прямой в пространстве, и расхождение в пару
+       миллиметров прятало модуль внутрь плиты. */
+    m.position.set(w.x, w.z + 0.020, -w.y);
+    m.renderOrder = 4;
+    keyRig.add(m);
+    /* рамка гнезда вокруг экрана: без неё модуль читается наклейкой */
+    var ring2 = new T.Mesh(capGeo(T, hw * 2.14, hh * 2.20, 0.016, Math.min(hw, hh) * 0.16), socketMat);
+    ring2.position.set(w.x, w.z + 0.006, -w.y);
+    keyRig.add(ring2);
+    mods.push({ mesh: m, ctx: c.getContext("2d"), tex: t, w: cw, h: chh,
+                draw: draw, every: 1000 / (fps || 6), last: -1e9 });
+    return m;
+  }
+
+  var CY = "#7fe3ff", CY2 = "rgba(127,227,255,.35)", INK = "#050b12";
+
+  function drawRadar(x, W2, H2, t, tele) {
+    x.fillStyle = INK; x.fillRect(0, 0, W2, H2);
+    var cx = W2 / 2, cy = H2 / 2, R = Math.min(cx, cy) * 0.92;
+    x.strokeStyle = CY2; x.lineWidth = Math.max(1, R * 0.02);
+    for (var k = 1; k <= 3; k++) {
+      x.beginPath(); x.arc(cx, cy, R * k / 3, 0, TAU); x.stroke();
+    }
+    x.beginPath(); x.moveTo(cx - R, cy); x.lineTo(cx + R, cy);
+    x.moveTo(cx, cy - R); x.lineTo(cx, cy + R); x.stroke();
+    var a = (t * 1.15) % TAU;
+    var gr = x.createRadialGradient(cx, cy, 0, cx, cy, R);
+    gr.addColorStop(0, "rgba(127,227,255,.45)");
+    gr.addColorStop(1, "rgba(127,227,255,0)");
+    x.beginPath(); x.moveTo(cx, cy);
+    x.arc(cx, cy, R, a - 0.5, a); x.closePath();
+    x.fillStyle = gr; x.fill();
+    x.strokeStyle = CY; x.lineWidth = Math.max(1, R * 0.035);
+    x.beginPath(); x.moveTo(cx, cy);
+    x.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); x.stroke();
+    /* отметки целей: не случайные - те же тела, что в маршруте */
+    var marks = (tele && tele.marks) || [0.42, 0.68, 0.24];
+    for (k = 0; k < marks.length; k++) {
+      var ma = a - 0.9 - k * 1.9, mr = R * (0.3 + marks[k] * 0.6);
+      var fade = 0.35 + 0.65 * Math.max(0, 1 - ((a - ma + TAU) % TAU) / 2.2);
+      x.fillStyle = "rgba(154,255,120," + fade.toFixed(2) + ")";
+      x.beginPath();
+      x.arc(cx + Math.cos(ma) * mr, cy + Math.sin(ma) * mr, Math.max(1.5, R * 0.05), 0, TAU);
+      x.fill();
+    }
+    x.strokeStyle = "rgba(140,180,205,.5)"; x.lineWidth = Math.max(1, R * 0.05);
+    x.beginPath(); x.arc(cx, cy, R, 0, TAU); x.stroke();
+  }
+
+  function drawTele(x, W2, H2, t, tele) {
+    x.fillStyle = INK; x.fillRect(0, 0, W2, H2);
+    x.strokeStyle = "rgba(127,227,255,.16)"; x.lineWidth = 1;
+    var step = H2 / 6, k;
+    for (k = 1; k < 6; k++) { x.beginPath(); x.moveTo(0, k * step); x.lineTo(W2, k * step); x.stroke(); }
+    for (k = 1; k < 10; k++) { x.beginPath(); x.moveTo(k * W2 / 10, 0); x.lineTo(k * W2 / 10, H2); x.stroke(); }
+    /* график: не шум, а тот же ход корабля */
+    var v = (tele && tele.speed) || 0;
+    x.strokeStyle = CY; x.lineWidth = Math.max(1.5, H2 * 0.03);
+    x.beginPath();
+    for (k = 0; k <= 40; k++) {
+      var u = k / 40;
+      var yy = H2 * (0.72 - 0.42 * v * (0.55 + 0.45 * Math.sin(u * 7 + t * 1.6)));
+      if (k === 0) x.moveTo(0, yy); else x.lineTo(u * W2, yy);
+    }
+    x.stroke();
+    x.fillStyle = "rgba(190,232,250,.92)";
+    x.font = "700 " + Math.round(H2 * 0.17) + "px " + FONT;
+    x.textBaseline = "top";
+    x.fillText("ПОТОК", W2 * 0.04, H2 * 0.05);
+    x.textAlign = "right";
+    x.fillText(Math.round(120 + v * 880) + " ГБ/С", W2 * 0.96, H2 * 0.05);
+    x.textAlign = "left";
+  }
+
+  function drawSpeed(x, W2, H2, t, tele) {
+    x.fillStyle = INK; x.fillRect(0, 0, W2, H2);
+    var v = (tele && tele.speed) || 0;
+    x.fillStyle = "rgba(127,227,255,.10)";
+    x.fillRect(0, H2 * (1 - v), W2, H2 * v);
+    x.fillStyle = "#cfefff";
+    x.font = "800 " + Math.round(H2 * 0.52) + "px " + FONT;
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText((v * 12).toFixed(1), W2 / 2, H2 * 0.40);
+    x.fillStyle = "rgba(160,200,225,.85)";
+    x.font = "700 " + Math.round(H2 * 0.20) + "px " + FONT;
+    x.fillText("КМ/С", W2 / 2, H2 * 0.80);
+    void t;
+  }
+
+  /* Куда садятся живые приборы. Замерено по самому снимку: на
+     приборной доске уже есть врезанные экраны, и наши показания
+     обязаны лечь ровно в них, а не рядом. Радар слева, поток по
+     обе стороны от блока команд, скорость справа. */
+  var MOD = portrait ? {
+    radar: [0.150, 0.945, 0.130, 0.030],
+    telL:  [0.330, 0.945, 0.150, 0.028],
+    telR:  [0.670, 0.945, 0.150, 0.028],
+    speed: [0.855, 0.945, 0.150, 0.030]
+  } : {
+    radar: [0.160, 0.900, 0.078, 0.070],
+    telL:  [0.258, 0.900, 0.062, 0.062],
+    telR:  [0.762, 0.900, 0.062, 0.062],
+    speed: [0.858, 0.900, 0.082, 0.062]
+  };
+  function mod(spec, draw, fps) {
+    addModule(fx(spec[0]), fy(spec[1]), spec[2] * W, spec[3] * H, draw, fps);
+  }
+  mod(MOD.radar, drawRadar, 12);
+  mod(MOD.telL, drawTele, 4);
+  mod(MOD.telR, drawTele, 4);
+  mod(MOD.speed, drawSpeed, 6);
+  api.mods = mods;
+
+  /* ── Свет рамы ──────────────────────────────────────────
+     Два коротких источника за отбортовкой. Дальность жёстко
+     ограничена: пульт обязан светиться сам, но подкрашивать Землю
+     за окном он не имеет права. */
+  var lightIn = proj.at(T, 0, inner.b - 0.02, D_LIP - 0.10);
+  var lampBottom = new T.PointLight(0x9fd8f2, tiny ? 3.2 : 4.4, 3.2, 1.5);
+  lampBottom.position.copy(lightIn);
+  grp.add(lampBottom);
+  var lightTop = proj.at(T, 0, inner.t + 0.02, D_LIP - 0.10);
+  var lampTop = new T.PointLight(0xcfe4f5, tiny ? 2.6 : 3.6, 3.2, 1.5);
+  lampTop.position.copy(lightTop);
+  grp.add(lampTop);
+  api.lights = [lampBottom, lampTop];
+
+  /* Диодные лестницы по стойкам сняты: на снимке рубки световоды
+     и индикаторы уже стоят там, где им положено, и вторая гирлянда
+     поверх спорила с ними. Ход корабля показывает крупная скорость
+     на приборной доске, а не самодельные полоски по краям. */
+  var live = [];
+  api.live = live;
+
+  /* ── Приёмка ───────────────────────────────────────────
+     Доли кадра отдаём наружу: без них любой разговор о размере
+     панели превращается в спор на глазок. */
+  /* Четыре точки на середине кромок проёма. Полёт проецирует их
+     живой камерой и получает настоящие доли кадра - не расчётные,
+     а те, что зритель видит. Без такого замера разговор о размере
+     панели каждый раз скатывается на глазок. */
+  api.probe = [
+    proj.at(T, 0, inner.b, D_LIP),
+    proj.at(T, 0, inner.t, D_LIP),
+    proj.at(T, inner.l, 0, D_LIP),
+    proj.at(T, inner.r, 0, D_LIP)
+  ];
+  api.frameShare = function () {
+    return {
+      низ: +((1 + inner.b) / 2 * 100).toFixed(1),
+      верх: +((1 - inner.t) / 2 * 100).toFixed(1),
+      бок: +((1 + inner.l) / 2 * 100).toFixed(1),
+      клавишаPx: +keyPx.toFixed(0),
+      служебнаяPx: +auxPx.toFixed(0)
+    };
+  };
+  /* Прямоугольник, целиком лежащий внутри проёма.
+
+     Проём восьмиугольный, поэтому габаритная рамка задевает
+     срезанные углы: всплывающее окно, положенное по габариту,
+     заезжало бы на раму - ровно то, что заказчик запретил
+     («окно = экран с голограммами», рама неприкосновенна).
+     Ищем вписанный прямоугольник сжатием к середине проёма, пока
+     все четыре его угла не окажутся внутри контура. */
+  function inPoly(px, py) {
+    var c = false;
+    for (var k = 0, j = Rin.length - 1; k < Rin.length; j = k++) {
+      var a = Rin[k], b = Rin[j];
+      if (((a.y > py) !== (b.y > py)) &&
+          (px < (b.x - a.x) * (py - a.y) / (b.y - a.y) + a.x)) c = !c;
+    }
+    return c;
+  }
+  var midX = (inner.l + inner.r) / 2, midY = (inner.b + inner.t) / 2;
+  var safe = { l: inner.l, r: inner.r, b: inner.b, t: inner.t };
+  for (var kk = 0; kk < 24; kk++) {
+    if (inPoly(safe.l, safe.b) && inPoly(safe.r, safe.b) &&
+        inPoly(safe.l, safe.t) && inPoly(safe.r, safe.t)) break;
+    safe.l = midX + (safe.l - midX) * 0.965;
+    safe.r = midX + (safe.r - midX) * 0.965;
+    safe.b = midY + (safe.b - midY) * 0.965;
+    safe.t = midY + (safe.t - midY) * 0.965;
+  }
+  api.safe = safe;
+  RC.last = { inner: inner, safe: safe };
+
+  api.windowRect = function () {
+    return { x: (safe.l + 1) / 2, y: (1 - safe.t) / 2,
+             w: (safe.r - safe.l) / 2, h: (safe.t - safe.b) / 2 };
+  };
+  api.deckRect = function () {
+    return { x: 0, y: (1 - inner.b) / 2, w: 1, h: (1 + inner.b) / 2 };
+  };
+
+  /* ── Кадр ──────────────────────────────────────────────── */
+  var tPrev = 0;
+  api.update = function (ts, dt, tele) {
+    void dt;
+    var t = ts * 0.001;
+    tPrev = t;
+    /* световод дышит еле заметно: ровное свечение читается пластиком */
+    /* Рама дышит собственным свечением: ровная яркость снимка
+       читается наклейкой, лёгкое колебание - работающим железом. */
+    matFrame.emissiveIntensity = 0.78 + Math.sin(t * 0.6) * 0.035;
+    var speed = tele && typeof tele.speed === "number" ? tele.speed : 0;
+    for (var mi = 0; mi < mods.length; mi++) {
+      var M = mods[mi];
+      if (ts - M.last < M.every) continue;
+      M.last = ts;
+      M.draw(M.ctx, M.w, M.h, t, tele);
+      M.tex.needsUpdate = true;
+    }
+    for (var k = 0; k < live.length; k++) {
+      var L = live[k];
+      if (!L.mesh.instanceColor) continue;
+      var c = api._c || (api._c = new T.Color());
+      for (var j = 0; j < L.n; j++) {
+        var on;
+        if (L.kind === "thrust") {
+          on = (j / L.n) < speed ? 1 : 0.06;
+          if (Math.abs(j / L.n - speed) < 1 / L.n) on = 0.55 + 0.45 * Math.sin(t * 9);
+          c.setRGB(0.32 * on, 0.80 * on, 1.0 * on);
+        } else {
+          var ph = j * 1.7;
+          on = 0.22 + 0.78 * (0.5 + 0.5 * Math.sin(t * (1.1 + j * 0.17) + ph));
+          c.setRGB(0.55 * on, 1.0 * on, 0.58 * on);
+        }
+        L.mesh.setColorAt(j, c);
+      }
+      L.mesh.instanceColor.needsUpdate = true;
+    }
+  };
+  void tPrev;
+
+  return api;
+}
+
+RC.build = build;
+g.RC_CONSOLE = RC;
+Object.assign(RC, {
+  EYE: EYE, R: R_WALL, CAM_WIN: CAM_WIN,
+  WIN_Y0: WIN_Y0, WIN_Y1: WIN_Y1, WIN_HALF: WIN_HALF,
+  F_BOTTOM: F_BOTTOM, F_TOP: F_TOP, F_SIDE: F_SIDE
+});
 
 })(window);
