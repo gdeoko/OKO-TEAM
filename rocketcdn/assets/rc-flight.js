@@ -550,7 +550,7 @@ function buildUI() {
                     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                     '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
                     '<b>' + (RU ? "КУРС" : "COURSE") + '</b></button>' +
-                  '<button type="button" class="rcf-key rcf-map-key" aria-label="' + (RU ? "Карта сети" : "Network map") + '">' +
+                  '<button type="button" class="rcf-key rcf-map-key" title="' + (RU ? "Карта сети" : "Network map") + '" aria-label="' + (RU ? "Карта сети" : "Network map") + '">' +
                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                     '<path d="M9 4L3.5 6.2v13.3L9 17.3l6 2.4 5.5-2.2V4.2L15 6.4z"/><path d="M9 4v13.3M15 6.4v13.3"/></svg>' +
@@ -598,19 +598,19 @@ function buildUI() {
                 '<div class="rcf-d-col">' +
                   '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
                   '<div class="rcf-d-row">' +
-                    '<button type="button" class="rcf-key rcf-mini rcf-zoom-in" aria-label="' + (RU ? "Приблизить" : "Zoom in") + '">' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-zoom-in" title="' + (RU ? "Приблизить" : "Zoom in") + '" aria-label="' + (RU ? "Приблизить" : "Zoom in") + '">' +
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
                       'stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/>' +
                       '<path d="M15.4 15.4L21 21M10.5 7.6v5.8M7.6 10.5h5.8"/></svg></button>' +
-                    '<button type="button" class="rcf-key rcf-mini rcf-zoom-out" aria-label="' + (RU ? "Отдалить" : "Zoom out") + '">' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-zoom-out" title="' + (RU ? "Отдалить" : "Zoom out") + '" aria-label="' + (RU ? "Отдалить" : "Zoom out") + '">' +
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
                       'stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/>' +
                       '<path d="M15.4 15.4L21 21M7.6 10.5h5.8"/></svg></button>' +
-                    '<button type="button" class="rcf-key rcf-mini rcf-shot" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-shot" title="' + (RU ? "Снимок из кабины" : "Snapshot") + '" aria-label="' + (RU ? "Снимок из кабины" : "Snapshot") + '">' +
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                       '<path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg></button>' +
-                    '<button type="button" class="rcf-key rcf-mini rcf-help-key" aria-label="' + (RU ? "Справка" : "Help") + '">' +
+                    '<button type="button" class="rcf-key rcf-mini rcf-help-key" title="' + (RU ? "Справка" : "Help") + '" aria-label="' + (RU ? "Справка" : "Help") + '">' +
                       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
                       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                       '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/>' +
@@ -2039,10 +2039,18 @@ function buildWorld() {
             "float landLum = dot(texture2D(roughnessMap, vRoughnessMapUv).rgb, vec3(0.299,0.587,0.114));\n" +
             "roughnessFactor = mix(0.18, 0.92, smoothstep(0.10, 0.42, landLum));")
           /* Огни городов только там, где ночь */
+          /* Огни городов только там, где ночь.
+
+             Границы у smoothstep идут по возрастанию, а результат
+             инвертируется отдельно. Обратный порядок (0.14, -0.22)
+             спецификация оставляет неопределённым: на одних
+             драйверах он давал ноль, на других единицу, и ночная
+             сторона то не зажигалась вовсе, то светила по всему
+             шару. */
           .replace("#include <emissivemap_fragment>",
             "#include <emissivemap_fragment>\n" +
             "float sunDot = dot(normalize(vSunN), uSunDir);\n" +
-            "totalEmissiveRadiance *= smoothstep(0.14, -0.22, sunDot);");
+            "totalEmissiveRadiance *= 1.0 - smoothstep(-0.22, 0.14, sunDot);");
       };
       return m;
     })()

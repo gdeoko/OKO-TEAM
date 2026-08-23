@@ -491,6 +491,141 @@ function controlGlyphAtlas(T) {
 /* A machined slab for objects that must catch real cabin light. The
    canvas deck skin remains useful for lettering, but it cannot create
    silhouette, parallax or a contact shadow. These beveled meshes can. */
+/* ── Гравированная легенда пульта ────────────────────────────
+   Заказчик сформулировал претензию точно: «хуй поймёшь что за
+   кнопки и зачем они». И был прав. Названия команд лежали
+   гравировкой на самих клавишах, а клавиша занимает на экране
+   пару десятков пикселей - подпись выходила ростом в шесть
+   пикселей, то есть её не было.
+
+   В настоящей кабине подписывают не клавишу, а панель под ней:
+   табличка шире клавиши в разы, поэтому текст читается. Плюс
+   команды разложены по зонам с заголовками, и рука знает, куда
+   тянуться, не читая каждую надпись.
+
+   Раскладка совпадает с геометрией один в один: семь основных
+   клавиш стоят с шагом 0,43 от центра, вспомогательные - на
+   плечах пульта. Совпадение обязано быть точным, иначе подпись
+   уедет от своей клавиши и станет хуже, чем её отсутствие.
+
+   Отдельная плита, а не рисунок на настиле: у выдавленной
+   геометрии настила текстурные координаты идут в мировых
+   единицах, и рисунок на ней повторяется три с половиной раза.
+   У плоскости координаты честные, от нуля до единицы. */
+var LEGEND = {
+  ru: { keys: ["КУРС", "СКАН", "УЗЕЛ", "ЗАЛП", "АВТО", "СТОП", "ТЯГА"],
+        zones: [["НАВИГАЦИЯ", 0.14], ["РАБОТА С СЕТЬЮ", 0.5], ["ХОД КОРАБЛЯ", 0.86]],
+        aux: ["СЕТЬ", "БЛИЖЕ", "ДАЛЬШЕ", "КАДР", "СПРАВКА"],
+        warn: "ОСТОРОЖНО" },
+  en: { keys: ["COURSE", "SCAN", "NODE", "FIRE", "AUTO", "STOP", "THRUST"],
+        zones: [["NAVIGATION", 0.14], ["NETWORK", 0.5], ["DRIVE", 0.86]],
+        aux: ["NET", "ZOOM IN", "ZOOM OUT", "FRAME", "HELP"],
+        warn: "CAUTION" }
+};
+
+function legendTex(T, ru) {
+  var L = ru ? LEGEND.ru : LEGEND.en;
+  var W = 2048, H = 124, c = cnv(W, H), x = c.getContext("2d");
+  x.clearRect(0, 0, W, H);
+
+  /* Бортик: тёмный анодированный алюминий с продольной шлифовкой */
+  var bg = x.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "rgba(28,36,44,.96)");
+  bg.addColorStop(0.5, "rgba(18,25,32,.96)");
+  bg.addColorStop(1, "rgba(11,16,21,.96)");
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  for (var i = 0; i < H; i += 3) {
+    x.fillStyle = i % 9 ? "rgba(190,212,224,.020)" : "rgba(0,3,6,.10)";
+    x.fillRect(0, i, W, 1);
+  }
+
+  /* Границы зон: тонкие фрезерованные канавки */
+  x.strokeStyle = "rgba(0,0,0,.66)"; x.lineWidth = 3;
+  [0.325, 0.695].forEach(function (u) {
+    x.beginPath(); x.moveTo(u * W, 8); x.lineTo(u * W, H - 8); x.stroke();
+  });
+  x.strokeStyle = "rgba(120,190,220,.14)"; x.lineWidth = 1;
+  [0.325, 0.695].forEach(function (u) {
+    x.beginPath(); x.moveTo(u * W + 2, 8); x.lineTo(u * W + 2, H - 8); x.stroke();
+  });
+
+  /* Предупредительная косая штриховка под залпом: команда
+     необратимая, и в кабине такие всегда выделены. */
+  var wx0 = W * 0.478, wx1 = W * 0.560;
+  x.save();
+  x.beginPath(); x.rect(wx0, 6, wx1 - wx0, H - 12); x.clip();
+  x.fillStyle = "rgba(66,29,11,.9)"; x.fillRect(wx0, 6, wx1 - wx0, H - 12);
+  x.strokeStyle = "rgba(226,124,44,.55)"; x.lineWidth = 9;
+  for (var s = -120; s < (wx1 - wx0) + 120; s += 26) {
+    x.beginPath(); x.moveTo(wx0 + s, H - 6); x.lineTo(wx0 + s + 112, 6); x.stroke();
+  }
+  x.restore();
+
+  /* Заголовки зон */
+  x.textAlign = "center"; x.textBaseline = "middle";
+  /* Заголовков зон на бортике нет. Видна ровно одна строка -
+     нижнюю половину закрывают сами клавиши, - и эта строка должна
+     называть команды, а не разделы. Группы всё равно читаются: по
+     промежуткам между гнёздами и по красной зоне у залпа. */
+
+  /* Подписи основных клавиш. Семь штук с шагом 0,43 при ширине
+     плиты 3,65: доля центра = 0,5 + (i-3)*0,43/3,65. */
+  x.font = "800 62px " + FONT;
+  for (i = 0; i < 7; i++) {
+    var u = 0.5 + (i - 3) * (0.43 / 3.65);
+    var px = u * W;
+    var fire = i === 3;
+    /* Гравировка: тёмный оттиск плюс подсвеченный кант сверху */
+    x.fillStyle = "rgba(0,0,0,.85)";
+    x.fillText(L.keys[i], px, 66);
+    x.fillStyle = fire ? "rgba(255,196,138,.98)" : "rgba(206,232,246,.94)";
+    x.fillText(L.keys[i], px, 63);
+    /* Разделитель между гнёздами команд */
+    if (i < 6) {
+      x.strokeStyle = "rgba(120,170,196,.14)"; x.lineWidth = 1;
+      var du = 0.5 + (i - 2.5) * (0.43 / 3.65);
+      x.beginPath(); x.moveTo(du * W, 10); x.lineTo(du * W, H - 10); x.stroke();
+    }
+  }
+
+  /* Крепёж по углам: без него плита выглядит наклейкой */
+  [[18, 18], [W - 18, 18], [18, H - 18], [W - 18, H - 18]].forEach(function (p) {
+    var g = x.createRadialGradient(p[0], p[1], 0, p[0], p[1], 13);
+    g.addColorStop(0, "rgba(180,199,214,.85)");
+    g.addColorStop(0.62, "rgba(70,86,100,.9)");
+    g.addColorStop(1, "rgba(0,0,0,.55)");
+    x.fillStyle = g;
+    x.beginPath(); x.arc(p[0], p[1], 8, 0, TAU); x.fill();
+  });
+
+  var t = new T.CanvasTexture(c);
+  if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+/* Табличка вспомогательного переключателя: одна короткая подпись
+   на своей маленькой плите. Их пять, и каждая стоит вплотную к
+   своему тумблеру на плече пульта. */
+function auxLabelTex(T, text) {
+  var W = 512, H = 128, c = cnv(W, H), x = c.getContext("2d");
+  x.clearRect(0, 0, W, H);
+  x.fillStyle = "rgba(16,23,30,.92)";
+  x.fillRect(0, 0, W, H);
+  x.strokeStyle = "rgba(120,190,220,.18)"; x.lineWidth = 2;
+  x.strokeRect(3, 3, W - 6, H - 6);
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.font = "800 58px " + FONT;
+  x.fillStyle = "rgba(0,0,0,.85)";
+  x.fillText(text, W / 2, H / 2 + 3);
+  x.fillStyle = "rgba(206,232,246,.94)";
+  x.fillText(text, W / 2, H / 2);
+  var t = new T.CanvasTexture(c);
+  if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
 function roundedDeckGeo(T, w, h, d, radius) {
   var s = new T.Shape(), x0 = -w * 0.5, y0 = -h * 0.5;
   var rr = Math.min(radius, w * 0.23, h * 0.23);
@@ -890,6 +1025,36 @@ function build(T, opts) {
   auxSockets.instanceMatrix.needsUpdate = true;
   pilotRig.add(auxSockets);
   controlSockets.push(auxSockets);
+
+  /* ── Плита с подписями ──────────────────────────────────────
+     Ложится на настил перед клавишами. Подписи стоят ровно под
+     своими клавишами (шаг 0,43 при ширине 3,65), заголовки зон -
+     у дальнего края, ближе к остеклению.
+
+     Материал светящийся: гравировка в кабине подсвечивается
+     изнутри, поэтому её видно и в тени. Basic не участвует в
+     расчёте света, а значит подпись не потемнеет вместе со
+     стеной, когда камера отвернётся от лампы. */
+  var legRU = (doc.documentElement.getAttribute("lang") || "ru").indexOf("en") !== 0;
+  /* Бортик стоит почти вертикально и смотрит на пилота. Лежащая
+     плашмя табличка с этого ракурса сжимается в нитку: глаз идёт
+     вдоль настила, а не сверху. Наклон в двенадцать градусов - как
+     у приборных бортиков в кабине, чтобы не бликовал в лампу. */
+  var legendPlate = new T.Mesh(
+    new T.PlaneGeometry(3.65, 0.221),
+    new T.MeshBasicMaterial({ map: legendTex(T, legRU), transparent: true, fog: false, depthWrite: false })
+  );
+  legendPlate.rotation.x = -0.21;
+  legendPlate.position.set(0, 0.238, -0.168);
+  pilotRig.add(legendPlate);
+
+  /* Табличек у вспомогательных тумблеров нет намеренно. Их пробовали
+     поставить такими же бортиками, но переключатель на плече пульта
+     занимает на экране десяток пикселей, и подпись рядом с ним
+     превращалась в белое пятно: светящийся текст на этом размере
+     сливается в один блик. Названия этих пяти команд человек видит
+     подсказкой при наведении (атрибут title на их DOM-двойниках),
+     а бортик оставлен главным семи. */
 
   /* One atlas, one instanced draw. Twelve separate CanvasTextures and
      twelve plane meshes looked identical but added eleven avoidable
