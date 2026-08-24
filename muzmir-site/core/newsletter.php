@@ -920,10 +920,33 @@ function mass_sending_enabled(): bool {
  *   Штатное завершение кампании — 'campaign_finished'.
  */
 function mass_sending_set(bool $on, string $reason = ''): void {
+    $was = (string) setting('mass_sending', '0');
     set_setting('mass_sending', $on ? '1' : '0');
     set_setting('mass_sending_changed_at', date('Y-m-d H:i:s'));
     if (!$on) set_setting('mass_sending_off_reason', $reason !== '' ? $reason : 'unknown');
     else      set_setting('mass_sending_off_reason', '');
+
+    /* АВАРИЙНАЯ ОСТАНОВКА НЕ ДОЛЖНА ПРОХОДИТЬ МОЛЧА.
+     *
+     * 24 августа защита опустила стоп-кран в 09:34, и рассылка простояла весь
+     * день с 24 588 письмами в очереди. Узнали об этом только вечером и только
+     * потому, что полезли в логи руками. Автоматика вправе останавливать
+     * рассылку — но обязана сказать владельцу, что остановила и почему. Штатное
+     * завершение кампании ('campaign_finished') и включение — молча. */
+    if (!$on && $was === '1' && $reason !== '' && $reason !== 'campaign_finished') {
+        try {
+            if (!function_exists('owner_notify') && is_file(BASE_PATH . '/core/notify_owner.php')) {
+                require_once BASE_PATH . '/core/notify_owner.php';
+            }
+            if (function_exists('owner_notify')) {
+                $left = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'") ?? 0);
+                owner_notify('РАССЫЛКА', 'Массовая рассылка остановлена автоматикой',
+                    'Причина: ' . $reason . "\nВ очереди осталось: " . $left . " писем."
+                    . "\nПока стоп-кран опущен, массовые не уходят — личные письма идут как обычно.",
+                    ['Когда' => date('d.m.Y H:i'), '_event' => 'mass_sending_off']);
+            }
+        } catch (\Throwable $e) { /* уведомление не должно ломать остановку */ }
+    }
 
     // ПРОГРЕВ ОТСЧИТЫВАЕТСЯ ОТ ПЕРВОЙ РЕАЛЬНОЙ ОТПРАВКИ, А НЕ ОТ НАСТРОЙКИ.
     // Если проставить дату старта заранее и запустить рассылку через три недели,
