@@ -1,3 +1,10 @@
+> **УСТАРЕЛО 24.08.2026.** Файл описывает июльскую попытку завести аккаунты
+> под ником `aktiviti.official`. С тех пор площадки заведены под ником
+> `klaster.official` (Instagram `klasterofficial`, YouTube `@klasterofficial`,
+> Telegram `@radialnya`). Актуальный источник правды по оформлению площадок —
+> `03_deliverables/SOCIAL_PROFILES.md`. Здесь оставлено только как история
+> попыток автоматической регистрации и ограничений среды.
+
 # Создание аккаунтов соцсетей — статус и инструкция
 
 Единый ник: **aktiviti.official** · Почта: aktiviti.official@gmail.com
