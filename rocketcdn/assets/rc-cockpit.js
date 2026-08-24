@@ -84,8 +84,8 @@ function src() {
      не поднялась, fallback больше не возвращает старую рисованную
      панель в момент перехода к полёту. */
   var want = tall()
-    ? "assets/gen/cockpit-tall-v2.webp"
-    : "assets/gen/cockpit-wide-v2.webp";
+    ? "assets/gen/cockpit-tall-hd.webp"
+    : "assets/gen/cockpit-wide-hd.webp";
   if (want !== srcNow) { srcNow = want; img.setAttribute("src", want); }
   var w = tall() ? WIN_TALL : WIN_WIDE, s = tall() ? SCR_TALL : SCR_WIDE;
   /* Границы остекления отдаём в проценты окна: вёрстка ставит по ним

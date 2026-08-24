@@ -29,51 +29,56 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "assets", "gen", "cab", "cand")
 
 BASE = (
-    "First person view from the pilot seat of a spacecraft cockpit, photorealistic. "
-    "In the exact centre a large rounded rectangle viewport opening filled with pure "
-    "solid black, completely empty, no stars, no glass, no reflection, no glare. "
+    "Interior of a modern spacecraft cockpit seen from the pilot seat, photorealistic, "
+    "shot straight ahead, symmetrical. In the exact centre one very large viewport opening "
+    "filled with pure solid black, absolutely empty: no stars, no glass, no reflection, no "
+    "glare, no light of any kind inside it. "
     "{share} "
-    "Around it on all four sides a continuous machined console frame: {layout}. "
-    "Dark graphite anodized aluminium and gunmetal, brushed satin metal, chamfered "
-    "edges with thin specular highlights, countersunk hex bolts, deep panel seams, "
-    "recessed wells, raised plates, real thickness and depth, ambient occlusion in "
-    "every crevice, micro scratches and faint dust. "
-    "On the bottom shelf a row of chunky square backlit keycaps glowing lime green, "
-    "two knurled metal rotary dials, a chrome throttle lever with black rubber grip, "
-    "two small recessed screens glowing lime green with radar and telemetry graphics. "
-    "The pillars carry toggle switches under raised metal guards and small round amber "
-    "and lime indicator lamps. The overhead panel has covered switches with red safety "
-    "flaps and a linear vent grille with fine slats. "
-    "The cockpit is dark, lit only from inside by lime green keycap backlight, amber "
-    "indicator lamps and a soft cool white strip under the overhead lip. Strong "
-    "contrast, deep shadows, cinematic. Near monochrome graphite with lime green as "
-    "the only saturated accent. "
-    "No text, no letters, no numbers, no logos, no people, no hands, nothing at all "
-    "inside the black opening. Symmetrical, level, sharp focus everywhere, 8K, "
-    "photoreal practical film set."
+    "Around the opening on all four sides one seamless moulded cockpit frame: {layout}. "
+    "A continuous thin bright cyan light line runs all the way around the opening just "
+    "inside the frame edge, following its shape exactly, like a light guide set into a "
+    "recessed channel. "
+    "The design language is current generation spaceflight, year 2035: smooth continuous "
+    "surfaces with almost no visible seams, soft touch matte dark charcoal composite, "
+    "brushed titanium accents, gently radiused corners, flush frameless glass panels "
+    "sitting perfectly level with the surface, precision machined, clinically clean, "
+    "expensive, minimal. "
+    "The only illumination is cool cyan: the light line around the opening, a faint cyan "
+    "glow from the flush glass panels, a few tiny white status points. Everything else is "
+    "deep charcoal and near black. Strong contrast, deep shadow, cinematic, calm. "
+    "Absolutely no mechanical keyboard, no keycaps, no rows of physical buttons, no toggle "
+    "switches, no rotary dials, no analogue gauges, no CRT monitors, no green screens, no "
+    "exposed wiring, no rivets, no clutter, no retro, nothing from the nineteen eighties, "
+    "no white plastic, no beige. No text, no letters, no numbers, no logos, no people, no "
+    "hands, nothing at all inside the black opening. "
+    "Perfectly symmetrical left to right, perfectly level, razor sharp across the whole "
+    "frame, 8K, high dynamic range, photoreal, shot on a full frame cinema camera."
 )
 
 VIEWS = {
     "широкая": {
-        "w": 1344, "h": 768,
+        "w": 1536, "h": 864,
         "share": "The black opening covers the central 76 percent of the width and "
                  "74 percent of the height, so the frame is a narrow even band: about "
                  "12 percent of the width on each side, 11 percent of the height along "
                  "the top and 15 percent along the bottom. The frame never gets wider "
                  "than that anywhere.",
-        "layout": "a wide instrument shelf across the bottom, vertical control pillars "
-                  "left and right, an overhead switch panel across the top",
+        "layout": "a shallow console ledge across the bottom carrying two wide flush glass "
+                  "panels glowing faint cyan, slim smooth pillars left and right, a plain "
+                  "overhead brow. The frame is a narrow even band and never gets wider "
+                  "than the shares given above, the opening takes up most of the picture",
     },
     "высокая": {
-        "w": 704, "h": 1408,
+        "w": 832, "h": 1664,
         "share": "The black opening covers the central 76 percent of the width and "
                  "74 percent of the height, so the frame is a narrow even band: about "
                  "12 percent of the width on each side, 11 percent of the height along "
                  "the top and 15 percent along the bottom. The frame never gets wider "
                  "than that anywhere.",
-        "layout": "a shallow instrument shelf across the bottom carrying most of the "
-                  "controls in one dense row, narrow vertical jambs left and right, a "
-                  "slim overhead switch panel across the top",
+        "layout": "a shallow console ledge across the bottom carrying one wide flush glass "
+                  "panel glowing faint cyan, very slim smooth jambs left and right, a plain "
+                  "overhead brow. The frame is a narrow even band and never gets wider "
+                  "than the shares given above, the opening takes up most of the picture",
     },
 }
 

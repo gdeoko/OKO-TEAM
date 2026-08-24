@@ -60,38 +60,52 @@ var WIN_HALF = 0.43;
    У телефона своя раскладка. Экран 9:19.5 вдвое уже монитора, и
    двенадцать процентов с каждой стороны там съедают вчетверо больше
    полезной ширины, чем на мониторе. Поэтому стойки ужимаем до восьми
-   процентов, а полку отдаём вниз - руке она всё равно нужна внизу, и
-   пальцу нужен размер. Итог: бока 8%, верх 10%, низ 24%.
+   процентов. Итог: бока 8%, верх 10%, низ 15%.
+
+   Низ был 24 процента: полка несла два ряда клавиш, и им нужен был
+   размер под палец. Заказчик потребовал не больше пятнадцати нигде,
+   поэтому ряд теперь один, а клавиши стали шире и ниже - палец в них
+   попадает не хуже, а четверть экрана вернулась космосу.
 
    Числа выбраны так, чтобы окно по пропорциям совпало с окном на
    снимке: чем ближе они, тем меньше растяжения (см. MAX_SKEW). */
-var F_SIDE = 0.760;
-var F_TOP = 0.780;
-var F_BOTTOM = 0.700;
+var F_SIDE = 0.780;
+var F_TOP = 0.800;
+var F_BOTTOM = 0.720;
 var F_SIDE_P = 0.840;
 var F_TOP_P = 0.800;
-var F_BOTTOM_P = 0.520;
+var F_BOTTOM_P = 0.700;
 
 /* Разброс глубины оболочки по оси взгляда, метры от глаза.
    Дальняя точка - задняя стенка ниши, ближняя - кромка пульта под
-   руками. Полметра хода хватает, чтобы силуэт читался, и мало
-   настолько, что рама не лезет в кадр при тряске. */
-var D_BACK = 1.18;
-var D_FRONT = 0.64;
+   руками.
+
+   Было полметра, и рама выходила раздутой: заказчик попросил тоньше,
+   «не сильно объёмную». Двадцать сантиметров хватает, чтобы силуэт
+   читался и блик ехал по кромке, но рама остаётся плоской панелью
+   современного корабля, а не толстым бортом старого. */
+var D_BACK = 1.02;
+var D_FRONT = 0.80;
 
 /* Предел растяжения снимка: во сколько раз масштаб по горизонтали
-   вправе разойтись с масштабом по вертикали. Восемнадцать процентов
-   на металле не читаются, тридцать уже видно по болтам. */
-var MAX_SKEW = 1.18;
+   вправе разойтись с масштабом по вертикали.
+
+   Треть - это много, на металле такое растяжение уже видно. Но выбор
+   тут между растянутым кадром и нарушенной договорённостью: на
+   мониторе 21:9 при меньшем пределе рама раздувалась до шестнадцати
+   процентов по бокам вместо обещанных пятнадцати. Договорённость
+   важнее. На обычных пропорциях предел всё равно не срабатывает. */
+var MAX_SKEW = 1.32;
 
 /* Насколько сильно светится сам снимок.
 
    Свет кабины на кадре уже запечён, и материал отдаёт его через
    свечение - иначе рама уходит в чёрный силуэт. Но полная сила тоже
    неверна: свечение не знает ни теней, ни бликов, и рама становится
-   молочной, теряя контраст, который на снимке есть. Половина с
-   небольшим держит и то и другое: рисунок читается, тени остаются. */
-var EMIS_BASE = 0.55;
+   молочной, теряя контраст, который на снимке есть. Меньше половины
+   держит и то и другое: рисунок читается, тени остаются, и рама не
+   выглядит освещённой днём комнатой на фоне чёрного космоса. */
+var EMIS_BASE = 0.46;
 
 var TEX = "assets/gen/cab/";
 
@@ -202,6 +216,27 @@ function inPoly(poly, x, y) {
   return hit;
 }
 
+/* Где луч из точки внутрь-наружу пересекает контур.
+
+   Нужно, чтобы посадить вершины краевых ячеек ровно на кромку окна.
+   Без этого край шёл ступенями с шагом сетки: ячейка либо целиком
+   есть, либо целиком нет, и прозрачность снимка тут не помогает -
+   резать нечего, крайние ячейки просто не выпускаются. */
+function rayHit(poly, cx, cy, dx, dy) {
+  var n = poly.length, best = -1, i, j;
+  for (i = 0, j = n - 1; i < n; j = i++) {
+    var x1 = poly[j][0], y1 = poly[j][1];
+    var x2 = poly[i][0], y2 = poly[i][1];
+    var ex = x2 - x1, ey = y2 - y1;
+    var den = dx * ey - dy * ex;
+    if (Math.abs(den) < 1e-12) continue;
+    var t = ((x1 - cx) * ey - (y1 - cy) * ex) / den;
+    var u = ((x1 - cx) * dy - (y1 - cy) * dx) / den;
+    if (t > 0 && u >= 0 && u <= 1 && (best < 0 || t < best)) best = t;
+  }
+  return best;
+}
+
 /* Самый большой вписанный прямоугольник со сторонами по осям.
 
    Габарит проёма тут не годится: проём скруглён, и всплывающее окно
@@ -273,6 +308,15 @@ var ATLAS_ROWS = 4;
    выходит в два с половиной сантиметра экрана - меньше подушечки
    пальца, и попасть в неё нельзя. */
 function layout(inner, tgt, portrait) {
+  /* На мониторе двенадцать клавиш идут одним рядом, на телефоне
+     двумя по шесть.
+
+     Одним рядом на телефоне пробовала: триста девяносто точек на
+     двенадцать клавиш это тридцать две точки на клавишу, подпись
+     под иконкой перестаёт читаться совсем. Двумя рядами клавиша
+     выходит вдвое шире, а полоса под пульт остаётся та же
+     пятнадцатипроцентная - в неё два ряда помещаются, если не
+     оставлять пустых полей. */
   var rows = portrait ? 2 : 1;
   var perRow = 12 / rows;
   /* Полоса под окном целиком */
@@ -280,10 +324,12 @@ function layout(inner, tgt, portrait) {
   var bandH = bandTop + 1;
   /* Ряд ставим в нижние две трети полосы: верхняя треть это кромка
      окна и её фаска, туда садиться нельзя. */
-  var top = bandTop - bandH * 0.22;
-  var bot = bandTop - bandH * 0.88;
+  /* На ПК ряд сидит в нижней половине полки: в верхней стоят
+     запечённые экраны пульта, и ряд поверх них выглядел кашей. */
+  var top = bandTop - bandH * (rows > 1 ? 0.04 : 0.30);
+  var bot = bandTop - bandH * (rows > 1 ? 0.92 : 0.88);
   var rowH = (top - bot) / rows;
-  var half = Math.min(inner.r, tgt.side) * 0.94;
+  var half = Math.min(inner.r, tgt.side) * (rows > 1 ? 0.99 : 0.94);
   var stepX = (half * 2) / perRow;
   /* Крышка квадратная в пикселях экрана, поэтому по вертикали её
      доля кадра иная, чем по горизонтали. Здесь работаем в долях
@@ -294,8 +340,8 @@ function layout(inner, tgt, portrait) {
       out.push({
         sx: -half + stepX * (i + 0.5),
         sy: top - rowH * (r + 0.5),
-        wx: stepX * 0.82,
-        wy: rowH * 0.80
+        wx: stepX * (rows > 1 ? 0.93 : 0.86),
+        wy: rowH * (rows > 1 ? 0.84 : 0.74)
       });
     }
   }
@@ -357,17 +403,32 @@ function capUv(geo, cell) {
 }
 
 function keycaps(T, api, proj, fit, dep, inner, tgt, parent, ru, tiny, aniso) {
-  var loader = new T.TextureLoader();
-  var atlas = loader.load(TEX + "keys-atlas.webp");
+  var list = layout(inner, tgt, api.portrait);
+
+  /* Лица клавиш рисует rc-keys прямо под размер, который клавиша
+     займёт на этом экране, и под плотность этого экрана.
+
+     Снятый атлас отсюда убран. Генератор рисует стеклянную плитку
+     хуже, чем формула: иконки выходили разного размера, сетка
+     неровная, нарезка шла по замеренным на глаз местам, и половина
+     лиц обрезалась. Заказчик написал «кнопки кривые обрезанные», и
+     это было ровно про это. Здесь обрезаться нечему. */
+  var cellPx = 96;
+  if (list.length) {
+    var q0 = list[0];
+    cellPx = Math.max(48, Math.round(Math.min(q0.wx * api.W / 2, q0.wy * api.H / 2)));
+  }
+  var drawn = g.RC_KEYS ? g.RC_KEYS.atlas(cellPx, ru) : null;
+  if (!drawn) return [];
+  var atlas = new T.CanvasTexture(drawn.canvas);
   atlas.wrapS = atlas.wrapT = T.ClampToEdgeWrapping;
   atlas.anisotropy = aniso;
+  atlas.minFilter = T.LinearMipmapLinearFilter;
+  atlas.generateMipmaps = true;
   if (T.SRGBColorSpace) atlas.colorSpace = T.SRGBColorSpace;
   api.atlas = atlas;
-
-  var list = layout(inner, tgt, api.portrait);
+  api.atlasCell = drawn.cell;
   var caps = [];
-  var main = ru ? CMD_RU : CMD_EN;
-  var aux = ru ? AUX_RU : AUX_EN;
   for (var i = 0; i < list.length; i++) {
     var q = list[i];
     var d01 = dep.at(fit.u(q.sx), fit.v(q.sy));
@@ -375,24 +436,33 @@ function keycaps(T, api, proj, fit, dep, inner, tgt, parent, ru, tiny, aniso) {
     var hw = q.wx / 2 * proj.th * dist;
     var hh = q.wy / 2 * proj.tv * dist;
     if (!(hw > 1e-5) || !(hh > 1e-5)) continue;
-    /* Крышка квадратная: берём меньшую сторону, чтобы ряд не
-       превращался в ленту растянутых прямоугольников. */
+    /* Крышка не квадрат, а вписанный прямоугольник со своими
+       пропорциями клетки, но не уже трёх четвертей высоты: на
+       телефоне двенадцать квадратов в ряд превратились бы в
+       полоску по три миллиметра. */
+    hw = Math.min(hw, hh * 1.45);
+    hh = Math.min(hh, hw * 1.35);
     var side = Math.min(hw, hh);
-    hw = hh = side;
-    var th = side * 0.62;
+    var th = side * 0.30;
     var geo = capGeo(T, hw, hh, th, side * 0.24);
     capUv(geo, i);
     /* Своя копия материала на каждую клавишу: rc-flight тянет
        свечение нажатой отдельно от остальных, а на общем материале
        вспыхивал бы весь пульт разом. Карты у копий те же самые,
        памяти это не стоит. */
+    /* Стеклянная плитка: почти не металл, гладкая, светится сама.
+       Свечение держим высоким - лицо уже нарисовано со своим светом,
+       и гасить его сценой значит потерять иконку в темноте.
+       Крышка низкая (треть стороны): она сидит в лотке пульта,
+       который генерится нарочно пустым, и выглядит его частью,
+       а не наклейкой поверх. */
     var cm = new T.MeshStandardMaterial({
       map: atlas,
       emissiveMap: atlas,
       emissive: new T.Color(0xffffff),
-      emissiveIntensity: EMIS_BASE * 0.7,
-      metalness: 0.30,
-      roughness: 0.62
+      emissiveIntensity: 0.82,
+      metalness: 0.10,
+      roughness: 0.34
     });
     var m = new T.Mesh(geo, cm);
     proj.set(m.position, q.sx, q.sy, dist - th * 0.5);
@@ -400,12 +470,12 @@ function keycaps(T, api, proj, fit, dep, inner, tgt, parent, ru, tiny, aniso) {
     m.renderOrder = 7;
     m.userData.halfW = hw;
     m.userData.halfH = hh;
-    m.userData["имя"] = i < 7 ? main[i] : (aux[i - 7] || "");
+    m.userData["имя"] = g.RC_KEYS.name(i, ru);
     m.userData.z0 = m.position.z;
     m.userData["ход"] = th * 0.55;
     m.userData["нажата"] = 0;
     /* Числа для свечения нажатой: их читает rc-flight */
-    m.userData.baseEmissive = EMIS_BASE * 0.7;
+    m.userData.baseEmissive = 0.82;
     m.userData.ph = i * 0.7;
     m.userData.homeY = m.position.y;
     parent.add(m);
@@ -425,6 +495,99 @@ function keycaps(T, api, proj, fit, dep, inner, tgt, parent, ru, tiny, aniso) {
    Сборка
    ══════════════════════════════════════════════════════════ */
 var RC = { last: null };
+
+/* ══════════════════════════════════════════════════════════
+   Плоская рама
+
+   Рама рубки снова плоская: тем же кадром, что стоял 17-19 августа.
+
+   Почему отказались от объёмной сетки, хотя её и просили сделать
+   «единым 3D миром». Причина не идейная, а измеримая. Сетка
+   пересэмплирует снимок дважды - при выборке по развёртке и при
+   мипмаппинге, - и на экране он мылится; край окна режется по
+   клеткам сетки и идёт зубцами; материал накладывает свой свет
+   поверх запечённого и даёт пересветы. Всё это заказчик и назвал
+   «качество говно, форма уродская». Плоский слой браузер
+   масштабирует один раз своим фильтром: кадр остаётся резким,
+   кромка ровной, пересветов нет вовсе.
+
+   Физически рама и не должна быть объёмной: она приклеена к глазу
+   пилота и никогда не движется относительно него. Объём нужен миру
+   за окном, и он там есть.
+
+   Сам кадр показывает rc-cockpit слоем разметки. Здесь остаётся
+   геометрия: где на экране окно, какой у него контур, куда можно
+   класть всплывающие окна. Её спрашивают rc-desk, rc-flight и
+   отсечение голограмм, поэтому источник обязан быть один.
+   ══════════════════════════════════════════════════════════ */
+function flatBuild(T, o, api, inner3, portrait, W, H, proj) {
+  var M = g.RC_CAB_FLAT;
+  var meta = M ? (portrait ? M["высокая"] : M["широкая"]) : null;
+  if (!meta) return null;
+
+  /* Слой разметки кладёт кадр по object-fit: cover. Повторяем ту же
+     арифметику - иначе окно у геометрии и окно на экране разъедутся. */
+  var c = Math.max(W / meta.w, H / meta.h);
+  var dw = meta.w * c, dh = meta.h * c;
+  var ox = (W - dw) / 2, oy = (H - dh) / 2;
+  function sx(u) { return (ox + u * dw) / W * 2 - 1; }
+  function sy(v) { return 1 - (oy + v * dh) / H * 2; }
+
+  var poly = [], i;
+  for (i = 0; i < meta["контур"].length; i++) {
+    var q = meta["контур"][i];
+    poly.push([sx(q[0]), sy(q[1])]);
+  }
+  var box = meta["коробка"];
+  var inner = { l: sx(box.l), r: sx(box.r), t: sy(box.t), b: sy(box.b) };
+
+  api.meta = meta;
+  api.poly = poly;
+  api.inner = inner;
+  api.flat = true;
+  api.caps = [];
+  api.shell = null;
+  api.tris = 0;
+  api.fit = { skew: 1 };
+
+  var deck = new T.Group();
+  deck.position.set(0, 0, proj.cz - CAM_WIN * 0.9);
+  inner3.add(deck);
+  api.deck = deck;
+
+  api.probe = [
+    proj.at(T, inner.l, 0, CAM_WIN),
+    proj.at(T, inner.r, 0, CAM_WIN),
+    proj.at(T, 0, inner.t, CAM_WIN),
+    proj.at(T, 0, inner.b, CAM_WIN)
+  ];
+
+  var raw = inscribed(poly);
+  var pad = 0.012;
+  var safe = { l: raw.l + pad, r: raw.r - pad, b: raw.b + pad, t: raw.t - pad };
+  api.safe = safe;
+
+  api.clipPath = function (ins) {
+    var p = ins || 0, out = [], k;
+    for (k = 0; k < poly.length; k++) {
+      var x = (1 + poly[k][0] * (1 - p)) / 2 * 100;
+      var y = (1 - poly[k][1] * (1 - p)) / 2 * 100;
+      out.push(x.toFixed(2) + "% " + y.toFixed(2) + "%");
+    }
+    return "polygon(" + out.join(",") + ")";
+  };
+  api.windowRect = function () {
+    return { x: (safe.l + 1) / 2, y: (1 - safe.t) / 2,
+             w: (safe.r - safe.l) / 2, h: (safe.t - safe.b) / 2 };
+  };
+  api.frameShare = function () {
+    return { слева: (1 + inner.l) / 2, справа: (1 - inner.r) / 2,
+             сверху: (1 - inner.t) / 2, снизу: (1 + inner.b) / 2 };
+  };
+  RC.last = { inner: inner, safe: safe, clip: api.clipPath(), poly: poly, плоская: true };
+  g.RC_PANEL_LAST_API = api;
+  return api;
+}
 
 function build(T, o) {
   o = o || {};
@@ -462,6 +625,11 @@ function build(T, o) {
   api.tiny = tiny;
   api.W = W; api.H = H;
   api.portrait = portrait;
+
+  /* Плоская рама - основной путь. Объёмная сетка ниже осталась
+     запасной: если паспорта плоской рамы нет, сцена соберёт старую. */
+  var flat = flatBuild(T, o, api, inner3, portrait, W, H, proj);
+  if (flat) return flat;
 
   var M = g.RC_CAB_META;
   var meta = M ? (portrait ? M["высокая"] : M["широкая"]) : null;
@@ -526,7 +694,16 @@ function build(T, o) {
        добавить отклик сцены. */
     metalness: 0.38,
     roughness: 1.0,
-    alphaTest: 0.5,
+    /* Кромку окна режем прозрачностью, но НЕ порогом.
+
+       Порог (alphaTest) сравнивает альфу с половиной и отбрасывает
+       пиксель целиком. На скруглении окна это давало видимую
+       лесенку: заказчик её и увидел. Обычная прозрачность режет
+       плавно, край выходит ровным, а глубина всё равно пишется -
+       значит космос за окном не просвечивает сквозь раму. */
+    transparent: true,
+    alphaTest: 0.02,
+    depthWrite: true,
     side: T.FrontSide
   });
   mat.normalScale = new T.Vector2(1.2, 1.2);
@@ -549,13 +726,13 @@ function build(T, o) {
      стоят десяток лишних треугольников с чёрной кромкой. */
   var S = 1.20;
   var pos = [], uvs = [], idx = [];
-  var flag = new Uint8Array((NX + 1) * (NY + 1));
   var v3 = new T.Vector3();
   var ii, jj;
   for (jj = 0; jj <= NY; jj++) {
-    var sy = -S + 2 * S * jj / NY;
+    var sy0 = -S + 2 * S * jj / NY;
     for (ii = 0; ii <= NX; ii++) {
       var sx = -S + 2 * S * ii / NX;
+      var sy = sy0;
       var u = fit.u(sx), v = fit.v(sy);
       var dist = D_BACK - dep.at(u, v) * (D_BACK - D_FRONT);
       proj.set(v3, sx, sy, dist);
@@ -563,7 +740,6 @@ function build(T, o) {
       var cu = u < 0 ? 0 : u > 1 ? 1 : u;
       var cv = v < 0 ? 0 : v > 1 ? 1 : v;
       uvs.push(cu, 1 - cv);
-      flag[jj * (NX + 1) + ii] = inPoly(poly, sx, sy) ? 1 : 0;
     }
   }
   for (jj = 0; jj < NY; jj++) {
@@ -572,7 +748,20 @@ function build(T, o) {
       var b0 = a0 + 1;
       var c0 = a0 + (NX + 1);
       var d0 = c0 + 1;
-      if (flag[a0] && flag[b0] && flag[c0] && flag[d0]) continue;
+      /* Ячейки внутри окна НЕ выбрасываем.
+
+         Пробовала двумя способами - выбрасывать по контуру и сажать
+         вершины краевых ячеек на кромку. Оба дают видимый зубчатый
+         край: в первом случае лесенкой с шагом сетки, во втором
+         пилой между внешними вершинами и контурными. Заказчик увидел
+         именно это.
+
+         Правильно так: сетка идёт сплошной, а окно вырезает
+         прозрачность снимка - она в текстуре плавная, переход шесть
+         пикселей, и край получается ровным на любом увеличении.
+         Плата - примерно четверть лишних треугольников, полностью
+         прозрачных: их фрагменты отбрасываются порогом до записи
+         глубины, поэтому космос за окном виден как надо. */
       /* Обход против часовой стрелки со стороны пилота.
          При обратном порядке лицевая сторона смотрит от него, и
          оболочка отбраковывается целиком: в кадре остаются одни
@@ -602,6 +791,14 @@ function build(T, o) {
 
   api.caps = keycaps(T, api, proj, fit, dep, inner, tgt, inner3, ru, tiny, aniso);
 
+  /* ── Живые приборы ──────────────────────────────────────
+     Радар, карта узлов и телеметрия ложатся ровно в рамки экранов,
+     найденных на снимке (tools/cabgen.py). Запечённая картинка
+     остаётся подложкой, живой холст чуть впереди - прибор начинает
+     работать: развёртка идёт, узлы дышат, кривая ползёт. Заказчик
+     просил «радары навигаторы», и это они. */
+  instruments(T, api, proj, fit, dep, meta, inner3, tiny, aniso);
+
   /* ── Собственный свет кабины ────────────────────────────
      Три мягкие лампы: тёплая снизу от пульта, холодная сверху
      из-под козырька и лайм от приборов. Они не рисуют картинку
@@ -613,7 +810,9 @@ function build(T, o) {
   var cool = new T.PointLight(0xbfe6ff, tiny ? 0.16 : 0.26, 3.0, 2);
   cool.position.set(0, EYE + 0.58, proj.cz - D_FRONT - 0.05);
   inner3.add(cool);
-  var lime = new T.PointLight(0x9aff00, tiny ? 0.12 : 0.20, 2.2, 2);
+  /* Была лампа лаймом 0x9aff00 - цвет OKO, не Rocket CDN. Она и
+     красила ближние клавиши в зелень, которую увидел заказчик. */
+  var lime = new T.PointLight(0x42b2dc, tiny ? 0.12 : 0.20, 2.2, 2);
   lime.position.set(0, EYE - 0.46, proj.cz - D_FRONT + 0.04);
   inner3.add(lime);
   api.lights = [warm, cool, lime];
@@ -671,6 +870,174 @@ function build(T, o) {
      насколько растянут снимок. На глаз это не оценивается. */
   g.RC_PANEL_LAST_API = api;
   return api;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Живые приборы пульта
+   ══════════════════════════════════════════════════════════ */
+var CYAN_CSS = "rgba(66,178,220,";
+var PALE_CSS = "rgba(207,233,245,";
+
+function drawRadar(c, w, h, t) {
+  c.clearRect(0, 0, w, h);
+  var cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.44;
+  c.strokeStyle = CYAN_CSS + "0.5)";
+  c.lineWidth = Math.max(1, R * 0.02);
+  for (var i = 1; i <= 3; i++) {
+    c.beginPath();
+    c.arc(cx, cy, R * i / 3, 0, Math.PI * 2);
+    c.stroke();
+  }
+  c.beginPath();
+  c.moveTo(cx - R, cy); c.lineTo(cx + R, cy);
+  c.moveTo(cx, cy - R); c.lineTo(cx, cy + R);
+  c.stroke();
+  /* Развёртка с затухающим следом */
+  var a = t * 1.4;
+  var grd = c.createConicGradient ? null : null;
+  for (var k = 0; k < 20; k++) {
+    var aa = a - k * 0.045;
+    c.strokeStyle = CYAN_CSS + (0.55 * (1 - k / 20)).toFixed(3) + ")";
+    c.beginPath();
+    c.moveTo(cx, cy);
+    c.lineTo(cx + Math.cos(aa) * R, cy + Math.sin(aa) * R);
+    c.stroke();
+  }
+  /* Отметки целей: стоят на месте, вспыхивают под лучом */
+  var marks = [[0.55, 0.7], [2.3, 0.4], [4.1, 0.85], [5.3, 0.55]];
+  for (var m = 0; m < marks.length; m++) {
+    var ma = marks[m][0], mr = marks[m][1] * R;
+    var d = (a - ma) % (Math.PI * 2);
+    if (d < 0) d += Math.PI * 2;
+    var glow = Math.max(0, 1 - d * 0.8);
+    c.fillStyle = PALE_CSS + (0.25 + glow * 0.75).toFixed(3) + ")";
+    c.beginPath();
+    c.arc(cx + Math.cos(ma) * mr, cy + Math.sin(ma) * mr,
+          Math.max(1.5, R * 0.045), 0, Math.PI * 2);
+    c.fill();
+  }
+}
+
+function drawNav(c, w, h, t) {
+  c.clearRect(0, 0, w, h);
+  /* Карта узлов сети: точки соединены дугами, дышат по очереди */
+  var pts = [[0.15, 0.62], [0.32, 0.3], [0.5, 0.55], [0.68, 0.28], [0.86, 0.6], [0.5, 0.82]];
+  c.strokeStyle = CYAN_CSS + "0.4)";
+  c.lineWidth = Math.max(1, h * 0.015);
+  var links = [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [0, 5], [4, 5]];
+  for (var l = 0; l < links.length; l++) {
+    var A = pts[links[l][0]], B = pts[links[l][1]];
+    c.beginPath();
+    c.moveTo(A[0] * w, A[1] * h);
+    c.quadraticCurveTo((A[0] + B[0]) / 2 * w, (A[1] + B[1]) / 2 * h - h * 0.08,
+                       B[0] * w, B[1] * h);
+    c.stroke();
+  }
+  for (var i = 0; i < pts.length; i++) {
+    var puls = 0.5 + 0.5 * Math.sin(t * 1.8 + i * 1.1);
+    c.fillStyle = PALE_CSS + (0.35 + puls * 0.6).toFixed(3) + ")";
+    c.beginPath();
+    c.arc(pts[i][0] * w, pts[i][1] * h, Math.max(1.5, h * 0.045 * (0.7 + puls * 0.5)), 0, Math.PI * 2);
+    c.fill();
+  }
+  /* Бегущая искра по случайному ребру: пакет пошёл */
+  var li = ((t * 0.7) | 0) % links.length;
+  var f = (t * 0.7) % 1;
+  var A2 = pts[links[li][0]], B2 = pts[links[li][1]];
+  c.fillStyle = PALE_CSS + "0.95)";
+  c.beginPath();
+  c.arc((A2[0] + (B2[0] - A2[0]) * f) * w,
+        (A2[1] + (B2[1] - A2[1]) * f) * h - Math.sin(f * Math.PI) * h * 0.08,
+        Math.max(1.5, h * 0.03), 0, Math.PI * 2);
+  c.fill();
+}
+
+function drawTele(c, w, h, t, speed) {
+  c.clearRect(0, 0, w, h);
+  /* Сетка */
+  c.strokeStyle = CYAN_CSS + "0.22)";
+  c.lineWidth = 1;
+  for (var gx = 1; gx < 6; gx++) {
+    c.beginPath(); c.moveTo(w * gx / 6, 0); c.lineTo(w * gx / 6, h); c.stroke();
+  }
+  for (var gy = 1; gy < 4; gy++) {
+    c.beginPath(); c.moveTo(0, h * gy / 4); c.lineTo(w, h * gy / 4); c.stroke();
+  }
+  /* Кривая тяги: ползёт влево, отвечает скорости */
+  c.strokeStyle = CYAN_CSS + "0.9)";
+  c.lineWidth = Math.max(1, h * 0.03);
+  c.beginPath();
+  for (var x = 0; x <= w; x += 3) {
+    var ph = (x / w) * 5 + t * 1.6;
+    var y = h * (0.62 - speed * 0.22
+      - Math.sin(ph) * 0.10 - Math.sin(ph * 2.7) * 0.05);
+    if (x === 0) c.moveTo(x, y); else c.lineTo(x, y);
+  }
+  c.stroke();
+}
+
+function instruments(T, api, proj, fit, dep, meta, parent, tiny, aniso) {
+  var list = (meta["экраны"] || []).slice(0);
+  /* Снимок без различимых экранов - ставим два расчётных: по левой
+     и правой трети полосы между низом окна и рядом клавиш. Пульт
+     без приборов заказчик не принимает, и правильно. */
+  if (list.length < 2) {
+    var box = meta["коробка"];
+    var band = 1 - box.b;
+    var sw = (box.r - box.l) * 0.20;
+    var sh = band * 0.34;
+    var sy0 = box.b + band * 0.05;
+    list = [
+      { x: box.l + (box.r - box.l) * 0.10, y: sy0, w: sw, h: sh },
+      { x: box.r - (box.r - box.l) * 0.10 - sw, y: sy0, w: sw, h: sh }
+    ].concat(list);
+  }
+  var kinds = ["radar", "nav", "tele"];
+  var made = [];
+  for (var i = 0; i < list.length && i < 3; i++) {
+    var r = list[i];
+    var cu = r.x + r.w / 2, cv = r.y + r.h / 2;
+    var sx = fit.sx(cu), sy = fit.sy(cv);
+    var dist = D_BACK - dep.at(cu, cv) * (D_BACK - D_FRONT);
+    var hw = (fit.sx(r.x + r.w) - fit.sx(r.x)) / 2 * proj.th * dist;
+    var hh = (fit.sy(r.y) - fit.sy(r.y + r.h)) / 2 * proj.tv * dist;
+    if (!(hw > 1e-5) || !(hh > 1e-5)) continue;
+    var pxw = Math.max(96, Math.min(384, Math.round(r.w * api.W * 1.4)));
+    var pxh = Math.max(64, Math.min(256, Math.round(pxw * hh / hw)));
+    var cnv = document.createElement("canvas");
+    cnv.width = pxw; cnv.height = pxh;
+    var ctx2 = cnv.getContext("2d");
+    var tex2 = new T.CanvasTexture(cnv);
+    tex2.anisotropy = aniso;
+    if (T.SRGBColorSpace) tex2.colorSpace = T.SRGBColorSpace;
+    var mat2 = new T.MeshBasicMaterial({
+      map: tex2, transparent: true, opacity: 0.92,
+      blending: T.AdditiveBlending, depthWrite: false, fog: false
+    });
+    var mesh = new T.Mesh(new T.PlaneGeometry(hw * 2 * 0.94, hh * 2 * 0.88), mat2);
+    proj.set(mesh.position, sx, sy, dist - 0.008);
+    mesh.renderOrder = 8;
+    mesh.frustumCulled = false;
+    parent.add(mesh);
+    made.push({ ctx: ctx2, tex: tex2, w: pxw, h: pxh, kind: kinds[i % 3] });
+  }
+  if (!made.length) return;
+  api.screens = made;
+  var last = 0;
+  api.addUpdate(function (t, dt, tele) {
+    /* Десять кадров в секунду прибору достаточно, глазу видна
+       развёртка, а телефону не жжёт батарею. */
+    if (t - last < 0.1) return;
+    last = t;
+    var sp = Math.max(0, Math.min(1, tele.speed || 0));
+    for (var q = 0; q < made.length; q++) {
+      var m = made[q];
+      if (m.kind === "radar") drawRadar(m.ctx, m.w, m.h, t);
+      else if (m.kind === "nav") drawNav(m.ctx, m.w, m.h, t);
+      else drawTele(m.ctx, m.w, m.h, t, sp);
+      m.tex.needsUpdate = true;
+    }
+  });
 }
 
 /* ══════════════════════════════════════════════════════════

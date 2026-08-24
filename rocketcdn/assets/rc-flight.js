@@ -3959,6 +3959,13 @@ function physicalControlsFrame(ts, dt) {
   }
 }
 
+/* Приборы плоской плиты идут отдельным заходом: у неё нет объёмных
+   крышек, и вся жизнь пульта рисуется светом в её нишах. */
+function deckTick(ts, dt) {
+  if (!ui || !ui.wrap || !ui.wrap.classList.contains("rcf-native-cab")) return;
+  try { deckFrame(ts, dt); } catch (e) {}
+}
+
 /* Голограмма подсказки над клавишей.
 
    Держим её на стекле и всегда ВНУТРИ проёма: заезжать на раму
@@ -4769,6 +4776,10 @@ function frame(ts) {
   }
 
   physicalControlsFrame(ts, dt);
+  /* Приборы плоской плиты живут отдельно от объёмных крышек: у неё их
+     нет вовсе, и заход выше уходит на первой же строке. Ставить вызов
+     внутрь него значило бы, что на плоской раме пульт не оживёт. */
+  deckTick(ts, dt);
   earthSunFrame(w3);
   if (w3.post) w3.post.render(w3.scene, w3.cam, ts);
   else w3.r.render(w3.scene, w3.cam);
@@ -4852,10 +4863,14 @@ function open() {
        проёме совпал с плоской рамкой полёта: подмены не видно, а
        геометрия комнаты больше не тратит ни кадра. */
     cabinFlightMode();
+    cabFrameLayer();
+    deckLayer();
     ui.wrap.classList.add("rcf-native-cab");
   } else {
     F.p = 0; F.v = 0; F.last = 0;
     cabinFlightMode();
+    cabFrameLayer();
+    deckLayer();
     ui.wrap.classList.add("rcf-native-cab");
   }
 
@@ -6130,6 +6145,148 @@ function cabinBuild() {
   return cabin;
 }
 
+/* ── Плоская рама рубки в полёте ─────────────────────────────
+   Кадр рубки показывается обычной картинкой поверх холста, а не
+   натягивается на объёмную сетку.
+
+   Так было 17-19 августа, и заказчику с его клиентом это нравилось.
+   Потом раму перевели в объём, и она потеряла резкость: сетка
+   пересэмплирует снимок дважды, кромка окна режется по клеткам, а
+   материал кладёт свой свет поверх запечённого. Здесь браузер
+   масштабирует кадр один раз своим фильтром - он остаётся ровно
+   таким, каким снят.
+
+   Геометрию окна (куда класть всплывающие окна, чем отсекать
+   голограммы) по-прежнему считает rc-panel: источник обязан быть
+   один, иначе окно у разметки и окно на картинке разъезжаются. */
+/* ── Приборы пульта ──────────────────────────────────────────
+   Плита приходит с пустыми нишами, и слой светится в них: навигатор,
+   обзор, состояние, подсветка клавиш. Свет складывается с металлом
+   (режим screen), поэтому приборы выходят частью панели.
+
+   Смысл и касание остаются за разметкой: настоящие кнопки .rcf-*
+   встают невидимыми поверх нарисованных мест теми же числами, что
+   считает слой. Так у клавиши есть имя для чтения с экрана и палец
+   попадает туда, куда смотрит глаз, а второго ряда кнопок поверх
+   пульта не появляется. */
+var deck = null;
+var deckSize = { w: 0, h: 0, d: 0, вид: "" };
+
+function deckLayer() {
+  if (!ui || !ui.wrap || !g.RC_DECK || !g.RC_CAB_FLAT || !g.RC_CAB_DECK) return null;
+  var вид = innerHeight > innerWidth ? "высокая" : "широкая";
+  var meta = g.RC_CAB_FLAT[вид], план = g.RC_CAB_DECK[вид];
+  if (!meta || !план) return null;
+  if (!deck) {
+    deck = g.RC_DECK.создать();
+    ui.wrap.appendChild(deck.canvas);
+  }
+  /* Плотность режем двумя с половиной: холст размером с экран и так
+     не дешёвый, а разницы между двумя и тремя точками на глаз нет. */
+  var dpr = Math.min(2.5, g.devicePixelRatio || 1);
+  if (deckSize.вид !== вид) {
+    deck.вид(meta, план, doc.documentElement.lang !== "en");
+    deckSize.вид = вид;
+  }
+  if (deckSize.w !== innerWidth || deckSize.h !== innerHeight || deckSize.d !== dpr) {
+    deck.размер(innerWidth, innerHeight, dpr);
+    deckSize.w = innerWidth; deckSize.h = innerHeight; deckSize.d = dpr;
+  }
+  return deck;
+}
+
+function deckFrame(ts, dt) {
+  var d = deckLayer();
+  if (!d) return;
+  var мест = d.мест();
+  var nodes = physicalControlsFrame.nodes;
+  if (!nodes && ui.wrap) {
+    physicalControlsFrame.nodes = nodes = [
+      ui.wrap.querySelector(".rcf-navkey"), ui.wrap.querySelector(".rcf-scan-key"),
+      ui.wrap.querySelector(".rcf-deploy"), ui.wrap.querySelector(".rcf-fire-key"),
+      ui.wrap.querySelector(".rcf-auto-key"), ui.wrap.querySelector(".rcf-stop-key"),
+      ui.wrap.querySelector(".rcf-thr"), ui.wrap.querySelector(".rcf-map-key"),
+      ui.wrap.querySelector(".rcf-zoom-in"), ui.wrap.querySelector(".rcf-zoom-out"),
+      ui.wrap.querySelector(".rcf-shot"), ui.wrap.querySelector(".rcf-help-key")
+    ];
+  }
+
+  /* Живые числа. Прибор, показывающий выдумку, хуже отсутствующего:
+     заказчик такое замечает сразу. Берём то, чем управляет полёт. */
+  var кам = W3 && W3.cam;
+  var курс = 0, тангаж = 0, крен = 0;
+  if (кам) {
+    курс = ((-кам.rotation.y * 180 / Math.PI) % 360 + 360) % 360;
+    тангаж = Math.max(-1, Math.min(1, кам.rotation.x * 1.6));
+    крен = Math.max(-0.5, Math.min(0.5, кам.rotation.z));
+  }
+  d["данные"]({
+    курс: курс, тангаж: тангаж, крен: крен,
+    скорость: Math.max(0, Math.min(1, (F.v || 0) / 0.30)),
+    высота: Math.max(0, Math.min(1, F.p || 0)),
+    тяга: Math.max(0, Math.min(1, F.thr || 0)),
+    щит: F.enMax ? Math.max(0, Math.min(1, F.en / F.enMax)) : 1,
+    корпус: Math.max(0, Math.min(1, (F.hull == null ? 100 : F.hull) / 100))
+  });
+
+  for (var i = 0; i < мест; i++) {
+    var el = nodes && nodes[i];
+    if (!el) continue;
+    var жив = el.matches(":active") || el.classList.contains("cur") ||
+              el.classList.contains("live") ||
+              el.getAttribute("aria-pressed") === "true" ||
+              el.getAttribute("aria-expanded") === "true";
+    if (жив) d["нажать"](i);
+    var q = d["место"](i);
+    if (!q) continue;
+    var cx = (q[0].x + q[1].x + q[2].x + q[3].x) / 4;
+    var cy = (q[0].y + q[1].y + q[2].y + q[3].y) / 4;
+    var шир = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y);
+    var выс = Math.hypot(q[3].x - q[0].x, q[3].y - q[0].y);
+    el.classList.add("rcf-phys-hit");
+    el.style.setProperty("--rcf-phys-x", cx.toFixed(2) + "px");
+    el.style.setProperty("--rcf-phys-y", cy.toFixed(2) + "px");
+    el.style.setProperty("display", "block", "important");
+    el.style.setProperty("position", "fixed", "important");
+    el.style.setProperty("transform", "translate(-50%, -50%)", "important");
+    el.style.setProperty("--rcf-phys-w", Math.max(40, шир).toFixed(2) + "px");
+    el.style.setProperty("--rcf-phys-h", Math.max(40, выс).toFixed(2) + "px");
+  }
+  /* Команды, которым на этой плите места не хватило, остаются в меню
+     полёта: втискивать двенадцать клавиш в две ниши телефона значит
+     вернуть ту самую мелкую кашу, за которую пульт уже ругали. */
+  for (var j = мест; nodes && j < nodes.length; j++) {
+    var e2 = nodes[j];
+    if (e2 && e2.classList.contains("rcf-phys-hit")) {
+      e2.classList.remove("rcf-phys-hit");
+      e2.style.removeProperty("display");
+      e2.style.removeProperty("position");
+      e2.style.removeProperty("transform");
+    }
+  }
+  d["кадр"](Math.min(0.05, dt || 0.016));
+}
+
+function cabFrameLayer() {
+  if (!ui || !ui.wrap) return;
+  var M = g.RC_CAB_FLAT;
+  if (!M) return;
+  var meta = innerHeight > innerWidth ? M["высокая"] : M["широкая"];
+  if (!meta) return;
+  if (!ui.cabFrame) {
+    var el = doc.createElement("img");
+    el.className = "rcf-cabframe";
+    el.alt = "";
+    el.setAttribute("aria-hidden", "true");
+    el.decoding = "async";
+    ui.wrap.appendChild(el);
+    ui.cabFrame = el;
+  }
+  if (ui.cabFrame.getAttribute("src") !== meta["файл"]) {
+    ui.cabFrame.setAttribute("src", meta["файл"]);
+  }
+}
+
 function cabinFlightMode() {
   if (!cabin || !W3 || cabin.flightMode) return;
   cabin.flightMode = true;
@@ -6164,10 +6321,29 @@ function cabinFlightMode() {
   cabin.group.position.set(0, -(C ? C.EYE : cabin.eye), rWall - camWin);
   cabin.group.quaternion.identity();
   cabin.group.scale.set(1, 1, 1);
-  /* Обшивку гасим: по краям кадра она ближе к глазу, чем рама, и
-     перекрывала её полосами вдоль левого и правого края. */
-  if (cabin.walls) {
-    for (var wi = 0; wi < cabin.walls.length; wi++) cabin.walls[wi].visible = false;
+  /* В полёте из салона видна ТОЛЬКО рама пульта.
+
+     Гасим всё остальное железо салона по двум причинам, обе
+     замерены. Первая: обшивка по краям кадра оказывается ближе к
+     глазу, чем рама, и перекрывала её синими полосами вдоль левого и
+     правого края. Вторая: окантовка проёма собрана из трёх десятков
+     сегментов, и её кромка шла по дуге окна крупной пилой - её и
+     видел заказчик, считая, что зубцы у рамы.
+
+     Свет не трогаем: лампы салона освещают раму, а у неё свои
+     поверх них. Прежнюю видимость запоминаем, чтобы вернуть при
+     выходе из полёта. */
+  if (!cabin.скрыто) {
+    cabin.скрыто = [];
+    var внутри = [];
+    if (cabin.console3 && cabin.console3.group) {
+      cabin.console3.group.traverse(function (o) { внутри.push(o); });
+    }
+    cabin.group.traverse(function (o) {
+      if (!o.isMesh && !o.isPoints && !o.isLine) return;
+      if (внутри.indexOf(o) >= 0) return;
+      if (o.visible) { cabin.скрыто.push(o); o.visible = false; }
+    });
   }
   W3.cam.add(cabin.group);
   cabin.group.updateMatrixWorld(true);
@@ -6536,7 +6712,11 @@ function frameMeasure() {
     var hw = cap.userData.halfW, hh = cap.userData.halfH;
     var corners = [[-hw, -hh], [hw, hh]];
     for (var k = 0; k < 2; k++) {
-      v.set(corners[k][0], 0, -corners[k][1]);
+      /* Крышка смотрит в лицо пилоту: её плоскость это местные x и y,
+         толщина по z. Прошлая рама лежала на полке, и здесь стояло
+         (x, 0, -y) - для стоячей крышки это разворачивало углы в
+         толщину, и замер клавиш отдавал числа на порядки мимо. */
+      v.set(corners[k][0], corners[k][1], 0);
       cap.localToWorld(v);
       v.project(W3.cam);
       if (v.y < lo) lo = v.y;
@@ -6545,11 +6725,16 @@ function frameMeasure() {
       if (v.x > capR) capR = v.x;
     }
   }
+  /* Порядок точек в probe: левая, правая, верхняя, нижняя.
+     Раньше здесь читали из них не те оси - у левой точки вертикаль
+     около нуля, и «низ» выходил ровно пятьдесят процентов при любой
+     раме. Замер обязан падать в глаза, а не выглядеть правдоподобно,
+     поэтому оси теперь по именам. */
   cabin._share = {
-    низ: +((1 + out[0].y) / 2 * 100).toFixed(1),
-    верх: +((1 - out[1].y) / 2 * 100).toFixed(1),
-    лево: +((1 + out[2].x) / 2 * 100).toFixed(1),
-    право: +((1 - out[3].x) / 2 * 100).toFixed(1),
+    лево: +((1 + out[0].x) / 2 * 100).toFixed(1),
+    право: +((1 - out[1].x) / 2 * 100).toFixed(1),
+    верх: +((1 - out[2].y) / 2 * 100).toFixed(1),
+    низ: +((1 + out[3].y) / 2 * 100).toFixed(1),
     клавишиНиз: +((1 + lo) / 2 * 100).toFixed(1),
     клавишиВерх: +((1 - hi) / 2 * 100).toFixed(1),
     клавишаPx: +(Math.abs(capR - capL) / 7 * innerWidth / 2).toFixed(0),

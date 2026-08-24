@@ -174,12 +174,13 @@ g.RC_GL = {
      подгрузке в сторону сцена успевала подняться раньше него и
      собирала раму по запасным числам, а потом дёргалась. */
   var FILES = ["vendor/three.min.js", "rc-real.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js",
-               "rc-interior.js", "rc-planets.js", "gen/cab/meta.js", "rc-panel.js", "rc-cabin.js",
+               "rc-interior.js", "rc-planets.js", "gen/cab/meta.js", "gen/cab/flat.js", "gen/cab/deck.js", "rc-keys.js", "rc-deck.js", "rc-panel.js",
+               "rc-cabin.js",
                "rc-flight.js"];
   /* Без чего объёмного слоя нет вовсе. Паспорт рубки сюда не входит:
      без него рама соберётся по запасным числам, и это лучше, чем
      страница без корабля. */
-  var SOFT = { "gen/cab/meta.js": 1 };
+  var SOFT = { "gen/cab/meta.js": 1, "gen/cab/flat.js": 1, "gen/cab/deck.js": 1 };
   var started = false;
 
   function loadAll() {
