@@ -6246,10 +6246,17 @@ function deckFrame(ts, dt) {
     if (жив) d["нажать"](i);
     var q = d["место"](i);
     if (!q) continue;
-    var cx = (q[0].x + q[1].x + q[2].x + q[3].x) / 4;
-    var cy = (q[0].y + q[1].y + q[2].y + q[3].y) / 4;
-    var шир = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y);
-    var выс = Math.hypot(q[3].x - q[0].x, q[3].y - q[0].y);
+    /* Слой считает места в точках УСТРОЙСТВА: холст живёт в них, иначе
+       на телефоне выйдет мыло. Разметка же меряет в точках CSS. Без
+       деления на плотность области нажатия уезжали в два с половиной
+       раза дальше нужного, то есть за экран: на телефоне пульт было
+       видно, а нажать нельзя. Приёмка это и показала - восемь клавиш
+       из восьми за кадром. */
+    var пл = deckSize.d || 1;
+    var cx = (q[0].x + q[1].x + q[2].x + q[3].x) / 4 / пл;
+    var cy = (q[0].y + q[1].y + q[2].y + q[3].y) / 4 / пл;
+    var шир = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y) / пл;
+    var выс = Math.hypot(q[3].x - q[0].x, q[3].y - q[0].y) / пл;
     el.classList.add("rcf-phys-hit");
     el.style.setProperty("--rcf-phys-x", cx.toFixed(2) + "px");
     el.style.setProperty("--rcf-phys-y", cy.toFixed(2) + "px");
