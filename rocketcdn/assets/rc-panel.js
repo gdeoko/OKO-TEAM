@@ -525,11 +525,17 @@ function flatBuild(T, o, api, inner3, portrait, W, H, proj) {
   var meta = M ? (portrait ? M["высокая"] : M["широкая"]) : null;
   if (!meta) return null;
 
-  /* Слой разметки кладёт кадр по object-fit: cover. Повторяем ту же
-     арифметику - иначе окно у геометрии и окно на экране разъедутся. */
-  var c = Math.max(W / meta.w, H / meta.h);
-  var dw = meta.w * c, dh = meta.h * c;
-  var ox = (W - dw) / 2, oy = (H - dh) / 2;
+  /* Раскладку кадра считает слой приборов и он же ставит её картинке.
+     Считать её здесь второй раз нельзя: на широком мониторе кадр
+     привязан к низу, чтобы пульт не ушёл за кромку, и вторая копия
+     арифметики молча разошлась бы с первой - окно у геометрии одно, на
+     экране другое. Запасные числа нужны на случай, если слой не
+     поднялся: без него лучше центр, чем ничего. */
+  var п = (g.RC_DECK && g.RC_DECK["покрытие"])
+    ? g.RC_DECK["покрытие"](meta, W, H) : null;
+  var c = п ? п.k : Math.max(W / meta.w, H / meta.h);
+  var dw = п ? п.dw : meta.w * c, dh = п ? п.dh : meta.h * c;
+  var ox = п ? п.ox : (W - dw) / 2, oy = п ? п.oy : (H - dh) / 2;
   function sx(u) { return (ox + u * dw) / W * 2 - 1; }
   function sy(v) { return 1 - (oy + v * dh) / H * 2; }
 

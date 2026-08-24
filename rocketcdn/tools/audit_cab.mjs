@@ -101,6 +101,30 @@ for (const d of DEVICES) {
   });
 
   /* Клавиши и треугольники берём у самой рамы */
+  /* Клавиши теперь не объёмные крышки, а места на плите: свет в её
+     нишах. Меряем то, что есть на самом деле, иначе приёмка отчитается
+     о нуле клавиш при живом пульте. */
+  const пульт = await p.evaluate(() => {
+    const cv = document.querySelector(".rcf-instr");
+    const hit = [...document.querySelectorAll(".rcf-phys-hit")];
+    if (!cv) return { нет: true };
+    const р = hit.map(el => {
+      const b = el.getBoundingClientRect();
+      return Math.round(Math.min(b.width, b.height));
+    });
+    return {
+      холст: cv.width + "x" + cv.height,
+      клавиш: hit.length,
+      мелкая: р.length ? Math.min.apply(null, р) : 0,
+      подПалец: р.filter(v => v >= 40).length,
+      заКадром: hit.filter(el => {
+        const b = el.getBoundingClientRect();
+        return b.right < 0 || b.bottom < 0 || b.left > innerWidth || b.top > innerHeight;
+      }).length
+    };
+  });
+  console.log("пульт:", JSON.stringify(пульт));
+
   const железо = await p.evaluate(() => {
     const c = window.RC_PANEL_LAST_API || null;
     if (!c) return null;

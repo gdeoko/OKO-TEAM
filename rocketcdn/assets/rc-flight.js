@@ -6191,6 +6191,13 @@ function deckLayer() {
   if (deckSize.w !== innerWidth || deckSize.h !== innerHeight || deckSize.d !== dpr) {
     deck.размер(innerWidth, innerHeight, dpr);
     deckSize.w = innerWidth; deckSize.h = innerHeight; deckSize.d = dpr;
+    /* Привязку кадра пересчитываем вместе с размером: она зависит от
+       того, насколько экран шире снимка, и при повороте телефона
+       меняется. */
+    if (ui.cabFrame) {
+      var пк = g.RC_DECK["покрытие"](meta, innerWidth, innerHeight);
+      ui.cabFrame.style.objectPosition = "50% " + (пк["доля"] * 100).toFixed(2) + "%";
+    }
   }
   return deck;
 }
@@ -6284,6 +6291,13 @@ function cabFrameLayer() {
   }
   if (ui.cabFrame.getAttribute("src") !== meta["файл"]) {
     ui.cabFrame.setAttribute("src", meta["файл"]);
+  }
+  /* Привязка кадра по вертикали считается там же, где геометрия ниш:
+     иначе картинка и разметка приборов разъедутся ровно на широком
+     мониторе, где сдвиг и нужен. */
+  if (g.RC_DECK && g.RC_DECK["покрытие"]) {
+    var п = g.RC_DECK["покрытие"](meta, innerWidth, innerHeight);
+    ui.cabFrame.style.objectPosition = "50% " + (п["доля"] * 100).toFixed(2) + "%";
   }
 }
 
