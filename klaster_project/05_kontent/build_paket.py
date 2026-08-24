@@ -135,9 +135,9 @@ def сборка():
 
     o = ['<!doctype html><html lang="ru"><meta charset="utf-8">',
          '<meta name="viewport" content="width=device-width,initial-scale=1">',
-         '<title>Кластер — контент на согласование</title>',
+         '<title>Кластер: контент на согласование</title>',
          f'<style>{CSS}</style><div class="wrap">',
-         '<header><h1>Контент первой недели — на согласование</h1>',
+         '<header><h1>Контент первой недели на согласование</h1>',
          '<div class="sub">Бизнес-парк «Кластер» · подготовила команда OKO<br>'
          'Публикуем после вашего подтверждения. Правки принимаем по любому пункту.</div></header>',
          '<div class="svodka">',
