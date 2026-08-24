@@ -100,13 +100,19 @@ def one(path):
 
 
 def main():
-    wide, tall = one(sys.argv[1]), one(sys.argv[2])
-    for name, d in (("широкая", wide), ("высокая", tall)):
+    """Пары «имя=файл». Видов теперь три: широкий экран, средний
+    (планшет и четыре к трём) и телефон. Раньше было два, и на 4:3
+    боковая рама срезалась целиком - приёмка показала поля в минус
+    девять процентов, то есть окно шире экрана."""
+    пары = [a.split("=", 1) for a in sys.argv[1:]]
+    out = {}
+    for name, path in пары:
+        out[name] = one(path)
+    for name, d in out.items():
         p = d["поля"]
         sys.stderr.write("%s %sx%s  поля %.1f %.1f %.1f %.1f\n" % (
             name, d["w"], d["h"], p["слева"] * 100, p["справа"] * 100,
             p["сверху"] * 100, p["снизу"] * 100))
-    out = {"широкая": wide, "высокая": tall}
     print("/* Паспорт плоской рамы. Собран tools/cabflat.py, руками не править. */")
     print("window.RC_CAB_FLAT = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";")
 

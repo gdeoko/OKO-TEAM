@@ -6174,8 +6174,9 @@ var deckSize = { w: 0, h: 0, d: 0, вид: "" };
 
 function deckLayer() {
   if (!ui || !ui.wrap || !g.RC_DECK || !g.RC_CAB_FLAT || !g.RC_CAB_DECK) return null;
-  var вид = innerHeight > innerWidth ? "высокая" : "широкая";
-  var meta = g.RC_CAB_FLAT[вид], план = g.RC_CAB_DECK[вид];
+  var вид = g.RC_DECK["какой"](innerWidth, innerHeight);
+  var meta = g.RC_CAB_FLAT[вид] || g.RC_CAB_FLAT["широкая"];
+  var план = g.RC_CAB_DECK[вид] || g.RC_CAB_DECK["широкая"];
   if (!meta || !план) return null;
   if (!deck) {
     deck = g.RC_DECK.создать();
@@ -6268,8 +6269,15 @@ function deckFrame(ts, dt) {
   }
   /* Команды, которым на этой плите места не хватило, остаются в меню
      полёта: втискивать двенадцать клавиш в две ниши телефона значит
-     вернуть ту самую мелкую кашу, за которую пульт уже ругали. */
-  for (var j = мест; nodes && j < nodes.length; j++) {
+     вернуть ту самую мелкую кашу, за которую пульт уже ругали.
+
+     Пока мест НОЛЬ, не трогаем ничего. Ноль здесь значит не «мест не
+     нашлось», а «слой ещё не рисовал кадр»: места считаются в самом
+     рисовании, ниже по ходу. Без этой проверки первый же заход снимал
+     все двенадцать кнопок разом, и если следующего кадра не
+     случалось, пульт оставался без единой рабочей клавиши. Приёмка
+     поймала это на 1920: рама есть, холст есть, клавиш ноль. */
+  for (var j = мест; мест && nodes && j < nodes.length; j++) {
     var e2 = nodes[j];
     if (e2 && e2.classList.contains("rcf-phys-hit")) {
       e2.classList.remove("rcf-phys-hit");
@@ -6285,7 +6293,8 @@ function cabFrameLayer() {
   if (!ui || !ui.wrap) return;
   var M = g.RC_CAB_FLAT;
   if (!M) return;
-  var meta = innerHeight > innerWidth ? M["высокая"] : M["широкая"];
+  var meta = M[(g.RC_DECK && g.RC_DECK["какой"]) ? g.RC_DECK["какой"](innerWidth, innerHeight)
+                : (innerHeight > innerWidth ? "высокая" : "широкая")] || M["широкая"];
   if (!meta) return;
   if (!ui.cabFrame) {
     var el = doc.createElement("img");

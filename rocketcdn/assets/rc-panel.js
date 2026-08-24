@@ -522,7 +522,12 @@ var RC = { last: null };
    ══════════════════════════════════════════════════════════ */
 function flatBuild(T, o, api, inner3, portrait, W, H, proj) {
   var M = g.RC_CAB_FLAT;
-  var meta = M ? (portrait ? M["высокая"] : M["широкая"]) : null;
+  /* Какой кадр под этот экран, решает слой приборов: правило одно на
+     всех, иначе рама и разметка окна разъедутся. Признак portrait
+     остаётся запасным на случай, если слой не поднялся. */
+  var имя = (g.RC_DECK && g.RC_DECK["какой"]) ? g.RC_DECK["какой"](W, H)
+            : (portrait ? "высокая" : "широкая");
+  var meta = M ? (M[имя] || M["широкая"]) : null;
   if (!meta) return null;
 
   /* Раскладку кадра считает слой приборов и он же ставит её картинке.
@@ -638,7 +643,12 @@ function build(T, o) {
   if (flat) return flat;
 
   var M = g.RC_CAB_META;
-  var meta = M ? (portrait ? M["высокая"] : M["широкая"]) : null;
+  /* Какой кадр под этот экран, решает слой приборов: правило одно на
+     всех, иначе рама и разметка окна разъедутся. Признак portrait
+     остаётся запасным на случай, если слой не поднялся. */
+  var имя = (g.RC_DECK && g.RC_DECK["какой"]) ? g.RC_DECK["какой"](W, H)
+            : (portrait ? "высокая" : "широкая");
+  var meta = M ? (M[имя] || M["широкая"]) : null;
   if (!meta) return fallback(T, api, inner3, proj, portrait);
 
   var tgt = portrait
