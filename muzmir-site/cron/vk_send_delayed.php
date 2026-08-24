@@ -4,8 +4,12 @@
  * Запускается ОТСОЕДИНЁННО из вебхука (exec … &), чтобы НЕ держать php-fpm воркер
  * 20-30 секунд (иначе на пуле из 5 воркеров подвиснет весь сайт).
  *
- * Аргументы: <peer_id> <delay_seconds> <base64(text)>
+ * Аргументы: <peer_id> <delay_seconds> <base64(text)> [row_id]
  * Логика: пингуем «печатает…» каждые ~7 сек, ждём delay, затем шлём сообщение.
+ *
+ * row_id — строка ответа в chat_messages. По ней сторож (cron/vk_resend_stuck.php)
+ * понимает, дошёл ли ответ: этот процесс спит до пяти минут и может не пережить
+ * перезапуск php-fpm или деплой, а человек в ВК останется без ответа молча.
  */
 declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
@@ -13,6 +17,7 @@ if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
 $peer  = (int) ($argv[1] ?? 0);
 $delay = (int) ($argv[2] ?? 20);
 $text  = (string) base64_decode((string) ($argv[3] ?? ''), true);
+$rowId = (int) ($argv[4] ?? 0);
 if ($peer <= 0 || $text === '') exit(0);
 // Предел поднят с сорока секунд до пятнадцати минут: обычный участник ждёт
 // ответа в очереди (core/chat_priority.php), и эта очередь исполняется здесь.
@@ -47,4 +52,8 @@ if (!isset($r['response'])) {
     if (function_exists('_vk_log')) _vk_log("vk_send_delayed peer=$peer НЕ ДОСТАВЛЕНО: $why");
     error_log("vk_send_delayed peer=$peer не доставлено: $why");
     exit(1);
+}
+// Отметка «ушло» — иначе сторож пошлёт этот же ответ второй раз.
+if ($rowId > 0) {
+    try { q("UPDATE chat_messages SET vk_sent=1 WHERE id=?", [$rowId]); } catch (\Throwable $e) {}
 }

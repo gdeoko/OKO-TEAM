@@ -294,7 +294,7 @@ function vk_cb_ack_then_process(string $type): void {
         }
 
         // Сразу фиксируем ответ в истории (состояние диалога корректно тут же).
-        insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
+        $replyRowId = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
         if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа, чтобы следующий диалог снова здоровался
 
         // Тихая эскалация оператору в Телеграм: участник просит живого человека / жалоба / возврат.
@@ -324,27 +324,42 @@ function vk_cb_ack_then_process(string $type): void {
         // Человеческая пауза 20-30 сек (для коротких/повторных — 8-14 сек) с «печатает…».
         // Выполняется ОТДЕЛЬНЫМ отсоединённым процессом, чтобы НЕ держать php-fpm воркер
         // (пул из 5 — иначе подвиснет весь сайт). Индикатор «печатает…» уже показан выше.
-        /* ЧЕЛОВЕЧЕСКАЯ ПАУЗА ЕСТЬ, ОЧЕРЕДИ НЕТ.
+        /* ЧЕЛОВЕЧЕСКАЯ ПАУЗА ПЛЮС ОЧЕРЕДЬ.
          * Пауза в 8-30 секунд остаётся всем: мгновенный ответ на длинный вопрос
-         * читается как автомат. А вот пятиминутная очередь для «неклубных» убрана
-         * (правило владельца 19.08.2026): человек писал в сообщество и пять минут
-         * смотрел в пустой диалог, хотя ответ уже был готов. Привилегия Клуба
-         * теперь не в паузе для остальных, а в приоритете живого оператора. */
+         * читается как автомат. Сверх неё «неклубные» ждут в очереди
+         * (chat_delay_regular_sec, сейчас пять минут) — в этом и состоит
+         * привилегия Клуба. В ВК никакого «отвечу через пять минут» не пишем:
+         * там нет отложенного показа, там ответ просто приходит позже, как от
+         * живого оператора. */
         if (!function_exists('chat_reply_delay_sec')) require_once BASE_PATH . '/core/chat_priority.php';
         $target = $short ? random_int(8, 14) : random_int(20, 30);
         $target = (int) max(3, $target - (time() - $t0)); // вычесть уже потраченное на генерацию
         if (!chat_vip_by_vk($peer)) $target += chat_reply_delay_sec(null);
+
+        /* СТОРОЖ НА СЛУЧАЙ ПОТЕРИ ПРОЦЕССА.
+         * Ответ отправляет отсоединённый процесс, который спит до своего срока.
+         * На двадцати секундах его гибель (перезапуск php-fpm, OOM, деплой) почти
+         * ничего не стоила; на пяти минутах это молча потерянный ответ живому
+         * человеку. Проставляем срок и признак «ещё не отправлено» — просроченное
+         * дошлёт cron/vk_resend_stuck.php. */
+        try {
+            q("UPDATE chat_messages SET vk_send_at=?, vk_sent=0 WHERE id=?",
+              [date('Y-m-d H:i:s', time() + $target), $replyRowId]);
+        } catch (\Throwable $e) { /* колонки появятся при ближайшей миграции */ }
+
         // Отсоединённый процесс запускаем ЯВНЫМ бинарником PHP и проверяем, что он
         // вообще стартовал. Голое 'php …' зависело от PATH процесса php-fpm — в нём
         // php может отсутствовать вовсе, и тогда ответ бота не уходил никуда, а в
         // логе стояло бодрое «bot reply». Если запустить не удалось — отправляем
         // синхронно, без человеческой паузы: лучше мгновенный ответ, чем никакого.
-        if (!_vk_spawn_delayed($peer, $target, $reply)) {
+        if (!_vk_spawn_delayed($peer, $target, $reply, $replyRowId)) {
             _vk_log('bot reply peer=' . $peer . ': фоновый процесс не запустился — шлю синхронно');
             $r = vk_dm_send($peer, $reply, '', random_int(1, 2000000000));
             if (!isset($r['response'])) {
                 _vk_log('bot reply peer=' . $peer . ' НЕ ДОСТАВЛЕНО: '
                         . json_encode($r['error'] ?? $r, JSON_UNESCAPED_UNICODE));
+            } else {
+                try { q("UPDATE chat_messages SET vk_sent=1 WHERE id=?", [$replyRowId]); } catch (\Throwable $e) {}
             }
         }
         _vk_log('bot reply peer=' . $peer . ' greet=' . (int) $greet . ' short=' . (int) $short . ' delay=' . $target . 's len=' . mb_strlen($reply));
@@ -362,7 +377,7 @@ function vk_cb_ack_then_process(string $type): void {
  *
  * @return bool удалось ли запустить (false — вызывающий шлёт синхронно)
  */
-function _vk_spawn_delayed(int $peer, int $delay, string $text): bool {
+function _vk_spawn_delayed(int $peer, int $delay, string $text, int $rowId = 0): bool {
     if (!function_exists('exec')) return false;
     $bin = trim((string) cfgv('php_bin', ''));
     if ($bin === '' || !is_executable($bin)) $bin = PHP_BINARY ?: 'php';
@@ -374,7 +389,7 @@ function _vk_spawn_delayed(int $peer, int $delay, string $text): bool {
         if (str_contains(basename($bin), 'fpm')) return false;
     }
     $cmd = escapeshellarg($bin) . ' ' . escapeshellarg(BASE_PATH . '/cron/vk_send_delayed.php')
-         . ' ' . $peer . ' ' . $delay . ' ' . escapeshellarg(base64_encode($text))
+         . ' ' . $peer . ' ' . $delay . ' ' . escapeshellarg(base64_encode($text)) . ' ' . $rowId
          . ' >/dev/null 2>&1 &';
     $out = []; $rc = 0;
     @exec($cmd, $out, $rc);

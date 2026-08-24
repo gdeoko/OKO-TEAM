@@ -241,9 +241,33 @@ if (chat_is_closing($text)) {
  * Ответ уже готов, задерживается только его показ: участник Клуба видит его
  * сразу, обычный — через chat_delay_regular_sec. Пока ответ ждёт своего часа,
  * человеку сразу приходит подтверждение, что вопрос принят и когда будет ответ:
- * молчание в чате читается как поломка, а не как очередь. */
+ * молчание в чате читается как поломка, а не как очередь.
+ *
+ * ПОДТВЕРЖДЕНИЕ ЛОЖИТСЯ В БАЗУ РАНЬШЕ ОТЛОЖЕННОГО ОТВЕТА — это не косметика.
+ * Вкладка добирает историю по `since` = id последнего показанного сообщения.
+ * Пока подтверждение вставлялось после ответа, оно получало больший id: вкладка
+ * забирала подтверждение, двигала since за него, и ответ с меньшим id не
+ * проходил условие id > since уже никогда. Человек получал «отвечу через пять
+ * минут» и не получал ответа вовсе. */
 $delay = chat_reply_delay_sec($uid);
 $visibleAt = $delay > 0 ? date('Y-m-d H:i:s', time() + $delay) : '';
+$notice    = '';
+if ($delay > 0) {
+    // Про Клуб — только в первом ожидании этого диалога (см. chat_wait_notice).
+    $waited = 0;
+    try {
+        $waited = (int) scalar("SELECT COUNT(*) FROM chat_messages
+                                 WHERE session_key=? AND COALESCE(visible_at,'') <> ''", [$sessionKey]);
+    } catch (\Throwable $e) {}
+    $notice = chat_wait_notice($delay, $greetName, $waited === 0);
+}
+
+if ($delay > 0 && $notice !== '') {
+    try {
+        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
+                                 'text' => $notice, 'file' => '']);
+    } catch (\Throwable $e) {}
+}
 
 try {
     insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
@@ -265,13 +289,8 @@ $fmt     = chat_web_format($reply, $actions);
 $actions = $fmt['actions'];
 $image   = chat_sample_image($text);   // картинка-образец «по необходимости»
 
-$notice = $delay > 0 ? chat_wait_notice($delay, $greetName) : '';
 if ($delay > 0 && $notice !== '') {
     // Ответ придёт следующим опросом истории, когда настанет его время.
-    try {
-        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
-                                 'text' => $notice, 'file' => '']);
-    } catch (\Throwable $e) {}
     json_out([
         'ok'      => true,
         'reply'   => $notice,

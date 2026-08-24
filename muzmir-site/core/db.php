@@ -440,6 +440,15 @@ function db_migrate(PDO $pdo): void {
         // обычный участник в обещанный срок (core/chat_priority.php).
         ['chat_messages', 'visible_at', "TEXT DEFAULT ''"],
 
+        // Очередь ВКонтакте. Там ответ не «показывается», а ОТПРАВЛЯЕТСЯ отдельным
+        // отсоединённым процессом, который спит до своего срока. Пока пауза была
+        // 20-30 секунд, потеря такого процесса роли не играла; с пятиминутной
+        // очередью это уже потерянный ответ живому человеку — и никаких следов.
+        // vk_send_at — когда ответ должен уйти, vk_sent — ушёл ли (сторож
+        // cron/vk_resend_stuck.php досылает всё, что просрочено).
+        ['chat_messages', 'vk_send_at', "TEXT DEFAULT ''"],
+        ['chat_messages', 'vk_sent',    'INTEGER DEFAULT 0'],
+
         ['users',   'blocked',     'INTEGER DEFAULT 0'],
         ['reviews', 'attachments', "TEXT DEFAULT ''"],
         ['newsletters', 'campaign_type', "TEXT DEFAULT 'konkurs'"],

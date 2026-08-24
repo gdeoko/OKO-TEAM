@@ -46,9 +46,14 @@ try {
     $say($delay <= 900, 'очередь не превышает обещанные 15 минут');
     $say(chat_reply_delay_sec(null) === $delay, 'гость обслуживается как обычный участник');
 
-    $notice = chat_wait_notice($delay, 'Мария');
+    $say(chat_promise_minutes() === (int) ceil($delay / 60),
+         'обещанный срок совпадает с фактической паузой', chat_promise_minutes() . ' мин');
+
+    $notice = chat_wait_notice($delay, 'Мария', true);
     $say(str_contains($notice, 'Мария'), 'подтверждение обращается по имени');
-    $say(str_contains($notice, 'Клуб'), 'подтверждение называет Клуб как способ отвечать быстрее');
+    $say(str_contains($notice, 'Клуб'), 'первое подтверждение называет Клуб как способ отвечать быстрее');
+    $say(!str_contains(chat_wait_notice($delay, 'Мария'), 'Клуб'),
+         'дальше про Клуб не повторяется');
 
     /* 2. Участник Клуба */
     club_boot();
