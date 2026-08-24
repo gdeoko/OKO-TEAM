@@ -3769,6 +3769,46 @@ function holoFrame(w3, ts) {
      (соседние планеты чужой системы с большой дистанции), разводить
      нечего: подписи ложатся друг на друга. Такие метки честнее не
      показывать вовсе - долететь всё равно можно по кнопке в пульте. */
+  /* ── Чужие панели, на которые метку ставить нельзя ──
+     Заказчик прислал кадр: подпись «УРАН» лежит на чипе «СЕТЬ
+     ПУСТА», «САТУРН» уходит под карточку подсказки, «НЕПТУН»
+     наезжает на строку состояния. Разведение меток между собой было,
+     а вот про постоянные панели рубки они не знали ничего.
+
+     Снимаем их прямоугольники и держим метки в стороне. Снимаем не
+     каждый кадр: панели стоят на месте, а съём геометрии заставляет
+     браузер пересчитать вёрстку. Раз в полсекунды с запасом хватает. */
+  if (!holoFrame._зона) { holoFrame._зона = []; holoFrame._зонаT = 0; }
+  var зона = holoFrame._зона;
+  if (ui.wrap && (!holoFrame._зонаT || ts - holoFrame._зонаT > 500)) {
+    holoFrame._зонаT = ts;
+    зона.length = 0;
+    var панели = ui.wrap.querySelectorAll(
+      ".rcf-netlist, .rcf-hint, .rcf-cap, .rcf-close, .rcf-holo, .rcf-brief-card, " +
+      ".rcf-info, .rcf-mis, .rc-vpn-projector, .rcf-goal, .rcf-toast");
+    for (var пи = 0; пи < панели.length; пи++) {
+      var пэ = панели[пи], пс = getComputedStyle(пэ);
+      if (пс.display === "none" || пс.visibility === "hidden" || +пс.opacity < 0.06) continue;
+      var пр = пэ.getBoundingClientRect();
+      if (пр.width < 24 || пр.height < 10) continue;
+      зона.push([пр.left - 8, пр.top - 6, пр.right + 8, пр.bottom + 6]);
+    }
+  }
+  /* Прямоугольник самой метки: карточка висит вправо от точки
+     крепления, поэтому влево от неё почти ничего нет. */
+  function крыло(x, y, d) {
+    var k = 1 - d * 0.35;
+    return [x - 12, y - 26 * k, x + 232 * k, y + 26 * k];
+  }
+  function бьётся(a, b) {
+    return !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
+  }
+  function наПанели(x, y, d) {
+    var r = крыло(x, y, d);
+    for (var зи = 0; зи < зона.length; зи++) if (бьётся(r, зона[зи])) return true;
+    return false;
+  }
+
   if (!holoFrame._px) { holoFrame._px = []; holoFrame._py = []; }
   var pxs = holoFrame._px, pys = holoFrame._py, pn = 0;
   /* Порог не круглый, а по форме карточки: она вытянута вправо на
@@ -3839,14 +3879,27 @@ function holoFrame(w3, ts) {
     var depth = Math.max(0, Math.min(0.55, (dist - 120) / 2600));
     var on = vis && !F.brief && shown < limit;
     if (on) {
-      /* Ближние метки идут первыми (список отсортирован), поэтому
-         прячется всегда дальняя из пары - так и правильно */
-      for (var pj = 0; pj < pn; pj++) {
-        var gdx = pxs[pj] - sx, gdy = pys[pj] - sy;
-        if (gdx < 0) gdx = -gdx;
-        if (gdy < 0) gdy = -gdy;
-        if (gdx < gapX && gdy < gapY) { on = false; break; }
+      /* Метку сначала пробуем ОТВЕСТИ, и только потом прячем.
+         Раньше выбор был один - спрятать, и с экрана пропадали тела,
+         до которых человек собирался лететь. Уводим по вертикали
+         короткими шагами в обе стороны: подпись остаётся у своего
+         тела, а на чужую панель или на соседнюю метку не ложится. */
+      var шаги = [0, 34, -34, 68, -68, 104, -104, 146, -146];
+      var нашли = false;
+      for (var ш = 0; ш < шаги.length && !нашли; ш++) {
+        var yП = sy + шаги[ш];
+        if (yП < padY || yП > innerHeight - padY * 1.6) continue;
+        if (наПанели(sx, yП, depth)) continue;
+        var чисто = true;
+        for (var pj = 0; pj < pn; pj++) {
+          var gdx = pxs[pj] - sx, gdy = pys[pj] - yП;
+          if (gdx < 0) gdx = -gdx;
+          if (gdy < 0) gdy = -gdy;
+          if (gdx < gapX && gdy < gapY) { чисто = false; break; }
+        }
+        if (чисто) { sy = yП; нашли = true; }
       }
+      if (!нашли) on = false;
     }
     if (on) { pxs[pn] = sx; pys[pn] = sy; pn++; shown++; }
     try { g.RC_HOLO.place(id, sx, sy, depth, on); } catch (e3) {}
@@ -3869,6 +3922,7 @@ function physicalControlsFrame(ts, dt) {
   if (!cabin || !cabin.controlCaps || !ui.wrap) return;
   if (!physicalControlsFrame.nodes) {
     physicalControlsFrame.nodes = [
+      /* Тот же порядок, что и в deckFrame: зум последний. */
       ui.wrap.querySelector(".rcf-navkey"),
       ui.wrap.querySelector(".rcf-scan-key"),
       ui.wrap.querySelector(".rcf-deploy"),
@@ -3877,10 +3931,10 @@ function physicalControlsFrame(ts, dt) {
       ui.wrap.querySelector(".rcf-stop-key"),
       ui.wrap.querySelector(".rcf-thr"),
       ui.wrap.querySelector(".rcf-map-key"),
-      ui.wrap.querySelector(".rcf-zoom-in"),
-      ui.wrap.querySelector(".rcf-zoom-out"),
       ui.wrap.querySelector(".rcf-shot"),
-      ui.wrap.querySelector(".rcf-help-key")
+      ui.wrap.querySelector(".rcf-help-key"),
+      ui.wrap.querySelector(".rcf-zoom-in"),
+      ui.wrap.querySelector(".rcf-zoom-out")
     ];
   }
   for (var pi = 0; pi < cabin.controlCaps.length; pi++) {
@@ -6210,12 +6264,19 @@ function deckFrame(ts, dt) {
   var nodes = physicalControlsFrame.nodes;
   if (!nodes && ui.wrap) {
     physicalControlsFrame.nodes = nodes = [
+      /* Порядок = очерёдность на пульт. Первые занимают ниши, лишние
+         остаются без места. Приближение и отдаление стоят последними
+         намеренно: колесо мыши и щипок делают то же самое, и если
+         паре не хватит ниши, человек ничего не теряет. Раньше
+         последними были кадр и справка, и на плите с десятью нишами
+         они висели над пультом двумя одинокими наклейками - заказчик
+         это и назвал «кнопки криво, не единым целым». */
       ui.wrap.querySelector(".rcf-navkey"), ui.wrap.querySelector(".rcf-scan-key"),
       ui.wrap.querySelector(".rcf-deploy"), ui.wrap.querySelector(".rcf-fire-key"),
       ui.wrap.querySelector(".rcf-auto-key"), ui.wrap.querySelector(".rcf-stop-key"),
       ui.wrap.querySelector(".rcf-thr"), ui.wrap.querySelector(".rcf-map-key"),
-      ui.wrap.querySelector(".rcf-zoom-in"), ui.wrap.querySelector(".rcf-zoom-out"),
-      ui.wrap.querySelector(".rcf-shot"), ui.wrap.querySelector(".rcf-help-key")
+      ui.wrap.querySelector(".rcf-shot"), ui.wrap.querySelector(".rcf-help-key"),
+      ui.wrap.querySelector(".rcf-zoom-in"), ui.wrap.querySelector(".rcf-zoom-out")
     ];
   }
 
@@ -6240,6 +6301,8 @@ function deckFrame(ts, dt) {
   for (var i = 0; i < мест; i++) {
     var el = nodes && nodes[i];
     if (!el) continue;
+    /* Ниша появилась после смены размера окна - возвращаем кнопку */
+    if (el.style.display === "none") el.style.removeProperty("display");
     var жив = el.matches(":active") || el.classList.contains("cur") ||
               el.classList.contains("live") ||
               el.getAttribute("aria-pressed") === "true" ||
@@ -6277,14 +6340,18 @@ function deckFrame(ts, dt) {
      все двенадцать кнопок разом, и если следующего кадра не
      случалось, пульт оставался без единой рабочей клавиши. Приёмка
      поймала это на 1920: рама есть, холст есть, клавиш ноль. */
+  /* Команде не хватило ниши - её кнопка не висит над пультом
+     наклейкой, а уходит совсем. Пульт либо целое, либо ничто:
+     две одиноких плитки на раме ломают всю картину. */
   for (var j = мест; мест && nodes && j < nodes.length; j++) {
     var e2 = nodes[j];
-    if (e2 && e2.classList.contains("rcf-phys-hit")) {
+    if (!e2) continue;
+    if (e2.classList.contains("rcf-phys-hit")) {
       e2.classList.remove("rcf-phys-hit");
-      e2.style.removeProperty("display");
       e2.style.removeProperty("position");
       e2.style.removeProperty("transform");
     }
+    e2.style.display = "none";
   }
   d["кадр"](Math.min(0.05, dt || 0.016));
 }
