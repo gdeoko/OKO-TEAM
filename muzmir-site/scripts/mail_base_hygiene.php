@@ -83,7 +83,15 @@ if ($apply) {
             WHERE status='queued' AND LOWER(to_email) LIKE ?", ['%@' . $d]);
         $offQueue += db()->query("SELECT changes()")->fetchColumn();
     }
-    // Повторные отказы: в стоп-лист и вон из очереди.
+    /* Повторные отказы: в стоп-лист, вон из очереди И вон из рассылки учреждений.
+     *
+     * ПОСЛЕДНЕЕ — НЕ ЛИШНЕЕ. Раньше адрес попадал в стоп-лист, его письма из
+     * очереди убирались, а само учреждение оставалось активным. Через пятнадцать
+     * минут cron/queue_institutions.php ставил ему письмо заново, отправка
+     * упиралась в стоп-лист и возвращала «ящика не существует» — и так по кругу.
+     * 24 августа таких пропусков набралось тридцать один подряд, защита от порчи
+     * базы приняла их за сломанный канал и опустила стоп-кран на ВСЕ массовые:
+     * рассылка встала в 09:34 с 24 588 письмами в очереди на весь день. */
     foreach ($rep as $r) {
         $e = (string) $r['e'];
         try { q("INSERT OR IGNORE INTO mail_stop (email, reason, source) VALUES (?,?,?)",
@@ -91,6 +99,10 @@ if ($apply) {
         q("UPDATE mail_queue SET status='cancelled', error='повторный отказ почтовика'
             WHERE status='queued' AND LOWER(to_email)=?", [$e]);
         $offQueue += db()->query("SELECT changes()")->fetchColumn();
+        q("UPDATE institutions SET status='bounced', note=COALESCE(note,'') || ' [почтовик отказал дважды]',
+                 updated_at=datetime('now','localtime')
+            WHERE status NOT IN ('bounced','unsubscribed','banned') AND LOWER(email)=?", [$e]);
+        $offInst += db()->query("SELECT changes()")->fetchColumn();
     }
     // Битые адреса.
     foreach ($broken as [$id, $e]) {
