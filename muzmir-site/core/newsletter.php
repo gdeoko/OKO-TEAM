@@ -1774,13 +1774,33 @@ function newsletter_process_queue(int $limit): int {
             // — стоило поставить mail.ru на паузу, как вся пачка оказывалась из
             // одних пропусков, и ящик за прогон не отправлял НИЧЕГО, хотя дальше
             // в очереди стояли тысячи писем на другие домены.
-            $skipDomains = [];
+            /* ОТСЕИВАЕМ ВСЮ СЛУЖБУ, А НЕ ОДНО ЕЁ ИМЯ.
+             *
+             * Пауза и норма считаются по почтовой СЛУЖБЕ (mrep_bucket): у mail.ru
+             * это mail.ru, bk.ru, list.ru, inbox.ru, internet.ru. А в запрос
+             * подставлялось только имя службы — «mail.ru». Остальные её домены
+             * проходили фильтр, набивали собой всю пачку и уже в цикле
+             * пропускались по одному. Итог: прогон отправлял НОЛЬ, хотя дальше в
+             * очереди стояли тысячи писем на другие службы. Ровно это 25 августа
+             * держало рассылку на нуле при 23 тысячах писем в очереди. */
+            $skipBuckets = [];
             if (function_exists('mrep_paused_domains')) {
-                foreach (array_keys(mrep_paused_domains()) as $d) $skipDomains[$d] = true;
+                foreach (array_keys(mrep_paused_domains()) as $d) $skipBuckets[$d] = true;
             }
             if (function_exists('mrep_managed_domains')) {
                 foreach (mrep_managed_domains() as $d) {
-                    if (mrep_domain_quota_left($d) <= 0) $skipDomains[$d] = true;
+                    $b = function_exists('mrep_bucket') ? mrep_bucket($d) : $d;
+                    if (mrep_domain_quota_left($b) <= 0) $skipBuckets[$b] = true;
+                }
+            }
+            // Разворачиваем службы обратно в списки доменов.
+            $skipDomains = [];
+            foreach ($skipBuckets as $b => $_) {
+                $skipDomains[$b] = true;
+                if (function_exists('mrep_managed_domains') && function_exists('mrep_bucket')) {
+                    foreach (mrep_managed_domains() as $d) {
+                        if (mrep_bucket($d) === $b) $skipDomains[$d] = true;
+                    }
                 }
             }
             $skipSql = '';
