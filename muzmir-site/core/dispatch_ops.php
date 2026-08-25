@@ -300,3 +300,79 @@ function dops_diplomas_cancel(int $appId): array {
     }
     return ['ok' => true, 'msg' => $msg];
 }
+
+/* ======================= ПИСЬМО О ПРИЁМЕ ЗАЯВКИ ======================= */
+
+/**
+ * Состояние письма «Заявка принята» по заявке: было ли оно вообще.
+ *
+ * Отдельного поля в applications под это письмо нет — оно уходит один раз при
+ * подаче и нигде не отмечается. Единственный след — строка в очереди почты,
+ * по ней и смотрим: тема письма всегда начинается с «Заявка №<номер> принята».
+ *
+ * Возвращает ['state'=>'sent'|'queued'|'failed'|'none', 'at'=>'дата', 'tries'=>int].
+ */
+function dops_confirmation_state(int $appId): array {
+    $a = one("SELECT number, email FROM applications WHERE id=?", [$appId]);
+    $out = ['state' => 'none', 'at' => '', 'tries' => 0];
+    if (!$a || trim((string) $a['email']) === '') return $out;
+
+    $rows = all("SELECT status, created_at, sent_at FROM mail_queue
+                  WHERE LOWER(to_email)=LOWER(?) AND subject LIKE ?
+                  ORDER BY id DESC",
+                [trim((string) $a['email']), 'Заявка №' . (string) $a['number'] . ' принята%']);
+    if (!$rows) return $out;
+
+    $out['tries'] = count($rows);
+    $top = $rows[0];
+    $st  = (string) ($top['status'] ?? '');
+    $out['state'] = in_array($st, ['sent', 'queued', 'failed'], true) ? $st : 'queued';
+    $out['at']    = trim((string) ($top['sent_at'] ?? '')) !== ''
+        ? (string) $top['sent_at'] : (string) ($top['created_at'] ?? '');
+    return $out;
+}
+
+/**
+ * Отправить (или продублировать) письмо о приёме заявки.
+ *
+ * Письмо уходит само в момент подачи, но у части заявок его в очереди не
+ * оказалось — сбой отправки, отказ почтовика, ручное заведение заявки. Человек
+ * в таком случае подал работу и не получил ни номера, ни подтверждения, и не
+ * знает, дошла ли заявка вообще. Кнопка ставит письмо в очередь заново, ничего
+ * не меняя в самой заявке.
+ *
+ * Отклонённой заявке подтверждение не шлём: человек уже получил (или должен
+ * получить) письмо об отклонении, и «заявка принята» после отказа — прямая ложь.
+ */
+function dops_confirmation_send(int $appId): array {
+    $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if (!$a) return ['ok' => false, 'msg' => 'Заявка не найдена.'];
+
+    $email = trim((string) ($a['email'] ?? ''));
+    if ($email === '') return ['ok' => false, 'msg' => 'У заявки не указана почта — отправлять некуда.'];
+
+    if ((string) ($a['status'] ?? '') === 'rejected') {
+        return ['ok' => false, 'msg' => 'Заявка отклонена. Письмо «Заявка принята» ей отправлять нельзя — '
+            . 'нужно письмо об отклонении (раздел «Отправки»).'];
+    }
+
+    require_once BASE_PATH . '/core/result_mail.php';
+    if (!function_exists('application_mail_send')) {
+        return ['ok' => false, 'msg' => 'Сборщик письма недоступен.'];
+    }
+
+    $was = dops_confirmation_state($appId);
+
+    $ok = false;
+    try { $ok = (bool) application_mail_send($appId, (int) ($a['is_paid'] ?? 0) === 1); }
+    catch (\Throwable $e) { $ok = false; }
+
+    audit('application_confirm_resend', 'application', $appId,
+          ['email' => $email, 'was' => $was['state'], 'ok' => $ok]);
+
+    if (!$ok) return ['ok' => false, 'msg' => 'Письмо поставить в очередь не удалось. Смотрите журнал почты.'];
+
+    $msg = 'Письмо «Заявка №' . (string) $a['number'] . ' принята» поставлено в очередь на ' . $email . '.';
+    if ($was['state'] === 'none') $msg .= ' Раньше оно этому участнику не уходило.';
+    return ['ok' => true, 'msg' => $msg];
+}

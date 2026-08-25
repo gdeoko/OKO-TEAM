@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
 /* ---------- Действия по отправкам прямо из карточки заявки ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), [
         'result_sendnow','result_dup','result_resched','result_cancel',
-        'dip_sendnow','dip_dup','dip_resched','dip_cancel'], true)) {
+        'dip_sendnow','dip_dup','dip_resched','dip_cancel','conf_dup'], true)) {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
     require_once BASE_PATH . '/core/dispatch_ops.php';
     $aid = (int) input('id');
@@ -234,6 +234,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), [
         'dip_dup'        => dops_diplomas_send_now($aid, true),
         'dip_resched'    => dops_diplomas_resched($aid, $dt),
         'dip_cancel'     => dops_diplomas_cancel($aid),
+        /* ПОВТОР ПИСЬМА О ПРИЁМЕ ЗАЯВКИ.
+         *
+         * Письмо уходит само при подаче, но у трёх заявок его не оказалось: где-то
+         * сбой отправки, где-то адрес был в стоп-листе. Человек в таком случае
+         * подал заявку и не получил ни номера, ни подтверждения — и не знает,
+         * дошла ли она вообще. Кнопка даёт оператору отправить его вручную, не
+         * трогая базу и не заводя заявку заново. */
+        'conf_dup'       => dops_confirmation_send($aid),
     };
     flash($r['msg'], $r['ok'] ? 'success' : 'error');
     admin_redirect('applications', ['id' => $aid]);
@@ -315,6 +323,50 @@ if ($id = (int) input('id')) {
       </dl>
 
       <?= admin_same_work_box(app_same_work_graded($a)) ?>
+
+      <?php
+      /* ПОДТВЕРЖДЕНИЕ О ПРИЁМЕ ЗАЯВКИ.
+         Письмо уходит само при подаче и нигде в заявке не отмечается — его след
+         только в очереди почты. Показываем этот след честно: если письма не было,
+         оператор видит это сразу, а не узнаёт от участника, что тот «ничего не
+         получал». Кнопка ставит письмо в очередь заново. */
+      $cst = dops_confirmation_state($id);
+      ?>
+      <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <div>
+            <b>Письмо о приёме заявки</b><br>
+            <span class="small muted">Уходит участнику сразу после подачи</span>
+          </div>
+          <div class="small">
+            <?php if ($cst['state'] === 'sent'): ?>
+              <span class="badge badge--made">Отправлено <?= h(dops_dt($cst['at'])) ?></span>
+            <?php elseif ($cst['state'] === 'queued'): ?>
+              <span class="badge badge--making">В очереди с <?= h(dops_dt($cst['at'])) ?></span>
+            <?php elseif ($cst['state'] === 'failed'): ?>
+              <span class="badge badge--rejected">Не доставлено</span>
+            <?php else: ?>
+              <span class="badge badge--rejected">Не отправлялось</span>
+            <?php endif; ?>
+            <?php if ($cst['tries'] > 1): ?>
+              <span class="muted">· попыток: <?= (int) $cst['tries'] ?></span>
+            <?php endif; ?>
+          </div>
+        </div>
+        <?php if ((string) $a['status'] === 'rejected'): ?>
+          <p class="small muted" style="margin:10px 0 0">Заявка отклонена — письмо «Заявка принята» ей не отправляется.</p>
+        <?php elseif (trim((string) $a['email']) === ''): ?>
+          <p class="small muted" style="margin:10px 0 0">У заявки не указана почта — отправлять некуда.</p>
+        <?php else: ?>
+          <form method="post" action="<?= url('/admin/?p=applications') ?>" style="margin-top:12px">
+            <?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>">
+            <button class="btn <?= $cst['state'] === 'none' ? 'btn--primary' : 'btn--navy' ?> btn--sm" name="do" value="conf_dup"
+                    onclick="return confirm('Отправить письмо о приёме заявки на <?= h($a['email']) ?>?')">
+              <?= admin_icon($cst['state'] === 'none' ? 'send' : 'copy') ?><?= $cst['state'] === 'none' ? 'Отправить подтверждение' : 'Продублировать подтверждение' ?>
+            </button>
+          </form>
+        <?php endif; ?>
+      </div>
 
       <!-- ---- РЕЗУЛЬТАТ ---- -->
       <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
