@@ -1,110 +1,85 @@
 #!/usr/bin/env python3
 """
-Разметка ниш пульта: куда лягут приборы и кнопки.
+Настоящие четыре угла каждой ниши пульта.
 
-Плита приходит из кабинета с пустым пультом: чистый металл, а в нём
-неглубокие ниши под приборы. Их границы читаются глазом по светлой
-фаске, значит читаются и счётом. Ниша - гладкое тёмное поле, фаска -
-светлая линия вокруг него.
+Ниши на снимке рубки идут в перспективе: это не прямоугольники, а
+наклонные четырёхугольники, и у левого крыла наклон в одну сторону, у
+правого в другую. Заказчик это увидел сразу: «там форма кнопок ромбик
+с наклоном, а у тебя обычные прямоугольники».
 
-Считаем так: берём полосу ниже окна, вычитаем крупный размыв (уходит
-общая светотень, остаются перепады), тёмные поля метим, режем на
-связные куски, отбрасываем мелочь. У каждого куска берём центр и
-вписанный прямоугольник - по ним слой и рисует свет.
+Прежний разбор отдавал только габаритную коробку (x0..x1, y0..y1), и
+клавиша ложилась в нишу ровным прямоугольником поверх наклонной. Здесь
+у каждого пятна берутся четыре крайние точки по суммам и разностям
+координат - для параллелограмма это ровно его углы.
 
-  python3 tools/cabniche.py плита.webp > разметка.json
+  python3 tools/cabniche.py assets/gen/cockpit-mid-hd.webp [порог_площади]
 """
 import json
 import sys
+from collections import deque
 
 import numpy as np
 from PIL import Image, ImageFilter
 
 
-def поля(path, минплощадь=0.0007):
-    im = Image.open(path).convert("RGBA")
+def ниши(путь, минпл=0.0006, разм=0.008, порог=0.8):
+    im = Image.open(путь).convert("RGBA")
     w, h = im.size
     a = np.asarray(im).astype(np.float32)
     alpha = a[:, :, 3]
     lum = 0.2126 * a[:, :, 0] + 0.7152 * a[:, :, 1] + 0.0722 * a[:, :, 2]
-
-    # Окно вырезано в прозрачность: полка начинается под ним.
     ys = np.nonzero((alpha < 128).any(axis=1))[0]
-    низ = int(ys.max()) if len(ys) else int(h * 0.78)
+    низ = int(ys.max()) if len(ys) else int(h * 0.75)
 
     сер = np.asarray(Image.fromarray(lum.astype(np.uint8), "L")
-                     .filter(ImageFilter.GaussianBlur(w * 0.02))).astype(np.float32)
-    рельеф = lum - сер
+                     .filter(ImageFilter.GaussianBlur(w * разм))).astype(np.float32)
+    стена = np.asarray(Image.fromarray(((lum - сер > порог) * 255).astype(np.uint8), "L")
+                       .filter(ImageFilter.MaxFilter(3))) > 127
+    поле = (~стена) & (alpha > 200) & (lum > 2)
+    поле[:низ, :] = False
 
-    поле = np.zeros((h, w), dtype=bool)
-    поле[низ:, :] = (рельеф[низ:, :] < -0.8) & (lum[низ:, :] > 6) & (alpha[низ:, :] > 200)
-
-    # чистим точечный шум
-    м = Image.fromarray((поле * 255).astype(np.uint8), "L")
-    м = м.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5))
-    поле = np.asarray(м) > 127
-
-    метки = np.zeros((h, w), dtype=np.int32)
-    из_ = []
+    метки = np.zeros((h, w), np.int32)
     n = 0
-    from collections import deque
+    из_ = []
     for y in range(низ, h):
-        for x in range(w):
-            if not поле[y, x] or метки[y, x]:
+        for x in np.nonzero(поле[y])[0]:
+            if метки[y, x]:
                 continue
             n += 1
             q = deque([(y, x)])
             метки[y, x] = n
-            точки = []
+            pts = []
             while q:
                 cy, cx = q.popleft()
-                точки.append((cy, cx))
-                for ny, nx in ((cy-1,cx),(cy+1,cx),(cy,cx-1),(cy,cx+1)):
+                pts.append((cy, cx))
+                for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
                     if низ <= ny < h and 0 <= nx < w and поле[ny, nx] and not метки[ny, nx]:
                         метки[ny, nx] = n
                         q.append((ny, nx))
-            если = len(точки) / float(w * h)
-            if если < минплощадь:
+            пл = len(pts) / float(w * h)
+            if пл < минпл:
                 continue
-            ту = np.array(точки)
-            y0, y1 = int(ту[:, 0].min()), int(ту[:, 0].max())
-            x0, x1 = int(ту[:, 1].min()), int(ту[:, 1].max())
-            # вписанный прямоугольник: сужаем габарит, пока все его
-            # точки не окажутся внутри поля
-            маска = метки[y0:y1+1, x0:x1+1] == n
-            вх, вy = вписать(маска)
+            t = np.array(pts, dtype=np.float64)
+            yy, xx = t[:, 0], t[:, 1]
+            s, d = xx + yy, xx - yy
+            углы = [
+                (xx[s.argmin()], yy[s.argmin()]),   # левый верх
+                (xx[d.argmax()], yy[d.argmax()]),   # правый верх
+                (xx[s.argmax()], yy[s.argmax()]),   # правый низ
+                (xx[d.argmin()], yy[d.argmin()]),   # левый низ
+            ]
             из_.append({
-                "центр": [round((x0 + (вх[0]+вх[1])/2.0) / w, 4),
-                          round((y0 + (вy[0]+вy[1])/2.0) / h, 4)],
-                "габарит": [round(x0/w,4), round(y0/h,4), round(x1/w,4), round(y1/h,4)],
-                "нутро": [round((x0+вх[0])/w,4), round((y0+вy[0])/h,4),
-                          round((x0+вх[1])/w,4), round((y0+вy[1])/h,4)],
-                "площадь": round(если, 5),
+                "пл": round(пл, 5),
+                "угол": [[round(float(px) / w, 4), round(float(py) / h, 4)] for px, py in углы],
+                "цх": round(float(xx.mean()) / w, 4),
+                "цy": round(float(yy.mean()) / h, 4),
+                "ш": round(float(xx.max() - xx.min()) / w, 4),
+                "в": round(float(yy.max() - yy.min()) / h, 4),
             })
-    из_.sort(key=lambda d: (-d["площадь"]))
-    return {"w": w, "h": h, "низ_окна": round(низ / h, 4), "ниши": из_}
-
-
-def вписать(маска):
-    """Наибольший вписанный прямоугольник по строкам гистограммой."""
-    hh, ww = маска.shape
-    выс = np.zeros(ww, dtype=np.int32)
-    лучше = (0, (0, 0), (0, 0))
-    for y in range(hh):
-        выс = np.where(маска[y], выс + 1, 0)
-        стек = []
-        for x in range(ww + 1):
-            v = выс[x] if x < ww else 0
-            старт = x
-            while стек and стек[-1][1] >= v:
-                sx, sv = стек.pop()
-                пл = sv * (x - sx)
-                if пл > лучше[0]:
-                    лучше = (пл, (sx, x - 1), (y - sv + 1, y))
-                старт = sx
-            стек.append((старт, v))
-    return лучше[1], лучше[2]
+    из_.sort(key=lambda z: (round(z["цy"], 2), z["цх"]))
+    return {"низ_окна": round(низ / h, 4), "кадр": [w, h], "ниши": из_}
 
 
 if __name__ == "__main__":
-    print(json.dumps(поля(sys.argv[1]), ensure_ascii=False, indent=1))
+    мин = float(sys.argv[2]) if len(sys.argv) > 2 else 0.0006
+    print(json.dumps(ниши(sys.argv[1], мин), ensure_ascii=False, indent=1))
