@@ -136,7 +136,16 @@ function regulation_generate(int $competitionId): string {
     if (!$c) throw new \RuntimeException('Конкурс #' . $competitionId . ' не найден');
 
     $isPaid = (int) ($c['is_paid'] ?? 0) === 1;
-    $etalon = BASE_PATH . '/docs/polozheniya/' . ($isPaid ? 'etalon_2.docx' : 'etalon_4.docx');
+    /* КОНКУРС КЛУБА ИДЁТ ПО СВОЕМУ ЭТАЛОНУ.
+     *
+     * Он бесплатный, но не для всех: участвовать могут только участники Клуба,
+     * и у серии есть годовой призовой фонд, которого нет ни в одном другом
+     * конкурсе. Бесплатный эталон этого не говорит, а дописывать условия
+     * вручную каждый месяц — верный способ однажды забыть. Эталон собирается
+     * скриптом scripts/build_etalon_club.php из бесплатного. */
+    $clubOnly = (int) ($c['club_only'] ?? 0) === 1;
+    $file = $clubOnly ? 'etalon_5.docx' : ($isPaid ? 'etalon_2.docx' : 'etalon_4.docx');
+    $etalon = BASE_PATH . '/docs/polozheniya/' . $file;
     if (!is_file($etalon)) throw new \RuntimeException('Эталон положения не найден: ' . basename($etalon));
     // Частая причина сбоя copy(): эталон залит с правами 600 (root-only) и недоступен
     // php-fpm (www-data) для чтения. Пробуем самолечение, иначе — понятная ошибка про ИСТОЧНИК.

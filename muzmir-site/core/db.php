@@ -449,6 +449,11 @@ function db_migrate(PDO $pdo): void {
         ['chat_messages', 'vk_send_at', "TEXT DEFAULT ''"],
         ['chat_messages', 'vk_sent',    'INTEGER DEFAULT 0'],
 
+        // Конкурс только для участников Клуба: виден всем, но подать заявку
+        // может лишь член Клуба. Так членство продаёт себя само — это
+        // единственный конкурс серии с годовым призовым фондом.
+        ['competitions', 'club_only', 'INTEGER DEFAULT 0'],
+
         ['users',   'blocked',     'INTEGER DEFAULT 0'],
         ['reviews', 'attachments', "TEXT DEFAULT ''"],
         ['newsletters', 'campaign_type', "TEXT DEFAULT 'konkurs'"],

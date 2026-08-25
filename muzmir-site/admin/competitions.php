@@ -136,6 +136,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'direction'     => in_array(input('direction'), ['multi','patriotic','thematic'], true) ? input('direction') : 'multi',
             'duration'      => $duration,
             'is_paid'       => isset($_POST['is_paid']) ? 1 : 0,
+            /* Конкурс Клуба всегда бесплатный по оргвзносу: участие входит в
+             * членство. Если галочку поставили вместе с платным участием —
+             * побеждает Клуб, иначе человек заплатит дважды за одно и то же. */
+            'club_only'     => isset($_POST['club_only']) ? 1 : 0,
             'price'         => (int) input('price'),
             'cover'         => trim(input('cover')),
             'description'   => trim(input('description')),
@@ -763,6 +767,13 @@ if ($action === 'edit') {
           <hr>
           <label class="paycheck"><input type="checkbox" name="is_paid" id="fPaid" <?= $c['is_paid']?'checked':'' ?>> <?= admin_icon('money') ?><span>Платное участие (оргвзнос)</span></label>
           <div class="field" id="priceRow" style="margin-top:14px"><label>Стоимость участия, ₽</label><input type="number" name="price" value="<?= (int)$c['price'] ?>" min="0"></div>
+          <label class="paycheck" style="margin-top:14px"><input type="checkbox" name="club_only" id="fClubOnly" <?= !empty($c['club_only'])?'checked':'' ?>> <?= admin_icon('star') ?><span>Только для участников Клуба</span></label>
+          <p class="hint" style="margin-top:6px">
+            Конкурс виден всем, но подать заявку может только участник Клуба — остальным форма
+            предложит вступить. Оргвзнос за такой конкурс не берётся: участие входит в членство.
+            Положение собирается по отдельному эталону, с пунктом про призовой фонд 100 000 ₽
+            и ежегодный очный гала-концерт.
+          </p>
         </div>
       </div>
 

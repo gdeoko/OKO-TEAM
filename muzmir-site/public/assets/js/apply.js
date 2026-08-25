@@ -777,6 +777,24 @@
             if (retry) retry.hidden = true;
             notify('Заявка отправлена. Номер: ' + num, 'success');
           }
+        } else if (d.club_only) {
+          /* Отказ по членству — не ошибка, а развилка. Сообщение об ошибке
+             здесь тупик: человек прочитает «нельзя» и уйдёт. Даём кнопку. */
+          clearSubmitLoading();
+          submitting = false;
+          flashFormError(d.error || 'Конкурс проводится только для участников Клуба.');
+          var cbox = document.getElementById('mzClubOnlyNote');
+          if (!cbox) {
+            cbox = document.createElement('div');
+            cbox.id = 'mzClubOnlyNote';
+            cbox.className = 'note note--gold';
+            form.appendChild(cbox);
+          }
+          cbox.innerHTML = '<b>Конкурс проводится для участников Клуба.</b><br>' +
+            'Заявка не потеряется — вступите в Клуб и отправьте её снова. Отдельный взнос за конкурс не берётся.' +
+            '<br><a class="btn btn--primary" style="margin-top:10px" href="' + (d.club_url || CFG.clubUrl || '/club') + '">Вступить в Клуб</a>';
+          cbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          notify('Нужно членство в Клубе', 'error');
         } else {
           throw new Error(d.message || d.error || 'Не удалось отправить заявку.');
         }
@@ -841,6 +859,29 @@
     $$('[data-back]').forEach(function (b) { b.addEventListener('click', goBack); });
     form.addEventListener('submit', submit);
 
+    /* КОНКУРС КЛУБА: ГОВОРИМ СРАЗУ, А НЕ НА ПОСЛЕДНЕМ ШАГЕ.
+     *
+     * Замок стоит на сервере, но узнать о нём после восьми заполненных шагов —
+     * это потерянный человек и потерянная продажа. Поэтому подсказка появляется
+     * в момент выбора конкурса: не запрещает, а объясняет и даёт ссылку. */
+    function clubNotice(checked){
+      var box = document.getElementById('mzClubOnlyNote');
+      var need = checked.some(function(c){ return c.getAttribute('data-club-only') === '1'; });
+      var inClub = String(CFG.inClub || 0) === '1';
+      if (!need || inClub) { if (box) box.remove(); return; }
+      if (box) return;                                  // уже показана
+      var host = checked[0] && checked[0].closest('.step') || form;
+      box = document.createElement('div');
+      box.id = 'mzClubOnlyNote';
+      box.className = 'note note--gold';
+      box.innerHTML =
+        '<b>Этот конкурс — для участников Клуба.</b><br>' +
+        'Отдельный организационный взнос за него не берётся: участие входит в членство. ' +
+        'У конкурсов Клуба общий призовой фонд 100 000 ₽, который вручается раз в год на очном гала-концерте в Москве.' +
+        '<br><a class="btn btn--primary" style="margin-top:10px" href="' + (CFG.clubUrl || '/club') + '">Вступить в Клуб</a>';
+      host.appendChild(box);
+    }
+
     // Выбор конкурсов → платность (isPaid = true если ЛЮБОЙ выбран платный)
     function recomputePaid(){
       var checked = $$('input[name="competition_ids[]"]:checked');
@@ -848,6 +889,7 @@
       var first = checked[0];
       var link = document.getElementById('regLink');
       if (link && first) link.href = first.getAttribute('data-reg') || '#';
+      clubNotice(checked);
       renderProgress();
       updateConsentBtnLabel();
       fillPayAmount();

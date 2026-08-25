@@ -6,8 +6,21 @@
 require_once BASE_PATH . '/core/loyalty.php';
 
 // ГЕЙТ ЗАПУСКА: заявку можно подать только на ЗАПУЩЕННЫЕ конкурсы (launched=1).
-$comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg FROM competitions
+/* КОНКУРС КЛУБА ИЗ СПИСКА НЕ ПРЯЧЕМ.
+ *
+ * Соблазн — не показывать его тем, кто не в Клубе. Но тогда он и не продаёт
+ * ничего: человек не знает, что пропускает. Показываем всем с пометкой, а
+ * замок стоит на сервере (api/v1/apply.php). */
+$comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg,COALESCE(club_only,0) club_only
+              FROM competitions
               WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort");
+
+// В Клубе ли тот, кто сейчас заполняет форму.
+if (!function_exists('club_is_active') && is_file(BASE_PATH . '/core/club.php')) {
+    require_once BASE_PATH . '/core/club.php';
+}
+$applyUid    = current_user()['id'] ?? null;
+$applyInClub = $applyUid && function_exists('club_is_active') && club_is_active((int) $applyUid);
 
 // Предвыбор конкурса из ?competition=slug или ?comp=id.
 // Второй вид ссылки уже разослан письмами и стоит в очереди, поэтому он тоже
@@ -48,6 +61,12 @@ $jsCfg = [
     'videoCheck'=> url('/api/v1/video_check'),
     'privacy'   => url('/privacy'),
     'agreement' => url('/agreement'),
+    // Конкурсы Клуба и членство текущего участника: форма подсказывает про
+    // Клуб до отправки, а не после отказа сервера.
+    'clubUrl'    => url('/club'),
+    'inClub'     => $applyInClub ? 1 : 0,
+    'clubOnlyIds'=> array_values(array_map('intval', array_column(
+                        array_filter($comps, static fn($c) => (int) $c['club_only'] === 1), 'id'))),
     'consentDelay' => 15,
     'nominations'  => $noms,
     // Формы исполнения строго по номинации (apply.js перестраивает селект при выборе).
@@ -370,6 +389,7 @@ ob_start(); ?>
                   data-slug="<?= h($c['slug']) ?>" data-name="<?= h($c['name']) ?>"
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
                   data-reg="<?= url('/competition/'.$c['slug'].'/regulation.pdf') ?>" data-code="<?= h($c['code']) ?>"
+                  data-club-only="<?= (int)$c['club_only'] ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
                 <?php $dbg = trim((string)($c['diploma_bg'] ?? ''));
                       $cvr = trim((string)($c['cover'] ?? ''));
@@ -389,10 +409,14 @@ ob_start(); ?>
                         $apMy   = ((int) $jsCfg['clubPct'] > 0) ? (int) max(0, round($apFull * (100 - (int) $jsCfg['clubPct']) / 100)) : $apFull;
                       ?>
                       <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?php
-                        if (!(int)$c['is_paid']) { echo 'Бесплатный'; }
+                        if ((int)$c['club_only']) { echo 'Входит в Клуб'; }
+                        elseif (!(int)$c['is_paid']) { echo 'Бесплатный'; }
                         elseif ($apMy < $apFull) { echo '<s style="opacity:.6">' . $apFull . ' ₽</s> ' . $apMy . ' ₽'; }
                         else { echo $apFull . ' ₽'; }
                       ?></span>
+                      <?php if ((int)$c['club_only']): ?>
+                        <span class="badge badge--vip">Только для участников Клуба</span>
+                      <?php endif; ?>
                     </span>
                   </span>
                 </span>

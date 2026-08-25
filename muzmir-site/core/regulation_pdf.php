@@ -42,6 +42,9 @@ function regulation_pdf_cache_key(array $c): string {
         (string) ($c['name'] ?? ''), (string) ($c['end_date'] ?? ''),
         (string) ($c['results_date'] ?? ''), (string) ($c['type'] ?? ''),
         (string) ($c['is_paid'] ?? ''), (string) ($c['price'] ?? ''),
+        // Признак конкурса Клуба меняет сам эталон (etalon_5), а значит и весь
+        // текст положения — без него PDF застрял бы на прежнем документе.
+        (string) ($c['club_only'] ?? ''),
         date('01.m.Y', strtotime($approve) ?: time()),
         'etalon:' . $etalonTs,
         'soffice-v3-price',

@@ -377,6 +377,18 @@ p{margin:0 0 1em}
 .badge--intl{background:var(--gold-soft);color:var(--gold-ink);border:1px solid var(--glass-brd)}
 [data-theme="dark"] .badge--intl{color:var(--gold)}
 .badge--judging{background:color-mix(in srgb,var(--warning) 16%,transparent);color:var(--warning);border:1px solid color-mix(in srgb,var(--warning) 32%,transparent)}
+/* Конкурс Клуба. Метка золотая и заметная: это единственный конкурс серии
+   с годовым призовым фондом, и по ней человек понимает, что членство даёт
+   не скидку, а доступ. */
+.badge--vip{background:linear-gradient(135deg,var(--gold-soft),transparent 70%),color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-ink);border:1px solid color-mix(in srgb,var(--gold) 42%,transparent);font-weight:700}
+[data-theme="dark"] .badge--vip{color:var(--gold)}
+/* Подсказка про Клуб в форме подачи: заметная, но не тревожная — это
+   предложение, а не сообщение об ошибке. */
+.note--gold{margin-top:14px;padding:14px 16px;border-radius:14px;line-height:1.5;
+  background:linear-gradient(135deg,var(--gold-soft),transparent 78%),var(--panel-solid);
+  border:1px solid color-mix(in srgb,var(--gold) 38%,transparent)}
+.note--gold b{color:var(--gold-ink)}
+[data-theme="dark"] .note--gold b{color:var(--gold)}
 
 /* ══════════════════════════════ ШАГИ ══════════════════════════════ */
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
