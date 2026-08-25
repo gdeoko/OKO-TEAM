@@ -221,11 +221,29 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
                 } catch (\Throwable $ePdf) {
                     error_log('regulation_pdf (soffice) failed: ' . $ePdf->getMessage());
                 }
-                // Фолбэк на старый генератор, если конвертация недоступна (чтобы ссылка не падала).
+                /* ПРЕЖНИЙ ФАЙЛ ЛУЧШЕ САМОДЕЛЬНОГО.
+                 *
+                 * Здесь стоял фолбэк на старый рисованный генератор
+                 * (core/pdf_regulation.php) — «чтобы ссылка не падала». Цена
+                 * этой страховки выяснилась 25.08.2026: файлы положений
+                 * оказались с чужим владельцем, пересобрать их php-fpm не мог,
+                 * и участники вместо утверждённого документа получали
+                 * самодельный PDF с наложениями текста и гербов. Владелец
+                 * увидел его на боевом конкурсе и назвал отсебятиной — и был
+                 * прав: официальный документ подменялся молча.
+                 *
+                 * Порядок теперь такой: не собралось — отдаём ПРЕЖНИЙ готовый
+                 * файл, он утверждён и лежит рядом. Нет и его — честная ошибка,
+                 * а не выдуманный документ. */
                 if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
-                    require_once BASE_PATH . '/core/pdf_regulation.php';
-                    $pdf = pdf_regulation($c);
-                    $pdfData = ($pdf !== '' && strlen($pdf) < 512 && is_file($pdf)) ? (string) file_get_contents($pdf) : (string) $pdf;
+                    $prev = BASE_PATH . '/public/uploads/regulations/' . $c['slug'] . '.pdf';
+                    if (is_file($prev) && filesize($prev) > 1000) {
+                        $prevData = (string) file_get_contents($prev);
+                        if (strncmp($prevData, '%PDF', 4) === 0) {
+                            $pdfData = $prevData;
+                            error_log('regulation: отдан прежний PDF, пересобрать не удалось — ' . $c['slug']);
+                        }
+                    }
                 }
                 if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
                     throw new \RuntimeException('Не удалось сформировать PDF положения.');
