@@ -655,3 +655,18 @@ html[data-theme="light"] .logo img { filter: contrast(1.12) saturate(1.05); }
 @media (max-width: 900px) {
   html[data-act="pad"] #rocketCanvas { z-index: 0; }
 }
+
+
+/* ── Корабль выключен сторожем ────────────────────────────────
+   Класс ставит watchdog в rc-cockpit.js, когда акт уже внутренний, а
+   внутрь мы так и не попали. Он останавливает сцену - и до сих пор
+   этим всё и заканчивалось: правила у класса не было вовсе, и на
+   экране оставался последний кадр остановленного корабля. Картинка
+   не двигалась, а человек продолжал крутить страницу.
+
+   Останавливать сцену без того, чтобы её убрать, нельзя. Убираем. */
+html.rc-ship-off #rocketCanvas {
+  opacity: 0 !important;
+  transition: opacity .45s var(--ease, ease);
+  pointer-events: none;
+}
