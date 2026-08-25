@@ -360,7 +360,11 @@ ob_start(); ?>
                 ? h(trim($shortDate($c['start_date']) . ' - ' . $shortDate($c['end_date']), ' -'))
                 : 'уточняется' ?></b></span></li>
             <li><span class="calx-meta__ic"><?= $ic['award'] ?></span>
-              <span>Результаты: <b><?= !empty($c['results_date']) ? h($shortDate($c['results_date'])) : 'по итогам оценки' ?></b></span></li>
+              <?php /* Дата итогов стоит только там, где оглашение идёт списком в
+                        назначенный день. У конкурсов с личной отправкой её нет и быть
+                        не должно: работа аттестуется по мере поступления, и центр
+                        отвечает сроком — 5 рабочих дней, а не календарным числом. */ ?>
+              <span>Результаты: <b><?= !empty($c['results_date']) ? h($shortDate($c['results_date'])) : 'в течение 5 рабочих дней' ?></b></span></li>
             <li><span class="calx-meta__ic"><?= $ic['wallet'] ?></span>
               <span>Участие: <b><?= $paid ? h(money((int) $c['price'])) : 'бесплатно' ?></b></span></li>
           </ul>
