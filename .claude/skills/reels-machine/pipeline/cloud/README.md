@@ -11,7 +11,7 @@
 | `CREATOMATE_API_KEY` | Creatomate серверный ключ (Bearer). В браузер НЕ отдавать |
 | `CREATOMATE_PUBLIC_TOKEN` | Creatomate public-токен — только клиентский preview-плеер |
 
-Вручную поднять ключи: `source <(base64 -d secrets.env.b64)`
+Вручную поднять ключи: `. ~/.oko/secrets.env`
 
 ## Правило окружения
 Сеть **только через curl** — requests/urllib ходят мимо прокси и виснут. Обёртки

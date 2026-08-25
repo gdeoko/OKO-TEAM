@@ -8,7 +8,7 @@ ROOT="${CLAUDE_PROJECT_DIR:-/home/user/OKO-TEAM}"
 cd "$ROOT" 2>/dev/null || cd /home/user/OKO-TEAM
 
 # --- 1. секреты ---
-[ -f secrets.env.b64 ] && base64 -d secrets.env.b64 > secrets.env 2>/dev/null
+[ -f secrets.env.b64 ] && cat ~/.oko/secrets.env > secrets.env 2>/dev/null
 for f in ~/.bashrc ~/.profile; do
   grep -q '# oko-secrets' "$f" 2>/dev/null || \
     echo 'source /home/user/OKO-TEAM/secrets.env 2>/dev/null # oko-secrets' >> "$f"

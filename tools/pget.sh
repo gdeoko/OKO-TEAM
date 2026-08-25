@@ -2,7 +2,7 @@
 # pget.sh <удалённый-файл> <локальный> — забрать файл с хоста моста кусками.
 set -u
 cd /home/user/OKO-TEAM || exit 1
-source <(base64 -d secrets.env.b64) 2>/dev/null
+. ~/.oko/secrets.env 2>/dev/null
 vx() {
   curl -s $([ -f /root/.ccr/ca-bundle.crt ] && echo --cacert /root/.ccr/ca-bundle.crt) -m 120 \
     -X POST "$OKO_POSTER_URL" -H "Authorization: Bearer $OKO_POSTER_TOKEN" -H "Content-Type: application/json" \
