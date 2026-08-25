@@ -322,7 +322,9 @@ require_once BASE_PATH . '/core/app_status.php';
 require_once BASE_PATH . '/core/mailer.php';   // mm_vip_discount — единый размер скидки клуба
 $apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid,
                     c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
-                    c.results_published_at AS comp_results_pub
+                    c.results_published_at AS comp_results_pub,
+                    -- по нему решаем, звать ли подать заявку заново после отклонения
+                    c.status AS comp_status
              FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
              WHERE a.user_id=? ORDER BY a.created_at DESC", [$uid]);
 // ГЛАВНОЕ ПРАВИЛО КАБИНЕТА: участник видит ровно то, что ему уже оглашено.
@@ -1113,13 +1115,24 @@ ob_start(); ?>
                       <b style="color:#8B2F2F">Причина (пункт положения):</b> <?= nl2br(h((string) $a['reject_reason'])) ?>
                     </p>
                   <?php endif; ?>
-                  <p style="margin:0 0 12px;font-size:.92rem;color:var(--text);line-height:1.5">
-                    Устраните причину отклонения и подайте заявку заново — мы с радостью примем её к аттестации!
-                  </p>
-                  <a class="btn btn--primary btn--sm"
-                     href="<?= h(url('/apply' . (!empty($a['comp_slug']) ? '?competition=' . rawurlencode((string) $a['comp_slug']) : ''))) ?>">
-                    Заново подать заявку
-                  </a>
+                  <?php
+                  /* Звать подать заново — только пока заявки принимают. После
+                     закрытия приёма (25-го в 18:00) кнопка вела в форму, которая
+                     сама же отвечала «приём этого месяца завершён»: человек читал
+                     отказ и следом обещание, выполнить которое нельзя. Условие то
+                     же, что в письме об отклонении (core/grade_apply.php). */
+                  $__reapply = in_array((string) ($a['comp_status'] ?? ''), ['open', 'judging'], true)
+                            && (string) setting('intake_closed', '') !== '1';
+                  ?>
+                  <?php if ($__reapply): ?>
+                    <p style="margin:0 0 12px;font-size:.92rem;color:var(--text);line-height:1.5">
+                      Устраните причину отклонения и подайте заявку заново — мы с радостью примем её к аттестации!
+                    </p>
+                    <a class="btn btn--primary btn--sm"
+                       href="<?= h(url('/apply' . (!empty($a['comp_slug']) ? '?competition=' . rawurlencode((string) $a['comp_slug']) : ''))) ?>">
+                      Заново подать заявку
+                    </a>
+                  <?php endif; ?>
                 </div>
               <?php else: ?>
                 <div class="cab-steps">

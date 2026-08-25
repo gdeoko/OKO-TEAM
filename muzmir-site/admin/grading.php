@@ -440,14 +440,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject_edit') {
         try {
             $name  = trim((string) $a['full_name']);
             $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+            // Звать подать заново можно только пока заявки принимают — то же условие,
+            // что и в самом письме об отклонении (core/grade_apply.php).
+            $__cst = (string) (scalar("SELECT status FROM competitions WHERE id=?",
+                                      [(int) ($a['competition_id'] ?? 0)]) ?: '');
+            $canReapply = in_array($__cst, ['open', 'judging'], true)
+                       && (string) setting('intake_closed', '') !== '1';
             $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;line-height:1.3;font-weight:700;color:' . RM_NAVY . ';">Заявка №' . h((string) $a['number']) . ': уточнение причины</h1>'
                 . '<p style="margin:0 0 14px;">' . $hello . '</p>'
                 . '<p style="margin:0 0 18px;">Оргкомитет уточнил основание, по которому Ваша заявка на конкурс «' . h((string) $a['comp']) . '» не была принята к участию. Верной считается формулировка ниже.</p>'
                 . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:14px;">'
                 . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения (пункт положения 1:1)</div>'
                 . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
-                . '<p style="margin:0 0 14px;">Это не отказ навсегда: устраните причину и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации.</p>'
-                . rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($a['comp_slug'] ?? ''))), 'Подать заявку заново');
+                . ($canReapply
+                    ? '<p style="margin:0 0 14px;">Это не отказ навсегда: устраните причину и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации.</p>'
+                    : '')
+                . ($canReapply
+                    ? rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($a['comp_slug'] ?? ''))), 'Подать заявку заново')
+                    : rm_mail_btn(url('/cabinet'), 'Личный кабинет'));
             $html = rm_mail_layout($inner, 'Заявка №' . (string) $a['number'] . ': уточнили причину отклонения.');
             $mailed = mail_queue((string) $a['email'], $name,
                 'Заявка №' . (string) $a['number'] . ' — уточнение причины отклонения', $html) > 0;

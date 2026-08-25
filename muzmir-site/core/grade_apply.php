@@ -256,13 +256,27 @@ function grade_reject_application(int $appId, string $reason, string $source = '
         } catch (\Throwable $e) { $out['refund_error'] = $e->getMessage(); }
     }
 
-    // Письмо участнику: причина, возврат и приглашение подать заново.
+    // Письмо участнику: причина, возврат и — пока идёт приём — приглашение подать заново.
     if (trim((string) $a['email']) !== '' && is_file(BASE_PATH . '/core/result_mail.php')) {
         require_once BASE_PATH . '/core/result_mail.php';
         try {
             $name  = trim((string) $a['full_name']);
             $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
             $comp  = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: ['name' => (string) $a['comp']];
+
+            /* «ПОДАЙТЕ ЗАЯВКУ ЗАНОВО» — ТОЛЬКО ПОКА ЗАЯВКУ ДЕЙСТВИТЕЛЬНО ПРИНИМАЮТ.
+             *
+             * Остаток работ жюри разбирает и после 25-го числа, когда приём уже
+             * закрыт. Письмо звало устранить причину и подать заново, кнопка вела
+             * в форму — а форма отвечала, что приём этого месяца завершён. Человек
+             * получал отказ и следом обещание, выполнить которое нельзя.
+             *
+             * Условие то же, по которому форма решает, принимать ли заявку
+             * (api/v1/apply.php): конкурс в 'open' или 'judging' и общий приём
+             * месяца не закрыт. Закрыт — письмо просто сообщает об отклонении с
+             * причиной и возвратом, без предложения подать снова. */
+            $canReapply = in_array((string) ($comp['status'] ?? ''), ['open', 'judging'], true)
+                       && (string) (function_exists('setting') ? setting('intake_closed', '') : '') !== '1';
             $card  = rm_mail_app_card((array) $a, (array) $comp);
             $extraRows = rm_card_row('Форма исполнения', (string) ($a['formation'] ?? ''))
                        . rm_card_row('Подраздел',        (string) ($a['subgroup'] ?? ''))
@@ -280,16 +294,25 @@ function grade_reject_application(int $appId, string $reason, string $source = '
                 . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:14px;">'
                 . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения (пункт положения 1:1)</div>'
                 . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
-                . '<p style="margin:0 0 14px;">Это не отказ навсегда, пожалуйста, устраните причину отклонения и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации!</p>'
+                . ($canReapply
+                    ? '<p style="margin:0 0 14px;">Это не отказ навсегда, пожалуйста, устраните причину отклонения и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации!</p>'
+                    : '')
                 . ($refunded
                     ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#EAF7EF;border:1px solid #BFE6CC;border-radius:14px;">'
                       . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1E7A44;margin-bottom:6px;">Возврат средств</div>'
                       . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">Оргвзнос <b>' . $out['refunded'] . ' ₽</b> возвращён в полном объёме на ту же карту или способ оплаты. Зачисление обычно занимает до 3 рабочих дней (срок зависит от банка).</div></td></tr></table>'
                     : '<p style="margin:0 0 4px;color:' . RM_MUTED . ';font-size:13px;">Если был внесён оргвзнос, он возвращается в полном объёме (п. 7.6.1 положения).</p>')
-                . rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($comp['slug'] ?? ''))), 'Подать заявку заново');
-            $html = rm_mail_layout($inner, 'Заявка №' . (string) $a['number'] . ': устраните причину и подайте заявку заново — мы с радостью примем её к аттестации.');
+                . ($canReapply
+                    ? rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($comp['slug'] ?? ''))), 'Подать заявку заново')
+                    : rm_mail_btn(url('/cabinet'), 'Личный кабинет'));
+            $html = rm_mail_layout($inner, $canReapply
+                ? 'Заявка №' . (string) $a['number'] . ': устраните причину и подайте заявку заново — мы с радостью примем её к аттестации.'
+                : 'Заявка №' . (string) $a['number'] . ' не принята к участию. Причина — внутри письма.');
             $out['mailed'] = mail_queue((string) $a['email'], $name,
-                'Заявка №' . (string) $a['number'] . ' — устраните причину и подайте заново', $html) > 0;
+                $canReapply
+                    ? 'Заявка №' . (string) $a['number'] . ' — устраните причину и подайте заново'
+                    : 'Заявка №' . (string) $a['number'] . ' не принята к участию',
+                $html) > 0;
         } catch (\Throwable $e) { /* письмо не должно ломать отклонение */ }
     }
 
