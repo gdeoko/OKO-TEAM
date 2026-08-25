@@ -89,7 +89,12 @@ function ALLOWED_PLATFORMS(): array {
     return ['rutube.ru'=>'RuTube','disk.yandex.ru'=>'Яндекс Диск','yadi.sk'=>'Яндекс Диск',
             'drive.google.com'=>'Google Диск','docs.google.com'=>'Google Диск',
             'cloud.mail.ru'=>'Облако Mail.ru',
-            'vk.com'=>'VK Видео','vkvideo.ru'=>'VK Видео','ok.ru'=>'ОК Видео','dzen.ru'=>'Дзен Видео'];
+            // vk.ru — второй домен ВКонтакте, соцсеть сама отдаёт его в «Поделиться».
+            // zen.yandex.ru — прежний адрес Дзена, он же в списке проверки ссылок.
+            // Обоих здесь не было: шаг «Конкурсный номер» отвечал «платформа не в
+            // списке разрешённых» на рабочую ссылку и дальше не пускал.
+            'vk.com'=>'VK Видео','vk.ru'=>'VK Видео','vkvideo.ru'=>'VK Видео',
+            'ok.ru'=>'ОК Видео','dzen.ru'=>'Дзен Видео','zen.yandex.ru'=>'Дзен Видео'];
 }
 function BLOCKED_PLATFORMS(): array {
     return ['youtube.com','youtu.be','instagram.com','facebook.com','fb.watch','tiktok.com'];

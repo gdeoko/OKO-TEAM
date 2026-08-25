@@ -34,7 +34,11 @@ function vf_platform(string $url): string {
     if ($u === '') return '';
     if (str_contains($u, 'disk.yandex') || str_contains($u, 'yadi.sk'))   return 'yandex_disk';
     if (str_contains($u, 'cloud.mail.ru'))                                return 'mailru_cloud';
-    if (str_contains($u, 'vk.com/video') || str_contains($u, 'vkvideo.') || str_contains($u, 'vk.ru/video')) return 'vk';
+    // Клип ВК — та же видеозапись, и жюри её так же скачивает; без 'clip' площадка
+    // определялась как unknown и работа не выгружалась на оценку.
+    if (str_contains($u, 'vk.com/video') || str_contains($u, 'vk.com/clip')
+        || str_contains($u, 'vkvideo.') || str_contains($u, 'vk.ru/video')
+        || str_contains($u, 'vk.ru/clip') || str_contains($u, 'video_ext.php')) return 'vk';
     if (str_contains($u, 'rutube.ru'))                                    return 'rutube';
     if (str_contains($u, 'ok.ru'))                                        return 'ok';
     if (str_contains($u, 'dzen.ru') || str_contains($u, 'zen.yandex'))    return 'dzen';
@@ -190,8 +194,19 @@ function vf_direct_link(string $url): array {
             // получает пустую страницу. Токен сообщества центра такие записи
             // видит, поэтому сперва спрашиваем video.get по идентификатору из
             // ссылки, а разбор страницы оставляем запасным путём.
-            if (preg_match('~video(-?\d+)_(\d+)(?:[?&_]+([A-Za-z0-9]+))?~', $url, $m)) {
-                $vid   = $m[1] . '_' . $m[2] . (isset($m[3]) && $m[3] !== '' ? '_' . $m[3] : '');
+            // Те же четыре вида ссылки, что принимает форма заявки (core/link_check.php):
+            // …/video-123_456, …/video/-123_456, …/clip-123_456 и код встраивания
+            // video_ext.php?oid=…&id=…. Разбирать надо все, иначе работа, принятая
+            // формой, до жюри не доезжает.
+            $vid = '';
+            if (preg_match('~(?:video|clip)/?(-?\d+)_(\d+)(?:[?&_]+([A-Za-z0-9]+))?~', $url, $m)) {
+                $vid = $m[1] . '_' . $m[2] . (isset($m[3]) && $m[3] !== '' ? '_' . $m[3] : '');
+            } elseif (preg_match('~video_ext\.php~i', $url)
+                   && preg_match('~[?&]oid=(-?\d+)~i', $url, $mo)
+                   && preg_match('~[?&]id=(\d+)~i', $url, $mi)) {
+                $vid = $mo[1] . '_' . $mi[1];
+            }
+            if ($vid !== '') {
                 $token = function_exists('cfgv') ? trim((string) cfgv('vk_token', '')) : '';
                 if ($token !== '') {
                     $api = 'https://api.vk.com/method/video.get?videos=' . rawurlencode($vid)

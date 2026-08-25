@@ -125,7 +125,10 @@ if (!function_exists('video_verify')) {
             if ($hostIs($b)) return _lc_bad('', 'Эта платформа не принимается. Разрешены: RuTube, VK, Яндекс.Диск, Google Диск, ОК, Дзен.');
         }
         // Ни одна известная площадка не совпала — дальше не идём и НИКУДА не ходим.
-        $known = ['rutube.ru','vk.com','vkvideo.ru','disk.yandex.ru','disk.yandex.com','yadi.sk',
+        // vk.ru — второй домен ВКонтакте: соцсеть сама отдаёт его в «Поделиться»,
+        // и участник приносит ссылку именно оттуда. В списке его не было, и форма
+        // отвечала «эта платформа не принимается» на обычную ссылку ВК Видео.
+        $known = ['rutube.ru','vk.com','vk.ru','vkvideo.ru','disk.yandex.ru','disk.yandex.com','yadi.sk',
                   'drive.google.com','docs.google.com','cloud.mail.ru','ok.ru','dzen.ru','zen.yandex.ru'];
         $okHost = false;
         foreach ($known as $k) { if ($hostIs($k)) { $okHost = true; break; } }
@@ -149,7 +152,7 @@ if (!function_exists('video_verify')) {
         }
 
         /* ---- VK Видео ---- */
-        if ($hostIs('vk.com') || $hostIs('vkvideo.ru')) {
+        if ($hostIs('vk.com') || $hostIs('vk.ru') || $hostIs('vkvideo.ru')) {
             /* РАБОТА ХУДОЖНИКА — ЭТО ФОТОГРАФИЯ, А НЕ ВИДЕО.
              *
              * Здесь стояло жёсткое требование ссылки вида …/video-123_456, и по
@@ -168,12 +171,27 @@ if (!function_exists('video_verify')) {
             if (preg_match('#/(photo-?\d+_\d+|album-?\d+_\d+)#i', $url)) {
                 return _lc_result('ВКонтакте', null);
             }
-            if (!preg_match('#video(-?\d+_\d+(?:_[a-z0-9]+)?)#i', $url, $m)) {
+            /* ВК РАЗДАЁТ ССЫЛКУ НА ВИДЕО В ЧЕТЫРЁХ РАЗНЫХ ВИДАХ.
+             *
+             * Шаблон принимал только старый: …/video-123_456. Всё остальное, что
+             * соцсеть кладёт человеку в буфер по кнопке «Поделиться», форма
+             * отбивала как «дайте ссылку на саму работу»:
+             *   • vkvideo.ru/video/-123_456  — новый домен ВК Видео, со слэшем;
+             *   • vk.com/clip-123_456        — клип (а работы часто снимают клипом);
+             *   • vk.com/video_ext.php?oid=-123&id=456 — код встраивания плеера;
+             *   • vk.ru/video-123_456        — второй домен соцсети.
+             * Участник видит рабочую ссылку и отказ формы — и уходит. */
+            if (preg_match('#(?:video|clip)/?(-?\d+_\d+(?:_[a-z0-9]+)?)#i', $url, $m)) {
+                $vid = $m[1];
+            } elseif (preg_match('#video_ext\.php#i', $url)
+                   && preg_match('#[?&]oid=(-?\d+)#i', $url, $mo)
+                   && preg_match('#[?&]id=(\d+)#i', $url, $mi)) {
+                $vid = $mo[1] . '_' . $mi[1];
+            } else {
                 return _lc_bad('VK Видео',
-                    'Дайте ссылку на саму работу: видео ВКонтакте (…/video-123_456), фотографию (…/photo123_456) '
-                    . 'или файл на Яндекс.Диске, Google Диске, в Облаке Mail.ru.');
+                    'Дайте ссылку на саму работу: видео ВКонтакте (…/video-123_456), клип (…/clip-123_456), '
+                    . 'фотографию (…/photo123_456) или файл на Яндекс.Диске, Google Диске, в Облаке Mail.ru.');
             }
-            $vid = $m[1];
             // Ключ доступа может стоять и параметром list= — тогда он в адресе отдельно.
             if (!str_contains(substr($vid, 4), '_') && preg_match('#[?&]list=([a-z0-9]+)#i', $url, $lm)) {
                 $vid .= '_' . $lm[1];
