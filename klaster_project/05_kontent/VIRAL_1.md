@@ -545,7 +545,7 @@
 
 Источники: https://krt.mos.ru/ ; https://abnews.ru/center/news/msk/2026/8/13/moskva-zaklyuchila-rekordnye-63-dogovora-krt-za-sem-mesyaczev ; https://www.m24.ru/news/14082026/930833 ; доля промзон https://incrussia.ru/share/redevelopment-promzon/
 
-Визуал: 9:16 · три кадра, первый вид сверху на промышленный квартал, второй бренд-фон под опрос, третий инфографика с тремя числами · промпт `P-213-krt-cifry-stories`
+Визуал: 9:16 · генерация · 3 кадров 1080x1920, безопасные поля 250 сверху и снизу, 80 по бокам, надпись внутри кадра, место под стикер оставлено чистым · промпт `P-S-cto-proishodit-s-promzonami-moskvy`
 
 ---
 
@@ -569,7 +569,7 @@
 
 Источники: https://www.zollverein.de/app/uploads/2018/02/Zollverein-UNESCO-World_Heritage-Site.pdf ; https://www.route-industriekultur.ruhr/en/ankerpunkte/unesco-welterbe-zollverein/ ; https://www.oma.com/projects/zollverein-masterplan
 
-Визуал: 9:16 · три кадра, архивный кадр работающей шахты, надшахтный копёр сегодня, поток посетителей на площадке · подписи годов крупно в кадре · промпт `P-214-zollverein-stories`
+Визуал: 9:16 · генерация · 4 кадров 1080x1920, безопасные поля 250 сверху и снизу, 80 по бокам, надпись внутри кадра, место под стикер оставлено чистым · промпт `P-S-sahta-kotoraa-zakrylas-v-1986-godu`
 
 ---
 
