@@ -108,6 +108,49 @@ function afisha_img(string $rel): string {
 }
 
 /**
+ * ФОН ПОД РАЗМЕР АФИШИ, А НЕ КАК ПРИСЛАЛИ.
+ *
+ * Нейросеть отдаёт PNG на два с половиной мегабайта. Он уходит в страницу
+ * строкой base64, браузер бастиона его разбирает, и снимок не успевает
+ * сделаться за тридцать секунд — афиша не собирается вовсе. Приводим фон к
+ * размеру полотна и кладём рядом лёгкой копией: страница получает вместо
+ * двух мегабайт около двухсот килобайт, и снимок укладывается в секунды.
+ *
+ * Готовая копия переиспользуется, пока исходник не изменился.
+ */
+function afisha_bg_fit(string $rel): string {
+    $src = BASE_PATH . '/public/' . ltrim($rel, '/');
+    if (!is_file($src) || !function_exists('imagecreatetruecolor')) return $rel;
+
+    $dst = preg_replace('~\.(png|jpe?g|webp)$~i', '', $src) . '_fit.jpg';
+    $relFit = preg_replace('~\.(png|jpe?g|webp)$~i', '', $rel) . '_fit.jpg';
+    if (is_file($dst) && filemtime($dst) >= filemtime($src)) return $relFit;
+
+    $info = @getimagesize($src);
+    if (!$info) return $rel;
+    $im = match ($info[2]) {
+        IMAGETYPE_PNG  => @imagecreatefrompng($src),
+        IMAGETYPE_JPEG => @imagecreatefromjpeg($src),
+        IMAGETYPE_WEBP => @imagecreatefromwebp($src),
+        default        => null,
+    };
+    if (!$im) return $rel;
+
+    $sw = imagesx($im); $sh = imagesy($im);
+    $out = imagecreatetruecolor(AFISHA_W, AFISHA_H);
+    // Кадрируем по короткой стороне (cover): растянуть фон под другую пропорцию
+    // значит перекосить колонны и орнамент, а это сразу видно.
+    $scale = max(AFISHA_W / $sw, AFISHA_H / $sh);
+    $nw = (int) round($sw * $scale); $nh = (int) round($sh * $scale);
+    imagecopyresampled($out, $im, (int) round((AFISHA_W - $nw) / 2), (int) round((AFISHA_H - $nh) / 2),
+                       0, 0, $nw, $nh, $sw, $sh);
+    imagejpeg($out, $dst, 88);
+    imagedestroy($im); imagedestroy($out);
+    @chmod($dst, 0664);
+    return is_file($dst) ? $relFit : $rel;
+}
+
+/**
  * Гербы информационных партнёров — тот же набор и в том же порядке, что на
  * утверждённых образцах. Отсутствующий файл просто пропускается: лучше шесть
  * гербов вместо семи, чем пустой квадрат с крестиком на официальной афише.
@@ -157,10 +200,19 @@ function afisha_html(array $c, array $opt = []): string {
 
     // Фон: сгенерированная картинка, если её положили, иначе градиент темы.
     $bgRel = trim((string) ($opt['bg'] ?? ($c['afisha_bg'] ?? '')));
-    $bgImg = $bgRel !== '' ? afisha_img($bgRel) : '';
+    $bgImg = $bgRel !== '' ? afisha_img(afisha_bg_fit($bgRel)) : '';
     $bgCss = $bgImg !== ''
         ? "background-image:linear-gradient(180deg,rgba(0,0,0,.30),rgba(0,0,0,.55)),url('" . $bgImg . "');background-size:cover;background-position:center"
         : 'background-image:' . $t['bg'];
+
+    /* Подложка под текст зависит от того, светлая тема или тёмная: на светлой
+     * читается белая полупрозрачная, на тёмной — чёрная. Определяем по яркости
+     * цвета текста темы: светлый текст значит тёмный фон. */
+    $ink  = ltrim((string) $t['ink'], '#');
+    $lum  = (hexdec(substr($ink, 0, 2)) * 299 + hexdec(substr($ink, 2, 2)) * 587 + hexdec(substr($ink, 4, 2)) * 114) / 1000;
+    $dark = $lum > 140;   // светлые буквы → тёмная тема
+    $plateBg   = $dark ? 'rgba(6,8,16,.72)'  : 'rgba(255,252,244,.80)';
+    $plateSoft = $dark ? 'rgba(6,8,16,.50)'  : 'rgba(255,252,244,.58)';
 
     // Длинное название ужимаем, чтобы не переносилось в две строки и не ломало сетку.
     $len  = mb_strlen($name);
@@ -188,7 +240,14 @@ function afisha_html(array $c, array $opt = []): string {
          box-shadow:inset 0 0 0 5px rgba(255,255,255,.06), inset 0 0 0 7px ' . $t['line'] . ';
          padding:16px 40px 12px;
          display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center}
-  .law{font-size:11px;line-height:1.34;opacity:.85;max-width:1400px;letter-spacing:.1px}
+  /* Юридическая шапка и подвал ложатся на самые узорные полосы фона: у античной
+     темы это золотой меандр, у остальных — рамка орнамента. Без подложки мелкий
+     текст про Роскомнадзор растворяется в узоре и не читается вовсе, а это
+     ровно та строка, ради которой афишу принимают в учреждении. Подложка
+     подстроена под тему: на светлых фонах белая, на тёмных — чёрная. */
+  .law{font-size:11px;line-height:1.34;max-width:1440px;letter-spacing:.1px;
+       background:' . $plateBg . ';color:' . $t['ink'] . ';padding:7px 20px;border-radius:5px;
+       border:1px solid ' . $t['line'] . '}
   .brand{display:flex;align-items:center;gap:16px}
   .brand img{width:74px;height:74px;object-fit:contain}
   .brand b{font-size:26px;letter-spacing:.4px}
@@ -206,8 +265,11 @@ function afisha_html(array $c, array $opt = []): string {
      пропорций, и без оправы ряд выглядит как случайная россыпь картинок. */
   .em{width:78px;height:78px;border-radius:50%;object-fit:contain;padding:8px;background:rgba(255,255,255,.86);
       border:2px solid ' . $t['line'] . ';box-shadow:0 3px 9px rgba(0,0,0,.32)}
-  .foot{font-size:15.5px;letter-spacing:.4px;border-top:1px solid ' . $t['line'] . ';
-        padding-top:8px;width:100%;color:' . $t['sub'] . '}
+  .foot{font-size:15.5px;letter-spacing:.4px;padding:7px 24px;border-radius:5px;
+        background:' . $plateBg . ';border:1px solid ' . $t['line'] . ';color:' . $t['ink'] . '}
+  /* Средний блок тоже на подложке: название и сроки читаются поверх любого фона,
+     включая тёмные генерации с яркими бликами по центру. */
+  .mid{background:' . $plateSoft . ';border-radius:10px;padding:10px 40px 14px}
 </style></head><body><div class="frame">
   <div class="law">
     Зарегистрирован в официальном российском федеральном органе исполнительной власти Роскомнадзор от 24.06.2025 №094084.
@@ -220,13 +282,11 @@ function afisha_html(array $c, array $opt = []): string {
   </div>
   <div class="support">При информационной поддержке Министерства культуры и образования субъектов
     Российской Федерации и государственного портала «Pro Культура»</div>
-  <div>
+  <div class="mid">
     <div class="kind">' . $h($kind) . '</div>
     <div class="name">' . $h($name) . '</div>
-  </div>
-  <div>
-    <div class="terms">' . $h(afisha_terms($c)) . '</div>
-    ' . ($srok !== '' ? '<div class="srok" style="margin-top:10px">' . $h($srok) . '</div>' : '') . '
+    <div style="margin-top:12px"><div class="terms">' . $h(afisha_terms($c)) . '</div></div>
+    ' . ($srok !== '' ? '<div class="srok" style="margin-top:11px">' . $h($srok) . '</div>' : '') . '
     <div class="adv">Компетентное жюри • Квалифицированная оценка • Денежные премии</div>
   </div>
   <div class="ems">' . $emblemHtml . '</div>
