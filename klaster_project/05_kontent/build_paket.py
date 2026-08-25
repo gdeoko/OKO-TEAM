@@ -10,7 +10,11 @@
 import re, sys, os, base64, html
 from datetime import date
 
-MD = os.path.join(os.path.dirname(__file__), "НЕДЕЛЯ_1_ГОТОВО.md")
+ПАПКА = os.path.dirname(os.path.abspath(__file__))
+ФАЙЛЫ = [("Неделя 1", "НЕДЕЛЯ_1_ЧИСТОВИК.md"),
+         ("Неделя 2", "НЕДЕЛЯ_2.md"),
+         ("Неделя 3", "НЕДЕЛЯ_3.md"),
+         ("Неделя 4", "НЕДЕЛЯ_4.md")]
 VIS = sys.argv[1] if len(sys.argv) > 1 else ""
 
 # старая дата -> новая: неделя едет на 25.08 (вт) - 31.08 (пн)
@@ -50,8 +54,8 @@ def картинка(промпт_id):
     return None
 
 
-def разобрать():
-    src = open(MD, encoding="utf-8").read()
+def разобрать_файл(путь):
+    src = open(путь, encoding="utf-8").read()
     части = re.split(r"\n# (\d{2}\.\d{2} [А-Я]{2})\n", src)
     дни = []
     for i in range(1, len(части) - 1, 2):
@@ -83,6 +87,17 @@ def разобрать():
     return дни
 
 
+def разобрать():
+    все = []
+    for имя, файл in ФАЙЛЫ:
+        п = os.path.join(ПАПКА, файл)
+        if not os.path.exists(п):
+            continue
+        for метка, единицы in разобрать_файл(п):
+            все.append((имя, метка, единицы))
+    return все
+
+
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
 body{font:16px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -94,6 +109,8 @@ h1{font-size:26px;letter-spacing:-.5px;line-height:1.2}
 .svodka{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 34px}
 .chip{background:#fff;border:1px solid #e3e3df;border-radius:8px;padding:10px 14px;font-size:14px}
 .chip b{display:block;font-size:20px;color:#1c1c1e;margin-bottom:2px}
+.ned{font-size:15px;letter-spacing:1.6px;text-transform:uppercase;color:#8a8a8f;
+ margin:46px 0 -8px;padding-bottom:6px;border-bottom:2px solid #1c1c1e}
 .den{margin-top:34px}
 .den-h{display:flex;align-items:baseline;gap:10px;padding-bottom:8px;
  border-bottom:1px solid #d9d9d4;margin-bottom:18px}
@@ -129,25 +146,29 @@ figcaption{font-size:13px;color:#6b6b70;margin-top:7px}
 
 def сборка():
     дни = разобрать()
-    всего = sum(len(e) for _, e in дни)
-    сгенерено = sum(1 for _, e in дни for u in e if u["промпт"] and картинка(u["промпт"]))
-    нужно = sum(1 for _, e in дни for u in e if u["промпт"])
+    всего = sum(len(e) for _, _, e in дни)
+    сгенерено = sum(1 for _, _, e in дни for u in e if u["промпт"] and картинка(u["промпт"]))
+    нужно = sum(1 for _, _, e in дни for u in e if u["промпт"])
 
     o = ['<!doctype html><html lang="ru"><meta charset="utf-8">',
          '<meta name="viewport" content="width=device-width,initial-scale=1">',
          '<title>Кластер: контент на согласование</title>',
          f'<style>{CSS}</style><div class="wrap">',
-         '<header><h1>Контент первой недели на согласование</h1>',
+         '<header><h1>Контент на месяц, на согласование</h1>',
          '<div class="sub">Бизнес-парк «Кластер» · подготовила команда OKO<br>'
          'Публикуем после вашего подтверждения. Правки принимаем по любому пункту.</div></header>',
          '<div class="svodka">',
          f'<div class="chip"><b>{всего}</b>публикаций</div>',
          '<div class="chip"><b>6</b>площадок</div>',
-         '<div class="chip"><b>7</b>дней</div>',
+         '<div class="chip"><b>4</b>недели</div>',
          f'<div class="chip"><b>{сгенерено}/{нужно}</b>визуалов готово</div>',
          '</div>']
 
-    for метка, единицы in дни:
+    текущая_неделя = None
+    for неделя, метка, единицы in дни:
+        if неделя != текущая_неделя:
+            текущая_неделя = неделя
+            o.append(f'<h2 class="ned">{html.escape(неделя)}</h2>')
         новая, днед = СДВИГ.get(метка, (метка, ""))
         o.append(f'<section class="den"><div class="den-h"><span class="d">{новая}</span>'
                  f'<span class="w">{днед}</span></div>')

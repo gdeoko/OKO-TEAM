@@ -1,7 +1,7 @@
 """Проверка страницы пакета контента на семи ширинах."""
 from playwright.sync_api import sync_playwright
 
-URL = "file:///tmp/claude-0/-home-user-OKO-TEAM/aabccee1-6871-549d-b7a8-30daf94f16b4/scratchpad/paket.html"
+URL = "file:///tmp/claude-0/-home-user-OKO-TEAM/aabccee1-6871-549d-b7a8-30daf94f16b4/scratchpad/paket_mesyac.html"
 ШИРИНЫ = [(1920, 1080, "desktop-1920"), (1440, 900, "desktop-1440"),
           (1180, 820, "tablet-1180"), (834, 1112, "tablet-834"),
           (430, 932, "iphone-430"), (390, 844, "iphone-390"), (360, 800, "android-360")]
@@ -44,14 +44,6 @@ with sync_playwright() as p:
             print("        ", торчат)
         if вылет > 0 or битых or логи:
             ошибки.append(имя)
-        pg.close()
-
-    # полная страница на десктопе и мобиле
-    for w, h, имя in [(1440, 900, "full-desktop"), (390, 844, "full-mobile")]:
-        pg = b.new_page(viewport={"width": w, "height": h})
-        pg.goto(URL); pg.wait_for_load_state("networkidle")
-        pg.screenshot(path=f"/tmp/claude-0/-home-user-OKO-TEAM/aabccee1-6871-549d-b7a8-30daf94f16b4/scratchpad/pk_{имя}.png",
-                      full_page=True)
         pg.close()
 
     b.close()
