@@ -833,7 +833,10 @@ function ag_grade_application(int $appId, array $opt = []): array {
             $title = $levels[$capIdx];
             $ceil  = function_exists('gr_score_floor') ? gr_score_floor('ДИПЛОМАНТ II СТЕПЕНИ') : 70.0;
             $total = min($total, max(0.0, $ceil + 4.9));   // верх дипломанта I
-            $capped[] = 'фонограмма: звание снижено до дипломанта (п. 8.7 положения)';
+            // Формулировка общая (core/presets.php): у автоматической аттестации
+            // и у жюри причина снижения записана одними и теми же словами.
+            if (!defined('PHONOGRAM_NOTE')) require_once BASE_PATH . '/core/presets.php';
+            $capped[] = PHONOGRAM_NOTE;
         }
     }
 
