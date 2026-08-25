@@ -410,12 +410,26 @@ $appR = $__rejId ? one("SELECT a.*, c.slug comp_slug FROM applications a
 if ($appR) {
     $rid = (int) $appR['id'];
     q("UPDATE applications SET status='new', reject_reason='', is_paid=1 WHERE id=?", [$rid]);
-    q("DELETE FROM mail_queue WHERE subject LIKE '%устраните причину и подайте%'");
+    // Чистим очередь ТОЛЬКО от писем актёра проверки (@example.test).
+    //
+    // Раньше здесь стояло `DELETE ... WHERE subject LIKE '%устраните причину и
+    // подайте%'` — без адреса. Каждый прогон аудита стирал из очереди письма об
+    // отклонении ВСЕХ живых участников. Само письмо к тому моменту уже ушло, но
+    // след пропадал, и по базе выходило, что человеку ничего не отправляли:
+    // так заявка VR-2026-00107 (Юрченко Диана) две недели числилась «отклонена
+    // и не уведомлена», хотя письмо она получила 16.08.
+    q("DELETE FROM mail_queue WHERE subject LIKE '%устраните причину и подайте%'
+         AND LOWER(to_email) LIKE '%@example.test'");
     $tokR = tok($AJAR, '/admin/?p=grading&id=' . $rid);
     $reason = 'Ссылка не на разрешённый интернет-ресурс. Принимаются только: RuTube, Google Диск, Яндекс Диск, ОК видео, ВК видео, Дзен видео (п. 8.8 положения).';
     http($AJAR, $BASE . '/admin/?p=grading', ['_csrf' => $tokR, 'csrf' => $tokR,
         'do' => 'reject', 'id' => (string) $rid, 'reject_reason' => $reason]);
-    $mail = one("SELECT to_email, subject, body FROM mail_queue WHERE subject LIKE '%устраните причину и подайте%' ORDER BY id DESC LIMIT 1");
+    // Ищем письмо СВОЕГО актёра, а не последнее подходящее в очереди: иначе
+    // проверка разглядывала бы письмо живого участника и говорила «всё хорошо»
+    // даже тогда, когда собственное письмо не собралось.
+    $mail = one("SELECT to_email, subject, body FROM mail_queue
+                  WHERE subject LIKE '%устраните причину и подайте%' AND LOWER(to_email)=?
+                  ORDER BY id DESC LIMIT 1", [mb_strtolower((string) $__rejUser['email'])]);
     chk('письмо об отклонении поставлено в очередь', $mail !== null);
     if ($mail) {
         $b = (string) $mail['body'];

@@ -304,24 +304,71 @@ function dops_diplomas_cancel(int $appId): array {
 /* ======================= ПИСЬМО О ПРИЁМЕ ЗАЯВКИ ======================= */
 
 /**
+ * Ищет в журнале почты след письма «Заявка №<номер> принята».
+ *
+ * ОЧЕРЕДЬ — НЕ АРХИВ. Строку из mail_queue могут удалить (чистка проверочных
+ * писем, ручная уборка), и тогда по базе выходит, что письма не было, хотя оно
+ * ушло. Журнал data/logs/mail.log не ротируется и хранит факт отправки — он и
+ * есть последняя инстанция, когда в очереди пусто.
+ *
+ * Возвращает ['state'=>'sent'|'failed'|'none', 'at'=>'Y-m-d H:i:s'].
+ */
+function dops_confirm_log_trace(string $number): array {
+    $out = ['state' => 'none', 'at' => ''];
+    $file = BASE_PATH . '/data/logs/mail.log';
+    if ($number === '' || !is_readable($file)) return $out;
+    // Разрастись журнал сверх разумного — читать его на каждой карточке нельзя.
+    $size = (int) @filesize($file);
+    if ($size <= 0 || $size > 300 * 1024 * 1024) return $out;
+
+    $needle = '№' . $number . ' принята';
+    $fh = @fopen($file, 'r');
+    if (!$fh) return $out;
+    while (($ln = fgets($fh)) !== false) {
+        if (strpos($ln, $needle) === false) continue;
+        $isSent = (bool) preg_match('/\]\s+SENT(\([^)]*\))? to /u', $ln);
+        $isFail = !$isSent && (bool) preg_match('/\]\s+FAIL to /u', $ln);
+        if (!$isSent && !$isFail) continue;              // строки-примечания пропускаем
+        if ($out['state'] === 'sent' && $isFail) continue; // успех важнее позднего отказа
+        $out['state'] = $isSent ? 'sent' : 'failed';
+        if (preg_match('/^\[([\d\-: ]{19})\]/', $ln, $m)) $out['at'] = $m[1];
+    }
+    fclose($fh);
+    return $out;
+}
+
+/**
  * Состояние письма «Заявка принята» по заявке: было ли оно вообще.
  *
  * Отдельного поля в applications под это письмо нет — оно уходит один раз при
- * подаче и нигде не отмечается. Единственный след — строка в очереди почты,
- * по ней и смотрим: тема письма всегда начинается с «Заявка №<номер> принята».
+ * подаче и нигде не отмечается. Смотрим два следа: строку в очереди почты (тема
+ * всегда начинается с «Заявка №<номер> принята») и, если очередь пуста, журнал
+ * отправок. Без журнала админка врёт: у заявки VR-2026-00107 строку очереди
+ * подчистил аудиторский скрипт, и карточка показывала бы «письма не было»
+ * участнице, которая его получила.
  *
- * Возвращает ['state'=>'sent'|'queued'|'failed'|'none', 'at'=>'дата', 'tries'=>int].
+ * Возвращает ['state'=>'sent'|'queued'|'failed'|'none', 'at'=>'дата',
+ *             'tries'=>int, 'from_log'=>bool].
  */
 function dops_confirmation_state(int $appId): array {
     $a = one("SELECT number, email FROM applications WHERE id=?", [$appId]);
-    $out = ['state' => 'none', 'at' => '', 'tries' => 0];
+    $out = ['state' => 'none', 'at' => '', 'tries' => 0, 'from_log' => false];
     if (!$a || trim((string) $a['email']) === '') return $out;
 
     $rows = all("SELECT status, created_at, sent_at FROM mail_queue
                   WHERE LOWER(to_email)=LOWER(?) AND subject LIKE ?
                   ORDER BY id DESC",
                 [trim((string) $a['email']), 'Заявка №' . (string) $a['number'] . ' принята%']);
-    if (!$rows) return $out;
+    if (!$rows) {
+        $log = dops_confirm_log_trace((string) $a['number']);
+        if ($log['state'] !== 'none') {
+            $out['state']    = $log['state'];
+            $out['at']       = $log['at'];
+            $out['tries']    = 1;
+            $out['from_log'] = true;
+        }
+        return $out;
+    }
 
     $out['tries'] = count($rows);
     $top = $rows[0];

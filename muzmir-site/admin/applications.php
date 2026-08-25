@@ -348,7 +348,9 @@ if ($id = (int) input('id')) {
             <?php else: ?>
               <span class="badge badge--rejected">Не отправлялось</span>
             <?php endif; ?>
-            <?php if ($cst['tries'] > 1): ?>
+            <?php if ($cst['from_log']): ?>
+              <span class="muted">· по журналу почты</span>
+            <?php elseif ($cst['tries'] > 1): ?>
               <span class="muted">· попыток: <?= (int) $cst['tries'] ?></span>
             <?php endif; ?>
           </div>
