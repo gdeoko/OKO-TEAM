@@ -58,13 +58,33 @@ function mm_attachments(array $free): array {
         $slug = (string) ($c['slug'] ?? '');
         if ($slug === '') continue;
 
+        /* В ВЕДОМСТВО УХОДИТ ТОЛЬКО УТВЕРЖДЁННОЕ ПОЛОЖЕНИЕ.
+         *
+         * Здесь при отсутствии готового файла вызывался старый рисованный
+         * генератор pdf_regulation() — тот самый, от которого отказались из-за
+         * наложений текста и гербов. Он не просто выглядит иначе: он пишет
+         * своё содержание. Например, «Педагоги и концертмейстеры отмечаются
+         * благодарственными письмами» — обещание бесплатных благодарностей,
+         * которого в утверждённом положении нет и быть не может, потому что
+         * благодарности платные. Такой документ уходил в министерства и отделы
+         * культуры за подписью центра.
+         *
+         * Собираем нормальный PDF из эталона. Не вышло — прикладываем DOCX,
+         * он тоже утверждённый. Ничего не вышло — идём без вложения: лучше
+         * письмо без положения, чем письмо с выдуманным положением. */
         $pdf = BASE_PATH . '/public/uploads/regulations/' . $slug . '.pdf';
         if (!is_file($pdf)) {
-            if (!function_exists('pdf_regulation') && is_file(BASE_PATH . '/core/pdf_regulation.php')) {
-                require_once BASE_PATH . '/core/pdf_regulation.php';
+            $pdf = '';
+            try {
+                require_once BASE_PATH . '/core/regulation_pdf.php';
+                $made = regulation_pdf($c);
+                if (is_file($made)) $pdf = $made;
+            } catch (\Throwable $e) {
+                error_log('ministry_mailing: положение не собралось для ' . $slug . ' — ' . $e->getMessage());
             }
-            if (function_exists('pdf_regulation')) {
-                try { $pdf = pdf_regulation($c); } catch (\Throwable $e) { $pdf = ''; }
+            if ($pdf === '') {
+                $docx = BASE_PATH . '/public/uploads/regulations/' . $slug . '.docx';
+                if (is_file($docx)) $pdf = $docx;
             }
         }
         if ($pdf !== '' && is_file($pdf)) $out[] = $pdf;
