@@ -104,7 +104,9 @@ ob_start(); ?>
 <section class="section">
   <div class="container">
     <div class="section-head reveal" style="margin-bottom:14px">
-      <p class="eyebrow eyebrow--script">Приём открыт</p>
+      <?php /* Подпись не должна обещать приём, когда он закрыт: после 25-го числа
+               «Приём открыт» над пустым списком читается как обман. */ ?>
+      <p class="eyebrow eyebrow--script"><?= $comps ? 'Приём открыт' : 'Приём закрыт' ?></p>
       <h2>Действующие конкурсы</h2>
     </div>
     <?php if ($comps): ?>
@@ -165,7 +167,31 @@ ob_start(); ?>
       <?php endforeach; ?>
     </div>
     <?php else: ?>
-      <p class="reveal" style="text-align:center;color:var(--muted)">Сейчас идёт подготовка новых конкурсов. Подпишитесь ниже - и узнаете первыми.</p>
+      <?php
+      /* ЗАКРЫТЫЙ ПРИЁМ ОБЪЯСНЯЕТСЯ И НА ГЛАВНОЙ.
+         После 25-го числа список действующих конкурсов пустеет, и здесь стояло
+         общее «идёт подготовка» — человек не понимал, вернуться ли ему и когда,
+         и не знал, что награды по прошедшим конкурсам всё ещё заказываются.
+         Дату открытия ставит закрытие приёма (launch_close_intake), она же
+         показана в афише и в форме заявки — везде одна. */
+      $__intakeClosed = (string) setting('intake_closed', '') === '1';
+      $__reopen       = (string) setting('intake_reopen_date', '');
+      $__reopenTxt    = $__reopen !== '' ? ru_date($__reopen) : '1-го числа следующего месяца';
+      ?>
+      <?php if ($__intakeClosed): ?>
+        <div class="card reveal" style="max-width:620px;margin:0 auto;text-align:center">
+          <h3 style="margin:0 0 10px">Приём заявок этого месяца завершён</h3>
+          <p style="color:var(--muted);margin:0">Новые конкурсы откроются <b><?= h($__reopenTxt) ?></b>.
+            Наградной материал по прошедшим конкурсам заказывается в разделе
+            <a href="<?= url('/awards') ?>">«Награды»</a> ещё два месяца после закрытия приёма.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <a class="btn btn--primary" href="<?= url('/awards') ?>">Заказать награды</a>
+            <a class="btn btn--ghost" href="<?= url('/competitions') ?>">Афиша конкурсов</a>
+          </div>
+        </div>
+      <?php else: ?>
+        <p class="reveal" style="text-align:center;color:var(--muted)">Сейчас идёт подготовка новых конкурсов. Подпишитесь ниже - и узнаете первыми.</p>
+      <?php endif; ?>
     <?php endif; ?>
     <div style="text-align:center;margin-top:36px"><a class="btn btn--primary" href="<?= url('/competitions') ?>">Все конкурсы</a></div>
   </div>
