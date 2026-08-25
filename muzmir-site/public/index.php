@@ -453,6 +453,33 @@ if (preg_match('#^/letter-render/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
     exit;
 }
 
+/* Приватный рендер афиши конкурса — бастион снимает с этой страницы картинку.
+ *
+ * Ключ тот же, что у диплома: страница служебная, в поиске ей делать нечего, а
+ * заводить второй секрет ради того же самого бастиона — лишняя сущность,
+ * которую однажды забудут обновить. */
+if (preg_match('#^/afisha-render/(\d+)$#', $route, $m)) {
+    $key  = (string) ($_GET['key'] ?? '');
+    $good = (string) setting('diploma_render_key', '');
+    $c    = one("SELECT * FROM competitions WHERE id=?", [(int) $m[1]]);
+    if (!$c || $good === '' || $key === '' || !hash_equals($good, $key)) {
+        http_response_code(404); echo 'Не найдено'; exit;
+    }
+    require_once BASE_PATH . '/core/afisha_html.php';
+    $opt = [];
+    $bg = trim((string) ($_GET['bg'] ?? ''));
+    // Путь к фону приходит из админки и от сборщика. Пускаем только внутрь
+    // каталога загрузок: иначе параметром можно было бы затащить в афишу любой
+    // файл сервера, включая чужой диплом или бланк.
+    if ($bg !== '' && preg_match('~^uploads/[a-z0-9/_.-]+\.(jpe?g|png|webp)$~i', $bg) && !str_contains($bg, '..')) {
+        $opt['bg'] = $bg;
+    }
+    header('Content-Type: text/html; charset=utf-8');
+    header('X-Robots-Tag: noindex, nofollow');
+    echo afisha_html($c, $opt);
+    exit;
+}
+
 // Приватный рендер боевого диплома для PDF-печати бастионом (ключ в settings).
 if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     $key  = (string)($_GET['key'] ?? '');
