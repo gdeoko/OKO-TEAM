@@ -7003,6 +7003,9 @@ g.RC_FLIGHT = {
      проверяет, что рама вообще попала в кадр. Стоит за признаком в
      адресе, как и остальные служебные ходы. */
   _cam: function () { return DBG && W3 ? W3.cam : null; },
+  /* Прыжок в другой рукав по вызову: без него приёмка не могла снять
+     переход покадрово - до кнопки прыжка надо пройти половину игры. */
+  _jump: function (n) { if (DBG) jumpUniverse(n); },
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);
