@@ -504,7 +504,10 @@ function buildUI() {
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
           '</button>' +
           '<b class="rcf-dos-h"></b>' +
-          '<canvas class="rcf-dos-map" width="640" height="320"></canvas>' +
+          '<div class="rcf-dos-wrap">' +
+            '<video class="rcf-dos-vid" muted playsinline loop preload="none"></video>' +
+            '<canvas class="rcf-dos-map" width="640" height="320"></canvas>' +
+          '</div>' +
           '<p class="rcf-dos-p"></p>' +
           '<div class="rcf-dos-facts"></div>' +
         '</div>' +
@@ -715,6 +718,7 @@ function buildUI() {
   ui.dos = w.querySelector(".rcf-dos");
   ui.dosH = w.querySelector(".rcf-dos-h");
   ui.dosMap = w.querySelector(".rcf-dos-map");
+  ui.dosVid = w.querySelector(".rcf-dos-vid");
   ui.dosP = w.querySelector(".rcf-dos-p");
   ui.dosF = w.querySelector(".rcf-dos-facts");
   w.querySelector(".rcf-dos-x").addEventListener("click", function () { dosClose(); });
@@ -916,6 +920,8 @@ function solarScience(name) {
 function dosClose() {
   if (!ui.dos) return;
   ui.dos.classList.remove("on");
+  dosStop();
+  if (ui.dosVid) { try { ui.dosVid.pause(); } catch (eV3) {} }
   modalMark();
   dosName = "";
   if (dosT) { clearTimeout(dosT); dosT = 0; }
@@ -926,16 +932,60 @@ function dosClose() {
    тот же canvas, которым они покрашены в мире, поэтому досье и
    объект не могут разойтись. Если карты нет (звезда, галактика),
    рисуем спектральную полосу - и это честно: снимать с них нечего. */
-function dosPaint(obj, name) {
+/* ── Живая порода тела ───────────────────────────────────────
+   Заказчик описал это дословно: кусок породы планеты висит в
+   воздухе, и он оживлён видео. Так и сделано: кадр рисует кабинет
+   (фотореальный обломок коры с настоящей стратиграфией на срезе),
+   Runway его оживляет, ffmpeg складывает маятник вперёд-назад -
+   получается бесшовная петля из пяти секунд без единого стыка.
+
+   Ролик лежит под холстом досье, а холст рисует поверх него только
+   приборную обвязку: сетку координат, отметки узлов, луч сканера и
+   уголки рамки. Поэтому это не «видео вместо карты», а показания
+   прибора по живому образцу.
+
+   Развёртка остаётся запасным путём: у тела без ролика холст
+   по-прежнему рисует её карту и крутит по долготе. */
+var ПОРОДА = {};
+(function () {
+  var п = { "МАРС": "mars", "MARS": "mars" };
+  for (var k in п) if (п.hasOwnProperty(k)) ПОРОДА[k] = п[k];
+})();
+
+function породаДля(name) {
+  var n = String(name || "").toUpperCase().split(" ")[0].replace(/[^A-ZА-ЯЁ]/g, "");
+  return ПОРОДА[n] || null;
+}
+
+function dosPaint(obj, name, фаза) {
   var cv = ui.dosMap;
   if (!cv) return;
   var x = cv.getContext("2d"), W = cv.width, H = cv.height, i;
+  фаза = фаза || 0;
   x.clearRect(0, 0, W, H);
+  /* Есть ролик породы - карту тела не рисуем вовсе: под холстом
+     идёт видео, и закрашивать его нечем. */
+  var сВидео = !!(ui.dosVid && ui.dosVid.dataset && ui.dosVid.dataset.on === "1");
   var map = obj && obj.material && obj.material.map;
   var img = map && map.image;
-  var drew = false;
-  if (img && (img.width || img.naturalWidth)) {
-    try { x.drawImage(img, 0, 0, W, H); drew = true; } catch (e) {}
+  var drew = сВидео;
+  if (!сВидео && img && (img.width || img.naturalWidth)) {
+    try {
+      /* Развёртка ЕДЕТ: тело поворачивается под сканером.
+
+         Заказчик сказал про эту карту коротко: «поверхность картинкой,
+         нужно зацикленное видео». Видеофайлом это не решается - тел в
+         игре за полсотни, и на каждое пришлось бы качать ролик. Но
+         развёртка по долготе замкнута сама на себя: правый её край
+         продолжается левым. Значит достаточно рисовать её дважды со
+         сдвигом, и получается честная бесконечная петля без единого
+         байта загрузки. И она всегда совпадает с самим телом, потому
+         что берётся с его же карты. */
+      var сдв = (фаза % 1) * W;
+      x.drawImage(img, -сдв, 0, W, H);
+      x.drawImage(img, W - сдв, 0, W, H);
+      drew = true;
+    } catch (e) {}
   }
   if (!drew) {
     var gr = x.createLinearGradient(0, 0, W, H);
@@ -948,7 +998,10 @@ function dosPaint(obj, name) {
       x.fillRect(Math.random() * W, Math.random() * H, 1.4, 1.4);
     }
   }
-  /* Голограмма, а не фотография: карта уходит в циан и развёртку */
+  /* Голограмма, а не фотография: карта уходит в циан и развёртку.
+     Поверх видео тон не кладём - порода должна остаться породой. */
+  if (сВидео) { x.globalCompositeOperation = "source-over"; }
+  else {
   x.globalCompositeOperation = "multiply";
   x.fillStyle = "rgba(120,200,240,.85)";
   x.fillRect(0, 0, W, H);
@@ -956,6 +1009,7 @@ function dosPaint(obj, name) {
   x.fillStyle = "rgba(20,70,110,.5)";
   x.fillRect(0, 0, W, H);
   x.globalCompositeOperation = "source-over";
+  }
 
   /* Сетка координат */
   x.strokeStyle = "rgba(159,224,246,.28)";
@@ -967,19 +1021,34 @@ function dosPaint(obj, name) {
     x.beginPath(); x.moveTo(0, H * i / 4); x.lineTo(W, H * i / 4); x.stroke();
   }
   /* Отметки узлов сети: у Земли они настоящие, у прочих тел это
-     точки, которые ещё предстоит развернуть */
+     точки, которые ещё предстоит развернуть. Едут вместе с
+     развёрткой - они на поверхности, а не на стекле прибора. */
   var marks = name.indexOf("ЗЕМЛ") === 0 || name.indexOf("EARTH") === 0 ? 16 : 6;
   for (i = 0; i < marks; i++) {
-    var mx = W * (0.08 + (i * 0.137) % 0.84);
+    var mx = (W * (0.08 + (i * 0.137) % 0.84) - (фаза % 1) * W + W) % W;
     var my = H * (0.2 + ((i * 0.31) % 0.6));
     x.strokeStyle = "rgba(207,233,245,.85)";
     x.beginPath(); x.arc(mx, my, 5, 0, 6.283); x.stroke();
     x.fillStyle = "rgba(66,178,220,.9)";
     x.beginPath(); x.arc(mx, my, 2, 0, 6.283); x.fill();
   }
-  /* Развёртка строк - тот же приём, что у голограммы пульта */
-  x.fillStyle = "rgba(5,12,21,.22)";
-  for (i = 0; i < H; i += 3) x.fillRect(0, i, W, 1);
+  /* Развёртка строк - тот же приём, что у голограммы пульта. Поверх
+     видео строки реже и слабее: порода не должна тонуть в них. */
+  x.fillStyle = сВидео ? "rgba(5,12,21,.10)" : "rgba(5,12,21,.22)";
+  for (i = 0; i < H; i += (сВидео ? 4 : 3)) x.fillRect(0, i, W, 1);
+  /* Луч сканера идёт поперёк развёртки: без него петля читается
+     прокруткой картинки, а с ним - работой прибора. */
+  var лx = ((фаза * 2.1) % 1) * W;
+  var лг = x.createLinearGradient(лx - W * 0.16, 0, лx + W * 0.03, 0);
+  лг.addColorStop(0, "rgba(159,224,246,0)");
+  лг.addColorStop(0.72, "rgba(159,224,246,.10)");
+  лг.addColorStop(1, "rgba(207,233,245,.34)");
+  x.fillStyle = лг;
+  x.fillRect(Math.max(0, лx - W * 0.16), 0, W * 0.19, H);
+  x.strokeStyle = "rgba(207,233,245,.55)";
+  x.lineWidth = 1;
+  x.beginPath(); x.moveTo(лx, 0); x.lineTo(лx, H); x.stroke();
+
   /* Уголки рамки */
   x.strokeStyle = "rgba(66,178,220,.9)"; x.lineWidth = 2;
   var c = 22;
@@ -994,6 +1063,28 @@ function dosPaint(obj, name) {
   }
 }
 
+var dosRaf = 0, dosT0 = 0;
+
+/* Досье живёт, пока открыто: развёртка едет, луч сканера идёт. */
+function dosLive(obj, name) {
+  dosStop();
+  dosT0 = 0;
+  var шаг = function (ts) {
+    /* Класс видимости ставится на следующем кадре после открытия, и
+       проверять его сразу нельзя: петля глохла, не начавшись. Ждём
+       появления, а гаснем только когда досье реально закрыли. */
+    if (!ui.dos || ui.dos.hidden) { dosRaf = 0; return; }
+    if (!dosT0) dosT0 = ts;
+    dosPaint(obj, name, (ts - dosT0) / 40000);
+    dosRaf = requestAnimationFrame(шаг);
+  };
+  dosRaf = requestAnimationFrame(шаг);
+}
+
+function dosStop() {
+  if (dosRaf) { cancelAnimationFrame(dosRaf); dosRaf = 0; }
+}
+
 function dosOpen(obj, info) {
   if (!ui.dos || !info) return;
   var parts = info.split(" · ");
@@ -1006,7 +1097,42 @@ function dosOpen(obj, info) {
   ui.dosH.textContent = name;
   ui.dosP.textContent = science ? science.text :
     (parts.slice(1).join(" · ") || (RU ? "Данных в бортовом справочнике нет." : "No data on board."));
-  dosPaint(obj, name);
+  /* Порода тела: если для него снят ролик, включаем его под холстом.
+     preload="none" в разметке - файл тянется только при открытии
+     досье, а не при загрузке страницы. */
+  if (ui.dosVid) {
+    var ид = породаДля(name);
+    if (ид) {
+      /* Два формата на элементе, а не один.
+
+         WebM с VP9 играет Chrome, Firefox и Android, MP4 с H.264 -
+         Safari и айфон. Ставим оба: браузер берёт первый, который
+         умеет. Вес у них почти одинаковый, по четверти мегабайта на
+         тело, и тянутся они только при открытии досье. */
+      if (ui.dosVid.dataset.ид !== ид) {
+        ui.dosVid.dataset.ид = ид;
+        ui.dosVid.innerHTML = "";
+        var д = БАЗА_АКТИВОВ + "gen/surf/" + ид;
+        var и1 = doc.createElement("source"); и1.type = "video/webm"; и1.src = д + ".webm";
+        var и2 = doc.createElement("source"); и2.type = "video/mp4";  и2.src = д + ".mp4";
+        ui.dosVid.appendChild(и1); ui.dosVid.appendChild(и2);
+        try { ui.dosVid.load(); } catch (eL) {}
+      }
+      ui.dosVid.dataset.on = "1";
+      ui.dosVid.style.display = "block";
+      try { ui.dosVid.currentTime = 0; var пр = ui.dosVid.play(); if (пр && пр.catch) пр.catch(function () {}); } catch (eV) {}
+    } else {
+      ui.dosVid.dataset.on = "0";
+      ui.dosVid.style.display = "none";
+      try { ui.dosVid.pause(); } catch (eV2) {}
+    }
+  }
+  dosPaint(obj, name, 0);
+  /* Петля жизни развёртки. Крутится, только пока досье открыто:
+     закрыли - гасим, иначе прибор считает кадры за спиной у человека.
+     Скорость такая, что полный оборот занимает около сорока секунд:
+     тело поворачивается, а не мельтешит. */
+  dosLive(obj, name);
 
   /* Три показателя: удаление, состояние узла и доля исследованного.
      Числа берём из самого мира, а не выдумываем: расстояние честно
@@ -1409,6 +1535,17 @@ function jumpUniverse(want) {
     setTimeout(function () { uniBusy = false; }, 700);
   }, 480);
 }
+
+/* Откуда берём файлы активов. Сцена грузится из assets/, но путь
+   надо брать от собственного тега, а не писать жёстко: страница
+   может лежать не в корне. */
+var БАЗА_АКТИВОВ = (function () {
+  try {
+    var т = document.querySelector('script[src*="rc-gl.js"], script[src*="rc-flight.js"]');
+    if (т && т.src) return т.src.replace(/[?#].*$/, "").replace(/[^/]+$/, "");
+  } catch (e) {}
+  return "assets/";
+})();
 
 var GOAL_NAMES = {
   earth: RU ? "ЗЕМЛЯ" : "EARTH", moon: RU ? "ЛУНА" : "MOON",
@@ -7006,6 +7143,23 @@ g.RC_FLIGHT = {
   /* Прыжок в другой рукав по вызову: без него приёмка не могла снять
      переход покадрово - до кнопки прыжка надо пройти половину игры. */
   _jump: function (n) { if (DBG) jumpUniverse(n); },
+  /* Открыть досье тела по имени: клик по самому телу в приёмке
+     ненадёжен - на дистанции планета занимает несколько точек, и
+     попасть по ней мышью из скрипта не выходит. */
+  _dos: function (имя) {
+    if (!DBG) return null;
+    var ц = String(имя || "").toUpperCase();
+    for (var id in holoIds) {
+      if (!holoIds.hasOwnProperty(id)) continue;
+      var r = holoIds[id];
+      if (!r || !r.o) continue;
+      if (String(r.title || "").toUpperCase().indexOf(ц) !== 0) continue;
+      var об = r.o.userData && r.o.userData.info ? r.o : (r.o.children && r.o.children[0]) || r.o;
+      dosOpen(об, (об.userData && об.userData.info) || r.title);
+      return r.title;
+    }
+    return null;
+  },
   _dbg: function () {
     if (!W3) return null;
     var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);

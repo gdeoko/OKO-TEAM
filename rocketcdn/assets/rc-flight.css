@@ -1339,6 +1339,23 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   text-shadow: 0 0 18px rgba(var(--int-cyan-rgb, 66,178,220), .7);
   padding-right: 38px;
 }
+/* Обёртка карты: под холстом лежит ролик породы, холст рисует по
+   нему приборную обвязку. Обоим один размер и одно скругление. */
+.rcf-dos-wrap {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 0;
+}
+.rcf-dos-vid {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: none;
+  border-radius: 8px;
+}
+.rcf-dos-wrap .rcf-dos-map { position: relative; z-index: 1; }
+
 .rcf-dos-map {
   width: 100%;
   height: auto;
