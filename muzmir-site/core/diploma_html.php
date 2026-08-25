@@ -106,6 +106,16 @@ function _dh_split_lines(string $s, int $lines): array {
  * @param int $idx какой по счёту педагог нужен (0 — первый)
  */
 function _dh_one_person(string $raw, int $idx = 0): string {
+    /* Запись с должностями разбирается точно. Через _dh_teachers() она прошла бы
+     * как «Педагог: Иванов И.И.» — и на благодарности вместо имени человека
+     * стояло бы имя вместе с его должностью. */
+    if (str_contains($raw, ':')) {
+        if (!function_exists('mentors_parse')) require_once BASE_PATH . '/core/mentors.php';
+        $fios = array_values(array_filter(array_map(
+            static fn($m) => trim($m['fio']), mentors_parse($raw)
+        )));
+        if ($fios) return $fios[$idx] ?? $fios[0];
+    }
     [, $joined] = _dh_teachers($raw);
     $list = array_values(array_filter(array_map('trim', explode(',', $joined)), static fn($x) => $x !== ''));
     if (!$list) return trim($raw);
@@ -394,8 +404,21 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         if (!empty($a['group_name']) && $name !== $a['group_name']) $fields['Название коллектива'] = $a['group_name'];
         if (!empty($a['age_category'])) $fields['Возрастная категория'] = $a['age_category'];
         if (!empty($a['nomination']))   $fields['Номинация'] = $a['nomination'];
-        // Педагог(и): если в поле несколько ФИО — «Педагоги: ФИО, ФИО» (множественное + запятые).
-        if (!empty($a['teacher'])) { [$tLabel, $tVal] = _dh_teachers((string) $a['teacher']); if ($tVal !== '') $fields[$tLabel] = $tVal; }
+        /* Наставники с должностями: «Педагог: …», «Концертмейстер: …» отдельными
+         * строками. Раньше здесь стояла одна строка «Педагог(и)» на всех, и
+         * концертмейстер с руководителем коллектива печатались педагогами —
+         * документ, по которому человек потом отчитывается на работе. Заявки без
+         * должностей (все, поданные до этой правки) выводятся как прежде. */
+        if (!empty($a['teacher'])) {
+            if (!function_exists('mentors_doc_lines')) require_once BASE_PATH . '/core/mentors.php';
+            $lines = mentors_doc_lines((string) $a['teacher']);
+            if ($lines) {
+                foreach ($lines as $label => $val) if (trim($val) !== '') $fields[$label] = $val;
+            } else {
+                [$tLabel, $tVal] = _dh_teachers((string) $a['teacher']);
+                if ($tVal !== '') $fields[$tLabel] = $tVal;
+            }
+        }
         if (!empty($a['institution'])) {
             // Учреждение + город БЕЗ дублирования: «Московский …» уже содержит город.
             if (!function_exists('institution_with_city') && is_file(BASE_PATH . '/core/text_format.php'))

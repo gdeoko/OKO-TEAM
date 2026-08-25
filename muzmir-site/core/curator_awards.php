@@ -48,6 +48,16 @@ function curator_split_teachers(string $raw): array {
     $s = preg_replace('~\s+~u', ' ', trim($raw)) ?? '';
     if ($s === '') return [];
 
+    /* Заявка с должностями («Педагог: Иванов И.И.; Концертмейстер: Петрова А.А.»)
+     * разбирается точно, без угадывания по отчествам: имена уже разделены. */
+    if (str_contains($s, ':')) {
+        if (!function_exists('mentors_parse')) require_once BASE_PATH . '/core/mentors.php';
+        $fios = array_values(array_filter(array_map(
+            static fn($m) => trim($m['fio']), mentors_parse($s)
+        )));
+        if ($fios) return $fios;
+    }
+
     // Явные разделители — самый частый и самый надёжный случай.
     if (preg_match('~[,;/]|\sи\s~u', $s)) {
         $parts = preg_split('~\s*[,;/]\s*|\s+и\s+~u', $s) ?: [];

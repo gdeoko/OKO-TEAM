@@ -656,8 +656,13 @@ if ($id = (int) input('id')) {
             <?php else: ?>
               <input type="hidden" name="group_name" value="<?= h((string)$a['group_name']) ?>">
             <?php endif; ?>
-            <div class="field"><label>Педагог</label>
-              <input name="teacher" value="<?= h((string)$a['teacher']) ?>"></div>
+            <div class="field"><label>Педагоги и наставники</label>
+              <input name="teacher" value="<?= h((string)$a['teacher']) ?>">
+              <?php /* Формат хранения виден прямо в поле: «Должность: ФИО» через точку
+                       с запятой. Без подписи оператор при правке легко сотрёт двоеточие,
+                       и в дипломе концертмейстер станет педагогом. */ ?>
+              <p class="hint">Формат: <b>Педагог: Иванов И.В.; Концертмейстер: Петрова А.С.</b> — до пяти строк.
+                Без должности запись читается как педагог.</p></div>
             <div class="field"><label>Номинация</label>
               <select name="nomination">
                 <option value="">— не указана —</option>

@@ -470,10 +470,40 @@ ob_start(); ?>
         <!-- ШАГ 3. Педагог и учреждение -->
         <section class="astep" data-step="teacher">
           <div class="astep-head"><p class="eyebrow">Шаг 3</p><h2>Педагог и учреждение</h2></div>
-          <div class="field ff">
-            <input type="text" id="teacher" name="teacher" placeholder=" " data-fio value="<?= h($prefill['teacher']) ?>">
-            <label for="teacher">ФИО руководителя или педагога</label>
-            <div class="hint">Как указать в дипломе руководителя. Можно оставить пустым.</div>
+          <?php /* НАСТАВНИКИ: ДОЛЖНОСТЬ И ФИО, ДО ПЯТИ СТРОК.
+                   Поле было одно — «ФИО руководителя или педагога», и в диплом
+                   все попадали педагогами: концертмейстер, балетмейстер,
+                   директор школы. Участница с концертмейстером написала в
+                   поддержку, что указать его негде, — так и было.
+                   Первая строка разворачивается из уже сохранённого поля, чтобы
+                   повторная подача не заставляла вводить всё заново. */
+                if (!function_exists('mentors_parse')) require_once BASE_PATH . '/core/mentors.php';
+                $prefMentors = mentors_parse((string) $prefill['teacher']);
+                if (!$prefMentors) $prefMentors = [['role' => 'Педагог', 'fio' => '']];
+          ?>
+          <div class="mentors" id="mentorsBox" data-max="<?= MENTORS_MAX ?>">
+            <div class="mentors-head">
+              <span>Педагоги и наставники</span>
+              <span class="hint">Как указать в дипломе. Можно оставить пустым.</span>
+            </div>
+            <?php foreach ($prefMentors as $mi => $mv): ?>
+              <div class="mentor-row">
+                <select class="mentor-role" aria-label="Должность">
+                  <?php foreach (mentors_roles() as $role): ?>
+                    <option value="<?= h($role) ?>"<?= $role === ($mv['role'] ?? '') ? ' selected' : '' ?>><?= h($role) ?></option>
+                  <?php endforeach; ?>
+                  <option value="__other"<?= !in_array(($mv['role'] ?? ''), mentors_roles(), true) && ($mv['role'] ?? '') !== '' ? ' selected' : '' ?>>Другое…</option>
+                </select>
+                <input type="text" class="mentor-role-other" placeholder="Своя должность"
+                       value="<?= !in_array(($mv['role'] ?? ''), mentors_roles(), true) ? h($mv['role'] ?? '') : '' ?>"
+                       <?= in_array(($mv['role'] ?? ''), mentors_roles(), true) ? 'hidden' : '' ?>>
+                <input type="text" class="mentor-fio" data-fio placeholder="Фамилия Имя Отчество" value="<?= h($mv['fio'] ?? '') ?>">
+                <button type="button" class="mentor-del" aria-label="Убрать строку"<?= $mi === 0 ? ' hidden' : '' ?>>&times;</button>
+              </div>
+            <?php endforeach; ?>
+            <button type="button" class="mentor-add" id="mentorAdd">+ Добавить наставника</button>
+            <!-- Собранная строка «Должность: ФИО; …» — её и принимает сервер. -->
+            <input type="hidden" id="teacher" name="teacher" value="<?= h($prefill['teacher']) ?>">
           </div>
           <div class="field ff">
             <input type="text" id="institution" name="institution" placeholder=" " list="dlInstitution" value="<?= h($prefill['institution']) ?>">

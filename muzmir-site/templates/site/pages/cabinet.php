@@ -1080,7 +1080,15 @@ ob_start(); ?>
                     </div>
 
                     <div class="field" style="margin:0"><label>Название конкурсного номера</label><input type="text" name="work_title" value="<?= h($a['work_title'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>ФИО руководителя или педагога</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
+                    <?php /* Наставники с должностями — в том же виде, что и при подаче.
+                             Полноценный конструктор строк здесь не нужен: правка редкая,
+                             а вот подсказка про формат обязательна — иначе человек сотрёт
+                             двоеточия, и концертмейстер снова станет педагогом. */ ?>
+                    <div class="field" style="margin:0"><label>Педагоги и наставники</label>
+                      <input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>">
+                      <div class="hint">Через точку с запятой, с должностью каждого. Например:
+                        <b>Педагог: Иванов Иван Владимирович; Концертмейстер: Петрова Анна Сергеевна</b></div>
+                    </div>
                     <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Страна и город</label><input type="text" name="city" data-address-suggest data-suggest-mode="city" placeholder="Страна и город, например: Россия, г. Москва" value="<?= h($a['city'] ?? '') ?>"></div>
 

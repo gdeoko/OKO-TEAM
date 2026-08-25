@@ -913,6 +913,101 @@
       r.addEventListener('change', function () { applyFormType(); saveDraft(); });
     });
 
+    /* НАСТАВНИКИ: ДОЛЖНОСТЬ + ФИО, ДО ПЯТИ СТРОК.
+     *
+     * Сервер по-прежнему принимает одно поле teacher — строкой
+     * «Педагог: Иванов И.И.; Концертмейстер: Петрова А.А.». Собираем её здесь
+     * при любом изменении, чтобы черновик, автосохранение и отправка видели
+     * одно и то же значение и не расходились между собой. */
+    var mentorsBox = document.getElementById('mentorsBox');
+    if (mentorsBox) {
+      var mentorMax = parseInt(mentorsBox.getAttribute('data-max'), 10) || 5;
+      var mentorHidden = document.getElementById('teacher');
+      var mentorAdd = document.getElementById('mentorAdd');
+
+      function mentorRows() { return $$('.mentor-row', mentorsBox); }
+
+      function mentorCollect() {
+        var parts = [];
+        mentorRows().forEach(function (row) {
+          var sel = row.querySelector('.mentor-role');
+          var oth = row.querySelector('.mentor-role-other');
+          var fio = row.querySelector('.mentor-fio');
+          var name = (fio && fio.value || '').trim();
+          if (!name) return;
+          var role = sel && sel.value === '__other'
+            ? (oth && oth.value || '').trim()
+            : (sel && sel.value || '').trim();
+          if (!role) role = 'Педагог';
+          // Двоеточие и точка с запятой — служебные знаки формата: если человек
+          // введёт их в своей должности, строка развалится при разборе.
+          role = role.replace(/[:;]/g, ' ').trim();
+          name = name.replace(/[:;]/g, ' ').trim();
+          parts.push(role + ': ' + name);
+        });
+        if (mentorHidden) mentorHidden.value = parts.slice(0, mentorMax).join('; ');
+      }
+
+      function mentorSync() {
+        // Кнопку «добавить» прячем на пятой строке, крестик — у единственной.
+        var rows = mentorRows();
+        if (mentorAdd) mentorAdd.hidden = rows.length >= mentorMax;
+        rows.forEach(function (row, i) {
+          var del = row.querySelector('.mentor-del');
+          if (del) del.hidden = rows.length <= 1 && i === 0;
+        });
+        mentorCollect();
+      }
+
+      mentorsBox.addEventListener('input', function (e) {
+        if (e.target.closest('.mentor-row')) { mentorCollect(); saveDraft(); }
+      });
+      mentorsBox.addEventListener('change', function (e) {
+        var sel = e.target.closest('.mentor-role');
+        if (sel) {
+          var oth = sel.parentNode.querySelector('.mentor-role-other');
+          if (oth) { oth.hidden = sel.value !== '__other'; if (!oth.hidden) oth.focus(); }
+        }
+        mentorCollect(); saveDraft();
+      });
+      mentorsBox.addEventListener('blur', function (e) {
+        if (e.target.classList && e.target.classList.contains('mentor-fio')) {
+          e.target.value = fixFio(e.target.value); mentorCollect(); saveDraft();
+        }
+      }, true);
+      mentorsBox.addEventListener('click', function (e) {
+        var del = e.target.closest('.mentor-del');
+        if (!del) return;
+        var rows = mentorRows();
+        if (rows.length <= 1) {                      // последнюю не убираем, только чистим
+          var f = rows[0].querySelector('.mentor-fio'); if (f) f.value = '';
+        } else {
+          del.closest('.mentor-row').remove();
+        }
+        mentorSync(); saveDraft();
+      });
+
+      if (mentorAdd) mentorAdd.addEventListener('click', function () {
+        var rows = mentorRows();
+        if (rows.length >= mentorMax) return;
+        var copy = rows[rows.length - 1].cloneNode(true);
+        copy.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+        var oth = copy.querySelector('.mentor-role-other'); if (oth) oth.hidden = true;
+        var sel = copy.querySelector('.mentor-role');
+        // Второй строке по умолчанию ставим следующую должность, а не второго
+        // подряд «Педагога»: чаще всего добавляют именно концертмейстера.
+        if (sel && rows.length === 1) {
+          var conc = Array.prototype.find.call(sel.options, function (o) { return o.value === 'Концертмейстер'; });
+          if (conc) sel.value = 'Концертмейстер';
+        }
+        mentorAdd.parentNode.insertBefore(copy, mentorAdd);
+        mentorSync();
+        var nf = copy.querySelector('.mentor-fio'); if (nf) nf.focus();
+      });
+
+      mentorSync();
+    }
+
     // Автокоррекция ФИО
     $$('[data-fio]').forEach(function (el) {
       el.addEventListener('blur', function () { el.value = fixFio(el.value); saveDraft(); });
