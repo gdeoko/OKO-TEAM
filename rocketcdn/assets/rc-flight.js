@@ -3268,15 +3268,27 @@ function buildWorld() {
   /* ── Луна ── */
   var moon = new T.Mesh(
     new T.SphereGeometry(16, 40, 28),
-    new T.MeshPhongMaterial({ map: tex("assets/space/moon.webp"), shininess: 2 })
+    /* Луна была на Phong с бликом. Реголит это пыль: она не блестит
+       вообще, зеркальной составляющей у неё нет. Плюс карта светлее
+       настоящей вдвое (среднее 139 из 255 против альбедо 0.12), и
+       Луна выходила ярче земной суши. Standard, шероховатость в
+       единицу, карта приглушена множителем. */
+    new T.MeshStandardMaterial({
+      map: tex("assets/space/moon.webp"),
+      color: 0x9aa0a6,
+      roughness: 1.0,
+      metalness: 0.0,
+      envMapIntensity: 0.0
+    })
   );
   moon.position.set(300, 40, -190);
   scene.add(moon);
   /* Маршрут проходит с теневой стороны Луны - без своего света она
      встречала корабль чёрным диском */
-  var moonLamp = new T.PointLight(0xcfd8e2, 1.1, 420);
-  moonLamp.position.set(330, 60, -120);
-  scene.add(moonLamp);
+  /* Здесь стоял отдельный фонарь у Луны, светивший не оттуда, откуда
+     солнце. Он поднимал её теневую половину и убивал терминатор -
+     самую узнаваемую черту лунного диска. Луну освещает то же солнце,
+     что и всё остальное. */
 
   /* Узлы-реле CDN: цепочка светящихся маяков вдоль перегона
      Луна-Марс. Пустой кусок пути превращается в кадр про продукт:
@@ -3346,7 +3358,67 @@ function buildWorld() {
       uv.setXY(k, (v.length() - 60) / 56, 0.5);
     }
   })();
-  var ring = new T.Mesh(ringGeo, new T.MeshBasicMaterial({ map: paintRing(), side: T.DoubleSide, transparent: true, opacity: 0.92, depthWrite: false }));
+  /* Кольца Сатурна теперь знают, где солнце.
+
+     Стоял MeshBasicMaterial - материал, который вообще не реагирует
+     на свет. Кольца одинаково светились на дневной и на ночной
+     стороне и не темнели в тени планеты. Тень колец на диске и тень
+     диска на кольцах это самая узнаваемая деталь любого настоящего
+     снимка Сатурна, и её не было.
+
+     Полноценные тени в сцене не включены (это дорого на телефоне),
+     поэтому тень планеты на кольцах считается аналитически прямо в
+     шейдере: если луч от точки кольца к солнцу проходит ближе оси,
+     чем радиус планеты, точка в тени. Одно пересечение луча со
+     сферой, без единого лишнего прохода. */
+  var ringMatS = new T.ShaderMaterial({
+    transparent: true, side: T.DoubleSide, depthWrite: false,
+    uniforms: {
+      uMap: { value: paintRing() },
+      uSun: { value: new T.Vector3(1, 0.2, 0.3).normalize() },
+      /* Радиус самой планеты: по нему шейдер отмеряет ширину её
+         тени на кольце. Сфера Сатурна построена радиусом 46. */
+      uR: { value: 46.0 }
+    },
+    vertexShader: [
+      "varying vec2 vUv;",
+      "varying vec3 vLocal;",
+      "void main() {",
+      "  vUv = uv;",
+      "  vLocal = position;",
+      "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
+      "}"
+    ].join("\n"),
+    fragmentShader: [
+      "precision mediump float;",
+      "uniform sampler2D uMap;",
+      "uniform vec3 uSun;",
+      "uniform float uR;",
+      "varying vec2 vUv;",
+      "varying vec3 vLocal;",
+      "void main() {",
+      "  vec4 t = texture2D(uMap, vUv);",
+      "  if (t.a < 0.01) discard;",
+      /* Тень планеты: расстояние от точки кольца до оси, идущей на
+         солнце. Ближе радиуса планеты и позади неё - тень. */
+      "  vec3 p = vLocal;",
+      "  float along = dot(p, uSun);",
+      "  vec3 across = p - uSun * along;",
+      "  float d = length(across);",
+      "  float shade = 1.0;",
+      "  if (along < 0.0) {",
+      "    shade = smoothstep(uR * 0.86, uR * 1.14, d);",
+      "    shade = 0.18 + shade * 0.82;",
+      "  }",
+      /* Лёд рассеивает свет вперёд: на просвет кольцо ярче, чем в
+         отражении. Это тоже видно на снимках. */
+      "  float graze = abs(dot(normalize(p), uSun));",
+      "  float thru = 0.75 + pow(1.0 - graze, 2.2) * 0.55;",
+      "  gl_FragColor = vec4(t.rgb * shade * thru, t.a * 0.94);",
+      "}"
+    ].join("\n")
+  });
+  var ring = new T.Mesh(ringGeo, ringMatS);
   ring.rotation.x = Math.PI / 2.25;
   saturn.add(ring);
   saturn.position.set(1560, 260, -1060);
@@ -4117,6 +4189,7 @@ function buildWorld() {
     /* Оболочки атмосфер и точка солнца отдаются наружу: кадр
        обновляет по ним направление на светило. */
     atmShells: atmShells,
+    ringMat: ringMatS,
     "СОЛНЦЕ": СОЛНЦЕ,
     sunMat: sunBody.material,
     sun: sunBody, mercury: mercury, venus: venus, solarLive: solarLive,
@@ -5939,6 +6012,13 @@ function frame(ts) {
      вектора на каждую оболочку каждый кадр не нужна. */
   if (w3.atmShells && w3.atmShells.length && (!атмКадр.t || ts - атмКадр.t > 120)) {
     атмКадр.t = ts;
+    /* Кольцам Сатурна направление на солнце нужно по той же причине:
+       по нему шейдер кладёт тень планеты на кольцо. */
+    if (w3.ringMat && w3.ringMat.uniforms && w3.saturn) {
+      w3.ringMat.uniforms.uSun.value
+        .copy(w3.СОЛНЦЕ || w3.sun.position)
+        .sub(w3.saturn.position).normalize();
+    }
     for (var аи = 0; аи < w3.atmShells.length; аи++) {
       var об = w3.atmShells[аи];
       if (!об || !об.mesh || !об.mesh.material || !об.mesh.material.uniforms) continue;

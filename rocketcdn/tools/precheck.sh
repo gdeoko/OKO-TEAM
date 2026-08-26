@@ -30,3 +30,11 @@ for f in assets/rc-deck.js assets/gen/cab/deck.js assets/gen/cab/flat.js \
 done
 [ "$MISS" = 0 ] || exit 1
 echo "состояние в порядке: $(git log --oneline -1)"
+
+# Кириллица в шейдерах ломает сборку GLSL молча: экран чёрный, в
+# консоли VALIDATE_STATUS false. За проект это случалось трижды,
+# поэтому проверка стоит здесь и падает до выкладки, а не после.
+if ! node tools/shadercheck.mjs; then
+  echo "ВЫКЛАДКА ОСТАНОВЛЕНА: кириллица в шейдере"
+  exit 1
+fi
