@@ -153,6 +153,85 @@
     .node-add .chk { justify-content: flex-start }
   }
 
+  /* ── Тексты сайта ─────────────────────────────────────────
+     Раньше здесь стояла стена из тридцати полей без группировки и
+     без поиска, а карточки страницы правились сырым JSON. Теперь
+     надписи разложены по разделам страницы, а карточка правится
+     полями, как ей и положено. */
+  .seg.tiny button { padding: 6px 11px; font-size: 12px }
+  .cf-top {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 12px 0 4px; font-size: 12.5px; color: var(--tx-3);
+  }
+  .cf-top .mini { margin-left: auto }
+  .cf-sec { border: 1px solid var(--line); border-radius: var(--r-sm); margin-top: 10px; background: var(--surface-2) }
+  .cf-sec > summary {
+    padding: 11px 14px; cursor: pointer; font-size: 13.5px; font-weight: 650;
+    display: flex; align-items: center; gap: 10px; list-style: none; user-select: none;
+  }
+  .cf-sec > summary::-webkit-details-marker { display: none }
+  .cf-sec > summary::before {
+    content: ""; width: 6px; height: 6px; border-right: 1.6px solid var(--tx-3);
+    border-bottom: 1.6px solid var(--tx-3); transform: rotate(-45deg);
+    transition: transform var(--fast); flex: none; margin-left: 2px;
+  }
+  .cf-sec[open] > summary::before { transform: rotate(45deg) }
+  .cf-sec > summary .n { color: var(--tx-3); font-weight: 600; font-size: 12px; margin-left: auto }
+  .cf-sec > summary .ch {
+    padding: 1px 7px; border-radius: var(--r-full); font-size: 10.5px; font-weight: 700;
+    background: rgba(66,178,220,.18); color: var(--cyan);
+  }
+  .cf-body { padding: 2px 14px 14px }
+  .cf { margin-top: 12px }
+  .cf label {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    font-size: 12.5px; color: var(--tx-2); margin-bottom: 5px;
+  }
+  .cf label code { font-size: 11px; color: var(--tx-3); background: var(--bg-3); padding: 1px 6px; border-radius: var(--r-xs) }
+  .cf label .edited { color: var(--cyan); font-size: 11px; font-weight: 700 }
+  .cf input, .cf textarea {
+    width: 100%; padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.55;
+    background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r-xs);
+    color: var(--tx-1); outline: none; resize: vertical;
+  }
+  .cf textarea { min-height: 76px }
+  .cf input:focus, .cf textarea:focus { border-color: var(--cyan) }
+  .cf.is-edited input, .cf.is-edited textarea { border-color: rgba(66,178,220,.55) }
+  .cf .was { font-size: 12px; color: var(--tx-3); margin-top: 5px; line-height: 1.5 }
+  .cf-none { padding: 18px 4px; color: var(--tx-3); font-size: 13.5px }
+
+  /* Карточки страницы: одна карточка - одна плитка с полями. */
+  .blk-list { display: grid; gap: 10px }
+  .blk {
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--surface-2); padding: 14px;
+  }
+  .blk .head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px }
+  .blk .head .num {
+    width: 24px; height: 24px; flex: none; border-radius: var(--r-xs);
+    display: grid; place-items: center; font-size: 12px; font-weight: 700;
+    background: var(--bg-3); color: var(--tx-2);
+  }
+  .blk .head .ttl {
+    font-size: 13.5px; font-weight: 650; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1;
+  }
+  .blk .head .row-act { margin-left: auto; flex: none }
+  .blk .ico-pick { display: flex; align-items: center; gap: 10px }
+  .blk .ico-pick select {
+    padding: 9px 12px; font-size: 13.5px; background: var(--bg-3);
+    border: 1px solid var(--line); border-radius: var(--r-xs); color: var(--tx-1); outline: none;
+  }
+  .blk .ico-pick .prev {
+    width: 40px; height: 40px; flex: none; border-radius: var(--r-xs);
+    display: grid; place-items: center; background: var(--bg-3);
+    border: 1px solid var(--line); color: var(--cyan);
+  }
+  .blk .ico-pick .prev svg { width: 22px; height: 22px }
+  .raw { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px }
+  .raw > summary { cursor: pointer; font-size: 12.5px; color: var(--tx-3); user-select: none }
+  .raw > summary:hover { color: var(--cyan) }
+
   .login { min-height: 100svh; display: grid; place-items: center; padding: var(--pad); }
   .login .form-card { width: 100%; max-width: 380px; }
   .login img { height: 46px; margin: 0 auto 22px; }
@@ -174,6 +253,12 @@
   .seg button.on { background: var(--grad); color: #fff; border-color: transparent }
   @media (max-width: 640px) {
     .a-hdr-in { height: 56px }
+    /* На 390 шапка не помещалась в строку и кнопка «Выйти» уезжала
+       за правый край на 38 пикселей: выйти с телефона было нечем.
+       Значок «админка» на узком экране ничего не сообщает, вкладки
+       и так под ним, поэтому он уходит первым. */
+    .a-badge { display: none }
+    .a-hdr img { height: 24px }
     .chart { height: 200px }
     td, th { padding-left: 6px; padding-right: 6px }
   }
@@ -346,33 +431,61 @@
     <!-- Тексты -->
     <section class="pane" id="p-content">
       <div class="panel" style="margin-top:0">
-        <h3>Главные надписи</h3>
+        <h3>
+          <span>Надписи на странице</span>
+          <span class="seg tiny" id="cLang">
+            <button type="button" data-lang="ru" class="on">Русский</button>
+            <button type="button" data-lang="en">English</button>
+          </span>
+        </h3>
+        <input class="lead-find" id="cFind" placeholder="Найти надпись по смыслу, по тексту или по имени поля" autocomplete="off">
+        <div class="cf-top" id="cTop"></div>
         <div class="form-msg" id="cMsg"></div>
         <div id="cFields"></div>
-        <div class="btn-row" style="margin-top:8px">
-          <button type="button" class="btn btn-p btn-sm" id="cSave">Сохранить</button>
+        <div class="btn-row" style="margin-top:14px">
+          <button type="button" class="btn btn-p btn-sm" id="cSave">Сохранить надписи</button>
           <button type="button" class="btn btn-g btn-sm" id="cReset">Вернуть исходные</button>
         </div>
         <p class="hint" style="margin-top:12px">
           Правки применяются к сайту сразу, страницу у посетителей обновит первый же заход.
-          Пустое поле означает «оставить исходный текст».
+          Пустое поле означает «оставить исходный текст». Языки правятся раздельно:
+          что написано в русской версии, в английскую само не переедет.
+          Запись <code>{nodes}</code> внутри текста сайт заменит на текущее число точек присутствия.
         </p>
       </div>
+
       <div class="panel">
-        <h3>Блоки: продукты, преимущества, сценарии, вопросы</h3>
-        <p class="hint" style="margin-bottom:12px">
-          Формат JSON. Скопируйте исходный набор кнопкой ниже, поправьте и сохраните.
-        </p>
-        <div class="btn-row" style="margin-bottom:12px">
-          <button type="button" class="mini" id="bLoadRu">Взять текущие (RU)</button>
-          <button type="button" class="mini" id="bLoadEn">Взять текущие (EN)</button>
+        <h3>
+          <span>Карточки на странице</span>
+          <span class="hint" id="bLangNote"></span>
+        </h3>
+        <div class="seg" id="bGroup">
+          <button type="button" data-g="products" class="on">Продукты<span class="cnt"></span></button>
+          <button type="button" data-g="advantages">Преимущества<span class="cnt"></span></button>
+          <button type="button" data-g="cases">Сценарии<span class="cnt"></span></button>
+          <button type="button" data-g="faq">Вопросы<span class="cnt"></span></button>
         </div>
-        <div class="field"><textarea class="code" id="bJson" spellcheck="false"></textarea></div>
-        <div class="seg" style="margin-bottom:12px">
-          <button data-l="ru" class="on">Сохранить как RU</button>
-          <button data-l="en">Сохранить как EN</button>
+        <div class="blk-list" id="bList"></div>
+        <div class="btn-row" style="margin-top:12px">
+          <button type="button" class="mini" id="bAdd">Добавить карточку</button>
+          <button type="button" class="mini" id="bBack">Вернуть исходные в этой группе</button>
         </div>
         <div class="form-msg" id="bMsg"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button type="button" class="btn btn-p btn-sm" id="bSave">Сохранить карточки</button>
+        </div>
+        <details class="raw">
+          <summary>Показать эту группу в виде JSON</summary>
+          <p class="hint" style="margin:10px 0">
+            Нужно, только если правку удобнее внести целиком: скопировать набор,
+            перенести с другого сайта, откатить руками. Кнопка ниже переносит
+            текст обратно в карточки, там его и видно.
+          </p>
+          <div class="field"><textarea class="code" id="bJson" spellcheck="false"></textarea></div>
+          <div class="btn-row">
+            <button type="button" class="mini" id="bFromJson">Перенести в карточки</button>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -412,6 +525,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="assets/rc-geo.js?v=1787483102"></script>
+<script src="assets/rc-ico.js?v=1787483102"></script>
 <script src="assets/rc-i18n.js?v=1787483102"></script>
 <script>
 (function () {
@@ -917,98 +1031,421 @@ function renderNetList(q) {
 }
 $("#netSearch").addEventListener("input", function () { renderNetList(this.value); });
 
-/* ── Тексты ── */
-var C_FIELDS = [
-  ["hero.h1a", "Заголовок, первая строка"],
-  ["hero.h1b", "Заголовок, вторая строка"],
-  ["hero.sub", "Подзаголовок в шапке"],
-  ["kpi.1n", "Показатель 1: значение"],
-  ["kpi.1l", "Показатель 1: подпись"],
-  ["kpi.2l", "Показатель 2: подпись"],
-  ["kpi.3n", "Показатель 3: значение"],
-  ["kpi.3l", "Показатель 3: подпись"],
-  ["kpi.4n", "Показатель 4: значение"],
-  ["kpi.4l", "Показатель 4: подпись"],
-  ["what.h", "Заголовок «Что такое»"],
-  ["what.p", "Текст «Что такое»"],
-  ["prod.h", "Заголовок «Продукты»"],
-  ["adv.h", "Заголовок «Преимущества»"],
-  ["infra.h", "Заголовок «Инфраструктура»"],
-  ["how.h", "Заголовок «Как работает»"],
-  ["case.h", "Заголовок «Сценарии»"],
-  ["eff.h", "Заголовок «Эффект»"],
-  ["eff.p", "Текст «Эффект»"],
-  ["eff.c1h", "Карточка: задержка"],
-  ["eff.c2h", "Карточка: разгрузка origin"],
-  ["eff.c3h", "Карточка: доступность"],
-  ["live.h", "Заголовок графика трафика"],
-  ["topo.h", "Заголовок схемы маршрута"],
-  ["inc.h", "Заголовок «Что входит»"],
-  ["inc.p", "Текст «Что входит»"],
-  ["ct.h", "Заголовок формы"],
-  ["ct.p", "Текст над формой"],
-  ["ftr.about", "Описание в подвале"]
+/* ── Тексты ───────────────────────────────────────────────────
+   Панель правит две разные вещи. Надписи это плоский словарь на
+   двести с лишним ключей: он лежит в assets/rc-i18n.js, а правки
+   из админки его перекрывают (rc-app.js, функция t). Карточки это
+   четыре набора: продукты, преимущества, сценарии, вопросы.
+
+   До этой переделки в панели висели тридцать полей одной стеной без
+   разбивки и без поиска, английского не было вовсе, а карточки
+   правились сырым JSON в текстовом поле. Владелец сайта не обязан
+   уметь в JSON и считать запятые.
+
+   Теперь надписи разложены по разделам страницы, ищутся по смыслу и
+   по самому тексту, языки разведены, а карточка правится полями с
+   выбором иконки из настоящего набора. */
+
+var cLang = "ru";
+
+/* Понятные названия для полей, которые правят чаще всего. Остальным
+   подписью служит их исходный текст: он и так виден в поле. */
+var C_NAME = {
+  "hero.h1a": "Заголовок, первая строка",
+  "hero.h1b": "Заголовок, вторая строка",
+  "hero.sub": "Подзаголовок в шапке",
+  "kpi.1n": "Показатель 1: значение",
+  "kpi.1l": "Показатель 1: подпись",
+  "kpi.2l": "Показатель 2: подпись",
+  "kpi.3n": "Показатель 3: значение",
+  "kpi.3l": "Показатель 3: подпись",
+  "kpi.4n": "Показатель 4: значение",
+  "kpi.4l": "Показатель 4: подпись",
+  "what.h": "Заголовок «Что такое»",
+  "what.p": "Текст «Что такое»",
+  "prod.h": "Заголовок «Продукты»",
+  "adv.h": "Заголовок «Преимущества»",
+  "infra.h": "Заголовок «Инфраструктура»",
+  "how.h": "Заголовок «Как работает»",
+  "case.h": "Заголовок «Сценарии»",
+  "eff.h": "Заголовок «Эффект»",
+  "eff.p": "Текст «Эффект»",
+  "eff.c1h": "Карточка: задержка",
+  "eff.c2h": "Карточка: разгрузка origin",
+  "eff.c3h": "Карточка: доступность",
+  "live.h": "Заголовок графика трафика",
+  "topo.h": "Заголовок схемы маршрута",
+  "inc.h": "Заголовок «Что входит»",
+  "inc.p": "Текст «Что входит»",
+  "ct.h": "Заголовок формы",
+  "ct.p": "Текст над формой",
+  "ftr.about": "Описание в подвале"
+};
+
+/* Разделы идут в том же порядке, что и блоки на самой странице:
+   человек ищет надпись глазами сверху вниз, а не по алфавиту.
+   Первые три открыты сразу, остальные под щелчком, иначе снова
+   получается стена. */
+var C_SEC = [
+  ["Шапка", ["hero"], 1],
+  ["Показатели под шапкой", ["kpi"], 1],
+  ["Что такое Rocket CDN", ["what"], 0],
+  ["Продукты", ["prod"], 0],
+  ["Преимущества", ["adv"], 0],
+  ["Инфраструктура и карта", ["infra", "reg", "dc1p", "dc2p", "dc3p"], 0],
+  ["Как работает", ["how"], 0],
+  ["Сценарии", ["case"], 0],
+  ["Надёжность", ["rel"], 0],
+  ["Эффект и цифры", ["eff"], 0],
+  ["График трафика и схема маршрута", ["live", "topo"], 0],
+  ["Подписи внутри инфографики", ["viz"], 0],
+  ["Что входит", ["inc"], 0],
+  ["Вопросы", ["faq"], 0],
+  ["Форма заявки", ["ct"], 0],
+  ["Кнопки призыва", ["cta"], 0],
+  ["Меню и навигация", ["nav", "menu"], 0],
+  ["Подвал", ["ftr"], 0],
+  ["Заставка и полёт", ["epi", "fly", "cb", "tick"], 0],
+  ["Служебные подписи", ["ui", "theme", "toast"], 0]
 ];
-function loadContent() {
-  fetch(API + "?action=content").then(function (r) { return r.json(); }).then(function (r) {
-    content = (r && r.content) || {};
-    var i18n = (content.i18n && content.i18n.ru) || {};
-    $("#cFields").innerHTML = C_FIELDS.map(function (f) {
-      var base = (window.RC_I18N.ru[f[0]] || "");
-      var val = i18n[f[0]] || "";
-      var long = base.length > 70;
-      return '<div class="field"><label>' + esc(f[1]) + "</label>" +
-        (long
-          ? '<textarea data-k="' + f[0] + '" placeholder="' + esc(base) + '">' + esc(val) + "</textarea>"
-          : '<input data-k="' + f[0] + '" placeholder="' + esc(base) + '" value="' + esc(val) + '">') +
-        "</div>";
-    }).join("");
+
+function cDict(lang) {
+  var all = window.RC_I18N || {};
+  return all[lang] || all.ru || {};
+}
+function cOver(lang) {
+  return (content && content.i18n && content.i18n[lang]) || {};
+}
+/* Ключи в порядке разделов. Что не попало ни в один префикс, уходит
+   в конец отдельной группой: новый ключ в словаре не должен молча
+   исчезать из панели. */
+function cPlan() {
+  var d = cDict("ru"), keys = Object.keys(d), взято = {}, план = [];
+  C_SEC.forEach(function (sec) {
+    var list = keys.filter(function (k) {
+      var pre = k.split(".")[0];
+      return sec[1].indexOf(pre) >= 0 && !взято[k];
+    });
+    list.forEach(function (k) { взято[k] = 1; });
+    if (list.length) план.push({ name: sec[0], keys: list, open: sec[2] });
+  });
+  var хвост = keys.filter(function (k) { return !взято[k]; });
+  if (хвост.length) план.push({ name: "Прочее", keys: хвост, open: 0 });
+  return план;
+}
+
+function cRender() {
+  var база = cDict(cLang), ru = cDict("ru"), пр = cOver(cLang);
+  var иск = ($("#cFind").value || "").trim().toLowerCase();
+  var толькоПравки = $("#cOnly") && $("#cOnly").checked;
+  var всего = 0, правок = 0, видно = 0;
+
+  var html = cPlan().map(function (sec) {
+    var поля = sec.keys.filter(function (k) {
+      var есть = (пр[k] || "").trim() !== "";
+      if (толькоПравки && !есть) return false;
+      if (!иск) return true;
+      return (k + " " + (C_NAME[k] || "") + " " + (база[k] || "") + " " + (ru[k] || "") + " " + (пр[k] || ""))
+        .toLowerCase().indexOf(иск) >= 0;
+    });
+    sec.keys.forEach(function (k) {
+      всего++;
+      if ((пр[k] || "").trim() !== "") правок++;
+    });
+    if (!поля.length) return "";
+    видно += поля.length;
+    var своих = sec.keys.filter(function (k) { return (пр[k] || "").trim() !== ""; }).length;
+    var открыт = (иск || толькоПравки || sec.open) ? " open" : "";
+    return '<details class="cf-sec"' + открыт + '><summary>' + esc(sec.name) +
+      (своих ? '<span class="ch">' + своих + " правок</span>" : "") +
+      '<span class="n">' + поля.length + '</span></summary><div class="cf-body">' +
+      поля.map(function (k) {
+        /* Английская подсказка показывает английский исходник, но если
+           перевода нет, честнее показать русский, чем пустое поле. */
+        var исх = база[k] != null ? base_str(база[k]) : base_str(ru[k]);
+        var зн = пр[k] || "";
+        var длинно = исх.length > 70 || зн.length > 70;
+        var имя = C_NAME[k] || кратко(исх) || k;
+        /* Для ключей без своего названия подписью служит сам текст.
+           Тогда та же строка в подсказке поля была бы вторым эхом,
+           поэтому подсказка меняется на смысл пустого поля. */
+        var подск = имя === исх ? "оставить исходный текст" : исх;
+        return '<div class="cf' + (зн ? " is-edited" : "") + '" data-cf="' + esc(k) + '">' +
+          "<label><span>" + esc(имя) + "</span><code>" + esc(k) + "</code>" +
+          (зн ? '<span class="edited">правка</span>' : "") + "</label>" +
+          (длинно
+            ? '<textarea data-k="' + esc(k) + '" placeholder="' + esc(подск) + '">' + esc(зн) + "</textarea>"
+            : '<input data-k="' + esc(k) + '" placeholder="' + esc(подск) + '" value="' + esc(зн) + '">') +
+          (зн ? '<div class="was">Исходный текст: ' + esc(кратко(исх, 160)) + "</div>" : "") +
+          "</div>";
+      }).join("") + "</div></details>";
+  }).join("");
+
+  $("#cFields").innerHTML = html || '<div class="cf-none">Ничего не нашлось. Попробуйте другое слово или очистите поиск.</div>';
+  $("#cTop").innerHTML =
+    "<span>Всего надписей: <b>" + всего + "</b>. Своих правок: <b>" + правок + "</b>." +
+    (иск || толькоПравки ? " Показано: <b>" + видно + "</b>." : "") + "</span>" +
+    '<label class="chk" style="display:flex;align-items:center;gap:6px;cursor:pointer">' +
+    '<input type="checkbox" id="cOnly"' + (толькоПравки ? " checked" : "") + "> только изменённые</label>" +
+    (правок ? '<button type="button" class="mini" id="cWipe">Снять все правки языка</button>' : "");
+
+  var only = $("#cOnly");
+  if (only) only.addEventListener("change", cRender);
+  var wipe = $("#cWipe");
+  if (wipe) wipe.addEventListener("click", function () {
+    if (!confirm("Снять все ваши правки надписей для языка " + cLang.toUpperCase() + "? Тексты вернутся к исходным.")) return;
+    content = content || {};
+    content.i18n = content.i18n || {};
+    delete content.i18n[cLang];
+    cPush("Правки сняты, вернулись исходные тексты.");
   });
 }
-$("#cSave").addEventListener("click", function () {
+function base_str(v) { return typeof v === "string" ? v : ""; }
+function кратко(s, n) {
+  s = (s || "").replace(/\s+/g, " ").trim();
+  n = n || 58;
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+function cCollect() {
   var i18n = {};
   $$("#cFields [data-k]").forEach(function (el) {
     var v = el.value.trim();
     if (v) i18n[el.dataset.k] = v;
   });
-  content = content || {};
-  content.i18n = content.i18n || {};
-  content.i18n.ru = i18n;
-  api("content_save", { content: content }).then(function (r) {
+  /* На экране сейчас может быть виден не весь словарь: работает поиск
+     или галочка «только изменённые». Всё, что скрыто, надо унести из
+     прежнего набора, иначе сохранение стёрло бы правки, которых
+     человек в этот момент просто не видел. */
+  var было = cOver(cLang);
+  Object.keys(было).forEach(function (k) {
+    if (!$('#cFields [data-k="' + k.replace(/"/g, '\\"') + '"]')) i18n[k] = было[k];
+  });
+  return i18n;
+}
+function cPush(сообщение) {
+  return api("content_save", { content: content }).then(function (r) {
     var m = $("#cMsg");
     m.className = r.ok ? "form-msg ok" : "form-msg bad";
-    m.textContent = r.ok ? "Сохранено. Сайт уже отдаёт новые тексты." : "Не сохранилось, проверьте права на папку data.";
-    if (r.ok) toast("Тексты обновлены");
+    m.textContent = r.ok ? сообщение : "Не сохранилось, проверьте права на папку data.";
+    if (r.ok) { toast("Тексты обновлены"); cRender(); }
+    return r;
   });
+}
+function loadContent() {
+  fetch(API + "?action=content").then(function (r) { return r.json(); }).then(function (r) {
+    content = (r && r.content) || {};
+    bData = null;
+    cRender();
+    bRender();
+  });
+}
+$("#cFind").addEventListener("input", cRender);
+$$("#cLang button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    if (b.classList.contains("on")) return;
+    /* Пересобрать словарь до смены языка: иначе набранное в полях
+       уедет вместе с перерисовкой. */
+    content = content || {};
+    content.i18n = content.i18n || {};
+    content.i18n[cLang] = cCollect();
+    $$("#cLang button").forEach(function (x) { x.classList.remove("on"); });
+    b.classList.add("on");
+    cLang = b.dataset.lang;
+    $("#cMsg").textContent = "";
+    bData = null;
+    $("#bMsg").textContent = "";
+    cRender();
+    bRender();
+  });
+});
+$("#cSave").addEventListener("click", function () {
+  content = content || {};
+  content.i18n = content.i18n || {};
+  content.i18n[cLang] = cCollect();
+  cPush("Сохранено. Сайт уже отдаёт новые надписи на языке " + cLang.toUpperCase() + ".");
 });
 $("#cReset").addEventListener("click", function () {
-  if (!confirm("Вернуть все исходные тексты?")) return;
+  if (!confirm("Вернуть исходными ВСЕ тексты сайта: надписи обоих языков и карточки? Ваши правки пропадут.")) return;
   api("content_reset").then(function (r) {
-    if (r.ok) { toast("Исходные тексты возвращены"); loadContent(); }
+    if (!r.ok) return;
+    content = {};
+    bData = null;
+    toast("Исходные тексты возвращены");
+    cRender();
+    bRender();
   });
 });
-$("#bLoadRu").addEventListener("click", function () {
-  $("#bJson").value = JSON.stringify((content && content.blocks && content.blocks.ru) || window.RC_BLOCKS.ru, null, 2);
+
+/* ── Карточки страницы ───────────────────────────────────────
+   Продукты, преимущества, сценарии, вопросы. У каждой группы свой
+   набор полей, поэтому редактор собирается по описанию, а не пишется
+   четыре раза. */
+var B_SPEC = {
+  products: { name: "Продукты", ttl: "h", fields: [
+    ["icon", "Иконка", "icon"], ["h", "Название", "line"],
+    ["p", "Описание", "area"], ["li", "Список под описанием, по строке на пункт", "lines"]] },
+  advantages: { name: "Преимущества", ttl: "h", fields: [
+    ["icon", "Иконка", "icon"], ["h", "Заголовок", "line"], ["p", "Описание", "area"]] },
+  cases: { name: "Сценарии", ttl: "h", fields: [
+    ["h", "Заголовок", "line"], ["p", "Описание", "area"]] },
+  faq: { name: "Вопросы", ttl: "q", fields: [
+    ["q", "Вопрос", "line"], ["a", "Ответ", "area"]] }
+};
+var bGroup = "products";
+var bData = null;
+
+function bBase(lang) {
+  var B = window.RC_BLOCKS || {};
+  return B[lang] || B.ru || {};
+}
+function bNow(lang) {
+  var свои = content && content.blocks && content.blocks[lang];
+  return (свои && свои[bGroup]) || bBase(lang)[bGroup] || [];
+}
+function bIcons(текущая) {
+  var набор = window.RC_ICONS || {};
+  var имена = Object.keys(набор);
+  if (текущая && имена.indexOf(текущая) < 0) имена.unshift(текущая);
+  return имена.map(function (n) {
+    return '<option value="' + esc(n) + '"' + (n === текущая ? " selected" : "") + ">" + esc(n) + "</option>";
+  }).join("");
+}
+function bRender() {
+  if (!bData) bData = JSON.parse(JSON.stringify(bNow(cLang)));
+  var спец = B_SPEC[bGroup];
+  $("#bLangNote").textContent = "язык: " + (cLang === "en" ? "English" : "Русский");
+  $$("#bGroup button").forEach(function (b) {
+    var g = b.dataset.g;
+    b.classList.toggle("on", g === bGroup);
+    var набор = (content && content.blocks && content.blocks[cLang] && content.blocks[cLang][g]) || bBase(cLang)[g] || [];
+    b.querySelector(".cnt").textContent = набор.length;
+  });
+  $("#bList").innerHTML = bData.length ? bData.map(function (it, i) {
+    var поля = спец.fields.map(function (f) {
+      var ключ = f[0], подпись = f[1], вид = f[2], зн = it[ключ];
+      if (вид === "icon") {
+        return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
+          '<div class="ico-pick"><span class="prev" data-prev="' + i + '">' +
+          (window.RC_ICO ? window.RC_ICO(зн) : "") + "</span>" +
+          '<select data-i="' + i + '" data-f="icon">' + bIcons(зн) + "</select></div></div>";
+      }
+      if (вид === "lines") {
+        var текст = (зн || []).join("\n");
+        return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
+          '<textarea data-i="' + i + '" data-f="' + ключ + '" style="min-height:70px">' + esc(текст) + "</textarea></div>";
+      }
+      if (вид === "area") {
+        return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
+          '<textarea data-i="' + i + '" data-f="' + ключ + '">' + esc(зн || "") + "</textarea></div>";
+      }
+      return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
+        '<input data-i="' + i + '" data-f="' + ключ + '" value="' + esc(зн || "") + '"></div>';
+    }).join("");
+    return '<div class="blk"><div class="head"><span class="num">' + (i + 1) + "</span>" +
+      '<span class="ttl">' + esc(кратко(it[спец.ttl] || "Без названия")) + "</span>" +
+      '<span class="row-act">' +
+      '<button type="button" class="mini" data-move="' + i + '" data-dir="-1"' + (i === 0 ? " disabled" : "") + ">Выше</button>" +
+      '<button type="button" class="mini" data-move="' + i + '" data-dir="1"' + (i === bData.length - 1 ? " disabled" : "") + ">Ниже</button>" +
+      '<button type="button" class="mini danger" data-del="' + i + '">Убрать</button>' +
+      "</span></div>" + поля + "</div>";
+  }).join("") : '<div class="cf-none">В этой группе пока пусто. Нажмите «Добавить карточку».</div>';
+  $("#bJson").value = JSON.stringify(bData, null, 2);
+}
+$("#bList").addEventListener("input", function (e) {
+  var el = e.target;
+  if (el.dataset.i === undefined) return;
+  var i = +el.dataset.i, f = el.dataset.f, it = bData[i];
+  if (!it) return;
+  if (f === "li") it.li = el.value.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
+  else it[f] = el.value;
+  if (f === "icon") {
+    var prev = $('#bList [data-prev="' + i + '"]');
+    if (prev && window.RC_ICO) prev.innerHTML = window.RC_ICO(el.value);
+  }
+  var спец = B_SPEC[bGroup];
+  if (f === спец.ttl) {
+    var ttl = el.closest(".blk").querySelector(".ttl");
+    if (ttl) ttl.textContent = кратко(el.value || "Без названия");
+  }
+  $("#bJson").value = JSON.stringify(bData, null, 2);
 });
-$("#bLoadEn").addEventListener("click", function () {
-  $("#bJson").value = JSON.stringify((content && content.blocks && content.blocks.en) || window.RC_BLOCKS.en, null, 2);
+$("#bList").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.del !== undefined) {
+    var i = +b.dataset.del;
+    if (!confirm("Убрать карточку «" + (bData[i][B_SPEC[bGroup].ttl] || "") + "»?")) return;
+    bData.splice(i, 1);
+    bRender();
+    return;
+  }
+  if (b.dataset.move !== undefined) {
+    var j = +b.dataset.move, к = j + (+b.dataset.dir);
+    if (к < 0 || к >= bData.length) return;
+    var t = bData[j]; bData[j] = bData[к]; bData[к] = t;
+    bRender();
+  }
 });
-$$("#p-content .seg button").forEach(function (b) {
+$$("#bGroup button").forEach(function (b) {
   b.addEventListener("click", function () {
-    var m = $("#bMsg"), lang = b.dataset.l;
-    var txt = $("#bJson").value.trim();
-    if (!txt) { m.className = "form-msg bad"; m.textContent = "Пусто. Нажмите «Взять текущие» и поправьте."; return; }
-    var parsed;
-    try { parsed = JSON.parse(txt); }
-    catch (err) { m.className = "form-msg bad"; m.textContent = "JSON с ошибкой: " + err.message; return; }
-    content = content || {};
-    content.blocks = content.blocks || {};
-    content.blocks[lang] = parsed;
-    api("content_save", { content: content }).then(function (r) {
-      m.className = r.ok ? "form-msg ok" : "form-msg bad";
-      m.textContent = r.ok ? "Блоки сохранены для языка " + lang.toUpperCase() + "." : "Не сохранилось.";
-      if (r.ok) toast("Блоки обновлены");
-    });
+    if (b.dataset.g === bGroup) return;
+    bGroup = b.dataset.g;
+    bData = null;
+    $("#bMsg").textContent = "";
+    bRender();
+  });
+});
+$("#bAdd").addEventListener("click", function () {
+  var пустая = {};
+  B_SPEC[bGroup].fields.forEach(function (f) {
+    пустая[f[0]] = f[2] === "lines" ? [] : (f[2] === "icon" ? Object.keys(window.RC_ICONS || { cdn: 1 })[0] : "");
+  });
+  bData.push(пустая);
+  bRender();
+  var последняя = $("#bList").lastElementChild;
+  if (последняя) {
+    последняя.scrollIntoView({ behavior: "smooth", block: "center" });
+    var поле = последняя.querySelector('input[data-f], textarea[data-f]');
+    if (поле) поле.focus();
+  }
+});
+$("#bBack").addEventListener("click", function () {
+  if (!confirm("Вернуть исходный набор в группе «" + B_SPEC[bGroup].name + "»? Правки этой группы пропадут после сохранения.")) return;
+  bData = JSON.parse(JSON.stringify(bBase(cLang)[bGroup] || []));
+  bRender();
+});
+$("#bFromJson").addEventListener("click", function () {
+  var m = $("#bMsg"), txt = $("#bJson").value.trim();
+  var разобрано;
+  try { разобрано = JSON.parse(txt); }
+  catch (err) { m.className = "form-msg bad"; m.textContent = "JSON с ошибкой: " + err.message; return; }
+  if (!Array.isArray(разобрано)) { m.className = "form-msg bad"; m.textContent = "Ожидается список карточек в квадратных скобках."; return; }
+  bData = разобрано;
+  m.className = "form-msg ok";
+  m.textContent = "Перенесено в карточки. Проверьте и сохраните.";
+  bRender();
+});
+$("#bSave").addEventListener("click", function () {
+  var m = $("#bMsg"), спец = B_SPEC[bGroup];
+  var пусто = bData.filter(function (it) { return !(it[спец.ttl] || "").trim(); }).length;
+  if (пусто) {
+    m.className = "form-msg bad";
+    m.textContent = "Не сохранил: " + пусто + " карточек без заголовка. Заполните или уберите их.";
+    return;
+  }
+  content = content || {};
+  content.blocks = content.blocks || {};
+  /* Свой набор для языка заводим целиком с исходного: иначе
+     сохранение одной группы вынесло бы со страницы три остальные. */
+  if (!content.blocks[cLang]) content.blocks[cLang] = JSON.parse(JSON.stringify(bBase(cLang)));
+  content.blocks[cLang][bGroup] = bData;
+  api("content_save", { content: content }).then(function (r) {
+    m.className = r.ok ? "form-msg ok" : "form-msg bad";
+    m.textContent = r.ok
+      ? "Сохранено: " + bData.length + " карточек в группе «" + спец.name + "», язык " + cLang.toUpperCase() + "."
+      : "Не сохранилось, проверьте права на папку data.";
+    if (r.ok) { toast("Карточки обновлены"); bRender(); }
   });
 });
 
@@ -1030,12 +1467,36 @@ function loadSys() {
     function row(k, v, bad) {
       return "<b>" + esc(k) + '</b><span>' + (bad ? '<i class="bad-dot"></i>' : "") + esc(String(v)) + "</span>";
     }
+    /* «404 ч» человек в уме на сутки не делит, а прочерк после слова
+       «последняя» читается как поломка. Крупные величины пишем так,
+       как их произносят вслух. */
+    function ждёт(ч) {
+      if (ч < 24) return ч + " ч";
+      var д = Math.floor(ч / 24), ост = ч % 24;
+      return д + " " + скл(д, "день", "дня", "дней") + (ост ? " " + ост + " ч" : "");
+    }
+    function датаРФ(t) {
+      var m = String(t).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? m[3] + "." + m[2] + "." + m[1].slice(2) : String(t);
+    }
+    function скл(n, од, дв, мн) {
+      var a = n % 100, b = n % 10;
+      if (a > 10 && a < 20) return мн;
+      if (b === 1) return од;
+      if (b >= 2 && b <= 4) return дв;
+      return мн;
+    }
     var live = [];
     live.push(row("Заявок без ответа", r.leads_new || 0, (r.leads_new || 0) > 0));
-    if (r.leads_wait_hours) live.push(row("Самая старая ждёт", r.leads_wait_hours + " ч", r.leads_wait_hours >= 4));
-    live.push(row("Последний отчёт", r.cron_last || "ещё не было", !r.cron_last));
-    live.push(row("Резервных копий", (r.backup_count || 0) + " шт, последняя " + (r.backup_last || "-"), !r.backup_count));
-    if (r.cert_days != null) live.push(row("Сертификат", r.cert_days + " дн. до конца", r.cert_days <= 14));
+    if (r.leads_wait_hours) live.push(row("Самая старая ждёт", ждёт(+r.leads_wait_hours), r.leads_wait_hours >= 4));
+    /* Дата отчёта приходит машинным видом 2026-08-11. В заявках она
+       уже пишется по-человечески, здесь пусть выглядит так же. */
+    live.push(row("Последний отчёт", r.cron_last ? датаРФ(r.cron_last) : "ещё не было", !r.cron_last));
+    live.push(row("Резервных копий", r.backup_count
+      ? r.backup_count + " " + скл(r.backup_count, "штука", "штуки", "штук") +
+        (r.backup_last ? ", последняя " + r.backup_last : "")
+      : "ни одной", !r.backup_count));
+    if (r.cert_days != null) live.push(row("Сертификат", r.cert_days + " " + скл(r.cert_days, "день", "дня", "дней") + " до конца", r.cert_days <= 14));
     if (r.disk_free_gb != null) live.push(row("Свободно на диске", r.disk_free_gb + " ГБ", r.disk_free_gb < 3));
     if (r.tg_ip) live.push(row("Адрес Телеграма", r.tg_ip, false));
     var box = $("#sysLive");
