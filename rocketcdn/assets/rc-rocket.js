@@ -4810,7 +4810,16 @@ Rocket.prototype.layout = function (p, dt) {
 
 /* Крупный читаемый текст: только он лежит на прозрачном фоне,
    у карточек своя подложка и ракета за ней и так не видна */
-var READ_SEL = ".hero h1,.hero-sub,.sec-h,.sec-p,.sec-tag,.kpi-n,.kpi-l,.hs-h,.legal,.card,.prod-card,.case,.step,.faq-i,.chip";
+/* Что корабль обязан считать словами и над чем уступает яркостью.
+
+   Здесь не было .viz-card и .dc - карточек с графиками и с дата-
+   центрами. Корабль их не видел вовсе и проходил поверх в полную
+   силу: на снимке приёмки корпус накрыл «Точки присутствия по
+   регионам» вместе с числами 128 и 42, читать было нечего. Ошибка
+   тихая, потому что все остальные карточки раздела называются
+   .card и в список попали с самого начала. */
+var READ_SEL = ".hero h1,.hero-sub,.sec-h,.sec-p,.sec-tag,.kpi-n,.kpi-l,.hs-h,.legal," +
+  ".card,.prod-card,.case,.step,.faq-i,.chip,.viz-card,.dc";
 
 Rocket.prototype.readables = function () {
   if (!this._reads || this._readsAt !== document.body.childElementCount) {
