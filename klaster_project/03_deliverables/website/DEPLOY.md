@@ -19,7 +19,7 @@
 3. Создать `api/config.php` из `api/config.sample.php`, вписать токен бота, chat_id руководителей, Gmail app-password (значения — в secrets.env проекта). Либо задать ENV ACTIVITI_*.
 4. Проверить, что PHP имеет `curl` (для SMTP и Telegram). На большинстве хостингов есть.
 5. Права: папка `data/` доступна на запись PHP (0755/0775).
-6. Обновить в `index.html` реальный домен в canonical/OG и `sitemap.xml` (сейчас плейсхолдер clusterspace.ru).
+6. ~~Обновить в `index.html` реальный домен в canonical/OG и `sitemap.xml`~~ СДЕЛАНО 14.08.2026: домен clusterspace.ru подключён, сайт работает по https.
 7. Подключить Яндекс.Метрику/Google Analytics (вставить счётчик перед `</head>`).
 
 ## Проверка формы
