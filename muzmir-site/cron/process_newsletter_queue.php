@@ -78,6 +78,27 @@ try {
     }
 
     $take = min($batch, $remaining);
+
+    /* МАССОВОЕ ПИСЬМО ЖДЁТ РАБОЧЕГО ОКНА, ЛИЧНОЕ — НЕТ.
+     *
+     * Очередь наполняется в окно (крон queue_institutions идёт с 8 до 18), а
+     * разгребается ежеминутно и круглосуточно — поэтому наполненное вечером
+     * уходило под утро. Двадцать пятого августа две тысячи девяносто четыре
+     * приглашения учреждениям ушли между шестью и восемью утра: адресат видит
+     * холодное письмо от центра до начала рабочего дня и читает его как спам.
+     *
+     * Личные письма — код входа, подтверждение заявки, результат, наградные
+     * материалы — идут как шли: человек сам только что нажал кнопку и ждёт
+     * ответа, и час суток тут ни при чём. Массовым считаем то, что привязано к
+     * рассылке или помечено типом кампании. */
+    $massWait = '';
+    if (is_file(BASE_PATH . '/core/outreach_window.php')) {
+        require_once BASE_PATH . '/core/outreach_window.php';
+        if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
+            $massWait = " AND COALESCE(newsletter_id,0) = 0 AND COALESCE(campaign_type,'') = ''";
+        }
+    }
+
     /* ПИСЬМО МОЖЕТ ЖДАТЬ СВОЕГО ЧАСА.
      *
      * В очереди есть колонка scheduled_at, и код, который ставит письмо на утро,
@@ -88,7 +109,11 @@ try {
     $rows = all("SELECT * FROM mail_queue
                   WHERE status='queued'
                     AND (COALESCE(scheduled_at,'') = '' OR datetime(scheduled_at) <= datetime('now','localtime'))
+                    $massWait
                ORDER BY created_at ASC LIMIT ?", [$take]);
+    if ($massWait !== '' && !$rows) {
+        cron_log(JOB, 'массовые письма ждут окна: ' . outreach_window_reason());
+    }
 
     $sent = 0;
     $failed = 0;
