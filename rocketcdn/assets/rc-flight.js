@@ -2507,8 +2507,8 @@ function buildWorld() {
            дымка гасилась в ноль по всей оболочке и пропадала вовсе.
            А прежняя запись через порог 0.86 делала ровную полосу с
            обрубленным наружным краем - ту самую обводку. */
-        "  float край = clamp(dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0);" +
-        "  float rim = pow(край, 1.35);" +
+        "  float edge = clamp(dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0);" +
+        "  float rim = pow(edge, 1.35);" +
         "  float lit = clamp(dot(vW, uSun) * 0.5 + 0.5, 0.0, 1.0);" +
         "  float term = pow(1.0 - abs(dot(vW, uSun)), 7.0);" +
         "  vec3 col = mix(vec3(0.10,0.26,0.52), vec3(0.34,0.66,1.0), lit);" +
@@ -2587,8 +2587,8 @@ function buildWorld() {
         fragmentShader:
           "varying vec3 vN; varying vec3 vW; uniform vec3 uC; uniform vec3 uWarm; uniform vec3 uSun;" +
           "void main(){" +
-          "  float край = clamp(dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0);" +
-          "  float rim = pow(край, 1.35);" +
+          "  float edge = clamp(dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0);" +
+          "  float rim = pow(edge, 1.35);" +
           "  float lit = clamp(dot(vW, uSun) * 0.5 + 0.5, 0.0, 1.0);" +
           /* Терминатор: узкая полоса на границе света и тени */
           "  float term = pow(1.0 - abs(dot(vW, uSun)), 8.0);" +

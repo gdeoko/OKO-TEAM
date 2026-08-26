@@ -127,6 +127,10 @@ for (const э of ЭКРАНЫ) {
     const s = L ? L.safe : null;
     const окно = s ? { x: (1 + s.l) / 2 * innerWidth, y: (1 - s.t) / 2 * innerHeight,
                        w: (s.r - s.l) / 2 * innerWidth, h: (s.t - s.b) / 2 * innerHeight } : null;
+    /* Ошибка компиляции шейдера в консоли - это не «предупреждение»,
+       а разрушенный кадр: THREE молча ставит вместо материала пустой
+       и тело чернеет. Один раз я написала имя переменной кириллицей
+       прямо в GLSL, приёмка нашла это только по логу консоли. */
     const вылезло = [];
     if (окно) document.querySelectorAll(".rc-flight *").forEach(el => {
       const cs = getComputedStyle(el);
