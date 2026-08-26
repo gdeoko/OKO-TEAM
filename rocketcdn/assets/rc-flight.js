@@ -3541,7 +3541,12 @@ function buildWorld() {
     geo.setAttribute("position", new T.BufferAttribute(pos, 3));
     geo.setAttribute("color", new T.BufferAttribute(col, 3));
     var pts = new T.Points(geo, new T.PointsMaterial({
-      size: scale * 0.0075, sizeAttenuation: true, map: starDot, vertexColors: true,
+      /* Размер звезды галактики с ослаблением по дальности раздувал
+         её в полтора десятка экранных пикселей при подлёте: спираль
+         превращалась в горсть светящихся клякс. Ослабление снято,
+         размер задан в пикселях - галактика остаётся россыпью точек
+         с любого расстояния, как ей и положено. */
+      size: 1.3, sizeAttenuation: false, map: starDot, vertexColors: true,
       transparent: true, opacity: 0.95, depthWrite: false, blending: T.AdditiveBlending
     }));
     /* Ядро: тёплое свечение и балдж вокруг него */
@@ -5629,8 +5634,15 @@ function frame(ts) {
   }
   w3.hole.rotation.y += dt * 0.14;
   w3.diskMat.uniforms.uT.value = ts * 0.001;
-  w3.sky.rotation.y += dt * 0.0025;
-  if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
+  /* Небо больше не вращается.
+
+     Панорама крутилась на 0.0025 рад/с, а звёздное поле стояло:
+     полоса Млечного Пути из панорамы медленно уезжала относительно
+     сгущения звёзд, и через несколько минут два неба расходились.
+     В космосе фон вокруг корабля и не вращается: поворачивается сам
+     корабль. Галактики тоже остановлены - оборот за десять минут у
+     объекта, до которого миллионы лет лёта, глаз читает как
+     заводную игрушку. */
   if (w3.nebSprites) {
     for (var nbi = 0; nbi < w3.nebSprites.length; nbi++) {
       var nb = w3.nebSprites[nbi];
