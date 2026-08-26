@@ -428,6 +428,13 @@ from promt_engine import Бренд, собрать, проверить
 "P-84-vk-marshrut-detali":
     "a machined metal part resting on a graphite bench with the open roller gate of the next block visible "
     "beyond it across the yard, the part in sharp near focus",
+"P-130-vk-chetyre-sem-sot":
+    "an aerial view of a dense Moscow district at flat overcast noon shot straight down at a shallow angle, "
+    "residential blocks filling most of the frame and the long saw-tooth roofs of working production halls "
+    "reading clearly between them, service yards and truck bays visible in the gaps",
+"P-S-voskresen-e-spisok-goroda":
+    "a machined metal part resting alone on a graphite bench in a near overhead close view, its milled faces "
+    "and tool marks in hard raking light, the bench receding into black behind it",
 "P-91-karusel-sem-mest":
     "seven machined steel plates laid in a row on a graphite bench like a checklist, hard raking light "
     "separating one plate from the next, the last plate faced in amber and set slightly apart",
