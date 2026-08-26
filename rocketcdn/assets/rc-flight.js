@@ -976,6 +976,8 @@ var ПОВЕРХНОСТЬ = {
  "MERCURY": "mercury",
  "MOON": "moon",
  "NEPTUNE": "neptune",
+ "NETWORK NODE": "earth",
+ "NODE": "sat",
  "PROXIMA B": "terran",
  "PROXIMA CENTAURI": "star",
  "PROXIMA D": "rocky",
@@ -1004,20 +1006,32 @@ var ПОВЕРХНОСТЬ = {
  "МЕРКУРИЙ": "mercury",
  "НЕПТУН": "neptune",
  "САТУРН": "saturn",
+ "СПУТНИК": "sat",
  "СОЛНЦЕ": "sun",
  "УРАН": "uranus",
+ "УЗЕЛ": "sat",
+ "УЗЕЛ СЕТИ": "earth",
  "ЧЁРНАЯ": "hole",
  "ЮПИТЕР": "jupiter"
 };
 
 /* Имя тела в досье приходит как в подписи: «МАРС», «TRAPPIST-1 E»,
-   «ЧЁРНАЯ ДЫРА». Ищем сперва целиком, потом по первому слову - у
-   чёрной дыры и у составных имён это единственный надёжный путь. */
+   «ЧЁРНАЯ ДЫРА», «УЗЕЛ СЕТИ · Москва». Ищем сперва целиком, потом по
+   ДВУМ первым словам и только потом по одному.
+
+   Два слова здесь не украшение. Узлов в игре два разных вида, и оба
+   начинаются одинаково: «УЗЕЛ СЕТИ · Москва» стоит на земле, а
+   «УЗЕЛ RC-10» висит на орбите. По одному первому слову они
+   сливаются, и наземному узлу доставалась бы обшивка спутника. */
 function породаДля(name) {
   var n = String(name || "").toUpperCase().trim();
   if (ПОВЕРХНОСТЬ[n]) return ПОВЕРХНОСТЬ[n];
-  var первое = n.split(/[\s·]+/)[0];
-  return ПОВЕРХНОСТЬ[первое] || null;
+  var слова = n.split(/[\s·]+/).filter(Boolean);
+  if (слова.length > 1) {
+    var два = слова[0] + " " + слова[1];
+    if (ПОВЕРХНОСТЬ[два]) return ПОВЕРХНОСТЬ[два];
+  }
+  return ПОВЕРХНОСТЬ[слова[0]] || null;
 }
 
 function dosPaint(obj, name, фаза) {
@@ -4064,6 +4078,24 @@ function holoList(w3) {
     out.push({ id: "h-hole", o: w3.hole, title: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
                sub: RU ? "ГОРИЗОНТ СОБЫТИЙ" : "EVENT HORIZON", kind: "warn", goal: "hole",
                info: RU ? "Дальше не возвращаются даже пакеты. Держим дистанцию." : "Not even packets come back." });
+    /* Солнце, пояс, комета и спутник вели себя как декорация: сканер
+       их брал, а досье по ним не открывалось - в списке меток их
+       просто не было. Поверхности для всех четырёх сняты вместе с
+       прочими, и без этих строк они лежали бы мёртвым грузом.
+       Заказчик просил именно это: «50+ планет, астероиды и тд, и при
+       клике видео». */
+    out.push({ id: "h-sun", o: w3.sun, title: RU ? "СОЛНЦЕ" : "SUN",
+               sub: RU ? "5500 °C НА ПОВЕРХНОСТИ" : "5500 C SURFACE", kind: "warn", goal: "sun",
+               info: RU ? "Кипящая грануляция, пятна и протуберанцы. Ближе не подходим." : "Boiling granulation, spots and prominences. We keep our distance." });
+    out.push({ id: "h-belt", o: w3.belt1, title: RU ? "АСТЕРОИДНЫЙ ПОЯС" : "ASTEROID BELT",
+               sub: RU ? "МЕЖДУ МАРСОМ И ЮПИТЕРОМ" : "MARS TO JUPITER", kind: "warn", goal: "belt",
+               info: RU ? "Обломки несостоявшейся планеты: щебень, пыль и редкие глыбы." : "Debris of a planet that never formed: rubble, dust and rare boulders." });
+    out.push({ id: "h-comet", o: w3.comet, title: RU ? "КОМЕТА RC/2026" : "COMET RC/2026",
+               sub: RU ? "ХВОСТ ВСЕГДА ОТ СОЛНЦА" : "TAIL AWAY FROM THE SUN", kind: "station", goal: "comet",
+               info: RU ? "Тёмное ядро изо льда и пыли. Подходя к Солнцу, оно вскипает хвостом." : "A dark nucleus of ice and dust. Near the Sun it boils into a tail." });
+    out.push({ id: "h-sat", o: w3.sat, title: "RC-SAT",
+               sub: RU ? "УЗЕЛ НА ОРБИТЕ" : "ORBITAL NODE", kind: "station", goal: "sat",
+               info: RU ? "Свой спутник сети: солнечные панели, золотая изоляция, антенна на Землю." : "Our own network satellite: solar arrays, gold insulation, an antenna aimed at Earth." });
   } else {
     var pack = built[uniIdx];
     if (!pack) return out;
