@@ -6,8 +6,9 @@
  * редактирование и удаление любых сообщений бота, очистка диалога, блокировка,
  * включение/выключение бота, снятие ручного перехвата, создание нового диалога.
  *
- * Когда оператор отвечает сам — бот автоматически молчит 5–10 минут (ручной перехват),
- * см. core/chat_ops.php (chat_operator_touch). Функционал одинаков для ВК и сайта.
+ * Когда оператор отвечает сам — бот замолкает на 30 минут (ручной перехват) и его
+ * уже подготовленный, но не отправленный ответ снимается — см. core/chat_ops.php
+ * (chat_operator_touch). Функционал одинаков для ВК и сайта.
  */
 declare(strict_types=1);
 
@@ -59,13 +60,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (\Throwable $e) {}
         // Доставка в канал: ВК — сразу сообщением; сайт — участник подхватит опросом истории.
         $sent = chat_channel_send($sk, $text);
-        // Ручной перехват: бот молчит следующие 5–10 минут.
-        chat_operator_touch($sk);
+        /* Ручной перехват: бот молчит полчаса И снимает то, что уже собрался
+           сказать. Иначе через пару минут поверх живого ответа прилетал ещё и
+           ботовский — по тому же вопросу, другими словами. */
+        $cancelled = chat_operator_touch($sk);
         chat_dialog_set($sk, ['pending_offhours' => 0]);
         audit('chat_admin_reply', 'chat', 0, ['session' => $sk]);
+        $mins = function_exists('chat_takeover_minutes') ? chat_takeover_minutes() : 30;
+        $tail = ' Бот в этот диалог не заходит ' . $mins . ' минут.'
+              . ($cancelled > 0 ? ' Снят подготовленный ответ бота (' . $cancelled . ').' : '');
         flash(chats_channel($sk) === 'vk'
-            ? ($sent ? 'Ответ отправлен участнику во ВКонтакте. Бот молчит 5–10 минут.' : 'Ответ сохранён, но не ушёл во ВК (проверьте токен сообщества).')
-            : 'Ответ отправлен — участник увидит его в чате сайта. Бот молчит 5–10 минут.',
+            ? ($sent ? 'Ответ отправлен участнику во ВКонтакте.' . $tail : 'Ответ сохранён, но не ушёл во ВК (проверьте токен сообщества).')
+            : 'Ответ отправлен — участник увидит его в чате сайта.' . $tail,
             $sent || chats_channel($sk) === 'web' ? 'success' : 'error');
         admin_redirect('chats', $back);
     }
@@ -179,15 +185,28 @@ if ($sk !== '') {
     // конец, а не то, с чего разговор начинался год назад.
     $msgs = [];
     try {
+        /* ВРЕМЯ ДОСТАВКИ, А НЕ ВРЕМЯ СБОРКИ ОТВЕТА.
+         *
+         * Ответ обычному участнику ложится в базу сразу, а уходит через пять
+         * минут (visible_at на сайте, vk_send_at в ВК). Админка печатала
+         * created_at — и переписка выглядела так, будто бот отвечает через две
+         * секунды: вопрос 13:00:34, ответ 13:00:36. Владелец по этому экрану и
+         * судил, что очередь не работает, хотя человек получил ответ в 13:06.
+         * Берём оба срока и показываем правду: доставлено или ждёт отправки. */
         $msgs = array_reverse(all(
-            "SELECT id, role, text, file, created_at FROM chat_messages
+            "SELECT id, role, text, file, created_at,
+                    COALESCE(visible_at,'') AS visible_at,
+                    COALESCE(vk_send_at,'') AS vk_send_at,
+                    COALESCE(vk_sent,0)     AS vk_sent
+               FROM chat_messages
               WHERE session_key=? ORDER BY id DESC LIMIT 500", [$sk]));
     } catch (\Throwable $e) {}
     $botOn   = (int) ($d['bot_enabled'] ?? 1) === 1;
     $blocked = (int) ($d['blocked'] ?? 0) === 1;
     $opUntil = trim((string) ($d['operator_until'] ?? ''));
     $opActive = $opUntil !== '' && strtotime($opUntil) > time();
-    $roleRu = ['user' => 'Участник', 'assistant' => 'Центр', 'escalated' => '⚑ эскалация', 'escalated_noanswer' => '⚑ нет ответа', 'dialog_end' => '— конец диалога —', 'review_asked' => '— запрошен отзыв —'];
+    $roleRu = ['user' => 'Участник', 'assistant' => 'Центр', 'escalated' => '⚑ эскалация', 'escalated_noanswer' => '⚑ нет ответа', 'dialog_end' => '— конец диалога —', 'review_asked' => '— запрошен отзыв —',
+                'bot_cancelled' => '— ответ бота снят: отвечает оператор —'];
 
     ob_start(); ?>
     <div class="page-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -219,10 +238,22 @@ if ($sk !== '') {
           }
           $mine = $role === 'assistant';
           $txt  = trim((string) $m['text']);
-          $file = trim((string) ($m['file'] ?? '')); ?>
+          $file = trim((string) ($m['file'] ?? ''));
+          /* Когда ответ реально у человека. Сайт — visible_at, ВК — vk_send_at.
+             Пусто у обоих: ушло сразу (Клуб, оператор, шаблон вне графика). */
+          $due     = trim((string) ($m['visible_at'] ?? '')) ?: trim((string) ($m['vk_send_at'] ?? ''));
+          $pending = $mine && $due !== '' && strtotime($due) > time();
+          $stamp   = $due !== '' ? $due : (string) $m['created_at']; ?>
         <div class="chat-row" data-mid="<?= (int) $m['id'] ?>" style="display:flex;justify-content:<?= $mine ? 'flex-end' : 'flex-start' ?>;margin:8px 0">
-          <div style="max-width:78%;padding:9px 12px;border-radius:12px;background:<?= $mine ? '#d9f0e0' : '#fff' ?>;border:1px solid #e4e7ec">
-            <div style="font-size:11px;color:#888;margin-bottom:3px"><?= $mine ? 'Центр' : h($title) ?> · <?= h(date('d.m H:i', strtotime((string) $m['created_at']))) ?></div>
+          <div style="max-width:78%;padding:9px 12px;border-radius:12px;background:<?= $pending ? '#fdf3e0' : ($mine ? '#d9f0e0' : '#fff') ?>;border:1px solid <?= $pending ? '#f0d9a8' : '#e4e7ec' ?><?= $pending ? ';opacity:.85' : '' ?>">
+            <div style="font-size:11px;color:#888;margin-bottom:3px">
+              <?= $mine ? 'Центр' : h($title) ?> · <?= h(date('d.m H:i', strtotime($stamp))) ?>
+              <?php if ($pending): ?>
+                <span style="color:#96601a">· в очереди, уйдёт в <?= h(date('H:i', strtotime($due))) ?></span>
+              <?php elseif ($mine && $due !== ''): ?>
+                <span style="color:#1c8a72">· доставлено</span>
+              <?php endif; ?>
+            </div>
             <?php if ($file !== ''): ?><div style="margin:4px 0"><a href="<?= h(url($file)) ?>" target="_blank">📎 вложение</a></div><?php endif; ?>
             <?php if ($txt !== ''): ?><div style="white-space:pre-wrap;word-break:break-word"><?= nl2br(h($txt)) ?></div><?php endif; ?>
             <div class="chat-tools" style="margin-top:5px;display:flex;gap:8px">

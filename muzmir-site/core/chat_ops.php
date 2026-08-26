@@ -36,10 +36,14 @@ function chat_ops_boot(): void {
     } catch (\Throwable $e) { /* best-effort */ }
 }
 
-/** Сколько минут бот молчит после ответа оператора (ручной перехват). */
+/**
+ * Сколько минут бот молчит после ответа оператора (ручной перехват).
+ * Полчаса — правило владельца: столько длится живой разговор, и всё это время
+ * бот в диалог не заходит, даже если человек написал ещё раз.
+ */
 function chat_takeover_minutes(): int {
-    $m = (int) setting('chat_takeover_min', '10');
-    return $m > 0 ? min(120, $m) : 10;
+    $m = (int) setting('chat_takeover_min', '30');
+    return $m > 0 ? min(120, $m) : 30;
 }
 
 /** Строка состояния диалога (с дефолтами, если записи ещё нет). */
@@ -124,11 +128,45 @@ function chat_bot_muted(string $sessionKey): string {
     return '';
 }
 
-/** Отметить, что оператор только что ответил → включить тишину бота на N минут. */
-function chat_operator_touch(string $sessionKey, ?int $minutes = null): void {
+/**
+ * Отметить, что оператор только что ответил → включить тишину бота на N минут.
+ *
+ * И СНЯТЬ ТО, ЧТО БОТ УЖЕ СОБРАЛСЯ СКАЗАТЬ.
+ *
+ * Ответ обычному участнику ждёт своей очереди пять минут: на сайте — до
+ * visible_at, во ВКонтакте — до vk_send_at. Пока он ждёт, оператор успевает
+ * ответить сам, и через пару минут поверх живого ответа прилетал ещё и
+ * ботовский — по тому же вопросу, другими словами. Человек видел два разных
+ * ответа от «центра» подряд.
+ *
+ * Заглушить бота на будущее мало: снимаем и уже готовые, но не доставленные
+ * ответы. Строку не удаляем — меняем роль на 'bot_cancelled': из истории она
+ * пропадает (там отбор по user/assistant), в админке видно, что бот собирался
+ * ответить и был остановлен, а сторож досылки её больше не подхватит.
+ */
+function chat_operator_touch(string $sessionKey, ?int $minutes = null): int {
     $min = $minutes ?? chat_takeover_minutes();
     $until = date('Y-m-d H:i:s', time() + $min * 60);
     chat_dialog_set($sessionKey, ['operator_until' => $until, 'last_admin_at' => date('Y-m-d H:i:s')]);
+    return chat_cancel_pending_bot($sessionKey);
+}
+
+/**
+ * Снять неотправленные ответы бота в диалоге. Возвращает, сколько снято.
+ * Ответы самого оператора (by_operator=1) не трогаем — они уходят сразу и
+ * никакой очереди не ждут.
+ */
+function chat_cancel_pending_bot(string $sessionKey): int {
+    $now = date('Y-m-d H:i:s');
+    try {
+        $st = q("UPDATE chat_messages
+                    SET role='bot_cancelled'
+                  WHERE session_key=? AND role='assistant' AND COALESCE(by_operator,0)=0
+                    AND ( (COALESCE(visible_at,'') <> '' AND visible_at > ?)
+                       OR (COALESCE(vk_send_at,'') <> '' AND vk_send_at > ? AND COALESCE(vk_sent,0)=0) )",
+                [$sessionKey, $now, $now]);
+        return is_object($st) && method_exists($st, 'rowCount') ? (int) $st->rowCount() : 0;
+    } catch (\Throwable $e) { return 0; }
 }
 
 /** Шаблон-ответ вне графика работы (вопрос сохраняем, ответим в 9:00). */

@@ -35,8 +35,11 @@ try {
 
 $stuck = [];
 try {
+    // role='assistant' обязателен: снятый оператором ответ получает роль
+    // 'bot_cancelled', и досылать его нельзя — иначе сторож отправит человеку
+    // ровно то, что оператор только что отменил, ответив сам.
     $stuck = all("SELECT id, session_key, text FROM chat_messages
-                   WHERE vk_sent=0 AND COALESCE(vk_send_at,'') <> ''
+                   WHERE vk_sent=0 AND COALESCE(vk_send_at,'') <> '' AND role='assistant'
                      AND vk_send_at <= datetime('now','localtime','-2 minutes')
                    ORDER BY id ASC LIMIT 50");
 } catch (\Throwable $e) { exit(0); }

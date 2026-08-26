@@ -29,12 +29,15 @@ if ($action === 'history') {
     $rows = [];
     try {
         $rows = $since > 0
+            // role IN (...) отсекает служебные пометки и, главное, ответы бота,
+            // снятые оператором (bot_cancelled): человек не должен получить то,
+            // что уже отменили, ответив ему живьём.
             ? all("SELECT id, role, text, file, created_at FROM chat_messages
-                    WHERE session_key=? AND id>?
+                    WHERE session_key=? AND id>? AND role IN ('user','assistant')
                       AND (COALESCE(visible_at,'') = '' OR visible_at <= datetime('now','localtime'))
                     ORDER BY id ASC LIMIT 100", [$sessionKey, $since])
             : all("SELECT id, role, text, file, created_at FROM chat_messages
-                    WHERE session_key=?
+                    WHERE session_key=? AND role IN ('user','assistant')
                       AND (COALESCE(visible_at,'') = '' OR visible_at <= datetime('now','localtime'))
                     ORDER BY id DESC LIMIT 100", [$sessionKey]);
         if ($since <= 0) $rows = array_reverse($rows);   // последние 100, в прямом порядке

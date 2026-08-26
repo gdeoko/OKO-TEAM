@@ -42,6 +42,40 @@ while (time() - $start < $delay) {
         sleep((int) max(1, min(20, $typeFrom - (time() - $start))));
     }
 }
+/* ПЕРЕД САМОЙ ОТПРАВКОЙ СМОТРИМ, НЕ ОТМЕНИЛИ ЛИ ОТВЕТ.
+ *
+ * Процесс спит до пяти минут. За это время оператор мог зайти в диалог и
+ * ответить сам — тогда ответ бота снят (role='bot_cancelled', см.
+ * chat_cancel_pending_bot) и включён перехват. Без этой проверки бот всё равно
+ * писал человеку поверх живого ответа: сообщение уже было в аргументах
+ * процесса, и база его не останавливала.
+ *
+ * Без row_id (старый вызов, шаблон вне графика) проверять нечего — шлём. */
+if ($rowId > 0) {
+    try {
+        $row = one("SELECT role, vk_sent, session_key FROM chat_messages WHERE id=?", [$rowId]);
+        if (!$row) {
+            error_log("vk_send_delayed peer=$peer: строка ответа удалена — не отправляю");
+            exit(0);
+        }
+        if ((string) $row['role'] !== 'assistant') {
+            if (function_exists('_vk_log')) _vk_log("vk_send_delayed peer=$peer: ответ снят оператором — не отправляю");
+            exit(0);
+        }
+        if ((int) ($row['vk_sent'] ?? 0) === 1) exit(0);   // сторож уже дослал
+        // Перехват оператором мог включиться и без правки этой строки.
+        if (is_file(BASE_PATH . '/core/chat_ops.php')) {
+            require_once BASE_PATH . '/core/chat_ops.php';
+            if (function_exists('chat_operator_active')
+                && chat_operator_active((string) $row['session_key'])) {
+                q("UPDATE chat_messages SET role='bot_cancelled' WHERE id=?", [$rowId]);
+                if (function_exists('_vk_log')) _vk_log("vk_send_delayed peer=$peer: в диалоге работает оператор — не отправляю");
+                exit(0);
+            }
+        }
+    } catch (\Throwable $e) { /* база недоступна — лучше отправить, чем промолчать */ }
+}
+
 // РЕЗУЛЬТАТ ОТПРАВКИ ПРОВЕРЯЕМ. Раньше возврат просто отбрасывался, а vk_api
 // логирует только временные коды (1/6/9/10/29). Постоянные отказы — запрет
 // сообщений от сообщества (901/902), недействительный токен, 914 — уходили молча:
