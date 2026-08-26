@@ -102,6 +102,9 @@
   .lead .side { display: grid; gap: 8px; justify-items: end }
   .lead .row-act { justify-content: flex-end }
   .lead .note { grid-column: 1 / -1; display: grid; gap: 6px }
+  .lead .note .note-open { display: none; justify-self: start }
+  .lead .note.is-hidden .note-open { display: inline-block }
+  .lead .note.is-hidden textarea, .lead .note.is-hidden .nrow { display: none }
   .lead .note textarea {
     width: 100%; min-height: 56px; resize: vertical; padding: 9px 11px;
     font: inherit; font-size: 13px; line-height: 1.5;
@@ -856,8 +859,15 @@ function renderLeads() {
           "<button class='mini' data-s='spam' data-id='" + esc(x.id) + "'>Спам</button>" +
           "<button class='mini danger' data-del='" + esc(x.id) + "'>Удалить</button>" +
         "</div></div>" +
-      "<div class='note'><textarea data-note='" + esc(x.id) + "' rows='1' " +
-        "placeholder='Заметка по клиенту'>" + esc(x.note || "") + "</textarea>" +
+      /* Пустое поле заметки на каждой карточке съедало на телефоне
+         по сотне пикселей впустую, а заметки есть у единиц. Пока
+         записи нет, вместо поля стоит кнопка: нажал - поле раскрылось
+         и курсор уже в нём. Есть запись - поле видно сразу, иначе её
+         пришлось бы искать щелчком. */
+      "<div class='note" + (x.note ? "" : " is-hidden") + "'>" +
+        "<button class='mini note-open' data-open='" + esc(x.id) + "'>Заметка по клиенту</button>" +
+        "<textarea data-note='" + esc(x.id) + "' rows='1' " +
+        "placeholder='Что важно помнить по этому клиенту'>" + esc(x.note || "") + "</textarea>" +
         "<div class='nrow'><button class='mini' data-savenote='" + esc(x.id) + "'>Сохранить заметку</button>" +
         (x.note_ts ? "<span class='hint'>обновлена " + esc(когда(x.note_ts)) + "</span>" : "") +
         "</div></div>" +
@@ -877,6 +887,13 @@ $("#leadRows").addEventListener("click", function (e) {
     api("lead_delete", { id: b.dataset.del }).then(function (r) {
       if (r.ok) { toast("Удалено"); loadLeads(); }
     });
+  }
+  if (b.dataset.open) {
+    var гнездо = b.closest(".note");
+    гнездо.classList.remove("is-hidden");
+    var поле0 = гнездо.querySelector("textarea");
+    if (поле0) поле0.focus();
+    return;
   }
   if (b.dataset.savenote) {
     var поле = $("textarea[data-note='" + b.dataset.savenote + "']");
