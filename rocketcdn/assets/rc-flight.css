@@ -878,6 +878,44 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   background: linear-gradient(165deg, rgba(var(--int-hull-rgb, 10,21,36), .92), rgba(var(--int-deep-rgb, 5,12,21), .96));
   box-shadow: 0 30px 80px -30px rgba(0,0,0,.95), 0 0 60px -20px rgba(var(--int-cyan-rgb, 66,178,220), .4);
 }
+/* ── Луч проектора ───────────────────────────────────────────
+   Заказчик записал отдельным дефектом: «нет проекторов голограмм».
+   Карточка висела на стекле сама по себе и читалась наклейкой, а не
+   проекцией: у света не было источника.
+
+   Конус идёт вниз от карточки и книзу сужается - так рисуется луч,
+   бьющий СНИЗУ, с панели: у основания он узкий, у карточки во всю её
+   ширину. Трапецию режет clip-path, свет складывается со стеклом
+   через screen - он прибавляется к виду из окна, а не закрашивает
+   его. Дыхание еле заметное: проектор жив, но не мигает лампочкой.
+
+   Луч висит на подложке брифинга, а не на самой карточке. Два
+   прежних захода сгорели: на компактной карточке HUD стоит max-height
+   с overflow и всё лишнее срезается, а у карточки брифинга ::after уже
+   занят пятном проектора, ::before - развёрткой строк. У подложки
+   псевдоэлементы свободны, и обрезки на ней нет. */
+.rcf-brief::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: min(360px, 62vw);
+  transform: translateX(-50%);
+  top: calc(50% + 104px);
+  height: clamp(54px, 11vh, 130px);
+  pointer-events: none;
+  clip-path: polygon(0 0, 100% 0, 62% 100%, 38% 100%);
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .22) 0%,
+    rgba(var(--int-cyan-rgb, 66,178,220), .09) 44%,
+    rgba(var(--int-cyan-rgb, 66,178,220), 0) 100%);
+  mix-blend-mode: screen;
+  animation: rcfLuch 4.6s ease-in-out infinite;
+  z-index: 0;
+}
+@keyframes rcfLuch { 0%,100% { opacity: .76 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) {
+  .rcf-brief::after { animation: none; }
+}
 .rcf-brief-card b {
   font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(17px, 2.4vw, 24px); letter-spacing: .14em;
@@ -2120,7 +2158,12 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   -webkit-backdrop-filter: blur(4px) saturate(1.2);
   box-shadow:
     inset 0 1px 0 rgba(226,232,240,.16),
-    0 0 46px -16px rgba(var(--int-cyan-rgb, 66,178,220), .85) !important;
+    0 0 46px -16px rgba(var(--int-cyan-rgb, 66,178,220), .85),
+    /* Пролив света вниз, к панели: у проекции есть направление, и
+       свет от неё падает туда, откуда её бьют. Тень рисуется ЗА
+       рамкой, поэтому обрезка самой карточки её не съедает - в
+       отличие от псевдоэлемента, на котором первый заход сгорел. */
+    0 30px 54px -26px rgba(var(--int-cyan-rgb, 66,178,220), .62) !important;
 }
 /* Развёртка строк по всей поверхности проекции */
 .rc-flight .rcf-menu::before,
