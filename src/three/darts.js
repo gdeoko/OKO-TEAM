@@ -90,13 +90,19 @@ function boardTexture() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
+// Материалы дротика одинаковы для всех бросков — держим их ОБЩИМИ (один раз),
+// иначе каждый бросок плодил 3 новых материала, а reset() их не освобождал (утечка).
+const DART_STEEL = new THREE.MeshStandardMaterial({ color: 0xcdd2d8, roughness: 0.3, metalness: 0.85 });
+const DART_DARK = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, roughness: 0.5, metalness: 0.4 });
+const DART_FLIGHT = new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.5, metalness: 0.0,
+  emissive: 0x550000, emissiveIntensity: 0.6, side: THREE.DoubleSide });
+
 // процедурный дротик: остриё + ствол + хвостовик + оперение. Длинная ось = локальная +Z (остриё в +Z).
 function buildDart() {
   const g = new THREE.Group();
-  const steel = new THREE.MeshStandardMaterial({ color: 0xcdd2d8, roughness: 0.3, metalness: 0.85 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, roughness: 0.5, metalness: 0.4 });
-  const flightMat = new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.5, metalness: 0.0,
-    emissive: 0x550000, emissiveIntensity: 0.6, side: THREE.DoubleSide });
+  const steel = DART_STEEL;
+  const dark = DART_DARK;
+  const flightMat = DART_FLIGHT;
   const tip = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.10, 12), steel);
   tip.rotation.x = -Math.PI / 2; tip.position.z = 0.30; g.add(tip);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.018, 0.22, 14), steel);
