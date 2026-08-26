@@ -126,6 +126,9 @@ var рвWin = [], рвSum = 0;
    это заметно дольше собственного шага, а не дольше числа. */
 var шагЭкрана = 0.0167;
 var win = [], winSum = 0, winAt = 0;
+var ОКНО_МС = 1700;           /* столько же по времени, сколько сто кадров у здоровой машины */
+var МИН_КАДРОВ = 12;          /* по паре кадров не судим */
+var окноС = 0;                /* когда началось текущее окно */
 var stepAt = 0;               /* когда в последний раз меняли ступень */
 var goodSince = 0;            /* с какого времени кадры уверенно хорошие */
 
@@ -182,6 +185,7 @@ function watchFrame(dt) {
   var bad = dt > 0.05 ? 1 : 0;         /* ниже двадцати кадров в секунду */
   var порогРывка = шагЭкрана * 1.7 + 0.004;
   var рвано = dt > порогРывка ? 1 : 0; /* заметно дольше своего шага */
+  if (судить && !окноС) окноС = ts0;
   if (!судить) { /* этот кадр не наш */ }
   else if (win.length < WIN) { win.push(bad); winSum += bad; рвWin.push(рвано); рвSum += рвано; }
   else {
@@ -191,10 +195,28 @@ function watchFrame(dt) {
     рвWin[winAt] = рвано;
     winAt = (winAt + 1) % WIN;
   }
-  if (win.length < WIN) return;        /* окно ещё не набралось */
+  /* Окно закрывается по кадрам ИЛИ по времени, и вторая половина
+     здесь главная.
 
-  var share = winSum / WIN;
-  var рвДоля = рвSum / WIN;
+     Раньше стояло только «набрать сто кадров». На здоровой машине это
+     полторы секунды и вопросов не вызывает. А на слабой сто кадров -
+     это шесть секунд при пятнадцати кадрах в секунду и полминуты при
+     трёх. Выходило наоборот: чем сильнее машина не тянет, тем позже
+     приходило спасение, и до второй-третьей ступени человек не
+     доживал вовсе. Замер живьём на софтверном рендере: за минуту
+     прокрутки сторож сделал РОВНО ОДИН шаг вниз.
+
+     Теперь окно закрывается и по времени тоже. Быстрая машина этого
+     не заметит: за 1700 мс она успевает отдать свои сто кадров, и
+     первое условие срабатывает раньше. Медленная получает решение
+     через те же 1700 мс, а не через полминуты. Нижняя граница в
+     двенадцать кадров не даёт судить по паре случайных. */
+  var хватитКадров = win.length >= WIN;
+  var хватитВремени = win.length >= МИН_КАДРОВ && ts0 - окноС >= ОКНО_МС;
+  if (!хватитКадров && !хватитВремени) return;
+
+  var share = winSum / win.length;
+  var рвДоля = рвSum / win.length;
   if (!stepAt) stepAt = ts0;
 
   /* Рваная картинка: шаг вниз с выдержкой в пять секунд. */
@@ -202,7 +224,7 @@ function watchFrame(dt) {
     degrade++;
     stepAt = ts0;
     goodSince = 0;
-    winSum = 0; win.length = 0; winAt = 0; рвSum = 0; рвWin.length = 0;
+    winSum = 0; win.length = 0; winAt = 0; рвSum = 0; рвWin.length = 0; окноС = ts0;
     root.setAttribute("data-degrade", String(degrade));
     try {
       dispatchEvent(new CustomEvent("rc:degrade", { detail: { step: degrade, рвано: true } }));
@@ -216,7 +238,7 @@ function watchFrame(dt) {
     degrade++;
     stepAt = ts0;
     goodSince = 0;
-    winSum = 0; win.length = 0; winAt = 0; рвSum = 0; рвWin.length = 0;
+    winSum = 0; win.length = 0; winAt = 0; рвSum = 0; рвWin.length = 0; окноС = ts0;
     root.setAttribute("data-degrade", String(degrade));
     try {
       dispatchEvent(new CustomEvent("rc:degrade", { detail: { step: degrade } }));
@@ -235,7 +257,7 @@ function watchFrame(dt) {
       degrade--;
       stepAt = ts0;
       goodSince = 0;
-      winSum = 0; win.length = 0; winAt = 0; рвSum = 0; рвWin.length = 0;
+      winSum = 0; win.length = 0; winAt = 0; рвSum = 0; рвWin.length = 0; окноС = ts0;
       if (degrade > 0) root.setAttribute("data-degrade", String(degrade));
       else root.removeAttribute("data-degrade");
       try {
