@@ -71,12 +71,14 @@ PATRON   = re.compile(r'(ович|евич|ьевич|овна|евна|ична
 def is_fio(line):
     """Строка похожа на ФИО -> выбрасываем, в выгрузку персональные данные не идут."""
     l = line.strip(' .,;')
-    if not l or re.search(r'\d', l) or STREETS.search(l): return False
-    if any(rx.search(l) for _, rx in CATS): return False       # это описание проблемы
+    if not l or re.search(r'\d', l): return False
     w = l.split()
     if not (2 <= len(w) <= 4): return False
     if not all(re.fullmatch(r'[А-Яа-яЁё\-]+', x) for x in w): return False
-    return any(PATRON.search(x) for x in w) or all(x[0].isupper() for x in w)
+    if any(PATRON.search(x) for x in w): return True            # отчество -> точно ФИО
+    if STREETS.search(l): return False
+    if any(rx.search(l) for _, rx in CATS): return False        # это описание проблемы
+    return sum(1 for x in w if x[0].isupper()) >= 2
 
 RULES = [
     (r'эдварда\s*григ\w*', 'Эдварда Грига'),
@@ -192,7 +194,7 @@ def parse(raw):
 
     out, skipped = [], []
     for block in recs:
-        body = [l for l in block if not re.fullmatch(r'\d+[.)]?', l)]
+        body = [l for l in block if not re.fullmatch(r'\d{1,3}[.)]?', l)]   # номер пункта, но не телефон
         phone = next((PHONE.search(l).group() for l in body if PHONE.search(l)), None)
         marked_addr, marked_text, rest = [], [], []
         for l in body:
