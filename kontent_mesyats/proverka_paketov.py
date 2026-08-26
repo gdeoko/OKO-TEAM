@@ -3,14 +3,14 @@ from playwright.sync_api import sync_playwright
 import glob, os
 
 ШИРИНЫ = [(1920,1080),(1440,900),(1180,820),(834,1112),(430,932),(390,844),(360,800)]
-файлы = sorted(glob.glob("/tmp/claude-0/-home-user-OKO-TEAM/aabccee1-6871-549d-b7a8-30daf94f16b4/scratchpad/paket_*.html"))
+файлы = sorted(glob.glob(os.environ.get("ПАКЕТЫ", "/home/user/OKO-TEAM/pakety/*.html")))
 
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True,
         executable_path="/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args=["--no-sandbox"])
     итог = []
     for ф in файлы:
-        имя = os.path.basename(ф)[6:-5]
+        имя = os.path.basename(ф)[:-5]
         беды = []
         for w, h in ШИРИНЫ:
             pg = b.new_page(viewport={"width": w, "height": h})

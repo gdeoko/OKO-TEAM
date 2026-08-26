@@ -27,3 +27,6 @@ OKO_MASTER_VAULT.md.b64
 # python cache
 __pycache__/
 *.pyc
+
+# собранные страницы пакетов на согласование (генерируются из исходников)
+pakety/
