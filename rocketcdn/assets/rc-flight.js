@@ -2246,7 +2246,12 @@ function buildWorld() {
      Заполнение теперь даёт окружение (scene.environment): оно
      цветное и направленное, то есть тень от Земли синеватая, а от
      бортовых ламп тёплая, как в жизни. */
-  var amb = new T.AmbientLight(0x3a4a68, 0.34);
+  /* Заполняющий свет поджат с 0.34 до 0.15. Ровный синий подлив со
+     всех сторон поднимал теневые половины: настоящей чёрной ночи не
+     было ни у одного тела, и объём пропадал - шар выглядел
+     подсвеченным изнутри. В комментарии рядом уже стояло 0.16, а в
+     коде жило 0.34: правку когда-то откатили, а текст остался. */
+  var amb = new T.AmbientLight(0x3a4a68, 0.15);
   scene.add(amb);
   /* Светило стояло за спиной у камеры, и Земля из окна была всегда
      дневная - зелёно-синий шар, который заказчик справедливо назвал
@@ -2272,7 +2277,22 @@ function buildWorld() {
      смотрит в окно, а терминатор проходит по диску: слева день с
      океаном и облаками, справа ночь с огнями городов. Это и есть
      вид с орбиты, а не силуэт на просвет. */
-  sun.position.set(-2350, 900, 1650);
+  /* Единственная точка истины про то, где стоит светило. Ею
+     пользуются и свет, и диск, и корона, и блик, и всё, что считает
+     направление на солнце. Раньше числа были вписаны в трёх местах
+     и разошлись. */
+  var СОЛНЦЕ = new T.Vector3(2600, 1000, 1750);
+
+  /* Свет идёт ОТТУДА ЖЕ, где в кадре стоит солнце.
+
+     Здесь было (-2350, 900, 1650), а сам диск солнца, корона и блик
+     стоят в (2600, 1000, 1750). Знак по X противоположный: планеты
+     освещались с той стороны, где солнца в кадре нет вообще. Хвост
+     кометы считался от блика, ночная сторона Земли от этого света -
+     два разных направления в одном кадре, и ни одно не совпадало с
+     тем, что видит глаз. Это и есть первая причина, по которой
+     картинка читалась нарисованной. */
+  sun.position.set(СОЛНЦЕ.x, СОЛНЦЕ.y, СОЛНЦЕ.z);
   scene.add(sun);
 
   var L = new T.TextureLoader();
@@ -2318,6 +2338,11 @@ function buildWorld() {
       t.needsUpdate = true;
     });
     t.anisotropy = АНИЗО;
+    /* Карта цвета обязана жить в sRGB. Без этой строки загрузчик
+       three отдаёт её линейной, и снимок выцветает: Земля выходила
+       молочной, а Марс и Сатурн, которые грузятся другой функцией,
+       жили в другой гамме и не сходились с ней по тону. */
+    if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
     return t;
   }
 
@@ -2473,7 +2498,11 @@ function buildWorld() {
 
     var уни = {
       uT: { value: 0 },
-      uPx: { value: Math.min(2, g.devicePixelRatio || 1) },
+      /* Плотность берём У РЕНДЕРЕРА, а не у экрана. Буфер рисуется с
+         поджатой плотностью (на телефоне до 1.2), и звезда, посчитанная
+         по экранным 3, выходила втрое крупнее задуманного - снова
+         пятно вместо точки. */
+      uPx: { value: Math.min(2, (r && r.getPixelRatio ? r.getPixelRatio() : (g.devicePixelRatio || 1))) },
       uTint0: { value: new T.Color(0xcfe9f5) },
       uTint1: { value: new T.Color(0xffffff) },
       uTint2: { value: new T.Color(0xffe9c9) }
@@ -2563,7 +2592,7 @@ function buildWorld() {
     map: glowSprite(256, "rgba(255,246,225,1)", "rgba(255,190,110,0)"),
     transparent: true, opacity: 0.62, depthWrite: false, blending: T.AdditiveBlending
   }));
-  sunGlow.position.set(2600, 1000, 1750);
+  sunGlow.position.copy(СОЛНЦЕ);
   /* Блик поджат с 900 до 430. Он задуман как слепящее пятно с
      дальнего расстояния, но стоит в одной точке с диском и с двумя
      слоями короны: вблизи все три складывались в молочный шар шире
@@ -2608,8 +2637,14 @@ function buildWorld() {
     ng.setAttribute("position", new T.BufferAttribute(np, 3));
     var cloud = new T.Points(ng, new T.PointsMaterial({
       map: nebs[i][4], color: i % 2 ? 0x8a59f6 : 0x42b2dc,
-      size: tiny ? 5.4 : 6.8, sizeAttenuation: false,
-      transparent: true, opacity: .085, depthWrite: false,
+      /* Туманности поджаты вдвое. Заказчик назвал космос мутным, и
+         эти четыре облака и были мутью: тысяча мягких пятен по семь
+         пикселей, сложенных по яркости, застилали половину неба
+         синеватой дымкой. В жизни туманность с такого расстояния
+         глазом почти не видна - она различима на длинной выдержке,
+         а не как пелена поверх звёзд. Оставляем намёк на объём. */
+      size: tiny ? 4.2 : 5.2, sizeAttenuation: false,
+      transparent: true, opacity: .042, depthWrite: false,
       blending: T.AdditiveBlending
     }));
     cloud.position.set(nebs[i][0], nebs[i][1], nebs[i][2]);
@@ -3059,7 +3094,7 @@ function buildWorld() {
       м.needsUpdate = true;
     }, null, function () {});
   })();
-  sunBody.position.set(2600, 1000, 1750);
+  sunBody.position.copy(СОЛНЦЕ);
   sunBody.userData.info = RU ? "СОЛНЦЕ · 1,39 млн км · источник всей энергии системы"
                              : "SUN · 1.39M km wide";
   scene.add(sunBody);
@@ -3991,6 +4026,10 @@ function buildWorld() {
     /* Позиция светила: по ней бортовые панели набирают заряд */
     sunPos: sunGlow.position, corIn: corIn, corOut: corOut,
     starShell: starShell,
+    /* Оболочки атмосфер и точка солнца отдаются наружу: кадр
+       обновляет по ним направление на светило. */
+    atmShells: atmShells,
+    "СОЛНЦЕ": СОЛНЦЕ,
     sunMat: sunBody.material,
     sun: sunBody, mercury: mercury, venus: venus, solarLive: solarLive,
     jupiter: jupiter, uranus: uranus, neptune: neptune, belt: belt,
@@ -5186,6 +5225,9 @@ function подсказкиКлавиш(w) {
   }
 }
 
+/* Отметка времени для пересчёта атмосферных оболочек. */
+var атмКадр = { t: 0 };
+
 function keyHintFrame() {
   if (!ui.keyhint || !cabin || !cabin.controlCaps) return;
   var nodes = physicalControlsFrame.nodes;
@@ -5790,6 +5832,27 @@ function frame(ts) {
   /* Время для мерцания звёзд. Дрожание еле заметное и только у
      ярких, но без него небо стоит намертво и читается наклейкой. */
   if (w3.starMats && w3.starMats.уни) w3.starMats.уни.uT.value = ts * 0.001;
+
+  /* Атмосферные оболочки узнают, где солнце.
+
+     Массив собирался и НИКОГДА не читался: у Венеры, Юпитера, Урана
+     и Нептуна направление на светило навсегда оставалось тем, что
+     вписали при сборке - (1, 0.35, 0.6). Закатный поясок и
+     подсвеченная кромка смотрели в произвольную сторону, не
+     совпадающую ни со светом, ни с самим солнцем в кадре. Считаем
+     раз в несколько кадров: тела движутся медленно, а нормализация
+     вектора на каждую оболочку каждый кадр не нужна. */
+  if (w3.atmShells && w3.atmShells.length && (!атмКадр.t || ts - атмКадр.t > 120)) {
+    атмКадр.t = ts;
+    for (var аи = 0; аи < w3.atmShells.length; аи++) {
+      var об = w3.atmShells[аи];
+      if (!об || !об.mesh || !об.mesh.material || !об.mesh.material.uniforms) continue;
+      var у = об.mesh.material.uniforms.uSun;
+      if (!у) continue;
+      var центр = об.body && об.body.position ? об.body.position : об.mesh.position;
+      у.value.copy(w3.СОЛНЦЕ || w3.sun.position).sub(центр).normalize();
+    }
+  }
 
   var jm = w3.jump.material;
   jm.opacity += ((jumpZone ? 0.85 : 0) - jm.opacity) * Math.min(1, dt * 3);
