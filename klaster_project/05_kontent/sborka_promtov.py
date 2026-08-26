@@ -75,6 +75,27 @@ from promt_engine import Бренд, собрать, проверить
 
 # Сцена под каждый ключ: то, что видит камера в главном кадре. Остальное собирает движок.
 СЦЕНЫ = {
+ # --- обложки статей ---
+ "P-401-dzen-moshchnost": "the open door of a workshop main switchgear cabinet seen straight on, breaker modules in a strict vertical column behind the glazed panel, bus bars and cable glands below, one amber indicator lamp unlit",
+ "P-402-vc-kadry": "the hands of an older machinist resting on the cross-slide handwheel of a worn lathe, cropped tight at the wrists so no face is in frame, oil ghosting on the metal, curled steel swarf on the bed",
+ "P-403-rbk-promzemlya": "an aerial view of a city at flat overcast noon showing a hard boundary where low workshop roofs and saw-tooth sheds stop and rows of housing begin, the working side occupying the near half of the frame",
+ "P-404-dzen-12-voprosov": "a heavy brushed steel plate bolted to the concrete flank of a workshop beside a closed roller gate, its surface blank and lightly abraded, four countersunk screws at the corners",
+ "P-405-dzen-cenovye-kategorii": "a workshop distribution board seen straight on with a row of identical breakers behind the glazed door, sealed terminal covers, cable glands entering from below, no legible markings",
+ "P-406-vc-robotizacia": "a six-axis industrial robot arm at rest inside an empty production cell, safety fencing in the foreground catching the raking key, the hall behind falling into ink black",
+ "P-407-dzen-tri-mesta": "a heavy machine tool strapped to a rigging skate standing on a polished concrete floor directly in front of closed goods lift doors, lifting slings coiled on the floor beside it",
+ "P-408-rbk-zachem-goroda": "the flank wall and roof vents of a working production building standing directly behind a low fence, and immediately in front of it a residential courtyard, the two worlds separated by three metres",
+ "P-409-dzen-transportny-byudzhet": "a semi trailer standing at a workshop gate seen straight on from inside the dark bay, yard marking running away from the camera in strict perspective, wet asphalt holding the low light",
+ "P-410-dzen-shest-punktov": "a graphite steel bench shot straight down from directly above with a stapled contract on warm white paper lying on it, its printed body an unreadable grey texture with no legible word, a machined steel straightedge across the lower third",
+ "P-411-vc-indeksacia": "three mill-finish steel bars of increasing height standing in a row on a polished concrete floor, evenly spaced, each casting its own long shadow toward the camera",
+ "P-412-rbk-promipoteka": "six identical stamped steel tokens laid out in two rows of three on a graphite steel bench shot straight down from above, each blank, evenly spaced, edges catching the raking key",
+ "P-413-dzen-priyomka": "a ring of keys and a blank acceptance form on warm white paper lying on the bare concrete floor of an empty workshop, roof light falling across them, the far end of the bay in ink black",
+ "P-414-vc-zarplaty": "two mill-finish steel columns of visibly different height standing on a polished concrete floor facing each other across the frame, the taller one on the left, hard shadows raking right",
+ "P-415-dzen-ohrana-truda": "a row of identical steel lockers along a workshop changing room wall shot straight on, doors closed, worn repainted metal and numbered hasps with no legible digits, one door standing open onto darkness",
+ "P-416-rbk-nds-usn": "a machined steel gauge block standing upright on a graphite bench with a dial indicator resting against its face, shot straight on, the dial face blank and unreadable",
+ "P-417-vc-vtoraya-ochered": "the interior of a newly built production bay still under construction, a grid of raw concrete columns receding in strict perspective, a clean poured floor, roof lights above and no equipment anywhere",
+ "P-418-dzen-stroyka-za-zaborom": "a construction site hoarding running across the frame with a site traffic diagram mounted on a steel board beside a gate, its drawing an unreadable line texture, a working building visible above the hoarding",
+ "P-419-rbk-vakantnost": "a long empty production hall shot straight down its centre line, columns receding in strict perspective, roof lights above, floor marking still painted for machines that are gone, the far end lost in ink black",
+ "P-420-dzen-sosedi-po-stene": "two adjacent workshop gates in one long facade shot straight on, both open onto lit interiors, a shared concrete apron in front carrying tyre scuffs and a single steel trolley standing between them",
  # --- месяц 1, виральный блок ---
  "P-200-moskva-4700": "a wide Moscow industrial district seen from a high vantage point in flat overcast daylight, ranks of low factory blocks, saw-tooth roofs, rail spurs and chimney stacks receding toward a distant ring road, no billboards and no legible signage anywhere",
  "P-201-tarif-grafik": "a large folded technical drawing sheet lying flat on a graphite steel bench shot straight down from directly above, two hand-scribed lines diverging across it drawn in graphite pencil and amber paint, a machined steel straightedge and a pair of dividers resting on the lower third",
