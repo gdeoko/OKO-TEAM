@@ -14,7 +14,7 @@ from promt_engine import Бренд, собрать, проверить
 
 КЛАСТЕР = Бренд(
     имя="КЛАСТЕР",
-    домен="",  # домен сайта клиент ещё не выбрал: в кадр адрес не ставим
+    домен="CLUSTERSPACE.RU",  # сайт живёт на нём с 14.08.2026
 
     палитра=("The palette is locked to five values and their gradations: amber #E8A400 as the single saturated accent "
              "and the only warm light in the frame, muted gold #C9A233 for secondary highlights on machined edges and "
@@ -136,7 +136,7 @@ from promt_engine import Бренд, собрать, проверить
  "P-23-vorota-fura": "a semi trailer standing squarely at a workshop loading gate seen straight on from outside, the steel canopy and rubber dock seals of the gate framing it, yard marking running away under the wheels, wet asphalt holding the light",
  "P-89-karusel-stroyka-ryadom": "a construction hoarding running across the frame with a working production building standing directly behind it, a tower crane above, the shared concrete apron in the near plane carrying tyre scuffs",
  "P-27-ploshchadki-mira": "three fragments of industrial city in one frame divided by two thin vertical seams: a waterfront with gantry cranes, a narrow low-rise workshop street, and a shipyard basin, all under the same flat overcast light",
- "P-S-4-minuty-4000-kg-5-tonn": "a polished concrete workshop floor shot straight down from above, old yellow floor marking half worn away, the edge of a crane rail crossing the upper part of the frame, factory dust in the recesses",
+ "P-S-4-minuty-5-tonn-5-tonn": "a polished concrete workshop floor shot straight down from above, old yellow floor marking half worn away, the edge of a crane rail crossing the upper part of the frame, factory dust in the recesses",
  "P-13-chto-vhodit": "an empty production bay with its roller gate rolled fully up, the rectangle of the doorway filled with flat daylight, a crane rail running the length of the bay overhead, painted floor marking leading out through the gate",
  "P-15-rbk-oblozhka": "a working industrial territory seen from a high vantage point at flat overcast noon, a tower crane standing over one corner of it, the city skyline compressed on the horizon behind",
  "P-S-pervyj-den-lenty": "a graphite steel bench shot straight down from directly above with a blank warm white notebook page on it, a fountain pen resting across the page, one amber highlight along the pen barrel",
