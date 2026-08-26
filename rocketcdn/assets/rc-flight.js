@@ -2385,42 +2385,178 @@ function buildWorld() {
      дальнем конце маршрута - у дыры небо стояло полупустым */
   var starShell = new T.Group();
   scene.add(starShell);
-  function stars(n, size, spread, hue) {
+  /* ── Звёздное небо ───────────────────────────────────────────
+     Заказчик про космос сказал дважды и одинаково: «просто белые
+     точки на чёрном фоне, вообще нету реализма красоты и глубины».
+
+     Так и было устроено: четыре слоя Points, и внутри слоя ВСЕ звёзды
+     одного размера и одного цвета. Настоящее небо устроено ровно
+     наоборот, и различий там три.
+
+     Первое - величина. Ярких звёзд единицы, слабых тысячи, и закон
+     этот степенной, а не равномерный. Второе - цвет. Белых звёзд на
+     небе почти нет: есть голубоватые горячие, белые, желтоватые,
+     оранжевые и красные, и доли у них известны. Третье - как звезда
+     ложится на матрицу. Это не диск и не пятно, а острое ядро с
+     тонким ореолом, а у самых ярких ещё и крест лучей от оправы
+     объектива.
+
+     Всё три теперь есть, и всё три считает шейдер, поэтому поле одно
+     вместо четырёх: и честнее, и дешевле.
+
+     Подкраска вселенных сохранена. Каждая вселенная задаёт три цвета,
+     и они ложатся на три группы по температуре, а не заливают небо
+     одним тоном. */
+  var starScale = tiny ? 0.43 : (particleBudget ? 0.55 : (qualityHint ? 0.72 : 1));
+  var starMats = (function () {
+    var n = Math.round(17000 * starScale);
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(n * 3);
+    var aMag = new Float32Array(n);
+    var aCol = new Float32Array(n * 3);
+    var aGrp = new Float32Array(n);
+    var aPh = new Float32Array(n);
+    /* Доли спектральных классов взяты для ВИДИМОГО неба, а не для
+       всех звёзд подряд: глазом видны горячие и яркие, поэтому
+       голубых и белых среди них заметно больше, чем в галактике. */
+    var КЛАССЫ = [
+      [0.10, 0.66, 0.78, 1.00, 0],   /* O и B - голубовато-белые */
+      [0.22, 0.87, 0.91, 1.00, 0],   /* A - белые с голубизной */
+      [0.24, 1.00, 0.98, 0.94, 1],   /* F - белые тёплые */
+      [0.20, 1.00, 0.95, 0.82, 1],   /* G - жёлтые, как наше Солнце */
+      [0.17, 1.00, 0.84, 0.65, 2],   /* K - оранжевые */
+      [0.07, 1.00, 0.73, 0.57, 2]    /* M - красные */
+    ];
+    var сид = 4021977;
+    function сл() {
+      сид ^= сид << 13; сид >>>= 0;
+      сид ^= сид >>> 17;
+      сид ^= сид << 5;  сид >>>= 0;
+      return сид / 4294967296;
+    }
     for (var i = 0; i < n; i++) {
-      var v = new T.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-      v.normalize().multiplyScalar(spread * (0.35 + Math.random() * 0.65));
-      pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
+      /* Ровное распределение по сфере: через косинус широты, иначе
+         звёзды сбиваются к полюсам сферы и это видно. */
+      var z = сл() * 2 - 1;
+      var r = Math.sqrt(Math.max(0, 1 - z * z));
+      var a = сл() * 6.283185;
+      var d = 2600 * (0.55 + сл() * 0.45);
+      pos[i * 3] = Math.cos(a) * r * d;
+      pos[i * 3 + 1] = z * d;
+      pos[i * 3 + 2] = Math.sin(a) * r * d;
+      /* Величина по степенному закону: ярких единицы. */
+      var m = Math.pow(сл(), 3.4);
+      /* Полоса Млечного Пути гуще: звезда рядом с плоскостью диска
+         получает прибавку к яркости и чаще попадает в заметные. */
+      var широта = Math.abs(z);
+      if (широта < 0.22 && сл() < 0.5) m = Math.min(1, m + 0.10 + сл() * 0.18);
+      aMag[i] = m;
+      var t = сл(), сум = 0, кл = КЛАССЫ[0];
+      for (var ки = 0; ки < КЛАССЫ.length; ки++) {
+        сум += КЛАССЫ[ки][0];
+        if (t <= сум) { кл = КЛАССЫ[ки]; break; }
+      }
+      /* Слабые звёзды глаз видит обесцвеченными: на пороге
+         чувствительности цвет пропадает первым. */
+      var нас = 0.35 + m * 0.65;
+      aCol[i * 3] = 1 + (кл[1] - 1) * нас;
+      aCol[i * 3 + 1] = 1 + (кл[2] - 1) * нас;
+      aCol[i * 3 + 2] = 1 + (кл[3] - 1) * нас;
+      aGrp[i] = кл[4];
+      aPh[i] = сл() * 6.283185;
     }
     geo.setAttribute("position", new T.BufferAttribute(pos, 3));
-    var m = new T.PointsMaterial({
-      color: hue, size: size, sizeAttenuation: true, map: starDot,
-      transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending
-    });
-    var pts = new T.Points(geo, m);
-    starShell.add(pts);
-    return pts;
-  }
-  /* Звёзды. «Некоторые звёзды и звёздная пыль какие-то мутные и не
-     очень детализированные, портят картину» - причина была в
-     размере: точки в четыре-пять пикселей с мягким гало выглядели
-     не звёздами, а пятнами.
+    geo.setAttribute("aMag", new T.BufferAttribute(aMag, 1));
+    geo.setAttribute("aCol", new T.BufferAttribute(aCol, 3));
+    geo.setAttribute("aGrp", new T.BufferAttribute(aGrp, 1));
+    geo.setAttribute("aPh", new T.BufferAttribute(aPh, 1));
 
-     Настоящее небо устроено наоборот: тысячи острых точек и лишь
-     единицы заметных светил. Поэтому звёзд стало вдвое больше, а
-     размер втрое меньше; крупными остаются редкие яркие. */
-  /* Тёплый слой был третьим по счёту и давал тысячи бежевых точек
-     размером под три пикселя - владелец назвал их «бежевые звёзды
-     как баг», и по делу. Настоящее небо белое с голубизной, тёплых
-     звёзд единицы. */
-  var starScale = tiny ? 0.43 : (particleBudget ? 0.55 : (qualityHint ? 0.72 : 1));
-  var starMats = [
-    stars(Math.round(14000 * starScale), 1.4, 3000, 0xe8f2fa).material,
-    stars(Math.round(6200 * starScale), 1.9, 2400, 0xa8c8f2).material,
-    stars(Math.round(620 * starScale), 2.2, 1800, 0xf6e3c2).material,
-    stars(Math.round(320 * starScale), 3.6, 1400, 0xffffff).material
-  ];
+    var уни = {
+      uT: { value: 0 },
+      uPx: { value: Math.min(2, g.devicePixelRatio || 1) },
+      uTint0: { value: new T.Color(0xcfe9f5) },
+      uTint1: { value: new T.Color(0xffffff) },
+      uTint2: { value: new T.Color(0xffe9c9) }
+    };
+    var мат = new T.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+      uniforms: уни,
+      vertexShader: [
+        "attribute float aMag;",
+        "attribute vec3 aCol;",
+        "attribute float aGrp;",
+        "attribute float aPh;",
+        "uniform float uT;",
+        "uniform float uPx;",
+        "uniform vec3 uTint0;",
+        "uniform vec3 uTint1;",
+        "uniform vec3 uTint2;",
+        "varying vec3 vCol;",
+        "varying float vMag;",
+        "void main() {",
+        "  vec4 mv = modelViewMatrix * vec4(position, 1.0);",
+        "  gl_Position = projectionMatrix * mv;",
+        /* Мерцание еле заметное и только у ярких: слабую звезду
+           атмосфера не колышет, да и атмосферы здесь нет - это
+           дрожание самой матрицы. */
+        "  float tw = 1.0 + sin(uT * 2.1 + aPh) * 0.05 * aMag;",
+        /* Размер точки идёт от величины, а не от слоя. Потолок
+           держим жёстко: звезда крупнее нескольких пикселей уже не
+           звезда, а пятно - ровно то, на что жаловался заказчик. */
+        "  float px = (0.75 + pow(aMag, 2.1) * 2.5) * uPx * tw;",
+        "  gl_PointSize = clamp(px, 0.7, 3.4 * uPx);",
+        "  vec3 tint = aGrp < 0.5 ? uTint0 : (aGrp < 1.5 ? uTint1 : uTint2);",
+        "  vCol = aCol * tint;",
+        "  vMag = aMag * tw;",
+        "}"
+      ].join("\n"),
+      fragmentShader: [
+        "precision mediump float;",
+        "varying vec3 vCol;",
+        "varying float vMag;",
+        "void main() {",
+        "  vec2 p = gl_PointCoord * 2.0 - 1.0;",
+        "  float d = length(p);",
+        "  if (d > 1.0) discard;",
+        /* Ядро острое, ореол широкий и слабый: так свет звезды и
+           ложится на матрицу. Один гауссов колокол давал мягкое
+           пятно, поэтому их два с разной шириной. */
+        /* ВНИМАНИЕ: имена внутри шейдера только латиницей. Кириллица
+           здесь уже ломала сборку однажды: GLSL её не принимает, а
+           падает молча - экран просто чёрный. */
+        "  float core = exp(-d * d * 34.0);",
+        "  float halo = exp(-d * d * 7.0) * 0.13;",
+        /* Крест лучей от оправы объектива. Он есть только у самых
+           ярких: у слабых его нет и в жизни. */
+        "  float ray = 0.0;",
+        "  if (vMag > 0.62) {",
+        "    float k = (vMag - 0.62) / 0.38;",
+        "    float hx = exp(-abs(p.y) * 26.0) * exp(-abs(p.x) * 1.6);",
+        "    float vy = exp(-abs(p.x) * 26.0) * exp(-abs(p.y) * 1.6);",
+        "    ray = (hx + vy) * 0.22 * k * k;",
+        "  }",
+        "  float a = (core + halo + ray) * (0.16 + vMag * 0.92);",
+        "  if (a < 0.004) discard;",
+        /* Ядро самых ярких выбелено: перегруженный пиксель матрицы
+           теряет цвет и уходит в белый. */
+        "  vec3 col = mix(vCol, vec3(1.0), core * vMag * 0.7);",
+        "  gl_FragColor = vec4(col, a);",
+        "}"
+      ].join("\n")
+    });
+    var поле = new T.Points(geo, мат);
+    поле.frustumCulled = false;
+    starShell.add(поле);
+    /* Наружу отдаём три «материала» с ключом color: смена вселенной
+       красит небо через них, и тот код менять не пришлось. */
+    function ручка(им) {
+      return { color: уни[им].value, material: мат };
+    }
+    var р = [ручка("uTint0"), ручка("uTint1"), ручка("uTint2")];
+    р.поле = поле;
+    р.уни = уни;
+    return р;
+  })();
 
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
   var sunGlow = new T.Sprite(new T.SpriteMaterial({
@@ -5651,6 +5787,10 @@ function frame(ts) {
      светилось, но не летело. Теперь он ползёт вдоль своей оси и
      заворачивается по кругу, а к середине прыжка растягивается
      вдвое: полоса тем длиннее, чем быстрее идёт свет мимо. */
+  /* Время для мерцания звёзд. Дрожание еле заметное и только у
+     ярких, но без него небо стоит намертво и читается наклейкой. */
+  if (w3.starMats && w3.starMats.уни) w3.starMats.уни.uT.value = ts * 0.001;
+
   var jm = w3.jump.material;
   jm.opacity += ((jumpZone ? 0.85 : 0) - jm.opacity) * Math.min(1, dt * 3);
   if (jm.opacity > 0.01) {
