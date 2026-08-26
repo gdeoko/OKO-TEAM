@@ -293,7 +293,17 @@ function grade_reject_application(int $appId, string $reason, string $source = '
                 . $card
                 . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:14px;">'
                 . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения (пункт положения 1:1)</div>'
-                . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
+                . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div>'
+                /* ПУНКТ ДОЛЖНО БЫТЬ ГДЕ ПРОЧИТАТЬ.
+                   Отказ ссылается на номер пункта, а после закрытия приёма конкурс
+                   уходит с витрины вместе со ссылкой на документ. Даём её прямо
+                   здесь: положение хранится в разделе «Положения конкурсов» два
+                   месяца после закрытия — столько же, сколько заказ наград. */
+                . '<div style="margin-top:12px;font-size:13px;line-height:1.6;">'
+                . '<a href="' . url('/competition/' . rawurlencode((string) ($comp['slug'] ?? '')) . '/regulation.pdf')
+                . '" style="color:' . RM_NAVY . ';">Открыть положение конкурса</a>'
+                . ' &middot; <a href="' . url('/regulations') . '" style="color:' . RM_MUTED . ';">все положения</a>'
+                . '</div></td></tr></table>'
                 . ($canReapply
                     ? '<p style="margin:0 0 14px;">Это не отказ навсегда, пожалуйста, устраните причину отклонения и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации!</p>'
                     : '')

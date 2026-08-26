@@ -102,7 +102,7 @@ if (preg_match('#^/polozhenie-([a-z0-9\-]+)$#', $route, $m)) {   // положе
 if ($route === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=utf-8');
     $baseUrl = rtrim($CFG['base_url'], '/');
-    $static = ['/', '/competitions', '/apply', '/awards', '/order-awards', '/concerts',
+    $static = ['/', '/competitions', '/apply', '/awards', '/order-awards', '/regulations', '/concerts',
         '/about', '/goals', '/ministry-support', '/faq', '/contacts', '/reviews',
         '/blog', '/privacy', '/agreement'];
     echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -643,6 +643,7 @@ $map = [
     '/goals' => 'page_goals',
     '/ministry-support' => 'ministry',
     '/awards' => 'awards',
+    '/regulations' => 'regulations',
     '/order-awards' => 'order_awards',
     '/concerts' => 'concerts',
     '/blog' => 'blog',
