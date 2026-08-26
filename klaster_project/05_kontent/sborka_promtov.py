@@ -60,7 +60,11 @@ from promt_engine import Бренд, собрать, проверить
             "picture: a thousandth freezes particles in mid air, half a second lets a moving light draw its trail. "
             "Anamorphic character welcome: horizontal flare off amber sources, oval bokeh. Full frame capture, "
             "eight thousand pixels of detail in the plane of focus, fine grain in the shadows."),
-    референсы=(
+    # Территория подставляется только тем кадрам, где площадка и есть предмет
+    # разговора. Владелец 27.08.2026: «не всегда референс равно фон визуала».
+    # Кадру про счёт, про деталь или про идею настоящий двор не нужен, ему нужен
+    # свой мир, и от одинакового фона как раз и берётся ощущение конвейера.
+    территория=(
         "Photographs of the real site are attached and they are binding, not inspiration. This is a working "
         "industrial park in the south of Moscow as it stands today, not an architectural visualisation: long low "
         "production blocks of pale warm grey concrete, two continuous ribbon bands of glazing in dark frames along "
@@ -71,19 +75,15 @@ from promt_engine import Бренд, собрать, проверить
         "floors absent from the photographs. A production interior is that same site: a clear hall on round painted "
         "columns, a poured seamless floor, roller gates in the end wall. An office or conference hall is the "
         "renovated administrative building: white walls with one amber accent wall, black framed glazed partitions, "
-        "grey carpet, linear ceiling light. "
-        "The brand mark comes one to one from the attached logo file and is a physical object inside the scene, "
-        "never a flat sticker and never a watermark: a twelve toothed gear wheel with a clean circular centre, and "
-        "inside that circle the stylised figure of a person with arms raised outward to both sides; where the "
-        "wordmark appears it reads exactly «КЛАСТЕР». It lives on a real surface with real thickness and its own "
-        "cast shadow, engraved, cast in relief, stencilled or backlit, and takes the same light, dust and "
-        "reflections as everything around it. It appears once per frame, about three percent of the frame width, "
-        "where such a mark would really be fixed, never larger than the headline, never centred as a badge and "
-        "never repeated. "
-        "The subject world is a working industrial park inside Moscow: fifty thousand square metres of production "
-        "buildings, clear heights from six to twelve metres, roller gates four by four metres at yard level, a "
-        "crane beam running the length of the bay, goods lifts, a parking field with articulated trucks at the "
-        "far end. Everything in frame stays consistent with that place. "
+        "grey carpet, linear ceiling light. "),
+    знак=(
+        "The brand mark comes one to one from the attached logo file and is a physical object in the frame, never a "
+        "flat sticker and never a watermark: a twelve toothed gear wheel with a clean circular centre, and inside "
+        "that circle the stylised figure of a person with arms raised outward to both sides; where the wordmark "
+        "appears it reads exactly «КЛАСТЕР». It has real thickness and its own cast shadow and takes the same light "
+        "as everything around it. It appears once per frame, about three percent of the frame width, never larger "
+        "than the headline, never centred as a badge and never repeated. "),
+    финал=(
         "The finished frame reads as key art for a campaign: dense, layered, worth a second look. Build at least "
         "four depth planes, near foreground, subject, mid ground and dissolving background, with something crossing "
         "between them so the eye travels. Something is happening at this exact instant: a particle in flight, a "
