@@ -434,7 +434,21 @@ function buildUI() {
        она на стекле, а не на раме - окно у нас и есть экран. */
     '<div class="rcf-keyhint" aria-hidden="true"><b></b><span></span></div>' +
     '<div class="rcf-hud">' +
-      '<div class="rcf-cap" aria-live="polite"></div>' +
+      /* Верхняя полоса стекла собрана колонкой, а не разложена
+         абсолютными координатами.
+
+         Было именно так: у титула свой top, у задания свой, у плашки
+         аварии третий, и все три попадали в одну полосу 34..81
+         пикселя. На телефоне заказчика это выглядело как каша из
+         наложенных карточек: «ОСМОТРЕТЬСЯ» лежало поверх названия
+         тела, а красная плашка аварии поверх них обоих. Подвинуть
+         один top значило сломать другой, потому что величины разные
+         на каждой ширине.
+
+         Колонка снимает вопрос целиком: элементы идут друг за другом
+         и наложиться не могут в принципе, на любом экране. */
+      '<div class="rcf-top">' +
+        '<div class="rcf-cap" aria-live="polite"></div>' +
       /* Приборная плита собрана одним узлом: слева счётчики, в
          середине навигация и пуск узла, справа скорость. Раньше всё
          это висело по углам кадра отдельными наклейками, и владелец
@@ -448,9 +462,12 @@ function buildUI() {
       /* Текущее задание: одна строка с целью и полоской прогресса.
          Стоит у левого борта, где на корпусе кабины идёт вертикальная
          приборная панель. */
-      '<div class="rcf-mis"></div>' +
-      '<div class="rcf-fail" role="status"></div>' +
-      '<div class="rcf-netlist" aria-hidden="true"></div>' +
+        '<div class="rcf-fail" role="status"></div>' +
+        '<div class="rcf-trow">' +
+          '<div class="rcf-mis"></div>' +
+          '<div class="rcf-netlist" aria-hidden="true"></div>' +
+        '</div>' +
+      '</div>' +
       '<div class="rcf-help" role="dialog" aria-modal="false">' +
         '<div class="rcf-help-in">' +
           '<button type="button" class="rcf-help-x" aria-label="' + (RU ? "Закрыть" : "Close") + '">' +
@@ -709,6 +726,7 @@ function buildUI() {
   ui.cGoal = w.querySelector(".rcf-c-goal");
   ui.cDist = w.querySelector(".rcf-c-dist");
   ui.cMode = w.querySelector(".rcf-c-mode");
+  ui.cCell = w.querySelector(".rcf-d-course");
   ui.radar = w.querySelector(".rcf-radar");
   ui.thr = w.querySelector(".rcf-thr");
   var shotBtn = w.querySelector(".rcf-shot");
@@ -5892,8 +5910,15 @@ function courseFrame(w3, ts) {
          : d > 1e3 ? Math.round(d / 1e3) + (RU ? " тыс. км" : "k km")
          : Math.round(d) + (RU ? " км" : " km");
   }
-  ui.cGoal.textContent = name;
-  if (ui.navKeyTx) ui.navKeyTx.textContent = name === "—" ? (RU ? "не задан" : "none") : name;
+  /* Пока курс не задан, в табло стояли два прочерка подряд: «КУРС — —
+     РУЧНОЙ». На телефоне это читается как поломка, заказчик так и
+     сказал - прочерк вместо значения. Теперь пустой курс говорит
+     словами, а расстояние в этом случае не показывается вовсе:
+     показывать нечего. */
+  var пусто = name === "—";
+  ui.cGoal.textContent = пусто ? (RU ? "не задан" : "none") : name;
+  if (ui.cCell) ui.cCell.classList.toggle("is-empty", пусто);
+  if (ui.navKeyTx) ui.navKeyTx.textContent = пусто ? (RU ? "не задан" : "none") : name;
   ui.cDist.textContent = dist;
   ui.cMode.textContent = F.auto ? (RU ? "АВТОПИЛОТ" : "AUTOPILOT")
                        : F.orbit ? (RU ? "ОРБИТА" : "ORBIT")

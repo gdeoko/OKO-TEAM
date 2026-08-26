@@ -849,7 +849,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
      угол над остеклением, и ставим строго друг под другом. */
   .rcf-prog { left: 12px; top: 12px; bottom: auto; font-size: 9.5px; }
   .rcf-lock { width: 64px; height: 64px; }
-  .rcf-cap { top: 9.4%; font-size: 10.5px; max-width: 78vw; }
+  .rcf-cap { font-size: 10.5px; }
 }
 
 /* ── Брифинг старта ──────────────────────────────────────────
@@ -2466,6 +2466,87 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-hud .rcf-course { bottom: 6px; }
 .rc-flight .rcf-hud .rcf-prog,
 .rc-flight .rcf-hud .rcf-net { display: none; }
+
+
+/* ═══ Верхняя полоса стекла: колонка вместо трёх абсолютных плашек ═══
+   Титул тела, плашка аварии и ряд «задание + список узлов» идут
+   сверху вниз одной колонкой. Раньше у каждого был свой top, все три
+   попадали в полосу 34..81 пикселя, и на телефоне заказчика они
+   лежали друг на друге. Колонка убирает саму возможность наложения.
+
+   Ширину держит сама полоса, поэтому длинное название тела больше не
+   режется многоточием: оно переносится на вторую строку. */
+.rc-flight .rcf-hud .rcf-top {
+  position: absolute;
+  /* Отступ сверху считается от строки состояния: она стоит первой
+     строкой стекла, и колонка начинается под ней, а не на ней. */
+  left: 6px; right: 6px; top: 28px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 4;
+}
+/* Здесь стоит important, и на то есть причина. Эти три плашки
+   раскладывались абсолютными координатами в доброй дюжине мест файла,
+   включая правила внутри медиазапросов ниже по тексту. Пока хоть одно
+   из них доживало до телефона, колонка ломалась и карточки снова
+   ложились друг на друга. Глушим ровно раскладку и ровно внутри
+   колонки: оформление плашек не трогаем. */
+.rc-flight .rcf-hud .rcf-top > *,
+.rc-flight .rcf-hud .rcf-trow > * {
+  position: relative !important;
+  left: auto !important; right: auto !important;
+  top: auto !important; bottom: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+.rc-flight .rcf-hud .rcf-top .rcf-cap {
+  /* Ширину берём всю, какая есть у полосы. При width: auto плашка
+     ужималась по содержимому и последняя буква вместе с межбуквенным
+     зазором вылезала за край. */
+  max-width: 100% !important;
+  width: 100% !important;
+  white-space: normal !important;
+  text-align: center;
+  overflow: visible !important;
+  text-overflow: clip;
+  line-height: 1.35;
+}
+/* Появление титула вело transform с translateX, который в колонке уже
+   не нужен и сдвигал плашку влево на пол-ширины. */
+.rc-flight .rcf-hud .rcf-top .rcf-cap.in { animation: rcfCapCol .55s var(--ease) forwards, rcfHoloBreath 3.4s ease-in-out .55s infinite; }
+@keyframes rcfCapCol {
+  from { opacity: 0; transform: scaleY(.4); filter: brightness(2.2); }
+  55%  { opacity: 1; transform: scaleY(1.04); }
+  to   { opacity: 1; transform: scaleY(1); filter: brightness(1); }
+}
+/* Ряд под титулом: слева задание, справа список узлов. Не влезли по
+   ширине - список уходит под задание, а не наезжает на него. */
+.rc-flight .rcf-hud .rcf-trow {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px; width: 100%; flex-wrap: wrap;
+}
+.rc-flight .rcf-hud .rcf-trow .rcf-mis {
+  width: auto !important; flex: 1 1 180px;
+  max-width: 100% !important; max-height: none !important;
+}
+.rc-flight .rcf-hud .rcf-trow .rcf-netlist {
+  width: auto !important; flex: 0 1 auto; max-width: 46% !important;
+}
+/* Плашка аварии получила свою строку. Прежде она стояла абсолютно на
+   top 44px, то есть ровно на карточке задания. */
+.rc-flight .rcf-hud .rcf-top .rcf-fail { max-width: 100% !important; }
+.rc-flight .rcf-hud .rcf-top .rcf-fail:empty { display: none; }
+
+/* Курс без цели: расстояние прячем, иначе рядом стоят два прочерка.
+   На узком экране убираем и саму ячейку: слово «КУРС», за которым
+   ничего нет, это ровно та лишняя надпись, на которую жаловался
+   заказчик. Появится цель - появится и ячейка. */
+.rc-flight .rcf-d-course.is-empty .rcf-c-dist { display: none; }
+.rc-flight .rcf-d-course.is-empty .rcf-c-goal { opacity: .62; }
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-course.is-empty { display: none !important; }
+}
 
 /* Досье, справка и меню тоже живут на стекле и обрезаются им */
 .rc-flight .rcf-dos,
@@ -4107,15 +4188,15 @@ html.rc-deep-inside .rcf-fab {
 
 /* P6M · non-overlapping windscreen projection. Status, mission and
    the transient flight hint occupy three explicit glass bands. */
+/* Раскладку титула ведёт колонка .rcf-top, здесь остаётся только
+   оформление. Прежде тут стояли top, max-width 62% и nowrap с
+   многоточием - три заплатки подряд против наложения, которого
+   колонка не допускает вовсе. Именно они и резали название тела на
+   телефоне заказчика до «исутст...». */
 .rc-flight .rcf-hud .rcf-cap {
-  top: 7px !important;
-  max-width: 62% !important;
   padding: 6px 14px !important;
-  white-space: nowrap !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-size: clamp(9px, 1.1vw, 12px) !important;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 /* Карточка задания стоит НИЖЕ строки состояния, а не вровень с ней.
 
@@ -4142,7 +4223,12 @@ html.rc-deep-inside .rcf-fab {
   max-width: 80% !important;
   padding: 5px 10px;
   transform: translateX(-50%) !important;
-  white-space: nowrap !important;
+  /* Строка переносится. Стоял nowrap, и на телефоне подсказка
+     обрывалась многоточием на «щипок - п...»: полсовета пропадало
+     ровно там, где человек и не знает, что делать. */
+  white-space: normal !important;
+  text-align: center;
+  line-height: 1.45;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center !important;
@@ -4155,9 +4241,8 @@ html.rc-deep-inside .rcf-fab {
 }
 @media (max-width: 760px) {
   .rc-flight .rcf-hud .rcf-cap {
-    max-width: 58% !important;
     padding: 5px 10px !important;
-    font-size: 8.5px !important;
+    font-size: 9.5px !important;
   }
   .rc-flight .rcf-hud > .rcf-mis {
     top: 39px !important;
@@ -4300,9 +4385,8 @@ html.rc-deep-inside .rcf-fab {
 /* Титры уходят под табло. Табло переехало к верхней кромке стекла,
    и надпись о теле легла ровно на него - две строки в одном месте
    читаются мусором, а не приборами. */
-.rc-flight.rcf-native-cab .rcf-hud .rcf-cap {
-  top: clamp(30px, 4.2vh, 44px) !important;
-}
+/* Здесь стоял отдельный top для родной рубки: ещё одна заплатка
+   против того же наложения. Колонку он ломал, поэтому убран. */
 
 /* ══════════════════════════════════════════════════════════
    Плоская рама рубки в полёте
