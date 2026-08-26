@@ -133,6 +133,15 @@ for (const э of ЭКРАНЫ) {
       if (cs.display === "none" || cs.visibility === "hidden" || +cs.opacity === 0) return;
       if (el.classList.contains("rcf-cabframe") || el.classList.contains("rcf-instr") ||
           el.classList.contains("rcf-cv") || el.classList.contains("rcf-phys-hit")) return;
+      /* Метки тел живут в слое rc-holo, а он режется контуром стекла
+         (clip-path из --cab-clip). Обрезка меняет отрисовку, но НЕ
+         меняет getBoundingClientRect: коробка ореола по-прежнему
+         торчит за окно, хотя на экране за ним ничего не нарисовано.
+         Приёмка на этом кричала про rch-halo и rch-glow три прогона
+         подряд, и один раз я по её крику добавила на сайт правило,
+         которое чинило то, что и так было починено. Считаем такие
+         элементы обрезанными, а проверяем сам слой ниже. */
+      if (el.closest(".rc-holo")) return;
       const r = el.getBoundingClientRect();
       if (r.width < 30 || r.height < 16) return;
       if (el.children.length) return;
@@ -155,7 +164,15 @@ for (const э of ЭКРАНЫ) {
       заКадром: hit.filter(el => { const r = el.getBoundingClientRect();
         return r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight; }).length,
       голограмма: !!document.querySelector(".rcf-holo"),
-      вылезло: [...new Set(вылезло)].slice(0, 8)
+      вылезло: [...new Set(вылезло)].slice(0, 8),
+      /* Слой меток обязан быть обрезан по стеклу. Если контур не
+         доехал, метки светят на железо рубки - и вот это уже дефект. */
+      меткиОбрезаны: (function () {
+        const л = document.querySelector(".rc-holo");
+        if (!л) return "слоя нет";
+        const c = getComputedStyle(л).clipPath;
+        return c && c !== "none" ? "по контуру" : "НЕ ОБРЕЗАН";
+      })()
     };
   });
 
