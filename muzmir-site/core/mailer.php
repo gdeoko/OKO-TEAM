@@ -1304,7 +1304,13 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
 }
 
 /** Кладёт письмо в очередь mail_queue (реальная отправка — воркером). */
-function mail_queue(string $to, string $name, string $subject, string $html, string $attach = ''): int {
+/**
+ * @param string $scheduledAt 'Y-m-d H:i:s' — не отправлять раньше этого времени.
+ *        Пусто (обычный случай) — уйдёт ближайшим заходом отправщика. Нужно это
+ *        письмам, которые человеку незачем получать среди ночи: отказ по заявке
+ *        в час сорок ночи он всё равно прочитает утром, а тревогу вызовет сразу.
+ */
+function mail_queue(string $to, string $name, string $subject, string $html, string $attach = '', string $scheduledAt = ''): int {
     // В очередь мёртвый адрес не кладём вовсе: иначе он копится там неделями и
     // портит и отчёты, и суточную квоту.
     // Отказ от рассылки сюда не относится: в очередь попадают личные письма —
@@ -1320,6 +1326,7 @@ function mail_queue(string $to, string $name, string $subject, string $html, str
             'body'     => $html,
             'attach'   => $attach,
             'status'   => 'queued',
+            'scheduled_at' => trim($scheduledAt),
         ]);
         // Сразу дублируем в приложение как уведомление (письмо уйдёт воркером позже).
         if ($id) {

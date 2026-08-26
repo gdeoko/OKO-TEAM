@@ -318,11 +318,20 @@ function grade_reject_application(int $appId, string $reason, string $source = '
             $html = rm_mail_layout($inner, $canReapply
                 ? 'Заявка №' . (string) $a['number'] . ': устраните причину и подайте заявку заново — мы с радостью примем её к аттестации.'
                 : 'Заявка №' . (string) $a['number'] . ' не принята к участию. Причина — внутри письма.');
+            /* ОТКАЗ НЕ ПРИХОДИТ НОЧЬЮ.
+             *
+             * Жюри разбирает работы когда угодно, в том числе за полночь, а
+             * человек получает «заявка не принята к участию» — и до утра ему не
+             * у кого спросить, что делать. Три таких письма ушли участникам в
+             * час сорок ночи, потому что письмо ставилось в очередь без времени.
+             * Теперь нерабочее время сдвигает отправку на ближайшее рабочее:
+             * пн-сб, с девяти утра. Работа при этом отклоняется сразу — ждёт
+             * только письмо. */
             $out['mailed'] = mail_queue((string) $a['email'], $name,
                 $canReapply
                     ? 'Заявка №' . (string) $a['number'] . ' — устраните причину и подайте заново'
                     : 'Заявка №' . (string) $a['number'] . ' не принята к участию',
-                $html) > 0;
+                $html, '', ga_next_worktime()) > 0;
         } catch (\Throwable $e) { /* письмо не должно ломать отклонение */ }
     }
 
@@ -338,4 +347,30 @@ function grade_reject_application(int $appId, string $reason, string $source = '
         . ($out['refunded'] > 0 ? ' Возврат ' . $out['refunded'] . ' ₽ отправлен в ЮKassa.' : '')
         . ($out['refund_error'] !== '' ? ' ВНИМАНИЕ: автовозврат не прошёл (' . $out['refund_error'] . ') — верните вручную в ЛК ЮKassa.' : '');
     return $out;
+}
+
+/**
+ * БЛИЖАЙШЕЕ РАБОЧЕЕ ВРЕМЯ ДЛЯ ПИСЬМА УЧАСТНИКУ.
+ *
+ * Правило центра: наружу ничего не уходит ночью и в воскресенье — адресат читает
+ * ночное письмо как работу робота, а по отказу ему ещё и ответить некому.
+ * Рабочее время: понедельник-суббота, с 9 до 19.
+ *
+ * @return string 'Y-m-d H:i:s' или '' — если сейчас рабочее время и ждать нечего.
+ */
+function ga_next_worktime(): string {
+    $from = (int) (function_exists('cfgv') ? cfgv('OUTREACH_HOUR_FROM', 9) : 9);
+    $to   = (int) (function_exists('cfgv') ? cfgv('OUTREACH_HOUR_TO', 19) : 19);
+    $now  = time();
+    $h    = (int) date('G', $now);
+    $dow  = (int) date('N', $now);
+    if ($dow !== 7 && $h >= $from && $h < $to) return '';      // сейчас можно
+
+    for ($i = 0; $i < 8; $i++) {
+        $d = strtotime('+' . $i . ' day', $now);
+        if ((int) date('N', $d) === 7) continue;               // воскресенье
+        $start = strtotime(date('Y-m-d', $d) . ' ' . sprintf('%02d:00:00', $from));
+        if ($start > $now) return date('Y-m-d H:i:s', $start);
+    }
+    return date('Y-m-d H:i:s', strtotime('+1 day'));
 }

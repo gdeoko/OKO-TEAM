@@ -78,7 +78,17 @@ try {
     }
 
     $take = min($batch, $remaining);
-    $rows = all("SELECT * FROM mail_queue WHERE status='queued' ORDER BY created_at ASC LIMIT ?", [$take]);
+    /* ПИСЬМО МОЖЕТ ЖДАТЬ СВОЕГО ЧАСА.
+     *
+     * В очереди есть колонка scheduled_at, и код, который ставит письмо на утро,
+     * на неё рассчитывал — а выборка её не читала. Три отказа по конкурсу,
+     * отложенные на девять утра, ушли участникам в час сорок ночи: человек
+     * получает «заявка не принята» среди ночи и до утра не может ни спросить, ни
+     * ответить. Пустое поле по-прежнему значит «слать сейчас». */
+    $rows = all("SELECT * FROM mail_queue
+                  WHERE status='queued'
+                    AND (COALESCE(scheduled_at,'') = '' OR datetime(scheduled_at) <= datetime('now','localtime'))
+               ORDER BY created_at ASC LIMIT ?", [$take]);
 
     $sent = 0;
     $failed = 0;
