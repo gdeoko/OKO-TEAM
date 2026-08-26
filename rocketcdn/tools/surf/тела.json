@@ -1,22 +1,90 @@
 {
-  "earth":    {"имя":"ЗЕМЛЯ", "суть":"a low orbital view straight down onto the Pacific coastline of South America: deep blue ocean water with visible wave texture and pale turquoise shallows over sandbars, a green river delta cutting through jungle, white cumulus clouds casting sharp shadows on the water and land, a strip of surf breaking white along the shore"},
-  "moon":     {"имя":"ЛУНА", "суть":"the floor of a large lunar crater seen from low altitude: fine grey regolith dust with countless small craters of every size, scattered angular boulders casting long hard black shadows from a very low sun, a shallow rille winding across the plain, faint ray streaks of brighter ejecta"},
-  "mars":     {"имя":"МАРС", "суть":"the Martian surface from low altitude: rust and ochre regolith, long parallel dune fields of dark basalt sand with sharp crests, scattered angular rocks, a dry braided channel carved by ancient water, thin pale frost in the shadowed hollows"},
-  "mercury":  {"имя":"МЕРКУРИЙ", "суть":"the heavily cratered surface of Mercury: overlapping impact craters of every size packed edge to edge, dark grey basaltic plains, sharp crater rims and terraced walls, long black shadows from a hard low sun, bright fresh ejecta rays across the darker ground"},
-  "venus":    {"имя":"ВЕНЕРА", "суть":"the surface of Venus seen through its thick atmosphere: a plain of dark cracked volcanic rock under a heavy sulphurous ochre haze, flattened pancake domes, long lava channels, everything softened and yellowed by the dense air, no sky visible, oppressive and hot"},
-  "jupiter":  {"имя":"ЮПИТЕР", "суть":"a close view of the cloud tops of Jupiter filling the frame: turbulent zonal belts of cream, ochre and rust brown flowing past each other, curling vortices and white oval storms, a great swirling eddy of red brown cloud, deep three dimensional cloud structure with shadowed troughs"},
-  "saturn":   {"имя":"САТУРН", "суть":"a close view of the cloud tops of Saturn filling the frame: soft banded clouds in cream, pale gold and amber, gentle zonal jets with feathered edges, a hexagonal polar vortex pattern hinted at one edge, subtle white storm ovals, smoother and softer than Jupiter"},
-  "uranus":   {"имя":"УРАН", "суть":"the cloud deck of Uranus filling the frame: pale cyan and mint methane haze, very smooth and featureless at first glance, revealing faint banding and a few discrete white methane clouds under raking light, cold and serene"},
-  "neptune":  {"имя":"НЕПТУН", "суть":"the cloud deck of Neptune filling the frame: deep azure and cobalt methane clouds, fast bright white cirrus streaks stretched by supersonic winds, a dark storm oval with a bright companion cloud, strong contrast and motion"},
-  "sun":      {"имя":"СОЛНЦЕ", "суть":"the surface of the Sun filling the frame: granulation cells of convective plasma packed edge to edge, each cell bright in the centre with dark cooler lanes between, a large sunspot with a dark umbra and fibrous penumbra, bright plage and magnetic loops arching at one edge, incandescent orange and white"},
-  "hole":     {"имя":"ЧЁРНАЯ ДЫРА", "суть":"the accretion disc of a black hole filling the frame: incandescent plasma streaming in tight spiral filaments, doppler brightened on one side to blue white and dimmed to deep orange on the other, the black event horizon cutting the frame at one edge, gravitational lensing bending the light into arcs"},
-
-  "terran":   {"имя":"ЗЕМЛЕПОДОБНАЯ", "суть":"a low orbital view of an alien Earth-like world: a coastline where a violet tinted ocean meets rust coloured continents, patches of unfamiliar dark vegetation, braided river systems, thin white clouds casting shadows"},
-  "rocky":    {"имя":"КАМЕННАЯ", "суть":"the airless rocky surface of an alien world from low altitude: bare fractured stone plains, impact craters, fields of sharp angular debris, deep fissures, hard black shadows from a low sun, no atmosphere and no haze"},
-  "gas":      {"имя":"ГАЗОВЫЙ ГИГАНТ", "суть":"the cloud tops of an alien gas giant filling the frame: strong zonal belts in slate blue, teal and pale cream flowing in opposite directions, shearing vortices along the boundaries, deep cloud canyons in shadow"},
-  "ice":      {"имя":"ЛЕДЯНАЯ", "суть":"the frozen surface of an alien ice world from low altitude: a shattered plain of blue white water ice split by a network of dark fractures, pressure ridges thrown up along the cracks, drifts of fine snow, pale teal ice glowing from within"},
-  "lava":     {"имя":"ЛАВОВАЯ", "суть":"the molten surface of a lava world from low altitude: a crust of black cooled basalt broken by a glowing orange network of molten rock, incandescent lava fountains, dark plates drifting on the melt, heat shimmer over the cracks"},
-  "ocean":    {"имя":"ОКЕАНИЧЕСКАЯ", "суть":"the open ocean of a water world from low altitude: deep teal water covering everything to the edges of the frame, long swell lines and whitecaps, sunglint scattering off the wave facets, a spiral storm system on one side"},
-  "desert":   {"имя":"ПУСТЫННАЯ", "суть":"the desert surface of an arid alien world from low altitude: endless dune seas in amber and pale gold with knife sharp crests, wind carved rock outcrops, dust streaming off the ridges, dry cracked pan between the dunes"},
-  "star":     {"имя":"ЗВЕЗДА", "суть":"the surface of a red dwarf star filling the frame: dense convective granulation in deep orange and red, dark starspots, bright magnetic filaments, a prominence arching at one edge, seething and turbulent"}
+ "earth": {
+  "имя": "ЗЕМЛЯ",
+  "суть": "a low orbital view straight down onto the Pacific coastline of South America: deep blue ocean water with visible wave texture and pale turquoise shallows over sandbars, a green river delta cutting through jungle, white cumulus clouds casting sharp shadows on the water and land, a strip of surf breaking white along the shore"
+ },
+ "moon": {
+  "имя": "ЛУНА",
+  "суть": "the floor of a large lunar crater seen from low altitude: fine grey regolith dust with countless small craters of every size, scattered angular boulders casting long hard black shadows from a very low sun, a shallow rille winding across the plain, faint ray streaks of brighter ejecta"
+ },
+ "mars": {
+  "имя": "МАРС",
+  "суть": "the Martian surface from low altitude: rust and ochre regolith, long parallel dune fields of dark basalt sand with sharp crests, scattered angular rocks, a dry braided channel carved by ancient water, thin pale frost in the shadowed hollows"
+ },
+ "mercury": {
+  "имя": "МЕРКУРИЙ",
+  "суть": "the heavily cratered surface of Mercury: overlapping impact craters of every size packed edge to edge, dark grey basaltic plains, sharp crater rims and terraced walls, long black shadows from a hard low sun, bright fresh ejecta rays across the darker ground"
+ },
+ "venus": {
+  "имя": "ВЕНЕРА",
+  "суть": "the surface of Venus seen through its thick atmosphere: a plain of dark cracked volcanic rock under a heavy sulphurous ochre haze, flattened pancake domes, long lava channels, everything softened and yellowed by the dense air, no sky visible, oppressive and hot"
+ },
+ "jupiter": {
+  "имя": "ЮПИТЕР",
+  "суть": "a close view of the cloud tops of Jupiter filling the frame: turbulent zonal belts of cream, ochre and rust brown flowing past each other, curling vortices and white oval storms, a great swirling eddy of red brown cloud, deep three dimensional cloud structure with shadowed troughs"
+ },
+ "saturn": {
+  "имя": "САТУРН",
+  "суть": "a close view of the cloud tops of Saturn filling the frame: soft banded clouds in cream, pale gold and amber, gentle zonal jets with feathered edges, a hexagonal polar vortex pattern hinted at one edge, subtle white storm ovals, smoother and softer than Jupiter"
+ },
+ "uranus": {
+  "имя": "УРАН",
+  "суть": "the cloud deck of Uranus filling the frame: pale cyan and mint methane haze, very smooth and featureless at first glance, revealing faint banding and a few discrete white methane clouds under raking light, cold and serene"
+ },
+ "neptune": {
+  "имя": "НЕПТУН",
+  "суть": "the cloud deck of Neptune filling the frame: deep azure and cobalt methane clouds, fast bright white cirrus streaks stretched by supersonic winds, a dark storm oval with a bright companion cloud, strong contrast and motion"
+ },
+ "sun": {
+  "имя": "СОЛНЦЕ",
+  "суть": "the surface of the Sun filling the frame: granulation cells of convective plasma packed edge to edge, each cell bright in the centre with dark cooler lanes between, a large sunspot with a dark umbra and fibrous penumbra, bright plage and magnetic loops arching at one edge, incandescent orange and white"
+ },
+ "hole": {
+  "имя": "ЧЁРНАЯ ДЫРА",
+  "суть": "the accretion disc of a black hole filling the frame: incandescent plasma streaming in tight spiral filaments, doppler brightened on one side to blue white and dimmed to deep orange on the other, the black event horizon cutting the frame at one edge, gravitational lensing bending the light into arcs"
+ },
+ "terran": {
+  "имя": "ЗЕМЛЕПОДОБНАЯ",
+  "суть": "a low orbital view of an alien Earth-like world: a coastline where a violet tinted ocean meets rust coloured continents, patches of unfamiliar dark vegetation, braided river systems, thin white clouds casting shadows"
+ },
+ "rocky": {
+  "имя": "КАМЕННАЯ",
+  "суть": "the airless rocky surface of an alien world from low altitude: bare fractured stone plains, impact craters, fields of sharp angular debris, deep fissures, hard black shadows from a low sun, no atmosphere and no haze"
+ },
+ "gas": {
+  "имя": "ГАЗОВЫЙ ГИГАНТ",
+  "суть": "the cloud tops of an alien gas giant filling the frame: strong zonal belts in slate blue, teal and pale cream flowing in opposite directions, shearing vortices along the boundaries, deep cloud canyons in shadow"
+ },
+ "ice": {
+  "имя": "ЛЕДЯНАЯ",
+  "суть": "the frozen surface of an alien ice world from low altitude: a shattered plain of blue white water ice split by a network of dark fractures, pressure ridges thrown up along the cracks, drifts of fine snow, pale teal ice glowing from within"
+ },
+ "lava": {
+  "имя": "ЛАВОВАЯ",
+  "суть": "the molten surface of a lava world from low altitude: a crust of black cooled basalt broken by a glowing orange network of molten rock, incandescent lava fountains, dark plates drifting on the melt, heat shimmer over the cracks"
+ },
+ "ocean": {
+  "имя": "ОКЕАНИЧЕСКАЯ",
+  "суть": "the open ocean of a water world from low altitude: deep teal water covering everything to the edges of the frame, long swell lines and whitecaps, sunglint scattering off the wave facets, a spiral storm system on one side"
+ },
+ "desert": {
+  "имя": "ПУСТЫННАЯ",
+  "суть": "the desert surface of an arid alien world from low altitude: endless dune seas in amber and pale gold with knife sharp crests, wind carved rock outcrops, dust streaming off the ridges, dry cracked pan between the dunes"
+ },
+ "star": {
+  "имя": "ЗВЕЗДА",
+  "суть": "the surface of a red dwarf star filling the frame: dense convective granulation in deep orange and red, dark starspots, bright magnetic filaments, a prominence arching at one edge, seething and turbulent"
+ },
+ "asteroid": {
+  "имя": "АСТЕРОИД",
+  "суть": "the surface of a large carbonaceous asteroid seen from very close range: a chaotic rubble pile of angular grey and charcoal boulders half sunk in a blanket of fine dark regolith, the boulders sharply faceted with fresh bright fracture faces where recent impacts split them, older stones rounded and dusted over, shallow saucer craters overlapping one another across the whole ground, long chains of small secondary pits, thin bright rays of pale ejecta fanning out from the freshest hits, patches of smooth pooled dust where fine material has slid into the low spots, a few pale silicate clasts and metallic glints scattered through the darker matrix, everything airless and razor sharp with no atmosphere to soften an edge"
+ },
+ "comet": {
+  "имя": "КОМЕТА",
+  "суть": "the nucleus surface of an active comet seen from very close range: a dark charcoal crust of dust and organics pitted with rounded collapse pits, steep layered cliffs of exposed grey and blue white ice where the crust has broken away, a fractured terrace of consolidated ice slabs, fields of pebbles and metre sized boulders resting on smooth dust plains, polygonal crack networks across the frozen ground, bright fresh ice patches at the foot of the cliffs, faint fine jets of dust lifting off the surface at a grazing angle and drifting low across the ground, the whole terrain extremely dark and extremely contrasty, lit hard from one side"
+ },
+ "sat": {
+  "имя": "RC-SAT",
+  "суть": "the outer skin of a working communications satellite seen from extremely close range, filling the whole view: a deep blue gallium arsenide solar array with its fine silver interconnect grid and dark cell gaps running in strict parallel rows, next to it crinkled gold and amber multi layer insulation blanket held down by rows of stitching and pale tape, machined aluminium structural ribs with visible fastener heads and hex bolts, a white thermal radiator panel, a black waveguide run and a bundle of harness cable laced with white lacing cord, small scuffs, handling marks and micrometeoroid pits on the metal, the gold foil rippling and catching light in a hundred places, everything airless, hard edged, and lit by one brutally direct sun from the side"
+ }
 }

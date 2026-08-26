@@ -2864,7 +2864,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 /* Карта в досье не выше трети окна: иначе описание и показатели
    уезжали за нижнюю кромку рамки */
 .rc-flight .rcf-dos-map {
-  max-height: clamp(120px, 34vh, 190px);
+  max-height: clamp(132px, 30vh, 300px);
   object-fit: cover;
 }
 
@@ -3956,7 +3956,7 @@ html.rc-deep-inside .rcf-fab {
     max-height: calc(100% - 10px) !important;
     padding: 10px !important;
   }
-  .rc-flight .rcf-dos-map { max-height: 34%; object-fit: contain; }
+  .rc-flight .rcf-dos-map { max-height: 34%; object-fit: cover; }
   .rc-flight .rcf-dos-p { font-size: 10px; line-height: 1.35; }
   .rc-flight .rcf-dos-facts { gap: 4px; }
 }

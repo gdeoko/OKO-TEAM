@@ -506,7 +506,7 @@ function buildUI() {
           '<b class="rcf-dos-h"></b>' +
           '<div class="rcf-dos-wrap">' +
             '<video class="rcf-dos-vid" muted playsinline loop preload="none"></video>' +
-            '<canvas class="rcf-dos-map" width="640" height="320"></canvas>' +
+            '<canvas class="rcf-dos-map" width="640" height="360"></canvas>' +
           '</div>' +
           '<p class="rcf-dos-p"></p>' +
           '<div class="rcf-dos-facts"></div>' +
@@ -948,6 +948,9 @@ function dosClose() {
    по-прежнему рисует её карту и крутит по долготе. */
 var ПОВЕРХНОСТЬ = {
  "55 CANCRI": "star",
+ "ASTEROID": "asteroid",
+ "COMET": "comet",
+ "RC-SAT": "sat",
  "55 CANCRI D": "gas",
  "55 CANCRI E": "lava",
  "55 CANCRI F": "gas",
@@ -992,8 +995,10 @@ var ПОВЕРХНОСТЬ = {
  "TRAPPIST-1 G": "ocean",
  "URANUS": "uranus",
  "VENUS": "venus",
+ "АСТЕРОИДНЫЙ": "asteroid",
  "ВЕНЕРА": "venus",
  "ЗЕМЛЯ": "earth",
+ "КОМЕТА": "comet",
  "ЛУНА": "moon",
  "МАРС": "mars",
  "МЕРКУРИЙ": "mercury",
