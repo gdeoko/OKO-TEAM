@@ -236,11 +236,13 @@ def свет(ключ, запасной):
       "frame width, in warm white or brand amber, with generous clear space around it.",
  },
  "цифра": {
-   "как": "Design system for this frame is DATA POSTER: one number is the whole image. The key figure from the "
-          "headline is set enormous, filling two thirds of the frame height, in dense grotesque, cropped by the frame "
-          "edge if needed, in brand amber over a deep graphite ground, with a documentary photograph of the site "
-          "visible through the counters of the numerals or as a narrow band behind them. The rest of the headline is "
-          "set small and calm beneath it, reading exactly, character by character, the Russian line «{заголовок}».",
+   "как": "Design system for this frame is DATA POSTER: one number anchors the image, but the sentence still has to "
+          "be read. The key figure from the headline is set very large in brand amber, occupying about a third of the "
+          "frame, over a documentary photograph of the site. The headline itself is set beside or under that figure in "
+          "dense grotesque capitals, large enough to read at a three hundred pixel preview and never smaller than a "
+          "twentieth of the frame height, ranged left on a clear ground, reading exactly, character by character, the "
+          "Russian line «{заголовок}». The number is the accent, the sentence is the message: if only one of them can "
+          "be read at thumbnail size, it must be the sentence.",
    "типографика":
       "Typography is flat, geometric and precisely aligned, one dominant figure and one quiet supporting line, "
       "nothing else competing for attention.",
