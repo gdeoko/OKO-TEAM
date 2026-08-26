@@ -408,14 +408,30 @@ function buildUI() {
     navHtml += '<button type="button" data-goal="' + NAV[ni].id + '">' + NAV[ni].t + "</button>";
   }
 
+  /* Строка условия для рукава: сколько узлов нужно и сколько есть.
+     Одна на разметку и на обновление, чтобы текст не разъезжался. */
+  function нуженУзел(uu) {
+    var есть = netCount();
+    if (есть >= uu.need) return RU ? "открыт" : "unlocked";
+    return (RU ? "нужно узлов сети: " : "nodes needed: ") + uu.need +
+           " · " + (RU ? "развёрнуто " : "deployed ") + есть;
+  }
   var uniHtml = "";
   for (var ui2 = 0; ui2 < UNIVERSES.length; ui2++) {
     /* Закрытые вселенные показываем сразу: цель должна быть видна,
        иначе её незачем достигать. Разница только в состоянии кнопки */
     var uu = UNIVERSES[ui2];
     var locked = uu.need && netCount() < uu.need;
+    /* Условие открытия пишем прямо в кнопке, а не только всплывающей
+       строкой по нажатию. Заказчик до третьего рукава так и не дошёл:
+       он нажал, ничего не открылось, и он решил, что рукавов просто
+       нет - «полёт застревает на 2 вселенной, 3-4 вообще нету».
+       Всплывающая подсказка была, но она выходила ПОД открытым меню
+       и до глаз не доходила. */
     uniHtml += '<button type="button" data-uni="' + ui2 + '"' + (locked ? ' class="locked"' : '') + '><b>' +
-      uu.name + '</b><span>' + (uu.about || "") + "</span></button>";
+      uu.name + '</b><span>' + (uu.about || "") + "</span>" +
+      (uu.need ? '<u class="rcf-uni-need">' + нуженУзел(uu) + "</u>" : "") +
+      "</button>";
   }
 
   w.innerHTML =
@@ -4375,6 +4391,14 @@ function deployNode() {
     for (var bi2 = 0; bi2 < btns.length; bi2++) {
       var uv = UNIVERSES[parseInt(btns[bi2].getAttribute("data-uni"), 10)];
       btns[bi2].classList.toggle("locked", !!(uv && uv.need && netCount() < uv.need));
+      var стр = btns[bi2].querySelector(".rcf-uni-need");
+      if (стр && uv && uv.need) {
+        var т = netCount() >= uv.need
+          ? (RU ? "открыт" : "unlocked")
+          : (RU ? "нужно узлов сети: " : "nodes needed: ") + uv.need +
+            " · " + (RU ? "развёрнуто " : "deployed ") + netCount();
+        if (стр.textContent !== т) стр.textContent = т;
+      }
     }
   }
 }

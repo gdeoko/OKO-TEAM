@@ -1114,6 +1114,15 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   box-shadow: inset 0 -3px 0 -1px currentColor;
 }
 .rcf-uni button.locked:hover { opacity: .72; }
+/* Условие открытия рукава читается всегда, а не всплывает на секунду
+   под уже открытым меню. */
+.rcf-uni-need {
+  display: block; margin-top: 4px;
+  font-size: 10.5px; font-style: normal; letter-spacing: .04em;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .9);
+}
+.rcf-uni button.locked .rcf-uni-need { color: #F2B657; }
+.rcf-uni button.locked { opacity: .78; }
 
 /* ── Приглашение в полёт после заявки ────────────────────────
    Раньше игра открывалась сама через полторы секунды после
@@ -2031,10 +2040,21 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   bottom: calc(var(--cab-dh, 19%) + clamp(6px, 1.4vh, 16px));
   transform: translateX(-50%) translateY(12px);
   width: min(620px, 92vw);
-  max-height: 56vh;
+  /* Список длинный: тринадцать тел и четыре рукава. Он и прокручивался,
+     но на телефоне полосы прокрутки нет, и обрезанные по нижней кромке
+     «СОЛНЕЧНАЯ» и «МЕСТНЫЙ» читались поломкой, а не продолжением.
+
+     Даём больше высоты и растворяем нижний край: край, уходящий в
+     прозрачность, сам говорит, что ниже есть ещё. Плюс запас снизу,
+     чтобы последняя строка не заканчивалась ровно на срезе. */
+  max-height: min(64vh, 520px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 28px), rgba(0,0,0,.15));
+  mask-image: linear-gradient(180deg, #000 calc(100% - 28px), rgba(0,0,0,.15));
   padding: clamp(12px, 1.8vh, 18px);
+  padding-bottom: calc(clamp(12px, 1.8vh, 18px) + 26px);
   border-radius: 14px;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
   background: linear-gradient(170deg, rgba(10,21,36,.96), rgba(5,12,21,.98));
@@ -2095,6 +2115,32 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   gap: 6px;
 }
 .rc-flight .rcf-menu .rcf-uni button { margin: 0; }
+/* Кнопка рукава внутри меню: своя типографика, а не унаследованная от
+   отдельной панели прыжков. На телефоне заказчика её заголовок шёл
+   огромными буквами в две строки, «СОЛНЕЧНАЯ СИСТЕМА» и «МЕСТНЫЙ
+   РУКАВ» срезало нижней кромкой, и до третьего рукава он не долистал. */
+.rc-flight .rcf-menu .rcf-uni button {
+  display: block; text-align: left;
+  padding: 9px 12px; line-height: 1.3;
+}
+.rc-flight .rcf-menu .rcf-uni button b {
+  display: block;
+  font-size: 12px; font-weight: 700; letter-spacing: .08em;
+}
+.rc-flight .rcf-menu .rcf-uni button span {
+  display: block; margin-top: 2px;
+  font-size: 10px; line-height: 1.35;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .58);
+}
+/* Подзаголовок раздела переносится, а не обрывается на «прыжок через М...» */
+.rc-flight .rcf-menu-h { flex-wrap: wrap; }
+.rc-flight .rcf-menu-h span { flex: 1 1 100%; line-height: 1.4; }
+@media (max-width: 760px) {
+  .rc-flight .rcf-menu .rcf-uni { grid-template-columns: 1fr; }
+  .rc-flight .rcf-menu .rcf-nav { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+  .rc-flight .rcf-menu .rcf-nav button { padding: 8px 6px; font-size: 11px; }
+  .rc-flight .rcf-menu .rcf-uni button b { font-size: 11.5px; }
+}
 .rc-flight.rcf-stage .rcf-menu { opacity: 0 !important; visibility: hidden !important; }
 
 @media (max-width: 760px) {
