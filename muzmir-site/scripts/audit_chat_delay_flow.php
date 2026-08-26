@@ -53,28 +53,29 @@ try {
     $qid = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey,
                                           'role' => 'user', 'text' => 'Сколько стоит участие?', 'file' => '']);
 
-    /* Порядок вставки — тот же, что в api/v1/chat.php: сначала подтверждение,
-     * потом отложенный ответ. Срок берём заведомо близкий, чтобы не ждать пять
-     * минут: проверяется порядок номеров, а не длина паузы. */
-    $notice = chat_wait_notice($delay, 'Мария', true);
-    $nid = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey,
-                                          'role' => 'assistant', 'text' => $notice, 'file' => '']);
+    /* Так же, как в api/v1/chat.php: в базу ложится ТОЛЬКО отложенный ответ.
+     * Срок берём заведомо близкий, чтобы не ждать пять минут: проверяется
+     * поведение истории, а не длина паузы. */
+    $say(chat_wait_notice($delay, 'Мария', true) === '',
+         'подтверждение приёма вопроса не собирается вовсе');
+
     $aid = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey,
                                           'role' => 'assistant', 'text' => 'Участие стоит 1 000 ₽.',
                                           'file' => '', 'visible_at' => date('Y-m-d H:i:s', time() + 60)]);
 
-    $say($nid < $aid, 'подтверждение лежит в истории раньше ответа', "подтверждение $nid, ответ $aid");
-
     // Первый заход вкладки: показан вопрос, добираем всё после него.
     $first = $history($sessionKey, $qid);
     $texts = array_column($first, 'text');
-    $say(count($first) === 1 && $texts[0] === $notice, 'до срока приходит только подтверждение');
+    $say(count($first) === 0, 'до срока в чат не приходит ничего', 'сообщений: ' . count($first));
     $say(!in_array('Участие стоит 1 000 ₽.', $texts, true), 'готовый ответ до срока не виден');
 
-    // Вкладка запомнила номер последнего показанного — это и есть ловушка.
-    $since = 0;
+    /* Раз до срока показывать нечего, вкладка не двигает `since` вперёд — и
+     * ответ с меньшим номером не потеряется. Именно на этом ломалась прежняя
+     * схема с подтверждением: оно получало больший id, вкладка запоминала его,
+     * и ответ не проходил условие id > since уже никогда. */
+    $since = $qid;
     foreach ($first as $r) $since = max($since, (int) $r['id']);
-    $say($since === $nid, 'вкладка запомнила номер подтверждения', "since=$since");
+    $say($since === $qid, 'номер последнего показанного остался на вопросе', "since=$since");
 
     // Срок наступил.
     q("UPDATE chat_messages SET visible_at=datetime('now','localtime','-1 minute') WHERE id=?", [$aid]);
@@ -82,7 +83,7 @@ try {
     $got    = array_column($second, 'text');
     $say(in_array('Участие стоит 1 000 ₽.', $got, true),
          'после срока ответ доходит тем же опросом истории', 'сообщений: ' . count($second));
-    $say(!in_array($notice, $got, true), 'подтверждение вторым разом не дублируется');
+    $say(count($got) === 1, 'приходит только ответ, ничего лишнего');
 
 } catch (\Throwable $e) {
     $say(false, 'проверка прервана', $e->getMessage());
