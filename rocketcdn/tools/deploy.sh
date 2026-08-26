@@ -47,7 +47,11 @@ for try_n in 1 2 3; do
 done
 [ "$ok" = 1 ] || { echo "НЕ ВЫЛОЖЕНО: архив не доехал целым"; exit 1; }
 
-"$V" "cd /opt/oko-poster/cab && sshpass -p \"123321!@#\" scp -o StrictHostKeyChecking=no dep-$STAMP.tgz ubuntu@217.19.122.132:/tmp/ 2>&1 | tail -1; sshpass -p \"123321!@#\" ssh -o StrictHostKeyChecking=no ubuntu@217.19.122.132 \"sudo tar xzf /tmp/dep-$STAMP.tgz -C /var/www/rocketcdn && sudo php /var/www/rocketcdn/bump.php 2>&1 | tail -1\" 2>&1 | tail -2"
+# Пароль боевого сервера живёт в хранилище на VPS и НИКОГДА не попадает
+# в этот файл: репозиторий открытый, и однажды он тут уже лежал открытым
+# текстом. Мост читает строку "Вход | ubuntu / ..." из мастер-хранилища
+# прямо в момент выкладки.
+"$V" 'VAULT=/opt/oko-poster/cfg/OKO_MASTER_VAULT.md; PW=$(grep -m1 -E "^\| *Вход *\| *ubuntu */" "$VAULT" | sed -E "s#.*ubuntu */ *([^ (|]+).*#\\1#"); [ -n "$PW" ] || { echo "НЕ ВЫЛОЖЕНО: пароль не найден в хранилище"; exit 1; }; cd /opt/oko-poster/cab && sshpass -p "$PW" scp -o StrictHostKeyChecking=no dep-'"$STAMP"'.tgz ubuntu@217.19.122.132:/tmp/ 2>&1 | tail -1; sshpass -p "$PW" ssh -o StrictHostKeyChecking=no ubuntu@217.19.122.132 "sudo tar xzf /tmp/dep-'"$STAMP"'.tgz -C /var/www/rocketcdn && sudo php /var/www/rocketcdn/bump.php 2>&1 | tail -1" 2>&1 | tail -2'
 "$V" "rm -f $DST $DST.b64" >/dev/null
 rm -rf "$CH" "$ARC"
 echo "выложено: $*"
