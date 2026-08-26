@@ -2864,7 +2864,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 /* Карта в досье не выше трети окна: иначе описание и показатели
    уезжали за нижнюю кромку рамки */
 .rc-flight .rcf-dos-map {
-  max-height: clamp(132px, 30vh, 300px);
+  max-height: clamp(132px, 34vh, 300px);
   object-fit: cover;
 }
 

@@ -363,12 +363,23 @@ var VERT = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position
 
 /* Яркие места отдельно: всё, что выше порога, уходит в размытие
    и возвращается ореолом. Так светятся лампы и голограммы. */
+/* Потолок яркости у источника ореола. Без него одна раскалённая
+   точка - солнечный серп на кромке Земли - уносила буфер свечения
+   далеко за единицу, и на кадре вместо ореола висел МЯГКИЙ БЕЛЫЙ
+   КВАДРАТ размером в полсотни пикселей. Приёмка приняла его сперва
+   за сломанный спрайт, потом за отражение окружения; на деле буфер
+   свечения вчетверо мельче кадра, и один его тексель, растянутый
+   обратно, и есть тот квадрат. Ограничение сверху оставляет ореол
+   ореолом: яркое остаётся ярким, но перестаёт заливать соседей. */
 var BRIGHT = [
   "uniform sampler2D tD; uniform float thr; uniform float soft; varying vec2 vUv;",
   "void main(){ vec4 c = texture2D(tD, vUv);",
   "  float l = dot(c.rgb, vec3(0.2126,0.7152,0.0722));",
   "  float k = smoothstep(thr, thr + soft, l);",
-  "  gl_FragColor = vec4(c.rgb * k, 1.0); }"
+  "  vec3 b = c.rgb * k;",
+  "  float m = max(max(b.r, b.g), b.b);",
+  "  if (m > 2.2) b *= 2.2 / m;",
+  "  gl_FragColor = vec4(b, 1.0); }"
 ].join("\n");
 
 var BLUR = [
@@ -503,12 +514,21 @@ R.post = function (T, renderer, opt) {
       renderer.setRenderTarget(P.b1);
       renderer.clear();
       renderer.render(sBright, cam);
-      mBlur.uniforms.tD.value = P.b1.texture;
-      mBlur.uniforms.dir.value.set(1.1 / bw, 0);
-      renderer.setRenderTarget(P.b2); renderer.clear(); renderer.render(sBlur, cam);
-      mBlur.uniforms.tD.value = P.b2.texture;
-      mBlur.uniforms.dir.value.set(0, 1.1 / bh);
-      renderer.setRenderTarget(P.b1); renderer.clear(); renderer.render(sBlur, cam);
+      /* Два прохода размытия вместо одного. Пять отсчётов на проход
+         дают не круглый ореол, а боксовое плато с прямыми краями -
+         в мелком буфере оно и читается квадратом. Второй проход
+         вдвое уже первого, и плато становится круглым пятном.
+         Проходы идут по буферу вчетверо мельче кадра, стоят они
+         почти ничего. */
+      var ход = [[1.1, 0.5], [0.5, 0.28]];
+      for (var пр = 0; пр < ход.length; пр++) {
+        mBlur.uniforms.tD.value = P.b1.texture;
+        mBlur.uniforms.dir.value.set(ход[пр][0] / bw, 0);
+        renderer.setRenderTarget(P.b2); renderer.clear(); renderer.render(sBlur, cam);
+        mBlur.uniforms.tD.value = P.b2.texture;
+        mBlur.uniforms.dir.value.set(0, ход[пр][0] / bh);
+        renderer.setRenderTarget(P.b1); renderer.clear(); renderer.render(sBlur, cam);
+      }
     }
 
     mComp.uniforms.time.value = (t || 0) * 0.001;
