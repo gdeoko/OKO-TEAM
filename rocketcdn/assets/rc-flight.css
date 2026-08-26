@@ -4488,3 +4488,91 @@ html.rc-deep-inside .rcf-fab {
 }
 .rc-flight.rcf-native-cab .rcf-instr { display: block; }
 
+/* ═══ Клавиши пульта: настоящая клавиша, а не прозрачная зона ═══
+   Заказчик про пульт: «кнопки все непонятные», «кривые и плоские»,
+   «для чего какая кнопка вообще не понятно», «иконки не подходящие».
+
+   Причина ровно одна и она в коде: у клавиши стоял прозрачный фон и
+   ноль границы. На экране была видна не клавиша, а ниша с фотографии
+   кабины, а поверх неё висел бледный значок. Отсюда и «плоско»: у
+   кнопки просто не было тела.
+
+   Теперь тело есть. Клавиша сидит в своей нише как настоящая: свет
+   сверху, тень снизу, кайма по контуру, при нажатии уходит внутрь.
+   Подпись под значком возвращена на телефон - именно она отвечает на
+   вопрос «что делает эта кнопка», а никакая иконка на такое не
+   отвечает. */
+.rc-flight .rcf-key {
+  background:
+    linear-gradient(180deg,
+      rgba(var(--int-lit-rgb, 207,233,245), .13) 0%,
+      rgba(var(--int-panel-rgb, 20,40,61), .82) 34%,
+      rgba(4, 11, 20, .92) 100%);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .30);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .30),
+    inset 0 -6px 10px -8px rgba(0,0,0,.95),
+    0 2px 0 -1px rgba(0,0,0,.7),
+    0 6px 14px -8px rgba(0,0,0,.9);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .96);
+  transition: color .16s ease, transform .07s ease, box-shadow .16s ease,
+              border-color .16s ease, background .16s ease;
+}
+.rc-flight .rcf-key::before {
+  /* Блик по верхней кромке: клавиша выпуклая, а не наклейка */
+  content: ''; position: absolute; left: 12%; right: 12%; top: 1px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--int-lit-rgb, 207,233,245), .6), transparent);
+  pointer-events: none; border-radius: 1px;
+}
+.rc-flight .rcf-key:hover {
+  color: #fff;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .62);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .42),
+    inset 0 -6px 10px -8px rgba(0,0,0,.9),
+    0 2px 0 -1px rgba(0,0,0,.7),
+    0 8px 20px -8px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+/* Нажатие: клавиша уходит В нишу, свет сверху гаснет */
+.rc-flight .rcf-key:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 3px 8px -3px rgba(0,0,0,.95),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .10);
+}
+.rc-flight .rcf-key:active::before { opacity: .25; }
+/* Включённая клавиша горит: по ней сразу видно, что режим стоит */
+.rc-flight .rcf-key.cur,
+.rc-flight .rcf-key[aria-pressed="true"],
+.rc-flight .rcf-key[aria-expanded="true"] {
+  color: #fff;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .9);
+  background:
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .34) 0%,
+      rgba(var(--int-cyan-rgb, 66,178,220), .14) 42%,
+      rgba(6, 18, 30, .92) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .5),
+    0 0 18px -4px rgba(var(--int-cyan-rgb, 66,178,220), .85),
+    0 2px 0 -1px rgba(0,0,0,.7);
+}
+/* Подпись читается: она и есть ответ на «что делает эта кнопка».
+   Прятали её на узком экране - оставались одни значки. */
+.rc-flight .rcf-key b {
+  font-size: 8.5px;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .82);
+}
+.rc-flight .rcf-key.cur b,
+.rc-flight .rcf-key[aria-pressed="true"] b,
+.rc-flight .rcf-key[aria-expanded="true"] b { color: #fff; }
+@media (max-width: 760px) {
+  .rc-flight .rcf-key { height: 46px; min-width: 44px; padding: 0 6px; gap: 3px; border-radius: 8px; }
+  .rc-flight .rcf-key svg { width: 17px; height: 17px; }
+  .rc-flight .rcf-key b { display: block !important; font-size: 7.5px; letter-spacing: .07em; }
+}
+@media (max-width: 400px) {
+  .rc-flight .rcf-key { height: 44px; min-width: 40px; padding: 0 4px; }
+  .rc-flight .rcf-key b { display: block !important; font-size: 7px; letter-spacing: .04em; }
+}
+

@@ -269,12 +269,20 @@ function tile(c, s, item, ru) {
   round(c, m, m, w, w, r);
   c.stroke();
 
-  /* Иконка: циан со свечением */
+  /* Иконка и подпись стоят В РЯД, а не одна под другой.
+
+     Пульт наклонён от камеры, и по вертикали лицо клавиши сжимается
+     перспективой почти вдвое. Подпись лежала внизу плитки и от неё
+     на экране оставалась пара пикселей: заказчик видел одни значки и
+     написал прямо - «для чего какая кнопка вообще не понятно», а
+     иконки без слова назвал неподходящими. Наклон идёт вокруг
+     горизонтальной оси, значит ширина не страдает: кладём значок
+     слева, слово справа, и слово читается при любом наклоне. */
   var icon = ICON[item["рисунок"]];
   c.save();
-  var pad = s * 0.24;
+  var pad = s * 0.335;
   var side = s - pad * 2;
-  c.translate(pad, pad * 0.82);
+  c.translate(s * 0.055, (s - side) / 2);
   c.lineWidth = Math.max(1.4, side * 0.075);
   c.lineCap = "round";
   c.lineJoin = "round";
@@ -290,19 +298,10 @@ function tile(c, s, item, ru) {
      полосе пульта, когда плитка стоит над бликом. */
   var label = ru ? item["имя"] : item.en;
   c.save();
-  var bh = s * 0.16;
-  var bg = c.createLinearGradient(0, s - bh - s * 0.04, 0, s);
-  bg.addColorStop(0, "rgba(8,11,16,0)");
-  bg.addColorStop(0.4, "rgba(8,11,16,0.85)");
-  bg.addColorStop(1, "rgba(8,11,16,0.95)");
-  c.fillStyle = bg;
-  c.fillRect(s * 0.06, s - bh - s * 0.04, s * 0.88, bh);
-  c.restore();
-  c.save();
-  c.shadowColor = "rgba(66,178,220,0.55)";
-  c.shadowBlur = s * 0.04;
+  c.shadowColor = "rgba(8,11,16,0.9)";
+  c.shadowBlur = s * 0.05;
   c.fillStyle = PALE;
-  c.textAlign = "center";
+  c.textAlign = "left";
   c.textBaseline = "middle";
   /* Кегль подгоняем под ширину плитки, а не берём по числу букв.
 
@@ -311,8 +310,11 @@ function tile(c, s, item, ru) {
      мониторе. Меряем и ужимаем, пока не влезет в четыре пятых
      стороны - тогда подпись читается на любом устройстве и никогда
      не выходит за плитку. */
-  var size = s * 0.125;
-  var limit = s * 0.80;
+  /* Слово занимает правые две трети плитки и берёт всю высоту, какую
+     может: чем крупнее буква, тем меньше от неё отнимает наклон. */
+  var текстX = s * 0.44;
+  var size = s * 0.185;
+  var limit = s - текстX - s * 0.07;
   var font = function (px) {
     return "600 " + px.toFixed(1) + "px 'Golos Text', 'Manrope', system-ui, sans-serif";
   };
@@ -321,7 +323,7 @@ function tile(c, s, item, ru) {
     size *= 0.92;
     c.font = font(size);
   }
-  c.fillText(label, s / 2, s * 0.855);
+  c.fillText(label, текстX, s * 0.52);
   c.restore();
 }
 

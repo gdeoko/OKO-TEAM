@@ -691,6 +691,18 @@ function buildUI() {
   ui.bar = w.querySelector(".rcf-track i");
   ui.hint = w.querySelector(".rcf-hint");
   ui.keyhint = w.querySelector(".rcf-keyhint");
+  /* Подсказка по клавише от самих клавиш, а не от трёхмерных
+     колпачков.
+
+     Прежняя версия читала наведение на колпачки рубки, а в готовой
+     рубке колпачки запечены в саму картинку, объектов нет, и функция
+     выходила по первой строке. На телефоне подсказка не появлялась
+     ни разу - именно поэтому заказчик и написал, что по кнопкам не
+     понять, что они делают.
+
+     Здесь мы идём от разметки: у каждой клавиши уже есть имя, к нему
+     добавлено объяснение последствия. Нажал - прочитал. */
+  setTimeout(function () { подсказкиКлавиш(w); }, 0);
   ui.keyhintName = ui.keyhint ? ui.keyhint.querySelector("b") : null;
   ui.keyhintText = ui.keyhint ? ui.keyhint.querySelector("span") : null;
   /* Скорость показана в двух местах: в отсеке хода и в ленте
@@ -4952,12 +4964,129 @@ function deckTick(ts, dt) {
    всплывающему нельзя, это прямое требование заказчика. Если
    подсказка не помещается над клавишей, она уходит вбок к
    середине - но за кромку стекла не выходит никогда. */
+
+/* Что произойдёт при нажатии. Ключ - класс клавиши. */
+var ЧТОДЕЛАЕТ = {
+  "rcf-navkey":   RU ? "Список всех тел и прыжок в другие рукава" : "Every body plus the jump to other arms",
+  "rcf-map-key":  RU ? "Карта сети: где уже стоят ваши узлы" : "Network map: where your nodes stand",
+  "rcf-scan-key": RU ? "Снять карту тела, к которому подошли" : "Scan the body you are next to",
+  "rcf-deploy":   RU ? "Развернуть узел сети. Работает на орбите тела" : "Deploy a node. Works in orbit",
+  "rcf-fire-key": RU ? "Импульс по цели впереди" : "Pulse at the target ahead",
+  "rcf-auto-key": RU ? "Автопилот ведёт корабль сам" : "Autopilot flies the ship",
+  "rcf-stop-key": RU ? "Погасить ход до нуля" : "Kill the thrust",
+  "rcf-zoom-in":  RU ? "Приблизить вид" : "Zoom in",
+  "rcf-zoom-out": RU ? "Отдалить вид" : "Zoom out",
+  "rcf-fit-key":  RU ? "Вернуть обычный кадр" : "Reset the view",
+  "rcf-help-key": RU ? "Как летать: управление и правила" : "How to fly: controls and rules"
+};
+function подсказкиКлавиш(w) {
+  if (!w || !ui.keyhint || подсказкиКлавиш.готово) return;
+  var клавиши = w.querySelectorAll(".rcf-key");
+  if (!клавиши.length) return;
+  подсказкиКлавиш.готово = true;
+  var таймер = 0;
+  var показать = function (кн) {
+    var имя = (кн.querySelector("b") || {}).textContent || кн.getAttribute("aria-label") || "";
+    var текст = "";
+    for (var к in ЧТОДЕЛАЕТ) {
+      if (ЧТОДЕЛАЕТ.hasOwnProperty(к) && кн.classList.contains(к)) { текст = ЧТОДЕЛАЕТ[к]; break; }
+    }
+    if (!текст) текст = кн.getAttribute("title") || "";
+    if (!имя && !текст) return;
+    if (ui.keyhintName) ui.keyhintName.textContent = имя;
+    if (ui.keyhintText) ui.keyhintText.textContent = текст;
+    /* Ставим НАД клавишей и держим внутри проёма окна: заезжать на
+       раму всплывающему нельзя, это прямое требование заказчика. */
+    var r = кн.getBoundingClientRect();
+    var wr = w.getBoundingClientRect();
+    var кw = ui.keyhint.offsetWidth || 210, кh = ui.keyhint.offsetHeight || 54;
+    /* Границы берём по проёму остекления, а не по всему кадру: слой
+       режется контуром окна, и подсказка, влезшая в экран, всё равно
+       уходила под стойку рубки половиной текста. */
+    var cs = getComputedStyle(w);
+    var дол = function (имя) {
+      var v = parseFloat(cs.getPropertyValue(имя));
+      return isFinite(v) ? v / 100 : NaN;
+    };
+    var wx = дол("--cab-wx"), ww = дол("--cab-ww");
+    var л = wr.left + 8, п = wr.right - 8;
+    if (isFinite(wx) && isFinite(ww) && ww > 0.05) {
+      л = wr.left + wx * wr.width + 8;
+      п = wr.left + (wx + ww) * wr.width - 8;
+    }
+    var x = r.left + r.width / 2 - кw / 2;
+    if (x < л) x = л;
+    if (x + кw > п) x = п - кw;
+    var y = r.top - кh - 10;
+    if (y < wr.top + 8) y = r.bottom + 10;
+    /* Слой ставит себя по ЦЕНТРУ: в трансформации стоит
+       translate(-50%, -50%). Отдаём центр, а не левый верхний угол,
+       иначе карточка уезжает на пол-ширины влево и обрезается. */
+    ui.keyhint.style.setProperty("--kh-x", Math.round(x + кw / 2) + "px");
+    ui.keyhint.style.setProperty("--kh-y", Math.round(y + кh / 2) + "px");
+    ui.keyhint.classList.add("on");
+  };
+  var спрятать = function (задержка) {
+    if (таймер) clearTimeout(таймер);
+    таймер = setTimeout(function () {
+      таймер = 0;
+      ui.keyhint.classList.remove("on");
+    }, задержка || 1500);
+  };
+  for (var i = 0; i < клавиши.length; i++) {
+    (function (кн) {
+      кн.addEventListener("pointerdown", function () {
+        if (таймер) { clearTimeout(таймер); таймер = 0; }
+        показать(кн);
+      }, { passive: true });
+      кн.addEventListener("pointerup", function () { спрятать(1600); }, { passive: true });
+      кн.addEventListener("pointercancel", function () { спрятать(400); }, { passive: true });
+      кн.addEventListener("pointerleave", function () { спрятать(200); }, { passive: true });
+      кн.addEventListener("mouseenter", function () {
+        if (таймер) { clearTimeout(таймер); таймер = 0; }
+        показать(кн);
+      });
+    })(клавиши[i]);
+  }
+}
+
 function keyHintFrame() {
   if (!ui.keyhint || !cabin || !cabin.controlCaps) return;
   var nodes = physicalControlsFrame.nodes;
   if (!nodes) return;
+  /* Подсказка живёт и на пальце, а не только на мыши.
+
+     Она выбирала клавишу по :hover и :focus-visible. На телефоне
+     ни того, ни другого нет, поэтому подсказка не появлялась ни
+     разу - а именно на телефоне заказчик и не понял, что делают
+     кнопки. Теперь нажатие пальцем показывает её и держит ещё
+     полторы секунды после отпускания: успеть прочитать. */
+  if (!keyHintFrame.слушает) {
+    keyHintFrame.слушает = true;
+    keyHintFrame.тач = -1;
+    for (var ки = 0; ки < nodes.length; ки++) {
+      (function (эл, идx) {
+        if (!эл) return;
+        эл.addEventListener("pointerdown", function (ev) {
+          if (ev.pointerType === "mouse") return;
+          keyHintFrame.тач = идx;
+          if (keyHintFrame.таймер) { clearTimeout(keyHintFrame.таймер); keyHintFrame.таймер = 0; }
+        }, { passive: true });
+        var отпустить = function () {
+          if (keyHintFrame.таймер) clearTimeout(keyHintFrame.таймер);
+          keyHintFrame.таймер = setTimeout(function () {
+            keyHintFrame.тач = -1;
+            keyHintFrame.таймер = 0;
+          }, 1500);
+        };
+        эл.addEventListener("pointerup", отпустить, { passive: true });
+        эл.addEventListener("pointercancel", отпустить, { passive: true });
+      })(nodes[ки], ки);
+    }
+  }
   var over = -1, i;
-  for (i = 0; i < nodes.length; i++) {
+  if (keyHintFrame.тач >= 0 && nodes[keyHintFrame.тач]) over = keyHintFrame.тач;
+  for (i = 0; over < 0 && i < nodes.length; i++) {
     var el = nodes[i];
     if (!el) continue;
     try {
