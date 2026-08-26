@@ -181,8 +181,28 @@ function wave(box) {
 
   var x = cv.getContext("2d");
   /* Время держим в tm: имя t занято функцией перевода */
-  var N = 120, data = new Array(N).fill(0.5), tm = 0, running = false, raf = 0;
+  var N = 120, data = new Float64Array(N), tm = 0, running = false, raf = 0;
+  for (var di = 0; di < N; di++) data[di] = 0.5;
+  /* Кольцевой буфер вместо push/shift. Сдвиг массива на сто двадцать
+     значений каждый кадр - работа ради работы: сама волна от этого не
+     меняется, меняется только то, с какого места её читать. */
+  var head = 0;
   var num = $("b", readout);
+
+  /* Волну рисуем восемнадцать раз в секунду вместо шестидесяти.
+     Это фоновая декорация из синусов, на глаз шестьдесят от
+     восемнадцати здесь не отличить, а холст на телефоне стоил
+     полного кадра. Шаг времени поднят во столько же раз, поэтому
+     скорость самой волны осталась прежней. */
+  var FPS = 18, STEP = 1000 / FPS, drawAt = 0;
+
+  /* Градиенты собираем один раз. Раньше оба создавались заново в
+     каждом кадре, а создание градиента - это разбор цветов и сборка
+     таблицы переходов, то есть заметная работа на ровном месте.
+     Меняться им незачем: заливка привязана к высоте холста, свечение
+     головы - к своему центру, и мы просто переносим начало координат
+     в голову вместо того, чтобы пересобирать градиент под неё. */
+  var grFill = null, grGlow = null;
 
   function size() {
     var r = cv.getBoundingClientRect();
@@ -191,20 +211,24 @@ function wave(box) {
     cv.height = Math.max(1, r.height * dpr);
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
     cv._w = r.width; cv._h = r.height;
+    grFill = null; grGlow = null;
   }
   size();
   addEventListener("resize", function () { clearTimeout(box._rt); box._rt = setTimeout(size, 200); });
 
-  function frame() {
+  function frame(ts) {
     if (!running) return;
+    raf = requestAnimationFrame(frame);
     /* Внутри корабля и в полёте волна спит: секция всё равно не
        видна, а холст на телефоне стоит кадра */
     var rc = document.documentElement.classList;
-    if (rc.contains("rc-inside") || rc.contains("rc-flying")) {
-      raf = requestAnimationFrame(frame);
-      return;
-    }
-    tm += 0.032;
+    if (rc.contains("rc-inside") || rc.contains("rc-flying")) return;
+
+    var now = ts || (performance.now ? performance.now() : Date.now());
+    if (drawAt && now - drawAt < STEP - 1) return;
+    drawAt = now;
+
+    tm += 0.032 * (60 / FPS);
     /* Складываем несколько синусов и лёгкий шум - выглядит как живой трафик */
     var v = 0.52
       + Math.sin(tm * 0.9) * 0.16
@@ -212,7 +236,8 @@ function wave(box) {
       + Math.sin(tm * 5.1 + 0.4) * 0.05
       + (Math.random() - 0.5) * 0.05;
     v = Math.max(0.08, Math.min(0.96, v));
-    data.push(v); data.shift();
+    data[head] = v;
+    head = (head + 1) % N;
 
     var W = cv._w, H = cv._h, light = themeLight();
     x.clearRect(0, 0, W, H);
@@ -225,46 +250,68 @@ function wave(box) {
       x.beginPath(); x.moveTo(0, y); x.lineTo(W, y); x.stroke();
     }
 
-    function pt(i) { return [i / (N - 1) * W, H - data[i] * H * 0.86 - H * 0.07]; }
+    /* Точка по номеру считается на месте, без нового массива на каждую
+       из ста двадцати точек дважды за кадр */
+    var stepX = W / (N - 1), spanY = H * 0.86, padY = H * 0.07;
+    var px = 0, py = 0;
+
+    if (!grFill) {
+      grFill = x.createLinearGradient(0, 0, 0, H);
+      grFill.addColorStop(0, "rgba(66,178,220,.34)");
+      grFill.addColorStop(1, "rgba(66,178,220,0)");
+    }
+    if (!grGlow) {
+      grGlow = x.createRadialGradient(0, 0, 0, 0, 0, 14);
+      grGlow.addColorStop(0, "rgba(138,89,246,.85)");
+      grGlow.addColorStop(1, "rgba(138,89,246,0)");
+    }
 
     /* Заливка */
-    var gr = x.createLinearGradient(0, 0, 0, H);
-    gr.addColorStop(0, "rgba(66,178,220,.34)");
-    gr.addColorStop(1, "rgba(66,178,220,0)");
     x.beginPath();
     x.moveTo(0, H);
-    for (i = 0; i < N; i++) { var p = pt(i); x.lineTo(p[0], p[1]); }
+    for (i = 0; i < N; i++) {
+      px = i * stepX;
+      py = H - data[(head + i) % N] * spanY - padY;
+      x.lineTo(px, py);
+    }
     x.lineTo(W, H);
     x.closePath();
-    x.fillStyle = gr; x.fill();
+    x.fillStyle = grFill; x.fill();
 
     /* Линия */
     x.beginPath();
-    for (i = 0; i < N; i++) { p = pt(i); i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]); }
+    for (i = 0; i < N; i++) {
+      px = i * stepX;
+      py = H - data[(head + i) % N] * spanY - padY;
+      if (i) x.lineTo(px, py); else x.moveTo(px, py);
+    }
     x.strokeStyle = light ? "#0A5897" : "#5BC4EA";
     x.lineWidth = 2; x.lineJoin = "round";
     x.stroke();
 
-    /* Головная точка */
-    p = pt(N - 1);
-    var glow = x.createRadialGradient(p[0], p[1], 0, p[0], p[1], 14);
-    glow.addColorStop(0, "rgba(138,89,246,.85)");
-    glow.addColorStop(1, "rgba(138,89,246,0)");
-    x.fillStyle = glow;
-    x.beginPath(); x.arc(p[0], p[1], 14, 0, Math.PI * 2); x.fill();
+    /* Головная точка: переносим начало координат в неё, чтобы
+       свечение легло готовым градиентом */
+    px = W; py = H - v * spanY - padY;
+    x.save();
+    x.translate(px, py);
+    x.fillStyle = grGlow;
+    x.beginPath(); x.arc(0, 0, 14, 0, Math.PI * 2); x.fill();
     x.fillStyle = light ? "#8A59F6" : "#C9B4FF";
-    x.beginPath(); x.arc(p[0], p[1], 3.2, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.arc(0, 0, 3.2, 0, Math.PI * 2); x.fill();
+    x.restore();
 
     num.textContent = fmt(760 + v * 1900);
-    raf = requestAnimationFrame(frame);
   }
 
   onView(box, function (vis) {
+    var was = running;
     running = vis && !REDUCE;
-    if (running) frame();
-    else { cancelAnimationFrame(raf); }
+    /* Заводим только если цикл ещё не крутится: два наблюдения подряд
+       иначе оставили бы два параллельных цикла на один холст */
+    if (running && !was) frame();
+    if (!running) { cancelAnimationFrame(raf); raf = 0; }
   }, false);
-  box._stop = function () { running = false; cancelAnimationFrame(raf); };
+  box._stop = function () { running = false; cancelAnimationFrame(raf); raf = 0; };
 
   if (REDUCE) { running = true; frame(); running = false; }
 }

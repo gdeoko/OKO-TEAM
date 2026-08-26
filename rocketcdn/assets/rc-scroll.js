@@ -21,93 +21,29 @@ var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 var TOUCH  = matchMedia("(hover: none)").matches || "ontouchstart" in g;
 var FINE   = matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-var rocket = null, loopTop = 0, lock = false, lastY = 0, vel = 0;
+var rocket = null, lastY = 0, vel = 0;
 
-/* ── Клон первого экрана в конце страницы ────────────────── */
-function buildClone() {
-  var hero = $("#hero");
-  if (!hero || $("#heroClone")) return;
+/* ── Бесшовный цикл страницы: снят ───────────────────────────
+   Клиент попросил убрать зацикленность: страница кончается внизу,
+   дальше работает кнопка «наверх». Флаг LOOP стоял в false, но весь
+   аппарат цикла оставался на месте и продолжал стоить кадров:
+   слушатели wheel и touchmove звали пустую функцию на каждое
+   событие колеса и каждый палец, а замер точки склейки читал
+   scrollHeight по загрузке, по шрифтам, по наблюдателю за размерами
+   и ещё четырьмя таймерами - и каждое такое чтение заставляет браузер
+   досчитать вёрстку. Всё это ради переменной, которая по построению
+   всегда ноль.
 
-  var clone = hero.cloneNode(true);
-  clone.id = "heroClone";
-  clone.setAttribute("aria-hidden", "true");
-  clone.classList.add("is-clone");
-
-  /* Дубли идентификаторов недопустимы */
-  $$("[id]", clone).forEach(function (el) {
-    if (el.tagName === "CANVAS") el.id = "globeHeroClone";
-    else el.removeAttribute("id");
-  });
-  /* Клон не должен попадать в навигацию и фокус */
-  $$("a, button, input", clone).forEach(function (el) { el.setAttribute("tabindex", "-1"); });
-  if ("inert" in HTMLElement.prototype) clone.inert = true;
-
-  /* Клон ставим ПОСЛЕ подвала, а не внутрь main: точка склейки
-     считается по нему, и всё, что ниже, становится недостижимым. */
-  document.body.appendChild(clone);
-}
-
-/* ── Бесшовный цикл ──────────────────────────────────────── */
-/* Высота страницы меняется, пока грузятся шрифты и дорисовывается
-   инфографика. Замер точки склейки повторяем, иначе цикл сработает
-   не там, где нужно. */
-function measure() {
-  var clone = $("#heroClone");
-  var v = clone ? Math.round(clone.getBoundingClientRect().top + (g.scrollY || g.pageYOffset || 0)) : 0;
-  /* Страховка: точка склейки не может быть больше доступной прокрутки */
-  var maxScroll = document.documentElement.scrollHeight - innerHeight;
-  loopTop = (LOOP && v > 0 && v <= maxScroll) ? v : 0;
-}
-
-function watchLayout() {
-  var t;
-  function re() { clearTimeout(t); t = setTimeout(measure, 120); }
-  addEventListener("load", re);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(re).catch(function () {});
-  if (g.ResizeObserver) {
-    var ro = new ResizeObserver(re);
-    var main = $("main");
-    if (main) ro.observe(main);
-  }
-  /* Первые секунды страница ещё дособирается */
-  [400, 1200, 2500, 5000].forEach(function (ms) { setTimeout(measure, ms); });
-}
-
-function jumpTo(y) {
-  lock = true;
-  if (g.RC_SCROLL) {
-    g.RC_SCROLL.jumps++;
-    if (g.RC_SCROLL.log.length > 40) g.RC_SCROLL.log.length = 0;
-    g.RC_SCROLL.log.push({ from: Math.round(g.scrollY), to: Math.round(y), top: loopTop });
-  }
-  /* Мгновенный переход, иначе плавная прокрутка покажет перемотку */
-  var prev = document.documentElement.style.scrollBehavior;
-  document.documentElement.style.scrollBehavior = "auto";
-  g.scrollTo(0, y);
-  document.documentElement.style.scrollBehavior = prev;
-  lastY = y;
-  setTimeout(function () { lock = false; }, 90);
-}
+   Снято целиком: клон первого экрана, замер склейки, наблюдение за
+   раскладкой ради него, телепорт и обе проверки цикла. Кнопка
+   «наверх» и прогресс к циклу отношения не имеют и остались. */
 
 function pos() { return g.scrollY || g.pageYOffset || 0; }
-
-function loopCheck() {
-  if (!LOOP) return;
-  if (lock || loopTop < innerHeight * 2) return;
-  var y = pos();
-  if (y >= loopTop) jumpTo(y - loopTop);
-}
-
-function loopUp(delta) {
-  if (!LOOP) return;
-  if (lock || loopTop < innerHeight * 2) return;
-  if (pos() <= 1 && delta < 0) jumpTo(loopTop - 2);
-}
 
 /* ── Прогресс для ракеты ─────────────────────────────────── */
 function progress() {
   var y = pos();
-  var span = (LOOP && loopTop) || (DOCH() - innerHeight) || 1;
+  var span = (DOCH() - innerHeight) || 1;
   return (y / span) % 1;
 }
 
@@ -147,17 +83,55 @@ function writeParallax() {
   }
 }
 
-/* ── Магнитные кнопки ────────────────────────────────────── */
+/* ── Магнитные кнопки ──────────────────────────────────────
+   Мышь над кнопкой шлёт до сотни событий в секунду, и на каждом
+   здесь спрашивали место кнопки, а следующей же строкой писали ей
+   трансформ. Вопрос после записи стиля - это принудительный пересчёт
+   вёрстки, то есть сотня пересчётов в секунду просто за то, что
+   указатель лежит на кнопке. Слушатель вдобавок не был помечен
+   пассивным, и браузер на всякий случай ждал, не отменят ли прокрутку.
+
+   Кнопка под указателем не двигается и не меняет размер: место
+   достаточно узнать один раз, на входе указателя, и держать до
+   выхода. Прокрутка и изменение окна мерку сбрасывают. Сам сдвиг
+   пишем в кадре, а не прямо в событии: между двумя кадрами браузер
+   всё равно покажет только последнее значение. */
+var magBoxes = [];
+function dropMagBoxes() {
+  for (var i = 0; i < magBoxes.length; i++) magBoxes[i]();
+}
 function magnetics() {
   if (!FINE || REDUCE) return;
   $$(".btn-p, .btn-g, .icon-btn").forEach(function (b) {
+    var box = null, want = "", queued = false;
+
+    function put() {
+      queued = false;
+      if (b._magTf === want) return;
+      b._magTf = want;
+      b.style.transform = want;
+    }
+    b.addEventListener("mouseenter", function () { box = null; }, { passive: true });
     b.addEventListener("mousemove", function (e) {
-      var r = b.getBoundingClientRect();
-      var dx = (e.clientX - (r.left + r.width / 2)) / r.width;
-      var dy = (e.clientY - (r.top + r.height / 2)) / r.height;
-      b.style.transform = "translate(" + (dx * 7).toFixed(1) + "px," + (dy * 6).toFixed(1) + "px)";
-    });
-    b.addEventListener("mouseleave", function () { b.style.transform = ""; });
+      if (!box) {
+        var r = b.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        box = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+      }
+      var dx = (e.clientX - box.cx) / box.w;
+      var dy = (e.clientY - box.cy) / box.h;
+      want = "translate(" + (dx * 7).toFixed(1) + "px," + (dy * 6).toFixed(1) + "px)";
+      if (!queued) { queued = true; requestAnimationFrame(put); }
+    }, { passive: true });
+    b.addEventListener("mouseleave", function () {
+      box = null;
+      want = "";
+      if (!queued) { queued = true; requestAnimationFrame(put); }
+    }, { passive: true });
+
+    /* Страница поехала или окно сменило размер - кнопка под
+       указателем теперь в другом месте, мерку выбрасываем */
+    magBoxes.push(function () { box = null; });
   });
 }
 
@@ -172,6 +146,33 @@ function cursor() {
   document.body.appendChild(ring);
 
   var mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
+  var craf = 0;
+
+  /* Кольцо догоняет указатель по экспоненте, то есть догоняет его
+     за несколько кадров и дальше стоит вместе с ним. Цикл же крутился
+     вечно: на неподвижной мыши он каждый кадр считал те же числа и
+     писал в стиль ту же строку, и так все шестьдесят раз в секунду
+     весь визит, включая свёрнутую вкладку.
+
+     Теперь цикл живёт ровно столько, сколько идёт догон. Сошлись
+     координаты - цикл снимается сам, движение мыши заводит его
+     заново. Уход со вкладки тоже останавливает: в фоне кольца никто
+     не видит, а по возвращении оно встаёт на место мгновенно. */
+  function ride() {
+    craf = 0;
+    if (document.hidden) return;
+    rx += (mx - rx) * 0.16;
+    ry += (my - ry) * 0.16;
+    /* Полпикселя - предел того, что вообще может показать экран */
+    var done = Math.abs(mx - rx) < 0.5 && Math.abs(my - ry) < 0.5;
+    if (done) { rx = mx; ry = my; }
+    ring.style.transform = "translate3d(" + rx.toFixed(1) + "px," + ry.toFixed(1) + "px,0)";
+    if (!done) craf = requestAnimationFrame(ride);
+  }
+  function chase() {
+    if (!craf && !document.hidden) craf = requestAnimationFrame(ride);
+  }
+
   addEventListener("mousemove", function (e) {
     if (!document.documentElement.classList.contains("cursor-live")) {
       document.documentElement.classList.add("cursor-live");
@@ -181,15 +182,20 @@ function cursor() {
     var t = e.target;
     var hot = t.closest && t.closest("a, button, .card, .node-row, .faq-q, input, textarea, select");
     ring.classList.toggle("on", !!hot);
+    chase();
   }, { passive: true });
 
-  (function loop() {
-    rx += (mx - rx) * 0.16;
-    ry += (my - ry) * 0.16;
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      if (craf) { cancelAnimationFrame(craf); craf = 0; }
+      return;
+    }
+    /* Вернулись во вкладку: догонять нечего, ставим кольцо сразу */
+    rx = mx; ry = my;
     ring.style.transform = "translate3d(" + rx.toFixed(1) + "px," + ry.toFixed(1) + "px,0)";
-    requestAnimationFrame(loop);
-  })();
+  });
 
+  ride();
   document.documentElement.classList.add("has-cursor");
 }
 
@@ -372,7 +378,6 @@ function onScroll() {
   ticking = true;
   requestAnimationFrame(function () {
     ticking = false;
-    loopCheck();
     /* Сначала весь кадр читается, потом весь кадр пишется */
     readParallax();
     readHS();
@@ -386,39 +391,8 @@ function onScroll() {
 }
 
 /* ── Запуск ──────────────────────────────────────────────── */
-/* Клон строим, когда первый экран уже наполнен переводом и иконками,
-   иначе в копию попадают пустые блоки. */
-/* Клиент попросил убрать зацикленность: страница кончается внизу,
-   дальше работает кнопка «наверх». Клон первого экрана и телепорт
-   на стыке больше не нужны, но код оставлен - вдруг вернут. */
-var LOOP = false;
-
-function setupClone() {
-  if (!LOOP) { measure(); watchLayout(); return; }
-  if ($("#heroClone")) return;
-  buildClone();
-
-  /* Глобус для клона, чтобы стык был незаметен.
-     На телефоне второй глобус не рисуем: он виден доли секунды. */
-  var cloneCv = innerWidth > 760 ? $("#globeHeroClone") : null;
-  if (cloneCv && g.RCGlobe && g.RC_GEO) {
-    try {
-      var gl = new g.RCGlobe(cloneCv, {
-        nodes: g.RC_GEO.NODES, land: g.RC_GEO.landPoints(), dc: g.RC_GEO.DC,
-        theme: document.documentElement.getAttribute("data-theme") || "dark",
-        radius: 0.4, speed: 2.6
-      });
-      /* Список общий: его создаёт тот, кто пришёл первым */
-      (g.__globes = g.__globes || []).push(gl);
-    } catch (e) {}
-  }
-  measure();
-  splitWords();
-}
 
 function boot() {
-  measure();
-  watchLayout();
   collectParallax();
   collectHS();
 
@@ -443,26 +417,41 @@ function boot() {
     var y = g.scrollY || 0;
     vel = (y - lastY) * 0.35;
     lastY = y;
+    dropMagBoxes();
+    fadeOn();
     onScroll();
   }, { passive: true });
 
-  addEventListener("wheel", function (e) { loopUp(e.deltaY); }, { passive: true });
-
-  var ty = 0;
-  addEventListener("touchstart", function (e) { ty = e.touches[0].clientY; }, { passive: true });
-  addEventListener("touchmove", function (e) {
-    var dy = ty - e.touches[0].clientY;
-    if (dy < -6) loopUp(-1);
-  }, { passive: true });
+  /* Слушателей wheel и touchmove здесь больше нет: они звали loopUp,
+     которая при снятом цикле страницы выходила первой же строкой.
+     Каждый щелчок колеса и каждый палец будили обработчик ради
+     ничего, а на телефоне touchmove идёт сплошным потоком. */
 
   var rt;
   addEventListener("resize", function () {
     clearTimeout(rt);
-    rt = setTimeout(function () { sizeHS(); measure(); collectParallax(); onScroll(); }, 200);
+    dropMagBoxes();
+    rt = setTimeout(function () { sizeHS(); collectParallax(); onScroll(); }, 200);
   });
 
-  /* Затухание скорости, чтобы факел плавно успокаивался */
-  setInterval(function () { vel *= 0.82; }, 120);
+  /* Затухание скорости, чтобы факел плавно успокаивался.
+     Раньше это был вечный setInterval: он тикал каждые сто двадцать
+     миллисекунд весь визит, в том числе на неподвижной странице и в
+     свёрнутой вкладке, где ни факела, ни зрителя нет. Теперь
+     затухание живёт ровно от последнего движения до нуля и снимает
+     себя само; движение заводит его заново. */
+  var velT = 0;
+  function fade() {
+    if (document.hidden) { velStop(); return; }
+    vel *= 0.82;
+    /* Ниже сотой доли пикселя за кадр факел уже не отличить от покоя */
+    if (Math.abs(vel) < 0.01) velStop();
+  }
+  function velStop() { vel = 0; if (velT) { clearInterval(velT); velT = 0; } }
+  function fadeOn() { if (!velT && !document.hidden) velT = setInterval(fade, 120); }
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) velStop();
+  });
 
   magnetics();
   cursor();
@@ -476,14 +465,14 @@ function boot() {
   buildRing();
   splitWords();
 
-  /* Клон снимаем с уже наполненного первого экрана */
+  /* Перевод и загрузка меняют разметку первого экрана: разбивку слов
+     и список выездов надо собрать заново */
   document.addEventListener("rc:lang", function () {
-    setTimeout(function () { splitWords(); collectHS(); setupClone(); measure(); }, 60);
+    setTimeout(function () { splitWords(); collectHS(); }, 60);
   });
   addEventListener("load", function () {
-    setTimeout(function () { splitWords(); collectHS(); setupClone(); measure(); }, 100);
+    setTimeout(function () { splitWords(); collectHS(); }, 100);
   });
-  setTimeout(setupClone, 1200);
   onScroll();
 }
 
@@ -491,8 +480,10 @@ if (document.readyState === "loading") document.addEventListener("DOMContentLoad
 else boot();
 
 g.RC_SCROLL = {
-  /* Доступ к движку прокрутки нужен для отладки и внешних переходов */
-  get loopTop() { return loopTop; },
+  /* Доступ к движку прокрутки нужен для отладки и внешних переходов.
+     loopTop и jumps оставлены нулями: цикл страницы снят, но внешние
+     проверки и отладочные панели про эти поля ещё знают. */
+  get loopTop() { return 0; },
   progress: progress,
   jumps: 0,
   log: [],

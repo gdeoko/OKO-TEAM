@@ -98,6 +98,32 @@ var cam = { pan: 0, tilt: 0, dive: 0, yaw: 0, pitch: 0, roll: 0, z: 0 };
 var goal = { pan: 0, tilt: 0, dive: 0 };
 var raf = null, t0 = 0, idle = 0, lastY = -1;
 var lastTf = "";
+var lastOrigin = "";
+
+/* Верх кадра в окне без единого вопроса к вёрстке в кадре.
+
+   Место кадра в документе меряем один раз и держим до изменения окна
+   или содержимого: при прокрутке кадр никуда не переезжает, меняется
+   только положение окна, и его даёт scrollY.
+
+   Меряем по цепочке offsetTop, а не прямоугольником. Прямоугольник
+   учёл бы наш собственный transform, который мы сами и записали
+   кадром раньше: точка масштабирования гонялась бы за собственным
+   хвостом. offsetTop про трансформы ничего не знает и отвечает то,
+   что посчитала вёрстка. */
+var stageY = -1;
+function stageTop() {
+  if (stageY < 0) {
+    var y = 0, el = stage;
+    while (el) { y += el.offsetTop || 0; el = el.offsetParent; }
+    stageY = y;
+  }
+  return stageY - (g.pageYOffset || doc.documentElement.scrollTop || 0);
+}
+function dropStageY() { stageY = -1; }
+addEventListener("resize", dropStageY, { passive: true });
+addEventListener("rc:content", dropStageY);
+doc.addEventListener("rc:lang", function () { setTimeout(dropStageY, 250); });
 
 function seed() {
   stage = doc.querySelector("main");
@@ -297,15 +323,28 @@ function frame() {
 
   /* Один трансформ на весь кадр. Точка масштабирования - центр
      видимого окна, чтобы наезд шёл «в глубину кадра», а не от
-     верха страницы. */
-  var r = stage.getBoundingClientRect();
-  var oy = Math.round((innerHeight / 2 - r.top) * 2) / 2;
+     верха страницы.
+
+     Место кадра берём из мерки, снятой один раз (см. stageTop).
+     Здесь была самая дорогая строка на странице: прямой
+     getBoundingClientRect на main, а строкой ниже в тот же main
+     писался transform. Браузер обязан досчитать вёрстку всего
+     документа, прежде чем ответить на такой вопрос, и делал это
+     каждый кадр прокрутки на дереве в три тысячи узлов. */
+  var oy = Math.round((innerHeight / 2 - stageTop()) * 2) / 2;
   var tf = (zoom === 1 && !dx && !dy)
     ? ""
     : "translate3d(" + dx + "px," + dy + "px,0) scale(" + zoom + ")";
   if (tf !== lastTf) {
     lastTf = tf;
-    stage.style.transformOrigin = "50% " + oy + "px";
+    /* Точку масштабирования пишем отдельно от трансформа: она
+       меняется на прокрутке, а не на каждом дрожании камеры, и
+       лишняя запись стиля тут ничем не оправдана */
+    var org = "50% " + oy + "px";
+    if (org !== lastOrigin) {
+      lastOrigin = org;
+      stage.style.transformOrigin = org;
+    }
     stage.style.transform = tf;
   }
 }

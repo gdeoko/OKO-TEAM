@@ -59,8 +59,12 @@ function readScroll() {
   pTarget = Math.max(0, Math.min(1, (g.pageYOffset || doc.documentElement.scrollTop || 0) / maxScroll()));
 }
 
-addEventListener("scroll", readScroll, { passive: true });
-addEventListener("resize", readScroll, { passive: true });
+/* Признак «человек тронул страницу»: на простое цикл идёт реже, и
+   без него первое движение колеса ждало бы своей очереди до
+   пятидесяти миллисекунд. Один кадр вне очереди этого не допускает. */
+var wake = false;
+addEventListener("scroll", function () { readScroll(); wake = true; }, { passive: true });
+addEventListener("resize", function () { readScroll(); wake = true; }, { passive: true });
 readScroll();
 pSmooth = pTarget;
 
@@ -276,6 +280,20 @@ function loop(ts) {
   raf = requestAnimationFrame(loop);
   if (doc.hidden) { last = 0; return; }
 
+  /* Заданную частоту наконец соблюдаем. wantFps считался, писался в
+     api.fps и раздавался сценам событием rc:fps, а сам цикл всё равно
+     делал полную работу шестьдесят раз в секунду: на простое это был
+     чистый расход батареи и кадра.
+
+     Выходим ДО любой полезной работы, в том числе до watchFrame.
+     Иначе кадр, пропущенный по нашей же воле, сторож качества принял
+     бы за рывок устройства и начал снимать украшения ни за что.
+
+     На шестидесяти не режем ничего: экран на 120 Гц потерял бы
+     половину кадров, а частоту выше шестидесяти мы и не просим. */
+  if (wake) wake = false;
+  else if (fps < 60 && last && ts - last < 1000 / fps - 1) return;
+
   var dt = last ? Math.min(0.08, (ts - last) / 1000) : 0.016;
   last = ts;
   ts0 = ts;
@@ -321,8 +339,27 @@ function loop(ts) {
     try { dispatchEvent(new CustomEvent("rc:fps", { detail: { fps: fps } })); } catch (e) {}
   }
 
+  /* Упавший слушатель снимаем с цикла и говорим об этом один раз.
+     Раньше здесь стоял пустой catch: сломавшийся модуль молча падал
+     по шестьдесят раз в секунду - и работа впустую каждый кадр, и
+     поломку никто никогда не видел.
+
+     Снимаем после обхода, а не прямо в нём: порядок слушателей имеет
+     значение, модули рассчитывают друг на друга. */
+  var broken = null;
   for (var i = 0; i < listeners.length; i++) {
-    try { listeners[i](pSmooth, vel, mode); } catch (e) {}
+    try { listeners[i](pSmooth, vel, mode); }
+    catch (e) {
+      (broken || (broken = [])).push(listeners[i]);
+      try { console.error("RC_MOTION: слушатель снят с цикла после ошибки", e); }
+      catch (e2) {}
+    }
+  }
+  if (broken) {
+    for (var b = 0; b < broken.length; b++) {
+      var bi = listeners.indexOf(broken[b]);
+      if (bi >= 0) listeners.splice(bi, 1);
+    }
   }
   api.p = pSmooth;
   api.v = vel;
