@@ -139,13 +139,13 @@ class Бренд:
 # Номер слайда тоже не обязан всегда быть стальным ярлыком.
 НОМЕР = [
     "A small milled steel tag the size of a matchbox is bolted flat near the lower left of the working area, "
-    "engraved and accent paint filled with the single numeral {}, marking the position in the series.",
-    "The single numeral {} is stencilled large and low in the corner of the working area, half worn away by traffic, "
-    "marking the position in the series.",
-    "The single numeral {} is painted inside a filled circle of brand colour low in the corner of the working area, "
-    "marking the position in the series.",
-    "The single numeral {} hangs low in the corner of the working area as one dimensional metal figure on a standoff "
-    "with its own shadow, marking the position in the series.",
+    "engraved and accent paint filled with the position marker {}, marking the place in the series.",
+    "The position marker {} is stencilled large and low in the corner of the working area, half worn away by "
+    "traffic, marking the place in the series.",
+    "The position marker {} is set low in the corner of the working area against a filled block of brand "
+    "colour, marking the place in the series.",
+    "The position marker {} hangs low in the corner of the working area as dimensional metal figures on "
+    "standoffs with their own shadow, marking the place in the series.",
 ]
 
 
@@ -336,6 +336,20 @@ def свет(ключ, запасной):
    "знак":
       "The brand mark is knocked out of the amber block, small, about four percent of the frame width.",
  },
+ "брутал": {
+   "как": "Design system for this frame is INDUSTRIAL BRUTALIST: the layout is raw and confrontational, built from "
+          "the visual language of factory signage and wayfinding. A hard grid of thick rules divides the frame, one "
+          "block is filled solid brand amber, the photograph of the site occupies another block cropped without "
+          "mercy. The headline is set enormous in dense grotesque capitals, tight tracking, ranged left, allowed to "
+          "run to the very edge of its block and be cut by it, reading exactly, character by character, the Russian "
+          "line «{заголовок}».",
+   "типографика":
+      "Two type sizes only, both heavy, set flat on the picture plane with no effects at all. Alignment is strict "
+      "and the friction is deliberate: nothing is centred, nothing is softened.",
+   "знак":
+      "The brand mark is knocked out of the amber block or set inside a ruled box in the corner, small, about four "
+      "percent of the frame width, flat and hard edged.",
+ },
  "дуотон": {
    "как": "Design system for this frame is DUOTONE GRAPHIC: the documentary photograph is reduced to a two colour "
           "duotone of deep graphite and brand amber with clean separation and real tonal depth, and one solid block "
@@ -354,15 +368,15 @@ def свет(ключ, запасной):
 # Тема сама подсказывает систему: разбор цифр просит крупное число, разговор
 # про инженерию просит чертёж, история про людей и движение просит экшен.
 РУБРИКА_РЕЖИМ = {
-    "Цифры цеха": ("цифра", "объём"), "Цифры отрасли": ("цифра", "дуотон"),
+    "Цифры цеха": ("цифра", "объём"), "Цифры отрасли": ("цифра", "брутал"),
     "Деньги цеха": ("цифра", "сцена"), "Цена киловатта": ("объём", "разрез"),
     "Цена ошибки": ("экшен", "сцена"), "За что дают": ("цифра", "постер"),
     "Как выбирать": ("схема", "разрез"), "Не снесут": ("постер", "коллаж"),
     "Сто производств": ("поток", "объём"), "Кто стоит у станка": ("экшен", "крупно"),
     "Кадры цеха": ("экшен", "сцена"), "Сколько отсюда ехать": ("поток", "коллаж"),
-    "Стройка будущего": ("коллаж", "объём"), "Промышленный город": ("дуотон", "крупно"),
+    "Стройка будущего": ("коллаж", "объём"), "Промышленный город": ("брутал", "крупно"),
     "Площадки мира": ("дуотон", "постер"), "Отрасль": ("объём", "цифра"),
-    "Рынок": ("дуотон", "цифра"), "Воронка": ("сцена", "крупно"),
+    "Рынок": ("брутал", "цифра"), "Воронка": ("сцена", "крупно"),
     "Событие": ("постер", "экшен"),
 }
 
@@ -416,7 +430,20 @@ def собрать(бренд, кадры):
             куски.append(f"{формат} aspect ratio, exactly {размер} pixels, locked, never cropped or letterboxed.")
             if вид == "карусель":
                 куски.append(f"This is slide {к['номер']} of {к['всего']} of one vertical carousel, and every slide "
-                             f"obeys the same system so the separately generated frames read as one series.")
+                             f"obeys the same system so the separately generated frames read as one series: the same "
+                             f"two type sizes and no third, the same margins and padding, the same colour grade on "
+                             f"every photograph, one accent colour only.")
+                if к["номер"] == 1:
+                    # первый слайд решает, откроют ли остальные: контраст и приглашение листать
+                    куски.append("This is the cover slide and it carries the whole carousel: maximum contrast, the "
+                                 "simplest possible typography, the number or the claim in the headline made the "
+                                 "loudest element in the frame, and a small chevron pointing right at the outer edge "
+                                 "inviting the swipe. The cover has no other decoration.")
+                elif к["номер"] == к["всего"]:
+                    # финал зеркалит обложку: набор читается как оформленный, а не как реклама в конце
+                    куски.append("This is the closing slide and it mirrors the cover: the same colour, the same type "
+                                 "treatment and the same composition, so the set reads as designed rather than as an "
+                                 "advertisement bolted to the end.")
         куски.append(f"The scene of this frame is {к['сцена']}.")
         имя_режима = режим(к["ключ"], к.get("рубрика", ""), вид)
         р = РЕЖИМЫ[имя_режима]
@@ -428,9 +455,10 @@ def собрать(бренд, кадры):
                          else f"A supporting line is set small and calm under the headline in the same layout, "
                               f"reading exactly «{к['подпись']}».")
         if вид in ("карусель", "сторис"):
-            куски.append(шаблон_номера.format(к["номер"]) if имя_режима == "сцена"
-                         else f"The single numeral {к['номер']} is set small in the corner of the layout in brand "
-                              f"amber, marking the position in the series.")
+            метка_места = (f"{к['номер']} / {к['всего']}" if вид == "карусель" else str(к["номер"]))
+            куски.append(шаблон_номера.format(метка_места) if имя_режима == "сцена"
+                         else f"The position marker {метка_места} is set small in the corner of the layout in "
+                              f"brand amber, marking the place in the series.")
             if к["номер"] == к["всего"]:
                 куски.append(воронка(бренд) if вид == "карусель" else
                              f"This is the closing frame of the series, so the {бренд.имя} mark from the attached logo "
