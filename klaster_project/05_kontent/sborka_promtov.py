@@ -22,11 +22,16 @@ from promt_engine import Бренд, собрать, проверить
              "lettering. No other hue exists anywhere in the frame, including reflections, spill light, rust, dust, "
              "glass and skin. Never drift toward neon, cyberpunk, gloss, teal-and-orange film grading or a rendered "
              "look."),
-    свет=("Lighting is architectural and cinematic: one hard directional key from the upper left at a shallow raking "
-          "angle so every weld bead, bolt head, engraved edge and paint chip throws a long soft edged shadow down and "
-          "to the right; a weak amber bounce from the lower right lifting only the deepest shadow and reading as the "
-          "single source of warmth; ink black falloff in the far corner; no second key, no rim light, no lens flare, "
-          "no glow, no haze machine."),
+    свет=("Lighting is cinematic and volumetric, at the level of a commercial architecture shoot: one hard "
+          "directional key from the upper left at a shallow raking angle carves every weld bead, bolt head, "
+          "engraved edge and paint chip into relief and throws long soft edged shadows down and to the right; the "
+          "beam itself reads as a visible shaft of light with fine airborne dust and a faint haze drifting through "
+          "it, so the air in the room has body; a warm amber bounce from the lower right lifts the deepest shadow "
+          "and reads as the single source of heat in a cold space; a thin cool rim separates the subject from an "
+          "ink black falloff behind it; wet concrete and polished metal carry soft mirrored reflections of the "
+          "amber source. Deep three dimensional separation between foreground, subject and background: foreground "
+          "elements sit closer to camera and darker, the background dissolves into black. No flat frontal light, "
+          "no lens flare, no bloom, no neon."),
     материал=("Material honesty everywhere: mill scale on steel, oxidised bolts, chipped edge paint, concrete with "
               "form-tie marks and honest wear, factory dust settled in the recesses, tyre scuffs and old floor "
               "marking on polished concrete, crane rail worn bright by use; a working object photographed in a "
@@ -36,22 +41,48 @@ from promt_engine import Бренд, собрать, проверить
               "face and never a smile."),
     шрифт=("All lettering is one dense modern grotesque with the feel of technical documentation rather than an "
            "advertising poster: wide tracked capitals in the headline, technical generously leaded setting in the "
-           "caption, upright, never italic, outlined, scripted or drop-shadowed."),
+           "caption, upright, never italic, outlined, scripted or drop-shadowed. Every character has real physical "
+           "depth: an engraved letter shows the milled wall of its groove and a bright burr along the lit edge, a "
+           "stencilled letter shows the tooth of the paint and the ragged bridge marks, a cast letter shows the "
+           "draft angle of its relief. The headline is the largest object in the frame after the subject itself "
+           "and it is composed into the architecture, aligned to a panel joint, a floor marking line or the edge "
+           "of a steel plate, so removing it would leave a visible hole in the composition."),
     съёмка=("Cold architectural documentation photography on a digital medium format camera with a fifty millimetre "
             "equivalent lens, the camera axis perpendicular to the main surface of the scene, zero tilt, no "
             "converging verticals, no wide angle distortion, no vignette drama, no shallow bokeh and no dramatic "
             "angles."),
     референсы=(
+        "Reference images of the real site are attached and they are binding, not inspiration: the main facade with "
+        "its dark graphite chequerboard of perforated metal panels and mirror stainless bands, the loading gates "
+        "with steel canopies and rubber dock seals, the aerial panorama of the territory, and the brand mark file. "
+        "Reproduce the attached architecture exactly: the same panel module and chequerboard rhythm, the same "
+        "glazing grid, the same gate proportions, the same graphite and warm grey values. Do not invent a different "
+        "building, do not restyle the facade, do not add floors or decoration that is absent from the reference. "
+        "Where a frame shows an interior it is the interior of that same building: exposed structure, clear height "
+        "of six to twelve metres, painted floor marking, an overhead crane rail running along the bay. "
+        "The brand mark comes one to one from the attached logo file and is a physical object inside the scene, "
+        "never a flat sticker and never a watermark: a twelve toothed gear wheel with a clean circular centre, and "
+        "inside that circle the stylised figure of a person with arms raised outward to both sides; where the "
+        "wordmark appears it reads exactly «КЛАСТЕР» in the same dense grotesque as the file. The mark lives on a "
+        "real surface with real thickness and its own cast shadow: deep engraved into a brushed steel plate and "
+        "paint filled, recessed as a relief in the concrete, hard-stencilled onto a painted steel door with "
+        "slightly ragged edges and visible stencil bridges, or standing as the round backlit sign on the building "
+        "facade exactly as in the reference. It takes the same key light, the same dust and the same reflections "
+        "as everything around it. The mark appears once in every single frame, small, about three percent of the "
+        "frame width, placed where such a mark would really be bolted, cast or stencilled on this site: low on a "
+        "steel plate, on the flank of a gate, on a cabinet door, on the parapet of a roof, in the corner of a "
+        "painted floor marking. It is never larger than the headline, never centred as a badge, never repeated "
+        "twice and never floating in empty space. "
         "The subject world is a working industrial park inside Moscow: fifty thousand square metres of production "
         "buildings, clear heights from six to twelve metres, floors rated to four thousand kilograms per square "
         "metre, five megawatts on the site and one hundred kilowatts to a single unit, an overhead crane rail "
         "running the length of the bay, two five tonne goods lifts, a separate roller gate to every block and a "
-        "parking field for five hundred and fifty cars. Everything in frame must be consistent with that place: "
-        "heavy structure, honest wear, real dust, cold northern daylight outside and one amber source inside. "
+        "parking field for five hundred and fifty cars. Everything in frame stays consistent with that place. "
         "The finished frame reads at the level of a business magazine cover: composed on a strict geometric grid "
-        "with generous negative space around the subject, one clear focal point, deep true blacks, eight thousand "
-        "pixel sharpness across the plane of focus, commercial architectural photography quality, no illustration "
-        "look, no 3d render look, no painterly texture and no artificial sharpening halo."))
+        "with generous negative space around the subject, one clear focal point, real depth with a near plane, a "
+        "subject plane and a receding background, deep true blacks, eight thousand pixel sharpness across the "
+        "plane of focus, commercial architectural photography quality, no illustration look, no 3d render look, "
+        "no painterly texture and no artificial sharpening halo."))
 
 # Поверхности для информационных слайдов каруселей: число живёт на реальной плоскости.
 ПОВЕРХНОСТИ = [
@@ -75,6 +106,42 @@ from promt_engine import Бренд, собрать, проверить
 
 # Сцена под каждый ключ: то, что видит камера в главном кадре. Остальное собирает движок.
 СЦЕНЫ = {
+ # --- месяц 1: перевод старых промптов на единый паспорт ---
+ "P-53-karusel-indeksaciya": "three mill-finish steel bars of increasing height standing in a row on a polished concrete floor of an empty bay, evenly spaced, each casting its own long shadow toward the camera, crane rail visible overhead",
+ "P-S-subbota-i-vtoraa-smena": "the inner street of an industrial territory late in the evening, roller gates closed along both sides, one gate open with warm light spilling onto the concrete apron, a single car parked at the far end",
+ "P-54-nds-schet": "a printed rental invoice on warm white paper lying flat on a graphite steel bench shot straight down from directly above, its printed body an unreadable grey texture with no legible word, one line of it catching a narrow amber light, a machined steel straightedge across the lower third",
+ "P-02-karusel-krt": "an aerial view of a Moscow industrial district at flat overcast noon, a hard boundary where low workshop roofs stop and new residential blocks begin, cranes standing over the built side, the working half occupying the near part of the frame",
+ "P-03-dzen-oblozhka-krt": "one frame holding both worlds at once: in the near half the graphite chequerboard facade and loading gates of a working production building, in the far half a row of new residential towers rising directly behind it, flat overcast daylight, wet asphalt between them",
+ "P-S-dogovor-v-cetverg": "a stapled contract lying on a graphite steel bench under a desk lamp, its printed body an unreadable grey texture, a fountain pen resting across it, the workshop beyond falling into ink black",
+ "P-S-sotna-masterskih-v-odnom-kvartale": "an aerial view of a dense low-rise workshop quarter at dusk, dozens of small saw-tooth roofs packed edge to edge, warm light escaping from a few open gates",
+ "P-20-moshchnost-schet": "the open door of a workshop main switchgear cabinet seen straight on, breaker modules in a strict vertical column behind the glazed panel, bus bars and cable glands below, one amber indicator lamp glowing in the upper right",
+ "P-04-nagruzka": "a polished concrete workshop floor shot from a low angle almost at floor level, the machine bed of a heavy lathe anchored into it in the near plane, old floor marking running away into the depth of the bay, crane rail overhead",
+ "P-09-vc-oblozhka": "a working production hall in the near half of the frame with a crane rail overhead, and through the open gate at the far end a row of residential towers standing against the sky, the two worlds separated by one doorway",
+ "P-S-10-minut-na-kajdoj-otgruzke": "a semi trailer standing at a workshop loading gate seen straight on from inside the dark bay, yard marking running away in strict perspective, wet asphalt holding the low amber light",
+ "P-409-kak-otvechaem": "a heavy brushed steel plate bolted to the concrete flank of a workshop beside a closed roller gate, four countersunk screws at the corners, fine machining marks catching the raking key, factory dust along the lower edge",
+ "P-407-dogovor-fiksiruem": "a contract page pressed flat under a sheet of glass on a graphite steel bench shot straight down from above, its printed body an unreadable grey texture, a machined steel straightedge lying across it and catching one amber highlight",
+ "P-24-dogovor-krt": "a stapled contract opened flat on a workshop desk under a single directional lamp, its printed body an unreadable grey texture, a steel rule and a graphite pencil resting on the lower third, the bay behind in ink black",
+ "P-25-karusel-dogovor": "a stapled contract lying open on a graphite steel bench shot straight down from directly above, its printed body an unreadable grey texture with no legible word, a machined steel straightedge across the lower third",
+ "P-84-dzen-sreda-smeny": "an empty workshop changing room shot straight on, a row of steel lockers along the wall with doors closed, a bench in front of them, one door standing open onto darkness, warm light from a corridor beyond",
+ "P-S-cto-proishodit-s-promzonami-moskvy": "an aerial view of a Moscow industrial district at flat overcast noon, a hard boundary where workshop roofs stop and new residential blocks begin, tower cranes standing over the new side",
+ "P-S-subbota-na-territorii": "the inner street of an industrial territory on a quiet morning, roller gates closed along both sides, one gate half open with warm light inside, a single trolley standing on the concrete apron",
+ "P-07-shest-otrasley": "the inner street of a dense industrial territory seen straight down its centre line, roller gates repeating along both sides in strict perspective, a steel trolley crossing between two of them, crane rail visible through an open gate",
+ "P-S-sahta-kotoraa-zakrylas-v-1986-godu": "a tall steel headframe of a disused mine standing against an overcast sky, its lattice structure sharp against flat cloud, the empty yard below it swept and quiet",
+ "P-12-vosem-cifr": "an empty production bay shot straight down its centre line, structural columns receding in strict perspective, crane rail overhead, roof lights above, polished concrete floor carrying old marking, the far end lost in ink black",
+ "P-23-vorota-fura": "a semi trailer standing squarely at a workshop loading gate seen straight on from outside, the steel canopy and rubber dock seals of the gate framing it, yard marking running away under the wheels, wet asphalt holding the light",
+ "P-89-karusel-stroyka-ryadom": "a construction hoarding running across the frame with a working production building standing directly behind it, a tower crane above, the shared concrete apron in the near plane carrying tyre scuffs",
+ "P-27-ploshchadki-mira": "three fragments of industrial city in one frame divided by two thin vertical seams: a waterfront with gantry cranes, a narrow low-rise workshop street, and a shipyard basin, all under the same flat overcast light",
+ "P-S-4-minuty-4000-kg-5-tonn": "a polished concrete workshop floor shot straight down from above, old yellow floor marking half worn away, the edge of a crane rail crossing the upper part of the frame, factory dust in the recesses",
+ "P-13-chto-vhodit": "an empty production bay with its roller gate rolled fully up, the rectangle of the doorway filled with flat daylight, a crane rail running the length of the bay overhead, painted floor marking leading out through the gate",
+ "P-15-rbk-oblozhka": "a working industrial territory seen from a high vantage point at flat overcast noon, a tower crane standing over one corner of it, the city skyline compressed on the horizon behind",
+ "P-S-pervyj-den-lenty": "a graphite steel bench shot straight down from directly above with a blank warm white notebook page on it, a fountain pen resting across the page, one amber highlight along the pen barrel",
+ "P-29-infrastruktura": "the inner street of an industrial territory in the evening, roller gates along both sides, a lit canteen window at the far end throwing warm light onto the concrete, painted floor marking leading toward it",
+ "P-16-chetyre-stroki": "four flat machined steel plates lying in a vertical stack with a finger's width between them on a graphite bench shot straight down from above, each plate blank, the topmost catching the key light",
+ "P-22-dzen-pereezd-90": "an empty production bay with a long painted line running down the centre of its concrete floor from the near edge of the frame into the depth of the bay, four short cross marks scribed across the line at intervals, crane rail overhead",
+ "P-S-pervyj-scet": "a printed invoice on warm white paper lying on a graphite steel bench shot straight down from above, its printed body an unreadable grey texture, a pocket calculator resting beside it",
+ "P-83-shchit-100-kvt": "a workshop main switchboard seen straight on, its steel door open, breakers in a strict column, cable glands entering from below, one small brushed steel tag wired to the bus bar and catching amber light",
+ "P-S-slojnyj-procent": "three mill-finish steel bars of increasing height standing in a row on a polished concrete floor, evenly spaced, each casting its own long shadow toward the camera",
+ "P-88-vtoraya-ochered": "a working production building in the near half of the frame and directly behind it the raw concrete frame of a new building under construction, a tower crane above it, the shared yard in front carrying tyre scuffs",
  # --- мероприятие с телескопом ---
  "P-500-teleskop-krysha": "a large amateur telescope on a heavy tripod standing on the flat roof of a production building at night, the parapet and roof vents in the foreground, the lit territory below and a distant city skyline on the horizon, deep clear sky above",
  "P-501-vk-teleskop": "a large amateur telescope on a tripod silhouetted against the night sky on the roof of an industrial building, warm amber light spilling from a rooftop hatch, the yard lights of the territory glowing far below",
@@ -144,7 +211,7 @@ from promt_engine import Бренд, собрать, проверить
 
 
 ФОРМАТЫ = {"16:9": "16:9", "4:5": "4:5", "9:16": "9:16", "4:3": "4:3", "1:1": "1:1"}
-БЕЗ_ГЕНЕРАЦИИ = {"P-05-lift", "P-11-shattl", "P-94-kvartal-karta"}
+БЕЗ_ГЕНЕРАЦИИ = {"P-05-lift", "P-11-shattl", "P-94-kvartal-karta", "P-01-krt-karta"}
 
 
 def единицы(корень):
@@ -200,7 +267,10 @@ def главное(корень=".", писать=True):
         готовые |= set(json.load(open(ф, encoding="utf-8")))
     кадры = []
     for е in единицы(корень):
-        if any(k == е["ключ"] or k.startswith(е["ключ"] + "-") for k in готовые): continue
+        # если сцена описана в этом файле, кадр собирается движком заново,
+        # даже когда старый промпт где-то лежит: паспорт бренда должен быть единым
+        if е["ключ"] not in СЦЕНЫ and any(k == е["ключ"] or k.startswith(е["ключ"] + "-") for k in готовые):
+            continue
         кадры += кадры_единицы(е)
     промпты = собрать(КЛАСТЕР, кадры)
     длины = sorted(len(v["текст"]) for v in промпты.values())
@@ -214,6 +284,16 @@ def главное(корень=".", писать=True):
         путь = os.path.join(корень, "promts_new", "gruppa_dobor.json")
         json.dump(промпты, open(путь, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print("записано:", путь)
+        # старые версии тех же ключей убираем, чтобы источник был один
+        убрано = 0
+        for ф in sorted(glob.glob(os.path.join(корень, "promts_new", "*.json"))):
+            if ф == путь: continue
+            d = json.load(open(ф, encoding="utf-8"))
+            новый = {k: v for k, v in d.items() if k not in промпты}
+            if len(новый) != len(d):
+                убрано += len(d) - len(новый)
+                json.dump(новый, open(ф, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        if убрано: print("убрано старых версий:", убрано)
     return промпты
 
 
