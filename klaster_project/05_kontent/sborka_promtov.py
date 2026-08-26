@@ -53,14 +53,18 @@ from promt_engine import Бренд, собрать, проверить
             "converging verticals, no wide angle distortion, no vignette drama, no shallow bokeh and no dramatic "
             "angles."),
     референсы=(
-        "Reference images of the real site are attached and they are binding, not inspiration: the main facade with "
-        "its dark graphite chequerboard of perforated metal panels and mirror stainless bands, the loading gates "
-        "with steel canopies and rubber dock seals, the aerial panorama of the territory, and the brand mark file. "
-        "Reproduce the attached architecture exactly: the same panel module and chequerboard rhythm, the same "
-        "glazing grid, the same gate proportions, the same graphite and warm grey values. Do not invent a different "
-        "building, do not restyle the facade, do not add floors or decoration that is absent from the reference. "
-        "Where a frame shows an interior it is the interior of that same building: exposed structure, clear height "
-        "of six to twelve metres, painted floor marking, an overhead crane rail running along the bay. "
+        "Photographs of the real site are attached and they are binding, not inspiration. This is a working "
+        "industrial park in the south of Moscow as it stands today, not an architectural visualisation: long low "
+        "production blocks of pale warm grey concrete, two continuous ribbon bands of glazing in dark frames "
+        "running the length of each block, scaffolding along the part of the facade being renewed, roller shutter "
+        "gates flush in the wall at yard level, a wide concrete apron with box trucks and semi trailers parked at "
+        "an angle, lamp posts and standing water after rain. Reproduce it exactly: the same block proportions, "
+        "the same two band glazing rhythm in the same dark frames, the same pale grey wall values, the same flush "
+        "gates. Do not clad it in dark perforated panels, do not turn it into a glass tower, do not add floors or "
+        "decoration absent from the photographs. A production interior is that same site: a clear hall on round "
+        "painted columns, a poured seamless floor, roller gates in the end wall. An office, corridor or "
+        "conference hall is the renovated administrative building: white walls with one accent wall in brand "
+        "amber, black framed glazed partitions, grey carpet, linear ceiling light. "
         "The brand mark comes one to one from the attached logo file and is a physical object inside the scene, "
         "never a flat sticker and never a watermark: a twelve toothed gear wheel with a clean circular centre, and "
         "inside that circle the stylised figure of a person with arms raised outward to both sides; where the "
@@ -112,7 +116,7 @@ from promt_engine import Бренд, собрать, проверить
  "P-S-subbota-i-vtoraa-smena": "the inner street of an industrial territory late in the evening, roller gates closed along both sides, one gate open with warm light spilling onto the concrete apron, a single car parked at the far end",
  "P-54-nds-schet": "a printed rental invoice on warm white paper lying flat on a graphite steel bench shot straight down from directly above, its printed body an unreadable grey texture with no legible word, one line of it catching a narrow amber light, a machined steel straightedge across the lower third",
  "P-02-karusel-krt": "an aerial view of a Moscow industrial district at flat overcast noon, a hard boundary where low workshop roofs stop and new residential blocks begin, cranes standing over the built side, the working half occupying the near part of the frame",
- "P-03-dzen-oblozhka-krt": "one frame holding both worlds at once: in the near half the graphite chequerboard facade and loading gates of a working production building, in the far half a row of new residential towers rising directly behind it, flat overcast daylight, wet asphalt between them",
+ "P-03-dzen-oblozhka-krt": "one frame holding both worlds at once: in the near half the pale grey ribbon glazed facade and roller gates of a working production building, in the far half a row of new residential towers rising directly behind it, flat overcast daylight, wet asphalt between them",
  "P-S-dogovor-v-cetverg": "a stapled contract lying on a graphite steel bench under a desk lamp, its printed body an unreadable grey texture, a fountain pen resting across it, the workshop beyond falling into ink black",
  "P-S-sotna-masterskih-v-odnom-kvartale": "an aerial view of a dense low-rise workshop quarter at dusk, dozens of small saw-tooth roofs packed edge to edge, warm light escaping from a few open gates",
  "P-20-moshchnost-schet": "the open door of a workshop main switchgear cabinet seen straight on, breaker modules in a strict vertical column behind the glazed panel, bus bars and cable glands below, one amber indicator lamp glowing in the upper right",
@@ -347,7 +351,7 @@ from promt_engine import Бренд, собрать, проверить
     "four machined steel tabs standing along its edge, one tab faced in amber",
 "P-32-vtoraya-ochered":
     "the scaffolded facade of the second phase seen from the yard with the tower crane above it, the same "
-    "graphite chequerboard panel rhythm already fitted on the lower floors",
+    "pale grey wall and dark framed ribbon glazing already fitted on the lower floors",
 "P-63-karusel-status-uchastka":
     "a lease contract lying open on a concrete floor with a torch beam falling across one page, the printed "
     "body an unreadable grey texture, a single paragraph traced by a narrow amber line",
@@ -435,6 +439,17 @@ from promt_engine import Бренд, собрать, проверить
 "P-S-voskresen-e-spisok-goroda":
     "a machined metal part resting alone on a graphite bench in a near overhead close view, its milled faces "
     "and tool marks in hard raking light, the bench receding into black behind it",
+"P-140-konferenc-zal":
+    "the conference hall of the administrative building shot down its centre line from the back row, rows of "
+    "black chairs receding toward a large bright screen on the end wall, a linear ceiling light running the "
+    "length of the room, grey carpet, the side walls falling into shadow",
+"P-141-lyudi-smeny":
+    "a canteen servery and a locker row standing in one frame across a shared partition, both empty, a warm "
+    "amber source above the servery counter and cold falloff over the lockers, a poured floor between them",
+"P-142-karusel-fasad":
+    "the long facade of a production block under renewal, scaffolding standing along one bay of it, the two "
+    "ribbon bands of glazing in dark frames continuing past the scaffold to the far end, a wide concrete "
+    "apron in front with a box truck parked at an angle",
 "P-91-karusel-sem-mest":
     "seven machined steel plates laid in a row on a graphite bench like a checklist, hard raking light "
     "separating one plate from the next, the last plate faced in amber and set slightly apart",
