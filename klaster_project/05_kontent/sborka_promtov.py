@@ -127,6 +127,35 @@ from promt_engine import Бренд, собрать, проверить
     "frame above, the floor far below in soft focus",
     "a stack of pallets wrapped in stretch film standing in a warehouse block, the film catching the light, racking "
     "receding behind them",
+    "a wall of stacked euro pallets filling the frame, the pale wood grain and heat stamps reading clearly, "
+    "one pallet pulled slightly out of the stack",
+    "the underside of an overhead crane girder seen from below, the rail and festoon cabling running away in "
+    "perspective, roof structure beyond",
+    "a coil of steel strip standing on end on the floor, its wound edge filling most of the frame like a spiral, "
+    "mill oil catching the light",
+    "the tread plate of a steel staircase seen from directly above, its diamond pattern worn smooth in the middle "
+    "by traffic",
+    "a row of numbered roller gates along one long facade, seen at a shallow angle so they repeat away into "
+    "distance",
+    "a bundle of cable trays running along the ceiling of a corridor, cables sorted and tied, labels on each run",
+    "the corner of a poured floor slab meeting a painted column base, the expansion joint filled and the marking "
+    "line turning around it",
+    "a service lift interior with brushed steel walls and a scuffed floor, the doors half open onto the bay",
+    "an empty racking bay in a warehouse block seen straight on, uprights and beams making a grid across the frame",
+    "the flat roof of the building with ventilation units in a row, the city skyline low behind them",
+    "a compressed air manifold on a wall, gauges and quarter turn valves in a line, pipework running off both ways",
+    "a workbench top filling the frame from directly above, tools laid out in order, swarf swept into one corner",
+    "the yard gate barrier and guard window at the entrance, seen from the driver seat height",
+    "a puddle on the apron reflecting the facade and the sky upside down, the real building small at the top of "
+    "the frame",
+    "a stack of steel channel and angle stock on a rack, the ends cut square and facing camera in a grid",
+    "the loading dock leveller plate raised, the gap between the dock and the truck bed visible beneath it",
+    "a bank of electricity meters on a wall, sealed and numbered, conduit running down from each",
+    "the ceiling of a production hall seen looking straight up, roof lights and structure making a strict pattern",
+    "a heavy steel door with a push bar and a numbered sign, the paint chipped around the handle",
+    "a pile of production offcuts in a steel bin, bright cut faces catching the light",
+    "an aisle between two production areas marked by yellow floor lines, machinery out of focus on both sides",
+    "the corner of an office window with the industrial yard visible through it, blinds half drawn",
 ]
 
 # Сцена под каждый ключ: то, что видит камера в главном кадре. Остальное собирает движок.
