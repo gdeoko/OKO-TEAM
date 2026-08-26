@@ -946,15 +946,73 @@ function dosClose() {
 
    Развёртка остаётся запасным путём: у тела без ролика холст
    по-прежнему рисует её карту и крутит по долготе. */
-var ПОРОДА = {};
-(function () {
-  var п = { "МАРС": "mars", "MARS": "mars" };
-  for (var k in п) if (п.hasOwnProperty(k)) ПОРОДА[k] = п[k];
-})();
+var ПОВЕРХНОСТЬ = {
+ "55 CANCRI": "star",
+ "55 CANCRI D": "gas",
+ "55 CANCRI E": "lava",
+ "55 CANCRI F": "gas",
+ "BLACK": "hole",
+ "EARTH": "earth",
+ "JUPITER": "jupiter",
+ "KEPLER-186": "star",
+ "KEPLER-186 C": "rocky",
+ "KEPLER-186 E": "desert",
+ "KEPLER-186 F": "terran",
+ "KEPLER-62": "star",
+ "KEPLER-62 B": "lava",
+ "KEPLER-62 E": "terran",
+ "KEPLER-62 F": "ice",
+ "KEPLER-90": "star",
+ "KEPLER-90 D": "rocky",
+ "KEPLER-90 G": "gas",
+ "KEPLER-90 H": "gas",
+ "LHS 1140": "star",
+ "LHS 1140 B": "terran",
+ "LHS 1140 C": "rocky",
+ "MARS": "mars",
+ "MERCURY": "mercury",
+ "MOON": "moon",
+ "NEPTUNE": "neptune",
+ "PROXIMA B": "terran",
+ "PROXIMA CENTAURI": "star",
+ "PROXIMA D": "rocky",
+ "SATURN": "saturn",
+ "SUN": "sun",
+ "TOI-270": "star",
+ "TOI-270 B": "rocky",
+ "TOI-270 C": "gas",
+ "TOI-270 D": "gas",
+ "TOI-700": "star",
+ "TOI-700 C": "rocky",
+ "TOI-700 D": "terran",
+ "TOI-700 E": "terran",
+ "TRAPPIST-1": "star",
+ "TRAPPIST-1 E": "rocky",
+ "TRAPPIST-1 F": "ice",
+ "TRAPPIST-1 G": "ocean",
+ "URANUS": "uranus",
+ "VENUS": "venus",
+ "ВЕНЕРА": "venus",
+ "ЗЕМЛЯ": "earth",
+ "ЛУНА": "moon",
+ "МАРС": "mars",
+ "МЕРКУРИЙ": "mercury",
+ "НЕПТУН": "neptune",
+ "САТУРН": "saturn",
+ "СОЛНЦЕ": "sun",
+ "УРАН": "uranus",
+ "ЧЁРНАЯ": "hole",
+ "ЮПИТЕР": "jupiter"
+};
 
+/* Имя тела в досье приходит как в подписи: «МАРС», «TRAPPIST-1 E»,
+   «ЧЁРНАЯ ДЫРА». Ищем сперва целиком, потом по первому слову - у
+   чёрной дыры и у составных имён это единственный надёжный путь. */
 function породаДля(name) {
-  var n = String(name || "").toUpperCase().split(" ")[0].replace(/[^A-ZА-ЯЁ]/g, "");
-  return ПОРОДА[n] || null;
+  var n = String(name || "").toUpperCase().trim();
+  if (ПОВЕРХНОСТЬ[n]) return ПОВЕРХНОСТЬ[n];
+  var первое = n.split(/[\s·]+/)[0];
+  return ПОВЕРХНОСТЬ[первое] || null;
 }
 
 function dosPaint(obj, name, фаза) {
