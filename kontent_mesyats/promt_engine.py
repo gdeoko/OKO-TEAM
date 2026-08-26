@@ -30,15 +30,16 @@ class Бренд:
         self.съёмка = съёмка
         self.референсы = референсы
 
-    def система(self, ключ=""):
+    def система(self, ключ="", правило_типографики="", правило_знака=""):
         части = [self.съёмка, свет(ключ, self.свет) if ключ else self.свет,
                  self.материал, self.палитра, self.шрифт]
         if self.референсы:
             части.insert(0, self.референсы)
         части.append(
-            "Every letter is physically part of the scene, never a floating overlay: engraved into metal and paint "
-            "filled, hard-stencilled with slightly ragged edges and visible stencil bridges, or set into the floor "
-            "marking; it lies in the plane of its surface, obeys the frame perspective and takes the same light and dust. "
+            (правило_типографики or
+             "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
+             "surface, obeys the frame perspective and takes the same light and dust.") + " " +
+            (правило_знака or "") + " "
             "The headline stays legible at a three hundred pixel feed preview: maximum contrast, nothing crossing the "
             "characters, no blur, no unplanned line break. An eight percent dead margin on all four sides is kept clear, "
             "and all typography sits inside it. "
@@ -201,6 +202,136 @@ def свет(ключ, запасной):
     return СВЕТ_ВАРИАНТЫ[_ровно(осн, 3) % len(СВЕТ_ВАРИАНТЫ)] or запасной
 
 
+
+# ── Дизайнерские режимы ────────────────────────────────────────────────────
+# Одного подхода мало: пакет из полусотни кадров должен читаться как работа
+# студии, а не как один приём, размноженный полсотни раз. Держим шесть систем
+# со своей композицией, типографикой и ролью знака, и выбираем их по теме
+# и по площадке, а не наугад.
+
+РЕЖИМЫ = {
+ "сцена": {
+   "как": "Design system for this frame is IN-SCENE LETTERING: the words are physical objects inside the "
+          "photograph. {подача}",
+   "типографика":
+      "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
+      "surface, obeys the frame perspective and takes the same light, dust and wear as everything around it.",
+   "знак":
+      "The brand mark sits once on a real surface in the scene, small, about three percent of the frame width, "
+      "where such a mark would really be fixed, and takes the same light as the surface under it.",
+ },
+ "постер": {
+   "как": "Design system for this frame is EDITORIAL POSTER: a strong documentary photograph of the site fills the "
+          "frame, and the typography is set over it like a magazine cover, confidently and with air. The headline is "
+          "set in very large dense grotesque capitals, ranged left, occupying a clear third of the frame over the "
+          "calmest part of the image, one word per line where the line allows. A hairline rule of brand amber sits "
+          "directly under the headline block. The photograph is darkened by a soft gradient exactly where the type "
+          "lands, so the letters keep full contrast without a box around them. The headline reads exactly, character "
+          "by character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography is set flat on the picture plane as deliberate editorial layout, sharp and perfectly aligned, "
+      "never distorted to follow the surfaces beneath it. It is composed to a strict margin and baseline grid.",
+   "знак":
+      "The brand mark is placed as a clean flat lockup in one corner of the layout, small, about four percent of the "
+      "frame width, in warm white or brand amber, with generous clear space around it.",
+ },
+ "цифра": {
+   "как": "Design system for this frame is DATA POSTER: one number is the whole image. The key figure from the "
+          "headline is set enormous, filling two thirds of the frame height, in dense grotesque, cropped by the frame "
+          "edge if needed, in brand amber over a deep graphite ground, with a documentary photograph of the site "
+          "visible through the counters of the numerals or as a narrow band behind them. The rest of the headline is "
+          "set small and calm beneath it, reading exactly, character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography is flat, geometric and precisely aligned, one dominant figure and one quiet supporting line, "
+      "nothing else competing for attention.",
+   "знак":
+      "The brand mark is a small flat lockup in the lower corner, about three percent of the frame width, quiet "
+      "against the ground.",
+ },
+ "экшен": {
+   "как": "Design system for this frame is CINEMATIC ACTION: the moment is caught mid-movement with real energy. "
+          "Sparks, water spray, dust, steam or flying swarf cut across the frame, a fast shutter freezing the "
+          "particles while one element carries directional motion blur, shallow depth with the subject punched out "
+          "sharp against a rushing background. The headline is composed into the movement as heavy dimensional "
+          "lettering with real thickness and its own shadow, catching the same sparks and haze, reading exactly, "
+          "character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "The lettering is three dimensional and lit by the scene, with genuine edge highlights, contact shadow and "
+      "atmosphere passing in front of it, but it stays perfectly legible and never bends out of shape.",
+   "знак":
+      "The brand mark is embossed small into the lower corner of the frame, about three percent of the frame width, "
+      "picking up the same rim light as the action.",
+ },
+ "схема": {
+   "как": "Design system for this frame is TECHNICAL OVERLAY: a documentary photograph of the site with a precise "
+          "engineering drawing laid over it in brand amber hairlines, as if the drawing were registered to the real "
+          "object. Dimension lines with arrow terminators, leader lines, node dots and a fine grid sit exactly on "
+          "the features they describe. The headline is set flat in the negative space of the layout, reading exactly, "
+          "character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography and drawing are one flat overlay plane: hairline weights, technical tracking, everything aligned "
+      "to the same grid, the photograph reading clearly underneath.",
+   "знак":
+      "The brand mark sits in the corner of the drawing frame like the stamp of a title block, small, about three "
+      "percent of the frame width.",
+ },
+ "объём": {
+   "как": "Design system for this frame is DIMENSIONAL BUILD: the subject is shown as a clean three dimensional "
+          "build against a deep graphite ground, the object of the story rendered with photographic materials and "
+          "true reflections, its parts separated in an exploded view along one axis with thin brand amber leader "
+          "lines between them, or stacked as a precise isometric cutaway that reveals what is normally hidden. "
+          "The headline is set as heavy dimensional lettering standing in the same space as the object, sharing its "
+          "floor, its shadow and its reflections, reading exactly, character by character, the Russian line "
+          "«{заголовок}».",
+   "типографика":
+      "The lettering is a real object in the build with genuine thickness, contact shadow and edge highlight, lit by "
+      "the same studio light as the subject, and it stays perfectly legible and undistorted.",
+   "знак":
+      "The brand mark stands small in the build as a machined plate on the ground plane, about three percent of the "
+      "frame width, with its own shadow.",
+ },
+ "дуотон": {
+   "как": "Design system for this frame is DUOTONE GRAPHIC: the documentary photograph is reduced to a two colour "
+          "duotone of deep graphite and brand amber with clean separation and real tonal depth, and one solid block "
+          "of flat colour is placed against it as a compositional counterweight. The headline is knocked out of that "
+          "block or set directly against the duotone, very large and ranged left, reading exactly, character by "
+          "character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography is flat, graphic and poster-scaled, hard edges, no bevel, no shadow, no texture on the letters "
+      "themselves.",
+   "знак":
+      "The brand mark is knocked out of the colour block in the corner, small, about four percent of the frame "
+      "width, flat and clean.",
+ },
+}
+
+# Тема сама подсказывает систему: разбор цифр просит крупное число, разговор
+# про инженерию просит чертёж, история про людей и движение просит экшен.
+РУБРИКА_РЕЖИМ = {
+    "Цифры цеха": ("цифра", "объём"), "Цифры отрасли": ("цифра", "дуотон"),
+    "Деньги цеха": ("цифра", "сцена"), "Цена киловатта": ("объём", "схема"),
+    "Цена ошибки": ("экшен", "сцена"), "За что дают": ("цифра", "постер"),
+    "Как выбирать": ("схема", "сцена"), "Не снесут": ("постер", "схема"),
+    "Сто производств": ("экшен", "объём"), "Кто стоит у станка": ("экшен", "постер"),
+    "Кадры цеха": ("экшен", "сцена"), "Сколько отсюда ехать": ("схема", "дуотон"),
+    "Стройка будущего": ("постер", "объём"), "Промышленный город": ("дуотон", "постер"),
+    "Площадки мира": ("дуотон", "постер"), "Отрасль": ("объём", "цифра"),
+    "Рынок": ("дуотон", "цифра"), "Воронка": ("сцена", "постер"),
+    "Событие": ("постер", "экшен"),
+}
+
+
+def режим(ключ, рубрика="", вид="пост"):
+    """Систему выбираем от темы и от ключа: рубрика задаёт пару подходящих
+    систем, ключ выбирает одну из них. Серия слайдов держит одну систему."""
+    осн = ключ.rsplit("-", 1)[0] if ключ.rsplit("-", 1)[-1].isdigit() else ключ
+    пара = РУБРИКА_РЕЖИМ.get(рубрика)
+    if not пара:
+        имена = list(РЕЖИМЫ)
+        return имена[_ровно(осн, 11) % len(имена)]
+    return пара[_ровно(осн, 12) % 2]
+
+
 def воронка(бренд):
     return (f"This closing slide carries the funnel: bolted low on the surface, centred, its centre at seventy nine "
             f"percent down the frame, a wide brushed steel plate with four countersunk screws, engraved and paint "
@@ -241,19 +372,25 @@ def собрать(бренд, кадры):
                 куски.append(f"This is slide {к['номер']} of {к['всего']} of one vertical carousel, and every slide "
                              f"obeys the same system so the separately generated frames read as one series.")
         куски.append(f"The scene of this frame is {к['сцена']}.")
+        имя_режима = режим(к["ключ"], к.get("рубрика", ""), вид)
+        р = РЕЖИМЫ[имя_режима]
         (имя_приёма, шаблон), шаблон_номера = приём(к["ключ"])
-        куски.append(шаблон.format(к["заголовок"]))
+        куски.append(р["как"].format(подача=шаблон.format(к["заголовок"]),
+                                     заголовок=к["заголовок"]))
         if к.get("подпись"):
-            куски.append(ПОДПИСЬ[имя_приёма].format(к["подпись"]))
+            куски.append(ПОДПИСЬ[имя_приёма].format(к["подпись"]) if имя_режима == "сцена"
+                         else f"A supporting line is set small and calm under the headline in the same layout, "
+                              f"reading exactly «{к['подпись']}».")
         if вид in ("карусель", "сторис"):
-            куски.append(шаблон_номера.format(к["номер"]))
+            куски.append(шаблон_номера.format(к["номер"]) if имя_режима == "сцена"
+                         else f"The single numeral {к['номер']} is set small in the corner of the layout in brand "
+                              f"amber, marking the position in the series.")
             if к["номер"] == к["всего"]:
                 куски.append(воронка(бренд) if вид == "карусель" else
                              f"This is the closing frame of the series, so the {бренд.имя} mark from the attached logo "
-                             f"file is engraved once, small, at three percent of the frame width, into a brushed steel "
-                             f"plate low inside the working window"
-                             + (f" with «{бренд.домен}» beneath." if бренд.домен else "."))
-        куски.append(бренд.система(к["ключ"]))
+                             f"file appears once, small, at three percent of the frame width, low inside the working "
+                             f"window" + (f" with «{бренд.домен}» beneath." if бренд.домен else "."))
+        куски.append(бренд.система(к["ключ"], р["типографика"], р["знак"]))
         текст = " ".join(куски)
         промпты[к["ключ"]] = {"формат": формат, "размер": размер, "текст": текст}
     return промпты
