@@ -104,6 +104,12 @@ class Бренд:
                  "reading exactly, character by character, the Russian line «{}»."),
 ]
 
+# Обязательный масштаб надписи: применяется к любому приёму подачи.
+МАСШТАБ = ("The lettering is the subject of this photograph: the headline block spans at least sixty percent of "
+           "the frame width and a quarter of its height, sits close to camera, holds high contrast against "
+           "everything behind it and stays readable at a two hundred pixel thumbnail. No small plaque and no "
+           "distant sign.")
+
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
     "engraved": "The caption is hard-stencilled below the plate, at one third of the headline cap height, "
@@ -432,7 +438,9 @@ def собрать(бренд, кадры):
                 куски.append(f"This is slide {к['номер']} of {к['всего']} of one vertical carousel, and every slide "
                              f"obeys the same system so the separately generated frames read as one series: the same "
                              f"two type sizes and no third, the same margins and padding, the same colour grade on "
-                             f"every photograph, one accent colour only.")
+                             f"every photograph, one accent colour only. The mark sits in the lower left corner "
+                             f"and the position marker in the lower right corner on every slide, at the same "
+                             f"distance from the edges.")
                 if к["номер"] == 1:
                     # первый слайд решает, откроют ли остальные: контраст и приглашение листать
                     куски.append("This is the cover slide and it carries the whole carousel: maximum contrast, the "
@@ -450,6 +458,10 @@ def собрать(бренд, кадры):
         (имя_приёма, шаблон), шаблон_номера = приём(к["ключ"])
         куски.append(р["как"].format(подача=шаблон.format(к["заголовок"]),
                                      заголовок=к["заголовок"]))
+        # Кадр живёт в ленте размером с ноготь. Гравировка на маленькой табличке
+        # красива вблизи и пуста на превью, поэтому масштаб надписи задаём жёстко
+        # и одинаково для любого приёма подачи.
+        куски.append(МАСШТАБ)
         if к.get("подпись"):
             куски.append(ПОДПИСЬ[имя_приёма].format(к["подпись"]) if имя_режима == "сцена"
                          else f"A supporting line is set small and calm under the headline in the same layout, "
