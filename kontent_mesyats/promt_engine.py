@@ -292,6 +292,50 @@ def свет(ключ, запасной):
       "The brand mark stands small in the build as a machined plate on the ground plane, about three percent of the "
       "frame width, with its own shadow.",
  },
+ "крупно": {
+   "как": "Design system for this frame is BIG STATEMENT: one photograph of the site fills the frame with almost "
+          "nothing on it, and a single short line of type sits in the empty part like a caption on a gallery wall, "
+          "small relative to the image but perfectly placed and impossible to miss. Air and restraint do the work. "
+          "The line reads exactly, character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "One line, one weight, generous letter spacing, aligned to the architecture of the photograph. Nothing else "
+      "is set anywhere in the frame.",
+   "знак":
+      "The brand mark is a small flat lockup in the opposite corner from the line, about three percent of the frame "
+      "width.",
+ },
+ "разрез": {
+   "как": "Design system for this frame is MATERIAL CUTAWAY: the subject is cut open and shown in section, the way a "
+          "product page shows what is inside. Layers of the floor slab, the wall build-up or the switchgear are "
+          "peeled apart in a clean stepped section with each layer labelled by a thin brand amber leader line, "
+          "photographic materials and true thickness, deep graphite ground. The headline is set flat above the "
+          "section, reading exactly, character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography and labels share one hairline system, technical and quiet, so the section itself carries the "
+      "frame.",
+   "знак":
+      "The brand mark is a small flat lockup in the lower corner, about three percent of the frame width.",
+ },
+ "поток": {
+   "как": "Design system for this frame is LIGHT TRAILS: a long exposure of the site at night where every moving "
+          "thing draws a line, headlights of trucks pulling long amber ribbons across the yard, people reduced to "
+          "soft ghosts, the buildings themselves razor sharp. The headline is set flat over the darkest part of the "
+          "frame, reading exactly, character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography is flat, calm and perfectly sharp against the motion, ranged left, never blurred with the scene.",
+   "знак":
+      "The brand mark is a small flat lockup in the corner, about three percent of the frame width.",
+ },
+ "коллаж": {
+   "как": "Design system for this frame is LAYERED COLLAGE: a documentary photograph of the site with a second image "
+          "cut into it along a hard geometric edge, a technical drawing, a map fragment or an interior, so the two "
+          "read as one composed plane. A block of brand amber holds the seam. The headline is set across the seam, "
+          "reading exactly, character by character, the Russian line «{заголовок}».",
+   "типографика":
+      "Typography is flat and poster-scaled, crossing the seam deliberately so it binds the two images together.",
+   "знак":
+      "The brand mark is knocked out of the amber block, small, about four percent of the frame width.",
+ },
  "дуотон": {
    "как": "Design system for this frame is DUOTONE GRAPHIC: the documentary photograph is reduced to a two colour "
           "duotone of deep graphite and brand amber with clean separation and real tonal depth, and one solid block "
@@ -311,14 +355,14 @@ def свет(ключ, запасной):
 # про инженерию просит чертёж, история про людей и движение просит экшен.
 РУБРИКА_РЕЖИМ = {
     "Цифры цеха": ("цифра", "объём"), "Цифры отрасли": ("цифра", "дуотон"),
-    "Деньги цеха": ("цифра", "сцена"), "Цена киловатта": ("объём", "схема"),
+    "Деньги цеха": ("цифра", "сцена"), "Цена киловатта": ("объём", "разрез"),
     "Цена ошибки": ("экшен", "сцена"), "За что дают": ("цифра", "постер"),
-    "Как выбирать": ("схема", "сцена"), "Не снесут": ("постер", "схема"),
-    "Сто производств": ("экшен", "объём"), "Кто стоит у станка": ("экшен", "постер"),
-    "Кадры цеха": ("экшен", "сцена"), "Сколько отсюда ехать": ("схема", "дуотон"),
-    "Стройка будущего": ("постер", "объём"), "Промышленный город": ("дуотон", "постер"),
+    "Как выбирать": ("схема", "разрез"), "Не снесут": ("постер", "коллаж"),
+    "Сто производств": ("поток", "объём"), "Кто стоит у станка": ("экшен", "крупно"),
+    "Кадры цеха": ("экшен", "сцена"), "Сколько отсюда ехать": ("поток", "коллаж"),
+    "Стройка будущего": ("коллаж", "объём"), "Промышленный город": ("дуотон", "крупно"),
     "Площадки мира": ("дуотон", "постер"), "Отрасль": ("объём", "цифра"),
-    "Рынок": ("дуотон", "цифра"), "Воронка": ("сцена", "постер"),
+    "Рынок": ("дуотон", "цифра"), "Воронка": ("сцена", "крупно"),
     "Событие": ("постер", "экшен"),
 }
 

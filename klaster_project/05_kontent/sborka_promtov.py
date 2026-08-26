@@ -473,6 +473,12 @@ from promt_engine import Бренд, собрать, проверить
 "P-91-karusel-sem-mest":
     "seven machined steel plates laid in a row on a graphite bench like a checklist, hard raking light "
     "separating one plate from the next, the last plate faced in amber and set slightly apart",
+"P-505-sobytie-teleskop":
+    "the flat roof of the administrative building at night, a large amateur telescope on a heavy equatorial "
+    "mount standing on the roof deck in the near plane with its tube raised into a deep clear sky, the "
+    "silhouette of one person bent to the eyepiece seen from behind, the lit production buildings of the "
+    "territory spread out far below and behind, a single warm amber source from the open roof hatch raking "
+    "across the tube, the Milky Way and long star trails arching overhead, no crowd and no faces",
 "P-504-karusel-kosmos-otchet":
     "the flat roof of the administrative building at night, its parapet and roof plant low in the frame, a "
     "large amateur telescope on a heavy equatorial mount standing on the roof deck in the near plane with "
