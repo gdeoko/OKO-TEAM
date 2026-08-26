@@ -4387,9 +4387,49 @@ html.rc-deep-inside .rcf-fab {
    прямоугольника окна, отсечение идёт по контуру проёма - на раму
    она не заезжает ни пикселем. */
 .rc-flight.rcf-native-cab .rcf-holo {
-  right: calc(var(--cab-wx, 6%) + 1.2%);
-  bottom: calc(100% - var(--cab-wy, 10%) - var(--cab-wh, 70%) + 1.5%);
+  /* От правой кромки отступаем чуть больше: было четыре пикселя, и
+     марка стояла впритык к стойке. */
+  right: calc(var(--cab-wx, 6%) + 2.6%);
+  bottom: calc(100% - var(--cab-wy, 10%) - var(--cab-wh, 70%) + 2.2%);
   clip-path: var(--cab-clip, none);
+}
+
+/* ── Луч проектора под маркой ────────────────────────────────
+   Заказчик про марку сказал так: «логотип голограмма ниже справа
+   должно быть, но не залазить на рамку, как голограмма». Стояла она
+   уже внизу справа и уже с циановым тоном и развёрткой строк, но
+   читалась наклейкой: у проекции не было того, что делает её
+   проекцией - луча снизу.
+
+   Луч идёт от пульта вверх, сужаясь к марке, и складывается со
+   стеклом по свету. Он же объясняет, откуда марка взялась. */
+.rc-flight .rcf-holo::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 100%;
+  width: 230%; height: 190%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .30) 0%,
+    rgba(var(--int-cyan-rgb, 66,178,220), .10) 45%,
+    rgba(var(--int-cyan-rgb, 66,178,220), 0) 100%);
+  clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: blur(1.4px);
+  animation: rcfЛучМарки 4.2s ease-in-out infinite;
+}
+@keyframes rcfЛучМарки {
+  0%, 100% { opacity: .52; }
+  50%      { opacity: .82; }
+}
+/* Сама марка ярче и с более плотным свечением: издали она читалась
+   бледным пятном на тёмной стойке. */
+.rc-flight .rcf-holo img {
+  opacity: .92;
+  filter: brightness(1.75) sepia(1) hue-rotate(162deg) saturate(3.8)
+          drop-shadow(0 0 10px rgba(var(--int-cyan-rgb, 66,178,220), .95))
+          drop-shadow(0 0 26px rgba(var(--int-cyan-rgb, 66,178,220), .55));
 }
 
 /* ══════════════════════════════════════════════════════════
