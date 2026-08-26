@@ -211,9 +211,11 @@ function ag_transport(): string {
 function ag_ask_bridge(string $prompt, array $files): array {
     $bad = static fn(string $w): array => ['ok' => false, 'text' => '', 'why' => $w];
 
-    $poster = trim((string) cfgv('oko_poster_url', ''));
-    $token  = trim((string) cfgv('oko_poster_token', ''));
-    if ($poster === '' || $token === '') return $bad('мост не настроен (oko_poster_url/token)');
+    // Имена настроек те же, что у печати дипломов (core/diploma_render.php):
+    // мост один, и заводить ему второй комплект ключей незачем.
+    $poster = rtrim((string) cfgv('poster_url', ''), '/');
+    $token  = (string) cfgv('poster_token', '');
+    if ($poster === '' || $token === '') return $bad('мост не настроен (poster_url/poster_token)');
 
     $files = array_values(array_filter($files, 'is_file'));
     if (!$files) return $bad('нет подготовленных дорожек');
@@ -229,7 +231,7 @@ function ag_ask_bridge(string $prompt, array $files): array {
         $dst  = $share . '/' . $tag . '_' . $i . '.' . $ext;
         if (!@copy($f, $dst)) continue;
         $copies[] = $dst;
-        $links[]  = ['url' => rtrim((string) cfgv('site_url', url('/')), '/') . '/grade-media/' . $tag . '/' . $i . '.' . $ext,
+        $links[]  = ['url' => rtrim((string) (cfgv('site_url') ?: url('/')), '/') . '/grade-media/' . $tag . '/' . $i,
                      'name' => 'g' . $i . '.' . $ext];
     }
     if (!$links) return $bad('файлы не удалось выложить для моста');
@@ -735,8 +737,36 @@ function ag_grade_application(int $appId, array $opt = []): array {
             ? setting('grade_model_fallback', 'gemini-3.5-flash gemini-3.1-flash-lite gemini-3-flash-preview')
             : '')) ?: [],
     ])));
-    $raw = ''; $code = 0; $usedModel = ''; $gotFiles = false;
-    foreach ($keys as $k2) {
+    /* СНАЧАЛА МОСТ: там разбор идёт по оплаченной подписке и не стоит ничего.
+     *
+     * Ключ остаётся запасным путём — если браузер агента не ответил (Google
+     * поменял разметку, профиль потерял вход, машина занята), работа не должна
+     * зависать в очереди: доспрашиваем через API, как раньше. */
+    $raw = ''; $code = 0; $usedModel = ''; $gotFiles = false; $bridgeText = '';
+    if (ag_transport() === 'bridge') {
+        /* В API строгий JSON обеспечивает responseMimeType. В браузере такого
+           рычага нет: модель охотно добавляет вступление, рассуждения и
+           markdown-обёртку, и разбор рассыпается. Поэтому требование формата
+           дописываем словами, отдельным последним абзацем — его модель видит
+           непосредственно перед ответом. */
+        $br = ag_ask_bridge($prompt . "\n\n"
+            . 'ФОРМАТ ОТВЕТА. Верни РОВНО ОДИН объект JSON и больше ничего: '
+            . 'без вступления, без пояснений после, без markdown и без слова JSON перед скобкой. '
+            . 'Первый символ ответа — «{», последний — «}».', $uploaded);
+        if ($br['ok'] && ag_parse_json($br['text'])) {
+            $bridgeText = $br['text'];
+            $gotFiles   = true;
+            $usedModel  = 'браузер агента';
+            $code       = 200;
+        } else {
+            // Печатаем начало ответа: без него «не разобран» ничего не объясняет,
+            // а поправить промпт можно только увидев, что модель на самом деле ответила.
+            error_log('ai_grade(' . $appId . '): мост не дал разбор ('
+                . ($br['why'] ?: 'ответ не разобран') . ') — иду через ключ. Ответ моста: '
+                . mb_substr(preg_replace('~\s+~u', ' ', (string) ($br['text'] ?? '')), 0, 300));
+        }
+    }
+    foreach (($bridgeText === '' ? $keys : []) as $k2) {
         $parts = $uploadAll($k2);
         if (!$parts) continue;
         $gotFiles = true;
@@ -775,7 +805,9 @@ function ag_grade_application(int $appId, array $opt = []): array {
         return $bad('сервис оценки ответил ошибкой ' . $code . ': ' . mb_substr((string) ($j['error']['message'] ?? ''), 0, 200), $runId);
     }
     $j    = json_decode($raw, true);
-    $text = (string) ($j['candidates'][0]['content']['parts'][0]['text'] ?? '');
+    $text = $bridgeText !== ''
+        ? $bridgeText
+        : (string) ($j['candidates'][0]['content']['parts'][0]['text'] ?? '');
     $out  = ag_parse_json($text);
     if (!$out || empty($out['criteria'])) return $bad('ответ модели не разобран', $runId);
 

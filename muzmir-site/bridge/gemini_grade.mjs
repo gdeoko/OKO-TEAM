@@ -103,6 +103,14 @@ try {
     /* Меню открывается не всегда с первого нажатия: тяжёлая страница, и клик
        иногда уходит раньше, чем навешан обработчик. Жмём и ждём сам пункт, а не
        фиксированную паузу — на паузе в две секунды драйвер уже отваливался. */
+    /* Фон считаем ДО прикрепления. Признак «есть элемент вложения» срабатывал
+       в ту же секунду, что и отдача файла: на странице такие элементы уже
+       лежали. Запрос уходил до того, как запись доехала, и по видео ответа не
+       было вовсе. Ждём именно ПРИРОСТ к тому, что было. */
+    const фон = await p.evaluate(() =>
+      document.querySelectorAll('[class*=attachment],[class*=file-preview],[data-test-id*=file]').length
+    ).catch(() => 0);
+
     const пункт = p.getByText("Загрузить файлы", { exact: true }).first();
     let открылось = false;
     for (let попытка = 1; попытка <= 3 && !открылось; попытка++) {
@@ -123,20 +131,28 @@ try {
       лог("файлов отдано:", медиа.length);
     } catch (e) { лог("окно выбора не пришло:", String(e).slice(0, 90)); await уйти(4); }
 
-    /* Ждём, пока запись доедет. Признак — чип вложения: у ролика это его
-       длительность, у прочего имя файла. Уйдёт запрос раньше — модель разберёт
-       пустоту и выдаст правдоподобную оценку несуществующей работы. */
-    let доехало = false;
-    for (let ж = 0; ж < 75 && !доехало; ж++) {
-      доехало = await p.evaluate(() =>
-        [...document.querySelectorAll('[class*=attachment], [class*=file-preview], [data-test-id*=file]')]
-          .some(e => (e.innerText || '').trim().length > 0)
-        || [...document.querySelectorAll('img')].some(и => (и.src || '').startsWith('blob:') && и.naturalWidth > 30)
-      ).catch(() => false);
-      if (!доехало) await p.waitForTimeout(4000);
+    /* Ждём, пока запись доедет: прирост элементов вложения к фону И тишина по
+       индикаторам загрузки. Видео едет дольше картинки, поэтому срок щедрый —
+       лучше подождать, чем разобрать пустоту и выдать оценку несуществующей
+       работы. */
+    let доехало = false, было = "";
+    for (let ж = 0; ж < 120 && !доехало; ж++) {
+      const st = await p.evaluate(ф => {
+        const чипов = document.querySelectorAll('[class*=attachment],[class*=file-preview],[data-test-id*=file]').length;
+        const грузится = document.querySelectorAll('[role=progressbar]:not([aria-hidden="true"])').length;
+        return { чипов, грузится };
+      }, фон).catch(() => null);
+      if (st) {
+        было = "чипов " + st.чипов + " (было " + фон + "), индикаторов " + st.грузится;
+        if (st.чипов > фон) доехало = true;
+      }
+      if (!доехало) await p.waitForTimeout(3000);
     }
-    if (!доехало) { лог("вложение не доехало за 5 минут"); await уйти(5); }
-    лог("вложение доехало");
+    if (!доехало) { лог("вложение не доехало:", было); await уйти(5); }
+    лог("вложение доехало —", было);
+    /* Дать приложению закрепить вложение за запросом: чип появляется чуть
+       раньше, чем файл действительно привязан. */
+    await p.waitForTimeout(5000);
   }
 
   const поле = p.locator('div.ql-editor[contenteditable="true"], rich-textarea div[contenteditable="true"]').first();
@@ -158,23 +174,86 @@ try {
   лог("промпт в поле, знаков", влезло, "из", промпт.length);
   if (влезло < промпт.length * 0.5) throw new Error("промпт не вставился");
 
-  const БЫЛО = await p.evaluate(() =>
-    document.querySelectorAll("model-response, message-content").length);
+  /* Считаем ответы ДО отправки: приложение иногда держит в разметке пустые
+     оболочки, и «просто взять последний» даёт вчерашний ответ соседнего чата. */
+  const ОТВЕТОВ = () => p.evaluate(() =>
+    document.querySelectorAll("model-response, message-content, [data-response-index]").length);
+  const БЫЛО = await ОТВЕТОВ();
+  лог("ответов на странице до отправки:", БЫЛО);
 
+  /* ЗАПРОС С ВИДЕО НЕ УХОДИТ, ПОКА ЗАПИСЬ НЕ ОБРАБОТАНА.
+   *
+   * Чип вложения появляется сразу, а приложение ещё несколько минут готовит
+   * ролик — всё это время кнопка отправки нажимается вхолостую. В журнале это
+   * выглядело так: «отправлено», и дальше пять минут «ответов 0». Ждём, пока
+   * индикаторы обработки погаснут, и убеждаемся, что запрос действительно
+   * ушёл: иначе жмём ещё раз, потом пробуем Enter. */
   const отправить = p.locator('button[aria-label*="Отправить"], button[aria-label*="Send"]').first();
-  if (await отправить.count()) await отправить.click({ timeout: 15000 }).catch(() => {});
-  else await p.keyboard.press("Enter");
-  лог("отправлено, жду до", ждать, "с");
+
+  if (медиа.length) {
+    /* Ждём именно ВИДИМЫЙ индикатор: скрытый progressbar висит в разметке
+       постоянно, и проверка «их ноль» не срабатывала никогда — драйвер стоял
+       шесть минут на пустом месте. Заодно смотрим на кнопку отправки: пока
+       запись готовится, она недоступна. */
+    let готово = false;
+    for (let ж = 0; ж < 100 && !готово; ж++) {
+      готово = await p.evaluate(() => {
+        const видимых = [...document.querySelectorAll('[role=progressbar]')]
+          .filter(e => e.offsetParent !== null).length;
+        const кн = document.querySelector('button[aria-label*="Отправить"], button[aria-label*="Send"]');
+        const можно = kн => kн && !kн.disabled && kн.getAttribute('aria-disabled') !== 'true';
+        return видимых === 0 && можно(кн);
+      }).catch(() => false);
+      if (!готово) await p.waitForTimeout(3000);
+    }
+    лог(готово ? "запись обработана, кнопка активна" : "обработка затянулась — пробую отправить как есть");
+  }
+
+  /* ПОВТОРНОЕ НАЖАТИЕ ОТМЕНЯЕТ ОТВЕТ, А НЕ ПОВТОРЯЕТ ОТПРАВКУ.
+   *
+   * На время генерации кнопка на том же месте превращается в «Остановить».
+   * Драйвер, не дождавшись признака отправки за двадцать секунд, жал ещё раз —
+   * и сам обрывал ответ. В журнале это выглядело как «мост не дал разбор», а в
+   * чате оставалось «Вы остановили генерацию ответа». Поэтому перед каждым
+   * повтором смотрим, не идёт ли уже генерация: идёт — значит запрос ушёл. */
+  const идётОтвет = () => p.evaluate(() =>
+    !!document.querySelector('button[aria-label*="Остановить"], button[aria-label*="Stop"]')
+  ).catch(() => false);
+
+  let ушло = false;
+  for (let попытка = 1; попытка <= 3 && !ушло; попытка++) {
+    if (await идётОтвет()) { ушло = true; break; }
+    if (await отправить.count()) await отправить.click({ timeout: 15000 }).catch(() => {});
+    else await p.keyboard.press("Enter");
+    for (let ж = 0; ж < 15 && !ушло; ж++) {
+      await p.waitForTimeout(2000);
+      ушло = await идётОтвет()
+          || (await ОТВЕТОВ()) > БЫЛО
+          || await p.evaluate(() => document.querySelectorAll("user-query, [class*=user-query]").length > 0).catch(() => false);
+    }
+    if (!ушло) лог("запрос не ушёл, попытка", попытка);
+  }
+  лог(ушло ? "запрос ушёл, жду ответ до " + ждать + " с" : "отправить не удалось — жду на всякий случай");
 
   const срок = Date.now() + ждать * 1000;
-  let ответ = "", прошлый = "", устоялось = 0;
+  let ответ = "", прошлый = "", устоялось = 0, тик = 0;
   while (Date.now() < срок) {
     await p.waitForTimeout(3000);
+    /* Берём последний НЕПУСТОЙ ответ, а не просто последний: приложение держит
+       в разметке пустые оболочки, и «последний» стабильно давал ноль знаков —
+       драйвер ждал ответ, который уже был на экране. */
     const сейчас = await p.evaluate(было => {
-      const у = document.querySelectorAll("model-response, message-content");
+      const у = [...document.querySelectorAll("model-response, message-content, [data-response-index]")];
       if (у.length <= было) return "";
-      return у[у.length - 1].innerText || "";
+      const тексты = у.map(e => (e.innerText || "").trim()).filter(t => t.length > 0);
+      return тексты.length ? тексты[тексты.length - 1] : "";
     }, БЫЛО).catch(() => "");
+    /* Раз в минуту говорим, что происходит: молчаливое ожидание в пять минут
+       неотличимо от зависшего драйвера, и разбираться потом не по чему. */
+    if (++тик % 20 === 0) {
+      лог("жду ответ:", Math.round((срок - Date.now()) / 1000) + "с осталось,",
+          "ответов", await ОТВЕТОВ(), "накоплено знаков", (сейчас || "").length);
+    }
     if (сейчас && сейчас === прошлый) {
       const пишет = await p.evaluate(() =>
         !!document.querySelector('button[aria-label*="Остановить"], button[aria-label*="Stop"]')

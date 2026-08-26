@@ -476,6 +476,39 @@ if (preg_match('#^/letter-render/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
  * Ключ тот же, что у диплома: страница служебная, в поиске ей делать нечего, а
  * заводить второй секрет ради того же самого бастиона — лишняя сущность,
  * которую однажды забудут обновить. */
+/* ЗАПИСЬ ДЛЯ РАЗБОРА — МОСТУ, НА ПОЛЧАСА И ПО НЕУГАДЫВАЕМОМУ АДРЕСУ.
+ *
+ * Аттестация идёт через браузер агента на мосту (см. ag_ask_bridge), и мосту
+ * нужно откуда-то взять конкурсную запись. Гнать её в теле команды нельзя —
+ * это десятки мегабайт, поэтому мост забирает файл сам вот отсюда.
+ *
+ * Почему это безопасно: имя файла — 32 случайных знака, угадать нельзя;
+ * каталог лежит вне веб-корня и наружу иначе не отдаётся; файл живёт полчаса
+ * и стирается сразу после разбора. Ничего, кроме этого каталога, маршрут не
+ * отдаёт: имя проверяется шаблоном, никаких «..» в путь не попадёт.
+ */
+if (preg_match('#^/grade-media/([0-9a-f]{32})/(\d+)$#', $route, $m)) {
+    /* БЕЗ РАСШИРЕНИЯ В АДРЕСЕ. Сначала маршрут был вида «…/0.png», и наружу он
+       отдавал 404 от nginx: запросы с расширением картинки уходят в статику и
+       до PHP не доходят вовсе. Поэтому расширение не в адресе, а ищется на
+       диске по имени — тип отдаём заголовком. */
+    $base = BASE_PATH . '/data/grade_share/' . strtolower($m[1]) . '_' . (int) $m[2] . '.';
+    $file = '';
+    foreach (glob($base . '*') ?: [] as $cand) { $file = $cand; break; }
+    if ($file === '' || !is_file($file) || (time() - (int) @filemtime($file)) > 1800) {
+        http_response_code(404); echo 'Не найдено'; exit;
+    }
+    $mime = ['mp4' => 'video/mp4', 'mp3' => 'audio/mpeg', 'm4a' => 'audio/mp4', 'wav' => 'audio/wav',
+             'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp']
+            [strtolower(pathinfo($file, PATHINFO_EXTENSION))] ?? 'application/octet-stream';
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . (string) filesize($file));
+    header('X-Robots-Tag: noindex, nofollow');
+    header('Cache-Control: no-store');
+    readfile($file);
+    exit;
+}
+
 if (preg_match('#^/afisha-render/(\d+)$#', $route, $m)) {
     $key  = (string) ($_GET['key'] ?? '');
     $good = (string) setting('diploma_render_key', '');
