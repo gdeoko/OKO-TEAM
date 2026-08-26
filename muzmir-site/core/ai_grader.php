@@ -238,6 +238,27 @@ function ag_ask_bridge(string $prompt, array $files): array {
 
     $rm = static function (array $paths): void { foreach ($paths as $p) @unlink($p); };
 
+    /* БРАУЗЕР НА МОСТУ ОДИН, И ВКЛАДКА В НЁМ ОДНА.
+     *
+     * Два разбора одновременно попадают в одно и то же окно Gemini: второй
+     * прикрепляет свои файлы поверх чужого вопроса, а ответ достаётся тому, кто
+     * первый успел прочитать. Пока по ключу работали несколько потоков сразу,
+     * это было нормально; с мостом — нет. Поэтому очередь: кто пришёл вторым,
+     * ждёт до получаса и только потом сдаётся с понятной причиной. */
+    $lockDir = BASE_PATH . '/data/locks';
+    if (!is_dir($lockDir)) @mkdir($lockDir, 0775, true);
+    $lock = @fopen($lockDir . '/bridge.lock', 'c');
+    if ($lock) {
+        $waited = 0;
+        while (!flock($lock, LOCK_EX | LOCK_NB)) {
+            if ($waited >= 1800) { fclose($lock); $rm($copies); return $bad('браузер агента занят другим разбором'); }
+            sleep(5); $waited += 5;
+        }
+    }
+    $unlock = static function () use ($lock): void {
+        if ($lock) { flock($lock, LOCK_UN); fclose($lock); }
+    };
+
     // Команда мосту: забрать файлы, положить задание, позвать драйвер, отдать ответ.
     $work = '/tmp/grade_' . $tag;
     $cmd  = 'set -e; mkdir -p ' . $work . '; cd ' . $work . '; ';
@@ -247,7 +268,17 @@ function ag_ask_bridge(string $prompt, array $files): array {
         $mfiles[] = $work . '/' . $l['name'];
     }
     $cmd .= 'printf %s ' . escapeshellarg($prompt) . ' > zadanie.txt; ';
-    $cmd .= 'cd /opt/oko-poster && NODE_PATH=/opt/oko-poster/node_modules timeout 900 node gemini_grade.mjs '
+    /* КАКОЙ БРАУЗЕР НА МОСТУ БЕРЁМ.
+     *
+     * Порт 9222 на мосту общий: там сидит браузер, которым пользуются и другие
+     * задачи, и его выход может смотреть куда угодно. Для Gemini это решающе —
+     * с российского или европейского адреса Google отдаёт витрину со словами
+     * «Gemini пока не поддерживается в вашей стране» вместо приложения, и разбор
+     * возвращается пустым. Поэтому у аттестации свой браузер с тем же входом, но
+     * через выход США (порт 9333, профиль profiles/gemini_us). */
+    $cdp = trim((string) (function_exists('setting') ? setting('grade_cdp', 'http://127.0.0.1:9333') : 'http://127.0.0.1:9333'));
+    $cmd .= 'cd /opt/oko-poster && CHROME_CDP=' . escapeshellarg($cdp !== '' ? $cdp : 'http://127.0.0.1:9333')
+          . ' NODE_PATH=/opt/oko-poster/node_modules timeout 900 node gemini_grade.mjs '
           . escapeshellarg($work . '/zadanie.txt') . ' ' . escapeshellarg($work . '/otvet.txt') . ' '
           . escapeshellarg(implode(',', $mfiles)) . ' 600 >/dev/null 2>&1 || true; ';
     $cmd .= 'echo "===OTVET==="; cat ' . escapeshellarg($work . '/otvet.txt') . ' 2>/dev/null; ';
@@ -263,6 +294,7 @@ function ag_ask_bridge(string $prompt, array $files): array {
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     $rm($copies);
+    $unlock();
 
     if ($code !== 200) return $bad('мост ответил кодом ' . $code);
 
@@ -440,9 +472,15 @@ function ag_prompt(array $app, array $rubric, array $pitch = [], bool $isImage =
         $L[] = '  integrity: это авторская работа, а не срисовка чужого произведения, не раскраска и не распечатка.';
         $L[] = '  no_overdub: работа не собрана в редакторе из готовых изображений и не сгенерирована нейросетью.';
         $L[] = '  duration: снимок пригоден для оценки: работа в кадре целиком, без сильных бликов и перекосов.';
+        // Требования к съёмке исполнителя к рисунку неприменимы, но ключи должны
+        // прийти: иначе разбор картинки отличается по составу полей от разбора записи.
+        $L[] = '  visible: работа видна целиком, ничем не перекрыта, снята без сильного угла.';
+        $L[] = '  shooting: снимок сделан ровно, без дрожания и смаза.';
+        $L[] = '  quality: качество снимка позволяет судить о работе; нет чужих водяных знаков и логотипов поверх работы.';
     } else {
         foreach (gr_formal_checks() as $k => $text) $L[] = '  ' . $k . ': ' . $text;
     }
+    if (function_exists('rr_prompt_block')) $L[] = rr_prompt_block();
     $L[] = '';
     $L[] = $isImage
         ? 'ЗАТЕМ ОЦЕНКА ПО КРИТЕРИЯМ. Каждому критерию поставь балл от 0 до 100 и напиши обоснование из ДВУХ-ТРЁХ конкретных наблюдений с привязкой к месту на работе (например «в левом верхнем углу перспектива завалена», «тени положены одним тоном»). Без привязки к конкретным местам оценка не принимается.'
@@ -587,7 +625,7 @@ function ag_prompt(array $app, array $rubric, array $pitch = [], bool $isImage =
     $L[] = '  Пиши как профессор, разбирающий работу ученика: доброжелательно, но по существу, без общих слов вроде «молодцы» и «так держать». Не называй баллы и звание, не упоминай, что оценка автоматическая.';
     $L[] = '';
     $L[] = 'ОТВЕТ строго в JSON без markdown и пояснений:';
-    $L[] = '{"formal":{"playable":true,"one_piece":true,"participant":true,"nomination":true,"formation":true,"integrity":true,"no_overdub":true,"duration":true,"issues":["..."]},';
+    $L[] = '{"formal":{"playable":true,"one_piece":true,"participant":true,"nomination":true,"formation":true,"integrity":true,"no_overdub":true,"duration":true,"visible":true,"shooting":true,"quality":true,"issues":["..."]},';
     $L[] = ' "criteria":{"КЛЮЧ":{"score":0,"note":"..."}},';
     $L[] = ' "level":"звание одной строкой","phonogram":false,"extra_award":"","extra_award_why":"",';
     $L[] = ' "jury_comment":"...","internal_note":"для оргкомитета: сомнения, спорные места, что проверить человеку",';
@@ -632,7 +670,9 @@ function ag_grade_application(int $appId, array $opt = []): array {
         return ['ok' => false, 'run_id' => $runId, 'total' => 0.0, 'title' => '', 'why' => $why];
     };
 
-    $app = one("SELECT a.*, c.name AS comp_name, c.is_paid AS comp_paid
+    // comp_end нужен проверке возраста материала: срок считается от закрытия
+    // приёма, а не от дня разбора (см. media_too_old ниже).
+    $app = one("SELECT a.*, c.name AS comp_name, c.is_paid AS comp_paid, c.end_date AS comp_end
                   FROM applications a LEFT JOIN competitions c ON c.id = a.competition_id
                  WHERE a.id = ?", [$appId]);
     if (!$app) return $bad('заявка не найдена');
@@ -673,9 +713,63 @@ function ag_grade_application(int $appId, array $opt = []): array {
         }
     }
 
+    /* 0б. ОСНОВАНИЯ, ВИДНЫЕ ПО ОДНОЙ ССЫЛКЕ.
+     *
+     * Общая папка класса вместо своей работы и запрещённая площадка не требуют
+     * ни скачивания, ни модели: причина известна заранее и написана словами
+     * положения. Проверяем до загрузки — иначе на каждую из тридцати семи заявок
+     * с одним и тем же адресом уходил бы отдельный разбор чужой папки. */
+    require_once BASE_PATH . '/core/reject_rules.php';
+    foreach (['rr_check_shared_link', 'rr_check_platform'] as $rrFn) {
+        $rr = $rrFn($app, (string) ($app['comp_end'] ?? ''));
+        if (!$rr['reject']) continue;
+        try {
+            q("UPDATE grading_runs SET status='ok', title='ТРЕБУЕТ ПРОВЕРКИ', total=0,
+                      reject_hint=?, internal_note=? WHERE id=?",
+              [mb_substr((string) $rr['reason'], 0, 900),
+               'Оценка не проводилась: ' . (string) $rr['note'] . '. Работа не допускается по положению '
+               . 'независимо от качества.', $runId]);
+        } catch (\Throwable $e) {}
+        return ['ok' => true, 'run_id' => $runId, 'total' => 0.0,
+                'title' => 'ТРЕБУЕТ ПРОВЕРКИ', 'why' => (string) $rr['reason']];
+    }
+
     // 1. Достаём запись.
     $dl = vf_download($url, $appId);
     if (!$dl['ok']) return $bad('запись не получена: ' . $dl['why'], $runId);
+
+    /* 1а. ВОЗРАСТ МАТЕРИАЛА — ДО ВСЯКОЙ ОЦЕНКИ.
+     *
+     * Положение (п. 8.11) не принимает работу старше года с момента исполнения,
+     * и это не вопрос качества: разбирать такую запись незачем, её нельзя
+     * допустить ни с каким баллом. Владелец отклонял по этому основанию руками,
+     * каждый раз открывая файл и выясняя дату съёмки, — пятнадцать отказов из
+     * ста шестнадцати.
+     *
+     * Дату берём из самой работы: EXIF снимка, creation_time видео. Нет её —
+     * смотрим дату загрузки в облако, и только чтобы отклонить заведомо старое:
+     * снято не позже, чем загружено. Свежая загрузка не доказывает ничего.
+     *
+     * Срок считаем от закрытия приёма, а не от «сегодня»: иначе работа, поданная
+     * в срок и разобранная месяцем позже, превращалась бы в просроченную сама. */
+    require_once BASE_PATH . '/core/media_date.php';
+    $age = rr_check_age($app + ['__file' => $dl['path']], (string) ($app['comp_end'] ?? ''));
+    // Две недели у границы срока — не отказ, а работа человеку: причина посчитана
+    // и ляжет в подсказку после разбора (см. rr_check_age).
+    $ageEdge = (string) ($age['code'] ?? '') === 'too_old_edge' ? (string) $age['reason'] : '';
+    $age['old'] = (bool) $age['reject'];
+    if ($age['old']) {
+        vf_cleanup($dl['path']);
+        try {
+            q("UPDATE grading_runs SET status='ok', title='ТРЕБУЕТ ПРОВЕРКИ', total=0,
+                      reject_hint=?, internal_note=? WHERE id=?",
+              [mb_substr((string) $age['reason'], 0, 900),
+               'Возраст материала: ' . (string) $age['note'] . '. Оценка не проводилась — '
+               . 'работа не допускается по п. 8.11 независимо от качества.', $runId]);
+        } catch (\Throwable $e) {}
+        return ['ok' => true, 'run_id' => $runId, 'total' => 0.0,
+                'title' => 'ТРЕБУЕТ ПРОВЕРКИ', 'why' => (string) $age['reason']];
+    }
 
     // 2. Готовим дорожки.
     $media = ag_prepare_media($dl['path']);
@@ -1017,6 +1111,16 @@ function ag_grade_application(int $appId, array $opt = []): array {
      * списке жюри увидит «отклонить» вместо непонятного «требует проверки», а в
      * карточке причина уже подставлена в форму. Само отклонение не происходит:
      * в режиме подсказки решает человек, в полном автомате — cron/ai_grade. */
+    /* ВОЗРАСТ У САМОЙ ГРАНИЦЫ. Работа разобрана и звание посчитано, но материал
+       старше срока на считанные дни. Отказывать машине здесь нельзя (владелец в
+       таких случаях принимал), забыть тоже нельзя — поэтому причина ложится в
+       подсказку рядом с готовой оценкой, и человек выбирает одно из двух. */
+    if (($ageEdge ?? '') !== '') {
+        try {
+            update('grading_runs', ['reject_hint' => mb_substr($ageEdge, 0, 900)], 'id=:id', ['id' => $runId]);
+        } catch (\Throwable $e) {}
+    }
+
     if ($formalFail) {
         try {
             $runRow = one("SELECT * FROM grading_runs WHERE id=?", [$runId]);

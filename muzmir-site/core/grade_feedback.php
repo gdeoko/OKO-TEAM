@@ -85,7 +85,7 @@ function gfb_learn(int $appId): array {
     $url = trim((string) ($app['video_url'] ?? ''));
     if ($url === '') return ['ok' => false, 'why' => 'нет ссылки на работу'];
     $keys = ag_keys();
-    if (!$keys) return ['ok' => false, 'why' => 'не настроен доступ к модели'];
+    if (!$keys && ag_transport() !== 'bridge') return ['ok' => false, 'why' => 'не настроен доступ к модели'];
 
     $dl = vf_download($url, $appId);
     if (!$dl['ok']) return ['ok' => false, 'why' => 'запись не получена: ' . $dl['why']];
@@ -110,10 +110,31 @@ function gfb_learn(int $appId): array {
          . "}\n"
          . "Не оправдывайся и не пересказывай номер. Нужен разбор собственной ошибки.";
 
-    $raw = ''; $code = 0;
-    foreach ($keys as $key) {
+    /* ЧЕМ СПРАШИВАЕМ. Разбор ошибок — работа не срочная, но объёмная: расхождений
+       за месяц накапливается больше двух сотен, и по ключу они упирались в 429 на
+       первом же десятке («модель не ответила (код 429)» в журнале). Подписка в
+       браузере на мосту такой квоты не имеет, поэтому обучение идёт тем же путём,
+       что и оценка: сначала мост, ключ — запасной. */
+    $img = (string) ($media['image'] ?? '');
+    $files = array_values(array_filter([(string) $media['video'], (string) $media['audio'], $img], 'is_file'));
+
+    $txt = ''; $code = 0;
+    if (ag_transport() === 'bridge' && $files) {
+        $br = ag_ask_bridge($ask . "\n\n"
+            . 'ФОРМАТ ОТВЕТА. Верни РОВНО ОДИН объект JSON и больше ничего: без вступления, '
+            . 'без пояснений после, без markdown. Первый символ ответа — «{», последний — «}».', $files);
+        if ($br['ok']) { $txt = $br['text']; $code = 200; }
+        else error_log('[grade_learn] заявка ' . $appId . ': мост не ответил (' . $br['why'] . ') — иду через ключ');
+    }
+
+    $raw = '';
+    foreach (($txt === '' ? $keys : []) as $key) {
         $parts = [];
-        foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg']] as [$f, $mime]) {
+        $mimeImg = $img !== '' ? (['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+                                   'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif',
+                                   'bmp' => 'image/bmp', 'tif' => 'image/tiff', 'tiff' => 'image/tiff']
+                                  [mb_strtolower(pathinfo($img, PATHINFO_EXTENSION))] ?? 'image/jpeg') : '';
+        foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg'], [$img, $mimeImg]] as [$f, $mime]) {
             if ($f === '' || !is_file($f)) continue;
             $up = ag_upload($f, $mime, $key);
             if ($up['ok']) $parts[] = ['file_data' => ['mime_type' => $mime, 'file_uri' => $up['uri']]];
@@ -135,12 +156,14 @@ function gfb_learn(int $appId): array {
         if ($code === 200) break;
     }
     vf_cleanup($dl['path']);
-    foreach ([$media['video'], $media['audio']] as $f) if ($f !== '' && is_file($f)) @unlink($f);
+    foreach ([$media['video'], $media['audio'], $img] as $f) if ($f !== '' && is_file($f)) @unlink($f);
     if ($code !== 200) return ['ok' => false, 'why' => 'модель не ответила (код ' . $code . ')'];
 
-    $j = json_decode($raw, true);
-    $txt = (string) ($j['candidates'][0]['content']['parts'][0]['text'] ?? '');
-    $out = json_decode(trim(preg_replace('~^```(?:json)?|```$~m', '', $txt)), true);
+    if ($txt === '') {
+        $j = json_decode($raw, true);
+        $txt = (string) ($j['candidates'][0]['content']['parts'][0]['text'] ?? '');
+    }
+    $out = ag_parse_json($txt);
     if (!is_array($out)) return ['ok' => false, 'why' => 'ответ модели не разобран'];
 
     $lesson = trim((string) ($out['missed'] ?? ''));
