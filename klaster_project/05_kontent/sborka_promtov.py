@@ -8,7 +8,7 @@
     python3 sborka_promtov.py           # собрать и записать promts_new/gruppa_dobor.json
     python3 sborka_promtov.py --проверка # только показать длины и беды
 """
-import json, re, sys, os, glob
+import json, re, sys, os, glob, hashlib
 sys.path.insert(0, "/home/user/OKO-TEAM/kontent_mesyats")
 from promt_engine import Бренд, собрать, проверить
 
@@ -107,6 +107,26 @@ from promt_engine import Бренд, собрать, проверить
     "sheet lifted a finger's width to catch the key light",
     "an empty loading gate opening seen straight on from inside the dark bay, the rectangle of the doorway filled "
     "with flat overcast daylight, rubber dock seals worn at the edges",
+    "the renovated office corridor of the administrative building, white walls with one accent wall in brand amber, "
+    "black framed glazed partitions along one side, grey carpet, a linear ceiling light running away from camera",
+    "the conference hall seen from the back row, rows of black chairs receding toward a large bright screen, grey "
+    "carpet, a linear ceiling light along the length of the room",
+    "the inner street of the territory in the morning, roller gates running down both sides in perspective, a box "
+    "truck backing into one of them, painted parking bays on the wet concrete",
+    "the yard seen from above from the roof parapet, painted parking bays in a grid, trucks and cars standing in "
+    "them at an angle, the long roof of the production block along one edge",
+    "a machined metal part resting alone on a graphite bench in a near overhead close view, milled faces and tool "
+    "marks reading clearly, the bench falling away into shadow",
+    "the open door of a main switchboard cabinet, busbars and breaker rows in ordered ranks, cable glands along the "
+    "bottom, a meter face at eye level",
+    "a canteen servery counter with trays and a hot line behind glass, warm light above it, the dining room out of "
+    "focus beyond",
+    "the scaffolded part of the facade seen from the yard, the two ribbon bands of glazing continuing past the "
+    "scaffold to the far end, a tower crane above the roofline",
+    "an overhead crane hook and load block hanging over an empty bay, the crane rail running the length of the "
+    "frame above, the floor far below in soft focus",
+    "a stack of pallets wrapped in stretch film standing in a warehouse block, the film catching the light, racking "
+    "receding behind them",
 ]
 
 # Сцена под каждый ключ: то, что видит камера в главном кадре. Остальное собирает движок.
@@ -542,7 +562,10 @@ def кадры_единицы(е):
     вышло = []
     for i, (номер, заголовок, подпись) in enumerate(е["слайды"], 1):
         подпись = служебная(подпись)
-        поверхность = сцена if i == 1 else ПОВЕРХНОСТИ[(i - 2) % len(ПОВЕРХНОСТИ)]
+        # выбор от ключа единицы: иначе все карусели идут по одному и тому же
+        # ряду поверхностей и вся лента выглядит собранной из одного набора
+        сдвиг = int(hashlib.md5(к.encode()).hexdigest()[:8], 16)
+        поверхность = сцена if i == 1 else ПОВЕРХНОСТИ[(сдвиг + i - 2) % len(ПОВЕРХНОСТИ)]
         вышло.append({"ключ": f"{к}-{i:02d}", "формат": е["формат"], "сцена": поверхность,
                       "вид": вид, "номер": i, "всего": всего,
                       "заголовок": заголовок.replace(" / ", " ").strip(),
