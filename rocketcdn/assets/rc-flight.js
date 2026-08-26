@@ -2298,10 +2298,16 @@ function buildWorld() {
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
   var sunGlow = new T.Sprite(new T.SpriteMaterial({
     map: glowSprite(256, "rgba(255,246,225,1)", "rgba(255,190,110,0)"),
-    transparent: true, opacity: 0.95, depthWrite: false, blending: T.AdditiveBlending
+    transparent: true, opacity: 0.62, depthWrite: false, blending: T.AdditiveBlending
   }));
   sunGlow.position.set(2600, 1000, 1750);
-  sunGlow.scale.setScalar(900);
+  /* Блик поджат с 900 до 430. Он задуман как слепящее пятно с
+     дальнего расстояния, но стоит в одной точке с диском и с двумя
+     слоями короны: вблизи все три складывались в молочный шар шире
+     кадра, и сама звезда в нём тонула. Диаметр диска 380, значит
+     блик радиусом 430 - это ореол чуть шире звезды, а не туман на
+     полкадра. Издали его добирает свечение плёнки. */
+  sunGlow.scale.setScalar(430);
   scene.add(sunGlow);
 
   /* ── Volumetric nebulae ────────────────────────────────
@@ -2722,16 +2728,23 @@ function buildWorld() {
   var sunBody = new T.Mesh(
     new T.SphereGeometry(190, tiny ? 36 : 56, tiny ? 26 : 40),
     new T.ShaderMaterial({
-      uniforms: { uT: { value: 0 } },
+      uniforms: { uT: { value: 0 }, uMap: { value: null }, uHas: { value: 0 } },
       vertexShader:
         "varying vec3 vN; varying vec3 vP;" +
         "void main(){ vN = normalize(normalMatrix * normal); vP = position;" +
         "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
       fragmentShader:
         "varying vec3 vN; varying vec3 vP; uniform float uT;" +
-        /* Шум-основа: три октавы синусов дают ячейки конвекции без
-           единого байта текстуры */
-        "float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,45.164))) * 43758.5453); }" +
+        "uniform sampler2D uMap; uniform float uHas;" +
+        /* Шум-основа: три октавы дают ячейки конвекции.
+
+           Хэш БЕЗ синуса. На fract(sin(dot(...))) держалась вся
+           грануляция, а он опирается на точность sin от больших
+           аргументов, которой у видеокарт нет: вместо шума выходил
+           правильный узор, и звезда читалась плоским пятном. Ровно на
+           этом же сгорело зерно плёнки. */
+        "float h(vec3 p){ vec3 q = fract(p * 0.1031);" +
+        "  q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }" +
         "float n3(vec3 p){" +
         "  vec3 i = floor(p), f = fract(p);" +
         "  f = f*f*(3.0-2.0*f);" +
@@ -2755,10 +2768,34 @@ function buildWorld() {
         "  vec3 cold = vec3(0.92, 0.44, 0.12);" +
         "  vec3 col = mix(cold, mid, clamp(br, 0.0, 1.0));" +
         "  col = mix(col, hot, clamp((br - 0.85) * 3.0, 0.0, 1.0));" +
-        "  gl_FragColor = vec4(col * (0.9 + br * 0.6), 1.0);" +
+        /* Настоящая фотосфера поверх счёта. Снимок даёт то, чего
+           формулой не набрать: рисунок ячеек, факелы у пятен, живую
+           неровность яркости. Шум остаётся - он двигает картинку,
+           иначе звезда стоит мёртвой. Пока снимок не доехал, uHas
+           равен нулю и всё работает по-старому. */
+        "  if (uHas > 0.5) {" +
+        "    vec3 d = normalize(vP);" +
+        "    vec2 uv = vec2(atan(d.z, d.x) / 6.2831853 + 0.5, asin(clamp(d.y, -1.0, 1.0)) / 3.1415927 + 0.5);" +
+        "    vec3 ph = texture2D(uMap, uv).rgb;" +
+        "    col = mix(col, ph * (0.70 + br * 0.85), 0.86);" +
+        "  }" +
+        "  gl_FragColor = vec4(col * (0.9 + br * 0.6) * limb, 1.0);" +
         "}"
     })
   );
+  /* Снимок фотосферы кладём в шейдер по факту загрузки: пока его
+     нет, звезда живёт на одном счёте и в кадре не чернеет. */
+  (function () {
+    var м = sunBody.material;
+    L.load(WEBP ? "assets/space/sun.webp" : "assets/space/sun.jpg", function (t) {
+      t.colorSpace = T.SRGBColorSpace || t.colorSpace;
+      t.wrapS = T.RepeatWrapping;
+      t.anisotropy = АНИЗО;
+      м.uniforms.uMap.value = t;
+      м.uniforms.uHas.value = 1;
+      м.needsUpdate = true;
+    }, null, function () {});
+  })();
   sunBody.position.set(2600, 1000, 1750);
   sunBody.userData.info = RU ? "СОЛНЦЕ · 1,39 млн км · источник всей энергии системы"
                              : "SUN · 1.39M km wide";
@@ -2775,14 +2812,19 @@ function buildWorld() {
     map: glowSprite(256, "rgba(255,236,190,.9)", "rgba(255,180,90,0)"),
     transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending
   }));
-  corIn.scale.setScalar(560);
+  /* Корона поджата. Диск звезды 190 радиуса, а ближнее гало стояло
+     на 560 и дальнее на 1150 - вокруг Солнца горело пятно в шесть
+     его поперечников, и диск в нём тонул. У настоящей звезды корона
+     вне затмения почти не видна: у лимба тонкий ободок, дальше спад.
+     Владелец сказал коротко: «солнце не похоже». */
+  corIn.scale.setScalar(250);
   corIn.position.copy(sunBody.position);
   scene.add(corIn);
   var corOut = new T.Sprite(new T.SpriteMaterial({
     map: glowSprite(256, "rgba(255,190,110,.5)", "rgba(255,140,60,0)"),
-    transparent: true, opacity: 0.55, depthWrite: false, blending: T.AdditiveBlending
+    transparent: true, opacity: 0.34, depthWrite: false, blending: T.AdditiveBlending
   }));
-  corOut.scale.setScalar(1150);
+  corOut.scale.setScalar(430);
   corOut.position.copy(sunBody.position);
   scene.add(corOut);
 
