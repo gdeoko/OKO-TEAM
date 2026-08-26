@@ -350,6 +350,27 @@ if ($action === 'lead_status') {
     out(['ok' => $found]);
 }
 
+/* Заметка по заявке. Владелец ведёт клиента руками, и до сих пор
+   ему негде было записать «перезвонил, ждёт счёт» - статус этого не
+   вмещает. Пишем прямо в заявку, отдельного хранилища не заводим. */
+if ($action === 'lead_note') {
+    need_key();
+    $id = inp('id');
+    $note = mb_substr(trim((string)inp('note', '')), 0, 2000);
+    $found = false;
+    rc_json_update(RC_LEADS, function ($d) use ($id, $note, &$found) {
+        foreach (($d['items'] ?? []) as $i => $it) {
+            if (($it['id'] ?? '') === $id) {
+                $d['items'][$i]['note'] = $note;
+                $d['items'][$i]['note_ts'] = date('c');
+                $found = true;
+            }
+        }
+        return $d;
+    });
+    out(['ok' => $found]);
+}
+
 if ($action === 'lead_delete') {
     need_key();
     $id = inp('id');
@@ -392,6 +413,83 @@ if ($action === 'content_reset') {
     need_key();
     @unlink(RC_CONTENT);
     out(['ok' => true]);
+}
+
+/* ── Узлы сети из админки ─────────────────────────────────────
+   Реестр точек лежит в assets/rc-geo.js плоским массивом. Править его
+   руками владелец не может и не должен: до сих пор в админке висела
+   подсказка «допишите строку в файл» - для панели управления это
+   расписка в бессилии.
+
+   Правки храним отдельно, в data/nodes.json, и базовый реестр НЕ
+   трогаем: перевыкладка сайта их не затирает, а откатить можно одной
+   кнопкой. Папка data закрыта от веба (см. .htaccess), поэтому наружу
+   правки отдаёт сам api отдельным действием.
+
+   Формат узла ровно тот же, что в реестре:
+     [название RU, широта, долгота, регион, маска меток, название EN] */
+if ($action === 'nodes') {
+    need_key();
+    $d = rc_json_read(RC_NODES, []);
+    out(['ok' => true, 'add' => $d['add'] ?? [], 'hide' => $d['hide'] ?? [], 'ts' => $d['ts'] ?? '']);
+}
+
+if ($action === 'nodes_save') {
+    need_key();
+    $add  = json_decode((string)inp('add', '[]'), true);
+    $hide = json_decode((string)inp('hide', '[]'), true);
+    if (!is_array($add) || !is_array($hide)) out(['ok' => false, 'error' => 'json']);
+    /* Проверяем КАЖДУЮ строку: в глобус уходит этот же массив, и одна
+       кривая широта роняет первый кадр сайта у всех посетителей. */
+    $чисто = [];
+    $видели = [];
+    foreach ($add as $n) {
+        if (!is_array($n) || count($n) < 5) continue;
+        $имя = trim((string)$n[0]);
+        $ш = (float)$n[1]; $д = (float)$n[2];
+        $р = (int)$n[3];   $м = (int)$n[4];
+        $en = isset($n[5]) ? trim((string)$n[5]) : '';
+        if ($имя === '' || mb_strlen($имя) > 60) continue;
+        if ($ш < -90 || $ш > 90 || $д < -180 || $д > 180) continue;
+        if ($р < 0 || $р > 4) continue;
+        if ($м < 0 || $м > 7) continue;
+        /* Дубли режем и здесь: панель проверяет для скорости ответа, а
+           сервер - потому что он единственный, кто отвечает за файл. */
+        $ключ = mb_strtolower($имя);
+        if (isset($видели[$ключ])) continue;
+        $видели[$ключ] = 1;
+        $чисто[] = [$имя, round($ш, 4), round($д, 4), $р, $м, mb_substr($en, 0, 60)];
+        if (count($чисто) >= 400) break;
+    }
+    $скрыт = [];
+    foreach ($hide as $h) {
+        $h = trim((string)$h);
+        if ($h !== '' && mb_strlen($h) <= 60) $скрыт[] = $h;
+        if (count($скрыт) >= 400) break;
+    }
+    rc_json_write(RC_NODES, ['add' => $чисто, 'hide' => $скрыт, 'ts' => date('c')]);
+    out(['ok' => true, 'add' => count($чисто), 'hide' => count($скрыт)]);
+}
+
+/* Правки для самого сайта, отдельным скриптом. Отдаём javascript, а не
+   json: тег script выполняется по порядку, сразу после rc-geo.js, и
+   глобус успевает увидеть готовый реестр до первого кадра. Ключ тут не
+   нужен - это публичные данные о точках присутствия. */
+if ($action === 'nodes_js') {
+    $d = rc_json_read(RC_NODES, []);
+    $add = $d['add'] ?? []; $hide = $d['hide'] ?? [];
+    header('Content-Type: application/javascript; charset=utf-8');
+    header('Cache-Control: public, max-age=300');
+    if (!$add && !$hide) { echo "/* правок узлов нет */\n"; exit; }
+    echo "/* Правки реестра узлов из админки. Файл собирает api.php, руками не трогать. */\n";
+    echo "(function(g){var G=g.RC_GEO;if(!G||!G.NODES)return;\n";
+    echo "var скрыть=" . json_encode($hide, JSON_UNESCAPED_UNICODE) . ";\n";
+    echo "var добавить=" . json_encode($add, JSON_UNESCAPED_UNICODE) . ";\n";
+    echo "if(скрыть.length){var s={};for(var i=0;i<скрыть.length;i++)s[скрыть[i]]=1;\n";
+    echo "  for(var j=G.NODES.length-1;j>=0;j--) if(s[G.NODES[j][0]]) G.NODES.splice(j,1);}\n";
+    echo "for(var k=0;k<добавить.length;k++) G.NODES.push(добавить[k]);\n";
+    echo "G.COUNT=G.NODES.length;})(window);\n";
+    exit;
 }
 
 if ($action === 'errors') {

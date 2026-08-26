@@ -69,6 +69,9 @@ date_default_timezone_set($RC['tz']);
 define('RC_DATA',   !empty($RC['data_dir']) ? rtrim($RC['data_dir'], '/') : RC_ROOT . '/data');
 define('RC_STATS',  RC_DATA . '/stats');
 define('RC_LEADS',  RC_DATA . '/leads.json');
+/* Правки реестра точек присутствия из админки. Базовый реестр в
+   assets/rc-geo.js не трогаем: перевыкладка сайта их не затирает. */
+define('RC_NODES',  RC_DATA . '/nodes.json');
 define('RC_CONTENT',RC_DATA . '/content.json');
 define('RC_STATE',  RC_DATA . '/bot_state.json');
 define('RC_CONTEST',RC_DATA . '/contest.json');

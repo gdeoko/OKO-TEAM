@@ -54,7 +54,7 @@
   .bar-row .nm { color: var(--tx-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bar-row .tr { height: 8px; border-radius: 4px; background: var(--bg-3); overflow: hidden; }
   .bar-row .tr i { display: block; height: 100%; border-radius: 4px; background: var(--grad); }
-  .bar-row .vv { font-weight: 700; font-size: 12.5px; min-width: 34px; text-align: right; }
+  .bar-row .vv { font-weight: 700; font-size: 12.5px; min-width: 34px; text-align: right; white-space: nowrap; }
 
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th { text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); padding: 0 10px 10px; font-weight: 700; }
@@ -69,6 +69,89 @@
   .mini { padding: 6px 10px; font-size: 12px; border-radius: var(--r-xs); background: var(--surface-2); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer; transition: all var(--fast); }
   .mini:hover { border-color: var(--cyan); color: var(--cyan) }
   .mini.danger:hover { border-color: #F87171; color: #F87171 }
+
+  /* ── Заявки карточками ────────────────────────────────────
+     Каждая заявка это карточка, а не строка таблицы: на узком экране
+     она просто перестраивается в столбец, ничего не уезжает вбок. */
+  .lead-find {
+    width: 100%; padding: 11px 14px; font-size: 14px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-md); color: var(--tx-1); outline: none;
+  }
+  .lead-find:focus { border-color: var(--cyan) }
+  .leads { display: grid; gap: 10px; }
+  .lead {
+    display: grid; gap: 10px;
+    grid-template-columns: 132px minmax(150px, 1fr) minmax(180px, 1.4fr) auto;
+    align-items: start;
+    padding: 14px; border: 1px solid var(--line); border-radius: var(--r-md);
+    background: var(--surface-2);
+  }
+  .lead.is-new { border-left: 3px solid var(--cyan) }
+  .lead.is-work { border-left: 3px solid var(--violet) }
+  .lead.is-done { border-left: 3px solid #34D399 }
+  .lead.is-spam { border-left: 3px solid #F87171; opacity: .62 }
+  .lead .when { font-size: 12.5px; color: var(--tx-2); line-height: 1.5 }
+  .lead .who b { display: block; font-size: 14.5px }
+  /* Компания отдельной строкой. Была строчным элементом, и на узком
+     экране слипалась с почтой в «GameDev KZm.kim@gamedev.kz». */
+  .lead .who span { display: block; font-size: 12.5px; color: var(--tx-3) }
+  .lead .who a { display: block; margin-top: 2px }
+  .lead .what b { display: block; font-size: 13px; color: var(--cyan); margin-bottom: 3px }
+  .lead .what p { font-size: 13.5px; line-height: 1.5; color: var(--tx-2); margin: 0 }
+  .lead .side { display: grid; gap: 8px; justify-items: end }
+  .lead .row-act { justify-content: flex-end }
+  .lead .note { grid-column: 1 / -1; display: grid; gap: 6px }
+  .lead .note textarea {
+    width: 100%; min-height: 56px; resize: vertical; padding: 9px 11px;
+    font: inherit; font-size: 13px; line-height: 1.5;
+    background: var(--bg-3); border: 1px solid var(--line);
+    border-radius: var(--r-xs); color: var(--tx-1); outline: none;
+  }
+  .lead .note textarea:focus { border-color: var(--cyan) }
+  .lead .note .nrow { display: flex; gap: 8px; align-items: center }
+  @media (max-width: 860px) {
+    .lead { grid-template-columns: 1fr; gap: 8px }
+    .lead .side { justify-items: start }
+    .lead .row-act { justify-content: flex-start }
+  }
+  .seg button .cnt {
+    display: inline-block; margin-left: 6px; padding: 1px 6px;
+    border-radius: var(--r-full); font-size: 10.5px; font-weight: 700;
+    background: rgba(255,255,255,.10); color: inherit;
+  }
+
+  /* Правка узлов: поля в ряд на широком, в столбец на телефоне. */
+  .node-add {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
+  }
+  .node-add input, .node-add select {
+    padding: 9px 12px; font-size: 13.5px; background: var(--bg-3);
+    border: 1px solid var(--line); border-radius: var(--r-xs);
+    color: var(--tx-1); outline: none; min-width: 0;
+  }
+  .node-add input:focus, .node-add select:focus { border-color: var(--cyan) }
+  #nName, #nEn { flex: 1 1 150px }
+  #nLat, #nLon { flex: 0 1 110px }
+  #nReg { flex: 1 1 180px }
+  #hName { flex: 1 1 220px }
+  .node-add .chk {
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+    color: var(--tx-2); white-space: nowrap; cursor: pointer;
+  }
+  .node-own { display: grid; gap: 6px }
+  .node-own .one {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 9px 12px; border: 1px solid var(--line);
+    border-radius: var(--r-xs); background: var(--surface-2); font-size: 13.5px;
+  }
+  .node-own .one b { font-weight: 650 }
+  .node-own .one .co { color: var(--tx-3); font-size: 12.5px }
+  .node-own .one button { margin-left: auto }
+  @media (max-width: 700px) {
+    .node-add { flex-direction: column; align-items: stretch }
+    .node-add .chk { justify-content: flex-start }
+  }
 
   .login { min-height: 100svh; display: grid; place-items: center; padding: var(--pad); }
   .login .form-card { width: 100%; max-width: 380px; }
@@ -161,7 +244,12 @@
 
       <div class="grid g-2" style="margin-top:16px">
         <div class="panel" style="margin:0"><h3>Источники переходов</h3><div class="bars" id="barRefs"></div></div>
-        <div class="panel" style="margin:0"><h3>Устройства и системы</h3><div class="bars" id="barDev"></div></div>
+        <div class="panel" style="margin:0"><h3>Устройства</h3><div class="bars" id="barDev"></div></div>
+        <!-- Системы отдельной панелью. Прежде устройства и системы
+             валили в один список, и в нём стояло «компьютер 138» и
+             «Linux 138» подряд - две разные величины, которые глаз
+             читает как одну и складывает. -->
+        <div class="panel" style="margin:0"><h3>Системы</h3><div class="bars" id="barOs"></div></div>
         <div class="panel" style="margin:0"><h3>Глубина прочтения</h3><div class="bars" id="barScroll"></div></div>
         <div class="panel" style="margin:0"><h3>Искали города на карте</h3><div class="bars" id="barNodes"></div></div>
         <div class="panel" style="margin:0"><h3>Поисковые запросы по сети</h3><div class="bars" id="barSearch"></div></div>
@@ -181,13 +269,16 @@
         </div>
         <a class="mini" id="csv" style="margin-left:auto" href="#">Скачать CSV</a>
       </div>
+      <div style="margin-bottom:12px">
+        <input class="lead-find" id="leadFind" type="search" autocomplete="off"
+               placeholder="Поиск по имени, компании, контакту или задаче">
+      </div>
       <div class="panel" style="margin:0">
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Когда</th><th>Кто</th><th>Контакт</th><th>Задача</th><th>Статус</th><th></th></tr></thead>
-            <tbody id="leadRows"></tbody>
-          </table>
-        </div>
+        <!-- Карточки, а не таблица. Таблица на телефоне уезжала вбок:
+             в кадре оставались три колонки из шести, а задача, статус и
+             кнопки были за экраном. Владелец работает с телефона, там
+             это просто не работало. Карточка читается на любой ширине. -->
+        <div id="leadRows" class="leads"></div>
         <p class="hint" id="leadEmpty" style="display:none;text-align:center;padding:26px 0">Заявок пока нет.</p>
       </div>
     </section>
@@ -207,11 +298,48 @@
         </div>
         <div class="node-list" id="netList" style="max-height:420px"></div>
         <p class="hint" style="margin-top:12px">
-          Список узлов хранится в файле <code>assets/rc-geo.js</code>. Чтобы добавить город,
-          допишите строку вида <code>["Город", широта, долгота, регион, флаги]</code>.
-          Регион: 0 Россия и СНГ, 1 Азия и Восток, 2 Европа, 3 Северная Америка, 4 Южная Америка.
-          Флаги складываются: 1 облако, 2 защита, 4 скоро.
+          Базовый реестр лежит в <code>assets/rc-geo.js</code>. Города, добавленные ниже,
+          хранятся отдельно и переживают выкладку сайта.
         </p>
+      </div>
+
+      <!-- Правка узлов прямо из панели. Раньше здесь стояла подсказка
+           «допишите строку в файл» - для панели управления это расписка
+           в бессилии: владелец не должен лезть в код, чтобы открыть
+           новую точку присутствия. -->
+      <div class="panel">
+        <h3>Свои города <span class="hint" id="nodeCnt"></span></h3>
+        <div class="node-add">
+          <input id="nName" placeholder="Город" autocomplete="off">
+          <input id="nEn" placeholder="City (англ.)" autocomplete="off">
+          <input id="nLat" placeholder="Широта" inputmode="decimal" autocomplete="off">
+          <input id="nLon" placeholder="Долгота" inputmode="decimal" autocomplete="off">
+          <select id="nReg">
+            <option value="0">Россия и СНГ</option>
+            <option value="1">Азия, Африка и Океания</option>
+            <option value="2">Европа</option>
+            <option value="3">Северная Америка</option>
+            <option value="4">Южная Америка</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="nCloud"> облако</label>
+          <label class="chk"><input type="checkbox" id="nShield"> защита</label>
+          <label class="chk"><input type="checkbox" id="nSoon"> скоро</label>
+          <button class="btn" id="nAdd">Добавить город</button>
+        </div>
+        <div class="node-own" id="nodeOwn"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Скрытые города <span class="hint" id="hideCnt"></span></h3>
+        <p class="hint" style="margin-bottom:10px">
+          Точку из базового реестра удалить нельзя, но можно убрать с сайта.
+          Введите название ровно как в списке выше.
+        </p>
+        <div class="node-add">
+          <input id="hName" placeholder="Город из реестра" autocomplete="off">
+          <button class="btn ghost" id="hAdd">Убрать с сайта</button>
+        </div>
+        <div class="node-own" id="hideOwn"></div>
       </div>
     </section>
 
@@ -417,11 +545,23 @@ function loadStats() {
     Object.keys(r.devices || {}).forEach(function (k) {
       dev[{ mobile: "телефон", tablet: "планшет", desktop: "компьютер" }[k] || k] = r.devices[k];
     });
-    Object.keys(r.os || {}).forEach(function (k) { dev[k] = r.os[k]; });
     bars("#barDev", dev);
+    bars("#barOs", r.os);
+    /* Глубина прочтения - ВОРОНКА, а не просто четыре числа. Полосы
+       считались от наибольшего значения, а значения тут почти равны
+       (102, 102, 102, 100): все четыре полосы выходили одинаковой
+       длины во всю ширину, и панель не говорила ничего. Теперь доля
+       от первой ступени и подпись в процентах: видно, где человек
+       уходит. */
+    var шаги = Object.keys(r.scroll || {}).sort(function (a, b) { return a - b; });
+    var первый = шаги.length ? (r.scroll[шаги[0]] || 0) : 0;
     var sc = {};
-    Object.keys(r.scroll || {}).sort(function (a, b) { return a - b; }).forEach(function (k) { sc["до " + k + "%"] = r.scroll[k]; });
-    bars("#barScroll", sc);
+    шаги.forEach(function (k) {
+      var v = r.scroll[k] || 0;
+      var доля = первый ? Math.round(v / первый * 100) : 0;
+      sc["до " + k + "%"] = { v: v, доля: доля, подпись: v + " · " + доля + "%" };
+    });
+    bars("#barScroll", sc, первый);
     bars("#barNodes", r.nodes);
     bars("#barSearch", r.searches);
     bars("#barErr", r.errors);
@@ -429,15 +569,22 @@ function loadStats() {
   });
 }
 
-function bars(sel, obj) {
+/* Полосы. Значение может прийти числом или разбором вида
+   {v, доля, подпись} - воронке прочтения нужна своя длина полосы и
+   своя подпись, а всем прочим спискам достаточно числа. */
+function bars(sel, obj, база) {
   var el = $(sel);
   var keys = Object.keys(obj || {});
   if (!keys.length) { el.innerHTML = '<p class="hint">Пока нет данных.</p>'; return; }
-  var max = Math.max.apply(null, keys.map(function (k) { return obj[k]; }));
+  function число(k) { var x = obj[k]; return (x && typeof x === "object") ? x.v : x; }
+  var max = база || Math.max.apply(null, keys.map(число));
   el.innerHTML = keys.slice(0, 12).map(function (k) {
+    var x = obj[k], v = число(k);
+    var ш = max ? Math.max(3, Math.min(100, v / max * 100)) : 3;
+    var подпись = (x && typeof x === "object" && x.подпись) ? x.подпись : String(v);
     return '<div class="bar-row"><span class="nm" title="' + esc(k) + '">' + esc(k) + '</span>' +
-      '<span class="tr"><i style="width:' + Math.max(3, obj[k] / max * 100) + '%"></i></span>' +
-      '<span class="vv">' + obj[k] + "</span></div>";
+      '<span class="tr"><i style="width:' + ш + '%"></i></span>' +
+      '<span class="vv">' + esc(подпись) + "</span></div>";
   }).join("");
 }
 
@@ -540,29 +687,67 @@ function loadLeads() {
   });
 }
 var ST = { new: "новая", work: "в работе", done: "закрыта", spam: "спам" };
-function renderLeads() {
-  var rows = leads.filter(function (x) {
-    if (leadFilter === "all") return true;
-    if (leadFilter === "callback") return x.kind === "callback";
-    return (x.status || "new") === leadFilter;
+var leadQ = "";
+
+/* Дата целиком, с годом. Раньше показывали «08-10 03:13» - без года
+   и без понимания, вчера это или в прошлом сезоне. */
+function когда(ts) {
+  var t = String(ts || "");
+  var d = t.slice(8, 10), m = t.slice(5, 7), y = t.slice(2, 4), hm = t.slice(11, 16);
+  if (!d) return t.slice(0, 16);
+  return d + "." + m + "." + y + " " + hm;
+}
+function подходит(x) {
+  if (!leadQ) return true;
+  var с = [x.name, x.company, x.contact, x.task, x.topic, x.note].join(" ").toLowerCase();
+  return с.indexOf(leadQ) >= 0;
+}
+function поФильтру(x, f) {
+  if (f === "all") return true;
+  if (f === "callback") return x.kind === "callback";
+  return (x.status || "new") === f;
+}
+/* Счётчики прямо на кнопках фильтра: видно, сколько новых, не
+   перебирая вкладки. Считаем по тому же поиску, что и список. */
+function счётчики() {
+  var найденные = leads.filter(подходит);
+  $$("#leadFilter button").forEach(function (b) {
+    var n = найденные.filter(function (x) { return поФильтру(x, b.dataset.f); }).length;
+    var c = b.querySelector(".cnt");
+    if (!c) { c = document.createElement("span"); c.className = "cnt"; b.appendChild(c); }
+    c.textContent = n;
   });
+}
+function renderLeads() {
+  var rows = leads.filter(function (x) { return подходит(x) && поФильтру(x, leadFilter); });
+  счётчики();
   $("#leadEmpty").style.display = rows.length ? "none" : "block";
+  $("#leadEmpty").textContent = leadQ && !rows.length ? "По запросу ничего не нашлось." : "Заявок пока нет.";
   $("#leadRows").innerHTML = rows.map(function (x) {
     var st = x.status || "new";
     var contact = esc(x.contact || "");
     var link = /@/.test(x.contact || "") ? "mailto:" + contact : "tel:" + (x.contact || "").replace(/[^\d+]/g, "");
-    return "<tr>" +
-      "<td style='white-space:nowrap'>" + esc((x.ts || "").slice(5, 16)) + "<br><span class='hint'>" + (x.kind === "callback" ? "звонок" : "заявка") + "</span></td>" +
-      "<td><b>" + esc(x.name || "") + "</b>" + (x.company ? "<br><span class='hint'>" + esc(x.company) + "</span>" : "") + "</td>" +
-      "<td><a href='" + link + "' style='color:var(--cyan)'>" + contact + "</a></td>" +
-      "<td style='max-width:280px'>" + (x.topic ? "<b>" + esc(x.topic) + "</b><br>" : "") + esc(x.task || "") + "</td>" +
-      "<td><span class='st st-" + st + "'>" + ST[st] + "</span></td>" +
-      "<td><div class='row-act'>" +
-        "<button class='mini' data-s='work' data-id='" + esc(x.id) + "'>В работу</button>" +
-        "<button class='mini' data-s='done' data-id='" + esc(x.id) + "'>Закрыть</button>" +
-        "<button class='mini' data-s='spam' data-id='" + esc(x.id) + "'>Спам</button>" +
-        "<button class='mini danger' data-del='" + esc(x.id) + "'>Удалить</button>" +
-      "</div></td></tr>";
+    return "<div class='lead is-" + st + "'>" +
+      "<div class='when'>" + esc(когда(x.ts)) + "<br><span class='hint'>" +
+        (x.kind === "callback" ? "звонок" : "заявка") + "</span></div>" +
+      "<div class='who'><b>" + esc(x.name || "без имени") + "</b>" +
+        (x.company ? "<span>" + esc(x.company) + "</span>" : "") +
+        "<a href='" + link + "' style='color:var(--cyan);font-size:13px'>" + contact + "</a></div>" +
+      "<div class='what'>" + (x.topic ? "<b>" + esc(x.topic) + "</b>" : "") +
+        "<p>" + esc(x.task || "") + "</p></div>" +
+      "<div class='side'><span class='st st-" + st + "'>" + ST[st] + "</span>" +
+        "<div class='row-act'>" +
+          "<button class='mini' data-s='work' data-id='" + esc(x.id) + "'>В работу</button>" +
+          "<button class='mini' data-s='done' data-id='" + esc(x.id) + "'>Закрыть</button>" +
+          "<button class='mini' data-s='spam' data-id='" + esc(x.id) + "'>Спам</button>" +
+          "<button class='mini danger' data-del='" + esc(x.id) + "'>Удалить</button>" +
+        "</div></div>" +
+      "<div class='note'><textarea data-note='" + esc(x.id) + "' rows='1' " +
+        "placeholder='Заметка по клиенту'>" + esc(x.note || "") + "</textarea>" +
+        "<div class='nrow'><button class='mini' data-savenote='" + esc(x.id) + "'>Сохранить заметку</button>" +
+        (x.note_ts ? "<span class='hint'>обновлена " + esc(когда(x.note_ts)) + "</span>" : "") +
+        "</div></div>" +
+      "</div>";
   }).join("");
 }
 $("#leadRows").addEventListener("click", function (e) {
@@ -579,6 +764,31 @@ $("#leadRows").addEventListener("click", function (e) {
       if (r.ok) { toast("Удалено"); loadLeads(); }
     });
   }
+  if (b.dataset.savenote) {
+    var поле = $("textarea[data-note='" + b.dataset.savenote + "']");
+    api("lead_note", { id: b.dataset.savenote, note: поле ? поле.value : "" }).then(function (r) {
+      if (r.ok) { toast("Заметка сохранена"); loadLeads(); }
+      else toast("Не сохранилось");
+    });
+  }
+});
+/* Поиск по заявкам. Ищем по имени, компании, контакту, задаче и по
+   самой заметке: искать «обещал перезвонить» по своим же записям
+   нужнее всего. */
+$("#leadFind").addEventListener("input", function () {
+  leadQ = this.value.trim().toLowerCase();
+  renderLeads();
+});
+/* Ctrl+Enter в заметке сохраняет: руки уже в поле, тянуться к кнопке
+   лишнее движение. */
+$("#leadRows").addEventListener("keydown", function (e) {
+  if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return;
+  var t = e.target;
+  if (!t || !t.dataset || !t.dataset.note) return;
+  e.preventDefault();
+  api("lead_note", { id: t.dataset.note, note: t.value }).then(function (r) {
+    if (r.ok) { toast("Заметка сохранена"); loadLeads(); }
+  });
 });
 
 /* ── Сеть ── */
@@ -601,7 +811,95 @@ function loadNet() {
   }).join("");
   bars("#netRegions", reg);
   renderNetList("");
+  loadNodes();
 }
+
+/* ── Свои города ─────────────────────────────────────────────
+   Правки живут отдельно от базового реестра: добавленные города и
+   скрытые из базы. Сайт забирает их скриптом api.php?action=nodes_js,
+   поэтому после сохранения достаточно перезагрузить страницу сайта. */
+var своиУзлы = [], скрытые = [];
+function loadNodes() {
+  api("nodes").then(function (r) {
+    if (!r.ok) return;
+    своиУзлы = r.add || []; скрытые = r.hide || [];
+    renderNodes();
+  });
+}
+var МЕТКИ = [[1, "облако"], [2, "защита"], [4, "скоро"]];
+function renderNodes() {
+  var G = window.RC_GEO;
+  $("#nodeCnt").textContent = своиУзлы.length ? "· " + своиУзлы.length : "";
+  $("#hideCnt").textContent = скрытые.length ? "· " + скрытые.length : "";
+  $("#nodeOwn").innerHTML = своиУзлы.length ? своиУзлы.map(function (n, i) {
+    var метки = МЕТКИ.filter(function (m) { return n[4] & m[0]; }).map(function (m) { return m[1]; }).join(", ");
+    var рег = (G && G.REGIONS[n[3]]) ? G.REGIONS[n[3]].ru : "регион " + n[3];
+    return "<div class='one'><b>" + esc(n[0]) + "</b>" +
+      (n[5] ? "<span class='co'>" + esc(n[5]) + "</span>" : "") +
+      "<span class='co'>" + esc(рег) + " · " + n[1] + ", " + n[2] +
+      (метки ? " · " + esc(метки) : "") + "</span>" +
+      "<button class='mini danger' data-nodedel='" + i + "'>Убрать</button></div>";
+  }).join("") : "<p class='hint'>Своих городов пока нет.</p>";
+  $("#hideOwn").innerHTML = скрытые.length ? скрытые.map(function (h, i) {
+    return "<div class='one'><b>" + esc(h) + "</b>" +
+      "<button class='mini' data-hidedel='" + i + "'>Вернуть</button></div>";
+  }).join("") : "<p class='hint'>Ничего не скрыто.</p>";
+}
+function saveNodes(словом) {
+  return api("nodes_save", {
+    add: JSON.stringify(своиУзлы), hide: JSON.stringify(скрытые)
+  }).then(function (r) {
+    if (r.ok) { toast(словом); loadNodes(); }
+    else toast("Не сохранилось");
+    return r;
+  });
+}
+$("#nAdd").addEventListener("click", function () {
+  var имя = $("#nName").value.trim();
+  var ш = parseFloat($("#nLat").value.replace(",", "."));
+  var д = parseFloat($("#nLon").value.replace(",", "."));
+  if (!имя) return toast("Не заполнено название");
+  /* Проверяем здесь же, а не только на сервере: человеку нужен ответ
+     сразу, а не после круга по сети. */
+  if (!isFinite(ш) || ш < -90 || ш > 90) return toast("Широта от -90 до 90");
+  if (!isFinite(д) || д < -180 || д > 180) return toast("Долгота от -180 до 180");
+  var м = ($("#nCloud").checked ? 1 : 0) + ($("#nShield").checked ? 2 : 0) + ($("#nSoon").checked ? 4 : 0);
+  /* Один город дважды - это две точки в одном месте на глобусе и
+     завышенное число в шапке сайта. Проверяем и по своим, и по
+     базовому реестру. */
+  var естьСвой = своиУзлы.some(function (n) { return String(n[0]).toLowerCase() === имя.toLowerCase(); });
+  if (естьСвой) return toast("Такой город уже добавлен");
+  var G0 = window.RC_GEO;
+  if (G0 && G0.NODES.some(function (n) { return n[0].toLowerCase() === имя.toLowerCase(); }))
+    return toast("Такой город уже есть в базовом реестре");
+  своиУзлы.push([имя, ш, д, +$("#nReg").value, м, $("#nEn").value.trim()]);
+  saveNodes("Город добавлен").then(function (r) {
+    if (!r.ok) return;
+    ["#nName", "#nEn", "#nLat", "#nLon"].forEach(function (s) { $(s).value = ""; });
+    $("#nCloud").checked = $("#nShield").checked = $("#nSoon").checked = false;
+  });
+});
+$("#hAdd").addEventListener("click", function () {
+  var имя = $("#hName").value.trim();
+  if (!имя) return toast("Не заполнено название");
+  var G = window.RC_GEO;
+  var есть = G && G.NODES.some(function (n) { return n[0] === имя; });
+  if (!есть) return toast("Такого города в реестре нет");
+  if (скрытые.indexOf(имя) < 0) скрытые.push(имя);
+  saveNodes("Город убран с сайта").then(function () { $("#hName").value = ""; });
+});
+$("#nodeOwn").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b || !b.dataset.nodedel) return;
+  своиУзлы.splice(+b.dataset.nodedel, 1);
+  saveNodes("Убрано");
+});
+$("#hideOwn").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b || !b.dataset.hidedel) return;
+  скрытые.splice(+b.dataset.hidedel, 1);
+  saveNodes("Город вернулся на сайт");
+});
 function renderNetList(q) {
   var G = window.RC_GEO;
   q = (q || "").toLowerCase();
