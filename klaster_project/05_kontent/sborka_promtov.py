@@ -75,6 +75,11 @@ from promt_engine import Бренд, собрать, проверить
 
 # Сцена под каждый ключ: то, что видит камера в главном кадре. Остальное собирает движок.
 СЦЕНЫ = {
+ # --- мероприятие с телескопом ---
+ "P-500-teleskop-krysha": "a large amateur telescope on a heavy tripod standing on the flat roof of a production building at night, the parapet and roof vents in the foreground, the lit territory below and a distant city skyline on the horizon, deep clear sky above",
+ "P-501-vk-teleskop": "a large amateur telescope on a tripod silhouetted against the night sky on the roof of an industrial building, warm amber light spilling from a rooftop hatch, the yard lights of the territory glowing far below",
+ "P-502-stories-teleskop": "the eyepiece end of a large telescope in tight close-up against the night sky, the metal barrel catching one amber light from the side, everything beyond it falling into ink black",
+ "P-503-karusel-teleskop": "a large amateur telescope on a heavy tripod on the flat roof of a production building at night, parapet edge crossing the lower part of the frame, distant city lights on the horizon under a clear dark sky",
  # --- обложки статей ---
  "P-401-dzen-moshchnost": "the open door of a workshop main switchgear cabinet seen straight on, breaker modules in a strict vertical column behind the glazed panel, bus bars and cable glands below, one amber indicator lamp unlit",
  "P-402-vc-kadry": "the hands of an older machinist resting on the cross-slide handwheel of a worn lathe, cropped tight at the wrists so no face is in frame, oil ghosting on the metal, curled steel swarf on the bed",
@@ -145,7 +150,10 @@ from promt_engine import Бренд, собрать, проверить
 def единицы(корень):
     """Все единицы месяцев с их заголовком, слайдами и ссылкой на промпт."""
     сп = []
-    for путь in sorted(glob.glob(os.path.join(корень, "MESYAC_*", "NEDELYA_*.md"))):
+    пути = sorted(glob.glob(os.path.join(корень, "MESYAC_*", "NEDELYA_*.md")))
+    for доп in ("REZERV.md", "SOBYTIE_KOSMOS.md"):
+        if os.path.exists(os.path.join(корень, доп)): пути.append(os.path.join(корень, доп))
+    for путь in пути:
         s = open(путь, encoding="utf-8").read()
         for ч in re.split(r"\n(?=## )", s):
             z = ч.split("\n")[0][3:].strip()
