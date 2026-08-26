@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Промпты визуала «Кластер»: собираются из плана месяца и паспорта бренда.
 
-Паспорт взят из BRIEF_VISUAL.md дословно: амбер как единственный акцент,
-графит и чернильно-чёрный на плоскостях, тёплый белый на свету, честный износ,
-направленный кинематографический свет, никаких людей без нужды в масштабе.
+Паспорт: амбер единственный акцент, графит и чернильно-чёрный на плоскостях,
+тёплый белый на свету, честный износ, кинематографический объёмный свет.
+С 27.08.2026 кадр строится как ключевой кадр кампании: четыре плана глубины,
+действие в кадре, работающие люди, ракурс и оптика выбираются под сюжет.
 
     python3 sborka_promtov.py           # собрать и записать promts_new/gruppa_dobor.json
     python3 sborka_promtov.py --проверка # только показать длины и беды
@@ -17,12 +18,15 @@ from promt_engine import Бренд, собрать, проверить
     домен="CLUSTERSPACE.RU",  # сайт живёт на нём с 14.08.2026
 
     палитра=("The palette is locked to five values and their gradations: amber #E8A400 as the single saturated accent "
-             "and the only warm light in the frame, muted gold #C9A233 for secondary highlights on machined edges and "
-             "leader lines, graphite #14171C for solid bodies, panels and shadowed metal, ink black #0E1116 for "
-             "background and deep shadow, and warm white #F5F1E8 for lit planes, paper, hairlines and primary "
-             "lettering. No other hue exists anywhere in the frame, including reflections, spill light, rust, dust, "
-             "glass and skin. Never drift toward neon, cyberpunk, gloss, teal-and-orange film grading or a rendered "
-             "look."),
+             "and the only warm light, muted gold #C9A233 for secondary highlights on machined edges, graphite "
+             "#14171C for solid bodies and shadowed metal, ink black #0E1116 for background and deep shadow, warm "
+             "white #F5F1E8 for lit planes and primary lettering. No other hue exists anywhere, reflections, spill "
+             "light, dust, glass and skin included: every glow, spark, flame, hot metal, lamp and light trail is "
+             "amber or gold, every cool value is graphite, ink or warm white, so the picture can be as loud as it "
+             "likes and still read as this brand at a glance. Grade it rich and contrasty like a campaign frame: "
+             "crushed true blacks, amber highlights allowed to bloom and flare on the lens, haze carrying the "
+             "accent colour through the air. Never neon purple, cyberpunk teal, candy gradients or the cold "
+             "teal-and-orange stock grade."),
     свет=("Lighting is cinematic and volumetric, at the level of a commercial architecture shoot: one hard "
           "directional key from the upper left at a shallow raking angle carves every weld bead, bolt head, "
           "engraved edge and paint chip into relief and throws long soft edged shadows down and to the right; the "
@@ -30,64 +34,65 @@ from promt_engine import Бренд, собрать, проверить
           "it, so the air in the room has body; a warm amber bounce from the lower right lifts the deepest shadow "
           "and reads as the single source of heat in a cold space; a thin cool rim separates the subject from an "
           "ink black falloff behind it; wet concrete and polished metal carry soft mirrored reflections of the "
-          "amber source. Deep three dimensional separation between foreground, subject and background: foreground "
-          "elements sit closer to camera and darker, the background dissolves into black. No flat frontal light, "
-          "no lens flare, no bloom, no neon."),
+          "amber source. Deep three dimensional separation between foreground, subject and background: something "
+          "real sits in the near plane close to camera and out of focus, the subject is carved out by the key, the "
+          "background falls away into black. The air itself is lit: haze, dust, steam and smoke catch the beam and "
+          "give the room body, and where a hot source is in shot it blooms and throws a soft anamorphic streak. "
+          "No flat frontal light and no even fill anywhere."),
     материал=("Material honesty everywhere: mill scale on steel, oxidised bolts, chipped edge paint, concrete with "
-              "form-tie marks and honest wear, factory dust settled in the recesses, tyre scuffs and old floor "
-              "marking on polished concrete, crane rail worn bright by use; a working object photographed in a "
-              "working place inside Moscow, never a render, stock illustration or vector layout; medium format "
-              "capture, fine natural grain, deep true blacks, no plastic perfection and no showroom sheen. The space "
-              "is empty of people unless a person is needed to read scale, and then only a back or a hand, never a "
-              "face and never a smile."),
-    шрифт=("All lettering is one dense modern grotesque with the feel of technical documentation rather than an "
-           "advertising poster: wide tracked capitals in the headline, technical generously leaded setting in the "
-           "caption, upright, never italic, outlined, scripted or drop-shadowed. Every character has real physical "
-           "depth: an engraved letter shows the milled wall of its groove and a bright burr along the lit edge, a "
-           "stencilled letter shows the tooth of the paint and the ragged bridge marks, a cast letter shows the "
-           "draft angle of its relief. The headline is the largest object in the frame after the subject itself "
-           "and it is composed into the architecture, aligned to a panel joint, a floor marking line or the edge "
-           "of a steel plate, so removing it would leave a visible hole in the composition."),
-    съёмка=("Cold architectural documentation photography on a digital medium format camera with a fifty millimetre "
-            "equivalent lens, the camera axis perpendicular to the main surface of the scene, zero tilt, no "
-            "converging verticals, no wide angle distortion, no vignette drama, no shallow bokeh and no dramatic "
-            "angles."),
+              "form-tie marks and honest wear, factory dust in the recesses, tyre scuffs on polished concrete, "
+              "crane rail worn bright by use. No plastic perfection and no showroom sheen. People belong here and "
+              "carry the action: a welder behind the shield with the arc lighting his visor, hands on a control "
+              "panel, a driver stepping down from the cab, a shift crossing the apron in the rain. Faces are "
+              "allowed when the face is the moment, caught mid work, never posed, never smiling at the camera, "
+              "never a stock portrait. Clothing is real workwear with wear on it."),
+    шрифт=("All lettering is one dense modern grotesque: wide tracked capitals in the headline, generously leaded "
+           "technical setting in the caption, upright, never italic, outlined, scripted or drop-shadowed. Letters "
+           "have real physical depth and catch the key light on their lit edge. The headline is the largest object "
+           "in the frame after the subject and is composed into the architecture, aligned to a panel joint, a floor "
+           "marking or the edge of a steel plate, so removing it would leave a hole in the composition."),
+    съёмка=("Shot like a campaign frame, never like a survey photograph: the camera stands where the scene is most "
+            "powerful and takes the angle that gives the subject mass, low to the ground looking up, or a hard "
+            "three quarter diagonal, or a long lens stacking the depth into planes. Focal length is chosen for the "
+            "shot: twenty four millimetres from close range to make the foreground loom, fifty for a straight "
+            "confident read, a hundred and thirty five to compress and isolate. Aperture is deliberate: f/1.8 snaps "
+            "the subject out of a dissolving background, f/11 holds the whole depth. Shutter is part of the "
+            "picture: a thousandth freezes particles in mid air, half a second lets a moving light draw its trail. "
+            "Anamorphic character welcome: horizontal flare off amber sources, oval bokeh. Full frame capture, "
+            "eight thousand pixels of detail in the plane of focus, fine grain in the shadows."),
     референсы=(
         "Photographs of the real site are attached and they are binding, not inspiration. This is a working "
         "industrial park in the south of Moscow as it stands today, not an architectural visualisation: long low "
-        "production blocks of pale warm grey concrete, two continuous ribbon bands of glazing in dark frames "
-        "running the length of each block, scaffolding along the part of the facade being renewed, roller shutter "
-        "gates flush in the wall at yard level, a wide concrete apron with box trucks and semi trailers parked at "
-        "an angle, lamp posts and standing water after rain. Reproduce it exactly: the same block proportions, "
-        "the same two band glazing rhythm in the same dark frames, the same pale grey wall values, the same flush "
-        "gates. Do not clad it in dark perforated panels, do not turn it into a glass tower, do not add floors or "
-        "decoration absent from the photographs. A production interior is that same site: a clear hall on round "
-        "painted columns, a poured seamless floor, roller gates in the end wall. An office, corridor or "
-        "conference hall is the renovated administrative building: white walls with one accent wall in brand "
-        "amber, black framed glazed partitions, grey carpet, linear ceiling light. "
+        "production blocks of pale warm grey concrete, two continuous ribbon bands of glazing in dark frames along "
+        "each block, scaffolding on the part of the facade being renewed, roller shutter gates flush in the wall at "
+        "yard level, a wide concrete apron with box trucks and semi trailers, lamp posts and standing water after "
+        "rain. Keep the block proportions, the two band glazing rhythm, the pale grey wall values and the flush "
+        "gates exactly. Do not clad it in dark perforated panels, do not turn it into a glass tower, do not add "
+        "floors absent from the photographs. A production interior is that same site: a clear hall on round painted "
+        "columns, a poured seamless floor, roller gates in the end wall. An office or conference hall is the "
+        "renovated administrative building: white walls with one amber accent wall, black framed glazed partitions, "
+        "grey carpet, linear ceiling light. "
         "The brand mark comes one to one from the attached logo file and is a physical object inside the scene, "
         "never a flat sticker and never a watermark: a twelve toothed gear wheel with a clean circular centre, and "
         "inside that circle the stylised figure of a person with arms raised outward to both sides; where the "
-        "wordmark appears it reads exactly «КЛАСТЕР» in the same dense grotesque as the file. The mark lives on a "
-        "real surface with real thickness and its own cast shadow: deep engraved into a brushed steel plate and "
-        "paint filled, recessed as a relief in the concrete, hard-stencilled onto a painted steel door with "
-        "slightly ragged edges and visible stencil bridges, or standing as the round backlit sign on the building "
-        "facade exactly as in the reference. It takes the same key light, the same dust and the same reflections "
-        "as everything around it. The mark appears once in every single frame, small, about three percent of the "
-        "frame width, placed where such a mark would really be bolted, cast or stencilled on this site: low on a "
-        "steel plate, on the flank of a gate, on a cabinet door, on the parapet of a roof, in the corner of a "
-        "painted floor marking. It is never larger than the headline, never centred as a badge, never repeated "
-        "twice and never floating in empty space. "
+        "wordmark appears it reads exactly «КЛАСТЕР». It lives on a real surface with real thickness and its own "
+        "cast shadow, engraved, cast in relief, stencilled or backlit, and takes the same light, dust and "
+        "reflections as everything around it. It appears once per frame, about three percent of the frame width, "
+        "where such a mark would really be fixed, never larger than the headline, never centred as a badge and "
+        "never repeated. "
         "The subject world is a working industrial park inside Moscow: fifty thousand square metres of production "
-        "buildings, clear heights from six to twelve metres, floors rated to four thousand kilograms per square "
-        "metre, five megawatts on the site and one hundred kilowatts to a single unit, an overhead crane rail "
-        "running the length of the bay, two five tonne goods lifts, a separate roller gate to every block and a "
-        "parking field for five hundred and fifty cars. Everything in frame stays consistent with that place. "
-        "The finished frame reads at the level of a business magazine cover: composed on a strict geometric grid "
-        "with generous negative space around the subject, one clear focal point, real depth with a near plane, a "
-        "subject plane and a receding background, deep true blacks, eight thousand pixel sharpness across the "
-        "plane of focus, commercial architectural photography quality, no illustration look, no 3d render look, "
-        "no painterly texture and no artificial sharpening halo."))
+        "buildings, clear heights from six to twelve metres, roller gates four by four metres at yard level, a "
+        "crane beam running the length of the bay, goods lifts, a parking field with articulated trucks at the "
+        "far end. Everything in frame stays consistent with that place. "
+        "The finished frame reads as key art for a campaign: dense, layered, worth a second look. Build at least "
+        "four depth planes, near foreground, subject, mid ground and dissolving background, with something crossing "
+        "between them so the eye travels. Something is happening at this exact instant: a particle in flight, a "
+        "light drawing its trail, a hand mid movement, hot metal cooling, steam leaving a valve. Photoreal and "
+        "physically correct, at the level of a high end render married to a documentary photograph: true "
+        "reflections and roughness on every material, believable contact shadows, caustics on wet concrete, "
+        "subsurface glow through a lit edge. Composition is deliberate rather than centred, built on a diagonal or "
+        "on thirds, the subject given room to be big. No flat backdrop behind a floating object, no illustration "
+        "look, no painterly texture, no clip art, no sharpening halo."))
 
 # Поверхности для информационных слайдов каруселей: число живёт на реальной плоскости.
 ПОВЕРХНОСТИ = [

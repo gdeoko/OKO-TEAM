@@ -40,18 +40,15 @@ class Бренд:
              "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
              "surface, obeys the frame perspective and takes the same light and dust.") + " " +
             (правило_знака or "") + " "
-            "The headline stays legible at a three hundred pixel feed preview: maximum contrast, nothing crossing the "
-            "characters, no blur, no unplanned line break. An eight percent dead margin on all four sides is kept clear, "
-            "and all typography sits inside it. "
-            "No drawn interface elements: no call-to-action buttons, button shapes with text, swipe-up arrows, link "
-            "chips, cursors, app icons or screen mock-ups; every word lives on a real surface. "
-            "Strict restrictions: no text beyond the captions specified here, no subtitles, extra numbers, dimension "
-            "callouts, scale bars, street names, addresses, plaques, watermarks or timestamps, no logo beyond the "
-            "described mark, no invented words, placeholder or transliterated Latin lettering, emoji, icons or stock "
-            "smiling people. No price tags and no currency signs anywhere in the frame. "
+            "Nothing crosses the characters, no blur on them, no unplanned line break, and an eight percent dead "
+            "margin on all four sides stays clear with all typography inside it. "
+            "Nothing drawn from an interface: no buttons or button shapes, swipe arrows, link chips, cursors, app "
+            "icons or screen mock-ups. No text beyond the captions given here: no subtitles, extra numbers, "
+            "dimension callouts, scale bars, street names, addresses, plaques, watermarks, timestamps, price tags, "
+            "currency signs, second logo, invented words, Latin placeholder lettering, emoji or icons. "
             "Every Cyrillic letter, digit, space, punctuation mark and the letter Ё with its two dots is reproduced "
-            "exactly as written above, with no autocorrection, re-spacing or glyph substitution. If a letterform cannot "
-            "be rendered cleanly, render it larger and simpler, never substitute another alphabet.")
+            "exactly as written above, with no autocorrection, re-spacing or glyph substitution. If a letterform "
+            "cannot be rendered cleanly, render it larger and simpler, never substitute another alphabet.")
         return " ".join(части)
 
 
@@ -177,27 +174,26 @@ def приём(ключ):
 # тёмное, всё вечернее. Держим набор состояний света и раздаём их по кадрам,
 # сохраняя объём и материальность.
 СВЕТ_ВАРИАНТЫ = [
-    "Hard directional key from the upper left at a shallow raking angle carving every weld bead, bolt head and paint "
-    "chip into relief, a visible shaft of light with airborne dust in it, warm amber bounce lifting the deepest "
-    "shadow, ink black falloff behind the subject.",
-    "Flat overcast daylight through a wall of industrial glazing, soft and even with no hard shadow, the whole frame "
-    "pale and cool, a single warm amber source deep inside the space giving the only heat.",
-    "Low sun just after sunrise coming almost horizontally through the open gate, long orange shafts stretching "
-    "across the floor, dust turning in them, the far end of the bay still cold blue.",
-    "Blue hour outside just after the lamps come on, sky still deep cobalt, warm amber pooling out of every open "
-    "gate and window, wet asphalt doubling every light.",
-    "Bright hard midday sun with crisp black shadows and hot highlights on metal, the sky burnt out white, heat "
-    "shimmer over the concrete apron.",
-    "Overhead industrial fixtures at full power on a working shift, clean even light on the floor, the ceiling "
-    "structure dark above, deep shadow only under the machines.",
-    "Grey rain, everything wet and reflective, water running off the canopy edges, colours muted to steel and "
-    "graphite, the amber of the interior lights bleeding into the puddles.",
-    "Single work lamp clamped close to the subject in an otherwise dark bay, a tight warm pool of light with fast "
-    "falloff into black, the rest of the space only hinted at.",
-    "Soft north light in a clean renovated interior, white walls bouncing it around, one brand amber accent wall "
-    "warming the whole frame, no hard shadow anywhere.",
-    "Night on the territory under sodium and LED yard lighting, cold white pools on the apron between warm amber "
-    "gaps, the sky black above the roofline.",
+    "Hard directional key from the upper left at a shallow raking angle carving every weld bead and paint chip into "
+    "relief, a visible shaft of dusty light, amber bounce lifting the shadow, ink black falloff behind.",
+    "Flat overcast daylight through a wall of industrial glazing, no hard shadow, the frame pale and cool, one warm "
+    "amber source deep inside giving the only heat.",
+    "Low sun just after sunrise coming horizontally through the open gate, long amber shafts across the floor, dust "
+    "turning in them, the far end of the bay still cold blue.",
+    "Blue hour just after the lamps come on, sky deep cobalt, amber pooling out of every gate and window, wet "
+    "asphalt doubling every light.",
+    "Hard midday sun, crisp black shadows, hot highlights on metal, sky burnt out white, heat shimmer over the "
+    "apron.",
+    "Overhead fixtures at full power on a working shift, clean light on the floor, ceiling structure dark above, "
+    "deep shadow only under the machines.",
+    "Grey rain, everything wet and reflective, water off the canopy edges, colours muted to steel and graphite, "
+    "interior amber bleeding into the puddles.",
+    "One work lamp clamped close to the subject in a dark bay, a tight warm pool with fast falloff into black, the "
+    "rest of the space only hinted at.",
+    "Soft north light in a renovated interior, white walls bouncing it, one amber accent wall warming the frame, no "
+    "hard shadow.",
+    "Night on the territory under yard lighting, cold white pools on the apron between amber gaps, sky black above "
+    "the roofline.",
 ]
 
 
@@ -207,6 +203,122 @@ def свет(ключ, запасной):
     осн = ключ.rsplit("-", 1)[0] if ключ.rsplit("-", 1)[-1].isdigit() else ключ
     return СВЕТ_ВАРИАНТЫ[_ровно(осн, 3) % len(СВЕТ_ВАРИАНТЫ)] or запасной
 
+
+
+# ── Эффект кадра ───────────────────────────────────────────────────────────
+# Владелец 27.08.2026: «не просто фон плюс текст, а целые экшен-сцены, насыщенно,
+# объёмно, динамично». Композиция и свет задаются режимом, а вот атмосферу и
+# действие даёт отдельный слой: в кадре всегда что-то происходит физически.
+# Раздаём по ключу, чтобы соседние единицы не попадали в один приём.
+ЭФФЕКТЫ = [
+    "Two speeds in one frame: a fan of welding sparks, the near ones frozen at 1/2000 as hard white hot points, the "
+    "far ones stretched into curved streaks bending to the floor and fading red. The arc is the only key, a 6000 K "
+    "point, and haze turns it into a visible cone.",
+    "The instant of impact frozen at 1/4000: a ring of scale and oil mist blasts outward as thousands of separate "
+    "specks, dense at the source and thinning to a halo a metre out, while vented steam to one side is motion "
+    "stretched into soft streaks.",
+    "Twenty two seconds on a locked tripod: the vehicles that crossed the yard are gone and only their light "
+    "survives, an amber beacon arc curving into the depth and two headlight ribbons bending around the dock, while "
+    "every building and rail stays razor sharp. Wet concrete doubles every trail.",
+    "Shot at 1/6 of a second: everything moving has dissolved into a continuous smeared band four hundred "
+    "millimetres across the frame, while the steel structure, the control panel and a person standing still at the "
+    "far end stay perfectly sharp. The contrast between the liquid band and the rigid frame is the whole picture.",
+    "A jet of incandescent particles opens from a narrow root into a nine hundred millimetre plume: leading "
+    "particles frozen as dots at 1/3200, trailing ones stretched into comet streaks that fork where they hit the "
+    "floor. Beyond two metres, black.",
+    "A panning frame at 1/40: the moving subject is held sharp from its leading edge back, its tail already melting "
+    "into the pan, while posts and lamps behind it drag into clean horizontal streaks that carry the speed. Spray "
+    "off the tyres stretches into sixty millimetre comma shaped tails.",
+    "Rain drives across the near plane, drops streaking as short amber lines through every source, water sheeting "
+    "off the canopy edge, wet concrete turning into a mirror that doubles the whole scene upside down, and one hard "
+    "3200 K source raking low so every drop has an edge.",
+    "Dust hangs thick in a hard shaft crossing the frame diagonally, each particle separately lit, the beam solid "
+    "enough to read as an object with deep black either side. Something moves through the beam and drags a slow "
+    "smear while the lit edge nearest camera stays sharp.",
+    "Steam vents from a valve at the frame edge and rolls across the middle plane, backlit into a solid amber wall "
+    "of light, the subject cutting a dark silhouette through it with a bright rim along one side and the far "
+    "structure dissolving completely.",
+    "Heat shimmer distorts the air above a hot surface in the mid plane, the background rippling through it, an "
+    "amber glow radiating from the source and blooming into the lens as a soft horizontal streak, fine grit turning "
+    "slowly in the rising air.",
+    "Mixed uncorrected colour temperatures meet on one surface: 2000 K sodium flood from one side, 5600 K daylight "
+    "wedge from an open gate on the other, the line between them running right through the subject, dust turning in "
+    "both and each throwing its own coloured shadow.",
+    "A load is lifted and the frame catches the movement: the load swings a fraction, its shadow races across the "
+    "floor, the chains blur at 1/15 while the subject stays frozen sharp, and fine debris shaken loose falls "
+    "through the key beam.",
+]
+
+
+def эффект(ключ):
+    """Атмосферный слой кадра: своё действие у каждой единицы, повторов подряд нет."""
+    осн = ключ.rsplit("-", 1)[0] if ключ.rsplit("-", 1)[-1].isdigit() else ключ
+    return ЭФФЕКТЫ[_ровно(осн, 7) % len(ЭФФЕКТЫ)]
+
+
+# ── Графические приёмы для каруселей и историй ─────────────────────────────
+# Кадр ленты живёт по другим законам, чем кинокадр: там работает не действие, а
+# слоистость. Три плана минимум, один элемент пересекает границу блока.
+ГРАФИКА = [
+    "Composition: a solid flat plate of graphite #14171C fills the lower sixty two percent of the frame with a hard "
+    "horizontal edge, warm white #F5F1E8 above it. The photographic subject is cut out along a precise silhouette "
+    "and straddles that edge, lower half against the graphite, upper half against the white. The cutout carries a "
+    "three pixel amber #E8A400 stroke following the silhouette exactly plus a separate soft contact shadow cast "
+    "down and right onto the plate only. Three planes read clearly: flat plate behind, cutout with stroke in front, "
+    "caption on the plate below.",
+    "Composition: a keyline rectangle in a four pixel amber #E8A400 stroke sits inset from the frame edges over a "
+    "warm white #F5F1E8 field and contains the photograph. One element of the subject, a hook, a beam end, a wheel, "
+    "a shoulder, is masked out and reprinted on top so it crosses the keyline and extends well beyond it. Where the "
+    "escaping element crosses the stroke the stroke is interrupted and does not redraw, proving the break is "
+    "physical, and the element casts its own shadow onto the outer margin.",
+    "Composition: a full bleed photograph of the interior, exposed a stop under so it works as ground rather than "
+    "subject. Across the lower third lies a rectangular glass panel: the photograph beneath it blurred, filled with "
+    "graphite #14171C at under half opacity, with a one pixel warm white lip along its top edge only and a soft "
+    "ambient shadow thrown upward onto the photograph. Inside the panel the headline in warm white and one figure "
+    "in amber #E8A400 at four times its size, baselines aligned. Detail stays legible through the blur.",
+    "Composition: a warm white #F5F1E8 field split by a hard vertical edge. Left of it the photograph of industrial "
+    "structure is reduced to a one colour halftone in amber #E8A400 over the white, round dots at thirty two lines "
+    "per inch so the dots are plainly visible at thumbnail size, screen angle forty five degrees. Right of it the "
+    "same photograph continues in full colour at exact register so the subject runs unbroken across the split. The "
+    "dot pattern touches the image only, never the type.",
+    "Composition: a cut out subject centred on a warm white #F5F1E8 field with two flat duplicates of its own "
+    "silhouette offset behind it on one axis, the first in solid amber #E8A400, the second further out in graphite "
+    "#14171C at low opacity. Stacking runs darkest and farthest back, then amber, then the full colour subject in "
+    "front, so it reads as deliberate risograph misregistration rather than blur. Duplicate edges stay hard with no "
+    "feathering, and one hairline runs through the stack to lock it to a baseline.",
+    "Composition: the ground is a mesh gradient built from four poles, amber #E8A400 upper right, deep ember lower "
+    "right, graphite #14171C lower left, warm white #F5F1E8 upper left, blended without banding and covered by a "
+    "fine monochrome grain that kills the smoothness. A cut out subject with a hard silhouette sits over it, lit "
+    "from the upper right to agree with the amber pole, and throws a long directional shadow across the mesh toward "
+    "the lower left. Type sits only in the darkest zone of the mesh, in warm white.",
+    "Composition: the photograph of the block or bay fills the frame, desaturated and darkened into a substrate. "
+    "Registered exactly on top of it, a technical line drawing of the same structure in amber #E8A400: thin "
+    "orthographic outlines, dashed hidden lines, dimension lines with arrow terminators running clear of the "
+    "geometry, figures in a small mono grotesque. The drawing aligns to the photograph's perspective at the key "
+    "edges so the two read as one object seen twice, over a faint warm white hairline grid.",
+    "Composition: the whole frame carries a photocopier pass. Warm white #F5F1E8 base with uneven toner, density "
+    "falling off toward one edge, a faint dark band along the top from platen contact, scattered debris specks. "
+    "Photograph and type are reproduced together with crushed graphite blacks, blown highlights and a one pixel "
+    "fringe at high contrast edges, under fine grain and horizontal scan striation. One element resists the "
+    "treatment: a solid amber #E8A400 plate carrying the headline, crisp, hard edged, sitting on top.",
+    "Composition: a graphite #14171C field going near black at the frame edges. A cut out subject with a strong "
+    "silhouette is centred, and directly behind it sits a radial amber #E8A400 glow, its core hidden by the subject "
+    "and the rest haloing out around the edges. A two pixel amber rim traces the top and right silhouette edges "
+    "only, matching the glow. The floor plane catches a stretched elliptical amber reflection. Type in warm white "
+    "sits in the dark corner opposite the glow, never inside the halo.",
+    "Composition: a six by eight module grid on a warm white #F5F1E8 field with generous gutters, drawn as filled "
+    "modules rather than lines. Modules carry three treatments spread across the grid: flat amber #E8A400, flat "
+    "graphite #14171C, and photographic crops of industrial detail clipped to module bounds. One module breaks the "
+    "system: it spans three columns by two rows, floats above the grid plane with its own blurred shadow, sits "
+    "rotated two degrees off axis and carries the single figure of the layout at four times any other element. "
+    "Everything else stays locked to the grid.",
+]
+
+
+def графика(ключ, номер=0):
+    """Приём оформления для кадра ленты. Внутри серии держим один приём."""
+    осн = ключ.rsplit("-", 1)[0] if ключ.rsplit("-", 1)[-1].isdigit() else ключ
+    return ГРАФИКА[_ровно(осн, 9) % len(ГРАФИКА)]
 
 
 # ── Дизайнерские режимы ────────────────────────────────────────────────────
@@ -435,12 +547,11 @@ def собрать(бренд, кадры):
         else:
             куски.append(f"{формат} aspect ratio, exactly {размер} pixels, locked, never cropped or letterboxed.")
             if вид == "карусель":
-                куски.append(f"This is slide {к['номер']} of {к['всего']} of one vertical carousel, and every slide "
-                             f"obeys the same system so the separately generated frames read as one series: the same "
-                             f"two type sizes and no third, the same margins and padding, the same colour grade on "
-                             f"every photograph, one accent colour only. The mark sits in the lower left corner "
-                             f"and the position marker in the lower right corner on every slide, at the same "
-                             f"distance from the edges.")
+                куски.append(f"Slide {к['номер']} of {к['всего']} of one vertical carousel. Every slide obeys the "
+                             f"same system so separately generated frames read as one series: two type sizes and no "
+                             f"third, the same margins, the same colour grade, one accent colour. The mark sits in "
+                             f"the lower left corner and the position marker in the lower right, at the same "
+                             f"distance from the edges on every slide.")
                 if к["номер"] == 1:
                     # первый слайд решает, откроют ли остальные: контраст и приглашение листать
                     куски.append("This is the cover slide and it carries the whole carousel: maximum contrast, the "
@@ -449,10 +560,13 @@ def собрать(бренд, кадры):
                                  "inviting the swipe. The cover has no other decoration.")
                 elif к["номер"] == к["всего"]:
                     # финал зеркалит обложку: набор читается как оформленный, а не как реклама в конце
-                    куски.append("This is the closing slide and it mirrors the cover: the same colour, the same type "
-                                 "treatment and the same composition, so the set reads as designed rather than as an "
-                                 "advertisement bolted to the end.")
+                    куски.append("This closing slide mirrors the cover: the same colour, type treatment and "
+                                 "composition, so the set reads as designed rather than as an advertisement "
+                                 "bolted to the end.")
         куски.append(f"The scene of this frame is {к['сцена']}.")
+        # В посте и статье кадр держит действие, в карусели и историях слоистость:
+        # первое даёт кино, второе даёт ленту, и путать их нельзя.
+        куски.append(графика(к["ключ"]) if вид in ("карусель", "сторис") else эффект(к["ключ"]))
         имя_режима = режим(к["ключ"], к.get("рубрика", ""), вид)
         р = РЕЖИМЫ[имя_режима]
         (имя_приёма, шаблон), шаблон_номера = приём(к["ключ"])
@@ -469,8 +583,7 @@ def собрать(бренд, кадры):
         if вид in ("карусель", "сторис"):
             метка_места = (f"{к['номер']} / {к['всего']}" if вид == "карусель" else str(к["номер"]))
             куски.append(шаблон_номера.format(метка_места) if имя_режима == "сцена"
-                         else f"The position marker {метка_места} is set small in the corner of the layout in "
-                              f"brand amber, marking the place in the series.")
+                         else f"The position marker reads {метка_места}, small, in brand amber.")
             if к["номер"] == к["всего"]:
                 куски.append(воронка(бренд) if вид == "карусель" else
                              f"This is the closing frame of the series, so the {бренд.имя} mark from the attached logo "
