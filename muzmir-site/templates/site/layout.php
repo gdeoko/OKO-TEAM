@@ -2,7 +2,8 @@
 /** Базовый лейаут публичного сайта. Переменные: $title,$content,$meta_description,$og_image,$active. */
 $nav = [
   '/' => 'Главная', '/competitions' => 'Конкурсы',
-  '/awards' => 'Награды', '/concerts' => 'Концерты', '/about' => 'О нас',
+  '/awards' => 'Награды', '/regulations' => 'Положения конкурсов',
+  '/concerts' => 'Концерты', '/about' => 'О нас',
   '/faq' => 'Вопросы', '/contacts' => 'Контакты',
 ];
 $partners = [
@@ -203,6 +204,7 @@ html body{padding-top:0 !important}
     <a href="<?= url('/competitions') ?>" class="<?= $act === '/competitions' ? 'is-active' : '' ?>">Афиша</a>
     <a href="<?= url('/apply') ?>" class="<?= $act === '/apply' ? 'is-active' : '' ?>">Подать заявку</a>
     <a href="<?= url('/awards') ?>" class="<?= $act === '/awards' ? 'is-active' : '' ?>">Награды</a>
+    <a href="<?= url('/regulations') ?>" class="<?= $act === '/regulations' ? 'is-active' : '' ?>">Положения</a>
     <a href="<?= url('/calendar') ?>" class="<?= $act === '/calendar' ? 'is-active' : '' ?>">Календарь</a>
     <a href="<?= url('/club') ?>" class="<?= $act === '/club' ? 'is-active' : '' ?>">ВИП-клуб</a>
     <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($act, ['/cabinet','/login','/register','/notifications'], true) ? 'is-active' : '' ?>"><?= $u ? 'Профиль' : 'Вход' ?></a>

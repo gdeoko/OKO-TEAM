@@ -1124,6 +1124,16 @@ ob_start(); ?>
                   $__reapply = in_array((string) ($a['comp_status'] ?? ''), ['open', 'judging'], true)
                             && (string) setting('intake_closed', '') !== '1';
                   ?>
+                  <?php /* Пункт, по которому отказано, человек должен иметь возможность
+                           прочитать. После закрытия приёма конкурс уходит с витрины, и
+                           документ остаётся только в разделе «Положения конкурсов» —
+                           два месяца, столько же, сколько заказ наград. */ ?>
+                  <p style="margin:0 0 10px;font-size:.88rem">
+                    <a href="<?= h(url('/competition/' . rawurlencode((string) ($a['comp_slug'] ?? '')) . '/regulation.pdf')) ?>"
+                       target="_blank" rel="noopener">Открыть положение конкурса</a>
+                    <span style="color:var(--muted)"> · </span>
+                    <a href="<?= h(url('/regulations')) ?>" style="color:var(--muted)">все положения</a>
+                  </p>
                   <?php if ($__reapply): ?>
                     <p style="margin:0 0 12px;font-size:.92rem;color:var(--text);line-height:1.5">
                       Устраните причину отклонения и подайте заявку заново — мы с радостью примем её к аттестации!
