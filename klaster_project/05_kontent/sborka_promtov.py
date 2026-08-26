@@ -210,8 +210,236 @@ from promt_engine import Бренд, собрать, проверить
 }
 
 
+# Сцены месяцев 2 и 3 в том же паспорте: одна фраза, из которой движок собирает кадр.
+СЦЕНЫ.update({
+# --- месяц 2 ---
+"P-10-metro-2028":
+    "a hard-hat aerial of the industrial territory in the near half of the frame with a metro construction "
+    "site beyond it, tower crane and shoring pit clearly readable, walking distance drawn on the ground as "
+    "a shallow arc of amber floor marking painted across the concrete apron",
+"P-08-den-proizvodstva":
+    "the inner street of the territory at first light, roller gates being raised along the near side, "
+    "headlights of arriving cars throwing long reflections on wet concrete, an industrial wall clock bolted "
+    "to the gate pillar in the near plane",
+"P-26-vc-ploshchadki-mira":
+    "a working production hall seen from outside through its full-height glazing at dusk, dense residential "
+    "city blocks rising directly behind it, amber light filling the bays while the housing beyond stays cold "
+    "and unlit",
+"P-S-cas-prostoa-masiny":
+    "a heavy truck standing still at a loading dock with its engine off, the dock seal folded against the "
+    "body, a stopwatch face on a steel plate bolted to the dock wall in the near plane",
+"P-S-ponedel-nik-v-cehe":
+    "an empty production bay at six in the morning, overhead crane rail catching the first key light, floor "
+    "marking freshly swept, one work jacket hanging on a steel hook in the foreground",
+"P-55-akt-priyomki":
+    "a handover inspection form on warm white paper lying on the polished concrete floor of an empty bay, "
+    "a folding rule and a phone face down beside it, the printed body an unreadable grey texture, one field "
+    "of the form catching a narrow amber line",
+"P-57-dzen-polnaya-stoimost":
+    "a cost table drafted like a technical document on warm white paper pinned flat to a graphite steel "
+    "panel, its rows machined as shallow grooves in the metal beneath the paper, a steel straightedge laid "
+    "across the lower rows",
+"P-S-voskresen-e-itogi-nedeli":
+    "a lease contract lying open on a graphite steel bench in a dark empty office above the workshop, its "
+    "printed body an unreadable grey texture, one clause underlined by a narrow amber line, a closed pen "
+    "beside it",
+"P-400-tehzadanie":
+    "a steel clipboard with a technical brief clamped under its spring lying on a graphite workbench, the "
+    "printed body an unreadable grey texture with four ruled empty fields, a machinist rule and a pencil "
+    "aligned to its edge",
+"P-31-ig-smena":
+    "the morning entry gate of the territory with a queue of cars and a walking stream of workers seen from "
+    "behind, the barrier arm raised, painted floor numbering running across the asphalt in the near plane",
+"P-17-geografiya":
+    "a survey plan of the southern part of the city milled as shallow grooves into a graphite steel plate "
+    "lying flat, the site marked by a machined amber inlay, main road corridors cut as deeper channels",
+"P-S-dvor-s-tocki-zrenia-voditela":
+    "the yard seen from a truck cab window height, a roller gate directly ahead, the turning circle marked "
+    "on the concrete, a wing mirror catching the amber source in the near corner of the frame",
+"P-14-desyat-dney":
+    "ten machined steel plates of equal size laid in a row on a graphite bench like a strip of days, each "
+    "with a countersunk screw at its corner, raking light separating one plate from the next",
+"P-S-svobodnye-pomesenia":
+    "an empty production block with its roller gate fully open, daylight cutting a hard rectangle across the "
+    "concrete floor, crane rail overhead, the far wall dissolving into black",
+"P-50-struktura-platezha":
+    "seven brushed steel bars of equal length stacked as a flight of steps on a graphite surface, one bar "
+    "faced in amber, each casting its own shadow onto the one below",
+"P-S-voskresen-e-i-karta":
+    "a cadastral extract on warm white paper lying on a concrete floor with a torch beam across it, the "
+    "printed body an unreadable grey texture, one boundary line traced in amber",
+"P-61-tri-shemy-sosedstva":
+    "three drafting blocks milled side by side into a graphite steel plate, connecting lines between them "
+    "inlaid in amber, a machinist square laid across the lower edge",
+"P-67-rbk-oblozhka":
+    "a production building photographed straight on from the yard with a cost table drafted as a technical "
+    "document standing in the near plane on a steel easel, the table plane parallel to the facade behind it",
+"P-65-peregovory-shest":
+    "six machined steel tabs standing upright in a row in a graphite base like index tabs of a contract, "
+    "one tab faced in amber and pulled slightly forward from the rest",
+"P-S-cena-vakansii":
+    "an empty welding station in a bay, mask hanging on its hook, torch coiled on the bench, the workpiece "
+    "untouched, a single hard key light across the cold seam",
+"P-S-voskresen-e-doroga":
+    "a shuttle bus standing at a marked stop by the checkpoint at dawn, doors open, the territory gate "
+    "beyond it, wet asphalt carrying the amber reflection of the interior lights",
+"P-30-smena-nayem":
+    "a survey plan of the district milled into a graphite steel plate with a shallow circular groove cut "
+    "around the site, the groove filled with amber, residential blocks rendered as low relief inside it",
+"P-402-platezh-po-strokam":
+    "seven brushed steel strips bolted flat in a stack onto a graphite panel like the lines of an invoice, "
+    "one strip paint filled in amber, screw heads catching the key light",
+"P-S-1-oktabra":
+    "an electrical switchboard with its door open in a production block, breaker rows in hard raking light, "
+    "a meter face in the near plane, a tariff sticker on the inner door reduced to unreadable grey texture",
+"P-58-hodka-fury":
+    "a truck pulled up square to a loading dock seen from behind at bumper height, the dock seal compressed "
+    "around the body, a machined steel rule standing on the apron in the near plane",
+"P-401-subbota":
+    "the yard on a Saturday morning, one roller gate fully open on an otherwise closed row, long shadows "
+    "across the empty concrete, no vehicles and no people",
+"P-21-karusel-moshchnost":
+    "a main switchboard cabinet standing open in a production block, busbars and breaker rows in hard raking "
+    "light, an equipment rating plate screwed to the panel in the near plane",
+"P-S-strojka-radom":
+    "a metro construction site seen over the parapet of the territory, tower crane and shoring pit below, "
+    "the workshop roofs of the site occupying the near third of the frame",
+"P-403-vtoraya-ochered":
+    "a production building under construction in scaffolding, tower crane above it, the finished facade of "
+    "the first phase standing beside it in the same graphite panel rhythm",
+"P-S-vtornik-razbor-mosnosti":
+    "an equipment rating plate screwed to the flank of a machine, its stamped characters reduced to "
+    "unreadable relief, a narrow amber line crossing one row, the machine body falling into black behind it",
+# --- месяц 3 ---
+"P-52-indeksaciya-pyat-let":
+    "five brushed steel bars of increasing height standing in a row on a graphite base, the tallest faced "
+    "in amber, each bar casting its own long shadow toward the camera",
+"P-96-itog-mesyaca":
+    "a grid of seven machined recesses milled into a graphite steel plate lying flat, each recess holding a "
+    "countersunk screw, one recess paint filled in amber",
+"P-64-vtoraya-ochered-punkty":
+    "the scaffolded facade of the second phase photographed straight on from the yard, a drafting plate on a "
+    "steel easel standing in the near plane parallel to it, site fencing across the lower edge",
+"P-33-karusel-vtoraya-ochered":
+    "the interior of a bay under construction, structural columns standing in a receding row, formwork marks "
+    "on the concrete, the crane rail not yet fitted, daylight from the open gable end",
+"P-S-den-priemki":
+    "an electricity meter mounted in an open switchboard in a production block, its counter face in hard "
+    "raking light, a phone held up to it in the near plane seen only as a hand",
+"P-51-karusel-sem-strok":
+    "an invoice on warm white paper clamped to a steel clipboard on a graphite bench, the printed body an "
+    "unreadable grey texture, a machinist rule laid across one row, a pen resting at the margin",
+"P-S-subbota-i-bumagi":
+    "a wall planner milled as a grid of shallow grooves into a graphite steel panel bolted to a workshop "
+    "wall, twelve grooves running across it, one groove paint filled in amber",
+"P-404-chto-vzyat":
+    "a tape measure, a folding rule and a technical brief laid out on a graphite workbench in a straight "
+    "row, hard raking light separating each object from the surface",
+"P-59-karusel-logistika":
+    "a shipping register on warm white paper lying flat on a graphite bench shot straight down from above, "
+    "the printed body an unreadable grey texture, a machined steel rule across the lower third",
+"P-S-cto-vzat-na-vstrecu":
+    "a steel clipboard with a technical brief standing propped against the leg of a workbench, a pen clipped "
+    "to it, the empty bay receding into black behind",
+"P-62-dogovor-krt-punkty":
+    "a lease contract lying open on a graphite steel bench, the printed body an unreadable grey texture, "
+    "four machined steel tabs standing along its edge, one tab faced in amber",
+"P-32-vtoraya-ochered":
+    "the scaffolded facade of the second phase seen from the yard with the tower crane above it, the same "
+    "graphite chequerboard panel rhythm already fitted on the lower floors",
+"P-63-karusel-status-uchastka":
+    "a lease contract lying open on a concrete floor with a torch beam falling across one page, the printed "
+    "body an unreadable grey texture, a single paragraph traced by a narrow amber line",
+"P-S-sit-scetcik-dogovor":
+    "an electrical switchboard standing open against a workshop wall, meter and breaker rows in hard raking "
+    "light, the cabinet door swung toward the camera in the near plane",
+"P-S-granica-rabot":
+    "a construction fence line running through the territory, a block gate on the near side of it and "
+    "scaffolding beyond, a temporary route arrow painted on the concrete",
+"P-82-moshnost-delitsya":
+    "a main switchboard busbar seen straight on with feeder breakers branching from it in a row, one feeder "
+    "traced by a narrow amber line, the cabinet interior falling to black",
+"P-408-sosedstvo":
+    "the inner street of the territory in the morning, roller gates of separate blocks running down both "
+    "sides in perspective, one gate open with amber light spilling out",
+"P-S-samaa-bol-naa-proverka":
+    "a cadastral extract clamped to a steel clipboard resting on a concrete floor, the printed body an "
+    "unreadable grey texture, one line of it caught by a narrow amber light",
+"P-405-kran-balka":
+    "an overhead crane hook lowered over a machine bed in an empty bay, the crane rail running the length of "
+    "the frame overhead, the load block in hard raking light",
+"P-S-subbota-marsrut-masiny":
+    "a truck turning into the inner street of the territory past an open roller gate, the yard otherwise "
+    "empty, long shadows across wet concrete",
+"P-406-moshchnost-pod-vas":
+    "an equipment rating plate screwed to a machine flank in the near plane with an open switchboard "
+    "standing behind it in the same bay, both in one hard raking key",
+"P-66-karusel-peregovory":
+    "a lease contract lying open on a graphite steel bench with six machined steel tabs standing along its "
+    "edge, a pen laid across the page, the printed body an unreadable grey texture",
+"P-S-ponedel-nik-na-strojke":
+    "a production building under construction seen from the yard at first light, scaffolding on the facade, "
+    "the crane still, site fencing across the near plane",
+"P-80-devyat-voprosov-sosedi":
+    "a grid of nine machined recesses milled into a graphite steel plate lying flat, each recess holding a "
+    "countersunk screw, one recess paint filled in amber",
+"P-410-shattl":
+    "a shuttle bus standing at its marked stop by the checkpoint in the morning, doors open, a walking "
+    "stream of workers seen from behind boarding it, the territory gate beyond",
+"P-86-karusel-kooperaciya":
+    "two routes milled as channels into a graphite steel plate lying flat, one short channel between two "
+    "milled blocks and one long channel running off the plate edge, the short channel filled with amber",
+"P-S-obsij-proezd-utrom":
+    "two heavy trucks passing each other in the inner street of the territory, roller gates closed along "
+    "both sides, the gap between the vehicles narrow and clearly readable",
+"P-85-cena-rasstoyaniya":
+    "a route drawn as a long milled channel across a graphite steel plate lying flat, a machinist rule "
+    "measuring its length, the channel filled with amber at its far end",
+"P-97-karusel-itog":
+    "seven machined steel plates laid in a row on a graphite bench like a checklist, the last plate faced in "
+    "amber and set slightly apart from the six before it",
+"P-S-detal-uehala-v-sosednij-korpus":
+    "a machined metal part resting on a graphite bench with the open roller gate of the next block visible "
+    "beyond it through the yard, the part in sharp near focus",
+})
+
+
+# Резерв и отчёт о мероприятии: те же правила паспорта.
+СЦЕНЫ.update({
+"P-06-karusel-12-voprosov":
+    "twelve machined recesses milled in a grid into a graphite steel plate lying flat, each holding a "
+    "countersunk screw, one recess paint filled in amber, a machinist square along the lower edge",
+"P-28-karusel-ploshchadki-mira":
+    "a working production hall seen from outside through full-height glazing at dusk with dense city blocks "
+    "rising directly behind it, amber light filling the bays while the housing beyond stays cold",
+"P-56-karusel-akt":
+    "a handover inspection form clamped to a steel clipboard resting on the polished concrete floor of an "
+    "empty bay, a phone lying face down beside it, the printed body an unreadable grey texture",
+"P-60-grafik-12-nedel":
+    "twelve shallow grooves milled across a graphite steel panel bolted to a workshop wall like a countdown "
+    "strip, the first groove paint filled in amber, raking light along the milled walls",
+"P-81-karusel-sosedi":
+    "two adjacent block gates in one long facade shot straight on, one closed and one open onto a lit "
+    "interior, the shared concrete apron carrying tyre scuffs between them",
+"P-90-sreda-smeny":
+    "a workshop canteen and a locker row standing in one frame across a shared partition wall, both empty, "
+    "one warm amber source above the canteen tables and cold falloff over the lockers",
+"P-84-vk-marshrut-detali":
+    "a machined metal part resting on a graphite bench with the open roller gate of the next block visible "
+    "beyond it across the yard, the part in sharp near focus",
+"P-91-karusel-sem-mest":
+    "seven machined steel plates laid in a row on a graphite bench like a checklist, hard raking light "
+    "separating one plate from the next, the last plate faced in amber and set slightly apart",
+"P-504-karusel-kosmos-otchet":
+    "the territory at night seen from the yard, roof lines of the production buildings low against a deep "
+    "clear sky, an amateur telescope on its tripod standing on the concrete apron in the near plane, its "
+    "tube catching a single warm amber source from a doorway, no crowd and no faces",
+})
+
+
 ФОРМАТЫ = {"16:9": "16:9", "4:5": "4:5", "9:16": "9:16", "4:3": "4:3", "1:1": "1:1"}
-БЕЗ_ГЕНЕРАЦИИ = {"P-05-lift", "P-11-shattl", "P-94-kvartal-karta", "P-01-krt-karta"}
+БЕЗ_ГЕНЕРАЦИИ = {"P-05-lift", "P-11-shattl", "P-94-kvartal-karta", "P-01-krt-karta",
+                 "P-92-peresmenka-reels"}
 
 
 def единицы(корень):
@@ -232,18 +460,39 @@ def единицы(корень):
             if виз:
                 m = re.match(r"\s*(\d+:\d+)", виз.group(1))
                 if m and m.group(1) in ФОРМАТЫ: формат = m.group(1)
-            слайды = re.findall(r"^\*\*(\d+)\.\*\* ([^\n]+)\n> ([^\n]+)", ч, re.M)
+            # слайды бывают только у карусели и серии историй: у поста с опросом
+            # та же разметка означает варианты ответа, а не кадры
+            слайды = (re.findall(r"^\*\*(\d+)\.\*\* ([^\n]+)\n> ([^\n]+)", ч, re.M)
+                      if ("карусел" in z or "истори" in z) else [])
             заг = re.search(r"\n\*\*(.+?)\*\*", ч)
             сп.append({"ключ": ссылки[0], "загол": z, "формат": формат, "слайды": слайды,
                        "тема": заг.group(1) if заг else "", "блок": ч})
     return сп
 
 
+# Второй публикации на ту же тему нужен свой кадр: заголовок вгравирован в сцену.
+# Ключ с суффиксом -b наследует сцену базового, но снимается с другой точки.
+ВАРИАЦИИ = {"b": " The camera stands one step further back and a quarter turn to the left of the "
+                 "obvious view, so the same subject is read from a different angle than the frontal one.",
+            "c": " The camera drops to waist height and moves a quarter turn to the right of the obvious "
+                 "view, so the subject is read from below and from the side."}
+
+
+def сцена_ключа(к):
+    if к in СЦЕНЫ: return СЦЕНЫ[к]
+    осн, _, суф = к.rpartition("-")
+    if суф in ВАРИАЦИИ and осн in СЦЕНЫ:
+        return СЦЕНЫ[осн] + ВАРИАЦИИ[суф]
+    return None
+
+
 def кадры_единицы(е):
     """Список кадров под движок: один для поста, по слайду для карусели и серии."""
     к = е["ключ"]
-    if к in БЕЗ_ГЕНЕРАЦИИ or к not in СЦЕНЫ: return []
-    сцена = СЦЕНЫ[к]
+    осн = к.rpartition("-")[0] if к.rpartition("-")[2] in ВАРИАЦИИ else к
+    if к in БЕЗ_ГЕНЕРАЦИИ or осн in БЕЗ_ГЕНЕРАЦИИ: return []
+    сцена = сцена_ключа(к)
+    if not сцена: return []
     if not е["слайды"]:
         тема = е["тема"].replace("«", "").replace("»", "").strip()
         return [{"ключ": к, "формат": е["формат"], "сцена": сцена, "вид": "пост",
