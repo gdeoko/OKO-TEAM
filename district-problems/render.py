@@ -107,5 +107,5 @@ ul.ins{{margin:10px 0 0 18px}} ul.ins li{{margin-bottom:9px;font-size:15px}}
 {addr_cards}
 
 </body></html>'''
-open("Справка_проблемы_по_адресам.html","w").write(HTML)
+open("spravka-problemy.html","w").write(HTML)
 print("ok", len(HTML))
