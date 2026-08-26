@@ -3074,21 +3074,130 @@ function buildWorld() {
   hole.position.set(2140, -160, -2380);
   scene.add(hole);
 
-  /* ── Гиперпрыжок: пучок линий, вытянутых навстречу ── */
+  /* ── Гиперпрыжок: светящиеся следы ──────────────────────────
+     Здесь стояли LineSegments с LineBasicMaterial. В WebGL это всегда
+     линия толщиной ровно в один пиксель, одной яркости по всей длине
+     и без сглаживания. На телефоне заказчика прыжок и выглядел как
+     веер белых палок с лесенкой по краю: «скачок ужасно выглядит
+     вообще, прям хуета полная».
+
+     Толщину линии в WebGL задать нельзя, поэтому каждый след теперь
+     не линия, а вытянутый четырёхугольник, повёрнутый плашмя к
+     камере. Шейдер даёт ему то, чего у линии не было и быть не могло:
+
+       поперёк - мягкий спад от раскалённого ядра к прозрачным краям,
+                 то есть край размыт, а не нарезан пикселями;
+       вдоль   - голова яркая, хвост уходит в ноль, след читается
+                 летящим, а не приклеенным;
+       вразнобой - у каждого следа своя яркость, своя ширина и своя
+                 длина, поэтому пучок имеет глубину;
+       цвет    - ядро белёсое, края уходят в цвет прыжка. */
   var jump = (function () {
-    var nLines = tiny ? 220 : (particleBudget ? 280 : 420);
+    var n = tiny ? 200 : (particleBudget ? 260 : 380);
     var geo = new T.BufferGeometry();
-    var pos = new Float32Array(nLines * 6);
-    for (var k = 0; k < nLines; k++) {
-      var a = Math.random() * 6.283, rr = 14 + Math.random() * 240;
-      var x0 = Math.cos(a) * rr, y0 = Math.sin(a) * rr, z0 = -Math.random() * 900;
-      pos[k * 6] = x0; pos[k * 6 + 1] = y0; pos[k * 6 + 2] = z0;
-      pos[k * 6 + 3] = x0; pos[k * 6 + 4] = y0; pos[k * 6 + 5] = z0 - (60 + Math.random() * 200);
+    var pos = new Float32Array(n * 4 * 3);
+    var aSide = new Float32Array(n * 4);
+    var aAlong = new Float32Array(n * 4);
+    var aSeed = new Float32Array(n * 4);
+    var idx = new Uint16Array(n * 6);
+    for (var k = 0; k < n; k++) {
+      var a = Math.random() * 6.283;
+      /* Ближе к центру кадра следов гуще: там и находится точка, из
+         которой они разбегаются. Ровное распределение по радиусу
+         давало пустую середину. */
+      var rr = 10 + Math.pow(Math.random(), 0.72) * 250;
+      var z0 = -Math.random() * 900;
+      var len = 70 + Math.random() * 230;
+      /* Дальние следы тоньше ближних: это и создаёт глубину пучка. */
+      var wid = (0.8 + Math.random() * 2.6) * (0.55 + rr / 260 * 0.6);
+      var cx = Math.cos(a) * rr, cy = Math.sin(a) * rr;
+      /* Ширину откладываем поперёк луча, то есть по касательной: на
+         экране след идёт от центра наружу, и его толщина должна расти
+         вбок от этого направления. */
+      var tx = -Math.sin(a) * wid, ty = Math.cos(a) * wid;
+      var b = k * 4, p = b * 3;
+      pos[p] = cx - tx;      pos[p + 1] = cy - ty;      pos[p + 2] = z0;
+      pos[p + 3] = cx + tx;  pos[p + 4] = cy + ty;      pos[p + 5] = z0;
+      pos[p + 6] = cx + tx;  pos[p + 7] = cy + ty;      pos[p + 8] = z0 - len;
+      pos[p + 9] = cx - tx;  pos[p + 10] = cy - ty;     pos[p + 11] = z0 - len;
+      aSide[b] = -1; aSide[b + 1] = 1; aSide[b + 2] = 1; aSide[b + 3] = -1;
+      aAlong[b] = 0; aAlong[b + 1] = 0; aAlong[b + 2] = 1; aAlong[b + 3] = 1;
+      var sd = Math.random();
+      aSeed[b] = aSeed[b + 1] = aSeed[b + 2] = aSeed[b + 3] = sd;
+      var i6 = k * 6;
+      idx[i6] = b; idx[i6 + 1] = b + 1; idx[i6 + 2] = b + 2;
+      idx[i6 + 3] = b; idx[i6 + 4] = b + 2; idx[i6 + 5] = b + 3;
     }
     geo.setAttribute("position", new T.BufferAttribute(pos, 3));
-    var lines = new T.LineSegments(geo, new T.LineBasicMaterial({ color: 0x9fd8ef, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false }));
-    lines.frustumCulled = false;
-    return lines;
+    geo.setAttribute("aSide", new T.BufferAttribute(aSide, 1));
+    geo.setAttribute("aAlong", new T.BufferAttribute(aAlong, 1));
+    geo.setAttribute("aSeed", new T.BufferAttribute(aSeed, 1));
+    geo.setIndex(new T.BufferAttribute(idx, 1));
+    var mat = new T.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+      side: T.DoubleSide,
+      uniforms: {
+        uOpacity: { value: 0 },
+        uColor: { value: new T.Color(0x9fd8ef) },
+        uHeat: { value: 0 }
+      },
+      vertexShader: [
+        "attribute float aSide;",
+        "attribute float aAlong;",
+        "attribute float aSeed;",
+        "varying float vSide;",
+        "varying float vAlong;",
+        "varying float vSeed;",
+        "void main() {",
+        "  vSide = aSide; vAlong = aAlong; vSeed = aSeed;",
+        "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
+        "}"
+      ].join("\n"),
+      fragmentShader: [
+        "precision mediump float;",
+        "uniform float uOpacity;",
+        "uniform float uHeat;",
+        "uniform vec3 uColor;",
+        "varying float vSide;",
+        "varying float vAlong;",
+        "varying float vSeed;",
+        "void main() {",
+        /* Поперёк следа: единица в середине, ноль по краям. Степень
+           даёт узкое раскалённое ядро и широкий мягкий ореол. */
+        "  float w = 1.0 - abs(vSide);",
+        "  w = clamp(w, 0.0, 1.0);",
+        "  float core = pow(w, 5.0);",
+        "  float halo = pow(w, 1.35);",
+        /* Вдоль: голова яркая, хвост в ноль. К середине прыжка хвост
+           тянется дальше - свет мимо стекла идёт быстрее. */
+        "  float tail = pow(clamp(1.0 - vAlong, 0.0, 1.0), 1.55 - uHeat * 0.5);",
+        /* Голова чуть подсвечена отдельно: у настоящего следа она
+           самая яркая точка, а не просто край. */
+        "  float head = pow(clamp(1.0 - vAlong, 0.0, 1.0), 9.0) * 0.55;",
+        "  float a = (halo * 0.55 + core * 0.9) * (tail + head) * uOpacity * (0.4 + vSeed * 0.6);",
+        "  if (a < 0.004) discard;",
+        "  vec3 col = mix(uColor, vec3(1.0), core * (0.55 + uHeat * 0.35));",
+        "  gl_FragColor = vec4(col * (0.55 + core * 0.85), a);",
+        "}"
+      ].join("\n")
+    });
+    var mesh = new T.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    /* Обновляющий код правит .opacity и .color, как у обычного
+       материала. Держим этот же вид наружу, чтобы прыжок оставался
+       одной понятной ручкой. */
+    Object.defineProperty(mat, "opacity", {
+      get: function () { return mat.uniforms.uOpacity.value; },
+      set: function (v) { mat.uniforms.uOpacity.value = v; }
+    });
+    Object.defineProperty(mat, "color", {
+      get: function () { return mat.uniforms.uColor.value; }
+    });
+    Object.defineProperty(mat, "heat", {
+      get: function () { return mat.uniforms.uHeat.value; },
+      set: function (v) { mat.uniforms.uHeat.value = v; }
+    });
+    return mesh;
   })();
   scene.add(jump);
 
@@ -5259,6 +5368,9 @@ function frame(ts) {
       /* Фаза туннеля: к концу прыжка полосы уходят из циана в
          фиолет - видно, что летим уже по другому рукаву */
       jm.color.setRGB(0.62 - jk * 0.2, 0.85 - jk * 0.35, 0.94);
+      /* Накал ведёт и белизну ядра, и длину хвоста: к пробою след
+         вытягивается и выгорает добела, после выхода успокаивается. */
+      if ("heat" in jm) jm.heat = Math.pow(Math.sin(Math.min(1, jk * 1.12) * Math.PI), 0.8);
     }
     F.jz = ((F.jz || 0) + dt * (420 + jk * 1500)) % 300;
     /* Растяжение полос идёт не ровной синусоидой, а с изломом на
