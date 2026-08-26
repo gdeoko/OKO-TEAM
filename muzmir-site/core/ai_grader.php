@@ -185,6 +185,96 @@ function ag_keys(): array {
 }
 
 /**
+ * КАКИМ КАНАЛОМ СПРАШИВАЕМ МОДЕЛЬ: 'bridge' (браузер агента) или 'api' (ключ).
+ *
+ * Разбор через API жёг платную квоту: к девяти утра дневной лимит кончался, и
+ * весь рабочий день без мозга оставались и оценка, и чат-бот. Подписка Google
+ * у центра уже оплачена, и в браузере на мосту сидит тот же аккаунт — там
+ * разбор ничего не стоит. Ключ остаётся чату и запасным путём для оценки.
+ */
+function ag_transport(): string {
+    $t = (string) (function_exists('setting') ? setting('grade_transport', 'bridge') : 'bridge');
+    return in_array($t, ['bridge', 'api'], true) ? $t : 'bridge';
+}
+
+/**
+ * Спросить модель через браузер агента на мосту.
+ *
+ * Файл на мост не передаём: мост забирает его сам по временной ссылке с сайта
+ * (см. маршрут /grade-media в public/index.php). Так не нужен ни обратный ssh,
+ * ни base64 в теле команды — конкурсная запись весит десятки мегабайт.
+ *
+ * @param  string   $prompt  задание для модели (тот же, что уходит в API)
+ * @param  string[] $files   подготовленные дорожки: запись, звук, изображение
+ * @return array{ok:bool, text:string, why:string}
+ */
+function ag_ask_bridge(string $prompt, array $files): array {
+    $bad = static fn(string $w): array => ['ok' => false, 'text' => '', 'why' => $w];
+
+    $poster = trim((string) cfgv('oko_poster_url', ''));
+    $token  = trim((string) cfgv('oko_poster_token', ''));
+    if ($poster === '' || $token === '') return $bad('мост не настроен (oko_poster_url/token)');
+
+    $files = array_values(array_filter($files, 'is_file'));
+    if (!$files) return $bad('нет подготовленных дорожек');
+
+    // Раздаём файлы по одноразовой ссылке: имя не угадать, живёт полчаса,
+    // чистится сразу после разбора (и по расписанию, если разбор оборвался).
+    $share = BASE_PATH . '/data/grade_share';
+    if (!is_dir($share)) @mkdir($share, 0775, true);
+    $tag = bin2hex(random_bytes(16));
+    $links = []; $copies = [];
+    foreach ($files as $i => $f) {
+        $ext  = strtolower(pathinfo($f, PATHINFO_EXTENSION)) ?: 'bin';
+        $dst  = $share . '/' . $tag . '_' . $i . '.' . $ext;
+        if (!@copy($f, $dst)) continue;
+        $copies[] = $dst;
+        $links[]  = ['url' => rtrim((string) cfgv('site_url', url('/')), '/') . '/grade-media/' . $tag . '/' . $i . '.' . $ext,
+                     'name' => 'g' . $i . '.' . $ext];
+    }
+    if (!$links) return $bad('файлы не удалось выложить для моста');
+
+    $rm = static function (array $paths): void { foreach ($paths as $p) @unlink($p); };
+
+    // Команда мосту: забрать файлы, положить задание, позвать драйвер, отдать ответ.
+    $work = '/tmp/grade_' . $tag;
+    $cmd  = 'set -e; mkdir -p ' . $work . '; cd ' . $work . '; ';
+    $mfiles = [];
+    foreach ($links as $l) {
+        $cmd .= 'curl -sSL --max-time 300 -o ' . escapeshellarg($l['name']) . ' ' . escapeshellarg($l['url']) . '; ';
+        $mfiles[] = $work . '/' . $l['name'];
+    }
+    $cmd .= 'printf %s ' . escapeshellarg($prompt) . ' > zadanie.txt; ';
+    $cmd .= 'cd /opt/oko-poster && NODE_PATH=/opt/oko-poster/node_modules timeout 900 node gemini_grade.mjs '
+          . escapeshellarg($work . '/zadanie.txt') . ' ' . escapeshellarg($work . '/otvet.txt') . ' '
+          . escapeshellarg(implode(',', $mfiles)) . ' 600 >/dev/null 2>&1 || true; ';
+    $cmd .= 'echo "===OTVET==="; cat ' . escapeshellarg($work . '/otvet.txt') . ' 2>/dev/null; ';
+    $cmd .= 'rm -rf ' . $work;
+
+    $ch = curl_init($poster);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => 1, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 1200,
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['cmd' => $cmd], JSON_UNESCAPED_SLASHES),
+    ]);
+    $resp = (string) curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $rm($copies);
+
+    if ($code !== 200) return $bad('мост ответил кодом ' . $code);
+
+    // Мост отвечает конвертом {"exit":..,"stdout":..,"stderr":..}, а не голым выводом.
+    $j   = json_decode($resp, true);
+    $out = is_array($j) ? (string) ($j['stdout'] ?? '') : $resp;
+    $pos = strpos($out, '===OTVET===');
+    if ($pos === false) return $bad('мост не вернул ответ модели');
+    $text = trim(substr($out, $pos + 11));
+    if ($text === '') return $bad('браузер агента ответа не дал');
+    return ['ok' => true, 'text' => $text, 'why' => ''];
+}
+
+/**
  * ПОДГОТОВКА ЗАПИСИ ДЛЯ МОДЕЛИ.
  *
  * Видео ужимаем до 480p и 12 кадров в секунду: для оценки чистоты линий,
