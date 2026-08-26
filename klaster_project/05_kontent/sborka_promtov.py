@@ -14,7 +14,8 @@ from promt_engine import Бренд, собрать, проверить
 
 КЛАСТЕР = Бренд(
     имя="КЛАСТЕР",
-    домен="CLUSTERSPACE.RU",
+    домен="",  # домен сайта клиент ещё не выбрал: в кадр адрес не ставим
+
     палитра=("The palette is locked to five values and their gradations: amber #E8A400 as the single saturated accent "
              "and the only warm light in the frame, muted gold #C9A233 for secondary highlights on machined edges and "
              "leader lines, graphite #14171C for solid bodies, panels and shadowed metal, ink black #0E1116 for "

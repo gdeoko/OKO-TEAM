@@ -56,10 +56,11 @@ class Бренд:
 def воронка(бренд):
     return (f"This closing slide carries the funnel: bolted low on the surface, centred, its centre at seventy nine "
             f"percent down the frame, a wide brushed steel plate with four countersunk screws, engraved and paint "
-            f"filled with the {бренд.имя} wordmark taken one to one from the attached logo file, and beneath it, "
-            f"engraved in the accent colour at one quarter of the headline cap height, the line «{бренд.домен}»; "
-            f"hard-stencilled just below in warm white capitals at one third of the headline cap height, the closing "
-            f"line «СОХРАНИТЕ, ЧТОБЫ НЕ ИСКАТЬ».")
+            f"filled with the {бренд.имя} wordmark taken one to one from the attached logo file"
+            + (f", and beneath it, engraved in the accent colour at one quarter of the headline cap height, the line "
+               f"«{бренд.домен}»" if бренд.домен else "")
+            + f"; hard-stencilled just below in warm white capitals at one third of the headline cap height, the "
+              f"closing line «СОХРАНИТЕ, ЧТОБЫ НЕ ИСКАТЬ».")
 
 
 def поля_сторис():
@@ -107,7 +108,8 @@ def собрать(бренд, кадры):
                 куски.append(воронка(бренд) if вид == "карусель" else
                              f"This is the closing frame of the series, so the {бренд.имя} mark from the attached logo "
                              f"file is engraved once, small, at three percent of the frame width, into a brushed steel "
-                             f"plate low inside the working window, with the line «{бренд.домен}» engraved beneath it.")
+                             f"plate low inside the working window"
+                             + (f", with the line «{бренд.домен}» engraved beneath it." if бренд.домен else "."))
         куски.append(система)
         текст = " ".join(куски)
         промпты[к["ключ"]] = {"формат": формат, "размер": размер, "текст": текст}
