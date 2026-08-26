@@ -439,9 +439,10 @@ from promt_engine import Бренд, собрать, проверить
     "seven machined steel plates laid in a row on a graphite bench like a checklist, hard raking light "
     "separating one plate from the next, the last plate faced in amber and set slightly apart",
 "P-504-karusel-kosmos-otchet":
-    "the territory at night seen from the yard, roof lines of the production buildings low against a deep "
-    "clear sky, an amateur telescope on its tripod standing on the concrete apron in the near plane, its "
-    "tube catching a single warm amber source from a doorway, no crowd and no faces",
+    "the flat roof of the administrative building at night, its parapet and roof plant low in the frame, a "
+    "large amateur telescope on a heavy equatorial mount standing on the roof deck in the near plane with "
+    "its tube raised toward a deep clear sky, the lit production buildings of the territory spread out below "
+    "and behind it, a single warm amber source from a roof hatch raking across the tube, no crowd and no faces",
 })
 
 
