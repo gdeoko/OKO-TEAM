@@ -2194,6 +2194,41 @@ function buildWorld() {
     return t;
   }
 
+  /* Карта тела со страховкой. Снимок ставим ТОЛЬКО когда он
+     действительно доехал: три.js держит у материала пустую текстуру,
+     пока файл грузится, и шар всё это время чёрный. На быстром канале
+     это незаметно, на мобильном - планета угольная. Пока снимка нет,
+     работает цвет материала, а карта встаёт по факту загрузки. */
+  function картаТела(путь, мат) {
+    var src = путь;
+    if (!WEBP) src = путь.replace(/\.webp$/, ".jpg");
+    L.load(src,
+      function (t) {
+        t.colorSpace = T.SRGBColorSpace || t.colorSpace;
+        t.anisotropy = АНИЗО;
+        mat_поставить(мат, t);
+      },
+      null,
+      function () {
+        /* Не доехал webp - пробуем исходник. Не доехал и он - тело
+           остаётся своего цвета, и это честнее чёрного шара. */
+        if (src === путь) return;
+        L.load(путь, function (t2) {
+          t2.colorSpace = T.SRGBColorSpace || t2.colorSpace;
+          t2.anisotropy = АНИЗО;
+          mat_поставить(мат, t2);
+        }, null, function () {});
+      });
+    return null;
+  }
+  function mat_поставить(мат, t) {
+    if (!мат) return;
+    мат.map = t;
+    if (мат.emissive && мат.emissiveIntensity) мат.emissiveMap = t;
+    мат.color.setRGB(1, 1, 1);
+    мат.needsUpdate = true;
+  }
+
   /* Небо: панорама Млечного Пути на дальней сфере + звёзды точками.
      Панорама даёт глубину и «дорогое» небо, точки - искры и
      параллакс, которого у панорамы нет. */
@@ -2519,8 +2554,100 @@ function buildWorld() {
      Все они процедурные - ни одного лишнего килобайта на загрузку. */
   var atmShells = [];
   var solarLive = [];
+
+  /* ── Ободок атмосферы ────────────────────────────────────────
+     Один на все тела. Раньше он был вписан в makePlanet, и когда у
+     Земли починили обводку, у соседей она осталась: правку пришлось
+     бы повторять в каждом месте. Теперь место одно.
+
+     Про саму обводку. Оболочка рисуется ЗАДНЕЙ стороной, значит в
+     кадр попадает только колечко за силуэтом тела. Прежняя запись
+     через порог 0.72 давала ровную полосу с обрубленным наружным
+     краем - глаз читал её нарисованным контуром, владелец так и
+     сказал: «с какой-то обводкой». Оболочку раздвигаем (было 1.075
+     радиуса, стало 1.12: свету нужно место, чтобы сойти на нет), а
+     яркость ведём по произведению нормали на взгляд без переворота
+     знака - у внешней кромки ноль, к поверхности гуще. */
+  function атмосфера(r, цвет, тепло) {
+    return new T.Mesh(
+      new T.SphereGeometry(r * 1.12, tiny ? 26 : 44, tiny ? 18 : 30),
+      new T.ShaderMaterial({
+        transparent: true, side: T.BackSide, depthWrite: false,
+        blending: T.AdditiveBlending,
+        uniforms: {
+          uC: { value: new T.Color(цвет) },
+          uWarm: { value: new T.Color(тепло || 0xffb37a) },
+          uSun: { value: new T.Vector3(1, 0.35, 0.6).normalize() }
+        },
+        vertexShader:
+          "varying vec3 vN; varying vec3 vW;" +
+          "void main(){ vN = normalize(normalMatrix * normal);" +
+          "  vW = normalize(mat3(modelMatrix) * normal);" +
+          "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+        fragmentShader:
+          "varying vec3 vN; varying vec3 vW; uniform vec3 uC; uniform vec3 uWarm; uniform vec3 uSun;" +
+          "void main(){" +
+          "  float край = clamp(dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0);" +
+          "  float rim = pow(край, 1.35);" +
+          "  float lit = clamp(dot(vW, uSun) * 0.5 + 0.5, 0.0, 1.0);" +
+          /* Терминатор: узкая полоса на границе света и тени */
+          "  float term = pow(1.0 - abs(dot(vW, uSun)), 8.0);" +
+          "  vec3 col = mix(uC * 0.35, uC, lit);" +
+          "  col = mix(col, uWarm, term * 0.65);" +
+          "  gl_FragColor = vec4(col, rim * 1.15 * (0.05 + lit * 0.95));" +
+          "}"
+      })
+    );
+  }
   function makePlanet(r, pos, base, bands, noise, opt) {
     opt = opt || {};
+    /* ── Настоящий снимок вместо рисунка ───────────────────────
+       Землю в окне узнают сразу, а соседние планеты выглядели
+       нарисованными - и не потому, что рисовали плохо. У Земли лежат
+       настоящие карты со снимков, у остальных карта считалась кодом.
+       Владелец сказал прямо: «всё в космосе так же реалистично
+       сделай, как в жизни».
+
+       Если для тела есть снимок, строим его как Землю: карта в
+       diffuse, свет от одного светила, шероховатость поверхности - и
+       никакого процедурного слоя. Нет снимка - всё идёт по-старому,
+       ни одна планета не остаётся без тела. */
+    if (opt.карта) {
+      /* Цвет держим ВСЕГДА, даже когда есть снимок. Материал без
+         картинки уходит в чёрный: приёмка поймала Сатурна угольным
+         шаром, пока его карта ещё качалась. С цветом худшее, что
+         может случиться, - планета своего оттенка вместо снимка, а
+         не дыра в кадре. */
+      var оттенок = new T.Color((base[Math.floor(base.length * 0.5)] || base[0])[1]);
+      var мт = new T.MeshStandardMaterial({
+        color: оттенок,
+        map: null,
+        roughness: opt.шерох == null ? 0.92 : opt.шерох,
+        metalness: 0.0,
+        /* Окружение сюда не пускаем по той же причине, что и у Земли:
+           панорама светит со всех сторон и поднимает теневую половину
+           до уровня освещённой - шар выходит плоским. */
+        envMapIntensity: 0.0
+      });
+      if (opt.emis) {
+        мт.emissiveMap = мт.map;
+        мт.emissive = new T.Color(opt.emis);
+        мт.emissiveIntensity = opt.emisI || 0.5;
+      }
+      картаТела(opt.карта, мт);
+      var снимок = new T.Mesh(new T.SphereGeometry(r, tiny ? 36 : 64, tiny ? 24 : 44), мт);
+      снимок.position.set(pos[0], pos[1], pos[2]);
+      if (opt.наклон) снимок.rotation.z = opt.наклон;
+      scene.add(снимок);
+      if (opt.info) снимок.userData.info = opt.info;
+      if (opt.atm) {
+        var аш = атмосфера(r, opt.atm, opt.warm);
+        снимок.add(аш);
+        снимок.userData.atm = аш;
+        atmShells.push({ mesh: аш, body: снимок });
+      }
+      return снимок;
+    }
     /* Use the same procedural material system as the exoplanets for
        the home Solar System. Its colour, bump, specular, atmosphere
        and cloud maps are derived from one seeded 3D height field, so
@@ -2572,34 +2699,7 @@ function buildWorld() {
          по которому глаз узнаёт закат с орбиты. Направление на
          светило приходит извне, поэтому у каждой планеты ободок
          повёрнут в свою сторону, а не одинаково у всех. */
-      var a = new T.Mesh(
-        new T.SphereGeometry(r * 1.075, tiny ? 22 : 36, tiny ? 16 : 26),
-        new T.ShaderMaterial({
-          transparent: true, side: T.BackSide, depthWrite: false,
-          blending: T.AdditiveBlending,
-          uniforms: {
-            uC: { value: new T.Color(opt.atm) },
-            uWarm: { value: new T.Color(opt.warm || 0xffb37a) },
-            uSun: { value: new T.Vector3(1, 0.35, 0.6).normalize() }
-          },
-          vertexShader:
-            "varying vec3 vN; varying vec3 vW;" +
-            "void main(){ vN = normalize(normalMatrix * normal);" +
-            "  vW = normalize(mat3(modelMatrix) * normal);" +
-            "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-          fragmentShader:
-            "varying vec3 vN; varying vec3 vW; uniform vec3 uC; uniform vec3 uWarm; uniform vec3 uSun;" +
-            "void main(){" +
-            "  float rim = pow(clamp(0.72 - dot(vN, vec3(0.0,0.0,-1.0)), 0.0, 1.0), 3.0);" +
-            "  float lit = clamp(dot(vW, uSun) * 0.5 + 0.5, 0.0, 1.0);" +
-            /* Терминатор: узкая полоса на границе света и тени */
-            "  float term = pow(1.0 - abs(dot(vW, uSun)), 8.0);" +
-            "  vec3 col = mix(uC * 0.35, uC, lit);" +
-            "  col = mix(col, uWarm, term * 0.65);" +
-            "  gl_FragColor = vec4(col, rim * (0.22 + lit * 0.72));" +
-            "}"
-        })
-      );
+      var a = атмосфера(r, opt.atm, opt.warm);
       body.add(a);
       body.userData.atm = a;
       atmShells.push({ mesh: a, body: body });
@@ -2688,14 +2788,18 @@ function buildWorld() {
 
   var mercury = makePlanet(12, [470, 200, 690],
     [[0, "#c9b7a3"], [0.5, "#8e7d6d"], [1, "#5a4e44"]], 6, 700,
-    { kind: "rocky", seed: 3,
+    { kind: "rocky", seed: 3, карта: "assets/space/mercury.webp", шерох: 0.96,
       info: RU ? "МЕРКУРИЙ · год длиннее суток · без атмосферы" : "MERCURY · no atmosphere" });
   var venus = makePlanet(28, [190, 110, 360],
     [[0, "#f9e9c2"], [0.45, "#e0bf7a"], [1, "#a87f46"]], 26, 60,
-    { kind: "gas", rcKind: "toxic", seed: 8, atm: 0xf0d79a, warm: 0xffd9a0, info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
+    { kind: "gas", rcKind: "toxic", seed: 8, atm: 0xf0d79a, warm: 0xffd9a0,
+      карта: "assets/space/venus.webp", шерох: 0.88,
+      info: RU ? "ВЕНЕРА · 460 градусов · сутки длиннее года" : "VENUS · 460 C" });
   var jupiter = makePlanet(122, [1130, -50, -1180],
     [[0, "#efdfc4"], [0.22, "#c99f6e"], [0.44, "#e8d3ae"], [0.62, "#a97648"], [0.8, "#e2c9a4"], [1, "#c9a276"]], 44, 40,
-    { kind: "gas", seed: 17, atm: 0xe8cfa6, warm: 0xffc98a, info: RU ? "ЮПИТЕР · Большое красное пятно старше телескопа" : "JUPITER" });
+    { kind: "gas", seed: 17, atm: 0xe8cfa6, warm: 0xffc98a,
+      карта: "assets/space/jupiter.webp", шерох: 0.90,
+      info: RU ? "ЮПИТЕР · Большое красное пятно старше телескопа" : "JUPITER" });
   /* Большое красное пятно: узнаваемая примета, без неё Юпитер
      читается просто полосатым шаром */
   var spot = new T.Mesh(
@@ -2706,11 +2810,15 @@ function buildWorld() {
   (jSpin || jupiter).add(spot);
   var uranus = makePlanet(66, [1790, 390, -1430],
     [[0, "#dbf5f7"], [0.5, "#9fd8e0"], [1, "#74aebd"]], 22, 40,
-    { kind: "ice", seed: 23, atm: 0x9fe0ee, warm: 0xbfe8f5, info: RU ? "УРАН · лежит на боку · ось наклонена на 98 градусов" : "URANUS" });
+    { kind: "ice", seed: 23, atm: 0x9fe0ee, warm: 0xbfe8f5,
+      карта: "assets/space/uranus.webp", шерох: 0.86, наклон: 1.7,
+      info: RU ? "УРАН · лежит на боку · ось наклонена на 98 градусов" : "URANUS" });
   uranus.rotation.z = 1.7;
   var neptune = makePlanet(62, [2090, 250, -1930],
     [[0, "#8fb4f6"], [0.5, "#3f68c4"], [1, "#22407f"]], 30, 40,
-    { kind: "gas", seed: 31, atm: 0x6f9bf0, warm: 0x9fc0ff, info: RU ? "НЕПТУН · ветер до 2100 км/ч · самый быстрый в системе" : "NEPTUNE" });
+    { kind: "gas", seed: 31, atm: 0x6f9bf0, warm: 0x9fc0ff,
+      карта: "assets/space/neptune.webp", шерох: 0.88,
+      info: RU ? "НЕПТУН · ветер до 2100 км/ч · самый быстрый в системе" : "NEPTUNE" });
 
   /* Пояс астероидов между Марсом и Юпитером: облако мелких точек по
      дуге. Точками, а не телами - их тысячи, и каждая отдельным
@@ -2769,12 +2877,21 @@ function buildWorld() {
   scene.add(new T.Line(relayGeo, new T.LineBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false })));
 
   /* ── Марс ── */
+  /* Марс снимком, а не рисунком: мозаика «Викингов» (MDIM21, NASA,
+     общественное достояние). На нарисованной карте не было ни долины
+     Маринер, ни Фарсиды, ни полярных шапок - шар читался крашеным
+     оранжевым. Свет считается как у Земли: Standard, шероховатость
+     под пыль, окружение не пускаем. */
   var mars = new T.Mesh(
     new T.SphereGeometry(30, 44, 30),
-    new T.MeshPhongMaterial({
-      map: paintPlanet(tiny ? 512 : 1024, tiny ? 256 : 512, [[0, "#e8d6c8"], [0.16, "#c96f3b"], [0.5, "#a8502a"], [0.78, "#8c3f22"], [1, "#e2cfc2"]], 8, 900, "rocky", 41),
-      shininess: 4
-    })
+    (function () {
+      var м = new T.MeshStandardMaterial({
+        color: new T.Color(0xb0603a),
+        roughness: 0.95, metalness: 0.0, envMapIntensity: 0.0
+      });
+      картаТела("assets/space/mars.webp", м);
+      return м;
+    })()
   );
   mars.position.set(620, -170, -820);
   scene.add(mars);
@@ -2783,14 +2900,19 @@ function buildWorld() {
   var saturn = new T.Group();
   saturn.add(new T.Mesh(
     new T.SphereGeometry(46, 48, 34),
-    new T.MeshPhongMaterial({
-      /* Карта вдвое подробнее прежней. Сатурн в кино подходит
-         вплотную и занимает пол-кадра: на 1024 точках по долготе
-         полосы тонули в размытии, и шар читался крашеным. На слабых
-         устройствах остаётся прежний размер. */
-      map: paintPlanet(tiny ? 512 : 2048, tiny ? 256 : 1024, [[0, "#e8d3a4"], [0.26, "#e0c188"], [0.5, "#c9a56d"], [0.74, "#eedaab"], [1, "#b5905c"]], 46, 34, "gas", 53),
-      shininess: 6
-    })
+    (function () {
+      var м = new T.MeshStandardMaterial({
+      /* Сатурн снимком. Прежняя карта считалась кодом, и полосы у
+         неё шли ровными лентами - у настоящего Сатурна они разной
+         ширины, с завихрениями на границах и с шестиугольником у
+         полюса. Он в кино подходит вплотную и занимает пол-кадра,
+         поэтому разницу видно сразу. */
+        color: new T.Color(0xd8bb86),
+        roughness: 0.9, metalness: 0.0, envMapIntensity: 0.0
+      });
+      картаТела("assets/space/saturn.webp", м);
+      return м;
+    })()
   ));
   var ringGeo = new T.RingGeometry(60, 116, 96, 1);
   /* UV кольца по радиусу, чтобы полосатая текстура легла кругами */
@@ -5359,6 +5481,21 @@ function open() {
     if (g.RC_GL && !g.RC_GL.want3d) return;   /* этому устройству не положено */
     return;
   }
+  /* Корпус кабины ждём так же, как объёмный слой. Без него класс
+     объёмной рубки вставал на пустое место, раскладка клавиш
+     переезжала, а рамы вокруг не было - тот самый кадр «панель
+     управления пропала». Пробуем снова, когда модуль доедет. */
+  if (!g.RC_CABIN) {
+    if (!open._ждуКабину) {
+      open._ждуКабину = setInterval(function () {
+        if (!g.RC_CABIN) return;
+        clearInterval(open._ждуКабину);
+        open._ждуКабину = 0;
+        open();
+      }, 220);
+    }
+    return;
+  }
   buildUI();
   if (!F.built) {
     try { W3 = buildWorld(); } catch (e) {
@@ -5390,13 +5527,17 @@ function open() {
     cabinFlightMode();
     cabFrameLayer();
     deckLayer();
-    ui.wrap.classList.add("rcf-native-cab");
+    /* Класс ставим ТОЛЬКО когда корпус собран. Иначе раскладка
+       клавиш уезжала в объёмную, а рамы вокруг не было. */
+    if (cabin) ui.wrap.classList.add("rcf-native-cab");
   } else {
     F.p = 0; F.v = 0; F.last = 0;
     cabinFlightMode();
     cabFrameLayer();
     deckLayer();
-    ui.wrap.classList.add("rcf-native-cab");
+    /* Класс ставим ТОЛЬКО когда корпус собран. Иначе раскладка
+       клавиш уезжала в объёмную, а рамы вокруг не было. */
+    if (cabin) ui.wrap.classList.add("rcf-native-cab");
   }
 
   /* Возвращаемся домой. Раньше выход из чужой вселенной оставлял
@@ -7130,6 +7271,27 @@ function stage(k) {
       });
     }
     F.stageK = k;
+    return;
+  }
+  /* ── Без корпуса кабины сцену не показываем ────────────────
+     cabinBuild молча выходит, если модуль кабины ещё не доехал, а
+     сцена включалась следом - и человек видел клавиши и космос БЕЗ
+     рамы рубки. На быстром канале это доли секунды и незаметно, на
+     мобильном интернете - минута такого кадра. Владелец прислал
+     ровно его: «а куда снова панель управления пропала?»
+
+     Ждём модуль и пробуем снова. Скролл при этом не блокируется:
+     доля просто запоминается, как и с объёмным слоем выше. */
+  if (!g.RC_CABIN) {
+    F.stageK = k;
+    if (!stage._ждуКабину) {
+      stage._ждуКабину = setInterval(function () {
+        if (!g.RC_CABIN) return;
+        clearInterval(stage._ждуКабину);
+        stage._ждуКабину = 0;
+        if (F.stageK > 0.002 && !F.stage) stage(F.stageK);
+      }, 220);
+    }
     return;
   }
   buildUI();

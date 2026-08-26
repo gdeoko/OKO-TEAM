@@ -745,3 +745,11 @@ html[data-act="walk"][data-clear="1"] main.w3-stage > * {
 /* Ход камеры мира: пишется адресно каждому слою в кадре (rc-world),
    поэтому наследование ему тоже не нужно */
 @property --w3-shift { syntax: "<length>"; inherits: false; initial-value: 0px; }
+
+/* Подпись к картам тел. Мелко и тихо: это обязательство по лицензии
+   CC BY 4.0 для части карт, а не строка, которую надо читать. */
+.legal .legal-maps {
+  opacity: .55;
+  font-size: .82em;
+  flex-basis: 100%;
+}

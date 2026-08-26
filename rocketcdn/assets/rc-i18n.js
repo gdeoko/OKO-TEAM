@@ -196,6 +196,7 @@ var RU = {
   "ftr.sla":       "Условия SLA",
   "ftr.rights":    "Все права защищены",
   "ftr.made":      "Сделано в OKO TEAM",
+  "ftr.maps":      "Карты планет: NASA (Viking, MESSENGER, Magellan, Cassini) и Solar System Scope, CC BY 4.0",
 
   /* Эффект и инфографика */
   "eff.tag":       "Эффект",
@@ -403,6 +404,7 @@ var EN = {
   "ftr.nav": "Navigation", "ftr.prod": "Products", "ftr.doc": "Documents",
   "ftr.oferta": "Public offer", "ftr.policy": "Privacy policy", "ftr.sla": "SLA terms",
   "ftr.rights": "All rights reserved", "ftr.made": "Built by OKO TEAM",
+  "ftr.maps": "Planet maps: NASA (Viking, MESSENGER, Magellan, Cassini) and Solar System Scope, CC BY 4.0",
   "eff.tag": "Impact", "eff.h": "What changes once you connect",
   "eff.p": "Content is served from the nearest node, the origin is offloaded and traffic peaks stop being a problem.",
   "eff.c1h": "Latency to the user", "eff.c1p": "The request reaches the nearest point of presence instead of crossing the country.",
