@@ -1043,7 +1043,7 @@ function boot() {
       });
   }
 
-  function setModal(on) {
+  function setModal(on, кто) {
     if (!modal) return;
     modal.classList.toggle("on", on);
     document.body.style.overflow = on ? "hidden" : "";
@@ -1054,7 +1054,16 @@ function boot() {
        телом документа: человек, который ходит клавиатурой, после
        закрытия окна оказывался в начале страницы и шёл табом через
        всю шапку обратно. */
-    if (on) modalBack = document.activeElement;
+    if (on) {
+      /* Куда вернуть фокус. Обычно это тот элемент, что был в фокусе,
+         но нажатие мышью фокус на кнопку ставят не все браузеры (в
+         Safari и Firefox кнопка после клика остаётся неактивной), и
+         тогда здесь оказывается тело документа - возвращать фокус
+         становится некуда. Поэтому запоминаем и того, кто открыл. */
+      var актив = document.activeElement;
+      modalBack = (актив && актив !== document.body && актив !== document.documentElement)
+        ? актив : (кто || null);
+    }
 
     /* Страница под окном перестаёт существовать для клавиатуры и
        для чтения с экрана - так же, как это сделано у шторки меню */
@@ -1100,7 +1109,17 @@ function boot() {
         if (++tries < 120) requestAnimationFrame(aim);
       })();
     } else if (modalBack && modalBack.focus) {
-      try { modalBack.focus(); } catch (e) {}
+      var куда = modalBack;
+      var вернуть = function () {
+        try { куда.focus(); } catch (e) {}
+        /* Кнопка могла быть ещё глухой: страницу глушат и окно, и
+           сцена полёта, и снимают они это в разном порядке. Второй
+           заход следующим кадром попадает уже наверняка. */
+        if (document.activeElement !== куда) requestAnimationFrame(function () {
+          try { куда.focus(); } catch (e2) {}
+        });
+      };
+      вернуть();
       /* Под окном может стоять сцена полёта: она глушит страницу
          целиком, и вернуть фокус на кнопку под ней нельзя. Тогда
          отдаём его самой сцене, а не оставляем в начале документа. */
@@ -1124,14 +1143,20 @@ function boot() {
     });
   }
 
-  $$(".js-callback").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); setModal(true); }); });
+  $$(".js-callback").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); setModal(true, b); }); });
   $$(".js-modal-close").forEach(function (b) { b.addEventListener("click", function () { setModal(false); }); });
   if (modal) modal.addEventListener("click", function (e) { if (e.target === modal) setModal(false); });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
+    /* Escape, закрывший окно, дальше не идёт. Иначе он доходил до
+       сцены полёта и закрывал заодно её: сцена в этот момент снимала
+       глушение со страницы, и фокус, который окно только что вернуло
+       на кнопку, оставался в никуда. Одно нажатие - одно действие. */
+    var былоОкно = !!(modal && modal.classList.contains("on"));
     setModal(false);
-    if (drawer && drawer.classList.contains("on")) setDrawer(false);
-  });
+    if (drawer && drawer.classList.contains("on")) { setDrawer(false); былоОкно = true; }
+    if (былоОкно) { e.stopPropagation(); }
+  }, true);
 
   /* Почту и телеграм чаще переписывают, чем нажимают: на настольной
      машине mailto открывает не тот почтовик, а на телефоне человек
