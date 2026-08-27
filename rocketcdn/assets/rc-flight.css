@@ -3396,13 +3396,21 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-fire-key { color: rgba(255, 176, 120, .95); }
 .rc-flight .rcf-fire-key:hover { color: #ffd0a8; }
 
-/* Узел доступен только на орбите — гаснет, но остаётся на панели:
-   пустое гнездо на настоящем пульте тоже никуда не девается */
+/* Узел доступен только на орбите - гаснет, но остаётся на панели:
+   пустое гнездо на настоящем пульте тоже никуда не девается.
+
+   Нажатие при этом ПРИНИМАЕМ. Раньше здесь стояло pointer-events:
+   none, и клавиша не отвечала вовсе: приёмка записала УЗЕЛ в мёртвые,
+   а `document.elementFromPoint` в её же центре возвращал не кнопку, а
+   контейнер плиты. Настоящий пульт так себя не ведёт - недоступная
+   клавиша нажимается и говорит, почему нельзя. Ответ даёт
+   deployNode: «УЗЕЛ СТАВИТСЯ ТОЛЬКО НА ОРБИТЕ · ПОДОЙДИТЕ К ТЕЛУ». */
 .rc-flight .rcf-deploy {
   position: static;
   transform: none;
   opacity: .35;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 .rc-flight .rcf-deploy.on { opacity: 1; pointer-events: auto; }
 
