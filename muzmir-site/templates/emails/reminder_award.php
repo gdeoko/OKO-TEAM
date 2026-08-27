@@ -14,7 +14,7 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
   <tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">
     <div style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Что можно заказать</div>
     <div><span style="color:#C79322;">•</span> Памятные дипломы на плотной бумаге</div>
-    <div><span style="color:#C79322;">•</span> Медали с гравировкой</div>
+    <div><span style="color:#C79322;">•</span> Наградные медали и статуэтки</div>
     <div><span style="color:#C79322;">•</span> Наградные кубки</div>
   </td></tr>
 </table>

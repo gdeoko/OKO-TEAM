@@ -61,8 +61,8 @@ function ao_photo(int $compId, string $file, bool $square = false): string {
         return function_exists('url') ? url($rel) : $rel;
     }
     // Снимков этого конкурса ещё нет — берём любой готовый набор, чтобы человек
-    // всё-таки увидел, как выглядит награда: изделия одинаковые, отличается
-    // только гравировка.
+    // всё-таки увидел, как выглядит награда: изделия одни и те же для всех
+    // конкурсов центра.
     foreach (glob(BASE_PATH . '/public/assets/img/awards/*' . $sub . $file) ?: [] as $any) {
         $p = str_replace(BASE_PATH . '/public', '', $any);
         return function_exists('url') ? url($p) : $p;
@@ -83,7 +83,7 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
         $photo = ao_photo($compId, $file, true);
         if ($photo !== '') {
             $kit[] = ['photo' => $photo, 'title' => $title, 'price' => ao_price($compId, $priceKey),
-                      'note'  => 'С гравировкой звания, конкурса и Вашего имени. Приходит в подарочной упаковке.'];
+                      'note'  => 'Наградное изделие по Вашему званию. Приходит в подарочной упаковке.'];
         }
     }
     $photoDip = ao_photo($compId, 'diploma.jpg', true);
