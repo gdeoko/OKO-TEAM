@@ -2605,6 +2605,29 @@ function buildWorld() {
   var T = g.THREE;
   ЭТАПЫ = []; ЭТАП_Т = DBG ? performance.now() : 0;
   этап("старт");
+  /* Мир собирается в НОВУЮ сцену, значит всё, что помнило узлы
+     старой, обязано забыться здесь же.
+
+     built держал собранные вселенные. Группы оставались в снесённой
+     сцене, и повторный прыжок в тот же рукав приводил корабль в
+     пустоту: вспышка есть, звук есть, а тел нет, и ни навести, ни
+     отсканировать нечего.
+
+     netNodes держал маяки сети. netRestore выходит первой строкой,
+     если список не пуст, поэтому после пересборки ни один узел
+     игрока в кадр не возвращался: счётчик на пульте показывал
+     «5 из 11», кнопка УЗЕЛ отвечала «узел уже стоит», а в космосе
+     не было ни одного маяка и ни одной линии.
+
+     Путь до беды тот же самый: смена языка или потеря контекста. */
+  built = {};
+  netNodes = [];
+  netLine = null;
+  netBeam = null;
+  netBeamT = 0;
+  traf = null;
+  trafN = 0;
+  trafSeg = [];
   /* Узкий экран и слабое железо - разные вещи. Раньше по флагу mob
      в игре резалось всё подряд: вдвое меньше звёзд, вдвое грубее
      сферы планет, вполовину короче астероидные пояса. Владелец
@@ -4730,6 +4753,18 @@ function buildWorld() {
 }
 
 /* ── Управление ──────────────────────────────────────────────ы */
+/* Обзор мышью: состояние жеста живёт на уровне модуля.
+
+   Оконный pointerup вешается один раз за жизнь страницы, а
+   pointerdown и pointermove - на обёртку, которая пересобирается
+   после каждой смены языка. Пока эти переменные были внутри
+   bindControls, они раздваивались: нажатие писало в новые, отпуск
+   читал старые. Обзор залипал навсегда, а нажатие по планете
+   считалось от чужой точки и досье не открывалось - «планета не
+   кликается» ровно оттуда. */
+var drag = false, dX = 0, dY = 0;
+var downX = 0, downY = 0, downOK = false;
+
 function bindControls() {
   var w = ui.wrap;
 
@@ -4887,7 +4922,6 @@ function bindControls() {
   }, { passive: false });
   w.addEventListener("touchend", function () { tY = tX = null; tAxis = 0; pinch = 0; }, { passive: true });
 
-  var drag = false, dX = 0, dY = 0;
   w.addEventListener("pointermove", function (e) {
     if (e.pointerType === "touch") return;
     F.mx = (e.clientX / innerWidth) * 2 - 1;
@@ -4927,7 +4961,6 @@ function bindControls() {
      открывает только чистое нажатие: если между нажатием и отпуском
      палец прошёл больше нескольких пикселей, это был обзор, и карту
      снимать не надо. */
-  var downX = 0, downY = 0, downOK = false;
   w.addEventListener("pointerdown", function (e) {
     F.mx = (e.clientX / innerWidth) * 2 - 1;
     F.my = -(e.clientY / innerHeight) * 2 + 1;
@@ -4964,8 +4997,20 @@ function bindControls() {
   addEventListener("keydown", function (e) {
     if (!F.open) return;
     if (e.key === "Escape") { close(); return; }
-    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") { F.v += 0.14; e.preventDefault(); manual(); }
-    if (e.key === "ArrowUp" || e.key === "PageUp") { F.v -= 0.14; e.preventDefault(); manual(); }
+    /* Рычаг тяги - штатное клавиатурное управление, у него свой
+       обработчик стрелок. Нажатие с него всплывает на окно, и оба
+       срабатывали на одно нажатие: рычаг прибавлял тягу, окно тут же
+       вычитало ход. Корабль дёргался назад на «прибавить», а полоска
+       показывала обратное тому, что он делает. */
+    var наРычаге = e.target && e.target.closest && e.target.closest(".rcf-thr");
+    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+      if (наРычаге && e.key !== " ") return;
+      F.v += 0.14; e.preventDefault(); manual();
+    }
+    if (e.key === "ArrowUp" || e.key === "PageUp") {
+      if (наРычаге) return;
+      F.v -= 0.14; e.preventDefault(); manual();
+    }
   });
 
   addEventListener("resize", function () { size(); cabSrc(); }, { passive: true });
@@ -5270,6 +5315,38 @@ function netButton() {
    десятком узлов набирались десятки неосвобождённых наборов.
 
    Снимаем и освобождаем одним ходом, чтобы не забыть половину. */
+/* Снять узел со сцены и отдать его память карте.
+
+   Дерево обходим целиком: у салона под группой лежат десятки сеток
+   со своими текстурами, и снять одну вершину мало - видеопамять
+   отдаёт только явный dispose на каждой. */
+function убратьДерево(о) {
+  if (!о) return;
+  try { if (о.parent) о.parent.remove(о); } catch (e) {}
+  var список = [];
+  try { о.traverse(function (у) { список.push(у); }); } catch (e2) { список = [о]; }
+  for (var i = 0; i < список.length; i++) освободить(список[i]);
+}
+
+function освободить(о) {
+  try {
+    if (о.geometry && о.geometry.dispose) о.geometry.dispose();
+    var м = о.material;
+    var сп = м ? (м.length ? м : [м]) : [];
+    for (var i = 0; i < сп.length; i++) {
+      var мм = сп[i];
+      if (!мм) continue;
+      var карты = ["map", "alphaMap", "emissiveMap", "normalMap", "roughnessMap",
+                   "metalnessMap", "aoMap", "bumpMap", "envMap", "lightMap"];
+      for (var к = 0; к < карты.length; к++) {
+        var т = мм[карты[к]];
+        if (т && т.dispose) т.dispose();
+      }
+      if (мм.dispose) мм.dispose();
+    }
+  } catch (e) {}
+}
+
 function убрать(о) {
   if (!о) return;
   try { if (о.parent) о.parent.remove(о); } catch (e) {}
@@ -5499,6 +5576,16 @@ function holoSetup() {
        подпись планеты вылезала на корпус, чего в корабле быть не
        может. */
     g.RC_HOLO.init(ui.hud || ui.wrap);
+    /* Подписка на нажатие по метке - ОДИН раз за жизнь страницы.
+       Слой меток снятия подписки не знает, а holoSetup заходит сюда
+       заново после каждой смены языка (holoReady сбрасывается, чтобы
+       слой подшился в новую обёртку). Подписчики копились, и один
+       клик по метке исполнялся дважды: курс ставился дважды, досье
+       открывалось дважды, щелчок звучал сдвоенно. Тело обработчика
+       смотрит только в holoIds и в общие функции, они живут дольше
+       обёртки, поэтому одной подписки хватает навсегда. */
+    if (holoSetup.подписан) return;
+    holoSetup.подписан = true;
     g.RC_HOLO.onPick(function (id) {
       /* Клик по голограмме - это курс на объект. Ровно то, чего
          ждёшь от метки в кабине: ткнул и полетел.
@@ -6044,7 +6131,9 @@ var ЧТОДЕЛАЕТ = {
   "rcf-zoom-in":  RU ? "Приблизить вид" : "Zoom in",
   "rcf-zoom-out": RU ? "Отдалить вид" : "Zoom out",
   "rcf-fit-key":  RU ? "Вернуть обычный кадр" : "Reset the view",
-  "rcf-help-key": RU ? "Как летать: управление и правила" : "How to fly: controls and rules"
+  "rcf-help-key": RU ? "Как летать: управление и правила" : "How to fly: controls and rules",
+  "rcf-shot":     RU ? "Сохранить кадр из окна себе на устройство" : "Save the view to your device",
+  "rcf-thr":      RU ? "Тяга: тянуть вбок или стрелками" : "Thrust: drag sideways or use the arrows"
 };
 function имена(клавиши) {
   for (var ки = 0; ки < клавиши.length; ки++) {
@@ -6204,10 +6293,18 @@ function keyHintFrame() {
   if (!cap) return;
   if (keyHintFrame.idx !== over) {
     keyHintFrame.idx = over;
-    var names = g.RC_PANEL && cabin.console3 ? null : null;
-    void names;
     if (ui.keyhintName) ui.keyhintName.textContent = capName(over);
-    if (ui.keyhintText) ui.keyhintText.textContent = cap.userData.hint || "";
+    /* Строка «что делает» берётся из той же таблицы, по которой
+       собираются имена для чтения с экрана. Раньше читалось
+       cap.userData.hint, а туда никто ничего не кладёт: подсказка
+       снизу была пуста всегда. */
+    if (ui.keyhintText) {
+      var узел = nodes[over], что = "";
+      for (var кл in ЧТОДЕЛАЕТ) {
+        if (ЧТОДЕЛАЕТ.hasOwnProperty(кл) && узел && узел.classList.contains(кл)) { что = ЧТОДЕЛАЕТ[кл]; break; }
+      }
+      ui.keyhintText.textContent = что;
+    }
   }
   /* Кладём по проекции самой клавиши, а не по разметке: клавиша это
      железо в мире, и подсказка обязана стоять над ней, а не над её
@@ -6230,15 +6327,16 @@ function keyHintFrame() {
   if (!keyHintFrame.on) { ui.keyhint.classList.add("on"); keyHintFrame.on = true; }
 }
 
-/* Имя команды для подсказки. Берём из тех же списков, что печатаются
-   на лицах клавиш, иначе подпись и подсказка разойдутся. */
+/* Имя команды для подсказки. Список ровно один - тот, по которому
+   печатаются лица клавиш (RC_KEYS.KEYS). Своя копия здесь уже была,
+   и она отстала на две позиции: наведение на СПРАВКУ показывало
+   «ЗАЛП» (команды с таким именем в игре нет), на КАДР - «БЛИЖЕ».
+   Ровно об этом предупреждает комментарий в rc-keys.js. */
 function capName(i) {
   var ru = doc.documentElement.lang !== "en";
-  var main = ru ? ["КУРС", "СКАН", "УЗЕЛ", "ЗАЛП", "АВТО", "СТОП", "ТЯГА"]
-                : ["COURSE", "SCAN", "NODE", "FIRE", "AUTO", "STOP", "THRUST"];
-  var aux = ru ? ["СЕТЬ", "БЛИЖЕ", "ДАЛЬШЕ", "КАДР", "СПРАВКА"]
-               : ["MAP", "ZOOM IN", "ZOOM OUT", "FRAME", "HELP"];
-  return i < 7 ? main[i] : (aux[i - 7] || "");
+  var список = (g.RC_KEYS && g.RC_KEYS.KEYS) || null;
+  if (!список || !список[i]) return "";
+  return ru ? список[i]["имя"] : список[i].en;
 }
 
 function frame(ts) {
@@ -7354,6 +7452,12 @@ function close() {
   F.stage = false;
   F.stageK = 0;
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
+  /* Досье живёт собственным кадром, и глохнет он только по скрытому
+     окну карточки. Пока его тут не закрывали, страница после выхода
+     из игры продолжала чертить развёртку тела шестьдесят раз в
+     секунду - у галактик это полтысячи звёзд на кадр. Телефон грелся
+     на странице, где игры уже нет. */
+  dosClose();
   root.classList.remove("rc-flying", "rc-stage");
   ui.wrap.classList.remove("on", "rcf-stage", "rcf-native-cab");
   cabinDrop();
@@ -8347,7 +8451,8 @@ function deckSkinSoon() {
 function bindThrottle() {
   var el = ui.thr;
   if (!el) return;
-  var drag = false;
+  /* Своё имя, чтобы не затенять модульное состояние обзора мышью */
+  var тянут = false;
 
   function setFromY(clientX) {
     /* Рычаг лежит горизонтально: в плите высотой в десятую долю
@@ -8373,14 +8478,14 @@ function bindThrottle() {
   F.paintThrottle = paintThrottle;
 
   el.addEventListener("pointerdown", function (e) {
-    drag = true;
+    тянут = true;
     try { el.setPointerCapture(e.pointerId); } catch (er) {}
     setFromY(e.clientX);
     e.preventDefault();
   });
-  el.addEventListener("pointermove", function (e) { if (drag) setFromY(e.clientX); });
-  el.addEventListener("pointerup", function () { drag = false; });
-  el.addEventListener("pointercancel", function () { drag = false; });
+  el.addEventListener("pointermove", function (e) { if (тянут) setFromY(e.clientX); });
+  el.addEventListener("pointerup", function () { тянут = false; });
+  el.addEventListener("pointercancel", function () { тянут = false; });
   el.addEventListener("keydown", function (e) {
     var d = 0;
     if (e.key === "ArrowUp" || e.key === "ArrowRight") d = 0.08;
@@ -8961,8 +9066,14 @@ function cabinFlightMode() {
 
 function cabinDrop() {
   if (!cabin || !W3) return;
-  if (cabin.frame && cabin.frame.parent) cabin.frame.parent.remove(cabin.frame);
-  if (cabin.group && cabin.group.parent) cabin.group.parent.remove(cabin.group);
+  /* Салон собирается заново на каждый заезд в финал: прокрутил вниз,
+     прокрутил вверх, прокрутил вниз - и снова десяток холстов на
+     текстуры, объёмные клавиши и физматериалы. Раньше узел просто
+     отвязывался, а видеопамять за ним не возвращалась: второй и
+     каждый следующий заезд стоил дороже предыдущего, до потери
+     контекста. Отдаём всё дерево целиком. */
+  убратьДерево(cabin.frame);
+  убратьДерево(cabin.group);
   if (ui && ui.wrap) ui.wrap.classList.remove("rcf-native-cab");
   cabin = null;
 }
@@ -9733,6 +9844,21 @@ g.RC_FLIGHT = {
                         наклонПульта: +(-cabin.pilotRig.rotation.x * 57.3).toFixed(1) };
              })(),
              отметки: W3 && W3.at ? W3.at : null };
+  },
+  /* Что осталось в памяти между заходами. Проверке нужно видеть это
+     числами: раз за разом ломалось именно состояние, пережившее
+     пересборку мира. */
+  "кэши": function () {
+    return {
+      обзорЗалип: !!drag,
+      свободныйОбзор: !!F.free,
+      вселенныхВкэше: Object.keys(built).length,
+      маяковСети: netNodes.length,
+      телДляЛуча: W3 && W3.pickables ? W3.pickables.length : 0,
+      меток: doc.querySelectorAll(".rch-tag").length,
+      подписанНаМетки: !!holoSetup["подписан"],
+      салон: !!cabin
+    };
   },
   /* Отладочные рычаги для автопроверок: поставить корабль в нужную
      точку маршрута и прыгнуть в заданную вселенную. Через обычный
