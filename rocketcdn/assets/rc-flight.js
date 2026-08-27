@@ -474,7 +474,6 @@ function buildUI() {
        Ставим отдельную кнопку на стекло, рядом с приборами: места в
        ряду клавиш она не занимает, режется тем же контуром окна и
        открывает ту же панель «КАК ЛЕТАТЬ». */
-    '<button type="button" class="rcf-help-fab" aria-label="' + (RU ? "Как летать" : "How to fly") + '">?</button>' +
     '<div class="rcf-hud">' +
       /* Верхняя полоса стекла собрана колонкой, а не разложена
          абсолютными координатами.
@@ -751,24 +750,16 @@ function buildUI() {
       if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
     });
   }
-  /* Кнопка на стекле открывает ту же панель, что и клавиша пульта.
-     Держим их в одном состоянии, чтобы подсветка не разъезжалась. */
-  var helpFab = w.querySelector(".rcf-help-fab");
-  if (helpFab) {
-    helpFab.addEventListener("click", function () {
-      var on = !ui.help.classList.contains("on");
-      ui.help.classList.toggle("on", on);
-      helpFab.classList.toggle("cur", on);
-      if (helpKey) helpKey.classList.toggle("cur", on);
-      modalMark();
-      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
-    });
-  }
+  /* Отдельной кнопки справки на стекле больше нет. Она появлялась,
+     пока клавиша СПРАВКА не помещалась на плиту: команд было больше,
+     чем ниш, и лишним ставился display:none. Теперь справка стоит
+     четвёртой в ряду и видна на телефоне, а круглое «?» в углу
+     проёма только ложилось на подпись о теле и добавляло на экран
+     ещё одну надпись - ровно то, на что жаловались.  */
   var helpX = w.querySelector(".rcf-help-x");
   if (helpX) helpX.addEventListener("click", function () {
     ui.help.classList.remove("on");
     if (helpKey) helpKey.classList.remove("cur");
-    if (helpFab) helpFab.classList.remove("cur");
     modalMark();
   });
   var stopKey = w.querySelector(".rcf-stop-key");

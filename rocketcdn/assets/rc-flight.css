@@ -4653,50 +4653,6 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight.rcf-menu-on .rcf-radar { display: none !important; }
 }
 
-/* ── Справка на стекле ───────────────────────────────────────
-   Клавиша справки в пульте есть, но команд больше, чем ниш на плите,
-   и лишним ставится display:none - в жертву попала именно она. На
-   телефоне прочитать правила было негде вовсе.
-
-   Кнопка стоит в правом верхнем углу проёма, напротив радара внизу
-   слева. Места в ряду клавиш не занимает, режется контуром окна. */
-.rc-flight .rcf-help-fab {
-  position: fixed;
-  right: calc(var(--cab-wx, 6%) + 2.6%);
-  top: calc(var(--cab-wy, 10%) + 3.4%);
-  width: 34px; height: 34px;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .55);
-  background: linear-gradient(180deg,
-    rgba(var(--int-cyan-rgb, 66,178,220), .22),
-    rgba(5, 14, 24, .88));
-  color: var(--int-lit, #CFE9F5);
-  font: 700 15px/1 var(--f-body, "Golos Text", sans-serif);
-  cursor: pointer;
-  z-index: 7;
-  clip-path: var(--cab-clip, none);
-  box-shadow: inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .34),
-              0 0 20px -6px rgba(var(--int-cyan-rgb, 66,178,220), .8);
-  transition: transform .12s ease, box-shadow .16s ease, background .16s ease;
-}
-.rc-flight .rcf-help-fab:hover,
-.rc-flight .rcf-help-fab.cur {
-  color: #fff;
-  background: linear-gradient(180deg,
-    rgba(var(--int-cyan-rgb, 66,178,220), .42),
-    rgba(6, 18, 30, .9));
-  box-shadow: inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .5),
-              0 0 26px -4px rgba(var(--int-cyan-rgb, 66,178,220), .95);
-}
-.rc-flight .rcf-help-fab:active { transform: translateY(1.5px); }
-/* В сцене, в досье и в меню кнопка не нужна. */
-.rc-flight.rcf-stage .rcf-help-fab { display: none !important; }
-@media (max-width: 760px) {
-  .rc-flight .rcf-help-fab { width: 40px; height: 40px; font-size: 17px; }
-}
-
-
 /* ── Списки в панелях листаются пальцем ──────────────────────
    На всём слое полёта стоит touch-action: none - иначе свайп вверх
    тянул бы страницу вместо тяги корабля. Побочный эффект: меню
@@ -4716,3 +4672,29 @@ html.rc-deep-inside .rcf-fab {
    снимка держит .rcf-shot, а эта уходит с плиты. Разметку не рвём:
    на неё ссылаются подсказки и список команд. */
 .rc-flight .rcf-fire-key { display: none !important; }
+
+/* ── Бортовое табло на стекле не имеет права ужиматься ───────
+   На стекле стоит лента из пяти ячеек: сеть, открыто, курс, ход и
+   две шкалы. Ячейкам разрешили сжиматься (flex: 0 1 auto), и на
+   телефоне все пять сжимались разом: слова обрезались по букве, а
+   соседние сливались в кашу - "УРС 76 тыс. км КОД 520". Владелец
+   написал ровно это: "все надписи друг на друга накладываются и
+   обрезаются".
+
+   Ячейку ОТКРЫТО правило телефона снимало ещё раньше, но снять не
+   могло: у него вес (0,2,0), а у общего display: inline-flex для
+   ячеек ленты - (0,3,0), и он побеждал независимо от порядка.
+   Возвращаем правило тем же весом.
+
+   Дальше арифметика: сеть 55, курс 84, ход 38, шкалы 52 плюс зазоры
+   - 259 точек при доступных 298. Помещается, значит сжимать нечего
+   и ячейкам это запрещено. */
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-top .rcf-d-seen { display: none; }
+  .rc-flight .rcf-d-top .rcf-d-cell {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+  /* Ленте остаётся распределить остаток, а не резать содержимое */
+  .rc-flight.rcf-native-cab .rcf-d-top { justify-content: space-between; }
+}
