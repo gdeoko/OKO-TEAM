@@ -39,6 +39,13 @@ function vf_platform(string $url): string {
     if (str_contains($u, 'vk.com/video') || str_contains($u, 'vk.com/clip')
         || str_contains($u, 'vkvideo.') || str_contains($u, 'vk.ru/video')
         || str_contains($u, 'vk.ru/clip') || str_contains($u, 'video_ext.php')) return 'vk';
+    /* РАБОТА МОЖЕТ БЫТЬ СНИМКОМ, А НЕ ЗАПИСЬЮ.
+     *
+     * По изобразительному искусству, прикладному творчеству и фотографии
+     * участник присылает изображение, и ВКонтакте оно живёт по адресу вида
+     * vk.com/photo<id>_<id>. Такая ссылка определялась как «площадка не
+     * поддерживается», и фоторабота до жюри не доезжала. */
+    if (preg_match('~(?:vk\.com|vk\.ru|m\.vk\.com)/photo-?\d+_\d+~i', $u))  return 'vk_photo';
     if (str_contains($u, 'rutube.ru'))                                    return 'rutube';
     if (str_contains($u, 'ok.ru'))                                        return 'ok';
     if (str_contains($u, 'dzen.ru') || str_contains($u, 'zen.yandex'))    return 'dzen';
@@ -259,6 +266,30 @@ function vf_direct_link(string $url): array {
             }
             return $fail('ОК Видео: прямая ссылка не получена');
 
+        case 'vk_photo':
+            /* Снимок отдаётся тем же токеном сообщества, что и видеозаписи:
+               у большинства конкурсных работ доступ «по ссылке», и гостю
+               страница фотографии не открывается вовсе. Берём самый крупный
+               размер — по мелкой копии рисунок не оценить. */
+            if (!preg_match('~photo(-?\d+)_(\d+)~i', $url, $m)) {
+                return $fail('ВКонтакте: не удалось разобрать ссылку на снимок');
+            }
+            $token = function_exists('cfgv') ? trim((string) cfgv('vk_token', '')) : '';
+            if ($token === '') return $fail('ВКонтакте: снимок доступен только по токену сообщества');
+            $api = 'https://api.vk.com/method/photos.getById?photos=' . rawurlencode($m[1] . '_' . $m[2])
+                 . '&photo_sizes=1&access_token=' . rawurlencode($token) . '&v=5.199';
+            $j = json_decode(vf_http($api)['body'], true);
+            $sizes = (array) ($j['response'][0]['sizes'] ?? []);
+            $best = ['w' => 0, 'u' => ''];
+            foreach ($sizes as $s) {
+                $w = (int) ($s['width'] ?? 0);
+                if ($w >= $best['w'] && !empty($s['url'])) $best = ['w' => $w, 'u' => (string) $s['url']];
+            }
+            if ($best['u'] !== '') {
+                return ['ok' => true, 'url' => $best['u'], 'name' => 'vk_photo.jpg', 'size' => 0, 'why' => ''];
+            }
+            return $fail('ВКонтакте: снимок закрыт настройками приватности или удалён');
+
         case 'google_drive':
             if (preg_match('~/d/([A-Za-z0-9_\-]{10,})~', $url, $m)) {
                 return ['ok' => true, 'url' => 'https://drive.google.com/uc?export=download&id=' . $m[1],
@@ -329,7 +360,16 @@ function vf_download(string $url, int $appId = 0): array {
         if (is_file($out) && filesize($out) > 100000) {
             return ['ok' => true, 'path' => $out, 'size' => (int) filesize($out), 'why' => ''];
         }
-        $cmd = 'ffmpeg -y -loglevel error -user_agent ' . escapeshellarg('Mozilla/5.0 (compatible; MuzmirGrader/1.0)')
+        /* ОГРАНИЧЕНИЕ ПО ВРЕМЕНИ РАБОТЫ, А НЕ ТОЛЬКО ПО ДЛИНЕ НОМЕРА.
+         *
+         * «-t 900» ограничивает длину куска, но не время скачивания: заявка
+         * #1844 (запись на 2,7 ГБ) держала конвейер два с четвертью часа и
+         * остановила пересмотр на 197-й работе из 226 — ffmpeg тянул поток с
+         * Яндекс.Диска, а очередь стояла. Одна тяжёлая запись не должна
+         * блокировать остальные двести: не уложились в бюджет — заявка уходит
+         * человеку, конвейер идёт дальше. */
+        $budget = max(300, (int) (function_exists('setting') ? setting('grade_fetch_budget_sec', '900') : 900));
+        $cmd = 'timeout ' . $budget . ' ffmpeg -y -loglevel error -user_agent ' . escapeshellarg('Mozilla/5.0 (compatible; MuzmirGrader/1.0)')
              . ' -i ' . escapeshellarg($link['url'])
              . ' -t ' . max(60, $secs)
              . ' -c copy -movflags +faststart ' . escapeshellarg($out) . ' 2>&1';
@@ -337,7 +377,7 @@ function vf_download(string $url, int $appId = 0): array {
         // Не всякий контейнер режется копированием потока — тогда пережимаем.
         if (($rc1 !== 0 || !is_file($out) || filesize($out) < 100000)) {
             @unlink($out);
-            $cmd2 = 'ffmpeg -y -loglevel error -user_agent ' . escapeshellarg('Mozilla/5.0 (compatible; MuzmirGrader/1.0)')
+            $cmd2 = 'timeout ' . $budget . ' ffmpeg -y -loglevel error -user_agent ' . escapeshellarg('Mozilla/5.0 (compatible; MuzmirGrader/1.0)')
                   . ' -i ' . escapeshellarg($link['url'])
                   . ' -t ' . max(60, $secs)
                   . ' -vf scale=-2:720 -c:v libx264 -preset veryfast -crf 26 -c:a aac -b:a 128k '
