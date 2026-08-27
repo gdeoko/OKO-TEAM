@@ -69,7 +69,9 @@ html.rc-reduced .rc-int-air { display: none !important; }
 html.rc-rocket-parked.has-rocket #rocketCanvas,
 html.rc-rocket-parked #rocketCanvas,
 html[data-theme="light"].rc-rocket-parked.has-rocket #rocketCanvas {
-  opacity: 0 !important; transition: opacity .45s var(--ease);
+  /* Та же длительность, что у появления рубки: иначе на пороге
+     входа один кадр уже погас, а второй ещё не разгорелся. */
+  opacity: 0 !important; transition: opacity .7s var(--ease);
 }
 
 /* ── Тамбур ──────────────────────────────────────────────────
