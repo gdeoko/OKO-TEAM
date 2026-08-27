@@ -146,9 +146,23 @@ function vk_upload_wall_doc(string $filePath, string $title = ''): string {
     $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
     if ($ext !== '' && !str_ends_with(mb_strtolower($name), '.' . $ext)) $name .= '.' . $ext;
 
+    /* ДОКУМЕНТ ГРУЗИМ ОТ СЕБЯ, А НЕ В ГРУППУ.
+     *
+     * Проверка 27.08.2026 на живом сообществе: docs.getWallUploadServer с
+     * group_id отвечает «Access denied: User can't upload docs to this group» —
+     * у токена председателя оргкомитета такого права нет и не будет, это
+     * настройка сообщества, а не приложения. Права docs у токена при этом есть.
+     *
+     * Зато документ, загруженный БЕЗ group_id (то есть в личные документы),
+     * прикладывается к записи сообщества без всяких ограничений: проверено
+     * постом, файл виден в записи со ссылкой на скачивание. Поэтому основной
+     * путь — личные документы, а попытка с group_id остаётся запасной: если
+     * право однажды выдадут, файл ляжет в документы сообщества. */
+    $variants = [[], ['group_id' => $gid]];
+    foreach ($variants as $params) {
     for ($try = 1; $try <= 3; $try++) {
-        // 1) адрес для загрузки. type=doc — обычный документ на стену сообщества.
-        $s = vk_api('docs.getWallUploadServer', ['group_id' => $gid]);
+        // 1) адрес для загрузки.
+        $s = vk_api('docs.getWallUploadServer', $params);
         $url = (string) ($s['response']['upload_url'] ?? '');
         if ($url === '') {
             vk_upload_last_error('docs.getWallUploadServer: ' . (string) ($s['error']['error_msg'] ?? 'пусто'));
@@ -178,7 +192,10 @@ function vk_upload_wall_doc(string $filePath, string $title = ''): string {
                 vk_upload_last_error('docs.save: ' . (string) ($save['error']['error_msg'] ?? 'пусто'));
             }
         }
+        // Отказ в правах повторять бессмысленно — сразу пробуем другой вариант.
+        if (str_contains(vk_upload_last_error(), 'Access denied')) break;
         if ($try < 3) usleep(700000 * $try);
+    }
     }
     _vk_log('ДОКУМЕНТ НЕ ЗАГРУЗИЛСЯ (' . basename($filePath) . '): ' . vk_upload_last_error());
     return '';
