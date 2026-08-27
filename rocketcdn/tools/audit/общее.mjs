@@ -50,7 +50,14 @@ export async function страница(b, э) {
   });
   pg.on("requestfailed", (r) => {
     const u = r.url();
-    if (!/api\.php|analytics/.test(u)) беды.push("СОРВАЛСЯ " + u.slice(-60));
+    if (/api\.php|analytics/.test(u)) return;
+    /* Фоновые видео тянутся кусками и в момент закрытия браузера
+       недокачанный кусок обрывается. Это шум замера, а не беда сайта:
+       отдельная проверка показала readyState 4 и ноль ошибок у обоих
+       роликов. Считаем бедой только настоящий отказ, не отмену. */
+    const причина = r.failure() ? r.failure().errorText : "";
+    if (/\.(webm|mp4)(\?|$)/.test(u) && /ABORTED|net::ERR_ABORTED/.test(причина)) return;
+    беды.push("СОРВАЛСЯ " + u.slice(-60) + (причина ? " :: " + причина : ""));
   });
   await pg.goto(АДРЕС, { waitUntil: "domcontentloaded", timeout: 120000 });
   await pg.waitForTimeout(9000);
