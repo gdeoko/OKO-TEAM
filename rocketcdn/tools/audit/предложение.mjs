@@ -7,7 +7,7 @@ function вн(p,x,y){let h=false;for(let i=0,j=p.length-1;i<p.length;j=i++){cons
 function ок(P,x,y,w,h,m){for(let t=0;t<=w;t+=3){if(!вн(P,x+t,y-m)||!вн(P,x+t,y+h+m))return false;}
  for(let t=0;t<=h;t+=3){if(!вн(P,x-m,y+t)||!вн(P,x+w+m,y+t))return false;}return true;}
 const ПРАВ = +(process.env.PRAV || 2.6);   /* % ширины кадра к --cab-wx */
-for (const M of [1.5, 2.0, 2.5, 3.0, 4.0]) {
+for (const M of [4.0, 5.0, 6.0]) {
   console.log("\n== низ = 100% - --cab-dy + " + M + "%  ·  право = --cab-wx + " + ПРАВ + "% ==");
   for (const [имя,[W,H]] of Object.entries(ЭК)) {
     const р = рубка(W,H), P = р.P;

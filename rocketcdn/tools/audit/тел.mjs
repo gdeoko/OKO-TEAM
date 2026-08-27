@@ -13,10 +13,6 @@ const ок = await pg.evaluate(() => { if (window.RC_FLIGHT && window.RC_FLIGHT.
   const k = document.querySelector(".js-flight"); if (k) { k.click(); return true; } return false; });
 л("в игру: " + ок);
 await pg.waitForTimeout(11000);
-await pg.evaluate(() => { const b2 = document.querySelector(".rcf-brief-btns button[data-mode='manual']") ||
-  document.querySelector(".rcf-brief-btns button") || document.querySelector(".rcf-brief .rcf-go");
-  if (b2) b2.click(); const br = document.querySelector(".rcf-brief"); if (br) br.classList.add("off"); });
-л("брифинг закрыт");
 const д = await pg.evaluate(() => {
   const w = document.querySelector(".rc-flight"); const cs = w ? getComputedStyle(w) : null;
   const сн = (c) => { const e = document.querySelector(c); if (!e) return null; const s = getComputedStyle(e), r = e.getBoundingClientRect();

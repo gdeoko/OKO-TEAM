@@ -739,7 +739,7 @@ function buildUI() {
               '<div class="rcf-d-bay rcf-d-nav">' +
                 '<canvas class="rcf-radar" width="220" height="220" aria-hidden="true"></canvas>' +
                 '<div class="rcf-d-col">' +
-                  '<button type="button" class="rcf-key rcf-navkey" aria-expanded="false">' +
+                  '<button type="button" class="rcf-key rcf-navkey" aria-expanded="false" aria-label="' + (RU ? "КУРС. Список всех тел и прыжок в другие рукава" : "Course. Every body plus the jump to other arms") + '">' +
                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                     '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>' +
@@ -753,30 +753,30 @@ function buildUI() {
               '</div>' +
               /* ЦЕНТР: работа с миром */
               '<div class="rcf-d-bay rcf-d-work">' +
-                '<button type="button" class="rcf-key rcf-scan-key" data-scan aria-pressed="false">' +
+                '<button type="button" class="rcf-key rcf-scan-key" data-scan aria-pressed="false" aria-label="' + (RU ? "СКАН. Снять карту тела, к которому подошли" : "Scan. Map the body you are next to") + '">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                   '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>' +
                   '<path d="M3 12h18"/></svg>' +
                   '<b>' + (RU ? "СКАН" : "SCAN") + '</b></button>' +
-                '<button type="button" class="rcf-key rcf-deploy">' +
+                '<button type="button" class="rcf-key rcf-deploy" aria-label="' + (RU ? "УЗЕЛ. Поставить узел на орбите тела" : "Node. Put a node in the body orbit") + '">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                   '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>' +
                   '<path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg>' +
                   '<b>' + (RU ? "УЗЕЛ" : "NODE") + '</b></button>' +
-                '<button type="button" class="rcf-key rcf-fire-key" data-act="shot">' +
+                '<button type="button" class="rcf-key rcf-fire-key" data-act="shot" aria-label="' + (RU ? "СНИМОК. Снять кадр того, что перед носом" : "Shot. Capture what is ahead") + '">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                   '<path d="M3.4 8.2h3.1l1.5-2.4h8l1.5 2.4h3.1v10.2H3.4z"/>' +
                   '<circle cx="12" cy="13.1" r="3.5"/></svg>' +
                   '<b>' + (RU ? "СНИМОК" : "SHOT") + '</b></button>' +
-                '<button type="button" class="rcf-key rcf-auto-key" data-autokey aria-pressed="false">' +
+                '<button type="button" class="rcf-key rcf-auto-key" data-autokey aria-pressed="false" aria-label="' + (RU ? "АВТО. Автопилот ведёт корабль сам" : "Auto. Autopilot flies the ship") + '">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                   '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>' +
                   '<b>' + (RU ? "АВТО" : "AUTO") + '</b></button>' +
-                '<button type="button" class="rcf-key rcf-stop-key">' +
+                '<button type="button" class="rcf-key rcf-stop-key" aria-label="' + (RU ? "СТОП. Погасить ход до нуля" : "Stop. Kill the thrust") + '">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                   '<rect x="6.5" y="6.5" width="11" height="11" rx="2"/></svg>' +
@@ -2479,8 +2479,27 @@ function glowSprite(size, inner, outer) {
 }
 
 /* ── Мир ─────────────────────────────────────────────────────ы */
+/* ── Секундомер сборки мира ──────────────────────────────────
+   Владелец пишет одно и то же с самого начала: «вход в ракету
+   абсолютно всегда зависает». Сборку мира мы уже сдвинули вперёд,
+   в проход к трапу, но она как была одним синхронным куском, так и
+   осталась - просто встала раньше. Чинить кусок вслепую нельзя:
+   надо знать, какой из двадцати разделов съедает секунды.
+
+   Замер живёт только под ?rcdbg=1 и в боевом кадре не стоит ничего.
+   Разбивку забирают через RC_FLIGHT.этапы(). */
+var ЭТАП_Т = 0, ЭТАПЫ = [];
+function этап(имя) {
+  if (!DBG) return;
+  var т = performance.now();
+  if (ЭТАП_Т) ЭТАПЫ.push([имя, +(т - ЭТАП_Т).toFixed(1)]);
+  ЭТАП_Т = т;
+}
+
 function buildWorld() {
   var T = g.THREE;
+  ЭТАПЫ = []; ЭТАП_Т = DBG ? performance.now() : 0;
+  этап("старт");
   /* Узкий экран и слабое железо - разные вещи. Раньше по флагу mob
      в игре резалось всё подряд: вдвое меньше звёзд, вдвое грубее
      сферы планет, вполовину короче астероидные пояса. Владелец
@@ -2505,6 +2524,7 @@ function buildWorld() {
      не видит. Чёткость HUD не страдает: он в DOM. */
   r.setPixelRatio(Math.min(g.devicePixelRatio || 1, tiny ? 1.0 : (mob ? 1.2 : 1.8)));
   r.setClearColor(0x02050c, 1);
+  этап("слой WebGL");
 
   /* Страховка на случай, если контекст всё же отберут: выходим из
      полёта на страницу и забываем собранный мир, чтобы следующий
@@ -2783,6 +2803,7 @@ function buildWorld() {
      дальнем конце маршрута - у дыры небо стояло полупустым */
   var starShell = new T.Group();
   scene.add(starShell);
+  этап("небо");
   /* ── Звёздное небо ───────────────────────────────────────────
      Заказчик про космос сказал дважды и одинаково: «просто белые
      точки на чёрном фоне, вообще нету реализма красоты и глубины».
@@ -2975,6 +2996,7 @@ function buildWorld() {
   sunGlow.scale.setScalar(430);
   scene.add(sunGlow);
 
+  этап("туманности");
   /* ── Volumetric nebulae ────────────────────────────────
      The previous four Sprite objects always faced the camera, so a
      turn exposed them as flat translucent stains. These clouds are
@@ -3026,6 +3048,7 @@ function buildWorld() {
     nebSprites.push(cloud);
   }
 
+  этап("Земля");
   /* ── Земля ── */
   var earth = new T.Group();
   var eBody = new T.Mesh(
@@ -3232,6 +3255,7 @@ function buildWorld() {
   var atmShells = [];
   var solarLive = [];
 
+  этап("атмосфера");
   /* ── Ободок атмосферы ────────────────────────────────────────
      Один на все тела. Раньше он был вписан в makePlanet, и когда у
      Земли починили обводку, у соседей она осталась: правку пришлось
@@ -3386,6 +3410,7 @@ function buildWorld() {
 
   /* Солнце телом, а не только бликом: до него можно дойти, и у него
      есть поверхность - кипящая, с пятнами и протуберанцами */
+  этап("Солнце");
   /* ── Солнце ─────────────────────────────────────────────
      «Солнце вообще не реалистичное» - справедливо: шар, покрашенный
      градиентом, звездой не выглядит никогда. У настоящей звезды нет
@@ -3555,6 +3580,7 @@ function buildWorld() {
   }));
   scene.add(belt);
 
+  этап("Луна");
   /* ── Луна ── */
   var moon = new T.Mesh(
     new T.SphereGeometry(16, 40, 28),
@@ -3602,6 +3628,7 @@ function buildWorld() {
   var relayLine = new T.Line(relayGeo, new T.LineBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false }));
   scene.add(relayLine);
 
+  этап("Марс");
   /* ── Марс ── */
   /* Марс снимком, а не рисунком: мозаика «Викингов» (MDIM21, NASA,
      общественное достояние). На нарисованной карте не было ни долины
@@ -3622,6 +3649,7 @@ function buildWorld() {
   mars.position.set(620, -170, -820);
   scene.add(mars);
 
+  этап("Сатурн");
   /* ── Сатурн ── */
   var saturn = new T.Group();
   saturn.add(new T.Mesh(
@@ -3716,6 +3744,7 @@ function buildWorld() {
   saturn.rotation.z = 0.12;
   scene.add(saturn);
 
+  этап("дыра");
   /* ── Чёрная дыра ──
      Тонкий горячий диск, нарисованный шейдером: полосы, вращение,
      оранжевое пламя к центру и провал посередине. Плюс чёрное ядро
@@ -3800,6 +3829,7 @@ function buildWorld() {
   hole.position.set(2140, -160, -2380);
   scene.add(hole);
 
+  этап("прыжок");
   /* ── Гиперпрыжок: светящиеся следы ──────────────────────────
      Здесь стояли LineSegments с LineBasicMaterial. В WebGL это всегда
      линия толщиной ровно в один пиксель, одной яркости по всей длине
@@ -3938,11 +3968,13 @@ function buildWorld() {
   })();
   scene.add(jump);
 
+  этап("галактики");
   /* ── Галактики ──────────────────────────────────────────────
      Три спирали из частиц: Млечный Путь по курсу прыжка и две
      дальние вселенные по сторонам. Каждая - несколько тысяч точек
      по логарифмической спирали с гауссовым разбросом; ядро теплее,
      рукава в цвет вселенной. */
+  этап("спираль");
   /* ── Спиральная галактика ────────────────────────────────
      «Млечный путь не такой выглядит, как в реальности, нету
      чёткости, реализма и детализации» - и правда: три ровных рукава
@@ -4115,6 +4147,7 @@ function buildWorld() {
   gal3.children[1].userData.info = RU ? "ПОЛЯ KEPLER И TESS · подтверждённые экзопланетные системы" : "KEPLER AND TESS FIELDS · confirmed exoplanet systems";
   pickables.push(milky.children[1], gal2.children[1], gal3.children[1]);
 
+  этап("объём");
   /* ── World-locked galactic volume ───────────────────────
      The far sky sphere supplies astronomical scale, but it cannot
      translate relative to the cockpit. A sparse oblique volume of
@@ -4154,6 +4187,7 @@ function buildWorld() {
     return pts;
   })();
 
+  этап("пыль");
   /* ── Пыль у стекла ──
      Куб мелких частиц, вечно висящий вокруг камеры: кадр никогда
      не бывает мёртвым, а скорость читается кожей. Частицы
@@ -4180,6 +4214,7 @@ function buildWorld() {
     return pts;
   })();
 
+  этап("шлейф");
   /* ── Шлейф двигателя ──
      Двигатель у нас за спиной, самого факела из кабины не видно -
      зато видно, что он выбрасывает. Раскалённая крошка и искры
@@ -4231,6 +4266,7 @@ function buildWorld() {
     return pts;
   })();
 
+  этап("пояс");
   /* ── Астероидный пояс ──
      Камни рассыпаны трубой вокруг отрезка будущего маршрута между
      Марсом и Сатурном: корабль проходит сквозь пояс, камни висят
@@ -4298,6 +4334,7 @@ function buildWorld() {
     return mesh;
   })();
 
+  этап("маршрут");
   /* ── Маршрут ──
      Кривая проходит через все сцены и заворачивает домой. Взгляд
      ведут точки интереса: у каждого отрезка своя цель, между ними
@@ -4444,6 +4481,7 @@ function buildWorld() {
     scanTargets[см].o.userData.mark = scanTargets[см].key;
   }
 
+  этап("тела");
   /* ── Твёрдые тела ────────────────────────────────────────────
      Клиент прислал замечание: «чтобы ракета сквозь планеты не
      летала». Здесь перечень того, во что можно упереться: центр,
@@ -4475,6 +4513,7 @@ function buildWorld() {
   var wantFx = !reduced &&
     (parseInt(root.getAttribute("data-degrade") || "0", 10) || 0) < 2;
 
+  этап("реализм");
   /* ── Слой реализма ────────────────────────────────────────
      Сцена получает окружение: панораму с солнцем, Землёй и полосой
      Галактики. Без неё металлу нечего отражать, и любая обшивка
@@ -4496,6 +4535,9 @@ function buildWorld() {
       });
     } catch (eReal) { post = null; }
   }
+
+  этап("конец");
+  if (DBG) { try { console.table(ЭТАПЫ); } catch (eТ) {} }
 
   return {
     fx: wantFx, post: post, sunLight: sun,
@@ -5707,10 +5749,31 @@ var ЧТОДЕЛАЕТ = {
   "rcf-fit-key":  RU ? "Вернуть обычный кадр" : "Reset the view",
   "rcf-help-key": RU ? "Как летать: управление и правила" : "How to fly: controls and rules"
 };
+function имена(клавиши) {
+  for (var ки = 0; ки < клавиши.length; ки++) {
+    var кн = клавиши[ки];
+    if (кн.getAttribute("aria-label")) continue;
+    var подпись = ((кн.querySelector("b") || {}).textContent || "").trim();
+    var что = "";
+    for (var кк in ЧТОДЕЛАЕТ) {
+      if (ЧТОДЕЛАЕТ.hasOwnProperty(кк) && кн.classList.contains(кк)) { что = ЧТОДЕЛАЕТ[кк]; break; }
+    }
+    var имяК = подпись && что ? подпись + " · " + что : (подпись || что);
+    if (имяК) кн.setAttribute("aria-label", имяК);
+  }
+}
+
 function подсказкиКлавиш(w) {
-  if (!w || !ui.keyhint || подсказкиКлавиш.готово) return;
+  if (!w) return;
   var клавиши = w.querySelectorAll(".rcf-key");
   if (!клавиши.length) return;
+  /* Имена ставим ВСЕГДА, даже если всплывающей подсказки нет и даже
+     на повторном заходе: раньше и то и другое висело на одном
+     выходе по `готово`, и стоило подсказке не найтись - клавиши
+     оставались безымянными. Основные имена теперь стоят прямо в
+     разметке, здесь страховка на случай новых клавиш. */
+  имена(клавиши);
+  if (!ui.keyhint || подсказкиКлавиш.готово) return;
   подсказкиКлавиш.готово = true;
 
   /* Заодно даём клавишам доступное имя.
@@ -5724,17 +5787,6 @@ function подсказкиКлавиш(w) {
 
      Имя и что клавиша делает у нас уже есть здесь же, рядом. Берём
      их и ставим один раз при сборке. */
-  for (var ки = 0; ки < клавиши.length; ки++) {
-    var кн = клавиши[ки];
-    if (кн.getAttribute("aria-label")) continue;
-    var подпись = ((кн.querySelector("b") || {}).textContent || "").trim();
-    var что = "";
-    for (var кк in ЧТОДЕЛАЕТ) {
-      if (ЧТОДЕЛАЕТ.hasOwnProperty(кк) && кн.classList.contains(кк)) { что = ЧТОДЕЛАЕТ[кк]; break; }
-    }
-    var имяК = подпись && что ? подпись + " · " + что : (подпись || что);
-    if (имяК) кн.setAttribute("aria-label", имяК);
-  }
   var таймер = 0;
   var показать = function (кн) {
     var имя = (кн.querySelector("b") || {}).textContent || кн.getAttribute("aria-label") || "";
@@ -7726,6 +7778,19 @@ function deckSkin() {
   var deck = ui.wrap && ui.wrap.querySelector(".rcf-deck");
   var face = deck && deck.querySelector(".rcf-d-face");
   if (!face) return;
+  /* Пульт стал трёхмерным (блок P6I в rc-flight.css): железо гнёзд,
+     клавиши и обод радара рисует RC_CABIN, а здешнюю подложку CSS
+     гасит правилом background-image: none !important. Холст всё
+     равно собирался и гнал toDataURL - двенадцать-четырнадцать тысяч
+     символов PNG в инлайновый стиль при каждом входе в полёт и
+     каждом повороте экрана, и всё это в никуда. Рисунок ниже
+     оставлен как справка по геометрии гнёзд; работать он перестал.
+     Вернётся плоский пульт - убрать этот выход и правило в CSS. */
+  if (face.style.backgroundImage) {
+    face.style.backgroundImage = "";
+    face.style.backgroundSize = "";
+  }
+  return;
   /* Меряем в СОБСТВЕННЫХ координатах плоскости, а не экранных:
      панель наклонена перспективой, и getBoundingClientRect вернул бы
      уже спроецированный прямоугольник - рисунок железа разъехался бы
@@ -8757,7 +8822,9 @@ function stageCam(dt) {
    молча выходим: stage соберёт мир по-старому, как и раньше. */
 function prebuild() {
   if (F.built || !g.THREE) return false;
+  var тП = DBG ? performance.now() : 0;
   buildUI();
+  var тUI = DBG ? performance.now() : 0;
   try { W3 = buildWorld(); } catch (e) {
     try { console.error("rc-flight: предсборка мира не удалась -", e); } catch (e2) {}
     return false;
@@ -8768,7 +8835,14 @@ function prebuild() {
      первом кадре входа: замер приёмки на телефоне дал до 83 секунд
      на этот единственный кадр, и вход читался зависанием. Сцена
      ещё не рисуется, значит собрать его сейчас ничего не стоит. */
+  var тМир = DBG ? performance.now() : 0;
   if (g.RC_CABIN) { try { cabinBuild(); } catch (e) {} }
+  if (DBG) {
+    var тК = performance.now();
+    ЭТАПЫ.push(["+ разметка HUD", +(тUI - тП).toFixed(1)]);
+    ЭТАПЫ.push(["+ мир целиком", +(тМир - тUI).toFixed(1)]);
+    ЭТАПЫ.push(["+ корпус рубки", +(тК - тМир).toFixed(1)]);
+  }
   return true;
 }
 
@@ -9086,6 +9160,7 @@ function consoleShare() {
 
 g.RC_FLIGHT = {
   open: open, close: close, stage: stage, prebuild: prebuild,
+  "этапы": function () { return ЭТАПЫ.slice(); },
   /* Раньше здесь стоял второй ключ state. В объекте побеждает
      последний, поэтому этот молчал, и приёмка читала не то, что
      думала. Сведено в один ниже. */

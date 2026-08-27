@@ -2,12 +2,12 @@ import fs from "node:fs";
 import { ЭКРАНЫ, браузер, страница } from "./общее.mjs";
 
 const имя = process.argv[2] || "телефон";
-const часть = +(process.argv[3] || 0);          /* 0 - первая половина, 1 - вторая */
-const частей = +(process.argv[4] || 2);
-const дв = +(process.argv[5] || 1000);
+const отY = +(process.argv[3] || -1);
+const доY = +(process.argv[4] || -1);
+const дв = +(process.argv[5] || 900);
 const э = { ...ЭКРАНЫ[имя] }; if (process.env.RC_DPR) э.dpr = +process.env.RC_DPR;
 fs.mkdirSync("tools/audit/out", { recursive: true });
-const файл = "tools/audit/out/ч-" + имя + "-" + часть + ".ndjson";
+const файл = "tools/audit/out/ч-" + имя + "-" + (process.argv[6] || отY) + ".ndjson";
 fs.writeFileSync(файл, "");
 
 const b = await браузер();
@@ -17,7 +17,7 @@ console.log("ЭКСПОРТ пошёл "+от());
 await pg.exposeFunction("отдай", (o) => { fs.appendFileSync(файл, JSON.stringify(o) + "\n"); console.log(JSON.stringify(o)); });
 
 try {
-  await pg.evaluate(async ({ доляШага, ждать, часть, частей }) => {
+  await pg.evaluate(async ({ доляШага, ждать, отY, доY }) => {
     const сон = (ms) => new Promise((r) => setTimeout(r, ms));
     const r = document.documentElement;
     const снять = () => {
@@ -47,21 +47,20 @@ try {
     const шаг = Math.round(innerHeight * доляШага);
     const макс = document.documentElement.scrollHeight - innerHeight;
     const низ = Math.max(0, Math.round(document.getElementById("included").getBoundingClientRect().top + scrollY - innerHeight * 1.2));
-    const длина = макс - низ;
-    const от = Math.round(низ + длина * (часть / частей));
-    const до = Math.round(низ + длина * ((часть + 1) / частей));
+    const от = отY >= 0 ? отY : низ;
+    const до = доY >= 0 ? доY : макс;
     let охрана = 0;
     await window.отдай({ метка: "подвод старт", y: Math.round(scrollY), цель: от });
-    while (scrollY < от - 5 && охрана++ < 900) { scrollBy(0, Math.min(Math.round(innerHeight * 0.3), от - scrollY)); await сон(230); }
+    while (scrollY < от - 5 && охрана++ < 45) { scrollBy(0, Math.min(Math.round(innerHeight * 0.9), от - scrollY)); await сон(260); }
     await window.отдай({ метка: "подвод конец", y: Math.round(scrollY) });
-    await сон(3000);
+    await сон(6000);
     for (let i = 0; i < 400; i++) {
       await window.отдай(снять());
       if (scrollY >= макс - 2 || scrollY >= до) break;
       scrollBy(0, шаг);
       await сон(ждать);
     }
-  }, { доляШага: 0.11, ждать: дв, часть, частей });
+  }, { доляШага: 0.12, ждать: дв, отY, доY });
 } catch (e) { console.log("ОБРЫВ", (e.message || "").slice(0, 120)); }
 console.log("БЕДЫ " + JSON.stringify(беды.slice(0, 10)));
 await b.close();

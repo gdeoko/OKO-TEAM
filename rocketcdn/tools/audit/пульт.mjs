@@ -11,11 +11,27 @@ function лог(...a){const s=a.map(x=>typeof x==="string"?x:JSON.stringify(x)).
 const b = await браузер();
 const pg = await b.newPage({ viewport: э.vp, deviceScaleFactor: э.dpr, isMobile: э.mob, hasTouch: э.mob });
 await pg.addInitScript((l)=>{try{localStorage.setItem("rc_lang",l);}catch(e){}}, ЯЗ);
+pg.setDefaultTimeout(200000);
+await pg.addInitScript(() => {
+  let ждём=false, очередь=[];
+  window.requestAnimationFrame = function (cb) { очередь.push(cb);
+    if (!ждём) { ждём=true; setTimeout(()=>{ждём=false;const q=очередь;очередь=[];const t=performance.now();q.forEach(f=>{try{f(t)}catch(e){}});},200); }
+    return 1; };
+  window.cancelAnimationFrame = function(){};
+});
 await pg.goto(АДРЕС, { waitUntil: "domcontentloaded", timeout: 180000 });
 await pg.waitForTimeout(10000);
 лог("язык:", await pg.evaluate(()=>document.documentElement.lang));
-for (let i=0;i<16;i++){ await pg.evaluate(()=>scrollBy(0, innerHeight*0.85)); await pg.waitForTimeout(600); }
-await pg.waitForTimeout(8000);
+let прошл=-1;
+for (let i=0;i<70;i++){
+  const y = await pg.evaluate(()=>{ scrollBy(0, innerHeight*0.7); return Math.round(scrollY); });
+  if (y === прошл) break; прошл = y;
+  await pg.waitForTimeout(500);
+  const го = await pg.evaluate(()=>{const l=document.querySelector(".rc-desk"); return !!(l&&l.classList.contains("dsk-on"));});
+  if (го) { лог("пульт зажёгся на sy=", y, "шаг", i); break; }
+}
+лог("докрутили до", await pg.evaluate(()=>Math.round(scrollY)), "из", await pg.evaluate(()=>document.documentElement.scrollHeight));
+await pg.waitForTimeout(9000);
 const st = await pg.evaluate(()=>{const l=document.querySelector(".rc-desk");
   return {есть:!!l, on:l?l.classList.contains("dsk-on"):false, sy:Math.round(scrollY), dh:document.documentElement.scrollHeight};});
 лог("состояние:", st);
@@ -53,7 +69,7 @@ if (!д.нет) {
   });
   if (д.список && д.список.sh - д.список.ch > 1) лог("   СПИСОК ВОПРОСОВ ПРОКРУЧИВАЕТСЯ:", д.список.sh, "/", д.список.ch);
 }
-await pg.screenshot({path:`${КАД}/пульт-${тег}.jpeg`,type:"jpeg",quality:82});
+try{await pg.screenshot({path:`${КАД}/пульт-${тег}.jpeg`,type:"jpeg",quality:72,timeout:200000});лог("кадр пульта снят");}catch(e){лог("НЕТ КАДРА пульта");}
 // открыть ответ на первый вопрос
 await pg.evaluate(()=>{const q=document.querySelector(".dsk-q"); if(q) q.click();});
 await pg.waitForTimeout(2500);
@@ -61,7 +77,7 @@ const отв = await pg.evaluate(()=>{const a=document.querySelector(".dsk-a"), 
   const R=(э)=>{const r=э.getBoundingClientRect();return [+r.left.toFixed(1),+r.top.toFixed(1),+r.width.toFixed(1),+r.height.toFixed(1)];};
   return a?{r:R(a),sh:a.scrollHeight,ch:a.clientHeight,t:(a.textContent||"").slice(0,60),рамка:fr?R(fr):null}:null;});
 лог("ОТВЕТ:", отв);
-await pg.screenshot({path:`${КАД}/пульт-ответ-${тег}.jpeg`,type:"jpeg",quality:82});
+try{await pg.screenshot({path:`${КАД}/пульт-ответ-${тег}.jpeg`,type:"jpeg",quality:72,timeout:200000});лог("кадр ответа снят");}catch(e){лог("НЕТ КАДРА ответа");}
 writeFileSync(`/home/user/OKO-TEAM/rocketcdn/tools/audit/окна/пульт-${тег}.json`, JSON.stringify({д,отв},null,1));
 лог("ГОТОВО-ПУЛЬТ " + тег);
 await b.close();
