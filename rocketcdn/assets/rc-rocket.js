@@ -5394,7 +5394,19 @@ Rocket.prototype.publish = function () {
   }
   V(shine, "--rocket-x", Math.round(x) + "px");
   V(shine, "--rocket-y", Math.round(y) + "px");
-  V(shine, "--rocket-near", (1 - near).toFixed(2));
+  var бл = (1 - near);
+  V(shine, "--rocket-near", бл.toFixed(2));
+  /* Слой отблеска растянут на весь кадр и работает режимом наложения.
+     Прозрачность ноль его НЕ выключает: браузер всё равно держит
+     отдельный слой и на каждый кадр смешивает его со всем, что под
+     ним, по всей площади окна. А ракета рядом с кадром бывает малую
+     часть прокрутки. Снимаем слой из работы, пока светить нечем, и
+     возвращаем, когда есть. */
+  var виден = бл > 0.004;
+  if (виден !== this._shineOn) {
+    this._shineOn = виден;
+    if (shine.classList) shine.classList.toggle("rc-shine-on", виден);
+  }
   g.RC_ROCKET_POS = { x: x, y: y, near: 1 - near, orb: this.orbK };
 };
 

@@ -146,7 +146,7 @@ html[data-product="vpn"] .rc-flight .rc-vpn-projector img {
   max-width: 140px;
   transform: translateX(-50%);
   color: rgba(172, 211, 255, .74);
-  font: 600 7px/1.2 "Golos Text", system-ui, sans-serif;
+  font: 600 9px/1.2 "Golos Text", system-ui, sans-serif;
   letter-spacing: .16em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -230,8 +230,10 @@ html[data-product="vpn"] .rc-vpn-projector-scan {
   z-index: 4;
   top: 10px;
   right: 12px;
-  width: 31px;
-  height: 31px;
+  /* Тридцать одна точка под палец мало: у соседних крестиков того же
+     пульта норма тридцать четыре, и правило было одно на всех. */
+  width: 34px;
+  height: 34px;
   border: 1px solid rgba(124, 174, 255, .38);
   border-radius: 8px;
   color: #cfe3ff;
@@ -281,8 +283,10 @@ html[data-product="vpn"] .rc-vpn-projector-scan {
 }
 .rc-vpn-grid i {
   color: rgba(161, 203, 255, .64);
-  font: 600 8px/1 "Golos Text", system-ui, sans-serif;
-  letter-spacing: .14em;
+  /* Девять точек это пол читаемости, он держится по всему пульту.
+     Восемь с разрядкой в .14em читались узором, а не словом. */
+  font: 600 9px/1 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .1em;
 }
 .rc-vpn-grid b { font-size: 12px; font-weight: 600; }
 .rc-vpn-grid b.ok { color: #79e0bc; }
@@ -380,7 +384,9 @@ html.rc-product-glitch .rc-vpn-brand img {
   .rc-vpn-grid { gap: 4px; margin: 11px 0 10px; }
   .rc-vpn-grid span { padding: 7px 6px; }
   .rc-vpn-grid b { font-size: 9px; }
-  .rc-vpn-grid i { font-size: 6px; }
+  /* Кегль не имеет права уменьшаться по мере сужения экрана: на
+     телефоне читать труднее, а не легче. Держим тот же пол. */
+  .rc-vpn-grid i { font-size: 9px; letter-spacing: .06em; }
   .rc-vpn-actions { grid-template-columns: 1fr; }
   .rc-vpn-actions button { grid-column: auto; }
 }
@@ -391,7 +397,7 @@ html.rc-product-glitch .rc-vpn-brand img {
   .rc-vpn-holo p { font-size: 10px; line-height: 1.35; }
   .rc-vpn-actions { margin-top: 10px; }
   .rc-vpn-actions a,
-  .rc-vpn-actions button { min-height: 33px; padding: 6px; font-size: 8px; }
+  .rc-vpn-actions button { min-height: 36px; padding: 7px 6px; font-size: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

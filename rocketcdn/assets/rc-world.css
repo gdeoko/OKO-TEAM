@@ -330,6 +330,13 @@ html.cut-hit .rc-shine::after {
 .rc-shine {
   position: fixed; inset: 0; z-index: 4;
   pointer-events: none;
+  /* Пока светить нечем, слоя нет вовсе.
+
+     Прозрачность ноль слой не выключает: браузер держит его отдельно
+     и на каждый кадр смешивает со всем, что под ним, по всей площади
+     окна. Ракета же бывает рядом с кадром малую часть прокрутки.
+     Признак ставит rc-rocket.js по той же величине, что и яркость. */
+  display: none;
   mix-blend-mode: plus-lighter;
   opacity: calc(var(--rocket-near, 0) * .55);
   background:
@@ -343,10 +350,13 @@ html.cut-hit .rc-shine::after {
       transparent 72%);
   transition: opacity .5s linear;
 }
-/* Внутри корабля и в игре своего света хватает */
+.rc-shine.rc-shine-on { display: block; }
+/* Внутри корабля и в игре своего света хватает. Снимаем слой
+   целиком, а не гасим прозрачностью: прозрачный слой с режимом
+   наложения всё равно смешивается со всем кадром каждый кадр. */
 html.rc-inside .rc-shine,
 html.rc-flying .rc-shine,
-html.rc-approach .rc-shine { opacity: 0; }
+html.rc-approach .rc-shine { display: none !important; }
 /* Светлая тема: по белому листу тот же приём читается грязью, там
    свет корабля даём холодной тенью вместо засветки */
 html[data-theme="light"] .rc-shine {
