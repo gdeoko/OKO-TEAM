@@ -190,6 +190,33 @@ function relang() {
   }
   if (ui.wrap.parentNode) ui.wrap.parentNode.removeChild(ui.wrap);
   ui = {};
+  /* Вместе с обёрткой обязаны забыться и ВСЕ кэши, которые на неё
+     ссылаются. Иначе следующий заход рисует в узлы, которых больше
+     нет в документе, - без единой ошибки в консоли, просто пусто.
+
+     Путь до беды обычный: открыл полёт, закрыл, переключил язык,
+     открыл снова.
+
+     holoReady держал слой меток: он подшивался в обёртку один раз за
+     жизнь страницы, и после пересборки метки над планетами и узлами
+     писались в отсоединённый узел - над телами не появлялось ничего.
+
+     deck держал холст приборов: подсветка клавиш, радар и шкалы
+     рисовались в отсоединённый холст, а панель выглядела голым
+     металлом.
+
+     physicalControlsFrame.nodes держал список кнопок: новые кнопки
+     не получали ни признака зоны нажатия, ни координат, а в этом
+     режиме именно они единолично отвечают за место и размер зоны.
+
+     подсказкиКлавиш.готово держал имена клавиш. */
+  holoReady = false;
+  holoIds = {};
+  holoUni = -1;
+  deck = null;
+  deckSize = { w: 0, h: 0, d: 0, вид: "" };
+  physicalControlsFrame.nodes = null;
+  подсказкиКлавиш.готово = false;
   var fab = doc.querySelector(".rcf-fab");
   if (fab) {
     var lbl = fab.querySelector("span");
@@ -4905,6 +4932,16 @@ function bindControls() {
       w.classList.add("rcf-drag");
     }
   }, { passive: true });
+  /* Оконные слушатели вешаются ОДИН раз за жизнь страницы.
+
+     bindControls зовётся из buildUI, а buildUI пересобирается после
+     каждой смены языка. Снятия у этих подписок не было, и они
+     копились: после «открыл, закрыл, сменил язык, открыл» одно
+     нажатие стрелки исполняло разгон дважды, потом трижды. Тело
+     обработчиков смотрит только в F и ui, а те живут дольше обёртки,
+     поэтому одной подписки хватает навсегда. */
+  if (!bindControls.окноГотово) {
+    bindControls.окноГотово = true;
   addEventListener("pointerup", function (e) {
     drag = false;
     if (ui.wrap) ui.wrap.classList.remove("rcf-drag");
@@ -4926,6 +4963,7 @@ function bindControls() {
   });
 
   addEventListener("resize", function () { size(); cabSrc(); }, { passive: true });
+  }
 }
 
 /* ── Нажатие по телу считается СРАЗУ ─────────────────────────
@@ -5217,6 +5255,31 @@ function netButton() {
     : (RU ? "Узел ставится на орбите тела" : "Deploy in orbit"));
 }
 
+/* ── Убрать объект из сцены НАСОВСЕМ ─────────────────────────
+   scene.remove снимает объект с дерева, но его геометрия, материал и
+   текстура остаются в памяти видеокарты: three.js их сам не
+   освобождает. Линия сети, луч развёртывания и точки трафика
+   пересобираются на каждый новый узел и на каждую аварию, а спрайты
+   узлов рисуются каждый своей текстурой на своём холсте. За сессию с
+   десятком узлов набирались десятки неосвобождённых наборов.
+
+   Снимаем и освобождаем одним ходом, чтобы не забыть половину. */
+function убрать(о) {
+  if (!о) return;
+  try { if (о.parent) о.parent.remove(о); } catch (e) {}
+  try {
+    if (о.geometry && о.geometry.dispose) о.geometry.dispose();
+    var м = о.material;
+    var сп = м ? (м.length ? м : [м]) : [];
+    for (var i = 0; i < сп.length; i++) {
+      var мм = сп[i];
+      if (!мм) continue;
+      if (мм.map && мм.map.dispose) мм.map.dispose();
+      if (мм.dispose) мм.dispose();
+    }
+  } catch (e2) {}
+}
+
 function netMark(pos, name) {
   var T = g.THREE;
   if (!W3) return;
@@ -5243,7 +5306,7 @@ function netMark(pos, name) {
 
   /* Линии связи между узлами: сеть должна выглядеть сетью */
   if (netNodes.length > 1) {
-    if (netLine) W3.scene.remove(netLine);
+    if (netLine) убрать(netLine);
     var pts = [];
     for (var i = 0; i < netNodes.length; i++) {
       for (var j = i + 1; j < netNodes.length; j++) {
@@ -5291,7 +5354,7 @@ function deployNode() {
 
   /* Луч развёртывания: от корабля к телу, живёт полсекунды */
   var T = g.THREE;
-  if (netBeam) W3.scene.remove(netBeam);
+  if (netBeam) убрать(netBeam);
   var geo = new T.BufferGeometry().setFromPoints([W3.cam.position.clone(), F.orbit.c.clone()]);
   netBeam = new T.Line(geo, new T.LineBasicMaterial({
     color: 0x9fe0f6, transparent: true, opacity: 0.95, depthWrite: false, blending: T.AdditiveBlending
@@ -6583,7 +6646,7 @@ function frame(ts) {
     netBeamT -= dt;
     if (netBeam) {
       netBeam.material.opacity = Math.max(0, netBeamT / 0.65) * 0.95;
-      if (netBeamT <= 0) { w3.scene.remove(netBeam); netBeam = null; }
+      if (netBeamT <= 0) { убрать(netBeam); netBeam = null; }
     }
   }
   /* Узлы дышат: сеть живая, по ней идёт трафик */
@@ -7652,7 +7715,7 @@ var traf = null, trafN = 0, trafSeg = [];
 function trafBuild() {
   var T = g.THREE;
   if (!W3) return;
-  if (traf) { W3.scene.remove(traf); traf = null; }
+  if (traf) { убрать(traf); traf = null; }
   trafSeg = [];
   for (var i = 0; i < netNodes.length; i++) {
     for (var j = i + 1; j < netNodes.length; j++) {
@@ -7748,7 +7811,7 @@ function failTick(ts) {
          оставался висеть, и сеть на глаз не менялась */
       for (var fi = netNodes.length - 1; fi >= 0; fi--) {
         if (netNodes[fi].name === fail.name) {
-          if (W3) W3.scene.remove(netNodes[fi].s);
+          if (W3) убрать(netNodes[fi].s);
           netNodes.splice(fi, 1);
         }
       }
