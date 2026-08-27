@@ -65,15 +65,15 @@ class Бренд:
              "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
              "surface, obeys the frame perspective and takes the same light and dust.") + " " +
             (правило_знака or "") + " "
-            "Nothing crosses the characters, no blur on them, no unplanned line break, and an eight percent dead "
-            "margin on all four sides stays clear with all typography inside it. "
-            "Nothing drawn from an interface: no buttons or button shapes, swipe arrows, link chips, cursors, app "
-            "icons or screen mock-ups. No text beyond the captions given here: no subtitles, extra numbers, "
-            "dimension callouts, scale bars, street names, addresses, plaques, watermarks, timestamps, price tags, "
-            "currency signs, second logo, invented words, Latin placeholder lettering, emoji or icons. "
+            "Nothing crosses the characters, no blur, no unplanned line break, and an eight percent dead margin "
+            "on all four sides stays clear. "
+            "Nothing drawn from an interface: no buttons, swipe arrows, link chips, cursors, app icons or screen "
+            "mock-ups. No text beyond the captions given here: no subtitles, extra numbers, dimension callouts, "
+            "scale bars, street names, addresses, watermarks, timestamps, price tags, currency signs, second logo, "
+            "invented words, Latin placeholder lettering, emoji or icons. "
             "Every Cyrillic letter, digit, space, punctuation mark and the letter Ё with its two dots is reproduced "
-            "exactly as written above, with no autocorrection, re-spacing or glyph substitution. If a letterform "
-            "cannot be rendered cleanly, render it larger and simpler, never substitute another alphabet.")
+            "exactly as written above, without autocorrection or glyph substitution. A letterform that cannot be "
+            "rendered cleanly is rendered larger and simpler, never in another alphabet.")
         return " ".join(части)
 
 
@@ -129,7 +129,10 @@ class Бренд:
 # Обязательный масштаб надписи: применяется к любому приёму подачи. Держим одни
 # числа и убираем повторы: место в промпте дороже красивой формулировки.
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
-           "and a quarter of its height and stays readable at a two hundred pixel thumbnail.")
+           "and a quarter of its height and stays readable at a two hundred pixel thumbnail. Contrast is not left "
+           "to chance: warm white on a dark ground, or near black on a solid amber block. Where the type crosses "
+           "a bright or busy area, the ground under it is darkened or a plate is laid behind it. No amber type on "
+           "a pale ground, no dark type on a dark one.")
 
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
@@ -646,10 +649,9 @@ def графика(ключ, номер=0):
 # софтбоксу и одинаковому пластиковому материалу, из-за чего кадр и читался как
 # «фон плюс текст». Числа взяты из вывода разбора DIZAJN_3D и задают минимум,
 # ниже которого падать нельзя, а не описание конкретной сцены.
-ФИЗИКА = ("Physics floor: at least two light sources with stated colour temperatures and different angles, never "
-          "one flat wash; at least three materials of visibly different roughness, concrete near 0.75, brushed "
-          "steel 0.25, glass 0.02; black point lifted to 6 of 255, no pure black and no clipped white; at most "
-          "two overlaid effects.")
+ФИЗИКА = ("Physics floor: two light sources at least, with stated colour temperatures and different angles, never "
+          "one flat wash; three materials of visibly different roughness, concrete near 0.75, brushed steel 0.25, "
+          "glass 0.02; black point at 6 of 255, nothing clipped; two overlaid effects at most.")
 
 # Тема сама подсказывает систему. Люди, работа, ошибки и кадры цеха идут через
 # экшен-системы, цифры, деньги и сравнения через объёмные 3D-системы, город,

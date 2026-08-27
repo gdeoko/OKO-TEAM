@@ -286,8 +286,8 @@ from promt_engine import Бренд, собрать, проверить
     "city blocks rising directly behind it, amber light filling the bays while the housing beyond stays cold "
     "and unlit",
 "P-S-cas-prostoa-masiny":
-    "a heavy truck standing still at a loading dock with its engine off, the dock seal folded against the "
-    "body, a stopwatch face on a steel plate bolted to the dock wall in the near plane",
+    "a heavy truck standing still at a loading dock with its engine off, a stopwatch face on a steel plate "
+    "bolted to the dock wall in the near plane",
 "P-S-ponedel-nik-v-cehe":
     "an empty production bay at six in the morning, overhead crane rail catching the first key light, floor "
     "marking freshly swept, one work jacket hanging on a steel hook in the foreground",
