@@ -4755,3 +4755,26 @@ html.rc-deep-inside .rcf-fab {
 .rc-flight .rcf-netlist { display: none; }
 .rc-flight .rcf-hud .rcf-netlist.on,
 .rc-flight .rcf-netlist.on { display: flex; }
+
+/* ── Переключатель звука в справке ───────────────────────────
+   Единственная настройка, которая нужна прямо в полёте: шапка сайта
+   с общим переключателем на время полёта спрятана, и выключить гул
+   было негде. Кнопка живёт в строке списка, поэтому и выглядит как
+   строка, а не как ещё одна клавиша пульта. */
+.rc-flight .rcf-snd-key {
+  appearance: none;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  border-radius: 999px;
+  padding: 3px 12px;
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .1);
+  color: var(--int-lit, #CFE9F5);
+  font: 600 11px/1.5 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .16s linear, border-color .16s linear;
+}
+.rc-flight .rcf-snd-key:hover { background: rgba(var(--int-cyan-rgb, 66,178,220), .2); }
+.rc-flight .rcf-snd-key.cur {
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .3);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .85);
+}

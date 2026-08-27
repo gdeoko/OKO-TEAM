@@ -546,6 +546,14 @@ function buildUI() {
             '<li><i>' + (RU ? "ВЫХОД" : "EXIT") + '</i><span>' +
               (RU ? "Крестик в углу или настойчивая прокрутка вверх возвращают на страницу"
                   : "The corner cross or a firm scroll up returns to the page") + '</span></li>' +
+            /* Единственная настройка, которая нужна прямо в полёте.
+               Переключатель звука живёт в шапке сайта, а шапка на
+               время полёта спрятана: выключить гул и щелчки было
+               негде вовсе. Заказчик просил «типо настроек», и вот
+               она, на своём месте - в той же панели, где правила. */
+            '<li><i>' + (RU ? "ЗВУК" : "SOUND") + '</i><span>' +
+              '<button type="button" class="rcf-snd-key" aria-pressed="false">' +
+              (RU ? "включить" : "turn on") + '</button></span></li>' +
           '</ul>' +
         '</div>' +
       '</div>' +
@@ -756,6 +764,7 @@ function buildUI() {
   if (helpKey) {
     helpKey.addEventListener("click", function () {
       var on = !ui.help.classList.contains("on");
+      if (on) звукПодпись();
       ui.help.classList.toggle("on", on);
       helpKey.classList.toggle("cur", on);
       modalMark();
@@ -768,6 +777,28 @@ function buildUI() {
      четвёртой в ряду и видна на телефоне, а круглое «?» в углу
      проёма только ложилось на подпись о теле и добавляло на экран
      ещё одну надпись - ровно то, на что жаловались.  */
+  /* Звук переключается тем же ходом, что и в шапке сайта: общий
+     на весь сайт, чтобы состояние не разъезжалось между страницей
+     и полётом. */
+  var sndKey = w.querySelector(".rcf-snd-key");
+  function звукПодпись() {
+    if (!sndKey) return;
+    var вкл = !!(g.RC_SOUND && g.RC_SOUND.on);
+    sndKey.textContent = вкл ? (RU ? "выключить" : "turn off") : (RU ? "включить" : "turn on");
+    sndKey.setAttribute("aria-pressed", вкл ? "true" : "false");
+    sndKey.classList.toggle("cur", вкл);
+  }
+  if (sndKey) {
+    sndKey.addEventListener("click", function () {
+      if (g.RC_SOUND && g.RC_SOUND.toggle) { try { g.RC_SOUND.toggle(); } catch (eЗв) {} }
+      звукПодпись();
+      /* Включение поднимает аудиоконтекст, и флаг встаёт не в тот же
+         тик: без второй сверки подпись оставалась «включить» на уже
+         включённом звуке. Замер показал ровно это. */
+      setTimeout(звукПодпись, 280);
+    });
+    звукПодпись();
+  }
   var helpX = w.querySelector(".rcf-help-x");
   if (helpX) helpX.addEventListener("click", function () {
     ui.help.classList.remove("on");
