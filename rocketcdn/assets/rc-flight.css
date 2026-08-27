@@ -2613,11 +2613,11 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
    ═══════════════════════════════════════════════════════════ */
 .rc-flight .rcf-hud {
   left: var(--cab-wx, 6%);
-  top: var(--cab-wy, 8%);
+  top: var(--cab-hy, var(--cab-wy, 8%));
   right: auto;
   bottom: auto;
   width: var(--cab-ww, 88%);
-  height: var(--cab-wh, 68%);
+  height: var(--cab-hh, var(--cab-wh, 68%));
   overflow: hidden;
   /* Скругление по форме остекления: свет проекции не должен
      доходить до самых углов рамы */
@@ -2771,11 +2771,11 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-dos,
 .rc-flight .rcf-help {
   left: var(--cab-wx, 6%);
-  top: var(--cab-wy, 8%);
+  top: var(--cab-hy, var(--cab-wy, 8%));
   right: auto;
   bottom: auto;
   width: var(--cab-ww, 88%);
-  height: var(--cab-wh, 68%);
+  height: var(--cab-hh, var(--cab-wh, 68%));
   border-radius: clamp(10px, 2vw, 28px);
   overflow: hidden;
   /* Сброс базового сдвига на полразмера: без него окно, получив
@@ -3617,7 +3617,15 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   border: 0;
   box-shadow: none;
   opacity: .34;
-  pointer-events: none;
+  /* Нажатие принимаем и вне орбиты. Здесь стояло pointer-events: none,
+     и оно перебивало правило выше по файлу тремя классами против двух:
+     клавиша УЗЕЛ была мертва на всех экранах, палец попадал сквозь неё
+     в плиту. Комментарий над тем правилом объявлял это починенным - на
+     деле чинил его собственную половину, а эту нет. Недоступная
+     клавиша обязана нажиматься и говорить, почему нельзя: ответ даёт
+     deployNode, «УЗЕЛ СТАВИТСЯ ТОЛЬКО НА ОРБИТЕ». */
+  pointer-events: auto;
+  cursor: pointer;
 }
 .rc-flight .rcf-key.rcf-deploy.on {
   opacity: 1;
@@ -4729,7 +4737,7 @@ html.rc-deep-inside .rcf-fab {
 .rc-flight.rcf-native-cab .rcf-d-top {
   position: fixed;
   left: var(--cab-wx, 6%);
-  top: var(--cab-wy, 8%);
+  top: var(--cab-hy, var(--cab-wy, 8%));
   width: var(--cab-ww, 88%);
   z-index: 15;
   padding: 4px clamp(8px, 1.4vw, 18px);

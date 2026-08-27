@@ -146,8 +146,12 @@ function ensureFlight() {
   h.setAttribute("aria-modal", "false");
   h.setAttribute("aria-label", "RocketVPN");
   h.innerHTML =
+    /* Крестик стоит РЯДОМ с рамкой, а не внутри неё. Внутри его резал
+       собственный контур: срез угла проходит по кнопке, и режет он не
+       только вид, но и попадание - палец в правый верхний угол уходил
+       мимо, в саму панель. */
+    '<button type="button" class="rc-vpn-x" aria-label="' + (ru() ? "Закрыть" : "Close") + '">×</button>' +
     '<div class="rc-vpn-holo-in">' +
-      '<button type="button" class="rc-vpn-x" aria-label="' + (ru() ? "Закрыть" : "Close") + '">×</button>' +
       '<div class="rc-vpn-brand"><img src="assets/rocketvpn-logo.webp" alt="RocketVPN" width="128" height="128">' +
         '<span><i>SECURE RELAY / RC-VPN</i><b>RocketVPN</b><u data-vpn-status></u></span></div>' +
       '<div class="rc-vpn-grid">' +
