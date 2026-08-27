@@ -483,3 +483,61 @@ Claude напрямую, без сервера и без браузера.
 - HF Inference Providers (fal-ai, replicate, wavespeed через router):
   это платные провайдеры со счётом на аккаунт HF, не ZeroGPU. Не трогаем
   без разрешения Даниэля.
+
+## ElevenLabs — звуковые эффекты для сайтов и роликов (27.08.2026)
+
+Тариф Creator, оплачен 20.08.2026, аккаунт `okoteam.top@gmail.com`, рабочее
+пространство «OKO's Workspace». Проверено боем: банк из 26 эффектов для сайта
+Rocket CDN снят целиком за один заход.
+
+Ключ `ELEVEN_KEY` лежит только на VPS, в `/opt/oko-poster/cfg/secrets.env`, и
+наружу его не выносим: генерация идёт там же, в репозиторий приезжает готовый
+звук. Рядом `ELEVEN_LOGIN`, `ELEVEN_PAROL`, `ELEVEN_SOCKS`, `ELEVEN_MODEL`.
+
+**Про страну.** Российский адрес ElevenLabs не пускает. Ходить в API только
+через нидерландский выход `127.0.0.1:10840`:
+
+    curl --socks5-hostname 127.0.0.1:10840 https://api.elevenlabs.io/v1/user/subscription \
+         -H "xi-api-key: $ELEVEN_KEY"
+
+Отдаёт тариф и остаток символов. На 27.08.2026 было израсходовано 4 894 из
+295 684, и целый банк эффектов этот счётчик не сдвинул: эффекты считаются
+отдельно от речи.
+
+**Генерация эффекта.** `POST https://api.elevenlabs.io/v1/sound-generation`,
+тело `{"text": "...", "duration_seconds": 2.0, "prompt_influence": 0.55}`, для
+петли добавить `"loop": true`. Отдаёт `audio/mpeg` 128 кбит стерео.
+
+Промпт пишем по-английски и описываем звук, а не предмет: из чего он состоит,
+какая атака, какой хвост, сухо или с залом. В конце обязательно `no music,
+no voice` — иначе модель подкладывает подложку. `prompt_influence` около 0.5
+держит золотую середину: выше — буквальнее и суше, ниже — красивее и мимо.
+
+**Готовые скрипты на VPS**, `/opt/oko-poster/rcsnd`:
+
+    bash run.sh              # весь банк по списку из rcsnd_bank.py
+    bash run.sh click hyper  # только названные, остальные не трогает
+    bash post.sh             # сведение в моно 80 кбит + таблица замеров
+
+`rcsnd_bank.py` пропускает то, что уже лежит в `out/`, так что перегенерация
+одного эффекта не тратит остальные. `post.sh` печатает по каждому файлу
+длину, пик и RMS — пустышку и перегруз видно сразу, без прослушивания.
+
+Кабинет: https://elevenlabs.io/app/sound-effects, вход через «Continue with
+Google» в браузере агента, сессия живая. Там же История и Избранное — можно
+слушать и переснимать руками.
+
+## Envato и Runway — что уже открыто в браузере агента (27.08.2026)
+
+Один и тот же профиль Chrome на VPS (`/opt/oko-poster/profiles/google`, порт
+отладки 9222) держит живые сессии: ChatGPT и Envato под `okoteam.top@gmail.com`,
+Runway под `claude.okoteam@gmail.com`. Пароли спрашивать не нужно, вход уже
+пройден. Подключаться из любого чата:
+
+    import pkg from "/opt/oko-poster/node_modules/playwright-core/index.js";
+    const b = await pkg.chromium.connectOverCDP("http://127.0.0.1:9222");
+    const p = await b.contexts()[0].newPage();
+
+Envato отдаёт шаблоны After Effects, звук и графику по подписке; каталог
+живёт на `app.envato.com`. Готовые примеры вызовов лежат рядом в
+`/opt/oko-poster/_env_poisk.mjs` и `_env_kredit.mjs`.
