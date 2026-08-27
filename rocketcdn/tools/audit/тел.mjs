@@ -7,16 +7,15 @@ const b = await chromium.launch({ args:["--use-gl=swiftshader","--enable-unsafe-
 const pg = await b.newPage({ viewport:{width:412,height:800}, deviceScaleFactor:2, isMobile:true, hasTouch:true });
 await pg.goto("http://127.0.0.1:8123/?rcdbg=1", { waitUntil:"domcontentloaded", timeout:180000 });
 л("грузится");
-await pg.waitForTimeout(9000);
+await pg.waitForTimeout(7000);
 л("выдержка");
 const ок = await pg.evaluate(() => { if (window.RC_FLIGHT && window.RC_FLIGHT.open) { window.RC_FLIGHT.open(); return true; }
   const k = document.querySelector(".js-flight"); if (k) { k.click(); return true; } return false; });
 л("в игру: " + ок);
-await pg.waitForTimeout(13000);
+await pg.waitForTimeout(11000);
 await pg.evaluate(() => { const b2 = document.querySelector(".rcf-brief-btns button[data-mode='manual']") ||
   document.querySelector(".rcf-brief-btns button") || document.querySelector(".rcf-brief .rcf-go");
   if (b2) b2.click(); const br = document.querySelector(".rcf-brief"); if (br) br.classList.add("off"); });
-await pg.waitForTimeout(3000);
 л("брифинг закрыт");
 const д = await pg.evaluate(() => {
   const w = document.querySelector(".rc-flight"); const cs = w ? getComputedStyle(w) : null;
