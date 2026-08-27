@@ -68,13 +68,12 @@ class Бренд:
              "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
              "surface, obeys the frame perspective and takes the same light and dust.") + " " +
             ((правило_знака or "") if со_знаком else "") + " "
-            "Nothing crosses the characters, no blur, no unplanned line break, eight percent dead margin all "
-            "round. "
-            "Nothing drawn from an interface: no buttons, swipe arrows, link chips, cursors, app icons or screen "
-            "mock-ups. No text beyond the captions given here: no subtitles, extra numbers, dimension callouts, "
+            "Nothing crosses the characters, no blur, no unplanned line break, eight percent dead margin. "
+            "Nothing from an interface: no buttons, swipe arrows, link chips, cursors, app icons or screen "
+            "mock-ups. No text beyond the captions given here: no subtitles, extra numbers, "
             "scale bars, street names, addresses, watermarks, timestamps, price tags, currency signs, second logo, "
             "invented words, Latin placeholder lettering, emoji or icons. "
-            "Every Cyrillic letter, digit, space, punctuation mark and the letter Ё with its two dots is reproduced "
+            "Every Cyrillic letter, digit, space, punctuation mark and Ё with its two dots is reproduced "
             "exactly as written above, without autocorrection or glyph substitution. A letterform that cannot be "
             "rendered cleanly is rendered larger and simpler, never in another alphabet.")
         return " ".join(части)
@@ -136,7 +135,8 @@ class Бренд:
 ЧИТАЕМОСТЬ = ("Contrast is set, not hoped for: warm white on dark, or near black on solid amber. Amber type lives "
               "only on graphite or black; on any lighter ground the letters are warm white or near black, never "
               "amber. Where type crosses a bright or busy area the ground under it is darkened. Type is upright "
-              "always, no italic or script, and the guillemets in this prompt mark the wording and are never drawn. The headline faces camera square and never runs away from the lens: foreshortened letters "
+              "always, no italic or script. The outer guillemets around a quoted line are delimiters and are not drawn; "
+              "guillemets inside the wording itself are. The headline faces camera square and never runs away from the lens: foreshortened letters "
               "stop being letters. Its baseline is horizontal, never rotated, never running up or down the side "
               "of the frame.")
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
@@ -448,7 +448,7 @@ def графика(ключ, номер=0):
           "cured epoxy carrying subsurface light 2 mm in, oil at 0.06. 100 mm macro, f/5.6. The headline reads "
           "exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
-      "The headline stays off the surface as a small condensed caps block in warm white #F5F1E8, perfectly sharp "
+      "The headline stays off the surface as a heavy condensed caps block in warm white #F5F1E8, perfectly sharp "
       "against a field that is almost entirely out of focus.",
    "знак":
       "The brand mark is a small flat lockup in the corner, about three percent of the frame width, kept out of "
@@ -577,8 +577,8 @@ def графика(ключ, номер=0):
           "the road, and reads exactly, character by character, the Russian line "
           "«{заголовок}».",
    "типографика":
-      "The headline is laid flat on the ground plane in perspective, thin uppercase in warm white #F5F1E8, with "
-      "one light trail passing in front of it, so the long exposure happened on top of the type.",
+      "The headline stands square to camera in the dark upper part of the frame, heavy uppercase in warm white "
+      "#F5F1E8, one light trail passing in front of it, and it never lies along the road.",
    "знак":
       "The brand mark sits square to camera in a lower corner, about three percent of the frame width, "
       "upright and never laid into the road perspective.",
