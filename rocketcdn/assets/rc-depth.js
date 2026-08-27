@@ -113,7 +113,7 @@ var cards = [];        /* всё заявленное */
 var visible = [];      /* сейчас в кадре, по данным IntersectionObserver */
 var heads = [];        /* заголовки на параллаксе */
 var headsVis = [];
-var io = null, ioHead = null;
+var io = null, ioHead = null, ioK = null;
 var hoverEl = null, mx = 0, my = 0;
 var lastFrame = 0, tSec = 0;
 var seq = 0;
@@ -186,6 +186,7 @@ function collect() {
     el._rcdRec = rec;
     cards.push(rec);
     if (io) io.observe(el); else visible.push(rec);
+    if (ioK) ioK.observe(el);
   }
 
   var hl = doc.querySelectorAll(SEL_HEAD);
@@ -443,6 +444,24 @@ function stop() {
   for (i = 0; i < heads.length; i++) D(heads[i].el, "--rcd-y");
   if (io) io.disconnect();
   if (ioHead) ioHead.disconnect();
+  if (ioK) ioK.disconnect();
+}
+
+/* Ступени видимости для тихого режима: чем их больше, тем ровнее
+   идёт отблеск по стеклу. Дюжина хватает, дальше глаз не ловит. */
+var СТУПЕНИ = [0, .08, .16, .25, .34, .43, .52, .62, .72, .82, .92, 1];
+
+/* Та же мера входа в кадр, что считал цикл: полный разлёт слоёв
+   набирается за 40% высоты экрана. Прямоугольники берём из самого
+   события - браузер посчитал их сам, вёрстку это не тревожит. */
+function глубина(е) {
+  var rb = е.rootBounds, br = е.boundingClientRect;
+  var vh = rb ? rb.height : (innerHeight || root.clientHeight);
+  if (!vh || !br) return 0;
+  var верх = rb ? rb.top : 0;
+  var зона = vh * 0.4;
+  var deep = Math.min((vh - (br.top - верх)) / зона, (br.bottom - верх) / зона);
+  return clamp(deep, 0, 1);
 }
 
 /* ── Запуск ─────────────────────────────────────────────────
@@ -469,7 +488,7 @@ function boot() {
           rec.el.classList.remove("rcd-live");
           D(rec.el, "--rcd-rx"); D(rec.el, "--rcd-ry");
           D(rec.el, "--rcd-tz"); D(rec.el, "--rcd-lift");
-          V(rec.el, "--rcd-k", "0");
+          if (!ТИХО) V(rec.el, "--rcd-k", "0");
           V(rec.el, "--rcd-y", "0px");
         }
       }
@@ -488,6 +507,30 @@ function boot() {
         }
       }
     }, { rootMargin: "10% 0px" });
+
+    /* Глубина слоёв в тихом режиме.
+       Кадровый цикл при ТИХО не заводится, а --rcd-k нужна и без
+       него: по ней разводятся слои карточки, светится ореол под
+       значком и идёт отблеск по стеклу на телефоне. Раньше эту
+       переменную писал только цикл, поэтому после первого ухода
+       карточки за кадр она навсегда оставалась нулём - карточка
+       становилась плоской плиткой, а глянец на телефоне не
+       загорался вовсе.
+
+       Считаем её здесь, по ступеням видимости. Прямоугольники
+       приходят готовыми в самом событии, вёрстку никто не
+       трогает, кадра нет. Ступенчатость не видна: и прозрачность,
+       и сдвиг отблеска идут через переход в стилях. */
+    if (ТИХО) ioK = new IntersectionObserver(function (ents) {
+      for (var i = 0; i < ents.length; i++) {
+        var rec = ents[i].target._rcdRec;
+        if (!rec) continue;
+        var k = ents[i].isIntersecting ? глубина(ents[i]) : 0;
+        if (Math.abs(k - rec.kw) < 0.04) continue;
+        rec.kw = k;
+        V(rec.el, "--rcd-k", k.toFixed(2));
+      }
+    }, { threshold: СТУПЕНИ });
   }
 
   rows();

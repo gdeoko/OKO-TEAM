@@ -280,8 +280,12 @@ Globe3D.prototype.arcCurve = function (a, b) {
 
 Globe3D.prototype.seedArcs = function () {
   var P = this.palette();
+  /* Снимаем прошлый набор через remove, а не pop: pop вынимает
+     ребёнка из массива, но оставляет ему ссылку на родителя, и
+     сцена держит выброшенное. */
   while (this.arcGroup.children.length) {
-    var c = this.arcGroup.children.pop();
+    var c = this.arcGroup.children[this.arcGroup.children.length - 1];
+    this.arcGroup.remove(c);
     if (c.geometry) c.geometry.dispose();
   }
   var live = [];
@@ -291,6 +295,25 @@ Globe3D.prototype.seedArcs = function () {
   var want = this.mob ? 8 : 16, seen = {}, guard = 0;
   this.arcs = [];
   var glow = this._glowTex || (this._glowTex = glowTexture());
+
+  /* Материал у всех дуг один и тот же, и меняется он только вместе
+     с темой. Раньше своя пара материалов заводилась на каждую дугу
+     и выбрасывалась при пересборке - а пересборка идёт на каждый
+     поворот экрана и на каждое переключение темы. Видеопамять
+     набирала по три десятка мёртвых программ за сессию и не
+     отдавала их никогда. Теперь пара живёт до смены темы, старая
+     освобождается явно. Текстуру огонька не трогаем: она общая. */
+  if (!this._arcMat || this._arcTheme !== this.theme) {
+    if (this._arcMat) this._arcMat.dispose();
+    if (this._pktMat) this._pktMat.dispose();
+    this._arcMat = new T.LineBasicMaterial({
+      color: P.arc, transparent: true, opacity: 0.42, depthWrite: false, blending: T.AdditiveBlending
+    });
+    this._pktMat = new T.SpriteMaterial({
+      map: glow, color: 0xDFF6FF, transparent: true, blending: T.AdditiveBlending, depthWrite: false
+    });
+    this._arcTheme = this.theme;
+  }
 
   while (this.arcs.length < want && guard++ < want * 40) {
     var a = live[(Math.random() * live.length) | 0], b = live[(Math.random() * live.length) | 0];
@@ -304,14 +327,10 @@ Globe3D.prototype.seedArcs = function () {
     var curve = this.arcCurve(na, nb);
     var pts = curve.getPoints(this.mob ? 28 : 48);
     var geo = new T.BufferGeometry().setFromPoints(pts);
-    var line = new T.Line(geo, new T.LineBasicMaterial({
-      color: P.arc, transparent: true, opacity: 0.42, depthWrite: false, blending: T.AdditiveBlending
-    }));
+    var line = new T.Line(geo, this._arcMat);
     this.arcGroup.add(line);
 
-    var packet = new T.Sprite(new T.SpriteMaterial({
-      map: glow, color: 0xDFF6FF, transparent: true, blending: T.AdditiveBlending, depthWrite: false
-    }));
+    var packet = new T.Sprite(this._pktMat);
     packet.scale.setScalar(0.075);
     this.arcGroup.add(packet);
 

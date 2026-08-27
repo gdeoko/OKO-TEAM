@@ -153,6 +153,13 @@ function boot() {
   if (root.getAttribute("data-degrade") === "3") return;
   /* Шлюз нужен только у самого люка: в остальное время цикл спит */
   idler(frame, function () {
+    /* Внутри корабля шлюзу делать нечего, и проверка обязана это
+       знать. Без неё выходило так: кадр видит rc-inside, работы
+       нет, цикл засыпает - а сторож тут же будит его обратно,
+       потому что доля люка и подхода внутри уже не меняются. Круг
+       замыкался, и всё время в рубке, на вопросах и в контактах
+       браузер входил в JS десяток раз в секунду впустую. */
+    if (root.classList.contains("rc-inside")) return false;
     var d = (typeof g.RC_DOOR === "number") ? g.RC_DOOR : 0;
     var app = (typeof g.RC_APPROACH === "number") ? g.RC_APPROACH : 0;
     return app > 0.4 && d > 0.05;

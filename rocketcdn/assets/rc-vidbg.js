@@ -138,9 +138,15 @@ function build(sec, name) {
     else if (inView() && !root.classList.contains("rc-flying")) tryPlay();
   });
 
-  /* В полёте фоны страницы молчат */
+  /* В полёте фоны страницы молчат, а после возврата оживают.
+     Раньше слушали только вход, и человек, вернувшийся из полёта,
+     получал вместо живого фона застывший кадр до конца сессии. */
   addEventListener("rc:flight", function (e) {
-    if (e.detail && e.detail.on) { try { v.pause(); } catch (err) {} }
+    var on = !!(e.detail && e.detail.on);
+    if (on) { try { v.pause(); } catch (err) {} return; }
+    if (doc.hidden || !inView()) return;
+    if (root.classList.contains("rc-flying")) return;
+    tryPlay();
   });
 }
 
