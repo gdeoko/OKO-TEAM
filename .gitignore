@@ -37,3 +37,4 @@ rocketcdn/tools/audit/**/*.png
 # Chromium, ему в репозитории делать нечего.
 rocketcdn/tools/audit/tmpx/
 rocketcdn/tools/audit/**/playwright_chromiumdev_profile-*/
+rocketcdn/tools/audit/tmp/
