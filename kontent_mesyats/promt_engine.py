@@ -137,8 +137,8 @@ class Бренд:
            "area the ground under it is darkened. No amber on pale, no dark on dark. The headline faces camera "
            "square and never runs away from the lens: foreshortened letters stop being letters at feed size. "
            "Its baseline is horizontal, never rotated, never running up or down the side of the frame, and its "
-           "cap height is never less than a twelfth of the frame height, on a wide frame as much as on a tall "
-           "one: a headline that has to be looked for has already failed.")
+           "cap height is never less than a twelfth of the frame height, a twentieth on a 9:16 frame, on a wide "
+           "frame as much as on a tall one: a headline that has to be looked for has already failed.")
 
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
@@ -776,7 +776,7 @@ def поля_сторис():
             "top 250 pixels are covered by progress bars and the account name, the bottom 250 pixels by the reply "
             "field, and 80 pixels along each side are lost under the thumb. Everything meaningful lives inside the "
             "central working window of 920 by 1420 pixels, and the headline sits in the upper part of that window "
-            "since a story reads higher than its middle. The headline cap height is at least four percent of the "
+            "since a story reads higher than its middle. The headline cap height is at least eight percent of the "
             "frame width so it holds at arm's length, and it never runs longer "
             "than five lines. The poll or question sticker is NOT drawn in this image: the area reserved for it stays "
             "clean and nothing is painted there.")
