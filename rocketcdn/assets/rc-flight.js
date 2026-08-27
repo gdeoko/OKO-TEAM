@@ -1773,6 +1773,20 @@ function buildUniverse(i) {
              разъезжались (курс на «Лиловый гигант» вёл к звезде). */
           made.group.userData.planet = pi;
           made.group.userData.info = pl.name + " · " + pl.info;
+          /* Узел, поставленный здесь в прошлый заход, возвращается
+             вместе с планетой. netRestore знает только тела
+             Солнечной, и сеть, развёрнутая в чужом рукаве, после
+             возвращения на сайт жила только в счётчике: меток в мире
+             не было. Ставим метку тут, где мировые координаты
+             планеты уже известны. */
+          if (net[pl.name]) {
+            try {
+              var мп = new T.Vector3();
+              made.group.updateWorldMatrix(true, false);
+              мп.setFromMatrixPosition(made.group.matrixWorld);
+              netMark(мп, pl.name);
+            } catch (eУз) {}
+          }
           /* Мир проявляется, а не возникает: короткий рост от нуля */
           made.group.scale.setScalar(0.01);
           made.group.userData.grow = 0;
