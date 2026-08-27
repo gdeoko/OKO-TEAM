@@ -2099,10 +2099,66 @@ function buildAirlockInterior(env, R, HH, Y, seg) {
     }
   }
 
-  /* Embedded service console. The display and five keys are geometry
-     recessed into a metal socket; none of them is painted into the
-     bulkhead. This is the visual seed continued by the main flight
-     console after the camera reaches the cockpit. */
+  /* ── Панель в проёме одна, и она из игры ────────────────────
+     Здесь стояла собственная приборка тамбура: металлический короб,
+     безель, стеклянный экран, три полоски телеметрии и пять круглых
+     клавиш. Она была «визуальным зерном», которое потом подхватывает
+     настоящая рубка. На деле выходило три разные панели подряд - в
+     проёме люка своя, в салоне своя, и только в игре настоящая.
+     Заказчик написал про это прямо: «по факту реальная панель
+     управления с реальными размерами появляется только в игре, а я
+     что просил?»
+
+     Просил он одну. Ту, что в игре, видимую с той минуты, как
+     разошлись створки: стоит в глубине, прибитая на своём месте, и
+     растёт по мере подхода. Поэтому в глубину тамбура встаёт снимок
+     рубки - ТОТ ЖЕ ФАЙЛ, которым рубка живёт в игре. У него
+     прозрачное окно, значит это рама, а не наклейка, и файл общий с
+     игрой, значит второй загрузки нет.
+
+     Своя приборка остаётся запасным путём: паспорта кабины нет -
+     строим как раньше. Пустого проёма не будет ни при каком
+     раскладе. */
+  var снимок = null;
+  try {
+    var М = g.RC_CAB_FLAT;
+    if (М) {
+      var видК = (innerHeight > innerWidth) ? "высокая" : "широкая";
+      снимок = М[видК] || М["широкая"] || null;
+      if (снимок && !снимок["файл"]) снимок = null;
+    }
+  } catch (eСн) { снимок = null; }
+
+  var indicators = [];
+  var teleMat = new T.MeshStandardMaterial({
+    color: 0x071019, emissive: SHIP.cyan, emissiveIntensity: 1.2,
+    metalness: 0.05, roughness: 0.36, toneMapped: false
+  });
+  indicators.push(teleMat);
+
+  if (снимок) {
+    var текРубки = new T.TextureLoader().load(снимок["файл"]);
+    if (T.SRGBColorSpace) текРубки.colorSpace = T.SRGBColorSpace;
+    текРубки.anisotropy = 4;
+    /* Ширину берём по проёму, высоту по пропорции снимка: сплющенную
+       рубку заказчик поймает первым же взглядом. */
+    var шР = R * 1.30;
+    var вР = шР * (снимок.h / снимок.w);
+    var макВ = HH * 0.88;
+    if (вР > макВ) { вР = макВ; шР = вР * (снимок.w / снимок.h); }
+    var рубкаВдали = new T.Mesh(
+      new T.PlaneGeometry(шР, вР),
+      new T.MeshBasicMaterial({
+        map: текРубки, transparent: true, opacity: 0.96,
+        depthWrite: false, toneMapped: false
+      })
+    );
+    /* У самой дальней переборки и чуть ниже уровня глаз - там же, где
+       рубка окажется, когда мы к ней подойдём. */
+    рубкаВдали.position.set(0, Y - HH * 0.03, -R * 0.455);
+    рубкаВдали.renderOrder = 3;
+    group.add(рубкаВдали);
+  } else {
   var consoleBox = new T.Mesh(roundedSlab(R * 1.12, HH * 0.31, 0.12, R * 0.055, 0.014), shellMat);
   consoleBox.position.set(0, Y - HH * 0.055, -R * 0.47);
   group.add(consoleBox);
@@ -2112,20 +2168,12 @@ function buildAirlockInterior(env, R, HH, Y, seg) {
   var screen = new T.Mesh(new T.PlaneGeometry(R * 0.76, HH * 0.079), glassMat);
   screen.position.set(0, Y + HH * 0.005, -R * 0.360);
   group.add(screen);
-  /* Sparse telemetry lines live below the glass. A solid cyan card
-     looked like a pasted web button; narrow emitters look like an
-     instrument whose pixels are actually inside the panel. */
-  var indicators = [];
-  var teleMat = new T.MeshStandardMaterial({
-    color: 0x071019, emissive: SHIP.cyan, emissiveIntensity: 1.2,
-    metalness: 0.05, roughness: 0.36, toneMapped: false
-  });
   for (var ti = 0; ti < 3; ti++) {
     var tele = new T.Mesh(new T.BoxGeometry(R * (0.58 - ti * 0.10), 0.008, 0.006), teleMat);
     tele.position.set(-R * 0.07, Y + HH * (0.030 - ti * 0.024), -R * 0.342);
     group.add(tele);
   }
-  indicators.push(teleMat);
+  }
   var keyCapMat = new T.MeshStandardMaterial({
     color: 0x46545f, metalness: 0.78, roughness: 0.24,
     envMap: env, envMapIntensity: 1.1
@@ -2138,30 +2186,37 @@ function buildAirlockInterior(env, R, HH, Y, seg) {
     color: 0x180b05, emissive: 0xff783a, emissiveIntensity: 0.96,
     metalness: 0.20, roughness: 0.34, toneMapped: false
   });
-  var socketGeo = new T.CylinderGeometry(R * 0.067, R * 0.067, 0.028, 14);
-  var capGeo = new T.CylinderGeometry(R * 0.044, R * 0.048, 0.021, 16);
-  var ringGeo = new T.TorusGeometry(R * 0.052, R * 0.0065, 5, 18);
-  for (var bi = 0; bi < 5; bi++) {
-    var socket = new T.Mesh(socketGeo, steelMat);
-    socket.position.set((bi - 2) * R * 0.17, Y - HH * 0.126, -R * 0.390);
-    socket.rotation.x = Math.PI * 0.5;
-    group.add(socket);
-    var key = new T.Mesh(capGeo, keyCapMat);
-    key.position.set(socket.position.x, socket.position.y, -R * 0.361);
-    key.rotation.x = Math.PI * 0.5;
-    group.add(key);
-    var ring = new T.Mesh(ringGeo, bi === 3 ? keyActiveMat : keyLampMat);
-    ring.position.set(socket.position.x, socket.position.y, -R * 0.342);
-    group.add(ring);
+  /* Пять круглых клавиш - часть запасной приборки: их строим только
+     тогда, когда снимка рубки нет и в проёме нечего показать. */
+  if (!снимок) {
+    var socketGeo = new T.CylinderGeometry(R * 0.067, R * 0.067, 0.028, 14);
+    var capGeo = new T.CylinderGeometry(R * 0.044, R * 0.048, 0.021, 16);
+    var ringGeo = new T.TorusGeometry(R * 0.052, R * 0.0065, 5, 18);
+    for (var bi = 0; bi < 5; bi++) {
+      var socket = new T.Mesh(socketGeo, steelMat);
+      socket.position.set((bi - 2) * R * 0.17, Y - HH * 0.126, -R * 0.390);
+      socket.rotation.x = Math.PI * 0.5;
+      group.add(socket);
+      var key = new T.Mesh(capGeo, keyCapMat);
+      key.position.set(socket.position.x, socket.position.y, -R * 0.361);
+      key.rotation.x = Math.PI * 0.5;
+      group.add(key);
+      var ring = new T.Mesh(ringGeo, bi === 3 ? keyActiveMat : keyLampMat);
+      ring.position.set(socket.position.x, socket.position.y, -R * 0.342);
+      group.add(ring);
+    }
+    var domeGeo = new T.SphereGeometry(R * 0.027, 10, 6);
+    var domes = new T.InstancedMesh(domeGeo, keyCapMat, 5);
+    var domeQ = new T.Quaternion(), domeS = new T.Vector3(1, 1, 0.42), domeP = new T.Vector3();
+    for (bi = 0; bi < 5; bi++) {
+      domeP.set((bi - 2) * R * 0.17, Y - HH * 0.126, -R * 0.322);
+      matrix.compose(domeP, domeQ, domeS); domes.setMatrixAt(bi, matrix);
+    }
+    domes.instanceMatrix.needsUpdate = true; group.add(domes);
   }
-  var domeGeo = new T.SphereGeometry(R * 0.027, 10, 6);
-  var domes = new T.InstancedMesh(domeGeo, keyCapMat, 5);
-  var domeQ = new T.Quaternion(), domeS = new T.Vector3(1, 1, 0.42), domeP = new T.Vector3();
-  for (bi = 0; bi < 5; bi++) {
-    domeP.set((bi - 2) * R * 0.17, Y - HH * 0.126, -R * 0.322);
-    matrix.compose(domeP, domeQ, domeS); domes.setMatrixAt(bi, matrix);
-  }
-  domes.instanceMatrix.needsUpdate = true; group.add(domes);
+  /* Материалы ламп кладём в список ВСЕГДА, даже когда сама приборка
+     не построена: кадр читает список по номеру (indicators[1] и [2]),
+     и укоротить его значит уронить сборку корабля целиком. */
   indicators.push(keyLampMat, keyActiveMat);
 
   /* Eight cold fastener heads pin the console to the bulkhead. They
@@ -2200,7 +2255,12 @@ function buildAirlockInterior(env, R, HH, Y, seg) {
   cabinLight.position.set(0, Y + HH * 0.14, -R * 0.20);
   group.add(cabinLight);
 
-  return { group: group, lamp: lamp, bulkhead: bulk, console: consoleBox, indicators: indicators };
+  /* consoleBox есть только у запасной приборки: со снимком рубки короб
+     не строится вовсе. Наружу отдаём то, что есть - читателей у этого
+     поля сейчас нет, но пусть значение будет честным. */
+  return { group: group, lamp: lamp, bulkhead: bulk,
+           console: (typeof consoleBox !== "undefined" ? consoleBox : null),
+           indicators: indicators };
 }
 
 function buildDoor(C, env, hullMat) {
@@ -4398,7 +4458,7 @@ Rocket.prototype.doorOpen = function (dt) {
     /* The service console is alive before take-off. Pulse only the
        emissive channel of its physical pixels; no DOM overlay and no
        texture swap can drift away from the panel during the walk. */
-    if (d.indicators && d.indicators.length) {
+    if (d.indicators && d.indicators.length >= 3) {
       var airT = (g.performance && performance.now ? performance.now() : Date.now()) * 0.001;
       d.indicators[0].emissiveIntensity = 1.05 + Math.sin(airT * 2.1) * 0.18;
       d.indicators[1].emissiveIntensity = 0.72 + Math.sin(airT * 1.35 + 0.8) * 0.10;
