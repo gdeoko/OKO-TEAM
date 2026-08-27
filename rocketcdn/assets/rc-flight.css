@@ -2709,8 +2709,24 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   transform: none !important;
 }
 .rc-flight .rcf-dos.on { transform: none !important; }
-.rc-flight .rcf-dos { display: grid; place-items: center; }
-.rc-flight .rcf-dos-in { width: min(92%, 520px); max-height: 92%; overflow-y: auto; }
+/* Центрирование сеткой переполняется в ОБЕ стороны: когда содержимое
+   выше своей ячейки, верх уезжает за кадр и рамка обрезается. На
+   лежачем 900x412 замер дал верхнюю кромку досье на одиннадцать точек
+   ВЫШЕ экрана. Ключевое слово safe как раз про это - оно запрещает
+   уезжать за начало и прижимает содержимое к верхней кромке, а
+   дальше работает своя прокрутка. */
+.rc-flight .rcf-dos {
+  display: grid;
+  justify-items: center;
+  align-items: safe center;
+}
+.rc-flight .rcf-dos-in {
+  width: min(92%, 520px);
+  /* Не выше самого экрана: доля от родителя не спасает, если сам
+     родитель выше кадра. */
+  max-height: min(92%, calc(100vh - 16px));
+  overflow-y: auto;
+}
 .rc-flight .rcf-help-in {
   width: min(92%, 520px);
   max-height: 92%;
@@ -3126,7 +3142,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
    тысячу пикселей на весь кадр читалась не прибором, а плакатом */
 .rc-flight .rcf-dos-in {
   width: min(560px, 92%) !important;
-  max-height: 94% !important;
+  max-height: min(94%, calc(100vh - 16px)) !important;
 }
 
 /* Карта в досье не выше трети окна: иначе описание и показатели
