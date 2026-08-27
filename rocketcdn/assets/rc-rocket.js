@@ -44,6 +44,38 @@ var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
 var BOX = (g.RC_BOX && g.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
 
 /* ── Возможности устройства ──────────────────────────────── */
+/* ── Полотно страницы не имеет права укорачиваться под пальцем ──
+   Замер входа в корабль: высота документа падала с 14294 до 12447
+   точек. Разделы за спиной сжимались (у них по прокрутке едет
+   max-width, а с ней перетекает текст), браузер подтягивал
+   прокрутку назад на полторы тысячи точек - и доля подъезда к
+   пульту отскакивала с половины на ноль. Ровно это владелец назвал
+   «шев переход» и «скачок» на финальной сцене.
+
+   Лечится не поимённой правкой каждого раздела, а полом высоты:
+   с началом подхода полотно фиксируем на достигнутой высоте. Расти
+   ему можно, укорачиваться - нет. Отпускаем, когда отошли, и при
+   смене размера окна: там пересчёт честен. */
+function закрепитьВысоту(вкл) {
+  var m = document.querySelector("main.w3-stage") || document.querySelector("main");
+  if (!m) return;
+  if (!вкл) {
+    m.style.minHeight = "";
+    закрепитьВысоту._h = 0;
+    return;
+  }
+  var h = m.offsetHeight;
+  if (h > (закрепитьВысоту._h || 0)) {
+    закрепитьВысоту._h = h;
+    m.style.minHeight = h + "px";
+  }
+}
+addEventListener("resize", function () {
+  if (закрепитьВысоту._w === innerWidth) return;
+  закрепитьВысоту._w = innerWidth;
+  if (!document.documentElement.classList.contains("rc-approach")) закрепитьВысоту(false);
+}, { passive: true });
+
 function caps() {
   var w = innerWidth, mob = w < 760;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -4403,6 +4435,7 @@ Rocket.prototype.doorOpen = function (dt) {
   if (over !== this._over) {
     this._over = over;
     document.documentElement.classList.toggle("rc-approach", over);
+    закрепитьВысоту(over);
   }
   /* Долю подхода отдаём в CSS: по ней содержимое раздела уходит из
      кадра корабля, и делает это ровно с той же скоростью, с какой
