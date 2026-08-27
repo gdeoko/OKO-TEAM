@@ -274,7 +274,23 @@ function rc_tg_send($chat, $text, $markup = null, $topic = null) {
     $p = ['chat_id' => $chat, 'text' => $text, 'parse_mode' => 'HTML', 'disable_web_page_preview' => true];
     if ($topic) $p['message_thread_id'] = (int)$topic;
     if ($markup) $p['reply_markup'] = $markup;
-    return rc_tg('sendMessage', $p);
+    $r = rc_tg('sendMessage', $p);
+    /* Телеграм отвечает на плохую клавиатуру обычным ответом с
+       ok:false, а не сетевой ошибкой, поэтому rc_tg считает вызов
+       удавшимся и молчит. Сообщение при этом не уходит ВОВСЕ.
+
+       Так мы уже потеряли все отбивки по заявкам: в кнопке стояла
+       ссылка tel:, которую Телеграм не принимает. Одной строкой это
+       больше не повторится: не прошло с клавиатурой - шлём то же
+       самое без неё, а причину пишем в журнал. Текст важнее кнопок. */
+    if (is_array($r) && isset($r['ok']) && !$r['ok']) {
+        rc_log_rare('tg_send_fail', 'TG sendMessage: ' . (string)($r['description'] ?? 'ok:false'));
+        if ($markup) {
+            unset($p['reply_markup']);
+            $r = rc_tg('sendMessage', $p);
+        }
+    }
+    return $r;
 }
 
 /* Уведомление в общий чат (в нужную тему) и всем администраторам */

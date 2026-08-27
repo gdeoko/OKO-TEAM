@@ -419,7 +419,15 @@ function ticker(box) {
   var dec  = +(box.dataset.dec || 0);
   var drift = +(box.dataset.drift || 0);
   var suffix = box.dataset.suffix || "";
-  if (suffix === " Тбит/с" || suffix === " Tbps") suffix = t("viz.tbps", suffix);
+  /* Единицы измерения переводятся по таблице, а не двумя строками
+     подряд. Пока список был на одну единицу, « Тб» под подписью
+     «Нагрузки одновременно» оставалась кириллицей на всей английской
+     странице - единственной на ней. */
+  var ЕДИНИЦЫ = {
+    " Тбит/с": "viz.tbps", " Tbps": "viz.tbps",
+    " Тб": "viz.tb", " TB": "viz.tb"
+  };
+  if (ЕДИНИЦЫ[suffix]) suffix = t(ЕДИНИЦЫ[suffix], suffix);
   var out = document.createElement("b");
   out.textContent = fmt(from, dec) + suffix;
   box.insertBefore(out, box.firstChild);

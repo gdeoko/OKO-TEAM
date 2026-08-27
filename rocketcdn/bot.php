@@ -45,6 +45,22 @@ function menu_admin() {
         [['text' => 'Настройки'], ['text' => 'Помощь']],
     ], 'resize_keyboard' => true, 'is_persistent' => true];
 }
+/* Подписи всех кнопок нижнего меню одним списком. Собираем из самих
+   клавиатур: припишут кнопку - список подтянется сам. */
+function menu_labels() {
+    static $out = null;
+    if ($out !== null) return $out;
+    $out = [];
+    foreach ([menu_admin(), menu_user()] as $kb) {
+        foreach ((array)($kb['keyboard'] ?? []) as $row) {
+            foreach ((array)$row as $b) {
+                if (!empty($b['text'])) $out[] = (string)$b['text'];
+            }
+        }
+    }
+    return $out;
+}
+
 function menu_user() {
     return ['keyboard' => [
         [['text' => 'О сервисе'], ['text' => 'Продукты']],
@@ -347,7 +363,19 @@ function rc_nodes_summary() {
     if ($cache !== null) return $cache;
     $file = RC_ROOT . '/assets/rc-geo.js';
     $src  = is_file($file) ? file_get_contents($file) : '';
-    $regionNames = ['Россия и СНГ', 'Азия и Восток', 'Европа', 'Северная Америка', 'Южная Америка'];
+    /* Имена регионов читаем из самого реестра, а не держим копию.
+       Копия уже отстала: реестр переименовал «Азию и Восток» в
+       «Азия, Африка и Океания» - там же Сидней, Мельбурн и вся
+       Африка, и старое имя их прятало. Бот подписывал этим именем
+       больше половины сети. Порядок в реестре и есть номер региона
+       в записи узла, поэтому берём его как есть. */
+    $regionNames = [];
+    if (preg_match_all('~\{\s*id:\s*"[^"]*"\s*,\s*ru:\s*"([^"]+)"~u', $src, $rm)) {
+        $regionNames = $rm[1];
+    }
+    if (!$regionNames) {
+        $regionNames = ['Россия и СНГ', 'Азия, Африка и Океания', 'Европа', 'Северная Америка', 'Южная Америка'];
+    }
     $regions = array_fill_keys($regionNames, 0);
     $total = $cloud = $shield = $soon = 0;
     /* Закрывающую скобку сразу после пятого поля больше не требуем.
@@ -364,6 +392,22 @@ function rc_nodes_summary() {
             if ($f & 2) $shield++;
             if ($f & 4) $soon++;
         }
+    }
+    /* Правки владельца из панели лежат отдельным файлом и до сих пор
+       подмешивались только на сайте: после добавления города бот и
+       сайт называли разные числа. Учитываем их и здесь. */
+    $d = function_exists('rc_json_read') && defined('RC_NODES') ? rc_json_read(RC_NODES, []) : [];
+    foreach ((array)($d['hide'] ?? []) as $h) {
+        if ($total > 0) $total--;
+    }
+    foreach ((array)($d['add'] ?? []) as $a) {
+        if (!is_array($a) || count($a) < 5) continue;
+        $total++;
+        $r = (int)$a[3]; $f = (int)$a[4];
+        if (isset($regionNames[$r])) $regions[$regionNames[$r]]++;
+        if ($f & 1) $cloud++;
+        if ($f & 2) $shield++;
+        if ($f & 4) $soon++;
     }
     return $cache = compact('total', 'regions', 'cloud', 'shield', 'soon');
 }
@@ -814,9 +858,18 @@ for ($loop = 0; $loop < 6; $loop++) {
             continue;
         }
 
-        /* Ждём новый текст для выбранной строки */
+        /* Ждём новый текст для выбранной строки.
+
+           Кнопки нижнего меню сюда попадать не должны: они разобраны
+           выше, все кроме одной. «Настройки» стояли ниже, и владелец,
+           передумавший править строку, вместо настроек получал
+           предложение заменить текст сайта словом «Настройки» с
+           кнопкой «Сохранить». Список держим здесь, рядом с самой
+           проверкой, чтобы новая кнопка не повторила эту историю. */
+        $кнопкиМеню = menu_labels();
         $stt = texts_state_get($uid);
-        if (!empty($stt['key']) && $cmd !== '' && $cmd[0] !== '/' && !$isGroup) {
+        if (!empty($stt['key']) && $cmd !== '' && $cmd[0] !== '/' && !$isGroup
+            && !in_array($text, $кнопкиМеню, true)) {
             $stt['new'] = $text;
             texts_state_set($uid, $stt);
             say($chat, "<b>" . htmlspecialchars($stt['key']) . "</b>\n\nБыло:\n<code>"

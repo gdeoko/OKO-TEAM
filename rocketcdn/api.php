@@ -311,9 +311,18 @@ if ($action === 'lead' || $action === 'callback') {
          . ($task    ? "\n" . htmlspecialchars($task) . "\n" : '')
          . "\nВремя: " . date('d.m.Y H:i');
 
+    /* Кнопок «Позвонить» и «Ответить письмом» здесь больше нет.
+
+       Телеграм принимает в кнопке-ссылке только http, https и tg://.
+       На tel: и mailto: он отвечает «Bad Request: inline keyboard
+       button URL is invalid» и НЕ отправляет сообщение целиком. Форма
+       требует телефон или почту, значит одна из этих кнопок была в
+       каждой заявке - и отбивка не уходила ни разу. Человек оставлял
+       заявку, видел «Заявка принята», а в чате команды было пусто.
+
+       Контакт и так стоит в тексте кодом: Телеграм сам делает номер
+       нажимаемым, а по длинному нажатию строка копируется целиком. */
     $kb = [];
-    if ($isPhone) $kb[] = [['text' => 'Позвонить', 'url' => 'tel:' . preg_replace('~[^\d+]~', '', $contact)]];
-    if ($isMail)  $kb[] = [['text' => 'Ответить письмом', 'url' => 'mailto:' . $contact]];
     $kb[] = [['text' => 'В работе', 'callback_data' => 'lead_work_' . $lead['id']],
              ['text' => 'Закрыть',  'callback_data' => 'lead_done_' . $lead['id']]];
     rc_notify($txt, ['inline_keyboard' => $kb], 'tg_topic_form');

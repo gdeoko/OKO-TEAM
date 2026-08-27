@@ -72,7 +72,14 @@ var RU = doc.documentElement.lang !== "en";
    тот же маршрут, другая речь.
 
    Английский держим рядом с русским: у сайта две версии. */
-var СЛОВА = {
+/* Речь собирается функцией, а не один раз при загрузке файла.
+
+   Пока это был готовый объект, язык в нём застывал тем, с которым
+   страница открылась: в режиме сцены оверлей живёт всё время, пока
+   человек листает, и титры над окном оставались русскими на
+   английской версии до перезагрузки. Теперь на смену языка речь
+   пересобирается - это два десятка строк, не геометрия. */
+function строитьСлова() { return {
   cdn: {
     сеть:        RU ? "Rocket CDN" : "Rocket CDN",
     полёт:       RU ? "Полёт по сети Rocket CDN" : "Rocket CDN network flight",
@@ -122,7 +129,8 @@ var СЛОВА = {
                     : "The RocketVPN network is complete.",
     марка:       "ROCKETVPN"
   }
-};
+}; }
+var СЛОВА = строитьСлова();
 
 /* Речь берём по продукту. Переключатель может ещё не загрузиться -
    тогда говорим как CDN: это состояние по умолчанию у обоих сайтов. */
@@ -138,7 +146,9 @@ function СЛ(ключ) {
    атрибуте. Титры и списки берут слово сами, эти три - нет, поэтому
    переписываем их по событию переключателя. Мир при этом не
    пересобирается: меняются строки, не геометрия. */
-addEventListener("rc:product", function () {
+/* Переписать слова, вшитые в мир. Зовётся и при смене продукта, и при
+   смене языка: и то и другое меняет строки, но не геометрию. */
+function словаМира() {
   try {
     if (ui && ui.wrap) ui.wrap.setAttribute("aria-label", СЛ("полёт"));
     if (!W3) return;
@@ -158,7 +168,8 @@ addEventListener("rc:product", function () {
        соберёт метки заново - уже новыми словами. */
     holoUni = -1;
   } catch (eПр) {}
-});
+}
+addEventListener("rc:product", словаМира);
 
 /* Язык игры раньше решался один раз, при загрузке файла: человек
    переключал сайт на английский, а кабина, названия целей и
@@ -167,9 +178,151 @@ addEventListener("rc:product", function () {
    а в полёте ждём выхода, чтобы не рвать кадр. */
 var langDirty = false;
 
+/* Перевод на лету, без пересборки.
+
+   Полная пересборка ждёт выхода из полёта - и правильно: рвать кадр
+   посреди игры нельзя. Но в режиме сцены оверлей открыт всё время,
+   пока человек просто листает страницу, и ждать «выхода» бессмысленно:
+   на английской версии он часами видел русский пульт, русские имена
+   планет и русский заголовок меню. Здесь меняются только строки,
+   геометрия не трогается вовсе. */
+function переводНаЛету() {
+  if (!ui || !ui.wrap) return;
+  try {
+    ui.wrap.setAttribute("aria-label", СЛ("полёт"));
+    var шапки = ui.wrap.querySelectorAll(".rcf-menu-h");
+    if (шапки[0]) {
+      var и0 = шапки[0].querySelector("i");
+      if (и0) и0.textContent = RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM";
+    }
+    if (шапки[1]) {
+      var и1 = шапки[1].querySelector("i");
+      if (и1) и1.textContent = RU ? "РЕАЛЬНЫЕ ЭКЗОСИСТЕМЫ" : "REAL EXOPLANET SYSTEMS";
+      var с1 = шапки[1].querySelector("span");
+      if (с1) с1.textContent = RU ? "каталог NASA · прыжок через Млечный Путь" : "NASA catalog · Milky Way jump";
+    }
+    if (ui.nav) {
+      ui.nav.setAttribute("aria-label", RU ? "Навигация" : "Navigation");
+      systemNav();
+    }
+    /* Лица клавиш: имена берём из общего списка команд, по классу.
+       Списка два быть не может - на этом уже разъехались подсказки. */
+    var КЛАССЫ = ["rcf-navkey", "rcf-scan-key", "rcf-deploy", "rcf-help-key",
+                  "rcf-auto-key", "rcf-stop-key", "rcf-thr", "rcf-map-key",
+                  "rcf-shot", "rcf-zoom-in", "rcf-zoom-out"];
+    for (var кки = 0; кки < КЛАССЫ.length; кки++) {
+      var кнК = ui.wrap.querySelector("." + КЛАССЫ[кки]);
+      if (!кнК) continue;
+      var бК = кнК.querySelector("b");
+      var имК = capName(кки);
+      if (бК && имК) бК.textContent = имК;
+    }
+    /* Кнопка снимка в широкой ленте живёт отдельным классом */
+    var кнСн = ui.wrap.querySelector(".rcf-fire-key b");
+    if (кнСн) кнСн.textContent = RU ? "КАДР" : "FRAME";
+
+    /* Режим ведения и шкалы состояния */
+    if (ui.cMode) {
+      var рК = (ui.cMode.textContent || "").trim();
+      var авто = рК === "АВТО" || рК === "AUTO";
+      ui.cMode.textContent = авто ? (RU ? "АВТО" : "AUTO") : (RU ? "РУЧНОЙ" : "MANUAL");
+    }
+    var шкЭ = ui.wrap.querySelector(".rcf-bar-en b");
+    if (шкЭ) шкЭ.textContent = RU ? "ЗАРЯД" : "PWR";
+    var шкК = ui.wrap.querySelector(".rcf-bar-hull b");
+    if (шкК) шкК.textContent = RU ? "КОРПУС" : "HULL";
+
+    /* Лента над пультом: подписи ячеек */
+    var ЛЕНТА = RU
+      ? { "СЕТЬ": "СЕТЬ", "ОТКРЫТО": "ОТКРЫТО", "КУРС": "КУРС", "ХОД": "ХОД" }
+      : { "СЕТЬ": "NET", "ОТКРЫТО": "SEEN", "КУРС": "COURSE", "ХОД": "SPD" };
+    var ОБРАТНО = { "NET": "СЕТЬ", "SEEN": "ОТКРЫТО", "COURSE": "КУРС", "SPD": "ХОД" };
+    var ячейки = ui.wrap.querySelectorAll(".rcf-d-cell > i");
+    for (var яи = 0; яи < ячейки.length; яи++) {
+      var было = (ячейки[яи].textContent || "").trim();
+      var ключ = ОБРАТНО[было] || было;
+      if (ЛЕНТА[ключ]) ячейки[яи].textContent = ЛЕНТА[ключ];
+    }
+    var едХ = ui.wrap.querySelectorAll(".rcf-speed > span");
+    for (var еи = 0; еи < едХ.length; еи++) едХ[еи].textContent = RU ? "км/с" : "km/s";
+
+    /* Карточка брифинга: она показывается перед стартом и держится в
+       разметке всё время, поэтому язык в ней тоже обязан меняться. */
+    var бр = ui.wrap.querySelector(".rcf-brief-card");
+    if (бр) {
+      var брБ = бр.querySelector("b"), брП = бр.querySelector("p");
+      if (брБ) брБ.textContent = RU ? "ГОТОВ К СТАРТУ" : "READY FOR LAUNCH";
+      if (брП) брП.textContent = RU
+        ? "Маршрут: Земля → Луна → Марс → Сатурн → Млечный Путь. Курс, тяга и системы корабля уже встроены в нижний пульт."
+        : "Route: Earth → Moon → Mars → Saturn → Milky Way. Course, thrust and ship systems are built into the lower console.";
+      var брА = бр.querySelector('button[data-mode="auto"]');
+      var брР = бр.querySelector('button[data-mode="manual"]');
+      if (брА) {
+        брА.childNodes[0].nodeValue = RU ? "Автополёт" : "Autopilot";
+        var спА = брА.querySelector("span");
+        if (спА) спА.textContent = RU ? "смотреть как кино" : "watch as a movie";
+      }
+      if (брР) {
+        брР.childNodes[0].nodeValue = RU ? "Ручное управление" : "Manual";
+        var спР = брР.querySelector("span");
+        if (спР) спР.textContent = RU ? "колесо и свайп - тяга" : "scroll to thrust";
+      }
+    }
+    var зкр = ui.wrap.querySelector(".rcf-close");
+    if (зкр) зкр.setAttribute("aria-label", RU ? "Выйти из полёта" : "Exit flight");
+
+    /* Условие открытия рукава */
+    var нужды = ui.wrap.querySelectorAll(".rcf-uni-need");
+    for (var ни = 0; ни < нужды.length; ни++) {
+      var uu2 = UNIVERSES[ни + (UNIVERSES.length - нужды.length)];
+      if (!uu2 || !uu2.need) continue;
+      var есть2 = netCount();
+      нужды[ни].textContent = есть2 >= uu2.need
+        ? (RU ? "открыт" : "unlocked")
+        : (RU ? "нужно узлов сети: " : "nodes needed: ") + uu2.need +
+          " · " + (RU ? "развёрнуто " : "deployed ") + есть2;
+    }
+
+    /* Список рукавов: подписи и описания */
+    var рук = ui.wrap.querySelector(".rcf-uni");
+    if (рук) {
+      var кн = рук.querySelectorAll("button");
+      for (var уи = 0; уи < кн.length && уи < UNIVERSES.length; уи++) {
+        var б = кн[уи].querySelector("b"), сп = кн[уи].querySelector("span");
+        if (б) б.textContent = имяУни(UNIVERSES[уи]);
+        if (сп) сп.textContent = оУни(UNIVERSES[уи]);
+      }
+    }
+    /* Слова, вшитые в сам мир: подписи тел, из которых собираются
+       титры и метки. Без этого титры возвращались русскими сразу же -
+       следующий кадр читал их из userData. */
+    словаМира();
+    /* Титры перепишет следующий кадр: держать старую фразу до конца
+       её времени показа значит держать её на чужом языке. */
+    if (ui.cap) { ui.cap.textContent = ""; ui.cap._t = ""; ui.cap._hold = 0; }
+    var подск = ui.wrap.querySelector(".rcf-hint");
+    if (подск) {
+      подск.textContent = matchMedia("(pointer: coarse)").matches
+        ? (RU ? "Палец вверх - тяга, вбок - обзор на 360, щипок - приблизить"
+              : "Swipe up to thrust, sideways to look, pinch to zoom")
+        : (RU ? "Колесо - тяга, перетаскивание - обзор, shift+колесо - приблизить"
+              : "Wheel to thrust, drag to look, shift+wheel to zoom");
+    }
+    /* Имена клавиш для чтения с экрана и подсказки над ними */
+    подсказкиКлавиш.готово = false;
+    var клв = ui.wrap.querySelectorAll(".rcf-key, .rcf-mini");
+    for (var ки = 0; ки < клв.length; ки++) клв[ки].removeAttribute("aria-label");
+    имена(клв);
+    keyHintFrame.idx = -1;
+    /* Метки над телами пересоберутся следующим кадром */
+    holoUni = -1;
+  } catch (eПЛ) {}
+}
+
 function relang() {
   RU = doc.documentElement.lang !== "en";
-  if (F.open) { langDirty = true; return; }
+  СЛОВА = строитьСлова();
+  if (F.open) { langDirty = true; переводНаЛету(); return; }
   langDirty = false;
   if (!ui.wrap) return;
 
@@ -361,11 +514,19 @@ function paintProgress() {
    повторяется от захода к заходу и его можно узнавать.
 
    sys[] у родной вселенной пуст: её тела уже есть в сцене. */
+/* Подпись вселенной на языке страницы. Названия и описания задаются
+   один раз, при загрузке файла, и раньше застывали на том языке, с
+   которым страница открылась: в режиме сцены оверлей живёт всё время,
+   пока человек листает, и на английской версии список рукавов
+   оставался русским. */
+function имяУни(u) { return (RU ? u.nameRu : u.nameEn) || u.name || ""; }
+function оУни(u)   { return (RU ? u.aboutRu : u.aboutEn) || u.about || ""; }
+
 var UNIVERSES = [
-  { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM", tag: "SOL",
+  { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM", nameRu: "СОЛНЕЧНАЯ СИСТЕМА", nameEn: "SOLAR SYSTEM", tag: "SOL",
     sky: 0x9db4cc, amb: 0x3a4a68, neb: [0x42b2dc, 0x8a59f6], sun: 0xfff2dc,
     stars: [0xcfe9f5, 0x8fb7ff, 0xffe9c9],
-    about: RU ? "8 планет, Луна, Солнце и Млечный Путь" : "8 planets, Moon, Sun and Milky Way",
+    about: RU ? "8 планет, Луна, Солнце и Млечный Путь" : "8 planets, Moon, Sun and Milky Way", aboutRu: "8 планет, Луна, Солнце и Млечный Путь", aboutEn: "8 planets, Moon, Sun and Milky Way",
     source: "NASA Solar System Exploration",
     sys: [] },
 
@@ -375,10 +536,10 @@ var UNIVERSES = [
      знает, зато NASA Exoplanet Archive содержит тысячи миров
      Млечного Пути. В игре оставляем четыре навигационных пространства,
      но подписываем их честно — как сектора и поля наблюдений. */
-  { name: RU ? "МЕСТНЫЙ РУКАВ · EXO-1" : "LOCAL ARM · EXO-1", tag: "EXO-1",
+  { name: RU ? "МЕСТНЫЙ РУКАВ · EXO-1" : "LOCAL ARM · EXO-1", nameRu: "МЕСТНЫЙ РУКАВ · EXO-1", nameEn: "LOCAL ARM · EXO-1", tag: "EXO-1",
     sky: 0x8da9d8, amb: 0x344868, neb: [0x477fd4, 0x8059d8], sun: 0xe5efff,
     stars: [0xe9f4ff, 0xa8c8ff, 0xffdcc6],
-    about: RU ? "реальные системы в пределах 50 световых лет" : "real systems within 50 light-years",
+    about: RU ? "реальные системы в пределах 50 световых лет" : "real systems within 50 light-years", aboutRu: "реальные системы в пределах 50 световых лет", aboutEn: "real systems within 50 light-years",
     source: "NASA Exoplanet Archive",
     sys: [
       { id: "proxima", name: "PROXIMA CENTAURI", star: 0xff8d72, seed: 1741,
@@ -409,10 +570,10 @@ var UNIVERSES = [
         ] }
     ] },
 
-  { name: RU ? "ПОЛЕ KEPLER · EXO-2" : "KEPLER FIELD · EXO-2", tag: "EXO-2",
+  { name: RU ? "ПОЛЕ KEPLER · EXO-2" : "KEPLER FIELD · EXO-2", nameRu: "ПОЛЕ KEPLER · EXO-2", nameEn: "KEPLER FIELD · EXO-2", tag: "EXO-2",
     sky: 0xb08ca8, amb: 0x583852, neb: [0xc06ac7, 0x6f66d9], sun: 0xffd8bf,
     stars: [0xffeee2, 0xd2c5ff, 0x9fc9ff],
-    about: RU ? "реальные многопланетные системы телескопа Kepler" : "real multi-planet Kepler systems",
+    about: RU ? "реальные многопланетные системы телескопа Kepler" : "real multi-planet Kepler systems", aboutRu: "реальные многопланетные системы телескопа Kepler", aboutEn: "real multi-planet Kepler systems",
     source: "NASA Exoplanet Archive",
     sys: [
       { id: "kepler90", name: "KEPLER-90", star: 0xffd6a8, seed: 7711,
@@ -449,10 +610,10 @@ var UNIVERSES = [
 
   /* Финальный сектор закрыт шестью узлами: награда открывает ещё
      девять реальных каталожных миров, а не перекрашенную копию. */
-  { name: RU ? "ПОЛЕ TESS · EXO-3" : "TESS FIELD · EXO-3", tag: "EXO-3",
+  { name: RU ? "ПОЛЕ TESS · EXO-3" : "TESS FIELD · EXO-3", nameRu: "ПОЛЕ TESS · EXO-3", nameEn: "TESS FIELD · EXO-3", tag: "EXO-3",
     sky: 0x79b8b0, amb: 0x27554f, neb: [0x31c9a2, 0x428bdc], sun: 0xd7fff2,
     stars: [0xe1fff7, 0x8fe8d2, 0xc9e2ff],
-    about: RU ? "реальные миры TESS · открывается за шесть узлов" : "real TESS worlds · unlocks at six nodes",
+    about: RU ? "реальные миры TESS · открывается за шесть узлов" : "real TESS worlds · unlocks at six nodes", aboutRu: "реальные миры TESS · открывается за шесть узлов", aboutEn: "real TESS worlds · unlocks at six nodes",
     source: "NASA Exoplanet Archive",
     need: 6,
     sys: [
@@ -513,8 +674,23 @@ function inertPage(on) {
   for (var i = 0; i < kids.length; i++) {
     var el = kids[i];
     if (el === ui.wrap || el.tagName === "SCRIPT") continue;
-    if (on) { el.setAttribute("inert", ""); el.setAttribute("aria-hidden", "true"); }
-    else { el.removeAttribute("inert"); el.removeAttribute("aria-hidden"); }
+    /* Окна сайта не глушим. Полёт закрывал ВСЁ, кроме себя, и окно
+       обратного звонка, открытое поверх сцены, приходило мёртвым:
+       поля не принимали ввод, кнопка не нажималась. Закрытое окно
+       и так не ловит ни фокус, ни чтение с экрана - оно скрыто
+       по видимости. */
+    if (el.classList && el.classList.contains("modal")) continue;
+    /* Помечаем то, что закрыли мы. Слепое снятие возвращало в поле
+       зрения чтения с экрана слои-канвасы и закрытую шторку, которые
+       несут эти признаки прямо в разметке, и вдобавок отменяло
+       чужое окно, если оно открыто поверх. */
+    if (on) {
+      if (!el.hasAttribute("inert")) { el.setAttribute("inert", ""); el.setAttribute("data-rcf-inert", ""); }
+      if (!el.hasAttribute("aria-hidden")) { el.setAttribute("aria-hidden", "true"); el.setAttribute("data-rcf-ah", ""); }
+    } else {
+      if (el.hasAttribute("data-rcf-inert")) { el.removeAttribute("inert"); el.removeAttribute("data-rcf-inert"); }
+      if (el.hasAttribute("data-rcf-ah")) { el.removeAttribute("aria-hidden"); el.removeAttribute("data-rcf-ah"); }
+    }
   }
 }
 
@@ -527,6 +703,10 @@ function buildUI() {
      фокус по разделам сайта под ним */
   w.setAttribute("role", "dialog");
   w.setAttribute("aria-modal", "true");
+  /* Чтобы фокус можно было поставить на саму сцену: она диалог, и
+     когда закрывается окно поверх неё, вернуть фокус больше некуда -
+     страница под сценой глухая. */
+  w.setAttribute("tabindex", "-1");
   w.setAttribute("aria-label", СЛ("полёт"));
   /* Цели навигации: по ним корабль умеет долетать сам. Отметки p
      подставляются после сборки мира из честных позиций на дуге. */
@@ -590,7 +770,7 @@ function buildUI() {
        Всплывающая подсказка была, но она выходила ПОД открытым меню
        и до глаз не доходила. */
     uniHtml += '<button type="button" data-uni="' + ui2 + '"' + (locked ? ' class="locked"' : '') + '><b>' +
-      uu.name + '</b><span>' + (uu.about || "") + "</span>" +
+      имяУни(uu) + '</b><span>' + оУни(uu) + "</span>" +
       (uu.need ? '<u class="rcf-uni-need">' + нуженУзел(uu) + "</u>" : "") +
       "</button>";
   }
@@ -4996,7 +5176,15 @@ function bindControls() {
 
   addEventListener("keydown", function (e) {
     if (!F.open) return;
-    if (e.key === "Escape") { close(); return; }
+    /* Escape над открытым окном сайта принадлежит окну: раньше одно
+       нажатие закрывало и окно, и сцену, а фокус после этого уходил
+       в начало документа. */
+    if (e.key === "Escape") {
+      var окно = doc.querySelector(".modal.on");
+      if (окно) return;
+      close();
+      return;
+    }
     /* Рычаг тяги - штатное клавиатурное управление, у него свой
        обработчик стрелок. Нажатие с него всплывает на окно, и оба
        срабатывали на одно нажатие: рычаг прибавлял тягу, окно тут же

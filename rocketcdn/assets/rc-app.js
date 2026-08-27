@@ -166,20 +166,39 @@ function applyTheme(v, silent) {
 
 function applyLang(v, silent) {
   state.lang = v;
-  /* Разметка тоже пишет число через атрибут, а не цифрами */
+  /* Разметка тоже пишет число через атрибут, а не цифрами.
+
+     Счётчик KPI прокручивается и пишет число прямо в свой узел,
+     сметая вложенную метку. Поэтому обновляем и сам счётчик: без
+     этого после первой прокрутки метки оставалось на одну меньше, и
+     блок навсегда застывал на числе из разметки. */
   $$("[data-nodes]").forEach(function (el) { el.textContent = nodesCount(); });
+  $$("[data-count]").forEach(function (el) {
+    if (el._счётчикУзлов) el.textContent = nodesCount().toLocaleString(v === "en" ? "en-US" : "ru-RU");
+  });
   lsSet("rc_lang", v);
   document.documentElement.lang = v;
   $$("[data-i18n]").forEach(function (el) {
     var k = el.getAttribute("data-i18n");
+    /* Атрибутов может быть несколько через запятую. Раньше правился
+       ровно один, и подпись для чтения с экрана оставалась русской
+       поверх переведённой подсказки в поле: aria-label перебивает
+       placeholder при вычислении имени, и английский посетитель
+       слышал «Поиск города». Так же не переводились подсказки на
+       кнопках оформления. */
     var attr = el.getAttribute("data-i18n-attr");
+    var список = attr ? attr.split(",") : null;
     /* Запоминаем то, что написано в разметке: это наш запасной текст
        навсегда, даже если словарь придёт битым или устаревшим */
-    if (el._i18nOrig == null) el._i18nOrig = attr ? (el.getAttribute(attr) || "") : el.textContent;
+    if (el._i18nOrig == null) el._i18nOrig = список ? (el.getAttribute(список[0].trim()) || "") : el.textContent;
     var val = t(k, el._i18nOrig);
     if (val == null || val === "") return;
-    if (attr) el.setAttribute(attr, val);
-    else el.textContent = val;
+    if (список) {
+      for (var аи = 0; аи < список.length; аи++) {
+        var имяА = список[аи].trim();
+        if (имяА) el.setAttribute(имяА, val);
+      }
+    } else el.textContent = val;
   });
   $$(".lang button").forEach(function (b) {
     var on = b.dataset.lang === v;
@@ -602,6 +621,15 @@ function guardReveal() {
 }
 
 function countUp(el) {
+  /* Счётчик узлов держит число в реестре, а не в разметке. В
+     data-count стояло 218 цифрами, и после добавления города в панели
+     чип героя показывал новое число, а блок «Узлов CDN по всему миру»
+     - старое, навсегда, до правки разметки руками. Реестр - один
+     источник, разметка только запасной вариант. */
+  if (el._счётчикУзлов || (el.querySelector && el.querySelector("[data-nodes]"))) {
+    el._счётчикУзлов = true;
+    el.dataset.count = String(nodesCount());
+  }
   var raw = el.dataset.count, target = parseFloat(raw);
   if (isNaN(target)) return;
   var dur = 1400, t0 = performance.now(), dec = (raw.split(".")[1] || "").length;
@@ -673,7 +701,14 @@ function wireForm(form, kind) {
       if (!f.name) return;
       payload[f.name] = f.type === "checkbox" ? (f.checked ? 1 : 0) : (f.value || "").trim();
     });
-    payload.sid = sessionStorage.getItem("rc_sid") || "";
+    /* Обращение к хранилищу обязано быть в защите. Там, где cookie и
+       хранилище закрыты (браузер с полным запретом, приватные
+       вебвью, встраивание в рамку), сам доступ бросает исключение -
+       и обработчик отправки рвался прямо здесь, до кнопки и до
+       запроса. Для человека кнопка «Отправить заявку» просто не
+       работала и ничего не объясняла. */
+    try { payload.sid = sessionStorage.getItem("rc_sid") || ""; }
+    catch (eХр) { payload.sid = ""; }
 
     var label = btn ? btn.innerHTML : "";
     /* Отправка идёт: кнопка занята, в ней крутится точка. Без
@@ -1013,16 +1048,32 @@ function boot() {
     modal.classList.toggle("on", on);
     document.body.style.overflow = on ? "hidden" : "";
 
+    /* Куда вернуть фокус, запоминаем ДО того, как страница под окном
+       станет недоступной. Проставленный на предке inert сбрасывает
+       фокус на body, и снятый после него activeElement всегда был
+       телом документа: человек, который ходит клавиатурой, после
+       закрытия окна оказывался в начале страницы и шёл табом через
+       всю шапку обратно. */
+    if (on) modalBack = document.activeElement;
+
     /* Страница под окном перестаёт существовать для клавиатуры и
        для чтения с экрана - так же, как это сделано у шторки меню */
     $$("body > *").forEach(function (el) {
       if (el === modal || el.tagName === "SCRIPT") return;
-      if (on) { el.setAttribute("inert", ""); el.setAttribute("aria-hidden", "true"); }
-      else { el.removeAttribute("inert"); el.removeAttribute("aria-hidden"); }
+      if (on) {
+        /* Помечаем только то, что закрыли мы. Слои-канвасы и закрытая
+           шторка несут inert и aria-hidden прямо в разметке, и слепое
+           снятие на закрытии окна возвращало их в поле зрения чтения
+           с экрана - «фоновое небо» становилось содержимым. */
+        if (!el.hasAttribute("inert")) { el.setAttribute("inert", ""); el.setAttribute("data-rc-inert", ""); }
+        if (!el.hasAttribute("aria-hidden")) { el.setAttribute("aria-hidden", "true"); el.setAttribute("data-rc-ah", ""); }
+      } else {
+        if (el.hasAttribute("data-rc-inert")) { el.removeAttribute("inert"); el.removeAttribute("data-rc-inert"); }
+        if (el.hasAttribute("data-rc-ah")) { el.removeAttribute("aria-hidden"); el.removeAttribute("data-rc-ah"); }
+      }
     });
 
     if (on) {
-      modalBack = document.activeElement;
       track("open", "callback");
       /* Фокус ставим не по таймеру, а когда окно действительно
          проявилось: пока идёт переход, оно ещё visibility:hidden, и
@@ -1050,6 +1101,13 @@ function boot() {
       })();
     } else if (modalBack && modalBack.focus) {
       try { modalBack.focus(); } catch (e) {}
+      /* Под окном может стоять сцена полёта: она глушит страницу
+         целиком, и вернуть фокус на кнопку под ней нельзя. Тогда
+         отдаём его самой сцене, а не оставляем в начале документа. */
+      if (document.activeElement === document.body) {
+        var сцена = document.querySelector(".rc-flight.on");
+        if (сцена && сцена.focus) { try { сцена.focus(); } catch (e2) {} }
+      }
       modalBack = null;
     }
   }

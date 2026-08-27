@@ -244,6 +244,7 @@ var RU = {
   "viz.gbps":      "Гбит/с сейчас",
   "viz.origin":    "Ваш origin",
   "viz.tbps":      " Тбит/с",
+  "viz.tb":        " Тб",
   "viz.none":      "Пока нет данных.",
 
   /* Служебное */
@@ -424,7 +425,7 @@ var EN = {
   "inc.6": "Extended statistics", "inc.7": "Log access", "inc.8": "Personal manager", "inc.9": "99.9% SLA",
   "viz.lat1": "Without a delivery network", "viz.lat2": "Through Rocket CDN", "viz.ms": "ms",
   "viz.cache": "cache hit ratio", "viz.sla": "availability under SLA", "viz.gbps": "Gbps right now",
-  "viz.origin": "Your origin", "viz.tbps": " Tbps", "viz.none": "No data yet.",
+  "viz.origin": "Your origin", "viz.tbps": " Tbps", "viz.tb": " TB", "viz.none": "No data yet.",
   "toast.copy": "Copied"
 };
 
