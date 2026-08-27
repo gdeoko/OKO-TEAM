@@ -277,6 +277,26 @@ function vf_direct_link(string $url): array {
  */
 function vf_download(string $url, int $appId = 0): array {
     $maxMb = max(20, (int) (function_exists('setting') ? setting('grade_video_max_mb', '300') : 300));
+
+    /* ДЗЕН ОТДАЁТ ЗАПИСЬ ТОЛЬКО БРАУЗЕРУ.
+     *
+     * Дзен назван в положении среди разрешённых площадок (п. 8.8), и форма
+     * заявки такие ссылки принимает. А загрузчик их не умел: страница без
+     * куки отвечает трёхкилобайтной заглушкой SSO, прямой ссылки в ней нет —
+     * шесть работ пересмотра остались без оценки с записью «площадка не
+     * поддерживается». Участник подал по правилам, и это наша недоработка,
+     * а не его.
+     *
+     * Разбор страницы тут бесполезен: там HLS и авторизация. Скачиванием
+     * занимается yt-dlp — он умеет и обычные ролики, и «шортсы», и склеивает
+     * фрагменты сам. Единственная особенность: адрес вида /shorts/<id> его
+     * экстрактор принимает за канал и падает, поэтому приводим к /video/watch/.
+     */
+    if (vf_platform($url) === 'dzen') {
+        $dz = vf_fetch_dzen($url, $appId);
+        if ($dz['ok'] || $dz['why'] !== '') return $dz;
+    }
+
     $link  = vf_direct_link($url);
     if (!$link['ok']) return ['ok' => false, 'path' => '', 'size' => 0, 'why' => $link['why']];
 
@@ -405,4 +425,51 @@ function vf_duration(string $path): int {
 /** Убрать временную запись: она принадлежит участнику, хранить её незачем. */
 function vf_cleanup(string $path): void {
     if ($path !== '' && is_file($path) && str_starts_with($path, vf_dir())) @unlink($path);
+}
+
+/**
+ * СКАЧАТЬ ЗАПИСЬ С ДЗЕНА (yt-dlp).
+ *
+ * Отдельная функция, а не ветка vf_direct_link: у Дзена нет «прямой ссылки»,
+ * которую можно передать дальше по конвейеру, — запись раздаётся фрагментами
+ * HLS и собирается на нашей стороне.
+ *
+ * @return array{ok:bool, path:string, size:int, why:string}
+ *         why пустое и ok=false — значит yt-dlp на сервере нет, и вызывающий
+ *         код продолжит обычным путём (там будет честное «не поддерживается»).
+ */
+function vf_fetch_dzen(string $url, int $appId = 0): array {
+    $no = static fn(string $w): array => ['ok' => false, 'path' => '', 'size' => 0, 'why' => $w];
+
+    $bin = '';
+    foreach (['/usr/local/bin/yt-dlp', '/usr/bin/yt-dlp'] as $cand) {
+        if (is_file($cand) && is_executable($cand)) { $bin = $cand; break; }
+    }
+    if ($bin === '') return $no('');           // пусть решает общий путь
+
+    // «Шортс» у Дзена — та же запись, что и обычная, но экстрактор yt-dlp
+    // принимает такой адрес за канал: «shorts: Redirecting», затем KeyError.
+    $ask = preg_replace('~dzen\.ru/shorts/~i', 'dzen.ru/video/watch/', trim($url)) ?? $url;
+
+    $path = vf_dir() . '/app' . ($appId > 0 ? $appId : 0) . '_' . substr(md5($url), 0, 8) . '.mp4';
+    if (is_file($path) && filesize($path) > 100000) {
+        return ['ok' => true, 'path' => $path, 'size' => (int) filesize($path), 'why' => ''];
+    }
+
+    // Ограничение по высоте держит объём в разумных пределах: качество выше 720p
+    // на оценку не влияет, а время скачивания и место на диске растут заметно.
+    $secs = (int) (function_exists('setting') ? setting('grade_video_max_sec', '900') : 900);
+    $cmd  = 'timeout ' . max(120, $secs) . ' ' . escapeshellarg($bin)
+          . ' -f ' . escapeshellarg('best[height<=720]/best')
+          . ' --no-playlist --no-warnings --no-progress'
+          . ' -o ' . escapeshellarg($path)
+          . ' ' . escapeshellarg($ask) . ' 2>&1';
+    @exec($cmd, $out, $rc);
+
+    if (is_file($path) && filesize($path) > 100000) {
+        return ['ok' => true, 'path' => $path, 'size' => (int) filesize($path), 'why' => ''];
+    }
+    @unlink($path);
+    $tail = trim(mb_substr(implode(' ', array_slice((array) $out, -3)), 0, 300));
+    return $no('Дзен: запись не скачалась' . ($tail !== '' ? ' (' . $tail . ')' : ''));
 }
