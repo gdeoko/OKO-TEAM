@@ -13,7 +13,14 @@ for (const имя of (process.argv.slice(2).length ? process.argv.slice(2) : ["�
     for (const e of видимых) {
       const t = e.querySelector(".rch-tname");
       if (!t) continue;
-      if (t.scrollWidth > t.clientWidth + 1) режет.push([t.textContent.trim(), t.scrollWidth, t.clientWidth]);
+      /* Меряем ПО СТРОКАМ настоящего текста, а не по scrollWidth:
+         в scrollWidth попадают цветные двойники заголовка, они лежат
+         абсолютом поверх и раньше не переносились - число выходило
+         про них, а не про подпись. */
+      var стр = t.getClientRects().length;
+      var кор = t.getBoundingClientRect();
+      var влез = стр > 0 && стр <= 2;
+      if (!влез) режет.push([t.textContent.trim(), "строк:" + стр, Math.round(кор.width)]);
     }
     return { всего: карт.length, видимых: видимых.length, режет: режет,
              имена: видимых.slice(0, 8).map((e) => (e.querySelector(".rch-tname") || {}).textContent || "") };
