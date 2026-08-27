@@ -34,6 +34,11 @@ function budget() {
 
 var used = 0;
 
+function найти(cv) {
+  for (var i = 0; i < scenes.length; i++) if (scenes[i].cv === cv) return scenes[i];
+  return null;
+}
+
 /* ── Порядок важности ────────────────────────────────────────
    Сцены сайта не равны между собой. Корабль и рубка - это сам
    сценарий: без них фильма нет. Глобус и стойка - украшения
@@ -66,21 +71,50 @@ g.RC_GL = {
   /* Уступить место главному: зовут вспомогательные сцены сами */
   freeAux: freeAux,
 
-  give: function () { if (used > 0) used--; },
+  /* Вернуть место. Если сцена называет свой холст, возврат считается
+     ровно один раз: страховка ниже отдаёт место сама, когда браузер
+     сообщает о потере контекста, а сцена перед этим уже отдала его
+     руками. Событие о потере приходит следующей задачей, флаг сцены
+     к тому времени снят - и счётчик уезжал вниз на единицу за каждый
+     круг «полетал, переключил язык, вышел». Через три круга потолок
+     считался свободным при трёх живых контекстах, а весь смысл этого
+     счётчика в том, чтобы на айфоне не отобрали контекст и холст не
+     почернел навсегда. */
+  give: function (cv) {
+    var r = cv ? найти(cv) : null;
+    if (r) {
+      if (r.отдал) return;
+      r.отдал = true;
+    }
+    if (used > 0) used--;
+  },
+
+  /* Снять страховку совсем: сцену снесли вместе с холстом. Без этого
+     запись держала отсоединённый холст до конца жизни страницы, а
+     список сцен рос на каждую пересборку мира. */
+  drop: function (cv) {
+    for (var i = scenes.length - 1; i >= 0; i--) {
+      if (scenes[i].cv === cv) scenes.splice(i, 1);
+    }
+    if (cv) cv._glGuard = 0;
+  },
 
   /* Повесить страховку на холст.
      onLost вызывается при потере, onBack - при возврате. */
   guard: function (canvas, onLost, onBack) {
     if (!canvas || canvas._glGuard) return;
     canvas._glGuard = 1;
-    var rec = { cv: canvas, lost: false };
+    var rec = { cv: canvas, lost: false, отдал: false };
     scenes.push(rec);
 
     canvas.addEventListener("webglcontextlost", function (e) {
       /* Без preventDefault браузер не даст вернуть контекст */
       e.preventDefault();
       rec.lost = true;
-      g.RC_GL.give();
+      /* Смотрим на саму запись, а не ищем её по холсту: сцена могла
+         уже снять страховку через drop, и поиск бы ничего не нашёл -
+         тогда место вернулось бы второй раз. */
+      if (!rec.отдал) { rec.отдал = true; g.RC_GL.give(); }
       try { if (onLost) onLost(); } catch (err) {}
       canvas.style.opacity = "0";
       if (g.RC_track) g.RC_track("glloss", canvas.id || "canvas", true);
@@ -88,6 +122,10 @@ g.RC_GL = {
 
     canvas.addEventListener("webglcontextrestored", function () {
       rec.lost = false;
+      /* Контекст вернули - место снова занято. Потолок тут не
+         спрашиваем: браузер уже решил за нас, а счётчик обязан
+         показывать правду. */
+      if (rec.отдал) { rec.отдал = false; used++; }
       try { if (onBack) onBack(); } catch (err) {}
       canvas.style.opacity = "";
     }, false);

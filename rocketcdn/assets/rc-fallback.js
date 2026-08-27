@@ -216,6 +216,13 @@ function seeing() {
     });
     return;
   }
+  /* Прошлый комплект снимаем. Эту функцию зовут снова на каждое
+     переключение языка, а узлы под наблюдением те же самые: .kpi-n
+     при смене языка не пересобирается. Без снятия на одних и тех же
+     элементах копилось по три наблюдателя за переключение - замер
+     показал 182 наблюдателя вместо 46 после восьми переключений и
+     плюс 73 процента вызовов на ту же прокрутку. */
+  снятьДозоры();
   groups.forEach(function (grp) {
     var io = new IntersectionObserver(function (ents) {
       ents.forEach(function (e) {
@@ -225,7 +232,14 @@ function seeing() {
       });
     }, { threshold: 0.2 });
     [].forEach.call(doc.querySelectorAll(grp[0]), function (el) { io.observe(el); });
+    дозоры.push(io);
   });
+}
+
+var дозоры = [];
+function снятьДозоры() {
+  for (var i = 0; i < дозоры.length; i++) { try { дозоры[i].disconnect(); } catch (e) {} }
+  дозоры.length = 0;
 }
 
 /* ═══ Доступность поверх всего ═════════════════════════════ */

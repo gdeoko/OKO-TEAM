@@ -331,6 +331,13 @@ function relang() {
      которого больше нет, - чёрный кадр без единой ошибки. */
   if (F.built) {
     F.built = false;
+    var холст = ui.cv || null;
+    /* Сначала отдаём карте всё дерево мира: планеты, корабль, салон,
+       линии сети. renderer.dispose() освобождает только свои буферы,
+       геометрию и текстуры three.js не трогает никто. Замер показывал
+       около девятисот неотпущенных узлов за круг «полетал, переключил
+       язык, вышел». */
+    if (W3 && W3.scene) { try { убратьДерево(W3.scene); } catch (eМир) {} }
     if (W3 && W3.r) {
       try { W3.r.dispose(); } catch (e) {}
       try {
@@ -339,7 +346,13 @@ function relang() {
       } catch (e2) {}
     }
     W3 = null;
-    if (F.glSlot && g.RC_GL) { F.glSlot = false; g.RC_GL.give(); }
+    /* Место в бюджете возвращаем ИМЕНЕМ холста. Иначе страховка в
+       rc-gl отдаст его второй раз, когда придёт событие о потере
+       контекста, и счётчик уедет вниз на круг. */
+    if (F.glSlot && g.RC_GL) { F.glSlot = false; g.RC_GL.give(холст); }
+    /* И снимаем саму страховку: холст сейчас уйдёт вместе с оверлеем,
+       а запись о нём держала бы его до конца жизни страницы. */
+    if (холст && g.RC_GL && g.RC_GL.drop) { try { g.RC_GL.drop(холст); } catch (e3) {} }
   }
   if (ui.wrap.parentNode) ui.wrap.parentNode.removeChild(ui.wrap);
   ui = {};
@@ -2841,6 +2854,7 @@ function buildWorld() {
     try {
       g.RC_GL.guard(ui.cv, function () {
         F.built = false;
+        /* Место уже вернула сама страховка, второй раз не отдаём */
         F.glSlot = false;
         if (F.open) close();
       }, function () {

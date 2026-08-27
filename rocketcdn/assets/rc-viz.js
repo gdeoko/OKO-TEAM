@@ -35,8 +35,17 @@ function esc(s) {
 function themeLight() { return document.documentElement.getAttribute("data-theme") === "light"; }
 
 /* Запуск один раз при появлении в экране */
+/* Возвращаем сам наблюдатель: постоянное наблюдение (once === false)
+   само не снимается никогда, и снять его должен тот, кто заводил.
+   Без этого каждое переключение языка добавляло ещё один вечный
+   кадровый цикл графика: блок вычищался, холст выбрасывался, а
+   наблюдатель оставался висеть на самой коробке и при следующем
+   появлении её в кадре поднимал мёртвый цикл заново - рисовать в
+   холст, которого в документе больше нет. Замер: восемь переключений
+   языка давали десять циклов вместо двух и рост кадровой нагрузки
+   страницы в два с половиной раза. */
 function onView(el, fn, once) {
-  if (!("IntersectionObserver" in g)) { fn(true); return; }
+  if (!("IntersectionObserver" in g)) { fn(true); return null; }
   var io = new IntersectionObserver(function (ents) {
     ents.forEach(function (e) {
       if (e.isIntersecting) { fn(true); if (once !== false) io.unobserve(e.target); }
@@ -44,6 +53,17 @@ function onView(el, fn, once) {
     });
   }, { threshold: 0.25 });
   io.observe(el);
+  дозоры.push(io);
+  return io;
+}
+
+/* Все заведённые наблюдатели держим списком: при пересборке блоков
+   на смену языка старые обязаны уйти, иначе на одних и тех же узлах
+   копится по комплекту за переключение. */
+var дозоры = [];
+function снятьДозоры() {
+  for (var i = 0; i < дозоры.length; i++) { try { дозоры[i].disconnect(); } catch (e) {} }
+  дозоры.length = 0;
 }
 
 /* Плавный тик от 0 до 1.
@@ -214,7 +234,10 @@ function wave(box) {
     grFill = null; grGlow = null;
   }
   size();
-  addEventListener("resize", function () { clearTimeout(box._rt); box._rt = setTimeout(size, 200); });
+  /* Оконный слушатель тоже снимается в _stop: он заводился заново на
+     каждое переключение языка и держал за собой мёртвый холст. */
+  function поРазмеру() { clearTimeout(box._rt); box._rt = setTimeout(size, 200); }
+  addEventListener("resize", поРазмеру);
 
   function frame(ts) {
     if (!running) return;
@@ -303,7 +326,7 @@ function wave(box) {
     num.textContent = fmt(760 + v * 1900);
   }
 
-  onView(box, function (vis) {
+  var дозор = onView(box, function (vis) {
     var was = running;
     running = vis && !REDUCE;
     /* Заводим только если цикл ещё не крутится: два наблюдения подряд
@@ -311,7 +334,13 @@ function wave(box) {
     if (running && !was) frame();
     if (!running) { cancelAnimationFrame(raf); raf = 0; }
   }, false);
-  box._stop = function () { running = false; cancelAnimationFrame(raf); raf = 0; };
+  box._stop = function () {
+    running = false;
+    cancelAnimationFrame(raf); raf = 0;
+    clearTimeout(box._rt);
+    removeEventListener("resize", поРазмеру);
+    if (дозор) { дозор.disconnect(); дозор = null; }
+  };
 
   if (REDUCE) { running = true; frame(); running = false; }
 }
@@ -498,6 +527,7 @@ document.addEventListener("rc:lang", function (e) {
   TR = e && e.detail && e.detail.t ? e.detail.t : TR;
   /* Перестраиваем всё, где есть текст: иначе половина подписей
      остаётся на прежнем языке */
+  снятьДозоры();
   ["marquee", "bars", "latency", "donut", "gauge", "wave", "topology", "ticker"].forEach(function (kind) {
     $$('[data-viz="' + kind + '"]').forEach(function (el) {
       if (el._stop) { try { el._stop(); } catch (err) {} }
