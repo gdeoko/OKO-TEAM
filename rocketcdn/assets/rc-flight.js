@@ -749,6 +749,23 @@ function buildUI() {
                 '<span class="rcf-d-meter rcf-bar-en"><b>' + (RU ? "ЗАРЯД" : "PWR") + '</b><s><i></i></s><u>100</u></span>' +
                 '<span class="rcf-d-meter rcf-bar-hull"><b>' + (RU ? "КОРПУС" : "HULL") + '</b><s><i></i></s><u>100</u></span>' +
               '</span>' +
+              /* Снимок на портрете живёт здесь, в ленте.
+
+                 На плите портрета восемь гнёзд, а команд одиннадцать,
+                 и снимок в них не помещался: на телефоне кадр было не
+                 снять вовсе. Отбирать гнездо у курса, скана, узла,
+                 справки, автопилота, стопа, тяги или сети ради него
+                 неправильно - все восемь нужны в полёте. Лента же
+                 стоит на стекле и места под маленький значок в ней
+                 хватает. На широком экране кнопка скрыта: там снимок
+                 лежит в своём гнезде на плите. */
+              '<button type="button" class="rcf-d-shot" aria-label="' +
+                (RU ? "СНИМОК. Снять кадр того, что перед носом" : "Shot. Capture what is ahead") + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<path d="M3.4 8.2h3.1l1.5-2.4h8l1.5 2.4h3.1v10.2H3.4z"/>' +
+                '<circle cx="12" cy="13.1" r="3.5"/></svg>' +
+              '</button>' +
             '</div>' +
             '<div class="rcf-d-main">' +
               /* ЛЕВЫЙ БЛОК: куда идём */
@@ -957,6 +974,8 @@ function buildUI() {
   ui.thr = w.querySelector(".rcf-thr");
   var shotBtn = w.querySelector(".rcf-shot");
   if (shotBtn) shotBtn.addEventListener("click", shoot);
+  var shotTop = w.querySelector(".rcf-d-shot");
+  if (shotTop) shotTop.addEventListener("click", function () { shoot(); });
   ui.thrFill = w.querySelector(".rcf-thr-fill");
   bindThrottle();
   ui.dos = w.querySelector(".rcf-dos");

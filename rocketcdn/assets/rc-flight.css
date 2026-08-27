@@ -3753,6 +3753,28 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-key b { display: none; }
   .rc-flight .rcf-key { min-width: 34px; height: 36px; }
 }
+/* Снимок в ленте: только там, где ему не досталось гнезда на плите.
+   На широких раскладках кнопка скрыта, снимок лежит в своём гнезде. */
+.rc-flight .rcf-d-shot { display: none; }
+@media (max-width: 760px) {
+  .rc-flight .rcf-d-shot {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    margin-left: auto;
+    padding: 0;
+    border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .38);
+    border-radius: 5px;
+    background: rgba(4, 12, 20, .5);
+    color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .rc-flight .rcf-d-shot svg { width: 13px; height: 13px; }
+  .rc-flight .rcf-d-shot:active { background: rgba(var(--int-cyan-rgb, 66,178,220), .22); }
+}
+
 /* Дубль скорости в ленте только на узком экране */
 .rc-flight .rcf-d-spd { display: none; }
 @media (max-width: 760px) {
