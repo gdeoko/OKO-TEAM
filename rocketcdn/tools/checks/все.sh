@@ -9,7 +9,7 @@
 set -u
 dir="$(cd "$(dirname "$0")" && pwd)"
 code=0
-for name in маршрут клавиши метки панели мусор; do
+for name in маршрут клавиши метки панели мусор панель-одна; do
   echo "── $name ────────────────────────────────"
   HTTPS_PROXY= node "$dir/$name.mjs" || code=1
 done
