@@ -899,7 +899,11 @@ function buildUI() {
     if (!b) return;
     var want = parseInt(b.getAttribute("data-uni"), 10);
     var uw = UNIVERSES[want];
-    if (uw && uw.need && netCount() < uw.need) {
+    /* Кнопки без разбираемого номера быть не должно, но если она
+       появится, прыгать по ней нельзя: uniIdx уйдёт в NaN и слой
+       начнёт падать на каждом кадре. */
+    if (!uw) return;
+    if (uw.need && netCount() < uw.need) {
       /* Ещё закрыто: говорим, сколько осталось, и не закрываем меню -
          человек должен видеть, куда он собирался */
       say((RU ? "ЗАКРЫТО · нужно узлов сети: " : "LOCKED · nodes needed: ") +
@@ -1793,9 +1797,20 @@ function goSystem(si, pi) {
 var uniBusy = false;
 function jumpUniverse(want) {
   if (uniBusy || !W3) return;
+  /* Номер рукава приходит снаружи: из кнопки меню, из служебного
+     хода приёмки, из пробоя. Раньше он ложился в uniIdx как есть, и
+     одного мусорного значения хватало, чтобы весь слой начал падать:
+     UNIVERSES[NaN] это undefined, а дальше по коду идут .name и
+     .sys. Журнал ошибок с боевого сайта показал ровно эту пару -
+     "Cannot read properties of undefined (reading 'name')" и
+     "(reading 'sys')". Держим номер в границах списка. */
+  var н = (want === undefined) ? (uniIdx + 1) % UNIVERSES.length : Math.round(+want);
+  if (!isFinite(н)) return;
+  if (н < 0) н = 0;
+  if (н >= UNIVERSES.length) н = UNIVERSES.length - 1;
   F.jumps = (F.jumps || 0) + 1;
   uniBusy = true;
-  uniIdx = (want === undefined) ? (uniIdx + 1) % UNIVERSES.length : want;
+  uniIdx = н;
   if (ui.fade) { ui.fade.style.transition = "opacity .45s"; ui.fade.style.opacity = "1"; }
   if (g.RC_SOUND) { try { (g.RC_SOUND.hyper || g.RC_SOUND.chime).call(g.RC_SOUND); } catch (e) {} }
   F.shake = 1;
