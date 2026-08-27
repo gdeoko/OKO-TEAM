@@ -217,12 +217,16 @@ html.rc-flying body { overflow: hidden; }
   mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.62) 2px 3px);
   opacity: 0;
 }
+/* Скобки титра стояли ВНЕ коробки, на девять точек в каждую сторону,
+   и упирались в срез HUD: колонка титра выходила за свою ширину на
+   восемь точек, а скобки уходили под кромку. Убираем их внутрь -
+   места в отступе 22 точки на это хватает с запасом. */
 .rcf-cap::before, .rcf-cap::after {
   content: ''; position: absolute; top: -1px; bottom: -1px; width: 8px;
   border: 1px solid rgba(var(--int-lit-rgb, 207,233,245), .7);
 }
-.rcf-cap::before { left: -9px; border-right: 0; }
-.rcf-cap::after { right: -9px; border-left: 0; }
+.rcf-cap::before { left: 3px; border-right: 0; }
+.rcf-cap::after { right: 3px; border-left: 0; }
 .rcf-cap.in { animation: rcfCap .55s var(--ease) forwards, rcfHoloBreath 3.4s ease-in-out .55s infinite; }
 @keyframes rcfCap {
   from { opacity: 0; transform: translateX(-50%) scaleY(.4); filter: brightness(2.2); }
@@ -1734,9 +1738,16 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   padding: 10px 13px 12px;
   border-radius: 10px;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
-  background: linear-gradient(165deg, rgba(var(--int-cyan-rgb, 66,178,220), .1), rgba(5, 14, 26, .62));
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  /* Метки тел лежат слоем выше (z-index 12) и накрывали карточку:
+     замер дал перекрытия до 162 на 17 точек, слово «ОСМОТРЕТЬСЯ»
+     читалось сквозь имя планеты. Поднимаем карточку над метками и
+     делаем подложку плотной - тогда сверху лежит то, что читают, а
+     не смесь двух надписей.
+
+     Размытие подложки убрано заодно: это отдельный слой композитора
+     на каждый кадр, а плотный фон делает ту же работу даром. */
+  z-index: 14;
+  background: linear-gradient(165deg, rgba(var(--int-cyan-rgb, 66,178,220), .12), rgba(5, 14, 26, .94));
   font-family: var(--f-body, "Golos Text", sans-serif);
   pointer-events: none;
   box-shadow: 0 0 34px -14px rgba(var(--int-cyan-rgb, 66,178,220), .8);
@@ -3591,8 +3602,23 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
     margin: 0 4px;
     flex-wrap: nowrap;
     overflow: hidden;
+    /* Лента высотой 14 точек, а содержимое собиралось в 19 и семь
+       точек уходило под срез: на 360 из строки состояния оставались
+       два голых числа с отрезанными макушками. Межстрочный шаг
+       здесь не нужен - строка одна. */
+    line-height: 1;
   }
+  .rc-flight .rcf-d-top .rcf-d-cell,
+  .rc-flight .rcf-d-top .rcf-d-cell i,
+  .rc-flight .rcf-d-top .rcf-d-cell b,
+  .rc-flight .rcf-d-top .rcf-d-meter b,
+  .rc-flight .rcf-d-top .rcf-d-meter u { line-height: 1; }
   .rc-flight .rcf-d-top .rcf-d-cell { flex: 0 1 auto; min-width: 0; }
+  /* Скорость не сжимаем: на 360 ей доставалось шесть точек из
+     нужных тридцати четырёх, и «км/с» съедалось целиком - в ленте
+     оставался один знак «0» без единиц. Ужимаются соседи, у них
+     подписи длиннее и терпимее. */
+  .rc-flight .rcf-d-top .rcf-d-spd { flex: 0 0 auto; }
   .rc-flight .rcf-d-cell i { font-size: 7.5px; letter-spacing: .1em; }
   .rc-flight .rcf-d-cell .rcf-net,
   .rc-flight .rcf-d-cell .rcf-prog,
