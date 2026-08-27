@@ -711,11 +711,18 @@ function ag_grade_application(int $appId, array $opt = []): array {
         require_once BASE_PATH . '/core/folder_pick.php';
         $pick = fp_pick($url, $app);
         if (!$pick['ok'] && (int) $pick['files'] > 1) {
+            /* Это основание по положению, а не поломка: причина готова, и жюри
+               должно увидеть её в общем списке, а не в отчёте о технических
+               неудачах, куда никто не заглядывает. */
             try {
-                q("UPDATE grading_runs SET status='failed', error=?, reject_hint=? WHERE id=?",
-                  [mb_substr((string) $pick['why'], 0, 500), mb_substr((string) $pick['why'], 0, 900), $runId]);
+                q("UPDATE grading_runs SET status='ok', title='ТРЕБУЕТ ПРОВЕРКИ', total=0,
+                          reject_hint=?, internal_note=? WHERE id=?",
+                  [mb_substr((string) $pick['why'], 0, 900),
+                   'Оценка не проводилась: по ссылке общая папка на ' . (int) $pick['files']
+                   . ' работ, конкурсный материал этого участника не определяется.', $runId]);
             } catch (\Throwable $e) {}
-            return ['ok' => false, 'run_id' => $runId, 'total' => 0.0, 'title' => '', 'why' => (string) $pick['why']];
+            return ['ok' => true, 'run_id' => $runId, 'total' => 0.0,
+                    'title' => 'ТРЕБУЕТ ПРОВЕРКИ', 'why' => (string) $pick['why']];
         }
     } elseif (is_file(BASE_PATH . '/core/link_unique.php')) {
         require_once BASE_PATH . '/core/link_unique.php';

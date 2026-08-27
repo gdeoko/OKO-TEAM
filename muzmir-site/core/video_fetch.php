@@ -498,7 +498,16 @@ function vf_download(string $url, int $appId = 0): array {
     fclose($fp);
 
     if ($got > $limit) { @unlink($path); return ['ok' => false, 'path' => '', 'size' => $got, 'why' => 'запись больше ' . $maxMb . ' МБ']; }
-    if ($code >= 400 || $got < 100000) {
+    /* ПОРОГ «СЛИШКОМ МАЛО» У КАРТИНКИ СВОЙ.
+     *
+     * Сто килобайт — разумный минимум для видеозаписи, но не для рисунка:
+     * снимок работы по изобразительному искусству вполне живёт в шестидесяти,
+     * и такие заявки отбрасывались с формулировкой «площадка не отдала файл
+     * (код 200)» — при том что файл пришёл целиком. */
+    $isPic = (bool) preg_match('~^(jpe?g|png|webp|heic|heif|bmp|tiff?)$~i',
+                               (string) pathinfo($path, PATHINFO_EXTENSION));
+    $minBytes = $isPic ? 8000 : 100000;
+    if ($code >= 400 || $got < $minBytes) {
         @unlink($path);
         return ['ok' => false, 'path' => '', 'size' => $got, 'why' => 'площадка не отдала файл (код ' . $code . ')'];
     }
