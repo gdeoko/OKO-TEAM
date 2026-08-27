@@ -9175,11 +9175,11 @@ function stage(k) {
     F.built = true;
     netRestore();
   }
-  var былоУПульта = (F.stageK || 0) > 0.86;
+  var былоУПульта = (F.stageK || 0) > 0.80;
   F.stageK = k;
   /* Пересечение порога подъезда: пересчитываем плотность пикселей,
      чтобы к стыку с игрой она уже была игровой. */
-  if (F.stage && былоУПульта !== (k > 0.86)) stageLite(true);
+  if (F.stage && былоУПульта !== (k > 0.80)) stageLite(true);
   if (ui.wrap) ui.wrap.style.setProperty("--rcf-stage", k.toFixed(3));
   if (F.stage) return;
 
@@ -9232,6 +9232,21 @@ function stage(k) {
    стоят дороже всего остального вместе взятого */
 function stageLite(on) {
   if (!W3) return;
+  /* Дальние тела возвращаются НЕ на стыке с игрой, а на подъезде.
+
+     Их прятали на всё время сцены и включали разом в тот кадр, где
+     начинается полёт: приёмка сняла два кадра подряд, и на первом
+     справа пустой космос, а на втором там Сатурн, Юпитер, пояс
+     астероидов и луны. Двадцать одно тело, появившееся в один кадр,
+     читается подменой содержимого окна - ровно то слово, которое
+     говорил владелец.
+
+     Возвращаем их на четырёх пятых подъезда. Камера в этот момент уже
+     почти встала и смотрит в проём, человек читает панель, а не
+     считает звёзды. К стыку менять нечего: и тела на месте, и
+     плотность пикселей уже игровая. */
+  var уПульта = on && (F.stageK || 0) > 0.80;
+  var прятать = on && !уПульта;
   var far = [W3.milky, W3.gal2, W3.gal3, W3.nebSprites, W3.galacticVolume,
              W3.belt1, W3.belt2, W3.rockField,
              W3.jupiter, W3.uranus, W3.neptune, W3.mercury, W3.venus,
@@ -9243,8 +9258,8 @@ function stageLite(on) {
   for (var i = 0; i < far.length; i++) {
     var o = far[i];
     if (!o) continue;
-    if (o.length) { for (var j = 0; j < o.length; j++) if (o[j]) o[j].visible = !on; }
-    else o.visible = !on;
+    if (o.length) { for (var j = 0; j < o.length; j++) if (o[j]) o[j].visible = !прятать; }
+    else o.visible = !прятать;
   }
   /* Возвращая тела, спрашиваем, В КАКОМ МЫ РУКАВЕ.
 
@@ -9258,7 +9273,7 @@ function stageLite(on) {
 
      Домашние тела возвращаем только дома. Галактики и туманности
      общие, они остаются. */
-  if (!on) {
+  if (!прятать) {
     showGalaxyField(uniIdx);
     if (uniIdx !== 0) showHome(false);
   }
@@ -9272,7 +9287,6 @@ function stageLite(on) {
      закончился и кадр всё равно стоит, переходим на игровую
      плотность заранее. К моменту старта менять нечего. */
   if (W3.r) {
-    var уПульта = on && (F.stageK || 0) > 0.86;
     var dpr = g.devicePixelRatio || 1;
     var step = parseInt(root.getAttribute("data-degrade") || "0", 10) || 0;
     var hint = parseInt(root.getAttribute("data-quality-hint") || "0", 10) || 0;
