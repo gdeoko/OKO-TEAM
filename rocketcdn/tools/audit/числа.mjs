@@ -11,7 +11,9 @@ const файл = "tools/audit/out/ч-" + имя + "-" + часть + ".ndjson";
 fs.writeFileSync(файл, "");
 
 const b = await браузер();
-const { pg, беды } = await страница(b, э);
+const t0=Date.now(); const от=()=>((Date.now()-t0)/1000).toFixed(0);
+const { pg, беды } = await страница(b, э); console.log("ЗАГРУЗКА "+от());
+console.log("ЭКСПОРТ пошёл "+от());
 await pg.exposeFunction("отдай", (o) => { fs.appendFileSync(файл, JSON.stringify(o) + "\n"); console.log(JSON.stringify(o)); });
 
 try {
@@ -49,7 +51,9 @@ try {
     const от = Math.round(низ + длина * (часть / частей));
     const до = Math.round(низ + длина * ((часть + 1) / частей));
     let охрана = 0;
+    await window.отдай({ метка: "подвод старт", y: Math.round(scrollY), цель: от });
     while (scrollY < от - 5 && охрана++ < 900) { scrollBy(0, Math.min(Math.round(innerHeight * 0.3), от - scrollY)); await сон(230); }
+    await window.отдай({ метка: "подвод конец", y: Math.round(scrollY) });
     await сон(3000);
     for (let i = 0; i < 400; i++) {
       await window.отдай(снять());
