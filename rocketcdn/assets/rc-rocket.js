@@ -73,7 +73,14 @@ function закрепитьВысоту(вкл) {
 addEventListener("resize", function () {
   if (закрепитьВысоту._w === innerWidth) return;
   закрепитьВысоту._w = innerWidth;
-  if (!document.documentElement.classList.contains("rc-approach")) закрепитьВысоту(false);
+  /* Поворот телефона меняет всю раскладку, и старый пол высоты после
+     него врёт: держит страницу длиннее, чем она есть, и внизу
+     появляется пустота. Снимаем, а если подход ещё идёт - ставим
+     заново, уже по новой раскладке. Четверть секунды на то, чтобы
+     разделы успели перетечь. */
+  var подход = document.documentElement.classList.contains("rc-approach");
+  закрепитьВысоту(false);
+  if (подход) setTimeout(function () { закрепитьВысоту(true); }, 260);
 }, { passive: true });
 
 function caps() {
