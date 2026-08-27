@@ -1,4 +1,19 @@
 # Rocket CDN · настройки веб-сервера
+#
+# ВАЖНО: боевой сайт отдаёт nginx 1.24, а он .htaccess не читает
+# вовсе. Проверено живьём: служебные файлы закрыты (config.php,
+# data/, cron.php, bot.php - все 403), но закрывает их собственная
+# конфигурация nginx, а не этот файл. Значит правила отсюда на
+# боевом НЕ действуют, и всё, что нужно на самом деле, должно быть
+# продублировано в /etc/nginx/sites-enabled/rocketcdn.
+#
+# Файл оставлен на случай переезда на Apache и как опись того, что
+# сайту нужно от сервера.
+#
+# Не перенесено в nginx на сегодня: тип для .webmanifest. Сейчас
+# паспорт приложения уходит как application/octet-stream. Нужная
+# строка для nginx:
+#   location ~* \.webmanifest$ { default_type application/manifest+json; }
 Options -Indexes
 ServerSignature Off
 AddDefaultCharset UTF-8
