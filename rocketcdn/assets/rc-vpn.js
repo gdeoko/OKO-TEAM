@@ -118,7 +118,7 @@ function ensureDrawer() {
   b.type = "button";
   b.className = "rc-vpn-entry js-vpn-mode";
   b.innerHTML =
-    '<span class="rc-vpn-entry-mark"><img src="assets/rocketvpn-logo.webp" alt="" width="48" height="48" loading="lazy" decoding="async"></span>' +
+    '<span class="rc-vpn-entry-mark"><img src="assets/rocketvpn-logo.webp" alt="" aria-hidden="true" width="48" height="48" loading="lazy" decoding="async"></span>' +
     '<span><b>RocketVPN</b><i data-vpn-label></i></span>' +
     '<em aria-hidden="true"></em>';
   var tools = d.querySelector(".drawer-tools");

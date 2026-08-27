@@ -446,7 +446,12 @@ Rack.prototype.release = function () {
   if (cv && shot) {
     var img = document.createElement("img");
     img.src = shot;
-    img.alt = cv.getAttribute("aria-label") || "";
+    /* Подпись берём у холста. Её нет - значит кадр декоративный, и
+       читалке о нём говорить нечего: пустой alt без пометки заставляет
+       её объявлять «изображение» и молчать. */
+    var подпись = cv.getAttribute("aria-label") || "";
+    img.alt = подпись;
+    if (!подпись) img.setAttribute("aria-hidden", "true");
     img.className = "rack-still";
     if (cv.parentElement) cv.parentElement.insertBefore(img, cv);
     cv.style.display = "none";

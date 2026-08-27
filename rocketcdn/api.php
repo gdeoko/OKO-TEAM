@@ -22,6 +22,69 @@ function inp($k, $d = '') {
     $v = $body[$k] ?? $_POST[$k] ?? $_GET[$k] ?? $d;
     return is_string($v) ? trim($v) : $v;
 }
+/* Пропуск панели: временный, выдаётся на вход и живёт две недели.
+
+   Раньше в браузере лежал сам пароль от админки, открытым текстом в
+   localStorage: чужой скрипт на странице, чужие руки на ноутбуке или
+   расширение читали его целиком, и отозвать его можно было только
+   сменой пароля на сервере. Теперь браузер держит пропуск: он ничего
+   не говорит о пароле, протухает сам и отзывается по кнопке «выйти».
+
+   Файл пропусков лежит в папке данных, выше корня сайта. Если писать
+   туда не выходит, вход всё равно работает по паролю - панель просто
+   спросит его снова после перезагрузки. Молча отказать во входе
+   из-за прав на папку было бы хуже. */
+function rc_pass_file() { return RC_DATA . '/admin_pass.json'; }
+
+function rc_pass_new() {
+    try {
+        $t = bin2hex(random_bytes(24));
+    } catch (Throwable $e) {
+        return '';
+    }
+    $ok = rc_json_update(rc_pass_file(), function ($d) use ($t) {
+        $сейчас = time();
+        $чисто = [];
+        /* Заодно выметаем протухшие: файл не должен расти вечно. */
+        foreach ((array)$d as $х => $до) {
+            if (is_int($до) && $до > $сейчас) $чисто[$х] = $до;
+        }
+        $чисто[hash('sha256', $t)] = $сейчас + 14 * 86400;
+        return $чисто;
+    });
+    return $ok === false ? '' : $t;
+}
+
+function rc_pass_ok($t) {
+    if (!is_string($t) || strlen($t) !== 48) return false;
+    $d = rc_json_read(rc_pass_file(), []);
+    $до = $d[hash('sha256', $t)] ?? 0;
+    return is_int($до) && $до > time();
+}
+
+function rc_pass_drop($t) {
+    if (!is_string($t) || $t === '') return;
+    rc_json_update(rc_pass_file(), function ($d) use ($t) {
+        unset($d[hash('sha256', $t)]);
+        return $d;
+    });
+}
+
+/* Секрет приходит телом запроса или заголовком, но НЕ адресом.
+
+   inp() смотрит и в $_GET, а всё, что попало в адрес, оседает в
+   журнале nginx открытым текстом и живёт там месяцами. Панель и так
+   шлёт пароль телом, поэтому запрет ничего не ломает, но закрывает
+   дорогу любой будущей ссылке вида api.php?action=leads&key=... */
+function rc_secret($k) {
+    global $body;
+    $v = $body[$k] ?? $_POST[$k] ?? '';
+    if ($v === '' && $k === 'pass') {
+        $v = $_SERVER['HTTP_X_RC_PASS'] ?? '';
+    }
+    return is_string($v) ? trim($v) : '';
+}
+
 function need_key() {
     $real = (string)rc_cfg('admin_key');
     /* Пока пароль не сменили, закрытые разделы не работают вовсе:
@@ -30,8 +93,9 @@ function need_key() {
         out(['ok' => false, 'error' => 'default_key',
              'message' => 'Смените admin_key в config.local.php, пароль по умолчанию заблокирован.']);
     }
-    $k = inp('key');
-    if (!hash_equals($real, (string)$k)) out(['ok' => false, 'error' => 'auth']);
+    if (rc_pass_ok(rc_secret('pass'))) return;
+    $k = rc_secret('key');
+    if ($k === '' || !hash_equals($real, $k)) out(['ok' => false, 'error' => 'auth']);
 }
 /* Заголовки пересылки подделываются одной строкой в curl, поэтому
    доверяем им только когда запрос действительно пришёл от нашего
@@ -291,7 +355,17 @@ if ($action === 'content') {
 
 if ($action === 'login') {
     need_key();
-    out(['ok' => true, 'brand' => rc_cfg('brand')]);
+    /* Вход прошёл - выдаём пропуск на две недели. Пустая строка тут
+       значит, что папка данных не пишется: панель тогда работает по
+       паролю, как раньше, и просто спросит его после перезагрузки. */
+    out(['ok' => true, 'brand' => rc_cfg('brand'), 'pass' => rc_pass_new()]);
+}
+
+/* Выход: пропуск гасим на сервере, а не только в браузере. Иначе
+   «выйти» на чужом ноутбуке ничего не значило бы. */
+if ($action === 'logout') {
+    rc_pass_drop(rc_secret('pass'));
+    out(['ok' => true]);
 }
 
 /* Сводка аналитики за N дней */

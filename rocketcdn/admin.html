@@ -536,7 +536,17 @@
 var $ = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var API = "api.php";
-var KEY = localStorage.getItem("rc_admin_key") || "";
+/* В браузере держим пропуск, а не пароль. Пропуск выдаёт сервер на
+   вход, живёт две недели и гасится кнопкой «выйти». Пароль после
+   входа из памяти уходит: в localStorage ему делать нечего. */
+var PASS = localStorage.getItem("rc_admin_pass") || "";
+var KEY = "";
+/* Со старой версии панели в браузере мог остаться сам пароль. Берём
+   его на один вход, чтобы человек не остался за дверью, и стираем. */
+try {
+  var старый = localStorage.getItem("rc_admin_key");
+  if (старый) { KEY = старый; localStorage.removeItem("rc_admin_key"); }
+} catch (e) {}
 var days = 7, stats = null, leads = [], leadFilter = "all", content = null;
 
 /* ── Тема ── */
@@ -576,7 +586,11 @@ function esc(s) {
 function api(action, payload, method) {
   var url = API + "?action=" + action;
   var opt = { method: method || "POST", headers: { "Content-Type": "application/json" } };
-  opt.body = JSON.stringify(Object.assign({ key: KEY }, payload || {}));
+  /* Секрет уходит только телом запроса: в адресе он осел бы в журнале
+     сервера открытым текстом. Пропуск главнее пароля - пароль здесь
+     остаётся лишь на тот один вход, когда пропуска ещё нет. */
+  var секрет = PASS ? { pass: PASS } : { key: KEY };
+  opt.body = JSON.stringify(Object.assign(секрет, payload || {}));
   return fetch(url, opt).then(function (r) { return r.json(); });
 }
 
@@ -588,7 +602,10 @@ $("#loginForm").addEventListener("submit", function (e) {
   KEY = v;
   api("login").then(function (r) {
     if (r && r.ok) {
-      localStorage.setItem("rc_admin_key", v);
+      /* Пропуск есть - запоминаем его и забываем пароль. Пропуска нет
+         (папка данных не пишется) - работаем на пароле в памяти: он
+         переживёт сеанс, но не перезагрузку страницы. */
+      if (r.pass) { PASS = r.pass; try { localStorage.setItem("rc_admin_pass", PASS); } catch (e2) {} }
       start();
     } else if (r && r.error === "default_key") {
       msg.className = "form-msg bad";
@@ -603,8 +620,13 @@ $("#loginForm").addEventListener("submit", function (e) {
   });
 });
 $("#logout").addEventListener("click", function () {
-  localStorage.removeItem("rc_admin_key");
-  location.reload();
+  /* Гасим пропуск и на сервере: иначе «выйти» на чужом ноутбуке
+     означало бы только «убрать из виду». Ответа не ждём - страница
+     всё равно перезагружается. */
+  try { api("logout"); } catch (e3) {}
+  try { localStorage.removeItem("rc_admin_pass"); localStorage.removeItem("rc_admin_key"); } catch (e4) {}
+  PASS = ""; KEY = "";
+  setTimeout(function () { location.reload(); }, 120);
 });
 
 /* ── Табы ── */
@@ -1545,9 +1567,17 @@ function start() {
   loadNet();
   loadContent();
 }
-if (KEY) {
+/* Вход без вопросов, пока пропуск жив. Протух или отозван - панель
+   покажет форму, как чужому. */
+if (PASS || KEY) {
   api("login").then(function (r) {
-    if (r && r.ok) start();
+    if (r && r.ok) {
+      if (r.pass) { PASS = r.pass; try { localStorage.setItem("rc_admin_pass", PASS); } catch (e5) {} }
+      start();
+    } else {
+      PASS = ""; KEY = "";
+      try { localStorage.removeItem("rc_admin_pass"); } catch (e6) {}
+    }
   }).catch(function () {});
 }
 })();

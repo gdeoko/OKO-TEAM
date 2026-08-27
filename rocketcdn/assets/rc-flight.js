@@ -37,6 +37,7 @@ var doc = document, root = doc.documentElement;
 var DBG = false;
 try { DBG = /[?&]rcdbg=1/.test(location.search); } catch (e) {}
 
+
 /* Preserve one horizontal cockpit framing on tall phones. A fixed
    84° vertical lens made a 390×844 viewport crop much more of the
    ship than 390×650, so the same physical console ran off both
@@ -52,6 +53,112 @@ var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
 var RU = doc.documentElement.lang !== "en";
+
+/* ── Один мир, два продукта ───────────────────────────────────
+   Заказчик (переписка 27.08): «Можно ли убрать упоминания узлов CDN
+   и вместо них сделать узлы VPN? Будто у нас в космосе узлы
+   установлены и ВПН работает по всей галактике» и «Чёрную дыру можно
+   назвать РКН, дыра зла, поглощающая все свободы в сети».
+
+   Космос при этом остаётся ОДИН. Делать вторую копию полёта под VPN
+   значило бы чинить каждую находку дважды, а расходятся два продукта
+   только словами: сеть доставки против сети обхода. Поэтому здесь
+   лежит словарь, и он один на весь файл.
+
+   Что показывать, решает `RC_VPN.mode()` - тот самый переключатель,
+   что уже стоит в кабине. На rocketcdn.ru он по умолчанию «cdn», и
+   сайт говорит ровно то, что говорил. Переключили на «vpn» (руками в
+   кабине или заранее, когда полёт переедет на сайт VPN) - те же тела,
+   тот же маршрут, другая речь.
+
+   Английский держим рядом с русским: у сайта две версии. */
+var СЛОВА = {
+  cdn: {
+    сеть:        RU ? "Rocket CDN" : "Rocket CDN",
+    полёт:       RU ? "Полёт по сети Rocket CDN" : "Rocket CDN network flight",
+    земля:       RU ? "ЗЕМЛЯ · 218 точек присутствия Rocket CDN"
+                    : "EARTH · 218 Rocket CDN points of presence",
+    земляИнфо:   RU ? "ЗЕМЛЯ · диаметр 12 742 км · единственная планета с CDN"
+                    : "EARTH · 12,742 km wide · the only planet with a CDN",
+    земляДосье:  RU ? "Единственная планета с Rocket CDN. Отсюда расходится вся сеть."
+                    : "The only planet with Rocket CDN.",
+    спутник:     RU ? "СПУТНИК RC-SAT · ретранслятор Rocket CDN на низкой орбите"
+                    : "RC-SAT · Rocket CDN relay in low orbit",
+    дыраТитул:   RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
+    дыраПодпись: RU ? "ГОРИЗОНТ СОБЫТИЙ" : "EVENT HORIZON",
+    дыраПуть:    RU ? "ЧЁРНАЯ ДЫРА · так выглядит сайт без CDN"
+                    : "BLACK HOLE · a site with no CDN looks like this",
+    дыраИнфо:    RU ? "Дальше не возвращаются даже пакеты. Держим дистанцию."
+                    : "Not even packets come back.",
+    дыраСнимок:  RU ? "ЧЁРНАЯ ДЫРА · первый снимок - M87*, 2019"
+                    : "BLACK HOLE · first image - M87*, 2019",
+    замкнута:    RU ? "Сеть Rocket CDN замкнута во всех рукавах. Так же она работает и у нас: контент доходит до человека с ближайшего узла, где бы он ни был."
+                    : "The Rocket CDN network is complete.",
+    марка:       "ROCKET CDN"
+  },
+  vpn: {
+    сеть:        RU ? "RocketVPN" : "RocketVPN",
+    полёт:       RU ? "Полёт по сети RocketVPN" : "RocketVPN network flight",
+    земля:       RU ? "ЗЕМЛЯ · 218 узлов RocketVPN по всей галактике"
+                    : "EARTH · 218 RocketVPN nodes across the galaxy",
+    земляИнфо:   RU ? "ЗЕМЛЯ · диаметр 12 742 км · отсюда поднялась сеть RocketVPN"
+                    : "EARTH · 12,742 km wide · where the RocketVPN network started",
+    земляДосье:  RU ? "Отсюда поднялась сеть RocketVPN. Дальше узлы стоят по всей галактике, и свободный канал есть везде."
+                    : "Where RocketVPN started. Nodes now stand across the galaxy.",
+    спутник:     RU ? "СПУТНИК RC-SAT · узел RocketVPN на низкой орбите"
+                    : "RC-SAT · RocketVPN node in low orbit",
+    /* Название заказчика дословно. «РКН» на метке, расшифровка - в
+       подписи под ней: длинная строка на метке тела не помещается и
+       поехала бы за кромку окна. */
+    дыраТитул:   RU ? "РКН" : "RKN",
+    дыраПодпись: RU ? "ДЫРА ЗЛА" : "PIT OF EVIL",
+    дыраПуть:    RU ? "РКН · дыра зла, поглощающая все свободы в сети"
+                    : "RKN · the pit of evil that swallows every freedom online",
+    дыраИнфо:    RU ? "Поглощает свободы в сети целиком: отсюда не возвращается ни один пакет. Обходим стороной."
+                    : "It swallows every freedom online. Not a single packet comes back. We go around.",
+    дыраСнимок:  RU ? "РКН · дыра зла, из которой не возвращается ничего"
+                    : "RKN · the pit from which nothing returns",
+    замкнута:    RU ? "Сеть RocketVPN замкнута во всех рукавах. Так же она работает и у нас: свободный канал находится с ближайшего узла, где бы человек ни был."
+                    : "The RocketVPN network is complete.",
+    марка:       "ROCKETVPN"
+  }
+};
+
+/* Речь берём по продукту. Переключатель может ещё не загрузиться -
+   тогда говорим как CDN: это состояние по умолчанию у обоих сайтов. */
+function СЛ(ключ) {
+  var м = "cdn";
+  try { if (g.RC_VPN && g.RC_VPN.mode && g.RC_VPN.mode() === "vpn") м = "vpn"; } catch (eСЛ) {}
+  var н = СЛОВА[м] || СЛОВА.cdn;
+  return н[ключ] != null ? н[ключ] : СЛОВА.cdn[ключ];
+}
+
+/* Продукт можно щёлкнуть прямо в полёте, и часть речи к этому моменту
+   уже вшита в мир: подпись тела лежит в его userData, ярлык слоя - в
+   атрибуте. Титры и списки берут слово сами, эти три - нет, поэтому
+   переписываем их по событию переключателя. Мир при этом не
+   пересобирается: меняются строки, не геометрия. */
+addEventListener("rc:product", function () {
+  try {
+    if (ui && ui.wrap) ui.wrap.setAttribute("aria-label", СЛ("полёт"));
+    if (!W3) return;
+    if (W3.earth && W3.earth.userData) {
+      var зБ = W3.earth.userData.info ? W3.earth : (W3.earth.children || [])[0];
+      if (зБ && зБ.userData) зБ.userData.info = СЛ("земляИнфо");
+    }
+    if (W3.hole && W3.hole.children && W3.hole.children[0]) {
+      W3.hole.children[0].userData.info = СЛ("дыраСнимок");
+    }
+    if (W3.sat) {
+      var сБ = W3.sat.userData && W3.sat.userData.info ? W3.sat : (W3.sat.children || [])[0];
+      if (сБ && сБ.userData) сБ.userData.info = СЛ("спутник");
+    }
+    /* Список меток пересобирается, когда меняется рукав. Просим ту же
+       пересборку: сбрасываем запомненный рукав, и следующий кадр
+       соберёт метки заново - уже новыми словами. */
+    holoUni = -1;
+  } catch (eПр) {}
+});
 
 /* Язык игры раньше решался один раз, при загрузке файла: человек
    переключал сайт на английский, а кабина, названия целей и
@@ -95,12 +202,12 @@ addEventListener("rc:lang", relang);
 
 /* Подписи по маршруту: где мы и почему это про CDN */
 var CAPTIONS = [
-  { p: 0.00, t: RU ? "ЗЕМЛЯ · 218 точек присутствия Rocket CDN" : "EARTH · 218 Rocket CDN points of presence" },
+  { p: 0.00, ключ: "земля" },
   { p: 0.15, t: RU ? "ЛУНА · 384 000 км · пинг 2,6 с" : "MOON · 384,000 km · ping 2.6 s" },
   { p: 0.27, t: RU ? "РАЗГОН · контент идёт с ближайшего узла" : "ACCELERATION · content ships from the nearest node" },
   { p: 0.36, t: RU ? "МАРС · 225 млн км · без кеша сюда" : "MARS · 225M km · no cache out here" },
   { p: 0.50, t: RU ? "САТУРН · 1,4 млрд км от ваших пользователей" : "SATURN · 1.4B km from your users" },
-  { p: 0.63, t: RU ? "ЧЁРНАЯ ДЫРА · так выглядит сайт без CDN" : "BLACK HOLE · a site with no CDN looks like this" },
+  { p: 0.63, ключ: "дыраПуть" },
   { p: 0.76, t: RU ? "ГИПЕРПРЫЖОК · Rocket доставляет быстрее" : "HYPERJUMP · Rocket delivers faster" },
   { p: 0.90, t: RU ? "ДОМА · заявка - и ваш контент на сверхскорости" : "HOME · one request away from lightspeed content" }
 ];
@@ -387,7 +494,7 @@ function buildUI() {
      фокус по разделам сайта под ним */
   w.setAttribute("role", "dialog");
   w.setAttribute("aria-modal", "true");
-  w.setAttribute("aria-label", RU ? "Полёт по сети Rocket CDN" : "Rocket CDN network flight");
+  w.setAttribute("aria-label", СЛ("полёт"));
   /* Цели навигации: по ним корабль умеет долетать сам. Отметки p
      подставляются после сборки мира из честных позиций на дуге. */
   /* Полная система: все восемь планет, Солнце, Луна и дыра.
@@ -1142,6 +1249,11 @@ var ПОВЕРХНОСТЬ = {
  "УЗЕЛ": "sat",
  "УЗЕЛ СЕТИ": "earth",
  "ЧЁРНАЯ": "hole",
+ /* На сайте VPN та же дыра зовётся РКН - поиск обязан знать оба
+    имени, иначе досье по ней перестанет открываться после смены
+    продукта. */
+ "РКН": "hole",
+ "RKN": "hole",
  "ЮПИТЕР": "jupiter"
 };
 
@@ -1918,7 +2030,11 @@ var GOAL_NAMES = {
   venus: RU ? "ВЕНЕРА" : "VENUS", jupiter: RU ? "ЮПИТЕР" : "JUPITER",
   uranus: RU ? "УРАН" : "URANUS", neptune: RU ? "НЕПТУН" : "NEPTUNE",
   mars: RU ? "МАРС" : "MARS", saturn: RU ? "САТУРН" : "SATURN",
-  hole: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
+  /* Имя дыры зависит от продукта, а словарь спрашивает переключатель.
+     Свойство считается в момент чтения: список собирается при загрузке
+     файла, когда RC_VPN ещё может не подняться, а щёлкнуть продукт
+     можно и прямо в полёте. */
+  get hole() { return СЛ("дыраТитул"); },
   galaxy: RU ? "ГАЛАКТИКА" : "GALAXY", home: RU ? "ДОМОЙ" : "HOME"
 };
 
@@ -3925,11 +4041,11 @@ function buildWorld() {
     return gr;
   }
   /* Что расскажет бортовой справочник при наведении на объект */
-  eBody.userData.info = RU ? "ЗЕМЛЯ · диаметр 12 742 км · единственная планета с CDN" : "EARTH · 12,742 km wide · the only planet with a CDN";
+  eBody.userData.info = СЛ("земляИнфо");
   moon.userData.info = RU ? "ЛУНА · 384 400 км · первая цель космических миссий, 1959" : "MOON · 384,400 km · first space target, 1959";
   mars.userData.info = RU ? "МАРС · в телескоп впервые разглядел Галилей, 1610" : "MARS · first seen through a telescope by Galileo, 1610";
   saturn.userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
-  hole.children[0].userData.info = RU ? "ЧЁРНАЯ ДЫРА · первый снимок - M87*, 2019" : "BLACK HOLE · first image - M87*, 2019";
+  hole.children[0].userData.info = СЛ("дыраСнимок");
   /* Новые тела тоже отзываются на нажатие: по каждому можно снять
      карту, иначе половина системы остаётся немой */
   function planetPick(o) { return o && o.userData && o.userData.pick ? o.userData.pick : o; }
@@ -3976,7 +4092,7 @@ function buildWorld() {
   var sat = new T.Group();
   var satBody = new T.Mesh(new T.BoxGeometry(1.4, 1.4, 2.8),
     new T.MeshPhongMaterial({ color: 0xd8e2ec, shininess: 60, emissive: 0x22303e }));
-  satBody.userData.info = RU ? "СПУТНИК RC-SAT · ретранслятор Rocket CDN на низкой орбите" : "RC-SAT · Rocket CDN relay in low orbit";
+  satBody.userData.info = СЛ("спутник");
   sat.add(satBody);
   var panelMat = new T.MeshPhongMaterial({ color: 0x1d4d8f, shininess: 90, side: T.DoubleSide, emissive: 0x0d2038 });
   var p1 = new T.Mesh(new T.PlaneGeometry(5.6, 1.8), panelMat); p1.position.x = 4; sat.add(p1);
@@ -4308,7 +4424,7 @@ function buildWorld() {
     { o: moon, name: RU ? "ЛУНА" : "MOON", key: "moon" },
     { o: mars, name: RU ? "МАРС" : "MARS", key: "mars" },
     { o: saturn, name: RU ? "САТУРН" : "SATURN", key: "saturn" },
-    { o: hole, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE", key: "hole" },
+    { o: hole, name: СЛ("дыраТитул"), key: "hole" },
     { o: comet, name: RU ? "КОМЕТА RC/2026" : "COMET RC/2026", key: "comet" },
     { o: sat, name: "RC-SAT", key: "sat" },
     { o: belt1, name: RU ? "АСТЕРОИДНЫЙ ПОЯС" : "ASTEROID BELT", key: "belt" },
@@ -4341,7 +4457,7 @@ function buildWorld() {
     { o: moon,   r: 16, name: RU ? "ЛУНА" : "MOON" },
     { o: mars,   r: 30, name: RU ? "МАРС" : "MARS" },
     { o: saturn, r: 46, ring: 116, name: RU ? "САТУРН" : "SATURN" },
-    { o: hole,   r: 30, hole: true, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE" }
+    { o: hole,   r: 30, hole: true, name: СЛ("дыраТитул") }
   ,
     /* Новые тела системы: сквозь Солнце и гигантов корабль тоже не
        летает - обходит, как Марс и Сатурн */
@@ -5061,7 +5177,7 @@ function holoList(w3) {
   if (uniIdx === 0) {
     out.push({ id: "h-earth", o: w3.earth, title: RU ? "ЗЕМЛЯ" : "EARTH",
                sub: RU ? "ДОМ · 218 УЗЛОВ" : "HOME · 218 NODES", kind: "planet", goal: "earth",
-               info: RU ? "Единственная планета с Rocket CDN. Отсюда расходится вся сеть." : "The only planet with Rocket CDN." });
+               info: СЛ("земляДосье") });
     out.push({ id: "h-moon", o: w3.moon, title: RU ? "ЛУНА" : "MOON",
                sub: RU ? "РЕЗЕРВ · 384 400 КМ" : "BACKUP", kind: "station", goal: "moon",
                info: RU ? "Точка ретрансляции: сигнал доходит за 1,3 секунды." : "Relay point: 1.3 s of light travel." });
@@ -5086,9 +5202,9 @@ function holoList(w3) {
     out.push({ id: "h-saturn", o: w3.saturn, title: RU ? "САТУРН" : "SATURN",
                sub: RU ? "КОЛЬЦА · 282 000 КМ" : "RINGS", kind: "planet", goal: "saturn",
                info: RU ? "Кольца шириной в семь Земель, толщиной в десять метров." : "Rings seven Earths wide, ten metres thick." });
-    out.push({ id: "h-hole", o: w3.hole, title: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
-               sub: RU ? "ГОРИЗОНТ СОБЫТИЙ" : "EVENT HORIZON", kind: "warn", goal: "hole",
-               info: RU ? "Дальше не возвращаются даже пакеты. Держим дистанцию." : "Not even packets come back." });
+    out.push({ id: "h-hole", o: w3.hole, title: СЛ("дыраТитул"),
+               sub: СЛ("дыраПодпись"), kind: "warn", goal: "hole",
+               info: СЛ("дыраИнфо") });
     /* Солнце, пояс, комета и спутник вели себя как декорация: сканер
        их брал, а досье по ним не открывалось - в списке меток их
        просто не было. Поверхности для всех четырёх сняты вместе с
@@ -5491,19 +5607,40 @@ function physicalControlsFrame(ts, dt) {
       var sy3 = (-pp.y * 0.5 + 0.5) * innerHeight;
       var sw3 = Math.abs(pb.x - pa.x) * innerWidth * 0.5;
       var sh3 = Math.abs(pd.y - pc.y) * innerHeight * 0.5;
-      el3.classList.add("rcf-phys-hit");
-      el3.style.setProperty("--rcf-phys-x", sx3.toFixed(2) + "px");
-      el3.style.setProperty("--rcf-phys-y", sy3.toFixed(2) + "px");
       var minHit3 = cap3.userData.hit || 40;
+      var px3 = sx3.toFixed(2) + "px", py3 = sy3.toFixed(2) + "px";
+      var pw3 = Math.max(minHit3, sw3 * 1.12).toFixed(2) + "px";
+      var ph3 = Math.max(minHit3, sh3 * 1.22).toFixed(2) + "px";
+      /* Пишем только изменившееся. Раньше сюда уходили семь свойств на
+         каждую из восьми клавиш каждый кадр - пятьдесят шесть записей
+         в стиль, из которых менялись две-три. Каждая запись помечает
+         стиль дерева устаревшим, и на телефоне это видно кадрами.
+         Прошлое значение держим на самом узле: сравнение строк дешевле
+         чтения стиля, а чтение стиля вдобавок заставляет браузер
+         досчитывать раскладку. */
+      var пам = el3._physPrev || (el3._physPrev = {});
+      if (пам.x !== px3) { el3.style.setProperty("--rcf-phys-x", px3); пам.x = px3; }
+      if (пам.y !== py3) { el3.style.setProperty("--rcf-phys-y", py3); пам.y = py3; }
+      if (пам.w !== pw3) { el3.style.setProperty("--rcf-phys-w", pw3); пам.w = pw3; }
+      if (пам.h !== ph3) { el3.style.setProperty("--rcf-phys-h", ph3); пам.h = ph3; }
       /* Inline important owns the final projection. Legacy layout
          rules intentionally hide or translate map/zoom controls on
          small screens; once those controls have physical meshes,
-         applying those old transforms would displace the hit volume. */
-      el3.style.setProperty("display", "block", "important");
-      el3.style.setProperty("position", "fixed", "important");
-      el3.style.setProperty("transform", "translate(-50%, -50%)", "important");
-      el3.style.setProperty("--rcf-phys-w", Math.max(minHit3, sw3 * 1.12).toFixed(2) + "px");
-      el3.style.setProperty("--rcf-phys-h", Math.max(minHit3, sh3 * 1.22).toFixed(2) + "px");
+         applying those old transforms would displace the hit volume.
+         Эти три не меняются никогда после первой установки, поэтому
+         ставим их один раз и больше не трогаем. */
+      if (!пам.готово || !el3.classList.contains("rcf-phys-hit")) {
+        el3.classList.add("rcf-phys-hit");
+        el3.style.setProperty("display", "block", "important");
+        el3.style.setProperty("position", "fixed", "important");
+        el3.style.setProperty("transform", "translate(-50%, -50%)", "important");
+        el3.style.setProperty("--rcf-phys-x", px3);
+        el3.style.setProperty("--rcf-phys-y", py3);
+        el3.style.setProperty("--rcf-phys-w", pw3);
+        el3.style.setProperty("--rcf-phys-h", ph3);
+        пам.x = px3; пам.y = py3; пам.w = pw3; пам.h = ph3;
+        пам.готово = 1;
+      }
     }
   }
   if (cabin.syncControlGlyphs) cabin.syncControlGlyphs();
@@ -6489,6 +6626,11 @@ function frame(ts) {
   /* HUD */
   var cap = CAPTIONS[0];
   for (i = CAPTIONS.length - 1; i >= 0; i--) { if (F.p >= CAPTIONS[i].p) { cap = CAPTIONS[i]; break; } }
+  /* У двух титров текст зависит от продукта: на сайте VPN Земля это
+     узлы VPN, а чёрная дыра - РКН. Берём слово в момент показа, а не
+     при сборке списка: переключатель продукта может щёлкнуть прямо
+     в полёте, и титр обязан догнать. */
+  if (cap["ключ"]) cap = { t: СЛ(cap["ключ"]) };
   /* Пока идёт перелёт к цели, титул честно говорит, куда летим */
   if (F.goal !== null && F.goal !== undefined && F.goalName) {
     cap = { t: (RU ? "КУРС → " : "COURSE → ") + F.goalName };
@@ -6530,10 +6672,38 @@ function frame(ts) {
     try { g.RC_SOUND.flightLevel(Math.min(1, 0.25 + speed * 4 + (jumpZone ? 0.35 : 0))); } catch (e) {}
   }
 
-  /* Небо и звёзды бесконечны: сфера фона и оболочки точек едут за
-     камерой - на дальнем конце маршрута небо больше не редеет */
+  /* Небо бесконечно: панорама едет за камерой, и на дальнем конце
+     маршрута фон не редеет. */
   if (w3.sky) w3.sky.position.copy(w3.cam.position);
-  if (w3.starShell) w3.starShell.position.copy(w3.cam.position);
+
+  /* Звёзды - на поводке, а не приклеены.
+
+     Оболочка точек ехала за камерой ровно, точка в точку. Плотность
+     от этого держалась, но пропадало главное: звёзды стояли на месте
+     относительно кадра, и в окне не было НИ ОДНОГО признака, что
+     корабль движется. Заказчик написал про космос «нет глубины», и
+     это одна из двух причин, вторая была муть панорамы.
+
+     Теперь оболочка тянется за камерой с запаздыванием: пока корабль
+     не отошёл дальше длины поводка, звёзды остаются на месте и честно
+     смещаются относительно планет - это и есть параллакс. Отошёл
+     дальше - поводок дотягивает оболочку ровно настолько, чтобы
+     расстояние не росло. Плотность неба сохраняется на всём маршруте,
+     а движение видно.
+
+     Длина поводка меньше внутреннего радиуса поля (1430) втрое с
+     лишним: смещение заметно глазу и при этом ни одна звезда не может
+     оказаться за спиной. */
+  if (w3.starShell) {
+    var шп = w3.starShell.position, цп = w3.cam.position;
+    var одх = цп.x - шп.x, оду = цп.y - шп.y, одз = цп.z - шп.z;
+    var отст = Math.sqrt(одх * одх + оду * оду + одз * одз);
+    var ПОВОДОК = 420;
+    if (отст > ПОВОДОК) {
+      var доля = (отст - ПОВОДОК) / отст;
+      шп.x += одх * доля; шп.y += оду * доля; шп.z += одз * доля;
+    }
+  }
 
   /* Фотосфера кипит: время идёт в шейдер звезды */
   if (w3.sunMat && w3.sunMat.uniforms) w3.sunMat.uniforms.uT.value = ts * 0.001;
@@ -7029,8 +7199,7 @@ function pilotCard() {
         '<span><u>' + (F.saved || 0) + '</u>' + (RU ? "аварий отбито" : "outages fixed") + '</span>' +
       '</div>' +
       '<p>' + (RU
-        ? "Сеть Rocket CDN замкнута во всех рукавах. Так же она работает и у нас: контент доходит до человека с ближайшего узла, где бы он ни был."
-        : "The Rocket CDN network is complete.") + '</p>' +
+        ? СЛ("замкнута") : СЛ("замкнута")) + '</p>' +
       '<div class="rcf-pilot-b">' +
         '<button type="button" data-act="shot">' + (RU ? "Сохранить кадр" : "Save frame") + '</button>' +
         '<button type="button" data-act="close">' + (RU ? "Продолжить полёт" : "Keep flying") + '</button>' +
@@ -7302,7 +7471,7 @@ function shoot() {
     x.textBaseline = "bottom";
     var where = (ui.cGoal && ui.cGoal.textContent !== "—") ? ui.cGoal.textContent
               : (RU ? "ОТКРЫТЫЙ КОСМОС" : "DEEP SPACE");
-    x.fillText("ROCKET CDN · " + where + " · " +
+    x.fillText(СЛ("марка") + " · " + where + " · " +
       (RU ? "УЗЛОВ " : "NODES ") + netCount() + "/" + NET_TOTAL(), pad, H - pad);
 
     var url = c.toDataURL("image/png");
@@ -8094,14 +8263,40 @@ function deckFrame(ts, dt) {
     var cy = (q[0].y + q[1].y + q[2].y + q[3].y) / 4 / пл;
     var шир = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y) / пл;
     var выс = Math.hypot(q[3].x - q[0].x, q[3].y - q[0].y) / пл;
-    el.classList.add("rcf-phys-hit");
-    el.style.setProperty("--rcf-phys-x", cx.toFixed(2) + "px");
-    el.style.setProperty("--rcf-phys-y", cy.toFixed(2) + "px");
-    el.style.setProperty("display", "block", "important");
-    el.style.setProperty("position", "fixed", "important");
-    el.style.setProperty("transform", "translate(-50%, -50%)", "important");
-    el.style.setProperty("--rcf-phys-w", Math.max(40, шир).toFixed(2) + "px");
-    el.style.setProperty("--rcf-phys-h", Math.max(40, выс).toFixed(2) + "px");
+    /* Пишем только изменившееся: см. пояснение у второго такого места
+       в physicalControlsFrame. На плоской плите места клавиш стоят и
+       вовсе неподвижно, поэтому после первого кадра отсюда не уходит
+       ни одной записи в стиль. */
+    var пам2 = el._physPrev || (el._physPrev = {});
+    var px2 = cx.toFixed(2) + "px", py2 = cy.toFixed(2) + "px";
+    var pw2 = Math.max(40, шир).toFixed(2) + "px";
+    var ph2 = Math.max(40, выс).toFixed(2) + "px";
+    if (пам2.x !== px2) { el.style.setProperty("--rcf-phys-x", px2); пам2.x = px2; }
+    if (пам2.y !== py2) { el.style.setProperty("--rcf-phys-y", py2); пам2.y = py2; }
+    if (пам2.w !== pw2) { el.style.setProperty("--rcf-phys-w", pw2); пам2.w = pw2; }
+    if (пам2.h !== ph2) { el.style.setProperty("--rcf-phys-h", ph2); пам2.h = ph2; }
+    /* Признак и три неподвижных свойства ставим один раз - но ТОЛЬКО
+       пока они на месте. Ниже по ходу есть цикл, который снимает их с
+       клавиш, которым не хватило ниши.
+
+       Честно: проверка поворотом экрана (`tools/checks/клавиши.mjs`,
+       узкий → широкий → узкий → широкий) показала, что клавиша
+       возвращается на плиту и без этой оговорки - её держат правила
+       самой плиты. Это страховка, а не починка: сравнение с классом
+       стоит доли микросекунды, а цена ошибки здесь - пульт без
+       рабочих клавиш, за который заказчик ругал уже дважды. */
+    if (!пам2.готово || !el.classList.contains("rcf-phys-hit")) {
+      el.classList.add("rcf-phys-hit");
+      el.style.setProperty("display", "block", "important");
+      el.style.setProperty("position", "fixed", "important");
+      el.style.setProperty("transform", "translate(-50%, -50%)", "important");
+      el.style.setProperty("--rcf-phys-x", px2);
+      el.style.setProperty("--rcf-phys-y", py2);
+      el.style.setProperty("--rcf-phys-w", pw2);
+      el.style.setProperty("--rcf-phys-h", ph2);
+      пам2.x = px2; пам2.y = py2; пам2.w = pw2; пам2.h = ph2;
+      пам2.готово = 1;
+    }
   }
   /* Команды, которым на этой плите места не хватило, остаются в меню
      полёта: втискивать двенадцать клавиш в две ниши телефона значит
@@ -8123,6 +8318,10 @@ function deckFrame(ts, dt) {
       e2.classList.remove("rcf-phys-hit");
       e2.style.removeProperty("position");
       e2.style.removeProperty("transform");
+      /* Память о прошлом кадре больше не описывает клавишу: она снята
+         с плиты. Чистим, чтобы при возвращении всё поставилось заново
+         от нуля, а не «как было». */
+      e2._physPrev = null;
     }
     e2.style.display = "none";
   }
@@ -8652,6 +8851,16 @@ function cabinCassettes() {
    договорённость с заказчиком - не более десяти-пятнадцати. */
 function frameMeasure() {
   if (!W3 || !cabin || !cabin.console3 || !cabin.console3.probe) return;
+  /* Замер нужен приёмке, а не игре: его читает только служебная
+     выкладка состояния. В обычной сборке он молчит, иначе каждый
+     кадр уходили четыре проекции, шестнадцать углов клавиш и два
+     новых объекта в мусор - ради чисел, которых никто не смотрит.
+     В режиме приёмки считаем четыре раза в секунду: числам этого
+     хватает, а кадр остаётся чистым. */
+  if (!DBG) return;
+  var сейчас = (g.performance && g.performance.now) ? g.performance.now() : +new Date();
+  if (frameMeasure.когда && сейчас - frameMeasure.когда < 250) return;
+  frameMeasure.когда = сейчас;
   var T = g.THREE;
   if (!frameMeasure.v) frameMeasure.v = new T.Vector3();
   var C3 = cabin.console3, pr = C3.probe, v = frameMeasure.v, out = [], i;

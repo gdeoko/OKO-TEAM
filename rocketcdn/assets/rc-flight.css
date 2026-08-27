@@ -1683,6 +1683,12 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-course i:first-of-type { display: none; }
 }
 
+/* Мёртвые правила карточки задания сняты 27.08. Они требовали
+   .rcf-hud > .rcf-mis, то есть прямого потомка, а карточка лежит
+   через .rcf-top и .rcf-trow. Три media-блока подгонки не применялись
+   ни разу и только сбивали с толку при следующей правке. Живая
+   раскладка карточки - ниже, в блоке .rcf-trow. */
+
 /* ── Текущее задание ─────────────────────────────────────────
    Одна строка: что делаем, зачем и сколько осталось. Стоит у
    левого борта, на вертикальной приборной панели корпуса - там же,
@@ -2222,6 +2228,28 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
        отличие от псевдоэлемента, на котором первый заход сгорел. */
     0 30px 54px -26px rgba(var(--int-cyan-rgb, 66,178,220), .62) !important;
 }
+
+/* Досье - единственная панель, которую действительно ЧИТАЮТ: три
+   абзаца текста и таблица чисел. Остальные проекции глазом ловят на
+   лету, и полупрозрачное стекло им идёт. Заказчик написал прямо:
+   «досье полупрозрачное, за ним просвечивает планета, читать тяжело»,
+   и он прав - на светлой стороне Земли под шестьюдесятью процентами
+   плотности контраст текста падает вдвое.
+
+   Даём читаемую плотность и снимаем backdrop-filter: он тут больше не
+   нужен (сквозь такую плотность всё равно ничего не разобрать), а
+   стоит дорого - это самое большое стекло в кадре, и оно висит поверх
+   трёхмерной сцены. Стеклянный характер держим кромкой, бликом сверху
+   и свечением по контуру, а не прозрачностью. */
+.rc-flight .rcf-dos-in {
+  background:
+    linear-gradient(168deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .10),
+      rgba(5, 13, 23, .955) 44%,
+      rgba(4, 10, 19, .975)) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 /* Развёртка строк по всей поверхности проекции */
 .rc-flight .rcf-menu::before,
 .rc-flight .rcf-dos-in::before,
@@ -2583,10 +2611,32 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 8px; width: 100%; flex-wrap: wrap;
 }
+/* Карточка задания занимает столько, сколько в ней есть.
+
+   Здесь стояло flex: 1 1 180px, то есть «расти на всю строку». Список
+   узлов справа пустой почти всю игру, и карточка растягивалась во всю
+   ширину окна: на телефоне выходил широкий короб, в котором два слова
+   и счётчик, а остальное - пустота поверх космоса. Заказчик назвал это
+   «много лишних надписей на экране».
+
+   Расти запрещаем, сжиматься разрешаем. Заголовок и счётчик садятся в
+   одну строку: карточка становится строкой прибора, а не плитой. */
 .rc-flight .rcf-hud .rcf-trow .rcf-mis {
-  width: auto !important; flex: 1 1 180px;
+  width: auto !important; flex: 0 1 auto;
   max-width: 100% !important; max-height: none !important;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 10px;
 }
+.rc-flight .rcf-hud .rcf-trow .rcf-mis b { margin-bottom: 0; }
+.rc-flight .rcf-hud .rcf-trow .rcf-mis em { margin-top: 0; justify-self: end; }
+/* Пояснение и полоска идут во всю ширину карточки, под строкой. */
+.rc-flight .rcf-hud .rcf-trow .rcf-mis span,
+.rc-flight .rcf-hud .rcf-trow .rcf-mis i { grid-column: 1 / -1; }
+/* Пустой счётчик не должен держать колонку: без него заголовок
+   остаётся один и карточка сжимается до слова. */
+.rc-flight .rcf-hud .rcf-trow .rcf-mis em:empty { display: none; }
 .rc-flight .rcf-hud .rcf-trow .rcf-netlist {
   width: auto !important; flex: 0 1 auto; max-width: 46% !important;
 }
@@ -4073,17 +4123,7 @@ html.rc-deep-inside .rcf-fab {
   pointer-events: none !important;
 }
 
-/* Flight task is a readout, not a floating card over the console. */
-.rc-flight .rcf-hud > .rcf-mis {
-  left: 10px !important;
-  right: auto !important;
-  top: clamp(42px, 8%, 66px) !important;
-  bottom: auto !important;
-  width: min(44%, 260px) !important;
-  max-height: 92px;
-  transform: none !important;
-  overflow: hidden;
-}
+
 
 @media (max-width: 760px) {
   .rc-flight .rcf-hud > .rcf-menu {
@@ -4110,25 +4150,6 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight .rcf-menu-h i { font-size: 8.5px; letter-spacing: .14em; }
   .rc-flight .rcf-menu-h span { font-size: 8px; }
 
-  .rc-flight .rcf-hud > .rcf-mis {
-    left: 7px !important;
-    top: 40px !important;
-    width: min(66%, 220px) !important;
-    max-height: 52px;
-    padding: 6px 8px 7px;
-    border-radius: 7px;
-  }
-  .rc-flight .rcf-hud > .rcf-mis b {
-    margin: 0;
-    font-size: 9px;
-    line-height: 1.15;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .rc-flight .rcf-hud > .rcf-mis span { display: none !important; }
-  .rc-flight .rcf-hud > .rcf-mis i { margin-top: 4px; height: 2px; }
-  .rc-flight .rcf-hud > .rcf-mis em { margin-top: 3px; font-size: 7.5px; line-height: 1; }
 
   .rc-flight .rcf-dos-in,
   .rc-flight .rcf-help-in {
@@ -4147,7 +4168,6 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight .rcf-menu .rcf-nav button,
   .rc-flight .rcf-menu .rcf-uni button { min-height: 34px; font-size: 8px; }
   .rc-flight .rcf-menu .rcf-menu-h:not(:first-child) { margin-top: 8px; }
-  .rc-flight .rcf-hud > .rcf-mis { top: 34px !important; max-height: 48px; }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -4266,12 +4286,7 @@ html.rc-deep-inside .rcf-fab {
    класс has-info ставится только для служебных сообщений, а подпись
    тела висит и без него - проверено живьём. Место под строкой слева
    всё равно пустое, так что вид ничего не теряет. */
-.rc-flight .rcf-hud > .rcf-mis {
-  top: 96px !important;
-}
-@media (max-width: 760px) {
-  .rc-flight .rcf-hud > .rcf-mis { top: 74px !important; }
-}
+
 .rc-flight .rcf-hud .rcf-hint {
   top: auto !important;
   bottom: 10px !important;
@@ -4300,10 +4315,6 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight .rcf-hud .rcf-cap {
     padding: 5px 10px !important;
     font-size: 9.5px !important;
-  }
-  .rc-flight .rcf-hud > .rcf-mis {
-    top: 39px !important;
-    width: min(58%, 205px) !important;
   }
   .rc-flight .rcf-hud .rcf-hint {
     bottom: 7px !important;
