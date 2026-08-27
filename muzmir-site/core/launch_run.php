@@ -362,12 +362,46 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     $cover = launch_cover_path($c, $tplWave, $siblings);
     $report = [];
 
+    /* СПИСОК РЕЗУЛЬТАТОВ ГОТОВИТСЯ ОДИН РАЗ — И ДЛЯ ПОСТА, И ДЛЯ ПИСЕМ.
+     *
+     * Восемьсот строк «кто — откуда — какое звание» не помещаются ни в пост, ни
+     * в письмо. Файл нужен обоим каналам: к посту он прикладывается документом
+     * (его качают и несут в учреждение), в письмо уходит вложением и кнопкой.
+     * Раньше файл собирался внутри почтовой ветки, и посту не доставался. */
+    $docxAbs = ''; $docxUrl = '';
+    if ($wave === 'results' && !$dry) {
+        try {
+            if (is_file(BASE_PATH . '/core/results_doc.php')) require_once BASE_PATH . '/core/results_doc.php';
+            if (function_exists('results_docx')) {
+                $tmp = results_docx($compId);
+                if ($tmp && is_file($tmp)) {
+                    $pubDir = BASE_PATH . '/public/uploads/launch/';
+                    if (!is_dir($pubDir)) @mkdir($pubDir, 0775, true);
+                    $pubName = 'results_' . $compId . '.docx';
+                    if (@copy($tmp, $pubDir . $pubName)) { $docxAbs = $pubDir . $pubName; $docxUrl = url('/uploads/launch/' . $pubName); }
+                    else { $docxAbs = $tmp; }
+                }
+            }
+        } catch (\Throwable $e) {}
+    }
+
     // ---- ВК стена + сторис ----
+    // Ссылка на вышедший пост нужна письмам: участнику обещана кнопка «Результаты
+    // в ВКонтакте», и вести она должна на сам пост с итогами, а не на стену
+    // сообщества, где он через день уедет вниз под новыми записями.
+    $vkPostUrl = '';
     if (in_array('vk_wall', $channels, true)) {
         if ($dry) {
-            $report['vk_wall'] = 'постим на стену' . ($cover ? ' + афиша + сторис' : ' (без афиши)') . ', ' . mb_strlen($text) . ' симв.';
+            $report['vk_wall'] = 'постим на стену' . ($cover ? ' + афиша + сторис' : ' (без афиши)')
+                . ($wave === 'results' ? ' + файл списка результатов' : '') . ', ' . mb_strlen($text) . ' симв.';
         } else {
-            $r = $cover ? vk_wall_post_with_photo($text, $cover) : vk_wall_post($text);
+            // Список результатов — документом к посту.
+            $docAtt = '';
+            if ($docxAbs !== '' && function_exists('vk_upload_wall_doc')) {
+                $docAtt = vk_upload_wall_doc($docxAbs, 'Результаты конкурса ' . (string) ($c['name'] ?? ''));
+            }
+            $extraPost = $docAtt !== '' ? ['attachments' => $docAtt] : [];
+            $r = $cover ? vk_wall_post_with_photo($text, $cover, $extraPost) : vk_wall_post($text, $extraPost);
             $ok = empty($r['error']);
             // Афиша обязательна: если она не приложилась, это должно быть ВИДНО в отчёте,
             // а не выясняться потом по пустому посту в сообществе.
@@ -375,6 +409,15 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
             $report['vk_wall'] = $ok
                 ? ('опубликовано на стене' . ($noPhoto ? ' — БЕЗ АФИШИ: ' . (string) ($r['photo_error'] ?? '') . ' (приложить вручную)' : ''))
                 : ('ошибка: ' . ($r['error']['error_msg'] ?? '?'));
+            if ($wave === 'results') {
+                $report['vk_doc'] = $docxAbs === '' ? 'файл списка не собрался'
+                    : ($docAtt !== '' ? 'список результатов приложен файлом' : 'файл НЕ приложился: ' . vk_upload_last_error());
+            }
+            if ($ok) {
+                $pid = (int) ($r['response']['post_id'] ?? 0);
+                $gid = (int) cfgv('vk_group_id', 211325055);
+                if ($pid > 0 && $gid > 0) $vkPostUrl = 'https://vk.com/wall-' . $gid . '_' . $pid;
+            }
             if ($ok && $cover) { $s = vk_story_photo($cover, url('/competition/' . (string) $c['slug'])); $report['vk_story'] = empty($s['error']) ? 'сторис опубликована' : ('сторис: ' . ($s['error']['error_msg'] ?? '?')); }
         }
     }
@@ -393,24 +436,11 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 $report['email'] = 'персональные письма участникам: ' . $cnt . ' (результат+заявка+кнопки+файл списка)';
             } else {
                 if (!function_exists('results_long_mail_send') && is_file(BASE_PATH . '/core/result_mail.php')) require_once BASE_PATH . '/core/result_mail.php';
-                // Файл списка результатов (DOCX) — во вложение + публичная ссылка на кнопку.
-                $docxAbs = ''; $docxUrl = '';
-                try {
-                    if (is_file(BASE_PATH . '/core/results_doc.php')) require_once BASE_PATH . '/core/results_doc.php';
-                    if (function_exists('results_docx')) {
-                        $tmp = results_docx($compId);
-                        if ($tmp && is_file($tmp)) {
-                            $pubDir = BASE_PATH . '/public/uploads/launch/';
-                            if (!is_dir($pubDir)) @mkdir($pubDir, 0775, true);
-                            $pubName = 'results_' . $compId . '.docx';
-                            if (@copy($tmp, $pubDir . $pubName)) { $docxAbs = $pubDir . $pubName; $docxUrl = url('/uploads/launch/' . $pubName); }
-                            else { $docxAbs = $tmp; }
-                        }
-                    }
-                } catch (\Throwable $e) {}
+                // Файл списка результатов собран выше — он общий с постом ВК.
                 $posterUrl = '';
                 if ($cover !== '' && str_starts_with($cover, BASE_PATH . '/public')) $posterUrl = url(substr($cover, strlen(BASE_PATH . '/public')));
-                $vkUrl = (string) cfgv('org_vk');
+                // Ведём на сам пост с итогами; если пост не вышел — на сообщество.
+                $vkUrl = $vkPostUrl !== '' ? $vkPostUrl : (string) cfgv('org_vk');
                 $sent = 0;
                 if (function_exists('results_long_mail_send')) {
                     foreach (all("SELECT id FROM applications WHERE competition_id=? AND COALESCE(result,'')<>''", [$compId]) as $p) {

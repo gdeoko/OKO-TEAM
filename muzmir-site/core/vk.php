@@ -126,6 +126,64 @@ function vk_upload_wall_photo(string $filePath): string {
     return '';
 }
 
+/**
+ * ЗАГРУЗИТЬ ДОКУМЕНТ К ПОСТУ (список результатов).
+ *
+ * Итоги конкурса — это восемьсот строк: кто, откуда, какое звание. В тексте
+ * поста они не помещаются, а ссылка на сайт открывается не у всех и не сразу.
+ * Поэтому список прикладывается к посту файлом — его качают, распечатывают и
+ * несут в учреждение. Возвращает строку вида "doc-123456_789" для attachments
+ * или '' — причина в vk_upload_last_error().
+ *
+ * @param string $title подпись файла в посте (без расширения ВК показывает как есть)
+ */
+function vk_upload_wall_doc(string $filePath, string $title = ''): string {
+    if (!is_file($filePath)) { vk_upload_last_error('файла нет: ' . $filePath); return ''; }
+    $gid = (int) cfgv('vk_group_id', 211325055);
+    $name = $title !== '' ? $title : basename($filePath);
+    // ВК не любит в имени файла ничего, кроме букв, цифр и простых знаков.
+    $name = preg_replace('~[^\p{L}\p{N} ._-]+~u', '', $name) ?: basename($filePath);
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    if ($ext !== '' && !str_ends_with(mb_strtolower($name), '.' . $ext)) $name .= '.' . $ext;
+
+    for ($try = 1; $try <= 3; $try++) {
+        // 1) адрес для загрузки. type=doc — обычный документ на стену сообщества.
+        $s = vk_api('docs.getWallUploadServer', ['group_id' => $gid]);
+        $url = (string) ($s['response']['upload_url'] ?? '');
+        if ($url === '') {
+            vk_upload_last_error('docs.getWallUploadServer: ' . (string) ($s['error']['error_msg'] ?? 'пусто'));
+        } else {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => ['file' => new CURLFile($filePath, '', $name)],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 120,
+            ]);
+            $raw = (string) curl_exec($ch);
+            $cerr = curl_error($ch);
+            curl_close($ch);
+            $up = json_decode($raw, true);
+            if (!is_array($up) || empty($up['file'])) {
+                vk_upload_last_error('загрузка документа: ' . ($cerr !== '' ? $cerr : substr($raw, 0, 160)));
+            } else {
+                $save = vk_api('docs.save', ['file' => (string) $up['file'], 'title' => $name]);
+                // docs.save отвечает по-разному в зависимости от версии API:
+                // либо {type:'doc',doc:{...}}, либо массивом. Берём оба вида.
+                $d = $save['response']['doc'] ?? ($save['response'][0] ?? []);
+                if ($d && isset($d['id'])) {
+                    if ($try > 1) _vk_log('список результатов загрузился со ' . $try . '-й попытки');
+                    return 'doc' . (int) ($d['owner_id'] ?? 0) . '_' . (int) $d['id'];
+                }
+                vk_upload_last_error('docs.save: ' . (string) ($save['error']['error_msg'] ?? 'пусто'));
+            }
+        }
+        if ($try < 3) usleep(700000 * $try);
+    }
+    _vk_log('ДОКУМЕНТ НЕ ЗАГРУЗИЛСЯ (' . basename($filePath) . '): ' . vk_upload_last_error());
+    return '';
+}
+
 /** Причина последней неудачной загрузки афиши (для админки и логов). */
 function vk_upload_last_error(?string $set = null): string {
     static $e = '';
@@ -150,7 +208,11 @@ function vk_wall_post_with_photo(string $message, string $photoPath, array $extr
         }
         return $r;
     }
-    $extra['attachments'] = $att;
+    // Афиша ДОБАВЛЯЕТСЯ к тому, что уже приложено, а не заменяет его: к посту с
+    // итогами вместе с афишей идёт файл со списком результатов, и раньше он
+    // молча пропадал — картинка затирала вложение целиком.
+    $had = trim((string) ($extra['attachments'] ?? ''));
+    $extra['attachments'] = $had !== '' ? ($att . ',' . $had) : $att;
     return vk_wall_post($message, $extra);
 }
 

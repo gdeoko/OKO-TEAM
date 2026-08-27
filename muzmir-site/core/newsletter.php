@@ -1642,11 +1642,37 @@ function newsletter_process_queue(int $limit): int {
     };
 
     // 1) ТРАНЗАКЦИОННЫЕ (priority=0: результаты, подтверждения заявок/оплат, заказы наград,
-    //    восстановление пароля, уведомления, дипломы) — сразу, БЕЗ дневного лимита, до 30 за запуск.
+    //    восстановление пароля, уведомления, дипломы) — сразу, БЕЗ дневного лимита.
     //    Каждое уходит со своего отправителя (Gmail для конкурсов, nagradi для наград).
+    //
+    // ЛИЧНОЕ ПИСЬМО ЛИЧНОЕ ПОШТУЧНО, А НЕ СЕМЬЮСТАМИ РАЗОМ.
+    //
+    // Обычно в этой очереди одно-два письма: человек нажал кнопку и ждёт ответа,
+    // тридцать штук за минуту тут никого не смущают. Но в день оглашения итогов
+    // длинного конкурса сюда падает результат КАЖДОМУ участнику — у «Величия
+    // России» это семьсот двадцать два письма. При тридцати в минуту они уйдут с
+    // kc@ за двадцать пять минут, и почтовая служба увидит ровно тот всплеск, за
+    // который 17 августа закрыла ящику отправку наружу: 554 на каждое письмо,
+    // двое суток без подтверждений заявок и паролей от кабинетов.
+    //
+    // Поэтому: пока очередь маленькая — прежний темп; как только накопилась
+    // партия, переходим на темп работающей канцелярии. Восемь писем в минуту —
+    // это семьсот двадцать за полтора часа: оглашение в десять, последнее письмо
+    // около половины двенадцатого, всё внутри рабочего окна и без всплеска.
+    $txQueued = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0
+                               AND COALESCE(campaign_type,'') <> 'official'
+                               AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?)", [$nowTs]);
+    $txBurstFrom = max(1, (int) cfgv('tx_burst_from', 60));      // с какого размера очередь считается партией
+    $txLimit = $txQueued > $txBurstFrom
+        ? max(1, (int) cfgv('tx_burst_per_minute', 8))
+        : 30;
+    if ($txQueued > $txBurstFrom) {
+        nl_log("process: личных писем в очереди $txQueued — идём темпом $txLimit/мин, чтобы не сжечь ящик всплеском");
+    }
     $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0
                AND COALESCE(campaign_type,'') <> 'official'
-               AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT 30", [$nowTs]);
+               AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT ?",
+              [$nowTs, $txLimit]);
     foreach ($tx as $row) { if ($sendRow($row, $route($row))) $sent++; }
 
     // 1б) ОБРАЩЕНИЯ В ВЕДОМСТВА — тоже личные письма, но идут медленнее.

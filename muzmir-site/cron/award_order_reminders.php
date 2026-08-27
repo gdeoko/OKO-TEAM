@@ -162,7 +162,10 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl): string
         . '</td></tr></table>'
         // Награду покупают глазами: показываем настоящие снимки того, что придёт
         // по почте, и ровно то, что положено по этому званию.
-        . ao_block((int) $a['competition_id'], $result, $awardsUrl)
+        // Коллективу предлагается ещё и именной диплом на каждого участника:
+        // диплом ансамбля один, а детей в нём двадцать.
+        . ao_block((int) $a['competition_id'], $result, $awardsUrl,
+                   trim((string) ($a['group_name'] ?? '')) !== '')
         . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Если наградная продукция Вам не нужна, просто оставьте это письмо без ответа.</p>';
 
     return mm_email_tx($inner, [
@@ -212,7 +215,7 @@ try {
     //
     // Теперь годится любой из двух способов, и от него же считается срок.
     $rows = all(
-        "SELECT a.id, a.number, a.competition_id, a.user_id, a.full_name, a.email,
+        "SELECT a.id, a.number, a.competition_id, a.user_id, a.full_name, a.group_name, a.email,
                 a.result, a.graded_at, a.created_at, a.result_sent_at,
                 c.name AS comp_name, c.results_mode, c.results_published_at
            FROM applications a

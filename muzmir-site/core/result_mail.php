@@ -380,7 +380,25 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     $inner .= '<p style="margin:14px 0 0;color:' . RM_MUTED . ';font-size:14px;">Полный список результатов конкурса - на сайте, в нашем сообществе ВКонтакте и во вложении к этому письму.</p>';
 
     // Кнопки: заказать награды (hero) + список на сайте + список в ВК + скачать файл.
-    $awardsUrl  = url('/awards') . '?comp=' . (int) $a['competition_id'];
+    $awardsUrl  = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . (int) $a['id'];
+
+    /* НАГРАДУ ПОКУПАЮТ ГЛАЗАМИ.
+     *
+     * Конкурс бесплатный: наградных документов центр сам не изготавливает, их
+     * заказывает участник — и решает он это в ту минуту, когда читает письмо со
+     * званием. Одной кнопки «заказать» тут мало: человек не знает, что именно
+     * ему положено и как оно выглядит. Показываем настоящие снимки того, что
+     * придёт по почте, ровно по его званию: Гран-при — кубок, лауреату —
+     * статуэтка, дипломанту — медаль, и всем — диплом на бланке и благодарность
+     * педагогу. Коллективу отдельно предлагается именной диплом на каждого
+     * участника: диплом коллектива один, а детей в ансамбле двадцать. */
+    $isGroup = trim((string) ($a['group_name'] ?? '')) !== '';
+    if (!function_exists('ao_block') && is_file(BASE_PATH . '/core/award_offer.php')) {
+        require_once BASE_PATH . '/core/award_offer.php';
+    }
+    if (function_exists('ao_block')) {
+        $inner .= ao_block((int) $a['competition_id'], $result, '', $isGroup);
+    }
     $resultsUrl = url('/results/' . (string) ($c['slug'] ?? ''));
     $hero = mm_cta_primary($awardsUrl, 'Заказать наградной материал', 'Кубки, медали, оригиналы дипломов по результату');
     $actions = [['Список результатов на сайте', $resultsUrl]];

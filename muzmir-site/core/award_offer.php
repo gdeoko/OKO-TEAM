@@ -63,7 +63,7 @@ function ao_photo(int $compId, string $file): string {
  * Набор для участника: что показываем и почём.
  * @return array<int,array{photo:string,title:string,note:string,price:int}>
  */
-function ao_kit(int $compId, string $result): array {
+function ao_kit(int $compId, string $result, bool $isGroup = false): array {
     $kit  = [];
     $main = ao_main_item($result);
     if ($main) {
@@ -80,6 +80,25 @@ function ao_kit(int $compId, string $result): array {
                   'price' => ao_price($compId, 'Основной диплом'),
                   'note'  => 'Плотная дизайнерская бумага, голографический логотип, живые подпись и печать.'];
     }
+    /* КОЛЛЕКТИВУ — ИМЕННОЙ ДИПЛОМ КАЖДОМУ УЧАСТНИКУ.
+     *
+     * Диплом коллектива один на всех, и висит он в кабинете руководителя. Дети
+     * же несут награду домой, в портфолио, в личное дело — им нужен диплом со
+     * своей фамилией. Ансамблю из двадцати человек это двадцать дипломов, и не
+     * предложить их значит не сделать самого нужного: руководители спрашивают
+     * про именные чаще, чем про всё остальное вместе. Солисту эта позиция не
+     * показывается — у него диплом и так именной. */
+    if ($isGroup) {
+        $photoNm = ao_photo($compId, 'diploma-name.jpg');
+        if ($photoNm === '') $photoNm = ao_photo($compId, 'diploma.jpg');
+        if ($photoNm !== '') {
+            $kit[] = ['photo' => $photoNm, 'title' => 'Именной диплом каждому участнику коллектива',
+                      'price' => ao_price($compId, 'Именной диплом'),
+                      'note'  => 'С фамилией и именем ребёнка, званием и названием коллектива. '
+                               . 'Заказывается по числу участников — цена указана за один диплом.'];
+        }
+    }
+
     $photoTh = ao_photo($compId, 'thanks.jpg');
     if ($photoTh !== '') {
         $kit[] = ['photo' => $photoTh, 'title' => 'Благодарность педагогу',
@@ -96,8 +115,8 @@ function ao_kit(int $compId, string $result): array {
  * ни flex, ни grid, а Outlook игнорирует и часть обычных свойств. Одна колонка
  * на позицию — на телефоне это единственный вид, который не рассыпается.
  */
-function ao_block(int $compId, string $result, string $url = ''): string {
-    $kit = ao_kit($compId, $result);
+function ao_block(int $compId, string $result, string $url = '', bool $isGroup = false): string {
+    $kit = ao_kit($compId, $result, $isGroup);
     if (!$kit) return '';
 
     $navy = defined('RM_NAVY') ? RM_NAVY : '#17307A';
