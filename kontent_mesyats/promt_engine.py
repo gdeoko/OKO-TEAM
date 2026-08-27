@@ -133,9 +133,10 @@ class Бренд:
 # к камере. Масштаб же правило ленты: кадр в ленте живёт размером с ноготь, а
 # историю смотрят во весь экран с вытянутой руки, и требовать от неё той же
 # высоты литер значит запретить в истории связную фразу.
-ЧИТАЕМОСТЬ = ("Contrast is set, not hoped for: warm white on dark, or near black on solid amber, and where the "
-              "type crosses a bright or busy area the ground under it is darkened. No amber on pale, no dark on "
-              "dark. The headline faces camera square and never runs away from the lens: foreshortened letters "
+ЧИТАЕМОСТЬ = ("Contrast is set, not hoped for: warm white on dark, or near black on solid amber. Amber type lives "
+              "only on graphite or black; on any lighter ground the letters are warm white or near black, never "
+              "amber. Where type crosses a bright or busy area the ground under it is darkened. Type is upright "
+              "always: no italic, no oblique, no script. The headline faces camera square and never runs away from the lens: foreshortened letters "
               "stop being letters. Its baseline is horizontal, never rotated, never running up or down the side "
               "of the frame.")
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
@@ -338,9 +339,9 @@ def эффект(ключ):
 # витрина без жизни: вырезанный предмет на пустой подложке. Действие целиком сюда
 # не поставить, вёрстка развалится, поэтому просим одну живую деталь внутри
 # фотографической части.
-ОЖИВЛЕНИЕ = ("Inside the photographic part one small thing is alive at this instant: dust turning in a shaft of "
-             "light, steam leaving a valve, a hand entering mid movement, water still running off an edge. The "
-             "layout stays exactly as described.")
+ОЖИВЛЕНИЕ = ("Inside the photograph one small thing is alive at this instant: dust turning in a shaft of light, "
+             "steam leaving a valve, a hand mid movement, water running off an edge. The layout stays as "
+             "described.")
 
 
 def графика(ключ, номер=0):
@@ -819,9 +820,9 @@ def собрать(бренд, кадры):
                 if к["номер"] == 1:
                     # первый слайд решает, откроют ли остальные: контраст и приглашение листать
                     куски.append("This is the cover slide and it carries the whole carousel: maximum contrast, the "
-                                 "simplest possible typography, the number or the claim in the headline made the "
-                                 "loudest element in the frame, and a small chevron pointing right at the outer edge "
-                                 "inviting the swipe. The cover has no other decoration.")
+                                 "simplest typography, the number or claim in the headline the loudest element in "
+                                 "frame, and a small chevron at the outer edge inviting the swipe. No other "
+                                 "decoration.")
                 elif к["номер"] == к["всего"]:
                     # финал зеркалит обложку: набор читается как оформленный, а не как реклама в конце
                     куски.append("This closing slide mirrors the cover: the same colour, type treatment and "
@@ -843,7 +844,10 @@ def собрать(бренд, кадры):
         # первое даёт кино, второе даёт ленту, и путать их нельзя.
         if вид in ("карусель", "сторис"):
             куски.append(графика(к["ключ"]))
-            куски.append(ОЖИВЛЕНИЕ)
+            # Обложка карусели живёт правилом «никаких украшений»: живая деталь ей
+            # мешает, а место в промпте она занимает как раз там, где его нет.
+            if not (вид == "карусель" and к.get("номер") == 1):
+                куски.append(ОЖИВЛЕНИЕ)
         elif _эффект_среды:
             куски.append(_эффект_среды(к["ключ"], руб, к.get("сцена", "")))
         else:
