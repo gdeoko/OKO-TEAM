@@ -330,8 +330,8 @@ def эффект(ключ):
     "dark corner opposite.",
     "Composition: a six by eight module grid on a warm white #F5F1E8 field with generous gutters, drawn as "
     "filled modules in flat amber #E8A400, flat graphite #14171C and photographic crops clipped to module "
-    "bounds. One module breaks the system: three columns by two rows, floating with its own shadow, rotated two "
-    "degrees off axis.",
+    "bounds. Every photographic module is a different view, no crop repeats anywhere in the frame. One module "
+    "breaks the system: three columns by two rows, floating with its own shadow, rotated two degrees off axis.",
 ]
 
 
@@ -586,7 +586,8 @@ def графика(ключ, номер=0):
  "кинетика": {
    "как": "Design system for this frame is KINETIC TYPE: the headline is a steel object standing inside the scene "
           "while the scene moves around it. The letters are extruded 180 mm deep in brushed steel, standing on "
-          "the floor among whatever this scene holds. A figure or a moving mass passes behind them left to right, "
+          "the floor upright among whatever this scene holds, their faces vertical and turned to camera, never "
+          "lying flat on the ground. A figure or a moving mass passes behind them left to right, "
           "cut in half by the letterforms, its motion dragged into a 1/15 s smear while the type stays razor "
           "sharp. Dust and fine swarf drift through the counters of the letters. Camera 1.2 m high, 28 mm, f/5.6, "
           "1/15 s on a tripod, almost square to the line so the baseline stays level and only a shallow turn "
