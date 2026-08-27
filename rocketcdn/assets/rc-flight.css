@@ -2091,6 +2091,29 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   box-shadow: 0 0 20px -5px rgba(var(--int-cyan-rgb, 66,178,220), .95);
 }
 
+/* Прокручиваемое нутро меню. Панель держит рамку и фон, список ездит
+   внутри неё. Растворение краёв живёт здесь же: маска на самой
+   прокручиваемой коробке стоит на месте, а содержимое под ней едет.
+   Верх растворяем так же, как низ - прокрученное меню рубило ряд
+   кнопок ровно посередине, на кадре телефона видна половина строки
+   УРАН/НЕПТУН. */
+.rc-flight .rcf-menu-in {
+  max-height: inherit;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 calc(100% - 28px), rgba(0,0,0,.15));
+  mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 calc(100% - 28px), rgba(0,0,0,.15));
+  padding: clamp(12px, 1.8vh, 18px);
+  padding-top: calc(clamp(12px, 1.8vh, 18px) + 18px);
+  padding-bottom: calc(clamp(12px, 1.8vh, 18px) + 30px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--int-cyan-rgb, 66,178,220), .55) rgba(4,12,22,.4);
+  position: relative;
+  z-index: 2;
+}
+
 /* Само меню: сетка целей и рукавов, открывается над плитой */
 .rc-flight .rcf-menu {
   position: absolute;
@@ -2106,17 +2129,11 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
      прозрачность, сам говорит, что ниже есть ещё. Плюс запас снизу,
      чтобы последняя строка не заканчивалась ровно на срезе. */
   max-height: min(64vh, 520px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  /* Верх растворяем так же, как низ: прокрученное меню рубило ряд
-     кнопок ровно посередине - на кадре телефона видна половина
-     строки УРАН/НЕПТУН. */
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 calc(100% - 28px), rgba(0,0,0,.15));
-  mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 calc(100% - 28px), rgba(0,0,0,.15));
-  padding: clamp(12px, 1.8vh, 18px);
-  padding-top: calc(clamp(12px, 1.8vh, 18px) + 18px);
-  padding-bottom: calc(clamp(12px, 1.8vh, 18px) + 30px);
+  /* Прокручивается ВНУТРЕННЯЯ коробка, а не сама панель: уголковая
+     рамка и развёртка строк стоят в панели абсолютом, и в
+     прокручиваемой панели они считались от всей высоты содержимого -
+     прямоугольник рамки уезжал в середину списка. */
+  overflow: hidden;
   border-radius: 14px;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
   background: linear-gradient(170deg, rgba(10,21,36,.96), rgba(5,12,21,.98));
@@ -4198,15 +4215,20 @@ html.rc-deep-inside .rcf-fab {
   max-width: none !important;
   max-height: calc(100% - clamp(38px, 7%, 58px) - 8px) !important;
   margin: 0 !important;
-  padding: clamp(9px, 1.5vh, 14px) !important;
+  /* Отступ и прокрутка живут во внутренней коробке: панель держит
+     рамку и фон. */
+  padding: 0 !important;
   transform: translate3d(0, 7px, 0) !important;
   border-radius: 9px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--int-cyan-rgb,66,178,220),.55) rgba(4,12,22,.4);
+  overflow: hidden;
   contain: layout paint;
   z-index: 30 !important;
+}
+.rc-flight .rcf-hud > .rcf-menu > .rcf-menu-in {
+  max-height: 100%;
+  padding: clamp(9px, 1.5vh, 14px);
+  padding-top: calc(clamp(9px, 1.5vh, 14px) + 16px);
+  padding-bottom: calc(clamp(9px, 1.5vh, 14px) + 26px);
 }
 .rc-flight .rcf-hud > .rcf-menu.on {
   transform: translate3d(0, 0, 0) !important;
@@ -4269,7 +4291,12 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight .rcf-hud > .rcf-menu {
     inset: 36px 6px auto 6px !important;
     max-height: calc(100% - 42px) !important;
-    padding: 8px !important;
+    padding: 0 !important;
+  }
+  .rc-flight .rcf-hud > .rcf-menu > .rcf-menu-in {
+    padding: 8px;
+    padding-top: 22px;
+    padding-bottom: 32px;
   }
   .rc-flight .rcf-menu .rcf-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;

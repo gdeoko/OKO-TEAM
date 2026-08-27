@@ -670,12 +670,22 @@ function buildUI() {
           '</ul>' +
         '</div>' +
       '</div>' +
+      /* Содержимое меню лежит в своей коробке, и прокручивается
+         именно она. Раньше прокручивалась сама панель, а уголковая
+         рамка и развёртка строк стоят в ней абсолютом: в
+         прокручиваемой коробке абсолют считается от ВСЕЙ высоты
+         содержимого, и прямоугольник рамки уезжал в середину панели -
+         на кадре узкого экрана он стоит вокруг заголовка «РЕАЛЬНЫЕ
+         ЭКЗОСИСТЕМЫ» посреди списка. Теперь рамка принадлежит панели,
+         а ездит только список. */
       '<div class="rcf-menu" role="menu">' +
-        '<div class="rcf-menu-h"><i>' + (RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM") + '</i></div>' +
-        '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
-        '<div class="rcf-menu-h"><i>' + (RU ? "РЕАЛЬНЫЕ ЭКЗОСИСТЕМЫ" : "REAL EXOPLANET SYSTEMS") + '</i>' +
-          '<span>' + (RU ? "каталог NASA · прыжок через Млечный Путь" : "NASA catalog · Milky Way jump") + '</span></div>' +
-        '<div class="rcf-uni">' + uniHtml + '</div>' +
+        '<div class="rcf-menu-in">' +
+          '<div class="rcf-menu-h"><i>' + (RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM") + '</i></div>' +
+          '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
+          '<div class="rcf-menu-h"><i>' + (RU ? "РЕАЛЬНЫЕ ЭКЗОСИСТЕМЫ" : "REAL EXOPLANET SYSTEMS") + '</i>' +
+            '<span>' + (RU ? "каталог NASA · прыжок через Млечный Путь" : "NASA catalog · Milky Way jump") + '</span></div>' +
+          '<div class="rcf-uni">' + uniHtml + '</div>' +
+        '</div>' +
       '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
