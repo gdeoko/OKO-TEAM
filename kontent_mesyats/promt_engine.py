@@ -407,8 +407,8 @@ def графика(ключ, номер=0):
    "как": "Design system for this frame is DIMENSIONAL TYPE: the headline itself is the physical subject and the "
           "scene is its stage. Foreground: the free edge of the first letter, cropped and defocused, its extruded "
           "side wall filling the lower third with a slow specular gradient. Hero: the full line in condensed caps "
-          "extruded 180 mm with a 3 mm chamfer, standing on the floor of the scene at three quarters, letters "
-          "staggered in depth so each casts onto the next. Background: haze with one distant amber practical as a "
+          "extruded 180 mm with a 3 mm chamfer, standing on the floor of the scene almost square to camera, the "
+          "baseline level and every letter the same height, a shallow turn showing the extruded sides. Background: haze with one distant amber practical as a "
           "bokeh point. A 5600 K softbox high camera left, a 6500 K strip skimming every vertical edge, a 3000 K "
           "kicker under the letters. 65 mm, f/4. The letters read exactly, character by character, the Russian "
           "line «{заголовок}».",
@@ -554,7 +554,8 @@ def графика(ключ, номер=0):
           "around an obstacle, the movers themselves gone or ghosted, while structure, edges and rails stay "
           "perfectly sharp. Camera 1.6 m high, 20 mm, f/11, ISO 100, 22 s. Ambient is mixed and deliberately "
           "uncorrected: 2000 K sodium on the far wall, 4000 K LED overhead, cold 6500 K spill from one opening. "
-          "Wet ground doubles every trail. The headline reads exactly, character by character, the Russian line "
+          "Wet ground doubles every trail. The headline is set flat in the dark sky above the trails, never along "
+          "the road, and reads exactly, character by character, the Russian line "
           "«{заголовок}».",
    "типографика":
       "The headline is laid flat on the ground plane in perspective, thin uppercase in warm white #F5F1E8, with "
@@ -569,7 +570,8 @@ def графика(ключ, номер=0):
           "the floor among whatever this scene holds. A figure or a moving mass passes behind them left to right, "
           "cut in half by the letterforms, its motion dragged into a 1/15 s smear while the type stays razor "
           "sharp. Dust and fine swarf drift through the counters of the letters. Camera 1.2 m high, 28 mm, f/5.6, "
-          "1/15 s on a tripod, three quarter angle so the extrusion reads and the baseline runs diagonally. A "
+          "1/15 s on a tripod, almost square to the line so the baseline stays level and only a shallow turn "
+          "lets the extrusion read. A "
           "5600 K key high camera left edges the top facets, a 2700 K bounce fills the sides. The letters read "
           "exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
