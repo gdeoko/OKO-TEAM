@@ -252,11 +252,6 @@ if ($action === 'track') {
 
 /* ══ Заявка с сайта или обратный звонок ═══════════════════ */
 if ($action === 'lead' || $action === 'callback') {
-    if (!rate_ok('lead', 8, 3600)) out(['ok' => false, 'error' => 'too_many']);
-    /* Предел на весь сайт, а не только на адрес: с ботнета адреса разные,
-       а письма и сообщения уходят с нашего ящика. */
-    if (!rate_global('lead_total', 120, 86400)) out(['ok' => false, 'error' => 'too_many']);
-
     $kind    = inp('kind', $action === 'callback' ? 'callback' : 'lead');
     $name    = mb_substr(inp('name'), 0, 80);
     $contact = mb_substr(inp('contact'), 0, 120);
@@ -270,8 +265,21 @@ if ($action === 'lead' || $action === 'callback') {
     if ($name === '')            out(['ok' => false, 'error' => 'name']);
     $isMail  = (bool)filter_var($contact, FILTER_VALIDATE_EMAIL);
     $isPhone = strlen(preg_replace('~\D~', '', $contact)) >= 10;
-    if (!$isMail && !$isPhone)   out(['ok' => false, 'error' => 'contact']);
+    /* Ник в Телеграме тоже контакт, и в мини-приложении он основной:
+       оно подставляет ник человека само. Раньше сервер такую заявку
+       отвергал, и человек внутри Телеграма получал «проверьте телефон
+       или почту» на поле, которое заполнил не он. */
+    $isTg    = (bool)preg_match('~^(?:@|(?:https?://)?t\.me/)[A-Za-z0-9_]{4,32}$~', $contact);
+    if (!$isMail && !$isPhone && !$isTg) out(['ok' => false, 'error' => 'contact']);
     if (!$consent)               out(['ok' => false, 'error' => 'consent']);
+
+    /* Пределы считаем после разбора, а не до него. Счётчик тратит
+       только заявка, дошедшая до записи: раньше восемь опечаток в
+       телефоне запирали человека на час вместе с ботами. */
+    if (!rate_ok('lead', 8, 3600)) out(['ok' => false, 'error' => 'too_many']);
+    /* Предел на весь сайт, а не только на адрес: с ботнета адреса разные,
+       а письма и сообщения уходят с нашего ящика. */
+    if (!rate_global('lead_total', 120, 86400)) out(['ok' => false, 'error' => 'too_many']);
 
     $lead = [
         'id'      => substr(md5($contact . microtime(true)), 0, 10),
@@ -545,7 +553,11 @@ if ($action === 'nodes_save') {
         $ш = (float)$n[1]; $д = (float)$n[2];
         $р = (int)$n[3];   $м = (int)$n[4];
         $en = isset($n[5]) ? trim((string)$n[5]) : '';
-        if ($имя === '' || mb_strlen($имя) > 60) continue;
+        /* Раньше длинное имя выбрасывалось молча, а панель показывала
+           «Город добавлен» и чистила поля: набранное пропадало без
+           следа. Теперь сервер отвечает отказом и называет город. */
+        if ($имя !== '' && mb_strlen($имя) > 60) out(['ok' => false, 'error' => 'name_long', 'имя' => mb_substr($имя, 0, 20)]);
+        if ($имя === '') continue;
         if ($ш < -90 || $ш > 90 || $д < -180 || $д > 180) continue;
         if ($р < 0 || $р > 4) continue;
         if ($м < 0 || $м > 7) continue;
@@ -575,7 +587,16 @@ if ($action === 'nodes_js') {
     $d = rc_json_read(RC_NODES, []);
     $add = $d['add'] ?? []; $hide = $d['hide'] ?? [];
     header('Content-Type: application/javascript; charset=utf-8');
-    header('Cache-Control: public, max-age=300');
+    /* Пять минут хранения здесь стоили доверия к панели: владелец
+       сохранял город, перезагружал сайт по подсказке из самой панели
+       и не видел ничего. Теперь браузер спрашивает каждый раз, а
+       отпечаток отдаёт ответ пустым, если ничего не менялось. Слово
+       public убрано: правки узлов чужим кэшам отдавать незачем. */
+    $отпечаток = '"' . md5(json_encode([$add, $hide], JSON_UNESCAPED_UNICODE)) . '"';
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('ETag: ' . $отпечаток);
+    $было = trim((string)($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''));
+    if ($было !== '' && $было === $отпечаток) { http_response_code(304); exit; }
     if (!$add && !$hide) { echo "/* правок узлов нет */\n"; exit; }
     echo "/* Правки реестра узлов из админки. Файл собирает api.php, руками не трогать. */\n";
     echo "(function(g){var G=g.RC_GEO;if(!G||!G.NODES)return;\n";

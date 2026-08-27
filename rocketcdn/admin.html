@@ -386,8 +386,9 @@
         </div>
         <div class="node-list" id="netList" style="max-height:420px"></div>
         <p class="hint" style="margin-top:12px">
-          Базовый реестр лежит в <code>assets/rc-geo.js</code>. Города, добавленные ниже,
-          хранятся отдельно и переживают выкладку сайта.
+          Список и карточки сверху показывают сеть такой, какой её видит посетитель:
+          базовый реестр из <code>assets/rc-geo.js</code> плюс добавленные ниже города,
+          минус скрытые. Свои города помечены и переживают выкладку сайта.
         </p>
       </div>
 
@@ -398,8 +399,8 @@
       <div class="panel">
         <h3>Свои города <span class="hint" id="nodeCnt"></span></h3>
         <div class="node-add">
-          <input id="nName" placeholder="Город" autocomplete="off">
-          <input id="nEn" placeholder="City (англ.)" autocomplete="off">
+          <input id="nName" placeholder="Город" autocomplete="off" maxlength="60">
+          <input id="nEn" placeholder="City (англ.)" autocomplete="off" maxlength="60">
           <input id="nLat" placeholder="Широта" inputmode="decimal" autocomplete="off">
           <input id="nLon" placeholder="Долгота" inputmode="decimal" autocomplete="off">
           <select id="nReg">
@@ -651,31 +652,42 @@ $$("#p-dash .seg button").forEach(function (b) {
   });
 });
 
+/* Подпись возвращаем целиком: у роста с нуля процентов не бывает, и
+   раньше на её месте выходило «+598 к прошлому периоду», где 598 это
+   само сегодняшнее число, а не прирост. */
 function delta(now, was) {
-  if (!was) return now ? { c: "up", t: "+" + now } : { c: "flat", t: "" };
+  if (!was) return now ? { c: "up", t: "прошлый период был пустым" } : { c: "flat", t: "" };
   var p = Math.round((now - was) / was * 100);
-  return { c: p > 0 ? "up" : p < 0 ? "down" : "flat", t: (p > 0 ? "+" : "") + p + "%" };
+  return { c: p > 0 ? "up" : p < 0 ? "down" : "flat", t: (p > 0 ? "+" : "") + p + "% к прошлому периоду" };
 }
 
 function loadStats() {
   api("stats", { days: days }).then(function (r) {
     if (!r.ok) return;
     stats = r;
-    var half = Math.floor(r.series.length / 2);
+    /* Сравниваем средние за день, а не суммы половин. Половины бывают
+       разной длины: на семи днях свежая это четыре дня, прошлая три,
+       и панель рисовала зелёные «+33%» на совершенно ровном трафике.
+       На вкладке «Сегодня» прошлой половины нет вовсе - там сравнивать
+       не с чем, и подписи не будет. */
+    var дней = r.series.length;
+    var свежих = Math.ceil(дней / 2);
+    var A = r.series.slice(дней - свежих), B = r.series.slice(0, дней - свежих);
     function sum(arr, k) { return arr.reduce(function (a, x) { return a + x[k]; }, 0); }
-    var A = r.series.slice(half), B = r.series.slice(0, half);
+    function ср(arr, k) { return arr.length ? sum(arr, k) / arr.length : 0; }
+    function срав(k) { return B.length ? delta(ср(A, k), ср(B, k)) : null; }
     var cards = [
-      ["Уникальные посетители", r.total.uniq, delta(sum(A, "uniq"), sum(B, "uniq"))],
-      ["Просмотры страницы", r.total.views, delta(sum(A, "views"), sum(B, "views"))],
-      ["Клики «Регистрация»", r.total.register, delta(sum(A, "register"), sum(B, "register"))],
+      ["Уникальные посетители", r.total.uniq, срав("uniq")],
+      ["Просмотры страницы", r.total.views, срав("views")],
+      ["Клики «Регистрация»", r.total.register, срав("register")],
       ["Переходы к подключению", r.total.connect, null],
-      ["Заявки с формы", r.total.leads, delta(sum(A, "leads"), sum(B, "leads"))],
+      ["Заявки с формы", r.total.leads, срав("leads")],
       ["Заявки на звонок", r.total.callbacks, null],
       ["Конверсия в заявку", r.conv + "%", null],
       ["Доля кликнувших регистрацию", r.ctr + "%", null]
     ];
     $("#statGrid").innerHTML = cards.map(function (c) {
-      var d = c[2] && c[2].t ? '<div class="d ' + c[2].c + '">' + c[2].t + " к прошлому периоду</div>" : "";
+      var d = c[2] && c[2].t ? '<div class="d ' + c[2].c + '">' + esc(c[2].t) + "</div>" : "";
       return '<div class="stat"><div class="v">' + esc(c[1]) + '</div><div class="k">' + esc(c[0]) + "</div>" + d + "</div>";
     }).join("");
 
@@ -810,8 +822,14 @@ $("#csv").addEventListener("click", function (e) {
   f.method = "POST";
   f.action = API + "?action=export";
   f.target = "_blank";
+  /* Тем же секретом, что и все остальные вызовы. После входа
+     панель живёт на пропуске, KEY при возврате по нему пустой, и
+     выгрузка, собранная только на KEY, отвечала «auth» всякий раз
+     после перезагрузки страницы. */
   var i = document.createElement("input");
-  i.type = "hidden"; i.name = "key"; i.value = KEY;
+  i.type = "hidden";
+  if (PASS) { i.name = "pass"; i.value = PASS; }
+  else { i.name = "key"; i.value = KEY; }
   f.appendChild(i);
   document.body.appendChild(f);
   f.submit();
@@ -945,26 +963,45 @@ $("#leadRows").addEventListener("keydown", function (e) {
 });
 
 /* ── Сеть ── */
+/* Сводку считаем по тому, что видит посетитель, а не по базовому
+   реестру из rc-geo.js. Раньше карточки «Всего точек», «Облачные
+   площадки» и остальные брали только реестр: добавленные из панели
+   города в них не попадали, а скрытые продолжали считаться. Сайт при
+   этом честно пересчитывал себя скриптом nodes_js, и панель
+   расходилась с ним на всё число правок. */
+function сетьСейчас() {
+  var G = window.RC_GEO;
+  if (!G) return [];
+  var скрыт = {};
+  скрытые.forEach(function (имя) { скрыт[имя] = 1; });
+  var из = G.NODES.filter(function (n) { return !скрыт[n[0]]; });
+  return из.concat(своиУзлы.map(function (n) { n = n.slice(); n.своя = 1; return n; }));
+}
 function loadNet() {
+  if (!window.RC_GEO) return;
+  netSummary();
+  loadNodes();
+}
+function netSummary() {
   var G = window.RC_GEO;
   if (!G) return;
+  var узлы = сетьСейчас();
   var cloud = 0, shield = 0, soon = 0, reg = {};
-  G.NODES.forEach(function (n) {
+  узлы.forEach(function (n) {
     if (n[4] & 1) cloud++;
     if (n[4] & 2) shield++;
     if (n[4] & 4) soon++;
-    var r = G.REGIONS[n[3]].ru;
+    var r = (G.REGIONS[n[3]] || { ru: "регион " + n[3] }).ru;
     reg[r] = (reg[r] || 0) + 1;
   });
   $("#netStats").innerHTML = [
-    ["Всего точек", G.NODES.length], ["Собственных ЦОД", G.DC.length],
+    ["Всего точек", узлы.length], ["Собственных ЦОД", G.DC.length],
     ["Облачные площадки", cloud], ["С защитой от атак", shield], ["Готовятся к запуску", soon]
   ].map(function (c) {
     return '<div class="stat"><div class="v">' + c[1] + '</div><div class="k">' + c[0] + "</div></div>";
   }).join("");
   bars("#netRegions", reg);
-  renderNetList("");
-  loadNodes();
+  renderNetList($("#netSearch") ? $("#netSearch").value : "");
 }
 
 /* ── Свои города ─────────────────────────────────────────────
@@ -982,6 +1019,7 @@ function loadNodes() {
 var МЕТКИ = [[1, "облако"], [2, "защита"], [4, "скоро"]];
 function renderNodes() {
   var G = window.RC_GEO;
+  netSummary();
   $("#nodeCnt").textContent = своиУзлы.length ? "· " + своиУзлы.length : "";
   $("#hideCnt").textContent = скрытые.length ? "· " + скрытые.length : "";
   $("#nodeOwn").innerHTML = своиУзлы.length ? своиУзлы.map(function (n, i) {
@@ -998,12 +1036,19 @@ function renderNodes() {
       "<button class='mini' data-hidedel='" + i + "'>Вернуть</button></div>";
   }).join("") : "<p class='hint'>Ничего не скрыто.</p>";
 }
+/* Отказ сервера показываем словами. Раньше в ответ на любую беду
+   всплывало «Не сохранилось», и человек не понимал, что именно
+   исправить. */
+var ПОЧЕМУ = {
+  name_long: "Название города длиннее 60 знаков",
+  auth: "Панель разлогинилась, войдите заново"
+};
 function saveNodes(словом) {
   return api("nodes_save", {
     add: JSON.stringify(своиУзлы), hide: JSON.stringify(скрытые)
   }).then(function (r) {
     if (r.ok) { toast(словом); loadNodes(); }
-    else toast("Не сохранилось");
+    else toast(ПОЧЕМУ[r.error] || "Не сохранилось");
     return r;
   });
 }
@@ -1014,6 +1059,8 @@ $("#nAdd").addEventListener("click", function () {
   if (!имя) return toast("Не заполнено название");
   /* Проверяем здесь же, а не только на сервере: человеку нужен ответ
      сразу, а не после круга по сети. */
+  if (имя.length > 60) return toast("Название города длиннее 60 знаков");
+  if ($("#nEn").value.trim().length > 60) return toast("Английское название длиннее 60 знаков");
   if (!isFinite(ш) || ш < -90 || ш > 90) return toast("Широта от -90 до 90");
   if (!isFinite(д) || д < -180 || д > 180) return toast("Долгота от -180 до 180");
   var м = ($("#nCloud").checked ? 1 : 0) + ($("#nShield").checked ? 2 : 0) + ($("#nSoon").checked ? 4 : 0);
@@ -1027,7 +1074,9 @@ $("#nAdd").addEventListener("click", function () {
     return toast("Такой город уже есть в базовом реестре");
   своиУзлы.push([имя, ш, д, +$("#nReg").value, м, $("#nEn").value.trim()]);
   saveNodes("Город добавлен").then(function (r) {
-    if (!r.ok) return;
+    /* Сервер отказал - убираем город и из своего списка, иначе он
+       остаётся в памяти панели и валит каждое следующее сохранение. */
+    if (!r.ok) { своиУзлы.pop(); return; }
     ["#nName", "#nEn", "#nLat", "#nLon"].forEach(function (s) { $(s).value = ""; });
     $("#nCloud").checked = $("#nShield").checked = $("#nSoon").checked = false;
   });
@@ -1055,17 +1104,21 @@ $("#hideOwn").addEventListener("click", function (e) {
 });
 function renderNetList(q) {
   var G = window.RC_GEO;
+  if (!G) return;
   q = (q || "").toLowerCase();
-  var rows = G.NODES.filter(function (n) {
-    return !q || n[0].toLowerCase().indexOf(q) >= 0 || G.REGIONS[n[3]].ru.toLowerCase().indexOf(q) >= 0;
+  var rows = сетьСейчас().filter(function (n) {
+    var рег = (G.REGIONS[n[3]] || { ru: "" }).ru;
+    return !q || n[0].toLowerCase().indexOf(q) >= 0 || рег.toLowerCase().indexOf(q) >= 0;
   });
   $("#netList").innerHTML = rows.length ? rows.map(function (n) {
     var tags = "";
     if (n[4] & 1) tags += '<span class="tag tag-cloud">облако</span>';
     if (n[4] & 2) tags += '<span class="tag tag-shield">защита</span>';
     if (n[4] & 4) tags += '<span class="tag tag-soon">скоро</span>';
+    if (n.своя) tags += '<span class="tag">своя</span>';
+    var рег = (G.REGIONS[n[3]] || { ru: "регион " + n[3] }).ru;
     return '<div class="node-row"><span class="nm">' + esc(n[0]) + "</span>" + tags +
-      '<span class="rg">' + esc(G.REGIONS[n[3]].ru) + " · " + n[1].toFixed(2) + ", " + n[2].toFixed(2) + "</span></div>";
+      '<span class="rg">' + esc(рег) + " · " + Number(n[1]).toFixed(2) + ", " + Number(n[2]).toFixed(2) + "</span></div>";
   }).join("") : '<div class="node-empty">Ничего не нашлось.</div>';
 }
 $("#netSearch").addEventListener("input", function () { renderNetList(this.value); });
@@ -1229,7 +1282,7 @@ function cRender() {
     (правок ? '<button type="button" class="mini" id="cWipe">Снять все правки языка</button>' : "");
 
   var only = $("#cOnly");
-  if (only) only.addEventListener("change", cRender);
+  if (only) only.addEventListener("change", function () { cKeep(); cRender(); });
   var wipe = $("#cWipe");
   if (wipe) wipe.addEventListener("click", function () {
     if (!confirm("Снять все ваши правки надписей для языка " + cLang.toUpperCase() + "? Тексты вернутся к исходным.")) return;
@@ -1244,6 +1297,18 @@ function кратко(s, n) {
   s = (s || "").replace(/\s+/g, " ").trim();
   n = n || 58;
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+/* Набранное, но ещё не сохранённое, забираем с экрана перед любой
+   перерисовкой списка. Раньше это делала только смена языка, а поиск
+   и галочка «только изменённые» собирали поля заново из последнего
+   сохранённого набора: человек правил пять заголовков, набирал слово
+   в поиск ради шестого - и пять правок пропадали молча. */
+function cKeep() {
+  if (!$("#cFields [data-k]")) return;
+  content = content || {};
+  content.i18n = content.i18n || {};
+  content.i18n[cLang] = cCollect();
 }
 
 function cCollect() {
@@ -1274,20 +1339,20 @@ function cPush(сообщение) {
 function loadContent() {
   fetch(API + "?action=content").then(function (r) { return r.json(); }).then(function (r) {
     content = (r && r.content) || {};
+    bПравки = {};
     bData = null;
     cRender();
     bRender();
   });
 }
-$("#cFind").addEventListener("input", cRender);
+$("#cFind").addEventListener("input", function () { cKeep(); cRender(); });
 $$("#cLang button").forEach(function (b) {
   b.addEventListener("click", function () {
     if (b.classList.contains("on")) return;
     /* Пересобрать словарь до смены языка: иначе набранное в полях
        уедет вместе с перерисовкой. */
-    content = content || {};
-    content.i18n = content.i18n || {};
-    content.i18n[cLang] = cCollect();
+    cKeep();
+    bKeep();
     $$("#cLang button").forEach(function (x) { x.classList.remove("on"); });
     b.classList.add("on");
     cLang = b.dataset.lang;
@@ -1309,6 +1374,7 @@ $("#cReset").addEventListener("click", function () {
   api("content_reset").then(function (r) {
     if (!r.ok) return;
     content = {};
+    bПравки = {};
     bData = null;
     toast("Исходные тексты возвращены");
     cRender();
@@ -1333,6 +1399,23 @@ var B_SPEC = {
 };
 var bGroup = "products";
 var bData = null;
+/* Отложенные правки карточек: язык → группа → набор. Раньше bData
+   просто обнулялся при смене группы и языка, и всё набранное в
+   карточках пропадало без единого слова. Держим их в стороне от
+   content: пока человек не нажал «Сохранить карточки», на сайт они
+   не уходят, даже если он сохранит в это время надписи. */
+var bПравки = {};
+function bKeep() {
+  if (!bData) return;
+  bПравки[cLang] = bПравки[cLang] || {};
+  bПравки[cLang][bGroup] = bData;
+}
+function bНабор(lang, g) {
+  var от = bПравки[lang] && bПравки[lang][g];
+  if (от) return от;
+  var свои = content && content.blocks && content.blocks[lang];
+  return (свои && свои[g]) || bBase(lang)[g] || [];
+}
 
 function bBase(lang) {
   var B = window.RC_BLOCKS || {};
@@ -1351,13 +1434,16 @@ function bIcons(текущая) {
   }).join("");
 }
 function bRender() {
-  if (!bData) bData = JSON.parse(JSON.stringify(bNow(cLang)));
+  if (!bData) {
+    var отложено = bПравки[cLang] && bПравки[cLang][bGroup];
+    bData = отложено || JSON.parse(JSON.stringify(bNow(cLang)));
+  }
   var спец = B_SPEC[bGroup];
   $("#bLangNote").textContent = "язык: " + (cLang === "en" ? "English" : "Русский");
   $$("#bGroup button").forEach(function (b) {
     var g = b.dataset.g;
     b.classList.toggle("on", g === bGroup);
-    var набор = (content && content.blocks && content.blocks[cLang] && content.blocks[cLang][g]) || bBase(cLang)[g] || [];
+    var набор = bНабор(cLang, g);
     b.querySelector(".cnt").textContent = набор.length;
   });
   $("#bList").innerHTML = bData.length ? bData.map(function (it, i) {
@@ -1429,6 +1515,7 @@ $("#bList").addEventListener("click", function (e) {
 $$("#bGroup button").forEach(function (b) {
   b.addEventListener("click", function () {
     if (b.dataset.g === bGroup) return;
+    bKeep();
     bGroup = b.dataset.g;
     bData = null;
     $("#bMsg").textContent = "";
@@ -1484,7 +1571,11 @@ $("#bSave").addEventListener("click", function () {
     m.textContent = r.ok
       ? "Сохранено: " + bData.length + " карточек в группе «" + спец.name + "», язык " + cLang.toUpperCase() + "."
       : "Не сохранилось, проверьте права на папку data.";
-    if (r.ok) { toast("Карточки обновлены"); bRender(); }
+    if (r.ok) {
+      if (bПравки[cLang]) delete bПравки[cLang][bGroup];
+      toast("Карточки обновлены");
+      bRender();
+    }
   });
 });
 
