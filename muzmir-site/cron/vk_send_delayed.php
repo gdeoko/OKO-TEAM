@@ -66,6 +66,12 @@ if ($rowId > 0) {
         // Перехват оператором мог включиться и без правки этой строки.
         if (is_file(BASE_PATH . '/core/chat_ops.php')) {
             require_once BASE_PATH . '/core/chat_ops.php';
+            // Бота выключили целиком, пока ответ ждал своей минуты, — не отправляем.
+            if (function_exists('chat_bot_enabled') && !chat_bot_enabled()) {
+                q("UPDATE chat_messages SET role='bot_cancelled' WHERE id=?", [$rowId]);
+                if (function_exists('_vk_log')) _vk_log("vk_send_delayed peer=$peer: бот выключен — не отправляю");
+                exit(0);
+            }
             if (function_exists('chat_operator_active')
                 && chat_operator_active((string) $row['session_key'])) {
                 q("UPDATE chat_messages SET role='bot_cancelled' WHERE id=?", [$rowId]);

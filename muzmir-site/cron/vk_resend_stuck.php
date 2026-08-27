@@ -23,6 +23,12 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/vk.php';
+require_once BASE_PATH . '/core/chat_ops.php';
+
+/* Бота выключили целиком (chat_bot_enabled=0) — сторож молчит вместе с ним.
+ * Отложенные ответы остаются в истории и никуда не денутся: включат бота —
+ * досылка их не подхватит, они старше суток, и это правильно. */
+if (function_exists('chat_bot_enabled') && !chat_bot_enabled()) exit(0);
 
 /* Старше суток не трогаем вовсе. Если ответ пролежал сутки, досылать его поздно:
  * человек давно ушёл, и внезапное сообщение «по вчерашнему вопросу» выглядит

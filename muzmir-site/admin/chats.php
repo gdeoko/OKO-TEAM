@@ -121,6 +121,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         admin_redirect('chats');
     }
 
+    /* ОБЩИЙ РУБИЛЬНИК: выключить бота во всех каналах разом.
+     * В дни оглашения итогов ответ машины дороже молчания — переписку ведёт
+     * оператор, вопросы никуда не теряются (сообщения людей сохраняются). */
+    if ($do === 'bot_all') {
+        $new = chat_bot_enabled() ? '0' : '1';
+        set_setting('chat_bot_enabled', $new);
+        flash($new === '1'
+            ? 'Бот включён — отвечает на сайте и во ВКонтакте.'
+            : 'Бот выключен везде: на сайте и во ВКонтакте молчит, вопросы участников сохраняются здесь.', 'success');
+        admin_redirect('chats', $back);
+    }
+
     if ($do === 'toggle_bot' && $sk !== '') {
         $d = chat_dialog_get($sk);
         $new = (int) ($d['bot_enabled'] ?? 1) === 1 ? 0 : 1;
@@ -407,6 +419,25 @@ ob_start(); ?>
   <h1>Чат-бот</h1>
   <p class="muted small">Все диалоги — на сайте и во ВКонтакте. Откройте диалог, чтобы прочитать переписку и ответить самому, отредактировать или удалить сообщения бота, выключить бота или заблокировать. Когда отвечаете сами — бот автоматически молчит 5–10 минут.</p>
 </div>
+
+<?php $botAll = chat_bot_enabled(); ?>
+<form method="post" action="<?= url('/admin/') ?>" style="margin:0 0 14px"><?= csrf_field() ?>
+  <input type="hidden" name="do" value="bot_all">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:12px;
+              background:<?= $botAll ? '#f2f7ff' : '#fff5f5' ?>;border:1px solid <?= $botAll ? '#cfe0fb' : '#f3c8c8' ?>">
+    <div style="flex:1;min-width:200px">
+      <b><?= $botAll ? 'Бот отвечает' : 'Бот выключен везде' ?></b>
+      <div class="muted small" style="margin-top:2px">
+        <?= $botAll
+            ? 'Автоответы идут на сайте и во ВКонтакте.'
+            : 'На сайте и во ВКонтакте бот молчит. Сообщения участников сохраняются — отвечайте здесь сами.' ?>
+      </div>
+    </div>
+    <button class="btn <?= $botAll ? 'btn--ghost' : 'btn--primary' ?>" style="padding:9px 16px">
+      <?= $botAll ? 'Выключить бота везде' : 'Включить бота' ?>
+    </button>
+  </div>
+</form>
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
   <div class="tabs" style="display:flex;gap:6px">

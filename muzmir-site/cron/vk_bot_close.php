@@ -27,6 +27,7 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/vk.php';
 require_once BASE_PATH . '/core/chat_brain.php';
+require_once BASE_PATH . '/core/chat_ops.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'vk_bot_close';
@@ -34,6 +35,9 @@ if (!cron_lock(JOB, 600)) exit(0);
 
 try {
     if (trim((string) cfgv('vk_token', '')) === '') { cron_unlock(JOB); exit(0); }
+    // Бот выключен целиком (chat_bot_enabled=0) — молчим и здесь. Иначе человек,
+    // которому бот не ответил, получил бы от него «благодарим за обращение».
+    if (function_exists('chat_bot_enabled') && !chat_bot_enabled()) { cron_unlock(JOB); exit(0); }
 
     // Последнее сообщение каждого диалога ВК.
     $lastRows = all(
