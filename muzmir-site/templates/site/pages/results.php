@@ -220,6 +220,12 @@ ob_start(); ?>
 .pcard-meta svg{width:14px;height:14px;color:var(--gold-deep);flex:none}
 [data-theme="dark"] .pcard-meta svg{color:var(--gold)}
 .pcard-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:auto}
+/* Афиша итогов над списком: та же, что в письме и в сообществе — человек сразу
+   понимает, что попал куда шёл. Ширину держим по контейнеру, пропорции 16:9. */
+.res-poster-hero{max-width:1080px;margin:0 auto 26px;border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);line-height:0}
+.res-poster-hero img{display:block;width:100%;height:auto}
+.res-order{white-space:nowrap}
 .res-title{display:inline-flex;align-items:center;gap:7px;font-family:var(--ff-display);font-weight:700;
   letter-spacing:.02em;font-size:.98rem;padding:6px 14px;border-radius:999px;white-space:nowrap}
 .res-title svg{width:16px;height:16px;flex:none}
@@ -268,6 +274,27 @@ ob_start(); ?>
 <section class="section">
   <div class="container res-wrap">
     <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
+    <?php
+    /* АФИША ИТОГОВ В ШАПКЕ.
+     *
+     * Ту же картинку участник видит в письме и в сообществе ВКонтакте. Когда она
+     * встречает его и на странице, он с первого взгляда понимает, что попал туда,
+     * куда шёл, — а не на очередной похожий список. Берём ту, что назначена волне
+     * оглашения; нет её — обычную афишу конкурса. */
+    $resPoster = '';
+    if (function_exists('setting')) {
+        $ov = trim((string) setting('launch_cover:' . (int) $c['id'] . ':results', ''));
+        if ($ov !== '' && $ov !== '__none__') $resPoster = $ov;
+    }
+    if ($resPoster === '' && is_file(BASE_PATH . '/public/uploads/comp/' . (int) $c['id'] . '/afisha.jpg')) {
+        $resPoster = '/uploads/comp/' . (int) $c['id'] . '/afisha.jpg';
+    }
+    ?>
+    <?php if ($resPoster !== ''): ?>
+      <div class="res-poster-hero reveal">
+        <img src="<?= h(url($resPoster)) ?>" alt="Результаты конкурса «<?= h($c['name']) ?>» — Культурный центр «Музыкальный Мир»">
+      </div>
+    <?php endif; ?>
     <div class="res-hero reveal">
       <p class="eyebrow"><?= h($typeLabel) ?> · Итоги</p>
       <h1><?= h($c['name']) ?></h1>
@@ -296,8 +323,8 @@ ob_start(); ?>
 
       <div class="res-search reveal">
         <div class="field--float">
-          <input type="search" id="resSearch" placeholder=" " autocomplete="off" aria-label="Поиск по имени или номеру диплома">
-          <label for="resSearch">Поиск по фамилии, имени или номеру диплома</label>
+          <input type="search" id="resSearch" placeholder=" " autocomplete="off" aria-label="Поиск по фамилии, коллективу, названию номера или номеру диплома">
+          <label for="resSearch">Найдите себя: фамилия, коллектив, название номера</label>
           <svg class="rs-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         </div>
       </div>
@@ -360,13 +387,14 @@ ob_start(); ?>
                   <?php if ($tone === 'gp'): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M5 4h14v3a7 7 0 0 1-14 0zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg><?php endif; ?>
                   <?= h($r['result']) ?>
                 </span>
+                <?php /* КНОПКА ЗАКАЗА — ПРЯМО У СВОЕЙ СТРОКИ.
+                          Участник нашёл себя в списке — и заказывает награду отсюда же,
+                          не разыскивая раздел наград и не выбирая заявку заново: ссылка
+                          уже знает и конкурс, и номер заявки. */ ?>
+                <a class="btn btn--primary btn--sm res-order"
+                   href="<?= url('/awards') ?>?comp=<?= (int) $c['id'] ?>&app=<?= (int) $r['app_id'] ?>">Заказать награду</a>
                 <?php if (!empty($r['diploma_number'])): ?>
-                  <a class="btn btn--ghost" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a>
-                <?php elseif ($vkUrl): ?>
-                  <a class="vk-link" href="<?= h($vkUrl) ?>" target="_blank" rel="noopener" title="Публикация результатов ВКонтакте">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.9 16.5c-5.4 0-8.9-3.8-9-9.9h2.8c.1 4.5 2.1 6.4 3.6 6.8V6.6h2.6v3.9c1.5-.2 3-1.8 3.6-3.9h2.6c-.4 2.6-2 4.2-3.1 4.8 1.1.5 2.9 1.9 3.6 4.6h-2.9c-.5-1.8-1.9-3.2-3.7-3.4v3.4z"/></svg>
-                    Смотреть в VK
-                  </a>
+                  <a class="btn btn--ghost btn--sm" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a>
                 <?php endif; ?>
               </div>
             </div>

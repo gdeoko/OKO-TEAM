@@ -111,9 +111,18 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
 /**
  * Готовый блок для письма. Пустая строка, если показывать нечего.
  *
+ * ОБРАЗЦЫ СТОЯТ РЯДОМ, А НЕ СТОЛБИКОМ.
+ *
+ * Раньше каждая награда шла отдельной карточкой во всю ширину — четыре снимка
+ * подряд превращали письмо в длинного червяка, до кнопки заказа человек
+ * доскроллить не успевал. Теперь это одна горизонтальная витрина: три позиции
+ * в ряд (солист) или две на два (коллектив, где добавляется именной диплом).
+ * Ряд занимает один экран, весь набор виден сразу — так его и выбирают.
+ *
  * Вёрстка нарочно табличная и без внешних стилей: почтовые клиенты не понимают
- * ни flex, ни grid, а Outlook игнорирует и часть обычных свойств. Одна колонка
- * на позицию — на телефоне это единственный вид, который не рассыпается.
+ * ни flex, ни grid, а Outlook игнорирует и часть обычных свойств. Таблица с
+ * фиксированными долями ширины — единственное, что не рассыпается ни в Gmail,
+ * ни в mail.ru, ни на телефоне: колонки остаются колонками.
  */
 function ao_block(int $compId, string $result, string $url = '', bool $isGroup = false): string {
     $kit = ao_kit($compId, $result, $isGroup);
@@ -128,27 +137,50 @@ function ao_block(int $compId, string $result, string $url = '', bool $isGroup =
 
     $h = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
-    $out = '<p style="margin:22px 0 12px;font-weight:700;color:' . $navy . ';font-size:16px;">'
-         . 'Что можно заказать по Вашему результату</p>';
+    // Три позиции встают в один ряд, четыре — квадратом два на два: и то и другое
+    // выглядит намеренным, а 3+1 смотрится как обрыв вёрстки.
+    $cols  = count($kit) === 4 ? 2 : 3;
+    $width = $cols === 2 ? '50%' : '33.33%';
 
-    foreach ($kit as $it) {
+    $card1 = static function (array $it) use ($h, $navy, $gold, $ink, $line, $card, $width): string {
         $price = (int) $it['price'] > 0 ? number_format((int) $it['price'], 0, ',', ' ') . ' ₽' : '';
-        $out .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-              . 'style="margin:0 0 14px;background:' . $card . ';border:1px solid ' . $line . ';border-radius:14px;overflow:hidden;">'
-              . '<tr><td style="padding:0;">'
-              . '<img src="' . $h($it['photo']) . '" width="560" alt="' . $h($it['title']) . '" '
-              . 'style="display:block;width:100%;max-width:560px;height:auto;border:0;">'
-              . '</td></tr>'
-              . '<tr><td style="padding:14px 18px 16px;">'
-              . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:17px;font-weight:700;color:' . $navy . ';">'
-              . $h($it['title'])
-              . ($price !== '' ? ' <span style="color:' . $gold . ';font-size:15px;">— ' . $price . '</span>' : '')
-              . '</div>'
-              . '<div style="margin-top:6px;font-size:14px;line-height:1.6;color:' . $ink . ';">' . $h($it['note']) . '</div>'
-              . '</td></tr></table>';
-    }
+        return '<td width="' . $width . '" valign="top" style="width:' . $width . ';padding:4px;">'
+             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+             . 'style="background:' . $card . ';border:1px solid ' . $line . ';border-radius:12px;overflow:hidden;">'
+             . '<tr><td style="padding:0;"><img src="' . $h($it['photo']) . '" width="180" '
+             . 'alt="' . $h($it['title']) . '" style="display:block;width:100%;height:auto;border:0;"></td></tr>'
+             . '<tr><td style="padding:9px 10px 11px;text-align:center;">'
+             . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:13px;line-height:1.3;'
+             . 'font-weight:700;color:' . $navy . ';">' . $h($it['title']) . '</div>'
+             . ($price !== '' ? '<div style="margin-top:4px;font-size:14px;font-weight:700;color:' . $gold . ';">' . $price . '</div>' : '')
+             . '</td></tr></table></td>';
+    };
 
-    $out .= '<p style="margin:0 0 4px;font-size:13px;color:' . $mut . ';">'
+    $out = '<p style="margin:22px 0 10px;font-weight:700;color:' . $navy . ';font-size:16px;">'
+         . 'Что можно заказать по Вашему результату</p>'
+         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;margin:0 0 10px;">';
+    $rows = array_chunk($kit, $cols);
+    foreach ($rows as $row) {
+        $out .= '<tr>';
+        foreach ($row as $it) $out .= $card1($it);
+        for ($i = count($row); $i < $cols; $i++) {
+            $out .= '<td width="' . $width . '" style="width:' . $width . ';padding:4px;"></td>';
+        }
+        $out .= '</tr>';
+    }
+    $out .= '</table>';
+
+    // Пояснения к позициям — строками под витриной: в подпись под снимком они не
+    // помещаются, а без них непонятно, чем оригинал отличается от электронного.
+    $out .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 6px;">';
+    foreach ($kit as $it) {
+        $out .= '<tr><td style="padding:3px 4px;font-size:13px;line-height:1.55;color:' . $ink . ';">'
+              . '<b style="color:' . $navy . ';">' . $h($it['title']) . '.</b> ' . $h($it['note'])
+              . '</td></tr>';
+    }
+    $out .= '</table>';
+
+    $out .= '<p style="margin:6px 0 0;font-size:13px;color:' . $mut . ';">'
           . 'Доставка Почтой России по всей стране. Несколько позиций в одном заказе едут одной посылкой.</p>';
 
     if ($url !== '') {

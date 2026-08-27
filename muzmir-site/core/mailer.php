@@ -165,14 +165,43 @@ function mm_cta_primary(string $href, string $label, string $sub = '', string $v
 
 /** Ряд вторичных кнопок-ссылок. $buttons = [[label,url,emoji?], ...]. */
 function mm_actions_row(array $buttons): string {
-    $cells = '';
+    /* КНОПКИ РОВНЫМИ ПАРАМИ, А НЕ ЛЕСЕНКОЙ.
+     *
+     * Раньше все кнопки вставали в одну строку таблицы, и ширину каждой почта
+     * считала по длине подписи: «Оставить отзыв» получал узкую клетку в одну
+     * строку, «Скачать список результатов (DOCX)» — широкую в две, и ряд ехал
+     * ступеньками с рваными переносами. На телефоне это выглядит как сбой вёрстки.
+     *
+     * Теперь по две кнопки в ряд, каждая ровно половина ширины, у всех одинаковая
+     * высота (задана явно) и подпись по центру в две строки. Нечётная последняя
+     * кнопка занимает ряд целиком — так ряд остаётся симметричным. */
+    $btns = [];
     foreach ($buttons as $b) {
-        $label = (string) ($b[0] ?? ''); $url = (string) ($b[1] ?? '');
-        if ($label === '' || $url === '') continue;
-        $cells .= '<td style="padding:5px;"><a href="' . h($url) . '" style="display:block;text-align:center;padding:11px 10px;border:1.5px solid ' . MM_LINE . ';border-radius:11px;color:' . MM_NAVY . ';text-decoration:none;font-weight:700;font-size:13px;background:' . MM_CARD . ';">' . h($label) . '</a></td>';
+        $label = trim((string) ($b[0] ?? '')); $url = trim((string) ($b[1] ?? ''));
+        if ($label !== '' && $url !== '') $btns[] = [$label, $url];
     }
-    if ($cells === '') return '';
-    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 14px;"><tr>' . $cells . '</tr></table>';
+    if (!$btns) return '';
+
+    $cell = static function (array $b, string $width): string {
+        return '<td width="' . $width . '" style="width:' . $width . ';padding:5px;" valign="top">'
+             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+             . 'style="border:1.5px solid ' . MM_LINE . ';border-radius:11px;background:' . MM_CARD . ';">'
+             . '<tr><td height="52" style="height:52px;text-align:center;padding:8px 10px;">'
+             . '<a href="' . h($b[1]) . '" style="display:block;color:' . MM_NAVY . ';text-decoration:none;'
+             . 'font-weight:700;font-size:13px;line-height:1.35;">' . h($b[0]) . '</a>'
+             . '</td></tr></table></td>';
+    };
+
+    $rows = '';
+    for ($i = 0; $i < count($btns); $i += 2) {
+        $left  = $cell($btns[$i], '50%');
+        $right = isset($btns[$i + 1])
+            ? $cell($btns[$i + 1], '50%')
+            : '<td width="50%" style="width:50%;padding:5px;"></td>';
+        $rows .= '<tr>' . $left . $right . '</tr>';
+    }
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+         . 'style="margin:6px 0 14px;table-layout:fixed;">' . $rows . '</table>';
 }
 
 /**
@@ -1325,7 +1354,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
  *        письмам, которые человеку незачем получать среди ночи: отказ по заявке
  *        в час сорок ночи он всё равно прочитает утром, а тревогу вызовет сразу.
  */
-function mail_queue(string $to, string $name, string $subject, string $html, string $attach = '', string $scheduledAt = ''): int {
+function mail_queue(string $to, string $name, string $subject, string $html, string $attach = '', string $scheduledAt = '', bool $inapp = true): int {
     // В очередь мёртвый адрес не кладём вовсе: иначе он копится там неделями и
     // портит и отчёты, и суточную квоту.
     // Отказ от рассылки сюда не относится: в очередь попадают личные письма —
@@ -1343,8 +1372,13 @@ function mail_queue(string $to, string $name, string $subject, string $html, str
             'status'   => 'queued',
             'scheduled_at' => trim($scheduledAt),
         ]);
-        // Сразу дублируем в приложение как уведомление (письмо уйдёт воркером позже).
-        if ($id) {
+        /* Сразу дублируем в приложение как уведомление (письмо уйдёт воркером позже).
+         *
+         * $inapp = false ставит тот, кто создаёт уведомление сам и лучше знает, куда
+         * оно должно вести. Так у итогов конкурса: общее уведомление привело бы в
+         * кабинет, а участнику нужна страница заказа наград с его заявкой — и два
+         * уведомления об одном событии выглядят как сбой. */
+        if ($id && $inapp) {
             if (!function_exists('notify_from_email') && is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
             if (function_exists('notify_from_email')) { try { notify_from_email($to, $subject, $html); } catch (\Throwable $e) {} }
         }

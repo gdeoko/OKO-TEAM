@@ -332,14 +332,24 @@ function results_long_mail_send(int $appId, string $vkUrl = '', string $docxAbs 
     $queued = false;
     $whoName = trim((string) ($a['group_name'] ?? '')) !== '' ? trim((string) $a['group_name']) : trim((string) ($a['full_name'] ?? ''));
     if (trim((string) ($a['email'] ?? '')) !== '') {
-        $queued = mail_queue((string) $a['email'], $whoName, $subject, $html, $docxAbs) > 0;
+        // Уведомление создаём сами (ниже) — своё, с нужной ссылкой; общее из
+        // очереди отключаем, иначе участник получит два уведомления об одном.
+        $queued = mail_queue((string) $a['email'], $whoName, $subject, $html, $docxAbs, '', false) > 0;
     }
-    // In-app + колокол.
+
+    /* УВЕДОМЛЕНИЕ ВЕДЁТ ТУДА, ГДЕ ЕСТЬ ЧТО СДЕЛАТЬ.
+     *
+     * Участник открывает колокольчик или заходит в кабинет и видит своё звание.
+     * Дальше ему нужно ровно одно действие — заказать награду, потому что у
+     * бесплатного конкурса иначе её не получить. Поэтому уведомление ведёт не на
+     * общий список результатов, а на страницу заказа с уже подставленной заявкой:
+     * ни искать себя в восьмистах строках, ни выбирать заявку заново не нужно. */
     $uid = (int) ($a['user_id'] ?? 0);
     if ($uid > 0) {
         notify_user($uid, 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $result,
-            'Заявка №' . (string) $a['number'] . '. Списки результатов - на сайте и в ВК. Можно заказать наградной материал.',
-            url('/results/' . (string) ($c['slug'] ?? '')), 'trophy');
+            'Заявка №' . (string) $a['number'] . '. Нажмите, чтобы заказать наградной материал: '
+                . 'кубок, статуэтку или медаль по званию, оригиналы дипломов, благодарность педагогу.',
+            '/awards?comp=' . (int) $a['competition_id'] . '&app=' . (int) $a['id'], 'trophy');
     }
     return $queued;
 }
@@ -355,13 +365,29 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     $hello = $whoName !== '' ? 'Здравствуйте, ' . h($whoName) . '!' : 'Здравствуйте!';
     $extra = trim((string) ($a['extra_diploma'] ?? ''));
 
-    $inner = '';
-    // Афиша «РЕЗУЛЬТАТЫ КОНКУРСА» сверху.
+    /* ПОРЯДОК ПИСЬМА — ПОРЯДОК РАЗГОВОРА (правило владельца, 27.08.2026).
+     *
+     * Сначала здороваемся по имени, потом показываем афишу конкурса — человек
+     * сразу видит, о чём письмо, — и тут же даём кнопку заказа: у бесплатного
+     * конкурса это единственный способ получить награду на руки, и решение
+     * принимается на первом экране. Дальше объявляем звание, дополнительный
+     * диплом и данные заявки, показываем витрину наград и повторяем кнопку
+     * внизу — тому, кто дочитал.
+     *
+     * Раньше афиша стояла до приветствия, а кнопка заказа была одна и уезжала
+     * под самый низ, за четыре карточки наград.
+     */
+    $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . (int) $a['id'];
+    $orderBtn  = mm_cta_primary($awardsUrl, 'Заказать наградной материал',
+                                'Кубки, медали, оригиналы дипломов по результату');
+
+    $inner = '<p style="margin:0 0 16px;">' . $hello . '</p>';
+    // Афиша «РЕЗУЛЬТАТЫ КОНКУРСА».
     if ($posterUrl !== '') {
-        $inner .= '<div style="margin:0 0 20px;text-align:center;"><img src="' . h($posterUrl) . '" alt="Результаты конкурса" style="max-width:100%;border-radius:14px;border:1px solid ' . RM_LINE . ';"></div>';
+        $inner .= '<div style="margin:0 0 18px;text-align:center;"><img src="' . h($posterUrl) . '" alt="Результаты конкурса" style="display:block;width:100%;max-width:536px;height:auto;border-radius:14px;border:1px solid ' . RM_LINE . ';"></div>';
     }
-    $inner .= '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 18px;">Культурный центр «Музыкальный Мир» подвёл итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
+    $inner .= $orderBtn;
+    $inner .= '<p style="margin:18px 0 18px;">Культурный центр «Музыкальный Мир» подвёл итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
         . 'С радостью объявляем Ваш результат.</p>';
     // Крупно результат.
     $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
@@ -378,9 +404,6 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     }
     $inner .= rm_mail_app_card($a, $c);
     $inner .= '<p style="margin:14px 0 0;color:' . RM_MUTED . ';font-size:14px;">Полный список результатов конкурса - на сайте, в нашем сообществе ВКонтакте и во вложении к этому письму.</p>';
-
-    // Кнопки: заказать награды (hero) + список на сайте + список в ВК + скачать файл.
-    $awardsUrl  = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . (int) $a['id'];
 
     /* НАГРАДУ ПОКУПАЮТ ГЛАЗАМИ.
      *
@@ -399,8 +422,11 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     if (function_exists('ao_block')) {
         $inner .= ao_block((int) $a['competition_id'], $result, '', $isGroup);
     }
+    // Кнопка заказа повторяется под витриной: наверху её видит тот, кто решил
+    // сразу, здесь — тот, кто сначала посмотрел, что именно ему предлагают.
+    $inner .= '<div style="margin:18px 0 0;">' . $orderBtn . '</div>';
+
     $resultsUrl = url('/results/' . (string) ($c['slug'] ?? ''));
-    $hero = mm_cta_primary($awardsUrl, 'Заказать наградной материал', 'Кубки, медали, оригиналы дипломов по результату');
     $actions = [['Список результатов на сайте', $resultsUrl]];
     if ($vkUrl !== '')  $actions[] = ['Список результатов в ВКонтакте', $vkUrl];
     if ($docxUrl !== '') $actions[] = ['Скачать список результатов (DOCX)', $docxUrl];
@@ -409,7 +435,8 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     $subject = 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $result;
     $html = mm_email_tx($inner, [
         'preheader' => 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: ' . $result . '.',
-        'hero'      => $hero,
+        // Первичная кнопка стоит внутри письма, сразу под афишей — шапка её не дублирует.
+        'hero'      => '',
         'actions'   => $actions,
         'thanks'    => true,
     ]);
