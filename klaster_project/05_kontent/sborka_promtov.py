@@ -522,8 +522,256 @@ from promt_engine import Бренд, собрать, проверить
 })
 
 
+
+# Месяц 1: сцены сведены со строкой «Визуал:» в MESYAC_1/NEDELYA_*.md. Одно
+# предложение, только предметы и их расположение: цвет, свет, оптику и
+# типографику добавляет паспорт бренда, дублировать их в сцене вредно.
+СЦЕНЫ.update({
+"P-01-krt-karta":
+    "a printed district map spread flat on a workshop bench, cropped to two blocks, one of them shaded solid "
+    "to its boundary while the street line of the other runs clear along the edge, a steel rule pinning the "
+    "lower margin",
+"P-01-krt-karta-b":
+    "one frame divided by a single vertical seam, a factory hall with rail spurs running up to its gates "
+    "standing on the left side and the same ground rebuilt into residential blocks along an embankment on "
+    "the right",
+"P-54-nds-schet":
+    "two hands over a desk calculator standing on a workshop bench, a printed invoice sheet lying beside it a "
+    "little further back, a steel rule and swept swarf along the far edge of the bench",
+"P-05-krug-territoriya":
+    "a walk through an industrial territory held inside a circular frame, the inner street running ahead "
+    "between roller gates, a freight lift doorway and a crane hook passing close by at the frame edge",
+"P-03-dzen-oblozhka-krt":
+    "one frame cut corner to corner by a diagonal, working production sheds with roller gates filling the "
+    "lower half and new residential towers standing on the upper half, wet asphalt along the seam",
+"P-402-vc-kadry":
+    "the hands of a machinist on the cross slide handwheel of a worn lathe, cropped at the wrists so no face "
+    "is in frame, curled swarf lying on the bed and oil ghosting along the ways",
+"P-06-pol-ankery":
+    "a workshop floor slab filling the frame, four empty anchor holes left where a machine stood, a crack "
+    "running along the slab joint past them, the wedge of an open gate thrown across the concrete",
+"P-20-moshchnost-schet":
+    "an incoming switchgear cabinet with its door swung open, a small tag wired to one breaker in the near "
+    "plane, the hand of an electrician resting on the panel edge, cable glands entering from below",
+"P-401-dzen-moshchnost":
+    "a row of stamped equipment rating plates on machine casings, the nearest one filling the near plane and "
+    "the rest falling away down the line, the hall behind them soft",
+"P-04-nagruzka":
+    "the concrete floor under a machine bed, one anchor plate and its bolt in the near plane, the machined "
+    "foot of the frame resting on it, floor marking running away past the base into the bay",
+"P-09-vc-oblozhka":
+    "a production hall with a crane rail overhead in the near half and a row of residential towers behind it, "
+    "a strip of ruled calendar tape running across the frame between them with cross marks at intervals",
+"P-04-nagruzka-b":
+    "a row of machine tools standing down one side of a production bay, their beds bolted to the floor at even "
+    "intervals, a swept aisle running past them to the far end of the hall",
+"P-409-kak-otvechaem":
+    "the desk of a letting office from above, a floor plan of a block unfolded across it, a tape measure lying "
+    "over the plan, a phone face up beside it and a mug at the corner of the desk",
+"P-05-lift":
+    "the open doors of a goods lift seen from inside a block, a pallet of steel stock standing on the cabin "
+    "floor, a person beside it for scale, floor marking visible through the doorway",
+"P-84-dzen-sreda-smeny":
+    "a canteen servery with trays along the hot line and a row of changing room lockers standing beside it "
+    "across a shared partition, one locker door open with a work jacket on the hook",
+"P-407-dogovor-fiksiruem":
+    "a meeting room table from above, two copies of a contract lying side by side, a marked up printout "
+    "between them, two hands over the page and a coffee cup at the near corner",
+"P-24-srok-uvedomleniya":
+    "a machine being lifted off its foundation in a bay, empty anchor holes in the floor beneath it, rigging "
+    "slings under the frame and a hydraulic lifting table taking the weight, a work order sheet on a crate in "
+    "the near plane",
+"P-403-rbk-promzemlya":
+    "an aerial view of a city with the boundary between industrial roofs and housing running corner to corner "
+    "across the frame, saw tooth sheds and service yards on one side of it, dense residential blocks on the other",
+"P-24-dogovor-krt-b":
+    "a single contract page under a desk lamp, one line of it underscored by a marker stroke, the margins "
+    "empty, a pen lying across the lower corner of the sheet",
+"P-404-dzen-12-voprosov":
+    "a printed list of questions clamped to a clipboard, a tape measure lying across the sheet, the roller "
+    "gates of a workshop standing out of focus behind it",
+"P-07-shest-otrasley":
+    "the inner drive between two blocks, a sectional door standing open on each side with work going on inside "
+    "both, a trolley carrying a part being pushed across the drive between them",
+"P-12-vosem-strok-platezha":
+    "a desk carrying a calculator, a printed invoice and a folded floor plan of a block, a pencil resting on a "
+    "hand written sheet of eight ruled lines beside them",
+"P-24-pyat-strok-smety":
+    "five machined steel strips laid one under another on a bench with an even gap between them, each strip "
+    "blank, the lowest one set a finger further out than the rest",
+"P-23-vorota-fura":
+    "a semi trailer swinging round in the lower part of the frame with the opening of a loading gate above it, "
+    "yard marking curving under the wheels, the steel canopy of the gate closing the top edge",
+"P-405-dzen-cenovye-kategorii":
+    "a row of breakers behind the open door of a distribution board, the hands of an energy engineer on a "
+    "switch handle at the near end, the rest of the panel running away along the wall",
+"P-27-ploshchadki-mira":
+    "three separate city blocks laid out as three ruled ground plans side by side on one flat surface, a thin "
+    "line running between them from the first plan to the last",
+"P-20-moshchnost-schet-b":
+    "two upright steel columns of very different height standing apart on a swept floor, the tall one on the "
+    "left and the short one on the right, a thin bar spanning the gap between their tops",
+"P-15-rbk-oblozhka":
+    "a working industrial territory in the near half of the frame with a tower crane standing over one corner "
+    "of it and a row of residential towers on the far side, open sky above the near roofs",
+"P-13-chto-vhodit":
+    "five machined steel strips laid in a stack on a bench, a thin scored line running across each of them, "
+    "one larger blank plate standing on edge behind the stack",
+"P-16-chetyre-stroki":
+    "four flat steel plates lying in a stack with a finger's width between them on a bench, the top plate "
+    "pushed back and the three below it set slightly proud of its edge",
+"P-406-vc-robotizacia":
+    "a six axis robot arm folded at rest inside an empty production cell, the mesh of a safety fence standing "
+    "between it and the near edge of the frame, the hall behind falling away",
+"P-29-infrastruktura":
+    "the inner street of a territory at midday, workers in overalls walking away from the frame between the "
+    "blocks, a canteen doorway at the far end, marking numbers painted on the apron",
+"P-13-chto-vhodit-b":
+    "a milled steel panel bolted flat to a wall, eight shallow grooves cut across it one under another at even "
+    "spacing, one groove wider than the rest, screw heads at the panel corners",
+"P-83-shchit-100-kvt":
+    "a small stamped tag wired to a breaker on an incoming switchboard filling the near plane, the cable cores "
+    "behind it running down into the cabinet and out of focus",
+"P-417-vc-vtoraya-ochered":
+    "the inside of a newly built bay, a grid of raw concrete columns receding to the far wall, a clean poured "
+    "floor with no equipment standing on it, roof lights in a row overhead",
+"P-88-vtoraya-ochered":
+    "the entrance to a territory from the height of a truck cab, a site hoarding standing along the right side "
+    "of the drive, temporary route marking painted on the asphalt ahead and a barrier arm beyond it",
+"P-210-zavody-v-gorodah":
+    "four fragments of industrial city in one frame divided by thin seams, a factory block against housing, a "
+    "test track on a roof, a mine headframe and a works gate with people passing through it",
+"P-07-shest-otrasley-b":
+    "two doors in one corridor of a block standing opposite each other, a small plate mounted beside each of "
+    "them, a trolley loaded with tooling standing on the floor between the two doors",
+"P-407-dzen-tri-mesta":
+    "a machine tool strapped to a rigging skate standing in front of the open doors of a goods lift, a tape "
+    "measure extended across the doorway, slings coiled on the floor beside the skate",
+"P-408-rbk-zachem-goroda":
+    "a production block standing right up against a residential building with only a fence between them, "
+    "windows lit in both at evening, a narrow strip of yard running along the fence",
+"P-S-subbota-rabochaya":
+    "the inner street of a territory on a working Saturday, a semi trailer standing at an open gate with its "
+    "ramp down, pallets on the apron beside it and the guard post small at the far end of the row",
+"P-11-shattl":
+    "a minibus shuttle standing at the guard post of a territory in the morning, its door open with people "
+    "stepping in one after another, the barrier arm raised over the drive behind it",
+"P-22-dzen-pereezd-90":
+    "a long painted line running down the middle of a bay floor from the near edge into the depth of the hall, "
+    "four short cross marks scribed across it at intervals, a crane rail overhead",
+})
+
+
+# Сцена каждого слайда карусели и серии историй: выведена из его собственного
+# заголовка и подписи в файле недели. Слайд про ворота показывает ворота, слайд
+# про лифт показывает лифт. Внутри одной серии сцены разные, но из одного мира:
+# карусель по договору идёт по столу, карусель по территории по территории.
+СЦЕНЫ_СЛАЙДОВ = {
+# P-02 карусель «Полгода без отгрузок»: мир опустевшего цеха
+"P-02-karusel-krt-01": "an empty loading gate of a workshop shut from the inside of the bay, the dock leveller folded down, no truck on the apron beyond it, pallets stacked against the wall",
+"P-02-karusel-krt-02": "a sealed envelope lying on a workshop bench beside a bundle of keys, the roller gate of the bay standing closed behind it, a trolley parked against the wall",
+"P-02-karusel-krt-03": "a pad mounted transformer standing on a low plinth in a yard, its cable trench open in front of it, a workshop wall with a closed gate behind it",
+"P-02-karusel-krt-04": "a machine tool, a piston compressor and a run of dismantled racking standing together on the apron of a bay, strapped to skates and ready to be taken away",
+"P-02-karusel-krt-05": "a bay stripped of equipment, ventilation ducting still running along the roof structure and a cable tray still fixed to the wall, anchor holes left in the bare floor",
+"P-02-karusel-krt-06": "a switchboard cabinet bolted into the wall of an empty bay, its door shut and sealed, the conduit from it disappearing into the concrete, nothing else in the room",
+"P-02-karusel-krt-07": "a printed city map sheet lying flat on a bench, two blocks cropped inside a scribed rectangle, one of them shaded solid, a steel rule along the lower margin of the sheet",
+"P-02-karusel-krt-08": "a workshop gate standing wide open onto a swept bay with a machine running inside, the apron in front of it clear, a numbered plate fixed to the wall beside the opening",
+# P-S договор в четверг: мир стола с документами
+"P-S-dogovor-v-cetverg-01": "a poured workshop floor and the ventilation duct above it in one frame, the duct running the length of the bay and the floor freshly finished, no machine standing on either",
+"P-S-dogovor-v-cetverg-02": "a stapled contract standing open on a bench, its pages held flat by a steel rule, a pen resting in the gutter between the two open pages",
+"P-S-dogovor-v-cetverg-03": "a bundle of contract pages clipped together on a bench beside a folded floor plan, the corner of the top sheet turned up, a workshop gate closed behind them",
+# P-S сотня мастерских: мир плотного квартала мастерских
+"P-S-sotna-masterskih-v-odnom-kvartale-01": "a dense quarter of small workshops from above, dozens of saw tooth roofs packed edge to edge with narrow service yards between them, a few gates standing open",
+"P-S-sotna-masterskih-v-odnom-kvartale-02": "a narrow workshop street with shutters half raised on both sides, a small lathe standing inside one doorway, crates and stock stacked along the kerb",
+"P-S-sotna-masterskih-v-odnom-kvartale-03": "a machined part resting on a trolley in the drive between two blocks, the open gate of the next workshop a few steps beyond it, tool boxes by the threshold",
+# P-S 10 минут на отгрузке: мир ворот и двора
+"P-S-10-minut-na-kajdoj-otgruzke-01": "a yard with a semi trailer swinging round in the middle of it, painted bays marking the turning circle, the long wall of a block with numbered gates closing the far side",
+"P-S-10-minut-na-kajdoj-otgruzke-02": "the open gate of a bay from inside the dark hall, the rectangle of the opening filled with the flat yard beyond, dock seals worn along its edges, a pallet truck at the threshold",
+"P-S-10-minut-na-kajdoj-otgruzke-03": "a stack of loaded pallets standing just inside a bay door, stretch film catching on the corners, the gate half raised above them",
+"P-S-10-minut-na-kajdoj-otgruzke-04": "the tail of a semi trailer backed hard against a dock, the gap between the bed and the leveller plate showing beneath it, rubber seals pressed against the trailer sides",
+# P-25 карусель про договор: мир стола, шесть строк как шесть предметов
+"P-25-karusel-dogovor-01": "a stapled contract lying open on a bench with a steel rule across the lower third of the page, a pen and a bundle of keys beside it",
+"P-25-karusel-dogovor-02": "a franked envelope propped against a desk tray beside a closed contract folder, a letter opener lying across the tray",
+"P-25-karusel-dogovor-03": "a folded newspaper lying on a workshop bench beside a wall calendar torn down to three remaining sheets, a pencil across the calendar",
+"P-25-karusel-dogovor-04": "ventilation ducting and a cable run fixed to the wall of an empty bay above a freshly poured floor, a folded drawing sheet left on the floor beneath them",
+"P-25-karusel-dogovor-05": "a machine strapped to a rigging skate standing on the apron beside an open gate, slings and shackles laid out on the concrete in front of it",
+"P-25-karusel-dogovor-06": "three steel bars of rising height standing in a row on a bench beside a closed contract folder, the tallest one nearest the edge",
+"P-25-karusel-dogovor-07": "a machine standing on levelling wedges in a bare bay with its covers off, hand tools and a spirit level laid out on a crate beside it",
+"P-25-karusel-dogovor-08": "a bundle of contract pages held together by a bulldog clip on a bench, one extra sheet lying loose beside the bundle, a pen across it",
+"P-25-karusel-dogovor-09": "a contract squared up on a bench with two chairs pulled to the same side of it, a pen resting on the top page and a folder standing closed at the far edge",
+# P-S что происходит с промзонами: мир города сверху
+"P-S-cto-proishodit-s-promzonami-moskvy-01": "an aerial view of a city district where workshop roofs stop against rows of new housing, the boundary running straight through the frame, tower cranes on the built side",
+"P-S-cto-proishodit-s-promzonami-moskvy-02": "a workshop bay half emptied of equipment, a machine strapped to a skate near the gate and anchor holes left in the floor behind it, crates stacked along the wall",
+"P-S-cto-proishodit-s-promzonami-moskvy-03": "an aerial view of a working industrial quarter with a single block outlined by the streets around it, service yards and truck bays showing in the gaps between the roofs",
+"P-S-cto-proishodit-s-promzonami-moskvy-04": "a printed city map sheet spread on a bench with a straightedge laid along one street, a pencil resting where two streets cross",
+# P-S суббота на территории: мир территории в рабочую субботу
+"P-S-subbota-na-territorii-01": "the inner street of a territory with two semi trailers standing at open gates on the same side, an overhead crane hook lowered inside one of the bays, trolleys on the apron",
+"P-S-subbota-na-territorii-02": "the entrance group of a territory with a barrier arm down across the drive, a guard window beside it and a camera on a mast above, the gate open behind",
+"P-S-subbota-na-territorii-03": "a closed roller gate at the end of a row with a small wicket door set into it standing ajar, the apron in front swept clear, a trolley parked against the wall",
+"P-S-subbota-na-territorii-04": "the inner street of a territory in the evening with one gate still open at the far end, a car standing on the apron in front of it, the rest of the row shut",
+# P-S шахта Цольферайн: мир сохранённой шахты и московского квартала
+"P-S-sahta-kotoraa-zakrylas-v-1986-godu-01": "a tall lattice mine headframe standing above a brick winding house, the empty yard beneath it swept clean, rail track ending at the foot of the structure",
+"P-S-sahta-kotoraa-zakrylas-v-1986-godu-02": "a long brick industrial hall with tall steel windows, a stone plaque set into the wall beside its doorway, the headframe rising above the roofline behind it",
+"P-S-sahta-kotoraa-zakrylas-v-1986-godu-03": "the inside of a converted coal washing plant, the original steel machinery left standing in the hall with a new staircase threaded between the frames",
+"P-S-sahta-kotoraa-zakrylas-v-1986-godu-04": "an aerial view of a Moscow industrial quarter with workshop roofs on one side of a street and new residential towers rising on the other",
+"P-S-sahta-kotoraa-zakrylas-v-1986-godu-05": "a printed district map lying on a bench beside a phone face up, a pencil resting across the map where two blocks meet",
+# P-89 карусель про стройку за забором: мир общей границы со стройплощадкой
+"P-89-karusel-stroyka-ryadom-01": "a construction hoarding running the width of the frame with a working block standing directly behind it, a tower crane above the roofline, the shared apron scuffed by tyres",
+"P-89-karusel-stroyka-ryadom-02": "a site programme sheet clipped to a board mounted on the hoarding, a hard hat resting on the ledge beneath it, the crane base visible past the end of the board",
+"P-89-karusel-stroyka-ryadom-03": "one entrance drive shared by a semi trailer and a tipper truck, temporary route marking painted across the asphalt between them, cones set along the edge of the works",
+"P-89-karusel-stroyka-ryadom-04": "site cabins stacked two high standing across a row of painted parking bays, an excavator parked beside them, the bays under the cabins no longer usable",
+"P-89-karusel-stroyka-ryadom-05": "a precision machine standing in a bay with fine dust settled on its covers, a dial indicator mounted on the bed, the wall beyond it shared with the works",
+"P-89-karusel-stroyka-ryadom-06": "a shared drive tracked with dried mud from site wheels, the ruts running from a gate in the hoarding toward the open door of a bay",
+"P-89-karusel-stroyka-ryadom-07": "the raw concrete frame of a finished new block standing beside the working one, its floors clear and its gates not yet fitted, the yard between them swept",
+"P-89-karusel-stroyka-ryadom-08": "a folded site plan lying on the bonnet of a car parked at the hoarding, a pen on top of it, the gate of the works standing open beyond",
+# P-S четыре минуты, пять тонн, лифт: мир территории и трёх замеров
+"P-S-4-minuty-5-tonn-5-tonn-01": "an industrial territory from the roof parapet of one of its blocks, the yard laid out in painted bays below, the long roofs of the other blocks running to the boundary fence",
+"P-S-4-minuty-5-tonn-5-tonn-02": "the concrete floor of a bay with the levelling foot and anchor plate of a heavy machine bolted into it, the slab joint running past the base into the depth of the hall",
+"P-S-4-minuty-5-tonn-5-tonn-03": "the open doorway of a goods lift with a pallet of steel stock standing inside the cabin, a tape measure hooked on the door frame across the opening",
+"P-S-4-minuty-5-tonn-5-tonn-04": "the loading gate of a block from the middle of the yard, its shutter rolled fully up, painted bay lines running from the near edge of the frame to the threshold",
+# P-S первый день ленты: мир утра на территории
+"P-S-pervyj-den-lenty-01": "the entrance group of a territory early in the morning, a semi trailer just through the barrier standing on the drive, the guard window beside it and the gate open ahead",
+"P-S-pervyj-den-lenty-02": "an aerial view of a working quarter with one street separating the workshop roofs from a row of new residential towers standing along it",
+"P-S-pervyj-den-lenty-03": "the inside of a bay in the morning with the gate rolled up at the far end, a machine standing under the crane rail and the floor marking leading out through the opening",
+# P-S суббота рабочая: мир субботнего просмотра
+"P-S-subbota-rabochaya-01": "the inner street of a territory with a semi trailer standing at an open gate and its ramp down, pallets on the apron beside it, the row of gates running away past them",
+"P-S-subbota-rabochaya-02": "a tape measure held open across the opening of a loading gate, its blade spanning the jambs, a notebook and a bundle of keys on a crate beside the threshold",
+"P-S-subbota-rabochaya-03": "the guard post at the entrance of a territory with the barrier arm raised, a visitor log book open on the ledge of its window, the drive beyond running into the yard",
+# P-S первый счёт: мир офисной части и бумаг
+"P-S-pervyj-scet-01": "an office corridor of an administrative block in the morning, glazed partitions along one side and a linear ceiling light running away from the near edge of the frame",
+"P-S-pervyj-scet-02": "seven printed sheets fanned across a desk in an office, the top one squared to the edge, a pen and a pocket calculator lying beside them",
+"P-S-pervyj-scet-03": "the yard of a territory from the roof parapet, blocks standing around it with their gates shut, painted parking bays laid out in a grid below",
+# P-53 карусель про индексацию: мир договора и мерных предметов
+"P-53-karusel-indeksaciya-01": "a stapled contract lying open on a bench with three words of one clause underscored by a marker stroke, a steel rule across the lower part of the page",
+"P-53-karusel-indeksaciya-02": "three steel bars of gently rising height standing in a row on a bench, evenly spaced, a pocket calculator lying in front of the shortest one",
+"P-53-karusel-indeksaciya-03": "four steel bars standing on a bench with the gap in height between each pair growing sharply toward the far end of the row",
+"P-53-karusel-indeksaciya-04": "a machined gauge block standing upright on a bench with a dial indicator resting against its face, the indicator stand clamped down beside it",
+"P-53-karusel-indeksaciya-05": "a wall mounted pressure gauge with its needle standing off zero, pipework running away from it in both directions along the wall",
+"P-53-karusel-indeksaciya-06": "an empty bench with a contract page lying face down on it and a pen resting across the blank back of the sheet, nothing else on the surface",
+"P-53-karusel-indeksaciya-07": "a folded drawing sheet on a bench with a straightedge, a pair of dividers and a pencil laid out in a row along its lower edge",
+"P-53-karusel-indeksaciya-08": "a contract folder standing open on a bench beside a phone lying face up, a pen across the open page and a bundle of keys at the corner",
+# P-S сложный процент: мир договора и двух мерных пар
+"P-S-slojnyj-procent-01": "a contract page on a desk with a finger resting on one clause partway down it, the rest of the sheet lying flat under a steel rule",
+"P-S-slojnyj-procent-02": "a pocket calculator lying on a printed invoice on a bench, a pencil beside it and a folded sheet of hand written figures under the corner",
+"P-S-slojnyj-procent-03": "two steel bars of slightly different height standing side by side on a bench, the taller one a finger's width above the other",
+"P-S-slojnyj-procent-04": "two steel bars standing far apart in height on a bench, the tall one rising well above the short one, both squared to the same base line",
+"P-S-slojnyj-procent-05": "a stack of printed sheets squared up on a bench beside a phone lying face up, a pen resting across the top sheet of the stack",
+# P-S суббота и вторая смена: мир территории ночью
+"P-S-subbota-i-vtoraa-smena-01": "the yard of a territory at night with a car at the exit drive and its headlights raking the asphalt, the blocks around it dark except for one open gate",
+"P-S-subbota-i-vtoraa-smena-02": "a barrier arm lowered across an entrance drive at night, a lamp on the guard post above it, the road beyond running out into the dark",
+"P-S-subbota-i-vtoraa-smena-03": "the window of a guard post at night with a pass log book open on the ledge, a phone and a set of keys beside it, the drive dark beyond the glass",
+"P-S-subbota-i-vtoraa-smena-04": "a loading gate standing open at night with light falling out of the bay onto the apron, a semi trailer backed up to it and a trolley waiting on the concrete",
+}
+
+
 ФОРМАТЫ = {"16:9": "16:9", "4:5": "4:5", "9:16": "9:16", "4:3": "4:3", "1:1": "1:1"}
-БЕЗ_ГЕНЕРАЦИИ = {"P-05-lift", "P-11-shattl", "P-94-kvartal-karta", "P-01-krt-karta",
+# Кадры, которые нейросетью не рисуются: карта и схема квартала берутся из
+# официального источника с подписью и датой среза, кружок и Reels это видео.
+# P-05-lift и P-11-shattl отсюда убраны: открытый грузовой лифт и шаттл у КПП это
+# обычные фотокадры, в файлах недель они идут с описанием кадра, а не со ссылкой
+# на внешний источник, и без них у этих единиц не остаётся визуала вообще.
+БЕЗ_ГЕНЕРАЦИИ = {"P-94-kvartal-karta", "P-01-krt-karta",
+                 "P-93-karusel-kvartal", "P-05-krug-territoriya",
                  "P-92-peresmenka-reels"}
 
 
@@ -578,7 +826,10 @@ def сцена_ключа(к):
 # и режиссёрская ремарка для съёмки или SMM. Ремарку в кадр пускать нельзя:
 # «кадр территории сверху» и «опрос: читал / не открывал» так и печатались на
 # картинке вместо того, чтобы остаться указанием для человека.
-РЕМАРКА = re.compile(r"^\s*(кадр\b|живой кадр|опрос|викторин|стикер|слайдер|"
+# «живая съёмка двора» и «цифры крупно» тоже ремарки: после сведения сцен они
+# остались единственными подписями, которые печатались бы на картинке как текст
+РЕМАРКА = re.compile(r"^\s*(кадр\b|живой кадр|живые кадр|живая съёмк|живая съемк|"
+                     r"цифры крупно|вид\b|опрос|викторин|стикер|слайдер|"
                      r"стрелка|съёмка|съемка|фото\b|видео\b|крупный план|"
                      r"общий план|обложка|скрин|снимок|инфографик|схема\b|"
                      r"график\b|карта\b|анимаци|титр)", re.I)
@@ -600,7 +851,10 @@ def кадры_единицы(е):
     """Список кадров под движок: один для поста, по слайду для карусели и серии."""
     к = е["ключ"]
     осн = к.rpartition("-")[0] if к.rpartition("-")[2] in ВАРИАЦИИ else к
-    if к in БЕЗ_ГЕНЕРАЦИИ or осн in БЕЗ_ГЕНЕРАЦИИ: return []
+    # запрет базового ключа на вариацию не переносится, если у вариации своя
+    # сцена: у P-01-krt-karta-b кадр не карта, а таймлайн, и в файле недели он
+    # помечен генерацией. Наследование запрета отняло бы у него единственный кадр
+    if к in БЕЗ_ГЕНЕРАЦИИ or (осн in БЕЗ_ГЕНЕРАЦИИ and к not in СЦЕНЫ): return []
     сцена = сцена_ключа(к)
     if not сцена: return []
     if not е["слайды"]:
@@ -612,11 +866,16 @@ def кадры_единицы(е):
     вышло = []
     for i, (номер, заголовок, подпись) in enumerate(е["слайды"], 1):
         подпись = служебная(подпись)
-        # выбор от ключа единицы: иначе все карусели идут по одному и тому же
-        # ряду поверхностей и вся лента выглядит собранной из одного набора
-        сдвиг = int(hashlib.md5(к.encode()).hexdigest()[:8], 16)
-        поверхность = сцена if i == 1 else ПОВЕРХНОСТИ[(сдвиг + i - 2) % len(ПОВЕРХНОСТИ)]
-        вышло.append({"ключ": f"{к}-{i:02d}", "формат": е["формат"], "сцена": поверхность,
+        ключ_слайда = f"{к}-{i:02d}"
+        # сцена слайда пишется под его собственный заголовок и подпись: слайд про
+        # ворота показывает ворота, слайд про лифт показывает лифт. Поверхность из
+        # ПОВЕРХНОСТИ осталась запасным вариантом для серий без своих сцен: выбор
+        # от ключа единицы, иначе все карусели идут по одному и тому же ряду
+        сцена_слайда = СЦЕНЫ_СЛАЙДОВ.get(ключ_слайда)
+        if not сцена_слайда:
+            сдвиг = int(hashlib.md5(к.encode()).hexdigest()[:8], 16)
+            сцена_слайда = сцена if i == 1 else ПОВЕРХНОСТИ[(сдвиг + i - 2) % len(ПОВЕРХНОСТИ)]
+        вышло.append({"ключ": ключ_слайда, "формат": е["формат"], "сцена": сцена_слайда,
                       "вид": вид, "номер": i, "всего": всего,
                       "заголовок": заголовок.replace(" / ", " ").strip(),
                       "подпись": подпись.strip(), "рубрика": рубрика(е)})
