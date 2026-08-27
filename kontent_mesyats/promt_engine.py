@@ -65,8 +65,8 @@ class Бренд:
              "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
              "surface, obeys the frame perspective and takes the same light and dust.") + " " +
             (правило_знака or "") + " "
-            "Nothing crosses the characters, no blur, no unplanned line break, and an eight percent dead margin "
-            "on all four sides stays clear. "
+            "Nothing crosses the characters, no blur, no unplanned line break, eight percent dead margin all "
+            "round. "
             "Nothing drawn from an interface: no buttons, swipe arrows, link chips, cursors, app icons or screen "
             "mock-ups. No text beyond the captions given here: no subtitles, extra numbers, dimension callouts, "
             "scale bars, street names, addresses, watermarks, timestamps, price tags, currency signs, second logo, "
@@ -88,9 +88,9 @@ class Бренд:
     ("stencil",  "The headline is hard-stencilled straight onto the concrete wall of the scene in thick industrial "
                  "paint, letters a metre tall with the tooth of the roller and visible stencil bridges, slightly "
                  "worn at the edges, reading exactly, character by character, the Russian line «{}»."),
-    ("floor",    "The headline is painted into the floor marking itself, laid along the bay in the same worn safety "
-                 "yellow as the walkway lines, seen at a raking angle from standing height so the letters foreshorten "
-                 "with the perspective of the floor, reading exactly, character by character, the Russian line «{}»."),
+    ("floor",    "The headline is painted into the floor marking itself in the same worn safety yellow as the walkway "
+                 "lines, seen from almost directly above so the letters keep their true shape and read flat, "
+                 "reading exactly, character by character, the Russian line «{}»."),
     ("light",    "The headline is thrown across the scene as a hard shaft of projected light through a cut metal "
                  "gobo, the letters falling over wall, pipework and floor and bending where the surface breaks, "
                  "reading exactly, character by character, the Russian line «{}»."),
@@ -129,10 +129,10 @@ class Бренд:
 # Обязательный масштаб надписи: применяется к любому приёму подачи. Держим одни
 # числа и убираем повторы: место в промпте дороже красивой формулировки.
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
-           "and a quarter of its height and stays readable at a two hundred pixel thumbnail. Contrast is not left "
-           "to chance: warm white on a dark ground, or near black on a solid amber block. Where the type crosses "
-           "a bright or busy area, the ground under it is darkened or a plate is laid behind it. No amber type on "
-           "a pale ground, no dark type on a dark one.")
+           "and a quarter of its height and reads at a two hundred pixel thumbnail. Contrast is set, not hoped "
+           "for: warm white on dark, or near black on solid amber, and where the type crosses a bright or busy "
+           "area the ground under it is darkened. No amber on pale, no dark on dark. The headline faces camera "
+           "square and never runs away from the lens: foreshortened letters stop being letters at feed size.")
 
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
@@ -649,9 +649,9 @@ def графика(ключ, номер=0):
 # софтбоксу и одинаковому пластиковому материалу, из-за чего кадр и читался как
 # «фон плюс текст». Числа взяты из вывода разбора DIZAJN_3D и задают минимум,
 # ниже которого падать нельзя, а не описание конкретной сцены.
-ФИЗИКА = ("Physics floor: two light sources at least, with stated colour temperatures and different angles, never "
-          "one flat wash; three materials of visibly different roughness, concrete near 0.75, brushed steel 0.25, "
-          "glass 0.02; black point at 6 of 255, nothing clipped; two overlaid effects at most.")
+ФИЗИКА = ("Physics floor: two light sources at least, stated colour temperatures, different angles, never one flat "
+          "wash; three materials of different roughness, concrete 0.75, brushed steel 0.25, glass 0.02; black "
+          "point at 6 of 255; two overlaid effects at most.")
 
 # Тема сама подсказывает систему. Люди, работа, ошибки и кадры цеха идут через
 # экшен-системы, цифры, деньги и сравнения через объёмные 3D-системы, город,
