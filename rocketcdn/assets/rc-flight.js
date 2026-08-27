@@ -3690,9 +3690,16 @@ function buildWorld() {
         "varying float vSide;",
         "varying float vAlong;",
         "varying float vSeed;",
+        "varying float vRad;",
         "void main() {",
         "  vSide = aSide; vAlong = aAlong; vSeed = aSeed;",
-        "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
+        "  vec4 mv = modelViewMatrix * vec4(position, 1.0);",
+        /* Угол от оси взгляда. У точки схода полос сотни ореолов
+           складывались друг с другом и заливали кадр молочной
+           дымкой - тем самым «мутным космосом». В жизни там ничего
+           яркого нет: полосы сходятся В ТОЧКУ, а не в пятно. */
+        "  vRad = length(mv.xy) / max(1.0, abs(mv.z));",
+        "  gl_Position = projectionMatrix * mv;",
         "}"
       ].join("\n"),
       fragmentShader: [
@@ -3703,6 +3710,7 @@ function buildWorld() {
         "varying float vSide;",
         "varying float vAlong;",
         "varying float vSeed;",
+        "varying float vRad;",
         "void main() {",
         /* Поперёк следа: единица в середине, ноль по краям. Степень
            даёт узкое раскалённое ядро и широкий мягкий ореол. */
@@ -3716,7 +3724,10 @@ function buildWorld() {
         /* Голова чуть подсвечена отдельно: у настоящего следа она
            самая яркая точка, а не просто край. */
         "  float head = pow(clamp(1.0 - vAlong, 0.0, 1.0), 9.0) * 0.55;",
-        "  float a = (halo * 0.55 + core * 0.9) * (tail + head) * uOpacity * (0.4 + vSeed * 0.6);",
+        /* Ореол ужат: он и давал дымку, складываясь сам с собой на
+           сотне полос. Ядро осталось прежним, след стал резче. */
+        "  float a = (halo * 0.34 + core * 0.95) * (tail + head) * uOpacity * (0.4 + vSeed * 0.6);",
+        "  a *= smoothstep(0.0, 0.11, vRad);",
         "  if (a < 0.004) discard;",
         "  vec3 col = mix(uColor, vec3(1.0), core * (0.55 + uHeat * 0.35));",
         "  gl_FragColor = vec4(col * (0.55 + core * 0.85), a);",
@@ -3794,7 +3805,7 @@ function buildWorld() {
 
       var roll = Math.random();
       var c;
-      if (tt < 0.14) { c = cCore; siz[k] = 1.5; }
+      if (tt < 0.14) { c = cCore; siz[k] = 2.0; }
       else if (roll > 0.92) { c = cA; siz[k] = 2.2; }        /* голубые гиганты */
       else if (roll > 0.84) { c = cDust; siz[k] = 1.0; }     /* тёмная пыль */
       else { c = roll > 0.42 ? cB : cA; siz[k] = 1; }
@@ -3812,11 +3823,17 @@ function buildWorld() {
       transparent: true, opacity: 0.95, depthWrite: false, blending: T.AdditiveBlending
     }));
     /* Ядро: тёплое свечение и балдж вокруг него */
+    /* Ядро было втрое крупнее и почти непрозрачным: на подлёте оно
+       заливало кадр ровным белым шаром, а рукава за ним не читались
+       вовсе. Владелец увидел ровно это - «скачок вообще не красивый»
+       и «космос мутный». Балдж настоящей спирали ярче диска, но не
+       перекрывает его: делаем меньше и глуше, а плотность звёзд у
+       ядра поднята - светиться должны они, а не спрайт поверх. */
     var core = new T.Sprite(new T.SpriteMaterial({
       map: glowSprite(128, "rgba(255,240,214,.95)", "rgba(255,206,140,0)"),
-      transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending
+      transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending
     }));
-    core.scale.setScalar(scale * 0.34);
+    core.scale.setScalar(scale * 0.19);
     /* Гало диска: мягкое свечение по всей плоскости, из-за него
        галактика перестаёт быть россыпью точек и становится телом */
     /* Гало сжато вдвое и вдвое бледнее: на масштабе 1.9 оно
@@ -3830,6 +3847,11 @@ function buildWorld() {
     gr.add(pts); gr.add(core); gr.add(glow);
     gr.position.set(px, py, pz);
     gr.rotation.x = tiltX; gr.rotation.z = tiltZ;
+    /* Кадру нужны ссылки: у самого ядра спрайт гасится совсем, иначе
+       на подлёте он снова станет шаром */
+    gr.userData.ядро = core;
+    gr.userData.гало = glow;
+    gr.userData.радиус = scale;
     scene.add(gr);
     return gr;
   }
@@ -5080,6 +5102,14 @@ function holoFrame(w3, ts) {
     if (holoReady && g.RC_HOLO && g.RC_HOLO.clear) { try { g.RC_HOLO.clear(); } catch (e) {} }
     return;
   }
+  /* В туннеле подписей быть не должно. Мимо стекла несётся свет, а
+     поверх него висели серые карточки «ЛУНА» и «RC-SAT» - тел этих
+     в кадре уже нет, есть только их проекция где-то позади. Кадр от
+     этого читался не прыжком, а интерфейсом поверх прыжка. */
+  if (!F.away && W3 && W3.at && F.p > W3.at.jump0 + 0.02 && F.p < W3.at.jump1 - 0.01) {
+    if (holoReady && g.RC_HOLO && g.RC_HOLO.clear) { try { g.RC_HOLO.clear(); } catch (eТ) {} }
+    return;
+  }
   holoSetup();
   if (!holoReady) return;
 
@@ -6157,8 +6187,26 @@ function frame(ts) {
      совпадающую ни со светом, ни с самим солнцем в кадре. Считаем
      раз в несколько кадров: тела движутся медленно, а нормализация
      вектора на каждую оболочку каждый кадр не нужна. */
-  if (w3.atmShells && w3.atmShells.length && (!атмКадр.t || ts - атмКадр.t > 120)) {
+  /* Раз в восьмую долю секунды: медленное и дорогое. Оболочки
+     атмосфер могут и не собраться, а ядра галактик есть всегда,
+     поэтому условие тут только по времени. */
+  if (!атмКадр.t || ts - атмКадр.t > 120) {
     атмКадр.t = ts;
+    /* Ядро галактики гаснет по мере подлёта. Спрайт ядра это
+       упрощение, честное только издали: вблизи никакого светящегося
+       шара нет, есть плотная россыпь звёзд балджа. Пока спрайт
+       оставался на месте, полёт сквозь Млечный Путь упирался в белую
+       кляксу во весь проём. */
+    var галактики = [w3.milky, w3.gal2, w3.gal3];
+    for (var ги = 0; ги < 3; ги++) {
+      var га = галактики[ги];
+      if (!га || !га.userData || !га.userData.ядро) continue;
+      var рад = га.userData.радиус || 900;
+      var дг = w3.cam.position.distanceTo(га.position);
+      var к = Math.max(0, Math.min(1, (дг - рад * 0.55) / (рад * 1.4)));
+      га.userData.ядро.material.opacity = 0.5 * к;
+      if (га.userData.гало) га.userData.гало.material.opacity = 0.42 * (0.35 + 0.65 * к);
+    }
     /* Кольцам Сатурна направление на солнце нужно по той же причине:
        по нему шейдер кладёт тень планеты на кольцо. */
     if (w3.ringMat && w3.ringMat.uniforms && w3.saturn) {
@@ -6166,7 +6214,7 @@ function frame(ts) {
         .copy(w3.СОЛНЦЕ || w3.sun.position)
         .sub(w3.saturn.position).normalize();
     }
-    for (var аи = 0; аи < w3.atmShells.length; аи++) {
+    for (var аи = 0; аи < (w3.atmShells ? w3.atmShells.length : 0); аи++) {
       var об = w3.atmShells[аи];
       if (!об || !об.mesh || !об.mesh.material || !об.mesh.material.uniforms) continue;
       var у = об.mesh.material.uniforms.uSun;
@@ -6266,7 +6314,9 @@ function frame(ts) {
         }
       }
       if (nxt > 0 && uniIdx === 0) {
-        say((RU ? "ПРОБОЙ · РУКАВ " : "BREACH · ") + UNIVERSES[nxt].name, 2800);
+        /* Имя рукава уже содержит слово «рукав»: получалось
+           «ПРОБОЙ · РУКАВ МЕСТНЫЙ РУКАВ · EXO-1» */
+        say((RU ? "ПРОБОЙ · " : "BREACH · ") + UNIVERSES[nxt].name, 2800);
         setTimeout(function () { jumpUniverse(nxt); }, 480);
       } else {
         say(RU ? "ПРОБОЙ · МЛЕЧНЫЙ ПУТЬ ПОЗАДИ" : "BREACH · MILKY WAY BEHIND", 2600);
