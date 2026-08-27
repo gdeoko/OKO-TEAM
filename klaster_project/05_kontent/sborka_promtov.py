@@ -167,6 +167,7 @@ from promt_engine import Бренд, собрать, проверить
 СЦЕНЫ = {
  # --- месяц 1: перевод старых промптов на единый паспорт ---
  "P-53-karusel-indeksaciya": "three mill-finish steel bars of increasing height standing in a row on a polished concrete floor of an empty bay, evenly spaced, each casting its own long shadow toward the camera, crane rail visible overhead",
+ "P-S-subbota-rabochaya": "the inner street of an industrial territory on a bright Saturday morning, a semi trailer standing at an open roller gate of a workshop block with its ramp down, two pallets on the apron, yard marking running away in strict perspective, the guard post visible small at the far end",
  "P-S-subbota-i-vtoraa-smena": "the inner street of an industrial territory late in the evening, roller gates closed along both sides, one gate open with warm light spilling onto the concrete apron, a single car parked at the far end",
  "P-54-nds-schet": "a printed rental invoice on warm white paper lying flat on a graphite steel bench shot straight down from directly above, its printed body an unreadable grey texture with no legible word, one line of it catching a narrow amber light, a machined steel straightedge across the lower third",
  "P-02-karusel-krt": "an aerial view of a Moscow industrial district at flat overcast noon, a hard boundary where low workshop roofs stop and new residential blocks begin, cranes standing over the built side, the working half occupying the near part of the frame",
