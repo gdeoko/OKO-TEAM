@@ -597,7 +597,8 @@ def графика(ключ, номер=0):
           "5600 K key high camera left edges the top facets, a 2700 K bounce fills the sides. The letters read "
           "exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
-      "Letter faces are warm white #F5F1E8 and the extrusion sides catch amber #E8A400, every letter throws a "
+      "The line is set in uppercase so every letter is the same height and stands on one baseline. Letter "
+      "faces are warm white #F5F1E8 and the extrusion sides catch amber #E8A400, every letter throws a "
       "hard contact shadow, and nothing moving smears the type itself.",
    "знак":
       "The brand mark is a small machined plate leaning against the base of the last letter, about three percent "
