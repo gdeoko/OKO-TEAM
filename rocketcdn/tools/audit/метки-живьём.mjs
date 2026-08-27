@@ -7,7 +7,7 @@ for (const имя of (process.argv.slice(2).length ? process.argv.slice(2) : ["�
   await вИгру(pg);
   await pg.waitForTimeout(12000);
   const с = await pg.evaluate(() => {
-    const карт = [...document.querySelectorAll(".rch")];
+    const карт = [...document.querySelectorAll(".rch-tag")];
     const видимых = карт.filter((e) => !e.classList.contains("off"));
     const режет = [];
     for (const e of видимых) {
