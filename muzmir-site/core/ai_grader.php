@@ -697,7 +697,27 @@ function ag_grade_application(int $appId, array $opt = []): array {
      * человеку с готовой причиной (п. 8.1 положения — одна заявка, один
      * материал). Папка с одним файлом разбирается как обычно: там работа одна и
      * понятно какая. */
-    if (is_file(BASE_PATH . '/core/link_unique.php')) {
+    /* ПАПКУ РАЗБИРАЕМ, А НЕ ОТБРАСЫВАЕМ.
+     *
+     * Прежде любая папка с несколькими файлами означала отказ, и пятнадцать
+     * работ пересмотра остались без оценки — при том что внутри лежал один
+     * номер или файл был подписан фамилией участника. Теперь свой файл ищется
+     * по данным заявки (core/folder_pick.php), и отказ остаётся только там, где
+     * определить работу действительно нельзя: школа выложила класс одной
+     * папкой. Прежняя проверка сохранена запасным путём — на случай площадок,
+     * которые разбор папок не поддерживает. */
+    if (is_file(BASE_PATH . '/core/folder_pick.php')
+        && in_array(vf_platform($url), ['yandex_disk', 'mailru_cloud'], true)) {
+        require_once BASE_PATH . '/core/folder_pick.php';
+        $pick = fp_pick($url, $app);
+        if (!$pick['ok'] && (int) $pick['files'] > 1) {
+            try {
+                q("UPDATE grading_runs SET status='failed', error=?, reject_hint=? WHERE id=?",
+                  [mb_substr((string) $pick['why'], 0, 500), mb_substr((string) $pick['why'], 0, 900), $runId]);
+            } catch (\Throwable $e) {}
+            return ['ok' => false, 'run_id' => $runId, 'total' => 0.0, 'title' => '', 'why' => (string) $pick['why']];
+        }
+    } elseif (is_file(BASE_PATH . '/core/link_unique.php')) {
         require_once BASE_PATH . '/core/link_unique.php';
         if (function_exists('lu_is_folder')) {
             $fold = lu_is_folder($url);

@@ -65,17 +65,49 @@ function media_cloud_dates(string $url): array {
     /* ---- Яндекс.Диск ---- */
     if (str_contains($host, 'disk.yandex') || str_contains($host, 'yadi.sk')) {
         $j = media_http_json('https://cloud-api.yandex.net/v1/disk/public/resources?public_key='
-                             . rawurlencode($url));
+                             . rawurlencode($url) . '&limit=200');
         if (is_array($j)) {
-            $up = strtotime((string) ($j['created'] ?? $j['modified'] ?? ''));
-            if ($up) $out['uploaded'] = $up;
-            /* EXIF у Яндекса чаще пуст: телефоны и монтажки метаданные вычищают.
-               Когда он всё же есть — это дата съёмки, и она главнее загрузки. */
-            $ex = $j['exif'] ?? [];
-            $dt = is_array($ex) ? (string) ($ex['date_time'] ?? '') : '';
-            if ($dt !== '' && ($ts = strtotime($dt))) {
-                $out['shot'] = $ts;
-                $out['source'] = 'EXIF на Яндекс.Диске';
+            /* ПАПКА — БЕРЁМ ДАТЫ ФАЙЛА, А НЕ САМОЙ ПАПКИ.
+             *
+             * У папки «created» — это когда её завели, а не когда сняли номер:
+             * работа 2023 года в свежесозданной папке выглядела вчерашней.
+             * Внутри берём самый ранний снимок: если участник положил рядом
+             * несколько дублей одного номера, судить надо по первому. */
+            $items = (string) ($j['type'] ?? '') === 'dir'
+                ? array_values(array_filter((array) ($j['_embedded']['items'] ?? []),
+                    static fn(array $it): bool => (string) ($it['type'] ?? '') === 'file'))
+                : [$j];
+
+            /* НЕСКОЛЬКО ФАЙЛОВ В ПАПКЕ — ДАТУ ЗДЕСЬ НЕ РЕШАЕМ.
+             *
+             * Какой из них конкурсная работа, знает разбор папки
+             * (core/folder_pick.php), а «самый ранний» может оказаться чужим
+             * дублем: у заявки #1632 в папке лежат съёмки от 3 июня и от 25
+             * августа, и по первой работа выглядела бы просроченной. Точная
+             * дата всё равно берётся из скачанного файла. */
+            if (count($items) > 1) return $out;
+
+            foreach ($items as $it) {
+                $up = strtotime((string) ($it['created'] ?? $it['modified'] ?? ''));
+                if ($up && ($out['uploaded'] === null || $up < $out['uploaded'])) $out['uploaded'] = $up;
+
+                /* EXIF у Яндекса чаще пуст: телефоны и монтажки метаданные вычищают.
+                   Когда он всё же есть — это дата съёмки, и она главнее загрузки.
+                   photoslice_time — та же дата в ленте «Фото», её Яндекс отдаёт
+                   и там, где exif уже вычищен. */
+                $ex = (array) ($it['exif'] ?? []);
+                $dt = (string) ($ex['date_time'] ?? '');
+                $src = 'EXIF на Яндекс.Диске';
+                if ($dt === '' && !empty($it['photoslice_time'])) {
+                    $dt = (string) $it['photoslice_time'];
+                    $src = 'дата съёмки в ленте Яндекс.Диска';
+                }
+                if ($dt !== '' && ($ts = strtotime($dt))) {
+                    if ($out['shot'] === null || $ts < $out['shot']) {
+                        $out['shot'] = $ts;
+                        $out['source'] = $src;
+                    }
+                }
             }
         }
         return $out;
@@ -83,13 +115,42 @@ function media_cloud_dates(string $url): array {
 
     /* ---- Облако Mail.ru ---- */
     if (str_contains($host, 'cloud.mail.ru')) {
-        if (preg_match('~cloud\.mail\.ru/public/([^/?#]+/[^/?#]+)~i', $url, $m)) {
-            $j = media_http_json('https://cloud.mail.ru/api/v2/folder?weblink='
-                                 . rawurlencode($m[1]) . '&api=2');
-            $body = is_array($j) ? ($j['body'] ?? []) : [];
-            $mtime = (int) ($body['mtime'] ?? 0);
-            if (!$mtime && !empty($body['list'][0]['mtime'])) $mtime = (int) $body['list'][0]['mtime'];
-            if ($mtime > 0) $out['uploaded'] = $mtime;
+        if (preg_match('~cloud\.mail\.ru/public/([^/?#]+/[^?#]+)~i', $url, $m)) {
+            $weblink = rtrim($m[1], '/');
+            /* Ручка file отвечает и на файл, и на папку: у файла отдаёт mtime
+               самого файла, у папки — список с mtime каждого. Прежде мы
+               спрашивали только folder, и по ссылке на файл дата не приходила
+               вовсе. */
+            $j = media_http_json('https://cloud.mail.ru/api/v2/file?weblink='
+                                 . rawurlencode($weblink) . '&api=2');
+            $body = is_array($j) ? (array) ($j['body'] ?? []) : [];
+            /* Про папку ручка file отвечает «kind: folder», но содержимое
+               оставляет пустым — список отдаёт api/v2/folder (та же история,
+               что в core/folder_pick.php). */
+            if ((string) ($body['kind'] ?? '') !== 'file' && !($body['list'] ?? [])) {
+                $f = media_http_json('https://cloud.mail.ru/api/v2/folder?weblink='
+                                     . rawurlencode($weblink) . '&api=2');
+                if (is_array($f) && !empty($f['body'])) $body = (array) $f['body'];
+            }
+
+            $take = static function (array $it) use (&$out): void {
+                $mt = (int) ($it['mtime'] ?? 0);
+                if ($mt > 0 && ($out['uploaded'] === null || $mt < $out['uploaded'])) $out['uploaded'] = $mt;
+            };
+            if ((string) ($body['kind'] ?? '') === 'file') {
+                $take($body);
+            } else {
+                $inner = array_values(array_filter((array) ($body['list'] ?? []),
+                    static fn($it): bool => is_array($it) && (string) ($it['kind'] ?? '') === 'file'));
+                // Та же осторожность, что и у Яндекса: по папке с несколькими
+                // работами дату решает разбор папки, а не «самая ранняя».
+                if (count($inner) > 1) return $out;
+                foreach ($inner as $it) $take((array) $it);
+                if ($out['uploaded'] === null) $take($body);
+            }
+            /* Даты съёмки Облако по публичной ссылке не отдаёт совсем — ни EXIF,
+               ни ленты. Она достаётся только из самого файла, после скачивания
+               (media_file_shot_date), поэтому здесь остаётся только загрузка. */
         }
         return $out;
     }

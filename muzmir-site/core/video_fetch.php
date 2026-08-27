@@ -328,7 +328,38 @@ function vf_download(string $url, int $appId = 0): array {
         if ($dz['ok'] || $dz['why'] !== '') return $dz;
     }
 
-    $link  = vf_direct_link($url);
+    /* ПАПКА — ЕЩЁ НЕ ПОВОД ОТКАЗАТЬ.
+     *
+     * Ссылку на папку присылают чаще, чем на файл: кнопка «поделиться» в
+     * телефоне отдаёт именно её. Внутри у большинства лежит один номер, а у
+     * остальных нужный файл подписан фамилией участника. Разбираем (см.
+     * core/folder_pick.php) и берём свой файл; берём «первый попавшийся»
+     * только тогда, когда он единственный. */
+    $link = ['ok' => false, 'url' => '', 'name' => '', 'size' => 0, 'why' => ''];
+    if ($appId > 0 && in_array(vf_platform($url), ['yandex_disk', 'mailru_cloud'], true)
+        && is_file(BASE_PATH . '/core/folder_pick.php')) {
+        require_once BASE_PATH . '/core/folder_pick.php';
+        $app = function_exists('one')
+            ? one("SELECT full_name, group_name, work_title, created_at FROM applications WHERE id=?", [$appId])
+            : null;
+        if (is_array($app)) {
+            $pick = fp_pick($url, $app);
+            if (!$pick['ok'] && (int) $pick['files'] > 1) {
+                return ['ok' => false, 'path' => '', 'size' => 0, 'why' => (string) $pick['why']];
+            }
+            if ($pick['ok'] && (int) $pick['files'] > 1) {
+                // Свой файл найден среди нескольких — качаем именно его.
+                $direct = fp_direct_url($url, (array) $pick['file']);
+                if ($direct !== '') {
+                    $link = ['ok' => true, 'url' => $direct,
+                             'name' => (string) $pick['file']['name'],
+                             'size' => (int) $pick['file']['size'], 'why' => ''];
+                }
+            }
+        }
+    }
+
+    if (!$link['ok']) $link = vf_direct_link($url);
     if (!$link['ok']) return ['ok' => false, 'path' => '', 'size' => 0, 'why' => $link['why']];
 
     /* Расширение берём по имени файла: раньше всё, что не видео, называлось
