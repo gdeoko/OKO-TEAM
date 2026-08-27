@@ -61,8 +61,8 @@
 /* Reliability holograms finish before the pressure door exposes the
    tunnel. Leaving them in the aperture made readable content look
    pasted to the rocket and hid the very geometry the camera enters. */
-html.rc-door-open .rc-gate,
-html.rc-door-open #reliability .cin-world > .cin-item.cin-holo {
+html.rc-gate-out .rc-gate,
+html.rc-gate-out #reliability .cin-world > .cin-item.cin-holo {
   opacity: 0 !important;
   pointer-events: none !important;
   filter: blur(5px) brightness(1.65) !important;
