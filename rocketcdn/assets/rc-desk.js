@@ -259,7 +259,11 @@ function fillAnswer(i) {
   body.innerHTML =
     '<button type="button" class="dsk-back" data-go="menu">' +
       esc(t("ui.back", "Назад")) + '</button>' +
-    '<div class="dsk-title">' + esc(rec.q) + '</div>' +
+    /* Сам вопрос это не метка раздела: у него свой класс. С общим
+       он попадал под правило метки - девятый кегль ПРОПИСНЫМИ с
+       разрядкой в две с половиной точки, и строки вопроса смыкались
+       друг с другом. */
+    '<div class="dsk-title dsk-q">' + esc(rec.q) + '</div>' +
     '<div class="dsk-a">' + esc(rec.a) + '</div>';
   body.hidden = false;
   slot.hidden = true;

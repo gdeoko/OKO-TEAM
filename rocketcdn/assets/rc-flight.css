@@ -1120,6 +1120,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 /* Закрытый рукав в меню прыжков: виден, но пока недоступен. Цель
    должна быть на глазах - иначе её незачем достигать. */
 .rcf-uni button.locked { opacity: .5; }
+/* Значок замка держится в одной строке с названием. Он переносился
+   на отдельную строку обрубком под словом, и четвёртая карточка
+   рукава выпадала из ряда трёх нормальных. */
+.rcf-uni button.locked b { white-space: nowrap; }
 .rcf-uni button.locked b::after {
   content: '';
   display: inline-block; width: 11px; height: 13px;
@@ -2105,10 +2109,14 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 28px), rgba(0,0,0,.15));
-  mask-image: linear-gradient(180deg, #000 calc(100% - 28px), rgba(0,0,0,.15));
+  /* Верх растворяем так же, как низ: прокрученное меню рубило ряд
+     кнопок ровно посередине - на кадре телефона видна половина
+     строки УРАН/НЕПТУН. */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 calc(100% - 28px), rgba(0,0,0,.15));
+  mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 calc(100% - 28px), rgba(0,0,0,.15));
   padding: clamp(12px, 1.8vh, 18px);
-  padding-bottom: calc(clamp(12px, 1.8vh, 18px) + 26px);
+  padding-top: calc(clamp(12px, 1.8vh, 18px) + 18px);
+  padding-bottom: calc(clamp(12px, 1.8vh, 18px) + 30px);
   border-radius: 14px;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
   background: linear-gradient(170deg, rgba(10,21,36,.96), rgba(5,12,21,.98));
@@ -2331,6 +2339,24 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-mis > *,
 .rc-flight .rcf-netlist > *,
 .rc-flight .rcf-pilot-in > * { position: relative; z-index: 2; }
+/* Крестик закрытия из этого правила выведен обратно.
+
+   Правило выше поднимает содержимое панели над развёрткой строк, и
+   вместе со всеми оно роняло в поток кнопку закрытия: `position:
+   absolute` у неё весом 0,1,0 проигрывал этому селектору весом
+   0,2,0. Крестик уезжал в ЛЕВЫЙ верхний угол и вставал на кромку
+   карточки, а `right: 8px` работал как относительный сдвиг. Замер:
+   на телефоне крестик стоял на x=85,8 при карточке от 82,8, хотя
+   должен на 287. Заодно это резало заголовок: под крестик
+   зарезервировано место СПРАВА, а он был слева, и «АСТЕРОИДНЫЙ
+   ПОЯС» уходил за кромку на восемь точек. */
+.rc-flight .rcf-dos-in > .rcf-dos-x {
+  position: absolute;
+  right: 8px;
+  left: auto;
+  top: 8px;
+  z-index: 3;
+}
 
 /* Включение проекции: разрыв изображения, а не выезд */
 .rc-flight .rcf-menu.on,
@@ -2462,9 +2488,22 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   font-family: var(--f-body, "Golos Text", sans-serif);
 }
 .rc-flight .rcf-help.on .rcf-help-in { animation: rcfHoloIn .42s steps(1, end) 1; }
+/* Крестик справки прилипает к верхней кромке панели.
+
+   Панель прокручивается, а крестик стоял в ней `absolute` - уезжал
+   вместе с содержимым. Замер: на телефоне после прокрутки на 238
+   точек он оказывался на 227 точек ВЫШЕ панели, на мониторе на 152.
+   Справку было нечем закрыть, кроме Escape, о котором никто не
+   знает. Sticky держит его на месте в любом положении списка.
+
+   Тридцать точек под палец мало (норма тридцать две) - подрос. */
 .rc-flight .rcf-help-x {
-  position: absolute; right: 10px; top: 10px;
-  width: 30px; height: 30px;
+  position: sticky;
+  float: right;
+  top: 0;
+  margin: -6px -6px 0 0;
+  width: 34px; height: 34px;
+  flex: 0 0 34px;
   display: grid; place-items: center;
   border-radius: 50%;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .4);
@@ -2475,6 +2514,9 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-help-x svg { width: 15px; height: 15px; }
 .rc-flight .rcf-help b {
   display: block;
+  /* Место под крестик: без отступа коробка заголовка уходила прямо
+     под него - на телефоне перекрытие тридцать на тридцать точек. */
+  padding-right: 42px;
   margin-bottom: 14px;
   font-family: var(--f-head, "Bebas Neue", sans-serif);
   font-size: clamp(20px, 3.4vh, 28px);
@@ -2729,11 +2771,23 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-help-in {
   width: min(92%, 520px);
-  max-height: 92%;
-  /* Если список не влез, он гаснет к нижней кромке: понятно, что
-     дальше есть ещё, и строка не обрывается на полуслове */
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
-  mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+  max-height: min(92%, calc(100vh - 16px));
+  /* Растворяем ОБА края, а не только нижний.
+
+     Снизу это признак продолжения: край, уходящий в прозрачность,
+     сам говорит, что ниже есть ещё. Сверху растворения не было
+     вовсе, и прокрученная панель рубила строку пополам ровной
+     чертой - на кадрах видно обрубок «на все 360». Теперь верх
+     тоже уходит в прозрачность, и обрубок читается продолжением, а
+     не поломкой.
+
+     Запас снизу и сверху под сами полосы растворения: без него
+     последняя строка целиком лежит в полосе и не читается даже
+     тогда, когда докрутили до конца. */
+  padding-top: calc(clamp(18px, 3vh, 28px) + 20px);
+  padding-bottom: calc(clamp(18px, 3vh, 28px) + 26px);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 20px, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 20px, #000 calc(100% - 26px), transparent 100%);
 }
 /* Пока открыта справка, метки объектов гаснут: читать поверх них
    нельзя, а спорить двум слоям на одном стекле незачем */
@@ -4072,7 +4126,12 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 @media (max-width: 760px) {
   .rc-flight .rcf-brief { padding: 10px; }
   .rc-flight .rcf-brief-card {
-    width: min(330px, 86vw);
+    /* Ширину меряем по ПРОЁМУ ОКНА, а не по экрану. Карточка знала
+       только vw и на телефоне вылезала за остекление на 37 точек с
+       каждой стороны, на узком 360 - на 43: брифинг лежал прямо на
+       раме рубки, чего заказчик запретил прямо. --cab-ww это ширина
+       проёма в долях кадра, её и берём с запасом на кромку. */
+    width: min(330px, 86vw, calc(var(--cab-ww, 86%) - 24px));
     padding: 14px 13px 13px;
     border-radius: 8px;
   }
@@ -4127,12 +4186,17 @@ html.rc-deep-inside .rcf-fab {
 
 /* HUD is the physical glass boundary. Child projections never receive
    a second set of viewport offsets. */
+/* Меню растягивалось на всё окно, и под последней кнопкой оставалось
+   пустое поле: на 1920 - 224 точки, на 1440 - 143. Панель размером в
+   экран с горстью кнопок наверху читается недоделанной. Низ отпускаем
+   и держим только потолок высоты: панель ровно по содержимому, а
+   длинный список по-прежнему прокручивается. */
 .rc-flight .rcf-hud > .rcf-menu {
-  inset: clamp(38px, 7%, 58px) 8px 8px 8px !important;
+  inset: clamp(38px, 7%, 58px) 8px auto 8px !important;
   width: auto !important;
   height: auto !important;
   max-width: none !important;
-  max-height: none !important;
+  max-height: calc(100% - clamp(38px, 7%, 58px) - 8px) !important;
   margin: 0 !important;
   padding: clamp(9px, 1.5vh, 14px) !important;
   transform: translate3d(0, 7px, 0) !important;
@@ -4203,7 +4267,8 @@ html.rc-deep-inside .rcf-fab {
 
 @media (max-width: 760px) {
   .rc-flight .rcf-hud > .rcf-menu {
-    inset: 36px 6px 6px !important;
+    inset: 36px 6px auto 6px !important;
+    max-height: calc(100% - 42px) !important;
     padding: 8px !important;
   }
   .rc-flight .rcf-menu .rcf-nav {
@@ -4241,8 +4306,18 @@ html.rc-deep-inside .rcf-fab {
 
 @media (max-width: 380px), (max-height: 650px) {
   .rc-flight .rcf-hud > .rcf-menu { top: 32px !important; }
+  /* Восемь точек это не подпись, это узор. Замер: на узком 360 кегль
+     кнопок целей 8, на лежачем 900 тоже 8 - то есть на экране втрое
+     шире буквы такие же мелкие. Держим одиннадцать, как на телефоне. */
   .rc-flight .rcf-menu .rcf-nav button,
-  .rc-flight .rcf-menu .rcf-uni button { min-height: 34px; font-size: 8px; }
+  .rc-flight .rcf-menu .rcf-uni button { min-height: 34px; font-size: 11px; }
+  /* Рукава в две колонки на 360 превращались в кашу: кнопка 94 точки
+     шириной, а в ней «ПОЛЕ KEPLER · EXO-2 · реальные многопланетные
+     системы телескопа Kepler» - семь строк по одному-два слова с
+     разрывом слов посередине. Одна колонка на строку. */
+  .rc-flight .rcf-menu .rcf-uni {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
   .rc-flight .rcf-menu .rcf-menu-h:not(:first-child) { margin-top: 8px; }
 }
 

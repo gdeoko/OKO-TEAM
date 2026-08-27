@@ -5389,11 +5389,28 @@ function holoSetup() {
     g.RC_HOLO.init(ui.hud || ui.wrap);
     g.RC_HOLO.onPick(function (id) {
       /* Клик по голограмме - это курс на объект. Ровно то, чего
-         ждёшь от метки в кабине: ткнул и полетел. */
+         ждёшь от метки в кабине: ткнул и полетел.
+
+         И досье заодно. Метка висит ровно НА теле и перехватывает
+         нажатие раньше сцены: замер живыми кликами показал, что луч
+         в планету попадает, а карточка не открывается - нажатие
+         забрала подпись. Человек читает это как «планета не
+         кликается», и он прав: он целился в планету. Теперь один
+         клик делает обе вещи - ставит курс и показывает, что это
+         за тело. */
       var rec = holoIds[id];
       if (!rec) return;
       if (rec.sys !== undefined) goSystem(rec.sys, rec.pl);
       else if (rec.goal) goTo(rec.goal);
+      if (rec.o && rec.info) {
+        try {
+          dosOpen(rec.o, rec.info);
+          F.infoUntil = (g.performance && g.performance.now ? performance.now() : 0) + 4200;
+          if (!(rec.o.userData && rec.o.userData["реле"])) {
+            noteExplored(меткаТела(rec.o) || String(rec.info).split(" · ")[0]);
+          }
+        } catch (eД) {}
+      }
       if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
     });
   } catch (e) { holoReady = false; }
