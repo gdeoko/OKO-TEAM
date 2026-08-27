@@ -2,6 +2,9 @@ import { ЭКРАНЫ, браузер, страница, вИгру, проём 
 
 const b = await браузер();
 const { pg, беды } = await страница(b, ЭКРАНЫ["ПК"]);
+pg.on("close",()=>console.log("!!! СТРАНИЦА ЗАКРЫЛАСЬ"));
+pg.on("crash",()=>console.log("!!! КРАШ"));
+b.on("disconnected",()=>console.log("!!! БРАУЗЕР ОТВАЛИЛСЯ"));
 console.log("вошли:", await вИгру(pg));
 await pg.waitForTimeout(2000);
 

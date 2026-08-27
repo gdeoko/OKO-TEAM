@@ -75,6 +75,7 @@ export const ИНСТР = () => {
     });
   });
   const gcs = W.getComputedStyle;
+  W.__gcsRaw = gcs.bind(W);
   W.getComputedStyle = function (...a) { пометитьЧтение("computed"); return gcs.apply(W, a); };
 
   /* ── rAF ── */
@@ -130,27 +131,38 @@ export const ИНСТР = () => {
   });
 };
 
-/* backdrop-filter слои */
+/* Быстрый счёт слоёв: не обходим всё дерево, а спрашиваем ровно те
+   узлы, которые в оформлении объявлены дорогими. */
 export const СЛОИ = () => {
-  const из = { backdrop: [], filter: [], willChange: [], fixed: 0, всего: 0 };
-  document.querySelectorAll("*").forEach(э => {
-    из.всего++;
-    const s = getComputedStyle(э);
-    const bf = s.backdropFilter || s.webkitBackdropFilter;
+  const gcs = window.__gcsRaw || window.getComputedStyle;
+  const цели = [".card", ".viz-card", ".dc", ".cin-item", ".cin-holo", ".cin-scr",
+                ".rcf-holo", ".hdr", ".chip", ".btn", ".rcf-panel", ".rcf-dos",
+                ".rcf-brief", ".rcf-menu", ".rcf-hud", ".cin-br", ".cin-beam", ".cin-sweep",
+                "[class*=rcf-]", "[class*=cin-]", "[class*=rcd-]"];
+  const узлы = new Set();
+  цели.forEach(с => { try { document.querySelectorAll(с).forEach(э => узлы.add(э)); } catch (e) {} });
+  const из = { bd: [], fl: [], wc: [], mask: 0, fixed: 0, анимаций: 0 };
+  узлы.forEach(э => {
+    const s = gcs(э);
     const вид = s.display !== "none" && s.visibility !== "hidden" && +s.opacity > 0.01;
-    const кто = (э.tagName + "." + (э.className || "").toString().split(" ").filter(Boolean).slice(0, 2).join(".")).slice(0, 60);
-    if (bf && bf !== "none") из.backdrop.push({ кто, bf: bf.slice(0, 40), вид });
-    if (s.filter && s.filter !== "none") из.filter.push({ кто, f: s.filter.slice(0, 40), вид });
-    if (s.willChange && s.willChange !== "auto") из.willChange.push({ кто, w: s.willChange.slice(0, 30), вид });
+    const r = э.getBoundingClientRect();
+    const вкадре = вид && r.width > 2 && r.height > 2 && r.bottom > 0 && r.top < innerHeight;
+    const кто = (э.tagName + "." + (э.className || "").toString().split(" ").filter(Boolean).slice(0, 2).join(".")).slice(0, 52);
+    const bf = s.backdropFilter || s.webkitBackdropFilter;
+    if (bf && bf !== "none") из.bd.push({ кто, v: bf.slice(0, 34), вкадре });
+    if (s.filter && s.filter !== "none") из.fl.push({ кто, v: s.filter.slice(0, 34), вкадре });
+    if (s.willChange && s.willChange !== "auto") из.wc.push({ кто, вкадре });
+    if ((s.maskImage && s.maskImage !== "none") || (s.webkitMaskImage && s.webkitMaskImage !== "none")) из.mask++;
     if (s.position === "fixed") из.fixed++;
+    if (s.animationName && s.animationName !== "none" && вкадре) из.анимаций++;
   });
   return {
-    всегоУзлов: из.всего,
-    backdropВсего: из.backdrop.length, backdropВидимых: из.backdrop.filter(x => x.вид).length,
-    backdropПримеры: из.backdrop.filter(x => x.вид).slice(0, 14),
-    filterВсего: из.filter.length, filterВидимых: из.filter.filter(x => x.вид).length,
-    filterПримеры: из.filter.filter(x => x.вид).slice(0, 10),
-    willChangeВсего: из.willChange.length, willChangeПримеры: из.willChange.slice(0, 10),
-    fixed: из.fixed
+    осмотрено: узлы.size, всегоУзлов: document.querySelectorAll("*").length,
+    backdropВсего: из.bd.length, backdropВидимых: из.bd.filter(x => x.вкадре).length,
+    backdropПримеры: из.bd.filter(x => x.вкадре).slice(0, 12),
+    filterВсего: из.fl.length, filterВидимых: из.fl.filter(x => x.вкадре).length,
+    filterПримеры: из.fl.filter(x => x.вкадре).slice(0, 10),
+    willChangeВсего: из.wc.length, willChangeВидимых: из.wc.filter(x => x.вкадре).length,
+    масок: из.mask, fixed: из.fixed, живыхАнимаций: из.анимаций
   };
 };

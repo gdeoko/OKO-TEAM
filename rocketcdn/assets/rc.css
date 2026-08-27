@@ -615,13 +615,25 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .flow-node h3 { font-size: var(--fs-6); font-weight: 650; line-height: var(--lh-title); margin-bottom: 6px; }
 .flow-node p { font-size: var(--fs-3); line-height: var(--lh-tight); color: var(--tx-2); }
 .flow-link { position: relative; height: 2px; background: var(--line); border-radius: 2px; min-width: 40px; overflow: hidden; }
+/* Искра в связке узлов бежит СДВИГОМ, а не свойством left.
+
+   Свойство left не композитится: каждый кадр этой вечной анимации
+   был новым пересчётом раскладки, и так на всех связках сразу, пока
+   страница открыта. Сдвиг считает видеокарта, раскладка не трогается.
+   Искра шириной 34% от связки, стоит в её начале, поэтому путь от
+   края до края - это 100% ширины СВЯЗКИ, то есть 294% собственной
+   ширины искры (100 / 34). */
 .flow-link i {
-  position: absolute; top: 0; left: -34%; width: 34%; height: 100%;
+  position: absolute; top: 0; left: 0; width: 34%; height: 100%;
   background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  will-change: transform;
   animation: flowRun 2.1s linear infinite;
 }
 .flow-link:nth-of-type(4) i { animation-delay: .5s }
-@keyframes flowRun { to { left: 100% } }
+@keyframes flowRun {
+  from { transform: translateX(-100%) }
+  to   { transform: translateX(294%) }
+}
 
 /* ── Инфраструктура и карта ───────────────────────────────── */
 .infra { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(0, .94fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
@@ -877,8 +889,12 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   .kpi { grid-template-columns: repeat(2, 1fr) }
   .flow { grid-template-columns: 1fr; gap: 0 }
   .flow-link { width: 2px; height: 34px; min-width: 0; margin: 10px auto; }
-  .flow-link i { left: 0; top: -34%; width: 100%; height: 34%; background: linear-gradient(180deg, transparent, var(--cyan), transparent); animation: flowRunY 2.1s linear infinite; }
-  @keyframes flowRunY { to { top: 100% } }
+  /* То же самое для вертикальной связки на узком экране. */
+  .flow-link i { left: 0; top: 0; width: 100%; height: 34%; background: linear-gradient(180deg, transparent, var(--cyan), transparent); animation: flowRunY 2.1s linear infinite; }
+  @keyframes flowRunY {
+    from { transform: translateY(-100%) }
+    to   { transform: translateY(294%) }
+  }
 }
 @media (max-width: 640px) {
   .g-2, .g-3, .g-4 { grid-template-columns: 1fr }
@@ -1527,7 +1543,22 @@ body { background: var(--bg); }
    закрывается, поэтому увидеть подмену нельзя. */
 html.rc-flying .card,
 html.rc-flying .viz-card,
-html.rc-flying .dc {
+html.rc-flying .dc,
+/* Салон и финальная сцена - тот же случай, и он даже важнее.
+   Заплатка выше сначала знала только про `rc-flying`, а его ставят,
+   когда игра УЖЕ запущена. Финальная сцена идёт под `rc-inside` и
+   `rc-stage`, и как раз в ней заказчик и видит просадку: полотно
+   кабины на весь экран, поверх трёхмерный салон, а под ними всё те
+   же тридцать девять стёкол считают размытие впустую. Проверка
+   поиском показала, что ни одно правило с этими признаками
+   backdrop-filter не трогало - то есть заплатка стояла мимо того
+   места, ради которого её ставили. */
+html.rc-inside .card,
+html.rc-inside .viz-card,
+html.rc-inside .dc,
+html.rc-stage .card,
+html.rc-stage .viz-card,
+html.rc-stage .dc {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }

@@ -135,7 +135,7 @@ for (const имя of СПИСОК) {
   }
 
   console.log("### " + имя + " ###");
-  console.log(JSON.stringify(R, null, 1));
+  console.log(JSON.stringify({...R, poly: undefined, перем: undefined}, null, 1).slice(0, 3000));
   fs.writeFileSync(КАДРЫ + "../out/лого-" + имя + ".json", JSON.stringify(R, null, 1));
 
   // кадры
@@ -144,17 +144,17 @@ for (const имя of СПИСОК) {
     const поле = 34;
     const cl = { x: Math.max(0, Math.round(x-поле)), y: Math.max(0, Math.round(y-поле)),
                  width: Math.min(д.vw, Math.round(ww+поле*2)), height: Math.min(д.vh, Math.round(hh+поле*2)) };
-    await pg.screenshot({ path: КАДРЫ + "холо-" + имя + ".png", clip: cl });
+    try { await pg.screenshot({ path: КАДРЫ + "холо-" + имя + ".png", clip: cl, animations: "disabled", timeout: 20000 }); } catch(e) { console.log("кадр холо не вышел:", e.message.slice(0,60)); }
     // крупнее: с областью vpn
     const x2 = д.vpn ? Math.min(x, д.vpn.r[0]) : x;
     const п2 = д.vpn ? Math.max(x+ww, д.vpn.r[0]+д.vpn.r[2]) : x+ww;
     const y2 = д.vpn ? Math.min(y, д.vpn.r[1]) : y;
     const н2 = д.vpn ? Math.max(y+hh, д.vpn.r[1]+д.vpn.r[3]) : y+hh;
-    await pg.screenshot({ path: КАДРЫ + "пара-" + имя + ".png",
+    try { await pg.screenshot({ path: КАДРЫ + "пара-" + имя + ".png", animations: "disabled", timeout: 20000,
       clip: { x: Math.max(0, Math.round(x2-40)), y: Math.max(0, Math.round(y2-40)),
-              width: Math.round(п2-x2+80), height: Math.round(н2-y2+80) } });
+              width: Math.round(п2-x2+80), height: Math.round(н2-y2+80) } }); } catch(e) { console.log("кадр пара не вышел:", e.message.slice(0,60)); }
   }
-  await pg.screenshot({ path: КАДРЫ + "кадр-" + имя + ".jpeg", type: "jpeg", quality: 72 });
+  try { await pg.screenshot({ path: КАДРЫ + "кадр-" + имя + ".jpeg", type: "jpeg", quality: 72, animations: "disabled", timeout: 25000 }); } catch(e) { console.log("общий кадр не вышел:", e.message.slice(0,60)); }
   await pg.close();
 }
 await b.close();

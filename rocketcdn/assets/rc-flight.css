@@ -705,7 +705,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
    прозрачная, с бегущей полосой скана и лёгким дыханием. */
 .rcf-holo {
   position: absolute; right: clamp(16px, 6vw, 90px); bottom: clamp(60px, 15vh, 150px);
-  width: clamp(54px, 7vw, 92px);
+  /* Размер марки держим в переменной: по ней развёртка знает длину
+     своего пути и не спрашивает её у браузера. */
+  --rcf-holo-разм: clamp(54px, 7vw, 92px);
+  width: var(--rcf-holo-разм);
   aspect-ratio: 1;
   pointer-events: none;
   animation: rcfHolo 5s ease-in-out infinite;
@@ -721,6 +724,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-holo::after {
   content: ''; position: absolute; left: -8%; right: -8%; top: 0; height: 3px;
   background: linear-gradient(90deg, transparent, rgba(var(--int-lit-rgb, 207,233,245), .9), transparent);
+  /* Путь развёртки - высота самой марки. Считаем в единицах контейнера,
+     чтобы не зависеть от того, какого она сейчас размера. */
+  --rcf-scan-путь: var(--rcf-holo-разм, 72px);
+  will-change: transform;
   animation: rcfScan 2.6s linear infinite;
 }
 .rcf-holo i {
@@ -732,11 +739,15 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   0%, 100% { transform: translateY(0); opacity: .95; }
   50%      { transform: translateY(-5px); opacity: .8; }
 }
+/* Развёртка по марке идёт сдвигом, а не свойством top: top не
+   композитится, и каждый кадр этой вечной анимации был пересчётом
+   раскладки. Полоса высотой 3px, поэтому путь считаем в долях высоты
+   РОДИТЕЛЯ - для этого ниже у неё height: 3px и своя переменная. */
 @keyframes rcfScan {
-  from { top: -4%; opacity: 0; }
+  from { transform: translateY(0); opacity: 0; }
   12%  { opacity: 1; }
   88%  { opacity: 1; }
-  to   { top: 102%; opacity: 0; }
+  to   { transform: translateY(var(--rcf-scan-путь, 100px)); opacity: 0; }
 }
 
 @media (max-width: 760px) {
@@ -762,7 +773,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   .rcf-nav::-webkit-scrollbar { display: none; }
   .rcf-nav button { font-size: 9.5px; padding: 8px 10px 9px; flex: 0 0 auto; }
   .rcf-auto { padding: 8px 12px; font-size: 11px; }
-  .rcf-holo { right: 8px; bottom: 12.5%; width: 44px; }
+  .rcf-holo { right: 8px; bottom: 12.5%; --rcf-holo-разм: 44px; width: 44px; }
   .rcf-info { top: clamp(64px, 12vh, 110px); }
   /* Подсказка стоит внутри остекления, а не на панели приборов:
      на телефоне кабина занимает низ кадра, и на 17% строка ложилась

@@ -334,7 +334,13 @@ function cabin(act) {
     if (i === best) vis = Math.max(vis, 0.92);
 
     CSSVAR(el, "--cin-vis", vis.toFixed(2));
-    CSSVAR(el, "--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(1) + "px");
+    /* Ноль пишем как `none`, а не как `0px`. Фильтр с нулевым
+       радиусом ничего не размывает, но браузер всё равно уводит
+       элемент в отдельный слой и гоняет фильтр-пасс каждый кадр -
+       на карточках сайта и экранах салона таких пустышек набралось
+       под три десятка. */
+    var рз = soft && i !== best ? (1 - vis) * 2.6 : 0;
+    CSSVAR(el, "--cin-blur", рз > 0.05 ? "blur(" + рз.toFixed(1) + "px)" : "none");
     CSSVAR(el, "--cin-zi", String(Math.round(600 - ax * 170)));
 
     /* ── Голограмма: яркость проектора и распад развёртки ─────
@@ -448,7 +454,8 @@ function tunnel(act, p) {
     CSSVAR(el, "--cin-vis", (0.3 + vis * 0.7).toFixed(3));
     /* Размытие только у дальнего края и слабое: карточку, до которой
        человек долистал, он должен читать, а не угадывать. */
-    CSSVAR(el, "--cin-blur", ((1 - clamp(k * 2.4, 0, 1)) * 1.4).toFixed(2) + "px");
+    var рз2 = (1 - clamp(k * 2.4, 0, 1)) * 1.4;
+    CSSVAR(el, "--cin-blur", рз2 > 0.05 ? "blur(" + рз2.toFixed(2) + "px)" : "none");
   }
 }
 

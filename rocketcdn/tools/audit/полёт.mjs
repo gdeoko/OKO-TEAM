@@ -23,6 +23,7 @@ for (const имя of экраны) {
   const ok = await вИгру(pg);
   if (!ok) { console.log("НЕ ВОШЛИ", имя); await pg.close(); continue; }
   if (рукав) { await pg.evaluate((n)=>window.RC_FLIGHT._jump(n), рукав); await pg.waitForTimeout(6000); }
+  let снимков = 0;
   const w = await проём(pg);
   console.log("=== ЭКРАН", имя, JSON.stringify(э.vp), "рукав", рукав, "проём", JSON.stringify(w));
   for (const d of доли) {
@@ -37,11 +38,13 @@ for (const имя of экраны) {
       вылеты: zv.вылеты, наложения: nl};
     ЛОГ.push(зап);
     const есть = зап.обрезки.length||зап.вылеты.length||зап.наложения.length;
-    console.log(`-- ${имя} p=${d} обрез=${зап.обрезки.length} вылет=${зап.вылеты.length} налож=${зап.наложения.length}`);
+    process.stdout.write("");console.log(`-- ${имя} p=${d} обрез=${зап.обрезки.length} вылет=${зап.вылеты.length} налож=${зап.наложения.length}`);
     зап.обрезки.forEach(x=>console.log("   ОБРЕЗ", JSON.stringify(x)));
     зап.вылеты.forEach(x=>console.log("   ВЫЛЕТ", JSON.stringify(x)));
     зап.наложения.forEach(x=>console.log("   НАЛОЖ", JSON.stringify(x)));
-    if (есть) await pg.screenshot({path:`${КАДРЫ}/${имя}-r${рукав}-p${d}.jpeg`, type:"jpeg", quality:72});
+    if (есть && снимков < 4) { снимков++;
+      try { await pg.screenshot({path:`${КАДРЫ}/${имя}-r${рукав}-p${d}.jpeg`, type:"jpeg", quality:70, timeout:120000}); }
+      catch(e){ console.log("   (снимок не вышел)"); } }
   }
   if (беды.length) console.log("беды:", JSON.stringify([...new Set(беды)].slice(0,6)));
   await pg.close();

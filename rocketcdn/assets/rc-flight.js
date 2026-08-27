@@ -1963,9 +1963,8 @@ function jumpUniverse(want) {
     if (ui.cap) {
       ui.cap._t = UNIVERSES[uniIdx].name;
       ui.cap._hold = performance.now() + 3200;
-      ui.cap.classList.remove("in"); void ui.cap.offsetWidth;
       ui.cap.textContent = UNIVERSES[uniIdx].name;
-      ui.cap.classList.add("in");
+      заново(ui.cap, "in");
     }
     /* Панель навигации перестраивается под новую вселенную, и
        корабль сразу оказывается у первой её системы: прыжок должен
@@ -4846,15 +4845,41 @@ function cabGeom() {
    Кольца Сатурна считаются отдельно: сквозь них проходить нельзя,
    но и отбрасывать далеко не нужно - корабль поднимается над
    плоскостью колец, как это делают настоящие зонды. */
+/* ── Перезапуск анимации без пересчёта раскладки ──────────────
+   Чтобы CSS-анимация проиграла заново, её надо снять и поставить, а
+   между этим заставить браузер признать снятие. Обычно для этого
+   читают размер узла (`void el.offsetWidth`) - и это НАМЕРЕННЫЙ
+   синхронный пересчёт раскладки. Замер прокрутки главной поймал 67
+   таких пересчётов, и 34 из них дали два места здесь, причём одно
+   стоит прямо в кадровом цикле и срабатывает на каждой смене титра.
+
+   Тот же результат даёт запись анимации: сбрасываем её время в ноль
+   через Web Animations, и браузер начинает заново, ничего не считая.
+   Старым движкам оставляем прежний путь - там лучше лишний пересчёт,
+   чем застывшая надпись. */
+function заново(эл, класс) {
+  if (!эл) return;
+  эл.classList.remove(класс);
+  var сброшено = false;
+  try {
+    if (эл.getAnimations) {
+      var а = эл.getAnimations();
+      for (var i = 0; i < а.length; i++) { а[i].cancel(); }
+      сброшено = true;
+    }
+  } catch (eЗ) {}
+  if (!сброшено) void эл.offsetWidth;
+  эл.classList.add(класс);
+}
+
 /* Короткое сообщение на табло поверх обычных титров. Держится
    заданное время, потом титры сцены возвращаются сами. */
 function say(text, ms) {
   if (!ui.cap) return;
   ui.cap._t = text;
   ui.cap._hold = performance.now() + (ms || 1400);
-  ui.cap.classList.remove("in"); void ui.cap.offsetWidth;
   ui.cap.textContent = text;
-  ui.cap.classList.add("in");
+  заново(ui.cap, "in");
 }
 
 var dodge = null, dodgeWarn = 0;
@@ -6647,10 +6672,8 @@ function frame(ts) {
   }
   if (ui.cap._t !== cap.t && !(ui.cap._hold && ts < ui.cap._hold)) {
     ui.cap._t = cap.t;
-    ui.cap.classList.remove("in");
-    void ui.cap.offsetWidth;
     ui.cap.textContent = cap.t;
-    ui.cap.classList.add("in");
+    заново(ui.cap, "in");
   }
   ui.bar.style.width = (F.p * 100).toFixed(1) + "%";
   /* На перелёте между системами табло показывает настоящий ход:
@@ -7115,9 +7138,7 @@ function missionFrame(ts) {
   ui.mis.classList.remove("full");
   /* Смена задания - тоже включение проекции: контент не подменяется
      тихо, изображение рвётся и собирается заново */
-  ui.mis.classList.remove("rcf-flick");
-  void ui.mis.offsetWidth;
-  ui.mis.classList.add("rcf-flick");
+  заново(ui.mis, "rcf-flick");
   ui.mis.innerHTML =
     '<b>' + esc(m.t) + '</b>' +
     '<span>' + esc(m.h) + '</span>' +
@@ -7250,9 +7271,7 @@ function netList() {
   if (names.length > show.length) {
     h += '<span class="more">+' + (names.length - show.length) + '</span>';
   }
-  ui.netList.classList.remove("rcf-flick");
-  void ui.netList.offsetWidth;
-  ui.netList.classList.add("rcf-flick");
+  заново(ui.netList, "rcf-flick");
   ui.netList.innerHTML = h;
 }
 

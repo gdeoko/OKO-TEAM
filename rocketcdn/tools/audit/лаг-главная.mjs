@@ -88,13 +88,13 @@ const высота = await pg.evaluate(() => document.documentElement.scrollHeig
 console.log("\n── ПРОКРУТКА сверху донизу (высота " + высота + "px) ──");
 await pg.evaluate(() => window.__ЛАГсброс());
 const s1 = await метрики();
-const шаг = Math.round(э.vp.height * 0.6);
-const шагов = Math.min(60, Math.ceil(высота / шаг));
+const шаг = Math.round(высота / 26);
+const шагов = Math.min(26, Math.ceil(высота / шаг));
 const посекции = [];
 for (let i = 0; i < шагов; i++) {
   const a = await метрики();
   await pg.mouse.wheel(0, шаг);
-  await pg.waitForTimeout(420);
+  await pg.waitForTimeout(500);
   const b2 = await метрики();
   const y = await pg.evaluate(() => Math.round(window.scrollY));
   const d = дельта(a, b2);
