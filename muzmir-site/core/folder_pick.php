@@ -281,23 +281,13 @@ function fp_direct_url(string $folderUrl, array $file): string {
         return is_array($j) ? (string) ($j['href'] ?? '') : '';
     }
 
-    if (str_contains($u, 'cloud.mail.ru')) {
-        /* Хост скачивания у Облака плавающий — какой сегодня рабочий, сообщает
-           dispatcher (та же логика, что в core/video_fetch.php). */
-        if (!preg_match('~cloud\.mail\.ru/public/([^/?#]+)/([^?#]+)~i', $folderUrl, $m)) return '';
-        $weblink = $m[1] . '/' . ltrim($m[2], '/');
-        $inner = trim((string) $file['name']);
-        if ($inner === '') return '';
-        $d = (string) @file_get_contents('https://dispatcher.cloud.mail.ru/?client_id=cloud-win');
-        $host = '';
-        foreach (preg_split('~\s+~', $d) ?: [] as $tok) {
-            if (preg_match('~^https?://\S+/(weblink_get|get)/?$~i', $tok)) { $host = rtrim($tok, '/'); break; }
-        }
-        if ($host === '') $host = 'https://cloclo-cdn.cloud.mail.ru/weblink_get';
-        $full = $weblink . '/' . $inner;
-        $enc  = implode('/', array_map('rawurlencode', explode('/', $full)));
-        return $host . '/' . $enc;
-    }
-
+    /* ОБЛАКО MAIL.RU СЮДА НЕ ПОПАДАЕТ НАМЕРЕННО.
+     *
+     * Адрес файла там выдаёт dispatcher, и собранный вручную хост живёт
+     * ненадёжно: у заявки #1828 (рисунок на 62 КБ) такая ссылка не отвечала
+     * вовсе — «код 0», — тогда как штатный путь загрузчика ту же работу берёт
+     * без запинки. Пустая строка означает «строить адрес не берусь»: вызывающий
+     * код пойдёт обычной дорогой (core/video_fetch.php), где вся эта механика
+     * уже отлажена. */
     return '';
 }
