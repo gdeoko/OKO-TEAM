@@ -1338,6 +1338,24 @@ function boot() {
   if (root.classList.contains("rc-reduced")) return;
   T = g.THREE;
   if (!T) return;
+  /* Второй раз сюда заходить нельзя.
+
+     Снизу стоит `addEventListener("rc:3d", boot)` И следом
+     `if (g.THREE) boot()`. Объёмный слой грузится списком со снятым
+     async, то есть строго по порядку, и three.js в этом списке идёт
+     РАНЬШЕ этого файла: к моменту его выполнения g.THREE уже есть,
+     и второй вызов срабатывает сразу. Потом приходит событие rc:3d и
+     зовёт boot ещё раз.
+
+     Защёлки не было, и всё, что boot подписывает, вешалось по два
+     раза: смена языка, resize, load, люк, прокрутка, pageshow,
+     видимость вкладки. Замер живьём: подписок на rc:hatch три,
+     на pageshow две. Хуже всего прокрутка - обработчик прогресса
+     стоял в списке дважды, и весь пересчёт геометрии рубки с
+     проекцией панелей на пульте шёл вдвое чаще нужного на КАЖДЫЙ
+     тик прокрутки. */
+  if (boot.готово) return;
+  boot.готово = true;
   measure();
   doc.addEventListener("rc:lang", function () { setTimeout(measure, 200); });
   addEventListener("resize", function () { setTimeout(measure, 250); }, { passive: true });
