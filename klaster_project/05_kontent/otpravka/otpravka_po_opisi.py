@@ -33,7 +33,7 @@ ACC = "acc1"
 ВРЕМЕНКА = "/tmp/oko_tg_opis"
 ФОРУМ = -1003575806235
 ПАУЗА = 3
-ПРЕДЕЛ_СООБЩЕНИЯ = 3800
+ПРЕДЕЛ_ПОДПИСИ = 1024
 
 опись_путь = sys.argv[1]
 кадры_папка = sys.argv[2]
@@ -52,6 +52,11 @@ def кадры(ключ):
     # прилипает баннер «P-20-moshchnost-schet-b», это отдельная единица плана,
     # и клиент получает под одним текстом две разные картинки.
     return sorted(glob.glob(os.path.join(кадры_папка, ключ + "-[0-9][0-9].png")))
+
+
+def не_влезло(о, подписью):
+    """Текст уходит отдельным файлом: статья или подпись длиннее предела."""
+    return bool(о["текст"]) and not подписью
 
 
 async def main():
@@ -80,38 +85,32 @@ async def main():
     ушло = 0
     for н, о in enumerate(готовы, 1):
         try:
+            # Единица идёт одним сообщением: кадр или все слайды карусели плюс
+            # текст подписью. Подпись Телеграма держит 1024 знака, и если текст
+            # длиннее, кадры уходят одним сообщением, а текст следом файлом.
+            подписью = (not о["статья"] and о["текст"]
+                        and len(о["текст"]) <= ПРЕДЕЛ_ПОДПИСИ)
+            подпись = развернуть(о["текст"]) if подписью else None
             if о["кадры"]:
                 if len(о["кадры"]) == 1:
-                    await app.send_photo(ФОРУМ, о["кадры"][0], message_thread_id=ветка)
+                    await app.send_photo(ФОРУМ, о["кадры"][0], caption=подпись,
+                                         parse_mode=ParseMode.HTML,
+                                         message_thread_id=ветка)
                 else:
                     # медиагруппа кладётся пачками по десять: столько держит Telegram
                     for i in range(0, len(о["кадры"]), 10):
                         куски = о["кадры"][i:i + 10]
-                        await app.send_media_group(
-                            ФОРУМ, [InputMediaPhoto(к) for к in куски],
-                            message_thread_id=ветка)
+                        медиа = [InputMediaPhoto(к) for к in куски]
+                        if i == 0 and подпись:
+                            медиа[0] = InputMediaPhoto(куски[0], caption=подпись,
+                                                       parse_mode=ParseMode.HTML)
+                        await app.send_media_group(ФОРУМ, медиа, message_thread_id=ветка)
                         await asyncio.sleep(ПАУЗА)
             await asyncio.sleep(ПАУЗА)
-            if о["статья"]:
-                # статья уходит файлом: в сообщение она не помещается
+            if не_влезло(о, подписью):
                 имя = f"/tmp/{о['имя']}.txt"
                 io.open(имя, "w", encoding="utf-8").write(о["текст"])
                 await app.send_document(ФОРУМ, имя, message_thread_id=ветка)
-            elif о["текст"]:
-                куски, текущий = [], ""
-                for абзац in о["текст"].split("\n\n"):
-                    if len(текущий) + len(абзац) + 2 > ПРЕДЕЛ_СООБЩЕНИЯ:
-                        куски.append(текущий)
-                        текущий = абзац
-                    else:
-                        текущий = (текущий + "\n\n" + абзац).strip()
-                if текущий:
-                    куски.append(текущий)
-                for к in куски:
-                    await app.send_message(ФОРУМ, развернуть(к), message_thread_id=ветка,
-                                           parse_mode=ParseMode.HTML,
-                                           disable_web_page_preview=True)
-                    await asyncio.sleep(1)
             ушло += 1
             print(f"[{н}/{len(готовы)}] {о['имя'][:52]}")
             await asyncio.sleep(ПАУЗА)
