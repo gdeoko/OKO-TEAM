@@ -1583,8 +1583,17 @@ function buildUniverse(i) {
           live.push(made);
 
           /* Планеты чужих вселенных попадают и в сканер, и под
-             наведение: иначе прибор в чужом рукаве слепнет */
-          var solid = made.group.children[0];
+             наведение: иначе прибор в чужом рукаве слепнет.
+
+             Брать children[0] нельзя. Первый ребёнок собранной
+             планеты - это пустая группа наклона оси, а у группы
+             метода raycast нет вовсе: луч по списку без обхода вглубь
+             такой объект просто не видит. Отсюда «не на всех работает
+             планетах клики» - в чужих рукавах не работал НИ ОДИН.
+             Ищем первый настоящий меш: обход идёт вглубь, и шар тела
+             попадается раньше оболочек атмосферы. */
+          var solid = null;
+          made.group.traverse(function (о) { if (!solid && о.isMesh) solid = о; });
           if (solid) {
             solid.userData.info = made.group.userData.info;
             if (W3.pickables) W3.pickables.push(solid);
@@ -1713,7 +1722,12 @@ function goSystem(si, pi) {
        в кадр попадали и звезда, и планеты */
     var far = 0;
     for (var k = 0; k < sys.planets.length; k++) far = Math.max(far, sys.planets[k].dist);
-    r = far * 1.25; y = far * 0.3;
+    /* На телефоне окно рубки занимает три четверти и без того узкого
+       кадра: система, честно влезавшая в экран, целиком уходила за
+       стойки, и сразу после прыжка ткнуть было не во что. Отходим
+       дальше - вся система оказывается в проёме. */
+    r = far * (innerHeight > innerWidth ? 1.85 : 1.25);
+    y = far * 0.3;
   } else {
     var pl = sys.planets[pi];
     var pg2 = null;
@@ -8562,6 +8576,49 @@ g.RC_FLIGHT = {
      проверяет, что рама вообще попала в кадр. Стоит за признаком в
      адресе, как и остальные служебные ходы. */
   _cam: function () { return DBG && W3 ? W3.cam : null; },
+  /* Что вернёт луч из данной точки экрана. Приёмке нужно отличать
+     «луч не попал» от «попал, но досье не открылось». */
+  _ray: function (px, py) {
+    if (!DBG || !W3) return null;
+    var T = g.THREE;
+    var r = new T.Raycaster();
+    r.setFromCamera({ x: (px / innerWidth) * 2 - 1, y: -(py / innerHeight) * 2 + 1 }, W3.cam);
+    var h = r.intersectObjects(W3.pickables || [], false);
+    var из = [];
+    for (var i = 0; i < h.length && i < 6; i++) {
+      из.push({ инфо: (h[i].object.userData && h[i].object.userData.info) || "",
+                видно: видимоЛи(h[i].object), д: Math.round(h[i].distance) });
+    }
+    return { попаданий: h.length, первые: из };
+  },
+  /* Что вообще можно ткнуть в этом кадре: имя, экранные точки,
+     видимость по всей ветке и масштаб. Без этих чисел жалобу «клики
+     не работают на планетах» приходится проверять мышью вслепую. */
+  _pick: function () {
+    if (!DBG || !W3) return null;
+    var T = g.THREE, v = new T.Vector3(), из = [];
+    var сп = W3.pickables || [];
+    for (var i = 0; i < сп.length; i++) {
+      var o = сп[i];
+      if (!o) continue;
+      o.updateWorldMatrix(true, false);
+      v.setFromMatrixPosition(o.matrixWorld);
+      var d = W3.cam.position.distanceTo(v);
+      v.project(W3.cam);
+      var м = new T.Vector3();
+      o.matrixWorld.decompose(new T.Vector3(), new T.Quaternion(), м);
+      из.push({
+        имя: (o.userData && o.userData.info ? String(o.userData.info).split(" · ")[0] : (o.name || "?")),
+        видно: видимоЛи(o),
+        масштаб: +м.x.toFixed(3),
+        д: Math.round(d),
+        сзади: v.z > 1,
+        x: Math.round((v.x * 0.5 + 0.5) * innerWidth),
+        y: Math.round((-v.y * 0.5 + 0.5) * innerHeight)
+      });
+    }
+    return { всего: сп.length, вселенная: uniIdx, тела: из };
+  },
   /* Прыжок в другой рукав по вызову: без него приёмка не могла снять
      переход покадрово - до кнопки прыжка надо пройти половину игры. */
   _jump: function (n) { if (DBG) jumpUniverse(n); },
