@@ -1280,14 +1280,18 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         </div>
         <div class="field">
           <label for="lfTopic" data-i18n="ct.topic">Направление</label>
+          <!-- Список наполняет rc-app.js из того же массива продуктов,
+               что и карточки раздела. Здесь остаётся запасной набор на
+               случай, если скрипт не доехал: форма обязана работать и
+               без него. -->
           <select id="lfTopic" name="topic">
-            <option data-i18n="prod.1h">CDN</option>
-            <option data-i18n="prod.2h">Стриминг</option>
-            <option data-i18n="prod.3h">Медиа-хранилище</option>
-            <option data-i18n="prod.4h">Плеер</option>
-            <option data-i18n="prod.5h">Облако</option>
-            <option data-i18n="prod.6h">Безопасность</option>
-            <option data-i18n="prod.7h">Виртуальный диктор</option>
+            <option>CDN</option>
+            <option>Стриминг</option>
+            <option>Медиа-хранилище</option>
+            <option>Плеер</option>
+            <option>Облако</option>
+            <option>Безопасность</option>
+            <option>Виртуальный диктор</option>
           </select>
         </div>
         <div class="field">

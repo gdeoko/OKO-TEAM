@@ -9,6 +9,11 @@
 <link rel="canonical" href="https://rocketcdn.ru/privacy.html">
 <meta name="robots" content="index, follow">
 <link rel="icon" type="image/png" href="assets/favicon.png">
+<script>/* Тема выбирается на главной и живёт в localStorage. Эти
+страницы скриптов не имели вовсе, тема была прибита в разметке, и
+человек, включивший светлую, приходил сюда на тёмную. Ставим признак
+до отрисовки, чтобы не мигало. */
+try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark"){document.documentElement.setAttribute("data-theme",_t);var _m=document.querySelector('meta[name="theme-color"]');if(_m)_m.setAttribute("content",_t==="light"?"#F4F7FB":"#050C15");}}catch(e){}</script>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
 <link rel="stylesheet" href="assets/rc.css?v=1787483102">
 <style>
