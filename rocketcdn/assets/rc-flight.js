@@ -7782,6 +7782,10 @@ function cabinBuild() {
   /* RC_CABIN is the shell. There is deliberately no portrait/wide
      image option anymore; camera aspect changes projection only, not
      the physical ship around it. */
+  /* Отмечаем, был ли готов модуль пульта в момент сборки: без пульта
+     салон собирается пустым, и понять это потом можно только так */
+  cabinBuild.былПульт = !!g.RC_PANEL;
+  cabinBuild.когда = (g.performance && g.performance.now) ? Math.round(g.performance.now()) : 0;
   cabin = g.RC_CABIN.build(T, {
     tiny: innerWidth < 760,
     aspect: innerWidth / Math.max(1, innerHeight),
@@ -8227,6 +8231,15 @@ function stageCam(dt) {
     }
   }
 
+  /* Рама подъезжает вместе с камерой: далеко она меньше и глуше, у
+     самого пульта - ровно 1:1, как в полёте. Совпадение в конце
+     обязательно, на нём и держится бесшовность: кадр перед нажатием
+     кнопки и первый кадр игры должны быть одним и тем же кадром. */
+  if (ui.cabFrame && ui.wrap) {
+    ui.wrap.style.setProperty("--rcf-cabs", (0.62 + 0.38 * ek).toFixed(3));
+    ui.wrap.style.setProperty("--rcf-cabo", (0.30 + 0.70 * ek).toFixed(3));
+  }
+
   var dim = Math.max(0, Math.min(1, (ek - 0.55) / 0.4));
   if (C.deskLight) C.deskLight.intensity = 0.9 + ek * 1.9;
   if (C.hemi) C.hemi.intensity = 1.45 * (1 - dim * 0.92);
@@ -8348,6 +8361,14 @@ function stage(k) {
   F.stage = true;
   F.open = true;                              /* кадр рисуется тем же циклом */
   if (ui.wrap) ui.wrap.classList.remove("rcf-native-cab");
+  /* Рама рубки нужна ЕЩЁ НА ПОДЪЕЗДЕ. Заказчик написал дословно:
+     «панель не видно ещё до захода в корабль, она должна быть
+     прибита к салону ещё до захода в ракету и видно вдалеке её же
+     1:1». Раньше на весь финал рамы не было вовсе: человек летел к
+     голограмме, висящей в пустоте, а по нажатию кнопки вокруг него
+     внезапно возникала рубка. Это и была подмена, о которой он
+     говорил. Картинка одна и та же, меняется только расстояние. */
+  cabFrameLayer();
   cabinBuild();
   /* Гул корабля в салоне. Тише, чем в полёте: двигатель на холостом,
      работает вентиляция и приборы. Без него помещение читается
@@ -8607,6 +8628,59 @@ g.RC_FLIGHT = {
      проверяет, что рама вообще попала в кадр. Стоит за признаком в
      адресе, как и остальные служебные ходы. */
   _cam: function () { return DBG && W3 ? W3.cam : null; },
+  /* Состояние салона: где он, что в нём видно и в кадре ли рама.
+     Жалоба «куда снова панель управления пропала» проверяется
+     только числами - на глаз в тёмном кадре не отличить. */
+  _cabin: function () {
+    if (!DBG || !cabin || !W3) return null;
+    var видимых = 0, всего = 0, части = [];
+    cabin.group.traverse(function (o) {
+      if (!o.isMesh && !o.isPoints && !o.isLine) return;
+      всего++;
+      if (видимоЛи(o)) видимых++;
+      if (части.length < 14) части.push([o.name || o.type, видимоЛи(o)]);
+    });
+    var T = g.THREE, v = new T.Vector3();
+    var рама = null;
+    if (cabin.frame) {
+      cabin.frame.updateWorldMatrix(true, false);
+      v.setFromMatrixPosition(cabin.frame.matrixWorld);
+      рама = { видно: видимоЛи(cabin.frame),
+               прозрачность: +(cabin.frame.material.opacity || 0).toFixed(2),
+               д: Math.round(W3.cam.position.distanceTo(v)) };
+    }
+    return {
+      вСцене: !!(cabin.group.parent),
+      родитель: cabin.group.parent ? (cabin.group.parent === W3.cam ? "камера" : "сцена") : "нет",
+      мешей: всего, видимых: видимых, скрыто: cabin.скрыто ? cabin.скрыто.length : 0,
+      центрД: Math.round(W3.cam.position.distanceTo(cabin.center || new T.Vector3())),
+      R: cabin.R, рама: рама, части: части,
+      былПультПриСборке: cabinBuild.былПульт, собранНа: cabinBuild.когда,
+      /* Где на экране стоит игровая консоль: заказчик требует видеть
+         её ЕЩЁ ДО входа в полёт, и на том же месте */
+      пульт3: (function () {
+        if (!cabin.console3 || !cabin.console3.group) return null;
+        var б = new T.Box3().setFromObject(cabin.console3.group);
+        if (!isFinite(б.min.x)) return null;
+        var уг = [], v2 = new T.Vector3();
+        for (var i = 0; i < 8; i++) {
+          v2.set(i & 1 ? б.max.x : б.min.x, i & 2 ? б.max.y : б.min.y, i & 4 ? б.max.z : б.min.z);
+          v2.project(W3.cam);
+          уг.push([(v2.x * 0.5 + 0.5) * innerWidth, (-v2.y * 0.5 + 0.5) * innerHeight, v2.z]);
+        }
+        var л = 1e9, п = -1e9, в = 1e9, н = -1e9, сзади = 0;
+        for (var j = 0; j < 8; j++) {
+          if (уг[j][2] > 1) { сзади++; continue; }
+          л = Math.min(л, уг[j][0]); п = Math.max(п, уг[j][0]);
+          в = Math.min(в, уг[j][1]); н = Math.max(н, уг[j][1]);
+        }
+        if (сзади === 8) return { сзади: true };
+        return { л: Math.round(л), п: Math.round(п), в: Math.round(в), н: Math.round(н),
+                 доляШирины: +((п - л) / innerWidth).toFixed(3),
+                 видимГруппа: видимоЛи(cabin.console3.group) };
+      })()
+    };
+  },
   /* Что вернёт луч из данной точки экрана. Приёмке нужно отличать
      «луч не попал» от «попал, но досье не открылось». */
   _ray: function (px, py) {
