@@ -662,6 +662,57 @@ from promt_engine import Бренд, собрать, проверить
 })
 
 
+# Месяц 3, пятнадцать статей: сцены сведены со строкой «Визуал:» каждой статьи
+# в MESYAC_3/NEDELYA_*.md. Одно предложение, только предметы и их расположение.
+СЦЕНЫ.update({
+"P-3101-kategoriya-nadezhnosti":
+    "the main switchgear cabinet of a workshop with its door swung open showing two incoming feeds and a "
+    "transfer panel, a printed single line diagram lying open in front of it, the bay receding behind",
+"P-3102-shum-i-sanzona":
+    "a sound level meter on a tripod standing at a work post beside a running compressor, ear defenders "
+    "hanging on the machine frame, a residential block visible through the workshop window beyond",
+"P-3103-ventilyaciya-otoplenie":
+    "an air handling unit standing on the roof of a production building with its duct running into a wall "
+    "opening, and below it the corner of a bay where a local exhaust arm hangs over a work post",
+"P-3104-voda-i-stoki":
+    "an open sewer inspection manhole in the yard of a production site with its cover lying beside it and a "
+    "sampling device standing at the shaft, the workshop block with its gates behind",
+"P-3105-othody-proizvodstva":
+    "a waste container yard under a canopy with separate marked containers standing in a row and a drum on a "
+    "pallet beside them, the gates of a workshop and a forklift further back",
+"P-3201-kategoriya-na-dveri":
+    "the metal door of a production block seen close up with a small category plate mounted on it beside the "
+    "handle, the door standing ajar onto the bay behind",
+"P-3202-vc-maly-format":
+    "a cutaway of a two storey production building with a machine tool and a semi trailer at the gate on the "
+    "lower floor and a smaller block with a goods lift on the upper floor",
+"P-3203-strahovanie-ceha":
+    "an opened policy document lying on a workshop bench with a machine nameplate and a valuation report "
+    "beside it, a fire extinguisher standing at the machine bed and a lathe receding behind",
+"P-3204-zimniy-schet-za-teplo":
+    "a workshop bay in winter with its gate half rolled up, a thermometer mounted on a structural column in "
+    "the near plane and vapour drifting in the open doorway",
+"P-3205-vc-arenda-protiv-pokupki":
+    "a pair of balance scales standing in a production interior with a door key and a stack of contracts on "
+    "one pan and a small machine tool and a wall calendar on the other",
+"P-3301-rbk-porogi-gektara":
+    "an aerial view of an industrial quarter split by one straight line, a single long roofed building "
+    "filling one side and a dense grid of small workshop blocks with gates on the other",
+"P-3302-rbk-rynok-arendatora":
+    "the long inner corridor of a new production building with a row of sectional gates repeating along one "
+    "side, one of them rolled up and the rest closed, the run receding to the far end",
+"P-3303-rbk-inzhenernyy-barer":
+    "a distribution board in a workshop with its door open showing rows of breakers and busbars, an "
+    "electricity meter mounted beside it, a machine tool under a dust cover further back",
+"P-3304-vc-shest-stadiy-vybora":
+    "a workshop floor plan unrolled across a desk with a tape measure, a hard hat and a printed list of "
+    "machines lying on top of it and pencil marks along the gate dimensions",
+"P-3305-vc-cena-prostoya":
+    "a stopped lathe in an empty workshop with a part still clamped in its chuck and swarf lying in the tray, "
+    "a large wall clock mounted on the wall behind it",
+})
+
+
 # Сцена каждого слайда карусели и серии историй: выведена из его собственного
 # заголовка и подписи в файле недели. Слайд про ворота показывает ворота, слайд
 # про лифт показывает лифт. Внутри одной серии сцены разные, но из одного мира:
