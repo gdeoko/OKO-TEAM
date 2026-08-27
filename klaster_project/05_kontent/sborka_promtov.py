@@ -77,12 +77,13 @@ from promt_engine import Бренд, собрать, проверить
         "renovated administrative building: white walls with one amber accent wall, black framed glazed partitions, "
         "grey carpet, linear ceiling light. "),
     знак=(
-        "The brand mark comes one to one from the attached logo file and is a physical object in the frame, never a "
-        "flat sticker and never a watermark: a twelve toothed gear wheel with a clean circular centre, and inside "
-        "that circle the stylised figure of a person with arms raised outward to both sides; where the wordmark "
-        "appears it reads exactly «КЛАСТЕР». It has real thickness and its own cast shadow and takes the same light "
-        "as everything around it. It appears once per frame, about three percent of the frame width, never larger "
-        "than the headline, never centred as a badge and never repeated. "),
+        "The brand mark comes one to one from the attached logo file and is a physical object, never a flat sticker "
+        "or watermark: a twelve toothed gear wheel with a clean circular centre holding the stylised figure of a "
+        "person with arms raised to both sides; where the wordmark "
+        "appears it reads exactly «КЛАСТЕР». It has real thickness, a cast shadow and the same light "
+        "as everything around it. It appears once, in a corner, under a seventh of the frame width and a third of "
+        "the headline cap height: a maker's mark, never a hero prop, a signboard or the largest object in frame, "
+        "never centred and never repeated. "),
     финал=(
         "The finished frame reads as key art for a campaign: dense, layered, worth a second look. Build at least "
         "four depth planes, near foreground, subject, mid ground and dissolving background, with something crossing "

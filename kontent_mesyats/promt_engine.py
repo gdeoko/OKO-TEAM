@@ -718,10 +718,12 @@ def воронка(бренд, ключ="", подпись=""):
     # Формулировка сжата: место в промпте нужнее системе кадра, чем описанию плиты
     return (f"This closing slide carries the funnel: low and centred, its centre at seventy nine percent down the "
             f"frame, a brushed steel plate with four countersunk screws, engraved and paint filled with the "
-            f"{бренд.имя} wordmark taken one to one from the attached logo file"
+            f"{бренд.имя} wordmark from the attached logo file"
+            # Домен на плите нужен, только если его нет в самой подписи слайда:
+            # иначе адрес стоит в кадре дважды и подвал читается как ошибка вёрстки.
             + (f"; beneath it, in the accent colour at a quarter of the headline cap height, «{бренд.домен}»"
-               if бренд.домен else "")
-            + f"; stencilled below in warm white capitals at one third of that cap height, the closing line "
+               if бренд.домен and бренд.домен.lower() not in (подпись or "").lower() else "")
+            + f"; stencilled below in warm white capitals at a third of that cap height, the closing line "
               f"«{закрывающая(ключ, подпись)}».")
 
 
