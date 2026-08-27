@@ -685,7 +685,32 @@ def режим(ключ, рубрика="", вид="пост"):
     return пара[_ровно(осн, 16) % 2]
 
 
-def воронка(бренд):
+# Одна и та же строка на последнем слайде каждой карусели превращает набор в
+# шаблон, и критики поймали это первым делом: в одном кадре «СОХРАНИТЕ» стояло
+# дважды, крупно в подписи слайда и мелко в подвале. Держим набор закрывающих
+# строк и выбираем по ключу, пропуская ту, что повторяет слово из подписи.
+ЗАКРЫВАЮЩИЕ = [
+    "СОХРАНИТЕ, ЧТОБЫ НЕ ИСКАТЬ",
+    "ПЕРЕШЛИТЕ ТОМУ, КОМУ ЭТО СЕЙЧАС НУЖНО",
+    "ВОПРОСЫ ЗАКРЫВАЕМ ЗА ОДИН ЗВОНОК",
+    "ПРИЕЗЖАЙТЕ ПОСМОТРЕТЬ СВОИМИ ГЛАЗАМИ",
+    "СПРОСИТЕ ЦИФРЫ ПО СВОЕЙ ЗАДАЧЕ",
+    "ОТВЕЧАЕМ В ТОТ ЖЕ РАБОЧИЙ ДЕНЬ",
+    "РАЗБЕРЁМ ВАШ СЛУЧАЙ ПО ТЕЛЕФОНУ",
+    "НАПИШИТЕ, ЧТО ПРОВЕРИТЬ ПЕРВЫМ",
+]
+
+
+def закрывающая(ключ, подпись=""):
+    """Строка подвала последнего слайда: своя у каждой карусели."""
+    осн = ключ.rsplit("-", 1)[0] if ключ.rsplit("-", 1)[-1].isdigit() else ключ
+    годные = [с for с in ЗАКРЫВАЮЩИЕ
+              if not any(сл in (подпись or "").upper() for сл in с.split()[:1])]
+    годные = годные or ЗАКРЫВАЮЩИЕ
+    return годные[_ровно(осн, 23) % len(годные)]
+
+
+def воронка(бренд, ключ="", подпись=""):
     # Формулировка сжата: место в промпте нужнее системе кадра, чем описанию плиты
     return (f"This closing slide carries the funnel: low and centred, its centre at seventy nine percent down the "
             f"frame, a brushed steel plate with four countersunk screws, engraved and paint filled with the "
@@ -693,7 +718,7 @@ def воронка(бренд):
             + (f"; beneath it, in the accent colour at a quarter of the headline cap height, «{бренд.домен}»"
                if бренд.домен else "")
             + f"; stencilled below in warm white capitals at one third of that cap height, the closing line "
-              f"«СОХРАНИТЕ, ЧТОБЫ НЕ ИСКАТЬ».")
+              f"«{закрывающая(ключ, подпись)}».")
 
 
 def поля_сторис():
@@ -777,7 +802,7 @@ def собрать(бренд, кадры):
             куски.append(шаблон_номера.format(метка_места) if имя_режима == "сцена"
                          else f"The position marker reads {метка_места}, small, in brand amber.")
             if к["номер"] == к["всего"]:
-                куски.append(воронка(бренд) if вид == "карусель" else
+                куски.append(воронка(бренд, к["ключ"], к.get("заголовок", "")) if вид == "карусель" else
                              f"This is the closing frame of the series, so the {бренд.имя} mark from the attached logo "
                              f"file appears once, small, at three percent of the frame width, low inside the working "
                              f"window" + (f" with «{бренд.домен}» beneath." if бренд.домен else "."))
