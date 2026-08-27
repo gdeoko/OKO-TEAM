@@ -433,8 +433,9 @@ def графика(ключ, номер=0):
           "kicker under the letters. 65 mm, f/4. The letters read exactly, character by character, the Russian "
           "line «{заголовок}».",
    "типографика":
-      "Letter faces are amber #E8A400 powder coat at roughness 0.35 under a 0.05 clearcoat, side walls milled "
-      "aluminium at 0.22, and every letter casts a real contact shadow.",
+      "Letter faces are warm white #F5F1E8 powder coat at roughness 0.35 under a 0.05 clearcoat, the amber "
+      "#E8A400 living on the milled side walls at 0.22 and never on the faces, and every letter casts a "
+      "real contact shadow.",
    "знак":
       "The brand mark stands beside the letters as a small machined plate on the same floor, about three percent "
       "of the frame width, with its own shadow.",
