@@ -534,6 +534,18 @@ function buildUI() {
             '<li><i>' + (RU ? "УЗЛЫ" : "NODES") + '</i><span>' +
               (RU ? "На орбите тела разверните узел сети. Узлы держат трафик и открывают новые рукава"
                   : "In orbit deploy a node. Nodes carry traffic and unlock arms") + '</span></li>' +
+            /* Три клавиши оставались без объяснения, и заказчик
+               спрашивал про них прямо: «для чего какая кнопка вообще
+               не понятно». Справка обязана закрывать весь ряд. */
+            '<li><i>' + (RU ? "АВТО" : "AUTO") + '</i><span>' +
+              (RU ? "Автопилот ведёт корабль по маршруту сам. Любая ручная команда его выключает"
+                  : "Autopilot flies the route. Any manual input turns it off") + '</span></li>' +
+            '<li><i>' + (RU ? "СТОП" : "STOP") + '</i><span>' +
+              (RU ? "Гасит ход до нуля. Рядом КАДР сохраняет вид из окна себе на устройство"
+                  : "Kills the thrust. Next to it, SHOT saves the view to your device") + '</span></li>' +
+            '<li><i>' + (RU ? "ВЫХОД" : "EXIT") + '</i><span>' +
+              (RU ? "Крестик в углу или настойчивая прокрутка вверх возвращают на страницу"
+                  : "The corner cross or a firm scroll up returns to the page") + '</span></li>' +
           '</ul>' +
         '</div>' +
       '</div>' +
