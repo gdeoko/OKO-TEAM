@@ -144,9 +144,24 @@ var W3 = null;    /* всё трёхмерное */
 /* Журнал исследователя: что уже открыто наведением. Живёт в
    localStorage - вернувшись на сайт, человек продолжает свой
    список, а не начинает заново. */
-var LOG_KEY = "rcdn.explored";
+/* Версия ключа поднята: до неё сканер писал в журнал латинский id
+   («mars»), а наведение - первое слово подписи («МАРС»). Одно тело
+   считалось дважды, счётчик открытий врал. Старые смешанные журналы
+   не читаем, они бы так и остались кривыми. */
+var LOG_KEY = "rcdn.explored2";
 var explored = {};
 try { explored = JSON.parse(localStorage.getItem(LOG_KEY) || "{}") || {}; } catch (e) { explored = {}; }
+/* Видно ли тело на самом деле: прячут чаще всего родительскую
+   группу, а не сам меш */
+function видимоЛи(o) {
+  while (o) { if (o.visible === false) return false; o = o.parent; }
+  return true;
+}
+/* Ключ журнала для тела, по которому попали лучом */
+function меткаТела(o) {
+  while (o) { if (o.userData && o.userData.mark) return o.userData.mark; o = o.parent; }
+  return "";
+}
 function noteExplored(name) {
   if (explored[name]) return;
   explored[name] = 1;
@@ -449,6 +464,17 @@ function buildUI() {
        называет команду, голограмма объясняет последствие. Живёт
        она на стекле, а не на раме - окно у нас и есть экран. */
     '<div class="rcf-keyhint" aria-hidden="true"><b></b><span></span></div>' +
+    /* Справка на стекле.
+
+       Клавиша справки в пульте есть, но команд больше, чем ниш на
+       плите, и лишним ставится display:none - в жертву попала именно
+       она. На телефоне прочитать правила было негде вовсе, а заказчик
+       написал прямо: «нету типо настроек инструкций каких-то».
+
+       Ставим отдельную кнопку на стекло, рядом с приборами: места в
+       ряду клавиш она не занимает, режется тем же контуром окна и
+       открывает ту же панель «КАК ЛЕТАТЬ». */
+    '<button type="button" class="rcf-help-fab" aria-label="' + (RU ? "Как летать" : "How to fly") + '">?</button>' +
     '<div class="rcf-hud">' +
       /* Верхняя полоса стекла собрана колонкой, а не разложена
          абсолютными координатами.
@@ -616,9 +642,9 @@ function buildUI() {
                 '<button type="button" class="rcf-key rcf-fire-key" data-act="shot">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                  '<circle cx="12" cy="12" r="7.5"/><path d="M12 1.8v3.4M12 18.8v3.4M1.8 12h3.4M18.8 12h3.4"/>' +
-                  '<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>' +
-                  '<b>' + (RU ? "ЗАЛП" : "FIRE") + '</b></button>' +
+                  '<path d="M3.4 8.2h3.1l1.5-2.4h8l1.5 2.4h3.1v10.2H3.4z"/>' +
+                  '<circle cx="12" cy="13.1" r="3.5"/></svg>' +
+                  '<b>' + (RU ? "СНИМОК" : "SHOT") + '</b></button>' +
                 '<button type="button" class="rcf-key rcf-auto-key" data-autokey aria-pressed="false">' +
                   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
                   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -725,10 +751,24 @@ function buildUI() {
       if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
     });
   }
+  /* Кнопка на стекле открывает ту же панель, что и клавиша пульта.
+     Держим их в одном состоянии, чтобы подсветка не разъезжалась. */
+  var helpFab = w.querySelector(".rcf-help-fab");
+  if (helpFab) {
+    helpFab.addEventListener("click", function () {
+      var on = !ui.help.classList.contains("on");
+      ui.help.classList.toggle("on", on);
+      helpFab.classList.toggle("cur", on);
+      if (helpKey) helpKey.classList.toggle("cur", on);
+      modalMark();
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    });
+  }
   var helpX = w.querySelector(".rcf-help-x");
   if (helpX) helpX.addEventListener("click", function () {
     ui.help.classList.remove("on");
     if (helpKey) helpKey.classList.remove("cur");
+    if (helpFab) helpFab.classList.remove("cur");
     modalMark();
   });
   var stopKey = w.querySelector(".rcf-stop-key");
@@ -1557,6 +1597,7 @@ function buildUniverse(i) {
           if (solid) {
             solid.userData.info = made.group.userData.info;
             if (W3.pickables) W3.pickables.push(solid);
+            made.group.userData.mark = sys.id + "-" + pi;
             if (W3.scanTargets) W3.scanTargets.push({ o: made.group, name: pl.name, key: sys.id + "-" + pi, uni: i });
           }
         });
@@ -1580,6 +1621,15 @@ function showHome(on) {
               W3.corOut, W3.mercury, W3.venus, W3.jupiter, W3.uranus,
               W3.neptune];
   for (var i = 0; i < list.length; i++) if (list[i]) list[i].visible = on;
+  /* Узлы-реле CDN тоже домашние. Их в списке не было, и цепочка из
+     шести маяков «УЗЕЛ RC-10 · ближайший к вам сервер сети» висела
+     во всех чужих рукавах, отзываясь на нажатие своим досье. */
+  if (W3.relaySprites) {
+    for (var ri = 0; ri < W3.relaySprites.length; ri++) {
+      if (W3.relaySprites[ri]) W3.relaySprites[ri].visible = on;
+    }
+  }
+  if (W3.relayLine) W3.relayLine.visible = on;
 }
 
 /* A galaxy is a destination, not wallpaper. Keeping every arm live
@@ -1728,12 +1778,27 @@ function jumpUniverse(want) {
        заканчиваться видом на новый мир, а не на пустоту */
     systemNav();
     if (uniIdx > 0) {
+      /* Помним, где уже были: по этому следу пробой выбирает
+         следующий рукав, а не гоняет по одному и тому же */
+      F.былиВ = F.былиВ || {};
+      F.былиВ[uniIdx] = 1;
+      F.ластРукав = uniIdx;
       goSystem(0);
       F.away = true;
     } else {
       F.away = false;
       F.orbit = null;
       F.rejoin = 1;
+      /* Возврат домой - это выход ИЗ туннеля, а не повторный вход в
+         него. Пока корабль оставался внутри зоны прыжка, пробой
+         срабатывал сразу же и снова уносил в чужой рукав: маршрут
+         замыкался в круг, дойти до конца было нельзя. Ставим
+         корабль сразу за зоной, на домашний участок. */
+      if (W3 && W3.at && F.p > W3.at.jump0 && F.p < W3.at.jump1) {
+        F.p = Math.min(1, W3.at.jump1 + 0.012);
+        F.jBang = false;
+        F.jFlash = 0;
+      }
     }
     if (ui.fade) ui.fade.style.opacity = "0";
     setTimeout(function () { uniBusy = false; }, 700);
@@ -3323,7 +3388,8 @@ function buildWorld() {
   }
   /* Линия связи между узлами: тонкая, едва заметная */
   var relayGeo = new T.BufferGeometry().setFromPoints(relayPts);
-  scene.add(new T.Line(relayGeo, new T.LineBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false })));
+  var relayLine = new T.Line(relayGeo, new T.LineBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false }));
+  scene.add(relayLine);
 
   /* ── Марс ── */
   /* Марс снимком, а не рисунком: мозаика «Викингов» (MDIM21, NASA,
@@ -4133,6 +4199,12 @@ function buildWorld() {
     { o: uranus, name: RU ? "УРАН" : "URANUS", key: "uranus" },
     { o: neptune, name: RU ? "НЕПТУН" : "NEPTUNE", key: "neptune" }
   ];
+  /* Один ключ на тело для обоих приборов: сканер берёт его из
+     списка, наведение - с самого объекта. Иначе Марс попадал в
+     журнал дважды под разными именами. */
+  for (var см = 0; см < scanTargets.length; см++) {
+    scanTargets[см].o.userData.mark = scanTargets[см].key;
+  }
 
   /* ── Твёрдые тела ────────────────────────────────────────────
      Клиент прислал замечание: «чтобы ракета сквозь планеты не
@@ -4203,6 +4275,8 @@ function buildWorld() {
     /* Оболочки атмосфер и точка солнца отдаются наружу: кадр
        обновляет по ним направление на светило. */
     atmShells: atmShells,
+    /* Узлы-реле отдаём наружу: их надо гасить в чужих рукавах. */
+    relaySprites: relaySprites, relayLine: relayLine,
     ringMat: ringMatS,
     "СОЛНЦЕ": СОЛНЦЕ,
     sunMat: sunBody.material,
@@ -4293,8 +4367,15 @@ function bindControls() {
     var dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   }
+  /* Палец, начавший движение внутри прокручиваемой панели, ведёт
+     список, а не корабль. Без этой проверки свайп по меню КУРСа
+     разгонял корабль, а список стоял на месте. */
+  function вПанели(e) {
+    var t = e.target;
+    return !!(t && t.closest && t.closest(".rcf-menu, .rcf-dos-in, .rcf-help-in"));
+  }
   w.addEventListener("touchstart", function (e) {
-    if (F.stage) { tY = tX = null; tAxis = 0; pinch = 0; return; }
+    if (F.stage || вПанели(e)) { tY = tX = null; tAxis = 0; pinch = 0; return; }
     /* Два пальца - щипок: приближает, а не разгоняет. Тот же зум,
        что на ПК даёт шифт с колесом. */
     if (e.touches.length > 1) { pinch = pinchDist(e); return; }
@@ -4302,7 +4383,7 @@ function bindControls() {
     if (e.touches.length) { tY = e.touches[0].clientY; tX = e.touches[0].clientX; tAxis = 0; tSum = 0; }
   }, { passive: true });
   w.addEventListener("touchmove", function (e) {
-    if (F.stage) return;
+    if (F.stage || вПанели(e)) return;
 
     /* Выход из финала тем же движением, каким вошли.
 
@@ -5321,7 +5402,7 @@ var ЧТОДЕЛАЕТ = {
   "rcf-map-key":  RU ? "Карта сети: где уже стоят ваши узлы" : "Network map: where your nodes stand",
   "rcf-scan-key": RU ? "Снять карту тела, к которому подошли" : "Scan the body you are next to",
   "rcf-deploy":   RU ? "Развернуть узел сети. Работает на орбите тела" : "Deploy a node. Works in orbit",
-  "rcf-fire-key": RU ? "Импульс по цели впереди" : "Pulse at the target ahead",
+  "rcf-fire-key": RU ? "Сохранить кадр из окна себе на устройство" : "Save the view to your device",
   "rcf-auto-key": RU ? "Автопилот ведёт корабль сам" : "Autopilot flies the ship",
   "rcf-stop-key": RU ? "Погасить ход до нуля" : "Kill the thrust",
   "rcf-zoom-in":  RU ? "Приблизить вид" : "Zoom in",
@@ -5970,8 +6051,15 @@ function frame(ts) {
     var hits = frame._ray.intersectObjects(w3.pickables || [], false);
     var info = null, hitObj = null;
     for (var hi = 0; hi < hits.length; hi++) {
-      if (hits[hi].object.userData && hits[hi].object.userData.info) {
-        info = hits[hi].object.userData.info; hitObj = hits[hi].object; break;
+      var кто = hits[hi].object;
+      /* three.js рейкастом спрятанные объекты НЕ отсеивает: он бьёт
+         по списку как есть. Отсюда жалоба «кликаю на планету чужого
+         рукава, открывается описание Земли» - Земля лежала невидимой
+         ровно на той же линии взгляда. Проверяем видимость сами, и
+         обязательно по всей ветке вверх: прячут обычно группу. */
+      if (!видимоЛи(кто)) continue;
+      if (кто.userData && кто.userData.info) {
+        info = кто.userData.info; hitObj = кто; break;
       }
     }
     /* Нажали по телу - снимаем с него карту. Наведение по-прежнему
@@ -5994,7 +6082,7 @@ function frame(ts) {
         ui.info.textContent = shownInfo;
         ui.info.classList.add("on");
         if (ui.cap && ui.cap.parentNode) ui.cap.parentNode.classList.add("has-info");
-        noteExplored(shownInfo.split(" ")[0]);
+        noteExplored(меткаТела(hitObj) || shownInfo.split(" · ")[0]);
         if (g.RC_SOUND) { try { (g.RC_SOUND.uiHover || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
       }
       else {
@@ -6110,10 +6198,27 @@ function frame(ts) {
          первый открытый чужой рукав. Раньше туннель, вспышка и
          надпись были, а прыжка НЕ БЫЛО - владелец назвал это
          «других вселенных по факту нету», и был прав. */
-      var nxt = 0;
+      /* Раньше здесь брался первый попавшийся открытый рукав, а
+         первый открытый всегда один и тот же - EXO-1. Сколько ни
+         прыгай, попадаешь в него же: владелец так и написал,
+         «полёт застревает на 2 вселенной, 3-4 вообще нету».
+         Теперь пробой ведёт туда, где ещё не были, а когда обойдены
+         все - в следующий по кругу от прошлого. */
+      var открытые = [];
       for (var qi = 1; qi < UNIVERSES.length; qi++) {
         var uu3 = UNIVERSES[qi];
-        if (!uu3.need || netCount() >= uu3.need) { nxt = qi; break; }
+        if (!uu3.need || netCount() >= uu3.need) открытые.push(qi);
+      }
+      var nxt = 0;
+      if (открытые.length) {
+        F.былиВ = F.былиВ || {};
+        for (var qk = 0; qk < открытые.length; qk++) {
+          if (!F.былиВ[открытые[qk]]) { nxt = открытые[qk]; break; }
+        }
+        if (!nxt) {
+          var пред = открытые.indexOf(F.ластРукав || 0);
+          nxt = открытые[(пред + 1) % открытые.length];
+        }
       }
       if (nxt > 0 && uniIdx === 0) {
         say((RU ? "ПРОБОЙ · РУКАВ " : "BREACH · ") + UNIVERSES[nxt].name, 2800);
@@ -6244,7 +6349,11 @@ function frame(ts) {
   ui.bar.style.width = (F.p * 100).toFixed(1) + "%";
   /* На перелёте между системами табло показывает настоящий ход:
      иначе при варпе счётчик стоял на месте, хотя мимо летит космос */
-  var spdV = Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9);
+  /* Погасив ход, пилот видел на табло 8 км/с и считал прибор
+     сломанным. Семь и девять - это первая космическая, она честна
+     на витке и в полёте, но не тогда, когда корабль стоит. */
+  var естьХод = speed > 0.0004 || (F.warpV || 0) > 1 || !!F.orbit;
+  var spdV = естьХод ? Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9) : 0;
   if (spdV !== F._spdPub) {
     F._spdPub = spdV;
     var sv = String(spdV);
@@ -7966,8 +8075,17 @@ function stageCam(dt) {
      сохраняется как очень небольшой параллакс головы, а не как тур
      по декорации. Это тот же 3D-мир и та же камера, с которой через
      секунду начинается управление кораблём. */
-  var survey = Math.sin(yawT) * (1 - ek) * 0.055;
-  var yaw = Math.PI * 2 + survey;
+  /* Полный оборот салона считает rc-interior: ноль на входе, семь
+     остановок у экранов, ровно TAU на подъезде к пульту. Здесь
+     стояло yaw = TAU всегда, то есть в слое полёта камера смотрела
+     в окно с первого же кадра и оборота не показывала совсем -
+     отсюда «внутри ракеты в салоне перед игрой 360 не работает».
+
+     Берём настоящий угол, а к пульту дожимаем его к полному кругу:
+     ek на подъезде равен единице, значит финальный кадр остаётся
+     тем же самым и проём никуда не уезжает. */
+  var survey = Math.sin(F.stageT / 4.4) * 0.014 * (1 - ek);
+  var yaw = yawT + (Math.PI * 2 - yawT) * ek + survey;
   F.stageYaw = yaw;
 
   /* Дыхание: человек не штатив. На подъезде затухает - там кадр
@@ -8114,6 +8232,11 @@ function prebuild() {
   }
   F.built = true;
   netRestore();
+  /* Корпус рубки собираем здесь же, заранее. Раньше он строился в
+     первом кадре входа: замер приёмки на телефоне дал до 83 секунд
+     на этот единственный кадр, и вход читался зависанием. Сцена
+     ещё не рисуется, значит собрать его сейчас ничего не стоит. */
+  if (g.RC_CABIN) { try { cabinBuild(); } catch (e) {} }
   return true;
 }
 
@@ -8226,7 +8349,22 @@ function stageLite(on) {
     if (o.length) { for (var j = 0; j < o.length; j++) if (o[j]) o[j].visible = !on; }
     else o.visible = !on;
   }
-  if (!on) showGalaxyField(uniIdx);
+  /* Возвращая тела, спрашиваем, В КАКОМ МЫ РУКАВЕ.
+
+     Здесь стояло безусловное включение всего списка. В чужой
+     вселенной это означало вот что: после любого срабатывания
+     адаптивного качества посреди PROXIMA снова зажигались Марс,
+     Сатурн, Юпитер, Нептун, комета и земные узлы сети. Заказчик
+     увидел ровно это и написал, что в других вселенных клик по
+     планете открывает описание Земли: он и правда попадал по
+     воскресшей Земле, стоявшей поверх чужой системы.
+
+     Домашние тела возвращаем только дома. Галактики и туманности
+     общие, они остаются. */
+  if (!on) {
+    showGalaxyField(uniIdx);
+    if (uniIdx !== 0) showHome(false);
+  }
   /* Плотность пикселей в салоне ниже: кадр статичный, камера едет
      по прокрутке, и разница на глаз не видна */
   if (W3.r) {

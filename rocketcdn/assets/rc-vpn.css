@@ -44,26 +44,52 @@
 }
 .rc-vpn-entry.on em { background: #7ca1ff; box-shadow: 0 0 18px #628aff; }
 
-/* Невидимая зона правого проектора. В режиме CDN она лишь добавляет
-   фокус и подпись доступности поверх уже нарисованной голограммы;
-   изображение RocketVPN появляется только после переключения. */
+/* Проектор RocketVPN стоит рядом с голограммой Rocket CDN, у самого
+   пульта. Раньше это был прозрачный круг 148px под потолком справа:
+   на экране его не было видно совсем, зато он молча съедал клики по
+   планетам в правой верхней четверти окна - отсюда «не на всех
+   планетах работают клики». Теперь он виден как вторая голограмма,
+   меньше по размеру и на своём месте. */
 .rc-flight .rc-vpn-projector {
   position: absolute;
   z-index: 9;
-  top: max(12%, calc(var(--cab-wy, 7%) + 3%));
-  right: max(3.5%, calc(100% - var(--cab-wx, 9%) - var(--cab-ww, 82%) + 2%));
-  width: clamp(88px, 12vw, 148px);
+  right: calc(clamp(16px, 6vw, 90px) + clamp(54px, 7vw, 92px) + clamp(14px, 2.4vw, 34px));
+  bottom: clamp(60px, 15vh, 150px);
+  top: auto;
+  width: clamp(46px, 6vw, 78px);
   aspect-ratio: 1;
   padding: 0;
   border: 0;
   border-radius: 50%;
   color: rgba(191, 226, 255, .82);
   background: transparent;
-  opacity: .62;
+  opacity: .86;
   pointer-events: auto;
   cursor: pointer;
-  filter: drop-shadow(0 0 8px rgba(64, 135, 255, .18));
+  filter: drop-shadow(0 0 10px rgba(64, 135, 255, .28));
   transition: opacity .22s linear, filter .22s linear, transform .22s ease;
+  animation: rcVpnLift 5.4s ease-in-out infinite;
+}
+/* Подставка-луч под проекцией: без неё логотип висит в воздухе и
+   читается как наклейка на стекле, а не как объём в кабине */
+.rc-flight .rc-vpn-projector::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(108, 158, 255, .5), transparent 72%);
+  filter: blur(1px);
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  .rc-flight .rc-vpn-projector {
+    right: calc(8px + 44px + 12px);
+    bottom: 12.5%;
+    width: 38px;
+  }
 }
 .rc-flight .rc-vpn-projector:hover,
 .rc-flight .rc-vpn-projector:focus-visible {
@@ -78,11 +104,15 @@
   width: 86%;
   height: 86%;
   object-fit: contain;
-  opacity: 0;
+  /* В режиме CDN марка приглушена, но видна: человек должен понимать,
+     куда он жмёт, ещё до переключения на RocketVPN */
+  opacity: .34;
   transform: perspective(240px) rotateY(-10deg) scale(.84);
   filter: saturate(1.2) contrast(1.08) drop-shadow(0 0 8px rgba(94, 133, 255, .55));
   transition: opacity .24s linear, transform .42s cubic-bezier(.18,.7,.16,1);
 }
+.rc-flight .rc-vpn-projector:hover img,
+.rc-flight .rc-vpn-projector:focus-visible img { opacity: .72; }
 html[data-product="vpn"] .rc-flight .rc-vpn-projector {
   opacity: .95;
   filter: drop-shadow(0 0 18px rgba(70, 142, 255, .62));
@@ -298,6 +328,12 @@ html.rc-product-glitch .rc-vpn-brand img {
   50%  { transform: translate(-2px,2px) skewX(-3deg); filter: hue-rotate(-28deg) drop-shadow(4px 0 #8a59f6); }
   75%  { transform: translate(1px,-2px) skewX(2deg); }
   100% { transform: translate(0) skewX(0); }
+}
+/* Отдельный подъём для самой проекции: общий rcVpnFloat крутит
+   изображение по Y, кнопке такой наклон не нужен */
+@keyframes rcVpnLift {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 @keyframes rcVpnFloat {
   0%,100% { transform: perspective(240px) rotateY(-7deg) translateY(0) scale(1); }
