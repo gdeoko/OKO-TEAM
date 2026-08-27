@@ -5404,7 +5404,13 @@ function holoSetup() {
       else if (rec.goal) goTo(rec.goal);
       if (rec.o && rec.info) {
         try {
-          dosOpen(rec.o, rec.info);
+          /* Заголовок досье собирается из первой доли строки до
+             разделителя. У записи метки в info лежит целая фраза без
+             имени («Полосы облаков, вихри и Большое красное пятно»),
+             и в шапку карточки попадала она. Берём подпись самого
+             тела, а к фразе приставляем имя метки. */
+          dosOpen(rec.o, (rec.o.userData && rec.o.userData.info) ||
+                         ((rec.title ? rec.title + " · " : "") + rec.info));
           F.infoUntil = (g.performance && g.performance.now ? performance.now() : 0) + 4200;
           if (!(rec.o.userData && rec.o.userData["реле"])) {
             noteExplored(меткаТела(rec.o) || String(rec.info).split(" · ")[0]);
