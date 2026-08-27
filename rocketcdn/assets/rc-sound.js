@@ -505,6 +505,122 @@ Sound.prototype.hyper = function () {
   } catch (e) {}
 };
 
+/* ══════════════════════════════════════════════════════════
+   Голоса приборов
+
+   До сих пор весь корабль говорил четырьмя звуками: щелчок,
+   наведение, подтверждение и гул прыжка. Всё остальное - развёртка
+   узла, захват цели, открытие досье, удар о корпус, выход на виток -
+   звучало одинаковым blip, то есть не звучало никак. Заказчик просил
+   звуков «везде и много», и это как раз тот случай, когда прибор без
+   голоса читается неживым.
+
+   Всё синтезируется на месте: ни одного файла, ни одного запроса.
+   Каждый голос - это узнаваемая форма, а не просто другая частота.
+   ══════════════════════════════════════════════════════════ */
+
+/* Общая заготовка: тон с огибающей и необязательным глиссандо */
+Sound.prototype._тон = function (f0, f1, t0, dur, type, vol, q) {
+  if (!this.on || !this.ready) return;
+  var ctx = this.ctx, t = ctx.currentTime + (t0 || 0);
+  try {
+    var o = ctx.createOscillator(), gn = ctx.createGain();
+    o.type = type || "sine";
+    o.frequency.setValueAtTime(f0, t);
+    if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.03, dur * 0.25));
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    var хвост = gn;
+    if (q) {
+      var f = ctx.createBiquadFilter();
+      f.type = "bandpass"; f.frequency.value = (f0 + (f1 || f0)) / 2; f.Q.value = q;
+      gn.connect(f); хвост = f;
+    }
+    o.connect(gn); хвост.connect(this.master);
+    o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+};
+
+/* Шумовой всплеск с полосовым фильтром: удары, шорохи, затвор */
+Sound.prototype._шум = function (t0, dur, f0, f1, vol, q) {
+  if (!this.on || !this.ready) return;
+  var ctx = this.ctx, t = ctx.currentTime + (t0 || 0);
+  try {
+    var n = Math.max(64, Math.floor(ctx.sampleRate * dur));
+    var b = ctx.createBuffer(1, n, ctx.sampleRate), c = b.getChannelData(0);
+    for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    var src = ctx.createBufferSource(); src.buffer = b;
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = q || 1.1;
+    f.frequency.setValueAtTime(f0, t);
+    if (f1 && f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    var gn = ctx.createGain();
+    gn.gain.setValueAtTime(vol, t);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(gn); gn.connect(this.master);
+    src.start(t);
+  } catch (e) {}
+};
+
+/* Узел развёрнут: три ноты вверх и мягкий щелчок фиксатора. Это
+   главное достижение в игре, и звучать оно обязано как награда. */
+Sound.prototype.node = function () {
+  if (!this.ready && !this.build()) return;
+  this._тон(523, 523, 0, 0.10, "sine", 0.045);
+  this._тон(659, 659, 0.09, 0.10, "sine", 0.042);
+  this._тон(880, 880, 0.18, 0.26, "sine", 0.05);
+  this._шум(0.18, 0.06, 2600, 900, 0.02, 2.2);
+};
+
+/* Захват цели: короткий двойной писк радара */
+Sound.prototype.lock = function () {
+  if (!this.ready) return;
+  this._тон(1480, 1480, 0, 0.035, "square", 0.014);
+  this._тон(1480, 1480, 0.075, 0.035, "square", 0.012);
+};
+
+/* Досье открылось: стеклянный подъём. Закрылось - он же вниз. */
+Sound.prototype.panelIn = function () {
+  if (!this.ready && !this.build()) return;
+  this._тон(420, 1180, 0, 0.20, "triangle", 0.022, 2.4);
+  this._шум(0, 0.16, 900, 3200, 0.012, 1.6);
+};
+Sound.prototype.panelOut = function () {
+  if (!this.ready) return;
+  this._тон(980, 380, 0, 0.16, "triangle", 0.016, 2.4);
+};
+
+/* Удар о корпус: низкий толчок с металлическим призвуком */
+Sound.prototype.alarm = function () {
+  if (!this.ready && !this.build()) return;
+  this._тон(96, 42, 0, 0.34, "sawtooth", 0.07);
+  this._шум(0, 0.22, 1800, 260, 0.05, 0.9);
+  this._тон(740, 740, 0.10, 0.12, "square", 0.018);
+};
+
+/* Выход на виток: тёплый разлив. Прибытие обязано ощущаться. */
+Sound.prototype.arrive = function () {
+  if (!this.ready && !this.build()) return;
+  this._тон(196, 294, 0, 0.55, "sine", 0.04);
+  this._тон(294, 392, 0.12, 0.55, "sine", 0.03);
+  this._тон(588, 588, 0.30, 0.40, "sine", 0.018);
+};
+
+/* Затвор: снимок из окна */
+Sound.prototype.shutter = function () {
+  if (!this.ready && !this.build()) return;
+  this._шум(0, 0.035, 3400, 1400, 0.05, 1.4);
+  this._шум(0.055, 0.05, 1600, 700, 0.04, 1.2);
+};
+
+/* Отказ: рукав закрыт, узлов не хватает, команда сейчас недоступна */
+Sound.prototype.deny = function () {
+  if (!this.ready && !this.build()) return;
+  this._тон(220, 220, 0, 0.09, "square", 0.03);
+  this._тон(165, 165, 0.10, 0.16, "square", 0.03);
+};
+
 g.RC_SOUND = snd;
 
 function bind() {

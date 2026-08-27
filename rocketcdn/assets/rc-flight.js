@@ -892,7 +892,9 @@ function buildUI() {
          человек должен видеть, куда он собирался */
       say((RU ? "ЗАКРЫТО · нужно узлов сети: " : "LOCKED · nodes needed: ") +
           uw.need + " (" + (RU ? "есть " : "have ") + netCount() + ")", 2800);
-      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND, 180); } catch (e3) {} }
+      /* Отказ звучит отказом: щелчок «как обычно» человек читает
+         как «нажалось», и непонятно, почему ничего не произошло */
+      if (g.RC_SOUND) { try { (g.RC_SOUND.deny || g.RC_SOUND.uiClick).call(g.RC_SOUND, 180); } catch (e3) {} }
       return;
     }
     /* Прыгаем: закрываем ОБЩЕЕ меню курса - список рукавов теперь
@@ -996,6 +998,9 @@ function solarScience(name) {
 
 function dosClose() {
   if (!ui.dos) return;
+  if (ui.dos.classList.contains("on") && g.RC_SOUND && g.RC_SOUND.panelOut) {
+    try { g.RC_SOUND.panelOut(); } catch (eЗ) {}
+  }
   ui.dos.classList.remove("on");
   dosStop();
   if (ui.dosVid) { try { ui.dosVid.pause(); } catch (eV3) {} }
@@ -1362,6 +1367,9 @@ function dosOpen(obj, info) {
       try { ui.dosVid.pause(); } catch (eV2) {}
     }
   }
+  /* Досье открывается стеклянным подъёмом: панель, которая
+     появляется молча, читается картинкой, а не прибором */
+  if (g.RC_SOUND && g.RC_SOUND.panelIn) { try { g.RC_SOUND.panelIn(); } catch (eЗ) {} }
   dosPaint(obj, name, 0);
   /* Петля жизни развёртки. Крутится, только пока досье открыто:
      закрыли - гасим, иначе прибор считает кадры за спиной у человека.
@@ -4822,10 +4830,15 @@ function deployNode() {
   say((closed ? (RU ? "ЗАПРОС ЗАКРЫТ · " : "REQUEST SERVED · ")
               : (RU ? "УЗЕЛ РАЗВЁРНУТ · " : "NODE DEPLOYED · ")) + name + " · " +
       (RU ? "в сети " : "in network ") + netCount(), 2600);
+  /* Развёртка узла - главное достижение в игре. Три ноты вверх и
+     щелчок фиксатора: это награда, и звучать она обязана наградой. */
   if (g.RC_SOUND) {
     try {
-      (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND);
-      setTimeout(function () { if (g.RC_SOUND.blip) g.RC_SOUND.blip(880); }, 180);
+      if (g.RC_SOUND.node) g.RC_SOUND.node();
+      else {
+        (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND);
+        setTimeout(function () { if (g.RC_SOUND.blip) g.RC_SOUND.blip(880); }, 180);
+      }
     } catch (e2) {}
   }
   if (netCount() >= NET_TOTAL()) {
@@ -5636,7 +5649,9 @@ function frame(ts) {
         var fitR = ob.r * (innerHeight > innerWidth ? 1.72 : 1);
         F.orbit = { c: tgt.position, r: fitR, y: ob.y, a: null,
                     name: GOAL_NAMES[F.goalId] || F.goalId };
-        if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e2) {} }
+        /* Выход на виток - событие, а не подтверждение нажатия.
+           Тёплый разлив вместо общего «готово». */
+        if (g.RC_SOUND) { try { (g.RC_SOUND.arrive || g.RC_SOUND.uiConfirm).call(g.RC_SOUND); } catch (e2) {} }
       }
     }
     else {
@@ -6042,6 +6057,12 @@ function frame(ts) {
       }
     }
     if (bestT) {
+      /* Писк только на смену цели: на каждый кадр захвата он
+         превращался бы в непрерывный зуммер */
+      if (frame._lockOn !== bestT.key && g.RC_SOUND && g.RC_SOUND.lock) {
+        try { g.RC_SOUND.lock(); } catch (eЗ) {}
+      }
+      frame._lockOn = bestT.key;
       ui.lock.classList.add("on");
       ui.lock.style.left = sx + "px";
       ui.lock.style.top = sy + "px";
@@ -6054,6 +6075,7 @@ function frame(ts) {
         : (Math.round(tkm) + (RU ? " тыс. км" : "K km")));
       noteExplored(bestT.key);
     } else {
+      frame._lockOn = "";
       ui.lock.classList.remove("on");
     }
   }
@@ -7062,7 +7084,7 @@ function failTick(ts) {
       /* Пришли вовремя - узел поднят, заряд не тратится: это
          восстановление, а не новое строительство */
       say((RU ? "УЗЕЛ ПОДНЯТ · " : "NODE RESTORED · ") + fail.name, 2600);
-      if (g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
+      if (g.RC_SOUND) { try { (g.RC_SOUND.node || g.RC_SOUND.uiConfirm).call(g.RC_SOUND); } catch (e) {} }
       F.saved = (F.saved || 0) + 1;
       fail = null;
       failNext = ts + 52000;
@@ -7083,7 +7105,7 @@ function failTick(ts) {
       }
       trafBuild();
       say((RU ? "УЗЕЛ ПОТЕРЯН · " : "NODE LOST · ") + fail.name, 3200);
-      if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(140, 0.7, "sawtooth", 0.04); } catch (e) {} }
+      if (g.RC_SOUND) { try { (g.RC_SOUND.alarm || g.RC_SOUND.blip).call(g.RC_SOUND, 140, 0.7, "sawtooth", 0.04); } catch (e) {} }
       fail = null;
       failNext = ts + 64000;
       netPaint();
@@ -7104,7 +7126,7 @@ function failTick(ts) {
   fail = { name: pick, until: ts + 46000 };
   say((RU ? "АВАРИЯ НА УЗЛЕ · " : "NODE DOWN · ") + pick +
       (RU ? " · выйдите на его орбиту" : " · reach its orbit"), 4200);
-  if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(320, 0.5, "square", 0.03); } catch (e) {} }
+  if (g.RC_SOUND) { try { (g.RC_SOUND.alarm || g.RC_SOUND.blip).call(g.RC_SOUND, 320, 0.5, "square", 0.03); } catch (e) {} }
 }
 
 function failPaint() {
@@ -7162,7 +7184,8 @@ function shoot() {
     a.click();
     setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 400);
     say(RU ? "СНИМОК СОХРАНЁН" : "SNAPSHOT SAVED", 1800);
-    if (g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
+    /* Затвор, а не общее «готово»: снимок обязан звучать снимком */
+    if (g.RC_SOUND) { try { (g.RC_SOUND.shutter || g.RC_SOUND.uiConfirm).call(g.RC_SOUND); } catch (e) {} }
     if (g.RC_track) g.RC_track("flight", "shot");
   } catch (e) {
     say(RU ? "СНИМОК НЕ УДАЛСЯ" : "SNAPSHOT FAILED", 1800);
@@ -7325,7 +7348,7 @@ function spend(cost, what) {
   if (F.en >= cost) { F.en -= cost; return true; }
   say((RU ? "НЕ ХВАТАЕТ ЗАРЯДА · " : "NOT ENOUGH POWER · ") +
       Math.round(F.en) + "/" + cost + (what ? " · " + what : ""), 2200);
-  if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(180, 0.35, "sawtooth", 0.02); } catch (e) {} }
+  if (g.RC_SOUND) { try { (g.RC_SOUND.deny || g.RC_SOUND.blip).call(g.RC_SOUND, 180, 0.35, "sawtooth", 0.02); } catch (e) {} }
   return false;
 }
 
