@@ -579,7 +579,7 @@ function ag_prompt(array $app, array $rubric, array $pitch = [], bool $isImage =
     } else {
         foreach (gr_formal_checks() as $k => $text) $L[] = '  ' . $k . ': ' . $text;
     }
-    if (function_exists('rr_prompt_block')) $L[] = rr_prompt_block();
+    if (function_exists('rr_prompt_block')) $L[] = rr_prompt_block((string) ($app['nomination'] ?? ''));
     $L[] = '';
     $L[] = $isImage
         ? 'ЗАТЕМ ОЦЕНКА ПО КРИТЕРИЯМ. Каждому критерию поставь балл от 0 до 100 и напиши обоснование из ДВУХ-ТРЁХ конкретных наблюдений с привязкой к месту на работе (например «в левом верхнем углу перспектива завалена», «тени положены одним тоном»). Без привязки к конкретным местам оценка не принимается.'

@@ -63,6 +63,17 @@ if ($onlyNew) {
  * шесть работ так и остались с оценкой по старым правилам, пока остальные
  * двести шли по новым. Признак свежести — наличие ключа visible в формальной
  * проверке: он появился вместе с новым заданием. */
+/* Точечный пересмотр: правило уточнили — надо переспросить именно те работы,
+   которых оно касается, а не гонять всю очередь заново. */
+$ids = [];
+foreach ($argv as $a) {
+    if (preg_match('~^--ids=([\d,]+)$~', $a, $m)) {
+        foreach (explode(',', $m[1]) as $v) if ((int) $v > 0) $ids[] = (int) $v;
+    }
+}
+if ($ids) {
+    $where .= ' AND a.id IN (' . implode(',', array_map('intval', $ids)) . ')';
+}
 if (in_array('--stale', $argv, true)) {
     $where .= " AND EXISTS (SELECT 1 FROM grading_runs r WHERE r.application_id = a.id AND r.status='ok')"
             . " AND NOT EXISTS (SELECT 1 FROM grading_runs r2 WHERE r2.application_id = a.id"
