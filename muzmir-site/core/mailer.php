@@ -1284,13 +1284,28 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     curl_close($ch);
     if (is_resource($stream)) fclose($stream);
 
+    $whyFail = '';
     if ($ok) {
         mail_log('SENT to ' . $to . ' | ' . $subject);
     } else {
         $why = trim(($code ? $code . ' ' : '') . $err);
         if ($why === '') $why = 'сервер отклонил письмо без объяснения';
+        $whyFail = $why;
         mail_log('FAIL to ' . $to . ' | ' . $subject . ' | ' . $why);
         mail_last_error('SMTP ' . $host . ':' . $port . ' - ' . $why);
+    }
+
+    /* ПИСЬМО ОСТАЁТСЯ В ЖУРНАЛЕ.
+     *
+     * Личное письмо уходит прямой отправкой, минуя очередь, и раньше от него
+     * не оставалось ничего, кроме строки в логе. Владелец вводил трек-номер,
+     * нажимал «Отправить» — и посмотреть, что получил участник, было негде.
+     * Письма из очереди не пишем: их тело и так лежит в mail_queue. */
+    if (empty($opt['from_queue'])) {
+        if (!function_exists('mail_archive_store') && is_file(BASE_PATH . '/core/mail_archive.php')) {
+            require_once BASE_PATH . '/core/mail_archive.php';
+        }
+        if (function_exists('mail_archive_store')) mail_archive_store($to, $subject, $html, $opt, $ok, $whyFail);
     }
     // Дублируем письмо в приложение как уведомление — но НЕ для писем из очереди
     // (у них уведомление уже создано в mail_queue(), иначе был бы дубль).

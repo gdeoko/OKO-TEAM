@@ -10,6 +10,32 @@ declare(strict_types=1);
 require_once BASE_PATH . '/core/orders.php';
 orders_migrate();
 
+/* --------- ПИСЬМО ОБ ОТПРАВКЕ: ПОКАЗАТЬ ТО, ЧТО ПОЛУЧИЛ УЧАСТНИК ---------
+ *
+ * Письмо с трек-номером уходит прямой отправкой, минуя очередь рассылок, и в
+ * «Рассылках» его нет — после нажатия «Отправить» проверить было нечего.
+ * Сначала ищем письмо в журнале личных писем; если заказ отправлен раньше, чем
+ * журнал появился, письмо собирается заново из того же шаблона и тех же данных
+ * заказа — получается ровно то, что ушло участнику.
+ */
+if (($__letter = (int) input('letter')) > 0) {
+    $o = one("SELECT * FROM awards_orders WHERE id=?", [$__letter]);
+    if (!$o) { http_response_code(404); echo 'Заказ не найден'; exit; }
+    $html = '';
+    if (is_file(BASE_PATH . '/core/mail_archive.php')) {
+        require_once BASE_PATH . '/core/mail_archive.php';
+        mail_archive_migrate();
+        $rec = one("SELECT body FROM mail_sent WHERE to_email=? AND subject LIKE ? ORDER BY id DESC LIMIT 1",
+                   [(string) ($o['email'] ?? ''), '%заказ №' . $__letter]);
+        if ($rec) $html = (string) $rec['body'];
+    }
+    if ($html === '') $html = order_ship_email($o);
+    header('Content-Type: text/html; charset=utf-8');
+    header('X-Robots-Tag: noindex, nofollow');
+    echo $html;
+    exit;
+}
+
 /* --------- Выдача чистого бланка (GET) ---------
  *
  * Бланк без подписи и печати лежит вне веб-корня и отдаётся ТОЛЬКО отсюда: этот
@@ -496,6 +522,9 @@ $groups = og_groups($orders);
         <?php if ($st === 'shipped'): ?>
           <span class="small">Трек: <b><?= h((string)$o['tracking']) ?></b></span>
           <?php if ($trackUrl): ?><a class="btn btn--ghost btn--sm" href="<?= h($trackUrl) ?>" target="_blank">Отследить</a><?php endif; ?>
+          <?php /* Письмо об отправке уходит прямой отправкой, минуя очередь, и в
+                    «Рассылках» его нет. Здесь — ровно то, что увидел участник. */ ?>
+          <a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['letter' => (int)$o['id']]) ?>" target="_blank"><?= admin_icon('newsletter') ?>Письмо участнику</a>
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
             <input type="hidden" name="do" value="delivered"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
             <button class="btn btn--navy btn--sm" type="submit"><?= admin_icon('check') ?>Доставлено</button>
