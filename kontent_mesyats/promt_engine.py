@@ -129,16 +129,19 @@ class Бренд:
                  "reading exactly, character by character, the Russian line «{}»."),
 ]
 
-# Обязательный масштаб надписи: применяется к любому приёму подачи. Держим одни
-# числа и убираем повторы: место в промпте дороже красивой формулировки.
+# Читаемость нужна любому кадру: контраст, горизонтальная строка, надпись лицом
+# к камере. Масштаб же правило ленты: кадр в ленте живёт размером с ноготь, а
+# историю смотрят во весь экран с вытянутой руки, и требовать от неё той же
+# высоты литер значит запретить в истории связную фразу.
+ЧИТАЕМОСТЬ = ("Contrast is set, not hoped for: warm white on dark, or near black on solid amber, and where the "
+              "type crosses a bright or busy area the ground under it is darkened. No amber on pale, no dark on "
+              "dark. The headline faces camera square and never runs away from the lens: foreshortened letters "
+              "stop being letters. Its baseline is horizontal, never rotated, never running up or down the side "
+              "of the frame.")
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
-           "and a quarter of its height and reads at a two hundred pixel thumbnail. Contrast is set, not hoped "
-           "for: warm white on dark, or near black on solid amber, and where the type crosses a bright or busy "
-           "area the ground under it is darkened. No amber on pale, no dark on dark. The headline faces camera "
-           "square and never runs away from the lens: foreshortened letters stop being letters at feed size. "
-           "Its baseline is horizontal, never rotated, never running up or down the side of the frame, and its "
-           "cap height is never less than a twelfth of the frame height, a twentieth on a 9:16 frame, on a wide "
-           "frame as much as on a tall one: a headline that has to be looked for has already failed.")
+           "and a quarter of its height and reads at a two hundred pixel thumbnail. Its cap height is never less "
+           "than a twelfth of the frame height, on a wide frame as much as on a tall one: a headline that has to "
+           "be looked for has already failed. " + ЧИТАЕМОСТЬ)
 
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
@@ -777,7 +780,8 @@ def поля_сторис():
             "field, and 80 pixels along each side are lost under the thumb. Everything meaningful lives inside the "
             "central working window of 920 by 1420 pixels, and the headline sits in the upper part of that window "
             "since a story reads higher than its middle. The headline cap height is at least eight percent of the "
-            "frame width so it holds at arm's length, and it never runs longer "
+            "frame width so it holds at arm's length, stepping down to no less than five percent when the "
+            "line is long, and it never runs longer "
             "than five lines. The poll or question sticker is NOT drawn in this image: the area reserved for it stays "
             "clean and nothing is painted there.")
 
@@ -845,7 +849,7 @@ def собрать(бренд, кадры):
         # Кадр живёт в ленте размером с ноготь. Гравировка на маленькой табличке
         # красива вблизи и пуста на превью, поэтому масштаб надписи задаём жёстко
         # и одинаково для любого приёма подачи.
-        куски.append(МАСШТАБ)
+        куски.append(ЧИТАЕМОСТЬ if вид == "сторис" else МАСШТАБ)
         if к.get("подпись"):
             куски.append(ПОДПИСЬ[имя_приёма].format(к["подпись"]) if имя_режима == "сцена"
                          else f"A supporting line is set small and calm under the headline in the same layout, "
