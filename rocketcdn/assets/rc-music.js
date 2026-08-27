@@ -7,14 +7,29 @@
    перекрёстным затуханием - конец переходит в начало без шва, и
    человек не слышит, где трек пошёл по кругу.
 
-   Как включается. Браузеры не дают сайту зазвучать без участия
-   человека, и никакой трюк этого не отменяет. Зато можно сделать
-   так, чтобы задержки не было ни на слух, ни на глаз: трек
-   стартует беззвучно сразу при загрузке, крутится и ждёт. Первое
-   же касание - клик, палец, клавиша, колесо - снимает немоту, и
-   музыка появляется уже идущей, а не начинает грузиться. Там, где
-   браузер разрешает звук сразу (человек уже бывал на сайте),
-   ничего ждать не надо: включаемся на загрузке.
+   Как включается. ТОЛЬКО кнопкой звука в шапке, и никак иначе.
+
+   Раньше здесь стояла хитрая схема: трек заводился беззвучно прямо
+   на загрузке, а первое же событие из списка жестов - в том числе
+   прокрутка и колесо мыши - снимало немоту. Замер на живой странице
+   показал, чем это оборачивается: человек листает первый экран, у
+   него сама собой начинает играть музыка на громкости 0.3, на
+   документе появляется класс music-on, а тумблер звука в шапке при
+   этом стоит в положении «выключено» (aria-pressed="false"). Плюс
+   полмегабайта темы качалось у каждого, кто вообще не собирался
+   ничего слушать.
+
+   Прокрутка это не просьба включить звук. Поэтому:
+     · по умолчанию тишина, ни одного байта темы не качается;
+     · элемент audio создаётся в момент нажатия на кнопку, тогда же
+       и начинается загрузка файла;
+     · выключили - трек останавливается, состояние запоминается;
+     · класс music-on и событие rc:music держат кнопку в шапке
+       в том же положении, в каком находится сам звук.
+
+   Мгновенного старта после нажатия теперь нет: первые доли секунды
+   уходят на загрузку. Это честная цена за то, что страница молчит,
+   пока её не попросили зазвучать, и не тратит трафик впустую.
 
    Громкость. Ниже, чем кажется правильным на первый взгляд: тема
    должна читаться как воздух комнаты, а не как саундтрек поверх
@@ -40,9 +55,11 @@ var VOL_QUIET = 0.16;                 /* когда человек в форме
 var FADE = 6.0;                       /* секунд на проявление */
 
 var el = null, want = 0, cur = 0, raf = null, last = 0;
-var armed = false, started = false, killed = false, duckUntil = 0, heard = false, boosted = false;
+var started = false, killed = false, duckUntil = 0, boosted = false;
 
-function off() {
+/* Человек уже говорил «выключить» - помним это между визитами.
+   Ключ общий со звуками ракеты: кнопка в шапке одна на весь звук. */
+function muteChoice() {
   try { return localStorage.getItem(KEY) === "off"; } catch (e) { return false; }
 }
 
@@ -50,11 +67,12 @@ function build() {
   if (el) return el;
   el = doc.createElement("audio");
   el.loop = true;
-  /* Метаданные хватает, чтобы трек был готов начаться: сами данные
-     браузер дотянет по ходу немого прогона */
-  el.preload = "metadata";
+  /* Строим элемент только по нажатию, поэтому и качаем сразу всё:
+     ждать больше нечего, человек уже попросил звук. Раньше здесь
+     стояло "metadata" ради немого прогона на загрузке страницы -
+     прогона больше нет. */
+  el.preload = "auto";
   el.volume = 0;
-  el.muted = true;                    /* немой старт разрешён везде */
   el.setAttribute("playsinline", "");
   el.setAttribute("aria-hidden", "true");
 
@@ -64,35 +82,36 @@ function build() {
   b.src = SRC_M4A; b.type = "audio/mp4; codecs=mp4a.40.2";
   el.appendChild(a); el.appendChild(b);
 
-  /* Файла нет или формат не понят - молчим и не мешаем странице */
-  el.addEventListener("error", function () { killed = true; }, true);
+  /* Файла нет или формат не понят - молчим, кнопку возвращаем в
+     положение «выключено», чтобы она не врала про играющий звук */
+  el.addEventListener("error", function () {
+    killed = true;
+    want = 0; cur = 0; started = false;
+    root.classList.remove("music-on");
+    tell(false);
+  }, true);
 
   el.style.cssText = "position:absolute;width:0;height:0;opacity:0;pointer-events:none";
   doc.body.appendChild(el);
   return el;
 }
 
+function tell(on) {
+  try { dispatchEvent(new CustomEvent("rc:music", { detail: { on: !!on } })); } catch (e) {}
+}
+
+/* Кадровый цикл поднимаем только когда есть что вести: громкость
+   едет, тема пригнулась под грохот или трек ещё не завёлся. */
+function kick() {
+  if (!raf) { last = 0; raf = requestAnimationFrame(frame); }
+}
+
 /* Плавность ведём сами: у элемента нет своих переходов громкости,
    а резкое включение как раз и есть то, что бьёт по нервам. */
 function frame(ts) {
-  /* Кадровый цикл нужен только пока громкость едет. Когда она
-     доехала до своего значения, а трек уже играет или уже молчит,
-     смотреть каждый кадр не на что: дальше за темой следит редкий
-     сторож немого прогона на таймере. */
   var moving = Math.abs(cur - want) > 0.002 || duckUntil > ts || (want > 0 && !started);
   raf = moving ? requestAnimationFrame(frame) : 0;
-  if (!raf) {
-    if (!frame._nap) {
-      frame._nap = setInterval(function () {
-        if (doc.hidden) return;
-        if (Math.abs(cur - want) > 0.002 || duckUntil > performance.now() ||
-            (!want && !killed && el && el.muted && el.paused)) {
-          clearInterval(frame._nap); frame._nap = 0;
-          if (!raf) raf = requestAnimationFrame(frame);
-        }
-      }, 400);
-    }
-  } else if (frame._nap) { clearInterval(frame._nap); frame._nap = 0; }
+  if (!raf) last = 0;
 
   var dt = last ? Math.min(0.1, (ts - last) / 1000) : 0.016;
   last = ts;
@@ -107,170 +126,52 @@ function frame(ts) {
   var v = cur < 0 ? 0 : (cur > 1 ? 1 : cur);
   try { if (Math.abs(el.volume - v) > 0.003) el.volume = v; } catch (e) {}
 
-  /* Дошли до нуля - останавливаем, чтобы не жечь батарею впустую.
-     Немой прогон не трогаем: он и заведён ради того, чтобы к
-     первому касанию трек уже шёл, а не начинал грузиться. */
-  if (v < 0.004 && started && !want && !el.muted) { try { el.pause(); } catch (e) {} started = false; }
-
-  /* Сторож немого прогона. Проба голоса и запрет браузера ходят
-     наперегонки, и трек легко остаётся на паузе: сняли немоту -
-     браузер остановил, вернули немоту - момент упущен. Поэтому раз
-     в полторы секунды просто проверяем факт: молчим, стоим, не
-     выключены - значит снова заводим беззвучно. */
-  if (!want && !killed && !doc.hidden && el.muted && el.paused && ts - (frame._at || 0) > 800) {
-    frame._at = ts;
-    play();
-  }
+  /* Дошли до нуля - останавливаем совсем. Держать трек на паузе
+     без звука незачем: немого прогона в этой схеме нет. */
+  if (v < 0.004 && !want && started) { try { el.pause(); } catch (e2) {} started = false; }
 }
 
 function play() {
   if (!el || killed) return null;
   var r = null;
   try { r = el.play(); } catch (e) { return null; }
-  if (r && r.then) r.then(function () { started = true; }).catch(function () {});
-  else started = true;
+  if (r && r.then) {
+    r.then(function () { started = true; }).catch(function () {
+      /* Браузер отказал даже после нажатия - значит звука нет, и
+         кнопка обязана это показать, а не гореть «включено» */
+      started = false;
+      want = 0; cur = 0;
+      root.classList.remove("music-on");
+      tell(false);
+    });
+  } else started = true;
   return r;
 }
 
 /* ── Включение ───────────────────────────────────────────────
-   Снимаем немоту и выводим громкость. Если браузер к этому
-   моменту так и не дал играть - пробуем ещё раз: жест человека
-   уже случился, теперь разрешение есть. */
+   Зовётся строго из обработчика нажатия на кнопку звука
+   (rc-sound.js): это и есть жест человека, ради которого браузер
+   вообще разрешает звук. Здесь же начинается загрузка файла. */
 function on(level) {
-  if (killed || off()) return;
+  if (killed) return;
+  /* Слово человека сильнее любого вызова: сказал «выключить» - тема не
+     поднимается, кто бы её ни звал. Кнопка звука пишет «on» в этот же
+     ключ ДО того, как позвать нас, поэтому собственное нажатие сюда
+     не упирается. */
+  if (muteChoice()) return;
   build();
-  /* Первое включение начинаем с начала выбранного куска: пока трек
-     шёл беззвучно, он успел уехать на несколько секунд, а заказчик
-     выбирал именно это вступление. Слышно этого никто не может -
-     до сих пор была тишина. */
-  if (!heard) {
-    heard = true;
-    try { if (el.currentTime > 0.2) el.currentTime = 0; } catch (e) {}
-  }
-  el.muted = false;
   want = level === undefined ? VOL : level;
   if (!started || el.paused) play();
   root.classList.add("music-on");
-  try { dispatchEvent(new CustomEvent("rc:music", { detail: { on: true } })); } catch (e) {}
+  tell(true);
+  kick();
 }
 
 function silence() {
   want = 0;
   root.classList.remove("music-on");
-  try { dispatchEvent(new CustomEvent("rc:music", { detail: { on: false } })); } catch (e) {}
-}
-
-/* ── Первый контакт ──────────────────────────────────────────
-   Ловим всё, что браузер согласен считать участием человека.
-   Один раз: дальше слушатели снимаются. */
-var GESTURES = ["pointerdown", "pointerup", "touchstart", "touchend",
-                "mousedown", "click", "keydown", "wheel", "scroll"];
-
-function first() {
-  if (!armed) return;
-  armed = false;
-  GESTURES.forEach(function (n) {
-    removeEventListener(n, first, true);
-    doc.removeEventListener(n, first, true);
-  });
-  on();
-}
-
-function arm() {
-  if (armed) return;
-  armed = true;
-  GESTURES.forEach(function (n) {
-    addEventListener(n, first, { capture: true, passive: true });
-    doc.addEventListener(n, first, { capture: true, passive: true });
-  });
-}
-
-/* Проба голоса: снимаем немоту и смотрим, не осадил ли нас
-   браузер. Осадил - молча возвращаемся к беззвучному прогону и
-   ждём касания; разрешил - выводим громкость. Проверяем не по
-   обещанию, а по факту через треть секунды: браузер имеет право
-   ответить «да» и тут же поставить на паузу. */
-function tryAloud() {
-  if (!el || killed) return;
-  var at = el.currentTime;
-  try { el.muted = false; } catch (e) { return; }
-  var r = null;
-  try { r = el.play(); } catch (e2) {}
-  if (r && r.catch) r.catch(function () {});
-  setTimeout(function () {
-    if (!el) return;
-    if (!el.paused && !el.muted && el.currentTime >= at) {
-      started = true;
-      armed = false;
-      on();
-    } else {
-      try { el.muted = true; } catch (e3) {}
-      play();
-      arm();
-    }
-  }, 340);
-}
-
-function boot() {
-  if (off()) return;
-  build();
-  if (!raf) raf = requestAnimationFrame(frame);
-
-  /* Немой прогон: к первому касанию трек уже идёт и звук появится
-     мгновенно, без паузы на загрузку. Только когда он точно пошёл,
-     пробуем зазвучать в голос - иначе браузер отклонит обе попытки
-     разом и мы останемся молча. */
-  var r = play();
-  if (r && r.then) r.then(tryAloud).catch(arm);
-  else setTimeout(tryAloud, 200);
-
-  /* Человек уже что-то делал на странице до загрузки скрипта -
-     значит разрешение есть, ждать нечего. */
-  try {
-    if (navigator.userActivation && navigator.userActivation.hasBeenActive) setTimeout(tryAloud, 60);
-  } catch (e) {}
-  arm();
-
-  /* Второй сторож, уже на таймере. Кадровый цикл на загруженной
-     странице может надолго уступить место отрисовке, и тогда немой
-     прогон поднимется не сразу; таймер от этого не зависит. */
-  setInterval(function () {
-    if (killed || off() || want || doc.hidden) return;
-    if (el && el.muted && el.paused) play();
-  }, 1500);
-
-  /* Тише там, где читают и пишут. Справочник и пульт - места, где
-     человек думает над текстом, музыка там отходит на шаг назад и
-     возвращается, когда сцена снова становится полётом. */
-  addEventListener("rc:act", function (e) {
-    var a = e && e.detail && e.detail.act;
-    if (!want || boosted) return;
-    want = (a === "console" || a === "manual") ? VOL_QUIET : VOL;
-  });
-  doc.addEventListener("focusin", function (e) {
-    if (!want || boosted) return;
-    var n = e.target && e.target.tagName;
-    if (n === "INPUT" || n === "TEXTAREA" || n === "SELECT") want = VOL_QUIET;
-  });
-  doc.addEventListener("focusout", function () {
-    if (want) setTimeout(function () {
-      if (!want || boosted) return;
-      var a = doc.activeElement && doc.activeElement.tagName;
-      if (a !== "INPUT" && a !== "TEXTAREA" && a !== "SELECT") {
-        var act = g.RC_SCENE && g.RC_SCENE.act;
-        want = (act === "console" || act === "manual") ? VOL_QUIET : VOL;
-      }
-    }, 60);
-  });
-
-  /* Подстраховка: вкладка могла открыться в фоне, и тогда браузер
-     не даёт играть даже беззвучно. Как только вкладку показали -
-     пробуем снова. */
-  doc.addEventListener("visibilitychange", function () {
-    if (doc.hidden) { if (el && want) { try { el.pause(); } catch (e) {} started = false; } }
-    else if (want) { play(); }
-    else if (!off() && el && el.paused) { play(); }
-  });
+  tell(false);
+  kick();
 }
 
 /* ── Наружу ──────────────────────────────────────────────────
@@ -279,61 +180,83 @@ function boot() {
 g.RC_MUSIC = {
   on: on,
   off: silence,
-  quiet: function (yes) { if (want) want = yes ? VOL_QUIET : VOL; },
+  quiet: function (yes) { if (want) { want = yes ? VOL_QUIET : VOL; kick(); } },
   /* Полёт: музыка встаёт в полный рост - клиент просил громче,
-     когда летим. Выход из полёта возвращает фоновый уровень. */
+     когда летим. Выход из полёта возвращает фоновый уровень.
+     Завести молчащую тему полёт не может: раньше boost(true) сам
+     звал on(), и человек, не трогавший кнопку звука, получал
+     музыку от одного нажатия «Начать полёт». */
   boost: function (yes) {
+    if (!want) { boosted = false; return; }
     boosted = !!yes;
-    if (yes) { if (!want) on(); want = 0.55; }
-    else if (want) want = VOL;
+    want = yes ? 0.55 : VOL;
+    kick();
   },
-  duck: function (ms) { duckUntil = performance.now() + (ms || 2200); },
-  playing: function () { return !!(el && !el.paused && !el.muted && cur > 0.01); },
+  duck: function (ms) { duckUntil = performance.now() + (ms || 2200); kick(); },
+  /* Для кнопки в шапке: «включено» это намерение играть плюс живой
+     трек. Ждать, пока шестисекундное проявление доедет до слышимой
+     громкости, кнопка не должна - иначе первые секунды после
+     нажатия она показывает «выключено» при играющей музыке. */
+  playing: function () { return !!(el && want > 0 && !el.paused); },
   level: function () { return cur; },
   state: function () {
     return {
       файл: el ? (el.currentSrc || "").split("/").pop() : null,
-      идёт: !!(el && !el.paused), немой: !!(el && el.muted),
+      создан: !!el,
+      идёт: !!(el && !el.paused),
       громкость: +cur.toFixed(3), цель: +want.toFixed(3),
-      ждёт_касания: armed, сломан: killed
+      сломан: killed
     };
   }
 };
 
-/* Полкилобайта на человека, который звук так и не включит - дорого:
-   тема весит 513 КБ и качалась у всех подряд ещё до первого касания
-   экрана. Немой прогон остаётся (он и даёт мгновенный звук после
-   жеста), но заводим его не раньше, чем видно вовлечение: касание,
-   клавиша или уход с первого экрана. На экономии трафика и режиме
-   «сберечь данные» тема не поднимается вообще.
+/* ── Обстановка вокруг темы ──────────────────────────────────
+   Всё это работает только когда музыка уже играет: пока want ноль,
+   слушатели просто ничего не делают и ни байта не качают. */
+function wire() {
+  /* Тише там, где читают и пишут. Справочник и пульт - места, где
+     человек думает над текстом, музыка там отходит на шаг назад и
+     возвращается, когда сцена снова становится полётом. */
+  addEventListener("rc:act", function (e) {
+    var a = e && e.detail && e.detail.act;
+    if (!want || boosted) return;
+    want = (a === "console" || a === "manual") ? VOL_QUIET : VOL;
+    kick();
+  });
+  doc.addEventListener("focusin", function (e) {
+    if (!want || boosted) return;
+    var n = e.target && e.target.tagName;
+    if (n === "INPUT" || n === "TEXTAREA" || n === "SELECT") { want = VOL_QUIET; kick(); }
+  });
+  doc.addEventListener("focusout", function () {
+    if (want) setTimeout(function () {
+      if (!want || boosted) return;
+      var a = doc.activeElement && doc.activeElement.tagName;
+      if (a !== "INPUT" && a !== "TEXTAREA" && a !== "SELECT") {
+        var act = g.RC_SCENE && g.RC_SCENE.act;
+        want = (act === "console" || act === "manual") ? VOL_QUIET : VOL;
+        /* Кадровый цикл засыпает, когда громкость доехала: без толчка
+           новый уровень остался бы числом в переменной, а не звуком */
+        kick();
+      }
+    }, 60);
+  });
 
-   Страховка на десять секунд нужна тому, кто просто читает первый
-   экран и потом сразу жмёт звук - он не должен ждать загрузки. */
-function armBoot() {
-  if (off()) return;
-  try {
-    var c = navigator.connection;
-    if (c && (c.saveData || /(^|-)(2g)$/.test(c.effectiveType || ""))) return;
-  } catch (e) {}
+  /* Ушли со вкладки - тема замолкает и не играет в пустоту.
+     Вернулись при включённом звуке - продолжаем с того же места. */
+  doc.addEventListener("visibilitychange", function () {
+    if (!el || !want) return;
+    if (doc.hidden) { try { el.pause(); } catch (e) {} started = false; }
+    else { play(); kick(); }
+  });
 
-  var done = false;
-  function go() {
-    if (done) return;
-    done = true;
-    removeEventListener("pointerdown", go);
-    removeEventListener("keydown", go);
-    removeEventListener("scroll", onScr);
-    boot();
-  }
-  function onScr() { if ((scrollY || 0) > innerHeight * 0.5) go(); }
-
-  addEventListener("pointerdown", go, { passive: true, once: true });
-  addEventListener("keydown", go, { once: true });
-  addEventListener("scroll", onScr, { passive: true });
-  setTimeout(go, 10000);
+  /* Человек сказал «выключить» в другой вкладке - гасим и здесь */
+  addEventListener("storage", function (e) {
+    if (e && e.key === KEY && e.newValue === "off" && want) silence();
+  });
 }
 
-if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", armBoot);
-else armBoot();
+if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", wire);
+else wire();
 
 })(window);
