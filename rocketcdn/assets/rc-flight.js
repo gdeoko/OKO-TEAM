@@ -513,6 +513,12 @@ function buildUI() {
     { id: "uranus", t: RU ? "Уран" : "Uranus" },
     { id: "neptune", t: RU ? "Нептун" : "Neptune" },
     { id: "hole", t: RU ? "Дыра" : "Hole" },
+    /* Пояс, комета и спутник тоже цели маршрута. Метки на них висят
+       и курс по ним теперь ставится, а в меню их не было - долететь
+       можно было только через клик по голограмме. */
+    { id: "belt", t: RU ? "Пояс астероидов" : "Asteroid belt" },
+    { id: "comet", t: RU ? "Комета" : "Comet" },
+    { id: "sat", t: RU ? "Спутник" : "Satellite" },
     { id: "galaxy", t: RU ? "Галактика" : "Galaxy" },
     { id: "home", t: RU ? "Домой" : "Home" }
   ];
@@ -1711,6 +1717,19 @@ function buildUniverse(i) {
         madeStar = g.RC_PLANETS.star({ radius: 78, seed: sys.seed, tint: sys.star, light: false, corona: 1.25 });
         sg.add(madeStar.group);
         live.push(madeStar);
+        /* Сама звезда тоже отзывается на нажатие. Планеты системы в
+           список подбора кладут, а звезду - нет: самое крупное и
+           заметное тело рукава молчало на клик. */
+        (function (мс, с) {
+          var тело = null;
+          мс.group.traverse(function (о) { if (!тело && о.isMesh) тело = о; });
+          if (!тело) return;
+          тело.userData.info = RU
+            ? с.name + " · звезда системы"
+            : с.name + " · system star";
+          тело.userData.mark = с.id + "-star";
+          if (W3 && W3.pickables) W3.pickables.push(тело);
+        })(madeStar, sys);
       } catch (e1) { madeStar = null; }
     }
     if (!madeStar) {
@@ -5122,7 +5141,14 @@ function netMark(pos, name) {
      стоит: в кадре оставалось белое пятно вместо Земли. */
   s.scale.setScalar(6);
   s.userData.info = (RU ? "УЗЕЛ СЕТИ · " : "NETWORK NODE · ") + name;
+  /* Свой узел это не открываемое тело: в журнал исследователя он не
+     идёт, как и реле сети. */
+  s.userData["реле"] = true;
   W3.scene.add(s);
+  /* Поставленный узел можно ткнуть. Описание у него было, а в списке
+     подбора его не было: человек ставит узел, тыкает в него и не
+     получает ничего. */
+  if (W3.pickables) W3.pickables.push(s);
   netNodes.push({ s: s, p: pos.clone(), name: name });
 
   /* Линии связи между узлами: сеть должна выглядеть сетью */
