@@ -55,6 +55,19 @@ if ($comp > 0) { $where .= ' AND a.competition_id = ?'; $args[] = $comp; }
 if ($onlyNew) {
     $where .= " AND NOT EXISTS (SELECT 1 FROM grading_runs r WHERE r.application_id = a.id AND r.status='ok')";
 }
+/* УСТАРЕВШИЙ РАЗБОР — ТОЖЕ ПРОБЕЛ.
+ *
+ * Разбор, сделанный прежним заданием, выглядит в отчётах как готовый, а на
+ * деле в нём нет ни уроков, разобранных на правках жюри, ни проверок раздела 8
+ * (видны ли руки, ноги и лицо, статична ли камера, слышен ли звук). Тридцать
+ * шесть работ так и остались с оценкой по старым правилам, пока остальные
+ * двести шли по новым. Признак свежести — наличие ключа visible в формальной
+ * проверке: он появился вместе с новым заданием. */
+if (in_array('--stale', $argv, true)) {
+    $where .= " AND EXISTS (SELECT 1 FROM grading_runs r WHERE r.application_id = a.id AND r.status='ok')"
+            . " AND NOT EXISTS (SELECT 1 FROM grading_runs r2 WHERE r2.application_id = a.id"
+            . "   AND r2.status='ok' AND r2.formal LIKE '%visible%' AND r2.created_at >= '2026-08-27 04:00')";
+}
 $rows = all("SELECT a.id, a.nomination, a.full_name, a.group_name, c.name AS comp
                FROM applications a LEFT JOIN competitions c ON c.id = a.competition_id
               WHERE $where ORDER BY a.id" . ($limit > 0 ? ' LIMIT ' . $limit : ''), $args);
