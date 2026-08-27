@@ -26,7 +26,7 @@
 # первого слайда серии, если своей сцены у слайда нет.
 СЦЕНЫ_M2 = {
 # --- неделя 1: 28.09 - 04.10 ---
-"P-10-metro-2028": "the industrial territory in the near half of the frame with a metro construction site beyond its fence, a tower crane over a shoring pit and a walking route marked across the concrete apron",
+"P-10-metro-2028": "an industrial street in the early morning with long workshop fences and closed roller gates along both sides, a bus stop sign at the near kerb and residential towers standing at the far end of the street",
 "P-211-shest-kategoriy": "the open door of a workshop switchgear room with six identical breaker modules stacked in one vertical column behind the glazed panel, bus bars and cable glands below them",
 "P-11-shattl": "a shuttle bus standing at a marked stop beside the checkpoint of an industrial territory with its door open and a line of workers boarding it seen from behind, the barrier arm raised beyond",
 "P-08-den-proizvodstva": "the inner street of an industrial territory at first light with roller gates being raised along the near side, cars arriving through the entrance and a wall clock bolted to a gate pillar",
@@ -40,7 +40,7 @@
 "P-57-dzen-polnaya-stoimost": "a cost table drawn as a technical document on a sheet pinned flat to a steel panel with a straightedge across its lower rows, the printed body an unreadable grey texture",
 "P-410-dzen-shest-punktov": "a stapled contract lying open on a steel bench with a machinist rule across the page and six small steel tabs standing along its edge, the printed body an unreadable grey texture",
 "P-S-subbota-itogi-nedeli": "a stapled contract lying open on a steel bench with a pen resting on the page, a closed folder and a phone face down beside it at the far edge of the surface",
-"P-212-tri-cifry-kadry": "three steel bars of different height standing in a row on the swept floor of a workshop bay, evenly spaced, each casting its own shadow toward the near edge of the frame",
+"P-212-tri-cifry-kadry": "a workshop bay seen along its line of machines with a lathe, a drill press and a bench grinder standing one behind the other, tools left out on the benches beside them and no one at any of them",
 # --- неделя 2: 05.10 - 11.10 ---
 "P-400-tehzadanie": "a technical brief form lying on a workbench with a tape measure and a phone face up beside it, the printed body an unreadable grey texture with four ruled fields filled by hand",
 "P-17-geografiya": "a survey plan of the southern part of a city lying flat on a bench with the site marked by a scribed point, two road corridors running off the sheet and a straightedge across it",
@@ -109,7 +109,7 @@
 # P-S истории «Среда, 06:00»: мир проходной и цеха на рассвете
 "P-S-sreda-v-cehe-01": "a line of cars standing nose to tail at a lowered barrier before dawn with a guard window beside the lane and the closed gate of the territory ahead",
 "P-S-sreda-v-cehe-02": "an industrial wall clock bolted to the pillar of an entrance gate with its hands and figures worn away, the closed gate leaf behind it",
-"P-S-sreda-v-cehe-03": "an overhead crane hook carrying a steel billet on slings across a bay, two workers steadying it from either side and the crane rail overhead",
+"P-S-sreda-v-cehe-03": "a steel billet on slings hanging just clear of a workbench under an overhead crane, one worker at each end holding it steady and the crane rail running above them",
 "P-S-sreda-v-cehe-04": "the closed roller gate of a block with a numbered plate beside it and a swept apron in front, a steel trolley parked against the wall",
 # P-206 карусель «Лондон SIL»: мир города сверху и его печатных планов
 "P-206-london-sil-01": "an aerial view of a dense industrial district beside a river where long workshop roofs and rail yards fill the near half of the frame and housing begins along a straight boundary",
