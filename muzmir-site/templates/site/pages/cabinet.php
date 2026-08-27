@@ -1157,17 +1157,16 @@ ob_start(); ?>
                 <?php if (trim((string)($a['extra_diploma'] ?? '')) !== ''): ?>
                   <p class="cab-extra"><span>Дополнительный диплом:</span> <?= h($a['extra_diploma']) ?></p>
                 <?php endif; ?>
-                <?php // Комментарий и рекомендация жюри — ТОЛЬКО для участников ВИП-клуба.
-                  if ($isVip): ?>
-                  <?php if (trim((string)($a['jury_comment'] ?? '')) !== ''): ?>
-                    <p class="cab-jury">Комментарий жюри: «<?= h($a['jury_comment']) ?>»</p>
-                  <?php else: ?>
-                    <div style="margin-top:10px">
-                      <button type="button" class="btn btn--ghost btn--sm" data-jury-req="<?= (int)$a['id'] ?>">Запросить комментарий и рекомендацию жюри</button>
-                    </div>
-                  <?php endif; ?>
-                <?php elseif (trim((string)($a['jury_comment'] ?? '')) !== ''): ?>
-                  <p class="cab-meta" style="margin-top:8px;color:var(--gold-ink,#8B6F1F)">Комментарий и рекомендация жюри доступны участникам <a href="<?= url('/club') ?>">ВИП-клуба</a>.</p>
+                <?php /* РАЗБОР ВЫСТУПЛЕНИЯ — ОТДЕЛЬНАЯ УСЛУГА, А НЕ ЧАСТЬ РЕЗУЛЬТАТА.
+                         Решение владельца: комментарий жюри участнику не показывается.
+                         Он остаётся в базе и будет доступен тем, кто закажет разбор
+                         отдельно. В кабинете — только приглашение, без самого текста.
+                         Снижение за фонограмму объясняется в письме с результатом:
+                         там причина обязана быть названа (п. 8.7 положения). */ ?>
+                <?php if (trim((string)($a['result'] ?? '')) !== ''): ?>
+                  <div style="margin-top:10px">
+                    <button type="button" class="btn btn--ghost btn--sm" data-jury-req="<?= (int)$a['id'] ?>">Заказать разбор выступления от жюри</button>
+                  </div>
                 <?php endif; ?>
                 <?php if ($canOrder): ?>
                   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">

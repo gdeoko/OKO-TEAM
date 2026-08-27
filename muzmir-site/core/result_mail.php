@@ -224,15 +224,33 @@ function result_mail_send(int $appId): bool {
             . '</td></tr></table>';
     }
 
-    // Комментарий жюри.
-    if ($jcomm !== '') {
-        $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-            . 'style="margin:0 0 20px;background:' . $card . ';border-radius:14px;">'
-            . '<tr><td style="width:4px;background:' . $gold . ';border-radius:14px 0 0 14px;"></td>'
-            . '<td style="padding:16px 22px;">'
-            . '<div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:' . $muted . ';margin-bottom:6px;">Комментарий жюри</div>'
-            . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';font-style:italic;">«' . h($jcomm) . '»</div>'
-            . '</td></tr></table>';
+    /* КОММЕНТАРИЙ ЖЮРИ В ПИСЬМО НЕ ИДЁТ.
+     *
+     * Решение владельца: разбор выступления — отдельная услуга, платная
+     * привилегия, а не часть результата. В письме остаётся звание,
+     * дополнительный диплом и порядок получения наград.
+     *
+     * Одно исключение — снижение за фонограмму. Участник, рассчитывавший на
+     * лауреата, обязан знать, почему получил дипломанта: это записано в
+     * положении (п. 8.7), и без объяснения отметка выглядит произволом.
+     * Формулировка берётся из первой строки комментария, куда её кладёт
+     * core/grade_apply.php, а сам разбор остаётся в базе — для тех, кто
+     * закажет его отдельно. */
+    if ($jcomm !== '' && mb_stripos($jcomm, 'фонограмм') !== false) {
+        $строки = preg_split('~\r?\n~', $jcomm) ?: [];
+        $про = '';
+        foreach ($строки as $стр) {
+            if (mb_stripos($стр, 'фонограмм') !== false) { $про = trim($стр); break; }
+        }
+        if ($про !== '') {
+            $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+                . 'style="margin:0 0 20px;background:' . $card . ';border-radius:14px;">'
+                . '<tr><td style="width:4px;background:' . $gold . ';border-radius:14px 0 0 14px;"></td>'
+                . '<td style="padding:16px 22px;">'
+                . '<div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:' . $muted . ';margin-bottom:6px;">Пояснение к результату</div>'
+                . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . h($про) . '</div>'
+                . '</td></tr></table>';
+        }
     }
 
     // Карточка данных заявки.
