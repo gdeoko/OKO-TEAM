@@ -33,8 +33,12 @@ export async function браузер() {
 
 /* Страница с копилкой бед: ошибки и неудачные запросы копятся сами. */
 export async function страница(b, э) {
+  /* Сертификат боевого домена в песочнице подписан прокси, и без
+     этого флага проверка боевого сайта падает на подмене
+     удостоверяющего центра. На локальный сервер флаг не влияет. */
   const pg = await b.newPage({ viewport: э.vp, deviceScaleFactor: э.dpr,
-                               isMobile: э.mob, hasTouch: э.mob });
+                               isMobile: э.mob, hasTouch: э.mob,
+                               ignoreHTTPSErrors: true });
   const беды = [];
   pg.on("pageerror", (e) => беды.push("JS: " + e.message.slice(0, 160)));
   pg.on("console", (m) => {
