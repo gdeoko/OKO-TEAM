@@ -3629,6 +3629,11 @@ function buildWorld() {
     rs.position.copy(rp);
     rs.scale.setScalar(9);
     rs.userData.info = RU ? "УЗЕЛ RC-" + (ri + 1) + "0 · ближайший к вам сервер сети" : "NODE RC-" + (ri + 1) + "0";
+    /* Реле сети это не открываемое тело: журнал исследователя считает
+       планеты и галактики, а знаменатель шести узлов не знает. Без
+       этой пометки нажатие СКАН у Земли мгновенно поднимало счётчик
+       «ОТКРЫТО» с 0/42 на 1/42, не подлетев ни к чему. */
+    rs.userData["реле"] = true;
     scene.add(rs);
     relayPts.push(rp);
     relaySprites.push(rs);
@@ -5143,9 +5148,25 @@ function netMark(pos, name) {
 }
 
 function deployNode() {
-  if (!W3 || !F.orbit || !F.orbit.name) return;
+  if (!W3) return;
+  /* Отказ теперь ГОВОРИТ, почему.
+
+     Здесь стояли три молчаливых выхода подряд: не на орбите - тишина,
+     узел уже стоит - тишина. Человек жмёт клавишу, и не происходит
+     ничего: ни слова, ни звука. Замер приёмки записал УЗЕЛ в мёртвые
+     клавиши именно поэтому. Кнопка обязана отвечать всегда, даже
+     когда ответ - «пока нельзя». */
+  if (!F.orbit || !F.orbit.name) {
+    say(RU ? "УЗЕЛ СТАВИТСЯ ТОЛЬКО НА ОРБИТЕ · ПОДОЙДИТЕ К ТЕЛУ"
+           : "NODE NEEDS AN ORBIT · APPROACH A BODY", 1900);
+    if (g.RC_SOUND && g.RC_SOUND.deny) { try { g.RC_SOUND.deny(); } catch (e) {} }
+    return;
+  }
   var name = F.orbit.name;
-  if (net[name]) return;
+  if (net[name]) {
+    say((RU ? "УЗЕЛ УЖЕ СТОИТ · " : "NODE ALREADY HERE · ") + name, 1700);
+    return;
+  }
   /* Узел стоит заряда: это и делает выбор выбором - на дальний
      рубеж или на прыжок, но не на всё сразу */
   if (!spend(14, RU ? "развёртывание узла" : "node deploy")) return;
@@ -5238,8 +5259,12 @@ function reqPick() {
      планеты текущего рукава */
   var list = [];
   if (uniIdx === 0) {
+    /* Солнца в этом списке не было, а узел на нём ставится и в
+       знаменатель сети оно входит: всплеск трафика не приходил
+       туда никогда, и «сеть развёрнута полностью» с этой стороны
+       было недостижимо. */
     var names = [GOAL_NAMES.earth, GOAL_NAMES.moon, GOAL_NAMES.mars, GOAL_NAMES.saturn,
-                 GOAL_NAMES.mercury, GOAL_NAMES.venus, GOAL_NAMES.jupiter,
+                 GOAL_NAMES.sun, GOAL_NAMES.mercury, GOAL_NAMES.venus, GOAL_NAMES.jupiter,
                  GOAL_NAMES.uranus, GOAL_NAMES.neptune, GOAL_NAMES.hole];
     for (var i = 0; i < names.length; i++) if (!net[names[i]]) list.push({ name: names[i] });
   } else {
@@ -6451,6 +6476,13 @@ function frame(ts) {
          иначе прибор ведёт объект из другого рукава сквозь всё небо */
       if (tg.uni !== undefined && tg.uni !== uniIdx) continue;
       if (tg.uni === undefined && uniIdx !== 0) continue;
+      /* И просто по факту видимости. Фильтр по вселенной не ловит
+         тела, спрятанные внутри своей: галактические поля дома
+         скрыты, но uni у них не задан - сканер вёл их сквозь всё
+         небо, рамка захвата вставала на пустое место и писала «ПОЛЕ
+         KEPLER». Зеркально в рукаве, где поле как раз видно, оно
+         пропускалось. */
+      if (!видимоЛи(tg.o)) continue;
       w3.tmpA.setFromMatrixPosition(tg.o.matrixWorld).project(w3.cam);
       if (w3.tmpA.z > 1) continue;                  /* за спиной */
       var dxn = w3.tmpA.x, dyn = w3.tmpA.y;
@@ -6537,7 +6569,9 @@ function frame(ts) {
         ui.info.textContent = shownInfo;
         ui.info.classList.add("on");
         if (ui.cap && ui.cap.parentNode) ui.cap.parentNode.classList.add("has-info");
-        noteExplored(меткаТела(hitObj) || shownInfo.split(" · ")[0]);
+        if (!(hitObj && hitObj.userData && hitObj.userData["реле"])) {
+          noteExplored(меткаТела(hitObj) || shownInfo.split(" · ")[0]);
+        }
         if (g.RC_SOUND) { try { (g.RC_SOUND.uiHover || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
       }
       else {
