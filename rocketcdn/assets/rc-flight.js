@@ -9165,7 +9165,11 @@ function stage(k) {
     F.built = true;
     netRestore();
   }
+  var былоУПульта = (F.stageK || 0) > 0.86;
   F.stageK = k;
+  /* Пересечение порога подъезда: пересчитываем плотность пикселей,
+     чтобы к стыку с игрой она уже была игровой. */
+  if (F.stage && былоУПульта !== (k > 0.86)) stageLite(true);
   if (ui.wrap) ui.wrap.style.setProperty("--rcf-stage", k.toFixed(3));
   if (F.stage) return;
 
@@ -9249,12 +9253,20 @@ function stageLite(on) {
     if (uniIdx !== 0) showHome(false);
   }
   /* Плотность пикселей в салоне ниже: кадр статичный, камера едет
-     по прокрутке, и разница на глаз не видна */
+     по прокрутке, и разница на глаз не видна.
+
+     Но ровно на стыке с игрой она видна очень хорошо: плотность
+     прыгала с 1.15 на 1.8 в один кадр, и картинка разом
+     переоценивалась по резкости - приёмка прочитала это как подмену
+     содержимого окна. Поэтому у самого пульта, когда подъезд уже
+     закончился и кадр всё равно стоит, переходим на игровую
+     плотность заранее. К моменту старта менять нечего. */
   if (W3.r) {
+    var уПульта = on && (F.stageK || 0) > 0.86;
     var dpr = g.devicePixelRatio || 1;
     var step = parseInt(root.getAttribute("data-degrade") || "0", 10) || 0;
     var hint = parseInt(root.getAttribute("data-quality-hint") || "0", 10) || 0;
-    var cap = on ? 1.15 : (tiny ? 1.0 : (innerWidth < 760 ? 1.35 : 1.8));
+    var cap = (on && !уПульта) ? 1.15 : (tiny ? 1.0 : (innerWidth < 760 ? 1.35 : 1.8));
     cap -= Math.max(step, hint > 1 ? hint - 1 : 0) * 0.16;
     W3.r.setPixelRatio(Math.max(0.72, Math.min(dpr, cap)));
   }
