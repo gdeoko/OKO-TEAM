@@ -1,10 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
    Rocket CDN · звук фильма
 
-   Ни одного звукового файла: всё собирается прямо в браузере из
-   осцилляторов и шума. Гул двигателя, свист набегающего потока,
-   эфир радиосвязи и щелчки приборов. Громкость и тембр идут за
-   скоростью прокрутки и за актом, в котором сейчас человек.
+   Два слоя. Непрерывный - гул двигателя, свист набегающего потока
+   и эфир радиосвязи - собирается прямо в браузере из осцилляторов и
+   шума: он тянется минутами и должен идти за скоростью прокрутки и
+   за актом, в котором сейчас человек. Разовые события - щелчок
+   клавиши, пробой, тревога, стыковка - берут записи из assets/snd.
+   Синтез такое вытягивает до «похоже», запись звучит как рубка.
+   Если запись не доехала, событие отдаёт синтезу: звук пропасть не
+   может, он может только стать проще.
 
    Правила приличия соблюдаем: без жеста ничего не звучит, тихо,
    вводится плавно, выключается одним нажатием и запоминается.
@@ -39,6 +43,43 @@ var FLIGHT = {
   walk: 0.10, cabin: 0.06, manual: 0.05, console: 0.05
 };
 
+/* ── Банк записанных эффектов ─────────────────────────────────
+   Ключ - имя файла в assets/snd без расширения, значение - во сколько
+   раз его слышно относительно общей громкости. Файлы уже сведены к
+   одному уровню, здесь только характер: щелчок тише удара.
+
+   Ничего не грузится заранее. Первый вызов события заказывает файл и
+   на этот раз отдаёт синтез, со второго звучит запись. Так первый
+   экран не тянет семьсот килобайт ради звука, который человек может
+   и не включить. */
+var ГРОМКО = {
+  "hover": 0.34, "click": 0.52, "confirm": 0.46, "deny": 0.50,
+  "panel-in": 0.42, "panel-out": 0.40, "switch": 0.50, "type": 0.34,
+  "ignite": 0.62, "engine": 0.40, "climb": 0.40, "boom": 0.70,
+  "hyper": 0.62, "arrive": 0.46, "dock": 0.52, "brake": 0.50,
+  "radar": 0.44, "scan": 0.42, "lock": 0.48, "alarm": 0.52,
+  "beacon": 0.36, "node": 0.42, "amb-cabin": 0.26, "amb-space": 0.30,
+  "reveal": 0.44, "success": 0.52
+};
+
+/* Петли режем внутрь буфера: mp3 добивает края тишиной кодировщика,
+   и стык на loop даёт щелчок. Играем не весь буфер, а его середину. */
+var ПЕТЛЯ = { "engine": 1, "climb": 1, "amb-cabin": 1, "amb-space": 1 };
+
+/* Откуда брать файлы. Считаем от собственного адреса, чтобы сайт жил
+   и в подкаталоге, и с версией в запросе. */
+var ПАПКА = (function () {
+  var me = document.currentScript;
+  if (!me || !me.src) {
+    var все = document.getElementsByTagName("script");
+    for (var i = все.length - 1; i >= 0; i--) {
+      if (/rc-sound\.js/.test(все[i].src || "")) { me = все[i]; break; }
+    }
+  }
+  if (me && me.src) return me.src.replace(/[?#].*$/, "").replace(/[^/]+$/, "") + "snd/";
+  return "assets/snd/";
+})();
+
 function Sound() {
   this.on = false;
   this.ready = false;
@@ -48,6 +89,9 @@ function Sound() {
   this.p = 0;            /* положение на странице */
   this.fly = 0;          /* насколько ракета сейчас в кадре */
   this.ctx = null;
+  this.буфер = {};       /* разобранные записи банка */
+  this.везут = {};       /* что уже заказано и едет */
+  this.фоны = {};        /* играющие петли: имя -> {src, gain} */
 }
 
 Sound.prototype.build = function () {
@@ -114,6 +158,102 @@ Sound.prototype.build = function () {
   return true;
 };
 
+/* ── Работа с банком ──────────────────────────────────────────
+   Заказ файла. Отдаёт буфер, если он разобран, иначе null и ставит
+   загрузку. Ошибка сети не роняет ничего: имя уходит в буфер как
+   false и больше не запрашивается, событие до конца сеанса остаётся
+   за синтезом. */
+Sound.prototype.дай = function (имя) {
+  var б = this.буфер[имя];
+  if (б) return б;
+  if (б === false || this.везут[имя] || !this.ctx) return null;
+  var сам = this;
+  this.везут[имя] = 1;
+  fetch(ПАПКА + имя + ".mp3", { cache: "force-cache" })
+    .then(function (о) { if (!о.ok) throw new Error(о.status); return о.arrayBuffer(); })
+    .then(function (сырое) {
+      return new Promise(function (готово, беда) {
+        /* Старый Safari знает только вариант с обратными вызовами. */
+        var р = сам.ctx.decodeAudioData(сырое, готово, беда);
+        if (р && р.then) р.then(готово, беда);
+      });
+    })
+    .then(function (буф) { сам.буфер[имя] = буф; delete сам.везут[имя]; })
+    .catch(function () { сам.буфер[имя] = false; delete сам.везут[имя]; });
+  return null;
+};
+
+/* Проиграть разовый эффект. Второй довод - множитель громкости для
+   момента. Отдаёт true, если запись действительно прозвучала: на
+   этом ответе стоят все события, синтез идёт только при false. */
+Sound.prototype.эф = function (имя, доля) {
+  if (!this.on || !this.ready) return false;
+  var буф = this.дай(имя);
+  if (!буф) return false;
+  try {
+    var ctx = this.ctx;
+    var src = ctx.createBufferSource();
+    src.buffer = буф;
+    var gn = ctx.createGain();
+    gn.gain.value = (ГРОМКО[имя] || 0.4) * (доля == null ? 1 : доля);
+    src.connect(gn); gn.connect(this.master);
+    src.start(ctx.currentTime);
+    return true;
+  } catch (e) { return false; }
+};
+
+/* Фоновая петля. Второй вызов с тем же именем не заводит второй
+   источник, он только ведёт громкость. Ноль гасит и убирает. */
+Sound.prototype.фон = function (имя, громкость) {
+  if (!this.ready || !this.ctx) return;
+  var ц = Math.max(0, +громкость || 0) * (ГРОМКО[имя] || 0.3);
+  var уже = this.фоны[имя];
+  if (уже) {
+    try { уже.gain.gain.setTargetAtTime(ц, this.ctx.currentTime, 0.6); } catch (e) {}
+    if (ц <= 0.0005) {
+      var сам = this;
+      setTimeout(function () {
+        var э = сам.фоны[имя];
+        if (!э || э.gain.gain.value > 0.002) return;
+        try { э.src.stop(); } catch (e2) {}
+        delete сам.фоны[имя];
+      }, 2600);
+    }
+    return;
+  }
+  if (ц <= 0.0005) return;
+  var буф = this.дай(имя);
+  if (!буф) return;
+  try {
+    var ctx = this.ctx, t = ctx.currentTime;
+    var src = ctx.createBufferSource();
+    src.buffer = буф;
+    src.loop = true;
+    if (ПЕТЛЯ[имя] && буф.duration > 0.6) {
+      src.loopStart = 0.08;
+      src.loopEnd = Math.max(0.2, буф.duration - 0.08);
+    }
+    var gn = ctx.createGain();
+    gn.gain.value = 0;
+    gn.gain.setTargetAtTime(ц, t, 0.9);
+    src.connect(gn); gn.connect(this.master);
+    src.start(t);
+    this.фоны[имя] = { src: src, gain: gn };
+  } catch (e) {}
+};
+
+/* Заранее заказать пачку: зовём, когда ясно, что человек сейчас
+   войдёт в игру, и файлы успевают доехать до первого нажатия. */
+Sound.prototype.прогрев = function (список) {
+  if (!this.ready) return;
+  for (var i = 0; i < список.length; i++) this.дай(список[i]);
+};
+
+Sound.prototype.прогревРубки = function () {
+  this.прогрев(["switch", "click", "hover", "panel-in", "panel-out",
+                "radar", "lock", "node", "amb-cabin"]);
+};
+
 /* Короткий звук события: щелчок, сигнал, подтверждение */
 Sound.prototype.blip = function (freq, dur, type, vol) {
   if (!this.on || !this.ready) return;
@@ -135,6 +275,7 @@ Sound.prototype.blip = function (freq, dur, type, vol) {
 
 /* Двухнотный сигнал: отправка заявки, важное событие */
 Sound.prototype.chime = function () {
+  if (this.эф("success")) return;
   this.blip(660, 0.16, "sine", 0.06);
   var self = this;
   setTimeout(function () { self.blip(990, 0.22, "sine", 0.05); }, 120);
@@ -264,6 +405,17 @@ Sound.prototype.loop = function () {
     if (self.p > 0.2 && self.p < 0.8 && Math.random() < 0.006) {
       self.blip(1200 + Math.random() * 900, 0.05, "square", 0.012);
     }
+
+    /* Два фона, и одновременно они не звучат. Человек внутри рубки -
+       слышно рубку: вентиляция, электрика, редкий тик прибора. Ракета
+       в кадре снаружи - слышно пустоту. Пересчёт раз в полсекунды:
+       петли ведутся плавно, чаще незачем. */
+    if (!self._фонВ || t - self._фонВ > 0.5) {
+      self._фонВ = t;
+      var внутри = act === "cabin" || act === "manual" || act === "console" || act === "walk";
+      self.фон("amb-cabin", внутри ? 1 : 0);
+      self.фон("amb-space", внутри ? 0 : Math.max(0, self.p * 1.2 - 0.15) * (0.35 + self.fly * 0.65));
+    }
   }
   step();
 };
@@ -340,6 +492,7 @@ Sound.prototype.space = function () {
    Они и создают ощущение, что вокруг работает инфраструктура. */
 Sound.prototype.beacon = function () {
   if (!this.on || !this.ctx) return;
+  if (this.эф("beacon")) return;
   var ctx = this.ctx, now = ctx.currentTime;
   if (this._bAt && now - this._bAt < 6) return;
   this._bAt = now;
@@ -374,6 +527,7 @@ Sound.prototype.tick = function (freq) {
   var now = this.ctx.currentTime;
   if (this._blipAt && now - this._blipAt < 0.16) return;
   this._blipAt = now;
+  if (this.эф("type")) return;
   try {
     var o = this.ctx.createOscillator(), g2 = this.ctx.createGain();
     o.type = "triangle";
@@ -393,19 +547,25 @@ Sound.prototype.boom = function () {
   var now = this.ctx.currentTime;
   if (this._boomAt && now - this._boomAt < 2) return;
   this._boomAt = now;
+  var записью = this.эф("boom");
   /* Удар опор перекрывает музыку: тема отступает на пару секунд */
   if (g.RC_MUSIC && g.RC_MUSIC.duck) { try { g.RC_MUSIC.duck(2400); } catch (e) {} }
   try {
-    var n = Math.floor(this.ctx.sampleRate * 0.6);
-    var b = this.ctx.createBuffer(1, n, this.ctx.sampleRate), c = b.getChannelData(0);
-    for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
-    var src = this.ctx.createBufferSource(); src.buffer = b;
-    var f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900;
-    var g2 = this.ctx.createGain();
-    g2.gain.setValueAtTime(0.32, now);
-    g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-    src.connect(f); f.connect(g2); g2.connect(this.master);
-    src.start();
+    /* Шумовой удар нужен, только когда записи нет: иначе два удара
+       наложатся и выйдет каша. Уход двигателя в ноль остаётся в обоих
+       случаях - это не эффект, это состояние ракеты. */
+    if (!записью) {
+      var n = Math.floor(this.ctx.sampleRate * 0.6);
+      var b = this.ctx.createBuffer(1, n, this.ctx.sampleRate), c = b.getChannelData(0);
+      for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+      var src = this.ctx.createBufferSource(); src.buffer = b;
+      var f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900;
+      var g2 = this.ctx.createGain();
+      g2.gain.setValueAtTime(0.32, now);
+      g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+      src.connect(f); f.connect(g2); g2.connect(this.master);
+      src.start();
+    }
     /* Гул двигателя уходит в ноль: ракета села */
     if (this.eg) this.eg.gain.setTargetAtTime(0.0001, now, 0.2);
   } catch (e) {}
@@ -448,6 +608,7 @@ Sound.prototype.flightLevel = function (k) {
    эффекты обязаны читаться, а не пугать. */
 Sound.prototype.uiClick = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("click")) return;
   var ctx = this.ctx, t = ctx.currentTime;
   try {
     var o1 = ctx.createOscillator(), g1 = ctx.createGain();
@@ -466,6 +627,7 @@ Sound.prototype.uiClick = function () {
 
 Sound.prototype.uiHover = function () {
   if (!this.ready) return;
+  if (this.эф("hover")) return;
   var ctx = this.ctx, t = ctx.currentTime;
   try {
     var o = ctx.createOscillator(), gn = ctx.createGain();
@@ -480,6 +642,7 @@ Sound.prototype.uiHover = function () {
 };
 
 Sound.prototype.uiConfirm = function () {
+  if (this.эф("confirm")) return;
   this.blip(660, 0.1, "sine", 0.035);
   var self = this;
   setTimeout(function () { self.blip(990, 0.16, "sine", 0.03); }, 90);
@@ -487,6 +650,7 @@ Sound.prototype.uiConfirm = function () {
 
 Sound.prototype.hyper = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("hyper")) return;
   var ctx = this.ctx, t = ctx.currentTime;
   try {
     var n = Math.floor(ctx.sampleRate * 1.4);
@@ -567,6 +731,7 @@ Sound.prototype._шум = function (t0, dur, f0, f1, vol, q) {
    главное достижение в игре, и звучать оно обязано как награда. */
 Sound.prototype.node = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("node")) return;
   this._тон(523, 523, 0, 0.10, "sine", 0.045);
   this._тон(659, 659, 0.09, 0.10, "sine", 0.042);
   this._тон(880, 880, 0.18, 0.26, "sine", 0.05);
@@ -576,6 +741,7 @@ Sound.prototype.node = function () {
 /* Захват цели: короткий двойной писк радара */
 Sound.prototype.lock = function () {
   if (!this.ready) return;
+  if (this.эф("lock")) return;
   this._тон(1480, 1480, 0, 0.035, "square", 0.014);
   this._тон(1480, 1480, 0.075, 0.035, "square", 0.012);
 };
@@ -583,17 +749,20 @@ Sound.prototype.lock = function () {
 /* Досье открылось: стеклянный подъём. Закрылось - он же вниз. */
 Sound.prototype.panelIn = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("panel-in")) return;
   this._тон(420, 1180, 0, 0.20, "triangle", 0.022, 2.4);
   this._шум(0, 0.16, 900, 3200, 0.012, 1.6);
 };
 Sound.prototype.panelOut = function () {
   if (!this.ready) return;
+  if (this.эф("panel-out")) return;
   this._тон(980, 380, 0, 0.16, "triangle", 0.016, 2.4);
 };
 
 /* Удар о корпус: низкий толчок с металлическим призвуком */
 Sound.prototype.alarm = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("alarm")) return;
   this._тон(96, 42, 0, 0.34, "sawtooth", 0.07);
   this._шум(0, 0.22, 1800, 260, 0.05, 0.9);
   this._тон(740, 740, 0.10, 0.12, "square", 0.018);
@@ -602,6 +771,7 @@ Sound.prototype.alarm = function () {
 /* Выход на виток: тёплый разлив. Прибытие обязано ощущаться. */
 Sound.prototype.arrive = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("arrive")) return;
   this._тон(196, 294, 0, 0.55, "sine", 0.04);
   this._тон(294, 392, 0.12, 0.55, "sine", 0.03);
   this._тон(588, 588, 0.30, 0.40, "sine", 0.018);
@@ -610,6 +780,7 @@ Sound.prototype.arrive = function () {
 /* Затвор: снимок из окна */
 Sound.prototype.shutter = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("switch")) return;
   this._шум(0, 0.035, 3400, 1400, 0.05, 1.4);
   this._шум(0.055, 0.05, 1600, 700, 0.04, 1.2);
 };
@@ -617,9 +788,29 @@ Sound.prototype.shutter = function () {
 /* Отказ: рукав закрыт, узлов не хватает, команда сейчас недоступна */
 Sound.prototype.deny = function () {
   if (!this.ready && !this.build()) return;
+  if (this.эф("deny")) return;
   this._тон(220, 220, 0, 0.09, "square", 0.03);
   this._тон(165, 165, 0.10, 0.16, "square", 0.03);
 };
+
+/* ── Что умеет только запись ──────────────────────────────────
+   Розжиг, пневматика шлюза, тормозные двигатели, проход сканера,
+   пинг локатора и щелчок тумблера на доске. Синтезом это выходит
+   похожим на игрушку, поэтому запаса тут нет: файла нет - события
+   нет. Молчание честнее подделки. */
+function записью(имя, поле) {
+  Sound.prototype[поле] = function (доля) {
+    if (!this.ready && !this.build()) return false;
+    return this.эф(имя, доля);
+  };
+}
+записью("switch", "key");
+записью("ignite", "ignite");
+записью("dock", "dock");
+записью("brake", "brake");
+записью("radar", "radar");
+записью("scan", "scan");
+записью("reveal", "reveal");
 
 g.RC_SOUND = snd;
 

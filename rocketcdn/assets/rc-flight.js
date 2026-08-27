@@ -819,7 +819,7 @@ function buildUI() {
       if (F.auto) setAuto(false);
       if (F.paintThrottle) F.paintThrottle();
       say(RU ? "ПОЛНАЯ ОСТАНОВКА" : "FULL STOP", 1600);
-      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+      if (g.RC_SOUND && g.RC_SOUND.brake) { try { g.RC_SOUND.brake(); } catch (e) {} }
     });
   }
   ui.bars = w.querySelector(".rcf-bars");
@@ -864,7 +864,7 @@ function buildUI() {
   if (ui.autoKey) ui.autoKey.addEventListener("click", function () {
     setAuto(!F.auto);
     deckSkinSoon();
-    if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    if (g.RC_SOUND && g.RC_SOUND.key) { try { g.RC_SOUND.key(); } catch (e) {} }
   });
   ui.scanKey = w.querySelector(".rcf-scan-key");
   if (ui.scanKey) ui.scanKey.addEventListener("click", function () {
@@ -873,7 +873,8 @@ function buildUI() {
     ui.scanKey.classList.toggle("cur", F.scan);
     if (!F.scan && ui.lock) ui.lock.classList.remove("on");
     deckSkinSoon();
-    if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    if (g.RC_SOUND && g.RC_SOUND.key) { try { g.RC_SOUND.key(); } catch (e) {} }
+    if (F.scan) { if (g.RC_SOUND && g.RC_SOUND.scan) { try { g.RC_SOUND.scan(); } catch (e) {} } }
   });
   ui.prog = w.querySelector(".rcf-prog");
   ui.net = w.querySelector(".rcf-net");
@@ -5023,7 +5024,7 @@ function reqTick(ts) {
   req = { name: pick.name, sys: pick.sys, pl: pick.pl, until: ts + 62000 };
   say((RU ? "ЗАПРОС ТРАФИКА · " : "TRAFFIC SURGE · ") + pick.name +
       (RU ? " · нужен узел" : " · node needed"), 3400);
-  if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND, 660); } catch (e) {} }
+  if (g.RC_SOUND && g.RC_SOUND.radar) { try { g.RC_SOUND.radar(); } catch (e) {} }
 }
 
 /* ── Голограммы: связка сцены и слоя меток ───────────────────
@@ -6741,6 +6742,10 @@ function open() {
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: true } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(true); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(true); } catch (e) {} }
+  /* Записи рубки заказываем на входе: пока человек оглядывается, файлы
+     успевают доехать до первого нажатия клавиши. */
+  if (g.RC_SOUND && g.RC_SOUND.прогревРубки) { try { g.RC_SOUND.прогревРубки(); } catch (e) {} }
+  if (g.RC_SOUND && g.RC_SOUND.ignite) { try { g.RC_SOUND.ignite(0.7); } catch (e) {} }
   stageLite(false);
   if (g.RC_track) g.RC_track("flight", "open");
 

@@ -125,7 +125,13 @@ function frame() {
   /* Шипение пневматики один раз на открытие */
   if (k > 0.06 && !hissed) {
     hissed = true;
-    if (g.RC_SOUND && g.RC_SOUND.blip) {
+    var пневматика = false;
+    if (g.RC_SOUND && g.RC_SOUND.dock) {
+      try { пневматика = g.RC_SOUND.dock(); } catch (e) {}
+    }
+    /* Пока запись не доехала, шипение остаётся синтезом: тишины в
+       момент открытия дверей быть не должно. */
+    if (!пневматика && g.RC_SOUND && g.RC_SOUND.blip) {
       try { g.RC_SOUND.blip(180, 0.5, "sawtooth", 0.02); g.RC_SOUND.blip(2400, 0.35, "triangle", 0.008); } catch (e) {}
     }
   }
