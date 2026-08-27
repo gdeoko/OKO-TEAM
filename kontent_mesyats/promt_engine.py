@@ -129,8 +129,7 @@ class Бренд:
 # Обязательный масштаб надписи: применяется к любому приёму подачи. Держим одни
 # числа и убираем повторы: место в промпте дороже красивой формулировки.
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
-           "and a quarter of its height, sits close to camera and stays readable at a two hundred pixel "
-           "thumbnail.")
+           "and a quarter of its height and stays readable at a two hundred pixel thumbnail.")
 
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
@@ -286,44 +285,40 @@ def эффект(ключ):
 # слоистость. Три плана минимум, один элемент пересекает границу блока.
 ГРАФИКА = [
     "Composition: a flat graphite #14171C plate fills the lower sixty two percent with a hard horizontal edge, "
-    "warm white #F5F1E8 above. The subject is cut out along a precise silhouette and straddles that edge, "
-    "carrying a three pixel amber #E8A400 stroke and a soft contact shadow down and right onto the plate only.",
-    "Composition: a keyline rectangle in a four pixel amber #E8A400 stroke, inset from the frame edges over a "
-    "warm white #F5F1E8 field, holds the photograph. One element of the subject is reprinted on top so it crosses "
-    "the keyline and extends beyond it; where it crosses, the stroke is interrupted and does not redraw, and the "
-    "escaping element casts its own shadow onto the outer margin.",
-    "Composition: a full bleed photograph exposed a stop under, working as ground. Across the lower third lies a "
-    "rectangular glass panel: the image beneath it blurred, filled with graphite #14171C at under half opacity, a "
-    "one pixel warm white lip along its top edge only and a soft shadow thrown upward. Inside it the headline in "
-    "warm white and one figure in amber #E8A400 at four times its size, baselines aligned.",
-    "Composition: a warm white #F5F1E8 field split by a hard vertical edge. Left of it the photograph is reduced "
-    "to a one colour halftone in amber #E8A400, round dots at thirty two lines per inch, screen angle forty five "
-    "degrees. Right of it the same photograph continues in full colour at exact register, so the subject runs "
-    "unbroken across the split. The dot pattern touches the image only, never the type.",
-    "Composition: a cut out subject centred on a warm white #F5F1E8 field with two flat duplicates of its own "
-    "silhouette offset behind it on one axis, the first in solid amber #E8A400, the second further out in "
-    "graphite #14171C at low opacity. Edges stay hard with no feathering, so it reads as deliberate risograph "
-    "misregistration rather than blur, and one hairline locks the stack to a baseline.",
-    "Composition: the ground is a mesh gradient of four poles, amber #E8A400 upper right, deep ember lower right, "
-    "graphite #14171C lower left, warm white #F5F1E8 upper left, blended without banding under a fine monochrome "
-    "grain. A cut out subject with a hard silhouette sits over it, lit from the upper right to agree with the "
-    "amber pole, throwing a long shadow toward the lower left. Type sits only in the darkest zone.",
+    "warm white #F5F1E8 above. The subject is cut out along a precise silhouette and straddles that edge, with a "
+    "three pixel amber #E8A400 stroke and a soft contact shadow onto the plate only.",
+    "Composition: a keyline rectangle in a four pixel amber #E8A400 stroke, inset over a warm white #F5F1E8 "
+    "field, holds the photograph. One element of the subject is reprinted on top so it crosses the keyline and "
+    "extends beyond it; there the stroke is interrupted and does not redraw.",
+    "Composition: a full bleed photograph exposed a stop under works as ground. Across the lower third lies a "
+    "glass panel: the image beneath it blurred, filled with graphite #14171C at under half opacity, a one pixel "
+    "warm white lip on its top edge only. Inside it the headline and one figure in amber #E8A400 at four times "
+    "its size.",
+    "Composition: a warm white #F5F1E8 field split by a hard vertical edge. Left of it the photograph is a one "
+    "colour halftone in amber #E8A400, round dots at thirty two lines per inch, screen angle forty five degrees. "
+    "Right of it the same photograph in full colour at exact register, the subject unbroken across the split.",
+    "Composition: a cut out subject on a warm white #F5F1E8 field with two flat duplicates of its own silhouette "
+    "offset behind it on one axis, the first solid amber #E8A400, the second further out in graphite #14171C at "
+    "low opacity. Edges stay hard, so it reads as risograph misregistration and not as blur.",
+    "Composition: the ground is a mesh gradient of four poles, amber #E8A400 upper right, deep ember lower "
+    "right, graphite #14171C lower left, warm white #F5F1E8 upper left, blended without banding under fine "
+    "grain. A cut out subject lit from the upper right throws a long shadow toward the lower left. Type sits only "
+    "in the darkest zone.",
     "Composition: the photograph fills the frame, desaturated and darkened into a substrate. Registered exactly "
-    "on top of it, a technical line drawing of the same structure in amber #E8A400: thin orthographic outlines, "
-    "dashed hidden lines, dimension lines with arrow terminators running clear of the geometry. The drawing "
-    "aligns to the photograph perspective at the key edges, so the two read as one object seen twice.",
+    "on top, a technical line drawing of the same structure in amber #E8A400: thin orthographic outlines, dashed "
+    "hidden lines, dimension lines with arrow terminators, aligned to the photograph perspective at the key "
+    "edges.",
     "Composition: the whole frame carries a photocopier pass. Warm white #F5F1E8 base with uneven toner, density "
-    "falling toward one edge, scattered debris specks, crushed blacks, blown highlights and a one pixel fringe at "
-    "high contrast edges under horizontal scan striation. One element resists the treatment: a solid amber "
-    "#E8A400 plate carrying the headline, crisp and hard edged on top.",
-    "Composition: a graphite #14171C field going near black at the frame edges. A cut out subject with a strong "
-    "silhouette is centred, and directly behind it sits a radial amber #E8A400 glow, its core hidden by the "
-    "subject and haloing out around the edges. A two pixel amber rim traces the top and right edges only. Type in "
-    "warm white sits in the dark corner opposite the glow, never inside the halo.",
-    "Composition: a six by eight module grid on a warm white #F5F1E8 field with generous gutters, drawn as filled "
-    "modules. Modules carry three treatments: flat amber #E8A400, flat graphite #14171C, and photographic crops "
-    "clipped to module bounds. One module breaks the system: three columns by two rows, floating above the grid "
-    "plane with its own blurred shadow, rotated two degrees off axis, carrying the single figure of the layout.",
+    "falling toward one edge, debris specks, crushed blacks and a one pixel fringe at high contrast edges under "
+    "scan striation. One element resists it: a solid amber #E8A400 plate carrying the headline, crisp on top.",
+    "Composition: a graphite #14171C field going near black at the edges. A cut out subject with a strong "
+    "silhouette is centred, and directly behind it a radial amber #E8A400 glow, its core hidden by the subject "
+    "and haloing around the edges. A two pixel amber rim traces the top and right edges only. Type sits in the "
+    "dark corner opposite.",
+    "Composition: a six by eight module grid on a warm white #F5F1E8 field with generous gutters, drawn as "
+    "filled modules in flat amber #E8A400, flat graphite #14171C and photographic crops clipped to module "
+    "bounds. One module breaks the system: three columns by two rows, floating with its own shadow, rotated two "
+    "degrees off axis.",
 ]
 
 
@@ -334,13 +329,17 @@ def графика(ключ, номер=0):
 
 
 # ── Дизайнерские режимы ────────────────────────────────────────────────────
-# Владелец 27.08.2026 забраковал прежний визуал как «фон плюс текст». Поэтому
-# набор систем пересобран из двух разборов: DIZAJN_3D (объём, материал, оптика)
-# и DIZAJN_EKSHEN (движение, заморозка, следы). Каждая система задаёт планы,
-# источники света с кельвинами, шероховатости и роль надписи, то есть кадр
-# строится физикой, а не подложкой. Приём наложен на ЛЮБУЮ сцену: часть кадров
-# снимается в студии, на сетке или как макро предмета, поэтому ни один блок не
-# называет конкретный цех, пресс или фуру, а говорит «что бы ни было в сцене».
+# Владелец 27.08.2026 забраковал прежний визуал как «фон плюс текст, скучно».
+# Поэтому набор систем пересобран из двух разборов: DIZAJN_3D даёт объём,
+# материал и оптику, DIZAJN_EKSHEN даёт движение, заморозку и следы. Каждая
+# система задаёт планы, источники с кельвинами, шероховатости и роль надписи,
+# то есть кадр строится физикой, а не подложкой под текст.
+# Ни один блок не называет конкретный цех, пресс, конвейер или фуру: сцена
+# приходит отдельной строкой, и часть кадров снимается в студии, на графической
+# сетке или как макро предмета, куда сварочный пост не поставить. Поэтому приём
+# сформулирован через «что бы ни было в этой сцене» и ложится на любую основу.
+# Длины полей держим у нижней границы вилки: предел промпта 10 200 знаков, и
+# паспорт бренда с основой и действием уже занимают большую его часть.
 
 РЕЖИМЫ = {
  "сцена": {
@@ -356,12 +355,12 @@ def графика(ключ, номер=0):
  "разрез": {
    "как": "Design system for this frame is INDUSTRIAL CUTAWAY: whatever this scene holds is sliced along one "
           "vertical plane. Foreground: a cut edge with exposed structure, sharp at f/8. Hero: the sliced volume, "
-          "floor, span and roof reading as one section, its parts offset 40 to 120 mm along that axis and linked "
-          "by one pixel muted gold #C9A233 leaders. Background: graphite void at eight percent luminance. A 5600 K "
-          "key raked fifteen degrees camera left through a grid throws hard parallel shadow bars, a 3200 K "
-          "practical burns inside the section, a 6500 K strip behind lays a cold rim on every top edge. 35 mm, "
-          "f/8, 1/125, camera at 1.2 m. The headline stands on the cut slab as extruded condensed caps 60 mm "
-          "deep, reading exactly, character by character, the Russian line «{заголовок}».",
+          "floor, span and roof as one section, parts offset 40 to 120 mm along that axis on one pixel muted gold "
+          "#C9A233 leaders. Background: graphite void at eight percent luminance. A 5600 K key raked fifteen "
+          "degrees camera left throws hard parallel shadow bars, a 3200 K practical burns inside the section, a "
+          "6500 K strip behind rims every top edge. 35 mm, f/8, 1/125, camera at 1.2 m. The headline stands on "
+          "the cut slab as extruded condensed caps 60 mm deep, reading exactly, character by character, the "
+          "Russian line «{заголовок}».",
    "типографика":
       "Type is an extruded object standing inside the section, sixty millimetres deep, taking the raking key on "
       "its top bevel and dropping a hard contact shadow onto the slab.",
@@ -370,33 +369,33 @@ def графика(ключ, номер=0):
       "own contact shadow and the same raking light.",
  },
  "заморозка": {
-   "как": "Design system for this frame is FREEZE FRAME: the strongest action this scene can hold is stopped dead. "
-          "Foreground: incandescent chips arcing at the lens, the nearest three defocused into hot amber discs. "
-          "Hero: the contact point at optical centre, white hot particles leaving along a tangent. Background: "
-          "haze at twenty percent contrast. Frozen by 1/8000 flash duration, not shutter: a 5600 K head camera "
-          "right at forty five degrees as key, a gridded 5600 K strip behind at eighty degrees rimming every wet "
-          "edge, a 2900 K fill from below. Motion is trajectory, not blur: each particle keeps its shape plus a "
-          "3 mm tail. 50 mm, f/4, low angle at 0.9 m. The headline is heavy condensed caps flush left in the upper "
-          "dead zone, reading exactly, character by character, the Russian line «{заголовок}».",
+   "как": "Design system for this frame is FREEZE FRAME: the strongest action this scene can hold is stopped "
+          "dead. Foreground: incandescent chips arcing at the lens, the nearest three defocused into hot amber "
+          "discs. Hero: the contact point at optical centre, white hot particles leaving along a tangent. "
+          "Background: haze at twenty percent contrast. Frozen by 1/8000 flash duration, not shutter: a 5600 K "
+          "head camera right at forty five degrees as key, a gridded 5600 K strip behind at eighty degrees "
+          "rimming every wet edge, a 2900 K fill from below. Motion is trajectory, not blur: each particle keeps "
+          "its shape plus a 3 mm tail. 50 mm, f/4, low angle at 0.9 m. The headline reads exactly, character by "
+          "character, the Russian line «{заголовок}».",
    "типографика":
-      "The letters are lit by the burst itself, warm at their left edge and near black at their right, and they "
-      "stay razor sharp while everything around them flies.",
+      "The headline is heavy condensed caps flush left in the upper dead zone, lit by the burst itself, warm at "
+      "its left edge and near black at its right, and razor sharp while everything flies.",
    "знак":
-      "The brand mark is embossed small into the lower corner, about three percent of the frame width, picking up "
-      "the same hard rim light as the particles.",
+      "The brand mark is embossed small into the lower corner, about three percent of the frame width, picking "
+      "up the same hard rim light as the particles.",
  },
  "частицы": {
    "как": "Design system for this frame is PARTICLE COMPOSITE: the scene is built from four separated depth "
-          "layers. One, foreground: dust and fine filings blown into soft overlapping discs, occupying the outer "
-          "eighteen percent as a vignette of matter. Two: the hero volume in full sharpness, isolated with a clean "
-          "hard edge. Three: the structure behind, dropped two stops and cooled. Four: a ground graduating from "
-          "ink black #0E1116 to graphite #14171C. A large 5600 K key high behind camera left, a 6000 K narrow "
-          "source behind the subject haloing through the dust, a 3000 K amber bounce off the floor. Low density "
-          "single scatter, denser in the beam cone, every filing sharing one vector with 4 to 8 mm streaks. "
-          "85 mm, f/2.8. The headline reads exactly, character by character, the Russian line «{заголовок}».",
+          "layers. One, foreground: dust and fine filings blown into soft overlapping discs over the outer "
+          "eighteen percent as a vignette of matter. Two: the hero volume in full sharpness on a clean hard edge. "
+          "Three: the structure behind, dropped two stops and cooled. Four: a ground graduating from ink black "
+          "#0E1116 to graphite #14171C. A 5600 K key high behind camera left, a 6000 K narrow source behind the "
+          "subject haloing through the dust, a 3000 K bounce off the floor. Low density single scatter, every "
+          "filing on one vector with 4 to 8 mm streaks. 85 mm, f/2.8. The headline reads exactly, character by "
+          "character, the Russian line «{заголовок}».",
    "типографика":
       "The headline is a flat condensed caps block in warm white #F5F1E8 crossed by a six percent dust overlay, "
-      "so it breathes the same air as the layers instead of sitting on top of them.",
+      "so it breathes the same air as the layers instead of sitting on them.",
    "знак":
       "The brand mark is a small flat lockup in the corner, about three percent of the frame width, carrying the "
       "same faint dust pass as the headline.",
@@ -404,12 +403,12 @@ def графика(ключ, номер=0):
  "объёмтип": {
    "как": "Design system for this frame is DIMENSIONAL TYPE: the headline itself is the physical subject and the "
           "scene is its stage. Foreground: the free edge of the first letter, cropped and defocused, its extruded "
-          "side wall filling the lower third with a slow specular gradient. Hero: the full line in dense condensed "
-          "caps extruded 180 mm with a 3 mm chamfer, standing on the floor of the scene at three quarters, letters "
+          "side wall filling the lower third with a slow specular gradient. Hero: the full line in condensed caps "
+          "extruded 180 mm with a 3 mm chamfer, standing on the floor of the scene at three quarters, letters "
           "staggered in depth so each casts onto the next. Background: haze with one distant amber practical as a "
-          "bokeh point. A large 5600 K softbox high camera left, a 6500 K strip skimming the right down every "
-          "vertical edge, a 3000 K kicker under the letters. 65 mm, f/4. The letters read exactly, character by "
-          "character, the Russian line «{заголовок}».",
+          "bokeh point. A 5600 K softbox high camera left, a 6500 K strip skimming every vertical edge, a 3000 K "
+          "kicker under the letters. 65 mm, f/4. The letters read exactly, character by character, the Russian "
+          "line «{заголовок}».",
    "типографика":
       "Letter faces are amber #E8A400 powder coat at roughness 0.35 under a 0.05 clearcoat, side walls milled "
       "aluminium at 0.22, and every letter casts a real contact shadow.",
@@ -419,14 +418,13 @@ def графика(ключ, номер=0):
  },
  "макро": {
    "как": "Design system for this frame is MACRO: the smallest telling detail of this scene, shot at 1:1. "
-          "Foreground: a blurred sliver of the same material entering lower right, reduced to a wash of tone. "
-          "Hero: a 30 mm band of surface in true focus, depth of field about 3 mm, machined ridges crisp at centre "
-          "and dissolving within a centimetre either side. Background: the object collapsing into gradient with "
-          "two speculars blooming into round bokeh discs. A single 5600 K strip softbox raked at ten degrees so "
-          "every tool mark and pore casts its own micro shadow, a 3200 K low fill, a 6500 K pinpoint behind for a "
-          "hot ridge rim. Milled aluminium 0.22 anisotropic, cured epoxy carrying subsurface light 2 mm into its "
-          "body, a smear of oil at 0.06. 100 mm macro, f/5.6, focus stacked. The headline reads exactly, character "
-          "by character, the Russian line «{заголовок}».",
+          "Foreground: a blurred sliver of the same material entering lower right. Hero: a 30 mm band of surface "
+          "in true focus, depth of field about 3 mm, machined ridges crisp at centre and dissolving within a "
+          "centimetre either side. Background: the object collapsing into gradient with two speculars blooming "
+          "into round bokeh discs. A 5600 K strip softbox raked at ten degrees so every tool mark casts its own "
+          "micro shadow, a 3200 K low fill, a 6500 K pinpoint behind for a hot ridge rim. Milled aluminium 0.22, "
+          "cured epoxy carrying subsurface light 2 mm in, oil at 0.06. 100 mm macro, f/5.6. The headline reads "
+          "exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
       "The headline stays off the surface as a small condensed caps block in warm white #F5F1E8, perfectly sharp "
       "against a field that is almost entirely out of focus.",
@@ -437,12 +435,12 @@ def графика(ключ, номер=0):
  "изометрия": {
    "как": "Design system for this frame is ISOMETRIC DIORAMA: the scene is rebuilt as a precision scale model, "
           "orthographic, camera at thirty degrees elevation and forty five degrees rotation. Foreground: the cut "
-          "edge of the base, a graphite #14171C slab with a 4 mm amber #E8A400 inlay. Middle: the model itself on "
-          "a modular grid, its blocks separated so nothing occludes anything. Background: pure void in ink black "
-          "#0E1116, the model floating on one soft shadow. A large 5600 K overhead area source gives clean forty "
-          "five degree shadows, a 6500 K rim from the far corner cuts the silhouette out of the void, a 2800 K "
-          "glow leaks from every opening. Matte resin 0.6, brushed steel 0.25, amber #E8A400 acrylic 0.15 glowing "
-          "from within. The headline reads exactly, character by character, the Russian line «{заголовок}».",
+          "edge of the base, a graphite #14171C slab with a 4 mm amber #E8A400 inlay. Middle: the model on a "
+          "modular grid, its blocks separated so nothing occludes anything. Background: void in ink black "
+          "#0E1116, the model on one soft shadow. A 5600 K overhead area source gives clean forty five degree "
+          "shadows, a 6500 K rim from the far corner cuts the silhouette out of the void, a 2800 K glow leaks "
+          "from every opening. Matte resin 0.6, brushed steel 0.25, amber #E8A400 acrylic 0.15. The headline "
+          "reads exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
       "Flat condensed caps labels sit on hairline muted gold #C9A233 leaders inside the model, and one extruded "
       "headline rests on the base edge at the real scale of the slab.",
@@ -456,28 +454,28 @@ def графика(ключ, номер=0):
           "white #F5F1E8 at the top to graphite #14171C at the bottom. Inner: the scene of this frame, visible "
           "only inside that silhouette, exposed so its highlights punch through the silhouette edge while its "
           "shadows leave that edge razor sharp. Depth comes from the inner image: near planes sharp, the far end "
-          "fading into haze at fifteen percent contrast, 4000 K linear fixtures receding and a 5600 K daylight "
-          "wedge from a distant opening. Black point 10/255, visible grain. The headline reads exactly, character "
-          "by character, the Russian line «{заголовок}».",
+          "fading into haze at fifteen percent contrast, 4000 K fixtures receding and a 5600 K daylight wedge "
+          "from a distant opening. Black point 10/255. The headline reads exactly, character by character, the "
+          "Russian line «{заголовок}».",
    "типографика":
-      "The headline is a condensed caps block placed entirely in the empty gradient outside the silhouette, set in "
-      "graphite where the field is pale, never fighting the inner image for the same square centimetre.",
+      "The headline is a condensed caps block placed entirely in the empty gradient outside the silhouette, set "
+      "in graphite where the field is pale, never over the inner image.",
    "знак":
       "The brand mark is a small flat lockup in the pale part of the gradient, about three percent of the frame "
       "width, well clear of the silhouette edge.",
  },
  "вырезка": {
-   "как": "Design system for this frame is CUTOUT COLLAGE: hard cutouts laid over rendered depth. Plate: the scene "
-          "itself, defocused to f/1.8 softness and dropped two stops, working purely as atmosphere. Middle: two or "
-          "three photographic cutouts with knife sharp edges and a 2 px warm white #F5F1E8 keyline, each with its "
-          "own hard drop shadow offset 12 px down and right at forty percent, so each reads as a physical layer. "
-          "Foreground: a flat amber #E8A400 bar with zero texture, plus a 40 lpi halftone patch in muted gold "
-          "#C9A233 bleeding off one edge. Every cutout is keyed from the upper left at 5600 K: one light direction "
-          "is what stops a collage looking random. The headline reads exactly, character by character, the Russian "
-          "line «{заголовок}».",
+   "как": "Design system for this frame is CUTOUT COLLAGE: hard cutouts laid over rendered depth. Plate: the "
+          "scene itself, defocused to f/1.8 softness and dropped two stops, working purely as atmosphere. Middle: "
+          "two or three photographic cutouts with knife sharp edges and a 2 px warm white #F5F1E8 keyline, each "
+          "with its own hard drop shadow offset 12 px down and right at forty percent, so each reads as a "
+          "physical layer. Foreground: a flat amber #E8A400 bar with zero texture and a 40 lpi halftone patch in "
+          "muted gold #C9A233 running off one edge. Every cutout is keyed from the upper left at 5600 K, one "
+          "direction for all, because that is what stops a collage looking random. The headline reads exactly, "
+          "character by character, the Russian line «{заголовок}».",
    "типографика":
       "The headline is the loudest element of the layout, dense condensed caps in graphite #14171C over the amber "
-      "shape, its letters overlapping the cutout edges so the layers physically interlock.",
+      "shape, its letters overlapping the cutout edges so the layers interlock.",
    "знак":
       "The brand mark is knocked out of the flat amber shape, about four percent of the frame width, hard edged "
       "and with no shadow of its own.",
@@ -487,27 +485,26 @@ def графика(ключ, номер=0):
           "Foreground: a near black defocused mass filling the left quarter. Hero: the subject standing in the "
           "beam path, its top surfaces carved out in amber, its lower body descending into graphite. Background: "
           "the space receding sixty metres, contrast falling until the far plane sits at twelve percent. Haze is "
-          "low and even, enough that a 5600 K source through a high grid resolves into three parallel shafts with "
-          "clean edges. A 2900 K sodium practical deep in the scene glows as a warm point, a 6500 K narrow source "
-          "behind rims the subject. Dust motes resolve at 1/60 as 5 mm streaks. Black point 10/255. 35 mm, f/2.8, "
-          "floor level. The headline reads exactly, character by character, the Russian line «{заголовок}».",
+          "low and even, so a 5600 K source through a high grid resolves into three parallel shafts with clean "
+          "edges. A 2900 K sodium practical deep in the scene glows as a warm point, a 6500 K narrow source "
+          "behind rims the subject. Dust motes resolve at 1/60 as 5 mm streaks. 35 mm, f/2.8. The headline reads "
+          "exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
-      "The headline sits in the darkest quadrant in muted gold #C9A233 condensed caps, outside every shaft, so the "
-      "beams stay the brightest thing in the picture and the type reads by contrast alone.",
+      "The headline sits in the darkest quadrant in muted gold #C9A233 condensed caps, outside every shaft, so "
+      "the beams stay the brightest thing in the picture.",
    "знак":
       "The brand mark is a small flat lockup in the same dark quadrant, about three percent of the frame width, "
       "never inside a shaft and never on the floor pool.",
  },
  "продукт": {
-   "как": "Design system for this frame is HYPERREAL PRODUCT: the key object of this scene is treated as a premium "
-          "product. Foreground: a shallow pool of wet polished concrete entering the bottom eighth, defocused, "
-          "carrying an inverted amber smear of the subject. Hero: the object at three quarters, sixty percent of "
-          "frame height, every edge resolved. Background: a seamless sweep from graphite #14171C to ink black "
-          "#0E1116 at the base. A 1.5 m 5600 K softbox overhead as key, two vertical 5600 K strips at seventy "
-          "degrees for the long specular runs down the flanks, a 6500 K kicker behind for the top rim. Machined "
-          "aluminium 0.22 anisotropic, amber #E8A400 powder coat 0.35 under 0.05 clearcoat, rubber 0.9, glass at "
-          "IOR 1.52 throwing a small caustic. 100 mm, f/8, black point 6/255. The headline reads exactly, "
-          "character by character, the Russian line «{заголовок}».",
+   "как": "Design system for this frame is HYPERREAL PRODUCT: the key object of this scene is treated as a "
+          "premium product. Foreground: a shallow pool of wet polished concrete entering the bottom eighth, "
+          "defocused, carrying an inverted amber smear of the subject. Hero: the object at three quarters, sixty "
+          "percent of frame height, every edge resolved. Background: a seamless sweep from graphite #14171C to "
+          "ink black #0E1116 at the base. A 1.5 m 5600 K softbox overhead as key, two vertical 5600 K strips at "
+          "seventy degrees for the specular runs down the flanks, a 6500 K kicker behind. Machined aluminium "
+          "0.22, amber #E8A400 powder coat 0.35, rubber 0.9, glass at IOR 1.52. 100 mm, f/8, black point 6/255. "
+          "The headline reads exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
       "The headline is a dense condensed caps lockup in warm white #F5F1E8 set into the upper right negative "
       "space, flat on the picture plane and sharp to the pixel.",
@@ -520,26 +517,26 @@ def графика(ключ, номер=0):
           "scene lives off its spill. Whatever this scene holds, its hottest point ignites right of centre and a "
           "fan of sparks leaves it down and left at about 12 m/s across a 120 degree cone: sparks within a metre "
           "frozen as hard white hot points, sparks beyond that stretched into curved 20 mm streaks bending to the "
-          "floor and fading red. Camera 1.1 m off the ground, 35 mm, f/2.8, 1/2000 s, the source 1.4 m away so its "
-          "near edge is razor sharp and the far wall dissolves. The core is 6000 K blowing to pure white, a "
-          "3000 K fixture 6 m behind camera left rims the subject, haze turns the core into a visible cone. The "
-          "headline reads exactly, character by character, the Russian line «{заголовок}».",
+          "floor and fading red. Camera 1.1 m off the ground, 35 mm, f/2.8, 1/2000 s, the source 1.4 m away so "
+          "its near edge is razor sharp and the far wall dissolves. The core is 6000 K blowing to white, a 3000 K "
+          "fixture 6 m behind camera left rims the subject. The headline reads exactly, character by character, "
+          "the Russian line «{заголовок}».",
    "типографика":
       "The headline sits inside the shadow the arc throws, heavy condensed caps in warm white #F5F1E8, its lower "
       "letters buried behind frozen sparks so the type is inside the event.",
    "знак":
-      "The brand mark is small in the darkest corner, about three percent of the frame width, lit only by the cold "
-      "spill of the arc and holding no colour of its own.",
+      "The brand mark is small in the darkest corner, about three percent of the frame width, lit only by the "
+      "cold spill of the arc and holding no colour of its own.",
  },
  "удар": {
    "как": "Design system for this frame is IMPACT: the exact millisecond something in this scene lands and stops "
           "while everything else is still moving. A ring of scale, mist and micro debris blasts outward and "
           "slightly upward from the contact line, frozen mid flight as thousands of individual specks, densest in "
-          "the first 300 mm and thinning to a halo at 1.2 m. A sheet of vapour vents to one side, motion stretched "
-          "into soft 40 mm streaks. Camera at contact height, 24 mm, f/4, 1/4000 s, 900 mm out, a seven degree "
-          "tilt so the structure runs diagonally. Two hard sources: a 5600 K panel raking from camera right at "
-          "seventy degrees to edge every particle, and a low 2700 K lamp under the contact throwing amber up into "
-          "the debris. The headline reads exactly, character by character, the Russian line «{заголовок}».",
+          "the first 300 mm and thinning to a halo at 1.2 m. A sheet of vapour vents to one side, stretched into "
+          "soft 40 mm streaks. Camera at contact height, 24 mm, f/4, 1/4000 s, 900 mm out, a seven degree tilt so "
+          "the structure runs diagonally. A 5600 K panel rakes from camera right at seventy degrees to edge every "
+          "particle, a low 2700 K lamp throws amber up into the debris. The headline reads exactly, character by "
+          "character, the Russian line «{заголовок}».",
    "типографика":
       "The headline is set behind the debris field as one wide uppercase line in warm white #F5F1E8, partly "
       "occluded by flying specks so it reads as struck, and those specks stay sharp, never blurred.",
@@ -554,27 +551,27 @@ def графика(ключ, номер=0):
           "around an obstacle, the movers themselves gone or ghosted, while structure, edges and rails stay "
           "perfectly sharp. Camera 1.6 m high, 20 mm, f/11, ISO 100, 22 s. Ambient is mixed and deliberately "
           "uncorrected: 2000 K sodium on the far wall, 4000 K LED overhead, cold 6500 K spill from one opening. "
-          "Wet ground doubles every trail by reflection. The headline reads exactly, character by character, the "
-          "Russian line «{заголовок}».",
+          "Wet ground doubles every trail. The headline reads exactly, character by character, the Russian line "
+          "«{заголовок}».",
    "типографика":
       "The headline is laid flat on the ground plane in perspective, thin uppercase in warm white #F5F1E8, with "
-      "one light trail passing in front of it so the exposure happened on top of the type.",
+      "one light trail passing in front of it, so the long exposure happened on top of the type.",
    "знак":
       "The brand mark sits flat on the same ground plane beside the headline, about three percent of the frame "
       "width, foreshortened by the same perspective.",
  },
  "кинетика": {
    "как": "Design system for this frame is KINETIC TYPE: the headline is a steel object standing inside the scene "
-          "while the scene moves around it. The letters are extruded 180 mm deep in brushed steel, standing on the "
-          "floor among whatever this scene holds. A figure or a moving mass passes behind them left to right, cut "
-          "in half by the letterforms, its motion dragged into a 1/15 s smear while the type stays razor sharp. "
-          "Dust and fine swarf drift through the counters of the letters. Camera 1.2 m high, 28 mm, f/5.6, 1/15 s "
-          "on a tripod, three quarter angle so the extrusion reads and the baseline runs diagonally to the upper "
-          "right. A 5600 K hard key high camera left edges the top facets, a 2700 K bounce fills the extrusion "
-          "sides. The letters read exactly, character by character, the Russian line «{заголовок}».",
+          "while the scene moves around it. The letters are extruded 180 mm deep in brushed steel, standing on "
+          "the floor among whatever this scene holds. A figure or a moving mass passes behind them left to right, "
+          "cut in half by the letterforms, its motion dragged into a 1/15 s smear while the type stays razor "
+          "sharp. Dust and fine swarf drift through the counters of the letters. Camera 1.2 m high, 28 mm, f/5.6, "
+          "1/15 s on a tripod, three quarter angle so the extrusion reads and the baseline runs diagonally. A "
+          "5600 K key high camera left edges the top facets, a 2700 K bounce fills the sides. The letters read "
+          "exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
-      "Letter faces are warm white #F5F1E8 and the extrusion sides catch amber #E8A400, every letter throws a hard "
-      "contact shadow, and nothing moving in the frame smears the type itself.",
+      "Letter faces are warm white #F5F1E8 and the extrusion sides catch amber #E8A400, every letter throws a "
+      "hard contact shadow, and nothing moving smears the type itself.",
    "знак":
       "The brand mark is a small machined plate leaning against the base of the last letter, about three percent "
       "of the frame width, sharing its shadow.",
@@ -584,13 +581,13 @@ def графика(ключ, номер=0):
           "through this scene dissolves into a continuous smeared band four hundred millimetres across the frame "
           "while every fixed thing stays perfectly sharp. Whatever moves here, a load, a belt, traffic, a hand, "
           "becomes liquid colour, while the structure, the panel and one person standing still at the far end "
-          "remain rigid: the contrast between the liquid band and the rigid frame is the whole image. Camera "
-          "1.4 m high, 50 mm, f/11, ISO 100, placed so the moving line runs from the lower right corner to the "
-          "upper left third. A row of 4000 K linear battens overhead plus a 3000 K practical, thin haze softening "
-          "the far end. The headline reads exactly, character by character, the Russian line «{заголовок}».",
+          "remain rigid: liquid band against rigid frame is the whole image. Camera 1.4 m high, 50 mm, f/11, ISO "
+          "100, the moving line running from the lower right corner to the upper left third. A row of 4000 K "
+          "battens overhead plus a 3000 K practical. The headline reads exactly, character by character, the "
+          "Russian line «{заголовок}».",
    "типографика":
       "The headline is locked to the sharp structure in the still zone, uppercase in warm white #F5F1E8, with a "
-      "hairline rule continuing the line of movement out of the smeared band.",
+      "hairline rule continuing the line of movement out of the band.",
    "знак":
       "The brand mark sits on the rigid structure, about three percent of the frame width, perfectly sharp so it "
       "belongs to the still half of the picture.",
@@ -599,31 +596,30 @@ def графика(ключ, номер=0):
    "как": "Design system for this frame is LOW ANGLE WIDE: camera on the ground, lens 220 mm above the floor, "
           "16 mm ultra wide, f/8, 1/500 s, tilted up twenty degrees. The nearest object of this scene sits 700 mm "
           "from the front element and rises out of the frame: its near edge huge and slightly soft, its verticals "
-          "converging hard toward the ceiling, any person small and high in the frame. Behind it the space recedes "
-          "and the roof structure fans out to the corners. Vertical lines are left uncorrected so they read as "
-          "thrust, and a faint 1/500 s edge of lifted dust sits at the base. An opening camera right pushes a "
-          "5600 K daylight wedge across the floor and backlights the dust, 4000 K fills the depth. The headline "
-          "reads exactly, character by character, the Russian line «{заголовок}».",
+          "converging hard toward the ceiling, any person small and high in the frame. Behind it the space "
+          "recedes and the roof structure fans out to the corners. Vertical lines are left uncorrected so they "
+          "read as thrust, and a faint 1/500 s edge of lifted dust sits at the base. An opening camera right "
+          "pushes a 5600 K wedge across the floor, 4000 K fills the depth. The headline reads exactly, character "
+          "by character, the Russian line «{заголовок}».",
    "типографика":
-      "The headline runs up the left third rotated ninety degrees, uppercase in warm white #F5F1E8, cropped by the "
-      "top edge so it feels taller than the picture and carries the same upward thrust.",
+      "The headline runs up the left third rotated ninety degrees, uppercase in warm white #F5F1E8, cropped by "
+      "the top edge so it feels taller than the picture.",
    "знак":
-      "The brand mark sits low in the opposite corner at the foot of the converging verticals, about three percent "
-      "of the frame width, upright and uncropped.",
+      "The brand mark sits low in the opposite corner at the foot of the converging verticals, about three "
+      "percent of the frame width, upright.",
  },
  "взрыв": {
    "как": "Design system for this frame is PARTICLE BURST: the whole frame is built around one jet of matter "
-          "leaving a single point of this scene. A dense stream of incandescent particles leaves the working point "
-          "at roughly 25 m/s aimed at the lower left corner, opening from a 25 mm root into a 900 mm plume, the "
-          "leading particles frozen as dots and the trailing ones stretched into 30 mm comet streaks with visible "
-          "micro forking where they split on impact. Behind the jet a slower cloud of fine dust hangs and scatters "
-          "the light. Camera 600 mm from the source, 85 mm, f/4, 1/3200 s, the subject slightly above centre. The "
-          "stream is its own key at about 2400 K, one 5600 K rim light behind camera left separates the near "
-          "edges, everything beyond two metres is black. The headline reads exactly, character by character, the "
-          "Russian line «{заголовок}».",
+          "leaving a single point of this scene. A dense stream of incandescent particles leaves the working "
+          "point at roughly 25 m/s aimed at the lower left corner, opening from a 25 mm root into a 900 mm plume, "
+          "the leading particles frozen as dots and the trailing ones stretched into 30 mm comet streaks with "
+          "micro forking where they split on impact. Behind the jet a slower cloud of fine dust scatters the "
+          "light. Camera 600 mm from the source, 85 mm, f/4, 1/3200 s. The stream is its own key at about 2400 K, "
+          "one 5600 K rim light behind camera left separates the near edges. The headline reads exactly, "
+          "character by character, the Russian line «{заголовок}».",
    "типографика":
       "The headline is one short uppercase line in the empty upper right in warm white #F5F1E8, with a few stray "
-      "particles crossing in front of it so the burst passes through the type plane.",
+      "particles crossing in front of it, so the burst passes through the plane of the type.",
    "знак":
       "The brand mark is small in the black beyond the plume, about three percent of the frame width, lit only by "
       "the rim source so it stays a quiet grey.",
@@ -634,31 +630,33 @@ def графика(ключ, номер=0):
           "back while its tail already melts into the pan, and everything behind it, posts, lamps, structure, is "
           "dragged into clean horizontal streaks that carry the speed. Spray or dust lifts off the contact points "
           "and stretches into 60 mm comma shaped tails. Camera twelve metres out, 70 mm, f/5.6, ISO 200. A low "
-          "3200 K sun rakes from behind camera left along the flank, a cool 6500 K overcast fills, wet ground "
-          "returns both. Grade: cold graphite #14171C, amber #E8A400 in the moving body. The headline reads "
-          "exactly, character by character, the Russian line «{заголовок}».",
+          "3200 K sun rakes from behind camera left along the flank, a cool 6500 K overcast fills, and the wet "
+          "ground returns both. The headline reads exactly, character by character, the Russian line "
+          "«{заголовок}».",
    "типографика":
       "The headline is placed in the empty third the movement is heading into, uppercase in warm white #F5F1E8, "
-      "with the same directional drag on its trailing edge only so the front of every letter stays crisp.",
+      "with the same directional drag on its trailing edge only.",
    "знак":
       "The brand mark sits behind the movement in the streaked half of the frame, about three percent of the "
-      "frame width, sharp against the drag so it does not read as a smear.",
+      "frame width, sharp against the drag.",
  },
 }
 
 # Физика кадра одна на все системы: без неё генератор возвращается к плоскому
-# софтбоксу и пластиковому материалу, из-за чего кадр и читался как «фон плюс
-# текст». Числа взяты из вывода разбора DIZAJN_3D и держат минимум, ниже
-# которого падать нельзя, а не описание конкретной сцены.
+# софтбоксу и одинаковому пластиковому материалу, из-за чего кадр и читался как
+# «фон плюс текст». Числа взяты из вывода разбора DIZAJN_3D и задают минимум,
+# ниже которого падать нельзя, а не описание конкретной сцены.
 ФИЗИКА = ("Physics floor: at least two light sources with stated colour temperatures and different angles, never "
-          "one flat wash; at least three materials of visibly different roughness in one frame, concrete near "
-          "0.75, brushed steel 0.25, glass 0.02; black point lifted to 6 of 255, no pure black and no clipped "
-          "white; at most two overlaid effects in the frame.")
+          "one flat wash; at least three materials of visibly different roughness, concrete near 0.75, brushed "
+          "steel 0.25, glass 0.02; black point lifted to 6 of 255, no pure black and no clipped white; at most "
+          "two overlaid effects.")
 
 # Тема сама подсказывает систему. Люди, работа, ошибки и кадры цеха идут через
-# экшен-системы, цифры и деньги через объёмные 3D-системы, город и площадки
-# через свет, двойную экспозицию, следы и вырезку. Пара на рубрику, чтобы
-# соседние единицы одной темы не выглядели близнецами.
+# экшен-системы, цифры, деньги и сравнения через объёмные 3D-системы, город,
+# отрасль и площадки мира через объёмный свет, двойную экспозицию, следы и
+# вырезку. На рубрику даём пару, чтобы соседние единицы одной темы не выглядели
+# близнецами, и следим, чтобы каждая из девятнадцати систем попала хотя бы в
+# одну пару: иначе половина набора не выйдет в ленту ни разу.
 РУБРИКА_РЕЖИМ = {
     "Цифры цеха": ("изометрия", "разрез"), "Цифры отрасли": ("изометрия", "продукт"),
     "Деньги цеха": ("продукт", "разрез"), "Цена киловатта": ("разрез", "макро"),
