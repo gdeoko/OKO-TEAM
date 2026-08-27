@@ -24,3 +24,11 @@ OKO_MASTER_VAULT.md.b64
 # python cache
 __pycache__/
 *.pyc
+
+# Кадры и выгрузки сплошного аудита: снимки нужны на время разбора,
+# в истории им делать нечего - их сотни и они мегабайтами.
+rocketcdn/tools/audit/кадры/
+rocketcdn/tools/audit/out/
+rocketcdn/tools/audit/**/*.jpg
+rocketcdn/tools/audit/**/*.jpeg
+rocketcdn/tools/audit/**/*.png
