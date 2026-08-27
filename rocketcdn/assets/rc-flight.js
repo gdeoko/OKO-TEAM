@@ -4094,6 +4094,12 @@ function buildWorld() {
                    sunBody, planetPick(mercury), planetPick(venus), planetPick(jupiter),
                    planetPick(uranus), planetPick(neptune)];
   for (var rj = 0; rj < relaySprites.length; rj++) pickables.push(relaySprites[rj]);
+  /* Кольца Сатурна тоже тело: по ним нажимают чаще, чем по шару -
+     они крупнее и заметнее, а подбирался только шар. */
+  if (saturn.children[1]) {
+    saturn.children[1].userData.info = saturn.userData.info;
+    pickables.push(saturn.children[1]);
+  }
   saturn.children[0].userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
 
   /* Комета: ядро со свечением и хвост из частиц. Ходит по вытянутому
@@ -4308,6 +4314,31 @@ function buildWorld() {
   }
   var belt1 = beltLayer(tiny ? 500 : (particleBudget ? 700 : 1100), 1.0, 230, 0x575a5c);
   var belt2 = beltLayer(tiny ? 260 : (particleBudget ? 360 : 600), 1.55, 160, 0x766d63);
+
+  /* ── По поясу можно нажать ────────────────────────────────
+     Пояс это россыпь точек, а луч подбора бьёт по точкам с порогом в
+     одну единицу - попасть в такую крупинку нельзя. Замер это и
+     показал: голограмма «АСТЕРОИДНЫЙ ПОЯС» висит, а клик по ней не
+     делает ничего. Заказчик писал ровно про это: «астероиды и тд, и
+     при клике видео».
+
+     Ставим невидимое тело подбора - шар по размеру самого пояса, в
+     его середине. Он ничего не рисует (visible = false рейкаст не
+     останавливает, поэтому гасим материал прозрачностью и снимаем
+     запись в буфер глубины), но нажатие ловит честно, и досье
+     открывается по поясу так же, как по планете. */
+  var beltPick = new T.Mesh(
+    new T.SphereGeometry(300, 12, 8),
+    new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false })
+  );
+  beltPick.position.set(1055, 45, -950);
+  beltPick.renderOrder = -1;
+  beltPick.userData.info = RU
+    ? "АСТЕРОИДНЫЙ ПОЯС · миллионы обломков между Марсом и Юпитером"
+    : "ASTEROID BELT · millions of fragments between Mars and Jupiter";
+  beltPick.userData.mark = "belt";
+  scene.add(beltPick);
+  pickables.push(beltPick);
 
   /* Points describe the enormous belt; these instanced rocks are the
      nearby bodies the camera can actually pass. Every instance owns
@@ -8396,7 +8427,14 @@ function deckFrame(ts, dt) {
     if (!deckFrame.вп) deckFrame.вп = new g.THREE.Vector3();
     var вп = deckFrame.вп;
     var носК = -кам.rotation.y;
-    var ДАЛЬ = 900;
+    /* Дальность обзора считаем от того, что вокруг, а не жёстким
+       числом. С постоянными девятьюстами единицами радар пустовал
+       почти весь маршрут: между планетами расстояния в тысячи, всё
+       уходило за круг и прибор показывал одну развёртку без единой
+       отметки. Берём восемь ближайших тел и растягиваем круг по
+       самому дальнему из них - тогда на радаре всегда есть картина,
+       а взаимное расположение читается верно. */
+    var рядом = [];
     for (var хи in holoIds) {
       if (!holoIds.hasOwnProperty(хи)) continue;
       var зп = holoIds[хи];
@@ -8405,13 +8443,16 @@ function deckFrame(ts, dt) {
       вп.sub(кам.position);
       var дист = вп.length();
       if (!isFinite(дист) || дист < 0.5) continue;
-      var р = дист / ДАЛЬ;
-      if (р > 1) continue;
       /* Ноль на радаре смотрит вверх, поэтому угол отсчитываем от
          направления взгляда и поворачиваем на четверть круга. */
-      var уг = Math.atan2(вп.x, -вп.z) - носК - Math.PI / 2;
-      метки.push({ a: уг, r: Math.max(0.08, Math.min(0.96, р)) });
-      if (метки.length >= 8) break;
+      рядом.push({ a: Math.atan2(вп.x, -вп.z) - носК - Math.PI / 2, д: дист });
+    }
+    рядом.sort(function (a, b) { return a.д - b.д; });
+    if (рядом.length > 8) рядом.length = 8;
+    var круг = 300;
+    for (var ри = 0; ри < рядом.length; ри++) if (рядом[ри].д > круг) круг = рядом[ри].д;
+    for (var ри2 = 0; ри2 < рядом.length; ри2++) {
+      метки.push({ a: рядом[ри2].a, r: Math.max(0.08, Math.min(0.96, рядом[ри2].д / круг)) });
     }
   }
 
