@@ -4616,3 +4616,40 @@ html.rc-deep-inside .rcf-fab {
   .rc-flight .rcf-key b { display: block !important; font-size: 7px; letter-spacing: .04em; }
 }
 
+/* ═══ Радар на телефоне ═══════════════════════════════════════
+   Заказчик про пульт: «радары навигаторы нету, они детские и криво
+   размещено». Радар в разметке есть и честно рисуется, но на узком
+   экране он был выключен двумя правилами подряд с пояснением, что
+   кругляш съедает место у клавиш. Место он и правда съедал - в ряду
+   клавиш. Значит место надо менять, а не выключать прибор.
+
+   На телефоне радар переезжает НА СТЕКЛО, в левый нижний угол
+   проёма: там он ничего не занимает, читается как бортовой прибор и
+   не спорит с клавишами. Режется тем же контуром остекления, что и
+   всё остальное на стекле, поэтому на раму не заезжает. */
+@media (max-width: 760px) {
+  .rc-flight .rcf-radar,
+  .rc-flight.rcf-native-cab .rcf-radar {
+    display: block !important;
+    position: fixed !important;
+    left: calc(var(--cab-wx, 6%) + 2.6%) !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: calc(100% - var(--cab-wy, 10%) - var(--cab-wh, 70%) + 2.2%) !important;
+    width: clamp(52px, 15vw, 72px) !important;
+    height: clamp(52px, 15vw, 72px) !important;
+    z-index: 5;
+    pointer-events: none;
+    opacity: .92;
+    clip-path: var(--cab-clip, none);
+    border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+    background: radial-gradient(circle at 50% 50%, rgba(6,20,34,.72), rgba(3,10,18,.86));
+    box-shadow: inset 0 0 18px rgba(var(--int-cyan-rgb, 66,178,220), .26),
+                0 0 22px -8px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  }
+  /* В досье, справке и меню прибор не нужен: он бы просвечивал
+     сквозь открытую голограмму. */
+  .rc-flight.rcf-dos-on .rcf-radar,
+  .rc-flight.rcf-menu-on .rcf-radar { display: none !important; }
+}
+
