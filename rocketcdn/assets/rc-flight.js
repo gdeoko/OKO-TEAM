@@ -4352,7 +4352,7 @@ function buildWorld() {
      запись в буфер глубины), но нажатие ловит честно, и досье
      открывается по поясу так же, как по планете. */
   var beltPick = new T.Mesh(
-    new T.SphereGeometry(300, 12, 8),
+    new T.SphereGeometry(190, 12, 8),
     new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false })
   );
   beltPick.position.set(1055, 45, -950);
@@ -4361,6 +4361,12 @@ function buildWorld() {
     ? "АСТЕРОИДНЫЙ ПОЯС · миллионы обломков между Марсом и Юпитером"
     : "ASTEROID BELT · millions of fragments between Mars and Jupiter";
   beltPick.userData.mark = "belt";
+  /* Мягкое тело: уступает дорогу всем настоящим. Шар в триста единиц
+     стоит ровно на линии взгляда к внешней системе, и первый же
+     замер после его появления показал, что он забирает себе нажатия
+     по Сатурну, Юпитеру, Урану, Нептуну и дыре. Пояс отзывается
+     только тогда, когда за ним нет никого другого. */
+  beltPick.userData["мягкий"] = true;
   scene.add(beltPick);
   pickables.push(beltPick);
 
@@ -4864,7 +4870,9 @@ function bindControls() {
     if (moved > 7) return;
     F.mx = (e.clientX / innerWidth) * 2 - 1;
     F.my = -(e.clientY / innerHeight) * 2 + 1;
-    F.pick = true;
+    /* Считаем тут же. Флаг оставляем на случай, если мир ещё не
+       собран: тогда сработает прежний путь через кадр. */
+    if (!нажатиеПоТелу(e.clientX, e.clientY)) F.pick = true;
   }, { passive: true });
 
   addEventListener("keydown", function (e) {
@@ -4875,6 +4883,45 @@ function bindControls() {
   });
 
   addEventListener("resize", function () { size(); cabSrc(); }, { passive: true });
+}
+
+/* ── Нажатие по телу считается СРАЗУ ─────────────────────────
+   Раньше нажатие только поднимало флаг, а луч пускал кадр - и не
+   ближайший, а тот, в котором подошла очередь дорогой проверки
+   пересечений (восемь раз в секунду). Всё это время камеру
+   доворачивала мышь, и луч уходил уже из другого ракурса: замер
+   живыми кликами дал попадание луча из точки клика и при этом
+   закрытое досье. Человек видит это как «планета не кликается».
+
+   Считаем здесь же, в обработчике отпускания: камера ровно та, в
+   которой нарисован кадр перед глазами, а курсор ровно там, куда
+   нажали. Между тем, что видно, и тем, что подбирается, не остаётся
+   ни одного кадра. */
+function нажатиеПоТелу(px, py) {
+  if (!W3 || !W3.cam || !g.THREE) return false;
+  var T = g.THREE;
+  if (!нажатиеПоТелу.луч) нажатиеПоТелу.луч = new T.Raycaster();
+  нажатиеПоТелу.луч.setFromCamera(
+    { x: (px / innerWidth) * 2 - 1, y: -(py / innerHeight) * 2 + 1 }, W3.cam);
+  var hits = нажатиеПоТелу.луч.intersectObjects(W3.pickables || [], false);
+  var инфо = null, кто = null, мИнфо = null, мКто = null;
+  for (var i = 0; i < hits.length; i++) {
+    var o = hits[i].object;
+    if (!видимоЛи(o)) continue;
+    if (!o.userData || !o.userData.info) continue;
+    /* Мягкие оболочки (пояс) уступают настоящим телам */
+    if (o.userData["мягкий"]) { if (!мИнфо) { мИнфо = o.userData.info; мКто = o; } continue; }
+    инфо = o.userData.info; кто = o; break;
+  }
+  if (!инфо && мИнфо) { инфо = мИнфо; кто = мКто; }
+  if (!инфо) { dosClose(); return false; }
+  dosOpen(кто, инфо);
+  F.infoUntil = (g.performance && g.performance.now ? performance.now() : 0) + 4200;
+  hideHint();
+  if (!(кто.userData && кто.userData["реле"])) {
+    noteExplored(меткаТела(кто) || инфо.split(" · ")[0]);
+  }
+  return true;
 }
 
 var hintHidden = false, hintT = 0;
@@ -6560,6 +6607,11 @@ function frame(ts) {
     frame._ray.setFromCamera({ x: F.mx, y: F.my }, w3.cam);
     var hits = frame._ray.intersectObjects(w3.pickables || [], false);
     var info = null, hitObj = null;
+    /* Мягкие тела - невидимые оболочки вроде пояса астероидов. Они
+       нужны, чтобы по россыпи точек вообще можно было нажать, но
+       забирать нажатие у настоящей планеты за ними им нельзя.
+       Держим их про запас и берём, только если больше ничего нет. */
+    var мягИнфо = null, мягКто = null;
     for (var hi = 0; hi < hits.length; hi++) {
       var кто = hits[hi].object;
       /* three.js рейкастом спрятанные объекты НЕ отсеивает: он бьёт
@@ -6569,9 +6621,14 @@ function frame(ts) {
          обязательно по всей ветке вверх: прячут обычно группу. */
       if (!видимоЛи(кто)) continue;
       if (кто.userData && кто.userData.info) {
+        if (кто.userData["мягкий"]) {
+          if (!мягИнфо) { мягИнфо = кто.userData.info; мягКто = кто; }
+          continue;
+        }
         info = кто.userData.info; hitObj = кто; break;
       }
     }
+    if (!info && мягИнфо) { info = мягИнфо; hitObj = мягКто; }
     /* Нажали по телу - снимаем с него карту. Наведение по-прежнему
        только подписывает; досье открывает именно нажатие, иначе оно
        выскакивало бы от каждого движения мыши. */
