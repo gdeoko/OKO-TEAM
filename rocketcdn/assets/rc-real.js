@@ -215,6 +215,12 @@ R.maps = function (T, kind) {
 /* Панорама вокруг сцены: солнце сбоку, тёплое пятно Земли снизу,
    полоса Галактики, общий холод космоса. Металл отражает именно
    её, поэтому корпус перестаёт быть плоским. */
+
+/* Доля ширины, на которой стоит солнце в базовой панораме. Через
+   неё считается доворот: цифра живёт рядом с рисованием солнца,
+   чтобы правка одного не разошлась с другим. */
+var SUN_U = 0.74;
+
 function envCanvas(warm) {
   var w = 512, h = 256;
   var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
@@ -260,12 +266,48 @@ function envCanvas(warm) {
   return cv;
 }
 
+/* Та же панорама, довёрнутая по горизонтали. Развёртка замкнута по
+   кругу, поэтому поворот это сдвиг с переносом: рисуем базовый холст
+   дважды - на месте и на ширину левее.
+
+   Только по горизонтали. Наклон светила над плоскостью сдвигом не
+   передать: равнопромежуточная развёртка тянет полюса, и сдвиг по
+   вертикали рвёт небо швом поперёк всего кадра. */
+function envRotated(base, shift) {
+  var d = ((shift % 1) + 1) % 1;
+  if (d < 1e-3) return base;
+  var cv = document.createElement("canvas");
+  cv.width = base.width; cv.height = base.height;
+  var x = cv.getContext("2d");
+  var dx = Math.round(d * base.width);
+  x.drawImage(base, dx, 0);
+  x.drawImage(base, dx - base.width, 0);
+  return cv;
+}
+
 var envCache = {};
-R.env = function (T, renderer, warm) {
-  var key = warm ? "warm" : "cold";
+/* sunDir - фактическое направление на светило в мире сцены.
+   Панорама рисовалась с солнцем на постоянном месте и со сценой не
+   поворачивалась: корабль разворачивался, свет на нём приходил с
+   одной стороны, а блик в металле оставался с другой. Азимут
+   укладывается в ширину развёртки ровно так, как её читает
+   библиотека: u = atan2(z, x) / 2pi + 0.5.
+
+   Направление необязательное: без него панорама остаётся ровно
+   такой, какой была, поэтому старые вызовы ничего не замечают.
+   Шаг доворота грубый, одна тридцать вторая круга: каждый новый
+   угол это своя свёртка PMREM, а отражение окружения таких долей
+   на глаз не различает. */
+R.env = function (T, renderer, warm, sunDir) {
+  var shift = 0;
+  if (sunDir && (sunDir.x || sunDir.y || sunDir.z)) {
+    var u = Math.atan2(sunDir.z, sunDir.x) / (Math.PI * 2) + 0.5;
+    shift = Math.round((u - SUN_U) * 32) / 32;
+  }
+  var key = (warm ? "warm" : "cold") + "@" + shift;
   if (envCache[key]) return envCache[key];
   try {
-    var tex = new T.CanvasTexture(envCanvas(warm));
+    var tex = new T.CanvasTexture(envRotated(envCanvas(warm), shift));
     tex.mapping = T.EquirectangularReflectionMapping;
     if (T.SRGBColorSpace) tex.colorSpace = T.SRGBColorSpace;
     var pm = new T.PMREMGenerator(renderer);
@@ -340,6 +382,27 @@ R.toStandard = function (T, mat, opt) {
 R.upgradeTree = function (T, root, rules) {
   if (!root) return 0;
   var n = 0;
+  /* Один Phong обычно висит сразу на десятке мешей: салон собирается
+     из общих материалов, а не из своего на каждую деталь. Раньше
+     каждому мешу делался отдельный Standard, а исходный материал
+     оставался жить со своей программой в памяти видеокарты - обход
+     салона оставлял за собой сотни висячих материалов и столько же
+     лишних Standard там, где хватило бы одного.
+
+     Замену запоминаем по паре «исходный материал плюс его правило»:
+     правило входит в ключ потому, что вызывающий смотрит и на меш
+     тоже и вправе выдать одному материалу разные настройки.
+
+     Освобождаем не на месте, а списком после обхода. На месте нельзя:
+     до части мешей обход ещё не дошёл, и они держат тот же материал -
+     освобождённый материал успел бы попасть в кадр. Текстуры при этом
+     не страдают, dispose материала их не трогает, а карты мы перенесли
+     в новый материал по ссылке. */
+  var made = {}, spent = [];
+  function hintKey(h) {
+    if (!h) return "-";
+    return [h.kind, h.roughness, h.metalness, h.normalScale, h.envMapIntensity, h.repeat].join(",");
+  }
   root.traverse(function (o) {
     if (!o.isMesh || !o.material) return;
     var apply = function (mm) {
@@ -348,12 +411,20 @@ R.upgradeTree = function (T, root, rules) {
       if (mm.isMeshBasicMaterial) return mm;
       var hint = rules && rules(o, mm);
       if (hint === false) return mm;
+      var key = mm.uuid + "|" + hintKey(hint);
+      if (made[key]) return made[key];
       n++;
-      return R.toStandard(T, mm, hint || {});
+      var s = R.toStandard(T, mm, hint || {});
+      made[key] = s;
+      if (spent.indexOf(mm) < 0) spent.push(mm);
+      return s;
     };
     if (Array.isArray(o.material)) o.material = o.material.map(apply);
     else o.material = apply(o.material);
   });
+  for (var i = 0; i < spent.length; i++) {
+    try { spent[i].dispose(); } catch (e) {}
+  }
   return n;
 };
 
@@ -363,23 +434,43 @@ var VERT = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position
 
 /* Яркие места отдельно: всё, что выше порога, уходит в размытие
    и возвращается ореолом. Так светятся лампы и голограммы. */
-/* Потолок яркости у источника ореола. Без него одна раскалённая
-   точка - солнечный серп на кромке Земли - уносила буфер свечения
-   далеко за единицу, и на кадре вместо ореола висел МЯГКИЙ БЕЛЫЙ
-   КВАДРАТ размером в полсотни пикселей. Приёмка приняла его сперва
-   за сломанный спрайт, потом за отражение окружения; на деле буфер
-   свечения вчетверо мельче кадра, и один его тексель, растянутый
-   обратно, и есть тот квадрат. Ограничение сверху оставляет ореол
-   ореолом: яркое остаётся ярким, но перестаёт заливать соседей. */
+/* Потолок яркости у источника ореола и четыре отсчёта вместо одного.
+
+   Потолок появился из-за белого квадрата: одна раскалённая точка -
+   солнечный серп на кромке Земли - уносила буфер свечения далеко за
+   единицу, и на кадре вместо ореола висел МЯГКИЙ БЕЛЫЙ КВАДРАТ в
+   полсотни пикселей. Приёмка приняла его сперва за сломанный спрайт,
+   потом за отражение окружения; на деле буфер свечения был вчетверо
+   мельче кадра, и один его тексель, растянутый обратно, и есть тот
+   квадрат.
+
+   Потолок тогда поставили на 2.2, и это оказалась другая крайность:
+   солнце в упор светило ровно так же, как лампа на пульте, и слепить
+   перестало вовсе. Квадрат давало не само число, а единственный
+   мелкий буфер. Теперь ореол собирается пирамидой и самый мелкий её
+   уровень размывается многократно: одиночный выброс расходится, а не
+   растягивается прямоугольником. Потолок поэтому поднят - яркому
+   разрешено оставаться ярким.
+
+   Четыре отсчёта по углам тексела это честное уменьшение вдвое.
+   Одиночная выборка из полного кадра в мелкий буфер брала строку
+   через строку, и звёзды в ореоле мигали при каждом движении камеры.
+   Ограничение ставим на каждом отсчёте до усреднения: иначе один
+   горячий тексель протаскивает свой перебор через среднее. */
 var BRIGHT = [
-  "uniform sampler2D tD; uniform float thr; uniform float soft; varying vec2 vUv;",
-  "void main(){ vec4 c = texture2D(tD, vUv);",
-  "  float l = dot(c.rgb, vec3(0.2126,0.7152,0.0722));",
-  "  float k = smoothstep(thr, thr + soft, l);",
-  "  vec3 b = c.rgb * k;",
+  "uniform sampler2D tD; uniform float thr; uniform float soft;",
+  "uniform float top; uniform vec2 px; varying vec2 vUv;",
+  "vec3 grab(vec2 uv){",
+  "  vec3 c = texture2D(tD, uv).rgb;",
+  "  float l = dot(c, vec3(0.2126,0.7152,0.0722));",
+  "  vec3 b = c * smoothstep(thr, thr + soft, l);",
   "  float m = max(max(b.r, b.g), b.b);",
-  "  if (m > 2.2) b *= 2.2 / m;",
-  "  gl_FragColor = vec4(b, 1.0); }"
+  "  if (m > top) b *= top / m;",
+  "  return b; }",
+  "void main(){",
+  "  vec3 s = grab(vUv + vec2(-0.5,-0.5) * px) + grab(vUv + vec2(0.5,-0.5) * px)",
+  "         + grab(vUv + vec2(-0.5, 0.5) * px) + grab(vUv + vec2(0.5, 0.5) * px);",
+  "  gl_FragColor = vec4(s * 0.25, 1.0); }"
 ].join("\n");
 
 var BLUR = [
@@ -390,6 +481,34 @@ var BLUR = [
   "  s += texture2D(tD, vUv + dir * 3.2307692308) * 0.0702702703;",
   "  s += texture2D(tD, vUv - dir * 3.2307692308) * 0.0702702703;",
   "  gl_FragColor = s; }"
+].join("\n");
+
+/* Сглаживание в самом композите. Нужно там, где multisample у цели
+   рендера недоступен: на WebGL 1 его нет вовсе, а на самом слабом
+   уровне мы отказываемся от него сами - полнокадровый multisample-
+   буфер там дороже, чем девять выборок на пиксель.
+   Классический FXAA: по яркостям на кресте находим направление края
+   и усредняем поперёк него. */
+var FXAA = [
+  "float fxLum(vec3 c){ return dot(c, vec3(0.2126,0.7152,0.0722)); }",
+  "vec3 fxaa(sampler2D t, vec2 uv, vec2 px){",
+  "  float nw = fxLum(texture2D(t, uv + vec2(-1.0,-1.0) * px).rgb);",
+  "  float ne = fxLum(texture2D(t, uv + vec2( 1.0,-1.0) * px).rgb);",
+  "  float sw = fxLum(texture2D(t, uv + vec2(-1.0, 1.0) * px).rgb);",
+  "  float se = fxLum(texture2D(t, uv + vec2( 1.0, 1.0) * px).rgb);",
+  "  vec3 cm = texture2D(t, uv).rgb; float lm = fxLum(cm);",
+  "  float lo = min(lm, min(min(nw, ne), min(sw, se)));",
+  "  float hi = max(lm, max(max(nw, ne), max(sw, se)));",
+  "  vec2 dir = vec2(-((nw + ne) - (sw + se)), ((nw + sw) - (ne + se)));",
+  "  float damp = max((nw + ne + sw + se) * 0.03125, 0.0078125);",
+  "  float k = 1.0 / (min(abs(dir.x), abs(dir.y)) + damp);",
+  "  dir = clamp(dir * k, vec2(-8.0), vec2(8.0)) * px;",
+  "  vec3 a = 0.5 * (texture2D(t, uv + dir * -0.1666667).rgb",
+  "                + texture2D(t, uv + dir *  0.1666667).rgb);",
+  "  vec3 b = a * 0.5 + 0.25 * (texture2D(t, uv + dir * -0.5).rgb",
+  "                           + texture2D(t, uv + dir *  0.5).rgb);",
+  "  float lb = fxLum(b);",
+  "  return (lb < lo || lb > hi) ? a : b; }"
 ].join("\n");
 
 /* Сведение: кривая ACES, ореол, лёгкое расхождение цвета по краю,
@@ -408,37 +527,72 @@ var BLUR = [
    Расхождение каналов держим микроскопическим: это оптика, а не
    поломка сигнала. Смещение считаем в пикселях, а не в долях
    экрана, иначе на широком мониторе край расползается радугой. */
-var COMP = [
-  "uniform sampler2D tD; uniform sampler2D tB; uniform float bloom;",
-  "uniform float expo; uniform float vig; uniform float grain; uniform float time; uniform float ab;",
-  "uniform vec2 px;",
-  "varying vec2 vUv;",
-  "vec3 aces(vec3 x){ float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14; return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0); }",
-  "vec3 toSRGB(vec3 c){ return mix(c*12.92, 1.055*pow(max(c,vec3(0.0)), vec3(0.41666))-0.055, step(0.0031308, c)); }",
-  /* Хэш без синуса. Классический fract(sin(dot(...))) держится на
-     точности sin от больших аргументов, а её у видеокарт не хватает:
-     вместо шума получается правильная РЕШЁТКА по всему кадру. На
-     тёмном небе она видна отчётливо, и приёмка приняла её за
-     наложение из вёрстки. Здесь три перемножения дробных частей -
-     ни синуса, ни зависимости от точности. */
-  "float hash(vec2 p){ vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));",
-  "  q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }",
-  "void main(){",
-  "  vec2 d = vUv - 0.5; float r2 = dot(d,d);",
-  "  vec2 off = normalize(d + 1e-6) * r2 * ab * px;",
-  "  vec3 c;",
-  "  c.r = texture2D(tD, vUv - off).r;",
-  "  c.g = texture2D(tD, vUv).g;",
-  "  c.b = texture2D(tD, vUv + off).b;",
-  "  c += texture2D(tB, vUv).rgb * bloom;",
-  "  c = aces(c * expo);",
-  "  c = toSRGB(c);",
-  "  float v = smoothstep(0.92, 0.10, r2 * vig);",
-  "  c *= mix(1.0, v, 0.55);",
-  "  float n = hash(vUv * 512.0 + time) - 0.5;",
-  "  c += n * grain;",
-  "  gl_FragColor = vec4(c, 1.0); }"
-].join("\n");
+function compShader(fx) {
+  return [
+    "uniform sampler2D tD; uniform sampler2D tB; uniform sampler2D tB2;",
+    "uniform sampler2D tB3; uniform sampler2D tB4; uniform vec4 halo;",
+    "uniform float bloom;",
+    "uniform float expo; uniform float vig; uniform float grain; uniform float time; uniform float ab;",
+    "uniform vec2 px;",
+    "varying vec2 vUv;",
+    "vec3 aces(vec3 x){ float a=2.51,b=0.03,c=2.43,d=0.59,e=0.14; return clamp((x*(a*x+b))/(x*(c*x+d)+e),0.0,1.0); }",
+    "vec3 toSRGB(vec3 c){ return mix(c*12.92, 1.055*pow(max(c,vec3(0.0)), vec3(0.41666))-0.055, step(0.0031308, c)); }",
+    /* Хэш без синуса. Классический fract(sin(dot(...))) держится на
+       точности sin от больших аргументов, а её у видеокарт не хватает:
+       вместо шума получается правильная РЕШЁТКА по всему кадру. На
+       тёмном небе она видна отчётливо, и приёмка приняла её за
+       наложение из вёрстки. Здесь три перемножения дробных частей -
+       ни синуса, ни зависимости от точности. */
+    "float hash(vec2 p){ vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));",
+    "  q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }",
+    fx ? FXAA : "",
+    "void main(){",
+    "  vec2 d = vUv - 0.5; float r2 = dot(d,d);",
+    "  vec2 off = normalize(d + 1e-6) * r2 * ab * px;",
+    "  vec3 c;",
+    /* Без multisample кадр сперва проходит FXAA, и расхождение каналов
+       ложится на уже сглаженный кадр поправкой, а не тремя своими
+       выборками: сдвиг тут доли пикселя, а девять выборок FXAA на
+       каждый канал стоили бы втрое дороже всего прохода. */
+    fx ? "  vec3 base = fxaa(tD, vUv, px); vec3 mid = texture2D(tD, vUv).rgb;" : "",
+    fx ? "  c = base;" : "",
+    fx ? "  c.r += texture2D(tD, vUv - off).r - mid.r;" : "  c.r = texture2D(tD, vUv - off).r;",
+    fx ? "" : "  c.g = texture2D(tD, vUv).g;",
+    fx ? "  c.b += texture2D(tD, vUv + off).b - mid.b;" : "  c.b = texture2D(tD, vUv + off).b;",
+    "  vec3 h = texture2D(tB, vUv).rgb * halo.x + texture2D(tB2, vUv).rgb * halo.y",
+    "         + texture2D(tB3, vUv).rgb * halo.z + texture2D(tB4, vUv).rgb * halo.w;",
+    "  c += h * bloom;",
+    "  c = aces(c * expo);",
+    "  c = toSRGB(c);",
+    "  float v = smoothstep(0.92, 0.10, r2 * vig);",
+    "  c *= mix(1.0, v, 0.55);",
+    /* Зерно. Раньше амплитуда была одна на весь кадр, и на чёрном
+       космосе поверх половины площади лежала ровная статика - у
+       матрицы её там не бывает: в чистом чёрном остаётся только шум
+       считывания, сильнее всего зерно в средних тонах, а в светах его
+       прячет сам сигнал. Ведём амплитуду по яркости уже переведённого
+       кадра, потому что глазу зерно заметно именно в показанных
+       тонах, а не в линейных.
+
+       Внизу оставлен порог, а не ноль. С нулём чистый чёрный выходил
+       математически стерильным: восьми разрядов на канал не хватает
+       даже на один уровень такой амплитуды, и космос становился
+       заливкой. У матрицы в темноте остаётся шум считывания, порог
+       двадцать два сотых и есть он.
+
+       Время берём завёрнутым. На сотнях секунд аргумент хэша
+       перерастал точность float, соседние кадры давали один и тот же
+       узор, и зерно ПОДМЕРЗАЛО - на длинном полёте оно превращалось
+       в неподвижную грязь на стекле. Дробная часть возвращает
+       аргумент в первую тысячу, где шаг между кадрами ещё есть. */
+    "  float lum = dot(c, vec3(0.2126,0.7152,0.0722));",
+    "  float amp = 0.22 + 0.78 * smoothstep(0.0, 0.32, lum) * (1.0 - 0.55 * smoothstep(0.55, 1.0, lum));",
+    "  float gt = fract(time * 0.37) * 1000.0;",
+    "  float n = hash(vUv * 512.0 + gt) - 0.5;",
+    "  c += n * grain * amp;",
+    "  gl_FragColor = vec4(c, 1.0); }"
+  ].filter(function (l) { return l !== ""; }).join("\n");
+}
 
 function quad(T, mat) {
   var s = new T.Scene();
@@ -458,22 +612,93 @@ R.post = function (T, renderer, opt) {
   var pr = renderer.getPixelRatio();
   var W = Math.max(2, Math.round(size.x * pr)), H = Math.max(2, Math.round(size.y * pr));
 
-  function rt(w, h) {
+  /* ms - сколько отсчётов на пиксель просить у самой цели.
+     depth - нужен ли ей буфер глубины: буферам ореола он не нужен
+     никогда, они плоские, а место в памяти видеокарты занимает. */
+  function rt(w, h, ms, depth) {
     return new T.WebGLRenderTarget(Math.max(2, w | 0), Math.max(2, h | 0), {
       type: half, minFilter: T.LinearFilter, magFilter: T.LinearFilter,
-      depthBuffer: true, stencilBuffer: false
+      depthBuffer: !!depth, stencilBuffer: false, samples: ms || 0
     });
   }
 
-  P.scene = rt(W, H);
-  var bw = Math.max(2, W >> 2), bh = Math.max(2, H >> 2);
-  P.b1 = lvl > 0 ? rt(bw, bh) : null;
-  P.b2 = lvl > 0 ? rt(bw, bh) : null;
+  /* Сглаживание. antialias, который просят у рендерера, относится к
+     ХОЛСТУ, а кадр идёт в свою цель - холст композер только показывает
+     готовым. Поэтому запрошенное сглаживание не делало ничего вообще:
+     лесенка шла и по лимбам планет, и по кольцам, и по раме кабины,
+     хотя в коде antialias честно стоял. Просить его надо у цели
+     рендера, иначе просьба уходит в никуда.
+
+     Буферам ореола отсчётов не даём: они мельче кадра в разы и следом
+     размываются, сглаживать там нечего, а multisample стоит и памяти,
+     и такта на разрешение буфера.
+
+     Числа отсчётов режем по тому, что умеет железо: на WebGL 1
+     multisample у цели нет вовсе, и maxSamples там ноль. Если отсчётов
+     не досталось, сглаживаем в композите FXAA - девять выборок на
+     пиксель дешевле полнокадрового multisample-буфера, а лесенку
+     снимают обе дороги. */
+  var maxMS = (renderer.capabilities && renderer.capabilities.maxSamples) || 0;
+  var wantMS = o.samples != null ? o.samples : (lvl === 0 ? 0 : (lvl === 1 ? 2 : 4));
+  var msaa = Math.max(0, Math.min(wantMS | 0, maxMS));
+  P.samples = msaa;
+  P.fxaa = msaa === 0;
+
+  P.scene = rt(W, H, msaa, true);
+
+  /* Ореол пирамидой.
+
+     Было: один буфер вчетверо мельче кадра и два прохода по пять
+     отсчётов. Радиус выходил около четырнадцати пикселей, и это всё,
+     на что свечение было способно. Оптика так не светит: у настоящего
+     ореола есть узкое ядро вплотную к источнику и широкий слабый нимб
+     на пол-кадра. Один масштаб не даёт ни того, ни другого - солнце
+     получалось тусклой ватой и не слепило.
+
+     Стало: каждый следующий уровень вдвое мельче предыдущего и
+     строится ИЗ УЖЕ РАЗМЫТОГО. Радиус на ступень удваивается почти
+     даром - работа на всей пирамиде меньше, чем на одном полном
+     кадре. Складываем уровни с убывающими весами: ядро несёт первый,
+     нимб последний.
+
+     Веса нормируем в сумму единицу, чтобы ручка bloom у вызывающего
+     осталась той же величиной, что и была до пирамиды.
+
+     Мельче уровня в шестнадцать раз не спускаемся: там уже мало
+     текселей, и буфер начинает дышать при движении камеры. */
+  var SHIFT = lvl === 0 ? [] : (lvl === 1 ? [2, 3, 4] : [1, 2, 3, 4]);
+  var WEIGHT = lvl === 1 ? [1.0, 0.55, 0.34] : [1.0, 0.62, 0.42, 0.30];
+  /* Ширина размытия на уровне, в текселях этого уровня. Первому
+     уровню даём поменьше: он и есть ядро, ему положено быть тугим. */
+  function ширина(i) { return i === 0 ? 0.9 : 1.4; }
+
+  var уровни = [];
+  for (var i = 0; i < SHIFT.length; i++) {
+    var lw = Math.max(2, W >> SHIFT[i]), lh = Math.max(2, H >> SHIFT[i]);
+    уровни.push({ sh: SHIFT[i], w: lw, h: lh, a: rt(lw, lh, 0, false), b: rt(lw, lh, 0, false) });
+  }
+  P.levels = уровни;
+  /* Прежние имена буферов свечения: на них смотрят снаружи */
+  P.b1 = уровни.length ? уровни[0].a : null;
+  P.b2 = уровни.length ? уровни[0].b : null;
+
+  var wsum = 0;
+  for (i = 0; i < уровни.length; i++) wsum += WEIGHT[i];
+  var haloW = new T.Vector4(0, 0, 0, 0);
+  for (i = 0; i < уровни.length && i < 4; i++) haloW.setComponent(i, WEIGHT[i] / wsum);
 
   var cam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
   var mBright = new T.ShaderMaterial({
-    uniforms: { tD: { value: P.scene.texture }, thr: { value: o.threshold != null ? o.threshold : 0.72 }, soft: { value: 0.28 } },
+    uniforms: {
+      tD: { value: P.scene.texture },
+      thr: { value: o.threshold != null ? o.threshold : 0.72 },
+      soft: { value: 0.28 },
+      /* Потолок высокий: пирамида размывает выброс, а не растягивает
+         его прямоугольником, поэтому слепить солнцу теперь можно */
+      top: { value: o.bloomTop != null ? o.bloomTop : 8.0 },
+      px: { value: new T.Vector2(1 / W, 1 / H) }
+    },
     vertexShader: VERT, fragmentShader: BRIGHT, depthTest: false, depthWrite: false
   });
   var mBlur = new T.ShaderMaterial({
@@ -482,10 +707,15 @@ R.post = function (T, renderer, opt) {
   });
   var black = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
   black.needsUpdate = true;
+  function слой(i) { return уровни[i] ? уровни[i].a.texture : black; }
   var mComp = new T.ShaderMaterial({
     uniforms: {
       tD: { value: P.scene.texture },
-      tB: { value: lvl > 0 ? P.b1.texture : black },
+      tB: { value: слой(0) },
+      tB2: { value: слой(1) },
+      tB3: { value: слой(2) },
+      tB4: { value: слой(3) },
+      halo: { value: haloW },
       bloom: { value: lvl === 0 ? 0 : (lvl === 1 ? o.bloomLow || 0.42 : o.bloom || 0.70) },
       expo: { value: o.exposure != null ? o.exposure : 1.06 },
       vig: { value: o.vignette != null ? o.vignette : 1.30 },
@@ -495,7 +725,7 @@ R.post = function (T, renderer, opt) {
       px: { value: new T.Vector2(1 / W, 1 / H) },
       time: { value: 0 }
     },
-    vertexShader: VERT, fragmentShader: COMP, depthTest: false, depthWrite: false
+    vertexShader: VERT, fragmentShader: compShader(P.fxaa), depthTest: false, depthWrite: false
   });
 
   var sBright = quad(T, mBright), sBlur = quad(T, mBlur), sComp = quad(T, mComp);
@@ -505,7 +735,12 @@ R.post = function (T, renderer, opt) {
     W = Math.max(2, Math.round(w * p)); H = Math.max(2, Math.round(h * p));
     P.scene.setSize(W, H);
     mComp.uniforms.px.value.set(1 / W, 1 / H);
-    if (P.b1) { bw = Math.max(2, W >> 2); bh = Math.max(2, H >> 2); P.b1.setSize(bw, bh); P.b2.setSize(bw, bh); }
+    mBright.uniforms.px.value.set(1 / W, 1 / H);
+    for (var i = 0; i < уровни.length; i++) {
+      var L = уровни[i];
+      L.w = Math.max(2, W >> L.sh); L.h = Math.max(2, H >> L.sh);
+      L.a.setSize(L.w, L.h); L.b.setSize(L.w, L.h);
+    }
   };
 
   /* Одна отрисовка кадра: сцена в буфер, ореол, сведение на экран */
@@ -517,24 +752,23 @@ R.post = function (T, renderer, opt) {
     renderer.clear();
     renderer.render(scene, camera);
 
-    if (P.b1) {
-      renderer.setRenderTarget(P.b1);
+    if (уровни.length) {
+      /* Яркое снимаем сразу в первый уровень пирамиды, дальше каждый
+         уровень строится из предыдущего: свой проход по горизонтали
+         во вспомогательный буфер, свой по вертикали обратно. Уменьшение
+         и размытие делает одна и та же пара проходов - отдельного
+         прохода на уменьшение не нужно, выборка и так билинейная. */
+      renderer.setRenderTarget(уровни[0].a);
       renderer.clear();
       renderer.render(sBright, cam);
-      /* Два прохода размытия вместо одного. Пять отсчётов на проход
-         дают не круглый ореол, а боксовое плато с прямыми краями -
-         в мелком буфере оно и читается квадратом. Второй проход
-         вдвое уже первого, и плато становится круглым пятном.
-         Проходы идут по буферу вчетверо мельче кадра, стоят они
-         почти ничего. */
-      var ход = [[1.1, 0.5], [0.5, 0.28]];
-      for (var пр = 0; пр < ход.length; пр++) {
-        mBlur.uniforms.tD.value = P.b1.texture;
-        mBlur.uniforms.dir.value.set(ход[пр][0] / bw, 0);
-        renderer.setRenderTarget(P.b2); renderer.clear(); renderer.render(sBlur, cam);
-        mBlur.uniforms.tD.value = P.b2.texture;
-        mBlur.uniforms.dir.value.set(0, ход[пр][0] / bh);
-        renderer.setRenderTarget(P.b1); renderer.clear(); renderer.render(sBlur, cam);
+      for (var i = 0; i < уровни.length; i++) {
+        var L = уровни[i], src = i === 0 ? уровни[0].a : уровни[i - 1].a, k = ширина(i);
+        mBlur.uniforms.tD.value = src.texture;
+        mBlur.uniforms.dir.value.set(k / L.w, 0);
+        renderer.setRenderTarget(L.b); renderer.clear(); renderer.render(sBlur, cam);
+        mBlur.uniforms.tD.value = L.b.texture;
+        mBlur.uniforms.dir.value.set(0, k / L.h);
+        renderer.setRenderTarget(L.a); renderer.clear(); renderer.render(sBlur, cam);
       }
     }
 
@@ -547,9 +781,15 @@ R.post = function (T, renderer, opt) {
   P.set = function (k, v) { if (mComp.uniforms[k]) mComp.uniforms[k].value = v; };
 
   P.dispose = function () {
-    P.scene.dispose(); if (P.b1) P.b1.dispose(); if (P.b2) P.b2.dispose();
+    P.scene.dispose();
+    for (var i = 0; i < уровни.length; i++) { уровни[i].a.dispose(); уровни[i].b.dispose(); }
+    уровни.length = 0;
+    P.b1 = P.b2 = null;
     mBright.dispose(); mBlur.dispose(); mComp.dispose(); black.dispose();
   };
+  /* Последний собранный композер: по нему автопроверки видят, дали
+     ли цели отсчёты на самом деле, или пришлось уходить в FXAA */
+  R.lastPost = P;
   return P;
 };
 
