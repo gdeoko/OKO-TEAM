@@ -1716,7 +1716,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
      одной точке и наезжали друг на друга. Имя цели там же не нужно -
      его показывает клавиша «Курс». */
   .rc-flight .rcf-course {
-    font-size: 8.5px;
+    font-size: 9px;
     gap: 8px;
     top: clamp(58px, 11vh, 92px);
   }
@@ -1908,7 +1908,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-netlist i {
   font-style: normal;
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: .18em;
   color: rgba(var(--int-cyan-rgb, 66,178,220), .95);
@@ -3044,7 +3044,9 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-d-cell i {
   font-style: normal;
-  font-size: 8.5px;
+  /* Девять точек - нижняя граница читаемого. Восемь с половиной на
+     планшете и телефоне превращали подпись прибора в узор. */
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: .18em;
   color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
@@ -3081,7 +3083,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   gap: 5px;
 }
 .rc-flight .rcf-d-meter b {
-  font-size: 8.5px; font-weight: 700; letter-spacing: .14em;
+  font-size: 9px; font-weight: 700; letter-spacing: .12em;
   color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
 }
 .rc-flight .rcf-d-meter s {
@@ -3344,7 +3346,9 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-d-cell i {
   font-style: normal;
-  font-size: 8.5px;
+  /* Девять точек - нижняя граница читаемого. Восемь с половиной на
+     планшете и телефоне превращали подпись прибора в узор. */
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: .18em;
   color: rgba(var(--int-cyan-rgb, 66, 178, 220), .85);
@@ -3377,7 +3381,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-d-meter { display: inline-flex; align-items: center; gap: 5px; }
 .rc-flight .rcf-d-meter b {
-  font-size: 8.5px; font-weight: 700; letter-spacing: .14em;
+  font-size: 9px; font-weight: 700; letter-spacing: .12em;
   color: rgba(var(--int-cyan-rgb, 66, 178, 220), .85);
 }
 .rc-flight .rcf-d-meter s {
@@ -3458,7 +3462,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 }
 .rc-flight .rcf-key b {
   font-family: var(--f-body, "Golos Text", sans-serif);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: .12em;
   line-height: 1;
@@ -3530,7 +3534,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   position: absolute; left: 50%; top: 50%; bottom: auto;
   transform: translate(-50%, -50%);
   font-family: var(--f-body, "Golos Text", sans-serif);
-  font-size: 8.5px; font-weight: 700; letter-spacing: .2em;
+  font-size: 9px; font-weight: 700; letter-spacing: .16em;
   color: rgba(226, 240, 252, .92);
   text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
   pointer-events: none;
@@ -4359,7 +4363,7 @@ html.rc-deep-inside .rcf-fab {
     line-height: 1.15;
     overflow-wrap: anywhere;
   }
-  .rc-flight .rcf-menu-h i { font-size: 8.5px; letter-spacing: .14em; }
+  .rc-flight .rcf-menu-h i { font-size: 9px; letter-spacing: .12em; }
   .rc-flight .rcf-menu-h span { font-size: 9px; }
 
 
@@ -4857,7 +4861,7 @@ html.rc-deep-inside .rcf-fab {
 /* Подпись читается: она и есть ответ на «что делает эта кнопка».
    Прятали её на узком экране - оставались одни значки. */
 .rc-flight .rcf-key b {
-  font-size: 8.5px;
+  font-size: 9px;
   color: rgba(var(--int-lit-rgb, 207,233,245), .82);
 }
 .rc-flight .rcf-key.cur b,
