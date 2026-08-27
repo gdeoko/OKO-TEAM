@@ -464,8 +464,8 @@ def графика(ключ, номер=0):
           "from every opening. Matte resin 0.6, brushed steel 0.25, amber #E8A400 acrylic 0.15. The headline "
           "reads exactly, character by character, the Russian line «{заголовок}».",
    "типографика":
-      "Flat condensed caps labels sit on hairline muted gold #C9A233 leaders inside the model, and one extruded "
-      "headline rests on the base edge at the real scale of the slab.",
+      "Flat condensed caps labels sit on hairline muted gold #C9A233 leaders inside the model, while the "
+      "headline stands large in the void above at frame scale, not at model scale, its baseline level.",
    "знак":
       "The brand mark is inlaid into the base slab beside the headline, about three percent of the frame width, "
       "flush with the surface and catching the overhead source.",
