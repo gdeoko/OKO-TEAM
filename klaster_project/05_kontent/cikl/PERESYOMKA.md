@@ -43,3 +43,4 @@
 
 Переснимаются заново: P-29-infrastruktura, P-403-rbk-promzemlya,
 P-406-vc-robotizacia, P-409-kak-otvechaem.
+| P-408-rbk-zachem-goroda | пересняли до правки системы «следы», текст снова лёг вдоль дороги |
