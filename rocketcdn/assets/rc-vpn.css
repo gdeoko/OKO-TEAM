@@ -57,6 +57,12 @@
   bottom: clamp(60px, 15vh, 150px);
   top: auto;
   width: clamp(46px, 6vw, 78px);
+  /* Внутри остекления и никогда на раме: заказчик написал прямо -
+     «логотип голограмма ниже справа должно быть, но не залазить на
+     рамку, как голограмма». Считаем место от вписанного
+     прямоугольника окна теми же долями, что и марка Rocket CDN, и
+     отступаем от неё влево на её же ширину. */
+  clip-path: var(--cab-clip, none);
   aspect-ratio: 1;
   padding: 0;
   border: 0;
@@ -69,6 +75,10 @@
   filter: drop-shadow(0 0 10px rgba(64, 135, 255, .28));
   transition: opacity .22s linear, filter .22s linear, transform .22s ease;
   animation: rcVpnLift 5.4s ease-in-out infinite;
+}
+.rc-flight.rcf-native-cab .rc-vpn-projector {
+  right: calc(var(--cab-wx, 6%) + 2.6% + clamp(54px, 7vw, 92px) + clamp(12px, 2.2vw, 26px));
+  bottom: calc(100% - var(--cab-wy, 10%) - var(--cab-wh, 70%) + 2.6%);
 }
 /* Подставка-луч под проекцией: без неё логотип висит в воздухе и
    читается как наклейка на стекле, а не как объём в кабине */
@@ -85,10 +95,9 @@
   pointer-events: none;
 }
 @media (max-width: 760px) {
-  .rc-flight .rc-vpn-projector {
-    right: calc(8px + 44px + 12px);
-    bottom: 12.5%;
-    width: 38px;
+  .rc-flight .rc-vpn-projector { width: 34px; }
+  .rc-flight.rcf-native-cab .rc-vpn-projector {
+    right: calc(var(--cab-wx, 6%) + 2.6% + 44px + 10px);
   }
 }
 .rc-flight .rc-vpn-projector:hover,
@@ -346,11 +355,9 @@ html.rc-product-glitch .rc-vpn-brand img {
 @keyframes rcVpnSweep { from { background-position: 170% 0, 0 0; } to { background-position: -70% 0, 0 0; } }
 
 @media (max-width: 760px) {
-  .rc-flight .rc-vpn-projector {
-    top: max(9%, calc(var(--cab-wy, 7%) + 2%));
-    right: 2.5%;
-    width: clamp(68px, 22vw, 94px);
-  }
+  /* Место проектора задано выше, в блоке телефона рядом с самим
+     правилом. Здесь оставалась прежняя раскладка под потолком, и
+     она перебивала новую просто потому, что лежит ниже по файлу. */
   .rc-flight .rc-vpn-projector b { display: none; }
   .rc-flight .rc-vpn-holo {
     top: max(58px, calc(var(--cab-wy, 7%) + 5%));

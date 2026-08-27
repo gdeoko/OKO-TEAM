@@ -5295,13 +5295,12 @@ function physicalControlsFrame(ts, dt) {
       ui.wrap.querySelector(".rcf-navkey"),
       ui.wrap.querySelector(".rcf-scan-key"),
       ui.wrap.querySelector(".rcf-deploy"),
-      ui.wrap.querySelector(".rcf-fire-key"),
+      ui.wrap.querySelector(".rcf-help-key"),
       ui.wrap.querySelector(".rcf-auto-key"),
       ui.wrap.querySelector(".rcf-stop-key"),
       ui.wrap.querySelector(".rcf-thr"),
       ui.wrap.querySelector(".rcf-map-key"),
       ui.wrap.querySelector(".rcf-shot"),
-      ui.wrap.querySelector(".rcf-help-key"),
       ui.wrap.querySelector(".rcf-zoom-in"),
       ui.wrap.querySelector(".rcf-zoom-out")
     ];
@@ -7860,11 +7859,22 @@ function deckFrame(ts, dt) {
          последними были кадр и справка, и на плите с десятью нишами
          они висели над пультом двумя одинокими наклейками - заказчик
          это и назвал «кнопки криво, не единым целым». */
+      /* Порядок обязан совпадать с KEYS в rc-keys.js: подпись на
+         плите берётся оттуда по номеру ниши. Разошлись они молча -
+         на плите писалось «БЛИЖЕ», а нажатие сохраняло снимок.
+         Заказчик так и сказал: «для чего какая кнопка вообще не
+         понятно».
+
+         Справка стоит четвёртой, среди тех, что попадают на плиту
+         телефона: «нету типо настроек инструкций каких-то» - значит
+         инструкция обязана быть под рукой, а не в конце очереди.
+         Прежний ЗАЛП оттуда ушёл: он делал ровно то же, что КАДР,
+         то есть сохранял снимок, и был вторым таким же. */
       ui.wrap.querySelector(".rcf-navkey"), ui.wrap.querySelector(".rcf-scan-key"),
-      ui.wrap.querySelector(".rcf-deploy"), ui.wrap.querySelector(".rcf-fire-key"),
+      ui.wrap.querySelector(".rcf-deploy"), ui.wrap.querySelector(".rcf-help-key"),
       ui.wrap.querySelector(".rcf-auto-key"), ui.wrap.querySelector(".rcf-stop-key"),
       ui.wrap.querySelector(".rcf-thr"), ui.wrap.querySelector(".rcf-map-key"),
-      ui.wrap.querySelector(".rcf-shot"), ui.wrap.querySelector(".rcf-help-key"),
+      ui.wrap.querySelector(".rcf-shot"),
       ui.wrap.querySelector(".rcf-zoom-in"), ui.wrap.querySelector(".rcf-zoom-out")
     ];
   }
