@@ -379,12 +379,21 @@ function launch_combo_body(string $name, string $email, string $pass): string {
          . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
          . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Клуб постоянных участников</h2>'
          . $p('Для педагогов и активных участников - привилегии, ранние результаты и особые условия.')
-         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
-         . lc_perk('Скидка ' . $disc . '% на всё', 'участие и наградные материалы')
-         . lc_perk('Результаты за 3 рабочих дня', 'вместо обычных пяти')
-         . lc_perk('Бесплатный конкурс каждый месяц', 'одна заявка в номинацию')
-         . lc_perk('Приоритетная поддержка', 'ответ в течение суток')
-         . '</table>'
+         /* ПУНКТЫ — ИЗ ОБЩЕГО СПИСКА (core/club_perks.php).
+          * Здесь стоял свой набор, набранный руками, и он разошёлся со страницей
+          * клуба: обещали «ответ в течение суток», тогда как на сайте написано
+          * «моментально, вне очереди». Письмо запуска уходит по всей базе. */
+         . (static function () use ($disc): string {
+               if (!function_exists('club_perks_mail') && is_file(BASE_PATH . '/core/club_perks.php')) {
+                   require_once BASE_PATH . '/core/club_perks.php';
+               }
+               $rows = '';
+               foreach (array_slice(function_exists('club_perks_mail') ? club_perks_mail($disc) : [], 0, 4) as $p) {
+                   $rows .= lc_perk((string) $p['t'], mb_strtolower(mb_substr((string) $p['short'], 0, 1)) . mb_substr((string) $p['short'], 1));
+               }
+               return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
+                    . $rows . '</table>';
+           })()
          . mm_email_btn($base . '/club', 'Вступить в Клуб', 'navy')
          . LC_VIP_CLOSE;
 

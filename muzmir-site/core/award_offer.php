@@ -1,6 +1,6 @@
 <?php
 /**
- * ПРЕДЛОЖЕНИЕ ОРИГИНАЛОВ НАГРАД — С ФОТОГРАФИЯМИ И ЦЕНАМИ.
+ * ПРЕДЛОЖЕНИЕ НАГРАД — С ФОТОГРАФИЯМИ, БЕЗ ЦЕН.
  *
  * Письма о заказе наград до сих пор объясняли словами: «доступна памятная
  * статуэтка в честь Вашего звания». Человек не видел, что именно ему предлагают,
@@ -8,7 +8,10 @@
  * пока её не показали, письмо остаётся текстом с просьбой заплатить.
  *
  * Здесь собирается набор, положенный конкретному участнику, с настоящими
- * снимками того, что придёт по почте, и с ценами из прайса конкурса.
+ * снимками того, что придёт по почте. Цен в письме нет: они зависят от вида
+ * (оригинал или электронная версия), от клубной скидки и от прайса конкурса,
+ * и в письме быстро устаревают. Актуальную цену человек видит на странице
+ * заказа — там же, где выбирает.
  *
  * ЧТО КОМУ ПОЛОЖЕНО (правило центра, оно же в rm_award_hint):
  *   Гран-при   — кубок;
@@ -43,20 +46,29 @@ function ao_price(int $compId, string $item, string $kind = 'original'): int {
     } catch (\Throwable $e) { return 0; }
 }
 
-/** Есть ли снимок для письма. Возвращает публичный адрес или ''. */
-function ao_photo(int $compId, string $file): string {
-    $rel = '/assets/img/awards/' . $compId . '/mail/' . $file;
+/**
+ * Есть ли снимок для письма. Возвращает публичный адрес или ''.
+ *
+ * $square — брать квадратную версию из подпапки mail/sq (scripts/award_squares.php).
+ * Снимки разные по пропорциям: кубок горизонтальный, дипломы вертикальные. В ряду
+ * из-за этого карточки выходили разной высоты, и витрина выглядела сломанной.
+ * Квадратные превью одного размера ставят ряд ровно.
+ */
+function ao_photo(int $compId, string $file, bool $square = false): string {
+    $sub = $square ? '/mail/sq/' : '/mail/';
+    $rel = '/assets/img/awards/' . $compId . $sub . $file;
     if (is_file(BASE_PATH . '/public' . $rel)) {
         return function_exists('url') ? url($rel) : $rel;
     }
     // Снимков этого конкурса ещё нет — берём любой готовый набор, чтобы человек
     // всё-таки увидел, как выглядит награда: изделия одинаковые, отличается
     // только гравировка.
-    foreach (glob(BASE_PATH . '/public/assets/img/awards/*/mail/' . $file) ?: [] as $any) {
+    foreach (glob(BASE_PATH . '/public/assets/img/awards/*' . $sub . $file) ?: [] as $any) {
         $p = str_replace(BASE_PATH . '/public', '', $any);
         return function_exists('url') ? url($p) : $p;
     }
-    return '';
+    // Квадратной версии может не быть у старого конкурса — откатываемся к обычной.
+    return $square ? ao_photo($compId, $file, false) : '';
 }
 
 /**
@@ -68,13 +80,13 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
     $main = ao_main_item($result);
     if ($main) {
         [$file, $title, $priceKey] = $main;
-        $photo = ao_photo($compId, $file);
+        $photo = ao_photo($compId, $file, true);
         if ($photo !== '') {
             $kit[] = ['photo' => $photo, 'title' => $title, 'price' => ao_price($compId, $priceKey),
                       'note'  => 'С гравировкой звания, конкурса и Вашего имени. Приходит в подарочной упаковке.'];
         }
     }
-    $photoDip = ao_photo($compId, 'diploma.jpg');
+    $photoDip = ao_photo($compId, 'diploma.jpg', true);
     if ($photoDip !== '') {
         $kit[] = ['photo' => $photoDip, 'title' => 'Диплом на бланке',
                   'price' => ao_price($compId, 'Основной диплом'),
@@ -89,17 +101,17 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
      * про именные чаще, чем про всё остальное вместе. Солисту эта позиция не
      * показывается — у него диплом и так именной. */
     if ($isGroup) {
-        $photoNm = ao_photo($compId, 'diploma-name.jpg');
-        if ($photoNm === '') $photoNm = ao_photo($compId, 'diploma.jpg');
+        $photoNm = ao_photo($compId, 'diploma-name.jpg', true);
+        if ($photoNm === '') $photoNm = ao_photo($compId, 'diploma.jpg', true);
         if ($photoNm !== '') {
-            $kit[] = ['photo' => $photoNm, 'title' => 'Именной диплом каждому участнику коллектива',
+            $kit[] = ['photo' => $photoNm, 'title' => 'Именной диплом участнику',
                       'price' => ao_price($compId, 'Именной диплом'),
                       'note'  => 'С фамилией и именем ребёнка, званием и названием коллектива. '
-                               . 'Заказывается по числу участников — цена указана за один диплом.'];
+                               . 'Заказывается по числу участников коллектива.'];
         }
     }
 
-    $photoTh = ao_photo($compId, 'thanks.jpg');
+    $photoTh = ao_photo($compId, 'thanks.jpg', true);
     if ($photoTh !== '') {
         $kit[] = ['photo' => $photoTh, 'title' => 'Благодарность педагогу',
                   'price' => ao_price($compId, 'Благодарность'),
@@ -137,38 +149,38 @@ function ao_block(int $compId, string $result, string $url = '', bool $isGroup =
 
     $h = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
-    // Три позиции встают в один ряд, четыре — квадратом два на два: и то и другое
-    // выглядит намеренным, а 3+1 смотрится как обрыв вёрстки.
-    $cols  = count($kit) === 4 ? 2 : 3;
-    $width = $cols === 2 ? '50%' : '33.33%';
+    /* ВСЁ В ОДИН РЯД, ОДИНАКОВОГО РАЗМЕРА.
+     *
+     * Раскладка «три плюс один» и «два на два» смотрелась как сломанная вёрстка:
+     * у солиста ряд из трёх, у коллектива квадрат из четырёх, подписи разной
+     * длины тянули карточки на разную высоту. Теперь позиции стоят одной
+     * строкой — сколько бы их ни было, — снимки квадратные и одного размера, а
+     * подпись занимает фиксированные две строки. Ряд ровный при любом наборе.
+     *
+     * ЦЕН В ПИСЬМЕ НЕТ (правило владельца, 27.08.2026). Цена зависит от вида —
+     * оригинал или электронная версия, — от клубной скидки и от прайса конкурса;
+     * в письме она живёт своей жизнью и устаревает. Актуальную человек видит на
+     * странице заказа, где и выбирает. */
+    $n = max(1, count($kit));
+    $width = round(100 / $n, 4) . '%';
 
-    $card1 = static function (array $it) use ($h, $navy, $gold, $ink, $line, $card, $width): string {
-        $price = (int) $it['price'] > 0 ? number_format((int) $it['price'], 0, ',', ' ') . ' ₽' : '';
-        return '<td width="' . $width . '" valign="top" style="width:' . $width . ';padding:4px;">'
+    $card1 = static function (array $it) use ($h, $navy, $line, $card, $width): string {
+        return '<td width="' . $width . '" valign="top" style="width:' . $width . ';padding:3px;">'
              . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
              . 'style="background:' . $card . ';border:1px solid ' . $line . ';border-radius:12px;overflow:hidden;">'
-             . '<tr><td style="padding:0;"><img src="' . $h($it['photo']) . '" width="180" '
+             . '<tr><td style="padding:0;line-height:0;"><img src="' . $h($it['photo']) . '" width="170" height="170" '
              . 'alt="' . $h($it['title']) . '" style="display:block;width:100%;height:auto;border:0;"></td></tr>'
-             . '<tr><td style="padding:9px 10px 11px;text-align:center;">'
-             . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:13px;line-height:1.3;'
+             . '<tr><td height="52" style="height:52px;padding:8px 7px 10px;text-align:center;vertical-align:top;">'
+             . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:12.5px;line-height:1.3;'
              . 'font-weight:700;color:' . $navy . ';">' . $h($it['title']) . '</div>'
-             . ($price !== '' ? '<div style="margin-top:4px;font-size:14px;font-weight:700;color:' . $gold . ';">' . $price . '</div>' : '')
              . '</td></tr></table></td>';
     };
 
     $out = '<p style="margin:22px 0 10px;font-weight:700;color:' . $navy . ';font-size:16px;">'
          . 'Что можно заказать по Вашему результату</p>'
-         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;margin:0 0 10px;">';
-    $rows = array_chunk($kit, $cols);
-    foreach ($rows as $row) {
-        $out .= '<tr>';
-        foreach ($row as $it) $out .= $card1($it);
-        for ($i = count($row); $i < $cols; $i++) {
-            $out .= '<td width="' . $width . '" style="width:' . $width . ';padding:4px;"></td>';
-        }
-        $out .= '</tr>';
-    }
-    $out .= '</table>';
+         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;margin:0 0 10px;"><tr>';
+    foreach ($kit as $it) $out .= $card1($it);
+    $out .= '</tr></table>';
 
     // Пояснения к позициям — строками под витриной: в подпись под снимком они не
     // помещаются, а без них непонятно, чем оригинал отличается от электронного.
