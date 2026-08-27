@@ -370,13 +370,31 @@ function vf_download(string $url, int $appId = 0): array {
         && is_file(BASE_PATH . '/core/folder_pick.php')) {
         require_once BASE_PATH . '/core/folder_pick.php';
         $app = function_exists('one')
-            ? one("SELECT full_name, group_name, work_title, created_at FROM applications WHERE id=?", [$appId])
+            ? one("SELECT full_name, group_name, work_title, created_at, nomination FROM applications WHERE id=?", [$appId])
             : null;
         if (is_array($app)) {
             $pick = fp_pick($url, $app);
+            /* Повторный заход с другим файлом: разбор не нашёл в первом того,
+               что заявлено, и конвейер назвал следующего кандидата по имени. */
+            $force = trim((string) ($GLOBALS['vf_pick_force'] ?? ''));
+            if ($force !== '') {
+                foreach (fp_only_media(fp_list($url)) as $cand) {
+                    if ((string) $cand['name'] === $force) {
+                        $pick = ['ok' => true, 'file' => $cand, 'files' => 1, 'listing' => $force,
+                                 'others' => [], 'why' => ''];
+                        break;
+                    }
+                }
+                $GLOBALS['vf_pick_force'] = '';
+            }
             if (!$pick['ok'] && (int) $pick['files'] > 1) {
                 return ['ok' => false, 'path' => '', 'size' => 0, 'why' => (string) $pick['why']];
             }
+            // Запасные кандидаты папки кладём в глобальную подсказку: если разбор
+            // скажет «читают не то произведение», конвейер попробует следующий
+            // файл, а не снимет заявку (см. core/ai_grader.php).
+            $GLOBALS['vf_pick_others'] = (array) ($pick['others'] ?? []);
+            $GLOBALS['vf_pick_folder'] = $url;
             if ($pick['ok']) {
                 /* КАЧАЕМ ВЫБРАННЫЙ ФАЙЛ, А НЕ «ПАПКУ ЦЕЛИКОМ».
                  *

@@ -157,6 +157,29 @@ function fp_norm(string $s): string {
  */
 function fp_pick(string $url, array $app): array {
     $files = fp_only_media(fp_list($url));
+
+    /* У ХУДОЖНИКОВ ПАПКА — ЭТО ОДНА РАБОТА С РАЗНЫХ СТОРОН.
+     *
+     * Решение владельца: «если фотоискусство, художник, изобразительное,
+     * декоративно-прикладное — там может быть папка с фото работ с разных
+     * ракурсов, это нормально, не отклоняем». Так и было с валенками «Русский
+     * стиль» (#1841): десять снимков одной пары — общий вид, голенище, подошва,
+     * деталь росписи, работа на модели. Прежнее правило увидело «десять работ с
+     * похожими названиями» и сняло заявку.
+     *
+     * Поэтому у изобразительных номинаций папка отказом не бывает: берём лучший
+     * снимок — самый крупный файл, он же обычно самый подробный. */
+    $nom = mb_strtolower((string) ($app['nomination'] ?? ''));
+    $isArt = str_contains($nom, 'зобраз') || str_contains($nom, 'прикладн')
+          || str_contains($nom, 'фото')   || str_contains($nom, 'художеств') && str_contains($nom, 'творчеств');
+    if ($isArt && count($files) > 1) {
+        usort($files, static fn(array $a, array $b): int => (int) $b['size'] <=> (int) $a['size']);
+        return ['ok' => true, 'file' => $files[0], 'files' => count($files),
+                'listing' => implode(', ', array_map(static fn(array $f): string => (string) $f['name'],
+                                                     array_slice($files, 0, 8))),
+                'why' => ''];
+    }
+
     $n = count($files);
     $listing = implode(', ', array_map(static fn(array $f): string => (string) $f['name'],
                                        array_slice($files, 0, 8)));
@@ -201,7 +224,8 @@ function fp_pick(string $url, array $app): array {
     }
 
     if ($best['score'] > 0 && !$best['tie']) {
-        return ['ok' => true, 'file' => $files[$best['i']], 'files' => $n, 'listing' => $listing, 'why' => ''];
+        return ['ok' => true, 'file' => $files[$best['i']], 'files' => $n, 'listing' => $listing,
+                'others' => fp_others($files, $best['i']), 'why' => ''];
     }
 
     /* ПОДПИСЕЙ НЕТ — СУДИМ ПО ВРЕМЕНИ.
@@ -234,8 +258,13 @@ function fp_pick(string $url, array $app): array {
                 $second = min($second, abs($when - $ts));
             }
             if ($second === PHP_INT_MAX || $second - $near['d'] >= 86400) {
+                /* Выбор по времени — догадка, пусть и обоснованная: в папке #1632
+                   лежат две безымянные съёмки, и «У лукоморья» оказалось в той,
+                   что подана не последней. Поэтому рядом кладём остальные файлы:
+                   если разбор скажет «читают не то произведение», конвейер
+                   попробует следующий, а не снимет заявку. */
                 return ['ok' => true, 'file' => $files[$near['i']], 'files' => $n,
-                        'listing' => $listing, 'why' => ''];
+                        'listing' => $listing, 'others' => fp_others($files, $near['i']), 'why' => ''];
             }
         }
     }
@@ -290,4 +319,11 @@ function fp_direct_url(string $folderUrl, array $file): string {
      * код пойдёт обычной дорогой (core/video_fetch.php), где вся эта механика
      * уже отлажена. */
     return '';
+}
+
+/** Остальные файлы папки — запасные кандидаты, в исходном порядке. */
+function fp_others(array $files, int $chosen): array {
+    $out = [];
+    foreach ($files as $i => $f) if ($i !== $chosen) $out[] = $f;
+    return $out;
 }
