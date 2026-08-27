@@ -328,10 +328,10 @@ def эффект(ключ):
     "silhouette is centred, and directly behind it a radial amber #E8A400 glow, its core hidden by the subject "
     "and haloing around the edges. A two pixel amber rim traces the top and right edges only. Type sits in the "
     "dark corner opposite.",
-    "Composition: a six by eight module grid on a warm white #F5F1E8 field with generous gutters, drawn as "
-    "filled modules in flat amber #E8A400, flat graphite #14171C and photographic crops clipped to module "
-    "bounds. Every photographic module is a different view, no crop repeats anywhere in the frame. One module "
-    "breaks the system: three columns by two rows, floating with its own shadow, rotated two degrees off axis.",
+    "Composition: a six by eight module grid with generous gutters, drawn as filled modules in flat amber "
+    "#E8A400 and flat graphite #14171C. Exactly ONE module carries a photograph and it is big, at least "
+    "three columns by three rows, floating with its own shadow and turned two degrees off axis; every other "
+    "filled module is flat colour. No second photograph, no repeated crop, no wallpaper of small pictures.",
 ]
 
 
