@@ -22,7 +22,17 @@
 .rail-dot {
   width: 22px; height: 26px; padding: 0; border: 0; background: none;
   display: grid; place-items: center; cursor: pointer;
+  /* Зона нажатия выше самой кнопки. Точек в ряду до десятка, и в
+     ширину раздать их до тридцати четырёх нельзя - ряд не влезет в
+     узкий экран, а перекрывающиеся зоны хуже маленьких: палец начнёт
+     попадать в соседа. Поэтому раздаём вверх и вниз, до соседней
+     точки по горизонтали и не дальше. */
+  position: relative;
   -webkit-tap-highlight-color: transparent;
+}
+.rail-dot::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 24px; height: 34px; transform: translate(-50%, -50%);
 }
 .rail-dot i {
   display: block; width: 6px; height: 6px; border-radius: 50%;

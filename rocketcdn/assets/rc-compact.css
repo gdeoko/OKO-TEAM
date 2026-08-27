@@ -330,7 +330,10 @@
   .leg { font-size: var(--fs-2); }
 
   .reg-tabs { gap: 6px; margin-bottom: 10px; }
-  .reg-tabs button { padding: 6px 11px; font-size: var(--fs-3); }
+  /* Палец меньше 34 точек не попадает уверенно, а вкладок здесь
+     шесть в два ряда: промах уводит в чужой регион. Высоту держим
+     явно, а не надеемся на поля. */
+  .reg-tabs button { padding: 6px 11px; font-size: var(--fs-3); min-height: 34px; }
   .search { margin-bottom: 9px; }
   .search input { padding: 10px 14px 10px 38px; }
   /* Окно списка: 190 пикселей - это пять строк. Все 218 городов

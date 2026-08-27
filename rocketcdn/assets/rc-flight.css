@@ -2590,7 +2590,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
      окно и последняя обрывается */
   .rc-flight .rcf-help li { grid-template-columns: 66px 1fr; gap: 8px; padding-bottom: 6px; }
   .rc-flight .rcf-help ul { gap: 6px; }
-  .rc-flight .rcf-help li i { font-size: 8px; letter-spacing: .1em; }
+  .rc-flight .rcf-help li i { font-size: 9px; letter-spacing: .07em; }
   .rc-flight .rcf-help li span { font-size: 11px; line-height: 1.4; }
   .rc-flight .rcf-help b { font-size: 19px; margin-bottom: 10px; }
   .rc-flight .rcf-help-in { padding: 14px 14px 16px; }
@@ -3548,7 +3548,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   text-shadow: 0 0 10px rgba(var(--int-cyan-rgb, 66, 178, 220), .5);
 }
 .rc-flight .rcf-d-main .rcf-speed span {
-  font-size: 8px; letter-spacing: .14em;
+  font-size: 9px; letter-spacing: .1em;
   color: rgba(var(--int-cyan-rgb, 66, 178, 220), .8);
 }
 
@@ -3568,7 +3568,11 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-d-main .rcf-radar { display: none; }
   .rc-flight .rcf-d-nav .rcf-map-key { display: none; }
   .rc-flight .rcf-key { height: 40px; min-width: 40px; padding: 0 5px; gap: 1px; }
-  .rc-flight .rcf-key b { font-size: 7px; letter-spacing: .08em; }
+  /* Подпись на клавише либо читается, либо её нет вовсе. Семь
+     точек - это ни то ни другое. Ниже по файлу есть правило,
+     которое на совсем узких экранах прячет подпись начисто и
+     оставляет иконку. */
+  .rc-flight .rcf-key b { font-size: 9px; letter-spacing: .06em; }
   .rc-flight .rcf-key.rcf-mini { width: 26px; height: 26px; }
   .rc-flight .rcf-d-main .rcf-thr { width: 62px; height: 40px; }
   .rc-flight .rcf-d-main .rcf-speed { min-width: 0; }
@@ -3730,20 +3734,20 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
      оставался один знак «0» без единиц. Ужимаются соседи, у них
      подписи длиннее и терпимее. */
   .rc-flight .rcf-d-top .rcf-d-spd { flex: 0 0 auto; }
-  .rc-flight .rcf-d-cell i { font-size: 7.5px; letter-spacing: .1em; }
+  .rc-flight .rcf-d-cell i { font-size: 9px; letter-spacing: .06em; }
   .rc-flight .rcf-d-cell .rcf-net,
   .rc-flight .rcf-d-cell .rcf-prog,
   .rc-flight .rcf-d-course .rcf-c-goal { font-size: 10px; }
-  .rc-flight .rcf-d-meter b { font-size: 7.5px; letter-spacing: .06em; }
+  .rc-flight .rcf-d-meter b { font-size: 9px; letter-spacing: .04em; }
   .rc-flight .rcf-d-meter s { width: 22px; height: 4px; }
   .rc-flight .rcf-d-top .rcf-bars { gap: 8px; }
 
   .rc-flight .rcf-d-work { gap: 4px; }
   .rc-flight .rcf-key { height: 38px; min-width: 38px; padding: 0 4px; }
   .rc-flight .rcf-key svg { width: 15px; height: 15px; }
-  .rc-flight .rcf-key b { font-size: 6.5px; letter-spacing: .05em; }
+  .rc-flight .rcf-key b { font-size: 9px; letter-spacing: .04em; }
   .rc-flight .rcf-d-main .rcf-thr { width: 54px; height: 38px; }
-  .rc-flight .rcf-thr b { font-size: 7px; letter-spacing: .1em; }
+  .rc-flight .rcf-thr b { font-size: 9px; letter-spacing: .06em; }
   /* Скорость и справка живут в ленте, не в отсеке хода */
   .rc-flight .rcf-d-drive .rcf-d-col { display: none; }
   .rc-flight .rcf-d-face { transform: rotateX(24deg); height: 142%; }
@@ -3781,7 +3785,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-d-spd { display: inline-flex; }
   .rc-flight .rcf-d-spd .rcf-speed { position: static; display: inline-flex; align-items: baseline; gap: 2px; }
   .rc-flight .rcf-d-spd .rcf-speed b { font-size: 11px; font-weight: 700; color: rgba(var(--int-lit-rgb,207,233,245),.96); }
-  .rc-flight .rcf-d-spd .rcf-speed span { font-size: 7px; color: rgba(var(--int-cyan-rgb,66,178,220),.8); }
+  .rc-flight .rcf-d-spd .rcf-speed span { font-size: 9px; color: rgba(var(--int-cyan-rgb,66,178,220),.8); }
 }
 
 /* Справка и снимок остаются и на телефоне: без справки человек не
@@ -4194,7 +4198,10 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   .rc-flight .rcf-brief-card p { margin: 7px auto 10px; font-size: 10.5px; line-height: 1.42; }
   .rc-flight .rcf-brief-btns { gap: 6px; }
   .rc-flight .rcf-brief-btns button { padding: 9px 5px 8px; font-size: 9.5px; letter-spacing: .08em; }
-  .rc-flight .rcf-brief-btns button span { font-size: 8px; }
+  /* Девять точек - нижняя граница читаемого на телефоне. Восемь тут
+     уже не слово, а узор: подпись под кнопкой перестаёт объяснять,
+     чем автополёт отличается от ручного. */
+  .rc-flight .rcf-brief-btns button span { font-size: 9px; }
   .rc-flight .rcf-deck .rcf-key { border-radius: 6px; }
 }
 
@@ -4353,7 +4360,7 @@ html.rc-deep-inside .rcf-fab {
     overflow-wrap: anywhere;
   }
   .rc-flight .rcf-menu-h i { font-size: 8.5px; letter-spacing: .14em; }
-  .rc-flight .rcf-menu-h span { font-size: 8px; }
+  .rc-flight .rcf-menu-h span { font-size: 9px; }
 
 
   .rc-flight .rcf-dos-in,
@@ -4519,7 +4526,9 @@ html.rc-deep-inside .rcf-fab {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center !important;
-  font-size: clamp(8px, 1vw, 10px) !important;
+  /* Девять точек - нижняя граница читаемого. Восемь на телефоне
+     превращают совет по управлению в узор. */
+  font-size: clamp(9px, 1vw, 10px) !important;
   letter-spacing: .08em;
   background: linear-gradient(90deg, transparent, rgba(10,35,52,.42) 14%, rgba(10,35,52,.42) 86%, transparent);
   border-top: 1px solid rgba(116,214,244,.16);
@@ -4535,7 +4544,7 @@ html.rc-deep-inside .rcf-fab {
     bottom: 7px !important;
     max-width: 88% !important;
     padding: 4px 8px;
-    font-size: 8px !important;
+    font-size: 9px !important;
   }
 }
 
@@ -4857,11 +4866,11 @@ html.rc-deep-inside .rcf-fab {
 @media (max-width: 760px) {
   .rc-flight .rcf-key { height: 46px; min-width: 44px; padding: 0 6px; gap: 3px; border-radius: 8px; }
   .rc-flight .rcf-key svg { width: 17px; height: 17px; }
-  .rc-flight .rcf-key b { display: block !important; font-size: 7.5px; letter-spacing: .07em; }
+  .rc-flight .rcf-key b { display: block !important; font-size: 9px; letter-spacing: .05em; }
 }
 @media (max-width: 400px) {
   .rc-flight .rcf-key { height: 44px; min-width: 40px; padding: 0 4px; }
-  .rc-flight .rcf-key b { display: block !important; font-size: 7px; letter-spacing: .04em; }
+  .rc-flight .rcf-key b { display: block !important; font-size: 9px; letter-spacing: .03em; }
 }
 
 /* ═══ Радар на телефоне ═══════════════════════════════════════
