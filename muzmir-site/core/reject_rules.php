@@ -210,6 +210,30 @@ function rr_check_age(array $app, string $deadline = ''): array {
     $url = trim((string) ($app['video_url'] ?? ''));
     if ($url === '') return $ok;
 
+    /* Дату съёмки мог уже прочитать мост: файла на сайте нет, а creation_time
+       контейнера он отдаёт вместе с подготовленными дорожками. Своё показание
+       главнее облачного — оно из самой записи. */
+    if ((int) ($app['__shot_ts'] ?? 0) > 0) {
+        $ts = (int) $app['__shot_ts'];
+        $limit = strtotime('-' . MEDIA_MAX_AGE_YEARS . ' year', $deadline !== '' ? (int) strtotime($deadline) : time());
+        $days = (int) floor(($limit - $ts) / 86400);
+        if ($days > 14) {
+            return ['reject' => true, 'code' => 'too_old',
+                'reason' => 'Конкурсный материал старше 1 года с момента исполнения (п. 8.11 положения).' . "\n"
+                          . 'Дата съёмки: ' . date('d.m.Y', $ts),
+                'note' => 'дата съёмки ' . date('d.m.Y', $ts) . ' (метка в записи, прочитана мостом)'];
+        }
+        if ($days > 0) {
+            return ['reject' => false, 'code' => 'too_old_edge',
+                'reason' => 'Конкурсный материал старше 1 года с момента исполнения (п. 8.11 положения).' . "\n"
+                          . 'Дата съёмки: ' . date('d.m.Y', $ts),
+                'note' => 'на границе срока: дата съёмки ' . date('d.m.Y', $ts) . ', старше допустимого на '
+                        . $days . ' дн., решение за человеком'];
+        }
+        return ['reject' => false, 'code' => '', 'reason' => '',
+                'note' => 'дата съёмки ' . date('d.m.Y', $ts) . ' (метка в записи)'];
+    }
+
     $age = media_too_old($url, (string) ($app['__file'] ?? ''), $deadline !== '' ? $deadline : null);
     if (!$age['old']) return ['reject' => false, 'code' => '', 'reason' => '', 'note' => (string) $age['note']];
 

@@ -208,7 +208,11 @@ function ag_transport(): string {
  * @param  string[] $files   подготовленные дорожки: запись, звук, изображение
  * @return array{ok:bool, text:string, why:string}
  */
-function ag_ask_bridge(string $prompt, array $files): array {
+/**
+ * @param bool $remote true — пути уже НА МОСТУ (запись он скачал и подготовил
+ *        сам, см. ag_bridge_prepare), выкладывать и передавать нечего.
+ */
+function ag_ask_bridge(string $prompt, array $files, bool $remote = false): array {
     $bad = static fn(string $w): array => ['ok' => false, 'text' => '', 'why' => $w];
 
     // Имена настроек те же, что у печати дипломов (core/diploma_render.php):
@@ -217,24 +221,28 @@ function ag_ask_bridge(string $prompt, array $files): array {
     $token  = (string) cfgv('poster_token', '');
     if ($poster === '' || $token === '') return $bad('мост не настроен (poster_url/poster_token)');
 
-    $files = array_values(array_filter($files, 'is_file'));
+    $files = $remote
+        ? array_values(array_filter($files, static fn($f): bool => is_string($f) && trim($f) !== ''))
+        : array_values(array_filter($files, 'is_file'));
     if (!$files) return $bad('нет подготовленных дорожек');
 
-    // Раздаём файлы по одноразовой ссылке: имя не угадать, живёт полчаса,
-    // чистится сразу после разбора (и по расписанию, если разбор оборвался).
-    $share = BASE_PATH . '/data/grade_share';
-    if (!is_dir($share)) @mkdir($share, 0775, true);
     $tag = bin2hex(random_bytes(16));
     $links = []; $copies = [];
-    foreach ($files as $i => $f) {
-        $ext  = strtolower(pathinfo($f, PATHINFO_EXTENSION)) ?: 'bin';
-        $dst  = $share . '/' . $tag . '_' . $i . '.' . $ext;
-        if (!@copy($f, $dst)) continue;
-        $copies[] = $dst;
-        $links[]  = ['url' => rtrim((string) (cfgv('site_url') ?: url('/')), '/') . '/grade-media/' . $tag . '/' . $i,
-                     'name' => 'g' . $i . '.' . $ext];
+    if (!$remote) {
+        // Раздаём файлы по одноразовой ссылке: имя не угадать, живёт полчаса,
+        // чистится сразу после разбора (и по расписанию, если разбор оборвался).
+        $share = BASE_PATH . '/data/grade_share';
+        if (!is_dir($share)) @mkdir($share, 0775, true);
+        foreach ($files as $i => $f) {
+            $ext  = strtolower(pathinfo($f, PATHINFO_EXTENSION)) ?: 'bin';
+            $dst  = $share . '/' . $tag . '_' . $i . '.' . $ext;
+            if (!@copy($f, $dst)) continue;
+            $copies[] = $dst;
+            $links[]  = ['url' => rtrim((string) (cfgv('site_url') ?: url('/')), '/') . '/grade-media/' . $tag . '/' . $i,
+                         'name' => 'g' . $i . '.' . $ext];
+        }
+        if (!$links) return $bad('файлы не удалось выложить для моста');
     }
-    if (!$links) return $bad('файлы не удалось выложить для моста');
 
     $rm = static function (array $paths): void { foreach ($paths as $p) @unlink($p); };
 
@@ -263,9 +271,15 @@ function ag_ask_bridge(string $prompt, array $files): array {
     $work = '/tmp/grade_' . $tag;
     $cmd  = 'set -e; mkdir -p ' . $work . '; cd ' . $work . '; ';
     $mfiles = [];
-    foreach ($links as $l) {
-        $cmd .= 'curl -sSL --max-time 300 -o ' . escapeshellarg($l['name']) . ' ' . escapeshellarg($l['url']) . '; ';
-        $mfiles[] = $work . '/' . $l['name'];
+    if ($remote) {
+        // Дорожки мост подготовил сам (ag_bridge_prepare) — они уже лежат у него,
+        // и гонять их через сайт незачем.
+        $mfiles = $files;
+    } else {
+        foreach ($links as $l) {
+            $cmd .= 'curl -sSL --max-time 300 -o ' . escapeshellarg($l['name']) . ' ' . escapeshellarg($l['url']) . '; ';
+            $mfiles[] = $work . '/' . $l['name'];
+        }
     }
     $cmd .= 'printf %s ' . escapeshellarg($prompt) . ' > zadanie.txt; ';
     /* КАКОЙ БРАУЗЕР НА МОСТУ БЕРЁМ.
@@ -306,6 +320,91 @@ function ag_ask_bridge(string $prompt, array $files): array {
     $text = trim(substr($out, $pos + 11));
     if ($text === '') return $bad('браузер агента ответа не дал');
     return ['ok' => true, 'text' => $text, 'why' => ''];
+}
+
+/**
+ * ЗАПИСЬ ГОТОВИТ МОСТ, А НЕ САЙТ.
+ *
+ * Прежний порядок был такой: сайт качает конкурсную запись себе, ужимает её,
+ * выкладывает по временной ссылке — и мост качает её обратно. Гигабайтный файл
+ * шёл по узкому каналу сайта дважды: заявка на 2,7 ГБ так держала очередь два с
+ * четвертью часа и остановила пересмотр на 197-й работе из 226.
+ *
+ * Мост стоит в Москве и берёт с Яндекс.Диска 55 МБ/с. Здесь запись качается,
+ * ужимается до 480p, отдельно вынимается звук и там же меряется строй. На сайт
+ * возвращается только небольшой JSON: длительность, дата съёмки, числа замера и
+ * пути дорожек — сами дорожки остаются на мосту и оттуда попадают в браузер.
+ *
+ * Для площадок, где прямую ссылку умеет добывать только сайт (ВК, ОК, RuTube,
+ * Облако Mail.ru), он её и добывает, а мосту передаёт уже готовый адрес.
+ *
+ * @return array{ok:bool, video:string, audio:string, image:string, seconds:int,
+ *               shot:string, pitch:array, work:string, why:string}
+ */
+function ag_bridge_prepare(string $url, int $maxSec = 900): array {
+    $bad = static fn(string $w): array => ['ok' => false, 'video' => '', 'audio' => '', 'image' => '',
+                                           'seconds' => 0, 'shot' => '', 'pitch' => [], 'work' => '', 'why' => $w];
+    $poster = rtrim((string) cfgv('poster_url', ''), '/');
+    $token  = (string) cfgv('poster_token', '');
+    if ($poster === '' || $token === '') return $bad('мост не настроен');
+
+    /* Яндекс.Диск и Дзен мост берёт сам — там открытый API и yt-dlp. Остальное
+       (ВК, ОК, RuTube, Облако) умеет только сайт: у него токен сообщества и
+       разобранная механика dispatcher, поэтому прямую ссылку готовим здесь. */
+    $ask = $url;
+    $kind = vf_platform($url);
+    if (!in_array($kind, ['yandex_disk', 'dzen'], true)) {
+        $link = vf_direct_link($url);
+        if (!$link['ok']) return $bad((string) $link['why']);
+        $ask = (string) $link['url'];
+    }
+
+    $work = '/tmp/gf_' . bin2hex(random_bytes(8));
+    $cmd  = 'timeout 1500 /opt/oko-poster/grade_fetch.sh ' . escapeshellarg($ask) . ' '
+          . escapeshellarg($work) . ' ' . (int) $maxSec . ' 2>/dev/null';
+
+    $ch = curl_init($poster);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => 1, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 1800,
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['cmd' => $cmd], JSON_UNESCAPED_SLASHES),
+    ]);
+    $resp = (string) curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($code !== 200) return $bad('мост ответил кодом ' . $code);
+
+    $env = json_decode($resp, true);
+    $out = is_array($env) ? trim((string) ($env['stdout'] ?? '')) : trim($resp);
+    $j = ag_parse_json($out);
+    if (!is_array($j)) return $bad('мост не вернул описание записи');
+    if (empty($j['ok'])) return $bad((string) ($j['why'] ?? 'запись не подготовлена'));
+
+    return ['ok' => true,
+            'video'   => (string) ($j['video'] ?? ''),
+            'audio'   => (string) ($j['audio'] ?? ''),
+            'image'   => (string) ($j['image'] ?? ''),
+            'seconds' => (int) ($j['seconds'] ?? 0),
+            'shot'    => (string) ($j['shot'] ?? ''),
+            'pitch'   => (array) ($j['pitch'] ?? []),
+            'work'    => $work,
+            'why'     => ''];
+}
+
+/** Убрать за собой рабочую папку на мосту: запись принадлежит участнику. */
+function ag_bridge_cleanup(string $work): void {
+    if ($work === '' || !preg_match('~^/tmp/gf_[0-9a-f]+$~', $work)) return;
+    $poster = rtrim((string) cfgv('poster_url', ''), '/');
+    $token  = (string) cfgv('poster_token', '');
+    if ($poster === '' || $token === '') return;
+    $ch = curl_init($poster);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => 1, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 60,
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['cmd' => 'rm -rf ' . escapeshellarg($work)], JSON_UNESCAPED_SLASHES),
+    ]);
+    @curl_exec($ch);
+    curl_close($ch);
 }
 
 /**
@@ -761,8 +860,40 @@ function ag_grade_application(int $appId, array $opt = []): array {
                 'title' => 'ТРЕБУЕТ ПРОВЕРКИ', 'why' => (string) $rr['reason']];
     }
 
+    /* ГОТОВИТ ЛИ ЗАПИСЬ МОСТ.
+     *
+     * Настройка grade_fetch_on_bridge переключает конвейер: при ней сайт запись
+     * себе не тянет вовсе — качает, ужимает и меряет строй мост, у которого
+     * канал в десятки раз шире. Выключено — работает прежний путь, файл за
+     * файлом через сайт. */
+    $onBridge = ag_transport() === 'bridge'
+             && (string) (function_exists('setting') ? setting('grade_fetch_on_bridge', '0') : '0') === '1';
+    $prep = ['ok' => false, 'work' => '', 'pitch' => [], 'shot' => '', 'seconds' => 0];
+
+    if ($onBridge) {
+        $prep = ag_bridge_prepare($url, (int) (function_exists('setting') ? setting('grade_video_max_sec', '900') : 900));
+        if (!$prep['ok']) {
+            $why = (string) $prep['why'];
+            $closed = (bool) preg_match('~закрыт|удален|удалён|не отдаётся|приватн|недоступ~ui', $why);
+            if ($closed) {
+                $reason = "Ссылка на конкурсный материал недействительна: она должна быть актуальна "
+                        . "вплоть до оглашения результатов (п. 8.10 положения).\n" . $why;
+                try {
+                    q("UPDATE grading_runs SET status='ok', title='ТРЕБУЕТ ПРОВЕРКИ', total=0,
+                              reject_hint=?, internal_note=? WHERE id=?",
+                      [mb_substr($reason, 0, 900), 'Оценка не проводилась: запись по ссылке недоступна. ' . $why, $runId]);
+                } catch (\Throwable $e) {}
+                return ['ok' => true, 'run_id' => $runId, 'total' => 0.0,
+                        'title' => 'ТРЕБУЕТ ПРОВЕРКИ', 'why' => $reason];
+            }
+            return $bad('запись не получена: ' . $why, $runId);
+        }
+    }
+
     // 1. Достаём запись.
-    $dl = vf_download($url, $appId);
+    $dl = $onBridge
+        ? ['ok' => true, 'path' => '', 'size' => 0, 'why' => '']
+        : vf_download($url, $appId);
     if (!$dl['ok']) {
         /* ЗАКРЫТАЯ ССЫЛКА — ЭТО ОСНОВАНИЕ, А НЕ ПОЛОМКА.
          *
@@ -806,7 +937,13 @@ function ag_grade_application(int $appId, array $opt = []): array {
      * Срок считаем от закрытия приёма, а не от «сегодня»: иначе работа, поданная
      * в срок и разобранная месяцем позже, превращалась бы в просроченную сама. */
     require_once BASE_PATH . '/core/media_date.php';
-    $age = rr_check_age($app + ['__file' => $dl['path']], (string) ($app['comp_end'] ?? ''));
+    /* Дату съёмки при работе через мост приносит он же: файла на сайте нет, а
+       creation_time контейнера он уже прочитал. */
+    $ageApp = $app + ['__file' => (string) $dl['path']];
+    if ($onBridge && trim((string) $prep['shot']) !== '' && ($shotTs = strtotime((string) $prep['shot']))) {
+        $ageApp['__shot_ts'] = $shotTs;
+    }
+    $age = rr_check_age($ageApp, (string) ($app['comp_end'] ?? ''));
     // Две недели у границы срока — не отказ, а работа человеку: причина посчитана
     // и ляжет в подсказку после разбора (см. rr_check_age).
     $ageEdge = (string) ($age['code'] ?? '') === 'too_old_edge' ? (string) $age['reason'] : '';
@@ -824,8 +961,11 @@ function ag_grade_application(int $appId, array $opt = []): array {
                 'title' => 'ТРЕБУЕТ ПРОВЕРКИ', 'why' => (string) $age['reason']];
     }
 
-    // 2. Готовим дорожки.
-    $media = ag_prepare_media($dl['path']);
+    // 2. Готовим дорожки (на мосту они уже готовы).
+    $media = $onBridge
+        ? ['ok' => true, 'video' => (string) $prep['video'], 'audio' => (string) $prep['audio'],
+           'image' => (string) $prep['image'], 'seconds' => (int) $prep['seconds'], 'why' => '']
+        : ag_prepare_media($dl['path']);
     if (!$media['ok']) { vf_cleanup($dl['path']); return $bad($media['why'], $runId); }
 
     // 3. Загружаем в сервис.
@@ -851,7 +991,10 @@ function ag_grade_application(int $appId, array $opt = []): array {
         }
         return $parts;
     };
-    $uploaded = array_values(array_filter([$media['video'], $media['audio'], (string) ($media['image'] ?? '')], 'is_file'));
+    $uploaded = $onBridge
+        ? array_values(array_filter([$media['video'], $media['audio'], (string) ($media['image'] ?? '')],
+              static fn($f): bool => is_string($f) && trim($f) !== ''))
+        : array_values(array_filter([$media['video'], $media['audio'], (string) ($media['image'] ?? '')], 'is_file'));
 
     // 4. Спрашиваем.
     $rubric = gr_rubric_for((string) ($app['nomination'] ?? ''), (string) ($app['subgroup'] ?? ''));
@@ -859,7 +1002,9 @@ function ag_grade_application(int $appId, array $opt = []): array {
     // мы измеряем сами и кладём в запрос как факт (см. scripts/pitch_check.py).
     // Замер строя нужен там, где есть звук. У рисунка его нет, и запускать
     // питч-трекер на пустоте незачем.
-    $pitch = trim((string) ($media['audio'] ?? '')) !== '' ? ag_pitch_measure((string) $media['audio']) : [];
+    $pitch = $onBridge
+        ? (array) $prep['pitch']                       // мост померил строй у себя
+        : (trim((string) ($media['audio'] ?? '')) !== '' ? ag_pitch_measure((string) $media['audio']) : []);
     $prompt = ag_prompt($app, $rubric, $pitch, trim((string) ($media['image'] ?? '')) !== '');
     $mkBody = static function (array $parts) use ($prompt): array {
         $parts[] = ['text' => $prompt];
@@ -899,7 +1044,7 @@ function ag_grade_application(int $appId, array $opt = []): array {
         $br = ag_ask_bridge($prompt . "\n\n"
             . 'ФОРМАТ ОТВЕТА. Верни РОВНО ОДИН объект JSON и больше ничего: '
             . 'без вступления, без пояснений после, без markdown и без слова JSON перед скобкой. '
-            . 'Первый символ ответа — «{», последний — «}».', $uploaded);
+            . 'Первый символ ответа — «{», последний — «}».', $uploaded, $onBridge);
         if ($br['ok'] && ag_parse_json($br['text'])) {
             $bridgeText = $br['text'];
             $gotFiles   = true;
