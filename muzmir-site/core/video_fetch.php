@@ -377,8 +377,15 @@ function vf_download(string $url, int $appId = 0): array {
             if (!$pick['ok'] && (int) $pick['files'] > 1) {
                 return ['ok' => false, 'path' => '', 'size' => 0, 'why' => (string) $pick['why']];
             }
-            if ($pick['ok'] && (int) $pick['files'] > 1) {
-                // Свой файл найден среди нескольких — качаем именно его.
+            if ($pick['ok']) {
+                /* КАЧАЕМ ВЫБРАННЫЙ ФАЙЛ, А НЕ «ПАПКУ ЦЕЛИКОМ».
+                 *
+                 * У Яндекса ручка download принимает и папку — и отдаёт её
+                 * ZIP-архивом. Расширение при этом остаётся от имени папки, и
+                 * на диск ложились 282 МБ архива, которые ffmpeg честно не
+                 * открывал: «moov atom not found». Четыре работы выглядели как
+                 * «закачка оборвалась». Поэтому у папки всегда спрашиваем
+                 * адрес конкретного файла — даже когда он там один. */
                 $direct = fp_direct_url($url, (array) $pick['file']);
                 if ($direct !== '') {
                     $link = ['ok' => true, 'url' => $direct,
