@@ -1119,15 +1119,22 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 
 /* Закрытый рукав в меню прыжков: виден, но пока недоступен. Цель
    должна быть на глазах - иначе её незачем достигать. */
-.rcf-uni button.locked { opacity: .5; }
-/* Значок замка держится в одной строке с названием. Он переносился
-   на отдельную строку обрубком под словом, и четвёртая карточка
-   рукава выпадала из ряда трёх нормальных. */
-.rcf-uni button.locked b { white-space: nowrap; }
+.rcf-uni button.locked { opacity: .5; position: relative; }
+/* Значок замка ушёл из строки в угол карточки.
+
+   Он стоял в строке названия и на узкой колонке переносился на
+   отдельную строку обрубком под словом - четвёртая карточка рукава
+   выпадала из ряда трёх нормальных. Первая попытка запретить перенос
+   вышла хуже: замер поймал, что на телефоне сетка рукавов стала шире
+   своей коробки на девятнадцать точек, то есть название просто
+   полезло за край. Значок в углу не участвует в переносе вовсе,
+   стоит на одном месте у всех карточек и место под себя занимает
+   отступом справа. */
+.rcf-uni button.locked b { padding-right: 22px; }
 .rcf-uni button.locked b::after {
   content: '';
-  display: inline-block; width: 11px; height: 13px;
-  margin-left: 8px; vertical-align: -2px;
+  position: absolute; right: 11px; top: 12px;
+  width: 11px; height: 13px;
   border: 1.5px solid currentColor; border-radius: 2px;
   border-top-width: 6px; border-top-color: transparent;
   box-shadow: inset 0 -3px 0 -1px currentColor;
