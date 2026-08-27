@@ -328,18 +328,24 @@ body { min-height: 100vh; min-height: 100svh; }
 
 @media (max-width: 900px) {
   .drawer {
-    padding-top: calc(66px + var(--safe-t, 0px));
-    padding-bottom: calc(14px + var(--safe-b, 0px));
+    padding-top: calc(62px + var(--safe-t, 0px));
+    padding-bottom: calc(12px + var(--safe-b, 0px));
     gap: 0;
   }
   .drawer a { padding: 10px 4px; }
+  /* Плитка входа в VPN приезжает в меню скриптом (rc-vpn), и
+     воздуха вокруг неё стояло 19 пикселей: семь сверху и
+     двенадцать снизу, а следом ещё отступ блока переключателей.
+     Плитку не трогаем - она ростом со свою картинку, - сокращаем
+     только зазор под ней, он там задваивался. */
+  .drawer .rc-vpn-entry { margin: 6px 0 4px; }
   /* Правовые ссылки - не навигация, а сноска. Им хватает роста
      пальца без запаса и кегля на ступень мельче: иначе две
      служебные строки весят столько же, сколько «Продукты» и
      «Инфраструктура» вместе. */
   .drawer .drawer-law { font-size: var(--fs-3); font-weight: 500; }
-  .drawer .btn { margin-top: 12px; }
-  .drawer-tools { margin-top: 10px; gap: 8px; }
+  .drawer .btn { margin-top: 10px; }
+  .drawer-tools { margin-top: 8px; gap: 8px; }
   /* Язык остаётся строкой (в нём слова «Русский» и «English»),
      звук и тема делят вторую строку пополам. Минус одна полоса
      из трёх - это 54 пикселя, ровно те, которых не хватало. */

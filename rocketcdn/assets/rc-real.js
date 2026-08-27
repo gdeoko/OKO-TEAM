@@ -459,13 +459,13 @@ var VERT = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position
    горячий тексель протаскивает свой перебор через среднее. */
 var BRIGHT = [
   "uniform sampler2D tD; uniform float thr; uniform float soft;",
-  "uniform float top; uniform vec2 px; varying vec2 vUv;",
+  "uniform float hicap; uniform vec2 px; varying vec2 vUv;",
   "vec3 grab(vec2 uv){",
   "  vec3 c = texture2D(tD, uv).rgb;",
   "  float l = dot(c, vec3(0.2126,0.7152,0.0722));",
   "  vec3 b = c * smoothstep(thr, thr + soft, l);",
   "  float m = max(max(b.r, b.g), b.b);",
-  "  if (m > top) b *= top / m;",
+  "  if (m > hicap) b *= hicap / m;",
   "  return b; }",
   "void main(){",
   "  vec3 s = grab(vUv + vec2(-0.5,-0.5) * px) + grab(vUv + vec2(0.5,-0.5) * px)",
@@ -696,7 +696,7 @@ R.post = function (T, renderer, opt) {
       soft: { value: 0.28 },
       /* Потолок высокий: пирамида размывает выброс, а не растягивает
          его прямоугольником, поэтому слепить солнцу теперь можно */
-      top: { value: o.bloomTop != null ? o.bloomTop : 8.0 },
+      hicap: { value: o.bloomTop != null ? o.bloomTop : 8.0 },
       px: { value: new T.Vector2(1 / W, 1 / H) }
     },
     vertexShader: VERT, fragmentShader: BRIGHT, depthTest: false, depthWrite: false
