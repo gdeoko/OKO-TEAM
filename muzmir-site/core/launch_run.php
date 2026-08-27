@@ -432,8 +432,12 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
             // РЕЗУЛЬТАТЫ ДЛИННОГО: на почту — ПЕРСОНАЛЬНОЕ письмо КАЖДОМУ участнику
             // (результат + заявка + кнопки + вложение списка), НЕ 1:1 с ВК-постом.
             if ($dry) {
-                $cnt = (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=? AND COALESCE(result,'')<>''", [$compId]);
-                $report['email'] = 'персональные письма участникам: ' . $cnt . ' (результат+заявка+кнопки+файл списка)';
+                $apps  = (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=? AND COALESCE(result,'')<>''", [$compId]);
+                $addrs = (int) scalar("SELECT COUNT(*) FROM (SELECT 1 FROM applications
+                                        WHERE competition_id=? AND COALESCE(result,'')<>''
+                                     GROUP BY lower(trim(email)))", [$compId]);
+                $report['email'] = 'персональные письма участникам: ' . $addrs . ' (по числу адресов; заявок '
+                                 . $apps . ', результаты нескольких заявок идут одним письмом)';
             } else {
                 if (!function_exists('results_long_mail_send') && is_file(BASE_PATH . '/core/result_mail.php')) require_once BASE_PATH . '/core/result_mail.php';
                 // Файл списка результатов собран выше — он общий с постом ВК.
@@ -441,10 +445,26 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 if ($cover !== '' && str_starts_with($cover, BASE_PATH . '/public')) $posterUrl = url(substr($cover, strlen(BASE_PATH . '/public')));
                 // Ведём на сам пост с итогами; если пост не вышел — на сообщество.
                 $vkUrl = $vkPostUrl !== '' ? $vkPostUrl : (string) cfgv('org_vk');
+                /* ОДИН ЧЕЛОВЕК — ОДНО ПИСЬМО.
+                 *
+                 * Заявок 722, а адресов 307: педагог подаёт номер на каждого
+                 * ученика, у одного руководителя доходит до двадцати. Письмо на
+                 * заявку означало бы двадцать писем подряд за две минуты —
+                 * человек читает это как сбой, почтовая служба как рассылку, и
+                 * ящик kc@ получает вдвое с лишним больше отправок. Группируем
+                 * по адресу; внутри письма результат идёт по каждой заявке. */
                 $sent = 0;
-                if (function_exists('results_long_mail_send')) {
-                    foreach (all("SELECT id FROM applications WHERE competition_id=? AND COALESCE(result,'')<>''", [$compId]) as $p) {
-                        if (results_long_mail_send((int) $p['id'], $vkUrl, $docxAbs, $docxUrl, $posterUrl)) $sent++;
+                if (function_exists('results_long_mail_send_batch')) {
+                    $byMail = [];
+                    foreach (all("SELECT id, email FROM applications
+                                   WHERE competition_id=? AND COALESCE(result,'')<>''
+                                ORDER BY id", [$compId]) as $p) {
+                        $key = mb_strtolower(trim((string) $p['email']));
+                        if ($key === '') $key = 'app#' . (int) $p['id'];   // без почты — сам по себе
+                        $byMail[$key][] = (int) $p['id'];
+                    }
+                    foreach ($byMail as $ids) {
+                        if (results_long_mail_send_batch($ids, $vkUrl, $docxAbs, $docxUrl, $posterUrl)) $sent++;
                     }
                 }
                 $report['email'] = 'персональных писем участникам: ' . $sent;

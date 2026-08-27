@@ -321,20 +321,44 @@ function result_mail_send(int $appId): bool {
  * @param string $posterUrl URL афиши «РЕЗУЛЬТАТЫ КОНКУРСА» (сверху письма), '' — без афиши
  */
 function results_long_mail_send(int $appId, string $vkUrl = '', string $docxAbs = '', string $docxUrl = '', string $posterUrl = ''): bool {
-    $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
-    if (!$a) return false;
-    $c = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: [];
-    $result = trim((string) ($a['result'] ?? ''));
-    if ($result === '') return false;
+    return results_long_mail_send_batch([$appId], $vkUrl, $docxAbs, $docxUrl, $posterUrl);
+}
 
-    [$subject, $html] = results_long_mail_html($a, $c, $vkUrl, $docxUrl, $posterUrl);
+/**
+ * ОДИН ЧЕЛОВЕК — ОДНО ПИСЬМО, СКОЛЬКО БЫ ЗАЯВОК ОН НИ ПОДАЛ.
+ *
+ * У «Величия России» 722 оценённые заявки, но адресов всего 307: педагоги
+ * заводят по номеру на каждого ученика, у одного руководителя доходит до
+ * двадцати. Письмо на заявку означало бы двадцать писем подряд за две минуты —
+ * человек читает это как сбой рассылки, почтовая служба как рассылку, и ящик
+ * kc@ получает 722 отправки вместо 307.
+ *
+ * Поэтому письмо собирается на АДРЕС: приветствие, афиша, кнопка заказа, потом
+ * результат каждой заявки со своей карточкой, витрина наград и кнопка внизу.
+ * Одна заявка — письмо выглядит ровно как прежде.
+ *
+ * @param int[] $appIds заявки ОДНОГО адресата (порядок сохраняется)
+ */
+function results_long_mail_send_batch(array $appIds, string $vkUrl = '', string $docxAbs = '', string $docxUrl = '', string $posterUrl = ''): bool {
+    $apps = [];
+    foreach ($appIds as $id) {
+        $a = one("SELECT * FROM applications WHERE id=?", [(int) $id]);
+        if ($a && trim((string) ($a['result'] ?? '')) !== '') $apps[] = $a;
+    }
+    if (!$apps) return false;
+
+    $first = $apps[0];
+    $c = one("SELECT * FROM competitions WHERE id=?", [(int) $first['competition_id']]) ?: [];
+
+    [$subject, $html] = results_long_mail_html_multi($apps, $c, $vkUrl, $docxUrl, $posterUrl);
 
     $queued = false;
-    $whoName = trim((string) ($a['group_name'] ?? '')) !== '' ? trim((string) $a['group_name']) : trim((string) ($a['full_name'] ?? ''));
-    if (trim((string) ($a['email'] ?? '')) !== '') {
+    $whoName = trim((string) ($first['group_name'] ?? '')) !== ''
+        ? trim((string) $first['group_name']) : trim((string) ($first['full_name'] ?? ''));
+    if (trim((string) ($first['email'] ?? '')) !== '') {
         // Уведомление создаём сами (ниже) — своё, с нужной ссылкой; общее из
         // очереди отключаем, иначе участник получит два уведомления об одном.
-        $queued = mail_queue((string) $a['email'], $whoName, $subject, $html, $docxAbs, '', false) > 0;
+        $queued = mail_queue((string) $first['email'], $whoName, $subject, $html, $docxAbs, '', false) > 0;
     }
 
     /* УВЕДОМЛЕНИЕ ВЕДЁТ ТУДА, ГДЕ ЕСТЬ ЧТО СДЕЛАТЬ.
@@ -342,23 +366,54 @@ function results_long_mail_send(int $appId, string $vkUrl = '', string $docxAbs 
      * Участник открывает колокольчик или заходит в кабинет и видит своё звание.
      * Дальше ему нужно ровно одно действие — заказать награду, потому что у
      * бесплатного конкурса иначе её не получить. Поэтому уведомление ведёт не на
-     * общий список результатов, а на страницу заказа с уже подставленной заявкой:
-     * ни искать себя в восьмистах строках, ни выбирать заявку заново не нужно. */
-    $uid = (int) ($a['user_id'] ?? 0);
+     * общий список результатов, а на страницу заказа: при одной заявке она уже
+     * подставлена, при нескольких человек выбирает, по какой заказывает.
+     *
+     * Уведомление тоже одно на человека: двадцать колокольчиков подряд об одном
+     * событии — это не забота, а шум. */
+    $uid = (int) ($first['user_id'] ?? 0);
     if ($uid > 0) {
-        notify_user($uid, 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $result,
-            'Заявка №' . (string) $a['number'] . '. Нажмите, чтобы заказать наградной материал: '
-                . 'кубок, статуэтку или медаль по званию, оригиналы дипломов, благодарность педагогу.',
-            '/awards?comp=' . (int) $a['competition_id'] . '&app=' . (int) $a['id'], 'trophy');
+        $cnt = count($apps);
+        $title = $cnt === 1
+            ? 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . trim((string) $first['result'])
+            : 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $cnt . ' ' . rm_ru_apps($cnt);
+        $body = $cnt === 1
+            ? 'Заявка №' . (string) $first['number'] . '. Нажмите, чтобы заказать наградной материал: '
+              . 'кубок, статуэтку или медаль по званию, оригиналы дипломов, благодарность педагогу.'
+            : 'Итоги по всем Вашим заявкам — в письме и в кабинете. Нажмите, чтобы заказать '
+              . 'наградной материал: кубки, статуэтки и медали по званиям, оригиналы дипломов, благодарности педагогам.';
+        $url = '/awards?comp=' . (int) $first['competition_id']
+             . ($cnt === 1 ? '&app=' . (int) $first['id'] : '');
+        notify_user($uid, $title, $body, $url, 'trophy');
     }
     return $queued;
 }
 
+/** «1 заявка / 2 заявки / 5 заявок». */
+function rm_ru_apps(int $n): string {
+    $n10 = $n % 10; $n100 = $n % 100;
+    if ($n10 === 1 && $n100 !== 11) return 'заявка';
+    if ($n10 >= 2 && $n10 <= 4 && ($n100 < 12 || $n100 > 14)) return 'заявки';
+    return 'заявок';
+}
+
 /**
- * Чистая сборка HTML персонального письма результата длинного конкурса (для отправки И
- * для предпросмотра). Возвращает [subject, html]. Без «Подать заявку».
+ * Одна заявка — прежняя точка входа (предпросмотр в пульте, короткие сценарии).
  */
 function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $docxUrl = '', string $posterUrl = ''): array {
+    return results_long_mail_html_multi([$a], $c, $vkUrl, $docxUrl, $posterUrl);
+}
+
+/**
+ * Чистая сборка HTML письма результата длинного конкурса (для отправки И для
+ * предпросмотра). Принимает ВСЕ заявки одного адресата. Возвращает [subject, html].
+ * Без «Подать заявку».
+ */
+function results_long_mail_html_multi(array $apps, array $c, string $vkUrl = '', string $docxUrl = '', string $posterUrl = ''): array {
+    $apps = array_values(array_filter($apps, static fn($x): bool => is_array($x) && trim((string) ($x['result'] ?? '')) !== ''));
+    if (!$apps) $apps = [['result' => 'ЛАУРЕАТ I СТЕПЕНИ']];
+    $a = $apps[0];
+    $many = count($apps) > 1;
     $result = trim((string) ($a['result'] ?? '')) ?: 'ЛАУРЕАТ I СТЕПЕНИ';
     $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD;
     $whoName = trim((string) ($a['group_name'] ?? '')) !== '' ? trim((string) $a['group_name']) : trim((string) ($a['full_name'] ?? ''));
@@ -377,7 +432,10 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
      * Раньше афиша стояла до приветствия, а кнопка заказа была одна и уезжала
      * под самый низ, за четыре карточки наград.
      */
-    $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . (int) $a['id'];
+    // При нескольких заявках кнопка ведёт в раздел наград конкурса без выбранной
+    // заявки: какую заказывать, человек решает сам — у него их несколько.
+    $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id']
+               . ($many ? '' : '&app=' . (int) $a['id']);
     $orderBtn  = mm_cta_primary($awardsUrl, 'Заказать наградной материал',
                                 'Кубки, медали, оригиналы дипломов по результату');
 
@@ -388,21 +446,69 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     }
     $inner .= $orderBtn;
     $inner .= '<p style="margin:18px 0 18px;">Культурный центр «Музыкальный Мир» подвёл итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
-        . 'С радостью объявляем Ваш результат.</p>';
-    // Крупно результат.
-    $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
-        . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:28px 26px;text-align:center;">'
-        . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:10px;">Ваш результат</div>'
-        . '<div style="font-family:Georgia,serif;font-size:30px;line-height:1.25;font-weight:800;color:' . $gold . ';letter-spacing:.03em;">' . h($result) . '</div>'
-        . '</td></tr></table>';
-    if ($extra !== '') {
-        $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#FBF4E1;border:1px solid #EAD9A8;border-radius:14px;">'
-            . '<tr><td style="padding:16px 22px;text-align:center;">'
-            . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#A07A1E;margin-bottom:4px;">Дополнительный диплом</div>'
-            . '<div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:' . $gold . ';">' . h($extra) . '</div>'
-            . '</td></tr></table>';
+        . ($many
+            ? 'С радостью объявляем результаты по всем Вашим заявкам — их ' . count($apps) . '.'
+            : 'С радостью объявляем Ваш результат.') . '</p>';
+
+    /* РЕЗУЛЬТАТ ПО КАЖДОЙ ЗАЯВКЕ.
+     *
+     * Педагог подаёт номер на каждого ученика, и у одного адресата их бывает до
+     * двадцати. Каждая заявка получает свой блок: звание, дополнительный диплом,
+     * карточка заявки — то же, что человек видел бы в отдельном письме, только
+     * подряд и в одном. */
+    /* БОЛЬШУЮ ПАЧКУ ПОКАЗЫВАЕМ ТАБЛИЦЕЙ.
+     *
+     * Двадцать крупных синих плашек подряд никто не листает, а весит такое
+     * письмо под сто килобайт — Gmail обрезает всё, что больше ста двух, и
+     * прячет хвост под «Показать всё сообщение»: часть результатов человек
+     * просто не увидит. От семи заявок переходим на компактную таблицу: номер,
+     * конкурсный номер, номинация, звание. Всё на одном экране и вчетверо легче. */
+    $compact = count($apps) > 6;
+    if ($compact) {
+        $rows = '';
+        foreach ($apps as $ap) {
+            $ex = trim((string) ($ap['extra_diploma'] ?? ''));
+            $rows .= '<tr>'
+                . '<td style="padding:9px 10px 9px 0;font-size:13px;color:' . RM_INK . ';border-top:1px solid ' . RM_LINE . ';vertical-align:top;">'
+                . '<b>' . h((string) ($ap['work_title'] ?? '—')) . '</b>'
+                . '<div style="color:' . RM_MUTED . ';font-size:12px;margin-top:2px;">'
+                . h(trim((string) ($ap['full_name'] ?: ($ap['group_name'] ?? '')))) 
+                . ' · ' . h((string) ($ap['nomination'] ?? '')) . ' · №' . h((string) $ap['number']) . '</div></td>'
+                . '<td style="padding:9px 0;font-size:13px;font-weight:700;color:' . $navy . ';border-top:1px solid ' . RM_LINE . ';text-align:right;white-space:nowrap;vertical-align:top;">'
+                . h(trim((string) ($ap['result'] ?? '')))
+                . ($ex !== '' ? '<div style="font-weight:400;font-size:11.5px;color:' . $gold . ';margin-top:3px;">' . h($ex) . '</div>' : '')
+                . '</td></tr>';
+        }
+        $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+                . 'style="margin:0 0 18px;background:' . RM_CARD . ';border:1px solid ' . RM_LINE . ';border-radius:14px;">'
+                . '<tr><td style="padding:16px 20px 18px;">'
+                . '<div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:' . RM_MUTED . ';margin-bottom:6px;">Ваши результаты</div>'
+                . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $rows . '</table>'
+                . '</td></tr></table>';
     }
-    $inner .= rm_mail_app_card($a, $c);
+    foreach ($compact ? [] : $apps as $i => $ap) {
+        $res  = trim((string) ($ap['result'] ?? ''));
+        $ex   = trim((string) ($ap['extra_diploma'] ?? ''));
+        if ($many) {
+            $inner .= '<div style="margin:' . ($i ? '26px' : '0') . ' 0 10px;font-size:12px;letter-spacing:.14em;'
+                    . 'text-transform:uppercase;color:' . RM_MUTED . ';border-top:' . ($i ? '1px solid ' . RM_LINE : 'none')
+                    . ';padding-top:' . ($i ? '20px' : '0') . ';">Заявка ' . ($i + 1) . ' из ' . count($apps) . '</div>';
+        }
+        // Крупно результат.
+        $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
+            . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:28px 26px;text-align:center;">'
+            . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:10px;">Ваш результат</div>'
+            . '<div style="font-family:Georgia,serif;font-size:30px;line-height:1.25;font-weight:800;color:' . $gold . ';letter-spacing:.03em;">' . h($res) . '</div>'
+            . '</td></tr></table>';
+        if ($ex !== '') {
+            $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#FBF4E1;border:1px solid #EAD9A8;border-radius:14px;">'
+                . '<tr><td style="padding:16px 22px;text-align:center;">'
+                . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#A07A1E;margin-bottom:4px;">Дополнительный диплом</div>'
+                . '<div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:' . $gold . ';">' . h($ex) . '</div>'
+                . '</td></tr></table>';
+        }
+        $inner .= rm_mail_app_card($ap, $c);
+    }
     $inner .= '<p style="margin:14px 0 0;color:' . RM_MUTED . ';font-size:14px;">Полный список результатов конкурса - на сайте, в нашем сообществе ВКонтакте и во вложении к этому письму.</p>';
 
     /* НАГРАДУ ПОКУПАЮТ ГЛАЗАМИ.
@@ -415,12 +521,26 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
      * статуэтка, дипломанту — медаль, и всем — диплом на бланке и благодарность
      * педагогу. Коллективу отдельно предлагается именной диплом на каждого
      * участника: диплом коллектива один, а детей в ансамбле двадцать. */
-    $isGroup = trim((string) ($a['group_name'] ?? '')) !== '';
+    // Витрина одна на письмо. Когда заявок несколько, берём высшее из званий —
+    // по нему положен самый весомый трофей, а дипломы и благодарность доступны
+    // при любом. Именной диплом показываем, если хоть одна заявка коллективная.
+    $isGroup = false; $topResult = trim((string) ($a['result'] ?? ''));
+    $rank = static function (string $r): int {
+        $r = mb_strtoupper($r);
+        if (str_contains($r, 'ГРАН-ПРИ'))  return 3;
+        if (str_contains($r, 'ЛАУРЕАТ'))   return 2;
+        if (str_contains($r, 'ДИПЛОМАНТ')) return 1;
+        return 0;
+    };
+    foreach ($apps as $ap) {
+        if (trim((string) ($ap['group_name'] ?? '')) !== '') $isGroup = true;
+        if ($rank((string) ($ap['result'] ?? '')) > $rank($topResult)) $topResult = trim((string) $ap['result']);
+    }
     if (!function_exists('ao_block') && is_file(BASE_PATH . '/core/award_offer.php')) {
         require_once BASE_PATH . '/core/award_offer.php';
     }
     if (function_exists('ao_block')) {
-        $inner .= ao_block((int) $a['competition_id'], $result, '', $isGroup);
+        $inner .= ao_block((int) $a['competition_id'], $topResult, '', $isGroup);
     }
     // Кнопка заказа повторяется под витриной: наверху её видит тот, кто решил
     // сразу, здесь — тот, кто сначала посмотрел, что именно ему предлагают.
@@ -432,9 +552,11 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     if ($docxUrl !== '') $actions[] = ['Скачать список результатов (DOCX)', $docxUrl];
     $actions[] = ['Оставить отзыв', url('/reviews')];
 
-    $subject = 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $result;
+    $subject = 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - '
+             . ($many ? (count($apps) . ' ' . rm_ru_apps(count($apps))) : $result);
     $html = mm_email_tx($inner, [
-        'preheader' => 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: ' . $result . '.',
+        'preheader' => 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: '
+                     . ($many ? ('результаты по ' . count($apps) . ' ' . (count($apps) % 10 === 1 && count($apps) % 100 !== 11 ? 'заявке' : 'заявкам')) : $result) . '.',
         // Первичная кнопка стоит внутри письма, сразу под афишей — шапка её не дублирует.
         'hero'      => '',
         'actions'   => $actions,

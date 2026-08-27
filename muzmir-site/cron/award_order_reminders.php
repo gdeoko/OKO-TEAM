@@ -129,8 +129,68 @@ function award_ru_days(int $n): string {
     return $n . ' дней';
 }
 
-/** HTML письма-напоминания в фирменном лейауте (синий + золото). */
-function award_reminder_html(array $a, int $daysLeft, string $awardsUrl): string {
+
+/** «1 заявка / 2 заявки / 5 заявок». */
+function award_ru_apps(int $n): string {
+    $n10 = $n % 10; $n100 = $n % 100;
+    if ($n10 === 1 && $n100 !== 11) return 'заявка';
+    if ($n10 >= 2 && $n10 <= 4 && ($n100 < 12 || $n100 > 14)) return 'заявки';
+    return 'заявок';
+}
+
+/** Высшее из званий адресата: по нему положен самый весомый трофей. */
+function award_top_result(array $apps): string {
+    $rank = static function (string $r): int {
+        $r = mb_strtoupper($r);
+        if (str_contains($r, 'ГРАН-ПРИ'))  return 3;
+        if (str_contains($r, 'ЛАУРЕАТ'))   return 2;
+        if (str_contains($r, 'ДИПЛОМАНТ')) return 1;
+        return 0;
+    };
+    $best = '';
+    foreach ($apps as $a) {
+        $r = trim((string) ($a['result'] ?? ''));
+        if ($best === '' || $rank($r) > $rank($best)) $best = $r;
+    }
+    return $best;
+}
+
+/** Есть ли среди заявок коллективная — тогда предлагаем и именной диплом. */
+function award_any_group(array $apps): bool {
+    foreach ($apps as $a) if (trim((string) ($a['group_name'] ?? '')) !== '') return true;
+    return false;
+}
+
+/** Перечень результатов адресата — когда заявок несколько. */
+function award_reminder_list(array $apps): string {
+    $rows = '';
+    foreach ($apps as $a) {
+        $ex = trim((string) ($a['extra_diploma'] ?? ''));
+        $rows .= '<tr>'
+            . '<td style="padding:9px 10px 9px 0;font-size:13px;color:' . RM_INK . ';border-top:1px solid ' . RM_LINE . ';vertical-align:top;">'
+            . '<b>' . h((string) ($a['work_title'] ?? '—')) . '</b>'
+            . '<div style="color:' . RM_MUTED . ';font-size:12px;margin-top:2px;">№' . h((string) $a['number']) . '</div></td>'
+            . '<td style="padding:9px 0;font-size:13px;font-weight:700;color:' . RM_NAVY . ';border-top:1px solid ' . RM_LINE . ';text-align:right;white-space:nowrap;vertical-align:top;">'
+            . h(trim((string) ($a['result'] ?? '')))
+            . ($ex !== '' ? '<div style="font-weight:400;font-size:11.5px;color:' . RM_GOLD . ';margin-top:3px;">' . h($ex) . '</div>' : '')
+            . '</td></tr>';
+    }
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+         . 'style="margin:0 0 20px;background:' . RM_CARD . ';border:1px solid ' . RM_LINE . ';border-radius:14px;">'
+         . '<tr><td style="padding:16px 20px 18px;">'
+         . '<div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:' . RM_MUTED . ';margin-bottom:6px;">Ваши результаты</div>'
+         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $rows . '</table>'
+         . '</td></tr></table>';
+}
+
+/**
+ * HTML письма-напоминания в фирменном лейауте (синий + золото).
+ *
+ * $apps — все заявки этого адресата, попавшие в письмо. При одной заявке письмо
+ * выглядит как прежде; при нескольких вместо одного звания идёт их перечень,
+ * потому что напоминание одно на человека, а результаты у него разные.
+ */
+function award_reminder_html(array $a, int $daysLeft, string $awardsUrl, array $apps = []): string {
     $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD; $muted = RM_MUTED;
     $card = RM_CARD; $line = RM_LINE;
 
@@ -139,18 +199,24 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl): string
     $result = trim((string) $a['result']);
     $comp   = (string) $a['comp_name'];
     $deadline = date('d.m.Y', award_graded_ts($a) + AWARD_ORDER_WINDOW_DAYS * 86400);
+    if (!$apps) $apps = [$a];
+    $many = count($apps) > 1;
 
     $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . $navy . ';">Не забудьте заказать награды</h1>'
         . '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 20px;">Не забудьте заказать награды по результату '
-        . '<b style="color:' . $navy . ';">«' . h($result) . '»</b> конкурса «' . h($comp) . '». '
-        . h(rm_award_hint($result)) . '</p>'
-        // Крупно результат — золотом на синем градиенте (как в письме с итогами).
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
-        . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:24px 26px;text-align:center;">'
-        . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:8px;">Ваш результат</div>'
-        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:800;color:' . $gold . ';letter-spacing:.03em;">' . h($result) . '</div>'
-        . '</td></tr></table>'
+        . ($many
+            ? '<p style="margin:0 0 20px;">Не забудьте заказать награды по итогам конкурса «' . h($comp) . '». '
+              . 'У Вас ' . count($apps) . ' ' . award_ru_apps(count($apps)) . ' с аттестационным результатом.</p>'
+            : '<p style="margin:0 0 20px;">Не забудьте заказать награды по результату '
+              . '<b style="color:' . $navy . ';">«' . h($result) . '»</b> конкурса «' . h($comp) . '». '
+              . h(rm_award_hint($result)) . '</p>')
+        // Результат: одно звание крупно, несколько — перечнем.
+        . ($many ? award_reminder_list($apps) :
+            '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
+          . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:24px 26px;text-align:center;">'
+          . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:8px;">Ваш результат</div>'
+          . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:800;color:' . $gold . ';letter-spacing:.03em;">' . h($result) . '</div>'
+          . '</td></tr></table>')
         // Срок действия заказа.
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
         . 'style="margin:0 0 8px;background:' . $card . ';border:1px solid ' . $line . ';border-radius:14px;">'
@@ -164,8 +230,7 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl): string
         // по почте, и ровно то, что положено по этому званию.
         // Коллективу предлагается ещё и именной диплом на каждого участника:
         // диплом ансамбля один, а детей в нём двадцать.
-        . ao_block((int) $a['competition_id'], $result, $awardsUrl,
-                   trim((string) ($a['group_name'] ?? '')) !== '')
+        . ao_block((int) $a['competition_id'], award_top_result($apps), $awardsUrl, award_any_group($apps))
         . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Если наградная продукция Вам не нужна, просто оставьте это письмо без ответа.</p>';
 
     return mm_email_tx($inner, [
@@ -228,7 +293,18 @@ try {
             )"
     );
 
+    /* ОДИН ЧЕЛОВЕК — ОДНО НАПОМИНАНИЕ, СКОЛЬКО БЫ ЗАЯВОК У НЕГО НИ БЫЛО.
+     *
+     * У «Величия России» 719 заявок в цепочке, а адресов около трёхсот: педагог
+     * подаёт номер на каждого ученика, у одного руководителя доходит до двадцати.
+     * Письмо на заявку означало бы двадцать одинаковых напоминаний в один день —
+     * человек читает это как сбой, почтовая служба как рассылку, и ящик kc@
+     * получает 719 отправок вместо трёхсот. Группируем по адресу.
+     *
+     * Отметка в reminder_log ставится по КАЖДОЙ заявке из письма: идемпотентность
+     * сохраняется, и заявка, попавшая в письмо, второй раз шаг не отработает. */
     $queued = 0; $expired = 0;
+    $groups = [];                       // адрес => [шаг => [заявки]]
     foreach ($rows as $a) {
         $id = (int) $a['id'];
 
@@ -247,39 +323,51 @@ try {
         foreach (AWARD_REMINDER_STEPS as $s) { if ($days >= $s) $step = $s; }
         if ($step === null) continue;
 
-        $kind = 'award_order_' . $step;
-        if (award_reminder_sent($id, $kind)) continue;
+        if (award_reminder_sent($id, 'award_order_' . $step)) continue;
 
-        $daysLeft  = max(1, AWARD_ORDER_WINDOW_DAYS - $days);
-        $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . $id;
+        $key = mb_strtolower(trim((string) $a['email']));
+        if ($key === '') $key = 'app#' . $id;          // без почты — сам по себе
+        $a['_days_left'] = max(1, AWARD_ORDER_WINDOW_DAYS - $days);
+        $groups[$key][$step][] = $a;
+    }
 
-        $delivered = false;
+    foreach ($groups as $bySteps) {
+        foreach ($bySteps as $step => $apps) {
+            $first     = $apps[0];
+            $cnt       = count($apps);
+            $daysLeft  = (int) $first['_days_left'];
+            // При нескольких заявках ведём в раздел наград конкурса: какую
+            // заказывать, человек выбирает сам.
+            $awardsUrl = url('/awards') . '?comp=' . (int) $first['competition_id']
+                       . ($cnt === 1 ? '&app=' . (int) $first['id'] : '');
 
-        // Письмо в очередь mail_queue.
-        $email = trim((string) $a['email']);
-        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $html = award_reminder_html($a, $daysLeft, $awardsUrl);
-            $subject = 'Не забудьте заказать награды - «' . $a['comp_name'] . '»';
-            if (mail_queue($email, (string) $a['full_name'], $subject, $html) > 0) $delivered = true;
-        }
+            $delivered = false;
 
-        // In-app уведомление участнику.
-        if ((int) $a['user_id'] > 0 && function_exists('notify_user')) {
-            $nid = notify_user(
-                (int) $a['user_id'],
-                'Не забудьте заказать награды',
-                'Результат «' . $a['result'] . '» на конкурсе «' . $a['comp_name'] . '». '
-                    . 'Заказ доступен ещё ' . award_ru_days($daysLeft) . '.',
-                '/awards?comp=' . (int) $a['competition_id'] . '&app=' . $id,
-                'trophy'
-            );
-            if ($nid > 0) $delivered = true;
-        }
+            // Письмо в очередь mail_queue.
+            $email = trim((string) $first['email']);
+            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $html = award_reminder_html($first, $daysLeft, $awardsUrl, $apps);
+                $subject = 'Не забудьте заказать награды - «' . $first['comp_name'] . '»';
+                if (mail_queue($email, (string) $first['full_name'], $subject, $html) > 0) $delivered = true;
+            }
 
-        if ($delivered) {
-            award_reminder_mark($id, $kind);
-            $queued++;
-            cron_log(JOB, "заявка #$id ({$a['number']}): шаг $step дн., осталось $daysLeft дн.");
+            // In-app уведомление участнику.
+            if ((int) $first['user_id'] > 0 && function_exists('notify_user')) {
+                $body = $cnt === 1
+                    ? 'Результат «' . $first['result'] . '» на конкурсе «' . $first['comp_name'] . '». '
+                      . 'Заказ доступен ещё ' . award_ru_days($daysLeft) . '.'
+                    : 'Итоги по ' . $cnt . ' Вашим заявкам на конкурсе «' . $first['comp_name'] . '». '
+                      . 'Заказ наград доступен ещё ' . award_ru_days($daysLeft) . '.';
+                $nid = notify_user((int) $first['user_id'], 'Не забудьте заказать награды', $body, $awardsUrl, 'trophy');
+                if ($nid > 0) $delivered = true;
+            }
+
+            if ($delivered) {
+                foreach ($apps as $ap) award_reminder_mark((int) $ap['id'], 'award_order_' . $step);
+                $queued++;
+                cron_log(JOB, sprintf('%s: шаг %d дн., заявок в письме %d, осталось %d дн.',
+                                      $email !== '' ? $email : ('#' . $first['id']), $step, $cnt, $daysLeft));
+            }
         }
     }
     cron_log(JOB, "напоминания о заказе наград: отправлено $queued, окно 60 дн. истекло у $expired");
