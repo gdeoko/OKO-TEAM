@@ -478,6 +478,25 @@ function vf_download(string $url, int $appId = 0): array {
                 'why' => 'запись скачалась не полностью (' . round($got / 1048576) . ' из '
                        . round($link['size'] / 1048576) . ' МБ)'];
     }
+    /* РАЗМЕРА МАЛО — НАДО, ЧТОБЫ ФАЙЛ ОТКРЫВАЛСЯ.
+     *
+     * Сверка выше работает, только когда площадка заранее назвала размер. Когда
+     * не назвала (а видеохостинги его чаще всего не отдают), обрыв проходит
+     * незамеченным: на диске приличные мегабайты, а внутри mp4 без завершающего
+     * блока. Участник в таком случае получал «запись не читается» — при живой и
+     * целой записи в облаке. Спрашиваем контейнер сразу: не открылся — файл
+     * выбрасываем и говорим про закачку, а не про работу. */
+    $vid = in_array(mb_strtolower((string) pathinfo($path, PATHINFO_EXTENSION)),
+                    ['mp4', 'mov', 'm4v', 'webm', 'mkv', 'avi', 'mpg', 'mpeg', '3gp'], true);
+    if ($vid) {
+        $probe = (string) @shell_exec('ffprobe -v error -show_entries format=duration -of csv=p=0 '
+                                    . escapeshellarg($path) . ' 2>/dev/null');
+        if ((float) trim($probe) <= 0) {
+            @unlink($path);
+            return ['ok' => false, 'path' => '', 'size' => $got,
+                    'why' => 'запись скачалась повреждённой (файл не открывается) — закачка оборвалась'];
+        }
+    }
     return ['ok' => true, 'path' => $path, 'size' => $got, 'why' => ''];
 }
 
