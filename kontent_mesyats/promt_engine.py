@@ -136,9 +136,9 @@ class Бренд:
               "only on graphite or black; on any lighter ground the letters are warm white or near black, never "
               "amber. Where type crosses a bright or busy area the ground under it is darkened. Type is upright "
               "always, no italic or script. The outer guillemets around a quoted line are delimiters and are not drawn; "
-              "guillemets inside the wording itself are. The headline faces camera square and never runs away from the lens: foreshortened letters "
-              "stop being letters. Its baseline is horizontal, never rotated, never running up or down the side "
-              "of the frame.")
+              "guillemets inside the wording itself are. The headline faces camera square: foreshortened "
+              "letters stop being letters. Its baseline is horizontal, never rotated, never running up or "
+              "down the side of the frame.")
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
            "and a quarter of its height and reads at a two hundred pixel thumbnail. Its cap height is never less "
            "than a twelfth of the frame height, on a wide frame as much as on a tall one: a headline that has to "
@@ -560,8 +560,9 @@ def графика(ключ, номер=0):
           "particle, a low 2700 K lamp throws amber up into the debris. The headline reads exactly, character by "
           "character, the Russian line «{заголовок}».",
    "типографика":
-      "The headline is set behind the debris field as one wide uppercase line in warm white #F5F1E8, partly "
-      "occluded by flying specks so it reads as struck, and those specks stay sharp, never blurred.",
+      "The headline is set behind the debris field as one wide uppercase line in warm white #F5F1E8, grazed "
+      "at its edges by flying specks so it reads as struck while every letter stays whole, and those specks "
+      "stay sharp, never blurred.",
    "знак":
       "The brand mark is small in the quiet corner away from the blast, about three percent of the frame width, "
       "clean and unhit while the rest of the frame takes the debris.",
