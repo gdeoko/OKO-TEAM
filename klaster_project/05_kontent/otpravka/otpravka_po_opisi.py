@@ -48,7 +48,10 @@ def кадры(ключ):
     один = os.path.join(кадры_папка, ключ + ".png")
     if os.path.exists(один):
         return [один]
-    return sorted(glob.glob(os.path.join(кадры_папка, ключ + "-*.png")))
+    # Только двузначные номера слайдов: иначе к посту «P-20-moshchnost-schet»
+    # прилипает баннер «P-20-moshchnost-schet-b», это отдельная единица плана,
+    # и клиент получает под одним текстом две разные картинки.
+    return sorted(glob.glob(os.path.join(кадры_папка, ключ + "-[0-9][0-9].png")))
 
 
 async def main():
