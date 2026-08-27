@@ -2105,7 +2105,14 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
    кнопок ровно посередине, на кадре телефона видна половина строки
    УРАН/НЕПТУН. */
 .rc-flight .rcf-menu-in {
-  max-height: inherit;
+  /* Высоту коробки ограничивает флекс, а не проценты: у панели стоит
+     max-height, а собственной высоты нет, и доля от неё разрешается в
+     «без ограничения» - коробка вырастала во всё содержимое (замер:
+     690 точек при панели в 428), и ездила снова сама панель. Флекс с
+     min-height: 0 сжимает коробку ровно по месту, которое панели
+     оставил её потолок. */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -2140,6 +2147,8 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
      рамка и развёртка строк стоят в панели абсолютом, и в
      прокручиваемой панели они считались от всей высоты содержимого -
      прямоугольник рамки уезжал в середину списка. */
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border-radius: 14px;
   border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
@@ -4232,7 +4241,6 @@ html.rc-deep-inside .rcf-fab {
   z-index: 30 !important;
 }
 .rc-flight .rcf-hud > .rcf-menu > .rcf-menu-in {
-  max-height: 100%;
   padding: clamp(9px, 1.5vh, 14px);
   padding-top: calc(clamp(9px, 1.5vh, 14px) + 16px);
   padding-bottom: calc(clamp(9px, 1.5vh, 14px) + 26px);
