@@ -49,13 +49,16 @@ class Бренд:
         self.знак = знак
         self.финал = финал
 
-    def система(self, ключ="", правило_типографики="", правило_знака="", с_территорией=True):
+    def система(self, ключ="", правило_типографики="", правило_знака="", с_территорией=True,
+                со_знаком=True):
         части = [self.съёмка, свет(ключ, self.свет) if ключ else self.свет,
                  self.материал, self.палитра, self.шрифт]
         голова = ""
         if self.территория and с_территорией:
             голова += self.территория
-        голова += self.знак + self.финал
+        # На закрывающем слайде карусели знак уже полностью описан блоком воронки:
+        # повторять его правила значит и раздувать промпт, и звать второй логотип.
+        голова += (self.знак if со_знаком else "") + self.финал
         if голова:
             части.insert(0, голова)
         elif self.референсы:
@@ -64,7 +67,7 @@ class Бренд:
             (правило_типографики or
              "Every letter is physically part of the scene, never a floating overlay: it lies in the plane of its "
              "surface, obeys the frame perspective and takes the same light and dust.") + " " +
-            (правило_знака or "") + " "
+            ((правило_знака or "") if со_знаком else "") + " "
             "Nothing crosses the characters, no blur, no unplanned line break, eight percent dead margin all "
             "round. "
             "Nothing drawn from an interface: no buttons, swipe arrows, link chips, cursors, app icons or screen "
@@ -132,7 +135,10 @@ class Бренд:
            "and a quarter of its height and reads at a two hundred pixel thumbnail. Contrast is set, not hoped "
            "for: warm white on dark, or near black on solid amber, and where the type crosses a bright or busy "
            "area the ground under it is darkened. No amber on pale, no dark on dark. The headline faces camera "
-           "square and never runs away from the lens: foreshortened letters stop being letters at feed size.")
+           "square and never runs away from the lens: foreshortened letters stop being letters at feed size. "
+           "Its baseline is horizontal, never rotated, never running up or down the side of the frame, and its "
+           "cap height is never less than a twelfth of the frame height, on a wide frame as much as on a tall "
+           "one: a headline that has to be looked for has already failed.")
 
 # Подпись под заголовком идёт тем же способом, что и он: иначе кадр распадается.
 ПОДПИСЬ = {
@@ -754,7 +760,7 @@ def закрывающая(ключ, подпись=""):
 
 def воронка(бренд, ключ="", подпись=""):
     # Формулировка сжата: место в промпте нужнее системе кадра, чем описанию плиты
-    return (f"This closing slide carries the funnel: low and centred, its centre at seventy nine percent down the "
+    return (f"This closing slide carries the funnel, centred at seventy nine percent down the "
             f"frame, a brushed steel plate with four countersunk screws, engraved and paint filled with the "
             f"{бренд.имя} wordmark from the attached logo file"
             # Домен на плите нужен, только если его нет в самой подписи слайда:
@@ -770,8 +776,8 @@ def поля_сторис():
             "top 250 pixels are covered by progress bars and the account name, the bottom 250 pixels by the reply "
             "field, and 80 pixels along each side are lost under the thumb. Everything meaningful lives inside the "
             "central working window of 920 by 1420 pixels, and the headline sits in the upper part of that window "
-            "because the visual centre of a story reads higher than the middle. The headline cap height is at least "
-            "four percent of the frame width so it is legible at arm's length in motion, and it never runs longer "
+            "since a story reads higher than its middle. The headline cap height is at least four percent of the "
+            "frame width so it holds at arm's length, and it never runs longer "
             "than five lines. The poll or question sticker is NOT drawn in this image: the area reserved for it stays "
             "clean and nothing is painted there.")
 
@@ -795,8 +801,8 @@ def собрать(бренд, кадры):
             if вид == "карусель":
                 куски.append(f"Slide {к['номер']} of {к['всего']} of one vertical carousel. Every slide obeys the "
                              f"same system so separately generated frames read as one series: two type sizes, the "
-                             f"same margins, the same grade, one accent colour. The mark sits lower left and the "
-                             f"position marker lower right on every slide.")
+                             f"same margins, the same grade, one accent colour. The mark sits lower left, the "
+                             f"position marker lower right.")
                 if к["номер"] == 1:
                     # первый слайд решает, откроют ли остальные: контраст и приглашение листать
                     куски.append("This is the cover slide and it carries the whole carousel: maximum contrast, the "
@@ -849,11 +855,15 @@ def собрать(бренд, кадры):
             куски.append(шаблон_номера.format(метка_места) if имя_режима == "сцена"
                          else f"The position marker reads {метка_места}, small, in brand amber.")
             if к["номер"] == к["всего"]:
-                куски.append(воронка(бренд, к["ключ"], к.get("заголовок", "")) if вид == "карусель" else
+                куски.append(воронка(бренд, к["ключ"],
+                                     к.get("заголовок", "") + " " + (к.get("подпись") or ""))
+                             if вид == "карусель" else
                              f"This is the closing frame of the series, so the {бренд.имя} mark from the attached logo "
                              f"file appears once, small, at three percent of the frame width, low inside the working "
                              f"window" + (f" with «{бренд.домен}» beneath." if бренд.домен else "."))
-        куски.append(бренд.система(к["ключ"], р["типографика"], р["знак"], с_территорией))
+        закрывающий = вид in ("карусель", "сторис") and к.get("номер") == к.get("всего")
+        куски.append(бренд.система(к["ключ"], р["типографика"], р["знак"], с_территорией,
+                                   со_знаком=not закрывающий))
         текст = " ".join(куски)
         промпты[к["ключ"]] = {"формат": формат, "размер": размер, "текст": текст}
     return промпты

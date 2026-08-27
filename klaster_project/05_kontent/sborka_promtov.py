@@ -82,18 +82,17 @@ from promt_engine import Бренд, собрать, проверить
         "person with arms raised to both sides; where the wordmark "
         "appears it reads exactly «КЛАСТЕР». It has real thickness, a cast shadow and the same light "
         "as everything around it. It appears once, in a corner, under a seventh of the frame width and a third of "
-        "the headline cap height: a maker's mark, never a hero prop, a signboard or the largest object in frame, "
+        "the headline cap height: a maker's mark, never a hero prop, a signboard or the biggest object in frame, "
         "never centred and never repeated. "),
     финал=(
-        "The finished frame reads as key art for a campaign: dense, layered, worth a second look. Build at least "
-        "four depth planes, near foreground, subject, mid ground and dissolving background, with something crossing "
-        "between them so the eye travels. Something is happening at this exact instant: a particle in flight, a "
-        "light drawing its trail, a hand mid movement, hot metal cooling, steam leaving a valve. Photoreal and "
-        "physically correct, at the level of a high end render married to a documentary photograph: true "
-        "reflections and roughness on every material, believable contact shadows, caustics on wet concrete, "
-        "subsurface glow through a lit edge. Composition is deliberate rather than centred, built on a diagonal or "
-        "on thirds, the subject given room to be big. No flat backdrop behind a floating object, no illustration "
-        "look, no painterly texture, no clip art, no sharpening halo."))
+        "The finished frame reads as key art for a campaign: dense, layered, worth a second look. Build four "
+        "depth planes, near foreground, subject, mid ground and dissolving background, with something crossing "
+        "between them so the eye travels. Something is happening at this instant: a particle in flight, a light "
+        "drawing its trail, a hand mid movement, steam leaving a valve. Photoreal and physically correct, a high "
+        "end render married to a documentary photograph: true reflections and roughness on every material, "
+        "believable contact shadows, caustics on wet concrete. Composition is deliberate rather than centred, built "
+        "on a diagonal or on thirds, the subject given room to be big. No flat backdrop behind a floating object, "
+        "no illustration or painterly look, no clip art, no sharpening halo."))
 
 # Поверхности для информационных слайдов каруселей: число живёт на реальной плоскости.
 ПОВЕРХНОСТИ = [
@@ -917,6 +916,19 @@ def рубрика(е):
     return m.group(1) if m else ""
 
 
+def _без_кавычек(з):
+    """Заголовок статьи в плане стоит в ёлочках, в кадре они не нужны.
+
+    Модель честно рисует кавычки, и заголовок кадра выглядит цитатой из
+    чужого текста вместо утверждения.
+    """
+    з = з.replace(" / ", " ").strip()
+    for л, п in (("«", "»"), ('"', '"'), ("“", "”")):
+        if з.startswith(л) and з.endswith(п):
+            з = з[len(л):-len(п)].strip()
+    return з
+
+
 def кадры_единицы(е):
     """Список кадров под движок: один для поста, по слайду для карусели и серии."""
     к = е["ключ"]
@@ -947,7 +959,7 @@ def кадры_единицы(е):
             сцена_слайда = сцена if i == 1 else ПОВЕРХНОСТИ[(сдвиг + i - 2) % len(ПОВЕРХНОСТИ)]
         вышло.append({"ключ": ключ_слайда, "формат": е["формат"], "сцена": сцена_слайда,
                       "вид": вид, "номер": i, "всего": всего,
-                      "заголовок": заголовок.replace(" / ", " ").strip(),
+                      "заголовок": _без_кавычек(заголовок),
                       "подпись": подпись.strip(), "рубрика": рубрика(е)})
     return вышло
 
