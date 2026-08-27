@@ -16,7 +16,10 @@ require __DIR__ . '/config.php';
    команда /report обязана давать ровно то же, что приходит в 9:00 */
 require __DIR__ . '/lib_report.php';
 
-if (php_sapi_name() !== 'cli' && ($_GET['key'] ?? '') !== rc_cfg('admin_key')) {
+/* Пароль сверяем hash_equals: обычное сравнение выходит на первом
+   несовпавшем знаке, и время ответа подсказывает подбирающему, сколько
+   знаков он уже угадал. */
+if (php_sapi_name() !== 'cli' && !hash_equals((string)rc_cfg('admin_key'), (string)($_GET['key'] ?? ''))) {
     http_response_code(403); exit('forbidden');
 }
 @set_time_limit(120);

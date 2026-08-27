@@ -70,6 +70,28 @@ function measure() {
   live = r.top < start + h * 0.12 && r.top > -h * 0.5;
 }
 
+/* Цикл спит, когда двери в кадре нет.
+
+   Раньше он крутился всю жизнь страницы: даже когда секция салона
+   стояла за три экрана, браузер входил в JS на каждом кадре. Запасной
+   вход включается ровно там, где WebGL не потянул, - на самых слабых
+   устройствах, и лишний кадр там заметнее всего. Теперь пустые кадры
+   считаются, и после восьми подряд цикл ложится на дозор четыре раза
+   в секунду; первая же непустая проверка будит его обратно. Так же
+   устроен затвор в rc-gate. */
+var пусто = 0, дозор = 0;
+function сон() {
+  if (дозор) return;
+  raf = null;
+  дозор = setInterval(function () {
+    if (doc.hidden) return;
+    measure();
+    if (!live) return;
+    clearInterval(дозор); дозор = 0; пусто = 0;
+    if (!raf) raf = requestAnimationFrame(frame);
+  }, 250);
+}
+
 function frame() {
   raf = requestAnimationFrame(frame);
   if (doc.hidden || !el) return;
@@ -78,6 +100,13 @@ function frame() {
     return;
   }
   measure();
+  /* Пустой кадр - это когда двери в окне нет и створки давно стоят
+     на месте. Считаем такие подряд: восемь - и на дозор. */
+  if (!live && k === kGoal && !el.classList.contains("on")) {
+    if (++пусто > 8) { cancelAnimationFrame(raf); сон(); return; }
+  } else {
+    пусто = 0;
+  }
 
   /* Дверь - у корпуса ракеты: пока мы не подошли к нему вплотную
      (RC_APPROACH из rc-rocket), створкам в кадре делать нечего.

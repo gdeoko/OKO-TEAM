@@ -566,15 +566,26 @@ function collect() {
        уже лежит в кольце и сам помечен классом card - без этого
        фильтра он попадал в список дважды, углы съезжали на один
        шаг, и первый экран оказывался не перед входящим, а сбоку. */
+    var world0 = ring.querySelector(":scope > .cin-world");
     var cards = [].slice.call(ring.querySelectorAll(".card")).filter(function (el) {
       return el !== head;
     });
     var on = cabinAllowed() && cards.length > 1;
     if (head) {
       if (on) {
-        if (head.parentNode !== ring) ring.insertBefore(head, ring.firstChild);
+        /* В кольце заголовок может лежать и внутри слоя комнаты - для
+           салона это одно и то же место, трогать его тогда незачем. */
+        if (head.parentNode !== ring && !(world0 && head.parentNode === world0)) {
+          ring.insertBefore(head, ring.firstChild);
+        }
         head.classList.add("card", "cab-head");
-      } else if (head._cabHome && head.parentNode === ring) {
+      } else if (head._cabHome && head.parentNode !== head._cabHome.parent) {
+        /* Домой возвращаем откуда угодно, а не только прямо из кольца.
+           Пока проверка стояла на кольцо, заголовок, уехавший внутрь
+           слоя комнаты, домой не возвращался - и погибал вместе со
+           слоем несколькими строками ниже, где комната сносится
+           целиком. Раздел надёжности после этого оставался без
+           названия до перезагрузки страницы. */
         head.classList.remove("card", "cab-head");
         head._cabHome.parent.insertBefore(head, head._cabHome.next);
       }
@@ -606,6 +617,11 @@ function collect() {
       cards.forEach(function (el) { if (el.parentNode !== world) world.appendChild(el); });
     } else if (world) {
       cards.forEach(function (el) { if (el.parentNode === world) ring.appendChild(el); });
+      /* Слой сносим только пустым. Всё, что в нём осталось помимо
+         известных панелей, переезжает в кольцо: иначе чужой узел,
+         который сюда положил кто-то другой, исчезнет вместе с ним и
+         никем не восстановится. */
+      while (world.firstChild) ring.appendChild(world.firstChild);
       ring.removeChild(world);
       world = null;
     }

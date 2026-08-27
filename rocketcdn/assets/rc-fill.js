@@ -12,6 +12,30 @@ function esc(s) {
   });
 }
 
+/* Перерисовка блока с оглядкой на чужие узлы.
+
+   Раздел надёжности рисуем мы, но в салоне его заголовок временно
+   переезжает внутрь той же сетки первой панелью (rc-cinema держит
+   в узле путь домой, `_cabHome`). Смена языка звала innerHTML, и
+   заголовок вместе с этим путём исчезал навсегда: на разборе через
+   сто двадцать миллисекунд rc-cinema искал его и не находил, а
+   раздел оставался без названия до перезагрузки страницы.
+
+   Поэтому чужие узлы вынимаем до перерисовки и возвращаем первыми
+   после неё - там же, где они и стояли. */
+/* Наблюдатель за секцией ЦОД живёт между сборками блока */
+var дозорЦОД = null;
+
+function перерисовать(box, html) {
+  if (!box) return;
+  var чужие = $$(".sec-head", box);
+  /* Узел мог лежать не прямо в сетке, а внутри слоя комнаты, который
+     салон создаёт сам, поэтому снимаем его с настоящего родителя. */
+  чужие.forEach(function (el) { if (el.parentNode) el.parentNode.removeChild(el); });
+  box.innerHTML = html;
+  for (var i = чужие.length - 1; i >= 0; i--) box.insertBefore(чужие[i], box.firstChild);
+}
+
 function fill(t, blocks) {
   var svg = window.RC_ICO, GEO = window.RC_GEO;
   var lang = document.documentElement.lang === "en" ? "en" : "ru";
@@ -57,9 +81,16 @@ function fill(t, blocks) {
       "<p>" + esc(t("dc" + (i + 1) + "p")) + "</p></article>";
   }).join("");
 
-  /* Ленивая подстановка снимков ЦОД: за полтора экрана до секции */
+  /* Ленивая подстановка снимков ЦОД: за полтора экрана до секции.
+
+     Наблюдатель снимает сам себя, когда секция дошла до кадра, но
+     блок собирается заново на каждую смену языка. Переключили язык
+     до того, как секция попала в кадр, - и на том же узле оставался
+     висеть ещё один наблюдатель, и так по одному на каждый круг.
+     Поэтому прошлый снимаем сами, до того как заведём новый. */
+  if (дозорЦОД) { дозорЦОД.disconnect(); дозорЦОД = null; }
   if (dc && "IntersectionObserver" in window) {
-    var dcIo = new IntersectionObserver(function (es) {
+    var dcIo = дозорЦОД = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
         if (!e.isIntersecting) return;
         [].forEach.call(dc.querySelectorAll("[data-shot]"), function (el) {
@@ -67,6 +98,7 @@ function fill(t, blocks) {
           el.removeAttribute("data-shot");
         });
         dcIo.disconnect();
+        if (дозорЦОД === dcIo) дозорЦОД = null;
       });
     }, { rootMargin: "1400px 0px" });
     dcIo.observe(dc);
@@ -79,24 +111,24 @@ function fill(t, blocks) {
   /* Путь запроса: горизонтальный маршрут с отсечками времени */
   var how = $("#howGrid");
   var howMs = ["0", "3", "9", "18", "31", "40"];
-  if (how) how.innerHTML = [1, 2, 3, 4, 5, 6].map(function (n) {
+  перерисовать(how, [1, 2, 3, 4, 5, 6].map(function (n) {
     return '<article class="card case step rv rv-d' + n + '">' +
       '<span class="num">' + n + "</span>" +
       '<span class="step-ms"><b>' + howMs[n - 1] + "</b> " + esc(t("how.ms")) + "</span>" +
       "<h3>" + esc(t("how.s" + n + "h")) + "</h3>" +
       "<p>" + esc(t("how.s" + n + "p")) + "</p>" +
       '<i class="step-line" aria-hidden="true"></i></article>';
-  }).join("");
+  }).join(""));
 
   /* Надёжность */
   var rel = $("#relGrid");
   var relIco = ["check", "support", "shield", "load"];
-  if (rel) rel.innerHTML = [1, 2, 3, 4].map(function (n) {
+  перерисовать(rel, [1, 2, 3, 4].map(function (n) {
     return '<article class="card rv rv-d' + n + '">' +
       '<div class="card-ico">' + svg(relIco[n - 1]) + "</div>" +
       "<h3>" + esc(t("rel." + n + "h")) + "</h3>" +
       "<p>" + esc(t("rel." + n + "p")) + "</p></article>";
-  }).join("");
+  }).join(""));
 
   /* Состав подключения */
   var inc = $("#incGrid");

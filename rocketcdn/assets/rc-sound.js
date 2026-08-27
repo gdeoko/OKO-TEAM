@@ -326,6 +326,11 @@ Sound.prototype.music = function () {
 
 Sound.prototype.stop = function () {
   this.on = false;
+  /* Маятник маяков заводится при включении звука и раньше тикал до
+     закрытия вкладки: сигнала он не давал, потому что внутри стоит
+     проверка on, но будильник каждые семь секунд держал вкладку
+     занятой и мешал браузеру усыпить страницу. */
+  if (this._bTimer) { clearInterval(this._bTimer); this._bTimer = null; }
   document.documentElement.classList.remove("snd-on");
   if (g.RC_MUSIC) { try { g.RC_MUSIC.off(); } catch (e) {} }
   if (!this.ready) return;

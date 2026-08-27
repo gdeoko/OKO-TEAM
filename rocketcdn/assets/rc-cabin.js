@@ -82,6 +82,23 @@ function thetaOf(th) { return Math.PI - th; }
 function grab() {
   var out = [];
   var i, n, t, p;
+  /* Метки и заголовки экранов раньше стояли русскими всегда, а строки
+     под ними брались со страницы и переводились. На английской версии
+     экран получался смешанным: «БОРТОВЫЕ ПОКАЗАТЕЛИ» над английскими
+     подписями. Слова экранов теперь идут из одной таблицы и меняются
+     вместе с языком страницы. */
+  var ru = doc.documentElement.lang !== "en";
+  var С = ru ? {
+    над: "НАДЁЖНОСТЬ", пок: "БОРТОВЫЕ ПОКАЗАТЕЛИ", вход: "ЧТО ВХОДИТ",
+    спр: "СПРАВОЧНИК", борт: "НА БОРТУ",
+    сеть: "Сеть в цифрах", вкаждом: "В каждом подключении",
+    коротко: "Коротко о главном", инфра: "Инфраструктура"
+  } : {
+    над: "RELIABILITY", пок: "NETWORK FIGURES", вход: "WHAT IS INCLUDED",
+    спр: "HANDBOOK", борт: "ON BOARD",
+    сеть: "Network in numbers", вкаждом: "In every connection",
+    коротко: "The short answers", инфра: "Infrastructure"
+  };
 
   /* Четыре карточки надёжности */
   var rel = doc.querySelectorAll("#reliability .card");
@@ -89,7 +106,7 @@ function grab() {
     t = rel[i].querySelector("h3");
     p = rel[i].querySelector("p");
     if (!t) continue;
-    out.push({ tag: "НАДЁЖНОСТЬ", h: t.textContent.trim(), lines: [p ? p.textContent.trim() : ""] });
+    out.push({ tag: С.над, h: t.textContent.trim(), lines: [p ? p.textContent.trim() : ""] });
   }
 
   /* Показатели сети: числа с их подписями */
@@ -100,34 +117,42 @@ function grab() {
     var kt = kpi[i].querySelector(".kpi-l");
     if (kn && kt) kl.push(kn.textContent.trim() + "  " + kt.textContent.trim());
   }
-  if (kl.length) out.push({ tag: "БОРТОВЫЕ ПОКАЗАТЕЛИ", h: "Сеть в цифрах", lines: kl });
+  if (kl.length) out.push({ tag: С.пок, h: С.сеть, lines: kl });
 
   /* Состав подключения */
   var inc = doc.querySelectorAll("#included .inc-item span");
   var il = [];
   for (i = 0; i < inc.length && il.length < 6; i++) il.push(inc[i].textContent.trim());
-  if (il.length) out.push({ tag: "ЧТО ВХОДИТ", h: "В каждом подключении", lines: il });
+  if (il.length) out.push({ tag: С.вход, h: С.вкаждом, lines: il });
 
   /* Бортовой справочник: первые вопросы */
   var faq = doc.querySelectorAll("#faqList .faq-q span");
   var fl = [];
   for (i = 0; i < faq.length && fl.length < 5; i++) fl.push(faq[i].textContent.trim());
-  if (fl.length) out.push({ tag: "СПРАВОЧНИК", h: "Коротко о главном", lines: fl });
+  if (fl.length) out.push({ tag: С.спр, h: С.коротко, lines: fl });
 
   /* Продукты: чем корабль загружен */
   var pr = doc.querySelectorAll("#products .prod-card h3");
   var pl = [];
   for (i = 0; i < pr.length && pl.length < 6; i++) pl.push(pr[i].textContent.trim());
-  if (pl.length) out.push({ tag: "НА БОРТУ", h: "Инфраструктура", lines: pl });
+  if (pl.length) out.push({ tag: С.борт, h: С.инфра, lines: pl });
 
-  var FALL = [
-    { tag: "НАДЁЖНОСТЬ", h: "SLA 99,9%", lines: ["Доступность закреплена договором."] },
-    { tag: "НАДЁЖНОСТЬ", h: "Поддержка 24/7", lines: ["Дежурная смена инженеров круглосуточно."] },
-    { tag: "НАДЁЖНОСТЬ", h: "Защита от атак", lines: ["Фильтрация на кромке сети."] },
-    { tag: "НАДЁЖНОСТЬ", h: "Резерв", lines: ["Дублирование на каждом участке маршрута."] },
-    { tag: "БОРТОВЫЕ ПОКАЗАТЕЛИ", h: "Сеть в цифрах", lines: ["218 узлов", "3 Тбит/с", "1,5 млн зрителей"] },
-    { tag: "ЧТО ВХОДИТ", h: "В каждом подключении", lines: ["Свой домен и сертификат", "Гибкие правила кэша", "Статистика в кабинете"] },
-    { tag: "СПРАВОЧНИК", h: "Коротко о главном", lines: ["Подключение за один день", "Оплата по факту трафика"] }
+  var FALL = ru ? [
+    { tag: С.над, h: "SLA 99,9%", lines: ["Доступность закреплена договором."] },
+    { tag: С.над, h: "Поддержка 24/7", lines: ["Дежурная смена инженеров круглосуточно."] },
+    { tag: С.над, h: "Защита от атак", lines: ["Фильтрация на кромке сети."] },
+    { tag: С.над, h: "Резерв", lines: ["Дублирование на каждом участке маршрута."] },
+    { tag: С.пок, h: С.сеть, lines: ["218 узлов", "3 Тбит/с", "1,5 млн зрителей"] },
+    { tag: С.вход, h: С.вкаждом, lines: ["Свой домен и сертификат", "Гибкие правила кэша", "Статистика в кабинете"] },
+    { tag: С.спр, h: С.коротко, lines: ["Подключение за один день", "Оплата по факту трафика"] }
+  ] : [
+    { tag: С.над, h: "SLA 99.9%", lines: ["Availability is fixed by the contract."] },
+    { tag: С.над, h: "Support 24/7", lines: ["Engineers on duty around the clock."] },
+    { tag: С.над, h: "Attack shield", lines: ["Filtering at the network edge."] },
+    { tag: С.над, h: "Redundancy", lines: ["Every leg of the route is duplicated."] },
+    { tag: С.пок, h: С.сеть, lines: ["218 nodes", "3 Tbit/s", "1.5M viewers"] },
+    { tag: С.вход, h: С.вкаждом, lines: ["Your own domain and certificate", "Flexible cache rules", "Statistics in the panel"] },
+    { tag: С.спр, h: С.коротко, lines: ["Connection in a single day", "You pay for the traffic you use"] }
   ];
   for (n = 0; out.length < 7; n++) out.push(FALL[n % FALL.length]);
   return out.slice(0, 7);
@@ -1109,6 +1134,9 @@ function build(T, opts) {
 
 g.RC_CABIN = {
   build: build,
+  /* Содержимое экранов наружу: проверке нужно видеть, что слова
+     меняются вместе с языком страницы */
+  "экраны": grab,
   "этапы": function () { return СБ.slice(); },
   R: R_WALL,
   eye: EYE,
