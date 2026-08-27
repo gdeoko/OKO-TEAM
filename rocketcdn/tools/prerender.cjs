@@ -86,6 +86,45 @@ Object.keys(SEED).forEach(function (id) {
   done++;
 });
 
+/* ── Разметка вопросов для поисковика ───────────────────────
+   Блок FAQPage правился руками и разъезжался со словарём: там
+   оставался старый текст ответа про нагрузку. Собираем его тем же
+   словарём, что и сам список.
+
+   Вопросов берём ровно столько, сколько человек реально видит на
+   голограмме пульта (qLimit в assets/rc-desk.js). Правила
+   расширенного сниппета требуют, чтобы каждый вопрос из разметки был
+   виден на странице: один невидимый снимает сниппет целиком. */
+var ВИДНО = 7;
+try {
+  var desk = fs.readFileSync(path.join(ROOT, "assets", "rc-desk.js"), "utf8");
+  var м = desk.match(/function qLimit\(\)\s*\{\s*return\s*(\d+)/);
+  if (м) ВИДНО = +м[1];
+} catch (e) {}
+
+var ldFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": B.faq.slice(0, ВИДНО).map(function (x) {
+    return {
+      "@type": "Question",
+      "name": x.q,
+      "acceptedAnswer": { "@type": "Answer", "text": x.a }
+    };
+  })
+};
+var метка = '"@type": "FAQPage"';
+var поз = html.indexOf(метка);
+if (поз < 0) console.log("блок FAQPage не найден");
+else {
+  var началоТега = html.lastIndexOf("<script type=\"application/ld+json\">", поз);
+  var конецТега = html.indexOf("</script>", поз);
+  html = html.slice(0, началоТега) +
+    '<script type="application/ld+json">\n' + JSON.stringify(ldFaq, null, 2) + "\n" +
+    html.slice(конецТега);
+  console.log("вопросов в разметке для поисковика:", ldFaq.mainEntity.length, "из", B.faq.length);
+}
+
 fs.writeFileSync(HTML, html);
 console.log("засеяно контейнеров:", done,
   "| символов текста:", Object.keys(SEED).reduce(function (a, k) {

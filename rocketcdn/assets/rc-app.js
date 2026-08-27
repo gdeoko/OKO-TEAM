@@ -200,6 +200,30 @@ function applyLang(v, silent) {
       }
     } else el.textContent = val;
   });
+  /* Заголовок вкладки, описание и canonical. Их не менял никто:
+     английская страница висела с русским заголовком, а canonical с
+     ключом языка указывал на русский адрес и тем самым отменял
+     английскую версию для поисковика - она склеивалась с русской и
+     выпадала из выдачи. */
+  try {
+    var загл = t("meta.title", "");
+    if (загл) document.title = загл;
+    var опис = t("meta.desc", "");
+    var мОпис = document.querySelector('meta[name="description"]');
+    if (опис && мОпис) мОпис.setAttribute("content", опис);
+    var ог = document.querySelector('meta[property="og:title"]');
+    if (загл && ог) ог.setAttribute("content", загл);
+    var огО = document.querySelector('meta[property="og:description"]');
+    if (опис && огО) огО.setAttribute("content", опис);
+    var канон = document.querySelector('link[rel="canonical"]');
+    if (канон) канон.setAttribute("href", v === "en" ? "https://rocketcdn.ru/?lang=en" : "https://rocketcdn.ru/");
+    var огЛок = document.querySelector('meta[property="og:locale"]');
+    if (огЛок) огЛок.setAttribute("content", v === "en" ? "en_US" : "ru_RU");
+    var огАльт = document.querySelector('meta[property="og:locale:alternate"]');
+    if (огАльт) огАльт.setAttribute("content", v === "en" ? "ru_RU" : "en_US");
+    var огУрл = document.querySelector('meta[property="og:url"]');
+    if (огУрл) огУрл.setAttribute("content", v === "en" ? "https://rocketcdn.ru/?lang=en" : "https://rocketcdn.ru/");
+  } catch (eМета) {}
   $$(".lang button").forEach(function (b) {
     var on = b.dataset.lang === v;
     b.classList.toggle("on", on);

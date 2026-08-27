@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050C15">
 <title>Rocket CDN - доставка контента на сверхскорости</title>
-<meta name="description" content="Rocket CDN объединяет собственную инфраструктуру и глобальное edge-покрытие: 218 точек присутствия, три собственных ЦОД, SLA 99,9% и пропускная способность более 3 Тбит/с по России.">
+<meta name="description" content="Сеть доставки контента: 218 точек присутствия, три собственных ЦОД, SLA 99,9% и более 3 Тбит/с по России.">
 <meta name="keywords" content="CDN, сеть доставки контента, стриминг, видеохостинг, edge, дата-центр, защита от DDoS, облако, Rocket CDN">
 <link rel="canonical" href="https://rocketcdn.ru/">
 <!-- Английская версия живёт на том же адресе: язык выбирается ключом -->
@@ -99,41 +99,41 @@ img,svg,canvas{max-width:100%}
 
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
-<link rel="stylesheet" href="assets/rc.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-compact.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-interior.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc.css?v=1787862644">
+<link rel="stylesheet" href="assets/rc-compact.css?v=1787860231">
+<link rel="stylesheet" href="assets/rc-interior.css?v=1787847843">
 <link rel="stylesheet" href="assets/rc-reduced.css?v=1787483102">
 <!-- Посадка на реальные устройства. Подключается последним: файл правит
      значения предыдущих, а своих цветов и шрифтов не вводит -->
-<link rel="stylesheet" href="assets/rc-adapt.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-adapt.css?v=1787835351">
 <link rel="stylesheet" href="assets/rc-depth.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-cinema.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-cinema.css?v=1787840566">
 
-<link rel="stylesheet" href="assets/rc-world.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-world.css?v=1787855737">
 
 <link rel="stylesheet" href="assets/rc-hud.css?v=1787498327">
-<link rel="stylesheet" href="assets/rc-rail.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-rail.css?v=1787869930">
 <!-- Оформление рубки, пульта, шлюза и игры нужно не раньше, чем
      человек дойдёт до корабля. В критическом пути оно держало
      первый экран лишние сотни килобайт, поэтому грузится
      параллельно и применяется сразу по готовности. -->
-<link rel="stylesheet" href="assets/rc-flight.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
-<link rel="stylesheet" href="assets/rc-cockpit.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
-<link rel="stylesheet" href="assets/rc-desk.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
-<link rel="stylesheet" href="assets/rc-holo.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-flight.css?v=1787862728" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-cockpit.css?v=1787835351" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-desk.css?v=1787862801" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-holo.css?v=1787848544" media="print" onload="this.media='all';this.onload=null">
 <link rel="stylesheet" href="assets/rc-airlock.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
 <link rel="stylesheet" href="assets/rc-gate.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
 <link rel="stylesheet" href="assets/rc-landing.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
-<link rel="stylesheet" href="assets/rc-vpn.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-vpn.css?v=1787862678" media="print" onload="this.media='all';this.onload=null">
 <noscript>
-<link rel="stylesheet" href="assets/rc-flight.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-cockpit.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-desk.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-holo.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-flight.css?v=1787862728">
+<link rel="stylesheet" href="assets/rc-cockpit.css?v=1787835351">
+<link rel="stylesheet" href="assets/rc-desk.css?v=1787862801">
+<link rel="stylesheet" href="assets/rc-holo.css?v=1787848544">
 <link rel="stylesheet" href="assets/rc-airlock.css?v=1787483102">
 <link rel="stylesheet" href="assets/rc-gate.css?v=1787483102">
 <link rel="stylesheet" href="assets/rc-landing.css?v=1787483102">
-<link rel="stylesheet" href="assets/rc-vpn.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-vpn.css?v=1787862678">
 </noscript>
 
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
@@ -141,8 +141,8 @@ img,svg,canvas{max-width:100%}
 <!-- Кэш переменных оформления: сцены пишут состояние на корне
      документа каждый кадр, и без него браузер пересчитывает стиль
      всего дерева впустую. Подключается до всех сцен -->
-<script src="assets/rc-var.js?v=1787483102"></script>
-<script src="assets/rc-fallback.js?v=1787483102"></script>
+<script src="assets/rc-var.js?v=1787835351"></script>
+<script src="assets/rc-fallback.js?v=1787868898"></script>
 
 <!-- ══ Заставка «Старт» ═════════════════════════════════════════════
      Объёмная ракета, посчитанная прямо здесь: настоящая трёхмерная
@@ -609,7 +609,6 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   "name": "Rocket CDN",
   "url": "https://rocketcdn.ru",
   "logo": "https://rocketcdn.ru/assets/logo.webp",
-  "slogan": "Fast. Reliable. Global.",
   "description": "Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.",
   "sameAs": ["https://lk.rocketcdn.ru"],
   "contactPoint": [{
@@ -724,15 +723,15 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       "name": "Сколько времени занимает подключение?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня."
+        "text": "Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня."
       }
     },
     {
       "@type": "Question",
-      "name": "Можно ли использовать свой домен и сертификат?",
+      "name": "Можно ли использовать свой домен и сертификат?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете."
+        "text": "Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете."
       }
     },
     {
@@ -740,7 +739,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       "name": "Как считается стоимость?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора."
+        "text": "По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора."
       }
     },
     {
@@ -748,23 +747,23 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       "name": "Что происходит, если узел недоступен?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной."
+        "text": "Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной."
       }
     },
     {
       "@type": "Question",
-      "name": "Есть ли защита от атак?",
+      "name": "Есть ли защита от атак?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки."
+        "text": "На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки."
       }
     },
     {
       "@type": "Question",
-      "name": "Подходит ли сеть для живых трансляций?",
+      "name": "Подходит ли сеть для живых трансляций?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабайта нагрузки."
+        "text": "Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабита в секунду нагрузки."
       }
     },
     {
@@ -772,20 +771,19 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       "name": "Где находятся собственные дата-центры?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Какая статистика доступна?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика»."
+        "text": "В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком."
       }
     }
   ]
 }
 </script>
+<!-- Блок FAQPage выше собирает tools/prerender.cjs из того же
+     словаря, что и сам список вопросов: руками он разъезжался со
+     словарём. Вопросов в нём столько, сколько человек видит на
+     голограмме пульта (qLimit в assets/rc-desk.js), сейчас семь из
+     восьми: правила расширенного сниппета требуют, чтобы каждый
+     вопрос из разметки был виден на странице, и один невидимый снял
+     бы сниппет целиком. -->
 </head>
 <body class="has-mcta">
 <!-- Первый табстоп: обход шапки и списка узлов прямо к тексту -->
@@ -813,22 +811,23 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <img class="lg-light" src="assets/logo-h-light.webp" alt="Rocket CDN" width="172" height="34" loading="lazy" decoding="async">
     </a>
 
-    <nav class="nav" aria-label="Основная навигация">
+    <nav class="nav" data-i18n="a11y.nav" data-i18n-attr="aria-label" aria-label="Основная навигация">
       <a href="#products"  data-i18n="nav.products">Продукты</a>
       <a href="#infra"     data-i18n="nav.infra">Инфраструктура</a>
       <a href="#adv"       data-i18n="nav.adv">Преимущества</a>
       <a href="#how"       data-i18n="nav.how">Как работает</a>
+      <a href="#cases"     data-i18n="nav.cases">Сценарии</a>
       <a href="#faq"       data-i18n="nav.faq">Вопросы</a>
       <a href="#contact"   data-i18n="nav.contact">Контакты</a>
     </nav>
 
     <div class="hdr-act">
-      <div class="pill lang" role="group" aria-label="Язык интерфейса">
+      <div class="pill lang" role="group" data-i18n="a11y.lang" data-i18n-attr="aria-label" aria-label="Язык интерфейса">
         <i class="pill-knob" aria-hidden="true"></i>
         <button type="button" data-lang="ru" class="on" aria-pressed="true">RU</button>
         <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
-      <div class="pill theme" role="group" aria-label="Оформление">
+      <div class="pill theme" role="group" data-i18n="a11y.theme" data-i18n-attr="aria-label" aria-label="Оформление">
         <i class="pill-knob" aria-hidden="true"></i>
         <button type="button" class="js-theme" data-theme="light" aria-pressed="false" data-i18n="ui.light" data-i18n-attr="title" title="Светлая тема">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -839,7 +838,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
           <span class="vh" data-i18n="ui.dark">Тёмная тема</span>
         </button>
       </div>
-      <div class="pill snd" role="group" aria-label="Звук">
+      <div class="pill snd" role="group" data-i18n="a11y.sound" data-i18n-attr="aria-label" aria-label="Звук">
         <i class="pill-knob" aria-hidden="true"></i>
         <button type="button" class="js-sound" aria-pressed="false">
           <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -849,13 +848,13 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <a class="btn btn-p btn-sm js-reg" data-place="header" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
         <span data-i18n="cta.register">Регистрация</span>
       </a>
-      <button type="button" class="icon-btn burger" id="burger" aria-label="Открыть меню" aria-expanded="false"></button>
+      <button type="button" class="icon-btn burger" id="burger" data-i18n="menu.open" data-i18n-attr="aria-label" aria-label="Открыть меню" aria-expanded="false"></button>
     </div>
   </div>
 </header>
 
 <!-- Мобильное меню -->
-<nav class="drawer" id="drawer" aria-label="Меню">
+<nav class="drawer" id="drawer" data-i18n="a11y.menu" data-i18n-attr="aria-label" aria-label="Меню">
   <a href="#products" data-i18n="nav.products">Продукты</a>
   <a href="#infra"    data-i18n="nav.infra">Инфраструктура</a>
   <a href="#adv"      data-i18n="nav.adv">Преимущества</a>
@@ -869,23 +868,32 @@ html[data-theme="light"] .rc-load{background:#070F1A}
        наклейкой поверх кадра. В меню они доступны с любого места. -->
   <a class="drawer-law" href="privacy.html" target="_blank" data-i18n="ftr.policy">Политика конфиденциальности</a>
   <a class="drawer-law" href="offer.html" target="_blank" data-i18n="ftr.oferta">Публичная оферта</a>
+  <a class="drawer-law" href="offer.html#sla" target="_blank" data-i18n="ftr.sla">Условия SLA</a>
+  <!-- Подвал страницы в финале кино скрыт: человек сидит в кресле
+       корабля, и правовая строка поперёк остекления читалась бы
+       наклейкой поверх кадра. Значит копирайт и обязательная подпись
+       к картам планет обязаны жить здесь: Сатурн, Уран, Нептун и
+       Солнце взяты у Solar System Scope под лицензией CC BY 4.0, и
+       подпись по её условиям обязательна. -->
+  <span class="drawer-law drawer-fine">&copy; <span class="year">2026</span> Rocket CDN</span>
+  <span class="drawer-law drawer-fine" data-i18n="ftr.maps">Карты планет: NASA (Viking, MESSENGER, Magellan, Cassini) и Solar System Scope, CC BY 4.0</span>
   <a class="btn btn-p js-reg" data-place="drawer" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
     <span data-i18n="cta.register2">Зарегистрироваться</span>
   </a>
   <div class="drawer-tools">
-    <div class="pill lang wide" role="group" aria-label="Язык интерфейса">
+    <div class="pill lang wide" role="group" data-i18n="a11y.lang" data-i18n-attr="aria-label" aria-label="Язык интерфейса">
       <i class="pill-knob" aria-hidden="true"></i>
       <button type="button" data-lang="ru" class="on" aria-pressed="true">Русский</button>
       <button type="button" data-lang="en" aria-pressed="false">English</button>
     </div>
-    <div class="pill snd wide" role="group" aria-label="Звук">
+    <div class="pill snd wide" role="group" data-i18n="a11y.sound" data-i18n-attr="aria-label" aria-label="Звук">
       <i class="pill-knob" aria-hidden="true"></i>
       <button type="button" class="js-sound" aria-pressed="false">
         <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
         <span data-i18n="ui.sound">Звук</span>
       </button>
     </div>
-    <div class="pill theme wide" role="group" aria-label="Оформление">
+    <div class="pill theme wide" role="group" data-i18n="a11y.theme" data-i18n-attr="aria-label" aria-label="Оформление">
       <i class="pill-knob" aria-hidden="true"></i>
       <button type="button" class="js-theme" data-theme="light" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -977,7 +985,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
       <article class="viz-card rv rv-d1">
         <h3 data-i18n="eff.c2h">Разгрузка origin</h3>
-        <div class="dn-wrap" data-viz="donut" data-value="94" data-caption="попаданий в кэш"></div>
+        <div class="dn-wrap" data-viz="donut" data-value="95" data-caption="попаданий в кэш"></div>
         <p data-i18n="eff.c2p">Почти весь трафик отдают узлы сети. Ваш сервер занимается делом, а не раздачей файлов.</p>
       </article>
 
@@ -992,10 +1000,13 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <article class="viz-card viz-wide wave-wrap">
         <h3 data-i18n="live.h">Трафик сети прямо сейчас</h3>
         <div data-viz="wave"></div>
-        <p data-i18n="live.p">Совокупная отдача по всем точкам присутствия. Обновляется в реальном времени.</p>
+        <!-- Обещания «обновляется в реальном времени» тут стоять не может:
+     кривая рисуется на месте и к серверу не ходит. Текст сведён с
+     тем, что лежит в словаре и попадает на экран. -->
+<p data-i18n="live.p">Совокупная отдача по всем точкам присутствия.</p>
       </article>
       <article class="viz-card">
-        <div class="tick" data-viz="ticker" data-from="0" data-to="218" data-drift="0">
+        <div class="tick" data-viz="ticker" data-from="0" data-to="nodes" data-drift="0">
           <span data-i18n="tick.1">Точек присутствия</span>
         </div>
         <div class="tick" data-viz="ticker" data-from="0" data-to="1500000" data-drift="900">
@@ -1026,7 +1037,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       </div>
 
       <div class="rack rv rv-d1">
-        <canvas id="rackCv" aria-label="Стойка дата-центра Rocket CDN в объёме"></canvas>
+        <canvas id="rackCv" data-i18n="a11y.rack" data-i18n-attr="aria-label" aria-label="Стойка дата-центра Rocket CDN в объёме"></canvas>
         <div class="rack-hint"><span data-i18n="what.spin">Покрутите стойку</span></div>
       </div>
     </div>
@@ -1064,7 +1075,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <h2 class="sec-h" data-i18n="prod.h">Инфраструктура под любую задачу</h2>
       <p class="sec-p" data-i18n="prod.p">Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.</p>
     </div>
-    <div class="grid g-4 tight" id="gridProducts"><div class="card"><h3>CDN</h3><p>Кэширование и раздача статики, видео и больших файлов с ближайшего к пользователю узла.</p><ul><li>Статика и большие файлы</li><li>Гибкие правила кэша</li><li>Своя SSL и свой домен</li></ul></div><div class="card"><h3>Стриминг</h3><p>Живые трансляции и видео по запросу на аудиторию любого размера, на все известные устройства.</p><ul><li>Live и VOD</li><li>Транскодирование</li><li>Низкая задержка</li></ul></div><div class="card"><h3>Медиа-хранилище</h3><p>Объектное хранилище для видео и файлов с прямой отдачей в сеть доставки.</p><ul><li>S3-совместимый доступ</li><li>Хранение без лимитов</li><li>Отдача сразу через CDN</li></ul></div><div class="card"><h3>Плеер</h3><p>Готовый плеер с адаптивным качеством, вашим брендом и аналитикой просмотров.</p><ul><li>Адаптивный битрейт</li><li>Оформление под бренд</li><li>Статистика просмотров</li></ul></div><div class="card"><h3>Облако</h3><p>Виртуальные машины на процессорах нового поколения AMD и Intel, а для Big Data и AI - ARM и GPU.</p><ul><li>AMD, Intel, ARM</li><li>Графические ускорители</li><li>Масштабирование за минуты</li></ul></div><div class="card"><h3>Безопасность</h3><p>Фильтрация атак на уровне сети и приложения, доступ по правилам и защита origin.</p><ul><li>Защита L3-L7</li><li>Правила доступа</li><li>Origin закрыт от прямых запросов</li></ul></div><div class="card"><h3>Виртуальный диктор</h3><p>Синтез речи для озвучки роликов, объявлений и медиа-контента.</p><ul><li>Естественные голоса</li><li>Пакетная обработка</li><li>Готовый файл в хранилище</li></ul></div></div>
+    <div class="grid g-4 tight" id="gridProducts"><div class="card"><h3>CDN</h3><p>Кэширование и раздача статики, видео и больших файлов с ближайшего к пользователю узла.</p><ul><li>Статика и большие файлы</li><li>Гибкие правила кэширования</li><li>Своя SSL и свой домен</li></ul></div><div class="card"><h3>Стриминг</h3><p>Живые трансляции и видео по запросу на аудиторию любого размера, на все известные устройства.</p><ul><li>Live и VOD</li><li>Транскодирование</li><li>Низкая задержка</li></ul></div><div class="card"><h3>Медиа-хранилище</h3><p>Объектное хранилище для видео и файлов с прямой отдачей в сеть доставки.</p><ul><li>S3-совместимый доступ</li><li>Хранение без лимитов</li><li>Отдача сразу через CDN</li></ul></div><div class="card"><h3>Плеер</h3><p>Готовый плеер с адаптивным качеством, вашим брендом и аналитикой просмотров.</p><ul><li>Адаптивный битрейт</li><li>Оформление под бренд</li><li>Статистика просмотров</li></ul></div><div class="card"><h3>Облако</h3><p>Виртуальные машины на процессорах нового поколения AMD и Intel, а для Big Data и AI - ARM и GPU.</p><ul><li>AMD, Intel, ARM</li><li>Графические ускорители</li><li>Масштабирование за минуты</li></ul></div><div class="card"><h3>Безопасность</h3><p>Фильтрация атак на уровне сети и приложения, доступ по правилам и защита origin.</p><ul><li>Защита L3-L7</li><li>Правила доступа</li><li>Origin закрыт от прямых запросов</li></ul></div><div class="card"><h3>Виртуальный диктор</h3><p>Синтез речи для озвучки роликов, объявлений и медиа-контента.</p><ul><li>Естественные голоса</li><li>Пакетная обработка</li><li>Готовый файл в хранилище</li></ul></div></div>
   </div>
 </section>
 
@@ -1076,7 +1087,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <h2 class="sec-h" data-i18n="adv.h">Почему выбирают Rocket CDN</h2>
       <p class="sec-p" data-i18n="adv.p">Собственное железо, собственные каналы и инженеры на связи круглосуточно.</p>
     </div>
-    <div class="grid g-3" id="gridAdv"><div class="card"><h3>Процессоры нового поколения</h3><p>Виртуальные машины на базе AMD и Intel последних поколений. Ресурсы выделяются честно, без переподписки.</p></div><div class="card"><h3>ARM и GPU для Big Data и AI</h3><p>Для расчётов, обучения моделей и обработки медиа доступны ARM-процессоры и графические ускорители.</p></div><div class="card"><h3>Трансляции любого масштаба</h3><p>Качественные трансляции на аудиторию любого размера, на все известные устройства, в короткие сроки и по доступным ценам.</p></div><div class="card"><h3>Поддержка круглосуточно</h3><p>Инженеры на связи 24/7. Отвечает человек, который разбирается в сети, а не робот с шаблоном.</p></div><div class="card"><h3>1 500 000 зрителей и 1 Тб</h3><p>Сеть держит более полутора миллионов зрителей одновременно и свыше терабайта нагрузки.</p></div><div class="card"><h3>3 Тбит/с по России</h3><p>Пропускная способность сети внутри России превышает 3 Тбит/с и растёт вместе с вашим трафиком.</p></div></div>
+    <div class="grid g-3" id="gridAdv"><div class="card"><h3>Процессоры нового поколения</h3><p>Виртуальные машины на базе AMD и Intel последних поколений. Ресурсы выделяются честно, без переподписки.</p></div><div class="card"><h3>ARM и GPU для Big Data и AI</h3><p>Для расчётов, обучения моделей и обработки медиа доступны ARM-процессоры и графические ускорители.</p></div><div class="card"><h3>Трансляции любого масштаба</h3><p>Трансляции держат пик зрителей без просадки картинки: мультибитрейт, запись и защита ссылок настраиваются под ваш поток.</p></div><div class="card"><h3>Поддержка круглосуточно</h3><p>Инженеры на связи 24/7. Отвечает человек, который разбирается в сети.</p></div><div class="card"><h3>1 500 000 зрителей и 1 Тбит/с</h3><p>Сеть держит более полутора миллионов зрителей одновременно и свыше терабита в секунду нагрузки.</p></div><div class="card"><h3>3 Тбит/с по России</h3><p>Пропускная способность сети внутри России превышает 3 Тбит/с и растёт вместе с вашим трафиком.</p></div></div>
   </div>
 </section>
 
@@ -1093,7 +1104,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
     <div class="infra">
       <div class="rv">
-        <div class="map-wrap"><canvas id="globeMap" aria-label="Карта сети Rocket CDN: точки присутствия на глобусе"></canvas></div>
+        <div class="map-wrap"><canvas id="globeMap" data-i18n="a11y.globe" data-i18n-attr="aria-label" aria-label="Карта сети Rocket CDN: точки присутствия на глобусе"></canvas></div>
         <div class="map-legend">
           <span class="leg"><i style="background:#42B2DC"></i><span data-i18n="infra.leg1">Узел CDN</span></span>
           <span class="leg"><i style="background:#8A59F6"></i><span data-i18n="infra.leg2">Облако и защита</span></span>
@@ -1134,9 +1145,9 @@ html[data-theme="light"] .rc-load{background:#070F1A}
           <span data-i18n="reg.t1">Собственных дата-центра</span>
         </div>
         <div class="tick" data-viz="ticker" data-from="0" data-to="5">
-          <span data-i18n="reg.t2">Континента в покрытии</span>
+          <span data-i18n="reg.t2">Регионов в покрытии</span>
         </div>
-        <div class="tick" data-viz="ticker" data-from="0" data-to="1" data-suffix=" Тб">
+        <div class="tick" data-viz="ticker" data-from="0" data-to="1" data-suffix=" Тбит/с">
           <span data-i18n="reg.t3">Нагрузки одновременно</span>
         </div>
       </article>
@@ -1145,7 +1156,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 </section>
 
 <!-- ═══ Демо-полёт: вход в открытый космос ═══ -->
-<section id="flight" class="rcf-cta" aria-label="Демо-полёт">
+<section id="flight" class="rcf-cta" data-i18n="a11y.flight" data-i18n-attr="aria-label" aria-label="Демо-полёт">
   <button type="button" class="rcf-cta-btn js-flight">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
     <span data-i18n="fly.btn">Полёт в открытый космос</span>
@@ -1230,7 +1241,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <div class="sec-tag" data-i18n="faq.tag">Вопросы и ответы</div>
       <h2 class="sec-h" data-i18n="faq.h">Коротко о главном</h2>
     </div>
-    <div class="faq rv rv-d1" id="faqList"><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA0" id="faqQ0" data-faq="0"><span>Сколько времени занимает подключение?</span><i></i></button><div class="faq-a" id="faqA0" role="region" aria-labelledby="faqQ0" inert><p>Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA1" id="faqQ1" data-faq="1"><span>Можно ли использовать свой домен и сертификат?</span><i></i></button><div class="faq-a" id="faqA1" role="region" aria-labelledby="faqQ1" inert><p>Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA2" id="faqQ2" data-faq="2"><span>Как считается стоимость?</span><i></i></button><div class="faq-a" id="faqA2" role="region" aria-labelledby="faqQ2" inert><p>По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA3" id="faqQ3" data-faq="3"><span>Что происходит, если узел недоступен?</span><i></i></button><div class="faq-a" id="faqA3" role="region" aria-labelledby="faqQ3" inert><p>Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA4" id="faqQ4" data-faq="4"><span>Есть ли защита от атак?</span><i></i></button><div class="faq-a" id="faqA4" role="region" aria-labelledby="faqQ4" inert><p>На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA5" id="faqQ5" data-faq="5"><span>Подходит ли сеть для живых трансляций?</span><i></i></button><div class="faq-a" id="faqA5" role="region" aria-labelledby="faqQ5" inert><p>Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабайта нагрузки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA6" id="faqQ6" data-faq="6"><span>Где находятся собственные дата-центры?</span><i></i></button><div class="faq-a" id="faqA6" role="region" aria-labelledby="faqQ6" inert><p>В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA7" id="faqQ7" data-faq="7"><span>Какая статистика доступна?</span><i></i></button><div class="faq-a" id="faqA7" role="region" aria-labelledby="faqQ7" inert><p>Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика».</p></div></div></div>
+    <div class="faq rv rv-d1" id="faqList"><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA0" id="faqQ0" data-faq="0"><span>Сколько времени занимает подключение?</span><i></i></button><div class="faq-a" id="faqA0" role="region" aria-labelledby="faqQ0" inert><p>Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA1" id="faqQ1" data-faq="1"><span>Можно ли использовать свой домен и сертификат?</span><i></i></button><div class="faq-a" id="faqA1" role="region" aria-labelledby="faqQ1" inert><p>Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA2" id="faqQ2" data-faq="2"><span>Как считается стоимость?</span><i></i></button><div class="faq-a" id="faqA2" role="region" aria-labelledby="faqQ2" inert><p>По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA3" id="faqQ3" data-faq="3"><span>Что происходит, если узел недоступен?</span><i></i></button><div class="faq-a" id="faqA3" role="region" aria-labelledby="faqQ3" inert><p>Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA4" id="faqQ4" data-faq="4"><span>Есть ли защита от атак?</span><i></i></button><div class="faq-a" id="faqA4" role="region" aria-labelledby="faqQ4" inert><p>На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA5" id="faqQ5" data-faq="5"><span>Подходит ли сеть для живых трансляций?</span><i></i></button><div class="faq-a" id="faqA5" role="region" aria-labelledby="faqQ5" inert><p>Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабита в секунду нагрузки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA6" id="faqQ6" data-faq="6"><span>Где находятся собственные дата-центры?</span><i></i></button><div class="faq-a" id="faqA6" role="region" aria-labelledby="faqQ6" inert><p>В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA7" id="faqQ7" data-faq="7"><span>Какая статистика доступна?</span><i></i></button><div class="faq-a" id="faqA7" role="region" aria-labelledby="faqQ7" inert><p>Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика».</p></div></div></div>
   </div>
 </section>
 
@@ -1321,7 +1332,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
      пульта, анкета растаяла, и на остеклении разгорается бортовая
      надпись старта. Корабль при этом остаётся вокруг нас - мы в
      нём сидим, поэтому никакой летящей ракеты в кадре нет. -->
-<section id="epilogue" class="epi" aria-label="Эпилог">
+<section id="epilogue" class="epi" data-i18n="a11y.epilogue" data-i18n-attr="aria-label" aria-label="Эпилог">
   <div class="wrap epi-in">
    <div class="epi-holo">
     <span class="sec-tag" data-i18n="epi.tag">Эпилог</span>
@@ -1344,7 +1355,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
     <div class="legal">
       <a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a>
       <a href="offer.html" data-i18n="ftr.oferta">Публичная оферта</a>
-      <a href="#faq" data-i18n="ftr.sla">Условия SLA</a>
+      <a href="offer.html#sla" target="_blank" data-i18n="ftr.sla">Условия SLA</a>
       <span>&copy; <span id="year">2026</span> Rocket CDN</span>
       <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
       <!-- Подпись к картам тел. Снимки Меркурия, Венеры, Марса и
@@ -1362,7 +1373,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <!-- Окно обратного звонка -->
 <div class="modal" id="cbModal" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
   <div class="modal-box" style="position:relative">
-    <button type="button" class="icon-btn modal-x js-modal-close" aria-label="Закрыть">
+    <button type="button" class="icon-btn modal-x js-modal-close" data-i18n="a11y.close" data-i18n-attr="aria-label" aria-label="Закрыть">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
     </button>
     <h3 id="cbTitle" data-i18n="cb.h">Перезвоните мне</h3>
@@ -1379,7 +1390,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <div class="field">
         <label for="cbPhone" data-i18n="cb.phone">Телефон</label>
         <input id="cbPhone" name="contact" required maxlength="40" data-kind="phone" type="tel" placeholder="+7 900 000-00-00" autocomplete="tel">
-        <span class="err" data-i18n="ct.badcontact">Укажите телефон</span>
+        <span class="err" data-i18n="ct.badphone">Укажите телефон</span>
       </div>
       <label class="consent">
         <input type="checkbox" name="consent" value="1" required>
@@ -1404,42 +1415,42 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   </a>
 </div>
 
-<button type="button" class="totop" id="toTop" aria-label="Наверх">
+<button type="button" class="totop" id="toTop" data-i18n="a11y.totop" data-i18n-attr="aria-label" aria-label="Наверх">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
 </button>
 
-<script defer src="assets/rc-space.js?v=1787483102"></script>
-<script defer src="assets/rc-sound.js?v=1787483102"></script>
-<script defer src="assets/rc-music.js?v=1787483102"></script>
-<script defer src="assets/rc-geo.js?v=1787483102"></script>
+<script defer src="assets/rc-space.js?v=1787835351"></script>
+<script defer src="assets/rc-sound.js?v=1787868907"></script>
+<script defer src="assets/rc-music.js?v=1787835351"></script>
+<script defer src="assets/rc-geo.js?v=1787869778"></script>
 <!-- Правки реестра узлов из админки. Отдаёт api, потому что папка
      data закрыта от веба: там же лежат заявки. defer держит порядок,
      значит правки лягут сразу после базового реестра и до глобуса.
      Нет правок - придёт пустой файл, ничего не сломается. -->
 <script defer src="api.php?action=nodes_js"></script>
-<script defer src="assets/rc-ico.js?v=1787483102"></script>
-<script defer src="assets/rc-i18n.js?v=1787483102"></script>
+<script defer src="assets/rc-ico.js?v=1787835351"></script>
+<script defer src="assets/rc-i18n.js?v=1787870015"></script>
 <script defer src="assets/rc-globe.js?v=1787483102"></script>
-<script defer src="assets/rc-app.js?v=1787483102"></script>
-<script defer src="assets/rc-fill.js?v=1787483102"></script>
-<script defer src="assets/rc-viz.js?v=1787483102"></script>
-<script defer src="assets/rc-motion.js?v=1787483102"></script>
+<script defer src="assets/rc-app.js?v=1787869742"></script>
+<script defer src="assets/rc-fill.js?v=1787869918"></script>
+<script defer src="assets/rc-viz.js?v=1787870015"></script>
+<script defer src="assets/rc-motion.js?v=1787835351"></script>
 <script defer src="assets/rc-scene.js?v=1787483102"></script>
-<script defer src="assets/rc-holo.js?v=1787483102"></script>
-<script defer src="assets/rc-gate.js?v=1787483102"></script>
-<script defer src="assets/rc-world.js?v=1787483102"></script>
-<script defer src="assets/rc-vidbg.js?v=1787483102"></script>
-<script defer src="assets/rc-airlock.js?v=1787483102"></script>
+<script defer src="assets/rc-holo.js?v=1787845912"></script>
+<script defer src="assets/rc-gate.js?v=1787864441"></script>
+<script defer src="assets/rc-world.js?v=1787856234"></script>
+<script defer src="assets/rc-vidbg.js?v=1787864429"></script>
+<script defer src="assets/rc-airlock.js?v=1787856767"></script>
 <script defer src="assets/rc-hooks.js?v=1787483102"></script>
-<script defer src="assets/rc-depth.js?v=1787483102"></script>
-<script defer src="assets/rc-cinema.js?v=1787483102"></script>
-<script defer src="assets/rc-cockpit.js?v=1787483102"></script>
-<script defer src="assets/rc-desk.js?v=1787483102"></script>
+<script defer src="assets/rc-depth.js?v=1787864420"></script>
+<script defer src="assets/rc-cinema.js?v=1787856607"></script>
+<script defer src="assets/rc-cockpit.js?v=1787835351"></script>
+<script defer src="assets/rc-desk.js?v=1787847889"></script>
 <script defer src="assets/rc-rail.js?v=1787483102"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
-<script defer src="assets/rc-gl.js?v=1787487127"></script>
-<script defer src="assets/rc-scroll.js?v=1787483102"></script>
-<script defer src="assets/rc-vpn.js?v=1787483102"></script>
+<script defer src="assets/rc-gl.js?v=1787869026"></script>
+<script defer src="assets/rc-scroll.js?v=1787835351"></script>
+<script defer src="assets/rc-vpn.js?v=1787862678"></script>
 </body>
 </html>

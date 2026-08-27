@@ -39,3 +39,30 @@ foreach ($pages as $page) {
     echo $page . ": готово\n";
 }
 echo "ссылок проштамповано: {$total}\n";
+
+/* ── Дата правки в карте сайта ──────────────────────────────
+   lastmod стоял руками и отставал от страниц на недели: поисковик
+   не видел повода перечитать сайт. Берём дату из самого файла
+   страницы, на которую указывает адрес. */
+$карта = $root . '/sitemap.xml';
+if (is_file($карта)) {
+    $xml = file_get_contents($карта);
+    $файлПоАдресу = function ($loc) {
+        $путь = parse_url($loc, PHP_URL_PATH);
+        $имя = ($путь === null || $путь === '' || $путь === '/') ? 'index.html' : ltrim($путь, '/');
+        return $имя;
+    };
+    $правок = 0;
+    $xml = preg_replace_callback(
+        '~<loc>([^<]+)</loc><lastmod>[^<]*</lastmod>~',
+        function ($m) use ($root, $файлПоАдресу, &$правок) {
+            $файл = $root . '/' . $файлПоАдресу($m[1]);
+            if (!is_file($файл)) return $m[0];
+            $правок++;
+            return '<loc>' . $m[1] . '</loc><lastmod>' . date('Y-m-d', filemtime($файл)) . '</lastmod>';
+        },
+        $xml
+    );
+    file_put_contents($карта, $xml);
+    echo "карта сайта: дат обновлено {$правок}\n";
+}

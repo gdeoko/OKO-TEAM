@@ -136,8 +136,12 @@ function fill(t, blocks) {
     return '<div class="inc-item">' + svg("check") + "<span>" + esc(t("inc." + n)) + "</span></div>";
   }).join("");
 
+  /* Год стоит и в подвале, и в меню: подвал в финале кино скрыт,
+     и копирайт без второго дома пропадал бы совсем. */
+  var год = String(new Date().getFullYear());
   var y = $("#year");
-  if (y) y.textContent = new Date().getFullYear();
+  if (y) y.textContent = год;
+  [].forEach.call(document.querySelectorAll(".year"), function (э) { э.textContent = год; });
 }
 
 document.addEventListener("rc:lang", function (e) {

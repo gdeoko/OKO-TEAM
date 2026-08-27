@@ -83,8 +83,8 @@ function строитьСлова() { return {
   cdn: {
     сеть:        RU ? "Rocket CDN" : "Rocket CDN",
     полёт:       RU ? "Полёт по сети Rocket CDN" : "Rocket CDN network flight",
-    земля:       RU ? "ЗЕМЛЯ · 218 точек присутствия Rocket CDN"
-                    : "EARTH · 218 Rocket CDN points of presence",
+    земля:       RU ? "ЗЕМЛЯ · " + УЗЛОВ() + " точек присутствия Rocket CDN"
+                    : "EARTH · " + УЗЛОВ() + " Rocket CDN points of presence",
     земляИнфо:   RU ? "ЗЕМЛЯ · диаметр 12 742 км · единственная планета с CDN"
                     : "EARTH · 12,742 km wide · the only planet with a CDN",
     земляДосье:  RU ? "Единственная планета с Rocket CDN. Отсюда расходится вся сеть."
@@ -106,8 +106,8 @@ function строитьСлова() { return {
   vpn: {
     сеть:        RU ? "RocketVPN" : "RocketVPN",
     полёт:       RU ? "Полёт по сети RocketVPN" : "RocketVPN network flight",
-    земля:       RU ? "ЗЕМЛЯ · 218 узлов RocketVPN по всей галактике"
-                    : "EARTH · 218 RocketVPN nodes across the galaxy",
+    земля:       RU ? "ЗЕМЛЯ · " + УЗЛОВ() + " узлов RocketVPN по всей галактике"
+                    : "EARTH · " + УЗЛОВ() + " RocketVPN nodes across the galaxy",
     земляИнфо:   RU ? "ЗЕМЛЯ · диаметр 12 742 км · отсюда поднялась сеть RocketVPN"
                     : "EARTH · 12,742 km wide · where the RocketVPN network started",
     земляДосье:  RU ? "Отсюда поднялась сеть RocketVPN. Дальше узлы стоят по всей галактике, и свободный канал есть везде."
@@ -496,6 +496,13 @@ function TOTAL_MARKS() {
    у «Сети» брался от «Исследовано» - множества разные, и счётчик мог
    уйти за свой же предел, а «сеть развёрнута полностью» достигалась
    только через это переполнение. */
+/* Число точек присутствия берём из реестра, вместе с правками из
+   панели. Цифра руками расходилась с сайтом на всё, что владелец
+   добавил или скрыл: в шапке 219, в титрах полёта 218. */
+function УЗЛОВ() {
+  return (g.RC_GEO && g.RC_GEO.COUNT) || 218;
+}
+
 function NET_TOTAL() {
   var n = 11;                        /* Земля, Луна, Марс, Сатурн, дыра */
   for (var u = 1; u < UNIVERSES.length; u++) {
@@ -1393,7 +1400,7 @@ var dosT = 0, dosName = "";
    Юпитер может стоять ближе ради красивого облёта, но досье всё
    равно показывает его настоящий диаметр и орбитальный период. */
 var SOLAR_SCI = {
-  "СОЛНЦЕ":   { en: "SUN",       type: RU ? "звезда G2V" : "G2V star", diameter: "1 392 700 km", period: RU ? "оборот ~25–35 суток" : "~25–35 day rotation", text: RU ? "Фотосфера, грануляция, пятна и корона; в ней сосредоточено 99,86% массы системы." : "Photosphere, granulation, sunspots and corona; 99.86% of the Solar System's mass." },
+  "СОЛНЦЕ":   { en: "SUN",       type: RU ? "звезда G2V" : "G2V star", diameter: "1 392 700 km", period: RU ? "оборот ~25-35 суток" : "~25-35 day rotation", text: RU ? "Фотосфера, грануляция, пятна и корона; в ней сосредоточено 99,86% массы системы." : "Photosphere, granulation, sunspots and corona; 99.86% of the Solar System's mass." },
   "МЕРКУРИЙ": { en: "MERCURY",   type: RU ? "каменная планета" : "rocky planet", diameter: "4 879 km", period: RU ? "88 земных суток" : "88 Earth days", text: RU ? "Ближайшая к Солнцу планета: почти без атмосферы, с резко контрастными температурами." : "Closest planet to the Sun, with almost no atmosphere and extreme temperatures." },
   "ВЕНЕРА":   { en: "VENUS",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 104 km", period: RU ? "224,7 суток" : "224.7 days", text: RU ? "Плотная атмосфера CO₂ и облака серной кислоты создают сильнейший парниковый эффект." : "A dense CO₂ atmosphere and sulfuric-acid clouds drive an extreme greenhouse effect." },
   "ЗЕМЛЯ":    { en: "EARTH",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 742 km", period: RU ? "365,26 суток" : "365.26 days", text: RU ? "Океанический мир с азотно-кислородной атмосферой, магнитосферой и единственной известной биосферой." : "An ocean world with a nitrogen-oxygen atmosphere, magnetosphere and the only known biosphere." },
@@ -3805,7 +3812,11 @@ function buildWorld() {
      нет, звезда живёт на одном счёте и в кадре не чернеет. */
   (function () {
     var м = sunBody.material;
-    L.load(WEBP ? "assets/space/sun.webp" : "assets/space/sun.jpg", function (t) {
+    /* Запасного sun.jpg на сервере нет и никогда не было: у Солнца,
+       планет и колец лежит только webp, как и у всей остальной сцены.
+       Ветка на jpg давала браузеру без webp честный 404 и Солнце без
+       текстуры вместо запасной картинки. */
+    L.load("assets/space/sun.webp", function (t) {
       t.colorSpace = T.SRGBColorSpace || t.colorSpace;
       t.wrapS = T.RepeatWrapping;
       t.anisotropy = АНИЗО;
@@ -5847,7 +5858,7 @@ function holoList(w3) {
   var out = [];
   if (uniIdx === 0) {
     out.push({ id: "h-earth", o: w3.earth, title: RU ? "ЗЕМЛЯ" : "EARTH",
-               sub: RU ? "ДОМ · 218 УЗЛОВ" : "HOME · 218 NODES", kind: "planet", goal: "earth",
+               sub: RU ? "ДОМ · " + УЗЛОВ() + " УЗЛОВ" : "HOME · " + УЗЛОВ() + " NODES", kind: "planet", goal: "earth",
                info: СЛ("земляДосье") });
     out.push({ id: "h-moon", o: w3.moon, title: RU ? "ЛУНА" : "MOON",
                sub: RU ? "РЕЗЕРВ · 384 400 КМ" : "BACKUP", kind: "station", goal: "moon",

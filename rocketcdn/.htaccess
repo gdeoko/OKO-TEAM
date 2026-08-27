@@ -31,6 +31,9 @@ DirectoryIndex index.html
 # Шрифты отдаём с правильным типом
 <IfModule mod_mime.c>
   AddType font/woff2 .woff2
+  # Без этого сервер отдаёт паспорт приложения как поток байтов, и
+  # браузер его просто не читает: ни имени, ни иконок, ни цвета.
+  AddType application/manifest+json .webmanifest
 </IfModule>
 
 # Служебные файлы наружу не отдаём

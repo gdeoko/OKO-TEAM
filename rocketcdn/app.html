@@ -8,7 +8,7 @@
 <title>Rocket CDN</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
-<link rel="stylesheet" href="assets/rc.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc.css?v=1787862644">
 <script src="https://telegram.org/js/telegram-web-app.js" onerror="window.Telegram=window.Telegram||{}"></script>
 <style>
   body { padding: 0 0 84px; overscroll-behavior-y: contain; }
@@ -50,7 +50,7 @@
   }
   .pitem .card-ico { width: 38px; height: 38px; border-radius: 11px; margin: 0; }
   .pitem .card-ico svg { width: 19px; height: 19px }
-  .pitem h4 { font-size: 15px; font-weight: 650; margin-bottom: 3px }
+  .pitem .pitem-h { font-size: 15px; font-weight: 650; margin-bottom: 3px }
   .pitem p { font-size: 12.8px; color: var(--tx-2); line-height: 1.55 }
 
   .tabbar {
@@ -90,7 +90,7 @@
     <p class="app-sub">Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.</p>
     <div class="app-chips">
       <span class="chip"><i class="dot-live"></i>сеть работает</span>
-      <span class="chip"><b>218</b> точек</span>
+      <span class="chip"><b class="js-nodes">218</b> точек</span>
       <span class="chip"><b>3</b> ЦОД</span>
     </div>
   </div>
@@ -98,7 +98,7 @@
   <div class="app-body">
     <div class="kpi2">
       <div><div class="n grad-tx">99,9%</div><div class="l">Доступность по SLA</div></div>
-      <div><div class="n grad-tx">218</div><div class="l">Узлов по всему миру</div></div>
+      <div><div class="n grad-tx js-nodes">218</div><div class="l">Узлов по всему миру</div></div>
       <div><div class="n grad-tx">3 Тбит/с</div><div class="l">Пропускная способность в России</div></div>
       <div><div class="n grad-tx">1,5 млн</div><div class="l">Зрителей одновременно</div></div>
     </div>
@@ -124,7 +124,7 @@
 <!-- Продукты -->
 <section class="screen" id="s-prod">
   <div class="app-body" style="padding-top:22px">
-    <h1 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Продукты</h1>
+    <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Продукты</h2>
     <p class="app-sub" style="margin:0 0 20px;max-width:none;text-align:left">Инфраструктура под любую задачу, всё в одном личном кабинете.</p>
     <div class="plist" id="prodList"></div>
   </div>
@@ -133,8 +133,8 @@
 <!-- Сеть -->
 <section class="screen" id="s-net">
   <div class="app-body" style="padding-top:22px">
-    <h1 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Сеть присутствия</h1>
-    <p class="app-sub" style="margin:0 0 16px;max-width:none;text-align:left">Найдено точек: <b id="netCount" style="color:var(--cyan)">218</b></p>
+    <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Сеть присутствия</h2>
+    <p class="app-sub" style="margin:0 0 16px;max-width:none;text-align:left">Найдено точек: <b id="netCount" class="js-nodes" style="color:var(--cyan)">218</b></p>
     <div class="reg-tabs" id="appRegTabs"></div>
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
@@ -148,7 +148,7 @@
 <section class="screen" id="s-more">
   <div class="app-body" style="padding-top:22px">
     <div id="adminBox" style="display:none">
-      <h1 class="app-h" style="font-size:24px;text-align:left;margin-bottom:14px">Аналитика сайта</h1>
+      <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:14px">Аналитика сайта</h2>
       <div class="seg" style="display:flex;gap:6px;margin-bottom:12px">
         <button class="mini on" data-d="1" style="padding:7px 13px;font-size:12.5px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx-2)">Сегодня</button>
         <button class="mini" data-d="7" style="padding:7px 13px;font-size:12.5px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx-2)">7 дней</button>
@@ -161,7 +161,7 @@
       <hr style="border:0;border-top:1px solid var(--line);margin:28px 0">
     </div>
 
-    <h1 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Оставить заявку</h1>
+    <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Оставить заявку</h2>
     <p class="app-sub" style="margin:0 0 18px;max-width:none;text-align:left">Опишите задачу, инженер свяжется с вами.</p>
     <form id="appForm" novalidate>
       <div class="form-msg"></div>
@@ -213,8 +213,12 @@
   <button data-s="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Заявка</span></button>
 </nav>
 
-<script src="assets/rc-geo.js?v=1787483102"></script>
-<script src="assets/rc-i18n.js?v=1787483102"></script>
+<script src="assets/rc-geo.js?v=1787869778"></script>
+<!-- Правки реестра из панели. Без этой строки мини-приложение жило со
+     своим числом точек: владелец добавляет город, сайт показывает
+     новое число, приложение старое. -->
+<script src="api.php?action=nodes_js"></script>
+<script src="assets/rc-i18n.js?v=1787870015"></script>
 <script src="assets/rc-globe.js?v=1787483102"></script>
 <script>
 (function () {
@@ -283,19 +287,19 @@ track("view", "/app");
 $$("[data-ico]").forEach(function (el) { el.insertAdjacentHTML("afterbegin", svg(el.dataset.ico)); });
 
 $("#advList").innerHTML = B.advantages.map(function (x) {
-  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + "</div><div><h4>" + esc(x.h) + "</h4><p>" + esc(x.p) + "</p></div></div>";
+  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + "</div><div><h3 class="pitem-h">" + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
 }).join("");
 
 $("#prodList").innerHTML = B.products.map(function (x) {
-  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + "</div><div><h4>" + esc(x.h) + "</h4><p>" + esc(x.p) + "</p></div></div>";
+  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + "</div><div><h3 class="pitem-h">" + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
 }).join("");
 
 var DCP = ["Основная площадка. Облако, защита от атак и точка обмена трафиком.",
            "Опорный узел для Центральной Азии. Облако и низкая задержка для региона.",
            "Европейская площадка. Облако и стык с магистральными операторами."];
 $("#dcList").innerHTML = G.DC.map(function (d, i) {
-  return '<div class="pitem"><div class="card-ico">' + svg("dc") + "</div><div><h4>" + esc(d.name.ru) +
-    ' <span style="color:var(--tx-3);font-weight:500;font-size:12px">· ' + esc(d.cc.ru) + "</span></h4><p>" + esc(DCP[i] || "") + "</p></div></div>";
+  return '<div class="pitem"><div class="card-ico">' + svg("dc") + "</div><div><h3 class="pitem-h">" + esc(d.name.ru) +
+    ' <span style="color:var(--tx-3);font-weight:500;font-size:12px">· ' + esc(d.cc.ru) + "</span></h3><p>" + esc(DCP[i] || "") + "</p></div></div>";
 }).join("");
 
 /* ── Глобус ── */
@@ -472,6 +476,14 @@ function loadAdmin(days) {
     }).join("") : '<p style="color:var(--tx-3);font-size:13px">Заявок пока нет.</p>';
   }).catch(function () {});
 }
+
+/* Число точек присутствия одно на весь сайт: реестр rc-geo.js плюс
+   правки из панели, которые подключены строкой выше. Цифра, вбитая в
+   разметку, расходилась бы с сайтом на всё, что владелец добавил. */
+(function () {
+  var n = (G && G.COUNT) || 218;
+  $$(".js-nodes").forEach(function (э) { э.textContent = n; });
+})();
 })();
 </script>
 </body>

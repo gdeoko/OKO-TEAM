@@ -444,7 +444,13 @@ function marquee(box) {
 /* ── 7. Живые счётчики ───────────────────────────────────── */
 function ticker(box) {
   var from = +(box.dataset.from || 0);
-  var to   = +(box.dataset.to || 100);
+  /* data-to="nodes" - живое число точек присутствия из реестра, вместе
+     с правками из панели. Раньше здесь стояла цифра руками, и после
+     добавления города посетитель видел 219 в одном месте и 218 в
+     соседнем. Единственный источник числа - RC_GEO.COUNT. */
+  var to = box.dataset.to === "nodes"
+    ? ((g.RC_GEO && g.RC_GEO.COUNT) || 218)
+    : +(box.dataset.to || 100);
   var dec  = +(box.dataset.dec || 0);
   var drift = +(box.dataset.drift || 0);
   var suffix = box.dataset.suffix || "";

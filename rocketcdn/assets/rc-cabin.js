@@ -137,12 +137,15 @@ function grab() {
   for (i = 0; i < pr.length && pl.length < 6; i++) pl.push(pr[i].textContent.trim());
   if (pl.length) out.push({ tag: С.борт, h: С.инфра, lines: pl });
 
+  /* Число точек присутствия одно на весь сайт: реестр плюс правки из
+     панели. Цифра руками на стене рубки расходилась бы с шапкой. */
+  function узлов() { return (g.RC_GEO && g.RC_GEO.COUNT) || 218; }
   var FALL = ru ? [
     { tag: С.над, h: "SLA 99,9%", lines: ["Доступность закреплена договором."] },
     { tag: С.над, h: "Поддержка 24/7", lines: ["Дежурная смена инженеров круглосуточно."] },
     { tag: С.над, h: "Защита от атак", lines: ["Фильтрация на кромке сети."] },
     { tag: С.над, h: "Резерв", lines: ["Дублирование на каждом участке маршрута."] },
-    { tag: С.пок, h: С.сеть, lines: ["218 узлов", "3 Тбит/с", "1,5 млн зрителей"] },
+    { tag: С.пок, h: С.сеть, lines: [узлов() + " узлов", "3 Тбит/с", "1,5 млн зрителей"] },
     { tag: С.вход, h: С.вкаждом, lines: ["Свой домен и сертификат", "Гибкие правила кэша", "Статистика в кабинете"] },
     { tag: С.спр, h: С.коротко, lines: ["Подключение за один день", "Оплата по факту трафика"] }
   ] : [
@@ -150,7 +153,7 @@ function grab() {
     { tag: С.над, h: "Support 24/7", lines: ["Engineers on duty around the clock."] },
     { tag: С.над, h: "Attack shield", lines: ["Filtering at the network edge."] },
     { tag: С.над, h: "Redundancy", lines: ["Every leg of the route is duplicated."] },
-    { tag: С.пок, h: С.сеть, lines: ["218 nodes", "3 Tbit/s", "1.5M viewers"] },
+    { tag: С.пок, h: С.сеть, lines: [узлов() + " nodes", "3 Tbit/s", "1.5M viewers"] },
     { tag: С.вход, h: С.вкаждом, lines: ["Your own domain and certificate", "Flexible cache rules", "Statistics in the panel"] },
     { tag: С.спр, h: С.коротко, lines: ["Connection in a single day", "You pay for the traffic you use"] }
   ];

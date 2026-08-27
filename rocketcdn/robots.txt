@@ -3,6 +3,9 @@ Allow: /
 Disallow: /admin.html
 Disallow: /app.html
 Disallow: /data/
+# api.php закрыт целиком, кроме списка узлов: его подключает сама
+# страница тегом script, и без него робот увидит карту сети пустой.
 Disallow: /api.php
+Allow: /api.php?action=nodes_js
 
 Sitemap: https://rocketcdn.ru/sitemap.xml

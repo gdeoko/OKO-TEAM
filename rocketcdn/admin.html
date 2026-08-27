@@ -8,7 +8,7 @@
 <title>Админка · Rocket CDN</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
-<link rel="stylesheet" href="assets/rc.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc.css?v=1787862644">
 <style>
   body { padding-bottom: 60px; }
   .a-hdr {
@@ -18,6 +18,9 @@
   .a-hdr-in { display: flex; align-items: center; gap: 12px; height: 62px; }
   .a-hdr img { height: 28px; }
   .a-badge {
+    /* Это заголовок первого уровня, значит у него есть свои поля и
+       свой кегль от браузера: снимаем оба, вид чипа не меняется. */
+    margin: 0; line-height: 1.2;
     font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
     padding: 4px 9px; border-radius: var(--r-full); background: var(--grad-soft);
     color: var(--cyan); border: 1px solid var(--line);
@@ -291,7 +294,10 @@
     <div class="wrap a-hdr-in">
       <img class="lg-dark" src="assets/logo-h.png" alt="Rocket CDN">
       <img class="lg-light" src="assets/logo-h-light.png" alt="Rocket CDN" style="display:none">
-      <span class="a-badge">админка</span>
+      <!-- Заголовок первого уровня для чтения с экрана: на странице
+           стояли одни h3, и скринридер начинал обход с третьего
+           уровня, не назвав, куда человек вообще попал. -->
+      <h1 class="a-badge">админка</h1>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
         <a class="mini" href="index.html" target="_blank">Сайт</a>
@@ -528,9 +534,9 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="assets/rc-geo.js?v=1787483102"></script>
-<script src="assets/rc-ico.js?v=1787483102"></script>
-<script src="assets/rc-i18n.js?v=1787483102"></script>
+<script src="assets/rc-geo.js?v=1787869778"></script>
+<script src="assets/rc-ico.js?v=1787835351"></script>
+<script src="assets/rc-i18n.js?v=1787870015"></script>
 <script>
 (function () {
 "use strict";
