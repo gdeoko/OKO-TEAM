@@ -323,7 +323,7 @@ def эффект(ключ):
     "edges.",
     "Composition: the whole frame carries a photocopier pass. Warm white #F5F1E8 base with uneven toner, density "
     "falling toward one edge, debris specks, crushed blacks and a one pixel fringe at high contrast edges under "
-    "scan striation. One element resists it: a solid amber #E8A400 plate carrying the headline, crisp on top.",
+    "scan striation. One element resists it: a solid amber #E8A400 plate carrying the headline in near black, crisp on top.",
     "Composition: a graphite #14171C field going near black at the edges. A cut out subject with a strong "
     "silhouette is centred, and directly behind it a radial amber #E8A400 glow, its core hidden by the subject "
     "and haloing around the edges. A two pixel amber rim traces the top and right edges only. Type sits in the "
