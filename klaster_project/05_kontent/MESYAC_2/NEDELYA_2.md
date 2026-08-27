@@ -408,7 +408,7 @@
 
 Посмотрите, что стоит на месте ближайшей к вам промзоны, которую закрыли пять лет назад. Обычно там жильё.
 
-У нас 50 000 м² и 100 производств на одной территории: московский аналог той самой плотности. 6-я Радиальная, 17с1, CLUSTERSPACE.RU
+У нас 50 000 м² и 100 производств на одной территории: московский аналог той самой плотности. 6-я Радиальная, 17с1, 8 985 331 02 71, CLUSTERSPACE.RU
 ```
 
 Источники: https://asianews.network/tokyos-small-factories-open-doors-to-showcase-technical-finesse/ ; https://benbansal.me/?p=3497 ; https://www.pio-ota.jp/en/otacity_industryguide/
