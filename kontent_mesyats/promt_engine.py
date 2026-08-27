@@ -136,7 +136,7 @@ class Бренд:
 ЧИТАЕМОСТЬ = ("Contrast is set, not hoped for: warm white on dark, or near black on solid amber. Amber type lives "
               "only on graphite or black; on any lighter ground the letters are warm white or near black, never "
               "amber. Where type crosses a bright or busy area the ground under it is darkened. Type is upright "
-              "always: no italic, no oblique, no script. The headline faces camera square and never runs away from the lens: foreshortened letters "
+              "always, no italic or script, and the guillemets in this prompt mark the wording and are never drawn. The headline faces camera square and never runs away from the lens: foreshortened letters "
               "stop being letters. Its baseline is horizontal, never rotated, never running up or down the side "
               "of the frame.")
 МАСШТАБ = ("The lettering is the subject here: the headline block spans at least sixty percent of the frame width "
@@ -626,8 +626,8 @@ def графика(ключ, номер=0):
           "pushes a 5600 K wedge across the floor, 4000 K fills the depth. The headline reads exactly, character "
           "by character, the Russian line «{заголовок}».",
    "типографика":
-      "The headline runs up the left third rotated ninety degrees, uppercase in warm white #F5F1E8, cropped by "
-      "the top edge so it feels taller than the picture.",
+      "The headline sits horizontally across the upper third against the converging verticals, uppercase in "
+      "warm white #F5F1E8, its first line cropped by the frame edge so it feels bigger than the picture.",
    "знак":
       "The brand mark sits low in the opposite corner at the foot of the converging verticals, about three "
       "percent of the frame width, upright.",
@@ -786,14 +786,13 @@ def воронка(бренд, ключ="", подпись=""):
 
 def поля_сторис():
     return ("This is a vertical 9:16 story frame, exactly 1080x1920 pixels, built around the platform interface: the "
-            "top 250 pixels are covered by progress bars and the account name, the bottom 250 pixels by the reply "
-            "field, and 80 pixels along each side are lost under the thumb. Everything meaningful lives inside the "
+            "top 250 pixels go to progress bars and the account name, the bottom 250 to the reply field, and 80 "
+            "along each side are lost under the thumb. Everything meaningful lives inside the "
             "central working window of 920 by 1420 pixels, and the headline sits in the upper part of that window "
             "since a story reads higher than its middle. The headline cap height is at least eight percent of the "
             "frame width so it holds at arm's length, stepping down to no less than five percent when the "
             "line is long, and it never runs longer "
-            "than five lines. The poll or question sticker is NOT drawn in this image: the area reserved for it stays "
-            "clean and nothing is painted there.")
+            "than five lines. The poll or question sticker is NOT drawn: the area reserved for it stays clean.")
 
 
 def собрать(бренд, кадры):
