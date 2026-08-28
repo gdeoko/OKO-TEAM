@@ -416,7 +416,15 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             if ($ageCat)     $rows[] = ['Возрастная категория: ', $ageCat];
             if ($nomination) $rows[] = ['Номинация: ', $nomination];
             if ($teacher)    $rows[] = ['Преподаватель: ', $teacher];
-            if ($inst)       $rows[] = ['Название учреждения: ', trim($inst . ($city ? ', ' . $city : ''))];
+            // Учреждение и город — разные строки: город в графе «Название
+            // учреждения» превращал её в адрес на полторы строки.
+            if ($inst)       $rows[] = ['Название учреждения: ', $inst];
+            if ($city) {
+                if (!function_exists('country_city_line') && is_file(BASE_PATH . '/core/text_format.php'))
+                    require_once BASE_PATH . '/core/text_format.php';
+                $cc = function_exists('country_city_line') ? country_city_line($city) : $city;
+                if ($cc !== '') $rows[] = ['Страна, город: ', $cc];
+            }
             if ($work)       $rows[] = ['Конкурсный номер: ', $work];
             foreach ($rows as [$lab, $val]) {
                 foreach (pl_wrap($lab . $val, 24, $fBold, $contentW - 10) as $ln) {

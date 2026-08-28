@@ -398,7 +398,8 @@ function diploma_html(array $c, array $a, array $opt = []): string {
             'Возрастная категория'  => '00-00 лет',
             'Номинация'             => 'указать вашу номинацию',
             'Педагог'               => 'Иванов Иван Иванович',
-            'Название учреждения'   => 'указать ваше учреждение и город',
+            'Название учреждения'   => 'указать ваше учреждение',
+            'Страна, город'         => 'Россия, г. Москва',
             'Конкурсный номер'      => 'Указать название вашего конкурсного номера',
         ];
     } else {
@@ -425,13 +426,21 @@ function diploma_html(array $c, array $a, array $opt = []): string {
                 if ($tVal !== '') $fields[$tLabel] = $tVal;
             }
         }
-        if (!empty($a['institution'])) {
-            // Учреждение + город БЕЗ дублирования: «Московский …» уже содержит город.
-            if (!function_exists('institution_with_city') && is_file(BASE_PATH . '/core/text_format.php'))
-                require_once BASE_PATH . '/core/text_format.php';
-            $fields['Название учреждения'] = function_exists('institution_with_city')
-                ? institution_with_city((string) $a['institution'], (string) ($a['city'] ?? ''))
-                : $a['institution'] . (!empty($a['city']) ? ', ' . $a['city'] : '');
+        /* УЧРЕЖДЕНИЕ И ГОРОД — РАЗНЫЕ СТРОКИ.
+         *
+         * Город приклеивался к названию учреждения, и в графе «Название
+         * учреждения» оказывалось «МБУК «Ялтинская централизованная клубная
+         * система»… , Россия, пгт Гурзуф»: полторы строки названия плюс адрес,
+         * которому там не место. Правило владельца: страна и город идут своей
+         * строкой сразу после учреждения. */
+        if (!function_exists('country_city_line') && is_file(BASE_PATH . '/core/text_format.php'))
+            require_once BASE_PATH . '/core/text_format.php';
+        if (!empty($a['institution'])) $fields['Название учреждения'] = trim((string) $a['institution']);
+        if (!empty($a['city'])) {
+            $cc = function_exists('country_city_line')
+                ? country_city_line((string) $a['city'])
+                : trim((string) $a['city']);
+            if ($cc !== '') $fields['Страна, город'] = $cc;
         }
         if (!empty($a['work_title']))   $fields['Конкурсный номер'] = $a['work_title'];
     }
