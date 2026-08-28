@@ -73,12 +73,11 @@ if ($action === 'delete') {
         $in = implode(',', array_map(fn($s) => (int) $s['id'], $siblings));
         try { q("UPDATE applications SET batch_id='' WHERE id IN ($in)"); } catch (\Throwable $e) {}
     }
-    // Строку платежа не стираем — она нужна реконсилеру и истории. Помечаем снятой,
-    // и только ту, что относится к удаляемой одиночной заявке.
-    if (tbl_exists('payments')) {
-        q("UPDATE payments SET status='canceled'
-            WHERE application_id=? AND status IN ('pending','waiting_for_capture','')", [$holder]);
-    }
+    /* Строку платежа не стираем — она нужна реконсилеру и истории. Гасим счёт,
+     * и только тот, что относится к удаляемой одиночной заявке. Через кассу:
+     * если человек нажал «удалить» ровно тогда, когда оплата прошла, пометить
+     * такой счёт отменённым — значит потерять пришедшие деньги. */
+    payments_close_open('application', $holder);
 
     audit('application_delete_self', 'applications', $appId, [
         'user' => $uid, 'batch' => $batch, 'siblings_unlinked' => count($siblings),
@@ -116,9 +115,10 @@ if ($action === 'pay') {
     if (!$payment || empty($payment['id'])) {
         json_out(['ok' => false, 'error' => 'Не удалось создать платёж. Попробуйте позже.'], 502);
     }
-    // Гасим прежние висящие платежи этой заявки (повторный клик не плодит pending).
+    // Гасим прежние висящие счета этой заявки (повторный клик не плодит живые ссылки).
+    // Через payments_close_open: уже оплаченный счёт не гасится, а проводится.
+    payments_close_open('application', $appId);
     if (tbl_exists('payments')) {
-        q("UPDATE payments SET status='canceled' WHERE application_id=? AND status IN ('pending','waiting_for_capture','')", [$appId]);
         insert('payments', [
             'application_id' => $appId, 'amount' => $amount, 'method' => 'yukassa',
             'status' => $payment['status'] ?? 'pending', 'yukassa_id' => $payment['id'], 'purpose' => 'application',

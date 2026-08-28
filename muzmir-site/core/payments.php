@@ -194,6 +194,69 @@ function yukassa_cancel_open_for_order(int $orderId): int {
 }
 
 /**
+ * ГАШЕНИЕ ПРЕЖНИХ СЧЕТОВ — СО ВЗГЛЯДОМ В КАССУ, А НЕ ВСЛЕПУЮ.
+ *
+ * Перед созданием нового счёта прежние надо закрыть, иначе у человека на руках
+ * несколько живых ссылок и он платит дважды. Делалось это самым коротким
+ * способом — UPDATE payments SET status='canceled' WHERE ... AND status='pending',
+ * прямо в трёх местах (api/v1/order_manage.php, api/v1/app_pay.php дважды).
+ *
+ * ЦЕНА ЭТОЙ КОРОТКОЙ СТРОКИ. 28.08.2026 участница оплатила заказ №70 в 13:08:34 —
+ * деньги в кассе, платёж succeeded. Уведомления от ЮKassa в проект не приходят
+ * вовсе (вебхук не настроен, в журнале ноль обращений), статусы подтягивает
+ * опросом cron/reconcile_payments.php, а он ходит только по pending. Через сорок
+ * секунд участница, не увидев в кабинете отметки об оплате, нажала «Оплатить»
+ * ещё раз — и этот UPDATE пометил её ОПЛАЧЕННЫЙ платёж отменённым. Реконсилер
+ * такие больше не опрашивает: оплата выпала из системы навсегда. Дальше она
+ * платила ещё одиннадцать раз, получала письма «Оплатите заказ №70», а владелец
+ * спрашивал, не обманывает ли она.
+ *
+ * Поэтому здесь порядок обратный: сначала спрашиваем кассу, потом решаем.
+ *   • succeeded — деньги пришли: НЕ гасим, а проводим оплату;
+ *   • pending — гасим в кассе и, только если касса подтвердила, у себя;
+ *   • касса не ответила — не трогаем вовсе: пусть счёт остаётся живым и за ним
+ *     следит реконсилер. Потерять оплату страшнее, чем оставить лишний счёт.
+ *
+ * @param string $scope 'order' — заказ наград, 'application' — заявка
+ * @return array{closed:int, paid:int, kept:int}
+ */
+function payments_close_open(string $scope, int $id): array {
+    $out = ['closed' => 0, 'paid' => 0, 'kept' => 0];
+    if ($id <= 0 || !function_exists('tbl_exists') || !tbl_exists('payments')) return $out;
+    $col = $scope === 'order' ? 'order_id' : 'application_id';
+    try {
+        $rows = all("SELECT id, yukassa_id FROM payments
+                      WHERE $col = ? AND status IN ('pending','waiting_for_capture','')
+                        AND COALESCE(yukassa_id,'') <> '' AND yukassa_id NOT LIKE 'stub-%'", [$id]);
+    } catch (\Throwable $e) { return $out; }
+
+    foreach ($rows as $r) {
+        $pid = (string) $r['yukassa_id'];
+        $obj = yukassa_get_payment($pid);
+        if (!$obj) { $out['kept']++; continue; }          // касса молчит — не трогаем
+        $st = (string) ($obj['status'] ?? '');
+        if ($st === 'succeeded' || $st === 'waiting_for_capture') {
+            // Деньги уже у нас. Гасить нечего — надо провести.
+            if ($st === 'succeeded') {
+                try { payment_apply_status($pid, 'succeeded', $obj); $out['paid']++; }
+                catch (\Throwable $e) { error_log('payments_close_open: ' . $e->getMessage()); }
+            } else { $out['kept']++; }
+            continue;
+        }
+        if ($st === 'canceled') {
+            try { update('payments', ['status' => 'canceled'], 'id=:id', ['id' => (int) $r['id']]); } catch (\Throwable $e) {}
+            $out['closed']++;
+            continue;
+        }
+        if (yukassa_cancel_payment($pid)) {
+            try { update('payments', ['status' => 'canceled'], 'id=:id', ['id' => (int) $r['id']]); } catch (\Throwable $e) {}
+            $out['closed']++;
+        } else { $out['kept']++; }
+    }
+    return $out;
+}
+
+/**
  * Запрос статуса платежа в ЮKassa: GET /v3/payments/{id}.
  * @return array|null полный объект платежа или null при недоступности/stub.
  */
