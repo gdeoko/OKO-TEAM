@@ -529,7 +529,20 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
         $contents[] = ['role' => 'user', 'parts' => [['text' => $text]]];
     }
 
-    $model = (string) (cfgv('gemini_model') ?: 'gemini-2.5-flash');
+    /* НЕ ОДНА МОДЕЛЬ, А ОЧЕРЕДЬ.
+     *
+     * У бесплатных ключей лимит считается по каждой модели отдельно, и тяжёлая
+     * выбивает квоту первой: сегодня к полудню основная отвечала 429, а лёгкие
+     * работали как ни в чём не бывало — но помощник этого не знал и весь день
+     * молчал бы шаблонами. Теперь при отказе по квоте или перегрузке пробуем
+     * следующую модель из очереди. Порядок — от лучшей к самой выносливой. */
+    $models = array_values(array_filter(array_map('trim',
+        preg_split('~[,\s]+~', (string) (cfgv('gemini_models') ?: '')) ?: [])));
+    if (!$models) {
+        $models = [(string) (cfgv('gemini_model') ?: 'gemini-2.5-flash'),
+                   'gemini-3-flash-preview', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
+    }
+    $models = array_values(array_unique($models));
     $payload = json_encode([
         'systemInstruction' => ['parts' => [['text' => chat_system_prompt()]]],
         'contents'          => $contents,
@@ -542,6 +555,9 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
     ], JSON_UNESCAPED_UNICODE);
 
     $base = rtrim((string) (cfgv('gemini_base_url') ?: 'https://generativelanguage.googleapis.com'), '/');
+    $resp = null; $err = 0; $code = 0; $model = '';
+    foreach ($models as $try) {
+    $model = $try;
     $ch = curl_init($base . '/v1beta/models/'
         . rawurlencode($model) . ':generateContent?key=' . rawurlencode($apiKey));
     curl_setopt_array($ch, [
@@ -568,8 +584,13 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
         mail_log('CHAT gemini ' . ($err ? ('curl ' . $err) : ('HTTP ' . $code))
                  . ' key=' . substr($apiKey, 0, 8) . ' model=' . $model);
     }
-    // 429 — квота кончилась. Запоминаем, чтобы до завтра не тратить на этот ключ
-    // время каждого сообщения, а сразу идти к следующему.
+    // Квота этой модели кончилась (429) или она перегружена (503) — пробуем
+    // следующую из очереди, ключ тот же. Прочие ошибки перебирать незачем.
+    if ($code === 429 || $code === 503) continue;
+    break;
+    }
+    // Ключ считаем выбитым, только если по квоте отказали ВСЕ модели: иначе
+    // завтрашняя очередь начнётся с ключа, который на самом деле работает.
     if ($code === 429) chat_gemini_mark_exhausted($apiKey);
     if ($err || !$resp || $code >= 400) return null;
 
