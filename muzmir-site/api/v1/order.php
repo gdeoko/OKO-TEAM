@@ -272,8 +272,12 @@ if (!$isClubOrder && $applicationId) {
 // ФИО — ПОЛНОСТЬЮ (Фамилия Имя Отчество). Адрес — полный (город/улица/ДОМ), только если
 // в заказе есть ОРИГИНАЛ (kind=original), т.е. нужна почтовая доставка. Клубное членство —
 // без этих требований (это не отправляемый материал).
-$hasOriginal = false;
-foreach ($normItems as $ni) { if ((string) ($ni['kind'] ?? '') === 'original') { $hasOriginal = true; break; } }
+$hasOriginal = false; $hasDigital = false;
+foreach ($normItems as $ni) {
+    $k = (string) ($ni['kind'] ?? '');
+    if ($k === 'original') $hasOriginal = true;
+    elseif ($k === 'digital') $hasDigital = true;
+}
 if (!$isClubOrder) {
     $fio = trim((string) input('full_name'));
     $fioParts = array_values(array_filter(preg_split('~\s+~u', $fio) ?: [], static fn($w) => mb_strlen($w) >= 2));
@@ -306,6 +310,15 @@ $orderId = insert('awards_orders', [
     'email'          => mb_strtolower(input('email')),
     'phone'          => input('phone'),
     'address'        => input('address'),
+    /* ВИД ЗАКАЗА — ПО ЕГО СОСТАВУ, А НЕ ПО УМОЛЧАНИЮ.
+     *
+     * Колонка заполнялась значением по умолчанию 'original', и заказ на одну
+     * электронную версию выглядел в базе и в выгрузках как посылка на бланке.
+     * На изготовление это не влияло (и письмо, и производство читают состав),
+     * но в списках заказ читался неверно. Считаем честно: есть хоть один
+     * оригинал и есть электронные — 'mixed'; только оригиналы — 'original';
+     * только электронные — 'digital'; членство клуба — 'club'. */
+    'kind'           => $isClubOrder ? 'club' : ($hasOriginal ? ($hasDigital ? 'mixed' : 'original') : 'digital'),
     'status'         => 'new',
 ]);
 

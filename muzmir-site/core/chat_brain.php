@@ -496,7 +496,12 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
     $payload = json_encode([
         'systemInstruction' => ['parts' => [['text' => chat_system_prompt()]]],
         'contents'          => $contents,
-        'generationConfig'  => ['maxOutputTokens' => 1000, 'temperature' => 0.4],
+        /* РАЗМЫШЛЕНИЯ ВЫКЛЮЧЕНЫ. Новые модели по умолчанию сначала «думают
+         * вслух», и эти черновики приходят такими же частями ответа: участник
+         * получал английский разбор промпта вместо ответа оператора. Оператору
+         * колл-центра размышления не нужны — нужен короткий готовый ответ. */
+        'generationConfig'  => ['maxOutputTokens' => 1000, 'temperature' => 0.4,
+                                'thinkingConfig' => ['thinkingBudget' => 0]],
     ], JSON_UNESCAPED_UNICODE);
 
     $base = rtrim((string) (cfgv('gemini_base_url') ?: 'https://generativelanguage.googleapis.com'), '/');
@@ -507,13 +512,25 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => $payload,
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-        CURLOPT_TIMEOUT        => 12,
+        /* ДВЕНАДЦАТИ СЕКУНД НЕ ХВАТАЛО.
+         * Модель с большим системным промптом отвечает около десяти секунд, и
+         * запрос обрывался почти на финише: «мозг» считался молчащим, участник
+         * получал шаблон с просьбой позвонить. Ответ всё равно показывается не
+         * мгновенно (обычному участнику — через пять минут), так что лишние
+         * секунды ожидания ему ничего не стоят, а живой ответ стоят. */
+        CURLOPT_TIMEOUT        => 25,
         CURLOPT_CONNECTTIMEOUT => 5,
     ]);
     $resp = curl_exec($ch);
     $err  = curl_errno($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
+    // Ошибку «мозга» пишем в лог: без неё молчание выглядит как исправная работа,
+    // а участник получает шаблон, и никто не знает почему.
+    if (($err || $code >= 400) && function_exists('mail_log')) {
+        mail_log('CHAT gemini ' . ($err ? ('curl ' . $err) : ('HTTP ' . $code))
+                 . ' key=' . substr($apiKey, 0, 8) . ' model=' . $model);
+    }
     // 429 — квота кончилась. Запоминаем, чтобы до завтра не тратить на этот ключ
     // время каждого сообщения, а сразу идти к следующему.
     if ($code === 429) chat_gemini_mark_exhausted($apiKey);
@@ -523,6 +540,10 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
     if (!is_array($d) || empty($d['candidates'][0]['content']['parts'])) return null;
     $out = '';
     foreach ($d['candidates'][0]['content']['parts'] as $p) {
+        // Часть с thought=true — это черновик рассуждения модели, а не ответ.
+        // Просить не думать мало: если модель всё же прислала мысли, они не
+        // должны попасть человеку.
+        if (!empty($p['thought'])) continue;
         if (isset($p['text'])) $out .= (string) $p['text'];
     }
     $out = trim($out);
