@@ -145,7 +145,11 @@ function diploma_make_number(string $base, string $type = 'main', int $extraInde
         $base = 'MM-' . date('Y') . '-' . str_pad((string)random_int(1, 999999), 6, '0', STR_PAD_LEFT);
     }
     switch ($type) {
-        case 'named':  return $base . '-N';
+        /* ИМЕННОЙ — КАЖДОМУ УЧАСТНИКУ СВОЙ, ЗНАЧИТ И НОМЕР СВОЙ.
+         * Номер был один на заявку: ансамбль заказал девять именных дипломов на
+         * девять детей, а завести в реестре удалось ровно один — номер занят.
+         * Первый сохраняет прежний вид, остальные получают -N2, -N3 и дальше. */
+        case 'named':  return $base . '-N' . ($extraIndex > 1 ? $extraIndex : '');
         // У коллектива бывает два руководителя, и благодарность выписывается
         // каждому своя. Пока номер был один на заявку, вторая благодарность
         // просто не заводилась в реестре: номер занят, запись не создать, в
@@ -232,6 +236,11 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         // --- получатель / данные ---
         $isGroup = (int)($application['is_group'] ?? 0) === 1;
         $recipient = trim((string)($isGroup ? ($application['group_name'] ?: $application['full_name']) : ($application['full_name'] ?? ''))) ?: 'Участник';
+        /* ИМЕННОЙ ДИПЛОМ — НА ИМЯ РЕБЁНКА, А НЕ АНСАМБЛЯ.
+         * Ради этого его и заказывают: диплом коллектива уже есть, а ребёнку нужен
+         * свой, с фамилией. ФИО приходит из заказа — там его вводит руководитель. */
+        $personOpt = trim((string)($application['person'] ?? ''));
+        if ($type === 'named' && $personOpt !== '') $recipient = $personOpt;
 
         $result = (string)($application['result'] ?? '');
         if ($result === '' && isset($application['score']) && $application['score'] !== null && $application['score'] !== '' && function_exists('score_to_result')) {
@@ -349,7 +358,11 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             $y += 78;
             pl_text_gold($img, $cX, $y, 78, $fSerB, 'БЛАГОДАРНОСТЬ', 'center', ['sparkle' => true]);
             $y += 46;
-            $who = $teacher !== '' ? $teacher : $recipient;
+            /* Благодарность — ОДНОМУ педагогу, чьё ФИО указано в заказе.
+             * Поле teacher в заявке бывает списком из двух руководителей, и
+             * печатать его целиком нельзя: благодарность выписывается каждому
+             * своя. Заявка остаётся запасным вариантом. */
+            $who = $personOpt !== '' ? $personOpt : ($teacher !== '' ? $teacher : $recipient);
             // ФИО — синим рукописным: истинный курсив-serif если есть (shear=0), иначе эмуляция наклоном.
             $handFont  = pl_font_hand();
             $handShear = pl_font_hand_is_italic() ? 0.0 : 0.20;

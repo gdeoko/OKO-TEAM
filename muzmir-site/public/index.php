@@ -554,6 +554,10 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
         $opt['extra'] = true;  // отдельный дополнительный диплом (спецноминация)
     } elseif ($rtype === 'named') {
         $opt['named'] = true;  // именной диплом (участник в составе коллектива)
+        // ФИО участника приходит из заказа — без него бланк печатал название
+        // ансамбля, и девять именных дипломов выходили одинаковыми.
+        $opt['person']     = trim((string) ($_GET['person'] ?? ''));
+        $opt['person_idx'] = (int) ($_GET['pidx'] ?? 0);
     }
     // ЧИСТЫЙ оригинал (без подписи/печати) — для типографии/изготовления. Номер+QR остаются.
     if (!empty($_GET['clean'])) $opt['clean'] = true;
@@ -569,7 +573,9 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
             ? diploma_person_index((string) ($app['teacher'] ?? ''),
                                    (string) ($opt['person'] ?? ''),
                                    (int) ($opt['person_idx'] ?? 0))
-            : 0;
+            // У именного номер отличает одного ребёнка от другого: индекс задаёт
+            // заказ (позиция позиции в нём), считать его по заявке неоткуда.
+            : ($rtype === 'named' ? (int) ($opt['person_idx'] ?? 0) : 0);
         $opt['number'] = diploma_make_number((string)($app['number'] ?? ''), $rtype ?: 'main', $tIdx);
     }
     echo diploma_html($c ?: [], $app, $opt);

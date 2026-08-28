@@ -81,6 +81,10 @@ function order_fulfill_digital(int $orderId): int {
     if (is_file(BASE_PATH . '/core/diploma_render.php')) require_once BASE_PATH . '/core/diploma_render.php';
 
     $created = 0;
+    /* Сквозной номер именного. Считаем от уже выданных по этой заявке, а не с
+     * нуля: коллектив дозаказывает детей вторым заказом, и нумерация с единицы
+     * упёрлась бы в занятые номера. */
+    $namedSeq = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type='named'", [$appId]);
     foreach ($items as $it) {
         if (!is_array($it) || (string) ($it['kind'] ?? '') !== 'digital') continue;
         $type = $map[mb_strtolower(trim((string) ($it['item'] ?? '')))] ?? '';
@@ -89,9 +93,16 @@ function order_fulfill_digital(int $orderId): int {
         // один педагог = одно ФИО. Заказали две — будет два разных документа,
         // поэтому и повтор ловим по паре «тип + получатель», а не по одному типу.
         $person = trim((string) ($it['fio'] ?? ''));
+        /* В РЕЕСТРЕ У ИМЕННОГО ДОЛЖНО СТОЯТЬ ИМЯ, А НЕ ЗВАНИЕ.
+         *
+         * Здесь у 'named' в result уходило звание — одинаковое у всех участников
+         * коллектива. Проверка повтора ниже сверяет как раз пару «тип + result»,
+         * поэтому из девяти именных дипломов ансамбля заводился ОДИН, а восемь
+         * молча пропадали: человек заплатил 3 600 ₽ и получил один документ.
+         * Звание на бланк берётся из заявки, так что имени здесь ничего не мешает. */
         $result = $type === 'extra'
             ? (string) ($a['extra_diploma'] ?? '')
-            : ($type === 'thanks' ? $person : (string) ($a['result'] ?? ''));
+            : (($type === 'thanks' || $type === 'named') ? $person : (string) ($a['result'] ?? ''));
 
         $dup = $type === 'thanks' || $type === 'named'
             ? one("SELECT id FROM diplomas WHERE application_id=? AND type=? AND COALESCE(result,'')=?",
@@ -105,7 +116,8 @@ function order_fulfill_digital(int $orderId): int {
         // реестра не стояла ни на одном документе. Считаем тем же индексом.
         $pIdx = ($type === 'thanks' && function_exists('diploma_person_index'))
                   ? diploma_person_index((string) ($a['teacher'] ?? ''), $person)
-                  : 0;
+                  // Именные нумеруются по порядку в заказе: первый -N, второй -N2…
+                  : ($type === 'named' ? ++$namedSeq : 0);
         $mk = static fn(int $idx): string => function_exists('diploma_make_number')
                  ? diploma_make_number((string) $a['number'], $type, $idx)
                  : ((string) $a['number'] . '-' . mb_strtoupper($type) . ($idx > 1 ? $idx : ''));
