@@ -9361,6 +9361,9 @@ function deckLayer() {
   if (!meta || !план) return null;
   if (!deck) {
     deck = g.RC_DECK.создать();
+    /* Сначала тела клавиш, потом свет: колпачок заслоняет дно ниши,
+       свет ложится на его лицо. */
+    if (deck["тело"]) ui.wrap.appendChild(deck["тело"]);
     ui.wrap.appendChild(deck.canvas);
   }
   /* Плотность режем двумя с половиной: холст размером с экран и так

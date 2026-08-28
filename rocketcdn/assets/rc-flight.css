@@ -4877,7 +4877,18 @@ html.rc-deep-inside .totop.on {
   pointer-events: none;
   mix-blend-mode: screen;
 }
-.rc-flight.rcf-native-cab .rcf-instr { display: block; }
+/* Тела клавиш. Наложение обычное: колпачок обязан ЗАСЛОНЯТЬ дно
+   ниши, а слой света этого не умеет - он только складывается. Слой
+   стоит под светом и живёт по тем же правилам показа. */
+.rcf-caps {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: none;
+  pointer-events: none;
+}
+.rc-flight.rcf-native-cab .rcf-instr,
+.rc-flight.rcf-native-cab .rcf-caps { display: block; }
 
 /* В финале приборы живут по тем же двум числам, что и сама картинка
    кабины: масштаб подъезда и прозрачность. Пока переменные одни на
@@ -4888,7 +4899,8 @@ html.rc-deep-inside .totop.on {
    Замер подъезда: коробка картинки 897x561 при прозрачности 0.31,
    потом 1200x750 при 0.69, потом весь экран при единице. Слой
    повторяет этот путь шаг в шаг. */
-.rc-flight.rcf-stage .rcf-instr {
+.rc-flight.rcf-stage .rcf-instr,
+.rc-flight.rcf-stage .rcf-caps {
   display: block;
   transform: scale(var(--rcf-cabs, 1));
   transform-origin: 50% 62%;
