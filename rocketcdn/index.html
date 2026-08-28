@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050C15">
+<title>Rocket CDN - доставка контента на сверхскорости</title>
+<meta name="description" content="Сеть доставки контента: 218 точек присутствия, три собственных ЦОД, SLA 99,9% и более 3 Тбит/с по России.">
+<meta name="keywords" content="CDN, сеть доставки контента, стриминг, видеохостинг, edge, дата-центр, защита от DDoS, облако, Rocket CDN">
+<link rel="canonical" href="https://rocketcdn.ru/">
+<!-- Английская версия живёт на том же адресе: язык выбирается ключом -->
+<link rel="alternate" hreflang="ru" href="https://rocketcdn.ru/">
+<link rel="alternate" hreflang="en" href="https://rocketcdn.ru/?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://rocketcdn.ru/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rocket CDN">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:title" content="Rocket CDN - доставка контента на сверхскорости">
+<meta property="og:description" content="Глобальная сеть доставки контента: 218 точек присутствия, собственные ЦОД в Москве, Алматы и Праге, SLA 99,9%.">
+<meta property="og:url" content="https://rocketcdn.ru/">
+<!-- Карточка ссылки: jpeg, а не webp. VK и часть клиентов Telegram
+     webp-превью не рисуют вовсе, и ссылка уходит без картинки -->
+<meta property="og:image" content="https://rocketcdn.ru/assets/gen/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Rocket CDN - доставка контента на сверхскорости: 218 точек присутствия, 3 собственных ЦОД, SLA 99,9%">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rocket CDN - доставка контента на сверхскорости">
+<meta name="twitter:description" content="Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.">
+<meta name="twitter:image" content="https://rocketcdn.ru/assets/gen/og.jpg">
+<meta name="twitter:image:alt" content="Rocket CDN - доставка контента на сверхскорости: 218 точек присутствия, 3 собственных ЦОД, SLA 99,9%">
+
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+<script>/* Тема до первой отрисовки: без этого страница моргает и клон первого экрана строится не в той теме */
+try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<style>
+/* Скелет страницы до прихода rc.css. Пока стили едут по сети,
+   служебные подписи для скринридеров, подсказка звука, меню и
+   модалка обязаны быть скрыты, а слои-канвасы - лежать за
+   содержимым. Иначе человек видит в шапке «Светлая тема / Тёмная
+   тема / Звук» и крупную надпись «У этого сайта есть звук» первой
+   строкой документа - ровно то, на что жаловался заказчик.
+
+   Блок стоит ДО всех <link>: значения здесь повторяют исходные
+   состояния из rc.css, и приехавший rc.css перекрывает их по
+   порядку следования. Правится .vh или .snd-hint в rc.css -
+   этот блок надо править синхронно. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.snd-hint{position:fixed;top:76px;right:16px;max-width:260px;opacity:0;pointer-events:none}
+.drawer{position:fixed;inset:0;transform:translateX(100%);visibility:hidden}
+.modal{position:fixed;inset:0;opacity:0;visibility:hidden}
+.totop{position:fixed;right:18px;bottom:18px;opacity:0;visibility:hidden}
+.prog{position:fixed;top:0;left:0;height:2px;width:0}
+#spaceBg,#rocketCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
+.lg-light{display:none}
+[data-theme="light"] .lg-dark{display:none}
+[data-theme="light"] .lg-light{display:block}
+body{margin:0;background:#050C15;color:#E2E8F0;
+     font-family:'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+[data-theme="light"] body{background:#F3F7FB;color:#091320}
+img,svg,canvas{max-width:100%}
+</style>
+
+<noscript>
+<style>
+/* Без сценариев появление при прокрутке не отработает, и весь текст
+   так и остался бы прозрачным. Показываем сразу. */
+.rv{opacity:1 !important;transform:none !important}
+/* Заставка, слои и подсказки без сценариев бессмысленны */
+.rc-load,.snd-hint,.totop,.prog,#spaceBg,#rocketCanvas,#heroClone{display:none !important}
+/* Меню открывает сценарий, поэтому вместо бургера показываем саму
+   навигацию: шапка встаёт в две строки, зато по сайту можно ходить */
+.burger{display:none !important}
+.hdr-in{height:auto !important;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+.nav{display:flex !important;flex-wrap:wrap;justify-content:center;width:100%;margin:0 !important}
+/* Контейнеры, которые заполняет сценарий, остались бы пустыми дырами
+   между заголовком и следующим блоком */
+/* :empty срабатывает только на тех, куда контент кладёт JS. Продукты,
+   преимущества, сценарии и вопросы засеяны в разметку и видны без JS */
+#gridProducts:empty,#gridAdv:empty,#gridCases:empty,#faqList:empty,
+#relGrid:empty,#incGrid:empty,#dcGrid:empty,#howGrid:empty,
+#heroMarks:empty,#whatMarks:empty,#nodeList:empty,#regTabs:empty{display:none !important}
+/* Без JS ленты не едут вбок - показываем их обычной сеткой */
+.hs-view{display:block !important;overflow:visible !important}
+.hs-track{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;width:auto !important;transform:none !important}
+.hs-track>*{width:auto !important}
+.hs-stage{position:static !important;height:auto !important}
+.hs-bar{display:none !important}
+</style>
+</noscript>
+
+<link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
+<link rel="stylesheet" href="assets/rc.css?v=1787894141">
+<link rel="stylesheet" href="assets/rc-compact.css?v=1787860231">
+<link rel="stylesheet" href="assets/rc-interior.css?v=1787847843">
+<link rel="stylesheet" href="assets/rc-reduced.css?v=1787483102">
+<!-- Посадка на реальные устройства. Подключается последним: файл правит
+     значения предыдущих, а своих цветов и шрифтов не вводит -->
+<link rel="stylesheet" href="assets/rc-adapt.css?v=1787889139">
+<link rel="stylesheet" href="assets/rc-depth.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-cinema.css?v=1787840566">
+
+<link rel="stylesheet" href="assets/rc-world.css?v=1787855737">
+
+<link rel="stylesheet" href="assets/rc-hud.css?v=1787498327">
+<link rel="stylesheet" href="assets/rc-rail.css?v=1787893781">
+<!-- Оформление рубки, пульта, шлюза и игры нужно не раньше, чем
+     человек дойдёт до корабля. В критическом пути оно держало
+     первый экран лишние сотни килобайт, поэтому грузится
+     параллельно и применяется сразу по готовности. -->
+<link rel="stylesheet" href="assets/rc-flight.css?v=1787894226" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-cockpit.css?v=1787894040" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-desk.css?v=1787888510" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-holo.css?v=1787848544" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-airlock.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-gate.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-landing.css?v=1787483102" media="print" onload="this.media='all';this.onload=null">
+<link rel="stylesheet" href="assets/rc-vpn.css?v=1787862678" media="print" onload="this.media='all';this.onload=null">
+<noscript>
+<link rel="stylesheet" href="assets/rc-flight.css?v=1787894226">
+<link rel="stylesheet" href="assets/rc-cockpit.css?v=1787894040">
+<link rel="stylesheet" href="assets/rc-desk.css?v=1787888510">
+<link rel="stylesheet" href="assets/rc-holo.css?v=1787848544">
+<link rel="stylesheet" href="assets/rc-airlock.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-gate.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-landing.css?v=1787483102">
+<link rel="stylesheet" href="assets/rc-vpn.css?v=1787862678">
+</noscript>
+
+<!-- Режим страницы решается до того, как поднимутся сцены: иначе они
+     успеют занять контексты, которых на слабом устройстве и так мало -->
+<!-- Кэш переменных оформления: сцены пишут состояние на корне
+     документа каждый кадр, и без него браузер пересчитывает стиль
+     всего дерева впустую. Подключается до всех сцен -->
+<script src="assets/rc-var.js?v=1787835351"></script>
+<script src="assets/rc-fallback.js?v=1787868898"></script>
+
+<!-- ══ Заставка «Старт» ═════════════════════════════════════════════
+     Объёмная ракета, посчитанная прямо здесь: настоящая трёхмерная
+     модель, перспективная проекция, свет по форме. Ни одного запроса
+     и ни одного килобайта библиотек - заставка обязана быть на экране
+     раньше, чем приедет что-либо ещё.
+
+     Разметку строит сам скрипт: при выключенном JavaScript заставки
+     нет вовсе и страница читается сразу, как требует приёмка. ══ -->
+<style>
+.rc-load{position:fixed;inset:0;z-index:1200;background:#050C15;opacity:0;overflow:hidden;
+  transition:opacity .3s ease}
+html[data-theme="light"] .rc-load{background:#070F1A}
+.rc-load.on{opacity:1}
+.rc-load canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.rc-load-sl{position:absolute;left:0;right:0;bottom:12%;text-align:center;
+  font:600 10px/1 'Golos Text',system-ui,sans-serif;letter-spacing:.42em;
+  color:rgba(226,232,240,.44);opacity:0;transition:opacity .5s ease}
+.rc-load-pc{position:absolute;left:0;right:0;bottom:7.2%;text-align:center;
+  font:700 13px/1 'Golos Text',system-ui,sans-serif;color:#42B2DC;
+  font-variant-numeric:tabular-nums;opacity:0;transition:opacity .5s ease}
+.rc-load.lit .rc-load-sl,.rc-load.lit .rc-load-pc{opacity:1}
+.rc-load.out{opacity:0;transition:opacity .55s ease}
+@media (prefers-reduced-motion: reduce){
+  .rc-load,.rc-load-sl,.rc-load-pc{transition:none!important}
+}
+</style>
+<script>
+/* ── RocketLoader ─────────────────────────────────────────────────
+   Показ подчинён сценарию: молчим первые 150 мс, показались - живём
+   минимум 700 мс, потолок 4 секунды, финальные 600 мс старта не
+   обрываем никогда. Прогресс честный: шрифт, событие load и сигнал
+   объёмного слоя. */
+(function (g, d) {
+  "use strict";
+
+  /* ── Модель ракеты ───────────────────────────────────────────
+     Строим один раз при запуске: тело вращения из колец плюс
+     стабилизаторы. Координаты в условных единицах, ось Y - вдоль
+     корпуса. Профиль задаёт форму: пары «высота, радиус». */
+  var PROFILE = [
+    [ 2.30, 0.00],   /* острие */
+    [ 2.05, 0.14],
+    [ 1.75, 0.26],
+    [ 1.35, 0.36],
+    [ 0.60, 0.40],   /* цилиндр корпуса */
+    [-0.30, 0.40],
+    [-0.95, 0.38],
+    [-1.25, 0.30],   /* сужение к соплу */
+    [-1.45, 0.26],
+    [-1.62, 0.34],   /* раструб */
+    [-1.72, 0.30]
+  ];
+  var SEG = 18;      /* граней по окружности */
+
+  function buildRocket() {
+    var verts = [], faces = [], i, j;
+
+    /* Кольца профиля */
+    for (i = 0; i < PROFILE.length; i++) {
+      for (j = 0; j < SEG; j++) {
+        var a = (j / SEG) * Math.PI * 2;
+        verts.push([Math.cos(a) * PROFILE[i][1], PROFILE[i][0], Math.sin(a) * PROFILE[i][1]]);
+      }
+    }
+    /* Боковые грани между соседними кольцами */
+    for (i = 0; i < PROFILE.length - 1; i++) {
+      for (j = 0; j < SEG; j++) {
+        var j2 = (j + 1) % SEG;
+        var a0 = i * SEG + j, b0 = i * SEG + j2;
+        var a1 = (i + 1) * SEG + j, b1 = (i + 1) * SEG + j2;
+        /* Тёмная обшивка, у сопла металл темнее и холоднее */
+        var kind = i >= PROFILE.length - 3 ? "nozzle" : (i <= 2 ? "nose" : "hull");
+        faces.push({ v: [a0, b0, b1, a1], kind: kind, ring: i });
+      }
+    }
+
+    /* Три стабилизатора: плоские клинья у основания */
+    for (i = 0; i < 3; i++) {
+      var ang = (i / 3) * Math.PI * 2 + 0.4;
+      var ca = Math.cos(ang), sa = Math.sin(ang);
+      var base = verts.length;
+      /* Внутренняя кромка у корпуса, внешняя отведена наружу и вниз */
+      verts.push([ca * 0.36, -0.35, sa * 0.36]);
+      verts.push([ca * 0.36, -1.15, sa * 0.36]);
+      verts.push([ca * 0.95, -1.42, sa * 0.95]);
+      verts.push([ca * 0.60, -0.62, sa * 0.60]);
+      faces.push({ v: [base, base + 1, base + 2, base + 3], kind: "fin", ring: 99 });
+    }
+
+    return { verts: verts, faces: faces };
+  }
+
+  var MODEL = buildRocket();
+
+  /* ── Математика ──────────────────────────────────────────── */
+  function rotate(p, ry, rx) {
+    var cy = Math.cos(ry), sy = Math.sin(ry);
+    var cx = Math.cos(rx), sx = Math.sin(rx);
+    var x = p[0] * cy - p[2] * sy;
+    var z = p[0] * sy + p[2] * cy;
+    var y = p[1] * cx - z * sx;
+    z = p[1] * sx + z * cx;
+    return [x, y, z];
+  }
+
+  function normal(a, b, c) {
+    var ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    var vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    var l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+    return [nx / l, ny / l, nz / l];
+  }
+
+  /* Свет по договору всего сайта: ключевой сверху-слева цианoвый,
+     заполняющий снизу-справа фиолетовый, контровой холодный белый. */
+  var KEY = [-0.55, 0.72, 0.42];
+  var FILL = [0.6, -0.4, 0.35];
+
+  function shade(n, kind) {
+    var kd = Math.max(0, n[0] * KEY[0] + n[1] * KEY[1] + n[2] * KEY[2]);
+    var fd = Math.max(0, n[0] * FILL[0] + n[1] * FILL[1] + n[2] * FILL[2]);
+    var rim = Math.pow(1 - Math.abs(n[2]), 3);
+
+    var base = kind === "nozzle" ? [34, 44, 58]
+             : kind === "fin" ? [22, 42, 64]
+             : kind === "nose" ? [40, 74, 104]
+             : [30, 56, 82];
+
+    var r = base[0] + kd * 128 + fd * 62 + rim * 78;
+    var gg = base[1] + kd * 186 + fd * 54 + rim * 132;
+    var b = base[2] + kd * 210 + fd * 150 + rim * 168;
+    return "rgb(" + Math.min(255, r | 0) + "," + Math.min(255, gg | 0) + "," + Math.min(255, b | 0) + ")";
+  }
+
+  /* ── Рисование кадра ─────────────────────────────────────── */
+  function drawRocket(x, W, H, S, spin, tilt, cxp, cyp, scale, glow) {
+    var i, j;
+    if (!(W > 8) || !(H > 8)) return;          /* холст ещё без размера */
+    var cx = W * cxp, cy = H * cyp;
+    /* Масштаб считаем от меньшей стороны, но с потолком по высоте:
+       на узком и высоком экране телефона ракета иначе распухала и
+       превращалась в вертикальную полосу во весь кадр. */
+    var fov = Math.min(S * scale, H * scale * 0.62);
+    var dist = 7.4;
+
+    var rot = [], vs = MODEL.verts;
+    for (i = 0; i < vs.length; i++) rot.push(rotate(vs[i], spin, tilt));
+
+    var list = [];
+    for (i = 0; i < MODEL.faces.length; i++) {
+      var f = MODEL.faces[i];
+      var pts = [], zsum = 0;
+      for (j = 0; j < f.v.length; j++) {
+        var p = rot[f.v[j]];
+        zsum += p[2];
+        var k = fov / (dist + p[2]);
+        pts.push([cx + p[0] * k, cy - p[1] * k]);
+      }
+      var n = normal(rot[f.v[0]], rot[f.v[1]], rot[f.v[2]]);
+      /* Задние грани не рисуем: экономия и правильный силуэт */
+      if (n[2] > 0.06 && f.kind !== "fin") continue;
+      list.push({ pts: pts, z: zsum / f.v.length, col: shade(n, f.kind), kind: f.kind, ring: f.ring });
+    }
+    list.sort(function (a, b) { return b.z - a.z; });
+
+    for (i = 0; i < list.length; i++) {
+      var it = list[i];
+      x.beginPath();
+      x.moveTo(it.pts[0][0], it.pts[0][1]);
+      for (j = 1; j < it.pts.length; j++) x.lineTo(it.pts[j][0], it.pts[j][1]);
+      x.closePath();
+      x.fillStyle = it.col;
+      x.fill();
+      /* Швы обшивки: тонкая цианoвая линия по кольцам */
+      if (it.kind === "hull" && it.ring % 2 === 0) {
+        x.strokeStyle = "rgba(66,178,220,.22)";
+        x.lineWidth = Math.max(0.6, S * 0.0012);
+        x.stroke();
+      }
+    }
+
+    /* Факел: живёт под соплом, длина и яркость идут за прогрессом */
+    if (glow > 0.01) {
+      var nozzle = rotate([0, -1.78, 0], spin, tilt);
+      var k2 = fov / (dist + nozzle[2]);
+      var fx = cx + nozzle[0] * k2, fy = cy - nozzle[1] * k2;
+      var len = S * (0.05 + glow * 0.14);
+      var gr = x.createLinearGradient(fx, fy, fx, fy + len);
+      gr.addColorStop(0, "rgba(226,240,255," + (0.85 * glow).toFixed(3) + ")");
+      gr.addColorStop(0.22, "rgba(66,178,220," + (0.8 * glow).toFixed(3) + ")");
+      gr.addColorStop(0.6, "rgba(138,89,246," + (0.42 * glow).toFixed(3) + ")");
+      gr.addColorStop(1, "rgba(138,89,246,0)");
+      x.beginPath();
+      x.moveTo(fx - S * 0.016 * (0.6 + glow), fy);
+      x.quadraticCurveTo(fx, fy + len * 1.15, fx + S * 0.016 * (0.6 + glow), fy);
+      x.closePath();
+      x.fillStyle = gr;
+      x.fill();
+      /* Ореол у среза сопла */
+      var hg = x.createRadialGradient(fx, fy, 0, fx, fy, S * 0.05 * (0.5 + glow));
+      hg.addColorStop(0, "rgba(207,233,245," + (0.5 * glow).toFixed(3) + ")");
+      hg.addColorStop(1, "rgba(66,178,220,0)");
+      x.fillStyle = hg;
+      x.beginPath(); x.arc(fx, fy, S * 0.05 * (0.5 + glow), 0, 6.283); x.fill();
+    }
+  }
+
+  var el=null, cv=null, x=null, raf=null, last=0, t=0;
+  var shown=0, killed=false, hid=false, p=0, pShow=0, launch=0;
+  var T_HOLD=700, T_CAP=4000, T_OUT=600;
+  var calm=false;
+  try { calm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+  /* Звук берём только с разрешения, выданного раньше на этом сайте */
+  var wantSound = false;
+  try { wantSound = localStorage.getItem("rcdn.sound") !== "off"; } catch (e) {}
+  var ac=null, bus=null, engG=null, engF=null;
+
+  function audioUp() {
+    if (ac || !wantSound || calm) return;
+    try {
+      var C = g.AudioContext || g.webkitAudioContext;
+      if (!C) return;
+      ac = new C();
+      if (ac.state !== "running") { try { ac.close(); } catch (e2) {} ac = null; return; }
+      bus = ac.createGain(); bus.gain.value = 0;
+      var lim = ac.createDynamicsCompressor();
+      lim.threshold.value=-12; lim.ratio.value=20; lim.attack.value=.003; lim.release.value=.25;
+      bus.connect(lim); lim.connect(ac.destination);
+      bus.gain.setTargetAtTime(.4, ac.currentTime, .5);
+      engG = ac.createGain(); engG.gain.value = .0001;
+      engF = ac.createBiquadFilter(); engF.type="lowpass"; engF.frequency.value=140; engF.Q.value=6;
+      var o1 = ac.createOscillator(), o2 = ac.createOscillator();
+      o1.type = o2.type = "sawtooth";
+      o1.frequency.value = 52; o2.frequency.value = 78; o2.detune.value = 8;
+      o1.connect(engF); o2.connect(engF); engF.connect(engG); engG.connect(bus);
+      o1.start(); o2.start();
+      engG.gain.setTargetAtTime(.15, ac.currentTime, .8);
+    } catch (e) { ac = null; }
+  }
+  function liftoff() {
+    if (!ac) return;
+    try {
+      var n = Math.floor(ac.sampleRate * .9), b = ac.createBuffer(1, n, ac.sampleRate), c = b.getChannelData(0);
+      for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.4);
+      var s = ac.createBufferSource(); s.buffer = b;
+      var f = ac.createBiquadFilter(); f.type="lowpass"; f.frequency.value=2400;
+      var gg = ac.createGain();
+      gg.gain.setValueAtTime(.5, ac.currentTime);
+      gg.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .9);
+      s.connect(f); f.connect(gg); gg.connect(bus); s.start();
+      if (engG) engG.gain.setTargetAtTime(.32, ac.currentTime, .12);
+      if (engF) engF.frequency.setTargetAtTime(1400, ac.currentTime, .2);
+    } catch (e) {}
+  }
+
+  /* Звёздный поток за ракетой: даёт скорость и глубину кадра */
+  var stars = [];
+  for (var si = 0; si < 190; si++) {
+    stars.push({ x:(Math.random()-.5)*2, y:(Math.random()-.5)*2, z:Math.random(), c:Math.random() });
+  }
+  /* Дальний слой: неподвижные мерцающие звёзды. Стримы дают скорость,
+     а глубину кадру дают именно они. */
+  var dots = [];
+  for (var di = 0; di < 110; di++) {
+    dots.push({ x: Math.random(), y: Math.random(), r: .5 + Math.random() * 1.3, ph: Math.random() * 6.28, sp: .4 + Math.random() * 1.1 });
+  }
+
+  /* Размер берём у самого холста, а не у окна: в мобильных браузерах
+     окно и видимая область расходятся, когда прячется адресная
+     строка, и холст оставался со старым размером - картинку тянуло
+     по вертикали в полосу. Заодно страхуемся от нулевого размера. */
+  function size() {
+    if (!cv) return;
+    var r = Math.min(2, g.devicePixelRatio || 1);
+    var box = cv.getBoundingClientRect();
+    var w = Math.round((box.width || innerWidth) * r);
+    var h = Math.round((box.height || innerHeight) * r);
+    if (w < 8 || h < 8) return;
+    if (cv.width !== w) cv.width = w;
+    if (cv.height !== h) cv.height = h;
+  }
+
+  function build() {
+    if (el || killed) return;
+    el = d.createElement("div");
+    el.className = "rc-load";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-busy", "true");
+    el.innerHTML =
+      '<canvas aria-hidden="true"></canvas>' +
+      '<div class="rc-load-sl">FAST. RELIABLE. GLOBAL.</div>' +
+      '<div class="rc-load-pc">0%</div>' +
+      '<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Загрузка Rocket CDN</span>';
+    (d.body || d.documentElement).appendChild(el);
+    cv = el.querySelector("canvas");
+    x = cv.getContext("2d");
+    size();
+    addEventListener("resize", size, { passive: true });
+    requestAnimationFrame(function () { if (el) { el.classList.add("on"); el.classList.add("lit"); } });
+    shown = Date.now();
+    audioUp();
+    if (calm) frame(0); else raf = requestAnimationFrame(loop);
+  }
+
+  function frame(dt) {
+    if (!x || !cv) return;
+    size();                                   /* окно на телефоне ползёт постоянно */
+    if (cv.width < 8 || cv.height < 8) return;
+    pShow += (p - pShow) * 0.1;
+    t += dt;
+    if (launch) launch = Math.min(1, launch + dt * 1.5);
+    var W = cv.width, H = cv.height, S = Math.min(W, H);
+
+    /* Шлейф вместо очистки: следы читаются как скорость */
+    x.fillStyle = "rgba(5,12,21," + (0.4 - pShow * 0.16).toFixed(3) + ")";
+    x.fillRect(0, 0, W, H);
+
+    /* Туманности: два дыхания цвета в глубине кадра */
+    var ng = x.createRadialGradient(W * 0.24, H * 0.3, 0, W * 0.24, H * 0.3, S * 0.75);
+    ng.addColorStop(0, "rgba(66,178,220," + (0.05 + Math.sin(t * 0.5) * 0.012).toFixed(3) + ")");
+    ng.addColorStop(1, "rgba(66,178,220,0)");
+    x.fillStyle = ng; x.fillRect(0, 0, W, H);
+    ng = x.createRadialGradient(W * 0.8, H * 0.74, 0, W * 0.8, H * 0.74, S * 0.65);
+    ng.addColorStop(0, "rgba(138,89,246," + (0.045 + Math.cos(t * 0.4) * 0.012).toFixed(3) + ")");
+    ng.addColorStop(1, "rgba(138,89,246,0)");
+    x.fillStyle = ng; x.fillRect(0, 0, W, H);
+
+    /* Дальние звёзды: стоят и мерцают */
+    for (var dj = 0; dj < dots.length; dj++) {
+      var dd = dots[dj];
+      var da = 0.18 + 0.3 * (0.5 + 0.5 * Math.sin(t * dd.sp + dd.ph));
+      x.fillStyle = "rgba(207,233,245," + da.toFixed(3) + ")";
+      x.beginPath(); x.arc(dd.x * W, dd.y * H, dd.r, 0, 6.283); x.fill();
+    }
+
+    /* Поток данных мимо камеры */
+    var speed = (0.1 + pShow * pShow * 0.9 + launch * 2.2) * dt * 60;
+    var fov = S * 0.7, cx = W / 2, cy = H / 2;
+    for (var i = 0; i < stars.length; i++) {
+      var st = stars[i], pz = st.z;
+      st.z -= speed * 0.012;
+      if (st.z <= 0.02) { st.z = 1; st.x = (Math.random()-.5)*2; st.y = (Math.random()-.5)*2; st.c = Math.random(); pz = st.z; }
+      var k = fov / st.z, kp = fov / pz;
+      var a = Math.min(1, (1 - st.z) * 1.4);
+      x.strokeStyle = st.c > .8 ? "rgba(138,89,246," + (a*.75).toFixed(3) + ")"
+                    : "rgba(66,178,220," + (a*.7).toFixed(3) + ")";
+      x.lineWidth = Math.max(0.6, (1 - st.z) * 3.4);
+      x.beginPath();
+      x.moveTo(cx + st.x * kp, cy + st.y * kp);
+      x.lineTo(cx + st.x * k, cy + st.y * k);
+      x.stroke();
+    }
+
+    /* Ракета: на загрузке медленно поворачивается, показывая объём,
+       на старте выпрямляется и уходит вверх из кадра */
+    var spin = t * 0.55;
+    var tilt = 0.34 - launch * 0.3 + Math.sin(t * 0.7) * 0.05;
+    var upY = 0.44 - launch * launch * 0.9;
+    var scale = 0.42 + pShow * 0.05 + launch * 0.14;
+    var glow = 0.3 + pShow * 0.5 + launch * 1.1;
+    drawRocket(x, W, H, S, spin, tilt, 0.5, upY, scale, glow);
+
+    /* Дымный столб под ракетой в момент старта */
+    if (launch > 0.02) {
+      var sg = x.createRadialGradient(cx, cy + S * 0.3, 0, cx, cy + S * 0.3, S * (0.2 + launch * 0.5));
+      sg.addColorStop(0, "rgba(207,233,245," + (0.22 * (1 - launch)).toFixed(3) + ")");
+      sg.addColorStop(1, "rgba(66,178,220,0)");
+      x.fillStyle = sg;
+      x.beginPath(); x.arc(cx, cy + S * 0.3, S * (0.2 + launch * 0.5), 0, 6.283); x.fill();
+    }
+
+    /* Кольцо хода загрузки вокруг ракеты: дуга в фирменном градиенте.
+       На старте кольцо замыкается и вспыхивает. */
+    if (launch < 0.9) {
+      var rr = S * (0.30 + launch * 0.1), ry = H * 0.44 + S * 0.02;
+      var a0 = -Math.PI / 2, a1 = a0 + Math.max(0.02, pShow) * 6.28318;
+      var lg = x.createLinearGradient(cx - rr, cy, cx + rr, cy);
+      lg.addColorStop(0, "rgba(66,178,220," + (0.6 * (1 - launch)).toFixed(3) + ")");
+      lg.addColorStop(1, "rgba(138,89,246," + (0.6 * (1 - launch)).toFixed(3) + ")");
+      x.strokeStyle = lg;
+      x.lineWidth = Math.max(1.5, S * 0.004);
+      x.lineCap = "round";
+      x.beginPath(); x.arc(cx, ry, rr, a0, a1); x.stroke();
+      /* Огонёк на конце дуги */
+      x.fillStyle = "rgba(207,233,245," + (0.5 * (1 - launch)).toFixed(3) + ")";
+      x.beginPath(); x.arc(cx + Math.cos(a1) * rr, ry + Math.sin(a1) * rr, Math.max(2, S * 0.005), 0, 6.283); x.fill();
+    }
+
+    var pc = el && el.querySelector(".rc-load-pc");
+    if (pc) pc.textContent = Math.round(pShow * 100) + "%";
+  }
+
+  function loop(ts) {
+    raf = requestAnimationFrame(loop);
+    if (d.hidden) { last = 0; return; }
+    var dt = last ? Math.min(.05, (ts - last) / 1000) : .016;
+    last = ts;
+    frame(dt);
+    if (ac && engF && !launch) {
+      try { engF.frequency.setTargetAtTime(140 + pShow * 700, ac.currentTime, .3); } catch (e) {}
+    }
+  }
+
+  var api = {
+    show: function () { if (!hid) build(); },
+    setProgress: function (v) { p = v > 1 ? v / 100 : v; if (p > 1) p = 1; if (p < 0) p = 0; },
+    sound: function (on) {
+      wantSound = !!on;
+      if (!on && ac) { try { ac.close(); } catch (e) {} ac = null; }
+      else if (on && el) audioUp();
+    },
+    hide: function () {
+      if (hid) return;
+      hid = true;
+      if (!el) { killed = true; return; }
+      var wait = Math.max(0, T_HOLD - (Date.now() - shown));
+      setTimeout(function () {
+        if (!el) return;
+        p = 1;
+        launch = 0.001;          /* старт: ракета уходит вверх */
+        liftoff();
+        setTimeout(function () {
+          if (!el) return;
+          el.classList.add("out");
+          d.documentElement.classList.add("rc-loaded");
+          if (ac && bus) { try { bus.gain.setTargetAtTime(0, ac.currentTime, .2); } catch (e) {} }
+          setTimeout(api.destroy, T_OUT + 80);
+        }, 620);
+      }, wait);
+    },
+    destroy: function () {
+      killed = true;
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      if (ac) { try { ac.close(); } catch (e) {} ac = null; }
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      el = null; cv = null; x = null;
+    }
+  };
+  g.RocketLoader = api;
+
+  setTimeout(function () { if (!hid) api.show(); }, 150);
+
+  var got = 0, need = 3;
+  function step() { got++; api.setProgress(got / need); if (got >= need) api.hide(); }
+  try { if (d.fonts && d.fonts.ready) d.fonts.ready.then(step); else step(); } catch (e) { step(); }
+  if (d.readyState === "complete") step();
+  else g.addEventListener("load", step, { once: true });
+  var told = false;
+  function once() { if (told) return; told = true; step(); }
+  g.addEventListener("rc:3d", once);
+  g.addEventListener("rc:no3d", once);
+  setTimeout(once, 2600);
+  setTimeout(function () { api.hide(); }, T_CAP);
+})(window, document);
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Rocket CDN",
+  "url": "https://rocketcdn.ru",
+  "logo": "https://rocketcdn.ru/assets/logo.webp",
+  "description": "Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.",
+  "sameAs": ["https://lk.rocketcdn.ru"],
+  "contactPoint": [{
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "email": "info@rocketcdn.ru",
+    "availableLanguage": ["Russian", "English"]
+  }]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Rocket CDN",
+  "url": "https://rocketcdn.ru/",
+  "inLanguage": [
+    "ru",
+    "en"
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rocket CDN",
+    "url": "https://rocketcdn.ru"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Сеть доставки контента",
+  "provider": {
+    "@type": "Organization",
+    "name": "Rocket CDN",
+    "url": "https://rocketcdn.ru"
+  },
+  "areaServed": [
+    {
+      "@type": "Country",
+      "name": "Россия"
+    },
+    {
+      "@type": "Place",
+      "name": "Мир"
+    }
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Продукты Rocket CDN",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "CDN"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Стриминг"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Медиа-хранилище"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Плеер"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Облако"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Безопасность"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Виртуальный диктор"
+        }
+      }
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Сколько времени занимает подключение?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Можно ли использовать свой домен и сертификат?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Как считается стоимость?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Что происходит, если узел недоступен?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Есть ли защита от атак?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Подходит ли сеть для живых трансляций?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабита в секунду нагрузки."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Где находятся собственные дата-центры?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком."
+      }
+    }
+  ]
+}
+</script>
+<!-- Блок FAQPage выше собирает tools/prerender.cjs из того же
+     словаря, что и сам список вопросов: руками он разъезжался со
+     словарём. Вопросов в нём столько, сколько человек видит на
+     голограмме пульта (qLimit в assets/rc-desk.js), сейчас семь из
+     восьми: правила расширенного сниппета требуют, чтобы каждый
+     вопрос из разметки был виден на странице, и один невидимый снял
+     бы сниппет целиком. -->
+</head>
+<body class="has-mcta">
+<!-- Первый табстоп: обход шапки и списка узлов прямо к тексту -->
+<a class="skip" href="#top" data-i18n="ui.skip">К содержимому</a>
+
+<!-- Заставку строит RocketLoader из шапки документа: без JavaScript её нет
+     вовсе и страница читается сразу -->
+
+<!-- Живой космос на фоне всей страницы -->
+<canvas id="spaceBg" aria-hidden="true"></canvas>
+
+<div class="prog" id="prog"></div>
+<div class="snd-hint" role="status" data-i18n="ui.soundHint">У этого сайта есть звук</div>
+
+<!-- 3D-ракета, летит по скроллу через весь сайт -->
+<canvas id="rocketCanvas" aria-hidden="true"></canvas>
+
+<!-- Шапка -->
+<header class="hdr" id="hdr">
+  <div class="wrap hdr-in">
+    <a href="#top" class="logo" aria-label="Rocket CDN">
+      <!-- Обе темы лежали картинками и качались обе: 240 КБ, половина
+           всегда впустую. Теперь webp и загрузка по текущей теме -->
+      <img class="lg-dark"  src="assets/logo-h.webp"       alt="Rocket CDN" width="172" height="34" fetchpriority="high">
+      <img class="lg-light" src="assets/logo-h-light.webp" alt="Rocket CDN" width="172" height="34" loading="lazy" decoding="async">
+    </a>
+
+    <nav class="nav" data-i18n="a11y.nav" data-i18n-attr="aria-label" aria-label="Основная навигация">
+      <a href="#products"  data-i18n="nav.products">Продукты</a>
+      <a href="#infra"     data-i18n="nav.infra">Инфраструктура</a>
+      <a href="#adv"       data-i18n="nav.adv">Преимущества</a>
+      <a href="#how"       data-i18n="nav.how">Как работает</a>
+      <a href="#cases"     data-i18n="nav.cases">Сценарии</a>
+      <a href="#faq"       data-i18n="nav.faq">Вопросы</a>
+      <a href="#contact"   data-i18n="nav.contact">Контакты</a>
+    </nav>
+
+    <div class="hdr-act">
+      <div class="pill lang" role="group" data-i18n="a11y.lang" data-i18n-attr="aria-label" aria-label="Язык интерфейса">
+        <i class="pill-knob" aria-hidden="true"></i>
+        <button type="button" data-lang="ru" class="on" aria-pressed="true">RU</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <div class="pill theme" role="group" data-i18n="a11y.theme" data-i18n-attr="aria-label" aria-label="Оформление">
+        <i class="pill-knob" aria-hidden="true"></i>
+        <button type="button" class="js-theme" data-theme="light" aria-pressed="false" data-i18n="ui.light" data-i18n-attr="title" title="Светлая тема">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="vh" data-i18n="ui.light">Светлая тема</span>
+        </button>
+        <button type="button" class="js-theme" data-theme="dark" aria-pressed="true" data-i18n="ui.dark" data-i18n-attr="title" title="Тёмная тема">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <span class="vh" data-i18n="ui.dark">Тёмная тема</span>
+        </button>
+      </div>
+      <div class="pill snd" role="group" data-i18n="a11y.sound" data-i18n-attr="aria-label" aria-label="Звук">
+        <i class="pill-knob" aria-hidden="true"></i>
+        <button type="button" class="js-sound" aria-pressed="false">
+          <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="vh" data-i18n="ui.sound">Звук</span>
+        </button>
+      </div>
+      <a class="btn btn-p btn-sm js-reg" data-place="header" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
+        <span data-i18n="cta.register">Регистрация</span>
+      </a>
+      <button type="button" class="icon-btn burger" id="burger" data-i18n="menu.open" data-i18n-attr="aria-label" aria-label="Открыть меню" aria-expanded="false" aria-controls="drawer"></button>
+    </div>
+  </div>
+</header>
+
+<!-- Мобильное меню -->
+<nav class="drawer" id="drawer" data-i18n="a11y.menu" data-i18n-attr="aria-label" aria-label="Меню">
+  <!-- Своя кнопка закрытия. Шторка это непрозрачная заслонка во весь
+       экран, страница под ней заглушена, и бургер в шапке из-под неё
+       не достать: без этой кнопки закрыть меню с клавиатуры можно
+       было бы только Escape. -->
+  <button type="button" class="icon-btn drawer-x js-drawer-close" data-i18n="menu.close" data-i18n-attr="aria-label" aria-label="Закрыть меню">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <a href="#products" data-i18n="nav.products">Продукты</a>
+  <a href="#infra"    data-i18n="nav.infra">Инфраструктура</a>
+  <a href="#adv"      data-i18n="nav.adv">Преимущества</a>
+  <a href="#how"      data-i18n="nav.how">Как работает</a>
+  <a href="#cases"    data-i18n="nav.cases">Сценарии</a>
+  <a href="#faq"      data-i18n="nav.faq">Вопросы</a>
+  <a href="#contact"  data-i18n="nav.contact">Контакты</a>
+  <!-- Правовые ссылки живут и в меню. Раньше они были только в
+       подвале, а подвал в финале кино не показывается: человек сидит
+       в кресле корабля, и правовая строка поперёк остекления читалась
+       наклейкой поверх кадра. В меню они доступны с любого места. -->
+  <a class="drawer-law" href="privacy.html" target="_blank" data-i18n="ftr.policy">Политика конфиденциальности</a>
+  <a class="drawer-law" href="offer.html" target="_blank" data-i18n="ftr.oferta">Публичная оферта</a>
+  <a class="drawer-law" href="offer.html#sla" target="_blank" data-i18n="ftr.sla">Условия SLA</a>
+  <!-- Подвал страницы в финале кино скрыт: человек сидит в кресле
+       корабля, и правовая строка поперёк остекления читалась бы
+       наклейкой поверх кадра. Значит копирайт и обязательная подпись
+       к картам планет обязаны жить здесь: Сатурн, Уран, Нептун и
+       Солнце взяты у Solar System Scope под лицензией CC BY 4.0, и
+       подпись по её условиям обязательна. -->
+  <span class="drawer-law drawer-fine">&copy; <span class="year">2026</span> Rocket CDN</span>
+  <span class="drawer-law drawer-fine" data-i18n="ftr.maps">Карты планет: NASA (Viking, MESSENGER, Magellan, Cassini) и Solar System Scope, CC BY 4.0</span>
+  <a class="btn btn-p js-reg" data-place="drawer" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
+    <span data-i18n="cta.register2">Зарегистрироваться</span>
+  </a>
+  <div class="drawer-tools">
+    <div class="pill lang wide" role="group" data-i18n="a11y.lang" data-i18n-attr="aria-label" aria-label="Язык интерфейса">
+      <i class="pill-knob" aria-hidden="true"></i>
+      <button type="button" data-lang="ru" class="on" aria-pressed="true">Русский</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    </div>
+    <div class="pill snd wide" role="group" data-i18n="a11y.sound" data-i18n-attr="aria-label" aria-label="Звук">
+      <i class="pill-knob" aria-hidden="true"></i>
+      <button type="button" class="js-sound" aria-pressed="false">
+        <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span data-i18n="ui.sound">Звук</span>
+      </button>
+    </div>
+    <div class="pill theme wide" role="group" data-i18n="a11y.theme" data-i18n-attr="aria-label" aria-label="Оформление">
+      <i class="pill-knob" aria-hidden="true"></i>
+      <button type="button" class="js-theme" data-theme="light" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span data-i18n="ui.light">Светлая</span>
+      </button>
+      <button type="button" class="js-theme" data-theme="dark" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span data-i18n="ui.dark">Тёмная</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- ═══ Герой ═══ -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-globe"><canvas id="globeHero" aria-hidden="true"></canvas></div>
+  <div class="wrap">
+    <div class="hero-in">
+      <div class="hero-logo rv">
+        <img class="lg-dark"  src="assets/logo.webp"       alt="Rocket CDN" width="300" height="204" fetchpriority="high">
+        <img class="lg-light" src="assets/logo-light.webp" alt="Rocket CDN" width="300" height="204" loading="lazy" decoding="async">
+      </div>
+      <div class="hero-chips">
+        <span class="chip"><i class="dot-live"></i><span data-i18n="hero.chip1">сеть работает</span></span>
+        <span class="chip"><b><span data-nodes>218</span></b> <span data-i18n="hero.chip2">точек присутствия</span></span>
+        <span class="chip"><b>3</b> <span data-i18n="hero.chip3">собственных ЦОД</span></span>
+      </div>
+      <h1>
+        <span data-i18n="hero.h1a">Доставка контента</span><br>
+        <span class="grad-tx" data-i18n="hero.h1b">на сверхскорости</span>
+      </h1>
+      <p class="hero-sub" data-i18n="hero.sub">Rocket CDN объединяет собственную инфраструктуру и глобальное edge-покрытие, чтобы контент находился ближе к пользователю. Быстро, стабильно и предсказуемо.</p>
+      <div class="btn-row">
+        <a class="btn btn-p btn-lg js-reg" data-place="hero" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
+          <span data-i18n="cta.register2">Зарегистрироваться</span>
+        </a>
+        <a class="btn btn-g btn-lg js-connect" data-place="hero" href="#contact">
+          <span data-i18n="cta.connect">Запросить подключение</span>
+        </a>
+      </div>
+      <div class="hero-marks" id="heroMarks"></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span data-i18n="hero.scroll">Листайте вниз</span><i></i></div>
+</section>
+
+<!-- ═══ Показатели ═══ -->
+<section id="kpi" style="padding-top:0">
+  <div class="wrap">
+    <div class="kpi rv">
+      <div>
+        <div class="kpi-n grad-tx" data-i18n="kpi.1n">99,9%</div>
+        <div class="kpi-l" data-i18n="kpi.1l">Доступность по SLA</div>
+      </div>
+      <div>
+        <div class="kpi-n grad-tx"><span data-count="218"><span data-nodes>218</span></span></div>
+        <div class="kpi-l" data-i18n="kpi.2l">Узлов CDN по всему миру</div>
+      </div>
+      <div>
+        <div class="kpi-n grad-tx" data-i18n="kpi.3n">3 Тбит/с</div>
+        <div class="kpi-l" data-i18n="kpi.3l">Пропускная способность в России</div>
+      </div>
+      <div>
+        <div class="kpi-n grad-tx" data-i18n="kpi.4n">1,5 млн</div>
+        <div class="kpi-l" data-i18n="kpi.4l">Зрителей одновременно</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Что даёт сеть ═══ -->
+<section id="effect">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="eff.tag">Эффект</div>
+      <h2 class="sec-h" data-i18n="eff.h">Что меняется после подключения</h2>
+      <p class="sec-p" data-i18n="eff.p">Цифры с боевых площадок: контент отдаётся с ближайшего узла, origin разгружается, пики перестают быть проблемой.</p>
+    </div>
+
+    <div class="viz-grid">
+      <article class="viz-card rv">
+        <h3 data-i18n="eff.c1h">Задержка до пользователя</h3>
+        <div data-viz="latency" data-l1="Без сети доставки" data-l2="Через Rocket CDN"></div>
+        <p data-i18n="eff.c1p">Запрос идёт до ближайшей точки присутствия, а не через полстраны.</p>
+      </article>
+
+      <article class="viz-card rv rv-d1">
+        <h3 data-i18n="eff.c2h">Разгрузка origin</h3>
+        <div class="dn-wrap" data-viz="donut" data-value="95" data-caption="попаданий в кэш"></div>
+        <p data-i18n="eff.c2p">Почти весь трафик отдают узлы сети. Ваш сервер занимается делом, а не раздачей файлов.</p>
+      </article>
+
+      <article class="viz-card rv rv-d2">
+        <h3 data-i18n="eff.c3h">Доступность</h3>
+        <div class="ga-wrap" data-viz="gauge" data-value="99.9" data-min="99" data-caption="доступность по SLA"></div>
+        <p data-i18n="eff.c3p">Уровень закреплён договором. Резервирование на каждом участке маршрута.</p>
+      </article>
+    </div>
+
+    <div class="viz-grid rv rv-d1" style="margin-top:var(--gap)">
+      <article class="viz-card viz-wide wave-wrap">
+        <h3 data-i18n="live.h">Трафик сети прямо сейчас</h3>
+        <div data-viz="wave"></div>
+        <!-- Обещания «обновляется в реальном времени» тут стоять не может:
+     кривая рисуется на месте и к серверу не ходит. Текст сведён с
+     тем, что лежит в словаре и попадает на экран. -->
+<p data-i18n="live.p">Совокупная отдача по всем точкам присутствия.</p>
+      </article>
+      <article class="viz-card">
+        <div class="tick" data-viz="ticker" data-from="0" data-to="nodes" data-drift="0">
+          <span data-i18n="tick.1">Точек присутствия</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="1500000" data-drift="900">
+          <span data-i18n="tick.2">Зрителей одновременно</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="3" data-dec="0" data-suffix=" Тбит/с">
+          <span data-i18n="tick.3">Пропускная способность в России</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="24" data-suffix="/7">
+          <span data-i18n="tick.4">Дежурство инженеров</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="sep-line"><i></i></div>
+
+<!-- ═══ Что это ═══ -->
+<section id="what">
+  <div class="wrap">
+    <div class="what-top">
+      <div class="sec-head rv" data-par="0.03" style="margin-bottom:0">
+        <div class="sec-tag" data-i18n="what.tag">Простыми словами</div>
+        <h2 class="sec-h" data-i18n="what.h">Что такое Rocket CDN</h2>
+        <p class="sec-p" data-i18n="what.p">Сеть серверов, расположенных рядом с вашей аудиторией.</p>
+        <div class="hero-marks" id="whatMarks" style="margin-top:22px"></div>
+      </div>
+
+      <div class="rack rv rv-d1">
+        <canvas id="rackCv" data-i18n="a11y.rack" data-i18n-attr="aria-label" aria-label="Стойка дата-центра Rocket CDN в объёме"></canvas>
+        <div class="rack-hint"><span data-i18n="what.spin">Покрутите стойку</span></div>
+      </div>
+    </div>
+
+    <div class="flow rv rv-d1">
+      <div class="flow-node">
+        <div class="card-ico" data-ico="storage"></div>
+        <h3 data-i18n="what.n1h">Ваш origin</h3>
+        <p data-i18n="what.n1p">Сайт, видеоплатформа или хранилище.</p>
+      </div>
+      <div class="flow-link"><i></i></div>
+      <div class="flow-node hot">
+        <div class="card-ico" data-ico="globe"></div>
+        <h3 data-i18n="what.n2h">Edge-узлы Rocket CDN</h3>
+        <p data-i18n="what.n2p">218 точек присутствия кэшируют контент.</p>
+      </div>
+      <div class="flow-link"><i></i></div>
+      <div class="flow-node">
+        <div class="card-ico" data-ico="user"></div>
+        <h3 data-i18n="what.n3h">Пользователь</h3>
+        <p data-i18n="what.n3p">Получает данные с ближайшего узла.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="sep-line"><i></i></div>
+
+<!-- ═══ Продукты ═══ -->
+<section id="products">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="prod.tag">Продукты</div>
+      <h2 class="sec-h" data-i18n="prod.h">Инфраструктура под любую задачу</h2>
+      <p class="sec-p" data-i18n="prod.p">Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.</p>
+    </div>
+    <div class="grid g-4 tight" id="gridProducts"><div class="card"><h3>CDN</h3><p>Кэширование и раздача статики, видео и больших файлов с ближайшего к пользователю узла.</p><ul><li>Статика и большие файлы</li><li>Гибкие правила кэширования</li><li>Своя SSL и свой домен</li></ul></div><div class="card"><h3>Стриминг</h3><p>Живые трансляции и видео по запросу на аудиторию любого размера, на все известные устройства.</p><ul><li>Live и VOD</li><li>Транскодирование</li><li>Низкая задержка</li></ul></div><div class="card"><h3>Медиа-хранилище</h3><p>Объектное хранилище для видео и файлов с прямой отдачей в сеть доставки.</p><ul><li>S3-совместимый доступ</li><li>Хранение без лимитов</li><li>Отдача сразу через CDN</li></ul></div><div class="card"><h3>Плеер</h3><p>Готовый плеер с адаптивным качеством, вашим брендом и аналитикой просмотров.</p><ul><li>Адаптивный битрейт</li><li>Оформление под бренд</li><li>Статистика просмотров</li></ul></div><div class="card"><h3>Облако</h3><p>Виртуальные машины на процессорах нового поколения AMD и Intel, а для Big Data и AI - ARM и GPU.</p><ul><li>AMD, Intel, ARM</li><li>Графические ускорители</li><li>Масштабирование за минуты</li></ul></div><div class="card"><h3>Безопасность</h3><p>Фильтрация атак на уровне сети и приложения, доступ по правилам и защита origin.</p><ul><li>Защита L3-L7</li><li>Правила доступа</li><li>Origin закрыт от прямых запросов</li></ul></div><div class="card"><h3>Виртуальный диктор</h3><p>Синтез речи для озвучки роликов, объявлений и медиа-контента.</p><ul><li>Естественные голоса</li><li>Пакетная обработка</li><li>Готовый файл в хранилище</li></ul></div></div>
+  </div>
+</section>
+
+<!-- ═══ Преимущества ═══ -->
+<section id="adv">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="adv.tag">Преимущества</div>
+      <h2 class="sec-h" data-i18n="adv.h">Почему выбирают Rocket CDN</h2>
+      <p class="sec-p" data-i18n="adv.p">Собственное железо, собственные каналы и инженеры на связи круглосуточно.</p>
+    </div>
+    <div class="grid g-3" id="gridAdv"><div class="card"><h3>Процессоры нового поколения</h3><p>Виртуальные машины на базе AMD и Intel последних поколений. Ресурсы выделяются честно, без переподписки.</p></div><div class="card"><h3>ARM и GPU для Big Data и AI</h3><p>Для расчётов, обучения моделей и обработки медиа доступны ARM-процессоры и графические ускорители.</p></div><div class="card"><h3>Трансляции любого масштаба</h3><p>Трансляции держат пик зрителей без просадки картинки: мультибитрейт, запись и защита ссылок настраиваются под ваш поток.</p></div><div class="card"><h3>Поддержка круглосуточно</h3><p>Инженеры на связи 24/7. Отвечает человек, который разбирается в сети.</p></div><div class="card"><h3>1 500 000 зрителей и 1 Тбит/с</h3><p>Сеть держит более полутора миллионов зрителей одновременно и свыше терабита в секунду нагрузки.</p></div><div class="card"><h3>3 Тбит/с по России</h3><p>Пропускная способность сети внутри России превышает 3 Тбит/с и растёт вместе с вашим трафиком.</p></div></div>
+  </div>
+</section>
+
+<div class="sep-line"><i></i></div>
+
+<!-- ═══ Инфраструктура ═══ -->
+<section id="infra">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="infra.tag">Инфраструктура</div>
+      <h2 class="sec-h" data-i18n="infra.h">Глобальная сеть присутствия</h2>
+      <p class="sec-p" data-i18n="infra.p">Точки присутствия на шести континентах и три собственных дата-центра.</p>
+    </div>
+
+    <div class="infra">
+      <div class="rv">
+        <div class="map-wrap"><canvas id="globeMap" data-i18n="a11y.globe" data-i18n-attr="aria-label" aria-label="Карта сети Rocket CDN: точки присутствия на глобусе"></canvas></div>
+        <div class="map-legend">
+          <span class="leg"><i style="background:#42B2DC"></i><span data-i18n="infra.leg1">Узел CDN</span></span>
+          <span class="leg"><i style="background:#8A59F6"></i><span data-i18n="infra.leg2">Облако и защита</span></span>
+          <span class="leg"><i style="background:#64748B"></i><span data-i18n="infra.leg3">Скоро в сети</span></span>
+          <span class="leg"><i style="background:#B8ECFF;box-shadow:0 0 0 3px rgba(66,178,220,.28)"></i><span data-i18n="infra.leg4">Собственный ЦОД</span></span>
+        </div>
+      </div>
+
+      <div class="rv rv-d1">
+        <div class="reg-tabs" id="regTabs"></div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input type="search" id="nodeSearch" data-i18n="infra.search" data-i18n-attr="placeholder,aria-label" placeholder="Поиск города или региона" aria-label="Поиск города или региона">
+        </div>
+        <div class="node-list" id="nodeList"></div>
+        <p style="font-size:13px;color:var(--tx-3);margin-top:10px">
+          <span data-i18n="infra.found">Найдено точек</span>: <b id="nodeCount" style="color:var(--accent-tx)"><span data-nodes>218</span></b>
+        </p>
+      </div>
+    </div>
+
+    <div class="sec-head rv dc-head" style="margin:clamp(30px,4vw,52px) 0 0">
+      <h3 class="sec-h" style="font-size:clamp(21px,2.6vw,30px)" data-i18n="infra.dch">Три собственных дата-центра</h3>
+      <p class="sec-p" data-i18n="infra.dcp">Своё оборудование, свои каналы и полный контроль над маршрутами.</p>
+    </div>
+    <div class="dc-grid" id="dcGrid"></div>
+
+    <div class="mq rv" data-viz="marquee" style="margin-top:clamp(22px,3vw,34px)"></div>
+
+    <div class="viz-grid rv rv-d1" style="margin-top:var(--gap)">
+      <article class="viz-card viz-wide">
+        <h3 data-i18n="reg.h">Точки присутствия по регионам</h3>
+        <div data-viz="bars"></div>
+      </article>
+      <article class="viz-card">
+        <h3 data-i18n="reg.h2">Свои мощности</h3>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="3">
+          <span data-i18n="reg.t1">Собственных дата-центра</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="5">
+          <span data-i18n="reg.t2">Регионов в покрытии</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="1" data-suffix=" Тбит/с">
+          <span data-i18n="reg.t3">Нагрузки одновременно</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Демо-полёт: вход в открытый космос ═══ -->
+<section id="flight" class="rcf-cta" data-i18n="a11y.flight" data-i18n-attr="aria-label" aria-label="Демо-полёт">
+  <button type="button" class="rcf-cta-btn js-flight">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+    <span data-i18n="fly.btn">Полёт в открытый космос</span>
+  </button>
+  <p class="rcf-cta-note" data-i18n="fly.note">Облетите Землю, пройдите мимо Сатурна и вернитесь через гиперпрыжок. Управление - прокрутка.</p>
+</section>
+
+<!-- ═══ Как работает ═══ -->
+<section id="how" class="hs">
+  <div class="hs-stage">
+    <div class="wrap hs-head sec-head rv" data-par="0.02">
+      <div class="sec-tag" data-i18n="how.tag">Как это работает</div>
+      <h2 class="sec-h" data-i18n="how.h">Путь запроса за 40 миллисекунд</h2>
+      <p class="sec-p" data-i18n="how.p">Маршрут строится автоматически.</p>
+    </div>
+    <div class="hs-view">
+      <div class="hs-track" id="howGrid"></div>
+    </div>
+    <div class="wrap hs-bar"><i></i></div>
+  </div>
+</section>
+
+<div class="sep-line"><i></i></div>
+
+<section id="route">
+  <div class="wrap">
+    <div class="viz-card rv">
+      <h3 data-i18n="topo.h">Маршрут от origin до пользователя</h3>
+      <div data-viz="topology"></div>
+      <p data-i18n="topo.p">Слева ваш сервер, в центре собственные дата-центры, справа edge-узлы рядом с аудиторией.</p>
+    </div>
+  </div>
+</section>
+
+<div class="sep-line"><i></i></div>
+
+<!-- ═══ Что входит ═══ -->
+<section id="included">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="inc.tag">Что входит</div>
+      <h2 class="sec-h" data-i18n="inc.h">Включено в подключение</h2>
+      <p class="sec-p" data-i18n="inc.p">Базовый набор доступен сразу, без отдельной платы за каждую опцию.</p>
+    </div>
+    <div class="inc-grid rv rv-d1" id="incGrid"></div>
+  </div>
+</section>
+
+<!-- ═══ Сценарии ═══ -->
+<section id="cases" class="hs">
+  <div class="hs-stage">
+    <div class="wrap hs-head sec-head rv" data-par="0.02">
+      <div class="sec-tag" data-i18n="case.tag">Сценарии</div>
+      <h2 class="sec-h" data-i18n="case.h">Под какие задачи берут Rocket CDN</h2>
+      <p class="sec-p" data-i18n="case.p">От разовой трансляции до постоянной раздачи терабайтов.</p>
+    </div>
+    <div class="hs-view">
+      <div class="hs-track" id="gridCases"><div class="case-card"><h3>Видеосервисы и OTT</h3><p>Раздача VOD-библиотек и живых каналов без буферизации в часы пик.</p></div><div class="case-card"><h3>Телеканалы</h3><p>Круглосуточное вещание с резервированием потока и записью эфира.</p></div><div class="case-card"><h3>Медиа и новости</h3><p>Мгновенная отдача фото, видео и страниц при всплесках посещаемости.</p></div><div class="case-card"><h3>E-commerce</h3><p>Быстрые карточки товаров и каталоги. Скорость страницы напрямую влияет на конверсию.</p></div><div class="case-card"><h3>Игры и приложения</h3><p>Раздача обновлений и патчей на миллионы устройств без просадки канала.</p></div><div class="case-card"><h3>Концерты и конференции</h3><p>Разовые трансляции на десятки тысяч зрителей, без подготовки своей инфраструктуры.</p></div><div class="case-card"><h3>Образование и вебинары</h3><p>Трансляции на большие аудитории с записью и хранением материалов.</p></div><div class="case-card"><h3>SaaS и B2B-платформы</h3><p>Стабильная работа интерфейса для клиентов в разных странах и часовых поясах.</p></div><div class="case-card"><h3>Недвижимость</h3><p>Тяжёлые планировки, туры и видео объектов открываются без ожидания.</p></div><div class="case-card"><h3>Туризм</h3><p>Каталоги и галереи грузятся одинаково быстро из любой страны.</p></div><div class="case-card"><h3>Госсектор</h3><p>Порталы и трансляции мероприятий, устойчивые к нагрузке и атакам.</p></div><div class="case-card"><h3>Сайты под нагрузкой</h3><p>Любой проект, где всплеск посещаемости не должен ронять сервер.</p></div></div>
+    </div>
+    <div class="wrap hs-bar"><i></i></div>
+  </div>
+</section>
+
+<!-- ═══ Надёжность ═══ -->
+<section id="reliability">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="rel.tag">Надёжность</div>
+      <h2 class="sec-h" data-i18n="rel.h">Работает, когда на вас смотрят</h2>
+      <p class="sec-p" data-i18n="rel.p">Резервирование на каждом уровне и мониторинг в реальном времени.</p>
+    </div>
+    <div class="grid g-4" id="relGrid"></div>
+  </div>
+</section>
+
+<div class="sep-line"><i></i></div>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="faq.tag">Вопросы и ответы</div>
+      <h2 class="sec-h" data-i18n="faq.h">Коротко о главном</h2>
+    </div>
+    <div class="faq rv rv-d1" id="faqList"><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA0" id="faqQ0" data-faq="0"><span>Сколько времени занимает подключение?</span><i></i></button><div class="faq-a" id="faqA0" role="region" aria-labelledby="faqQ0" inert><p>Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA1" id="faqQ1" data-faq="1"><span>Можно ли использовать свой домен и сертификат?</span><i></i></button><div class="faq-a" id="faqA1" role="region" aria-labelledby="faqQ1" inert><p>Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA2" id="faqQ2" data-faq="2"><span>Как считается стоимость?</span><i></i></button><div class="faq-a" id="faqA2" role="region" aria-labelledby="faqQ2" inert><p>По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA3" id="faqQ3" data-faq="3"><span>Что происходит, если узел недоступен?</span><i></i></button><div class="faq-a" id="faqA3" role="region" aria-labelledby="faqQ3" inert><p>Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA4" id="faqQ4" data-faq="4"><span>Есть ли защита от атак?</span><i></i></button><div class="faq-a" id="faqA4" role="region" aria-labelledby="faqQ4" inert><p>На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA5" id="faqQ5" data-faq="5"><span>Подходит ли сеть для живых трансляций?</span><i></i></button><div class="faq-a" id="faqA5" role="region" aria-labelledby="faqQ5" inert><p>Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабита в секунду нагрузки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA6" id="faqQ6" data-faq="6"><span>Где находятся собственные дата-центры?</span><i></i></button><div class="faq-a" id="faqA6" role="region" aria-labelledby="faqQ6" inert><p>В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA7" id="faqQ7" data-faq="7"><span>Какая статистика доступна?</span><i></i></button><div class="faq-a" id="faqA7" role="region" aria-labelledby="faqQ7" inert><p>Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика».</p></div></div></div>
+  </div>
+</section>
+
+<!-- ═══ Контакты и заявка ═══ -->
+<section id="contact">
+  <div class="wrap">
+    <div class="contact">
+      <div class="rv">
+        <div class="sec-tag" data-i18n="ct.tag">Подключение</div>
+        <h2 class="sec-h" data-i18n="ct.h">Расскажите о проекте</h2>
+        <p class="sec-p" data-i18n="ct.p">Опишите задачу, и мы подберём конфигурацию с расчётом стоимости.</p>
+
+        <div class="contact-list">
+          <a href="mailto:info@rocketcdn.ru" data-ico="mail"><span>info@rocketcdn.ru</span></a>
+          <a href="https://t.me/rocket_cdn_bot" target="_blank" rel="noopener" data-ico="tg"><span>@rocket_cdn_bot</span></a>
+          <a href="https://lk.rocketcdn.ru" target="_blank" rel="noopener" class="js-reg" data-place="contacts" data-ico="globe"><span data-i18n="ct.lk">Личный кабинет</span></a>
+          <div data-ico="clock"><span data-i18n="ct.time">Поддержка круглосуточно</span></div>
+        </div>
+
+        <div class="btn-row" style="margin-top:26px">
+          <button type="button" class="btn btn-g js-callback">
+            <span data-i18n="cta.callback">Перезвоните мне</span>
+          </button>
+        </div>
+
+      </div>
+
+      <form class="form-card rv rv-d1" id="leadForm" novalidate
+            action="api.php?action=lead" method="post" accept-charset="UTF-8">
+        <div class="form-msg" role="status" aria-live="polite"></div>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="vh">
+        <div class="form-2">
+          <div class="field">
+            <label for="lfName" data-i18n="ct.name">Как к вам обращаться</label>
+            <input id="lfName" name="name" required maxlength="100" data-i18n="ct.namep" data-i18n-attr="placeholder" placeholder="Имя" autocomplete="name">
+            <span class="err" data-i18n="ct.req">Заполните поле</span>
+          </div>
+          <div class="field">
+            <label for="lfContact" data-i18n="ct.contact">Телефон или почта</label>
+            <input id="lfContact" name="contact" required maxlength="120" data-kind="contact" data-i18n="ct.contactp" data-i18n-attr="placeholder" placeholder="+7 900 000-00-00" autocomplete="email">
+            <span class="err" data-i18n="ct.badcontact">Укажите телефон или почту</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="lfCompany" data-i18n="ct.company">Компания</label>
+          <input id="lfCompany" name="company" maxlength="150" data-i18n="ct.companyp" data-i18n-attr="placeholder" placeholder="Название организации" autocomplete="organization">
+        </div>
+        <div class="field">
+          <label for="lfTopic" data-i18n="ct.topic">Направление</label>
+          <!-- Список наполняет rc-app.js из того же массива продуктов,
+               что и карточки раздела. Здесь остаётся запасной набор на
+               случай, если скрипт не доехал: форма обязана работать и
+               без него. -->
+          <select id="lfTopic" name="topic">
+            <option>CDN</option>
+            <option>Стриминг</option>
+            <option>Медиа-хранилище</option>
+            <option>Плеер</option>
+            <option>Облако</option>
+            <option>Безопасность</option>
+            <option>Виртуальный диктор</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lfTask" data-i18n="ct.task">Задача</label>
+          <textarea id="lfTask" name="task" maxlength="2000" data-i18n="ct.taskp" data-i18n-attr="placeholder" placeholder="Что нужно раздавать, какой объём трафика"></textarea>
+        </div>
+        <label class="consent">
+          <input type="checkbox" name="consent" value="1" required>
+          <span>
+            <span data-i18n="ct.consent">Соглашаюсь с обработкой персональных данных</span>
+            <a href="privacy.html" target="_blank" data-i18n="ct.policy">Политика конфиденциальности</a>
+          </span>
+        </label>
+        <button type="submit" class="btn btn-p" style="width:100%">
+          <span data-i18n="ct.send">Отправить заявку</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Эпилог: пульт отпускает, впереди космос ═══
+     Финальный кадр фильма. Камера мира отъезжает от пульта
+     (акт egress), рубка отдаёт сцену, снаружи снова звёзды и
+     корабль - и отсюда один шаг до демо-полёта. -->
+<!-- Финал играем НЕ на фоне сайта, а из кабины: камера отошла от
+     пульта, анкета растаяла, и на остеклении разгорается бортовая
+     надпись старта. Корабль при этом остаётся вокруг нас - мы в
+     нём сидим, поэтому никакой летящей ракеты в кадре нет. -->
+<section id="epilogue" class="epi" data-i18n="a11y.epilogue" data-i18n-attr="aria-label" aria-label="Эпилог">
+  <div class="wrap epi-in">
+   <div class="epi-holo">
+    <span class="sec-tag" data-i18n="epi.tag">Эпилог</span>
+    <h2 class="sec-h" data-i18n="epi.h">Дальше - открытый космос</h2>
+    <p class="sec-p" data-i18n="epi.p">Заявка на пульте, инженеры выходят на связь. А корабль уже ваш - шлюз открыт.</p>
+    <button type="button" class="epi-btn js-flight">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+      <span data-i18n="epi.btn">Начать полёт</span>
+    </button>
+    <!-- Второй путь из финала. Приёмка заметила верно: последний
+         кадр фильма предлагал одно действие - игру, хотя сайт
+         продаёт доставку контента. Заявка теперь стоит рядом, и
+         ведёт она обратно к пульту, где эта заявка и оставляется. -->
+    <a class="epi-alt" href="#contact" data-i18n="epi.alt">Оставить заявку</a>
+   </div>
+    <!-- Подвал переехал из пульта сюда: правовые ссылки закрывают
+         страницу после финального кадра, а не разрывают сценарий
+         между формой и эпилогом. В кабину он не входит - висит под
+         остеклением, мелко и тихо, чтобы не спорить с титром -->
+    <div class="legal">
+      <a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a>
+      <a href="offer.html" data-i18n="ftr.oferta">Публичная оферта</a>
+      <a href="offer.html#sla" target="_blank" data-i18n="ftr.sla">Условия SLA</a>
+      <span>&copy; <span id="year">2026</span> Rocket CDN</span>
+      <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
+      <!-- Подпись к картам тел. Снимки Меркурия, Венеры, Марса и
+           Юпитера - NASA, общественное достояние, подпись для них
+           необязательна и стоит из уважения. Карты Сатурна, Урана,
+           Нептуна и Солнца взяты у Solar System Scope под лицензией
+           CC BY 4.0, и вот там подпись обязательна по условиям. -->
+      <span class="legal-maps" data-i18n="ftr.maps">Карты планет: NASA (Viking, MESSENGER, Magellan, Cassini) и Solar System Scope, CC BY 4.0</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Окно обратного звонка -->
+<div class="modal" id="cbModal" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
+  <div class="modal-box" style="position:relative">
+    <button type="button" class="icon-btn modal-x js-modal-close" data-i18n="a11y.close" data-i18n-attr="aria-label" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <h3 id="cbTitle" data-i18n="cb.h">Перезвоните мне</h3>
+    <p class="sub" data-i18n="cb.p">Оставьте номер, инженер перезвонит и ответит на вопросы.</p>
+    <form id="cbForm" novalidate
+          action="api.php?action=callback" method="post" accept-charset="UTF-8">
+      <div class="form-msg" role="status" aria-live="polite"></div>
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="vh">
+      <div class="field">
+        <label for="cbName" data-i18n="ct.name">Как к вам обращаться</label>
+        <input id="cbName" name="name" required maxlength="100" data-i18n="ct.namep" data-i18n-attr="placeholder" placeholder="Имя" autocomplete="name">
+        <span class="err" data-i18n="ct.req">Заполните поле</span>
+      </div>
+      <div class="field">
+        <label for="cbPhone" data-i18n="cb.phone">Телефон</label>
+        <input id="cbPhone" name="contact" required maxlength="40" data-kind="phone" type="tel" placeholder="+7 900 000-00-00" autocomplete="tel">
+        <span class="err" data-i18n="ct.badphone">Укажите телефон</span>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consent" value="1" required>
+        <span data-i18n="ct.consent">Соглашаюсь с обработкой персональных данных</span>
+      </label>
+      <button type="submit" class="btn btn-p" style="width:100%">
+        <span data-i18n="cb.send">Жду звонка</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Заявка всегда под большим пальцем: панель приезжает после первого
+     экрана и уходит, когда открыто меню или окно звонка -->
+<div class="mcta" id="mcta">
+  <button type="button" class="btn btn-g js-callback" data-place="mcta">
+    <span data-i18n="cta.callback">Перезвоните мне</span>
+  </button>
+  <a class="btn btn-p js-reg" data-place="mcta" href="https://lk.rocketcdn.ru"
+     target="_blank" rel="noopener">
+    <span data-i18n="cta.register">Регистрация</span>
+  </a>
+</div>
+
+<button type="button" class="totop" id="toTop" data-i18n="a11y.totop" data-i18n-attr="aria-label" aria-label="Наверх">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+<script defer src="assets/rc-space.js?v=1787835351"></script>
+<script defer src="assets/rc-sound.js?v=1787877452"></script>
+<script defer src="assets/rc-music.js?v=1787835351"></script>
+<script defer src="assets/rc-geo.js?v=1787869778"></script>
+<!-- Правки реестра узлов из админки. Отдаёт api, потому что папка
+     data закрыта от веба: там же лежат заявки. defer держит порядок,
+     значит правки лягут сразу после базового реестра и до глобуса.
+     Нет правок - придёт пустой файл, ничего не сломается. -->
+<script defer src="api.php?action=nodes_js"></script>
+<script defer src="assets/rc-ico.js?v=1787835351"></script>
+<script defer src="assets/rc-i18n.js?v=1787870946"></script>
+<script defer src="assets/rc-globe.js?v=1787483102"></script>
+<script defer src="assets/rc-app.js?v=1787889151"></script>
+<script defer src="assets/rc-fill.js?v=1787869918"></script>
+<script defer src="assets/rc-viz.js?v=1787870015"></script>
+<script defer src="assets/rc-motion.js?v=1787835351"></script>
+<script defer src="assets/rc-scene.js?v=1787483102"></script>
+<script defer src="assets/rc-holo.js?v=1787845912"></script>
+<script defer src="assets/rc-gate.js?v=1787864441"></script>
+<script defer src="assets/rc-world.js?v=1787856234"></script>
+<script defer src="assets/rc-vidbg.js?v=1787864429"></script>
+<script defer src="assets/rc-airlock.js?v=1787856767"></script>
+<script defer src="assets/rc-hooks.js?v=1787483102"></script>
+<script defer src="assets/rc-depth.js?v=1787864420"></script>
+<script defer src="assets/rc-cinema.js?v=1787856607"></script>
+<script defer src="assets/rc-cockpit.js?v=1787835351"></script>
+<script defer src="assets/rc-desk.js?v=1787894167"></script>
+<script defer src="assets/rc-rail.js?v=1787889182"></script>
+<!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
+     после загрузки и только там, где он вообще будет показан -->
+<script defer src="assets/rc-gl.js?v=1787869026"></script>
+<script defer src="assets/rc-scroll.js?v=1787835351"></script>
+<script defer src="assets/rc-vpn.js?v=1787876032"></script>
+</body>
+</html>

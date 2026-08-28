@@ -1,0 +1,2231 @@
+/* ═══════════════════════════════════════════════════════════
+   RocketCDN · дизайн-система сайта
+   Палитра бренда: #091320 · #42B2DC · #E2E8F0 · акцент #8A59F6
+   Градиент: #42B2DC → #0A5897
+   Две темы, одна сетка, мобильный приоритет.
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:      #091320;
+  --cyan:     #42B2DC;
+  --cyan-2:   #0A5897;
+  /* Акцент отдельно для ТЕКСТА и иконок. На светлом фоне циан даёт 2,3:1
+     и читаться перестаёт, поэтому там подставляется глубокий синий #0A5897.
+     Заливки, рамки, свечения и градиенты по-прежнему берут --cyan. */
+  --accent-tx: #42B2DC;
+  --mist:     #E2E8F0;
+  --violet:   #8A59F6;
+  /* Фиолетовый для ТЕКСТА: на своей же 16%-подложке чистый #8A59F6
+     даёт 3,5:1 в обеих темах. Здесь он осветлён под тёмный фон,
+     в светлой теме ниже подставляется затемнённый. Заливки - --violet. */
+  --violet-tx: #B49BFF;
+  --grad:     linear-gradient(135deg, #42B2DC 0%, #0A5897 100%);
+  /* Тот же градиент, но пригодный ПОД БЕЛЫЙ ТЕКСТ. Светлый конец
+     фирменного даёт с белым 2,4:1 при норме 4,5 - на главной кнопке
+     сайта надпись читалась хуже всего именно там, где важнее всего.
+     Здесь светлый конец притемнён до 5,3:1, тон и направление те же.
+     Кнопкам с тёмным текстом и полоскам без текста по-прежнему
+     полагается --grad. */
+  --grad-btn:  linear-gradient(135deg, #1B7396 0%, #0A5897 100%);
+  --grad-btn-hi: linear-gradient(135deg, #1E7DA1 0%, #0C6BB4 100%);
+  --grad-soft:linear-gradient(135deg, rgba(66,178,220,.16) 0%, rgba(10,88,151,.16) 100%);
+  --grad-txt: linear-gradient(120deg, #7FD8FA 0%, #42B2DC 45%, #8A59F6 100%);
+
+  /* ── Радиусы по рангу элемента ──────────────────────────────
+     Раньше их было пять несогласованных: карточка 16, виджет 22,
+     форма 30, значок 13, поле 12. В одном ряду это читалось как
+     разные детали от разных наборов. Теперь радиус назначает не
+     вкус, а ранг: чем крупнее коробка, тем мягче её угол.
+       xs  - крошечные метки и полоски;
+       sm  - вложенное в карточку: поля, значки, малые кнопки;
+       md  - сама карточка и кнопка;
+       lg  - крупная панель: форма, список, аккордеон, окно;
+       full- пилюли и чипы. */
+  --r-xs: 8px; --r-sm: 12px; --r-md: 18px; --r-lg: 24px; --r-xl: 24px; --r-full: 999px;
+  --pad:  clamp(16px, 4vw, 32px);
+  --gap:  clamp(14px, 2.2vw, 24px);
+  --sec:  clamp(64px, 9vw, 132px);
+  --maxw: 1200px;
+
+  /* ── Шкала кегля ────────────────────────────────────────────
+     Одна геометрическая прогрессия вместо трёх десятков отдельных
+     чисел (17, 14.5, 13.8, 12.5, 11.5...). Каждая роль берёт свою
+     ступень, и одинаковые по смыслу подписи в разных блоках
+     становятся одного размера - именно этого не хватало сайту.
+     Шаг примерно 1,18; нижняя граница каждого clamp - телефон,
+     верхняя - настольный экран. */
+  /* Кегли заданы в rem, а не в точках: rem это базовый кегль
+     браузера, и человек, поставивший себе крупный шрифт в настройках,
+     получает крупный шрифт на сайте. Пока всё было в точках, страница
+     не замечала настройку вовсе - замер 16, 20 и 24 пунктов не менял
+     на ней ни одного элемента, а подписи оставались 12,5 точками.
+
+     При обычных настройках ничего не меняется: 1rem это те же 16
+     точек, и все величины ниже пересчитаны один в один. Пределы
+     clamp тоже в rem, а середина по-прежнему по ширине окна. */
+  --fs-1:  0.6875rem;                       /* надпись-код, легенда   */
+  --fs-2:  clamp(0.7188rem, 1.05vw, 0.7812rem); /* мелкая подпись      */
+  --fs-3:  clamp(0.7812rem, 1.15vw, 0.8438rem); /* подпись, метка      */
+  --fs-4:  clamp(0.8438rem, 1.25vw, 0.9375rem);   /* основной текст мелкий */
+  --fs-5:  clamp(0.9062rem, 1.35vw, 1rem);   /* основной текст      */
+  --fs-6:  clamp(0.9688rem, 1.5vw, 1.0938rem);  /* крупный текст, лид  */
+  --fs-7:  clamp(1rem, 1.7vw, 1.1875rem);      /* подзаголовок блока  */
+  --fs-8:  clamp(1.1875rem, 2.4vw, 1.625rem);      /* заголовок карточки-панели */
+  --fs-9:  clamp(1.5625rem, 3.6vw, 2.625rem);      /* заголовок раздела   */
+  --fs-10: clamp(2.125rem, 6.4vw, 4.625rem);      /* заголовок первого экрана */
+
+  /* ── Межстрочное и трекинг по ролям ─────────────────────────
+     Правило простое: чем крупнее кегль, тем плотнее строка и тем
+     сильнее отрицательный трекинг. Заголовки жмутся, текст дышит,
+     подписи получают разрядку, чтобы читаться как подписи. */
+  --lh-display: 1.04;  --tr-display: -.032em;  /* первый экран   */
+  --lh-head:    1.12;  --tr-head:    -.022em;  /* заголовки      */
+  --lh-title:   1.28;  --tr-title:   -.015em;  /* карточки       */
+  --lh-body:    1.62;  --tr-body:     0;       /* абзацы         */
+  --lh-tight:   1.45;  /* абзацы в тесных карточках             */
+  --lh-cap:     1.35;  --tr-cap:      .02em;   /* подписи        */
+  --tr-eyebrow: .18em;                          /* надпись-код   */
+
+  /* ── Длина строки ───────────────────────────────────────────
+     45-75 знаков. В кириллице знак уже латинского, поэтому ch
+     здесь занижает: 58ch даёт около 65 реальных знаков. */
+  --mw-lead: 58ch;   /* лид под заголовком */
+  --mw-text: 68ch;   /* длинный текст: ответы, широкие виджеты */
+
+  /* ── Шкала отступов ─────────────────────────────────────────
+     Все внутренние расстояния кратны одному ряду, поэтому
+     одинаковые по смыслу зазоры совпадают в любом блоке. */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+  /* Внутренний отступ карточки - один на все карточки сайта */
+  --card-pad: clamp(16px, 2.1vw, 24px);
+  /* Панель крупнее карточки и дышит шире: анкета, окно, аккордеон */
+  --panel-pad: clamp(20px, 3vw, 36px);
+
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --fast: .22s var(--ease);
+  --slow: .7s  var(--ease);
+
+  --font: 'Golos Text', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ── Тёмная тема (по умолчанию) ───────────────────────────── */
+:root, [data-theme="dark"] {
+  --cyan-lit:  #42B2DC;
+  --tag-cloud-bg:  #1E1638;
+  --tag-cloud-tx:  #C9B8FF;
+  --tag-shield-bg: #0A2233;
+  --tag-shield-tx: #8AD4F0;
+  --bg:        #050C15;
+  --bg-2:      #091320;
+  --bg-3:      #0D1B2C;
+  --surface:   rgba(255,255,255,.035);
+  --surface-2: rgba(255,255,255,.055);
+  --line:      rgba(226,232,240,.10);
+  /* Граница ОРГАНА управления это не украшение: по ней человек
+     опознаёт, куда писать и куда нажимать, и норма для неё 3:1, как
+     для любого нетекстового признака. Декоративная --line даёт 1,22
+     к фону - на ноутбуке при боковом свете поле анкеты просто
+     пропадает. Здесь 3,3:1, посчитано по фону страницы. */
+  --line-ui:   rgba(226,232,240,.40);
+  --line-2:    rgba(226,232,240,.17);
+  --tx:        #E2E8F0;
+  --tx-2:      rgba(226,232,240,.66);
+  --tx-3:      rgba(226,232,240,.58);
+  --glow:      0 0 40px rgba(66,178,220,.22);
+  /* Общая тень «оторванного» слоя - тот же третий уровень, что у
+     парящей карточки: у окна, формы и всплывающей подсказки нет
+     причин отбрасывать разную тень с одной и той же высоты. */
+  --shadow:    var(--sh-3);
+  /* Три уровня тени вместо шести разных наборов. Уровень - это
+     высота над плоскостью: 1 покой, 2 наведение, 3 отрыв (окно,
+     парящая карточка). Одинаковая высота даёт одинаковую тень,
+     и ряд карточек перестаёт выглядеть собранным из кусков. */
+  --sh-1: 0 10px 26px -22px rgba(4,12,22,.9);
+  --sh-2: 0 22px 46px -26px rgba(4,12,22,.95);
+  --sh-3: 0 34px 70px -30px rgba(4,12,22,.95);
+  --head-bg:   rgba(5,12,21,.72);
+  --hero-veil: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(66,178,220,.18), transparent 62%),
+               radial-gradient(ellipse 60% 50% at 88% 12%, rgba(138,89,246,.13), transparent 60%);
+  --pill-bg:   rgba(255,255,255,.06);
+  --pill-line: rgba(226,232,240,.16);
+  --pill-off:  rgba(226,232,240,.62);
+  --pill-hover:#E2E8F0;
+  --tab-on:    #E2E8F0;
+  --tab-on-tx: #091320;
+  --read-veil:  rgba(5,12,21,.50);
+  --read-veil-soft: rgba(5,12,21,.26);
+  --read-veil-2:rgba(5,12,21,.34);
+  --gl-1:      rgba(255,255,255,.075);
+  --gl-2:      rgba(255,255,255,.035);
+  --gl-3:      rgba(255,255,255,.015);
+  --gl-line:   rgba(226,232,240,.13);
+  --gl-line-2: rgba(226,232,240,.24);
+  --gl-top:    rgba(255,255,255,.14);
+  --gl-top-2:  rgba(255,255,255,.22);
+  --gl-bot:    rgba(4,12,22,.35);
+  --gl-ring:   rgba(66,178,220,.18);
+  --ico-bg:    rgba(138,89,246,.14);
+  --ico-bg-2:  rgba(138,89,246,.22);
+  --ico-line:  rgba(138,89,246,.26);
+}
+
+/* ── Светлая тема ─────────────────────────────────────────── */
+[data-theme="light"] {
+  /* Циан хорош на чернилах и слеп на белом: как текст он давал 2,2:1
+     при норме 4,5. В светлой теме акцентом работает глубокий синий,
+     а сам циан остаётся для линий, свечений и заливок. */
+  --cyan:      #0A5897;
+  --cyan-lit:  #42B2DC;
+  --tag-cloud-bg:  #EDE7FF;
+  --tag-cloud-tx:  #4A27B0;
+  --tag-shield-bg: #E1F1F9;
+  --tag-shield-tx: #08558E;
+  --bg:        #F3F7FB;
+  --bg-2:      #FFFFFF;
+  --bg-3:      #E9EFF6;
+  --accent-tx: #0A5897;
+  --violet-tx: #5B32C9;
+  --surface:   rgba(255,255,255,.92);
+  --surface-2: #FFFFFF;
+  --line:      rgba(9,19,32,.10);
+  --line-ui:   rgba(9,19,32,.46);
+  --line-2:    rgba(9,19,32,.18);
+  --tx:        #091320;
+  --tx-2:      rgba(9,19,32,.66);
+  --tx-3:      rgba(9,19,32,.62);
+  --glow:      0 0 40px rgba(66,178,220,.20);
+  --shadow:    var(--sh-3);
+  /* На светлом тень не чернит, а сгущает синеву фона: чёрная тень
+     на #F3F7FB читается грязью. Уровни те же, что в тёмной теме. */
+  --sh-1: 0 8px 20px -16px rgba(9,19,32,.34);
+  --sh-2: 0 18px 38px -22px rgba(9,19,32,.30);
+  --sh-3: 0 28px 60px -26px rgba(9,19,32,.28);
+  --head-bg:   rgba(243,247,251,.78);
+  /* Середина градиента была на цианe и давала 2,26:1 - заголовок выцветал.
+     Стопы затемнены до 6,83 / 6,22 / 7,11 на фоне #F3F7FB, палитра та же. */
+  --grad-txt:  linear-gradient(120deg, #0A5897 0%, #15618F 50%, #5B32C9 100%);
+  --hero-veil: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(66,178,220,.20), transparent 62%),
+               radial-gradient(ellipse 60% 50% at 88% 12%, rgba(138,89,246,.10), transparent 60%);
+  /* В светлой теме пилюля тёмная: ровно так она нарисована в их макете */
+  --pill-bg:   #091320;
+  --pill-line: #091320;
+  --pill-off:  rgba(255,255,255,.55);
+  --pill-hover:#fff;
+  --tab-on:    #091320;
+  --tab-on-tx: #fff;
+  --read-veil:  rgba(243,247,251,.62);
+  --read-veil-soft: rgba(243,247,251,.34);
+  --read-veil-2:rgba(243,247,251,.44);
+  --gl-1:      rgba(255,255,255,.96);
+  --gl-2:      rgba(255,255,255,.82);
+  --gl-3:      rgba(238,245,252,.72);
+  --gl-line:   rgba(9,19,32,.09);
+  --gl-line-2: rgba(9,19,32,.16);
+  --gl-top:    rgba(255,255,255,1);
+  --gl-top-2:  rgba(255,255,255,1);
+  --gl-bot:    rgba(9,19,32,.05);
+  --gl-ring:   rgba(66,178,220,.22);
+  --ico-bg:    rgba(138,89,246,.10);
+  --ico-bg-2:  rgba(138,89,246,.16);
+  --ico-line:  rgba(138,89,246,.22);
+}
+
+html {
+  /* Выдвижное меню стоит за правым краем и раздувает ширину документа.
+     clip обрезает, не создавая своего контейнера прокрутки. */
+  overflow-x: clip;
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+  -webkit-text-size-adjust: 100%;
+  /* Айфон подсвечивает нажатие серым прямоугольником поверх наших
+     собственных состояний - выключаем */
+  -webkit-tap-highlight-color: transparent;
+  /* Якорение прокрутки здесь работает против нас. Весь сюжет сайта
+     ведёт положение прокрутки, а разделы по ходу меняют вёрстку:
+     у них едет max-width, перетекает текст, включается и гаснет
+     быстрый режим. Хром видит эти изменения выше окна и «чинит»
+     кадр, подтягивая прокрутку. Замер входа в корабль: страница
+     сама отскакивала на 1445 точек назад, доля подъезда к пульту
+     падала с 0,68 на ноль. Это и есть «скачок» и «шев переход»
+     на финальной сцене. Позицию прокрутки держим мы, не браузер. */
+  overflow-anchor: none;
+}
+body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.62;
+  /* Здесь был hidden - и делал body контейнером прокрутки. Из-за
+     этого липкие сцены (.hs-stage в разделах «как работает» и
+     «сценарии») не прилипали вовсе: они держались за body, а
+     прокручивается документ. clip обрезает так же, но своего
+     контейнера прокрутки не создаёт, и прилипание работает. */
+  overflow-x: clip;
+  min-height: 100svh;
+  -webkit-font-smoothing: antialiased;
+  transition: background .45s var(--ease), color .45s var(--ease);
+}
+
+/* Фолбэк: браузеры без overflow: clip обрезают по-старому */
+@supports not (overflow: clip) {
+  html, body { overflow-x: hidden; }
+}
+
+img, svg, canvas { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; color: inherit; }
+::selection { background: rgba(66,178,220,.32); color: var(--tx); }
+
+/* Фокус с клавиатуры. Здесь стояло border-radius: 4px - и это была
+   ошибка: свойство меняет радиус самого элемента, поэтому круглая
+   пилюля в момент фокуса становилась прямоугольной, а карточка
+   теряла скругление. Обводка и без того повторяет форму элемента.
+   Оставляем только саму обводку и отступ от края. */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+/* Внутри карточек и списков отступ 3px наезжает на соседнюю строку -
+   там кольцо ложится вплотную */
+.node-row:focus-visible, .faq-q:focus-visible, .drawer a:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ── Каркас ───────────────────────────────────────────────── */
+.wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad); position: relative; z-index: 2; }
+section { position: relative; padding: var(--sec) 0; }
+.sec-tag {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-size: var(--fs-1); font-weight: 700; letter-spacing: var(--tr-eyebrow); text-transform: uppercase;
+  line-height: var(--lh-cap);
+  color: var(--accent-tx); margin-bottom: 14px;
+}
+.sec-tag::before { content: ''; width: 22px; height: 1px; background: var(--cyan); opacity: .7; }
+.sec-h {
+  font-size: var(--fs-9);
+  line-height: var(--lh-head); font-weight: 700; letter-spacing: var(--tr-head);
+  margin-bottom: var(--sp-4); max-width: 20ch;
+  /* Заголовок ломается по словам, а не по буквам, и никогда не
+     оставляет одинокое слово в последней строке */
+  text-wrap: balance;
+}
+.sec-p { font-size: var(--fs-5); line-height: var(--lh-body); color: var(--tx-2); max-width: var(--mw-lead); }
+.sec-head { margin-bottom: clamp(32px, 5vw, 60px); }
+.grad-tx {
+  background: var(--grad-txt);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+
+/* ── Появление при скролле ────────────────────────────────── */
+.rv { opacity: 0; transform: translateY(26px); transition: opacity .75s var(--ease), transform .75s var(--ease); }
+.rv.on { opacity: 1; transform: none; }
+.rv-d1 { transition-delay: .07s } .rv-d2 { transition-delay: .14s }
+.rv-d3 { transition-delay: .21s } .rv-d4 { transition-delay: .28s }
+.rv-d5 { transition-delay: .35s } .rv-d6 { transition-delay: .42s }
+
+/* ── Кнопки (по брендбуку: градиент, скруглённая пилюля) ──── */
+/* Высота кнопки собирается из min-height, а не из суммы отступов и
+   межстрочного: раньше .btn-p и .btn-g стояли рядом в одной строке
+   и различались на два пикселя, потому что у сплошной кнопки рамки
+   не было, а у прозрачной была. Теперь рамка есть у обеих (у
+   сплошной - прозрачная), межстрочное задано явно, а высоту держит
+   min-height. Две кнопки одного размера совпадают до пикселя. */
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 0 26px; min-height: 46px;
+  border: 1px solid transparent; border-radius: var(--r-md);
+  font-size: var(--fs-5); font-weight: 600; letter-spacing: -.01em; line-height: 1.2;
+  cursor: pointer; overflow: hidden; white-space: nowrap;
+  transition: transform var(--fast), box-shadow var(--fast), background var(--fast),
+              border-color var(--fast), color var(--fast), opacity var(--fast);
+}
+.btn-p {
+  background: var(--grad-btn); color: #fff;
+  box-shadow: 0 10px 26px -10px rgba(10,88,151,.85), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.btn-p::after {
+  content: ''; position: absolute; inset: 0;
+  background: var(--grad-btn-hi);
+  opacity: 0; transition: opacity var(--fast);
+}
+.btn-p:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -12px rgba(10,88,151,.95), var(--glow); }
+.btn-p:hover::after { opacity: 1; }
+.btn-p:active { transform: translateY(0); }
+.btn-p > * { position: relative; z-index: 1; }
+.btn-g {
+  background: var(--surface); color: var(--tx);
+  border: 1px solid var(--line-2); backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.btn-g:hover { border-color: var(--cyan); background: var(--surface-2); transform: translateY(-2px); }
+/* Три размера кнопки - три высоты, и ни одной промежуточной */
+.btn-sm { padding: 0 15px; min-height: 38px; font-size: var(--fs-3); border-radius: var(--r-sm); }
+.btn-lg { padding: 0 34px; min-height: 54px; font-size: var(--fs-6); }
+/* Кнопка на две строки (узкий экран, длинная английская подпись)
+   растёт вниз от min-height, а не ломает выравнивание строки */
+.btn { padding-block: 10px; }
+.btn[disabled], .btn[aria-disabled="true"] {
+  opacity: .45; cursor: not-allowed; transform: none !important; box-shadow: none;
+  filter: grayscale(.35);
+}
+.btn[disabled]:hover::after, .btn[aria-disabled="true"]:hover::after { opacity: 0; }
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: stretch; }
+/* Кнопки в одной строке тянутся до высоты самой высокой: подпись в
+   две строки больше не делает соседку ниже себя */
+.btn-row > .btn { align-self: stretch; }
+
+/* ── Рифма с личным кабинетом ──────────────────────────────────
+   Клиент прислал дизайн-систему кабинета, и она оказалась той же
+   самой: чернила #091320, акцент #42B2DC, светлый #E2E8F0, градиент
+   от циана через фиолет к глубокому синему. Значит выдумывать мост
+   не нужно - сайт и кабинет уже говорят на одном языке. Здесь мы
+   только помечаем всё, что уводит в кабинет, его фирменной чертой,
+   и держим общие радиусы и тени. */
+:root {
+  --lk-ink:    #091320;
+  --lk-accent: #42B2DC;
+  --lk-mist:   #E2E8F0;
+  --lk-deep:   #0A5897;
+  --lk-violet: #8A59F6;
+  --lk-grad:   linear-gradient(120deg, #42B2DC 0%, #8A59F6 55%, #0A5897 100%);
+  --lk-ok:     #34D399;
+  --lk-err:    #F87171;
+  --lk-r:      14px;
+  --lk-r-sm:   10px;
+  --lk-shadow: 0 10px 30px -14px rgba(9,19,32,.55);
+}
+/* Всё, что уводит в кабинет, помечено его чертой: тонкая полоса
+   фирменного градиента появляется на наведении снизу. */
+.js-reg { position: relative; }
+.btn.js-reg::before {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: 6px; height: 2px;
+  border-radius: 2px; background: var(--lk-grad);
+  opacity: 0; transform: scaleX(.4); transform-origin: 50% 50%;
+  transition: opacity var(--fast), transform var(--fast); z-index: 2;
+}
+.btn.js-reg:hover::before, .btn.js-reg:focus-visible::before { opacity: .95; transform: none; }
+a.js-reg:not(.btn) { background-image: var(--lk-grad); background-repeat: no-repeat;
+  background-size: 0 2px; background-position: 0 100%; transition: background-size var(--fast); }
+a.js-reg:not(.btn):hover { background-size: 100% 2px; }
+
+/* Состояния берём из кабинета: одинаковый зелёный, одинаковый
+   янтарный, одинаковый красный по обе стороны перехода. */
+
+/* ── Карточки ─────────────────────────────────────────────── */
+.card {
+  position: relative; background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: var(--card-pad);
+  transition: transform var(--fast), border-color var(--fast), background var(--fast), box-shadow var(--fast);
+  height: 100%;
+  /* Колонка: значок, заголовок, текст, список. Нужна для того,
+     чтобы последний блок карточки можно было прижать к низу и
+     ряд карточек читался по одной нижней линии, а не вразнобой. */
+  display: flex; flex-direction: column;
+}
+.card::before {
+  content: ''; position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(66,178,220,.12), transparent 62%);
+  border-radius: inherit;
+  transition: opacity .3s var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: var(--shadow); }
+  .card:hover::before { opacity: 1; }
+}
+/* Значок карточки: фиолетовая плашка, как в их дизайн-системе.
+   Циан и градиент оставляем бренду, данным и кнопкам, иначе сайт
+   становится одноцветным. */
+.card-ico {
+  width: 46px; height: 46px; border-radius: var(--r-sm); display: grid; place-items: center;
+  background: var(--ico-bg); border: 1px solid var(--ico-line);
+  color: var(--violet-tx); margin-bottom: var(--sp-4); flex: none;
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card-ico { background: var(--ico-bg-2); border-color: var(--violet); }
+}
+.card-ico svg { width: 24px; height: 24px; }
+.card h3 { font-size: var(--fs-7); font-weight: 650; letter-spacing: var(--tr-title);
+  line-height: var(--lh-title); margin-bottom: 9px; }
+.card p  { font-size: var(--fs-4); color: var(--tx-2); line-height: var(--lh-body); }
+/* Одна сетка на весь сайт: зазор всегда --gap, по обеим осям.
+   Раньше у продуктов он был 14, у преимуществ 24 по горизонтали и
+   22 по вертикали, у состава подключения 12 - соседние блоки
+   стояли с разной частотой и сетка выглядела собранной наспех. */
+.grid { display: grid; gap: var(--gap); }
+.g-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* ── Шапка ────────────────────────────────────────────────── */
+.hdr {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--head-bg); backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--fast), background var(--fast), transform .4s var(--ease);
+}
+.hdr.stuck { border-bottom-color: var(--line); }
+.hdr.hide { transform: translateY(-100%); }
+.hdr-in { display: flex; align-items: center; gap: 12px; height: 70px; }
+.logo { display: flex; align-items: center; gap: 10px; flex: none; }
+.logo img { height: 32px; width: auto; }
+/* Переключение вариантов логотипа работает и в шапке, и в подвале */
+.lg-light { display: none; }
+[data-theme="light"] .lg-dark  { display: none; }
+[data-theme="light"] .lg-light { display: block; }
+.nav { display: flex; gap: 4px; margin-left: auto; }
+.nav a {
+  position: relative; padding: 9px 8px; border-radius: var(--r-sm);
+  font-size: var(--fs-3); line-height: var(--lh-cap); color: var(--tx-2); white-space: nowrap;
+  transition: color var(--fast), background var(--fast);
+}
+.nav a:hover, .nav a.act { color: var(--tx); background: var(--surface); }
+.nav a.act::after {
+  content: ''; position: absolute; left: 13px; right: 13px; bottom: 3px;
+  height: 2px; border-radius: 2px; background: var(--grad);
+}
+.hdr-act { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+@media (min-width: 901px) { .nav + .hdr-act { margin-left: 8px; } }
+.icon-btn {
+  width: 38px; height: 38px; display: grid; place-items: center; flex: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+  color: var(--tx-2); cursor: pointer;
+  /* Список свойств вместо all: с all в переход попадала и обводка
+     фокуса - кольцо проявлялось четверть секунды, и на быстром
+     табе человек успевал уйти дальше, так его и не увидев. */
+  transition: color var(--fast), border-color var(--fast), background var(--fast), transform var(--fast);
+}
+.icon-btn:hover { color: var(--accent-tx); border-color: var(--cyan); }
+.icon-btn svg { width: 18px; height: 18px; }
+/* ── Фирменная пилюля из дизайн-системы клиента ───────────── */
+/* Тёмная капсула, внутри ездит фиолетовый кругляш, подписи по краям. */
+.pill {
+  position: relative; display: flex; align-items: center; flex: none;
+  background: var(--pill-bg); border: 1px solid var(--pill-line);
+  border-radius: var(--r-full); padding: 3px;
+  transition: background var(--fast), border-color var(--fast);
+}
+.pill-knob {
+  position: absolute; top: 3px; left: 3px; width: calc(50% - 3px); height: calc(100% - 6px);
+  border-radius: var(--r-full); background: var(--violet);
+  box-shadow: 0 2px 10px -2px rgba(138,89,246,.7);
+  transition: transform .34s var(--ease), background var(--fast);
+  pointer-events: none;
+}
+.pill.at-2 .pill-knob { transform: translateX(100%); }
+.pill button {
+  position: relative; z-index: 1; display: grid; place-items: center;
+  min-width: 38px; height: 30px; padding: 0 10px;
+  background: none; border: 0; border-radius: var(--r-full);
+  font-size: var(--fs-2); font-weight: 700; letter-spacing: var(--tr-cap);
+  color: var(--pill-off); cursor: pointer;
+  transition: color var(--fast);
+}
+.pill button:hover { color: var(--pill-hover); }
+.pill button.on { color: #fff; }
+.pill button svg { width: 16px; height: 16px; }
+.pill.theme button { min-width: 33px; padding: 0 7px; }
+.vh {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* Широкий вариант для меню на телефоне: подписи словами */
+.pill.wide { width: 100%; }
+.pill.wide button { flex: 1 1 0; min-width: 0; height: 40px; gap: 8px; font-size: var(--fs-4); }
+.pill.theme.wide button { display: flex; align-items: center; justify-content: center; }
+.burger { display: none; }
+
+/* Мобильное меню */
+.drawer {
+  position: fixed; inset: 0; z-index: 199; background: var(--bg);
+  padding: calc(90px + env(safe-area-inset-top, 0px)) var(--pad)
+           calc(40px + env(safe-area-inset-bottom, 0px));
+  -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 6px;
+  transform: translateX(100%); visibility: hidden;
+  transition: transform .42s var(--ease), visibility .42s var(--ease);
+  overflow-y: auto;
+}
+.drawer.on { transform: none; visibility: visible; }
+.drawer a {
+  padding: 15px 4px; font-size: var(--fs-7); font-weight: 600; line-height: var(--lh-title); border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center; color: var(--tx-2);
+}
+.drawer a:active { color: var(--accent-tx); }
+/* Своя кнопка закрытия шторки. Стоит там же, где бургер, который она
+   заменяет: страница под шторкой заглушена, и до бургера в шапке
+   из-под неё не дотянуться ни фокусом, ни пальцем. */
+.drawer .drawer-x {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 17px);
+  right: var(--pad);
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  color: var(--tx-2);
+}
+.drawer .drawer-x svg { width: 20px; height: 20px; }
+.drawer .btn { margin-top: 22px; }
+
+/* ── Прогресс чтения ──────────────────────────────────────── */
+.prog {
+  position: fixed; top: 0; left: 0; height: 2px; width: 0;
+  background: var(--grad); z-index: 300; box-shadow: 0 0 10px rgba(66,178,220,.6);
+  transition: width .12s linear;
+}
+
+/* ── Прелоадер ────────────────────────────────────────────── */
+.preload {
+  position: fixed; inset: 0; z-index: 900; background: var(--bg);
+  display: grid; place-items: center; gap: 20px;
+  transition: opacity .6s var(--ease), visibility .6s;
+}
+.preload.off { opacity: 0; visibility: hidden; }
+.preload-in { display: grid; justify-items: center; gap: 18px; }
+.preload img { width: 108px; animation: floatY 2.6s ease-in-out infinite; }
+.preload-bar { width: 168px; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.preload-bar i { display: block; height: 100%; width: 0; background: var(--grad); transition: width .3s var(--ease); }
+@keyframes floatY { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-11px) } }
+
+/* ── Герой ────────────────────────────────────────────────── */
+.hero { min-height: 100svh; display: flex; align-items: center; padding: 118px 0 64px; overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; z-index: 0; background: var(--hero-veil); pointer-events: none; }
+.hero-globe {
+  position: absolute; z-index: 1;
+  right: -16%; top: 50%; transform: translateY(-50%);
+  width: min(1000px, 78vw); aspect-ratio: 1;
+  opacity: .95;
+}
+.hero-globe canvas { width: 100%; height: 100%; }
+.hero-in { position: relative; z-index: 2; max-width: 660px; }
+.hero h1 {
+  font-size: var(--fs-10); line-height: var(--lh-display); font-weight: 700;
+  letter-spacing: var(--tr-display); margin-bottom: 22px;
+}
+.hero-sub { font-size: var(--fs-6); line-height: var(--lh-body); color: var(--tx-2); max-width: var(--mw-lead); margin-bottom: 34px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;
+  border-radius: var(--r-full); background: var(--surface); border: 1px solid var(--line);
+  font-size: var(--fs-2); font-weight: 600; line-height: var(--lh-cap); color: var(--tx-2); backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.chip b { color: var(--tx); font-weight: 700; }
+.dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--lk-ok); box-shadow: 0 0 0 0 rgba(52,211,153,.6); animation: pulse 2.2s infinite; flex: none; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(52,211,153,0) } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0) } }
+.hero-chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 26px; }
+.hero-marks { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 38px; }
+.hero-mark { display: flex; align-items: center; gap: 9px; font-size: var(--fs-3); line-height: var(--lh-cap); color: var(--tx-3); }
+.hero-mark svg { width: 15px; height: 15px; color: var(--accent-tx); flex: none; }
+/* Подсказка стоит у правого края: по центру она наезжала на строку отметок */
+.scroll-hint {
+  position: absolute; bottom: 26px; right: var(--pad); z-index: 3;
+  display: grid; justify-items: center; gap: 7px; font-size: var(--fs-1); letter-spacing: .16em;
+  text-transform: uppercase; color: var(--tx-3);
+}
+@media (max-width: 1180px) { .scroll-hint { display: none } }
+.scroll-hint i { display: block; width: 1px; height: 34px; background: linear-gradient(var(--cyan), transparent); animation: hintY 1.9s ease-in-out infinite; }
+@keyframes hintY { 0%,100% { transform: scaleY(.3); transform-origin: top } 50% { transform: scaleY(1); transform-origin: top } }
+
+/* ── Полоса показателей ───────────────────────────────────── */
+.kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.kpi > div { background: var(--bg); padding: clamp(20px, 3vw, 34px) clamp(14px, 2vw, 26px); transition: background var(--fast); }
+.kpi > div:hover { background: var(--bg-3); }
+.kpi-n { font-size: clamp(1.625rem, 3.6vw, 2.75rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+/* Подпись под числом - одна роль на весь сайт, один кегль */
+.kpi-l { font-size: var(--fs-3); line-height: var(--lh-cap); color: var(--tx-2); margin-top: 7px; }
+
+/* ── Схема работы ─────────────────────────────────────────── */
+.flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: clamp(8px, 1.6vw, 20px); }
+.flow-node {
+  text-align: center; padding: var(--card-pad);
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+}
+.flow-node.hot { border-color: rgba(66,178,220,.5); box-shadow: var(--glow); }
+.flow-node .card-ico { margin: 0 auto 14px; }
+.flow-node h3 { font-size: var(--fs-6); font-weight: 650; line-height: var(--lh-title); margin-bottom: 6px; }
+.flow-node p { font-size: var(--fs-3); line-height: var(--lh-tight); color: var(--tx-2); }
+.flow-link { position: relative; height: 2px; background: var(--line); border-radius: 2px; min-width: 40px; overflow: hidden; }
+/* Искра в связке узлов бежит СДВИГОМ, а не свойством left.
+
+   Свойство left не композитится: каждый кадр этой вечной анимации
+   был новым пересчётом раскладки, и так на всех связках сразу, пока
+   страница открыта. Сдвиг считает видеокарта, раскладка не трогается.
+   Искра шириной 34% от связки, стоит в её начале, поэтому путь от
+   края до края - это 100% ширины СВЯЗКИ, то есть 294% собственной
+   ширины искры (100 / 34). */
+.flow-link i {
+  position: absolute; top: 0; left: 0; width: 34%; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  will-change: transform;
+  animation: flowRun 2.1s linear infinite;
+}
+.flow-link:nth-of-type(4) i { animation-delay: .5s }
+@keyframes flowRun {
+  from { transform: translateX(-100%) }
+  to   { transform: translateX(294%) }
+}
+
+/* ── Инфраструктура и карта ───────────────────────────────── */
+.infra { display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(0, .94fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
+.map-wrap { position: relative; aspect-ratio: 1; width: 100%; max-width: 620px; margin: 0 auto; }
+.map-wrap canvas { width: 100%; height: 100%; }
+.map-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; justify-content: center; }
+.leg { display: flex; align-items: center; gap: 7px; font-size: var(--fs-2); line-height: var(--lh-cap); color: var(--tx-3); }
+.leg i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+.reg-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.reg-tabs button {
+  padding: 8px 14px; border-radius: var(--r-full); font-size: var(--fs-3); font-weight: 600; line-height: var(--lh-cap);
+  background: var(--surface); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer;
+  transition: color var(--fast), border-color var(--fast), background var(--fast), box-shadow var(--fast);
+}
+.reg-tabs button:hover { border-color: var(--cyan); color: var(--tx); }
+/* Активная вкладка - тёмная таблетка, как в их дизайн-системе */
+.reg-tabs button.on {
+  background: var(--tab-on); border-color: var(--tab-on); color: var(--tab-on-tx);
+  box-shadow: 0 4px 14px -6px rgba(9,19,32,.55);
+}
+.reg-tabs button.on:hover { border-color: var(--tab-on); }
+.search { position: relative; margin-bottom: 14px; }
+.search input {
+  width: 100%; padding: 13px 15px 13px 42px; border-radius: var(--r-sm);
+  background: var(--surface); border: 1px solid var(--line); color: var(--tx); font-size: var(--fs-5);
+  transition: border-color var(--fast);
+}
+.search input:focus { outline: none; border-color: var(--cyan); }
+.search input::placeholder { color: var(--tx-3); }
+.search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--tx-3); }
+/* Реестр узлов больше не окно с собственной прокруткой. Внутренняя
+   полоса на треть экрана воровала ход колеса и палец: человек
+   листал двести восемнадцать городов вместо страницы и застревал
+   посреди фильма. Теперь высота свободная, а длину списка держит
+   разметка - первые строки и кнопка «показать все». */
+.node-list {
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.node-more {
+  display: block; width: 100%;
+  padding: 13px 15px;
+  background: none; border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--accent-tx, #42B2DC);
+  font: 600 var(--fs-3)/1.2 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background var(--fast), color var(--fast);
+}
+.node-more:hover { background: var(--surface-2); }
+.node-more:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+.node-list::-webkit-scrollbar { width: 6px }
+.node-list::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px }
+.node-row {
+  display: flex; align-items: center; gap: 10px; padding: 11px 15px;
+  border-bottom: 1px solid var(--line); cursor: pointer; transition: background var(--fast);
+  font-size: var(--fs-4);
+}
+.node-row:last-child { border-bottom: 0 }
+.node-row:hover { background: var(--surface-2) }
+.node-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.node-row .rg { font-size: var(--fs-2); color: var(--tx-3); flex: none; }
+.tag {
+  font-size: var(--fs-1); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; line-height: 1.4;
+  padding: 3px 8px; border-radius: var(--r-full); flex: none;
+}
+/* Заливка меток непрозрачная: сквозь полупрозрачную подложку
+   считать контраст нечем, а на светлом фоне пара «фиолетовый по
+   фиолетовому» давала 3,5 при норме 4,5. */
+.tag-cloud  { background: var(--tag-cloud-bg);  color: var(--tag-cloud-tx); }
+.tag-shield { background: var(--tag-shield-bg); color: var(--tag-shield-tx); }
+.tag-soon   { background: var(--surface-2); color: var(--tx-3); border: 1px solid var(--line); }
+.node-empty { padding: 26px; text-align: center; color: var(--tx-3); font-size: var(--fs-4); }
+
+/* Площадки одной высоты в ряду: карточка тянется на всю ячейку, а
+   не по своему тексту - иначе соседние стоят ступеньками */
+.dc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); margin-top: clamp(28px, 4vw, 48px); align-items: stretch; }
+.dc-grid > .dc { height: 100%; }
+.dc {
+  position: relative; padding: var(--card-pad); border-radius: var(--r-md);
+  border: 1px solid var(--line); background: var(--surface); overflow: hidden;
+}
+/* Блик в углу карточки ЦОД был на ::after и не рисовался никогда:
+   ниже по файлу на тот же ::after кладётся снимок зала, а второго
+   ::after у элемента не бывает. Переносим блик на отдельный слой
+   через ::before у обёртки нельзя (он занят подсветкой струёй),
+   поэтому просто убираем мёртвое правило: снимок зала делает ту же
+   работу и делает её лучше. */
+.dc .lbl { font-size: var(--fs-1); letter-spacing: .16em; text-transform: uppercase; color: var(--accent-tx); font-weight: 700; }
+.dc h4 { font-size: var(--fs-8); font-weight: 700; margin: var(--sp-2) 0 var(--sp-1); letter-spacing: var(--tr-head); line-height: var(--lh-title); }
+.dc p { font-size: var(--fs-3); color: var(--tx-2); line-height: var(--lh-tight); }
+
+/* ── Продукты ─────────────────────────────────────────────── */
+.prod-card { display: flex; flex-direction: column; }
+.prod-card ul { list-style: none; margin-top: 14px; display: grid; gap: 7px; }
+.prod-card li { position: relative; padding-left: 20px; font-size: var(--fs-3); line-height: var(--lh-tight); color: var(--tx-2); }
+/* Маркер стоял на .62em - на глазок, и при межстрочном 1.45 висел
+   на полтора пикселя ниже середины строки. Считаем честно: центр
+   первой строки это половина межстрочного, минус половина маркера. */
+.prod-card li::before {
+  content: ''; position: absolute; left: 4px;
+  top: calc(var(--lh-tight) * .5em - 3px); width: 6px; height: 6px;
+  border-radius: 50%; background: var(--cyan); opacity: .75;
+}
+
+/* ── Сценарии ─────────────────────────────────────────────── */
+.case { position: relative; }
+.case .num {
+  position: absolute; right: 16px; top: 6px; font-size: 74px; font-weight: 800;
+  letter-spacing: -.06em; color: var(--tx); opacity: .05; line-height: 1;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────── */
+.faq { border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); }
+.faq-i { border-bottom: 1px solid var(--line); }
+.faq-i:last-child { border-bottom: 0 }
+.faq-q {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: clamp(16px, 2.2vw, 22px) clamp(16px, 2.4vw, 26px); background: none; border: 0;
+  text-align: left; font-size: var(--fs-6); font-weight: 600; line-height: var(--lh-title); cursor: pointer;
+  transition: color var(--fast);
+}
+.faq-q:hover { color: var(--accent-tx); }
+.faq-q i {
+  position: relative; width: 18px; height: 18px; flex: none;
+}
+.faq-q i::before, .faq-q i::after {
+  content: ''; position: absolute; background: currentColor; border-radius: 2px;
+  transition: transform .3s var(--ease), opacity .3s var(--ease);
+}
+.faq-q i::before { left: 0; top: 8px; width: 18px; height: 2px; }
+.faq-q i::after  { left: 8px; top: 0; width: 2px; height: 18px; }
+.faq-i.on .faq-q { color: var(--accent-tx) }
+.faq-i.on .faq-q i::after { transform: rotate(90deg); opacity: 0 }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height .42s var(--ease); }
+.faq-a p { padding: 0 clamp(16px, 2.4vw, 26px) clamp(18px, 2.4vw, 24px); font-size: var(--fs-4); color: var(--tx-2); line-height: var(--lh-body); max-width: var(--mw-text); }
+
+/* ── Формы ────────────────────────────────────────────────── */
+.form-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: var(--panel-pad); box-shadow: var(--shadow);
+}
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: var(--fs-2); font-weight: 600; line-height: var(--lh-cap); color: var(--tx-2); margin-bottom: 7px; }
+.field input, .field textarea, .field select {
+  width: 100%; padding: 13px 15px; border-radius: var(--r-sm);
+  /* Кегль поля в rem: человек, поставивший себе крупный шрифт,
+     должен видеть крупным и то, что он сам печатает. */
+  background: var(--bg-2); border: 1px solid var(--line-ui); color: var(--tx); font-size: 0.9375rem;
+  transition: border-color var(--fast), box-shadow var(--fast);
+}
+[data-theme="light"] .field input,
+[data-theme="light"] .field textarea,
+[data-theme="light"] .field select { background: #fff; }
+.field input:hover, .field textarea:hover, .field select:hover { border-color: var(--cyan); }
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none; border-color: var(--tx); box-shadow: 0 0 0 3px rgba(66,178,220,.18);
+}
+.search input:hover { border-color: var(--cyan); }
+.field input::placeholder, .field textarea::placeholder { color: var(--tx-3); }
+.field textarea { resize: vertical; min-height: 96px; }
+.field.bad input, .field.bad textarea { border-color: #F87171; }
+.field .err { display: none; font-size: var(--fs-2); line-height: var(--lh-cap); color: #F87171; margin-top: 5px; }
+.field.bad .err { display: block; }
+.form-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-2); line-height: var(--lh-cap); color: var(--tx-3); margin: 4px 0 16px; }
+.consent input { width: 17px; height: 17px; margin-top: 2px; flex: none; accent-color: var(--cyan); }
+.consent a { color: var(--accent-tx); text-decoration: underline; text-underline-offset: 2px; }
+.form-msg { display: none; padding: 13px 16px; border-radius: var(--r-sm); font-size: var(--fs-4); line-height: var(--lh-cap); margin-bottom: 14px; }
+.form-msg.ok  { display: block; background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.34); color: var(--lk-ok); }
+.form-msg.bad { display: block; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.34); color: var(--lk-err); }
+
+.contact { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(26px, 4vw, 60px); align-items: start; }
+.contact-list { display: grid; gap: 14px; margin-top: 28px; }
+.contact-list a, .contact-list div {
+  display: flex; align-items: center; gap: 13px; font-size: var(--fs-5); line-height: var(--lh-cap); color: var(--tx-2);
+  transition: color var(--fast);
+}
+.contact-list a:hover { color: var(--accent-tx); }
+.contact-list svg { width: 19px; height: 19px; color: var(--accent-tx); flex: none; }
+
+/* ── Подвал ───────────────────────────────────────────────── */
+.ftr { border-top: 1px solid var(--line); padding: clamp(44px, 6vw, 70px) 0 30px; background: var(--bg-2); }
+.ftr-top { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 48px); }
+.ftr h5 { font-size: var(--fs-2); letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); margin-bottom: 15px; font-weight: 700; }
+.ftr ul { list-style: none; display: grid; gap: 9px; }
+.ftr ul a { font-size: var(--fs-4); line-height: var(--lh-cap); color: var(--tx-2); transition: color var(--fast); }
+.ftr ul a:hover { color: var(--accent-tx); }
+.ftr-brand img { height: 46px; margin-bottom: 14px; }
+.ftr-brand p { font-size: var(--fs-3); line-height: var(--lh-body); color: var(--tx-3); max-width: 34ch; }
+.ftr-bot {
+  margin-top: clamp(30px, 4vw, 48px); padding-top: 22px; border-top: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between;
+  font-size: var(--fs-2); line-height: var(--lh-cap); color: var(--tx-3);
+}
+.soc { display: flex; gap: 8px; }
+.soc a {
+  width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-sm);
+  border: 1px solid var(--line); color: var(--tx-3);
+  transition: color var(--fast), border-color var(--fast), transform var(--fast);
+}
+.soc a:hover { color: var(--accent-tx); border-color: var(--cyan); transform: translateY(-2px); }
+.soc svg { width: 17px; height: 17px; }
+
+/* ── Всплывающее окно обратного звонка ────────────────────── */
+.modal {
+  position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: var(--pad);
+  background: rgba(3,8,14,.72); backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0; visibility: hidden; transition: opacity .3s var(--ease), visibility .3s;
+}
+.modal.on { opacity: 1; visibility: visible; }
+.modal-box {
+  width: 100%; max-width: 440px; background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--panel-pad); box-shadow: var(--shadow);
+  transform: translateY(18px) scale(.98); transition: transform .34s var(--ease);
+  max-height: 92vh; overflow-y: auto;
+}
+.modal.on .modal-box { transform: none; }
+.modal-x { position: absolute; top: 14px; right: 14px; }
+.modal h3 { font-size: var(--fs-8); font-weight: 700; line-height: var(--lh-title); margin-bottom: 6px; letter-spacing: var(--tr-head); }
+.modal .sub { font-size: var(--fs-4); line-height: var(--lh-body); color: var(--tx-2); margin-bottom: 20px; }
+
+/* ── Кнопка «наверх» ──────────────────────────────────────── */
+.totop {
+  position: fixed; right: 18px; z-index: 180;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--grad-btn); color: #fff; border: 0; cursor: pointer;
+  box-shadow: 0 10px 26px -8px rgba(10,88,151,.8);
+  opacity: 0; visibility: hidden; transform: translateY(12px);
+  transition: opacity var(--fast), visibility var(--fast), transform var(--fast), box-shadow var(--fast);
+}
+.totop.on { opacity: 1; visibility: visible; transform: none; }
+.totop svg { width: 19px; height: 19px; }
+
+/* ── Адаптив ──────────────────────────────────────────────── */
+@media (max-width: 1080px) {
+  .g-4 { grid-template-columns: repeat(2, 1fr) }
+  .hero-globe { right: -30%; width: min(880px, 96vw); opacity: .86 }
+  .infra { grid-template-columns: 1fr }
+  .ftr-top { grid-template-columns: 1fr 1fr }
+}
+@media (max-width: 900px) {
+  .nav { display: none }
+  .burger { display: grid }
+  /* Пилюли уезжают в меню, в шапке им тесно */
+  .hdr-act .pill { display: none }
+  .g-3 { grid-template-columns: repeat(2, 1fr) }
+  .contact { grid-template-columns: 1fr }
+  .dc-grid { grid-template-columns: 1fr }
+  .kpi { grid-template-columns: repeat(2, 1fr) }
+  .flow { grid-template-columns: 1fr; gap: 0 }
+  .flow-link { width: 2px; height: 34px; min-width: 0; margin: 10px auto; }
+  /* То же самое для вертикальной связки на узком экране. */
+  .flow-link i { left: 0; top: 0; width: 100%; height: 34%; background: linear-gradient(180deg, transparent, var(--cyan), transparent); animation: flowRunY 2.1s linear infinite; }
+  @keyframes flowRunY {
+    from { transform: translateY(-100%) }
+    to   { transform: translateY(294%) }
+  }
+}
+@media (max-width: 640px) {
+  .g-2, .g-3, .g-4 { grid-template-columns: 1fr }
+  .form-2 { grid-template-columns: 1fr }
+  .hero { min-height: auto; padding: 104px 0 56px }
+  .hero-globe { position: relative; right: auto; top: auto; transform: none; width: 100%; max-width: 460px; margin: 30px auto -10px; opacity: 1 }
+  .hero-in { max-width: none }
+  .scroll-hint { display: none }
+  .ftr-top { grid-template-columns: 1fr; gap: 26px }
+  .kpi { grid-template-columns: 1fr 1fr }
+  .btn { width: 100%; }
+  .btn-row .btn { flex: 1 1 100%; }
+  .hdr-in { height: 62px }
+  .logo img { height: 29px }
+}
+
+/* Печать и уменьшенная анимация */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  .rv { opacity: 1; transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Кинематика: ракета, курсор, клон первого экрана
+   ═══════════════════════════════════════════════════════════ */
+#rocketCanvas {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 1; pointer-events: none;
+  opacity: 0; transition: opacity 1.2s var(--ease);
+}
+/* Прозрачностью холста правит сцена: она считает, наехал ли корпус
+   на строки, и сама выставляет её в стиле элемента. Здесь только
+   начальные значения для первого кадра. */
+.has-rocket #rocketCanvas { opacity: 1; }
+[data-theme="light"] #rocketCanvas { opacity: 0; }
+[data-theme="light"].has-rocket #rocketCanvas { opacity: .92; }
+/* Наехала на слова - гаснет сама, прозрачность ведёт скрипт */
+.has-rocket #rocketCanvas.rk-soft { transition: opacity .28s linear; }
+
+#heroClone { pointer-events: none; }
+#heroClone .scroll-hint { display: none; }
+
+.cur-dot, .cur-ring {
+  position: fixed; top: 0; left: 0; pointer-events: none; z-index: 999;
+  border-radius: 50%; will-change: transform;
+}
+.cur-dot {
+  width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  background: var(--cyan); box-shadow: 0 0 12px rgba(66,178,220,.9);
+}
+.cur-ring {
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border: 1.5px solid rgba(66,178,220,.45);
+  transition: width .22s var(--ease), height .22s var(--ease), margin .22s var(--ease), border-color .22s var(--ease), background .22s var(--ease);
+}
+.cur-ring.on {
+  width: 52px; height: 52px; margin: -26px 0 0 -26px;
+  border-color: var(--cyan); background: rgba(66,178,220,.07);
+}
+@media (hover: none) { .cur-dot, .cur-ring { display: none } }
+
+/* ═══════════════════════════════════════════════════════════
+   Инфографика
+   ═══════════════════════════════════════════════════════════ */
+.viz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); align-items: stretch; }
+.viz-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--sp-4);
+  position: relative; overflow: hidden;
+}
+.viz-card > h3 { font-size: var(--fs-6); font-weight: 650; letter-spacing: var(--tr-title); line-height: var(--lh-title); }
+/* Абзац виджета прижат к низу карточки: в ряду из трёх подписи
+   встают на одну линию, даже если графики над ними разной высоты */
+.viz-card > p  { font-size: var(--fs-3); color: var(--tx-2); line-height: var(--lh-tight);
+  margin-top: auto; max-width: var(--mw-text); }
+.viz-wide { grid-column: span 2; }
+
+/* Задержка */
+.lat-row { margin-bottom: 16px; }
+.lat-row:last-child { margin-bottom: 0 }
+.lat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: var(--fs-3); color: var(--tx-2); }
+.lat-top b { font-size: 19px; font-weight: 700; letter-spacing: -.02em; color: var(--tx); font-variant-numeric: tabular-nums; }
+.lat-track { height: 10px; border-radius: 6px; background: var(--bg-3); overflow: hidden; }
+.lat-track i { display: block; height: 100%; border-radius: 6px; transition: width .1s linear; }
+.lat-row.bad  .lat-track i { background: linear-gradient(90deg, #64748B, #94A3B8); }
+.lat-row.bad  .lat-top b   { color: var(--tx-2); }
+.lat-row.good .lat-track i { background: var(--grad); box-shadow: 0 0 18px rgba(66,178,220,.5); }
+.lat-row.good .lat-top b   { color: var(--accent-tx); }
+
+/* Кольцо и шкала */
+.dn-wrap, .ga-wrap { position: relative; display: grid; place-items: center; }
+.donut, .gauge { width: 100%; max-width: 190px; height: auto; overflow: visible; }
+.dn-bg { fill: none; stroke: var(--bg-3); stroke-width: 13; }
+.dn-val { fill: none; stroke-width: 13; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 70px 70px; filter: drop-shadow(0 0 8px rgba(66,178,220,.45)); }
+.dn-mid, .ga-mid {
+  position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2px;
+}
+.ga-mid { align-content: center; padding-top: 6px; }
+.dn-mid b, .ga-mid b { font-size: 30px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.dn-mid span, .ga-mid span { font-size: var(--fs-2); color: var(--tx-3); max-width: 12ch; margin: 0 auto; line-height: var(--lh-cap); }
+.ga-bg { fill: none; stroke: var(--bg-3); stroke-width: 12; stroke-linecap: round; }
+.ga-val { fill: none; stroke-width: 12; stroke-linecap: round; filter: drop-shadow(0 0 8px rgba(66,178,220,.45)); }
+.ga-dot { fill: #fff; filter: drop-shadow(0 0 8px rgba(138,89,246,.9)); }
+
+/* График трафика */
+.wave-wrap { position: relative; }
+/* Точка отсчёта для показания - сам блок графика, иначе оно ложится на заголовок */
+[data-viz="wave"] { position: relative; }
+.wave-cv { width: 100%; height: 150px; display: block; }
+.wave-read { position: absolute; left: 0; top: 0; display: flex; align-items: baseline; gap: 7px; }
+.wave-read b { font-size: 26px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.wave-read span { font-size: var(--fs-2); color: var(--tx-3); }
+
+/* Схема сети */
+.topo { width: 100%; height: auto; overflow: visible; }
+.tp-link { fill: none; stroke: rgba(66,178,220,.30); stroke-width: 1.6; }
+.tp-thin { stroke: rgba(66,178,220,.16); stroke-width: 1; }
+.tp-pulse { fill: #7FD8FA; filter: drop-shadow(0 0 6px rgba(127,216,250,.9)); }
+.tp-p2 { fill: #B79BFF; filter: drop-shadow(0 0 5px rgba(183,155,255,.85)); }
+.tp-origin rect { fill: var(--surface-2); stroke: var(--line-2); stroke-width: 1.4; }
+.tp-dc circle { fill: url(#none); fill: rgba(66,178,220,.16); stroke: var(--cyan); stroke-width: 1.8; }
+.tp-ring { fill: none !important; stroke: rgba(66,178,220,.5); animation: tpRing 2.8s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.tp-edge { fill: rgba(138,89,246,.55); }
+.topo text { fill: var(--tx-3); font-size: 12px; text-anchor: middle; font-family: var(--font); }
+@keyframes tpRing { 0% { transform: scale(1); opacity: .8 } 100% { transform: scale(2.2); opacity: 0 } }
+
+/* Бегущая строка городов */
+.mq { overflow: hidden; position: relative; padding: 14px 0; border-block: 1px solid var(--line); }
+.mq::before, .mq::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 90px; z-index: 2; pointer-events: none;
+}
+.mq::before { left: 0;  background: linear-gradient(90deg, var(--bg), transparent); }
+.mq::after  { right: 0; background: linear-gradient(270deg, var(--bg), transparent); }
+.mq-track { display: flex; width: max-content; animation: mqRun 140s linear infinite; }
+.mq-set { display: flex; align-items: center; gap: 14px; padding-right: 14px; }
+.mq-set span { font-size: var(--fs-3); color: var(--tx-2); white-space: nowrap; }
+/* Точка-разделитель живёт внутри узла города: так на строку уходит
+   вдвое меньше узлов, а выглядит она ровно так же */
+.mq-set span { display: inline-flex; align-items: center; gap: 14px; }
+.mq-dot {
+  display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--cyan); opacity: .55; flex: none;
+}
+@keyframes mqRun { to { transform: translateX(-50%) } }
+.mq:hover .mq-track { animation-play-state: paused }
+
+/* Столбики регионов */
+.rb-row { display: grid; grid-template-columns: minmax(96px, 38%) 1fr auto; gap: 12px; align-items: center; margin-bottom: 11px; }
+.rb-row:last-child { margin-bottom: 0 }
+.rb-n { font-size: var(--fs-3); color: var(--tx-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rb-t { height: 9px; border-radius: 5px; background: var(--bg-3); overflow: hidden; }
+.rb-t i { display: block; height: 100%; width: 0; border-radius: 5px; background: var(--grad); transition: width 1s var(--ease); }
+.rb-v { font-size: var(--fs-3); font-weight: 700; color: var(--accent-tx); font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
+
+/* Живые счётчики */
+.tick { display: grid; gap: 3px; }
+.tick b { font-size: clamp(24px, 3.2vw, 36px); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums;
+  background: var(--grad-txt); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.tick span { font-size: var(--fs-2); line-height: var(--lh-cap); color: var(--tx-2); }
+
+@media (max-width: 1080px) { .viz-grid { grid-template-columns: repeat(2, 1fr) } .viz-wide { grid-column: span 2 } }
+@media (max-width: 700px)  { .viz-grid { grid-template-columns: 1fr } .viz-wide { grid-column: span 1 } .wave-cv { height: 120px } }
+
+/* ═══════════════════════════════════════════════════════════
+   Доводка под телефон и стартовое состояние курсора
+   ═══════════════════════════════════════════════════════════ */
+.cur-dot, .cur-ring { opacity: 0; }
+.has-cursor.cursor-live .cur-dot,
+.has-cursor.cursor-live .cur-ring { opacity: 1; }
+.cur-ring { transition: width .22s var(--ease), height .22s var(--ease), margin .22s var(--ease), border-color .22s var(--ease), background .22s var(--ease), opacity .3s var(--ease); }
+.cur-dot { transition: opacity .3s var(--ease); }
+
+@media (max-width: 640px) {
+  /* Первый экран складывается в колонку, глобус уходит фоном за текст */
+  .hero { display: block; }
+  .hero-globe {
+    position: absolute; left: 50%; top: 46%;
+    transform: translate(-50%, -50%);
+    width: 128vw; max-width: none; margin: 0;
+    /* Владелец сказал прямо: «в hero планета почти прозрачная, нужно
+       нормально, как раньше». Так и было: сорок процентов - это не
+       планета за спиной, а водяной знак. Читаемость текста держим не
+       тем, что гасим сцену, а подложкой под самими буквами (ниже) -
+       тогда и планета видна, и заголовок читается. */
+    opacity: .84; z-index: 0;
+  }
+  .hero .wrap { position: relative; z-index: 2; }
+  /* Мягкая тень кадра ровно под текстом первого экрана: планета за
+     ней остаётся плотной, а строки не ложатся на сетку меридианов */
+  .hero .hero-in::before {
+    content: '';
+    position: absolute;
+    inset: -7% -9% -5% -9%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 82% 64% at 42% 46%,
+      rgba(3, 9, 17, .80) 0%,
+      rgba(3, 9, 17, .46) 56%,
+      transparent 84%);
+  }
+  /* В светлой теме подложка обязана быть светлой, иначе она сама
+     становится тёмным пятном под чёрными буквами и читаемость не
+     спасает, а губит. Планета там же держится тише: тёмный шар на
+     белом листе перетягивает кадр на себя сильнее, чем на чёрном. */
+  html[data-theme="light"] .hero .hero-in::before {
+    background: radial-gradient(ellipse 82% 64% at 42% 46%,
+      rgba(246, 249, 252, .90) 0%,
+      rgba(246, 249, 252, .62) 56%,
+      transparent 84%);
+  }
+  html[data-theme="light"] .hero-globe { opacity: .55; }
+  .logo img { height: 26px; }
+  .hdr-act { gap: 6px; }
+  /* Кнопка шапки ужимается по кеглю, а высоту держит min-height -
+     ровно как иконка-бургер рядом, чтобы строка шапки была ровной */
+  .hdr-act .btn-p { padding: 0 14px; min-height: 38px; font-size: var(--fs-3); }
+  .hero-chips { gap: 7px; }
+  .chip { padding: 6px 11px; font-size: var(--fs-2); }
+}
+@media (max-width: 560px) {
+  /* Переключатель темы переезжает в меню, иначе шапка не влезает */
+  .hdr-act .js-theme { display: none; }
+}
+.drawer-tools { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+
+/* ═══════════════════════════════════════════════════════════
+   Премиальные мелочи: зерно, разделители, вскрытие заголовков,
+   наклон карточек, живая рамка у главной кнопки
+   ═══════════════════════════════════════════════════════════ */
+
+/* Тонкое зерно поверх всего: убирает пластиковость градиентов */
+/* Зерно лежит НАД фоном, но ПОД содержимым и ракетой: поверх всего
+   оно глушило анимацию и делало картинку тусклой.
+
+   Было на ::after - и полностью терялось: ниже по файлу на том же
+   ::after рисуется виньетка кадра, а один элемент не может иметь
+   двух ::after. Побеждало последнее правило, зерна на сайте не было
+   вовсе, зато виньетка наследовала от зерна mix-blend-mode: overlay
+   и вместо мягкого затемнения по краям высветляла их. Разводим по
+   разным псевдоэлементам: зерно на ::before, виньетка на ::after. */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: .028; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme="light"] body::before { opacity: .022; }
+
+/* Разделитель секций. Шёл по всей ширине контейнера, включая его
+   боковые поля, поэтому начинался левее заголовка и кончался
+   правее последней карточки - линия жила отдельно от того, что
+   разделяла. Прижимаем её к той же колонке, что и содержимое. */
+.sep-line {
+  position: relative; height: 1px;
+  margin: 0 auto; width: 100%;
+  max-width: calc(var(--maxw) - var(--pad) * 2);
+  padding: 0;
+  background: linear-gradient(90deg, transparent, var(--line-2) 18%, var(--line-2) 82%, transparent);
+}
+@media (max-width: 1264px) {
+  /* Пока контейнер уже своего предела, поля считаются от экрана */
+  .sep-line { max-width: calc(100% - var(--pad) * 2 - var(--safe-l, 0px) - var(--safe-r, 0px)); }
+}
+.sep-line i {
+  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 10px rgba(66,178,220,.8), 0 0 26px rgba(66,178,220,.35);
+  animation: sepPulse 3s ease-in-out infinite;
+}
+@keyframes sepPulse { 0%, 100% { transform: scale(1); opacity: .85 } 50% { transform: scale(1.5); opacity: 1 } }
+
+/* Заголовки вскрываются по словам */
+.sec-h .w, .hero h1 .w { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.sec-h .w > i, .hero h1 .w > i {
+  display: inline-block; font-style: inherit;
+  transform: translateY(105%); opacity: 0;
+  transition: transform .8s var(--ease), opacity .8s var(--ease);
+}
+.rv.on .sec-h .w > i, .hero h1.words-in .w > i { transform: none; opacity: 1; }
+.sec-h .w > i { transition-delay: calc(var(--i, 0) * 55ms); }
+.hero h1 .w > i { transition-delay: calc(var(--i, 0) * 70ms + 200ms); }
+
+/* Наклон карточек под курсором */
+@media (hover: hover) and (pointer: fine) {
+  .card, .viz-card, .dc {
+    transform-style: preserve-3d;
+    transition: transform .35s var(--ease), border-color var(--fast), box-shadow var(--fast), background var(--fast);
+  }
+  .card.tilt, .viz-card.tilt, .dc.tilt { transition: transform .12s linear; }
+}
+
+/* Живая рамка у главной кнопки */
+.btn-p::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: linear-gradient(120deg, rgba(255,255,255,.7), rgba(127,216,250,.15) 30%, rgba(138,89,246,.65) 55%, rgba(255,255,255,.55));
+  background-size: 260% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: .55; animation: btnEdge 5.5s linear infinite; pointer-events: none;
+}
+.btn-p:hover::before { opacity: .95; }
+@keyframes btnEdge { to { background-position: 260% 0 } }
+
+/* Кольцо прогресса вокруг кнопки «наверх» снято по просьбе
+   владельца: белый ободок поверх фирменной кнопки выбивался из
+   кадра фильма и читался чужеродным кружком. Прогресс страницы и
+   так виден полосой вверху, дублировать его нечем. Разметку
+   оставляем на месте: она приходит из скрипта, и удалять её
+   значило бы держать правку в двух файлах сразу. */
+.totop svg.ring { display: none; }
+
+/* Страховка: заголовок не должен остаться невидимым, если блок
+   почему-то не получил класс появления */
+.sec-h:not(.rv .sec-h) .w > i { transform: none; opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-h .w > i, .hero h1 .w > i { transform: none; opacity: 1; }
+  .btn-p::before, .sep-line i { animation: none; }
+  /* Снимается зерно (оно живёт на ::before), виньетка кадра
+     остаётся: она статична и движению не мешает */
+  body::before { display: none; }
+}
+
+/* Состав подключения */
+/* Зазор у состава подключения был свой, 12 - на фоне соседних 24
+   ряд плиток выглядел сбитым в кучу. Возвращаем общий. */
+.inc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
+.inc-item {
+  display: flex; align-items: center; gap: 12px; padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  font-size: var(--fs-4); line-height: var(--lh-cap); transition: border-color var(--fast), background var(--fast), transform var(--fast);
+}
+.inc-item:hover { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-2px); }
+.inc-item svg {
+  width: 18px; height: 18px; flex: none; color: var(--accent-tx);
+  padding: 3px; border-radius: 50%; background: var(--grad-soft); box-sizing: content-box;
+}
+@media (max-width: 900px) { .inc-grid { grid-template-columns: repeat(2, 1fr) } }
+@media (max-width: 560px) { .inc-grid { grid-template-columns: 1fr } }
+
+/* ═══════════════════════════════════════════════════════════
+   Компактнее и живее: парящее лого, горизонтальная лента,
+   плотные отступы, компактная правовая строка
+   ═══════════════════════════════════════════════════════════ */
+
+/* Плотнее по вертикали: длинные блоки читались как простыня.
+   Числа здесь больше не свои - все берутся из шкалы кегля и шкалы
+   отступов, объявленных в начале файла. Одинаковые по смыслу вещи
+   в разных блоках теперь совпадают по размеру автоматически. */
+:root { --sec: clamp(52px, 6.4vw, 96px); }
+.sec-head { margin-bottom: clamp(24px, 3.4vw, 40px); }
+.sec-h { margin-bottom: var(--sp-3); }
+.card { padding: var(--card-pad); }
+.card h3 { margin-bottom: 7px; }
+.card-ico { width: 42px; height: 42px; border-radius: var(--r-sm); margin-bottom: 14px; }
+.card-ico svg { width: 21px; height: 21px; }
+.viz-card { padding: var(--card-pad); gap: var(--sp-3); }
+.prod-card ul { margin-top: 11px; gap: 5px; }
+.prod-card li { font-size: var(--fs-3); }
+/* Плитка состава - половина ранга карточки: одна строка текста и
+   галочка. Отступ считается от того же --card-pad, поэтому при
+   любой ширине экрана плитка остаётся ровно вдвое компактнее
+   карточки, а не живёт по собственному расписанию. */
+.inc-item { padding: calc(var(--card-pad) * .55) calc(var(--card-pad) * .65); font-size: var(--fs-4); }
+.kpi > div { padding: clamp(17px, 2.4vw, 26px) clamp(13px, 1.8vw, 22px); }
+.faq-q { padding: clamp(14px, 1.8vw, 18px) clamp(15px, 2vw, 22px); }
+.faq-a p { padding: 0 clamp(15px, 2vw, 22px) clamp(15px, 2vw, 20px); }
+
+/* Парящее лого в первом экране */
+.hero-logo { margin: 0 0 22px; }
+.hero-logo img {
+  width: clamp(190px, 22vw, 280px); height: auto;
+  filter: drop-shadow(0 0 34px rgba(66,178,220,.45)) drop-shadow(0 0 72px rgba(138,89,246,.20));
+  animation: heroFloat 6.5s ease-in-out infinite;
+  will-change: transform;
+}
+[data-theme="light"] .hero-logo img {
+  filter: drop-shadow(0 10px 26px rgba(9,19,32,.16)) drop-shadow(0 0 46px rgba(66,178,220,.28));
+}
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg) }
+  50%      { transform: translateY(-13px) rotate(-1.1deg) }
+}
+
+/* Горизонтальная лента, которую двигает вертикальный скролл */
+.hs { padding: 0; }
+/* z-index на липкой сцене: без него вся лента лежит под ракетой */
+.hs-stage { z-index: 2; position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 3vw, 34px); overflow: hidden; }
+.hs-head { flex: none; margin-bottom: 0; }
+/* Свой слой: иначе ракета проходит поверх карточек, а не за ними */
+/* Лента этапов едет вбок, и её крайние карточки неизбежно
+   обрезаны кромкой кадра. Резаный край читался поломкой - владелец
+   назвал это «карточки разных размеров и формы, не красиво, как
+   баг». Карточки одного размера, обрывался только кадр: теперь края
+   ленты растворяются, и обрез читается движением, а не разрывом. */
+.hs-view {
+  position: relative; z-index: 2; width: 100%; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+}
+.hs-track {
+  display: flex; gap: var(--gap); padding: 4px var(--pad);
+  width: max-content; will-change: transform;
+}
+.hs-track > * { width: clamp(250px, 26vw, 330px); flex: none; }
+.hs-bar { flex: none; }
+.hs-bar i {
+  display: block; height: 3px; border-radius: 3px; background: var(--line);
+  position: relative; overflow: hidden;
+}
+.hs-bar i::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: var(--p, 8%); border-radius: 3px; background: var(--grad);
+  transition: width .1s linear;
+}
+
+/* Правовая строка вместо подвала */
+.legal {
+  display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center;
+  margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--line);
+  font-size: var(--fs-2); line-height: var(--lh-cap); color: var(--tx-3);
+}
+.legal a { color: var(--tx-2); transition: color var(--fast); }
+.legal a:hover { color: var(--accent-tx); }
+
+@media (max-width: 900px) {
+  /* На телефоне лента просто листается пальцем: закреплять экран неудобно */
+  .hs-stage { position: static; height: auto; padding: var(--sec) 0; }
+  .hs-view { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .hs-view::-webkit-scrollbar { display: none }
+  .hs-track { transform: none !important; }
+  .hs-track > * { width: 76vw; scroll-snap-align: center; }
+  .hs-bar { display: none }
+  .hero-logo img { width: clamp(170px, 52vw, 230px) }
+}
+
+/* Подпись города над трёхмерным глобусом */
+.g3-label {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, 0);
+  padding: 6px 11px; border-radius: var(--r-xs); font-size: var(--fs-2); font-weight: 600;
+  background: var(--bg-2); border: 1px solid var(--line-2); color: var(--tx);
+  pointer-events: none; white-space: nowrap; opacity: 0;
+  transition: opacity .18s var(--ease); z-index: 4; box-shadow: var(--shadow);
+}
+.map-wrap { position: relative; }
+.map-wrap canvas { touch-action: pan-y; }
+
+/* ── Стойка дата-центра в объёме ──────────────────────────── */
+.what-top {
+  display: grid; grid-template-columns: 1.02fr .98fr;
+  gap: clamp(22px, 4vw, 56px); align-items: center;
+  margin-bottom: clamp(30px, 4.4vw, 52px);
+}
+.rack {
+  position: relative; min-height: 400px; height: clamp(360px, 42vw, 470px);
+  border-radius: var(--r-lg); overflow: hidden;
+  background:
+    radial-gradient(70% 60% at 50% 42%, rgba(47,169,224,.13), transparent 70%),
+    linear-gradient(160deg, var(--bg-2), var(--bg));
+  border: 1px solid var(--line);
+}
+.rack canvas { display: block; width: 100%; height: 100%; }
+/* Затемнение у нижнего края, чтобы подпись читалась поверх корпуса */
+.rack::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 92px;
+  background: linear-gradient(transparent, rgba(5,12,21,.62));
+  pointer-events: none;
+}
+[data-theme="light"] .rack::after { background: linear-gradient(transparent, rgba(243,247,251,.72)); }
+.rack-hint {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  font-size: var(--fs-1); letter-spacing: var(--tr-eyebrow); text-transform: uppercase;
+  color: var(--tx-3); pointer-events: none; transition: opacity var(--fast);
+}
+.rack:hover .rack-hint { opacity: 0; }
+.rk-tip {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) translateY(6px);
+  padding: 7px 14px; border-radius: var(--r-full); font-size: var(--fs-3); font-weight: 600;
+  background: var(--bg-3); border: 1px solid var(--line-2); color: var(--tx);
+  opacity: 0; pointer-events: none; white-space: nowrap;
+  transition: opacity var(--fast), transform var(--fast);
+}
+.rk-tip.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 900px) {
+  .what-top { grid-template-columns: 1fr; }
+  .rack { height: clamp(300px, 74vw, 380px); min-height: 0; order: -1; }
+}
+
+/* ── Шаг маршрута в горизонтальной ленте ──────────────────── */
+.card.step { display: flex; flex-direction: column; }
+.step-ms {
+  display: inline-flex; align-items: baseline; gap: 5px; align-self: flex-start;
+  margin-bottom: 12px; padding: 4px 11px; border-radius: var(--r-full);
+  background: var(--grad-soft); border: 1px solid var(--line);
+  font-size: var(--fs-1); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-tx);
+}
+.step-ms b { font-size: var(--fs-5); font-weight: 700; letter-spacing: -.01em; }
+/* Нить, связывающая шаги в один маршрут */
+.step-line {
+  position: absolute; left: 100%; top: 50%; width: var(--gap); height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+  opacity: .55;
+}
+.hs-track > *:last-child .step-line { display: none; }
+
+/* ── Плотная сетка: тот же контент, меньше воздуха ──────────
+   Зазор здесь был свой, 14 пикселей, тогда как у соседних сеток
+   24. Два блока подряд с разной частотой ряда - первое, что
+   бросается в глаза как неровность. Зазор возвращаем общий,
+   плотность держим за счёт кегля и внутреннего отступа: колонка
+   у продуктов уже, потому что их четыре, а не три. */
+.grid.tight { gap: var(--gap); }
+.grid.tight .card { padding: clamp(15px, 1.8vw, 20px); border-radius: var(--r-md); }
+.grid.tight .card-ico { width: 38px; height: 38px; border-radius: var(--r-sm); margin-bottom: 12px; }
+.grid.tight .card-ico svg { width: 19px; height: 19px; }
+.grid.tight .card h3 { font-size: var(--fs-6); margin-bottom: 6px; }
+.grid.tight .card p { font-size: var(--fs-3); }
+.grid.tight .prod-card ul { margin-top: auto; padding-top: 10px; gap: 5px; }
+.grid.tight .prod-card li { font-size: var(--fs-2); padding-left: 17px; }
+@media (max-width: 1080px) { .grid.tight { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 560px)  { .grid.tight { grid-template-columns: 1fr } }
+
+/* Заголовок про ЦОД встаёт рядом с карточками, а не над ними */
+@media (min-width: 1024px) {
+  .dc-head { display: grid; grid-template-columns: minmax(0,.44fr) minmax(0,.56fr); gap: var(--gap); align-items: end; margin-bottom: clamp(16px,2vw,24px) !important; }
+  .dc-head .sec-h { margin-bottom: 0; max-width: none; }
+  .dc-head .sec-p { max-width: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Настоящий объём карточек
+
+   Карточка это не картинка с тенью: у неё есть толщина.
+   Внутренние слои вынесены вперёд по оси Z, поэтому при
+   наклоне они расходятся с фоном по-настоящему, а не
+   имитируют глубину градиентом.
+   ═══════════════════════════════════════════════════════════ */
+.d3 { transform-style: preserve-3d; will-change: transform; }
+.d3 > * { transform: translateZ(12px); }
+.d3 .card-ico { transform: translateZ(42px); }
+.d3 h3, .d3 h4 { transform: translateZ(26px); }
+.d3 p, .d3 ul { transform: translateZ(16px); }
+.d3 .num { transform: translateZ(2px); }
+.d3 .step-ms { transform: translateZ(34px); }
+/* Блик едет против наклона: так читается стеклянная поверхность */
+.d3::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(var(--gl, 120deg), rgba(255,255,255,.10), transparent 46%);
+  opacity: 0; transition: opacity .3s var(--ease);
+  pointer-events: none; transform: translateZ(1px);
+}
+.d3.tilt::after { opacity: 1; }
+[data-theme="light"] .d3::after { background: linear-gradient(var(--gl, 120deg), rgba(255,255,255,.75), transparent 46%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .d3, .d3 > * { transform: none !important; }
+}
+
+/* ── Живой космос на фоне ─────────────────────────────────── */
+#spaceBg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0; transition: opacity 1.4s var(--ease);
+}
+#spaceBg.on { opacity: 1; }
+/* Тело больше не глухая заливка: сквозь секции виден космос */
+body { background: var(--bg); }
+
+/* ═══════════════════════════════════════════════════════════
+   Стекло
+
+   Карточка это не прямоугольник с прозрачностью. У стекла есть
+   толщина, светящаяся кромка сверху, где свет входит, и тень
+   снизу, где он выходит. Размытие фона включаем только там, где
+   оно по карману: на телефоне это самая дорогая операция в списке.
+   ═══════════════════════════════════════════════════════════ */
+.card, .viz-card, .dc {
+  background:
+    linear-gradient(160deg, var(--gl-1) 0%, var(--gl-2) 46%, var(--gl-3) 100%);
+  border: 1px solid var(--gl-line);
+  /* Тень берётся из уровня, а не пишется тут же числами: у всех
+     карточек сайта в покое она теперь одна и та же. */
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    inset 0 -1px 0 var(--gl-bot),
+    var(--sh-1);
+}
+/* Кромка: тонкая светлая линия по верхнему краю, как на настоящем стекле */
+.card::after, .viz-card::after {
+  border-radius: inherit;
+}
+/* Наведение только там, где оно настоящее. На телефоне hover
+   «залипает» после тапа: карточка так и остаётся приподнятой, с
+   кольцом и тенью, а соседние - плоские. Владелец увидел ровно это -
+   «некоторые карточки при клике дают какой-то кривой фон тени».
+   Пальцу наводить нечем, значит и правила ему не адресованы. */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover, .viz-card:hover, .dc:hover {
+    border-color: var(--gl-line-2);
+    box-shadow:
+      inset 0 1px 0 var(--gl-top-2),
+      inset 0 -1px 0 var(--gl-bot),
+      var(--sh-2),
+      0 0 0 1px var(--gl-ring);
+  }
+}
+/* Клавиатура должна видеть то же, что и мышь: наведение и фокус
+   поднимают карточку одинаково. Раньше карточка с фокусом внутри
+   не отличалась от соседних совсем. */
+.card:has(:focus-visible), .viz-card:has(:focus-visible), .dc:has(:focus-visible) {
+  border-color: var(--gl-line-2);
+  box-shadow:
+    inset 0 1px 0 var(--gl-top-2),
+    inset 0 -1px 0 var(--gl-bot),
+    var(--sh-2),
+    0 0 0 1px var(--gl-ring);
+}
+/* Нажатие: карточка возвращается на плоскость - тот же ответ, что
+   у кнопок, чтобы поведение сайта было одним на все элементы */
+.card:active, .viz-card:active, .dc:active { transform: translateY(-1px); }
+
+/* Размытие фона под карточкой. Раньше оно доставалось только
+   настольным, и на телефоне стекло становилось матовой плиткой -
+   владелец сравнил и сказал прямо, что так нельзя. Теперь размытие
+   есть везде, а разной остаётся только его величина: радиус - это
+   цена кадра, а не наличие эффекта, и на плотном экране телефона
+   шесть пикселей читаются так же, как девять на мониторе. */
+@media (min-width: 1024px) and (hover: hover) {
+  .card, .viz-card, .dc {
+    backdrop-filter: blur(9px) saturate(1.25);
+    -webkit-backdrop-filter: blur(9px) saturate(1.25);
+  }
+}
+@media (max-width: 1023px) {
+  .card, .viz-card, .dc {
+    backdrop-filter: blur(6px) saturate(1.2);
+    -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  }
+}
+
+/* Пока идёт полёт, страница под ним закрыта целиком: слой игры
+   занимает весь экран, и ни одной карточки сайта не видно. Размытие
+   при этом продолжало считаться - три с половиной десятка стёкол,
+   каждое на своём слое, поверх которых браузер ещё и рисует
+   трёхмерную сцену. На телефоне это и есть та самая просадка в
+   финальной сцене. Стекло возвращается ровно в тот миг, когда игра
+   закрывается, поэтому увидеть подмену нельзя. */
+html.rc-flying .card,
+html.rc-flying .viz-card,
+html.rc-flying .dc,
+/* Салон и финальная сцена - тот же случай, и он даже важнее.
+   Заплатка выше сначала знала только про `rc-flying`, а его ставят,
+   когда игра УЖЕ запущена. Финальная сцена идёт под `rc-inside` и
+   `rc-stage`, и как раз в ней заказчик и видит просадку: полотно
+   кабины на весь экран, поверх трёхмерный салон, а под ними всё те
+   же тридцать девять стёкол считают размытие впустую. Проверка
+   поиском показала, что ни одно правило с этими признаками
+   backdrop-filter не трогало - то есть заплатка стояла мимо того
+   места, ради которого её ставили. */
+html.rc-inside .card,
+html.rc-inside .viz-card,
+html.rc-inside .dc,
+html.rc-stage .card,
+html.rc-stage .viz-card,
+html.rc-stage .dc {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Парящая карточка: отрывается от плоскости и получает свою тень.
+   Ставим точечно, где это уместно, а не на всё подряд. */
+.float-3d {
+  animation: floatY 7s var(--ease) infinite;
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    var(--sh-3),
+    0 0 60px -30px rgba(66, 178, 220, .5);
+}
+.float-3d:nth-child(2n) { animation-delay: -2.3s; animation-duration: 8.4s; }
+.float-3d:nth-child(3n) { animation-delay: -4.1s; animation-duration: 9.1s; }
+@keyframes floatY {
+  0%, 100% { transform: translateY(0) }
+  50%      { transform: translateY(-11px) }
+}
+@media (prefers-reduced-motion: reduce) { .float-3d { animation: none } }
+
+/* ── Звук: фирменная капсула с эквалайзером ───────────────── */
+.pill.snd button { min-width: 44px; padding: 0 12px; }
+.eq { display: flex; align-items: center; gap: 3px; height: 14px; }
+.eq i {
+  width: 2.5px; border-radius: 2px; background: currentColor;
+  height: 3px; transition: height .12s linear;
+}
+/* Звук выключен: полоски приплюснуты в одну черту */
+.snd-on .pill.snd .eq i:nth-child(1) { height: calc(4px + var(--snd-e, 0) * 9px); }
+.snd-on .pill.snd .eq i:nth-child(2) { height: calc(6px + var(--snd-e, 0) * 14px); }
+.snd-on .pill.snd .eq i:nth-child(3) { height: calc(3px + var(--snd-e, 0) * 7px); }
+
+.snd-hint {
+  position: fixed; z-index: 210; top: calc(76px + env(safe-area-inset-top, 0px));
+  right: var(--pad); max-width: 260px;
+  padding: 10px 15px; border-radius: var(--r-md);
+  background: var(--bg-3); border: 1px solid var(--line-2); color: var(--tx);
+  font-size: var(--fs-3); line-height: var(--lh-cap); box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity .4s var(--ease), transform .4s var(--ease);
+}
+.snd-hint.on { opacity: 1; transform: none; }
+@media (max-width: 900px) { .snd-hint { display: none } }
+
+/* Звук это одно состояние, а не выбор из двух. Раньше здесь ездил
+   тот же кругляш в половину капсулы, что у языка и темы, - и в
+   шапке это выглядело поломкой: фиолетовое пятно занимало ровно
+   левую половину капсулы и разрезало иконку эквалайзера пополам.
+   Широкому варианту в меню это уже починили ниже по файлу; тут
+   делаем то же самое: кругляш - не указатель половины, а заливка
+   всей капсулы. Звук включён - капсула горит, выключен - пустая. */
+.pill.snd { width: 54px; }
+.pill.snd button { width: 100%; min-width: 0; padding: 0; }
+.pill.snd .pill-knob {
+  width: calc(100% - 6px);
+  transform: none; opacity: 0;
+  transition: opacity .28s var(--ease), background var(--fast);
+}
+.pill.snd.at-2 .pill-knob { transform: none; opacity: 1; }
+
+/* Ширина шапки не резиновая. Сначала ужимаем навигацию, потом
+   уводим язык в меню: тема и звук нужнее под рукой. */
+@media (max-width: 1340px) {
+  .nav a { padding: 9px 8px; font-size: var(--fs-3); }
+}
+/* Капсула языка живёт в шапке только там, где строке хватает места.
+   Ниже она уходит в меню, а меню открывает бургер - и оба порога
+   теперь совпадают. Пока они расходились, на полосе 1081-1240
+   переключить язык было НЕЧЕМ: капсулу уже сняли, а бургер ещё не
+   включили. */
+@media (max-width: 1299px) {
+  .hdr-act .pill.lang { display: none; }
+}
+/* Ниже 1080 навигация в строку уже не помещается, и это не мелочь:
+   логотип, восемь ссылок и правый блок с кнопкой «Регистрация»
+   требуют 1055 точек, а строка их не отдаёт. Кнопка уезжала за правый
+   край - на 1024 у неё срезалось тридцать точек и читалось
+   «Регистраци», на 920 она уходила за кадр целиком, и второго входа в
+   шапке не было: бургер включался только с 900.
+
+   Заметить это замером ширины документа нельзя: у страницы стоит
+   overflow-x: clip, и scrollWidth равен clientWidth даже когда
+   содержимое за кромкой. Поэтому граница бургера поднята до 1080 -
+   там, где строка перестаёт вмещать честно. */
+/* Порог поднят с 1080 до 1300 по замеру самой строки, а не на глаз.
+   Восемь ссылок, логотип и правый блок с кнопкой честно вмещаются
+   только с 1300: на 1280 «Регистрация» резалась на пять точек, на
+   1240 «Контакты» уходили под правый блок на 22 точки, на 1081 - на
+   72. Проверка tools/audit/зло-шапка.mjs теперь меряет и это, а не
+   только вылет за край окна. */
+@media (max-width: 1299px) {
+  .nav { display: none; }
+  .burger { display: grid; }
+}
+/* Ни один элемент шапки не имеет права распирать строку. Правило
+   стояло только ниже 900, хотя тесно становится куда раньше. */
+.hdr-in > * { min-width: 0; }
+
+/* ═══════════════════════════════════════════════════════════
+   Читаемость без затемнения
+
+   Гасить всю картинку ради текста неправильно: пропадает и фон, и
+   ракета. Подложку ставим локально, ровно под текстовым блоком, и
+   она стеклянная: сквозь неё виден и космос, и ракета.
+   ═══════════════════════════════════════════════════════════ */
+.sec-head, .hero-in, .hs-head {
+  position: relative;
+  isolation: isolate;
+}
+/* Прямоугольной плашки под текстом больше нет: она закрывала космос
+   и читалась как тёмная карточка поверх фона. Вместо неё мягкое
+   затухание строго по габаритам текста - к краям сходит в ноль,
+   поэтому границы не видно совсем, а буквы держит собственная тень. */
+.sec-head::before, .hero-in::before, .hs-head::before {
+  content: '';
+  position: absolute; z-index: -1;
+  inset: -10vh -18vw -8vh -14vw;
+  background: radial-gradient(ellipse 62% 58% at 32% 50%,
+              var(--read-veil) 0%, var(--read-veil-soft) 45%, transparent 78%);
+  pointer-events: none;
+}
+.hero h1, .sec-h, .hs-h {
+  text-shadow: 0 1px 3px rgba(5,12,21,.55), 0 0 22px rgba(5,12,21,.35);
+}
+[data-theme="light"] .hero h1,
+[data-theme="light"] .sec-h,
+[data-theme="light"] .hs-h {
+  text-shadow: 0 1px 2px rgba(243,247,251,.9);
+}
+.hero-sub, .sec-p {
+  text-shadow: 0 1px 2px rgba(5,12,21,.45);
+}
+[data-theme="light"] .hero-sub,
+[data-theme="light"] .sec-p { text-shadow: 0 1px 2px rgba(243,247,251,.85); }
+
+/* На телефоне в шапке остаётся только кнопка регистрации и меню:
+   капсулы живут в выдвижном меню, там им просторно */
+@media (max-width: 900px) {
+  .hdr-act .pill { display: none; }
+}
+/* Широкая капсула звука в меню. У языка и темы по две кнопки, и
+   кругляш честно показывает, какая из них выбрана. У звука кнопка
+   одна на всю ширину: кругляш в половину капсулы разрезал её ровно
+   по эквалайзеру - половина иконки на фиолетовом, половина на тёмном.
+   Поэтому здесь кругляш - не указатель половины, а заливка всей
+   капсулы: звук включён - капсула горит, выключен - пустая. */
+.pill.snd.wide { width: 100%; }
+.pill.snd.wide button { width: 100%; gap: 9px; display: flex; align-items: center; justify-content: center; }
+.pill.snd.wide .pill-knob {
+  width: calc(100% - 6px);
+  transform: none;
+  opacity: 0;
+  transition: opacity .28s var(--ease), background var(--fast);
+}
+.pill.snd.wide.at-2 .pill-knob { transform: none; opacity: 1; }
+
+/* ══ Точки касания ракеты ═════════════════════════════════════
+   Стили для rc-hooks.js. Здесь важно одно: ракета трогает
+   элементы через отдельные свойства rotate и translate, а не
+   через transform. Transform у карточек уже занят парением и
+   наклоном под курсором, и если бы мы писали в него, эффекты
+   затирали бы друг друга. ══════════════════════════════════ */
+
+/* Пакеты данных, которые ракета бросает в виджеты */
+.rc-pkt-layer { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+.rc-pkt {
+  position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle, #CFE9F5 0%, var(--cyan) 45%, rgba(66,178,220,0) 72%);
+  opacity: .95; will-change: transform, opacity;
+  transition: transform .62s cubic-bezier(.3,.8,.35,1), opacity .62s ease;
+}
+
+/* Показатель, разбуженный пролётом */
+.kpi-n { transition: text-shadow .5s var(--ease), filter .5s var(--ease); }
+.kpi-n.rc-lit { filter: brightness(1.14); text-shadow: 0 0 26px rgba(66,178,220,.5); }
+
+/* Виджет, поймавший пакет */
+.viz-card.rc-pulse {
+  border-color: rgba(66,178,220,.5);
+  box-shadow: inset 0 1px 0 var(--gl-top), 0 0 44px -16px rgba(66,178,220,.75);
+}
+
+/* Карточки дата-центров под струёй */
+.dc {
+  rotate: var(--jet-rot, 0deg);
+  translate: 0 calc(var(--jet, 0) * -4px);
+  /* Длинный переход сглаживает даже редкие обновления: карточка
+     не дёргается вслед за ракетой, а мягко отзывается на неё. */
+  transition: rotate .9s var(--ease), translate .9s var(--ease), box-shadow .5s var(--ease);
+}
+.dc::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(100deg, rgba(66,178,220,.16), transparent 55%);
+  opacity: var(--jet, 0); transition: opacity .4s var(--ease);
+}
+
+/* Продукты-спутники кренятся от прохода */
+.prod-card {
+  rotate: var(--tilt, 0deg);
+  translate: 0 calc(var(--lift, 0px) * -1);
+  transition: rotate .95s var(--ease), translate .95s var(--ease);
+}
+
+/* Заголовок, подсвеченный снизу факелом */
+.sec-h { position: relative; }
+.sec-h::after {
+  content: ''; position: absolute; left: 0; right: 12%; bottom: -8px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), rgba(138,89,246,.65) 70%, transparent);
+  opacity: calc(var(--under, 0) * .9);
+  transform: scaleX(calc(.3 + var(--under, 0) * .7)); transform-origin: 0 50%;
+  transition: opacity .35s var(--ease), transform .35s var(--ease);
+}
+
+/* Отсечка маршрута, которую щёлкнула ракета */
+.step .step-ms { transition: color .4s var(--ease), text-shadow .4s var(--ease); }
+.step.rc-tick .step-ms { color: var(--accent-tx); text-shadow: 0 0 18px rgba(66,178,220,.55); }
+.step.rc-tick .step-line { opacity: 1; }
+
+/* Лента сценариев, которую ракета тянет за собой */
+.case:not(.step) { translate: var(--drag, 0px) 0; transition: translate .9s var(--ease); }
+
+/* Девять пунктов: галочка приезжает по световой дорожке */
+.inc-item svg { opacity: .25; transition: opacity .4s var(--ease), filter .4s var(--ease); }
+.inc-item::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 0; height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+  opacity: 0; transition: width .45s var(--ease), opacity .45s var(--ease);
+}
+.inc-item { position: relative; }
+.inc-item.rc-landed svg { opacity: 1; filter: drop-shadow(0 0 8px rgba(66,178,220,.6)); }
+.inc-item.rc-landed::before { width: 100%; opacity: .5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-pkt { display: none; }
+  .dc, .prod-card, .case:not(.step) { rotate: 0deg; translate: 0; transition: none; }
+  .inc-item svg { opacity: 1; }
+  .inc-item::before { display: none; }
+}
+
+/* ── Пыль из-под опор при посадке ─────────────────────────────
+   Слой живёт полторы секунды и сам себя убирает. Держим его в
+   вёрстке, а не в сцене: частицы в WebGL стоят дорого, а тут
+   тридцать кружков, которые браузер рисует композитором. */
+.rc-dust {
+  position: fixed; z-index: 3; pointer-events: none;
+  width: 0; height: 0;
+}
+.rc-dust i {
+  position: absolute; left: 0; top: 0;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(207,233,245,.5), rgba(66,178,220,.16) 55%, transparent 72%);
+  opacity: 0; transform: translate3d(0,0,0) scale(.3);
+  animation: rcDust 1.5s cubic-bezier(.15,.75,.3,1) forwards;
+}
+@keyframes rcDust {
+  10%  { opacity: .85 }
+  100% { opacity: 0; transform: translate3d(var(--dx,60px), var(--dy,20px), 0) scale(var(--ds,1.2)) }
+}
+@media (prefers-reduced-motion: reduce) { .rc-dust { display: none } }
+
+/* ── Снимок зала на карточке дата-центра ──────────────────────
+   Картинка живёт в фоне и придавлена затемнением: карточка
+   остаётся читаемой, но перестаёт быть пустым прямоугольником.
+   Подставляет её rc-fill.js через переменную --shot. */
+.dc { isolation: isolate; }
+.dc::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background-image: linear-gradient(180deg, rgba(5,12,21,.62), rgba(5,12,21,.93) 72%), var(--shot, none);
+  background-size: cover; background-position: center;
+  opacity: var(--shot-on, 1);
+  transition: transform .8s var(--ease), opacity .5s var(--ease);
+  border-radius: inherit;
+}
+.dc:hover::after { transform: scale(1.06); }
+[data-theme="light"] .dc::after {
+  background-image: linear-gradient(180deg, rgba(243,247,251,.78), rgba(243,247,251,.95) 72%), var(--shot, none);
+}
+html.rc-reduced .dc::after { transition: none; }
+
+/* У градиентного заголовка текст прозрачный, и тень от букв рисуется
+   прямо под ним - краски мутнеют. Тени здесь не место: читаемость
+   держит мягкое свечение всего блока. */
+.grad-tx { text-shadow: none !important; }
+.hero h1:has(.grad-tx), .sec-h:has(.grad-tx) { text-shadow: none; }
+.hero h1 .grad-tx, .sec-h .grad-tx {
+  filter: drop-shadow(0 2px 10px rgba(5,12,21,.55));
+}
+[data-theme="light"] .hero h1 .grad-tx,
+[data-theme="light"] .sec-h .grad-tx {
+  filter: drop-shadow(0 1px 4px rgba(243,247,251,.9));
+}
+
+/* ── Акты фильма в оформлении ─────────────────────────────────
+   Диспетчер сцены (rc-scene.js) ставит на документ data-act и
+   долю акта --act-k. Здесь по ним смешивается настроение: у земли
+   кадр теплее и плотнее, на орбите холоднее и разреженнее, внутри
+   корабля почти гаснет, у пульта собирается к центру. Это то, что
+   связывает фон, текст и сцену в одно целое. */
+:root { --act-warm: 0; --act-cold: 0; --act-inside: 0; }
+html[data-act="pad"],
+html[data-act="ignite"]   { --act-warm: 1; }
+html[data-act="orbit"],
+html[data-act="route"]    { --act-cold: 1; }
+html[data-act="cabin"],
+html[data-act="manual"],
+html[data-act="console"]  { --act-inside: 1; }
+
+/* Виньетка кадра: у земли мягкая, на орбите почти нет, внутри
+   корабля собирает внимание к центру */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(ellipse 120% 90% at 50% 50%,
+              transparent 42%,
+              rgba(5,12,21, calc(.18 + var(--act-inside, 0) * .26)) 100%);
+  opacity: calc(.55 + var(--act-warm, 0) * .25 - var(--act-cold, 0) * .3);
+  transition: opacity 1.2s var(--ease), background 1.2s var(--ease);
+}
+[data-theme="light"] body::after {
+  background: radial-gradient(ellipse 120% 90% at 50% 50%,
+              transparent 46%, rgba(9,19,32,.10) 100%);
+  opacity: .4;
+}
+html.rc-reduced body::after { display: none; }
+
+
+/* ── Посадочная площадка ─────────────────────────────────────
+   Ракета садится в нижнюю часть секции «Включено в подключение».
+   Пустой чёрный низ читался как дыра в вёрстке - теперь там
+   площадка: кольцо посадочных огней и мягкое свечение бетона.
+   Чистое оформление сцены, никакой логики. */
+#included { position: relative; }
+#included::after {
+  content: ''; position: absolute; left: 50%; bottom: 3%;
+  width: min(560px, 74vw); height: clamp(70px, 12vh, 130px);
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 50% 42% at 50% 58%, rgba(66,178,220,.10), transparent 70%),
+    radial-gradient(ellipse 46% 30% at 50% 60%, transparent 62%, rgba(66,178,220,.22) 66%, transparent 71%),
+    radial-gradient(ellipse 30% 20% at 50% 62%, transparent 58%, rgba(207,233,245,.12) 64%, transparent 70%);
+  pointer-events: none;
+  animation: rcPad 3.6s ease-in-out infinite;
+}
+@keyframes rcPad {
+  0%, 100% { opacity: .55; }
+  50%      { opacity: 1; }
+}
+html.rc-reduced #included::after,
+html[data-theme="light"] #included::after { animation: none; opacity: .4; }
+@media (prefers-reduced-motion: reduce) { #included::after { animation: none; } }
+
+/* ═══════════════════════════════════════════════════════════
+   РОВНОСТЬ: одна логика состояний, одна нижняя линия
+
+   Претензия владельца была не про какой-то один блок, а про
+   ощущение: «неровно». Разбор показал три источника.
+
+   Первый - разные зазоры у соседних сеток (14 у продуктов, 24 у
+   преимуществ, 12 у состава подключения). Починено выше по файлу:
+   зазор теперь один, --gap.
+
+   Второй - разная высота одинаковых на вид кнопок. Сплошная
+   кнопка шла без рамки, прозрачная с рамкой, и стоящие рядом они
+   различались на два пикселя. Починено там же, где объявлена
+   кнопка: рамка есть у обеих, высоту держит min-height.
+
+   Третий - разнобой состояний. У одних элементов наведение
+   поднимало на два пикселя, у других не делало ничего, фокус с
+   клавиатуры был виден не везде, нажатие не отзывалось нигде.
+   Этим занят раздел ниже: одна логика на все интерактивные
+   элементы сайта.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Нижняя линия карточек ─────────────────────────────────────
+   В ряду из четырёх продуктов описания разной длины, поэтому
+   списки под ними начинались на разной высоте и ряд выглядел
+   рассыпанным. Список прижат к низу карточки: описания остаются
+   разными, а маркеры встают на одну линию. */
+.prod-card ul { margin-top: auto; padding-top: 11px; }
+/* Значок и заголовок остаются наверху и не растягиваются */
+.card > .card-ico, .card > h3 { flex: none; }
+
+/* ── Единая логика состояний ───────────────────────────────────
+   Наведение и фокус с клавиатуры дают ОДИН И ТОТ ЖЕ вид: человек
+   с мышью и человек с клавиатурой видят одинаковый сайт. Нажатие
+   всегда возвращает элемент на плоскость. Недоступный элемент
+   всегда гаснет и не отзывается.
+
+   :where() держит вес правил на нуле, поэтому кино-сцена и
+   собственные стили блоков перебивают их без !important. */
+:where(.btn, .icon-btn, .reg-tabs button, .pill button, .soc a,
+       .node-row, .faq-q, .inc-item, .drawer a, .legal a,
+       .contact-list a, .nav a, .totop) {
+  transition: transform var(--fast), box-shadow var(--fast),
+              background var(--fast), border-color var(--fast), color var(--fast);
+}
+
+/* Наведение и фокус - одно и то же движение вверх */
+.btn-p:focus-visible { transform: translateY(-2px); box-shadow: 0 16px 34px -12px rgba(10,88,151,.95), var(--glow); }
+.btn-p:focus-visible::after { opacity: 1; }
+.btn-g:focus-visible { border-color: var(--cyan); background: var(--surface-2); transform: translateY(-2px); }
+.icon-btn:focus-visible { color: var(--accent-tx); border-color: var(--cyan); }
+.reg-tabs button:focus-visible { border-color: var(--cyan); color: var(--tx); }
+.soc a:focus-visible { color: var(--accent-tx); border-color: var(--cyan); transform: translateY(-2px); }
+.inc-item:focus-visible { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-2px); }
+.node-row:focus-visible, .node-row:hover { background: var(--surface-2); }
+.faq-q:focus-visible { color: var(--accent-tx); }
+.contact-list a:focus-visible, .legal a:focus-visible, .ftr ul a:focus-visible { color: var(--accent-tx); }
+.nav a:focus-visible { color: var(--tx); background: var(--surface); }
+
+/* Нажатие: всё, что поднималось, возвращается на место. Раньше
+   отклик на нажатие был только у главной кнопки. */
+.btn:active, .icon-btn:active, .soc a:active,
+.inc-item:active, .reg-tabs button:active { transform: translateY(0); }
+.totop:active { transform: scale(.94); }
+
+/* Недоступное состояние - одинаковое у кнопки, поля и вкладки */
+.reg-tabs button[disabled], .icon-btn[disabled],
+.field input[disabled], .field textarea[disabled], .field select[disabled] {
+  opacity: .45; cursor: not-allowed; pointer-events: none;
+}
+
+/* ── Поля ввода: четыре состояния и ни одного лишнего ──────────
+   Наведение подсвечивает границу, фокус добавляет к ней кольцо,
+   ошибка красит границу и кольцо в красный, недоступность гасит.
+   Одинаково у анкеты и у поиска по городам. */
+.search input:focus, .search input:focus-visible {
+  /* Кольцо было прозрачным на восемнадцать процентов - клавиатурой
+     не видно, куда попал фокус. Плотность подняли до читаемой */
+  outline: none; border-color: var(--tx);
+  box-shadow: 0 0 0 3px rgba(66, 178, 220, .55);
+}
+.field.bad input:focus, .field.bad textarea:focus {
+  border-color: #F87171; box-shadow: 0 0 0 3px rgba(248,113,113,.20);
+}
+.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible {
+  outline: none;
+}
+.consent input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+/* ── Светлая тема: карточка должна иметь край ───────────────────
+   Граница в 9% чернил на почти белом фоне давала 1,04:1 - край
+   карточки был не виден вовсе, и ряд читался как облако пятен, а
+   не как сетка. Поднимаем до различимого, тень при этом остаётся
+   мягкой: контур делает не она, а линия. */
+[data-theme="light"] {
+  --gl-line:   rgba(9,19,32,.13);
+  --gl-line-2: rgba(9,19,32,.22);
+  --line:      rgba(9,19,32,.13);
+  --line-ui:   rgba(9,19,32,.46);
+  --line-2:    rgba(9,19,32,.22);
+}
+
+/* ── Ровные разделители внутри панелей ─────────────────────────
+   Последняя строка списка или аккордеона не должна давать вторую
+   линию поверх границы самой панели: получалась двойная рамка
+   толщиной в два пикселя ровно в одном месте из восьми. */
+.faq-i:last-child, .node-row:last-child, .ftr ul li:last-child { border-bottom: 0; }
+
+/* ── Наведение, которое видно и на светлой теме ────────────────
+   Строка города и плитка состава подсвечивались через --surface-2.
+   В тёмной теме это заметное осветление, а в светлой --surface-2
+   это чистый белый поверх почти белого: наведение было, а увидеть
+   его было нельзя. На светлой подсвечиваем не белым, а третьим
+   уровнем фона - тем же, которым подсвечен показатель в полосе
+   KPI, чтобы отклик на наведение везде был одной природы. */
+[data-theme="light"] .node-row:hover,
+[data-theme="light"] .node-row:focus-visible,
+[data-theme="light"] .inc-item:hover,
+[data-theme="light"] .inc-item:focus-visible { background: var(--bg-3); }
+
+/* ═══════════════════════════════════════════════════════════
+   ПЕЧАТЬ
+
+   Страница это фильм на прокрутке: слои стоят друг на друге,
+   разделы проявляются по въезду в кадр, а половина кадра нарисована
+   в холстах и в трёхмерной рубке. Принтеру всё это не нужно и
+   ничего из этого не достаётся: документ он не прокручивает, а
+   значит наблюдатели появления не срабатывают ни разу.
+
+   Пока правил печати не было вовсе, из пятнадцати листов A4 семь
+   выходили практически пустыми (по десятку знаков на лист), герой и
+   эпилог печатались белым по белой бумаге, а анкета заявки не
+   попадала на бумагу ни разу.
+
+   Здесь один принцип: на бумагу идёт ТЕКСТ. Чёрным по белому, без
+   слоёв, без кино и без корабля. ═══════════════════════════════ */
+@media print {
+  /* Кино на бумаге не играет: снимаем всё, что зависит от
+     прокрутки, наблюдателей и трёхмерного слоя. */
+  :root,
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  html.rc-inside, html.rc-deep-inside, html.rc-stage, html.rc-flying { }
+
+  /* Проявление по въезду в кадр: печатаем всё сразу. */
+  .rv, .rv.on, [class*="rv-d"],
+  .rcd, .rcd-head, .cin-item, .hs-track > *, .card, .case-card, .prod-card {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+    filter: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Разделы, спрятанные рубкой, на бумаге нужны: там вопросы,
+     контакты и анкета. */
+  html.rc-inside #faq > .wrap,
+  html.rc-inside #contact > .wrap,
+  html.rc-inside #epilogue > .wrap,
+  #faq > .wrap, #contact > .wrap, #epilogue > .wrap,
+  #faqList, #faqList .faq-i, #faqList .faq-a {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  #faqList .faq-a { display: block !important; }
+  #faqList .faq-a[inert] { pointer-events: auto; }
+
+  /* Слои поверх страницы, кино, корабль и всё нарисованное. */
+  .skip, .hdr, .drawer, .modal, .prog, .totop, .mcta, .snd-hint,
+  .rc-flight, .rc-desk, .rc-gate, .rk-soft, .rc-shine, .rc-hatch-glow,
+  .rc-quake-fx, .cur-dot, .cur-ring, .rcf-fab, .rcf-cta, .rc-vpn-holo,
+  canvas, video, .hero-globe, .rcd-sheen, .vid-bg, .rc-vidbg,
+  .rail-nav, .hs-bar, .marquee, [data-viz="marquee"] {
+    display: none !important;
+  }
+
+  /* Ленты на бумаге разворачиваются в столбец: вбок листать нечем. */
+  .hs-view, .hs-track {
+    overflow: visible !important;
+    transform: none !important;
+    display: block !important;
+    width: auto !important;
+  }
+  .hs-track > * {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 0 10mm 0 !important;
+  }
+
+  /* Кадр и поля бумаги. */
+  .wrap { max-width: none !important; padding: 0 !important; }
+  section { padding: 6mm 0 !important; page-break-inside: auto; }
+  /* Высота разделов на сайте это хронометраж фильма: по ней едет
+     камера. На бумаге она превращается в пустые листы - «Надёжность»
+     занимала 1980 точек при 527 знаках текста, эпилог 1961 при 419.
+     Убираем запас высоты: на листе остаётся ровно содержимое. */
+  section, section > .wrap, main > *, .epi, .hs, .cin-stage, .w3-stage {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  .card, .case-card, .prod-card, .dc, .flow-node, .faq-i, .form-card {
+    page-break-inside: avoid;
+    border: 1px solid #999 !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    margin-bottom: 4mm;
+  }
+  h1, h2, h3, h4 { page-break-after: avoid; color: #000 !important; }
+  a { color: #000 !important; text-decoration: underline; }
+  /* Адрес ссылки на бумаге виден, иначе ссылка бесполезна. */
+  .doc a[href^="http"]::after,
+  .contact-list a[href^="http"]::after,
+  .contact-list a[href^="mailto"]::after { content: " (" attr(href) ")"; font-size: 9pt; }
+
+  /* Градиентный текст на бумаге исчезал: заголовок героя и эпилога
+     печатались белым по белому. */
+  .grad-tx, .hero h1, .hero h1 span, .epi h2, .sec-h, .kpi-n, .n {
+    -webkit-text-fill-color: #000 !important;
+    color: #000 !important;
+    background: none !important;
+    background-clip: border-box !important;
+    -webkit-background-clip: border-box !important;
+  }
+
+  /* Анкета печатается как бланк: поля видно, куда писать. */
+  .form-card input, .form-card textarea, .form-card select {
+    border: 1px solid #999 !important;
+    background: #fff !important;
+    color: #000 !important;
+    min-height: 10mm;
+  }
+  button, .btn { display: none !important; }
+  .consent { display: block !important; }
+
+  @page { margin: 14mm; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ПРИНУДИТЕЛЬНЫЕ ЦВЕТА (режим высокой контрастности)
+
+   Система заменяет все цвета своими. Значки, нарисованные фоном по
+   маске, при этом пропадают целиком: фон становится системным белым,
+   маска остаётся, и на месте кнопки остаётся пустой овал. Замер
+   показал ровно это на кнопке звука - управление звуком исчезало с
+   экрана полностью, вместе с полосками эквалайзера.
+
+   Лечим точечно: значкам, которые нарисованы маской, оставляем свои
+   цвета, а кнопкам возвращаем видимую границу. */
+@media (forced-colors: active) {
+  .pill .pill-knob,
+  .pill.snd button::before,
+  .eq, .eq i,
+  .icon-btn svg, .btn svg {
+    forced-color-adjust: none;
+  }
+  .pill, .btn, .icon-btn, .totop, .node-row, .field input,
+  .field textarea, .field select, .consent input[type="checkbox"] {
+    border: 1px solid ButtonBorder !important;
+  }
+  .totop {
+    background: ButtonFace !important;
+    color: ButtonText !important;
+  }
+  /* Подпись кнопки звука спрятана визуально: в этом режиме значок
+     может не прочитаться, и подпись возвращается словами. */
+  .pill.snd .vh {
+    position: static !important;
+    width: auto !important; height: auto !important;
+    clip: auto !important; clip-path: none !important;
+    white-space: nowrap;
+    padding: 0 6px;
+  }
+}

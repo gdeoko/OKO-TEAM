@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rocket CDN · экраны загрузки на выбор</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
+<style>
+  :root{
+    --ink:#091320; --cyan:#42B2DC; --cyan2:#0A5897; --mist:#E2E8F0; --violet:#8A59F6;
+    --bg:#050C15; --bg2:#0B1523; --line:rgba(226,232,240,.12);
+    --font:'Golos Text','Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--mist);font-family:var(--font);line-height:1.6;
+       padding:clamp(20px,4vw,48px);-webkit-font-smoothing:antialiased}
+  h1{font-size:clamp(24px,3.4vw,38px);letter-spacing:-.02em;margin-bottom:8px}
+  .lead{color:rgba(226,232,240,.66);max-width:70ch;margin-bottom:34px;font-size:15px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px}
+  .item{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--bg2)}
+  .head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+        padding:14px 18px;border-bottom:1px solid var(--line)}
+  .head h2{font-size:16px;font-weight:650;letter-spacing:-.01em}
+  .head p{font-size:12.5px;color:rgba(226,232,240,.55);margin-top:2px}
+  .go{padding:8px 14px;border:0;border-radius:10px;cursor:pointer;font:inherit;font-size:13px;
+      font-weight:600;color:#fff;background:linear-gradient(135deg,#42B2DC,#0A5897)}
+  .go:hover{filter:brightness(1.12)}
+  .stage{position:relative;height:290px;background:var(--ink);overflow:hidden}
+  .stage canvas,.stage svg{display:block}
+  .note{padding:12px 18px;font-size:12.5px;color:rgba(226,232,240,.5);border-top:1px solid var(--line)}
+
+  /* ── 1. Зажигание ── */
+  .v1{position:absolute;inset:0;display:grid;place-items:center}
+  .v1 .wrap{display:grid;justify-items:center;gap:14px}
+  .v1 svg{width:104px;height:104px;overflow:visible}
+  .v1 .rr{fill:none;stroke:var(--cyan);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
+          stroke-dasharray:420;stroke-dashoffset:420}
+  .v1.run .rr{animation:draw .55s .15s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .v1 .rk{opacity:0}
+  .v1.run .rk{animation:fadeIn .4s .7s ease-out forwards}
+  @keyframes fadeIn{to{opacity:1}}
+  .v1 .fl{opacity:0;transform-origin:50% 0}
+  .v1.run .fl{animation:fadeIn .3s .95s forwards,flick .16s 1.1s infinite alternate}
+  @keyframes flick{from{transform:scaleY(.7) scaleX(.9)}to{transform:scaleY(1.25) scaleX(1.05)}}
+  .v1 .sl{font-size:10px;letter-spacing:.3em;color:rgba(226,232,240,.45);opacity:0}
+  .v1.run .sl{animation:fadeIn .5s 1.2s forwards}
+  .v1 .arc{position:absolute;width:150px;height:150px;border-radius:50%;
+           border:2px solid transparent;border-top-color:rgba(66,178,220,.7);opacity:0}
+  .v1.run .arc{animation:fadeIn .4s 1.1s forwards,spin 1.1s 1.1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .v1.out{animation:v1out .35s ease-in forwards}
+  @keyframes v1out{to{transform:translateY(-40%);opacity:0}}
+
+  /* ── 3. Полоса пропускания ── */
+  .v3{position:absolute;inset:0;display:grid;place-items:center;gap:18px;align-content:center}
+  .v3 .lg{font-size:38px;font-weight:800;letter-spacing:-.04em;opacity:0;
+           background:linear-gradient(135deg,#7FD8FA,#42B2DC 45%,#8A59F6);
+           -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .v3.run .lg{animation:fadeIn .35s .15s forwards}
+  .v3 .tube{width:min(260px,70%);height:8px;border-radius:12px;background:#16283C;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(226,232,240,.10);
+            position:relative;opacity:0}
+  .v3.run .tube{animation:fadeIn .3s .25s forwards}
+  .v3 .beam{position:absolute;inset:0 100% 0 0;border-radius:12px;
+            background:linear-gradient(90deg,#42B2DC,#0A5897);transition:right .2s linear}
+  .v3 .beam::after{content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(115deg,rgba(255,255,255,.32) 0 8px,transparent 8px 22px);
+    animation:slide .7s linear infinite}
+  @keyframes slide{to{background-position:44px 0}}
+  .v3 .pct{font-size:12px;letter-spacing:.16em;color:rgba(226,232,240,.5);font-variant-numeric:tabular-nums}
+
+  /* ── 4. Отсчёт 40 мс ── */
+  .v4{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:6px}
+  .v4 .num{font-size:74px;font-weight:600;letter-spacing:-.04em;line-height:1;
+           font-variant-numeric:tabular-nums;opacity:0}
+  .v4.run .num{animation:fadeIn .3s .15s forwards}
+  .v4 .ms{font-size:15px;color:var(--cyan);letter-spacing:.18em;opacity:0}
+  .v4.run .ms{animation:fadeIn .3s .25s forwards}
+  .v4 .slog{display:flex;gap:14px;opacity:0;perspective:600px}
+  .v4 .slog span{display:inline-block;font-size:14px;font-weight:700;letter-spacing:.22em;
+                 transform:rotateX(90deg);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+  .v4 .slog.on{opacity:1}
+  .v4 .slog.on span{transform:none}
+  .v4 .bar{width:0;height:2px;background:var(--cyan);border-radius:2px;transition:width .5s linear}
+
+  /* ── 5. Капсула ── */
+  .v5{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:20px}
+  .v5 .cap{position:relative;width:120px;height:56px;border-radius:999px;background:#0F1B2B;
+           border:1px solid rgba(255,255,255,.08);opacity:0}
+  .v5.run .cap{animation:fadeIn .3s .15s forwards}
+  .v5 .knob{position:absolute;top:5px;left:5px;width:44px;height:44px;border-radius:50%;
+            background:var(--violet);box-shadow:0 0 22px -4px rgba(138,89,246,.9);
+            transition:left .25s cubic-bezier(.22,1,.36,1),border-radius .3s,width .3s,height .3s,top .3s}
+  .v5 .sl{font-size:10px;letter-spacing:.3em;color:rgba(226,232,240,.45);opacity:0}
+  .v5.run .sl{animation:fadeIn .4s .5s forwards}
+  .v5.snap .knob{left:76px;opacity:0;transform:scale(.5);transition:left .25s,opacity .3s,transform .3s}
+  .v5 .rin{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;font-weight:800;
+           color:#fff;opacity:0;transform:scale(.7);transition:opacity .3s,transform .3s cubic-bezier(.22,1,.36,1)}
+  .v5.snap .rin{opacity:1;transform:none}
+  .v5.snap .cap{border-color:rgba(138,89,246,.55);box-shadow:0 0 34px -8px rgba(138,89,246,.75)}
+</style>
+</head>
+<body>
+
+<h1>Экраны загрузки Rocket CDN</h1>
+<p class="lead">
+  Пять вариантов под их бренд. Каждый самодостаточный: ни одной внешней зависимости,
+  ни одного запроса, вес до трёх килобайт после сжатия. Любой можно отдать разработчику
+  личного кабинета куском кода. Нажмите «показать», чтобы проиграть заново.
+</p>
+
+<div class="grid">
+
+  <div class="item">
+    <div class="head">
+      <div><h2>1. Зажигание</h2><p>Логотип собирается на глазах, ракета уходит вверх</p></div>
+      <button class="go" data-v="1">показать</button>
+    </div>
+    <div class="stage">
+      <div class="v1" id="s1">
+        <div class="arc"></div>
+        <div class="wrap">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <path class="rr" d="M28 84V22h22a17 17 0 0 1 0 34H28l30 28"/>
+            <g class="rk">
+              <path d="M50 34c6 4 9 11 9 19l-9 7-9-7c0-8 3-15 9-19z" fill="#E2E8F0"/>
+              <circle cx="50" cy="47" r="3.4" fill="#0A5897"/>
+              <path d="M41 55l-5 8 8-3zM59 55l5 8-8-3z" fill="#42B2DC"/>
+            </g>
+            <path class="fl" d="M50 62c3 5 4 9 0 14-4-5-3-9 0-14z" fill="#8A59F6"/>
+          </svg>
+          <div class="sl">FAST. RELIABLE. GLOBAL.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Инлайновый SVG плюс CSS. Дуга вокруг буквы это индикатор реального прогресса.</div>
+  </div>
+
+  <div class="item">
+    <div class="head">
+      <div><h2>2. Пинг по планете</h2><p>Волна от Москвы зажигает 218 точек по миру</p></div>
+      <button class="go" data-v="2">показать</button>
+    </div>
+    <div class="stage"><canvas id="s2"></canvas></div>
+    <div class="note">Холст, семьсот точек материков. Стыкуется с глобусом, который человек увидит ниже.</div>
+  </div>
+
+  <div class="item">
+    <div class="head">
+      <div><h2>3. Полоса пропускания</h2><p>Луч данных идёт по трубе строго по проценту загрузки</p></div>
+      <button class="go" data-v="3">показать</button>
+    </div>
+    <div class="stage">
+      <div class="v3" id="s3">
+        <div class="lg">R</div>
+        <div class="tube"><i class="beam"></i></div>
+        <div class="pct">0%</div>
+      </div>
+    </div>
+    <div class="note">Самый честный вариант: полоса показывает не таймер, а реальную загрузку.</div>
+  </div>
+
+  <div class="item">
+    <div class="head">
+      <div><h2>4. Отсчёт 40 миллисекунд</h2><p>Цифра падает до нуля и собирается в слоган</p></div>
+      <button class="go" data-v="4">показать</button>
+    </div>
+    <div class="stage">
+      <div class="v4" id="s4">
+        <div class="num">40</div>
+        <div class="ms">ms</div>
+        <div class="slog"><span>FAST</span><span>RELIABLE</span><span>GLOBAL</span></div>
+        <div class="bar"></div>
+      </div>
+    </div>
+    <div class="note">Рифма с разделом «Путь запроса за 40 миллисекунд»: заставка обещает, страница показывает.</div>
+  </div>
+
+  <div class="item">
+    <div class="head">
+      <div><h2>5. Капсула</h2><p>Фирменный переключатель едет и схлопывается в букву R</p></div>
+      <button class="go" data-v="5">показать</button>
+    </div>
+    <div class="stage">
+      <div class="v5" id="s5">
+        <div class="cap"><i class="knob"></i><span class="rin">R</span></div>
+        <div class="sl">FAST. RELIABLE. GLOBAL.</div>
+      </div>
+    </div>
+    <div class="note">Самый «фирменный»: тот же элемент, что стоит в шапке сайта переключателем темы.</div>
+  </div>
+
+</div>
+
+<script>
+/* Каждая заставка умеет одно: проиграться от нуля и показать прогресс.
+   В бою прогресс приходит настоящий, здесь имитируем загрузку. */
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+
+  function fakeProgress(cb, done) {
+    var p = 0;
+    var id = setInterval(function () {
+      p += 4 + Math.random() * 9;
+      if (p >= 100) { p = 100; clearInterval(id); cb(p); setTimeout(done || function () {}, 400); return; }
+      cb(p);
+    }, 90);
+    return id;
+  }
+
+  /* 1. Зажигание */
+  function play1() {
+    var el = $("#s1");
+    el.classList.remove("run", "out");
+    void el.offsetWidth;
+    el.classList.add("run");
+    setTimeout(function () { el.classList.add("out"); }, 2600);
+    setTimeout(function () { el.classList.remove("run", "out"); void el.offsetWidth; el.classList.add("run"); }, 3100);
+  }
+
+  /* 2. Пинг по планете */
+  var c2 = $("#s2"), x2 = c2.getContext("2d"), raf2 = null;
+  var dots = [], nodes = [];
+  (function seed() {
+    /* Материки грубым эллипсом с вырезами: узнаваемо и дёшево */
+    for (var i = 0; i < 700; i++) {
+      var a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
+      var x = Math.cos(a) * r, y = Math.sin(a) * r * 0.62;
+      if (Math.abs(y) > 0.52) continue;
+      if (x > -0.15 && x < 0.12 && y > -0.1 && y < 0.34) continue;
+      dots.push([x, y]);
+    }
+    for (i = 0; i < 218; i++) {
+      var b = Math.random() * Math.PI * 2, q = 0.15 + Math.sqrt(Math.random()) * 0.82;
+      nodes.push({ x: Math.cos(b) * q, y: Math.sin(b) * q * 0.62, d: 0, on: 0 });
+    }
+    nodes[0].x = -0.12; nodes[0].y = -0.16;           /* Москва */
+    for (i = 0; i < nodes.length; i++) {
+      var dx = nodes[i].x - nodes[0].x, dy = nodes[i].y - nodes[0].y;
+      nodes[i].d = Math.sqrt(dx * dx + dy * dy);
+    }
+  })();
+  function play2() {
+    cancelAnimationFrame(raf2);
+    var b = c2.parentElement.getBoundingClientRect();
+    var dpr = Math.min(devicePixelRatio || 1, 2);
+    c2.width = b.width * dpr; c2.height = b.height * dpr;
+    c2.style.width = b.width + "px"; c2.style.height = b.height + "px";
+    x2.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var w = b.width, h = b.height, R = Math.min(w, h) * 0.38, cx = w / 2, cy = h / 2;
+    var t0 = performance.now();
+    (function loop(t) {
+      raf2 = requestAnimationFrame(loop);
+      var e = (t - t0) / 1000;
+      if (e > 4.2) { t0 = t; nodes.forEach(function (n) { n.on = 0; }); }
+      x2.clearRect(0, 0, w, h);
+      var rise = Math.min(1, e / 0.45);
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        if ((d[1] + 1) / 2 > rise * 1.25) continue;
+        x2.fillStyle = "rgba(66,178,220,.22)";
+        x2.fillRect(cx + d[0] * R - 1, cy + d[1] * R - 1, 1.6, 1.6);
+      }
+      var ping = Math.max(0, e - 0.55) * 1.15;
+      if (ping > 0 && ping < 1.6) {
+        x2.beginPath();
+        x2.arc(cx, cy - 0.16 * R, ping * R * 1.5, 0, 6.283);
+        x2.strokeStyle = "rgba(138,89,246," + Math.max(0, 0.5 - ping * 0.3).toFixed(2) + ")";
+        x2.lineWidth = 2;
+        x2.stroke();
+      }
+      var lit = 0;
+      for (i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        if (ping * 1.5 > n.d) n.on = Math.min(1, n.on + 0.08);
+        if (n.on > 0.05) lit++;
+        var big = i < 3 ? 2.6 : 1.5;
+        x2.beginPath();
+        x2.arc(cx + n.x * R, cy + n.y * R, big * (0.5 + n.on), 0, 6.283);
+        x2.fillStyle = i === 0 ? "rgba(138,89,246," + n.on + ")" : "rgba(111,214,255," + (n.on * 0.9) + ")";
+        x2.fill();
+      }
+      x2.fillStyle = "#E2E8F0";
+      x2.font = "600 26px " + getComputedStyle(document.body).fontFamily;
+      x2.textAlign = "center";
+      x2.fillText(String(lit), cx, cy + R + 34);
+      x2.font = "500 12px " + getComputedStyle(document.body).fontFamily;
+      x2.fillStyle = "rgba(66,178,220,.8)";
+      x2.fillText("точек в сети", cx, cy + R + 52);
+    })(t0);
+  }
+
+  /* 3. Полоса пропускания */
+  function play3() {
+    var el = $("#s3");
+    el.classList.remove("run"); void el.offsetWidth; el.classList.add("run");
+    var beam = el.querySelector(".beam"), pct = el.querySelector(".pct");
+    beam.style.right = "100%"; pct.textContent = "0%";
+    fakeProgress(function (p) {
+      beam.style.right = (100 - p) + "%";
+      pct.textContent = Math.round(p) + "%";
+    }, function () { setTimeout(play3, 700); });
+  }
+
+  /* 4. Отсчёт */
+  var t4 = null;
+  function play4() {
+    clearInterval(t4);
+    var el = $("#s4");
+    el.classList.remove("run"); void el.offsetWidth; el.classList.add("run");
+    var num = el.querySelector(".num"), slog = el.querySelector(".slog"), bar = el.querySelector(".bar");
+    slog.classList.remove("on");
+    slog.querySelectorAll("span").forEach(function (s, i) { s.style.transitionDelay = (i * 90) + "ms"; });
+    bar.style.width = "0";
+    var v = 40;
+    num.textContent = v;
+    t4 = setInterval(function () {
+      v--;
+      num.textContent = v < 0 ? 0 : v;
+      if (v <= 0) {
+        clearInterval(t4);
+        slog.classList.add("on");
+        bar.style.width = "170px";
+        setTimeout(play4, 2200);
+      }
+    }, 26);
+  }
+
+  /* 5. Капсула */
+  function play5() {
+    var el = $("#s5");
+    el.classList.remove("run", "snap"); void el.offsetWidth; el.classList.add("run");
+    var knob = el.querySelector(".knob");
+    knob.style.left = "5px";
+    fakeProgress(function (p) {
+      knob.style.left = (5 + (p / 100) * 71) + "px";
+    }, function () {
+      el.classList.add("snap");
+      setTimeout(play5, 1600);
+    });
+  }
+
+  var players = { "1": play1, "2": play2, "3": play3, "4": play4, "5": play5 };
+  document.querySelectorAll(".go").forEach(function (b) {
+    b.addEventListener("click", function () { players[b.dataset.v](); });
+  });
+  Object.keys(players).forEach(function (k) { players[k](); });
+})();
+</script>
+</body>
+</html>

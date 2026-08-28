@@ -1,0 +1,890 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · кинематограф, оформление
+
+   Здесь только то, что можно выразить стилями: сцена с точкой
+   схода, положение карточки в пространстве по переменным из
+   rc-cinema.js и поведение при касании. Никаких значений в
+   пикселях, посчитанных наугад: всё приходит из кадра.
+
+   Железное правило: карточка, оказавшаяся перед зрителем, стоит
+   к нему лицом и не размыта. Текст важнее любого эффекта.
+
+   Про приоритеты. У карточек три хозяина трансформации: пружина
+   объёма (rc-depth.js, пишет --rcd-*), наклон от курсора
+   (rc-scroll.js, пишет inline) и салон (rc-cinema.js, пишет
+   --cin-*). Драться за последний кадр им нельзя, поэтому в
+   салоне трансформация собирается здесь одной строкой: сначала
+   место на стене, потом наклон карточки под рукой человека.
+   Отсюда и !important - он не от лени, а вместо гонки.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Общая сцена ─────────────────────────────────────────── */
+.cin-stage {
+  perspective: 1400px;
+  perspective-origin: 50% 45%;
+}
+.cin-item {
+  transform:
+    translate3d(0, var(--cin-y, 0px), var(--cin-z, 0px))
+    rotateY(var(--cin-rot, 0deg));
+  opacity: var(--cin-vis, 1);
+  filter: var(--cin-blur, none);
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition: filter .35s var(--ease), opacity .35s var(--ease);
+  backface-visibility: hidden;
+}
+
+/* ═══ САЛОН КОРАБЛЯ ═══════════════════════════════════════════
+   Человек вошёл в ракету и стоит в центре рубки. Карточки
+   надёжности висят на стеновых панелях вокруг него, поворот
+   приходит из самой сцены. Раскладка нужна ровно одна: панели
+   стоят друг за другом по кругу, значит в потоке они занимают
+   одно и то же место, а разводит их поворот. */
+
+/* Салону нужна длина прокрутки. Без неё четыре панели проносятся
+   за один оборот колеса и прочитать их невозможно. Тридцать
+   экранных процентов на панель - примерно секунда спокойного
+   чтения на каждой. */
+html:not(.rc-reduced) .cin-cabin > .wrap {
+  min-height: calc(62vh + var(--cab-n, 4) * 30vh);
+}
+
+/* Кольцо стоит на месте, пока блок проезжает мимо: человек стоит
+   в центре рубки, а не едет вдоль неё. Прокрутку при этом никто
+   не перехватывает - страница едет как ехала, просто кольцо
+   какое-то время держится в середине кадра.
+
+   Почему не position: sticky, хотя он тут напрашивается. У body
+   стоит overflow-x: hidden, а это делает body контейнером
+   прокрутки: липкий элемент внутри начинает липнуть к body,
+   который не прокручивается, и просто уезжает вверх. Проверено
+   замером: у закреплённого кольца верх должен держаться на
+   245 пикселях, а держался на минус 894. Поэтому состояние
+   кольца назначает кадр (класс приходит из rc-cinema.js), а
+   высоту трека держит обёртка блока - она никуда не девается,
+   что бы ни делало кольцо. */
+html:not(.rc-reduced) .cin-ring {
+  --cab-h: clamp(150px, 21vh, 205px);
+  /* Радиус комнаты и точка схода. Экраны стоят по кругу этого
+     радиуса, человек - в его центре. Числа подобраны так, чтобы
+     соседний экран уходил за кромку кадра, а не наезжал на
+     читаемый: угол между экранами задаёт сцена (сорок пять
+     градусов), значит развести их можно только радиусом. */
+  --cab-r: 545px;
+  --cab-w: min(560px, 46vw);
+  --cab-h-scr: clamp(210px, 26vh, 280px);
+  position: relative;
+  display: block;
+  height: calc(var(--cab-h) * 2);
+  perspective: var(--cab-p, 620px);
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+}
+
+/* ── Комната как одно тело ────────────────────────────────────
+   Владелец описал требование дословно: «все заголовки, все
+   карточки, весь текст - это один единый мир, привязанный к
+   3D-миру; экраны стоят на своих точках, а не ездят вверх-вниз».
+
+   Раньше каждый экран получал собственные координаты в каждом
+   кадре: место на экране, поворот, глубину. Формально это давало
+   круг, на деле - пять независимо дёргающихся плиток: одна уходила
+   вверх вместе с потоком страницы, другая появлялась сбоку.
+
+   Теперь круг настоящий. Экран получает свой угол ОДИН раз при
+   сборке и больше не двигается никогда. Двигается комната: на неё
+   идёт один поворот - тот самый, которым живёт объёмная рубка.
+   Из-за этого экраны физически не могут разъехаться ни между
+   собой, ни со стенами, а вертикального хода у них нет вовсе.
+
+   Сдвиг комнаты вперёд на радиус ставит читаемый экран ровно в
+   плоскость кадра: он виден в свою натуральную величину, а не
+   уменьшенным перспективой. Остальные уходят вглубь сами. */
+html:not(.rc-reduced) .cin-world {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform:
+    translateZ(calc(var(--cab-r) - var(--cab-back, 0px)))
+    rotateY(var(--cab-turn, 0deg));
+}
+/* Кольцо держится в середине кадра, пока блок идёт мимо */
+html:not(.rc-reduced) .cin-ring.cin-pin {
+  position: fixed;
+  left: 0; right: 0;
+  top: calc(50vh - var(--cab-h));
+}
+/* Блок кончился: кольцо остаётся внизу своего трека и уезжает
+   вместе с ним, без прыжка обратно наверх. */
+html:not(.rc-reduced) .cin-ring.cin-pin-end {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+}
+
+/* Экран на своей точке круга. Угол (--cin-slot) ставится один раз
+   при сборке и в кадре не переписывается: экран стоит там, где
+   стоит, как предмет обстановки. Вертикального смещения здесь нет
+   намеренно - ни от потока страницы, ни от объёма карточек.
+
+   Горизонтально экран центрован отступом, а не процентным сдвигом:
+   процентный сдвиг пришлось бы ставить ПОСЛЕ поворота, и тогда
+   дальняя панель уезжала бы вбок вместе с кругом. Подъём по
+   вертикали от поворота вокруг вертикальной оси не зависит, его
+   можно оставить в трансформации. */
+html:not(.rc-reduced) .cin-world > .cin-item {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--cab-w);
+  margin-left: calc(var(--cab-w) / -2);
+  height: auto;
+  z-index: var(--cin-zi, 1);
+  /* Одна высота на все экраны. Владелец попросил прямо: «сделай
+     одного размера». Экраны стоят по кругу на одинаковых панелях, и
+     разная высота выдавала в них карточки сайта, а не приборы
+     корабля. Само число приходит из rc-cinema.js (fitPanels): это
+     высота самой длинной панели, поэтому «одного размера» больше
+     не означает «обрезано». Здесь остаётся только запасное
+     значение на случай, если скрипт не доехал. */
+  height: var(--cab-h-scr, 230px);
+  transform:
+    translateY(-50%)
+    translateY(var(--cin-up, 0px))
+    rotateY(var(--cin-slot, 0deg))
+    translateZ(calc(var(--cab-r) * -1))
+    scale(var(--cin-s, 1))
+    scaleY(var(--cin-sy, 1)) !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* safe center нужен именно вместе с прокруткой: при обычном
+     center переполнение уезжает за ВЕРХНЮЮ кромку, куда полосой не
+     доскроллить, и вместо хвоста текста пропадает заголовок. */
+  justify-content: safe center;
+  /* Вбок панель не растягивается никогда, вниз - прокручивается,
+     если текст не влез даже в потолок высоты. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  opacity: var(--cin-vis, 1);
+  filter: var(--cin-blur, none);
+  /* Трансформацию ведёт кадр, а не переход: любой transition на
+     ней превращает поворот салона в резину. */
+  transition: opacity .3s linear, filter .3s linear,
+              box-shadow .4s var(--ease), border-color .4s var(--ease) !important;
+  backface-visibility: hidden;
+}
+
+/* Панель перед зрителем: её читают. Ни размытия, ни поворота,
+   зато подсвеченная кромка - видно, что она сейчас главная. */
+html:not(.rc-reduced) .cin-world > .cin-item.cin-front {
+  --cin-blur: none;
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    0 34px 70px -34px rgba(0,0,0,.92),
+    0 0 52px -18px rgba(66,178,220,.75);
+  border-color: rgba(66,178,220,.42);
+}
+
+/* Ушедшее за плечо не ловит курсор и палец: кликать по тому, что
+   человек уже не видит, нельзя. */
+.cin-world > .cin-item.cin-far { pointer-events: none; }
+
+/* На телефоне раскладка проще: карточки идут одна за другой,
+   разворот мягче, тяжёлых фильтров нет вовсе. */
+@media (max-width: 760px) {
+  html:not(.rc-reduced) .cin-cabin > .wrap {
+    min-height: calc(54vh + var(--cab-n, 4) * 34vh);
+  }
+  html:not(.rc-reduced) .cin-ring {
+    --cab-h: clamp(160px, 24vh, 240px);
+    --cab-r: 378px;
+    --cab-w: min(86vw, 300px);
+    --cab-h-scr: clamp(200px, 27vh, 260px);
+    perspective: var(--cab-p, 508px);
+  }
+  /* Раньше здесь эффекты снимались начисто, и телефон получал
+     плоскую плитку вместо голограммы. Владелец сказал прямо: на ПК
+     карточки живые и глянцевые, а на телефоне «гавно» - так быть не
+     должно. Возвращаем и глубину, и стекло; дешевле их делает не
+     отключение, а радиус: размытие стоит пропорционально радиусу, а
+     на плотном экране телефона полтора пикселя читаются так же, как
+     три на мониторе. */
+  html:not(.rc-reduced) .cin-world > .cin-item {
+    filter: var(--cin-blur, none);
+    backdrop-filter: blur(5px) saturate(1.15);
+    -webkit-backdrop-filter: blur(5px) saturate(1.15);
+  }
+}
+
+/* ═══ БОРТОВОЙ СПРАВОЧНИК ═════════════════════════════════════
+   Вопросы и ответы - экран на стене рубки. Он поворачивается со
+   стеной, но угол ограничен в скрипте: длинный текст читают, а
+   не разглядывают под наклоном. */
+html:not(.rc-reduced) .cin-desk { perspective: 1700px; perspective-origin: 50% 44%; }
+html:not(.rc-reduced) .cin-board {
+  transform:
+    translate3d(var(--cin-x, 0px), 0, var(--cin-z, 0px))
+    rotateY(var(--cin-rot, 0deg));
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+/* Строка, доехавшая до линии чтения, получает световую кромку:
+   видно, какой вопрос сейчас «под лучом» справочника. */
+html:not(.rc-reduced) .cin-board .faq-i { position: relative; }
+html:not(.rc-reduced) .cin-board .faq-i::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg, transparent, var(--cyan), transparent);
+  opacity: calc(var(--cin-lit, 0) * .85);
+  transition: opacity .25s linear;
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  html:not(.rc-reduced) .cin-desk { perspective: 1100px; }
+}
+
+/* ── Проезд вглубь ───────────────────────────────────────────
+   Коридор продуктов: дальние мельче и мягче, ближние резкие. */
+.cin-tunnel { perspective: 1600px; perspective-origin: 50% 42%; }
+
+/* ── Полка с разворотом ─────────────────────────────────────
+   Лента едет вбок, карточки по краям отвёрнуты от зрителя. */
+.cin-shelf { perspective: 1800px; }
+.cin-shelf .cin-item { transition: opacity .3s linear; }
+
+/* ── Ответ на касание ────────────────────────────────────────
+   На телефоне вместо наведения работает нажатие: карточка
+   проваливается на пару миллиметров и возвращается. В салоне
+   для этого есть своя переменная, чтобы не переписывать всю
+   собранную трансформацию. */
+.cin-press {
+  transform:
+    translate3d(0, var(--cin-y, 0px), calc(var(--cin-z, 0px) - 26px))
+    rotateY(var(--cin-rot, 0deg)) scale(.985);
+  transition: transform .18s var(--ease);
+}
+.cin-world > .cin-item.cin-press { --cin-s: .972; }
+
+/* ── Когда всё это выключено ─────────────────────────────────
+   Быстрая прокрутка, слабое устройство и просьба меньше
+   движения возвращают обычную страницу без единого поворота.
+
+   Салон в этот список не входит намеренно: его карточки лежат
+   друг на друге, и снятая трансформация схлопнула бы их в кучу
+   прямо посреди прокрутки. Ему снимают только украшения. */
+html.rc-fast .cin-tunnel .cin-item,
+html.rc-reduced .cin-tunnel .cin-item,
+html[data-degrade="3"] .cin-tunnel .cin-item,
+html.rc-fast .cin-shelf .cin-item,
+html.rc-reduced .cin-shelf .cin-item,
+html[data-degrade="3"] .cin-shelf .cin-item {
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+html.rc-fast .cin-world > .cin-item,
+html[data-degrade="2"] .cin-world > .cin-item,
+html[data-degrade="3"] .cin-world > .cin-item {
+  filter: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cin-item { transform: none !important; filter: none !important; opacity: 1 !important; }
+  .cin-board { transform: none !important; }
+  .cin-ring { position: static !important; height: auto !important; }
+  .cin-cabin > .wrap { min-height: 0 !important; }
+}
+
+/* На узком экране глубина мягче: там карточка занимает почти всю
+   ширину, и сильный разворот съедает читаемость. */
+@media (max-width: 760px) {
+  .cin-stage { perspective: 900px; }
+  /* Глубину на телефоне не снимаем, а смягчаем радиусом: дальняя
+     карточка обязана быть дальней и здесь, иначе проезд камеры
+     превращается в обычный список */
+  .cin-tunnel .cin-item, .cin-shelf .cin-item {
+    filter: var(--cin-blur, none);
+  }
+}
+
+/* ═══ ГОЛОГРАММНЫЕ ЭКРАНЫ РУБКИ ══════════════════════════════
+   Претензия владельца дословно: «чтобы карточки были не поверх
+   фона сайта, а как голограммные экраны в салоне ракеты, как
+   фильм». Раньше по кругу ехали обычные тёмные карточки сайта:
+   геометрия была салонная, а материал - страничный, и глаз читал
+   их как плитки, наклеенные на кадр.
+
+   Здесь материал. Экран - не плита, а проекция: подложка
+   полупрозрачная, за ней видно стеновую панель; свет идёт
+   полосами, как у строчной развёртки; по углам стоят скобки
+   прицела; текст чуть двоится по цвету, как на плохо сведённом
+   луче. Экран висит выше линии глаз, а под ним от панели идёт
+   стойка-луч - видно, что картинку кто-то проецирует, а не
+   повесил табличку.
+
+   Что здесь НЕ делается и почему.
+   Текст не трогаем в размере и не топим в свечении: голограмма
+   украшает, читает человек. Поэтому под текстом подложка плотнее,
+   чем по краям, а к каждой светящейся тени добавлена тёмная -
+   контраст выходит выше исходного, а не ниже.
+   Живой фильтр фона (backdrop-filter) - ровно один на кадр и
+   только у ближнего экрана: за остальными и так наша же сцена.
+
+   Цвет - только из палитры рубки (--int-*, публикует
+   rc-interior.js). Фолбэки стоят у каждой переменной: если
+   объёмный слой не поднялся, экран всё равно в тон.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Общий набор каналов. Держим их на самом экране, а не на :root:
+   так фолбэк рядом с каждым цветом, и правка палитры рубки
+   доезжает сюда сама. */
+html #reliability .cin-world > .cin-item.cin-holo {
+  --hz-c: var(--int-cyan, #42B2DC);
+  --hz-crgb: var(--int-cyan-rgb, 66,178,220);
+  --hz-vrgb: var(--int-vio-rgb, 138,89,246);
+  --hz-lrgb: var(--int-lit-rgb, 207,233,245);
+  --hz-prgb: var(--int-panel-rgb, 20,40,61);
+  --hz-wrgb: var(--int-wall-rgb, 14,29,46);
+  --hz-drgb: var(--int-deep-rgb, 5,12,21);
+  --hz-ergb: var(--int-emis-rgb, 18,60,92);
+  /* Одна ручка яркости на весь экран: расстояние до линии чтения
+     (--cin-lit, пишет скрипт) плюс рука человека (--cin-hov,
+     ставят стили). Складываем, а не выбираем: наведение обязано
+     работать и на дальнем экране тоже. */
+  --hz-k: min(1, calc(var(--cin-lit, 0) + var(--cin-hov, 0)));
+  /* Экран висит выше линии глаз: в рубке смотрят чуть вверх.
+     Число не на глаз: проекция стены тянет экран вниз (в скрипте
+     это ty, до десятой доли высоты кадра), и подъём обязан этот
+     снос перекрыть, иначе «чуть выше по кругу» превращается в
+     «чуть ниже». Замерено по кадру: при -7vh центр экрана стоял
+     на 525 из 850, теперь встаёт около 430. */
+  --cin-up: -11vh;
+}
+
+/* ── Материал экрана ─────────────────────────────────────────
+   Подложка собрана в два слоя, и профиль плотности у неё не
+   декоративный, а посчитанный.
+
+   Наверху, где стоит шапка и свет проектора, подложка почти
+   прозрачная: там сквозь экран видно стеновую панель рубки, ради
+   этого всё и затевалось. Ниже, под заголовком и абзацем, она
+   уплотняется и уходит в самый тёмный тон палитры (--int-deep).
+   Так надо: контраст текста к подложке обязан быть не ниже, чем
+   был у обычной карточки, а любой светлый тон под буквами его
+   роняет. Проверено не счётом, а замером по готовым кадрам: у
+   прежней плиты rgba(16,33,52,.93) заголовок давал 13.4, абзац
+   5.8; на этом профиле заголовок 13.7-15.4, абзац 11.5-13.0.
+
+   Ни одного непрозрачного стопа здесь нет: даже в самой плотной
+   точке за экраном остаётся сорок процентов рубки, и панель за
+   ним продолжает ехать вместе со стеной. */
+html #reliability .cin-world > .cin-item.cin-holo {
+  background:
+    linear-gradient(178deg,
+      rgba(var(--hz-ergb), .20) 0%,
+      rgba(var(--hz-prgb), .42) 20%,
+      rgba(var(--hz-drgb), .68) 56%,
+      rgba(var(--hz-drgb), .64) 88%,
+      rgba(var(--hz-wrgb), .36) 100%),
+    linear-gradient(148deg,
+      rgba(var(--hz-crgb), .20) 0%,
+      rgba(var(--hz-crgb), .07) 46%,
+      rgba(var(--hz-vrgb), .09) 100%);
+  /* Кромка нарочно слабее скобок: у проекции нет физической рамки,
+     поле обозначают углы, а не обводка по периметру. */
+  border: 1px solid rgba(var(--hz-crgb), calc(.18 + var(--hz-k, 0) * .30));
+  border-radius: 14px;
+  /* Никакого тяжёлого «ящика»: тени только светящиеся, тёмная
+     оставлена одна и слабая - иначе экран снова читается плитой.
+     Геометрия у них постоянная, меняется только сила света:
+     --hz-k шевелится на каждом кадре оборота, а радиус размытия
+     в тени - это пересчёт раскладки, слишком дорого для кадра. */
+  box-shadow:
+    inset 0 1px 0 rgba(var(--hz-lrgb), calc(.14 + var(--hz-k, 0) * .22)),
+    inset 0 0 44px -14px rgba(var(--hz-crgb), calc(.26 + var(--hz-k, 0) * .58)),
+    0 0 72px -18px rgba(var(--hz-crgb), calc(.44 + var(--hz-k, 0) * .52)),
+    0 22px 44px -34px rgba(var(--hz-drgb), .85);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition:
+    box-shadow .22s linear,
+    border-color .22s linear !important;
+}
+
+/* Тёмная строчная сетка на всю высоту плюс косой блик проекции.
+   Слой перебивает рисованное стекло из rc-interior.css: у
+   голограммы блик не от лампы, а от плоскости луча, поэтому он
+   шире и холоднее.
+
+   Почему сетка тёмная, а не светлая. Светлые полосы держатся
+   только на тёмной стене: замер по кадру показал, что на светлой
+   панели рубки они полностью выцветают и экран снова читается
+   стеклянной карточкой. Тёмные видны на любом фоне и, в отличие
+   от светлых, контраст текста не роняют, а поднимают - подложка
+   под буквами становится темнее.
+
+   Шаг сетки совпадает с шагом маски на .cin-scr, а фаза сдвинута
+   на половину периода: тёмная полоса ложится ровно в промежуток
+   светлой. Разойдись они по шагу - пошли бы биения. */
+html #reliability .cin-world > .cin-item.cin-holo::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; z-index: 1;
+  background:
+    /* Излучающая рейка по верхней кромке: у прибора есть светящийся
+       край, по нему глаз и отличает экран от куска стекла. Рейка
+       живёт здесь, а не на .cin-scr, потому что на том слое стоит
+       маска развёртки и она бы порезала рейку на точки. */
+    linear-gradient(90deg,
+      transparent,
+      rgba(var(--hz-lrgb), calc(.40 + var(--hz-k, 0) * .48)) 20%,
+      rgba(var(--hz-crgb), calc(.70 + var(--hz-k, 0) * .30)) 50%,
+      rgba(var(--hz-lrgb), calc(.40 + var(--hz-k, 0) * .48)) 80%,
+      transparent) 0 0 / 100% 1.6px no-repeat,
+    repeating-linear-gradient(180deg,
+      transparent 0 1.6px,
+      rgba(var(--hz-drgb), .30) 1.6px 3.2px),
+    /* Блик держим в циане, а не в белом: белая полоса поперёк
+       экрана читается как молочное стекло, цветная - как плоскость
+       луча, которую видно под углом. */
+    linear-gradient(106deg,
+      transparent 26%,
+      rgba(var(--hz-crgb), calc(.07 + var(--hz-k, 0) * .09)) 46%,
+      rgba(var(--hz-lrgb), calc(.04 + var(--hz-k, 0) * .05)) 52%,
+      rgba(var(--hz-crgb), calc(.06 + var(--hz-k, 0) * .07)) 58%,
+      transparent 72%);
+  opacity: var(--cin-vis, 1);
+}
+
+/* Ближний экран получает настоящее стекло. Один живой фильтр на
+   кадр - это потолок бюджета, поэтому он есть только здесь и
+   только там, где под экраном действительно движется сцена. */
+@media (min-width: 1024px) and (hover: hover) {
+  html:not(.rc-fast):not([data-degrade="2"]):not([data-degrade="3"])
+  #reliability .cin-world > .cin-item.cin-holo.cin-front {
+    backdrop-filter: blur(6px) saturate(150%) brightness(1.08) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(150%) brightness(1.08) !important;
+  }
+}
+
+/* ── Слои проекции ───────────────────────────────────────────
+   Четыре подложки на экран, все служебные и все без событий:
+   плёнка развёртки, скобки прицела, стойка-луч, полоса розжига. */
+html #reliability .cin-world > .cin-item.cin-holo > .cin-scr,
+html #reliability .cin-world > .cin-item.cin-holo > .cin-br,
+html #reliability .cin-world > .cin-item.cin-holo > .cin-sweep {
+  position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Строчная развёртка. Свет режется маской на полосы: сам световой
+   градиент никуда не девается, но виден полосами - это и читается
+   как проекция, а не как заливка. */
+html #reliability .cin-world > .cin-item.cin-holo > .cin-scr {
+  z-index: 1;
+  /* Свет развёртки садится сверху и быстро гаснет к низу: он не
+     имеет права подсветить полосу, по которой идёт текст. */
+  background:
+    linear-gradient(180deg,
+      rgba(var(--hz-lrgb), .18) 0%,
+      rgba(var(--hz-crgb), .09) 30%,
+      rgba(var(--hz-crgb), .03) 62%,
+      transparent 92%);
+  -webkit-mask-image: repeating-linear-gradient(180deg,
+    #000 0 1.6px, rgba(0,0,0,.10) 1.6px 3.2px);
+  mask-image: repeating-linear-gradient(180deg,
+    #000 0 1.6px, rgba(0,0,0,.10) 1.6px 3.2px);
+  opacity: calc(.55 + var(--hz-k, 0) * .45);
+  animation: cin-flick 4.3s linear infinite;
+  animation-delay: calc(var(--cin-ph, 0) * -1s);
+}
+/* Бегущая полоса кадровой развёртки: одна на экран, медленная.
+   Она и даёт «живую» голограмму без единого лишнего слоя. */
+html #reliability .cin-world > .cin-item.cin-holo > .cin-scr::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 26%;
+  border-radius: inherit;
+  background: linear-gradient(180deg,
+    transparent, rgba(var(--hz-lrgb), .16) 50%, transparent);
+  will-change: transform;
+  animation: cin-roll 6.4s linear infinite;
+  animation-delay: calc(var(--cin-ph, 0) * -1.7s);
+}
+
+/* Скобки прицела по углам: рамка есть, но она не замкнута -
+   у проекции нет физической кромки, есть только метки поля. */
+html #reliability .cin-world > .cin-item.cin-holo > .cin-br {
+  z-index: 3;
+  /* Скобки отодвинуты внутрь от кромки: иначе они сливаются с
+     обводкой и вместо меток поля читается просто рамка. */
+  inset: 7px;
+  --bb: 26px;
+  --bt: 2px;
+  /* Цвет скобок постоянный, сила света идёт прозрачностью слоя.
+     Так на каждом кадре оборота перерисовывается один слой, а не
+     восемь градиентов и тень под ними. */
+  --bc: rgb(var(--hz-crgb));
+  background:
+    linear-gradient(var(--bc), var(--bc))    0    0    / var(--bb) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc))    0    0    / var(--bt) var(--bb) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) 100%    0    / var(--bb) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) 100%    0    / var(--bt) var(--bb) no-repeat,
+    linear-gradient(var(--bc), var(--bc))    0 100%    / var(--bb) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc))    0 100%    / var(--bt) var(--bb) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) 100% 100%    / var(--bb) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) 100% 100%    / var(--bt) var(--bb) no-repeat;
+  filter: drop-shadow(0 0 6px rgba(var(--hz-crgb), .75));
+  opacity: calc((.60 + var(--hz-k, 0) * .40) * var(--cin-vis, 1));
+}
+
+
+/* Стойка-луч. Экран висит выше глаз, значит его кто-то держит:
+   от панели вверх идёт конус проектора, узкий у излучателя и
+   широкий у экрана, а на панели остаётся световое пятно. */
+html #reliability .cin-world > .cin-item.cin-holo > .cin-beam {
+  position: absolute; left: 50%; top: 100%;
+  width: 2px; height: clamp(40px, 7.4vh, 82px);
+  transform: translateX(-50%);
+  pointer-events: none; z-index: 0;
+  background: linear-gradient(180deg,
+    rgba(var(--hz-crgb), calc(.20 + var(--hz-k, 0) * .22)) 0%,
+    rgba(var(--hz-crgb), calc(.62 + var(--hz-k, 0) * .34)) 78%,
+    rgba(var(--hz-lrgb), calc(.70 + var(--hz-k, 0) * .30)) 100%);
+  opacity: var(--cin-vis, 1);
+}
+html #reliability .cin-world > .cin-item.cin-holo > .cin-beam::before {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 62px; transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    rgba(var(--hz-crgb), calc(.13 + var(--hz-k, 0) * .10)),
+    rgba(var(--hz-crgb), .03) 74%, transparent);
+  clip-path: polygon(0 0, 100% 0, 60% 100%, 40% 100%);
+}
+html #reliability .cin-world > .cin-item.cin-holo > .cin-beam::after {
+  content: ''; position: absolute; left: 50%; bottom: -4px;
+  width: 44px; height: 9px; transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(var(--hz-lrgb), calc(.42 + var(--hz-k, 0) * .34)) 0%,
+    rgba(var(--hz-crgb), .26) 42%, transparent 72%);
+}
+
+/* Полоса розжига и вспышка выбора живут на одном слое: одна
+   анимация в кадре, два разных повода. */
+html #reliability .cin-world > .cin-item.cin-holo > .cin-sweep {
+  z-index: 4;
+  opacity: 0;
+  background-color: transparent;
+  background-image: linear-gradient(180deg,
+    transparent 0%,
+    rgba(var(--hz-lrgb), .34) 40%,
+    rgba(var(--hz-lrgb), .62) 50%,
+    rgba(var(--hz-crgb), .34) 60%,
+    transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 44%;
+  background-position: 0 -60%;
+}
+html #reliability .cin-world > .cin-item.cin-holo.cin-ignite > .cin-sweep {
+  animation: cin-scan .66s cubic-bezier(.22,.61,.36,1) 1;
+}
+html #reliability .cin-world > .cin-item.cin-holo.cin-flash > .cin-sweep {
+  animation: cin-blink .36s ease-out 1;
+}
+
+/* ── Текст ───────────────────────────────────────────────────
+   Читаемость важнее любой красоты, поэтому здесь два правила.
+   Первое: размер не меняем ни на пиксель. Второе: у каждой
+   светящейся тени есть тёмная пара - от неё контраст к подложке
+   выше исходного, а цветное двоение остаётся заметным глазу и
+   безвредным для букв (сдвиг меньше толщины штриха). */
+html #reliability .cin-world > .cin-item.cin-holo > .card-ico,
+html #reliability .cin-world > .cin-item.cin-holo > h3,
+html #reliability .cin-world > .cin-item.cin-holo > p {
+  position: relative; z-index: 2;
+}
+html #reliability .cin-world > .cin-item.cin-holo > h3 {
+  color: rgb(var(--hz-lrgb));
+  /* Свет остекления рубки чуть темнее прежнего цвета текста, а
+     терять на этом контраст нельзя. Подмешиваем белый: тон
+     остаётся тем же, светимость возвращается. Строка стоит второй
+     нарочно - там, где color-mix не поддержан, остаётся первая. */
+  color: color-mix(in srgb, rgb(var(--hz-lrgb)) 48%, #FFFFFF);
+  text-shadow:
+    0 1px 3px rgba(var(--hz-drgb), .96),
+    0 0 calc(10px + var(--hz-k, 0) * 10px)
+      rgba(var(--hz-crgb), calc(.30 + var(--hz-k, 0) * .34)),
+    -0.55px 0 0 rgba(var(--hz-crgb), .40),
+    0.55px 0 0 rgba(var(--hz-vrgb), .30);
+}
+html #reliability .cin-world > .cin-item.cin-holo > p {
+  color: rgba(var(--hz-lrgb), .92);
+  color: color-mix(in srgb, rgb(var(--hz-lrgb)) 76%, #FFFFFF);
+  text-shadow:
+    0 1px 3px rgba(var(--hz-drgb), .94),
+    -0.4px 0 0 rgba(var(--hz-crgb), .22),
+    0.4px 0 0 rgba(var(--hz-vrgb), .16);
+}
+/* Значок: у проекции не бывает плашек, бывает светящийся контур */
+html #reliability .cin-world > .cin-item.cin-holo > .card-ico {
+  background: rgba(var(--hz-crgb), calc(.08 + var(--hz-k, 0) * .10));
+  border: 1px solid rgba(var(--hz-crgb), calc(.36 + var(--hz-k, 0) * .40));
+  color: rgb(var(--hz-lrgb));
+  box-shadow:
+    inset 0 0 18px -8px rgba(var(--hz-crgb), .9),
+    0 0 calc(12px + var(--hz-k, 0) * 14px) -8px rgba(var(--hz-crgb), .95);
+}
+
+/* ── Рука человека ───────────────────────────────────────────
+   Скрипт пишет --cin-lit inline, и перебить его правилом нельзя.
+   Поэтому наведение поднимает вторую ручку, --cin-hov: сумма
+   уходит в --hz-k выше, и разгорается весь экран разом. */
+html #reliability .cin-world > .cin-item.cin-holo:hover,
+html #reliability .cin-world > .cin-item.cin-holo:focus-within,
+html #reliability .cin-world > .cin-item.cin-holo.cin-press {
+  --cin-hov: 1;
+  --cin-blur: none;
+}
+
+/* ── Выключение проектора ────────────────────────────────────
+   Экран, ушедший за плечо, не гаснет прозрачностью: у проекции
+   рвётся развёртка. Полосы маски утоньшаются, картинка распадается
+   на строки, а в самом хвосте изображение схлопывается по вертикали
+   (--cin-sy в общей трансформации) - так гасли кинескопы.
+   Класс ставит скрипт и только там, где эффекты по карману. */
+html #reliability .cin-world > .cin-item.cin-holo.cin-decay {
+  -webkit-mask-image: repeating-linear-gradient(180deg,
+    #000 0 calc(7px - var(--cin-dec, 0) * 6.3px),
+    rgba(0,0,0,.04) calc(7px - var(--cin-dec, 0) * 6.3px) 7px);
+  mask-image: repeating-linear-gradient(180deg,
+    #000 0 calc(7px - var(--cin-dec, 0) * 6.3px),
+    rgba(0,0,0,.04) calc(7px - var(--cin-dec, 0) * 6.3px) 7px);
+}
+
+@keyframes cin-flick {
+  0%, 46%   { filter: brightness(1); }
+  47%       { filter: brightness(1.30); }
+  48%       { filter: brightness(.84); }
+  49%       { filter: brightness(1.14); }
+  50%, 77%  { filter: brightness(1); }
+  78%       { filter: brightness(.90); }
+  79%       { filter: brightness(1.06); }
+  80%, 100% { filter: brightness(1); }
+}
+/* Бегущая полоса развёртки идёт СДВИГОМ, а не свойством top.
+
+   `top` не композитится: каждый кадр такой анимации - новый пересчёт
+   раскладки, и так бесконечно, на пяти экранах салона разом. Сдвиг
+   считает видеокарта, раскладка при этом не трогается вовсе.
+   Полоса высотой 26% от родителя, поэтому путь от -30% до 104%
+   родителя пересчитан в доли собственной высоты: -115% и 400%. */
+@keyframes cin-roll {
+  0%   { transform: translateY(-115%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(400%); opacity: 0; }
+}
+@keyframes cin-scan {
+  0%   { opacity: 0; background-position: 0 -60%; }
+  14%  { opacity: 1; }
+  86%  { opacity: .75; }
+  100% { opacity: 0; background-position: 0 160%; }
+}
+@keyframes cin-blink {
+  0%   { opacity: 1; background-color: rgba(var(--hz-lrgb), .50); }
+  45%  { opacity: .6; background-color: rgba(var(--hz-crgb), .30); }
+  100% { opacity: 0; background-color: rgba(var(--hz-lrgb), 0); }
+}
+
+/* ── Светлая тема ────────────────────────────────────────────
+   Днём проектор светит по-другому: подложка светлая, буквы тёмные.
+   Голограмма остаётся голограммой - те же полосы, те же скобки,
+   только знак контраста другой. */
+html[data-theme="light"] #reliability .cin-world > .cin-item.cin-holo {
+  background:
+    linear-gradient(178deg,
+      rgba(255,255,255,.80) 0%,
+      rgba(238,247,252,.86) 34%,
+      rgba(226,241,250,.82) 78%,
+      rgba(214,234,246,.66) 100%),
+    linear-gradient(148deg,
+      rgba(var(--hz-crgb), .14) 0%,
+      rgba(var(--hz-crgb), .04) 52%,
+      rgba(var(--hz-vrgb), .07) 100%);
+  border-color: rgba(var(--hz-crgb), calc(.34 + var(--hz-k, 0) * .42));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    inset 0 0 40px -16px rgba(var(--hz-crgb), calc(.24 + var(--hz-k, 0) * .48)),
+    0 0 calc(32px + var(--hz-k, 0) * 40px) -22px
+      rgba(var(--hz-crgb), calc(.40 + var(--hz-k, 0) * .48)),
+    0 20px 40px -32px rgba(10,40,70,.5);
+}
+html[data-theme="light"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr {
+  background: linear-gradient(180deg,
+    rgba(var(--hz-crgb), .16) 0%, rgba(var(--hz-crgb), .07) 46%, transparent 100%);
+}
+html[data-theme="light"] #reliability .cin-world > .cin-item.cin-holo > h3 {
+  color: #08243B;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.85),
+    -0.5px 0 0 rgba(var(--hz-crgb), .34),
+    0.5px 0 0 rgba(var(--hz-vrgb), .24);
+}
+html[data-theme="light"] #reliability .cin-world > .cin-item.cin-holo > p {
+  color: #24455F;
+  text-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+html[data-theme="light"] #reliability .cin-world > .cin-item.cin-holo > .card-ico {
+  color: #0A5897;
+}
+
+/* ── Бюджет ──────────────────────────────────────────────────
+   Телефон: живого фильтра нет вовсе, полосы реже (на плотном
+   экране частая маска даёт муар), конус проектора без обрезки по
+   форме, подъём над глазами мягче - там экран занимает почти всю
+   ширину и высокий подвес уводит текст под самый верх кадра. */
+@media (max-width: 760px) {
+  html #reliability .cin-world > .cin-item.cin-holo {
+    --cin-up: -7vh;
+    border-radius: 13px;
+    /* Стекло голограммы остаётся и на телефоне - без него экран
+       перестаёт быть проекцией и снова читается плиткой. Радиус
+       меньше настольного: он и стоит меньше, и на плотном экране
+       даёт ровно тот же эффект матового стекла. */
+    backdrop-filter: blur(5px) saturate(1.2);
+    -webkit-backdrop-filter: blur(5px) saturate(1.2);
+  }
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-scr {
+    -webkit-mask-image: repeating-linear-gradient(180deg,
+      #000 0 2.2px, rgba(0,0,0,.16) 2.2px 4.4px);
+    mask-image: repeating-linear-gradient(180deg,
+      #000 0 2.2px, rgba(0,0,0,.16) 2.2px 4.4px);
+  }
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-br { --bb: 15px; }
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-beam {
+    height: clamp(30px, 5vh, 54px);
+  }
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-beam::before {
+    width: 46px;
+  }
+}
+
+/* ── Первая ступень: снимаем дорогое, оставляем красивое ──────
+   Замер показал, что признак `data-degrade="1"` стоит на телефоне
+   УЖЕ при загрузке - сторож фиксирует просадку до того, как человек
+   что-то сделал. А снимала первая ступень ровно три декоративных
+   правила: значок карточки, слой пакетов и полоску разделителя. То
+   есть телефон постоянно висел на ступени, которая не помогает, и
+   качался между уровнями, пока не доживал до второй.
+
+   Теперь первая ступень снимает то, что реально стоит кадров, и не
+   трогает то, за что держится картинка. Уходят маски экранов салона
+   (пять штук, каждая на своём слое) и вечная бегущая развёртка.
+   Остаются полупрозрачность, полосы, скобки и сам поворот салона -
+   голограмма читается и без движения полосы. */
+html[data-degrade="1"] #reliability .cin-world > .cin-item.cin-holo {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+html[data-degrade="1"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr::before {
+  animation: none !important;
+  opacity: 0 !important;
+}
+/* Мерцание яркостью - тоже вечная анимация на тех же пяти экранах, и
+   каждый её кадр это перерисовка слоя. На первой ступени гасим: без
+   мерцания экран остаётся экраном. */
+html[data-degrade="1"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr {
+  animation: none !important;
+}
+
+/* Перемотка и слабое устройство: остаётся сам материал экрана -
+   полупрозрачность, полосы, скобки, - а всё, что стоит кадров,
+   снимается. Голограмма читается и неподвижной. */
+html.rc-fast #reliability .cin-world > .cin-item.cin-holo > .cin-scr,
+html[data-degrade="2"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr,
+html[data-degrade="3"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr,
+html.rc-fast #reliability .cin-world > .cin-item.cin-holo > .cin-scr::before,
+html[data-degrade="2"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr::before,
+html[data-degrade="3"] #reliability .cin-world > .cin-item.cin-holo > .cin-scr::before {
+  animation: none !important;
+}
+html.rc-fast #reliability .cin-world > .cin-item.cin-holo,
+html[data-degrade="2"] #reliability .cin-world > .cin-item.cin-holo,
+html[data-degrade="3"] #reliability .cin-world > .cin-item.cin-holo {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Просьба меньше движения: экран просто есть. Ни мерцания, ни
+   бегущей строки, ни распада на полосы, ни розжига. */
+@media (prefers-reduced-motion: reduce) {
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-scr,
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-scr::before,
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-sweep {
+    animation: none !important;
+  }
+  html #reliability .cin-world > .cin-item.cin-holo > .cin-sweep { opacity: 0 !important; }
+  html #reliability .cin-world > .cin-item.cin-holo {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+}
+
+/* ═══ Заголовок салона - такой же экран на стене ════════════
+   Внутри корабля не бывает «заголовка страницы»: там есть экраны,
+   привязанные к точкам салона. Заголовок раздела на время салона
+   переезжает в кольцо первой панелью и выглядит как остальные -
+   тот же размер, та же рамка, тот же проектор. */
+html:not(.rc-reduced) .cin-world > .cab-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: clamp(18px, 3.4vw, 28px) clamp(16px, 3vw, 26px);
+  max-width: none;
+}
+html:not(.rc-reduced) .cin-world > .cab-head .sec-h {
+  font-size: clamp(21px, 4.6vw, 30px);
+  line-height: 1.12;
+  margin: 0;
+}
+html:not(.rc-reduced) .cin-world > .cab-head .sec-p {
+  font-size: var(--fs-3);
+  line-height: var(--lh-cap);
+  margin: 0;
+  max-width: 34ch;
+}
+html:not(.rc-reduced) .cin-world > .cab-head .sec-tag { margin: 0; }
+/* Разделительная черта под тегом раздела в кольце не нужна: рамку
+   экрана рисует сама панель */
+html:not(.rc-reduced) .cin-world > .cab-head .sec-h::after { display: none; }
+
+/* ═══ Переменные кольца не наследуются ═══════════════════════
+   Место, поворот и глубину каждой карточки кино переписывает в
+   каждом кадре. По умолчанию такая запись помечает устаревшим стиль
+   всего поддерева карточки, а внутри у неё заголовок, абзац, список
+   и иконки: на посадке трассировка насчитала из-за этого больше
+   тринадцати секунд пересчёта за один проход прокрутки.
+
+   Все девять переменных читает только сама карточка - проверено по
+   всем файлам оформления. Наследование ей не нужно, и объявленное
+   явно оно перестаёт задевать вложенные узлы. Видимых изменений
+   нет: значения и начальные величины те же.
+
+   Прозрачность (--cin-vis), подсветку строки (--cin-lit) и шаг
+   развёртки (--cin-dec) здесь намеренно нет: их читают псевдоэлементы
+   карточки, а те получают значения именно по наследованию. */
+@property --cin-rot  { syntax: "<angle>";   inherits: false; initial-value: 0deg; }
+@property --cin-x    { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-y    { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-z    { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-up   { syntax: "<length>";  inherits: false; initial-value: 0px; }
+/* --cin-blur теперь несёт ГОТОВОЕ значение фильтра (`none` или
+   `blur(1.4px)`), а не длину: пустой фильтр с нулевым радиусом всё
+   равно уводил элемент в свой слой. Типизировать это через @property
+   нельзя - объявление с syntax "<length>" отвергло бы и `none`, и
+   `blur(...)`, и переменная молча свалилась бы к начальному значению.
+   Поэтому объявления здесь нет: переменная остаётся нетипизированной,
+   плавность перехода даёт transition на самом filter. */
+@property --cin-zi   { syntax: "<integer>"; inherits: false; initial-value: 1; }
+@property --cin-s    { syntax: "<number>";  inherits: false; initial-value: 1; }
+@property --cin-sy   { syntax: "<number>";  inherits: false; initial-value: 1; }

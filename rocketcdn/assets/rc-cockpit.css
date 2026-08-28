@@ -1,0 +1,802 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · кабина, оформление
+
+   Слой лежит между объёмной сценой и содержимым страницы: космос
+   и рубка видны сквозь остекление, а текст, форма и финальный титр
+   стоят внутри окна кабины - на них переплёт не наезжает.
+
+   Файл кадра тот же, что берёт игра, и фильтр к нему тот же: при
+   переходе в полёт картинка не должна дрогнуть ни на тон.
+   ═══════════════════════════════════════════════════════════ */
+
+.rc-cockpit {
+  position: fixed; inset: 0; z-index: 2;
+  pointer-events: none;
+  opacity: var(--cab-k, 0);
+  /* Кадр кабины крупнее экрана и обрезан по краям. Там, где картинка
+     не достаёт (высокий экран телефона), должен быть не чёрный
+     провал, а та же глубина корабля - иначе сверху и снизу видны
+     пустые полосы, будто кадр не догрузился. */
+  background:
+    linear-gradient(180deg,
+      rgba(var(--int-deep-rgb, 5,12,21), .96) 0%,
+      rgba(var(--int-hull-rgb, 10,21,36), .55) 22%,
+      rgba(var(--int-hull-rgb, 10,21,36), .55) 76%,
+      rgba(var(--int-deep-rgb, 5,12,21), .98) 100%);
+  /* Панель - предмет обстановки рубки, а не рамка поверх кадра.
+     Пока идёт оборот, она стоит в своём углу: сдвинута вбок,
+     повёрнута вполоборота и мельче. Числа считает rc-cockpit.js по
+     экранной проекции этого угла, поэтому панель не может уехать
+     от стен - у них одна геометрия на двоих. */
+  transform:
+    perspective(1500px)
+    translateX(var(--cab-tx, 0%))
+    rotateY(var(--cab-rot, 0deg))
+    scale(var(--cab-sc, 1));
+  transform-origin: 50% 78%;
+  transition: opacity .3s linear;
+  will-change: opacity, transform;
+  contain: layout paint;
+}
+
+/* Обрезка сверху: в салоне от кабины видна только приборная часть,
+   остекление приходит на подъезде. Без неё в углу комнаты висела бы
+   пустая рамка окна, чего в рубке быть не может. */
+.rc-cockpit .cab-img,
+.rc-cockpit .cab-void,
+.rc-cockpit .cab-glass {
+  /* Не резкий срез, а растворение: прямая линия поперёк картинки
+     сразу выдавала вырезку из фотографии. Полоса перехода узкая -
+     пять процентов кадра, - поэтому на подъезде, когда обрезка
+     уходит в ноль, верх кадра остаётся плотным. */
+  -webkit-mask-image: linear-gradient(180deg,
+    transparent 0,
+    transparent calc(var(--cab-top, 0%) - 5%),
+    #000 calc(var(--cab-top, 0%) + 3%),
+    #000 100%);
+  -webkit-mask-image: linear-gradient(180deg,
+    transparent 0,
+    transparent calc(var(--cab-top, 0%) - 5%),
+    #000 calc(var(--cab-top, 0%) + 3%),
+    #000 100%);
+  mask-image: linear-gradient(180deg,
+    transparent 0,
+    transparent calc(var(--cab-top, 0%) - 5%),
+    #000 calc(var(--cab-top, 0%) + 3%),
+    #000 100%);
+}
+
+.rc-cockpit .cab-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* Ровно тот же фильтр, что у кабины в игре (rc-flight.css):
+     иначе на переходе «сайт - полёт» кадр менял температуру */
+  filter: brightness(.86) contrast(1.1) saturate(2.1) hue-rotate(5deg);
+}
+
+/* Даль за стеклом. Звёзды рисует холст космоса, но одних точек в
+   финальном кадре мало: без дымки окно читается чёрным вырезом, а
+   не видом наружу. Разгорается вместе с отъездом от пульта. */
+.rc-cockpit .cab-void {
+  position: absolute;
+  left: var(--cab-x0, 12%); top: var(--cab-y0, 12%);
+  width: var(--cab-win-w, 76%); height: var(--cab-win-h, 66%);
+  border-radius: clamp(10px, 2vw, 26px);
+  background:
+    radial-gradient(ellipse 60% 46% at 62% 34%,
+      rgba(var(--int-cyan-rgb, 66,178,220), .16) 0%, transparent 62%),
+    radial-gradient(ellipse 52% 40% at 28% 68%,
+      rgba(var(--int-vio-rgb, 138,89,246), .13) 0%, transparent 66%),
+    radial-gradient(ellipse 90% 70% at 50% 50%,
+      rgba(10,26,46,.55) 0%, rgba(3,8,16,.9) 78%);
+  opacity: calc(var(--int-out, 0) * .9);
+  transition: opacity .6s linear;
+}
+
+/* Остекление: блик по верхней кромке и мягкий обод внутрь кадра.
+   На самой картинке стекла нет, и без этих двух штрихов космос за
+   окном выглядел вырезанным по контуру, а не увиденным сквозь него. */
+.rc-cockpit .cab-glass {
+  position: absolute;
+  left: var(--cab-x0, 12%); top: var(--cab-y0, 12%);
+  width: var(--cab-win-w, 76%); height: var(--cab-win-h, 66%);
+  border-radius: clamp(10px, 2vw, 26px);
+  background:
+    linear-gradient(152deg,
+      rgba(var(--int-lit-rgb, 207,233,245), .09) 0%,
+      rgba(var(--int-lit-rgb, 207,233,245), .02) 34%,
+      transparent 58%);
+  box-shadow:
+    inset 0 0 clamp(40px, 9vw, 120px) calc(-1 * clamp(18px, 4vw, 46px))
+      rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  opacity: calc(var(--cab-k, 0) * .9);
+}
+
+/* Луч проектора от экрана панели. Клиент просил, чтобы анкета была
+   именно НА панели управления, но экран на ней размером с ладонь -
+   заполнять в нём форму невозможно. Поэтому честный компромисс
+   рубки: анкету проецирует этот экран, и луч от него виден. Форма
+   при этом читается в полный рост, а происхождение её очевидно. */
+.rc-cockpit .cab-beam {
+  position: absolute;
+  left: var(--cab-scr-x, 50%);
+  top: calc(var(--cab-y0, 12%) + var(--cab-win-h, 66%) * .28);
+  width: min(62vw, 620px);
+  height: calc(var(--cab-scr-y, 84%) - var(--cab-y0, 12%) - var(--cab-win-h, 66%) * .28);
+  transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .16),
+    rgba(var(--int-cyan-rgb, 66,178,220), .05) 62%,
+    transparent);
+  /* Конус: узкий у излучателя внизу, широкий у проекции вверху */
+  clip-path: polygon(0 0, 100% 0, 56% 100%, 44% 100%);
+  opacity: calc(var(--int-con, 0) * (1 - var(--int-out, 0)) * .85);
+  filter: blur(6px);
+  transition: opacity .5s linear;
+}
+/* На широком экране анкета стоит справа от текста, а излучатель -
+   по центру панели: луч бил бы мимо. Там он не нужен - у формы и
+   так видно всю панель под ней. */
+@media (min-width: 901px) {
+  .rc-cockpit .cab-beam { display: none; }
+}
+
+/* Содержимое финала садится внутрь остекления. Пока кабина далеко,
+   вёрстка обычная - правила включает класс rc-cab-on. */
+html.rc-cab-on main.w3-stage {
+  /* Текст поверх переплёта: слой кабины стоит на z-index 2 */
+  z-index: 3;
+}
+/* Ширину меняем только у финального титра. У секции заявки её
+   трогать нельзя: форма перестраивается, высота документа
+   схлопывается на тысячу пикселей, и браузер зажимает позицию -
+   человека отбрасывает назад ровно в акте пульта, а сам акт можно
+   проскочить целиком. Приёмка поймала и прыжок, и проскок. */
+html.rc-cab-on #epilogue .wrap {
+  width: min(var(--cab-win-w, 76%), 1040px);
+  margin-inline: auto;
+}
+/* Анкету вместо сужения просто отодвигаем от переплёта кабины -
+   раскладка при этом не меняется, высота документа стоит на месте */
+html.rc-cab-on #contact .wrap {
+  padding-left: max(var(--pad, 16px), calc(var(--cab-x0, 12%) * .6));
+  padding-right: max(var(--pad, 16px), calc(var(--cab-x0, 12%) * .6));
+}
+/* Окно кабины смещено вверх относительно середины экрана (снизу
+   панель с приборами), и центр содержимого обязан идти за ним -
+   иначе финальный титр ложится ровно на пульт */
+html.rc-cab-on #epilogue .epi-in {
+  transform: translateY(calc((var(--cab-y0, 12%) + var(--cab-y1, 78%)) / 2 - 50%));
+}
+
+/* Кабину не убираем ни на одной ступени деградации. Это правило
+   стоило владельцу целого финала: на его телефоне ступень доходила
+   до третьей, слой пропадал, и последний кадр фильма превращался в
+   чёрный экран. Сцена - это содержание, а не украшение; экономить
+   на ней нельзя, экономим на том, как она посчитана. */
+html[data-degrade="3"] .rc-cockpit .cab-void,
+html[data-degrade="3"] .rc-cockpit .cab-beam { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rc-cockpit { transform: none; }
+}
+
+/* ── Финал внутри кабины ─────────────────────────────────────
+   Раньше в последнем акте объёмная рубка гасилась совсем, и её
+   место занимал плоский космический фон страницы: считалось, что
+   камера «отступила и вышла из корабля». Владелец забраковал этот
+   ход целиком - «чтобы швов вообще не было и наложений одно поверх
+   другого ни на сайте, ни в ракете, ни в игре, ни в космосе, всё в
+   одном 3D мире». И он прав: мы сидим в этом корабле, выходить нам
+   некуда, а космос виден в его собственное остекление.
+
+   Поэтому рубка держится до последнего пикселя страницы, а плоский
+   фон в этом акте, наоборот, убран - иначе он просвечивал сквозь
+   стены и был тем самым швом. */
+html[data-act="egress"] #spaceBg {
+  opacity: 0 !important;
+  transition: opacity .6s var(--ease, ease);
+}
+/* Кольцо экранов рубки остаётся за спиной: в отлёте мы смотрим в
+   окно, и карточки надёжности не имеют права просвечивать сквозь
+   финальный титр */
+html[data-act="egress"] .cin-ring,
+html[data-act="egress"] #reliability .card {
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity .5s linear;
+}
+/* Ракеты в финале нет по сценарию: мы сидим в ней */
+html[data-act="egress"] #rocketCanvas,
+html[data-act="console"] #rocketCanvas {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Последний кадр фильма должен быть кадром, а не страницей с
+   остатками разделов по краям. Поэтому в отлёте уходит вся секция
+   заявки целиком (её хвост просвечивал над остеклением), а шапка
+   теряет свою полосу и размытие: сверху обязан быть корпус корабля,
+   а не панель сайта. */
+html[data-act="egress"] #contact {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s linear;
+}
+/* Финальный CTA - часть приборного стекла, а не хвост страницы.
+   Прежний общий селектор давал полностью чёрный финал. */
+html[data-act="egress"] #epilogue > .wrap,
+html.rc-reduced[data-act="egress"] #epilogue > .wrap {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto;
+  transition: opacity .5s linear;
+}
+html[data-act="egress"] .hdr {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
+/* Анкета уходит вместе с отъездом: камера отступает от пульта, и
+   форма растворяется голограммой, а не остаётся висеть в кадре.
+   Долю отъезда публикует rc-interior (--int-out). */
+html[data-act="egress"] #contact .form-card,
+html[data-act="egress"] #contact .sec-head {
+  opacity: calc(1 - var(--int-out, 0) * 1.9);
+  filter: blur(calc(var(--int-out, 0) * 7px));
+  transform: scale(calc(1 - var(--int-out, 0) * 0.07));
+  transition: opacity .4s linear, filter .4s linear, transform .5s var(--ease, ease);
+  pointer-events: none;
+}
+
+/* ── Титр старта: бортовая надпись на остеклении ─────────────
+   Не блок сайта на фоне, а проекция на стекле кабины: тот же
+   материал, что у экранов рубки и карточек в проёме люка, - чтобы
+   человек читал его как последний кадр фильма, а не как футер. */
+.epi-holo {
+  position: relative;
+  padding: clamp(20px, 4vh, 42px) clamp(18px, 4vw, 46px);
+  border-radius: 14px;
+  /* Проступает по мере отъезда: пока камера у пульта, надписи нет.
+     Разгорается быстро - к середине отъезда титр уже читается
+     целиком. Растянутое проявление выглядело не «голограммой», а
+     недогруженным текстом: половину кадра человек видел бледные
+     буквы и не понимал, дефект это или задумка. */
+  --epi-k: clamp(0, calc((var(--int-out, 0) - 0.22) / 0.24), 1);
+}
+html.rc-cab-on .epi-holo::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .055) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .07),
+      rgba(var(--int-deep-rgb, 5,12,21), .34));
+  box-shadow:
+    0 0 60px -18px rgba(var(--int-cyan-rgb, 66,178,220), .7),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .16);
+  opacity: var(--epi-k, 1);
+  pointer-events: none;
+  transition: opacity .5s linear;
+}
+/* Скобки прицела по углам - тот же приём, что у экранов рубки */
+html.rc-cab-on .epi-holo::after {
+  content: '';
+  position: absolute; inset: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  clip-path: polygon(
+    0 0, 22px 0, 22px 1px, 1px 1px, 1px 22px, 0 22px,
+    0 100%, 22px 100%, 22px calc(100% - 1px), 1px calc(100% - 1px), 1px calc(100% - 22px), 0 calc(100% - 22px),
+    100% 100%, calc(100% - 22px) 100%, calc(100% - 22px) calc(100% - 1px), calc(100% - 1px) calc(100% - 1px), calc(100% - 1px) calc(100% - 22px), 100% calc(100% - 22px),
+    100% 0, calc(100% - 22px) 0, calc(100% - 22px) 1px, calc(100% - 1px) 1px, calc(100% - 1px) 22px, 100% 22px);
+  opacity: calc(var(--epi-k, 1) * .9);
+  pointer-events: none;
+}
+html.rc-cab-on .epi-holo > * { position: relative; z-index: 1; }
+/* Сам текст финала разгорается вместе с рамкой */
+html.rc-cab-on .epi-holo .sec-tag,
+html.rc-cab-on .epi-holo .sec-h,
+html.rc-cab-on .epi-holo .sec-p,
+html.rc-cab-on .epi-holo .epi-alt,
+html.rc-cab-on .epi-holo .epi-btn {
+  opacity: var(--epi-k, 1);
+  transition: opacity .5s linear;
+}
+/* Титр стоит на звёздном небе, а звёзды - это рассыпанные светлые
+   точки прямо под буквами. Без плотной подложки и тени текст на них
+   рябит и читается тускло, особенно на телефоне, где кегль меньше. */
+html.rc-cab-on .epi-holo .sec-h {
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  text-shadow:
+    0 2px 10px rgba(0,0,0,.85),
+    0 0 26px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+html.rc-cab-on .epi-holo .sec-p {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+  text-shadow: 0 1px 8px rgba(0,0,0,.8);
+}
+html.rc-cab-on .epi-holo .sec-tag {
+  text-shadow: 0 1px 8px rgba(0,0,0,.8);
+}
+/* Подложка титра плотнее: это экран на стекле, сквозь него не
+   должно просвечивать звёздное поле целиком */
+html.rc-cab-on .epi-holo::before {
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .06) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-deep-rgb, 5,12,21), .72),
+      rgba(var(--int-deep-rgb, 5,12,21), .84));
+}
+/* В остеклении места меньше, чем на полной ширине страницы, и
+   надпись кнопки ломалась на две строки. Держим её в одну: это
+   тумблер старта, а не абзац. */
+html.rc-cab-on .epi-btn {
+  white-space: nowrap;
+  padding: 15px 26px;
+  gap: 10px;
+}
+/* Экраны рубки внутри кабины становятся уже: остекление съедает по
+   седьмой части кадра с каждой стороны, и панель прежней ширины
+   уезжала под переплёт - строка обрывалась на полуслове. */
+html.rc-cab-on .cin-ring { --cab-w: min(430px, 62vw); }
+@media (max-width: 900px) {
+  /* Внутри корабля панель уже не может быть во всю ширину экрана:
+     она стоит на стене под углом, и её край при повороте уходит за
+     обрез кадра - строка обрывалась на полуслове. Сужаем на весь
+     эпизод рубки, а не только у пульта. */
+  html.rc-inside .cin-ring { --cab-w: min(74vw, 300px); }
+  html.rc-cab-on .cin-ring { --cab-w: min(66vw, 290px); }
+}
+
+/* Заголовок раздела внутри корабля - это надпись в рубке, а не
+   плашка над кадром. В самом верху экрана он ложился на тёмный
+   потолок и читался отдельной чёрной полосой поверх сцены; опускаем
+   его к линии экранов, где он становится частью помещения, и даём
+   ту же тень, что у голограмм, чтобы он не спорил с фоном. */
+html.rc-inside #reliability .sec-head,
+html.rc-inside #faq .sec-head {
+  transform: translateY(clamp(6vh, 12vh, 16vh));
+  transition: transform .6s var(--ease, ease);
+}
+html.rc-inside #reliability .sec-head .sec-h,
+html.rc-inside #faq .sec-head .sec-h {
+  text-shadow: 0 2px 12px rgba(0,0,0,.8), 0 0 30px rgba(var(--int-cyan-rgb, 66,178,220), .4);
+}
+html.rc-inside #reliability .sec-head .sec-p,
+html.rc-inside #faq .sec-head .sec-p {
+  text-shadow: 0 1px 8px rgba(0,0,0,.75);
+}
+
+/* Липкая панель заявки уходит из кадра на всё время внутри корабля.
+   Она полезна на странице, но в рубке перекрывает нижнюю треть
+   сцены - пол, пульт и приборы, - то есть ровно то, ради чего сцена
+   и снята. Заявку человек оставит на пульте, к которому мы его и
+   ведём. */
+html[data-act="landing"] .mcta,
+html[data-act="walk"] .mcta,
+html.rc-inside .mcta,
+/* Признак «мы внутри» приходит на кадр-другой позже самого акта,
+   и на этом стыке панель успевала мигнуть поверх сцены */
+html[data-act="cabin"] .mcta,
+html[data-act="manual"] .mcta,
+html[data-act="console"] .mcta,
+html.rc-hull .mcta,
+html[data-act="egress"] .mcta {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s var(--ease, ease);
+}
+
+/* Подвал в кабине живёт отдельно от титра: он не часть кадра
+   фильма, поэтому стоит ниже, мельче и тише.
+   Прозрачности на весь блок тут больше нет: она умножалась на
+   прозрачность самих чернил и загоняла правовые ссылки в нечитаемое.
+   Разбор и числа - у второго правила этого же подвала ниже. */
+html.rc-cab-on #epilogue .legal {
+  font-size: 11px;
+  margin-top: clamp(18px, 4vh, 42px);
+  gap: 8px 14px;
+}
+
+/* ═══ Свет внутри корабля не зависит от темы сайта ═══════════
+   Приёмка показала, что в светлой теме вся вторая половина фильма
+   разваливается: тёмный текст на тёмном интерьере, серая заплатка
+   рубки поверх белой страницы, в финале вместо космоса светлая
+   плита. И это не набор мелких промахов, а одна ошибка по сути.
+
+   Тема сайта - это освещение помещения, в котором лежит страница. А
+   с момента посадки страница лежит не на столе, а внутри корабля,
+   где горит бортовой свет и за окном космос. Там светлой темы быть
+   не может физически - как не может её быть ночью на улице.
+
+   Поэтому в актах внутри корабля палитра переключается на бортовую
+   независимо от выбора человека, а на выходе возвращается. Выбор
+   темы при этом не теряется: он снова действует, стоит отлистать
+   назад к разделам сайта. */
+html[data-theme="light"].rc-inside,
+html[data-theme="light"][data-act="landing"],
+html[data-theme="light"][data-act="walk"],
+html[data-theme="light"][data-act="cabin"],
+html[data-theme="light"][data-act="manual"],
+html[data-theme="light"][data-act="console"],
+html[data-theme="light"][data-act="egress"] {
+  --bg:        #050C15;
+  --bg-2:      #091320;
+  --bg-3:      #0D1B2C;
+  --surface:   rgba(255,255,255,.035);
+  --surface-2: rgba(255,255,255,.055);
+  --line:      rgba(226,232,240,.10);
+  --line-2:    rgba(226,232,240,.17);
+  --tx:        #E2E8F0;
+  --tx-2:      rgba(226,232,240,.72);
+  --tx-3:      rgba(226,232,240,.6);
+  --head-bg:   rgba(5,12,21,.72);
+  --rcd-baked: rgba(6, 14, 25, .72);
+  --pill-bg:   rgba(255,255,255,.06);
+  --pill-line: rgba(226,232,240,.16);
+  --pill-off:  rgba(226,232,240,.62);
+  --pill-hover: #E2E8F0;
+  /* Акцент внутри корабля тоже бортовой. Светлая тема держит вместо
+     циана глубокий синий #0A5897 - он придуман для белой страницы, а
+     на обшивке давал 2,67:1 (замер на надписи «Эпилог»): норма 4,5.
+     Возвращаем циан рубки, он читается на корпусе на 7,9:1. */
+  --cyan:      #42B2DC;
+  --cyan-lit:  #42B2DC;
+  --accent-tx: #42B2DC;
+  --violet-tx: #B49BFF;
+  color-scheme: dark;
+}
+/* Переход между освещением делаем не мгновенным: смена палитры
+   посреди кадра читается миганием, а нам нужен въезд в тень борта */
+html[data-theme="light"] body,
+html[data-theme="light"] .card,
+html[data-theme="light"] .faq,
+html[data-theme="light"] .form-card {
+  transition: background-color .6s linear, color .6s linear,
+              border-color .6s linear;
+}
+/* Фон страницы внутри корабля - сам корабль, а не белый лист.
+
+   Цвет текста здесь такой же обязательный, как фон, и вот почему.
+   Разметка страницы задаёт светлой теме чернила НАПРЯМУЮ, в теге
+   style в самой странице: `[data-theme="light"] body{color:#091320}`.
+   Это правило весом (0,1,1), а `body{color:var(--tx)}` из rc.css -
+   (0,0,1). То есть в светлой теме переменная --tx на цвет body не
+   влияет вообще: сколько её ни переключай на бортовую палитру, body
+   остаётся с зашитыми чернилами.
+
+   Отсюда и брак, который поймала приёмка на двух последних экранах:
+   фон мы честно гасили до #050C15, а весь наследуемый текст оставался
+   чернильным. Замеры: заголовок эпилога 1,05:1, подпись про карты
+   планет 1,02:1, ссылки подвала около 1,03:1 - буквы того же цвета,
+   что и обшивка за ними. Экран заявки и подвал в светлой теме просто
+   не читались, причём именно там, где оставляют заявку.
+
+   Поэтому цвет текста переопределяем ровно тем же весом, что и фон:
+   селектор (0,2,2) сильнее зашитого в разметку (0,1,1), и body внутри
+   корабля наконец берёт бортовые чернила из --tx. Тёмной темы это не
+   касается ни одним правилом. */
+html[data-theme="light"].rc-inside body,
+html[data-theme="light"][data-act="egress"] body,
+html[data-theme="light"][data-act="console"] body {
+  background: #050C15;
+  color: var(--tx);
+}
+
+/* ── Плавающие кнопки не лезут в кадр фильма ─────────────────
+   Приёмка нашла их поверх вопросов справочника, поверх карточек
+   коридора и поверх строки согласия в анкете. Кнопка «наверх» и
+   «Полёт» полезны на страничных разделах, но в кадре кино это две
+   плашки поверх сцены. В актах фильма убираем обе - выйти вверх
+   человек может прокруткой, а полёт ждёт его в финале. */
+html[data-act="landing"] .totop,
+html[data-act="walk"] .totop,
+html[data-act="cabin"] .totop,
+html[data-act="manual"] .totop,
+html[data-act="console"] .totop,
+html[data-act="egress"] .totop,
+html[data-act="cabin"] .rcf-fab,
+html[data-act="manual"] .rcf-fab,
+html[data-act="console"] .rcf-fab,
+html[data-act="landing"] .rcf-fab,
+html[data-act="walk"] .rcf-fab {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity .4s linear;
+}
+
+/* ── Посадка на телефоне: кадр очищается так же, как на ПК ────
+   На широком экране в этом акте карточки уже расступались, а на
+   телефоне оставались под корпусом: корабль закрывал заголовок и
+   ленту кейсов, текст читался кусками по краям обшивки. Требование
+   владельца - одинаково хорошо на обоих экранах, значит и здесь
+   кадр обязан очищаться. */
+@media (max-width: 900px) {
+  html[data-act="landing"] #cases .hs-view,
+  html[data-act="landing"] #cases .hs-bar {
+    opacity: calc(1 - var(--rc-app, 0) * 1.8);
+    filter: blur(calc(var(--rc-app, 0) * 4px));
+    transition: opacity .4s linear, filter .4s linear;
+  }
+  html[data-act="landing"] #cases .hs-head,
+  html[data-act="landing"] #included .sec-head {
+    transform: translateY(calc(var(--rc-app, 0) * -22vh));
+  }
+  /* Титр над кораблём получает свою подложку: на светлой обшивке
+     белый текст без неё пропадает начисто */
+  html[data-act="landing"] #cases .hs-head .sec-h,
+  html[data-act="walk"] #cases .hs-head .sec-h,
+  html[data-act="landing"] #included .sec-head .sec-h,
+  html[data-act="walk"] #included .sec-head .sec-h {
+    text-shadow:
+      0 2px 10px rgba(5, 12, 21, .95),
+      0 0 26px rgba(5, 12, 21, .8);
+  }
+}
+
+/* ── Анкета на пульте: читаемость важнее прозрачности ────────
+   Приёмка поймала три вещи разом: сквозь поля светил трёхмерный
+   пульт (яркая бирюза и розовые диоды под текстом), строка согласия
+   почти пропадала, а кнопка отправки выглядела отключённой.
+
+   Голограмма голограммой, но заполняет форму живой человек. Поэтому
+   в акте пульта поля получают плотное дно, а кнопка - полную силу
+   фирменной заливки. Стекло и свечение вокруг остаются: проекция
+   читается по рамке, сканлайнам и лучу, а не по тому, насколько
+   плохо видно текст. */
+html[data-act="console"] .field input,
+html[data-act="console"] .field textarea,
+html[data-act="console"] .field select,
+html.rc-inside .field input,
+html.rc-inside .field textarea,
+html.rc-inside .field select {
+  background: rgba(var(--int-deep-rgb, 5,12,21), .88);
+  /* Граница поля на пульте держала 1,89 к своей подложке при норме
+     3,0 - при боковом свете на ноутбуке поле анкеты просто
+     пропадало. Бирюза рубки на этом фоне доходит до нормы на 0,55. */
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+}
+/* Обязательная галочка согласия на пульте: в светлой теме её граница
+   рисовалась тёмными чернилами по тёмному борту и давала 1,02 - на
+   экране её не было вовсе. Внутри корабля цвет борта, а не темы. */
+html[data-act="console"] .consent input[type="checkbox"],
+html.rc-inside .consent input[type="checkbox"] {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .62);
+}
+/* ── Ошибка сильнее оформления пульта ────────────────────────
+   Правило выше красит рамку поля в бирюзу рубки и весит (0,2,2), а
+   `.field.bad input` из rc.css весит (0,2,1) и стоит в файле раньше.
+   Значит на пульте красной рамки не было вовсе: приёмка отправляла
+   пустую форму, класс bad вставал на оба поля, а краснело только то,
+   в котором стоял курсор - `.field.bad input:focus` весит (0,3,1) и
+   бирюзу перебивал. Человек видел одну ошибку из двух и правил не то
+   поле.
+
+   Ошибка это не оттенок оформления, а состояние, которое обязано
+   пробиваться сквозь любую сцену. Даём ей вес (0,3,2) - выше и
+   бирюзы пульта, и правила фокуса, - и красным становятся все
+   помеченные поля сразу, с курсором или без. */
+html[data-act="console"] .field.bad input,
+html[data-act="console"] .field.bad textarea,
+html[data-act="console"] .field.bad select,
+html.rc-inside .field.bad input,
+html.rc-inside .field.bad textarea,
+html.rc-inside .field.bad select {
+  border-color: #F87171;
+}
+/* С курсором в ошибочном поле к рамке добавляется красное кольцо -
+   ровно как на обычной странице, чтобы состояние читалось одинаково
+   и в кадре фильма, и вне его */
+html[data-act="console"] .field.bad input:focus,
+html[data-act="console"] .field.bad textarea:focus,
+html.rc-inside .field.bad input:focus,
+html.rc-inside .field.bad textarea:focus {
+  border-color: #F87171;
+  box-shadow: 0 0 0 3px rgba(248,113,113,.20);
+}
+
+html[data-act="console"] .field input::placeholder,
+html[data-act="console"] .field textarea::placeholder,
+html.rc-inside .field input::placeholder,
+html.rc-inside .field textarea::placeholder {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .62);
+  /* Плейсхолдер длиннее поля обрезался посреди слова: показываем,
+     что текст продолжается, вместо рваного хвоста */
+  text-overflow: ellipsis;
+}
+html[data-act="console"] .field select,
+html.rc-inside .field select,
+html[data-act="console"] .field select option,
+html.rc-inside .field select option {
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  background-color: rgba(var(--int-deep-rgb, 5,12,21), 1);
+}
+html[data-act="console"] .consent,
+html[data-act="console"] .form-card label,
+html.rc-inside .consent,
+html.rc-inside .form-card label {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+}
+html[data-act="console"] .form-card .btn-p,
+html.rc-inside .form-card .btn-p {
+  background: var(--grad-btn);
+  color: #fff;
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 14px 34px -16px rgba(10, 88, 151, .9),
+              0 0 30px -12px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+
+/* Поле «Задача» обрезало третью строку подсказки ровно пополам -
+   даём ему высоту под три строки целиком */
+html[data-act="console"] .field textarea,
+html.rc-inside .field textarea { min-height: 108px; }
+
+/* Подпись «Как к вам обращаться» переносится в две строки, и парное
+   поле уезжало вниз - выравниваем пары по нижней кромке подписи */
+@media (max-width: 900px) {
+  .form-2 { align-items: end; }
+  .form-2 .field label { min-height: 2.6em; display: flex; align-items: flex-end; }
+}
+
+/* Чекбокс согласия: цель под палец, а не под курсор */
+@media (hover: none) and (pointer: coarse) {
+  .consent input[type="checkbox"] { width: 26px; height: 26px; }
+}
+
+/* ── Кольцо рубки: панель со спины не двоит текст ─────────────
+   Приёмка увидела у боковой карточки перевёрнутую копию текста -
+   это была панель с другой стороны круга, просвечивавшая сквозь
+   свою. Обратная сторона проекции зрителю не нужна: гасим её
+   совсем, а не полупрозрачностью, иначе призрак остаётся. */
+html.rc-inside .cin-world > .cin-item {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ── Карта маршрута: подписи должны читаться и на телефоне ────
+   Карта масштабируется под ширину, и заданные в ней двенадцать
+   пикселей превращались на экране в восемь - названия узлов
+   сливались в кашу, тем более поверх новой строчной развёртки
+   прибора. На узком экране развёртку снимаем, а подписи делаем
+   плотнее и ярче: прибор обязан читаться, иначе он не прибор. */
+@media (max-width: 760px) {
+  html.w3-on:not([data-theme="light"]) #route .viz-card {
+    background:
+      linear-gradient(180deg,
+        rgba(var(--int-cyan-rgb, 66,178,220), .07),
+        rgba(var(--int-deep-rgb, 5,12,21), .55));
+  }
+  #route .topo text,
+  #route svg text {
+    font-size: 15px;
+    font-weight: 600;
+    fill: rgba(226, 232, 240, .95);
+    paint-order: stroke;
+    stroke: rgba(5, 12, 21, .85);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+}
+
+/* ── Подвал финала: тихо это не то же самое, что не видно ─────
+   Он нужен по закону, но в кадре фильма это строка мелкого текста
+   поверх пульта. Опускаем её под окно кабины и приглушаем - читается,
+   но кадр не перебивает.
+
+   Приглушение раньше стояло общей прозрачностью на всём блоке, и она
+   умножалась на прозрачность самих чернил: ссылка на 70% внутри блока
+   на 42% давала итоговые 29% - около 2,2:1 при норме 4,5. Подпись про
+   карты планет собирала три множителя подряд и уходила ниже 1,5:1.
+   Правовые ссылки читать обязаны, иначе они не ссылки.
+
+   Тихость держим тем же, чем и раньше: мелким кеглем, отступом вниз и
+   приглушённым цветом. Убираем только множитель на весь блок - гасить
+   им текст, у которого уже задана своя прозрачность, значит гасить
+   дважды. Числа посчитаны на обшивке #050C15: обычный текст 6,3:1,
+   ссылки около 8:1. */
+html.rc-cab-on #epilogue .legal {
+  position: relative;
+  z-index: 1;
+  font-size: 10.5px;
+  margin-top: clamp(24px, 5vh, 56px);
+  color: rgba(226,232,240,.62);
+}
+html.rc-cab-on #epilogue .legal a { color: rgba(var(--int-lit-rgb, 207,233,245), .78); }
+
+/* Подпись к картам планет гасилась своей прозрачностью .55 поверх и
+   без того приглушённого --tx-3, а в кабине сверху ложился ещё и
+   множитель всего подвала. На странице это давало 2,6:1, в кабине
+   около 1,4:1, а по замеру приёмки в светлой теме и вовсе 1,02:1.
+
+   Правило действует в обеих темах, и это сознательно: финал в обеих
+   темах играется бортовым светом, палитра там одна и та же, поэтому
+   чинить подпись только в светлой значило бы получить две разные
+   подписи на одном и том же кадре. Тот же тихий вид, но заданный
+   цветом, а не множителем: 5,1:1. */
+#epilogue .legal .legal-maps {
+  opacity: 1;
+  color: rgba(226,232,240,.55);
+}
+
+/* ── Кнопка старта внутри корабля не знает светлой темы ───────
+   Тот же закон, что и у палитры выше: с посадки страница лежит не на
+   столе, а в рубке, где горит бортовой свет. Светлая тема красила
+   финальную кнопку в белую пилюлю с чернильной надписью #0A2740 -
+   она висела молочным пятном на звёздном небе, и замер поверх
+   обшивки давал 1,29:1. Возвращаем ей материал голограммы: тот же,
+   каким она нарисована в тёмной теме и каким сделаны экраны рубки.
+   Тёмная тема этих правил не видит вовсе. */
+html[data-theme="light"].rc-inside .epi-btn,
+html[data-theme="light"][data-act="console"] .epi-btn,
+html[data-theme="light"][data-act="egress"] .epi-btn {
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .09) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(158deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .16),
+      rgba(var(--int-hull-rgb, 10,21,36), .92));
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .6);
+}
+html[data-theme="light"].rc-inside .epi-btn svg,
+html[data-theme="light"][data-act="console"] .epi-btn svg,
+html[data-theme="light"][data-act="egress"] .epi-btn svg {
+  color: var(--cyan, #42B2DC);
+}
+
+/* Тэглайн логотипа в светлой теме почти пропадал: серое по белому */
+html[data-theme="light"] .logo img { filter: contrast(1.12) saturate(1.05); }
+
+/* В прологе корабль стоит перед глобусом, а не внутри него: на
+   широком экране шар занимает правую половину кадра, и корпус,
+   оказавшись под его сеткой, читался призраком. */
+@media (min-width: 901px) {
+  html[data-act="pad"] #rocketCanvas { z-index: 2; }
+}
+
+/* На телефоне корабль стоит ЗА текстом первого экрана, а не перед ним.
+
+   Так было не всегда: сначала он был позади и его не было видно
+   вовсе, потом его подняли вперёд - и он полетел прямо сквозь
+   заголовок. Приёмка сняла этот кадр: «Доставка контент», и по
+   буквам идёт корпус. Затемнение под текстом (veil в rc-rocket) от
+   этого не спасает, оно гасит корабль, а не освобождает буквы.
+
+   Причина, по которой корабль пропадал позади, была не в порядке
+   слоёв: разделы прозрачны, и сквозь них он виден. Он пропадал
+   оттого, что стоял за краем кадра, и это чинилось отдельно, в
+   хватке пролога. Теперь можно вернуть его назад: буквы читаются
+   всегда, а корпус виден везде, где букв нет, то есть почти везде.
+
+   На широком экране всё иначе: там текст занимает левую половину, а
+   корабль летит справа, и поднимать его вперёд можно без вреда. */
+@media (max-width: 900px) {
+  html[data-act="pad"] #rocketCanvas { z-index: 0; }
+}
+
+
+/* ── Корабль выключен сторожем ────────────────────────────────
+   Класс ставит watchdog в rc-cockpit.js, когда акт уже внутренний, а
+   внутрь мы так и не попали. Он останавливает сцену - и до сих пор
+   этим всё и заканчивалось: правила у класса не было вовсе, и на
+   экране оставался последний кадр остановленного корабля. Картинка
+   не двигалась, а человек продолжал крутить страницу.
+
+   Останавливать сцену без того, чтобы её убрать, нельзя. Убираем. */
+html.rc-ship-off #rocketCanvas {
+  opacity: 0 !important;
+  transition: opacity .45s var(--ease, ease);
+  pointer-events: none;
+}

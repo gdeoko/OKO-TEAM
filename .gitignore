@@ -24,3 +24,17 @@ OKO_MASTER_VAULT.md.b64
 # python cache
 __pycache__/
 *.pyc
+
+# Кадры и выгрузки сплошного аудита: снимки нужны на время разбора,
+# в истории им делать нечего - их сотни и они мегабайтами.
+rocketcdn/tools/audit/кадры/
+rocketcdn/tools/audit/out/
+rocketcdn/tools/audit/**/*.jpg
+rocketcdn/tools/audit/**/*.jpeg
+rocketcdn/tools/audit/**/*.png
+# Временные профили браузера, которые проверяющие создают рядом со
+# своими прогонами. Один такой профиль уже утёк в историю: это кэш
+# Chromium, ему в репозитории делать нечего.
+rocketcdn/tools/audit/tmpx/
+rocketcdn/tools/audit/**/playwright_chromiumdev_profile-*/
+rocketcdn/tools/audit/tmp/

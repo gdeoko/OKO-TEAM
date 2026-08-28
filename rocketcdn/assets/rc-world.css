@@ -1,0 +1,779 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · единый 3D-мир, оформление
+
+   Камера двигает весь поток страницы одним трансформом (его пишет
+   rc-world.js прямо в style у main). Здесь только слои параллакса
+   внутри разделов и вспышка света на входе в корабль. Ничего не
+   деформируется: сетки, наклоны карточек и липкие сцены живут
+   своей жизнью, камера лишь везёт кадр.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Кадр: браузеру заранее сказано, что он поедет. Трансформ делает
+   main единым слоём, поэтому явно поднимаем его над фоновыми
+   холстами (космос, ракета, рубка живут на z 0): иначе канвас
+   рубки, добавленный в конец body, ложился поверх формы заявки. */
+html.w3-on main.w3-stage {
+  /* will-change здесь стоять не должно.
+
+     Подсказка «этот узел поедет» заставляет браузер выделить узлу
+     собственный слой заранее и держать его всё время. Для кнопки это
+     копейки, а main это вся страница: шестнадцать тысяч точек в
+     высоту, слой на девяносто восемь мегабайт видеопамяти. Заодно
+     собственные слои получают его дети. Замер живьём: четыреста
+     слоёв и шестьсот мегабайт против здоровых десятков. Отсюда и
+     рывки при прокрутке, на которые жаловался заказчик, причём на
+     хорошей видеокарте тоже - там дело не в скорости рисования, а в
+     том, что видеопамять кончается и слои пересобираются заново.
+
+     Сам трансформ остаётся и работает: браузер поднимет слой сам на
+     время движения и отпустит потом. Это и есть правильное
+     поведение, will-change его только ломало. */
+  position: relative;
+  z-index: 1;
+}
+
+/* В салоне камеру мира выключаем начисто - и трансформ, и подсказку
+   will-change. Любая из них делает main точкой отсчёта для всего
+   фиксированного внутри, а кольцо карточек рубки стоит именно на
+   position: fixed. С трансформом кольцо цеплялось за main и уезжало
+   вместе со скроллом на километры за кадр: человек делал оборот по
+   пустой комнате. Внутри корабля своя камера (rc-interior), мир там
+   и не нужен. */
+html.rc-inside.w3-on main.w3-stage {
+  transform: none !important;
+  will-change: auto;
+}
+
+/* Слои параллакса: ближние (заголовки) идут за камерой, дальние
+   (карточки, глобус) чуть отстают. Ход маленький и одинаковый у
+   соседей по ряду - сетка остаётся сеткой, но кадр дышит глубиной. */
+/* Слой складывает два движения: параллакс от общей камеры и уход
+   в сторону от пролетающего корабля (переменные пишет rc-hooks).
+   Оба через translate, поэтому transform у элемента остаётся
+   свободным - его занимают собственные анимации появления. */
+html.w3-on .w3-lay {
+  translate: calc(var(--w3-shift, 0px) * var(--w3-k, 0) + var(--rc-fx, 0px)) var(--rc-fy, 0px);
+}
+/* Заголовки липких сцен и салона в слои мира не попадают (там своя
+   раскладка), но уступать дорогу кораблю обязаны и они - иначе в
+   этих разделах текст снова оказался бы поверх корпуса */
+html.w3-on .sec-h:not(.w3-lay),
+html.w3-on .sec-p:not(.w3-lay),
+html.w3-on .hs-h:not(.w3-lay),
+html.w3-on .sec-tag:not(.w3-lay) {
+  translate: var(--rc-fx, 0px) var(--rc-fy, 0px);
+}
+html.w3-on .sec-h, html.w3-on .sec-p, html.w3-on .hs-h, html.w3-on .sec-tag {
+  transition: opacity .3s linear;
+}
+
+/* Пока человек в форме или в демо-полёте, мир замирает: ввод и
+   игра важнее кино */
+html.rc-form-active.w3-on main.w3-stage,
+html.rc-flying.w3-on main.w3-stage {
+  transition: transform .5s cubic-bezier(.22,.61,.36,1);
+}
+
+/* Переход по ссылке меню: кадр на секунду встаёт ровно, чтобы
+   браузер прыгнул точно в раздел, а не мимо на четверть экрана
+   (координаты цели он берёт с учётом наезда камеры). Плавно, чтобы
+   выравнивание читалось как доводка кадра, а не как рывок. */
+html.rc-anchor.w3-on main.w3-stage {
+  transform: none !important;
+  transition: transform .45s cubic-bezier(.22,.61,.36,1);
+}
+
+/* ── Режиссура кадра: контент расступается перед кораблём ─────
+   Ошибка, которую здесь исправляем: сначала холст просто клали
+   поверх страницы, и корабль закрывал собой карточки. Клиент
+   сформулировал точно: контент не прячется под сцену, он ЖИВЁТ в
+   ней - у каждого элемента своё место в кадре.
+
+   Поэтому корабль остаётся на первом плане (иначе текст читался бы
+   сквозь металл), но в тех актах, где он крупный, содержимое
+   раздела уходит из-под него: на широком экране расступается в две
+   колонки, оставляя в середине коридор под корпус, на телефоне
+   поднимается над площадкой. Ничего не гаснет и не пропадает -
+   всё читается, просто стоит там, где корабля нет. */
+html.rc-approach #rocketCanvas {
+  z-index: 6 !important;
+  /* Длительность та же, что у появления рубки (.7s), и кривая та же.
+     Стояло .4s linear, и наружная сцена гасла примерно на треть
+     секунды РАНЬШЕ, чем салон становился непрозрачным: на пороге
+     входа между двумя кадрами открывалась тёмная щель. Замер поймал
+     сам порог - на мониторе за 108 точек прокрутки меняется весь
+     кадр. Совпадающие кривые превращают эту подмену в честный
+     перекрёстный переход. */
+  transition: opacity .7s var(--ease, ease);
+}
+/* Исключение: пока человек заполняет заявку, корабль не имеет права
+   стоять поверх полей. При мгновенном перескоке по ссылке меню доля
+   подхода не успевала обнулиться, и форма открывалась под корпусом. */
+html.rc-approach.rc-form-active #rocketCanvas { z-index: 0 !important; }
+
+/* ── Посадка: кадр очищается под корабль ─────────────────────
+   Клиент описал этот момент кино дословно: «ракета приземлилась и
+   приблизилась, там только заголовок, карточек и текста нет».
+
+   Значит на посадке и проходе раздел отдаёт кадру всё, кроме
+   заголовка: карточки уходят вниз и растворяются, как будто их и
+   не было, а вернувшись назад по скроллу - так же собираются. Это
+   не «спрятать контент»: он возвращается сразу, как только корабль
+   уступает кадр, и до посадки читается целиком. */
+html[data-act="landing"] #included .inc-grid,
+html[data-act="walk"] #included .inc-grid {
+  opacity: calc(1 - var(--rc-app, 0) * 1.25);
+  transform: translateY(calc(var(--rc-app, 0) * 40px)) scale(calc(1 - var(--rc-app, 0) * 0.04));
+  filter: blur(calc(var(--rc-app, 0) * 3px));
+  transition: opacity .45s linear, transform .5s var(--ease, ease), filter .45s linear;
+  pointer-events: none;
+}
+html[data-act="landing"] #included .inc-grid { pointer-events: auto; }
+
+/* Коридор посадки. Пока доля подхода нулевая, карточки ещё не
+   растворились, а корабль уже заходит на площадку по оси кадра -
+   и садится ровно на среднюю колонку. Поэтому на широком экране в
+   этом акте сетка расступается на две колонки, оставляя посередине
+   полосу под корабль. Это та же мысль, что и в коридоре продуктов:
+   содержимое не прячется под сцену, оно уступает ей дорогу. */
+@media (min-width: 1100px) {
+  html[data-act="landing"] #included .inc-grid,
+  html[data-act="walk"] #included .inc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(200px, 24vw, 420px);
+  }
+}
+
+/* Заголовок остаётся - он и есть титр этой сцены. Уводим его в
+   сторону от корпуса и держим повыше, чтобы корабль встал в кадр
+   целиком, от носа до площадки. */
+@media (min-width: 901px) {
+  html[data-act="landing"] #included .sec-head,
+  html[data-act="walk"] #included .sec-head {
+    max-width: 46%;
+    transition: max-width .6s var(--ease, ease), transform .6s var(--ease, ease);
+    transform: translateY(calc(var(--rc-app, 0) * -6vh));
+  }
+}
+@media (max-width: 900px) {
+  html[data-act="landing"] #included .sec-head,
+  html[data-act="walk"] #included .sec-head {
+    transform: translateY(calc(var(--rc-app, 0) * -4vh));
+    transition: transform .6s var(--ease, ease);
+  }
+}
+
+/* Проход к трапу: корпус растёт до края кадра. Раньше ленту сценариев
+   просто приподнимали, и на телефоне она всё равно оставалась за
+   бортом - корабль закрывал экран целиком, а под ним висел невидимый
+   контент. Делаем как на посадке: лента уходит из кадра совсем, в
+   кадре остаётся один титр. Клиент просил ровно это - «приземлилась
+   и приблизилась, там только заголовок, карточек и текста нет».
+   Откат скролла назад тут же возвращает ленту на место. */
+html[data-act="walk"] #cases .hs-view {
+  opacity: calc(1 - var(--rc-app, 0) * 1.6);
+  transform:
+    translateY(calc(var(--rc-app, 0) * -12vh))
+    scale(calc(1 - var(--rc-app, 0) * 0.04));
+  filter: blur(calc(var(--rc-app, 0) * 4px));
+  transition: opacity .4s linear, transform .5s var(--ease, ease), filter .4s linear;
+}
+/* Полоса прокрутки ленты гаснет вместе с ней */
+html[data-act="walk"] #cases .hs-bar {
+  opacity: calc(1 - var(--rc-app, 0) * 2);
+  transition: opacity .35s linear;
+}
+/* Погасшая лента не должна ловить свайпы: горизонтальный скроллер
+   невидим, но палец по нему всё ещё ездил бы. Класс ставит корабль,
+   когда подход перевалил за треть - к этому мигу лента уже тает. */
+html[data-act="walk"].rc-approach #cases .hs-view { pointer-events: none; }
+html[data-act="walk"] #cases .hs-head {
+  transform: translateY(calc(var(--rc-app, 0) * -8vh));
+  transition: transform .5s var(--ease, ease);
+}
+@media (min-width: 901px) {
+  /* Титр держится в левой половине: правую занимает корпус.
+     Одной ширины мало - обёртка раздела центрирована, и суженный
+     блок оставался ровно посередине, под носом корабля. Прижимаем
+     его к левому полю: корабль по оси кадра, текст рядом с ним. */
+  html[data-act="walk"] #cases .hs-head {
+    max-width: 44%;
+    margin-left: 0;
+    margin-right: auto;
+    padding-left: clamp(16px, 5vw, 96px);
+    transition: max-width .6s var(--ease, ease), padding-left .6s var(--ease, ease);
+  }
+}
+@media (max-width: 900px) {
+  /* На телефоне корпус занимает кадр целиком, свободен только верх:
+     титр уходит под самую шапку, подпись под ним уступает место */
+  html[data-act="walk"] #cases .hs-head {
+    transform: translateY(calc(var(--rc-app, 0) * -26vh));
+  }
+  html[data-act="walk"] #cases .hs-head .sec-p {
+    opacity: calc(1 - var(--rc-app, 0) * 1.6);
+    transition: opacity .4s linear;
+  }
+}
+
+/* ── Коридор продуктов: корабль идёт по оси кадра ────────────
+   В этом акте камера делает полный наезд вглубь, и корабль проходит
+   ровно посередине. Карточки продуктов расходятся к краям, оставляя
+   ему полосу пролёта - получается коридор, по которому мы летим, а
+   не сетка, сквозь которую он продирается. */
+@media (min-width: 1100px) {
+  html[data-act="corridor"] #products .grid {
+    column-gap: clamp(60px, 8vw, 160px);
+    transition: column-gap .7s var(--ease, ease);
+  }
+}
+
+/* Посадка: следующий раздел подходит снизу ровно туда, где стоит
+   площадка с опорами. Отводим его ниже - карточки не наезжают на
+   грунт, а корабль садится на свободное место. */
+html[data-act="landing"] #cases .hs-view,
+html[data-act="landing"] #cases .hs-head {
+  transform: translateY(9vh);
+  transition: transform .6s var(--ease, ease);
+}
+/* Заголовок следующего раздела упирался в нос корабля: держим его
+   в левой половине, пока площадка занимает центр кадра */
+@media (min-width: 901px) {
+  html[data-act="landing"] #cases .hs-head {
+    max-width: 44%;
+    margin-left: 0;
+    margin-right: auto;
+    padding-left: clamp(16px, 5vw, 96px);
+  }
+}
+@media (max-width: 900px) {
+  html[data-act="landing"] #cases .hs-view,
+  html[data-act="landing"] #cases .hs-head { transform: translateY(4vh); }
+}
+
+/* Свет из открывающегося люка. Не заплатка на стыке, а честный
+   засвет: он начинается ещё снаружи, когда створки только пошли, и
+   к моменту, когда сцену принимает рубка, кадр уже залит тёплым.
+   Поэтому подмену сцены увидеть нечем. Долю ведёт rc-rocket. */
+.rc-hatch-glow {
+  position: fixed; inset: 0; z-index: 930;
+  pointer-events: none;
+  opacity: var(--hatch-glow, 0);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 48%,
+      rgba(255,226,186,.55) 0%, rgba(255,206,150,.28) 34%,
+      rgba(120,180,220,.10) 62%, transparent 82%);
+  transition: opacity .25s linear;
+}
+html.rc-inside .rc-hatch-glow { opacity: 0; }
+
+/* ── Монтажные склейки на драматических переходах ────────────
+   Отклик кадра на смену плана: вспышка двигателя, нагрев обшивки на
+   входе в атмосферу, толчок от касания. Всё на одном уже стоящем
+   слое света корабля - отдельных элементов не заводим, меняется
+   только его заливка на секунду. */
+html.cut-fire .rc-shine::after,
+html.cut-heat .rc-shine::after,
+html.cut-hit .rc-shine::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+html.cut-fire .rc-shine::after {
+  background: radial-gradient(ellipse 80% 60% at 50% 78%,
+    rgba(255, 214, 150, .5) 0%, rgba(255, 150, 70, .18) 34%, transparent 70%);
+  animation: cutFire 1s cubic-bezier(.2,.7,.3,1) forwards;
+}
+/* Нагрев обшивки. Сплошная тёплая заливка на пол-кадра давала
+   охристо-болотную пелену поверх синего космоса и вымывала подписи
+   карточек - приёмка поймала это первым же кадром. Настоящий нагрев
+   виден не пятном, а раскалённой кромкой: узкая полоса у верхнего
+   среза кадра, куда набегает атмосфера. */
+html.cut-heat .rc-shine::after {
+  background: linear-gradient(180deg,
+    rgba(255, 138, 74, .5) 0%,
+    rgba(226, 84, 48, .22) 6%,
+    rgba(180, 60, 40, .07) 13%,
+    transparent 22%);
+  animation: cutHeat 1.1s ease-out forwards;
+}
+html.cut-hit .rc-shine::after {
+  background: radial-gradient(ellipse 90% 40% at 50% 96%,
+    rgba(214, 196, 170, .4) 0%, rgba(160, 140, 116, .14) 44%, transparent 76%);
+  animation: cutHit .95s ease-out forwards;
+}
+@keyframes cutFire {
+  0%   { opacity: 0; transform: scale(.9); }
+  16%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.14); }
+}
+@keyframes cutHeat {
+  0%   { opacity: 0; }
+  22%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes cutHit {
+  0%   { opacity: 0; transform: translateY(6%); }
+  14%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-3%); }
+}
+
+/* ── Свет корабля на странице ────────────────────────────────
+   Отблеск факела там, где корабль сейчас в кадре. Позицию берём
+   из переменных сцены, поэтому слой не считает ничего сам: браузер
+   двигает готовый градиент, а это работа композитора, не процессора.
+
+   Режим наложения светлее обычного: свет складывается с тем, что
+   под ним, и карточка под кораблём действительно подсвечивается, а
+   не закрывается пеленой. Сила намеренно небольшая - это отблеск,
+   а не прожектор: кино держится на полутонах. */
+.rc-shine {
+  position: fixed; inset: 0; z-index: 4;
+  pointer-events: none;
+  /* Пока светить нечем, слоя нет вовсе.
+
+     Прозрачность ноль слой не выключает: браузер держит его отдельно
+     и на каждый кадр смешивает со всем, что под ним, по всей площади
+     окна. Ракета же бывает рядом с кадром малую часть прокрутки.
+     Признак ставит rc-rocket.js по той же величине, что и яркость. */
+  display: none;
+  mix-blend-mode: plus-lighter;
+  opacity: calc(var(--rocket-near, 0) * .55);
+  background:
+    radial-gradient(circle 26vmax at var(--rocket-x, 50%) var(--rocket-y, 50%),
+      rgba(122, 196, 255, .16) 0%,
+      rgba(96, 150, 220, .07) 34%,
+      transparent 68%),
+    radial-gradient(circle 9vmax at var(--rocket-x, 50%) calc(var(--rocket-y, 50%) + 6vmax),
+      rgba(255, 196, 128, .18) 0%,
+      rgba(255, 150, 80, .06) 42%,
+      transparent 72%);
+  transition: opacity .5s linear;
+}
+.rc-shine.rc-shine-on { display: block; }
+/* Внутри корабля и в игре своего света хватает. Снимаем слой
+   целиком, а не гасим прозрачностью: прозрачный слой с режимом
+   наложения всё равно смешивается со всем кадром каждый кадр. */
+html.rc-inside .rc-shine,
+html.rc-flying .rc-shine,
+html.rc-approach .rc-shine { display: none !important; }
+/* Светлая тема: по белому листу тот же приём читается грязью, там
+   свет корабля даём холодной тенью вместо засветки */
+html[data-theme="light"] .rc-shine {
+  mix-blend-mode: multiply;
+  opacity: calc(var(--rocket-near, 0) * .32);
+  background:
+    radial-gradient(circle 24vmax at var(--rocket-x, 50%) var(--rocket-y, 50%),
+      rgba(120, 160, 210, .16) 0%, transparent 66%);
+}
+/* Склейки видны и там, где сам свет корабля притушен, и в светлой
+   теме тоже. Правило стоит ПОСЛЕ темы намеренно: приёмка поймала,
+   что при равной силе селекторов тема перебивала вспышку, и на
+   светлом фоне переходы просто не читались. Заодно снимаем плавный
+   переход - вспышка обязана быть мгновенной, иначе она не успевает
+   проявиться до снятия класса (это ловилось на телефоне). */
+html.cut-fire .rc-shine,
+html.cut-heat .rc-shine,
+html.cut-hit .rc-shine {
+  opacity: 1;
+  transition: none;
+}
+/* На светлом фоне складывать свет нельзя - выходит грязь. Там
+   вспышка работает затемнением, как настоящая тень от пламени. */
+html[data-theme="light"].cut-fire .rc-shine,
+html[data-theme="light"].cut-heat .rc-shine,
+html[data-theme="light"].cut-hit .rc-shine {
+  mix-blend-mode: multiply;
+  opacity: .5;
+}
+
+@media (prefers-reduced-motion: reduce) { .rc-shine { display: none; } }
+
+/* Вспышка света из люка на стыке «проём - салон»: тёплый свет
+   изнутри корабля на долю секунды заливает кадр - шаг через порог */
+.w3-flash {
+  position: fixed; inset: 0; z-index: 940;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,226,186,.92) 0%, rgba(255,206,150,.55) 26%,
+                    rgba(120,180,220,.22) 52%, transparent 76%);
+  animation: w3Flash .62s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes w3Flash {
+  0%   { opacity: 0; transform: scale(.72); }
+  22%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* ── Эпилог: финальный кадр фильма ──────────────────────────
+   Прозрачный фон - сквозь него живой космос и вернувшаяся ракета.
+   Один заголовок и одна большая кнопка: дальше начинается игра. */
+/* Эпилог - это отлёт от пульта, и ему нужна длина.
+
+   Приёмка замерила: на весь акт отлёта приходилось 228 пикселей
+   прокрутки при экране в 900 - камера не отъезжала, а защёлкивалась
+   за два щелчка колеса. Причина простая: эпилог был ростом в экран
+   и стоял последним, поэтому прокручивать в нём было нечего.
+
+   Теперь у секции есть шлейф в экран с лишним, а содержимое липнет
+   к кадру: пока идёт этот шлейф, камера отступает от панели, анкета
+   растворяется, разгорается титр старта - всё то, что клиент описал
+   словами «отдалились, и вот рамка из панели и космос вдалеке». */
+.epi {
+  min-height: 215svh;
+  text-align: center;
+  position: relative;
+}
+.epi > .wrap {
+  position: sticky; top: 0;
+  min-height: 100svh;
+  display: grid; place-items: center;
+}
+.epi-in { display: grid; justify-items: center; gap: 14px; }
+.epi .sec-p { max-width: 440px; }
+/* Подвал в эпилоге: мелко, в самом низу кадра, кино не перебивает */
+.epi .legal { margin-top: clamp(48px, 10vh, 96px); justify-content: center; }
+/* Пока финальная кнопка в кадре, плавающая «Полёт» не нужна: две
+   одинаковые кнопки рядом - это шум, а на телефоне они слипались */
+html[data-act="egress"] .rcf-fab { opacity: 0 !important; pointer-events: none !important; }
+/* Кнопка старта - последняя голограмма фильма. Клиент описал этот
+   кадр так: «камера отдаляется, анкета исчезает голограммой, а у
+   нас появляется экран игры и надпись голограммой типа старта
+   игры». Значит и материал у неё голограммный: проекция на стекле
+   рубки со сканлайнами и скобками, а не обычная кнопка сайта. */
+.epi-btn {
+  margin-top: 18px;
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 18px 34px;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 16px; font-weight: 700; letter-spacing: .08em;
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .09) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(158deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .16),
+      rgba(var(--int-hull-rgb, 10,21,36), .92));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .6);
+  border-radius: 999px;
+  cursor: pointer;
+  text-shadow: 0 0 14px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  box-shadow:
+    0 18px 44px -16px rgba(0,0,0,.9),
+    0 0 44px -10px rgba(var(--int-cyan-rgb, 66,178,220), .8),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .2);
+  transition: transform .3s var(--ease, ease), box-shadow .3s;
+}
+/* Луч проектора под кнопкой: надпись висит в воздухе рубки */
+.epi-btn::before {
+  content: ''; position: absolute; left: 50%; bottom: -26px;
+  width: 2px; height: 26px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(var(--int-cyan-rgb, 66,178,220), .85), transparent);
+  pointer-events: none;
+}
+.epi-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 22px 52px -16px rgba(0,0,0,.95), 0 0 64px -8px rgba(66,178,220,.95);
+}
+.epi-btn svg { width: 22px; height: 22px; color: var(--cyan, #42B2DC); }
+/* Мягкое кольцо-пульс вокруг кнопки: финал зовёт в полёт */
+.epi-btn::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: inherit;
+  border: 1px solid rgba(66,178,220,.4);
+  animation: epiPulse 2.6s ease-out infinite;
+  pointer-events: none;
+}
+.epi-btn { position: relative; }
+@keyframes epiPulse {
+  0%   { opacity: .8; transform: scale(1); }
+  70%  { opacity: 0;  transform: scale(1.18); }
+  100% { opacity: 0;  transform: scale(1.18); }
+}
+html[data-theme="light"] .epi-btn {
+  color: #0A2740;
+  background: linear-gradient(158deg, rgba(255,255,255,.95), rgba(234,244,252,.92));
+  border-color: rgba(10,88,151,.4);
+}
+html[data-theme="light"] .epi-btn svg { color: #0A5897; }
+
+/* Просьба меньше движения и третья ступень деградации: мира нет */
+@media (prefers-reduced-motion: reduce) {
+  html.w3-on main.w3-stage, html.w3-on .w3-lay { transform: none !important; translate: none !important; }
+}
+/* Третья ступень раньше глушила камеру мира насмерть, да ещё и
+   правилом с !important: одна трёхсекундная просадка где угодно
+   выключала единый мир до конца визита, а скрипт при этом честно
+   продолжал считать и писать трансформ каждый кадр - работа в
+   никуда. Амплитуду на этой ступени уменьшает сам rc-world (до
+   трети), и этого достаточно: движение остаётся, стоит дёшево, а
+   мир не разваливается на отдельные страницы. */
+html[data-degrade="3"] .w3-lay { transform: none; }
+
+/* Второй путь из финала: заявка рядом с кнопкой полёта. Держим её
+   вторичной по весу - кино заканчивается стартом, но человек,
+   который пришёл за услугой, не должен искать, куда нажать. */
+.epi-alt {
+  margin-top: 14px;
+  display: inline-block;
+  padding: 10px 20px;
+  font: 600 13.5px/1 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .06em;
+  color: rgba(var(--int-lit-rgb, 207,233,245), .82);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .38);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: color .25s var(--ease), border-color .25s var(--ease), background .25s var(--ease);
+}
+.epi-alt:hover {
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .75);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .10);
+}
+html[data-theme="light"]:not(.rc-cab-on) .epi-alt { color: var(--tx-2); border-color: var(--line-2); }
+
+/* ═══ Читаемость поверх корабля ═════════════════════════════
+   Корабль летит за контентом, но яркий корпус за буквами съедает
+   контраст: приёмка замерила 2,3:1 на подсказках и 4,0:1 на теле
+   карточек там, где под ними проходит ракета.
+
+   Доля перекрытия приходит из сцены. По ней сам корабль приглушается,
+   а текст в это же время получает мягкую подложку - ровно настолько,
+   насколько она нужна. Ни на телефоне, ни на мониторе ничего не
+   выключается: меняется только плотность.
+
+   Плотность держим двумя ступенями-классами, а не переменной, которую
+   корабль писал бы каждый кадр. Причина в цене: эти правила висят на
+   сотнях узлов, и любая запись переменной на корне документа помечает
+   устаревшим стиль всего дерева - на телефоне это давало пересчёт
+   стиля в каждом кадре прокрутки. Ступени переключаются считанные
+   разы за проход, а глазом переход между ними не отличить от
+   плавного: подложка мягкая и уходит в размытие.
+
+   Плотность поднята. Прежние двадцать два процента считались от
+   тёмного неба, а корабль на подходе подставляет под слова не небо,
+   а светлый нос: приёмка увидела «Путь запроса ЗА» с потерянным
+   «за» - белые буквы на белом бликующем обтекателе. Уступать
+   яркостью должен не корабль (владелец уже говорил, что тогда
+   ракеты «нет вовсе»), а фон под буквами. */
+html.rk-veil-1 .sec-h, html.rk-veil-1 .sec-p, html.rk-veil-1 .sec-tag,
+html.rk-veil-1 .hero h1, html.rk-veil-1 .hero .lead,
+html.rk-veil-1 .viz-card h3, html.rk-veil-1 .card h3, html.rk-veil-1 .card p,
+html.rk-veil-1 .dc h4, html.rk-veil-1 .step h3 {
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .40), 0 0 26px rgba(3, 8, 14, .28);
+}
+html.rk-veil-2 .sec-h, html.rk-veil-2 .sec-p, html.rk-veil-2 .sec-tag,
+html.rk-veil-2 .hero h1, html.rk-veil-2 .hero .lead,
+html.rk-veil-2 .viz-card h3, html.rk-veil-2 .card h3, html.rk-veil-2 .card p,
+html.rk-veil-2 .dc h4, html.rk-veil-2 .step h3 {
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .62), 0 0 26px rgba(3, 8, 14, .44);
+}
+html.rk-veil-1[data-theme="light"] .sec-h, html.rk-veil-1[data-theme="light"] .sec-p,
+html.rk-veil-1[data-theme="light"] .sec-tag, html.rk-veil-1[data-theme="light"] .hero h1,
+html.rk-veil-1[data-theme="light"] .hero .lead, html.rk-veil-1[data-theme="light"] .viz-card h3,
+html.rk-veil-1[data-theme="light"] .card h3, html.rk-veil-1[data-theme="light"] .card p,
+html.rk-veil-1[data-theme="light"] .dc h4, html.rk-veil-1[data-theme="light"] .step h3 {
+  text-shadow: 0 1px 10px rgba(243, 247, 251, .62), 0 0 26px rgba(243, 247, 251, .46);
+}
+html.rk-veil-2[data-theme="light"] .sec-h, html.rk-veil-2[data-theme="light"] .sec-p,
+html.rk-veil-2[data-theme="light"] .sec-tag, html.rk-veil-2[data-theme="light"] .hero h1,
+html.rk-veil-2[data-theme="light"] .hero .lead, html.rk-veil-2[data-theme="light"] .viz-card h3,
+html.rk-veil-2[data-theme="light"] .card h3, html.rk-veil-2[data-theme="light"] .card p,
+html.rk-veil-2[data-theme="light"] .dc h4, html.rk-veil-2[data-theme="light"] .step h3 {
+  text-shadow: 0 1px 10px rgba(243, 247, 251, .86), 0 0 26px rgba(243, 247, 251, .70);
+}
+/* Смена ступени не должна щёлкать: тень переливается за треть секунды */
+.sec-h, .sec-p, .sec-tag, .hero h1, .hero .lead,
+.viz-card h3, .card h3, .card p, .dc h4, .step h3 {
+  transition: text-shadow .34s linear;
+}
+
+/* Подсказки поверх сцены - самое слабое место по контрасту:
+   их подложка нужна всегда, а не только под кораблём */
+.scroll-hint, .rack-hint, .g3-legend, .mq {
+  text-shadow: 0 1px 8px rgba(3, 8, 14, .85), 0 0 20px rgba(3, 8, 14, .6);
+}
+html[data-theme="light"] .scroll-hint,
+html[data-theme="light"] .rack-hint,
+html[data-theme="light"] .g3-legend,
+html[data-theme="light"] .mq {
+  text-shadow: 0 1px 8px rgba(243, 247, 251, .9), 0 0 20px rgba(243, 247, 251, .7);
+}
+
+/* ═══ Бортовой планшет ══════════════════════════════════════
+   Три раздела сценарно попадают в кадры, где корабль по замыслу
+   занимает экран: «Сценарии» - это проход к трапу, «Надёжность» -
+   салон, «Вопросы» - бортовой справочник. Уменьшать корабль там
+   нельзя: мы к нему идём, он и есть сцена.
+
+   Поэтому текст в этих актах ложится не прямо на обшивку, а на
+   свою поверхность - как данные на бортовом экране. Подложка
+   плотная ровно настолько, чтобы буквы читались, и остаётся
+   стеклянной: сквозь неё видно, что мы внутри той же сцены.
+
+   Одинаково на телефоне и на мониторе: меняются только отступы. */
+/* Пока корабль занимает кадр, он стоит поверх страницы (см. правило
+   подхода выше) - и текст оказывается под обшивкой. Поднять сами
+   планшеты нельзя: контент живёт внутри main с трансформом камеры,
+   а это свой контекст наложения, и z-index потомков с холстом уже
+   не сравнивается. Поэтому в таких кадрах опускаем холст.
+
+   Исключение - собственно вход в люк: там корабль обязан идти
+   поверх, и текста в кадре по сценарию нет. */
+html.rc-hull:not(.rc-approach) #rocketCanvas { z-index: 0 !important; }
+
+/* Планшеты с текстом обязаны быть выше него: иначе подложка есть,
+   а буквы всё равно под обшивкой. */
+html.rc-hull:not(.rc-approach) #cases .hs-head,
+html.rc-hull:not(.rc-approach) #cases .hs-view,
+html.rc-hull:not(.rc-approach) #reliability .sec-head,
+html.rc-hull:not(.rc-approach) #reliability .grid,
+html.rc-hull:not(.rc-approach) #included .sec-head,
+html.rc-hull:not(.rc-approach) #included .inc-grid,
+html.rc-hull:not(.rc-approach) #faq .sec-head,
+html.rc-hull:not(.rc-approach) #faq .faq {
+  position: relative;
+  z-index: 7;
+}
+
+html.rc-hull:not(.rc-approach) #cases .hs-head,
+html.rc-hull:not(.rc-approach) #cases .case-card,
+html.rc-hull:not(.rc-approach) #cases .card,
+html.rc-hull:not(.rc-approach) #reliability .sec-head,
+html.rc-hull:not(.rc-approach) #reliability .card,
+html.rc-hull:not(.rc-approach) #included .sec-head,
+html.rc-hull:not(.rc-approach) #faq .sec-head,
+html.rc-hull:not(.rc-approach) #faq .faq-i {
+  background: rgba(5, 11, 19, .93);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  border-radius: var(--r-md, 16px);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, .38),
+    inset 0 1px 0 rgba(var(--int-cyan-rgb, 66, 178, 220), .18);
+  transition: background .5s var(--ease), box-shadow .5s var(--ease);
+}
+html.rc-hull:not(.rc-approach) #cases .hs-head,
+html.rc-hull:not(.rc-approach) #reliability .sec-head,
+html.rc-hull:not(.rc-approach) #included .sec-head,
+html.rc-hull:not(.rc-approach) #faq .sec-head {
+  padding: clamp(14px, 2.4vw, 22px) clamp(16px, 2.6vw, 26px);
+}
+/* Тексту на планшете подложка уже не нужна - снимаем тень букв,
+   иначе она читается грязью на ровном фоне */
+html.rc-hull:not(.rc-approach) #cases .sec-h,
+html.rc-hull:not(.rc-approach) #cases .sec-p,
+html.rc-hull:not(.rc-approach) #cases .sec-tag,
+html.rc-hull:not(.rc-approach) #reliability .sec-h,
+html.rc-hull:not(.rc-approach) #reliability .sec-p,
+html.rc-hull:not(.rc-approach) #reliability .sec-tag,
+html.rc-hull:not(.rc-approach) #reliability .card h3,
+html.rc-hull:not(.rc-approach) #reliability .card p,
+html.rc-hull:not(.rc-approach) #faq .sec-h,
+html.rc-hull:not(.rc-approach) #faq .sec-p,
+html.rc-hull:not(.rc-approach) #faq .sec-tag { text-shadow: none; }
+
+/* Светлая тема внутри этих кадров - тот же бортовой свет: снаружи
+   день, внутри корабля своя лампа, и это честнее белого листа */
+html[data-theme="light"].rc-hull:not(.rc-approach) #cases .hs-head,
+html[data-theme="light"].rc-hull:not(.rc-approach) #cases .case-card,
+html[data-theme="light"].rc-hull:not(.rc-approach) #cases .card,
+html[data-theme="light"].rc-hull:not(.rc-approach) #reliability .sec-head,
+html[data-theme="light"].rc-hull:not(.rc-approach) #reliability .card,
+html[data-theme="light"].rc-hull:not(.rc-approach) #faq .sec-head,
+html[data-theme="light"].rc-hull:not(.rc-approach) #faq .faq-i {
+  background: rgba(247, 250, 253, .95);
+  box-shadow:
+    0 18px 46px rgba(9, 19, 32, .16),
+    inset 0 1px 0 rgba(66, 178, 220, .22);
+}
+
+/* ═══ Посадка на пустую площадку ════════════════════════════
+   Владелец описал этот кадр дословно: «текст, заголовки и контент
+   сайта на каком-то моменте кончаются, и ракета садится на пустом
+   пространстве». Раньше кадр очищали по одной секции, и в него всё
+   равно попадали соседние - под опорами читались карточки, а снизу
+   просвечивало, что там ещё что-то есть.
+
+   Теперь по доле посадки уходит вся страница разом. Это не «спрятать
+   контент»: доля обратима, и стоит откатить прокрутку - страница
+   собирается на своих местах. Заголовки уступают кадр сцене ровно
+   на те секунды, пока корабль касается грунта. */
+/* Долю очистки пишет корабль каждому разделу отдельно (rc-rocket):
+   одна запись на сцену помечала бы устаревшим стиль всего документа,
+   потому что main - родитель всей страницы. Раздел читает своё
+   значение сам, наследовать его некому. */
+@property --rc-clear { syntax: "<number>"; inherits: false; initial-value: 0; }
+/* Очистка не привязана к акту, и это принципиально. Пока правило
+   висело на двух актах, между ними оставалась щель: корабль уже шёл
+   на посадку и занимал кадр, а акт ещё назывался «маршрут» - и
+   заголовок соседнего раздела спокойно читался прямо по корпусу.
+   Владелец прислал ровно такой кадр. Долю очистки ведёт сам корабль
+   (rc-rocket), вне посадки она ноль, поэтому лишнего правило не
+   погасит нигде. */
+/* Гасим детей только когда кадр действительно чистится. Правило
+   стояло без условия, и прозрачность с переходом висела на каждом
+   разделе всегда: даже при полной непрозрачности это повод выделить
+   узлу свой слой, а разделов на странице десятки. */
+html[data-clear="1"] main.w3-stage > * {
+  opacity: calc(1 - var(--rc-clear, 0));
+  transition: opacity .45s linear;
+}
+/* Ниже площадки не должно быть видно «продолжения»: подвал и
+   правовая строка уходят вместе со всем остальным */
+html[data-clear="1"] .legal { opacity: calc(1 - var(--rc-clear, 0)); }
+
+/* Пока кадр чистится, по нему нельзя попасть пальцем в невидимое */
+main.w3-stage > * {
+  pointer-events: auto;
+}
+html[data-act="landing"][data-clear="1"] main.w3-stage > *,
+html[data-act="walk"][data-clear="1"] main.w3-stage > * {
+  pointer-events: none;
+}
+
+/* ═══ Анимации за кромкой окна ═══════════════════════════════
+   Раздел ушёл из кадра - его бесконечные анимации встают на паузу
+   (класс ставит rc-motion по наблюдателю видимости). Показать они
+   всё равно ничего не могут, а браузер пересчитывал из-за них стиль
+   в каждом кадре. Возвращаются с того же места: на глаз разницы нет,
+   счётчик анимации просто не двигался, пока её не было видно. */
+.rc-off, .rc-off *, .rc-off *::before, .rc-off *::after {
+  animation-play-state: paused !important;
+}
+
+/* ═══ Покадровые переменные объявлены не наследуемыми ════════
+   Объём карточек и уход текста от корабля живут на переменных,
+   которые сцены переписывают в каждом кадре. По умолчанию любая
+   такая запись помечает устаревшим стиль всего поддерева элемента:
+   у карточки это десяток вложенных узлов, у трёх десятков карточек -
+   под триста узлов на кадр. Трассировка на телефоне показала, что
+   именно эти пересчёты и съедали кадр.
+
+   Каждая из перечисленных переменных читается только тем самым
+   элементом, на котором её пишут (проверено по всем файлам
+   оформления), поэтому наследование ей не нужно. Объявляем это
+   явно - и запись перестаёт задевать вложенные узлы. Внешне не
+   меняется ничего: значения и начальные величины те же. */
+@property --rcd-rx   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --rcd-ry   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --rcd-tz   { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rcd-y    { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rcd-lift { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --tilt     { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --lift     { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rc-fx    { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rc-fy    { syntax: "<length>"; inherits: false; initial-value: 0px; }
+/* Ход камеры мира: пишется адресно каждому слою в кадре (rc-world),
+   поэтому наследование ему тоже не нужно */
+@property --w3-shift { syntax: "<length>"; inherits: false; initial-value: 0px; }
+
+/* Подпись к картам тел. Мелко и тихо: это обязательство по лицензии
+   CC BY 4.0 для части карт, а не строка, которую надо читать. */
+.legal .legal-maps {
+  opacity: .55;
+  font-size: .82em;
+  flex-basis: 100%;
+}

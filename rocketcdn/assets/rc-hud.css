@@ -1,0 +1,192 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · контент как приборы корабля
+
+   Клиент просил не только финал: «продумать, где ещё на сайте
+   контент не просто статичный блок поверх фона, а внутри 3D-мира,
+   как часть интерфейса сайта».
+
+   Здесь два таких места, оба выше по странице, задолго до посадки:
+
+   1. Цифры KPI перестают быть плашками и становятся показаниями
+      борта: стеклянные приборы со сканлайнами, скобками прицела и
+      шкалой под числом. Космос за ними виден - подложка больше не
+      глухая заливка. Приборы чуть доворачиваются вместе с камерой
+      мира (--w3-shift), поэтому читаются стоящими В кадре, а не
+      наклеенными НА него.
+
+   2. Преимущества становятся створом: карточки по краям ряда
+      отвёрнуты от зрителя, средние стоят фронтально - ряд читается
+      воротами, сквозь которые идёт корабль, а не сеткой.
+
+   Правила те же, что во всём фильме: доворот крошечный (полтора
+   градуса), текст всегда лицом к зрителю и не размыт, при просьбе
+   меньше движения и на слабом устройстве всё выключается.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Приборы KPI ──────────────────────────────────────────
+   Только тёмная тема: на светлой стеклянная панель со сканлайнами
+   теряет контраст, и цифра читается хуже обычной плашки. */
+html.w3-on:not([data-theme="light"]) #kpi .kpi {
+  background: transparent;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .22);
+  overflow: visible;
+  gap: clamp(6px, 1vw, 12px);
+  padding: 2px;
+}
+
+/* ── Подложка приборных блоков ────────────────────────────────
+   Была полупрозрачной, и сквозь неё светила ракета: в первом экране
+   корабль проходит ровно по карточкам показателей, и заказчик увидел
+   «ракета поверх текста». Порядок слоёв при этом был правильным -
+   холст корабля лежит ниже вёрстки. Дело было в том, что фон самой
+   карточки прозрачен на две трети, а корабль в прологе намеренно не
+   притухает: он герой первого кадра.
+
+   Уплотняем подложку до непрозрачной. Приборный вид сохраняется:
+   его держат рамка, полосы развёртки, внутренний блик и свечение по
+   контуру, а не то, что сквозь прибор виден космос. */
+html.w3-on:not([data-theme="light"]) #kpi .kpi > div {
+  position: relative;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .26);
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .05) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .08),
+      rgba(var(--int-deep-rgb, 5,12,21), .97)),
+    linear-gradient(180deg, rgb(var(--int-deep-rgb, 5,12,21)), rgb(var(--int-deep-rgb, 5,12,21)));
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .12),
+    0 0 34px -18px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+  /* Доворот за камерой мира. Величина нарочно крошечная: прибор
+     обязан стоять в кадре ровно, «каша» из наклонов - это то, на
+     что клиент уже жаловался. */
+  transform: perspective(1100px)
+             rotateY(calc(var(--w3-shift, 0px) * -0.10));
+  transition: background .4s linear, box-shadow .4s linear, transform .5s var(--ease, ease);
+}
+html.w3-on:not([data-theme="light"]) #kpi .kpi > div:hover {
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .07) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .13),
+      rgba(var(--int-deep-rgb, 5,12,21), .97)),
+    linear-gradient(180deg, rgb(var(--int-deep-rgb, 5,12,21)), rgb(var(--int-deep-rgb, 5,12,21)));
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .18),
+    0 0 44px -14px rgba(var(--int-cyan-rgb, 66,178,220), .95);
+}
+
+/* Скобки прицела: две противоположные, как на бортовых экранах */
+html.w3-on:not([data-theme="light"]) #kpi .kpi > div::before,
+html.w3-on:not([data-theme="light"]) #kpi .kpi > div::after {
+  content: '';
+  position: absolute;
+  width: 13px; height: 13px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .75);
+  pointer-events: none;
+}
+html.w3-on:not([data-theme="light"]) #kpi .kpi > div::before {
+  left: 7px; top: 7px; border-right: 0; border-bottom: 0;
+}
+html.w3-on:not([data-theme="light"]) #kpi .kpi > div::after {
+  right: 7px; bottom: 7px; border-left: 0; border-top: 0;
+}
+
+/* Шкала под числом: прибор показывает не только цифру, но и
+   заполнение. Растёт, когда блок вошёл в кадр (класс on ставит
+   наблюдатель появления из rc-app). */
+html.w3-on:not([data-theme="light"]) #kpi .kpi-n {
+  position: relative;
+  padding-bottom: 9px;
+}
+html.w3-on:not([data-theme="light"]) #kpi .kpi-n::after {
+  content: '';
+  position: absolute; left: 0; bottom: 0;
+  width: 0; height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    var(--int-cyan, #42B2DC), var(--int-vio, #8A59F6));
+  box-shadow: 0 0 10px rgba(var(--int-cyan-rgb, 66,178,220), .8);
+  transition: width 1.4s cubic-bezier(.22,.61,.36,1);
+}
+html.w3-on:not([data-theme="light"]) #kpi .kpi.on .kpi-n::after { width: 62%; }
+html.w3-on:not([data-theme="light"]) #kpi .kpi.on > div:nth-child(2) .kpi-n::after { width: 84%; }
+html.w3-on:not([data-theme="light"]) #kpi .kpi.on > div:nth-child(3) .kpi-n::after { width: 71%; }
+html.w3-on:not([data-theme="light"]) #kpi .kpi.on > div:nth-child(4) .kpi-n::after { width: 55%; }
+
+/* ── 1б. Схема маршрута как навигационный экран ──────────────
+   Раздел, в котором корабль выравнивается над схемой сети, - это по
+   сценарию взгляд на бортовую карту. Значит и выглядеть он должен
+   картой на приборе: рамка прибора, строки развёртки, скобки
+   прицела по углам, тёплый отсвет от подсветки шкал.
+
+   Ничего не двигается и не пересчитывается: это статичная отделка
+   поверх уже готового блока. */
+html.w3-on:not([data-theme="light"]) #route .viz-card {
+  position: relative;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .3);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .045) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .07),
+      rgba(var(--int-deep-rgb, 5,12,21), .96)),
+    linear-gradient(180deg, rgb(var(--int-deep-rgb, 5,12,21)), rgb(var(--int-deep-rgb, 5,12,21)));
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .12),
+    0 0 50px -22px rgba(var(--int-cyan-rgb, 66,178,220), .85);
+}
+html.w3-on:not([data-theme="light"]) #route .viz-card::before,
+html.w3-on:not([data-theme="light"]) #route .viz-card::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  pointer-events: none;
+}
+html.w3-on:not([data-theme="light"]) #route .viz-card::before {
+  left: 9px; top: 9px; border-right: 0; border-bottom: 0;
+}
+html.w3-on:not([data-theme="light"]) #route .viz-card::after {
+  right: 9px; bottom: 9px; border-left: 0; border-top: 0;
+}
+/* Заголовок карты - строка прибора, а не заголовок статьи */
+html.w3-on:not([data-theme="light"]) #route .viz-card h3 {
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: clamp(13px, 1.5vw, 15px);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+}
+
+/* ── 2. Створ преимуществ ────────────────────────────────────
+   Ряд карточек стоит воротами: крайние отвёрнуты внутрь, средние
+   фронтально. Разворот идёт только на широком экране - на телефоне
+   карточки идут в одну колонку, и разворачивать там нечего. */
+@media (min-width: 1100px) and (hover: hover) {
+  html.w3-on #adv .grid.g-3 { perspective: 1600px; }
+  html.w3-on #adv .grid.g-3 > * {
+    transition: rotate .6s var(--ease, ease), translate .6s var(--ease, ease);
+  }
+  /* Первый в ряду смотрит вправо, последний влево: между ними
+     остаётся коридор, по которому идёт корабль */
+  html.w3-on #adv .grid.g-3 > :nth-child(3n+1) { rotate: y 3.2deg; }
+  html.w3-on #adv .grid.g-3 > :nth-child(3n)   { rotate: y -3.2deg; }
+  /* Наведение выпрямляет карточку к зрителю: читать её нужно
+     лицом, а не под углом */
+  html.w3-on #adv .grid.g-3 > :hover { rotate: y 0deg; }
+}
+
+/* Просьба меньше движения и слабое устройство: ничего из этого */
+@media (prefers-reduced-motion: reduce) {
+  html.w3-on #kpi .kpi > div { transform: none; }
+  html.w3-on #adv .grid.g-3 > * { rotate: none; }
+}
+html[data-degrade="2"] #kpi .kpi > div,
+html[data-degrade="3"] #kpi .kpi > div { transform: none; }
+html[data-degrade="3"] #adv .grid.g-3 > * { rotate: none; }

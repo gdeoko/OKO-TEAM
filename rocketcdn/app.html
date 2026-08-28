@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050C15">
+<meta name="robots" content="noindex">
+<title>Rocket CDN</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/rc-fonts.css?v=1786467974">
+<link rel="stylesheet" href="assets/rc.css?v=1787894141">
+<script src="https://telegram.org/js/telegram-web-app.js" onerror="window.Telegram=window.Telegram||{}"></script>
+<style>
+  body { padding: 0 0 84px; overscroll-behavior-y: contain; }
+  .app-top {
+    position: relative; padding: 22px var(--pad) 0; text-align: center; overflow: hidden;
+  }
+  .app-top::before {
+    content: ''; position: absolute; inset: -40% -20% auto; height: 320px;
+    background: radial-gradient(ellipse at 50% 0, rgba(66,178,220,.22), transparent 65%);
+    pointer-events: none;
+  }
+  .app-logo { height: 34px; margin: 0 auto 18px; position: relative; }
+  .app-globe { width: min(78vw, 320px); aspect-ratio: 1; margin: 0 auto; position: relative; }
+  .app-globe canvas { width: 100%; height: 100%; }
+  .app-h {
+    font-size: clamp(24px, 7vw, 32px); font-weight: 700; letter-spacing: -.03em;
+    line-height: 1.08; margin: -8px 0 10px; position: relative;
+  }
+  .app-sub { font-size: 14px; color: var(--tx-2); max-width: 34ch; margin: 0 auto 18px; position: relative; }
+  .app-chips { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; position: relative; }
+
+  .app-body { padding: 0 var(--pad); }
+  .app-sec { margin-top: 30px; }
+  .app-sec > h2 {
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan);
+    font-weight: 700; margin-bottom: 14px;
+  }
+  .kpi2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi2 > div {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 15px 16px;
+  }
+  .kpi2 .n { font-size: 22px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1 }
+  .kpi2 .l { font-size: 11.5px; color: var(--tx-2); margin-top: 4px; line-height: 1.4 }
+
+  .plist { display: grid; gap: 10px; }
+  .pitem {
+    display: flex; gap: 13px; align-items: flex-start; padding: 15px 16px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  }
+  .pitem .card-ico { width: 38px; height: 38px; border-radius: 11px; margin: 0; }
+  .pitem .card-ico svg { width: 19px; height: 19px }
+  .pitem .pitem-h { font-size: 15px; font-weight: 650; margin-bottom: 3px }
+  .pitem p { font-size: 12.8px; color: var(--tx-2); line-height: 1.55 }
+
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--head-bg); backdrop-filter: blur(18px);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar button {
+    background: none; border: 0; padding: 11px 4px 13px; cursor: pointer;
+    display: grid; justify-items: center; gap: 4px; color: var(--tx-3);
+    font-size: 10.5px; font-weight: 600; transition: color var(--fast);
+  }
+  .tabbar button svg { width: 21px; height: 21px }
+  .tabbar button.on { color: var(--cyan) }
+  .screen { display: none } .screen.on { display: block }
+  .app-list { max-height: none }
+  .adm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+  .adm-grid > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 15px }
+  .adm-grid .n { font-size: 21px; font-weight: 700; letter-spacing: -.03em }
+  .adm-grid .l { font-size: 11.5px; color: var(--tx-2); margin-top: 3px }
+  .lead-item { padding: 13px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 9px; font-size: 13.5px }
+  .lead-item b { display: block; margin-bottom: 3px }
+  .lead-item .c { color: var(--cyan); font-size: 13px }
+  .lead-item .t { color: var(--tx-3); font-size: 11.5px; margin-top: 5px }
+</style>
+</head>
+<body>
+
+<!-- Ориентир страницы: экраны это содержимое, полоса внизу -
+     навигация. Без ориентиров чтение с экрана шло сплошняком от
+     первой строки до последней. -->
+<main>
+
+<!-- Главный экран -->
+<section class="screen on" id="s-home">
+  <div class="app-top">
+    <img class="app-logo lg-dark" src="assets/logo-h.png" alt="Rocket CDN">
+    <img class="app-logo lg-light" src="assets/logo-h-light.png" alt="Rocket CDN" style="display:none">
+    <div class="app-globe"><canvas id="appGlobe"></canvas></div>
+    <h1 class="app-h">Доставка контента<br><span class="grad-tx">на сверхскорости</span></h1>
+    <p class="app-sub">Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.</p>
+    <div class="app-chips">
+      <span class="chip"><i class="dot-live"></i>сеть работает</span>
+      <span class="chip"><b class="js-nodes">218</b> точек</span>
+      <span class="chip"><b>3</b> ЦОД</span>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="kpi2">
+      <div><div class="n grad-tx">99,9%</div><div class="l">Доступность по SLA</div></div>
+      <div><div class="n grad-tx js-nodes">218</div><div class="l">Узлов по всему миру</div></div>
+      <div><div class="n grad-tx">3 Тбит/с</div><div class="l">Пропускная способность в России</div></div>
+      <div><div class="n grad-tx">1,5 млн</div><div class="l">Зрителей одновременно</div></div>
+    </div>
+
+    <div class="app-sec">
+      <h2>Преимущества</h2>
+      <div class="plist" id="advList"></div>
+    </div>
+
+    <div class="app-sec">
+      <h2>Собственные дата-центры</h2>
+      <div class="plist" id="dcList"></div>
+    </div>
+
+    <div class="app-sec">
+      <div class="btn-row">
+        <a class="btn btn-p" style="width:100%" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener" id="regBtn">Зарегистрироваться</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Продукты -->
+<section class="screen" id="s-prod">
+  <div class="app-body" style="padding-top:22px">
+    <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Продукты</h2>
+    <p class="app-sub" style="margin:0 0 20px;max-width:none;text-align:left">Инфраструктура под любую задачу, всё в одном личном кабинете.</p>
+    <div class="plist" id="prodList"></div>
+  </div>
+</section>
+
+<!-- Сеть -->
+<section class="screen" id="s-net">
+  <div class="app-body" style="padding-top:22px">
+    <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Сеть присутствия</h2>
+    <p class="app-sub" style="margin:0 0 16px;max-width:none;text-align:left">Найдено точек: <b id="netCount" class="js-nodes" style="color:var(--cyan)">218</b></p>
+    <div class="reg-tabs" id="appRegTabs"></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input type="search" id="appSearch" placeholder="Поиск города или региона">
+    </div>
+    <div class="node-list app-list" id="appNodes" style="max-height:none"></div>
+  </div>
+</section>
+
+<!-- Заявка / админ -->
+<section class="screen" id="s-more">
+  <div class="app-body" style="padding-top:22px">
+    <div id="adminBox" style="display:none">
+      <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:14px">Аналитика сайта</h2>
+      <div class="seg" style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="mini on" data-d="1" style="padding:7px 13px;font-size:12.5px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx-2)">Сегодня</button>
+        <button class="mini" data-d="7" style="padding:7px 13px;font-size:12.5px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx-2)">7 дней</button>
+        <button class="mini" data-d="30" style="padding:7px 13px;font-size:12.5px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);color:var(--tx-2)">30 дней</button>
+      </div>
+      <div class="adm-grid" id="admStats"></div>
+      <h2 style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin:26px 0 12px">Последние заявки</h2>
+      <div id="admLeads"></div>
+      <a class="btn btn-g" style="width:100%;margin-top:14px" href="admin.html" target="_blank">Открыть полную админку</a>
+      <hr style="border:0;border-top:1px solid var(--line);margin:28px 0">
+    </div>
+
+    <h2 class="app-h" style="font-size:24px;text-align:left;margin-bottom:8px">Оставить заявку</h2>
+    <p class="app-sub" style="margin:0 0 18px;max-width:none;text-align:left">Опишите задачу, инженер свяжется с вами.</p>
+    <form id="appForm" novalidate>
+      <div class="form-msg"></div>
+      <div class="field">
+        <label for="afName">Как к вам обращаться</label>
+        <input id="afName" name="name" required placeholder="Имя">
+        <span class="err">Заполните поле</span>
+      </div>
+      <div class="field">
+        <label for="afContact">Телефон или почта</label>
+        <input id="afContact" name="contact" required data-kind="contact" placeholder="+7 900 000-00-00 или mail@company.ru">
+        <span class="err">Укажите телефон или почту</span>
+      </div>
+      <div class="field">
+        <label for="afTopic">Направление</label>
+        <select id="afTopic" name="topic">
+          <option>CDN</option><option>Стриминг</option><option>Медиа-хранилище</option>
+          <option>Плеер</option><option>Облако</option><option>Безопасность</option>
+          <option>Виртуальный диктор</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="afTask">Задача</label>
+        <textarea id="afTask" name="task" placeholder="Что нужно раздавать, какой объём трафика"></textarea>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consent" required checked>
+        <span>Соглашаюсь с обработкой персональных данных</span>
+      </label>
+      <button type="submit" class="btn btn-p" style="width:100%">Отправить заявку</button>
+    </form>
+
+    <div class="app-sec" style="margin-top:26px">
+      <h2>Контакты</h2>
+      <div class="contact-list">
+        <a href="mailto:info@rocketcdn.ru" data-ico="mail"><span>info@rocketcdn.ru</span></a>
+        <a href="https://rocketcdn.ru" target="_blank" rel="noopener" data-ico="globe"><span>rocketcdn.ru</span></a>
+        <a href="https://lk.rocketcdn.ru" target="_blank" rel="noopener" data-ico="dc"><span>Личный кабинет</span></a>
+        <div data-ico="clock"><span>Поддержка круглосуточно</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="tabbar" id="tabbar" aria-label="Разделы приложения">
+  <button type="button" data-s="home" class="on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg><span>Главная</span></button>
+  <button type="button" data-s="prod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg><span>Продукты</span></button>
+  <button type="button" data-s="net"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3Z"/></svg><span>Сеть</span></button>
+  <button type="button" data-s="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Заявка</span></button>
+</nav>
+
+<script src="assets/rc-geo.js?v=1787869778"></script>
+<!-- Правки реестра из панели. Без этой строки мини-приложение жило со
+     своим числом точек: владелец добавляет город, сайт показывает
+     новое число, приложение старое. -->
+<script src="api.php?action=nodes_js"></script>
+<script src="assets/rc-i18n.js?v=1787870946"></script>
+<script src="assets/rc-globe.js?v=1787483102"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var API = "api.php";
+var TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+var G = window.RC_GEO, B = window.RC_BLOCKS.ru;
+var globe = null, region = null, adminKey = localStorage.getItem("rc_admin_key") || "";
+
+var ICO = {
+  cdn:'<path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h13A2.5 2.5 0 0 1 21 6.5v1A2.5 2.5 0 0 1 18.5 10h-13A2.5 2.5 0 0 1 3 7.5v-1ZM3 16.5A2.5 2.5 0 0 1 5.5 14h13a2.5 2.5 0 0 1 2.5 2.5v1a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-1Z"/><path d="M7 7h.01M7 17h.01"/>',
+  stream:'<rect x="2" y="4" width="20" height="14" rx="2.5"/><path d="M8 21h8M12 18v3"/><path d="m10.5 8.8 4 2.2-4 2.2V8.8Z"/>',
+  storage:'<path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="m3 12 9 4.5L21 12M3 16.5 12 21l9-4.5"/>',
+  player:'<circle cx="12" cy="12" r="9"/><path d="m10.2 8.6 5.3 3.4-5.3 3.4V8.6Z"/>',
+  cloud:'<path d="M17.5 19a4.5 4.5 0 0 0 .3-9 6.5 6.5 0 0 0-12.4 2A4 4 0 0 0 6 19h11.5Z"/>',
+  shield:'<path d="M12 3 5 6v5.5c0 4.3 2.9 8.2 7 9.5 4.1-1.3 7-5.2 7-9.5V6l-7-3Z"/><path d="m9.2 12 2 2 3.6-3.8"/>',
+  voice:'<rect x="9" y="3" width="6" height="10" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/>',
+  cpu:'<rect x="7" y="7" width="10" height="10" rx="2"/><path d="M4 10h3M4 14h3M17 10h3M17 14h3M10 4v3M14 4v3M10 17v3M14 17v3"/>',
+  gpu:'<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M7 10.5h3.5M7 13.5h3.5"/><circle cx="16" cy="12" r="2.6"/>',
+  support:'<path d="M4 13a8 8 0 0 1 16 0"/><rect x="2.5" y="13" width="4" height="6" rx="2"/><rect x="17.5" y="13" width="4" height="6" rx="2"/><path d="M20 19a3 3 0 0 1-3 3h-2"/>',
+  load:'<path d="M4 19h16"/><path d="M6.5 19V9.5M11 19V4.5M15.5 19v-7M20 19V7"/>',
+  speed:'<path d="M12 20a8 8 0 1 1 8-8"/><path d="m12 12 5-3.5"/><circle cx="12" cy="12" r="1.6"/>',
+  dc:'<rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/>',
+  mail:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3 7 9 6 9-6"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3Z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.4 2"/>'
+};
+function svg(n) {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + (ICO[n] || "") + "</svg>";
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+/* Тема берём из Телеграма, вне Телеграма ставим тёмную */
+function setTheme(v) {
+  document.documentElement.setAttribute("data-theme", v);
+  $$(".lg-dark").forEach(function (i) { i.style.display = v === "light" ? "none" : "block"; });
+  $$(".lg-light").forEach(function (i) { i.style.display = v === "light" ? "block" : "none"; });
+  if (globe) globe.setTheme(v);
+}
+setTheme(TG && TG.colorScheme === "light" ? "light" : "dark");
+
+if (TG) {
+  TG.ready();
+  TG.expand();
+  try { TG.setHeaderColor(TG.colorScheme === "light" ? "#F3F7FB" : "#050C15"); } catch (e) {}
+  TG.onEvent("themeChanged", function () { setTheme(TG.colorScheme === "light" ? "light" : "dark"); });
+}
+
+/* Аналитика мини-приложения идёт в тот же поток, что и сайт */
+var sid = sessionStorage.getItem("rc_sid");
+if (!sid) { sid = "app" + Math.random().toString(36).slice(2); sessionStorage.setItem("rc_sid", sid); }
+function track(t, l) {
+  var body = JSON.stringify({ sid: sid, ref: "miniapp", events: [{ t: t, l: l || "", ts: Date.now() }] });
+  if (navigator.sendBeacon) navigator.sendBeacon(API + "?action=track", new Blob([body], { type: "application/json" }));
+  else fetch(API + "?action=track", { method: "POST", headers: { "Content-Type": "application/json" }, body: body }).catch(function () {});
+}
+track("view", "/app");
+
+/* ── Наполнение ── */
+$$("[data-ico]").forEach(function (el) { el.insertAdjacentHTML("afterbegin", svg(el.dataset.ico)); });
+
+$("#advList").innerHTML = B.advantages.map(function (x) {
+  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + '</div><div><h3 class="pitem-h">' + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
+}).join("");
+
+$("#prodList").innerHTML = B.products.map(function (x) {
+  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + '</div><div><h3 class="pitem-h">' + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
+}).join("");
+
+var DCP = ["Основная площадка. Облако, защита от атак и точка обмена трафиком.",
+           "Опорный узел для Центральной Азии. Облако и низкая задержка для региона.",
+           "Европейская площадка. Облако и стык с магистральными операторами."];
+$("#dcList").innerHTML = G.DC.map(function (d, i) {
+  return '<div class="pitem"><div class="card-ico">' + svg("dc") + '</div><div><h3 class="pitem-h">' + esc(d.name.ru) +
+    ' <span style="color:var(--tx-3);font-weight:500;font-size:12px">· ' + esc(d.cc.ru) + "</span></h3><p>" + esc(DCP[i] || "") + "</p></div></div>";
+}).join("");
+
+/* ── Глобус ── */
+var land = G.landPoints();
+globe = new RCGlobe($("#appGlobe"), {
+  nodes: G.NODES, land: land, dc: G.DC,
+  theme: document.documentElement.getAttribute("data-theme"),
+  radius: 0.44, speed: 3
+});
+
+/* ── Список сети ── */
+$("#appRegTabs").innerHTML = '<button class="on" data-r="all">Все регионы</button>' +
+  G.REGIONS.map(function (r, i) { return '<button data-r="' + i + '">' + esc(r.ru) + "</button>"; }).join("");
+$("#appRegTabs").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b) return;
+  $$("#appRegTabs button").forEach(function (x) { x.classList.remove("on"); });
+  b.classList.add("on");
+  region = b.dataset.r === "all" ? null : +b.dataset.r;
+  if (globe) globe.filter = region;
+  renderNodes();
+  if (TG && TG.HapticFeedback) TG.HapticFeedback.selectionChanged();
+});
+$("#appSearch").addEventListener("input", renderNodes);
+
+function renderNodes() {
+  var q = $("#appSearch").value.trim().toLowerCase();
+  var rows = G.NODES.map(function (n, i) { return [n, i]; }).filter(function (p) {
+    var n = p[0];
+    if (region != null && n[3] !== region) return false;
+    if (!q) return true;
+    return n[0].toLowerCase().indexOf(q) >= 0 || G.REGIONS[n[3]].ru.toLowerCase().indexOf(q) >= 0;
+  });
+  $("#netCount").textContent = rows.length;
+  $("#appNodes").innerHTML = rows.length ? rows.map(function (p) {
+    var n = p[0], tags = "";
+    if (n[4] & 1) tags += '<span class="tag tag-cloud">облако</span>';
+    if (n[4] & 2) tags += '<span class="tag tag-shield">защита</span>';
+    if (n[4] & 4) tags += '<span class="tag tag-soon">скоро</span>';
+    return '<div class="node-row" data-i="' + p[1] + '"><span class="nm">' + esc(n[0]) + "</span>" + tags +
+      '<span class="rg">' + esc(G.REGIONS[n[3]].ru) + "</span></div>";
+  }).join("") : '<div class="node-empty">Ничего не нашлось.</div>';
+}
+$("#appNodes").addEventListener("click", function (e) {
+  var row = e.target.closest(".node-row");
+  if (!row) return;
+  var n = G.NODES[+row.dataset.i];
+  track("node", n[0]);
+  if (TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred("light");
+  go("home");
+  setTimeout(function () { if (globe) globe.focusOn(n[1], n[2]); }, 120);
+});
+renderNodes();
+
+/* ── Навигация ── */
+function go(name) {
+  $$(".screen").forEach(function (s) { s.classList.remove("on"); });
+  $("#s-" + name).classList.add("on");
+  /* Какой экран открыт, должно быть слышно, а не только видно по
+     подсветке значка. */
+  $$("#tabbar button").forEach(function (b) {
+    var свой = b.dataset.s === name;
+    b.classList.toggle("on", свой);
+    if (свой) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+  window.scrollTo(0, 0);
+  track("screen", name);
+}
+$("#tabbar").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b) return;
+  go(b.dataset.s);
+  if (TG && TG.HapticFeedback) TG.HapticFeedback.selectionChanged();
+});
+$("#regBtn").addEventListener("click", function (e) {
+  track("register", "miniapp");
+  if (TG) { e.preventDefault(); TG.openLink("https://lk.rocketcdn.ru"); }
+});
+
+/* ── Форма ── */
+var u = TG && TG.initDataUnsafe ? TG.initDataUnsafe.user : null;
+if (u) {
+  $("#afName").value = [u.first_name, u.last_name].filter(Boolean).join(" ");
+  if (u.username) $("#afContact").value = "@" + u.username;
+}
+$("#appForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var f = e.target, msg = $(".form-msg", f), btn = $('button[type="submit"]', f);
+  var ok = true;
+  $$("[required]", f).forEach(function (x) {
+    var w = x.closest(".field") || x.parentNode, bad;
+    if (x.type === "checkbox") bad = !x.checked;
+    else if (x.dataset.kind === "contact") {
+      var v = x.value.trim();
+      bad = !(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v) || v.replace(/\D/g, "").length >= 10 || /^@\w{3,}$/.test(v));
+    } else bad = !x.value.trim();
+    if (w.classList) w.classList.toggle("bad", bad);
+    if (bad) ok = false;
+  });
+  if (!ok) return;
+
+  var p = { kind: "lead", lang: "ru", page: "/app", sid: sid };
+  $$("input, textarea, select", f).forEach(function (x) {
+    if (x.name) p[x.name] = x.type === "checkbox" ? (x.checked ? 1 : 0) : x.value.trim();
+  });
+  if (u) p.task = (p.task ? p.task + "\n\n" : "") + "Из мини-приложения, Телеграм id " + u.id;
+  /* Ник в Телеграме допустим как контакт, на сервер шлём в понятном виде */
+  if (/^@\w+$/.test(p.contact)) p.contact = "t.me/" + p.contact.slice(1);
+
+  btn.disabled = true;
+  var label = btn.innerHTML;
+  btn.innerHTML = "Отправляем...";
+  fetch(API + "?action=lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) })
+    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      btn.disabled = false; btn.innerHTML = label;
+      if (r && r.ok) {
+        msg.className = "form-msg ok";
+        msg.textContent = "Заявка принята. Свяжемся с вами в ближайшее время.";
+        f.reset();
+        if (TG && TG.HapticFeedback) TG.HapticFeedback.notificationOccurred("success");
+        track("lead", "miniapp");
+      } else {
+        msg.className = "form-msg bad";
+        msg.textContent = r && r.error === "contact" ? "Проверьте телефон или почту." : "Не отправилось. Попробуйте позже.";
+      }
+    })
+    .catch(function () {
+      btn.disabled = false; btn.innerHTML = label;
+      msg.className = "form-msg bad";
+      msg.textContent = "Сеть недоступна. Попробуйте позже.";
+    });
+});
+
+/* ── Раздел администратора ── */
+var ADMIN_IDS = [1966985736, 6547482131, 581327337];
+if (u && ADMIN_IDS.indexOf(u.id) >= 0) {
+  $("#adminBox").style.display = "block";
+  if (!adminKey) {
+    adminKey = prompt("Пароль администратора для показа статистики") || "";
+    if (adminKey) localStorage.setItem("rc_admin_key", adminKey);
+  }
+  loadAdmin(1);
+  $$("#adminBox .seg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$("#adminBox .seg button").forEach(function (x) { x.classList.remove("on"); x.style.background = "var(--surface-2)"; x.style.color = "var(--tx-2)"; });
+      b.classList.add("on");
+      b.style.background = "linear-gradient(135deg,#42B2DC,#0A5897)";
+      b.style.color = "#fff";
+      loadAdmin(+b.dataset.d);
+    });
+  });
+}
+function loadAdmin(days) {
+  fetch(API + "?action=stats", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: adminKey, days: days })
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r.ok) { $("#admStats").innerHTML = '<p class="hint" style="grid-column:1/-1;color:var(--tx-3);font-size:13px">Пароль администратора не подошёл.</p>'; return; }
+    $("#admStats").innerHTML = [
+      ["Уникальные", r.total.uniq], ["Просмотры", r.total.views],
+      ["Клики «Регистрация»", r.total.register], ["Заявки", r.total.leads + r.total.callbacks],
+      ["Конверсия", r.conv + "%"], ["Доля кликов", r.ctr + "%"]
+    ].map(function (c) {
+      return '<div><div class="n grad-tx">' + esc(c[1]) + '</div><div class="l">' + esc(c[0]) + "</div></div>";
+    }).join("");
+  }).catch(function () {});
+
+  fetch(API + "?action=leads", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: adminKey })
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    if (!r.ok) return;
+    var items = (r.items || []).slice(0, 6);
+    $("#admLeads").innerHTML = items.length ? items.map(function (x) {
+      return '<div class="lead-item"><b>' + esc(x.name || "") + "</b>" +
+        '<span class="c">' + esc(x.contact || "") + "</span>" +
+        (x.task ? "<div style='color:var(--tx-2);margin-top:5px'>" + esc(x.task.slice(0, 120)) + "</div>" : "") +
+        '<div class="t">' + esc(x.ts || "") + " · " + (x.kind === "callback" ? "звонок" : "заявка") + "</div></div>";
+    }).join("") : '<p style="color:var(--tx-3);font-size:13px">Заявок пока нет.</p>';
+  }).catch(function () {});
+}
+
+/* Число точек присутствия одно на весь сайт: реестр rc-geo.js плюс
+   правки из панели, которые подключены строкой выше. Цифра, вбитая в
+   разметку, расходилась бы с сайтом на всё, что владелец добавил. */
+(function () {
+  var n = (G && G.COUNT) || 218;
+  $$(".js-nodes").forEach(function (э) { э.textContent = n; });
+})();
+})();
+</script>
+</body>
+</html>

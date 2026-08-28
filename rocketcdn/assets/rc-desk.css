@@ -1,0 +1,588 @@
+/* ПРАВИЛО ПРО СОКРАЩЁННОЕ СВОЙСТВО font.
+
+   Внутри font нельзя писать var(--что-то, inherit). Переменная в
+   этом файле нигде не задана, а подстановка inherit в сокращённое
+   свойство делает ВСЁ объявление недействительным на этапе
+   вычисления: браузер сбрасывает font целиком, и кегль приходит по
+   наследству. Замер: строка вопроса рисовалась шестнадцатью
+   пикселями вместо одиннадцати, строка занимала 94 пикселя высоты,
+   и в список на телефоне влезал ОДИН вопрос из семи.
+
+   Запасное значение обязано быть настоящей гарнитурой.
+   ══════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · экран приборной панели, оформление
+
+   Голограмма внутри остекления кабины - той самой рамки, в которой
+   потом идёт игра. Размеры экрана берутся из границ остекления,
+   которые публикует rc-cockpit.js: --cab-x0/y0 и ширина с высотой
+   окна. Поэтому экран не может заехать под переплёт, на какой бы
+   стороне кадра ни стояла панель и как бы её ни повернуло.
+
+   Слой лежит внутри самой кабины, а не рядом: тогда наезд, поворот
+   и масштаб панели достаются ему даром, одной и той же
+   трансформацией. Ничего дублировать и синхронизировать не нужно.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Слой экрана стоит выше содержимого страницы: по вопросам и
+   кнопкам нужно попадать пальцем, а сама кабина лежит под текстом
+   финала (иначе титр читался бы под переплётом). Постановку кадра
+   слой повторяет теми же числами, что и кабина, - их отдаёт
+   rc-cockpit.js, поэтому экран не может от неё уехать. */
+.rc-desk {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .34s linear;
+  transform:
+    perspective(1500px)
+    translateX(var(--cab-tx, 0%))
+    rotateY(var(--cab-rot, 0deg))
+    scale(var(--cab-sc, 1));
+  transform-origin: 50% 78%;
+  will-change: opacity, transform;
+}
+/* Появление - разрывом изображения, а не проявлением. Прежняя
+   плавная прозрачность читалась «панель выехала откуда-то»; на
+   деле проектор либо включён, либо нет. */
+.rc-desk.dsk-on { opacity: 1; }
+.rc-desk { transition: none; }
+
+/* Окно остекления: ровно те же границы, что у кабины */
+.rc-desk .dsk-win {
+  position: absolute;
+  left: var(--cab-x0, 12%);
+  top: var(--cab-y0, 12%);
+  width: var(--cab-win-w, 76%);
+  height: var(--cab-win-h, 66%);
+  display: flex;
+  align-items: center;
+  /* Голограмма стоит РОВНО ПОСРЕДИ остекления. Прежде она жалась к
+     левому краю, чтобы не закрывать Землю, но владелец сказал
+     прямо: «у тебя по левой стороне стоит, а не в центре, она
+     должна глитчем появиться в центре». Панель - главное на этом
+     кадре, и стоять ей положено по центру стекла. */
+  justify-content: center;
+  pointer-events: none;
+}
+.rc-desk.dsk-on .dsk-win { pointer-events: auto; }
+
+/* Сама голограмма. Не карточка на фоне, а изображение, собранное
+   лучом: подложка почти прозрачна, светится кромка и развёртка. */
+.rc-desk .dsk-frame {
+  position: relative;
+  /* На широком экране остекление кабины шире, чем нужно тексту:
+     строка вопроса в тысячу двести пикселей не читается, а кнопки
+     растягиваются в полосы. Экран занимает середину окна. */
+  width: min(100%, 44vw, 540px);
+  height: 100%;
+  max-height: 100%;
+  padding: clamp(12px, 2.2vh, 22px) clamp(12px, 2.4vw, 24px);
+  /* Рамка резала содержимое наглухо: замер дал 64 точки срезанного
+     на телефоне и 68 на мониторе, без единого признака, что там
+     что-то есть. Даём прокрутку и растворяем нижний край - так
+     видно, что список продолжается.
+
+     Вертикаль оставляем сверху: кнопка «Назад» это навигация, её
+     место у верхней кромки, а не посреди панели. Пустоту под
+     ответом (замер дал 263 точки) забирает сам ответ - ему отдан
+     свободный запас, и текст садится в середину оставшегося места,
+     пока заголовок и «Назад» стоят там, где стояли. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Ход НЕ запираем внутри голограммы. Пока стояло contain, палец,
+     попавший в неё, съедал полсотни точек её собственного хода и
+     дальше не отдавал странице ничего: голограмма занимает больше
+     половины экрана телефона, и это ровно то место, куда ложится
+     большой палец. Замер на 360x640: семь свайпов подряд из середины
+     экрана двигают страницу на ноль точек, а тысяча сто пятьдесят
+     семь точек низа страницы недостижимы вообще. Из финала пальцем
+     было не выйти: шапка, бургер, кнопка «наверх» и липкая панель на
+     дне погашены все до одной.
+
+     Со свободным ходом список сначала прокручивается сам, а дойдя до
+     края, отдаёт движение странице - и фильм едет дальше. */
+  overscroll-behavior: auto;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: clamp(8px, 1.4vh, 14px);
+  border-radius: clamp(10px, 1.6vw, 20px);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
+  /* Подложка остаётся проекцией на стекле - Земля и космос читаются
+     сквозь неё, - но держит текст.
+
+     Прежние три десятых прозрачности работали над чёрным космосом и
+     проваливались над Землёй: заказчик прислал кадр, где вопросы
+     лежат на зелёных материках и не читаются. Лечится не глухой
+     заливкой, а размытием: настоящий стеклянный экран размывает то,
+     что за ним, и буквы получают ровный фон, оставаясь на просвет.
+     Шесть точек размытия плюс чуть более плотная середина. */
+  background:
+    linear-gradient(168deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .10),
+      rgba(6, 16, 28, .50) 46%,
+      rgba(6, 16, 28, .60));
+  backdrop-filter: blur(6px) saturate(1.15);
+  -webkit-backdrop-filter: blur(6px) saturate(1.15);
+  box-shadow:
+    inset 0 1px 0 rgba(226,232,240,.18),
+    0 0 42px -14px rgba(var(--int-cyan-rgb, 66,178,220), .75);
+  /* Голограмма собрана лучом снизу: масштаб по вертикали идёт от
+     основания, а не от середины - так экран «вырастает» из панели */
+  transform-origin: 50% 100%;
+}
+
+/* Телефон. Блок стоит ПОСЛЕ основного правила нарочно: медиазапрос
+   не поднимает вес селектора, и объявленная ниже ширина в 46vw
+   перебивала его - голограмма на телефоне оставалась в четверть
+   кадра, хотя окно кабины занимает почти всю ширину. */
+@media (max-width: 760px) {
+  .rc-desk .dsk-win { justify-content: center; }
+  .rc-desk .dsk-frame { width: 100%; }
+  .rc-desk .dsk-acts { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .rc-desk .dsk-b { padding: 9px 4px; font-size: clamp(10.5px, 1.5vh, 13px); }
+}
+
+/* Развёртка луча: тонкие строки, по которым и видно, что это
+   проекция, а не стекло. Шаг совпадает с экранами салона. */
+.rc-desk .dsk-scan {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: repeating-linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .06) 0 1.4px,
+    transparent 1.4px 3.2px);
+  mix-blend-mode: screen;
+}
+/* Конус проектора снизу: экран стоит не в воздухе, а над панелью */
+.rc-desk .dsk-beam {
+  position: absolute;
+  left: 50%; bottom: -14%;
+  width: 42%; height: 26%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(0deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .30), transparent 78%);
+  filter: blur(6px);
+  opacity: .8;
+}
+
+.rc-desk .dsk-slot {
+  position: relative;
+  /* Форма длиннее окна остекления, и вылезать за переплёт ей нельзя:
+     растягиваемся ровно на остаток высоты и прокручиваем внутри. */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* А вот в ФОРМЕ ход запираем. Здесь человек занят делом, и увезти
+     его со страницы на середине заполнения нельзя. Выход из формы
+     есть свой и видимый - кнопка «Назад» у верхней кромки. */
+  overscroll-behavior: contain;
+  /* Форма на телефоне длиннее окна: снизу растворяем край, чтобы
+     было видно, что она продолжается. Замер на 360x640: первым кадром
+     видны только имя и контакт, а согласие и кнопка отправки лежат
+     ниже кромки, и без этого признака человек их не искал. */
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 20px), transparent 100%);
+}
+/* Тело голограммы тянется на всю высоту остекления: справочник
+   сверху, приборный ряд внизу. Раньше блок сжимался по содержимому,
+   и кнопки повисали посреди стекла - владелец назвал это «блоки все
+   кривые». */
+.rc-desk .dsk-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.1vh, 12px);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Приборный ряд под справочником: две кнопки заявки в строку и
+   пусковая на всю ширину под ними. Ряд прижат к низу голограммы -
+   так же, как на настоящем пульте под стеклом. */
+.rc-desk .dsk-acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(6px, 1vw, 10px);
+  margin-top: auto;
+  padding-top: clamp(8px, 1.4vh, 14px);
+  border-top: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
+}
+.rc-desk .dsk-b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: clamp(38px, 5.2vh, 48px);
+  font: 600 clamp(11px, 1.55vh, 14px)/1.2 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  letter-spacing: .01em;
+  padding: clamp(8px, 1.3vh, 13px) 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--int-lit, #e2eefc);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .12);
+  transition: background .2s linear, border-color .2s linear, transform .12s linear;
+}
+.rc-desk .dsk-b:hover { background: rgba(var(--int-cyan-rgb, 66,178,220), .22); }
+.rc-desk .dsk-b:active { transform: translateY(1px); }
+.rc-desk .dsk-b-lead {
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .34),
+    rgba(var(--int-cyan-rgb, 66,178,220), .16));
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+}
+
+.rc-desk .dsk-title {
+  font: 700 clamp(12px, 1.8vh, 17px)/1.25 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  color: var(--int-lit, #e2eefc);
+  text-shadow: 0 0 16px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+
+.rc-desk .dsk-qs {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* Ход НЕ запираем внутри голограммы. Пока стояло contain, палец,
+     попавший в неё, съедал полсотни точек её собственного хода и
+     дальше не отдавал странице ничего: голограмма занимает больше
+     половины экрана телефона, и это ровно то место, куда ложится
+     большой палец. Замер на 360x640: семь свайпов подряд из середины
+     экрана двигают страницу на ноль точек, а тысяча сто пятьдесят
+     семь точек низа страницы недостижимы вообще. Из финала пальцем
+     было не выйти: шапка, бургер, кнопка «наверх» и липкая панель на
+     дне погашены все до одной.
+
+     Со свободным ходом список сначала прокручивается сам, а дойдя до
+     края, отдаёт движение странице - и фильм едет дальше. */
+  overscroll-behavior: auto;
+  /* Последняя строка не должна обрываться на полуслове: если список
+     не влез, он гаснет к нижнему краю и ясно, что дальше есть ещё */
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+}
+.rc-desk .dsk-q {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  /* Отступ строки считается от высоты КАРТОЧКИ, а не от высоты
+     экрана. На телефоне окно рубки высокое, а карточка внутри
+     невысокая, и отступ по vh съедал место так, что в список
+     влезало две строки из семи. */
+  padding: clamp(5px, .9vh, 10px) 4px;
+  /* Строку нажимают тем же пальцем, что и вопросы справочника на
+     самой странице, а там пол в 46 точек стоит явно. Здесь высота
+     собиралась из отступов и на альбомном телефоне давала двадцать
+     пять точек с зазором в одну между строками: попасть в нужный
+     вопрос становилось лотереей. Тридцать четыре - тот минимум,
+     ниже которого промах перестаёт быть случайностью. */
+  min-height: 34px;
+  border: 0;
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .18);
+  background: transparent;
+  color: rgba(var(--int-lit-rgb, 226,238,252), .92);
+  font: 500 clamp(11px, 1.4vh, 14px)/1.3 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  transition: color .18s linear, padding-left .18s linear;
+}
+/* Метка строки: маленький ромб слева, как на приборной панели.
+   Без неё строки читались просто списком, а не пунктами бортового
+   справочника. */
+.rc-desk .dsk-q::before {
+  content: "";
+  width: 5px; height: 5px;
+  flex: none;
+  transform: rotate(45deg);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+  box-shadow: 0 0 7px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  transition: transform .18s linear, background .18s linear;
+}
+.rc-desk .dsk-q span { flex: 1 1 auto; min-width: 0; }
+.rc-desk .dsk-q:hover { color: var(--int-lit, #e2eefc); }
+.rc-desk .dsk-q:hover::before { transform: rotate(45deg) scale(1.4); background: #eaf6ff; }
+
+.rc-desk .dsk-a {
+  font: 400 clamp(11px, 1.5vh, 14px)/1.5 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  color: rgba(var(--int-lit-rgb, 226,238,252), .84);
+  overflow-y: auto;
+  /* Ход НЕ запираем внутри голограммы. Пока стояло contain, палец,
+     попавший в неё, съедал полсотни точек её собственного хода и
+     дальше не отдавал странице ничего: голограмма занимает больше
+     половины экрана телефона, и это ровно то место, куда ложится
+     большой палец. Замер на 360x640: семь свайпов подряд из середины
+     экрана двигают страницу на ноль точек, а тысяча сто пятьдесят
+     семь точек низа страницы недостижимы вообще. Из финала пальцем
+     было не выйти: шапка, бургер, кнопка «наверх» и липкая панель на
+     дне погашены все до одной.
+
+     Со свободным ходом список сначала прокручивается сам, а дойдя до
+     края, отдаёт движение странице - и фильм едет дальше. */
+  overscroll-behavior: auto;
+  min-height: 0;
+}
+
+.rc-desk .dsk-back {
+  align-self: flex-start;
+  cursor: pointer;
+  padding: 5px 12px 5px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
+  background: transparent;
+  color: rgba(var(--int-lit-rgb, 226,238,252), .9);
+  font: 600 clamp(10px, 1.3vh, 12px)/1 var(--f-body, 'Golos Text', system-ui, sans-serif);
+}
+.rc-desk .dsk-back::before { content: "\2190"; margin-right: 6px; }
+.rc-desk .dsk-back:hover { background: rgba(var(--int-cyan-rgb, 66,178,220), .16); }
+
+/* Формы на экране панели: те же самые, только уже и без своей
+   подложки - подложка здесь одна, голограмма. */
+.rc-desk .dsk-slot > form {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  margin: 0;
+}
+.rc-desk .dsk-slot label {
+  font-size: clamp(10px, 1.25vh, 12px);
+}
+.rc-desk .dsk-slot input,
+.rc-desk .dsk-slot select,
+.rc-desk .dsk-slot textarea {
+  font-size: clamp(12px, 1.5vh, 15px);
+  padding: clamp(9px, 1.4vh, 13px) 12px;
+  border-radius: 10px;
+  background: rgba(4, 12, 22, .62);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  transition: border-color .18s linear, box-shadow .18s linear;
+}
+.rc-desk .dsk-slot input:focus,
+.rc-desk .dsk-slot textarea:focus,
+.rc-desk .dsk-slot select:focus {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .9);
+  box-shadow: 0 0 0 3px rgba(var(--int-cyan-rgb, 66,178,220), .16);
+  outline: none;
+}
+/* Кнопка отправки анкеты - того же роста, что клавиши панели */
+.rc-desk .dsk-slot button[type="submit"],
+.rc-desk .dsk-slot .btn {
+  width: 100%;
+  min-height: clamp(40px, 5.4vh, 50px);
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.rc-desk .dsk-slot textarea { min-height: clamp(48px, 8vh, 90px); }
+.rc-desk .dsk-slot .field { margin-bottom: clamp(5px, .9vh, 10px); }
+.rc-desk .dsk-slot .consent { font-size: clamp(9px, 1.15vh, 11px); }
+
+/* ── Разрыв изображения ──────────────────────────────────────
+   Голограмма не переключается плавно: луч сбивается, картинка
+   рвётся на строки и собирается заново уже с другим содержимым.
+   Владелец назвал этот переход глитчем, и он здесь единственный -
+   ни выездов, ни вспышек. */
+@keyframes dskGlitch {
+  0%   { clip-path: inset(0 0 0 0);      transform: translate3d(0,0,0)      scaleY(1); filter: none; }
+  14%  { clip-path: inset(18% 0 42% 0);  transform: translate3d(-7px,0,0)   scaleY(1.02);
+         filter: brightness(1.5) saturate(1.6); }
+  28%  { clip-path: inset(56% 0 8% 0);   transform: translate3d(6px,0,0)    scaleY(.98); }
+  42%  { clip-path: inset(4% 0 74% 0);   transform: translate3d(-4px,0,0)   scaleY(1.04);
+         filter: brightness(1.8) saturate(.6); }
+  50%  { clip-path: inset(48% 0 48% 0);  transform: translate3d(0,0,0)      scaleY(.6);
+         filter: brightness(2.2); }
+  64%  { clip-path: inset(10% 0 62% 0);  transform: translate3d(5px,0,0)    scaleY(1.03); }
+  78%  { clip-path: inset(62% 0 12% 0);  transform: translate3d(-3px,0,0)   scaleY(.99); }
+  100% { clip-path: inset(0 0 0 0);      transform: translate3d(0,0,0)      scaleY(1); filter: none; }
+}
+.rc-desk.dsk-glitch .dsk-frame {
+  animation: dskGlitch .42s steps(1, end) 1;
+}
+/* Цветной развал каналов на самом разрыве: без него глитч читается
+   просто дрожанием, а не сбоем проектора */
+.rc-desk.dsk-glitch .dsk-frame::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .22) 0 2px,
+      transparent 2px 5px);
+  mix-blend-mode: screen;
+  opacity: .9;
+}
+
+/* ── Внутри корабля страница не листается снизу ──────────────
+   Пока мы в салоне, вопросы и контакты живут на экране панели.
+   Их разделы остаются в разметке - они держат длину прокрутки, по
+   которой едет камера, - но в кадре их быть не должно: изнутри
+   комнаты снизу выехать нечему.
+
+   Прячем именно видимостью, а не прозрачностью: невидимый, но
+   доступный с клавиатуры блок - это ловушка для фокуса. Формы к
+   этому моменту уже переехали на экран панели и остаются доступны. */
+html.rc-inside:not(.rc-reduced) #faq > .wrap,
+html.rc-inside:not(.rc-reduced) #contact > .wrap,
+html.rc-inside:not(.rc-reduced) #epilogue > .wrap {
+  visibility: hidden;
+}
+
+/* ── Разбег для оборота в салоне ─────────────────────────────
+   Оборот на 360 идёт ровно по высоте раздела вопросов: от его
+   верха (P_IN) до верха раздела с пультом (P_TURN). На телефоне
+   раздел занимал 517 точек - весь круг с семью экранами укладывался
+   в две трети экрана прокрутки, и вместо осмотра салона получался
+   рывок. Владелец увидел это как «внутри ракеты 360 не работает».
+
+   Даём кругу настоящий разбег. Пустоты на странице от этого не
+   появляется: с этого места мы уже в салоне, содержимое раздела
+   скрыто правилом выше, а прокрутка здесь работает лентой времени
+   для камеры. Высоту задаём статикой, а не по классу: меняться она
+   не имеет права, от неё считаются все пороги сцены.
+
+   Без объёмного слоя (rc-reduced и старые телефоны) раздел живёт
+   обычной страницей, и разбег ему не нужен. */
+html.rc-adaptive-3d:not(.rc-reduced) #faq {
+  min-height: 210vh;
+}
+/* Эпилог тоже уехал на стекло. Раньше он оставался отдельным
+   экраном: камера отъезжала от пульта, и поверх кадра всплывали
+   титр, кнопка полёта и правовая строка подвала - владелец назвал
+   это «политика конфиденциальности и всякая другая хрень подвала
+   поверх налеплено криво», и был прав. Внутри корабля подвала нет:
+   в кабине есть остекление, пульт и кнопка старта на нём. Высоту
+   секции при этом сохраняем (видимость, а не display): по ней идёт
+   последний отрезок прокрутки, на котором горит панель. */
+
+/* Просьба меньше движения или упрощённый режим - и всё возвращается
+   на свои места: обычные разделы, обычная форма, никакой панели */
+html.rc-reduced .rc-desk { display: none; }
+
+/* ── Кнопка старта на пульте ─────────────────────────────────
+   Полёт больше не отдельный титр в конце страницы, а тумблер на
+   приборной панели: «список вопросов, две кнопки и кнопка полёта в
+   космос». Поэтому кнопка живёт в том же ряду, что и заявка, но
+   выглядит иначе - это единственное на панели действие, которое
+   уводит из кабины. */
+.dsk-b-fly {
+  grid-column: 1 / -1;
+  background: linear-gradient(100deg,
+    rgba(var(--int-cyan-rgb, 66 178 220), .22),
+    rgba(var(--int-vio-rgb, 150 92 220), .18)) !important;
+  border-color: rgba(var(--int-cyan-rgb, 66 178 220), .6) !important;
+  color: #eaf6ff !important;
+  letter-spacing: .1em;
+}
+.dsk-b-fly svg { width: 17px; height: 17px; flex: none; }
+.dsk-b-fly b { font-weight: 700; }
+.dsk-b-fly:hover { filter: brightness(1.22); }
+
+/* Запал старта: у самого дна страницы кнопка полёта начинает
+   дышать светом. Раньше здесь рвался весь кадр - это работало как
+   предупреждение «сейчас само включится», а само оно больше не
+   включается. Теперь запал показывает, куда нажать. */
+@keyframes dskArm {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--int-cyan-rgb, 66 178 220), .42); }
+  50%      { box-shadow: 0 0 22px 3px rgba(var(--int-cyan-rgb, 66 178 220), .34); }
+}
+.rc-desk.dsk-arm .dsk-b-fly {
+  animation: dskArm 1.9s ease-in-out infinite;
+  filter: brightness(1.12);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Голограмма финала: бортовой прибор, а не белая плита
+
+   На экране она читалась светлым прямоугольником поверх кадра.
+   У проекции корабля обязаны быть свои приметы: срезанный угол,
+   уголковые метки по углам, строчная развёртка и мягкое свечение
+   кромки. Те же приметы носят метки в игре - интерфейс один.
+   ═══════════════════════════════════════════════════════════ */
+.rc-desk .dsk-frame {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .58);
+  box-shadow:
+    inset 0 0 40px -14px rgba(var(--int-cyan-rgb, 66,178,220), .55),
+    0 0 44px -16px rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  /* Срезанный верхний угол - опознавательный знак приборной
+     графики: прямоугольник читается веб-карточкой */
+  -webkit-clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+/* Строчная развёртка проекции */
+.rc-desk .dsk-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg,
+    rgba(150, 220, 250, .05) 0 1px,
+    rgba(0, 0, 0, 0) 1px 3px);
+  mix-blend-mode: screen;
+  z-index: 2;
+}
+/* Уголковые метки: прибор наведён и держит цель */
+.rc-desk .dsk-frame > .dsk-corners {
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  z-index: 3;
+}
+.rc-desk .dsk-corners i {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 0 solid rgba(var(--int-cyan-rgb, 66,178,220), .95);
+}
+.rc-desk .dsk-corners i:nth-child(1) { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
+.rc-desk .dsk-corners i:nth-child(2) { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; }
+.rc-desk .dsk-corners i:nth-child(3) { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
+.rc-desk .dsk-corners i:nth-child(4) { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+
+/* Вопрос набирается как вопрос, а не как метка раздела.
+
+   Правило метки ниже (девятый кегль прописными с разрядкой .28em)
+   применялось и к самому вопросу: на телефоне «Сколько времени
+   занимает подключение?» выходило коробкой 263 на 29,5 точки, две
+   строки смыкались. Собственный класс возвращает ему человеческий
+   кегль и обычный регистр. */
+/* Ответ забирает свободное место панели: заголовок и «Назад»
+   остаются наверху, а текст садится в середину того, что осталось. */
+.rc-desk .dsk-a { margin-block: auto; }
+
+.rc-desk .dsk-title.dsk-q {
+  font-size: clamp(13px, 1.9vh, 18px);
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1.3;
+  text-transform: none;
+  color: var(--int-lit, #e2eefc);
+  text-shadow: 0 0 16px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+
+/* Заголовок проекции: метка раздела, как на экранах салона */
+.rc-desk .dsk-title {
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .95);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .28);
+}
