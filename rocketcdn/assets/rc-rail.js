@@ -67,10 +67,29 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
     }
     r.cards = cards;
 
+    /* Точки ленты. Три вещи, из-за которых они были беднее, чем
+       выглядели.
+
+       Имя точки было голой цифрой: «1», «2», «3». Человек, который
+       слушает страницу, слышал ряд чисел без единого слова о том, что
+       это и куда ведёт. Берём заголовок самой карточки.
+
+       В обход табом вставали ВСЕ точки: восемнадцать остановок на
+       главной, тридцать семь процентов всего кольца. По правилу для
+       ленты вкладок в кольце стоит одна выбранная, остальные берутся
+       стрелками - это и делает роль tablist, объявленная тут же.
+
+       Стрелки при этом не работали вовсе. Теперь работают. */
+    var анг = (d.documentElement.lang === "en");
     var html = "";
     for (var i = 0; i < cards.length; i++) {
-      html += '<button type="button" class="rail-dot" role="tab" aria-label="' +
-        (i + 1) + '" data-i="' + i + '"><i></i></button>';
+      var загл = cards[i].querySelector("h2, h3, h4, .ttl, b");
+      var имя = загл ? загл.textContent.replace(/\s+/g, " ").trim().slice(0, 60) : "";
+      var подпись = анг
+        ? ("Card " + (i + 1) + " of " + cards.length + (имя ? ": " + имя : ""))
+        : ("Карточка " + (i + 1) + " из " + cards.length + (имя ? ": " + имя : ""));
+      html += '<button type="button" class="rail-dot" role="tab" tabindex="-1" aria-selected="false" aria-label="' +
+        подпись.replace(/"/g, "&quot;") + '" data-i="' + i + '"><i></i></button>';
     }
     r.dots.innerHTML = html;
     var em = $("em", r.cnt);
@@ -103,6 +122,9 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
     for (var k = 0; k < dots.length; k++) {
       dots[k].classList.toggle("on", k === i);
       dots[k].setAttribute("aria-selected", k === i ? "true" : "false");
+      /* В кольце табов стоит только выбранная точка, остальные
+         берутся стрелками. */
+      dots[k].setAttribute("tabindex", k === i ? "0" : "-1");
     }
     /* Подсказку «листайте вбок» гасим, как только человек
        доехал до второй карточки: дальше она только мешает */
@@ -161,6 +183,30 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
       try { if (g.navigator && g.navigator.vibrate) g.navigator.vibrate(8); } catch (e3) {}
     });
     r.view.addEventListener("scroll", schedule, { passive: true });
+
+    /* Стрелки внутри ленты точек. Раньше нажатие не делало ничего:
+       роль tablist была объявлена, а обхода стрелками к ней не было. */
+    r.dots.addEventListener("keydown", function (e) {
+      var шаг = 0;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") шаг = 1;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") шаг = -1;
+      else if (e.key === "Home") шаг = -1e6;
+      else if (e.key === "End") шаг = 1e6;
+      else return;
+      var точки = $$(".rail-dot", r.dots);
+      if (!точки.length) return;
+      var текущая = точки.indexOf(d.activeElement);
+      if (текущая < 0) текущая = Math.max(0, r.idx);
+      var цель = шаг === -1e6 ? 0
+               : шаг === 1e6 ? точки.length - 1
+               : текущая + шаг;
+      if (цель < 0) цель = точки.length - 1;
+      if (цель >= точки.length) цель = 0;
+      e.preventDefault();
+      goto(r, цель);
+      точки[цель].setAttribute("tabindex", "0");
+      try { точки[цель].focus({ preventScroll: true }); } catch (eФ) {}
+    });
   }
 
   function init() {

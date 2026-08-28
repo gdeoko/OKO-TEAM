@@ -619,7 +619,7 @@ html.rc-inside .form-card label {
 }
 html[data-act="console"] .form-card .btn-p,
 html.rc-inside .form-card .btn-p {
-  background: var(--grad);
+  background: var(--grad-btn);
   color: #fff;
   opacity: 1;
   filter: none;

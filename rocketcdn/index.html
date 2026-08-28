@@ -848,13 +848,20 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <a class="btn btn-p btn-sm js-reg" data-place="header" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
         <span data-i18n="cta.register">Регистрация</span>
       </a>
-      <button type="button" class="icon-btn burger" id="burger" data-i18n="menu.open" data-i18n-attr="aria-label" aria-label="Открыть меню" aria-expanded="false"></button>
+      <button type="button" class="icon-btn burger" id="burger" data-i18n="menu.open" data-i18n-attr="aria-label" aria-label="Открыть меню" aria-expanded="false" aria-controls="drawer"></button>
     </div>
   </div>
 </header>
 
 <!-- Мобильное меню -->
 <nav class="drawer" id="drawer" data-i18n="a11y.menu" data-i18n-attr="aria-label" aria-label="Меню">
+  <!-- Своя кнопка закрытия. Шторка это непрозрачная заслонка во весь
+       экран, страница под ней заглушена, и бургер в шапке из-под неё
+       не достать: без этой кнопки закрыть меню с клавиатуры можно
+       было бы только Escape. -->
+  <button type="button" class="icon-btn drawer-x js-drawer-close" data-i18n="menu.close" data-i18n-attr="aria-label" aria-label="Закрыть меню">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
   <a href="#products" data-i18n="nav.products">Продукты</a>
   <a href="#infra"    data-i18n="nav.infra">Инфраструктура</a>
   <a href="#adv"      data-i18n="nav.adv">Преимущества</a>

@@ -80,6 +80,11 @@
 </head>
 <body>
 
+<!-- Ориентир страницы: экраны это содержимое, полоса внизу -
+     навигация. Без ориентиров чтение с экрана шло сплошняком от
+     первой строки до последней. -->
+<main>
+
 <!-- Главный экран -->
 <section class="screen on" id="s-home">
   <div class="app-top">
@@ -206,11 +211,13 @@
   </div>
 </section>
 
-<nav class="tabbar" id="tabbar">
-  <button data-s="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg><span>Главная</span></button>
-  <button data-s="prod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg><span>Продукты</span></button>
-  <button data-s="net"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3Z"/></svg><span>Сеть</span></button>
-  <button data-s="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Заявка</span></button>
+</main>
+
+<nav class="tabbar" id="tabbar" aria-label="Разделы приложения">
+  <button type="button" data-s="home" class="on" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg><span>Главная</span></button>
+  <button type="button" data-s="prod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg><span>Продукты</span></button>
+  <button type="button" data-s="net"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3Z"/></svg><span>Сеть</span></button>
+  <button type="button" data-s="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Заявка</span></button>
 </nav>
 
 <script src="assets/rc-geo.js?v=1787869778"></script>
@@ -358,7 +365,14 @@ renderNodes();
 function go(name) {
   $$(".screen").forEach(function (s) { s.classList.remove("on"); });
   $("#s-" + name).classList.add("on");
-  $$("#tabbar button").forEach(function (b) { b.classList.toggle("on", b.dataset.s === name); });
+  /* Какой экран открыт, должно быть слышно, а не только видно по
+     подсветке значка. */
+  $$("#tabbar button").forEach(function (b) {
+    var свой = b.dataset.s === name;
+    b.classList.toggle("on", свой);
+    if (свой) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
   window.scrollTo(0, 0);
   track("screen", name);
 }

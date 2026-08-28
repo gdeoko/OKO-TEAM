@@ -128,11 +128,22 @@ function swap(next, fill) {
   var same = next === state;
   layer.classList.add("dsk-glitch");
   snd("uiClick");
+  /* Нажатие приходит и с клавиатуры: экран после него пересобирается
+     целиком, нажатая кнопка исчезает из документа, и фокус падает в
+     тело. Человек, который ходит клавиатурой, оказывался в начале
+     страницы. Ставим фокус на то, ради чего экран и сменился. */
+  var сКлавиатуры = doc.activeElement && doc.activeElement !== doc.body &&
+                    layer.contains(doc.activeElement);
   swapT = setTimeout(function () {
     swapT = 0;
     state = next;
     layer.setAttribute("data-state", next);
     try { fill(); } catch (e) {}
+    if (!сКлавиатуры) return;
+    var цель = layer.querySelector(".dsk-body input, .dsk-body textarea, .dsk-body select") ||
+               layer.querySelector(".dsk-back") ||
+               layer.querySelector(".dsk-q, .dsk-b");
+    if (цель) { try { цель.focus({ preventScroll: true }); } catch (eФ) {} }
   }, 170);
   if (glitchT) clearTimeout(glitchT);
   glitchT = setTimeout(function () {

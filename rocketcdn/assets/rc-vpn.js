@@ -215,6 +215,9 @@ g.RC_VPN = {
   mode: function () { return mode; },
   set: function (v) { setMode(v, "api", true); },
   open: openHolo,
+  /* Закрытие наружу: Escape в полёте разбирает открытые панели
+     сверху вниз и должен уметь снять эту тоже. */
+  close: closeHolo,
   variant: function () { return variant; }
 };
 

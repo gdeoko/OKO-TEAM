@@ -714,6 +714,39 @@ function inertPage(on) {
   }
 }
 
+/* Слой полёта живёт в двух совершенно разных состояниях, и путать
+   их нельзя.
+
+   Режим сцены - это задник финала страницы: космос и корпус рубки за
+   голограммой пульта. Управления в нём нет, страница под ним живая и
+   листается. Роль диалога с aria-modal тут врала дважды: чтение с
+   экрана прятало ВЕСЬ сайт за невидимым окном, а пятнадцать погашенных
+   органов управления оставались в обходе клавиатурой. Человек с
+   клавиатуры упирался в них и не понимал, куда попал.
+
+   Полёт - настоящее полноэкранное окно: страница под ним заглушена,
+   и роль диалога тут честная. */
+function модальность(вкл) {
+  var w = ui.wrap;
+  if (!w) return;
+  if (вкл) {
+    w.removeAttribute("inert");
+    w.removeAttribute("aria-hidden");
+    w.setAttribute("role", "dialog");
+    w.setAttribute("aria-modal", "true");
+  } else {
+    w.removeAttribute("aria-modal");
+    w.setAttribute("role", "presentation");
+    /* Заглушать слой целиком нельзя: в режиме сцены внутри него живёт
+       рабочий проектор RocketVPN и его голограмма, и они человеку
+       нужны. Погашенные органы управления убирает из обхода видимость
+       в стилях (.rc-flight.rcf-stage в rc-flight.css), а закрытый
+       слой целиком и так visibility: hidden. */
+    w.removeAttribute("inert");
+    w.removeAttribute("aria-hidden");
+  }
+}
+
 function buildUI() {
   if (ui.wrap) return;
   var w = doc.createElement("div");
@@ -721,8 +754,9 @@ function buildUI() {
   /* Полёт занимает весь экран, значит это диалог: без роли чтение с
      экрана считает его обычным куском страницы и продолжает водить
      фокус по разделам сайта под ним */
-  w.setAttribute("role", "dialog");
-  w.setAttribute("aria-modal", "true");
+  /* Рождается слой задником: пока полёт не открыт, окном он не
+     является. Переключает состояние функция модальность(). */
+  w.setAttribute("role", "presentation");
   /* Чтобы фокус можно было поставить на саму сцену: она диалог, и
      когда закрывается окно поверх неё, вернуть фокус больше некуда -
      страница под сценой глухая. */
@@ -1417,6 +1451,52 @@ function solarScience(name) {
     if (up === k || up === SOLAR_SCI[k].en) return SOLAR_SCI[k];
   }
   return null;
+}
+
+/* Закрыть верхнюю открытую панель полёта. Возвращает true, если
+   что-то закрыли: тогда Escape дальше не идёт. Порядок разбора -
+   сверху вниз по тому, что перекрывает что. */
+function закрытьВерхнее() {
+  var холо = doc.querySelector(".rc-vpn-holo.on");
+  if (холо && g.RC_VPN && g.RC_VPN.close) {
+    try {
+      g.RC_VPN.close();
+      вернутьФокус(".rcf-key, .rcf-mini");
+      return true;
+    } catch (eВ) {}
+  }
+  if (ui.dos && ui.dos.classList.contains("on")) { dosClose(); вернутьФокус(".rcf-key, .rcf-mini"); return true; }
+  if (ui.help && ui.help.classList.contains("on")) {
+    ui.help.classList.remove("on");
+    var кс = ui.wrap && ui.wrap.querySelector(".rcf-help-key");
+    if (кс) { кс.classList.remove("cur"); try { кс.focus({ preventScroll: true }); } catch (eС) {} }
+    modalMark();
+    return true;
+  }
+  if (ui.menu && ui.menu.classList.contains("on")) {
+    ui.menu.classList.remove("on");
+    if (ui.navKey) {
+      ui.navKey.setAttribute("aria-expanded", "false");
+      ui.navKey.classList.remove("cur");
+      try { ui.navKey.focus({ preventScroll: true }); } catch (eН) {}
+    }
+    modalMark();
+    return true;
+  }
+  if (ui.netList && ui.netList.classList.contains("on")) {
+    ui.netList.classList.remove("on");
+    modalMark();
+    return true;
+  }
+  return false;
+}
+
+/* Фокус после закрытия панели должен встать на живой орган рубки, а
+   не провалиться в тело документа. */
+function вернутьФокус(сел) {
+  if (!ui.wrap) return;
+  var э = ui.wrap.querySelector(сел);
+  try { (э || ui.wrap).focus({ preventScroll: true }); } catch (eФ) {}
 }
 
 function dosClose() {
@@ -5207,6 +5287,11 @@ function bindControls() {
     if (e.key === "Escape") {
       var окно = doc.querySelector(".modal.on");
       if (окно) return;
+      /* Escape закрывает то, что открыто сверху, а не всё сразу.
+         Раньше одно нажатие над открытой справкой выкидывало из
+         полёта целиком, а сама справка оставалась включённой и
+         встречала человека при следующем заходе. */
+      if (закрытьВерхнее()) { e.preventDefault(); return; }
       close();
       return;
     }
@@ -7569,6 +7654,19 @@ function open() {
      cockpit image; that made two entry paths lead to two ships. */
   cabinBuild();
   F.open = true;
+  /* Запоминаем, откуда пришли: сюда вернём фокус на выходе. */
+  var кто = doc.activeElement;
+  F.открыл = (кто && кто !== doc.body && кто !== doc.documentElement && кто.isConnected)
+    ? кто
+    : (doc.querySelector(".rcf-fab") || doc.querySelector(".rcf-cta-btn") || null);
+  модальность(true);
+  /* Фокус внутрь окна: без него чтение с экрана остаётся на
+     странице, которую мы только что заглушили. */
+  setTimeout(function () {
+    if (!F.open || !ui.wrap) return;
+    var первый = ui.wrap.querySelector(".rcf-close");
+    try { (первый || ui.wrap).focus({ preventScroll: true }); } catch (eФ) {}
+  }, 60);
   if (fromStage) {
     F.stage = false;
     F.stageK = 0;
@@ -7693,6 +7791,24 @@ function close() {
   ui.wrap.classList.remove("on", "rcf-stage", "rcf-native-cab");
   cabinDrop();
   inertPage(false);
+  модальность(false);
+  /* Фокус обязан вернуться туда, откуда полёт открыли. Раньше после
+     выхода он падал в body: человек с клавиатуры оказывался в начале
+     страницы и заново шёл через всё меню. Кнопку помним сами -
+     программное нажатие фокус на кнопку не ставит, а на телефоне и в
+     части браузеров его не ставит и настоящее нажатие. */
+  var назад = F.открыл;
+  F.открыл = null;
+  if (назад && назад.isConnected && назад.focus) {
+    try { назад.focus({ preventScroll: true }); } catch (eФ) { try { назад.focus(); } catch (eФ2) {} }
+    /* Вёрстка после выхода перестраивается ещё кадр: если фокус
+       сбило, ставим ещё раз. */
+    requestAnimationFrame(function () {
+      if (doc.activeElement === doc.body && назад.isConnected) {
+        try { назад.focus({ preventScroll: true }); } catch (eФ3) {}
+      }
+    });
+  }
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: false } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(false); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(false); } catch (e) {} }
@@ -9765,10 +9881,12 @@ function stageOff() {
     return;
   }
   cabinDrop();
+  модальность(false);
   /* Вышли из корабля назад по странице - гул смолкает */
   if (g.RC_SOUND && g.RC_SOUND.flight && !F.open) { try { g.RC_SOUND.flight(false); } catch (e) {} }
   F.stage = false;
   F.open = false;
+  модальность(false);
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
   if (ui.wrap) ui.wrap.classList.remove("on", "rcf-stage");
   /* Reverse scrolling is an unconditional return to the website.

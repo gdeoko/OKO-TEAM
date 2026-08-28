@@ -32,7 +32,7 @@
     background: var(--surface); border: 1px solid var(--line); color: var(--tx-2);
     cursor: pointer; white-space: nowrap; transition: all var(--fast);
   }
-  .a-tabs button.on { background: var(--grad); border-color: transparent; color: #fff; }
+  .a-tabs button.on { background: var(--grad-btn); border-color: transparent; color: #fff; }
   .pane { display: none; padding: 0 0 44px; }
   .pane.on { display: block; }
 
@@ -50,6 +50,10 @@
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
     padding: clamp(16px, 2.4vw, 24px); margin-top: 16px;
   }
+  /* Заголовки панелей это второй уровень: над ними только h1 в
+     шапке. Раньше стояли h3 через голову h2, и обход по заголовкам
+     начинался с провала на уровень. */
+  .panel h2,
   .panel h3 { font-size: 15px; font-weight: 650; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
   .chart { width: 100%; height: 240px; }
   .bars { display: grid; gap: 9px; }
@@ -256,7 +260,7 @@
   .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, 0) }
   .seg { display: flex; gap: 6px; flex-wrap: wrap }
   .seg button { padding: 7px 13px; font-size: 12.5px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer }
-  .seg button.on { background: var(--grad); color: #fff; border-color: transparent }
+  .seg button.on { background: var(--grad-btn); color: #fff; border-color: transparent }
   @media (max-width: 640px) {
     .a-hdr-in { height: 56px }
     /* На 390 шапка не помещалась в строку и кнопка «Выйти» уезжала
@@ -276,9 +280,12 @@
 <div class="login" id="login">
   <form class="form-card" id="loginForm">
     <img src="assets/logo-h.png" alt="Rocket CDN">
-    <h3 style="font-size:19px;font-weight:700;margin-bottom:6px">Панель управления</h3>
+    <h2 style="font-size:19px;font-weight:700;margin-bottom:6px">Панель управления</h2>
     <p class="hint" style="margin-bottom:20px">Введите пароль администратора.</p>
-    <div class="form-msg"></div>
+    <!-- Живая область: отказ во входе и другие ответы формы должны
+         произноситься, а не только показываться. На главной этот же
+         блок так и сделан. -->
+    <div class="form-msg" role="status" aria-live="polite"></div>
     <div class="field">
       <label for="key">Пароль</label>
       <input id="key" type="password" autocomplete="current-password" required>
@@ -307,27 +314,36 @@
   </header>
 
   <div class="wrap">
-    <div class="a-tabs" id="tabs">
-      <button data-p="dash" class="on">Аналитика</button>
-      <button data-p="leads">Заявки</button>
-      <button data-p="net">Сеть</button>
-      <button data-p="content">Тексты сайта</button>
-      <button data-p="sys">Состояние</button>
-    </div>
+    <!-- Полоса вкладок это навигация по панели, и какая вкладка
+         открыта, должно быть слышно, а не только видно по цвету.
+         Ролей вкладок ARIA тут намеренно нет: они требуют ещё и
+         обхода стрелками с одной остановкой на всю полосу, а это
+         другая механика. Достаточно честного aria-current. -->
+    <nav class="a-tabs" id="tabs" aria-label="Разделы панели">
+      <button type="button" aria-current="page" data-p="dash" class="on">Аналитика</button>
+      <button type="button" data-p="leads">Заявки</button>
+      <button type="button" data-p="net">Сеть</button>
+      <button type="button" data-p="content">Тексты сайта</button>
+      <button type="button" data-p="sys">Состояние</button>
+    </nav>
+
+    <!-- Ориентир страницы: разделы это содержимое панели. Без него
+         чтение с экрана идёт сплошняком от шапки до конца. -->
+    <main>
 
     <!-- Аналитика -->
     <section class="pane on" id="p-dash">
-      <div class="seg" style="margin-bottom:14px">
-        <button data-d="1">Сегодня</button>
-        <button data-d="7" class="on">7 дней</button>
-        <button data-d="14">14 дней</button>
-        <button data-d="30">30 дней</button>
-        <button data-d="90">90 дней</button>
+      <div class="seg" style="margin-bottom:14px" role="group" aria-label="Период аналитики">
+        <button type="button" data-d="1" aria-pressed="false">Сегодня</button>
+        <button type="button" data-d="7" class="on" aria-pressed="true">7 дней</button>
+        <button type="button" data-d="14" aria-pressed="false">14 дней</button>
+        <button type="button" data-d="30" aria-pressed="false">30 дней</button>
+        <button type="button" data-d="90" aria-pressed="false">90 дней</button>
       </div>
       <div class="stat-grid" id="statGrid"></div>
 
       <div class="panel">
-        <h3><span>Посещения, клики и заявки по дням</span></h3>
+        <h2><span>Посещения, клики и заявки по дням</span></h2>
         <canvas class="chart" id="chart"></canvas>
         <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--tx-3)">
           <span class="leg"><i style="background:#42B2DC;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>уникальные</span>
@@ -337,29 +353,29 @@
       </div>
 
       <div class="grid g-2" style="margin-top:16px">
-        <div class="panel" style="margin:0"><h3>Источники переходов</h3><div class="bars" id="barRefs"></div></div>
-        <div class="panel" style="margin:0"><h3>Устройства</h3><div class="bars" id="barDev"></div></div>
+        <div class="panel" style="margin:0"><h2>Источники переходов</h2><div class="bars" id="barRefs"></div></div>
+        <div class="panel" style="margin:0"><h2>Устройства</h2><div class="bars" id="barDev"></div></div>
         <!-- Системы отдельной панелью. Прежде устройства и системы
              валили в один список, и в нём стояло «компьютер 138» и
              «Linux 138» подряд - две разные величины, которые глаз
              читает как одну и складывает. -->
-        <div class="panel" style="margin:0"><h3>Системы</h3><div class="bars" id="barOs"></div></div>
-        <div class="panel" style="margin:0"><h3>Глубина прочтения</h3><div class="bars" id="barScroll"></div></div>
-        <div class="panel" style="margin:0"><h3>Искали города на карте</h3><div class="bars" id="barNodes"></div></div>
-        <div class="panel" style="margin:0"><h3>Поисковые запросы по сети</h3><div class="bars" id="barSearch"></div></div>
-        <div class="panel" style="margin:0"><h3>Ошибки у посетителей</h3><div class="bars" id="barErr"></div></div>
+        <div class="panel" style="margin:0"><h2>Системы</h2><div class="bars" id="barOs"></div></div>
+        <div class="panel" style="margin:0"><h2>Глубина прочтения</h2><div class="bars" id="barScroll"></div></div>
+        <div class="panel" style="margin:0"><h2>Искали города на карте</h2><div class="bars" id="barNodes"></div></div>
+        <div class="panel" style="margin:0"><h2>Поисковые запросы по сети</h2><div class="bars" id="barSearch"></div></div>
+        <div class="panel" style="margin:0"><h2>Ошибки у посетителей</h2><div class="bars" id="barErr"></div></div>
       </div>
     </section>
 
     <!-- Заявки -->
     <section class="pane" id="p-leads">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
-        <div class="seg" id="leadFilter">
-          <button data-f="all" class="on">Все</button>
-          <button data-f="new">Новые</button>
-          <button data-f="work">В работе</button>
-          <button data-f="done">Закрытые</button>
-          <button data-f="callback">Звонки</button>
+        <div class="seg" id="leadFilter" role="group" aria-label="Фильтр заявок">
+          <button type="button" data-f="all" class="on" aria-pressed="true">Все</button>
+          <button type="button" data-f="new" aria-pressed="false">Новые</button>
+          <button type="button" data-f="work" aria-pressed="false">В работе</button>
+          <button type="button" data-f="done" aria-pressed="false">Закрытые</button>
+          <button type="button" data-f="callback" aria-pressed="false">Звонки</button>
         </div>
         <a class="mini" id="csv" style="margin-left:auto" href="#">Скачать CSV</a>
       </div>
@@ -381,11 +397,11 @@
     <section class="pane" id="p-net">
       <div class="stat-grid" id="netStats"></div>
       <div class="panel">
-        <h3>Точки присутствия по регионам</h3>
+        <h2>Точки присутствия по регионам</h2>
         <div class="bars" id="netRegions"></div>
       </div>
       <div class="panel">
-        <h3><span>Список узлов</span></h3>
+        <h2><span>Список узлов</span></h2>
         <div class="search" style="margin-bottom:12px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
           <input type="search" id="netSearch" placeholder="Поиск города">
@@ -403,13 +419,13 @@
            в бессилии: владелец не должен лезть в код, чтобы открыть
            новую точку присутствия. -->
       <div class="panel">
-        <h3>Свои города <span class="hint" id="nodeCnt"></span></h3>
+        <h2>Свои города <span class="hint" id="nodeCnt"></span></h2>
         <div class="node-add">
           <input id="nName" placeholder="Город" autocomplete="off" maxlength="60">
           <input id="nEn" placeholder="City (англ.)" autocomplete="off" maxlength="60">
           <input id="nLat" placeholder="Широта" inputmode="decimal" autocomplete="off">
           <input id="nLon" placeholder="Долгота" inputmode="decimal" autocomplete="off">
-          <select id="nReg">
+          <select id="nReg" aria-label="Регион города">
             <option value="0">Россия и СНГ</option>
             <option value="1">Азия, Африка и Океания</option>
             <option value="2">Европа</option>
@@ -425,7 +441,7 @@
       </div>
 
       <div class="panel">
-        <h3>Скрытые города <span class="hint" id="hideCnt"></span></h3>
+        <h2>Скрытые города <span class="hint" id="hideCnt"></span></h2>
         <p class="hint" style="margin-bottom:10px">
           Точку из базового реестра удалить нельзя, но можно убрать с сайта.
           Введите название ровно как в списке выше.
@@ -441,16 +457,16 @@
     <!-- Тексты -->
     <section class="pane" id="p-content">
       <div class="panel" style="margin-top:0">
-        <h3>
+        <h2>
           <span>Надписи на странице</span>
           <span class="seg tiny" id="cLang">
             <button type="button" data-lang="ru" class="on">Русский</button>
             <button type="button" data-lang="en">English</button>
           </span>
-        </h3>
+        </h2>
         <input class="lead-find" id="cFind" placeholder="Найти надпись по смыслу, по тексту или по имени поля" autocomplete="off">
         <div class="cf-top" id="cTop"></div>
-        <div class="form-msg" id="cMsg"></div>
+        <div class="form-msg" id="cMsg" role="status" aria-live="polite"></div>
         <div id="cFields"></div>
         <div class="btn-row" style="margin-top:14px">
           <button type="button" class="btn btn-p btn-sm" id="cSave">Сохранить надписи</button>
@@ -465,10 +481,10 @@
       </div>
 
       <div class="panel">
-        <h3>
+        <h2>
           <span>Карточки на странице</span>
           <span class="hint" id="bLangNote"></span>
-        </h3>
+        </h2>
         <div class="seg" id="bGroup">
           <button type="button" data-g="products" class="on">Продукты<span class="cnt"></span></button>
           <button type="button" data-g="advantages">Преимущества<span class="cnt"></span></button>
@@ -480,7 +496,7 @@
           <button type="button" class="mini" id="bAdd">Добавить карточку</button>
           <button type="button" class="mini" id="bBack">Вернуть исходные в этой группе</button>
         </div>
-        <div class="form-msg" id="bMsg"></div>
+        <div class="form-msg" id="bMsg" role="status" aria-live="polite"></div>
         <div class="btn-row" style="margin-top:14px">
           <button type="button" class="btn btn-p btn-sm" id="bSave">Сохранить карточки</button>
         </div>
@@ -491,7 +507,7 @@
             перенести с другого сайта, откатить руками. Кнопка ниже переносит
             текст обратно в карточки, там его и видно.
           </p>
-          <div class="field"><textarea class="code" id="bJson" spellcheck="false"></textarea></div>
+          <div class="field"><textarea class="code" id="bJson" spellcheck="false" aria-label="Карточки группы в виде JSON"></textarea></div>
           <div class="btn-row">
             <button type="button" class="mini" id="bFromJson">Перенести в карточки</button>
           </div>
@@ -502,23 +518,23 @@
     <!-- Состояние -->
     <section class="pane" id="p-sys">
       <div class="panel" style="margin-top:0">
-        <h3>Проверка связи</h3>
+        <h2>Проверка связи</h2>
         <div class="kv" id="sysKv"></div>
         <div class="btn-row" style="margin-top:16px">
           <button type="button" class="btn btn-g btn-sm" id="sysTest">Отправить тестовое письмо и сообщение</button>
         </div>
-        <div class="form-msg" id="sysMsg"></div>
+        <div class="form-msg" id="sysMsg" role="status" aria-live="polite"></div>
       </div>
       <div class="panel">
-        <h3>Что происходит сейчас</h3>
+        <h2>Что происходит сейчас</h2>
         <div class="kv" id="sysLive"></div>
       </div>
       <div class="panel">
-        <h3>Журнал ошибок сервера</h3>
-        <div class="field"><textarea class="code" id="sysLog" readonly style="min-height:260px"></textarea></div>
+        <h2>Журнал ошибок сервера</h2>
+        <div class="field"><textarea class="code" id="sysLog" readonly aria-label="Журнал ошибок сервера" style="min-height:260px"></textarea></div>
       </div>
       <div class="panel">
-        <h3>Подсказки по запуску</h3>
+        <h2>Подсказки по запуску</h2>
         <p class="hint">
           Ежедневный отчёт в Телеграм собирает <code>cron.php</code>, бот работает через <code>bot.php</code>.
           Расписание на сервере:<br><br>
@@ -529,10 +545,14 @@
         </p>
       </div>
     </section>
+    </main>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- Всплывающая подсказка это единственный ответ панели на половину
+     действий: без живой области слепой администратор нажимал «Убрать
+     город» и не узнавал, случилось ли что-нибудь. -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="assets/rc-geo.js?v=1787869778"></script>
 <script src="assets/rc-ico.js?v=1787835351"></script>
@@ -640,8 +660,9 @@ $("#logout").addEventListener("click", function () {
 $("#tabs").addEventListener("click", function (e) {
   var b = e.target.closest("button");
   if (!b) return;
-  $$("#tabs button").forEach(function (x) { x.classList.remove("on"); });
+  $$("#tabs button").forEach(function (x) { x.classList.remove("on"); x.removeAttribute("aria-current"); });
   b.classList.add("on");
+  b.setAttribute("aria-current", "page");
   $$(".pane").forEach(function (p) { p.classList.remove("on"); });
   $("#p-" + b.dataset.p).classList.add("on");
   if (b.dataset.p === "sys") loadSys();
@@ -651,8 +672,10 @@ $("#tabs").addEventListener("click", function (e) {
 /* ── Аналитика ── */
 $$("#p-dash .seg button").forEach(function (b) {
   b.addEventListener("click", function () {
-    $$("#p-dash .seg button").forEach(function (x) { x.classList.remove("on"); });
+    /* Выбранный период должен быть слышен, а не только виден */
+    $$("#p-dash .seg button").forEach(function (x) { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); });
     b.classList.add("on");
+    b.setAttribute("aria-pressed", "true");
     days = +b.dataset.d;
     loadStats();
   });
@@ -815,8 +838,9 @@ window.addEventListener("resize", function () { if (stats) drawChart(); });
 $("#leadFilter").addEventListener("click", function (e) {
   var b = e.target.closest("button");
   if (!b) return;
-  $$("#leadFilter button").forEach(function (x) { x.classList.remove("on"); });
+  $$("#leadFilter button").forEach(function (x) { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); });
   b.classList.add("on");
+  b.setAttribute("aria-pressed", "true");
   leadFilter = b.dataset.f;
   renderLeads();
 });
@@ -1455,23 +1479,29 @@ function bRender() {
   $("#bList").innerHTML = bData.length ? bData.map(function (it, i) {
     var поля = спец.fields.map(function (f) {
       var ключ = f[0], подпись = f[1], вид = f[2], зн = it[ключ];
+      /* Подпись и поле связываем по имени. Раньше подпись стояла
+         отдельным label без for, а поле лежало снаружи него: связи не
+         было ни явной, ни неявной, и чтение с экрана произносило над
+         каждым из двадцати девяти полей просто «правка». */
+      var ид = "bf-" + bGroup + "-" + i + "-" + ключ;
+      var под = '<label class="cf-l" for="' + ид + '"><span>' + esc(подпись) + "</span></label>";
       if (вид === "icon") {
-        return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
+        return '<div class="cf">' + под +
           '<div class="ico-pick"><span class="prev" data-prev="' + i + '">' +
           (window.RC_ICO ? window.RC_ICO(зн) : "") + "</span>" +
-          '<select data-i="' + i + '" data-f="icon">' + bIcons(зн) + "</select></div></div>";
+          '<select id="' + ид + '" data-i="' + i + '" data-f="icon">' + bIcons(зн) + "</select></div></div>";
       }
       if (вид === "lines") {
         var текст = (зн || []).join("\n");
-        return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
-          '<textarea data-i="' + i + '" data-f="' + ключ + '" style="min-height:70px">' + esc(текст) + "</textarea></div>";
+        return '<div class="cf">' + под +
+          '<textarea id="' + ид + '" data-i="' + i + '" data-f="' + ключ + '" style="min-height:70px">' + esc(текст) + "</textarea></div>";
       }
       if (вид === "area") {
-        return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
-          '<textarea data-i="' + i + '" data-f="' + ключ + '">' + esc(зн || "") + "</textarea></div>";
+        return '<div class="cf">' + под +
+          '<textarea id="' + ид + '" data-i="' + i + '" data-f="' + ключ + '">' + esc(зн || "") + "</textarea></div>";
       }
-      return '<div class="cf"><label><span>' + esc(подпись) + "</span></label>" +
-        '<input data-i="' + i + '" data-f="' + ключ + '" value="' + esc(зн || "") + '"></div>';
+      return '<div class="cf">' + под +
+        '<input id="' + ид + '" data-i="' + i + '" data-f="' + ключ + '" value="' + esc(зн || "") + '"></div>';
     }).join("");
     return '<div class="blk"><div class="head"><span class="num">' + (i + 1) + "</span>" +
       '<span class="ttl">' + esc(кратко(it[спец.ttl] || "Без названия")) + "</span>" +

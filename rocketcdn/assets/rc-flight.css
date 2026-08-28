@@ -1260,6 +1260,31 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* ── Погашенное не должно ловить клавиатуру ──────────────────
+   Прозрачность убирает орган с глаз, но не из обхода табом. В
+   финале страницы это давало пятнадцать невидимых остановок фокуса
+   подряд: человек с клавиатуры уходил в «Закрыть досье», КУРС,
+   СКАН, СТОП, «Выйти из полёта» - в органы корабля, которого он
+   ещё не видел и куда не заходил. Снимаем видимостью: она и с глаз
+   убирает, и из обхода.
+
+   Два исключения. Проектор RocketVPN и его голограмма в этом
+   режиме РАБОЧИЕ: проектор стоит в кадре финала, по нему нажимают,
+   и он единственный, кому слой оставляет нажатия. */
+.rc-flight.rcf-stage button,
+.rc-flight.rcf-stage a[href],
+.rc-flight.rcf-stage input,
+.rc-flight.rcf-stage select,
+.rc-flight.rcf-stage textarea,
+.rc-flight.rcf-stage [tabindex]:not([tabindex="-1"]) {
+  visibility: hidden;
+}
+.rc-flight.rcf-stage .rc-vpn-projector,
+.rc-flight.rcf-stage .rc-vpn-holo,
+.rc-flight.rcf-stage .rc-vpn-holo * {
+  visibility: visible;
+}
 /* Салон виден всё время, пока мы внутри корабля, а не только на
    подъезде: человек вошёл в помещение и обходит его взглядом.
    Прежнее правило вязало прозрачность к доле подъезда, и весь

@@ -22,6 +22,14 @@
      в светлой теме ниже подставляется затемнённый. Заливки - --violet. */
   --violet-tx: #B49BFF;
   --grad:     linear-gradient(135deg, #42B2DC 0%, #0A5897 100%);
+  /* Тот же градиент, но пригодный ПОД БЕЛЫЙ ТЕКСТ. Светлый конец
+     фирменного даёт с белым 2,4:1 при норме 4,5 - на главной кнопке
+     сайта надпись читалась хуже всего именно там, где важнее всего.
+     Здесь светлый конец притемнён до 5,3:1, тон и направление те же.
+     Кнопкам с тёмным текстом и полоскам без текста по-прежнему
+     полагается --grad. */
+  --grad-btn:  linear-gradient(135deg, #1B7396 0%, #0A5897 100%);
+  --grad-btn-hi: linear-gradient(135deg, #1E7DA1 0%, #0C6BB4 100%);
   --grad-soft:linear-gradient(135deg, rgba(66,178,220,.16) 0%, rgba(10,88,151,.16) 100%);
   --grad-txt: linear-gradient(120deg, #7FD8FA 0%, #42B2DC 45%, #8A59F6 100%);
 
@@ -322,12 +330,12 @@ section { position: relative; padding: var(--sec) 0; }
               border-color var(--fast), color var(--fast), opacity var(--fast);
 }
 .btn-p {
-  background: var(--grad); color: #fff;
+  background: var(--grad-btn); color: #fff;
   box-shadow: 0 10px 26px -10px rgba(10,88,151,.85), inset 0 1px 0 rgba(255,255,255,.22);
 }
 .btn-p::after {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, #5BC4EA 0%, #0C6BB4 100%);
+  background: var(--grad-btn-hi);
   opacity: 0; transition: opacity var(--fast);
 }
 .btn-p:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -12px rgba(10,88,151,.95), var(--glow); }
@@ -535,6 +543,18 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   display: flex; justify-content: space-between; align-items: center; color: var(--tx-2);
 }
 .drawer a:active { color: var(--accent-tx); }
+/* Своя кнопка закрытия шторки. Стоит там же, где бургер, который она
+   заменяет: страница под шторкой заглушена, и до бургера в шапке
+   из-под неё не дотянуться ни фокусом, ни пальцем. */
+.drawer .drawer-x {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 17px);
+  right: var(--pad);
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  color: var(--tx-2);
+}
+.drawer .drawer-x svg { width: 20px; height: 20px; }
 .drawer .btn { margin-top: 22px; }
 
 /* ── Прогресс чтения ──────────────────────────────────────── */
@@ -863,7 +883,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   position: fixed; right: 18px; z-index: 180;
   bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--grad); color: #fff; border: 0; cursor: pointer;
+  background: var(--grad-btn); color: #fff; border: 0; cursor: pointer;
   box-shadow: 0 10px 26px -8px rgba(10,88,151,.8);
   opacity: 0; visibility: hidden; transform: translateY(12px);
   transition: opacity var(--fast), visibility var(--fast), transform var(--fast), box-shadow var(--fast);

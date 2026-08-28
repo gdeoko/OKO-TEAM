@@ -13,6 +13,9 @@
   --ink:#091320; --mut:#5A6B7D; --line:#E2E8F0; --bg:#F3F7FB; --card:#FFFFFF;
   --blue:#0A5897; --ok:#34D399;
   --grad:linear-gradient(120deg,#42B2DC 0%,#8A59F6 55%,#0A5897 100%);
+  /* Тот же градиент под белый текст: светлый конец фирменного даёт с
+     белым 2,4:1 при норме 4,5. Здесь притемнён, тон и ход те же. */
+  --grad-btn:linear-gradient(120deg,#1B7396 0%,#5B36B0 55%,#0A5897 100%);
   --r:12px; --r-sm:8px; --sh:0 8px 24px -12px rgba(16,46,56,.32);
   --font:"Golos Text",Geologica,'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
@@ -23,7 +26,7 @@ h1{font-size:31px;font-weight:800;margin:0 0 10px}
 .top{max-width:1220px;margin:0 auto 30px;text-align:center}
 .lead{max-width:74ch;color:var(--mut);margin:0 auto}
 .badge{display:inline-block;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;
-       color:#fff;background:var(--grad);margin-bottom:12px}
+       color:#fff;background:var(--grad-btn);margin-bottom:12px}
 .grid{display:grid;gap:22px;max-width:1220px;margin:0 auto;
       grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
 .item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
@@ -44,7 +47,7 @@ button:hover{border-color:var(--blue);color:var(--blue)}
 button.go{background:var(--blue);border-color:var(--blue);color:#fff}
 button.go:hover{background:#084577;color:#fff}
 button.ok{border-color:var(--ok);color:var(--ok)}
-button[aria-pressed="true"]{background:var(--grad);border-color:transparent;color:#fff}
+button[aria-pressed="true"]{background:var(--grad-btn);border-color:transparent;color:#fff}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
      background:#EDF3F9;border-radius:4px;padding:1px 5px}
 .foot{max-width:1220px;margin:34px auto 0;padding:20px;background:#fff;border:1px solid var(--line);

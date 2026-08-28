@@ -818,7 +818,8 @@ function boot() {
 
   /* Мобильное меню */
   var drawer = $("#drawer"), burger = $("#burger");
-  function setDrawer(on) {
+  var шторкаНазад = null;
+  function setDrawer(on, кто) {
     if (!drawer) return;
     drawer.classList.toggle("on", on);
     /* Закрытое меню не должно ловить фокус и читаться скринридером */
@@ -830,10 +831,45 @@ function boot() {
       burger.setAttribute("aria-label", t(on ? "menu.close" : "menu.open", on ? "Закрыть меню" : "Открыть меню"));
       burger.setAttribute("aria-expanded", on ? "true" : "false");
     }
+
+    /* Шторка это непрозрачная заслонка во весь экран, значит страница
+       под ней перестаёт существовать так же, как под окном заявки.
+       Раньше этого не было: человек с клавиатуры проходил меню до
+       конца и следующим нажатием уходил ЗА заслонку, вслепую, а
+       Escape оставлял фокус на кнопке, лежащей на пять тысяч точек
+       ниже окна. Делаем ровно то же, что и окно: глушим страницу,
+       ставим фокус внутрь, на закрытии возвращаем на бургер. */
+    if (on) {
+      var актив = document.activeElement;
+      шторкаНазад = (актив && актив !== document.body && актив !== document.documentElement)
+        ? актив : (кто || burger || null);
+    }
+    $$("body > *").forEach(function (el) {
+      if (el === drawer || el.tagName === "SCRIPT") return;
+      if (on) {
+        if (!el.hasAttribute("inert")) { el.setAttribute("inert", ""); el.setAttribute("data-rc-dinert", ""); }
+        if (!el.hasAttribute("aria-hidden")) { el.setAttribute("aria-hidden", "true"); el.setAttribute("data-rc-dah", ""); }
+      } else {
+        if (el.hasAttribute("data-rc-dinert")) { el.removeAttribute("inert"); el.removeAttribute("data-rc-dinert"); }
+        if (el.hasAttribute("data-rc-dah")) { el.removeAttribute("aria-hidden"); el.removeAttribute("data-rc-dah"); }
+      }
+    });
+    if (on) {
+      var первая = drawer.querySelector("a[href], button");
+      if (первая) { try { первая.focus({ preventScroll: true }); } catch (eФ) {} }
+    } else if (шторкаНазад && шторкаНазад.focus) {
+      var куда = шторкаНазад;
+      шторкаНазад = null;
+      try { куда.focus({ preventScroll: true }); } catch (eФ2) {}
+      if (document.activeElement !== куда) requestAnimationFrame(function () {
+        try { куда.focus({ preventScroll: true }); } catch (eФ3) {}
+      });
+    }
   }
   setDrawer(false);
-  if (burger) burger.addEventListener("click", function () { setDrawer(!drawer.classList.contains("on")); });
+  if (burger) burger.addEventListener("click", function () { setDrawer(!drawer.classList.contains("on"), burger); });
   $$("#drawer a").forEach(function (a) { a.addEventListener("click", function () { setDrawer(false); }); });
+  $$(".js-drawer-close").forEach(function (b) { b.addEventListener("click", function () { setDrawer(false); }); });
 
   /* Шапка: тень, скрытие при скролле вниз, активный пункт */
   var hdr = $("#hdr"), prog = $("#prog"), toTop = $("#toTop"), lastY = 0, maxScroll = 0;
