@@ -686,19 +686,31 @@ ob_start(); ?>
     if(ex){ex.qty=Math.max(ex.qty,1);}else{cart.push({item:'Основной диплом',kind:kind,price:price,full:full,qty:1,fios:[]});}
     render();
   }
+  /* ВИД ОСНОВНОГО ДИПЛОМА ВЫБИРАЕТ ЧЕЛОВЕК.
+   *
+   * Правило требует только сам диплом, а не его вид: электронный основной прекрасно
+   * сочетается с оригиналом благодарности, а оригинал основного — с электронным
+   * дополнительным. Поэтому в окне обе кнопки; первой стоит та, что подходит к
+   * собранной корзине, но вторая доступна всегда. */
+  function baseBtn(kind, primary){
+    var vid = kind==='digital' ? 'электронный' : 'оригинал на бланке';
+    var price=(MMA.basePrice||{})[kind]||0;
+    var card=document.querySelector('.shop-card[data-item="Основной диплом"]');
+    if(card){ var r=card.querySelector('input[type=radio][value="'+kind+'"]'); if(r){ price=parseInt(r.getAttribute('data-price'),10)||price; } }
+    return {label:'Основной диплом — '+vid+(price?' · '+price+' ₽':''), primary:!!primary, onClick:function(){
+      addBaseToCart(kind); awPopClose();
+      if(window.toast)window.toast('Основной диплом добавлен — проверьте сумму','success');
+    }};
+  }
   function ensureBaseDiploma(){
     var need=baseNeed();
     if(!need) return true;
-    var vid = need.kind==='digital' ? 'электронный' : 'оригинал на бланке';
+    var other = need.kind==='digital' ? 'original' : 'digital';
     awPop('Нужен основной диплом',
       'У Вас нет основного диплома по Вашему аттестационному результату. «'+need.blocked+'» — '+
-      'дополнение к нему, отдельно он не изготавливается. Добавьте основной диплом ('+vid+') в корзину — '+
-      'и заказ можно будет оформить.',
-      [{label:'Добавить основной диплом ('+vid+')',primary:true,onClick:function(){
-          addBaseToCart(need.kind); awPopClose();
-          if(window.toast)window.toast('Основной диплом добавлен — проверьте сумму','success');
-        }},
-       {label:'Вернуться в корзину',onClick:awPopClose}]);
+      'дополнение к нему, отдельно он не изготавливается. Добавьте основной диплом в корзину — '+
+      'вид выбирайте любой, он не обязан совпадать с остальными позициями.',
+      [baseBtn(need.kind,true), baseBtn(other,false), {label:'Вернуться в корзину',onClick:awPopClose}]);
     return false;
   }
 
@@ -827,15 +839,12 @@ ob_start(); ?>
         // окно с кнопкой. Сюда попадают случаи, которых страница знать не могла:
         // например, прошлый заказ так и не был оплачен.
         if(!d.ok && d.need_base){
-          var nb=d.need_base, vid=nb.kind==='digital'?'электронный':'оригинал на бланке';
+          var nb=d.need_base, alt=nb.kind==='digital'?'original':'digital';
           awPop('Нужен основной диплом',
             'У Вас нет основного диплома по Вашему аттестационному результату. «'+(nb.blocked||'Эта позиция')+
-            '» — дополнение к нему, отдельно он не изготавливается. Добавьте основной диплом ('+vid+') в корзину.',
-            [{label:'Добавить основной диплом ('+vid+')',primary:true,onClick:function(){
-                addBaseToCart(nb.kind); awPopClose();
-                if(window.toast)window.toast('Основной диплом добавлен — проверьте сумму','success');
-              }},
-             {label:'Вернуться в корзину',onClick:awPopClose}]);
+            '» — дополнение к нему, отдельно он не изготавливается. Добавьте основной диплом в корзину — '+
+            'вид выбирайте любой.',
+            [baseBtn(nb.kind,true), baseBtn(alt,false), {label:'Вернуться в корзину',onClick:awPopClose}]);
           return;
         }
         if(!d.ok){err.textContent=d.error||'Не удалось оформить заказ';err.hidden=false;return;}

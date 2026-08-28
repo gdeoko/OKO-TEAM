@@ -631,32 +631,47 @@ ob_start(); ?>
     }
     return null;
   }
+  /* ВИД ОСНОВНОГО ДИПЛОМА ВЫБИРАЕТ ЧЕЛОВЕК.
+   *
+   * Правило требует сам диплом, а не его вид: электронный основной прекрасно
+   * сочетается с оригиналом благодарности, а оригинал основного — с электронным
+   * дополнительным. В окне обе кнопки; первой стоит та, что подходит к набранному
+   * заказу, но вторая доступна всегда. */
   function basePopup(need) {
-    var vid = need.kind === 'digital' ? 'электронный' : 'оригинал на бланке';
-    var box = baseCheckbox(need.kind);
-    var price = box ? (parseInt(box.getAttribute('data-price'), 10) || 0) : 0;
     var wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(10,14,30,.55)';
+    var kinds = [need.kind, need.kind === 'digital' ? 'original' : 'digital'];
+    var btns = '';
+    kinds.forEach(function (k, i) {
+      var box = baseCheckbox(k);
+      if (!box) return;                                   // такого вида нет в прайсе конкурса
+      var price = parseInt(box.getAttribute('data-price'), 10) || 0;
+      var vid = k === 'digital' ? 'электронный' : 'оригинал на бланке';
+      btns += '<button type="button" class="btn ' + (i === 0 ? 'btn--primary' : 'btn--ghost') +
+              '" data-kind="' + k + '">Основной диплом — ' + vid + (price ? ' · ' + price + ' ₽' : '') + '</button>';
+    });
     wrap.innerHTML =
-      '<div class="card" style="max-width:440px;width:100%;padding:26px 24px;text-align:center">' +
+      '<div class="card" style="max-width:460px;width:100%;padding:26px 24px;text-align:center">' +
       '<h3 style="margin:0 0 10px">Нужен основной диплом</h3>' +
       '<p style="color:var(--muted);margin:0 0 18px;line-height:1.6">У Вас нет основного диплома по Вашему аттестационному результату. «' +
         need.blocked + '» — дополнение к нему, отдельно он не изготавливается. ' +
-        'Добавьте основной диплом (' + vid + (price ? ', ' + price + ' ₽' : '') + ') — и заказ можно будет оформить.</p>' +
-      '<div style="display:flex;flex-direction:column;gap:9px">' +
-      '<button type="button" class="btn btn--primary" data-add>Добавить основной диплом</button>' +
+        'Добавьте основной диплом — вид выбирайте любой, он не обязан совпадать с остальными позициями.</p>' +
+      '<div style="display:flex;flex-direction:column;gap:9px">' + btns +
       '<button type="button" class="btn btn--ghost" data-close>Вернуться к выбору</button>' +
       '</div></div>';
     document.body.appendChild(wrap);
     function close() { wrap.remove(); }
     wrap.querySelector('[data-close]').onclick = close;
     wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
-    wrap.querySelector('[data-add]').onclick = function () {
-      if (box) { box.checked = true; recompute(); }
-      close();
-      msg.style.color = 'var(--mint)';
-      msg.textContent = 'Основной диплом добавлен. Проверьте сумму и нажмите «Оформить заказ».';
-    };
+    wrap.querySelectorAll('[data-kind]').forEach(function (b) {
+      b.onclick = function () {
+        var box = baseCheckbox(b.getAttribute('data-kind'));
+        if (box) { box.checked = true; recompute(); }
+        close();
+        msg.style.color = 'var(--mint)';
+        msg.textContent = 'Основной диплом добавлен. Проверьте сумму и нажмите «Оформить заказ».';
+      };
+    });
   }
   function ensureBaseDiploma() {
     var need = baseNeed();
