@@ -399,7 +399,8 @@ html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
    экране. То же самое при отказе трёхмерного слоя. */
 html.rc-reduced .rcf-fab, html.rc-reduced .rcf-cta, html.rc-reduced .epi-btn.js-flight,
 html.rc-no3d .rcf-fab, html.rc-no3d .rcf-cta, html.rc-no3d .epi-btn.js-flight,
-html[data-degrade="3"] .rcf-fab, html[data-degrade="3"] .epi-btn.js-flight {
+html[data-degrade="3"] .rcf-fab, html[data-degrade="3"] .rcf-cta,
+html[data-degrade="3"] .epi-btn.js-flight {
   display: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -5114,4 +5115,15 @@ html.rc-deep-inside .totop.on {
 .rc-flight .rcf-snd-key.cur {
   background: rgba(var(--int-cyan-rgb, 66,178,220), .3);
   border-color: rgba(var(--int-cyan-rgb, 66,178,220), .85);
+}
+
+/* Строка «полёта на этом устройстве нет». Не окно и не всплывашка:
+   короткая строка там, где человек только что нажал кнопку. */
+.rcf-no-fly {
+  margin: 14px auto 0;
+  max-width: 44ch;
+  text-align: center;
+  font-size: var(--fs-3, 0.8438rem);
+  line-height: 1.5;
+  color: var(--tx-2, rgba(226,238,252,.72));
 }

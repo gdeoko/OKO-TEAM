@@ -248,6 +248,15 @@ function screenTex(T, rec, tiny) {
      текст внутрь панели можно: тогда за кадром остаётся рамка, а не
      буквы. Шестнадцать процентов покрывают срез с запасом. */
   var PAD = W * 0.16;
+  /* Поле сверху и снизу отдельное от бокового. Боковое широкое по
+     причине выше - оно спасает СЛОВА от кромки кадра. Сверху и
+     снизу кромка кадра ничего не режет, а шестнадцать процентов от
+     ШИРИНЫ съедали почти половину высоты панели: на текст
+     оставалось 265 пикселей из 576. Ради этой арифметики панель и
+     выбрасывала строки. */
+  var PADY = Math.round(H * 0.105);
+  var maxW = W - PAD * 2;
+  var low = H - PADY;
 
   /* Метка раздела */
   x.fillStyle = "#5fc8ef";
@@ -256,54 +265,80 @@ function screenTex(T, rec, tiny) {
   var tag = (rec.tag || "").toUpperCase();
   var sp = "";
   for (i = 0; i < tag.length; i++) sp += tag[i] + (i < tag.length - 1 ? " " : "");
-  x.fillText(sp, PAD, PAD);
-  x.fillRect(PAD, PAD + W * 0.05, W * 0.09, 2);
+  x.fillText(sp, PAD, PADY);
+  x.fillRect(PAD, PADY + W * 0.05, W * 0.09, 2);
 
-  /* Заголовок */
-  x.fillStyle = "#eaf4ff";
-  x.font = "800 " + Math.round(W * 0.082) + "px " + FONT;
-  var hy = PAD + W * 0.085;
-  var words = String(rec.h || "").split(" "), line = "", maxW = W - PAD * 2;
-  for (i = 0; i < words.length; i++) {
-    var probe = line ? line + " " + words[i] : words[i];
-    if (x.measureText(probe).width > maxW && line) {
-      x.fillText(line, PAD, hy);
-      hy += W * 0.082;
-      line = words[i];
-    } else line = probe;
-  }
-  if (line) { x.fillText(line, PAD, hy); hy += W * 0.082; }
+  /* ── Раскладка текста в два прохода ───────────────────────────
+     Раньше проход был один и сразу рисующий: строки шли сверху
+     вниз, а когда место кончалось, цикл обрывался. На панели
+     «Коротко о главном» из пяти вопросов в кадр попадал один, на
+     «Сети в цифрах» из четырёх показателей - два. Хвост текста
+     пропадал молча, и со стороны это читалось как обрезанная
+     панель.
 
-  /* Отбивка */
-  x.fillStyle = "rgba(95,200,239,.32)";
-  x.fillRect(PAD, hy + W * 0.012, W - PAD * 2, 1);
-
-  /* Строки: каждая с точкой-маркером */
-  x.font = "500 " + Math.round(W * 0.040) + "px " + FONT;
-  var ly = hy + W * 0.055;
-  var lines = rec.lines || [];
-  for (i = 0; i < lines.length && ly < H - PAD; i++) {
-    var s = String(lines[i]);
-    if (!s) continue;
-    x.fillStyle = "#5fc8ef";
-    x.beginPath(); x.arc(PAD + 4, ly + W * 0.022, 3.2, 0, TAU); x.fill();
-    x.fillStyle = "rgba(226,238,252,.9)";
-    /* Длинную строку режем по ширине, а не выпускаем за край */
-    var w2 = "", parts = s.split(" "), yy = ly;
-    for (var k = 0; k < parts.length; k++) {
-      var pr = w2 ? w2 + " " + parts[k] : parts[k];
-      if (x.measureText(pr).width > maxW - W * 0.05 && w2) {
-        x.fillText(w2, PAD + W * 0.05, yy);
-        yy += W * 0.052;
-        w2 = parts[k];
-      } else w2 = pr;
+     Теперь сначала считаем, сколько места просит весь текст, и если
+     он не помещается, ужимаем кегль, пока не влезет. Ниже 62% не
+     опускаемся: мельче на стене уже не прочесть. */
+  function lay(k, paint) {
+    var i2, k2;
+    if (paint) x.fillStyle = "#eaf4ff";
+    x.font = "800 " + Math.round(W * 0.082 * k) + "px " + FONT;
+    var hy = PADY + W * 0.085 * k;
+    var words = String(rec.h || "").split(" "), line = "";
+    for (i2 = 0; i2 < words.length; i2++) {
+      var probe = line ? line + " " + words[i2] : words[i2];
+      if (x.measureText(probe).width > maxW && line) {
+        if (paint) x.fillText(line, PAD, hy);
+        hy += W * 0.082 * k;
+        line = words[i2];
+      } else line = probe;
     }
-    if (w2 && yy < H - PAD * 1.2) x.fillText(w2, PAD + W * 0.05, yy);
-    ly = yy + W * 0.072;
-    /* Не начинаем строку, которой не хватит места: обрезанный
-       хвост текста на стене читается как брак */
-    if (ly > H - PAD * 1.6) break;
+    if (line) { if (paint) x.fillText(line, PAD, hy); hy += W * 0.082 * k; }
+
+    /* Отбивка */
+    if (paint) {
+      x.fillStyle = "rgba(95,200,239,.32)";
+      x.fillRect(PAD, hy + W * 0.012, W - PAD * 2, 1);
+    }
+
+    /* Строки: каждая с точкой-маркером */
+    x.font = "500 " + Math.round(W * 0.040 * k) + "px " + FONT;
+    var ly = hy + W * 0.055 * k;
+    var lines = rec.lines || [];
+    for (i2 = 0; i2 < lines.length; i2++) {
+      var s2 = String(lines[i2]);
+      if (!s2) continue;
+      if (paint) {
+        x.fillStyle = "#5fc8ef";
+        x.beginPath(); x.arc(PAD + 4, ly + W * 0.022 * k, 3.2 * k, 0, TAU); x.fill();
+        x.fillStyle = "rgba(226,238,252,.9)";
+      }
+      /* Длинную строку режем по ширине, а не выпускаем за край */
+      var w2 = "", parts = s2.split(" "), yy = ly;
+      for (k2 = 0; k2 < parts.length; k2++) {
+        var pr = w2 ? w2 + " " + parts[k2] : parts[k2];
+        if (x.measureText(pr).width > maxW - W * 0.05 && w2) {
+          if (paint) x.fillText(w2, PAD + W * 0.05, yy);
+          yy += W * 0.052 * k;
+          w2 = parts[k2];
+        } else w2 = pr;
+      }
+      if (w2) {
+        if (paint) x.fillText(w2, PAD + W * 0.05, yy);
+        yy += W * 0.052 * k;
+      }
+      ly = yy + W * 0.020 * k;
+    }
+    return ly;
   }
+
+  var kg = 1;
+  for (i = 0; i < 9; i++) {
+    if (lay(kg, false) <= low) break;
+    kg -= 0.055;
+    if (kg < 0.62) { kg = 0.62; break; }
+  }
+  lay(kg, true);
 
   /* Развёртка строк: дисплей, а не плакат */
   /* Развёртка заметнее: строчная сетка - главный признак того,
