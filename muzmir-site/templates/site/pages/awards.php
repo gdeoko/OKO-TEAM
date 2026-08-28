@@ -498,9 +498,53 @@ ob_start(); ?>
       $mmaOther = ['id' => (int)$o0['competition_id'], 'slug' => (string)$o0['comp_slug'],
                    'app' => (int)$o0['id'], 'name' => (string)$o0['comp_name']];
   }
+  /* ОСНОВНОЙ ДИПЛОМ — УСЛОВИЕ ДЛЯ ВСЕГО ОСТАЛЬНОГО (правило центра, 28.08.2026).
+   *
+   * Дополнительный диплом, благодарность и трофеи — дополнения к главной награде,
+   * и отдельно от неё не изготавливаются. Проверяет это сервер (api/v1/order.php),
+   * а здесь готовятся данные, чтобы окно с объяснением и кнопкой «добавить»
+   * появилось ДО оплаты, а не в виде отказа после нажатия «Оплатить».
+   *
+   * baseDone — заявки, по которым основной (или именной) уже есть: заказан и
+   * оплачен раньше либо выпущен. Таким участникам ничего добавлять не нужно, и
+   * окно им не показывается. */
+  $baseDone = [];
+  $__checkApps = $compApps ?: [];
+  if ($appLock) $__checkApps[] = $appLock;   // пришли из кабинета по конкретной заявке
+  foreach ($__checkApps as $__a) {
+      $__aid = (int) $__a['id'];
+      $__ok = false;
+      try {
+          foreach (all("SELECT items FROM awards_orders WHERE application_id=?
+                         AND status IN ('paid','made','shipped','delivered','sent')", [$__aid]) as $__o) {
+              foreach ((array) json_decode((string) ($__o['items'] ?? '[]'), true) as $__pi) {
+                  if (is_array($__pi) && function_exists('award_is_base')
+                      && award_is_base((string) ($__pi['item'] ?? ''))) { $__ok = true; break 2; }
+              }
+          }
+          if (!$__ok && one("SELECT id FROM diplomas WHERE application_id=? AND type IN ('main','named') LIMIT 1", [$__aid])) {
+              $__ok = true;
+          }
+      } catch (\Throwable $e) { $__ok = false; }
+      if ($__ok) $baseDone[] = $__aid;
+  }
+  // Цена основного диплома этого конкурса — её показываем на кнопке «добавить».
+  $basePrice = ['digital' => 0, 'original' => 0];
+  foreach (['digital', 'original'] as $__k) {
+      $__rows = all("SELECT item, price FROM awards_prices WHERE competition_id=? AND kind=?", [(int) $selComp['id'], $__k]);
+      if (!$__rows) $__rows = all("SELECT item, price FROM awards_prices WHERE competition_id IS NULL AND kind=?", [$__k]);
+      foreach ($__rows as $__r) {
+          if (function_exists('award_canon_item') && award_canon_item((string) $__r['item']) === 'Основной диплом') {
+              $basePrice[$__k] = (int) $__r['price']; break;
+          }
+      }
+  }
   $mma = [
       'compId'       => (int)$selComp['id'],
       'compName'     => (string)$selComp['name'],
+      'isPaid'       => (int) ($selComp['is_paid'] ?? 0) === 1,
+      'baseDone'     => $baseDone,
+      'basePrice'    => $basePrice,
       'hasCompGraded'=> !empty($compApps),
       'hasCompApp'   => !empty($hasCompApp),
       'applyUrl'     => url('/apply') . '?comp=' . (int)$selComp['id'],
@@ -603,6 +647,61 @@ ob_start(); ?>
     return false;
   }
 
+  /* ДОПОЛНЕНИЯ — ТОЛЬКО ВМЕСТЕ С ОСНОВНЫМ ДИПЛОМОМ.
+   *
+   * Правило центра: дополнительный диплом, благодарность педагогу и трофеи —
+   * это дополнения к главной награде участника, отдельно они не изготавливаются.
+   * Сервер это проверяет и откажет, но отказ после нажатия «Оплатить» — плохой
+   * способ объяснять правила. Поэтому объясняем здесь и сразу предлагаем выход:
+   * одна кнопка добавляет недостающий диплом в корзину.
+   *
+   * Вид подбирается под корзину: собрал электронные — электронный, есть оригинал
+   * или трофей — оригинал (иначе в посылке с медалью не будет самого диплома).
+   * Платного конкурса правило не касается: там диплом входит в оргвзнос. */
+  function isBaseItem(n){ return /основн|именн/i.test(n||''); }
+  function baseNeed(){
+    if(MMA.isPaid) return null;
+    var sel=$('#ord_app');
+    var appId=parseInt((sel&&sel.value)||((document.querySelector('input[name=application_id]')||{}).value)||0,10);
+    if(appId && (MMA.baseDone||[]).indexOf(appId)>=0) return null;   // диплом уже есть
+    var hasBase=false, blocked=null, needOriginal=false;
+    cart.forEach(function(c){
+      if(isBaseItem(c.item)){ hasBase=true; return; }
+      if(!blocked) blocked=c.item;
+      if(c.kind!=='digital') needOriginal=true;
+    });
+    if(hasBase||!blocked) return null;
+    return {blocked:blocked, kind:needOriginal?'original':'digital'};
+  }
+  function addBaseToCart(kind){
+    var price=(MMA.basePrice||{})[kind]||0;
+    var full=price;
+    // Цену со скидкой клуба берём с карточки, если она на странице есть.
+    var card=document.querySelector('.shop-card[data-item="Основной диплом"]');
+    if(card){
+      var r=card.querySelector('input[type=radio][value="'+kind+'"]');
+      if(r){ price=parseInt(r.getAttribute('data-price'),10)||price; full=parseInt(r.getAttribute('data-full'),10)||price; }
+    }
+    var ex=cart.find(function(c){return c.item==='Основной диплом'&&c.kind===kind;});
+    if(ex){ex.qty=Math.max(ex.qty,1);}else{cart.push({item:'Основной диплом',kind:kind,price:price,full:full,qty:1,fios:[]});}
+    render();
+  }
+  function ensureBaseDiploma(){
+    var need=baseNeed();
+    if(!need) return true;
+    var vid = need.kind==='digital' ? 'электронный' : 'оригинал на бланке';
+    awPop('Нужен основной диплом',
+      'У Вас нет основного диплома по Вашему аттестационному результату. «'+need.blocked+'» — '+
+      'дополнение к нему, отдельно он не изготавливается. Добавьте основной диплом ('+vid+') в корзину — '+
+      'и заказ можно будет оформить.',
+      [{label:'Добавить основной диплом ('+vid+')',primary:true,onClick:function(){
+          addBaseToCart(need.kind); awPopClose();
+          if(window.toast)window.toast('Основной диплом добавлен — проверьте сумму','success');
+        }},
+       {label:'Вернуться в корзину',onClick:awPopClose}]);
+    return false;
+  }
+
   document.querySelectorAll('[data-qty]').forEach(function(q){
     var v=q.querySelector('[data-val]');
     q.querySelector('[data-dec]').addEventListener('click',function(){v.textContent=Math.max(1,parseInt(v.textContent)-1);});
@@ -689,6 +788,7 @@ ob_start(); ?>
     // Гость (есть поле «Номер заявки») — проверку делает сервер; окно не показываем.
     var isGuest = !!$('#ord_number');
     if(!isGuest && !ensureOrderable()) return;
+    if(!isGuest && !ensureBaseDiploma()) return;
     var err=$('#orderErr'); err.hidden=true;
     var btn=$('#orderSubmit'); btn.disabled=true; btn.textContent='Создаём заказ…';
     // ФИО обязательны для каждого экземпляра именного диплома и благодарности.
@@ -723,6 +823,21 @@ ob_start(); ?>
       .then(function(r){return r.json();})
       .then(function(d){
         btn.disabled=false; btn.textContent='Оплатить';
+        // Сервер отказал из-за отсутствия основного диплома — показываем то же
+        // окно с кнопкой. Сюда попадают случаи, которых страница знать не могла:
+        // например, прошлый заказ так и не был оплачен.
+        if(!d.ok && d.need_base){
+          var nb=d.need_base, vid=nb.kind==='digital'?'электронный':'оригинал на бланке';
+          awPop('Нужен основной диплом',
+            'У Вас нет основного диплома по Вашему аттестационному результату. «'+(nb.blocked||'Эта позиция')+
+            '» — дополнение к нему, отдельно он не изготавливается. Добавьте основной диплом ('+vid+') в корзину.',
+            [{label:'Добавить основной диплом ('+vid+')',primary:true,onClick:function(){
+                addBaseToCart(nb.kind); awPopClose();
+                if(window.toast)window.toast('Основной диплом добавлен — проверьте сумму','success');
+              }},
+             {label:'Вернуться в корзину',onClick:awPopClose}]);
+          return;
+        }
         if(!d.ok){err.textContent=d.error||'Не удалось оформить заказ';err.hidden=false;return;}
         if(d.confirmation_url){location.href=d.confirmation_url;return;}
         location.href='<?= url('/cabinet') ?>#awards';

@@ -185,6 +185,29 @@ foreach ($comps as $c) {
     $priceMatrix[$c['slug']] = $row;
 }
 
+/* ОСНОВНОЙ ДИПЛОМ — УСЛОВИЕ ДЛЯ ДОПОЛНЕНИЙ (правило центра, 28.08.2026).
+ * Здесь готовятся два факта для формы: платный ли конкурс (тогда правило не
+ * действует — диплом входит в оргвзнос) и есть ли основной диплом у этой заявки
+ * уже сейчас (заказан и оплачен раньше либо выпущен). Сам запрет держит сервер. */
+$compPaidBySlug = [];
+foreach ($comps as $c) $compPaidBySlug[(string) $c['slug']] = (int) ($c['is_paid'] ?? 0) === 1;
+
+$baseAlready = false;
+if ($fromApp) {
+    $__aid = (int) $fromApp['id'];
+    try {
+        foreach (all("SELECT items FROM awards_orders WHERE application_id=?
+                       AND status IN ('paid','made','shipped','delivered','sent')", [$__aid]) as $__o) {
+            foreach ((array) json_decode((string) ($__o['items'] ?? '[]'), true) as $__pi) {
+                if (is_array($__pi) && award_is_base((string) ($__pi['item'] ?? ''))) { $baseAlready = true; break 2; }
+            }
+        }
+        if (!$baseAlready && one("SELECT id FROM diplomas WHERE application_id=? AND type IN ('main','named') LIMIT 1", [$__aid])) {
+            $baseAlready = true;
+        }
+    } catch (\Throwable $e) { $baseAlready = false; }
+}
+
 $icoCard = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
 
 ob_start(); ?>
@@ -492,6 +515,11 @@ ob_start(); ?>
   var CLUB_PCT = <?= (int) $clubPct ?>;
   function clubPrice(n) { return CLUB_PCT > 0 ? Math.max(0, Math.round(n * (100 - CLUB_PCT) / 100)) : n; }
 
+  // Правило «дополнения только вместе с основным дипломом»: платные конкурсы его
+  // не касаются, участник с уже полученным дипломом — тоже.
+  var COMP_PAID = <?= json_encode($compPaidBySlug, JSON_UNESCAPED_UNICODE) ?>;
+  var BASE_DONE = <?= $baseAlready ? 'true' : 'false' ?>;
+
   var form = document.getElementById('awardsOrderForm');
   var compSel = document.getElementById('competition');
   var resultSel = document.getElementById('result');
@@ -572,6 +600,71 @@ ob_start(); ?>
 
   if (compSel.value) renderItems(compSel.value);
 
+  /* ДОПОЛНЕНИЯ — ТОЛЬКО ВМЕСТЕ С ОСНОВНЫМ ДИПЛОМОМ.
+   *
+   * Дополнительный диплом, благодарность и трофеи — дополнения к главной награде
+   * участника: отдельно центр их не изготавливает. Запрет держит сервер, а здесь
+   * человеку объясняют правило до оплаты и сразу дают выход — одна кнопка
+   * отмечает нужную позицию. Вид подбирается под уже выбранное: только
+   * электронные — электронный диплом, есть оригинал или трофей — оригинал. */
+  function isBaseName(n) { return /основн|именн/i.test(n || ''); }
+  function baseNeed() {
+    if (COMP_PAID[compSel.value]) return null;   // в платном диплом входит в участие
+    if (BASE_DONE) return null;                  // диплом по этой заявке уже есть
+    var boxes = itemsBox.querySelectorAll('.award-item:checked');
+    var hasBase = false, blocked = null, needOriginal = false;
+    for (var i = 0; i < boxes.length; i++) {
+      var m = META[boxes[i].getAttribute('data-key')] || {};
+      var nm = m.item || '';
+      if (isBaseName(nm)) { hasBase = true; continue; }
+      if (!blocked) blocked = nm;
+      if (m.kind !== 'digital') needOriginal = true;
+    }
+    if (hasBase || !blocked) return null;
+    return { blocked: blocked, kind: needOriginal ? 'original' : 'digital' };
+  }
+  function baseCheckbox(kind) {
+    var boxes = itemsBox.querySelectorAll('.award-item');
+    for (var i = 0; i < boxes.length; i++) {
+      var m = META[boxes[i].getAttribute('data-key')] || {};
+      if ((m.item || '') === 'Основной диплом' && m.kind === kind) return boxes[i];
+    }
+    return null;
+  }
+  function basePopup(need) {
+    var vid = need.kind === 'digital' ? 'электронный' : 'оригинал на бланке';
+    var box = baseCheckbox(need.kind);
+    var price = box ? (parseInt(box.getAttribute('data-price'), 10) || 0) : 0;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(10,14,30,.55)';
+    wrap.innerHTML =
+      '<div class="card" style="max-width:440px;width:100%;padding:26px 24px;text-align:center">' +
+      '<h3 style="margin:0 0 10px">Нужен основной диплом</h3>' +
+      '<p style="color:var(--muted);margin:0 0 18px;line-height:1.6">У Вас нет основного диплома по Вашему аттестационному результату. «' +
+        need.blocked + '» — дополнение к нему, отдельно он не изготавливается. ' +
+        'Добавьте основной диплом (' + vid + (price ? ', ' + price + ' ₽' : '') + ') — и заказ можно будет оформить.</p>' +
+      '<div style="display:flex;flex-direction:column;gap:9px">' +
+      '<button type="button" class="btn btn--primary" data-add>Добавить основной диплом</button>' +
+      '<button type="button" class="btn btn--ghost" data-close>Вернуться к выбору</button>' +
+      '</div></div>';
+    document.body.appendChild(wrap);
+    function close() { wrap.remove(); }
+    wrap.querySelector('[data-close]').onclick = close;
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.querySelector('[data-add]').onclick = function () {
+      if (box) { box.checked = true; recompute(); }
+      close();
+      msg.style.color = 'var(--mint)';
+      msg.textContent = 'Основной диплом добавлен. Проверьте сумму и нажмите «Оформить заказ».';
+    };
+  }
+  function ensureBaseDiploma() {
+    var need = baseNeed();
+    if (!need) return true;
+    basePopup(need);
+    return false;
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var boxes = itemsBox.querySelectorAll('.award-item:checked');
@@ -594,6 +687,7 @@ ob_start(); ?>
     }
 
     if (!ok) { form.reportValidity(); return; }
+    if (!ensureBaseDiploma()) return;
 
     var items = [];
     var amount = 0;
@@ -625,6 +719,10 @@ ob_start(); ?>
           msg.textContent = d.message || 'Заказ оформлен. Переход к оплате ЮKassa будет доступен после подключения магазина.';
           form.reset(); itemsBox.innerHTML = '<p style="color:var(--muted);margin:12px 0">Сначала выберите конкурс.</p>';
           totalEl.textContent = money(0); recipientBlock.style.display = 'none';
+        } else if (d && d.need_base) {
+          // Сервер знает больше страницы (например, прошлый заказ не оплачен) —
+          // показываем то же окно с кнопкой, а не голый текст ошибки.
+          basePopup({ blocked: d.need_base.blocked || 'Эта позиция', kind: d.need_base.kind || 'digital' });
         } else {
           msg.style.color = 'var(--error)';
           msg.textContent = (d && d.message) || (d && d.error) || 'Не удалось отправить заказ. Попробуйте ещё раз.';

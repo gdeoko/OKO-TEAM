@@ -249,6 +249,76 @@ function award_is_trophy(string $item): bool {
         || mb_strpos($n, 'медал') !== false;
 }
 
+/** Базовая награда — та, от которой считается всё остальное: основной или именной диплом. */
+function award_is_base(string $item): bool {
+    $c = award_canon_item($item);
+    return $c === 'Основной диплом' || $c === 'Именной диплом';
+}
+
+/**
+ * ЕСТЬ ЛИ У УЧАСТНИКА ОСНОВНОЙ ДИПЛОМ — В КОРЗИНЕ ИЛИ УЖЕ ПОЛУЧЕННЫЙ.
+ *
+ * Правило центра (28.08.2026): дополнительный диплом, благодарность педагогу,
+ * кубок, статуэтка и медаль — это дополнения к главной награде. Заказ одной
+ * благодарности без диплома участника бессмыслен: человек остаётся без
+ * документа о собственном результате, а центр печатает награду «в никуда».
+ * Поэтому в БЕСПЛАТНОМ конкурсе такие позиции доступны только вместе с
+ * основным (или именным) дипломом.
+ *
+ * Платных конкурсов правило не касается: там основной диплом входит в оргвзнос
+ * и приходит сам, требовать его повторно значит брать деньги дважды.
+ *
+ * «Основной есть» — это любое из трёх: он в этом же заказе; он заказан раньше
+ * (и заказ дошёл хотя бы до оплаты); он уже выпущен и лежит в реестре дипломов.
+ *
+ * Вид требуемого диплома подбирается под корзину, чтобы человеку не навязывать
+ * лишнее: собрал электронные — хватит электронного, есть хоть один оригинал или
+ * трофей — нужен оригинал (иначе к посылке с медалью не будет самого диплома).
+ *
+ * @return array{need:bool, kind:string, blocked:string}
+ *         need    — требуется ли добавить основной диплом;
+ *         kind    — 'digital' | 'original', какой именно добавить;
+ *         blocked — название позиции, из-за которой он потребовался.
+ */
+function award_base_required(array $items, ?int $appId, bool $compIsPaid): array {
+    $none = ['need' => false, 'kind' => 'digital', 'blocked' => ''];
+    if ($compIsPaid) return $none;
+
+    $hasBase = false; $blocked = ''; $needOriginal = false;
+    foreach ($items as $it) {
+        if (!is_array($it)) continue;
+        $item = trim((string) ($it['item'] ?? ''));
+        $kind = (string) ($it['kind'] ?? 'original');
+        if ($item === '' || $kind === 'club') continue;
+        if (award_canon_item($item) === '') continue;      // доставка и прочее служебное
+        if (award_is_base($item)) { $hasBase = true; continue; }
+        if ($blocked === '') $blocked = $item;
+        if ($kind !== 'digital') $needOriginal = true;     // оригинал или трофей
+    }
+    if ($hasBase || $blocked === '') return $none;
+
+    // Заказан раньше по этой же заявке — с момента оплаты. Неоплаченный заказ
+    // основного не считаем: он может так и не состояться, а награда уже уедет.
+    if ($appId) {
+        try {
+            foreach (all("SELECT items FROM awards_orders
+                           WHERE application_id=? AND status IN ('paid','made','shipped','delivered','sent')",
+                         [$appId]) as $o) {
+                foreach ((array) json_decode((string) ($o['items'] ?? '[]'), true) as $pi) {
+                    if (is_array($pi) && award_is_base((string) ($pi['item'] ?? ''))) return $none;
+                }
+            }
+        } catch (\Throwable $e) { /* нет таблицы — просто требуем диплом */ }
+        // Уже выпущен (в том числе автоматически, по платному участию).
+        try {
+            $d = one("SELECT id FROM diplomas WHERE application_id=? AND type IN ('main','named') LIMIT 1", [$appId]);
+            if ($d) return $none;
+        } catch (\Throwable $e) { /* реестра нет — требуем */ }
+    }
+
+    return ['need' => true, 'kind' => $needOriginal ? 'original' : 'digital', 'blocked' => $blocked];
+}
+
 /**
  * Разрешена ли позиция к заказу по этой заявке.
  *

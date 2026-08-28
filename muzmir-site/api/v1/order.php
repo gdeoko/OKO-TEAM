@@ -266,6 +266,47 @@ if (!$isClubOrder && $applicationId) {
             json_out(['ok' => false, 'error' => 'Позиция «' . (string) ($ni['item'] ?? '') . '»: ' . $why], 422);
         }
     }
+
+    /* БЕЗ ОСНОВНОГО ДИПЛОМА ДОПОЛНЕНИЯ НЕ ЗАКАЗЫВАЮТСЯ.
+     *
+     * Проверка стоит на сервере, потому что это правило центра, а не подсказка
+     * формы: обе витрины (магазин образцов и форма заказа) шлют сюда, и обойти
+     * подсказку в браузере ничего не стоит.
+     *
+     * Отказ отдаём не голым текстом: в need_base лежит всё, чтобы страница
+     * показала окно «у Вас нет основного диплома» с готовой кнопкой «добавить в
+     * корзину» — нужного вида и с реальной ценой. Человек не должен гадать,
+     * что именно ему добавить и почему заказ не проходит. */
+    $base = award_base_required($normItems, $applicationId, $compIsPaid);
+    if (!empty($base['need'])) {
+        $bKind = (string) $base['kind'];
+        // Цена основного диплома по прайсу: сначала персональный прайс конкурса,
+        // потом общий. Своё замыкание, а не $pickPrice выше: то привязано к
+        // последней разобранной позиции заказа.
+        $basePrice = static function (?int $cid, string $kind): ?int {
+            $rows = $cid !== null
+                ? all("SELECT item, price FROM awards_prices WHERE competition_id=? AND kind=?", [$cid, $kind])
+                : all("SELECT item, price FROM awards_prices WHERE competition_id IS NULL AND kind=?", [$kind]);
+            foreach ($rows as $r) {
+                if (award_canon_item((string) $r['item']) === 'Основной диплом') return (int) $r['price'];
+            }
+            return null;
+        };
+        $bPrice = $compId !== null ? $basePrice($compId, $bKind) : null;
+        if ($bPrice === null) $bPrice = $basePrice(null, $bKind);
+        json_out([
+            'ok'    => false,
+            'error' => 'В заказе нет основного диплома по Вашему аттестационному результату. '
+                     . 'Позиция «' . (string) $base['blocked'] . '» — дополнение к нему и отдельно не изготавливается.',
+            'need_base' => [
+                'item'  => 'Основной диплом',
+                'kind'  => $bKind,
+                'price' => (int) ($bPrice ?? 0),
+                'label' => 'Основной диплом — ' . ($bKind === 'digital' ? 'электронная версия' : 'оригинал на бланке'),
+                'blocked' => (string) $base['blocked'],
+            ],
+        ], 422);
+    }
 }
 
 // --- Серверная валидация получателя и адреса (зеркало клиентской проверки) ---
