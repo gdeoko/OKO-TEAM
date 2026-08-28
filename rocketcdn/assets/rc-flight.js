@@ -10353,6 +10353,42 @@ g.RC_FLIGHT = {
   /* Состояние салона: где он, что в нём видно и в кадре ли рама.
      Жалоба «куда снова панель управления пропала» проверяется
      только числами - на глаз в тёмном кадре не отличить. */
+  /* Экранные коробки мешей салона. Нужны, чтобы искать в кадре
+     конкретную деталь - например пустые гнёзда пульта, - не гадая
+     по мировым координатам. Обход от камеры не работает: камера
+     обычно не в графе сцены, и traverse от неё находит ноль мешей
+     (проверено). Идём от самого салона. Живёт под ?rcdbg=1. */
+  _меши: function (снизу) {
+    if (!DBG || !cabin || !cabin.group || !W3) return null;
+    var T = g.THREE, из = [], край = (снизу == null ? 0 : снизу) * innerHeight;
+    var б = new T.Box3(), в = new T.Vector3();
+    /* Идём от КОРНЯ сцены, а не от салона: пульт строит не rc-cabin,
+       и обход по cabin.group его не находит (проверено - там только
+       стены и цилиндры комнаты). От камеры идти тоже нельзя, она
+       обычно вне графа. Салон в графе есть всегда, от него и
+       поднимаемся до самого верха. */
+    var корень = cabin.group;
+    while (корень.parent) корень = корень.parent;
+    корень.traverse(function (o) {
+      if (!o.isMesh || !видимоЛи(o)) return;
+      б.setFromObject(o);
+      if (!isFinite(б.min.x)) return;
+      var л = 1e9, п = -1e9, вв = 1e9, н = -1e9, сзади = 0;
+      for (var i = 0; i < 8; i++) {
+        в.set(i & 1 ? б.max.x : б.min.x, i & 2 ? б.max.y : б.min.y, i & 4 ? б.max.z : б.min.z);
+        в.project(W3.cam);
+        if (в.z > 1) { сзади++; continue; }
+        var x = (в.x * 0.5 + 0.5) * innerWidth, y = (-в.y * 0.5 + 0.5) * innerHeight;
+        л = Math.min(л, x); п = Math.max(п, x); вв = Math.min(вв, y); н = Math.max(н, y);
+      }
+      if (сзади === 8 || н < край) return;
+      из.push({ имя: o.name || "", гео: o.geometry ? o.geometry.type : "",
+                л: Math.round(л), п: Math.round(п), в: Math.round(вв), н: Math.round(н),
+                мир: [+б.min.y.toFixed(2), +б.max.y.toFixed(2), +б.min.z.toFixed(2), +б.max.z.toFixed(2)] });
+    });
+    из.sort(function (a, c) { return (c.п - c.л) * (c.н - c.в) - (a.п - a.л) * (a.н - a.в); });
+    return { всего: из.length, детали: из.slice(0, 20) };
+  },
   _cabin: function () {
     if (!DBG || !cabin || !W3) return null;
     var видимых = 0, всего = 0, части = [];
