@@ -550,32 +550,39 @@ html[data-theme="light"]:not(.rc-cab-on) .epi-alt { color: var(--tx-2); border-c
    устаревшим стиль всего дерева - на телефоне это давало пересчёт
    стиля в каждом кадре прокрутки. Ступени переключаются считанные
    разы за проход, а глазом переход между ними не отличить от
-   плавного: подложка мягкая и уходит в размытие. */
+   плавного: подложка мягкая и уходит в размытие.
+
+   Плотность поднята. Прежние двадцать два процента считались от
+   тёмного неба, а корабль на подходе подставляет под слова не небо,
+   а светлый нос: приёмка увидела «Путь запроса ЗА» с потерянным
+   «за» - белые буквы на белом бликующем обтекателе. Уступать
+   яркостью должен не корабль (владелец уже говорил, что тогда
+   ракеты «нет вовсе»), а фон под буквами. */
 html.rk-veil-1 .sec-h, html.rk-veil-1 .sec-p, html.rk-veil-1 .sec-tag,
 html.rk-veil-1 .hero h1, html.rk-veil-1 .hero .lead,
 html.rk-veil-1 .viz-card h3, html.rk-veil-1 .card h3, html.rk-veil-1 .card p,
 html.rk-veil-1 .dc h4, html.rk-veil-1 .step h3 {
-  text-shadow: 0 1px 10px rgba(3, 8, 14, .22), 0 0 26px rgba(3, 8, 14, .16);
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .40), 0 0 26px rgba(3, 8, 14, .28);
 }
 html.rk-veil-2 .sec-h, html.rk-veil-2 .sec-p, html.rk-veil-2 .sec-tag,
 html.rk-veil-2 .hero h1, html.rk-veil-2 .hero .lead,
 html.rk-veil-2 .viz-card h3, html.rk-veil-2 .card h3, html.rk-veil-2 .card p,
 html.rk-veil-2 .dc h4, html.rk-veil-2 .step h3 {
-  text-shadow: 0 1px 10px rgba(3, 8, 14, .38), 0 0 26px rgba(3, 8, 14, .26);
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .62), 0 0 26px rgba(3, 8, 14, .44);
 }
 html.rk-veil-1[data-theme="light"] .sec-h, html.rk-veil-1[data-theme="light"] .sec-p,
 html.rk-veil-1[data-theme="light"] .sec-tag, html.rk-veil-1[data-theme="light"] .hero h1,
 html.rk-veil-1[data-theme="light"] .hero .lead, html.rk-veil-1[data-theme="light"] .viz-card h3,
 html.rk-veil-1[data-theme="light"] .card h3, html.rk-veil-1[data-theme="light"] .card p,
 html.rk-veil-1[data-theme="light"] .dc h4, html.rk-veil-1[data-theme="light"] .step h3 {
-  text-shadow: 0 1px 10px rgba(243, 247, 251, .40), 0 0 26px rgba(243, 247, 251, .30);
+  text-shadow: 0 1px 10px rgba(243, 247, 251, .62), 0 0 26px rgba(243, 247, 251, .46);
 }
 html.rk-veil-2[data-theme="light"] .sec-h, html.rk-veil-2[data-theme="light"] .sec-p,
 html.rk-veil-2[data-theme="light"] .sec-tag, html.rk-veil-2[data-theme="light"] .hero h1,
 html.rk-veil-2[data-theme="light"] .hero .lead, html.rk-veil-2[data-theme="light"] .viz-card h3,
 html.rk-veil-2[data-theme="light"] .card h3, html.rk-veil-2[data-theme="light"] .card p,
 html.rk-veil-2[data-theme="light"] .dc h4, html.rk-veil-2[data-theme="light"] .step h3 {
-  text-shadow: 0 1px 10px rgba(243, 247, 251, .70), 0 0 26px rgba(243, 247, 251, .55);
+  text-shadow: 0 1px 10px rgba(243, 247, 251, .86), 0 0 26px rgba(243, 247, 251, .70);
 }
 /* Смена ступени не должна щёлкать: тень переливается за треть секунды */
 .sec-h, .sec-p, .sec-tag, .hero h1, .hero .lead,
