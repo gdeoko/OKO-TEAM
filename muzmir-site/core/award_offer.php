@@ -75,9 +75,17 @@ function ao_photo(int $compId, string $file, bool $square = false): string {
  * Набор для участника: что показываем и почём.
  * @return array<int,array{photo:string,title:string,note:string,price:int}>
  */
-function ao_kit(int $compId, string $result, bool $isGroup = false): array {
+function ao_kit(int $compId, string $result, bool $isGroup = false, array $skip = []): array {
+    /* ЧЕГО У ЧЕЛОВЕКА УЖЕ НЕТ — ТО И ПОКАЗЫВАЕМ.
+     *
+     * $skip — позиции, которые он уже оплатил: 'trophy', 'diploma', 'named',
+     * 'thanks'. Предлагать купленное второй раз значит расписаться в том, что
+     * его заказ никто не смотрел, — а именно так и выглядело письмо, приходившее
+     * после покупки диплома с тем же дипломом на первой картинке. */
+    $has  = static fn(string $k): bool => in_array($k, $skip, true);
     $kit  = [];
     $main = ao_main_item($result);
+    if ($main && $has('trophy')) $main = [];
     if ($main) {
         [$file, $title, $priceKey] = $main;
         $photo = ao_photo($compId, $file, true);
@@ -91,7 +99,7 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
                                . 'Приходит в подарочной упаковке.'];
         }
     }
-    $photoDip = ao_photo($compId, 'diploma.jpg', true);
+    $photoDip = $has('diploma') ? '' : ao_photo($compId, 'diploma.jpg', true);
     if ($photoDip !== '') {
         $kit[] = ['photo' => $photoDip, 'title' => 'Диплом на бланке',
                   'price' => ao_price($compId, 'Основной диплом'),
@@ -105,7 +113,7 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
      * предложить их значит не сделать самого нужного: руководители спрашивают
      * про именные чаще, чем про всё остальное вместе. Солисту эта позиция не
      * показывается — у него диплом и так именной. */
-    if ($isGroup) {
+    if ($isGroup && !$has('named')) {
         $photoNm = ao_photo($compId, 'diploma-name.jpg', true);
         if ($photoNm === '') $photoNm = ao_photo($compId, 'diploma.jpg', true);
         if ($photoNm !== '') {
@@ -116,7 +124,7 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
         }
     }
 
-    $photoTh = ao_photo($compId, 'thanks.jpg', true);
+    $photoTh = $has('thanks') ? '' : ao_photo($compId, 'thanks.jpg', true);
     if ($photoTh !== '') {
         $kit[] = ['photo' => $photoTh, 'title' => 'Благодарность педагогу',
                   'price' => ao_price($compId, 'Благодарность'),
@@ -141,8 +149,8 @@ function ao_kit(int $compId, string $result, bool $isGroup = false): array {
  * фиксированными долями ширины — единственное, что не рассыпается ни в Gmail,
  * ни в mail.ru, ни на телефоне: колонки остаются колонками.
  */
-function ao_block(int $compId, string $result, string $url = '', bool $isGroup = false): string {
-    $kit = ao_kit($compId, $result, $isGroup);
+function ao_block(int $compId, string $result, string $url = '', bool $isGroup = false, array $skip = []): string {
+    $kit = ao_kit($compId, $result, $isGroup, $skip);
     if (!$kit) return '';
 
     $navy = defined('RM_NAVY') ? RM_NAVY : '#17307A';

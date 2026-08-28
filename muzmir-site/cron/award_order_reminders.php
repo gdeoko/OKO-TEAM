@@ -2,16 +2,28 @@
 /**
  * Цепочка напоминаний о заказе наградной продукции по итогам конкурса.
  *
- * Кому: заявки со статусом graded и непустым результатом, по которым НЕТ
- * оплаченного заказа наград (awards_orders по application_id со статусом
- * paid/shipped/delivered). Когда: через 3, 15, 30 и 55 дней после
- * проставления результата (applications.graded_at, пишется в admin/grading.php
- * при сохранении итога; для старых заявок без метки — от created_at).
- * Заказ наград доступен 60 дней после результата — после 60 дней не шлём.
+ * Кому: заявки со статусом graded и непустым результатом. Молчим ровно в одном
+ * случае — когда человек уже взял ВЕСЬ положенный ему комплект.
+ *
+ * ДВЕ ЦЕПОЧКИ, ПО ТОМУ, ПОКУПАЛ ЧЕЛОВЕК ИЛИ НЕТ.
+ *   • Не заказывал ничего — письма через 3, 15, 30 и 55 дней после того, как он
+ *     узнал результат.
+ *   • Уже что-то оплатил, но комплект неполный — два письма, через 5 и 20 дней
+ *     ПОСЛЕ ОПЛАТЫ, и в них показывается только недостающее.
+ *
+ * Раньше второй цепочки не было вовсе: первый же оплаченный заказ выключал
+ * напоминания навсегда. Из 27 покупателей 19 остались без трофея по своему
+ * званию, семь коллективов — без именных дипломов на детей, и предложить им это
+ * было некому. Полный комплект считается по тому, что человеку действительно
+ * положено: трофей по званию, диплом на бланке, именные (только коллективу),
+ * благодарность (только если в заявке есть педагог).
+ *
+ * Заказ наград доступен 60 дней после результата — после 60 дней не шлём ничего,
+ * обе цепочки живут внутри этого окна.
  *
  * Идемпотентность: таблица reminder_log (app_id, kind, sent_at) + уникальный
- * индекс на пару app_id+kind, kind = award_order_<дней>. При догоняющем
- * запуске отправляется только самый поздний подходящий шаг, а не вся пачка.
+ * индекс на пару app_id+kind, kind = award_order_<дней> или award_addon_<дней>.
+ * При догоняющем запуске отправляется только самый поздний подходящий шаг.
  *
  * Письмо — фирменный лейаут core/result_mail.php (rm_mail_layout, синий
  * #17307A + золото #C79322), кладётся в mail_queue — реальную отправку делает
@@ -51,6 +63,13 @@ require_once __DIR__ . '/_lib.php';
 const JOB = 'award_order_reminders';
 /** Дни после результата, в которые шлём напоминания (по возрастанию). */
 const AWARD_REMINDER_STEPS = [3, 15, 30, 55];
+
+/* ШАГИ ДЛЯ ТЕХ, КТО УЖЕ ЧТО-ТО КУПИЛ.
+ *
+ * Считаются не от результата, а от дня оплаты: человек только что заплатил,
+ * письмо «доберите остальное» на следующее утро выглядит навязчиво. Два письма
+ * за всё окно — через 5 и через 20 дней, и оба только если комплект неполный. */
+const AWARD_ADDON_STEPS = [5, 20];
 /** Сколько дней после результата доступен заказ наград. */
 const AWARD_ORDER_WINDOW_DAYS = 60;
 
@@ -155,6 +174,83 @@ function award_top_result(array $apps): string {
     return $best;
 }
 
+/**
+ * ЧТО ЧЕЛОВЕК УЖЕ ОПЛАТИЛ ПО ЭТИМ ЗАЯВКАМ.
+ *
+ * Позиции сводим к четырём видам, которыми и торгует центр: 'trophy' (кубок,
+ * статуэтка, медаль — что положено по званию), 'diploma' (основной или
+ * дополнительный диплом), 'named' (именной), 'thanks' (благодарность педагогу).
+ *
+ * @param array $apps заявки одного адресата
+ * @return string[] виды, которые уже куплены
+ */
+function award_owned_kinds(array $apps): array {
+    $ids = [];
+    foreach ($apps as $a) $ids[] = (int) $a['id'];
+    if (!$ids) return [];
+    $in = implode(',', $ids);
+    $own = [];
+    try {
+        $rows = all("SELECT items FROM awards_orders
+                      WHERE application_id IN ($in) AND status IN ('paid','made','shipped','delivered')");
+    } catch (\Throwable $e) { return []; }
+    foreach ($rows as $r) {
+        foreach ((array) json_decode((string) $r['items'], true) as $it) {
+            if (!is_array($it)) continue;
+            $nm = mb_strtolower((string) ($it['item'] ?? ''));
+            if ($nm === '') continue;
+            if (str_contains($nm, 'кубок') || str_contains($nm, 'статуэт') || str_contains($nm, 'медал')) $own['trophy'] = true;
+            elseif (str_contains($nm, 'именн'))      $own['named']  = true;
+            elseif (str_contains($nm, 'благодар'))   $own['thanks'] = true;
+            elseif (str_contains($nm, 'диплом'))     $own['diploma'] = true;
+        }
+    }
+    return array_keys($own);
+}
+
+/** Когда человек в последний раз оплачивал заказ по этим заявкам (unix ts, 0 — не платил). */
+function award_last_paid_ts(array $apps): int {
+    $ids = [];
+    foreach ($apps as $a) $ids[] = (int) $a['id'];
+    if (!$ids) return 0;
+    $in = implode(',', $ids);
+    try {
+        $v = (string) scalar("SELECT MAX(COALESCE(NULLIF(made_at,''), created_at)) FROM awards_orders
+                               WHERE application_id IN ($in) AND status IN ('paid','made','shipped','delivered')");
+    } catch (\Throwable $e) { return 0; }
+    if (trim($v) === '') return 0;
+    $ts = strtotime($v);
+    return $ts !== false ? $ts : 0;
+}
+
+/**
+ * ЧЕГО У ЧЕЛОВЕКА ЕЩЁ НЕТ ИЗ ПОЛОЖЕННОГО.
+ *
+ * Раньше цепочка останавливалась на первом же оплаченном заказе: купил
+ * электронный диплом за 400 ₽ — и больше ни слова, хотя ни трофея по своему
+ * званию, ни именных дипломов на детей у него нет. Из 27 покупателей 19 остались
+ * без трофея, семь коллективов — без именных, и предложить им это было некому.
+ *
+ * Считаем по тому, что человеку действительно положено:
+ *   • трофей — всем, у кого есть звание (вид зависит от звания);
+ *   • диплом на бланке — всем;
+ *   • именной — только коллективам (у солиста диплом и так именной);
+ *   • благодарность — только если в заявке указан педагог.
+ * Полный комплект — писем нет вовсе.
+ *
+ * @return string[] недостающие виды
+ */
+function award_missing_kinds(array $apps, array $owned): array {
+    $need = [];
+    if (award_top_result($apps) !== '') $need[] = 'trophy';
+    $need[] = 'diploma';
+    if (award_any_group($apps)) $need[] = 'named';
+    foreach ($apps as $a) {
+        if (trim((string) ($a['teacher'] ?? '')) !== '') { $need[] = 'thanks'; break; }
+    }
+    return array_values(array_diff($need, $owned));
+}
+
 /** Есть ли среди заявок коллективная — тогда предлагаем и именной диплом. */
 function award_any_group(array $apps): bool {
     foreach ($apps as $a) if (trim((string) ($a['group_name'] ?? '')) !== '') return true;
@@ -190,7 +286,7 @@ function award_reminder_list(array $apps): string {
  * выглядит как прежде; при нескольких вместо одного звания идёт их перечень,
  * потому что напоминание одно на человека, а результаты у него разные.
  */
-function award_reminder_html(array $a, int $daysLeft, string $awardsUrl, array $apps = []): string {
+function award_reminder_html(array $a, int $daysLeft, string $awardsUrl, array $apps = [], array $owned = []): string {
     $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD; $muted = RM_MUTED;
     $card = RM_CARD; $line = RM_LINE;
 
@@ -202,14 +298,26 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl, array $
     if (!$apps) $apps = [$a];
     $many = count($apps) > 1;
 
-    $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . $navy . ';">Не забудьте заказать награды</h1>'
+    /* ТОМУ, КТО УЖЕ ПЛАТИЛ, НЕЛЬЗЯ ПИСАТЬ «НЕ ЗАБУДЬТЕ ЗАКАЗАТЬ».
+     *
+     * Он заказал — и письмо с таким заголовком читается как «ваш заказ потеряли».
+     * Для него это разговор о том, что к полученному можно добавить: витрина ниже
+     * уже показывает только недостающее (в ao_block уходит $owned). */
+    $isAddon = $owned !== [];
+    $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . $navy . ';">'
+        . ($isAddon ? 'К Вашей награде можно добавить' : 'Не забудьте заказать награды') . '</h1>'
         . '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . ($many
+        . ($isAddon
+            ? '<p style="margin:0 0 20px;">Спасибо за заказ — он в работе. По результату '
+              . '<b style="color:' . $navy . ';">«' . h($result) . '»</b> конкурса «' . h($comp) . '» '
+              . 'Вам положено ещё кое-что из наградного комплекта. Ниже — только то, чего у Вас пока нет.</p>'
+            : '')
+        . ($isAddon ? '' : ($many
             ? '<p style="margin:0 0 20px;">Не забудьте заказать награды по итогам конкурса «' . h($comp) . '». '
               . 'У Вас ' . count($apps) . ' ' . award_ru_apps(count($apps)) . ' с аттестационным результатом.</p>'
             : '<p style="margin:0 0 20px;">Не забудьте заказать награды по результату '
               . '<b style="color:' . $navy . ';">«' . h($result) . '»</b> конкурса «' . h($comp) . '». '
-              . h(rm_award_hint($result)) . '</p>')
+              . h(rm_award_hint($result)) . '</p>'))
         // Результат: одно звание крупно, несколько — перечнем.
         . ($many ? award_reminder_list($apps) :
             '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
@@ -230,12 +338,15 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl, array $
         // по почте, и ровно то, что положено по этому званию.
         // Коллективу предлагается ещё и именной диплом на каждого участника:
         // диплом ансамбля один, а детей в нём двадцать.
-        . ao_block((int) $a['competition_id'], award_top_result($apps), $awardsUrl, award_any_group($apps))
+        . ao_block((int) $a['competition_id'], award_top_result($apps), $awardsUrl, award_any_group($apps), $owned)
         . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Если наградная продукция Вам не нужна, просто оставьте это письмо без ответа.</p>';
 
     return mm_email_tx($inner, [
-        'preheader' => 'Заказ наград по результату «' . $result . '» доступен ещё ' . award_ru_days($daysLeft) . '.',
-        'hero'      => mm_cta_primary($awardsUrl, 'Заказать наградной материал', $result !== '' ? 'По результату: ' . $result : ''),
+        'preheader' => $isAddon
+            ? 'К заказанному можно добавить остальное — заказ открыт ещё ' . award_ru_days($daysLeft) . '.'
+            : 'Заказ наград по результату «' . $result . '» доступен ещё ' . award_ru_days($daysLeft) . '.',
+        'hero'      => mm_cta_primary($awardsUrl, $isAddon ? 'Дополнить заказ' : 'Заказать наградной материал',
+                                      $result !== '' ? 'По результату: ' . $result : ''),
         'actions'   => [['Личный кабинет', url('/cabinet')], ['Оставить отзыв', url('/reviews')]],
     ]);
 }
@@ -281,7 +392,7 @@ try {
     // Теперь годится любой из двух способов, и от него же считается срок.
     $rows = all(
         "SELECT a.id, a.number, a.competition_id, a.user_id, a.full_name, a.group_name, a.email,
-                a.result, a.graded_at, a.created_at, a.result_sent_at,
+                a.result, a.graded_at, a.created_at, a.result_sent_at, a.teacher,
                 c.name AS comp_name, c.results_mode, c.results_published_at
            FROM applications a
            JOIN competitions c ON c.id = a.competition_id
@@ -303,74 +414,102 @@ try {
      *
      * Отметка в reminder_log ставится по КАЖДОЙ заявке из письма: идемпотентность
      * сохраняется, и заявка, попавшая в письмо, второй раз шаг не отработает. */
-    $queued = 0; $expired = 0;
-    $groups = [];                       // адрес => [шаг => [заявки]]
+    $queued = 0; $expired = 0; $complete = 0;
+
+    /* СНАЧАЛА СОБИРАЕМ ЧЕЛОВЕКА ЦЕЛИКОМ, ПОТОМ РЕШАЕМ, ЧТО ЕМУ ПИСАТЬ.
+     *
+     * Комплект считается на адресат, а не на заявку: письмо одно на человека, и
+     * трофей, купленный по одной заявке, закрывает эту позицию для всех его
+     * заявок в конкурсе. Пока решение принималось по каждой заявке отдельно,
+     * человек с пятью номерами получил бы пять разных решений на одно письмо. */
+    $people = [];
     foreach ($rows as $a) {
-        $id = (int) $a['id'];
-
-        // Оплаченный заказ наград уже есть — напоминать не о чем.
-        $paidOrders = (int) scalar(
-            "SELECT COUNT(*) FROM awards_orders WHERE application_id=? AND status IN ('paid','shipped','delivered')",
-            [$id]
-        );
-        if ($paidOrders > 0) continue;
-
+        $id   = (int) $a['id'];
         $days = (int) floor((time() - award_graded_ts($a)) / 86400);
-        if ($days > AWARD_ORDER_WINDOW_DAYS) { $expired++; continue; } // окно заказа закрыто
-
-        // Самый поздний подходящий шаг цепочки (3/15/30/55): одно письмо за запуск.
-        $step = null;
-        foreach (AWARD_REMINDER_STEPS as $s) { if ($days >= $s) $step = $s; }
-        if ($step === null) continue;
-
-        if (award_reminder_sent($id, 'award_order_' . $step)) continue;
+        if ($days > AWARD_ORDER_WINDOW_DAYS) { $expired++; continue; }   // окно заказа закрыто
 
         $key = mb_strtolower(trim((string) $a['email']));
-        if ($key === '') $key = 'app#' . $id;          // без почты — сам по себе
+        if ($key === '') $key = 'app#' . $id;                            // без почты — сам по себе
         $a['_days_left'] = max(1, AWARD_ORDER_WINDOW_DAYS - $days);
-        $groups[$key][$step][] = $a;
+        $a['_days']      = $days;
+        $people[$key][]  = $a;
     }
 
-    foreach ($groups as $bySteps) {
-        foreach ($bySteps as $step => $apps) {
-            $first     = $apps[0];
-            $cnt       = count($apps);
-            $daysLeft  = (int) $first['_days_left'];
-            // При нескольких заявках ведём в раздел наград конкурса: какую
-            // заказывать, человек выбирает сам.
-            $awardsUrl = url('/awards') . '?comp=' . (int) $first['competition_id']
-                       . ($cnt === 1 ? '&app=' . (int) $first['id'] : '');
+    foreach ($people as $apps) {
+        $first  = $apps[0];
+        $owned  = award_owned_kinds($apps);
+        $missing = award_missing_kinds($apps, $owned);
 
-            $delivered = false;
+        // Взял всё положенное — писем больше нет. Единственный случай молчания.
+        if (!$missing) { $complete++; continue; }
 
-            // Письмо в очередь mail_queue.
-            $email = trim((string) $first['email']);
-            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $html = award_reminder_html($first, $daysLeft, $awardsUrl, $apps);
-                $subject = 'Не забудьте заказать награды - «' . $first['comp_name'] . '»';
-                if (mail_queue($email, (string) $first['full_name'], $subject, $html) > 0) $delivered = true;
-            }
+        $isAddon = $owned !== [];
+        if ($isAddon) {
+            /* Уже покупал: отсчёт от дня оплаты, два письма за всё окно.
+             * И только внутри тех же 60 дней — после них заказ всё равно закрыт. */
+            $paidTs = award_last_paid_ts($apps);
+            if ($paidTs <= 0) continue;
+            $sinceBuy = (int) floor((time() - $paidTs) / 86400);
+            $step = null;
+            foreach (AWARD_ADDON_STEPS as $s) { if ($sinceBuy >= $s) $step = $s; }
+            if ($step === null) continue;
+            $kind = 'award_addon_' . $step;
+        } else {
+            // Ничего не купил — прежняя цепочка от результата.
+            $step = null;
+            foreach (AWARD_REMINDER_STEPS as $s) { if ((int) $first['_days'] >= $s) $step = $s; }
+            if ($step === null) continue;
+            $kind = 'award_order_' . $step;
+        }
 
-            // In-app уведомление участнику.
-            if ((int) $first['user_id'] > 0 && function_exists('notify_user')) {
-                $body = $cnt === 1
+        // Идемпотентность прежняя: шаг отмечается по каждой заявке из письма.
+        $alreadySent = true;
+        foreach ($apps as $ap) { if (!award_reminder_sent((int) $ap['id'], $kind)) { $alreadySent = false; break; } }
+        if ($alreadySent) continue;
+
+        $cnt      = count($apps);
+        $daysLeft = (int) $first['_days_left'];
+        // При нескольких заявках ведём в раздел наград конкурса: какую
+        // заказывать, человек выбирает сам.
+        $awardsUrl = url('/awards') . '?comp=' . (int) $first['competition_id']
+                   . ($cnt === 1 ? '&app=' . (int) $first['id'] : '');
+
+        $delivered = false;
+
+        // Письмо в очередь mail_queue.
+        $email = trim((string) $first['email']);
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $html = award_reminder_html($first, $daysLeft, $awardsUrl, $apps, $owned);
+            $subject = $isAddon
+                ? 'Остальное к Вашей награде - «' . $first['comp_name'] . '»'
+                : 'Не забудьте заказать награды - «' . $first['comp_name'] . '»';
+            if (mail_queue($email, (string) $first['full_name'], $subject, $html) > 0) $delivered = true;
+        }
+
+        // In-app уведомление участнику.
+        if ((int) $first['user_id'] > 0 && function_exists('notify_user')) {
+            $body = $isAddon
+                ? 'К заказанному можно добавить остальное из положенного по результату «'
+                  . $first['result'] . '». Заказ доступен ещё ' . award_ru_days($daysLeft) . '.'
+                : ($cnt === 1
                     ? 'Результат «' . $first['result'] . '» на конкурсе «' . $first['comp_name'] . '». '
                       . 'Заказ доступен ещё ' . award_ru_days($daysLeft) . '.'
                     : 'Итоги по ' . $cnt . ' Вашим заявкам на конкурсе «' . $first['comp_name'] . '». '
-                      . 'Заказ наград доступен ещё ' . award_ru_days($daysLeft) . '.';
-                $nid = notify_user((int) $first['user_id'], 'Не забудьте заказать награды', $body, $awardsUrl, 'trophy');
-                if ($nid > 0) $delivered = true;
-            }
+                      . 'Заказ наград доступен ещё ' . award_ru_days($daysLeft) . '.');
+            $title = $isAddon ? 'Дополните наградной комплект' : 'Не забудьте заказать награды';
+            $nid = notify_user((int) $first['user_id'], $title, $body, $awardsUrl, 'trophy');
+            if ($nid > 0) $delivered = true;
+        }
 
-            if ($delivered) {
-                foreach ($apps as $ap) award_reminder_mark((int) $ap['id'], 'award_order_' . $step);
-                $queued++;
-                cron_log(JOB, sprintf('%s: шаг %d дн., заявок в письме %d, осталось %d дн.',
-                                      $email !== '' ? $email : ('#' . $first['id']), $step, $cnt, $daysLeft));
-            }
+        if ($delivered) {
+            foreach ($apps as $ap) award_reminder_mark((int) $ap['id'], $kind);
+            $queued++;
+            cron_log(JOB, sprintf('%s: %s шаг %d дн., заявок %d, не хватает: %s',
+                                  $email !== '' ? $email : ('#' . $first['id']),
+                                  $isAddon ? 'допродажа,' : 'напоминание,', $step, $cnt, implode('+', $missing)));
         }
     }
-    cron_log(JOB, "напоминания о заказе наград: отправлено $queued, окно 60 дн. истекло у $expired");
+    cron_log(JOB, "заказ наград: писем $queued, комплект уже полный у $complete, окно истекло у $expired");
 } catch (\Throwable $e) {
     cron_log(JOB, 'ОШИБКА: ' . $e->getMessage());
 } finally {
