@@ -81,7 +81,7 @@ if (!$isFinished) {
 require_once BASE_PATH . '/core/app_status.php';
 $results = all(
     "SELECT a.id AS app_id, a.user_id, a.full_name, a.group_name, a.is_group, a.city, a.institution, a.teacher,
-            a.nomination, a.age_category, a.work_title, a.result, a.score, a.video_url, a.video_platform,
+            a.nomination, a.age_category, a.work_title, a.result, a.extra_diploma, a.score, a.video_url, a.video_platform,
             d.number AS diploma_number
      FROM applications a
      LEFT JOIN diplomas d ON d.application_id = a.id
@@ -134,25 +134,29 @@ foreach ($artistGroups as $key => $g) {
     $artistSlugMap[$key] = $slugify($g['name']) . '-' . $cid;
 }
 
-/* Группировка по номинациям + статистика. */
-$byNomination = [];
-$cities = []; $grandPrix = 0; $laureates = 0;
-foreach ($results as $r) {
-    $nom = $r['nomination'] ?: 'Без номинации';
-    $byNomination[$nom][] = $r;
-    if (!empty($r['city'])) $cities[trim($r['city'])] = true;
-    if (mb_stripos((string) $r['result'], 'ГРАН-ПРИ') !== false) $grandPrix++;
-    elseif (mb_stripos((string) $r['result'], 'ЛАУРЕАТ') !== false) $laureates++;
-}
-ksort($byNomination, SORT_NATURAL | SORT_FLAG_CASE);
+/* ОДИН СПИСОК, БЕЗ ДЕЛЕНИЯ НА НОМИНАЦИИ.
+ *
+ * Раньше результаты стояли главами: «Вокальное искусство», за ним «Хореография»
+ * и так далее. Порядок глав задавала не заслуга, а алфавит, и вокалисты каждый
+ * раз оказывались первыми, а кто-то — всегда последним. Конкурс многожанровый,
+ * все аттестованы по одним правилам, и делить их на очередь незачем.
+ *
+ * Теперь список один и отсортирован по алфавиту: участник ищет себя поиском или
+ * глазами по букве, а не разбирается, в какую главу его записали. */
+$sortKey = static function (array $r): string {
+    $n = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
+    // Кавычки и служебные символы в начале сбивают алфавит: «Овация» уехала бы
+    // в конец списка, к знакам препинания.
+    return mb_strtolower(trim((string) $n, " \t\n\r\0\x0B\"'«»„“"));
+};
+usort($results, static fn(array $a, array $b): int => strcmp($sortKey($a), $sortKey($b)));
 
-/* Медиа: афиши/материалы конкурса (если загружены) и уникальные видео-ссылки победителей. */
-$posters = all("SELECT * FROM posters WHERE competition_id = ? ORDER BY id", [(int) $c['id']]);
-$videos = [];
-foreach ($results as $r) {
-    if (!empty($r['video_url']) && !isset($videos[$r['video_url']])) {
-        $videos[$r['video_url']] = ['name' => $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'], 'platform' => $r['video_platform'] ?: 'Видео'];
-    }
+/* Файл со списком результатов — тот же, что уходит в письме и в сообществе
+ * ВКонтакте (собирается пультом запуска, core/launch_run.php). Если он собран —
+ * даём скачать прямо со страницы. */
+$docxUrl = '';
+if (is_file(BASE_PATH . '/public/uploads/launch/results_' . (int) $c['id'] . '.docx')) {
+    $docxUrl = url('/uploads/launch/results_' . (int) $c['id'] . '.docx');
 }
 
 $vkUrl = cfgv('org_vk');
@@ -173,9 +177,9 @@ ob_start(); ?>
 .res-hero::before{content:"";position:absolute;left:50%;top:-60px;width:min(680px,100%);height:360px;transform:translateX(-50%);
   background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:-1}
 
-.res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}
-.res-stats .stat{position:relative;overflow:hidden}
-.res-stats .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
+/* Шапка списка: сколько всего и две кнопки — заказать награды и скачать список. */
+.res-top{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:0 0 24px}
+.res-total{text-align:center;color:var(--muted);font-size:.9rem;margin:0 0 16px}
 
 .res-search{position:sticky;top:74px;z-index:5;margin:0 auto 34px;max-width:560px}
 .res-search .field--float{margin:0}
@@ -184,42 +188,31 @@ ob_start(); ?>
 .res-count{text-align:center;color:var(--muted);font-size:.86rem;margin:-20px 0 30px}
 
 .res-search .field--float>input{box-shadow:var(--shadow-card)}
-.res-nom{margin-bottom:40px}
-.res-nom > h3{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);
-  padding-bottom:12px;margin:0 0 20px;color:var(--text);position:relative}
-.res-nom > h3::after{content:"";position:absolute;left:0;bottom:-1px;width:64px;height:2px;background:var(--grad-gold);border-radius:2px}
-.res-nom > h3 .n-count{font-family:var(--ff-body);font-size:.8rem;font-weight:700;color:var(--gold-ink);
-  background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:999px;padding:3px 11px}
-[data-theme="dark"] .res-nom > h3 .n-count{color:var(--gold)}
-
-.pcard{display:flex;flex-direction:column;gap:14px;padding:22px;position:relative;overflow:hidden}
-.pcard-corner{position:absolute;top:12px;right:12px;width:16px;height:16px;pointer-events:none;
-  border-top:1.5px solid var(--gold-2);border-right:1.5px solid var(--gold-2);border-top-right-radius:5px;opacity:.4;transition:opacity .3s}
-@media(hover:hover){.pcard:hover .pcard-corner{opacity:1}}
-/* Гран-при - выделенная карточка */
-.pcard--gp{background:radial-gradient(150% 100% at 100% 0,var(--gold-soft),transparent 55%),var(--panel)}
-.pcard--gp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-gold);opacity:.9}
-.pcard--gp .pcard-corner{opacity:.85;border-color:var(--gold)}
-.pcard--lau::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold-2);opacity:.5}
-.pcard-top{display:flex;gap:16px;align-items:center}
-.pring{flex:none;width:88px;height:88px}
-.pring .ring-num{font-size:1.5rem}
-.pring .ring-num small{font-size:.62rem}
-.pcard-id{flex:none;width:88px;height:88px;border-radius:16px;display:grid;place-items:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-deep)}
-[data-theme="dark"] .pcard-id{color:var(--gold)}
-.pcard-id svg{width:34px;height:34px}
-.pcard-name{min-width:0}
-.pcard-name b{font-family:var(--ff-display);letter-spacing:.01em;color:var(--text);font-size:1.12rem;
-  line-height:1.15;display:block;overflow-wrap:anywhere}
-.pcard-name b a{color:inherit}
-.pcard-name .pcard-work{color:var(--muted);font-size:.9rem;margin:4px 0 0;overflow-wrap:anywhere}
-.pcard-meta{display:flex;flex-wrap:wrap;gap:7px 14px;color:var(--text-dim);font-size:.86rem;
-  border-top:1px solid var(--line);padding-top:12px}
-.pcard-meta span{display:inline-flex;align-items:center;gap:6px}
-.pcard-meta svg{width:14px;height:14px;color:var(--gold-deep);flex:none}
-[data-theme="dark"] .pcard-meta svg{color:var(--gold)}
-.pcard-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:auto}
+/* СТРОКА РЕЗУЛЬТАТА.
+ *
+ * В одном ряду должно уместиться всё, за чем человек пришёл: кто выступал, с
+ * каким номером, откуда, от какого учреждения, что получил — основное звание и
+ * дополнительный диплом, — и кнопки заказа. Поэтому список идёт в одну колонку
+ * на всю ширину: две колонки заставляли резать текст, а названия коллективов и
+ * учреждений длинные. Слева — участник, справа — звания и действия; на телефоне
+ * всё выстраивается в столбик. */
+.rrow{display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-start;justify-content:space-between;
+  padding:20px 22px;position:relative;overflow:hidden;margin-bottom:12px}
+.rrow--gp{background:radial-gradient(150% 100% at 100% 0,var(--gold-soft),transparent 55%),var(--panel)}
+.rrow--gp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-gold);opacity:.9}
+.rrow--lau::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold-2);opacity:.5}
+.rrow-main{flex:1 1 340px;min-width:0}
+.rrow-main b{font-family:var(--ff-display);letter-spacing:.01em;color:var(--text);font-size:1.12rem;
+  line-height:1.2;display:block;overflow-wrap:anywhere}
+.rrow-main b a{color:inherit}
+.rrow-work{color:var(--muted);font-size:.92rem;margin:5px 0 0;overflow-wrap:anywhere}
+.rrow-meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--text-dim);font-size:.85rem;margin-top:10px}
+.rrow-meta span{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.rrow-meta svg{width:14px;height:14px;color:var(--gold-deep);flex:none}
+[data-theme="dark"] .rrow-meta svg{color:var(--gold)}
+.rrow-side{flex:0 1 300px;display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.rrow-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.rrow .btn{padding:9px 16px;font-size:.86rem}
 /* Афиша итогов над списком: та же, что в письме и в сообществе — человек сразу
    понимает, что попал куда шёл. Ширину держим по контейнеру, пропорции 16:9. */
 .res-poster-hero{max-width:1080px;margin:0 auto 26px;border-radius:var(--radius);overflow:hidden;
@@ -234,40 +227,32 @@ ob_start(); ?>
 [data-theme="dark"] .res-title.lau{color:var(--gold)}
 .res-title.dip{color:var(--text-dim);background:var(--panel);border:1px solid var(--glass-brd)}
 .res-title.part{color:var(--muted);background:var(--panel);border:1px solid var(--line)}
-.pcard .btn{padding:9px 16px;font-size:.86rem}
-.vk-link{display:inline-flex;align-items:center;gap:7px;font-size:.84rem;font-weight:700;color:var(--info);
-  padding:9px 15px;border-radius:999px;background:color-mix(in srgb,var(--info) 12%,transparent);
-  border:1px solid color-mix(in srgb,var(--info) 30%,transparent)}
-.vk-link svg{width:16px;height:16px}
-.vk-link:hover{color:var(--info);border-color:var(--info)}
+/* Дополнительный диплом — вторая награда, а не пояснение к первой: показываем
+   его отдельной строкой, чтобы человек видел обе свои. */
+.res-extra{display:inline-flex;align-items:flex-start;gap:7px;font-size:.86rem;line-height:1.35;
+  color:var(--gold-ink);background:var(--gold-soft);border:1px solid var(--glass-brd);
+  border-radius:12px;padding:7px 13px;overflow-wrap:anywhere}
+[data-theme="dark"] .res-extra{color:var(--gold)}
+.res-extra svg{width:15px;height:15px;flex:none;margin-top:1px}
+.res-extra i{font-style:normal;font-weight:700}
 
-.res-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 20px;display:none}
+.res-empty{text-align:center;color:var(--muted);padding:40px 20px;display:none}
 
-.res-media{display:flex;flex-wrap:wrap;gap:12px}
-.res-poster{width:150px;border:1px solid var(--glass-brd);border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow-card)}
-.res-poster img{width:100%;display:block}
-.res-video-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--panel);
-  border:1px solid var(--glass-brd);color:var(--text);font-size:.86rem;font-weight:600;box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
-.res-video-chip svg{color:var(--gold-deep)}
-[data-theme="dark"] .res-video-chip svg{color:var(--gold)}
-.res-video-chip:hover{border-color:var(--gold);color:var(--gold-2)}
-
-@media(max-width:860px){.res-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+  .rrow{padding:18px}
+  .rrow-side{flex:1 1 100%}
+}
 @media(max-width:560px){
   .res-search{top:66px}
-  .pcard-top{gap:13px}
-  .pring,.pcard-id{width:74px;height:74px}
-  .pring .ring-num{font-size:1.25rem}
 }
 /* Узкие экраны 360/390: без горизонтального оверфлоу, звание переносится по словам */
 @media(max-width:400px){
-  .pcard{padding:18px}
   .res-title{white-space:normal;font-size:.92rem;overflow-wrap:anywhere}
-  .pcard-foot{gap:9px}
-  .pcard .btn,.vk-link{width:100%;justify-content:center}
+  .rrow-acts{gap:8px}
+  .rrow .btn{width:100%;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){
-  .pcard-corner,.res-video-chip,.vk-link{transition:none}
+  .rrow,.res-title{transition:none}
 }
 </style>
 
@@ -314,11 +299,18 @@ ob_start(); ?>
       </div>
     <?php else: ?>
 
-      <div class="res-stats reveal">
-        <div class="stat"><b data-count="<?= count($results) ?>">0</b><span>Аттестационных результатов</span></div>
-        <div class="stat"><b data-count="<?= $grandPrix ?>">0</b><span>Гран-при</span></div>
-        <div class="stat"><b data-count="<?= $laureates ?>">0</b><span>Лауреатов</span></div>
-        <div class="stat"><b data-count="<?= count($cities) ?>">0</b><span>Городов и регионов</span></div>
+      <p class="res-total reveal">Аттестационных результатов в списке: <b><?= count($results) ?></b>. Список общий, без деления на номинации, по алфавиту.</p>
+
+      <?php /* ДВЕ КНОПКИ НАД СПИСКОМ. Заказ наград — то, зачем участник сюда
+               чаще всего и приходит; файл со списком — тот же, что ушёл в письме
+               и в сообществе, его скачивают учреждения и педагоги целиком. */ ?>
+      <div class="res-top reveal">
+        <a class="btn btn--primary" href="<?= url('/awards') ?>?comp=<?= (int) $c['id'] ?>">Заказать награды</a>
+        <?php if ($docxUrl !== ''): ?>
+          <a class="btn btn--ghost" href="<?= h($docxUrl) ?>" download>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>Скачать список результатов
+          </a>
+        <?php endif; ?>
       </div>
 
       <div class="res-search reveal">
@@ -331,107 +323,66 @@ ob_start(); ?>
       <p class="res-count" id="resCount" aria-live="polite"></p>
 
       <div id="resList">
-      <?php foreach ($byNomination as $nom => $rows): ?>
-        <div class="res-nom reveal" data-nom>
-          <h3>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-            <span><?= h($nom) ?></span>
-          </h3>
-          <div class="grid grid-2">
-          <?php foreach ($rows as $i => $r):
-            $displayName = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
-            $aslug = $artistSlugMap[mb_strtolower(trim($r['full_name']))] ?? null;
-            $tone = $titleTone((string) $r['result']);
-            $score = is_numeric($r['score']) ? (float) $r['score'] : null;
-            $ringPct = $score !== null ? max(0, min(100, $score * 10)) : 0;
-            $needle = mb_strtolower(trim($displayName . ' ' . $r['full_name'] . ' ' . $r['diploma_number'] . ' ' . $r['work_title'] . ' ' . $r['city']));
-          ?>
-            <div class="card pcard pcard--<?= $tone ?> reveal" style="--i:<?= $i ?>" data-item data-search="<?= h($needle) ?>">
-              <span class="pcard-corner" aria-hidden="true"></span>
-              <div class="pcard-top">
-                <?php if ($score !== null): ?>
-                  <div class="stat-ring pring" data-value="<?= $ringPct ?>">
-                    <svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="52"></circle><circle class="ring-val ring-fill" cx="60" cy="60" r="52"></circle></svg>
-                    <div class="ring-num"><?= h(rtrim(rtrim(number_format($score, 1, '.', ''), '0'), '.')) ?><small>/10</small></div>
-                  </div>
-                <?php else: ?>
-                  <div class="pcard-id">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9L6.4 19.5l1.1-6L3.1 9.3l6-.8z"/></svg>
-                  </div>
-                <?php endif; ?>
-                <div class="pcard-name">
-                  <b><?php if ($aslug): ?><a href="<?= url('/artist/' . $aslug) ?>"><?= h($displayName) ?></a><?php else: ?><?= h($displayName) ?><?php endif; ?></b>
-                  <?php if ($r['work_title']): ?><p class="pcard-work"><?= h(wt_show((string) $r['work_title'])) ?></p><?php endif; ?>
-                </div>
-              </div>
-
-              <?php if ($r['age_category'] || $r['city'] || $r['institution']): ?>
-                <div class="pcard-meta">
-                  <?php if ($r['age_category']): ?>
-                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><?= h($r['age_category']) ?></span>
-                  <?php endif; ?>
-                  <?php if ($r['city']):
-                    // Город хранится канонично «Страна, г. Город» — в бейдже показываем «г. Город».
-                    $cityBadge = ($cp = mb_strrpos((string) $r['city'], ',')) !== false
-                        ? trim(mb_substr((string) $r['city'], $cp + 1)) : (string) $r['city']; ?>
-                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($cityBadge) ?></span>
-                  <?php endif; ?>
-                  <?php if ($r['institution']): ?>
-                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/></svg><?= h($r['institution']) ?></span>
-                  <?php endif; ?>
-                </div>
+      <?php foreach ($results as $i => $r):
+        $displayName = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
+        $aslug = $artistSlugMap[mb_strtolower(trim($r['full_name']))] ?? null;
+        $tone  = $titleTone((string) $r['result']);
+        $extra = trim((string) ($r['extra_diploma'] ?? ''));
+        $needle = mb_strtolower(trim($displayName . ' ' . $r['full_name'] . ' ' . $r['diploma_number'] . ' '
+                . $r['work_title'] . ' ' . $r['city'] . ' ' . $r['institution'] . ' ' . $r['result'] . ' ' . $extra));
+      ?>
+        <article class="card rrow rrow--<?= $tone ?> reveal" style="--i:<?= min($i, 12) ?>" data-item data-search="<?= h($needle) ?>">
+          <div class="rrow-main">
+            <b><?php if ($aslug): ?><a href="<?= url('/artist/' . $aslug) ?>"><?= h($displayName) ?></a><?php else: ?><?= h($displayName) ?><?php endif; ?></b>
+            <?php if ($r['work_title']): ?><p class="rrow-work">Конкурсный номер: <?= h(wt_show((string) $r['work_title'])) ?></p><?php endif; ?>
+            <div class="rrow-meta">
+              <?php if ($r['age_category']): ?>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><?= h($r['age_category']) ?></span>
               <?php endif; ?>
-
-              <div class="pcard-foot">
-                <span class="res-title <?= $tone ?>">
-                  <?php if ($tone === 'gp'): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M5 4h14v3a7 7 0 0 1-14 0zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg><?php endif; ?>
-                  <?= h($r['result']) ?>
-                </span>
-                <?php /* КНОПКА ЗАКАЗА — ПРЯМО У СВОЕЙ СТРОКИ.
-                          Участник нашёл себя в списке — и заказывает награду отсюда же,
-                          не разыскивая раздел наград и не выбирая заявку заново: ссылка
-                          уже знает и конкурс, и номер заявки. */ ?>
-                <a class="btn btn--primary btn--sm res-order"
-                   href="<?= url('/awards') ?>?comp=<?= (int) $c['id'] ?>&app=<?= (int) $r['app_id'] ?>">Заказать награду</a>
-                <?php if (!empty($r['diploma_number'])): ?>
-                  <a class="btn btn--ghost btn--sm" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a>
-                <?php endif; ?>
-              </div>
+              <?php if ($r['city']): /* Город хранится канонично: «Страна, г. Город» — показываем целиком. */ ?>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($r['city']) ?></span>
+              <?php endif; ?>
+              <?php if ($r['institution']): ?>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/></svg><?= h($r['institution']) ?></span>
+              <?php endif; ?>
             </div>
-          <?php endforeach; ?>
           </div>
-        </div>
+
+          <div class="rrow-side">
+            <span class="res-title <?= $tone ?>">
+              <?php if ($tone === 'gp'): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M5 4h14v3a7 7 0 0 1-14 0zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg><?php endif; ?>
+              <?= h($r['result']) ?>
+            </span>
+            <?php if ($extra !== ''): ?>
+              <span class="res-extra">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>
+                <span>Дополнительный диплом<br><i><?= h($extra) ?></i></span>
+              </span>
+            <?php endif; ?>
+            <div class="rrow-acts">
+              <?php /* Заказ — прямо у своей строки: ссылка уже знает и конкурс, и номер заявки. */ ?>
+              <a class="btn btn--primary btn--sm res-order"
+                 href="<?= url('/awards') ?>?comp=<?= (int) $c['id'] ?>&app=<?= (int) $r['app_id'] ?>">Заказать награды</a>
+              <?php /* ССЫЛКИ НА ВЫСТУПЛЕНИЕ ЗДЕСЬ НЕТ И НЕ ДОЛЖНО БЫТЬ.
+                        Участник присылал видео для жюри, а не для публикации:
+                        это чужой файл на чужом облаке, часто с детьми в кадре и
+                        без согласия на показ. Список результатов такие ссылки не
+                        раздаёт (правило владельца, 28.08.2026). */ ?>
+              <?php if (!empty($r['diploma_number'])): ?>
+                <a class="btn btn--ghost btn--sm" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a>
+              <?php endif; ?>
+            </div>
+          </div>
+        </article>
       <?php endforeach; ?>
       <div class="res-empty" id="resEmpty">По вашему запросу ничего не найдено. Уточните фамилию или номер диплома.</div>
       </div>
-
-      <?php if ($posters): ?>
-        <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Материалы</p><h2>Афиши конкурса</h2></div>
-        <div class="res-media reveal" style="margin-bottom:36px">
-          <?php foreach ($posters as $p): ?>
-            <a class="res-poster" href="<?= h($p['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($p['image_path']) ?>" alt="Афиша конкурса «<?= h($c['name']) ?>» - Культурного центра «Музыкальный Мир»" loading="lazy"></a>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-
-      <?php if ($videos): ?>
-        <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Смотрите</p><h2>Видео-номера участников</h2></div>
-        <div class="res-media reveal">
-          <?php foreach ($videos as $vurl => $v): ?>
-            <a class="res-video-chip" href="<?= h($vurl) ?>" target="_blank" rel="noopener">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <?= h($v['name']) ?> · <?= h($v['platform']) ?>
-            </a>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
 
       <script>
       (function () {
         var inp = document.getElementById('resSearch');
         if (!inp) return;
         var items = [].slice.call(document.querySelectorAll('[data-item]'));
-        var noms  = [].slice.call(document.querySelectorAll('[data-nom]'));
         var empty = document.getElementById('resEmpty');
         var count = document.getElementById('resCount');
         var total = items.length;
@@ -442,10 +393,6 @@ ob_start(); ?>
             var ok = !q || (el.getAttribute('data-search') || '').indexOf(q) !== -1;
             el.style.display = ok ? '' : 'none';
             if (ok) shown++;
-          });
-          noms.forEach(function (n) {
-            var any = n.querySelector('[data-item]:not([style*="display: none"])');
-            n.style.display = any ? '' : 'none';
           });
           empty.style.display = shown ? 'none' : 'block';
           count.textContent = q ? ('Найдено: ' + shown + ' из ' + total) : '';
@@ -460,7 +407,7 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 $metaDesc = $results
-    ? 'Результаты конкурса «' . $c['name'] . '»: ' . count($results) . ' аттестационных результатов, ' . count($byNomination) . ' номинаций. Культурного центра «Музыкальный Мир».'
+    ? 'Результаты конкурса «' . $c['name'] . '»: ' . count($results) . ' аттестационных результатов. Культурный центр «Музыкальный Мир».'
     : 'Результаты конкурса «' . $c['name'] . '» - Культурного центра «Музыкальный Мир».';
 render_page('Результаты - ' . $c['name'], $content, [
     'active'   => '/competitions',
