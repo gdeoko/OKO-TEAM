@@ -105,12 +105,23 @@ function agent_chat_proxy(string $url, string $token, string $text, string $sess
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode(['text' => $text, 'session' => $session, 'user_id' => $uid], JSON_UNESCAPED_UNICODE),
+        /* Внешнему мозгу нужны те же правила, по которым отвечает свой:
+         * иначе он ответит «как ассистент», без знаний центра и его манеры. */
+        CURLOPT_POSTFIELDS     => json_encode([
+            'text'    => $text,
+            'session' => $session,
+            'user_id' => $uid,
+            'system'  => function_exists('chat_system_prompt') ? chat_system_prompt() : '',
+        ], JSON_UNESCAPED_UNICODE),
         CURLOPT_HTTPHEADER     => array_values(array_filter([
             'Content-Type: application/json',
             $token ? 'Authorization: Bearer ' . $token : null,
         ])),
-        CURLOPT_TIMEOUT        => 15,
+        /* Запасной мозг — это живой кабинет ChatGPT в браузере агента, и ответ
+         * оттуда идёт около полуминуты. Пятнадцати секунд не хватало никогда:
+         * запрос обрывался, и участник получал заготовку. Ответ в чате всё
+         * равно показывается с задержкой, так что подождать можно. */
+        CURLOPT_TIMEOUT        => 60,
     ]);
     $resp = curl_exec($ch);
     $err = curl_errno($ch);
