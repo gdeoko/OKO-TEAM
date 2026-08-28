@@ -1162,7 +1162,10 @@ function buildUI() {
   doc.body.appendChild(w);
   ui.wrap = w;
   ui.cv = w.querySelector(".rcf-cv");
-  ui.cab = w.querySelector(".rcf-cab");
+  /* Узла .rcf-cab в разметке нет с тех пор, как кабина стала
+     объёмной: плоская рама живёт в ui.cabFrame и подставляется
+     отдельно. Ссылку не заводим - она годами была пустой, а код
+     вокруг неё делал вид, что работает. */
   ui.hud = w.querySelector(".rcf-hud");
   ui.cap = w.querySelector(".rcf-cap");
   ui.nav = w.querySelector(".rcf-nav");
@@ -5373,12 +5376,16 @@ function bindControls() {
        срабатывали на одно нажатие: рычаг прибавлял тягу, окно тут же
        вычитало ход. Корабль дёргался назад на «прибавить», а полоска
        показывала обратное тому, что он делает. */
-    var наРычаге = e.target && e.target.closest && e.target.closest(".rcf-thr");
     /* Пробел и стрелки принадлежат тому, что сейчас в фокусе. Раньше
        пробел на клавише СТОП не нажимал её, а прибавлял ход: человек
        жал «остановиться», и корабль разгонялся. Enter при этом
        работал, то есть пультом с клавиатуры пользоваться было
-       нельзя. */
+       нельзя.
+
+       Рычаг тяги сюда тоже попадает: он объявлен как ползунок с
+       tabindex, и стрелки на нём разбирает его собственный
+       обработчик. Отдельной проверки на рычаг здесь больше нет - она
+       была недостижима. */
     var наОргане = e.target && e.target.closest &&
                    e.target.closest("button, a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
     if (наОргане) return;
@@ -5387,11 +5394,9 @@ function bindControls() {
        вне рычага давало задний ход, вверх на рычаге прибавляло тягу,
        и человек не мог понять, что делает его же клавиша. */
     if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === " ") {
-      if (наРычаге && e.key !== " ") return;
       F.v += 0.14; e.preventDefault(); manual();
     }
     if (e.key === "ArrowDown" || e.key === "PageDown") {
-      if (наРычаге) return;
       F.v -= 0.14; e.preventDefault(); manual();
     }
   });
@@ -7857,7 +7862,6 @@ function open() {
      масштабе, и игра обязана принять кадр в том же виде. Готовность
      рамки проверяем ещё раз - между сборкой интерфейса и открытием
      могла смениться ориентация, а с ней и картинка. */
-  if (ui.cab && ui.cab.complete && ui.cab.naturalWidth) ui.wrap.classList.add("has-cab");
   ui.wrap.classList.toggle("rcf-seam", seamless);
   F.brief = !seamless;
   F.orbit = null;
@@ -8477,13 +8481,11 @@ function shoot() {
     /* Корпус кабины поверх: снимок должен выглядеть так же, как
        кадр, который человек видел */
     /* Раму на снимок берём ту, что реально стоит в кадре. Узла
-       .rcf-cab в разметке нет с тех пор, как кабина стала объёмной, и
-       ui.cab всегда был пуст: обещание «снимок выглядит так же, как
-       кадр, который человек видел» не выполнялось - сохранялся голый
-       космос без рамы. Плоская рама живёт в ui.cabFrame. */
-    var рама = (ui.cab && ui.cab.complete && ui.cab.naturalWidth) ? ui.cab
-             : (ui.cabFrame && ui.cabFrame.complete && ui.cabFrame.naturalWidth) ? ui.cabFrame
-             : null;
+       .rcf-cab в разметке нет с тех пор, как кабина стала объёмной:
+       обещание «снимок выглядит так же, как кадр, который человек
+       видел» не выполнялось, сохранялся голый космос без рамы.
+       Плоская рама живёт в ui.cabFrame. */
+    var рама = (ui.cabFrame && ui.cabFrame.complete && ui.cabFrame.naturalWidth) ? ui.cabFrame : null;
     if (рама) {
       var iw = рама.naturalWidth, ih = рама.naturalHeight;
       var sc = Math.max(W / iw, H / ih);
@@ -9934,10 +9936,6 @@ function stage(k) {
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
   F.free = false;
   cabSrc();
-  if (ui.cab) {
-    if (ui.cab.complete && ui.cab.naturalWidth) ui.wrap.classList.add("has-cab");
-    else ui.cab.onload = function () { if (ui.wrap) ui.wrap.classList.add("has-cab"); };
-  }
   /* ── Разгрузка салона ────────────────────────────────────
      Из окна корабля виден только ближний космос: Земля, Луна и
      звёзды. Дальние галактики, туманности, пояс астероидов и
@@ -10041,7 +10039,6 @@ function stageOff() {
     return;
   }
   cabinDrop();
-  модальность(false);
   /* Вышли из корабля назад по странице - гул смолкает */
   if (g.RC_SOUND && g.RC_SOUND.flight && !F.open) { try { g.RC_SOUND.flight(false); } catch (e) {} }
   F.stage = false;

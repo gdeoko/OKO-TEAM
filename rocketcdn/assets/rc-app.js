@@ -688,7 +688,7 @@ function bindErr(field, wrap, bad) {
 function validate(form) {
   var ok = true, first = null;
   $$("[required]", form).forEach(function (f) {
-    var wrap = f.closest(".field") || f.parentNode, val = (f.value || "").trim(), bad = false;
+    var wrap = f.closest(".field") || f.closest(".consent") || f.parentNode, val = (f.value || "").trim(), bad = false;
     if (f.type === "checkbox") bad = !f.checked;
     else if (!val) bad = true;
     else if (f.dataset.kind === "contact") bad = !(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(val) || (val.replace(/\D/g, "").length >= 10));
@@ -764,12 +764,21 @@ function wireForm(form, kind) {
     });
   });
 
-  $$("input, textarea", form).forEach(function (f) {
-    f.addEventListener("input", function () {
-      var w = f.closest(".field");
-      if (w) w.classList.remove("bad");
+  /* Метку ошибки снимаем ровно с той обёртки, на которую её и
+     повесила проверка. Раньше здесь искали только .field, а у флажка
+     согласия обёртка другая (.consent): человек ставил галочку, поля
+     белели, а рамка вокруг согласия и подпись под ним оставались
+     красными. Событие у флажка тоже своё - change, а не input. */
+  $$("input, textarea, select", form).forEach(function (f) {
+    var снять = function () {
+      var w = f.closest(".field") || f.closest(".consent") || f.parentNode;
+      if (w && w.classList) w.classList.remove("bad");
       bindErr(f, w, false);
-    });
+    };
+    f.addEventListener("input", снять);
+    if (f.type === "checkbox" || f.type === "radio" || f.tagName === "SELECT") {
+      f.addEventListener("change", снять);
+    }
   });
 }
 
@@ -855,8 +864,21 @@ function boot() {
       }
     });
     if (on) {
-      var первая = drawer.querySelector("a[href], button");
-      if (первая) { try { первая.focus({ preventScroll: true }); } catch (eФ) {} }
+      /* Фокус ставим не сразу: у шторки анимируется сама видимость, и
+         в тот же тик, когда навешен класс, она ещё hidden - focus()
+         на невидимом узле молча ничего не делает. Целимся, пока не
+         попадём, как это сделано у окна заявки и у полёта. */
+      var попыток = 0;
+      (function целиться() {
+        if (!drawer.classList.contains("on")) return;
+        var видно = getComputedStyle(drawer).visibility !== "hidden";
+        var первая = видно ? drawer.querySelector("a[href], button") : null;
+        if (первая) {
+          try { первая.focus({ preventScroll: true }); } catch (eФ) {}
+          if (document.activeElement === первая) return;
+        }
+        if (++попыток < 90) requestAnimationFrame(целиться);
+      })();
     } else if (шторкаНазад && шторкаНазад.focus) {
       var куда = шторкаНазад;
       шторкаНазад = null;
@@ -1292,4 +1314,55 @@ function boot() {
    «надёжность» и «что входит» оставались пустыми. */
 if (document.readyState === "complete") boot();
 else document.addEventListener("DOMContentLoaded", boot);
+
+/* ── Поворот телефона держит ДОЛЮ прочитанного ───────────────
+   Страница это фильм на прокрутке, и его высота в двух положениях
+   разная: 13226 точек в портрете против 11232 в альбоме. Браузер при
+   повороте сохраняет число точек, а не долю, поэтому доля скачет, и
+   человек оказывается в другом акте.
+
+   Замер на живой странице: с середины (доля 0,615, акт «Сценарии»)
+   три поворота подряд дали сдвиги +1704, +2025 и +1345 точек и
+   положили человека ровно на дно, в финал. Читал про сценарии,
+   повернул телефон дважды - смотришь титры.
+
+   Держим долю: где человек читал, там и останется. */
+(function поворот() {
+  var доля = 0, тик = 0, возвращаем = 0;
+  var шир = innerWidth, выс = innerHeight;
+  function запомнить() {
+    var макс = document.documentElement.scrollHeight - innerHeight;
+    доля = макс > 0 ? scrollY / макс : 0;
+  }
+  addEventListener("scroll", function () {
+    /* Пока идёт возврат после поворота, долю не переписываем: высота
+       документа в эти доли секунды ещё считается, и запись с неё
+       увела бы человека туда же, откуда мы его возвращаем. */
+    if (возвращаем || тик) return;
+    тик = requestAnimationFrame(function () { тик = 0; запомнить(); });
+  }, { passive: true });
+  запомнить();
+  addEventListener("resize", function () {
+    /* Смена высоты сама по себе поворотом не считается: на телефоне
+       она меняется каждый раз, когда прячется адресная строка. Ждём
+       именно смены стороны. */
+    var былоШире = шир > выс;
+    шир = innerWidth; выс = innerHeight;
+    if (былоШире === (шир > выс)) return;
+    var д = доля;
+    возвращаем++;
+    var вернуть = function (последний) {
+      var макс = document.documentElement.scrollHeight - innerHeight;
+      if (макс > 0) { try { window.scrollTo(0, Math.round(макс * д)); } catch (e) {} }
+      доля = д;
+      if (последний) возвращаем = Math.max(0, возвращаем - 1);
+    };
+    /* Раскладка после поворота досчитывается не сразу: возвращаемся
+       несколько раз, пока высота документа не устоится. */
+    setTimeout(вернуть, 60);
+    setTimeout(вернуть, 320);
+    setTimeout(вернуть, 720);
+    setTimeout(function () { вернуть(true); }, 1400);
+  }, { passive: true });
+})();
 })();

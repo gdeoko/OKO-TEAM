@@ -61,11 +61,18 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
     var cards = $$(":scope > *", r.track).filter(function (el) {
       return el.nodeType === 1;
     });
-    if (cards.length === r.cards.length && r.dots.children.length === cards.length) {
+    /* Пересобираем не только когда изменилось ЧИСЛО карточек, но и
+       когда сменился язык: подписи точек берут заголовок карточки, а
+       он приходит из словаря. Пока проверялось одно число, английская
+       страница оставалась с русскими подписями - ровно тот дефект,
+       который в этом же круге и чинили. */
+    var язык = d.documentElement.lang || "ru";
+    if (cards.length === r.cards.length && r.dots.children.length === cards.length && r.язык === язык) {
       r.cards = cards;
       return;
     }
     r.cards = cards;
+    r.язык = язык;
 
     /* Точки ленты. Три вещи, из-за которых они были беднее, чем
        выглядели.
@@ -83,7 +90,13 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
     var анг = (d.documentElement.lang === "en");
     var html = "";
     for (var i = 0; i < cards.length; i++) {
-      var загл = cards[i].querySelector("h2, h3, h4, .ttl, b");
+      /* Заголовок ищем по порядку важности, а не одним списком:
+         querySelector отдаёт первый подходящий по документу, и в
+         карточках «Как работает» первым шёл <b> из отсечки времени -
+         подписи выходили «Карточка 1 из 6: 0», «...: 3», «...: 9». */
+      var загл = cards[i].querySelector("h2, h3, h4") ||
+                 cards[i].querySelector(".ttl") ||
+                 cards[i].querySelector("b");
       var имя = загл ? загл.textContent.replace(/\s+/g, " ").trim().slice(0, 60) : "";
       var подпись = анг
         ? ("Card " + (i + 1) + " of " + cards.length + (имя ? ": " + имя : ""))
@@ -92,6 +105,15 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
         подпись.replace(/"/g, "&quot;") + '" data-i="' + i + '"><i></i></button>';
     }
     r.dots.innerHTML = html;
+    /* Одна точка в кольце обхода нужна СРАЗУ. Раньше tabindex="0"
+       навешивала только отрисовка активной точки, а она не звалась,
+       пока лента не въедет в кадр: у ленты ниже сгиба вся механика
+       вкладок была недостижима. */
+    var перваяТочка = r.dots.firstElementChild;
+    if (перваяТочка) {
+      перваяТочка.setAttribute("tabindex", "0");
+      перваяТочка.setAttribute("aria-selected", "true");
+    }
     var em = $("em", r.cnt);
     if (em) em.textContent = String(cards.length);
     r.idx = -1;
@@ -221,7 +243,7 @@ var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getB
     /* Карточки в ленты досыпаются из словаря и из админки:
        пока это происходит, держим счётчик в курсе */
     g.addEventListener("rc:content", schedule);
-    d.addEventListener("rc:lang", schedule);
+    d.addEventListener("rc:lang", function () { setTimeout(schedule, 160); });
     /* Ленты наполняются и переписываются из словаря, из админки и при
        смене языка. Следим за самим содержимым, а не за моментами,
        когда его меняют: иначе счётчик рано или поздно отстанет. */

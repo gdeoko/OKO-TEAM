@@ -1269,9 +1269,15 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
    ещё не видел и куда не заходил. Снимаем видимостью: она и с глаз
    убирает, и из обхода.
 
-   Два исключения. Проектор RocketVPN и его голограмма в этом
-   режиме РАБОЧИЕ: проектор стоит в кадре финала, по нему нажимают,
-   и он единственный, кому слой оставляет нажатия. */
+   Исключений нет. Сначала я вывел из-под этого правила проектор
+   RocketVPN, считая его рабочим в режиме сцены, - и был неправ
+   дважды. Проектор в этом режиме и так погашен правилом
+   `.rc-flight:has(.rcf-brief:not(.off)) > .rc-vpn-projector` с
+   !important (класс `off` у брифинга не ставится нигде), а нажатия
+   в режиме сцены не получает НИКТО: ниже стоит
+   `.rc-flight.rcf-stage * { pointer-events: none !important }`.
+   Заодно исключение возвращало видимость двум кнопкам ЗАКРЫТОЙ
+   голограммы - ровно то, против чего написано само правило. */
 .rc-flight.rcf-stage button,
 .rc-flight.rcf-stage a[href],
 .rc-flight.rcf-stage input,
@@ -1279,11 +1285,6 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rc-flight.rcf-stage textarea,
 .rc-flight.rcf-stage [tabindex]:not([tabindex="-1"]) {
   visibility: hidden;
-}
-.rc-flight.rcf-stage .rc-vpn-projector,
-.rc-flight.rcf-stage .rc-vpn-holo,
-.rc-flight.rcf-stage .rc-vpn-holo * {
-  visibility: visible;
 }
 /* Салон виден всё время, пока мы внутри корабля, а не только на
    подъезде: человек вошёл в помещение и обходит его взглядом.
@@ -4300,6 +4301,20 @@ html.rc-deep-inside .rcf-fab {
   opacity: 0 !important;
   visibility: hidden;
   pointer-events: none !important;
+}
+/* Кнопка «наверх» - единственный видимый выход из финала: шапка,
+   логотип и липкая панель там погашены все, на любом экране. Она
+   маленькая, стоит в углу над голограммой и кадру не мешает.
+
+   Сначала это правило стояло только для телефона, и на мониторе
+   получился клавиатурный тупик: страница внутри корабля заглушена,
+   голограмма пульта собирается по доле подъезда и при заходе
+   прыжком фокуса может не собраться вовсе - живых элементов в
+   документе ноль, и выйти нечем. */
+html.rc-deep-inside .totop.on {
+  opacity: .82 !important;
+  visibility: visible;
+  pointer-events: auto !important;
 }
 
 /* HUD is the physical glass boundary. Child projections never receive

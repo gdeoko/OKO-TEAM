@@ -23,6 +23,7 @@ foreach ($pages as $page) {
     $file = $root . '/' . $page;
     if (!is_file($file)) continue;
     $html = file_get_contents($file);
+    $было = $html;
 
     $html = preg_replace_callback(
         '~(src|href)="(assets/[^"?#]+\.(?:js|css))(\?v=[0-9]+)?"~',
@@ -35,8 +36,17 @@ foreach ($pages as $page) {
         $html
     );
 
-    file_put_contents($file, $html);
-    echo $page . ": готово\n";
+    /* Пишем ТОЛЬКО если что-то изменилось. Безусловная запись
+       двигала время правки каждой страницы на любой выкладке, а по
+       нему ниже считается lastmod карты сайта: дата уезжала вперёд
+       даже там, где менялись одни ассеты, и обещание «берём дату из
+       самого файла страницы» превращалось в «берём дату выкладки». */
+    if ($html !== $было) {
+        file_put_contents($file, $html);
+        echo $page . ": готово\n";
+    } else {
+        echo $page . ": без изменений\n";
+    }
 }
 echo "ссылок проштамповано: {$total}\n";
 
