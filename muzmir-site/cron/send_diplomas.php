@@ -542,9 +542,54 @@ function _diploma_group_html(array $blocks, string $name, string $comp): string 
  * Возвращает [абсолютный путь PDF диплома для вложения, HTTPS-URL PNG-превью для тела].
  * PNG-превью генерим из PDF через pdftoppm (кэшируем в public/diplomas/preview_<num>.png).
  */
+/**
+ * БЛАНКА НЕТ — ЗНАЧИТ РИСУЕМ ЕГО ЗДЕСЬ, А НЕ ОТКЛАДЫВАЕМ ПИСЬМО.
+ *
+ * Отправка умела брать только готовый pdf_path. Пока файл всегда рисовался при
+ * оплате заказа, это работало; но бланк приходится перевыпускать — исправили ФИО
+ * на именном, поправили конкурсный номер в заявке, — и тогда путь обнуляют. Для
+ * крона такой диплом выглядел как «PDF собрать не удалось»: пять попыток, и он
+ * выпадал из очереди навсегда. Человек оплатил и не получил ничего.
+ *
+ * Опции берём по типу: у именного и благодарности документ выписан на конкретного
+ * человека, и его ФИО лежит в diplomas.result — именно оно должно попасть на бланк
+ * золотом, а название коллектива уходит в блок данных ниже.
+ *
+ * @return string путь к готовому PDF или '' если собрать не вышло
+ */
+function _diploma_make_pdf(array $d): string {
+    if (!function_exists('diploma_pdf_html')) return '';
+    $a = one("SELECT * FROM applications WHERE id=?", [(int) ($d['application_id'] ?? 0)]);
+    if (!$a) return '';
+    $type = (string) ($d['type'] ?? 'main');
+    $who  = trim((string) ($d['result'] ?? ''));
+    $opt  = [
+        'extra'  => $type === 'extra',
+        'thanks' => $type === 'thanks',
+        'named'  => $type === 'named',
+    ];
+    // Номер бланка обязан совпасть с реестром, иначе QR ведёт в «не найдено».
+    $a['diploma_number'] = (string) ($d['number'] ?? '');
+    if (($type === 'named' || $type === 'thanks') && $who !== '') {
+        $opt['person'] = $who;
+        if (function_exists('diploma_person_index') && $type === 'thanks') {
+            $opt['person_idx'] = diploma_person_index((string) ($a['teacher'] ?? ''), $who);
+        }
+    }
+    try { $p = diploma_pdf_html((array) $a, $opt); } catch (\Throwable $e) {
+        error_log('send_diplomas: бланк ' . (string) ($d['number'] ?? '') . ' не собрался: ' . $e->getMessage());
+        return '';
+    }
+    if (!$p) return '';
+    try { update('diplomas', ['pdf_path' => $p], 'id=:id', ['id' => (int) $d['id']]); } catch (\Throwable $e) {}
+    return (string) $p;
+}
+
 function _diploma_files(array $d): array {
     $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
     $stored = trim((string)($d['pdf_path'] ?? ''));
+    // Файла нет или он потерялся — рисуем заново, письмо не откладываем.
+    if ($stored === '') $stored = _diploma_make_pdf($d);
     $pdfAbs = '';
     if ($stored !== '' && !str_starts_with($stored, 'http')) {
         $pdfAbs = (str_starts_with($stored, '/var')) ? $stored
