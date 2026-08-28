@@ -954,11 +954,42 @@ function lockHide() {
    осталось только переключение самого эпизода - мы внутри корабля
    или снаружи. Наружная сцена при входе паркуется: смотреть на
    ракету снаружи, сидя в ней, не на что. */
+/* ── Кто ловит клавиатуру внутри корабля ─────────────────────
+   Внутри корабля человек сидит в кресле: вопросы и контакты уехали
+   на экран голограммы, а сами разделы страницы спрятаны видимостью.
+   Но всё, что ВЫШЕ по странице, оставалось в обходе табом, и обход
+   тянул фокус наверх - фокус на элементе прокручивает страницу к
+   нему, прокрутка выводит из корабля, кадр меняется, фокус теряется.
+   Замер: сорок нажатий Tab, стоя у пульта, не попали на голограмму
+   ни разу, а восемьдесят пять остановок из ста шестидесяти провалились
+   в тело документа.
+
+   Пока мы внутри, страница за кадром для клавиатуры не существует.
+   Прокрутке это не мешает: колесо, стрелки и палец работают как
+   работали, и первое же движение назад возвращает всё на место. */
+function заглушитьСтраницу(вкл) {
+  var дети = doc.body ? doc.body.children : [];
+  for (var i = 0; i < дети.length; i++) {
+    var э = дети[i];
+    if (э.tagName === "SCRIPT") continue;
+    /* Голограмму пульта и слой полёта не трогаем: это и есть то, с
+       чем человек сейчас работает. */
+    if (э.classList && (э.classList.contains("rc-desk") || э.classList.contains("rc-flight"))) continue;
+    if (вкл) {
+      if (!э.hasAttribute("inert")) { э.setAttribute("inert", ""); э.setAttribute("data-rci-inert", ""); }
+    } else if (э.hasAttribute("data-rci-inert")) {
+      э.removeAttribute("inert");
+      э.removeAttribute("data-rci-inert");
+    }
+  }
+}
+
 function show() {
   if (st.shown || st.dead) return;
   build();
   st.shown = true;
   root.classList.add("rc-inside");
+  заглушитьСтраницу(true);
   if (g.RC_ROCKET && !root.classList.contains("rc-rocket-parked")) {
     try { g.RC_ROCKET.stop(); root.classList.add("rc-rocket-parked"); } catch (e) {}
   }
@@ -973,6 +1004,7 @@ function hide() {
   if (!st.shown) return;
   st.shown = false;
   root.classList.remove("rc-inside", "rc-deep-inside");
+  заглушитьСтраницу(false);
   st.pIn0 = null;
   if (raf) { cancelAnimationFrame(raf); raf = null; }
   scene3d(false);

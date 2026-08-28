@@ -205,6 +205,30 @@ function переводНаЛету() {
       ui.nav.setAttribute("aria-label", RU ? "Навигация" : "Navigation");
       systemNav();
     }
+    /* Справка «КАК ЛЕТАТЬ» переводится на месте, а не пересобирается:
+       в последней её строке живёт кнопка звука со своим обработчиком,
+       и перезапись разметки его бы потеряла. Раньше панель не
+       переводилась вовсе - вся инструкция оставалась русской. */
+    if (ui.help) {
+      var загСпр = ui.help.querySelector("b");
+      if (загСпр) загСпр.textContent = RU ? "КАК ЛЕТАТЬ" : "HOW TO FLY";
+      var крестСпр = ui.help.querySelector(".rcf-help-x");
+      if (крестСпр) крестСпр.setAttribute("aria-label", RU ? "Закрыть" : "Close");
+      var строки = ui.help.querySelectorAll("li");
+      var данные = строкиСправки();
+      for (var сси = 0; сси < строки.length && сси < данные.length; сси++) {
+        var иС = строки[сси].querySelector("i");
+        if (иС) иС.textContent = данные[сси].и;
+        if (данные[сси].кнопка) continue;
+        var спС = строки[сси].querySelector("span");
+        if (спС) спС.textContent = данные[сси].т;
+      }
+      var кнЗв = ui.help.querySelector(".rcf-snd-key");
+      if (кнЗв) {
+        var вклЗв = кнЗв.getAttribute("aria-pressed") === "true";
+        кнЗв.textContent = вклЗв ? (RU ? "выключить" : "turn off") : (RU ? "включить" : "turn on");
+      }
+    }
     /* Лица клавиш: имена берём из общего списка команд, по классу.
        Списка два быть не может - на этом уже разъехались подсказки. */
     var КЛАССЫ = ["rcf-navkey", "rcf-scan-key", "rcf-deploy", "rcf-help-key",
@@ -316,12 +340,20 @@ function переводНаЛету() {
     keyHintFrame.idx = -1;
     /* Метки над телами пересоберутся следующим кадром */
     holoUni = -1;
+    /* Лица клавиш нарисованы в холсте плиты, и язык им задаётся один
+       раз при выборе вида. Пока это не сбрасывали, английский
+       посетитель, переключивший язык в полёте, видел в разметке
+       COURSE и SCAN, а на самой плите по-прежнему КУРС и СКАН. */
+    deckSize.вид = "";
+    deckLayer();
   } catch (eПЛ) {}
 }
 
 function relang() {
   RU = doc.documentElement.lang !== "en";
   СЛОВА = строитьСлова();
+  SOLAR_SCI = строитьНауку();
+  ЧТОДЕЛАЕТ = строитьЧтоДелает();
   if (F.open) { langDirty = true; переводНаЛету(); return; }
   langDirty = false;
   if (!ui.wrap) return;
@@ -459,6 +491,23 @@ var explored = {};
 try { explored = JSON.parse(localStorage.getItem(LOG_KEY) || "{}") || {}; } catch (e) { explored = {}; }
 /* Видно ли тело на самом деле: прячут чаще всего родительскую
    группу, а не сам меш */
+/* Тело в список для луча. Кладём в полный список, а рабочий
+   пересобирается под текущий рукав в applyUniverse. */
+function вЛуч(о) {
+  if (!W3 || !о) return;
+  if (!W3.pickablesAll) W3.pickablesAll = (W3.pickables || []).slice();
+  W3.pickablesAll.push(о);
+  if (W3.pickables) W3.pickables.push(о);
+}
+
+function подобратьТелаЛуча() {
+  if (!W3) return;
+  if (!W3.pickablesAll) W3.pickablesAll = (W3.pickables || []).slice();
+  var из = W3.pickablesAll, вышло = [];
+  for (var i = 0; i < из.length; i++) if (видимоЛи(из[i])) вышло.push(из[i]);
+  W3.pickables = вышло;
+}
+
 function видимоЛи(o) {
   while (o) { if (o.visible === false) return false; o = o.parent; }
   return true;
@@ -747,6 +796,37 @@ function модальность(вкл) {
   }
 }
 
+/* Цели родной системы. Список ОДИН на весь файл: он строится и при
+   сборке окна, и заново при смене языка и при возврате из чужого
+   рукава. Пока их было два, второй отставал: пояс, комета и спутник
+   стояли только в первом, и после первой же смены языка три цели
+   пропадали из меню КУРС навсегда - долететь до них можно было
+   только кликом по голограмме.
+
+   Строится каждый раз заново: подписи зависят от языка. */
+function целиСистемы() {
+  return [
+    { id: "sun", t: RU ? "Солнце" : "Sun" },
+    { id: "mercury", t: RU ? "Меркурий" : "Mercury" },
+    { id: "venus", t: RU ? "Венера" : "Venus" },
+    { id: "earth", t: RU ? "Земля" : "Earth" },
+    { id: "moon", t: RU ? "Луна" : "Moon" },
+    { id: "mars", t: RU ? "Марс" : "Mars" },
+    { id: "jupiter", t: RU ? "Юпитер" : "Jupiter" },
+    { id: "saturn", t: RU ? "Сатурн" : "Saturn" },
+    { id: "uranus", t: RU ? "Уран" : "Uranus" },
+    { id: "neptune", t: RU ? "Нептун" : "Neptune" },
+    { id: "hole", t: RU ? "Дыра" : "Hole" },
+    /* Пояс, комета и спутник тоже цели маршрута. Метки на них висят
+       и курс по ним ставится. */
+    { id: "belt", t: RU ? "Пояс астероидов" : "Asteroid belt" },
+    { id: "comet", t: RU ? "Комета" : "Comet" },
+    { id: "sat", t: RU ? "Спутник" : "Satellite" },
+    { id: "galaxy", t: RU ? "Галактика" : "Galaxy" },
+    { id: "home", t: RU ? "Домой" : "Home" }
+  ];
+}
+
 function buildUI() {
   if (ui.wrap) return;
   var w = doc.createElement("div");
@@ -768,27 +848,7 @@ function buildUI() {
      «Почему в солнечной системе нету подлёта ко всем 8 планетам
      существующим плюс солнце?» - теперь есть, и к каждому телу
      ведёт своя кнопка. Ряд прокручивается, если не влезает. */
-  var NAV = [
-    { id: "sun", t: RU ? "Солнце" : "Sun" },
-    { id: "mercury", t: RU ? "Меркурий" : "Mercury" },
-    { id: "venus", t: RU ? "Венера" : "Venus" },
-    { id: "earth", t: RU ? "Земля" : "Earth" },
-    { id: "moon", t: RU ? "Луна" : "Moon" },
-    { id: "mars", t: RU ? "Марс" : "Mars" },
-    { id: "jupiter", t: RU ? "Юпитер" : "Jupiter" },
-    { id: "saturn", t: RU ? "Сатурн" : "Saturn" },
-    { id: "uranus", t: RU ? "Уран" : "Uranus" },
-    { id: "neptune", t: RU ? "Нептун" : "Neptune" },
-    { id: "hole", t: RU ? "Дыра" : "Hole" },
-    /* Пояс, комета и спутник тоже цели маршрута. Метки на них висят
-       и курс по ним теперь ставится, а в меню их не было - долететь
-       можно было только через клик по голограмме. */
-    { id: "belt", t: RU ? "Пояс астероидов" : "Asteroid belt" },
-    { id: "comet", t: RU ? "Комета" : "Comet" },
-    { id: "sat", t: RU ? "Спутник" : "Satellite" },
-    { id: "galaxy", t: RU ? "Галактика" : "Galaxy" },
-    { id: "home", t: RU ? "Домой" : "Home" }
-  ];
+  var NAV = целиСистемы();
   /* Ряд из тринадцати кнопок не помещался никуда: на телефоне было
      видно две, и до Млечного Пути и чужих рукавов человек просто не
      мог добраться. Владелец сказал прямо: «я так и не понял, как
@@ -895,46 +955,12 @@ function buildUI() {
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
           '</button>' +
           '<b>' + (RU ? "КАК ЛЕТАТЬ" : "HOW TO FLY") + '</b>' +
-          '<ul>' +
-            '<li><i>' + (RU ? "ХОД" : "THRUST") + '</i><span>' +
-              (RU ? "Тяните рычаг справа, крутите колесо или ведите пальцем вверх"
-                  : "Drag the lever, use the wheel or swipe up") + '</span></li>' +
-            '<li><i>' + (RU ? "ОБЗОР" : "LOOK") + '</i><span>' +
-              (RU ? "Зажмите и тяните мышь, на телефоне - палец вбок. Обзор на все 360"
-                  : "Drag the mouse or swipe sideways for a full 360 look") + '</span></li>' +
-            '<li><i>' + (RU ? "ЗУМ" : "ZOOM") + '</i><span>' +
-              (RU ? "Shift с колесом, на телефоне - щипок двумя пальцами"
-                  : "Shift with the wheel, or pinch on a phone") + '</span></li>' +
-            '<li><i>' + (RU ? "КУРС" : "COURSE") + '</i><span>' +
-              (RU ? "Кнопка «Курс» внизу: все планеты системы и прыжок в другие рукава"
-                  : "The Course key: every body plus the jump to other arms") + '</span></li>' +
-            '<li><i>' + (RU ? "СКАН" : "SCAN") + '</i><span>' +
-              (RU ? "Нажмите по телу в окне - корабль снимет с него карту"
-                  : "Tap a body to scan it") + '</span></li>' +
-            '<li><i>' + (RU ? "УЗЛЫ" : "NODES") + '</i><span>' +
-              (RU ? "На орбите тела разверните узел сети. Узлы держат трафик и открывают новые рукава"
-                  : "In orbit deploy a node. Nodes carry traffic and unlock arms") + '</span></li>' +
-            /* Три клавиши оставались без объяснения, и заказчик
-               спрашивал про них прямо: «для чего какая кнопка вообще
-               не понятно». Справка обязана закрывать весь ряд. */
-            '<li><i>' + (RU ? "АВТО" : "AUTO") + '</i><span>' +
-              (RU ? "Автопилот ведёт корабль по маршруту сам. Любая ручная команда его выключает"
-                  : "Autopilot flies the route. Any manual input turns it off") + '</span></li>' +
-            '<li><i>' + (RU ? "СТОП" : "STOP") + '</i><span>' +
-              (RU ? "Гасит ход до нуля. Рядом КАДР сохраняет вид из окна себе на устройство"
-                  : "Kills the thrust. Next to it, SHOT saves the view to your device") + '</span></li>' +
-            '<li><i>' + (RU ? "ВЫХОД" : "EXIT") + '</i><span>' +
-              (RU ? "Крестик в углу или настойчивая прокрутка вверх возвращают на страницу"
-                  : "The corner cross or a firm scroll up returns to the page") + '</span></li>' +
-            /* Единственная настройка, которая нужна прямо в полёте.
-               Переключатель звука живёт в шапке сайта, а шапка на
-               время полёта спрятана: выключить гул и щелчки было
-               негде вовсе. Заказчик просил «типо настроек», и вот
-               она, на своём месте - в той же панели, где правила. */
-            '<li><i>' + (RU ? "ЗВУК" : "SOUND") + '</i><span>' +
-              '<button type="button" class="rcf-snd-key" aria-pressed="false">' +
-              (RU ? "включить" : "turn on") + '</button></span></li>' +
-          '</ul>' +
+          '<ul>' + строкиСправки().map(function (с) {
+            return '<li><i>' + с.и + '</i><span>' + (с.кнопка
+              ? '<button type="button" class="rcf-snd-key" aria-pressed="false">' +
+                (RU ? "включить" : "turn on") + '</button>'
+              : с.т) + '</span></li>';
+          }).join("") + '</ul>' +
         '</div>' +
       '</div>' +
       /* Содержимое меню лежит в своей коробке, и прокручивается
@@ -1433,24 +1459,45 @@ var dosT = 0, dosName = "";
    игровой сцены. Это отделяет физику мира от режиссёрского масштаба:
    Юпитер может стоять ближе ради красивого облёта, но досье всё
    равно показывает его настоящий диаметр и орбитальный период. */
-var SOLAR_SCI = {
-  "СОЛНЦЕ":   { en: "SUN",       type: RU ? "звезда G2V" : "G2V star", diameter: "1 392 700 km", period: RU ? "оборот ~25-35 суток" : "~25-35 day rotation", text: RU ? "Фотосфера, грануляция, пятна и корона; в ней сосредоточено 99,86% массы системы." : "Photosphere, granulation, sunspots and corona; 99.86% of the Solar System's mass." },
-  "МЕРКУРИЙ": { en: "MERCURY",   type: RU ? "каменная планета" : "rocky planet", diameter: "4 879 km", period: RU ? "88 земных суток" : "88 Earth days", text: RU ? "Ближайшая к Солнцу планета: почти без атмосферы, с резко контрастными температурами." : "Closest planet to the Sun, with almost no atmosphere and extreme temperatures." },
-  "ВЕНЕРА":   { en: "VENUS",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 104 km", period: RU ? "224,7 суток" : "224.7 days", text: RU ? "Плотная атмосфера CO₂ и облака серной кислоты создают сильнейший парниковый эффект." : "A dense CO₂ atmosphere and sulfuric-acid clouds drive an extreme greenhouse effect." },
-  "ЗЕМЛЯ":    { en: "EARTH",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 742 km", period: RU ? "365,26 суток" : "365.26 days", text: RU ? "Океанический мир с азотно-кислородной атмосферой, магнитосферой и единственной известной биосферой." : "An ocean world with a nitrogen-oxygen atmosphere, magnetosphere and the only known biosphere." },
-  "ЛУНА":     { en: "MOON",      type: RU ? "естественный спутник" : "natural satellite", diameter: "3 475 km", period: RU ? "27,3 суток" : "27.3 days", text: RU ? "Приливно захваченный спутник Земли; средняя дистанция до Земли 384 400 км." : "Earth's tidally locked satellite, at a mean distance of 384,400 km." },
-  "МАРС":     { en: "MARS",      type: RU ? "каменная планета" : "rocky planet", diameter: "6 779 km", period: RU ? "687 суток" : "687 days", text: RU ? "Холодный пустынный мир с тонкой атмосферой CO₂, полярными шапками и крупнейшим вулканом системы." : "A cold desert world with a thin CO₂ atmosphere, polar caps and the Solar System's largest volcano." },
-  "ЮПИТЕР":   { en: "JUPITER",   type: RU ? "газовый гигант" : "gas giant", diameter: "139 820 km", period: RU ? "11,86 года" : "11.86 years", text: RU ? "Крупнейшая планета системы; Большое красное пятно это долговечный атмосферный вихрь." : "The largest planet; the Great Red Spot is a long-lived atmospheric vortex." },
-  "САТУРН":   { en: "SATURN",    type: RU ? "газовый гигант" : "gas giant", diameter: "116 460 km", period: RU ? "29,45 года" : "29.45 years", text: RU ? "Система колец состоит главным образом из частиц водяного льда размером от пыли до глыб." : "Its rings are made mostly of water-ice particles ranging from dust to boulders." },
-  "УРАН":     { en: "URANUS",    type: RU ? "ледяной гигант" : "ice giant", diameter: "50 724 km", period: RU ? "84 года" : "84 years", text: RU ? "Ось вращения наклонена примерно на 98°, поэтому планета фактически вращается на боку." : "Its axial tilt is about 98°, so the planet effectively rotates on its side." },
-  "НЕПТУН":   { en: "NEPTUNE",   type: RU ? "ледяной гигант" : "ice giant", diameter: "49 244 km", period: RU ? "164,8 года" : "164.8 years", text: RU ? "Самая дальняя планета; в атмосфере наблюдаются самые быстрые ветры Солнечной системы." : "The farthest planet, with the fastest winds observed in the Solar System." }
-};
+/* Таблицы, зависящие от языка, СТРОЯТСЯ, а не пишутся один раз.
+   Раньше они считались при разборе файла по значению RU и оставались
+   русскими на всей английской странице: досье планет, подписи клавиш
+   для чтения с экрана и подсказки над ними. */
+function строитьНауку() {
+  /* Единица длины тоже переводится: в русском досье стояло
+     «ДИАМЕТР 116 460 km». */
+  var КМ = RU ? " км" : " km";
+  return {
+  "СОЛНЦЕ":   { en: "SUN",       type: RU ? "звезда G2V" : "G2V star", diameter: "1 392 700" + КМ,  period: RU ? "оборот ~25-35 суток" : "~25-35 day rotation", text: RU ? "Фотосфера, грануляция, пятна и корона; в ней сосредоточено 99,86% массы системы." : "Photosphere, granulation, sunspots and corona; 99.86% of the Solar System's mass." },
+  "МЕРКУРИЙ": { en: "MERCURY",   type: RU ? "каменная планета" : "rocky planet", diameter: "4 879" + КМ,  period: RU ? "88 земных суток" : "88 Earth days", text: RU ? "Ближайшая к Солнцу планета: почти без атмосферы, с резко контрастными температурами." : "Closest planet to the Sun, with almost no atmosphere and extreme temperatures." },
+  "ВЕНЕРА":   { en: "VENUS",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 104" + КМ,  period: RU ? "224,7 суток" : "224.7 days", text: RU ? "Плотная атмосфера CO₂ и облака серной кислоты создают сильнейший парниковый эффект." : "A dense CO₂ atmosphere and sulfuric-acid clouds drive an extreme greenhouse effect." },
+  "ЗЕМЛЯ":    { en: "EARTH",     type: RU ? "каменная планета" : "rocky planet", diameter: "12 742" + КМ,  period: RU ? "365,26 суток" : "365.26 days", text: RU ? "Океанический мир с азотно-кислородной атмосферой, магнитосферой и единственной известной биосферой." : "An ocean world with a nitrogen-oxygen atmosphere, magnetosphere and the only known biosphere." },
+  "ЛУНА":     { en: "MOON",      type: RU ? "естественный спутник" : "natural satellite", diameter: "3 475" + КМ,  period: RU ? "27,3 суток" : "27.3 days", text: RU ? "Приливно захваченный спутник Земли; средняя дистанция до Земли 384 400 км." : "Earth's tidally locked satellite, at a mean distance of 384,400 km." },
+  "МАРС":     { en: "MARS",      type: RU ? "каменная планета" : "rocky planet", diameter: "6 779" + КМ,  period: RU ? "687 суток" : "687 days", text: RU ? "Холодный пустынный мир с тонкой атмосферой CO₂, полярными шапками и крупнейшим вулканом системы." : "A cold desert world with a thin CO₂ atmosphere, polar caps and the Solar System's largest volcano." },
+  "ЮПИТЕР":   { en: "JUPITER",   type: RU ? "газовый гигант" : "gas giant", diameter: "139 820" + КМ,  period: RU ? "11,86 года" : "11.86 years", text: RU ? "Крупнейшая планета системы; Большое красное пятно это долговечный атмосферный вихрь." : "The largest planet; the Great Red Spot is a long-lived atmospheric vortex." },
+  "САТУРН":   { en: "SATURN",    type: RU ? "газовый гигант" : "gas giant", diameter: "116 460" + КМ,  period: RU ? "29,45 года" : "29.45 years", text: RU ? "Система колец состоит главным образом из частиц водяного льда размером от пыли до глыб." : "Its rings are made mostly of water-ice particles ranging from dust to boulders." },
+  "УРАН":     { en: "URANUS",    type: RU ? "ледяной гигант" : "ice giant", diameter: "50 724" + КМ,  period: RU ? "84 года" : "84 years", text: RU ? "Ось вращения наклонена примерно на 98°, поэтому планета фактически вращается на боку." : "Its axial tilt is about 98°, so the planet effectively rotates on its side." },
+  "НЕПТУН":   { en: "NEPTUNE",   type: RU ? "ледяной гигант" : "ice giant", diameter: "49 244" + КМ,  period: RU ? "164,8 года" : "164.8 years", text: RU ? "Самая дальняя планета; в атмосфере наблюдаются самые быстрые ветры Солнечной системы." : "The farthest planet, with the fastest winds observed in the Solar System." }
+}; }
+var SOLAR_SCI = строитьНауку();
 function solarScience(name) {
   var up = String(name || "").toUpperCase();
   for (var k in SOLAR_SCI) {
     if (up === k || up === SOLAR_SCI[k].en) return SOLAR_SCI[k];
   }
   return null;
+}
+
+/* Снять со всех панелей признак открытости. Зовём на выходе из
+   полёта и перед финальной карточкой. */
+function сброситьПанели() {
+  var спис = [ui.menu, ui.help, ui.dos, ui.netList];
+  for (var i = 0; i < спис.length; i++) if (спис[i]) спис[i].classList.remove("on");
+  if (ui.navKey) { ui.navKey.classList.remove("cur"); ui.navKey.setAttribute("aria-expanded", "false"); }
+  var кс = ui.wrap && ui.wrap.querySelector(".rcf-help-key");
+  if (кс) кс.classList.remove("cur");
+  if (g.RC_VPN && g.RC_VPN.close) { try { g.RC_VPN.close(); } catch (eВ) {} }
+  modalMark();
 }
 
 /* Закрыть верхнюю открытую панель полёта. Возвращает true, если
@@ -2070,7 +2117,7 @@ function buildUniverse(i) {
             ? с.name + " · звезда системы"
             : с.name + " · system star";
           тело.userData.mark = с.id + "-star";
-          if (W3 && W3.pickables) W3.pickables.push(тело);
+          вЛуч(тело);
         })(madeStar, sys);
       } catch (e1) { madeStar = null; }
     }
@@ -2149,7 +2196,7 @@ function buildUniverse(i) {
           made.group.traverse(function (о) { if (!solid && о.isMesh) solid = о; });
           if (solid) {
             solid.userData.info = made.group.userData.info;
-            if (W3.pickables) W3.pickables.push(solid);
+            вЛуч(solid);
             made.group.userData.mark = sys.id + "-" + pi;
             if (W3.scanTargets) W3.scanTargets.push({ o: made.group, name: pl.name, key: sys.id + "-" + pi, uni: i });
           }
@@ -2204,6 +2251,13 @@ function applyUniverse(i) {
   if (i > 0) buildUniverse(i).root.visible = true;
   showHome(i === 0);
   showGalaxyField(i);
+  /* Список тел для луча пересобираем под текущий рукав. Тела чужих
+     рукавов остаются в сцене скрытыми, и список рос с каждым
+     прыжком: 24 дома, 34 после первого рукава, 46 после второго, и
+     домой он уже не сжимался. Клики отсеивали скрытые по видимости,
+     но каждый клик и каждый кадр перебирали вдвое больше объектов, и
+     рост ничем не ограничивался. */
+  подобратьТелаЛуча();
   W3.sky.material.color.set(u.sky);
   W3.amb.color.set(u.amb);
   W3.sunGlow.material.color = new T.Color(u.sun);
@@ -2227,15 +2281,9 @@ function systemNav() {
   if (uniIdx === 0) {
     /* Родная система в полном составе: прежние семь кнопок прятали
        шесть тел, к которым уже можно летать */
-    var NAV = [["sun", RU ? "Солнце" : "Sun"], ["mercury", RU ? "Меркурий" : "Mercury"],
-               ["venus", RU ? "Венера" : "Venus"], ["earth", RU ? "Земля" : "Earth"],
-               ["moon", RU ? "Луна" : "Moon"], ["mars", RU ? "Марс" : "Mars"],
-               ["jupiter", RU ? "Юпитер" : "Jupiter"], ["saturn", RU ? "Сатурн" : "Saturn"],
-               ["uranus", RU ? "Уран" : "Uranus"], ["neptune", RU ? "Нептун" : "Neptune"],
-               ["hole", RU ? "Дыра" : "Hole"], ["galaxy", RU ? "Галактика" : "Galaxy"],
-               ["home", RU ? "Домой" : "Home"]];
+    var NAV = целиСистемы();
     for (var i = 0; i < NAV.length; i++) {
-      html += '<button type="button" data-goal="' + NAV[i][0] + '">' + NAV[i][1] + "</button>";
+      html += '<button type="button" data-goal="' + NAV[i].id + '">' + NAV[i].t + "</button>";
     }
   } else {
     for (var s = 0; s < u.sys.length; s++) {
@@ -2300,6 +2348,12 @@ function goSystem(si, pi) {
     r = pl.r * (innerHeight > innerWidth ? 4.5 : 3.4);
     y = pl.r * 0.8;
   }
+  /* Пришли на орбиту - автопилот своё отработал. Если вёл именно он,
+     человека надо предупредить: в кино-режиме маршрут доводил до
+     чужого рукава и там молча выключался, а человек, выбравший
+     «смотреть как кино», оставался стоять на орбите незнакомой
+     звезды без единого слова о том, что делать дальше. */
+  var велАвтопилот = F.auto;
   F.away = true;
   F.auto = false;
   F.goal = null;
@@ -2308,7 +2362,14 @@ function goSystem(si, pi) {
   F.orbit = { c: c, r: r, y: y, a: null, name: name };
   courseText(name);
   noteExplored(name);
-  say((RU ? "КУРС · " : "COURSE · ") + name, 2200);
+  if (велАвтопилот) {
+    say((RU ? "АВТОПИЛОТ ДОВЁЛ · " : "AUTOPILOT DONE · ") + name +
+        (RU ? " · дальше вручную: КУРС выберет цель, УЗЕЛ развернёт сеть"
+            : " · manual from here: COURSE picks a target, NODE deploys the network"), 5200);
+    if (ui.auto) ui.auto.setAttribute("aria-pressed", "false");
+  } else {
+    say((RU ? "КУРС · " : "COURSE · ") + name, 2200);
+  }
   if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
 }
 
@@ -5019,7 +5080,11 @@ function buildWorld() {
     galacticVolume: galacticVolume, dust: dust, wash: wash, washN: washN,
     nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb, mob: mob,
     earth: earth, atmMat: atmMat, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
-    diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
+    /* pickablesAll это полный список тел, включая скрытые рукава;
+       pickables - рабочий, под текущий рукав. Новый мир начинает с
+       чистого полного списка, иначе в нём остались бы ссылки на
+       разобранную сцену. */
+    diskMat: diskMat, jump: jump, sky: sky, pickables: pickables, pickablesAll: null,
     /* Позиция светила: по ней бортовые панели набирают заряд */
     sunPos: sunGlow.position, corIn: corIn, corOut: corOut,
     starShell: starShell,
@@ -5058,6 +5123,14 @@ function bindControls() {
        не должна съедать колесо даже если жест начался за кадр до
        переключения stage. */
     if (F.stage) return;
+    /* Колесо внутри открытой панели листает панель, а не гонит
+       корабль. У касания эта защита была с самого начала, у колеса
+       её не было: на ноутбуке 1024x600 в меню КУРС четыре карточки
+       вселенных обрезаны снизу, и добраться до них было нечем -
+       ровно то, на что жаловался владелец словами «я так и не понял,
+       как перейти в Млечный путь». В справке тем же способом
+       отрезались СТОП, ВЫХОД и ЗВУК. */
+    if (вПанели(e)) return;
 
     /* Выход из финала тем же движением, каким вошли.
 
@@ -5301,11 +5374,23 @@ function bindControls() {
        вычитало ход. Корабль дёргался назад на «прибавить», а полоска
        показывала обратное тому, что он делает. */
     var наРычаге = e.target && e.target.closest && e.target.closest(".rcf-thr");
-    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+    /* Пробел и стрелки принадлежат тому, что сейчас в фокусе. Раньше
+       пробел на клавише СТОП не нажимал её, а прибавлял ход: человек
+       жал «остановиться», и корабль разгонялся. Enter при этом
+       работал, то есть пультом с клавиатуры пользоваться было
+       нельзя. */
+    var наОргане = e.target && e.target.closest &&
+                   e.target.closest("button, a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+    if (наОргане) return;
+    /* Стрелки идут в ту же сторону, что и рычаг: вверх прибавить ход,
+       вниз убавить. Раньше окно и рычаг понимали их наоборот - вверх
+       вне рычага давало задний ход, вверх на рычаге прибавляло тягу,
+       и человек не мог понять, что делает его же клавиша. */
+    if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === " ") {
       if (наРычаге && e.key !== " ") return;
       F.v += 0.14; e.preventDefault(); manual();
     }
-    if (e.key === "ArrowUp" || e.key === "PageUp") {
+    if (e.key === "ArrowDown" || e.key === "PageDown") {
       if (наРычаге) return;
       F.v -= 0.14; e.preventDefault(); manual();
     }
@@ -5700,7 +5785,7 @@ function netMark(pos, name) {
   /* Поставленный узел можно ткнуть. Описание у него было, а в списке
      подбора его не было: человек ставит узел, тыкает в него и не
      получает ничего. */
-  if (W3.pickables) W3.pickables.push(s);
+  вЛуч(s);
   netNodes.push({ s: s, p: pos.clone(), name: name });
 
   /* Линии связи между узлами: сеть должна выглядеть сетью */
@@ -6436,7 +6521,49 @@ function deckTick(ts, dt) {
    середине - но за кромку стекла не выходит никогда. */
 
 /* Что произойдёт при нажатии. Ключ - класс клавиши. */
-var ЧТОДЕЛАЕТ = {
+/* Строки справки «КАК ЛЕТАТЬ». Список ОДИН: по нему панель и
+   собирается, и переводится на лету при смене языка. Раньше разметка
+   писалась прямо в сборке окна и в полёте не переводилась вовсе -
+   английский посетитель читал русскую инструкцию. */
+function строкиСправки() {
+  return [
+    { и: RU ? "ХОД" : "THRUST",
+      т: RU ? "Тяните рычаг справа, крутите колесо или ведите пальцем вверх. С клавиатуры - стрелки вверх и вниз"
+            : "Drag the lever, use the wheel or swipe up. From the keyboard - the up and down arrows" },
+    { и: RU ? "ОБЗОР" : "LOOK",
+      т: RU ? "Зажмите и тяните мышь, на телефоне - палец вбок. Обзор на все 360"
+            : "Drag the mouse or swipe sideways for a full 360 look" },
+    { и: RU ? "ЗУМ" : "ZOOM",
+      т: RU ? "Shift с колесом, на телефоне - щипок двумя пальцами"
+            : "Shift with the wheel, or pinch on a phone" },
+    { и: RU ? "КУРС" : "COURSE",
+      т: RU ? "Кнопка «Курс» внизу: все планеты системы и прыжок в другие рукава"
+            : "The Course key: every body plus the jump to other arms" },
+    { и: RU ? "СКАН" : "SCAN",
+      т: RU ? "Нажмите по телу в окне - корабль снимет с него карту"
+            : "Tap a body to scan it" },
+    { и: RU ? "УЗЛЫ" : "NODES",
+      т: RU ? "На орбите тела разверните узел сети. Узлы держат трафик и открывают новые рукава"
+            : "In orbit deploy a node. Nodes carry traffic and unlock arms" },
+    /* Три клавиши оставались без объяснения, и заказчик спрашивал про
+       них прямо: «для чего какая кнопка вообще не понятно». */
+    { и: RU ? "АВТО" : "AUTO",
+      т: RU ? "Автопилот ведёт корабль по маршруту сам. Любая ручная команда его выключает"
+            : "Autopilot flies the route. Any manual input turns it off" },
+    { и: RU ? "СТОП" : "STOP",
+      т: RU ? "Гасит ход до нуля. Рядом КАДР сохраняет вид из окна себе на устройство"
+            : "Kills the thrust. Next to it, SHOT saves the view to your device" },
+    { и: RU ? "ВЫХОД" : "EXIT",
+      т: RU ? "Крестик в углу или настойчивая прокрутка вверх возвращают на страницу"
+            : "The corner cross or a firm scroll up returns to the page" },
+    /* Единственная настройка, которая нужна прямо в полёте:
+       переключатель звука живёт в шапке сайта, а шапка на время
+       полёта спрятана. */
+    { и: RU ? "ЗВУК" : "SOUND", кнопка: true }
+  ];
+}
+
+function строитьЧтоДелает() { return {
   "rcf-navkey":   RU ? "Список всех тел и прыжок в другие рукава" : "Every body plus the jump to other arms",
   "rcf-map-key":  RU ? "Карта сети: где уже стоят ваши узлы" : "Network map: where your nodes stand",
   "rcf-scan-key": RU ? "Снять карту тела, к которому подошли" : "Scan the body you are next to",
@@ -6450,7 +6577,8 @@ var ЧТОДЕЛАЕТ = {
   "rcf-help-key": RU ? "Как летать: управление и правила" : "How to fly: controls and rules",
   "rcf-shot":     RU ? "Сохранить кадр из окна себе на устройство" : "Save the view to your device",
   "rcf-thr":      RU ? "Тяга: тянуть вбок или стрелками" : "Thrust: drag sideways or use the arrows"
-};
+}; }
+var ЧТОДЕЛАЕТ = строитьЧтоДелает();
 function имена(клавиши) {
   for (var ки = 0; ки < клавиши.length; ки++) {
     var кн = клавиши[ки];
@@ -6736,8 +6864,15 @@ function frame(ts) {
   var surgeGoal = F.stage ? 0 : Math.max(-.72, Math.min(.72, -accelV * 2.1));
   F.camSurge = (F.camSurge || 0) + (surgeGoal - (F.camSurge || 0)) * Math.min(1, dt * 4.6);
   F.p += F.v * dt;
-  if (F.p < 0) { F.p = 0; F.v = 0; }
-  if (F.p > 1) { F.p = 1; F.v = 0; }
+  /* На упоре маршрута гасим и рычаг. Раньше обнулялся только ход:
+     корабль стоит, а рычаг показывает 85 процентов и полоска залита
+     на те же 85 - по приборам двигатель работает, по кадру корабль
+     не движется. */
+  if (F.p < 0 || F.p > 1) {
+    F.p = F.p < 0 ? 0 : 1;
+    F.v = 0;
+    if (F.thr) { F.thr = 0; if (F.paintThrottle) { try { F.paintThrottle(); } catch (eР) {} } }
+  }
 
   /* Подсветка текущей цели в навигации */
   if (ui.nav && w3.at && (frame._navT || 0) < ts - 300) {
@@ -7789,6 +7924,12 @@ function close() {
   dosClose();
   root.classList.remove("rc-flying", "rc-stage");
   ui.wrap.classList.remove("on", "rcf-stage", "rcf-native-cab");
+  /* Панели закрываем вместе с полётом. Раньше состояние оставалось:
+     человек выходил с открытым КУРСом, а следующий заход начинался с
+     меню во весь проём, под которым пряталась карточка «ГОТОВ К
+     СТАРТУ» с обеими кнопками. Пока не догадаешься нажать клавишу,
+     которую не нажимал, стартовать было нельзя. */
+  сброситьПанели();
   cabinDrop();
   inertPage(false);
   модальность(false);
@@ -8057,6 +8198,11 @@ function pilotCard() {
   if (pilotShown || !ui.wrap) return;
   if (netCount() < NET_TOTAL()) return;
   pilotShown = true;
+  /* Награда за всю игру не должна вылезать из-под открытой панели.
+     Меню, справка и досье стоят слоем 30, карточка финала слоем 8: из
+     под меню КУРС торчали две кнопки и обрывок слова. Закрываем всё
+     открытое, слой карточки поднят в стилях. */
+  сброситьПанели();
 
   var el = doc.createElement("div");
   el.className = "rcf-pilot";
@@ -8330,18 +8476,32 @@ function shoot() {
     x.drawImage(src, 0, 0);
     /* Корпус кабины поверх: снимок должен выглядеть так же, как
        кадр, который человек видел */
-    if (ui.cab && ui.cab.complete && ui.cab.naturalWidth) {
-      var iw = ui.cab.naturalWidth, ih = ui.cab.naturalHeight;
+    /* Раму на снимок берём ту, что реально стоит в кадре. Узла
+       .rcf-cab в разметке нет с тех пор, как кабина стала объёмной, и
+       ui.cab всегда был пуст: обещание «снимок выглядит так же, как
+       кадр, который человек видел» не выполнялось - сохранялся голый
+       космос без рамы. Плоская рама живёт в ui.cabFrame. */
+    var рама = (ui.cab && ui.cab.complete && ui.cab.naturalWidth) ? ui.cab
+             : (ui.cabFrame && ui.cabFrame.complete && ui.cabFrame.naturalWidth) ? ui.cabFrame
+             : null;
+    if (рама) {
+      var iw = рама.naturalWidth, ih = рама.naturalHeight;
       var sc = Math.max(W / iw, H / ih);
-      x.drawImage(ui.cab, (W - iw * sc) / 2, (H - ih * sc) / 2, iw * sc, ih * sc);
+      x.drawImage(рама, (W - iw * sc) / 2, (H - ih * sc) / 2, iw * sc, ih * sc);
     }
     /* Подпись: где сняли и сколько узлов в сети на тот момент */
     var pad = Math.round(W * 0.03);
     x.font = "700 " + Math.round(W * 0.017) + "px 'Golos Text', system-ui, sans-serif";
     x.fillStyle = "rgba(226,238,252,.95)";
     x.textBaseline = "bottom";
-    var where = (ui.cGoal && ui.cGoal.textContent !== "—") ? ui.cGoal.textContent
-              : (RU ? "ОТКРЫТЫЙ КОСМОС" : "DEEP SPACE");
+    /* Пустой курс табло пишет словами «не задан», а не прочерком:
+       сравнение с прочерком не срабатывало никогда, и на сохранённом
+       кадре внизу стояло «ROCKET CDN · не задан · УЗЛОВ 0/45», да ещё
+       и в имени файла. Смотрим на тот же признак, что ставит табло. */
+    var курс = ui.cGoal ? ui.cGoal.textContent : "";
+    var безЦели = !курс || курс === "—" ||
+                  (ui.cCell && ui.cCell.classList.contains("is-empty"));
+    var where = безЦели ? (RU ? "ОТКРЫТЫЙ КОСМОС" : "DEEP SPACE") : курс;
     x.fillText(СЛ("марка") + " · " + where + " · " +
       (RU ? "УЗЛОВ " : "NODES ") + netCount() + "/" + NET_TOTAL(), pad, H - pad);
 
@@ -9989,15 +10149,24 @@ function frameMeasure() {
      около нуля, и «низ» выходил ровно пятьдесят процентов при любой
      раме. Замер обязан падать в глаза, а не выглядеть правдоподобно,
      поэтому оси теперь по именам. */
+  /* Клавиш в объёмной раме может не быть вовсе: сейчас работает
+     плоская ветка пульта, и C3.caps там пустой. Тогда сторожевые
+     значения оставались нетронутыми и уезжали в выдачу как числа
+     («клавишиНиз: 50000000050», «клавишаPx: 205714285714»), а
+     «срезано» считалось из них же и всегда выходило false. Любая
+     проверка, построенная на этих полях, показывала зелёный свет,
+     ничего не измерив. Пусто - так и говорим. */
+  var естьКлавиши = lo < 1e8;
   cabin._share = {
     лево: +((1 + out[0].x) / 2 * 100).toFixed(1),
     право: +((1 - out[1].x) / 2 * 100).toFixed(1),
     верх: +((1 - out[2].y) / 2 * 100).toFixed(1),
     низ: +((1 + out[3].y) / 2 * 100).toFixed(1),
-    клавишиНиз: +((1 + lo) / 2 * 100).toFixed(1),
-    клавишиВерх: +((1 - hi) / 2 * 100).toFixed(1),
-    клавишаPx: +(Math.abs(capR - capL) / 7 * innerWidth / 2).toFixed(0),
-    срезано: lo < -1 || hi > 1 || capL < -1 || capR > 1
+    клавишиНиз: естьКлавиши ? +((1 + lo) / 2 * 100).toFixed(1) : null,
+    клавишиВерх: естьКлавиши ? +((1 - hi) / 2 * 100).toFixed(1) : null,
+    клавишаPx: естьКлавиши ? +(Math.abs(capR - capL) / 7 * innerWidth / 2).toFixed(0) : null,
+    клавишВРаме: C3.caps ? C3.caps.length : 0,
+    срезано: естьКлавиши ? (lo < -1 || hi > 1 || capL < -1 || capR > 1) : null
   };
 }
 

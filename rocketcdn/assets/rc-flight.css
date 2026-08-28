@@ -1414,6 +1414,21 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   transition: opacity .3s var(--ease, ease), transform .3s var(--ease, ease);
 }
 .rcf-dos.on { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+/* Закрытая карточка не должна ловить фокус. Прозрачность его не
+   убирает, а атрибут hidden перебивается правилом с display ниже:
+   вторая-третья остановка табом в полёте садилась на «Закрыть
+   досье» карточки, растянутой на весь экран и невидимой. */
+.rc-flight .rcf-dos:not(.on),
+.rc-flight .rcf-help:not(.on),
+.rc-flight .rcf-menu:not(.on) {
+  visibility: hidden;
+  /* Видимость снимаем ПОСЛЕ того, как доиграет растворение: иначе
+     панель не гаснет, а исчезает рывком. */
+  transition: opacity .3s var(--ease, ease), transform .3s var(--ease, ease), visibility 0s linear .3s;
+}
+.rc-flight .rcf-dos.on,
+.rc-flight .rcf-help.on,
+.rc-flight .rcf-menu.on { visibility: visible; }
 .rcf-dos-in {
   position: relative;
   padding: clamp(14px, 2.4vh, 22px) clamp(14px, 2vw, 22px) clamp(12px, 2vh, 18px);
@@ -1974,7 +1989,11 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-pilot {
   position: absolute;
   inset: 0;
-  z-index: 8;
+  /* Выше панелей: меню, справка и досье стоят слоем 30, а карточка
+     финала стояла восьмым, и награда за всю игру пряталась под
+     открытым меню КУРС - из-под него торчали две кнопки и обрывок
+     слова. Финал перекрывает всё. */
+  z-index: 40;
   display: grid;
   place-items: center;
   background: radial-gradient(ellipse 70% 60% at 50% 50%,

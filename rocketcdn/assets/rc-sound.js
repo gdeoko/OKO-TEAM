@@ -583,7 +583,22 @@ Sound.prototype.boom = function () {
    в полёте не участвует - там свой мир. */
 Sound.prototype.flight = function (on) {
   this._flight = !!on;
-  if (on && !this.on) this.start();
+  if (on) {
+    /* Запоминаем, был ли звук включён ДО полёта. Полёт включает его
+       сам, и без этой памяти один заход в игру оставлял звук и
+       музыку играть на странице навсегда: человек нажал одну кнопку,
+       вышел из игры, а сайт продолжает гудеть, и тумблер в шапке
+       стоит включённым, хотя человек его не трогал. */
+    if (this._былВключён == null) this._былВключён = !!this.on;
+    if (!this.on) this.start();
+  }
+  if (!on && this._былВключён === false) {
+    /* Звук завёл полёт, и он же обязан его выключить */
+    this._былВключён = null;
+    this.stop();
+    return;
+  }
+  if (!on) this._былВключён = null;
   if (!this.ready) return;
   var t = this.ctx.currentTime;
   if (on) {

@@ -140,7 +140,10 @@ function swap(next, fill) {
     layer.setAttribute("data-state", next);
     try { fill(); } catch (e) {}
     if (!сКлавиатуры) return;
-    var цель = layer.querySelector(".dsk-body input, .dsk-body textarea, .dsk-body select") ||
+    /* Ищем по всему слою: формы переезжают в свою ячейку (.dsk-slot),
+       а не остаются в теле экрана. Первым делом поле ввода - человек
+       нажал «Отправить заявку», значит писать он будет сразу. */
+    var цель = layer.querySelector("input:not([type=hidden]), textarea, select") ||
                layer.querySelector(".dsk-back") ||
                layer.querySelector(".dsk-q, .dsk-b");
     if (цель) { try { цель.focus({ preventScroll: true }); } catch (eФ) {} }
@@ -226,17 +229,25 @@ function trimQs() {
      он навсегда оставался в две строки, даже когда места хватало на
      пять. Поэтому сначала кладём все вопросы, потом снимаем ровно
      столько, сколько не влезло. */
-  var h = "";
-  for (var i = 0; i < qCache.length; i++) {
-    h += '<li><button type="button" class="dsk-q" data-q="' + i + '">' +
-      '<span>' + esc(qCache[i].q) + '</span></button></li>';
+  /* Разметку НЕ переписываем. Строки уже собраны в fillMenu, а
+     перезапись убивала фокус: сторож за коробкой срабатывал на
+     собственную же перезапись и звал подрезку снова, по кругу. Пока
+     это было так, до вопросов на голограмме нельзя было добраться
+     табом вовсе - фокус садился на строку и в тот же миг падал в
+     тело документа. Замер: сорок нажатий подряд, ноль попаданий.
+
+     Лишние строки просто гасим признаком hidden: он и с глаз убирает,
+     и из обхода клавиатурой, а узлы остаются на месте. */
+  if (trimQs._идёт) return;
+  trimQs._идёт = true;
+  var строки = [].slice.call(ul.children), i;
+  for (i = 0; i < строки.length; i++) строки[i].hidden = false;
+  var guard = 0, к = строки.length - 1;
+  while (ul.scrollHeight > ul.clientHeight + 2 && к > 0 && guard++ < 16) {
+    строки[к].hidden = true;
+    к--;
   }
-  ul.innerHTML = h;
-  var guard = 0;
-  while (ul.scrollHeight > ul.clientHeight + 2 &&
-         ul.children.length > 1 && guard++ < 16) {
-    ul.removeChild(ul.lastElementChild);
-  }
+  trimQs._идёт = false;
   /* И следим за коробкой дальше.
 
      Подрезка честная, но она разовая: сколько строк влезло в момент
