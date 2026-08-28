@@ -84,43 +84,74 @@ function chat_learn_lesson(int $messageId, string $before, string $after): void 
  * отвечал. Короткие реплики вроде «да» или «спасибо» отбрасываем: стилю по ним не
  * научишься. Это и есть голос центра — не придуманный, а тот, которым здесь говорят.
  */
-function chat_style_examples(int $limit = 6): string {
+function chat_style_examples(int $limit = 8): string {
     chat_learn_migrate();
     $out = [];
+    $seen = [];
+    $topic = chat_topic_of((string) ($GLOBALS['chat_last_question'] ?? ''));
+
+    $sameStart = 0;
+    $add = static function (string $q, string $a) use (&$out, &$seen, &$sameStart, $limit): bool {
+        if (count($out) >= $limit) return false;
+        $q = trim($q); $a = chat_learn_strip_boiler($a);
+        if (mb_strlen($q) < 10 || $a === '') return true;
+        $key = mb_substr(mb_strtolower($a), 0, 60);
+        if (isset($seen[$key])) return true;      // одна и та же фраза уже показана
+        /* ОДНОТИПНЫХ ПРИМЕРОВ — НЕ БОЛЬШЕ ДВУХ.
+         * У занятого оператора самый частый ответ — «подробную информацию узнаете
+         * в положении по ссылке». Если показать модели пять таких примеров, она
+         * решит, что это и есть работа помощника, и начнёт отсылать к документу
+         * вместо ответа. Два примера показывают манеру, пять — портят помощника. */
+        if (preg_match('~^(более подробн|подробн|ознакомьтесь)~ui', $a)) {
+            if ($sameStart >= 2) return true;
+            $sameStart++;
+        }
+        $seen[$key] = true;
+        $out[] = 'Участник: ' . mb_substr($q, 0, 260) . "\nОтвет центра: " . mb_substr($a, 0, 420);
+        return true;
+    };
+
+    /* СНАЧАЛА — ОТВЕТЫ ПО ЭТОЙ ЖЕ ТЕМЕ.
+     *
+     * Раньше брались просто последние операторские ответы, и на вопрос про диплом
+     * модель видела три ответа про оргвзнос. Теперь сперва ищем, как в центре
+     * отвечали на похожее, и только потом добираем свежими: манера у всех ответов
+     * одна, а вот по делу учит только совпавший по теме. */
     try {
         $rows = all("SELECT id, session_key, text FROM chat_messages
                       WHERE by_operator=1 AND role='assistant' AND LENGTH(text)>60
-                   ORDER BY id DESC LIMIT ?", [$limit * 3]);
+                   ORDER BY id DESC LIMIT 200");
+        $pool = [];
         foreach ($rows as $r) {
             $q = trim((string) (scalar(
                 "SELECT text FROM chat_messages
                   WHERE session_key=? AND role='user' AND id<? AND text<>''
                ORDER BY id DESC LIMIT 1", [$r['session_key'], (int) $r['id']]) ?: ''));
-            if (mb_strlen($q) < 10) continue;
-            $out[] = 'Участник: ' . mb_substr($q, 0, 260) . "\nОтвет центра: " . mb_substr(trim((string) $r['text']), 0, 420);
-            if (count($out) >= $limit) break;
+            if ($q === '') continue;
+            $pool[] = ['q' => $q, 'a' => (string) $r['text']];
         }
+        if ($topic !== '') {
+            foreach ($pool as $p) { if (chat_topic_of($p['q']) === $topic) $add($p['q'], $p['a']); }
+        }
+        foreach ($pool as $p) $add($p['q'], $p['a']);
     } catch (\Throwable $e) {}
+
     // ПЯТЬ ЛЕТ ПЕРЕПИСКИ СООБЩЕСТВА — тоже наши ответы, просто данные раньше.
     // Операторских ответов в новом чате пока десятки, а в сообществе их тысячи,
     // и именно там видно, как центр разговаривает: короткими репликами, без
     // канцелярита, с уточняющими вопросами вместо догадок. Образцы подбираются
     // под тему текущего вопроса (scripts/vk_style_learn.php раскладывает их по темам).
     if (count($out) < $limit) {
-        $topic = chat_topic_of((string) ($GLOBALS['chat_last_question'] ?? ''));
         try {
+            $need = $limit - count($out);
             $rows = $topic !== ''
-                ? all("SELECT question, answer FROM chat_style_samples WHERE topic=? ORDER BY RANDOM() LIMIT ?",
-                      [$topic, $limit - count($out)])
+                ? all("SELECT question, answer FROM chat_style_samples WHERE topic=? ORDER BY RANDOM() LIMIT ?", [$topic, $need])
                 : [];
-            if (count($rows) < $limit - count($out)) {
+            if (count($rows) < $need) {
                 foreach (all("SELECT question, answer FROM chat_style_samples ORDER BY RANDOM() LIMIT ?",
-                             [$limit - count($out) - count($rows)]) as $extra) $rows[] = $extra;
+                             [$need - count($rows)]) as $extra) $rows[] = $extra;
             }
-            foreach ($rows as $r) {
-                $out[] = 'Участник: ' . mb_substr(trim((string) $r['question']), 0, 260)
-                       . "\nОтвет центра: " . mb_substr(trim((string) $r['answer']), 0, 420);
-            }
+            foreach ($rows as $r) $add((string) $r['question'], (string) $r['answer']);
         } catch (\Throwable $e) { /* образцов ещё нет — не беда */ }
     }
 
@@ -130,6 +161,76 @@ function chat_style_examples(int $limit = 6): string {
          . "с уточняющим вопросом вместо догадки. НЕ копируй дословно и НЕ повторяй чужую подпись — "
          . "говори так же, но своими словами:\n\n"
          . implode("\n\n", $out);
+}
+
+/**
+ * ОЧИСТКА ЭТАЛОНА ОТ ДЕЖУРНЫХ ФРАЗ.
+ *
+ * Оператор пишет короткими репликами: отдельно «Здравствуйте», отдельно суть,
+ * в конце — «Благодарим Вас за обращение» с графиком работы и подписью. В базе
+ * каждая реплика лежит отдельной строкой, и в эталоны стиля попадали именно
+ * прощания: на вопрос «какой оргвзнос?» модель видела три примера, где центр
+ * отвечает «рады были помочь», — и училась отвечать так же, ничего не сказав
+ * по делу. Здесь дежурное отсекается: приветствие, прощание, справочный хвост
+ * с телефоном и графиком. Остаётся то, ради чего человек и писал.
+ *
+ * Возвращает '' , если после чистки ничего содержательного не осталось.
+ */
+function chat_learn_strip_boiler(string $text): string {
+    $t = trim($text);
+    if ($t === '') return '';
+    // Справочный хвост: всё от «В случае возникновения дополнительных вопросов»,
+    // графика работы или подписи оргкомитета — это подпись, а не ответ.
+    $cut = [
+        'В случае возникновения дополнительных вопросов',
+        'График работы',
+        'С уважением, оргкомитет',
+        'Ожидайте пожалуйста',
+        'Ожидайте, пожалуйста',
+        '🕑', '🌍',
+    ];
+    foreach ($cut as $marker) {
+        $p = mb_strpos($t, $marker);
+        if ($p !== false) $t = mb_substr($t, 0, $p);
+    }
+    /* ПРИВЕТСТВИЕ В НАЧАЛЕ — НЕ ЧАСТЬ ОТВЕТА.
+     *
+     * Оператор пишет «Здравствуйте Наталья.» отдельной строкой, а суть — со
+     * следующей. Для эталона важна суть: приветствие мешает и разобрать пример,
+     * и распознать отписку, спрятанную за ним. Убираем строку целиком и только
+     * если она вся состоит из приветствия и имени — резать текст по словам
+     * нельзя, так из «Здравствуйте. Информацию по заявке…» пропадало слово. */
+    $lines = preg_split('~\R~u', trim($t)) ?: [];
+    while ($lines && preg_match('~^(здравствуйте|добрый день|доброе утро|добрый вечер|доброго времени суток|приветствую)[\s,!.]*([А-ЯЁ][а-яё]+)?[\s,!.]*$~ui', trim((string) $lines[0]))) {
+        array_shift($lines);
+    }
+    $t = trim(implode("\n", $lines));
+    $t = trim($t);
+    $plain = mb_strtolower(preg_replace('~[^\p{L}\d ]+~u', ' ', $t) ?? '');
+    $plain = trim(preg_replace('~\s+~u', ' ', $plain) ?? '');
+    $boiler = [
+        '~^здравствуйте[а-яё ]*$~u',
+        '~^благодарим вас за обращение~u',
+        '~^рады были вам помочь~u',
+        '~^доброго времени суток~u',
+        '~^спасибо( вам)?( за обращение)?$~u',
+        '~остались вопросы~u',
+    ];
+    foreach ($boiler as $re) if (preg_match($re, $plain)) return '';
+    /* ОТСЫЛКА К ПОЛОЖЕНИЮ — НЕ ОБРАЗЕЦ ОТВЕТА.
+     *
+     * Занятой оператор часто отвечает одной фразой: «более подробную информацию
+     * узнаете в положении по ссылке». Человеку так отвечать можно — он видит
+     * собеседника и понимает, что тот спешит. Но как ЭТАЛОН для помощника это
+     * яд: модель перенимает самое частое и начинает отправлять к документу
+     * вместо ответа. Берём такие ответы в примеры только если после формулы
+     * идёт что-то по существу — то есть текст заметно длиннее самой формулы. */
+    if (preg_match('~^(более подробн|подробн|ознакомьтесь|ознакомиться)~ui', $t) && mb_strlen($t) < 260) return '';
+    // Та же отписка, начатая с другого слова: «Информацию по срокам… Вы сможете
+    // узнать, ознакомившись с положением…». Ловим по сути, а не по первому слову.
+    if (preg_match('~(ознакомившись|ознакомьтесь|ознакомиться)[^.]{0,60}положени~ui', $t) && mb_strlen($t) < 320) return '';
+    // После чистки должно остаться настоящее предложение, а не два слова.
+    return mb_strlen($t) >= 40 ? $t : '';
 }
 
 /**
