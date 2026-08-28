@@ -2,7 +2,7 @@
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050C15">
 <meta name="robots" content="noindex">
 <title>Rocket CDN</title>
@@ -287,18 +287,18 @@ track("view", "/app");
 $$("[data-ico]").forEach(function (el) { el.insertAdjacentHTML("afterbegin", svg(el.dataset.ico)); });
 
 $("#advList").innerHTML = B.advantages.map(function (x) {
-  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + "</div><div><h3 class="pitem-h">" + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
+  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + '</div><div><h3 class="pitem-h">' + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
 }).join("");
 
 $("#prodList").innerHTML = B.products.map(function (x) {
-  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + "</div><div><h3 class="pitem-h">" + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
+  return '<div class="pitem"><div class="card-ico">' + svg(x.icon) + '</div><div><h3 class="pitem-h">' + esc(x.h) + "</h3><p>" + esc(x.p) + "</p></div></div>";
 }).join("");
 
 var DCP = ["Основная площадка. Облако, защита от атак и точка обмена трафиком.",
            "Опорный узел для Центральной Азии. Облако и низкая задержка для региона.",
            "Европейская площадка. Облако и стык с магистральными операторами."];
 $("#dcList").innerHTML = G.DC.map(function (d, i) {
-  return '<div class="pitem"><div class="card-ico">' + svg("dc") + "</div><div><h3 class="pitem-h">" + esc(d.name.ru) +
+  return '<div class="pitem"><div class="card-ico">' + svg("dc") + '</div><div><h3 class="pitem-h">' + esc(d.name.ru) +
     ' <span style="color:var(--tx-3);font-weight:500;font-size:12px">· ' + esc(d.cc.ru) + "</span></h3><p>" + esc(DCP[i] || "") + "</p></div></div>";
 }).join("");
 
