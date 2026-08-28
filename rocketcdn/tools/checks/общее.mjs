@@ -5,7 +5,13 @@
    из переменной, а не из имени пакета: голый импорт здесь не
    разрешается. На машине, где playwright установлен как зависимость,
    достаточно задать RC_PW=playwright. */
-const { chromium } = await import(process.env.RC_PW || "/tmp/node_modules/playwright/index.mjs");
+/* Сначала полный пакет, затем core: в облачной песочнице стоит
+   playwright-core, а бинарь берётся из PLAYWRIGHT_BROWSERS_PATH */
+const { chromium } = await import(process.env.RC_PW ||
+  await Promise.any([
+    import("/tmp/node_modules/playwright/index.mjs").then(() => "/tmp/node_modules/playwright/index.mjs"),
+    import("/tmp/node_modules/playwright-core/index.mjs").then(() => "/tmp/node_modules/playwright-core/index.mjs")
+  ]).catch(() => "/tmp/node_modules/playwright/index.mjs"));
 
 export const АДРЕС = process.env.RC_URL || "http://127.0.0.1:8123/?rcdbg=1";
 
@@ -13,7 +19,10 @@ export const ТЕЛЕФОН = { имя: "телефон", vp: { width: 412, heig
 export const ПК = { имя: "ПК", vp: { width: 1440, height: 900 }, dpr: 1, mob: false };
 
 export async function браузер() {
-  return chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] });
+  return chromium.launch({
+    executablePath: process.env.RC_CHROME || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    args: ["--no-sandbox", "--use-gl=swiftshader", "--enable-unsafe-swiftshader"]
+  });
 }
 
 /* Открыть страницу и довести до игры. Возвращает страницу и живой

@@ -2229,3 +2229,13 @@ html[data-theme="light"] #included::after { animation: none; opacity: .4; }
     padding: 0 6px;
   }
 }
+
+/* Кнопка «наверх» гаснет внутри корабля и в полёте: она ложилась
+   поверх клавиши СПРАВКА на пульте, а прокрутки в игре нет */
+html.rc-inside .totop,
+html.rc-stage .totop,
+html.rc-flying .totop {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
