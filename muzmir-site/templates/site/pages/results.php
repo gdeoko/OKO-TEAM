@@ -22,7 +22,8 @@ $c = one("SELECT * FROM competitions WHERE slug = ?", [$slug]);
 
 if (!$c) {
     http_response_code(404);
-    ob_start(); ?>
+
+ob_start(); ?>
     <section class="section">
       <div class="container" style="text-align:center;max-width:640px">
         <p class="eyebrow">Ошибка 404</p>
@@ -169,6 +170,14 @@ $titleTone = function (string $res): string {
     if (mb_strpos($r, 'ДИПЛОМАНТ') !== false) return 'dip';
     return 'part';
 };
+
+/* Иконки строки — одни и те же в PHP-разметке и в JS-шаблоне догрузки.
+   Держим их константами, чтобы обе половины рисовали одинаково. */
+define('RES_IC_AGE',  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>');
+define('RES_IC_GEO',  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>');
+define('RES_IC_INST', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/></svg>');
+define('RES_IC_CUP',  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M5 4h14v3a7 7 0 0 1-14 0zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg>');
+define('RES_IC_STAR', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>');
 
 ob_start(); ?>
 <style>
@@ -322,82 +331,183 @@ ob_start(); ?>
       </div>
       <p class="res-count" id="resCount" aria-live="polite"></p>
 
-      <div id="resList">
-      <?php foreach ($results as $i => $r):
-        $displayName = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
-        $aslug = $artistSlugMap[mb_strtolower(trim($r['full_name']))] ?? null;
-        $tone  = $titleTone((string) $r['result']);
-        $extra = trim((string) ($r['extra_diploma'] ?? ''));
-        $needle = mb_strtolower(trim($displayName . ' ' . $r['full_name'] . ' ' . $r['diploma_number'] . ' '
-                . $r['work_title'] . ' ' . $r['city'] . ' ' . $r['institution'] . ' ' . $r['result'] . ' ' . $extra));
-      ?>
-        <article class="card rrow rrow--<?= $tone ?> reveal" style="--i:<?= min($i, 12) ?>" data-item data-search="<?= h($needle) ?>">
-          <div class="rrow-main">
-            <b><?php if ($aslug): ?><a href="<?= url('/artist/' . $aslug) ?>"><?= h($displayName) ?></a><?php else: ?><?= h($displayName) ?><?php endif; ?></b>
-            <?php if ($r['work_title']): ?><p class="rrow-work">Конкурсный номер: <?= h(wt_show((string) $r['work_title'])) ?></p><?php endif; ?>
-            <div class="rrow-meta">
-              <?php if ($r['age_category']): ?>
-                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><?= h($r['age_category']) ?></span>
-              <?php endif; ?>
-              <?php if ($r['city']): /* Город хранится канонично: «Страна, г. Город» — показываем целиком. */ ?>
-                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($r['city']) ?></span>
-              <?php endif; ?>
-              <?php if ($r['institution']): ?>
-                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/></svg><?= h($r['institution']) ?></span>
-              <?php endif; ?>
-            </div>
-          </div>
+      <?php
+      /* ПЕРВАЯ СОТНЯ — РАЗМЕТКОЙ, ОСТАЛЬНЫЕ — ДАННЫМИ.
+       *
+       * Семьсот с лишним карточек весили 1,7 МБ HTML: на телефоне страница
+       * заметно думала, прежде чем показать хоть что-то. Теперь сервер отдаёт
+       * готовыми первые сто строк — их видно сразу, их же читают поисковики, —
+       * а остальные едут компактным списком данных (в семь раз легче разметки)
+       * и дорисовываются по мере прокрутки.
+       *
+       * ПОИСК ПРИ ЭТОМ ИЩЕТ ПО ВСЕМ. Это главное: человек заходит найти себя, и
+       * ему всё равно, дорисовалась его строка или нет — данные всех у страницы
+       * уже есть, ищем по ним, а не по нарисованному. */
+      $SEED = 100;
+      $rowHtml = function (array $r) use ($c, $artistSlugMap, $titleTone): string {
+          $h = static fn(string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+          $displayName = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
+          $aslug = $artistSlugMap[mb_strtolower(trim((string) $r['full_name']))] ?? null;
+          $tone  = $titleTone((string) $r['result']);
+          $extra = trim((string) ($r['extra_diploma'] ?? ''));
+          $work  = trim((string) $r['work_title']);
 
-          <div class="rrow-side">
-            <span class="res-title <?= $tone ?>">
-              <?php if ($tone === 'gp'): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M5 4h14v3a7 7 0 0 1-14 0zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg><?php endif; ?>
-              <?= h($r['result']) ?>
-            </span>
-            <?php if ($extra !== ''): ?>
-              <span class="res-extra">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg>
-                <span>Дополнительный диплом<br><i><?= h($extra) ?></i></span>
-              </span>
-            <?php endif; ?>
-            <div class="rrow-acts">
-              <?php /* Заказ — прямо у своей строки: ссылка уже знает и конкурс, и номер заявки. */ ?>
-              <a class="btn btn--primary btn--sm res-order"
-                 href="<?= url('/awards') ?>?comp=<?= (int) $c['id'] ?>&app=<?= (int) $r['app_id'] ?>">Заказать награды</a>
-              <?php /* ССЫЛКИ НА ВЫСТУПЛЕНИЕ ЗДЕСЬ НЕТ И НЕ ДОЛЖНО БЫТЬ.
-                        Участник присылал видео для жюри, а не для публикации:
-                        это чужой файл на чужом облаке, часто с детьми в кадре и
-                        без согласия на показ. Список результатов такие ссылки не
-                        раздаёт (правило владельца, 28.08.2026). */ ?>
-              <?php if (!empty($r['diploma_number'])): ?>
-                <a class="btn btn--ghost btn--sm" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a>
-              <?php endif; ?>
-            </div>
-          </div>
-        </article>
-      <?php endforeach; ?>
-      <div class="res-empty" id="resEmpty">По вашему запросу ничего не найдено. Уточните фамилию или номер диплома.</div>
+          $o = '<article class="card rrow rrow--' . $tone . '" data-item>';
+          $o .= '<div class="rrow-main"><b>'
+              . ($aslug ? '<a href="' . $h(url('/artist/' . $aslug)) . '">' . $h((string) $displayName) . '</a>'
+                        : $h((string) $displayName))
+              . '</b>';
+          if ($work !== '') $o .= '<p class="rrow-work">Конкурсный номер: ' . $h(wt_show($work)) . '</p>';
+          $o .= '<div class="rrow-meta">';
+          if ($r['age_category']) $o .= '<span>' . RES_IC_AGE . $h((string) $r['age_category']) . '</span>';
+          /* Город хранится канонично: «Страна, г. Город» — показываем целиком. */
+          if ($r['city'])         $o .= '<span>' . RES_IC_GEO . $h((string) $r['city']) . '</span>';
+          if ($r['institution'])  $o .= '<span>' . RES_IC_INST . $h((string) $r['institution']) . '</span>';
+          $o .= '</div></div><div class="rrow-side"><span class="res-title ' . $tone . '">'
+              . ($tone === 'gp' ? RES_IC_CUP : '') . $h((string) $r['result']) . '</span>';
+          if ($extra !== '') {
+              $o .= '<span class="res-extra">' . RES_IC_STAR
+                  . '<span>Дополнительный диплом<br><i>' . $h($extra) . '</i></span></span>';
+          }
+          $o .= '<div class="rrow-acts">'
+              /* Заказ — прямо у своей строки: ссылка уже знает и конкурс, и номер заявки. */
+              . '<a class="btn btn--primary btn--sm res-order" href="'
+              . $h(url('/awards') . '?comp=' . (int) $c['id'] . '&app=' . (int) $r['app_id'])
+              . '">Заказать награды</a>';
+          /* ССЫЛКИ НА ВЫСТУПЛЕНИЕ ЗДЕСЬ НЕТ И НЕ ДОЛЖНО БЫТЬ. Участник присылал
+             запись для жюри, а не для публикации: это чужой файл на чужом облаке,
+             часто с детьми в кадре и без согласия на показ. Список результатов
+             такие ссылки не раздаёт (правило владельца, 28.08.2026). */
+          if (!empty($r['diploma_number'])) {
+              $o .= '<a class="btn btn--ghost btn--sm" href="' . $h(url('/verify/' . $r['diploma_number']))
+                  . '">Проверить диплом</a>';
+          }
+          return $o . '</div></div></article>';
+      };
+
+      /* Данные для догрузки и поиска: только то, из чего собирается строка.
+         Ключи короткие — их здесь семь сотен, каждый лишний байт умножается. */
+      $rowsData = [];
+      foreach ($results as $r) {
+          $displayName = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
+          $aslug = $artistSlugMap[mb_strtolower(trim((string) $r['full_name']))] ?? null;
+          $row = [
+              'n' => (string) $displayName,
+              't' => $titleTone((string) $r['result']),
+              'r' => (string) $r['result'],
+              'i' => (int) $r['app_id'],
+          ];
+          if (trim((string) $r['work_title']) !== '')   $row['w'] = wt_show((string) $r['work_title']);
+          if ($r['city'])                                $row['c'] = (string) $r['city'];
+          if ($r['institution'])                         $row['u'] = (string) $r['institution'];
+          if ($r['age_category'])                        $row['a'] = (string) $r['age_category'];
+          if (trim((string) ($r['extra_diploma'] ?? '')) !== '') $row['x'] = trim((string) $r['extra_diploma']);
+          if (!empty($r['diploma_number']))              $row['d'] = (string) $r['diploma_number'];
+          if ($aslug)                                    $row['s'] = $aslug;
+          $rowsData[] = $row;
+      }
+      ?>
+      <div id="resList">
+      <?php foreach (array_slice($results, 0, $SEED) as $r) echo $rowHtml($r), "\n"; ?>
       </div>
+      <div id="resMore"></div>
+      <div id="resSentinel" style="height:1px"></div>
+      <div class="res-empty" id="resEmpty">По вашему запросу ничего не найдено. Уточните фамилию или номер диплома.</div>
+      <script type="application/json" id="resData"><?= json_encode($rowsData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 
       <script>
       (function () {
-        var inp = document.getElementById('resSearch');
-        if (!inp) return;
-        var items = [].slice.call(document.querySelectorAll('[data-item]'));
+        var box  = document.getElementById('resList');
+        var more = document.getElementById('resMore');
+        var data = document.getElementById('resData');
+        if (!box || !data) return;
+        var ROWS = JSON.parse(data.textContent || '[]');
+        var SEED = <?= (int) $SEED ?>, PAGE = 60;
+        var AW = '<?= h(url('/awards')) ?>?comp=<?= (int) $c['id'] ?>&app=';
+        var VF = '<?= h(url('/verify/')) ?>';
+        var AR = '<?= h(url('/artist/')) ?>';
+        var IC = {
+          age:  <?= json_encode(RES_IC_AGE, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>,
+          geo:  <?= json_encode(RES_IC_GEO, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>,
+          inst: <?= json_encode(RES_IC_INST, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>,
+          cup:  <?= json_encode(RES_IC_CUP, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>,
+          star: <?= json_encode(RES_IC_STAR, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) ?>
+        };
+        function esc(s) {
+          return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+          });
+        }
+        /* Тот же порядок и те же классы, что в PHP-разметке первой сотни:
+           строка не должна отличаться от того, дорисована она или пришла с сервера. */
+        function card(o) {
+          var h = '<article class="card rrow rrow--' + o.t + '" data-item>';
+          h += '<div class="rrow-main"><b>' + (o.s ? '<a href="' + AR + esc(o.s) + '">' + esc(o.n) + '</a>' : esc(o.n)) + '</b>';
+          if (o.w) h += '<p class="rrow-work">Конкурсный номер: ' + esc(o.w) + '</p>';
+          h += '<div class="rrow-meta">';
+          if (o.a) h += '<span>' + IC.age + esc(o.a) + '</span>';
+          if (o.c) h += '<span>' + IC.geo + esc(o.c) + '</span>';
+          if (o.u) h += '<span>' + IC.inst + esc(o.u) + '</span>';
+          h += '</div></div><div class="rrow-side"><span class="res-title ' + o.t + '">'
+             + (o.t === 'gp' ? IC.cup : '') + esc(o.r) + '</span>';
+          if (o.x) h += '<span class="res-extra">' + IC.star + '<span>Дополнительный диплом<br><i>' + esc(o.x) + '</i></span></span>';
+          h += '<div class="rrow-acts"><a class="btn btn--primary btn--sm res-order" href="' + AW + o.i + '">Заказать награды</a>';
+          if (o.d) h += '<a class="btn btn--ghost btn--sm" href="' + VF + encodeURIComponent(o.d) + '">Проверить диплом</a>';
+          return h + '</div></div></article>';
+        }
+
+        var view = ROWS, drawn = SEED;
+        var sent  = document.getElementById('resSentinel');
         var empty = document.getElementById('resEmpty');
         var count = document.getElementById('resCount');
-        var total = items.length;
+
+        function draw() {
+          if (drawn >= view.length) { sent.style.display = 'none'; return; }
+          var html = '', to = Math.min(drawn + PAGE, view.length);
+          for (var i = drawn; i < to; i++) html += card(view[i]);
+          more.insertAdjacentHTML('beforeend', html);
+          drawn = to;
+          sent.style.display = drawn < view.length ? '' : 'none';
+        }
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(function (e) { if (e[0].isIntersecting) draw(); },
+                                   { rootMargin: '600px' }).observe(sent);
+        } else {
+          window.addEventListener('scroll', function () {
+            if (sent.getBoundingClientRect().top < window.innerHeight + 600) draw();
+          }, { passive: true });
+        }
+
+        /* Поиск идёт по всем результатам, а не по нарисованным: строка человека
+           может быть ещё не дорисована, и «не найдено» было бы неправдой. */
+        function needle(o) {
+          if (o._q === undefined) {
+            o._q = (o.n + ' ' + (o.w || '') + ' ' + (o.c || '') + ' ' + (o.u || '') + ' '
+                 + o.r + ' ' + (o.x || '') + ' ' + (o.d || '')).toLowerCase();
+          }
+          return o._q;
+        }
+        var inp = document.getElementById('resSearch');
+        var timer = null;
         function apply() {
           var q = inp.value.trim().toLowerCase();
-          var shown = 0;
-          items.forEach(function (el) {
-            var ok = !q || (el.getAttribute('data-search') || '').indexOf(q) !== -1;
-            el.style.display = ok ? '' : 'none';
-            if (ok) shown++;
-          });
-          empty.style.display = shown ? 'none' : 'block';
-          count.textContent = q ? ('Найдено: ' + shown + ' из ' + total) : '';
+          if (!q) {
+            box.style.display = '';
+            more.innerHTML = ''; view = ROWS; drawn = SEED;
+            sent.style.display = ''; empty.style.display = 'none';
+            count.textContent = '';
+            return;
+          }
+          view = ROWS.filter(function (o) { return needle(o).indexOf(q) !== -1; });
+          box.style.display = 'none';           // серверную сотню прячем — рисуем найденное
+          more.innerHTML = ''; drawn = 0;
+          draw();
+          empty.style.display = view.length ? 'none' : 'block';
+          count.textContent = 'Найдено: ' + view.length + ' из ' + ROWS.length;
         }
-        inp.addEventListener('input', apply);
+        if (inp) inp.addEventListener('input', function () {
+          clearTimeout(timer); timer = setTimeout(apply, 120);
+        });
       })();
       </script>
 
