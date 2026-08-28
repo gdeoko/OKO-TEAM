@@ -525,7 +525,7 @@ function fitPanels(ring, cards) {
     if (h > need) need = h;
   });
   if (!need) { CSSDEL(ring, "--cab-h-scr"); return; }
-  var cap = Math.round(innerHeight * 0.62);
+  var cap = Math.round(innerHeight * (phone ? 0.62 : 0.46));
   CSSVAR(ring, "--cab-h-scr", Math.max(200, Math.min(need + 2, cap)) + "px");
 }
 
@@ -548,7 +548,16 @@ function roomFit(ring) {
      владелец просил «чтобы экраны стояли, а я оборачивался и читал»:
      соседний уходит за кромку кадра раньше, чем читаемый до неё
      доедет, и два текста не накладываются друг на друга. */
-  var w = Math.max(innerWidth * 0.50, Math.min(k * panel * 0.78, innerWidth * 0.86));
+  /* Размер настенного дисплея - как у настоящего: экран занимает
+     чуть больше половины СВОЕЙ стеновой панели и никогда не
+     распухает на полкадра. Прежний минимум в половину экрана и
+     потолок в 86% превращали приборы в кинотеатральные полотна от
+     пола до потолка - владелец назвал это перебором, и по делу.
+     На телефоне пропорции свои: стена ближе, и экрану положено
+     быть шире, иначе текст не читается. */
+  var w = phone
+    ? Math.max(innerWidth * 0.58, Math.min(k * panel * 0.72, innerWidth * 0.84))
+    : Math.max(innerWidth * 0.30, Math.min(k * panel * 0.60, innerWidth * 0.46));
 
   CSSVAR(ring, "--cab-r", Math.round(rc) + "px");
   CSSVAR(ring, "--cab-p", Math.round(pp) + "px");
