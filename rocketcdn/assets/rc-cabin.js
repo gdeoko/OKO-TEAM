@@ -402,10 +402,13 @@ function hullTex(T) {
   /* Separate plates catch slightly different exposure. Keeping the
      variation under ten percent avoids the tiled blue-wall look while
      preserving one draw call for the entire cylindrical hull. */
+  /* Разброс по панелям держим втрое мягче прежнего: при пяти
+     процентах соседние секции читались разной краской, и стена
+     выглядела подлатанной. */
   for (i = 0; i < 8; i++) {
-    for (var pj = 0; pj < 4; pj++) {
-      x.fillStyle = (i + pj) % 3 === 0 ? "rgba(155,176,193,.035)" : "rgba(0,4,8,.055)";
-      x.fillRect(i * W / 8 + 3, pj * H / 4 + 3, W / 8 - 6, H / 4 - 6);
+    for (var pj = 0; pj < 3; pj++) {
+      x.fillStyle = (i + pj) % 3 === 0 ? "rgba(160,186,208,.013)" : "rgba(0,4,8,.018)";
+      x.fillRect(i * W / 8 + 2, pj * H / 3 + 2, W / 8 - 4, H / 3 - 4);
     }
   }
   /* Тёмный пояс у самого низа: тень от настила на стену */
@@ -413,35 +416,50 @@ function hullTex(T) {
   sh.addColorStop(0, "rgba(6,14,24,0)");
   sh.addColorStop(1, "rgba(6,14,24,.72)");
   x.fillStyle = sh; x.fillRect(0, H * 0.78, W, H * 0.22);
-  /* Швы листов */
-  x.strokeStyle = "rgba(1,5,9,.88)"; x.lineWidth = 3;
+  /* ── Современная обшивка, а не клёпаный корпус ─────────────
+     Стены выглядели потрёпанными, и владелец сказал это прямо:
+     «поверхность стен какая-то потрёпанная, нужно салон современнее,
+     а не старый». Делали её такой три вещи: грубые чёрные швы в три
+     точки, сетка заклёпок по каждому шву и сто семьдесят царапин
+     поверх. Всё это признаки старого клёпаного железа.
+
+     Убрано целиком. Вместо них - крупные композитные панели с
+     тончайшим тёмным раскроем и холодной световой нитью по стыку:
+     так выглядит панель, набранная из литых секций, а не сшитая
+     заклёпками. Плюс мягкое продольное шлифование очень низкого
+     контраста - поверхность живая, но чистая. */
+
+  /* Раскрой: тонкий тёмный шов и световая нить рядом с ним */
   for (i = 0; i <= 8; i++) {
-    x.beginPath(); x.moveTo(i * W / 8, 0); x.lineTo(i * W / 8, H); x.stroke();
+    var sxп = i * W / 8;
+    x.strokeStyle = "rgba(3,9,15,.55)"; x.lineWidth = 1.2;
+    x.beginPath(); x.moveTo(sxп, 0); x.lineTo(sxп, H); x.stroke();
+    x.strokeStyle = "rgba(120,190,225,.10)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(sxп + 1.4, 0); x.lineTo(sxп + 1.4, H); x.stroke();
   }
-  for (i = 0; i <= 4; i++) {
-    x.beginPath(); x.moveTo(0, i * H / 4); x.lineTo(W, i * H / 4); x.stroke();
+  /* Горизонтальный раскрой реже: две линии вместо четырёх, и обе
+     тоньше - частая сетка дробила стену на «плитку в ванной» */
+  for (i = 1; i <= 2; i++) {
+    var syп = i * H / 3;
+    x.strokeStyle = "rgba(3,9,15,.42)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(0, syп); x.lineTo(W, syп); x.stroke();
+    x.strokeStyle = "rgba(120,190,225,.07)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(0, syп + 1.2); x.lineTo(W, syп + 1.2); x.stroke();
   }
-  /* Заклёпки по швам */
-  x.fillStyle = "rgba(180,196,208,.19)";
-  for (i = 0; i < 8; i++) {
-    for (var j = 0; j < 12; j++) {
-      x.beginPath(); x.arc(i * W / 8 + 5, j * H / 12 + 8, 1.45, 0, TAU); x.fill();
-    }
+  /* Продольное шлифование: едва заметная фактура литого композита */
+  for (i = 0; i < H; i += 2) {
+    x.fillStyle = "rgba(190,214,232," +
+      (0.006 + 0.010 * Math.abs(Math.sin(i * 1.9))).toFixed(3) + ")";
+    x.fillRect(0, i, W, 1);
   }
-  /* Seeded hairline wear: the cabin remains identical between the
-     exterior threshold and flight and never reshuffles on reload. */
-  var seed = 7727;
-  function rnd() {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 4294967296;
-  }
-  x.lineCap = "round";
-  for (i = 0; i < 170; i++) {
-    var sx = rnd() * W, sy = rnd() * H, sl = 3 + rnd() * 31;
-    x.strokeStyle = "rgba(205,219,228," + (0.018 + rnd() * 0.05).toFixed(3) + ")";
-    x.lineWidth = 0.4 + rnd() * 0.7;
-    x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + sl, sy + (rnd() - 0.5) * 2.5); x.stroke();
-  }
+  /* Световой пояс на высоте глаз: у современной рубки подсветка
+     идёт лентой, и она же собирает цилиндр в помещение */
+  var поясГ = x.createLinearGradient(0, H * 0.30, 0, H * 0.52);
+  поясГ.addColorStop(0, "rgba(120,190,225,0)");
+  поясГ.addColorStop(0.5, "rgba(120,190,225,.055)");
+  поясГ.addColorStop(1, "rgba(120,190,225,0)");
+  x.fillStyle = поясГ;
+  x.fillRect(0, H * 0.30, W, H * 0.22);
   var t = new T.CanvasTexture(c);
   t.wrapS = t.wrapT = T.RepeatWrapping;
   if (T.SRGBColorSpace) t.colorSpace = T.SRGBColorSpace;
@@ -824,16 +842,23 @@ function build(T, opts) {
      пилота. Тогда панель затыкает проём ровно, с небольшим напуском
      на обшивку (сам снимок шире кадра по cover), и стыка не видно.
      Числа зависят от кадра - как и всё остальное в этой сцене. */
-  var Dок = CON && CON.CAM_WIN ? CON.CAM_WIN : 0.86;
+  var Dок = opts["dПан"] || (CON && CON.CAM_WIN ? CON.CAM_WIN : 0.86);
   var fovОк = (opts.fov || 72) * Math.PI / 180;
   var Hок = 2 * Dок * Math.tan(fovОк / 2);
   var Wок = Hок * aspect;
-  /* Половина проёма по дуге: хорда Wок на радиусе обшивки */
+  /* Половина проёма по дуге: хорда Wок на радиусе обшивки.
+
+     Поджимаем на семь процентов. Панель плоская, а проём вырезан по
+     цилиндру, и от зрителя, стоящего не в центре, дуга видна шире
+     хорды: по краям панели показывались звёзды - проём выглядывал
+     из-под неё. Пусть лучше панель заходит на обшивку, чем обшивка
+     светит мимо панели. */
   var пол = Math.min(0.42, Math.max(0.10, Math.asin(
-    Math.min(0.99, (Wок / 2) / R_WALL))));
+    Math.min(0.99, (Wок / 2) / R_WALL)))) * 0.93;
   WIN_HALF = пол;
-  WIN_Y0 = Math.max(0.12, EYE - Hок / 2);
-  WIN_Y1 = Math.min(H_ROOM - 0.12, EYE + Hок / 2);
+  var полВ = Hок / 2 * 0.94;
+  WIN_Y0 = Math.max(0.12, EYE - полВ);
+  WIN_Y1 = Math.min(H_ROOM - 0.12, EYE + полВ);
   var grp = new T.Group();
   var i, m, th;
   var style = g.RC_SHIP_STYLE || {
@@ -1048,24 +1073,13 @@ function build(T, opts) {
      тут только спорила бы сама с собой и ловила z-конфликт. */
   сб("рама");
   /* ── Обстановка помещения ───────────────────────────────
-     Поручень, кабельные трассы и вентиляция стоят не ради красоты.
-     Ближняя дуга поручня проходит перед объективом и едет заметно
-     быстрее дальней стены - этот параллакс глаз читает как «я
-     нахожусь внутри», и никакая текстура его не заменит. */
-  if (!tiny) {
-    var rail = new T.Mesh(new T.TorusGeometry(R_WALL - 0.14, 0.04, 5, 44), steel);
-    rail.rotation.x = Math.PI / 2;
-    rail.position.y = 1.06;
-    grp.add(rail);
-    /* Кронштейны поручня: он к чему-то крепится */
-    for (i = 0; i < 8; i++) {
-      th = azOf(i) + SECT / 2;
-      m = new T.Mesh(new T.BoxGeometry(0.05, 0.05, 0.2), steel);
-      m.position.copy(at(th, R_WALL - 0.06, 1.06, T));
-      m.rotation.y = -th;
-      grp.add(m);
-    }
-  }
+     Поручня по кругу больше нет. Он ставился ради параллакса -
+     ближняя дуга едет быстрее дальней стены, и это читается как «я
+     внутри». Но проходил он ровно на высоте карточек и перечёркивал
+     их поперёк на каждом кадре оборота: владелец увидел это первым и
+     сказал прямо - «снизу какая-то полоса и их перекрывает, нужно её
+     убрать вообще». Параллакс дают стойки, кабельные трассы и сам
+     оборот, а перечёркнутый текст не даёт ничего. */
 
   /* Кабельные трассы поясом под потолком и спуски на стойки:
      вертикаль связывает потолок со стеной, и верх кадра перестаёт
