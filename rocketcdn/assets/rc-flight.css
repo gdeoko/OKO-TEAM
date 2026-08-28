@@ -5174,3 +5174,13 @@ html.rc-deep-inside .totop.on {
 }
 
 
+
+/* В салоне панель - 3D-консоль в мире (console3), а не экранный
+   оверлей. DOM-кокпит (снимок, приборы, клавиши) в режиме сцены
+   скрыт: он прибит к взгляду и «ездит с камерой», чего быть не
+   должно - консоль стоит в своём углу как часть корабля. */
+.rc-flight.rcf-stage .rcf-cabframe,
+.rc-flight.rcf-stage .rcf-instr,
+.rc-flight.rcf-stage .rcf-caps {
+  display: none !important;
+}

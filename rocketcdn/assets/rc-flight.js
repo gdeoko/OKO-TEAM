@@ -5548,6 +5548,7 @@ function hideHint() {
 
 function size() {
   if (!W3 || !F.open) return;
+  if (F.stage) stageWall();
   deckSkinSoon();
   var w = innerWidth, h = innerHeight;
   W3.r.setSize(w, h, false);
@@ -7945,6 +7946,11 @@ function open() {
        проёме совпал с плоской рамкой полёта: подмены не видно, а
        геометрия комнаты больше не тратит ни кадра. */
     if (cabin && cabin.console3 && cabin.console3.group) cabin.console3.group.visible = true;
+    if (stageWallMesh) {
+      stageWallMesh.visible = false;
+      var бт = stageWallMesh.userData.борта || [];
+      for (var бi = 0; бi < бт.length; бi++) бт[бi].visible = false;
+    }
     cabinFlightMode();
     cabFrameLayer();
     deckLayer();
@@ -9688,26 +9694,22 @@ function stageWall() {
   img.decoding = "async";
   img.onload = function () {
     if (!cabin || !W3) return;
-    /* Запекаем в разрешении кадра: панель на стене обязана быть
-       того же качества, что плоская рамка игры */
+    /* Запекаем панель в разрешении кадра. Снимок кабины уже
+       СПЛОШНОЙ и непрозрачный (углы alpha=255), прозрачно ТОЛЬКО
+       окно (центр alpha=0). Значит плоскость сама по себе - твёрдая
+       консоль с дырой окна: планета видна ровно в окне, всё
+       остальное - корпус. Никаких растворений кромок и тёмных полос:
+       они и читались как «всё равно прозрачная». */
     var dpr = Math.min(2, g.devicePixelRatio || 1);
-    /* Запас по краям: из глубины салона видно больше, чем кадр, и
-       без запаса плоскость обрезала снимок резкой линией прямо над
-       рамой окна. Снимок в cover-раскладке больше кадра, его
-       настоящие пиксели и продолжают панель за кромку. */
-    var PAD = 0.16;
-    var Wб = Math.round(W * (1 + PAD * 2)), Hб = Math.round(H * (1 + PAD * 2));
     var c = doc.createElement("canvas");
-    c.width = Math.round(Wб * dpr);
-    c.height = Math.round(Hб * dpr);
+    c.width = Math.round(W * dpr);
+    c.height = Math.round(H * dpr);
     var x = c.getContext("2d");
     x.scale(dpr, dpr);
     var пк = g.RC_DECK["покрытие"](meta, W, H);
-    var сдвX = Math.round(W * PAD), сдвY = Math.round(H * PAD);
-    x.drawImage(img, пк.ox + сдвX, пк.oy + сдвY, пк.dw, пк.dh);
-    x.translate(сдвX, сдвY);
-    /* Ниши, тела и свет клавиш - тем же модулем, что в игре:
-       панель на стене и панель в игре не могут разойтись */
+    x.drawImage(img, пк.ox, пк.oy, пк.dw, пк.dh);
+    /* Ниши, тела и свет клавиш - тем же модулем, что в игре, чтобы
+       консоль в салоне и панель в игре были один в один */
     try {
       var d2 = g.RC_DECK.создать();
       d2.вид(meta, план, doc.documentElement.lang !== "en");
@@ -9719,59 +9721,20 @@ function stageWall() {
       x.globalCompositeOperation = "source-over";
     } catch (eD) {}
 
-    /* Кромка растворяется: обрез снимка на границе запаса читался
-       тёмной плитой поверх космоса. Маска собирается отдельным
-       холстом (полный залив, края стёрты градиентами) и снимается
-       одной операцией: иначе каждая полоса destination-in стирала
-       бы всё вне себя. */
-    var мк = doc.createElement("canvas");
-    мк.width = c.width; мк.height = c.height;
-    var мх = мк.getContext("2d");
-    мх.scale(dpr, dpr);
-    мх.fillStyle = "#fff";
-    мх.fillRect(0, 0, Wб, Hб);
-    мх.globalCompositeOperation = "destination-out";
-    var кр = Math.round(Math.min(Wб, Hб) * 0.10);
-    var гЛ = мх.createLinearGradient(0, 0, кр, 0);
-    гЛ.addColorStop(0, "rgba(0,0,0,1)"); гЛ.addColorStop(1, "rgba(0,0,0,0)");
-    мх.fillStyle = гЛ; мх.fillRect(0, 0, кр, Hб);
-    var гП = мх.createLinearGradient(Wб - кр, 0, Wб, 0);
-    гП.addColorStop(0, "rgba(0,0,0,0)"); гП.addColorStop(1, "rgba(0,0,0,1)");
-    мх.fillStyle = гП; мх.fillRect(Wб - кр, 0, кр, Hб);
-    /* Сверху стираем всё выше верхней балки рамы: тёмный верх
-       снимка затемнял планету прямоугольником. Балку оставляем,
-       переход в полсотни точек прямо над ней. */
-    var yр = пк.oy + сдвY + (meta["коробка"] && meta["коробка"].t ? meta["коробка"].t : 0.09) * пк.dh;
-    var гВ = мх.createLinearGradient(0, Math.max(0, yр - 52), 0, yр + 8);
-    гВ.addColorStop(0, "rgba(0,0,0,1)"); гВ.addColorStop(1, "rgba(0,0,0,0)");
-    мх.fillStyle = гВ; мх.fillRect(0, 0, Wб, Math.max(0, yр + 8));
-    var гН = мх.createLinearGradient(0, Hб - кр, 0, Hб);
-    гН.addColorStop(0, "rgba(0,0,0,0)"); гН.addColorStop(1, "rgba(0,0,0,1)");
-    мх.fillStyle = гН; мх.fillRect(0, Hб - кр, Wб, кр);
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    x.globalCompositeOperation = "destination-in";
-    x.drawImage(мк, 0, 0);
-    x.globalCompositeOperation = "source-over";
-
-
     var tex = new T.CanvasTexture(c);
     if (T.SRGBColorSpace) tex.colorSpace = T.SRGBColorSpace;
     tex.anisotropy = 4;
 
-    /* Плоскость по фрустуму из p0 на дистанции стены */
+    /* Плоскость по фрустуму из p0 на дистанции окна: в конце
+       подъезда, из точки пилота, она заполняет кадр - то есть
+       совпадает 1:1 с кадром игры. Из глубины салона она заметно
+       меньше и стоит в своём углу - ровно как просил заказчик. */
     var D = (g.RC_PANEL && g.RC_PANEL.CAM_WIN) || 0.86;
     var fovV = (W3.fov0 || 72) * Math.PI / 180;
-    var Hm0 = 2 * D * Math.tan(fovV / 2);
-    var Wm0 = Hm0 * (W / H);
-    var Hm = Hm0 * (1 + PAD * 2);
-    var Wm = Wm0 * (1 + PAD * 2);
+    var Hm = 2 * D * Math.tan(fovV / 2);
+    var Wm = Hm * (W / H);
     if (stageWallMesh) {
       try {
-        var бт2 = stageWallMesh.userData.борта || [];
-        for (var бj = 0; бj < бт2.length; бj++) {
-          бт2[бj].parent && бт2[бj].parent.remove(бт2[бj]);
-          бт2[бj].geometry.dispose(); бт2[бj].material.dispose();
-        }
         stageWallMesh.parent && stageWallMesh.parent.remove(stageWallMesh);
         stageWallMesh.geometry.dispose();
         stageWallMesh.material.map && stageWallMesh.material.map.dispose();
@@ -9781,53 +9744,19 @@ function stageWall() {
     }
     var mesh = new T.Mesh(
       new T.PlaneGeometry(Wm, Hm),
-      new T.MeshBasicMaterial({ map: tex, transparent: true, fog: false })
+      new T.MeshBasicMaterial({ map: tex, transparent: true, fog: false, depthWrite: false })
     );
-    /* Ставим в мировых координатах по лучу q1 из p0, затем переводим
-       в локаль салона: группа может быть повешена на камеру в полёте,
-       и стена обязана жить в её системе, чтобы прятаться вместе со
-       всем салоном. */
+    mesh.userData.борта = [];
     var dir = new T.Vector3(0, 0, -1).applyQuaternion(cabin.q1);
     var посадка = cabin.p0.clone().addScaledVector(dir, D);
     mesh.position.copy(посадка);
     mesh.quaternion.copy(cabin.q1);
-    mesh.renderOrder = 4;
+    mesh.renderOrder = 5;
     cabin.group.updateMatrixWorld(true);
     cabin.group.worldToLocal(mesh.position);
-    /* Поворот тоже в локаль: у группы есть свой yaw */
     var qInv = cabin.group.getWorldQuaternion(new T.Quaternion()).invert();
     mesh.quaternion.premultiply(qInv);
     cabin.group.add(mesh);
-    /* Борт за панелью. Панель уже сектора, и в щели между её
-       растворённой кромкой и краем проёма сквозила планета - на
-       телефоне корпус читался призраком. Две тёмные полосы позади
-       панели закрывают щели по бокам ОКНА, само окно не трогают:
-       из финальной точки они за кромкой кадра и стыку не мешают. */
-    var кб = meta["коробка"] || { l: 0.1, r: 0.9 };
-    function бокс(x0м, x1м) {
-      var bw = x1м - x0м;
-      if (bw <= 0.01) return;
-      var b = new T.Mesh(
-        new T.PlaneGeometry(bw, Hm * 1.5),
-        new T.MeshBasicMaterial({ color: 0x060d16, fog: false })
-      );
-      b.position.copy(посадка).addScaledVector(dir, 0.03);
-      b.quaternion.copy(mesh.quaternion);
-      /* Сдвиг вбок в плоскости панели */
-      var right = new T.Vector3(1, 0, 0).applyQuaternion(cabin.q1);
-      b.position.addScaledVector(right, (x0м + x1м) / 2);
-      cabin.group.worldToLocal(b.position);
-      b.quaternion.copy(mesh.quaternion);
-      b.renderOrder = 3;
-      cabin.group.add(b);
-      mesh.userData.борта.push(b);
-    }
-    mesh.userData.борта = [];
-    /* Координаты кромок окна снимка в метрах плоскости */
-    var xлк = ((пк.ox + сдвX + кб.l * пк.dw) / Wб - 0.5) * Wm;
-    var xпк = ((пк.ox + сдвX + кб.r * пк.dw) / Wб - 0.5) * Wm;
-    бокс(-Wm * 0.95, xлк + Wm * 0.02);
-    бокс(xпк - Wm * 0.02, Wm * 0.95);
     stageWallMesh = mesh;
     stageWallSize.w = W; stageWallSize.h = H;
   };
@@ -10057,28 +9986,9 @@ function stageCam(dt) {
      подхватывает кадр ровно там, где совпадает с плоской рамкой
      полёта. Опережать нельзя - иначе он повиснет в воздухе. */
   if (C.frame) C.frame.visible = false;
-  /* ── Полноэкранная панель, видимая когда смотришь в окно ──
-     Панель это тот же DOM-кокпит, что в полёте: снимок кабины во
-     весь кадр (cover) плюс приборы и тела клавиш. Держим его на
-     ПОЛНОМ размере всегда (scale=1) - никакого роста от маленькой,
-     значит от пола до потолка и на ПК, и на телефоне. Прозрачностью
-     ведёт взгляд: facing=1 когда смотрим в сектор окна, 0 когда
-     отвернулись к экранам стен. Так панель «стоит у окна» - видна
-     сразу на входе, гаснет когда листаешь карточки, и снова во весь
-     кадр к подъезду. На подъезде (ek) держим её силой. */
-  var сект = Math.PI * 2 / 8;
-  var кОкну = Math.min(yawT, Math.max(0, Math.PI * 2 - yawT));
-  /* Держим панель полностью включённой в широком поле у окна и
-     гасим её быстро на кромке сектора: так меньше кадров, где она
-     полупрозрачна и сквозь неё видно комнату (это и читалось как
-     «всё равно прозрачная»). */
-  var facing = 1 - Math.max(0, Math.min(1, (кОкну - сект * 0.85) / (сект * 0.32)));
-  facing = facing * facing * (3 - 2 * facing);
-  facing = Math.max(facing, ek);
-  if (ui.wrap) {
-    ui.wrap.style.setProperty("--rcf-cabs", "1");
-    ui.wrap.style.setProperty("--rcf-cabo", facing.toFixed(3));
-  }
+  /* Панель в салоне - 3D-консоль в мире (console3), не DOM-оверлей.
+     Гасим экранный слой начисто, чтобы он не висел поверх кадра. */
+  if (ui.wrap) ui.wrap.style.setProperty("--rcf-cabo", "0");
   /* Свет пульта разгорается вместе с подходом, а общий свет
      помещения к концу подъезда гаснет. Это не приём ради приёма:
      когда человек садится за панель, кадр обязан принадлежать
@@ -10266,15 +10176,16 @@ function stage(k) {
      внезапно возникала рубка. Это и была подмена, о которой он
      говорил. Картинка одна и та же, меняется только расстояние. */
   cabinBuild();
-  /* Панель в салоне - ТОТ ЖЕ полноэкранный кокпит, что в игре:
-     снимок кабины (ui.cabFrame, object-fit: cover - от пола до
-     потолка на любом экране) плюс слой приборов и тел клавиш. Он
-     занимает кадр целиком, как в полёте, значит floor-to-ceiling и
-     на ПК, и на телефоне. Видимостью управляет взгляд: смотришь в
-     окно - панель во весь кадр и непрозрачная, отвернулся к экранам
-     стен - гаснет. Трёхмерную раму пульта прячем, чтобы не двоила. */
-  cabFrameLayer();
-  deckLayer();
+  /* Панель в салоне - console в СВОЁМ СЕКТОРЕ окна, стоит в мире
+     как часть корабля (stageWall). Заказчик дословно: «она должна
+     дальше стоять в углу, а не на весь экран и ездить вместе со
+     мной; она часть корабля; просто стоит там вместо пустоты, где
+     планета». Плоскость с запечённым пультом стоит в проёме окна:
+     смотришь из глубины салона - она в своём углу; повернулся - она
+     на месте; подошёл - приблизилась. Полноэкранной (DOM) она
+     становится только когда стартует сама игра. Трёхмерную раму
+     прячем, чтобы не двоила. */
+  stageWall();
   if (cabin && cabin.console3 && cabin.console3.group) cabin.console3.group.visible = false;
   /* Гул корабля в салоне. Тише, чем в полёте: двигатель на холостом,
      работает вентиляция и приборы. Без него помещение читается
