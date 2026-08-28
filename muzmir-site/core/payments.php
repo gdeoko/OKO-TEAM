@@ -595,10 +595,34 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
     $suppressPaySuccess = !empty($batchIds) && empty($orderId);
     if (!$suppressPaySuccess && $email !== '' && function_exists('mail_queue')) {
         $baseCab = rtrim((string) cfgv('base_url'), '/');
+        $tplPay  = 'payment_success';
+        $tplVars = [];
         if ($orderId) {
-            // Заказ наградных материалов оплачен — письмо «принят в производство».
-            $preheader = 'Заявка на изготовление наградного материала принята. Заказ передан в изготовление.';
-            $heroSub   = 'Заказ №' . (int) $orderId . ' · передан в изготовление';
+            /* ЗАКАЗ НАГРАД — СВОЁ ПИСЬМО, А НЕ ОБЩЕЕ ОБ ОПЛАТЕ.
+             *
+             * Тема письма была верная, а внутри шёл payment_success: «подтверждаем
+             * оплату участия в конкурсе… работа передана жюри». Человек заказывает
+             * награду уже ПОСЛЕ оглашения — и получает письмо про участие, которое
+             * давно состоялось, без слова о том, что он купил и когда это придёт.
+             * Теперь письмо своё: состав заказа, сумма, сроки по каждому виду и
+             * адрес доставки для оригиналов. */
+            $ordRowMail = one("SELECT * FROM awards_orders WHERE id=?", [(int) $orderId]);
+            $itemsMail  = json_decode((string) ($ordRowMail['items'] ?? '[]'), true);
+            if (!is_array($itemsMail)) $itemsMail = [];
+            // Дата готовности электронных — та же, что проставлена дипломам при
+            // приёме заказа (order_fulfill_digital): пишем человеку ровно то, что
+            // стоит в очереди отправки, а не пересчитанный заново срок.
+            $digDate = '';
+            $schd = one("SELECT scheduled_at FROM diplomas WHERE application_id=? AND COALESCE(scheduled_at,'')<>''
+                          ORDER BY id DESC LIMIT 1", [(int) ($ordRowMail['application_id'] ?? 0)]);
+            if ($schd && !empty($schd['scheduled_at'])) {
+                $ts = strtotime((string) $schd['scheduled_at']);
+                if ($ts) $digDate = function_exists('ru_date') ? ru_date(date('Y-m-d', $ts)) : date('d.m.Y', $ts);
+            }
+            $tplPay    = 'award_order_paid';
+            $tplVars   = ['order' => $ordRowMail ?: [], 'items' => $itemsMail, 'digital_date' => $digDate];
+            $preheader = 'Заявка на изготовление наградного материала принята. Ниже — состав заказа и сроки.';
+            $heroSub   = 'Заказ №' . (int) $orderId . ' · принят в изготовление';
             $actions   = [['Отследить в кабинете', $baseCab . '/cabinet'], ['Оставить отзыв', $baseCab . '/reviews']];
             $subjectPay = 'Заявка на изготовление наград принята — Культурный центр «Музыкальный Мир»';
         } else {
@@ -609,7 +633,7 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
             $subjectPay = 'Оплата получена — Культурный центр «Музыкальный Мир»';
         }
         $html = function_exists('mail_template')
-            ? mail_template('payment_success', ['name' => $name, 'full_name' => $name, 'amount' => $amount, 'payment_id' => $paymentId, 'cabinet_url' => $baseCab . '/cabinet',
+            ? mail_template($tplPay, $tplVars + ['name' => $name, 'full_name' => $name, 'amount' => $amount, 'payment_id' => $paymentId, 'cabinet_url' => $baseCab . '/cabinet',
                 '_tx' => [
                     'preheader' => $preheader,
                     'hero'      => mm_cta_primary($baseCab . '/cabinet', 'Перейти в личный кабинет', $heroSub),
