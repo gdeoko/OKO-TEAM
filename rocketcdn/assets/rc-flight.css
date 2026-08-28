@@ -391,13 +391,19 @@ html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
 
 /* Слабое устройство и просьба меньше движения: полёта нет, кнопки
    не обещают того, чего не будет */
-html.rc-reduced .rcf-fab, html.rc-reduced .rcf-cta,
-html.rc-no3d .rcf-fab, html.rc-no3d .rcf-cta,
-html[data-degrade="3"] .rcf-fab {
+/* Список закрывает ВСЕ входы в полёт, а не два из трёх. Третья
+   кнопка живёт в эпилоге (.epi-btn.js-flight), и её тут не было:
+   в режиме покоя человек нажимал большую подсвеченную кнопку, слой
+   игры при этом стоял display: none, страница запиралась (overflow
+   уходил в hidden), заигрывала музыка - и ни одной кнопки выхода на
+   экране. То же самое при отказе трёхмерного слоя. */
+html.rc-reduced .rcf-fab, html.rc-reduced .rcf-cta, html.rc-reduced .epi-btn.js-flight,
+html.rc-no3d .rcf-fab, html.rc-no3d .rcf-cta, html.rc-no3d .epi-btn.js-flight,
+html[data-degrade="3"] .rcf-fab, html[data-degrade="3"] .epi-btn.js-flight {
   display: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .rcf-fab, .rcf-cta, .rc-flight { display: none !important; }
+  .rcf-fab, .rcf-cta, .rc-flight, .epi-btn.js-flight { display: none !important; }
 }
 
 @media (max-width: 760px) {
@@ -1270,14 +1276,13 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
    убирает, и из обхода.
 
    Исключений нет. Сначала я вывел из-под этого правила проектор
-   RocketVPN, считая его рабочим в режиме сцены, - и был неправ
-   дважды. Проектор в этом режиме и так погашен правилом
-   `.rc-flight:has(.rcf-brief:not(.off)) > .rc-vpn-projector` с
-   !important (класс `off` у брифинга не ставится нигде), а нажатия
-   в режиме сцены не получает НИКТО: ниже стоит
-   `.rc-flight.rcf-stage * { pointer-events: none !important }`.
-   Заодно исключение возвращало видимость двум кнопкам ЗАКРЫТОЙ
-   голограммы - ровно то, против чего написано само правило. */
+   RocketVPN, считая его рабочим в режиме сцены, - и был неправ.
+   Нажатия в режиме сцены не получает НИКТО: ниже стоит
+   `.rc-flight.rcf-stage * { pointer-events: none !important }`. А
+   видимость проектора снимает это же правило: он объявлен кнопкой,
+   и общий селектор его подбирает. Заодно исключение возвращало
+   видимость двум кнопкам ЗАКРЫТОЙ голограммы - ровно то, против
+   чего написано само правило. */
 .rc-flight.rcf-stage button,
 .rc-flight.rcf-stage a[href],
 .rc-flight.rcf-stage input,

@@ -91,7 +91,70 @@ if (!проба.нет) {
   шаг("пробел на клавише не разгоняет корабль", !(послеV > (доV || 0) + 0.05),
       `ход ${доV} -> ${послеV}`);
 }
+
+/* И обратное: вне органа управления стрелка ОБЯЗАНА давать тягу.
+   Без этой половины проверка была зелёной на полностью мёртвой
+   клавиатуре - проверялось только то, что ничего не происходит. */
+await pg.evaluate(() => {
+  var сцена = document.querySelector(".rc-flight");
+  if (сцена && сцена.focus) сцена.focus();
+  else document.body.focus();
+});
+await pg.waitForTimeout(400);
+const доСтрелки = await pg.evaluate(() => window.RC_FLIGHT.state ? window.RC_FLIGHT.state().v : null);
+await pg.keyboard.press("ArrowUp");
+await pg.waitForTimeout(500);
+const послеСтрелки = await pg.evaluate(() => window.RC_FLIGHT.state ? window.RC_FLIGHT.state().v : null);
+шаг("стрелка вне органа даёт тягу", послеСтрелки > (доСтрелки || 0) + 0.05,
+    `ход ${доСтрелки} -> ${послеСтрелки}`);
+/* И направление: вниз убавляет */
+await pg.keyboard.press("ArrowDown");
+await pg.keyboard.press("ArrowDown");
+await pg.waitForTimeout(500);
+const послеВниз = await pg.evaluate(() => window.RC_FLIGHT.state ? window.RC_FLIGHT.state().v : null);
+шаг("стрелка вниз убавляет ход", послеВниз < послеСтрелки, `ход ${послеСтрелки} -> ${послеВниз}`);
+
+/* Клавиша КАРТА не должна оставаться горящей после выхода. */
+await pg.evaluate(() => { const к = document.querySelector(".rcf-map-key"); if (к) к.click(); });
+await pg.waitForTimeout(900);
 await изполёта();
+const карта = await pg.evaluate(() => {
+  const к = document.querySelector(".rcf-map-key");
+  return { горит: !!(к && к.classList.contains("cur")), список: !!document.querySelector(".rcf-netlist.on") };
+});
+шаг("клавиша КАРТА гаснет вместе с полётом", !карта.горит && !карта.список, JSON.stringify(карта));
+await влёт();
+await изполёта();
+/* Пробел в поле ввода обязан набираться. В режиме сцены полёт
+   «открыт», и обработчик клавиш доставал до формы на голограмме
+   пульта: пробел съедался, слова в имени слипались. */
+await изполёта();
+await pg.evaluate(() => window.scrollTo(0, 0));
+await pg.waitForTimeout(1200);
+for (let i = 0; i < 30; i++) { await pg.mouse.wheel(0, 700); await pg.waitForTimeout(110); }
+await pg.waitForTimeout(2500);
+const кнЗаявки = await pg.$(".rc-desk .dsk-b-lead");
+if (кнЗаявки) {
+  const р = await кнЗаявки.boundingBox();
+  if (р) await pg.mouse.click(р.x + р.width / 2, р.y + р.height / 2);
+  await pg.waitForTimeout(1400);
+  const кудаСел = await pg.evaluate(() => {
+    const э = document.activeElement;
+    return { поле: э.tagName + (э.id ? "#" + э.id : ""), ловушка: э.name === "website" };
+  });
+  await pg.keyboard.type("Иван Петров");
+  await pg.waitForTimeout(400);
+  const набрано = await pg.evaluate(() => ({
+    имя: (document.querySelector("#lfName") || {}).value || "",
+    ловушка: (document.querySelector('.rc-desk input[name="website"]') || {}).value || ""
+  }));
+  шаг("каретка садится в настоящее поле, не в ловушку для ботов",
+      !кудаСел.ловушка && набрано.ловушка === "" && набрано.имя.indexOf(" ") > 0,
+      `фокус ${кудаСел.поле} · имя «${набрано.имя}» · ловушка «${набрано.ловушка}»`);
+} else {
+  шаг("каретка садится в настоящее поле, не в ловушку для ботов", false, "кнопки заявки на пульте нет");
+}
+
 console.log(бед ? "ИТОГ: игра ещё врёт" : "ИТОГ: игра держит слово");
 await b.close();
 process.exit(бед ? 1 : 0);

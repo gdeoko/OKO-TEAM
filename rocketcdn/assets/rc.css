@@ -56,16 +56,25 @@
      становятся одного размера - именно этого не хватало сайту.
      Шаг примерно 1,18; нижняя граница каждого clamp - телефон,
      верхняя - настольный экран. */
-  --fs-1:  11px;                       /* надпись-код, легенда   */
-  --fs-2:  clamp(11.5px, 1.05vw, 12.5px); /* мелкая подпись      */
-  --fs-3:  clamp(12.5px, 1.15vw, 13.5px); /* подпись, метка      */
-  --fs-4:  clamp(13.5px, 1.25vw, 15px);   /* основной текст мелкий */
-  --fs-5:  clamp(14.5px, 1.35vw, 16px);   /* основной текст      */
-  --fs-6:  clamp(15.5px, 1.5vw, 17.5px);  /* крупный текст, лид  */
-  --fs-7:  clamp(16px, 1.7vw, 19px);      /* подзаголовок блока  */
-  --fs-8:  clamp(19px, 2.4vw, 26px);      /* заголовок карточки-панели */
-  --fs-9:  clamp(25px, 3.6vw, 42px);      /* заголовок раздела   */
-  --fs-10: clamp(34px, 6.4vw, 74px);      /* заголовок первого экрана */
+  /* Кегли заданы в rem, а не в точках: rem это базовый кегль
+     браузера, и человек, поставивший себе крупный шрифт в настройках,
+     получает крупный шрифт на сайте. Пока всё было в точках, страница
+     не замечала настройку вовсе - замер 16, 20 и 24 пунктов не менял
+     на ней ни одного элемента, а подписи оставались 12,5 точками.
+
+     При обычных настройках ничего не меняется: 1rem это те же 16
+     точек, и все величины ниже пересчитаны один в один. Пределы
+     clamp тоже в rem, а середина по-прежнему по ширине окна. */
+  --fs-1:  0.6875rem;                       /* надпись-код, легенда   */
+  --fs-2:  clamp(0.7188rem, 1.05vw, 0.7812rem); /* мелкая подпись      */
+  --fs-3:  clamp(0.7812rem, 1.15vw, 0.8438rem); /* подпись, метка      */
+  --fs-4:  clamp(0.8438rem, 1.25vw, 0.9375rem);   /* основной текст мелкий */
+  --fs-5:  clamp(0.9062rem, 1.35vw, 1rem);   /* основной текст      */
+  --fs-6:  clamp(0.9688rem, 1.5vw, 1.0938rem);  /* крупный текст, лид  */
+  --fs-7:  clamp(1rem, 1.7vw, 1.1875rem);      /* подзаголовок блока  */
+  --fs-8:  clamp(1.1875rem, 2.4vw, 1.625rem);      /* заголовок карточки-панели */
+  --fs-9:  clamp(1.5625rem, 3.6vw, 2.625rem);      /* заголовок раздела   */
+  --fs-10: clamp(2.125rem, 6.4vw, 4.625rem);      /* заголовок первого экрана */
 
   /* ── Межстрочное и трекинг по ролям ─────────────────────────
      Правило простое: чем крупнее кегль, тем плотнее строка и тем
@@ -116,6 +125,12 @@
   --surface:   rgba(255,255,255,.035);
   --surface-2: rgba(255,255,255,.055);
   --line:      rgba(226,232,240,.10);
+  /* Граница ОРГАНА управления это не украшение: по ней человек
+     опознаёт, куда писать и куда нажимать, и норма для неё 3:1, как
+     для любого нетекстового признака. Декоративная --line даёт 1,22
+     к фону - на ноутбуке при боковом свете поле анкеты просто
+     пропадает. Здесь 3,3:1, посчитано по фону страницы. */
+  --line-ui:   rgba(226,232,240,.40);
   --line-2:    rgba(226,232,240,.17);
   --tx:        #E2E8F0;
   --tx-2:      rgba(226,232,240,.66);
@@ -177,6 +192,7 @@
   --surface:   rgba(255,255,255,.92);
   --surface-2: #FFFFFF;
   --line:      rgba(9,19,32,.10);
+  --line-ui:   rgba(9,19,32,.46);
   --line-2:    rgba(9,19,32,.18);
   --tx:        #091320;
   --tx-2:      rgba(9,19,32,.66);
@@ -620,7 +636,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
 .kpi > div { background: var(--bg); padding: clamp(20px, 3vw, 34px) clamp(14px, 2vw, 26px); transition: background var(--fast); }
 .kpi > div:hover { background: var(--bg-3); }
-.kpi-n { font-size: clamp(26px, 3.6vw, 44px); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+.kpi-n { font-size: clamp(1.625rem, 3.6vw, 2.75rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
 /* Подпись под числом - одна роль на весь сайт, один кегль */
 .kpi-l { font-size: var(--fs-3); line-height: var(--lh-cap); color: var(--tx-2); margin-top: 7px; }
 
@@ -803,7 +819,9 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .field label { display: block; font-size: var(--fs-2); font-weight: 600; line-height: var(--lh-cap); color: var(--tx-2); margin-bottom: 7px; }
 .field input, .field textarea, .field select {
   width: 100%; padding: 13px 15px; border-radius: var(--r-sm);
-  background: var(--bg-2); border: 1px solid var(--line); color: var(--tx); font-size: 15px;
+  /* Кегль поля в rem: человек, поставивший себе крупный шрифт,
+     должен видеть крупным и то, что он сам печатает. */
+  background: var(--bg-2); border: 1px solid var(--line-ui); color: var(--tx); font-size: 0.9375rem;
   transition: border-color var(--fast), box-shadow var(--fast);
 }
 [data-theme="light"] .field input,
@@ -1645,7 +1663,12 @@ html.rc-stage .dc {
 @media (max-width: 1340px) {
   .nav a { padding: 9px 8px; font-size: var(--fs-3); }
 }
-@media (max-width: 1240px) {
+/* Капсула языка живёт в шапке только там, где строке хватает места.
+   Ниже она уходит в меню, а меню открывает бургер - и оба порога
+   теперь совпадают. Пока они расходились, на полосе 1081-1240
+   переключить язык было НЕЧЕМ: капсулу уже сняли, а бургер ещё не
+   включили. */
+@media (max-width: 1299px) {
   .hdr-act .pill.lang { display: none; }
 }
 /* Ниже 1080 навигация в строку уже не помещается, и это не мелочь:
@@ -1659,7 +1682,13 @@ html.rc-stage .dc {
    overflow-x: clip, и scrollWidth равен clientWidth даже когда
    содержимое за кромкой. Поэтому граница бургера поднята до 1080 -
    там, где строка перестаёт вмещать честно. */
-@media (max-width: 1080px) {
+/* Порог поднят с 1080 до 1300 по замеру самой строки, а не на глаз.
+   Восемь ссылок, логотип и правый блок с кнопкой честно вмещаются
+   только с 1300: на 1280 «Регистрация» резалась на пять точек, на
+   1240 «Контакты» уходили под правый блок на 22 точки, на 1081 - на
+   72. Проверка tools/audit/зло-шапка.mjs теперь меряет и это, а не
+   только вылет за край окна. */
+@media (max-width: 1299px) {
   .nav { display: none; }
   .burger { display: grid; }
 }
@@ -2017,6 +2046,7 @@ html[data-theme="light"] #included::after { animation: none; opacity: .4; }
   --gl-line:   rgba(9,19,32,.13);
   --gl-line-2: rgba(9,19,32,.22);
   --line:      rgba(9,19,32,.13);
+  --line-ui:   rgba(9,19,32,.46);
   --line-2:    rgba(9,19,32,.22);
 }
 
@@ -2037,3 +2067,165 @@ html[data-theme="light"] #included::after { animation: none; opacity: .4; }
 [data-theme="light"] .node-row:focus-visible,
 [data-theme="light"] .inc-item:hover,
 [data-theme="light"] .inc-item:focus-visible { background: var(--bg-3); }
+
+/* ═══════════════════════════════════════════════════════════
+   ПЕЧАТЬ
+
+   Страница это фильм на прокрутке: слои стоят друг на друге,
+   разделы проявляются по въезду в кадр, а половина кадра нарисована
+   в холстах и в трёхмерной рубке. Принтеру всё это не нужно и
+   ничего из этого не достаётся: документ он не прокручивает, а
+   значит наблюдатели появления не срабатывают ни разу.
+
+   Пока правил печати не было вовсе, из пятнадцати листов A4 семь
+   выходили практически пустыми (по десятку знаков на лист), герой и
+   эпилог печатались белым по белой бумаге, а анкета заявки не
+   попадала на бумагу ни разу.
+
+   Здесь один принцип: на бумагу идёт ТЕКСТ. Чёрным по белому, без
+   слоёв, без кино и без корабля. ═══════════════════════════════ */
+@media print {
+  /* Кино на бумаге не играет: снимаем всё, что зависит от
+     прокрутки, наблюдателей и трёхмерного слоя. */
+  :root,
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  html.rc-inside, html.rc-deep-inside, html.rc-stage, html.rc-flying { }
+
+  /* Проявление по въезду в кадр: печатаем всё сразу. */
+  .rv, .rv.on, [class*="rv-d"],
+  .rcd, .rcd-head, .cin-item, .hs-track > *, .card, .case-card, .prod-card {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+    filter: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Разделы, спрятанные рубкой, на бумаге нужны: там вопросы,
+     контакты и анкета. */
+  html.rc-inside #faq > .wrap,
+  html.rc-inside #contact > .wrap,
+  html.rc-inside #epilogue > .wrap,
+  #faq > .wrap, #contact > .wrap, #epilogue > .wrap,
+  #faqList, #faqList .faq-i, #faqList .faq-a {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  #faqList .faq-a { display: block !important; }
+  #faqList .faq-a[inert] { pointer-events: auto; }
+
+  /* Слои поверх страницы, кино, корабль и всё нарисованное. */
+  .skip, .hdr, .drawer, .modal, .prog, .totop, .mcta, .snd-hint,
+  .rc-flight, .rc-desk, .rc-gate, .rk-soft, .rc-shine, .rc-hatch-glow,
+  .rc-quake-fx, .cur-dot, .cur-ring, .rcf-fab, .rcf-cta, .rc-vpn-holo,
+  canvas, video, .hero-globe, .rcd-sheen, .vid-bg, .rc-vidbg,
+  .rail-nav, .hs-bar, .marquee, [data-viz="marquee"] {
+    display: none !important;
+  }
+
+  /* Ленты на бумаге разворачиваются в столбец: вбок листать нечем. */
+  .hs-view, .hs-track {
+    overflow: visible !important;
+    transform: none !important;
+    display: block !important;
+    width: auto !important;
+  }
+  .hs-track > * {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 0 10mm 0 !important;
+  }
+
+  /* Кадр и поля бумаги. */
+  .wrap { max-width: none !important; padding: 0 !important; }
+  section { padding: 6mm 0 !important; page-break-inside: auto; }
+  /* Высота разделов на сайте это хронометраж фильма: по ней едет
+     камера. На бумаге она превращается в пустые листы - «Надёжность»
+     занимала 1980 точек при 527 знаках текста, эпилог 1961 при 419.
+     Убираем запас высоты: на листе остаётся ровно содержимое. */
+  section, section > .wrap, main > *, .epi, .hs, .cin-stage, .w3-stage {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  .card, .case-card, .prod-card, .dc, .flow-node, .faq-i, .form-card {
+    page-break-inside: avoid;
+    border: 1px solid #999 !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    margin-bottom: 4mm;
+  }
+  h1, h2, h3, h4 { page-break-after: avoid; color: #000 !important; }
+  a { color: #000 !important; text-decoration: underline; }
+  /* Адрес ссылки на бумаге виден, иначе ссылка бесполезна. */
+  .doc a[href^="http"]::after,
+  .contact-list a[href^="http"]::after,
+  .contact-list a[href^="mailto"]::after { content: " (" attr(href) ")"; font-size: 9pt; }
+
+  /* Градиентный текст на бумаге исчезал: заголовок героя и эпилога
+     печатались белым по белому. */
+  .grad-tx, .hero h1, .hero h1 span, .epi h2, .sec-h, .kpi-n, .n {
+    -webkit-text-fill-color: #000 !important;
+    color: #000 !important;
+    background: none !important;
+    background-clip: border-box !important;
+    -webkit-background-clip: border-box !important;
+  }
+
+  /* Анкета печатается как бланк: поля видно, куда писать. */
+  .form-card input, .form-card textarea, .form-card select {
+    border: 1px solid #999 !important;
+    background: #fff !important;
+    color: #000 !important;
+    min-height: 10mm;
+  }
+  button, .btn { display: none !important; }
+  .consent { display: block !important; }
+
+  @page { margin: 14mm; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ПРИНУДИТЕЛЬНЫЕ ЦВЕТА (режим высокой контрастности)
+
+   Система заменяет все цвета своими. Значки, нарисованные фоном по
+   маске, при этом пропадают целиком: фон становится системным белым,
+   маска остаётся, и на месте кнопки остаётся пустой овал. Замер
+   показал ровно это на кнопке звука - управление звуком исчезало с
+   экрана полностью, вместе с полосками эквалайзера.
+
+   Лечим точечно: значкам, которые нарисованы маской, оставляем свои
+   цвета, а кнопкам возвращаем видимую границу. */
+@media (forced-colors: active) {
+  .pill .pill-knob,
+  .pill.snd button::before,
+  .eq, .eq i,
+  .icon-btn svg, .btn svg {
+    forced-color-adjust: none;
+  }
+  .pill, .btn, .icon-btn, .totop, .node-row, .field input,
+  .field textarea, .field select, .consent input[type="checkbox"] {
+    border: 1px solid ButtonBorder !important;
+  }
+  .totop {
+    background: ButtonFace !important;
+    color: ButtonText !important;
+  }
+  /* Подпись кнопки звука спрятана визуально: в этом режиме значок
+     может не прочитаться, и подпись возвращается словами. */
+  .pill.snd .vh {
+    position: static !important;
+    width: auto !important; height: auto !important;
+    clip: auto !important; clip-path: none !important;
+    white-space: nowrap;
+    padding: 0 6px;
+  }
+}

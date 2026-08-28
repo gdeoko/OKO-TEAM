@@ -253,7 +253,8 @@ html.rc-inside .consent.bad { color: #F87171 !important; }
 .consent input[type="checkbox"] {
   appearance: none; -webkit-appearance: none;
   width: 18px; height: 18px; margin-top: 1px; flex: none;
-  border: 1.5px solid var(--line-2); border-radius: 5px;
+  /* Обязательная галочка - орган управления, её граница держит 3:1 */
+  border: 1.5px solid var(--line-ui); border-radius: 5px;
   background: transparent; cursor: pointer;
   display: grid; place-items: center;
   transition: border-color .18s var(--ease), background .18s var(--ease);
@@ -351,6 +352,15 @@ html:not(.snd-on) .pill.snd .eq { opacity: .5; }
    уходит в три строки, между текстом и глобусом остаётся четверть
    экрана пустоты. Даём кадру дышать - раскладка та же, меняются
    только величины, как и требует приёмка. */
+/* Кадр расширяется там же, где в шапке появляется капсула языка.
+   Пока порог стоял на 1600, между 1241 и 1599 строка шапки не
+   вмещала себя: навигация обрезалась на 71 точку, «Контакты» уходили
+   под капсулу «RU EN», а надпись «Регистрация» вылезала за кнопку.
+   Полоса эта не редкая: 1280, 1366 и 1440 без всякого увеличения, а
+   ещё 1920 при 150 процентах и 2560 при 175. */
+@media (min-width: 1300px) {
+  :root { --maxw: 1360px; }
+}
 @media (min-width: 1600px) {
   :root { --maxw: 1400px; }
 }

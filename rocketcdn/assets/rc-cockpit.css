@@ -560,8 +560,18 @@ html.rc-inside .field input,
 html.rc-inside .field textarea,
 html.rc-inside .field select {
   background: rgba(var(--int-deep-rgb, 5,12,21), .88);
-  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  /* Граница поля на пульте держала 1,89 к своей подложке при норме
+     3,0 - при боковом свете на ноутбуке поле анкеты просто
+     пропадало. Бирюза рубки на этом фоне доходит до нормы на 0,55. */
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .55);
   color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+}
+/* Обязательная галочка согласия на пульте: в светлой теме её граница
+   рисовалась тёмными чернилами по тёмному борту и давала 1,02 - на
+   экране её не было вовсе. Внутри корабля цвет борта, а не темы. */
+html[data-act="console"] .consent input[type="checkbox"],
+html.rc-inside .consent input[type="checkbox"] {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .62);
 }
 /* ── Ошибка сильнее оформления пульта ────────────────────────
    Правило выше красит рамку поля в бирюзу рубки и весит (0,2,2), а

@@ -142,10 +142,29 @@ function swap(next, fill) {
     if (!сКлавиатуры) return;
     /* Ищем по всему слою: формы переезжают в свою ячейку (.dsk-slot),
        а не остаются в теле экрана. Первым делом поле ввода - человек
-       нажал «Отправить заявку», значит писать он будет сразу. */
-    var цель = layer.querySelector("input:not([type=hidden]), textarea, select") ||
-               layer.querySelector(".dsk-back") ||
-               layer.querySelector(".dsk-q, .dsk-b");
+       нажал «Отправить заявку», значит писать он будет сразу.
+
+       ЛОВУШКУ ДЛЯ БОТОВ ОБХОДИМ. В форме первым стоит скрытое поле
+       website: оно не hidden по типу, а спрятано классом, и focus()
+       на нём срабатывает. Каретка садилась именно в него, человек
+       набирал имя в ловушку, сервер видел заполненную ловушку и
+       выбрасывал заявку, ответив «ок». Заявка пропадала молча - и с
+       клавиатуры, и мышью. */
+    var поля = layer.querySelectorAll("input, textarea, select");
+    var цель = null, пи;
+    for (пи = 0; пи < поля.length && !цель; пи++) {
+      var поле = поля[пи];
+      if (поле.type === "hidden") continue;
+      if (поле.name === "website") continue;
+      if (поле.tabIndex < 0) continue;
+      if (поле.getAttribute("aria-hidden") === "true") continue;
+      if (поле.classList.contains("vh")) continue;
+      if (!поле.offsetParent && getComputedStyle(поле).position !== "fixed") continue;
+      цель = поле;
+    }
+    цель = цель ||
+           layer.querySelector(".dsk-back") ||
+           layer.querySelector(".dsk-q, .dsk-b");
     if (цель) { try { цель.focus({ preventScroll: true }); } catch (eФ) {} }
   }, 170);
   if (glitchT) clearTimeout(glitchT);
@@ -240,13 +259,19 @@ function trimQs() {
      и из обхода клавиатурой, а узлы остаются на месте. */
   if (trimQs._идёт) return;
   trimQs._идёт = true;
+  /* Строки больше не прячем ВООБЩЕ. Список прокручивается сам, а
+     нижний край растворён - видно, что он продолжается.
+
+     Пряталось это ради ровного края: обрубок строки под кромкой
+     голограммы читался браком. Но цена оказалась выше: на экране с
+     увеличением 250 процентов в панель влезала ОДНА строка из
+     восьми, а раздел с вопросами на самой странице внутри корабля
+     спрятан - остальные семь ответов становились недостижимы совсем.
+     Обещание комментария выше («остальные остаются в разделе для
+     тех, кто листает страницу без корабля») внутри корабля не
+     выполнялось. */
   var строки = [].slice.call(ul.children), i;
   for (i = 0; i < строки.length; i++) строки[i].hidden = false;
-  var guard = 0, к = строки.length - 1;
-  while (ul.scrollHeight > ul.clientHeight + 2 && к > 0 && guard++ < 16) {
-    строки[к].hidden = true;
-    к--;
-  }
   trimQs._идёт = false;
   /* И следим за коробкой дальше.
 
