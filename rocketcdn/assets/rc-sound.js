@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════════════════════
    Rocket CDN · звук фильма
 
-   Два слоя. Непрерывный - гул двигателя, свист набегающего потока
-   и эфир радиосвязи - собирается прямо в браузере из осцилляторов и
-   шума: он тянется минутами и должен идти за скоростью прокрутки и
-   за актом, в котором сейчас человек. Разовые события - щелчок
+   Два слоя. Непрерывный - рёв двигателя, свист набегающего потока
+   и эфир радиосвязи - собирается прямо в браузере из шума: он
+   тянется минутами и должен идти за скоростью прокрутки и за актом,
+   в котором сейчас человек. Осцилляторов в двигателе нет намеренно,
+   почему - написано у сборки двигателя. Разовые события - щелчок
    клавиши, пробой, тревога, стыковка - берут записи из assets/snd.
    Синтез такое вытягивает до «похоже», запись звучит как рубка.
    Если запись не доехала, событие отдаёт синтезу: звук пропасть не
@@ -32,7 +33,6 @@ var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
 
 var KEY = "rcdn.sound";
 var HINT = "rcdn.soundHintSeen";
-var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* Сколько двигателя слышно в каждом акте фильма. Единица - ракета
    идёт прямо перед человеком, ноль - её здесь просто нет. Ключи
@@ -80,6 +80,93 @@ var ПАПКА = (function () {
   return "assets/snd/";
 })();
 
+/* ── Шум для двигателя ────────────────────────────────────────
+   Настоящий ракетный двигатель это не нота. Это широкополосный шум:
+   в камере идёт неупорядоченное горение, и наружу выходит рёв, у
+   которого нет высоты. Поэтому основа тут - шум, а не осциллятор.
+
+   Розовый шум спадает на 3 дБ на октаву, коричневый на 6. Второй и
+   даёт тот самый вес внизу, за который двигатель узнаётся ухом.
+   Формулы розового - схема Пола Келлета: семь однополюсных звеньев
+   держат ровный наклон во всей слышимой полосе, в отличие от простого
+   усреднения, которое врёт на краях.
+
+   Стык петли. Кусок шума играет по кругу, и если конец не сведён с
+   началом, каждый оборот даёт щелчок - особенно у коричневого, где
+   соседние отсчёты близки и разрыв слышен как удар. Поэтому хвост
+   длиной в шов перекрёстно затухает в голову, и шва не слышно. */
+function шумБуфер(ctx, сек, коричневый) {
+  var sr = ctx.sampleRate;
+  var n = Math.floor(sr * сек);
+  var шов = Math.floor(sr * 0.05);          /* 50 мс на сведение петли */
+  var сырое = new Float32Array(n + шов);
+  var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+  var инт = 0, i, w, p;
+  for (i = 0; i < n + шов; i++) {
+    w = Math.random() * 2 - 1;
+    b0 = 0.99886 * b0 + w * 0.0555179;
+    b1 = 0.99332 * b1 + w * 0.0750759;
+    b2 = 0.96900 * b2 + w * 0.1538520;
+    b3 = 0.86650 * b3 + w * 0.3104856;
+    b4 = 0.55000 * b4 + w * 0.5329522;
+    b5 = -0.7616 * b5 - w * 0.0168980;
+    p = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362;
+    b6 = w * 0.115926;
+    if (коричневый) {
+      /* Ещё один полюс поверх розового: интегратор с утечкой уводит
+         наклон к 6 дБ на октаву и не даёт уехать постоянной
+         составляющей, на которой динамик просто стоит отклонённым. */
+      инт = (инт + 0.035 * p) / 1.035;
+      сырое[i] = инт;
+    } else сырое[i] = p;
+  }
+  for (i = 0; i < шов; i++) {
+    var k = i / шов;
+    сырое[i] = сырое[i] * k + сырое[n + i] * (1 - k);
+  }
+  /* Приводим к единице по самому громкому отсчёту. Без этого размах
+     у каждой сборки свой: коричневый шум это случайное блуждание, и
+     куда оно забредёт за пять секунд, заранее неизвестно. Двигатель
+     от захода к заходу звучал бы то тише, то громче. */
+  var буф = ctx.createBuffer(1, n, sr);
+  var d = буф.getChannelData(0);
+  var макс = 0;
+  for (i = 0; i < n; i++) { var a = Math.abs(сырое[i]); if (a > макс) макс = a; }
+  if (!макс) макс = 1;
+  for (i = 0; i < n; i++) d[i] = сырое[i] / макс;
+  return буф;
+}
+
+/* Дрожь горения. Тяга у настоящего двигателя не стоит на месте:
+   давление в камере всё время слегка гуляет, и громкость рёва гуляет
+   вместе с ним. Без этого шум звучит как включённый фен - ровно и
+   мёртво. Здесь белый шум придавлен однополюсным звеном примерно до
+   восемнадцати герц: получается медленное неровное покачивание, а не
+   треск. */
+function дрожьБуфер(ctx, сек) {
+  var sr = ctx.sampleRate;
+  var n = Math.floor(sr * сек);
+  var шов = Math.floor(sr * 0.25);
+  var a = Math.exp(-2 * Math.PI * 18 / sr);
+  var сырое = new Float32Array(n + шов);
+  var v = 0, i;
+  for (i = 0; i < n + шов; i++) {
+    v = a * v + (1 - a) * (Math.random() * 2 - 1);
+    сырое[i] = v;
+  }
+  for (i = 0; i < шов; i++) {
+    var k = i / шов;
+    сырое[i] = сырое[i] * k + сырое[n + i] * (1 - k);
+  }
+  var буф = ctx.createBuffer(1, n, sr);
+  var d = буф.getChannelData(0);
+  var макс = 0;
+  for (i = 0; i < n; i++) { var m = Math.abs(сырое[i]); if (m > макс) макс = m; }
+  if (!макс) макс = 1;
+  for (i = 0; i < n; i++) d[i] = сырое[i] / макс;
+  return буф;
+}
+
 function Sound() {
   this.on = false;
   this.ready = false;
@@ -113,49 +200,118 @@ Sound.prototype.build = function () {
   this.an = an;
   this.bins = new Uint8Array(an.frequencyBinCount);
 
-  /* ── Двигатель: две низкие волны через фильтр ── */
+  var узлы = this.двигатель(ctx, master);
+  this.eg = узлы.eg;
+  this.срез = узлы.срез;
+  this.рёвG = узлы.рёвG;
+  this.bp = узлы.bp;
+  this.ng = узлы.ng;
+
+  this.ready = true;
+  return true;
+};
+
+/* ── Двигатель ────────────────────────────────────────────────
+   Собран отдельной сборкой, а не внутри build, по двум причинам:
+   его же строит замер спектра в OfflineAudioContext, и здесь видно
+   всю схему целиком, а не вперемешку с анализатором и мастером.
+
+   Было до этого: пила на 41 Гц плюс синус на 82 Гц через фильтр
+   низких частот, и обе частоты ехали вверх за скоростью прокрутки -
+   до 90 Гц и выше. Замер показал ровно то, на что жаловался
+   заказчик: одиночный пик, который торчит над соседями на 80 дБ на
+   холостом ходу и на 53 дБ под тягой, то есть чистый тон. Ухо
+   слышит такое как ноту, которая ползёт вверх-вниз, а не как
+   двигатель, и на длинной прокрутке это выматывает.
+
+   Стало: три слоя шума и ни одного осциллятора.
+     · вес - коричневый шум ниже 110 Гц, это то, что ощущается телом;
+     · тело - тот же шум в узкой полосе около 82 Гц с добротностью
+       3.4: так звучит резонанс камеры, из-за него у двигателя есть
+       характер, но нет высоты;
+     · рёв - розовый шум около 240 Гц, его тем больше, чем больше
+       тяга; он и читается как «мощно», хотя энергии в нём мало.
+   Сверху всё это придавлено срезом: тяга открывает его выше, звук
+   становится ярче. Высоту не двигает ничто - у ракеты нет ноты. */
+Sound.prototype.двигатель = function (ctx, выход) {
   var eg = ctx.createGain();
   eg.gain.value = 0.5;
-  var lp = ctx.createBiquadFilter();
-  lp.type = "lowpass";
-  lp.frequency.value = 190;
-  lp.Q.value = 0.9;
-  eg.connect(lp);
-  lp.connect(master);
 
-  var o1 = ctx.createOscillator();
-  o1.type = "sawtooth";
-  o1.frequency.value = 41;
-  var o2 = ctx.createOscillator();
-  o2.type = "sine";
-  o2.frequency.value = 82;
-  var g1 = ctx.createGain(); g1.gain.value = 0.42;
-  var g2 = ctx.createGain(); g2.gain.value = 0.30;
-  o1.connect(g1); g1.connect(eg);
-  o2.connect(g2); g2.connect(eg);
-  o1.start(); o2.start();
-  this.o1 = o1; this.o2 = o2; this.lp = lp; this.eg = eg;
+  /* Дрожь горения множит громкость, а не прибавляется к ней: ±18%
+     вокруг единицы. Прибавкой это делать нельзя - на малой тяге
+     сумма ушла бы в минус, и волна перевернулась бы фазой. */
+  var дрожь = ctx.createGain();
+  дрожь.gain.value = 1;
+  var дИст = ctx.createBufferSource();
+  дИст.buffer = дрожьБуфер(ctx, 6);
+  дИст.loop = true;
+  var дG = ctx.createGain();
+  дG.gain.value = 0.18;
+  дИст.connect(дG); дG.connect(дрожь.gain);
+  дИст.start();
 
-  /* ── Поток: шум через полосовой фильтр ── */
-  var len = ctx.sampleRate * 2;
-  var buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  var d = buf.getChannelData(0);
-  for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  var src = ctx.createBufferSource();
-  src.buffer = buf;
-  src.loop = true;
+  /* Срез яркости. Открывается тягой от 280 до 1500 Гц: на холостом
+     ходу слышен только низ, под тягой добавляется верх. */
+  var срез = ctx.createBiquadFilter();
+  срез.type = "lowpass";
+  срез.frequency.value = 300;
+  срез.Q.value = 0.5;
+
+  eg.connect(дрожь); дрожь.connect(срез); срез.connect(выход);
+
+  var корич = ctx.createBufferSource();
+  корич.buffer = шумБуфер(ctx, 5, true);
+  корич.loop = true;
+
+  var низ = ctx.createBiquadFilter();
+  низ.type = "lowpass"; низ.frequency.value = 110; низ.Q.value = 0.6;
+  var низG = ctx.createGain(); низG.gain.value = 1.0;
+  корич.connect(низ); низ.connect(низG); низG.connect(eg);
+
+  var рез = ctx.createBiquadFilter();
+  рез.type = "bandpass"; рез.frequency.value = 82; рез.Q.value = 3.4;
+  var резG = ctx.createGain(); резG.gain.value = 0.85;
+  корич.connect(рез); рез.connect(резG); резG.connect(eg);
+
+  /* Розовый буфер один на два слоя: генерация шума заметно дороже
+     всего остального в этой сборке, и второй такой же кусок стоил
+     лишних полтора десятка миллисекунд прямо в обработчике жеста.
+     Источники читают его с разных мест, поэтому не складываются в
+     один и тот же звук вдвое громче. */
+  var розовБуф = шумБуфер(ctx, 5, false);
+
+  var розов = ctx.createBufferSource();
+  розов.buffer = розовБуф;
+  розов.loop = true;
+
+  var рёв = ctx.createBiquadFilter();
+  рёв.type = "bandpass"; рёв.frequency.value = 240; рёв.Q.value = 0.9;
+  var рёвG = ctx.createGain(); рёвG.gain.value = 0.06;
+  розов.connect(рёв); рёв.connect(рёвG); рёвG.connect(eg);
+
+  корич.start(); розов.start();
+
+  /* ── Поток: набегающий воздух ──
+     Идёт мимо двигателя прямо на мастер: это не ракета, это ветер
+     снаружи, и он живёт по своим правилам. Раньше здесь был белый
+     шум - ровный до двадцати килогерц и оттого шипящий как помеха.
+     Розовый на том же фильтре звучит воздухом, а не эфиром. */
+  var поток = ctx.createBufferSource();
+  поток.buffer = розовБуф;
+  поток.loop = true;
   var bp = ctx.createBiquadFilter();
   bp.type = "bandpass";
   bp.frequency.value = 700;
   bp.Q.value = 0.7;
   var ng = ctx.createGain();
   ng.gain.value = 0.0;
-  src.connect(bp); bp.connect(ng); ng.connect(master);
-  src.start();
-  this.bp = bp; this.ng = ng;
+  поток.connect(bp); bp.connect(ng); ng.connect(выход);
+  /* Со сдвигом в две с половиной секунды: тот же буфер, читаемый с
+     той же точки, дал бы два одинаковых шума, то есть один шум
+     вдвое громче, а не два независимых слоя. */
+  поток.start(ctx.currentTime, розовБуф.duration * 0.5);
 
-  this.ready = true;
-  return true;
+  return { eg: eg, срез: срез, рёвG: рёвG, bp: bp, ng: ng };
 };
 
 /* ── Работа с банком ──────────────────────────────────────────
@@ -316,6 +472,7 @@ Sound.prototype.fadeIn = function () {
   this.loop();
   try { localStorage.setItem(KEY, "on"); } catch (e) {}
   if (g.RC_MUSIC) { try { g.RC_MUSIC.on(); } catch (e) {} }
+  сказать(true);
   if (g.RC_track) g.RC_track("sound", "on");
 };
 
@@ -333,17 +490,27 @@ Sound.prototype.stop = function () {
   if (this._bTimer) { clearInterval(this._bTimer); this._bTimer = null; }
   document.documentElement.classList.remove("snd-on");
   if (g.RC_MUSIC) { try { g.RC_MUSIC.off(); } catch (e) {} }
+  /* Слово человека записываем до всякой работы со звуковым узлом:
+     на устройстве без Web Audio выход стоял выше по строке, и
+     «выключить» не запоминалось - следующий заход снова заводил
+     музыку сам. */
+  try { localStorage.setItem(KEY, "off"); } catch (e) {}
+  сказать(false);
+  if (g.RC_track) g.RC_track("sound", "off");
   if (!this.ready) return;
   var t = this.ctx.currentTime;
   this.master.gain.cancelScheduledValues(t);
   this.master.gain.setValueAtTime(this.master.gain.value, t);
   this.master.gain.linearRampToValueAtTime(0, t + 0.5);
-  try { localStorage.setItem(KEY, "off"); } catch (e) {}
-  if (g.RC_track) g.RC_track("sound", "off");
 };
 
 Sound.prototype.toggle = function () {
-  if (this.on) this.stop(); else this.start();
+  /* Кнопка в шапке одна на весь звук сайта, поэтому и решение здесь
+     одно: слышно хоть что-нибудь - гасим. Раньше смотрели только на
+     синтезированный слой, и на устройстве без Web Audio, где играет
+     одна музыкальная тема, нажатие на горящую кнопку не выключало
+     её, а пыталось включить звук заново. */
+  if (this.on || this.music()) this.stop(); else this.start();
 };
 
 /* Подсказка показывается один раз в жизни */
@@ -394,11 +561,12 @@ Sound.prototype.loop = function () {
       self.eg.gain.setTargetAtTime(0.004 + base * self.fly, t, 0.35);
     }
 
-    /* Разгон: чем быстрее листаешь, тем выше и злее гул */
-    var f = 41 + self.vel * 26 + self.p * 8;
-    self.o1.frequency.setTargetAtTime(f, t, 0.12);
-    self.o2.frequency.setTargetAtTime(f * 2, t, 0.12);
-    self.lp.frequency.setTargetAtTime(170 + self.vel * 520, t, 0.15);
+    /* Разгон. Раньше здесь ехала вверх частота обоих осцилляторов, и
+       быстрая прокрутка поднимала тон - именно это читалось как вой.
+       Теперь скорость открывает срез и добавляет рёва: звук
+       становится ярче и злее, оставаясь на месте по высоте. */
+    self.срез.frequency.setTargetAtTime(280 + self.vel * 620 + self.fly * 300, t, 0.15);
+    self.рёвG.gain.setTargetAtTime(0.08 + self.vel * 0.28 + self.fly * 0.34, t, 0.25);
 
     /* Поток: в атмосфере шумно, в космосе тихо, а на земле его нет
        вовсе - набегающему воздуху взяться неоткуда. */
@@ -612,11 +780,10 @@ Sound.prototype.flight = function (on) {
 Sound.prototype.flightLevel = function (k) {
   if (!this._flight || !this.ready) return;
   var t = this.ctx.currentTime;
-  var f = 44 + k * 46;
-  this.o1.frequency.setTargetAtTime(f, t, 0.2);
-  this.o2.frequency.setTargetAtTime(f * 2, t, 0.2);
-  this.lp.frequency.setTargetAtTime(200 + k * 900, t, 0.25);
-  if (this.ng) this.ng.gain.setTargetAtTime(0.004 + k * 0.05, t, 0.3);
+  /* Тяга ведёт громкость и яркость, высоту не трогает вовсе */
+  this.срез.frequency.setTargetAtTime(300 + k * 1200, t, 0.25);
+  this.рёвG.gain.setTargetAtTime(0.10 + k * 0.70, t, 0.3);
+  if (this.ng) this.ng.gain.setTargetAtTime(0.004 + k * 0.035, t, 0.3);
   if (this.eg) this.eg.gain.setTargetAtTime((this.music() ? 0.3 : 0.5) * (0.5 + k * 0.8), t, 0.35);
 };
 
@@ -876,17 +1043,21 @@ function bind() {
     for (var ei = 0; ei < eqEls.length; ei++) V(eqEls[ei], "--snd-e", e.toFixed(2));
   }, 110);
 
-  /* Первый жест человека. Прокрутка на айфоне разрешением не считается,
-     поэтому там сработает подсказка и включение по нажатию. */
-  var off;
-  try { off = localStorage.getItem(KEY) === "off"; } catch (e) {}
-  if (off || REDUCE) return;
+  /* Первый жест человека звук заводит, и делает это rc-music.js: там
+     живёт музыкальная тема, ради которой всё и включается, и там же
+     видно, пустил браузер звук или отказал. Сюда приходит готовый
+     вызов start(), а кнопка догоняет состояние по событию rc:music -
+     она подписана на него выше. Своего слушателя жестов здесь нет
+     намеренно: два независимых заводящих обработчика уже приводили к
+     тому, что тумблер показывал одно, а звучало другое. */
+  addEventListener("rc:sound", paint);
+}
 
-  /* Звук ждёт нажатия на свою кнопку и ничего больше. Раньше он
-     заводился на первой же прокрутке, хотя тумблер в шапке стоял в
-     положении «выключено»: человек листал страницу и получал гул,
-     которого не просил. Подсказка о том, что звук здесь есть,
-     осталась - она сообщает, а не включает. */
+/* Кнопка обязана догнать любое включение и выключение, откуда бы оно
+   ни пришло: собственное нажатие, первый жест на странице, вход в
+   полёт. Событие даёт ей это, не заставляя опрашивать состояние. */
+function сказать(вкл) {
+  try { dispatchEvent(new CustomEvent("rc:sound", { detail: { on: !!вкл } })); } catch (e) {}
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
