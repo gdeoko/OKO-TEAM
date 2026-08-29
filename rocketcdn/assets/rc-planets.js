@@ -15,8 +15,14 @@
    - высоту считаем один раз в массив, уровень моря выбираем по
      гистограмме под нужную долю суши. Иначе на одном seed выходит
      Пангея, на другом сплошной океан;
-   - тот же массив высот идёт в bumpMap, поэтому рельеф читается на
-     терминаторе: там свет скользящий и любая неровность видна;
+   - из того же массива высот печём карту нормалей, поэтому рельеф
+     читается на терминаторе: там свет скользящий и любая неровность
+     видна. Нормаль, а не bump: bump берёт производную яркости уже в
+     пикселе кадра и на пологом склоне тонет в округлении текселя;
+   - светит планету не сцена, а её собственный ключевой свет по
+     направлению на звезду системы. Иначе терминатор, кайма
+     атмосферы и ночные огни живут по одному вектору, а тени по
+     другому, и объём пропадает;
    - климат раскладываем по широтам, а не пятнами. Пустыни Земли
      лежат кольцами на тридцатых широтах, потому что там опускается
      воздух пассатной ячейки, и глаз этот рисунок узнаёт;
@@ -268,6 +274,75 @@ function texFrom(canvas, srgb) {
   return tx;
 }
 
+/* ── Карта нормалей из поля высот ─────────────────────────
+   Раньше рельеф шёл в bumpMap. bumpMap в three берёт производную
+   яркости прямо в пикселе кадра (dFdx/dFdy): на пологом склоне она
+   тонет в округлении текселя, и рельеф читается ватными пятнами, а
+   не поверхностью. Наклон площадки известен точно там, где известно
+   само поле высот, - здесь его и считаем, один раз на всю планету.
+   В кадре это ещё и дешевле: одна выборка вместо трёх и без
+   производных, а кадр у нас упирается именно в заливку.
+
+   Шаг по долготе у экватора длиннее, чем у полюса, ровно в косинус
+   широты раз. Горизонтальную производную на него и делим, иначе к
+   полюсам рельеф вытягивается вертикальной гребёнкой. У самого
+   полюса косинус зажимаем: там один тексель тянется на всю
+   параллель и делить не на что.
+
+   Ось V текстуры смотрит вверх, а строки холста вниз (flipY у
+   CanvasTexture включён), поэтому вертикальная производная идёт с
+   прямым знаком, а горизонтальная с обратным. */
+function normalMapFrom(f, W, H, strength) {
+  var can = canvas2d(W, H);
+  var ctx = can.getContext("2d");
+  var img = ctx.createImageData(W, H);
+  var d = img.data;
+  for (var y = 0; y < H; y++) {
+    var lat = (0.5 - (y + 0.5) / H) * PI;
+    var kx = strength / Math.max(0.20, Math.cos(lat));
+    var r0 = (y > 0 ? y - 1 : 0) * W;
+    var r1 = (y < H - 1 ? y + 1 : H - 1) * W;
+    var row = y * W;
+    for (var x = 0; x < W; x++) {
+      var xl = x > 0 ? x - 1 : W - 1, xr = x < W - 1 ? x + 1 : 0;
+      var nx = -(f[row + xr] - f[row + xl]) * kx;
+      var ny = (f[r1 + x] - f[r0 + x]) * strength;
+      var il = 1 / Math.sqrt(nx * nx + ny * ny + 1);
+      var p4 = (row + x) << 2;
+      d[p4] = (nx * il * 0.5 + 0.5) * 255;
+      d[p4 + 1] = (ny * il * 0.5 + 0.5) * 255;
+      d[p4 + 2] = (il * 0.5 + 0.5) * 255;
+      d[p4 + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return can;
+}
+
+/* ── Тон ──────────────────────────────────────────────────
+   Палитры сняты со снимков и сами по себе честные, но снимок делает
+   камера с автоматической экспозицией, а у нас планету освещает одно
+   светило под большим углом. Средние тона на диске сжимаются, и мир
+   читается пыльным пятном - владелец назвал это «мутный круг с
+   цветом». Разводим тона вокруг средней светлоты и добавляем цвета:
+   контраст множителем от середины, насыщенность отклонением от
+   собственной яркости пикселя. Обе поправки мелкие; большие
+   превращают планету в плакат. */
+var TONE = [0, 0, 0];
+function tone(r, g, b, con, sat, mid) {
+  var l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  var lc = mid + (l - mid) * con;
+  if (lc < 0) lc = 0; else if (lc > 255) lc = 255;
+  var dl = lc - l;
+  var rr = l + (r - l) * sat + dl;
+  var gg = l + (g - l) * sat + dl;
+  var bb = l + (b - l) * sat + dl;
+  TONE[0] = rr < 0 ? 0 : (rr > 255 ? 255 : rr);
+  TONE[1] = gg < 0 ? 0 : (gg > 255 ? 255 : gg);
+  TONE[2] = bb < 0 ? 0 : (bb > 255 ? 255 : bb);
+  return TONE;
+}
+
 /* ── Порог по гистограмме ────────────────────────────────
    Уровень моря нельзя задавать константой: у каждого seed свой
    размах высот, и на одном выходит сплошная суша, на другом
@@ -428,12 +503,37 @@ var PAL = {
    Октавы считаем скупо - каждая лишняя это ещё полмиллиона
    вызовов шума на карту. */
 var TERRAIN = {
-  terran: { land: 0.29, freq: 2.4, oct: 4, ridge: 0.60, rOct: 4, warp: 0.42, craters: 0, bump: 0.055 },
-  ocean: { land: 0.14, freq: 2.2, oct: 4, ridge: 0.40, rOct: 3, warp: 0.40, craters: 0, bump: 0.040 },
-  desert: { land: 0.97, freq: 2.7, oct: 4, ridge: 0.75, rOct: 4, warp: 0.55, craters: 110, bump: 0.085 },
-  rocky: { land: 1.00, freq: 2.2, oct: 4, ridge: 0.45, rOct: 3, warp: 0.35, craters: 560, bump: 0.30 },
-  ice: { land: 1.00, freq: 2.0, oct: 4, ridge: 0.38, rOct: 3, warp: 0.30, craters: 150, bump: 0.075 },
-  lava: { land: 1.00, freq: 2.5, oct: 4, ridge: 0.55, rOct: 3, warp: 0.50, craters: 45, bump: 0.090 }
+  terran: { land: 0.29, freq: 2.4, oct: 4, ridge: 0.60, rOct: 4, warp: 0.42, craters: 0 },
+  ocean: { land: 0.14, freq: 2.2, oct: 4, ridge: 0.40, rOct: 3, warp: 0.40, craters: 0 },
+  desert: { land: 0.97, freq: 2.7, oct: 4, ridge: 0.75, rOct: 4, warp: 0.55, craters: 110 },
+  rocky: { land: 1.00, freq: 2.2, oct: 4, ridge: 0.45, rOct: 3, warp: 0.35, craters: 560 },
+  ice: { land: 1.00, freq: 2.0, oct: 4, ridge: 0.38, rOct: 3, warp: 0.30, craters: 150 },
+  lava: { land: 1.00, freq: 2.5, oct: 4, ridge: 0.55, rOct: 3, warp: 0.50, craters: 45 }
+};
+
+/* Сила рельефа в карте нормалей: во сколько раз перепад поля высот
+   между соседними текселями превращается в наклон площадки. Числа
+   маленькие нарочно. Соседние тексели отстоят друг от друга на
+   десятки километров поверхности, и настоящий склон между ними
+   пологий: у Луны самый обрывистый вал кратера даёт единицы
+   градусов на такой базе. Крупные числа дают чёрную рябь в каждом
+   тексельном шаге - поверхность превращается в жжёную пробку, и это
+   ровно та ошибка, ради которой рельеф вообще делали нормалями, а не
+   рисованными тенями. У каменного мира склоны круче всех, у
+   океанского почти нет, у газового своего рельефа нет вовсе - там
+   наклон нужен только чтобы полосы проступали на терминаторе. */
+var RELIEF = {
+  terran: 5, ocean: 4, desert: 7, rocky: 7, ice: 5, lava: 7, gas: 2, toxic: 2
+};
+
+/* Поправка тона по типам: контраст, насыщенность и середина шкалы.
+   Океанские миры тянем сильнее прочих: глубокая вода почти чёрная, и
+   без разводки диск уходит в один тёмный тон. Лаве контраст не нужен
+   вовсе - её вытягивает собственное свечение разломов. */
+var TONING = {
+  terran: [1.14, 1.12, 104], ocean: [1.16, 1.18, 96], desert: [1.10, 1.14, 150],
+  rocky: [1.18, 1.12, 118], ice: [1.12, 1.14, 176], lava: [1.06, 1.10, 60],
+  gas: [1.12, 1.16, 168], toxic: [1.10, 1.14, 172]
 };
 
 /* ═══════════════════════════════════════════════════════════
@@ -530,11 +630,15 @@ function terrainMaps(kind, W, H, rnd, N, tf, opts) {
   if (lowd) craters = (craters * 0.45) | 0;
   if (craters > 0) stampCraters(h, alb, W, H, rnd, craters, kind === "rocky" ? 1.9 : 1.1);
 
-  /* ── Раскраска ──────────────────────────────────────── */
-  var cCan = canvas2d(W, H), bCan = canvas2d(W, H);
-  var cCtx = cCan.getContext("2d"), bCtx = bCan.getContext("2d");
-  var cImg = cCtx.createImageData(W, H), bImg = bCtx.createImageData(W, H);
-  var cD = cImg.data, bD = bImg.data;
+  /* ── Раскраска ────────────────────────────────────────
+     Поле высот для освещения держим числами, а не холстом: из него
+     дальше считается карта нормалей, и промежуточная упаковка в
+     байты только съела бы полутона склонов. */
+  var cCan = canvas2d(W, H);
+  var cCtx = cCan.getContext("2d");
+  var cImg = cCtx.createImageData(W, H);
+  var cD = cImg.data;
+  var shF = new Float32Array(n);
   var wantSpec = (kind === "terran" || kind === "ocean" || kind === "ice");
   var sCan = null, sD = null, sImg = null, sCtx = null;
   if (wantSpec) {
@@ -552,6 +656,7 @@ function terrainMaps(kind, W, H, rnd, N, tf, opts) {
 
   var capLat = kind === "terran" ? 0.80 : (kind === "ocean" ? 0.85 : 0.87);
   var hasCap = isWater || isDesert;
+  var TN = TONING[kind] || TONING.rocky;
 
   var eCan = null, eCtx = null, eImg = null, eD = null;
   if (isLava) {
@@ -665,6 +770,15 @@ function terrainMaps(kind, W, H, rnd, N, tf, opts) {
           var wide = clamp(1 - a1 * kw1 * 0.26, 0, 1);
           var fine = clamp(1 - a2 * kw2, 0, 1);
           crack = clamp(core + wide * wide * 0.42 + fine * fine * 0.40, 0, 1);
+          /* Борозды не идут ровной паутиной по всему шару: одни
+             участки коры разбиты в сетку, другие целы. Гасим сеть
+             тем же полем, которое ниже задаёт поля хаоса, - там,
+             где кора подтаяла и застыла мозаикой, старых борозд уже
+             нет. Без этого разломы одинаково чёткие везде и вся
+             планета выглядит расчерченной от руки. */
+          var uncracked = smooth(0.30, 0.78, m);
+          core *= 1 - uncracked * 0.85;
+          crack *= 0.30 + (1 - uncracked) * 0.70;
         }
         if (isIce) {
           /* Поля хаоса: участки, где лёд когда-то подтаял и застыл
@@ -743,16 +857,15 @@ function terrainMaps(kind, W, H, rnd, N, tf, opts) {
       r += grain; gc += grain; b += grain;
 
       r *= tf[0]; gc *= tf[1]; b *= tf[2];
+      var tn = tone(r, gc, b, TN[0], TN[1], TN[2]);
 
-      cD[p4] = r; cD[p4 + 1] = gc; cD[p4 + 2] = b; cD[p4 + 3] = 255;
-      var bv = bump * 255;
-      bD[p4] = bv; bD[p4 + 1] = bv; bD[p4 + 2] = bv; bD[p4 + 3] = 255;
+      cD[p4] = tn[0]; cD[p4 + 1] = tn[1]; cD[p4 + 2] = tn[2]; cD[p4 + 3] = 255;
+      shF[i] = bump;
       if (sD) { sD[p4] = spec; sD[p4 + 1] = spec; sD[p4 + 2] = spec; sD[p4 + 3] = 255; }
     }
   }
 
   cCtx.putImageData(cImg, 0, 0);
-  bCtx.putImageData(bImg, 0, 0);
   if (sD) sCtx.putImageData(sImg, 0, 0);
   if (eD) eCtx.putImageData(eImg, 0, 0);
 
@@ -803,18 +916,21 @@ function terrainMaps(kind, W, H, rnd, N, tf, opts) {
     eCtx.globalCompositeOperation = "source-over";
   }
 
-  return { color: cCan, bump: bCan, spec: sCan, emis: eCan, h: h, sea: sea };
+  return { color: cCan, nrm: normalMapFrom(shF, W, H, RELIEF[kind] || 12),
+           spec: sCan, emis: eCan, h: h, sea: sea };
 }
 
 /* ═══════════════════════════════════════════════════════════
    Карты газовых гигантов и планет с плотной атмосферой
    ═══════════════════════════════════════════════════════════ */
 function gasMaps(kind, W, H, rnd, N, tf, opts) {
-  var cCan = canvas2d(W, H), bCan = canvas2d(W, H);
-  var cCtx = cCan.getContext("2d"), bCtx = bCan.getContext("2d");
-  var cImg = cCtx.createImageData(W, H), bImg = bCtx.createImageData(W, H);
-  var cD = cImg.data, bD = bImg.data;
+  var cCan = canvas2d(W, H);
+  var cCtx = cCan.getContext("2d");
+  var cImg = cCtx.createImageData(W, H);
+  var cD = cImg.data;
+  var shF = new Float32Array(W * H);
   var LP = palLUT(kind === "toxic" ? PAL.toxic : PAL.gas);
+  var TN = TONING[kind] || TONING.gas;
   var lowd = opts.detail === "low";
 
   var isTox = kind === "toxic";
@@ -979,18 +1095,18 @@ function gasMaps(kind, W, H, rnd, N, tf, opts) {
       var grain = grainAt(x, y) * 5;
       r += grain; gc += grain; b += grain;
       r *= tf[0]; gc *= tf[1]; b *= tf[2];
+      var tn = tone(r, gc, b, TN[0], TN[1], TN[2]);
 
       var p4 = (row + x) << 2;
-      cD[p4] = r; cD[p4 + 1] = gc; cD[p4 + 2] = b; cD[p4 + 3] = 255;
-      /* Рельефа у газа нет, но лёгкий bump заставляет полосы
-         проступать на терминаторе и убирает ощущение наклейки */
-      var bv = (v * 0.6 + turb * 0.2 + spotMix * 0.2) * 255;
-      bD[p4] = bv; bD[p4 + 1] = bv; bD[p4 + 2] = bv; bD[p4 + 3] = 255;
+      cD[p4] = tn[0]; cD[p4 + 1] = tn[1]; cD[p4 + 2] = tn[2]; cD[p4 + 3] = 255;
+      /* Рельефа у газа нет, но лёгкий наклон площадки заставляет
+         полосы проступать на терминаторе и убирает ощущение наклейки */
+      shF[row + x] = v * 0.6 + turb * 0.2 + spotMix * 0.2;
     }
   }
   cCtx.putImageData(cImg, 0, 0);
-  bCtx.putImageData(bImg, 0, 0);
-  return { color: cCan, bump: bCan, spec: null, emis: null };
+  return { color: cCan, nrm: normalMapFrom(shF, W, H, RELIEF[kind] || 4),
+           spec: null, emis: null };
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1161,10 +1277,10 @@ function moonSet(radius, seed, count, high, sunU, termU) {
                            [0.96 + rnd() * 0.1, 0.95 + rnd() * 0.1, 0.92 + rnd() * 0.12],
                            { detail: "low", cloudAmount: 0 });
     var mTex = texFrom(maps.color, true);
-    var bTex = texFrom(maps.bump, false);
+    var bTex = texFrom(maps.nrm, false);
     var mMat = new T.MeshPhongMaterial({
-      map: mTex, bumpMap: bTex, bumpScale: mr * 0.02, shininess: 2,
-      specular: new T.Color(0x0a0c0e)
+      map: mTex, normalMap: bTex, normalScale: new T.Vector2(0.75, 0.75),
+      shininess: 2, specular: new T.Color(0x0a0c0e)
     });
     /* Терминатор спутнику тоже нужен: без него ровно половина шара
        проваливается в равномерную серость */
@@ -1211,14 +1327,25 @@ var WORLD_VS = [
    длинный и яркий. У терминатора свет прошёл всю толщу по
    касательной, синева рассеялась - остаётся красное. Это и есть
    закат, увиденный с орбиты. */
+/* Профиль по высоте. Френель «единица минус косинус» даёт максимум
+   на силуэте САМОЙ ОБОЛОЧКИ, а она на пять процентов шире планеты.
+   Из-за этого яркое кольцо висело в пустоте, отступив от диска, и
+   между ними шла тёмная щель - глаз читает такое как нарисованную
+   обводку, а не как воздух. Настоящая атмосфера ярче всего у самого
+   лимба планеты и гаснет наружу.
+   Косинус в точке лимба планеты известен заранее из отношения
+   радиусов: он приходит в uCos0. Считаем долю пути от лимба к краю
+   оболочки и гасим по ней - максимум оказывается ровно там, где
+   кончается твердь. */
 var ATM_FS = [
   "uniform vec3 uSun; uniform vec3 uSky; uniform vec3 uSet;",
-  "uniform float uPow; uniform float uStr; uniform float uFloor;",
+  "uniform float uPow; uniform float uStr; uniform float uFloor; uniform float uCos0;",
   "varying vec3 vWN; varying vec3 vWP; varying vec2 vUvR;",
   "void main(){",
   "  vec3 N = normalize(vWN);",
   "  vec3 V = normalize(cameraPosition - vWP);",
-  "  float rim = pow(1.0 - abs(dot(N, V)), uPow);",
+  "  float up = clamp(1.0 - abs(dot(N, V)) / max(uCos0, 0.001), 0.0, 1.0);",
+  "  float rim = pow(1.0 - up, uPow);",
   "  vec3 L = normalize(uSun);",
   "  float ndl = dot(N, L);",
   "  float day = smoothstep(-0.26, 0.30, ndl);",
@@ -1324,7 +1451,7 @@ var CORONA_FS = [
 ].join("\n");
 
 /* ── Правка стандартного материала ────────────────────────
-   Четыре вещи, которых нет в готовом MeshPhongMaterial и ради
+   Шесть вещей, которых нет в готовом MeshPhongMaterial и ради
    которых не стоит писать своё освещение с нуля:
    1) ночные огни. emissiveMap в three светит всегда, и города
       горят поверх освещённой суши. Гасим эмиссию по скалярному
@@ -1340,14 +1467,44 @@ var CORONA_FS = [
       горизонт постепенно (диск светила имеет угловой размер) и
       атмосфера у края подсвечивает поверхность красным. Обе даём
       одной вставкой: узкая тёплая полоса вдоль терминатора плюс
-      затухание ночной стороны. */
+      затухание ночной стороны.
+   5) СОБСТВЕННЫЙ КЛЮЧЕВОЙ СВЕТ. Это главное. Планета брала свет из
+      сцены, а в сцене его для неё нет: у точечного светила системы
+      физический спад (three r160 считает 1/d^decay без поблажек), и
+      на орбитальной дистанции в три сотни единиц от него доходит
+      меньше тысячной доли. Освещал планету единственный оставшийся
+      направленный свет - домашнее Солнце, светящее из постоянной
+      мировой точки. Оно било почти в лоб камере: терминатора нет,
+      теней нет, шар выходил ровно залитым кругом. А кайма атмосферы,
+      ночные огни и закатная полоса живут по ДРУГОМУ вектору - по
+      направлению на звезду этой системы. Два несовпадающих
+      направления и дали ту самую «мутность»: ободок горит с одной
+      стороны, чернота с другой, объёма нет ни там, ни там.
+      Поэтому ключевой свет планеты считаем сами и ровно по тому же
+      вектору uSunDir, по которому живёт вся остальная оптика тела.
+      Прямую составляющую освещения при этом ЗАМЕЩАЕМ, а не
+      дополняем: иначе к нашему терминатору добавился бы чужой.
+   6) дымка над диском. Отдельной оболочкой она стоила лишнего
+      прохода по всей планете, а её на слабом железе просто не
+      строили - и диск выходил вырезанным из бумаги. Тот же френель
+      считаем здесь: лишних фрагментов ноль. */
 function patchSurface(mat, kind, u) {
   var wantNight = !!u.night, wantRing = !!u.ringTex;
+  /* Спутникам и планетам из старого вызова параметры ключа не
+     передают - подставляем разумные, чтобы тело не осталось тёмным */
+  var uKeyCol = u.keyCol || { value: new T.Vector3(1.0, 0.95, 0.88) };
+  var uKeyStr = u.keyStr || { value: 0.62 };
+  var uHazeCol = u.hazeCol || { value: new T.Vector3(0.5, 0.6, 0.78) };
+  var uHazeStr = u.hazeStr || { value: 0.0 };
   mat.onBeforeCompile = function (shader) {
     shader.uniforms.uSunDir = u.sun;
     shader.uniforms.uTime = u.time;
     shader.uniforms.uTermCol = u.termCol;
     shader.uniforms.uTermStr = u.termStr;
+    shader.uniforms.uKeyCol = uKeyCol;
+    shader.uniforms.uKeyStr = uKeyStr;
+    shader.uniforms.uHazeCol = uHazeCol;
+    shader.uniforms.uHazeStr = uHazeStr;
     if (wantRing) {
       shader.uniforms.uRingTex = u.ringTex;
       shader.uniforms.uRingN = u.ringN;
@@ -1365,7 +1522,9 @@ function patchSurface(mat, kind, u) {
 
     var fs = shader.fragmentShader;
     var head = "varying vec3 vRcWN;\nvarying vec3 vRcWP;\nuniform vec3 uSunDir;\nuniform float uTime;\n" +
-               "uniform vec3 uTermCol;\nuniform float uTermStr;\n";
+               "uniform vec3 uTermCol;\nuniform float uTermStr;\n" +
+               "uniform vec3 uKeyCol;\nuniform float uKeyStr;\n" +
+               "uniform vec3 uHazeCol;\nuniform float uHazeStr;\n";
     if (wantRing) {
       head += "uniform sampler2D uRingTex;\nuniform vec3 uRingN;\nuniform vec3 uCenter;\n" +
               "uniform float uRingIn;\nuniform float uRingOut;\n";
@@ -1406,23 +1565,49 @@ function patchSurface(mat, kind, u) {
           "        if (uu > 0.0 && uu < 1.0) rcSh = 1.0 - texture2D(uRingTex, vec2(uu, 0.5)).a * 0.88;",
           "      }",
           "    }",
-          "  }",
-          "  reflectedLight.directDiffuse *= rcSh;",
-          "  reflectedLight.directSpecular *= rcSh;");
+          "  }");
+      } else {
+        sh.push("  float rcSh = 1.0;");
       }
-      /* Мягкий терминатор. Полоса шириной примерно в десять градусов
-         вдоль нулевого косинуса получает тёплый подмес: свет там
-         прошёл всю толщу атмосферы по касательной и растерял синеву.
-         Ночную сторону наоборот приглушаем - иначе рассеянный свет
-         сцены делает её равномерно серой, и терминатора не видно
-         вовсе. Оба слагаемых идут в непрямую составляющую: прямую
-         трогать нельзя, там живут блик по воде и тень колец. */
+      /* Ключевой свет. Направление берём в пространстве вида, чтобы
+         считать по ТОЙ ЖЕ нормали, что дала карта нормалей: она уже
+         повёрнута в вид, и мировая нормаль вершины про её рельеф
+         ничего не знает. Ступень мягкая: диск светила имеет угловой
+         размер, свет за горизонт уходит не мгновенно, и жёсткий
+         max(ndl, 0) режет планету ножом.
+         Блик считаем по Блинну той же нормалью: без него океан и лёд
+         теряют единственный признак, по которому глаз отличает воду
+         от крашеной суши. specularStrength сюда приходит из карты
+         бликов, поэтому по материку блика не будет. */
       sh.push(
         "  {",
+        "    vec3 rcL = normalize((viewMatrix * vec4(normalize(uSunDir), 0.0)).xyz);",
+        "    vec3 rcV = normalize(vViewPosition);",
+        "    vec3 rcN = normalize(normal);",
+        "    float rcNdl = dot(rcN, rcL);",
+        "    float rcLam = smoothstep(-0.10, 0.15, rcNdl);",
+        "    float rcSpec = pow(max(dot(rcN, normalize(rcL + rcV)), 0.0), material.specularShininess)",
+        "                 * material.specularStrength;",
+        "    vec3 rcKey = uKeyCol * (uKeyStr * rcSh);",
+        "    reflectedLight.directDiffuse = diffuseColor.rgb * rcKey * rcLam;",
+        "    reflectedLight.directSpecular = rcKey * material.specularColor * (rcSpec * rcLam);",
+        /* Мягкий терминатор. Полоса шириной примерно в десять градусов
+           вдоль нулевого косинуса получает тёплый подмес: свет там
+           прошёл всю толщу атмосферы по касательной и растерял синеву.
+           Ночную сторону наоборот приглушаем - иначе рассеянный свет
+           сцены делает её равномерно серой, и терминатора не видно
+           вовсе. Оба слагаемых идут в непрямую составляющую: прямую
+           уже занял ключевой свет. */
         "    float rcTn = dot(normalize(vRcWN), normalize(uSunDir));",
         "    float rcBand = exp(-rcTn * rcTn * 22.0);",
         "    reflectedLight.indirectDiffuse += diffuseColor.rgb * uTermCol * (rcBand * uTermStr);",
         "    reflectedLight.indirectDiffuse *= mix(0.40, 1.0, smoothstep(-0.42, 0.02, rcTn));",
+        /* Дымка над диском: у лимба луч идёт сквозь атмосферу по
+           касательной и набирает всю её толщу, в зените - почти
+           ничего. Гасим её на ночной стороне: рассеивать там нечего. */
+        "    float rcRim = 1.0 - clamp(dot(rcN, rcV), 0.0, 1.0);",
+        "    rcRim *= rcRim * rcRim;",
+        "    reflectedLight.indirectDiffuse += uHazeCol * (rcRim * uHazeStr * (0.08 + 0.92 * rcLam));",
         "  }");
       fs = fs.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + sh.join("\n"));
     }
@@ -1476,7 +1661,21 @@ function make(kind, opts) {
     detail = weak ? "low" : "high";
   }
   var high = detail === "high";
-  var W = high ? 1024 : 512, H = high ? 512 : 256;
+  /* Разрешение карты - это не то же самое, что уровень детализации.
+     Уровень решает, сколько мешей и сколько октав мы потянем, и
+     rc-flight просит "low" у всех подряд, чтобы чужая вселенная
+     собиралась без пауз. Но на подлёте планета занимает в кадре
+     шестьсот точек и больше, а карта в 512 текселей растягивается на
+     них вдвое - отсюда «мутный круг». Ширину карты выбираем по
+     экрану: на телефоне 512 (там столько точек и нет), на обычном
+     экране 768, при полной детализации 1024. Стоимость растёт
+     квадратом ширины, поэтому шаг берём в полтора раза, а не в два. */
+  var W = 768;
+  if (high) W = 1024;
+  else {
+    try { if ((g.innerWidth || 1024) < 760) W = 512; } catch (eW) {}
+  }
+  var H = W >> 1;
   var conf = { detail: detail, cloudAmount: opts.cloudAmount || 0 };
 
   var isGas = (kind === "gas" || kind === "toxic");
@@ -1537,6 +1736,21 @@ function make(kind, opts) {
     ringTex: null, night: false
   };
 
+  /* Ключевой свет тела. Яркость подобрана так, чтобы белая площадка,
+     повёрнутая прямо к светилу, вышла почти в верх шкалы: у three
+     ламбертова составляющая делится на пи, и без этого множителя
+     планета садится в нижнюю треть тонов. Цвет по умолчанию - тёплый
+     белый, как у домашнего Солнца; звезда своего рукава может
+     передать свой через opts.sunColor. */
+  var sunC = new T.Color(typeof opts.sunColor === "number" ? opts.sunColor : 0xfff2dc);
+  U.keyCol = { value: new T.Vector3(sunC.r, sunC.g, sunC.b) };
+  U.keyStr = { value: (typeof opts.light === "number" ? opts.light : 1) * 0.72 };
+  /* Дымка над диском: цвет неба этого типа, помноженный на оттенок
+     клиента, чтобы у песчаного мира она была песочной, а не голубой */
+  U.hazeCol = { value: new T.Vector3(AT0.sky[0] * tf[0], AT0.sky[1] * tf[1], AT0.sky[2] * tf[2]) };
+  U.hazeStr = { value: wantAtm ? AT0.haze * 2.1 *
+    (typeof opts.atmoStrength === "number" ? opts.atmoStrength : 1) : 0 };
+
   /* ── Иерархия ────────────────────────────────────────
      group -> tilt (наклон оси) -> spin (суточное вращение).
      Кольца висят в наклонённой системе, но не крутятся вместе с
@@ -1553,16 +1767,20 @@ function make(kind, opts) {
   var segW = high ? 64 : 32, segH = high ? 48 : 24;
   var geo = keep(new T.SphereGeometry(radius, segW, segH));
   var mapTex = keep(texFrom(maps.color, true));
-  var bumpTex = keep(texFrom(maps.bump, false));
+  var nrmTex = keep(texFrom(maps.nrm, false));
 
+  /* Наклон площадки уже посчитан по полю высот, поэтому здесь только
+     общая сила рельефа. Единица - как посчитано; меньше единицы
+     нужно газовым гигантам, у которых своего рельефа нет. */
+  var nScale = isGas ? 0.55 : 1.0;
   var matOpt = {
     map: mapTex,
-    bumpMap: bumpTex,
-    bumpScale: (TERRAIN[kind] ? TERRAIN[kind].bump : 0.014) * (high ? 1 : 0.7),
+    normalMap: nrmTex,
+    normalScale: new T.Vector2(nScale, nScale),
     shininess: 6,
     specular: new T.Color(0x0c1014)
   };
-  if (isGas) { matOpt.bumpScale = 0.012; matOpt.shininess = 2; }
+  if (isGas) matOpt.shininess = 2;
   if (maps.spec) {
     matOpt.specularMap = keep(texFrom(maps.spec, false));
     /* Узкий и не слишком яркий блик: широкий превращает океан в
@@ -1619,26 +1837,29 @@ function make(kind, opts) {
     var skyV = new T.Vector3(A.sky[0] * tf[0], A.sky[1] * tf[1], A.sky[2] * tf[2]);
     var setV = new T.Vector3(A.set[0], A.set[1], A.set[2]);
 
-    if (high && A.haze > 0.02) {
-      var hGeo = keep(new T.SphereGeometry(radius * 1.004, 48, 32));
-      var hMat = keep(new T.ShaderMaterial({
-        uniforms: {
-          uSun: U.sun, uSky: { value: skyV.clone() }, uSet: { value: setV.clone() },
-          uPow: { value: 1.4 }, uStr: { value: A.haze * strK }, uFloor: { value: 0.02 }
-        },
-        vertexShader: WORLD_VS, fragmentShader: ATM_FS,
-        transparent: true, side: T.FrontSide, depthWrite: false
-      }));
-      atmInner = new T.Mesh(hGeo, hMat);
-      atmInner.renderOrder = 2;
-      group.add(atmInner);
-    }
+    /* Внутренней оболочки дымки здесь больше нет: она была лишним
+       полупрозрачным проходом по всему диску, а кадр у нас упирается
+       именно в заливку. Тот же френель теперь считается прямо в
+       шейдере поверхности (uHazeStr), фрагментов от этого не
+       прибавляется, и дымка есть на любом железе, а не только при
+       полной детализации. */
 
-    var aGeo = keep(new T.SphereGeometry(radius * 1.055, high ? 48 : 24, high ? 32 : 18));
+    /* Косинус нормали к взгляду на лимбе планеты для этой оболочки.
+       Луч, касательный к твёрдому шару, входит в оболочку под углом,
+       который задаётся одним отношением радиусов: cos = sqrt(1 - 1/k²).
+       Отсюда шейдер знает, где кончается планета и начинается воздух. */
+    var aK = 1.055;
+    var aCos0 = Math.sqrt(1 - 1 / (aK * aK));
+    var aGeo = keep(new T.SphereGeometry(radius * aK, high ? 48 : 24, high ? 32 : 18));
     var aMat = keep(new T.ShaderMaterial({
       uniforms: {
         uSun: U.sun, uSky: { value: skyV }, uSet: { value: setV },
-        uPow: { value: A.pow }, uStr: { value: A.str * strK }, uFloor: { value: A.floor }
+        uPow: { value: A.pow }, uFloor: { value: A.floor },
+        uCos0: { value: aCos0 },
+        /* Максимум профиля переехал с края оболочки на лимб планеты,
+           а там прежняя формула давала около трети яркости. Плотность
+           уменьшаем во столько же, иначе кайма станет втрое ярче. */
+        uStr: { value: A.str * strK * 0.42 }
       },
       vertexShader: WORLD_VS, fragmentShader: ATM_FS,
       transparent: true, side: T.BackSide, depthWrite: false,

@@ -44,26 +44,34 @@ var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
 var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* Каким должен быть космос в каждом акте фильма:
-   [теплота, приглушение, скорость пакетов].
+   [теплота, приглушение].
    Теплота - зарево двигателя и атмосферы; приглушение - мы внутри
-   корабля и смотрим сквозь стекло; скорость - как быстро идёт мимо
-   поток данных. Ключи те же, что у диспетчера сцены. */
+   корабля и смотрим сквозь стекло. Ключи те же, что у диспетчера
+   сцены.
+
+   Третьим числом здесь была скорость «пакетов данных» - неоновых
+   росчерков, летевших поперёк кадра. Владелец назвал фон детским и
+   перегруженным, и первыми под это описание попадали именно они:
+   в настоящем небе цветных прочерков нет, а на экране их было
+   одиннадцать штук одновременно, в фирменных циане и фиолете, и
+   каждый рисовался своим градиентом в каждом кадре. Росчерки сняты
+   целиком, вместе с третьим числом. */
 var ACT = {
-  pad:      [0.60, 0.12, 0.55],
-  ignite:   [0.95, 0.00, 1.55],
-  climb:    [0.65, 0.00, 1.90],
-  clouds:   [0.38, 0.05, 1.60],
-  corridor: [0.12, 0.28, 1.20],
-  advance:  [0.10, 0.18, 1.10],
-  orbit:    [0.00, 0.00, 0.80],
-  reentry:  [1.00, 0.05, 2.10],
-  route:    [0.10, 0.22, 0.90],
-  landing:  [0.72, 0.10, 0.70],
-  walk:     [0.30, 0.46, 0.50],
-  cabin:    [0.12, 0.60, 0.35],
-  manual:   [0.10, 0.62, 0.30],
-  console:  [0.16, 0.50, 0.45],
-  _:        [0.20, 0.10, 1.00]
+  pad:      [0.60, 0.12],
+  ignite:   [0.95, 0.00],
+  climb:    [0.65, 0.00],
+  clouds:   [0.38, 0.05],
+  corridor: [0.12, 0.28],
+  advance:  [0.10, 0.18],
+  orbit:    [0.00, 0.00],
+  reentry:  [1.00, 0.05],
+  route:    [0.10, 0.22],
+  landing:  [0.72, 0.10],
+  walk:     [0.30, 0.46],
+  cabin:    [0.12, 0.60],
+  manual:   [0.10, 0.62],
+  console:  [0.16, 0.50],
+  _:        [0.20, 0.10]
 };
 
 /* Спектральные классы. Доли взяты по смыслу, а не по каталогу: в
@@ -79,13 +87,17 @@ var SPECTRA = [
   [255, 176, 140, 0.20, 0.84]    /* M: красные карлики */
 ];
 
-function pickSpectrum(u) {
+function pickIndex(u) {
   var acc = 0;
   for (var i = 0; i < SPECTRA.length; i++) {
     acc += SPECTRA[i][3];
-    if (u <= acc) return SPECTRA[i];
+    if (u <= acc) return i;
   }
-  return SPECTRA[2];
+  return 2;
+}
+
+function pickSpectrum(u) {
+  return SPECTRA[pickIndex(u)];
 }
 
 /* Детерминированный генератор: небо обязано быть одинаковым от
@@ -111,7 +123,6 @@ function Space(canvas) {
      плавно - иначе на границе секций фон дёргался бы ступенькой */
   this.warm = 0.2; this.warmT = 0.2;
   this.dim = 0.1;  this.dimT = 0.1;
-  this.rush = 1;   this.rushT = 1;
   this.running = false;
   this.theme = document.documentElement.getAttribute("data-theme") || "dark";
   this.resize();
@@ -155,34 +166,93 @@ Space.prototype.build = function () {
   this.stars = [];
   for (var i = 0; i < n; i++) {
     var layer = i % 3;                      /* 0 дальний, 2 ближний */
-    var sp = pickSpectrum(rnd());
+    var si = pickIndex(rnd());
+    var sp = SPECTRA[si];
     /* Размер по степенному закону: ярких звёзд единицы, мелких
        россыпь. Линейное распределение даёт «манную крупу». */
     var mag = Math.pow(rnd(), 2.2);
-    var r = (0.35 + layer * 0.30 + mag * 1.5) * sp[4];
+    /* Дрожание размера внутри слоя. Без него у каждого из трёх слоёв
+       свой чёткий минимальный размер, и небо распадается на три
+       ровных семейства одинаковых точек - именно это глаз читает как
+       нарисованность, «звёзды рядами». */
+    var r = (0.35 + layer * 0.30 + (rnd() - 0.5) * 0.22 + mag * 1.35) * sp[4];
+    if (r < 0.28) r = 0.28;
     this.stars.push({
-      x: rnd(), y: rnd(), r: r, l: layer,
+      x: rnd(), y: rnd(), r: r, l: layer, si: si,
       c: sp[0] + "," + sp[1] + "," + sp[2],
       /* Мерцание: две несоизмеримые частоты. Мелкая звезда дрожит
          сильнее - её диск целиком укладывается в одну ячейку
-         турбулентности, у крупной дрожание усредняется. */
+         турбулентности, у крупной дрожание усредняется.
+
+         Размах убавлен с 0.46 до 0.26. На прежнем звёзды не мерцали,
+         а моргали, и вместе с тем, что от мерцания менялся ещё и
+         радиус, кадр читался гирляндой. Настоящая сцинтилляция - это
+         дрожь блеска на единицы процентов, а не пульсация диска. */
       f1: 0.6 + rnd() * 1.5, p1: rnd() * 6.28,
       f2: 1.7 + rnd() * 3.4, p2: rnd() * 6.28,
-      amp: Math.min(0.46, 0.16 + 0.30 / (0.5 + r)),
+      amp: Math.min(0.26, 0.09 + 0.17 / (0.5 + r)),
       base: 0.42 + mag * 0.58,
-      spike: r > 1.55
+      spike: false,
+      halo: false
     });
   }
-  /* Пакеты данных: короткие росчерки, летят поперёк */
-  this.pk = [];
-  var pn = B.lean ? 3 : 11;
-  for (i = 0; i < pn; i++) this.pk.push(this.seedPacket(true));
 
-  /* Метеоры: один живой болид за раз, следующий через паузу */
+  /* Кто получает ореол, а кто ещё и крест дифракции.
+
+     Раньше и то и другое решал порог по радиусу, и он ловил заметно
+     больше звёзд, чем задумано: ореол доставался ста двадцати трём
+     звёздам из трёхсот двадцати, крест - шестидесяти. Одинаковый
+     значок на каждой пятой точке неба - это узор, а не небо, и
+     владелец справедливо назвал такие звёзды детскими.
+
+     Считаем не порогом, а числом: ореол у двадцати самых крупных,
+     крест у десяти. Порог зависел бы от случайного разброса
+     радиусов, число - нет, и небо получается одинаковым при любой
+     раскладке. Крест в природе даёт не звезда, а оптика, и достаётся
+     он только тем, кто её пересветил, - то есть единицам. */
+  var порядок = this.stars.slice().sort(function (a, b) { return b.r - a.r; });
+  for (i = 0; i < порядок.length && i < 20; i++) {
+    порядок[i].halo = true;
+    if (i < 10) порядок[i].spike = true;
+  }
+  /* Метеоры: один живой болид за раз, следующий через паузу.
+
+     Пауза выросла с трёх-девяти секунд до двадцати с лишним. Раньше
+     болид летел практически всё время, и это была вторая половина
+     «детского» фона: настоящий метеор - редкое событие, а не
+     постоянный житель кадра. */
   this.met = null;
-  this.metAt = 3 + rnd() * 6;
+  this.metAt = 12 + rnd() * 18;
 
   this.bakeDeep();
+  this.bakeHalo();
+};
+
+/* ── Ореол яркой звезды: один спрайт на всё небо ──────────────
+   Ореол вокруг ярких звёзд нужен - чистая точка выглядит дешёвой
+   засветкой пикселя. Но раньше он собирался заново для КАЖДОЙ такой
+   звезды в КАЖДОМ кадре: сто двадцать три круговых градиента за
+   кадр, и это была самая дорогая строка всего фона. По форме ореол
+   у всех одинаков, отличается только цвет, а цветов ровно столько,
+   сколько спектральных классов. Печём по одному спрайту на класс -
+   пять картинок на всю жизнь страницы вместо сотни градиентов в
+   каждом кадре. */
+Space.prototype.bakeHalo = function () {
+  var R = 48;
+  this.halo = [];
+  for (var i = 0; i < SPECTRA.length; i++) {
+    var col = SPECTRA[i][0] + "," + SPECTRA[i][1] + "," + SPECTRA[i][2];
+    var c = document.createElement("canvas");
+    c.width = c.height = R * 2;
+    var x = c.getContext("2d");
+    var gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, "rgba(" + col + ",1)");
+    gr.addColorStop(0.34, "rgba(" + col + ",0.26)");
+    gr.addColorStop(1, "rgba(" + col + ",0)");
+    x.fillStyle = gr;
+    x.fillRect(0, 0, R * 2, R * 2);
+    this.halo.push(c);
+  }
 };
 
 /* ── Дальний слой: туманности, Млечный Путь, звёздная пыль ──
@@ -350,31 +420,27 @@ Space.prototype.bakeDeep = function () {
   this.deepPad = PAD;
 };
 
-Space.prototype.seedPacket = function (anywhere) {
-  return {
-    x: anywhere ? Math.random() : -0.05,
-    y: Math.random(),
-    v: 0.05 + Math.random() * 0.12,
-    len: 0.04 + Math.random() * 0.10,
-    a: 0.25 + Math.random() * 0.5,
-    hue: Math.random() > 0.72 ? "v" : "c"
-  };
-};
-
 /* Метеор: входит с края под пологим углом, живёт секунду с
-   небольшим. След тянется назад по курсу и гаснет к хвосту. */
+   небольшим. След тянется назад по курсу и гаснет к хвосту.
+
+   Владелец назвал прежние метеоры детскими кометами, и по числам он
+   прав: болид проходил до 0.97 ширины экрана в секунду и тянул след
+   в четверть кадра. Это не метеор, это комета из мультфильма -
+   настоящий метеор виден как тонкая короткая царапина на краю поля
+   зрения. Скорость убавлена вдвое, след вдвое короче, и он больше не
+   стартует от самого угла кадра поперёк всего неба. */
 Space.prototype.seedMeteor = function () {
   var fromTop = Math.random() < 0.7;
   var a = (fromTop ? 0.25 : -0.15) + Math.random() * 0.5;   /* угол вниз-вправо */
   var dir = Math.random() < 0.5 ? 1 : -1;
   return {
-    x: dir > 0 ? -0.05 : 1.05,
-    y: fromTop ? Math.random() * 0.45 : 0.4 + Math.random() * 0.4,
-    vx: dir * (0.42 + Math.random() * 0.55),
-    vy: a * 0.55,
-    len: 0.09 + Math.random() * 0.16,
+    x: dir > 0 ? 0.04 + Math.random() * 0.22 : 0.74 + Math.random() * 0.22,
+    y: fromTop ? Math.random() * 0.40 : 0.42 + Math.random() * 0.36,
+    vx: dir * (0.20 + Math.random() * 0.26),
+    vy: a * 0.30,
+    len: 0.045 + Math.random() * 0.070,
     life: 0,
-    max: 1.1 + Math.random() * 0.9,
+    max: 0.9 + Math.random() * 0.7,
     /* Цвет по составу: железо горит белым, натрий жёлто-оранжевым */
     c: Math.random() < 0.62 ? "214,236,255" : "255,214,158"
   };
@@ -401,7 +467,7 @@ Space.prototype.bind = function () {
   addEventListener("rc:act", function (e) {
     var a = e && e.detail && e.detail.act;
     var s = ACT[a] || ACT._;
-    self.warmT = s[0]; self.dimT = s[1]; self.rushT = s[2];
+    self.warmT = s[0]; self.dimT = s[1];
   });
 };
 
@@ -442,7 +508,11 @@ Space.prototype.bakeHaze = function (p, warm, dim, light) {
 
   var g1 = c.createRadialGradient(cw * (0.18 + p * 0.2), ch * (0.18 + p * 0.1), 0,
                                   cw * (0.18 + p * 0.2), ch * (0.18 + p * 0.1), mx * 0.62);
-  var a1 = (light ? 0.08 : 0.15) * dim;
+  /* Обе цветные заливки убавлены примерно на четверть. Фирменные
+     циан и фиолет шли поверх и без того цветных туманностей, и небо
+     выходило подкрашенным сплошь: глубины в нём не читалось, читался
+     градиентный фон. Оттенок остался, плотность ушла. */
+  var a1 = (light ? 0.062 : 0.115) * dim;
   g1.addColorStop(0, "rgba(66,178,220," + (a1 * (1 - p * 0.35)).toFixed(3) + ")");
   g1.addColorStop(1, "rgba(66,178,220,0)");
   c.fillStyle = g1;
@@ -450,7 +520,7 @@ Space.prototype.bakeHaze = function (p, warm, dim, light) {
 
   var g2 = c.createRadialGradient(cw * (0.88 - p * 0.25), ch * (0.72 - p * 0.3), 0,
                                   cw * (0.88 - p * 0.25), ch * (0.72 - p * 0.3), mx * 0.55);
-  var a2 = (light ? 0.055 : 0.12) * dim;
+  var a2 = (light ? 0.042 : 0.092) * dim;
   g2.addColorStop(0, "rgba(138,89,246," + (a2 * (0.5 + p * 0.5)).toFixed(3) + ")");
   g2.addColorStop(1, "rgba(138,89,246,0)");
   c.fillStyle = g2;
@@ -483,8 +553,7 @@ Space.prototype.frame = function (dt) {
   var k = Math.min(1, dt * 1.1);
   this.warm += (this.warmT - this.warm) * k;
   this.dim  += (this.dimT  - this.dim)  * k;
-  this.rush += (this.rushT - this.rush) * k;
-  var warm = this.warm, dim = 1 - this.dim * 0.62, rush = this.rush;
+  var warm = this.warm, dim = 1 - this.dim * 0.62;
 
   x.clearRect(0, 0, w, h);
 
@@ -567,7 +636,12 @@ Space.prototype.frame = function (dt) {
     if (al <= 0.01) continue;
     if (al > 1) al = 1;
     var px = sx * w, py = sy * h;
-    var rr2 = s.r * tw;
+    /* Мерцание меняет ТОЛЬКО блеск, а не радиус. Раньше на tw
+       умножался и радиус, и звезда физически раздувалась и
+       сжималась - на экране это читалось пульсирующими шариками, а
+       не небом. Атмосфера дрожание блеска даёт, а диск звезды не
+       трогает. */
+    var rr2 = s.r;
     x.fillStyle = light
       ? "rgba(12,22,38," + (al * 0.9).toFixed(3) + ")"
       : "rgba(" + s.c + "," + al.toFixed(3) + ")";
@@ -581,19 +655,20 @@ Space.prototype.frame = function (dt) {
       x.fill();
       /* Ореол вокруг ярких: у настоящей яркой звезды свет
          рассеивается в оптике и в глазу, чистая точка выглядит
-         дешёвой засветкой пикселя */
-      if (rr2 > 1.4 && !light) {
-        var hg = x.createRadialGradient(px, py, 0, px, py, rr2 * 3.4);
-        hg.addColorStop(0, "rgba(" + s.c + "," + (al * 0.34).toFixed(3) + ")");
-        hg.addColorStop(1, "rgba(" + s.c + ",0)");
-        x.fillStyle = hg;
-        x.fillRect(px - rr2 * 3.4, py - rr2 * 3.4, rr2 * 6.8, rr2 * 6.8);
+         дешёвой засветкой пикселя. Рисуем готовым спрайтом, а не
+         свежим градиентом на каждую звезду: вид тот же, стоимость
+         никакая. */
+      if (s.halo && this.halo && !light) {
+        var hr = rr2 * 3.4;
+        x.globalAlpha = al * 0.30;
+        x.drawImage(this.halo[s.si || 0], px - hr, py - hr, hr * 2, hr * 2);
+        x.globalAlpha = 1;
       }
     }
     /* Крест дифракции у самых ярких */
     if (spikes && s.spike && !light) {
       var sl = rr2 * 5.5;
-      x.strokeStyle = "rgba(" + s.c + "," + (al * 0.22).toFixed(3) + ")";
+      x.strokeStyle = "rgba(" + s.c + "," + (al * 0.20).toFixed(3) + ")";
       x.lineWidth = 0.7;
       x.beginPath();
       x.moveTo(px - sl, py); x.lineTo(px + sl, py);
@@ -610,13 +685,15 @@ Space.prototype.frame = function (dt) {
       m.x += m.vx * dt; m.y += m.vy * dt;
       if (m.life > m.max || m.x < -0.2 || m.x > 1.2 || m.y > 1.2) {
         this.met = null;
-        this.metAt = this.t + 6 + Math.random() * 12;
+        this.metAt = this.t + 16 + Math.random() * 26;
       } else {
         /* Яркость всплывает и гаснет: болид вспыхивает при входе и
            сгорает, ровная линия читается царапиной на экране */
         var lf = m.life / m.max;
         var fl = Math.sin(lf * Math.PI);
-        fl = fl * fl * (light ? 0.45 : 1) * dim;
+        /* Приглушён на треть: болид не имеет права спорить яркостью
+           со звёздами, иначе кадр читается фейерверком */
+        fl = fl * fl * (light ? 0.30 : 0.66) * dim;
         var hx = m.x * w, hy = m.y * h;
         var tx = (m.x - m.vx * m.len / 0.5) * w, ty2 = (m.y - m.vy * m.len / 0.5) * h;
         var lg2 = x.createLinearGradient(tx, ty2, hx, hy);
@@ -624,42 +701,27 @@ Space.prototype.frame = function (dt) {
         lg2.addColorStop(0.72, "rgba(" + m.c + "," + (fl * 0.32).toFixed(3) + ")");
         lg2.addColorStop(1, "rgba(" + m.c + "," + (fl * 0.85).toFixed(3) + ")");
         x.strokeStyle = lg2;
-        x.lineWidth = 1.6;
+        /* Ниточная царапина вместо шнура: метеор в небе тоньше
+           волоса, полтора пикселя с круглыми концами читались
+           нарисованной кометой */
+        x.lineWidth = 1.0;
         x.lineCap = "round";
         x.beginPath();
         x.moveTo(tx, ty2); x.lineTo(hx, hy);
         x.stroke();
         x.lineCap = "butt";
-        /* Голова ярче следа: там идёт само горение */
-        var hg2 = x.createRadialGradient(hx, hy, 0, hx, hy, 7);
-        hg2.addColorStop(0, "rgba(255,255,255," + (fl * 0.75).toFixed(3) + ")");
-        hg2.addColorStop(0.35, "rgba(" + m.c + "," + (fl * 0.35).toFixed(3) + ")");
-        hg2.addColorStop(1, "rgba(" + m.c + ",0)");
-        x.fillStyle = hg2;
-        x.fillRect(hx - 7, hy - 7, 14, 14);
+        /* Голова ярче следа: там идёт само горение. Размер срезан с
+           семи точек до трёх с половиной - прежний белый шар на конце
+           был крупнее любой звезды в кадре. */
+        if (this.halo) {
+          x.globalAlpha = fl * 0.55;
+          x.drawImage(this.halo[1], hx - 3.5, hy - 3.5, 7, 7);
+          x.globalAlpha = 1;
+        }
       }
     } else if (this.t > this.metAt) {
       this.met = this.seedMeteor();
     }
-  }
-
-  /* Пакеты данных */
-  for (i = 0; i < this.pk.length; i++) {
-    var q = this.pk[i];
-    q.x += q.v * dt * rush;
-    if (q.x > 1.1) this.pk[i] = q = this.seedPacket(false);
-    var x1 = q.x * w, y1 = q.y * h;
-    var x2 = (q.x - q.len) * w, y2 = y1 + q.len * h * 0.16;
-    var col = q.hue === "v" ? "138,89,246" : "66,178,220";
-    var lg = x.createLinearGradient(x2, y2, x1, y1);
-    lg.addColorStop(0, "rgba(" + col + ",0)");
-    lg.addColorStop(1, "rgba(" + col + "," + (q.a * (light ? 0.5 : 1) * dim).toFixed(2) + ")");
-    x.strokeStyle = lg;
-    x.lineWidth = 1.4;
-    x.beginPath();
-    x.moveTo(x2, y2);
-    x.lineTo(x1, y1);
-    x.stroke();
   }
 };
 
