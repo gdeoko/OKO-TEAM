@@ -5198,12 +5198,21 @@ html.rc-deep-inside .totop.on {
 .rc-flight.rcf-stage .rcf-cabframe,
 .rc-flight.rcf-stage .rcf-instr,
 .rc-flight.rcf-stage .rcf-caps {
-  display: block;
-  transform-origin: 0 0;
-  transform: var(--rcf-cabm, none);
-  opacity: var(--rcf-cabo, 1);
-  /* Переходов нет: место ведёт кадр, любой transition превратит
-     поворот салона в резину */
-  transition: opacity .18s linear;
-  will-change: transform;
+  display: none !important;
 }
+/* Запечённая панель: один слой, без наложения, с матрицей от камеры.
+   Три прежних полноэкранных слоя (снимок, приборы с режимом screen,
+   тела клавиш) стоили браузеру трёх композиций с блендом на каждый
+   кадр оборота - это и были рывки финальной сцены. */
+.rcf-cabbake {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  display: none;
+  pointer-events: none;
+  z-index: 4;
+  transform-origin: 0 0;
+  will-change: transform;
+  transition: opacity .16s linear;
+}
+.rc-flight.rcf-stage .rcf-cabbake { display: block; }

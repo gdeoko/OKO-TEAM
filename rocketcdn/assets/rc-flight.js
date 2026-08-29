@@ -5189,7 +5189,11 @@ function bindControls() {
        где тяга бесполезна: разглядеть кольца Сатурна с орбиты, не
        врезаясь в них. Держим его отдельно от объектива сцены -
        обратно он всегда возвращается сам. */
-    if (e.shiftKey) {
+    /* В салоне приближения нет вовсе. Владелец: «функция приближения
+       в салоне не нужна, она только в игре». Там кадр ведёт прокрутка
+       страницы, и второй, независимый от неё зум ломал и подъезд, и
+       ощущение помещения. */
+    if (e.shiftKey && !F.stage) {
       F.zoom = Math.max(0, Math.min(1, (F.zoom || 0) - e.deltaY * 0.0012));
       return;
     }
@@ -5248,7 +5252,8 @@ function bindControls() {
     e.preventDefault();
     if (e.touches.length > 1) {
       var d2 = pinchDist(e);
-      if (pinch) F.zoom = Math.max(0, Math.min(1, (F.zoom || 0) + (d2 - pinch) * 0.004));
+      /* Щипок приближает только в игре: в салоне зума нет */
+      if (pinch && !F.stage) F.zoom = Math.max(0, Math.min(1, (F.zoom || 0) + (d2 - pinch) * 0.004));
       pinch = d2;
       hideHint();
       return;
@@ -5548,7 +5553,7 @@ function hideHint() {
 
 function size() {
   if (!W3 || !F.open) return;
-  if (F.stage) { cabFrameLayer(); deckLayer(); }
+  if (F.stage) stageBake();
   deckSkinSoon();
   var w = innerWidth, h = innerHeight;
   W3.r.setSize(w, h, false);
@@ -9766,6 +9771,119 @@ function панельD(W, H, fovDeg) {
    пилота, углы прямоугольника ложатся на углы кадра, матрица
    становится единичной - и последний кадр салона совпадает с первым
    кадром игры пиксель в пиксель. */
+/* ── Панель салона одним запечённым слоем ────────────────────
+   Панель собиралась из трёх слоёв разметки: снимок кабины, холст
+   приборов и холст тел клавиш. Два из них полноэкранные, у одного
+   режим наложения screen, и все три каждый кадр получали новую
+   проективную матрицу. Браузер на это отвечает пересчётом стиля и
+   композитингом трёх полноэкранных слоёв с наложением - на каждый
+   кадр оборота. Отсюда и рывки, на которые владелец показал первым
+   пунктом: «очень сильно лагает последняя сцена».
+
+   В салоне ничего из этих трёх слоёв не двигается друг относительно
+   друга: приборы стоят, клавиши не нажимаются, снимок один. Значит
+   их можно свести в ОДИН холст один раз - и возить по кадру только
+   его. Кадр становится втрое дешевле, а резкость остаётся: холст
+   печётся в разрешении исходного снимка, а не кадра.
+
+   Печём кроп ровно по cover-раскладке: элемент по-прежнему равен
+   кадру, и матрица для него считается та же, что раньше. */
+var bakeEl = null, bakeKey = "";
+function stageBake() {
+  if (!ui || !ui.wrap || !g.RC_DECK || !g.RC_CAB_FLAT || !g.RC_CAB_DECK) return;
+  var W = innerWidth, H = innerHeight;
+  var вид = g.RC_DECK["какой"](W, H);
+  var meta = g.RC_CAB_FLAT[вид] || g.RC_CAB_FLAT["широкая"];
+  var план = g.RC_CAB_DECK[вид] || g.RC_CAB_DECK["широкая"];
+  if (!meta || !план) return;
+  var ru = doc.documentElement.lang !== "en";
+  var ключ = вид + "|" + W + "x" + H + "|" + (ru ? "ru" : "en");
+  if (bakeKey === ключ && bakeEl) return;
+
+  if (!bakeEl) {
+    bakeEl = doc.createElement("canvas");
+    bakeEl.className = "rcf-cabbake";
+    bakeEl.setAttribute("aria-hidden", "true");
+    ui.wrap.appendChild(bakeEl);
+  }
+  var пк = g.RC_DECK["покрытие"](meta, W, H);
+  var k = пк.k || 1;
+  /* Внутреннее разрешение холста - разрешение снимка, а не кадра:
+     иначе панель мылится ровно так же, как мылил её WebGL */
+  var cw = Math.max(2, Math.round(W / k));
+  var ch = Math.max(2, Math.round(H / k));
+  bakeEl.width = cw; bakeEl.height = ch;
+  var x = bakeEl.getContext("2d");
+  var im = new Image();
+  im.decoding = "async";
+  im.onload = function () {
+    x.clearRect(0, 0, cw, ch);
+    x.save();
+    x.scale(1 / k, 1 / k);
+    x.drawImage(im, пк.ox, пк.oy, пк.dw, пк.dh);
+    x.restore();
+    try {
+      var d2 = g.RC_DECK.создать();
+      d2.вид(meta, план, ru);
+      d2.размер(W, H, 1 / k);
+      d2.кадр(0.016);
+      if (d2["тело"]) x.drawImage(d2["тело"], 0, 0, cw, ch);
+      x.globalCompositeOperation = "screen";
+      x.drawImage(d2.canvas, 0, 0, cw, ch);
+      x.globalCompositeOperation = "source-over";
+    } catch (eB) {}
+
+    /* ── Срезаем чужую рубку ──────────────────────────────
+       На снимке кокпита есть СВОИ пол, потолок и боковины. В кадре
+       они ложатся поверх пола, потолка и стен настоящей комнаты - и
+       панель читается криво вклеенным скриншотом. Владелец сказал
+       это дословно: «залазит кусок на пол, кусок на стену, кусок на
+       потолок; как будто школьник скриншот сделал и вклеил криво».
+
+       Оставляем от снимка ровно то, чего в комнате нет: проём с
+       рамой и приборную консоль под ним. Всё остальное - лишнее
+       повторение помещения, и оно уходит. Края растворяем, чтобы не
+       осталось прямой линии реза: у настоящей консоли нет кромки,
+       она уходит в полумрак рубки. */
+    try {
+      var кб = meta["коробка"];
+      var сдX = пк.ox / k, шп = meta.w, вп = meta.h;
+      var л = сдX + (кб.l - 0.055) * шп;
+      var п = сдX + (кб.r + 0.055) * шп;
+      var сдY = пк.oy / k;
+      var в = сдY + (кб.t - 0.045) * вп;
+      var н = сдY + вп;                    /* до низа снимка: там консоль */
+      var мк = doc.createElement("canvas");
+      мк.width = cw; мк.height = ch;
+      var мx = мк.getContext("2d");
+      мx.fillStyle = "#fff";
+      мx.fillRect(л, в, п - л, н - в);
+      мx.globalCompositeOperation = "destination-out";
+      var пер = Math.round(шп * 0.045);
+      function растворить(gx0, gy0, gx1, gy1, rx, ry, rw, rh) {
+        var г = мx.createLinearGradient(gx0, gy0, gx1, gy1);
+        г.addColorStop(0, "rgba(0,0,0,1)");
+        г.addColorStop(1, "rgba(0,0,0,0)");
+        мx.fillStyle = г;
+        мx.fillRect(rx, ry, rw, rh);
+      }
+      растворить(л, 0, л + пер, 0, л, в, пер, н - в);
+      растворить(п, 0, п - пер, 0, п - пер, в, пер, н - в);
+      растворить(0, в, 0, в + пер, л, в, п - л, пер);
+      /* Низ консоли тоже без прямого реза: у настоящего пульта нет
+         кромки поперёк настила, он уходит в полумрак под собой */
+      var перН = Math.round(вп * 0.10);
+      растворить(0, н, 0, н - перН, л, н - перН, п - л, перН);
+      мx.globalCompositeOperation = "source-over";
+      x.globalCompositeOperation = "destination-in";
+      x.drawImage(мк, 0, 0);
+      x.globalCompositeOperation = "source-over";
+    } catch (eМ) {}
+    bakeKey = ключ;
+  };
+  im.src = meta["файл"];
+}
+
 function stagePanel() {
   if (!cabin || !W3 || !ui || !ui.wrap || !g.THREE) return;
   var T = g.THREE, cam = W3.cam;
@@ -9825,20 +9943,23 @@ function stagePanel() {
     b.toFixed(6) + "," + e.toFixed(6) + ",0," + hк.toFixed(8) + "," +
     "0,0,1,0," +
     cc.toFixed(3) + "," + f.toFixed(3) + ",0,1)";
-  if (stagePanel._m !== m) {
+  /* Пишем матрицу ПРЯМО на слой, а не переменной на обёртке: запись
+     переменной в родителя метит на пересчёт всё его поддерево, а там
+     вся разметка рубки. Один элемент - одна композиция. */
+  if (bakeEl && stagePanel._m !== m) {
     stagePanel._m = m;
-    ui.wrap.style.setProperty("--rcf-cabm", m);
+    bakeEl.style.transform = m;
   }
   if (stagePanel._on !== 1) {
     stagePanel._on = 1;
-    ui.wrap.style.setProperty("--rcf-cabo", "1");
+    if (bakeEl) bakeEl.style.opacity = "1";
     заглушкаОкна(false);
   }
 }
 function панельПрочь() {
   if (stagePanel._on === 0) return;
   stagePanel._on = 0;
-  if (ui && ui.wrap) ui.wrap.style.setProperty("--rcf-cabo", "0");
+  if (bakeEl) bakeEl.style.opacity = "0";
   заглушкаОкна(true);
 }
 
@@ -10432,9 +10553,18 @@ function stage(k) {
      остаётся на месте, при подъезде приближается, а в конце подъезда
      ложится на кадр один в один - это и есть кадр игры.
      Трёхмерную раму пульта прячем, чтобы не двоила. */
-  cabFrameLayer();
-  deckLayer();
-  if (cabin && cabin.console3 && cabin.console3.group) cabin.console3.group.visible = false;
+  /* Слои разметки в салоне не поднимаем: панель там одна, запечённая
+     (stageBake), и возится по кадру одной матрицей */
+  stageBake();
+  /* Трёхмерный пульт против плоской панели: с признаком rc3d=1 в
+     салоне работает НАСТОЯЩАЯ геометрия, поднятая по карте глубины
+     того же снимка, а плоская картинка не поднимается вовсе. */
+  var трёхм = false;
+  try { трёхм = /[?&]rc3d=1/.test(location.search); } catch (e3D) {}
+  if (cabin && cabin.console3 && cabin.console3.group) {
+    cabin.console3.group.visible = трёхм;
+  }
+  if (трёхм && bakeEl) bakeEl.style.display = "none";
   /* Гул корабля в салоне. Тише, чем в полёте: двигатель на холостом,
      работает вентиляция и приборы. Без него помещение читается
      картинкой - в кино корабль всегда слышно. */
