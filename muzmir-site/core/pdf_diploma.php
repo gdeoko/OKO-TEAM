@@ -418,7 +418,14 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             if ($teacher)    $rows[] = ['Преподаватель: ', $teacher];
             // Учреждение и город — разные строки: город в графе «Название
             // учреждения» превращал её в адрес на полторы строки.
-            if ($inst)       $rows[] = ['Название учреждения: ', $inst];
+            if ($inst) {
+                // Город из названия — только служебным хвостом; см. institution_clean_city().
+                if (!function_exists('institution_clean_city') && is_file(BASE_PATH . '/core/text_format.php')) {
+                    require_once BASE_PATH . '/core/text_format.php';
+                }
+                $rows[] = ['Название учреждения: ', function_exists('institution_clean_city')
+                    ? institution_clean_city($inst, $city) : $inst];
+            }
             if ($city) {
                 if (!function_exists('country_city_line') && is_file(BASE_PATH . '/core/text_format.php'))
                     require_once BASE_PATH . '/core/text_format.php';

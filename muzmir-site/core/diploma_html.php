@@ -435,7 +435,15 @@ function diploma_html(array $c, array $a, array $opt = []): string {
          * строкой сразу после учреждения. */
         if (!function_exists('country_city_line') && is_file(BASE_PATH . '/core/text_format.php'))
             require_once BASE_PATH . '/core/text_format.php';
-        if (!empty($a['institution'])) $fields['Название учреждения'] = trim((string) $a['institution']);
+        /* Город из названия убираем, чтобы он не стоял дважды — здесь и строкой
+         * ниже. Режется только служебный хвост («…"ДМШ 14" г. Самара»); имя в
+         * кавычках и прилагательное («Волгоградская консерватория») остаются как
+         * есть — это официальное наименование. */
+        if (!empty($a['institution'])) {
+            $fields['Название учреждения'] = function_exists('institution_clean_city')
+                ? institution_clean_city((string) $a['institution'], (string) ($a['city'] ?? ''))
+                : trim((string) $a['institution']);
+        }
         if (!empty($a['city'])) {
             $cc = function_exists('country_city_line')
                 ? country_city_line((string) $a['city'])
