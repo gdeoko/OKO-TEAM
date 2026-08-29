@@ -415,7 +415,9 @@ function pdf_diploma(array $application, string $type = 'main'): string {
                 $rows[] = ['Название коллектива: ', $groupNm];
             if ($ageCat)     $rows[] = ['Возрастная категория: ', $ageCat];
             if ($nomination) $rows[] = ['Номинация: ', $nomination];
-            if ($teacher)    $rows[] = ['Преподаватель: ', $teacher];
+            // Сам себе педагог: имя не печатается дважды (см. diploma_html.php).
+            if ($teacher && mb_strtolower(trim($teacher)) !== mb_strtolower(trim($recipient)))
+                $rows[] = ['Преподаватель: ', $teacher];
             // Учреждение и город — разные строки: город в графе «Название
             // учреждения» превращал её в адрес на полторы строки.
             if ($inst) {

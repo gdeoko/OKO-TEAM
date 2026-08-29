@@ -416,13 +416,24 @@ function diploma_html(array $c, array $a, array $opt = []): string {
          * концертмейстер с руководителем коллектива печатались педагогами —
          * документ, по которому человек потом отчитывается на работе. Заявки без
          * должностей (все, поданные до этой правки) выводятся как прежде. */
-        if (!empty($a['teacher'])) {
+        /* САМ СЕБЕ ПЕДАГОГ — СТРОКИ «ПЕДАГОГ» НЕ БУДЕТ.
+         *
+         * Взрослые солисты подают заявку за себя и в поле педагога пишут своё же
+         * имя: по базе таких пятнадцать. На бланке выходило «награждается: Голенева
+         * Олеся Сергеевна», а ниже «Педагог: Голенева Олеся Сергеевна» — то же имя
+         * дважды, читается как ошибка центра. Для благодарности это не касается:
+         * там награждаемый и есть педагог, и строки «Педагог» в ней нет вовсе. */
+        $teacherRaw = trim((string) ($a['teacher'] ?? ''));
+        $sameAsName = $teacherRaw !== ''
+            && mb_strtolower(preg_replace('~\s+~u', ' ', $teacherRaw) ?? $teacherRaw)
+               === mb_strtolower(preg_replace('~\s+~u', ' ', $name) ?? $name);
+        if ($teacherRaw !== '' && !$sameAsName) {
             if (!function_exists('mentors_doc_lines')) require_once BASE_PATH . '/core/mentors.php';
-            $lines = mentors_doc_lines((string) $a['teacher']);
+            $lines = mentors_doc_lines($teacherRaw);
             if ($lines) {
                 foreach ($lines as $label => $val) if (trim($val) !== '') $fields[$label] = $val;
             } else {
-                [$tLabel, $tVal] = _dh_teachers((string) $a['teacher']);
+                [$tLabel, $tVal] = _dh_teachers($teacherRaw);
                 if ($tVal !== '') $fields[$tLabel] = $tVal;
             }
         }
