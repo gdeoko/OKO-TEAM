@@ -106,14 +106,14 @@
   "Camera: 24mm at f/5.6, camera height 1.6 metres, one point perspective "
   "slightly off centre, verticals parallel, sharp from three metres to the far "
   "wall. Composition: the upper right quadrant is calm bright wall kept free "
-  "for the type. Typography in the upper right: a headline in Russian on two "
-  "lines reading exactly «КТО ВЛАДЕЕТ ИНФОРМАЦИЕЙ, ТОТ ПЕРВЫМ ДЕЛАЕТ СДЕЛКУ», "
-  "and under it a small line reading exactly «Всё о свободных блоках из первых "
-  "рук». Headline in deep graphite with a short amber rule above it. "
+  "for the type. Typography in the upper right: a headline in Russian reading "
+  "exactly «КЛЮЧИ К УСПЕШНЫМ СДЕЛКАМ», and under it a small line reading exactly "
+  "«Брокер-тур «Кластер» · 2 сентября». Headline in deep graphite with a short "
+  "amber rule above it. "
   + БЕЗ_ВЫДУМАННОГО + КИРИЛЛИЦА + КАЧЕСТВО)),
 
 "real-4-zal": dict(
- образцы=["zal_1", "zal_2"],
+ образцы=["zal_1", "zal_2", "logo"],
  текст=(
   ССЫЛКА +
   "Recreate this conference hall as a bright, premium photograph taken minutes "
@@ -127,8 +127,11 @@
   "changes: the room is warmer and brighter, daylight pours through the right "
   "hand windows and lifts the whole space, about twenty five people in ordinary "
   "business clothes are already seated, two more walk down the aisle away from "
-  "camera, a speaker stands beside the screen. The screen shows a neutral light "
-  "slide with no text. "
+  "camera, a speaker stands beside the screen. On the wide projection screen "
+  "there is the client logotype taken from the attached logo file and reproduced "
+  "exactly: a solid amber triangle mark with the word «АКТИВИТИ» under it in "
+  "dark grey, centred on a light neutral slide, undistorted, correct "
+  "proportions, and no other text anywhere on the screen. "
   + СВЕТ + БРЕНД +
   "Camera: 28mm at f/5.6, camera height 1.7 metres, symmetrical composition "
   "along the aisle, verticals strictly parallel, natural depth of field with the "
