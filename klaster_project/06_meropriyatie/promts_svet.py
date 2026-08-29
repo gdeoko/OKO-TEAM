@@ -62,6 +62,30 @@
 
 ПРОМПТЫ = {
 
+"EV-05-svet-sdelki": (
+ "A bright daylight photograph of a working negotiation moment inside a modern "
+ "production hall: a broker in a light shirt stands half turned towards a client "
+ "in a dark jacket, holding a tablet with a simple floor plan on the screen, and "
+ "points with an open hand towards the depth of the hall. The client follows the "
+ "gesture and looks convinced rather than polite. Both are ordinary business "
+ "people in their forties, no models, natural faces partly turned away. Behind "
+ "them the unit is white and airy: clean high ceiling with white steel trusses, "
+ "rows of daylight battens, a polished light grey floor with fresh amber traffic "
+ "lines, a wide open sectional gate on the right pouring in morning sun, a clean "
+ "forklift and neatly stacked new pallets far in the background. "
+ + СВЕТ + БРЕНД +
+ "Camera: 35mm at f/4, camera height 1.6 metres, the two figures on the left "
+ "third in sharp focus, the depth of the hall softly falling off, verticals "
+ "parallel. The frame must feel like a real photograph from a viewing, not a "
+ "staged stock shot: slightly imperfect posture, a folder under the arm, a lanyard. "
+ "Composition: the upper right quadrant is calm bright wall and open air, kept "
+ "clear for the type. "
+ "Typography in the upper right: a headline in Russian reading exactly "
+ "«ИСКУССТВО ИЛИ НАВЫК?», and under it a small line reading exactly "
+ "«25 аргументов, которыми брокер закрывает клиента». Headline in deep graphite "
+ "with a short amber rule above it. "
+ + БЕЗ_ВЫДУМАННОГО + КИРИЛЛИЦА + КАЧЕСТВО),
+
 "EV-01-svet-tur": (
  "A wide aerial three quarter photograph of a modern industrial business park in "
  "Moscow at ten in the morning, shot from a drone at about ninety metres. The "

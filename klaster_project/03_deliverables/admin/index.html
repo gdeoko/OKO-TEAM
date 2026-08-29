@@ -75,6 +75,20 @@ svg{display:block}
 .пункт svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.7}
 .пункт:hover{background:var(--карта);color:var(--т1)}
 .пункт.вкл{background:rgba(224,188,90,.11);border-color:var(--кант2);color:var(--зол)}
+.ветки{display:none;margin:2px 0 6px 30px;border-left:1px solid var(--кант);padding-left:9px}
+.ветки.раскрыт{display:block}
+.ветка{padding:7px 9px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--т2)}
+.ветка:hover{background:var(--карта);color:var(--т1)}
+.ветка.вкл{color:var(--зол);background:rgba(224,188,90,.10)}
+.агент{background:var(--карта);border:1px solid var(--кант);border-radius:14px;padding:14px 16px;
+ margin-bottom:9px}
+.агент b{display:block;font-size:14.5px;margin-bottom:3px}
+.агент .что{color:var(--т2);font-size:13px;line-height:1.5}
+.агент .когда{color:var(--т3);font-size:12px;margin-top:8px;display:flex;gap:12px;flex-wrap:wrap}
+.агент .жив{width:8px;height:8px;border-radius:50%;background:#3ecf7a;display:inline-block;
+ margin-right:6px;vertical-align:middle}
+.агент .молчит{background:#e0bc5a}
+.агент .стоит{background:#e06a5a}
 .пункт .счёт{margin-left:auto;font-size:11px;color:var(--т3);background:var(--карта);
              border-radius:20px;padding:2px 7px}
 .бок-низ{margin-top:auto;padding-top:14px;display:flex;gap:8px}
@@ -207,6 +221,14 @@ tbody tr:hover{background:var(--карта)}
     <div class="пункт" data-р="площадки" onclick="иди('площадки')">
       <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
       <span>Площадки</span></div>
+    <div class="ветки" id="ветка-площадки">
+      <div class="ветка" data-р="площадки:instagram" onclick="иди('площадки:instagram')">Instagram</div>
+      <div class="ветка" data-р="площадки:telegram" onclick="иди('площадки:telegram')">Telegram</div>
+      <div class="ветка" data-р="площадки:vk" onclick="иди('площадки:vk')">ВКонтакте</div>
+      <div class="ветка" data-р="площадки:youtube" onclick="иди('площадки:youtube')">YouTube</div>
+      <div class="ветка" data-р="площадки:dzen" onclick="иди('площадки:dzen')">Дзен</div>
+      <div class="ветка" data-р="площадки:vc" onclick="иди('площадки:vc')">vc.ru</div>
+    </div>
     <div class="пункт" data-р="лента" onclick="иди('лента')">
       <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.9 8.9 0 01-4-.9L3 21l2-4a8.4 8.4 0 01-1-4 8.4 8.4 0 018.5-8.4A8.4 8.4 0 0121 11.5z"/></svg>
       <span>Лента</span></div>
@@ -222,6 +244,9 @@ tbody tr:hover{background:var(--карта)}
     <div class="пункт" data-р="подписчики" onclick="иди('подписчики')">
       <svg viewBox="0 0 24 24"><path d="M17 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 20v-2a4 4 0 00-3-3.9"/></svg>
       <span>Подписчики</span></div>
+    <div class="пункт" data-р="агенты" onclick="иди('агенты')">
+      <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9.5 16.5h5"/></svg>
+      <span>Агенты</span><span class="счёт" id="счАгентов">0</span></div>
     <div class="пункт" data-р="настройки" onclick="иди('настройки')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 004.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V2a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
       <span>Настройки</span></div>
@@ -254,6 +279,7 @@ tbody tr:hover{background:var(--карта)}
     <section class="раздел" id="р-публикации"></section>
     <section class="раздел" id="р-контент"></section>
     <section class="раздел" id="р-подписчики"></section>
+    <section class="раздел" id="р-агенты"></section>
     <section class="раздел" id="р-настройки"></section>
   </main>
 </div>
@@ -354,18 +380,29 @@ var ЗАГОЛОВКИ = {
   публикации:['Публикации','Что вышло, где и с какой отдачей'],
   контент:['Контент','План публикаций и готовые материалы'],
   подписчики:['Подписчики','База контактов и рассылки'],
+  агенты:['Агенты','Кто работает на площадках и что принёс'],
   настройки:['Настройки','Подключения, доступы и выгрузка']
 };
+/* Адрес раздела может быть с веткой: «площадки:instagram». Слева от
+   двоеточия раздел, справа фильтр внутри него. */
+var ПЛОЩАДКИ_ИМЕНА = {instagram:'Instagram', telegram:'Telegram', vk:'ВКонтакте',
+  youtube:'YouTube', dzen:'Дзен', vc:'vc.ru'};
 function иди(р){
   СЕЙЧАС = р;
+  var части = String(р).split(':');
+  var раздел = части[0], ветка = части[1] || '';
   var пункты = document.querySelectorAll('.пункт');
-  for (var i=0;i<пункты.length;i++) пункты[i].classList.toggle('вкл', пункты[i].getAttribute('data-р') === р);
+  for (var i=0;i<пункты.length;i++) пункты[i].classList.toggle('вкл', пункты[i].getAttribute('data-р') === раздел);
+  var ветки = document.querySelectorAll('.ветка');
+  for (var k=0;k<ветки.length;k++) ветки[k].classList.toggle('вкл', ветки[k].getAttribute('data-р') === р);
+  var список = $('#ветка-площадки');
+  if (список) список.classList.toggle('раскрыт', раздел === 'площадки');
   var разделы = document.querySelectorAll('.раздел');
-  for (var j=0;j<разделы.length;j++) разделы[j].classList.toggle('вкл', разделы[j].id === 'р-' + р);
-  $('#заглРаздела').textContent = ЗАГОЛОВКИ[р][0];
-  $('#поясРаздела').textContent = ЗАГОЛОВКИ[р][1];
+  for (var j=0;j<разделы.length;j++) разделы[j].classList.toggle('вкл', разделы[j].id === 'р-' + раздел);
+  $('#заглРаздела').textContent = ЗАГОЛОВКИ[раздел][0] + (ветка ? ' · ' + (ПЛОЩАДКИ_ИМЕНА[ветка]||ветка) : '');
+  $('#поясРаздела').textContent = ЗАГОЛОВКИ[раздел][1];
   if ($('#бок').classList.contains('открыт')) бок();
-  загрузить(р);
+  загрузить(раздел, ветка);
 }
 
 /* ========================= ГРАФИКИ СВОИМИ РУКАМИ ========================= */
@@ -451,7 +488,7 @@ function полосы(пары, всего){
 
 /* ========================= РАЗДЕЛЫ ========================= */
 
-async function загрузить(р){
+async function загрузить(р, ветка){
   var у = $('#р-' + р);
   if (!у.innerHTML) у.innerHTML = '<div class="пусто"><p>Загружаем</p></div>';
   var д = await взять(р === 'свод' ? 'свод' : р);
@@ -459,11 +496,53 @@ async function загрузить(р){
   КЭШ[р] = д;
   ({свод:рисСвод, сайт:рисСайт, площадки:рисПлощадки, лента:рисЛента, заявки:рисЗаявки,
     публикации:рисПубликации, контент:рисКонтент, подписчики:рисПодписчики,
-    настройки:рисНастройки})[р](д, у);
+    агенты:рисАгенты, настройки:рисНастройки})[р](д, у, ветка || '');
   $('#обновлено').textContent = 'обновлено ' + new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 }
 function рисуй(){ if (КЭШ[СЕЙЧАС]) загрузить(СЕЙЧАС); }
 function обновить(){ загрузить(СЕЙЧАС); }
+
+/* ---------- агенты ---------- */
+/* Что показываем: кто из агентов за что отвечает, когда отработал последний
+   раз и что принёс. Цифры берём из ответа сервера, ничего не досочиняем:
+   агент, от которого давно нет вестей, так и подписан. */
+var АГЕНТЫ = [
+  {код:'сбор', имя:'Сборщик площадок',
+   что:'Раз в час снимает подписчиков, просмотры и охваты со всех аккаунтов и кладёт в панель.'},
+  {код:'трекер', имя:'Трекер сайта',
+   что:'Считает посещения, источники, клики и шаги формы прямо на clusterspace.ru.'},
+  {код:'заявки', имя:'Приём заявок',
+   что:'Забирает форму с сайта, пишет в журнал и уводит уведомление в рабочий чат.'},
+  {код:'лента', имя:'Лента комментариев',
+   что:'Собирает комментарии и упоминания по площадкам, чтобы ответ не потерялся.'},
+  {код:'публикатор', имя:'Публикатор',
+   что:'Ставит согласованный контент в очередь и выкладывает по расписанию.'}
+];
+function рисАгенты(д, у){
+  if (д && д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var сост = (д && д.агенты) || {};
+  var живых = 0;
+  var карточки = АГЕНТЫ.map(function(а){
+    var с = сост[а.код] || {};
+    var класс = с.состояние === 'работает' ? 'жив' :
+                (с.состояние === 'молчит' ? 'жив молчит' : 'жив стоит');
+    if (с.состояние === 'работает') живых++;
+    var строки = [];
+    строки.push('последний раз: ' + (с.когда || 'сведений нет'));
+    if (с.принёс) строки.push('принёс: ' + с.принёс);
+    if (с.почему) строки.push(с.почему);
+    return '<div class="агент"><b><span class="' + класс + '"></span>' + а.имя + '</b>' +
+           '<div class="что">' + а.что + '</div>' +
+           '<div class="когда">' + строки.map(function(т){ return '<span>' + т + '</span>'; }).join('') +
+           '</div></div>';
+  }).join('');
+  var счёт = $('#счАгентов'); if (счёт) счёт.textContent = живых;
+  у.innerHTML = '<div class="сетка с2"><div>' + карточки + '</div>' +
+    '<div class="карта"><h3>Как это работает</h3>' +
+    '<p class="пояс">Агенты живут на сервере и работают по расписанию. Панель показывает ' +
+    'их последний ответ: если агент молчит дольше суток, это видно сразу, а не через месяц ' +
+    'по пустым цифрам.</p></div></div>';
+}
 
 /* ---------- дашборд ---------- */
 function рисСвод(д, у){
@@ -598,7 +677,16 @@ function таблПлощадок(п){
   return '<div class="обёртка"><table><thead><tr><th>Площадка</th><th>Аудитория</th><th>Публикаций</th><th>Просмотров</th><th>Состояние</th></tr></thead><tbody>' + строки + '</tbody></table></div>';
 }
 
-function рисПлощадки(д, у){
+function рисПлощадки(д, у, ветка){
+  /* Ветка это фильтр по одной площадке: показываем только её карточку,
+     чтобы разговор про Instagram не тонул в шести колонках. */
+  if (ветка && д && д.площадки){
+    var только = {};
+    Object.keys(д.площадки).forEach(function(к){
+      if (к.toLowerCase().indexOf(ветка) >= 0) только[к] = д.площадки[к];
+    });
+    if (Object.keys(только).length) д = Object.assign({}, д, {площадки: только});
+  }
   if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
   var к = д.площадки || {};
   var карты = Object.keys(к).map(function(ключ){
