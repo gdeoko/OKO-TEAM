@@ -233,6 +233,25 @@ foreach (all("SELECT id, full_name, email, amount, created_at FROM awards_orders
 if (!$bad) $say('  чисто: брошенных счетов старше суток нет');
 else $say('  (это не всегда ошибка: человек мог передумать на странице оплаты)');
 
+$head('10. НА ПЕЧАТЬ ГОТОВИТСЯ БОЛЬШЕ БУМАГ, ЧЕМ ОПЛАЧЕНО');
+/* Заказу с трофеем без диплома система молча подкладывала основной диплом:
+ * педагог оплатил два диплома и статуэтку на 1 800 ₽, а на печать выходило три
+ * диплома — расхождение в 500 ₽, которое владелец пошёл искать руками. Состав
+ * печати обязан сходиться с составом оплаты. */
+$bad = 0;
+foreach (all("SELECT id, full_name, amount, items, clean_pdfs FROM awards_orders WHERE $PAID") as $o) {
+    $paper = 0;
+    foreach ((array) json_decode((string) $o['items'], true) as $it) {
+        if (preg_match('~диплом|благодар~ui', (string) ($it['item'] ?? ''))) $paper++;
+    }
+    $sheets = count((array) json_decode((string) ($o['clean_pdfs'] ?? '[]'), true));
+    if ($sheets <= $paper) continue;
+    $bad++; $problems++;
+    printf("  заказ #%-4d %-26s %s ₽: оплачено бумаг %d, готовится к печати %d\n",
+        $o['id'], mb_substr((string) $o['full_name'], 0, 26), (string) $o['amount'], $paper, $sheets);
+}
+if (!$bad) $say('  чисто: печатается ровно то, что оплачено');
+
 $say("\n$line");
 printf("ИТОГ: проблем найдено — %d\n", $problems);
 $say($line);
