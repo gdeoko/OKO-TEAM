@@ -213,7 +213,10 @@ function og_groups(array $orders): array {
     $known       = [];    // получатель → [нормализованный адрес => ключ адреса]
     foreach ($withAddr as $o) {
         $who  = (int) ($o['user_id'] ?? 0) ?: mb_strtolower(trim((string) ($o['email'] ?? '')));
-        $norm = og_norm_address((string) ($o['address'] ?? ''));
+        // Готовый ключ от DaData точнее разбора строки: он одинаков и у адреса,
+        // вписанного руками, и у выбранного из подсказки.
+        $norm = trim((string) ($o['addr_key'] ?? ''));
+        if ($norm === '') $norm = og_norm_address((string) ($o['address'] ?? ''));
 
         /* ПРЕЖДЕ ЧЕМ ЗАВОДИТЬ НОВУЮ ПОСЫЛКУ — СМОТРИМ, НЕТ ЛИ УЖЕ ОТКРЫТОЙ НА ЭТОТ
          * ЖЕ АДРЕС. Тот же человек пишет адрес то руками, то из подсказки, и записи

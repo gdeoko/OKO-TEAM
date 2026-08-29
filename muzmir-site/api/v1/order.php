@@ -364,6 +364,20 @@ $orderId = insert('awards_orders', [
     'email'          => mb_strtolower(input('email')),
     'phone'          => input('phone'),
     'address'        => input('address'),
+    /* КЛЮЧ АДРЕСА — ДЛЯ СБОРКИ ПОСЫЛОК, А НЕ ДЛЯ КОНВЕРТА.
+     *
+     * Сам адрес остаётся ровно таким, как его написал человек: по этой строке
+     * повезёт почтальон. А ключ считается по каноническому виду из DaData, и
+     * именно он решает, одна это посылка или две. Без ключа один и тот же адрес,
+     * записанный руками и выбранный из подсказки, ехал двумя отправлениями. */
+    'addr_key'       => (static function (string $a): string {
+        if (trim($a) === '') return '';
+        if (!function_exists('addr_key') && is_file(BASE_PATH . '/core/address.php')) {
+            require_once BASE_PATH . '/core/address.php';
+        }
+        try { return function_exists('addr_key') ? addr_key($a) : ''; }
+        catch (\Throwable $e) { return ''; }   // подсказки недоступны — группировка сама разберётся по строке
+    })((string) input('address')),
     /* ВИД ЗАКАЗА — ПО ЕГО СОСТАВУ, А НЕ ПО УМОЛЧАНИЮ.
      *
      * Колонка заполнялась значением по умолчанию 'original', и заказ на одну

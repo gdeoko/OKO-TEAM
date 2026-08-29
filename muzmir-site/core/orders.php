@@ -18,6 +18,9 @@ function orders_migrate(): void {
         try { db()->exec("ALTER TABLE awards_orders ADD COLUMN $col TEXT"); } catch (\Throwable $e) {}
     }
     try { db()->exec("ALTER TABLE awards_orders ADD COLUMN clean_pdfs TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+    // Ключ адреса для сборки посылок (core/address.php): один адрес — одна посылка,
+    // как бы человек его ни записал.
+    try { db()->exec("ALTER TABLE awards_orders ADD COLUMN addr_key TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 }
 
 /* ==================== ПРАВИЛА СОСТАВА НАГРАДНОГО МАТЕРИАЛА ====================
