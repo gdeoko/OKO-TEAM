@@ -1,0 +1,16 @@
+P-01-krt-karta-b
+P-54-nds-schet
+P-04-nagruzka
+P-S-10-minut-na-kajdoj-otgruzke
+P-84-dzen-sreda-smeny
+P-24-srok-uvedomleniya
+P-S-subbota-na-territorii
+P-07-shest-otrasley
+P-24-pyat-strok-smety
+P-15-rbk-oblozhka
+P-16-chetyre-stroki
+P-S-pervyj-scet
+P-417-vc-vtoraya-ochered
+P-S-slojnyj-procent
+P-88-vtoraya-ochered
+P-407-dzen-tri-mesta

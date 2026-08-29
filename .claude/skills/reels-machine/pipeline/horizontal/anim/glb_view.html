@@ -1,0 +1,57 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;width:1920px;height:1080px;background:transparent;overflow:hidden}#c{width:1920px;height:1080px}</style>
+<script type="importmap">
+{ "imports": { "three": "./three.module.js", "three/addons/": "./jsm/" }}
+</script></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const P = window.PARAMS || {glb:'http://localhost:8765/glb/lock.glb', dur:4, pos:'C', spin:1, fit:2.2};
+const DUR=P.dur, W=1920, H=1080;
+const FIT = P.fit || 2.2;
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),alpha:true,antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(W,H); renderer.setPixelRatio(1);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15;
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(32,W/H,0.1,100); cam.position.set(0,0,6.2);
+const offX = P.pos==='L' ? -1.35 : (P.pos==='R' ? 1.35 : 0);
+const grp=new THREE.Group(); grp.position.x=offX; scene.add(grp);
+const inner=new THREE.Group(); grp.add(inner);
+scene.add(new THREE.AmbientLight(0xffffff,0.45));
+const d1=new THREE.DirectionalLight(0xffffff,2.4); d1.position.set(4,6,6); scene.add(d1);
+const p1=new THREE.PointLight(0x9AFF00,2.4,40); p1.position.set(-4,2,4); scene.add(p1);
+const p2=new THREE.PointLight(0x66aaff,1.8,40); p2.position.set(4,-3,4); scene.add(p2);
+const rim=new THREE.DirectionalLight(0xbfff66,1.4); rim.position.set(-3,2,-5); scene.add(rim);
+const pmrem=new THREE.PMREMGenerator(renderer);
+const cvs=document.createElement('canvas');cvs.width=cvs.height=256;const ctx=cvs.getContext('2d');
+const grad=ctx.createLinearGradient(0,0,0,256);grad.addColorStop(0,'#0e1a12');grad.addColorStop(.5,'#12331d');grad.addColorStop(1,'#050505');
+ctx.fillStyle=grad;ctx.fillRect(0,0,256,256);
+for(let i=0;i<50;i++){ctx.fillStyle='rgba(154,255,0,'+(Math.random()*.25)+')';ctx.fillRect(Math.random()*256,Math.random()*256,3,3);}
+ctx.fillStyle='rgba(255,255,255,0.9)';ctx.fillRect(40,20,180,40);
+const tex=new THREE.CanvasTexture(cvs);tex.mapping=THREE.EquirectangularReflectionMapping;
+scene.environment=pmrem.fromEquirectangular(tex).texture;
+let model=null, meshes=[];
+new GLTFLoader().load(P.glb,(g)=>{
+  model=g.scene;
+  const box=new THREE.Box3().setFromObject(model);
+  const size=box.getSize(new THREE.Vector3());
+  const center=box.getCenter(new THREE.Vector3());
+  let maxd=Math.max(size.x,size.y,size.z); if(!maxd) maxd=1;
+  const s=FIT/maxd;
+  model.scale.setScalar(s);
+  model.position.set(-center.x*s,-center.y*s,-center.z*s);
+  model.traverse(o=>{ if(o.isMesh && o.material){ o.material.envMapIntensity=1.35; o.material.needsUpdate=true; meshes.push(o.material);} });
+  inner.add(model);
+  window.__ready=true;
+}, undefined, (e)=>{ window.__err=String(e); window.__ready=true; });
+window.renderT=(t)=>{
+  // scale-in at start; CONTINUOUS spin+float for the whole clip; NO end fade (compositor handles the cut).
+  const p=Math.min(1,t/0.55), inS=1-Math.pow(1-p,3);
+  grp.scale.setScalar(0.55+0.45*inS);
+  if(model){ inner.rotation.y=(P.spin!==undefined?P.spin:1)*(t*0.6)+0.35; inner.rotation.x=Math.sin(t*0.5)*0.06; }
+  grp.position.y=Math.sin(t*1.1)*0.14;
+  meshes.forEach(m=>{ m.transparent=false; m.opacity=1; });
+  renderer.render(scene,cam);
+};
+</script></body></html>

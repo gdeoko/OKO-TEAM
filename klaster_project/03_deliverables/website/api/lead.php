@@ -89,7 +89,7 @@ $html = "<div style='font-family:Arial,sans-serif;max-width:560px;margin:auto'>
   <div style='background:#0E1116;color:#fff;padding:20px 24px;border-radius:14px 14px 0 0'>
   <b style='font-size:18px'>Новая заявка — сайт «Кластер»</b></div>
   <table style='width:100%;border-collapse:collapse;background:#fff;border:1px solid #E6E8EC'>$rowsHtml</table>
-  <div style='padding:14px;color:#9aa2ad;font-size:12px'>".date('d.m.Y H:i')." · klaster-park.ru</div></div>";
+  <div style='padding:14px;color:#9aa2ad;font-size:12px'>".date('d.m.Y H:i')." · clusterspace.ru</div></div>";
 $mailOk = smtp_mail($cfg, $cfg['NOTIFY_EMAIL'], 'Новая заявка — сайт Кластер', $html);
 
 echo json_encode(['ok'=>true,'tg'=>$tgOk,'mail'=>$mailOk]);

@@ -1,0 +1,100 @@
+{
+ "c1_hook": {
+  "id": 7234088,
+  "dur": 10,
+  "url": "https://videos.pexels.com/video-files/7234088/7234088-hd_1080_1920_24fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c2_hold": {
+  "id": 38410501,
+  "dur": 21,
+  "url": "https://videos.pexels.com/video-files/38410501/16310021_1080_1920_25fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c3_window": {
+  "id": 8038468,
+  "dur": 14,
+  "url": "https://videos.pexels.com/video-files/8038468/8038468-hd_1080_1920_25fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c4_soft": {
+  "id": 8056092,
+  "dur": 10,
+  "url": "https://videos.pexels.com/video-files/8056092/8056092-hd_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c5_shadow": {
+  "id": 34826022,
+  "dur": 17,
+  "url": "https://videos.pexels.com/video-files/34826022/14763693_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c6_step": {
+  "id": 19598792,
+  "dur": 6,
+  "url": "https://videos.pexels.com/video-files/19598792/19598792-hd_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c7_feet": {
+  "id": 9465542,
+  "dur": 11,
+  "url": "https://videos.pexels.com/video-files/9465542/9465542-hd_1080_1920_25fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c8_frame": {
+  "id": 35847550,
+  "dur": 6,
+  "url": "https://videos.pexels.com/video-files/35847550/15200646_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c9_clap": {
+  "id": 35313959,
+  "dur": 5,
+  "url": "https://videos.pexels.com/video-files/35313959/14961338_1080_1920_50fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c10_edit": {
+  "id": 37446281,
+  "dur": 8,
+  "url": "https://videos.pexels.com/video-files/37446281/15859797_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c11_light": {
+  "id": 28599141,
+  "dur": 6,
+  "url": "https://videos.pexels.com/video-files/28599141/12429718_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c12_mic": {
+  "id": 12330883,
+  "dur": 5,
+  "url": "https://videos.pexels.com/video-files/12330883/12330883-hd_1080_1920_25fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c13_owner": {
+  "id": 6201679,
+  "dur": 6,
+  "url": "https://videos.pexels.com/video-files/6201679/6201679-hd_1080_1920_24fps.mp4",
+  "w": 1080,
+  "h": 1920
+ },
+ "c14_dm": {
+  "id": 7822022,
+  "dur": 7,
+  "url": "https://videos.pexels.com/video-files/7822022/7822022-hd_1080_1920_30fps.mp4",
+  "w": 1080,
+  "h": 1920
+ }
+}

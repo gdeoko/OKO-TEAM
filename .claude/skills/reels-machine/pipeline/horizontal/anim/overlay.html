@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Oswald;src:url(../fonts/Oswald-Bold.ttf)}
+@font-face{font-family:Mont;src:url(../fonts/Montserrat-Bold.ttf)}
+@font-face{font-family:MontR;src:url(../fonts/Montserrat-Regular.ttf)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
+#stage{position:absolute;inset:0}
+.lime{color:#9AFF00}.red{color:#FF2D2D}.wht{color:#F2F2F4}
+.osw{font-family:Oswald}.mont{font-family:Mont}.montr{font-family:MontR}
+.panel{position:absolute;background:rgba(13,13,16,.92);border:3px solid #9AFF00;border-radius:26px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 60px rgba(154,255,0,.10)}
+.panel.red{border-color:#FF2D2D;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 60px rgba(255,45,45,.14)}
+.glow{filter:drop-shadow(0 0 18px rgba(154,255,0,.5))}
+.chip{display:inline-flex;align-items:center;gap:14px;background:#9AFF00;color:#0b0b0b;font-family:Mont;font-weight:700;border-radius:40px;padding:12px 30px}
+.chip.red{background:#FF2D2D;color:#fff}
+.dot{width:16px;height:16px;border-radius:50%;background:#0b0b0b}
+</style></head>
+<body><div id="stage"></div>
+<script src="anim.js"></script>
+<script>
+// params injected via window.PARAMS
+const P = window.PARAMS || {kind:'stat',big:'+30–40%',small:'демо',accent:'lime',dur:4};
+buildComponent(P);
+</script>
+</body></html>
