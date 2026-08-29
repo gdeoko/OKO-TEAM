@@ -362,13 +362,30 @@ if ($hasOriginal) {
         require_once BASE_PATH . '/core/address.php';
     }
     $addrManual = in_array((string) input('address_manual'), ['1', 'true', 'on'], true);
-    if (!$addrManual && function_exists('addr_validate')) {
+    $addrCanon = '';
+    $addrPostal = '';
+    if (function_exists('addr_validate')) {
         $chk = addr_validate($addr);
-        if (!$chk['ok']) {
+        if (!$chk['ok'] && !$addrManual) {
             json_out(['ok' => false, 'error' => 'Выберите адрес из подсказок: ' . $chk['reason']
                 . '. Начните вводить адрес и нажмите на нужную строку в списке. '
                 . 'Если Вашего адреса в списке нет — отметьте «Моего адреса нет в подсказках», '
                 . 'и мы проверим его вручную.', 'address_hint' => true], 422);
+        }
+        /* РОССИЙСКИЙ АДРЕС ЗАПИСЫВАЕМ В ВИДЕ СПРАВОЧНИКА, А НЕ КАК НАБРАЛ ЧЕЛОВЕК.
+         *
+         * Решение владельца: по России адрес всегда применяется из подсказки,
+         * чтобы одна и та же квартира не появлялась в базе в трёх написаниях —
+         * с индексом и без, «мкр» то развёрнутым, то опущенным. Именно из-за
+         * этого центр однажды собрал две посылки на один адрес.
+         *
+         * Берём канонический вид ТОЛЬКО когда сервис подтвердил адрес до дома и
+         * это Россия: ФИАС знает её, а Минск и Алматы — нет, и там остаётся
+         * написанное человеком. Квартиру дописывает addr_validate, если сервис
+         * опустил её в своём ответе. */
+        if ($chk['ok'] && !empty($chk['ru']) && trim((string) $chk['value']) !== '') {
+            $addrCanon  = trim((string) $chk['value']);
+            $addrPostal = trim((string) $chk['postal']);
         }
     }
     if ($addrManual && function_exists('audit')) {
@@ -391,7 +408,9 @@ $orderId = insert('awards_orders', [
     'discount_pct'   => $discPctOrder,
     'email'          => mb_strtolower(input('email')),
     'phone'          => input('phone'),
-    'address'        => input('address'),
+    // По России — канонический вид из справочника (см. проверку выше); зарубежье
+    // и адреса, которых справочник не знает, остаются как написал человек.
+    'address'        => $addrCanon !== '' ? $addrCanon : input('address'),
     /* КЛЮЧ АДРЕСА — ДЛЯ СБОРКИ ПОСЫЛОК, А НЕ ДЛЯ КОНВЕРТА.
      *
      * Сам адрес остаётся ровно таким, как его написал человек: по этой строке
