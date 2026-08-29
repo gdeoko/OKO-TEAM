@@ -397,14 +397,32 @@ html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
    игры при этом стоял display: none, страница запиралась (overflow
    уходил в hidden), заигрывала музыка - и ни одной кнопки выхода на
    экране. То же самое при отказе трёхмерного слоя. */
+/* ── Кнопка стола сюда же ─────────────────────────────────────
+   Правило пряталo три входа в игру: плавающую кнопку, призыв в
+   рубке и кнопку в финале страницы. Четвёртого входа тогда не
+   существовало - экран на стекле с кнопкой «Начать полёт»
+   (.dsk-b-fly) появился позже, и под правило не попал.
+
+   А ведь именно он и есть тот вход, которым пользуются: замер
+   прокрутки показал, что до самого низа страницы в кадр попадает
+   ТОЛЬКО он, остальные три к этому моменту либо за кадром, либо
+   свёрнуты. То есть на устройстве, которому полёт не по силам,
+   пряталось всё, кроме единственной кнопки, которую человек видит.
+
+   Проверено живым кликом мышью: слой на третьей ступени упрощения
+   честно отказывает и говорит причину, но кнопку при этом
+   предлагает. Предлагать то, что не сработает, нельзя. */
 html.rc-reduced .rcf-fab, html.rc-reduced .rcf-cta, html.rc-reduced .epi-btn.js-flight,
+html.rc-reduced .dsk-b-fly,
 html.rc-no3d .rcf-fab, html.rc-no3d .rcf-cta, html.rc-no3d .epi-btn.js-flight,
+html.rc-no3d .dsk-b-fly,
 html[data-degrade="3"] .rcf-fab, html[data-degrade="3"] .rcf-cta,
-html[data-degrade="3"] .epi-btn.js-flight {
+html[data-degrade="3"] .epi-btn.js-flight,
+html[data-degrade="3"] .dsk-b-fly {
   display: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .rcf-fab, .rcf-cta, .rc-flight, .epi-btn.js-flight { display: none !important; }
+  .rcf-fab, .rcf-cta, .rc-flight, .epi-btn.js-flight, .dsk-b-fly { display: none !important; }
 }
 
 @media (max-width: 760px) {
