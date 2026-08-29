@@ -238,6 +238,7 @@ foreach (all("SELECT id, full_name, email, amount, created_at FROM awards_orders
 if (!$bad) $say('  чисто: брошенных счетов старше суток нет');
 else $say('  (это не всегда ошибка: человек мог передумать на странице оплаты)');
 
+require_once BASE_PATH . '/core/orders.php';
 $head('10. НА ПЕЧАТЬ ГОТОВИТСЯ БОЛЬШЕ БУМАГ, ЧЕМ ОПЛАЧЕНО');
 /* Заказу с трофеем без диплома система молча подкладывала основной диплом:
  * педагог оплатил два диплома и статуэтку на 1 800 ₽, а на печать выходило три
@@ -247,7 +248,9 @@ $bad = 0;
 foreach (all("SELECT id, full_name, amount, items, clean_pdfs FROM awards_orders WHERE $PAID") as $o) {
     $paper = 0;
     foreach ((array) json_decode((string) $o['items'], true) as $it) {
-        if (preg_match('~диплом|благодар~ui', (string) ($it['item'] ?? ''))) $paper++;
+        // «Медаль дипломанта» — изделие, а не бумага: award_is_paper() отсекает
+        // изделия до поиска слова «диплом» в названии.
+        if (function_exists('award_is_paper') && award_is_paper((string) ($it['item'] ?? ''))) $paper++;
     }
     $sheets = count((array) json_decode((string) ($o['clean_pdfs'] ?? '[]'), true));
     if ($sheets <= $paper) continue;
