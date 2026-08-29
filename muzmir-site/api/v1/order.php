@@ -176,10 +176,28 @@ if (!$isClubOrder && $amount > 0) {
 
 // application_id: напрямую, либо резолвим по номеру заявки (для гостей).
 $applicationId = (int) input('application_id', '0');
-if (!$applicationId) {
-    $appNum = trim((string) input('application_number'));
-    if ($appNum !== '') {
-        $ar = one("SELECT id FROM applications WHERE number=? LIMIT 1", [$appNum]);
+$appNumTyped = trim((string) input('application_number'));
+if (!$applicationId && $appNumTyped !== '') {
+    /* НОМЕР ЗАЯВКИ ЧЕЛОВЕК ПЕРЕПИСЫВАЕТ РУКАМИ ИЗ ПИСЬМА.
+     *
+     * Поиск шёл строгим равенством, и любая мелочь при переписывании — лишний
+     * пробел, строчные буквы, «№» впереди, тире вместо дефиса — означала «заявка
+     * не найдена». Дальше человек получал ответ «заказать награды можно только по
+     * оценённой заявке» и читал его как «мою работу не оценили».
+     *
+     * Ищем по очищенному виду, а если введены одни цифры — по хвосту номера:
+     * «518» находит VR-2026-00518. Номер уникален, поэтому одну заявку это
+     * находит точно; если под хвост попадает несколько — не гадаем. */
+    $clean = mb_strtoupper(preg_replace('~[^\p{L}\p{N}]+~u', '', $appNumTyped) ?? '');
+    if ($clean !== '') {
+        $ar = one("SELECT id FROM applications
+                    WHERE UPPER(REPLACE(REPLACE(REPLACE(number,'-',''),' ',''),'№','')) = ? LIMIT 1", [$clean]);
+        if (!$ar && ctype_digit($clean)) {
+            $digits = ltrim($clean, '0');
+            $rows = all("SELECT id, number FROM applications WHERE number LIKE ? OR number LIKE ?",
+                        ['%-' . str_pad($digits, 5, '0', STR_PAD_LEFT), '%' . $digits]);
+            if (count($rows) === 1) $ar = $rows[0];
+        }
         if ($ar) $applicationId = (int) $ar['id'];
     }
 }
@@ -190,7 +208,17 @@ if (!$applicationId) {
 $appRow = null;   // используется ниже и при клубном заказе остаётся null
 if (!$isClubOrder) {
     if (!$applicationId) {
-        json_out(['ok' => false, 'error' => 'Заказать награды можно только по оценённой заявке. Дождитесь результатов или подайте заявку на участие.'], 422);
+        /* Раньше здесь стоял один текст на два разных случая: «заказать награды
+         * можно только по оценённой заявке». Человек, который просто не указал
+         * номер (или ошибся при переписывании), читал это как отказ по своей
+         * работе — «нас не оценили». Разводим случаи. */
+        json_out(['ok' => false, 'error' => $appNumTyped !== ''
+            ? 'Заявка с номером «' . mb_substr($appNumTyped, 0, 40) . '» не найдена. '
+              . 'Проверьте номер — он есть в письме о приёме заявки и в письме с результатом '
+              . '(вида VR-2026-00123). Или войдите в личный кабинет, и заявка выберется из списка.'
+            : 'Укажите номер заявки, по которой заказываете награды: он есть в письме о приёме '
+              . 'заявки и в письме с результатом. Или войдите в личный кабинет — тогда заявка '
+              . 'выберется из списка сама.'], 422);
     }
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
     $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at,

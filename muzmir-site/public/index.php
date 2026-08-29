@@ -38,6 +38,32 @@ $route = $route === '' ? '/' : $route;
 // Заголовки безопасности (CSP/HSTS/anti-clickjacking) — на все ответы, кроме встраиваемого виджета.
 security_headers($route);
 
+/* ВХОД ПО КЛЮЧУ ИЗ ПИСЬМА.
+ *
+ * Письмо с результатом зовёт открыть кабинет, а приводило на форму входа: пароль
+ * человек либо не заводил (заявку подали за него), либо забыл. Дальше он не мог
+ * ни увидеть свои заявки, ни заказать награды — заказ требует заявку, а её номер
+ * из письма месячной давности никто не помнит.
+ *
+ * Ключ в ссылке (?k=…) впускает сразу в свой кабинет. Уже вошедшего не трогаем:
+ * человек мог открыть старое письмо, сидя под своей учётной записью, и
+ * переключать его мы не вправе. Ключ из адреса убираем сразу же — чтобы он не
+ * остался в истории браузера и не уехал в чужие руки вместе со ссылкой. */
+if (!empty($_GET['k']) && is_file(BASE_PATH . '/core/auth_link.php')) {
+    require_once BASE_PATH . '/core/auth_link.php';
+    if (!function_exists('current_user') || !current_user()) {
+        $__lid = auth_link_consume((string) $_GET['k']);
+        if ($__lid > 0) {
+            login_user($__lid);
+            if (function_exists('audit')) audit('login_by_email_link', 'user', $__lid, []);
+        }
+    }
+    $__q = $_GET; unset($__q['k']);
+    $__to = $route . ($__q ? '?' . http_build_query($__q) : '');
+    header('Location: ' . (function_exists('url') ? url($__to) : $__to), true, 302);
+    exit;
+}
+
 // REST API и админ-панель обслуживаются через фронт-контроллер
 // (в проде nginx try_files отдаёт эти пути в index.php, т.к. web-root = public/).
 if (preg_match('#^/api/v1/([a-z0-9_]+)(?:\.php)?$#', $route, $m)) {

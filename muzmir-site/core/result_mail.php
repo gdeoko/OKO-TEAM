@@ -257,10 +257,23 @@ function result_mail_send(int $appId): bool {
     $inner .= rm_mail_app_card($a, $c);
 
     $reviewsUrl = url('/reviews');
-    $cabinetUrl = url('/cabinet');
+    /* ССЫЛКИ ПИСЬМА ВЕДУТ В КАБИНЕТ СРАЗУ, БЕЗ ФОРМЫ ВХОДА.
+     *
+     * Пароль участник часто не заводил вовсе — заявку подали за него, — и кнопка
+     * «Открыть личный кабинет» упиралась в форму, за которой он не мог ни увидеть
+     * свои заявки, ни заказать награды. Ключ в ссылке впускает владельца заявки
+     * в его собственный кабинет (core/auth_link.php). */
+    if (!function_exists('auth_link_url') && is_file(BASE_PATH . '/core/auth_link.php')) {
+        require_once BASE_PATH . '/core/auth_link.php';
+    }
+    $__uid = (int) ($a['user_id'] ?? 0);
+    $cabinetUrl = function_exists('auth_link_url') ? auth_link_url('/cabinet', $__uid) : url('/cabinet');
     if ($isPaid) {
         // Платный конкурс: сроки наградных дипломов + блок заказа оригиналов наград.
-        $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . $appId;
+        $awardsUrl = (function_exists('auth_link_url')
+            ? auth_link_url('/awards', $__uid) . (str_contains(auth_link_url('/awards', $__uid), '?') ? '&' : '?')
+            : url('/awards') . '?')
+            . 'comp=' . (int) $a['competition_id'] . '&app=' . $appId;
         $inner .= '<p style="margin:0 0 14px;">Наградные дипломы придут на эту почту в течение '
             . '<b style="color:' . $navy . ';">5 рабочих дней</b> и появятся в личном кабинете.</p>'
             . '<p style="margin:0 0 8px;font-size:14px;color:' . RM_INK . ';line-height:1.65;">' . h(rm_award_hint($result))

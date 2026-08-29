@@ -475,10 +475,27 @@ ob_start(); ?>
         </div>
         <?php endif; ?>
       <?php else: ?>
-        <div class="field">
-          <label for="ord_number">Номер заявки (необязательно)</label>
-          <input type="text" id="ord_number" name="application_number" placeholder="MM-2026-00001">
-          <div class="hint">Или <a href="<?= url('/login') ?>">войдите</a>, чтобы выбрать заявку из списка.</div>
+        <!-- НОМЕР ЗАЯВКИ ГОСТЮ ОБЯЗАТЕЛЕН.
+             Поле было подписано «необязательно», а сервер без заявки заказ не
+             принимает — и отвечает «заказать награды можно только по оценённой
+             заявке». Человек читает это как «мою работу не оценили», хотя на
+             деле у него просто не спросили номер. Руководитель коллектива,
+             который ни разу не заходил в кабинет, упирался в это намертво. -->
+        <!-- ГОСТЬ ИЩЕТ СВОЮ ЗАЯВКУ, А НЕ ВСПОМИНАЕТ ЕЁ НОМЕР.
+             Номер лежит в письме месячной давности, а руководитель коллектива подал
+             двадцать заявок и не помнит ни одной. Ищем по тому, что человек знает
+             наверняка: фамилии участника, названию коллектива, своей фамилии,
+             учреждению или номеру. Выбранную заявку показываем целиком — с конкурсом,
+             номинацией, конкурсным номером и званием, — чтобы он видел, что берёт
+             свою, а не однофамильца. -->
+        <div class="field" id="appSearchField" style="position:relative">
+          <label for="ord_number">Ваша заявка</label>
+          <input type="text" id="ord_number" name="application_number" autocomplete="off"
+                 placeholder="Фамилия участника, коллектив, педагог или номер заявки" required>
+          <div class="hint">Начните вводить — покажем ваши заявки. Или
+            <a href="<?= url('/login') ?>">войдите</a>, и заявка выберется сама.</div>
+          <div id="appSearchList" class="addr-list" hidden></div>
+          <div id="appPicked" class="app-picked" hidden></div>
         </div>
       <?php endif; ?>
 
@@ -829,6 +846,13 @@ ob_start(); ?>
     if(!cart.length)return;
     // Гость (есть поле «Номер заявки») — проверку делает сервер; окно не показываем.
     var isGuest = !!$('#ord_number');
+    if(isGuest && !pickedApp){
+      var e0=$('#orderErr');
+      e0.innerHTML='Найдите и <b>выберите свою заявку</b>: начните вводить фамилию участника, '+
+        'название коллектива, свою фамилию или номер заявки — и нажмите на нужную строку. '+
+        'Или <a href="<?= url('/login') ?>">войдите</a>, тогда заявка выберется сама.';
+      e0.hidden=false; $('#ord_number').focus(); return;
+    }
     if(!isGuest && !ensureOrderable()) return;
     if(!isGuest && !ensureBaseDiploma()) return;
     var err=$('#orderErr'); err.hidden=true;
@@ -892,6 +916,83 @@ ob_start(); ?>
         location.href='<?= url('/cabinet') ?>#awards';
       }).catch(function(){btn.disabled=false;btn.textContent='Оплатить';err.textContent='Ошибка сети, попробуйте ещё раз';err.hidden=false;});
   });
+
+  /* ПОИСК СВОЕЙ ЗАЯВКИ (гость).
+     Человек вводит что помнит, мы показываем найденное и — после выбора —
+     раскрываем карточку целиком: конкурс, номинация, конкурсный номер, звание,
+     педагог и закрытая почта. По ним видно, что заявка своя, а не однофамильца. */
+  var pickedApp = null;
+  (function(){
+    var inp = document.getElementById('ord_number');
+    if (!inp) return;                       // вошедший в кабинет выбирает из списка
+    var box = document.getElementById('appSearchList');
+    var card = document.getElementById('appPicked');
+    var t = null, last = '';
+
+    function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+    function showCard(a){
+      pickedApp = a;
+      inp.value = a.number;
+      var rows = [
+        ['Участник', a.who],
+        ['Конкурс', a.comp],
+        ['Номинация', a.nomination],
+        ['Конкурсный номер', a.work],
+        ['Педагог', a.teacher],
+        ['Почта заявки', a.email]
+      ].filter(function(r){ return r[1]; }).map(function(r){
+        return '<div style="display:flex;gap:8px;margin-top:4px"><span style="min-width:132px;color:var(--muted)">'+
+               esc(r[0])+'</span><b>'+esc(r[1])+'</b></div>'; }).join('');
+      card.innerHTML =
+        '<div style="border:1px solid var(--gold-2,#C79322);border-radius:12px;padding:12px 14px;margin-top:10px;'+
+        'background:rgba(199,147,34,.07);font-size:.9rem">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">'+
+        '<b>'+esc(a.number)+'</b><span style="color:var(--gold-2,#C79322);font-weight:700">'+esc(a.result)+'</span></div>'+
+        rows +
+        '<button type="button" id="appReset" class="btn btn--ghost" style="margin-top:10px;padding:6px 12px;font-size:.82rem">'+
+        'Выбрать другую заявку</button></div>';
+      card.hidden = false;
+      box.hidden = true;
+      document.getElementById('appReset').addEventListener('click', function(){
+        pickedApp = null; card.hidden = true; inp.value=''; inp.focus();
+      });
+    }
+
+    function render(items){
+      if (!items.length){ box.hidden = true; return; }
+      box.innerHTML = items.map(function(a,i){
+        return '<div class="addr-item" data-i="'+i+'">'+esc(a.who)+
+               ' <small>'+esc(a.number)+' · '+esc(a.comp)+' · '+esc(a.result)+
+               (a.work ? ' · '+esc(a.work) : '')+'</small></div>'; }).join('');
+      box.hidden = false;
+      box.onclick = function(e){
+        var it = e.target.closest('.addr-item'); if (!it) return;
+        showCard(items[parseInt(it.getAttribute('data-i'),10)]);
+      };
+    }
+
+    inp.addEventListener('input', function(){
+      pickedApp = null; card.hidden = true;
+      var q = inp.value.trim();
+      if (q.length < 3){ box.hidden = true; return; }
+      if (q === last) return;
+      last = q;
+      clearTimeout(t);
+      t = setTimeout(function(){
+        var url = '<?= url('/api/v1/app_search') ?>?q=' + encodeURIComponent(q)
+                + (MMA.compId ? '&comp=' + MMA.compId : '');
+        fetch(url, { credentials:'same-origin' })
+          .then(function(r){ return r.json(); })
+          .then(function(d){ render((d && d.items) || []); })
+          .catch(function(){ box.hidden = true; });
+      }, 250);
+    });
+    document.addEventListener('click', function(e){
+      if (!e.target.closest('#appSearchField')) box.hidden = true;
+    });
+  })();
 
   // Если корзину перенесли с другого конкурса — показываем её сразу.
   if(cart.length){ render(); openCart(); }

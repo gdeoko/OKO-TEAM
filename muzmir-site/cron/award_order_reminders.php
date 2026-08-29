@@ -58,6 +58,7 @@ require_once BASE_PATH . '/core/outreach_window.php';
 // + core/notifications.php подключается изнутри result_mail.php.
 require_once BASE_PATH . '/core/result_mail.php';
 require_once BASE_PATH . '/core/award_offer.php';
+require_once BASE_PATH . '/core/auth_link.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'award_order_reminders';
@@ -347,7 +348,12 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl, array $
             : 'Заказ наград по результату «' . $result . '» доступен ещё ' . award_ru_days($daysLeft) . '.',
         'hero'      => mm_cta_primary($awardsUrl, $isAddon ? 'Дополнить заказ' : 'Заказать наградной материал',
                                       $result !== '' ? 'По результату: ' . $result : ''),
-        'actions'   => [['Личный кабинет', url('/cabinet')], ['Оставить отзыв', url('/reviews')]],
+        // Кабинет открываем сразу: пароль участник часто не заводил вовсе, и
+        // кнопка «Личный кабинет» упиралась в форму входа (core/auth_link.php).
+        'actions'   => [['Личный кабинет', (function_exists('auth_link_url')
+                            ? auth_link_url('/cabinet', (int) ($a['user_id'] ?? 0))
+                            : url('/cabinet'))],
+                        ['Оставить отзыв', url('/reviews')]],
     ]);
 }
 
