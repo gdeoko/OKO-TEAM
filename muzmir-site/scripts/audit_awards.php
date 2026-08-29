@@ -22,6 +22,11 @@
  *      упёрся в предел и он выпал из очереди навсегда.
  *   7. Номер бланка разошёлся с реестром — QR ведёт в «диплом не найден».
  *   8. Заявка с программой вместо одного номера (п. 8.1 положения).
+ *   9. Брошенные счета старше суток.
+ *  10. На печать готовится больше бумаг, чем оплачено — заказу с трофеем без
+ *      диплома система подкладывала основной, и состав печати расходился с чеком.
+ *  11. Две посылки одному человеку на один адрес — адрес вписан то руками, то из
+ *      подсказки, и центр вёз одну квартиру двумя отправлениями.
  *
  * Только чтение, ничего не меняет. Запуск:
  *   php scripts/audit_awards.php            — всё
@@ -251,6 +256,34 @@ foreach (all("SELECT id, full_name, amount, items, clean_pdfs FROM awards_orders
         $o['id'], mb_substr((string) $o['full_name'], 0, 26), (string) $o['amount'], $paper, $sheets);
 }
 if (!$bad) $say('  чисто: печатается ровно то, что оплачено');
+
+$head('11. ДВЕ ПОСЫЛКИ ОДНОМУ ЧЕЛОВЕКУ НА ОДИН АДРЕС');
+/* Педагог оформил четыре заказа за восемь минут: первый адрес вписал руками, три
+ * следующих взял из подсказки. Записи разошлись на «Россия», область и индекс —
+ * и центр собрал две посылки на одну квартиру: две доставки и два похода на почту
+ * вместо одного. Сверяем адреса внутри одного получателя. */
+require_once BASE_PATH . '/core/order_group.php';
+$bad = 0;
+$orig = all("SELECT * FROM awards_orders WHERE items LIKE '%\"kind\":\"original\"%'");
+$byWho = [];
+foreach (og_groups($orig) as $key => $g) {
+    if (!str_starts_with((string) $key, 'post:')) continue;
+    $byWho[explode(':', (string) $key)[1] ?? ''][] = $g;
+}
+foreach ($byWho as $who => $list) {
+    if (count($list) < 2) continue;
+    for ($i = 0; $i < count($list); $i++) {
+        for ($j = $i + 1; $j < count($list); $j++) {
+            $a = og_norm_address((string) $list[$i]['address']);
+            $b = og_norm_address((string) $list[$j]['address']);
+            if (!og_addr_same($a, $b)) continue;
+            $bad++; $problems++;
+            printf("  получатель %s: заказы %s и %s едут порознь на один адрес\n",
+                $who, implode(',', $list[$i]['ids']), implode(',', $list[$j]['ids']));
+        }
+    }
+}
+if (!$bad) $say('  чисто: на один адрес собирается одна посылка');
 
 $say("\n$line");
 printf("ИТОГ: проблем найдено — %d\n", $problems);
