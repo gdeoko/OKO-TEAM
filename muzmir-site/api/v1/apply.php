@@ -316,6 +316,32 @@ if (!$uid && $email !== '') {
         // адресу, и его заявки должны быть в его кабинете. Но доступ выдаётся
         // только через вход с паролем: подача заявки владения почтой не доказывает.
         $uid = (int) $existing['id'];
+
+        /* УЧЁТКА ЕСТЬ, А ПАРОЛЯ ЧЕЛОВЕК НЕ ЗНАЕТ — ТОЖЕ ВЫДАЁМ ДОСТУП.
+         *
+         * Письмо с логином и паролем уходило только при создании новой записи. А
+         * запись часто существует заранее: адрес попал в базу подписчиков или
+         * человек участвовал в прошлом конкурсе, — и тогда он не получал ничего.
+         * По базе таких 32 участника: кабинет у них есть, входа не было ни разу,
+         * пароля они не видели. Именно так застряла Морозова Светлана Викторовна —
+         * заявка оценена, лауреат II степени, а заказать награды она не смогла.
+         *
+         * Условие узкое: ни одного входа И ни одного письма о кабинете. Тому, кто
+         * кабинетом пользуется, пароль не меняем — это было бы кражей доступа. */
+        $neverLogged = trim((string) ($existing['last_login'] ?? '')) === '';
+        $gotPassMail = false;
+        try {
+            $gotPassMail = (bool) scalar("SELECT 1 FROM mail_queue
+                                           WHERE mb_lower(to_email)=mb_lower(?) AND subject LIKE '%кабинет%' LIMIT 1",
+                                         [$email]);
+        } catch (\Throwable $e) { $gotPassMail = true; }   // не знаем — не трогаем
+        if ($neverLogged && !$gotPassMail) {
+            $freshPass = function_exists('kabinet_gen_password') ? kabinet_gen_password() : bin2hex(random_bytes(4));
+            try {
+                q("UPDATE users SET password_hash=? WHERE id=?", [password_hash($freshPass, PASSWORD_DEFAULT), $uid]);
+                audit('access_granted_on_apply', 'user', $uid, ['email' => $email]);
+            } catch (\Throwable $e) { $freshPass = ''; }
+        }
     } else {
         $freshPass = function_exists('kabinet_gen_password') ? kabinet_gen_password() : bin2hex(random_bytes(4));
         $uid = (int) insert('users', [
