@@ -79,9 +79,23 @@
         var cnt = document.querySelector(countrySel);
         if (cnt) cnt.value = 'Россия';   // DaData отдаёт только адреса РФ
       }
+      /* ОТМЕЧАЕМ, ЧТО АДРЕС ВЗЯТ ИЗ ПОДСКАЗКИ.
+         Форма заказа по этой метке решает, можно ли отправлять: адрес, набранный
+         на глаз, уезжает в посылку как есть, и почта его не находит. Метка живёт
+         до первого ручного изменения поля — стоит человеку дописать хоть букву,
+         и адрес снова считается непроверенным. */
+      input.setAttribute('data-addr-picked', '1');
+      input.setAttribute('data-addr-value', input.value);
       hide();
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
+
+    input.addEventListener('input', function () {
+      if (input.getAttribute('data-addr-picked') === '1'
+          && input.value !== input.getAttribute('data-addr-value')) {
+        input.removeAttribute('data-addr-picked');
+      }
+    });
 
     function query(q) {
       if (q === lastQuery) return;

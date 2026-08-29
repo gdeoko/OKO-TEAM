@@ -501,7 +501,17 @@ ob_start(); ?>
         <input type="text" id="ord_addr" name="address" placeholder="Начните вводить: город, улица, дом…"
                autocomplete="off" data-address-suggest data-postal="#ord_postal">
         <input type="hidden" id="ord_postal" name="postal_index" value="">
-        <div class="hint">Начните вводить адрес — подскажем и подставим индекс. Доставка Почтой России.</div>
+        <div class="hint">Начните вводить адрес и <b>выберите строку из списка</b> — так посылка точно дойдёт,
+          индекс подставится сам. Доставка Почтой России.</div>
+        <!-- СПРАВОЧНИК ЗНАЕТ НЕ ВСЁ, А ЛЮДИ ТАМ ЖИВУТ.
+             Новостройки попадают в него с опозданием, в частном секторе бывают дома
+             без улицы, есть абонентские ящики и адреса ближнего зарубежья. Без этого
+             выхода такой участник просто не смог бы оформить заказ. Отмеченный
+             адрес проверяет человек перед отправкой. -->
+        <label class="addr-manual" style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:.86rem;color:var(--muted)">
+          <input type="checkbox" id="ord_addr_manual" name="address_manual" value="1" style="margin-top:3px">
+          <span>Моего адреса нет в подсказках — впишу вручную (проверим перед отправкой)</span>
+        </label>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>
       <p id="orderErr" class="shop-err" hidden></p>
@@ -847,6 +857,16 @@ ob_start(); ?>
       if(!addrV || !hasHouse || !hasStreet){
         err.textContent='Адрес должен быть ПОЛНЫМ: город, улица и дом (номер квартиры — по желанию). Без дома отправить нельзя.';
         err.hidden=false; var b1=$('#orderSubmit'); b1.disabled=false; b1.textContent='Оплатить'; document.getElementById('ord_addr').focus(); return;
+      }
+      /* АДРЕС — ИЗ ПОДСКАЗОК. Набранный на глаз уезжает в посылку как есть, и
+         почта его не находит: индекс не тот, улицы такой нет, дом чужой. Метку
+         ставит компонент подсказок при выборе строки и снимает при ручной правке. */
+      var ai2=document.getElementById('ord_addr');
+      var manual=(document.getElementById('ord_addr_manual')||{}).checked;
+      if(!manual && ai2 && ai2.getAttribute('data-addr-picked')!=='1'){
+        err.innerHTML='Выберите адрес <b>из списка подсказок</b>: начните вводить и нажмите на нужную строку. '+
+          'Если Вашего адреса там нет — отметьте «Моего адреса нет в подсказках».';
+        err.hidden=false; var b2=$('#orderSubmit'); b2.disabled=false; b2.textContent='Оплатить'; ai2.focus(); return;
       }
     }
     var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++){var it={item:c.item,kind:c.kind};var f=(c.fios||[])[i];if(f&&f.trim())it.fio=f.trim();items.push(it);}});

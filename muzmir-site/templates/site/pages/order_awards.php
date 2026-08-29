@@ -467,8 +467,15 @@ ob_start(); ?>
           <textarea id="address" name="address" rows="3" placeholder=" "
                     data-address-suggest data-postal="#postal_index"></textarea>
           <label for="address">Полный адрес с индексом</label>
-          <span class="hint">Например, 123456, город, улица, дом, квартира.</span>
+          <span class="hint">Начните вводить и <b>выберите строку из списка</b> — индекс подставится сам.</span>
           <span class="err-msg">Укажите полный адрес с индексом.</span>
+          <!-- Справочник знает не всё: новостройки, дома без улицы, абонентские
+               ящики, ближнее зарубежье. Без этого выхода такой участник не смог бы
+               оформить заказ вовсе; отмеченный адрес проверяет человек. -->
+          <label class="addr-manual" style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.85rem;opacity:.85">
+            <input type="checkbox" id="address_manual" name="address_manual" value="1" style="margin-top:3px">
+            <span>Моего адреса нет в подсказках — впишу вручную (проверим перед отправкой)</span>
+          </label>
         </div>
 
         <div class="field ff">
@@ -707,6 +714,23 @@ ob_start(); ?>
 
     if (!ok) { form.reportValidity(); return; }
     if (!ensureBaseDiploma()) return;
+
+    /* АДРЕС — ИЗ ПОДСКАЗОК. Набранный на глаз уезжает в посылку как есть, и почта
+       его не находит: индекс не тот, улицы такой нет. Метку ставит компонент
+       подсказок при выборе строки и снимает при ручной правке. */
+    var addrEl = document.getElementById('address');
+    var addrManual = (document.getElementById('address_manual') || {}).checked;
+    var needsAddr = boxes.some(function (b) { var m = META[b.getAttribute('data-key')] || {}; return m.kind === 'original'; });
+    if (needsAddr && !addrManual && addrEl && addrEl.getAttribute('data-addr-picked') !== '1') {
+      var f = addrEl.closest('.field');
+      if (f) {
+        f.classList.add('has-err');
+        var em = f.querySelector('.err-msg');
+        if (em) em.textContent = 'Выберите адрес из списка подсказок. Нет в списке — отметьте галочку ниже.';
+      }
+      addrEl.focus();
+      return;
+    }
 
     var items = [];
     var amount = 0;
