@@ -70,72 +70,96 @@ function pab_variant(int $instId): string {
 function pab_stats(bool $fresh = false): array {
     pab_migrate();
 
-    /* СЧИТАЕМ РАЗ В ДЕСЯТЬ МИНУТ, А НЕ НА КАЖДЫЙ ОТКРЫТЫЙ РАЗДЕЛ.
+    /* АДМИНКА НИЧЕГО НЕ СЧИТАЕТ — ОНА ЧИТАЕТ ГОТОВОЕ.
      *
-     * Подсчёт идёт по трём таблицам разом: полторы тысячи учреждений, тридцать
-     * тысяч событий доставки, двадцать три тысячи посещений. Это восемнадцать
-     * секунд — столько раздел «Партнёры» и не открывался. Цифры сравнения писем
-     * меняются за часы, а не за секунды, поэтому держим последний расчёт и
-     * обновляем его не чаще чем раз в десять минут. */
-    $ttl = 600;
+     * Прежний расчёт соединял mail_events с institutions по mb_lower(email).
+     * Соединение по функции индексы не использует, а таблицы выросли: 77 тысяч
+     * событий почты, 39 тысяч учреждений, 20 тысяч записей сравнения. Раздел
+     * «Партнёры» перестал открываться вовсе — страница висела минутами и падала
+     * по таймауту.
+     *
+     * Теперь без кэша функция честно возвращает пустоту, а не уходит считать на
+     * пять минут: раздел откроется мгновенно и покажет «идёт подсчёт». Считает
+     * крон (cron/partner_ab_stats.php) — там время есть.
+     */
+    $ttl = 3600;
     if (!$fresh) {
         try {
             $raw = (string) (function_exists('setting') ? setting('partner_ab_stats', '') : '');
             if ($raw !== '') {
                 $c = json_decode($raw, true);
-                if (is_array($c) && (time() - (int) ($c['at'] ?? 0)) < $ttl && !empty($c['data'])) {
-                    return (array) $c['data'];
+                if (is_array($c) && !empty($c['data'])) {
+                    $stale = (time() - (int) ($c['at'] ?? 0)) > $ttl;
+                    $out = (array) $c['data'];
+                    $out['_at'] = (int) ($c['at'] ?? 0);
+                    $out['_stale'] = $stale;
+                    return $out;
                 }
             }
-        } catch (\Throwable $e) { /* считаем заново */ }
+        } catch (\Throwable $e) { /* нет кэша — вернём пустоту */ }
+        return [];
     }
+
+    /* ПОЛНЫЙ ПЕРЕСЧЁТ (только из крона).
+     *
+     * Считаем в памяти, а не соединениями в базе: три последовательных прохода
+     * по таблицам вместо перебора «каждая строка против каждой». */
+    $variant = [];      // id учреждения → вариант письма
+    try {
+        foreach (all("SELECT inst_id, variant FROM partner_ab") as $r) {
+            $variant[(int) $r['inst_id']] = ((string) $r['variant'] === 'b') ? 'b' : 'a';
+        }
+    } catch (\Throwable $e) { return []; }
+    if (!$variant) return [];
 
     $out = [];
     foreach (['a', 'b'] as $v) {
-        $ids = [];
-        try {
-            foreach (all("SELECT inst_id FROM partner_ab WHERE variant=?", [$v]) as $r) $ids[] = (int) $r['inst_id'];
-        } catch (\Throwable $e) { $ids = []; }
-        $row = ['variant' => $v, 'n' => count($ids), 'sent' => 0, 'delivered' => 0,
-                'opened' => 0, 'visited' => 0, 'replied' => 0, 'partners' => 0];
-        if (!$ids) { $out[$v] = $row; continue; }
-        $in = implode(',', array_map('intval', $ids));
-        try {
-            $row['sent']      = (int) scalar("SELECT COUNT(*) FROM institutions WHERE id IN ($in) AND COALESCE(invited_at,'')<>''");
-            $row['replied']   = (int) scalar("SELECT COUNT(*) FROM institutions WHERE id IN ($in) AND COALESCE(replied_at,'')<>''");
-            $row['partners']  = (int) scalar("SELECT COUNT(*) FROM institutions WHERE id IN ($in) AND partner_status='accepted'");
-            $row['delivered'] = (int) scalar("SELECT COUNT(DISTINCT e.email) FROM mail_events e
-                                               JOIN institutions i ON mb_lower(i.email)=mb_lower(e.email)
-                                              WHERE i.id IN ($in) AND e.status='delivered'");
-            $row['opened']    = (int) scalar("SELECT COUNT(DISTINCT e.email) FROM mail_events e
-                                               JOIN institutions i ON mb_lower(i.email)=mb_lower(e.email)
-                                              WHERE i.id IN ($in) AND e.status='opened'");
-            /* ЗАХОДЫ СЧИТАЕМ ОДНИМ ЗАПРОСОМ, А НЕ ПО ОДНОМУ НА УЧРЕЖДЕНИЕ.
-             *
-             * Здесь стоял цикл: на каждое учреждение свой запрос с LIKE по
-             * журналу посещений. При 1359 учреждениях в сравнении это 1359
-             * запросов LIKE по таблице в двадцать три тысячи строк — раздел
-             * «Партнёры» переставал открываться вовсе. Берём все заходы на
-             * страницу согласия разом и разбираем номера в памяти. */
-            static $visits = null;
-            if ($visits === null) {
-                $visits = [];
-                try {
-                    // Своя переменная: снаружи $v — это вариант письма, и затирать
-                    // её строкой журнала нельзя, иначе второй вариант не посчитается.
-                    foreach (all("SELECT path FROM site_events WHERE path LIKE '%partner-join%'") as $ev) {
-                        if (preg_match('~partner-join\?i=(\d+)~', (string) $ev['path'], $mv)) {
-                            $visits[(int) $mv[1]] = true;
-                        }
-                    }
-                } catch (\Throwable $e) { $visits = []; }
-            }
-            $visited = 0;
-            foreach ($ids as $id) if (isset($visits[$id])) $visited++;
-            $row['visited'] = $visited;
-        } catch (\Throwable $e) { /* показываем то, что посчиталось */ }
-        $out[$v] = $row;
+        $out[$v] = ['variant' => $v, 'n' => 0, 'sent' => 0, 'delivered' => 0,
+                    'opened' => 0, 'visited' => 0, 'replied' => 0, 'partners' => 0];
     }
+
+    // Учреждения сравнения: один проход, попутно запоминаем адреса.
+    $mailToVar = [];
+    try {
+        foreach (all("SELECT id, mb_lower(COALESCE(email,'')) em, COALESCE(invited_at,'') inv,
+                             COALESCE(replied_at,'') rep, COALESCE(partner_status,'') st
+                        FROM institutions") as $r) {
+            $id = (int) $r['id'];
+            if (!isset($variant[$id])) continue;
+            $v = $variant[$id];
+            $out[$v]['n']++;
+            if (trim((string) $r['inv']) !== '') $out[$v]['sent']++;
+            if (trim((string) $r['rep']) !== '') $out[$v]['replied']++;
+            if ((string) $r['st'] === 'accepted') $out[$v]['partners']++;
+            $em = trim((string) $r['em']);
+            if ($em !== '') $mailToVar[$em] = $v;
+        }
+    } catch (\Throwable $e) { return []; }
+
+    // Доставки и открытия: один проход по событиям почты, сверка по памяти.
+    $seen = ['delivered' => [], 'opened' => []];
+    try {
+        foreach (all("SELECT mb_lower(COALESCE(email,'')) em, status FROM mail_events
+                       WHERE status IN ('delivered','opened')") as $r) {
+            $em = trim((string) $r['em']);
+            if ($em === '' || !isset($mailToVar[$em])) continue;
+            $st = (string) $r['status'];
+            if (isset($seen[$st][$em])) continue;          // один адрес считаем один раз
+            $seen[$st][$em] = true;
+            $out[$mailToVar[$em]][$st]++;
+        }
+    } catch (\Throwable $e) { /* события не критичны */ }
+
+    // Заходы на страницу согласия: один проход по журналу.
+    try {
+        foreach (all("SELECT path FROM site_events WHERE path LIKE '%partner-join%'") as $ev) {
+            if (!preg_match('~partner-join\?i=(\d+)~', (string) $ev['path'], $m)) continue;
+            $id = (int) $m[1];
+            if (!isset($variant[$id])) continue;
+            $out[$variant[$id]]['visited']++;
+        }
+    } catch (\Throwable $e) { /* журнал не критичен */ }
+
     try {
         if (function_exists('set_setting')) {
             set_setting('partner_ab_stats', json_encode(['at' => time(), 'data' => $out], JSON_UNESCAPED_UNICODE));

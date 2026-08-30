@@ -260,69 +260,39 @@ try {
         ] as $sql) {
             try { if (scalar($sql, [$from])) { $known = true; break; } } catch (\Throwable $e) {}
         }
-        if (!$known) {
-            ia_log('адрес не из наших баз, помощник не отвечает: ' . $from);
-            $mark('human');
-            $did['skip']++;
-            continue;
-        }
-
-        // Один ответ на адрес в полчаса: без этого переписка с чужим
-        // автоответчиком превращается в бесконечную петлю, а домен — в спамера.
-        $last = (string) (scalar("SELECT MAX(reply_sent_at) FROM inbox_messages WHERE from_email=? AND reply_sent_at<>''", [$from]) ?? '');
-        if ($last !== '' && strtotime($last) > time() - 1800) { $mark('dedup'); $did['skip']++; continue; }
-
-        // Контекст участника — по адресу письма. Через него же работает запрет
-        // называть результат раньше, чем он ушёл человеку на почту.
-        $uid = (int) $r['user_id'] ?: null;
-        $GLOBALS['chat_gates']    = [];
-        $ctxMail = $uid ? chat_user_context($uid) : '';
-        // ЧЕЛОВЕК БЕЗ КАБИНЕТА — ТОЖЕ НАШ УЧАСТНИК.
-        //
-        // Контекст брался только по учётной записи, а заявку можно подать и без
-        // регистрации: тогда помощник отвечал письмом вслепую, общими сроками, хотя
-        // заявка этого адреса лежит в базе. Личность здесь подтверждена самим
-        // фактом письма с того же адреса, что указан в заявке, — этого достаточно.
-        if ($ctxMail === '') {
-            try {
-                $apps = all("SELECT a.*, c.name AS comp_name, c.is_paid AS comp_paid, c.slug AS comp_slug,
-                                    c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
-                                    c.results_published_at AS comp_results_pub
-                               FROM applications a JOIN competitions c ON c.id=a.competition_id
-                              WHERE LOWER(a.email)=LOWER(?) ORDER BY a.id DESC LIMIT 8", [$from]);
-                if ($apps && function_exists('_chat_apps_lines')) {
-                    $ctxMail = "ЗАЯВКИ ЭТОГО УЧАСТНИКА (письмо пришло с адреса из заявки, личность подтверждена):\n"
-                             . _chat_apps_lines($apps);
-                }
-            } catch (\Throwable $e) {}
-        }
-        $GLOBALS['chat_user_ctx'] = $ctxMail;
-        $ask = 'Письмо на ящик ' . $box . '@музыкальный-мир.рф. Тема: ' . (string) $r['subject']
-             . "\nТекст письма:\n" . (string) $r['body_text'];
-        $reply = chat_brain_reply($ask, 'inbox:' . md5($from), $uid, 'vk');
-
-        if (trim($reply) === '' || !empty($GLOBALS['chat_fell_back'])) {
-            ia_log('помощник не смог ответить, нужен оператор: ' . $from);
-            $mark('human');
-            continue;
-        }
-        if ($dry) { ia_log('ОТВЕТИЛ БЫ ' . $from . ': ' . mb_substr($reply, 0, 90)); $did['bot']++; continue; }
-
-        // Ответ уходит с автозаменой ящика: 17 августа рабочая почта закрылась
-        // наружу, и прямой mail_send молча не доставил ни одного ответа.
-        $ok = function_exists('mail_send_failover')
-            ? mail_send_failover($from, 'Re: ' . ((string) $r['subject'] ?: 'Ваше обращение'), ia_wrap($reply),
-                                 ['account' => ia_account($box), 'pool' => 'tx'])
-            : mail_send($from, 'Re: ' . ((string) $r['subject'] ?: 'Ваше обращение'), ia_wrap($reply),
-                        ['account' => ia_account($box)]);
-        if ($ok) {
-            ia_log('ответ отправлен: ' . $from);
-            $mark('bot', $reply);
+        /* ПОЧТА ТОЛЬКО ОТПРАВЛЯЕТ — ОТВЕЧАЕМ ОДНИМ АВТООТВЕТОМ (решение владельца).
+         *
+         * Раньше на письмо отвечал помощник, разбирая вопрос по существу. Но
+         * переписку на этих ящиках никто не ведёт и не контролирует: ответ
+         * помощника уходил в пустоту, а продолжение разговора читать было
+         * некому. Человек ждал живого ответа там, где его не будет.
+         *
+         * Теперь одно короткое письмо: этот ящик не читают, вопросы — в
+         * колл-центр, и сразу две двери туда, чат на сайте и сообщения
+         * сообщества ВКонтакте. Обе живые, обе отвечают в тот же день.
+         *
+         * Всё, что было выше по ветке — согласия и отказы партнёров, ответы
+         * ведомств — разбирается как прежде: это не вопросы, а действия, и они
+         * доходят до системы сами. */
+        if (!function_exists('iar_reply')) require_once BASE_PATH . '/core/inbox_autoreply.php';
+        if ($dry) { ia_log('АВТООТВЕТ БЫ ушёл: ' . $from); $did['bot']++; continue; }
+        $res = iar_reply((array) $r);
+        if ($res === 'sent') {
+            ia_log('автоответ «пишите в колл-центр» отправлен: ' . $from);
+            $mark('bot', 'автоответ: почта не для переписки, колл-центр на сайте и во ВКонтакте');
             $did['bot']++;
+        } elseif (str_starts_with($res, 'вне рабочего окна')) {
+            // Ответим утром: письмо остаётся неразобранным и попадёт в следующий заход.
+            ia_log('автоответ отложен до рабочего окна: ' . $from);
+            $did['skip']++;
         } else {
-            ia_log('ответ не ушёл (' . mail_last_error() . '), нужен оператор: ' . $from);
-            $mark('human');
+            ia_log('автоответ не нужен (' . $res . '): ' . $from);
+            // Письмо не теряем: помечаем разобранным, чтобы не крутилось в очереди,
+            // но в списке входящих оно остаётся видимым.
+            $mark($res === 'учреждение/ведомство' ? 'human' : 'dedup');
+            $did['skip']++;
         }
+
     }
 
     $sum = sprintf('итог: принято партнёров %d, удалено отказников %d, ответов помощника %d, отложено %d',
