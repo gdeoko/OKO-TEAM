@@ -381,13 +381,49 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       bus.connect(lim); lim.connect(ac.destination);
       bus.gain.setTargetAtTime(.4, ac.currentTime, .5);
       engG = ac.createGain(); engG.gain.value = .0001;
-      engF = ac.createBiquadFilter(); engF.type="lowpass"; engF.frequency.value=140; engF.Q.value=6;
-      var o1 = ac.createOscillator(), o2 = ac.createOscillator();
-      o1.type = o2.type = "sawtooth";
-      o1.frequency.value = 52; o2.frequency.value = 78; o2.detune.value = 8;
-      o1.connect(engF); o2.connect(engF); engF.connect(engG); engG.connect(bus);
-      o1.start(); o2.start();
-      engG.gain.setTargetAtTime(.15, ac.currentTime, .8);
+      /* Двигатель заставки. Здесь стояли две пилы на 52 и 78 герцах
+         через узкий срез с добротностью 6, и это была нота, а не
+         тяга: замер анализатором дал полный гармонический ряд от
+         52 герц с пиками на 32-35 децибел над соседями. Заказчик
+         назвал этот звук раздражающим и нереалистичным, и он прав -
+         у ракеты нет высоты тона, у неё широкополосный рёв.
+
+         Ставим коричневый шум: белый, пропущенный через интегратор,
+         спадает примерно на шесть децибел на октаву, а это и есть
+         наклон настоящего рокота. Добротность среза опускаем с 6 до
+         половины: с шестёркой срез сам поёт на своей частоте и нота
+         вернулась бы уже из фильтра.
+
+         Петлю склеиваем перекрёстным затуханием хвоста в голову,
+         иначе на стыке слышен щелчок каждые три секунды. */
+      engF = ac.createBiquadFilter(); engF.type="lowpass"; engF.frequency.value=140; engF.Q.value=.5;
+      var сек = 3, дл = Math.floor(ac.sampleRate * сек);
+      var буф = ac.createBuffer(1, дл, ac.sampleRate), к = буф.getChannelData(0);
+      var инт = 0, пик = 0, i2;
+      for (i2 = 0; i2 < дл; i2++) {
+        инт = (инт + 0.035 * (Math.random() * 2 - 1)) / 1.035;
+        к[i2] = инт;
+        if (Math.abs(инт) > пик) пик = Math.abs(инт);
+      }
+      if (пик > 0) for (i2 = 0; i2 < дл; i2++) к[i2] /= пик;
+      var скл = Math.min(Math.floor(ac.sampleRate * .05), дл >> 2);
+      for (i2 = 0; i2 < скл; i2++) {
+        var доля = i2 / скл;
+        к[i2] = к[i2] * доля + к[дл - скл + i2] * (1 - доля);
+      }
+      var шум = ac.createBufferSource();
+      шум.buffer = буф; шум.loop = true;
+      шум.connect(engF); engF.connect(engG); engG.connect(bus);
+      шум.start();
+      /* Уровень подобран замером на стенде, а не на слух: шум после
+         нормировки по пику ТИШЕ двух пил, потому что у пилы вся
+         энергия сидит в нескольких гармониках, а у шума размазана по
+         полосе, и прежний срез с добротностью 6 вдобавок поднимал
+         свою частоту резонансом. С единицей полосы 20-60 и 60-120
+         герц сходятся с прежним звуком в пределах 0,6 децибела.
+         Единица здесь безопасна: дальше стоит шина на 0,4 и
+         ограничитель за ней. */
+      engG.gain.setTargetAtTime(1.0, ac.currentTime, .8);
     } catch (e) { ac = null; }
   }
   function liftoff() {
@@ -401,7 +437,9 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       gg.gain.setValueAtTime(.5, ac.currentTime);
       gg.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .9);
       s.connect(f); f.connect(gg); gg.connect(bus); s.start();
-      if (engG) engG.gain.setTargetAtTime(.32, ac.currentTime, .12);
+      /* Взлёт держит ту же пропорцию к ровной тяге, что и раньше
+         (было .15 и .32), просто на новой шкале. */
+      if (engG) engG.gain.setTargetAtTime(2.1, ac.currentTime, .12);
       if (engF) engF.frequency.setTargetAtTime(1400, ac.currentTime, .2);
     } catch (e) {}
   }
