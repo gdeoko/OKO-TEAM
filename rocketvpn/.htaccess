@@ -1,0 +1,12 @@
+# Rocket VPN. Плёнка наружу не отдаётся: единственный вход - index.php,
+# он проверяет ключ. Без этого правила створ обходится набором полного
+# имени файла, что и случилось в первой сборке.
+<FilesMatch "^(frame|stvor)\.html$">
+  Require all denied
+</FilesMatch>
+
+# Запрет индексации заголовком - он действует и на то, у чего разметки
+# нет вовсе, и переживает правку самой разметки.
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
+</IfModule>

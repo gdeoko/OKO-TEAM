@@ -1,0 +1,443 @@
+/* Rocket VPN. Акт 3 «Прокол» - подпись всего сценария.
+
+   ЗДЕСЬ САЙТ ДЕЛАЕТ ТО, ЧЕГО НЕТ У ROCKET CDN. У CDN движение боковое и
+   длинное: ракета идёт по дуге, человек летает между планетами. Здесь
+   движение одно - внутрь экрана, рывком. Поэтому в этом акте нет ни
+   одного бокового смещения: ни камеры, ни содержимого. Всё, что
+   двигается, двигается вдоль оси взгляда. Стоит добавить сюда хоть один
+   боковой проезд, и акт перестанет отличаться от родственного сайта.
+
+   ТРИ ЯВЛЕНИЯ ПОДРЯД, И ОНИ РАЗНЫЕ ПО ПРИРОДЕ.
+   1. Линза. Полноэкранное искривление: свет за ней ЗАГИБАЕТСЯ к центру,
+      а не размывается по краям. Размытие читалось бы как «плохо видно»,
+      а нужно «пространство гнётся».
+   2. Свёртка стены в кольцо. Стену человек только что разглядывал в акте
+      «Периметр», поэтому она обязана быть узнаваемой: та же решётка
+      сегментов, просто теперь её стягивает в воронку и закручивает.
+      Кольцо в конце свёртки и оказывается входом.
+   3. Тоннель. Короткий и очень быстрый. Встречные потоки света вдоль
+      стен, ускорение до конца акта, никакой болтанки.
+
+   ПОЧЕМУ КАМЕРА НЕ ДВИГАЕТСЯ. Камера в этом мире одна на весь сайт и
+   общая со всеми актами. Двигать её значит драться за неё с соседними
+   актами на стыках, где два акта одновременно в кадре. Ощущение хода
+   вглубь даёт содержимое: кольцо надвигается и уходит за спину, поток
+   тоннеля разгоняется. Для зрителя это неотличимо, а на стыках ничего
+   не ломается.
+
+   Ступень качества меняет густоту сетки стены, число граней тоннеля и
+   размер мишени линзы. Ни линза, ни свёртка, ни тоннель не отключаются
+   ни на одной ступени: на слабом устройстве прокол становится проще, но
+   он остаётся проколом. */
+(function (g, d) {
+  "use strict";
+
+  var М = {};
+  var W = null;
+  var собрано = false;
+
+  function зажать(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+  function мягко(край0, край1, v) {
+    var t = зажать((v - край0) / (край1 - край0), 0, 1);
+    return t * t * (3 - 2 * t);
+  }
+
+  /* ── Шейдеры ──────────────────────────────────────────────────
+     Имена внутри GLSL латиницей: не-ASCII идентификатор часть драйверов
+     не соберёт, и акт станет чёрным пятном. Объяснения - в JS. */
+
+  /* Свёртка. Плоскость стены переводится в полярные координаты и
+     стягивается к кольцу радиуса uRing. Одновременно центр уходит от
+     камеры: без этого ухода стена сворачивается в блин, а нам нужна
+     воронка, в которую можно войти. */
+  var В_СТЕНА = [
+    "uniform float uFold;",
+    "uniform float uRing;",
+    "varying vec2 vUv;",
+    "varying float vR;",
+    "void main(){",
+    "  vUv = uv;",
+    "  vec3 p = position;",
+    "  float r = length(p.xy);",
+    "  float a = atan(p.y, p.x);",
+    "  float t = clamp(r / 26.0, 0.0, 1.0);",
+    "  float rr = mix(r, uRing + (r - uRing) * 0.12, uFold);",
+    "  a += uFold * 1.7 * (1.0 - t);",
+    "  float z = -uFold * 20.0 * (1.0 - t) * (1.0 - t);",
+    "  p.x = cos(a) * rr;",
+    "  p.y = sin(a) * rr;",
+    "  p.z = z;",
+    "  vR = rr;",
+    "  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);",
+    "}"
+  ].join("\n");
+
+  var Ф_СТЕНА = [
+    "uniform float uFold;",
+    "uniform float uRing;",
+    "uniform float uBright;",
+    "uniform vec3 uIndigo;",
+    "uniform vec3 uGlow;",
+    "varying vec2 vUv;",
+    "varying float vR;",
+    "void main(){",
+    "  vec2 cell = abs(fract(vUv * vec2(18.0, 12.0)) - 0.5);",
+    "  float line = 1.0 - smoothstep(0.0, 0.055, min(cell.x, cell.y));",
+    "  float rim = exp(-pow((vR - uRing) * 0.75, 2.0)) * uFold;",
+    "  vec3 c = uIndigo * line * (0.45 + uFold * 0.7) + uGlow * rim * 1.1;",
+    "  float a = (line * 0.55 + rim * 0.95) * uBright;",
+    "  gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));",
+    "}"
+  ].join("\n");
+
+  /* Линза. Смещение выборки направлено к центру и обратно пропорционально
+     расстоянию: это и есть загиб света, а не размытие. Кольцо на
+     фиксированном радиусе - тот самый ободок, по которому гравитационную
+     линзу узнают. */
+  var В_ЭКРАН = [
+    "varying vec2 vUv;",
+    "void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }"
+  ].join("\n");
+
+  var Ф_ЛИНЗА = [
+    "uniform sampler2D uFrame;",
+    "uniform vec2 uRes;",
+    "uniform float uPow;",
+    "uniform float uAspect;",
+    "uniform float uRich;",
+    "uniform vec3 uGlow;",
+    "void main(){",
+    "  vec2 uv = gl_FragCoord.xy / uRes;",
+    "  vec2 dv = (uv - 0.5) * vec2(uAspect, 1.0);",
+    "  float r = length(dv) + 0.05;",
+    "  vec2 off = -normalize(dv) * (uPow * 0.055 / r);",
+    "  vec4 s = texture2D(uFrame, uv + off);",
+    "  vec3 c = s.rgb;",
+    "  if (uRich > 0.5) {",
+    "    c.r = texture2D(uFrame, uv + off * 1.12).r;",
+    "    c.b = texture2D(uFrame, uv + off * 0.88).b;",
+    "  }",
+    "  float ring = exp(-pow((r - 0.22) * 11.0, 2.0)) * uPow;",
+    "  c += uGlow * ring * 0.45;",
+    "  float a = clamp(max(max(c.r, c.g), c.b) * 2.4 + ring * 0.5, 0.0, 1.0);",
+    "  gl_FragColor = vec4(c, a);",
+    "}"
+  ].join("\n");
+
+  /* Тоннель. Потоки идут НА камеру: время прибавляется к продольной
+     координате, и полосы съезжают в сторону зрителя. Метки скорости -
+     редкие короткие штрихи, которые ярче остальных: без них поток
+     читается как обои, а не как скорость. */
+  var Ф_ТОННЕЛЬ = [
+    "uniform float uRun;",
+    "uniform float uBright;",
+    "uniform vec3 uIndigo;",
+    "uniform vec3 uGlow;",
+    "varying vec2 vUv;",
+    "float noi(vec2 p){ return fract(sin(dot(p, vec2(13.71, 7.13))) * 43758.5453); }",
+    "void main(){",
+    "  float lane = floor(vUv.x * 56.0);",
+    "  float seed = noi(vec2(lane, 3.0));",
+    "  float v = vUv.y * 22.0 + uRun * (0.65 + seed * 0.7);",
+    "  float cell = floor(v);",
+    "  float f = fract(v);",
+    "  float k = noi(vec2(lane, cell));",
+    "  float len = 0.10 + k * 0.34;",
+    "  float streak = 1.0 - smoothstep(0.0, len, f);",
+    "  streak *= step(0.42, k);",
+    "  float mark = step(0.94, k);",
+    "  float inl = 1.0 - smoothstep(0.0, 0.5, abs(fract(vUv.x * 56.0) - 0.5) * 2.0);",
+    "  float depth = smoothstep(0.0, 0.30, vUv.y) * (1.0 - smoothstep(0.86, 1.0, vUv.y));",
+    "  float i = streak * inl * depth * (0.35 + k * 0.8 + mark * 1.6);",
+    "  vec3 c = mix(uIndigo, uGlow, min(1.0, k + mark));",
+    "  gl_FragColor = vec4(c * i * uBright, clamp(i * uBright, 0.0, 1.0));",
+    "}"
+  ].join("\n");
+
+  /* Вспышка входа и дальний зрачок тоннеля - один и тот же простой
+     радиальный градиент, разной жёсткости. */
+  var Ф_ПЯТНО = [
+    "uniform vec3 uCol;",
+    "uniform float uBright;",
+    "uniform float uHard;",
+    "varying vec2 vUv;",
+    "void main(){",
+    "  float dd = length(vUv - 0.5) * 2.0;",
+    "  float a = pow(max(0.0, 1.0 - dd), uHard);",
+    "  gl_FragColor = vec4(uCol, a * uBright);",
+    "}"
+  ].join("\n");
+
+  /* ── Сборка ───────────────────────────────────────────────────*/
+  function построить(мир) {
+    if (собрано) return true;
+    W = мир || W;
+    if (!W || !W.T || !W.scene || !W.r) return false;
+    var T = W.T;
+
+    М.корень = new T.Group();
+    М.корень.visible = false;
+    W.scene.add(М.корень);
+
+    var цИндиго = new T.Color(0x3048A8);
+    var цПерелив = new T.Color(0x6078D8);
+    var цСвет = new T.Color(0x8A9CFF);
+
+    /* ── Стена периметра ────────────────────────────────────────
+       Сегментов по горизонтали и вертикали много: свёртка идёт в
+       вершинном шейдере, и на редкой сетке кольцо получилось бы
+       многоугольником. Это отделка, поэтому на слабой ступени сетка
+       реже, но сама стена и её свёртка есть везде. */
+    var сег = W.ступень === 0 ? [48, 32] : (W.ступень === 1 ? [88, 56] : [140, 88]);
+    М.мСтена = new T.ShaderMaterial({
+      uniforms: {
+        uFold: { value: 0 },
+        uRing: { value: 7.4 },
+        uBright: { value: 1 },
+        uIndigo: { value: цИндиго },
+        uGlow: { value: цСвет }
+      },
+      vertexShader: В_СТЕНА, fragmentShader: Ф_СТЕНА,
+      transparent: true, depthWrite: false, side: T.DoubleSide,
+      blending: T.AdditiveBlending
+    });
+    М.стена = new T.Mesh(new T.PlaneGeometry(46, 32, сег[0], сег[1]), М.мСтена);
+    М.стена.position.z = -6;
+    М.стена.renderOrder = 1;
+    М.корень.add(М.стена);
+
+    /* ── Тоннель ────────────────────────────────────────────────
+       Цилиндр развёрнут осью вдоль взгляда и смотрит внутрь. Длина
+       большая не ради красоты: короткая труба выдаёт свой дальний край,
+       и «очень быстро» превращается в «быстро и приехали». */
+    var граней = W.ступень === 0 ? 24 : (W.ступень === 1 ? 40 : 64);
+    М.мТоннель = new T.ShaderMaterial({
+      uniforms: {
+        uRun: { value: 0 },
+        uBright: { value: 0 },
+        uIndigo: { value: цИндиго },
+        uGlow: { value: цСвет }
+      },
+      vertexShader: В_ЭКРАН, fragmentShader: Ф_ТОННЕЛЬ,
+      transparent: true, depthWrite: false, side: T.BackSide,
+      blending: T.AdditiveBlending
+    });
+    М.тоннель = new T.Mesh(
+      new T.CylinderGeometry(3.6, 3.6, 220, граней, 1, true),
+      М.мТоннель
+    );
+    М.тоннель.rotation.x = 1.5708;
+    М.тоннель.position.z = -100;
+    М.тоннель.renderOrder = 2;
+    М.тоннель.visible = false;
+    М.корень.add(М.тоннель);
+
+    /* Дальний зрачок: точка, к которой идёт тоннель. Он не приближается -
+       к нему идут вечно, и именно это читается как «насквозь», а не
+       «доехали». */
+    М.зрачок = new T.Mesh(
+      new T.PlaneGeometry(6, 6),
+      new T.ShaderMaterial({
+        uniforms: { uCol: { value: цПерелив }, uBright: { value: 0 }, uHard: { value: 3.0 } },
+        vertexShader: В_ЭКРАН, fragmentShader: Ф_ПЯТНО,
+        transparent: true, depthWrite: false, blending: T.AdditiveBlending
+      })
+    );
+    М.зрачок.position.z = -196;
+    М.зрачок.renderOrder = 2;
+    М.корень.add(М.зрачок);
+
+    /* ── Пакет человека ─────────────────────────────────────────
+       Его втягивает в кольцо. Он и есть тот, кого протаскивают сквозь
+       прокол, поэтому он уходит вглубь раньше стен. */
+    М.свой = new T.Mesh(
+      new T.SphereGeometry(0.26, W.ступень === 0 ? 12 : 20, W.ступень === 0 ? 8 : 14),
+      new T.MeshBasicMaterial({ color: цСвет })
+    );
+    М.свой.renderOrder = 3;
+    М.корень.add(М.свой);
+
+    М.свойОреол = new T.Mesh(
+      new T.PlaneGeometry(1.7, 1.7),
+      new T.ShaderMaterial({
+        uniforms: { uCol: { value: цСвет }, uBright: { value: 0.3 }, uHard: { value: 3.0 } },
+        vertexShader: В_ЭКРАН, fragmentShader: Ф_ПЯТНО,
+        transparent: true, depthWrite: false, blending: T.AdditiveBlending
+      })
+    );
+    М.свойОреол.renderOrder = 3;
+    М.корень.add(М.свойОреол);
+
+    /* ── Вспышка входа ──────────────────────────────────────────
+       Одна на весь акт. Вспышек больше одной превратили бы прокол в
+       мигание, а по сценарию за вспышкой идёт тишина и скорость. */
+    М.вспышка = new T.Mesh(
+      new T.PlaneGeometry(2, 2),
+      new T.ShaderMaterial({
+        uniforms: { uCol: { value: цСвет }, uBright: { value: 0 }, uHard: { value: 1.2 } },
+        vertexShader: В_ЭКРАН, fragmentShader: Ф_ПЯТНО,
+        transparent: true, depthWrite: false, depthTest: false,
+        blending: T.AdditiveBlending
+      })
+    );
+    М.вспышка.position.z = 11.2;
+    М.вспышка.renderOrder = 950;
+    М.вспышка.visible = false;
+    W.scene.add(М.вспышка);
+
+    /* ── Линза ──────────────────────────────────────────────────
+       Квад стоит вплотную к камере и рисуется последним поверх всего.
+       Пока линза работает, содержимое акта уходит в мишень и на экран
+       попадает только через неё - иначе картинка удвоится. */
+    М.доляМишени = W.ступень === 0 ? 0.5 : (W.ступень === 1 ? 0.72 : 1.0);
+    М.мишень = new T.WebGLRenderTarget(2, 2, {
+      minFilter: T.LinearFilter, magFilter: T.LinearFilter
+    });
+    М.мЛинза = new T.ShaderMaterial({
+      uniforms: {
+        uFrame: { value: М.мишень.texture },
+        uRes: { value: new T.Vector2(2, 2) },
+        uPow: { value: 0 },
+        uAspect: { value: 1.6 },
+        uRich: { value: W.ступень === 0 ? 0 : 1 },
+        uGlow: { value: цСвет }
+      },
+      vertexShader: В_ЭКРАН, fragmentShader: Ф_ЛИНЗА,
+      transparent: true, depthWrite: false, depthTest: false
+    });
+    М.линза = new T.Mesh(new T.PlaneGeometry(2, 2), М.мЛинза);
+    М.линза.position.z = 11.0;
+    М.линза.renderOrder = 900;
+    М.линза.visible = false;
+    W.scene.add(М.линза);
+
+    М.бег = 0;
+    собрано = true;
+    размерить(g.innerWidth, g.innerHeight);
+    return true;
+  }
+
+  /* ── Размер ───────────────────────────────────────────────────
+     Полноэкранные квады пересчитываются под текущий кадр камеры: они
+     стоят в мировых координатах, а не в экранных, и после поворота
+     телефона иначе не закрыли бы кадр. */
+  function размерить(w, h) {
+    if (!собрано || !W) return;
+    var T = W.T;
+    var расст = W.cam.position.z - 11.0;
+    var выс = 2 * Math.tan(W.cam.fov * Math.PI / 360) * расст;
+    var шир = выс * (w / h);
+    М.линза.scale.set(шир / 2 * 1.06, выс / 2 * 1.06, 1);
+    М.вспышка.scale.set(шир / 2 * 1.2, выс / 2 * 1.2, 1);
+
+    var р = W.r.getDrawingBufferSize(new T.Vector2());
+    М.мЛинза.uniforms.uRes.value.set(Math.max(2, р.x), Math.max(2, р.y));
+    М.мЛинза.uniforms.uAspect.value = w / h;
+    М.мишень.setSize(
+      Math.max(2, Math.round(р.x * М.доляМишени)),
+      Math.max(2, Math.round(р.y * М.доляМишени))
+    );
+
+    /* На узком экране кольцо входа не помещается по ширине, и человек
+       видит не вход, а обрезанную дугу. Уменьшаем всю сцену акта, а не
+       двигаем её вбок: боковых смещений в этом акте нет. */
+    var к = w < 760 ? 0.62 : 1.0;
+    М.стена.scale.setScalar(к);
+    М.мСтена.uniforms.uRing.value = 7.4;
+  }
+
+  /* ── Кадр ─────────────────────────────────────────────────────*/
+  function кадр(доля, dt, часы) {
+    if (!собрано && !построить(g.RV_WORLD ? g.RV_WORLD["мир"]() : null)) return;
+
+    /* Три фазы. Границы намеренно ранние: по сценарию прокол короткий,
+       и больше половины акта человек уже летит внутри. */
+    var свёртка = мягко(0.00, 0.34, доля);
+    var вход = мягко(0.28, 0.46, доля);
+    var полёт = мягко(0.40, 0.62, доля);
+
+    /* 1. Стена сворачивается и одновременно надвигается: кольцо должно
+       пройти мимо зрителя, а не остаться висеть вдалеке. */
+    М.мСтена.uniforms.uFold.value = свёртка;
+    М.мСтена.uniforms.uBright.value = 1 - мягко(0.42, 0.56, доля);
+    М.стена.position.z = -6 + вход * 22;
+    М.стена.visible = М.мСтена.uniforms.uBright.value > 0.01;
+    /* Кольцо медленно проворачивается вокруг оси взгляда. Это
+       единственное вращение в акте, и оно продольное: боковых движений
+       здесь нет ни одного. */
+    М.стена.rotation.z = свёртка * 0.5 + часы * 0.05 * свёртка;
+
+    /* 2. Пакет человека втягивает внутрь раньше, чем дойдут стены. */
+    var тяга = мягко(0.10, 0.44, доля);
+    М.свой.position.set(0, 0, 4.5 - тяга * 26);
+    М.свой.visible = тяга < 0.995;
+    М.свойОреол.position.copy(М.свой.position);
+    М.свойОреол.visible = М.свой.visible;
+    М.свойОреол.material.uniforms.uBright.value = 0.30 * (1 - тяга * 0.6);
+
+    /* 3. Вспышка на входе. Короткая: подъём быстрый, спад чуть длиннее,
+       чтобы за ней читалась тишина, а не обрыв. */
+    var вс = мягко(0.38, 0.44, доля) * (1 - мягко(0.44, 0.55, доля));
+    М.вспышка.visible = вс > 0.004;
+    М.вспышка.material.uniforms.uBright.value = вс * 1.5;
+
+    /* 4. Тоннель. Скорость растёт до самого конца акта: замедление в
+       конце прочиталось бы как «приехали», а прокол не имеет остановки
+       внутри себя. */
+    var скорость = 3 + полёт * 46;
+    М.бег += dt * скорость;
+    М.мТоннель.uniforms.uRun.value = М.бег;
+    М.мТоннель.uniforms.uBright.value = полёт;
+    М.тоннель.visible = полёт > 0.01;
+    М.зрачок.material.uniforms.uBright.value = полёт * 0.55;
+
+    /* 5. Линза. Работает только на свёртке и входе: дальше пространство
+        уже сложено, гнуть больше нечего. */
+    var силаЛинзы = свёртка * (1 - мягко(0.40, 0.52, доля));
+    var линзаЖива = силаЛинзы > 0.012;
+    М.мЛинза.uniforms.uPow.value = силаЛинзы;
+
+    if (линзаЖива) {
+      /* Содержимое акта уходит в мишень, а на экран попадает только квад
+         линзы. Порядок именно такой: сначала снимок без квада, потом
+         показ квада вместо содержимого. */
+      М.линза.visible = false;
+      М.вспышка.visible = false;
+      var прежняя = W.r.getRenderTarget();
+      W.r.setRenderTarget(М.мишень);
+      W.r.render(W.scene, W.cam);
+      W.r.setRenderTarget(прежняя);
+      М.корень.visible = false;
+      М.линза.visible = true;
+      М.вспышка.visible = вс > 0.004;
+    } else {
+      М.линза.visible = false;
+      М.корень.visible = true;
+    }
+  }
+
+  /* ── Договор с ядром ──────────────────────────────────────────*/
+  var МОДУЛЬ = {
+    "собрать": function (мир) { построить(мир); },
+    "показать": function (да) {
+      if (да && !собрано) построить(g.RV_WORLD ? g.RV_WORLD["мир"]() : null);
+      if (!собрано) return;
+      М.корень.visible = !!да;
+      /* Полноэкранные квады живут вне корня акта: они рисуются поверх
+         всего и обязаны исчезать вместе с актом, иначе линза останется
+         висеть над соседним. */
+      if (!да) { М.линза.visible = false; М.вспышка.visible = false; }
+    },
+    "кадр": кадр,
+    "размер": function (w, h) { размерить(w, h); }
+  };
+
+  function встать() {
+    if (!g.RV_WORLD) return;
+    g.RV_WORLD["акт"]("прокол", МОДУЛЬ);
+  }
+
+  if (g.RV_WORLD && g.RV_WORLD["готов"] && g.RV_WORLD["готов"]()) встать();
+  else g.addEventListener("rv:мир", встать);
+})(window, document);

@@ -10,6 +10,10 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <meta name="referrer" content="no-referrer">
 <title>Rocket VPN</title>
+<!-- Значок вкладки - настоящая марка клиента, а не нарисованная
+     заглушка. Без него браузер просит favicon.ico, получает отказ, и в
+     консоли копится ошибка, которая маскирует настоящие. -->
+<link rel="icon" type="image/webp" href="assets/rv-mark.webp">
 
 <style>
 /* Критическая часть: пока стили не приехали, человек не должен видеть
@@ -171,6 +175,7 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 </div><!-- /плёнка -->
 
 <script src="assets/rv-gate.js"></script>
+<script src="assets/rv-boot.js" defer></script>
 <script src="assets/rv-net.js" defer></script>
 <script src="assets/vendor/three.min.js" defer></script>
 <script src="assets/rv-world.js" defer></script>

@@ -267,3 +267,38 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
   pointer-events: none;
 }
 .rv-плёнка { position: relative; z-index: 1; }
+
+/* ── Экран загрузки ────────────────────────────────────────────
+   Кадром он не отличается от сайта: тот же чёрный, та же марка. Так
+   уход экрана читается не сменой картинки, а тем, что просто убрали
+   лишнее. У родственного проекта заставка была отдельным зрелищем, и
+   переход от неё к сайту всегда был заметным швом. */
+.rv-загр {
+  position: fixed; inset: 0; z-index: 80;
+  background: var(--rv-фон);
+  display: grid; place-content: center; justify-items: center;
+  gap: calc(var(--rv-шаг) * 3);
+  transition: opacity .52s ease;
+}
+.rv-загр.ушёл { opacity: 0; pointer-events: none; }
+.rv-загр-в { display: grid; justify-items: center; gap: calc(var(--rv-шаг) * 3); }
+.rv-загр-марка { width: clamp(56px, 7vw, 72px); height: auto; }
+
+/* Ход загрузки полосой, а не кружком. Кружок вращается независимо от
+   того, движется ли дело, и потому врёт: он крутится одинаково и когда
+   грузится, и когда всё висит. Полоса растёт только по факту. */
+.rv-загр-путь {
+  width: clamp(120px, 16vw, 180px); height: 2px;
+  background: rgba(var(--rv-свет-rgb), .14);
+  overflow: hidden;
+}
+.rv-загр-путь i {
+  display: block; width: 100%; height: 100%;
+  transform: scaleX(0); transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--rv-индиго), var(--rv-индиго-свет));
+  transition: transform .34s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-загр, .rv-загр-путь i { transition: none; }
+}

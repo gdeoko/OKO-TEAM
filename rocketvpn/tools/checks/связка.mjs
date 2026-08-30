@@ -1,0 +1,57 @@
+/* Проверка: переход между сайтами Rocket VPN и Rocket CDN.
+
+   Смысл связки в том, что человек, пришедший через космос, попадает в
+   акт выхода, а не на первый экран: он уже прошёл сюжет проблемы на той
+   стороне. Проверяем именно это, а не наличие ссылки. */
+import { браузер, открыть, ПК, ТЕЛЕФОН, доложить } from "./общее.mjs";
+
+const беды = [];
+const b = await браузер();
+
+for (const э of [ПК, ТЕЛЕФОН]) {
+  /* Приход из космоса. */
+  const { pg, ошибки } = await открыть(b, э, { from: "cdn" });
+  const приход = await pg.evaluate(() => {
+    const a = document.querySelector('[data-акт="выход"]');
+    if (!a) return { есть: false };
+    const к = a.getBoundingClientRect();
+    return {
+      есть: true,
+      вКадре: к.top <= 0 && к.bottom > innerHeight * 0.5,
+      доля: +(getComputedStyle(a).getPropertyValue("--д") || 0),
+      признак: document.documentElement.getAttribute("data-из")
+    };
+  });
+  if (!приход.есть) беды.push(э.имя + ": акта выхода нет в разметке");
+  else {
+    if (!приход.вКадре) беды.push(э.имя + ": пришедший из космоса не попал в акт выхода");
+    if (!(приход.доля > 0.05 && приход.доля < 0.35)) {
+      беды.push(э.имя + ": доля акта выхода при приходе " + приход.доля + ", ждали в пределах 0.05..0.35");
+    }
+  }
+
+  /* Уход в космос CDN. */
+  const уход = await pg.evaluate(() => {
+    const a = document.getElementById("rvКcdn");
+    return a ? { href: a.getAttribute("href"), rel: a.getAttribute("rel") } : null;
+  });
+  if (!уход) беды.push(э.имя + ": кнопки ухода в CDN нет");
+  else {
+    if (!/rocketcdn\.ru/.test(уход.href || "")) беды.push(э.имя + ": уход ведёт не на CDN: " + уход.href);
+    if (!/from=vpn/.test(уход.href || "")) беды.push(э.имя + ": уход не несёт признак from=vpn");
+    if (/[?&]k=/.test(уход.href || "")) беды.push(э.имя + ": уход уносит КЛЮЧ на чужой сайт");
+    if (!/noreferrer/.test(уход.rel || "")) беды.push(э.имя + ": уход без noreferrer, адрес с ключом уедет в чужую аналитику");
+  }
+
+  /* Обычный заход без признака не должен никуда прыгать. */
+  await pg.close();
+  const обычный = await открыть(b, э, {});
+  const где = await обычный.pg.evaluate(() => window.scrollY);
+  if (где > 40) беды.push(э.имя + ": обычный заход почему-то уехал на " + где + " точек");
+  for (const о of обычный.ошибки) беды.push(э.имя + ": " + о);
+  for (const о of ошибки) беды.push(э.имя + ": " + о);
+  await обычный.pg.close();
+}
+
+await b.close();
+доложить("связка с Rocket CDN", беды);
