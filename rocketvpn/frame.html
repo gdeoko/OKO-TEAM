@@ -179,7 +179,13 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <script src="assets/rv-net.js" defer></script>
 <script src="assets/vendor/three.min.js" defer></script>
 <script src="assets/rv-world.js" defer></script>
+<!-- Порядок этих строк не важен: каждый акт ждёт события готовности
+     мира и кладёт себя в ядро сам. -->
+<script src="assets/rv-act-shell.js" defer></script>
+<script src="assets/rv-act-fold.js" defer></script>
 <script src="assets/rv-act-exit.js" defer></script>
+<script src="assets/rv-act-bridge.js" defer></script>
+<script src="assets/rv-act-dock.js" defer></script>
 <script src="assets/rv-data.js" defer></script>
 <script src="assets/rv-fill.js" defer></script>
 <script src="assets/rv-motion.js" defer></script>
