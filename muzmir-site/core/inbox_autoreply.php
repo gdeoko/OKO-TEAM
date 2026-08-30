@@ -96,19 +96,6 @@ function iar_html(string $name = ''): string {
 function iar_reply(array $msg): string {
     if (!iar_enabled()) return 'выключено';
 
-    /* НАРУЖУ — ТОЛЬКО В РАБОЧЕЕ ОКНО (правило владельца: пн-сб, 09:00-19:00 МСК).
-     *
-     * Автоответ уходит от имени центра, и письмо, пришедшее в час ночи или в
-     * воскресенье, читается как работа робота. Письмо никуда не денется:
-     * разбор входящих идёт по расписанию и ответит утром, когда окно откроется. */
-    if (!function_exists('outreach_window_ok') && is_file(BASE_PATH . '/core/outreach_window.php')) {
-        require_once BASE_PATH . '/core/outreach_window.php';
-    }
-    if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
-        return 'вне рабочего окна' . (function_exists('outreach_window_reason')
-            ? ' (' . outreach_window_reason() . ')' : '');
-    }
-
     $from = mb_strtolower(trim((string) ($msg['from_email'] ?? '')));
     if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) return 'нет адреса';
 
@@ -131,6 +118,23 @@ function iar_reply(array $msg): string {
     if (iar_is_institution($from)) return 'учреждение/ведомство';
 
     if (iar_recently_answered($from)) return 'уже отвечали на этой неделе';
+
+    /* НАРУЖУ — ТОЛЬКО В РАБОЧЕЕ ОКНО (правило владельца: пн-сб, 09:00-19:00 МСК).
+     *
+     * Проверка стоит ПОСЛЕДНЕЙ, после всех причин промолчать. Иначе письмо, на
+     * которое отвечать и не надо — от учреждения, от робота, — откладывалось бы
+     * «до утра» и заново разбиралось при каждом заходе крона до понедельника.
+     *
+     * Автоответ уходит от имени центра, и письмо, пришедшее в час ночи или в
+     * воскресенье, читается как работа робота. Письмо никуда не денется:
+     * разбор входящих идёт по расписанию и ответит утром, когда окно откроется. */
+    if (!function_exists('outreach_window_ok') && is_file(BASE_PATH . '/core/outreach_window.php')) {
+        require_once BASE_PATH . '/core/outreach_window.php';
+    }
+    if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
+        return 'вне рабочего окна' . (function_exists('outreach_window_reason')
+            ? ' (' . outreach_window_reason() . ')' : '');
+    }
 
     if (!function_exists('mail_queue')) return 'почта недоступна';
     $name = trim((string) ($msg['from_name'] ?? ''));
