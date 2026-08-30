@@ -1,0 +1,257 @@
+/* Rocket VPN. Основа оформления.
+
+   Палитра снята с логотипа клиента, а не выбрана на вкус: у марки VPN
+   преобладает индиго #3048A8 с переходом в #6078D8. У родственного
+   сайта Rocket CDN та же чёрная основа, но акцент бирюзовый #30A8D8.
+   Держать эти два акцента строго врозь - единственная защита от того,
+   чтобы два сайта одной семьи слились в один.
+
+   Тёплый янтарь здесь ровно один и появляется ровно в одном месте: на
+   лучах досмотра в акте «Периметр». Он единственное тёплое пятно на
+   сайте, поэтому и читается как тревога. Если растащить его по другим
+   блокам, тревога исчезнет. */
+
+:root {
+  /* Основа */
+  --rv-фон:        #05060C;
+  --rv-фон-глубже: #02030700;
+  --rv-текст:      #E8EAF6;
+  --rv-текст-тихо: rgba(232,234,246,.62);
+  --rv-текст-очень-тихо: rgba(232,234,246,.38);
+
+  /* Марка. Три ступени одного индиго: тень, тело, свет. */
+  --rv-индиго-тень: #2A3A8C;
+  --rv-индиго:      #3048A8;
+  --rv-индиго-свет: #6078D8;
+  --rv-индиго-rgb:  48,72,168;
+  --rv-свет-rgb:    96,120,216;
+
+  /* Тревога. Только акт «Периметр». */
+  --rv-тревога:     #FF6A3C;
+  --rv-тревога-rgb: 255,106,60;
+
+  /* Бирюза родственного сайта. Нужна ровно в одном месте - на воротах
+     стыковки с Rocket CDN, чтобы прокол в его сторону был его цвета. */
+  --rv-cdn:         #30A8D8;
+  --rv-cdn-rgb:     48,168,216;
+
+  --rv-кромка:      rgba(96,120,216,.22);
+  --rv-плита:       rgba(10,14,32,.72);
+
+  --rv-шрифт: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Ритм. Один шаг, от него всё остальное: так вертикальный ритм
+     держится сам, без подгонки каждого блока руками. */
+  --rv-шаг: 8px;
+  --rv-поле: clamp(18px, 5vw, 64px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--rv-фон);
+  color: var(--rv-текст);
+  font-family: var(--rv-шрифт);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Горизонтального выезда быть не должно ни на одной ширине. Это не
+   украшение: на телефоне выезд превращает вертикальную прокрутку в
+   диагональную, и плёнка сайта начинает дёргаться. */
+html, body { overflow-x: clip; }
+
+img, canvas, svg { max-width: 100%; display: block; }
+
+a { color: inherit; }
+
+/* ── Плёнка ────────────────────────────────────────────────────
+   Каждый акт это отрезок прокрутки. Высота задаётся в экранах, а
+   содержимое липнет к окну: так доля внутри акта считается честно и
+   одинаково на любом устройстве. */
+.rv-акт { position: relative; }
+.rv-акт > .rv-кадр {
+  position: sticky; top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.rv-слой {
+  position: absolute; inset: 0;
+  display: grid; align-content: center;
+  padding: 0 var(--rv-поле);
+  pointer-events: none;
+}
+.rv-слой > * { pointer-events: auto; }
+
+.rv-холст { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ── Типографика ───────────────────────────────────────────────
+   Заголовок набирается от ширины окна, но с потолком: на широком
+   мониторе строка иначе разъезжается до плаката и перестаёт читаться
+   как речь. */
+.rv-над {
+  font-size: clamp(10px, 1.1vw, 12px);
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--rv-текст-очень-тихо);
+  margin: 0 0 calc(var(--rv-шаг) * 2);
+}
+.rv-заг {
+  font-size: clamp(30px, 5.4vw, 68px);
+  line-height: 1.04; letter-spacing: -.02em; font-weight: 700;
+  margin: 0 0 calc(var(--rv-шаг) * 3);
+  max-width: 16ch;
+}
+.rv-абз {
+  font-size: clamp(15px, 1.35vw, 18px);
+  line-height: 1.6; color: var(--rv-текст-тихо);
+  margin: 0; max-width: 46ch;
+}
+
+.rv-марка { display: flex; align-items: center; gap: calc(var(--rv-шаг) * 1.5); }
+.rv-марка img { width: 44px; height: 44px; }
+.rv-марка b { font-size: 15px; letter-spacing: .16em; font-weight: 700; }
+.rv-марка i {
+  font-style: normal; font-size: 9px; letter-spacing: .3em;
+  color: var(--rv-текст-очень-тихо); display: block;
+}
+
+/* ── Створ ─────────────────────────────────────────────────────
+   Закрытый вход. Выглядит одинаково и при неверном ключе, и при его
+   отсутствии: по виду створа нельзя понять, существует ли за ним
+   что-нибудь вообще. */
+.rv-створ {
+  position: fixed; inset: 0; z-index: 90;
+  display: grid; place-content: center; justify-items: center;
+  gap: calc(var(--rv-шаг) * 3);
+  background: var(--rv-фон);
+  text-align: center; padding: var(--rv-поле);
+}
+.rv-створ p {
+  margin: 0; max-width: 34ch;
+  color: var(--rv-текст-тихо); font-size: 15px; line-height: 1.6;
+}
+html.rv-открыт .rv-створ { display: none; }
+/* До проверки ключа содержимое не показываем вовсе: иначе оно мигнёт
+   под створом на медленной машине.
+
+   Гасит плёнку критический стиль в шапке документа, и гасит безусловно:
+   иначе она мигнёт в тот промежуток, пока этот файл ещё едет. Значит
+   ВЕРНУТЬ видимость обязан кто-то здесь - само по себе это не
+   произойдёт. Правило ниже и есть тот самый возврат, и без него сайт
+   открывается в чёрный экран: створ уходит, а содержимое остаётся
+   невидимым. Поймано снимком экрана; проверки разметки этого не видели,
+   потому что текст узлов читается и у невидимого блока. */
+html:not(.rv-открыт) .rv-плёнка { visibility: hidden; }
+html.rv-открыт .rv-плёнка { visibility: visible; }
+
+/* ── Кнопки ────────────────────────────────────────────────────
+   Сорок четыре точки в высоту - порог, ниже которого палец начинает
+   промахиваться. Держим его сразу, а не чиним потом обмером. */
+.rv-кн {
+  display: inline-flex; align-items: center; gap: var(--rv-шаг);
+  min-height: 44px; padding: 0 calc(var(--rv-шаг) * 2.5);
+  border: 1px solid var(--rv-кромка); border-radius: 3px;
+  background: var(--rv-плита); color: var(--rv-текст);
+  font: 600 13px/1 var(--rv-шрифт); letter-spacing: .08em;
+  text-decoration: none; cursor: pointer;
+  transition: border-color .2s, box-shadow .2s;
+}
+.rv-кн:hover, .rv-кн:focus-visible {
+  border-color: rgba(var(--rv-свет-rgb), .7);
+  box-shadow: 0 0 26px -8px rgba(var(--rv-свет-rgb), .8);
+}
+.rv-кн-гл {
+  background: linear-gradient(120deg, var(--rv-индиго-тень), var(--rv-индиго-свет));
+  border-color: transparent;
+}
+/* Ворота в сторону Rocket CDN носят его цвет, а не наш: прокол туда
+   должен читаться как чужая сторона ещё до нажатия. */
+.rv-кн-cdn { border-color: rgba(var(--rv-cdn-rgb), .5); }
+.rv-кн-cdn:hover, .rv-кн-cdn:focus-visible {
+  border-color: rgba(var(--rv-cdn-rgb), .9);
+  box-shadow: 0 0 26px -8px rgba(var(--rv-cdn-rgb), .9);
+}
+
+/* ── Подвал ────────────────────────────────────────────────────*/
+.rv-подвал {
+  padding: calc(var(--rv-шаг) * 8) var(--rv-поле) calc(var(--rv-шаг) * 6);
+  border-top: 1px solid var(--rv-кромка);
+  display: grid; gap: calc(var(--rv-шаг) * 3);
+  color: var(--rv-текст-тихо); font-size: 14px;
+}
+.rv-подвал a { min-height: 44px; display: inline-flex; align-items: center; }
+
+/* ── Уважение к настройкам человека ────────────────────────────
+   При просьбе убрать движение сайт не ломается и не пустеет: акты
+   остаются, они просто перестают двигаться. Отказывать в содержимом
+   нельзя - на этом уже обожглись в родственном проекте. */
+@media (prefers-reduced-motion: reduce) {
+  .rv-акт { height: auto !important; }
+  .rv-акт > .rv-кадр { position: static; height: auto; padding: 14vh 0; }
+}
+
+@media (pointer: coarse) {
+  .rv-подвал a, .rv-кн { min-height: 44px; }
+}
+
+/* ── Блоки фактов ──────────────────────────────────────────────
+   Числа приезжают из одного файла (assets/rv-data.js), разметка держит
+   только пустые гнёзда. Оформление здесь общее для всех гнёзд: они
+   родня по смыслу, и разное оформление читалось бы как разные сущности.
+
+   Сетка везде авто-заполняемая. Причина не в красоте: у станций три
+   позиции, у тарифов две, у звена три, и жёсткие колонки под каждое
+   гнездо пришлось бы чинить на каждой новой ширине по отдельности. */
+.rv-станции, .rv-тех { list-style: none; margin: calc(var(--rv-шаг)*3) 0 0; padding: 0; }
+.rv-станции, .rv-тех, .rv-доки, .rv-звено {
+  display: grid; gap: var(--rv-шаг);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  max-width: 760px;
+}
+.rv-доки, .rv-звено { margin-top: calc(var(--rv-шаг)*3); }
+
+.rv-станции li, .rv-тех li, .rv-док, .rv-орбита {
+  border: 1px solid var(--rv-кромка); border-radius: 3px;
+  background: var(--rv-плита);
+  padding: calc(var(--rv-шаг)*2);
+  display: grid; gap: calc(var(--rv-шаг)*.5);
+  /* Левая кромка марочного цвета вместо заливки: заливка спорила бы с
+     кадром за спиной, а кромка держит принадлежность к бренду и
+     оставляет космос видимым. */
+  border-left: 2px solid rgba(var(--rv-свет-rgb), .55);
+}
+.rv-станции b, .rv-тех b, .rv-док b, .rv-орбита b {
+  font-size: 15px; letter-spacing: .04em;
+}
+.rv-орбита b { font-size: 24px; letter-spacing: -.01em; }
+.rv-станции span, .rv-тех span, .rv-док span, .rv-орбита i {
+  font-style: normal; font-size: 13px; line-height: 1.45;
+  color: var(--rv-текст-тихо);
+}
+.rv-док i {
+  font-style: normal; font-size: 12px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--rv-текст-очень-тихо);
+}
+.rv-док u {
+  text-decoration: none; font-size: 19px; font-weight: 700;
+  margin-top: calc(var(--rv-шаг)*.5);
+}
+
+.rv-сноска {
+  margin: calc(var(--rv-шаг)*2) 0 0; max-width: 52ch;
+  font-size: 13px; line-height: 1.5; color: var(--rv-текст-очень-тихо);
+}
+
+/* Подвал: ссылки в ряд, но на телефоне в столбец - иначе три ссылки по
+   44 точки не помещаются в ширину и рвутся посередине слова. */
+.rv-подвал > div[data-заполнить] {
+  display: flex; flex-wrap: wrap; gap: calc(var(--rv-шаг)*3);
+}
+
+/* Крупная марка первого экрана. Размер в пределах: на телефоне 96 точек
+   съедают треть высоты кадра и вытесняют заголовок за нижнюю кромку. */
+.rv-марка-гл {
+  width: clamp(64px, 8vw, 96px); height: auto;
+  margin-bottom: calc(var(--rv-шаг) * 4);
+}
