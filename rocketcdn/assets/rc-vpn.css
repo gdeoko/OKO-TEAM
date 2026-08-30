@@ -218,7 +218,12 @@ html.rc-product-glitch .rc-vpn-entry-mark {
   .rc-flight .rc-vpn-exit { min-height: 40px; padding: 0 11px 0 9px; gap: 7px; }
   .rc-flight .rc-vpn-exit i { display: none; }
   .rc-flight .rc-vpn-exit b { font-size: 10px; letter-spacing: .06em; }
-  .rc-flight .rcf-holo .rc-vpn-mark-cap { top: calc(100% + 9px); font-size: 8px; letter-spacing: .12em; }
+  /* Девять точек, а не восемь. Проект сам объявил девятку нижней
+     границей читаемого (см. комментарий в rc-flight.css у правила
+     для узких экранов), и подпись марки была единственным местом,
+     которое опустилось ниже собственной границы команды. Разрядку
+     чуть убавляем, чтобы подпись не стала шире марки. */
+  .rc-flight .rcf-holo .rc-vpn-mark-cap { top: calc(100% + 9px); font-size: 9px; letter-spacing: .10em; }
 }
 @media (max-width: 390px) {
   .rc-flight .rc-vpn-exit svg { width: 17px; height: 17px; }
