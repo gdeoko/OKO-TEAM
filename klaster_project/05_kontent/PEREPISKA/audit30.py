@@ -199,8 +199,18 @@ def проверить(единицы, фильтр=""):
     return беды
 
 
+def всё():
+    """Все недели месяца, какие уже переписаны."""
+    из = []
+    for модуль in ("nedelya1_chast1", "nedelya1_chast2", "nedelya2",
+                   "nedelya3", "nedelya4"):
+        try:
+            из += __import__(модуль).ЕДИНИЦЫ
+        except ModuleNotFoundError:
+            continue
+    return из
+
+
 if __name__ == "__main__":
-    from nedelya1_chast1 import ЕДИНИЦЫ as ч1
-    from nedelya1_chast2 import ЕДИНИЦЫ as ч2
     фильтр = sys.argv[1] if len(sys.argv) > 1 else ""
-    sys.exit(1 if проверить(ч1 + ч2, фильтр) else 0)
+    sys.exit(1 if проверить(всё(), фильтр) else 0)

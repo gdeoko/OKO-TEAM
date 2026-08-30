@@ -8,6 +8,13 @@ import os, subprocess, sys, time
 sys.path.insert(0, "/opt/oko-poster/perepiska")
 from promty_nedeli import ПРОМПТЫ
 
+# Недели 2-4 лежат в своём файле, склеиваем в один каталог.
+try:
+    from promty_mesyaca import ПРОМПТЫ as ЕЩЁ
+    ПРОМПТЫ = dict(ПРОМПТЫ, **ЕЩЁ)
+except ModuleNotFoundError:
+    pass
+
 РЕФЫ = "/opt/oko-poster/klaster_ref_small"
 КУДА = "/opt/oko-poster/klaster_nedelya1"
 os.makedirs(КУДА, exist_ok=True)

@@ -14,8 +14,7 @@ sys.path.insert(0, "/opt/oko-poster/perepiska")
 from config import config
 from core import tg_net
 from emo import обычные, премиум
-from nedelya1_chast1 import ЕДИНИЦЫ as ч1
-from nedelya1_chast2 import ЕДИНИЦЫ as ч2
+from audit30 import всё
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 
@@ -70,7 +69,10 @@ def тело(е):
 
 
 async def main():
-    единицы = ч1 + ч2
+    # Какую неделю отправляем: НЕДЕЛЯ=w2 шлёт только вторую.
+    метка = os.getenv("НЕДЕЛЯ", "")
+    единицы = [е for е in всё() if not метка or е["код"].startswith(метка)]
+    print(f"к отправке единиц: {len(единицы)}")
     os.makedirs(ВРЕМЕНКА, exist_ok=True)
     for к in ("", "-journal", "-wal", "-shm"):
         и = os.path.join(str(config.SESSIONS_DIR), f"{ACC}.session{к}")
@@ -107,9 +109,10 @@ async def main():
                 print(f"{метка}: id {m.id} (обычные эмодзи, у аккаунта нет премиума)")
             else:
                 print(f"{метка}: НЕ УШЛО, {str(беда)[:90]}")
-        await asyncio.sleep(2.5)
+        await asyncio.sleep(7)
 
-    await послать(ШАПКА, "шапка")
+    if not метка:
+        await послать(ШАПКА, "шапка")
     for е in единицы:
         кадр = f"{КАДРЫ}/{е['кадр'].split('..')[0]}.png" if е.get("кадр") else ""
         if кадр and os.path.exists(кадр):
@@ -118,7 +121,7 @@ async def main():
                                          parse_mode=ParseMode.HTML,
                                          message_thread_id=ВЕТКА)
                 print(f"{е['код']} кадр: id {m.id}")
-                await asyncio.sleep(2.5)
+                await asyncio.sleep(7)
             except Exception as беда:
                 print(f"{е['код']} кадр не ушёл: {str(беда)[:70]}")
         await послать(тело(е), f"{е['код']} текст")
