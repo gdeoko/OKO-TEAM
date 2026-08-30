@@ -103,70 +103,77 @@
      сайт, и источник света, поставленный здесь, изменил бы материалы
      соседних актов. Поэтому освещение поддельное - направление солнца
      задано числом прямо в шейдере. Это дешевле настоящего и никого не
-     задевает. */
+     задевает.
+
+     ИМЕНА ВНУТРИ ШЕЙДЕРОВ ЛАТИНИЦЕЙ, И ЭТО НЕ НЕБРЕЖНОСТЬ. Язык шейдеров
+     допускает в именах только латиницу, цифры и подчёркивание. Кириллица
+     в имени переменной не даёт внятной ошибки: программа просто не
+     собирается, а браузер сыплет «useProgram: program not valid» сотнями
+     строк, и сцена молча чернеет. Поймано ровно так на первом прогоне.
+     Поэтому здесь имена латиницей, а объяснения - в комментариях рядом. */
   var ВЕРШИНЫ = [
-    "varying vec3 vН;",
-    "varying vec3 vГ;",
+    "varying vec3 vN;",   /* нормаль в мире */
+    "varying vec3 vI;",   /* направление на камеру */
     "void main() {",
-    "  vec4 мир = modelMatrix * vec4(position, 1.0);",
-    "  vН = normalize(mat3(modelMatrix) * normal);",
-    "  vГ = normalize(cameraPosition - мир.xyz);",
-    "  gl_Position = projectionMatrix * viewMatrix * мир;",
+    "  vec4 mir = modelMatrix * vec4(position, 1.0);",
+    "  vN = normalize(mat3(modelMatrix) * normal);",
+    "  vI = normalize(cameraPosition - mir.xyz);",
+    "  gl_Position = projectionMatrix * viewMatrix * mir;",
     "}"
   ].join("\n");
 
   var ПЛАНЕТА_ШЕЙДЕР = [
-    "uniform vec3 солнце;",
-    "uniform vec3 цветДня;",
-    "uniform vec3 цветНочи;",
-    "uniform vec3 цветКромки;",
-    "varying vec3 vН;",
-    "varying vec3 vГ;",
+    "uniform vec3 sun;",
+    "uniform vec3 den;",     /* цвет дневной стороны */
+    "uniform vec3 noch;",    /* цвет ночной стороны */
+    "uniform vec3 kromka;",  /* цвет кромки атмосферы */
+    "varying vec3 vN;",
+    "varying vec3 vI;",
     "void main() {",
-    "  float с = dot(vН, солнце);",
+    "  float s = dot(vN, sun);",
     /* Переход день-ночь намеренно широкий: резкий терминатор читается
        как вырезанный из бумаги круг, а не как шар. */
-    "  float день = smoothstep(-0.35, 0.75, с);",
-    "  vec3 c = mix(цветНочи, цветДня, день);",
+    "  float d = smoothstep(-0.35, 0.75, s);",
+    "  vec3 c = mix(noch, den, d);",
     /* Полосы широт: планета без них выглядит крашеным мячом. Считаем от
        нормали, а не текстурой - текстур в этой сборке ещё нет. */
-    "  float полосы = 0.5 + 0.5 * sin(vН.y * 14.0);",
-    "  c *= 0.92 + 0.08 * полосы;",
-    "  float кромка = pow(1.0 - max(dot(vН, vГ), 0.0), 3.0);",
-    "  c += цветКромки * кромка * (0.20 + 0.80 * день);",
+    "  float pol = 0.5 + 0.5 * sin(vN.y * 14.0);",
+    "  c *= 0.92 + 0.08 * pol;",
+    "  float kr = pow(1.0 - max(dot(vN, vI), 0.0), 3.0);",
+    "  c += kromka * kr * (0.20 + 0.80 * d);",
     "  gl_FragColor = vec4(c, 1.0);",
     "}"
   ].join("\n");
 
   var АТМОСФЕРА_ШЕЙДЕР = [
-    "uniform vec3 цвет;",
-    "uniform float сила;",
-    "varying vec3 vН;",
-    "varying vec3 vГ;",
+    "uniform vec3 cvet;",
+    "uniform float sila;",
+    "varying vec3 vN;",
+    "varying vec3 vI;",
     "void main() {",
     /* Оболочка рисуется изнутри (BackSide), поэтому нормаль смотрит от
-       камеры и скалярное произведение берём со знаком минус. */
-    "  float к = pow(clamp(0.72 + dot(vН, vГ), 0.0, 1.0), 3.0);",
-    "  gl_FragColor = vec4(цвет * сила, к * сила);",
+       камеры, и на кромке скалярное произведение уходит к минус единице. */
+    "  float k = pow(clamp(0.72 + dot(vN, vI), 0.0, 1.0), 3.0);",
+    "  gl_FragColor = vec4(cvet * sila, k * sila);",
     "}"
   ].join("\n");
 
   var КОРПУС_ШЕЙДЕР = [
-    "uniform vec3 солнце;",
-    "uniform vec3 цвет;",
-    "uniform vec3 цветЖара;",
-    "uniform float жар;",
-    "varying vec3 vН;",
-    "varying vec3 vГ;",
+    "uniform vec3 sun;",
+    "uniform vec3 cvet;",
+    "uniform vec3 jarCvet;",
+    "uniform float jar;",
+    "varying vec3 vN;",
+    "varying vec3 vI;",
     "void main() {",
-    "  float с = max(dot(vН, солнце), 0.0);",
-    "  vec3 c = цвет * (0.30 + 0.70 * с);",
-    "  float кромка = pow(1.0 - max(dot(vН, vГ), 0.0), 2.2);",
+    "  float s = max(dot(vN, sun), 0.0);",
+    "  vec3 c = cvet * (0.30 + 0.70 * s);",
+    "  float kr = pow(1.0 - max(dot(vN, vI), 0.0), 2.2);",
     /* Кромка есть всегда: без неё погашенная станция сливается с
        чёрным фоном и человек не понимает, что там вообще что-то есть.
        Зажигание её усиливает, а не создаёт. */
-    "  c += цветЖара * кромка * (0.22 + 0.90 * жар);",
-    "  c += цветЖара * жар * 0.30;",
+    "  c += jarCvet * kr * (0.22 + 0.90 * jar);",
+    "  c += jarCvet * jar * 0.30;",
     "  gl_FragColor = vec4(c, 1.0);",
     "}"
   ].join("\n");
@@ -273,10 +280,10 @@
     var сег = ст === 0 ? 28 : (ст === 1 ? 44 : 72);
     var м = new T.ShaderMaterial({
       uniforms: {
-        солнце:     { value: new T.Vector3(0.45, 0.42, 0.79).normalize() },
-        цветДня:    { value: цвет(Ц.планета) },
-        цветНочи:   { value: цвет(Ц.тень) },
-        цветКромки: { value: цвет(Ц.свет) }
+        sun:    { value: new T.Vector3(0.45, 0.42, 0.79).normalize() },
+        den:    { value: цвет(Ц.планета) },
+        noch:   { value: цвет(Ц.тень) },
+        kromka: { value: цвет(Ц.свет) }
       },
       vertexShader: ВЕРШИНЫ,
       fragmentShader: ПЛАНЕТА_ШЕЙДЕР
@@ -290,8 +297,8 @@
     var сег = ст === 0 ? 24 : 40;
     var м = new T.ShaderMaterial({
       uniforms: {
-        цвет: { value: цвет(Ц.свет) },
-        сила: { value: ст === 0 ? 0.5 : 0.8 }
+        cvet: { value: цвет(Ц.свет) },
+        sila: { value: ст === 0 ? 0.5 : 0.8 }
       },
       vertexShader: ВЕРШИНЫ,
       fragmentShader: АТМОСФЕРА_ШЕЙДЕР,
@@ -309,10 +316,10 @@
     var г = new T.Group();
     var м = new T.ShaderMaterial({
       uniforms: {
-        солнце:   { value: new T.Vector3(0.45, 0.42, 0.79).normalize() },
-        цвет:     { value: цвет(Ц.корпус) },
-        цветЖара: { value: цвет(Ц.свет) },
-        жар:      { value: 0 }
+        sun:     { value: new T.Vector3(0.45, 0.42, 0.79).normalize() },
+        cvet:    { value: цвет(Ц.корпус) },
+        jarCvet: { value: цвет(Ц.свет) },
+        jar:     { value: 0 }
       },
       vertexShader: ВЕРШИНЫ,
       fragmentShader: КОРПУС_ШЕЙДЕР
@@ -810,14 +817,14 @@
       var цель = (i === выбрана) ? 1 : ((i === наведена) ? 0.42 : 0);
       станции[i].жар = подтянуть(станции[i].жар, цель, тихо ? 1 : 0.12, dt);
       var пульс = (i === выбрана && !тихо) ? (1 + Math.sin(часы * 2.2) * 0.06) : 1;
-      станции[i].материал.uniforms["жар"].value = станции[i].жар * пульс;
+      станции[i].материал.uniforms["jar"].value = станции[i].жар * пульс;
     }
 
     if (мосты) {
       мосты.material.opacity = 0.20 + (тихо ? 0.10 : (0.5 + Math.sin(часы * 0.9) * 0.5) * 0.16);
     }
     if (атмосфера) {
-      атмосфера.material.uniforms["сила"].value =
+      атмосфера.material.uniforms["sila"].value =
         (W["ступень"] === 0 ? 0.5 : 0.8) * (0.75 + вход * 0.25);
     }
     if (дальние) дальние.rotation.y = -поворотОрбиты * 0.35;
