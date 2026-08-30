@@ -596,6 +596,20 @@ function order_generate_clean_pdfs(array $order): array {
     $jobs = [];
     foreach (order_items_parse($order) as $p) {
         if ($p['dtype'] === '') continue;
+        /* ДОПОЛНИТЕЛЬНЫЙ ДИПЛОМ БЕЗ ПРИСУЖДЁННОЙ НОМИНАЦИИ НЕ ПЕЧАТАЕМ.
+         *
+         * У Самойлова дополнительный диплом присуждён по одной заявке («за
+         * искренность исполнения»), а заказ оформлен по другой, где не присуждали
+         * ничего. Бланк всё равно готовился — и выходил с выдуманной наградой.
+         * Печатать нечего: жюри решения не принимало, подтвердить документ
+         * невозможно. Позиция остаётся в заказе видимой, но лист не готовим. */
+        if ($p['dtype'] === 'extra' && trim((string) ($app['extra_diploma'] ?? '')) === '') {
+            if (function_exists('audit')) {
+                audit('order_extra_not_awarded', 'awards_orders', (int) ($order['id'] ?? 0),
+                      ['app' => $appId, 'number' => (string) ($app['number'] ?? '')]);
+            }
+            continue;
+        }
         $named = in_array($p['dtype'], ['named', 'thanks'], true);
         $n = $named ? max(1, (int) $p['count']) : 1;   // неименные печатаются одним образцом
         for ($i = 0; $i < $n; $i++) {

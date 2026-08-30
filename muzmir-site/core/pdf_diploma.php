@@ -283,7 +283,9 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             $looksLikeCode = $type === '' || (bool) preg_match('~^[a-z0-9_\-]+$~', $type);
             if (!$looksLikeCode && !in_array($type, $knownTypes, true)) $specialSrc = $type;
             elseif ($result !== '')                                     $specialSrc = $result;
-            else                                                        $specialSrc = 'За артистизм';
+            // Номинацию не выдумываем: пусто — печатаем звание из заявки.
+            // Прежняя заглушка «За артистизм» выдавала награду, которой не было.
+            else                                                        $specialSrc = $result;
         }
         $special = mb_strtoupper($specialSrc, 'UTF-8');
 
