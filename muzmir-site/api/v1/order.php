@@ -221,7 +221,7 @@ if (!$isClubOrder) {
               . 'выберется из списка сама.'], 422);
     }
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
-    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at,
+    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at, a.extra_diploma,
                           c.id AS comp_id, c.name AS comp_name, c.is_paid AS comp_is_paid,
                           c.results_mode, c.results_published_at, c.status AS comp_status, c.end_date
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
@@ -305,6 +305,22 @@ if (!$isClubOrder && $applicationId) {
         );
         if (!$allowed) {
             json_out(['ok' => false, 'error' => 'Позиция «' . (string) ($ni['item'] ?? '') . '»: ' . $why], 422);
+        }
+        /* ДОПОЛНИТЕЛЬНЫЙ ДИПЛОМ ЗАКАЗЫВАЮТ ТОЛЬКО ТОГДА, КОГДА ЕГО ПРИСУДИЛИ.
+         *
+         * Он выдаётся не за участие, а за отдельное достоинство выступления —
+         * «за артистизм», «за патриотизм», — и решает это жюри. Если в заявке
+         * дополнительный диплом не проставлен, печатать нечего: номинацию не
+         * выдумаешь. Заказ №77 такую позицию пропустил, человек заплатил 350 ₽ и
+         * документа не получил — потому что его и не существует.
+         *
+         * Проверяем на сервере: формы шлют сюда обе, а подсказку в браузере
+         * обойти ничего не стоит. */
+        if (preg_match('~дополнительн~ui', (string) ($ni['item'] ?? ''))
+            && trim((string) ($appRow['extra_diploma'] ?? '')) === '') {
+            json_out(['ok' => false, 'error' => 'Дополнительный диплом по этой заявке не присуждён. '
+                . 'Его назначает жюри за отдельное достоинство выступления (за артистизм, за патриотизм '
+                . 'и подобное) — и он всегда назван в Вашем результате. Заказать его отдельно нельзя.'], 422);
         }
     }
 

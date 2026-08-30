@@ -149,7 +149,10 @@ if (!$bad) $say('  чисто: недостач нет');
 $head('3. ИМЕННОЙ ИЛИ БЛАГОДАРНОСТЬ СО ЗВАНИЕМ ВМЕСТО ФИО');
 $bad = 0;
 foreach (all("SELECT number, type, result, sent_at FROM diplomas WHERE type IN ('named','thanks')") as $d) {
-    if (!preg_match('~ЛАУРЕАТ|ДИПЛОМАНТ|ГРАН-ПРИ|УЧАСТНИК КОНКУРСА~ui', (string) $d['result'])) continue;
+    /* Ловим звание, только если им НАЧИНАЕТСЯ строка. Иначе под проверку попадала
+     * законная благодарность «Благодарность за подготовку УЧАСТНИКОВ: Мельникова…» —
+     * слово встретилось в тексте, а ФИО на месте. */
+    if (!preg_match('~^(ГРАН-ПРИ|ЛАУРЕАТ|ДИПЛОМАНТ|УЧАСТНИК)~ui', trim((string) $d['result']))) continue;
     $bad++; $problems++;
     printf("  %-22s %-8s «%s»%s\n", (string) $d['number'], (string) $d['type'],
         mb_substr((string) $d['result'], 0, 30), trim((string) $d['sent_at']) !== '' ? '  УЖЕ ОТПРАВЛЕН' : '');
@@ -259,6 +262,26 @@ foreach (all("SELECT id, full_name, amount, items, clean_pdfs FROM awards_orders
         $o['id'], mb_substr((string) $o['full_name'], 0, 26), (string) $o['amount'], $paper, $sheets);
 }
 if (!$bad) $say('  чисто: печатается ровно то, что оплачено');
+
+$head('12. ОПЛАЧЕН ДОПОЛНИТЕЛЬНЫЙ ДИПЛОМ, КОТОРЫЙ НЕ ПРИСУЖДАЛИ');
+/* Дополнительный диплом даёт жюри за отдельное достоинство выступления, и без
+ * присуждения печатать нечего: номинацию не выдумаешь. Заказ №77 такую позицию
+ * пропустил — человек заплатил 350 ₽ и документа не получил, потому что его не
+ * существует. На приёме заказа проверка теперь стоит; здесь ловим прошлое. */
+$bad = 0;
+foreach (all("SELECT o.id, o.full_name, o.items, a.number, a.extra_diploma
+                FROM awards_orders o JOIN applications a ON a.id=o.application_id
+               WHERE o.$PAID") as $o) {
+    if (trim((string) $o['extra_diploma']) !== '') continue;
+    foreach ((array) json_decode((string) $o['items'], true) as $it) {
+        if (!preg_match('~дополнительн~ui', (string) ($it['item'] ?? ''))) continue;
+        $bad++; $problems++;
+        printf("  заказ #%-4d %-24s заявка %s: оплачено %s руб, а диплом не присуждён\n",
+            $o['id'], mb_substr((string) $o['full_name'], 0, 24), (string) $o['number'],
+            (string) ($it['price'] ?? '0'));
+    }
+}
+if (!$bad) $say('  чисто: дополнительный диплом оплачен только там, где он присуждён');
 
 $head('11. ДВЕ ПОСЫЛКИ ОДНОМУ ЧЕЛОВЕКУ НА ОДИН АДРЕС');
 /* Педагог оформил четыре заказа за восемь минут: первый адрес вписал руками, три
