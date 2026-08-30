@@ -100,12 +100,17 @@ a { color: inherit; }
   font-size: clamp(30px, 5.4vw, 68px);
   line-height: 1.04; letter-spacing: -.02em; font-weight: 700;
   margin: 0 0 calc(var(--rv-шаг) * 3);
-  max-width: 16ch;
+  /* Потолок в знаках, но не шире экрана. Без второй половины на 412
+     точках заголовок в 16 знаков занимал 667 и уезжал за правую
+     кромку. Документ при этом не выезжал вбок (его режет overflow-x у
+     корня), поэтому замер выезда документа показывал ноль - а текст
+     всё равно обрезался. Меряем слой, а не документ. */
+  max-width: min(16ch, 100%);
 }
 .rv-абз {
   font-size: clamp(15px, 1.35vw, 18px);
   line-height: 1.6; color: var(--rv-текст-тихо);
-  margin: 0; max-width: 46ch;
+  margin: 0; max-width: min(46ch, 100%);
 }
 
 .rv-марка { display: flex; align-items: center; gap: calc(var(--rv-шаг) * 1.5); }
@@ -188,7 +193,25 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
    нельзя - на этом уже обожглись в родственном проекте. */
 @media (prefers-reduced-motion: reduce) {
   .rv-акт { height: auto !important; }
-  .rv-акт > .rv-кадр { position: static; height: auto; padding: 14vh 0; }
+  .rv-акт > .rv-кадр { position: static; height: auto; }
+  /* Слой обязан выйти из абсолютного положения ВМЕСТЕ с кадром.
+     Пока кадр становился обычным, а слой оставался прижатым к его
+     краям, все акты наваливались друг на друга в одну кашу из
+     заголовков - поймано снимком экрана, числовой замер наложений
+     этого не увидел, потому что коробки слоёв формально не
+     пересекались.
+
+     Полей сверху и снизу тут больше, чем было у кадра: в обычном
+     потоке акты идут подряд, и без воздуха между ними лента
+     читается сплошняком. */
+  .rv-акт > .rv-кадр > .rv-слой {
+    position: static; inset: auto;
+    padding: 12vh var(--rv-поле);
+  }
+  /* Объёмный холст в этом режиме не нужен: сцена в нём не движется, а
+     место занимает. Содержимое при этом НЕ пропадает - оно всё в
+     разметке, и это принципиально. */
+  .rv-мир { display: none; }
 }
 
 @media (pointer: coarse) {
@@ -206,12 +229,18 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
 .rv-станции, .rv-тех { list-style: none; margin: calc(var(--rv-шаг)*3) 0 0; padding: 0; }
 .rv-станции, .rv-тех, .rv-доки, .rv-звено {
   display: grid; gap: var(--rv-шаг);
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  max-width: 760px;
+  /* Минимум колонки тоже не шире экрана: с жёсткими 210 точками сетка
+     на узком складывала ряд в 646 точек при окне 412. */
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  max-width: min(760px, 100%);
 }
 .rv-доки, .rv-звено { margin-top: calc(var(--rv-шаг)*3); }
 
 .rv-станции li, .rv-тех li, .rv-док, .rv-орбита {
+  /* Без этого длинное слово внутри ячейки распирает колонку сетки
+     шире её доли: у элементов сетки наименьшая ширина по умолчанию
+     равна ширине содержимого, а не нулю. */
+  min-width: 0;
   border: 1px solid var(--rv-кромка); border-radius: 3px;
   background: var(--rv-плита);
   padding: calc(var(--rv-шаг)*2);
@@ -239,7 +268,7 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
 }
 
 .rv-сноска {
-  margin: calc(var(--rv-шаг)*2) 0 0; max-width: 52ch;
+  margin: calc(var(--rv-шаг)*2) 0 0; max-width: min(52ch, 100%);
   font-size: 13px; line-height: 1.5; color: var(--rv-текст-очень-тихо);
 }
 
@@ -301,4 +330,28 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
 
 @media (prefers-reduced-motion: reduce) {
   .rv-загр, .rv-загр-путь i { transition: none; }
+}
+
+/* ── Карточки станций как орган выбора ─────────────────────────
+   Карточки описаны выше как простой список фактов. Здесь они получают
+   поведение: акт «Выход» делает их третьим способом выбрать станцию,
+   наравне с кадром и клавиатурой.
+
+   Вес селекторов намеренно избыточен. Правило одного класса проигрывает
+   по весу описанию «.rv-станции li» выше, и класс на карточке
+   появлялся, а цвет не менялся. Поймано опросом вычисленного стиля, а
+   не глазом: на снимке разница между выбранной и невыбранной сводилась
+   к одному ореолу и выглядела правдоподобной. */
+.rv-станции li.rv-станция {
+  cursor: pointer;
+  transition: border-color .25s, box-shadow .25s, background-color .25s;
+}
+.rv-станции li.rv-станция:hover { border-left-color: rgba(138,156,255,.9); }
+.rv-станции li.rv-станция:focus-visible {
+  outline: 2px solid rgba(138,156,255,.9); outline-offset: 2px;
+}
+.rv-станции li.rv-станция-выбрана {
+  border-left-color: #8A9CFF;
+  background: rgba(48,72,168,.24);
+  box-shadow: 0 0 30px -10px rgba(96,120,216,.95);
 }

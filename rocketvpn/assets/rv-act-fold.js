@@ -47,32 +47,49 @@
      Имена внутри GLSL латиницей: не-ASCII идентификатор часть драйверов
      не соберёт, и акт станет чёрным пятном. Объяснения - в JS. */
 
-  /* Свёртка. Плоскость стены переводится в полярные координаты и
-     стягивается к кольцу радиуса uRing. Одновременно центр уходит от
-     камеры: без этого ухода стена сворачивается в блин, а нам нужна
-     воронка, в которую можно войти. */
+  /* Свёртка. Стена переводится в полярные координаты и стягивается к
+     кольцу радиуса uRing. Одновременно центр уходит от камеры: без этого
+     ухода стена сворачивается в блин, а нам нужна воронка, в которую
+     можно войти.
+
+     ПОЧЕМУ СЕТКА КОЛЬЦЕВАЯ, А НЕ ПРЯМОУГОЛЬНАЯ. Плоскость при свёртке
+     вырождается в своём центре: вершина, стоявшая на нуле, обязана
+     уехать на радиус кольца, и треугольники вокруг неё растягиваются в
+     кашу. На снимке это выглядело как мутное пятно вместо входа. У
+     кольцевой сетки центра нет вовсе, поэтому вырождаться нечему. */
   var В_СТЕНА = [
     "uniform float uFold;",
     "uniform float uRing;",
     "varying vec2 vUv;",
+    "varying vec2 vP;",
     "varying float vR;",
+    "varying float vA;",
     "void main(){",
     "  vUv = uv;",
+    "  vP = position.xy;",
     "  vec3 p = position;",
     "  float r = length(p.xy);",
     "  float a = atan(p.y, p.x);",
     "  float t = clamp(r / 26.0, 0.0, 1.0);",
-    "  float rr = mix(r, uRing + (r - uRing) * 0.12, uFold);",
+    /* Сжатие к кольцу неполное намеренно. Стянуть всё в узкий обод
+       значит положить десяток рядов решётки на несколько пикселей: они
+       сольются в мутную полосу, и вход перестанет читаться входом. */
+    "  float rr = mix(r, uRing + (r - uRing) * 0.30, uFold);",
     "  a += uFold * 1.7 * (1.0 - t);",
-    "  float z = -uFold * 20.0 * (1.0 - t) * (1.0 - t);",
+    "  float z = -uFold * 15.0 * (1.0 - t) * (1.0 - t);",
     "  p.x = cos(a) * rr;",
     "  p.y = sin(a) * rr;",
     "  p.z = z;",
     "  vR = rr;",
+    "  vA = a * 0.15915 + 0.5;",
     "  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);",
     "}"
   ].join("\n");
 
+  /* Решётка обязана быть узнаваемой: это та же стена, что человек
+     разглядывал в акте «Периметр». Поэтому ячеек немного, линии толстые,
+     а на пересечениях стоят узлы - без них решётка читается как
+     миллиметровка, а не как блокпост. */
   var Ф_СТЕНА = [
     "uniform float uFold;",
     "uniform float uRing;",
@@ -80,13 +97,28 @@
     "uniform vec3 uIndigo;",
     "uniform vec3 uGlow;",
     "varying vec2 vUv;",
+    "varying vec2 vP;",
     "varying float vR;",
+    "varying float vA;",
     "void main(){",
-    "  vec2 cell = abs(fract(vUv * vec2(18.0, 12.0)) - 0.5);",
-    "  float line = 1.0 - smoothstep(0.0, 0.055, min(cell.x, cell.y));",
-    "  float rim = exp(-pow((vR - uRing) * 0.75, 2.0)) * uFold;",
-    "  vec3 c = uIndigo * line * (0.45 + uFold * 0.7) + uGlow * rim * 1.1;",
-    "  float a = (line * 0.55 + rim * 0.95) * uBright;",
+    /* Пока стена стоит стеной, её решётка считается по мировым
+       координатам, а не по uv кольца: иначе клетка расходилась бы
+       веером от центра и стена сразу выдавала бы, что она круглая. */
+    "  vec2 cell = abs(fract(vP / 3.0) - 0.5) * 2.0;",
+    "  float line = 1.0 - smoothstep(0.02, 0.12, min(cell.x, cell.y));",
+    "  float node = 1.0 - smoothstep(0.06, 0.26, length(cell));",
+    "  float grid0 = line * 0.6 + node * 0.7;",
+    /* Свёрнутая стена рисуется не той же решёткой, а спицами и кольцами.
+       Прямоугольная клетка, натянутая на воронку, даёт муар и слипается
+       у горловины; спицы с кольцами держат ту же плотность и остаются
+       читаемыми до самого центра. */
+    "  float sp = 1.0 - smoothstep(0.02, 0.16, abs(fract(vA * 30.0) - 0.5) * 2.0);",
+    "  float rg = 1.0 - smoothstep(0.02, 0.18, abs(fract(vR * 0.55) - 0.5) * 2.0);",
+    "  float fold = sp * 0.55 + rg * 0.75;",
+    "  float grid = mix(grid0, fold, uFold);",
+    "  float rim = exp(-pow((vR - uRing) * 0.60, 2.0)) * uFold;",
+    "  vec3 c = uIndigo * grid * 1.0 * (0.7 + uFold * 0.7) + uGlow * rim * 1.0;",
+    "  float a = (grid * 0.5 + rim * 0.8) * uBright;",
     "  gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));",
     "}"
   ].join("\n");
@@ -111,12 +143,16 @@
     "  vec2 uv = gl_FragCoord.xy / uRes;",
     "  vec2 dv = (uv - 0.5) * vec2(uAspect, 1.0);",
     "  float r = length(dv) + 0.05;",
-    "  vec2 off = -normalize(dv) * (uPow * 0.055 / r);",
+    /* Смещение ограничено сверху. Без потолка выборка у самого центра
+       уезжает на пол-экрана, и вместо загиба света получается каша, в
+       которой не читается ни стена, ни кольцо. */
+    "  float bend = min(uPow * 0.05 / r, 0.085);",
+    "  vec2 off = -normalize(dv) * bend;",
     "  vec4 s = texture2D(uFrame, uv + off);",
     "  vec3 c = s.rgb;",
     "  if (uRich > 0.5) {",
-    "    c.r = texture2D(uFrame, uv + off * 1.12).r;",
-    "    c.b = texture2D(uFrame, uv + off * 0.88).b;",
+    "    c.r = texture2D(uFrame, uv + off * 1.03).r;",
+    "    c.b = texture2D(uFrame, uv + off * 0.97).b;",
     "  }",
     "  float ring = exp(-pow((r - 0.22) * 11.0, 2.0)) * uPow;",
     "  c += uGlow * ring * 0.45;",
@@ -137,21 +173,26 @@
     "varying vec2 vUv;",
     "float noi(vec2 p){ return fract(sin(dot(p, vec2(13.71, 7.13))) * 43758.5453); }",
     "void main(){",
-    "  float lane = floor(vUv.x * 56.0);",
+    "  float lane = floor(vUv.x * 44.0);",
     "  float seed = noi(vec2(lane, 3.0));",
-    "  float v = vUv.y * 22.0 + uRun * (0.65 + seed * 0.7);",
+    "  float v = vUv.y * 16.0 + uRun * (0.65 + seed * 0.7);",
     "  float cell = floor(v);",
     "  float f = fract(v);",
     "  float k = noi(vec2(lane, cell));",
-    "  float len = 0.10 + k * 0.34;",
+    "  float len = 0.16 + k * 0.55;",
     "  float streak = 1.0 - smoothstep(0.0, len, f);",
-    "  streak *= step(0.42, k);",
-    "  float mark = step(0.94, k);",
-    "  float inl = 1.0 - smoothstep(0.0, 0.5, abs(fract(vUv.x * 56.0) - 0.5) * 2.0);",
-    "  float depth = smoothstep(0.0, 0.30, vUv.y) * (1.0 - smoothstep(0.86, 1.0, vUv.y));",
-    "  float i = streak * inl * depth * (0.35 + k * 0.8 + mark * 1.6);",
-    "  vec3 c = mix(uIndigo, uGlow, min(1.0, k + mark));",
-    "  gl_FragColor = vec4(c * i * uBright, clamp(i * uBright, 0.0, 1.0));",
+    "  streak *= step(0.30, k);",
+    "  float mark = step(0.92, k);",
+    "  float inl = 1.0 - smoothstep(0.0, 0.5, abs(fract(vUv.x * 44.0) - 0.5) * 2.0);",
+    /* Кольца - это и есть стены тоннеля. Без них поток читается как
+       звёздный разлёт, то есть как полёт в пустоте, а нам нужна труба,
+       у которой видно обшивку. */
+    "  float rw = fract(vUv.y * 9.0 + uRun * 0.07);",
+    "  float ring = pow(1.0 - abs(rw - 0.5) * 2.0, 14.0);",
+    "  float depth = smoothstep(0.0, 0.22, vUv.y) * (1.0 - smoothstep(0.90, 1.0, vUv.y));",
+    "  float i = (streak * inl * (0.5 + k * 1.1 + mark * 2.0) + ring * 0.45) * depth;",
+    "  vec3 c = mix(uIndigo, uGlow, min(1.0, k * 0.8 + mark));",
+    "  gl_FragColor = vec4(c * i * uBright * 1.8, clamp(i * uBright * 1.4, 0.0, 1.0));",
     "}"
   ].join("\n");
 
@@ -161,11 +202,16 @@
     "uniform vec3 uCol;",
     "uniform float uBright;",
     "uniform float uHard;",
+    "uniform float uCore;",
     "varying vec2 vUv;",
     "void main(){",
     "  float dd = length(vUv - 0.5) * 2.0;",
-    "  float a = pow(max(0.0, 1.0 - dd), uHard);",
-    "  gl_FragColor = vec4(uCol, a * uBright);",
+    "  float base = max(0.0, 1.0 - dd);",
+    "  float a = pow(base, uHard);",
+    /* Белое ядро внутри цветного гало. Без него вспышка читается как
+       мягкая подсветка, а на входе в прокол нужен удар. */
+    "  vec3 c = uCol + vec3(1.0) * pow(base, 6.0) * uCore;",
+    "  gl_FragColor = vec4(c, clamp(a * uBright, 0.0, 1.0));",
     "}"
   ].join("\n");
 
@@ -185,15 +231,15 @@
     var цСвет = new T.Color(0x8A9CFF);
 
     /* ── Стена периметра ────────────────────────────────────────
-       Сегментов по горизонтали и вертикали много: свёртка идёт в
-       вершинном шейдере, и на редкой сетке кольцо получилось бы
-       многоугольником. Это отделка, поэтому на слабой ступени сетка
-       реже, но сама стена и её свёртка есть везде. */
-    var сег = W.ступень === 0 ? [48, 32] : (W.ступень === 1 ? [88, 56] : [140, 88]);
+       Сегментов по кругу много: свёртка идёт в вершинном шейдере, и на
+       редкой сетке кольцо получилось бы многоугольником. Это отделка,
+       поэтому на слабой ступени сетка реже, но сама стена и её свёртка
+       есть везде. Внутренний радиус ненулевой - см. пояснение к В_СТЕНА. */
+    var сег = W.ступень === 0 ? [72, 22] : (W.ступень === 1 ? [128, 40] : [200, 60]);
     М.мСтена = new T.ShaderMaterial({
       uniforms: {
         uFold: { value: 0 },
-        uRing: { value: 7.4 },
+        uRing: { value: 4.8 },
         uBright: { value: 1 },
         uIndigo: { value: цИндиго },
         uGlow: { value: цСвет }
@@ -202,7 +248,7 @@
       transparent: true, depthWrite: false, side: T.DoubleSide,
       blending: T.AdditiveBlending
     });
-    М.стена = new T.Mesh(new T.PlaneGeometry(46, 32, сег[0], сег[1]), М.мСтена);
+    М.стена = new T.Mesh(new T.RingGeometry(0.9, 26, сег[0], сег[1]), М.мСтена);
     М.стена.position.z = -6;
     М.стена.renderOrder = 1;
     М.корень.add(М.стена);
@@ -239,7 +285,7 @@
     М.зрачок = new T.Mesh(
       new T.PlaneGeometry(6, 6),
       new T.ShaderMaterial({
-        uniforms: { uCol: { value: цПерелив }, uBright: { value: 0 }, uHard: { value: 3.0 } },
+        uniforms: { uCol: { value: цПерелив }, uBright: { value: 0 }, uHard: { value: 3.0 }, uCore: { value: 0.6 } },
         vertexShader: В_ЭКРАН, fragmentShader: Ф_ПЯТНО,
         transparent: true, depthWrite: false, blending: T.AdditiveBlending
       })
@@ -252,8 +298,8 @@
        Его втягивает в кольцо. Он и есть тот, кого протаскивают сквозь
        прокол, поэтому он уходит вглубь раньше стен. */
     М.свой = new T.Mesh(
-      new T.SphereGeometry(0.26, W.ступень === 0 ? 12 : 20, W.ступень === 0 ? 8 : 14),
-      new T.MeshBasicMaterial({ color: цСвет })
+      new T.SphereGeometry(0.20, W.ступень === 0 ? 12 : 20, W.ступень === 0 ? 8 : 14),
+      new T.MeshBasicMaterial({ color: цСвет, transparent: true })
     );
     М.свой.renderOrder = 3;
     М.корень.add(М.свой);
@@ -261,7 +307,7 @@
     М.свойОреол = new T.Mesh(
       new T.PlaneGeometry(1.7, 1.7),
       new T.ShaderMaterial({
-        uniforms: { uCol: { value: цСвет }, uBright: { value: 0.3 }, uHard: { value: 3.0 } },
+        uniforms: { uCol: { value: цСвет }, uBright: { value: 0.3 }, uHard: { value: 3.0 }, uCore: { value: 0.0 } },
         vertexShader: В_ЭКРАН, fragmentShader: Ф_ПЯТНО,
         transparent: true, depthWrite: false, blending: T.AdditiveBlending
       })
@@ -275,7 +321,7 @@
     М.вспышка = new T.Mesh(
       new T.PlaneGeometry(2, 2),
       new T.ShaderMaterial({
-        uniforms: { uCol: { value: цСвет }, uBright: { value: 0 }, uHard: { value: 1.2 } },
+        uniforms: { uCol: { value: цСвет }, uBright: { value: 0 }, uHard: { value: 1.1 }, uCore: { value: 1.4 } },
         vertexShader: В_ЭКРАН, fragmentShader: Ф_ПЯТНО,
         transparent: true, depthWrite: false, depthTest: false,
         blending: T.AdditiveBlending
@@ -290,7 +336,7 @@
        Квад стоит вплотную к камере и рисуется последним поверх всего.
        Пока линза работает, содержимое акта уходит в мишень и на экран
        попадает только через неё - иначе картинка удвоится. */
-    М.доляМишени = W.ступень === 0 ? 0.5 : (W.ступень === 1 ? 0.72 : 1.0);
+    М.доляМишени = W.ступень === 0 ? 0.45 : (W.ступень === 1 ? 0.6 : 0.7);
     М.мишень = new T.WebGLRenderTarget(2, 2, {
       minFilter: T.LinearFilter, magFilter: T.LinearFilter
     });
@@ -344,7 +390,7 @@
        двигаем её вбок: боковых смещений в этом акте нет. */
     var к = w < 760 ? 0.62 : 1.0;
     М.стена.scale.setScalar(к);
-    М.мСтена.uniforms.uRing.value = 7.4;
+    М.мСтена.uniforms.uRing.value = w < 760 ? 3.0 : 4.8;
   }
 
   /* ── Кадр ─────────────────────────────────────────────────────*/
@@ -361,7 +407,7 @@
        пройти мимо зрителя, а не остаться висеть вдалеке. */
     М.мСтена.uniforms.uFold.value = свёртка;
     М.мСтена.uniforms.uBright.value = 1 - мягко(0.42, 0.56, доля);
-    М.стена.position.z = -6 + вход * 22;
+    М.стена.position.z = -6 + вход * 15;
     М.стена.visible = М.мСтена.uniforms.uBright.value > 0.01;
     /* Кольцо медленно проворачивается вокруг оси взгляда. Это
        единственное вращение в акте, и оно продольное: боковых движений
@@ -370,17 +416,20 @@
 
     /* 2. Пакет человека втягивает внутрь раньше, чем дойдут стены. */
     var тяга = мягко(0.10, 0.44, доля);
-    М.свой.position.set(0, 0, 4.5 - тяга * 26);
-    М.свой.visible = тяга < 0.995;
+    М.свой.position.set(0, 0, 2.0 - тяга * 24);
+    /* Втянутый пакет гаснет, а не улетает точкой: точка под линзой
+       размазывается в цветные дуги и читается как сбой картинки. */
+    М.свой.material.opacity = (1 - тяга) * (1 - тяга);
+    М.свой.visible = тяга < 0.97;
     М.свойОреол.position.copy(М.свой.position);
     М.свойОреол.visible = М.свой.visible;
-    М.свойОреол.material.uniforms.uBright.value = 0.30 * (1 - тяга * 0.6);
+    М.свойОреол.material.uniforms.uBright.value = 0.30 * (1 - тяга) * (1 - тяга);
 
     /* 3. Вспышка на входе. Короткая: подъём быстрый, спад чуть длиннее,
        чтобы за ней читалась тишина, а не обрыв. */
     var вс = мягко(0.38, 0.44, доля) * (1 - мягко(0.44, 0.55, доля));
     М.вспышка.visible = вс > 0.004;
-    М.вспышка.material.uniforms.uBright.value = вс * 1.5;
+    М.вспышка.material.uniforms.uBright.value = вс * 1.25;
 
     /* 4. Тоннель. Скорость растёт до самого конца акта: замедление в
        конце прочиталось бы как «приехали», а прокол не имеет остановки
@@ -394,14 +443,21 @@
 
     /* 5. Линза. Работает только на свёртке и входе: дальше пространство
         уже сложено, гнуть больше нечего. */
-    var силаЛинзы = свёртка * (1 - мягко(0.40, 0.52, доля));
+    var силаЛинзы = свёртка * (1 - мягко(0.33, 0.42, доля));
     var линзаЖива = силаЛинзы > 0.012;
     М.мЛинза.uniforms.uPow.value = силаЛинзы;
 
     if (линзаЖива) {
       /* Содержимое акта уходит в мишень, а на экран попадает только квад
          линзы. Порядок именно такой: сначала снимок без квада, потом
-         показ квада вместо содержимого. */
+         показ квада вместо содержимого.
+
+         Корень обязательно возвращается в кадр ПЕРЕД снимком. Он был
+         спрятан в конце прошлого кадра, и без этой строки в мишень
+         попадает пустая сцена: линза честно показывает пустоту, а на
+         экране остаётся мутное пятно вместо свёртки. Ровно это и было
+         поймано снимком. */
+      М.корень.visible = true;
       М.линза.visible = false;
       М.вспышка.visible = false;
       var прежняя = W.r.getRenderTarget();

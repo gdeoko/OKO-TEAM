@@ -73,7 +73,16 @@
 
   /* uRefr - сила увода выборки по нормали, то есть насколько сильно
      оболочка гнёт среду. uHitY - высота, на которой сейчас стоит луч:
-     по ней зажигается пояс касания. */
+     по ней зажигается место касания.
+
+     ДВА МЕСТА, ГДЕ ЛЕГКО ПОЛУЧИТЬ ПЛОСКИЙ СИНИЙ БЛИН ВМЕСТО СТЕКЛА.
+     Первое: у задней грани нормаль смотрит от зрителя, и френель на ней
+     выходит единицей по всей площади - сфера заливается ровным цветом.
+     Разворачиваем нормаль по gl_FrontFacing.
+     Второе: касание луча нельзя жечь по всей окружности на его высоте.
+     Спереди эта окружность проецируется в прямую через центр, и кадр
+     читается как «луч прошёл насквозь» - ровно наоборот сценарию.
+     Поэтому касание горит только у боков, где луч и соскальзывает. */
   var Ф_ОБОЛОЧКА = [
     "uniform sampler2D uBack;",
     "uniform vec2 uRes;",
@@ -83,6 +92,7 @@
     "uniform float uSeamGlow;",
     "uniform float uHitY;",
     "uniform float uHit;",
+    "uniform float uR;",
     "uniform vec3 uIndigo;",
     "uniform vec3 uGlow;",
     "uniform vec3 uVoid;",
@@ -90,21 +100,23 @@
     "varying vec3 vEye;",
     "varying vec3 vLoc;",
     "void main(){",
+    "  vec3 n = gl_FrontFacing ? vN : -vN;",
     "  vec2 uv = gl_FragCoord.xy / uRes;",
-    "  vec2 off = vN.xy * uRefr;",
+    "  vec2 off = n.xy * uRefr;",
     "  vec4 s = texture2D(uBack, uv + off);",
-    "  float rr = texture2D(uBack, uv + off * 1.10).r;",
-    "  float bb = texture2D(uBack, uv + off * 0.90).b;",
-    "  vec3 back = mix(uVoid, vec3(rr, s.g, bb), clamp(s.a * 1.6, 0.0, 1.0));",
-    "  float fres = pow(1.0 - max(dot(vN, -vEye), 0.0), 3.0);",
-    "  vec3 c = back * (0.82 + 0.18 * fres) + uIndigo * fres * 1.15;",
+    "  float rr = texture2D(uBack, uv + off * 1.14).r;",
+    "  float bb = texture2D(uBack, uv + off * 0.86).b;",
+    "  vec3 back = mix(uVoid, vec3(rr, s.g, bb), clamp(s.a * 1.8, 0.0, 1.0));",
+    "  float fres = pow(1.0 - max(dot(n, -vEye), 0.0), 3.0);",
+    "  vec3 c = back * 1.35 + uIndigo * fres * 1.25;",
     "  float belt = 1.0 - smoothstep(0.015, 0.10, abs(vLoc.y));",
     "  float ang = atan(vLoc.z, vLoc.x) * 0.15915 + 0.5;",
     "  float run = pow(max(0.0, 1.0 - abs(fract(ang - uSeamPhase + 0.5) - 0.5) * 7.0), 2.0);",
-    "  c += uGlow * belt * (0.22 + run * 1.5) * uSeamGlow;",
-    "  float hit = 1.0 - smoothstep(0.0, 0.30, abs(vLoc.y - uHitY));",
-    "  c += uGlow * hit * uHit * (0.45 + fres * 0.9);",
-    "  float a = uLight * (0.26 + fres * 0.80 + belt * uSeamGlow * 0.5 + hit * uHit * 0.5);",
+    "  float edge = smoothstep(0.45, 0.95, abs(vLoc.x) / uR);",
+    "  c += uGlow * belt * (0.22 + run * 1.5) * uSeamGlow * (0.4 + edge * 0.9);",
+    "  float hit = (1.0 - smoothstep(0.0, 0.26, abs(vLoc.y - uHitY))) * edge;",
+    "  c += uGlow * hit * uHit * 1.4;",
+    "  float a = uLight * (0.16 + fres * 0.72 + belt * uSeamGlow * 0.5 + hit * uHit * 0.8);",
     "  gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));",
     "}"
   ].join("\n");
@@ -116,11 +128,15 @@
     "void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }"
   ].join("\n");
 
+  /* uSide отрезает половину полосы. Отражённый конец обязан начинаться в
+     точке касания и уходить наружу; двусторонний сегмент выглядел бы как
+     ещё один сквозной луч, то есть отменял бы весь смысл кадра. */
   var Ф_ЛУЧ = [
     "uniform float uWide;",
     "uniform float uHoleX;",
     "uniform float uHoleR;",
     "uniform float uBright;",
+    "uniform float uSide;",
     "uniform vec3 uCol;",
     "varying vec2 vUv;",
     "void main(){",
@@ -129,8 +145,11 @@
     "  float core = pow(1.0 - abs(vUv.y - 0.5) * 2.0, 22.0);",
     "  float x = (vUv.x - 0.5) * uWide;",
     "  float hole = smoothstep(uHoleR * 0.72, uHoleR, abs(x - uHoleX));",
-    "  float ends = 1.0 - smoothstep(0.36, 0.5, abs(vUv.x - 0.5));",
-    "  float a = (across * 0.30 + core * 0.9) * uBright * hole * ends;",
+    "  float ends = 1.0 - smoothstep(0.30, 0.5, abs(vUv.x - 0.5));",
+    "  float side = 1.0;",
+    "  if (uSide > 0.5) side = smoothstep(0.50, 0.56, vUv.x);",
+    "  if (uSide < -0.5) side = smoothstep(0.50, 0.56, 1.0 - vUv.x);",
+    "  float a = (across * 0.30 + core * 0.9) * uBright * hole * ends * side;",
     "  gl_FragColor = vec4(uCol * (0.6 + core), a);",
     "}"
   ].join("\n");
@@ -161,16 +180,38 @@
   ].join("\n");
 
   /* Ореол вокруг марки и вокруг своего пакета. Отдельный шейдер дешевле
-     текстуры и не тянет за собой загрузку. */
+     текстуры и не тянет за собой загрузку. Степень высокая намеренно:
+     при пологом спаде у пятна видна граница круга, и оно читается не
+     свечением, а наклеенным диском. */
   var Ф_ОРЕОЛ = [
     "uniform vec3 uCol;",
     "uniform float uBright;",
     "varying vec2 vUv;",
     "void main(){",
     "  float dd = length(vUv - 0.5) * 2.0;",
-    "  float a = pow(max(0.0, 1.0 - dd), 3.0);",
+    "  float a = pow(max(0.0, 1.0 - dd), 4.5);",
     "  gl_FragColor = vec4(uCol, a * uBright);",
     "}"
+  ].join("\n");
+
+  /* Среда. Затухание считается в вершине: решётка должна быть облаком
+     вокруг оболочки, а не обоями на весь экран. Обои спорят с подписью
+     акта и отбирают у оболочки роль главного предмета в кадре. */
+  var В_СРЕДА = [
+    "varying float vFade;",
+    "void main(){",
+    "  float r = length(position.xy);",
+    "  float dep = clamp((-position.z - 3.0) / 16.0, 0.0, 1.0);",
+    "  vFade = (1.0 - smoothstep(3.0, 8.6, r)) * (1.0 - dep * 0.6);",
+    "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
+    "}"
+  ].join("\n");
+
+  var Ф_СРЕДА = [
+    "uniform vec3 uCol;",
+    "uniform float uBright;",
+    "varying float vFade;",
+    "void main(){ gl_FragColor = vec4(uCol, vFade * uBright); }"
   ].join("\n");
 
   /* ── Сборка ───────────────────────────────────────────────────*/
@@ -195,27 +236,28 @@
        Три слоя расходятся при смещении выборки, и корка сразу читается
        как тело с толщиной. */
     var слоёв = W.ступень === 0 ? 2 : 3;
-    var шаг = W.ступень === 0 ? 2.4 : 1.6;
+    var шаг = W.ступень === 0 ? 2.0 : 1.35;
     var точки = [];
     var сл, i, j;
     for (сл = 0; сл < слоёв; сл++) {
       var z = -4 - сл * 4.5;
-      for (i = -6; i <= 6; i++) {
-        for (j = -5; j <= 5; j++) {
+      for (i = -7; i <= 7; i++) {
+        for (j = -6; j <= 6; j++) {
           var x0 = i * шаг + (случай(сл * 31.7 + i * 3.1 + j * 7.7) - 0.5) * 0.5;
           var y0 = j * шаг + (случай(сл * 17.3 + i * 5.9 + j * 2.3) - 0.5) * 0.5;
           /* Горизонталь и вертикаль соседям: полный граф превратился бы
              в заливку, а нам нужно, чтобы сквозь среду было видно. */
-          if (i < 6) { точки.push(x0, y0, z, x0 + шаг, y0, z); }
-          if (j < 5) { точки.push(x0, y0, z, x0, y0 + шаг, z); }
+          if (i < 7) { точки.push(x0, y0, z, x0 + шаг, y0, z); }
+          if (j < 6) { точки.push(x0, y0, z, x0, y0 + шаг, z); }
         }
       }
     }
     var гСреда = new T.BufferGeometry();
     гСреда.setAttribute("position", new T.Float32BufferAttribute(точки, 3));
-    М.среда = new T.LineSegments(гСреда, new T.LineBasicMaterial({
-      color: цИндиго, transparent: true, opacity: 0.30,
-      blending: T.AdditiveBlending, depthWrite: false
+    М.среда = new T.LineSegments(гСреда, new T.ShaderMaterial({
+      uniforms: { uCol: { value: цПерелив }, uBright: { value: 0.36 } },
+      vertexShader: В_СРЕДА, fragmentShader: Ф_СРЕДА,
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending
     }));
     М.среда.renderOrder = 0;
     М.корень.add(М.среда);
@@ -257,14 +299,14 @@
        Он остаётся видимым сквозь оболочку: смысл кадра в том, что
        внутри есть содержимое, просто снаружи его не прочитать. */
     М.свой = new T.Mesh(
-      new T.SphereGeometry(0.30, W.ступень === 0 ? 12 : 20, W.ступень === 0 ? 8 : 14),
+      new T.SphereGeometry(0.24, W.ступень === 0 ? 12 : 20, W.ступень === 0 ? 8 : 14),
       new T.MeshBasicMaterial({ color: цСвет })
     );
     М.свой.renderOrder = 2;
     М.корень.add(М.свой);
 
     М.свойОреол = new T.Mesh(
-      new T.PlaneGeometry(1.9, 1.9),
+      new T.PlaneGeometry(1.5, 1.5),
       new T.ShaderMaterial({
         uniforms: { uCol: { value: цСвет }, uBright: { value: 0.5 } },
         vertexShader: В_ПРОСТО, fragmentShader: Ф_ОРЕОЛ,
@@ -297,6 +339,7 @@
         uSeamGlow: { value: 0.0 },
         uHitY: { value: 99.0 },
         uHit: { value: 0.0 },
+        uR: { value: РАДИУС },
         uIndigo: { value: цИндиго },
         uGlow: { value: цСвет },
         uVoid: { value: цПустота }
@@ -363,6 +406,7 @@
           uHoleX: { value: 0.0 },
           uHoleR: { value: 0.0 },
           uBright: { value: ярко },
+          uSide: { value: 0.0 },
           uCol: { value: new T.Color(0xC8D6FF) }
         },
         vertexShader: В_ПРОСТО, fragmentShader: Ф_ЛУЧ,
@@ -372,6 +416,7 @@
     }
 
     М.мЛуч = лучМат(0);
+    М.мЛуч.uniforms.uSide.value = -1;
     М.луч = new T.Mesh(new T.PlaneGeometry(М.ширинаЛуча, 1.5), М.мЛуч);
     М.луч.position.z = 0.6;
     М.луч.renderOrder = 8;
@@ -380,8 +425,12 @@
     М.отражённые = [];
     for (i = 0; i < 2; i++) {
       var мо = лучМат(0);
-      мо.uniforms.uWide.value = 13;
-      var от = new T.Mesh(new T.PlaneGeometry(13, 1.2), мо);
+      мо.uniforms.uWide.value = 11;
+      /* Отрезаем внутреннюю половину: сегмент начинается ровно в точке
+         касания. Сегмент, торчащий в обе стороны, читался бы как второй
+         сквозной луч. */
+      мо.uniforms.uSide.value = i === 0 ? 1 : -1;
+      var от = new T.Mesh(new T.PlaneGeometry(11, 1.0), мо);
       от.position.z = 0.7;
       от.renderOrder = 8;
       /* Уходят в стороны и вверх: соскользнувший луч не может уйти вниз,
@@ -405,11 +454,18 @@
     шир = w; выс = h;
     var узко = w < 760;
     if (узко) {
+      /* На телефоне подпись акта занимает середину кадра, поэтому сцена
+         уходит в нижнюю треть, а марка поднимается над текстом. Двигать
+         её вбок бессмысленно: по ширине там места нет вовсе. */
       М.корень.scale.setScalar(0.56);
-      М.корень.position.set(0, -2.15, 0);
+      М.корень.position.set(0, -3.2, 0);
+      М.марка.position.set(0, 10.4, -0.4);
+      М.ореолМарки.position.set(0, 10.4, -0.6);
     } else {
       М.корень.scale.setScalar(0.92);
-      М.корень.position.set(w > 1180 ? 3.4 : 2.2, -0.3, 0);
+      М.корень.position.set(w > 1180 ? 3.4 : 2.4, -0.3, 0);
+      М.марка.position.set(0, 4.75, -0.4);
+      М.ореолМарки.position.set(0, 4.75, -0.6);
     }
 
     var T = W.T;
@@ -434,14 +490,16 @@
     var маркаСвет = мягко(0.02, 0.22, доля);
     М.мМарка.opacity = маркаСвет * 0.95;
     М.ореолМарки.material.uniforms.uBright.value =
-      маркаСвет * (0.16 + 0.06 * Math.sin(часы * 1.7));
+      маркаСвет * (0.09 + 0.03 * Math.sin(часы * 1.7));
 
-    /* 2. Пакет человека уходит к марке и встаёт в центр будущей оболочки. */
+    /* 2. Пакет человека уходит к марке и встаёт в центр будущей оболочки.
+       Стартует он от марки, а не из ниоткуда: по сценарию пакет уходит
+       к ней и там одевается. */
     var подход = мягко(0.04, 0.30, доля);
-    var стартY = 3.0, стартZ = 2.6;
+    var стартY = М.марка.position.y * 0.55, стартZ = 2.6;
     М.свой.position.set(0, стартY * (1 - подход), стартZ * (1 - подход));
     М.свойОреол.position.copy(М.свой.position);
-    М.свойОреол.material.uniforms.uBright.value = 0.22 + 0.07 * Math.sin(часы * 2.3);
+    М.свойОреол.material.uniforms.uBright.value = 0.14 + 0.04 * Math.sin(часы * 2.3);
 
     /* 3. Две половины сходятся. Разъезд считается назад от смыкания:
        к 0.46 половины стоят на месте, и дальше оболочка целая. */
@@ -455,7 +513,10 @@
     М.низ.rotation.z = -разъезд * 0.26;
 
     u.uLight.value = мягко(0.06, 0.30, доля);
-    u.uRefr.value = 0.030 * (1 - разъезд) + 0.006;
+    /* Преломление растёт по мере смыкания: у разведённых половин гнуть
+       среду ещё нечем, у сомкнутой оболочки - есть чем, и именно этим
+       она отличается от прозрачного пузыря. */
+    u.uRefr.value = 0.042 * (1 - разъезд) + 0.008;
 
     /* 4. Щелчок: в момент смыкания по шву пробегает свет. Вспышка
        короткая и сильная, дальше шов светится тихо - он остаётся
@@ -482,7 +543,7 @@
        её всегда, луч выглядит бракованным ещё до встречи. */
     var близко = лучЖив ? зажать(1 - (Math.abs(yЛуча) - РАДИУС) / 1.4, 0, 1) : 0;
     var внутриТела = лучЖив && Math.abs(yЛуча) < РАДИУС;
-    М.мЛуч.uniforms.uHoleR.value = (РАДИУС * 1.06) * близко;
+    М.мЛуч.uniforms.uHoleR.value = (РАДИУС * 1.25) * близко;
     М.мЛуч.uniforms.uHoleX.value = 0;
 
     /* Отражённые концы живут ровно столько, сколько луч стоит на корке.
@@ -493,14 +554,17 @@
       var от = М.отражённые[i];
       var зн = i === 0 ? 1 : -1;
       от.visible = внутриТела;
-      от.material.uniforms.uBright.value = внутриТела ? (0.5 + близко * 1.1) : 0;
-      от.position.x = зн * (скольжение + 6.0);
-      от.position.y = yЛуча + скольжение * 0.62;
-      от.rotation.z = зн * (0.30 + (скольжение / РАДИУС) * 0.42);
+      от.material.uniforms.uBright.value = внутриТела ? (0.6 + близко * 1.2) : 0;
+      /* Начало сегмента - ровно точка касания на боку оболочки. Чем
+         глубже луч зашёл, тем круче он уходит вверх: соскальзывание
+         должно быть видно как изменение угла, а не как мигание. */
+      от.position.x = зн * скольжение;
+      от.position.y = yЛуча;
+      от.rotation.z = зн * (0.22 + (1 - Math.abs(yЛуча) / РАДИУС) * 0.55);
     }
 
     u.uHitY.value = внутриТела ? yЛуча : 99;
-    u.uHit.value = внутриТела ? (0.55 + близко * 0.8) : 0;
+    u.uHit.value = внутриТела ? (0.30 + близко * 0.45) : 0;
 
     /* 6. Чужие пакеты вскрываются под лучом и гаснут сами. Пустая подпись
        своего пакета читается только на фоне непустых у остальных. */
@@ -519,16 +583,24 @@
     М.среда.position.x = Math.sin(часы * 0.09) * 0.7;
     М.среда.position.y = Math.cos(часы * 0.07) * 0.5;
 
-    /* 7. Снимок среды для преломления. Оболочку на время снимка убираем:
-       иначе она попадёт в собственную выборку и даст зеркальный коридор
-       вместо стекла. */
-    var верхБыл = М.верх.visible, низБыл = М.низ.visible;
-    М.верх.visible = false; М.низ.visible = false;
+    /* 7. Снимок среды для преломления. Убираем на время снимка не только
+       оболочку (иначе она попадёт в собственную выборку и даст зеркальный
+       коридор вместо стекла), но и весь досмотр: луч, попавший в фон,
+       читается сквозь оболочку как прошедший насквозь, а это ровно то,
+       чего в этом кадре быть не должно. */
+    var верхБыл = М.верх.visible, низБыл = М.низ.visible, лучБыл = М.луч.visible;
+    var отрБыли = [];
+    М.верх.visible = false; М.низ.visible = false; М.луч.visible = false;
+    for (i = 0; i < М.отражённые.length; i++) {
+      отрБыли[i] = М.отражённые[i].visible;
+      М.отражённые[i].visible = false;
+    }
     var прежняя = W.r.getRenderTarget();
     W.r.setRenderTarget(М.мишень);
     W.r.render(W.scene, W.cam);
     W.r.setRenderTarget(прежняя);
-    М.верх.visible = верхБыл; М.низ.visible = низБыл;
+    М.верх.visible = верхБыл; М.низ.visible = низБыл; М.луч.visible = лучБыл;
+    for (i = 0; i < М.отражённые.length; i++) М.отражённые[i].visible = отрБыли[i];
   }
 
   /* ── Договор с ядром ──────────────────────────────────────────*/
