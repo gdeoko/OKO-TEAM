@@ -636,13 +636,31 @@ function order_generate_clean_pdfs(array $order): array {
         if ($j['fio'] !== '') $opt['person'] = $j['fio'];
         else if (in_array($t, ['named', 'thanks'], true)) $opt['person_idx'] = $idx + 1;
 
-        $pdf = null;
-        try { $pdf = diploma_pdf_html((array)$app, $opt); } catch (\Throwable $e) { $pdf = null; }
+        $pdf = null; $err = '';
+        try { $pdf = diploma_pdf_html((array)$app, $opt); }
+        catch (\Throwable $e) { $pdf = null; $err = $e->getMessage(); }
         if ($pdf && is_file($pdf)) {
             $label = $labels[$t] ?? $j['item'];
             if ($j['fio'] !== '') $label .= ' — ' . $j['fio'];
             $out[] = ['label' => $label, 'path' => $pdf, 'url' => order_clean_url(basename($pdf)),
                       'type' => $t, 'fio' => $j['fio'], 'kind' => (string) ($j['kind'] ?? 'original')];
+            continue;
+        }
+        /* НЕ СОБРАЛСЯ — ГОВОРИМ ОБ ЭТОМ, А НЕ ТЕРЯЕМ ПОЗИЦИЮ МОЛЧА.
+         *
+         * Ошибка здесь проглатывалась: позиция просто исчезала из списка на
+         * печать, и заказ выглядел так, будто её и не заказывали. Именно так у
+         * заказа №67 (статуэтка, основной диплом, благодарность) на скачивании
+         * осталась одна благодарность — на бастионе снесли браузер, и рендер
+         * молча возвращал пустоту по всем бланкам разом.
+         *
+         * Теперь запись уходит в журнал и в аудит: оплаченная позиция без бланка
+         * должна быть видна, а не выясняться от участника через месяц. */
+        error_log('order_clean_pdfs: заказ ' . (int) ($order['id'] ?? 0) . ', позиция «' . $j['item']
+                . '» (' . $t . ') — бланк не собрался' . ($err !== '' ? ': ' . $err : ''));
+        if (function_exists('audit')) {
+            audit('order_blank_failed', 'awards_orders', (int) ($order['id'] ?? 0),
+                  ['item' => $j['item'], 'type' => $t, 'fio' => $j['fio'], 'error' => mb_substr($err, 0, 200)]);
         }
     }
     return $out;

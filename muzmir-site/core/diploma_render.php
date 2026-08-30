@@ -84,7 +84,18 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
     @unlink($stage);
 
     $tmp = '/tmp/dip_' . $appId . '_' . substr(bin2hex(random_bytes(4)), 0, 8) . '.pdf';
-    $cmd = 'cd /opt/oko-poster && NODE_PATH=/opt/oko-poster/node_modules node render_diploma.js '
+    /* БРАУЗЕР ЛЕЖИТ РЯДОМ С АГЕНТОМ, А НЕ В ДОМАШНЕМ КАТАЛОГЕ.
+     *
+     * Playwright без подсказки ищет браузеры в ~/.cache/ms-playwright. Пока они
+     * там были, рендер работал; при чистке диска на бастионе каталог снесли — и
+     * бланки перестали собираться ВСЕ разом, молча: генерация возвращала null,
+     * позиция просто исчезала из списка на печать. Так у заказа №67 из трёх
+     * позиций на скачивание осталась одна благодарность.
+     *
+     * Указываем путь явно: браузеры живут в /opt/oko-poster/pw-browsers (там же,
+     * куда смотрят cfg/rb.env и rbd.env остальных заданий агента). */
+    $cmd = 'cd /opt/oko-poster && PLAYWRIGHT_BROWSERS_PATH=/opt/oko-poster/pw-browsers '
+         . 'NODE_PATH=/opt/oko-poster/node_modules node render_diploma.js '
          . escapeshellarg($url) . ' ' . escapeshellarg($tmp)
          . ' && export SSHPASS=' . escapeshellarg($sshPas)
          . '; sshpass -e scp -o StrictHostKeyChecking=no ' . escapeshellarg($tmp)
