@@ -215,6 +215,9 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <script src="assets/rv-boot.js" defer></script>
 <script src="assets/rv-net.js" defer></script>
 <script src="assets/vendor/three.min.js" defer></script>
+<!-- Слой достоверности идёт ПЕРЕД ядром: ядро спрашивает его при
+     подъёме, и опоздавший слой означал бы мир без света. -->
+<script src="assets/rv-real.js" defer></script>
 <script src="assets/rv-world.js" defer></script>
 <!-- Порядок этих строк не важен: каждый акт ждёт события готовности
      мира и кладёт себя в ядро сам. -->
