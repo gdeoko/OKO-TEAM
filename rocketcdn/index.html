@@ -354,7 +354,12 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
   var el=null, cv=null, x=null, raf=null, last=0, t=0;
   var shown=0, killed=false, hid=false, p=0, pShow=0, launch=0;
-  var T_HOLD=700, T_CAP=4000, T_OUT=600;
+  /* T_CAP это не срок показа, а страховка на случай, когда объёмный
+     слой не доехал вовсе. Держали 4 с, и заставка уходила раньше
+     сцены на любой небыстрой машине. Подняли до 8 с: на здоровой
+     машине этот срок не наступает никогда, заставка уходит по
+     готовности за секунду с небольшим. */
+  var T_HOLD=700, T_CAP=8000, T_OUT=600;
   var calm=false;
   try { calm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
@@ -589,16 +594,40 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
   setTimeout(function () { if (!hid) api.show(); }, 150);
 
-  var got = 0, need = 3;
+  /* ── Заставка уходит по готовности, а не по часам ─────────
+     Считали три вещи: шрифты, событие load и объёмный слой. Замер
+     показал, что править надо в РАЗНЫЕ стороны.
+
+     load сюда не годится. Он ждёт все картинки страницы, включая
+     лежащие ниже экрана, которые человеку сейчас не нужны: на
+     свободном канале он приходил на 3,1 с, тогда как сцена была
+     готова на 1,2 с, и заставка держала человека впустую.
+
+     А запасной срок объёмного слоя стоял на 2,6 с и вместе с
+     потолком в 4 с делал ожидание готовности бессмысленным: на
+     загруженной машине rc:3d приходит на 6,9 с, то есть заставка
+     уходила ВСЕГДА раньше, чем появлялась сцена. Ровно это владелец
+     и прислал: «в какой-то момент все анимации, ракета и планета
+     пропадают» - анимаций там ещё и не было.
+
+     Ждём двоих: шрифты и объёмный слой. На быстрой машине заставка
+     уходит РАНЬШЕ прежнего, на медленной - позже, но уже на
+     собранную сцену. */
+  var got = 0, need = 2;
   function step() { got++; api.setProgress(got / need); if (got >= need) api.hide(); }
   try { if (d.fonts && d.fonts.ready) d.fonts.ready.then(step); else step(); } catch (e) { step(); }
-  if (d.readyState === "complete") step();
-  else g.addEventListener("load", step, { once: true });
   var told = false;
   function once() { if (told) return; told = true; step(); }
-  g.addEventListener("rc:3d", once);
-  g.addEventListener("rc:no3d", once);
-  setTimeout(once, 2600);
+  /* Уходим не в самом событии, а следующей задачей. В обработчиках
+     rc:3d сцены ещё только СОБИРАЮТСЯ, и счёт этот занимает единой
+     задачей до 2,6 с. Начни затухание прямо в событии - кольцо и
+     ракета застынут посреди хода: рисовать их в это время некому.
+     Отложенная задача встаёт в очередь за сборкой и получает поток,
+     когда та закончила. */
+  function послеСлоя() { setTimeout(once, 60); }
+  g.addEventListener("rc:3d", послеСлоя);
+  g.addEventListener("rc:no3d", послеСлоя);
+  setTimeout(once, 6000);
   setTimeout(function () { api.hide(); }, T_CAP);
 })(window, document);
 </script>
