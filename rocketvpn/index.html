@@ -36,6 +36,12 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
   <p>Створ закрыт. Он открывается по прямой ссылке.</p>
 </div>
 
+<!-- Один объёмный холст на ВЕСЬ сайт. Он неподвижен и лежит под
+     содержимым; акты кладут в него свои узлы и убирают, когда их время
+     прошло. Отдельные холсты на каждый акт съели бы лимит контекстов
+     рисования: их у браузера три на телефоне и четыре на мониторе. -->
+<canvas id="rvМир" class="rv-мир" aria-hidden="true"></canvas>
+
 <div class="rv-плёнка">
 
 <!-- ═══ Акт 0. Тебя видно ═══════════════════════════════════════
@@ -81,7 +87,6 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      вспышка марки читается как событие. -->
 <section class="rv-акт" data-акт="оболочка" style="height:200svh">
   <div class="rv-кадр">
-    <canvas class="rv-холст" id="rvОболочка" aria-hidden="true"></canvas>
     <div class="rv-слой">
       <p class="rv-над">Оболочка</p>
       <h2 class="rv-заг">Досмотр работает. И ничего не находит</h2>
@@ -97,7 +102,6 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      Акт намеренно короткий: это удар, а не проезд. -->
 <section class="rv-акт" data-акт="прокол" style="height:220svh">
   <div class="rv-кадр">
-    <canvas class="rv-холст" id="rvПрокол" aria-hidden="true"></canvas>
     <div class="rv-слой">
       <p class="rv-над">Прокол</p>
       <h2 class="rv-заг">Не в обход. Насквозь</h2>
@@ -113,7 +117,6 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      Названия станций проставляются из досье продукта, а не из головы. -->
 <section class="rv-акт" data-акт="выход" style="height:280svh">
   <div class="rv-кадр">
-    <canvas class="rv-холст" id="rvВыход" aria-hidden="true"></canvas>
     <div class="rv-слой">
       <p class="rv-над">Точка выхода</p>
       <h2 class="rv-заг">С той стороны сеть снова открыта</h2>
@@ -130,7 +133,6 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      Цены проставляются из досье продукта. -->
 <section class="rv-акт" data-акт="рубка" style="height:320svh">
   <div class="rv-кадр">
-    <canvas class="rv-холст" id="rvРубка" aria-hidden="true"></canvas>
     <div class="rv-слой">
       <p class="rv-над">Шлюзовая рубка</p>
       <h2 class="rv-заг">Причаль свои устройства</h2>
@@ -147,7 +149,6 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      что оба сайта делят одну вселенную, а не баннером. -->
 <section class="rv-акт" data-акт="стыковка" style="height:180svh">
   <div class="rv-кадр">
-    <canvas class="rv-холст" id="rvСтыковка" aria-hidden="true"></canvas>
     <div class="rv-слой">
       <p class="rv-над">Стыковка</p>
       <h2 class="rv-заг">Второй корабль этого флота</h2>
@@ -170,6 +171,9 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 </div><!-- /плёнка -->
 
 <script src="assets/rv-gate.js"></script>
+<script src="assets/rv-net.js" defer></script>
+<script src="assets/vendor/three.min.js" defer></script>
+<script src="assets/rv-world.js" defer></script>
 <script src="assets/rv-data.js" defer></script>
 <script src="assets/rv-fill.js" defer></script>
 <script src="assets/rv-motion.js" defer></script>
