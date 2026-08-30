@@ -131,7 +131,7 @@ $appLock = null;                     // заявка, по которой зак
 $appLockResult = '';                 // её аттестационный результат
 $appId = (int) input('app', '');
 if ($appId > 0 && $u) {
-    $ar = one("SELECT a.id, a.number, a.result, a.result_sent_at, a.competition_id,
+    $ar = one("SELECT a.id, a.number, a.result, a.result_sent_at, a.competition_id, a.is_group,
                       c.results_mode, c.results_published_at, c.name AS comp_name
                  FROM applications a LEFT JOIN competitions c ON c.id = a.competition_id
                 WHERE a.id = ? AND a.user_id = ?", [$appId, (int) $u['id']]);
@@ -256,7 +256,10 @@ ob_start(); ?>
         if ($appLock) {
             $allowedHere = false;
             foreach (array_keys($catalog[$item]) as $k) {
-                [$okItem] = award_item_allowed($item, (string) $k, $appLockResult, $paidComp);
+                // Пятым аргументом — коллектив или солист: именной положен только
+                // участнику коллектива, у солиста основной диплом и так именной.
+                [$okItem] = award_item_allowed($item, (string) $k, $appLockResult, $paidComp,
+                                               (int) ($appLock['is_group'] ?? 0) === 1);
                 if ($okItem) { $allowedHere = true; break; }
             }
             if (!$allowedHere) continue;
@@ -277,8 +280,9 @@ ob_start(); ?>
         // По заявке отсекаем и запрещённые ВИДЫ позиции (например электронный
         // основной диплом в платном конкурсе — он входит в оргвзнос).
         if ($appLock) {
-            $kinds = array_filter($kinds, static function ($price, $k) use ($item, $appLockResult, $paidComp) {
-                [$okKind] = award_item_allowed($item, (string) $k, $appLockResult, $paidComp);
+            $isGrpLock = (int) ($appLock['is_group'] ?? 0) === 1;
+            $kinds = array_filter($kinds, static function ($price, $k) use ($item, $appLockResult, $paidComp, $isGrpLock) {
+                [$okKind] = award_item_allowed($item, (string) $k, $appLockResult, $paidComp, $isGrpLock);
                 return $okKind;
             }, ARRAY_FILTER_USE_BOTH);
             if (!$kinds) continue;

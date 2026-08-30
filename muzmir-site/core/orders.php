@@ -343,9 +343,25 @@ function award_base_required(array $items, ?int $appId, bool $compIsPaid): array
  * @param bool   $compIsPaid платный ли конкурс
  * @return array [bool разрешено, string причина отказа]
  */
-function award_item_allowed(string $item, string $kind, string $result, bool $compIsPaid): array {
+function award_item_allowed(string $item, string $kind, string $result, bool $compIsPaid,
+                            ?bool $isGroup = null): array {
     $itemN = trim($item);
     $kind  = $kind === 'digital' ? 'digital' : 'original';
+
+    /* ИМЕННОЙ ДИПЛОМ — ТОЛЬКО УЧАСТНИКУ КОЛЛЕКТИВА (жёсткое правило владельца).
+     *
+     * Смысл именного в том, что диплом коллектива один на всех и висит у
+     * руководителя, а ребёнку нужен свой — с фамилией. У солиста основной диплом
+     * И ТАК именной: там его фамилия. Заказав оба, он получает два одинаковых
+     * документа и платит за второй впустую — ровно это случилось у Самойлова.
+     *
+     * $isGroup передаётся из заявки. Не передан (старые вызовы) — правило не
+     * применяем, чтобы не отказать по незнанию. */
+    if ($isGroup === false && preg_match('~именн~ui', $itemN)) {
+        return [false, 'Именной диплом выписывается участнику КОЛЛЕКТИВА. '
+                     . 'У солиста основной диплом и так именной — на нём стоит его фамилия, '
+                     . 'и второй такой же документ заказывать незачем.'];
+    }
 
     // 1) Трофеи — строго по результату, и только оригиналами.
     if (award_is_trophy($itemN)) {
@@ -466,6 +482,17 @@ function order_clean_pdfs(array $order, bool $regen = false): array {
             $c['url'] = order_clean_url(basename($abs));
             $live[] = $c;
         }
+        /* У старых записей вида нет. Восстанавливаем его по составу заказа: без
+         * этого админка снова посчитает электронные оригиналами, пока кэш не
+         * пересчитают руками. */
+        $byType = [];
+        foreach (order_items_parse($order) as $p) {
+            if (($p['dtype'] ?? '') !== '') $byType[(string) $p['dtype']] = (string) ($p['kind'] ?? 'original');
+        }
+        foreach ($live as $i => $c) {
+            if (isset($c['kind']) && $c['kind'] !== '') continue;
+            $live[$i]['kind'] = $byType[(string) ($c['type'] ?? '')] ?? 'original';
+        }
         // Кэш посчитан (строка непустая) — возвращаем результат, даже если он пуст.
         if ($raw !== '') return $live;
     }
@@ -473,8 +500,16 @@ function order_clean_pdfs(array $order, bool $regen = false): array {
     if (!$regen) return [];   // ещё не считали — но и бастион в цикле вывода не дёргаем
 
     $pdfs = order_generate_clean_pdfs($order);
+    /* ВИД ПОЗИЦИИ СОХРАНЯЕМ ТОЖЕ.
+     *
+     * В кэш писались только подпись, адрес, тип и ФИО — вид (оригинал или
+     * электронная версия) терялся. Админка отбирает бланки для посылки как раз
+     * по нему, а при отсутствии поля считала оригиналом ВСЁ: в разделе «Заказы
+     * оригиналов» у Самойлова висели три электронных диплома, и понять, что
+     * печатать и класть в коробку, было нельзя. */
     $store = array_map(
-        fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type'], 'fio' => $p['fio'] ?? ''],
+        fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type'],
+                   'fio' => $p['fio'] ?? '', 'kind' => (string) ($p['kind'] ?? 'original')],
         $pdfs
     );
     if ($oid > 0) update('awards_orders', ['clean_pdfs' => json_encode($store, JSON_UNESCAPED_UNICODE)], 'id=:id', ['id' => $oid]);
@@ -704,7 +739,9 @@ function order_dispatch_production(int $orderId): bool {
 
     $pdfs = order_generate_clean_pdfs($order);
     // Кэшируем чистые дипломы в заказ (для админки — скачивание без повторного рендера).
-    $store = array_map(fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type']], $pdfs);
+    // Вид позиции — в кэш: по нему админка отделяет посылку от электронных.
+    $store = array_map(fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type'],
+                                  'fio' => $p['fio'] ?? '', 'kind' => (string) ($p['kind'] ?? 'original')], $pdfs);
     update('awards_orders', ['clean_pdfs' => json_encode($store, JSON_UNESCAPED_UNICODE)], 'id=:id', ['id' => $orderId]);
 
     // Маршрут — ТОПИК «ЗАКАЗЫ НАГРАД» рабочего чата (форум-группа), а не отдельный канал.

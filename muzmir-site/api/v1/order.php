@@ -221,7 +221,7 @@ if (!$isClubOrder) {
               . 'выберется из списка сама.'], 422);
     }
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
-    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at, a.extra_diploma,
+    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at, a.extra_diploma, a.is_group,
                           c.id AS comp_id, c.name AS comp_name, c.is_paid AS comp_is_paid,
                           c.results_mode, c.results_published_at, c.status AS comp_status, c.end_date
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
@@ -301,7 +301,9 @@ if (!$isClubOrder && $applicationId) {
     $compIsPaid = (int) ($appRow['comp_is_paid'] ?? 0) === 1;
     foreach ($normItems as $ni) {
         [$allowed, $why] = award_item_allowed(
-            (string) ($ni['item'] ?? ''), (string) ($ni['kind'] ?? 'original'), $appResult, $compIsPaid
+            (string) ($ni['item'] ?? ''), (string) ($ni['kind'] ?? 'original'), $appResult, $compIsPaid,
+            // Коллектив или солист — берём из ЗАЯВКИ: именной положен только коллективу.
+            (int) ($appRow['is_group'] ?? 0) === 1
         );
         if (!$allowed) {
             json_out(['ok' => false, 'error' => 'Позиция «' . (string) ($ni['item'] ?? '') . '»: ' . $why], 422);

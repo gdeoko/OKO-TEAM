@@ -432,10 +432,17 @@ $groups = og_groups($orders);
             Состав посылки (что изготовить) · оплачено
             <b style="color:var(--a-navy);font-size:13px"><?= number_format($postSum, 0, '.', ' ') ?> ₽</b>
           </div>
+          <?php /* РАЗДЕЛ ОРИГИНАЛОВ — ТОЛЬКО ПРО ПОСЫЛКУ.
+                   Здесь перечислялись и электронные позиции заказа: «в этом же
+                   заказе 4 электронных материала». Для сборщика это лишний шум —
+                   он собирает коробку, а не читает состав чужого раздела, — и от
+                   него же путаница, что печатать. Электронные живут в своём
+                   разделе; здесь остаётся одна строка о деньгах, иначе сумма
+                   посылки не сходится с суммой заказа и её начинают искать. */ ?>
           <?php if ($digiCnt > 0): ?>
-            <div class="small" style="color:#1E7A46;margin:-2px 0 6px">
-              В этом же заказе <?= (int)$digiCnt ?> электронн<?= $digiCnt === 1 ? 'ый материал' : 'ых материала' ?> —
-              они уходят письмом из раздела «Заказы электронных наград», в посылку не кладутся.
+            <div class="small muted" style="margin:-2px 0 6px">
+              Сумма посылки меньше суммы заказа: остальное — электронные материалы,
+              они уходят письмом из своего раздела.
             </div>
           <?php endif; ?>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -480,7 +487,7 @@ $groups = og_groups($orders);
       <?php if ($cleans || $needAddr): ?>
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--a-line);">
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
-            Наградные материалы (чистые бланки, с номером и QR)
+            Бланки для печати в посылку (чистые, с номером и QR)
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch">
             <?php foreach ($cleans as $c): $u = (string) $c['url']; ?>
