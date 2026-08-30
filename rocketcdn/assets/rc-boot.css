@@ -1,0 +1,226 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · экран ожидания входа в корабль
+
+   Заказчик сформулировал требование точно: «загрузочный экран не
+   такой, что перекрывает весь экран: панель управления остаётся на
+   месте». Поэтому здесь нет ни одного правила, которое накрывало бы
+   низ кадра. Слой физически заканчивается выше пульта: он висит от
+   верхней кромки до --rc-boot-floor, а всё, что ниже, живёт своей
+   жизнью и остаётся нажимаемым.
+
+   Второе требование - качество. Оформление собрано теми же
+   средствами, что и заставка старта и приборная плита рубки: тот же
+   тёмный корпус, тот же цианoвый ключевой свет, тот же фиолетовый
+   заполняющий, тот же наборный шрифт с разрядкой. Экран ожидания не
+   должен читаться заплаткой поверх кино.
+   ═══════════════════════════════════════════════════════════ */
+
+.rc-boot {
+  /* Пол слоя. Пульт в полёте стоит с 80% высоты кадра и занимает
+     19% (см. --cab-dy/--cab-dh в rc-flight.css), плюс запас на
+     подписи под ним. Тридцать процентов держат пульт целиком
+     свободным на любом экране. */
+  --rc-boot-floor: 30%;
+  --rc-boot-cyan: var(--int-cyan, #42B2DC);
+  --rc-boot-vio: var(--int-vio, #8A59F6);
+  --rc-boot-lit: var(--int-lit, #CFE9F5);
+  --rc-boot-deep: var(--int-deep, #050C15);
+  --rc-boot-panel: var(--int-panel, #14283D);
+  --rc-boot-hull: var(--int-hull, #0A1524);
+
+  position: fixed;
+  left: 0; right: 0; top: 0;
+  bottom: var(--rc-boot-floor);
+  /* Выше окна полёта (220), ниже системных подсказок браузера */
+  z-index: 240;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Слой ничего не перехватывает: нажимаемой остаётся только
+     табличка, а пульт под слоем вообще вне его границ */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .28s cubic-bezier(.22, 1, .36, 1);
+}
+
+.rc-boot.on { opacity: 1; }
+
+/* Затемнение только остекления. Книзу оно сходит на нет, чтобы
+   между слоем и открытым низом кадра не было видимой кромки:
+   человек не должен догадаться, что это прямоугольник. */
+.rc-boot::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    rgba(5, 12, 21, .88) 0%,
+    rgba(5, 12, 21, .78) 42%,
+    rgba(5, 12, 21, .44) 76%,
+    rgba(5, 12, 21, 0) 100%);
+}
+
+/* ── Табличка ────────────────────────────────────────────────
+   Материал повторяет приборную плиту: тёмный корпус со светом
+   изнутри, тонкая цианoвая кромка, блик по верхнему ребру. */
+.rc-boot-p {
+  position: relative;
+  pointer-events: auto;
+  width: min(340px, 78vw);
+  padding: 22px 22px 18px;
+  border-radius: 14px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 78% 100% at 50% 0%,
+      rgba(66, 178, 220, .16), transparent 70%),
+    linear-gradient(180deg,
+      var(--rc-boot-panel) 0%,
+      var(--rc-boot-hull) 56%,
+      var(--rc-boot-deep) 100%);
+  border: 1px solid rgba(66, 178, 220, .34);
+  box-shadow:
+    inset 0 1px 0 rgba(207, 233, 245, .14),
+    inset 0 0 30px rgba(5, 12, 21, .7),
+    0 0 70px -20px rgba(66, 178, 220, .7),
+    0 18px 40px -14px rgba(0, 0, 0, .95);
+  transform: translateY(10px) scale(.985);
+  transition: transform .34s cubic-bezier(.22, 1, .36, 1);
+}
+
+.rc-boot.on .rc-boot-p { transform: none; }
+
+/* ── Кольцо хода ─────────────────────────────────────────────
+   Дуга в фирменном градиенте, ровно как кольцо вокруг ракеты на
+   заставке старта. Внутри - доля числом. */
+.rc-boot-r {
+  position: relative;
+  width: 74px; height: 74px;
+  margin: 0 auto 14px;
+}
+
+.rc-boot-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  /* Дорожка под дугой: без неё кольцо на малом ходу читается
+     обрывком, а не шкалой */
+  background:
+    conic-gradient(from -90deg,
+      var(--rc-boot-cyan) 0turn,
+      var(--rc-boot-vio) calc(var(--rc-boot-p, 0) * 1turn),
+      rgba(66, 178, 220, .13) calc(var(--rc-boot-p, 0) * 1turn));
+  /* Кольцо, а не круг: середину вырезаем маской */
+  -webkit-mask: radial-gradient(circle, transparent 0 29px, #000 30px);
+  mask: radial-gradient(circle, transparent 0 29px, #000 30px);
+  transition: background .3s linear;
+}
+
+/* Тонкий обод по внешней кромке - кольцо перестаёт быть плоским */
+.rc-boot-ring::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(207, 233, 245, .08);
+}
+
+/* Огонёк, бегущий по кольцу. Он и есть признак жизни: пока он
+   идёт, человек видит, что мы работаем, а не повисли. */
+.rc-boot-spin {
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(from 0turn,
+    rgba(207, 233, 245, 0) 0turn,
+    rgba(207, 233, 245, 0) .78turn,
+    rgba(66, 178, 220, .5) .93turn,
+    rgba(207, 233, 245, .95) 1turn);
+  -webkit-mask: radial-gradient(circle, transparent 0 33px, #000 34px);
+  mask: radial-gradient(circle, transparent 0 33px, #000 34px);
+  animation: rc-boot-turn 1.5s linear infinite;
+}
+
+@keyframes rc-boot-turn { to { transform: rotate(1turn); } }
+
+/* Доля числом лежит НАД маской кольца. Внутрь кольца её не
+   положить: маска вырезает середину вместе с содержимым, - поэтому
+   число живёт отдельным узлом рядом и наводится на центр. */
+.rc-boot-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 17px/1 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  color: var(--rc-boot-lit);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.rc-boot-t {
+  font: 700 11px/1.2 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: rgba(207, 233, 245, .92);
+  margin: 0 0 8px;
+}
+
+.rc-boot-s {
+  font: 500 12.5px/1.45 var(--f-body, 'Golos Text', system-ui, sans-serif);
+  color: rgba(207, 233, 245, .58);
+  margin: 0;
+  min-height: 2.9em;
+}
+
+/* Полоска хода по нижнему ребру таблички: то же число, что и в
+   кольце, но читается боковым зрением */
+.rc-boot-bar {
+  position: absolute;
+  left: 14px; right: 14px; bottom: 7px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(66, 178, 220, .14);
+  overflow: hidden;
+}
+
+.rc-boot-bar i {
+  display: block;
+  height: 100%;
+  width: calc(var(--rc-boot-p, 0) * 100%);
+  background: linear-gradient(90deg, var(--rc-boot-cyan), var(--rc-boot-vio));
+  transition: width .3s cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ── Посадка на реальные экраны ──────────────────────────────
+   На низком экране (телефон боком) пульт занимает большую долю
+   высоты, поэтому пол слоя поднимаем и табличку ужимаем. */
+@media (max-height: 560px) {
+  .rc-boot { --rc-boot-floor: 36%; }
+  .rc-boot-p { padding: 14px 16px 12px; width: min(300px, 74vw); }
+  .rc-boot-r { width: 54px; height: 54px; margin-bottom: 9px; }
+  .rc-boot-ring,
+  .rc-boot-spin {
+    -webkit-mask: radial-gradient(circle, transparent 0 21px, #000 22px);
+    mask: radial-gradient(circle, transparent 0 21px, #000 22px);
+  }
+  .rc-boot-spin {
+    -webkit-mask: radial-gradient(circle, transparent 0 24px, #000 25px);
+    mask: radial-gradient(circle, transparent 0 24px, #000 25px);
+  }
+  .rc-boot-num { font-size: 14px; }
+  .rc-boot-s { min-height: 1.5em; }
+}
+
+/* Светлая тема сайта на кино не распространяется: остекление
+   тёмное всегда, и экран ожидания живёт по тем же правилам, что и
+   заставка старта. Разница только в глубине фона. */
+html[data-theme="light"] .rc-boot::before {
+  background: linear-gradient(180deg,
+    rgba(7, 15, 26, .9) 0%,
+    rgba(7, 15, 26, .8) 42%,
+    rgba(7, 15, 26, .46) 76%,
+    rgba(7, 15, 26, 0) 100%);
+}
+
+/* Просили меньше движения - убираем вращение и переходы, шкала
+   остаётся: она несёт смысл, а не украшает. */
+@media (prefers-reduced-motion: reduce) {
+  .rc-boot,
+  .rc-boot-p,
+  .rc-boot-bar i,
+  .rc-boot-ring { transition: none; }
+  .rc-boot-spin { animation: none; opacity: .35; }
+  .rc-boot-p { transform: none; }
+}
