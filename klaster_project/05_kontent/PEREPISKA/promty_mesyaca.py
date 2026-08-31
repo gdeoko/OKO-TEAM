@@ -453,8 +453,127 @@ for ключ, слайды in КАРУСЕЛИ.items():
             текст=слайд(сцена, заг, стр, н, всего))
 
 
+# ── добор: визуалы статей, экспертных материалов и оставшихся постов ──────
+ДОБОР = {
+"P-01-krt-karta-b": dict(
+ образцы=["fasad_1", "proezd"],
+ сцена="a split comparison of one city quarter: on the left an old industrial "
+       "block with workshops and a chimney, on the right the same kind of place "
+       "rebuilt into residential blocks with a park and an embankment, both "
+       "halves shot from a similar high angle in daylight.",
+ камера="35mm equivalent at f/8, elevated viewpoint, verticals parallel, even "
+        "midday light.",
+ зона="the lower centre over the neutral ground",
+ заголовок="12 ЛЕТ ОТ ЦЕХОВ ДО НАБЕРЕЖНОЙ",
+ строка="Как московский квартал меняет профессию",
+ низ="Промзоны занимают 17 % территории старой Москвы", акцент="12 ЛЕТ"),
+
+"P-03-instrukciya": dict(
+ образцы=["fasad_1"],
+ сцена="a laptop on a plain desk showing an open map service with a highlighted "
+       "land plot boundary, a printed cadastral extract lying beside it with the "
+       "numbers out of focus, a pen and a phone.",
+ камера="50mm at f/4 from above at 35 degrees, sharp on the screen edge and the "
+        "paper, soft falloff.",
+ зона="the upper right over the desk",
+ заголовок="ПРОВЕРКА КВАРТАЛА ЗА 4 МИНУТЫ",
+ строка="Кадастровый номер и перечень принятых решений",
+ низ="Без юриста и без запросов", акцент="4 МИНУТЫ"),
+
+"P-04-shattl": dict(
+ образцы=["fasad_1", "proezd"],
+ сцена="a clean shuttle bus standing at a stop in front of an industrial estate "
+       "entrance in the morning, a few workers boarding, metro entrance visible "
+       "in the distance behind, autumn light.",
+ камера="35mm at f/5.6, eye level, three quarter view of the bus, deep "
+        "sharpness.",
+ зона="the upper left over the sky",
+ заголовок="15 МИНУТ ОТ МЕТРО ШАТТЛОМ",
+ строка="Дорога решает, останется станочник или уйдёт",
+ низ="Средний возраст токаря перевалил за 55 лет", акцент="15 МИНУТ"),
+
+"P-09-dogovor": dict(
+ образцы=["ceh"],
+ сцена="a lease contract lying open on a table with a highlighter marking one "
+       "line, the text deliberately unreadable, reading glasses and a cup of tea "
+       "at the edge of the frame.",
+ камера="50mm at f/2.8 from above at 30 degrees, shallow depth, sharp on the "
+        "highlighted line.",
+ зона="the upper left over the table",
+ заголовок="ОДНА СТРОКА, КОТОРОЙ У ВАС НЕТ",
+ строка="Обязанность уведомить о решении по кварталу",
+ низ="Арендодателю она не стоит ничего", акцент="ОДНА СТРОКА"),
+
+"P-206-rbk": dict(
+ образцы=["fasad_1", "dvor"],
+ сцена="a high aerial view of a Moscow industrial district bordering new "
+       "residential construction: production halls and yards on one side, tower "
+       "cranes and new blocks on the other, a wide road between them.",
+ камера="24mm equivalent, 45 degree oblique from about 200 metres, clear "
+        "midday light, high micro contrast.",
+ зона="the upper left quadrant over the sky and distant city",
+ заголовок="17 % ТЕРРИТОРИИ СТАРОЙ МОСКВЫ",
+ строка="Столько занимают бывшие промзоны",
+ низ="102 проекта КРТ за 7 месяцев 2026 года", акцент="17 %"),
+
+"P-306-rbk2": dict(
+ образцы=["fasad_1", "ceh"],
+ сцена="a wide shot of a modern working production hall with several machines "
+       "running and operators at them, bright even light, clean floor with "
+       "marked walkways, everything in order.",
+ камера="24mm at f/6.3, camera height 1.6 metres, deep sharpness, verticals "
+        "parallel.",
+ зона="the upper right over the wall",
+ заголовок="4700 ПЛОЩАДОК И 760 000 ЗАНЯТЫХ",
+ строка="Москва промышленная, как она выглядит в цифрах",
+ низ="Рост производства 12,1 % за первое полугодие", акцент="4700"),
+
+"P-309-pereezd": dict(
+ образцы=["ceh", "dvor"],
+ сцена="a production unit during a move: a machine on transport rollers being "
+       "guided by two workers, protective film on the floor, a truck visible "
+       "through the open gate outside.",
+ камера="35mm at f/4, camera height 1.5 metres, sharp on the machine and the "
+        "workers, gate blown out slightly by daylight.",
+ зона="the upper left over the wall",
+ заголовок="ПЕРЕЕЗД ЦЕХА: ПЛАН НА 90 ДНЕЙ",
+ строка="Ломается не на грузовиках, а на сроках",
+ низ="Бетон под станину сохнет 28 суток", акцент="90 ДНЕЙ"),
+
+"P-402-pervyy-otvet": dict(
+ образцы=["ceh", "fasad_1"],
+ сцена="a leasing manager's desk with a printed list of available units, a "
+       "calculator, a phone showing an outgoing message and a mug, shot from "
+       "above at a slight angle, numbers on the paper out of focus.",
+ камера="50mm at f/4 from above at 40 degrees, sharp on the list edge.",
+ зона="the right third over the desk surface",
+ заголовок="ОТВЕТ В ТОТ ЖЕ РАБОЧИЙ ДЕНЬ",
+ строка="Ставка по строкам, свободные блоки, нагрузка и мощность",
+ низ="Чего не знаем, называем дату, когда цифра будет", акцент="В ТОТ ЖЕ ДЕНЬ"),
+
+"P-409-rbk3": dict(
+ образцы=["proezd", "fasad_1"],
+ сцена="a metro construction site next to a working industrial estate: "
+       "fencing, a crane, the shape of a future station entrance, production "
+       "buildings and a shuttle bus in the background, clear daylight.",
+ камера="35mm at f/8, eye level, verticals parallel, deep sharpness.",
+ зона="the upper right over the sky",
+ заголовок="ТРАНСПОРТ КАК ФАКТОР СТАВКИ",
+ строка="Метро в 2028 и МЦД в 2029 по периметру площадки",
+ низ="Кто заходит сейчас, фиксирует условия", акцент="2028"),
+}
+
+for имя, п in ДОБОР.items():
+    ПРОМПТЫ[имя] = dict(образцы=п["образцы"],
+                        текст=пост(п["сцена"], п["камера"], п["зона"],
+                                   п["заголовок"], п["строка"],
+                                   п.get("низ", ""), п.get("акцент", "")))
+
+
 if __name__ == "__main__":
     коротких = [и for и, п in ПРОМПТЫ.items() if len(п["текст"]) < 2000]
     print(f"промптов: {len(ПРОМПТЫ)}, короче 2000 знаков: {коротких or 'нет'}")
     for и, п in list(ПРОМПТЫ.items())[:3]:
         print(f"  {и}: {len(п['текст'])} знаков")
+
+
