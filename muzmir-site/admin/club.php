@@ -46,11 +46,18 @@ $daysLeft = static function (?string $utc): ?int {
     return (int) floor(($ts - time()) / 86400);
 };
 
-/** Раздел оценки под конкурс: длинные (results_mode='list') — свой раздел. */
+/* ПЕРЕХОД ДОЛЖЕН ОТКРЫВАТЬ ОДНУ ЗАЯВКУ, А НЕ СПИСОК ИЗ СЕМИСОТ.
+ *
+ * Оба раздела оценки умеют искать по номеру заявки, поэтому передаём номер в
+ * поиск: раздел открывается уже отфильтрованным до этой строки, искать её
+ * глазами не нужно. Длинные конкурсы живут в своём разделе и ждут параметр
+ * competition — с 'comp' конкурс не выбирался вовсе, и открывался первый
+ * попавшийся список. */
 $gradeLink = static function (array $a): string {
+    $args = ['competition' => (int) ($a['competition_id'] ?? 0), 'q' => (string) ($a['number'] ?? '')];
     return (string) ($a['results_mode'] ?? '') === 'list'
-        ? a_link('longcomp', ['comp' => (int) ($a['competition_id'] ?? 0), 'id' => (int) $a['id']])
-        : a_link('grading', ['id' => (int) $a['id']]);
+        ? a_link('longcomp', $args)
+        : a_link('grading', $args);
 };
 
 /** Заказы наград одного участника, разложенные на электронные и оригиналы. */
@@ -241,17 +248,29 @@ if ($viewUid > 0) {
             <td><span class="badge <?= h($sCls) ?>"><?= h($sLbl) ?></span></td>
             <td style="white-space:nowrap">
               <?php
-              /* Раздел «Заказы оригиналов» ищет по номеру заказа, а «Заказы
-               * электронных» сгруппирован по ЗАЯВКЕ — туда номер заказа
-               * бессмысленно передавать, ведём по номеру заявки. */
-              $goQ = $section === 'orders'
-                  ? (string) $o['id']
-                  : (string) (scalar("SELECT number FROM applications WHERE id=?", [(int) ($o['application_id'] ?? 0)])
-                              // Заказ без заявки ищем по участнику: номер заказа в разделе
-                              // электронных ничего не найдёт — он сгруппирован по заявкам.
-                              ?: (string) ($o['email'] ?? ''));
+              /* ПЕРЕХОД ОТКРЫВАЕТ ИМЕННО ЭТОТ ЗАКАЗ.
+               *
+               * «Заказы оригиналов» ищут по номеру заказа, но их рабочий список
+               * показывает только оплаченные и изготовленные: отменённый или
+               * неоплаченный заказ по одному поиску не нашёлся бы. Поэтому вместе
+               * с номером передаём и вкладку под его статус.
+               *
+               * «Заказы электронных» сгруппированы по ЗАЯВКЕ — туда номер заказа
+               * передавать бессмысленно, ведём по номеру заявки (а заказ без
+               * заявки — по почте участника). Фильтр там при поиске сам
+               * переключается на «все». */
+              if ($section === 'orders') {
+                  $goArgs = ['q' => (string) $o['id']];
+                  $stNow  = (string) $o['status'];
+                  if (in_array($stNow, ['shipped', 'delivered'], true)) $goArgs['status'] = 'archive';
+                  elseif (in_array($stNow, ['new', 'canceled'], true)) $goArgs['status'] = $stNow;
+              } else {
+                  $goArgs = ['q' => (string) (scalar("SELECT number FROM applications WHERE id=?",
+                                                    [(int) ($o['application_id'] ?? 0)])
+                                              ?: (string) ($o['email'] ?? ''))];
+              }
               ?>
-              <a class="btn btn--ghost btn--sm" href="<?= a_link($section, ['q' => $goQ]) ?>">Открыть</a>
+              <a class="btn btn--ghost btn--sm" href="<?= a_link($section, $goArgs) ?>">Открыть</a>
             </td>
           </tr>
         <?php endforeach; ?>
