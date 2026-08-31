@@ -1,0 +1,239 @@
+/* ===== Кластер — моушен-слой =====
+   Подключается ПОСЛЕ style.css и только дополняет его.
+   Всё, что здесь есть, выключается при prefers-reduced-motion.
+   Классы с префиксом mo- ставит motion.js, разметку менять не нужно. */
+
+:root{
+  --mo-ease: cubic-bezier(.22,.61,.36,1);
+  --mo-ease-out: cubic-bezier(.16,1,.3,1);
+  --mo-dur: .72s;
+}
+
+/* ---------- 1. полоса прокрутки сверху ---------- */
+.mo-progress{
+  position:fixed; inset:0 auto auto 0; height:3px; width:100%;
+  transform:scaleX(0); transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--amber-d),var(--amber) 55%,#FFD778);
+  z-index:200; pointer-events:none;
+  box-shadow:0 0 14px rgba(232,164,0,.45);
+}
+
+/* ---------- 2. шапка ужимается ---------- */
+.hd{transition:box-shadow .35s var(--mo-ease), background .35s var(--mo-ease)}
+.hd-in{transition:height .35s var(--mo-ease)}
+.hd.mo-stuck{background:rgba(255,255,255,.94); box-shadow:0 10px 30px rgba(20,23,28,.09)}
+.hd.mo-stuck .hd-in{height:60px}
+.hd-logo{transition:height .35s var(--mo-ease)}
+.hd.mo-stuck .hd-logo{height:32px}
+
+/* ---------- 3. базовое появление ---------- */
+html.js .mo-r{
+  opacity:0;
+  transform:translate3d(0,26px,0);
+  transition:opacity var(--mo-dur) var(--mo-ease-out), transform var(--mo-dur) var(--mo-ease-out);
+  transition-delay:calc(var(--i,0) * 70ms);
+  will-change:opacity,transform;
+}
+html.js .mo-r.mo-left {transform:translate3d(-32px,0,0)}
+html.js .mo-r.mo-right{transform:translate3d(32px,0,0)}
+html.js .mo-r.mo-zoom {transform:scale(.955)}
+html.js .mo-r.mo-on{opacity:1; transform:none}
+html.js .mo-r.mo-on{will-change:auto}
+
+/* ---------- 4. заголовки: маска снизу вверх + золотая черта ---------- */
+html.js .mo-h{overflow:hidden; display:block}
+html.js .mo-h > .mo-hi{
+  display:block;
+  transform:translate3d(0,105%,0);
+  transition:transform .9s var(--mo-ease-out);
+}
+html.js .mo-h.mo-on > .mo-hi{transform:none}
+
+html.js .mo-rule{position:relative}
+html.js .mo-rule::after{
+  content:''; position:absolute; left:0; bottom:-14px; height:3px; width:64px;
+  background:var(--amber); border-radius:2px;
+  transform:scaleX(0); transform-origin:0 50%;
+  transition:transform .7s var(--mo-ease-out) .18s;
+}
+html.js .mo-rule.mo-on::after{transform:scaleX(1)}
+.center .mo-rule::after{left:50%; margin-left:-32px; transform-origin:50% 50%}
+
+/* ---------- 5. картинки: шторка + золотой блик ---------- */
+html.js .mo-img{position:relative; overflow:hidden}
+html.js .mo-img > img{
+  transform:scale(1.1);
+  transition:transform 1.5s var(--mo-ease-out), filter 1.2s var(--mo-ease-out);
+  filter:saturate(.72) contrast(.96);
+}
+html.js .mo-img.mo-on > img{transform:scale(1); filter:none}
+html.js .mo-img::after{
+  content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,232,170,.5) 50%,transparent 62%);
+  transform:translate3d(-120%,0,0);
+  transition:transform 1.15s var(--mo-ease-out) .1s;
+}
+html.js .mo-img.mo-on::after{transform:translate3d(120%,0,0)}
+
+/* ---------- 6. счётчики ---------- */
+.mo-num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+
+/* ---------- 7. параллакс героя ---------- */
+.hero{overflow:hidden}
+.hero .mo-par{will-change:transform}
+.mo-glow{
+  position:absolute; z-index:0; pointer-events:none;
+  width:min(760px,88vw); aspect-ratio:1; right:-14%; top:-24%;
+  background:radial-gradient(circle at 50% 50%,rgba(232,164,0,.20),rgba(232,164,0,.07) 42%,transparent 68%);
+  filter:blur(18px);
+  animation:mo-breathe 11s ease-in-out infinite;
+}
+@keyframes mo-breathe{
+  0%,100%{transform:translate3d(0,0,0) scale(1); opacity:.85}
+  50%    {transform:translate3d(-2.5%,3%,0) scale(1.09); opacity:1}
+}
+
+/* ---------- 8. бегущая строка фактов ---------- */
+.mo-ticker{
+  position:relative; overflow:hidden;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  background:var(--ink); color:#fff;
+  padding:14px 0; margin-top:clamp(28px,5vw,54px);
+}
+.mo-ticker::before,.mo-ticker::after{
+  content:''; position:absolute; top:0; bottom:0; width:90px; z-index:2; pointer-events:none;
+}
+.mo-ticker::before{left:0;  background:linear-gradient(90deg,var(--ink),transparent)}
+.mo-ticker::after {right:0; background:linear-gradient(270deg,var(--ink),transparent)}
+.mo-track{display:flex; width:max-content; animation:mo-slide 42s linear infinite}
+.mo-ticker:hover .mo-track{animation-play-state:paused}
+.mo-track span{
+  font-family:var(--ff-d); font-weight:600; text-transform:uppercase;
+  letter-spacing:.14em; font-size:14px; white-space:nowrap;
+  padding:0 30px; display:inline-flex; align-items:center; gap:30px; opacity:.94;
+}
+.mo-track span::after{content:''; width:6px; height:6px; border-radius:50%; background:var(--amber)}
+@keyframes mo-slide{from{transform:translate3d(0,0,0)} to{transform:translate3d(-50%,0,0)}}
+
+/* ---------- 9. карточки: подъём и блик за курсором ---------- */
+.mo-card{
+  position:relative;
+  transition:transform .42s var(--mo-ease), box-shadow .42s var(--mo-ease), border-color .42s var(--mo-ease);
+}
+.mo-card::before{
+  content:''; position:absolute; inset:0; border-radius:inherit; z-index:1;
+  opacity:0; transition:opacity .35s var(--mo-ease); pointer-events:none;
+  background:radial-gradient(320px circle at var(--mx,50%) var(--my,50%),rgba(232,164,0,.14),transparent 62%);
+}
+@media (hover:hover){
+  .mo-card:hover{transform:translateY(-6px); box-shadow:var(--sh-lg); border-color:rgba(232,164,0,.42)}
+  .mo-card:hover::before{opacity:1}
+}
+
+/* ---------- 10. кнопки тянутся к курсору ---------- */
+@media (hover:hover) and (pointer:fine){
+  .mo-mag{transition:transform .3s var(--mo-ease), background .2s, border-color .2s}
+}
+
+/* ---------- 11. подсказка «листайте» ---------- */
+.mo-scroll{
+  display:inline-flex; align-items:center; gap:10px; margin-top:26px;
+  font-family:var(--ff-d); font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--muted);
+}
+.mo-scroll i{
+  width:22px; height:34px; border:1.5px solid var(--line); border-radius:12px; position:relative; display:block;
+}
+.mo-scroll i::after{
+  content:''; position:absolute; left:50%; top:7px; width:3px; height:7px; margin-left:-1.5px;
+  border-radius:2px; background:var(--amber); animation:mo-wheel 1.9s var(--mo-ease) infinite;
+}
+@keyframes mo-wheel{0%{opacity:0;transform:translateY(-4px)}35%{opacity:1}100%{opacity:0;transform:translateY(11px)}}
+.mo-scroll.mo-hide{opacity:0; transition:opacity .5s}
+
+/* ---------- 12. номера разделов водяным знаком ---------- */
+.mo-stamp{
+  position:absolute; right:clamp(8px,3vw,44px); top:clamp(12px,3vw,40px);
+  font-family:var(--ff-d); font-weight:700; font-size:clamp(72px,11vw,160px);
+  line-height:1; color:var(--ink); opacity:.035; pointer-events:none; user-select:none;
+  letter-spacing:-.03em;
+}
+
+/* ---------- 13. фильтр каталога ---------- */
+.mo-flip{transition:transform .5s var(--mo-ease), opacity .3s var(--mo-ease)}
+.mo-out{opacity:0; transform:scale(.94)}
+
+/* ---------- 14. плавный якорный переход ---------- */
+@media (prefers-reduced-motion:no-preference){
+  html{scroll-behavior:smooth}
+}
+
+/* ---------- 15. полное выключение движения ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  html.js .mo-r,
+  html.js .mo-h > .mo-hi,
+  html.js .mo-img > img,
+  html.js .mo-img::after{
+    opacity:1 !important; transform:none !important; filter:none !important; transition:none !important;
+  }
+  html.js .mo-rule::after{transform:scaleX(1) !important; transition:none !important}
+  .mo-track{animation:none}
+  .mo-glow{animation:none}
+  .mo-scroll i::after{animation:none}
+  .mo-progress{display:none}
+  .mo-card{transition:none}
+}
+
+/* ---------- 16. кинослой: фотография оживает видео ---------- */
+.cine{position:relative;overflow:hidden}
+.cine > .cine-v{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; z-index:1;
+  opacity:0; transition:opacity .9s var(--mo-ease-out);
+  pointer-events:none;
+}
+.cine.cine-on > .cine-v{opacity:1}
+/* постер остаётся под видео и держит размер блока */
+.cine > picture,.cine > img{position:relative;z-index:0}
+.cine > figcaption{position:relative;z-index:3}
+/* метка «живой кадр» */
+.cine::before{
+  content:''; position:absolute; z-index:4; left:14px; top:14px;
+  width:9px; height:9px; border-radius:50%; background:var(--amber);
+  box-shadow:0 0 0 0 rgba(232,164,0,.55);
+  opacity:0; transition:opacity .4s;
+}
+.cine.cine-on::before{opacity:1; animation:cine-pulse 2.4s ease-out infinite}
+@keyframes cine-pulse{
+  0%{box-shadow:0 0 0 0 rgba(232,164,0,.55)}
+  70%{box-shadow:0 0 0 12px rgba(232,164,0,0)}
+  100%{box-shadow:0 0 0 0 rgba(232,164,0,0)}
+}
+@media (prefers-reduced-motion:reduce){
+  .cine > .cine-v{display:none}
+  .cine::before{display:none}
+}
+
+/* ---------- 17. слой объёма ---------- */
+/* специфичность поднята намеренно: правило появления mo-on ставит transform:none
+   и без этого перебивает наклон карточки */
+.d-tilt,
+html.js .d-tilt.mo-r.mo-on{
+  transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px));
+  transform-style:preserve-3d;
+  transition:transform .35s var(--mo-ease), box-shadow .42s var(--mo-ease), border-color .42s var(--mo-ease);
+}
+@media (hover:hover){
+  .mo-card.d-tilt:hover,
+  html.js .mo-card.d-tilt.mo-r.mo-on:hover{--ty:-6px}
+}
+.d-hero .hero-media{transform-style:preserve-3d;will-change:transform}
+.d-hero .hero-badge{will-change:transform}
+.d-w{display:inline-block;overflow:hidden;vertical-align:top}
+.d-wi{display:inline-block;will-change:transform}
+html.has-lenis{scroll-behavior:auto}
+@media (prefers-reduced-motion:reduce){
+  .d-tilt,html.js .d-tilt.mo-r.mo-on{transform:none !important;transition:none}
+  .d-wi{transform:none !important}
+}
