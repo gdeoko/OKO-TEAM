@@ -98,7 +98,7 @@ $order = ['Кубок Гран-при','Статуэтка лауреата','М
 // Заявки пользователя (для оформления).
 $myApps = [];
 if ($u) {
-    $myApps = all("SELECT a.id, a.number, a.competition_id, a.full_name, a.result, a.status,
+    $myApps = all("SELECT a.id, a.number, a.competition_id, a.full_name, a.result, a.status, a.is_group,
                           c.name AS comp_name, c.slug AS comp_slug,
                           c.results_mode AS comp_rmode, c.results_published_at AS comp_rpub
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
@@ -252,6 +252,19 @@ ob_start(); ?>
       foreach ($order as $item):
         if (empty($catalog[$item])) continue;
         // Заказ по конкретной заявке: показываем ТОЛЬКО то, что по её результату
+        /* СОЛИСТУ ИМЕННОЙ ДИПЛОМ НЕ ПОКАЗЫВАЕМ ВОВСЕ — правило владельца.
+         *
+         * Ниже позиция и так отсеивается по выбранной заявке, но до её выбора
+         * каталог показывал именной каждому. Человек клал его в корзину, доходил
+         * до оплаты и упирался в отказ — читал это как поломку сайта. Если у
+         * участника нет ни одной коллективной заявки, именного в каталоге нет. */
+        if ($item === 'Именной диплом' && !$appLock && $u && $myApps) {
+            $hasGroupApp = false;
+            foreach ($myApps as $ma) {
+                if ((int) ($ma['is_group'] ?? 0) === 1) { $hasGroupApp = true; break; }
+            }
+            if (!$hasGroupApp) continue;
+        }
         // реально можно заказать (правила — core/orders.php, там же и серверная проверка).
         if ($appLock) {
             $allowedHere = false;
