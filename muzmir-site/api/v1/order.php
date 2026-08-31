@@ -299,51 +299,74 @@ if (!$isClubOrder && $applicationId) {
     // иначе состав наград определялся бы тем, что подставил клиент.
     $appResult  = (string) ($appRow['result'] ?? '');
     $compIsPaid = (int) ($appRow['comp_is_paid'] ?? 0) === 1;
-    /* СОЛИСТ ВЫБРАЛ ИМЕННОЙ — ВЫДАЁМ ОСНОВНОЙ, А НЕ ОТКАЗЫВАЕМ.
+    /* СОЛИСТ ВЫБРАЛ ИМЕННОЙ — ВЫДАЁМ ДРУГУЮ НАГРАДУ, А НЕ ОТКАЗЫВАЕМ И НЕ ВОЗВРАЩАЕМ.
      *
-     * Правило владельца. Именной диплом положен участнику коллектива, у солиста
-     * основной и так с его фамилией — но человек у формы этого не знает и часто
-     * просто путает названия. Отказ на кнопке «Оплатить» он читает как поломку
-     * сайта и уходит без награды, а центр теряет заказ. Поэтому позицию молча
-     * заменяем на основной диплом: цена та же, документ человеку нужен именно
-     * этот. Если основной в заказе уже есть — вторую такую позицию убираем,
-     * чтобы не продать один документ дважды. */
+     * Правило владельца, дословно: цель — заработать и заменить награду, а не
+     * возвращать деньги из-за нашей же путаницы. Именной диплом положен участнику
+     * коллектива; у солиста основной и так с его фамилией, но человек у формы
+     * этого не знает и просто путает названия. Отказ на кнопке «Оплатить» он
+     * читает как поломку сайта и уходит без награды.
+     *
+     * Поэтому позиция становится ОСНОВНЫМ дипломом — цена та же, документ нужен
+     * именно этот. Если основной по этой заявке уже в заказе, ищем другую
+     * аттестованную заявку того же участника, где основной ещё не заказан, и
+     * оформляем позицию на неё: у Самойлова так и вышло — две заявки, два
+     * основных диплома. Не нашлось и такой — позицию ОСТАВЛЯЕМ оплаченной и
+     * зовём владельца заменить награду руками. Деньги из заказа не вычитаем
+     * никогда: возврат из-за нашей путаницы — это потеря центра. */
     if ((int) ($appRow['is_group'] ?? 0) !== 1) {
-        $hasMain = false;
+        $mainBusy = [];   // номера заявок, по которым основной уже в заказе
         foreach ($normItems as $ni) {
-            if (trim((string) ($ni['item'] ?? '')) === 'Основной диплом') { $hasMain = true; break; }
+            if (trim((string) ($ni['item'] ?? '')) === 'Основной диплом') {
+                $mainBusy[(string) ($ni['note'] ?? (string) $applicationId)] = true;
+            }
         }
         $swapped = [];
         foreach ($normItems as $ni) {
             if (!preg_match('~именн~ui', (string) ($ni['item'] ?? ''))) { $swapped[] = $ni; continue; }
-            if ($hasMain) {
-                /* Основной уже заказан — именной у солиста был бы его копией.
-                 * Скидка к этому моменту уже применена, поэтому из суммы к оплате
-                 * снимаем цену СО СКИДКОЙ, а из «цены без скидки» — полную. */
-                $full = (int) ($ni['price'] ?? 0);
-                $net  = $discPctOrder > 0 ? (int) round($full * (100 - $discPctOrder) / 100) : $full;
-                $amount = max(0, $amount - $net);
-                $amountBeforeDiscount = max(0, $amountBeforeDiscount - $full);
-                if (function_exists('audit')) {
-                    audit('order_named_dropped', 'awards_orders', null,
-                          ['app' => $applicationId, 'price' => (int) ($ni['price'] ?? 0)]);
-                }
-                continue;
-            }
             $ni['item'] = 'Основной диплом';
             unset($ni['fio']);
-            $hasMain = true;
-            $swapped[] = $ni;
-            if (function_exists('audit')) {
-                audit('order_named_to_main', 'awards_orders', null, ['app' => $applicationId]);
+
+            if (isset($mainBusy[(string) $applicationId])) {
+                /* Основной по этой заявке уже заказан. Ищем другую аттестованную
+                 * заявку того же участника, где основного ещё нет. */
+                $other = one(
+                    "SELECT a.id, a.number FROM applications a
+                      WHERE a.user_id = ? AND a.id <> ? AND COALESCE(a.result,'') <> ''
+                        AND NOT EXISTS (SELECT 1 FROM diplomas d WHERE d.application_id = a.id AND d.type='main')
+                      ORDER BY a.id LIMIT 1",
+                    [$uid, $applicationId]
+                );
+                if ($other) {
+                    $ni['note'] = (string) $other['number'];
+                    $mainBusy[(string) $other['id']] = true;
+                    if (function_exists('audit')) {
+                        audit('order_named_to_main_other', 'awards_orders', null,
+                              ['app' => $applicationId, 'moved_to' => (string) $other['number']]);
+                    }
+                } else {
+                    // Заменить не на что — зовём владельца, но деньги оставляем.
+                    $ni['needs_review'] = 'солист заказал именной, основной уже есть — заменить награду вручную';
+                    if (function_exists('tg_notify_admin')) {
+                        try {
+                            tg_notify_admin('Заказ солиста: именной диплом заменить не на что (заявка '
+                                . (string) ($appRow['number'] ?? $applicationId)
+                                . '). Позиция оплачена — выберите замену в разделе «Заказы».');
+                        } catch (\Throwable $e) {}
+                    }
+                    if (function_exists('audit')) {
+                        audit('order_named_needs_review', 'awards_orders', null, ['app' => $applicationId]);
+                    }
+                }
+            } else {
+                $mainBusy[(string) $applicationId] = true;
+                if (function_exists('audit')) {
+                    audit('order_named_to_main', 'awards_orders', null, ['app' => $applicationId]);
+                }
             }
+            $swapped[] = $ni;
         }
         $normItems = $swapped;
-        if (!$normItems) {
-            json_out(['ok' => false, 'error' => 'Основной диплом по этой заявке у Вас уже заказан. '
-                . 'Именной диплом выписывается участнику коллектива, а у солиста основной диплом '
-                . 'и так именной — на нём стоит его фамилия.'], 422);
-        }
     }
     foreach ($normItems as $ni) {
         [$allowed, $why] = award_item_allowed(
