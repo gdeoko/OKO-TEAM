@@ -29,6 +29,38 @@ require_once __DIR__ . '/afisha_html.php';   // afisha_terms(), темы
 function afisha_scene_for(string $name): string {
     $n = mb_strtolower($name);
     $map = [
+        /* ТОЧНЫЕ НАЗВАНИЯ ИДУТ ПЕРВЫМИ.
+         *
+         * Ключи проверяются по порядку, и общее слово перехватывает частное:
+         * «Мир звёзд» без этой строки поймал бы ключ «мир» и получил глобус
+         * вместо звёздного неба. Поэтому конкурсы сезона описаны отдельно и
+         * подробно — каждый со своим миром, чтобы афиши года не были на одно
+         * лицо. */
+        'наследие росс' => 'a majestic hall of Russian heritage: golden silhouettes of Kremlin towers and white-stone '
+            . 'cathedral domes rising behind an ornate iconostasis-like screen, carved wooden khokhloma and gzhel '
+            . 'ornament woven into golden filigree, antique gusli and balalaika resting on brocade, heavy embroidered '
+            . 'rushnik towels with traditional red patterns draped at the sides, flowing russian tricolour ribbons, '
+            . 'laurel branches, an aged parchment scroll with a wax seal, warm candlelight glow, the feeling of '
+            . 'centuries of culture passed from hand to hand',
+        'высшая лига'   => 'the summit of mastery: a tall three-step ceremonial podium of polished dark marble with '
+            . 'gold inlay standing on a grand stage, a colossal golden laurel wreath arching overhead, heavy velvet '
+            . 'curtains parted wide, converging spotlight beams meeting at the top step, golden confetti and sparks '
+            . 'suspended in the air, an ornate gold champion cup silhouette in the background haze, heraldic shields '
+            . 'and crossed palm branches, the atmosphere of an elite final where only the best compete',
+        'мир звёзд'     => 'a boundless cosmic sky in deep sapphire and indigo, filled with radiant golden stars, '
+            . 'comets with long luminous tails, spiral nebulae and constellations drawn in fine gold lines, luminous '
+            . 'golden treble clefs and musical notes drifting weightlessly among the stars, a distant golden planet '
+            . 'ringed with a musical stave, soft stardust haze, the whole scene opening above a dark grand stage as '
+            . 'if the universe itself were the auditorium',
+        'мир звезд'     => 'a boundless cosmic sky in deep sapphire and indigo, filled with radiant golden stars, '
+            . 'comets with long luminous tails, spiral nebulae and constellations drawn in fine gold lines, luminous '
+            . 'golden treble clefs and musical notes drifting weightlessly among the stars, a distant golden planet '
+            . 'ringed with a musical stave, soft stardust haze, the whole scene opening above a dark grand stage',
+        'волне искусств' => 'a majestic golden wave rising like a musical crescendo: a great curling ocean wave whose '
+            . 'crest dissolves into flowing musical staves, notes and treble clefs carried in the spray, sea foam '
+            . 'turning into golden filigree ornament, a lyre and a violin scroll emerging from the swell, moonlit '
+            . 'deep-teal water below and a warm golden horizon above, ribbons of light rippling across the surface, '
+            . 'the movement and breath of art itself made visible',
         'мир'        => 'a magnificent golden globe wrapped in flowing musical staves and ribbons, surrounded by golden stars and treble clefs, set on a grand theatre stage',
         'росси'      => 'golden silhouettes of the Moscow Kremlin towers and Saint Basil cathedral, flowing russian tricolour ribbons, laurel branches and golden stars',
         'звезд'      => 'a deep cosmic sky filled with golden stars, comets and constellations, luminous golden treble clefs and musical notes drifting through the nebula',
@@ -80,6 +112,13 @@ function afisha_prompt(array $c): string {
     if ($res !== '')      $srok .= ($srok !== '' ? ' · ' : '') . 'Результаты ' . $res;
     elseif ($srok !== '') $srok .= ' · Результаты в течение 5 рабочих дней';
 
+    /* Приписка про положение — только у конкурса Клуба: сумма фонда на ленте без
+     * неё читается как приз каждому участнику каждый месяц. */
+    $note = function_exists('afisha_note') ? afisha_note($c) : '';
+    $noteLine = $note !== ''
+        ? "Line 6a, directly under the ribbon banner, small, light weight, subdued, centred: «{$note}»\n\n"
+        : '';
+
     return <<<PROMPT
 Create a complete, finished, print-ready HORIZONTAL POSTER in 16:9 aspect ratio (1920x1080 or larger), for an official Russian cultural competition. This is a FINAL DESIGN, not a background plate: it must contain real, correctly spelled RUSSIAN (Cyrillic) typography exactly as specified below, rendered crisply and legibly at full size.
 
@@ -99,7 +138,7 @@ Line 5, THE MAIN HEADLINE, very large, dominant, centred, in polished three-dime
 
 Line 6, inside a deep burgundy ribbon banner with a thin gold border, bold white capitals: «{$terms}»
 
-Line 7, bold, clearly readable: «{$srok}»
+{$noteLine}Line 7, bold, clearly readable: «{$srok}»
 
 Line 8, regular weight: «Компетентное жюри · Квалифицированная оценка · Денежные премии»
 
@@ -115,6 +154,6 @@ LENS AND RENDERING. As if photographed with an 85mm lens at f/8 — everything i
 
 COLOUR PALETTE, exact values: {$pal[0]}; {$pal[1]}; {$pal[2]}; {$pal[3]}. Warm off-white #F5EEDC for the smaller text lines. Ivory #F6F1E4 for the placeholder discs. Keep everything within this family; no green, no magenta, no neon, no modern gradients.
 
-QUALITY REQUIREMENTS. 8K, ultra sharp, commercial print quality, flawless symmetry, no banding in gradients, no noise, no compression artefacts. Typography must be crisp and perfectly legible at full size — every Cyrillic character correctly formed and correctly spelled, with correct Russian quotation marks « » where shown. No watermarks, no signatures, no photographer credits, no extra text beyond the nine lines specified above.
+QUALITY REQUIREMENTS. 8K, ultra sharp, commercial print quality, flawless symmetry, no banding in gradients, no noise, no compression artefacts. Typography must be crisp and perfectly legible at full size — every Cyrillic character correctly formed and correctly spelled, with correct Russian quotation marks « » where shown. No watermarks, no signatures, no photographer credits, no extra text beyond the lines specified above.
 PROMPT;
 }

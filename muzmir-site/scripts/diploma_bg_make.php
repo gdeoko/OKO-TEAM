@@ -98,7 +98,8 @@ $local  = $dirAbs . '/diploma_bg_new.png';
 echo "Отправляю промпт…\n";
 $bastion('cat > /opt/oko-poster/' . $tag . '.txt <<\'PROMPT_EOF\'' . "\n" . $prompt . "\nPROMPT_EOF\necho ok", 60);
 echo "Генерирую фон A4…\n";
-$bastion('cd /opt/oko-poster && nohup node gpt_image.mjs ' . $tag . '.txt ' . $remote
+// Порт браузера с входом в ChatGPT — см. пояснение в scripts/afisha_make.php.
+$bastion('cd /opt/oko-poster && CDP_URL=http://127.0.0.1:9222 nohup node gpt_image.mjs ' . $tag . '.txt ' . $remote
        . ' 420 > /tmp/' . $tag . '.log 2>&1 & echo started', 60);
 
 $ready = false;
