@@ -50,6 +50,8 @@ def karta(k):
                  'как придут, встанут сюда сами.</div>')
     if k.get("oplata"):
         o.append(f'<a class="pay" href="{e(k["oplata"])}" target="_blank">Оплатить {rub(k.get("nasha") or k["trebuyut"])}</a>')
+    if k.get("pismo"):
+        o.append(f'<div class="pismo" style="border-color:var(--lime)">{e(k["pismo"])}</div>')
     if k.get("kommentariy"):
         o.append(f'<div class="note">{e(k["kommentariy"])}</div>')
     o.append('<div class="spravka"><b>Справка о закрытии обязательна.</b> После оплаты требуем на почту '
@@ -221,6 +223,12 @@ document.querySelectorAll('.copy').forEach(function(b){
     try:
         os.makedirs(os.path.dirname(VYHOD), exist_ok=True)
         open(VYHOD, "w", encoding="utf-8").write(php)
+        k = os.path.join(BAZA, ".kluch")
+        if os.path.exists(k):
+            kv = open(k).read().strip()
+            kp = os.path.join(os.path.dirname(VYHOD), ".kluch")
+            open(kp, "w").write(kv)
+            os.chmod(kp, 0o644)
         print("страница выложена:", VYHOD)
     except Exception as ex:
         print("в корень сайта не записалось (" + type(ex).__name__ + "), лежит запасом:", ZAPAS)

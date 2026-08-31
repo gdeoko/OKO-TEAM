@@ -47,13 +47,15 @@ def main():
     pisma = json.load(open(PISMA, encoding="utf-8"))
     log = uzhe()
 
-    if rezhim == "spisok":
+    if rezhim not in ("poehali", "poehali_seychas"):
         for p in pisma:
             m = "УЖЕ ОТПРАВЛЕНО " + log[p["id"]]["kogda"] if p["id"] in log else "ждёт"
             print(f'{p["id"]:<12} {p["komu"]:<32} {m}')
         return
 
     mozhno, seychas = okno()
+    if rezhim == "poehali_seychas":
+        mozhno = True
     if not mozhno:
         print("Окно закрыто (", seychas.strftime("%a %H:%M"), "МСК ). "
               "Наружу пишем пн-сб 09:00-19:00. Ничего не отправлено.")
