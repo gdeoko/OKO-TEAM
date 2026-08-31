@@ -486,18 +486,30 @@ function payment_mark_refunded(string $yukassaId, float $amount, string $refundI
     $pay = one("SELECT * FROM payments WHERE yukassa_id=?", [$yukassaId]);
     if (!$pay || (string) $pay['status'] === 'refunded') return false;
 
-    update('payments', ['status' => 'refunded'], 'id=:id', ['id' => (int) $pay['id']]);
+    /* ЧАСТИЧНЫЙ ВОЗВРАТ — НЕ ВОЗВРАТ ПЛАТЕЖА.
+     *
+     * Здесь платёж помечался «возвращён» при любой сумме возврата. Заказ на
+     * 1 950 ₽, из которого вернули 400 за одну позицию, начинал числиться
+     * возвращённым целиком: в учёте пропадали 1 550 ₽, которые у центра есть.
+     * Статус меняем, только когда вернули всю сумму; частичный возврат
+     * записываем суммой у заказа и заявки. */
+    $paid = (float) (int) ($pay['amount'] ?? 0);
+    $full = $paid > 0 ? ($amount + 0.01 >= $paid) : true;
+    if ($full) update('payments', ['status' => 'refunded'], 'id=:id', ['id' => (int) $pay['id']]);
 
     $appId = (int) ($pay['application_id'] ?? 0);
     if ($appId) {
         foreach ([['refunded_at', "TEXT DEFAULT ''"], ['amount_refunded', 'INTEGER DEFAULT 0']] as [$col, $decl]) {
             try { db()->exec("ALTER TABLE applications ADD COLUMN $col $decl"); } catch (\Throwable $e) {}
         }
-        update('applications', [
+        $fields = [
             'refunded_at'     => date('Y-m-d H:i:s'),
             'amount_refunded' => (int) round($amount),
-            'is_paid'         => 0,
-        ], 'id=:id', ['id' => $appId]);
+        ];
+        // Заявку снимаем с оплаченных только при полном возврате: частичный
+        // возврат за одну позицию не отменяет участие.
+        if ($full) $fields['is_paid'] = 0;
+        update('applications', $fields, 'id=:id', ['id' => $appId]);
     }
     $ordId = (int) ($pay['order_id'] ?? 0);
     if ($ordId) {

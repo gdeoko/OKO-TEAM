@@ -731,6 +731,10 @@ ob_start(); ?>
     var hasBase=false, blocked=null, needOriginal=false;
     cart.forEach(function(c){
       if(isBaseItem(c.item)){ hasBase=true; return; }
+      // Дополнительный диплом — самостоятельная награда жюри, заказывается
+      // отдельно от основного (правило владельца, серверная проверка —
+      // award_base_required в core/orders.php).
+      if(/дополнительн/i.test(c.item)) return;
       if(!blocked) blocked=c.item;
       if(c.kind!=='digital') needOriginal=true;
     });
