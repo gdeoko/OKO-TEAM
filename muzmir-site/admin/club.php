@@ -23,6 +23,11 @@ require_once BASE_PATH . '/core/orders.php';
 club_boot();
 orders_migrate();
 
+/* Разметку отдаём через admin_layout(), как все разделы админки: шапку, меню и
+ * стили рисует она. Без буфера страница уходила в браузер голым HTML — без
+ * навигации и оформления. */
+ob_start();
+
 /** Дата членства → человеческий вид. В базе она в UTC (см. core/club.php). */
 $clubDate = static function (?string $utc, bool $withTime = false): string {
     $utc = trim((string) $utc);
@@ -280,6 +285,8 @@ if ($viewUid > 0) {
       </table></div>
     <?php endif; ?>
     <?php
+    $content = ob_get_clean();
+    admin_layout('ВИП-клуб · ' . (trim((string) ($u['full_name'] ?? '')) ?: (string) $u['email']), $content, 'club');
     return;
 }
 
@@ -403,3 +410,6 @@ foreach ($rows as $r) {
   </tbody>
 </table></div>
 <?php endif; ?>
+<?php
+$content = ob_get_clean();
+admin_layout('ВИП-клуб', $content, 'club');
