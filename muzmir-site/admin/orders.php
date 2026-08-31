@@ -134,13 +134,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $manyNote = static fn(array $x): string => count($x) > 1 ? (' (заказов в посылке: ' . count($x) . ')') : '';
 
     if ($do === 'edit_addr' && $ids) {
-        // Адрес правится сразу у всей посылки: он у неё один по определению.
-        foreach ($ids as $i) update('awards_orders', [
+        /* Адрес правится сразу у всей посылки: он у неё один по определению.
+         *
+         * Вместе с адресом пересчитываем и КЛЮЧ адреса. Без этого посылка,
+         * которую только что переадресовали, продолжала бы собираться по старому
+         * ключу — и уехала бы по прежнему адресу. */
+        $newAddr = mb_substr(trim(input('address')), 0, 500);
+        $newKey  = '';
+        if ($newAddr !== '') {
+            if (!function_exists('addr_key') && is_file(BASE_PATH . '/core/address.php')) {
+                require_once BASE_PATH . '/core/address.php';
+            }
+            try { $newKey = function_exists('addr_key') ? addr_key($newAddr) : ''; }
+            catch (\Throwable $e) { $newKey = ''; }
+        }
+        $fields = [
             'full_name'    => mb_substr(trim(input('full_name')), 0, 200),
-            'address'      => mb_substr(trim(input('address')), 0, 500),
+            'address'      => $newAddr,
             'postal_index' => mb_substr(trim(input('postal_index')), 0, 20),
             'phone'        => mb_substr(trim(input('phone')), 0, 40),
-        ], 'id=:id', ['id' => $i]);
+        ];
+        // Ключ переписываем, только если он посчитался: пустым значением мы бы
+        // разбили посылку на отдельные отправления и отправили их по частям.
+        if ($newKey !== '') $fields['addr_key'] = $newKey;
+        foreach ($ids as $i) update('awards_orders', $fields, 'id=:id', ['id' => $i]);
         audit('order_edit_addr', 'awards_orders', $oid, ['orders' => $ids]);
         flash('Данные получателя обновлены' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');
