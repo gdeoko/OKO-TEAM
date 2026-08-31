@@ -42,7 +42,7 @@ def сторис(сцена, заголовок, строка, низ=""):
 "S-02-ota": [
  ("a dense street of small metal workshops in an Asian city, open roller "
   "shutters, a worker carrying a part across the road",
-  "3481 ЦЕХ ВМЕСТО 9100", "Район Ота в Токио за 30 лет"),
+  "3600 ЦЕХОВ ВМЕСТО 9100", "Район Ота в Токио за 40 лет"),
  ("the interior of a small family workshop with a lathe and a man working at "
   "it, flats visible through the open door above",
   "ГОРОД ОСТАВИЛ ИХ ВНУТРИ", "Мастерская внизу, жильё выше, школа рядом"),

@@ -63,7 +63,7 @@
   "road markings. Composition: the outlined estate sits in the right two thirds, "
   "the upper left quadrant stays calm and slightly darkened for the type. "
   "Typography in the upper left: a headline in Russian reading exactly "
-  "«ТРИ МЕСЯЦА НА ВЫЕЗД», under it a supporting line reading exactly "
+  "«3 МЕСЯЦА НА ВЫЕЗД», under it a supporting line reading exactly "
   "«Столько остаётся арендатору, когда квартал уходит под жильё», and lower a "
   "small caption reading exactly «6-я Радиальная, 17с1 · вне зоны КРТ на 08.2026». "
   "Headline in warm white with a short amber rule above it, supporting line in "
@@ -94,8 +94,8 @@
   "with a wide margin on both sides and must never touch or cross the right edge "
   "of its column; if it does not fit, set it smaller rather than wider. Under it "
   "a supporting line "
-  "reading exactly «Опытного видно за пять минут», and at the bottom a small "
-  "line reading exactly «Разворот в три приёма: 10 минут на каждой машине» "
+  "reading exactly «Опытного видно за 5 минут», and at the bottom a small "
+  "line reading exactly «Разворот в 3 приёма: 10 минут на каждой машине» "
   "Headline warm white, amber rule "
   "above it. "
   + ЧИСТО + КИРИЛЛИЦА + КАЧЕСТВО)),
@@ -119,7 +119,7 @@
   "type, with a soft graphite gradient behind the letters. Amber appears only on "
   "one number in the type and on a single marker tag on a cable. "
   "Typography in the right third: a headline in Russian on two lines reading "
-  "exactly «5 МВТ НА ЗДАНИИ. ДО ВАШЕГО СТАНКА МОЖЕТ НЕ ДОЙТИ НИЧЕГО», under it a "
+  "exactly «5 МВТ НА ЗДАНИИ. ДО СТАНКА МОЖЕТ НЕ ДОЙТИ НИЧЕГО», under it a "
   "supporting line reading exactly «Спросите цифру в договоре, а не мощность "
   "здания», and at the bottom a small line reading exactly "
   "«От 20 кВт на помещение с увеличением до 300 кВт». The figure «300 кВт» is the "
@@ -145,8 +145,8 @@
   "sky and calm facade for the type, with a light graphite gradient under the "
   "letters. "
   "Typography in the upper left: a headline in Russian on two lines reading "
-  "exactly «СОСЕД ПО ТЕРРИТОРИИ СДЕЛАЕТ ДЕТАЛЬ ЗА ЧАС», under it a supporting "
-  "line reading exactly «Сто производств и шесть отраслей на одной площадке», and "
+  "exactly «СОСЕД СДЕЛАЕТ ДЕТАЛЬ ЗА 3 ЧАСА», under it a supporting "
+  "line reading exactly «100 производств и 6 отраслей на одной площадке», and "
   "a small bottom line reading exactly «6-я Радиальная, 17с1». Amber only on the "
   "short rule above the headline. "
   + ЧИСТО + КИРИЛЛИЦА + КАЧЕСТВО)),
@@ -278,10 +278,10 @@ for имя, сцена, заг, стр, ном in КАРУСЕЛЬ:
   "the upper left sky and wall area stays calm for the type with a soft graphite "
   "gradient behind the letters. "
   "Typography in the upper left: a headline in Russian on two lines reading "
-  "exactly «9100 ЦЕХОВ В 1983. ОСТАЛОСЬ 3481», under it a supporting line "
+  "exactly «9100 ЦЕХОВ В 1983. ОСТАЛОСЬ 3600», under it a supporting line "
   "reading exactly «Район Ота, Токио: как дорогая земля съедает производство», "
   "and a small bottom line reading exactly «Разбираем по 1 городу в месяц». The "
-  "figure «3481» is the only element in amber. "
+  "figure «3600» is the only element in amber. "
   + ЧИСТО + КИРИЛЛИЦА + КАЧЕСТВО))
 
 ПРОМПТЫ["P-07-pol"] = dict(
@@ -325,7 +325,7 @@ for имя, сцена, заг, стр, ном in КАРУСЕЛЬ:
   "Typography in the lower left: a headline in Russian on two lines reading "
   "exactly «СМЕНА ЕЗДИТ ОБЕДАТЬ 20 МИНУТ», under it a supporting line reading "
   "exactly «Каждый день, за ваш счёт», and a small bottom line reading exactly "
-  "«Столовая, душевые и 267 машиномест на территории». The figure «20 МИНУТ» is "
+  "«Столовая, душевые и 550 машиномест на территории». The figure «20 МИНУТ» is "
   "the only element in amber. "
   + ЧИСТО + КИРИЛЛИЦА + КАЧЕСТВО))
 
