@@ -405,7 +405,30 @@ $groups = og_groups($orders);
         <b style="font-size:16px;color:var(--a-navy);">
           <?= count($ids) > 1 ? 'Посылка · заказы №' . h(implode(', №', $ids)) : 'Заказ №' . $oid ?>
         </b>
-        <span class="muted small"> · <?= h((string)$o['created_at']) ?></span>
+        <span class="muted small"> · <?= h(order_dt((string)$o['created_at'])) ?></span>
+        <?php
+        /* СРОКИ ВИДНЫ СРАЗУ, БЕЗ ЗАХОДА В ЗАЯВКУ.
+         *
+         * В шапке стояла одна дата оформления, и понять, кто ждёт дольше всех и
+         * что уже просрочено, было нельзя: приходилось открывать заявку, потом
+         * платежи, потом считать рабочие дни в уме. */
+        $tl = order_timeline($o);
+        ?>
+        <div class="small muted" style="margin-top:3px;line-height:1.55">
+          Заказ наград оформлен: <b><?= h(order_dt($tl['ordered'], false)) ?></b>
+          <span class="muted">(<?= h(order_ago($tl['ordered'])) ?>)</span>
+          <?php if ($tl['paid_at'] !== ''): ?>
+            · Оплачен: <b><?= h(order_dt($tl['paid_at'], false)) ?></b>
+          <?php endif; ?>
+          <?php if ($tl['due'] !== ''): ?>
+            · Изготовить до:
+            <b style="color:<?= $tl['overdue'] ? '#8B2F2F' : 'var(--a-navy)' ?>"><?= h(order_dt($tl['due'], false)) ?></b>
+            <?php if ($tl['overdue']): ?><span style="color:#8B2F2F">просрочено</span><?php endif; ?>
+          <?php endif; ?>
+          <?php if ($tl['queue'] > 0): ?>
+            · В очереди: <b><?= (int) $tl['queue'] ?></b> из <?= (int) $tl['queue_total'] ?>
+          <?php endif; ?>
+        </div>
         <div class="small">
           <?= h((string)$o['competition']) ?> · <b><?= h((string)$o['result']) ?></b>
           <?php /* В разделе оригиналов вид всегда один — почтовая посылка. Писать

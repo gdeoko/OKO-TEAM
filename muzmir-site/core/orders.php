@@ -877,3 +877,98 @@ function order_ship_email(array $order): string {
         'thanks'    => true,
     ]);
 }
+
+/**
+ * СРОКИ И ОЧЕРЕДЬ ПО ЗАКАЗУ — ДЛЯ АДМИНКИ.
+ *
+ * Владелец смотрит на заказ и должен сразу видеть: когда человек подал заявку на
+ * участие, когда оформил заказ, когда оплатил, к какому числу вещь должна быть
+ * готова и какой этот заказ по счёту в работе. Раньше в карточке стояла одна
+ * дата оформления, и понять, кто ждёт дольше всех, было нельзя.
+ *
+ * Сроки берутся те же, что обещаны участнику в письмах и в разделе «Вопросы и
+ * ответы»: оригиналы - до 7 рабочих дней со дня оплаты, электронные - 5 рабочих
+ * дней (3 для участников клуба).
+ *
+ * @return array{app_date:string, ordered:string, paid_at:string, due:string,
+ *               queue:int, queue_total:int, overdue:bool}
+ */
+function order_timeline(array $o): array {
+    $out = ['app_date' => '', 'ordered' => '', 'paid_at' => '', 'due' => '',
+            'queue' => 0, 'queue_total' => 0, 'overdue' => false];
+    $oid = (int) ($o['id'] ?? 0);
+    if (!$oid) return $out;
+
+    $out['ordered'] = (string) ($o['created_at'] ?? '');
+
+    // Когда человек подал заявку на участие.
+    $appId = (int) ($o['application_id'] ?? 0);
+    if ($appId) {
+        try { $out['app_date'] = (string) (scalar("SELECT created_at FROM applications WHERE id=?", [$appId]) ?: ''); }
+        catch (\Throwable $e) { /* заявки может не быть */ }
+    }
+
+    // Когда оплачен: по успешному платежу, иначе по дате оформления заказа.
+    try {
+        $out['paid_at'] = (string) (scalar("SELECT created_at FROM payments
+                                             WHERE order_id=? AND status='succeeded'
+                                             ORDER BY id DESC LIMIT 1", [$oid]) ?: '');
+    } catch (\Throwable $e) { /* таблицы может не быть */ }
+    if ($out['paid_at'] === '' && in_array((string) ($o['status'] ?? ''), ['paid','made','shipped','delivered'], true)) {
+        $out['paid_at'] = (string) ($o['created_at'] ?? '');
+    }
+
+    // К какому числу должно быть готово: 7 рабочих дней от оплаты.
+    if ($out['paid_at'] !== '') {
+        if (!function_exists('working_days_after') && is_file(BASE_PATH . '/core/send_timing.php')) {
+            require_once BASE_PATH . '/core/send_timing.php';
+        }
+        if (function_exists('working_days_after')) {
+            try { $out['due'] = working_days_after($out['paid_at'], 7)->format('Y-m-d H:i:s'); }
+            catch (\Throwable $e) { $out['due'] = ''; }
+        }
+    }
+    // Просрочка считается только для того, что ещё не изготовлено.
+    if ($out['due'] !== '' && (string) ($o['status'] ?? '') === 'paid') {
+        $out['overdue'] = strtotime($out['due']) < time();
+    }
+
+    /* Очередь: какой это заказ по счёту среди ожидающих изготовления. Считаем от
+     * оплаты - кто заплатил раньше, того и делают раньше. */
+    if ((string) ($o['status'] ?? '') === 'paid') {
+        try {
+            $out['queue_total'] = (int) scalar(
+                "SELECT COUNT(*) FROM awards_orders
+                  WHERE status='paid' AND items LIKE '%\"kind\":\"original\"%'
+                    AND items NOT LIKE '%\"kind\":\"club\"%'");
+            $out['queue'] = 1 + (int) scalar(
+                "SELECT COUNT(*) FROM awards_orders
+                  WHERE status='paid' AND items LIKE '%\"kind\":\"original\"%'
+                    AND items NOT LIKE '%\"kind\":\"club\"%' AND id < ?", [$oid]);
+        } catch (\Throwable $e) { /* без очереди не страшно */ }
+    }
+    return $out;
+}
+
+/** Дата в человеческом виде: «31.08.2026, 14:41». Пусто - прочерк. */
+function order_dt(string $s, bool $withTime = true): string {
+    $s = trim($s);
+    if ($s === '') return '—';
+    $ts = strtotime($s);
+    if (!$ts) return '—';
+    return date($withTime ? 'd.m.Y, H:i' : 'd.m.Y', $ts);
+}
+
+/** «3 дня назад» / «сегодня» - чтобы было видно, кто ждёт дольше всех. */
+function order_ago(string $s): string {
+    $s = trim($s);
+    if ($s === '') return '';
+    $ts = strtotime($s);
+    if (!$ts) return '';
+    $d = (int) floor((time() - $ts) / 86400);
+    if ($d <= 0) return 'сегодня';
+    if ($d === 1) return 'вчера';
+    $tail = ($d % 10 === 1 && $d % 100 !== 11) ? 'день'
+          : ((in_array($d % 10, [2,3,4], true) && !in_array($d % 100, [12,13,14], true)) ? 'дня' : 'дней');
+    return $d . ' ' . $tail . ' назад';
+}

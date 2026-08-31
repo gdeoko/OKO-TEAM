@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 require_once BASE_PATH . '/core/app_status.php';
 require_once BASE_PATH . '/core/dispatch_ops.php';
+// order_dt/order_ago — общий формат дат для обоих разделов заказов.
+require_once BASE_PATH . '/core/orders.php';
 
 $DIG_LBL = ['main' => 'Основной диплом', 'extra' => 'Дополнительный диплом',
             'named' => 'Именной диплом', 'thanks' => 'Благодарность педагогу'];
@@ -65,7 +67,7 @@ if ($q !== '') {
 }
 
 $rowsRaw = all("SELECT d.*, a.id AS app_id, a.number AS app_number, a.full_name, a.group_name,
-                       a.is_group, a.email, a.phone, a.user_id,
+                       a.is_group, a.email, a.phone, a.user_id, a.created_at AS app_created,
                        c.name AS comp_name, c.is_paid AS comp_paid, c.results_mode
                   FROM diplomas d
                   JOIN applications a ON a.id = d.application_id
@@ -110,8 +112,20 @@ if ($groups) {
                 if ((string) ($it['kind'] ?? '') === 'digital') $names[] = (string) ($it['item'] ?? '');
             }
         }
+        // Дата оформления и дата оплаты нужны в карточке: раздел про изготовление
+        // наградного материала, и считать сроки надо от заказа, а не от заявки.
+        $paidAt = '';
+        try {
+            $paidAt = (string) (scalar("SELECT created_at FROM payments
+                                         WHERE order_id=? AND status='succeeded'
+                                         ORDER BY id DESC LIMIT 1", [(int) $o['id']]) ?: '');
+        } catch (\Throwable $e) { /* платежей может не быть */ }
+        if ($paidAt === '' && in_array((string) $o['status'], ['paid','made','shipped','delivered'], true)) {
+            $paidAt = (string) ($o['created_at'] ?? '');
+        }
         $groups[$aid]['orders'][] = ['id' => (int) $o['id'], 'status' => (string) $o['status'],
-                                     'amount' => (int) $o['amount'], 'names' => $names];
+                                     'amount' => (int) $o['amount'], 'names' => $names,
+                                     'created_at' => (string) ($o['created_at'] ?? ''), 'paid_at' => $paidAt];
         if (in_array((string) $o['status'], ['paid','made','shipped','delivered'], true)) {
             $groups[$aid]['orders_sum'] += (int) $o['amount'];
         }
@@ -178,6 +192,35 @@ ob_start(); ?>
             <?= h((string)$a['comp_name']) ?> · заявка <?= h((string)$a['app_number']) ?> ·
             <?= h((string)$a['email']) ?>
             <?= (int)($a['comp_paid'] ?? 0) === 1 ? ' · <span class="badge badge--paid small">платный</span>' : ' · <span class="badge badge--muted small">бесплатный</span>' ?>
+          </div>
+          <?php
+          /* ЗДЕСЬ ВАЖНА ДАТА ЗАКАЗА НАГРАД, А НЕ ДАТА ЗАЯВКИ НА УЧАСТИЕ.
+           *
+           * Раздел про изготовление наградного материала: срок отсчитывается от
+           * оплаты заказа, и владельцу нужно видеть, кто ждёт изготовления дольше
+           * всех. Дата подачи заявки на участие живёт в разделах «Заявки» и
+           * «Оценка» — там она и нужна.
+           *
+           * У электронных документов платного конкурса своего заказа нет: они
+           * входят в оргвзнос, и точкой отсчёта служит оплата участия. */
+          $__oc = ''; $__op = '';
+          foreach ($g['orders'] as $__o) {
+              $__c = trim((string) ($__o['created_at'] ?? ''));
+              if ($__c !== '' && ($__oc === '' || $__c < $__oc)) $__oc = $__c;
+              $__p = trim((string) ($__o['paid_at'] ?? ''));
+              if ($__p !== '' && ($__op === '' || $__p < $__op)) $__op = $__p;
+          }
+          ?>
+          <div class="small muted" style="margin-top:3px">
+            <?php if ($__oc !== ''): ?>
+              Заказ наград оформлен: <b><?= h(order_dt($__oc, false)) ?></b>
+              <span class="muted">(<?= h(order_ago($__oc)) ?>)</span>
+              <?php if ($__op !== ''): ?> · Оплачен: <b><?= h(order_dt($__op, false)) ?></b><?php endif; ?>
+            <?php elseif ((int) ($a['comp_paid'] ?? 0) === 1): ?>
+              Входит в оргвзнос — отдельного заказа нет
+            <?php else: ?>
+              Отдельного заказа наград нет
+            <?php endif; ?>
           </div>
         </div>
         <div style="text-align:right">
