@@ -24,7 +24,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($do === 'save_faq') {
         $id = (int) input('id');
-        $data = ['question'=>trim(input('question')),'answer'=>trim(input('answer')),
+        /* ОТВЕТ ХРАНИТСЯ ПРОСТЫМ ТЕКСТОМ. Раздел «Вопросы и ответы» печатает его
+         * с экранированием, поэтому вставленная разметка не оформляет текст, а
+         * показывается участнику буквами: «<p>», «<b>» так и висели в ответах.
+         * Заодно приводим к стилю центра: обращение на «Вы» с большой буквы и
+         * короткое тире (docs/knowledge/03_context.md, п. 4.1). */
+        $clean = static function (string $t): string {
+            $t = strip_tags($t);
+            $t = html_entity_decode($t, ENT_QUOTES, 'UTF-8');
+            $t = str_replace(['—', '–'], '-', $t);
+            $t = preg_replace_callback(
+                '~(?<![\p{L}])(вы|вам|вас|вами|ваш|ваша|ваше|ваши|вашего|вашей|вашему|вашим|ваших|вашими|вашу)(?![\p{L}])~u',
+                static fn(array $m): string => mb_strtoupper(mb_substr($m[1], 0, 1)) . mb_substr($m[1], 1),
+                $t
+            );
+            return trim(preg_replace('~[ \t]{2,}~u', ' ', $t));
+        };
+        $data = ['question'=>$clean(input('question')),'answer'=>$clean(input('answer')),
                  'sort'=>(int)input('sort'),'active'=>isset($_POST['active'])?1:0];
         if ($id) update('faq', $data, 'id=:wid', ['wid'=>$id]); else $id = insert('faq', $data);
         audit('faq_save', 'faq', $id);
