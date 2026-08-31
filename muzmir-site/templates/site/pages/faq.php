@@ -1,5 +1,7 @@
 <?php
 /** Вопросы и ответы: премиум-аккордеон из таблицы faq с поиском и группировкой по темам. */
+// Тема вопроса — своя колонка (см. $faqTopicOf ниже); добавляется мягко.
+try { db()->exec("ALTER TABLE faq ADD COLUMN topic TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 $faqs = all("SELECT * FROM faq WHERE active=1 ORDER BY sort, id");
 
 /* Темы выводятся из текста вопроса (в таблице faq нет колонки категории) - без изменения выборки. */
@@ -13,7 +15,18 @@ $faqTopics = [
     'oplata'    => 'Оплата',
     'zhuri'     => 'Жюри',
 ];
-$faqTopicOf = static function (array $f): string {
+$faqTopicOf = static function (array $f) use ($faqTopics): string {
+    /* ТЕМА БЕРЁТСЯ ИЗ САМОЙ ЗАПИСИ, А НЕ УГАДЫВАЕТСЯ ПО СЛОВАМ.
+     *
+     * Раньше тема определялась только по ключевым словам ответа, и вопрос о
+     * сроках изготовления награды попадал в «Оплату» (в ответе есть слово
+     * «оплаты»), а вопрос о сроках результатов — в «Награды» (там есть
+     * «наградные материалы»). Порядок вопросов на странице от этого путался.
+     * Теперь у записи есть своя тема; подбор по словам остаётся запасным
+     * вариантом для старых записей, где тема ещё не проставлена. */
+    $own = trim((string) ($f['topic'] ?? ''));
+    if ($own !== '' && isset($faqTopics[$own])) return $own;
+
     $s = mb_strtolower(($f['question'] ?? '') . ' ' . ($f['answer'] ?? ''), 'UTF-8');
     $has = static function (array $keys) use ($s): bool {
         foreach ($keys as $k) {
