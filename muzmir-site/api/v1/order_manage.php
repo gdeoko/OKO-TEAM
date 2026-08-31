@@ -78,7 +78,11 @@ if ((string) $o['status'] !== 'new') {
 
 if ($action === 'delete') {
     q("DELETE FROM awards_orders WHERE id=? AND user_id=? AND status='new'", [$orderId, $uid]);
-    if (tbl_exists('payments')) q("DELETE FROM payments WHERE order_id=? AND status IN ('pending','')", [$orderId]);
+    /* Строку платежа не удаляем, а закрываем: удалённая строка уносит из учёта
+     * след денег, и оплату, пришедшую перед самой отменой, потом не найти. */
+    if (tbl_exists('payments')) {
+        q("UPDATE payments SET status='canceled' WHERE order_id=? AND status IN ('pending','')", [$orderId]);
+    }
     audit('order_delete_self', 'awards_orders', $orderId, ['user' => $uid]);
     json_out(['ok' => true, 'deleted' => true]);
 }

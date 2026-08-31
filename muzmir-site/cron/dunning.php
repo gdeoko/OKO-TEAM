@@ -24,6 +24,9 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
 require_once BASE_PATH . '/core/paylink.php';   // прямые ссылки на оплату конкретного счёта
+// Нужен для сверки с кассой перед удалением неоплаченной заявки: «не оплачено» —
+// это наш статус, а деньги могли прийти минуту назад.
+require_once BASE_PATH . '/core/payments.php';
 require_once BASE_PATH . '/core/outreach_window.php';
 require_once __DIR__ . '/_lib.php';
 
@@ -109,8 +112,32 @@ try {
                 dun_app_deleted_notify($a, $baseCab);
                 dun_mark($id, 'dun_app_deleted');
             }
+            /* ПЕРЕД УДАЛЕНИЕМ СПРАШИВАЕМ КАССУ, А НЕ СВОЮ БАЗУ.
+             *
+             * Здесь удалялась заявка «без оплаты» и её незакрытый счёт. Но
+             * «без оплаты» — это НАШ статус: человек мог заплатить час назад,
+             * а уведомление кассы до нас не дошло. Тогда дожим сносил и заявку,
+             * и строку платежа — и деньги пропадали из учёта совсем: сверка
+             * ищет платёж по своей строке, а строки больше нет.
+             *
+             * Так 16.08 пропали 500 ₽ участницы: оплата прошла, заявка была
+             * удалена, конкурс закрылся, и человек остался без участия и без
+             * денег. Поэтому сначала сверяемся с кассой: деньги пришли —
+             * проводим оплату и заявку НЕ трогаем. */
+            $close = function_exists('payments_close_open')
+                ? payments_close_open('application', $id)
+                : ['paid' => 0, 'kept' => 0];
+            if ((int) ($close['paid'] ?? 0) > 0 || (int) ($close['kept'] ?? 0) > 0) {
+                cron_log(JOB, "заявка #$id ($num) не удалена: в кассе есть деньги или касса не ответила");
+                continue;
+            }
             q("DELETE FROM applications WHERE id=? AND is_paid=0", [$id]);
-            if (tbl_exists('payments')) q("DELETE FROM payments WHERE application_id=? AND status IN ('pending','')", [$id]);
+            /* Строку платежа НЕ удаляем: это финансовый след. Она нужна, чтобы
+             * потом сойтись с кассой и увидеть, что деньги приходили. */
+            if (tbl_exists('payments')) {
+                q("UPDATE payments SET status='canceled'
+                    WHERE application_id=? AND status IN ('pending','')", [$id]);
+            }
             audit('dunning_delete', 'application', $id, ['number' => $num]);
             $delApp++;
             continue;
@@ -152,7 +179,11 @@ try {
                 dun_mark($id, 'dun_ord_deleted');
             }
             q("DELETE FROM awards_orders WHERE id=? AND status='new'", [$id]);
-            if (tbl_exists('payments')) q("DELETE FROM payments WHERE order_id=? AND status IN ('pending','')", [$id]);
+            // Строку платежа не удаляем — это финансовый след (см. выше).
+            if (tbl_exists('payments')) {
+                q("UPDATE payments SET status='canceled'
+                    WHERE order_id=? AND status IN ('pending','')", [$id]);
+            }
             audit('dunning_delete', 'awards_order', $id, []);
             $delOrd++;
             continue;

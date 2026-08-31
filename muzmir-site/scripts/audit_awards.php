@@ -313,6 +313,93 @@ foreach ($byWho as $who => $list) {
 }
 if (!$bad) $say('  чисто: на один адрес собирается одна посылка');
 
+$head('13. ЗАКАЗ ЕДЕТ ПОЧТОЙ, А ПОЧТОВОГО ИНДЕКСА НЕТ');
+/* Почта России без индекса отправление не примет, и узнаётся это на почте, с
+ * готовой посылкой на руках. У 13 заказов индекса не было вовсе, потому что
+ * колонки под него в базе не существовало. */
+$bad = 0;
+foreach (all("SELECT id, full_name, postal_index, address, status FROM awards_orders
+               WHERE COALESCE(kind,'') NOT IN ('digital','club') AND $PAID") as $o) {
+    if (preg_match('~\d{6}~', (string) $o['postal_index'])) continue;
+    $bad++; $problems++;
+    printf("  заказ #%-4s %-28s статус %-9s адрес: %s\n", $o['id'],
+        mb_substr((string) $o['full_name'], 0, 28), (string) $o['status'],
+        mb_substr((string) $o['address'], 0, 40));
+}
+if (!$bad) $say('  чисто: у всех посылок есть индекс');
+
+$head('14. ДЕНЬГИ ВЕРНУЛИ В КАССЕ, А У НАС ЧИСЛЯТСЯ ПРИНЯТЫМИ');
+/* Возврат делают руками в кабинете ЮKassa, и сайту об этом никто не сообщает:
+ * платёж остаётся «оплачено», выручка завышена, а система готовит по такой
+ * заявке наградные материалы. Так три отклонённые заявки неделю числились
+ * оплаченными уже после возврата денег людям. */
+if ($skipKassa) { $say('  пропущено (--no-kassa)'); }
+else {
+    $shop = (string) cfgv('yukassa_shop'); $sec = (string) cfgv('yukassa_secret');
+    if ($shop === '' || $sec === '') { $say('  ключи ЮKassa не заданы — проверка невозможна'); }
+    else {
+        $bad = 0; $cursor = ''; $pages = 0;
+        do {
+            $url = 'https://api.yookassa.ru/v3/refunds?limit=100&created_at.gte='
+                 . rawurlencode(gmdate('Y-m-d\TH:i:s.000\Z', time() - 60 * 86400))
+                 . ($cursor !== '' ? '&cursor=' . rawurlencode($cursor) : '');
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 25,
+                                    CURLOPT_USERPWD => $shop . ':' . $sec]);
+            $j = json_decode((string) curl_exec($ch), true); curl_close($ch);
+            if (!is_array($j)) break;
+            foreach ((array) ($j['items'] ?? []) as $rf) {
+                if ((string) ($rf['status'] ?? '') !== 'succeeded') continue;
+                $row = one("SELECT id, status, amount FROM payments WHERE yukassa_id=?",
+                           [(string) ($rf['payment_id'] ?? '')]);
+                if (!$row || (string) $row['status'] === 'refunded') continue;
+                $bad++; $problems++;
+                printf("  платёж #%s на %s ₽ возвращён %s, а у нас статус «%s»\n",
+                    $row['id'], (string) ($rf['amount']['value'] ?? '?'),
+                    mb_substr((string) ($rf['created_at'] ?? ''), 0, 10), (string) $row['status']);
+            }
+            $cursor = (string) ($j['next_cursor'] ?? ''); $pages++;
+        } while ($cursor !== '' && $pages < 5);
+        if (!$bad) $say('  чисто: возвраты кассы и база сходятся');
+    }
+}
+
+$head('15. ИМЕННОЙ ДИПЛОМ У СОЛИСТА');
+/* Жёсткое правило владельца: именной диплом предназначен только участнику
+ * КОЛЛЕКТИВА. У солиста он дословно повторяет основной — человек платит 400 ₽
+ * за второй экземпляр того же документа. */
+$bad = 0;
+foreach (all("SELECT o.id, o.full_name, o.items, a.number, a.is_group
+                FROM awards_orders o JOIN applications a ON a.id=o.application_id
+               WHERE o.items LIKE '%менной%' AND COALESCE(a.is_group,0)=0 AND o.$PAID") as $o) {
+    $bad++; $problems++;
+    printf("  заказ #%-4s %-28s заявка %s — солист с именным дипломом\n",
+        $o['id'], mb_substr((string) $o['full_name'], 0, 28), (string) $o['number']);
+}
+if (!$bad) $say('  чисто: именной диплом только у коллективов');
+
+$head('16. ДВЕ ЗАЯВКИ НА ОДИН И ТОТ ЖЕ КОНКУРСНЫЙ МАТЕРИАЛ');
+/* Один номер, поданный дважды, получает два разных звания за одно исполнение:
+ * так вышло с ансамблем «Вишенки». Ловим совпадение участника, конкурса и
+ * названия работы. */
+$bad = 0;
+$seen = [];
+foreach (all("SELECT id, number, competition_id, full_name, group_name, work_title, status
+                FROM applications WHERE status NOT IN ('rejected','deleted','canceled')") as $a) {
+    $who  = mb_strtolower(trim((string) ($a['group_name'] ?: $a['full_name'])));
+    $work = mb_strtolower(trim((string) $a['work_title']));
+    if ($who === '' || $work === '') continue;
+    $k = $a['competition_id'] . '|' . $who . '|' . $work;
+    if (isset($seen[$k])) {
+        $bad++; $problems++;
+        printf("  %s и %s — %s, «%s»\n", $seen[$k], (string) $a['number'],
+            mb_substr($who, 0, 30), mb_substr($work, 0, 30));
+        continue;
+    }
+    $seen[$k] = (string) $a['number'];
+}
+if (!$bad) $say('  чисто: один материал — одна заявка');
+
 $say("\n$line");
 printf("ИТОГ: проблем найдено — %d\n", $problems);
 $say($line);
