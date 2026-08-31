@@ -308,6 +308,31 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     }
     // Затемнение нужно только поверх фотографии; на градиенте эталона — ноль.
     $overlay = isset($tpl['overlay']) ? max(0, min(100, (int)$tpl['overlay'])) : ($bgUrl ? 55 : 0);
+
+    /* ПОЛЯ И ЦВЕТ ТЕКСТА ПОДБИРАЮТСЯ ПОД КОНКРЕТНЫЙ ФОН.
+     *
+     * Поля были заданы одним числом на все конкурсы, и на новых фонах строки
+     * заезжали на боковой орнамент - на балалайку, на резную раму. Здесь фон
+     * разбирается по пикселям (core/diploma_fit.php): находится граница
+     * рисунка, и от неё считаются поля. Там же меряется яркость середины: на
+     * светлой бумаге текст тёмный, на тёмной подложке - светлый. */
+    if (!function_exists('diploma_fit') && is_file(BASE_PATH . '/core/diploma_fit.php')) {
+        require_once BASE_PATH . '/core/diploma_fit.php';
+    }
+    $bgFile = '';
+    if (!empty($c['diploma_bg'])) {
+        $bp = (string) $c['diploma_bg'];
+        if (!preg_match('~^https?://~', $bp)) $bgFile = BASE_PATH . '/public/' . ltrim($bp, '/');
+    }
+    $FIT = function_exists('diploma_fit') ? diploma_fit($bgFile) : [
+        'pad_top' => 8.0, 'pad_right' => 12.0, 'pad_bottom' => 7.0, 'pad_left' => 12.0,
+        'dark' => true, 'ink' => '#ffffff', 'muted' => 'rgba(255,255,255,.88)',
+        'shadow' => 'drop-shadow(0 1px 3px rgba(0,0,0,.55))',
+    ];
+    // Ручная настройка конкурса, если она задана, всегда сильнее автоподбора.
+    foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left'] as $pk) {
+        if (isset($tpl[$pk]) && is_numeric($tpl[$pk])) $FIT[$pk] = (float) $tpl[$pk];
+    }
     $fade    = isset($tpl['fade']) ? max(30, min(160, (int)$tpl['fade'])) : 105;
     $T       = diploma_theme_pick($c, $tpl);
 
@@ -540,10 +565,11 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Засвет снизу: длинное мягкое растворение кверху, без белого «блока» */
 .bg-white-gradient{position:absolute;bottom:0;left:0;right:0;height:<?= $fade ?>mm;z-index:2;pointer-events:none;
   background:linear-gradient(180deg, transparent 0%, rgba(248,248,252,.05) 16%, rgba(250,250,253,.16) 34%, rgba(252,252,254,.36) 52%, rgba(253,253,255,.62) 70%, rgba(255,255,255,.85) 86%, rgba(255,255,255,.95) 100%)}
-.content{position:relative;z-index:3;padding:8mm 12mm 0;height:100%}
-.header-legal{text-align:center;font-size:7.5pt;line-height:1.3;color:#fff;margin-bottom:3mm}
-.header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:#fff}
-.header-legal .legal-text{font-weight:600;color:#fff}
+.content{position:relative;z-index:3;height:100%;
+  padding:<?= $FIT['pad_top'] ?>mm <?= $FIT['pad_right'] ?>mm 0 <?= $FIT['pad_left'] ?>mm}
+.header-legal{text-align:center;font-size:7.5pt;line-height:1.3;color:<?= $FIT['muted'] ?>;margin-bottom:3mm}
+.header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:<?= $FIT['ink'] ?>}
+.header-legal .legal-text{font-weight:600;color:<?= $FIT['muted'] ?>}
 /* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
 .logos-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2mm;padding:0 2mm}
 .logos-row .logo{width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
@@ -551,12 +577,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .logos-row .logo-medal{height:21mm}
 .logos-row .logo-natsproekty{height:19mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
-.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:#fff;margin-bottom:1.5mm}
+.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:1.5mm}
 .competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:37pt;font-weight:900;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
-.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.3;margin-bottom:3mm;padding:0 5mm;color:#fff}
+.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.3;margin-bottom:3mm;padding:0 5mm;color:<?= $FIT['muted'] ?>}
 .diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -570,18 +596,21 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:4px;margin-bottom:2.5mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#fff;margin-bottom:1mm}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:1mm}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:29pt;font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 .awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
 .field-list{padding:0 6mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;line-height:<?= $fldLh ?>;text-align:center}
-.field-list .field{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.field-list .field{color:<?= $FIT['ink'] ?>;filter:<?= $FIT['shadow'] ?>}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
-.gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:<?= $FIT['ink'] ?>;filter:<?= $FIT['shadow'] ?>}
 /* Подписи прижаты ниже и собраны компактнее: регалии набираются в ТРИ строки
  * вместо четырёх, межстрочный интервал и промежуток между двумя подписями меньше.
  * Это освобождает ~14 мм по вертикали — длинная заявка (много полей, длинные
  * названия) больше не упирается в подписи и печати. */
-.bottom-block{position:absolute;bottom:7mm;left:14mm;right:14mm;z-index:4;color:#1a1a2a}
+.bottom-block{position:absolute;z-index:4;color:#1a1a2a;
+  bottom:<?= $FIT['pad_bottom'] ?>mm;
+  left:<?= max(6.0, $FIT['pad_left'] - 2) ?>mm;
+  right:<?= max(6.0, $FIT['pad_right'] - 2) ?>mm}
 .signatures-grid{display:grid;grid-template-columns:1fr 82mm;grid-template-rows:16mm 19mm;gap:2mm 4mm;align-items:center}
 .sig-text-block{font-family:'Manrope',sans-serif;font-size:8.4pt;line-height:1.2;padding-right:2mm}
 .sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:10pt}
