@@ -299,6 +299,52 @@ if (!$isClubOrder && $applicationId) {
     // иначе состав наград определялся бы тем, что подставил клиент.
     $appResult  = (string) ($appRow['result'] ?? '');
     $compIsPaid = (int) ($appRow['comp_is_paid'] ?? 0) === 1;
+    /* СОЛИСТ ВЫБРАЛ ИМЕННОЙ — ВЫДАЁМ ОСНОВНОЙ, А НЕ ОТКАЗЫВАЕМ.
+     *
+     * Правило владельца. Именной диплом положен участнику коллектива, у солиста
+     * основной и так с его фамилией — но человек у формы этого не знает и часто
+     * просто путает названия. Отказ на кнопке «Оплатить» он читает как поломку
+     * сайта и уходит без награды, а центр теряет заказ. Поэтому позицию молча
+     * заменяем на основной диплом: цена та же, документ человеку нужен именно
+     * этот. Если основной в заказе уже есть — вторую такую позицию убираем,
+     * чтобы не продать один документ дважды. */
+    if ((int) ($appRow['is_group'] ?? 0) !== 1) {
+        $hasMain = false;
+        foreach ($normItems as $ni) {
+            if (trim((string) ($ni['item'] ?? '')) === 'Основной диплом') { $hasMain = true; break; }
+        }
+        $swapped = [];
+        foreach ($normItems as $ni) {
+            if (!preg_match('~именн~ui', (string) ($ni['item'] ?? ''))) { $swapped[] = $ni; continue; }
+            if ($hasMain) {
+                /* Основной уже заказан — именной у солиста был бы его копией.
+                 * Скидка к этому моменту уже применена, поэтому из суммы к оплате
+                 * снимаем цену СО СКИДКОЙ, а из «цены без скидки» — полную. */
+                $full = (int) ($ni['price'] ?? 0);
+                $net  = $discPctOrder > 0 ? (int) round($full * (100 - $discPctOrder) / 100) : $full;
+                $amount = max(0, $amount - $net);
+                $amountBeforeDiscount = max(0, $amountBeforeDiscount - $full);
+                if (function_exists('audit')) {
+                    audit('order_named_dropped', 'awards_orders', null,
+                          ['app' => $applicationId, 'price' => (int) ($ni['price'] ?? 0)]);
+                }
+                continue;
+            }
+            $ni['item'] = 'Основной диплом';
+            unset($ni['fio']);
+            $hasMain = true;
+            $swapped[] = $ni;
+            if (function_exists('audit')) {
+                audit('order_named_to_main', 'awards_orders', null, ['app' => $applicationId]);
+            }
+        }
+        $normItems = $swapped;
+        if (!$normItems) {
+            json_out(['ok' => false, 'error' => 'Основной диплом по этой заявке у Вас уже заказан. '
+                . 'Именной диплом выписывается участнику коллектива, а у солиста основной диплом '
+                . 'и так именной — на нём стоит его фамилия.'], 422);
+        }
+    }
     foreach ($normItems as $ni) {
         [$allowed, $why] = award_item_allowed(
             (string) ($ni['item'] ?? ''), (string) ($ni['kind'] ?? 'original'), $appResult, $compIsPaid,
