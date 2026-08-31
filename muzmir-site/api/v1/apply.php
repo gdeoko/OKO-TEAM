@@ -281,6 +281,50 @@ if ($wt !== '') {
     }
 }
 
+/* ОДИН МАТЕРИАЛ — ОДНА ЗАЯВКА НА КОНКУРС. ПОВТОР НЕ ПРИНИМАЕМ.
+ *
+ * Проверки на повтор здесь не было вовсе, и один и тот же номер попадал в
+ * конкурс дважды: Остапенко Наталью Александровну с «Посвящаю моей России»
+ * подал сначала педагог со своей почты, а через три дня она сама — со своей.
+ * Жюри оценило обе записи независимо и присудило ЛАУРЕАТ I и ЛАУРЕАТ II за
+ * одно исполнение. Два разных звания за один номер обесценивают оба.
+ *
+ * Сверяем не почту и не учётную запись — они у повторной подачи как раз
+ * другие, — а самое устойчивое: конкурс, участник (ФИО или название
+ * коллектива) и название конкурсного номера. Отклонённые заявки не в счёт:
+ * человек имеет право подать заново после отказа. */
+if (!$errors) {
+    $dupWho  = mb_strtolower(trim($isGroup ? (string) $group_name : (string) $full_name));
+    // Кавычки и двойные пробелы в названии номера человек пишет как придётся.
+    $dupWork = mb_strtolower(trim(preg_replace('~\s+~u', ' ',
+                   str_replace(['«', '»', '"', "'", '“', '”'], '', (string) $wt))));
+    if ($dupWho !== '' && $dupWork !== '') {
+        foreach ($comps as $__c) {
+            $__found = null;
+            foreach (all("SELECT number, work_title, full_name, group_name, is_group, status
+                            FROM applications
+                           WHERE competition_id = ? AND status NOT IN ('rejected','deleted','canceled')",
+                         [(int) $__c['id']]) as $__a) {
+                $__who = mb_strtolower(trim((int) ($__a['is_group'] ?? 0) === 1 || trim((string) $__a['group_name']) !== ''
+                             ? (string) $__a['group_name'] : (string) $__a['full_name']));
+                if ($__who !== $dupWho) continue;
+                $__w = mb_strtolower(trim(preg_replace('~\s+~u', ' ',
+                           str_replace(['«', '»', '"', "'", '“', '”'], '', (string) $__a['work_title']))));
+                if ($__w !== $dupWork) continue;
+                $__found = $__a;
+                break;
+            }
+            if ($__found) {
+                json_out(['ok' => false, 'error' => 'Этот номер уже подан на конкурс «' . (string) $__c['name']
+                    . '»: заявка ' . (string) $__found['number'] . '. По положению одно выступление участвует '
+                    . 'один раз — второй раз оценить его нельзя. Если заявку подал педагог, она уже в работе; '
+                    . 'если Вы хотите участвовать с другим номером, укажите в поле «конкурсный номер» его название.',
+                    'fields' => ['work_title' => 'Этот номер уже подан: заявка ' . (string) $__found['number']]], 422);
+            }
+        }
+    }
+}
+
 if ($errors) {
     json_out(['ok' => false, 'error' => 'Проверьте заполнение формы', 'fields' => $errors], 422);
 }
