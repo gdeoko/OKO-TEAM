@@ -547,6 +547,31 @@ ob_start(); ?>
           <span>Моего адреса нет в подсказках — впишу вручную (проверим перед отправкой)</span>
         </label>
       </div>
+      <?php
+      /* СОГЛАСИЯ ПЕРЕД ОПЛАТОЙ — КАК ПРИ ПОДАЧЕ ЗАЯВКИ.
+       *
+       * Заказ наградного материала — это обработка персональных данных
+       * (ФИО, адрес, телефон) и обязательство центра по срокам изготовления.
+       * Человек должен подтвердить, что видел и то, и другое, до списания денег,
+       * а не узнать сроки из письма постфактум. */
+      ?>
+      <div class="ord-agree" style="margin:14px 0 10px;display:grid;gap:9px">
+        <label style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5">
+          <input type="checkbox" name="ord_agree_reg" id="ord_agree_reg" value="1" style="margin-top:3px">
+          <span>Я ознакомился с положением конкурса и принимаю его условия.</span>
+        </label>
+        <label style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5">
+          <input type="checkbox" name="ord_agree_pd" id="ord_agree_pd" value="1" style="margin-top:3px">
+          <span>Я согласен на обработку персональных данных согласно
+            <a href="<?= url('/policy') ?>" target="_blank" rel="noopener">политике конфиденциальности</a>.</span>
+        </label>
+        <label style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5">
+          <input type="checkbox" name="ord_agree_terms" id="ord_agree_terms" value="1" style="margin-top:3px">
+          <span>Я ознакомился со сроками изготовления и доставки наградного материала:
+            электронные - 5 рабочих дней с момента оплаты, оригиналы - 7 рабочих дней на изготовление
+            и до 14 рабочих дней на доставку Почтой России.</span>
+        </label>
+      </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>
       <p id="orderErr" class="shop-err" hidden></p>
     </form>
@@ -912,6 +937,17 @@ ob_start(); ?>
         err.innerHTML='Выберите адрес <b>из списка подсказок</b>: начните вводить и нажмите на нужную строку. '+
           'Если Вашего адреса там нет — отметьте «Моего адреса нет в подсказках».';
         err.hidden=false; var b2=$('#orderSubmit'); b2.disabled=false; b2.textContent='Оплатить'; ai2.focus(); return;
+      }
+    }
+    // Три согласия обязательны: положение, персональные данные, сроки изготовления.
+    var agrees=[['ord_agree_reg','Подтвердите, что ознакомились с положением конкурса.'],
+                ['ord_agree_pd','Подтвердите согласие на обработку персональных данных.'],
+                ['ord_agree_terms','Подтвердите, что ознакомились со сроками изготовления и доставки.']];
+    for(var ia=0;ia<agrees.length;ia++){
+      var el=document.getElementById(agrees[ia][0]);
+      if(el && !el.checked){
+        err.textContent=agrees[ia][1]; err.hidden=false;
+        var bA=$('#orderSubmit'); bA.disabled=false; bA.textContent='Оплатить'; el.focus(); return;
       }
     }
     var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++){var it={item:c.item,kind:c.kind};var f=(c.fios||[])[i];if(f&&f.trim())it.fio=f.trim();items.push(it);}});
