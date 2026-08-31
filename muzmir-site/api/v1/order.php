@@ -385,6 +385,8 @@ if (!$isClubOrder) {
         json_out(['ok' => false, 'error' => 'Укажите ФИО получателя ПОЛНОСТЬЮ: Фамилия, Имя и Отчество.'], 422);
     }
 }
+// Индекс заказа: у электронных его нет и быть не должно — им никуда не ехать.
+$addrPostal = '';
 if ($hasOriginal) {
     $addr = trim((string) input('address'));
     $hasHouse  = (bool) preg_match('~(^|[\s,.])(д(ом)?\.?\s*)?\d+~iu', $addr);
@@ -409,7 +411,6 @@ if ($hasOriginal) {
     }
     $addrManual = in_array((string) input('address_manual'), ['1', 'true', 'on'], true);
     $addrCanon = '';
-    $addrPostal = '';
     if (function_exists('addr_validate')) {
         $chk = addr_validate($addr);
         if (!$chk['ok'] && !$addrManual) {
@@ -434,6 +435,15 @@ if ($hasOriginal) {
             $addrPostal = trim((string) $chk['postal']);
         }
     }
+    /* ИНДЕКС ОБЯЗАТЕЛЕН. Правило владельца: без индекса заказ не уходит в
+     * производство вовсе. Из подсказки индекс приходит сам, поэтому здесь ловим
+     * только адрес, введённый руками: попросить индекс сейчас, пока человек у
+     * формы, дешевле, чем разыскивать его потом с готовой посылкой на руках. */
+    if ($addrPostal === '' && preg_match('~(?<!\d)(\d{6})(?!\d)~u', $addr, $mPi)) $addrPostal = $mPi[1];
+    if ($addrPostal === '' && $addrManual) {
+        json_out(['ok' => false, 'error' => 'Укажите почтовый индекс в адресе: без него Почта России '
+            . 'посылку не примет. Впишите шесть цифр индекса в начало адреса.', 'address_hint' => true], 422);
+    }
     if ($addrManual && function_exists('audit')) {
         audit('order_address_manual', 'awards_orders', null, ['address' => mb_substr($addr, 0, 200)]);
     }
@@ -457,6 +467,8 @@ $orderId = insert('awards_orders', [
     // По России — канонический вид из справочника (см. проверку выше); зарубежье
     // и адреса, которых справочник не знает, остаются как написал человек.
     'address'        => $addrCanon !== '' ? $addrCanon : input('address'),
+    // Индекс отдельным полем: он нужен на конверте и без него посылка не поедет.
+    'postal_index'   => $addrPostal,
     /* КЛЮЧ АДРЕСА — ДЛЯ СБОРКИ ПОСЫЛОК, А НЕ ДЛЯ КОНВЕРТА.
      *
      * Сам адрес остаётся ровно таким, как его написал человек: по этой строке

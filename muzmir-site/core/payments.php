@@ -470,6 +470,51 @@ function refund_award_order(int $orderId, string $reason = ''): array {
 }
 
 /**
+ * ОТМЕТИТЬ У СЕБЯ ВОЗВРАТ, СДЕЛАННЫЙ В КАБИНЕТЕ КАССЫ.
+ *
+ * Возврат руками через ЮKassa сайту не приходит никак: платёж у нас остаётся
+ * «оплачено», заявка — оплаченной, выручка — завышенной. Так три отклонённые
+ * заявки неделю числились оплаченными уже после того, как деньги вернули людям,
+ * и система готовила по ним наградные материалы.
+ *
+ * Функция ничего не возвращает и никуда не платит — только приводит наш учёт в
+ * соответствие с кассой. Идемпотентна: повторный вызов ничего не меняет.
+ *
+ * @return bool true, если запись действительно изменилась
+ */
+function payment_mark_refunded(string $yukassaId, float $amount, string $refundId = ''): bool {
+    $pay = one("SELECT * FROM payments WHERE yukassa_id=?", [$yukassaId]);
+    if (!$pay || (string) $pay['status'] === 'refunded') return false;
+
+    update('payments', ['status' => 'refunded'], 'id=:id', ['id' => (int) $pay['id']]);
+
+    $appId = (int) ($pay['application_id'] ?? 0);
+    if ($appId) {
+        foreach ([['refunded_at', "TEXT DEFAULT ''"], ['amount_refunded', 'INTEGER DEFAULT 0']] as [$col, $decl]) {
+            try { db()->exec("ALTER TABLE applications ADD COLUMN $col $decl"); } catch (\Throwable $e) {}
+        }
+        update('applications', [
+            'refunded_at'     => date('Y-m-d H:i:s'),
+            'amount_refunded' => (int) round($amount),
+            'is_paid'         => 0,
+        ], 'id=:id', ['id' => $appId]);
+    }
+    $ordId = (int) ($pay['order_id'] ?? 0);
+    if ($ordId) {
+        update('awards_orders', [
+            'refund_amount' => (int) round($amount),
+            'refund_id'     => $refundId,
+        ], 'id=:id', ['id' => $ordId]);
+    }
+    if (function_exists('audit')) {
+        audit('refund_detected', 'payments', (int) $pay['id'],
+              ['yukassa_id' => $yukassaId, 'amount' => $amount, 'refund_id' => $refundId,
+               'app' => $appId, 'order' => $ordId]);
+    }
+    return true;
+}
+
+/**
  * Применяет статус платежа к БД. Идемпотентно: бизнес-эффекты (пометка заявки/заказа
  * оплаченными, письмо, уведомление админу) выполняются только при ПЕРЕХОДЕ в succeeded.
  * @param string $paymentId  ЮKassa payment id (совпадает с payments.yukassa_id)

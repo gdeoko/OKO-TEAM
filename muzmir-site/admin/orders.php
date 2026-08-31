@@ -164,6 +164,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($do === 'made' && $ids) {
+        /* БЕЗ ИНДЕКСА НА ИЗГОТОВЛЕНИЕ НЕ ПРОПУСКАЕМ. Правило владельца.
+         *
+         * Почта России без индекса отправление не примет, а узнаётся это уже на
+         * почте, с готовой посылкой на руках: кубок изготовлен, упакован, и его
+         * несут обратно. Индекс проставляется сам при заказе, поэтому пустым он
+         * бывает только у старых заказов и у адресов, введённых руками —
+         * их и ловим здесь, до производства, пока исправить стоит одну минуту. */
+        $noIndex = [];
+        foreach ($ids as $i) {
+            $ord = one("SELECT id, postal_index, kind FROM awards_orders WHERE id=?", [$i]);
+            if (!$ord) continue;
+            // Электронные и членство в клубе никуда не едут — индекс им не нужен.
+            if (in_array((string) ($ord['kind'] ?? ''), ['digital', 'club'], true)) continue;
+            if (!preg_match('~\d{6}~', (string) ($ord['postal_index'] ?? ''))) $noIndex[] = (int) $ord['id'];
+        }
+        if ($noIndex) {
+            flash('Не отмечено: у заказа ' . implode(', ', array_map(static fn($x) => '№' . $x, $noIndex))
+                . ' нет почтового индекса. Почта без индекса посылку не примет — впишите индекс'
+                . ' в «Изменить адрес» и повторите.', 'error');
+            admin_redirect('orders');
+        }
         foreach ($ids as $i) update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
         flash('Отмечено как изготовленное' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');

@@ -89,6 +89,11 @@ try {
                 if ($pid === '') continue;
                 $row = one("SELECT id, status FROM payments WHERE yukassa_id=?", [$pid]);
                 if (!$row || (string) $row['status'] === 'succeeded') continue;
+                // Деньги уже вернули — проводить нечего. Без этой проверки возврат,
+                // отмеченный ниже, на следующем заходе снова становился бы оплатой,
+                // и центр печатал бы награду за деньги, которых у него нет.
+                if ((string) $row['status'] === 'refunded') continue;
+                if ((float) ($obj['refunded_amount']['value'] ?? 0) > 0) continue;
                 // У нас платёж не проведён, а деньги пришли. Возвращаем в работу и
                 // применяем: payment_apply_status сам поставит заказу/заявке «оплачено»,
                 // изготовит наградные материалы и отправит письмо.
@@ -116,7 +121,44 @@ try {
         cron_log(JOB, 'встречная сверка не прошла: ' . $e->getMessage());
     }
 
-    cron_log(JOB, "проверено:$checked изменено:$changed оплачено:$succeeded восстановлено:$recovered");
+    /* ВОЗВРАТЫ ТОЖЕ СВЕРЯЕМ. Возврат делают руками в кабинете кассы — сайту об
+     * этом никто не сообщает, и в базе платёж остаётся «оплачено». Из-за этого
+     * три отклонённые заявки числились оплаченными уже неделю: деньги человеку
+     * вернули, а система готовила по ним наградные материалы и считала выручку.
+     *
+     * Идём от кассы: у успешного платежа появилась возвращённая сумма — значит
+     * возврат был. Отмечаем его у себя: платёж, заявку, заказ. */
+    $refunds = 0;
+    try {
+        $from = gmdate('Y-m-d\TH:i:s.000\Z', time() - 30 * 86400);
+        $cursor = ''; $pages = 0;
+        do {
+            $url = 'https://api.yookassa.ru/v3/refunds?limit=100'
+                 . '&created_at.gte=' . rawurlencode($from)
+                 . ($cursor !== '' ? '&cursor=' . rawurlencode($cursor) : '');
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 25,
+                CURLOPT_USERPWD => (string) cfgv('yukassa_shop') . ':' . (string) cfgv('yukassa_secret')]);
+            $raw = (string) curl_exec($ch); curl_close($ch);
+            $j = json_decode($raw, true);
+            if (!is_array($j)) break;
+            foreach ((array) ($j['items'] ?? []) as $rf) {
+                if ((string) ($rf['status'] ?? '') !== 'succeeded') continue;
+                $pid = (string) ($rf['payment_id'] ?? '');
+                $sum = (float) ($rf['amount']['value'] ?? 0);
+                if ($pid === '' || $sum <= 0) continue;
+                if (function_exists('payment_mark_refunded') && payment_mark_refunded($pid, $sum, (string) ($rf['id'] ?? ''))) {
+                    $refunds++;
+                }
+            }
+            $cursor = (string) ($j['next_cursor'] ?? '');
+            $pages++;
+        } while ($cursor !== '' && $pages < 5);
+    } catch (\Throwable $e) {
+        cron_log(JOB, 'сверка возвратов не прошла: ' . $e->getMessage());
+    }
+
+    cron_log(JOB, "проверено:$checked изменено:$changed оплачено:$succeeded восстановлено:$recovered возвратов отмечено:$refunds");
 } catch (\Throwable $e) {
     cron_log(JOB, 'исключение: ' . $e->getMessage());
 } finally {
