@@ -698,6 +698,55 @@ ob_start(); ?>
 
         <div class="err-msg" id="applyFormError" style="margin-top:14px;text-align:center"></div>
       </form>
+
+      <?php
+      /* КОНКУРС КЛУБА: ОКНО, А НЕ ПЛАШКА ВНИЗУ СТРАНИЦЫ.
+       *
+       * Решение владельца: человек, не состоящий в Клубе, не должен доходить до
+       * формы вовсе — при выборе такого конкурса он сразу видит окно с двумя
+       * дверями: вступить прямо сейчас или сначала почитать о Клубе. Плашка под
+       * списком терялась на длинной странице, и участник узнавал о замке уже
+       * на последнем шаге. Иконка — SVG, эмодзи в интерфейсе центра не ставим. */
+      ?>
+      <div id="mzClubPop" class="mz-club-pop" hidden>
+        <div class="mz-club-back" data-clubp-close></div>
+        <div class="mz-club-box" role="dialog" aria-modal="true" aria-labelledby="mzClubPopT">
+          <button type="button" class="mz-club-x" data-clubp-close aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <div class="mz-club-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 3h12v5a6 6 0 0 1-12 0V3Z"/><path d="M6 5H4a3 3 0 0 0 3 3"/>
+              <path d="M18 5h2a3 3 0 0 1-3 3"/><path d="M12 14v4"/><path d="M8 21h8l-1-3H9l-1 3Z"/>
+            </svg>
+          </div>
+          <h3 id="mzClubPopT">Конкурс для участников Клуба</h3>
+          <p id="mzClubPopTxt"></p>
+          <div class="mz-club-btns">
+            <a class="btn btn--primary" href="<?= url('/club') ?>">Вступить в Клуб</a>
+            <a class="btn btn--ghost" href="<?= url('/club') ?>#about">Подробнее о Клубе</a>
+          </div>
+        </div>
+      </div>
+      <style>
+      .mz-club-pop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px}
+      .mz-club-pop[hidden]{display:none}
+      .mz-club-back{position:absolute;inset:0;background:rgba(8,12,30,.62);backdrop-filter:blur(3px)}
+      .mz-club-box{position:relative;z-index:1;max-width:430px;width:100%;background:var(--card,#12204a);color:#fff;
+        border-radius:20px;padding:26px 24px 22px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.5);
+        border:1px solid rgba(255,255,255,.12);animation:mzClubIn .26s cubic-bezier(.2,.9,.3,1.15)}
+      @keyframes mzClubIn{from{transform:translateY(16px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+      .mz-club-x{position:absolute;top:12px;right:14px;background:none;border:0;color:rgba(255,255,255,.6);cursor:pointer;
+        line-height:0;padding:4px}
+      .mz-club-ico{color:var(--gold,#C79322);margin-bottom:8px;line-height:0}
+      .mz-club-ico svg{display:inline-block}
+      .mz-club-box h3{margin:0 0 10px;font-size:1.25rem;line-height:1.25}
+      .mz-club-box p{margin:0 0 18px;font-size:.96rem;line-height:1.55;color:rgba(255,255,255,.85)}
+      .mz-club-btns{display:flex;flex-direction:column;gap:10px}
+      .mz-club-btns .btn{width:100%}
+      </style>
     <?php endif; ?>
     </div>
   </div>

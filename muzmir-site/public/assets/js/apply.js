@@ -864,22 +864,43 @@
      * Замок стоит на сервере, но узнать о нём после восьми заполненных шагов —
      * это потерянный человек и потерянная продажа. Поэтому подсказка появляется
      * в момент выбора конкурса: не запрещает, а объясняет и даёт ссылку. */
+    /* Окно показываем сразу при выборе конкурса Клуба и снимаем выбор: до формы
+     * человек не доходит вовсе, как решил владелец. Плашка внизу страницы для
+     * этого не годилась - на длинной форме её не замечали. */
+    function clubPopClose(){
+      var p = document.getElementById('mzClubPop');
+      if (p) p.hidden = true;
+    }
+    function clubPopShow(name){
+      var p = document.getElementById('mzClubPop');
+      if (!p) return;
+      var t = document.getElementById('mzClubPopTxt');
+      if (t) {
+        t.textContent = 'Конкурс «' + name + '» проводится только для участников Клуба. '
+          + 'Отдельный организационный взнос за него не взимается: участие входит в членство. '
+          + 'У конкурсов Клуба общий призовой фонд 100 000 ₽ — он вручается раз в год '
+          + 'на очном гала-концерте в Москве.';
+      }
+      p.hidden = false;
+    }
+    document.addEventListener('click', function(e){
+      if (e.target && e.target.closest && e.target.closest('[data-clubp-close]')) clubPopClose();
+    });
+
     function clubNotice(checked){
-      var box = document.getElementById('mzClubOnlyNote');
-      var need = checked.some(function(c){ return c.getAttribute('data-club-only') === '1'; });
       var inClub = String(CFG.inClub || 0) === '1';
-      if (!need || inClub) { if (box) box.remove(); return; }
-      if (box) return;                                  // уже показана
-      var host = checked[0] && checked[0].closest('.step') || form;
-      box = document.createElement('div');
-      box.id = 'mzClubOnlyNote';
-      box.className = 'note note--gold';
-      box.innerHTML =
-        '<b>Этот конкурс — для участников Клуба.</b><br>' +
-        'Отдельный организационный взнос за него не берётся: участие входит в членство. ' +
-        'У конкурсов Клуба общий призовой фонд 100 000 ₽, который вручается раз в год на очном гала-концерте в Москве.' +
-        '<br><a class="btn btn--primary" style="margin-top:10px" href="' + (CFG.clubUrl || '/club') + '">Вступить в Клуб</a>';
-      host.appendChild(box);
+      if (inClub) return;
+      var hit = null;
+      checked.forEach(function(c){ if (!hit && c.getAttribute('data-club-only') === '1') hit = c; });
+      if (!hit) return;
+      // Снимаем выбор: конкурс недоступен, и сумма с шагами не должны его учитывать.
+      hit.checked = false;
+      var lbl = hit.closest('label');
+      var nm  = lbl ? (lbl.querySelector('.comp-name') || lbl).textContent.trim() : 'Высшая лига';
+      clubPopShow(nm.split('\n')[0].trim());
+      // Пересчитываем сумму и шаги уже без снятого конкурса. Повторного захода
+      // сюда не будет: галочка снята, и клубный конкурс больше не найдётся.
+      recomputePaid();
     }
 
     // Выбор конкурсов → платность (isPaid = true если ЛЮБОЙ выбран платный)
