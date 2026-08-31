@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Долги · Ильясов Д.А. · сводка v2</title>
+<style>
+:root{--bg:#050505;--card:#0d0d0d;--line:#1e1e1e;--lime:#9AFF00;--txt:#e8e8e8;--dim:#8a8a8a;--red:#ff5c5c;--amber:#ffc04a;--blue:#6db3ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:15px/1.5 'Onest',-apple-system,Segoe UI,Roboto,sans-serif;padding:20px 14px 60px}
+h1{font-size:22px;letter-spacing:.5px;margin-bottom:4px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat b{display:block;font-size:20px;color:var(--lime)}
+.stat span{font-size:12px;color:var(--dim)}
+h2{font-size:15px;color:var(--lime);margin:26px 0 10px;text-transform:uppercase;letter-spacing:1px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.card.hot{border-color:var(--red)}
+.card.deal{border-color:var(--lime)}
+.card.warn{border-color:var(--amber)}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.name{font-weight:700;font-size:16px}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.t-deal{background:rgba(154,255,0,.12);color:var(--lime)}
+.t-wait{background:rgba(109,179,255,.12);color:var(--blue)}
+.t-hot{background:rgba(255,92,92,.14);color:var(--red)}
+.t-warn{background:rgba(255,192,74,.14);color:var(--amber)}
+.nums{display:flex;gap:18px;margin:10px 0;flex-wrap:wrap}
+.nums div b{display:block;font-size:17px}
+.nums div span{font-size:11px;color:var(--dim);text-transform:uppercase}
+.strike{color:var(--dim);text-decoration:line-through}
+.offer b{color:var(--lime)}
+.meta{font-size:13px;color:var(--dim);margin-top:6px}
+.meta a{color:var(--blue);text-decoration:none;word-break:break-all}
+.rekv{background:#080808;border:1px solid var(--line);border-left:2px solid var(--lime);border-radius:10px;padding:10px 12px;margin-top:10px;font:12px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:#cfcfcf;white-space:pre-wrap;word-break:break-all}
+.note{font-size:13px;color:var(--amber);margin-top:8px}
+.bad{color:var(--red)}
+.good{color:var(--lime)}
+.banner{background:rgba(255,92,92,.08);border:1px solid var(--red);border-radius:14px;padding:14px;margin-bottom:20px;font-size:13px;line-height:1.6}
+.banner b{color:var(--red);display:block;margin-bottom:6px;font-size:14px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;font-size:14px}
+.step b{color:var(--lime)}
+table.banks,table.plan{width:100%;border-collapse:collapse;font-size:14px}
+table.banks td,table.plan td,table.plan th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.banks td:last-child,table.plan td:last-child,table.plan th:last-child{text-align:right}
+table.plan th{color:var(--dim);font-size:11px;text-transform:uppercase;font-weight:400}
+table.plan tr:last-child td{border-bottom:none;font-weight:700}
+.upd{color:var(--dim);font-size:12px;margin-top:30px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<h1>Сводка по долгам</h1>
+<div class="sub">Ильясов Даниэль Альбертович &middot; обновлено 31.08.2026 18:00 МСК &middot; сборка v2</div>
+
+<div class="banner">
+<b>Данные по девяти МФО из одиннадцати не обновлялись с 09.07 — 53 дня</b>
+Переписка по заявлениям велась не с okoteam.top@gmail.com, а с почты daniel.iliasov.piano@gmail.com,
+и доступа к ней из этой сессии нет (нет пароля приложения в хранилище). Проверено по ящику
+okoteam.top: там лежит только переписка с Финтеррой и три письма о переуступке Небуса.
+Всё, что помечено «требует проверки», — цифры на 09.07, за 53 дня они выросли, а две акции
+уже истекли. Дай пароль приложения от daniel.iliasov.piano@gmail.com (или пришли выгрузку) —
+пересоберу таблицу по фактическим ответам за час.
+</div>
+
+<div class="stats">
+<div class="stat"><b>11</b><span>МФО в работе</span></div>
+<div class="stat"><b>336 460 ₽</b><span>требовали на 09.07</span></div>
+<div class="stat"><b>~44 500 ₽</b><span>закрывает 7 из 11</span></div>
+<div class="stat"><b>~22 450 ₽</b><span>закрывает 5 мелких</span></div>
+<div class="stat" style="border-color:var(--red)"><b style="color:var(--red)">1</b><span>дело в суде</span></div>
+</div>
+
+<h2>Что изменилось с 09.07</h2>
+
+<div class="card warn">
+<div class="top"><span class="name">Небус (МКК Луна) → продан коллектору</span><span class="tag t-warn">НОВЫЙ КРЕДИТОР</span></div>
+<div class="nums">
+<div><b>12 900 ₽</b><span>требуют</span></div>
+<div><b>6 000 ₽</b><span>основной долг</span></div>
+<div><b>6 900 ₽</b><span>проценты</span></div>
+</div>
+<div class="meta">
+23.07.2026 — договор цессии № 10ЛЦ: ООО «Луна» уступило долг ООО ПКО «АйДи Коллект».<br>
+29.07 и 26.08 — уведомления от коллектора на okoteam.top. 13.08 — своё уведомление прислал Небус.<br>
+Договор займа № 431617 от 15.12.2025 &middot; ID должника <b>005402108</b> &middot; горячая линия 8 800 600-09-79 &middot;
+почта для ответа soft@idfeurasia.pro и info@idcollect.ru &middot; ЛК idcollect.ru/private
+</div>
+<div class="rekv">Получатель: ООО ПКО «АйДи Коллект»
+ИНН 7730233723 &middot; КПП 770301001
+Р/сч 40702810101160144385
+К/сч 30101810345250000460
+БИК 044525460 &middot; АО «Экспобанк»
+Назначение: погашение задолженности по Договору займа №431617</div>
+<div class="note good">Долг куплен коллектором за долю от номинала — это лучшая позиция для дисконта из всех
+одиннадцати. Целимся в 4 000–6 000 ₽ (тело 6 000). Небус больше не сторона, писать только в АйДи Коллект.</div>
+</div>
+
+<h2>Закрыть сейчас — мелкие</h2>
+
+<div class="card">
+<div class="top"><span class="name">Русинтерфинанс (еКапуста)</span><span class="tag t-wait">ТРЕБУЕТ ПРОВЕРКИ</span></div>
+<div class="nums"><div><b class="strike">4 592 ₽</b><span>требовали 09.07</span></div><div class="offer"><b>2 000 ₽</b><span>наша встречка</span></div></div>
+<div class="meta">Займ 2 000 от 20.12.2025 &middot; тикет #7663760Z &middot; договор 52053243 &middot; support@ekapusta.ru<br>
+08.07 предлагали 4 133 (скидка 10%), встречка 2 000 (тело долга) ушла в тот же день. Ответа в доступном ящике нет.</div>
+<div class="note">Самый дешёвый из всех. Реальный потолок сделки 2 000–3 000 ₽. Реквизитов нет — запросить вместе с подтверждением скидки.</div>
+</div>
+
+<div class="card">
+<div class="top"><span class="name">Право онлайн (быв. Стратосфера)</span><span class="tag t-wait">ТРЕБУЕТ ПРОВЕРКИ</span></div>
+<div class="nums"><div><b class="strike">6 564 ₽</b><span>требовали 09.07</span></div><div class="offer"><b>3 000 ₽</b><span>наше предложение</span></div></div>
+<div class="meta">Договор № 25200746995 от 01.12.2025 &middot; цессия СТ-77-2026-11536 &middot; help@pvonline.ru<br>
+ООО МКК «Стратосфера» письмом с info@ykky.ru подтвердило: все требования к «Право онлайн».</div>
+<div class="note">Тоже куплен коллектором — шанс на дисконт максимальный. Целимся 3 000–3 500 ₽. Реквизитов нет.</div>
+</div>
+
+<div class="card">
+<div class="top"><span class="name">МикроКлад</span><span class="tag t-wait">ТРЕБУЕТ ПРОВЕРКИ</span></div>
+<div class="nums"><div><b class="strike">12 650 ₽</b><span>требовали 09.07</span></div><div class="offer"><b>5 500 ₽</b><span>наше предложение</span></div></div>
+<div class="meta">Займ 5 500 от 22.12.2025 &middot; потолок 130% достигнут &middot; 8 800 200-20-39<br>
+Почта закрыта, заявление подано в чат microklad.ru/support 07.07. Ответ виден только в самом чате.</div>
+<div class="note">Проверять в чате поддержки на сайте, по почте ответа не будет.</div>
+</div>
+
+<div class="card">
+<div class="top"><span class="name">МКК УФ (OneClickMoney / Деньги сразу)</span><span class="tag t-wait">ТРЕБУЕТ ПРОВЕРКИ</span></div>
+<div class="nums"><div><b class="strike">13 685 ₽</b><span>требовали 09.07</span></div><div class="offer"><b>5 950 ₽</b><span>наше предложение</span></div></div>
+<div class="meta">Договор № УФ-916/2170414 от 12.12.2025 &middot; loan@oneclickmoney.ru &middot; потолок 130% достигнут<br>
+Заявление ушло на правильный адрес только 08.07 14:10 — до этого адрес был неверный.</div>
+</div>
+
+<div class="card warn">
+<div class="top"><span class="name">АйДи Коллект (быв. Небус)</span><span class="tag t-warn">РЕКВИЗИТЫ ЕСТЬ</span></div>
+<div class="nums"><div><b class="strike">12 900 ₽</b><span>требуют</span></div><div class="offer"><b>6 000 ₽</b><span>тело долга</span></div></div>
+<div class="meta">Реквизиты и контакты — в блоке «Что изменилось» выше. Единственный кредитор, по которому
+на руках полные банковские реквизиты и актуальная на 26.08 сумма.</div>
+</div>
+
+<h2>Протухло — перезапросить</h2>
+
+<div class="card hot">
+<div class="top"><span class="name">Мани Мен (Moneyman)</span><span class="tag t-hot">СРОК АКЦИИ ИСТЁК 31.07</span></div>
+<div class="nums">
+<div><b class="strike">21 979 ₽</b><span>требовали</span></div>
+<div><b class="bad">10 989,25 ₽</b><span>условие истекло</span></div>
+</div>
+<div class="meta">Займ 10 000 от 12.12.2025 &middot; тикет 650773 &middot; support@svoi.ru &middot; реквизиты в ЛК moneyman.ru</div>
+<div class="note bad">09.07 Мани Мен дал акцию прощения долга: 10 989,25 ₽ со сроком оплаты до 31.07.2026.
+Срок прошёл месяц назад, скидка сгорела. Написать в тикет 650773 и просить продлить акцию на тех же
+условиях — компании такие акции продлевают, но только по запросу.</div>
+</div>
+
+<div class="card hot">
+<div class="top"><span class="name">Финтерра</span><span class="tag t-hot">ССЫЛКА ОПЛАТЫ ПРОТУХЛА</span></div>
+<div class="nums">
+<div><b class="strike">20 585 ₽</b><span>требовали</span></div>
+<div class="offer"><b>11 098 ₽</b><span>согласовано −46%</span></div>
+</div>
+<div class="meta">Договор № 00003747465-СБП от 22.12.2025 &middot; Чарухина Наталья Викторовна,
+n.butuzova@fterra.ru, 8-960-905-17-58 &middot; отдел udr@fterra.ru &middot; скидка подтверждена письмом 07.07 14:57</div>
+<div class="note bad">Ссылка на оплату СБП выдана 07.07, живёт такая ссылка несколько дней — платить по ней уже нельзя.
+08.07 Чарухина обещала прислать реквизиты для перевода без комиссии и не прислала, 09.07 требовала
+квитанцию. Написать ей: скидка согласована, реквизитов так и нет, прошу выставить новую ссылку или
+дать реквизиты счёта.</div>
+<div class="note">Отдельно: 07.07 в 13:57 на адрес Чарухиной ушёл автоматический «Отклик на вакансию» от
+агента ОКО — кредитор попал в базу откликов. Адрес n.butuzova@fterra.ru и udr@fterra.ru занести в
+blocklist агентов, чтобы не повторилось.</div>
+</div>
+
+<h2>Срочное</h2>
+
+<div class="card hot">
+<div class="top"><span class="name">Займер</span><span class="tag t-hot">СУД · РЕЗУЛЬТАТ НЕИЗВЕСТЕН</span></div>
+<div class="nums">
+<div><b>60 298 ₽</b><span>требуют</span></div>
+<div><b class="good">возражение подано</b><span>08.07 11:30</span></div>
+</div>
+<div class="meta">Судебный приказ № 2-946/2026 от 19.05.2026, судебный участок № 5 Кировского района г. Уфы &middot;
+возражение с ходатайством о восстановлении срока направлено на msrb021@yandex.ru, оригинал Почтой России
+с описью &middot; в дисконте Займер отказал дважды (08.07 10:02)</div>
+<div class="note bad">С 08.07 прошло 53 дня, определение об отмене приказа должно было прийти давно.
+Проверить в первую очередь: определение суда (почта и бумажная), сайт ФССП по фамилии (нет ли уже
+исполнительного производства), госуслуги. Если приказ отменён — переговоры перезапускаются с сильной
+позиции; если нет — считаем срок на подачу возражения заново.</div>
+</div>
+
+<h2>Ждём ответа с 07.07 — 53 дня тишины</h2>
+
+<div class="card">
+<div class="top"><span class="name">Корона (Страна Экспресс) · 2 договора</span><span class="tag t-wait">ПРОСРОЧЕН СРОК ОТВЕТА</span></div>
+<div class="nums"><div><b class="strike">92 193 + 50 819 ₽</b><span>требуют</span></div><div class="offer"><b>остатки + макс. дисконт</b><span>позиция</span></div></div>
+<div class="meta">Оба договора от 17.07.2025 (45 000 и 25 000) &middot; тикет KORONAMKK-118727 подтверждён 08.07 03:00 &middot;
+1909001476@stranaexpress.ru</div>
+<div class="note bad">По ст. 9.1 ФЗ-151 ответ обязаны дать за 15 рабочих дней — срок вышел в конце июля.
+Это основание для жалобы в ЦБ РФ (интернет-приёмная cbr.ru) и в СРО «МиР». Жалоба сама по себе двигает
+дисконт: компании не любят надзорные запросы.</div>
+</div>
+
+<div class="card">
+<div class="top"><span class="name">Т-Финанс / МБА Финансы</span><span class="tag t-wait">ТРЕБУЕТ ПРОВЕРКИ</span></div>
+<div class="nums"><div><b class="strike">29 418 ₽</b><span>требовали</span></div><div class="offer"><b>22 000 ₽</b><span>наша встречка</span></div></div>
+<div class="meta">Договор № 0477650489 от 17.05.2025 &middot; info.tbank@mbafin.ru &middot; тело 27 401, ориентир сделки 24–25 тыс.<br>
+Давление шло по WhatsApp: требовали полную оплату до 10.07. Ответ мог прийти в WhatsApp, а не на почту.</div>
+<div class="note">Запросить расшифровку строки «иные платежи 1 221,51 ₽» — без обоснования её можно снять.</div>
+</div>
+
+<div class="card">
+<div class="top"><span class="name">Триумвират (Привет, сосед!)</span><span class="tag t-wait">ТРЕБУЕТ ПРОВЕРКИ</span></div>
+<div class="nums"><div><b class="strike">23 822 ₽</b><span>требовали</span></div><div class="offer"><b>11 000 ₽</b><span>предложили</span></div></div>
+<div class="meta">Займ 11 000 от 12.12.2025 &middot; обращение ВХ-ПС-2017468 &middot; идентификация направлена 07.07 17:28 &middot; office@privsosed.ru</div>
+</div>
+
+<h2>План закрытия мелочи</h2>
+<div class="card">
+<table class="plan">
+<tr><th>Кредитор</th><th>Требуют</th><th>Платим</th></tr>
+<tr><td>еКапуста</td><td>4 592 ₽</td><td>2 000 ₽</td></tr>
+<tr><td>Право онлайн</td><td>6 564 ₽</td><td>3 000 ₽</td></tr>
+<tr><td>МикроКлад</td><td>12 650 ₽</td><td>5 500 ₽</td></tr>
+<tr><td>АйДи Коллект</td><td>12 900 ₽</td><td>6 000 ₽</td></tr>
+<tr><td>МКК УФ</td><td>13 685 ₽</td><td>5 950 ₽</td></tr>
+<tr><td>Пять мелких закрыты</td><td>50 391 ₽</td><td>22 450 ₽</td></tr>
+</table>
+<div class="note">Плюс два средних, если вернуть согласованные условия: Финтерра 11 098 ₽ и Мани Мен
+~11 000 ₽. Тогда семь договоров из одиннадцати закрываются примерно за 44 500 ₽ вместо 92 955 ₽.
+Остаются четыре крупных: Корона (два договора, 143 012), Займер (60 298, суд), МБА (29 418),
+Триумвират (23 822).</div>
+</div>
+
+<h2>Порядок действий</h2>
+<div class="step"><b>1.</b> Займер: проверить определение об отмене судебного приказа и сайт ФССП. Это единственный
+пункт, где цена ошибки — списание со счетов.</div>
+<div class="step"><b>2.</b> Финтерра: письмо Чарухиной — скидка согласована 07.07, реквизитов нет, прошу
+выставить заново. Сумма 11 098 ₽ зафиксирована перепиской, отказаться от неё они уже не могут.</div>
+<div class="step"><b>3.</b> Мани Мен: тикет 650773 — просьба продлить акцию прощения долга на тех же
+условиях (10 989,25 ₽).</div>
+<div class="step"><b>4.</b> АйДи Коллект: письмо на soft@idfeurasia.pro с предложением 6 000 ₽ (тело долга)
+единым платежом при закрытии договора. Реквизиты уже на руках.</div>
+<div class="step"><b>5.</b> Корона: жалоба в ЦБ РФ и СРО «МиР» за нарушение срока ответа по ст. 9.1 ФЗ-151.
+Это самый крупный МФО-долг (143 012 ₽), надзорный рычаг там уместен.</div>
+<div class="step"><b>6.</b> еКапуста, Право онлайн, МКК УФ, МикроКлад, Триумвират, МБА: поднять переписку,
+повторить предложение с указанием, что первое ушло 07.07 и ответа не было.</div>
+<div class="step"><b>7.</b> Занести адреса кредиторов в blocklist агентов ОКО, чтобы туда не улетали
+отклики на вакансии.</div>
+
+<h2>Банки — отдельный трек, реструктуризация, не дисконт</h2>
+<div class="card">
+<table class="banks">
+<tr><td><b>ВТБ · автокредит</b> — приоритет №1, залог (машина)</td><td class="bad">просрочка 72 992 ₽ / остаток ~582 т.</td></tr>
+<tr><td><b>Совкомбанк · кредитка</b></td><td style="color:var(--amber)">просрочка 129 360 ₽</td></tr>
+<tr><td><b>Газпромбанк · овердрафт</b></td><td>просрочка 17 333 ₽ / остаток ~13 т.</td></tr>
+<tr><td><b>Сбербанк · кредитка</b> — не ронять</td><td class="good">без просрочки, ~437 т.</td></tr>
+</table>
+<div class="note">Цифры на 09.07, за 53 дня просрочка выросла. По банкам дисконта не бывает, работает
+только реструктуризация или кредитные каникулы. ВТБ первый: там залог, и машину забирают быстрее,
+чем идут суды по МФО.</div>
+</div>
+
+<h2>Чего не хватает</h2>
+<div class="card">
+<div class="meta" style="color:var(--txt);font-size:14px;line-height:1.7">
+<b style="color:var(--amber)">Почта daniel.iliasov.piano@gmail.com.</b> Там вся переписка по десяти
+заявлениям от 07.07 и все ответы кредиторов за 53 дня. Нужен пароль приложения Google (id.google.com →
+Безопасность → Пароли приложений), положить в мастер-хранилище. Без него девять карточек выше остаются
+на цифрах 09.07.<br><br>
+<b style="color:var(--amber)">Телеграм-чат по мелким долгам.</b> Ссылка есть, прочитать из этой сессии
+не смог: служба агентов сейчас работает, а подключаться к сессии Телеграма при живой службе запрещено
+правилом 6j — именно так 31.08 погибли четыре аккаунта. Читать можно только так: погасить службу
+(agents_stop), подключиться, прочитать, поднять обратно (agents_start). Скажи слово — сделаю по этому
+порядку. Или выгрузи чат в файл, это быстрее и без риска.<br><br>
+<b style="color:var(--amber)">WhatsApp с МБА Финансы.</b> Давление шло туда, ответ на встречку 22 000 ₽
+мог прийти тоже туда. Посмотреть переписку в телефоне.
+</div>
+</div>
+
+<div class="upd">
+История: 07.07 — отправлено 10 заявлений плюс чат МикроКлад, Финтерра согласована на 11 098 &middot;
+08.07 — Займер подал в суд и отказал в дисконте, возражение отправлено 11:30, еКапуста предложила 4 133,
+встречка 2 000 &middot; 09.07 — Мани Мен дал акцию 10 989,25 до 31.07 &middot; <b class="good">23.07 — цессия
+№ 10ЛЦ, Небус продал долг АйДи Коллекту</b> &middot; 29.07 — уведомление коллектора &middot;
+<b class="bad">31.07 — сгорела акция Мани Мена</b> &middot; 13.08 — уведомление о переуступке от Небуса &middot;
+26.08 — требование АйДи Коллекта с реквизитами &middot; 31.08 — сборка v2: проверен ящик okoteam.top,
+пересобран план закрытия мелочи.
+</div>
+
+</body>
+</html>
