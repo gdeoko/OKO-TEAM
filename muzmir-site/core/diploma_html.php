@@ -757,6 +757,23 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    сдвигает их относительно сетки - поэтому вместо scale уменьшается кегль. */
 /* Подписи и печать лежат на белой подсветке внизу листа, поэтому цвет у них
    всегда тёмный - на тёмном фоне светлые буквы на белом просто пропадали. */
+/* ПОДЛОЖКА ПОД ПОДПИСЯМИ.
+ *
+ * Внизу листа у всех фонов лежит тяжёлый орнамент - инструменты, свитки,
+ * резьба. Подписи и печать на нём читаются плохо. Выхолащивать сам фон нельзя:
+ * пустая нижняя треть выглядит незаконченным макетом. Поэтому под блоком
+ * подписей лежит мягкое высветление бумаги: сверху оно растворяется в ноль, по
+ * бокам сходит на нет, и читается как естественный свет на пергаменте, а не как
+ * наклеенная плашка. */
+.sign-veil{position:absolute;z-index:3;pointer-events:none;
+  left:0;right:0;
+  bottom:0;height:<?= round($FIT['pad_bottom'] + 62) ?>mm;
+  background:
+    linear-gradient(180deg, rgba(255,252,244,0) 0%, rgba(255,252,244,.55) 26%,
+                            rgba(255,252,244,.82) 52%, rgba(255,252,244,.9) 100%),
+    radial-gradient(120% 100% at 50% 100%, rgba(255,252,244,.75) 0%, rgba(255,252,244,0) 72%);
+  -webkit-mask-image:linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 12%, #000 88%, rgba(0,0,0,0) 100%);
+  mask-image:linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 12%, #000 88%, rgba(0,0,0,0) 100%)}
 .bottom-block{position:absolute;z-index:4;color:#1a1a2a;
   bottom:<?= $FIT['pad_bottom'] ?>mm;
   left:<?= $FIT['pad_left_bot'] ?? $FIT['pad_left'] ?>mm;
@@ -880,6 +897,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   </div>
 
   <?php $e = $E('bottom'); ?>
+  <div class="sign-veil"></div>
   <div class="bottom-block"<?= $D('bottom') . _dh_style($e) ?>>
     <div class="signatures-grid">
       <div class="sig-text-block">
