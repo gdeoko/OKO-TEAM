@@ -61,7 +61,14 @@ var ПРИЧАЛЫ = [
   },
   {
     марка: "vpn",
-    лого: "assets/rocketvpn-logo.webp",
+    /* Марка без надписи. У Rocket CDN марка это голая литера с
+       ракетой, а у VPN в файле лежит полный замок с надписью
+       RocketVPN и слоганом. Рядом на двух причалах это читалось
+       разнобоем: слева знак, справа вывеска, и размеры разные.
+       Владелец увидел это первым же взглядом. Здесь берём марку,
+       вырезанную из того же файла: обе стоят в одинаковом квадрате и
+       читаются парой. Название и так подписано ниже словами. */
+    лого: "assets/rocketvpn-mark.webp",
     имя: "RocketVPN",
     строка: { ru: "уйти проколом на сайт VPN", en: "punch through to the VPN site" },
     цвет: "индиго"
@@ -128,7 +135,7 @@ function собрать() {
     b.innerHTML =
       '<span class="rcf-berth-glow" aria-hidden="true"></span>' +
       '<img class="rcf-berth-mark" src="' + п.лого + '" alt="" aria-hidden="true" ' +
-      'width="72" height="72" decoding="async">' +
+      'width="256" height="256" decoding="async">' +
       '<b>' + п.имя + '</b>' +
       '<i>' + (ru() ? п.строка.ru : п.строка.en) + '</i>';
     b.addEventListener("click", function () { швартовка(b, п.марка); });

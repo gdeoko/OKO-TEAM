@@ -420,9 +420,14 @@ html.rc-product-glitch .rc-vpn-entry-mark {
   color: rgba(203, 224, 240, .72);
   text-align: center;
 }
+/* Марки на причалах садятся в ОДИН квадрат и вписываются в него
+   целиком. Разные файлы имеют разные пропорции, и без общего квадрата
+   один знак выходит крупнее другого - на причалах это читается
+   разнобоем, а не парой. */
 .rcf-berth-mark {
-  width: clamp(46px, 6vw, 66px);
-  height: auto;
+  width: clamp(46px, 6vw, 64px);
+  height: clamp(46px, 6vw, 64px);
+  object-fit: contain;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .55));
 }
 /* Свет причала: он и есть цвет марки. Полоса снизу, как посадочный
