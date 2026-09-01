@@ -34,6 +34,8 @@ function diploma_fit(string $bgPath): array
         'pad_top' => 8.0, 'pad_right' => 12.0, 'pad_bottom' => 7.0, 'pad_left' => 12.0,
         'dark' => true, 'ink' => '#ffffff', 'muted' => 'rgba(255,255,255,.85)',
         'shadow' => 'drop-shadow(0 1px 3px rgba(0,0,0,.55))',
+        'dark_top' => true, 'ink_top' => '#ffffff', 'muted_top' => 'rgba(255,255,255,.9)',
+        'fade_bottom' => true,
     ];
     if ($bgPath === '' || !is_file($bgPath)) return $def;
 
@@ -105,17 +107,31 @@ function diploma_fit(string $bgPath): array
 
     $l = $edge('left'); $r = $edge('right'); $t = $edge('top'); $b = $edge('bottom');
 
-    // Яркость середины листа - по ней выбираем цвет текста.
-    $sum = 0.0; $n = 0;
-    for ($ky = 0.35; $ky <= 0.65; $ky += 0.05) {
-        for ($kx = 0.3; $kx <= 0.7; $kx += 0.05) {
-            $sum += $lum(imagecolorat($img, (int) ($W * $kx), (int) ($H * $ky)));
-            $n++;
+    /* ЯРКОСТЬ МЕРЯЕМ ПО ТРЁМ ЗОНАМ, А НЕ ПО ОДНОЙ СЕРЕДИНЕ.
+     *
+     * У «Высшей лиги» фон тёмный по краям и светлый в центре: по одной средней
+     * яркости он считался светлым, и шапка тёмными буквами тонула в тёмном
+     * верху. Считаем отдельно верх (там реквизиты и название центра), середину
+     * (звание и данные заявки) и низ (подписи, печать, номер). */
+    $zone = static function (float $y0, float $y1) use ($img, $W, $H, $lum): float {
+        $sum = 0.0; $n = 0;
+        for ($ky = $y0; $ky <= $y1; $ky += 0.02) {
+            for ($kx = 0.28; $kx <= 0.72; $kx += 0.04) {
+                $sum += $lum(imagecolorat($img, (int) ($W * $kx), (int) ($H * min(0.999, $ky))));
+                $n++;
+            }
         }
-    }
+        return $n ? $sum / $n : 0.0;
+    };
+    $brTop = $zone(0.03, 0.16);
+    $brMid = $zone(0.34, 0.62);
+    $brBot = $zone(0.78, 0.96);
     imagedestroy($img);
-    $bright = $n ? $sum / $n : 0.0;
-    $dark   = $bright < 140;                 // тёмная подложка - пишем светлым
+
+    $bright   = $brMid;
+    $dark     = $brMid < 140;                // основной текст
+    $darkTop  = $brTop < 140;                // шапка
+    $darkBot  = $brBot < 150;                // низ: подписи и печать
 
     /* Переводим доли в миллиметры листа и добавляем дыхание, чтобы буквы не
      * прижимались к рисунку вплотную. Держим в разумных границах: слишком
@@ -147,6 +163,13 @@ function diploma_fit(string $bgPath): array
         'shadow'     => $dark
             ? 'drop-shadow(0 1px 3px rgba(0,0,0,.55))'
             : 'drop-shadow(0 1px 2px rgba(255,255,255,.75))',
+        // Шапка живёт в своей полосе и красится по её яркости.
+        'dark_top'   => $darkTop,
+        'ink_top'    => $darkTop ? '#ffffff' : '#2A1A0B',
+        'muted_top'  => $darkTop ? 'rgba(255,255,255,.9)' : 'rgba(42,26,11,.86)',
+        /* Белая подсветка внизу нужна там, где низ фона тёмный: на ней стоят
+         * подписи и печать, и без неё они пропадают. */
+        'fade_bottom' => $darkBot,
     ];
     @file_put_contents($cache, json_encode($out, JSON_UNESCAPED_UNICODE));
     return $out;

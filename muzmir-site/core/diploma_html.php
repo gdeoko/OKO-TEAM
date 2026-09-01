@@ -659,10 +659,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Реквизиты и строка поддержки выходят за поля основного текста: вверху листа
    рамка тоньше, места больше, а в узкой колонке эти длинные строки рвались на
    куски посреди слова. Небольшой отрицательный отступ даёт им нужную ширину. */
-.header-legal{text-align:center;font-size:6.9pt;line-height:1.34;color:<?= $FIT['muted'] ?>;
+.header-legal{text-align:center;font-size:6.9pt;line-height:1.34;color:<?= $FIT['muted_top'] ?? $FIT['muted'] ?>;
   margin:0 -<?= max(0, round($FIT['pad_left'] - 9, 1)) ?>mm 3mm -<?= max(0, round($FIT['pad_right'] - 9, 1)) ?>mm}
-.header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:<?= $FIT['ink'] ?>}
-.header-legal .legal-text{font-weight:600;color:<?= $FIT['muted'] ?>}
+.header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:<?= $FIT['ink_top'] ?? $FIT['ink'] ?>}
+.header-legal .legal-text{font-weight:600;color:<?= $FIT['muted_top'] ?? $FIT['muted'] ?>}
 /* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
 /* Гербы выравниваем по центру равными промежутками: при распределении по краям
    крайние эмблемы прижимались к рамке и ряд выглядел кривым. */
@@ -756,7 +756,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   <?php if ($overlay > 0 || $edit): ?><div class="bg-tone"></div><?php endif; ?>
   <?php /* Белая подсветка снизу нужна только тёмному фону: на светлом она
            выбеливает орнамент и выглядит грязным пятном. */ ?>
-  <?php if (!empty($FIT['dark'])): ?><div class="bg-white-gradient"></div><?php endif; ?>
+  <?php if (!empty($FIT['fade_bottom'])): ?><div class="bg-white-gradient"></div><?php endif; ?>
   <?php if ($sample): ?><div class="sample-frame"></div><div class="sample-mark"><?php for ($si = 0; $si < 60; $si++) echo '<span>ОБРАЗЕЦ</span>'; ?></div><?php endif; ?>
 
   <div class="content">
