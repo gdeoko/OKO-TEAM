@@ -779,7 +779,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;
   font-weight:700;color:#1a1a2a;padding-right:30mm}
 /* Номер диплома + QR проверки подлинности — правый нижний угол. */
-.dip-verify{position:absolute;right:<?= $FIT['pad_right_bot'] ?? $FIT['pad_right'] ?>mm;bottom:<?= max(4.0, $FIT['pad_bottom'] - 2) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+/* Номер с QR стоит в самом углу листа, а не по полям текста: он служебный,
+   его место - край документа. По полям он уезжал к середине и вверх, и угол
+   выглядел пустым. */
+.dip-verify{position:absolute;right:10mm;bottom:8mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dip-verify .qr svg{width:100%;height:100%;display:block}
 .dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
