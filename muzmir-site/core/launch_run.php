@@ -424,7 +424,21 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     // ---- ВК рассылка в личку ----
     if (in_array('vk_dm', $channels, true)) {
         if ($dry) { $report['vk_dm'] = 'рассылка в открытые диалоги (пачками)'; }
-        else { $r = function_exists('vk_broadcast') ? vk_broadcast($text) : ['error' => ['error_msg' => 'vk_broadcast нет']]; $report['vk_dm'] = empty($r['error']) ? ('отправлено: ' . (int) ($r['sent'] ?? $r['count'] ?? 0)) : ('ошибка: ' . ($r['error']['error_msg'] ?? '?')); }
+        else {
+            $r = function_exists('vk_broadcast') ? vk_broadcast($text) : ['error' => 'vk_broadcast нет'];
+            // ПРИЧИНА СБОЯ ДОЛЖНА БЫТЬ В ОТЧЁТЕ.
+            // vk_broadcast отдаёт ошибку СТРОКОЙ, а здесь её читали как массив
+            // ($r['error']['error_msg']) — в отчёте волны оставался вопросительный
+            // знак: «vk_dm: ошибка: ?». Запуск 01.09 прошёл с этим знаком по всем
+            // четырём конкурсам, и понять, что рассылка в личку не ушла и почему,
+            // было неоткуда. Разбираем обе формы ответа.
+            $err = $r['error'] ?? null;
+            if (is_array($err)) $err = (string) ($err['error_msg'] ?? $err['description'] ?? $err['message'] ?? '');
+            $err = trim((string) $err);
+            $report['vk_dm'] = ($err === '')
+                ? ('отправлено: ' . (int) ($r['sent'] ?? $r['count'] ?? 0))
+                : ('ошибка: ' . $err);
+        }
     }
     // ---- Email ----
     if (in_array('email', $channels, true)) {
