@@ -1241,3 +1241,60 @@ OKO_POSTER_TOKEN" -d '{"cmd":"..."}'`.
 ---
 
 Конец библии. Источник правды — `oko-agents/docs/OKO_ПРОДАКШН_БИБЛИЯ.md`.
+
+---
+
+# ПРИЛОЖЕНИЕ F. ПОРТЫ, ТОЧКИ ДОСТУПА И ВНУТРЕННЯЯ МЕХАНИКА КАРТЫ
+
+Полная техническая карта для кода, который зовёт карту напрямую (обычно всё прячет
+`card.нужна()`, но пусть будет выписано).
+
+## F.1 Порты и сервисы
+| Порт | Сервис | Где |
+|---|---|---|
+| **8188** | ComfyUI (H3, аватар, 3D, музыка, SFX) | под RunPod |
+| **7777** | box svc — мост команд на под (`POST /`, заголовок `X-Token`) | под RunPod |
+| **11434** | Ollama (`qwen3-coder:30b`) | под RunPod |
+| **4096** | OpenCode web (`opencode serve --port 4096`) | под RunPod |
+| **9222** | Chrome браузер 1 (ChatGPT/ElevenLabs/Envato), аккаунт okoteam.top | VPS |
+| **9254** | Chrome браузер 2 (только Runway), аккаунт claude.okoteam | VPS |
+| **9251/9254** | `RUNWAY_CDP` — CDP-отладчик браузера Runway (болгарский профиль) | VPS |
+| **10840/10809/10808/10811** | Pantera-выходы NL/Дубай/Франкфурт/США (socks5) | VPS |
+
+## F.2 Мост на карту (box svc)
+- Адрес: `https://<podid>-7777.proxy.runpod.net/`, метод POST, заголовок `X-Token: <svc_token>`,
+  тело — bash-команда, ответ JSON `{exit, stdout, stderr}`.
+- **ВАЖНО:** runpod-прокси режет питоновский urllib (403 на его User-Agent). Ходить
+  ТОЛЬКО через `curl` subprocess, не urllib. Зашито в `core/card.py` и `core/avatar.py`.
+- ComfyUI внутри пода — `http://127.0.0.1:8188` (проверка готовности `/system_stats`).
+
+## F.3 Управление картой (gpu.py, VPS `/opt/oko-poster/gpu/`)
+- `gpu.py start` — идемпотентно поднять (already/resumed/created), ставит `want_on=True`.
+- `gpu.py stop` — выключить, `want_on=False`.
+- `gpu.py status` — работает / ищу (`searching`) / не нашёл (`search_failed`) / выключена,
+  тип GPU, стоимость, простой X/10.
+- `gpu.py watchdog` — сторож (cron раз в минуту): добивает слот при `want_on`, гасит по
+  простою 10 мин (учёт ComfyUI-очереди И активности OpenCode `_opencode_active`), сдаётся
+  через 20 мин поиска.
+- Состояние — `/opt/oko-poster/gpu/rt/state.json` (0777/666, чтобы писала и www-data из
+  админки). Конфиг — `conf.json` (`idle_stop_minutes=10`, `grace_minutes=15`,
+  `search_giveup_minutes=20`, `svc_token`).
+- Из облачного чата — через `vexec` (мост VPS). Root-файлы веб-корня правим через docker
+  (okoposter в группе docker), sudo для okoposter запрещён.
+
+## F.4 Единая дверь из кода (прячет всё выше)
+```python
+from core import card
+card.нужна()          # поднять карту, дождаться стека, OKO_GPU_SVC_URL в окружение
+card.тронуть()        # держать живой при активности (сдвиг таймера простоя)
+```
+Любой картовый вызов (`generate.ролик` H3, `avatar.вставка`, 3D, музыка, SFX,
+локальный код) первым делом зовёт `card.нужна()` — карта включается сама, без человека.
+
+## F.5 Установка стека на свежий том (однократно, `setup/oko-stack.sh`)
+- `apt-get install -y zstd pciutils lshw` ДО установки Ollama (без zstd install падает).
+- Ollama env: `OLLAMA_CONTEXT_LENGTH=32768`, `OLLAMA_FLASH_ATTENTION=true`
+  (контекст 131072 душил до 9 ток/мин; 32768+flash = 129 ток/с).
+- Модели живут на секьюр-томе `oko-stack` (не перекачиваются при пересборке пода).
+- OpenCode: `/root/.config/opencode/opencode.json`, провайдер `ollama`, baseURL
+  `http://127.0.0.1:11434/v1`, модель `qwen3-coder:30b`.
