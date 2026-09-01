@@ -980,6 +980,28 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         }
     }
 
+    // ВОЛНА ОБРАЩЕНИЙ В ВЕДОМСТВА ИДЁТ ТОЛЬКО ЧЕРЕЗ СЕРВИС РАССЫЛОК.
+    //
+    // Двести с лишним обращений за час — по объёму это рассылка, хотя каждое
+    // письмо именное и приоритет у него нулевой (потому старший замок на массовые
+    // их и не поймал). Уходят они все с одного ящика kc@, у которого нет запасного:
+    // 17 августа его закрыли наружу ровно за такой всплеск, и центр двое суток
+    // остался без подтверждений заявок и паролей от кабинетов.
+    //
+    // 01.09 сервис отбил письмо из-за одинаковых имён вложений — и failover
+    // спокойно увёл волну на прямой SMTP kc@. Такого пути быть не должно: если
+    // сервис не принял письмо, оно ждёт в очереди и чинится, а не уходит с
+    // рабочей почты центра. Личная переписка с ведомством сюда не попадает — у
+    // неё нет типа кампании.
+    if ((string) ($opt['campaign_type'] ?? '') === 'official') {
+        $before = count($accounts);
+        $accounts = array_values(array_filter($accounts, static fn(array $a): bool
+            => (string) ($a['transport'] ?? '') !== ''));
+        if (count($accounts) < $before) {
+            mail_log('волна обращений в ведомства: прямые ящики центра исключены, только сервис рассылок');
+        }
+    }
+
     if (!$accounts) {
         mail_last_error('Для этого типа писем не настроен ни один почтовый ящик (пул «' . $pool . '»).');
         mail_log('POOL EMPTY (' . $pool . ') для ' . $to);
@@ -1138,10 +1160,29 @@ function mail_send_unisender(string $to, string $subject, string $html, array $o
     if (!empty($opt['attach'])) {
         $files = is_array($opt['attach']) ? $opt['attach'] : [$opt['attach']];
         $att = [];
+        // ИМЕНА ВЛОЖЕНИЙ ОБЯЗАНЫ РАЗЛИЧАТЬСЯ.
+        // Афиши четырёх конкурсов лежат по своим папкам, но зовутся одинаково —
+        // afisha.jpg. Сервис рассылок такое письмо не принимает вовсе:
+        // «Error in attachments field. Duplicated filename: afisha.jpg», HTTP 400.
+        // Обращения в ведомства 01.09 падали на этой ошибке и уходили ЗАПАСНЫМ
+        // путём — прямым SMTP с kc@, то есть массовой волной с ящика, которому
+        // массовые запрещены: ровно за это 17 августа Яндекс закрыл его наружу.
+        // Второму и следующим файлам с тем же именем добавляем номер.
+        $used = [];
         foreach ($files as $f) {
             $f = (string) $f;
             if ($f === '' || !is_file($f)) continue;
-            $att[] = ['type' => mail_mime_type($f), 'name' => basename($f), 'content' => base64_encode((string) file_get_contents($f))];
+            $name = basename($f);
+            if (isset($used[mb_strtolower($name)])) {
+                $ext  = pathinfo($name, PATHINFO_EXTENSION);
+                $stem = pathinfo($name, PATHINFO_FILENAME);
+                $n    = 1;
+                do { $try = $stem . '-' . (++$n) . ($ext !== '' ? '.' . $ext : ''); }
+                while (isset($used[mb_strtolower($try)]));
+                $name = $try;
+            }
+            $used[mb_strtolower($name)] = true;
+            $att[] = ['type' => mail_mime_type($f), 'name' => $name, 'content' => base64_encode((string) file_get_contents($f))];
         }
         if ($att) $msg['attachments'] = $att;
     }
