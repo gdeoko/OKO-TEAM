@@ -608,3 +608,38 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
 @media (prefers-reduced-motion: reduce) {
   .rv-плита { transform: none; opacity: .9; }
 }
+
+/* ── Кнопка звука ──────────────────────────────────────────────
+   Одна на весь сайт, в углу, не мешает содержимому. Палец берёт её
+   уверенно: сорок четыре точки под грубым указателем это не запас, а
+   требование. Звук по умолчанию выключен: сайт, заоравший в тишине
+   офиса, теряет человека навсегда. */
+.rv-звук {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 40;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--rv-текст-тихо);
+  background: rgba(8, 11, 24, .72);
+  border: 1px solid var(--rv-кромка);
+  border-radius: 50%;
+  backdrop-filter: blur(6px);
+  transition: color .2s, border-color .2s, box-shadow .2s;
+}
+.rv-звук:hover,
+.rv-звук:focus-visible {
+  color: #E8EAF6;
+  border-color: rgba(var(--rv-свет-rgb), .7);
+  box-shadow: 0 0 26px -8px rgba(var(--rv-свет-rgb), .9);
+}
+.rv-звук svg { width: 21px; height: 21px; }
+.rv-звук .rv-звук-волна { opacity: 0; transition: opacity .2s; }
+.rv-звук .rv-звук-крест { opacity: .85; transition: opacity .2s; }
+.rv-звук.rv-звук-вкл { color: #E8EAF6; border-color: rgba(var(--rv-свет-rgb), .55); }
+.rv-звук.rv-звук-вкл .rv-звук-волна { opacity: .9; }
+.rv-звук.rv-звук-вкл .rv-звук-крест { opacity: 0; }
