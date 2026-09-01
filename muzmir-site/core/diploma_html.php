@@ -872,12 +872,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:<?= $lsPx ?>px;margin-bottom:calc(var(--u) * 1);line-height:1.04;
   filter:<?= $HALO_C ?>}
 .support-line{text-align:center;font-family:'Playfair Display',serif;font-size:10.2pt;font-weight:700;
-  line-height:1.28;margin:0 -<?= max(0, round($PAD_X - 11, 1)) ?>mm calc(var(--u) * 1.5) -<?= max(0, round($PAD_X - 11, 1)) ?>mm;
+  line-height:1.28;margin:0 -<?= max(0, round($PAD_X - 11, 1)) ?>mm var(--u) -<?= max(0, round($PAD_X - 11, 1)) ?>mm;
   padding:0;color:<?= $FIT['muted'] ?>}
 .diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:5px;margin-bottom:calc(var(--u) * 0.5);line-height:1}
+  letter-spacing:5px;margin-bottom:var(--u);line-height:1}
 /* Цифры — только «прописные» (lining): в антиквах тем цифры по умолчанию
    старостильные, и «1 СТЕПЕНИ» печаталось крошечной единицей. */
 .diploma-degree,.awarded-name,.awarded-name-script,.field-list,.diploma-type{
@@ -894,12 +894,9 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:4px;margin-top:calc(var(--u) * 1);
   margin-bottom:calc(var(--u) * 1);filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 0.5)}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:var(--u)}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
-  /* Отступ от имени до полей заявки НЕ растягивается вместе с остальным ритмом:
-     ФИО и данные - одна связка, и когда свободное место листа раскладывалось по
-     всем интервалам, между ними разъезжалась дыра. Фиксированный шаг. */
-  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:<?= $TIGHT ? '2' : '2.6' ?>mm;
+    font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:var(--u);
   letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
   filter:<?= $FIT['dark'] ? 'none' : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))' ?>}
 .awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;line-height:1}
