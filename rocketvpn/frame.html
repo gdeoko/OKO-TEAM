@@ -76,6 +76,12 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      здесь на сайте есть тёплый цвет: янтарные лучи досмотра. -->
 <section class="rv-акт" data-акт="периметр" style="height:260svh">
   <div class="rv-кадр">
+    <!-- Стена блокпоста настоящим железом. Считана Blender'ом один раз
+     (tools/блокпост.py), потому что тяжёлый свет незачем считать в
+     браузере на каждом кадре. Пакеты, лучи досмотра и очередь
+     рисует холст поверх: живое остаётся живым. -->
+    <img class="rv-плита" src="assets/gen/блокпост.webp" alt="" aria-hidden="true"
+         width="2200" height="1400" decoding="async" loading="lazy">
     <canvas class="rv-холст" id="rvПериметр" aria-hidden="true"></canvas>
     <div class="rv-слой">
       <p class="rv-над">Периметр</p>
