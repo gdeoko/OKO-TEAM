@@ -144,7 +144,11 @@ foreach ($KINDS as $type => $k) {
             . 'const b=await chromium.launch();const p=await b.newPage({viewport:{width:1400,height:2000},'
             . 'deviceScaleFactor:2});'
             . 'await p.goto("file://' . $htmlRem . '",{waitUntil:"networkidle"});'
-            . 'await p.waitForTimeout(1500);'
+            /* Ждём метку подгонки названия: кегль главной строки подбирается в
+               браузере после загрузки веб-шрифта, и снимок раньше метки ловил
+               лист с ещё не подобранным заголовком. */
+            . 'await p.waitForSelector("html[data-title-fit=\'1\']",{timeout:6000}).catch(()=>{});'
+            . 'await p.waitForTimeout(1200);'
             /* Снимаем сам лист, а не страницу целиком: вокруг бланка остаётся
                серое поле подложки, и в карточке образца документ выглядел бы
                маленьким прямоугольником в пустоте. */
