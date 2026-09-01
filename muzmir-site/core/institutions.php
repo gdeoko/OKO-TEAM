@@ -423,6 +423,13 @@ function inst_pick_for_invite(int $limit = 500): array {
  */
 function inst_pick_for_reinvite(int $limit = 500, int $months = 3, int $maxLetters = 4): array {
     inst_migrate();
+    /* НОВЫЙ ПЕРИОД — НОВАЯ ВОЛНА ПО ВСЕЙ БАЗЕ. Пороги задаются настройками:
+     * inst_reinvite_months — через сколько месяцев можно написать повторно,
+     * inst_reinvite_max    — сколько писем всего допустимо на одно учреждение.
+     * Конкурсы обновляются каждый месяц, и приглашение на сентябрьские — это
+     * новое предложение, а не повтор августовского. */
+    $months     = max(0, (int) setting('inst_reinvite_months', (string) $months));
+    $maxLetters = max(1, (int) setting('inst_reinvite_max',    (string) $maxLetters));
     $limit = max(1, min(5000, $limit));
     try {
         return all(
@@ -432,11 +439,14 @@ function inst_pick_for_reinvite(int $limit = 500, int $months = 3, int $maxLette
                 AND COALESCE(bounce_count,0) < 2
                 AND COALESCE(invited_count,1) < ?
                 AND invited_at <> ''
-                AND invited_at < datetime('now', 'localtime', ?)
+                -- months=0 — волна раз в календарный месяц: в сентябрьскую
+                -- попадают все, кому писали в августе и раньше, но не те, кому
+                -- письмо уже ушло в этом месяце.
+                AND invited_at < " . ($months < 1 ? "date('now','localtime','start of month')" : "datetime('now','localtime',?)") . "
               ORDER BY CASE WHEN COALESCE(director,'') <> '' THEN 0 ELSE 1 END,
                        invited_at ASC
               LIMIT ?",
-            [$maxLetters, '-' . max(1, $months) . ' months', $limit]
+            $months < 1 ? [$maxLetters, $limit] : [$maxLetters, '-' . $months . ' months', $limit]
         );
     } catch (\Throwable $e) { return []; }
 }
