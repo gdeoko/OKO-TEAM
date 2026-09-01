@@ -882,7 +882,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:<?= $T['ls_degree'] ?? '2px' ?>;text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:4px;margin-bottom:<?= $TIGHT ? '2.2' : '3.2' ?>mm;filter:<?= $HALO_D ?>;line-height:1}
+  /* Звание отодвинуто от слова ДИПЛОМ и придвинуто к «награждается»: раньше оно
+     висело ровно посередине между ними, и связка «звание - кому» разрывалась. */
+  letter-spacing:4px;margin-top:<?= $TIGHT ? '1.8' : '2.6' ?>mm;
+  margin-bottom:<?= $TIGHT ? '1.4' : '2' ?>mm;filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:<?= $TIGHT ? '1' : '1.6' ?>mm}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
