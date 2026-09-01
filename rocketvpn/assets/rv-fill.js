@@ -156,14 +156,25 @@
         'rel="noopener noreferrer">Забрать ' + эк(D["проба"]) + '</a>' +
       '<a href="' + с["помощь"] + '" target="_blank" rel="noopener noreferrer">Написать в поддержку</a>' +
       '<a href="' + с["канал"] + '" target="_blank" rel="noopener noreferrer">Канал: новости и аварии</a>' +
-      '<a href="' + с["партнёрам"] + '" target="_blank" rel="noopener noreferrer">Партнёрам</a>';
+      '<a href="' + с["партнёрам"] + '" target="_blank" rel="noopener noreferrer">Партнёрам</a>' +
+      '<a href="' + с["кабинет"] + '" target="_blank" rel="noopener noreferrer">Личный кабинет</a>';
+  }
+
+  /* Адрес кабинета на кнопке входа. Сама кнопка стоит в разметке и
+     работает без скрипта - это правильно, за ней приходит платящий
+     человек. Здесь адрес только ПОДТВЕРЖДАЕТСЯ из досье, чтобы при
+     смене домена правка была одна, а не две. */
+  function вход(D) {
+    var э = d.getElementById("rvВход");
+    var а = D["связь"] && D["связь"]["кабинет"];
+    if (э && а) э.setAttribute("href", а);
   }
 
   function старт() {
     var D = g.RV_DATA;
     if (!D) return;
     станции(D); тарифы(D); звено(D); технологии(D);
-    надёжность(D); призыв(D); итог(D); контакты(D);
+    надёжность(D); призыв(D); итог(D); контакты(D); вход(D);
   }
 
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", старт);
