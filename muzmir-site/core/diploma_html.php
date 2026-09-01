@@ -757,26 +757,6 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    сдвигает их относительно сетки - поэтому вместо scale уменьшается кегль. */
 /* Подписи и печать лежат на белой подсветке внизу листа, поэтому цвет у них
    всегда тёмный - на тёмном фоне светлые буквы на белом просто пропадали. */
-/* ПОДЛОЖКА ПОД ПОДПИСЯМИ.
- *
- * Внизу листа у всех фонов лежит тяжёлый орнамент - инструменты, свитки,
- * резьба. Подписи и печать на нём читаются плохо. Выхолащивать сам фон нельзя:
- * пустая нижняя треть выглядит незаконченным макетом. Поэтому под блоком
- * подписей лежит мягкое высветление бумаги: сверху оно растворяется в ноль, по
- * бокам сходит на нет, и читается как естественный свет на пергаменте, а не как
- * наклеенная плашка. */
-.sign-veil{position:absolute;z-index:3;pointer-events:none;
-  left:0;right:0;
-  bottom:0;height:<?= round($FIT['pad_bottom'] + 86) ?>mm;
-  <?php /* На тёмном фоне подложка плотнее: там подписи иначе не читаются.
-           На светлой бумаге она едва заметна - только снимает пестроту. */
-        $vA = !empty($FIT['dark']) ? [.72, .95, 1.0, .88] : [.5, .78, .88, .7]; ?>
-  background:
-    linear-gradient(180deg, rgba(255,252,244,0) 0%, rgba(255,252,244,<?= $vA[0] ?>) 16%,
-                            rgba(255,252,244,<?= $vA[1] ?>) 34%, rgba(255,252,244,<?= $vA[2] ?>) 100%),
-    radial-gradient(120% 100% at 50% 100%, rgba(255,252,244,<?= $vA[3] ?>) 0%, rgba(255,252,244,0) 72%);
-  -webkit-mask-image:linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 12%, #000 88%, rgba(0,0,0,0) 100%);
-  mask-image:linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 12%, #000 88%, rgba(0,0,0,0) 100%)}
 .bottom-block{position:absolute;z-index:4;color:#1a1a2a;
   bottom:<?= $FIT['pad_bottom'] ?>mm;
   left:<?= $FIT['pad_left_bot'] ?? $FIT['pad_left'] ?>mm;
@@ -802,7 +782,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Номер с QR стоит в самом углу листа, а не по полям текста: он служебный,
    его место - край документа. По полям он уезжал к середине и вверх, и угол
    выглядел пустым. */
-.dip-verify{position:absolute;right:10mm;bottom:8mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+/* Номер держится правого нижнего угла, но не опускается ниже блока подписей:
+   у «Высшей лиги» внизу тёмный мраморный пьедестал, и в самом углу номер на нём
+   пропадал. */
+.dip-verify{position:absolute;right:10mm;bottom:<?= max(8.0, round($FIT['pad_bottom'] - 8, 1)) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dip-verify .qr svg{width:100%;height:100%;display:block}
 .dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
@@ -900,7 +883,6 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   </div>
 
   <?php $e = $E('bottom'); ?>
-  <div class="sign-veil"></div>
   <div class="bottom-block"<?= $D('bottom') . _dh_style($e) ?>>
     <div class="signatures-grid">
       <div class="sig-text-block">
