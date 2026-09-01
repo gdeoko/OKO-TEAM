@@ -12,11 +12,6 @@
  * Ошибки приватности (901/902/936/914) — skipped, не повторяем; флуд-контроль
  * (6/9/29) — оставляем в очереди и выходим до следующей минуты.
  * Выключатель: settings.vk_dm_enabled = '0' останавливает отправку.
- *
- * ВРЕМЯ. Крон идёт каждую минуту круглосуточно, поэтому окно проверяем внутри
- * (core/outreach_window.php): очередь на 5 тыс. диалогов уходит 4-5 часов, и
- * набранная днём рассылка иначе продолжалась бы ночью и в воскресенье — ровно то,
- * из-за чего окно и появилось.
  */
 declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
@@ -26,14 +21,10 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/vk.php';
-require_once BASE_PATH . '/core/outreach_window.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'vk_dm_worker';
 
-// Проверка до лока, как в cron/vk_admin_dm.php: вне окна работать нечего, а лишний
-// лок каждую минуту только мешал бы разбирать журнал.
-if (!outreach_window_ok()) exit(0);
 if (!cron_lock(JOB, 300)) exit(0);
 
 try {

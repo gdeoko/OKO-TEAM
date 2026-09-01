@@ -216,6 +216,56 @@ function _dh_style2(array $cfg, string $autoCss = ''): string {
 }
 
 /**
+ * ШИРИНА СТРОКИ В МИЛЛИМЕТРАХ ПРИ ЗАДАННОМ КЕГЛЕ (Manrope, полужирный).
+ *
+ * Точно её знает только браузер, но нам нужна оценка на стороне PHP - до того,
+ * как страница отрисована. Прописные буквы шире строчных, пробел и запятая
+ * заметно уже; коэффициенты сняты с гарнитуры и дают ошибку в пределах пары
+ * процентов, чего для подбора кегля достаточно.
+ */
+function _dh_text_w(string $s, float $fsPt): float {
+    $mmPerEm = $fsPt * 0.3528;
+    $w = 0.0;
+    $len = mb_strlen($s);
+    for ($i = 0; $i < $len; $i++) {
+        $ch = mb_substr($s, $i, 1);
+        /* Коэффициенты откалиброваны по готовому бланку: первый набор был снят
+         * «на глаз» и занижал ширину примерно на восемь процентов - расчёт
+         * обещал четыре строки, а браузер выкладывал пять. */
+        if ($ch === ' ')                                  $w += 0.29;
+        elseif (mb_strpos(',.:;!?«»"\'()-–—', $ch) !== false) $w += 0.33;
+        elseif (mb_strpos('мшщюжфыМШЩЮЖФЫ', $ch) !== false)  $w += 0.78;
+        elseif ($ch === mb_strtoupper($ch) && $ch !== mb_strtolower($ch)) $w += 0.68;
+        else                                              $w += 0.575;
+    }
+    return $w * $mmPerEm;
+}
+
+/**
+ * НАИБОЛЬШИЙ КЕГЛЬ, ПРИ КОТОРОМ ТЕКСТ УКЛАДЫВАЕТСЯ В ЗАДАННОЕ ЧИСЛО СТРОК.
+ *
+ * Слова переносятся так же, как это сделает браузер: жадно, по пробелам, без
+ * разрыва слова. Если не помещается даже на нижней границе кегля - возвращаем
+ * её: лучше строкой больше, чем нечитаемые буквы.
+ */
+function _dh_fit_lines(string $text, float $widthMm, float $maxFs, float $minFs, int $maxLines): float {
+    $words = preg_split('~\s+~u', trim($text)) ?: [];
+    if (!$words) return $maxFs;
+    for ($fs = $maxFs; $fs >= $minFs - 0.001; $fs -= 0.1) {
+        $lines = 1; $cur = '';
+        foreach ($words as $wd) {
+            $try = $cur === '' ? $wd : $cur . ' ' . $wd;
+            // Три процента запаса: округления браузера не должны стоить лишней строки.
+            if (_dh_text_w($try, $fs) <= $widthMm * 0.97) { $cur = $try; continue; }
+            $lines++; $cur = $wd;
+            if ($lines > $maxLines) break;
+        }
+        if ($lines <= $maxLines) return round($fs, 1);
+    }
+    return $minFs;
+}
+
+/**
  * Дизайн-тема диплома по названию конкурса: свои шрифты и цвета для названия,
  * слова ДИПЛОМ/БЛАГОДАРНОСТЬ, степени и ФИО. Все шрифты — с кириллицей.
  * Переопределяется ключом diploma_template.theme (cosmos|zenith|theatre|derzhava|classic).
@@ -232,7 +282,10 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'ff_comp' => "'Prata',serif", 'ls_comp' => '4px',
             'grad_comp'   => 'linear-gradient(180deg,#EAF7FF 0%,#BFE9FF 30%,#7FC9F0 55%,#CDEFFF 80%,#FFFFFF 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6C4 0%,#FFD54F 18%,#FFC107 38%,#D4A017 52%,#B8860B 62%,#FFC107 80%,#FFF3B0 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 35%,#8FD4F5 65%,#E8F9FF 100%)',
+            /* Звание уведено в аметист: рядом с ледяным названием и золотым
+             * словом ДИПЛОМ оно раньше было таким же бело-голубым и читалось как
+             * продолжение заголовка. */
+            'grad_degree' => 'linear-gradient(180deg,#F6F0FF 0%,#DCC8FF 34%,#A98CFF 66%,#EFE6FF 100%)',
             'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
             'script_font' => 'Pacifico', 'ff_script' => "'Pacifico',cursive", 'script_fs' => 36, 'script_color' => '#D6F1FF',
         ],
@@ -244,7 +297,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'ff_comp' => "'Forum',serif", 'ls_comp' => '5px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF7D6 0%,#FFE082 25%,#E9C567 45%,#B8860B 58%,#E9C567 75%,#FFF3B0 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFFBE8 0%,#FFE082 20%,#F5C542 40%,#C9971C 55%,#A67C10 65%,#E9C567 82%,#FFF7D6 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF3C4 30%,#F0CE72 60%,#D4A017 85%,#FFE082 100%)',
+            // Звание — холодная платина: рядом с золотым названием видно сразу.
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#E2E9F5 34%,#9AA6BE 68%,#F0F4FB 100%)',
             'name_color' => '#FFE99C', 'ff_name' => "'Forum',serif",
             'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE99C',
         ],
@@ -256,7 +310,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'ff_comp' => "'Cormorant Garamond',serif", 'ls_comp' => '3px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF6E8 0%,#FFE3B0 30%,#F2BE6A 55%,#D89A3D 70%,#FFDFA6 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF9EC 0%,#FFE7B8 22%,#F4C878 42%,#D89A3D 56%,#B87526 66%,#F2BE6A 82%,#FFF2D8 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF0D6 32%,#F2CE8E 62%,#D89A3D 88%,#FFE3B0 100%)',
+            // Звание — светлый изумруд сцены, чтобы не повторять золото названия.
+            'grad_degree' => 'linear-gradient(180deg,#EAFFF6 0%,#B6EDD6 34%,#5FBF9B 68%,#DFFBF0 100%)',
             'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
             'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 42, 'script_color' => '#FFE3B0',
         ],
@@ -268,7 +323,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'ff_comp' => "'Old Standard TT',serif", 'ls_comp' => '4px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF3C4 0%,#FFD766 22%,#E8A93C 45%,#B8641B 60%,#E8A93C 78%,#FFE9A6 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6D0 0%,#FFD766 20%,#F0AE3C 40%,#C4571E 55%,#A63E14 63%,#E8A93C 80%,#FFE9A6 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFEFC0 30%,#F0C868 60%,#D08A20 85%,#FFD766 100%)',
+            // Звание — светлый багрянец: золото остаётся за названием конкурса.
+            'grad_degree' => 'linear-gradient(180deg,#FFF0EC 0%,#FFC9C2 32%,#E0555F 66%,#FFE3DC 100%)',
             'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
             'script_font' => 'Lobster', 'ff_script' => "'Lobster',cursive", 'script_fs' => 37, 'script_color' => '#FFD98F',
         ],
@@ -280,7 +336,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'ff_comp' => "'Playfair Display',serif", 'ls_comp' => '3px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 20%,#C9A84C 45%,#8B6F1F 55%,#C9A84C 75%,#FFE082 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 25%,#D4A017 55%,#A67C10 75%,#FFC107 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#E2E9F5 34%,#9AA6BE 68%,#F0F4FB 100%)',
             'name_color' => '#FFE082', 'ff_name' => "'Playfair Display',serif",
             'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE082',
         ],
@@ -310,24 +366,25 @@ function diploma_theme_on_light(array $T): array {
     $deep = [
         // Космос: глубокая полночная синь с холодным серебром.
         'cosmos' => [
-            'grad_comp'   => 'linear-gradient(180deg,#1B3A63 0%,#12294A 45%,#0C1D36 70%,#1B3A63 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#3A6EAC 0%,#255089 45%,#1B3E6D 70%,#356AA6 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 35%,#4A3607 60%,#8A6A12 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#1B3A63 0%,#12294A 55%,#0C1D36 100%)',
+            // Звание — аметист: рядом с синим названием видно сразу, но не темнит лист.
+            'grad_degree' => 'linear-gradient(180deg,#8A68D8 0%,#6748B4 55%,#503595 100%)',
             'name_color'  => '#12294A', 'script_color' => '#1B3A63',
         ],
         // Зенит: тёмное червонное золото с медью.
         'zenith' => [
-            'grad_comp'   => 'linear-gradient(180deg,#F2DFA2 0%,#D4A93C 22%,#8A6A12 50%,#D4A93C 74%,#FBF0C8 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#F9EBBC 0%,#E5C060 22%,#C99A2C 50%,#E5C060 74%,#FCF3D8 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#9C6B1A 0%,#7A4F10 38%,#57370A 62%,#9C6B1A 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#3A2E5C 0%,#2A2145 45%,#1B1630 75%,#3A2E5C 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#7A5FCC 0%,#5A43A6 45%,#432F80 78%,#6B51BC 100%)',
             'name_color'  => '#2A2145', 'script_color' => '#3A2E5C',
             'sh_comp'     => '0 1px 0 rgba(42,33,69,.5), 0 0 14px rgba(212,169,60,.28)',
         ],
         // Театр, искусство: тёмный изумруд с бронзой.
         'theatre' => [
-            'grad_comp'   => 'linear-gradient(180deg,#E3C877 0%,#BF9A34 24%,#7A5E12 50%,#BF9A34 74%,#F0E2AB 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#F6E7B8 0%,#DDB855 24%,#BE8F26 50%,#DDB855 74%,#F9EFD0 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 40%,#4A3607 65%,#8A6A12 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#1B5C50 0%,#14483F 45%,#0A241F 75%,#1B5C50 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#33B394 0%,#1D9276 45%,#12735C 78%,#2AA687 100%)',
             'name_color'  => '#0E332C', 'script_color' => '#14483F',
             'sh_comp'     => '0 1px 0 rgba(14,51,44,.5), 0 0 14px rgba(191,154,52,.25)',
         ],
@@ -336,17 +393,19 @@ function diploma_theme_on_light(array $T): array {
             /* Название - густое золото с тёмной прочеканкой, звание - багрянец:
              * две главные строки должны различаться, иначе диплом читается как
              * один сплошной заголовок. */
-            'grad_comp'   => 'linear-gradient(180deg,#E8C36A 0%,#C79A2E 22%,#8A6A12 48%,#C79A2E 72%,#F2DE9E 100%)',
+            /* Чистое светлое золото - без затемнения и без обводок: тёмные тона
+             * на бумаге выглядели грязно. Отличие от звания даётся цветом. */
+            'grad_comp'   => 'linear-gradient(180deg,#F8E9B6 0%,#E3BA58 24%,#C79126 50%,#E3BA58 74%,#FAF0CE 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#C79A2E 0%,#9C6B1A 26%,#6B4F0A 52%,#9C6B1A 76%,#D9B45A 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#B02531 0%,#8A1F26 40%,#5C1219 70%,#9E2028 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#E8515E 0%,#C82936 42%,#A81A26 74%,#DC414E 100%)',
             'name_color'  => '#5C1219', 'script_color' => '#7A1B22',
             'sh_comp'     => '0 1px 0 rgba(92,18,25,.55), 0 0 14px rgba(184,134,43,.25)',
         ],
         // Классика: тёмный кофейный с золотом.
         'classic' => [
-            'grad_comp'   => 'linear-gradient(180deg,#4A3115 0%,#37230F 45%,#25170A 70%,#4A3115 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#F6E6B4 0%,#DEB955 24%,#BF9028 50%,#DEB955 74%,#F9EECC 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 38%,#4A3607 62%,#8A6A12 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#4A3115 0%,#37230F 60%,#25170A 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#E0663C 0%,#BC4622 55%,#9C3316 100%)',
             'name_color'  => '#37230F', 'script_color' => '#4A3115',
         ],
     ];
@@ -413,9 +472,17 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left', 'pad_left_bot', 'pad_right_bot'] as $pk) {
         if (isset($tpl[$pk]) && is_numeric($tpl[$pk])) $FIT[$pk] = (float) $tpl[$pk];
     }
+    /* Каким низ листа вышел ПО РИСУНКУ, а не по настройке. Белую подсветку внизу
+     * владелец у части конкурсов снял вручную, но сам фон под номером бланка от
+     * этого светлее не стал: у «Высшей лиги» там тёмный мраморный пьедестал, и
+     * номер с надписью «проверка подлинности» на нём пропадали. Признак нужен
+     * отдельно от настройки, чтобы покрасить служебный угол по факту. */
+    $bottomIsDark = !empty($FIT['fade_bottom']);
     foreach (['dark', 'dark_top', 'fade_bottom'] as $bk) {
         if (isset($tpl[$bk])) $FIT[$bk] = (bool) $tpl[$bk];
     }
+    // Подсветку включили руками — под номером снова светло.
+    if (!empty($FIT['fade_bottom'])) $bottomIsDark = false;
     // Цвета пересобираем после ручных правок, иначе они разойдутся с флагами.
     $FIT['ink']       = $FIT['dark'] ? '#ffffff' : '#2A1A0B';
     $FIT['muted']     = $FIT['dark'] ? 'rgba(255,255,255,.88)' : 'rgba(42,26,11,.86)';
@@ -656,6 +723,40 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $roleDirector = 'Лауреат международных и всероссийских конкурсов и фестивалей, заслуженный'
         . ' деятель культуры, генеральный директор Культурного центра «Музыкальный Мир»';
 
+    /* РЕГАЛИИ ПОДПИСАНТОВ — РОВНО ЧЕТЫРЕ СТРОКИ.
+     *
+     * Кегль был задан одним числом на все бланки, а ширина колонки под текст у
+     * каждого фона своя: чем шире рамка, тем уже колонка. На «Наследии России»
+     * регалии разъезжались на пять строк, блок подписей вырастал и садился на
+     * нижний орнамент. Считаем фактическую ширину колонки и подбираем кегль так,
+     * чтобы обе подписи уложились в четыре строки - тогда низ листа сходится на
+     * любом фоне. */
+    $sigTextW = (210.0 - ($FIT['pad_left_bot'] ?? $FIT['pad_left']) - ($FIT['pad_right_bot'] ?? $FIT['pad_right']))
+              - 82.0 * $CSCALE - 4.0 /* промежуток сетки */ - 2.0 /* поле справа у текста */;
+    $sigTextW = max(30.0, $sigTextW);
+    $SIG_FS = min(
+        _dh_fit_lines($roleChairman, $sigTextW, 8.1, 5.9, 4),
+        _dh_fit_lines($roleDirector, $sigTextW, 8.1, 5.9, 4)
+    );
+    /* Фамилии подписантов - строго в одну строку: «Галиулин Данил / Дамирович»
+     * на наградном документе выглядит опечаткой. */
+    $SIGN_FS = min(
+        _dh_fit_lines('Галиулин Данил Дамирович', $sigTextW, 10.0, 7.6, 1),
+        _dh_fit_lines('Ильясов Альберт Ильясович', $sigTextW, 10.0, 7.6, 1)
+    );
+    /* Место и год - тоже одной строкой; справа от них стоит номер бланка с QR,
+     * поэтому мерим по ширине за вычетом его поля. */
+    $bottomW = 210.0 - ($FIT['pad_left_bot'] ?? $FIT['pad_left']) - ($FIT['pad_right_bot'] ?? $FIT['pad_right']);
+    $CITY_FS = _dh_fit_lines('Российская Федерация, город Москва - ' . date('Y'),
+                             max(40.0, $bottomW - 24.0), 12.0, 9.0, 1);
+
+    /* НИКАКИХ ОБВОДОК И ТЁМНЫХ ОРЕОЛОВ вокруг названия и звания: пробовали -
+     * буквы обрастали грязным контуром и выглядели хуже, чем без него. Две
+     * главные строки различаются ЦВЕТОМ, а не тенью. На тёмном фоне остаётся
+     * только лёгкая тень для читаемости, на светлой бумаге - ничего. */
+    $HALO_C = $FIT['dark'] ? 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' : 'none';
+    $HALO_D = $FIT['dark'] ? 'drop-shadow(0 2px 4px rgba(0,0,0,.5))' : 'none';
+
     $E = static fn(string $k) => _dh_cfg($tpl, $k);
     $D = static fn(string $k) => $edit ? ' data-el="' . $k . '"' : '';
 
@@ -714,11 +815,19 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .logos-row .logo-natsproekty{height:19mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
 .competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:1.5mm}
+/* НАЗВАНИЕ КОНКУРСА И ЗВАНИЕ — ДВЕ ГЛАВНЫЕ СТРОКИ ДОКУМЕНТА.
+   Они набраны заливкой-градиентом, и на пёстром фоне их края растворялись: лист
+   читался как ровный текст без выделенных строк. Тонкий цветной контур (двойная
+   тень нулевого смещения — при заливке текста градиентом обычная обводка
+   -webkit-text-stroke закрывает саму заливку) отделяет буквы от рисунка. Цвет
+   контура у названия и у звания РАЗНЫЙ и взят из палитры конкурса: две строки
+   перекликаются, но их не спутать. */
 .competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $COMP_FS ?>pt;font-weight:900;
   text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
+  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;
+  filter:<?= $HALO_C ?>}
 .support-line{text-align:center;font-family:'Playfair Display',serif;font-size:10.2pt;font-weight:700;
   line-height:1.28;margin:0 -<?= max(0, round($FIT['pad_left'] - 11, 1)) ?>mm 3mm -<?= max(0, round($FIT['pad_right'] - 11, 1)) ?>mm;
   padding:0;color:<?= $FIT['muted'] ?>}
@@ -735,7 +844,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:<?= $T['ls_degree'] ?? '2px' ?>;text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:4px;margin-bottom:2.5mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
+  letter-spacing:4px;margin-bottom:2.5mm;filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:1mm}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
@@ -764,8 +873,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   font-size:<?= round(100 * $CSCALE) ?>%}
 .signatures-grid{display:grid;grid-template-columns:1fr <?= round(82 * $CSCALE) ?>mm;
   grid-template-rows:auto auto;gap:2.5mm 4mm;align-items:center}
-.sig-text-block{font-family:'Manrope',sans-serif;font-size:8.1pt;line-height:1.18;padding-right:2mm}
-.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:10pt}
+.sig-text-block{font-family:'Manrope',sans-serif;font-size:<?= $SIG_FS ?>pt;line-height:1.18;padding-right:2mm}
+.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:<?= $SIGN_FS ?>pt;white-space:nowrap}
 .sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
 .sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
 /* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
@@ -776,8 +885,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 /* Справа внизу стоит номер бланка с QR, поэтому строке места и года оставляем
    под него поле: без этого она заезжала под номер и обе надписи сливались. */
-.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;
-  font-weight:700;color:#1a1a2a;padding-right:30mm}
+.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:<?= $CITY_FS ?>pt;
+  font-weight:700;color:#1a1a2a;padding-right:24mm;white-space:nowrap}
 /* Номер диплома + QR проверки подлинности — правый нижний угол. */
 /* Номер с QR стоит в самом углу листа, а не по полям текста: он служебный,
    его место - край документа. По полям он уезжал к середине и вверх, и угол
@@ -788,8 +897,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .dip-verify{position:absolute;right:10mm;bottom:<?= max(8.0, round($FIT['pad_bottom'] - 8, 1)) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dip-verify .qr svg{width:100%;height:100%;display:block}
-.dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
-.dip-verify .lbl{font-family:'Manrope',sans-serif;font-size:5.6pt;font-weight:600;color:#3a3a4a;text-transform:uppercase;letter-spacing:.4px}
+.dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;letter-spacing:.3px;
+  color:<?= $bottomIsDark ? '#ffffff' : '#1a1a2a' ?>;<?php if ($bottomIsDark): ?>text-shadow:0 1px 2px rgba(0,0,0,.8)<?php endif; ?>}
+.dip-verify .lbl{font-family:'Manrope',sans-serif;font-size:5.6pt;font-weight:600;text-transform:uppercase;letter-spacing:.4px;
+  color:<?= $bottomIsDark ? 'rgba(255,255,255,.92)' : '#3a3a4a' ?>;<?php if ($bottomIsDark): ?>text-shadow:0 1px 2px rgba(0,0,0,.8)<?php endif; ?>}
 /* Водяной знак «ОБРАЗЕЦ» повторяется ПО ВСЕМУ ПОЛЮ диплома (перекрёстно, по диагонали). */
 .sample-mark{position:absolute;inset:-20%;z-index:9;pointer-events:none;overflow:hidden;
   display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:9mm 18mm;

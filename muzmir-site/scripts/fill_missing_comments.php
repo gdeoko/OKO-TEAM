@@ -29,11 +29,8 @@ echo 'без комментария: ' . count($rows) . "\n";
 
 foreach ($rows as $a) {
     $id = (int) $a['id'];
-    /* Разбор, закончившийся «ТРЕБУЕТ ПРОВЕРКИ», не годится: его комментарий
-       написан о нарушении, а не о выступлении, и участнику он скажет не то. */
     $prev = one("SELECT jury_comment, title FROM grading_runs
                   WHERE application_id=? AND status='ok' AND COALESCE(jury_comment,'') <> ''
-                    AND title <> 'ТРЕБУЕТ ПРОВЕРКИ'
                ORDER BY id DESC LIMIT 1", [$id]);
     if (!$prev) { echo "  #{$id} {$a['number']} — прежнего разбора нет, нужен человек\n"; continue; }
     $same = (string) $prev['title'] === (string) $a['result'];

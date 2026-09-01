@@ -134,10 +134,7 @@ ob_start(); ?>
       ?>
       <tr>
         <td class="small" style="white-space:nowrap"><?= h(date('d.m H:i', strtotime((string) $r['received_at']))) ?>
-          <?php /* Кроме входящих читаем только спам, а зовётся он у каждой службы
-                   по-своему (у Gmail это [Gmail]/&BCEEPwQwBDw-), поэтому метку
-                   ставим по «не INBOX», а не по одному имени. */ ?>
-          <?php if ((string) $r['folder'] !== '' && (string) $r['folder'] !== 'INBOX'): ?><div class="small" style="color:#b34">из спама</div><?php endif; ?></td>
+          <?php if ((string) $r['folder'] === 'Spam'): ?><div class="small" style="color:#b34">из спама</div><?php endif; ?></td>
         <td class="small"><?= h((string) $r['mailbox']) ?></td>
         <td class="small"><b><?= h(mb_substr((string) $r['from_email'], 0, 38)) ?></b>
           <?php if ($who !== ''): ?><div class="small muted"><?= h($who) ?></div><?php endif; ?></td>

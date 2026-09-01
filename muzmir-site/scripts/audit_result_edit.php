@@ -115,22 +115,19 @@ step('результат проставляется', function () use ($aid, $pr
     return (string) (scalar("SELECT result FROM applications WHERE id=?", [$aid]) ?? '') === $presets[0]
         ? $presets[0] : false;
 });
-step('при смене звания сносится основной диплом, а именной остаётся', function () use ($aid, $presets) {
-    insert('diplomas', ['application_id' => $aid, 'number' => 'CHK-' . $aid, 'type' => 'main', 'result' => $presets[0]]);
-    insert('diplomas', ['application_id' => $aid, 'number' => 'CHK-N-' . $aid, 'type' => 'named', 'result' => $presets[0]]);
-    // Ровно это делает раздел оценки при изменившемся звании. Крон пересобирает
-    // только основной и дополнительный, поэтому именной (его могли оплатить
-    // заказом) не трогаем: администратор перевыпускает его сам.
-    q("DELETE FROM diplomas WHERE application_id=? AND type='main' AND COALESCE(sent_at,'')=''", [$aid]);
+step('неотправленный диплом сносится при смене звания', function () use ($aid, $presets) {
+    insert('diplomas', ['application_id' => $aid, 'number' => 'CHK-' . $aid, 'type' => 'result', 'result' => $presets[0]]);
+    $had = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$aid]) ?? 0);
+    // Ровно это делает раздел оценки при изменившемся итоге.
+    q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$aid]);
     update('applications', ['result' => $presets[1]], 'id=:id', ['id' => $aid]);
-    $main  = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type='main'",  [$aid]) ?? 0);
-    $named = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type='named'", [$aid]) ?? 0);
-    return $main === 0 && $named === 1 ? 'основной пересоздастся, именной уцелел' : false;
+    $left = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=?", [$aid]) ?? 0);
+    return $had === 1 && $left === 0 ? 'диплом пересоздастся с новым званием' : false;
 });
 step('отправленный документ при смене звания не трогается', function () use ($aid, $presets) {
-    insert('diplomas', ['application_id' => $aid, 'number' => 'CHK-SENT-' . $aid, 'type' => 'main',
+    insert('diplomas', ['application_id' => $aid, 'number' => 'CHK-SENT-' . $aid, 'type' => 'result',
                         'result' => $presets[1], 'sent_at' => date('Y-m-d H:i:s')]);
-    q("DELETE FROM diplomas WHERE application_id=? AND type='main' AND COALESCE(sent_at,'')=''", [$aid]);
+    q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$aid]);
     $left = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND sent_at IS NOT NULL", [$aid]) ?? 0);
     return $left === 1 ? 'отправленный диплом на месте' : false;
 });

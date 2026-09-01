@@ -39,23 +39,19 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 
 // РАБОЧЕЕ ОКНО ВЛАДЕЛЬЦА: наружу только пн-сб 09:00-19:00 МСК.
-// Расписание крона само по себе не защищает: час можно поменять руками, и письмо
-// от имени центра уйдёт человеку в нерабочее время. Проверяем окно в самом
-// задании; сама проверка стоит ниже, после подключения cron/_lib.php.
+// Расписание крона само по себе не защищает: оно ставит запуск на 08:00 или на
+// каждый день, включая воскресенье, и письмо от имени центра уходит человеку в
+// нерабочее время. Проверяем окно в самом задании, а не надеемся на крон.
 require_once BASE_PATH . '/core/outreach_window.php';
+if (!in_array('--force', $argv, true) && !outreach_window_ok()) {
+    echo "вне рабочего окна, письма не отправляются\n";
+    exit(0);
+}
 require_once __DIR__ . '/_lib.php';
 // Опционально: движок рассылок даёт настоящий unsub_token через nl_ensure_subscriber().
 if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
 
 const JOB = 'calendar_reminders';
-
-// Отказ по окну пишем в общий журнал кронов, а не только в stdout: вывод
-// заданий уходит в /dev/null, и молчаливо пропавшее задание не заметить.
-if (!in_array('--force', $argv, true) && !outreach_window_ok()) {
-    cron_log(JOB, 'вне рабочего окна (' . outreach_window_reason() . '), письма не отправляются');
-    echo "вне рабочего окна, письма не отправляются\n";
-    exit(0);
-}
 
 if (!cron_lock(JOB, 3600 * 6)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');

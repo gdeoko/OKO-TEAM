@@ -40,17 +40,10 @@ function im_cmd(array $acc, string $mailbox, string $req = '', int $timeout = 60
     return $out === false ? [false, $err] : [true, (string) $out];
 }
 
-/**
- * Номера писем по условию поиска IMAP («SINCE 01-Aug-2026», «FROM ...»).
- *
- * $err — причина сбоя для вызывающего. Без неё провал SELECT (нет такой папки,
- * имя не в том кодировании) выглядел ровно как пустая папка: спам Gmail месяцами
- * «пустовал», хотя писем там сотни, и в лог не попадало ни строки.
- */
-function im_search(array $acc, string $criteria, string $mailbox = 'INBOX', ?string &$err = null): array {
-    $err = '';
+/** Номера писем по условию поиска IMAP («SINCE 01-Aug-2026», «FROM ...»). */
+function im_search(array $acc, string $criteria, string $mailbox = 'INBOX'): array {
     [$ok, $body] = im_cmd($acc, $mailbox, 'SEARCH ' . $criteria);
-    if (!$ok) { $err = (string) $body; return []; }
+    if (!$ok) return [];
     $ids = [];
     foreach (preg_split('~\R~', $body) ?: [] as $line) {
         if (stripos($line, 'SEARCH') === false) continue;

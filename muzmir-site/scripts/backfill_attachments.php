@@ -18,7 +18,7 @@ require_once BASE_PATH . '/core/inbox_reader.php';
 
 $box = $argv[1] ?? 'kc';
 $acc = mail_account_by_name(inbox_boxes()[$box] ?? $box);
-$acc['host'] = 'imap.yandex.ru'; $acc['port'] = 993;
+$acc['host'] = trim((string)($acc['imap_host'] ?? '')) ?: 'imap.yandex.ru'; $acc['port'] = (int)($acc['imap_port'] ?? 0) ?: 993;
 $days = (int) ($argv[2] ?? 7);
 $since = date('d-M-Y', time() - $days * 86400);
 $own = inbox_own_emails();
