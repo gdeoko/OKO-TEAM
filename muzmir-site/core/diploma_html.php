@@ -896,7 +896,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 0.5)}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
-  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:calc(var(--u) * 1.5);
+  /* Отступ от имени до полей заявки НЕ растягивается вместе с остальным ритмом:
+     ФИО и данные - одна связка, и когда свободное место листа раскладывалось по
+     всем интервалам, между ними разъезжалась дыра. Фиксированный шаг. */
+  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:<?= $TIGHT ? '2' : '2.6' ?>mm;
   letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
   filter:<?= $FIT['dark'] ? 'none' : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))' ?>}
 .awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;line-height:1}
