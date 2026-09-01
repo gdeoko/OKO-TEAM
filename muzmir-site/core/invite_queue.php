@@ -35,6 +35,29 @@ function invite_open_comps(): array {
 }
 
 /**
+ * ОДНО ПИСЬМО НА АДРЕС ЗА ВОЛНУ — ПРОВЕРКА ПО САМОЙ ОЧЕРЕДИ.
+ *
+ * Учреждение помечается приглашённым ПОСЛЕ вставки письма, а выборка берёт
+ * «новых». Между этими двумя шагами лежит вся сборка письма — секунды. Второй
+ * проход, зашедший в ту же выборку, честно ставил учреждению второе письмо:
+ * 01.09.2026 так набралось шесть тысяч дублей, по два и по три приглашения на
+ * адрес. Лок мы починили (cron/_lib.php), но полагаться на один замок нельзя —
+ * ставить письмо тому, у кого уже лежит неотправленное или ушло в этом месяце,
+ * нельзя ни при каких обстоятельствах.
+ */
+function invite_already_has_letter(string $email): bool {
+    $e = mb_strtolower(trim($email));
+    if ($e === '') return true;
+    try {
+        return (int) scalar("SELECT COUNT(*) FROM mail_queue
+                              WHERE campaign_type='inst' AND LOWER(to_email)=?
+                                AND (status IN ('queued','paused','sending')
+                                     OR (status='sent' AND COALESCE(sent_at,'') >= ?))",
+                            [$e, date('Y-m-01')]) > 0;
+    } catch (\Throwable $ex) { return false; }
+}
+
+/**
  * Ставит приглашения в очередь для учреждений со статусом «Новое».
  *
  * @return array ['queued'=>int, 'skipped'=>int, 'comps'=>int]
@@ -68,6 +91,7 @@ function invite_queue_institutions(int $limit = 500): array {
     foreach ($rows as $r) {
         $email = trim((string) $r['email']);
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) { $skipped++; continue; }
+        if (invite_already_has_letter($email)) { try { inst_mark_invited((int) $r['id']); } catch (\Throwable $e) {} $skipped++; continue; }
 
         // Отписка обязательна и обязана работать, но заводить учреждение в базу
         // участников ради неё нельзя: списки разные. У учреждения свой токен
@@ -254,6 +278,7 @@ function invite_requeue_institutions(int $limit = 500, int $months = 3): array {
     foreach ($rows as $r) {
         $email = trim((string) $r['email']);
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) { $skipped++; continue; }
+        if (invite_already_has_letter($email)) { try { inst_mark_invited((int) $r['id']); } catch (\Throwable $e) {} $skipped++; continue; }
 
         if (!function_exists('inst_unsub_token')) require_once BASE_PATH . '/core/institutions.php';
         $token = inst_unsub_token((int) $r['id']);   // свой токен учреждения, не запись в базе участников

@@ -37,8 +37,22 @@ function cron_lock(string $job, int $ttl = 3600): bool {
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
     $file = $dir . '/.lock_' . preg_replace('/[^a-z0-9_]/i', '', $job);
 
-    // Протухший лок (процесс убит) снимаем — иначе задание встанет навсегда.
-    if (is_file($file) && (time() - (int) @filemtime($file)) >= $ttl) @unlink($file);
+    // ПРОТУХШИЙ ЛОК СНИМАЕМ, ЖИВОЙ — НЕТ.
+    // Срок жизни лока считался по времени создания файла и никогда не продлевался,
+    // а живой ли процесс — не спрашивалось вовсе. Долгий проход (набор очереди
+    // учреждений идёт больше часа) переживал собственный ttl, следующий крон
+    // считал лок протухшим и заходил ВТОРЫМ в ту же выборку: 01.09.2026 так
+    // родились шесть тысяч писем-дублей одним и тем же учреждениям — по два и по
+    // три приглашения на адрес, с разницей в две секунды.
+    // Теперь в локе лежит «время|pid», и перед снятием мы спрашиваем систему,
+    // жив ли этот процесс: жив — продлеваем метку и отказываем в захвате,
+    // мёртв (или лок старого формата, без pid) — снимаем как раньше.
+    if (is_file($file) && (time() - (int) @filemtime($file)) >= $ttl) {
+        $raw = trim((string) @file_get_contents($file));
+        $pid = (strpos($raw, '|') !== false) ? (int) explode('|', $raw)[1] : 0;
+        if ($pid > 0 && cron_pid_alive($pid)) { @touch($file); return false; }
+        @unlink($file);
+    }
 
     // ЗАХВАТ ОБЯЗАН БЫТЬ АТОМАРНЫМ. Раньше было «проверили is_file → записали файл»:
     // два запуска крона стартуют в одну и ту же секунду, оба видят, что файла нет,
@@ -46,9 +60,17 @@ function cron_lock(string $job, int $ttl = 3600): bool {
     // файл создаётся ТОЛЬКО если его не было, второй процесс получает false.
     $fh = @fopen($file, 'x');
     if ($fh === false) return false;
-    @fwrite($fh, (string) time());
+    @fwrite($fh, time() . '|' . getmypid());
     @fclose($fh);
     return true;
+}
+
+/** Жив ли процесс: /proc (Linux) или posix_kill там, где расширение есть. */
+function cron_pid_alive(int $pid): bool {
+    if ($pid < 2) return false;
+    if (is_dir('/proc/' . $pid)) return true;
+    if (function_exists('posix_kill')) return @posix_kill($pid, 0);
+    return false;
 }
 function cron_unlock(string $job): void {
     $file = BASE_PATH . '/data/logs/.lock_' . preg_replace('/[^a-z0-9_]/i', '', $job);
