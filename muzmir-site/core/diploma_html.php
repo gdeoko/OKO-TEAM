@@ -720,6 +720,10 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     foreach ($fields as $fk => $fv) {
         $fldLines += max(1, (int)ceil(mb_strlen($fk . ': ' . $fv) / 58));
     }
+    /* Плотный режим вёрстки: длинная заявка или бланк, у которого подписи стоят
+     * высоко (sig_reserve) - там свободного места между данными и подписями
+     * почти нет, и обычный ритм строк упирался в фамилию председателя. */
+    $TIGHT = ($fldLines > 6) || !empty($FIT['sig_reserve']);
     $fldFs = 13.5; $fldLh = 1.62;
     if ($fldLines > 6) {
         $fldFs = max(10.0, round(13.5 * 6 / $fldLines, 1));
@@ -878,16 +882,22 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:<?= $T['ls_degree'] ?? '2px' ?>;text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:4px;margin-bottom:2.5mm;filter:<?= $HALO_D ?>;line-height:1}
+  letter-spacing:4px;margin-bottom:<?= $TIGHT ? '2.2' : '3.2' ?>mm;filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:1mm}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:<?= $TIGHT ? '1' : '1.6' ?>mm}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
-  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;
+  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:<?= $TIGHT ? '2.6' : '3.8' ?>mm;
   letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
   filter:<?= $FIT['dark'] ? 'none' : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))' ?>}
 .awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;line-height:1}
 .field-list{padding:0 2mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;
-  line-height:<?= max(1.3, $fldLh - 0.18) ?>;text-align:center}
+  /* Поля заявки идут ровным ритмом, а не слипшимся столбиком: свободного места
+     между данными и подписями хватает, и лист выглядит собранным. Длинная
+     заявка (много полей, длинные названия) автоматически идёт плотнее. */
+  /* Плотнее там, где места мало: длинная заявка или бланк, у которого подписи
+     стоят высоко (sig_reserve). Иначе поля упирались в строку с фамилией
+     председателя. */
+  line-height:<?= $TIGHT ? 1.34 : $fldLh ?>;text-align:center}
 .field-list .field{color:<?= $FIT['ink'] ?>;filter:<?= $FIT['shadow'] ?>}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
 .gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:<?= $FIT['ink'] ?>;filter:<?= $FIT['shadow'] ?>}
@@ -1133,7 +1143,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     probe.style.textTransform=cs.textTransform;
     document.body.appendChild(probe);
     function textW(fs){ probe.style.fontSize=fs+'pt'; return probe.getBoundingClientRect().width; }
-    var lo=<?= max(18, (int)round($COMP_FS * 0.6)) ?>, hi=<?= (int)round(min(72, max(48, $COMP_FS * 2.6))) ?>, best=lo;
+    /* Потолок кегля нужен ради КОРОТКИХ названий: «МИР ЗВЁЗД» из девяти знаков,
+       растянутое на всю ширину колонки, набиралось буквами в полтора сантиметра
+       и подминало под себя весь верх листа. Ширина - цель, а не любой ценой. */
+    var lo=<?= max(18, (int)round($COMP_FS * 0.6)) ?>, hi=<?= (int)round(min(46, max(34, $COMP_FS * 2.6))) ?>, best=lo;
     for(var i=0;i<26 && hi-lo>0.1;i++){
       var mid=(lo+hi)/2;
       if(textW(mid)<=max){ best=mid; lo=mid; } else { hi=mid; }
