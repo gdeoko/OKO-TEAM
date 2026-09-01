@@ -65,6 +65,18 @@ if (!$dry && !cron_lock(JOB, 900)) { echo "уже выполняется\n"; exi
 $logKey = static fn(int $orderId): int => 900000 + $orderId;
 
 $sent = 0; $skipped = 0;
+/* ОДНО НАПОМИНАНИЕ НА ЧЕЛОВЕКА ЗА ПРОГОН.
+ *
+ * Заказы перебираются по одному, и у кого их три (собрал награды за три
+ * конкурса и ни один не оплатил), тот 01.09 получил три одинаковых письма
+ * подряд, с разницей в две секунды. Это читается как сбой робота, а не как
+ * забота, и по письму о деньгах особенно.
+ *
+ * Пишем про один заказ, остальные ждут следующего прогона: он в тот же день
+ * в 15:00 или назавтра в 10:00 — человек увидит второе напоминание отдельным
+ * письмом, а не пачкой. В журнал попадает только отправленный заказ, так что
+ * ничего не теряется. */
+$writtenTo = [];
 try {
     $rows = all("SELECT * FROM awards_orders
                   WHERE status = 'new'
@@ -93,6 +105,9 @@ foreach ($rows as $o) {
         if ($done > 0) { $skipped++; continue; }
     } catch (\Throwable $e) { /* журнала нет — создадим ниже вставкой */ }
 
+    $box = mb_strtolower(trim((string) ($o['email'] ?? '')));
+    if (isset($writtenTo[$box])) { $skipped++; continue; }   // этому человеку уже написали в этом прогоне
+
     $items = json_decode((string) ($o['items'] ?? '[]'), true);
     if (!is_array($items) || !$items) { $skipped++; continue; }
 
@@ -116,6 +131,7 @@ foreach ($rows as $o) {
 
     if ($dry) {
         echo "СУХОЙ ПРОГОН: заказ #$orderId, шаг $step ч, {$o['email']}, {$o['amount']} ₽\n";
+        $writtenTo[$box] = true;
         $sent++;
         continue;
     }
@@ -123,6 +139,7 @@ foreach ($rows as $o) {
     $ok = false;
     try { $ok = mail_send((string) $o['email'], $subject, $html); } catch (\Throwable $e) { $ok = false; }
     if ($ok) {
+        $writtenTo[$box] = true;
         try { insert('reminder_log', ['app_id' => $logKey($orderId), 'kind' => $kind]); } catch (\Throwable $e) {}
         // Уведомление в кабинет — человек может зайти туда раньше, чем в почту.
         if (function_exists('notify_user') && (int) ($o['user_id'] ?? 0) > 0) {
