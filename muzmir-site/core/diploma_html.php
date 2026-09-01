@@ -224,6 +224,10 @@ function diploma_theme_pick(array $c, array $tpl): array {
     $themes = [
         // Космос, звёзды: холодное сияние, серебристо-ледяные акценты к золоту.
         'cosmos' => [
+            /* Почерк темы: звание своим шрифтом, своя разрядка и тень - чтобы дипломы
+             * разных конкурсов не выглядели одним бланком с другой картинкой. */
+            'ff_degree' => "'Prata',serif", 'ls_degree' => '3px',
+            'ls_name' => '.5px', 'sh_comp' => '0 0 18px rgba(120,200,255,.35)',
             'fonts'   => 'Prata',
             'ff_comp' => "'Prata',serif", 'ls_comp' => '4px',
             'grad_comp'   => 'linear-gradient(180deg,#EAF7FF 0%,#BFE9FF 30%,#7FC9F0 55%,#CDEFFF 80%,#FFFFFF 100%)',
@@ -234,6 +238,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
         ],
         // Зенит, триумф: античная классика, тёплое торжественное золото.
         'zenith' => [
+            'ff_degree' => "'Forum',serif", 'ls_degree' => '5px',
+            'ls_name' => '1px', 'sh_comp' => '0 1px 0 rgba(255,240,200,.5)',
             'fonts'   => 'Forum',
             'ff_comp' => "'Forum',serif", 'ls_comp' => '5px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF7D6 0%,#FFE082 25%,#E9C567 45%,#B8860B 58%,#E9C567 75%,#FFF3B0 100%)',
@@ -244,6 +250,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
         ],
         // Театр, сцена: бархат и шампань, тёплый кремовый свет рампы.
         'theatre' => [
+            'ff_degree' => "'Cormorant Garamond',serif", 'ls_degree' => '4px',
+            'ls_name' => '.5px', 'sh_comp' => '0 1px 0 rgba(255,235,190,.45)',
             'fonts'   => 'Cormorant+Garamond:wght@600;700',
             'ff_comp' => "'Cormorant Garamond',serif", 'ls_comp' => '3px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF6E8 0%,#FFE3B0 30%,#F2BE6A 55%,#D89A3D 70%,#FFDFA6 100%)',
@@ -254,6 +262,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
         ],
         // Держава: имперское золото с рубиновым отблеском, строгая антиква.
         'derzhava' => [
+            'ff_degree' => "'Old Standard TT',serif", 'ls_degree' => '6px',
+            'ls_name' => '1px', 'sh_comp' => '0 1px 0 rgba(255,225,170,.5)',
             'fonts'   => 'Old+Standard+TT:wght@700',
             'ff_comp' => "'Old Standard TT',serif", 'ls_comp' => '4px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF3C4 0%,#FFD766 22%,#E8A93C 45%,#B8641B 60%,#E8A93C 78%,#FFE9A6 100%)',
@@ -264,6 +274,8 @@ function diploma_theme_pick(array $c, array $tpl): array {
         ],
         // Классика эталона (фолбэк).
         'classic' => [
+            'ff_degree' => "'Playfair Display',serif", 'ls_degree' => '3px',
+            'ls_name' => '.5px', 'sh_comp' => '0 1px 0 rgba(255,240,210,.45)',
             'fonts'   => '',
             'ff_comp' => "'Playfair Display',serif", 'ls_comp' => '3px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 20%,#C9A84C 45%,#8B6F1F 55%,#C9A84C 75%,#FFE082 100%)',
@@ -305,26 +317,30 @@ function diploma_theme_on_light(array $T): array {
         ],
         // Зенит: тёмное червонное золото с медью.
         'zenith' => [
-            'grad_comp'   => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 40%,#4A3607 65%,#8A6A12 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#F2DFA2 0%,#D4A93C 22%,#8A6A12 50%,#D4A93C 74%,#FBF0C8 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#9C6B1A 0%,#7A4F10 38%,#57370A 62%,#9C6B1A 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#8A6A12 0%,#5E440B 60%,#3E2C06 100%)',
-            'name_color'  => '#5E440B', 'script_color' => '#6B4F0A',
+            'grad_degree' => 'linear-gradient(180deg,#3A2E5C 0%,#2A2145 45%,#1B1630 75%,#3A2E5C 100%)',
+            'name_color'  => '#2A2145', 'script_color' => '#3A2E5C',
+            'sh_comp'     => '0 1px 0 rgba(42,33,69,.5), 0 0 14px rgba(212,169,60,.28)',
         ],
         // Театр, искусство: тёмный изумруд с бронзой.
         'theatre' => [
-            'grad_comp'   => 'linear-gradient(180deg,#14483F 0%,#0E332C 45%,#0A241F 70%,#14483F 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#E3C877 0%,#BF9A34 24%,#7A5E12 50%,#BF9A34 74%,#F0E2AB 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 40%,#4A3607 65%,#8A6A12 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#14483F 0%,#0E332C 60%,#0A241F 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#1B5C50 0%,#14483F 45%,#0A241F 75%,#1B5C50 100%)',
             'name_color'  => '#0E332C', 'script_color' => '#14483F',
+            'sh_comp'     => '0 1px 0 rgba(14,51,44,.5), 0 0 14px rgba(191,154,52,.25)',
         ],
         // Держава: тёмный багрянец с золотом.
         'derzhava' => [
-            /* Багрянец с золотой каймой: на кремовой бумаге он звучит богато и
-             * читается издалека, а плоский тёмный цвет выглядел как обычный текст. */
-            'grad_comp'   => 'linear-gradient(180deg,#9E2028 0%,#7A1B22 28%,#5C1219 52%,#8A1F26 74%,#B8862B 100%)',
+            /* Название - густое золото с тёмной прочеканкой, звание - багрянец:
+             * две главные строки должны различаться, иначе диплом читается как
+             * один сплошной заголовок. */
+            'grad_comp'   => 'linear-gradient(180deg,#E8C36A 0%,#C79A2E 22%,#8A6A12 48%,#C79A2E 72%,#F2DE9E 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#C79A2E 0%,#9C6B1A 26%,#6B4F0A 52%,#9C6B1A 76%,#D9B45A 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#9E2028 0%,#6C1219 55%,#8A6A12 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#B02531 0%,#8A1F26 40%,#5C1219 70%,#9E2028 100%)',
             'name_color'  => '#5C1219', 'script_color' => '#7A1B22',
+            'sh_comp'     => '0 1px 0 rgba(92,18,25,.55), 0 0 14px rgba(184,134,43,.25)',
         ],
         // Классика: тёмный кофейный с золотом.
         'classic' => [
@@ -387,10 +403,27 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         'dark' => true, 'ink' => '#ffffff', 'muted' => 'rgba(255,255,255,.88)',
         'shadow' => 'drop-shadow(0 1px 3px rgba(0,0,0,.55))',
     ];
-    // Ручная настройка конкурса, если она задана, всегда сильнее автоподбора.
-    foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left'] as $pk) {
+    /* РУЧНАЯ НАСТРОЙКА КОНКУРСА СИЛЬНЕЕ АВТОПОДБОРА.
+     *
+     * Разбор фона по пикселям хорош как основа, но живой рисунок бывает
+     * обманчив: у «Высшей лиги» тёмный верх усыпан золотыми листьями, средняя
+     * яркость выходит высокой, и шапка красилась тёмным по тёмному. Поэтому
+     * любое значение можно закрепить в карточке конкурса (diploma_template):
+     * поля, тёмный верх, подсветку снизу. */
+    foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left', 'pad_left_bot', 'pad_right_bot'] as $pk) {
         if (isset($tpl[$pk]) && is_numeric($tpl[$pk])) $FIT[$pk] = (float) $tpl[$pk];
     }
+    foreach (['dark', 'dark_top', 'fade_bottom'] as $bk) {
+        if (isset($tpl[$bk])) $FIT[$bk] = (bool) $tpl[$bk];
+    }
+    // Цвета пересобираем после ручных правок, иначе они разойдутся с флагами.
+    $FIT['ink']       = $FIT['dark'] ? '#ffffff' : '#2A1A0B';
+    $FIT['muted']     = $FIT['dark'] ? 'rgba(255,255,255,.88)' : 'rgba(42,26,11,.86)';
+    $FIT['shadow']    = $FIT['dark']
+        ? 'drop-shadow(0 1px 3px rgba(0,0,0,.55))'
+        : 'drop-shadow(0 1px 2px rgba(255,255,255,.75))';
+    $FIT['ink_top']   = !empty($FIT['dark_top']) ? '#ffffff' : '#2A1A0B';
+    $FIT['muted_top'] = !empty($FIT['dark_top']) ? 'rgba(255,255,255,.92)' : 'rgba(42,26,11,.86)';
     /* Во сколько раз сузилась колонка против базовой вёрстки (поля 12+12 мм).
      * На этот коэффициент сжимается всё содержимое листа. Ниже 0.78 не опускаем:
      * дальше текст становится мелким для печати. */
@@ -404,9 +437,16 @@ function diploma_html(array $c, array $a, array $opt = []): string {
      * насколько сузилась колонка. */
     $compLen  = max(1, mb_strlen(trim((string) ($c['name'] ?? ''))));
     $COMP_FS  = 37.0;
-    if ($compLen > 14) $COMP_FS = 40.0 * (14 / $compLen) ** 0.42;
-    else               $COMP_FS = 40.0;
-    $COMP_FS  = round(max(24.0, min(40.0, $COMP_FS * $CSCALE)), 1);
+    /* Кегль считаем по фактической ширине строки, а не «на глаз»: у названия
+     * есть разрядка между буквами, и она съедает место не хуже самих букв.
+     * Ширина прописной буквы этих гарнитур - примерно 0.63 кегля. */
+    $availMm = (210 - $FIT['pad_left'] - $FIT['pad_right']) / max(0.01, $CSCALE) - 14;
+    $lsMm    = 6 * 0.2646;                       // разрядка названия, мм на знак
+    /* Доля кегля на знак взята с запасом: у прописных этих гарнитур широкие «Д»,
+     * «Ш», «М», и расчёт «в притык» давал перенос на вторую строку. */
+    $perPt   = 0.3528 * 0.72;
+    $COMP_FS = ($availMm - $compLen * $lsMm) / max(1, $compLen) / $perPt;
+    $COMP_FS = round(max(26.0, min(46.0, $COMP_FS * $CSCALE)), 1);
 
     /* Белая подсветка поднята: подписи, печать и номер должны целиком лежать на
      * светлом, иначе на тёмном фоне нижние строки читаются с трудом. */
@@ -654,7 +694,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    столько же раз, во сколько сузилась колонка: пропорции и воздух остаются
    прежними, а текст целиком помещается внутрь рисованной рамки. */
 .content{position:relative;z-index:3;height:100%;
-  padding:<?= $FIT['pad_top'] ?>mm <?= $FIT['pad_right'] ?>mm 0 <?= $FIT['pad_left'] ?>mm;
+  padding:<?= $FIT['pad_top'] ?>mm <?= $FIT['pad_right'] ?>mm <?= round(($FIT['pad_bottom'] + 52) / max(0.01, $CSCALE), 1) ?>mm <?= $FIT['pad_left'] ?>mm;
   transform:scale(<?= $CSCALE ?>);transform-origin:top center}
 /* Реквизиты и строка поддержки выходят за поля основного текста: вверху листа
    рамка тоньше, места больше, а в узкой колонке эти длинные строки рвались на
@@ -675,6 +715,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
 .competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:1.5mm}
 .competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $COMP_FS ?>pt;font-weight:900;
+  text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
@@ -689,13 +730,18 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    старостильные, и «1 СТЕПЕНИ» печаталось крошечной единицей. */
 .diploma-degree,.awarded-name,.awarded-name-script,.field-list,.diploma-type{
   font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1,"onum" 0}
-.diploma-degree{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:33pt;font-weight:900;
+.diploma-degree{text-align:center;font-family:<?= $T['ff_degree'] ?? $T['ff_comp'] ?>;
+  font-size:<?= round(36 * $CSCALE, 1) ?>pt;font-weight:900;
+  letter-spacing:<?= $T['ls_degree'] ?? '2px' ?>;text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:4px;margin-bottom:2.5mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:1mm}
-.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:29pt;font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
+  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;
+  letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
+  filter:<?= $FIT['dark'] ? 'drop-shadow(0 2px 4px rgba(0,0,0,.6))' : 'drop-shadow(0 1px 2px rgba(255,255,255,.7))' ?>}
 .awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
 .field-list{padding:0 2mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;
   line-height:<?= max(1.3, $fldLh - 0.18) ?>;text-align:center}
@@ -713,8 +759,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    всегда тёмный - на тёмном фоне светлые буквы на белом просто пропадали. */
 .bottom-block{position:absolute;z-index:4;color:#1a1a2a;
   bottom:<?= $FIT['pad_bottom'] ?>mm;
-  left:<?= $FIT['pad_left'] ?>mm;
-  right:<?= $FIT['pad_right'] ?>mm;
+  left:<?= $FIT['pad_left_bot'] ?? $FIT['pad_left'] ?>mm;
+  right:<?= $FIT['pad_right_bot'] ?? $FIT['pad_right'] ?>mm;
   font-size:<?= round(100 * $CSCALE) ?>%}
 .signatures-grid{display:grid;grid-template-columns:1fr <?= round(82 * $CSCALE) ?>mm;
   grid-template-rows:auto auto;gap:2.5mm 4mm;align-items:center}
@@ -733,7 +779,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;
   font-weight:700;color:#1a1a2a;padding-right:30mm}
 /* Номер диплома + QR проверки подлинности — правый нижний угол. */
-.dip-verify{position:absolute;right:<?= $FIT['pad_right'] ?>mm;bottom:<?= max(4.0, $FIT['pad_bottom'] - 2) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+.dip-verify{position:absolute;right:<?= $FIT['pad_right_bot'] ?? $FIT['pad_right'] ?>mm;bottom:<?= max(4.0, $FIT['pad_bottom'] - 2) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dip-verify .qr svg{width:100%;height:100%;display:block}
 .dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
