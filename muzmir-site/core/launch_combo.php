@@ -296,11 +296,17 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $base = mmc_base();
 
     try {
-        $comps = all("SELECT id, name, slug, cover, type, is_paid, price, end_date
+        $comps = all("SELECT id, name, slug, cover, type, is_paid, price, end_date, COALESCE(club_only,0) club_only
                         FROM competitions WHERE status='open' ORDER BY is_paid ASC, sort ASC, id ASC");
     } catch (\Throwable $e) { $comps = []; }
 
-    $free = array_values(array_filter($comps, fn($c) => (int) ($c['is_paid'] ?? 0) !== 1));
+    /* КОНКУРС ВИП-КЛУБА НЕ ЗОВЁМ ВСЕЙ БАЗОЙ. Он бесплатный, но подать заявку
+     * может только участник клуба: в общей строке «участие бесплатное» он читался
+     * как открытый для всех, люди подавали заявки, и их приходилось отклонять.
+     * В перечислении его нет; отдельной строкой ниже сказано, для кого он. */
+    $free = array_values(array_filter($comps, fn($c) => (int) ($c['is_paid'] ?? 0) !== 1
+                                                     && (int) ($c['club_only'] ?? 0) !== 1));
+    $clubComps = array_values(array_filter($comps, fn($c) => (int) ($c['club_only'] ?? 0) === 1));
     $end  = '';
     foreach ($comps as $c) {
         $e = trim((string) ($c['end_date'] ?? ''));
@@ -344,6 +350,17 @@ function launch_combo_body(string $name, string $email, string $pass): string {
              . '</td></tr></table>';
     }
 
+    if ($clubComps) {
+        $cn = array_map(fn($c) => '«' . (string) $c['name'] . '»', $clubComps);
+        $out .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px">'
+             . '<tr><td style="background:' . MM_IVORY . ';border-left:4px solid ' . $navy . ';'
+             . 'border-radius:0 10px 10px 0;padding:14px 18px;font:15px/1.6 Arial,sans-serif;color:' . $ink . '">'
+             . '<b>' . h(implode(', ', $cn)) . ' - только для участников ВИП-клуба.</b> '
+             . 'Участие в нём тоже бесплатное и входит в членство, а по итогам года среди лауреатов '
+             . 'и обладателей Гран-при вручается призовой фонд 100 000 ₽.'
+             . '</td></tr></table>';
+    }
+
     // КНОПКА ДО СПИСКА, А НЕ ТОЛЬКО ПОСЛЕ НЕГО.
     // Единственная кнопка стояла под карточками всех четырёх конкурсов, то есть на
     // втором-третьем экране. Кто решил участвовать сразу, должен иметь возможность
@@ -377,7 +394,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $disc = max(1, (int) setting('club_discount', '20'));
     $out .= LC_VIP_OPEN
          . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
-         . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Клуб постоянных участников</h2>'
+         . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">ВИП-клуб постоянных участников</h2>'
          . $p('Для педагогов и активных участников - привилегии, ранние результаты и особые условия.')
          /* ПУНКТЫ — ИЗ ОБЩЕГО СПИСКА (core/club_perks.php).
           * Здесь стоял свой набор, набранный руками, и он разошёлся со страницей
@@ -394,7 +411,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
                return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
                     . $rows . '</table>';
            })()
-         . mm_email_btn($base . '/club', 'Вступить в Клуб', 'navy')
+         . mm_email_btn($base . '/club', 'Вступить в ВИП-клуб', 'navy')
          . LC_VIP_CLOSE;
 
     return $out;
