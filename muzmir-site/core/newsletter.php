@@ -1686,7 +1686,13 @@ function newsletter_process_queue(int $limit): int {
     // Пять в минуту — это около часа на всю рассылку и обычный темп работающей
     // канцелярии со стороны почтовой службы. Спешить тут некуда: обращения не
     // портятся.
-    $ofLimit = max(1, (int) cfgv('official_per_minute', 5));
+    // Темп берётся из настроек, а конфиг остаётся значением по умолчанию.
+    // Раньше читался только config.php, и поменять темп на ходу было нельзя:
+    // владелец просит разослать двести обращений «сегодня и сейчас», а пять
+    // писем в минуту растягивают это на сорок минут — иногда за край окна.
+    $ofLimit = max(1, (int) (function_exists('setting')
+        ? setting('official_per_minute', (string) cfgv('official_per_minute', 5))
+        : cfgv('official_per_minute', 5)));
     $of = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0
                AND COALESCE(campaign_type,'') = 'official'
                AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT ?",
