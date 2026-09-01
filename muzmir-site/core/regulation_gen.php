@@ -194,6 +194,12 @@ function regulation_generate(int $competitionId): string {
     $approveTs   = strtotime($approveBase) ?: time();
     $approveDate = date('01.m.Y', $approveTs);          // всегда 01 число месяца запуска
 
+    /* ССЫЛКА НА ОБРАЗЦЫ И ЗАКАЗ — СРАЗУ НА СВОЙ КОНКУРС.
+       В эталоне стоит общий адрес витрины наград; участник попадал на список
+       конкурсов и искал свой. Подставляем прямую страницу конкурса. */
+    $awardsUrl = 'https://музыкальный-мир.рф/awards?comp=' . $competitionId;
+    $xml = str_replace('https://музыкальный-мир.рф/awards', $awardsUrl, $xml);
+
     $nameHits = 0; $dateHits = 0; $misc = 0;
     if ($isPaid) {
         // etalon_2 «ЭВРИКА»: тематика уже «СВОБОДНАЯ», в титуле «Международный».
