@@ -18,7 +18,11 @@ require_once BASE_PATH . '/core/orders.php';
 $comps = array_values(array_filter(
     all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status, COALESCE(club_only,0) club_only
            FROM competitions
-          WHERE COALESCE(launched,0) = 1 AND status <> 'draft'
+          -- Флаг launched — про рассылку запуска, а не про витрину: образцы
+          -- наград показываем по всем реальным конкурсам, у которых идёт приём
+          -- или ещё открыто окно заказа. Иначе участник видел бы пустую полку,
+          -- пока владелец не разослал письма.
+          WHERE (COALESCE(launched,0) = 1 OR status = 'open') AND status <> 'draft'
        ORDER BY CASE WHEN status='open' THEN 0 ELSE 1 END, end_date DESC, sort, id"),
     'awards_window_open'
 ));
