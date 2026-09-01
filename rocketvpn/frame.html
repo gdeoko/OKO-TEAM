@@ -9,7 +9,47 @@
      потерю другого. -->
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <meta name="referrer" content="no-referrer">
-<title>Rocket VPN</title>
+<!-- ══════════════════════════════════════════════════════════════
+     ЗАГОЛОВОК, ОПИСАНИЕ И КАРТОЧКА ССЫЛКИ
+
+     Пока сайт был закрытым стендом, всего этого не требовалось: ссылку
+     видели трое, и превью никто не строил. С переездом на боевой домен
+     всё изменилось - адрес кидают в Telegram, в бот и в рекламу, и
+     ПЕРВОЕ, что видит человек, это карточка ссылки, а не сайт. Голая
+     карточка с одним словом «Rocket VPN» и белым квадратом вместо
+     картинки обесценивает всё, что за ней стоит.
+
+     Заголовок написан не «для поиска», а для человека в ленте
+     сообщений: он должен объяснить пользу за секунду. Описание снимает
+     главное возражение сразу - деньги вперёд не нужны.
+
+     Картинка нарисована ТЕМ ЖЕ браузером, тем же шрифтом и тем же
+     неоном, что и сайт (tools/карточка.mjs): карточка обязана быть
+     кадром сайта, а не отдельной картинкой про него.
+     ══════════════════════════════════════════════════════════════ -->
+<title>Rocket VPN - интернет без белых списков</title>
+<meta name="description" content="Мобильный интернет режут по белым спискам. Rocket VPN держит канал сквозь них: сервер выбирать не нужно, трафик не считают, первые 3 дня бесплатно и без карты.">
+
+<link rel="canonical" href="https://rocketvpn.top/">
+<meta name="theme-color" content="#05060C">
+<meta name="color-scheme" content="dark">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rocket VPN">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:url" content="https://rocketvpn.top/">
+<meta property="og:title" content="Rocket VPN - интернет без белых списков">
+<meta property="og:description" content="Сервер выбирать не нужно, трафик не считают, первые 3 дня бесплатно и без карты.">
+<meta property="og:image" content="https://rocketvpn.top/assets/rv-og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:alt" content="Rocket VPN. Не в обход, насквозь.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rocket VPN - интернет без белых списков">
+<meta name="twitter:description" content="Сервер выбирать не нужно, трафик не считают, первые 3 дня бесплатно и без карты.">
+<meta name="twitter:image" content="https://rocketvpn.top/assets/rv-og.jpg">
 <!-- Значок вкладки - настоящая марка клиента, а не нарисованная
      заглушка. Без него браузер просит favicon.ico, получает отказ, и в
      консоли копится ошибка, которая маскирует настоящие. -->
@@ -234,13 +274,34 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
   </div>
 </section>
 
-<!-- ═══ Акт 6. Стыковка с Rocket CDN ════════════════════════════
+<!-- ═══ Акт 6. Пуск ═════════════════════════════════════════════
+     Единственный акт, где сайт ничего не доказывает и ни в чём не
+     убеждает. Он объясняет, что делать руками.
+
+     Стоит ПОСЛЕ цен и ПЕРЕД стыковкой намеренно: человек уже знает,
+     сколько это стоит, и ещё не ушёл в соседний космос. До этого акта
+     сайт семь экранов убеждал и ни разу не сказал, с чего начать -
+     красивая витрина закрытого магазина. -->
+<section class="rv-акт" data-акт="пуск" style="height:240svh">
+  <div class="rv-кадр">
+    <div class="rv-слой">
+      <p class="rv-над" data-лист="0"><i>07</i><span>Пуск</span></p>
+      <h2 class="rv-заг" data-лист="0">Три шага, и <em>канал стоит</em></h2>
+      <p class="rv-абз" data-лист="0"><b>Ни один из них не занимает больше
+        минуты.</b> Карта не нужна ни на одном: пробные дни включаются до
+        всякой оплаты.</p>
+      <div id="rvШаги" data-заполнить="шаги" data-лист="1 2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Акт 7. Стыковка с Rocket CDN ════════════════════════════
      Тот же прокол, но в бирюзе родственного сайта. Связка продаётся тем,
      что оба сайта делят одну вселенную, а не баннером. -->
 <section class="rv-акт" data-акт="стыковка" style="height:180svh">
   <div class="rv-кадр">
     <div class="rv-слой">
-      <p class="rv-над" data-лист="0 1"><i>07</i><span>Стыковка</span></p>
+      <p class="rv-над" data-лист="0 1"><i>08</i><span>Стыковка</span></p>
       <h2 class="rv-заг" data-лист="0 1">Второй корабль <em>этого флота</em></h2>
       <p class="rv-абз" data-лист="0 1"><b>Rocket CDN держит ту же сеть с другой
         стороны: он раздаёт трафик, а не прячет его.</b> Один флот, две задачи.
@@ -282,6 +343,7 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <script src="assets/rv-act-exit.js" defer></script>
 <script src="assets/rv-act-bridge.js" defer></script>
 <script src="assets/rv-act-dock.js" defer></script>
+<script src="assets/rv-act-пуск.js" defer></script>
 <!-- Титры кладут слова В САМУ СЦЕНУ. Идут после актов: гнёзда
      станций заводят акты, и титру нужно готовое гнездо. -->
 <script src="assets/rv-титры.js" defer></script>
@@ -291,6 +353,9 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <!-- Листы идут ПОСЛЕ плёнки и после досье: они меряют высоту уже
      заполненного содержимого, а фазу читают ту, что ставит плёнка. -->
 <script src="assets/rv-лист.js" defer></script>
+<!-- Рейка ленты идёт последней: ей нужны и разметка актов, и
+     плёнка, чтобы брать долю сглаженной, а не сырой. -->
+<script src="assets/rv-рейка.js" defer></script>
 <script src="assets/rv-link.js" defer></script>
 </body>
 </html>

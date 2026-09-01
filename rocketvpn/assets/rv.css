@@ -227,9 +227,25 @@ a { color: inherit; }
    выходит на середину, - там, где сцена показывает то самое, о чём
    слово написано.
    ══════════════════════════════════════════════════════════════ */
-.rv-плёнка-идёт .rv-акт {
-  --rv-неон-сила: calc(0.35 + 0.65 * var(--вид, 1));
-}
+/* СИЛА НЕОНА ИДЁТ ОТ ФАЗЫ, А НЕ ОТ ДОЛИ, И ЭТО ВОПРОС СКОРОСТИ.
+
+   Сначала она считалась из --вид, то есть менялась КАЖДЫЙ КАДР. Радиус
+   размытия тени входит в неё множителем, а смена радиуса размытия это
+   полная перерисовка светящегося текста - шестьдесят раз в секунду на
+   заголовке в семьдесят точек кегля. Замер скорости поймал это: на
+   телефоне 72,7 процента кадров выходили длиннее сорока миллисекунд,
+   то есть каждый третий кадр человек видел заминкой.
+
+   Фаза меняется трижды за акт. Разница на глаз та же (заголовок
+   разгорается к середине акта и притухает к концу), перерисовок вместо
+   шестидесяти в секунду - три за акт.
+
+   Плавный вход и выход при этом никуда не делись: их держит
+   прозрачность слоя, а прозрачность браузер умеет менять без
+   перерисовки. */
+.rv-плёнка-идёт .rv-акт { --rv-неон-сила: .72; }
+.rv-плёнка-идёт .rv-акт[data-фаза="1"] { --rv-неон-сила: 1; }
+.rv-плёнка-идёт .rv-акт[data-фаза="2"] { --rv-неон-сила: .86; }
 .rv-плёнка-идёт .rv-акт[data-фаза="1"] .rv-заг em {
   animation: rv-неон-вспышка 2.6s ease-in-out infinite;
 }
@@ -485,6 +501,55 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
 /* Сноска. Это техническая приписка, и выглядеть она должна припиской:
    разрядка шире обычного текста, метка индиго вместо отступа. Так она
    не спорит с абзацем за внимание и при этом не теряется. */
+/* ── Три шага ──────────────────────────────────────────────────
+   Список, а не сетка карточек. У шагов есть ПОРЯДОК, и порядок здесь
+   несёт смысл: ключ без приложения бесполезен, приложение без ключа
+   пусто. Карточки в ряд этот порядок теряют - глаз читает их как три
+   равноправные штуки.
+
+   Номер шага светится, как номер акта в слейте: сайт говорит числами
+   одинаково везде. */
+.rv-шаги {
+  list-style: none; margin: calc(var(--rv-шаг) * 3) 0 0; padding: 0;
+  display: grid; gap: calc(var(--rv-шаг) * 2);
+  max-width: min(52ch, 100%);
+  counter-reset: шаг;
+}
+.rv-шаги li {
+  display: flex; align-items: flex-start; gap: calc(var(--rv-шаг) * 2);
+}
+.rv-шаги i {
+  flex: none; width: 34px; height: 34px;
+  display: grid; place-items: center;
+  font-family: var(--rv-шрифт-голос); font-style: normal;
+  font-weight: 700; font-size: 14px;
+  color: var(--rv-индиго-свет);
+  border: 1px solid rgba(var(--rv-свет-rgb), .45);
+  border-radius: 50%;
+  text-shadow: 0 0 8px var(--rv-неон-ядро);
+  box-shadow: 0 0 calc(16px * var(--rv-неон-сила, 1)) -4px rgba(var(--rv-свет-rgb), .8),
+              inset 0 0 12px -8px rgba(var(--rv-свет-rgb), .9);
+}
+.rv-шаги span { display: grid; gap: calc(var(--rv-шаг) * .5); min-width: 0; }
+.rv-шаги b {
+  font-size: clamp(16px, 1.4vw, 19px); font-weight: 600;
+  color: var(--rv-текст); letter-spacing: -.005em;
+}
+.rv-шаги u {
+  text-decoration: none;
+  font-size: 14px; line-height: 1.55; color: var(--rv-текст-тихо);
+}
+/* Линия, связывающая шаги в последовательность. Без неё три строки
+   стоят рядом, а не идут одна за другой. */
+.rv-шаги li { position: relative; }
+.rv-шаги li:not(:last-child)::before {
+  content: ""; position: absolute;
+  left: 17px; top: 38px; bottom: calc(var(--rv-шаг) * -2 + 4px);
+  width: 1px;
+  background: linear-gradient(180deg,
+    rgba(var(--rv-свет-rgb), .5), rgba(var(--rv-свет-rgb), .06));
+}
+
 .rv-сноска {
   position: relative;
   margin: calc(var(--rv-шаг)*2.5) 0 0; max-width: min(52ch, 100%);
@@ -917,6 +982,108 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
   .rv-плита { transform: none; opacity: .9; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   РЕЙКА ЛЕНТЫ
+
+   Восемь меток у правой кромки, по одной на акт. Пройденное залито,
+   текущее горит и подписано, будущее пусто. Ширина восемь точек: этого
+   хватает, чтобы рейку заметили, и мало, чтобы она отняла у мира
+   полосу кадра.
+
+   Подпись выезжает только у текущей метки и только под указателем: на
+   сайте, где слова живут слева, восемь подписей справа - это вторая
+   колонка текста, которой здесь не место.
+   ══════════════════════════════════════════════════════════════ */
+.rv-рейка {
+  position: fixed;
+  right: max(10px, env(safe-area-inset-right));
+  top: 50%; transform: translateY(-50%);
+  z-index: 42;
+  display: grid; gap: 10px;
+  padding: 10px 6px;
+}
+.rv-рейка-метка {
+  appearance: none; -webkit-appearance: none;
+  background: none; border: 0; padding: 4px 2px; margin: 0;
+  /* Метка прижата к правой кромке, подпись выведена ИЗ ПОТОКА влево.
+     Пока подпись стояла в потоке, она занимала ширину даже невидимой, и
+     каждая метка отъезжала влево ровно на длину своего слова: рейка
+     шла лесенкой вместо прямой линии. Видно это было только на снимке -
+     в разметке всё «выровнено по правому краю». */
+  position: relative;
+  display: flex; align-items: center; justify-content: flex-end;
+  cursor: pointer;
+  color: var(--rv-текст-очень-тихо);
+  font: 600 10px/1 var(--rv-шрифт); letter-spacing: .18em;
+  text-transform: uppercase;
+}
+/* Сама метка. Полоска, а не точка: полоска умеет ЗАПОЛНЯТЬСЯ по ходу
+   акта, и человек видит не только «где он», но и «сколько идёт». */
+.rv-рейка-метка i {
+  display: block; position: relative;
+  width: 2px; height: 18px; border-radius: 2px;
+  background: rgba(var(--rv-свет-rgb), .22);
+  transition: background-color .25s ease, box-shadow .25s ease, height .25s ease;
+}
+/* Заполнение метки идёт МАСШТАБОМ, а не высотой. Высота на каждом
+   кадре это пересчёт вёрстки восьми элементов шестьдесят раз в
+   секунду; масштаб браузер делает на композиторе, не трогая вёрстку
+   вовсе. Разница на глаз - никакой. */
+.rv-рейка-метка i::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 100%;
+  border-radius: 2px;
+  background: rgba(var(--rv-свет-rgb), .95);
+  transform-origin: 50% 0;
+  transform: scaleY(var(--ход, 0));
+}
+.rv-рейка-метка.rv-пройден i { background: rgba(var(--rv-свет-rgb), .55); }
+.rv-рейка-метка.rv-идёт i {
+  height: 30px;
+  background: rgba(var(--rv-свет-rgb), .3);
+  box-shadow: 0 0 12px rgba(var(--rv-свет-rgb), .85);
+}
+/* Подпись. Появляется у текущей метки и у той, на которую навели. */
+.rv-рейка-метка em {
+  position: absolute; right: 100%; margin-right: 10px; top: 50%;
+  font-style: normal; opacity: 0; transform: translateY(-50%) translateX(6px);
+  transition: opacity .22s ease, transform .22s ease, color .22s ease;
+  white-space: nowrap; pointer-events: none;
+}
+.rv-рейка-метка.rv-идёт em { opacity: .85; transform: translateY(-50%); color: var(--rv-текст-тихо); }
+.rv-рейка-метка:hover em,
+.rv-рейка-метка:focus-visible em { opacity: 1; transform: translateY(-50%); color: var(--rv-текст); }
+.rv-рейка-метка:hover i { background: rgba(var(--rv-свет-rgb), .6); }
+.rv-рейка-метка:focus-visible {
+  outline: 2px solid rgba(var(--rv-свет-rgb), .9); outline-offset: 3px; border-radius: 3px;
+}
+
+/* Нить телефона: та же величина, другой формой. Вертикальной рейке на
+   узком экране не место - она читается полосой прокрутки и провоцирует
+   тянуть её пальцем. */
+.rv-нить {
+  position: fixed; left: 0; right: 0; top: 0; height: 2px;
+  z-index: 42; pointer-events: none;
+  background: rgba(var(--rv-свет-rgb), .10);
+  display: none;
+}
+.rv-нить i {
+  display: block; height: 100%;
+  transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg,
+    rgba(var(--rv-индиго-rgb), .9), rgba(var(--rv-свет-rgb), 1));
+  box-shadow: 0 0 10px rgba(var(--rv-свет-rgb), .8);
+}
+@media (max-width: 860px) {
+  .rv-рейка { display: none; }
+  .rv-нить { display: block; }
+}
+/* Без движения рейка остаётся, но перестаёт дышать. Содержимое не
+   отменяется никогда. */
+@media (prefers-reduced-motion: reduce) {
+  .rv-рейка-метка i,
+  .rv-рейка-метка em { transition: none; }
 }
 
 /* ── Приглашение листать ───────────────────────────────────────
