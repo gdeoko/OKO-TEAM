@@ -285,6 +285,57 @@ function diploma_theme_pick(array $c, array $tpl): array {
     return $themes[$key] + ['key' => $key];
 }
 
+/**
+ * ПАЛИТРА ПОД СВЕТЛЫЙ ФОН.
+ *
+ * Все темы выше рассчитаны на тёмную подложку: там светлое золото и ледяные
+ * блики. На светлой бумаге такие буквы пропадают, а раньше это лечили тёмной
+ * плёнкой поверх всего фона - гасили рисунок ради текста. Теперь для светлых
+ * фонов у каждой темы есть свой глубокий вариант: цвета остаются «родными»
+ * конкурсу, но становятся насыщенными и читаются на бумаге.
+ */
+function diploma_theme_on_light(array $T): array {
+    $deep = [
+        // Космос: глубокая полночная синь с холодным серебром.
+        'cosmos' => [
+            'grad_comp'   => 'linear-gradient(180deg,#1B3A63 0%,#12294A 45%,#0C1D36 70%,#1B3A63 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 35%,#4A3607 60%,#8A6A12 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#1B3A63 0%,#12294A 55%,#0C1D36 100%)',
+            'name_color'  => '#12294A', 'script_color' => '#1B3A63',
+        ],
+        // Зенит: тёмное червонное золото с медью.
+        'zenith' => [
+            'grad_comp'   => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 40%,#4A3607 65%,#8A6A12 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#9C6B1A 0%,#7A4F10 38%,#57370A 62%,#9C6B1A 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#8A6A12 0%,#5E440B 60%,#3E2C06 100%)',
+            'name_color'  => '#5E440B', 'script_color' => '#6B4F0A',
+        ],
+        // Театр, искусство: тёмный изумруд с бронзой.
+        'theatre' => [
+            'grad_comp'   => 'linear-gradient(180deg,#14483F 0%,#0E332C 45%,#0A241F 70%,#14483F 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 40%,#4A3607 65%,#8A6A12 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#14483F 0%,#0E332C 60%,#0A241F 100%)',
+            'name_color'  => '#0E332C', 'script_color' => '#14483F',
+        ],
+        // Держава: тёмный багрянец с золотом.
+        'derzhava' => [
+            'grad_comp'   => 'linear-gradient(180deg,#7A1B22 0%,#5C1219 45%,#3F0C11 70%,#7A1B22 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 38%,#4A3607 62%,#8A6A12 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#7A1B22 0%,#5C1219 60%,#3F0C11 100%)',
+            'name_color'  => '#5C1219', 'script_color' => '#7A1B22',
+        ],
+        // Классика: тёмный кофейный с золотом.
+        'classic' => [
+            'grad_comp'   => 'linear-gradient(180deg,#4A3115 0%,#37230F 45%,#25170A 70%,#4A3115 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 38%,#4A3607 62%,#8A6A12 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#4A3115 0%,#37230F 60%,#25170A 100%)',
+            'name_color'  => '#37230F', 'script_color' => '#4A3115',
+        ],
+    ];
+    $k = (string) ($T['key'] ?? 'classic');
+    return isset($deep[$k]) ? array_merge($T, $deep[$k]) : $T;
+}
+
 function diploma_html(array $c, array $a, array $opt = []): string {
     $tpl = [];
     if (!empty($c['diploma_template'])) {
@@ -307,7 +358,12 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         $bgUrl = preg_match('~^https?://~', $p) ? $p : $base . '/' . ltrim($p, '/');
     }
     // Затемнение нужно только поверх фотографии; на градиенте эталона — ноль.
-    $overlay = isset($tpl['overlay']) ? max(0, min(100, (int)$tpl['overlay'])) : ($bgUrl ? 55 : 0);
+    /* ЗАТЕМНЕНИЕ ПО УМОЛЧАНИЮ ВЫКЛЮЧЕНО. Решение владельца: фон рисуется под
+     * конкретный конкурс и сам по себе красив, а тёмная плёнка поверх гасила
+     * весь орнамент ради читаемости белого текста. Читаемость теперь решается
+     * цветом текста под яркость фона (core/diploma_fit.php), а не порчей
+     * картинки. Ручная настройка конкурса по-прежнему сильнее. */
+    $overlay = isset($tpl['overlay']) ? max(0, min(100, (int)$tpl['overlay'])) : 0;
 
     /* ПОЛЯ И ЦВЕТ ТЕКСТА ПОДБИРАЮТСЯ ПОД КОНКРЕТНЫЙ ФОН.
      *
@@ -333,8 +389,29 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left'] as $pk) {
         if (isset($tpl[$pk]) && is_numeric($tpl[$pk])) $FIT[$pk] = (float) $tpl[$pk];
     }
+    /* Во сколько раз сузилась колонка против базовой вёрстки (поля 12+12 мм).
+     * На этот коэффициент сжимается всё содержимое листа. Ниже 0.78 не опускаем:
+     * дальше текст становится мелким для печати. */
+    $CSCALE = round(max(0.78, min(1.0, (210 - $FIT['pad_left'] - $FIT['pad_right']) / 186)), 3);
+
+    /* НАЗВАНИЕ КОНКУРСА ДОЛЖНО ВСТАВАТЬ В ОДНУ СТРОКУ.
+     *
+     * Кегль был жёстко 37 пунктов - под короткие названия. «Наследие России» и
+     * «На волне искусства» в узкой колонке переносились на два ряда и ломали
+     * весь верх листа. Считаем запас по числу знаков с учётом разрядки и того,
+     * насколько сузилась колонка. */
+    $compLen  = max(1, mb_strlen(trim((string) ($c['name'] ?? ''))));
+    $COMP_FS  = 37.0;
+    if ($compLen > 12) $COMP_FS = 37.0 * (12 / $compLen) ** 0.55;
+    $COMP_FS  = round(max(19.0, min(37.0, $COMP_FS * $CSCALE)), 1);
+
     $fade    = isset($tpl['fade']) ? max(30, min(160, (int)$tpl['fade'])) : 105;
     $T       = diploma_theme_pick($c, $tpl);
+    /* На светлом фоне берём глубокий вариант той же темы: цвета остаются
+     * «родными» конкурсу, но читаются на бумаге без затемняющей плёнки. */
+    if (empty($FIT['dark']) && function_exists('diploma_theme_on_light')) {
+        $T = diploma_theme_on_light($T);
+    }
 
     $isIntl   = ($c['type'] ?? '') === 'international';
     $typeGenM = $isIntl ? 'международного' : 'всероссийского';   // род. падеж
@@ -565,8 +642,15 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Засвет снизу: длинное мягкое растворение кверху, без белого «блока» */
 .bg-white-gradient{position:absolute;bottom:0;left:0;right:0;height:<?= $fade ?>mm;z-index:2;pointer-events:none;
   background:linear-gradient(180deg, transparent 0%, rgba(248,248,252,.05) 16%, rgba(250,250,253,.16) 34%, rgba(252,252,254,.36) 52%, rgba(253,253,255,.62) 70%, rgba(255,255,255,.85) 86%, rgba(255,255,255,.95) 100%)}
+/* СОДЕРЖИМОЕ СЖИМАЕТСЯ ПОД БЕЗОПАСНУЮ ЗОНУ.
+   Лист свёрстан под поля в двенадцать миллиметров. Когда рамка фона требует
+   поля шире, та же вёрстка в узкой колонке начинает переносить строки и
+   наезжать на подписи. Поэтому всё содержимое пропорционально уменьшается во
+   столько же раз, во сколько сузилась колонка: пропорции и воздух остаются
+   прежними, а текст целиком помещается внутрь рисованной рамки. */
 .content{position:relative;z-index:3;height:100%;
-  padding:<?= $FIT['pad_top'] ?>mm <?= $FIT['pad_right'] ?>mm 0 <?= $FIT['pad_left'] ?>mm}
+  padding:<?= $FIT['pad_top'] ?>mm <?= $FIT['pad_right'] ?>mm 0 <?= $FIT['pad_left'] ?>mm;
+  transform:scale(<?= $CSCALE ?>);transform-origin:top center}
 .header-legal{text-align:center;font-size:7.5pt;line-height:1.3;color:<?= $FIT['muted'] ?>;margin-bottom:3mm}
 .header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:<?= $FIT['ink'] ?>}
 .header-legal .legal-text{font-weight:600;color:<?= $FIT['muted'] ?>}
@@ -578,11 +662,11 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .logos-row .logo-natsproekty{height:19mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
 .competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:1.5mm}
-.competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:37pt;font-weight:900;
+.competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $COMP_FS ?>pt;font-weight:900;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
-.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.3;margin-bottom:3mm;padding:0 5mm;color:<?= $FIT['muted'] ?>}
+.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:10.8pt;font-weight:700;line-height:1.3;margin-bottom:3mm;padding:0 5mm;color:<?= $FIT['muted'] ?>}
 .diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -607,14 +691,19 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
  * вместо четырёх, межстрочный интервал и промежуток между двумя подписями меньше.
  * Это освобождает ~14 мм по вертикали — длинная заявка (много полей, длинные
  * названия) больше не упирается в подписи и печати. */
-.bottom-block{position:absolute;z-index:4;color:#1a1a2a;
+/* Подписи и печать вписываются в ту же рамку, что и текст. Масштабировать этот
+   блок нельзя: внутри него печать и подпись стоят на своих местах, а сжатие
+   сдвигает их относительно сетки - поэтому вместо scale уменьшается кегль. */
+.bottom-block{position:absolute;z-index:4;color:<?= $FIT['dark'] ? '#f2efe6' : '#1a1a2a' ?>;
   bottom:<?= $FIT['pad_bottom'] ?>mm;
-  left:<?= max(6.0, $FIT['pad_left'] - 2) ?>mm;
-  right:<?= max(6.0, $FIT['pad_right'] - 2) ?>mm}
-.signatures-grid{display:grid;grid-template-columns:1fr 82mm;grid-template-rows:16mm 19mm;gap:2mm 4mm;align-items:center}
+  left:<?= $FIT['pad_left'] ?>mm;
+  right:<?= $FIT['pad_right'] ?>mm;
+  font-size:<?= round(100 * $CSCALE) ?>%}
+.signatures-grid{display:grid;grid-template-columns:1fr <?= round(82 * $CSCALE) ?>mm;
+  grid-template-rows:auto auto;gap:2.5mm 4mm;align-items:center}
 .sig-text-block{font-family:'Manrope',sans-serif;font-size:8.4pt;line-height:1.2;padding-right:2mm}
-.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:10pt}
-.sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
+.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:<?= $FIT['dark'] ? '#f2efe6' : '#1a1a2a' ?>;font-size:10pt}
+.sig-text-block .sig-role{font-weight:600;color:<?= $FIT['dark'] ? 'rgba(242,239,230,.9)' : '#1a1a2a' ?>}
 .sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
 /* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
 .chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end;transform:translateY(-8mm)}
@@ -622,9 +711,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Росписи увеличены в 1.8 раза через scale — позиция не сдвигается */
 .sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
-.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;font-weight:700;color:#1a1a2a}
+/* Справа внизу стоит номер бланка с QR, поэтому строке места и года оставляем
+   под него поле: без этого она заезжала под номер и обе надписи сливались. */
+.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;
+  font-weight:700;color:<?= $FIT['dark'] ? '#f2efe6' : '#1a1a2a' ?>;padding-right:26mm}
 /* Номер диплома + QR проверки подлинности — правый нижний угол. */
-.dip-verify{position:absolute;right:7mm;bottom:6mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+.dip-verify{position:absolute;right:<?= $FIT['pad_right'] ?>mm;bottom:<?= max(4.0, $FIT['pad_bottom'] - 2) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dip-verify .qr svg{width:100%;height:100%;display:block}
 .dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
@@ -645,7 +737,9 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 <div class="diploma">
   <div class="bg-layer"></div>
   <?php if ($overlay > 0 || $edit): ?><div class="bg-tone"></div><?php endif; ?>
-  <div class="bg-white-gradient"></div>
+  <?php /* Белая подсветка снизу нужна только тёмному фону: на светлом она
+           выбеливает орнамент и выглядит грязным пятном. */ ?>
+  <?php if (!empty($FIT['dark'])): ?><div class="bg-white-gradient"></div><?php endif; ?>
   <?php if ($sample): ?><div class="sample-frame"></div><div class="sample-mark"><?php for ($si = 0; $si < 60; $si++) echo '<span>ОБРАЗЕЦ</span>'; ?></div><?php endif; ?>
 
   <div class="content">

@@ -16,7 +16,7 @@ $u = current_user();
 // когда окно заказа истекает.
 require_once BASE_PATH . '/core/orders.php';
 $comps = array_values(array_filter(
-    all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status
+    all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status, COALESCE(club_only,0) club_only
            FROM competitions
           WHERE COALESCE(launched,0) = 1 AND status <> 'draft'
        ORDER BY CASE WHEN status='open' THEN 0 ELSE 1 END, end_date DESC, sort, id"),
@@ -30,7 +30,7 @@ $compId = isset($_GET['comp']) ? (int) $_GET['comp'] : 0;
 $selComp = null;
 foreach ($comps as $c) { if ((int)$c['id'] === $compId) { $selComp = $c; break; } }
 if (!$selComp && $compId > 0) {
-    $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status
+    $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status, COALESCE(club_only,0) club_only
                       FROM competitions WHERE id=? AND status <> 'draft'", [$compId]);
     // Окно заказа по этому конкурсу могло истечь: два месяца прошли, награды
     // больше не изготавливаются. Показывать каталог с корзиной в этом случае
@@ -145,7 +145,7 @@ if ($appId > 0 && $u) {
         // Конкурс берём из ЗАЯВКИ — чтобы состав и цены точно соответствовали ей.
         if (!$selComp || (int) $selComp['id'] !== (int) $ar['competition_id']) {
             $compId  = (int) $ar['competition_id'];
-            $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
+            $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, COALESCE(club_only,0) club_only
                               FROM competitions WHERE id=?", [$compId]);
             // Прайс пересобираем под конкурс заявки.
             $catalog = [];
@@ -248,7 +248,9 @@ ob_start(); ?>
       // заказать можно, поэтому карточку не выбрасываем целиком (так было раньше — и
       // оригиналы пропадали из образцов), а убираем только запрещённый вид.
       // Единственный источник правил — award_item_allowed() в core/orders.php.
-      $paidComp = (int)($selComp['is_paid'] ?? 0) === 1;
+      /* Конкурс Клуба ведёт себя здесь как платный: электронные основной и
+       * дополнительный входят в участие и приходят сами, заказывать их не нужно. */
+      $paidComp = (int)($selComp['is_paid'] ?? 0) === 1 || (int)($selComp['club_only'] ?? 0) === 1;
       foreach ($order as $item):
         if (empty($catalog[$item])) continue;
         // Заказ по конкретной заявке: показываем ТОЛЬКО то, что по её результату

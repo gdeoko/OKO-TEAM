@@ -26,7 +26,7 @@ if (!is_array($items)) $items = [];
 $compRef = input('competition');
 $comp = $compRef !== ''
     // is_paid нужен ниже: в платном конкурсе электронные основной/доп. входят в оргвзнос.
-    ? one("SELECT id,slug,name,is_paid FROM competitions WHERE slug=? OR code=? OR id=?",
+    ? one("SELECT id,slug,name,is_paid,COALESCE(club_only,0) club_only FROM competitions WHERE slug=? OR code=? OR id=?",
           [$compRef, $compRef, ctype_digit($compRef) ? (int) $compRef : 0])
     : null;
 $compId = $comp ? (int) $comp['id'] : null;
@@ -98,9 +98,15 @@ foreach ($items as $it) {
     $price = (int) $price;
     // В ПЛАТНОМ конкурсе электронные основной и дополнительный дипломы входят в стоимость
     // участия (оргвзнос) — при заказе они бесплатны. В бесплатном — по прайсу.
+    /* В КОНКУРСЕ КЛУБА ЭЛЕКТРОННЫЕ ОСНОВНОЙ И ДОПОЛНИТЕЛЬНЫЙ ТОЖЕ ВХОДЯТ В УЧАСТИЕ.
+     *
+     * Правило было завязано на платность: в платном конкурсе эти два документа
+     * входят в оргвзнос. У конкурса Клуба взноса нет, участие оплачено членством,
+     * и по положению оба диплома входят в него так же - значит и здесь они
+     * бесплатны, иначе положение и касса разошлись бы. */
     if ($kind === 'digital'
         && in_array($itemName, ['Основной диплом', 'Дополнительный диплом'], true)
-        && $comp && (int) ($comp['is_paid'] ?? 0) === 1) {
+        && $comp && ((int) ($comp['is_paid'] ?? 0) === 1 || (int) ($comp['club_only'] ?? 0) === 1)) {
         $price = 0;
     }
     $serverAmount += $price;
@@ -223,6 +229,7 @@ if (!$isClubOrder) {
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
     $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at, a.extra_diploma, a.is_group,
                           c.id AS comp_id, c.name AS comp_name, c.is_paid AS comp_is_paid,
+                          COALESCE(c.club_only,0) AS comp_club_only,
                           c.results_mode, c.results_published_at, c.status AS comp_status, c.end_date
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.id=?", [$applicationId]);
@@ -298,7 +305,10 @@ if (!$isClubOrder && $applicationId) {
     // Результат и платность берём из ЗАЯВКИ (её конкурс), а не из полей запроса —
     // иначе состав наград определялся бы тем, что подставил клиент.
     $appResult  = (string) ($appRow['result'] ?? '');
-    $compIsPaid = (int) ($appRow['comp_is_paid'] ?? 0) === 1;
+    /* Конкурс Клуба приравнивается к платному в части состава: электронные
+     * основной и дополнительный входят в участие и заказу не подлежат. */
+    $compIsPaid = (int) ($appRow['comp_is_paid'] ?? 0) === 1
+               || (int) ($appRow['comp_club_only'] ?? 0) === 1;
     foreach ($normItems as $ni) {
         [$allowed, $why] = award_item_allowed(
             (string) ($ni['item'] ?? ''), (string) ($ni['kind'] ?? 'original'), $appResult, $compIsPaid,

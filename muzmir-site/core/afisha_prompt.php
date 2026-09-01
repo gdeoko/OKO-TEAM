@@ -136,7 +136,7 @@ Line 4, italic serif, slightly larger: «{$kind}»
 
 Line 5, THE MAIN HEADLINE, very large, dominant, centred, in polished three-dimensional gold with a subtle bevel and a soft outer glow, classical serif capitals with generous letter spacing: «{$name}»
 
-Line 6, inside a deep burgundy ribbon banner with a thin gold border, bold white capitals: «{$terms}»
+Line 6, inside a deep burgundy ribbon banner with a thin gold border, bold white capitals, LARGE and prominent — this line is the second most important element after the headline: «{$terms}»
 
 {$noteLine}Line 7, bold, clearly readable: «{$srok}»
 
