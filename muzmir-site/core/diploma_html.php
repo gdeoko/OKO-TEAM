@@ -1176,35 +1176,71 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     fitOne('.awarded-name-script', 13, <?= (float)$T['script_fs'] ?>);
     fitOne('.extra-award', 9, 15);
     if(!FAM || (document.fonts && document.fonts.check && document.fonts.check('900 40pt "'+FAM+'"'))){
-      fitRhythm();
+      fitOptical();
       document.documentElement.setAttribute('data-title-fit','1');
     }
   }
-  /* РОВНЫЙ ЛИСТ. Интервалы между строками кратны одному шагу (--u), но у разных
-     фонов подписи стоят на разной высоте: у «Мира звёзд» под данными оставалось
-     35 мм пустоты, у «Наследия России» - 13. Свободное место раскладывается по
-     тем же интервалам - лист заполняется равномерно, а ритм остаётся единым. */
-  function fitRhythm(){
-    var cont=document.querySelector('.content'),
-        fl=document.querySelector('.field-list')||document.querySelector('.gratitude-text'),
-        bb=document.querySelector('.bottom-block');
-    if(!cont||!fl||!bb) return;
-    var sc=1, m=getComputedStyle(cont).transform.match(/matrix\(([\d.]+)/); if(m) sc=parseFloat(m[1]);
+  /* РОВНЫЙ ЛИСТ - ПО БУКВАМ, А НЕ ПО РАМКАМ БЛОКОВ.
+     Раньше выравнивались margin'ы, и по замерам всё сходилось, а глаз видел
+     разнобой: у слова ДИПЛОМ в 58 пунктов рамка строки почти совпадает с
+     буквами, а у строчки «награждается» в 15 пунктов внутри рамки остаётся
+     воздух межстрочного интервала. Поэтому меряем НАСТОЯЩИЕ границы букв
+     (canvas: actualBoundingBoxAscent/Descent) и уравниваем просветы между ними.
+     Заодно свободное место листа делится на те же просветы поровну, поэтому низ
+     не проваливается и лист выглядит собранным. */
+  function inkBox(el){
+    var r=el.getBoundingClientRect();
+    if(el.tagName==='IMG'||el.classList.contains('logos-row')) return {top:r.top, bottom:r.bottom};
+    var cs=getComputedStyle(el);
+    var cv=inkBox._c||(inkBox._c=document.createElement('canvas')), g=cv.getContext('2d');
+    g.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+    var m=g.measureText(el.textContent.trim()||'Ag');
+    var fa=m.fontBoundingBoxAscent, fd=m.fontBoundingBoxDescent;
+    var aa=m.actualBoundingBoxAscent, ad=m.actualBoundingBoxDescent;
+    if(!(fa>0)||!(aa>0)) return {top:r.top, bottom:r.bottom};
+    var lh=parseFloat(cs.lineHeight); if(!(lh>0)) lh=r.height;
+    /* Базовая линия ПЕРВОЙ строки блока и последней: между ними может быть
+       несколько строк, поэтому низ считаем от нижней границы блока. */
+    var half=(lh-(fa+fd))/2;
+    return {top:r.top+half+(fa-aa), bottom:r.bottom-half-(fd-ad)};
+  }
+  function fitOptical(){
+    var cont=document.querySelector('.content'), bb=document.querySelector('.bottom-block');
+    if(!cont||!bb) return;
+    var sc=1, mm=getComputedStyle(cont).transform.match(/matrix\(([\d.]+)/); if(mm) sc=parseFloat(mm[1]);
     var PX_MM=document.querySelector('.diploma').getBoundingClientRect().width/210;
-    var base=parseFloat(<?= json_encode((string)$U) ?>), u=base, TARGET=13, STEPS=11;
-    for(var i=0;i<14;i++){
-      var free=(bb.getBoundingClientRect().top-fl.getBoundingClientRect().bottom)/PX_MM;
-      if(free<=TARGET+0.5) break;
-      var add=Math.min((free-TARGET)/STEPS/Math.max(sc,0.01), base*1.2-(u-base));
-      if(add<=0.05) break;
-      u+=add; cont.style.setProperty('--u', u.toFixed(2)+'mm');
+    var names=['.header-legal','.logos-row','.competition-type','.competition-name','.support-line',
+               '.diploma-type','.diploma-degree','.extra-award','.awarded-label','.awarded-name',
+               '.awarded-name-script','.field-list','.gratitude-text'];
+    var els=[]; names.forEach(function(n){ var e=cont.querySelector(n); if(e) els.push(e); });
+    if(els.length<3) return;
+    var last=els[els.length-1], RESERVE=7;   // мм: воздух между данными и подписями
+
+    /* Ставит между всеми блоками ОДИН И ТОТ ЖЕ просвет между буквами (G, мм) и
+       возвращает, сколько миллиметров осталось до блока подписей. */
+    function applyG(G){
+      for(var pass=0; pass<2; pass++){
+        var boxes=els.map(inkBox);
+        for(var i=0;i<els.length-1;i++){
+          var cur=(boxes[i+1].top-boxes[i].bottom)/PX_MM;          // просвет сейчас, мм листа
+          var m=parseFloat(getComputedStyle(els[i]).marginBottom)/PX_MM;  // отступ, мм колонки
+          /* Отрицательный отступ допустим: у мелкой строки собственный воздух
+             межстрочного интервала бывает БОЛЬШЕ нужного просвета, и без минуса
+             её нельзя подтянуть к соседям - именно так «награждается» стояло
+             ниже остальных строк. Меряем по буквам, поэтому это безопасно. */
+          els[i].style.marginBottom=Math.max(-6, m+(G-cur)/Math.max(sc,0.01)).toFixed(2)+'mm';
+        }
+      }
+      return (bb.getBoundingClientRect().top-inkBox(last).bottom)/PX_MM;
     }
-    /* Перебор назад: если раздвинули слишком сильно и данные упёрлись в подписи. */
-    for(var j=0;j<14;j++){
-      var f2=(bb.getBoundingClientRect().top-fl.getBoundingClientRect().bottom)/PX_MM;
-      if(f2>=6 || u<=base) break;
-      u=Math.max(base, u-0.4); cont.style.setProperty('--u', u.toFixed(2)+'mm');
+    /* Ищем самый крупный просвет, при котором данные ещё не подходят к подписям
+       ближе, чем на RESERVE: лист заполняется целиком, но ничего не налезает. */
+    var lo=1.0, hi=9.0, best=1.0;
+    for(var k=0;k<8;k++){
+      var G=(lo+hi)/2;
+      if(applyG(G)>=RESERVE){ best=G; lo=G; } else { hi=G; }
     }
+    applyG(best);
   }
   if(document.fonts && document.fonts.load && FAM){
     try{ document.fonts.load('900 40pt "'+FAM+'"').then(fitTitle, fitTitle); }catch(e){}
