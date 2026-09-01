@@ -336,3 +336,149 @@ html.rc-product-glitch .rc-vpn-entry-mark {
     animation-iteration-count: 1;
   }
 }
+
+/* ═══ Стыковочный узел: выход из космоса с выбором причала ═══
+   Коридор перед кораблём с двумя причалами. Живёт поверх кабины, но
+   ниже крестика выхода: короткий ход у человека должен оставаться
+   доступным всегда. Слой держит собственный фон, потому что за ним
+   идёт живая сцена, и без подложки слова по ней не читаются. */
+.rcf-dock {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 4vh, 40px);
+  padding: clamp(16px, 4vh, 48px) clamp(14px, 4vw, 56px);
+  background:
+    radial-gradient(120% 90% at 50% 78%, rgba(4, 10, 18, .62), rgba(2, 5, 12, .94) 68%),
+    rgba(2, 5, 12, .72);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .34s ease, visibility 0s linear .34s;
+}
+.rcf-dock.рчл-видно {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .34s ease, visibility 0s;
+}
+
+.rcf-dock-line {
+  margin: 0;
+  font: 600 clamp(12px, 1.5vw, 15px)/1.2 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(207, 233, 245, .72);
+}
+
+.rcf-dock-row {
+  display: flex;
+  gap: clamp(14px, 3vw, 42px);
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Причал. Трапеция намеренно: это створ дока, а не карточка. Скос
+   уводит взгляд внутрь, к марке. */
+.rcf-berth {
+  position: relative;
+  flex: 1 1 240px;
+  max-width: 380px;
+  min-height: 176px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: clamp(18px, 3vh, 30px) clamp(14px, 2vw, 26px);
+  cursor: pointer;
+  color: #EAF6FF;
+  background: linear-gradient(180deg, rgba(18, 26, 34, .92), rgba(8, 13, 19, .96));
+  border: 1px solid rgba(120, 160, 190, .28);
+  border-radius: 14px;
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.rcf-berth:hover,
+.rcf-berth:focus-visible {
+  transform: translateY(-4px);
+  outline: none;
+}
+.rcf-berth b {
+  font: 700 clamp(15px, 1.9vw, 20px)/1.15 "Golos Text", system-ui, sans-serif;
+  letter-spacing: .04em;
+}
+.rcf-berth i {
+  font: 400 clamp(11px, 1.3vw, 13px)/1.35 "Golos Text", system-ui, sans-serif;
+  font-style: normal;
+  color: rgba(203, 224, 240, .72);
+  text-align: center;
+}
+.rcf-berth-mark {
+  width: clamp(46px, 6vw, 66px);
+  height: auto;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .55));
+}
+/* Свет причала: он и есть цвет марки. Полоса снизу, как посадочный
+   огонь, и мягкое зарево от неё вверх. */
+.rcf-berth-glow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px;
+  transition: box-shadow .22s ease, opacity .22s ease;
+}
+.рчл-бирюза .rcf-berth-glow {
+  background: #42B2DC;
+  box-shadow: 0 0 18px 2px rgba(66, 178, 220, .55);
+}
+.рчл-индиго .rcf-berth-glow {
+  background: #6078D8;
+  box-shadow: 0 0 18px 2px rgba(96, 120, 216, .55);
+}
+.рчл-бирюза:hover,
+.рчл-бирюза:focus-visible { border-color: rgba(66, 178, 220, .8); box-shadow: 0 18px 46px -18px rgba(66, 178, 220, .75); }
+.рчл-индиго:hover,
+.рчл-индиго:focus-visible { border-color: rgba(96, 120, 216, .85); box-shadow: 0 18px 46px -18px rgba(96, 120, 216, .8); }
+
+/* Швартовка: выбранный причал разгорается и заливает кадр своим
+   светом, второй уходит в тень. Пауза короткая, но без неё переход
+   читается обрывом. */
+.rcf-berth.рчл-идёт { transform: translateY(-6px) scale(1.03); }
+.rcf-berth.рчл-идёт .rcf-berth-glow { height: 100%; opacity: .22; border-radius: 14px; }
+.rcf-dock[data-швартовка] .rcf-berth:not(.рчл-идёт) { opacity: .25; }
+.rcf-dock[data-швартовка] .rcf-dock-back { opacity: .25; pointer-events: none; }
+
+.rcf-dock-back {
+  min-height: 44px;
+  padding: 0 18px;
+  cursor: pointer;
+  color: rgba(203, 224, 240, .8);
+  background: transparent;
+  border: 1px solid rgba(120, 160, 190, .3);
+  border-radius: 10px;
+  font: 500 13px/1 "Golos Text", system-ui, sans-serif;
+  transition: border-color .2s ease, color .2s ease;
+}
+.rcf-dock-back:hover,
+.rcf-dock-back:focus-visible { color: #EAF6FF; border-color: rgba(120, 160, 190, .6); }
+
+/* Узкий экран: причалы встают друг под друга, но остаются причалами.
+   Скос при этом убираем: на узкой карточке он съедает угол подписи. */
+@media (max-width: 560px) {
+  .rcf-berth { min-height: 132px; clip-path: none; }
+  .rcf-dock { gap: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcf-dock, .rcf-berth, .rcf-berth-glow { transition: none; }
+  .rcf-berth.рчл-идёт { transform: none; }
+}
