@@ -767,11 +767,14 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
  * наклеенная плашка. */
 .sign-veil{position:absolute;z-index:3;pointer-events:none;
   left:0;right:0;
-  bottom:0;height:<?= round($FIT['pad_bottom'] + 62) ?>mm;
+  bottom:0;height:<?= round($FIT['pad_bottom'] + 86) ?>mm;
+  <?php /* На тёмном фоне подложка плотнее: там подписи иначе не читаются.
+           На светлой бумаге она едва заметна - только снимает пестроту. */
+        $vA = !empty($FIT['dark']) ? [.72, .95, 1.0, .88] : [.5, .78, .88, .7]; ?>
   background:
-    linear-gradient(180deg, rgba(255,252,244,0) 0%, rgba(255,252,244,.55) 26%,
-                            rgba(255,252,244,.82) 52%, rgba(255,252,244,.9) 100%),
-    radial-gradient(120% 100% at 50% 100%, rgba(255,252,244,.75) 0%, rgba(255,252,244,0) 72%);
+    linear-gradient(180deg, rgba(255,252,244,0) 0%, rgba(255,252,244,<?= $vA[0] ?>) 16%,
+                            rgba(255,252,244,<?= $vA[1] ?>) 34%, rgba(255,252,244,<?= $vA[2] ?>) 100%),
+    radial-gradient(120% 100% at 50% 100%, rgba(255,252,244,<?= $vA[3] ?>) 0%, rgba(255,252,244,0) 72%);
   -webkit-mask-image:linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 12%, #000 88%, rgba(0,0,0,0) 100%);
   mask-image:linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 12%, #000 88%, rgba(0,0,0,0) 100%)}
 .bottom-block{position:absolute;z-index:4;color:#1a1a2a;
