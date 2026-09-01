@@ -166,6 +166,13 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
 
     // Аудитория: активные подписчики + зарегистрированные с включёнными уведомлениями.
     // Отписавшихся и подавленных отсекает nl_ensure_subscriber ниже.
+    // АДРЕС УЧРЕЖДЕНИЯ ПОЛУЧАЕТ ПИСЬМО ОДИН РАЗ — ПАРТНЁРСКОЕ.
+    // Списки разные (правило владельца: участники и учреждения не смешиваются),
+    // но 327 адресов лежат в обоих: школа искусств когда-то подписалась на новости,
+    // а теперь она же в партнёрской базе. Волна участников идёт с news@, волна
+    // учреждений — с novosti@, обе в один день: директор получал два письма от
+    // одного центра с разных ящиков и читал это как рассылку робота. Своя волна
+    // уступает: приглашение в партнёры адреснее и ценнее.
     $recips = all(
         "SELECT email, name FROM (
              SELECT LOWER(s.email) AS email, s.name AS name FROM subscribers s WHERE s.active = 1
@@ -174,7 +181,13 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
               WHERE COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0
                 AND COALESCE(u.notify_email,1) = 1
                 AND COALESCE(u.role,'user') NOT IN ('owner','admin','orgcom')
-         ) ORDER BY email LIMIT ?",
+         )
+         WHERE email NOT IN (
+             SELECT LOWER(i.email) FROM institutions i
+              WHERE COALESCE(i.email,'') <> ''
+                AND COALESCE(i.status,'') IN ('new','invited','partner')
+         )
+         ORDER BY email LIMIT ?",
         [max(1, $limit)]
     );
 

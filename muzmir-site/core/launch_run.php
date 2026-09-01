@@ -503,8 +503,13 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
             try {
                 $res = launch_combo_enqueue($dry);
                 $report['email'] = $dry
-                    ? sprintf('объединённое письмо → получателей: %d (из них с доступом в кабинет: %d, с приглашением в клуб: %d), квота 400/день',
-                              $res['queued'], $res['with_cabinet'], $res['with_vip'])
+                    // Квота показывается настоящая: в отчёте стояло «400/день» строкой,
+                    // хотя жёсткий потолок в четыреста писем сняли ещё в августе, и
+                    // предпросмотр пугал владельца сроком в двадцать дней там, где волна
+                    // проходит за сутки.
+                    ? sprintf('объединённое письмо → получателей: %d (из них с доступом в кабинет: %d, с приглашением в клуб: %d), квота %d/день',
+                              $res['queued'], $res['with_cabinet'], $res['with_vip'],
+                              (int) (nl_daily_split()['konkurs'] ?? 0))
                     : sprintf('в очередь поставлено писем: %d (с доступом в кабинет: %d, с приглашением в клуб: %d)',
                               $res['queued'], $res['with_cabinet'], $res['with_vip']);
             } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
