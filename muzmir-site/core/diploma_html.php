@@ -724,6 +724,13 @@ function diploma_html(array $c, array $a, array $opt = []): string {
      * высоко (sig_reserve) - там свободного места между данными и подписями
      * почти нет, и обычный ритм строк упирался в фамилию председателя. */
     $TIGHT = ($fldLines > 6) || !empty($FIT['sig_reserve']);
+    /* ЕДИНЫЙ ШАГ ОТСТУПОВ. Раньше у каждой строки листа был свой отступ,
+     * набранный на глаз (1.5, 2, 2.4, 3, 3.8 мм), и промежутки между блоками
+     * шли вразнобой - лист читался как собранный из кусков. Теперь все
+     * вертикальные интервалы кратны одному шагу, а на тесном бланке шаг просто
+     * меньше: ритм сохраняется, содержимое умещается. */
+    $U = $TIGHT ? 1.7 : 2.4;
+    $u = static fn(float $k): string => (string) round($U * $k, 2);
     $fldFs = 13.5; $fldLh = 1.62;
     if ($fldLines > 6) {
         $fldFs = max(10.0, round(13.5 * 6 / $fldLines, 1));
@@ -820,7 +827,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    наезжать на подписи. Поэтому всё содержимое пропорционально уменьшается во
    столько же раз, во сколько сузилась колонка: пропорции и воздух остаются
    прежними, а текст целиком помещается внутрь рисованной рамки. */
-.content{position:relative;z-index:3;height:100%;
+.content{position:relative;z-index:3;height:100%;--u:<?= $U ?>mm;
   /* Боковые поля ОДИНАКОВЫЕ с двух сторон - берём большее из замеренных.
      Автоподбор часто даёт слева и справа разные значения (рисунок рамки не
      идеально симметричен), и тогда каждая центрированная строка стояла со
@@ -831,20 +838,20 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    рамка тоньше, места больше, а в узкой колонке эти длинные строки рвались на
    куски посреди слова. Небольшой отрицательный отступ даёт им нужную ширину. */
 .header-legal{text-align:center;font-size:6.9pt;line-height:1.34;color:<?= $FIT['muted_top'] ?? $FIT['muted'] ?>;
-  margin:0 -<?= max(0, round($PAD_X - 9, 1)) ?>mm 3mm -<?= max(0, round($PAD_X - 9, 1)) ?>mm}
+  margin:0 -<?= max(0, round($PAD_X - 9, 1)) ?>mm calc(var(--u) * 1) -<?= max(0, round($PAD_X - 9, 1)) ?>mm}
 .header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:<?= $FIT['ink_top'] ?? $FIT['ink'] ?>}
 .header-legal .legal-text{font-weight:600;color:<?= $FIT['muted_top'] ?? $FIT['muted'] ?>}
 /* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
 /* Гербы выравниваем по центру равными промежутками: при распределении по краям
    крайние эмблемы прижимались к рамке и ряд выглядел кривым. */
 .logos-row{display:flex;justify-content:center;align-items:center;gap:<?= round(4.5 * $CSCALE, 1) ?>mm;
-  margin-bottom:2mm;padding:0}
+  margin-bottom:calc(var(--u) * 1);padding:0}
 .logos-row .logo{width:auto}
 .logos-row .logo-prok{height:16mm}
 .logos-row .logo-medal{height:21mm}
 .logos-row .logo-natsproekty{height:19mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
-.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:1.5mm}
+.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 1)}
 /* НАЗВАНИЕ КОНКУРСА И ЗВАНИЕ — ДВЕ ГЛАВНЫЕ СТРОКИ ДОКУМЕНТА.
    Они набраны заливкой-градиентом, и на пёстром фоне их края растворялись: лист
    читался как ровный текст без выделенных строк. Тонкий цветной контур (двойная
@@ -862,15 +869,15 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:<?= $lsPx ?>px;margin-bottom:2.4mm;line-height:1.04;
+  letter-spacing:<?= $lsPx ?>px;margin-bottom:calc(var(--u) * 1);line-height:1.04;
   filter:<?= $HALO_C ?>}
 .support-line{text-align:center;font-family:'Playfair Display',serif;font-size:10.2pt;font-weight:700;
-  line-height:1.28;margin:0 -<?= max(0, round($PAD_X - 11, 1)) ?>mm 3mm -<?= max(0, round($PAD_X - 11, 1)) ?>mm;
+  line-height:1.28;margin:0 -<?= max(0, round($PAD_X - 11, 1)) ?>mm calc(var(--u) * 1.5) -<?= max(0, round($PAD_X - 11, 1)) ?>mm;
   padding:0;color:<?= $FIT['muted'] ?>}
 .diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:5px;margin-bottom:1mm;line-height:1}
+  letter-spacing:5px;margin-bottom:calc(var(--u) * 0.5);line-height:1}
 /* Цифры — только «прописные» (lining): в антиквах тем цифры по умолчанию
    старостильные, и «1 СТЕПЕНИ» печаталось крошечной единицей. */
 .diploma-degree,.awarded-name,.awarded-name-script,.field-list,.diploma-type{
@@ -884,12 +891,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   /* Звание отодвинуто от слова ДИПЛОМ и придвинуто к «награждается»: раньше оно
      висело ровно посередине между ними, и связка «звание - кому» разрывалась. */
-  letter-spacing:4px;margin-top:<?= $TIGHT ? '1.8' : '2.6' ?>mm;
-  margin-bottom:<?= $TIGHT ? '1.4' : '2' ?>mm;filter:<?= $HALO_D ?>;line-height:1}
+  letter-spacing:4px;margin-top:calc(var(--u) * 1);
+  margin-bottom:calc(var(--u) * 1);filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:<?= $TIGHT ? '1' : '1.6' ?>mm}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 0.5)}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
-  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:<?= $TIGHT ? '2.6' : '3.8' ?>mm;
+  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:calc(var(--u) * 1.5);
   letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
   filter:<?= $FIT['dark'] ? 'none' : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))' ?>}
 .awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;line-height:1}
@@ -1161,7 +1168,34 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     /* Метка готовности: снимок для витрины и печать PDF ждут её, чтобы не
        сфотографировать лист раньше, чем подобран кегль главной строки. */
     if(!FAM || (document.fonts && document.fonts.check && document.fonts.check('900 40pt "'+FAM+'"'))){
+      fitRhythm();
       document.documentElement.setAttribute('data-title-fit','1');
+    }
+  }
+  /* РОВНЫЙ ЛИСТ. Интервалы между строками кратны одному шагу (--u), но у разных
+     фонов подписи стоят на разной высоте: у «Мира звёзд» под данными оставалось
+     35 мм пустоты, у «Наследия России» - 13. Свободное место раскладывается по
+     тем же интервалам - лист заполняется равномерно, а ритм остаётся единым. */
+  function fitRhythm(){
+    var cont=document.querySelector('.content'),
+        fl=document.querySelector('.field-list')||document.querySelector('.gratitude-text'),
+        bb=document.querySelector('.bottom-block');
+    if(!cont||!fl||!bb) return;
+    var sc=1, m=getComputedStyle(cont).transform.match(/matrix\(([\d.]+)/); if(m) sc=parseFloat(m[1]);
+    var PX_MM=document.querySelector('.diploma').getBoundingClientRect().width/210;
+    var base=parseFloat(<?= json_encode((string)$U) ?>), u=base, TARGET=13, STEPS=11;
+    for(var i=0;i<14;i++){
+      var free=(bb.getBoundingClientRect().top-fl.getBoundingClientRect().bottom)/PX_MM;
+      if(free<=TARGET+0.5) break;
+      var add=Math.min((free-TARGET)/STEPS/Math.max(sc,0.01), base*1.2-(u-base));
+      if(add<=0.05) break;
+      u+=add; cont.style.setProperty('--u', u.toFixed(2)+'mm');
+    }
+    /* Перебор назад: если раздвинули слишком сильно и данные упёрлись в подписи. */
+    for(var j=0;j<14;j++){
+      var f2=(bb.getBoundingClientRect().top-fl.getBoundingClientRect().bottom)/PX_MM;
+      if(f2>=6 || u<=base) break;
+      u=Math.max(base, u-0.4); cont.style.setProperty('--u', u.toFixed(2)+'mm');
     }
   }
   if(document.fonts && document.fonts.load && FAM){
