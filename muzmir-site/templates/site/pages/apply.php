@@ -11,9 +11,13 @@ require_once BASE_PATH . '/core/loyalty.php';
  * Соблазн — не показывать его тем, кто не в Клубе. Но тогда он и не продаёт
  * ничего: человек не знает, что пропускает. Показываем всем с пометкой, а
  * замок стоит на сервере (api/v1/apply.php). */
-$comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg,COALESCE(club_only,0) club_only
+/* Конкурс ВИП-клуба стоит ПЕРВЫМ: он с призовым фондом, и именно его участник
+   должен увидеть раньше остальных, а не искать в конце списка. */
+$comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg,cover,end_date,
+                     COALESCE(club_only,0) club_only
               FROM competitions
-              WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort");
+              WHERE status='open' AND COALESCE(launched,0) = 1
+              ORDER BY COALESCE(club_only,0) DESC, sort");
 
 // В Клубе ли тот, кто сейчас заполняет форму.
 if (!function_exists('club_is_active') && is_file(BASE_PATH . '/core/club.php')) {
@@ -168,22 +172,40 @@ ob_start(); ?>
 .comp-opt .co-body{border:1.5px solid var(--glass-brd);border-radius:16px;padding:16px 18px;
   display:flex;align-items:center;gap:14px;min-height:64px;background:var(--panel);backdrop-filter:blur(10px);
   transition:border-color .2s,background .2s,box-shadow .2s,transform .2s}
-/* Карточка-афиша: обложка/фон диплома заливает всю карточку, поверх — чекбокс и название */
-.comp-opt .co-body--cover{position:relative;overflow:hidden;min-height:132px;align-items:flex-end;padding:14px 16px;
-  background-size:cover;background-position:center;color:#fff;border-color:var(--glass-brd2)}
+/* Карточка-афиша: орнамент бланка заливает карточку, поверх — название и метки. */
+.comp-opt .co-body--cover{position:relative;overflow:hidden;min-height:150px;align-items:flex-end;padding:16px 18px;
+  background-size:cover;background-position:center 38%;color:#fff;border-color:var(--glass-brd2)}
 @media(hover:hover){.comp-opt:hover .co-body{border-color:var(--gold);box-shadow:var(--shadow-card);transform:translateY(-2px)}}
 .comp-opt input:checked + .co-body{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 3px var(--gold-soft)}
 .comp-opt input:checked + .co-body--cover{box-shadow:0 0 0 3px var(--gold),0 12px 30px rgba(199,147,34,.32)}
 .comp-opt input:focus-visible + .co-body{box-shadow:0 0 0 4px var(--gold-soft)}
 .co-mark{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s;background:rgba(255,255,255,.9)}
 .co-body--cover .co-mark{position:absolute;top:12px;right:12px;border-color:rgba(255,255,255,.85);
-  box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:2}
 .comp-opt input:checked + .co-body .co-mark{border-color:var(--gold);background:var(--grad-gold)}
 .comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:8px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--gold-fg)}
 .co-main{flex:1;min-width:0;position:relative;z-index:2}
 .co-main b{display:block;font-family:var(--ff-serif);font-size:1.12rem;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
-.co-body--cover .co-main b{color:#fff;font-size:1.28rem;text-shadow:0 2px 10px rgba(0,0,0,.55)}
-.co-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.co-body--cover .co-main b{color:#fff;font-size:1.3rem;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.co-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.co-tags .badge{font-size:.7rem;padding:4px 9px;letter-spacing:.04em}
+/* Метки поверх орнамента: плотная подложка, иначе тонут в рисунке. */
+.co-body--cover .badge{background:rgba(10,16,34,.72) !important;color:#fff !important;
+  border:1px solid rgba(255,255,255,.35) !important;backdrop-filter:blur(6px);text-shadow:none}
+.co-body--cover .badge--open{background:rgba(22,101,64,.88) !important;border-color:rgba(150,235,190,.5) !important}
+.co-body--cover .badge--vip{background:var(--grad-gold) !important;color:var(--gold-fg) !important;
+  border-color:rgba(255,255,255,.55) !important;font-weight:800}
+
+/* Конкурс ВИП-клуба: золотая рамка и строка призового фонда. */
+.co-body--vip{border:2px solid var(--gold) !important;box-shadow:0 10px 34px rgba(199,147,34,.28)}
+.co-body--vip.co-body--cover{min-height:186px}
+.comp-opt input:checked + .co-body--vip{box-shadow:0 0 0 3px var(--gold),0 14px 38px rgba(199,147,34,.42)}
+.co-fund{display:inline-block;margin-top:11px;padding:8px 15px;border-radius:11px;
+  background:linear-gradient(135deg,#C79322,#E9C567 55%,#C79322);color:#2A1A0B;
+  font:800 .8rem/1.25 var(--ff-sans,inherit);letter-spacing:.06em;text-transform:uppercase;
+  box-shadow:0 6px 18px rgba(199,147,34,.35)}
+.co-fund b{font:900 1.1rem/1 var(--ff-serif);letter-spacing:0;text-transform:none}
+@media (max-width:430px){ .co-main b,.co-body--cover .co-main b{font-size:1.14rem} }
 
 /* Сегмент солист / коллектив */
 .seg{display:flex;gap:6px;border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:5px;margin-bottom:20px;background:var(--glass);backdrop-filter:blur(8px)}
@@ -391,33 +413,43 @@ ob_start(); ?>
                   data-reg="<?= url('/competition/'.$c['slug'].'/regulation.pdf') ?>" data-code="<?= h($c['code']) ?>"
                   data-club-only="<?= (int)$c['club_only'] ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
-                <?php $dbg = trim((string)($c['diploma_bg'] ?? ''));
-                      $cvr = trim((string)($c['cover'] ?? ''));
-                      $bgSrc = $dbg !== '' ? $dbg : $cvr;
-                      $bgUrl = $bgSrc !== '' ? (preg_match('~^https?://~', $bgSrc) ? $bgSrc : url('/' . ltrim($bgSrc, '/'))) : '';
-                      $coStyle = $bgUrl !== '' ? "background-image:linear-gradient(180deg,rgba(8,16,42,.28) 0%,rgba(8,16,42,.55) 52%,rgba(8,16,42,.88) 100%),url('".h($bgUrl)."')" : ''; ?>
-                <span class="co-body<?= $bgUrl !== '' ? ' co-body--cover' : '' ?>"<?= $coStyle !== '' ? ' style="'.$coStyle.'"' : '' ?>>
+                <?php
+                  /* ФОН КАРТОЧКИ — БЛАНК ДИПЛОМА. На афише название конкурса уже
+                     напечатано крупно, и поверх него ложилась наша подпись: два
+                     названия внахлёст. У бланка чистый орнамент — он и красив, и
+                     не спорит с текстом карточки. */
+                  $dbg   = trim((string)($c['diploma_bg'] ?? ''));
+                  $cvr   = trim((string)($c['cover'] ?? ''));
+                  $bgSrc = $dbg !== '' ? $dbg : $cvr;
+                  $bgUrl = $bgSrc !== '' ? (preg_match('~^https?://~', $bgSrc) ? $bgSrc : url('/' . ltrim($bgSrc, '/'))) : '';
+                  $veil  = (int)$c['club_only']
+                    ? 'linear-gradient(180deg,rgba(24,15,3,.34) 0%,rgba(28,17,4,.62) 52%,rgba(16,10,2,.92) 100%)'
+                    : 'linear-gradient(180deg,rgba(8,14,36,.34) 0%,rgba(8,14,36,.62) 52%,rgba(5,10,28,.92) 100%)';
+                  $coStyle = $bgUrl !== '' ? "background-image:" . $veil . ",url('" . h($bgUrl) . "')" : '';
+                ?>
+                <span class="co-body<?= $bgUrl !== '' ? ' co-body--cover' : '' ?><?= (int)$c['club_only'] ? ' co-body--vip' : '' ?>"<?= $coStyle !== '' ? ' style="'.$coStyle.'"' : '' ?>>
                   <span class="co-mark"></span>
                   <span class="co-main">
                     <b><?= h($c['name']) ?></b>
                     <span class="co-tags">
                       <span class="badge badge--intl"><?= $c['type']==='international'?'Международный':'Всероссийский' ?></span>
                       <?php
-                        // Участнику Клуба цену показываем так же, как в наградах и афише:
-                        // полная зачёркнута, рядом — со скидкой (сервер считает сам).
                         $apFull = (int) $c['price'];
                         $apMy   = ((int) $jsCfg['clubPct'] > 0) ? (int) max(0, round($apFull * (100 - (int) $jsCfg['clubPct']) / 100)) : $apFull;
                       ?>
                       <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?php
-                        if ((int)$c['club_only']) { echo 'Входит в Клуб'; }
+                        if ((int)$c['club_only']) { echo 'Бесплатно'; }
                         elseif (!(int)$c['is_paid']) { echo 'Бесплатный'; }
                         elseif ($apMy < $apFull) { echo '<s style="opacity:.6">' . $apFull . ' ₽</s> ' . $apMy . ' ₽'; }
                         else { echo $apFull . ' ₽'; }
                       ?></span>
                       <?php if ((int)$c['club_only']): ?>
-                        <span class="badge badge--vip">Только для участников Клуба</span>
+                        <span class="badge badge--vip">Только для ВИП-клуба</span>
                       <?php endif; ?>
                     </span>
+                    <?php if ((int)$c['club_only']): ?>
+                      <span class="co-fund">ПРИЗОВОЙ ФОНД: <b>100 000 ₽</b></span>
+                    <?php endif; ?>
                   </span>
                 </span>
               </label>

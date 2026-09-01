@@ -2235,11 +2235,13 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80
 
 /* --- Уровень 1: выбор конкурса --- */
 .aw-comp-list{display:flex;flex-direction:column;gap:12px}
-/* Карточка-афиша: обложка конкурса заливает ВСЮ карточку, контент — поверх */
+/* КАРТОЧКА КОНКУРСА В НАГРАДАХ: орнамент бланка заливает карточку, поверх —
+   название, метка масштаба и кнопка. У конкурса ВИП-клуба золотая рамка и
+   строка призового фонда. */
 .aw-comp{position:relative;display:flex;flex-direction:column;justify-content:flex-end;
   min-height:190px;border-radius:20px;overflow:hidden;padding:16px;
   text-decoration:none;color:#fff;background:linear-gradient(150deg,#17307A,#24499F 55%,#C79322 130%);
-  background-size:cover;background-position:center;
+  background-size:cover;background-position:center 38%;
   border:1px solid var(--glass-brd2);box-shadow:0 14px 40px rgba(21,34,76,.18), inset 0 1px 0 var(--sheen);
   opacity:0;transform:translateY(14px);animation:menuTileIn .5s cubic-bezier(.2,.85,.25,1) forwards;
   animation-delay:calc(var(--i,0)*70ms);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s}
@@ -2258,6 +2260,12 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80
   font-size:.82rem;font-weight:800;color:var(--gold-fg,#1B1533);background:var(--grad-gold);
   padding:8px 15px;border-radius:999px;box-shadow:0 6px 16px rgba(199,147,34,.4)}
 .aw-comp-go svg{width:16px;height:16px}
+.aw-comp--vip{border:2px solid var(--gold);min-height:214px;box-shadow:0 14px 40px rgba(199,147,34,.28)}
+.aw-comp-fund{align-self:flex-start;margin:2px 0 2px;padding:7px 14px;border-radius:11px;
+  background:linear-gradient(135deg,#C79322,#E9C567 55%,#C79322);color:#2A1A0B;
+  font:800 .76rem/1.25 var(--ff-sans,inherit);letter-spacing:.06em;text-transform:uppercase;
+  box-shadow:0 6px 16px rgba(199,147,34,.34)}
+.aw-comp-fund b{font:900 1.05rem/1 var(--ff-serif);letter-spacing:0;text-transform:none}
 
 /* --- Уровень 2: сетка образцов 1:1 --- */
 

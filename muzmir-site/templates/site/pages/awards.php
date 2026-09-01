@@ -175,24 +175,38 @@ ob_start(); ?>
     </div>
 
     <div class="aw-comp-list">
-      <?php foreach ($comps as $i => $c):
-        // Фон карточки награды — ТОЛЬКО пустой шаблон диплома (diploma_bg).
-        // Фолбэка на афишу (cover) здесь быть не должно: афиша и фон диплома —
-        // разные материалы, подмена одного другим сразу видна и выглядит браком.
-        $tpl = trim((string)($c['diploma_bg'] ?? ''));
-        $coverUrl = $tpl !== '' ? (preg_match('~^https?://~', $tpl) ? $tpl : url('/' . ltrim($tpl, '/'))) : '';
-        $scope = ($c['type'] === 'international') ? 'Международный' : 'Всероссийский';
+      <?php
+        /* Конкурс ВИП-клуба показываем первым — он с призовым фондом. */
+        usort($comps, static fn($a,$b) => ((int)($b['club_only'] ?? 0)) <=> ((int)($a['club_only'] ?? 0)));
       ?>
-      <?php $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];
-            $dir = $dirMap[(string)$c['direction']] ?? ($c['direction'] ?: 'Многожанровый');
-            $awStyle = "--i:$i" . ($coverUrl ? ";background-image:linear-gradient(180deg,rgba(8,16,42,.30) 0%,rgba(8,16,42,.55) 55%,rgba(8,16,42,.86) 100%),url('".h($coverUrl)."')" : ''); ?>
-      <a class="aw-comp<?= $coverUrl ? ' has-cover' : '' ?> reveal" style="<?= $awStyle ?>" href="<?= url('/awards') ?>?comp=<?= (int)$c['id'] ?>">
+      <?php foreach ($comps as $i => $c):
+        /* КАРТОЧКА: афиша конкурса миниатюрой ЦЕЛИКОМ, рядом название и данные.
+           Растянутая на всю карточку афиша не годилась: её собственное название
+           накладывалось на подпись, а обрезанный орнамент читался как пустое
+           пятно. */
+        // Фон — пустой бланк диплома: на афише уже напечатано название конкурса,
+        // и поверх него ложилась подпись карточки.
+        $tpl = trim((string)($c['diploma_bg'] ?? ''));
+        $cvr = trim((string)($c['cover'] ?? ''));
+        $src = $tpl !== '' ? $tpl : $cvr;
+        $coverUrl = $src !== '' ? (preg_match('~^https?://~', $src) ? $src : url('/' . ltrim($src, '/'))) : '';
+        $scope = ($c['type'] === 'international') ? 'Международный' : 'Всероссийский';
+        $isClub = (int)($c['club_only'] ?? 0) === 1;
+        $veil = $isClub
+          ? 'linear-gradient(180deg,rgba(24,15,3,.34) 0%,rgba(28,17,4,.62) 52%,rgba(16,10,2,.92) 100%)'
+          : 'linear-gradient(180deg,rgba(8,14,36,.34) 0%,rgba(8,14,36,.62) 52%,rgba(5,10,28,.92) 100%)';
+        $awStyle = "--i:$i" . ($coverUrl ? ";background-image:" . $veil . ",url('".h($coverUrl)."')" : '');
+        $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];
+        $dir = $dirMap[(string)$c['direction']] ?? ($c['direction'] ?: 'Многожанровый');
+      ?>
+      <a class="aw-comp<?= $coverUrl ? ' has-cover' : '' ?><?= $isClub ? ' aw-comp--vip' : '' ?> reveal" style="<?= $awStyle ?>" href="<?= url('/awards') ?>?comp=<?= (int)$c['id'] ?>">
         <span class="aw-comp-scope"><?= h($scope) ?></span>
         <span class="aw-comp-emb" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0V4z"/><path d="M6 6H3a3 3 0 0 0 3 5M18 6h3a3 3 0 0 1-3 5"/></svg>
         </span>
         <div class="aw-comp-body">
           <h3 class="aw-comp-name"><?= h($c['name']) ?></h3>
+          <?php if ($isClub): ?><span class="aw-comp-fund">ПРИЗОВОЙ ФОНД: <b>100 000 ₽</b></span><?php endif; ?>
           <p class="aw-comp-sub"><?= h(mb_strimwidth((string)$dir,0,40,'…')) ?></p>
           <span class="aw-comp-go">Выбрать награды
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

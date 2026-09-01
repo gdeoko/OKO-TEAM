@@ -919,6 +919,12 @@
     $$('input[name="competition_ids[]"]').forEach(function (r) {
       r.addEventListener('change', recomputePaid);
     });
+    /* КОНКУРС ВИП-КЛУБА ПРОВЕРЯЕМ И ПРИ ВХОДЕ ПО ССЫЛКЕ.
+       С афиши, календаря и главной человек попадает сюда с уже отмеченным
+       конкурсом (?competition=...). События change при этом нет, а проверка
+       членства висела только на нём: участник со стороны спокойно проходил всю
+       форму до конца и получал отказ уже при отправке. Проверяем сразу. */
+    clubNotice($$('input[name="competition_ids[]"]:checked'));
     // Кнопка «Выбрать все»
     var selAll = document.getElementById('mzApplySelectAll');
     if (selAll) selAll.addEventListener('click', function(){
