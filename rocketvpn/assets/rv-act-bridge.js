@@ -258,9 +258,9 @@
        с ней за внимание. Источники света в акте стоят со стороны
        камеры, поэтому после разворота они освещают именно её. */
     var мСпинка = new T.MeshStandardMaterial({
-      color: 0x232D45, metalness: 0.34, roughness: 0.52,
-      emissive: 0x0A1024, emissiveIntensity: 1,
-      envMapIntensity: 1.2, transparent: true, opacity: 1
+      color: 0x1B2438, metalness: 0.52, roughness: 0.44,
+      emissive: 0x05080F, emissiveIntensity: 1,
+      envMapIntensity: 1.8, transparent: true, opacity: 1
     });
     /* Двусторонняя намеренно. Обычная плоскость смотрит в +Z, и после
        поворота щита на пол-оборота браузер выбрасывает её как заднюю
@@ -312,9 +312,9 @@
              шероховатость тоже - блик стал собранным, а не размазанным
              в никуда. Собственное свечение подняли настолько, чтобы
              тело не проваливалось в фон даже спиной к свету. */
-          color: 0x33405F, metalness: 0.42, roughness: 0.38,
-          emissive: 0x101932, emissiveIntensity: 1,
-          envMapIntensity: 1.6, transparent: true, opacity: 1
+          color: 0x212A3E, metalness: 0.70, roughness: 0.36,
+          emissive: 0x070B18, emissiveIntensity: 1,
+          envMapIntensity: 1.3, transparent: true, opacity: 1
         });
         материалы.push([мТело, 1]);
         /* Свой свет на щит. Общие источники сцены поставлены под
@@ -323,11 +323,11 @@
            Два источника живут ВНУТРИ корня акта, поэтому гаснут вместе
            с ним и другим актам не мешают: ключ спереди слева сверху,
            контровой снизу справа - он и рисует кромку. */
-        var ключЩ = new T.DirectionalLight(0xC8D6FF, 5.0);
+        var ключЩ = new T.DirectionalLight(0xEAEFFF, 4.2);
         ключЩ.position.set(-3.4, 4.2, 6.5);
         корень.add(ключЩ);
         корень.add(ключЩ.target);
-        var кромкаЩ = new T.DirectionalLight(0x7C8CFF, 3.6);
+        var кромкаЩ = new T.DirectionalLight(0x6E7EE0, 2.8);
         кромкаЩ.position.set(4.0, -3.6, -2.2);
         корень.add(кромкаЩ);
         корень.add(кромкаЩ.target);
@@ -335,7 +335,7 @@
            было мало: ключ и контровой рисуют кромки, а середина щита
            между ними оставалась провалом, и гнёзда доков в этом
            провале не читались вовсе. */
-        var лицоЩ = new T.DirectionalLight(0x9FB0E8, 1.5);
+        var лицоЩ = new T.DirectionalLight(0x9FB0E8, 0.7);
         лицоЩ.position.set(0.4, 0.6, 9.0);
         корень.add(лицоЩ);
         корень.add(лицоЩ.target);
