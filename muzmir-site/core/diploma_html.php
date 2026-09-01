@@ -289,7 +289,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
              * продолжение заголовка. */
             'grad_degree' => 'linear-gradient(180deg,#F6F0FF 0%,#DCC8FF 34%,#A98CFF 66%,#EFE6FF 100%)',
             'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
-            'script_font' => 'Pacifico', 'ff_script' => "'Pacifico',cursive", 'script_fs' => 36, 'script_color' => '#D6F1FF',
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 32, 'script_color' => '#D6F1FF',
         ],
         // Зенит, триумф: античная классика, тёплое торжественное золото.
         'zenith' => [
@@ -302,7 +302,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             // Звание — холодная платина: рядом с золотым названием видно сразу.
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#E2E9F5 34%,#9AA6BE 68%,#F0F4FB 100%)',
             'name_color' => '#FFE99C', 'ff_name' => "'Forum',serif",
-            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE99C',
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 33, 'script_color' => '#FFE99C',
         ],
         // Театр, сцена: бархат и шампань, тёплый кремовый свет рампы.
         'theatre' => [
@@ -315,7 +315,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             // Звание — светлый изумруд сцены, чтобы не повторять золото названия.
             'grad_degree' => 'linear-gradient(180deg,#EAFFF6 0%,#B6EDD6 34%,#5FBF9B 68%,#DFFBF0 100%)',
             'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
-            'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 42, 'script_color' => '#FFE3B0',
+            'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 34, 'script_color' => '#FFE3B0',
         ],
         // Держава: имперское золото с рубиновым отблеском, строгая антиква.
         'derzhava' => [
@@ -328,7 +328,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             // Звание — светлый багрянец: золото остаётся за названием конкурса.
             'grad_degree' => 'linear-gradient(180deg,#FFF0EC 0%,#FFC9C2 32%,#E0555F 66%,#FFE3DC 100%)',
             'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
-            'script_font' => 'Lobster', 'ff_script' => "'Lobster',cursive", 'script_fs' => 37, 'script_color' => '#FFD98F',
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 32, 'script_color' => '#FFD98F',
         ],
         // Классика эталона (фолбэк).
         'classic' => [
@@ -340,7 +340,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#E2E9F5 34%,#9AA6BE 68%,#F0F4FB 100%)',
             'name_color' => '#FFE082', 'ff_name' => "'Playfair Display',serif",
-            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE082',
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 33, 'script_color' => '#FFE082',
         ],
     ];
     $key = (string)($tpl['theme'] ?? '');
@@ -1132,18 +1132,16 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
      text-align:center переполнение уходит в обе стороны, и scrollWidth всегда
      равен clientWidth - проверка «влезло?» была всегда ложной, и название
      оставалось мелким. Range даёт истинную ширину набранного текста. */
-  function fitTitle(){
-    var el=document.querySelector('.competition-name');
+  /* Ширину набранной строки меряем НА ОТДЕЛЬНОМ невидимом двойнике.
+     Прямые замеры обманывают: scrollWidth у центрированного блока равен
+     clientWidth, а Range отдаёт ширину, уже обрезанную рамками контейнера - и
+     то и другое показывало «влезает», когда строка выходила за края листа. */
+  function fitOne(sel, loPt, hiPt){
+    var el=document.querySelector(sel);
     if(!el) return;
     var max=el.clientWidth-2;
     if(max<=0) return;
     el.style.whiteSpace='nowrap';
-    /* Ширину набранной строки меряем НА ОТДЕЛЬНОМ невидимом двойнике.
-       Прямые замеры самого заголовка обманывают: scrollWidth у центрированного
-       блока равен clientWidth, а Range отдаёт ширину, уже обрезанную рамками
-       контейнера - и то и другое показывало «влезает», когда строка на деле
-       выходила за края листа. Двойник ничем не ограничен и даёт честную
-       ширину. */
     var cs=getComputedStyle(el);
     var probe=document.createElement('span');
     probe.textContent=el.textContent;
@@ -1153,10 +1151,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     probe.style.textTransform=cs.textTransform;
     document.body.appendChild(probe);
     function textW(fs){ probe.style.fontSize=fs+'pt'; return probe.getBoundingClientRect().width; }
-    /* Потолок кегля нужен ради КОРОТКИХ названий: «МИР ЗВЁЗД» из девяти знаков,
-       растянутое на всю ширину колонки, набиралось буквами в полтора сантиметра
-       и подминало под себя весь верх листа. Ширина - цель, а не любой ценой. */
-    var lo=<?= max(18, (int)round($COMP_FS * 0.6)) ?>, hi=<?= (int)round(min(46, max(34, $COMP_FS * 2.6))) ?>, best=lo;
+    var lo=loPt, hi=hiPt, best=lo;
     for(var i=0;i<26 && hi-lo>0.1;i++){
       var mid=(lo+hi)/2;
       if(textW(mid)<=max){ best=mid; lo=mid; } else { hi=mid; }
@@ -1165,8 +1160,21 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     probe.parentNode.removeChild(probe);
     el.style.fontSize=best.toFixed(1)+'pt';
     if(!fits) el.style.whiteSpace='normal';
-    /* Метка готовности: снимок для витрины и печать PDF ждут её, чтобы не
-       сфотографировать лист раньше, чем подобран кегль главной строки. */
+  }
+  function fitTitle(){
+    fitOne('.competition-name', <?= max(18, (int)round($COMP_FS * 0.6)) ?>, <?= (int)round(min(46, max(34, $COMP_FS * 2.6))) ?>);
+    /* Звание тоже подгоняется: у дополнительного диплома это не «Лауреат I
+       степени», а длинная формулировка вроде «За верность традициям» - при
+       жёстком кегле её обрезало краем листа. */
+    fitOne('.diploma-degree', 13, <?= round(40 * $CSCALE, 1) ?>);
+    /* Слово ДИПЛОМ короткое и всегда влезало, а вот БЛАГОДАРНОСТЬ на бланке с
+       узкими полями обрезалась краем листа - подгоняем и её. */
+    fitOne('.diploma-type', 22, <?= $thanks ? 48 : 58 ?>);
+    /* ФИО в благодарности - рукописной строкой: она бывает длинной («Константинопольская
+       Александра Владимировна»), и жёсткий кегль её либо обрезал, либо ронял на две
+       строки. Подгоняем по ширине, как название конкурса. */
+    fitOne('.awarded-name-script', 13, <?= (float)$T['script_fs'] ?>);
+    fitOne('.extra-award', 9, 15);
     if(!FAM || (document.fonts && document.fonts.check && document.fonts.check('900 40pt "'+FAM+'"'))){
       fitRhythm();
       document.documentElement.setAttribute('data-title-fit','1');
