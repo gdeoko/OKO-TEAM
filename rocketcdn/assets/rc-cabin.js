@@ -1032,7 +1032,7 @@ function build(T, opts) {
   var steel = new T.MeshPhongMaterial({ color: style.steel, shininess: 46, specular: 0x6f8296 });
   var caseMat = new T.MeshPhongMaterial({ color: style.panel, shininess: 12, specular: 0x223447 });
   var litCyan = new T.MeshBasicMaterial({ color: style.cyan, transparent: true, opacity: 0.75, fog: false });
-  var litSoft = new T.MeshBasicMaterial({ color: style.cyanSoft, transparent: true, opacity: 0.3,
+  var litSoft = new T.MeshBasicMaterial({ color: style.cyanSoft, transparent: true, opacity: 0.16,
     blending: T.AdditiveBlending, depthWrite: false, fog: false });
 
   сб("материалы");
@@ -1274,12 +1274,26 @@ function build(T, opts) {
   floor.rotation.x = -Math.PI / 2;
   grp.add(floor);
 
-  /* Световая полоса по периметру пола: главная линия помещения */
+  /* Световая полоса по периметру пола: главная линия помещения.
+
+     ПОЧЕМУ ОТСВЕТ СТАЛ УЖЕ. Рядом с полосой лежал второй круг, от
+     0.6 до 0.97 радиуса, сложением и на треть непрозрачности. Это
+     метр с лишним ширины на трёхметровом полу, то есть почти весь
+     настил разом. От глаз на высоте полутора метров дальняя его
+     половина ложится в кадр широкой дугой, выпуклой вверх, а поверх
+     дуги идёт яркая кромка самой полосы. Получается ровно силуэт
+     планеты с атмосферным ободком, и приёмка так его и записала:
+     «планета проходит сквозь стену рубки». Настила при этом не
+     видно вовсе - сложение выбеливает и решётку, и проступь.
+
+     Отсвет теперь лежит вплотную к полосе и вдвое слабее. Полоса
+     осталась линией помещения, отсвет остался отсветом, а пол снова
+     читается полом. */
   m = new T.Mesh(new T.RingGeometry(R_WALL * 0.93, R_WALL * 0.985, tiny ? 34 : 52), litCyan);
   m.rotation.x = -Math.PI / 2;
   m.position.y = 0.02;
   grp.add(m);
-  m = new T.Mesh(new T.RingGeometry(R_WALL * 0.6, R_WALL * 0.97, tiny ? 26 : 40), litSoft);
+  m = new T.Mesh(new T.RingGeometry(R_WALL * 0.87, R_WALL * 0.965, tiny ? 26 : 40), litSoft);
   m.rotation.x = -Math.PI / 2;
   m.position.y = 0.025;
   grp.add(m);
