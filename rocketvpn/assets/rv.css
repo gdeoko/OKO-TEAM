@@ -38,6 +38,15 @@
   --rv-кромка:      rgba(96,120,216,.22);
   --rv-плита:       rgba(10,14,32,.72);
 
+  /* Подложки постоянных органов, меню и полей ввода. Стоят здесь, в
+     основном наборе, а не в блоке тёмной темы: пока скрипт не проставил
+     признак темы, признака на корне НЕТ, и значения, объявленные только
+     под ним, не действуют - на первом кадре бургер и панель уходили в
+     прозрачность. Светлая тема их перекрывает. */
+  --rv-орган-фон:   rgba(8,11,24,.72);
+  --rv-меню-фон:    rgba(7,10,22,.92);
+  --rv-поле-фон:    rgba(6,9,20,.7);
+
   --rv-шрифт: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
   /* Гарнитура заголовков и чисел. Отдельной переменной, чтобы смена
      была одной правкой, а не поиском по файлу. */
@@ -196,23 +205,38 @@ a { color: inherit; }
      Цвет ровный, светлый, чуть голубее чистого белого - чтобы
      заголовок принадлежал холодному миру, а не лежал на нём. */
   color: #F4F6FF;
+  /* СВЕЧЕНИЕ НЕ ДОЛЖНО ЕСТЬ БУКВУ.
+
+     Ядро стояло десять точек размытия, и на этом радиусе оно
+     размазывало САМ рисунок знака: заголовок в три строки сливался в
+     светлое пятно, а владелец прочёл это как «пересвечены, сливаются».
+     У настоящей газоразрядной трубки наоборот - тело стекла режет
+     глаз чёткой линией, а мягкое только зарево вокруг.
+
+     Поэтому ядро прижато к букве (четыре точки), середина убрана
+     вдвое, а широкий нимб оставлен: он и даёт ночную атмосферу, но за
+     форму знака не отвечает. Тонкая тёмная подложка снизу отделяет
+     строку от собственного зарева соседней. */
   text-shadow:
-    0 0 calc(10px * var(--rv-неон-сила)) var(--rv-неон-ядро),
-    0 0 calc(28px * var(--rv-неон-сила)) var(--rv-неон-тело),
-    0 0 calc(64px * var(--rv-неон-сила)) var(--rv-неон-нимб),
-    0 2px 3px rgba(5, 6, 12, .95);
+    0 0 calc(4px * var(--rv-неон-сила)) var(--rv-неон-ядро),
+    0 0 calc(15px * var(--rv-неон-сила)) var(--rv-неон-тело),
+    0 0 calc(52px * var(--rv-неон-сила)) var(--rv-неон-нимб),
+    0 2px 4px rgba(5, 6, 12, .95);
 }
 /* Ключевое слово акта. Индиго и горит сильнее остального: в каждом
    акте есть одна мысль, ради которой акт написан, и она обязана
    светиться ярче фразы вокруг неё. */
 .rv-заг em {
   font-style: normal;
-  color: #A8B8FF;
+  /* Ключевое слово было светлее собственного зарева и тонуло в нём.
+     Тон опущен до тела индиго, зарево прижато к знаку: слово теперь
+     отличается от остального заголовка КРАСКОЙ, а не яркостью. */
+  color: #93A6FF;
   text-shadow:
-    0 0 calc(8px * var(--rv-неон-сила)) rgba(190, 205, 255, .98),
-    0 0 calc(26px * var(--rv-неон-сила)) rgba(120, 145, 255, .9),
-    0 0 calc(70px * var(--rv-неон-сила)) rgba(60, 90, 220, .8),
-    0 2px 3px rgba(5, 6, 12, .9);
+    0 0 calc(4px * var(--rv-неон-сила)) rgba(190, 205, 255, .9),
+    0 0 calc(14px * var(--rv-неон-сила)) rgba(120, 145, 255, .8),
+    0 0 calc(56px * var(--rv-неон-сила)) rgba(60, 90, 220, .7),
+    0 2px 4px rgba(5, 6, 12, .9);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -902,8 +926,30 @@ html.rv-открыт .rv-плёнка { visibility: visible; }
      где сцена уже сменилась, а слов ещё нет: пустой экран читается
      поломкой. Сейчас проявление занимает первые четыре сотых хода и
      уход - последние четыре. */
-  --вход: clamp(0, calc((var(--д, 0) - 0.008) * 26), 1);
-  --выход: clamp(0, calc((0.992 - var(--д, 0)) * 26), 1);
+  /* ДВА ИСТОЧНИКА ВИДИМОСТИ, И БЕРЁТСЯ БОЛЬШИЙ.
+
+     Первый - доля хода. Она честно ведёт текст, пока кадр прилип к
+     верху экрана. Но ход НАЧИНАЕТСЯ только с прилипания: пока акт
+     подъезжает снизу, доля ровно ноль, а кадр уже на экране. Целый
+     экран прокрутки на каждой из семи границ текст стоял невидимым
+     над живой сценой, и это ровно то, что видно как «долгий чёрный
+     экран между блоками».
+
+     Второй - положение секции на экране: подход и уход. По ним текст
+     выводится ЗАРАНЕЕ и убирается ПОЗЖЕ, поэтому на границе два
+     соседних акта перекрываются, а не гаснут оба разом. Они стоят на
+     разных половинах экрана и друг другу не мешают.
+
+     Берём максимум, а не сумму: складывать прозрачности значит
+     получить полтора и потерять оба перехода. */
+  --вход: max(
+    clamp(0, calc((var(--д, 0) - 0.008) * 26), 1),
+    clamp(0, calc((var(--подход, 0) - 0.28) * 2.6), 1)
+  );
+  --выход: max(
+    clamp(0, calc((0.992 - var(--д, 0)) * 26), 1),
+    clamp(0, calc((var(--уход, 1) - 0.28) * 2.6), 1)
+  );
   --вид: min(var(--вход), var(--выход));
 }
 /* Первый экран стоит до всякой прокрутки: он и есть крючок. */
@@ -1215,3 +1261,279 @@ html.rv-тронул .rv-листай { opacity: 0; pointer-events: none; }
 .rv-звук.rv-звук-вкл { color: #E8EAF6; border-color: rgba(var(--rv-свет-rgb), .55); }
 .rv-звук.rv-звук-вкл .rv-звук-волна { opacity: .9; }
 .rv-звук.rv-звук-вкл .rv-звук-крест { opacity: 0; }
+
+/* ═══════════════════════════════════════════════════════════
+   БУРГЕР, МЕНЮ, ФОРМА И ТЕМЫ
+
+   Бургер стоит СЛЕВА вверху, вход в кабинет справа, звук справа внизу:
+   три постоянных органа на трёх углах, они не спорят за место и палец
+   не берёт соседа вместо нужного.
+   ═══════════════════════════════════════════════════════════ */
+
+.rv-бургер {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  z-index: 96;
+  width: 44px; height: 44px;
+  padding: 0; border: 1px solid var(--rv-кромка); border-radius: 3px;
+  background: var(--rv-орган-фон);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--rv-текст-тихо);
+  cursor: pointer;
+  /* Полоски раздаёт колонка с ЗАЗОРОМ, а не сетка. Сетка делит высоту
+     кнопки на три ряда и разносит полоски на четырнадцать точек, а
+     крест собирается сдвигом на шесть: получался не крест, а галка.
+     При зазоре шаг равен сдвигу по построению. */
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  transition: color .2s, border-color .2s, box-shadow .2s, background-color .2s;
+}
+.rv-бургер i {
+  display: block; width: 18px; height: 2px; border-radius: 2px;
+  background: currentColor;
+  transition: transform .38s cubic-bezier(.2,.8,.2,1), opacity .2s ease, width .38s cubic-bezier(.2,.8,.2,1);
+}
+.rv-бургер:hover, .rv-бургер:focus-visible {
+  color: #FFFFFF;
+  border-color: rgba(var(--rv-свет-rgb), .9);
+  box-shadow: 0 0 26px -6px rgba(var(--rv-свет-rgb), .95);
+}
+.rv-меню-открыто .rv-бургер i:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.rv-меню-открыто .rv-бургер i:nth-child(2) { opacity: 0; transform: scaleX(.2); }
+.rv-меню-открыто .rv-бургер i:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.rv-мп-пелена {
+  position: fixed; inset: 0; z-index: 97;
+  background: rgba(2, 3, 8, .62);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  opacity: 0; transition: opacity .3s ease;
+}
+.rv-меню-открыто .rv-мп-пелена { opacity: 1; }
+
+.rv-меню {
+  position: fixed; z-index: 98;
+  top: 0; left: 0; bottom: 0;
+  width: min(380px, 92vw);
+  display: flex; flex-direction: column;
+  background: var(--rv-меню-фон);
+  border-right: 1px solid var(--rv-кромка);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 26px 0 60px -30px rgba(0, 0, 0, .9);
+  transform: translateX(-102%);
+  transition: transform .34s cubic-bezier(.2,.8,.2,1);
+  overscroll-behavior: contain;
+}
+.rv-меню-открыто .rv-меню { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) {
+  .rv-меню { transition: none; }
+  .rv-бургер i { transition: none; }
+}
+
+.rv-мп-верх {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: max(14px, env(safe-area-inset-top)) 18px 14px 18px;
+  border-bottom: 1px solid var(--rv-кромка);
+}
+.rv-мп-марка { width: 40px; height: 40px; object-fit: contain; }
+.rv-мп-закрыть {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border: 1px solid var(--rv-кромка); border-radius: 3px;
+  background: none; color: var(--rv-текст-тихо); cursor: pointer;
+  transition: color .2s, border-color .2s;
+}
+.rv-мп-закрыть svg { width: 19px; height: 19px; }
+.rv-мп-закрыть:hover, .rv-мп-закрыть:focus-visible {
+  color: var(--rv-текст); border-color: rgba(var(--rv-свет-rgb), .8);
+}
+
+.rv-мп-тело { flex: 1; overflow-y: auto; padding: 16px 14px calc(20px + env(safe-area-inset-bottom)); }
+.rv-мп-заг {
+  margin: 6px 6px 8px;
+  font: 600 11px/1 var(--rv-шрифт);
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--rv-текст-очень-тихо);
+}
+
+.rv-мп-акты { display: grid; gap: 2px; margin-bottom: 18px; }
+.rv-мп-акт {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 44px; padding: 8px 10px;
+  border: 0; border-radius: 4px; background: none; cursor: pointer;
+  color: var(--rv-текст-тихо); text-align: left;
+  font: 500 14px/1.2 var(--rv-шрифт);
+  transition: background-color .18s, color .18s;
+}
+.rv-мп-акт i {
+  font: 700 12px/1 var(--rv-шрифт-голос); font-style: normal;
+  color: var(--rv-индиго-свет); min-width: 20px;
+}
+.rv-мп-акт:hover, .rv-мп-акт:focus-visible {
+  background: rgba(var(--rv-индиго-rgb), .18); color: var(--rv-текст);
+}
+
+.rv-мп-дела { display: grid; gap: 4px; }
+.rv-мп-дело, .rv-мп-тема {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 52px; padding: 9px 10px;
+  border: 1px solid transparent; border-radius: 4px;
+  background: none; cursor: pointer; text-align: left; text-decoration: none;
+  color: var(--rv-текст-тихо);
+  transition: background-color .18s, border-color .18s, color .18s;
+}
+.rv-мп-дело b, .rv-мп-тема b {
+  display: block; font: 600 14px/1.25 var(--rv-шрифт); color: var(--rv-текст);
+}
+.rv-мп-дело i, .rv-мп-тема i {
+  display: block; font: 400 12px/1.3 var(--rv-шрифт); font-style: normal;
+  color: var(--rv-текст-очень-тихо); margin-top: 2px;
+}
+.rv-мп-знак {
+  flex: none; width: 34px; height: 34px; display: grid; place-items: center;
+  border: 1px solid var(--rv-кромка); border-radius: 3px;
+  color: var(--rv-индиго-свет);
+}
+.rv-мп-знак svg { width: 19px; height: 19px; }
+.rv-мп-дело:hover, .rv-мп-дело:focus-visible,
+.rv-мп-тема:hover, .rv-мп-тема:focus-visible {
+  background: rgba(var(--rv-индиго-rgb), .16);
+  border-color: rgba(var(--rv-свет-rgb), .4);
+}
+/* Главное действие видно до чтения: ради него сайт и написан. */
+.rv-мп-дело.гл { border-color: rgba(var(--rv-свет-rgb), .45); background: rgba(var(--rv-индиго-rgb), .2); }
+.rv-мп-дело.гл .rv-мп-знак {
+  color: #FFFFFF; border-color: rgba(var(--rv-свет-rgb), .8);
+  box-shadow: 0 0 22px -8px rgba(var(--rv-свет-rgb), .95);
+}
+.rv-мп-тема { margin-top: 16px; border-top: 1px solid var(--rv-кромка); border-radius: 0; padding-top: 16px; }
+
+/* ── Форма обратной связи ─────────────────────────────────── */
+.rv-форма {
+  position: fixed; inset: 0; z-index: 99;
+  display: grid; place-items: center;
+  padding: 16px;
+  background: rgba(2, 3, 8, .72);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0; transition: opacity .26s ease;
+}
+.rv-форма-открыта .rv-форма { opacity: 1; }
+.rv-форма-плита {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: calc(100vh - 32px); overflow-y: auto;
+  padding: 26px 22px 22px;
+  border: 1px solid var(--rv-кромка); border-radius: 6px;
+  background: var(--rv-меню-фон);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  transform: translateY(14px) scale(.985);
+  transition: transform .26s cubic-bezier(.2,.8,.2,1);
+}
+.rv-форма-открыта .rv-форма-плита { transform: none; }
+.rv-форма-плита .rv-мп-закрыть { position: absolute; top: 12px; right: 12px; }
+.rv-форма-заг {
+  margin: 0 0 6px; font: 700 clamp(22px, 5vw, 28px)/1.1 var(--rv-шрифт-голос);
+  color: var(--rv-текст);
+}
+.rv-форма-под { margin: 0 0 18px; font: 400 14px/1.5 var(--rv-шрифт); color: var(--rv-текст-тихо); }
+.rv-поле { display: block; margin-bottom: 14px; }
+.rv-поле > span {
+  display: block; margin-bottom: 6px;
+  font: 500 12px/1 var(--rv-шрифт); letter-spacing: .06em;
+  color: var(--rv-текст-тихо);
+}
+.rv-поле input, .rv-поле textarea {
+  width: 100%; padding: 11px 12px;
+  border: 1px solid var(--rv-кромка); border-radius: 3px;
+  background: var(--rv-поле-фон); color: var(--rv-текст);
+  font: 400 15px/1.4 var(--rv-шрифт);
+  transition: border-color .2s, box-shadow .2s;
+}
+.rv-поле textarea { resize: vertical; min-height: 76px; }
+.rv-поле input:focus, .rv-поле textarea:focus {
+  outline: none; border-color: rgba(var(--rv-свет-rgb), .8);
+  box-shadow: 0 0 0 3px rgba(var(--rv-индиго-rgb), .22);
+}
+.rv-согласие {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin: 4px 0 16px; cursor: pointer;
+  font: 400 13px/1.45 var(--rv-шрифт); color: var(--rv-текст-тихо);
+}
+.rv-согласие input { width: 18px; height: 18px; margin-top: 1px; flex: none; accent-color: var(--rv-индиго-свет); }
+.rv-форма-беда {
+  margin: 0 0 12px; padding: 9px 11px;
+  border: 1px solid rgba(var(--rv-тревога-rgb), .5); border-radius: 3px;
+  background: rgba(var(--rv-тревога-rgb), .12);
+  font: 500 13px/1.4 var(--rv-шрифт); color: var(--rv-тревога);
+}
+/* Ловушка для роботов. Не display:none: часть роботов пропускает
+   скрытое так же, как его пропускает браузер, а вот увести поле за
+   край экрана и снять с обхода по табу видят единицы. */
+.rv-ловушка {
+  position: absolute; left: -9999px; top: auto;
+  width: 1px; height: 1px; overflow: hidden;
+}
+
+/* ═══ СВЕТЛАЯ ТЕМА ═══════════════════════════════════════════
+   Не «инверсия», а второе время суток одного мира. Сайт это космос, и
+   белая бумага ему чужая: днём здесь рассвет над планетой - холодная
+   светлая дымка, а не лист. Поэтому фон не #FFF, а светлый сине-серый,
+   и текст не чёрный, а очень тёмный индиго: чистый чёрный на голубом
+   даёт звон и режет глаз на просвет.
+
+   Марка не меняется ни на йоту: индиго остаётся индиго, темнеет
+   только его светлая ступень, чтобы буквы на светлом читались. */
+:root[data-тема="светлая"] {
+  --rv-фон:        #E8ECF7;
+  --rv-фон-глубже: #E8ECF700;
+  --rv-текст:      #0E1330;
+  --rv-текст-тихо: rgba(14,19,48,.66);
+  --rv-текст-очень-тихо: rgba(14,19,48,.44);
+
+  --rv-индиго-тень: #1B2666;
+  --rv-индиго:      #2A3F9C;
+  --rv-индиго-свет: #2F49B8;
+  --rv-индиго-rgb:  42,63,156;
+  --rv-свет-rgb:    47,73,184;
+
+  --rv-кромка:      rgba(42,63,156,.26);
+  --rv-плита:       rgba(255,255,255,.76);
+  --rv-орган-фон:   rgba(255,255,255,.82);
+  --rv-меню-фон:    rgba(240,243,252,.94);
+  --rv-поле-фон:    rgba(255,255,255,.9);
+
+  /* Неон днём гаснет почти полностью. Свечение это свойство ТЕМНОТЫ:
+     на светлом фоне тот же ореол превращается в грязный ком вокруг
+     букв, и заголовок перестаёт читаться совсем. */
+  --rv-неон-ядро: rgba(42,63,156,.30);
+  --rv-неон-тело: rgba(42,63,156,.16);
+  --rv-неон-нимб: rgba(42,63,156,.08);
+  --rv-неон-сила: .35;
+}
+:root[data-тема="светлая"] .rv-мп-пелена { background: rgba(20,26,54,.42); }
+:root[data-тема="светлая"] .rv-форма { background: rgba(20,26,54,.5); }
+:root[data-тема="светлая"] .rv-меню { box-shadow: 26px 0 60px -34px rgba(20,26,54,.5); }
+
+@media (max-width: 480px) {
+  .rv-меню { width: 100vw; border-right: 0; }
+  .rv-мп-акт { min-height: 48px; }
+}
+
+/* Заголовки в светлой теме. Свечение это свойство темноты: тот же
+   ореол на светлом фоне превращается в грязный ком вокруг знака, и
+   белая буква пропадает совсем. Днём заголовок держат КРАСКА и вес, а
+   свет остаётся ровно намёком под буквой. */
+:root[data-тема="светлая"] .rv-заг {
+  color: #101838;
+  text-shadow: 0 1px 0 rgba(255,255,255,.6), 0 0 22px rgba(42,63,156,.10);
+}
+:root[data-тема="светлая"] .rv-заг em {
+  color: #2A3F9C;
+  text-shadow: 0 1px 0 rgba(255,255,255,.6), 0 0 18px rgba(42,63,156,.16);
+}
+:root[data-тема="светлая"] .rv-над i { color: #2A3F9C; }
+:root[data-тема="светлая"] .rv-абз b { color: #101838; }
