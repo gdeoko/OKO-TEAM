@@ -277,7 +277,18 @@ function адресВыхода() { return mode === "vpn" ? ПЕРЕДАЧА_VPN
 
 function уйтиНаСайт(source) {
   track((source || "exit") + "-" + mode);
-  if (mode === "vpn") { try { g.location.href = ПЕРЕДАЧА_VPN; } catch (e) {} return; }
+  if (mode === "vpn") {
+    /* Тот же прокол, что и на причале стыковочного узла. Уход на сайт
+       VPN у нас один, откуда бы его ни позвали: с причала, с кнопки
+       выхода или с крестика полёта. */
+    var уехать = function () { try { g.location.href = ПЕРЕДАЧА_VPN; } catch (e) {} };
+    var пошёл = false;
+    try {
+      if (g.RC_PROKOL && g.RC_PROKOL["открыть"]) пошёл = g.RC_PROKOL["открыть"](уехать);
+    } catch (eП) {}
+    if (!пошёл) уехать();
+    return;
+  }
   if (g.RC_FLIGHT && g.RC_FLIGHT.close) { try { g.RC_FLIGHT.close(); return; } catch (e2) {} }
   try { g.location.href = САЙТ_CDN; } catch (e3) {}
 }
