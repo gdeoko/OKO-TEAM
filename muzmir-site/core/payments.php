@@ -486,6 +486,22 @@ function payment_mark_refunded(string $yukassaId, float $amount, string $refundI
     $pay = one("SELECT * FROM payments WHERE yukassa_id=?", [$yukassaId]);
     if (!$pay || (string) $pay['status'] === 'refunded') return false;
 
+    /* ЧАСТИЧНЫЙ ВОЗВРАТ ТОЖЕ НАДО ЗАПОМНИТЬ.
+     *
+     * От повторной обработки защищал только статус «refunded», а он ставится
+     * лишь при полном возврате. Частичный сверка платежей видела новым каждые
+     * две минуты: по одному возврату 400 ₽ в журнале накопилось 1 378 записей
+     * за двое суток — пятая часть всего журнала, и в нём стало не найти
+     * настоящих событий. Запоминаем обработанные возвраты у самого платежа и
+     * второй раз за ту же сумму не беремся. */
+    try { db()->exec("ALTER TABLE payments ADD COLUMN refunds TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+    $seenKey  = ($refundId !== '' ? $refundId : 'sum') . ':' . (int) round($amount);
+    $seenList = array_filter(explode(',', (string) ($pay['refunds'] ?? '')));
+    if (in_array($seenKey, $seenList, true)) return false;
+    $seenList[] = $seenKey;
+    try { update('payments', ['refunds' => implode(',', $seenList)], 'id=:id', ['id' => (int) $pay['id']]); }
+    catch (\Throwable $e) {}
+
     /* ЧАСТИЧНЫЙ ВОЗВРАТ — НЕ ВОЗВРАТ ПЛАТЕЖА.
      *
      * Здесь платёж помечался «возвращён» при любой сумме возврата. Заказ на
