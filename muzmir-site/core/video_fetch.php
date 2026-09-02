@@ -54,6 +54,38 @@ function vf_platform(string $url): string {
     return 'unknown';
 }
 
+/* Обычный браузерный отпечаток. Площадки узнают служебные User-Agent и отдают
+   им урезанную страницу без плеера — так у нас годами не забиралось ни одно
+   видео с Одноклассников. Мы не притворяемся человеком ради обхода запрета:
+   доступ к закрытой записи это всё равно не даёт, страница просто приходит
+   целиком, как её видит любой посетитель. */
+const VF_BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
+/**
+ * Данные плеера Одноклассников со страницы записи.
+ *
+ * Лежат в атрибуте data-options: JSON, внутри которого поле flashvars.metadata —
+ * либо ещё один JSON строкой, либо уже разобранный объект (ОК отдаёт по-разному).
+ * @return array|null null — плеера на странице нет вовсе.
+ */
+function vf_ok_metadata(string $html): ?array {
+    if (!preg_match('~data-options="([^"]{200,})"~', $html, $m)) return null;
+    $opts = json_decode(html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'), true);
+    if (!is_array($opts)) return null;
+    $md = $opts['flashvars']['metadata'] ?? null;
+    if (is_string($md)) $md = json_decode($md, true);
+    return is_array($md) ? $md : null;
+}
+
+/** Страница ОК прямо говорит, что запись закрыта? */
+function vf_ok_closed(string $html): bool {
+    foreach (['Доступ к этому видео ограничен', 'доступ ограничен', 'видео удалено',
+              'видео недоступно', 'больше не доступно'] as $w) {
+        if (mb_stripos($html, $w) !== false) return true;
+    }
+    return false;
+}
+
 /** HTTP-запрос с общими правилами: без редиректов вслепую, с таймаутом и лимитом. */
 function vf_http(string $url, array $opt = []): array {
     $ch = curl_init($url);
@@ -304,11 +336,51 @@ function vf_direct_link(string $url): array {
             return $fail('RuTube: запись не отдаётся по ссылке');
 
         case 'ok':
-            $r = vf_http($url);
-            if (preg_match('~"videoName".*?"url":"(https:[^"]+?)"~s', $r['body'], $m)) {
-                return ['ok' => true, 'url' => str_replace('\\/', '/', $m[1]), 'name' => 'ok.mp4', 'size' => 0, 'why' => ''];
+            /* ОДНОКЛАССНИКИ ОТДАЮТ ПЛЕЕР ТОЛЬКО ЖИВОМУ БРАУЗЕРУ.
+             *
+             * Прежний разбор искал в HTML пару «videoName … url», и не находил её
+             * никогда: ни одна работа с ОК не была оценена за всё время. Причин
+             * две. Во-первых, наш прежний User-Agent («MuzmirGrader») ОК узнаёт
+             * и отдаёт урезанную страницу. Во-вторых, ссылки на файлы лежат не
+             * в тексте, а в data-options — JSON внутри HTML-атрибута, у которого
+             * поле flashvars.metadata само по себе ещё один JSON.
+             *
+             * Наличие data-options — заодно и точный признак доступа: у открытой
+             * записи он есть, у закрытой ОК присылает страницу «Доступ к этому
+             * видео ограничен» вовсе без плеера. Это позволяет отличать «мы не
+             * смогли забрать» от «участник не открыл доступ» — а разница тут
+             * решающая: за первое отклонять работу нельзя, за второе нужно. */
+            $r = vf_http($url, ['headers' => [
+                'User-Agent: ' . VF_BROWSER_UA,
+                'Accept-Language: ru,en;q=0.8',
+                'Accept: text/html,application/xhtml+xml',
+            ]]);
+            $md = vf_ok_metadata($r['body']);
+            if ($md === null) {
+                return $fail(vf_ok_closed($r['body'])
+                    ? 'ОК Видео: доступ к записи ограничен настройками приватности — откройте её по ссылке'
+                    : 'ОК Видео: страница не отдала плеер (код ' . $r['code'] . ')');
             }
-            return $fail('ОК Видео: прямая ссылка не получена');
+            // Берём самое высокое доступное качество: по мелкой копии не оценить
+            // ни технику, ни костюм. Порядок качества у ОК не гарантирован,
+            // поэтому идём по известной лестнице от лучшего к худшему.
+            $rank = ['full' => 6, 'quad' => 5, 'hd' => 4, 'sd' => 3, 'low' => 2, 'lowest' => 1, 'mobile' => 0];
+            $best = ['r' => -1, 'u' => ''];
+            foreach ((array) ($md['videos'] ?? []) as $v) {
+                $u2 = trim((string) ($v['url'] ?? ''));
+                if ($u2 === '') continue;
+                $q = $rank[mb_strtolower((string) ($v['name'] ?? ''))] ?? 0;
+                if ($q > $best['r']) $best = ['r' => $q, 'u' => $u2];
+            }
+            if ($best['u'] !== '') {
+                return ['ok' => true, 'url' => $best['u'], 'name' => 'ok.mp4', 'size' => 0, 'why' => ''];
+            }
+            // Прямых файлов нет — остаётся поток. ffmpeg читает его как обычный файл.
+            foreach (['hlsManifestUrl', 'ondemandHls', 'hlsMasterPlaylistUrl', 'dashManifestUrl'] as $k) {
+                $u2 = trim((string) ($md[$k] ?? ''));
+                if ($u2 !== '') return ['ok' => true, 'url' => $u2, 'name' => 'ok.m3u8', 'size' => 0, 'why' => ''];
+            }
+            return $fail('ОК Видео: запись найдена, но файл не отдаётся');
 
         case 'vk_photo':
             /* Снимок отдаётся тем же токеном сообщества, что и видеозаписи:

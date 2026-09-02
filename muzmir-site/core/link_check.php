@@ -61,15 +61,27 @@ if (!function_exists('_lc_html_date')) {
     /** Достаёт дату публикации из HTML (JSON-LD/meta) → unix, либо null. */
     function _lc_html_date(string $html): ?int {
         if ($html === '') return null;
+        /* ПОРЯДОК АТРИБУТОВ В META НЕ ЗАКРЕПЛЁН.
+         *
+         * Прежние шаблоны требовали, чтобы itemprop стоял ПЕРЕД content. У
+         * Одноклассников он стоит после, и дата публикации не находилась ни у
+         * одной записи — а без даты не работает правило «не старше года»:
+         * запись пятилетней давности проходила как свежая. Ищем оба порядка и
+         * добавляем поля, которыми пользуются Дзен и ВК. */
         $pats = [
-            '~"(?:uploadDate|datePublished|publication_ts|publicationDate|dateCreated)"\s*:\s*"([^"]{6,40})"~i',
-            '~itemprop="(?:uploadDate|datePublished)"[^>]*content="([^"]{6,40})"~i',
-            '~property="(?:video:release_date|og:video:release_date)"[^>]*content="([^"]{6,40})"~i',
+            '~"(?:uploadDate|datePublished|publication_ts|publicationDate|dateCreated|publishedAt)"\s*:\s*"([^"]{6,40})"~i',
+            '~(?:itemprop|property|name)="(?:uploadDate|datePublished|video:release_date|og:video:release_date|ya:ovs:upload_date)"[^>]*content="([^"]{6,40})"~i',
+            '~content="([^"]{6,40})"[^>]*(?:itemprop|property|name)="(?:uploadDate|datePublished|video:release_date|og:video:release_date|ya:ovs:upload_date)"~i',
             '~"published"\s*:\s*"([0-9]{4}-[0-9]{2}-[0-9]{2}[^"]*)"~i',
+            '~"(?:uploadDate|datePublished|publication_ts)"\s*:\s*([0-9]{9,13})~i',
         ];
         foreach ($pats as $p) {
             if (preg_match($p, $html, $m)) {
-                $t = strtotime(trim($m[1]));
+                $v = trim($m[1]);
+                // Часть площадок отдаёт метку времени числом, в секундах или миллисекундах.
+                $t = ctype_digit($v)
+                    ? (int) ((int) $v > 2000000000 ? (int) $v / 1000 : (int) $v)
+                    : (int) strtotime($v);
                 if ($t && $t > 946684800 && $t <= time() + 86400) return $t; // после 2000 г. и не из будущего
             }
         }
@@ -335,14 +347,39 @@ if (!function_exists('video_verify')) {
             if (!preg_match('#ok\.ru/(?:video|videoembed|live)/(\d+)#i', $url, $m)) {
                 return _lc_bad('ОК Видео', 'Дайте ссылку на конкретное видео ОК (ok.ru/video/…).');
             }
-            [$code, $body] = _lc_http_get('https://ok.ru/video/' . $m[1], 9);
+            /* ЗАКРЫТУЮ ЗАПИСЬ ОК ОТДАЁТ С КОДОМ 200.
+             *
+             * Проверка искала в тексте «видео удалено» или «недоступно», а
+             * Одноклассники на закрытую запись присылают страницу «Доступ к
+             * этому видео ограничен» — под эти слова она не подходила, и форма
+             * отвечала «Ссылка принята». Так 01.09 прошли четыре заявки, чьи
+             * записи гостю не открываются вовсе: участница узнала об этом уже
+             * из отказа, когда исправить ссылку было нельзя.
+             *
+             * Надёжный признак — сам плеер: у открытой записи страница содержит
+             * data-options с метаданными, у закрытой их нет. Оттуда же берём
+             * дату публикации, без которой не работает правило про год. */
+            [$code, $body] = _lc_http_get('https://ok.ru/video/' . $m[1], 12);
             if ($code === 404) return _lc_bad('ОК Видео', 'Видео в ОК не найдено (404).');
             if ($code === 0) return _lc_result('ОК Видео', null, 'Ссылка принята, доступ проверить не удалось');
-            if (stripos($body, 'видео удалено') !== false || stripos($body, 'видео недоступно') !== false
-                || stripos($body, 'больше не доступно') !== false) {
-                return _lc_bad('ОК Видео', 'Видео в ОК удалено или недоступно. Проверьте открытый доступ.');
+            if (!function_exists('vf_ok_metadata') && is_file(BASE_PATH . '/core/video_fetch.php')) {
+                require_once BASE_PATH . '/core/video_fetch.php';
             }
-            return _lc_result('ОК Видео', _lc_html_date($body));
+            $md = function_exists('vf_ok_metadata') ? vf_ok_metadata($body) : null;
+            if ($md === null) {
+                $closed = function_exists('vf_ok_closed') ? vf_ok_closed($body) : false;
+                return _lc_bad('ОК Видео', $closed
+                    ? 'Доступ к этой записи в ОК ограничен: гостю она не открывается. В настройках видео поставьте «Доступно всем» или «По ссылке» и проверьте ссылку в режиме инкогнито.'
+                    : 'Запись в ОК не открывается для проверки. Убедитесь, что ссылка ведёт на видео и доступ к нему открыт.');
+            }
+            // Дата публикации у ОК приходит в миллисекундах.
+            $ts = null;
+            foreach (['startTime', 'created', 'uploadDate'] as $k) {
+                $v = $md['movie'][$k] ?? ($md[$k] ?? null);
+                if (is_numeric($v) && (int) $v > 0) { $ts = (int) ((int) $v > 2000000000 ? (int) $v / 1000 : (int) $v); break; }
+                if (is_string($v) && $v !== '' && ($p = strtotime($v))) { $ts = $p; break; }
+            }
+            return _lc_result('ОК Видео', $ts ?: _lc_html_date($body));
         }
 
         /* ---- Дзен Видео ---- */
