@@ -529,10 +529,28 @@ function payment_mark_refunded(string $yukassaId, float $amount, string $refundI
     }
     $ordId = (int) ($pay['order_id'] ?? 0);
     if ($ordId) {
-        update('awards_orders', [
+        $fieldsOrd = [
             'refund_amount' => (int) round($amount),
             'refund_id'     => $refundId,
-        ], 'id=:id', ['id' => $ordId]);
+        ];
+        /* ПОЛНЫЙ ВОЗВРАТ ЗАКРЫВАЕТ ЗАКАЗ.
+         *
+         * Возврат записывался суммой, а статус заказа оставался «оплачен»: два
+         * таких заказа висели в работе с полностью возвращёнными деньгами, и по
+         * одному из них наградной документ уже ушёл человеку — он получил и
+         * награду, и деньги обратно. Второму выдача так и стояла в плане.
+         * Деньги вернули — заказ закрыт; уже отправленный не трогаем, там
+         * разбирается человек. */
+        if ($full) {
+            $ord = one("SELECT status, shipped_at FROM awards_orders WHERE id=?", [$ordId]);
+            $shipped = (string) ($ord['status'] ?? '') === 'shipped' || trim((string) ($ord['shipped_at'] ?? '')) !== '';
+            if ($ord && !$shipped) {
+                $fieldsOrd['status']        = 'canceled';
+                $fieldsOrd['canceled_at']   = date('Y-m-d H:i:s');
+                $fieldsOrd['cancel_reason'] = 'оплата возвращена полностью';
+            }
+        }
+        update('awards_orders', $fieldsOrd, 'id=:id', ['id' => $ordId]);
     }
     if (function_exists('audit')) {
         audit('refund_detected', 'payments', (int) $pay['id'],
