@@ -75,6 +75,38 @@
   var кольца = [], точкиУзел = null, точкиДанные = [];
   var искрыУзел = null;
   var воротаКольцо = null, воротаСвет = null;
+  /* Железо щита: физические материалы корпуса. Они НЕ в списке
+     «материалы»: у корпуса нет прозрачности, и приглушать его через
+     opacity значит выбросить его в прозрачный проход, где он снова
+     начнёт накладываться сам на себя. Появление и уход акта для него
+     идут через visible, зажигание через жар. */
+  var железо = [];
+  /* Стекло щита и его удары. Удары ставятся чистой функцией доли, поэтому
+     на отмотке кольца честно исчезают, а не остаются висеть. */
+  var стёкла = [], удары = [];
+  var огни = null, огниДанные = [], цветОгня = null;
+  var зажимыМатА = [], зажимыМатБ = [];
+  var носы = [];
+  var цветСтупицы = null, цветЯнтарь = null;
+  var рw = 1.75, рh = 3.7;
+
+  /* Рывок с перелётом: корабль заходит на причал с восемью процентами
+     перелёта и садится назад. Линейная посадка читается как перетаскивание
+     курсором; перелёт это инерция массы. c1 подобрано так, чтобы крайний
+     причал (x 1.5 от стоянки -2.1) не вылетал за раму щита. */
+  function перелёт(t) {
+    t = зажать(t, 0, 1);
+    var c1 = 1.1, c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+  /* Разворот с замахом: чуть назад, потом через перелёт вперёд. */
+  function замах(t) {
+    t = зажать(t, 0, 1);
+    var c1 = 1.2, c2 = c1 * 1.525;
+    return t < 0.5
+      ? (Math.pow(2 * t, 2) * ((c2 + 1) * 2 * t - c2)) / 2
+      : (Math.pow(2 * t - 2, 2) * ((c2 + 1) * (t * 2 - 2) + c2) + 2) / 2;
+  }
 
   /* Раскладка. На широком экране разметка акта (заголовок, карточки
      тарифов и звена) занимает левые две трети кадра, поэтому щит уезжает
@@ -105,6 +137,142 @@
   function линмат(цвет, прозр) {
     var м = new T.LineBasicMaterial({ color: цвет, transparent: true, opacity: прозр });
     материалы.push([м, прозр]);
+    return м;
+  }
+  /* Корпус: общая физика сцены (rv-real.js), та же, что у станций и
+     корабля стыковки. Щит и станции обязаны быть одной выделки, иначе
+     на стыке актов человек видит два разных сайта. Без rv-real стоит
+     обычный физический материал с теми же числами. */
+  function корпус(о) {
+    var м;
+    if (g.RV_REAL && g.RV_REAL["корпус"]) {
+      м = g.RV_REAL["корпус"](T, о);
+      if (м.масштаб) м.масштаб(1.0);
+    } else {
+      м = new T.MeshStandardMaterial({
+        color: о.цвет, metalness: о.металл, roughness: о.шерох,
+        emissive: о.свет, emissiveIntensity: о.жар, envMapIntensity: 1.3
+      });
+      м.жар = function (v) { м.emissiveIntensity = о.жар + Math.max(0, v) * 0.5; };
+    }
+    железо.push(м);
+    return м;
+  }
+
+  /* ── Энергетическое стекло ────────────────────────────────────
+     Спинка была плоской крашеной плитой: с лица её закрывал корпус, а
+     со спины она читалась чёрным прямоугольником с одним размазанным
+     бликом. Теперь на корпус с обеих сторон посажены две панели одного
+     стекла: тело полупрозрачное и ПИШЕТ глубину, поэтому сквозь него не
+     видно обратной стороны щита (заслон обязан заслонять), а поверх
+     идут гекс-сетка, кромка Френеля и два блика софтбоксов, посчитанных
+     аналитически: карта окружения в r160 это 2D-текстура с особым
+     маппингом, и честная выборка отражения стоила бы дороже, чем эти
+     два возведения в степень. От каждого причаливания по стеклу идёт
+     кольцо: до четырёх ударов разом, каждый задан точкой, возрастом и
+     силой. Внутри GLSL только латиница: кириллица ломает разбор. */
+  function стекло() {
+    var ст = W.ступень;
+    var верш = [
+      "varying vec2 vP;",
+      "varying vec3 vN;",
+      "varying vec3 vV;",
+      "void main() {",
+      "  vP = position.xy;",
+      "  vec4 mv = modelViewMatrix * vec4(position, 1.0);",
+      "  vN = normalize(normalMatrix * normal);",
+      "  vV = -mv.xyz;",
+      "  gl_Position = projectionMatrix * mv;",
+      "}"
+    ].join("\n");
+    var фраг = [
+      "uniform float uAlpha;",
+      "uniform float uDim;",
+      "uniform vec4 uHits[4];",
+      "uniform vec3 uBody;",
+      "uniform vec3 uEdge;",
+      "uniform vec3 uLine;",
+      "uniform vec3 uWarm;",
+      "uniform vec3 uCold;",
+      "uniform vec3 uDirWarm;",
+      "uniform vec3 uDirCold;",
+      "varying vec2 vP;",
+      "varying vec3 vN;",
+      "varying vec3 vV;",
+      /* Расстояние до кромки шестиугольной ячейки: две решётки со
+         сдвигом на полшага, берём ближайший центр. Шаг ячейки 0.22 ед. */
+      "float hexD(vec2 p) {",
+      "  p = abs(p);",
+      "  return max(dot(p, vec2(0.5, 0.8660254)), p.x);",
+      "}",
+      "float hexLine(vec2 uv) {",
+      "  vec2 r = vec2(1.0, 1.7320508);",
+      "  vec2 h = r * 0.5;",
+      "  vec2 a = mod(uv, r) - h;",
+      "  vec2 b = mod(uv - h, r) - h;",
+      "  vec2 gv = dot(a, a) < dot(b, b) ? a : b;",
+      "  float d = hexD(gv);",
+      "  return 1.0 - smoothstep(0.0, 0.055, 0.5 - d);",
+      "}",
+      "void main() {",
+      "  vec3 n = normalize(vN);",
+      "  if (!gl_FrontFacing) n = -n;",
+      "  vec3 v = normalize(vV);",
+      "  float ndv = clamp(dot(n, v), 0.0, 1.0);",
+      "  float fres = pow(1.0 - ndv, 3.0) * 0.9;",
+      "  vec3 R = reflect(-v, n);",
+      "  float hw = pow(max(dot(R, normalize(uDirWarm)), 0.0), 40.0) * 0.6;",
+      "  float hc = pow(max(dot(R, normalize(uDirCold)), 0.0), 40.0) * 0.35;",
+      "  float ring = 0.0;",
+      "  float line = 0.0;",
+      "#ifdef HEX",
+      "  for (int i = 0; i < 4; i++) {",
+      "    vec4 hh = uHits[i];",
+      "    if (hh.w <= 0.0) continue;",
+      "    float dist = length(vP - hh.xy);",
+      "    float fr = hh.z * 2.2;",
+      "    float m = 1.0 - smoothstep(fr - 0.12, fr + 0.12, dist);",
+      "    ring += hh.w * m * sin((dist - fr) * 18.0) * exp(-hh.z * 1.8) * exp(-dist * 0.9);",
+      "  }",
+      "  line = hexLine(vP / 0.22);",
+      "#endif",
+      "  float pulse = max(ring, 0.0);",
+      "  vec3 col = uBody",
+      "    + uLine * line * (0.35 + pulse * 1.6) * uDim",
+      "    + uEdge * fres * uDim",
+      "    + uEdge * pulse * 0.5 * uDim",
+      "    + uWarm * hw * uDim",
+      "    + uCold * hc * uDim;",
+      "  float a = uAlpha * clamp(0.55 + fres * 0.4 + line * 0.25 + pulse * 0.3 + hw + hc, 0.0, 1.0);",
+      "  gl_FragColor = vec4(col, a);",
+      "#include <tonemapping_fragment>",
+      "#include <colorspace_fragment>",
+      "}"
+    ].join("\n");
+    var удары4 = [];
+    for (var i = 0; i < 4; i++) удары4.push(new T.Vector4(0, 0, 0, 0));
+    var м = new T.ShaderMaterial({
+      uniforms: {
+        uAlpha: { value: 0 },
+        uDim: { value: 1 },
+        uHits: { value: удары4 },
+        uBody: { value: new T.Color(0x0E1430) },
+        uEdge: { value: new T.Color(0x8A9CFF) },
+        uLine: { value: new T.Color(0x6078D8) },
+        uWarm: { value: new T.Color(0xFFC8A2) },
+        uCold: { value: new T.Color(0x8A9CFF) },
+        /* Направления софтбоксов в пространстве камеры: тёплый сверху
+           слева, холодный снизу справа - тот же стан, что у станций. */
+        uDirWarm: { value: new T.Vector3(-0.45, 0.62, 0.64) },
+        uDirCold: { value: new T.Vector3(0.55, -0.42, 0.72) }
+      },
+      vertexShader: верш, fragmentShader: фраг,
+      transparent: true, depthWrite: true, depthTest: true,
+      side: T.FrontSide
+    });
+    /* Гексы и удары только выше нищей ступени: там стекло это плоский
+       Френель, и этого хватает, чтобы заслон остался заслоном. */
+    if (ст > 0) м.defines = { HEX: 1 };
     return м;
   }
 
@@ -193,8 +361,13 @@
       луч.rotation.z = уг - Math.PI / 2;
       г.add(луч);
 
-      var зажим = new T.Mesh(new T.TorusGeometry(0.13, 0.026, 4, 22),
-                             мат(Ц.свет, 0.3));
+      /* Зажим железный: физический корпус со своим свечением. Захват
+         показан жаром металла, а не прозрачностью кольца - у каждого
+         зажима свой материал, потому что горят они по одному. */
+      var зажим = W.ступень > 0
+        ? new T.Mesh(new T.TorusGeometry(0.13, 0.03, 8, 28),
+                     корпус({ цвет: 0x3A4468, металл: 0.8, шерох: 0.3, свет: 0x8A9CFF, жар: 0.12, лак: 0.2 }))
+        : new T.Mesh(new T.TorusGeometry(0.13, 0.026, 4, 22), мат(Ц.свет, 0.3));
       зажим.position.set(нx * рПричала, нy * рПричала, 0);
       г.add(зажим);
       зажимы.push(зажим);
@@ -219,13 +392,25 @@
      направленным, иначе причаливание превращается в подлёт кубика. */
   function кораблик(масшт, цвет) {
     var г = new T.Group();
-    var тело = new T.Mesh(new T.CylinderGeometry(0.018 * масшт, 0.075 * масшт, 0.34 * масшт, 6),
-                          мат(цвет, 0.95));
+    /* Тело металлом, а не плоской краской: кораблик стоит перед стеклом
+       и корпусом щита, и рядом с честным металлом плоский цвет читался
+       наклейкой. Хвост остаётся сложением: выхлоп это свет, не железо. */
+    var тело = new T.Mesh(new T.CylinderGeometry(0.018 * масшт, 0.075 * масшт, 0.34 * масшт, W.ступень > 0 ? 8 : 6),
+                          W.ступень > 0
+                            ? корпус({ цвет: 0x4A5690, металл: 0.85, шерох: 0.28, свет: 0x0A1030, жар: 0.3, лак: 0.3 })
+                            : мат(цвет, 0.95));
     г.add(тело);
     var хвост = new T.Mesh(new T.CylinderGeometry(0.055 * масшт, 0.02 * масшт, 0.10 * масшт, 6),
                            мат(цвет, 0.5, true));
     хвост.position.y = -0.21 * масшт;
     г.add(хвост);
+    /* Огонь в носу: пять яркостей, мимо тонировки, чтобы плёнка сняла с
+       него ореол. Он задаёт направление лучше, чем форма тела. */
+    var нос = new T.Mesh(new T.SphereGeometry(0.02 * масшт, 8, 6),
+                         new T.MeshBasicMaterial({ color: new T.Color(цвет).multiplyScalar(5), toneMapped: false }));
+    нос.position.y = 0.17 * масшт;
+    г.add(нос);
+    носы.push(нос);
     return г;
   }
 
