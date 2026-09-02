@@ -52,7 +52,13 @@ var ACTS = [
   { id: "route",   sel: "#route",       role: "схема маршрута" },
   { id: "landing", sel: "#included",    role: "посадка" },
   { id: "walk",    sel: "#cases",       role: "проход к трапу" },
-  { id: "cabin",   sel: "#reliability", role: "салон" },
+  /* Салон ждёт, пока человек ВОЙДЁТ. Секция «надёжность» подходит к
+     середине экрана раньше, чем корабль распахнёт люк, и без этого
+     условия акт объявлял салон, пока снаружи ещё шли к трапу: замер
+     дал 200 точек на мониторе и 240 на телефоне, на которых фон,
+     звук и карточки жили салоном, а в кадре стояла ракета. */
+  { id: "cabin",   sel: "#reliability", role: "салон", ждёт: "rc-in-hatch",
+    хозяин: function () { return typeof window.RC_DOOR === "number"; } },
   { id: "manual",  sel: "#faq",         role: "бортовой справочник" },
   { id: "console", sel: "#contact",     role: "пульт" },
   { id: "egress",  sel: "#epilogue",    role: "отлёт" }
@@ -66,25 +72,58 @@ function collect() {
   for (var i = 0; i < ACTS.length; i++) {
     var el = doc.querySelector(ACTS[i].sel);
     if (!el) continue;
-    live.push({ id: ACTS[i].id, role: ACTS[i].role, el: el, i: live.length });
+    live.push({ id: ACTS[i].id, role: ACTS[i].role, el: el, i: live.length,
+                ждёт: ACTS[i]["ждёт"] || null,
+                хозяин: ACTS[i]["хозяин"] || null });
   }
 }
 
 /* Кадр держит та секция, чья середина ближе к середине экрана.
    Заодно считаем долю: 0 - только вошла, 1 - вот-вот уступит. */
+/* Акт со сторожем берёт кадр только тогда, когда СОБЫТИЕ в мире уже
+   случилось. Признак ставит не эта сцена, а тот модуль, который
+   событием распоряжается: люк открывает корабль, он же вешает
+   rc-in-hatch. Так акт и эпизод не могут разойтись.
+
+   Сторож умеет только ЗАДЕРЖАТЬ акт, но не отменить его: если позади
+   уже никого нет и держать кадр некому, акт вступает всё равно.
+   Иначе одно незажжённое условие остановило бы фильм насовсем. */
+function открыт(а) {
+  if (!а["ждёт"]) return true;
+  /* Сторож работает, только пока жив тот, кто его снимает. Нет
+     корабля - нет и люка, и ждать было бы нечего: акт вступает. */
+  if (а["хозяин"] && !а["хозяин"]()) return true;
+  return root.classList.contains(а["ждёт"]);
+}
+
+function доля(r) {
+  var raw = (innerHeight - r.top) / (innerHeight + r.height);
+  return raw < 0 ? 0 : (raw > 1 ? 1 : raw);
+}
+
 function pick() {
   var mid = innerHeight / 2, best = null, bestD = 1e9, bestK = 0;
+  var держит = null, держитD = 1e9, держитK = 0;
   for (var i = 0; i < live.length; i++) {
     var r = BOX(live[i].el);
     if (r.bottom < -80 || r.top > innerHeight + 80) continue;
     var c = r.top + r.height / 2;
     var d = Math.abs(c - mid);
-    if (d < bestD) {
-      bestD = d;
-      best = live[i];
-      var raw = (innerHeight - r.top) / (innerHeight + r.height);
-      bestK = raw < 0 ? 0 : (raw > 1 ? 1 : raw);
+    if (d < bestD) { bestD = d; best = live[i]; bestK = доля(r); }
+    if (открыт(live[i]) && d < держитD) {
+      держитD = d; держит = live[i]; держитK = доля(r);
     }
+  }
+  /* Ближайшая секция ждёт своего события - кадр остаётся у ближайшей
+     из тех, кому ждать нечего. */
+  if (best && !открыт(best)) {
+    if (держит) return { act: держит, k: держитK };
+    /* В кадре одни ждущие. Тогда держит ТЕКУЩИЙ акт, даже если его
+       секция уже ушла вверх: на телефоне «проход к трапу» успевает
+       уехать за экран раньше, чем корабль распахнёт люк, и без этого
+       салон всё равно начинался бы на сто двадцать точек раньше
+       входа. Кадр стоит ровно до события, а не до конца секции. */
+    if (cur) return { act: cur, k: 1 };
   }
   return best ? { act: best, k: bestK } : null;
 }
