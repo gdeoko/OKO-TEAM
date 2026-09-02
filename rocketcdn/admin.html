@@ -1303,6 +1303,34 @@ function связка() {
   });
 }
 
+/* Что означает каждая строка самопроверки: имя по-русски и правило,
+   по которому она считается тревожной.
+
+   Раньше раздел показывал сырые ключи сервера (`mail_configured`,
+   `cert_days`) и судил обо всех одинаково: «число больше нуля -
+   хорошо». По такому правилу ноль просмотров за сегодня загорался
+   тревогой в девять утра, а сертификат, которому остался день,
+   выглядел спокойным наравне с годовым. */
+var СМЫСЛ = {
+  mail_configured:  ["Почта настроена",            function (з) { return з === true; }],
+  tg_configured:    ["Телеграм-бот настроен",      function (з) { return з === true; }],
+  chat_bound:       ["Чат команды привязан",       function (з) { return з === true; }],
+  data_writable:    ["Папка данных пишется",       function (з) { return з === true; }],
+  cron_last:        ["Последний отчёт",            function (з) { return !!з; }],
+  backup_last:      ["Последний слепок",           function (з) { return !!з; }],
+  backup_count:     ["Слепков сохранено",          function (з) { return з > 0; }],
+  leads_new:        ["Заявок без ответа",          function () { return true; }],
+  leads_wait_hours: ["Старшая ждёт, часов",        function (з) { return з < 48; }],
+  cert_days:        ["Сертификат, дней осталось",  function (з) { return з === null || з > 14; }],
+  cert_names:       ["Сертификат выдан на",        function (з) { return !!з; }],
+  disk_free_gb:     ["Свободно на диске, ГБ",      function (з) { return з === null || з > 2; }],
+  tg_ip:            ["Рабочий адрес Телеграма",    function (з) { return !!з; }],
+  stats_vpn:        ["Статистика VPN пишется",     function (з) { return з === true; }],
+  stats_game:       ["Статистика игры пишется",    function (з) { return з === true; }],
+  views_vpn_today:  ["Просмотры VPN за сегодня",   function () { return true; }],
+  views_game_today: ["Просмотры игры за сегодня",  function () { return true; }]
+};
+
 function проверки() {
   var где = $("#проверкиТело");
   где.innerHTML = '<div class="пусто">Проверяем…</div>';
@@ -1310,9 +1338,14 @@ function проверки() {
     if (!о.ok) { где.innerHTML = '<div class="пусто">Не отвечает</div>'; return; }
     var строки = Object.keys(о).filter(function (к) { return к !== "ok"; }).map(function (к) {
       var з = о[к];
-      var хорошо = з === true || з === "ok" || (typeof з === "number" && з > 0);
-      var текст = typeof з === "boolean" ? (з ? "да" : "нет") : String(з);
-      return "<tr><td>" + эк(к) + "</td><td><b>" + эк(текст) + "</b></td>" +
+      var см = СМЫСЛ[к];
+      var имя = см ? см[0] : к;
+      /* Незнакомый ключ судим по старому правилу: сервер обрастает
+         строками быстрее панели, и новая строка не должна пропадать
+         из виду только потому, что её здесь ещё не назвали. */
+      var хорошо = см ? см[1](з) : (з === true || з === "ok" || (typeof з === "number" && з > 0));
+      var текст = typeof з === "boolean" ? (з ? "да" : "нет") : (з === null ? "нет данных" : String(з));
+      return "<tr><td>" + эк(имя) + "</td><td><b>" + эк(текст) + "</b></td>" +
         '<td><span class="чип ' + (хорошо ? "добро" : "ждём") + '">' + (хорошо ? "в норме" : "смотреть") + "</span></td></tr>";
     }).join("");
     где.innerHTML = '<div class="плита" style="margin-top:0"><h3>Самопроверка сервера</h3>' +

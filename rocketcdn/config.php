@@ -507,6 +507,19 @@ function rc_selftest() {
     $free = @disk_free_space(RC_DATA);
     $res['disk_free_gb'] = $free ? round($free / 1073741824, 1) : null;
     $res['tg_ip'] = function_exists('rc_tg_pin_get') ? rc_tg_pin_get() : '';
+
+    /* Самопроверка знала только про Rocket CDN, а панель с тех пор
+       стала общей на три площадки. Папка, в которую счётчик пишет
+       статистику VPN и игры, ломается ровно так же тихо, как ломалась
+       CDN-овская: счётчик отвечает «принято», а записи нет. */
+    foreach (rc_sites() as $к => $имя) {
+        if ($к === 'cdn') continue;
+        $папка = RC_STATS . '/' . $к;
+        $res['stats_' . $к] = is_dir($папка) ? is_writable($папка) : is_writable(RC_STATS);
+        $файл = stat_file(null, $к);
+        $д = rc_json_read($файл, []);
+        $res['views_' . $к . '_today'] = (int)($д['views'] ?? 0);
+    }
     return $res;
 }
 
