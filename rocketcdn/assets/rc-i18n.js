@@ -198,6 +198,11 @@ var RU = {
   "ct.consent":    "Соглашаюсь с обработкой персональных данных",
   "ct.policy":     "Политика конфиденциальности",
   "ct.req":        "Заполните поле",
+  /* У согласия своя подпись, а не общее «заполните поле»: галочку не
+     заполняют, её ставят, и чтение с экрана обязано сказать именно
+     это. Без своей подписи у согласия не было НИКАКОЙ - проверка
+     формы нашла его единственным полем без связанной ошибки. */
+  "ct.needconsent": "Поставьте галочку согласия",
   "ct.badcontact": "Укажите телефон или почту",
   /* В окне обратного звонка поле одно и оно телефонное. Общий ключ
      писал туда «или почту», хотя почту вписать некуда. */
@@ -432,6 +437,7 @@ var EN = {
   "ct.err": "Could not send. Please email us or write on Telegram.",
   "ct.consent": "I agree to the processing of personal data", "ct.policy": "Privacy policy",
   "ct.req": "Please fill this in", "ct.badcontact": "Enter a phone number or email",
+  "ct.needconsent": "Please tick the consent box",
   "ct.badphone": "Enter a phone number",
   "cb.h": "Request a call", "cb.p": "Leave your number and an engineer will call you back.",
   "cb.phone": "Phone", "cb.send": "Call me back", "cb.ok": "Got it. We will call you shortly.",

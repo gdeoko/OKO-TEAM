@@ -835,8 +835,13 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .field input::placeholder, .field textarea::placeholder { color: var(--tx-3); }
 .field textarea { resize: vertical; min-height: 96px; }
 .field.bad input, .field.bad textarea { border-color: #F87171; }
-.field .err { display: none; font-size: var(--fs-2); line-height: var(--lh-cap); color: #F87171; margin-top: 5px; }
-.field.bad .err { display: block; }
+.field .err,
+.consent .err { display: none; font-size: var(--fs-2); line-height: var(--lh-cap); color: #F87171; margin-top: 5px; }
+.field.bad .err,
+.consent.bad .err { display: block; }
+/* Согласие это метка с галочкой и текстом в строку. Подпись ошибки
+   обязана встать под ними целой строкой, а не третьей колонкой. */
+.consent .err { flex-basis: 100%; }
 .form-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
 .consent { display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-2); line-height: var(--lh-cap); color: var(--tx-3); margin: 4px 0 16px; }
 .consent input { width: 17px; height: 17px; margin-top: 2px; flex: none; accent-color: var(--cyan); }
