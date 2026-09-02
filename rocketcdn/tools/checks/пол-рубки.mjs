@@ -58,6 +58,23 @@ for (const э of [ПК, ТЕЛЕФОН]) {
   }
   await pg.waitForTimeout(2000);
 
+  /* ── Ждём вход по ФАКТУ, а не по секундомеру ────────────────
+     Постоянная пауза врала. В одиночном прогоне её хватало, а под
+     полной батареей, когда машина занята соседними браузерами, доля
+     двери считается медленнее, и проверка объявляла «в рубку не
+     вошли» на живом сайте. Мерялась загрузка машины, а не пол.
+
+     Поэтому подталкиваем прокрутку короткими шагами и ждём признак
+     rc-inside. Двадцать попыток по полсекунды это десять секунд
+     запаса сверх обычного входа. */
+  for (let п = 0; п < 20; п++) {
+    if (await pg.evaluate(() => document.documentElement.classList.contains("rc-inside"))) break;
+    y += шаг;
+    await pg.evaluate(v => scrollTo(0, v), Math.min(y, H));
+    await pg.waitForTimeout(500);
+  }
+  await pg.waitForTimeout(800);
+
   const акт = await pg.evaluate(() => document.documentElement.getAttribute("data-act"));
   const внутри = await pg.evaluate(() => document.documentElement.classList.contains("rc-inside"));
   if (!внутри) {
