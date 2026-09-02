@@ -34,6 +34,16 @@ if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) exit;
 
 $APP_URL = rtrim(rc_cfg('site_url'), '/') . '/app.html';
 
+/* Сайт RocketVPN. Ведём НЕ на rocketvpn.top напрямую, а на свою же
+   передачу /vpn.php: сайт VPN пускает по подписанному ключу, подписать
+   его можно только секретом, а секрет живёт на сервере. Заодно на той
+   стороне человек встречает акт выхода, а не первый экран.
+
+   Кнопка именно ссылочная (url), а не web_app: web_app открывает
+   страницу ВНУТРИ бота, и человек, нажавший «сайт», остаётся в боте -
+   ровно на это и жаловался владелец. */
+$VPN_URL = rtrim(rc_cfg('site_url'), '/') . '/vpn.php';
+
 function is_admin($uid) { return in_array((int)$uid, array_map('intval', (array)rc_cfg('tg_admins', [])), true); }
 
 function menu_admin() {
@@ -755,6 +765,7 @@ for ($loop = 0; $loop < 6; $loop++) {
                 ? "<b>Rocket CDN</b>\nПанель управления сайтом.\n\nНижнее меню открывает аналитику, заявки и данные сети. Мини-приложение показывает сайт прямо в Телеграме."
                 : "<b>Rocket CDN</b>\n<i>Fast. Reliable. Global.</i>\n\nГлобальная сеть доставки контента. Выберите раздел в меню внизу или откройте мини-приложение.";
             $inline = [[['text' => 'Открыть мини-приложение', 'web_app' => ['url' => $APP_URL]]],
+                       [['text' => 'Сайт RocketVPN', 'url' => $VPN_URL]],
                        [['text' => 'Личный кабинет', 'url' => rc_cfg('lk_url')]]];
             rc_tg('sendMessage', ['chat_id' => $chat, 'text' => $hi, 'parse_mode' => 'HTML',
                                   'reply_markup' => menu_for($uid)]);
@@ -772,6 +783,7 @@ for ($loop = 0; $loop < 6; $loop++) {
         if ($text === 'Инфраструктура' || $text === 'Сеть') { say($chat, txt_infra(), $uid); continue; }
         if ($text === 'Подключение') {
             say($chat, txt_connect(), null, [[['text' => 'Оставить заявку', 'url' => rc_cfg('site_url') . '#contact']],
+                                             [['text' => 'Сайт RocketVPN', 'url' => $VPN_URL]],
                                              [['text' => 'Зарегистрироваться', 'url' => rc_cfg('lk_url')]]]);
             continue;
         }
