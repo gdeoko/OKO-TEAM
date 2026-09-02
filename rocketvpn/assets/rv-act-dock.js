@@ -191,8 +191,13 @@
     c.width = шПикс; c.height = вПикс;
     var кон = c.getContext("2d");
     var тек = new T.CanvasTexture(c);
+    /* Глубину проверяем. Выключенная проверка ставит подпись поверх
+       всего кадра независимо от её места в пространстве: подписи с
+       дальней стороны причала выходили наружу сквозь корабль и
+       ворота. Запись в буфер остаётся выключенной - подпись это
+       плёнка без толщины и загораживать соседей не должна. */
     var м = new T.SpriteMaterial({ map: тек, transparent: true, opacity: 1,
-                                   depthTest: false, depthWrite: false });
+                                   depthTest: true, depthWrite: false });
     материалы.push([м, 1]);
     var s = new T.Sprite(м);
     s.scale.set(шМира, шМира * вПикс / шПикс, 1);
