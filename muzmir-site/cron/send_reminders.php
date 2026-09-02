@@ -148,9 +148,24 @@ try {
             -- (status IN 'graded','sent') срабатывало сразу после работы жюри.
             AND " . app_result_public_sql('a', 'c') . ""
     );
+    /* ОДНО ПИСЬМО НА ЧЕЛОВЕКА, А НЕ НА КАЖДУЮ ЕГО ЗАЯВКУ.
+     *
+     * Цикл идёт по заявкам, а участник подаёт их пачкой: у одного адреса их
+     * бывает десять. 31.08 в 10:00:09 на anastasiya19941995@mail.ru ушло ДЕСЯТЬ
+     * одинаковых писем «Оформите награду» подряд, в одну секунду. Человек видит
+     * не заботу, а сломавшегося робота, и такое письмо помечают спамом — по
+     * этому и репутация домена страдает, и награду в итоге не заказывают.
+     *
+     * Пишем про одну заявку, остальные ждут следующего прогона (он суточный).
+     * Журнал ведётся по заявке, поэтому ничего не теряется: назавтра письмо
+     * уйдёт по следующей. */
+    $awardWritten = [];
     foreach ($rows as $a) {
         $id = (int) $a['id'];
         if (already_notified('reminder_award', 'application', $id)) continue;
+
+        $box = mb_strtolower(trim((string) $a['email']));
+        if (isset($awardWritten[$box])) continue;
 
         $ordered = (int) scalar("SELECT COUNT(*) FROM awards_orders WHERE application_id=?", [$id]);
         if ($ordered > 0) {
@@ -173,6 +188,7 @@ try {
         ]) : '';
 
         if ($html !== '' && reminder_enqueue((string) $a['email'], (string) $a['full_name'], 'Оформите награду - «' . $a['comp_name'] . '»', $html)) {
+            $awardWritten[$box] = true;
             audit('reminder_award', 'application', $id, ['competition' => $a['comp_name']]);
             if (!empty($a['user_id']) && function_exists('notify_user')) {
                 notify_user((int)$a['user_id'], 'Оформите памятную награду',
