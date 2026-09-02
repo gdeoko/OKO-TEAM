@@ -355,6 +355,7 @@ html.rc-product-glitch .rc-vpn-entry-mark {
   background:
     radial-gradient(120% 90% at 50% 78%, rgba(4, 10, 18, .62), rgba(2, 5, 12, .94) 68%),
     rgba(2, 5, 12, .72);
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   opacity: 0;
   visibility: hidden;

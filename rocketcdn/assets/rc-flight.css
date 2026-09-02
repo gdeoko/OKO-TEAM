@@ -4928,6 +4928,7 @@ html.rc-deep-inside .totop.on {
   background: linear-gradient(180deg, rgba(4, 12, 22, .62), rgba(4, 12, 22, .18));
   border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66, 178, 220), .22);
   border-radius: clamp(8px, 1.4vw, 16px) clamp(8px, 1.4vw, 16px) 0 0;
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   pointer-events: none;
 }
