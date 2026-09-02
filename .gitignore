@@ -38,3 +38,6 @@ rocketcdn/tools/audit/**/*.png
 rocketcdn/tools/audit/tmpx/
 rocketcdn/tools/audit/**/playwright_chromiumdev_profile-*/
 rocketcdn/tools/audit/tmp/
+
+# Кандидаты моделей NASA для просмотра на стенде: временные, боевые копии лежат в assets/gen/
+rocketvpn/assets/gen/кандидаты/
