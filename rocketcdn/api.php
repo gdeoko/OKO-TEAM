@@ -10,6 +10,25 @@ require __DIR__ . '/config.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
+
+/* ── Чужой домен пускаем ПОИМЕННО ──────────────────────────
+   Панель и счётчик теперь общие на два сайта, и страница с
+   rocketvpn.top обращается сюда, на rocketcdn.ru. Браузер такой
+   запрос без разрешения не пустит.
+
+   Список закрытый, звёздочки нет. Открытый доступ означал бы, что
+   любая страница в интернете может дёргать наш счётчик и наши
+   заявки от имени человека, зашедшего к нам. */
+$СВОИ = ['https://rocketvpn.top', 'https://www.rocketvpn.top',
+         'https://rocketcdn.ru', 'https://www.rocketcdn.ru'];
+$откуда = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($откуда !== '' && in_array($откуда, $СВОИ, true)) {
+    header('Access-Control-Allow-Origin: ' . $откуда);
+    header('Vary: Origin');
+    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Max-Age: 86400');
+}
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
@@ -17,6 +36,27 @@ $raw    = file_get_contents('php://input');
 $body   = $raw ? (json_decode($raw, true) ?: []) : [];
 
 function out($d) { echo json_encode($d, JSON_UNESCAPED_UNICODE); exit; }
+
+/* Ответить человеку сейчас, а долгие дела доделать после ответа.
+
+   Заявка уходит в Телеграм и двумя письмами, и всё это человек ждал
+   стоя у формы. Телеграм с этой площадки отвечает через раз, письма
+   идут через сторонний SMTP - в плохую минуту «Заявка принята»
+   появлялось почти через минуту, и люди жали кнопку второй раз.
+   Заявка к этому моменту уже сохранена, ответ честный.
+
+   fastcgi_finish_request закрывает ответ браузеру и оставляет php
+   доработать. Там, где её нет (встроенный сервер php на стенде),
+   возвращаем false: тогда ответ уже отдан echo, и второй раз писать
+   его нельзя. */
+function rc_ответить_и_продолжить($d) {
+    ignore_user_abort(true);
+    echo json_encode($d, JSON_UNESCAPED_UNICODE);
+    if (function_exists('fastcgi_finish_request')) { @fastcgi_finish_request(); return true; }
+    if (function_exists('litespeed_finish_request')) { @litespeed_finish_request(); return true; }
+    @ob_flush(); @flush();
+    return false;
+}
 function inp($k, $d = '') {
     global $body;
     $v = $body[$k] ?? $_POST[$k] ?? $_GET[$k] ?? $d;
@@ -125,7 +165,14 @@ function os_of($ua) {
     if (strpos($ua, 'linux') !== false)   return 'Linux';
     return 'другое';
 }
-function stat_file($day = null) { return RC_STATS . '/' . ($day ?: date('Y-m-d')) . '.json'; }
+/* Разрез по сайту берётся из запроса, поэтому rc_site живёт здесь,
+   рядом с inp(). Имена сайтов и путь к файлу статистики нужны ещё и
+   отчётам в Телеграм, они лежат в config.php. */
+function rc_site($имя = null) {
+    $s = $имя === null ? (string)inp('site', 'cdn') : (string)$имя;
+    return isset(rc_sites()[$s]) ? $s : 'cdn';
+}
+
 
 /* Ограничение частоты: не более N обращений с адреса за окно */
 function rate_ok($bucket, $limit, $window) {
@@ -175,8 +222,10 @@ if ($action === 'track') {
     $self = parse_url(rc_cfg('site_url'), PHP_URL_HOST);
     if ($refHost === $self) $refHost = '';
 
+    $сайт = rc_site();
     $fresh = [];
-    rc_json_update(stat_file(), function ($d) use ($events, $ua, $sid, $refHost, &$fresh) {
+    rc_json_update(stat_file(null, $сайт), function ($d) use ($events, $ua, $sid, $refHost, &$fresh, $сайт) {
+        $d['site'] = $сайт;
         $d['day']      = $d['day']      ?? date('Y-m-d');
         $d['views']    = $d['views']    ?? 0;
         $d['uniq']     = $d['uniq']     ?? [];
@@ -186,6 +235,7 @@ if ($action === 'track') {
         $d['os']       = $d['os']       ?? [];
         $d['refs']     = $d['refs']     ?? [];
         $d['scroll']   = $d['scroll']   ?? [];
+        $d['акты']     = $d['акты']     ?? [];
         $d['nodes']    = $d['nodes']    ?? [];
         $d['searches'] = $d['searches'] ?? [];
         $d['errors']   = $d['errors']   ?? [];
@@ -226,6 +276,12 @@ if ($action === 'track') {
                 }
             }
             if ($type === 'scroll') $d['scroll'][$label] = ($d['scroll'][$label] ?? 0) + 1;
+            /* Акты фильма VPN держим поимённо. Общего счётчика мало:
+               по нему видно «сто событий акта» и не видно, на каком
+               именно акте люди уходят, а весь смысл фильма в том, где
+               обрывается путь. Разных имён восемь, файл от этого не
+               растёт. */
+            if ($type === 'акт' && $label !== '') $d['акты'][$label] = ($d['акты'][$label] ?? 0) + 1;
             if ($type === 'node')   $d['nodes'][$label]  = ($d['nodes'][$label] ?? 0) + 1;
             if ($type === 'search' && $label !== '') $d['searches'][$label] = ($d['searches'][$label] ?? 0) + 1;
             if ($type === 'jserr') {
@@ -245,7 +301,9 @@ if ($action === 'track') {
        чтобы всплеск ошибок не превратился в поток сообщений. */
     if ($fresh && rate_ok('errnotify', 5, 3600)) {
         $list = array_slice($fresh, 0, 5);
-        rc_notify("<b>Ошибка на сайте</b>\n<code>" . htmlspecialchars(implode("\n", $list)) . "</code>", null, 'tg_topic_error');
+        $имяС = rc_sites()[$сайт] ?? $сайт;
+        rc_notify("<b>Ошибка · " . htmlspecialchars($имяС) . "</b>\n<code>"
+            . htmlspecialchars(implode("\n", $list)) . "</code>", null, 'tg_topic_error');
     }
     out(['ok' => true]);
 }
@@ -283,6 +341,10 @@ if ($action === 'lead' || $action === 'callback') {
 
     $lead = [
         'id'      => substr(md5($contact . microtime(true)), 0, 10),
+        /* С какого сайта пришла. Без этого в общей панели заявки двух
+           сайтов сливаются в одну кучу, и по ним нельзя ни отвечать
+           по адресу, ни считать воронку каждого. */
+        'site'    => rc_site(),
         'kind'    => $kind === 'callback' ? 'callback' : 'lead',
         'name'    => $name,
         'contact' => $contact,
@@ -302,15 +364,21 @@ if ($action === 'lead' || $action === 'callback') {
         $d['items'][] = $lead;
         return $d;
     });
-    rc_json_update(stat_file(), function ($d) use ($lead) {
+    rc_json_update(stat_file(null, $lead['site']), function ($d) use ($lead) {
         /* Заявки с формы и заявки на звонок считаем раздельно, чтобы не задваивать */
         if ($lead['kind'] === 'callback') $d['callbacks'] = ($d['callbacks'] ?? 0) + 1;
         else                              $d['leads']     = ($d['leads'] ?? 0) + 1;
         return $d;
     });
 
+    /* Заявка записана - человеку больше ждать нечего. Отбивки в
+       Телеграм и письма идут уже после ответа. */
+    rc_ответить_и_продолжить(['ok' => true, 'id' => $lead['id']]);
+
     /* В Телеграм */
-    $title = $lead['kind'] === 'callback' ? 'Заявка на звонок' : 'Новая заявка с сайта';
+    $имяСайта = rc_sites()[$lead['site']] ?? 'Rocket CDN';
+    $title = ($lead['kind'] === 'callback' ? 'Заявка на звонок' : 'Новая заявка')
+           . ' · ' . $имяСайта;
     $txt = "<b>{$title}</b>\n\n"
          . "Имя: <b>" . htmlspecialchars($name) . "</b>\n"
          . "Контакт: <code>" . htmlspecialchars($contact) . "</code>\n"
@@ -359,7 +427,7 @@ if ($action === 'lead' || $action === 'callback') {
         ));
     }
 
-    out(['ok' => true, 'id' => $lead['id']]);
+    exit;
 }
 
 /* ══ Контент сайта для фронта ═════════════════════════════ */
@@ -385,17 +453,67 @@ if ($action === 'logout') {
     out(['ok' => true]);
 }
 
+/* ── Сводка по ВСЕМ сайтам разом ───────────────────────────
+   Дашборд общей панели показывает три сайта рядом, и просить у
+   сервера три отдельные сводки ради этого незачем: три запроса вместо
+   одного, три чтения одних и тех же файлов и три разных момента
+   времени в одном кадре. Здесь считается коротко - только то, что
+   стоит на плитках дашборда, - а подробности каждый сайт отдаёт по
+   своему запросу stats. */
+if ($action === 'обзор') {
+    need_key();
+    $days = max(1, min(90, (int)inp('days', 14)));
+    $из = [];
+    foreach (rc_sites() as $код => $имя) {
+        $ряд = []; $сум = ['views' => 0, 'uniq' => 0, 'leads' => 0, 'callbacks' => 0];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $день = date('Y-m-d', strtotime("-{$i} day"));
+            $d = rc_json_read(stat_file($день, $код), []);
+            $с = [
+                'day'       => $день,
+                'views'     => (int)($d['views'] ?? 0),
+                'uniq'      => count($d['uniq'] ?? []),
+                'leads'     => (int)($d['leads'] ?? 0),
+                'callbacks' => (int)($d['callbacks'] ?? 0),
+            ];
+            foreach ($сум as $k => $v) $сум[$k] += $с[$k];
+            $ряд[] = $с;
+        }
+        $из[$код] = [
+            'имя'   => $имя,
+            'ряд'   => $ряд,
+            'сумма' => $сум,
+            'конв'  => $сум['uniq'] > 0
+                ? round(($сум['leads'] + $сум['callbacks']) / $сум['uniq'] * 100, 2) : 0,
+        ];
+    }
+    /* Заявки лежат общим списком: у них свой разрез по сайту внутри. */
+    $заявки = rc_json_read(RC_LEADS, []);
+    $поСайтам = []; $новых = 0;
+    foreach (($заявки['items'] ?? []) as $з) {
+        $с = isset(rc_sites()[$з['site'] ?? '']) ? $з['site'] : 'cdn';
+        $поСайтам[$с] = ($поСайтам[$с] ?? 0) + 1;
+        if (($з['status'] ?? 'new') === 'new') $новых++;
+    }
+    out(['ok' => true, 'days' => $days, 'сайты' => $из,
+         'заявок' => count($заявки['items'] ?? []), 'новых' => $новых,
+         'заявкиПоСайтам' => $поСайтам]);
+}
+
 /* Сводка аналитики за N дней */
 if ($action === 'stats') {
     need_key();
+    $сайт = rc_site();
     $days = max(1, min(90, (int)inp('days', 14)));
     $series = [];
     $tot = ['views' => 0, 'uniq' => 0, 'leads' => 0, 'callbacks' => 0, 'register' => 0, 'connect' => 0];
     $devices = []; $os = []; $refs = []; $nodes = []; $searches = []; $scroll = []; $hours = []; $errors = [];
+    $акты = [];
+    $события = [];
 
     for ($i = $days - 1; $i >= 0; $i--) {
         $day = date('Y-m-d', strtotime("-{$i} day"));
-        $d = rc_json_read(stat_file($day), []);
+        $d = rc_json_read(stat_file($day, $сайт), []);
         $ev = $d['events'] ?? [];
         $row = [
             'day'       => $day,
@@ -409,27 +527,34 @@ if ($action === 'stats') {
         foreach ($tot as $k => $v) $tot[$k] += $row[$k];
         $series[] = $row;
 
+        foreach (($d['events'] ?? []) as $kk => $vv) $события[$kk] = ($события[$kk] ?? 0) + $vv;
+
         foreach (['devices' => &$devices, 'os' => &$os, 'refs' => &$refs, 'nodes' => &$nodes,
-                  'searches' => &$searches, 'scroll' => &$scroll, 'hours' => &$hours, 'errors' => &$errors] as $k => &$acc) {
+                  'searches' => &$searches, 'scroll' => &$scroll, 'hours' => &$hours,
+                  'errors' => &$errors, 'акты' => &$акты] as $k => &$acc) {
             foreach (($d[$k] ?? []) as $kk => $vv) $acc[$kk] = ($acc[$kk] ?? 0) + $vv;
         }
         unset($acc);
     }
-    arsort($refs); arsort($nodes); arsort($searches); arsort($errors); arsort($os);
+    arsort($refs); arsort($nodes); arsort($searches); arsort($errors); arsort($os); arsort($события);
     ksort($hours); ksort($scroll);
 
     $conv = $tot['uniq'] > 0 ? round(($tot['leads'] + $tot['callbacks']) / $tot['uniq'] * 100, 2) : 0;
     $ctr  = $tot['uniq'] > 0 ? round($tot['register'] / $tot['uniq'] * 100, 2) : 0;
 
     out([
-        'ok' => true, 'days' => $days, 'series' => $series, 'total' => $tot,
+        'ok' => true, 'сайт' => $сайт, 'days' => $days, 'series' => $series, 'total' => $tot,
         'conv' => $conv, 'ctr' => $ctr,
         'devices' => $devices, 'os' => $os,
         'refs' => array_slice($refs, 0, 12, true),
         'nodes' => array_slice($nodes, 0, 12, true),
         'searches' => array_slice($searches, 0, 12, true),
         'errors' => array_slice($errors, 0, 12, true),
-        'scroll' => $scroll, 'hours' => $hours,
+        'scroll' => $scroll, 'hours' => $hours, 'акты' => $акты,
+        /* Событий у каждого сайта свой набор: у CDN регистрация и
+           подключение, у VPN проход по актам, у игры полёт и тела.
+           Отдаём как есть, панель разберёт по названиям. */
+        'события' => $события,
     ]);
 }
 
@@ -628,6 +753,87 @@ if ($action === 'selftest') {
         $res['tg_sent'] = true;
     }
     out(['ok' => true] + $res);
+}
+
+/* ── Связка: с чем панель сейчас соединена ─────────────────
+   Раздел «Связка» в панели отвечает на один вопрос: доходят ли
+   уведомления и куда именно. Без него привязку к чату можно узнать
+   только чтением файла на сервере, а «кажется, работает» это не
+   ответ. Сам токен наружу не отдаём никогда: панель показывает лишь
+   его хвост, чтобы отличить один бот от другого. */
+if ($action === 'связка') {
+    need_key();
+    $чат   = rc_cfg('tg_chat');
+    $токен = (string)rc_cfg('tg_token');
+    /* Каждому обращению наружу свой короткий предел. Без него раздел
+       висит на «спрашиваем сервер» столько, сколько молчит чужая
+       сторона: панель не имеет права ждать дольше человека. */
+    $ждать = stream_context_create(['http' => ['timeout' => 4, 'ignore_errors' => true]]);
+
+    /* Кто наш бот. Два правила разом.
+
+       ПЕРВОЕ: спрашиваем по той же дороге, что и все отправки - с
+       пином рабочего адреса. Прямой file_get_contents по имени
+       api.telegram.org отсюда не доходит вовсе: резолвер площадки
+       отдаёт адрес, до которого сети нет, и раздел писал «бот не
+       задан» про живого бота, который в это же время слал заявки.
+
+       ВТОРОЕ: имя бота не меняется, а связь с телеграмом здесь рвётся
+       через раз. Держим ответ сутки в файле и обновляем ОДНИМ коротким
+       заходом. Гонять полный перебор адресов ради строчки «кто мы»
+       значит держать человека у пустого раздела до минуты. */
+    $бот = null;
+    if ($токен !== '') {
+        $кэш = rc_json_read(RC_DATA . '/tg_me.json', []);
+        $свеж = !empty($кэш['ts']) && (time() - (int)$кэш['ts']) < 86400 && !empty($кэш['бот']);
+        if ($свеж) {
+            $бот = $кэш['бот'];
+        } else {
+            list($о, $е, ) = rc_tg_call($токен, 'getMe', [], rc_tg_pin_get(), true);
+            $j = $е ? null : json_decode((string)$о, true);
+            if (!empty($j['ok'])) {
+                $бот = $j['result'];
+                rc_json_write(RC_DATA . '/tg_me.json', ['ts' => time(), 'бот' => $бот]);
+            } elseif (!empty($кэш['бот'])) {
+                /* Не ответил сейчас - показываем последнее известное,
+                   это честнее пустого места. */
+                $бот = $кэш['бот'];
+            }
+        }
+    }
+    $сайты = [];
+    foreach (['cdn' => rc_cfg('site_url'), 'vpn' => 'https://rocketvpn.top'] as $к => $адрес) {
+        $было = ini_set('default_socket_timeout', '4');
+        $ч = @get_headers($адрес, true, $ждать);
+        if ($было !== false) ini_set('default_socket_timeout', $было);
+        $сайты[$к] = ['адрес' => $адрес, 'ответ' => $ч ? substr((string)$ч[0], 0, 20) : 'нет ответа'];
+    }
+    out([
+        'ok' => true,
+        'бот' => $бот ? ['имя' => $бот['username'] ?? '', 'id' => $бот['id'] ?? 0] : null,
+        'хвостТокена' => $токен === '' ? '' : substr($токен, -6),
+        'чат' => (string)$чат,
+        'темы' => [
+            'формы'    => (string)rc_cfg('tg_topic_form'),
+            'ошибки'   => (string)rc_cfg('tg_topic_error'),
+            'аналитика'=> (string)rc_cfg('tg_topic_stat'),
+        ],
+        'админы' => rc_cfg('tg_admins'),
+        'сайты' => $сайты,
+    ]);
+}
+
+/* Проверка связи по кнопке: пишем в каждую тему своё сообщение.
+   Одного общего мало - темы привязываются по одной, и молчащая тема
+   находится только тем, что в неё написали. */
+if ($action === 'связка_проба') {
+    need_key();
+    $из = [];
+    foreach (['tg_topic_form' => 'Формы', 'tg_topic_error' => 'Ошибки', 'tg_topic_stat' => 'Аналитика'] as $к => $имя) {
+        $из[$имя] = rc_notify("<b>Проба связи · {$имя}</b>\nОбщая панель на связи, уведомления доходят.", null, $к)
+            ? 'дошло' : 'не дошло';
+    }
+    out(['ok' => true, 'темы' => $из]);
 }
 
 out(['ok' => false, 'error' => 'unknown_action']);

@@ -6,13 +6,13 @@ if (!defined('RC_ROOT')) require __DIR__ . '/config.php';
 
 /* Свод за отрезок: $back — сколько дней назад начинать, $len — длина в днях.
    rc_stats_range(1, 1) это вчера, rc_stats_range(0, 7) это последняя неделя. */
-function rc_stats_range($back = 1, $len = 1) {
+function rc_stats_range($back = 1, $len = 1, $site = 'cdn') {
     $r = ['views' => 0, 'uniq' => 0, 'leads' => 0, 'callbacks' => 0, 'register' => 0,
           'connect' => 0, 'errors' => 0, 'refs' => [], 'devices' => [], 'nodes' => [],
           'searches' => [], 'scroll' => [], 'days' => []];
     for ($i = 0; $i < $len; $i++) {
         $day = date('Y-m-d', strtotime('-' . ($back + $i) . ' day'));
-        $d = rc_json_read(RC_STATS . '/' . $day . '.json', []);
+        $d = rc_json_read(stat_file($day, $site), []);
         $ev = $d['events'] ?? [];
         $row = [
             'day'       => $day,
@@ -54,7 +54,7 @@ function rc_report_daily() {
     $p = rc_stats_range(2, 1);
     $date = date('d.m.Y', strtotime('-1 day'));
 
-    $s = "<b>Аналитика сайта за {$date}</b>\n\n"
+    $s = "<b>Аналитика · Rocket CDN за {$date}</b>\n\n"
        . "Просмотры: <b>{$y['views']}</b>" . rc_delta($y['views'], $p['views']) . "\n"
        . "Уникальные: <b>{$y['uniq']}</b>" . rc_delta($y['uniq'], $p['uniq']) . "\n"
        . "Клики «Регистрация»: <b>{$y['register']}</b>" . rc_delta($y['register'], $p['register']) . "\n"
@@ -83,6 +83,33 @@ function rc_report_daily() {
         foreach ($y['nodes'] as $k => $v) { $s .= "· " . htmlspecialchars($k) . ": {$v}\n"; if (++$i >= 5) break; }
     }
     if (!$y['views']) $s .= "\nЗа сутки посещений не было.";
+
+    $s .= rc_report_sites_tail(1, 1);
+    return $s;
+}
+
+/* Хвост отчёта по остальным площадкам.
+
+   Подробный разбор оставляем за Rocket CDN: там воронка, города и
+   регистрации. По VPN и игре в чат идёт короткая строка - просмотры,
+   люди, заявки. Полный разбор на три сайта не читается с телефона, а
+   отчёт читают именно с телефона.
+
+   Площадка без единого посещения за сутки в отчёт не попадает: строка
+   «ноль, ноль, ноль» каждый день приучает не читать отчёт вовсе. */
+function rc_report_sites_tail($back = 1, $len = 1) {
+    $s = '';
+    foreach (rc_sites() as $к => $имя) {
+        if ($к === 'cdn') continue;
+        $r = rc_stats_range($back, $len, $к);
+        if (!$r['views'] && !$r['leads'] && !$r['callbacks']) continue;
+        $s .= "\n<b>" . htmlspecialchars($имя) . "</b>\n"
+            . "Просмотры: <b>{$r['views']}</b>, люди: <b>{$r['uniq']}</b>";
+        $з = $r['leads'] + $r['callbacks'];
+        if ($з) $s .= ", заявки: <b>{$з}</b>";
+        $s .= "\n";
+    }
+    if ($s !== '') $s = "\n<b>Остальные площадки</b>\n" . $s;
     return $s;
 }
 
@@ -96,6 +123,8 @@ function rc_report_period($len = 7, $title = 'Итоги периода') {
        . "Заявки: <b>" . ($now['leads'] + $now['callbacks']) . "</b>"
        . rc_delta($now['leads'] + $now['callbacks'], $was['leads'] + $was['callbacks']) . "\n"
        . "Конверсия: <b>{$now['conv']}%</b>\n";
+
+    $s .= rc_report_sites_tail(1, $len);
 
     $s .= "\n<b>По дням</b>\n<code>";
     foreach ($now['days'] as $r) {

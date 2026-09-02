@@ -2,1711 +2,1530 @@
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#050C15">
-<meta name="robots" content="noindex, nofollow">
-<title>Админка · Rocket CDN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#060B12">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Панель · Rocket CDN и Rocket VPN</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="stylesheet" href="assets/rc-fonts.css?v=1787326334">
-<link rel="stylesheet" href="assets/rc.css?v=1787920332">
 <style>
-  body { padding-bottom: 60px; }
-  .a-hdr {
-    position: sticky; top: 0; z-index: 50; background: var(--head-bg);
-    backdrop-filter: blur(16px); border-bottom: 1px solid var(--line);
-  }
-  .a-hdr-in { display: flex; align-items: center; gap: 12px; height: 62px; }
-  .a-hdr img { height: 28px; }
-  .a-badge {
-    /* Это заголовок первого уровня, значит у него есть свои поля и
-       свой кегль от браузера: снимаем оба, вид чипа не меняется. */
-    margin: 0; line-height: 1.2;
-    font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-    padding: 4px 9px; border-radius: var(--r-full); background: var(--grad-soft);
-    color: var(--cyan); border: 1px solid var(--line);
-  }
-  .a-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 14px 0; scrollbar-width: none; }
-  .a-tabs::-webkit-scrollbar { display: none }
-  .a-tabs button {
-    padding: 9px 16px; border-radius: var(--r-full); font-size: 13.5px; font-weight: 600;
-    background: var(--surface); border: 1px solid var(--line); color: var(--tx-2);
-    cursor: pointer; white-space: nowrap; transition: all var(--fast);
-  }
-  .a-tabs button.on { background: var(--grad-btn); border-color: transparent; color: #fff; }
-  .pane { display: none; padding: 0 0 44px; }
-  .pane.on { display: block; }
+/* ═══════════════════════════════════════════════════════════
+   ОБЩАЯ ПАНЕЛЬ ДВУХ САЙТОВ И ИГРЫ
 
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-  .stat {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
-    padding: 16px 18px;
-  }
-  .stat .v { font-size: clamp(22px, 3vw, 30px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
-  .stat .k { font-size: 12px; color: var(--tx-2); margin-top: 5px; }
-  .stat .d { font-size: 11.5px; margin-top: 4px; font-weight: 600; }
-  .d.up { color: #34D399 } .d.down { color: #F87171 } .d.flat { color: var(--tx-3) }
+   ПОЧЕМУ ОДИН ФАЙЛ И БЕЗ ЧУЖИХ БИБЛИОТЕК. Панель лежит на двух
+   доменах сразу: rocketcdn.ru/admin и rocketvpn.top/admin. Относительные
+   ссылки на стили и шрифты работали бы только на одном из них, а
+   графики через чужую библиотеку это триста килобайт и ещё один
+   сервер, который однажды не ответит. Всё своё: разметка, стили,
+   графики на холсте.
 
-  .panel {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
-    padding: clamp(16px, 2.4vw, 24px); margin-top: 16px;
-  }
-  /* Заголовки панелей это второй уровень: над ними только h1 в
-     шапке. Раньше стояли h3 через голову h2, и обход по заголовкам
-     начинался с провала на уровень. */
-  .panel h2,
-  .panel h3 { font-size: 15px; font-weight: 650; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
-  .chart { width: 100%; height: 240px; }
-  .bars { display: grid; gap: 9px; }
-  .bar-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
-  .bar-row .nm { color: var(--tx-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar-row .tr { height: 8px; border-radius: 4px; background: var(--bg-3); overflow: hidden; }
-  .bar-row .tr i { display: block; height: 100%; border-radius: 4px; background: var(--grad); }
-  .bar-row .vv { font-weight: 700; font-size: 12.5px; min-width: 34px; text-align: right; white-space: nowrap; }
+   ПОЧЕМУ ТРИ ЦВЕТА. Сайтов два и игра между ними, и в общей панели их
+   надо различать не подписью, а взглядом. Бирюза это Rocket CDN,
+   индиго RocketVPN, янтарь игра. Цвет один и тот же везде: на плитке,
+   на графике, на строке заявки.
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; min-width: 0; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th { text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); padding: 0 10px 10px; font-weight: 700; }
-  td { padding: 12px 10px; border-top: 1px solid var(--line); vertical-align: top; }
-  .tbl-wrap { overflow-x: auto; }
-  .st { font-size: 10.5px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-full); letter-spacing: .04em; }
-  .st-new  { background: rgba(66,178,220,.18); color: var(--cyan) }
-  .st-work { background: rgba(138,89,246,.18); color: var(--violet) }
-  .st-done { background: rgba(52,211,153,.16); color: #34D399 }
-  .st-spam { background: rgba(248,113,113,.14); color: #F87171 }
-  .row-act { display: flex; gap: 6px; flex-wrap: wrap; }
-  .mini { padding: 6px 10px; font-size: 12px; border-radius: var(--r-xs); background: var(--surface-2); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer; transition: all var(--fast); }
-  .mini:hover { border-color: var(--cyan); color: var(--cyan) }
-  .mini.danger:hover { border-color: #F87171; color: #F87171 }
+:root {
+  --фон: #060B12;
+  --плита: #0B131C;
+  --карта: rgba(255,255,255,.035);
+  --карта2: rgba(255,255,255,.055);
+  --кром: rgba(255,255,255,.09);
+  --кром2: rgba(255,255,255,.16);
+  --т1: #EAF2F8;
+  --т2: rgba(234,242,248,.66);
+  --т3: rgba(234,242,248,.40);
+  --т4: rgba(234,242,248,.22);
 
-  /* ── Заявки карточками ────────────────────────────────────
-     Каждая заявка это карточка, а не строка таблицы: на узком экране
-     она просто перестраивается в столбец, ничего не уезжает вбок. */
-  .lead-find {
-    width: 100%; padding: 11px 14px; font-size: 14px;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--r-md); color: var(--tx-1); outline: none;
-  }
-  .lead-find:focus { border-color: var(--cyan) }
-  .leads { display: grid; gap: 10px; }
-  .lead {
-    display: grid; gap: 10px;
-    grid-template-columns: 132px minmax(150px, 1fr) minmax(180px, 1.4fr) auto;
-    align-items: start;
-    padding: 14px; border: 1px solid var(--line); border-radius: var(--r-md);
-    background: var(--surface-2);
-  }
-  .lead.is-new { border-left: 3px solid var(--cyan) }
-  .lead.is-work { border-left: 3px solid var(--violet) }
-  .lead.is-done { border-left: 3px solid #34D399 }
-  .lead.is-spam { border-left: 3px solid #F87171; opacity: .62 }
-  .lead .when { font-size: 12.5px; color: var(--tx-2); line-height: 1.5 }
-  .lead .who b { display: block; font-size: 14.5px }
-  /* Компания отдельной строкой. Была строчным элементом, и на узком
-     экране слипалась с почтой в «GameDev KZm.kim@gamedev.kz». */
-  .lead .who span { display: block; font-size: 12.5px; color: var(--tx-3) }
-  .lead .who a { display: block; margin-top: 2px }
-  .lead .what b { display: block; font-size: 13px; color: var(--cyan); margin-bottom: 3px }
-  .lead .what p { font-size: 13.5px; line-height: 1.5; color: var(--tx-2); margin: 0 }
-  .lead .side { display: grid; gap: 8px; justify-items: end }
-  .lead .row-act { justify-content: flex-end }
-  .lead .note { grid-column: 1 / -1; display: grid; gap: 6px }
-  .lead .note .note-open { display: none; justify-self: start }
-  .lead .note.is-hidden .note-open { display: inline-block }
-  .lead .note.is-hidden textarea, .lead .note.is-hidden .nrow { display: none }
-  .lead .note textarea {
-    width: 100%; min-height: 56px; resize: vertical; padding: 9px 11px;
-    font: inherit; font-size: 13px; line-height: 1.5;
-    background: var(--bg-3); border: 1px solid var(--line);
-    border-radius: var(--r-xs); color: var(--tx-1); outline: none;
-  }
-  .lead .note textarea:focus { border-color: var(--cyan) }
-  .lead .note .nrow { display: flex; gap: 8px; align-items: center }
-  @media (max-width: 860px) {
-    .lead { grid-template-columns: 1fr; gap: 8px }
-    .lead .side { justify-items: start }
-    .lead .row-act { justify-content: flex-start }
-  }
-  .seg button .cnt {
-    display: inline-block; margin-left: 6px; padding: 1px 6px;
-    border-radius: var(--r-full); font-size: 10.5px; font-weight: 700;
-    background: rgba(255,255,255,.10); color: inherit;
-  }
+  --cdn: #42B2DC;
+  --vpn: #8A9CFF;
+  --игра: #FFC078;
+  --добро: #4ADE80;
+  --беда: #F87171;
+  --ждём: #FBBF24;
 
-  /* Правка узлов: поля в ряд на широком, в столбец на телефоне. */
-  .node-add {
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
-  }
-  .node-add input, .node-add select {
-    padding: 9px 12px; font-size: 13.5px; background: var(--bg-3);
-    border: 1px solid var(--line); border-radius: var(--r-xs);
-    color: var(--tx-1); outline: none; min-width: 0;
-  }
-  .node-add input:focus, .node-add select:focus { border-color: var(--cyan) }
-  #nName, #nEn { flex: 1 1 150px }
-  #nLat, #nLon { flex: 0 1 110px }
-  #nReg { flex: 1 1 180px }
-  #hName { flex: 1 1 220px }
-  .node-add .chk {
-    display: flex; align-items: center; gap: 6px; font-size: 13px;
-    color: var(--tx-2); white-space: nowrap; cursor: pointer;
-  }
-  .node-own { display: grid; gap: 6px }
-  .node-own .one {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    padding: 9px 12px; border: 1px solid var(--line);
-    border-radius: var(--r-xs); background: var(--surface-2); font-size: 13.5px;
-  }
-  .node-own .one b { font-weight: 650 }
-  .node-own .one .co { color: var(--tx-3); font-size: 12.5px }
-  .node-own .one button { margin-left: auto }
-  @media (max-width: 700px) {
-    .node-add { flex-direction: column; align-items: stretch }
-    .node-add .chk { justify-content: flex-start }
-  }
+  --r: 14px;
+  --r2: 20px;
+  --бок: 264px;
+  --шапка: 62px;
+  --ход: cubic-bezier(.22,1,.36,1);
+}
+:root[data-theme="light"] {
+  --фон: #F2F5F8;
+  --плита: #FFFFFF;
+  --карта: rgba(6,11,18,.028);
+  --карта2: rgba(6,11,18,.05);
+  --кром: rgba(6,11,18,.10);
+  --кром2: rgba(6,11,18,.18);
+  --т1: #0A1119;
+  --т2: rgba(10,17,25,.70);
+  --т3: rgba(10,17,25,.48);
+  --т4: rgba(10,17,25,.26);
+  --cdn: #1B87B4;
+  --vpn: #5566D8;
+  --игра: #C77A22;
+}
 
-  /* ── Тексты сайта ─────────────────────────────────────────
-     Раньше здесь стояла стена из тридцати полей без группировки и
-     без поиска, а карточки страницы правились сырым JSON. Теперь
-     надписи разложены по разделам страницы, а карточка правится
-     полями, как ей и положено. */
-  .seg.tiny button { padding: 6px 11px; font-size: 12px }
-  .cf-top {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    margin: 12px 0 4px; font-size: 12.5px; color: var(--tx-3);
-  }
-  .cf-top .mini { margin-left: auto }
-  .cf-sec { border: 1px solid var(--line); border-radius: var(--r-sm); margin-top: 10px; background: var(--surface-2) }
-  .cf-sec > summary {
-    padding: 11px 14px; cursor: pointer; font-size: 13.5px; font-weight: 650;
-    display: flex; align-items: center; gap: 10px; list-style: none; user-select: none;
-  }
-  .cf-sec > summary::-webkit-details-marker { display: none }
-  .cf-sec > summary::before {
-    content: ""; width: 6px; height: 6px; border-right: 1.6px solid var(--tx-3);
-    border-bottom: 1.6px solid var(--tx-3); transform: rotate(-45deg);
-    transition: transform var(--fast); flex: none; margin-left: 2px;
-  }
-  .cf-sec[open] > summary::before { transform: rotate(45deg) }
-  .cf-sec > summary .n { color: var(--tx-3); font-weight: 600; font-size: 12px; margin-left: auto }
-  .cf-sec > summary .ch {
-    padding: 1px 7px; border-radius: var(--r-full); font-size: 10.5px; font-weight: 700;
-    background: rgba(66,178,220,.18); color: var(--cyan);
-  }
-  .cf-body { padding: 2px 14px 14px }
-  .cf { margin-top: 12px }
-  .cf label {
-    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-    font-size: 12.5px; color: var(--tx-2); margin-bottom: 5px;
-  }
-  .cf label code { font-size: 11px; color: var(--tx-3); background: var(--bg-3); padding: 1px 6px; border-radius: var(--r-xs) }
-  .cf label .edited { color: var(--cyan); font-size: 11px; font-weight: 700 }
-  .cf input, .cf textarea {
-    width: 100%; padding: 10px 12px; font: inherit; font-size: 13.5px; line-height: 1.55;
-    background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--r-xs);
-    color: var(--tx-1); outline: none; resize: vertical;
-  }
-  .cf textarea { min-height: 76px }
-  .cf input:focus, .cf textarea:focus { border-color: var(--cyan) }
-  .cf.is-edited input, .cf.is-edited textarea { border-color: rgba(66,178,220,.55) }
-  .cf .was { font-size: 12px; color: var(--tx-3); margin-top: 5px; line-height: 1.5 }
-  .cf-none { padding: 18px 4px; color: var(--tx-3); font-size: 13.5px }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--фон); color: var(--т1); min-height: 100vh; line-height: 1.5;
+  font: 400 14.5px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: "tnum" 1;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.нет { display: none !important; }
+.тихо { color: var(--т3); }
+.числ { font-variant-numeric: tabular-nums; }
+.обрез { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Карточки страницы: одна карточка - одна плитка с полями. */
-  .blk-list { display: grid; gap: 10px }
-  .blk {
-    border: 1px solid var(--line); border-radius: var(--r-sm);
-    background: var(--surface-2); padding: 14px;
-  }
-  .blk .head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px }
-  .blk .head .num {
-    width: 24px; height: 24px; flex: none; border-radius: var(--r-xs);
-    display: grid; place-items: center; font-size: 12px; font-weight: 700;
-    background: var(--bg-3); color: var(--tx-2);
-  }
-  .blk .head .ttl {
-    font-size: 13.5px; font-weight: 650; overflow: hidden;
-    text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1;
-  }
-  .blk .head .row-act { margin-left: auto; flex: none }
-  .blk .ico-pick { display: flex; align-items: center; gap: 10px }
-  .blk .ico-pick select {
-    padding: 9px 12px; font-size: 13.5px; background: var(--bg-3);
-    border: 1px solid var(--line); border-radius: var(--r-xs); color: var(--tx-1); outline: none;
-  }
-  .blk .ico-pick .prev {
-    width: 40px; height: 40px; flex: none; border-radius: var(--r-xs);
-    display: grid; place-items: center; background: var(--bg-3);
-    border: 1px solid var(--line); color: var(--cyan);
-  }
-  .blk .ico-pick .prev svg { width: 22px; height: 22px }
-  .raw { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px }
-  .raw > summary { cursor: pointer; font-size: 12.5px; color: var(--tx-3); user-select: none }
-  .raw > summary:hover { color: var(--cyan) }
+/* ── Живой фон ─────────────────────────────────────────────
+   Медленная сетка с бегущим отсветом. Панель это место, где сидят
+   подолгу, и мёртвая заливка за карточками делает её похожей на
+   таблицу. Движение очень медленное и без единого резкого края:
+   заметить его можно, отвлечься на него нельзя. */
+#фон {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 42% at 18% 8%, rgba(66,178,220,.16), transparent 68%),
+    radial-gradient(52% 40% at 88% 82%, rgba(138,156,255,.13), transparent 66%),
+    linear-gradient(180deg, rgba(255,255,255,.02), transparent 40%);
+  animation: дышит 26s ease-in-out infinite alternate;
+}
+#фон::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(72% 60% at 50% 34%, #000, transparent 78%);
+}
+:root[data-theme="light"] #фон { opacity: .55; }
+@keyframes дышит { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(0,-14px,0) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { #фон { animation: none; } }
 
-  .login { min-height: 100svh; display: grid; place-items: center; padding: var(--pad); }
-  .login .form-card { width: 100%; max-width: 380px; }
-  .login img { height: 46px; margin: 0 auto 22px; }
-  .hint { font-size: 12.5px; color: var(--tx-3); line-height: 1.7; }
-  .kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 13.5px; }
-  .kv b { color: var(--tx-2); font-weight: 600 }
-  .ok-dot, .bad-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px }
-  .ok-dot { background: #34D399 } .bad-dot { background: #F87171 }
-  textarea.code { font-family: var(--mono); font-size: 12.5px; min-height: 320px; line-height: 1.6 }
-  .toast {
-    position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px);
-    background: var(--bg-2); border: 1px solid var(--line-2); color: var(--tx);
-    padding: 12px 20px; border-radius: var(--r-md); font-size: 14px; z-index: 500;
-    opacity: 0; visibility: hidden; transition: all .3s var(--ease); box-shadow: var(--shadow);
-  }
-  .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, 0) }
-  .seg { display: flex; gap: 6px; flex-wrap: wrap }
-  .seg button { padding: 7px 13px; font-size: 12.5px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer }
-  .seg button.on { background: var(--grad-btn); color: #fff; border-color: transparent }
-  @media (max-width: 640px) {
-    .a-hdr-in { height: 56px }
-    /* На 390 шапка не помещалась в строку и кнопка «Выйти» уезжала
-       за правый край на 38 пикселей: выйти с телефона было нечем.
-       Значок «админка» на узком экране ничего не сообщает, вкладки
-       и так под ним, поэтому он уходит первым. */
-    .a-badge { display: none }
-    .a-hdr img { height: 24px }
-    .chart { height: 200px }
-    td, th { padding-left: 6px; padding-right: 6px }
-  }
+/* ── Вход ──────────────────────────────────────────────────*/
+.вход {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px;
+  background: var(--фон);
+}
+.вход-к {
+  position: relative; width: 100%; max-width: 380px; text-align: center;
+  background: var(--карта); border: 1px solid var(--кром); border-radius: 22px;
+  padding: 36px 28px; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  animation: всплыл .5s var(--ход) both;
+}
+.вход-к img { height: 34px; margin: 0 auto 18px; display: block; }
+.вход-к h1 { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+.вход-к p { font-size: 12px; color: var(--т3); margin: 6px 0 22px; letter-spacing: .1em; text-transform: uppercase; }
+.поле {
+  width: 100%; padding: 13px 15px; border-radius: 12px; background: rgba(255,255,255,.05);
+  border: 1px solid var(--кром); outline: none; transition: border-color .18s, box-shadow .18s;
+}
+.поле:focus { border-color: var(--cdn); box-shadow: 0 0 0 3px rgba(66,178,220,.16); }
+.кн {
+  padding: 12px 18px; border-radius: 12px; border: 1px solid var(--кром2); cursor: pointer;
+  background: var(--карта2); font-weight: 600; font-size: 13.5px;
+  transition: transform .16s var(--ход), background .18s, border-color .18s;
+}
+.кн:hover { background: rgba(255,255,255,.10); border-color: var(--cdn); }
+.кн:active { transform: scale(.97); }
+.кн.мал { padding: 6px 11px; font-size: 13px; line-height: 1; }
+.кн-гл {
+  background: linear-gradient(135deg, var(--cdn), var(--vpn)); border-color: transparent; color: #04121B;
+}
+.кн-гл:hover { filter: brightness(1.08); }
+.вход .кн { width: 100%; margin-top: 12px; }
+.ошибка { color: var(--беда); font-size: 12.5px; margin-top: 12px; min-height: 18px; }
+@keyframes всплыл { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* ── Шапка ─────────────────────────────────────────────────*/
+.шапка {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--шапка); z-index: 40;
+  display: flex; align-items: center; gap: 12px; padding: 0 14px;
+  background: color-mix(in srgb, var(--плита) 88%, transparent);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--кром);
+}
+.шапка img.лого { height: 24px; }
+.шапка .назв { font-weight: 700; font-size: 14.5px; letter-spacing: -.01em; }
+.шапка .назв span { color: var(--т3); font-weight: 500; }
+.шапка .право { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* Бургер: три полосы складываются в крест. Не картинка и не шрифт -
+   три настоящие полосы, каждая едет своим путём. */
+/* Три полосы складываются в крест. Столбик с ЗАДАННЫМ просветом, а
+   не сетка: в сетке три строки делят высоту кнопки между собой, шаг
+   выходит в четырнадцать точек, а сходятся полосы на шесть - и вместо
+   креста получается стрелка. Замерено: было 26,7 точки между
+   полосами при переносе на 6. Здесь шаг равен переносу по
+   построению: две точки полосы плюс четыре просвета. */
+.бургер {
+  width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--кром);
+  background: var(--карта); cursor: pointer; flex: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  transition: background .2s, border-color .2s;
+}
+.бургер:hover { border-color: var(--cdn); }
+.бургер i {
+  display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--т1);
+  transition: transform .38s var(--ход), opacity .2s ease, width .38s var(--ход);
+}
+.бургер i:nth-child(3) { width: 12px; }
+body.меню .бургер i:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+body.меню .бургер i:nth-child(2) { opacity: 0; transform: scaleX(.2); }
+body.меню .бургер i:nth-child(3) { width: 18px; transform: translateY(-6px) rotate(-45deg); }
+
+.значок {
+  width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--кром);
+  background: var(--карта); display: grid; place-items: center; cursor: pointer;
+  transition: transform .16s var(--ход), border-color .2s, background .2s;
+}
+.значок:hover { border-color: var(--cdn); background: var(--карта2); }
+.значок:active { transform: scale(.94); }
+.значок svg { width: 17px; height: 17px; stroke: var(--т2); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.период { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--карта); border: 1px solid var(--кром); }
+.период button {
+  padding: 7px 11px; border-radius: 9px; border: 0; background: none; cursor: pointer;
+  font-size: 12.5px; font-weight: 600; color: var(--т3); transition: color .18s, background .18s;
+}
+.период button.вкл { background: var(--карта2); color: var(--т1); }
+
+/* ── Боковое меню ──────────────────────────────────────────*/
+.бок {
+  position: fixed; top: var(--шапка); bottom: 0; left: 0; width: var(--бок); z-index: 35;
+  padding: 14px 12px 24px; overflow-y: auto; overscroll-behavior: contain;
+  background: color-mix(in srgb, var(--плита) 92%, transparent);
+  border-right: 1px solid var(--кром);
+  scrollbar-width: thin;
+  transition: transform .42s var(--ход);
+}
+.бок-гр { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--т4); margin: 16px 10px 8px; }
+.бок-гр:first-child { margin-top: 4px; }
+.пункт {
+  position: relative; display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: 11px; cursor: pointer; color: var(--т2);
+  font-size: 13.5px; font-weight: 550;
+  transition: color .2s, background .2s, transform .2s var(--ход);
+}
+.пункт svg { width: 17px; height: 17px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.пункт:hover { background: var(--карта); color: var(--т1); transform: translateX(2px); }
+.пункт.вкл { background: var(--карта2); color: var(--т1); }
+/* Полоска у активного пункта выезжает, а не появляется. */
+.пункт::before {
+  content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 3px;
+  background: var(--акц, var(--cdn)); transform: translateY(-50%);
+  transition: height .32s var(--ход);
+}
+.пункт.вкл::before { height: 60%; }
+.пункт .хвост { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--т3); }
+.пункт .точка { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--добро); box-shadow: 0 0 0 0 rgba(74,222,128,.5); animation: пульс 2.4s infinite; }
+@keyframes пульс { 70% { box-shadow: 0 0 0 7px rgba(74,222,128,0); } 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); } }
+
+.штора {
+  position: fixed; inset: 0; z-index: 34; background: rgba(2,6,12,.62);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none; transition: opacity .34s var(--ход);
+}
+body.меню .штора { opacity: 1; pointer-events: auto; }
+
+/* ── Полотно ───────────────────────────────────────────────*/
+main {
+  position: relative; z-index: 1;
+  margin: var(--шапка) 0 0 var(--бок); padding: 20px clamp(14px, 2.4vw, 28px) 60px;
+  min-height: calc(100vh - var(--шапка));
+  transition: margin-left .42s var(--ход);
+}
+@media (max-width: 1080px) {
+  .бок { transform: translateX(-100%); box-shadow: 24px 0 60px -30px rgba(0,0,0,.8); }
+  body.меню .бок { transform: none; }
+  main { margin-left: 0; }
+}
+@media (min-width: 1081px) {
+  .штора { display: none; }
+  body.узко .бок { transform: translateX(-100%); }
+  body.узко main { margin-left: 0; }
+}
+
+.раздел { display: none; }
+.раздел.вкл { display: block; }
+.раздел.вкл > * { animation: вышло .42s var(--ход) both; }
+.раздел.вкл > *:nth-child(2) { animation-delay: .05s; }
+.раздел.вкл > *:nth-child(3) { animation-delay: .1s; }
+.раздел.вкл > *:nth-child(4) { animation-delay: .15s; }
+.раздел.вкл > *:nth-child(5) { animation-delay: .2s; }
+.раздел.вкл > *:nth-child(n+6) { animation-delay: .24s; }
+@keyframes вышло { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .раздел.вкл > * { animation: none; } }
+
+.заг { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.заг h2 { font-size: clamp(20px, 2.6vw, 27px); font-weight: 750; letter-spacing: -.03em; }
+.заг p { font-size: 13px; color: var(--т3); }
+
+/* ── Плитки ────────────────────────────────────────────────*/
+.сетка { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(216px, 1fr)); }
+.сетка.два { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.карт {
+  position: relative; overflow: hidden;
+  background: var(--карта); border: 1px solid var(--кром); border-radius: var(--r);
+  padding: 16px 18px;
+  transition: border-color .24s, transform .24s var(--ход);
+}
+.карт:hover { border-color: var(--кром2); transform: translateY(-2px); }
+.карт .к { font-size: 12px; color: var(--т3); display: flex; align-items: center; gap: 7px; }
+.карт .к b { width: 8px; height: 8px; border-radius: 3px; background: var(--акц, var(--cdn)); }
+.карт .з { font-size: clamp(24px, 3.4vw, 33px); font-weight: 750; letter-spacing: -.035em; line-height: 1.1; margin-top: 8px; }
+.карт .д { font-size: 12px; font-weight: 650; margin-top: 4px; }
+.д.вверх { color: var(--добро); } .д.вниз { color: var(--беда); } .д.ровно { color: var(--т4); }
+.карт canvas.искра { position: absolute; right: 0; bottom: 0; width: 100%; height: 42px; opacity: .5; pointer-events: none; }
+
+.плита {
+  background: var(--карта); border: 1px solid var(--кром); border-radius: var(--r2);
+  padding: clamp(15px, 2.2vw, 22px); margin-top: 14px;
+}
+.плита > h3 {
+  font-size: 14.5px; font-weight: 650; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap;
+}
+.плита > h3 .тихо { font-weight: 500; }
+.холст { width: 100%; height: 250px; display: block; }
+.холст.низ { height: 170px; }
+
+/* Полоски */
+.полосы { display: grid; gap: 9px; }
+.полоса { display: grid; grid-template-columns: minmax(88px, 30%) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.полоса .р { height: 9px; border-radius: 5px; background: rgba(255,255,255,.06); overflow: hidden; }
+.полоса .р i {
+  display: block; height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--акц, var(--cdn)), color-mix(in srgb, var(--акц, var(--cdn)) 45%, transparent));
+  width: 0; transition: width .8s var(--ход);
+}
+.полоса .ч { color: var(--т2); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+
+/* Таблица */
+.обёртка { overflow-x: auto; margin: 0 -4px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--кром); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--т3); font-weight: 650; white-space: nowrap; }
+tbody tr { transition: background .18s; }
+tbody tr:hover { background: var(--карта); }
+
+.чип {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 650; border: 1px solid var(--кром); background: var(--карта);
+  white-space: nowrap;
+}
+.чип b { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.чип.cdn { color: var(--cdn); border-color: color-mix(in srgb, var(--cdn) 40%, transparent); }
+.чип.vpn { color: var(--vpn); border-color: color-mix(in srgb, var(--vpn) 40%, transparent); }
+.чип.game { color: var(--игра); border-color: color-mix(in srgb, var(--игра) 40%, transparent); }
+.чип.добро { color: var(--добро); } .чип.беда { color: var(--беда); } .чип.ждём { color: var(--ждём); }
+
+.ряд { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.пусто { padding: 30px 8px; text-align: center; color: var(--т3); font-size: 13.5px; }
+
+/* Кольцо */
+.кольца { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.кольцо { position: relative; width: 132px; height: 132px; flex: none; }
+.кольцо canvas { width: 132px; height: 132px; }
+.кольцо .середина { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.кольцо .середина b { font-size: 19px; font-weight: 750; letter-spacing: -.02em; }
+.кольцо .середина span { font-size: 10.5px; color: var(--т3); }
+.легенда { display: grid; gap: 7px; font-size: 13px; }
+.легенда div { display: flex; align-items: center; gap: 9px; }
+.легенда i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+/* Подсказка графика */
+.подсказ {
+  position: fixed; z-index: 60; pointer-events: none; opacity: 0;
+  background: var(--плита); border: 1px solid var(--кром2); border-radius: 10px;
+  padding: 8px 11px; font-size: 12.5px; box-shadow: 0 14px 40px -16px rgba(0,0,0,.9);
+  transition: opacity .14s;
+}
+.подсказ b { display: block; font-size: 11px; color: var(--т3); font-weight: 600; margin-bottom: 3px; }
+
+/* Воронка */
+.ступени { display: grid; gap: 10px; }
+.ступень { display: grid; grid-template-columns: minmax(120px, 26%) 1fr auto; gap: 12px; align-items: center; }
+.ступень .р { height: 34px; border-radius: 9px; background: rgba(255,255,255,.05); overflow: hidden; display: flex; align-items: center; }
+.ступень .р i {
+  height: 100%; border-radius: 9px; width: 0;
+  background: linear-gradient(90deg, var(--акц, var(--cdn)), color-mix(in srgb, var(--акц, var(--cdn)) 30%, transparent));
+  transition: width 1s var(--ход);
+}
+.ступень .ч { font-variant-numeric: tabular-nums; font-weight: 650; }
+.ступень .п { font-size: 11.5px; color: var(--т3); }
+
+textarea.поле { min-height: 150px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.6; }
+.лента { max-height: 380px; overflow-y: auto; display: grid; gap: 8px; }
+.строка { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border-radius: 10px; background: var(--карта); font-size: 12.5px; }
+.строка time { color: var(--т4); font-size: 11px; white-space: nowrap; }
+
+.тост {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 18px); z-index: 80;
+  padding: 11px 18px; border-radius: 12px; background: var(--плита); border: 1px solid var(--кром2);
+  font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .24s, transform .24s var(--ход);
+  box-shadow: 0 20px 50px -24px rgba(0,0,0,.9);
+}
+.тост.вкл { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── Телефон ───────────────────────────────────────────────
+   В шапке на четырёхстах точках не помещается всё сразу: название
+   раздела переносилось на вторую строку и наезжало на переключатель
+   периода. Название убираем - оно и так написано заголовком раздела
+   строкой ниже, - а период оставляем: им пользуются постоянно. */
+@media (max-width: 720px) {
+  :root { --шапка: 56px; }
+  .шапка { gap: 8px; padding: 0 10px; }
+  .шапка .назв { display: none; }
+  .шапка img.лого { height: 20px; }
+  .период button { padding: 7px 8px; font-size: 12px; }
+  .значок { width: 34px; height: 34px; border-radius: 10px; }
+  .значок svg { width: 15px; height: 15px; }
+  .бургер { width: 38px; height: 38px; }
+  main { padding: 16px 12px 60px; }
+  .бок { width: min(84vw, 320px); }
+  .заг h2 { font-size: 22px; }
+  .полоса { grid-template-columns: minmax(76px, 38%) 1fr auto; font-size: 12.5px; }
+  .ступень { grid-template-columns: minmax(96px, 40%) 1fr auto; }
+  th, td { padding: 9px 7px; font-size: 12.5px; }
+}
+/* Совсем узкие: выход прячем в меню, чтобы шапка не ломалась. */
+@media (max-width: 420px) {
+  #выйти { display: none; }
+  .период button[data-д="90"] { display: none; }
+}
 </style>
 </head>
 <body>
+<div id="фон" aria-hidden="true"></div>
 
-<!-- Вход -->
-<div class="login" id="login">
-  <form class="form-card" id="loginForm">
-    <img src="assets/logo-h.png" alt="Rocket CDN">
-    <h2 style="font-size:19px;font-weight:700;margin-bottom:6px">Панель управления</h2>
-    <p class="hint" style="margin-bottom:20px">Введите пароль администратора.</p>
-    <!-- Живая область: отказ во входе и другие ответы формы должны
-         произноситься, а не только показываться. На главной этот же
-         блок так и сделан. -->
-    <div class="form-msg" role="status" aria-live="polite"></div>
-    <div class="field">
-      <label for="key">Пароль</label>
-      <input id="key" type="password" autocomplete="current-password" required>
-      <span class="err">Введите пароль</span>
-    </div>
-    <button type="submit" class="btn btn-p" style="width:100%">Войти</button>
-  </form>
-</div>
-
-<!-- Панель -->
-<div id="app" style="display:none">
-  <header class="a-hdr">
-    <div class="wrap a-hdr-in">
-      <img class="lg-dark" src="assets/logo-h.png" alt="Rocket CDN">
-      <img class="lg-light" src="assets/logo-h-light.png" alt="Rocket CDN" style="display:none">
-      <!-- Заголовок первого уровня для чтения с экрана: на странице
-           стояли одни h3, и скринридер начинал обход с третьего
-           уровня, не назвав, куда человек вообще попал. -->
-      <h1 class="a-badge">админка</h1>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
-        <a class="mini" href="index.html" target="_blank">Сайт</a>
-        <button type="button" class="mini" id="logout">Выйти</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="wrap">
-    <!-- Полоса вкладок это навигация по панели, и какая вкладка
-         открыта, должно быть слышно, а не только видно по цвету.
-         Ролей вкладок ARIA тут намеренно нет: они требуют ещё и
-         обхода стрелками с одной остановкой на всю полосу, а это
-         другая механика. Достаточно честного aria-current. -->
-    <nav class="a-tabs" id="tabs" aria-label="Разделы панели">
-      <button type="button" aria-current="page" data-p="dash" class="on">Аналитика</button>
-      <button type="button" data-p="leads">Заявки</button>
-      <button type="button" data-p="net">Сеть</button>
-      <button type="button" data-p="content">Тексты сайта</button>
-      <button type="button" data-p="sys">Состояние</button>
-    </nav>
-
-    <!-- Ориентир страницы: разделы это содержимое панели. Без него
-         чтение с экрана идёт сплошняком от шапки до конца. -->
-    <main>
-
-    <!-- Аналитика -->
-    <section class="pane on" id="p-dash">
-      <div class="seg" style="margin-bottom:14px" role="group" aria-label="Период аналитики">
-        <button type="button" data-d="1" aria-pressed="false">Сегодня</button>
-        <button type="button" data-d="7" class="on" aria-pressed="true">7 дней</button>
-        <button type="button" data-d="14" aria-pressed="false">14 дней</button>
-        <button type="button" data-d="30" aria-pressed="false">30 дней</button>
-        <button type="button" data-d="90" aria-pressed="false">90 дней</button>
-      </div>
-      <div class="stat-grid" id="statGrid"></div>
-
-      <div class="panel">
-        <h2><span>Посещения, клики и заявки по дням</span></h2>
-        <canvas class="chart" id="chart"></canvas>
-        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--tx-3)">
-          <span class="leg"><i style="background:#42B2DC;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>уникальные</span>
-          <span class="leg"><i style="background:#8A59F6;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>клики «Регистрация»</span>
-          <span class="leg"><i style="background:#34D399;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>заявки</span>
-        </div>
-      </div>
-
-      <div class="grid g-2" style="margin-top:16px">
-        <div class="panel" style="margin:0"><h2>Источники переходов</h2><div class="bars" id="barRefs"></div></div>
-        <div class="panel" style="margin:0"><h2>Устройства</h2><div class="bars" id="barDev"></div></div>
-        <!-- Системы отдельной панелью. Прежде устройства и системы
-             валили в один список, и в нём стояло «компьютер 138» и
-             «Linux 138» подряд - две разные величины, которые глаз
-             читает как одну и складывает. -->
-        <div class="panel" style="margin:0"><h2>Системы</h2><div class="bars" id="barOs"></div></div>
-        <div class="panel" style="margin:0"><h2>Глубина прочтения</h2><div class="bars" id="barScroll"></div></div>
-        <div class="panel" style="margin:0"><h2>Искали города на карте</h2><div class="bars" id="barNodes"></div></div>
-        <div class="panel" style="margin:0"><h2>Поисковые запросы по сети</h2><div class="bars" id="barSearch"></div></div>
-        <div class="panel" style="margin:0"><h2>Ошибки у посетителей</h2><div class="bars" id="barErr"></div></div>
-      </div>
-    </section>
-
-    <!-- Заявки -->
-    <section class="pane" id="p-leads">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
-        <div class="seg" id="leadFilter" role="group" aria-label="Фильтр заявок">
-          <button type="button" data-f="all" class="on" aria-pressed="true">Все</button>
-          <button type="button" data-f="new" aria-pressed="false">Новые</button>
-          <button type="button" data-f="work" aria-pressed="false">В работе</button>
-          <button type="button" data-f="done" aria-pressed="false">Закрытые</button>
-          <button type="button" data-f="callback" aria-pressed="false">Звонки</button>
-        </div>
-        <a class="mini" id="csv" style="margin-left:auto" href="#">Скачать CSV</a>
-      </div>
-      <div style="margin-bottom:12px">
-        <input class="lead-find" id="leadFind" type="search" autocomplete="off"
-               placeholder="Поиск по имени, компании, контакту или задаче">
-      </div>
-      <div class="panel" style="margin:0">
-        <!-- Карточки, а не таблица. Таблица на телефоне уезжала вбок:
-             в кадре оставались три колонки из шести, а задача, статус и
-             кнопки были за экраном. Владелец работает с телефона, там
-             это просто не работало. Карточка читается на любой ширине. -->
-        <div id="leadRows" class="leads"></div>
-        <p class="hint" id="leadEmpty" style="display:none;text-align:center;padding:26px 0">Заявок пока нет.</p>
-      </div>
-    </section>
-
-    <!-- Сеть -->
-    <section class="pane" id="p-net">
-      <div class="stat-grid" id="netStats"></div>
-      <div class="panel">
-        <h2>Точки присутствия по регионам</h2>
-        <div class="bars" id="netRegions"></div>
-      </div>
-      <div class="panel">
-        <h2><span>Список узлов</span></h2>
-        <div class="search" style="margin-bottom:12px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
-          <input type="search" id="netSearch" placeholder="Поиск города">
-        </div>
-        <div class="node-list" id="netList" style="max-height:420px"></div>
-        <p class="hint" style="margin-top:12px">
-          Список и карточки сверху показывают сеть такой, какой её видит посетитель:
-          базовый реестр из <code>assets/rc-geo.js</code> плюс добавленные ниже города,
-          минус скрытые. Свои города помечены и переживают выкладку сайта.
-        </p>
-      </div>
-
-      <!-- Правка узлов прямо из панели. Раньше здесь стояла подсказка
-           «допишите строку в файл» - для панели управления это расписка
-           в бессилии: владелец не должен лезть в код, чтобы открыть
-           новую точку присутствия. -->
-      <div class="panel">
-        <h2>Свои города <span class="hint" id="nodeCnt"></span></h2>
-        <div class="node-add">
-          <input id="nName" placeholder="Город" autocomplete="off" maxlength="60">
-          <input id="nEn" placeholder="City (англ.)" autocomplete="off" maxlength="60">
-          <input id="nLat" placeholder="Широта" inputmode="decimal" autocomplete="off">
-          <input id="nLon" placeholder="Долгота" inputmode="decimal" autocomplete="off">
-          <select id="nReg" aria-label="Регион города">
-            <option value="0">Россия и СНГ</option>
-            <option value="1">Азия, Африка и Океания</option>
-            <option value="2">Европа</option>
-            <option value="3">Северная Америка</option>
-            <option value="4">Южная Америка</option>
-          </select>
-          <label class="chk"><input type="checkbox" id="nCloud"> облако</label>
-          <label class="chk"><input type="checkbox" id="nShield"> защита</label>
-          <label class="chk"><input type="checkbox" id="nSoon"> скоро</label>
-          <button class="btn" id="nAdd">Добавить город</button>
-        </div>
-        <div class="node-own" id="nodeOwn"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Скрытые города <span class="hint" id="hideCnt"></span></h2>
-        <p class="hint" style="margin-bottom:10px">
-          Точку из базового реестра удалить нельзя, но можно убрать с сайта.
-          Введите название ровно как в списке выше.
-        </p>
-        <div class="node-add">
-          <input id="hName" placeholder="Город из реестра" autocomplete="off">
-          <button class="btn ghost" id="hAdd">Убрать с сайта</button>
-        </div>
-        <div class="node-own" id="hideOwn"></div>
-      </div>
-    </section>
-
-    <!-- Тексты -->
-    <section class="pane" id="p-content">
-      <div class="panel" style="margin-top:0">
-        <h2>
-          <span>Надписи на странице</span>
-          <span class="seg tiny" id="cLang">
-            <button type="button" data-lang="ru" class="on">Русский</button>
-            <button type="button" data-lang="en">English</button>
-          </span>
-        </h2>
-        <input class="lead-find" id="cFind" placeholder="Найти надпись по смыслу, по тексту или по имени поля" autocomplete="off">
-        <div class="cf-top" id="cTop"></div>
-        <div class="form-msg" id="cMsg" role="status" aria-live="polite"></div>
-        <div id="cFields"></div>
-        <div class="btn-row" style="margin-top:14px">
-          <button type="button" class="btn btn-p btn-sm" id="cSave">Сохранить надписи</button>
-          <button type="button" class="btn btn-g btn-sm" id="cReset">Вернуть исходные</button>
-        </div>
-        <p class="hint" style="margin-top:12px">
-          Правки применяются к сайту сразу, страницу у посетителей обновит первый же заход.
-          Пустое поле означает «оставить исходный текст». Языки правятся раздельно:
-          что написано в русской версии, в английскую само не переедет.
-          Запись <code>{nodes}</code> внутри текста сайт заменит на текущее число точек присутствия.
-        </p>
-      </div>
-
-      <div class="panel">
-        <h2>
-          <span>Карточки на странице</span>
-          <span class="hint" id="bLangNote"></span>
-        </h2>
-        <div class="seg" id="bGroup">
-          <button type="button" data-g="products" class="on">Продукты<span class="cnt"></span></button>
-          <button type="button" data-g="advantages">Преимущества<span class="cnt"></span></button>
-          <button type="button" data-g="cases">Сценарии<span class="cnt"></span></button>
-          <button type="button" data-g="faq">Вопросы<span class="cnt"></span></button>
-        </div>
-        <div class="blk-list" id="bList"></div>
-        <div class="btn-row" style="margin-top:12px">
-          <button type="button" class="mini" id="bAdd">Добавить карточку</button>
-          <button type="button" class="mini" id="bBack">Вернуть исходные в этой группе</button>
-        </div>
-        <div class="form-msg" id="bMsg" role="status" aria-live="polite"></div>
-        <div class="btn-row" style="margin-top:14px">
-          <button type="button" class="btn btn-p btn-sm" id="bSave">Сохранить карточки</button>
-        </div>
-        <details class="raw">
-          <summary>Показать эту группу в виде JSON</summary>
-          <p class="hint" style="margin:10px 0">
-            Нужно, только если правку удобнее внести целиком: скопировать набор,
-            перенести с другого сайта, откатить руками. Кнопка ниже переносит
-            текст обратно в карточки, там его и видно.
-          </p>
-          <div class="field"><textarea class="code" id="bJson" spellcheck="false" aria-label="Карточки группы в виде JSON"></textarea></div>
-          <div class="btn-row">
-            <button type="button" class="mini" id="bFromJson">Перенести в карточки</button>
-          </div>
-        </details>
-      </div>
-    </section>
-
-    <!-- Состояние -->
-    <section class="pane" id="p-sys">
-      <div class="panel" style="margin-top:0">
-        <h2>Проверка связи</h2>
-        <div class="kv" id="sysKv"></div>
-        <div class="btn-row" style="margin-top:16px">
-          <button type="button" class="btn btn-g btn-sm" id="sysTest">Отправить тестовое письмо и сообщение</button>
-        </div>
-        <div class="form-msg" id="sysMsg" role="status" aria-live="polite"></div>
-      </div>
-      <div class="panel">
-        <h2>Что происходит сейчас</h2>
-        <div class="kv" id="sysLive"></div>
-      </div>
-      <div class="panel">
-        <h2>Журнал ошибок сервера</h2>
-        <div class="field"><textarea class="code" id="sysLog" readonly aria-label="Журнал ошибок сервера" style="min-height:260px"></textarea></div>
-      </div>
-      <div class="panel">
-        <h2>Подсказки по запуску</h2>
-        <p class="hint">
-          Ежедневный отчёт в Телеграм собирает <code>cron.php</code>, бот работает через <code>bot.php</code>.
-          Расписание на сервере:<br><br>
-          <code>* * * * * /usr/bin/php /var/www/rocketcdn/bot.php</code><br>
-          <code>0 * * * * /usr/bin/php /var/www/rocketcdn/cron.php</code><br><br>
-          Чтобы уведомления шли в общий чат, добавьте бота в чат и напишите там <code>/bindchat</code>.
-          Для отдельных тем: <code>/bindtopic forms</code>, <code>/bindtopic errors</code>, <code>/bindtopic stats</code>.
-        </p>
-      </div>
-    </section>
-    </main>
+<!-- ── Вход ─────────────────────────────────────────────── -->
+<div class="вход" id="вход">
+  <div class="вход-к">
+    <img src="assets/logo-h.webp" alt="Rocket" width="140" height="34"
+         onerror="this.onerror=null;this.src='https://rocketcdn.ru/assets/logo-h.webp';this.dataset.второй=1"
+         style="max-width:160px">
+    <h1>Общая панель</h1>
+    <p>Rocket CDN · RocketVPN · Игра</p>
+    <input class="поле" id="пароль" type="password" autocomplete="current-password" placeholder="Пароль" aria-label="Пароль">
+    <button class="кн кн-гл" id="войти">Войти</button>
+    <p class="ошибка" id="входОшибка" role="alert"></p>
   </div>
 </div>
 
-<!-- Всплывающая подсказка это единственный ответ панели на половину
-     действий: без живой области слепой администратор нажимал «Убрать
-     город» и не узнавал, случилось ли что-нибудь. -->
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<!-- ── Шапка ────────────────────────────────────────────── -->
+<header class="шапка нет" id="шапка">
+  <button class="бургер" id="бургер" aria-label="Меню разделов" aria-expanded="false">
+    <i></i><i></i><i></i>
+  </button>
+  <img class="лого" src="assets/logo-h.webp" alt="" width="100" height="24"
+       onerror="this.onerror=null;this.src='https://rocketcdn.ru/assets/logo-h.webp'">
+  <div class="назв">Панель <span id="гдеМы">· Дашборд</span></div>
+  <div class="право">
+    <div class="период" id="период" role="group" aria-label="Период">
+      <button data-д="7">7д</button>
+      <button data-д="14" class="вкл">14д</button>
+      <button data-д="30">30д</button>
+      <button data-д="90">90д</button>
+    </div>
+    <button class="значок" id="тема" aria-label="Светлая или тёмная тема" title="Тема">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="значок" id="обновить" aria-label="Обновить данные" title="Обновить">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+    </button>
+    <button class="значок" id="выйти" aria-label="Выйти из панели" title="Выйти">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+    </button>
+  </div>
+</header>
 
-<script src="assets/rc-geo.js?v=1787918231"></script>
-<script src="assets/rc-ico.js?v=1787918231"></script>
-<script src="assets/rc-i18n.js?v=1787918231"></script>
+<div class="штора" id="штора"></div>
+
+<!-- ── Меню ─────────────────────────────────────────────── -->
+<nav class="бок нет" id="бок" aria-label="Разделы панели">
+  <div class="бок-гр">Обзор</div>
+  <div class="пункт вкл" data-р="дашборд">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+    <span>Дашборд</span><span class="точка"></span>
+  </div>
+  <div class="пункт" data-р="воронка">
+    <svg viewBox="0 0 24 24"><path d="M3 4h18l-7 8v7l-4 2v-9z"/></svg>
+    <span>Воронка</span>
+  </div>
+
+  <div class="бок-гр">Площадки</div>
+  <div class="пункт" data-р="cdn" style="--акц:var(--cdn)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg>
+    <span>Rocket CDN</span><span class="хвост" data-счёт="cdn"></span>
+  </div>
+  <div class="пункт" data-р="vpn" style="--акц:var(--vpn)">
+    <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    <span>RocketVPN</span><span class="хвост" data-счёт="vpn"></span>
+  </div>
+  <div class="пункт" data-р="game" style="--акц:var(--игра)">
+    <svg viewBox="0 0 24 24"><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18.5" cy="13.5" r="1"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+    <span>Игра</span><span class="хвост" data-счёт="game"></span>
+  </div>
+
+  <div class="бок-гр">Люди</div>
+  <div class="пункт" data-р="заявки">
+    <svg viewBox="0 0 24 24"><path d="M4 4h16v13H7l-3 3z"/><path d="M8 9h8M8 13h5"/></svg>
+    <span>Заявки</span><span class="хвост" id="счётЗаявок"></span>
+  </div>
+  <div class="пункт" data-р="источники">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18M3.5 9h17M3.5 15h17"/></svg>
+    <span>Источники и устройства</span>
+  </div>
+
+  <div class="бок-гр">Хозяйство</div>
+  <div class="пункт" data-р="ошибки">
+    <svg viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/></svg>
+    <span>Ошибки</span><span class="хвост" id="счётОшибок"></span>
+  </div>
+  <div class="пункт" data-р="узлы">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M12 7.2 6.4 16.8M12 7.2l5.6 9.6M7.2 19h9.6"/></svg>
+    <span>Узлы сети</span>
+  </div>
+  <div class="пункт" data-р="контент">
+    <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+    <span>Контент</span>
+  </div>
+  <div class="пункт" data-р="связка">
+    <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7L12.5 20"/></svg>
+    <span>Связка и бот</span>
+  </div>
+  <div class="пункт" data-р="проверки">
+    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    <span>Проверки</span>
+  </div>
+  <div class="пункт" data-р="ссылки">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2"/></svg>
+    <span>Все адреса</span>
+  </div>
+</nav>
+
+<main class="нет" id="полотно">
+
+  <!-- ═══ Дашборд ═══ -->
+  <section class="раздел вкл" data-р="дашборд">
+    <div class="заг"><h2>Дашборд</h2><p id="дашПодпись">две площадки и игра между ними</p></div>
+    <div class="сетка" id="дашПлитки"></div>
+    <div class="плита">
+      <h3>Посещения по дням <span class="тихо" id="дашЛегенда"></span></h3>
+      <canvas class="холст" id="дашГрафик"></canvas>
+    </div>
+    <div class="сетка два">
+      <div class="плита" style="margin-top:0">
+        <h3>Заявки по площадкам</h3>
+        <div class="кольца">
+          <div class="кольцо"><canvas id="дашКольцо"></canvas>
+            <div class="середина"><b id="дашВсегоЗаявок">0</b><span>заявок</span></div></div>
+          <div class="легенда" id="дашЛегендаЗаявок"></div>
+        </div>
+      </div>
+      <div class="плита" style="margin-top:0">
+        <h3>Сегодня <span class="тихо">живые числа</span></h3>
+        <div class="полосы" id="дашСегодня"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Воронка ═══ -->
+  <section class="раздел" data-р="воронка">
+    <div class="заг"><h2>Воронка</h2><p>от захода до заявки, по каждой площадке отдельно</p></div>
+    <div id="воронкаТело"></div>
+  </section>
+
+  <!-- ═══ Площадка (общий шаблон на три) ═══ -->
+  <section class="раздел" data-р="cdn"><div id="телоCdn"></div></section>
+  <section class="раздел" data-р="vpn"><div id="телоVpn"></div></section>
+  <section class="раздел" data-р="game"><div id="телоGame"></div></section>
+
+  <!-- ═══ Заявки ═══ -->
+  <section class="раздел" data-р="заявки">
+    <div class="заг"><h2>Заявки</h2><p>обе площадки в одном списке</p></div>
+    <div class="плита" style="margin-top:0">
+      <h3>
+        <span class="ряд" id="фильтрЗаявок"></span>
+        <span class="ряд">
+          <button class="кн" id="скачатьЗаявки">Скачать CSV</button>
+        </span>
+      </h3>
+      <div class="обёртка"><table id="таблицаЗаявок">
+        <thead><tr><th>Когда</th><th>Площадка</th><th>Имя</th><th>Связь</th><th>Задача</th><th>Статус</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="пусто нет" id="заявкиПусто">Заявок пока нет.</div>
+    </div>
+  </section>
+
+  <!-- ═══ Источники ═══ -->
+  <section class="раздел" data-р="источники">
+    <div class="заг"><h2>Источники и устройства</h2><p>откуда и с чего приходят</p></div>
+    <div id="источникиТело"></div>
+  </section>
+
+  <!-- ═══ Ошибки ═══ -->
+  <section class="раздел" data-р="ошибки">
+    <div class="заг"><h2>Ошибки</h2><p>что падает в браузере у людей</p></div>
+    <div id="ошибкиТело"></div>
+  </section>
+
+  <!-- ═══ Узлы ═══ -->
+  <section class="раздел" data-р="узлы">
+    <div class="заг"><h2>Узлы сети</h2><p>точки присутствия Rocket CDN на карте и в игре</p></div>
+    <div class="плита" style="margin-top:0">
+      <h3>Список узлов <span class="тихо" id="узлыСчёт"></span></h3>
+      <p class="тихо" style="margin-bottom:10px;font-size:12.5px">Одна строка на узел:
+        имя · широта · долгота · ранг · метка · имя по-английски</p>
+      <textarea class="поле" id="узлыТекст" spellcheck="false" aria-label="Список узлов"></textarea>
+      <div class="ряд" style="margin-top:12px">
+        <button class="кн кн-гл" id="узлыСохранить">Сохранить</button>
+        <span class="тихо" id="узлыОтвет"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Контент ═══ -->
+  <section class="раздел" data-р="контент">
+    <div class="заг"><h2>Контент</h2><p>тексты сайта Rocket CDN</p></div>
+    <div class="плита" style="margin-top:0">
+      <h3>Блоки страницы</h3>
+      <textarea class="поле" id="контентТекст" spellcheck="false" aria-label="Контент сайта"></textarea>
+      <div class="ряд" style="margin-top:12px">
+        <button class="кн кн-гл" id="контентСохранить">Сохранить</button>
+        <button class="кн" id="контентСброс">Вернуть исходный</button>
+        <span class="тихо" id="контентОтвет"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Связка ═══ -->
+  <section class="раздел" data-р="связка">
+    <div class="заг"><h2>Связка и бот</h2><p>куда уходят уведомления и живы ли площадки</p></div>
+    <div id="связкаТело"></div>
+  </section>
+
+  <!-- ═══ Проверки ═══ -->
+  <section class="раздел" data-р="проверки">
+    <div class="заг"><h2>Проверки</h2><p>почта, телеграм, папки данных, расписание</p></div>
+    <div id="проверкиТело"></div>
+  </section>
+
+  <!-- ═══ Ссылки ═══ -->
+  <section class="раздел" data-р="ссылки">
+    <div class="заг"><h2>Все адреса</h2><p>что где живёт</p></div>
+    <div class="плита" style="margin-top:0" id="ссылкиТело"></div>
+  </section>
+
+</main>
+
+<div class="подсказ" id="подсказ"></div>
+<div class="тост" id="тост"></div>
+
 <script>
+/* ═══════════════════════════════════════════════════════════
+   ЛОГИКА ПАНЕЛИ
+
+   Один источник данных на всё: api.php сайта Rocket CDN. Панель
+   лежит на двух доменах, поэтому адрес считается, а не пишется:
+   со своего домена идём относительным путём, с чужого - полным.
+   ═══════════════════════════════════════════════════════════ */
 (function () {
 "use strict";
-var $ = function (s, r) { return (r || document).querySelector(s); };
-var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-var API = "api.php";
-/* В браузере держим пропуск, а не пароль. Пропуск выдаёт сервер на
-   вход, живёт две недели и гасится кнопкой «выйти». Пароль после
-   входа из памяти уходит: в localStorage ему делать нечего. */
-var PASS = localStorage.getItem("rc_admin_pass") || "";
-var KEY = "";
-/* Со старой версии панели в браузере мог остаться сам пароль. Берём
-   его на один вход, чтобы человек не остался за дверью, и стираем. */
-try {
-  var старый = localStorage.getItem("rc_admin_key");
-  if (старый) { KEY = старый; localStorage.removeItem("rc_admin_key"); }
-} catch (e) {}
-var days = 7, stats = null, leads = [], leadFilter = "all", content = null;
 
-/* ── Тема ── */
-var ICO = {
-  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
-  moon: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>'
+/* ── Где живёт сервер данных ───────────────────────────────
+   Панель лежит на двух доменах, а сервер данных один, на Rocket CDN.
+
+   Общее правило: пробуем свой путь рядом с собой, не ответил -
+   переключаемся на боевой ровно один раз за сеанс. Так панель
+   работает и на стенде, и на предпросмотре, где имя домена всякий
+   раз другое: гадать по имени мы уже пробовали, и панель уходила на
+   боевой адрес, которого из песочницы не видно.
+
+   Исключение ровно одно - домен VPN. Там нет своего api.php, зато
+   есть створ, который на ЛЮБОЙ .php отдаёт двадцать восемь килобайт
+   самого сайта с кодом 200. Общее правило и здесь сработает, но
+   ценой лишней страницы по сети и падения на разборе JSON при каждом
+   входе. Домен известен заранее, поэтому идём сразу на боевой. */
+var СВОИ = ["api.php", "https://rocketcdn.ru/api.php"];
+var ЧУЖОЙ_СТВОР = /(^|\.)rocketvpn\.top$/i.test(location.hostname);
+var API = ЧУЖОЙ_СТВОР ? СВОИ[1] : СВОИ[0];
+var искали = ЧУЖОЙ_СТВОР;
+
+var ЦВЕТА = { cdn: "#42B2DC", vpn: "#8A9CFF", game: "#FFC078" };
+var ИМЕНА = { cdn: "Rocket CDN", vpn: "RocketVPN", game: "Игра" };
+
+/* Отложенная отрисовка холстов: раздел рисует себя, когда его
+   показали, а не когда пришли данные. */
+var холсты = {};
+
+var состояние = {
+  пропуск: "",
+  пароль: "",
+  дней: 14,
+  раздел: "дашборд",
+  обзор: null,
+  по: {},          /* подробная сводка по каждой площадке */
+  заявки: [],
+  фильтр: "все"
 };
-function applyTheme(v) {
-  document.documentElement.setAttribute("data-theme", v);
-  localStorage.setItem("rc_theme", v);
-  $$(".js-theme").forEach(function (b) {
-    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + ICO[v === "light" ? "moon" : "sun"] + "</svg>";
-  });
-  $$(".lg-dark").forEach(function (i) { i.style.display = v === "light" ? "none" : "block"; });
-  $$(".lg-light").forEach(function (i) { i.style.display = v === "light" ? "block" : "none"; });
-  if (stats) drawChart();
-}
-applyTheme(localStorage.getItem("rc_theme") || "dark");
-$$(".js-theme").forEach(function (b) {
-  b.addEventListener("click", function () {
-    applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
-  });
-});
 
-function toast(m) {
-  var t = $("#toast");
-  t.textContent = m;
-  t.classList.add("on");
-  clearTimeout(t._x);
-  t._x = setTimeout(function () { t.classList.remove("on"); }, 2600);
-}
-function esc(s) {
-  return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
-    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+/* ── Обращение к серверу ───────────────────────────────────
+   Всё POST-ом и всё с пропуском в теле: заголовок потребовал бы
+   отдельного разрешения на чужом домене, а тело едет и так. */
+function послать(адрес, действие, тело) {
+  return fetch(адрес + "?action=" + encodeURIComponent(действие), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(тело),
+    credentials: "omit"
+  }).then(function (о) {
+    if (!о.ok) throw new Error("код " + о.status);
+    return о.json();
   });
 }
-function api(action, payload, method) {
-  var url = API + "?action=" + action;
-  var opt = { method: method || "POST", headers: { "Content-Type": "application/json" } };
-  /* Секрет уходит только телом запроса: в адресе он осел бы в журнале
-     сервера открытым текстом. Пропуск главнее пароля - пароль здесь
-     остаётся лишь на тот один вход, когда пропуска ещё нет. */
-  var секрет = PASS ? { pass: PASS } : { key: KEY };
-  opt.body = JSON.stringify(Object.assign(секрет, payload || {}));
-  return fetch(url, opt).then(function (r) { return r.json(); });
-}
 
-/* ── Вход ── */
-$("#loginForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-  var v = $("#key").value.trim(), msg = $("#loginForm .form-msg");
-  if (!v) return;
-  KEY = v;
-  api("login").then(function (r) {
-    if (r && r.ok) {
-      /* Пропуск есть - запоминаем его и забываем пароль. Пропуска нет
-         (папка данных не пишется) - работаем на пароле в памяти: он
-         переживёт сеанс, но не перезагрузку страницы. */
-      if (r.pass) { PASS = r.pass; try { localStorage.setItem("rc_admin_pass", PASS); } catch (e2) {} }
-      start();
-    } else if (r && r.error === "default_key") {
-      msg.className = "form-msg bad";
-      msg.textContent = r.message || "Смените admin_key в config.local.php.";
-    } else {
-      msg.className = "form-msg bad";
-      msg.textContent = "Пароль не подошёл.";
-    }
-  }).catch(function () {
-    msg.className = "form-msg bad";
-    msg.textContent = "Сервер не ответил. Проверьте, что сайт открыт по http, а не как файл.";
-  });
-});
-$("#logout").addEventListener("click", function () {
-  /* Гасим пропуск и на сервере: иначе «выйти» на чужом ноутбуке
-     означало бы только «убрать из виду». Ответа не ждём - страница
-     всё равно перезагружается. */
-  try { api("logout"); } catch (e3) {}
-  try { localStorage.removeItem("rc_admin_pass"); localStorage.removeItem("rc_admin_key"); } catch (e4) {}
-  PASS = ""; KEY = "";
-  setTimeout(function () { location.reload(); }, 120);
-});
-
-/* ── Табы ── */
-$("#tabs").addEventListener("click", function (e) {
-  var b = e.target.closest("button");
-  if (!b) return;
-  $$("#tabs button").forEach(function (x) { x.classList.remove("on"); x.removeAttribute("aria-current"); });
-  b.classList.add("on");
-  b.setAttribute("aria-current", "page");
-  $$(".pane").forEach(function (p) { p.classList.remove("on"); });
-  $("#p-" + b.dataset.p).classList.add("on");
-  if (b.dataset.p === "sys") loadSys();
-  if (b.dataset.p === "dash" && stats) drawChart();
-});
-
-/* ── Аналитика ── */
-$$("#p-dash .seg button").forEach(function (b) {
-  b.addEventListener("click", function () {
-    /* Выбранный период должен быть слышен, а не только виден */
-    $$("#p-dash .seg button").forEach(function (x) { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); });
-    b.classList.add("on");
-    b.setAttribute("aria-pressed", "true");
-    days = +b.dataset.d;
-    loadStats();
-  });
-});
-
-/* Подпись возвращаем целиком: у роста с нуля процентов не бывает, и
-   раньше на её месте выходило «+598 к прошлому периоду», где 598 это
-   само сегодняшнее число, а не прирост. */
-function delta(now, was) {
-  if (!was) return now ? { c: "up", t: "прошлый период был пустым" } : { c: "flat", t: "" };
-  var p = Math.round((now - was) / was * 100);
-  return { c: p > 0 ? "up" : p < 0 ? "down" : "flat", t: (p > 0 ? "+" : "") + p + "% к прошлому периоду" };
-}
-
-function loadStats() {
-  api("stats", { days: days }).then(function (r) {
-    if (!r.ok) return;
-    stats = r;
-    /* Сравниваем средние за день, а не суммы половин. Половины бывают
-       разной длины: на семи днях свежая это четыре дня, прошлая три,
-       и панель рисовала зелёные «+33%» на совершенно ровном трафике.
-       На вкладке «Сегодня» прошлой половины нет вовсе - там сравнивать
-       не с чем, и подписи не будет. */
-    var дней = r.series.length;
-    var свежих = Math.ceil(дней / 2);
-    var A = r.series.slice(дней - свежих), B = r.series.slice(0, дней - свежих);
-    function sum(arr, k) { return arr.reduce(function (a, x) { return a + x[k]; }, 0); }
-    function ср(arr, k) { return arr.length ? sum(arr, k) / arr.length : 0; }
-    function срав(k) { return B.length ? delta(ср(A, k), ср(B, k)) : null; }
-    var cards = [
-      ["Уникальные посетители", r.total.uniq, срав("uniq")],
-      ["Просмотры страницы", r.total.views, срав("views")],
-      ["Клики «Регистрация»", r.total.register, срав("register")],
-      ["Переходы к подключению", r.total.connect, null],
-      ["Заявки с формы", r.total.leads, срав("leads")],
-      ["Заявки на звонок", r.total.callbacks, null],
-      ["Конверсия в заявку", r.conv + "%", null],
-      ["Доля кликнувших регистрацию", r.ctr + "%", null]
-    ];
-    $("#statGrid").innerHTML = cards.map(function (c) {
-      var d = c[2] && c[2].t ? '<div class="d ' + c[2].c + '">' + esc(c[2].t) + "</div>" : "";
-      return '<div class="stat"><div class="v">' + esc(c[1]) + '</div><div class="k">' + esc(c[0]) + "</div>" + d + "</div>";
-    }).join("");
-
-    bars("#barRefs", r.refs);
-    var dev = {};
-    Object.keys(r.devices || {}).forEach(function (k) {
-      dev[{ mobile: "телефон", tablet: "планшет", desktop: "компьютер" }[k] || k] = r.devices[k];
+function зов(действие, данные) {
+  var тело = Object.assign({}, данные || {});
+  if (состояние.пропуск) тело.pass = состояние.пропуск;
+  else if (состояние.пароль) тело.key = состояние.пароль;
+  return послать(API, действие, тело).catch(function () {
+    /* Свой путь не ответил. Пробуем боевой ровно один раз за сеанс:
+       бесконечная чехарда двух адресов на каждом запросе стоила бы
+       вдвое дороже и ничего бы не чинила. */
+    if (искали || API === СВОИ[1]) return { ok: false, error: "сеть" };
+    искали = true;
+    API = СВОИ[1];
+    return послать(API, действие, тело).catch(function () {
+      return { ok: false, error: "сеть" };
     });
-    bars("#barDev", dev);
-    bars("#barOs", r.os);
-    /* Глубина прочтения - ВОРОНКА, а не просто четыре числа. Полосы
-       считались от наибольшего значения, а значения тут почти равны
-       (102, 102, 102, 100): все четыре полосы выходили одинаковой
-       длины во всю ширину, и панель не говорила ничего. Теперь доля
-       от первой ступени и подпись в процентах: видно, где человек
-       уходит. */
-    var шаги = Object.keys(r.scroll || {}).sort(function (a, b) { return a - b; });
-    var первый = шаги.length ? (r.scroll[шаги[0]] || 0) : 0;
-    var sc = {};
-    шаги.forEach(function (k) {
-      var v = r.scroll[k] || 0;
-      var доля = первый ? Math.round(v / первый * 100) : 0;
-      sc["до " + k + "%"] = { v: v, доля: доля, подпись: v + " · " + доля + "%" };
-    });
-    bars("#barScroll", sc, первый);
-    bars("#barNodes", r.nodes);
-    bars("#barSearch", r.searches);
-    bars("#barErr", r.errors);
-    drawChart();
   });
 }
 
-/* Полосы. Значение может прийти числом или разбором вида
-   {v, доля, подпись} - воронке прочтения нужна своя длина полосы и
-   своя подпись, а всем прочим спискам достаточно числа. */
-function bars(sel, obj, база) {
-  var el = $(sel);
-  var keys = Object.keys(obj || {});
-  if (!keys.length) { el.innerHTML = '<p class="hint">Пока нет данных.</p>'; return; }
-  function число(k) { var x = obj[k]; return (x && typeof x === "object") ? x.v : x; }
-  var max = база || Math.max.apply(null, keys.map(число));
-  el.innerHTML = keys.slice(0, 12).map(function (k) {
-    var x = obj[k], v = число(k);
-    var ш = max ? Math.max(3, Math.min(100, v / max * 100)) : 3;
-    var подпись = (x && typeof x === "object" && x.подпись) ? x.подпись : String(v);
-    return '<div class="bar-row"><span class="nm" title="' + esc(k) + '">' + esc(k) + '</span>' +
-      '<span class="tr"><i style="width:' + ш + '%"></i></span>' +
-      '<span class="vv">' + esc(подпись) + "</span></div>";
-  }).join("");
+/* ── Мелочи ────────────────────────────────────────────────*/
+function $(с, где) { return (где || document).querySelector(с); }
+function $$(с, где) { return Array.prototype.slice.call((где || document).querySelectorAll(с)); }
+function эк(т) {
+  return String(т == null ? "" : т).replace(/[&<>"']/g, function (с) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[с];
+  });
+}
+function число(н) {
+  н = +н || 0;
+  return н >= 1000 ? н.toLocaleString("ru-RU") : String(н);
+}
+function тост(т) {
+  var у = $("#тост");
+  у.textContent = т; у.classList.add("вкл");
+  clearTimeout(у._т); у._т = setTimeout(function () { у.classList.remove("вкл"); }, 2600);
 }
 
-function drawChart() {
-  var cv = $("#chart");
-  if (!cv || !stats) return;
-  var r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
-  cv.width = r.width * dpr; cv.height = r.height * dpr;
-  var c = cv.getContext("2d");
-  c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  var W = r.width, H = r.height, pad = { l: 34, r: 10, t: 12, b: 24 };
-  var light = document.documentElement.getAttribute("data-theme") === "light";
-  var grid = light ? "rgba(9,19,32,.10)" : "rgba(226,232,240,.10)";
-  var txc = light ? "rgba(9,19,32,.5)" : "rgba(226,232,240,.45)";
-  c.clearRect(0, 0, W, H);
+/* Числа на плитках доезжают, а не появляются. Полсекунды: заметно,
+   что число живое, и не настолько долго, чтобы его ждать. */
+function докрутить(узел, до) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { узел.textContent = число(до); return; }
+  var от = 0, начало = 0, ход = 620;
+  function шаг(t) {
+    if (!начало) начало = t;
+    var д = Math.min(1, (t - начало) / ход);
+    var с = 1 - Math.pow(1 - д, 3);
+    узел.textContent = число(Math.round(от + (до - от) * с));
+    if (д < 1) requestAnimationFrame(шаг);
+  }
+  requestAnimationFrame(шаг);
+}
 
-  var S = stats.series;
-  var keys = ["uniq", "register", "leads"], cols = ["#42B2DC", "#8A59F6", "#34D399"];
-  var max = 1;
-  S.forEach(function (x) { keys.forEach(function (k) { if (x[k] > max) max = x[k]; }); });
-  max = Math.ceil(max * 1.15) || 1;
+/* ── Графики на холсте ─────────────────────────────────────
+   Своя отрисовка вместо чужой библиотеки: панели нужны три вида
+   графика, а библиотека тянет за собой триста килобайт и второй
+   сервер. Здесь линия с заливкой, кольцо и полоски - и всё это
+   умещается в сотню строк. */
+/* Холст под свой размер и ЧИСТЫЙ.
 
-  c.strokeStyle = grid; c.lineWidth = 1;
-  c.font = "11px Golos Text, sans-serif"; c.fillStyle = txc;
+   Сюда пришлось вернуться: в разделах площадок подписи на осях
+   двоились призраком на пару точек ниже и правее. Причина в том, что
+   отрисовка шла по таймеру после подстановки разметки, а к этому
+   моменту ширина холста ещё менялась - появлялась полоса прокрутки, и
+   второй проход рисовал поверх первого с другим преобразованием.
+
+   Лечится двумя вещами. Первая: чистим по РАЗМЕРУ БУФЕРА и при
+   единичном преобразовании, а не по размеру в точках CSS при
+   масштабе плотности - иначе чистится не весь холст. Вторая: рисуем
+   не по таймеру, а на ближайшем кадре после раскладки. */
+function размерХолста(х) {
+  var п = Math.min(2, window.devicePixelRatio || 1);
+  var w = х.clientWidth || 300, h = х.clientHeight || 200;
+  var нужно = Math.round(w * п), высоко = Math.round(h * п);
+  if (х.width !== нужно) х.width = нужно;
+  if (х.height !== высоко) х.height = высоко;
+  var к = х.getContext("2d");
+  к.setTransform(1, 0, 0, 1, 0, 0);
+  к.clearRect(0, 0, х.width, х.height);
+  к.setTransform(п, 0, 0, п, 0, 0);
+  return { к: к, ш: w, в: h };
+}
+
+/* Один общий ход «нарисовать после раскладки». Два кадра, а не один:
+   первый отдаёт браузеру подставленную разметку, второй приходит уже
+   с посчитанными размерами. */
+function послеРаскладки(дело) {
+  requestAnimationFrame(function () { requestAnimationFrame(дело); });
+}
+
+function линии(холст, ряды, подписи) {
+  var о = размерХолста(холст), к = о.к, ш = о.ш, в = о.в;
+  к.clearRect(0, 0, ш, в);
+  var л = 34, п = 8, вх = 10, нз = 22;
+  var гш = ш - л - п, гв = в - вх - нз;
+  var макс = 1;
+  ряды.forEach(function (р) { р.точки.forEach(function (з) { if (з > макс) макс = з; }); });
+  макс = Math.ceil(макс * 1.15) || 1;
+
+  var стиль = getComputedStyle(document.documentElement);
+  var сетка = стиль.getPropertyValue("--кром").trim() || "rgba(255,255,255,.09)";
+  var текст = стиль.getPropertyValue("--т3").trim() || "rgba(255,255,255,.4)";
+
+  к.strokeStyle = сетка; к.fillStyle = текст;
+  к.lineWidth = 1; к.font = "11px system-ui, sans-serif"; к.textBaseline = "middle";
   for (var i = 0; i <= 4; i++) {
-    var y = pad.t + (H - pad.t - pad.b) * i / 4;
-    c.beginPath(); c.moveTo(pad.l, y); c.lineTo(W - pad.r, y); c.stroke();
-    c.textAlign = "right"; c.textBaseline = "middle";
-    c.fillText(String(Math.round(max * (1 - i / 4))), pad.l - 8, y);
+    var y = вх + гв - (гв * i / 4);
+    к.beginPath(); к.moveTo(л, y + .5); к.lineTo(л + гш, y + .5); к.stroke();
+    к.textAlign = "right";
+    к.fillText(число(Math.round(макс * i / 4)), л - 7, y);
   }
-  var n = S.length, iw = (W - pad.l - pad.r) / Math.max(1, n);
-  function xAt(i) { return pad.l + iw * (i + 0.5); }
-  function yAt(v) { return pad.t + (H - pad.t - pad.b) * (1 - v / max); }
+  var n = подписи.length;
+  к.textBaseline = "top";
+  var шагП = Math.max(1, Math.ceil(n / 7));
+  for (var j = 0; j < n; j++) {
+    if (j % шагП && j !== n - 1) continue;
+    var x = л + (n === 1 ? гш / 2 : гш * j / (n - 1));
+    /* Крайние подписи прижимаем к краям графика. По центру последняя
+       наполовину уходила за холст и читалась как «09-0»: справа от
+       неё всего восемь точек поля, а дата занимает тридцать. */
+    к.textAlign = n < 2 ? "center" : (j === 0 ? "left" : (j === n - 1 ? "right" : "center"));
+    к.fillText(подписи[j].slice(5), x, вх + гв + 7);
+  }
 
-  c.textAlign = "center"; c.textBaseline = "top";
-  var stepL = Math.ceil(n / 8);
-  S.forEach(function (x, i) {
-    if (i % stepL) return;
-    var d = x.day.slice(8) + "." + x.day.slice(5, 7);
-    c.fillText(d, xAt(i), H - pad.b + 6);
-  });
-
-  keys.forEach(function (k, ki) {
-    /* Заливка под линией */
-    var g = c.createLinearGradient(0, pad.t, 0, H - pad.b);
-    g.addColorStop(0, cols[ki] + "44");
-    g.addColorStop(1, cols[ki] + "00");
-    c.beginPath();
-    c.moveTo(xAt(0), yAt(S[0][k]));
-    S.forEach(function (x, i) { c.lineTo(xAt(i), yAt(x[k])); });
-    c.lineTo(xAt(n - 1), H - pad.b);
-    c.lineTo(xAt(0), H - pad.b);
-    c.closePath();
-    c.fillStyle = g; c.fill();
-
-    c.beginPath();
-    S.forEach(function (x, i) { i ? c.lineTo(xAt(i), yAt(x[k])) : c.moveTo(xAt(i), yAt(x[k])); });
-    c.strokeStyle = cols[ki]; c.lineWidth = 2; c.lineJoin = "round"; c.stroke();
-
-    if (n <= 32) {
-      S.forEach(function (x, i) {
-        c.beginPath(); c.arc(xAt(i), yAt(x[k]), 2.8, 0, Math.PI * 2);
-        c.fillStyle = cols[ki]; c.fill();
-      });
-    }
-  });
-}
-window.addEventListener("resize", function () { if (stats) drawChart(); });
-
-/* ── Заявки ── */
-$("#leadFilter").addEventListener("click", function (e) {
-  var b = e.target.closest("button");
-  if (!b) return;
-  $$("#leadFilter button").forEach(function (x) { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); });
-  b.classList.add("on");
-  b.setAttribute("aria-pressed", "true");
-  leadFilter = b.dataset.f;
-  renderLeads();
-});
-$("#csv").addEventListener("click", function (e) {
-  e.preventDefault();
-  /* Пароль отправляем телом формы: в адресной строке он остаётся
-     в журналах сервера и в истории браузера. */
-  var f = document.createElement("form");
-  f.method = "POST";
-  f.action = API + "?action=export";
-  f.target = "_blank";
-  /* Тем же секретом, что и все остальные вызовы. После входа
-     панель живёт на пропуске, KEY при возврате по нему пустой, и
-     выгрузка, собранная только на KEY, отвечала «auth» всякий раз
-     после перезагрузки страницы. */
-  var i = document.createElement("input");
-  i.type = "hidden";
-  if (PASS) { i.name = "pass"; i.value = PASS; }
-  else { i.name = "key"; i.value = KEY; }
-  f.appendChild(i);
-  document.body.appendChild(f);
-  f.submit();
-  setTimeout(function () { f.remove(); }, 1000);
-});
-
-function loadLeads() {
-  api("leads").then(function (r) {
-    if (!r.ok) return;
-    leads = r.items || [];
-    renderLeads();
-  });
-}
-var ST = { new: "новая", work: "в работе", done: "закрыта", spam: "спам" };
-var leadQ = "";
-
-/* Дата целиком, с годом. Раньше показывали «08-10 03:13» - без года
-   и без понимания, вчера это или в прошлом сезоне. */
-function когда(ts) {
-  var t = String(ts || "");
-  var d = t.slice(8, 10), m = t.slice(5, 7), y = t.slice(2, 4), hm = t.slice(11, 16);
-  if (!d) return t.slice(0, 16);
-  return d + "." + m + "." + y + " " + hm;
-}
-function подходит(x) {
-  if (!leadQ) return true;
-  var с = [x.name, x.company, x.contact, x.task, x.topic, x.note].join(" ").toLowerCase();
-  return с.indexOf(leadQ) >= 0;
-}
-function поФильтру(x, f) {
-  if (f === "all") return true;
-  if (f === "callback") return x.kind === "callback";
-  return (x.status || "new") === f;
-}
-/* Счётчики прямо на кнопках фильтра: видно, сколько новых, не
-   перебирая вкладки. Считаем по тому же поиску, что и список. */
-function счётчики() {
-  var найденные = leads.filter(подходит);
-  $$("#leadFilter button").forEach(function (b) {
-    var n = найденные.filter(function (x) { return поФильтру(x, b.dataset.f); }).length;
-    var c = b.querySelector(".cnt");
-    if (!c) { c = document.createElement("span"); c.className = "cnt"; b.appendChild(c); }
-    c.textContent = n;
-  });
-}
-function renderLeads() {
-  var rows = leads.filter(function (x) { return подходит(x) && поФильтру(x, leadFilter); });
-  счётчики();
-  $("#leadEmpty").style.display = rows.length ? "none" : "block";
-  $("#leadEmpty").textContent = leadQ && !rows.length ? "По запросу ничего не нашлось." : "Заявок пока нет.";
-  $("#leadRows").innerHTML = rows.map(function (x) {
-    var st = x.status || "new";
-    var contact = esc(x.contact || "");
-    var link = /@/.test(x.contact || "") ? "mailto:" + contact : "tel:" + (x.contact || "").replace(/[^\d+]/g, "");
-    return "<div class='lead is-" + st + "'>" +
-      "<div class='when'>" + esc(когда(x.ts)) + "<br><span class='hint'>" +
-        (x.kind === "callback" ? "звонок" : "заявка") + "</span></div>" +
-      "<div class='who'><b>" + esc(x.name || "без имени") + "</b>" +
-        (x.company ? "<span>" + esc(x.company) + "</span>" : "") +
-        "<a href='" + link + "' style='color:var(--cyan);font-size:13px'>" + contact + "</a></div>" +
-      "<div class='what'>" + (x.topic ? "<b>" + esc(x.topic) + "</b>" : "") +
-        "<p>" + esc(x.task || "") + "</p></div>" +
-      "<div class='side'><span class='st st-" + st + "'>" + ST[st] + "</span>" +
-        "<div class='row-act'>" +
-          "<button class='mini' data-s='work' data-id='" + esc(x.id) + "'>В работу</button>" +
-          "<button class='mini' data-s='done' data-id='" + esc(x.id) + "'>Закрыть</button>" +
-          "<button class='mini' data-s='spam' data-id='" + esc(x.id) + "'>Спам</button>" +
-          "<button class='mini danger' data-del='" + esc(x.id) + "'>Удалить</button>" +
-        "</div></div>" +
-      /* Пустое поле заметки на каждой карточке съедало на телефоне
-         по сотне пикселей впустую, а заметки есть у единиц. Пока
-         записи нет, вместо поля стоит кнопка: нажал - поле раскрылось
-         и курсор уже в нём. Есть запись - поле видно сразу, иначе её
-         пришлось бы искать щелчком. */
-      "<div class='note" + (x.note ? "" : " is-hidden") + "'>" +
-        "<button class='mini note-open' data-open='" + esc(x.id) + "'>Заметка по клиенту</button>" +
-        "<textarea data-note='" + esc(x.id) + "' rows='1' " +
-        "placeholder='Что важно помнить по этому клиенту'>" + esc(x.note || "") + "</textarea>" +
-        "<div class='nrow'><button class='mini' data-savenote='" + esc(x.id) + "'>Сохранить заметку</button>" +
-        (x.note_ts ? "<span class='hint'>обновлена " + esc(когда(x.note_ts)) + "</span>" : "") +
-        "</div></div>" +
-      "</div>";
-  }).join("");
-}
-$("#leadRows").addEventListener("click", function (e) {
-  var b = e.target.closest("button");
-  if (!b) return;
-  if (b.dataset.s) {
-    api("lead_status", { id: b.dataset.id, status: b.dataset.s }).then(function (r) {
-      if (r.ok) { toast("Статус обновлён"); loadLeads(); }
+  ряды.forEach(function (р) {
+    var точки = р.точки.map(function (з, i) {
+      return [л + (n === 1 ? гш / 2 : гш * i / (n - 1)), вх + гв - гв * (з / макс)];
     });
-  }
-  if (b.dataset.del) {
-    if (!confirm("Удалить заявку без возможности вернуть?")) return;
-    api("lead_delete", { id: b.dataset.del }).then(function (r) {
-      if (r.ok) { toast("Удалено"); loadLeads(); }
-    });
-  }
-  if (b.dataset.open) {
-    var гнездо = b.closest(".note");
-    гнездо.classList.remove("is-hidden");
-    var поле0 = гнездо.querySelector("textarea");
-    if (поле0) поле0.focus();
+    var зал = к.createLinearGradient(0, вх, 0, вх + гв);
+    зал.addColorStop(0, р.цвет + "44");
+    зал.addColorStop(1, р.цвет + "00");
+    к.beginPath();
+    к.moveTo(точки[0][0], вх + гв);
+    точки.forEach(function (т) { к.lineTo(т[0], т[1]); });
+    к.lineTo(точки[точки.length - 1][0], вх + гв);
+    к.closePath(); к.fillStyle = зал; к.fill();
+
+    к.beginPath();
+    точки.forEach(function (т, i) { i ? к.lineTo(т[0], т[1]) : к.moveTo(т[0], т[1]); });
+    к.strokeStyle = р.цвет; к.lineWidth = 2; к.lineJoin = "round"; к.stroke();
+
+    var посл = точки[точки.length - 1];
+    к.beginPath(); к.arc(посл[0], посл[1], 3.4, 0, 6.283);
+    к.fillStyle = р.цвет; к.fill();
+  });
+
+  холст._данные = { ряды: ряды, подписи: подписи, л: л, гш: гш, n: n };
+}
+
+function искра(холст, точки, цвет) {
+  var о = размерХолста(холст), к = о.к, ш = о.ш, в = о.в;
+  к.clearRect(0, 0, ш, в);
+  if (!точки.length) return;
+  var макс = Math.max.apply(null, точки) || 1;
+  var шаг = точки.length > 1 ? ш / (точки.length - 1) : ш;
+  к.beginPath(); к.moveTo(0, в);
+  точки.forEach(function (з, i) { к.lineTo(i * шаг, в - (в - 5) * (з / макс)); });
+  к.lineTo(ш, в); к.closePath();
+  var г = к.createLinearGradient(0, 0, 0, в);
+  г.addColorStop(0, цвет + "55"); г.addColorStop(1, цвет + "00");
+  к.fillStyle = г; к.fill();
+  к.beginPath();
+  точки.forEach(function (з, i) {
+    var x = i * шаг, y = в - (в - 5) * (з / макс);
+    i ? к.lineTo(x, y) : к.moveTo(x, y);
+  });
+  к.strokeStyle = цвет; к.lineWidth = 1.6; к.stroke();
+}
+
+function кольцо(холст, куски) {
+  var о = размерХолста(холст), к = о.к, ш = о.ш, в = о.в;
+  к.clearRect(0, 0, ш, в);
+  var сум = куски.reduce(function (а, б) { return а + б.з; }, 0);
+  var сx = ш / 2, сy = в / 2, R = Math.min(ш, в) / 2 - 6, r = R * .62;
+  if (!сум) {
+    к.beginPath(); к.arc(сx, сy, (R + r) / 2, 0, 6.283);
+    к.strokeStyle = "rgba(255,255,255,.08)"; к.lineWidth = R - r; к.stroke();
     return;
   }
-  if (b.dataset.savenote) {
-    var поле = $("textarea[data-note='" + b.dataset.savenote + "']");
-    api("lead_note", { id: b.dataset.savenote, note: поле ? поле.value : "" }).then(function (r) {
-      if (r.ok) { toast("Заметка сохранена"); loadLeads(); }
-      else toast("Не сохранилось");
+  var угол = -Math.PI / 2;
+  куски.forEach(function (кус) {
+    var д = кус.з / сум * 6.283;
+    к.beginPath(); к.arc(сx, сy, (R + r) / 2, угол, угол + д);
+    к.strokeStyle = кус.цвет; к.lineWidth = R - r; к.lineCap = "butt"; к.stroke();
+    угол += д;
+  });
+}
+
+/* Подсказка на графике посещений: наводим и видим числа за день. */
+function подсказки(холст) {
+  var у = $("#подсказ");
+  холст.addEventListener("mousemove", function (е) {
+    var д = холст._данные; if (!д) return;
+    var к = холст.getBoundingClientRect();
+    var x = е.clientX - к.left;
+    var i = д.n === 1 ? 0 : Math.round((x - д.л) / д.гш * (д.n - 1));
+    if (i < 0 || i >= д.n) { у.style.opacity = 0; return; }
+    var т = "<b>" + эк(д.подписи[i]) + "</b>";
+    д.ряды.forEach(function (р) {
+      т += '<div style="color:' + р.цвет + '">' + эк(р.имя) + ": " + число(р.точки[i]) + "</div>";
     });
-  }
-});
-/* Поиск по заявкам. Ищем по имени, компании, контакту, задаче и по
-   самой заметке: искать «обещал перезвонить» по своим же записям
-   нужнее всего. */
-$("#leadFind").addEventListener("input", function () {
-  leadQ = this.value.trim().toLowerCase();
-  renderLeads();
-});
-/* Ctrl+Enter в заметке сохраняет: руки уже в поле, тянуться к кнопке
-   лишнее движение. */
-$("#leadRows").addEventListener("keydown", function (e) {
-  if (e.key !== "Enter" || !(e.ctrlKey || e.metaKey)) return;
-  var t = e.target;
-  if (!t || !t.dataset || !t.dataset.note) return;
-  e.preventDefault();
-  api("lead_note", { id: t.dataset.note, note: t.value }).then(function (r) {
-    if (r.ok) { toast("Заметка сохранена"); loadLeads(); }
+    у.innerHTML = т;
+    у.style.left = Math.min(window.innerWidth - 170, е.clientX + 14) + "px";
+    у.style.top = (е.clientY - 10) + "px";
+    у.style.opacity = 1;
   });
-});
+  холст.addEventListener("mouseleave", function () { у.style.opacity = 0; });
+}
 
-/* ── Сеть ── */
-/* Сводку считаем по тому, что видит посетитель, а не по базовому
-   реестру из rc-geo.js. Раньше карточки «Всего точек», «Облачные
-   площадки» и остальные брали только реестр: добавленные из панели
-   города в них не попадали, а скрытые продолжали считаться. Сайт при
-   этом честно пересчитывал себя скриптом nodes_js, и панель
-   расходилась с ним на всё число правок. */
-function сетьСейчас() {
-  var G = window.RC_GEO;
-  if (!G) return [];
-  var скрыт = {};
-  скрытые.forEach(function (имя) { скрыт[имя] = 1; });
-  var из = G.NODES.filter(function (n) { return !скрыт[n[0]]; });
-  return из.concat(своиУзлы.map(function (n) { n = n.slice(); n.своя = 1; return n; }));
-}
-function loadNet() {
-  if (!window.RC_GEO) return;
-  netSummary();
-  loadNodes();
-}
-function netSummary() {
-  var G = window.RC_GEO;
-  if (!G) return;
-  var узлы = сетьСейчас();
-  var cloud = 0, shield = 0, soon = 0, reg = {};
-  узлы.forEach(function (n) {
-    if (n[4] & 1) cloud++;
-    if (n[4] & 2) shield++;
-    if (n[4] & 4) soon++;
-    var r = (G.REGIONS[n[3]] || { ru: "регион " + n[3] }).ru;
-    reg[r] = (reg[r] || 0) + 1;
+/* ── Загрузка данных ───────────────────────────────────────*/
+function загрузить() {
+  var ждём = [зов("обзор", { days: состояние.дней }), зов("leads", {})];
+  ["cdn", "vpn", "game"].forEach(function (с) {
+    ждём.push(зов("stats", { days: состояние.дней, site: с }));
   });
-  $("#netStats").innerHTML = [
-    ["Всего точек", узлы.length], ["Собственных ЦОД", G.DC.length],
-    ["Облачные площадки", cloud], ["С защитой от атак", shield], ["Готовятся к запуску", soon]
-  ].map(function (c) {
-    return '<div class="stat"><div class="v">' + c[1] + '</div><div class="k">' + c[0] + "</div></div>";
-  }).join("");
-  bars("#netRegions", reg);
-  renderNetList($("#netSearch") ? $("#netSearch").value : "");
-}
-
-/* ── Свои города ─────────────────────────────────────────────
-   Правки живут отдельно от базового реестра: добавленные города и
-   скрытые из базы. Сайт забирает их скриптом api.php?action=nodes_js,
-   поэтому после сохранения достаточно перезагрузить страницу сайта. */
-var своиУзлы = [], скрытые = [];
-function loadNodes() {
-  api("nodes").then(function (r) {
-    if (!r.ok) return;
-    своиУзлы = r.add || []; скрытые = r.hide || [];
-    renderNodes();
-  });
-}
-var МЕТКИ = [[1, "облако"], [2, "защита"], [4, "скоро"]];
-function renderNodes() {
-  var G = window.RC_GEO;
-  netSummary();
-  $("#nodeCnt").textContent = своиУзлы.length ? "· " + своиУзлы.length : "";
-  $("#hideCnt").textContent = скрытые.length ? "· " + скрытые.length : "";
-  $("#nodeOwn").innerHTML = своиУзлы.length ? своиУзлы.map(function (n, i) {
-    var метки = МЕТКИ.filter(function (m) { return n[4] & m[0]; }).map(function (m) { return m[1]; }).join(", ");
-    var рег = (G && G.REGIONS[n[3]]) ? G.REGIONS[n[3]].ru : "регион " + n[3];
-    return "<div class='one'><b>" + esc(n[0]) + "</b>" +
-      (n[5] ? "<span class='co'>" + esc(n[5]) + "</span>" : "") +
-      "<span class='co'>" + esc(рег) + " · " + n[1] + ", " + n[2] +
-      (метки ? " · " + esc(метки) : "") + "</span>" +
-      "<button class='mini danger' data-nodedel='" + i + "'>Убрать</button></div>";
-  }).join("") : "<p class='hint'>Своих городов пока нет.</p>";
-  $("#hideOwn").innerHTML = скрытые.length ? скрытые.map(function (h, i) {
-    return "<div class='one'><b>" + esc(h) + "</b>" +
-      "<button class='mini' data-hidedel='" + i + "'>Вернуть</button></div>";
-  }).join("") : "<p class='hint'>Ничего не скрыто.</p>";
-}
-/* Отказ сервера показываем словами. Раньше в ответ на любую беду
-   всплывало «Не сохранилось», и человек не понимал, что именно
-   исправить. */
-var ПОЧЕМУ = {
-  name_long: "Название города длиннее 60 знаков",
-  auth: "Панель разлогинилась, войдите заново"
-};
-function saveNodes(словом) {
-  return api("nodes_save", {
-    add: JSON.stringify(своиУзлы), hide: JSON.stringify(скрытые)
-  }).then(function (r) {
-    if (r.ok) { toast(словом); loadNodes(); }
-    else toast(ПОЧЕМУ[r.error] || "Не сохранилось");
-    return r;
-  });
-}
-$("#nAdd").addEventListener("click", function () {
-  var имя = $("#nName").value.trim();
-  var ш = parseFloat($("#nLat").value.replace(",", "."));
-  var д = parseFloat($("#nLon").value.replace(",", "."));
-  if (!имя) return toast("Не заполнено название");
-  /* Проверяем здесь же, а не только на сервере: человеку нужен ответ
-     сразу, а не после круга по сети. */
-  if (имя.length > 60) return toast("Название города длиннее 60 знаков");
-  if ($("#nEn").value.trim().length > 60) return toast("Английское название длиннее 60 знаков");
-  if (!isFinite(ш) || ш < -90 || ш > 90) return toast("Широта от -90 до 90");
-  if (!isFinite(д) || д < -180 || д > 180) return toast("Долгота от -180 до 180");
-  var м = ($("#nCloud").checked ? 1 : 0) + ($("#nShield").checked ? 2 : 0) + ($("#nSoon").checked ? 4 : 0);
-  /* Один город дважды - это две точки в одном месте на глобусе и
-     завышенное число в шапке сайта. Проверяем и по своим, и по
-     базовому реестру. */
-  var естьСвой = своиУзлы.some(function (n) { return String(n[0]).toLowerCase() === имя.toLowerCase(); });
-  if (естьСвой) return toast("Такой город уже добавлен");
-  var G0 = window.RC_GEO;
-  if (G0 && G0.NODES.some(function (n) { return n[0].toLowerCase() === имя.toLowerCase(); }))
-    return toast("Такой город уже есть в базовом реестре");
-  своиУзлы.push([имя, ш, д, +$("#nReg").value, м, $("#nEn").value.trim()]);
-  saveNodes("Город добавлен").then(function (r) {
-    /* Сервер отказал - убираем город и из своего списка, иначе он
-       остаётся в памяти панели и валит каждое следующее сохранение. */
-    if (!r.ok) { своиУзлы.pop(); return; }
-    ["#nName", "#nEn", "#nLat", "#nLon"].forEach(function (s) { $(s).value = ""; });
-    $("#nCloud").checked = $("#nShield").checked = $("#nSoon").checked = false;
-  });
-});
-$("#hAdd").addEventListener("click", function () {
-  var имя = $("#hName").value.trim();
-  if (!имя) return toast("Не заполнено название");
-  var G = window.RC_GEO;
-  var есть = G && G.NODES.some(function (n) { return n[0] === имя; });
-  if (!есть) return toast("Такого города в реестре нет");
-  if (скрытые.indexOf(имя) < 0) скрытые.push(имя);
-  saveNodes("Город убран с сайта").then(function () { $("#hName").value = ""; });
-});
-$("#nodeOwn").addEventListener("click", function (e) {
-  var b = e.target.closest("button");
-  if (!b || !b.dataset.nodedel) return;
-  своиУзлы.splice(+b.dataset.nodedel, 1);
-  saveNodes("Убрано");
-});
-$("#hideOwn").addEventListener("click", function (e) {
-  var b = e.target.closest("button");
-  if (!b || !b.dataset.hidedel) return;
-  скрытые.splice(+b.dataset.hidedel, 1);
-  saveNodes("Город вернулся на сайт");
-});
-function renderNetList(q) {
-  var G = window.RC_GEO;
-  if (!G) return;
-  q = (q || "").toLowerCase();
-  var rows = сетьСейчас().filter(function (n) {
-    var рег = (G.REGIONS[n[3]] || { ru: "" }).ru;
-    return !q || n[0].toLowerCase().indexOf(q) >= 0 || рег.toLowerCase().indexOf(q) >= 0;
-  });
-  $("#netList").innerHTML = rows.length ? rows.map(function (n) {
-    var tags = "";
-    if (n[4] & 1) tags += '<span class="tag tag-cloud">облако</span>';
-    if (n[4] & 2) tags += '<span class="tag tag-shield">защита</span>';
-    if (n[4] & 4) tags += '<span class="tag tag-soon">скоро</span>';
-    if (n.своя) tags += '<span class="tag">своя</span>';
-    var рег = (G.REGIONS[n[3]] || { ru: "регион " + n[3] }).ru;
-    return '<div class="node-row"><span class="nm">' + esc(n[0]) + "</span>" + tags +
-      '<span class="rg">' + esc(рег) + " · " + Number(n[1]).toFixed(2) + ", " + Number(n[2]).toFixed(2) + "</span></div>";
-  }).join("") : '<div class="node-empty">Ничего не нашлось.</div>';
-}
-$("#netSearch").addEventListener("input", function () { renderNetList(this.value); });
-
-/* ── Тексты ───────────────────────────────────────────────────
-   Панель правит две разные вещи. Надписи это плоский словарь на
-   двести с лишним ключей: он лежит в assets/rc-i18n.js, а правки
-   из админки его перекрывают (rc-app.js, функция t). Карточки это
-   четыре набора: продукты, преимущества, сценарии, вопросы.
-
-   До этой переделки в панели висели тридцать полей одной стеной без
-   разбивки и без поиска, английского не было вовсе, а карточки
-   правились сырым JSON в текстовом поле. Владелец сайта не обязан
-   уметь в JSON и считать запятые.
-
-   Теперь надписи разложены по разделам страницы, ищутся по смыслу и
-   по самому тексту, языки разведены, а карточка правится полями с
-   выбором иконки из настоящего набора. */
-
-var cLang = "ru";
-
-/* Понятные названия для полей, которые правят чаще всего. Остальным
-   подписью служит их исходный текст: он и так виден в поле. */
-var C_NAME = {
-  "hero.h1a": "Заголовок, первая строка",
-  "hero.h1b": "Заголовок, вторая строка",
-  "hero.sub": "Подзаголовок в шапке",
-  "kpi.1n": "Показатель 1: значение",
-  "kpi.1l": "Показатель 1: подпись",
-  "kpi.2l": "Показатель 2: подпись",
-  "kpi.3n": "Показатель 3: значение",
-  "kpi.3l": "Показатель 3: подпись",
-  "kpi.4n": "Показатель 4: значение",
-  "kpi.4l": "Показатель 4: подпись",
-  "what.h": "Заголовок «Что такое»",
-  "what.p": "Текст «Что такое»",
-  "prod.h": "Заголовок «Продукты»",
-  "adv.h": "Заголовок «Преимущества»",
-  "infra.h": "Заголовок «Инфраструктура»",
-  "how.h": "Заголовок «Как работает»",
-  "case.h": "Заголовок «Сценарии»",
-  "eff.h": "Заголовок «Эффект»",
-  "eff.p": "Текст «Эффект»",
-  "eff.c1h": "Карточка: задержка",
-  "eff.c2h": "Карточка: разгрузка origin",
-  "eff.c3h": "Карточка: доступность",
-  "live.h": "Заголовок графика трафика",
-  "topo.h": "Заголовок схемы маршрута",
-  "inc.h": "Заголовок «Что входит»",
-  "inc.p": "Текст «Что входит»",
-  "ct.h": "Заголовок формы",
-  "ct.p": "Текст над формой",
-  "ftr.about": "Описание в подвале"
-};
-
-/* Разделы идут в том же порядке, что и блоки на самой странице:
-   человек ищет надпись глазами сверху вниз, а не по алфавиту.
-   Первые три открыты сразу, остальные под щелчком, иначе снова
-   получается стена. */
-var C_SEC = [
-  ["Шапка", ["hero"], 1],
-  ["Показатели под шапкой", ["kpi"], 1],
-  ["Что такое Rocket CDN", ["what"], 0],
-  ["Продукты", ["prod"], 0],
-  ["Преимущества", ["adv"], 0],
-  ["Инфраструктура и карта", ["infra", "reg", "dc1p", "dc2p", "dc3p"], 0],
-  ["Как работает", ["how"], 0],
-  ["Сценарии", ["case"], 0],
-  ["Надёжность", ["rel"], 0],
-  ["Эффект и цифры", ["eff"], 0],
-  ["График трафика и схема маршрута", ["live", "topo"], 0],
-  ["Подписи внутри инфографики", ["viz"], 0],
-  ["Что входит", ["inc"], 0],
-  ["Вопросы", ["faq"], 0],
-  ["Форма заявки", ["ct"], 0],
-  ["Кнопки призыва", ["cta"], 0],
-  ["Меню и навигация", ["nav", "menu"], 0],
-  ["Подвал", ["ftr"], 0],
-  ["Заставка и полёт", ["epi", "fly", "cb", "tick"], 0],
-  ["Служебные подписи", ["ui", "theme", "toast"], 0]
-];
-
-function cDict(lang) {
-  var all = window.RC_I18N || {};
-  return all[lang] || all.ru || {};
-}
-function cOver(lang) {
-  return (content && content.i18n && content.i18n[lang]) || {};
-}
-/* Ключи в порядке разделов. Что не попало ни в один префикс, уходит
-   в конец отдельной группой: новый ключ в словаре не должен молча
-   исчезать из панели. */
-function cPlan() {
-  var d = cDict("ru"), keys = Object.keys(d), взято = {}, план = [];
-  C_SEC.forEach(function (sec) {
-    var list = keys.filter(function (k) {
-      var pre = k.split(".")[0];
-      return sec[1].indexOf(pre) >= 0 && !взято[k];
+  return Promise.all(ждём).then(function (о) {
+    if (о[0] && о[0].ok) состояние.обзор = о[0];
+    if (о[1] && о[1].ok) состояние.заявки = о[1].items || [];
+    ["cdn", "vpn", "game"].forEach(function (с, i) {
+      if (о[2 + i] && о[2 + i].ok) состояние.по[с] = о[2 + i];
     });
-    list.forEach(function (k) { взято[k] = 1; });
-    if (list.length) план.push({ name: sec[0], keys: list, open: sec[2] });
+    нарисовать();
   });
-  var хвост = keys.filter(function (k) { return !взято[k]; });
-  if (хвост.length) план.push({ name: "Прочее", keys: хвост, open: 0 });
-  return план;
 }
 
-function cRender() {
-  var база = cDict(cLang), ru = cDict("ru"), пр = cOver(cLang);
-  var иск = ($("#cFind").value || "").trim().toLowerCase();
-  var толькоПравки = $("#cOnly") && $("#cOnly").checked;
-  var всего = 0, правок = 0, видно = 0;
+function нарисовать() {
+  дашборд();
+  площадка("cdn"); площадка("vpn"); площадка("game");
+  воронка(); заявки(); источники(); ошибки(); ссылки();
+  /* Открытый раздел дорисовываем сразу: его холсты уже с размерами. */
+  if (холсты[состояние.раздел]) послеРаскладки(холсты[состояние.раздел]);
+  послеРаскладки(function () {
+    $$('.раздел.вкл .р i').forEach(function (i) {
+      if (i.dataset.ш) i.style.width = i.dataset.ш;
+    });
+  });
+}
 
-  var html = cPlan().map(function (sec) {
-    var поля = sec.keys.filter(function (k) {
-      var есть = (пр[k] || "").trim() !== "";
-      if (толькоПравки && !есть) return false;
-      if (!иск) return true;
-      return (k + " " + (C_NAME[k] || "") + " " + (база[k] || "") + " " + (ru[k] || "") + " " + (пр[k] || ""))
-        .toLowerCase().indexOf(иск) >= 0;
+/* ── Дашборд ───────────────────────────────────────────────*/
+function дашборд() {
+  var о = состояние.обзор; if (!о) return;
+  var коробка = $("#дашПлитки"); коробка.innerHTML = "";
+
+  var всеЗахода = 0, всеЗаявок = 0;
+  ["cdn", "vpn", "game"].forEach(function (с) {
+    var д = о["сайты"][с]; if (!д) return;
+    всеЗахода += д["сумма"].uniq;
+    всеЗаявок += д["сумма"].leads + д["сумма"].callbacks;
+    var пол = д["ряд"].slice(-Math.ceil(д["ряд"].length / 2));
+    var перв = д["ряд"].slice(0, д["ряд"].length - пол.length);
+    var а = пол.reduce(function (с2, р) { return с2 + р.uniq; }, 0);
+    var б = перв.reduce(function (с2, р) { return с2 + р.uniq; }, 0);
+    var рост = б > 0 ? Math.round((а - б) / б * 100) : (а > 0 ? 100 : 0);
+    var к = document.createElement("div");
+    к.className = "карт"; к.style.setProperty("--акц", ЦВЕТА[с]);
+    к.innerHTML =
+      '<div class="к"><b></b>' + эк(д["имя"]) + "</div>" +
+      '<div class="з" data-до="' + д["сумма"].uniq + '">0</div>' +
+      '<div class="д ' + (рост > 2 ? "вверх" : рост < -2 ? "вниз" : "ровно") + '">' +
+        (рост > 0 ? "+" : "") + рост + "% к прошлой половине периода</div>" +
+      '<canvas class="искра"></canvas>';
+    коробка.appendChild(к);
+    докрутить($(".з", к), д["сумма"].uniq);
+    послеРаскладки(function () {
+      искра($("canvas", к), д["ряд"].map(function (р) { return р.uniq; }), ЦВЕТА[с]);
     });
-    sec.keys.forEach(function (k) {
-      всего++;
-      if ((пр[k] || "").trim() !== "") правок++;
+    var хвост = $('[data-счёт="' + с + '"]');
+    if (хвост) хвост.textContent = число(д["сумма"].uniq);
+  });
+
+  var кВсего = document.createElement("div");
+  кВсего.className = "карт";
+  кВсего.innerHTML =
+    '<div class="к"><b style="background:var(--добро)"></b>Заявки за период</div>' +
+    '<div class="з">0</div>' +
+    '<div class="д ровно">' + число(о["новых"]) + " ждут ответа</div>";
+  коробка.appendChild(кВсего);
+  докрутить($(".з", кВсего), всеЗаявок);
+
+  $("#дашПодпись").textContent = "две площадки и игра между ними · " + число(всеЗахода) + " человек за " + состояние.дней + " дней";
+  $("#счётЗаявок").textContent = о["новых"] ? число(о["новых"]) : "";
+
+  var ряды = ["cdn", "vpn", "game"].filter(function (с) { return о["сайты"][с]; }).map(function (с) {
+    return { имя: ИМЕНА[с], цвет: ЦВЕТА[с], точки: о["сайты"][с]["ряд"].map(function (р) { return р.uniq; }) };
+  });
+  var подписи = (о["сайты"].cdn ? о["сайты"].cdn["ряд"] : []).map(function (р) { return р.day; });
+  $("#дашЛегенда").innerHTML = ряды.map(function (р) {
+    return '<span style="color:' + р.цвет + '">■ ' + эк(р.имя) + "</span>";
+  }).join(" ");
+  холсты["дашборд"] = function () {
+    if (подписи.length) { линии($("#дашГрафик"), ряды, подписи); подсказки($("#дашГрафик")); }
+    кольцо($("#дашКольцо"), куски);
+    $$('.раздел[data-р="дашборд"] .полоса .р i').forEach(function (i) {
+      if (i.dataset.ш) i.style.width = i.dataset.ш;
     });
-    if (!поля.length) return "";
-    видно += поля.length;
-    var своих = sec.keys.filter(function (k) { return (пр[k] || "").trim() !== ""; }).length;
-    var открыт = (иск || толькоПравки || sec.open) ? " open" : "";
-    return '<details class="cf-sec"' + открыт + '><summary>' + esc(sec.name) +
-      (своих ? '<span class="ch">' + своих + " правок</span>" : "") +
-      '<span class="n">' + поля.length + '</span></summary><div class="cf-body">' +
-      поля.map(function (k) {
-        /* Английская подсказка показывает английский исходник, но если
-           перевода нет, честнее показать русский, чем пустое поле. */
-        var исх = база[k] != null ? base_str(база[k]) : base_str(ru[k]);
-        var зн = пр[k] || "";
-        var длинно = исх.length > 70 || зн.length > 70;
-        var имя = C_NAME[k] || кратко(исх) || k;
-        /* Для ключей без своего названия подписью служит сам текст.
-           Тогда та же строка в подсказке поля была бы вторым эхом,
-           поэтому подсказка меняется на смысл пустого поля. */
-        var подск = имя === исх ? "оставить исходный текст" : исх;
-        return '<div class="cf' + (зн ? " is-edited" : "") + '" data-cf="' + esc(k) + '">' +
-          "<label><span>" + esc(имя) + "</span><code>" + esc(k) + "</code>" +
-          (зн ? '<span class="edited">правка</span>' : "") + "</label>" +
-          (длинно
-            ? '<textarea data-k="' + esc(k) + '" placeholder="' + esc(подск) + '">' + esc(зн) + "</textarea>"
-            : '<input data-k="' + esc(k) + '" placeholder="' + esc(подск) + '" value="' + esc(зн) + '">') +
-          (зн ? '<div class="was">Исходный текст: ' + esc(кратко(исх, 160)) + "</div>" : "") +
-          "</div>";
-      }).join("") + "</div></details>";
+  };
+
+  var куски = ["cdn", "vpn", "game"].map(function (с) {
+    return { имя: ИМЕНА[с], цвет: ЦВЕТА[с], з: (о["заявкиПоСайтам"] || {})[с] || 0 };
+  });
+  $("#дашВсегоЗаявок").textContent = число(о["заявок"]);
+  $("#дашЛегендаЗаявок").innerHTML = куски.map(function (к) {
+    return '<div><i style="background:' + к.цвет + '"></i>' + эк(к.имя) + " <span class=\"тихо\">" + число(к.з) + "</span></div>";
   }).join("");
 
-  $("#cFields").innerHTML = html || '<div class="cf-none">Ничего не нашлось. Попробуйте другое слово или очистите поиск.</div>';
-  $("#cTop").innerHTML =
-    "<span>Всего надписей: <b>" + всего + "</b>. Своих правок: <b>" + правок + "</b>." +
-    (иск || толькоПравки ? " Показано: <b>" + видно + "</b>." : "") + "</span>" +
-    '<label class="chk" style="display:flex;align-items:center;gap:6px;cursor:pointer">' +
-    '<input type="checkbox" id="cOnly"' + (толькоПравки ? " checked" : "") + "> только изменённые</label>" +
-    (правок ? '<button type="button" class="mini" id="cWipe">Снять все правки языка</button>' : "");
-
-  var only = $("#cOnly");
-  if (only) only.addEventListener("change", function () { cKeep(); cRender(); });
-  var wipe = $("#cWipe");
-  if (wipe) wipe.addEventListener("click", function () {
-    if (!confirm("Снять все ваши правки надписей для языка " + cLang.toUpperCase() + "? Тексты вернутся к исходным.")) return;
-    content = content || {};
-    content.i18n = content.i18n || {};
-    delete content.i18n[cLang];
-    cPush("Правки сняты, вернулись исходные тексты.");
-  });
-}
-function base_str(v) { return typeof v === "string" ? v : ""; }
-function кратко(s, n) {
-  s = (s || "").replace(/\s+/g, " ").trim();
-  n = n || 58;
-  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+  var сегодня = ["cdn", "vpn", "game"].map(function (с) {
+    var р = о["сайты"][с]; if (!р) return null;
+    var п = р["ряд"][р["ряд"].length - 1] || { uniq: 0, views: 0 };
+    return { имя: ИМЕНА[с], цвет: ЦВЕТА[с], з: п.uniq, в: п.views };
+  }).filter(Boolean);
+  var маx = Math.max.apply(null, сегодня.map(function (с) { return с.з; }).concat([1]));
+  $("#дашСегодня").innerHTML = сегодня.map(function (с) {
+    return '<div class="полоса" style="--акц:' + с.цвет + '">' +
+      "<span>" + эк(с.имя) + '</span><span class="р"><i style="width:' + Math.round(с.з / маx * 100) + '%"></i></span>' +
+      '<span class="ч">' + число(с.з) + " / " + число(с.в) + "</span></div>";
+  }).join("") || '<div class="пусто">Сегодня ещё никого.</div>';
 }
 
-/* Набранное, но ещё не сохранённое, забираем с экрана перед любой
-   перерисовкой списка. Раньше это делала только смена языка, а поиск
-   и галочка «только изменённые» собирали поля заново из последнего
-   сохранённого набора: человек правил пять заголовков, набирал слово
-   в поиск ради шестого - и пять правок пропадали молча. */
-function cKeep() {
-  if (!$("#cFields [data-k]")) return;
-  content = content || {};
-  content.i18n = content.i18n || {};
-  content.i18n[cLang] = cCollect();
-}
+/* ── Площадка ──────────────────────────────────────────────
+   Один код на три раздела: у CDN, VPN и игры одни и те же вопросы,
+   разные только названия событий. Три копии этой разметки разошлись
+   бы после первой же правки. */
+function площадка(с) {
+  var д = состояние.по[с]; if (!д) return;
+  var где = $("#тело" + с.charAt(0).toUpperCase() + с.slice(1));
+  var цвет = ЦВЕТА[с];
+  var т = д.total || {};
+  var события = д["события"] || {};
 
-function cCollect() {
-  var i18n = {};
-  $$("#cFields [data-k]").forEach(function (el) {
-    var v = el.value.trim();
-    if (v) i18n[el.dataset.k] = v;
-  });
-  /* На экране сейчас может быть виден не весь словарь: работает поиск
-     или галочка «только изменённые». Всё, что скрыто, надо унести из
-     прежнего набора, иначе сохранение стёрло бы правки, которых
-     человек в этот момент просто не видел. */
-  var было = cOver(cLang);
-  Object.keys(было).forEach(function (k) {
-    if (!$('#cFields [data-k="' + k.replace(/"/g, '\\"') + '"]')) i18n[k] = было[k];
-  });
-  return i18n;
-}
-function cPush(сообщение) {
-  return api("content_save", { content: content }).then(function (r) {
-    var m = $("#cMsg");
-    m.className = r.ok ? "form-msg ok" : "form-msg bad";
-    m.textContent = r.ok ? сообщение : "Не сохранилось, проверьте права на папку data.";
-    if (r.ok) { toast("Тексты обновлены"); cRender(); }
-    return r;
-  });
-}
-function loadContent() {
-  fetch(API + "?action=content").then(function (r) { return r.json(); }).then(function (r) {
-    content = (r && r.content) || {};
-    bПравки = {};
-    bData = null;
-    cRender();
-    bRender();
-  });
-}
-$("#cFind").addEventListener("input", function () { cKeep(); cRender(); });
-$$("#cLang button").forEach(function (b) {
-  b.addEventListener("click", function () {
-    if (b.classList.contains("on")) return;
-    /* Пересобрать словарь до смены языка: иначе набранное в полях
-       уедет вместе с перерисовкой. */
-    cKeep();
-    bKeep();
-    $$("#cLang button").forEach(function (x) { x.classList.remove("on"); });
-    b.classList.add("on");
-    cLang = b.dataset.lang;
-    $("#cMsg").textContent = "";
-    bData = null;
-    $("#bMsg").textContent = "";
-    cRender();
-    bRender();
-  });
-});
-$("#cSave").addEventListener("click", function () {
-  content = content || {};
-  content.i18n = content.i18n || {};
-  content.i18n[cLang] = cCollect();
-  cPush("Сохранено. Сайт уже отдаёт новые надписи на языке " + cLang.toUpperCase() + ".");
-});
-$("#cReset").addEventListener("click", function () {
-  if (!confirm("Вернуть исходными ВСЕ тексты сайта: надписи обоих языков и карточки? Ваши правки пропадут.")) return;
-  api("content_reset").then(function (r) {
-    if (!r.ok) return;
-    content = {};
-    bПравки = {};
-    bData = null;
-    toast("Исходные тексты возвращены");
-    cRender();
-    bRender();
-  });
-});
-
-/* ── Карточки страницы ───────────────────────────────────────
-   Продукты, преимущества, сценарии, вопросы. У каждой группы свой
-   набор полей, поэтому редактор собирается по описанию, а не пишется
-   четыре раза. */
-var B_SPEC = {
-  products: { name: "Продукты", ttl: "h", fields: [
-    ["icon", "Иконка", "icon"], ["h", "Название", "line"],
-    ["p", "Описание", "area"], ["li", "Список под описанием, по строке на пункт", "lines"]] },
-  advantages: { name: "Преимущества", ttl: "h", fields: [
-    ["icon", "Иконка", "icon"], ["h", "Заголовок", "line"], ["p", "Описание", "area"]] },
-  cases: { name: "Сценарии", ttl: "h", fields: [
-    ["h", "Заголовок", "line"], ["p", "Описание", "area"]] },
-  faq: { name: "Вопросы", ttl: "q", fields: [
-    ["q", "Вопрос", "line"], ["a", "Ответ", "area"]] }
-};
-var bGroup = "products";
-var bData = null;
-/* Отложенные правки карточек: язык → группа → набор. Раньше bData
-   просто обнулялся при смене группы и языка, и всё набранное в
-   карточках пропадало без единого слова. Держим их в стороне от
-   content: пока человек не нажал «Сохранить карточки», на сайт они
-   не уходят, даже если он сохранит в это время надписи. */
-var bПравки = {};
-function bKeep() {
-  if (!bData) return;
-  bПравки[cLang] = bПравки[cLang] || {};
-  bПравки[cLang][bGroup] = bData;
-}
-function bНабор(lang, g) {
-  var от = bПравки[lang] && bПравки[lang][g];
-  if (от) return от;
-  var свои = content && content.blocks && content.blocks[lang];
-  return (свои && свои[g]) || bBase(lang)[g] || [];
-}
-
-function bBase(lang) {
-  var B = window.RC_BLOCKS || {};
-  return B[lang] || B.ru || {};
-}
-function bNow(lang) {
-  var свои = content && content.blocks && content.blocks[lang];
-  return (свои && свои[bGroup]) || bBase(lang)[bGroup] || [];
-}
-function bIcons(текущая) {
-  var набор = window.RC_ICONS || {};
-  var имена = Object.keys(набор);
-  if (текущая && имена.indexOf(текущая) < 0) имена.unshift(текущая);
-  return имена.map(function (n) {
-    return '<option value="' + esc(n) + '"' + (n === текущая ? " selected" : "") + ">" + esc(n) + "</option>";
-  }).join("");
-}
-function bRender() {
-  if (!bData) {
-    var отложено = bПравки[cLang] && bПравки[cLang][bGroup];
-    bData = отложено || JSON.parse(JSON.stringify(bNow(cLang)));
+  function плитка(имя, зн, доп) {
+    return '<div class="карт" style="--акц:' + цвет + '"><div class="к"><b></b>' + эк(имя) + "</div>" +
+      '<div class="з">' + число(зн) + "</div>" +
+      (доп ? '<div class="д ровно">' + эк(доп) + "</div>" : "") + "</div>";
   }
-  var спец = B_SPEC[bGroup];
-  $("#bLangNote").textContent = "язык: " + (cLang === "en" ? "English" : "Русский");
-  $$("#bGroup button").forEach(function (b) {
-    var g = b.dataset.g;
-    b.classList.toggle("on", g === bGroup);
-    var набор = bНабор(cLang, g);
-    b.querySelector(".cnt").textContent = набор.length;
-  });
-  $("#bList").innerHTML = bData.length ? bData.map(function (it, i) {
-    var поля = спец.fields.map(function (f) {
-      var ключ = f[0], подпись = f[1], вид = f[2], зн = it[ключ];
-      /* Подпись и поле связываем по имени. Раньше подпись стояла
-         отдельным label без for, а поле лежало снаружи него: связи не
-         было ни явной, ни неявной, и чтение с экрана произносило над
-         каждым из двадцати девяти полей просто «правка». */
-      var ид = "bf-" + bGroup + "-" + i + "-" + ключ;
-      var под = '<label class="cf-l" for="' + ид + '"><span>' + esc(подпись) + "</span></label>";
-      if (вид === "icon") {
-        return '<div class="cf">' + под +
-          '<div class="ico-pick"><span class="prev" data-prev="' + i + '">' +
-          (window.RC_ICO ? window.RC_ICO(зн) : "") + "</span>" +
-          '<select id="' + ид + '" data-i="' + i + '" data-f="icon">' + bIcons(зн) + "</select></div></div>";
+
+  var шапка =
+    '<div class="заг"><h2>' + эк(ИМЕНА[с]) + "</h2><p>за " + состояние.дней + " дней</p></div>" +
+    '<div class="сетка">' +
+      плитка("Заходов", т.uniq || 0, "разных людей") +
+      плитка("Просмотров", т.views || 0, "открытий страницы") +
+      плитка("Заявок", (т.leads || 0) + (т.callbacks || 0), "форма и звонок") +
+      плитка("Конверсия", (д.conv || 0) + "%", "заходов в заявку") +
+    "</div>";
+
+  var график =
+    '<div class="плита"><h3>Посещения по дням</h3>' +
+    '<canvas class="холст" id="гр-' + с + '"></canvas></div>';
+
+  var чтоСчитаем = {
+    cdn: "разделы страницы",
+    vpn: "акты фильма",
+    game: "полёт, тела, клавиши, причалы"
+  };
+  var спЧасы = д.hours || {};
+  var деталь =
+    '<div class="сетка два">' +
+      '<div class="плита" style="margin-top:0"><h3>События <span class="тихо">' + эк(чтоСчитаем[с]) + "</span></h3>" +
+        полосы(события, цвет, 12) + "</div>" +
+      '<div class="плита" style="margin-top:0"><h3>Часы суток</h3>' +
+        '<canvas class="холст низ" id="час-' + с + '"></canvas></div>' +
+    "</div>";
+
+  var прокрутка = (с === "cdn" || с === "vpn")
+    ? '<div class="плита"><h3>Докуда доходят</h3>' + полосы(д.scroll || {}, цвет, 14) + "</div>"
+    : "";
+
+  где.innerHTML = шапка + график + деталь + прокрутка;
+
+  /* Рисуем ПОТОМ, когда раздел покажут.
+
+     Тут была настоящая беда, и видно её было только на снимке: подписи
+     на осях выходили мыльными, будто картинку растянули. Так и было.
+     Разделы кроме открытого стоят с display:none, у спрятанного холста
+     ширина нулевая, отрисовка брала запасные триста точек и клала
+     буфер втрое меньше места, а стили растягивали его на всю плиту.
+
+     Поэтому здесь только запоминаем, ЧТО рисовать, а рисуем в
+     кРазделу - когда у холста появились настоящие размеры. */
+  холсты[с] = function () {
+    var хл = $("#гр-" + с);
+    if (хл) {
+      линии(хл, [{ имя: ИМЕНА[с], цвет: цвет, точки: (д.series || []).map(function (р) { return р.uniq; }) }],
+            (д.series || []).map(function (р) { return р.day; }));
+      подсказки(хл);
+    }
+    var хч = $("#час-" + с);
+    if (хч) {
+      var часы = [], метки = [];
+      for (var ч = 0; ч < 24; ч++) {
+        var к = ("0" + ч).slice(-2);
+        часы.push(+(спЧасы[к] || 0)); метки.push("2000-" + к + ":00");
       }
-      if (вид === "lines") {
-        var текст = (зн || []).join("\n");
-        return '<div class="cf">' + под +
-          '<textarea id="' + ид + '" data-i="' + i + '" data-f="' + ключ + '" style="min-height:70px">' + esc(текст) + "</textarea></div>";
-      }
-      if (вид === "area") {
-        return '<div class="cf">' + под +
-          '<textarea id="' + ид + '" data-i="' + i + '" data-f="' + ключ + '">' + esc(зн || "") + "</textarea></div>";
-      }
-      return '<div class="cf">' + под +
-        '<input id="' + ид + '" data-i="' + i + '" data-f="' + ключ + '" value="' + esc(зн || "") + '"></div>';
-    }).join("");
-    return '<div class="blk"><div class="head"><span class="num">' + (i + 1) + "</span>" +
-      '<span class="ttl">' + esc(кратко(it[спец.ttl] || "Без названия")) + "</span>" +
-      '<span class="row-act">' +
-      '<button type="button" class="mini" data-move="' + i + '" data-dir="-1"' + (i === 0 ? " disabled" : "") + ">Выше</button>" +
-      '<button type="button" class="mini" data-move="' + i + '" data-dir="1"' + (i === bData.length - 1 ? " disabled" : "") + ">Ниже</button>" +
-      '<button type="button" class="mini danger" data-del="' + i + '">Убрать</button>' +
-      "</span></div>" + поля + "</div>";
-  }).join("") : '<div class="cf-none">В этой группе пока пусто. Нажмите «Добавить карточку».</div>';
-  $("#bJson").value = JSON.stringify(bData, null, 2);
+      линии(хч, [{ имя: "Просмотры", цвет: цвет, точки: часы }], метки);
+    }
+    $$(".полоса .р i", где).forEach(function (i) { i.style.width = i.dataset.ш; });
+  };
+  if (состояние.раздел === с) послеРаскладки(холсты[с]);
 }
-$("#bList").addEventListener("input", function (e) {
-  var el = e.target;
-  if (el.dataset.i === undefined) return;
-  var i = +el.dataset.i, f = el.dataset.f, it = bData[i];
-  if (!it) return;
-  if (f === "li") it.li = el.value.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
-  else it[f] = el.value;
-  if (f === "icon") {
-    var prev = $('#bList [data-prev="' + i + '"]');
-    if (prev && window.RC_ICO) prev.innerHTML = window.RC_ICO(el.value);
-  }
-  var спец = B_SPEC[bGroup];
-  if (f === спец.ttl) {
-    var ttl = el.closest(".blk").querySelector(".ttl");
-    if (ttl) ttl.textContent = кратко(el.value || "Без названия");
-  }
-  $("#bJson").value = JSON.stringify(bData, null, 2);
-});
-$("#bList").addEventListener("click", function (e) {
-  var b = e.target.closest("button");
-  if (!b) return;
-  if (b.dataset.del !== undefined) {
-    var i = +b.dataset.del;
-    if (!confirm("Убрать карточку «" + (bData[i][B_SPEC[bGroup].ttl] || "") + "»?")) return;
-    bData.splice(i, 1);
-    bRender();
-    return;
-  }
-  if (b.dataset.move !== undefined) {
-    var j = +b.dataset.move, к = j + (+b.dataset.dir);
-    if (к < 0 || к >= bData.length) return;
-    var t = bData[j]; bData[j] = bData[к]; bData[к] = t;
-    bRender();
-  }
-});
-$$("#bGroup button").forEach(function (b) {
-  b.addEventListener("click", function () {
-    if (b.dataset.g === bGroup) return;
-    bKeep();
-    bGroup = b.dataset.g;
-    bData = null;
-    $("#bMsg").textContent = "";
-    bRender();
-  });
-});
-$("#bAdd").addEventListener("click", function () {
-  var пустая = {};
-  B_SPEC[bGroup].fields.forEach(function (f) {
-    пустая[f[0]] = f[2] === "lines" ? [] : (f[2] === "icon" ? Object.keys(window.RC_ICONS || { cdn: 1 })[0] : "");
-  });
-  bData.push(пустая);
-  bRender();
-  var последняя = $("#bList").lastElementChild;
-  if (последняя) {
-    последняя.scrollIntoView({ behavior: "smooth", block: "center" });
-    var поле = последняя.querySelector('input[data-f], textarea[data-f]');
-    if (поле) поле.focus();
-  }
-});
-$("#bBack").addEventListener("click", function () {
-  if (!confirm("Вернуть исходный набор в группе «" + B_SPEC[bGroup].name + "»? Правки этой группы пропадут после сохранения.")) return;
-  bData = JSON.parse(JSON.stringify(bBase(cLang)[bGroup] || []));
-  bRender();
-});
-$("#bFromJson").addEventListener("click", function () {
-  var m = $("#bMsg"), txt = $("#bJson").value.trim();
-  var разобрано;
-  try { разобрано = JSON.parse(txt); }
-  catch (err) { m.className = "form-msg bad"; m.textContent = "JSON с ошибкой: " + err.message; return; }
-  if (!Array.isArray(разобрано)) { m.className = "form-msg bad"; m.textContent = "Ожидается список карточек в квадратных скобках."; return; }
-  bData = разобрано;
-  m.className = "form-msg ok";
-  m.textContent = "Перенесено в карточки. Проверьте и сохраните.";
-  bRender();
-});
-$("#bSave").addEventListener("click", function () {
-  var m = $("#bMsg"), спец = B_SPEC[bGroup];
-  var пусто = bData.filter(function (it) { return !(it[спец.ttl] || "").trim(); }).length;
-  if (пусто) {
-    m.className = "form-msg bad";
-    m.textContent = "Не сохранил: " + пусто + " карточек без заголовка. Заполните или уберите их.";
-    return;
-  }
-  content = content || {};
-  content.blocks = content.blocks || {};
-  /* Свой набор для языка заводим целиком с исходного: иначе
-     сохранение одной группы вынесло бы со страницы три остальные. */
-  if (!content.blocks[cLang]) content.blocks[cLang] = JSON.parse(JSON.stringify(bBase(cLang)));
-  content.blocks[cLang][bGroup] = bData;
-  api("content_save", { content: content }).then(function (r) {
-    m.className = r.ok ? "form-msg ok" : "form-msg bad";
-    m.textContent = r.ok
-      ? "Сохранено: " + bData.length + " карточек в группе «" + спец.name + "», язык " + cLang.toUpperCase() + "."
-      : "Не сохранилось, проверьте права на папку data.";
-    if (r.ok) {
-      if (bПравки[cLang]) delete bПравки[cLang][bGroup];
-      toast("Карточки обновлены");
-      bRender();
-    }
-  });
-});
 
-/* ── Состояние ── */
-function loadSys() {
-  api("selftest").then(function (r) {
-    if (!r.ok) return;
-    var items = [
-      ["Почта настроена", r.mail_configured],
-      ["Бот настроен", r.tg_configured],
-      ["Чат для уведомлений привязан", r.chat_bound],
-      ["Папка data доступна для записи", r.data_writable]
-    ];
-    $("#sysKv").innerHTML = items.map(function (i) {
-      return "<b>" + esc(i[0]) + '</b><span><i class="' + (i[1] ? "ok-dot" : "bad-dot") + '"></i>' + (i[1] ? "да" : "нет") + "</span>";
-    }).join("");
-
-    /* Что происходит на площадке: видно, не заходя на сервер */
-    function row(k, v, bad) {
-      return "<b>" + esc(k) + '</b><span>' + (bad ? '<i class="bad-dot"></i>' : "") + esc(String(v)) + "</span>";
-    }
-    /* «404 ч» человек в уме на сутки не делит, а прочерк после слова
-       «последняя» читается как поломка. Крупные величины пишем так,
-       как их произносят вслух. */
-    function ждёт(ч) {
-      if (ч < 24) return ч + " ч";
-      var д = Math.floor(ч / 24), ост = ч % 24;
-      return д + " " + скл(д, "день", "дня", "дней") + (ост ? " " + ост + " ч" : "");
-    }
-    function датаРФ(t) {
-      var m = String(t).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      return m ? m[3] + "." + m[2] + "." + m[1].slice(2) : String(t);
-    }
-    function скл(n, од, дв, мн) {
-      var a = n % 100, b = n % 10;
-      if (a > 10 && a < 20) return мн;
-      if (b === 1) return од;
-      if (b >= 2 && b <= 4) return дв;
-      return мн;
-    }
-    var live = [];
-    live.push(row("Заявок без ответа", r.leads_new || 0, (r.leads_new || 0) > 0));
-    if (r.leads_wait_hours) live.push(row("Самая старая ждёт", ждёт(+r.leads_wait_hours), r.leads_wait_hours >= 4));
-    /* Дата отчёта приходит машинным видом 2026-08-11. В заявках она
-       уже пишется по-человечески, здесь пусть выглядит так же. */
-    live.push(row("Последний отчёт", r.cron_last ? датаРФ(r.cron_last) : "ещё не было", !r.cron_last));
-    live.push(row("Резервных копий", r.backup_count
-      ? r.backup_count + " " + скл(r.backup_count, "штука", "штуки", "штук") +
-        (r.backup_last ? ", последняя " + r.backup_last : "")
-      : "ни одной", !r.backup_count));
-    if (r.cert_days != null) live.push(row("Сертификат", r.cert_days + " " + скл(r.cert_days, "день", "дня", "дней") + " до конца", r.cert_days <= 14));
-    if (r.disk_free_gb != null) live.push(row("Свободно на диске", r.disk_free_gb + " ГБ", r.disk_free_gb < 3));
-    if (r.tg_ip) live.push(row("Адрес Телеграма", r.tg_ip, false));
-    var box = $("#sysLive");
-    if (box) box.innerHTML = live.join("");
-  });
-  api("errors").then(function (r) {
-    if (r.ok) $("#sysLog").value = (r.log || []).join("") || "Пусто, ошибок не было.";
-  });
+function полосы(объект, цвет, сколько) {
+  var пары = Object.keys(объект || {}).map(function (к) { return [к, объект[к]]; })
+    .sort(function (а, б) { return б[1] - а[1]; }).slice(0, сколько || 10);
+  if (!пары.length) return '<div class="пусто">Пока пусто.</div>';
+  var макс = пары[0][1] || 1;
+  return '<div class="полосы" style="--акц:' + цвет + '">' + пары.map(function (п) {
+    return '<div class="полоса"><span class="обрез" title="' + эк(п[0]) + '">' + эк(п[0]) + "</span>" +
+      '<span class="р"><i data-ш="' + Math.round(п[1] / макс * 100) + '%"></i></span>' +
+      '<span class="ч">' + число(п[1]) + "</span></div>";
+  }).join("") + "</div>";
 }
-$("#sysTest").addEventListener("click", function () {
-  var m = $("#sysMsg");
-  m.className = "form-msg";
-  api("selftest", { send: 1 }).then(function (r) {
-    m.className = r.mail_sent ? "form-msg ok" : "form-msg bad";
-    m.textContent = r.mail_sent
-      ? "Письмо ушло, сообщение в Телеграм отправлено."
-      : "Письмо не ушло. Проверьте ящик и пароль приложения в config.local.php.";
-    loadSys();
-  });
-});
 
-/* ── Запуск ── */
-function start() {
-  $("#login").style.display = "none";
-  $("#app").style.display = "block";
-  applyTheme(localStorage.getItem("rc_theme") || "dark");
-  loadStats();
-  loadLeads();
-  loadNet();
-  loadContent();
-}
-/* Вход без вопросов, пока пропуск жив. Протух или отозван - панель
-   покажет форму, как чужому. */
-if (PASS || KEY) {
-  api("login").then(function (r) {
-    if (r && r.ok) {
-      if (r.pass) { PASS = r.pass; try { localStorage.setItem("rc_admin_pass", PASS); } catch (e5) {} }
-      start();
+/* ── Воронка ───────────────────────────────────────────────*/
+function воронка() {
+  var где = $("#воронкаТело"); var из = "";
+  ["cdn", "vpn", "game"].forEach(function (с) {
+    var д = состояние.по[с]; if (!д) return;
+    var т = д.total || {}, е = д["события"] || {};
+    var ступени;
+    var акты = д["акты"] || {};
+    if (с === "cdn") {
+      ступени = [
+        ["Зашли", т.uniq || 0],
+        /* Прокрутка считается по долям страницы, а не по названиям
+           разделов: счётчик шлёт «scroll 50», и ключа «products» в
+           нём не бывало никогда - ступень стояла пустой при живых
+           данных. */
+        ["Долистали до середины", (д.scroll || {})["50"] || 0],
+        ["Смотрели продукты", е["product"] || 0],
+        ["Открыли игру", е["flight"] || 0],
+        ["Оставили заявку", (т.leads || 0) + (т.callbacks || 0)]
+      ];
+    } else if (с === "vpn") {
+      /* Акты берём поимённо. Раньше здесь общее число событий акта
+         делилось на восемь - в среднем по больнице, и стоило одному
+         человеку долистать до середины, как «дошли до прокола»
+         показывало долю человека. */
+      ступени = [
+        ["Зашли", т.uniq || 0],
+        ["Дошли до оболочки", акты["оболочка"] || 0],
+        ["Дошли до прокола", акты["прокол"] || 0],
+        ["Досмотрели до стыковки", акты["стыковка"] || 0],
+        ["Нажали вход", е["вход"] || 0],
+        ["Ушли в космос CDN", е["вCDN"] || 0]
+      ];
     } else {
-      PASS = ""; KEY = "";
-      try { localStorage.removeItem("rc_admin_pass"); } catch (e6) {}
+      ступени = [
+        ["Открыли полёт", е["полёт"] || 0],
+        ["Жали клавиши", е["клавиша"] || 0],
+        ["Прыгнули в чужой рукав", е["прыжок"] || 0],
+        ["Ушли через причал", е["причал"] || 0]
+      ];
     }
-  }).catch(function () {});
+    var верх = ступени[0][1] || 1;
+    из += '<div class="плита" style="--акц:' + ЦВЕТА[с] + '"><h3>' + эк(ИМЕНА[с]) + "</h3>" +
+      '<div class="ступени">' + ступени.map(function (ст, i) {
+        var доля = Math.round(ст[1] / верх * 100);
+        return '<div class="ступень"><span>' + эк(ст[0]) + "</span>" +
+          '<span class="р"><i data-ш="' + Math.max(доля, ст[1] ? 3 : 0) + '%"></i></span>' +
+          '<span class="ч">' + число(ст[1]) + ' <span class="п">' + (i ? доля + "%" : "") + "</span></span></div>";
+      }).join("") + "</div></div>";
+  });
+  где.innerHTML = из || '<div class="пусто">Данных пока нет.</div>';
+  послеРаскладки(function () {
+    $$(".ступень .р i", где).forEach(function (i) { i.style.width = i.dataset.ш; });
+  });
 }
+
+/* ── Заявки ────────────────────────────────────────────────*/
+function заявки() {
+  var сп = состояние.заявки;
+  var счёт = { все: сп.length, cdn: 0, vpn: 0, game: 0 };
+  сп.forEach(function (з) { var с = з.site || "cdn"; if (счёт[с] != null) счёт[с]++; });
+  $("#фильтрЗаявок").innerHTML = ["все", "cdn", "vpn"].map(function (к) {
+    return '<button class="кн" data-ф="' + к + '"' +
+      (состояние.фильтр === к ? ' style="border-color:var(--cdn)"' : "") + ">" +
+      (к === "все" ? "Все" : ИМЕНА[к]) + " · " + число(счёт[к]) + "</button>";
+  }).join("");
+  $$("#фильтрЗаявок button").forEach(function (б) {
+    б.onclick = function () { состояние.фильтр = б.dataset.ф; заявки(); };
+  });
+
+  var видно = сп.filter(function (з) {
+    return состояние.фильтр === "все" || (з.site || "cdn") === состояние.фильтр;
+  });
+  var тело = $("#таблицаЗаявок tbody");
+  $("#заявкиПусто").classList.toggle("нет", видно.length > 0);
+  тело.innerHTML = видно.map(function (з) {
+    var с = з.site || "cdn";
+    var ст = з.status || "new";
+    var подпись = { "new": "новая", "work": "в работе", "done": "закрыта" }[ст] || ст;
+    var класс = ст === "done" ? "добро" : ст === "work" ? "ждём" : "";
+    return "<tr><td class=\"тихо\">" + эк((з.ts || "").slice(0, 16)) + "</td>" +
+      '<td><span class="чип ' + с + '"><b></b>' + эк(ИМЕНА[с] || с) + "</span></td>" +
+      "<td>" + эк(з.name || "") + (з.kind === "callback" ? ' <span class="тихо">звонок</span>' : "") + "</td>" +
+      "<td>" + эк(з.contact || "") + "</td>" +
+      '<td class="обрез" style="max-width:280px" title="' + эк(з.task || "") + '">' + эк(з.task || "") + "</td>" +
+      '<td><span class="чип ' + класс + '">' + подпись + "</span></td>" +
+      '<td><div class="ряд" style="flex-wrap:nowrap">' +
+        '<button class="кн мал" data-ид="' + эк(з.id) + '" data-ст="work" title="Взять в работу">→</button>' +
+        '<button class="кн мал" data-ид="' + эк(з.id) + '" data-ст="done" title="Закрыть заявку">✓</button>' +
+      "</div></td></tr>";
+  }).join("");
+  $$("#таблицаЗаявок button").forEach(function (б) {
+    б.onclick = function () {
+      зов("lead_status", { id: б.dataset.ид, status: б.dataset.ст }).then(function (о) {
+        if (!о.ok) { тост("Не вышло: " + (о.error || "")); return; }
+        тост("Статус изменён");
+        зов("leads", {}).then(function (л) {
+          if (л.ok) { состояние.заявки = л.items || []; заявки(); }
+        });
+      });
+    };
+  });
+}
+
+/* ── Источники и устройства ────────────────────────────────*/
+function источники() {
+  var где = $("#источникиТело"); var из = "";
+  ["cdn", "vpn"].forEach(function (с) {
+    var д = состояние.по[с]; if (!д) return;
+    из += '<div class="плита"><h3>' + эк(ИМЕНА[с]) + "</h3>" +
+      '<div class="сетка два">' +
+        "<div><h3>Откуда пришли</h3>" + полосы(д.refs || {}, ЦВЕТА[с], 10) + "</div>" +
+        "<div><h3>С чего смотрят</h3>" + полосы(д.devices || {}, ЦВЕТА[с], 6) +
+          '<h3 style="margin-top:16px">Система</h3>' + полосы(д.os || {}, ЦВЕТА[с], 6) + "</div>" +
+      "</div></div>";
+  });
+  где.innerHTML = из || '<div class="пусто">Данных пока нет.</div>';
+  послеРаскладки(function () {
+    $$(".полоса .р i", где).forEach(function (i) { i.style.width = i.dataset.ш; });
+  });
+}
+
+/* ── Ошибки ────────────────────────────────────────────────*/
+function ошибки() {
+  var где = $("#ошибкиТело"); var из = ""; var всего = 0;
+  ["cdn", "vpn", "game"].forEach(function (с) {
+    var д = состояние.по[с]; if (!д) return;
+    var э = д.errors || {};
+    var n = Object.keys(э).length; всего += n;
+    из += '<div class="плита"><h3>' + эк(ИМЕНА[с]) +
+      ' <span class="тихо">' + (n ? n + " разных" : "чисто") + "</span></h3>" +
+      (n ? полосы(э, "#F87171", 12) : '<div class="пусто">Ни одной ошибки за период.</div>') + "</div>";
+  });
+  где.innerHTML = из;
+  $("#счётОшибок").textContent = всего ? число(всего) : "";
+  послеРаскладки(function () {
+    $$(".полоса .р i", где).forEach(function (i) { i.style.width = i.dataset.ш; });
+  });
+}
+
+/* ── Все адреса ────────────────────────────────────────────*/
+function ссылки() {
+  var список = [
+    ["Rocket CDN", "https://rocketcdn.ru/", "сайт, живой"],
+    ["Игра внутри CDN", "https://rocketcdn.ru/#hero", "кнопка «Полёт» на первом экране"],
+    ["RocketVPN", "https://rocketvpn.top/", "сайт, живой"],
+    ["Общая панель · с CDN", "https://rocketcdn.ru/admin", "эта страница"],
+    ["Общая панель · с VPN", "https://rocketvpn.top/admin", "та же панель, тот же пароль"],
+    ["Личный кабинет", "https://lk.rocketcdn.ru/", "вход для клиентов"],
+    ["Оферта", "https://rocketcdn.ru/offer.html", "договор-оферта"],
+    ["Политика", "https://rocketcdn.ru/privacy.html", "обработка данных"],
+    ["Переход CDN → VPN", "https://rocketcdn.ru/vpn.php", "прокол с подписанным ключом"],
+    ["Чат команды", "https://t.me/+Ajip_2t4t3Q2N2I6", "заявки, ошибки, аналитика"]
+  ];
+  $("#ссылкиТело").innerHTML = '<div class="обёртка"><table><tbody>' + список.map(function (с) {
+    return "<tr><td><b>" + эк(с[0]) + "</b></td>" +
+      '<td><a href="' + эк(с[1]) + '" target="_blank" rel="noopener" style="color:var(--cdn)">' + эк(с[1]) + "</a></td>" +
+      '<td class="тихо">' + эк(с[2]) + "</td></tr>";
+  }).join("") + "</tbody></table></div>";
+}
+
+/* ── Разделы по требованию ─────────────────────────────────*/
+function связка() {
+  var где = $("#связкаТело");
+  где.innerHTML = '<div class="пусто">Спрашиваем сервер…</div>';
+  зов("связка", {}).then(function (о) {
+    if (!о.ok) { где.innerHTML = '<div class="пусто">Не отвечает: ' + эк(о.error || "") + "</div>"; return; }
+    var т = о["темы"] || {};
+    function строка(имя, зн, хорошо) {
+      return "<tr><td>" + эк(имя) + "</td><td><b>" + эк(зн || "не задано") + "</b></td>" +
+        '<td><span class="чип ' + (хорошо ? "добро" : "беда") + '">' + (хорошо ? "есть" : "нет") + "</span></td></tr>";
+    }
+    var сайты = о["сайты"] || {};
+    где.innerHTML =
+      '<div class="плита" style="margin-top:0"><h3>Телеграм</h3><div class="обёртка"><table><tbody>' +
+        строка("Бот", о["бот"] ? "@" + о["бот"].имя : "", !!о["бот"]) +
+        строка("Токен, хвост", о["хвостТокена"], !!о["хвостТокена"]) +
+        строка("Чат команды", о["чат"], !!о["чат"]) +
+        строка("Тема «Форма»", т["формы"], !!т["формы"]) +
+        строка("Тема «Ошибки»", т["ошибки"], !!т["ошибки"]) +
+        строка("Тема «Аналитика»", т["аналитика"], !!т["аналитика"]) +
+      '</tbody></table></div><div class="ряд" style="margin-top:14px">' +
+        '<button class="кн кн-гл" id="пробаСвязки">Написать во все темы</button>' +
+        '<a class="кн" href="https://t.me/+Ajip_2t4t3Q2N2I6" target="_blank" rel="noopener">Открыть чат</a>' +
+        '<span class="тихо" id="пробаОтвет"></span>' +
+      "</div></div>" +
+      '<div class="плита"><h3>Площадки живы</h3><div class="обёртка"><table><tbody>' +
+        Object.keys(сайты).map(function (к) {
+          var ж = /200/.test(сайты[к]["ответ"]);
+          return "<tr><td>" + эк(ИМЕНА[к] || к) + "</td><td>" + эк(сайты[к]["адрес"]) + "</td>" +
+            '<td><span class="чип ' + (ж ? "добро" : "беда") + '">' + эк(сайты[к]["ответ"]) + "</span></td></tr>";
+        }).join("") +
+      "</tbody></table></div></div>";
+    $("#пробаСвязки").onclick = function () {
+      $("#пробаОтвет").textContent = "шлём…";
+      зов("связка_проба", {}).then(function (п) {
+        $("#пробаОтвет").textContent = п.ok
+          ? Object.keys(п["темы"]).map(function (к) { return к + ": " + п["темы"][к]; }).join(" · ")
+          : "не вышло";
+      });
+    };
+  });
+}
+
+function проверки() {
+  var где = $("#проверкиТело");
+  где.innerHTML = '<div class="пусто">Проверяем…</div>';
+  зов("selftest", {}).then(function (о) {
+    if (!о.ok) { где.innerHTML = '<div class="пусто">Не отвечает</div>'; return; }
+    var строки = Object.keys(о).filter(function (к) { return к !== "ok"; }).map(function (к) {
+      var з = о[к];
+      var хорошо = з === true || з === "ok" || (typeof з === "number" && з > 0);
+      var текст = typeof з === "boolean" ? (з ? "да" : "нет") : String(з);
+      return "<tr><td>" + эк(к) + "</td><td><b>" + эк(текст) + "</b></td>" +
+        '<td><span class="чип ' + (хорошо ? "добро" : "ждём") + '">' + (хорошо ? "в норме" : "смотреть") + "</span></td></tr>";
+    }).join("");
+    где.innerHTML = '<div class="плита" style="margin-top:0"><h3>Самопроверка сервера</h3>' +
+      '<div class="обёртка"><table><tbody>' + строки + "</tbody></table></div>" +
+      '<div class="ряд" style="margin-top:14px"><button class="кн" id="пробаПочты">Отправить пробное письмо и сообщение</button>' +
+      '<span class="тихо" id="пробаПочтыОтвет"></span></div></div>';
+    $("#пробаПочты").onclick = function () {
+      $("#пробаПочтыОтвет").textContent = "шлём…";
+      зов("selftest", { send: 1 }).then(function (п) {
+        $("#пробаПочтыОтвет").textContent = п.ok ? "отправлено" : "не вышло";
+      });
+    };
+  });
+}
+
+/* Узлы сети правятся строками, а не деревом JSON.
+
+   Сервер держит их массивом чисел: имя, широта, долгота, ранг, метка
+   и английское имя. Отдавать это в поле как JSON значит просить
+   человека считать скобки. Одна строка на узел, поля через середину
+   точки: так их и диктуют. */
+function узлы() {
+  зов("nodes", {}).then(function (о) {
+    if (!о.ok) { $("#узлыОтвет").textContent = "не отвечает"; return; }
+    var сп = о.add || [];
+    $("#узлыТекст").value = сп.map(function (у) { return у.join(" · "); }).join("\n");
+    $("#узлыСчёт").textContent = сп.length + " своих узлов" +
+      ((о.hide || []).length ? " · скрыто " + о.hide.length : "");
+    $("#узлыОтвет").textContent = о.ts ? "правились " + о.ts : "";
+  });
+}
+
+function узлыИзТекста(текст) {
+  return String(текст).split("\n").map(function (с) { return с.trim(); }).filter(Boolean)
+    .map(function (с) {
+      var ч = с.split("·").map(function (к) { return к.trim(); });
+      if (ч.length < 5) return null;
+      return [ч[0], parseFloat(ч[1]), parseFloat(ч[2]), parseInt(ч[3], 10) || 1, parseInt(ч[4], 10) || 1, ч[5] || ""];
+    }).filter(Boolean);
+}
+
+function контент() {
+  зов("content", {}).then(function (о) {
+    $("#контентТекст").value = JSON.stringify(о.content || о, null, 2);
+  });
+}
+
+/* ── Переключение разделов ─────────────────────────────────*/
+function кРазделу(имя) {
+  состояние.раздел = имя;
+  $$(".пункт").forEach(function (п) { п.classList.toggle("вкл", п.dataset.р === имя); });
+  $$(".раздел").forEach(function (р) { р.classList.toggle("вкл", р.dataset.р === имя); });
+  var п = $('.пункт[data-р="' + имя + '"]');
+  $("#гдеМы").textContent = "· " + (п ? $("span", п).textContent : имя);
+  if (innerWidth <= 1080) закрытьМеню();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  try { location.hash = имя; } catch (e) {}
+  /* Холсты открытого раздела получают размеры только сейчас. */
+  if (холсты[имя]) послеРаскладки(холсты[имя]);
+  if (имя === "воронка" || имя === "источники" || имя === "ошибки") {
+    послеРаскладки(function () {
+      $$('.раздел[data-р="' + имя + '"] .р i').forEach(function (i) {
+        if (i.dataset.ш) i.style.width = i.dataset.ш;
+      });
+    });
+  }
+  if (имя === "связка") связка();
+  if (имя === "проверки") проверки();
+  if (имя === "узлы") узлы();
+  if (имя === "контент") контент();
+}
+
+function открытьМеню() { document.body.classList.add("меню"); $("#бургер").setAttribute("aria-expanded", "true"); }
+function закрытьМеню() { document.body.classList.remove("меню"); $("#бургер").setAttribute("aria-expanded", "false"); }
+
+/* ── Запуск ────────────────────────────────────────────────*/
+function вПанель() {
+  $("#вход").classList.add("нет");
+  ["#шапка", "#бок", "#полотно"].forEach(function (с) { $(с).classList.remove("нет"); });
+  var хеш = (location.hash || "").replace("#", "");
+  загрузить().then(function () {
+    if (хеш && $('.пункт[data-р="' + хеш + '"]')) кРазделу(хеш);
+  });
+}
+
+function войти(пароль) {
+  состояние.пароль = пароль;
+  return зов("login", {}).then(function (о) {
+    if (!о.ok) {
+      $("#входОшибка").textContent = о.error === "default_key"
+        ? "На сервере стоит пароль по умолчанию, панель заблокирована."
+        : "Пароль не подошёл.";
+      состояние.пароль = "";
+      return false;
+    }
+    if (о.pass) {
+      состояние.пропуск = о.pass;
+      try { localStorage.setItem("rc-пропуск", о.pass); } catch (e) {}
+    }
+    вПанель();
+    return true;
+  });
+}
+
+$("#войти").onclick = function () { войти($("#пароль").value.trim()); };
+$("#пароль").addEventListener("keydown", function (е) { if (е.key === "Enter") $("#войти").click(); });
+
+$("#бургер").onclick = function () {
+  if (innerWidth > 1080) {
+    document.body.classList.toggle("узко");
+    return;
+  }
+  document.body.classList.contains("меню") ? закрытьМеню() : открытьМеню();
+};
+$("#штора").onclick = закрытьМеню;
+document.addEventListener("keydown", function (е) { if (е.key === "Escape") закрытьМеню(); });
+
+$$(".пункт").forEach(function (п) { п.onclick = function () { кРазделу(п.dataset.р); }; });
+
+$$("#период button").forEach(function (б) {
+  б.onclick = function () {
+    $$("#период button").forEach(function (д) { д.classList.remove("вкл"); });
+    б.classList.add("вкл");
+    состояние.дней = +б.dataset.д;
+    загрузить();
+  };
+});
+
+$("#обновить").onclick = function () {
+  var з = $("#обновить");
+  з.style.transition = "transform .7s var(--ход)";
+  з.style.transform = "rotate(360deg)";
+  setTimeout(function () { з.style.transition = ""; з.style.transform = ""; }, 720);
+  загрузить().then(function () { тост("Данные обновлены"); });
+};
+
+$("#тема").onclick = function () {
+  var т = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", т);
+  try { localStorage.setItem("rc-тема", т); } catch (e) {}
+  нарисовать();
+};
+try {
+  var сохр = localStorage.getItem("rc-тема");
+  if (сохр) document.documentElement.setAttribute("data-theme", сохр);
+} catch (e) {}
+
+$("#выйти").onclick = function () {
+  зов("logout", {}).then(function () {
+    try { localStorage.removeItem("rc-пропуск"); } catch (e) {}
+    location.reload();
+  });
+};
+
+$("#скачатьЗаявки").onclick = function () {
+  var сп = состояние.заявки.filter(function (з) {
+    return состояние.фильтр === "все" || (з.site || "cdn") === состояние.фильтр;
+  });
+  var шапка = ["когда", "площадка", "имя", "связь", "компания", "задача", "статус"];
+  var строки = сп.map(function (з) {
+    return [з.ts, ИМЕНА[з.site || "cdn"] || "", з.name, з.contact, з.company, з.task, з.status]
+      .map(function (к) { return '"' + String(к == null ? "" : к).replace(/"/g, '""') + '"'; }).join(";");
+  });
+  var текст = "﻿" + шапка.join(";") + "\n" + строки.join("\n");
+  var а = document.createElement("a");
+  а.href = URL.createObjectURL(new Blob([текст], { type: "text/csv;charset=utf-8" }));
+  а.download = "заявки-" + new Date().toISOString().slice(0, 10) + ".csv";
+  а.click();
+  setTimeout(function () { URL.revokeObjectURL(а.href); }, 4000);
+};
+
+$("#узлыСохранить").onclick = function () {
+  var список = узлыИзТекста($("#узлыТекст").value);
+  зов("nodes_save", { add: JSON.stringify(список), hide: "[]" }).then(function (о) {
+    $("#узлыОтвет").textContent = о.ok ? "сохранено, узлов " + список.length : "не вышло: " + (о.error || "");
+    if (о.ok) тост("Узлы сохранены");
+  });
+};
+$("#контентСохранить").onclick = function () {
+  var д;
+  try { д = JSON.parse($("#контентТекст").value); }
+  catch (e) { $("#контентОтвет").textContent = "это не JSON"; return; }
+  зов("content_save", { content: д }).then(function (о) {
+    $("#контентОтвет").textContent = о.ok ? "сохранено" : "не вышло";
+  });
+};
+$("#контентСброс").onclick = function () {
+  зов("content_reset", {}).then(function (о) {
+    $("#контентОтвет").textContent = о.ok ? "вернули исходный" : "не вышло";
+    контент();
+  });
+};
+
+/* Перерисовка графиков при смене размера окна: холст не резиновый,
+   и без пересчёта он растягивается мылом. */
+var таймерРазмера;
+addEventListener("resize", function () {
+  clearTimeout(таймерРазмера);
+  таймерРазмера = setTimeout(нарисовать, 260);
+});
+
+/* Пропуск из прошлого раза: панель не спрашивает пароль каждый день. */
+try {
+  var п = localStorage.getItem("rc-пропуск");
+  if (п) {
+    состояние.пропуск = п;
+    зов("обзор", { days: 1 }).then(function (о) {
+      if (о.ok) вПанель();
+      else { состояние.пропуск = ""; try { localStorage.removeItem("rc-пропуск"); } catch (e) {} }
+    });
+  }
+} catch (e) {}
+
 })();
 </script>
 </body>

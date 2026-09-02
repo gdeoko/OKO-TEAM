@@ -161,6 +161,32 @@ function rc_log($msg) {
     @file_put_contents(RC_LOG, date('Y-m-d H:i:s') . ' ' . $msg . "\n", FILE_APPEND | LOCK_EX);
 }
 
+/* ── Три сайта, одна панель ────────────────────────────────
+   Панель теперь общая на Rocket CDN, Rocket VPN и игру внутри CDN.
+   Раньше статистика лежала одним файлом на день, потому что сайт был
+   один. Смешивать три в один нельзя: у них разные посетители, разные
+   события и разная воронка, и «сто просмотров» без разреза не
+   означает ничего.
+
+   Файлы CDN остаются ТАМ ЖЕ, где лежали: `stats/2026-08-07.json`. Их
+   больше сотни, в них история, и переносить её ради ровности папок
+   значит рисковать историей ради красоты. Новые сайты кладутся в свои
+   подпапки: `stats/vpn/…`, `stats/game/…`. */
+function rc_sites() { return ['cdn' => 'Rocket CDN', 'vpn' => 'Rocket VPN', 'game' => 'Игра']; }
+
+function stat_file($day = null, $site = 'cdn') {
+    $d = $day ?: date('Y-m-d');
+    if ($site === 'cdn') return RC_STATS . '/' . $d . '.json';
+    /* Подпапку заводим здесь, а не при первой записи в неё. Один раз
+       папки не было: счётчик отвечал «принято», запись уходила в
+       несуществующий путь, и сутки статистики VPN просто не было -
+       ошибки при этом не показывал никто. Каталог стоит одного
+       is_dir на обращение. */
+    $папка = RC_STATS . '/' . $site;
+    if (!is_dir($папка)) @mkdir($папка, 0775, true);
+    return $папка . '/' . $d . '.json';
+}
+
 /* ── Телеграм ────────────────────────────────────────────── */
 /* Запасные адреса api.telegram.org.
    На российских площадках имя нередко резолвится в адрес, до которого
@@ -209,8 +235,13 @@ function rc_tg_call($token, $method, $params, $ip, $fast = false) {
     curl_setopt_array($ch, $opt);
     $r = curl_exec($ch);
     $err = curl_error($ch);
+    /* Дошло ли дело до соединения. Нужно, чтобы отличить «не
+       достучались» от «отправили и не дождались ответа»: первое
+       повторять безопасно, второе повторять нельзя - оно сдвоит
+       сообщение в чате. */
+    $связались = (float)curl_getinfo($ch, CURLINFO_CONNECT_TIME) > 0;
     curl_close($ch);
-    return [$r, $err];
+    return [$r, $err, $связались];
 }
 
 /* Резервный резолвинг через DNS поверх HTTPS.
@@ -272,10 +303,26 @@ function rc_tg($method, $params = [], $tries = 2) {
     if (!$token) return null;
     $err = '';
     $pin = rc_tg_pin_get();
-    for ($i = 0; $i < max(1, $tries); $i++) {
-        list($r, $err) = rc_tg_call($token, $method, $params, $pin);
+
+    /* ПОЧЕМУ ПОВТОРОВ БОЛЬШЕ, ЧЕМ ПРОСИЛИ. Провайдер площадки режет
+       телеграм не наглухо, а через раз: из семи известных адресов
+       отзывается один, и тот примерно в половине попыток. При двух
+       заходах бот молчал сутками - в журнале лежала ровная стена
+       «Failed to connect after 8001 ms», а заявки при этом приходили
+       на сайт и никуда не уходили. Шесть коротких заходов по живому
+       адресу дают ту же связь при том же худшем ожидании.
+
+       Повторяем ТОЛЬКО когда соединения не случилось вовсе. Если
+       телеграм принял запрос и не успел ответить, повтор отправил бы
+       второе такое же сообщение - дубль в чате заказчика. Молчание
+       лечится повтором, дубль не лечится ничем. */
+    $заходов = $pin ? max(2, (int)$tries, 6) : max(1, (int)$tries);
+    for ($i = 0; $i < $заходов; $i++) {
+        $быстро = $pin && $i > 0;
+        list($r, $err, $связались) = rc_tg_call($token, $method, $params, $pin, $быстро);
         if (!$err) return json_decode($r, true);
-        if ($i === 0) usleep(400000);
+        if ($связались) break;
+        usleep(300000);
     }
 
     /* Обычный путь не сработал: ищем адрес, до которого сеть есть.
@@ -285,7 +332,7 @@ function rc_tg($method, $params = [], $tries = 2) {
     foreach (array_merge(rc_tg_ips(), rc_tg_resolve()) as $ip) {
         if (in_array($ip, $tried, true)) continue;
         $tried[] = $ip;
-        list($r, $e2) = rc_tg_call($token, $method, $params, $ip, true);
+        list($r, $e2, ) = rc_tg_call($token, $method, $params, $ip, true);
         if (!$e2) {
             rc_tg_pin_set($ip);
             rc_log('TG: перешли на адрес ' . $ip);
@@ -323,14 +370,25 @@ function rc_tg_send($chat, $text, $markup = null, $topic = null) {
 }
 
 /* Уведомление в общий чат (в нужную тему) и всем администраторам */
+/* Возвращает true, только если Телеграм подтвердил отправку.
+
+   Раньше здесь не было return вовсе, и «отправили» означало лишь
+   «дошли до вызова». Проверка связи в панели по такому ответу писала
+   «не дошло» про дошедшее сообщение и «дошло» написала бы про
+   потерянное - то есть не проверяла ничего. */
 function rc_notify($text, $markup = null, $topic_key = null) {
     $chat = rc_cfg('tg_chat');
     $topic = $topic_key ? rc_cfg($topic_key) : null;
-    $sent = false;
-    if ($chat) { rc_tg_send($chat, $text, $markup, $topic); $sent = true; }
-    if (!$sent) {
-        foreach ((array)rc_cfg('tg_admins', []) as $uid) rc_tg_send($uid, $text, $markup);
+    if ($chat) {
+        $r = rc_tg_send($chat, $text, $markup, $topic);
+        return is_array($r) && !empty($r['ok']);
     }
+    $ушло = false;
+    foreach ((array)rc_cfg('tg_admins', []) as $uid) {
+        $r = rc_tg_send($uid, $text, $markup);
+        if (is_array($r) && !empty($r['ok'])) $ушло = true;
+    }
+    return $ушло;
 }
 
 /* ── Почта через SMTP Gmail ──────────────────────────────── */

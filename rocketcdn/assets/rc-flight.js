@@ -2530,6 +2530,10 @@ function jumpUniverse(want) {
   F.jumps = (F.jumps || 0) + 1;
   uniBusy = true;
   uniIdx = н;
+  /* Прыжок в чужой рукав это самое дорогое действие в игре: до него
+     доходят единицы, и знать сколько именно - половина ответа на
+     вопрос, работает ли игра вообще. */
+  if (g.RC_track_игра) g.RC_track_игра("прыжок", (UNIVERSES[н] && UNIVERSES[н].name) || String(н));
   if (ui.fade) { ui.fade.style.transition = "opacity .45s"; ui.fade.style.opacity = "1"; }
   if (g.RC_SOUND) { try { (g.RC_SOUND.hyper || g.RC_SOUND.chime).call(g.RC_SOUND); } catch (e) {} }
   F.shake = 1;
@@ -9202,7 +9206,7 @@ function open() {
   if (g.RC_SOUND && g.RC_SOUND.прогревРубки) { try { g.RC_SOUND.прогревРубки(); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.ignite) { try { g.RC_SOUND.ignite(0.7); } catch (e) {} }
   stageLite(false);
-  if (g.RC_track) g.RC_track("flight", "open");
+  if (g.RC_track_игра) g.RC_track_игра("полёт", "open");
 
   /* Из режима сцены цикл уже работает: второй rAF-контур давал
      двойной рендер каждого кадра - «всё лагает после старта» */
@@ -9253,7 +9257,7 @@ function close() {
   try { dispatchEvent(new CustomEvent("rc:flight", { detail: { on: false } })); } catch (e) {}
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(false); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(false); } catch (e) {} }
-  if (g.RC_track) g.RC_track("flight", "close p=" + F.p.toFixed(2));
+  if (g.RC_track_игра) g.RC_track_игра("полёт", "close p=" + F.p.toFixed(2));
   /* Язык переключили в полёте - пересобираем кабину теперь */
   if (langDirty) setTimeout(relang, 420);
 }
@@ -9554,7 +9558,7 @@ function pilotCard() {
   });
   requestAnimationFrame(function () { el.classList.add("on"); });
   if (g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
-  if (g.RC_track) g.RC_track("flight", "complete " + netCount());
+  if (g.RC_track_игра) g.RC_track_игра("полёт", "complete " + netCount());
 }
 
 /* ── Консоль сети ────────────────────────────────────────────
@@ -9833,7 +9837,7 @@ function shoot() {
     say(RU ? "СНИМОК СОХРАНЁН" : "SNAPSHOT SAVED", 1800);
     /* Затвор, а не общее «готово»: снимок обязан звучать снимком */
     if (g.RC_SOUND) { try { (g.RC_SOUND.shutter || g.RC_SOUND.uiConfirm).call(g.RC_SOUND); } catch (e) {} }
-    if (g.RC_track) g.RC_track("flight", "shot");
+    if (g.RC_track_игра) g.RC_track_игра("полёт", "shot");
   } catch (e) {
     say(RU ? "СНИМОК НЕ УДАЛСЯ" : "SNAPSHOT FAILED", 1800);
   }
@@ -10755,7 +10759,16 @@ function deckFrame(ts, dt) {
               el.classList.contains("live") ||
               el.getAttribute("aria-pressed") === "true" ||
               el.getAttribute("aria-expanded") === "true";
-    if (жив) d["нажать"](i);
+    if (жив) {
+      d["нажать"](i);
+      /* Какими клавишами пультом пользуются на самом деле. Отмечаем
+         ОДИН раз на клавишу за посещение: клавишу держат нажатой, и
+         без этого одно нажатие насчитало бы себе шестьдесят. */
+      if (g.RC_track_игра && !el._счёт) {
+        el._счёт = 1;
+        g.RC_track_игра("клавиша", (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30));
+      }
+    } else if (el._счёт) el._счёт = 0;
     /* Кто под рукой. Спрашиваем у САМОЙ КНОПКИ, а не заводим слежение
        за указателем: кнопки уже стоят поверх нарисованных клавиш
        своими числами, и «:hover» на них это то же самое место, куда

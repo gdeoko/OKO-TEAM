@@ -141,8 +141,10 @@ if (($state['backup'] ?? '') !== $today) {
 
 /* ── Уборка раз в сутки ─────────────────────────────────── */
 if (($state['clean'] ?? '') !== $today) {
-    /* Статистика старше 180 дней не нужна */
-    foreach (glob(RC_STATS . '/*.json') as $f) {
+    /* Статистика старше 180 дней не нужна. Подпапки площадок метём
+       наравне с корнем: иначе VPN и игра копили бы файлы вечно, а
+       заметили бы это через год по размеру диска. */
+    foreach (array_merge(glob(RC_STATS . '/*.json'), glob(RC_STATS . '/*/*.json')) as $f) {
         $day = basename($f, '.json');
         if (preg_match('~^\d{4}-\d{2}-\d{2}$~', $day) && strtotime($day) < strtotime('-180 day')) @unlink($f);
     }

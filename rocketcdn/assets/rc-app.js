@@ -108,23 +108,37 @@ function blocks() {
 }
 
 /* ═══ Аналитика ══════════════════════════════════════════ */
-var track = (function () {
+/* ── Сайт и игра считаются ОТДЕЛЬНО ────────────────────────
+   Панель теперь общая на два сайта и игру между ними, и смешивать их
+   в один счёт нельзя. Сайт это чтение страницы: разделы, формы,
+   источники. Игра это полёт: тела, клавиши, прыжки, выход через
+   стыковочный узел. Один и тот же человек за одно посещение бывает и
+   там, и там, а вопросы к этим числам разные: у сайта спрашивают
+   конверсию, у игры удержание.
+
+   Хранилище одно, разрез по сайту едет в адресе запроса. Отправщик
+   тоже один, только собирается дважды - иначе очередь и метка сессии
+   были бы общими, и события игры уезжали бы в счёт сайта. */
+function сборщик(сайт) {
   /* Тот же случай, что и с localStorage: недоступное хранилище
      не должно уносить с собой аналитику и весь модуль следом */
+  /* Метка сессии ОБЩАЯ у сайта и игры: это один человек за один
+     заход, и считать его дважды значит вдвое завысить уникальных. */
   var sid = "";
   try { sid = sessionStorage.getItem("rc_sid") || ""; } catch (e) {}
   if (!sid) {
     sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
     try { sessionStorage.setItem("rc_sid", sid); } catch (e2) {}
   }
+  var адрес = API + "?action=track" + (сайт ? "&site=" + сайт : "");
   var queue = [], timer = null, sent = {};
   function flush() {
     if (!queue.length) return;
     var body = JSON.stringify({ sid: sid, ref: document.referrer, events: queue.splice(0, queue.length) });
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(API + "?action=track", new Blob([body], { type: "application/json" }));
+      navigator.sendBeacon(адрес, new Blob([body], { type: "application/json" }));
     } else {
-      fetch(API + "?action=track", { method: "POST", headers: { "Content-Type": "application/json" }, body: body, keepalive: true }).catch(function () {});
+      fetch(адрес, { method: "POST", headers: { "Content-Type": "application/json" }, body: body, keepalive: true }).catch(function () {});
     }
   }
   function push(type, label, once) {
@@ -135,8 +149,11 @@ var track = (function () {
   window.addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
   return push;
-})();
+}
+var track = сборщик("");
 window.RC_track = track;
+/* Счётчик игры. Тот же ход, своя очередь, свой разрез в хранилище. */
+window.RC_track_игра = сборщик("game");
 
 /* Ловим ошибки фронта и складываем в тот же поток */
 window.addEventListener("error", function (e) {
