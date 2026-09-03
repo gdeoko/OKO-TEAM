@@ -21,13 +21,20 @@
 // Запасные ключи оставлены на случай, если запись добавили только что и пересчёт
 // ещё не прошёл: такая строка встанет по дате, а не улетит в конец.
 try { db()->exec("ALTER TABLE ministry_letters ADD COLUMN letter_date TEXT"); } catch (\Throwable $e) {}
+// ЗАКРЕПЛЁННЫЕ ПИСЬМА СТОЯТ ВЫШЕ ДАТЫ.
+// Обычный порядок — по дате письма (ниже). Но отдельные ответы — федерального
+// уровня, как Правительство Москвы, — владелец держит первыми независимо от
+// того, когда придёт более свежее региональное письмо. Для этого колонка
+// pinned: чем больше число, тем выше карточка; 0 — обычная сортировка по дате.
+try { db()->exec("ALTER TABLE ministry_letters ADD COLUMN pinned INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
 // ПОРЯДОК ЗАДАЁТ ДАТА ПИСЬМА, А НЕ КОЛОНКА sort.
 // sort пересчитывается ночью (scripts/fix_ministry_letters.php), и у карточки,
 // появившейся днём, он равен нулю: свежее письмо поддержки уезжало в самый низ
 // галереи и стояло там до утра. Сортируем по дате, sort остаётся вторым ключом
-// для писем одного дня.
+// для писем одного дня. Закреплённые (pinned) — всегда первыми.
 $letters = all("SELECT * FROM ministry_letters
-                ORDER BY (letter_date IS NULL OR letter_date='') ASC,
+                ORDER BY COALESCE(pinned,0) DESC,
+                         (letter_date IS NULL OR letter_date='') ASC,
                          letter_date DESC,
                          CASE WHEN COALESCE(sort,0) > 0 THEN sort ELSE 999999 END,
                          id DESC");
@@ -188,6 +195,13 @@ ob_start(); ?>
 .ms-tag{position:absolute;top:12px;left:12px;font-size:.66rem;font-weight:800;letter-spacing:.05em;
   padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--info) 16%,var(--panel-solid));
   color:var(--info);border:1px solid color-mix(in srgb,var(--info) 30%,transparent)}
+/* Закреплённое обращение федерального уровня — золотой бейдж поверх скана. */
+.ms-pin{position:absolute;top:12px;right:12px;z-index:2;display:inline-flex;align-items:center;gap:5px;
+  font-size:.66rem;font-weight:800;letter-spacing:.03em;padding:5px 10px;border-radius:999px;
+  background:var(--grad-gold);color:var(--gold-fg);border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);
+  box-shadow:0 6px 16px rgba(139,111,31,.4)}
+.ms-pin svg{width:13px;height:13px;fill:currentColor;stroke:none}
+.ms-item[data-pinned] .ms-thumb img{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 40%,transparent)}
 .ms-zoom{position:absolute;bottom:12px;right:12px;width:34px;height:34px;border-radius:50%;
   display:grid;place-items:center;background:var(--grad-gold);color:var(--gold-fg);
   box-shadow:0 6px 16px rgba(139,111,31,.4)}
@@ -355,6 +369,7 @@ ob_start(); ?>
             $img    = $ready ? $scanUrl((string)$l['image_path']) : '';
         ?>
           <article class="card reveal ms-item" data-region="<?= h($region) ?>"
+                   <?= !empty($l['pinned']) ? 'data-pinned="1"' : '' ?>
                    data-ready="<?= $ready ? '1' : '0' ?>"
                    data-img="<?= h($img) ?>"
                    data-titledoc="<?= h($title) ?>"
@@ -362,6 +377,13 @@ ob_start(); ?>
                    aria-label="<?= h($region . ($ready ? ', открыть скан письма' : ', документ готовится к публикации')) ?>">
             <div class="ms-thumb">
               <?php if ($dShort): ?><span class="ms-tag"><?= h($dShort) ?></span><?php endif; ?>
+              <?php if (!empty($l['pinned'])): ?>
+                <span class="ms-pin" title="Закреплённое обращение федерального уровня">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2 15 8l6 .5-4.5 4 1.4 6L12 15.6 6.1 18.5l1.4-6L3 8.5 9 8z"/></svg>
+                  Правительство&nbsp;Москвы</span>
+              <?php endif; ?>
               <?php if ($ready): ?>
                 <img src="<?= h($img) ?>" alt="<?= h('Письмо поддержки, ' . $region) ?>" loading="lazy">
                 <span class="ms-zoom" aria-hidden="true">
