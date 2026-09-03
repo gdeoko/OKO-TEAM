@@ -843,14 +843,15 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
 /* Гербы выравниваем по центру равными промежутками: при распределении по краям
    крайние эмблемы прижимались к рамке и ряд выглядел кривым. */
-.logos-row{display:flex;justify-content:center;align-items:center;gap:<?= round(2.3 * $CSCALE, 1) ?>mm;
+.logos-row{display:flex;justify-content:center;align-items:center;gap:<?= round(2.0 * $CSCALE, 1) ?>mm;
   margin-bottom:calc(var(--u) * 1);padding:0}
 .logos-row .logo{width:auto}
-.logos-row .logo-prok{height:12mm}
-.logos-row .logo-medal{height:14mm}
-.logos-row .logo-natsproekty{height:13mm}
-.logos-row .logo-rosmol{height:13mm;border-radius:2mm}
-.logos-row .logo-center{height:26mm;flex-shrink:0;margin:0 1.5mm}
+.logos-row .logo-prok{height:11mm}
+.logos-row .logo-medal{height:13mm}
+.logos-row .logo-natsproekty{height:12mm}
+.logos-row .logo-rosmol{height:12mm;border-radius:2mm}
+.logos-row .logo-mosru{height:12mm}
+.logos-row .logo-center{height:24mm;flex-shrink:0;margin:0 1.5mm}
 .competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 1)}
 /* НАЗВАНИЕ КОНКУРСА И ЗВАНИЕ — ДВЕ ГЛАВНЫЕ СТРОКИ ДОКУМЕНТА.
    Они набраны заливкой-градиентом, и на пёстром фоне их края растворялись: лист
@@ -1031,6 +1032,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minkult.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minprosvet.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minobr.png" alt="">
+      <img class="logo logo-mosru" src="<?= $imgDip ?>/logo_mosru.png" alt="">
       <img class="logo logo-center" src="<?= $imgDip ?>/logo_mm_badge.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_pravmoskva.png" alt="">
       <img class="logo logo-medal logo-rosmol" src="<?= $imgDip ?>/logo_rosmol.png" alt="">
