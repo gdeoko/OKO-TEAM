@@ -222,7 +222,7 @@
     "  vec3 n = normalize(vNor);",
     "  float sol = clamp(dot(n, normalize(vec3(-0.4, 0.85, 0.3))), 0.0, 1.0);",
     "  vec3 c = uCvet * (0.35 + 0.85 * sol);",
-    "  c += uGlow * vSvet * 0.55;",
+    "  c += uGlow * vSvet * 0.34;",
     /* Кольцо не включается, а проступает из того же воздуха, которым
        красится фон. Их приём: подмешать фон по vFade. */
     "  c = mix(uFon, c, clamp(vFade, 0.0, 1.0) * 0.95);",
@@ -271,7 +271,7 @@
     М.корень = new T.Group();
     М.корень.name = "труба";
     М.uTime = { value: 0 };
-    М.uСила = { value: 1 };
+    М.uСила = { value: 0.5 };
     М.uФон = { value: new T.Color(0x0B1026) };
 
     /* ТРУБА. Их числа как есть: радиус 1.3, длина 9, 64 на 32, без
@@ -284,7 +284,7 @@
     М.мТруба = new T.ShaderMaterial({
       uniforms: {
         tWind: { value: шум() }, uTime: М.uTime, uSila: М.uСила,
-        uCvet: { value: new T.Color(0xD9E6FF) }
+        uCvet: { value: new T.Color(0xAEC2E8) }
       },
       vertexShader: В_ТРУБА, fragmentShader: Ф_ТРУБА,
       transparent: true, depthWrite: false, blending: T.AdditiveBlending,
@@ -298,11 +298,11 @@
 
     /* ТРИ КОЛЬЦА-ПРОЛОМА на -1.65, -4.15, -6.65, плашмя. */
     var осколков = ст === 0 ? 16 : 28;
-    var гО = осколок(1.02, 1.52, 0.15, Math.PI * 2 / осколков * 0.84, 5);
+    var гО = осколок(1.20, 1.86, 0.13, Math.PI * 2 / осколков * 0.84, 5);
     М.мКольцо = new T.ShaderMaterial({
       uniforms: {
         uTime: М.uTime,
-        uCvet: { value: new T.Color(0x8E9AC4) },
+        uCvet: { value: new T.Color(0x6C7695) },
         uGlow: { value: new T.Color(0x7FA8FF) },
         uFon: М.uФон
       },
@@ -327,7 +327,7 @@
         меш.setMatrixAt(i, м4);
         /* Центроид куска: направление от середины кольца наружу. Именно
            по нему кусок и уезжает. */
-        var р = 1.27;
+        var р = 1.53;
         центр[i * 3] = Math.cos(a) * р;
         центр[i * 3 + 1] = 0;
         центр[i * 3 + 2] = Math.sin(a) * р;
@@ -337,6 +337,7 @@
       меш.geometry.setAttribute("aCentr", new T.InstancedBufferAttribute(центр, 3));
       меш.geometry.setAttribute("aRand", new T.InstancedBufferAttribute(случ, 3));
       меш.position.y = y;
+      меш.userData.базаY = y;
       меш.frustumCulled = false;
       меш.renderOrder = 2;
       М.корень.add(меш);
@@ -389,6 +390,24 @@
     М.корень.visible = видно;
   }
 
+  /* СДВИГ КОЛЕЦ ВДОЛЬ ТРУБЫ.
+
+     У igloo камера ПАДАЕТ сквозь неподвижные кольца. У нас камера идёт
+     по общей кривой мира и внутри акта стоит на постоянном выносе,
+     поэтому проход устроен зеркально: неподвижна камера, а кольца едут
+     ей навстречу. Для шейдера разницы нет вовсе - он считает расстояние
+     до камеры, и разлёт получается тот же самый.
+
+     Величина 8.6 подобрана так, чтобы три кольца прошли мимо объектива
+     на долях примерно 0.29, 0.58 и 0.87: они расставлены по акту ровно,
+     и ни одно не остаётся непройденным. */
+  function сдвигКолец(v) {
+    if (!М.кольца) return;
+    for (var i = 0; i < М.кольца.length; i++) {
+      М.кольца[i].position.y = М.кольца[i].userData.базаY + v;
+    }
+  }
+
   function фон(цвет) { if (М.uФон) М.uФон.value.setHex(цвет); }
   function сила(с) { if (М.uСила) М.uСила.value = с; }
 
@@ -396,6 +415,7 @@
     "собрать": собрать,
     "кадр": кадр,
     "фон": фон,
+    "сдвигКолец": сдвигКолец,
     "сила": сила,
     "корень": function () { return М.корень || null; },
     "замер": function () {
