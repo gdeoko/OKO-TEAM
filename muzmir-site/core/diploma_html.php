@@ -1028,17 +1028,17 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
              Культурного центра «Музыкальный Мир» (центр) — Союз композиторов — Минобразования —
              Нацпроекты «Культура». Всего 7. */ ?>
     <div class="logos-row"<?= $D('logos') . _dh_style($e) ?>>
-      <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prokultura.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minkult.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minprosvet.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minobr.png" alt="">
+      <img class="logo logo-natsproekty" src="<?= $imgDip ?>/logo_natsproekty2.png" alt="">
       <img class="logo logo-mosru" src="<?= $imgDip ?>/logo_mosru.png" alt="">
       <img class="logo logo-center" src="<?= $imgDip ?>/logo_mm_badge.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_pravmoskva.png" alt="">
       <img class="logo logo-medal logo-rosmol" src="<?= $imgDip ?>/logo_rosmol.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_soyuzkomp.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_std.png" alt="">
-      <img class="logo logo-natsproekty" src="<?= $imgDip ?>/logo_natsproekty2.png" alt="">
+      <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prokultura.png" alt="">
     </div>
 
     <?php $e = $E('comptype'); ?>
