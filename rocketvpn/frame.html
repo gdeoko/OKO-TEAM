@@ -303,6 +303,17 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
       <h2 class="rv-заг" data-лист="0">Три шага, и <em>канал стоит</em></h2>
       <p class="rv-абз" data-лист="0"><b>Три шага, каждый меньше минуты.</b> Карта не нужна, пробные дни сразу.</p>
       <div id="rvШаги" data-заполнить="шаги" data-лист="1 2"></div>
+      <!-- Мини-игра ангара. Три захода, проём сужается; выигрыш открывает
+           те же настоящие три пробных дня, которые выдаёт бот. Панель
+           только пишет и считает, вся игра идёт в сцене (rv-игра.js). -->
+      <div class="rv-игра" id="rvИгра" data-лист="1 2">
+        <p class="rv-игра-звать">В ангаре стоит ракета. Проведи её сквозь стену и забери три дня бесплатно, до всякой оплаты.</p>
+        <div class="rv-игра-счёт" aria-hidden="true">
+          <i data-заход="0" data-взят="0"></i><i data-заход="1" data-взят="0"></i><i data-заход="2" data-взят="0"></i>
+        </div>
+        <p><button type="button" class="rv-кн rv-кн-гл" id="rvИграКн">Пуск</button></p>
+        <p class="rv-игра-итог" id="rvИграИтог" role="status" aria-live="polite"></p>
+      </div>
     </div>
   </div>
 </section>
@@ -358,6 +369,7 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <script src="assets/rv-труба.js" defer></script>
 <script src="assets/rv-кирпичи.js" defer></script>
 <script src="assets/rv-частицы.js" defer></script>
+<script src="assets/rv-игра.js" defer></script>
 <!-- Порядок этих строк не важен: каждый акт ждёт события готовности
      мира и кладёт себя в ядро сам. -->
 <script src="assets/rv-act-shell.js" defer></script>

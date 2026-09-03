@@ -2207,3 +2207,61 @@ html[data-тема="светлая"] .rv-опозн-строка { fill: rgba(48
 html[data-тема="светлая"] .rv-опозн-черта { stroke: rgba(48, 72, 168, .5); }
 
 @media (prefers-reduced-motion: reduce) { .rv-опозн { display: none; } }
+
+/* ══ Мини-игра ангара ═════════════════════════════════════════════
+   Панель только пишет и считает: створки, проём и ракета живут в сцене
+   (rv-игра.js). Отсюда и вид - не игровое поле, а приборная строка
+   рядом со словами акта.
+
+   Три точки заходов вместо цифры «2 из 3»: цифра требует прочитать и
+   сопоставить, точки читаются краем глаза, а игра идёт на ходу. */
+.rv-игра {
+  margin-top: 18px;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--rv-кромка);
+  border-radius: 14px;
+  background: var(--rv-плита);
+  backdrop-filter: blur(8px);
+  max-width: 460px;
+}
+.rv-игра-звать {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--rv-текст-тихо);
+}
+.rv-игра-счёт {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.rv-игра-счёт i {
+  width: 26px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(var(--rv-свет-rgb), .22);
+  transition: background .28s ease, box-shadow .28s ease;
+}
+.rv-игра-счёт i[data-взят="1"] {
+  background: var(--rv-индиго-свет);
+  box-shadow: 0 0 10px rgba(var(--rv-свет-rgb), .7);
+}
+.rv-игра .rv-кн { margin: 0; }
+/* Выигранная кнопка ведёт в бот и обязана выглядеть иначе, чем «Пуск»:
+   это уже не ход игры, а дверь наружу. */
+.rv-игра .rv-кн[data-победа="1"] {
+  background: linear-gradient(135deg, #2E7D5B, #46C48A);
+  border-color: rgba(70, 196, 138, .5);
+}
+.rv-игра-итог {
+  margin: 10px 0 0;
+  min-height: 1.2em;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--rv-текст-тихо);
+}
+@media (max-width: 640px) {
+  .rv-игра { padding: 14px 14px 12px; margin-top: 14px; }
+  .rv-игра-звать { font-size: 13px; }
+}
+html[data-тема="светлая"] .rv-игра-счёт i { background: rgba(48, 72, 168, .2); }
