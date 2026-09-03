@@ -2138,3 +2138,72 @@ html.rv-тронул .rv-листай { opacity: 0; pointer-events: none; }
   .rv-шапка-марка img { width: 32px; height: 32px; }
   .rv-шапка { gap: 8px; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ОПОЗНАВАТЕЛИ: ПРИБОРНАЯ РАЗМЕТКА ПОВЕРХ МИРА
+
+   Владелец показал кадры igloo.inc: «текст как у них крутой с какими-то
+   опознавателями крутыми». У них поверх каждого предмета лежит тонкая
+   приборная разметка - крестики в точках съёма, волосяные линии между
+   ними, номера и подписи моноширинным.
+
+   Разметка делает предмет ИЗМЕРЯЕМЫМ. Пока картинка просто красивая,
+   глаз скользит мимо; как только на ней появляются точки съёма и
+   показания, мозг читает её как настоящий объект под наблюдением.
+
+   Всё здесь волосяное и тихое нарочно. Приборная разметка не спорит с
+   заголовком за внимание: она фон, который замечают вторым взглядом.
+   Толще одного пикселя линия сразу читается украшением.
+   ══════════════════════════════════════════════════════════════ */
+.rv-опозн {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  visibility: hidden;
+  /* Разметка живёт над холстом мира и ПОД колонкой слов: заголовок
+     всегда важнее показаний. */
+}
+html[data-тема="светлая"] .rv-опозн { mix-blend-mode: multiply; }
+
+.rv-опозн-линия {
+  stroke: rgba(196, 210, 255, .42);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.rv-опозн-точка line {
+  stroke: rgba(214, 226, 255, .92);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.rv-опозн-точка text {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .06em;
+  fill: rgba(206, 219, 255, .82);
+}
+.rv-опозн-код text {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: .10em;
+  fill: rgba(224, 233, 255, .95);
+}
+.rv-опозн-строка {
+  font-size: 10px !important;
+  fill: rgba(150, 172, 255, .78) !important;
+  letter-spacing: .08em !important;
+}
+.rv-опозн-черта {
+  stroke: rgba(150, 172, 255, .5);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+html[data-тема="светлая"] .rv-опозн-линия { stroke: rgba(30, 44, 92, .38); }
+html[data-тема="светлая"] .rv-опозн-точка line { stroke: rgba(22, 34, 74, .85); }
+html[data-тема="светлая"] .rv-опозн-точка text { fill: rgba(26, 38, 80, .8); }
+html[data-тема="светлая"] .rv-опозн-код text { fill: rgba(18, 28, 66, .95); }
+html[data-тема="светлая"] .rv-опозн-строка { fill: rgba(48, 72, 168, .8) !important; }
+html[data-тема="светлая"] .rv-опозн-черта { stroke: rgba(48, 72, 168, .5); }
+
+@media (prefers-reduced-motion: reduce) { .rv-опозн { display: none; } }
