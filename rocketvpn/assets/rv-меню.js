@@ -84,6 +84,14 @@
       var п = к.querySelector(".rv-мп-знач");
       if (п) п.textContent = т === "светлая" ? "светлая" : "тёмная";
     }
+    /* Тот же признак на кнопке в планке: по нему CSS показывает солнце
+       днём и луну ночью, и человек видит, куда переключит, а не где
+       стоит. */
+    var о = d.getElementById("rvОрганТема");
+    if (о) {
+      о.setAttribute("aria-pressed", т === "светлая" ? "true" : "false");
+      о.setAttribute("aria-label", т === "светлая" ? "Включить тёмную тему" : "Включить светлую тему");
+    }
   }
   поставитьТему(тема());
 
@@ -204,8 +212,25 @@
            равны по построению, а не на глаз. */
         '<img src="assets/rv-mark.webp" width="38" height="38" alt="Rocket VPN">' +
       "</a>" +
-      '<div class="rv-шапка-право"></div>';
+      '<div class="rv-шапка-право">' +
+        /* Быстрые действия стоят в самой планке, а не только в
+           бургере: владелец просил, чтобы форма, бот, игра и тема
+           открывались одним касанием. Ряд один и тот же на телефоне и
+           на ПК, на узком экране у него мельче шаг и меньше кнопки. */
+        '<nav class="rv-шапка-органы" aria-label="Быстрые действия">' +
+          '<a class="rv-орган" id="rvОрганФорма" href="#форма" aria-label="Написать нам">' + З.письмо + '</a>' +
+          '<a class="rv-орган" id="rvОрганБот" href="' + СВЯЗЬ.бот + '" target="_blank" rel="noopener" aria-label="Забрать 3 дня в боте">' + З.проба + '</a>' +
+          '<a class="rv-орган" id="rvОрганИгра" href="' + ИГРА + '" target="_blank" rel="noopener" aria-label="Играть, полёт в космосе Rocket CDN">' + З.игра + '</a>' +
+          '<button class="rv-орган" id="rvОрганТема" type="button" aria-label="Сменить тему" aria-pressed="false">' + З.тема + '</button>' +
+        '</nav>' +
+      '</div>';
     d.body.appendChild(ш);
+    ш.addEventListener("click", function (е) {
+      var ф = е.target.closest ? е.target.closest("#rvОрганФорма") : null;
+      if (ф) { е.preventDefault(); формаОткрыть(); return; }
+      var т = е.target.closest ? е.target.closest("#rvОрганТема") : null;
+      if (т) { поставитьТему(тема() === "светлая" ? "тёмная" : "светлая"); }
+    });
     ш.querySelector(".rv-шапка-марка").addEventListener("click", function (е) {
       е.preventDefault();
       try { g.scrollTo({ top: 0, behavior: "smooth" }); } catch (e2) { g.scrollTo(0, 0); }
