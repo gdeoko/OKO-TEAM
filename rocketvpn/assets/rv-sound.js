@@ -702,6 +702,13 @@
     try {
       музЭл = new Audio(ПАПКА + "fon.mp3");
       музЭл.preload = "auto";
+      /* Элемент кладём В ДОКУМЕНТ, хоть и невидимым. Отсоединённый
+         работает не везде: часть мобильных браузеров глушит поток у
+         элемента, которого нет в дереве, и заодно его не видно ни одной
+         проверке. */
+      музЭл.setAttribute("aria-hidden", "true");
+      музЭл.style.display = "none";
+      d.body.appendChild(музЭл);
       музЭл.crossOrigin = "anonymous";
       музЭл.loop = false;
       музГейн = К.createGain();
@@ -709,9 +716,23 @@
       музУзел = К.createMediaElementSource(музЭл);
       музУзел.connect(музГейн);
       музГейн.connect(шина);
-      музЭл.addEventListener("loadedmetadata", function () {
-        try { музЭл.currentTime = НАЧАЛО; } catch (e) {}
-      });
+      /* Перемотка на пятнадцатую секунду ставится НА КАЖДОЙ ступени
+         готовности, а не один раз. Причина в порядке событий: play()
+         может уйти раньше, чем приедут метаданные, и тогда перемотка
+         просто некуда - позиция остаётся нулём, и в эфир идёт то самое
+         вступление, которое велено пропускать. Замер это и показал:
+         дорожка играла с 0.8 секунды. */
+      var выставить = function () {
+        try {
+          if (музЭл.readyState > 0 && музЭл.currentTime < НАЧАЛО - 0.05) {
+            музЭл.currentTime = НАЧАЛО;
+          }
+        } catch (e) {}
+      };
+      музЭл.addEventListener("loadedmetadata", выставить);
+      музЭл.addEventListener("canplay", выставить);
+      музЭл.addEventListener("playing", выставить);
+      музЭл._выставить = выставить;
       музЭл.addEventListener("timeupdate", function () {
         var д = музЭл.duration;
         if (д && музЭл.currentTime > д - 0.25) {
@@ -730,7 +751,11 @@
         try { музЭл.currentTime = НАЧАЛО; } catch (e) {}
       }
       var п = музЭл.play();
-      if (п && п.catch) п.catch(function () {});
+      if (п) {
+        if (п.then) п.then(function () { if (музЭл._выставить) музЭл._выставить(); },
+                           function () {});
+        else if (п.catch) п.catch(function () {});
+      }
       музГейн.gain.setTargetAtTime(0.16, К.currentTime, 1.2);
     } else {
       музГейн.gain.setTargetAtTime(0, К.currentTime, 0.25);
@@ -821,6 +846,12 @@
       }
       return {
         "состояние": К ? К.state : "нет",
+      "музыка": музЭл ? {
+        "играет": !музЭл.paused,
+        "позиция": +(музЭл.currentTime || 0).toFixed(1),
+        "длина": +(музЭл.duration || 0).toFixed(1),
+        "громко": музГейн ? +музГейн.gain.value.toFixed(3) : 0
+      } : null,
         "шина": шина ? +шина.gain.value.toFixed(4) : 0,
         "гул": +сумма.toFixed(4),
         "свип": живых > 0 ? 1 : 0,
