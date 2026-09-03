@@ -423,3 +423,126 @@ function dops_confirmation_send(int $appId): array {
     if ($was['state'] === 'none') $msg .= ' Раньше оно этому участнику не уходило.';
     return ['ok' => true, 'msg' => $msg];
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  ЖУРНАЛ ПИСЕМ ПО ЗАЯВКЕ И ПОВТОР ЛЮБОГО ИЗ НИХ
+ *
+ * До сих пор дублировать можно было ровно три письма — результат, наградные
+ * материалы и подтверждение приёма, — и для каждого написана своя кнопка со
+ * своей логикой. Всё остальное (отклонение заявки, доступ в кабинет, запрос
+ * адреса, напоминание об оплате) продублировать было нечем: письмо об
+ * отклонении по заявке VR-2026-00676 ушло, но не дошло, и повторить его в
+ * админке оказалось невозможно.
+ *
+ * Хуже того, увидеть письма участника было негде: раздел «Отправки» показывает
+ * рассылки, а поиск по номеру заявки или по адресу там ничего не находит —
+ * личные письма в нём не ищутся вовсе.
+ *
+ * Здесь и то и другое: список писем этой заявки прямо в карточке и повтор
+ * любого из них одной кнопкой. Повтор не пересобирает письмо заново, а ставит
+ * в очередь ТУ ЖЕ копию, которую человек должен был получить: тело письма
+ * хранится в очереди целиком. Так дубль гарантированно совпадает с оригиналом,
+ * и не нужно повторять логику каждого отправителя.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Письма, относящиеся к заявке.
+ *
+ * Ищем по адресу заявки И по номеру в теме: адрес участник иногда меняет в
+ * кабинете, а номер заявки в теме остаётся навсегда. Дубли по id отсеиваются.
+ *
+ * @return array<int,array{id:int,subject:string,status:string,at:string,error:string,kind:string}>
+ */
+function dops_app_mails(int $appId, int $limit = 40): array {
+    $a = one("SELECT number, email FROM applications WHERE id=?", [$appId]);
+    if (!$a) return [];
+    $email = mb_strtolower(trim((string) $a['email']));
+    $num   = trim((string) $a['number']);
+
+    $where = []; $args = [];
+    if ($email !== '') { $where[] = 'LOWER(to_email)=?'; $args[] = $email; }
+    if ($num !== '')   { $where[] = 'subject LIKE ?';    $args[] = '%' . $num . '%'; }
+    if (!$where) return [];
+    $args[] = $limit;
+
+    try {
+        $rows = all("SELECT id, subject, status, created_at, sent_at, error, attach
+                       FROM mail_queue WHERE (" . implode(' OR ', $where) . ")
+                   ORDER BY id DESC LIMIT ?", $args);
+    } catch (\Throwable $e) { return []; }
+
+    $out = [];
+    foreach ($rows as $r) {
+        $subj = (string) $r['subject'];
+        $out[] = [
+            'id'      => (int) $r['id'],
+            'subject' => $subj,
+            'status'  => (string) $r['status'],
+            'at'      => trim((string) $r['sent_at']) !== '' ? (string) $r['sent_at'] : (string) $r['created_at'],
+            'error'   => (string) ($r['error'] ?? ''),
+            'files'   => count(array_filter((array) json_decode((string) ($r['attach'] ?? ''), true) ?: [])),
+            'kind'    => dops_mail_kind($subj),
+        ];
+    }
+    return $out;
+}
+
+/** Человеческое имя письма — по теме, чтобы в списке было видно суть без чтения. */
+function dops_mail_kind(string $subject): string {
+    $s = mb_strtolower($subject);
+    if (str_contains($s, 'не принята к участию'))              return 'отклонение заявки';
+    if (str_contains($s, 'принята'))                            return 'приём заявки';
+    if (str_contains($s, 'результаты конкурса'))                return 'результат';
+    if (str_contains($s, 'наградн') || str_contains($s, 'диплом')) return 'наградные материалы';
+    if (str_contains($s, 'доступ в личный кабинет'))            return 'доступ в кабинет';
+    if (str_contains($s, 'оплат'))                              return 'оплата';
+    if (str_contains($s, 'адрес'))                              return 'адрес доставки';
+    if (str_contains($s, 'отправлен') || str_contains($s, 'трек')) return 'отправка посылки';
+    return 'письмо центра';
+}
+
+/**
+ * Продублировать письмо: поставить в очередь копию уже отправленного.
+ *
+ * Ничего не пересобираем и ничего не меняем в заявке — кладём в очередь то же
+ * тело и те же вложения. Проверка одна: письмо должно относиться к этой заявке,
+ * иначе кнопкой из одной карточки можно было бы разослать чужое письмо.
+ */
+function dops_mail_resend(int $queueId, int $appId): array {
+    $a = one("SELECT number, email, full_name FROM applications WHERE id=?", [$appId]);
+    if (!$a) return ['ok' => false, 'msg' => 'Заявка не найдена.'];
+
+    $ok = false;
+    foreach (dops_app_mails($appId, 200) as $m) if ((int) $m['id'] === $queueId) { $ok = true; break; }
+    if (!$ok) return ['ok' => false, 'msg' => 'Это письмо не относится к заявке — дубль не отправлен.'];
+
+    $src = one("SELECT * FROM mail_queue WHERE id=?", [$queueId]);
+    if (!$src) return ['ok' => false, 'msg' => 'Письмо не найдено в очереди.'];
+
+    // Адрес берём АКТУАЛЬНЫЙ из заявки: если участник сменил почту, дубль должен
+    // уйти на новую, иначе повтор попадёт туда же, откуда его и не получили.
+    $to = trim((string) $a['email']) !== '' ? trim((string) $a['email']) : (string) $src['to_email'];
+    if (trim($to) === '') return ['ok' => false, 'msg' => 'У заявки не указана почта — отправлять некуда.'];
+
+    try {
+        $newId = (int) insert('mail_queue', [
+            'to_email'      => mb_strtolower($to),
+            'to_name'       => (string) ($src['to_name'] ?? $a['full_name'] ?? ''),
+            'subject'       => (string) $src['subject'],
+            'body'          => (string) $src['body'],
+            'attach'        => (string) ($src['attach'] ?? ''),
+            'status'        => 'queued',
+            'priority'      => 1,                       // личное письмо, не рассылка
+            'campaign_type' => (string) ($src['campaign_type'] ?? ''),
+        ]);
+    } catch (\Throwable $e) {
+        return ['ok' => false, 'msg' => 'Дубль не встал в очередь: ' . $e->getMessage()];
+    }
+    if ($newId <= 0) return ['ok' => false, 'msg' => 'Дубль не встал в очередь.'];
+
+    audit('mail_duplicate', 'application', $appId,
+          ['queue_id' => $queueId, 'new_id' => $newId, 'subject' => (string) $src['subject'], 'to' => $to]);
+
+    return ['ok' => true, 'msg' => 'Письмо «' . mb_substr((string) $src['subject'], 0, 60)
+        . '» поставлено в очередь повторно на ' . $to . '.'];
+}

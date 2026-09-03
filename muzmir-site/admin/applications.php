@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
 /* ---------- Действия по отправкам прямо из карточки заявки ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), [
         'result_sendnow','result_dup','result_resched','result_cancel',
-        'dip_sendnow','dip_dup','dip_resched','dip_cancel','conf_dup'], true)) {
+        'dip_sendnow','dip_dup','dip_resched','dip_cancel','conf_dup','mail_dup'], true)) {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
     require_once BASE_PATH . '/core/dispatch_ops.php';
     $aid = (int) input('id');
@@ -242,6 +242,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), [
          * дошла ли она вообще. Кнопка даёт оператору отправить его вручную, не
          * трогая базу и не заводя заявку заново. */
         'conf_dup'       => dops_confirmation_send($aid),
+        /* ПОВТОР ЛЮБОГО ПИСЬМА ПО ЗАЯВКЕ.
+         *
+         * Отдельные кнопки есть только у трёх писем, а продублировать бывает
+         * нужно любое: письмо об отклонении, доступ в кабинет, запрос адреса.
+         * Дубль ставит в очередь ту же копию, которая лежит в журнале. */
+        'mail_dup'       => dops_mail_resend((int) input('queue_id'), $aid),
     };
     flash($r['msg'], $r['ok'] ? 'success' : 'error');
     admin_redirect('applications', ['id' => $aid]);
@@ -607,6 +613,61 @@ if ($id = (int) input('id')) {
                 <td class="small"><span class="badge badge--<?= h((string)$o['status']) ?>"><?= h($ordLbl[(string)$o['status']] ?? (string)$o['status']) ?></span></td>
                 <td class="small" style="white-space:nowrap"><?= h(date('d.m.Y', strtotime((string)$o['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime((string)$o['created_at']))) ?></span></td>
                 <td class="small"><a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['id'=>(int)$o['id']]) ?>">Открыть</a></td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table></div>
+        <?php endif; ?>
+      </div>
+
+      <!-- ---- ПИСЬМА ПО ЗАЯВКЕ ----
+           Всё, что уходило этому участнику, — в одном месте и с кнопкой повтора
+           у каждого письма. Раньше письма участника нельзя было ни найти (раздел
+           «Отправки» показывает рассылки, поиск по номеру заявки и по адресу там
+           ничего не находит), ни продублировать: кнопки были только у результата,
+           наградных материалов и подтверждения приёма. Письмо об отклонении по
+           заявке VR-2026-00676 ушло, но не дошло — и повторить его было нечем. -->
+      <?php $mails = dops_app_mails($id); ?>
+      <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-top:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <b>Письма по заявке</b>
+          <span class="small muted"><?= count($mails) ?> шт. · <?= h((string) $a['email']) ?></span>
+        </div>
+        <?php if (!$mails): ?>
+          <p class="small muted" style="margin:8px 0 0">Писем по этой заявке в очереди нет.</p>
+        <?php else: ?>
+          <div class="table-wrap" style="margin-top:10px"><table class="tbl">
+            <thead><tr><th>Письмо</th><th>Тема</th><th>Статус</th><th>Когда</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($mails as $m):
+              $stBadge = ['sent' => 'paid', 'queued' => 'gold', 'paused' => 'gold',
+                          'failed' => 'rejected', 'cancelled' => 'rejected'][$m['status']] ?? 'gold';
+              $stName  = ['sent' => 'отправлено', 'queued' => 'в очереди', 'paused' => 'на паузе',
+                          'failed' => 'не ушло', 'cancelled' => 'снято'][$m['status']] ?? $m['status']; ?>
+              <tr>
+                <td class="small"><b><?= h($m['kind']) ?></b><?= $m['files'] > 0 ? '<br><span class="muted">вложений: ' . (int) $m['files'] . '</span>' : '' ?></td>
+                <td class="small"><?= h(mb_substr($m['subject'], 0, 70)) ?></td>
+                <td class="small">
+                  <span class="badge badge--<?= h($stBadge) ?>"><?= h($stName) ?></span>
+                  <?php if (trim($m['error']) !== ''): ?>
+                    <br><span class="muted" title="<?= h($m['error']) ?>"><?= h(mb_substr($m['error'], 0, 40)) ?></span>
+                  <?php endif; ?>
+                </td>
+                <td class="small" style="white-space:nowrap">
+                  <?= h(date('d.m.Y', strtotime($m['at']))) ?><br>
+                  <span class="muted"><?= h(date('H:i', strtotime($m['at']))) ?></span>
+                </td>
+                <td class="small">
+                  <form method="post" action="<?= url('/admin/?p=applications') ?>" style="margin:0">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= $id ?>">
+                    <input type="hidden" name="queue_id" value="<?= (int) $m['id'] ?>">
+                    <button class="btn btn--ghost btn--sm" name="do" value="mail_dup"
+                            onclick="return confirm('Продублировать письмо «<?= h(mb_substr($m['subject'], 0, 50)) ?>» на <?= h((string) $a['email']) ?>?')">
+                      <?= admin_icon('copy') ?>Продублировать
+                    </button>
+                  </form>
+                </td>
               </tr>
             <?php endforeach; ?>
             </tbody>

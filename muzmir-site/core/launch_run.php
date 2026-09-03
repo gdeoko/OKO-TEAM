@@ -470,8 +470,20 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 $sent = 0;
                 if (function_exists('results_long_mail_send_batch')) {
                     $byMail = [];
+                    /* ОТКЛОНЁННЫМ РЕЗУЛЬТАТ НЕ ШЛЁМ.
+                     *
+                     * Оценка и отклонение живут в разных полях: жюри отклоняет
+                     * заявку, а проставленный до этого результат остаётся в
+                     * `result` — он нужен в карточке и в истории. Волна брала
+                     * всех, у кого поле не пустое, и 28.08 участница с
+                     * отклонённой заявкой VR-2026-00676 получила письмо
+                     * «ДИПЛОМАНТ II СТЕПЕНИ» — на следующий день после письма
+                     * «заявка не принята к участию». Тот же фильтр давно стоит
+                     * в send_diplomas.php и publish_results_vk.php, здесь его
+                     * не было. */
                     foreach (all("SELECT id, email FROM applications
                                    WHERE competition_id=? AND COALESCE(result,'')<>''
+                                     AND status <> 'rejected'
                                 ORDER BY id", [$compId]) as $p) {
                         $key = mb_strtolower(trim((string) $p['email']));
                         if ($key === '') $key = 'app#' . (int) $p['id'];   // без почты — сам по себе
