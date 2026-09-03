@@ -96,6 +96,10 @@
     "attribute float aAO;",
     "attribute float aAOex;",
     "attribute float aInner;",
+    /* Семя блока. Нужно затем, чтобы фотоскан не лёг на все двести
+       блоков одним и тем же куском: без сдвига координат кладка
+       превращается в стену клонов, и это видно сразу. */
+    "attribute float aSeed;",
     "uniform float uOutline;",
     "varying vec3 vNor;",
     "varying vec3 vLocN;",
@@ -106,7 +110,11 @@
     "varying float vBounce;",
     "varying float vAO;",
     "varying float vInner;",
+    "varying vec2 vUv;",
+    "varying float vSeed;",
     "void main(){",
+    "  vUv = uv;",
+    "  vSeed = aSeed;",
     "  vLocN = normal;",
     "  vec3 p = position * (1.0 + uOutline * 0.018);",
     "  vec4 loc = instanceMatrix * vec4(p, 1.0);",
@@ -130,6 +138,11 @@
     "uniform vec3 uNiz;",
     "uniform vec3 uGlow;",
     "uniform float uOutline;",
+    /* Фотоскан панели: настоящая поверхность вместо хеш-крупы. uTex это
+       доля подмеса, она встаёт в единицу только когда файлы доехали. */
+    "uniform sampler2D tBlok;",
+    "uniform sampler2D tBlokN;",
+    "uniform float uTex;",
     "uniform float uIntro;",
     "uniform float uH;",
     "varying vec3 vNor;",
@@ -141,6 +154,8 @@
     "varying float vBounce;",
     "varying float vAO;",
     "varying float vInner;",
+    "varying vec2 vUv;",
+    "varying float vSeed;",
     "void main(){",
     /* Проявление снизу вверх, их формула: всё выше кромки отбрасывается,
        у кромки синее свечение с решёткой. Решётка у них из текстуры, у
@@ -167,8 +182,18 @@
     "  float edge = 1.0 - max(an.x, max(an.y, an.z));",
     "  edge = smoothstep(0.05, 0.4, edge);",
     /* Фактура камня: два масштаба хеша по мировым координатам. */
+    /* ФОТОСКАН ПАНЕЛИ. Координаты сдвинуты семенем блока, поэтому один
+       и тот же кусок скана не ложится на всю кладку: каждый блок берёт
+       свой участок поверхности, как и бывает у настоящих панелей.
+       Множитель 1.35 подобран так, чтобы зерно материала читалось на
+       блоке шириной около метра. */
+    "  vec2 uvT = vUv * 1.35 + vec2(vSeed, fract(vSeed * 7.31));",
+    "  vec3 fot = texture2D(tBlok, uvT).rgb;",
+    "  vec3 fotN = texture2D(tBlokN, uvT).xyz * 2.0 - 1.0;",
     "  vec3 zerno = vec3(hash12(vWorld.xy * 48.0), hash12(vWorld.yz * 48.0 + 3.1), hash12(vWorld.zx * 48.0 + 7.7)) - 0.5;",
-    "  n = normalize(n + zerno * 0.16);",
+    /* Пока файлы едут, рельеф даёт хеш-крупа. Как только доехали,
+       вместо неё встаёт настоящая карта нормалей. */
+    "  n = normalize(n + mix(zerno * 0.16, fotN * 0.40, uTex));",
     "  vec3 sun = normalize(vec3(-0.55, 0.78, 0.3));",
     "  float hemi = n.y * 0.5 + 0.5;",
     "  vec3 svet = mix(uNiz, uVerh, hemi);",
@@ -177,18 +202,47 @@
     "  float blik = pow(max(0.0, dot(normalize(sun + vv), n)), 20.0) * 0.3;",
     "  vec3 base = mix(uTen, uKamen, 0.3 + 0.7 * sol);",
     "  base *= 0.9 + 0.2 * hash12(floor(vWorld.xz * 2.1) + floor(vWorld.y * 2.1));",
+    /* Цвет скана заходит делением на его же среднюю (0.68 из замера
+       блок-цвет.webp). Так панель получает настоящую пятнистость, а
+       общая светлота кладки остаётся той, на которую настроен весь акт. */
+    "  base *= mix(vec3(1.0), fot / 0.68, uTex);",
     "  float ao = mix(0.3, 1.0, vAO);",
-    "  vec3 color = base * svet * ao * (0.55 + 0.7 * sol) + uVerh * blik * ao;",
-    /* Швы у igloo светлые, с изморозью: кромка светлее камня. */
-    "  color = mix(color, uVerh * 1.05, edge * 0.7);",
+    /* ЛУННОЕ СОЛНЦЕ, А НЕ ПАВИЛЬОН. У Луны нет атмосферы, рассеивать
+       свет нечем, и теневая сторона камня там уходит почти в чёрное.
+       Стояло 0.55 подсветки к 0.7 солнца: это земной пасмурный день, от
+       него камень читался пластиком. Теперь тень глубже, а солнце
+       сильнее, и форма блока рисуется контрастом, как на снимках Аполлона. */
+    "  vec3 color = base * svet * ao * (0.30 + 1.02 * sol) + uVerh * blik * ao;",
+    /* ШВЫ ТЁМНЫЕ, А НЕ СВЕТЯЩИЕСЯ. У igloo блоки снежные, и кромка у них
+       светлее тела: там изморозь. У нас камень, и светлый кант на каждом
+       ребре превращал кладку в груду светящихся кубиков, ровно то, на
+       что владелец и жаловался. У настоящей кладки ребро ловит немного
+       света, а ЩЕЛЬ между блоками уходит в темноту. Здесь оба слагаемых:
+       глубокая щель гасится до 0.62, ребро подхватывает свет на 0.12. */
+    "  color *= mix(1.0, 0.62, smoothstep(0.5, 1.0, edge));",
+    "  color = mix(color, uVerh * 1.02, edge * 0.12);",
     /* Их строки, по порядку: эмиссия по смещению, покойная эмиссия
        пульсом, свечение внутренней стороны, ложный подповерхностный
        свет, отскок от грунта. */
-    "  color += pow(vInner, 2.0) * clamp(1.0 * vDisp, 0.0, 1.0) * blue;",
-    "  vec3 powEmission = pow(vInner, 8.0) * blue * 0.5;",
+    /* СВЕТ ИЗНУТРИ, А НЕ РАСКАЛЁННЫЙ КАМЕНЬ.
+
+       У igloo это свет лампы, проходящий СКВОЗЬ снежный блок: снег
+       полупрозрачный, и внутренняя сторона свода у них честно светится.
+       Наш блок каменный, сквозь него не светит ничего, и та же сила
+       выбивала верхние ряды в белое пятно с решёткой. На снимке доля
+       точек ярче 200 доходила до 3.6 процента, и весь купол читался
+       раскалённым, а не освещённым.
+
+       Свет оставлен, потому что станция обитаемая и проём должен
+       выдавать жильё. Сила опущена втрое с лишним, и добавка идёт ОДИН
+       раз вместо двух: второе слагаемое по диагонали складывалось с
+       первым и удваивало пик ровно на верхних рядах. */
+    "  color += pow(vInner, 2.0) * clamp(1.0 * vDisp, 0.0, 1.0) * blue * 0.32;",
+    "  vec3 powEmission = pow(vInner, 8.0) * blue * 0.15;",
     "  color += powEmission * (sin(vPos.x - uTime * 1.0 + 3.2) * 0.5 + 0.5);",
-    "  color += max(0.0, smoothstep(0.0, 2.0, vPos.x * 0.5 - vPos.z * 0.5)) * powEmission;",
-    "  color += (vPos.x * 0.1 + 0.4) * 0.3 * min(vPos.y / uH + 0.5, 1.0) * 0.12;",
+    /* Общий подъём чёрного. Стоял 0.12 и поднимал ВЕСЬ купол ровной
+       плёнкой, съедая контраст лунной тени. */
+    "  color += (vPos.x * 0.1 + 0.4) * 0.3 * min(vPos.y / uH + 0.5, 1.0) * 0.045;",
     "  color = clamp(color, vec3(0.0), vec3(1.0));",
     "  color += (1.0 - smoothstep(-0.4, 0.3, vPos.y / uH)) * vBounce * vec3(0.8, 0.9, 1.0) * 0.25;",
     /* Кромка проявления: синее свечение с решёткой. */
@@ -389,8 +443,14 @@
     var N = М.куски.length;
     var гео = брусок();
     var aDisp = new Float32Array(N), aBounce = new Float32Array(N), aAO = new Float32Array(N), aAOex = new Float32Array(N), aInner = new Float32Array(N);
+    var aSeed = new Float32Array(N);
     for (var i = 0; i < N; i++) {
       var к = М.куски[i];
+      /* Семя блока для сдвига координат фотоскана. Берётся от центра
+         куска, а не от счётчика: у соседей по кладке центры разные, и
+         соседние блоки гарантированно возьмут разные участки скана. */
+      aSeed[i] = ((к.центр.x * 12.9898 + к.центр.y * 78.233 + к.центр.z * 37.719) * 43758.5453) % 1;
+      if (aSeed[i] < 0) aSeed[i] += 1;
       aAO[i] = к.ao; aAOex[i] = к.aoEx;
       /* Эмиссия у них запечена по вершинам; у нас куску целиком: блоки
          арки не светят, верхние ряды светят сильнее. */
@@ -401,14 +461,46 @@
     гео.setAttribute("aAO", new T.InstancedBufferAttribute(aAO, 1));
     гео.setAttribute("aAOex", new T.InstancedBufferAttribute(aAOex, 1));
     гео.setAttribute("aInner", new T.InstancedBufferAttribute(aInner, 1));
+    гео.setAttribute("aSeed", new T.InstancedBufferAttribute(aSeed, 1));
     гео.attributes.aDisp.setUsage(T.DynamicDrawUsage);
     гео.attributes.aBounce.setUsage(T.DynamicDrawUsage);
     М.aDisp = гео.attributes.aDisp; М.aBounce = гео.attributes.aBounce;
 
+    /* Карты панели общие для кладки и обводки: обводка идёт тем же
+       фрагментным шейдером, и без этих униформ он бы просто не собрался.
+       Объекты униформ ОДНИ И ТЕ ЖЕ, поэтому доехавший файл появляется
+       сразу в обоих материалах. */
+    М.uТек = { value: null };
+    М.uТекН = { value: null };
+    М.uТекДоля = { value: 0 };
     var общие = {
       uColor1: град.uColor1, uColor2: град.uColor2, uResolution: град.uResolution,
-      uTime: град.uTime, uDen: град.uDen, uIntro: { value: 0 }, uH: { value: R }
+      uTime: град.uTime, uDen: град.uDen, uIntro: { value: 0 }, uH: { value: R },
+      tBlok: М.uТек, tBlokN: М.uТекН, uTex: М.uТекДоля
     };
+
+    /* Фотоскан панели (ambientCG, CC0). Едет лениво: до приезда кладка
+       живёт на хеш-крупе и выглядит как раньше, поломки нет. Доля
+       подмеса поднимается только когда пришли ОБЕ карты, иначе рельеф
+       встал бы без цвета и панель на секунду позеленела бы. */
+    (function () {
+      var загр = new T.TextureLoader(), пришло = 0;
+      var анизо = 4;
+      try {
+        if (W && W.r && W.r.capabilities) анизо = Math.max(1, Math.min(8, W.r.capabilities.getMaxAnisotropy()));
+      } catch (e) {}
+      function готово() { if (++пришло >= 2) М.uТекДоля.value = 1; }
+      загр.load("assets/gen/pbr/блок-цвет.webp", function (т) {
+        т.colorSpace = T.SRGBColorSpace || т.colorSpace;
+        т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
+        М.uТек.value = т; готово();
+      });
+      загр.load("assets/gen/pbr/блок-норм.webp", function (т) {
+        т.colorSpace = T.NoColorSpace || T.LinearSRGBColorSpace || т.colorSpace;
+        т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
+        М.uТекН.value = т; готово();
+      });
+    })();
     М.кладкаМат = new T.ShaderMaterial({
       uniforms: Object.assign({}, общие, {
         uOutline: { value: 0 },
