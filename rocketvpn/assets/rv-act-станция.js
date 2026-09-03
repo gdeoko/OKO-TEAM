@@ -1,0 +1,714 @@
+/* Rocket VPN. Акт «Станция»: лунный купол из блоков, первый экран.
+
+   ЧТО ЭТО. Предмет-основа первого экрана: купол из плотно сложенных
+   блоков с аркой входа, ледяные глыбы сверху со свечением изнутри,
+   синяя тень на реголите. Он проявляется на старте снизу вверх, дышит,
+   приподнимает верхние блоки под курсором и открывается по ходу
+   прокрутки, пропуская человека дальше в фильм.
+
+   ЗАКОН ДВИЖЕНИЯ СНЯТ С igloo.inc ДОСЛОВНО (класс U3 их бандла), и это
+   главное отличие от первой сборки, где блоки разлетались во все
+   стороны кувырком. У них:
+     · каждый кусок ходит НАРУЖУ ПО РАДИУСУ: position = centroid +
+       centroid * displacement, никаких случайных направлений;
+     · двигаются только ВЕРХНИЕ ряды: множитель smoothstep(0.45, 0.7, y)
+       для дыхания и курсора, smoothstep(0.3, 1, y) для прокрутки;
+     · величины небольшие: дыхание до 0.4 * mix(0.5, 2, rand) * 0.5,
+       курсор поднимает куски в кольце 1..3 единиц на 0.5 + 0.3 * колебание,
+       прокрутка на старте держит верх раздвинутым до двух радиусов и к
+       0.4 хода собирает;
+     · всё через ДВА последовательных лерпа по 0.05-0.075, пересчитанных
+       на долю кадра;
+     · поворот куска: cos(displacement * 2 + rand * 30) * displacement * 0.5
+       по каждой оси плюс scrollDisplacement * rand * -1.5;
+     · старт это не сборка из осколков, а ПРОЯВЛЕНИЕ снизу вверх:
+       falloffsmooth(y, верх, низ, 1.5, uIntroMaterialize) с синей
+       светящейся кромкой и решёткой треугольников на ней.
+   Матрицы кусков считаются на стороне JS каждый кадр и уходят в
+   InstancedMesh: ровно их архитектура (батч с матрицами в текстуре).
+
+   МАТЕРИАЛ. Их фрагментный шейдер повторён по строкам: две карты света
+   (собранное и разлетевшееся) смешиваются по clamp(5 * displacement),
+   эмиссия по displacement синим, покойная эмиссия пульсом
+   sin(x - time + 3.2), подсветка внутренней стороны, ложный
+   подповерхностный свет боковым градиентом, отскок от грунта снизу.
+   Карт света у нас нет, вместо них затенение по кускам, посчитанное при
+   сборке для обоих состояний.
+
+   ПОЧЕМУ В СЦЕНЕ, А НЕ В ГНЕЗДЕ. Гнездо акта развёрнуто лицом к камере и
+   при камере выше предмета наклонено; горизонт с таким наклоном виден
+   сразу. Станция стоит в мировых координатах в точке «на». */
+(function (g, d) {
+  "use strict";
+
+  var W = null, T = null;
+  var М = {};
+  var собрано = false;
+
+  var ИМЯ = "станция";
+  var НА = [0, 11, 80];
+  var ОТ = [0, 13.2, 92];
+  var R = 2.3;
+
+  function зажать(v, н, в) { return v < н ? н : (v > в ? в : v); }
+  function плавно(a, b, x) { x = зажать((x - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); }
+  function fit(v, a, b, c, e) { return c + (e - c) * зажать((v - a) / (b - a), 0, 1); }
+  /* Их lerpCoefFPS: коэффициент, пересчитанный на долю кадра к 60 Гц. */
+  function лерпК(k, dt) {
+    var раз = dt * 60;
+    if (раз > 4) раз = 4;
+    if (!(раз > 0.05)) раз = 0.05;
+    return 1 - Math.pow(1 - k, раз);
+  }
+
+  /* ── GLSL ─────────────────────────────────────────────────────*/
+  var ОБЩЕЕ = [
+    "uniform vec3 uColor1;",
+    "uniform vec3 uColor2;",
+    "uniform vec2 uResolution;",
+    "uniform float uTime;",
+    "uniform float uDen;",
+    "vec3 nebo(){",
+    "  vec2 screenUv = gl_FragCoord.xy / uResolution;",
+    "  float grad = pow((screenUv.x + screenUv.y) * 0.5, 2.0);",
+    "  return mix(uColor2, uColor1, grad);",
+    "}",
+    "vec3 tuman(vec3 color, float mvz, float wy){",
+    "  float distanceFog = clamp(-mvz * 0.005, 0.0, 1.0);",
+    "  float heightFog = clamp(1.0 - wy * 0.35, 0.0, 1.0) * 0.25;",
+    "  return mix(color, nebo(), clamp(distanceFog + heightFog, 0.0, 1.0));",
+    "}",
+    "float hash12(vec2 p){",
+    "  vec3 p3 = fract(vec3(p.xyx) * 0.1031);",
+    "  p3 += dot(p3, p3.yzx + 33.33);",
+    "  return fract((p3.x + p3.y) * p3.z);",
+    "}",
+    "vec3 dizer(vec3 c){ return c + (hash12(gl_FragCoord.xy + uTime) - 0.5) / 255.0; }",
+    "float falloffsmooth(float x, float s, float e, float m, float p){",
+    "  float d = mix(s, e - m, clamp(x, 0.0, 1.0));",
+    "  return smoothstep(d, d + m, p);",
+    "}"
+  ].join("\n");
+
+  var В_БЛОК = [
+    "attribute float aDisp;",
+    "attribute float aBounce;",
+    "attribute float aAO;",
+    "attribute float aAOex;",
+    "attribute float aInner;",
+    "uniform float uOutline;",
+    "varying vec3 vNor;",
+    "varying vec3 vLocN;",
+    "varying vec3 vWorld;",
+    "varying vec3 vPos;",
+    "varying float vMvz;",
+    "varying float vDisp;",
+    "varying float vBounce;",
+    "varying float vAO;",
+    "varying float vInner;",
+    "void main(){",
+    "  vLocN = normal;",
+    "  vec3 p = position * (1.0 + uOutline * 0.018);",
+    "  vec4 loc = instanceMatrix * vec4(p, 1.0);",
+    "  vPos = loc.xyz;",
+    "  vec4 w = modelMatrix * loc;",
+    "  vWorld = w.xyz;",
+    "  vNor = normalize(normalMatrix * mat3(instanceMatrix) * normal);",
+    "  vDisp = aDisp; vBounce = aBounce; vInner = aInner;",
+    "  vAO = mix(aAO, aAOex, clamp(5.0 * aDisp, 0.0, 1.0));",
+    "  vec4 mv = viewMatrix * w;",
+    "  vMvz = mv.z;",
+    "  gl_Position = projectionMatrix * mv;",
+    "}"
+  ].join("\n");
+
+  var Ф_БЛОК = [
+    ОБЩЕЕ,
+    "uniform vec3 uKamen;",
+    "uniform vec3 uTen;",
+    "uniform vec3 uVerh;",
+    "uniform vec3 uNiz;",
+    "uniform vec3 uGlow;",
+    "uniform float uOutline;",
+    "uniform float uIntro;",
+    "uniform float uH;",
+    "varying vec3 vNor;",
+    "varying vec3 vLocN;",
+    "varying vec3 vWorld;",
+    "varying vec3 vPos;",
+    "varying float vMvz;",
+    "varying float vDisp;",
+    "varying float vBounce;",
+    "varying float vAO;",
+    "varying float vInner;",
+    "void main(){",
+    /* Проявление снизу вверх, их формула: всё выше кромки отбрасывается,
+       у кромки синее свечение с решёткой. Решётка у них из текстуры, у
+       нас из хеша по мировым координатам. */
+    "  vec3 blue = vec3(0.5, 0.7, 1.0);",
+    /* Кромка проявления идёт снизу вверх по высоте купола: при uIntro 0
+       всё выше кромки отброшено, при 1 кромка выше верха и купол целый.
+       Их falloffsmooth с их числами (3.95, -0.4, 1.5) считает в их
+       единицах высоты и на нашем радиусе не сходится, поэтому та же
+       ступенька записана по нормированной высоте. */
+    "  float kY = vPos.y / uH;",
+    "  float kromka = uIntro * 1.45 - 0.22;",
+    "  float introEmissive = 1.0 - smoothstep(kY - 0.14, kY + 0.14, kromka);",
+    "  if (introEmissive > 0.9999) discard;",
+    "  if (uOutline > 0.5) {",
+    "    vec3 oc = tuman(vec3(0.91, 0.93, 0.97), vMvz, vWorld.y);",
+    "    gl_FragColor = vec4(oc, 0.5 * (1.0 - introEmissive));",
+    "    return;",
+    "  }",
+    "  vec3 n = normalize(vNor);",
+    /* Кромка блока: где нормаль скруглённого бруска уходит от осей, там
+       ребро. Ребро светлее и с изморозью, это их светлые швы кладки. */
+    "  vec3 an = abs(normalize(vLocN));",
+    "  float edge = 1.0 - max(an.x, max(an.y, an.z));",
+    "  edge = smoothstep(0.05, 0.4, edge);",
+    /* Фактура камня: два масштаба хеша по мировым координатам. */
+    "  vec3 zerno = vec3(hash12(vWorld.xy * 48.0), hash12(vWorld.yz * 48.0 + 3.1), hash12(vWorld.zx * 48.0 + 7.7)) - 0.5;",
+    "  n = normalize(n + zerno * 0.16);",
+    "  vec3 sun = normalize(vec3(-0.55, 0.78, 0.3));",
+    "  float hemi = n.y * 0.5 + 0.5;",
+    "  vec3 svet = mix(uNiz, uVerh, hemi);",
+    "  float sol = smoothstep(0.02, 0.42, dot(n, sun));",
+    "  vec3 vv = normalize(cameraPosition - vWorld);",
+    "  float blik = pow(max(0.0, dot(normalize(sun + vv), n)), 20.0) * 0.3;",
+    "  vec3 base = mix(uTen, uKamen, 0.3 + 0.7 * sol);",
+    "  base *= 0.9 + 0.2 * hash12(floor(vWorld.xz * 2.1) + floor(vWorld.y * 2.1));",
+    "  float ao = mix(0.3, 1.0, vAO);",
+    "  vec3 color = base * svet * ao * (0.55 + 0.7 * sol) + uVerh * blik * ao;",
+    /* Швы у igloo светлые, с изморозью: кромка светлее камня. */
+    "  color = mix(color, uVerh * 1.05, edge * 0.7);",
+    /* Их строки, по порядку: эмиссия по смещению, покойная эмиссия
+       пульсом, свечение внутренней стороны, ложный подповерхностный
+       свет, отскок от грунта. */
+    "  color += pow(vInner, 2.0) * clamp(1.0 * vDisp, 0.0, 1.0) * blue;",
+    "  vec3 powEmission = pow(vInner, 8.0) * blue * 0.5;",
+    "  color += powEmission * (sin(vPos.x - uTime * 1.0 + 3.2) * 0.5 + 0.5);",
+    "  color += max(0.0, smoothstep(0.0, 2.0, vPos.x * 0.5 - vPos.z * 0.5)) * powEmission;",
+    "  color += (vPos.x * 0.1 + 0.4) * 0.3 * min(vPos.y / uH + 0.5, 1.0) * 0.12;",
+    "  color = clamp(color, vec3(0.0), vec3(1.0));",
+    "  color += (1.0 - smoothstep(-0.4, 0.3, vPos.y / uH)) * vBounce * vec3(0.8, 0.9, 1.0) * 0.25;",
+    /* Кромка проявления: синее свечение с решёткой. */
+    "  float tri = step(0.5, fract((vWorld.x + vWorld.y) * 6.0)) * step(0.5, fract((vWorld.z - vWorld.y) * 6.0));",
+    "  introEmissive += clamp(introEmissive * tri * 13.0, 0.0, 1.0);",
+    "  color += introEmissive * blue;",
+    "  color = tuman(color, vMvz, vWorld.y);",
+    "  gl_FragColor = vec4(dizer(color), 1.0);",
+    "}"
+  ].join("\n");
+
+  /* ── Единичный скруглённый брусок ─────────────────────────────
+     Один брусок на все блоки: InstancedMesh масштабирует его матрицей.
+     Коробка 3x3x3 сегмента тянется к эллипсоиду на 0.38 - это скругление
+     кромок, по которому шейдер находит рёбра. Швы вершин склеены, чтобы
+     нормали шли через ребро гладко. */
+  function брусок() {
+    var гео = new T.BoxGeometry(1, 1, 1, 4, 4, 4);
+    var p = гео.attributes.position;
+    var карта = {}, нов = [], перенос = new Int32Array(p.count);
+    for (var a = 0; a < p.count; a++) {
+      var v = new T.Vector3(p.getX(a), p.getY(a), p.getZ(a));
+      /* Скругление 0.26: при 0.38 блоки читались булыжником, у igloo это
+         плоские плиты с мягкой кромкой. */
+      var сф = v.clone().normalize().multiplyScalar(0.5);
+      v.lerp(сф, 0.26);
+      var кл = Math.round(v.x * 1e4) + "_" + Math.round(v.y * 1e4) + "_" + Math.round(v.z * 1e4);
+      if (карта[кл] === undefined) { карта[кл] = нов.length / 3; нов.push(v.x, v.y, v.z); }
+      перенос[a] = карта[кл];
+    }
+    var ind = гео.index, новИнд = [];
+    for (var b = 0; b < ind.count; b++) новИнд.push(перенос[ind.getX(b)]);
+    var г = new T.BufferGeometry();
+    г.setAttribute("position", new T.Float32BufferAttribute(нов, 3));
+    г.setIndex(новИнд);
+    г.computeVertexNormals();
+    return г;
+  }
+
+  /* ── Кладка ───────────────────────────────────────────────────
+     Ряды на полусфере, каждый следующий сдвинут на полблока, блоки
+     касаются друг друга (зазора нет, шов даёт скругление кромок), без
+     случайных наклонов: у igloo всё ровно. Арка входа впереди. */
+  function кладка() {
+    var куски = [];
+    var семя = 31;
+    function сл() { семя = (семя * 9301 + 49297) % 233280; return семя / 233280; }
+    function кусок(центр, кват, разм, внутр) {
+      куски.push({
+        центр: центр, кват: кват, разм: разм,
+        rand: new T.Vector3(сл(), сл(), сл()),
+        внутр: внутр,
+        disp: 0, td1: 0, td2: 0, bounce: 0, tb1: 0, tb2: 0, sd1: 0, sd2: 0,
+        ao: 1, aoEx: 1
+      });
+    }
+    var рядов = W.ступень === 0 ? 6 : 8;
+    var толщ = R * 0.16;
+    for (var ряд = 0; ряд < рядов; ряд++) {
+      var фи = (ряд + 0.5) / (рядов + 0.35) * (Math.PI / 2);
+      var rРяда = Math.cos(фи) * R, yРяда = Math.sin(фи) * R;
+      var выс = R * 0.175;
+      var шир0 = R * 0.30;
+      var n = Math.max(6, Math.round(2 * Math.PI * rРяда / шир0));
+      var шир = 2 * Math.PI * rРяда / n;   /* без зазора, блоки касаются */
+      var сдвиг = (ряд % 2) * 0.5;
+      for (var i = 0; i < n; i++) {
+        var th = ((i + сдвиг) / n) * Math.PI * 2;
+        var кЦентру = Math.abs(Math.atan2(Math.sin(th), Math.cos(th)) - Math.PI / 2);
+        if (ряд < 3 && кЦентру < 0.46) continue;
+        var центр = new T.Vector3(Math.cos(th) * rРяда, yРяда, Math.sin(th) * rРяда);
+        var норм = центр.clone().normalize();
+        var q = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 0, 1), норм);
+        /* Довернуть вокруг нормали так, чтобы «ширина» шла по кольцу. */
+        var вдоль = new T.Vector3(-Math.sin(th), 0, Math.cos(th));
+        var локX = new T.Vector3(1, 0, 0).applyQuaternion(q);
+        var угл = Math.atan2(локX.clone().cross(вдоль).dot(норм), локX.dot(вдоль));
+        q.premultiply(new T.Quaternion().setFromAxisAngle(норм, угл));
+        кусок(центр, q, new T.Vector3(шир * 1.01, выс * 0.98, толщ), true);
+      }
+    }
+    кусок(new T.Vector3(0, R * 0.99, 0), new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 0, 1), new T.Vector3(0, 1, 0)), new T.Vector3(R * 0.34, R * 0.34, толщ), true);
+    /* Арка: клинья полукольцом плюс опоры, вынесены вперёд. */
+    var rАрки = R * 0.44, zАрки = R * 0.95, глА = R * 0.42;
+    for (var a = 0; a < 7; a++) {
+      var t = a / 6 * Math.PI;
+      var ц = new T.Vector3(Math.cos(t) * rАрки, Math.sin(t) * rАрки + R * 0.06, zАрки);
+      var нз = new T.Vector3(Math.cos(t), Math.sin(t), 0);
+      var qa = new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), нз);
+      кусок(ц, qa, new T.Vector3(R * 0.155, R * 0.21, глА), false);
+    }
+    for (var s = 0; s < 2; s++) for (var h = 0; h < 2; h++) {
+      кусок(new T.Vector3((s ? 1 : -1) * rАрки, R * 0.06 + h * R * 0.2 - R * 0.13, zАрки), new T.Quaternion(), new T.Vector3(R * 0.15, R * 0.2, глА), false);
+    }
+
+    /* Затенение по кускам для двух состояний: 12 лучей из центра куска
+       по полусфере вокруг его нормали против сфер соседей. Это их две
+       карты света, посчитанные на месте. */
+    var лучи = [];
+    for (var l = 0; l < 12; l++) {
+      var z = (l + 0.5) / 12, rr = Math.sqrt(1 - z * z), ph = l * 2.39996;
+      лучи.push(new T.Vector3(Math.cos(ph) * rr, Math.sin(ph) * rr, z));
+    }
+    function затен(разлёт) {
+      var центры = куски.map(function (к) {
+        return разлёт ? к.центр.clone().addScaledVector(к.центр, 0.9 * плавно(0.3, 1, к.центр.y / R)) : к.центр;
+      });
+      for (var i2 = 0; i2 < куски.length; i2++) {
+        var к = куски[i2], c = центры[i2];
+        var норм = к.центр.clone().normalize();
+        var баз = new T.Matrix4().lookAt(new T.Vector3(), норм.clone().negate(), new T.Vector3(0, 1, 0));
+        var откр = 0;
+        for (var l2 = 0; l2 < 12; l2++) {
+          var dir = лучи[l2].clone().applyMatrix4(баз).normalize();
+          var задет = 0;
+          for (var b2 = 0; b2 < куски.length; b2++) {
+            if (b2 === i2) continue;
+            var o = центры[b2].clone().sub(c);
+            var tt = o.dot(dir);
+            if (tt <= 0 || tt > R * 1.2) continue;
+            var qd = o.sub(dir.clone().multiplyScalar(tt)).lengthSq();
+            var rb = куски[b2].разм.length() * 0.5;
+            if (qd < rb * rb * 0.7) { задет = 1; break; }
+          }
+          if (!задет) откр += лучи[l2].z;
+        }
+        var v = зажать(откр / 6.0, 0, 1);
+        if (разлёт) к.aoEx = v; else к.ao = v;
+      }
+    }
+    затен(false); затен(true);
+    return куски;
+  }
+
+  /* ── Лёд: скруглённые глыбы, их числа материала ─────────────── */
+  function лёд(гео) {
+    var гр = new T.Group();
+    var полная = W.ступень === 2;
+    /* Лёд читался белым выбитым пятном: эмиссия 0.45 при белом цвете
+       уходила за потолок. Теперь он полупрозрачный, чуть синий,
+       свечение слабое и растёт только от курсора и раскрытия. */
+    var мат = new T.MeshPhysicalMaterial({
+      color: 0xD6E4F2, roughness: полная ? 0.3 : 0.38, metalness: 0, ior: 1.18, reflectivity: 0.3,
+      transparent: true, opacity: полная ? 0.9 : 0.72, depthWrite: false,
+      transmission: полная ? 0.85 : 0, thickness: полная ? 2.0 : 0,
+      emissive: 0x7FA8FF, emissiveIntensity: 0.16, envMapIntensity: 0.91
+    });
+    М.лёдМат = мат;
+    /* Глыбы сидят НА верхушке справа, как на их снимке, размером в
+       треть-половину радиуса, а не в радиус. */
+    var места = [
+      [0.30, 0.92, 0.22, 0.52, 0.26, 0.40, 0.3],
+      [0.58, 0.80, 0.02, 0.44, 0.24, 0.34, -0.2],
+      [0.44, 1.02, -0.22, 0.34, 0.2, 0.28, 0.5],
+      [0.74, 0.66, 0.30, 0.3, 0.18, 0.24, -0.6]
+    ];
+    for (var i = 0; i < места.length; i++) {
+      var м = места[i];
+      var mesh = new T.Mesh(гео, мат);
+      mesh.position.set(м[0] * R, м[1] * R, м[2] * R);
+      mesh.scale.set(м[3] * R, м[4] * R, м[5] * R);
+      mesh.rotation.set(м[6] * 0.4, м[6], м[6] * 0.25);
+      mesh.renderOrder = 12;
+      гр.add(mesh);
+    }
+    return гр;
+  }
+
+  /* ── Сборка ───────────────────────────────────────────────────*/
+  function построить(мир) {
+    if (собрано) return true;
+    W = мир || W;
+    if (!W || !W.T || !W.scene || !W.r) return false;
+    T = W.T;
+
+    М.корень = new T.Group();
+    М.корень.name = "станция";
+    М.корень.position.fromArray(НА);
+    М.корень.visible = false;
+    W.scene.add(М.корень);
+
+    var град = g.RV_ЛУНА ? g.RV_ЛУНА["градиент"] : null;
+    if (g.RV_ЛУНА) {
+      var луна = g.RV_ЛУНА["собрать"](W);
+      if (луна) М.корень.add(луна);
+      М.тень = g.RV_ЛУНА["тень"](0, 0, R * 1.35);
+    }
+    if (!град) {
+      град = { uColor1: { value: new T.Color(0x202A48) }, uColor2: { value: new T.Color(0x05070F) },
+               uResolution: { value: new T.Vector2(1, 1) }, uTime: { value: 0 }, uDen: { value: 0 } };
+    }
+    М.град = град;
+    М.купол = new T.Group();
+    М.корень.add(М.купол);
+    М.сдвиг = new T.Vector3();
+
+    М.куски = кладка();
+    var N = М.куски.length;
+    var гео = брусок();
+    var aDisp = new Float32Array(N), aBounce = new Float32Array(N), aAO = new Float32Array(N), aAOex = new Float32Array(N), aInner = new Float32Array(N);
+    for (var i = 0; i < N; i++) {
+      var к = М.куски[i];
+      aAO[i] = к.ao; aAOex[i] = к.aoEx;
+      /* Эмиссия у них запечена по вершинам; у нас куску целиком: блоки
+         арки не светят, верхние ряды светят сильнее. */
+      aInner[i] = к.внутр ? зажать(0.35 + 0.65 * (к.центр.y / R), 0, 1) : 0;
+    }
+    гео.setAttribute("aDisp", new T.InstancedBufferAttribute(aDisp, 1));
+    гео.setAttribute("aBounce", new T.InstancedBufferAttribute(aBounce, 1));
+    гео.setAttribute("aAO", new T.InstancedBufferAttribute(aAO, 1));
+    гео.setAttribute("aAOex", new T.InstancedBufferAttribute(aAOex, 1));
+    гео.setAttribute("aInner", new T.InstancedBufferAttribute(aInner, 1));
+    гео.attributes.aDisp.setUsage(T.DynamicDrawUsage);
+    гео.attributes.aBounce.setUsage(T.DynamicDrawUsage);
+    М.aDisp = гео.attributes.aDisp; М.aBounce = гео.attributes.aBounce;
+
+    var общие = {
+      uColor1: град.uColor1, uColor2: град.uColor2, uResolution: град.uResolution,
+      uTime: град.uTime, uDen: град.uDen, uIntro: { value: 0 }, uH: { value: R }
+    };
+    М.кладкаМат = new T.ShaderMaterial({
+      uniforms: Object.assign({}, общие, {
+        uOutline: { value: 0 },
+        uKamen: { value: new T.Color(0x9A9CA3) }, uTen: { value: new T.Color(0x5C6478) },
+        uVerh: { value: new T.Color(0xE2E6EE) }, uNiz: { value: new T.Color(0x3A4258) },
+        uGlow: { value: new T.Color(0xBFD4FF) }
+      }),
+      vertexShader: В_БЛОК, fragmentShader: Ф_БЛОК, fog: false
+    });
+    М.кладка = new T.InstancedMesh(гео, М.кладкаМат, N);
+    М.кладка.frustumCulled = false;
+    М.кладка.renderOrder = 10;
+    М.кладка.instanceMatrix.setUsage(T.DynamicDrawUsage);
+    М.купол.add(М.кладка);
+
+    if (W.ступень > 0) {
+      М.обводкаМат = new T.ShaderMaterial({
+        uniforms: Object.assign({}, общие, {
+          uOutline: { value: 1 },
+          uKamen: { value: new T.Color(0) }, uTen: { value: new T.Color(0) },
+          uVerh: { value: new T.Color(0) }, uNiz: { value: new T.Color(0) }, uGlow: { value: new T.Color(0) }
+        }),
+        vertexShader: В_БЛОК, fragmentShader: Ф_БЛОК,
+        side: T.BackSide, transparent: true, depthWrite: false, fog: false
+      });
+      М.обводкаМат.uniforms.uIntro = М.кладкаМат.uniforms.uIntro;
+      М.обводка = new T.InstancedMesh(гео, М.обводкаМат, N);
+      М.обводка.instanceMatrix = М.кладка.instanceMatrix;
+      М.обводка.frustumCulled = false;
+      М.обводка.renderOrder = 9;
+      М.купол.add(М.обводка);
+
+      /* Настоящая тень от блоков на грунт: карта теней от источника
+         нулевой силы (он ничего не освещает, чтобы не засветить соседние
+         акты), принимает её плоскость с ShadowMaterial, синяя. */
+      if (!W.r.shadowMap.enabled) { W.r.shadowMap.enabled = true; W.r.shadowMap.type = T.PCFSoftShadowMap; }
+      М.солнце = new T.DirectionalLight(0xffffff, 0);
+      М.солнце.position.set(-5.5, 7.8, 3.0);
+      М.солнце.castShadow = true;
+      М.солнце.shadow.mapSize.set(W.ступень === 2 ? 1024 : 512, W.ступень === 2 ? 1024 : 512);
+      var ск = М.солнце.shadow.camera;
+      ск.left = -R * 3.5; ск.right = R * 3.5; ск.top = R * 3.5; ск.bottom = -R * 3.5; ск.near = 0.5; ск.far = 30;
+      М.солнце.shadow.bias = -0.0015;
+      М.купол.add(М.солнце); М.купол.add(М.солнце.target);
+      М.кладка.castShadow = true;
+      М.тень3д = new T.Mesh(new T.PlaneGeometry(R * 7, R * 7), new T.ShadowMaterial({ color: 0x1C2A5E, opacity: 0.55, transparent: true }));
+      М.тень3д.rotation.x = -Math.PI / 2;
+      М.тень3д.position.y = 0.012;
+      М.тень3д.receiveShadow = true;
+      М.тень3д.renderOrder = -5;
+      М.купол.add(М.тень3д);
+
+      М.лёд = лёд(гео);
+      М.лёд.children.forEach(function (m) { m.castShadow = true; });
+      М.купол.add(М.лёд);
+
+      var шум = g.RV_ЛУНА && g.RV_ЛУНА["шум"] ? g.RV_ЛУНА["шум"]() : null;
+      if (шум) {
+        var лучМат = new T.ShaderMaterial({
+          uniforms: { uColor1: град.uColor1, uColor2: град.uColor2, uResolution: град.uResolution,
+                      uTime: град.uTime, uDen: град.uDen, tMap: { value: шум },
+                      uCol: { value: new T.Color(0x9FC4FF) }, uAlpha: { value: 0.08 } },
+          vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+          fragmentShader: [
+            ОБЩЕЕ,
+            "uniform sampler2D tMap; uniform vec3 uCol; uniform float uAlpha; varying vec2 vUv;",
+            "void main(){",
+            "  float t = uTime * 0.12;",
+            "  float noise = texture2D(tMap, vUv * vec2(1.0, 0.46) + vec2(t, t * 0.323)).r;",
+            "  noise += texture2D(tMap, vUv * vec2(0.5, 0.25) + vec2(-t * 0.77, -t * 0.414)).r;",
+            "  float circularGradient = pow(1.0 - clamp(length(vUv - 0.5) * 2.0, 0.0, 1.0), 2.0);",
+            "  float a = noise * circularGradient * uAlpha;",
+            "  gl_FragColor = vec4(uCol * a, a);",
+            "}"
+          ].join("\n"),
+          transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false
+        });
+        М.луч = new T.Mesh(new T.PlaneGeometry(1, 1), лучМат);
+        М.луч.position.set(0, R * 0.55, R * 1.5);
+        М.луч.scale.set(R * 0.9, R * 1.6, 1);
+        М.луч.rotation.x = -40 * Math.PI / 180;
+        М.луч.renderOrder = 11;
+        М.купол.add(М.луч);
+      }
+    }
+
+    М.интро = 0;
+    /* Модулятор вступления обязан быть числом ДО первой записи матриц:
+       умножение на undefined давало NaN, и NaN пережил все лерпы - купол
+       не рисовался вовсе (четвёртая сборка, кадр без единого блока). */
+    М.интроМод = 0;
+    М.мышь = new T.Vector3(0, R * 0.5, 0);
+    М.мышьЦель = new T.Vector3(0, R * 0.5, 0);
+    М.мышьСкор = 0;
+    М.естьМышь = false;
+    М.наведено = false;
+    М.кусокПосл = 0;
+    М.открытоБыло = false;
+    М.сбор = 0;
+    указатель();
+    раскладка();
+    g.addEventListener("rv-тема", function (е) { тема(е && е.detail); });
+    тема(d.documentElement.getAttribute("data-тема") === "светлая" ? "светлая" : "тёмная");
+    собрано = true;
+    писатьМатрицы(0, 0, 1 / 60, 0);
+    return true;
+  }
+
+  /* Место купола в кадре. Широкий кадр: купол вправо на 3.2 (слова
+     слева). Узкий: купол на месте, а ВЫШЕ поднимается точка, на которую
+     смотрит камера, - тогда купол уходит в нижнюю половину под слова.
+     Опускать сам купол нельзя: он уходит под грунт (шестая сборка,
+     купол пропал под поверхностью). Поза переобъявляется, как это
+     делает акт «выход» на узком экране. */
+  function раскладка() {
+    if (!М.купол) return;
+    var ш = g.innerWidth || 1, в = g.innerHeight || 1;
+    var широкий = ш / в > 1.1;
+    М.сдвиг.set(широкий ? 3.2 : 0, 0, широкий ? 0 : 0.8);
+    М.купол.position.copy(М.сдвиг);
+    М.купол.scale.setScalar(широкий ? 1 : 1.12);
+    if (М.тень) М.тень.set(М.сдвиг.x, М.сдвиг.z, R * (широкий ? 1.35 : 1.5));
+    поза(широкий);
+  }
+
+  var позаБыла = null;
+  function поза(широкий) {
+    if (!g.RV_WORLD) return;
+    var ключ = широкий ? "ш" : "у";
+    if (позаБыла === ключ) return;
+    позаБыла = ключ;
+    var подъём = широкий ? 0 : 3.1;
+    g.RV_WORLD["поза"](ИМЯ, {
+      "на": [НА[0], НА[1] + подъём, НА[2]],
+      "от": [ОТ[0], ОТ[1] + подъём, ОТ[2]],
+      "подход": 4.0, "уход": -3.0,
+      "поле": [50, 47, 44],
+      "бок": [1.6, 0.3, -0.8],
+      "крен": [0, 0, 0],
+      /* Пролог короче, чем у оболочки (80): при 60 разбег до станции
+         давал размах скорости 29 при пороге 25, а высота 14 - спуск к
+         оболочке в 8.5 единицы за кадр флика на телефоне при пороге 8. */
+      "пролог": 45
+    });
+  }
+
+  function тема(имя) {
+    if (!М.кладкаМат) return;
+    var у = М.кладкаМат.uniforms;
+    if (имя === "светлая") {
+      у.uKamen.value.setHex(0xB4B6BD); у.uTen.value.setHex(0x6E7890);
+      у.uVerh.value.setHex(0xF6F7FA); у.uNiz.value.setHex(0x7C86A6);
+    } else {
+      у.uKamen.value.setHex(0x9A9CA3); у.uTen.value.setHex(0x5C6478);
+      у.uVerh.value.setHex(0xE2E6EE); у.uNiz.value.setHex(0x3A4258);
+    }
+  }
+
+  /* Их planeInteraction: точка экрана на плоскость поперёк взгляда через
+     центр купола, честным лучом. */
+  function указатель() {
+    var луч = new T.Vector3(), пл = new T.Plane(), точка = new T.Vector3();
+    function на(x, y) {
+      if (!W.cam) return;
+      var nx = (x / (g.innerWidth || 1)) * 2 - 1;
+      var ny = -(y / (g.innerHeight || 1)) * 2 + 1;
+      луч.set(nx, ny, 0.5).unproject(W.cam).sub(W.cam.position).normalize();
+      var вперёд = new T.Vector3(); W.cam.getWorldDirection(вперёд);
+      var центр = new T.Vector3().copy(М.сдвиг).add(new T.Vector3(0, R * 0.5, 0)).add(new T.Vector3().fromArray(НА));
+      пл.setFromNormalAndCoplanarPoint(вперёд, центр);
+      if (!new T.Ray(W.cam.position, луч).intersectPlane(пл, точка)) return;
+      М.мышьЦель.set(точка.x - НА[0] - М.сдвиг.x, точка.y - НА[1] - М.сдвиг.y, точка.z - НА[2] - М.сдвиг.z);
+      if (М.купол.scale.x !== 1) М.мышьЦель.divideScalar(М.купол.scale.x);
+      М.естьМышь = true;
+    }
+    g.addEventListener("pointermove", function (е) { if (е.pointerType !== "touch") на(е.clientX, е.clientY); }, { passive: true });
+    g.addEventListener("touchstart", function (е) { var t = е.touches[0]; if (t) на(t.clientX, t.clientY); }, { passive: true });
+    g.addEventListener("touchmove", function (е) { var t = е.touches[0]; if (t) на(t.clientX, t.clientY); }, { passive: true });
+    g.addEventListener("touchend", function () { М.мышьЦель.set(99, 99, 99); }, { passive: true });
+  }
+
+  function событие(что, сила) {
+    try { g.dispatchEvent(new CustomEvent("rv:станция", { detail: { "что": что, "сила": сила || 0 } })); } catch (e) {}
+  }
+
+  /* ── Кадр: их update() по строкам ────────────────────────────── */
+  var _м = null, _q = null, _v = null, _s = null;
+  function писатьМатрицы(доля, t, dt, часы) {
+    if (!_м) { _м = new T.Matrix4(); _q = new T.Quaternion(); _v = new T.Vector3(); _s = new T.Vector3(); }
+    var кс = лерпК(0.05, dt), кд = лерпК(0.06, dt);
+    /* Прокрутка: s = ease(fit(progress, 0, 0.4, 1, 0), sine.in) - на старте
+       верх раздвинут, к 0.4 собран. У нас плюс раскрытие на уходе:
+       после 0.72 те же куски снова приподнимаются, пропуская камеру. */
+    var s0 = fit(доля, 0, 0.4, 1, 0);
+    var s = 1 - Math.cos(s0 * Math.PI / 2);          /* sine.in */
+    var раскр = плавно(0.72, 1.0, доля) * 1.15;
+    s = Math.max(s, раскр);
+    var n = лерпК(0.075, dt);
+    var сумма = 0;
+    for (var i = 0; i < М.куски.length; i++) {
+      var a = М.куски[i];
+      /* Дыхание: их формула. */
+      var l = 0.4;
+      l *= Math.sin(-часы * 2 + a.центр.x) * 0.5 + 0.5;
+      l *= Math.cos(-часы) * 0.5 + 0.5;
+      l *= 0.5 + 1.5 * a.rand.z;
+      l *= 0.5;
+      l *= М.интроМод;
+      /* Курсор: кольцо 1..3 их единиц, у нас в долях R (их иглу ~4 R). */
+      var c = Math.sin(часы + a.rand.x * 12.342) * a.rand.y;
+      var dm = _v.copy(a.центр).sub(М.мышь).length() / (R * 0.25);
+      var h = fit(плавно(1, 3, dm), 0, 1, 0.5 + 0.3 * c, 0);
+      l = Math.max(l, h * t);
+      a.tb1 = l;
+      a.tb2 += (a.tb1 - a.tb2) * кс;
+      a.bounce += (a.tb2 - a.bounce) * кс;
+      var dY = плавно(0.45, 0.7, a.центр.y / R);
+      l *= dY;
+      l = Math.max(0, l);
+      a.td1 = l;
+      a.td2 += (a.td1 - a.td2) * кд;
+      a.disp += (a.td2 - a.disp) * кд;
+      var u = плавно(0.3, 1, a.центр.y / R);
+      var f = fit(a.rand.x, 0.4, 1, 0, 1) * 2;
+      var p = s * u * f;
+      a.sd1 += (p - a.sd1) * n;
+      a.sd2 += (a.sd1 - a.sd2) * n;
+      /* position = centroid + centroid * displacement (радиально). */
+      _v.copy(a.центр).addScaledVector(a.центр, a.disp).addScaledVector(a.центр, a.sd2);
+      var A = a.sd2 * a.rand.x * -1.5, Bm = a.sd2 * a.rand.y * -1.5, C = a.sd2 * a.rand.z * -1.5;
+      _q.copy(a.кват);
+      _q.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), Math.cos(a.disp * 2 + a.rand.z * 30) * a.disp * 0.5 + A));
+      _q.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 0, 1), Math.cos(a.disp * 2 + a.rand.x * 30) * a.disp * 0.5 + Bm));
+      _q.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1, 0, 0), Math.cos(a.disp * 2 + a.rand.y * 30) * a.disp * 0.5 + C));
+      _м.compose(_v, _q, a.разм);
+      М.кладка.setMatrixAt(i, _м);
+      М.aDisp.array[i] = a.disp; М.aBounce.array[i] = a.bounce;
+      сумма += a.sd2;
+    }
+    М.кладка.instanceMatrix.needsUpdate = true;
+    if (М.обводка) М.обводка.instanceMatrix = М.кладка.instanceMatrix;
+    М.aDisp.needsUpdate = true; М.aBounce.needsUpdate = true;
+    М.сбор = 1 - зажать(сумма / (М.куски.length * 0.5), 0, 1);
+    return s;
+  }
+
+  function кадр(доля, dt, часы) {
+    if (!собрано || !М.корень.visible) return;
+    /* Проявление снизу вверх за 2.4 с; дыхание и курсор включаются после. */
+    М.интро = Math.min(1, М.интро + dt / 2.4);
+    М.кладкаМат.uniforms.uIntro.value = 1 - Math.pow(1 - М.интро, 2);
+    М.интроМод = М.интро >= 1 ? 1 : 0;
+    /* Курсор: их лерп 0.05 и скорость с трением 0.98. */
+    М.мышь.lerp(М.мышьЦель, лерпК(0.05, dt));
+    М.мышьСкор += _v ? _v.copy(М.мышьЦель).sub(М.мышь).length() * 0.01 : 0;
+    М.мышьСкор *= Math.pow(0.98, зажать(dt * 60, 0.05, 4));
+    М.мышьСкор = зажать(М.мышьСкор, 0, 1);
+    var t = М.интро >= 1 ? 1 : 0;
+    var s = писатьМатрицы(доля, t, dt, часы);
+    if (!М.сборБыл && М.интро >= 1) { М.сборБыл = true; событие("сбор", 1); }
+    if (!М.открытоБыло && доля > 0.75) { М.открытоБыло = true; событие("разлёт", 1); }
+    if (М.открытоБыло && доля < 0.7) М.открытоБыло = false;
+    var рядом = М.мышь.distanceTo(new T.Vector3(0, R * 0.5, 0)) < R * 1.2;
+    if (рядом && !М.наведено) { М.наведено = true; событие("наведение", 1); }
+    if (!рядом) М.наведено = false;
+    if (рядом && М.мышьСкор > 0.05 && часы - М.кусокПосл > 0.125) { М.кусокПосл = часы; событие("кусок", М.мышьСкор); }
+    if (М.лёдМат) {
+      М.лёдМат.emissiveIntensity = 0.16 + 0.3 * (рядом ? М.мышьСкор : 0) + 0.22 * s;
+      if (М.лёд) М.лёд.position.y = s * R * 0.35;
+    }
+    if (g.RV_ЛУНА) g.RV_ЛУНА["кадр"](доля, dt, часы, W.cam);
+    else { М.град.uTime.value = часы; if (W.r && W.r.getDrawingBufferSize) W.r.getDrawingBufferSize(М.град.uResolution.value); }
+  }
+
+  var МОДУЛЬ = {
+    "собрать": function (мир) { построить(мир); },
+    "показать": function (да) {
+      if (да && !собрано) построить(g.RV_WORLD ? g.RV_WORLD["мир"]() : null);
+      if (собрано) М.корень.visible = !!да;
+    },
+    "кадр": кадр,
+    "размер": function () { if (собрано) раскладка(); }
+  };
+
+  function встать() {
+    if (!g.RV_WORLD) return false;
+    var ш = g.innerWidth || 1, в = g.innerHeight || 1;
+    поза(ш / в > 1.1);
+    g.RV_WORLD["акт"](ИМЯ, МОДУЛЬ);
+    return true;
+  }
+  if (!встать()) {
+    var попыток = 0;
+    var т = g.setInterval(function () { if (встать() || ++попыток > 50) g.clearInterval(т); }, 200);
+  }
+
+  g.RV_СТАНЦИЯ = {
+    "положение": function () { return НА.slice(); },
+    "состояние": function () {
+      return { "сбор": М.сбор || 0, "кусков": М.куски ? М.куски.length : 0, "наведено": !!М.наведено, "собрано": собрано };
+    }
+  };
+})(window, document);
