@@ -336,7 +336,7 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
 
     $doc = lm_render($number, [
         'title'       => 'Обращение',
-        'addressee'   => array_values(array_filter(['Руководителю ' . $org, $fio])),
+        'addressee'   => lm_addressee('Руководителю', $org, $fio),
         'salutation'  => lm_salut($fio),
         'body'        => ol_body_institution($comps, ['org' => $org, 'person' => $fio]),
         'attachments' => ['Положения конкурсов сезона (по ссылке на официальном сайте).'],
@@ -611,7 +611,7 @@ function lm_mail_thanks(array $inst, string $number, int $works = 0, array $teac
     $doc = lm_render($number, [
         'kind'       => 'thanks',
         'title'      => 'Благодарственное письмо',
-        'addressee'  => array_values(array_filter(['Руководителю ' . $org, $fio])),
+        'addressee'  => lm_addressee('Руководителю', $org, $fio),
         'salutation' => lm_salut($fio),
         'body'       => ol_body_thanks(['org' => $org, 'person' => $fio, 'works' => $works,
                                         'season' => $year, 'teachers' => $teachers]),
@@ -744,9 +744,21 @@ function lm_cover_pdf(array $r, string $number, array $attNames = []): string {
  * @return array<int,string> строки реквизита сверху вниз
  */
 function lm_addressee(string $role, string $org, string $fio): array {
-    $out = [];
-    $head = trim($role) !== '' ? trim($role) : trim($org);
+    $out  = [];
+    $role = trim($role);
+    $org  = trim($org);
+    $head = $role !== '' ? $role : $org;
     if ($head !== '') $out[] = $head;
+
+    // ОРГАНИЗАЦИЯ — ОТДЕЛЬНОЙ СТРОКОЙ, А НЕ ХВОСТОМ ДОЛЖНОСТИ.
+    //
+    // Письма учреждениям адресовались строкой «Руководителю <название>», и
+    // название стояло в именительном: «Руководителю Детская школа искусств №3».
+    // По ГОСТ Р 7.0.97-2016 организация пишется своей строкой и склонять её не
+    // нужно. Печатаем её, только когда должность её ещё не назвала, — иначе
+    // выйдет «Министру культуры Кировской области / Министерство культуры
+    // Кировской области» подряд.
+    if ($role !== '' && $org !== '' && !ol_role_covers_org($role, $org)) $out[] = $org;
 
     $parts = array_values(array_filter(preg_split('~\s+~u', trim($fio)) ?: []));
     if (count($parts) >= 2) {

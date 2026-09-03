@@ -476,7 +476,7 @@ function invite_thanks_teacher_pdf(string $org, string $teacher, int $works): st
             'kind'       => 'thanks',
             'number'     => (string) $L['number'],
             'title'      => 'Благодарственное письмо',
-            'addressee'  => array_values(array_filter(['Преподавателю ' . $org, $teacher])),
+            'addressee'  => lm_addressee('Преподавателю', $org, $teacher),
             'salutation' => lm_salut($teacher),
             'body'       => ol_body_teacher($teacher, $org, $works),
             'no_approve' => true,

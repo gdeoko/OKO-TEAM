@@ -29,7 +29,7 @@ declare(strict_types=1);
 define('BASE_PATH', '/var/www/muzmir');
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 foreach (['db', 'data', 'helpers', 'mailer', 'letter_texts', 'official_letter',
-          'letter_mail', 'ministries', 'ministry_mailing', 'outreach_window'] as $m) {
+          'letter_mail', 'ministries', 'ministry_mailing', 'ministry_reply', 'outreach_window'] as $m) {
     require_once BASE_PATH . '/core/' . $m . '.php';
 }
 
