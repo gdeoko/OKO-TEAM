@@ -89,7 +89,7 @@ ob_start(); ?>
       </div>
       <ul class="hero-trust" aria-label="Правовая основа и поддержка">
         <li><span class="hero-trust-ic"><?= $icons['shield'] ?></span>Роскомнадзор № 094084</li>
-        <li><span class="hero-trust-ic"><?= $icons['gov'] ?></span>При поддержке Минкультуры</li>
+        <li><a class="hero-trust-link" href="<?= url('/podderjka') ?>"><span class="hero-trust-ic"><?= $icons['gov'] ?></span>При поддержке ведомств<span class="hero-trust-more">смотреть письма</span></a></li>
         <li><span class="hero-trust-ic"><?= $icons['globe'] ?></span>Портал «Про.Культура.РФ»</li>
       </ul>
       <div class="hero-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
