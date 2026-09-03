@@ -345,13 +345,13 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         }
         $y += 26;
 
-        // при инф. поддержке — авто-подгон кегля под ширину контента
-        foreach (['При информационной поддержке Министерства культуры и образования',
-                  'субъектов Российской Федерации и государственного портала «Pro Культура»'] as $l) {
-            $fs = 21;
-            while ($fs > 13 && pl_text_w($fs, $fBold, $l) > $contentW) $fs--;
-            pl_text($img, 0, $y, $fs, $head, $fBold, $l, 'center', $W);
-            $y += 28;
+        // при инф. поддержке — единый текст, авто-подгон и перенос по ширине контента
+        $supFs = 18;
+        $supLines = pl_wrap(mm_support_text(), $supFs, $fBold, $contentW);
+        while (count($supLines) > 3 && $supFs > 12) { $supFs--; $supLines = pl_wrap(mm_support_text(), $supFs, $fBold, $contentW); }
+        foreach ($supLines as $l) {
+            pl_text($img, 0, $y, $supFs, $head, $fBold, $l, 'center', $W);
+            $y += $supFs + 8;
         }
         $y += 16;
 
