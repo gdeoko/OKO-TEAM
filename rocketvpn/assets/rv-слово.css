@@ -615,3 +615,53 @@ html.рв-слово[data-тема="светлая"] .rv-акт .rv-кн-cdn {
     transform: none;
   }
 }
+
+/* ЛИСТАНИЕ КАРТОЧЕК ПАЛЬЦЕМ (влево-вправо).
+
+   Прямая просьба тестировщика и админа: «хочется полистать влево-право
+   прямоугольники», «можно ли листание прямоугольных карточек». На
+   сенсорном экране ряды тарифов, станций, шагов и звеньев реферала
+   становятся лентой со снапом по X: палец ведёт карточки вбок, каждая
+   встаёт по центру, следующая выглядывает краем и зовёт листать дальше.
+
+   Только coarse pointer: на мониторе мышью карточки стоят рядами, там
+   листать нечего. Глубина ряда (translateZ, preserve-3d) на ленте
+   снимается: полоса прокрутки внутри трёхмерного предка ведёт себя
+   непредсказуемо, а плоская лента листается ровно. */
+@media (pointer: coarse) {
+  html.рв-слово .rv-акт .rv-станции,
+  html.рв-слово .rv-акт .rv-шаги,
+  html.рв-слово .rv-акт .rv-звено,
+  html.рв-слово .rv-акт .rv-тарифы {
+    display: flex; flex-wrap: nowrap;
+    grid-template-columns: none;
+    overflow-x: auto; overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: 14px;
+    gap: 12px;
+    margin-inline: calc(var(--rv-поле) * -1);
+    padding-inline: var(--rv-поле);
+    transform-style: flat;
+    scrollbar-width: none;
+    /* Лента листается вбок, а вертикальная прокрутка страницы при этом
+       не перехватывается: палец решает по направлению первого движения. */
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+  }
+  html.рв-слово .rv-акт .rv-станции::-webkit-scrollbar,
+  html.рв-слово .rv-акт .rv-шаги::-webkit-scrollbar,
+  html.рв-слово .rv-акт .rv-звено::-webkit-scrollbar,
+  html.рв-слово .rv-акт .rv-тарифы::-webkit-scrollbar { display: none; }
+
+  html.рв-слово .rv-акт .rv-станции > *,
+  html.рв-слово .rv-акт .rv-шаги > *,
+  html.рв-слово .rv-акт .rv-звено > *,
+  html.рв-слово .rv-акт .rv-тарифы > * {
+    flex: 0 0 78%;
+    max-width: 78%;
+    scroll-snap-align: center;
+    translate: none;
+    transform: none;
+  }
+}
