@@ -366,6 +366,33 @@
      без которого ответить нельзя. */
   var форма = null;
 
+  /* Поля пишутся ОДИН раз и ставятся в оба места: в окно из шапки и в
+     подвал страницы. Владелец просил форму НА СТРАНИЦЕ, а не только за
+     кнопкой: человек, доехавший до конца ленты, не должен ещё что-то
+     нажимать, чтобы написать. Две копии разметки означали бы две правды
+     о том, какие у нас поля, и рано или поздно они разошлись бы.
+
+     Признаков (id) внутри полей нет намеренно: копий на странице две, и
+     любой id здесь стал бы дублем. Кнопка и строка беды ищутся ВНУТРИ
+     своей формы по классу. */
+  function поляФормы() {
+    return '<label class="rv-поле"><span>Как к вам обращаться</span>' +
+        '<input name="name" type="text" autocomplete="name" maxlength="80" required></label>' +
+      '<label class="rv-поле"><span>Почта, телефон или ник в Телеграме</span>' +
+        '<input name="contact" type="text" autocomplete="email" maxlength="120" required></label>' +
+      '<label class="rv-поле"><span>Что нужно</span>' +
+        '<textarea name="task" rows="3" maxlength="2000"></textarea></label>' +
+      /* Ловушка для роботов. Скрыта от глаза и от чтения с экрана, из
+         обхода по табу выведена: живой человек её не заполнит никогда,
+         а робот заполняет всё подряд. */
+      '<div class="rv-ловушка" aria-hidden="true">' +
+        '<label>Сайт<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>' +
+      '<label class="rv-согласие"><input name="consent" type="checkbox" required>' +
+        '<span>Согласен на обработку данных для ответа на обращение</span></label>' +
+      '<p class="rv-форма-беда" role="alert" hidden></p>' +
+      '<button class="rv-кн rv-кн-гл rv-форма-слать" type="submit">Отправить</button>';
+  }
+
   function формаСобрать() {
     форма = d.createElement("div");
     форма.className = "rv-форма";
@@ -381,27 +408,30 @@
         "</button>" +
         '<h2 class="rv-форма-заг" id="rvФормаЗаг">Написать нам</h2>' +
         '<p class="rv-форма-под">Отвечаем на почту или в Телеграм. Обычно в тот же день.</p>' +
-        '<label class="rv-поле"><span>Как к вам обращаться</span>' +
-          '<input name="name" type="text" autocomplete="name" maxlength="80" required></label>' +
-        '<label class="rv-поле"><span>Почта, телефон или ник в Телеграме</span>' +
-          '<input name="contact" type="text" autocomplete="email" maxlength="120" required></label>' +
-        '<label class="rv-поле"><span>Что нужно</span>' +
-          '<textarea name="task" rows="3" maxlength="2000"></textarea></label>' +
-        /* Ловушка для роботов. Скрыта от глаза и от чтения с экрана, из
-           обхода по табу выведена: живой человек её не заполнит никогда,
-           а робот заполняет всё подряд. */
-        '<div class="rv-ловушка" aria-hidden="true">' +
-          '<label>Сайт<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>' +
-        '<label class="rv-согласие"><input name="consent" type="checkbox" required>' +
-          '<span>Согласен на обработку данных для ответа на обращение</span></label>' +
-        '<p class="rv-форма-беда" id="rvФормаБеда" role="alert" hidden></p>' +
-        '<button class="rv-кн rv-кн-гл" type="submit" id="rvФормаСлать">Отправить</button>' +
+        поляФормы() +
       "</form>";
     d.body.appendChild(форма);
 
     d.getElementById("rvФормаЗакрыть").addEventListener("click", формаЗакрыть);
     форма.addEventListener("click", function (е) { if (е.target === форма) формаЗакрыть(); });
     d.getElementById("rvФормаВид").addEventListener("submit", формаСлать);
+  }
+
+  /* Та же форма, вложенная в конец ленты. Гнездо стоит в разметке
+     подвала; если его нет, формы в подвале просто не будет, и окно из
+     шапки продолжит работать - одно не держится за другое. */
+  function формаВПодвале() {
+    var гнездо = d.getElementById("rvСвязь");
+    if (!гнездо || гнездо.querySelector("form")) return;
+    var ф = d.createElement("form");
+    ф.className = "rv-форма-плита rv-форма-вподвале";
+    ф.setAttribute("novalidate", "");
+    ф.innerHTML =
+      '<h2 class="rv-форма-заг">Написать нам</h2>' +
+      '<p class="rv-форма-под">Отвечаем на почту или в Телеграм. Обычно в тот же день.</p>' +
+      поляФормы();
+    гнездо.appendChild(ф);
+    ф.addEventListener("submit", формаСлать);
   }
 
   function формаОткрыть() {
@@ -420,8 +450,12 @@
     setTimeout(function () { форма.hidden = true; }, 260);
   }
 
-  function беда(текст) {
-    var э = d.getElementById("rvФормаБеда");
+  /* Строка беды ищется ВНУТРИ своей формы. Раньше она бралась по общему
+     признаку через весь документ, и с появлением второй копии формы в
+     подвале жалоба из подвала печаталась бы в окне шапки - человек
+     нажимал бы «Отправить» и не видел ни ответа, ни причины. */
+  function беда(ф, текст) {
+    var э = ф.querySelector(".rv-форма-беда");
     if (!э) return;
     э.textContent = текст;
     э.hidden = !текст;
@@ -432,11 +466,11 @@
     var ф = е.target;
     var имя = ф.name.value.trim();
     var связь = ф.contact.value.trim();
-    if (!имя) { беда("Скажите, как к вам обращаться."); ф.name.focus(); return; }
-    if (!связь) { беда("Нужен способ связи: почта, телефон или ник."); ф.contact.focus(); return; }
-    if (!ф.consent.checked) { беда("Без согласия на обработку мы не сможем ответить."); ф.consent.focus(); return; }
-    беда("");
-    var кн = d.getElementById("rvФормаСлать");
+    if (!имя) { беда(ф, "Скажите, как к вам обращаться."); ф.name.focus(); return; }
+    if (!связь) { беда(ф, "Нужен способ связи: почта, телефон или ник."); ф.contact.focus(); return; }
+    if (!ф.consent.checked) { беда(ф, "Без согласия на обработку мы не сможем ответить."); ф.consent.focus(); return; }
+    беда(ф, "");
+    var кн = ф.querySelector(".rv-форма-слать");
     кн.disabled = true;
     кн.textContent = "Отправляем…";
     fetch(API + "?action=lead", {
@@ -450,26 +484,29 @@
       })
     }).then(function (о) { return о.json(); }).then(function (о) {
       if (о && о.ok) {
+        /* Кнопка «Закрыть» имеет смысл только у окна. В подвале закрывать
+           нечего: форма стоит в ленте, и кнопка вела бы в никуда. */
+        var вокне = !!ф.closest(".rv-форма");
         ф.innerHTML = '<h2 class="rv-форма-заг">Приняли</h2>' +
           '<p class="rv-форма-под">Ответим на указанный контакт. Спасибо, что написали.</p>' +
-          '<button class="rv-кн rv-кн-гл" type="button" id="rvФормаГотово">Закрыть</button>';
-        d.getElementById("rvФормаГотово").addEventListener("click", формаЗакрыть);
-        try { if (g.RV_СЧЁТ) g.RV_СЧЁТ["событие"]("заявка", "меню"); } catch (e) {}
+          (вокне ? '<button class="rv-кн rv-кн-гл" type="button" id="rvФормаГотово">Закрыть</button>' : "");
+        if (вокне) d.getElementById("rvФормаГотово").addEventListener("click", формаЗакрыть);
+        try { if (g.RV_СЧЁТ) g.RV_СЧЁТ["событие"]("заявка", вокне ? "меню" : "подвал"); } catch (e) {}
         return;
       }
       кн.disabled = false; кн.textContent = "Отправить";
-      беда(о && о.error === "contact" ? "Проверьте способ связи: похоже, там опечатка."
+      беда(ф, о && о.error === "contact" ? "Проверьте способ связи: похоже, там опечатка."
          : о && о.error === "too_many" ? "Слишком много обращений подряд. Попробуйте позже."
          : "Не отправилось. Попробуйте ещё раз или напишите в поддержку.");
     }).catch(function () {
       кн.disabled = false; кн.textContent = "Отправить";
-      беда("Сеть не ответила. Попробуйте ещё раз или напишите в поддержку.");
+      беда(ф, "Сеть не ответила. Попробуйте ещё раз или напишите в поддержку.");
     });
   }
 
   /* Меню собираем после разметки: разделы читаются с экрана, и до
      готовности документа их там нет. */
-  function старт() { собрать(); }
+  function старт() { собрать(); формаВПодвале(); }
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", старт);
   else старт();
 
