@@ -139,9 +139,9 @@
     var дети = W.scene.children, i;
     for (i = дети.length - 1; i >= 0; i--) {
       var о = дети[i];
-      if (о.isPoints && о.material && о.material.isPointsMaterial && о.renderOrder === -1) {
-        W.scene.remove(о);
-      }
+      var ядра = о.name === "rv-пыль" ||
+        (о.isPoints && о.material && о.material.isPointsMaterial && о.renderOrder === -1);
+      if (ядра) W.scene.remove(о);
     }
 
     var поз = new Float32Array(n * 4 * 3);
@@ -201,10 +201,20 @@
     сетка.frustumCulled = false;
     сетка.renderOrder = -1;
     сетка.onBeforeRender = function (r, сц, кам) {
-      var ск = мерить(T, кам, W.часы);
+      /* Скорость берётся у мира, если он её отдаёт: одна мерка на пыль
+         и плёнку, иначе росчерки и размыв кадра расходятся по фазе.
+         Без неё своя мерка по ходу камеры. */
+      var ск = null;
+      try { if (g.RV_WORLD["скорость"]) ск = g.RV_WORLD["скорость"](); } catch (e) { ск = null; }
+      if (ск && ск["напр"] && ск["напр"].length === 3) {
+        униф.uVel.value.fromArray(ск["напр"]);
+        униф.uSpeed.value = ск["норм"] || 0;
+      } else {
+        ск = мерить(T, кам, W.часы);
+        униф.uVel.value.copy(ск["напр"]);
+        униф.uSpeed.value = ск["норм"];
+      }
       униф.uCam.value.copy(кам.position);
-      униф.uVel.value.copy(ск["напр"]);
-      униф.uSpeed.value = ск["норм"];
       униф.uTime.value = W.часы;
     };
     W.scene.add(сетка);
