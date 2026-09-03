@@ -729,8 +729,26 @@ function mrep_mark_eform(string $email, string $formUrl = '', string $why = ''):
 
 /** Адрес электронной приёмной, если ведомство назвало его в письме. */
 function mrep_form_url(string $text): string {
-    if (preg_match('~https?://[^\s<>"\)]+~u', $text, $m)) return rtrim($m[0], '.,;');
-    return '';
+    // Первая попавшаяся ссылка не годится: письмо ведомства цитирует наше
+    // обращение целиком, и первой в тексте оказывается ссылка на наш же логотип.
+    // Именно она и записалась Минкультуры Владимирской области как «электронная
+    // приёмная». Берём ссылку на чужой сайт, не на файл, и предпочитаем ту, в
+    // адресе которой есть приёмная или обращение.
+    $own = mb_strtolower((string) cfgv('domain', 'музыкальный-мир.рф'));
+    $ownPuny = 'xn----7sbugdeiegh1b0a9hen';                 // тот же домен в punycode
+    if (!preg_match_all('~https?://[^\s<>"\')]+~u', $text, $mm)) return '';
+
+    $best = '';
+    foreach ($mm[0] as $u) {
+        $u = rtrim($u, '.,;:');
+        $l = mb_strtolower($u);
+        if ($own !== '' && mb_strpos($l, $own) !== false) continue;      // наш домен
+        if (mb_strpos($l, $ownPuny) !== false) continue;
+        if (preg_match('~\.(png|jpe?g|gif|svg|webp|ico|css|js|pdf|docx?)($|\?)~u', $l)) continue;
+        if (preg_match('~priem|priyom|reception|obrashch|obrasheni|feedback|internet-priem~u', $l)) return $u;
+        if ($best === '') $best = $u;
+    }
+    return $best;
 }
 
 /** ОТКАЗ. Тот же принцип: помечаем, и рассылка больше эту строку не видит. */

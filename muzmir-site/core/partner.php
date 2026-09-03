@@ -129,12 +129,31 @@ function partner_next_no(?int $ts = null): string {
     $ts = $ts ?: time();
     $year = (int) date('Y', $ts);
     $prefix = 'ИП-' . $year . '-';
+    /* ДЛИНУ ПРЕФИКСА СЧИТАЕМ В СИМВОЛАХ, А НЕ В БАЙТАХ.
+     *
+     * SUBSTR у SQLite отрезает по символам, а strlen считает байты: у «ИП-2026-»
+     * это 10 против 8, потому что две кириллические буквы занимают по два байта.
+     * Срез уходил на два знака вправо, из «ИП-2026-00001» получалось «001», и
+     * максимумом всегда выходило 999 — следующий номер навсегда застревал на
+     * 01000. Один и тот же номер получили 37 944 учреждения, включая всех
+     * шестнадцать действующих партнёров: их сертификаты неотличимы друг от
+     * друга, а реестр по номеру ничего не находит. */
     try {
         $max = (int) (scalar("SELECT COALESCE(MAX(CAST(SUBSTR(partner_no, ?) AS INTEGER)), 0)
                               FROM institutions WHERE partner_no LIKE ?",
-                              [strlen($prefix) + 1, $prefix . '%']) ?? 0);
+                              [mb_strlen($prefix) + 1, $prefix . '%']) ?? 0);
     } catch (\Throwable $e) { $max = 0; }
-    return sprintf('%s%05d', $prefix, $max + 1);
+    // Номер обязан быть свободным. UNIQUE на partner_no нет, и молчаливый дубль
+    // уже стоил шестнадцати партнёрам одинакового сертификата — проверяем явно.
+    $n = $max + 1;
+    for ($i = 0; $i < 200; $i++) {
+        $no = sprintf('%s%05d', $prefix, $n);
+        try { $busy = one("SELECT id FROM institutions WHERE partner_no=?", [$no]); }
+        catch (\Throwable $e) { return $no; }
+        if (!$busy) return $no;
+        $n++;
+    }
+    return sprintf('%s%05d-%s', $prefix, $n, date('dHis'));
 }
 
 /** Уникальный промокод «PART-YYYY-XXXX». */

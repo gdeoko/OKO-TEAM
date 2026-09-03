@@ -40,7 +40,7 @@ echo "ОТВЕТЫ ВЕДОМСТВ ИЗ ОБЩЕЙ ПОЧТЫ\n$line\n";
 /* Берём всё, что похоже на ответ ведомства и ещё не разобрано по существу. */
 $rows = all("SELECT * FROM inbox_messages
               WHERE is_auto = 0
-                AND kind IN ('ministry_question','ministry_approve','ministry_decline')
+                AND kind IN ('ministry_question','ministry_approve','ministry_decline','ministry_eform')
                 AND COALESCE(handled_by,'') IN ('', 'skip')
               ORDER BY id ASC");
 printf("  писем к разбору: %d\n\n", count($rows));
@@ -101,8 +101,20 @@ foreach ($rows as $m) {
         $kind = 'ministry_decline';
     }
 
+    /* Требование сопроводительного письма — тоже не отказ по существу: документ
+       просто не приняли по форме. Ведомство помечаем, и следующее обращение
+       уйдёт к нему уже с сопроводительным отдельным файлом. */
+    if (preg_match('~отсутствует сопроводительн|без сопроводительн|нет сопроводительн'
+                 . '|отсутствует официальное письмо~ui', $text)) {
+        $kind = 'ministry_cover';
+    }
+
     $verdict = $kind === 'ministry_approve' ? 'поддержка'
-             : ($kind === 'ministry_decline' ? 'отказ' : 'непонятно');
+             : ($kind === 'ministry_decline' ? 'отказ'
+             : ($kind === 'ministry_eform'   ? 'только интернет-приёмная'
+             : ($kind === 'ministry_cover'   ? 'нужно сопроводительное'
+             : 'непонятно')));
+    if (!isset($stat[$verdict])) $stat[$verdict] = 0;
     printf("  #%-5d %-34s %s\n", $id, mb_substr($org, 0, 34), $verdict);
     $stat[$verdict]++;
 
@@ -112,6 +124,48 @@ foreach ($rows as $m) {
 
     if ($kind === 'ministry_question') {          // решает человек, автоматика молчит
         q("UPDATE inbox_messages SET handled_by='human' WHERE id=?", [$id]);
+        continue;
+    }
+
+    /* ── Принимают только через интернет-приёмную ──
+     *
+     * Благодарности тут быть не может: нам не отказали, но и не поддержали —
+     * документ вообще не приняли к рассмотрению. Почтовый канал для этого
+     * ведомства закрываем, чтобы следующая волна не слала ему письма впустую,
+     * и запоминаем ссылку на приёмную: подавать туда придётся руками. */
+    if ($kind === 'ministry_eform') {
+        $form = function_exists('mrep_form_url') ? mrep_form_url($text) : '';
+        if ($min) {
+            try {
+                q("UPDATE ministries SET portal_only=1" . ($form !== '' ? ", e_reception_url=?" : "")
+                  . " WHERE id=?", $form !== '' ? [$form, (int) $min['id']] : [(int) $min['id']]);
+            } catch (\Throwable $e) {}
+        }
+        try {
+            q("UPDATE official_letters SET status='eform', replied_at=datetime('now','localtime')
+                WHERE LOWER(email)=? AND kind='support' AND status IN ('sent','queued')", [$from]);
+        } catch (\Throwable $e) {}
+        echo "     принимают только через приёмную" . ($form !== '' ? ": $form" : "") . "\n";
+        q("UPDATE inbox_messages SET kind='ministry_eform', handled_by='human' WHERE id=?", [$id]);
+        continue;
+    }
+
+    /* ── Вернули из-за отсутствия сопроводительного письма ──
+     *
+     * Ставим ведомству отметку needs_cover: следующее обращение уйдёт с
+     * сопроводительным письмом отдельным первым файлом (lm_cover_pdf()).
+     * Обращение возвращаем в работу — оно не отправлено по существу. */
+    if ($kind === 'ministry_cover') {
+        if ($min) {
+            try { q("UPDATE ministries SET needs_cover=1 WHERE id=?", [(int) $min['id']]); }
+            catch (\Throwable $e) {}
+        }
+        try {
+            q("UPDATE official_letters SET status='needs_cover', replied_at=datetime('now','localtime')
+                WHERE LOWER(email)=? AND kind='support' AND status IN ('sent','queued')", [$from]);
+        } catch (\Throwable $e) {}
+        echo "     вернули без сопроводительного — отмечено, вышлем заново с ним\n";
+        q("UPDATE inbox_messages SET kind='ministry_cover', handled_by='human' WHERE id=?", [$id]);
         continue;
     }
 

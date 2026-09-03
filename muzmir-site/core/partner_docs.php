@@ -49,10 +49,22 @@ function partner_render_pdf(string $url, string $outPath): ?string {
     return $outPath;
 }
 
-/** PDF-путь для сертификата партнёра. */
-function partner_cert_pdf_path(string $partnerNo): string {
+/**
+ * PDF-путь для сертификата партнёра.
+ *
+ * КЭШ ИМЕНУЕТСЯ ПО УЧРЕЖДЕНИЮ, А НЕ ТОЛЬКО ПО НОМЕРУ.
+ *
+ * Имя файла строилось из одного номера партнёрства, а номер выдавался сломанным
+ * счётчиком и у всех оказался одинаковым (ИП-2026-01000). Кэш на 30 дней отдавал
+ * первый попавшийся бланк всем подряд: шестнадцать партнёров получили сертификат,
+ * на котором напечатана тестовая запись «ПРОВЕРКА Детская школа искусств».
+ * Номер починен, но одного этого мало — совпадение номеров не должно приводить
+ * к подмене документа, поэтому в имени файла всегда есть id учреждения.
+ */
+function partner_cert_pdf_path(string $partnerNo, int $instId = 0): string {
+    $slug = (string) preg_replace('~[^0-9a-zA-Z]~', '-', $partnerNo);
     return BASE_PATH . '/public/diplomas/partner_cert_'
-         . preg_replace('~[^0-9a-zA-Z]~', '-', $partnerNo) . '.pdf';
+         . $slug . ($instId > 0 ? '_i' . $instId : '') . '.pdf';
 }
 
 /**
@@ -65,7 +77,7 @@ function partner_cert_pdf(int $instId, bool $regen = false): ?string {
     $no = (string) ($inst['partner_no'] ?? '');
     if ($no === '') return null;
 
-    $out = partner_cert_pdf_path($no);
+    $out = partner_cert_pdf_path($no, $instId);
     if (!$regen && is_file($out) && filesize($out) > 20000 && (time() - (int) filemtime($out)) < 30 * 86400) {
         return $out;
     }

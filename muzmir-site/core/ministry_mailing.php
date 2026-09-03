@@ -256,6 +256,15 @@ function mm_queue_all(bool $activate = false, int $limit = 0): array {
         $pdf   = (string) ($mail['pdf'] ?? '');
         $files = $pdf !== '' && is_file($pdf) ? array_merge([$pdf], $att) : $att;
 
+        // Ведомствам, чья канцелярия требует сопроводительное, оно идёт ПЕРВЫМ
+        // файлом: их СЭД считает входящим именно его, а обращение — приложением.
+        // Без него документ не регистрируют и возвращают (см. lm_cover_pdf()).
+        if ((int) ($r['needs_cover'] ?? 0) === 1) {
+            $cover = lm_cover_pdf($r, $number,
+                ['Положение о конкурсе (бесплатное участие)', 'Афиша конкурса']);
+            if ($cover !== '') array_unshift($files, $cover);
+        }
+
         $id = 0;
         try {
             $id = (int) insert('mail_queue', [
