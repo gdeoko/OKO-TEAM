@@ -127,26 +127,31 @@ foreach ($rows as $m) {
         continue;
     }
 
-    /* ── Принимают только через интернет-приёмную ──
+    /* ── Требуют интернет-приёмную — УДАЛЯЕМ ИЗ БАЗЫ ──
+     *
+     * Правило владельца от 03.09.2026: интернет-приёмными центр не пользуется
+     * нигде. Ведомство, которое принимает обращения только через свою форму,
+     * из базы выбывает — работаем только почтой. Ссылку на приёмную не храним
+     * и пакет для ручной подачи не собираем: подавать туда никто не будет, а
+     * лежащая ссылка провоцирует к этому вернуться.
      *
      * Благодарности тут быть не может: нам не отказали, но и не поддержали —
-     * документ вообще не приняли к рассмотрению. Почтовый канал для этого
-     * ведомства закрываем, чтобы следующая волна не слала ему письма впустую,
-     * и запоминаем ссылку на приёмную: подавать туда придётся руками. */
+     * документ вообще не приняли к рассмотрению. */
     if ($kind === 'ministry_eform') {
-        $form = function_exists('mrep_form_url') ? mrep_form_url($text) : '';
         if ($min) {
             try {
-                q("UPDATE ministries SET portal_only=1" . ($form !== '' ? ", e_reception_url=?" : "")
-                  . " WHERE id=?", $form !== '' ? [$form, (int) $min['id']] : [(int) $min['id']]);
+                q("UPDATE ministries SET portal_only=1, status='excluded', e_reception_url='',
+                          replied_at=datetime('now','localtime'),
+                          note=TRIM(COALESCE(note,'')||' | принимают только через интернет-приёмную — исключено из базы ')||?
+                    WHERE id=?", [date('d.m.Y'), (int) $min['id']]);
             } catch (\Throwable $e) {}
         }
         try {
             q("UPDATE official_letters SET status='eform', replied_at=datetime('now','localtime')
                 WHERE LOWER(email)=? AND kind='support' AND status IN ('sent','queued')", [$from]);
         } catch (\Throwable $e) {}
-        echo "     принимают только через приёмную" . ($form !== '' ? ": $form" : "") . "\n";
-        q("UPDATE inbox_messages SET kind='ministry_eform', handled_by='human' WHERE id=?", [$id]);
+        echo "     требуют интернет-приёмную — исключено из базы\n";
+        q("UPDATE inbox_messages SET kind='ministry_eform', handled_by='auto_excluded' WHERE id=?", [$id]);
         continue;
     }
 

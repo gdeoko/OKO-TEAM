@@ -194,6 +194,10 @@ function chat_system_prompt(): string {
          . '7) Участника мягко ведут в личный кабинет: там его заявки, статусы и наградные материалы. '
          . '8) Прощание «Благодарим Вас за обращение» уместно ТОЛЬКО когда вопрос закрыт; на живой вопрос это не ответ.';
 
+    // КАНОН ВЫШЕ ЭТАЛОНОВ. Эталоны учат манере, канон даёт готовую формулировку
+    // центра по теме вопроса. Порядок в промпте — порядок важности: то, что ниже,
+    // модель читает как уточнение к тому, что выше.
+    if (function_exists('chat_canon_prompt')) { $cn = chat_canon_prompt(); if ($cn !== '') $L[] = $cn; }
     if (function_exists('chat_style_examples')) { $ex = chat_style_examples(); if ($ex !== '') $L[] = $ex; }
     if (function_exists('chat_lessons_for')) {
         $ls = chat_lessons_for((string) ($GLOBALS['chat_last_question'] ?? ''));

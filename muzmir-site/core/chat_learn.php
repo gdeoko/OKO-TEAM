@@ -164,6 +164,66 @@ function chat_style_examples(int $limit = 8): string {
 }
 
 /**
+ * КАНОН ЦЕНТРА — ОТВЕТЫ, КОТОРЫЕ ПОВТОРЯЮТ ПОЧТИ ДОСЛОВНО.
+ *
+ * Эталоны стиля учат манере: как здесь разговаривают. Но на десяток самых частых
+ * вопросов у центра есть готовые формулировки, выверенные годами, и их владелец
+ * правит у бота каждый раз, когда тот пересказывает их своими словами. «В случае
+ * принятия Вами решения о необходимости наградного диплома (согласно
+ * аттестационному результату)…» — это не стиль, это текст, который обязан
+ * прозвучать так и не иначе.
+ *
+ * Поэтому канон отделён от эталонов: эталоны показывают, КАК говорить, канон —
+ * ЧТО именно сказать по этим темам. Собирает его scripts/vk_style_learn.php из
+ * повторов в переписке сообщества, ведёт владелец в админке.
+ */
+function chat_canon_migrate(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS chat_canon (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            topic      TEXT DEFAULT '',
+            triggers   TEXT DEFAULT '',      -- примеры вопросов, по которым он подходит
+            answer     TEXT NOT NULL,
+            uses       INTEGER DEFAULT 0,    -- сколько раз так отвечали в переписке
+            enabled    INTEGER DEFAULT 1,
+            source     TEXT DEFAULT '',
+            created_at TEXT DEFAULT '')");
+    } catch (\Throwable $e) {}
+}
+
+/**
+ * Блок канона для системного промпта — только по теме текущего вопроса.
+ *
+ * Весь канон разом в промпт не кладём: десяток готовых ответов перед глазами
+ * превращает помощника в автомат, который выбирает ближайший шаблон вместо того,
+ * чтобы читать вопрос. Показываем один-два по делу.
+ */
+function chat_canon_prompt(int $limit = 2): string {
+    chat_canon_migrate();
+    $topic = chat_topic_of((string) ($GLOBALS['chat_last_question'] ?? ''));
+    if ($topic === '') return '';
+    try {
+        $rows = all("SELECT triggers, answer FROM chat_canon
+                      WHERE enabled=1 AND topic=? ORDER BY uses DESC LIMIT ?", [$topic, $limit]);
+    } catch (\Throwable $e) { return ''; }
+    if (!$rows) return '';
+
+    $out = [];
+    foreach ($rows as $r) {
+        $tr = trim((string) $r['triggers']);
+        $out[] = ($tr !== '' ? 'Когда спрашивают: ' . mb_substr($tr, 0, 200) . "\n" : '')
+               . 'Отвечай так: ' . trim((string) $r['answer']);
+    }
+    return "ГОТОВАЯ ФОРМУЛИРОВКА ЦЕНТРА ПО ЭТОЙ ТЕМЕ. Это выверенный текст, которым здесь отвечают "
+         . "годами, — передай его смысл ПОЛНОСТЬЮ и теми же словами в главном (сроки, порядок действий, "
+         . "ссылка, оговорки). Можно поправить обращение и убрать лишнее под вопрос человека, но не "
+         . "пересказывай своими словами и ничего не добавляй от себя:\n\n" . implode("\n\n", $out);
+}
+
+/**
  * ОЧИСТКА ЭТАЛОНА ОТ ДЕЖУРНЫХ ФРАЗ.
  *
  * Оператор пишет короткими репликами: отдельно «Здравствуйте», отдельно суть,
@@ -274,18 +334,27 @@ function chat_lessons_for(string $text, int $limit = 3): string {
             $cond = implode(' OR ', array_fill(0, count($words), 'LOWER(question) LIKE ?'));
             $args = array_map(fn($w) => '%' . $w . '%', $words);
             $args[] = $limit;
-            $rows = all("SELECT question, good FROM chat_lessons WHERE ($cond)
+            $rows = all("SELECT question, bad, good FROM chat_lessons WHERE ($cond)
                       ORDER BY id DESC LIMIT ?", $args);
         }
-        if (!$rows) $rows = all("SELECT question, good FROM chat_lessons ORDER BY id DESC LIMIT ?", [$limit]);
+        if (!$rows) $rows = all("SELECT question, bad, good FROM chat_lessons ORDER BY id DESC LIMIT ?", [$limit]);
     } catch (\Throwable $e) { return ''; }
     if (!$rows) return '';
     $out = [];
     foreach ($rows as $r) {
-        $q = trim((string) $r['question']); $g = trim((string) $r['good']);
+        $q = trim((string) $r['question']); $g = trim((string) $r['good']); $b = trim((string) $r['bad']);
         if ($g === '') continue;
-        $out[] = ($q !== '' ? 'На вопрос «' . mb_substr($q, 0, 180) . '» ' : '')
-               . 'правильный ответ такой: ' . mb_substr($g, 0, 400);
+        /* ПОКАЗЫВАЕМ КОНТРАСТ, А НЕ ТОЛЬКО ПРАВИЛЬНЫЙ ОТВЕТ.
+         * Урок «правильный ответ такой» модель читает как ещё один эталон и
+         * спокойно повторяет прежнюю ошибку рядом. Видно должно быть оба текста:
+         * что написал бот и что вместо этого сказал старший оператор — тогда
+         * заметна сама разница, ради которой урок и записан. */
+        $line = ($q !== '' ? 'На вопрос «' . mb_substr($q, 0, 180) . '»:' : 'Случай:');
+        if ($b !== '' && mb_substr(mb_strtolower($b), 0, 40) !== mb_substr(mb_strtolower($g), 0, 40)) {
+            $line .= "\n  бот написал ТАК (неверно): " . mb_substr($b, 0, 260);
+        }
+        $line .= "\n  надо ТАК: " . mb_substr($g, 0, 400);
+        $out[] = $line;
     }
     if (!$out) return '';
     return "РАНЬШЕ ЗДЕСЬ ОШИБАЛИСЬ, И СТАРШИЙ ОПЕРАТОР ПОПРАВИЛ. Не повторяй те ошибки:\n"

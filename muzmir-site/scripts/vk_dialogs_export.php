@@ -1,110 +1,118 @@
 <?php
 /**
- * ВЫГРУЗКА ПЕРЕПИСКИ СООБЩЕСТВА ВКОНТАКТЕ.
+ * vk_dialogs_export.php — выгрузка переписки сообщества ВК для обучения бота.
  *
- * Пять лет колл-центр отвечал участникам руками, и в этих диалогах лежит то,
- * чего нет ни в одном положении: как именно центр разговаривает с людьми. Какими
- * словами объясняют отказ, как просят уточнить конкурс, чем заканчивают разговор.
- * Бот, обученный на выдуманных примерах, звучит правильно, но чужим голосом.
+ * ЗАЧЕМ. Ассистент учится на том, что видит перед ответом: на эталонах стиля и
+ * на уроках-исправлениях (core/chat_learn.php). До сих пор материал брался
+ * только из chat_messages, а туда попадают лишь диалоги, которые вёл сам бот, —
+ * девять штук с 10 августа. Основная переписка центра лежит в сообществе
+ * ВКонтакте: пять тысяч диалогов, и отвечает в них владелец руками. Именно этот
+ * голос и нужно перенести в бота.
  *
- * Здесь переписка выгружается целиком: каждый диалог, каждое сообщение, с
- * пометкой, кто писал — участник или центр. Дальше scripts/vk_style_learn.php
- * разбирает её и собирает из неё живые образцы ответов.
+ * ЧТО ДЕЛАЕТ. Проходит диалоги от свежих к старым, забирает историю каждого и
+ * складывает в JSONL: одна строка — один диалог со списком реплик. Останавливается,
+ * когда диалоги становятся старше заданного срока (список отсортирован по дате
+ * последнего сообщения). Ничего не отправляет и ничего не меняет — только читает.
  *
- * Наружу ничего не уходит: только чтение messages.getConversations и
- * messages.getHistory. Токен сообщества с правом messages обязателен.
- *
- *   php scripts/vk_dialogs_export.php              — выгрузить всё (по умолчанию 600 диалогов)
- *   php scripts/vk_dialogs_export.php --limit=200  — ограничить число диалогов
- *   php scripts/vk_dialogs_export.php --out=/tmp/dlg.json
+ * Запуск: php scripts/vk_dialogs_export.php --days=40 --out=data/vk_dialogs.jsonl
  */
 declare(strict_types=1);
-if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
-
-define('BASE_PATH', dirname(__DIR__));
+define('BASE_PATH', '/var/www/muzmir');
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
+require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
 
-$limit = 600;
-$out   = BASE_PATH . '/data/vk_dialogs.json';
+$days = 40;
+$out  = BASE_PATH . '/data/vk_dialogs.jsonl';
 foreach ($argv as $a) {
-    if (preg_match('~^--limit=(\d+)$~', $a, $m)) $limit = max(1, (int) $m[1]);
-    if (preg_match('~^--out=(.+)$~', $a, $m))    $out   = $m[1];
+    if (preg_match('~^--days=(\d+)$~', $a, $m)) $days = max(1, (int) $m[1]);
+    if (preg_match('~^--out=(.+)$~', $a, $m))   $out  = $m[1][0] === '/' ? $m[1] : BASE_PATH . '/' . $m[1];
 }
 
-$token = trim((string) cfgv('vk_token', ''));
+$token = (string) cfgv('vk_token', '');
 $group = (int) cfgv('vk_group_id', 0);
-if ($token === '' || $group <= 0) { fwrite(STDERR, "нет токена сообщества или vk_group_id\n"); exit(1); }
+if ($token === '' || $group === 0) { fwrite(STDERR, "нет vk_token или vk_group_id\n"); exit(1); }
 
-/** Вызов VK API. Пятая версия, свои ошибки не глотаем: без них выгрузка молча пуста. */
-function vkx(string $method, array $params, string $token): array {
+/** Вызов VK API с мягкой обработкой лимита частоты. */
+function vkq(string $method, array $params, string $token): array {
     $params['access_token'] = $token;
     $params['v'] = '5.199';
-    $ch = curl_init('https://api.vk.com/method/' . $method);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => 1, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 40,
-        CURLOPT_POSTFIELDS => http_build_query($params),
-    ]);
-    $raw = curl_exec($ch);
-    curl_close($ch);
-    $d = json_decode((string) $raw, true);
-    if (!is_array($d)) return ['error' => ['error_msg' => 'нечитаемый ответ: ' . substr((string) $raw, 0, 200)]];
-    return $d;
+    for ($try = 0; $try < 5; $try++) {
+        $ch = curl_init('https://api.vk.com/method/' . $method);
+        curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => http_build_query($params),
+                                CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 45]);
+        $raw = curl_exec($ch);
+        curl_close($ch);
+        $d = json_decode((string) $raw, true);
+        if (!is_array($d)) { usleep(400000); continue; }
+        // 6 — «слишком много запросов в секунду»: ждём и повторяем, это не ошибка.
+        if (isset($d['error']) && (int) $d['error']['error_code'] === 6) { usleep(600000); continue; }
+        return $d;
+    }
+    return ['error' => ['error_msg' => 'нет ответа после пяти попыток']];
 }
 
-$line = str_repeat('=', 78);
-echo "ПЕРЕПИСКА СООБЩЕСТВА ВКОНТАКТЕ\n$line\n";
+$since = time() - $days * 86400;
+$fh = fopen($out, 'w');
+if (!$fh) { fwrite(STDERR, "не открывается $out\n"); exit(1); }
 
-/* ── 1. Список диалогов ── */
-$peers = [];
-for ($offset = 0; $offset < $limit; $offset += 200) {
-    $r = vkx('messages.getConversations', ['count' => min(200, $limit - $offset), 'offset' => $offset,
-                                           'group_id' => $group, 'extended' => 0], $token);
-    if (isset($r['error'])) { fwrite(STDERR, 'ВК: ' . ($r['error']['error_msg'] ?? '?') . "\n"); break; }
+$offset = 0; $dialogs = 0; $msgs = 0; $stop = false;
+$names = [];
+
+while (!$stop) {
+    $r = vkq('messages.getConversations',
+             ['count' => 200, 'offset' => $offset, 'group_id' => $group, 'extended' => 1], $token);
+    if (isset($r['error'])) { fwrite(STDERR, 'ошибка списка: ' . $r['error']['error_msg'] . "\n"); break; }
     $items = $r['response']['items'] ?? [];
     if (!$items) break;
-    foreach ($items as $it) {
-        $p = (int) ($it['conversation']['peer']['id'] ?? 0);
-        if ($p > 0) $peers[] = $p;
-    }
-    // Пауза между вызовами: у сообществ лимит три запроса в секунду.
-    usleep(400000);
-    if (count($items) < 200) break;
-}
-printf("  диалогов найдено: %d\n", count($peers));
-if (!$peers) { echo "  выгружать нечего\n"; exit(0); }
 
-/* ── 2. История каждого ── */
-$dialogs = [];
-$msgTotal = 0;
-foreach ($peers as $i => $peer) {
-    $msgs = [];
-    for ($offset = 0; $offset < 200; $offset += 200) {
-        $h = vkx('messages.getHistory', ['peer_id' => $peer, 'count' => 200, 'offset' => $offset,
-                                         'group_id' => $group, 'rev' => 0], $token);
-        if (isset($h['error'])) break;
-        foreach ($h['response']['items'] ?? [] as $m) {
+    foreach (($r['response']['profiles'] ?? []) as $p) {
+        $names[(int) $p['id']] = trim(($p['first_name'] ?? '') . ' ' . ($p['last_name'] ?? ''));
+    }
+
+    foreach ($items as $it) {
+        $peer = (int) ($it['conversation']['peer']['id'] ?? 0);
+        $last = (int) ($it['last_message']['date'] ?? 0);
+        if ($peer === 0) continue;
+        if ($last < $since) { $stop = true; break; }   // дальше только старее
+
+        $h = vkq('messages.getHistory',
+                 ['peer_id' => $peer, 'count' => 200, 'group_id' => $group, 'rev' => 0], $token);
+        if (isset($h['error'])) { fwrite(STDERR, "  peer $peer: " . $h['error']['error_msg'] . "\n"); continue; }
+
+        $turns = [];
+        foreach (array_reverse($h['response']['items'] ?? []) as $m) {
             $txt = trim((string) ($m['text'] ?? ''));
             if ($txt === '') continue;
-            $msgs[] = [
-                // Сообщение от сообщества: отрицательный from_id или флаг out.
-                'who'  => ((int) ($m['from_id'] ?? 0) < 0 || (int) ($m['out'] ?? 0) === 1) ? 'центр' : 'участник',
-                'date' => date('Y-m-d H:i:s', (int) ($m['date'] ?? 0)),
-                'text' => $txt,
+            // out=1 — писало сообщество. admin_author_id стоит, когда за сообщество
+            // писал человек из админов; без него это ответ бота через API.
+            $turns[] = [
+                'who'   => ((int) ($m['out'] ?? 0) === 1)
+                            ? (!empty($m['admin_author_id']) ? 'owner' : 'bot')
+                            : 'user',
+                'admin' => (int) ($m['admin_author_id'] ?? 0),
+                'date'  => date('Y-m-d H:i:s', (int) $m['date']),
+                'text'  => $txt,
             ];
+            $msgs++;
         }
-        if (count($h['response']['items'] ?? []) < 200) break;
+        if (!$turns) continue;
+
+        fwrite($fh, json_encode([
+            'peer'  => $peer,
+            'name'  => $names[$peer] ?? '',
+            'last'  => date('Y-m-d H:i:s', $last),
+            'turns' => $turns,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
+        $dialogs++;
+        if ($dialogs % 50 === 0) { echo "  диалогов $dialogs, реплик $msgs\n"; flush(); }
+        usleep(220000);                                 // 3 запроса в секунду — предел сообщества
     }
-    if ($msgs) {
-        usort($msgs, static fn($a, $b) => strcmp((string) $a['date'], (string) $b['date']));
-        $dialogs[] = ['peer' => $peer, 'messages' => $msgs];
-        $msgTotal += count($msgs);
-    }
-    if (($i + 1) % 25 === 0) printf("  прочитано диалогов: %d, сообщений: %d\n", $i + 1, $msgTotal);
-    usleep(400000);
+    if ($stop) break;
+    $offset += 200;
+    if ($offset > 6000) break;                          // страховка от бесконечного круга
 }
 
-@file_put_contents($out, json_encode($dialogs, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-printf("\n$line\n  диалогов: %d, сообщений: %d\n  сохранено: %s\n",
-    count($dialogs), $msgTotal, $out);
+fclose($fh);
+echo "готово: диалогов $dialogs, реплик $msgs → $out\n";
