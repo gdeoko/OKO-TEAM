@@ -396,25 +396,27 @@
       /* Униформы общие на все программы материала (материал с DoubleSide
          и разными сетками собирается не один раз): один объект, чтобы
          м.масштаб(v) менял число сразу везде. */
-      var uMasht = { value: 1.0 };
+      /* Имя униформы в GLSL остаётся латинским (uMasht): шейдер кириллицу
+         не соберёт. Кириллица только у объекта на стороне JS. */
+      var uМасштаб = { value: 1.0 };
       var uRim = { value: ст === 2 ? 0.35 : 0.22 };
       var uRimCol = { value: new T.Vector3(0.54, 0.61, 1.0) };
       /* fwidth на первом WebGL живёт в расширении, которого на старых
          телефонах нет, и шейдер с ним не собирается. Включаем только на
          втором. Слой берём у мира, если он уже поднят; иначе судим по
          наличию класса в окне: ложное «да» здесь дороже ложного «нет». */
-      var wgl2 = false;
+      var второйWebGL = false;
       try {
         var мир = g.RV_WORLD && g.RV_WORLD["мир"] ? g.RV_WORLD["мир"]() : null;
-        wgl2 = мир && мир.r ? !!мир.r.capabilities.isWebGL2 : !!g.WebGL2RenderingContext;
-      } catch (eW) { wgl2 = false; }
+        второйWebGL = мир && мир.r ? !!мир.r.capabilities.isWebGL2 : !!g.WebGL2RenderingContext;
+      } catch (eW) { второйWebGL = false; }
       /* Анизотропия: блик тянется вдоль обшивки, как на шлифованном
          металле, а не лежит круглым пятном. Стоит вторую выборку карты
          окружения на точку, поэтому только на полной ступени. */
       if (ст === 2) { м.anisotropy = 0.55; м.anisotropyRotation = 0; }
       м.onBeforeCompile = function (ш) {
         ш.uniforms.chast = { value: о.фактура == null ? 2.6 : о.фактура };
-        ш.uniforms.uMasht = uMasht;
+        ш.uniforms.uMasht = uМасштаб;
         ш.uniforms.uRim = uRim;
         ш.uniforms.uRimCol = uRimCol;
         /* Фактура в ОБЪЕКТНЫХ координатах, а не в мировых. По мировым швы
@@ -489,7 +491,7 @@
              столько, сколько нормаль уходит за точку. */
           .replace("#include <normal_fragment_maps>",
             "#include <normal_fragment_maps>\n"
-            + (wgl2
+            + (второйWebGL
                ? "  roughnessFactor = max(roughnessFactor, clamp(length(fwidth(normal)) * 0.9, 0.0, 0.35));"
                : ""))
           /* Кромка Френеля: у настоящего металла край, повёрнутый к глазу
@@ -501,8 +503,8 @@
             + "  outgoingLight += uRimCol * rimK * uRim;\n"
             + "#include <opaque_fragment>");
       };
-      м.customProgramCacheKey = function () { return "rv-korpus-3-" + ст + (wgl2 ? "w2" : "w1"); };
-      м.масштаб = function (v) { uMasht.value = v > 0 ? v : 1.0; };
+      м.customProgramCacheKey = function () { return "rv-korpus-3-" + ст + (второйWebGL ? "w2" : "w1"); };
+      м.масштаб = function (v) { uМасштаб.value = v > 0 ? v : 1.0; };
 
       /* Зажигание. Акты меняли uniform самописного шейдера; здесь тот
          же смысл выражен собственным свечением материала, а вызов
@@ -653,10 +655,10 @@
          первом WebGL без расширения буфер кадра выходит неполным, и
          слой молча рисует в никуда. Тогда восемь бит и потолок яркого
          в единицу: ореол грубее, но кадр есть. */
-      var wgl2 = false, полуМожно = false;
+      var второйWebGL = false, полуМожно = false;
       try {
-        wgl2 = !!рисовальщик.capabilities.isWebGL2;
-        полуМожно = wgl2 || рисовальщик.extensions.has("EXT_color_buffer_half_float");
+        второйWebGL = !!рисовальщик.capabilities.isWebGL2;
+        полуМожно = второйWebGL || рисовальщик.extensions.has("EXT_color_buffer_half_float");
       } catch (eК) {}
       var полу = полуМожно ? (T.HalfFloatType || T.FloatType) : T.UnsignedByteType;
 
@@ -665,11 +667,11 @@
          сглаживание холста до мишени не доходило: ступень 2 платила за
          antialias и не получала его. Только на втором WebGL: первый
          мультисэмпл в мишени не умеет. */
-      var выборки = (ступень === 2 && wgl2) ? 4 : 0;
+      var выборки = (ступень === 2 && второйWebGL) ? 4 : 0;
       П.сцена = мишень(T, w, h, полу, true, выборки);
       /* Глубина наружу: пыль и плиты по ней мягко гаснут у поверхностей.
          Только на полной ступени: остальным лишняя текстура ни к чему. */
-      П.глубина = (ступень === 2 && wgl2) ? глубинаК(T, П.сцена, w, h) : null;
+      П.глубина = (ступень === 2 && второйWebGL) ? глубинаК(T, П.сцена, w, h) : null;
 
       /* Сколько уровней. На нищей ступени два: ореол станет грубее, но
          останется. Отменять его нельзя - без ореола сцена мгновенно
@@ -815,13 +817,13 @@
         проверен = true;
         if (!(П.сцена.samples > 0)) return;
         try {
-          var gl = рисовальщик.getContext();
+          var контекст = рисовальщик.getContext();
           var св = рисовальщик.properties.get(П.сцена);
-          var fb = св.__webglMultisampledFramebuffer || св.__webglFramebuffer;
-          if (!fb) return;
-          рисовальщик.state.bindFramebuffer(gl.FRAMEBUFFER, fb);
-          var ок = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
-          рисовальщик.state.bindFramebuffer(gl.FRAMEBUFFER, null);
+          var буфер = св.__webglMultisampledFramebuffer || св.__webglFramebuffer;
+          if (!буфер) return;
+          рисовальщик.state.bindFramebuffer(контекст.FRAMEBUFFER, буфер);
+          var ок = контекст.checkFramebufferStatus(контекст.FRAMEBUFFER) === контекст.FRAMEBUFFER_COMPLETE;
+          рисовальщик.state.bindFramebuffer(контекст.FRAMEBUFFER, null);
           if (!ок) { П.сцена.samples = 0; П.сцена.dispose(); }
         } catch (e) {}
       }
