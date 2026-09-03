@@ -446,10 +446,24 @@ function dops_confirmation_send(int $appId): array {
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Письма, относящиеся к заявке.
+ * Письма ЭТОЙ заявки — и только этой.
  *
- * Ищем по адресу заявки И по номеру в теме: адрес участник иногда меняет в
- * кабинете, а номер заявки в теме остаётся навсегда. Дубли по id отсеиваются.
+ * Первая версия брала всё, что уходило на адрес участника, и в карточку падали
+ * общие рассылки («Открыт приём заявок», «Диплом куратора»), письма по другим
+ * его заявкам и служебное уведомление оргкомитету. Оператор ищет конкретную
+ * заявку по номеру и должен видеть её переписку, а не почтовый ящик человека.
+ *
+ * Признак принадлежности один и надёжный — НОМЕР ЗАЯВКИ. Он есть и в теме
+ * («Заявка №VR-2026-00676 не принята к участию»), и в теле письма о результате,
+ * где печатается карточка заявки. Плюс два отсечения:
+ *   - письмо ушло на адрес участника, а не в оргкомитет: уведомление
+ *     «[ЗАЯВКИ] Новая заявка VR-…» содержит номер, но адресовано центру;
+ *   - у письма нет newsletter_id: массовая рассылка к заявке не относится,
+ *     даже если человек её получил.
+ *
+ * Сводное письмо на несколько заявок (педагог подал номера за учеников)
+ * содержит номер каждой и показывается в карточке каждой — это верно: оно
+ * действительно относится ко всем ним.
  *
  * @return array<int,array{id:int,subject:string,status:string,at:string,error:string,kind:string}>
  */
@@ -458,22 +472,22 @@ function dops_app_mails(int $appId, int $limit = 40): array {
     if (!$a) return [];
     $email = mb_strtolower(trim((string) $a['email']));
     $num   = trim((string) $a['number']);
+    if ($email === '' || $num === '') return [];
 
-    $where = []; $args = [];
-    if ($email !== '') { $where[] = 'LOWER(to_email)=?'; $args[] = $email; }
-    if ($num !== '')   { $where[] = 'subject LIKE ?';    $args[] = '%' . $num . '%'; }
-    if (!$where) return [];
-    $args[] = $limit;
-
+    /* Сначала сужаем по адресу — писем на один ящик десятки, а в очереди их
+       сотни тысяч. Поиск номера в теле по всей таблице был бы полным перебором
+       с чтением каждого письма. */
     try {
-        $rows = all("SELECT id, subject, status, created_at, sent_at, error, attach
-                       FROM mail_queue WHERE (" . implode(' OR ', $where) . ")
-                   ORDER BY id DESC LIMIT ?", $args);
+        $rows = all("SELECT id, subject, body, status, created_at, sent_at, error, attach
+                       FROM mail_queue
+                      WHERE LOWER(to_email)=? AND COALESCE(newsletter_id,'')=''
+                   ORDER BY id DESC LIMIT 300", [$email]);
     } catch (\Throwable $e) { return []; }
 
     $out = [];
     foreach ($rows as $r) {
         $subj = (string) $r['subject'];
+        if (mb_strpos($subj, $num) === false && mb_strpos((string) $r['body'], $num) === false) continue;
         $out[] = [
             'id'      => (int) $r['id'],
             'subject' => $subj,
@@ -483,6 +497,7 @@ function dops_app_mails(int $appId, int $limit = 40): array {
             'files'   => count(array_filter((array) json_decode((string) ($r['attach'] ?? ''), true) ?: [])),
             'kind'    => dops_mail_kind($subj),
         ];
+        if (count($out) >= $limit) break;
     }
     return $out;
 }
@@ -490,6 +505,7 @@ function dops_app_mails(int $appId, int $limit = 40): array {
 /** Человеческое имя письма — по теме, чтобы в списке было видно суть без чтения. */
 function dops_mail_kind(string $subject): string {
     $s = mb_strtolower($subject);
+    if (str_contains($s, 'уточнение причины'))                  return 'уточнение отклонения';
     if (str_contains($s, 'не принята к участию'))              return 'отклонение заявки';
     if (str_contains($s, 'принята'))                            return 'приём заявки';
     if (str_contains($s, 'результаты конкурса'))                return 'результат';
