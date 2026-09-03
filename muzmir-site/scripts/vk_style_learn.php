@@ -34,19 +34,35 @@ require_once BASE_PATH . '/core/chat_learn.php';
 
 $apply    = in_array('--apply', $argv, true);
 $perTopic = 8;
+$days     = 40;
 $file     = BASE_PATH . '/data/vk_dialogs.jsonl';
 foreach ($argv as $a) {
     if (preg_match('~^--per-topic=(\d+)$~', $a, $m)) $perTopic = max(2, (int) $m[1]);
+    if (preg_match('~^--days=(\d+)$~', $a, $m)) $days = max(1, (int) $m[1]);
     if (preg_match('~^--file=(.+)$~', $a, $m)) $file = $m[1][0] === '/' ? $m[1] : BASE_PATH . '/' . $m[1];
 }
 if (!$apply && !in_array('--dry', $argv, true)) { fwrite(STDERR, "укажи --dry или --apply\n"); exit(2); }
 if (!is_file($file)) { fwrite(STDERR, "нет файла $file — сначала vk_dialogs_export.php\n"); exit(1); }
 
-/** Личные данные участника в эталоне не нужны. */
+/**
+ * Личные данные в эталоне не нужны.
+ *
+ * ОТДЕЛЬНО — ПЛАТЁЖНЫЕ РЕКВИЗИТЫ. В переписке лежит ответ про оплату из ближнего
+ * зарубежья с номером личной карты владельца и сроком действия. Повторён семь
+ * раз, то есть по частоте это «канон» — и он бы уехал в подсказку модели,
+ * которая начала бы диктовать номер карты всем, кто спросит про оплату. Карту,
+ * счёт и срок действия отбраковываем жёстко, до всякой другой проверки.
+ */
 function vsl_has_personal(string $t): bool {
     return (bool) preg_match('~[\w.+-]+@[\w-]+\.[a-z]{2,}~ui', $t)
         || (bool) preg_match('~(\+7|\b8)[\s(-]?\d{3}[\s)-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}~u', $t)
-        || (bool) preg_match('~\b[A-Z]{2,4}-\d{4}-\d{4,6}\b~u', $t);
+        || (bool) preg_match('~\b[A-Z]{2,4}-\d{4}-\d{4,6}\b~u', $t)
+        // Номер карты: 16 цифр группами или подряд; счёт: 20 цифр.
+        || (bool) preg_match('~\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b~u', $t)
+        || (bool) preg_match('~\b\d{20}\b~u', $t)
+        || (bool) preg_match('~\b\d{2}/\d{2}\b~u', $t)                 // срок действия карты
+        || (bool) preg_match('~карт[аеуы]?\s*(мир|сбер|виза|visa)?\s*:?\s*\d~ui', $t)
+        || (bool) preg_match('~реквизит|расчётный счёт|расчетный счет|инн\s*\d|бик\s*\d~ui', $t);
 }
 
 /** Ссылки и номера обезличиваем, чтобы эталон учил форме, а не данным. */
@@ -64,6 +80,9 @@ function vsl_clean(string $t): string {
  * ещё и сама — и человек получит «Здравствуйте, Мария. Здравствуйте, Мария.»
  */
 function vsl_strip_greeting(string $t): string {
+    // «Доброго времени суток» режем целиком: иначе от него остаётся хвост
+    // «суток.», и он уезжает в эталон началом ответа.
+    $t = preg_replace('~^\s*доброго\s+времени\s+суток\b[,!.\s]*~ui', '', $t) ?? $t;
     $t = preg_replace('~^\s*(здравствуйте|добрый день|доброе утро|добрый вечер|приветствую)\b[,!\s]*'
                     . '([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?)?[.,!\s]*~ui', '', $t) ?? $t;
     return trim($t);
@@ -123,7 +142,28 @@ function vsl_weight(string $a): int {
     return mb_strlen(trim($core));
 }
 
-$pairs = 0; $dialogs = 0; $byTopic = []; $canon = [];
+$since = date('Y-m-d H:i:s', time() - $days * 86400);
+
+/* КТО ПИСАЛ ЗА СООБЩЕСТВО — ЧЕЛОВЕК ИЛИ БОТ.
+ *
+ * Выгрузка отмечает ответ человеческим по полю admin_author_id, но ВКонтакте
+ * ставит его не всегда: из мобильного приложения сообщества оно не приходит.
+ * По этому признаку человеческими вышли 9 тысяч реплик из 377, а остальные 368
+ * тысяч — «ботом», хотя бот запущен неделю назад и столько написать не мог.
+ * Так обучение осталось бы почти без материала.
+ *
+ * Считаем ответом центра ЛЮБОЕ исходящее сообщение, а ответы бота вычитаем по
+ * списку: они все лежат в chat_messages. Их сотни, сверить по тексту дёшево. */
+$botTexts = [];
+try {
+    foreach (all("SELECT text FROM chat_messages
+                   WHERE role IN ('assistant','bot_cancelled') AND COALESCE(by_operator,0)=0") as $b) {
+        $k = mb_substr(preg_replace('~\s+~u', ' ', mb_strtolower(trim((string) $b['text']))) ?? '', 0, 80);
+        if ($k !== '') $botTexts[$k] = 1;
+    }
+} catch (\Throwable $e) {}
+
+$pairs = 0; $dialogs = 0; $byTopic = []; $canon = []; $drop = [];
 $fh = fopen($file, 'r');
 while (($line = fgets($fh)) !== false) {
     $d = json_decode(trim($line), true);
@@ -132,7 +172,13 @@ while (($line = fgets($fh)) !== false) {
     $turns = $d['turns'];
 
     for ($i = 1; $i < count($turns); $i++) {
-        if (($turns[$i]['who'] ?? '') !== 'owner') continue;     // учимся только на человеке
+        if (($turns[$i]['who'] ?? '') === 'user') continue;       // это вопрос, а не ответ
+        /* СВЕЖИМ СЧИТАЕТСЯ ОТВЕТ, А НЕ ДИАЛОГ.
+         * Выгрузка отбирала диалоги по дате последнего сообщения, но историю
+         * тянула целиком — до двухсот реплик. Переписка с постоянным участником
+         * идёт годами, и в обучение попадали ответы 2024 года про конкурсы,
+         * которых давно нет. Считаем только реплики за тот же срок. */
+        if (strcmp((string) ($turns[$i]['date'] ?? ''), $since) < 0) continue;
         // Вопрос — последняя подряд идущая реплика участника перед ответом.
         $q = '';
         for ($j = $i - 1; $j >= 0 && ($turns[$j]['who'] ?? '') === 'user'; $j--) {
@@ -142,11 +188,16 @@ while (($line = fgets($fh)) !== false) {
 
         $qc = vsl_clean($q);
         $ac = vsl_strip_greeting(vsl_clean((string) $turns[$i]['text']));
-        if (mb_strlen($qc) < 8 || mb_strlen($ac) < 20) continue;
-        if (vsl_is_machine($ac)) continue;                       // автоответ, а не человек
-        if (vsl_is_brushoff($ac)) continue;                      // отписка, учиться нечему
-        if (vsl_has_personal($ac) || vsl_has_personal($qc)) continue;
-        if (vsl_weight($ac) < 40) continue;                      // одни дежурные слова
+        $drop['всего исходящих'] = ($drop['всего исходящих'] ?? 0) + 1;
+        if (mb_strlen($qc) < 8 || mb_strlen($ac) < 20) { $drop['короткие'] = ($drop['короткие'] ?? 0) + 1; continue; }
+        if (vsl_is_machine($ac)) { $drop['автоответ'] = ($drop['автоответ'] ?? 0) + 1; continue; }
+        $bk = mb_substr(mb_strtolower($ac), 0, 80);
+        if (isset($botTexts[$bk])) { $drop['ответ бота'] = ($drop['ответ бота'] ?? 0) + 1; continue; }
+        if (vsl_is_brushoff($ac)) { $drop['отписка'] = ($drop['отписка'] ?? 0) + 1; continue; }
+        if (vsl_dead_competition($ac)) { $drop['закрытый конкурс'] = ($drop['закрытый конкурс'] ?? 0) + 1; continue; }
+        if (vsl_has_personal($ac)) { $drop['личные данные в ответе'] = ($drop['личные данные в ответе'] ?? 0) + 1; continue; }
+        if (vsl_has_personal($qc)) { $drop['личные данные в вопросе'] = ($drop['личные данные в вопросе'] ?? 0) + 1; continue; }
+        if (vsl_weight($ac) < 40) { $drop['мало сути'] = ($drop['мало сути'] ?? 0) + 1; continue; }
 
         $topic = vsl_topic($qc, $ac);
         $byTopic[$topic][] = ['q' => mb_substr($qc, 0, 400), 'a' => mb_substr($ac, 0, 900),
@@ -171,7 +222,8 @@ while (($line = fgets($fh)) !== false) {
 }
 fclose($fh);
 
-echo "диалогов разобрано: $dialogs, пар «вопрос → ответ человека»: $pairs\n\n";
+echo "диалогов разобрано: $dialogs, пар «вопрос → ответ человека»: $pairs\n";
+echo "отсев: "; foreach ($drop as $k => $v) echo "$k=$v; "; echo "\n\n";
 krsort($byTopic);
 uasort($byTopic, static fn(array $a, array $b): int => count($b) <=> count($a));
 
@@ -204,9 +256,41 @@ foreach ($byTopic as $topic => $list) {
 function vsl_is_brushoff(string $t): bool {
     $l = mb_strtolower($t);
     return (bool) preg_match('~обращение\s+зарег|находится в обработке|ожидайте пожалуйста|ожидайте, пожалуйста~u', $l)
-        || (bool) preg_match('~более подробную информацию вы можете узнать~u', $l)
+        || (bool) preg_match('~более подробную информацию~u', $l)
         || (bool) preg_match('~/voprosi|/oplata-sayt|/documents~u', $l)
-        || (bool) preg_match('~ответ .{0,30}будет дан~u', $l);
+        || (bool) preg_match('~ответ .{0,30}будет дан~u', $l)
+        // «Ознакомьтесь ВНИМАТЕЛЬНО!!!» и «настоятельно рекомендуем ознакомиться»
+        // отвечают человеку «сам виноват» вместо ответа. Отучать от такого и надо.
+        || (bool) preg_match('~ознакомьтесь пожалуйста внимательно|ознакомьтесь внимательно~u', $l)
+        || (bool) preg_match('~настоятельно рекомендуем.{0,40}ознакоми~u', $l)
+        || (bool) preg_match('~ранее в рамках данной переписки~u', $l);
+}
+
+/**
+ * УПОМИНАЕТ ЛИ ОТВЕТ КОНКУРС, КОТОРОГО БОЛЬШЕ НЕТ.
+ *
+ * Переписке сообщества годы: в ней живут «СЛАВА РОССИИ», «ТАЛАНТЫ РОССИИ»,
+ * «Мировые таланты» и десятки других завершённых конкурсов. В подсказке модели
+ * такой текст опасен ровно тем, от чего её отдельно отучают в системном промпте:
+ * она начнёт называть конкурсы, которых у центра нет. Ответ с названием, которого
+ * нет в базе, в канон не идёт — как эталон стиля он тоже не нужен.
+ */
+function vsl_dead_competition(string $t): bool {
+    static $live = null;
+    if ($live === null) {
+        $live = [];
+        try { foreach (all("SELECT name FROM competitions") as $c) $live[] = mb_strtolower(trim((string) $c['name'])); }
+        catch (\Throwable $e) { $live = []; }
+    }
+    if (!preg_match_all('~[«"]([^»"]{4,60})[»"]~u', $t, $mm)) return false;
+    foreach ($mm[1] as $name) {
+        $n = mb_strtolower(trim($name));
+        // Названия центра и его площадок — не конкурсы, их пропускаем.
+        if (preg_match('~музыкальн\w+ мир|вконтакте|почта росси~u', $n)) continue;
+        if (mb_strlen($n) < 5) continue;
+        if (!in_array($n, $live, true)) return true;
+    }
+    return false;
 }
 
 /* ── ШАБЛОНЫ 1:1 ─────────────────────────────────────────────────────────
@@ -253,7 +337,12 @@ try {
         // «Прочее» в канон не идёт: по такой теме ничего не подберёшь, а в промпт
         // попадёт случайный текст. Туда же не пускаем эскалацию по телефону —
         // она нужна только в конфликте, а не как ответ на обычный вопрос.
-        if ($c['topic'] === 'прочее') continue;
+            if ($c['topic'] === 'прочее') continue;
+        /* Шаблон из одной ссылки — не шаблон: человек получает голый адрес без
+           объяснения, что там и зачем. Такой ответ и правился владельцем чаще
+           прочих. */
+        $bare = trim(preg_replace('~https?://\S+~u', '', $c['a']) ?? '');
+        if (mb_strlen($bare) < 40) continue;
         $sc->execute([$c['topic'], implode(' | ', array_slice($c['qs'], 0, 3)), $c['a'], (int) $c['n']]);
         $canonSaved++;
     }
