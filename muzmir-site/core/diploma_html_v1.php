@@ -752,6 +752,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
      и одна общая поправка сводила основной лист, но разводила благодарность —
      у одного конкурса два блока сошлись вплотную. */
   var INKCAL=<?= json_encode((object)((array)($tpl[$thanks ? 'ink_cal_thanks' : ($isExtra ? 'ink_cal_extra' : ($named ? 'ink_cal_named' : 'ink_cal'))] ?? $tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
+  /* ДОБАВОЧНЫЙ ВОЗДУХ ПОД ОТДЕЛЬНОЙ СТРОКОЙ (gap_after, мм по селектору).
+     Ровные просветы считаются по буквам, и метрически они равны. Но под словом
+     ДИПЛОМ в 58 пунктов тот же просвет глаз читает как склейку: рядом с крупной
+     строкой воздуха нужно больше. Это оптика, а не ошибка замера, поэтому
+     держим её отдельной настройкой конкурса, а не правим выравниватель. */
+  var GAPADD=<?= json_encode((object)((array)($tpl['gap_after'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
   var SC=1;
   function _leaf(el, last){
     var e=el;
@@ -876,7 +882,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
         for(var i=0;i<els.length-1;i++){
           var cur=(boxes[i+1].top-boxes[i].bottom)/PX_MM;
           var m=parseFloat(getComputedStyle(els[i]).marginBottom)/PX_MM;
-          els[i].style.marginBottom=Math.max(-6, m+(G-cur)/Math.max(SC,0.01)).toFixed(2)+'mm';
+          var tgt=G + (parseFloat(GAPADD && GAPADD[sels[i]]) || 0);
+          els[i].style.marginBottom=Math.max(-6, m+(tgt-cur)/Math.max(SC,0.01)).toFixed(2)+'mm';
         }
       }
       return (bb.getBoundingClientRect().top-inkBox(last, sels[sels.length-1]).bottom)/PX_MM;

@@ -1231,6 +1231,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
      браузер реально раскладывает строку, и просветы у «МИР ЗВЁЗД» уезжали на
      два миллиметра. Нулевой inline-block по baseline даёт настоящую базовую
      линию той строки, в которую он попал. */
+  /* ДОБАВОЧНЫЙ ВОЗДУХ ПОД ОТДЕЛЬНОЙ СТРОКОЙ (gap_after, мм по селектору).
+     Ровные просветы считаются по буквам, и метрически они равны. Но под словом
+     ДИПЛОМ в 58 пунктов тот же просвет глаз читает как склейку: рядом с крупной
+     строкой воздуха нужно больше. Это оптика, а не ошибка замера, поэтому
+     держим её отдельной настройкой конкурса, а не правим выравниватель. */
+  var GAPADD=<?= json_encode((object)((array)($tpl['gap_after'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
   var SC=1;
   function _leaf(el, last){
     var e=el;
@@ -1321,7 +1327,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
           /* Цель просвета = общий шаг G плюс точная докрутка для ЭТОГО просвета.
              Докрутка встроена в цель, а не накладывается отдельным проходом:
              иначе при повторных прогонах ритма она накапливалась и лист «плыл». */
-          var tgt = G + (parseFloat(GAPFIX && GAPFIX[i]) || 0);
+          var tgt = G + (parseFloat(GAPFIX && GAPFIX[i]) || 0)
+                      + (parseFloat(GAPADD && GAPADD[sels[i]]) || 0);
           els[i].style.marginBottom=Math.max(-6, m+(tgt-cur)/Math.max(sc,0.01)).toFixed(2)+'mm';
         }
       }
