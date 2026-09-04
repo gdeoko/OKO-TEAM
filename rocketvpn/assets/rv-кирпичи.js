@@ -89,11 +89,13 @@
     "varying float vSeed;",
     "varying float vRaz;",
     "varying float vMvz;",
+    "varying vec3 vWorldPos;",
     "void main(){",
     "  vUv = uv; vSeed = aSeed; vRaz = aRaz; vLocN = normal;",
     "  vec4 loc = instanceMatrix * vec4(position, 1.0);",
     "  vNor = normalize(normalMatrix * mat3(instanceMatrix) * normal);",
     "  vec4 w = modelMatrix * loc;",
+    "  vWorldPos = loc.xyz;",
     "  vec4 mv = viewMatrix * w;",
     "  vMvz = mv.z;",
     "  gl_Position = projectionMatrix * mv;",
@@ -110,12 +112,15 @@
     "uniform float uTex;",
     "uniform float uBright;",
     "uniform float uTime;",
+    "uniform vec3 uHits[5];",
+    "uniform float uHitPow[5];",
     "varying vec3 vNor;",
     "varying vec3 vLocN;",
     "varying vec2 vUv;",
     "varying float vSeed;",
     "varying float vRaz;",
     "varying float vMvz;",
+    "varying vec3 vWorldPos;",
     "float hash12(vec2 p){",
     "  vec3 p3 = fract(vec3(p.xyx) * 0.1031);",
     "  p3 += dot(p3, p3.yzx + 33.33);",
@@ -150,6 +155,37 @@
        из проёма. Пик на середине пути, на концах ноль. */
     "  float lom = vRaz * (1.0 - vRaz) * 4.0;",
     "  color += uGlow * lom * (0.22 + edge * 0.5) * 0.26;",
+    /* ── ТРЕЩИНЫ ОТ ПОПАДАНИЙ ────────────────────────────────────
+       Сценарий владельца: «по мере каждой карточки у стены появляется
+       всё больше трещин и внутри этих трещин свечение ярче».
+
+       Трещины СЧИТАЮТСЯ, а не рисуются картинкой: их рисунок зависит от
+       того, куда именно попал снаряд, и заранее его не нарисуешь. Из
+       каждой точки удара расходятся лучи, число лучей нечётное (семь),
+       чтобы рисунок не выглядел снежинкой.
+
+       Луч это узкая долина по углу вокруг точки удара, затухающая с
+       расстоянием. Внутри долины камень уходит в темноту, а по её дну
+       идёт свет: так выглядит щель, за которой что-то горит. */
+    "  float shcheli = 0.0;",
+    "  for (int h = 0; h < 5; h++) {",
+    "    float sila = uHitPow[h];",
+    "    if (sila <= 0.001) continue;",
+    "    vec2 d = vWorldPos.xy - uHits[h].xy;",
+    "    float r = length(d);",
+    "    float ug = atan(d.y, d.x);",
+    /* Семь лучей: модуль угла по 2*PI/7 даёт долину каждые 51 градус.
+       Смещение по номеру удара разворачивает звёзды друг относительно
+       друга, иначе все пять выглядели бы одним штампом. */
+    "    float luch = abs(fract(ug * 1.1141 + float(h) * 0.37) - 0.5) * 2.0;",
+    "    float uzost = smoothstep(0.86, 1.0, luch);",
+    /* Дальше от точки удара трещина тоньше и глуше. Радиус растёт с
+       силой: свежая трещина короткая, устоявшаяся расходится дальше. */
+    "    float dalnost = 1.0 - smoothstep(0.0, 4.5 * sila + 1.0, r);",
+    "    shcheli = max(shcheli, uzost * dalnost * sila);",
+    "  }",
+    "  color *= mix(1.0, 0.22, shcheli);",
+    "  color += uGlow * pow(shcheli, 1.6) * 1.35;",
     /* Стена гаснет вдаль сама: у прокола нет тумана сцены, а без
        затухания дальние кирпичи спорят яркостью с ближними. */
     "  float dal = 1.0 - smoothstep(20.0, 96.0, -vMvz);",
@@ -225,7 +261,10 @@
         uVerh: { value: new T.Color(0x9FA9BC) },
         uGlow: { value: new T.Color(0x8FB4FF) },
         tBlok: М.uТек, tBlokN: М.uТекН, uTex: М.uТекДоля,
-        uBright: { value: 1 }, uTime: { value: 0 }
+        uBright: { value: 1 }, uTime: { value: 0 },
+        uHits: { value: [new T.Vector3(), new T.Vector3(), new T.Vector3(),
+                         new T.Vector3(), new T.Vector3()] },
+        uHitPow: { value: [0, 0, 0, 0, 0] }
       },
       vertexShader: В_КИРПИЧ, fragmentShader: Ф_КИРПИЧ, fog: false
     });
@@ -316,6 +355,16 @@
     "кадр": кадр,
     "видно": function (да) { if (собрано) М.корень.visible = !!да; },
     "яркость": function (v) { if (собрано) М.мат.uniforms.uBright.value = зажать(v, 0, 2); },
+    /* Трещины ставит тот, кто бьёт: снаряды знают, куда попали, стена
+       знает только как это нарисовать. */
+    "удары": function (точки, силы) {
+      if (!собрано || !точки || !силы) return;
+      var у = М.мат.uniforms;
+      for (var i = 0; i < 5; i++) {
+        у.uHits.value[i].set(точки[i * 3] || 0, точки[i * 3 + 1] || 0, точки[i * 3 + 2] || 0);
+        у.uHitPow.value[i] = силы[i] || 0;
+      }
+    },
     "корень": function () { return собрано ? М.корень : null; },
     "замер": function () {
       if (!собрано) return { "собрано": false };
