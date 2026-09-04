@@ -1178,11 +1178,19 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
        строки. Подгоняем по ширине, как название конкурса. */
     fitOne('.awarded-name-script', 13, <?= (float)$T['script_fs'] ?>);
     fitOne('.extra-award', 9, 15);
-    if(!FAM || (document.fonts && document.fonts.check && document.fonts.check('900 40pt "'+FAM+'"'))){
+    /* Раньше ждали шрифт названия ИМЕННО в весе 900. У части тем шрифт
+       одновесный (Prata у «Мира звёзд», Yeseva One), 900-начертания нет, и
+       проверка не проходила НИКОГДА — уравниватель просветов не запускался, а
+       лист уходил с кривым ритмом. Ждём шрифт в его реальном присутствии (без
+       привязки к 900); загрузку принудительно доводит document.fonts.load ниже. */
+    if(!FAM || !(document.fonts && document.fonts.check) || document.fonts.check('40pt "'+FAM+'"')){
       fitOptical();
       document.documentElement.setAttribute('data-title-fit','1');
     }
   }
+  /* Страховка: если детект шрифта так и не сработал (мост/оффлайн-шрифт),
+     всё равно выравниваем ритм и снимаем стоп-метку, чтобы бланк не ушёл кривым. */
+  function fitForce(){ try{ fitOptical(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
   /* РОВНЫЙ ЛИСТ - ПО БУКВАМ, А НЕ ПО РАМКАМ БЛОКОВ.
      Раньше выравнивались margin'ы, и по замерам всё сходилось, а глаз видел
      разнобой: у слова ДИПЛОМ в 58 пунктов рамка строки почти совпадает с
@@ -1246,11 +1254,14 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     applyG(best);
   }
   if(document.fonts && document.fonts.load && FAM){
-    try{ document.fonts.load('900 40pt "'+FAM+'"').then(fitTitle, fitTitle); }catch(e){}
+    /* Догружаем шрифт названия в РЕАЛЬНОМ присутствии, а не только в 900:
+       у одновесных шрифтов (Prata) запрос 900 отдавал пустой набор и ритм не
+       доводился. */
+    try{ Promise.all([document.fonts.load('40pt "'+FAM+'"'), document.fonts.load('900 40pt "'+FAM+'"').catch(function(){})]).then(fitTitle, fitTitle); }catch(e){}
   }
   if(document.fonts && document.fonts.ready){ document.fonts.ready.then(fitTitle); }
   window.addEventListener('load',fitTitle);
-  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>24) clearInterval(tick); },120);
+  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>24){ clearInterval(tick); if(document.documentElement.getAttribute('data-title-fit')!=='1') fitForce(); } },120);
 })();
 </script>
 </body>
