@@ -818,33 +818,76 @@ function order_dispatch_production(int $orderId): bool {
  * Почтой России» с кнопкой «Отследить посылку» + in-app уведомление.
  */
 function order_mark_shipped(int $orderId, string $track): bool {
-    orders_migrate();
-    $order = one("SELECT * FROM awards_orders WHERE id=?", [$orderId]);
-    if (!$order) return false;
-    $track = trim($track);
-    update('awards_orders', ['status' => 'shipped', 'tracking' => $track, 'shipped_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $orderId]);
+    return order_mark_shipped_parcel([$orderId], $track);
+}
 
-    $email = (string)($order['email'] ?? '');
-    $name  = (string)($order['full_name'] ?? '');
+/**
+ * ОТПРАВКА ПОСЫЛКИ: ОДИН ТРЕК — ОДНО ПИСЬМО, НО СО ВСЕМ, ЧТО В КОРОБКЕ.
+ *
+ * Человек заказывает награды по каждой заявке отдельно, а едут они вместе: один
+ * адрес, один ярлык, один трек-номер. Раньше письмо об отправке собиралось по
+ * ПЕРВОМУ заказу посылки, и участник читал, что ему выслали только основной и
+ * дополнительный дипломы, хотя в коробке лежали ещё благодарность и статуэтка
+ * из второго заказа. Человек шёл на почту за неполной посылкой и писал в центр.
+ *
+ * Поэтому состав письма собирается по ВСЕМ заказам посылки, а номера заказов
+ * перечисляются в заголовке. Письмо по-прежнему одно: четыре одинаковых письма
+ * подряд читаются как сбой рассылки.
+ *
+ * @param array<int> $orderIds заказы одной посылки (первый — основной)
+ */
+function order_mark_shipped_parcel(array $orderIds, string $track): bool {
+    orders_migrate();
+    $ids = array_values(array_unique(array_filter(array_map('intval', $orderIds), static fn(int $x): bool => $x > 0)));
+    if (!$ids) return false;
+    $track = trim($track);
+
+    $orders = [];
+    foreach ($ids as $i) {
+        $o = one("SELECT * FROM awards_orders WHERE id=?", [$i]);
+        if ($o) $orders[] = $o;
+    }
+    if (!$orders) return false;
+
+    foreach ($orders as $o) {
+        update('awards_orders', ['status' => 'shipped', 'tracking' => $track, 'shipped_at' => date('Y-m-d H:i:s')],
+               'id=:id', ['id' => (int) $o['id']]);
+    }
+
+    $order = $orders[0];
+    $nums  = array_map(static fn(array $o): int => (int) $o['id'], $orders);
+    $email = (string) ($order['email'] ?? '');
     $ok = false;
     if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $html = order_ship_email(array_merge($order, ['tracking' => $track]));
+        $html = order_ship_email(array_merge($order, ['tracking' => $track]), $orders);
         $nagradi = function_exists('mail_senders') ? (mail_senders()['nagradi'] ?? []) : [];
         $opt = ['from_name' => 'Наградный отдел «Музыкальный Мир»'];
         if ($nagradi) $opt['account'] = $nagradi;
-        if (function_exists('mail_send')) $ok = (bool) mail_send($email, 'Ваши награды отправлены Почтой России — заказ №' . $orderId, $html, $opt);
+        $subj = count($nums) > 1
+            ? 'Ваши награды отправлены Почтой России — заказы №' . implode(', №', $nums)
+            : 'Ваши награды отправлены Почтой России — заказ №' . $nums[0];
+        if (function_exists('mail_send')) $ok = (bool) mail_send($email, $subj, $html, $opt);
     }
     // In-app уведомление.
-    $uid = (int)($order['user_id'] ?? 0);
+    $uid = (int) ($order['user_id'] ?? 0);
     if ($uid > 0 && function_exists('notify_user')) {
         $track4 = $track !== '' ? (' Трек: ' . $track . '.') : '';
-        notify_user($uid, 'Награды отправлены Почтой России', 'Заказ №' . $orderId . ' отправлен.' . $track4, '/cabinet#orders', 'trophy');
+        $what = count($nums) > 1 ? ('Заказы №' . implode(', №', $nums) . ' отправлены одной посылкой.')
+                                 : ('Заказ №' . $nums[0] . ' отправлен.');
+        notify_user($uid, 'Награды отправлены Почтой России', $what . $track4, '/cabinet#orders', 'trophy');
     }
     return $ok;
 }
 
-/** Красивое письмо об отправке (rich mm_email_tx) с трек-номером и кнопкой отслеживания. */
-function order_ship_email(array $order): string {
+/**
+ * Красивое письмо об отправке (rich mm_email_tx) с трек-номером и кнопкой отслеживания.
+ *
+ * @param array $order  основной заказ посылки (адрес, получатель, трек)
+ * @param array $parcel все заказы этой посылки; пусто — значит посылка из одного
+ *                      заказа. Состав перечисляется по всем: в коробку кладут всё
+ *                      разом, и письмо обязано совпадать с тем, что человек достанет.
+ */
+function order_ship_email(array $order, array $parcel = []): string {
     $base  = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
     $name  = trim((string)($order['full_name'] ?? ''));
     $track = trim((string)($order['tracking'] ?? ''));
@@ -852,15 +895,37 @@ function order_ship_email(array $order): string {
     $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
     $trackUrl = order_pochta_url($track);
 
+    if (!$parcel) $parcel = [$order];
+    $nums = [];
+    foreach ($parcel as $o) { $n = (int) ($o['id'] ?? 0); if ($n > 0) $nums[] = $n; }
+    if (!$nums) $nums = [(int) $oid];
+
+    /* Одинаковые позиции из разных заказов складываем: «Медаль × 1» и «Медаль × 1»
+     * в одной коробке человек видит как две медали, а не как две строки. Именные
+     * бланки (диплом на ФИО, благодарность педагогу) не складываются — у каждого
+     * своё имя, и order_items_parse держит их отдельными строками. */
+    $lines = [];
+    foreach ($parcel as $o) {
+        foreach (order_items_parse($o) as $p) {
+            $key = mb_strtolower(trim((string) $p['item'])) . '|' . mb_strtolower(trim((string) ($p['fio'] ?? '')));
+            if (!isset($lines[$key])) $lines[$key] = ['item' => (string) $p['item'], 'fio' => (string) ($p['fio'] ?? ''), 'count' => 0];
+            $lines[$key]['count'] += (int) $p['count'];
+        }
+    }
     $rows = '';
-    foreach (order_items_parse($order) as $p) {
-        $rows .= '<tr><td style="padding:6px 0;font-size:14px;color:' . MM_INK . ';">' . h($p['item']) . '</td>'
+    foreach ($lines as $p) {
+        $who = $p['fio'] !== '' ? '<span style="color:' . MM_MUTED . ';"> · ' . h($p['fio']) . '</span>' : '';
+        $rows .= '<tr><td style="padding:6px 0;font-size:14px;color:' . MM_INK . ';">' . h($p['item']) . $who . '</td>'
               . '<td style="padding:6px 0;font-size:14px;color:' . MM_NAVY . ';font-weight:700;text-align:right;">× ' . (int)$p['count'] . '</td></tr>';
     }
 
+    $numsHtml = count($nums) > 1
+        ? 'заказам <b style="color:' . MM_NAVY . ';">№' . h(implode(', №', $nums)) . '</b> (одной посылкой)'
+        : 'заказу <b style="color:' . MM_NAVY . ';">№' . h((string) $nums[0]) . '</b>';
+
     $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;">Ваши награды отправлены</h1>'
         . '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 18px;">Наградные материалы по заказу <b style="color:' . MM_NAVY . ';">№' . h($oid) . '</b> изготовлены и отправлены <b>Почтой России</b>.</p>'
+        . '<p style="margin:0 0 18px;">Наградные материалы по ' . $numsHtml . ' изготовлены и отправлены <b>Почтой России</b>.</p>'
         . ($track !== '' ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border-radius:14px;overflow:hidden;"><tr>'
             . '<td style="background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ',' . MM_NAVY2 . ');padding:20px 24px;text-align:center;">'
             . '<div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:6px;">Трек-номер для отслеживания</div>'
@@ -871,7 +936,8 @@ function order_ship_email(array $order): string {
         . '<p style="margin:14px 0 0;font-size:14px;color:' . MM_MUTED . ';">Доставка Почтой России — обычно до 14 рабочих дней. Отследить посылку можно по кнопке ниже.</p>';
 
     return mm_email_tx($inner, [
-        'preheader' => 'Заказ №' . $oid . ' отправлен Почтой России' . ($track !== '' ? '. Трек: ' . $track : '') . '.',
+        'preheader' => (count($nums) > 1 ? 'Заказы №' . implode(', №', $nums) . ' отправлены' : 'Заказ №' . $nums[0] . ' отправлен')
+                     . ' Почтой России' . ($track !== '' ? '. Трек: ' . $track : '') . '.',
         'hero'      => $trackUrl !== '' ? mm_cta_primary($trackUrl, 'Отследить посылку', 'Почта России · трек ' . $track) : mm_cta_primary($base . '/cabinet#orders', 'Мои заказы в кабинете'),
         'actions'   => [['Личный кабинет', $base . '/cabinet#orders'], ['Оставить отзыв', $base . '/reviews']],
         'thanks'    => true,

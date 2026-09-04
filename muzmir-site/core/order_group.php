@@ -262,6 +262,42 @@ function og_groups(array $orders): array {
     return $g;
 }
 
+/**
+ * ВСЕ ЗАКАЗЫ ТОЙ ЖЕ ПОСЫЛКИ, ЧТО И ЗАДАННЫЙ.
+ *
+ * Нужно там, где кнопка стоит у одного заказа, а действие относится к посылке
+ * целиком: отправка с трек-номером. В «Очереди отправки» карточки идут по
+ * заказам, и без этой сверки трек проставлялся одному заказу, а второй из той же
+ * коробки оставался «в производстве», и участник получал письмо с половиной
+ * содержимого посылки.
+ *
+ * @return array<int> id заказов посылки, первым — переданный
+ */
+function og_parcel_ids(int $orderId): array {
+    $o = one("SELECT * FROM awards_orders WHERE id=?", [$orderId]);
+    if (!$o) return [];
+    if (!og_needs_address($o)) return [$orderId];   // электронные посылками не ездят
+
+    $uid   = (int) ($o['user_id'] ?? 0);
+    $mail  = trim((string) ($o['email'] ?? ''));
+    $where = $uid > 0 ? 'user_id = ?' : 'LOWER(email) = LOWER(?)';
+    $arg   = $uid > 0 ? $uid : $mail;
+    if ($uid <= 0 && $mail === '') return [$orderId];
+
+    $rows = all("SELECT * FROM awards_orders
+                  WHERE $where AND status IN ('paid','made','shipped')
+               ORDER BY id ASC LIMIT 200", [$arg]);
+    foreach (og_groups($rows) as $grp) {
+        if (in_array($orderId, array_map('intval', $grp['ids']), true)) {
+            $ids = array_values(array_unique(array_map('intval', $grp['ids'])));
+            // Переданный заказ — первым: по нему берутся получатель и адрес письма.
+            usort($ids, static fn(int $a, int $b): int => ($a === $orderId ? -1 : ($b === $orderId ? 1 : $a <=> $b)));
+            return $ids;
+        }
+    }
+    return [$orderId];
+}
+
 /** Общий статус группы: самый ранний из встреченных — по нему видно, что делать. */
 function og_group_status(array $group): string {
     foreach (['paid', 'made', 'shipped', 'delivered', 'new', 'canceled'] as $s) {

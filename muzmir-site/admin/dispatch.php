@@ -368,8 +368,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($do === 'ship') {
             $track = trim(input('tracking'));
             if ($track === '') disp_done(false, 'Введите трек-номер.');
-            $ok = function_exists('order_mark_shipped') ? order_mark_shipped($id, $track) : false;
-            disp_done($ok, $ok ? ('Заказ №' . $id . ' отправлен, участнику ушло письмо с трек-номером.') : 'Статус обновлён, письмо не ушло.', ['remove' => $ok]);
+            /* Трек ставится всей посылке, а не одному заказу. Карточки в очереди
+             * идут по заказам, но в коробку кладут всё, что человек заказал на
+             * один адрес: без этой сверки второй заказ оставался «в производстве»,
+             * а письмо перечисляло половину содержимого. */
+            require_once BASE_PATH . '/core/order_group.php';
+            $pids = function_exists('og_parcel_ids') ? og_parcel_ids($id) : [$id];
+            if (!$pids) $pids = [$id];
+            $ok = function_exists('order_mark_shipped_parcel') ? order_mark_shipped_parcel($pids, $track) : false;
+            $note = count($pids) > 1 ? (' Одной посылкой с заказ' . (count($pids) > 2 ? 'ами' : 'ом') . ' №'
+                                        . implode(', №', array_slice($pids, 1)) . '.') : '';
+            disp_done($ok, $ok ? ('Заказ №' . $id . ' отправлен, участнику ушло письмо с трек-номером.' . $note)
+                               : 'Статус обновлён, письмо не ушло.', ['remove' => $ok]);
         } elseif ($do === 'redispatch') {
             update('awards_orders', ['dispatched_at' => ''], 'id=:id', ['id' => $id]);
             $ok = function_exists('order_dispatch_production') ? order_dispatch_production($id) : false;

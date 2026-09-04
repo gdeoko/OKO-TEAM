@@ -1139,6 +1139,18 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
      сверху вниз) добавляется к отступам ПОСЛЕ выравнивателя и доводит их до
      равных по факту рендера. Значения подбираются замером готового листа. */
   var GAPFIX=<?= json_encode(array_values(array_map('floatval', (array)($tpl['gap_fix'] ?? []))), JSON_UNESCAPED_UNICODE) ?>;
+  /* ФИКСИРОВАННЫЙ РОВНЫЙ ШАГ.
+     Когда задан competitions.diploma_template.fixed_gap (мм листа), автоподбор
+     величины просвета выключается: между ВСЕМИ разделами ставится ровно этот
+     просвет. Автоподбор растягивал шаг на всю свободную высоту, из-за чего
+     отступы выходили в полтора раза больше эталона владельца. */
+  var FIXG=<?= (float)($tpl['fixed_gap'] ?? 0) ?>;
+  /* ПОПРАВКА ГРАНИЦ БУКВ ПО ШРИФТУ (competitions.diploma_template.ink_cal).
+     {'.селектор':[верх,низ]} в долях кегля. Снимается замером готового листа
+     скриптом scripts/diploma_rhythm_cal.php: у Prata и Playfair метрика canvas
+     на пару миллиметров расходится с тем, что печатается. Держим в долях
+     кегля, чтобы поправка не рассыпалась при другом размере строки. */
+  var INKCAL=<?= json_encode((object)((array)($tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
   /* Ширину строки меряем диапазоном (Range), а НЕ scrollWidth: у блока с
      text-align:center переполнение уходит в обе стороны, и scrollWidth всегда
      равен clientWidth - проверка «влезло?» была всегда ложной, и название
@@ -1210,21 +1222,69 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
      (canvas: actualBoundingBoxAscent/Descent) и уравниваем просветы между ними.
      Заодно свободное место листа делится на те же просветы поровну, поэтому низ
      не проваливается и лист выглядит собранным. */
-  function inkBox(el){
+  /* Базовую линию строки НЕ ВЫЧИСЛЯЕМ, А МЕРЯЕМ. Раньше её выводили из
+     fontBoundingBox: у Prata и Alegreya SC эти метрики расходятся с тем, как
+     браузер реально раскладывает строку, и просветы у «МИР ЗВЁЗД» уезжали на
+     два миллиметра. Нулевой inline-block по baseline даёт настоящую базовую
+     линию той строки, в которую он попал. */
+  var SC=1;
+  function _leaf(el, last){
+    var e=el;
+    for(var d=0; d<6; d++){
+      var kids=[].filter.call(e.children, function(k){ return k.getClientRects().length && k.textContent.trim(); });
+      if(!kids.length) break;
+      e = last ? kids[kids.length-1] : kids[0];
+    }
+    return e;
+  }
+  /* Щуп ставим ВПЛОТНУЮ К БУКВАМ, а не в начало и конец блока: у строки «При
+     информационной поддержке» текст переносится на две строки, и щуп в конце
+     блока попадал на пустую третью - низ блока уезжал на 11 точек вниз. */
+  function _tnodes(el){
+    var w=document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null), out=[], n;
+    while((n=w.nextNode())){ if(n.nodeValue && n.nodeValue.trim()) out.push(n); }
+    return out;
+  }
+  function _base(el, atEnd){
+    var s=document.createElement('span'), y;
+    s.style.cssText='display:inline-block;width:0;height:0;overflow:hidden;vertical-align:baseline';
+    var ns=_tnodes(el);
+    if(!ns.length){
+      if(atEnd) el.appendChild(s); else el.insertBefore(s, el.firstChild);
+      y=s.getBoundingClientRect().top; s.parentNode.removeChild(s); return y;
+    }
+    var r=document.createRange(), n, v, i;
+    if(atEnd){ n=ns[ns.length-1]; v=n.nodeValue; i=v.length; while(i>0 && /\s/.test(v.charAt(i-1))) i--; }
+    else     { n=ns[0];           v=n.nodeValue; i=0;        while(i<v.length && /\s/.test(v.charAt(i))) i++; }
+    r.setStart(n,i); r.setEnd(n,i);
+    r.insertNode(s);
+    y=s.getBoundingClientRect().top;
+    s.parentNode.removeChild(s);
+    el.normalize();   // вставка разрезала текстовый узел — сшиваем обратно
+    return y;
+  }
+  function _glyph(el){
+    var cs=getComputedStyle(el);
+    var cv=_glyph._c||(_glyph._c=document.createElement('canvas')), g=cv.getContext('2d');
+    g.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+    var t=el.textContent.trim()||'Ag';
+    if(cs.textTransform==='uppercase') t=t.toUpperCase();
+    var m=g.measureText(t);
+    return {aa:m.actualBoundingBoxAscent, ad:m.actualBoundingBoxDescent};
+  }
+  function inkBox(el, sel){
     var r=el.getBoundingClientRect();
     if(el.tagName==='IMG'||el.classList.contains('logos-row')) return {top:r.top, bottom:r.bottom};
-    var cs=getComputedStyle(el);
-    var cv=inkBox._c||(inkBox._c=document.createElement('canvas')), g=cv.getContext('2d');
-    g.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
-    var m=g.measureText(el.textContent.trim()||'Ag');
-    var fa=m.fontBoundingBoxAscent, fd=m.fontBoundingBoxDescent;
-    var aa=m.actualBoundingBoxAscent, ad=m.actualBoundingBoxDescent;
-    if(!(fa>0)||!(aa>0)) return {top:r.top, bottom:r.bottom};
-    var lh=parseFloat(cs.lineHeight); if(!(lh>0)) lh=r.height;
-    /* Базовая линия ПЕРВОЙ строки блока и последней: между ними может быть
-       несколько строк, поэтому низ считаем от нижней границы блока. */
-    var half=(lh-(fa+fd))/2;
-    return {top:r.top+half+(fa-aa), bottom:r.bottom-half-(fd-ad)};
+    var f=_leaf(el,false), l=_leaf(el,true);
+    var gf=_glyph(f), gl=_glyph(l);
+    if(!(gf.aa>0)) return {top:r.top, bottom:r.bottom};
+    /* Поправка на шрифт: у canvas хвосты Д и точки над Ё бывают выше и ниже,
+       чем печатается на самом деле. Держим её в долях кегля - тогда она не
+       ломается, когда длинное ФИО заставляет подобрать другой размер. */
+    var cal=(INKCAL && INKCAL[sel]) || [0,0];
+    var fs=parseFloat(getComputedStyle(el).fontSize)||0;
+    return {top:    _base(f,false) - gf.aa*SC + (parseFloat(cal[0])||0)*fs*SC,
+            bottom: _base(l,true)  + gl.ad*SC + (parseFloat(cal[1])||0)*fs*SC};
   }
   function fitOptical(){
     var cont=document.querySelector('.content'), bb=document.querySelector('.bottom-block');
@@ -1234,15 +1294,17 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     var names=['.header-legal','.logos-row','.competition-type','.competition-name','.support-line',
                '.diploma-type','.diploma-degree','.extra-award','.awarded-label','.awarded-name',
                '.awarded-name-script','.field-list','.gratitude-text'];
-    var els=[]; names.forEach(function(n){ var e=cont.querySelector(n); if(e) els.push(e); });
+    SC=sc;   // масштаб листа нужен внутри inkBox: метрики шрифта — до transform
+    var els=[], sels=[];
+    names.forEach(function(n){ var e=cont.querySelector(n); if(e){ els.push(e); sels.push(n); } });
     if(els.length<3) return;
     var last=els[els.length-1], RESERVE=7;   // мм: воздух между данными и подписями
 
     /* Ставит между всеми блоками ОДИН И ТОТ ЖЕ просвет между буквами (G, мм) и
        возвращает, сколько миллиметров осталось до блока подписей. */
     function applyG(G){
-      for(var pass=0; pass<2; pass++){
-        var boxes=els.map(inkBox);
+      for(var pass=0; pass<3; pass++){
+        var boxes=els.map(function(e,i){ return inkBox(e, sels[i]); });
         for(var i=0;i<els.length-1;i++){
           var cur=(boxes[i+1].top-boxes[i].bottom)/PX_MM;          // просвет сейчас, мм листа
           var m=parseFloat(getComputedStyle(els[i]).marginBottom)/PX_MM;  // отступ, мм колонки
@@ -1257,10 +1319,11 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
           els[i].style.marginBottom=Math.max(-6, m+(tgt-cur)/Math.max(sc,0.01)).toFixed(2)+'mm';
         }
       }
-      return (bb.getBoundingClientRect().top-inkBox(last).bottom)/PX_MM;
+      return (bb.getBoundingClientRect().top-inkBox(last, sels[sels.length-1]).bottom)/PX_MM;
     }
     /* Ищем самый крупный просвет, при котором данные ещё не подходят к подписям
        ближе, чем на RESERVE: лист заполняется целиком, но ничего не налезает. */
+    if(FIXG>0){ applyG(FIXG); return; }   // фиксированный ровный шаг — без автоподбора
     var lo=1.0, hi=9.0, best=1.0;
     for(var k=0;k<8;k++){
       var G=(lo+hi)/2;
