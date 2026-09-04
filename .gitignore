@@ -21,3 +21,6 @@ secrets.env
 __pycache__/
 tappio-app/factory/analysis/recon_seen.json
 tappio-app/factory/analysis/refs/
+
+# локальный бэкап OKO с секретами — никогда в git
+scratchpad/
