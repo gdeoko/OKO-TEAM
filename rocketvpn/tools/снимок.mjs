@@ -21,6 +21,9 @@ const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const КУДА = process.env.RV_SHOTS || "/tmp/кадры";
 const ПК = { width: 1440, height: 900 };
 const ТЕЛ = { width: 390, height: 844 };
+/* Плотность экрана телефона: у владельца она около трёх, и мыло видно
+   только при ней. Снимок с плотностью 1 врал в нашу пользу. */
+const ПЛОТ = +(process.env.RV_DPR || 1);
 
 const актАрг = process.argv[2] || null;
 const долиАрг = (process.argv[3] || "0.45").split(",").map(Number);
@@ -33,7 +36,7 @@ const бр = await chromium.launch({
 });
 
 async function снять(вьюпорт, метка) {
-  const стр = await бр.newPage({ viewport: вьюпорт, deviceScaleFactor: 1 });
+  const стр = await бр.newPage({ viewport: вьюпорт, deviceScaleFactor: ПЛОТ });
   const беды = [];
   стр.on("pageerror", (e) => беды.push("ИСКЛ " + e.message.slice(0, 160)));
   стр.on("console", (m) => { if (m.type() === "error") беды.push("КОНС " + m.text().slice(0, 160)); });
