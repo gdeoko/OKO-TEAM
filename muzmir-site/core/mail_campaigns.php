@@ -116,7 +116,8 @@ function mmc_h(string $text, string $sub = ''): string {
  * ВАЖНО (правило Даниэля): пишем ТОЛЬКО так, «при поддержке органов культуры» — нельзя.
  */
 function mmc_support_line(): string {
-    return mm_support_text(false);
+    return 'при информационной поддержке Министерства культуры и образования субъектов '
+         . 'Российской Федерации и государственного портала «Pro Культура»';
 }
 
 /** Плашка официальной информационной поддержки. */
@@ -131,8 +132,8 @@ function mmc_ministry_badge(): string {
         . '<td style="padding-right:14px;vertical-align:middle;width:44px;">'
         . '<div style="width:40px;height:40px;border-radius:50%;background:' . $navy . ';color:' . MM_GOLD2 . ';font-family:Georgia,serif;font-weight:700;font-size:20px;text-align:center;line-height:40px;">✦</div></td>'
         . '<td style="vertical-align:middle;">'
-        . '<div style="font-weight:700;color:' . $navy . ';font-size:14px;">Официально · ' . h(mm_support_text(false)) . '</div>'
-        . '<div style="font-size:13px;color:' . MM_MUTED . ';margin-top:3px;line-height:1.5;">' . h($cnt) . '.</div>'
+        . '<div style="font-weight:700;color:' . $navy . ';font-size:14px;">Официально · при информационной поддержке Министерства культуры</div>'
+        . '<div style="font-size:13px;color:' . MM_MUTED . ';margin-top:3px;line-height:1.5;">и образования субъектов РФ и государственного портала «Pro Культура». ' . h($cnt) . '.</div>'
         . '<a href="' . h($link) . '" style="display:inline-block;margin-top:8px;color:' . $gold . ';font-weight:700;font-size:13px;text-decoration:underline;">Смотреть письма поддержки →</a>'
         . '</td></tr></table></td></tr></table>';
 }

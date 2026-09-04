@@ -82,7 +82,7 @@ ob_start(); ?>
     <div class="reveal">
       <p class="eyebrow eyebrow--script">Искусство объединяет мир</p>
       <h1><?= h(setting('hero_title', cfgv('org_name', 'Музыкальный Мир'))) ?></h1>
-      <p class="lead"><?= h(setting('hero_subtitle', 'Международные и всероссийские онлайн-конкурсы и фестивали')) ?> культуры и искусства <?= mm_support_text(false) ?>.</p>
+      <p class="lead"><?= h(setting('hero_subtitle', 'Международные и всероссийские онлайн-конкурсы и фестивали')) ?> культуры и искусства при информационной поддержке Министерств культуры и образования субъектов Российской Федерации.</p>
       <div class="hero-cta">
         <a class="btn btn--primary btn--lg" href="<?= url('/apply') ?>">Подать заявку</a>
         <a class="btn btn--ghost btn--lg" href="<?= url('/competitions') ?>">Действующие конкурсы</a>

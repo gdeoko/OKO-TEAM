@@ -337,7 +337,8 @@ function afisha_html(array $c, array $opt = []): string {
   <div class="brand">' . ($logo !== '' ? '<img src="' . $logo . '" alt="">' : '') . '
     <b>Культурный центр «Музыкальный Мир»</b>
   </div>
-  <div class="support"><?= h(mm_support_text()) ?></div>
+  <div class="support">При информационной поддержке Министерства культуры и образования субъектов
+    Российской Федерации и государственного портала «Pro Культура»</div>
   <div class="mid">
     <div class="kind">' . $h($kind) . '</div>
     <div class="name">' . $h($name) . '</div>

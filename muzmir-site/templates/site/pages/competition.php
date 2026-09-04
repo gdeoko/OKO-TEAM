@@ -224,7 +224,7 @@ ob_start(); ?>
     @media (prefers-reduced-motion:reduce){.cb-countdown.cd--last{animation:none}}
     </style>
     <h1><?= h($c['name']) ?></h1>
-    <p class="comp-banner__lead">Дистанционный конкурс культуры и искусства <?= mm_support_text(false) ?>.</p>
+    <p class="comp-banner__lead">Дистанционный конкурс культуры и искусства при информационной поддержке Министерств культуры и образования субъектов Российской Федерации.</p>
     <?php if ($isOpen && !empty($c['end_date'])): ?>
     <div style="text-align:center;margin:14px 0 4px">
       <div style="color:var(--muted);font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px">До закрытия приёма</div>

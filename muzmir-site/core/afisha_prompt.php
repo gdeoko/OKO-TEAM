@@ -119,7 +119,6 @@ function afisha_prompt(array $c): string {
         ? "Line 6a, directly under the ribbon banner, small, light weight, subdued, centred: «{$note}»\n\n"
         : '';
 
-    $sup = mm_support_text();
     return <<<PROMPT
 Create a complete, finished, print-ready HORIZONTAL POSTER in 16:9 aspect ratio (1920x1080 or larger), for an official Russian cultural competition. This is a FINAL DESIGN, not a background plate: it must contain real, correctly spelled RUSSIAN (Cyrillic) typography exactly as specified below, rendered crisply and legibly at full size.
 
@@ -131,7 +130,7 @@ Line 1, small, across the very top, light weight, subdued: «Зарегистр�
 
 Line 2, medium, elegant serif: «Культурный центр «Музыкальный Мир»»
 
-Line 3, small italic serif: «{$sup}»
+Line 3, small italic serif: «При информационной поддержке Министерства культуры и образования субъектов Российской Федерации»
 
 Line 4, italic serif, slightly larger: «{$kind}»
 
