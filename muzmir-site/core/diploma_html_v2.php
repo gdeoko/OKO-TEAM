@@ -854,7 +854,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .logos-row .logo-medal{height:21mm}
 .logos-row .logo-natsproekty{height:19mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
-.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 1)}
+.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;line-height:1.06;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 1)}
 /* НАЗВАНИЕ КОНКУРСА И ЗВАНИЕ — ДВЕ ГЛАВНЫЕ СТРОКИ ДОКУМЕНТА.
    Они набраны заливкой-градиентом, и на пёстром фоне их края растворялись: лист
    читался как ровный текст без выделенных строк. Тонкий цветной контур (двойная
@@ -898,8 +898,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:4px;margin-top:0;
   margin-bottom:calc(var(--u) * 1);filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:var(--u)}
-.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;line-height:1.06;color:<?= $FIT['ink'] ?>;margin-bottom:var(--u)}
+.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;line-height:1.12;
     font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:var(--u);
   letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
   filter:<?= $FIT['dark'] ? 'none' : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))' ?>}
@@ -1132,6 +1132,13 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 <script>
 (function(){
   var FAM=<?= json_encode((string)($T['fam_comp'] ?? ''), JSON_UNESCAPED_UNICODE) ?>;
+  /* ТОЧНАЯ ДОКРУТКА ПРОСВЕТОВ.
+     Автовыравниватель считает границы букв по метрикам шрифта, а глаз видит
+     ещё и свечение/тень вокруг строки — из-за этого у части тем просветы
+     выходят на вид неравными. gap_fix (в мм листа, по одному числу на просвет
+     сверху вниз) добавляется к отступам ПОСЛЕ выравнивателя и доводит их до
+     равных по факту рендера. Значения подбираются замером готового листа. */
+  var GAPFIX=<?= json_encode(array_values(array_map('floatval', (array)($tpl['gap_fix'] ?? []))), JSON_UNESCAPED_UNICODE) ?>;
   /* Ширину строки меряем диапазоном (Range), а НЕ scrollWidth: у блока с
      text-align:center переполнение уходит в обе стороны, и scrollWidth всегда
      равен clientWidth - проверка «влезло?» была всегда ложной, и название
@@ -1184,11 +1191,17 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
        меряет запасной шрифт и margin'ы выходят кривыми. Поэтому метку готовности
        (её ждёт мост перед снимком) снимает ТОЛЬКО finish() после fonts.ready —
        здесь ритм лишь прогоняется предварительно, без метки. */
+    /* Докрутка просветов (GAPFIX) встроена ВНУТРЬ выравнивателя как цель
+       каждого просвета — отдельного прохода поверх больше нет. */
     fitOptical();
   }
+  /* Периодический прогон нужен только ДО загрузки шрифтов. После финала его
+     обязательно останавливаем: иначе очередной прогон ритма шёл поверх уже
+     доведённого листа и докрутка просветов «уплывала». */
+  function stopTicks(){ if(tick){ clearInterval(tick); tick=null; } }
   /* Финал: гарантированно после полной загрузки шрифтов — прогоняем ритм по
-     верным метрикам и снимаем стоп-метку для моста. */
-  function finish(){ try{ fitTitle(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
+     верным метрикам (fitTitle сам доводит просветы) и снимаем стоп-метку. */
+  function finish(){ try{ fitTitle(); }catch(e){} stopTicks(); document.documentElement.setAttribute('data-title-fit','1'); }
   /* РОВНЫЙ ЛИСТ - ПО БУКВАМ, А НЕ ПО РАМКАМ БЛОКОВ.
      Раньше выравнивались margin'ы, и по замерам всё сходилось, а глаз видел
      разнобой: у слова ДИПЛОМ в 58 пунктов рамка строки почти совпадает с
@@ -1237,7 +1250,11 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
              межстрочного интервала бывает БОЛЬШЕ нужного просвета, и без минуса
              её нельзя подтянуть к соседям - именно так «награждается» стояло
              ниже остальных строк. Меряем по буквам, поэтому это безопасно. */
-          els[i].style.marginBottom=Math.max(-6, m+(G-cur)/Math.max(sc,0.01)).toFixed(2)+'mm';
+          /* Цель просвета = общий шаг G плюс точная докрутка для ЭТОГО просвета.
+             Докрутка встроена в цель, а не накладывается отдельным проходом:
+             иначе при повторных прогонах ритма она накапливалась и лист «плыл». */
+          var tgt = G + (parseFloat(GAPFIX && GAPFIX[i]) || 0);
+          els[i].style.marginBottom=Math.max(-6, m+(tgt-cur)/Math.max(sc,0.01)).toFixed(2)+'mm';
         }
       }
       return (bb.getBoundingClientRect().top-inkBox(last).bottom)/PX_MM;
@@ -1262,7 +1279,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   window.addEventListener('load',fitTitle);
   /* Прогон ритма до загрузки шрифтов (предварительно, без метки) + жёсткая
      страховка на ~7с, если fonts.ready так и не разрешился. */
-  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>60){ clearInterval(tick); finish(); } },120);
+  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>60){ stopTicks(); finish(); } },120);
 })();
 </script>
 </body>
