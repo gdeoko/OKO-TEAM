@@ -1150,7 +1150,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
      скриптом scripts/diploma_rhythm_cal.php: у Prata и Playfair метрика canvas
      на пару миллиметров расходится с тем, что печатается. Держим в долях
      кегля, чтобы поправка не рассыпалась при другом размере строки. */
-  var INKCAL=<?= json_encode((object)((array)($tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
+  /* Поправка снимается ОТДЕЛЬНО ПОД КАЖДЫЙ ВИД ДОКУМЕНТА. В одних и тех же
+     строках у видов стоят разные буквы: «ДИПЛОМ» и «БЛАГОДАРНОСТЬ», «ЛАУРЕАТ I
+     СТЕПЕНИ» и «ЗА ВЕРНОСТЬ ТРАДИЦИЯМ». Хвосты и выносные у них разной глубины,
+     и одна общая поправка сводила основной лист, но разводила благодарность —
+     у одного конкурса два блока сошлись вплотную. */
+  var INKCAL=<?= json_encode((object)((array)($tpl[$thanks ? 'ink_cal_thanks' : ($isExtra ? 'ink_cal_extra' : ($named ? 'ink_cal_named' : 'ink_cal'))] ?? $tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
   /* Ширину строки меряем диапазоном (Range), а НЕ scrollWidth: у блока с
      text-align:center переполнение уходит в обе стороны, и scrollWidth всегда
      равен clientWidth - проверка «влезло?» была всегда ложной, и название

@@ -741,7 +741,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 <script>
 (function(){
   var FIXG=<?= (float)($tpl['fixed_gap'] ?? 0) ?>;
-  var INKCAL=<?= json_encode((object)((array)($tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
+  /* Поправка снимается ОТДЕЛЬНО ПОД КАЖДЫЙ ВИД ДОКУМЕНТА. В одних и тех же
+     строках у видов стоят разные буквы: «ДИПЛОМ» и «БЛАГОДАРНОСТЬ», «ЛАУРЕАТ I
+     СТЕПЕНИ» и «ЗА ВЕРНОСТЬ ТРАДИЦИЯМ». Хвосты и выносные у них разной глубины,
+     и одна общая поправка сводила основной лист, но разводила благодарность —
+     у одного конкурса два блока сошлись вплотную. */
+  var INKCAL=<?= json_encode((object)((array)($tpl[$thanks ? 'ink_cal_thanks' : ($isExtra ? 'ink_cal_extra' : ($named ? 'ink_cal_named' : 'ink_cal'))] ?? $tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
   var SC=1;
   function _leaf(el, last){
     var e=el;
