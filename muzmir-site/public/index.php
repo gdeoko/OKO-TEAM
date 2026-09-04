@@ -374,11 +374,11 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
             update('diplomas', ['pdf_path' => '/diplomas/' . basename($rendered)], 'id=:id', ['id' => (int) $d['id']]);
         }
     }
-    // Фолбэк — GD-генератор (если бастион недоступен)
-    if ($file === '' && $app && function_exists('pdf_diploma')) {
-        try { $gd = pdf_diploma($app, (string) ($d['type'] ?: 'main')); if ($gd && is_file($gd)) $file = $gd; }
-        catch (\Throwable $e) { /* ниже 404 */ }
-    }
+    /* GD-ПОДМЕНЫ ЗДЕСЬ БОЛЬШЕ НЕТ.
+     * Старый генератор рисует другой бланк — другой фон, шрифты и раскладка.
+     * Документ чужого вида на руках у человека хуже, чем документ, который
+     * соберётся минутой позже: боевой рендер делает три попытки, а страница
+     * ниже честно говорит «ещё формируется». */
     if ($file === '') { http_response_code(404); echo 'Диплом ещё формируется, попробуйте через минуту'; exit; }
     header('Content-Type: application/pdf');
     header('Content-Disposition: inline; filename="Diploma_' . $d['number'] . '.pdf"');

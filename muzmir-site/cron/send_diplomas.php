@@ -223,9 +223,11 @@ foreach ($fresh as $a) {
     if (!$hasMain) {
         $pdfPath = null;
         try { $pdfPath = diploma_pdf_html((array)$a); } catch (\Throwable $e) { $pdfPath = null; }
-        if (!$pdfPath && function_exists('pdf_diploma')) {
-            try { $pdfPath = pdf_diploma((array)$a, 'main'); } catch (\Throwable $e) { $pdfPath = null; }
-        }
+        /* GD-ПОДМЕНЫ ЗДЕСЬ БОЛЬШЕ НЕТ.
+         * Старый генератор рисует другой бланк — другой фон, шрифты и раскладка.
+         * Документ чужого вида на руках у участника хуже, чем документ, который
+         * соберётся часом позже: боевой рендер уже делает три попытки, а не
+         * собравшийся бланк просто ждёт следующего прогона. */
         insert('diplomas', [
             'number'         => diploma_make_number((string)$a['number'], 'main'),
             'application_id' => (int)$a['id'],

@@ -102,16 +102,31 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
          . ' root@176.124.200.169:' . escapeshellarg($stage)
          . ' && rm -f ' . escapeshellarg($tmp) . ' && echo RENDER_OK';
 
-    $ch = curl_init($poster);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 120,
-        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode(['cmd' => $cmd], JSON_UNESCAPED_SLASHES),
-    ]);
-    $resp = curl_exec($ch);
-    curl_close($ch);
+    /* ТРИ ПОПЫТКИ, А НЕ ОДНА.
+     *
+     * Бланк рисует браузер на бастионе. Секундная сетевая заминка или занятый
+     * Chromium — и попытка возвращалась пустой. Вызывающий код в этот момент
+     * падал на старый GD-генератор, который рисует СОВСЕМ ДРУГОЙ бланк: другой
+     * фон, другие шрифты, другая раскладка. Участник получал документ чужого
+     * вида, и понять по письму, что случилось, было нельзя.
+     *
+     * Поэтому сначала честно пробуем ещё раз. GD остаётся только там, где
+     * показать хоть что-то важнее вида (предпросмотр в админке). */
+    $resp = '';
+    for ($try = 1; $try <= 3; $try++) {
+        $ch = curl_init($poster);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+            CURLOPT_POSTFIELDS => json_encode(['cmd' => $cmd], JSON_UNESCAPED_SLASHES),
+        ]);
+        $resp = curl_exec($ch);
+        curl_close($ch);
+        if (is_string($resp) && str_contains($resp, 'RENDER_OK')) break;
+        if ($try < 3) sleep($try * 3);
+    }
     if (!is_string($resp) || !str_contains($resp, 'RENDER_OK')) {
         error_log('diploma_pdf_html(' . $appId . '): bastion render failed: ' . substr((string)$resp, 0, 300));
         @unlink($stage);

@@ -127,9 +127,11 @@ function dsync_rebuild(int $appId, array $changed = []): array {
                  ? diploma_pdf_html((array) $app, $type === 'extra' ? ['extra' => true] : [])
                  : null;
         } catch (\Throwable $e) { $new = null; }
-        if (!$new && function_exists('pdf_diploma')) {
-            try { $new = pdf_diploma((array) $app, $type); } catch (\Throwable $e) { $new = null; }
-        }
+        /* GD-ПОДМЕНЫ ЗДЕСЬ БОЛЬШЕ НЕТ.
+         * Старый генератор рисует другой бланк — другой фон, шрифты и раскладка.
+         * Документ чужого вида на руках у участника хуже, чем документ, который
+         * соберётся часом позже: боевой рендер уже делает три попытки, а не
+         * собравшийся бланк просто ждёт следующего прогона. */
         if (!$new) { $res['failed']++; continue; }
 
         $upd = ['pdf_path' => $new,

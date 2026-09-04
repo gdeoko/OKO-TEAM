@@ -202,9 +202,11 @@ function curator_grant(int $competitionId, array $t): int {
             $pdf = (string) diploma_pdf_html($doc, ['thanks' => true, 'person' => (string) $t['teacher']]);
         }
     } catch (\Throwable $e) { $pdf = ''; }
-    if ($pdf === '' && function_exists('pdf_diploma')) {
-        try { $pdf = (string) pdf_diploma($doc, 'thanks'); } catch (\Throwable $e) { $pdf = ''; }
-    }
+    /* GD-ПОДМЕНЫ ЗДЕСЬ БОЛЬШЕ НЕТ.
+     * Старый генератор рисует другой бланк — другой фон, шрифты и раскладка.
+     * Документ чужого вида на руках у человека хуже, чем документ, который
+     * соберётся минутой позже: боевой рендер делает три попытки, а страница
+     * ниже честно говорит «ещё формируется». */
 
     try {
         return (int) insert('curator_thanks', [
