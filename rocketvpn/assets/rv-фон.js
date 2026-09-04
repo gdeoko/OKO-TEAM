@@ -65,8 +65,8 @@
        после разворота идёт не сверху, а сверху-слева, и это заметно
        живее ровной горизонтали. */
     "  vec2 c = uv - 0.5;",
-    "  float ко = cos(-0.66), си = sin(-0.66);",
-    "  vec2 r = vec2(c.x * ко - c.y * си, c.x * си + c.y * ко) + 0.5;",
+    "  float ko = cos(-0.66), si = sin(-0.66);",
+    "  vec2 r = vec2(c.x * ko - c.y * si, c.x * si + c.y * ko) + 0.5;",
     "  float grad = pow(clamp(r.y, 0.0, 1.0), 3.0) * 0.5;",
     "  grad += hash12(uv * 1000.0 + uTime) * 0.01;",
     "  vec3 color = mix(uC1, uC2, clamp(grad, 0.0, 1.0));",

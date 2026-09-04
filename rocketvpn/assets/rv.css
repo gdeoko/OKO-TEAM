@@ -2465,3 +2465,107 @@ html.рв-слова-в-сцене .rv-слой [data-заполнить] {
   overflow: hidden;
   clip-path: inset(50%);
 }
+
+/* ══ Дела обхода: кнопки и анкета по разделам ═════════════════════
+   Владелец про комнату с частицами: «по скроллу мы обходим вокруг,
+   потом смотрим разделы с текстом и анкету и кнопки всякие. Главное,
+   что текст не перекрывает наши 3D объекты и сцену, текст часть этой
+   сцены как у igloo».
+
+   Слова разделов уехали в объём, а по кнопке в холсте пальцем не
+   попасть - значит, действия остаются разметкой. Чтобы они всё-таки
+   читались частью сцены, а не панелью поверх неё, держим два правила.
+
+   ПЕРВОЕ: стоят там же, где говорят слова. Колонка слов в комнате
+   правая (rv-слово3d.js, раскладка «справа»): правый край на семи
+   процентах от кромки кадра, ширина сорок два процента. Повторяем те же
+   доли - действие продолжает свой абзац, а не спорит с ним за место.
+   Панель мини-игры раньше стояла слева внизу и ложилась прямо на фигуру
+   из частиц; это ровно то, на что владелец и указал.
+
+   ВТОРОЕ: показывается ровно одно, то же, что говорит сцена. Признак
+   data-сектор ставит слой слов при каждой смене раздела. */
+.rv-дело {
+  position: absolute;
+  right: 7%;
+  top: 62%;
+  width: 42%;
+  display: flex; flex-wrap: wrap; justify-content: flex-end;
+  gap: 10px;
+  z-index: 4;
+  /* Скрыто, пока сцена не назвала свой раздел. Гасим прозрачностью и
+     сдвигом, как гаснут строки в объёме: у них тоже нет мгновенных
+     переключений. */
+  opacity: 0; transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity .32s ease, transform .32s ease;
+}
+html[data-сектор="рубка:1"] .rv-дело[data-сектор="рубка:1"],
+html[data-сектор="рубка:2"] .rv-дело[data-сектор="рубка:2"],
+html[data-сектор="рубка:3"] .rv-дело[data-сектор="рубка:3"],
+html[data-сектор="рубка:4"] .rv-дело[data-сектор="рубка:4"],
+html[data-сектор="пуск:0"] .rv-дело[data-сектор="пуск:0"],
+html[data-сектор="пуск:1"] .rv-дело[data-сектор="пуск:1"],
+html[data-сектор="пуск:2"] .rv-дело[data-сектор="пуск:2"],
+html[data-сектор="пуск:3"] .rv-дело[data-сектор="пуск:3"] {
+  opacity: 1; transform: none;
+  pointer-events: auto;
+}
+/* Пока объём не поднялся, слова живут в разметке обычным текстом, и
+   вторая колонка справа тогда лишняя: действия встают в поток под
+   словами, как на любой странице. */
+html:not(.рв-слова-в-сцене) .rv-дело {
+  position: static; width: auto; opacity: 1; transform: none;
+  pointer-events: auto; justify-content: flex-start; margin-top: 16px;
+}
+@media (max-width: 720px) {
+  /* На телефоне колонки нет вовсе: слова идут во всю ширину, и действие
+     под ними тоже. Прижимаем к низу кадра, чтобы кнопка попадала под
+     большой палец. */
+  .rv-дело {
+    right: var(--rv-поле); left: var(--rv-поле);
+    width: auto; top: auto; bottom: clamp(48px, 12vh, 96px);
+    justify-content: flex-start;
+  }
+  .rv-дело > .rv-кн { flex: 1 1 auto; justify-content: center; }
+}
+
+/* ── Анкета ──────────────────────────────────────────────────────
+   Три поля и одна кнопка. Подложки у полей нет, только нижняя черта:
+   плита под формой закрыла бы комнату ровно так же, как её закрывала
+   панель игры. */
+.rv-анкета { width: 100%; display: grid; gap: 12px; text-align: left; }
+.rv-анкета label { display: grid; gap: 5px; }
+.rv-анкета label span {
+  font: 600 11px/1 var(--rv-шрифт); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--rv-текст-тихо);
+}
+.rv-анкета input,
+.rv-анкета textarea {
+  width: 100%; padding: 9px 2px;
+  border: 0; border-bottom: 1px solid var(--rv-кромка);
+  background: transparent; color: var(--rv-текст);
+  font: 400 14px/1.45 var(--rv-шрифт);
+  resize: vertical;
+  transition: border-color .2s, box-shadow .2s;
+}
+.rv-анкета input::placeholder,
+.rv-анкета textarea::placeholder { color: var(--rv-текст-тихо); opacity: .55; }
+.rv-анкета input:focus,
+.rv-анкета textarea:focus {
+  outline: none;
+  border-bottom-color: rgba(var(--rv-свет-rgb), .9);
+  box-shadow: 0 1px 0 0 rgba(var(--rv-свет-rgb), .5);
+}
+.rv-анкета-ряд { display: flex; flex-wrap: wrap; gap: 10px; margin: 2px 0 0; }
+.rv-анкета-итог {
+  margin: 0; min-height: 1.2em;
+  font-size: 13px; line-height: 1.4; color: var(--rv-текст-тихо);
+}
+/* Панель игры внутри колонки уже не плита поверх мира: рамку и фон
+   снимаем, остаётся строка приборов рядом со словами. */
+.rv-дело .rv-игра {
+  margin: 0; padding: 0; max-width: none; width: 100%;
+  border: 0; background: none; backdrop-filter: none;
+  text-align: left;
+}
