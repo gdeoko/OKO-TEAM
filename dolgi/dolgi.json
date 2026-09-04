@@ -16,9 +16,9 @@
    "lk": "https://idcollect.ru/private",
    "oplata": "",
    "rekvizity": "Получатель: ООО ПКО «АйДи Коллект»\nИНН 7730233723 · КПП 770301001\nР/сч 40702810101160144385\nК/сч 30101810345250000460\nБИК 044525460 · АО «Экспобанк»\nНазначение: погашение задолженности по Договору займа №431617",
-   "kommentariy": "Единственный, по кому реквизиты на руках и сумма актуальна на 26.08. Долг куплен коллектором за долю от номинала, поэтому дисконт здесь самый достижимый. Целимся в тело долга 6 000.",
+   "kommentariy": "Реквизиты на руках, кредитор на связи. Ответить идентификацией (ФИО, дата рождения, телефон) и повторить предложение 6 000 руб (тело долга) единым платежом при закрытии. Долг куплен коллектором - дисконт достижим.",
    "aktualno": "26.08.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "Ответ АйДи Коллект 02.09 (soft@idfeurasia.pro): для работы просят ФИО, дату рождения и телефон из анкеты."
   },
   {
    "id": "ekapusta",
@@ -33,9 +33,9 @@
    "lk": "https://ekapusta.com/login",
    "oplata": "",
    "rekvizity": "",
-   "kommentariy": "Самый дешёвый долг из всех. 08.07 предлагали 4 133 (скидка 10%), встречка 2 000 ушла в тот же день, ответа нет. Потолок сделки 2 000-3 000.",
+   "kommentariy": "Ждём звонок менеджера. Держим позицию 2 000 руб (тело долга). Договор 52053243, тикеты 7663760Z / 7930009W.",
    "aktualno": "09.07.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "Ответ еКапуста 01.09: обращение 7930009W принято, менеджер свяжется по телефону из анкеты (927***0203)."
   },
   {
    "id": "pvonline",
@@ -52,7 +52,7 @@
    "rekvizity": "",
    "kommentariy": "Стратосфера письмом с info@ykky.ru подтвердила: все требования к «Право онлайн». Долг у коллектора, шанс на дисконт максимальный. Целимся 3 000-3 500.",
    "aktualno": "09.07.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "Право онлайн 03.09: наше письмо попало к ним с пометкой «подозрительное». Продублировать в ЛК/чат."
   },
   {
    "id": "microklad",
@@ -107,7 +107,7 @@
   {
    "id": "moneyman",
    "name": "Мани Мен (Moneyman)",
-   "status": "protuhlo",
+   "status": "zakryt",
    "trebuyut": 21979,
    "telo": 10000,
    "nasha": 10989,
@@ -117,9 +117,9 @@
    "lk": "https://moneyman.ru/login",
    "oplata": "",
    "rekvizity": "",
-   "kommentariy": "09.07 дали акцию прощения долга: 10 989,25 со сроком оплаты до 31.07.2026. Срок вышел месяц назад, скидка сгорела. Просить продление акции по тикету 650773, такие акции продлевают по запросу.",
+   "kommentariy": "Долг закрыт. Осталось получить официальную справку о закрытии с печатью. Запросить по тикету 650773 / support@svoi.ru.",
    "aktualno": "09.07.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "ОПЛАЧЕНО 13.07.2026, 10 989,25 руб зачислены, заём №32953220 погашен (ответ MoneyMan 01.09)."
   },
   {
    "id": "zaymer",
@@ -130,13 +130,13 @@
    "nasha": 0,
    "dogovor": "Судебный приказ № 2-946/2026 от 19.05.2026, участок № 5 Кировского района г. Уфы",
    "pochta": "support@zaymer.ru (поддержка), msrb021@yandex.ru (почта суда)",
-   "telefon": "8 800 7070-24-7",
+   "telefon": "участок № 5: 255-98-44 · support@zaymer.ru · 8 800 7070-24-7",
    "lk": "https://www.zaymer.ru",
    "oplata": "",
    "rekvizity": "",
-   "kommentariy": "Возражение с ходатайством о восстановлении срока отправлено 08.07 11:30, оригинал Почтой России с описью. В дисконте Займер отказал дважды. С тех пор 53 дня, определение об отмене должно было прийти. Проверить: почту суда, бумажную почту, сайт ФССП по фамилии, госуслуги.",
+   "kommentariy": "СРОЧНО. Судебный приказ действует, письмо на почту суд надлежащим заявлением не считает. Нужно подать бумажное заявление об отмене (ст. 128-129 ГПК) + ходатайство о восстановлении срока (ст. 112 ГПК), с подписью, лично или Почтой России с описью, на адрес участка № 5 Кировского района Уфы. Проект заявления готов (dolgi/zayavlenie_zaymer.txt). Пока приказ не отменён - риск приставов и списаний.",
    "aktualno": "09.07.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "СУД 04.09: заявление об отмене приказа НЕ поступало и не рассматривалось. Приказ № 2-946/2026 в силе."
   },
   {
    "id": "korona",
@@ -163,14 +163,14 @@
    "telo": 27401,
    "nasha": 22000,
    "dogovor": "Договор № 0477650489 от 17.05.2025",
-   "pochta": "support@mbafin.ru",
+   "pochta": "tfinance@mbafin.ru (кредитор Т-Финанс), support@mbafin.ru (агент МБА)",
    "telefon": "8 800 333-51-82 · WhatsApp wa.me/79051773806",
    "lk": "https://lk.mbafin.ru/AjZw_gTA0",
    "oplata": "",
    "rekvizity": "",
-   "kommentariy": "МБА Финансы - агент, переговоры вести с ними и дублировать в WhatsApp. Т-Финанс - сам кредитор (структура Т-Банка, тел. 8 800 551-01-46). Требовали полную оплату до 10.07, встречка 22 000 ушла, ответа нет. Запросить расшифровку строки «иные платежи 1 221,51». Тело 27 401, ориентир сделки 24-25 тыс.",
+   "kommentariy": "МБА подтвердила: она агент, не кредитор. По сумме и справке писать напрямую Т-Финанс (tfinance@mbafin.ru) и в чат Т-Банка. Расшифровку «иных платежей» и сделку 22 000 вести с Т-Финанс.",
    "aktualno": "09.07.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "Ответ МБА 04.09: они только агент по ст.1005 ГК, справок и расшифровок не дают, за документами - к кредитору."
   },
   {
    "id": "triumvirat",
@@ -179,7 +179,7 @@
    "trebuyut": 23822,
    "telo": 11000,
    "nasha": 11000,
-   "dogovor": "Займ 11 000 от 12.12.2025 · обращение ВХ-ПС-2017468",
+   "dogovor": "Займ 11 000 от 12.12.2025 · обращение ВХ-ПС-2017468 · новое обращение ВХ-ПС-2187615",
    "pochta": "office@privsosed.ru",
    "telefon": "",
    "lk": "",
@@ -187,7 +187,7 @@
    "rekvizity": "",
    "kommentariy": "Идентификация направлена 07.07 17:28, дальше тишина.",
    "aktualno": "09.07.2026",
-   "pismo": "Письмо отправлено 31.08.2026 21:35, ждём ответ."
+   "pismo": "Ответ Триумвират 31.08: обращение зарегистрировано под № ВХ-ПС-2187615."
   }
  ],
  "banki": [
@@ -256,16 +256,116 @@
   {
    "d": "31.08",
    "t": "Отправлены письма всем кредиторам и запрос в судебный участок по делу Займера. В каждом требование официальной справки о закрытии долга."
+  },
+  {
+   "d": "01.09",
+   "t": "MoneyMan: оплата 13.07 подтверждена, заём погашен - долг закрыт, запрошена справка. еКапуста и Триумвират зарегистрировали обращения."
+  },
+  {
+   "d": "02.09",
+   "t": "АйДи Коллект вышел на связь, просит идентификацию для переговоров по договору 431617."
+  },
+  {
+   "d": "04.09",
+   "t": "Суд: заявление об отмене приказа Займера НЕ поступало - приказ в силе, готовим бумажное заявление. МБА подтвердила статус агента, переговоры переносятся на кредитора Т-Финанс."
   }
  ],
  "pisma": [
   {
    "yashik": "okoteam.top@gmail.com",
-   "ot": "ООО «Луна» <outbox@nebusfinance.ru>",
-   "tema": "Уведомление о переуступке прав требований по договору №431617",
-   "data": "Thu, 13 Aug 2026 13:42:15 +0000",
+   "ot": "soft <soft@idfeurasia.pro>",
+   "tema": "Re: Договор займа № 431617, ID 005402108: предложение о полном закрытии",
+   "data": "Wed, 02 Sep 2026 08:29:45 +0300",
    "kto": "idcollect",
-   "kusok": "0KPQstCw0LbQsNC10LzRi9C5KNCw0Y8pINCY0LvRjNGP0YHQvtCyINCU0LDQvdC40Y3Qu9GMINCQ 0LvRjNCx0LXRgNGC0L7QstC40YchCgoK0KPQstC10LTQvtC80LvQtdC90LjQtQoKCgkKwqvQntCx 0YnQtdGB0YLQstC+INGBINC+0LPRgNCw0L3QuNGH0LXQvdC90L7QuSDQvtGC0LLQtdGC0YHRgtCy 0LXQvdC90L7RgdGC0YzRjiDCq9Cb0YPQvdCwwrsgKNCe0J7QniDCq9Cb0YPQvdCwwrssINCe0JPQ oNCdIDEyMzc3MDA3MDcwNzgsINCY0J3QnSA5NzI4MTA5MjY0LCDQsNC00YDQtdGBOiAxNDIwNjMs INCc0L7RgdC60L7"
+   "kusok": " ----ALT--81c3D26c63dB80819437B4dA12617b921788326985 Content-Type: text/plain; charset=utf-8 Content-Transfer-Encoding: base64 0JfQtNGA0LDQstGB0YLQstGD0LnRgtC1ISDQlNC70Y8g0YLQvtCz0L4g0YfRgtC+INCx0Ysg0Y8g 0YHQvNC+0LPQu9CwINC/0L7QvNC+0YfRjMKgINCyINGA0LXRiNC10L3QuNC4INCy0L7Qv9GA0L7R gdCwINC/0L4g0JLQsNGI0LXQuSDQv9GA0L7RgdGA0L7Rh9C10L3QvdC+0Lkg0LfQsNC00L7Qu9C2 0LXQvdC90L7RgdGC0LgsINC/0L7QttCw0LvRg9C50Y"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "еКапуста - служба поддержки <support@ekapusta.ru>",
+   "tema": "Обращение [#Обращение-7930009W]: Обращение 7663760Z, договор 52053243: жду ответ на встречное предложение",
+   "data": "Tue, 1 Sep 2026 08:24:05 +0700",
+   "kto": "ekapusta",
+   "kusok": "--b1=_6bUV1guQEeeS9XRYWSwgr8id20WgKwiFqVnKZZb14wg Content-Type: text/plain; charset=UTF-8 Content-Transfer-Encoding: 8bit Мгновенные займы онлайн Здравствуйте, Даниэль Альбертович. Чтобы обсудить детали оплаты вашего займа, с вами свяжется персональный менеджер по номеру телефона, указанному в анкете – 927***0203. Если ваш номер изменился, пожалуйста, сообщите нам об этом. Вы также можете связатьс"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "еКапуста - служба поддержки <support@ekapusta.ru>",
+   "tema": "Обращение [#Обращение-7930009W]: Обращение 7663760Z, договор 52053243: жду ответ на встречное предложение",
+   "data": "Tue, 1 Sep 2026 08:22:06 +0700",
+   "kto": "ekapusta",
+   "kusok": "--b1=_3LogcNbD0qj5br8nil19FhXdHZbhRuuubl7WwLjPUE Content-Type: text/plain; charset=UTF-8 Content-Transfer-Encoding: 8bit Мгновенные займы онлайн Ваше обращение принято и уже находится в обработке у наших специалистов, предоставим ответ как можно скорее в этой цепочке писем. При ответе на данное письмо, обязательно сохраните тему письма! еКапуста Вопросы и ответы Служба поддержки Договор-оферта --b"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "support@svoi.ru",
+   "tema": "Re: Отклик на вакансию • Даниэль Ильясов - более 7 лет в digital, 50+ ниш, 15k+ клиентов Re: Обращение 650773: прошу продлить акцию прощения долга",
+   "data": "Tue, 01 Sep 2026 08:49:26 +0300",
+   "kto": "moneyman",
+   "kusok": "--===============1486378224367918838== Content-Type: text/plain; charset=\"utf-8\" Content-Transfer-Encoding: base64 0JfQtNGA0LDQstGB0YLQstGD0LnRgtC1IQoK0J7Qv9C70LDRgtCwINC+0YIgMTMuMDcuMjAyNiDQ siDRgNCw0LfQvNC10YDQtSAxMCA5ODkuMjUg0YDRg9CxLiDRg9GB0L/QtdGI0L3QviDQt9Cw0YfQ uNGB0LvQtdC90LAsINC30LDQtdC8IOKEljMyOTUzMjIwINC/0L7Qs9Cw0YjQtdC9LgrQodC/0LDR gdC40LHQviwg0YfRgtC+INCy0L7RgdC/0L7Qu9GM0LfQvtCy0LDQu9"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "help_y@pvonline.ru <help_y@pvonline.ru>",
+   "tema": "[Подозрительное письмо!]Email клиента (okoteam.top@gmail.com) Договор № 25200746995, цессия СТ-77-2026-11536: предложение о закрытии",
+   "data": "Thu, 3 Sep 2026 06:25:52 +0300",
+   "kto": "pvonline",
+   "kusok": "--------_28688_2004482773_23328 Content-Type: multipart/alternative; boundary=\"------_3041_2004482773_23328\" --------_3041_2004482773_23328 Content-Type: text/plain; charset=\"utf-8\" Content-Transfer-Encoding: base64 0JjRgdGF0L7QtNGP0YnQtdC10J/QuNGB0YzQvNC+4oSWODNhN2E5MzctYTc0Ni0x MWYxLTllNzQtMDA1MDU2MTMxM2Iy --------_3041_2004482773_23328 Content-Type: text/html; charset=\"utf-8\" Content-Transfer-E"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "<loan@oneclickmoney.ru>",
+   "tema": "Обращение №2030A926002030 зарегистрировано",
+   "data": "Mon, 31 Aug 2026 21:47:10 +0300",
+   "kto": "oneclick",
+   "kusok": "=D0=94=D0=BE=D0=B1=D1=80=D1=8B=D0=B9 =D0=B4=D0=B5=D0=BD=D1=8C. =D0=91=D0= =BB=D0=B0=D0=B3=D0=BE=D0=B4=D0=B0=D1=80=D0=B8=D0=BC =D0=92=D0=B0=D1=81 = =D0=B7=D0=B0 =D0=BE=D0=B1=D1=80=D0=B0=D1=89=D0=B5=D0=BD=D0=B8=D0=B5 = =E2=84=96 2030A926002030, =D0=BE=D0=BD=D0=BE =D0=B7=D0=B0=D1=80=D0=B5=D0= =B3=D0=B8=D1=81=D1=82=D1=80=D0=B8=D1=80=D0=BE=D0=B2=D0=B0=D0=BD=D0=BE = =D0=B8 =D0=BF=D1=80=D0=B8=D0=BD=D1=8F"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "<loan@oneclickmoney.ru>",
+   "tema": "Обращение №1709A137921709 зарегистрировано",
+   "data": "Mon, 31 Aug 2026 21:41:50 +0300",
+   "kto": "oneclick",
+   "kusok": "=D0=94=D0=BE=D0=B1=D1=80=D1=8B=D0=B9 =D0=B4=D0=B5=D0=BD=D1=8C. =D0=91=D0= =BB=D0=B0=D0=B3=D0=BE=D0=B4=D0=B0=D1=80=D0=B8=D0=BC =D0=92=D0=B0=D1=81 = =D0=B7=D0=B0 =D0=BE=D0=B1=D1=80=D0=B0=D1=89=D0=B5=D0=BD=D0=B8=D0=B5 = =E2=84=96 1709A137921709, =D0=BE=D0=BD=D0=BE =D0=B7=D0=B0=D1=80=D0=B5=D0= =B3=D0=B8=D1=81=D1=82=D1=80=D0=B8=D1=80=D0=BE=D0=B2=D0=B0=D0=BD=D0=BE = =D0=B8 =D0=BF=D1=80=D0=B8=D0=BD=D1=8F"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "support@mbafin.ru",
+   "tema": "Благодарим вас за обращение в ООО \"ПКО \"М.Б.А. Финансы\"",
+   "data": "Mon, 31 Aug 2026 21:36:03 +0300",
+   "kto": "mba",
+   "kusok": " Здравствуйте! Направленная вами информация принята в работу. *Данное сообщение сформировано и отправлено автоматически. Пожалуйста, не отвечайте на него. "
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "support@svoi.ru",
+   "tema": "Re: Обращение 650773: прошу продлить акцию прощения долга",
+   "data": "Mon, 31 Aug 2026 21:36:01 +0300",
+   "kto": "moneyman",
+   "kusok": "--===============0670525520971391804== Content-Type: text/plain; charset=\"utf-8\" Content-Transfer-Encoding: base64 0JHQu9Cw0LPQvtC00LDRgNC40Lwg0LfQsCDQktCw0YjQtSDQvtCx0YDQsNGJ0LXQvdC40LUg0LIg 0YHQu9GD0LbQsdGDINC/0L7QtNC00LXRgNC20LrQuCBNb25leU1hbiEKCtCU0LDQvdC90L7QtSDQ v9C40YHRjNC80L4g0YHRhNC+0YDQvNC40YDQvtCy0LDQvdC+INCw0LLRgtC+0LzQsNGC0LjRh9C1 0YHQutC4LCDQvtGC0LLQtdGH0LDRgtGMINC90LAg0L3QtdCz0L4g0L"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "support@office.privsosed.ru",
+   "tema": "Уведомление о принятииобращения в работу",
+   "data": "Mon, 31 Aug 2026 18:45:26 +0000",
+   "kto": "triumvirat",
+   "kusok": "0KPQstCw0LbQsNC10LzRi9C5INC60LvQuNC10L3RgiAo0LfQsNGP0LLQuNGC0LXQu9GMKSwKCtCR 0LvQsNCz0L7QtNCw0YDQuNC8INC30LAg0L7QsdGA0LDRidC10L3QuNC1INCyINCf0YDQuNCy0LXR giwg0YHQvtGB0LXQtCEuCgrQktCw0YjQtSDQvtCx0YDQsNGJ0LXQvdC40LUg0LfQsNGA0LXQs9C4 0YHRgtGA0LjRgNC+0LLQsNC90L4g0L/QvtC0INC90L7QvNC10YDQvtC8OiDQktClLdCf0KEtMjE4 NzYxNSDQuCDQv9C10YDQtdC00LDQvdC+INC90LAg0YDQsNGB0YHQvNC+0YLRgNC10L3QuNC1LiDQ n9GA0L7RgdC40Lw"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "\"support\" <support@mbafin.ru>",
+   "tema": "Ответ",
+   "data": "Fri, 4 Sep 2026 10:09:31 +0300",
+   "kto": "mba",
+   "kusok": "0JTQvtCx0YDRi9C5INC00LXQvdGMLg0K0JLQt9GL0YHQutCw0L3QuNC1INC/0YDQvtCy0L7QtNC4 0YLRgdGPINC/0L4g0L/QvtGA0YPRh9C10L3QuNGOINCe0J7QniDQnNCk0JogwqvQoi3QpNC40L3Q sNC90YHCuy4g0JrQvtC80L/QsNC90LjRjyDQntCe0J4gwqvQn9Ca0J4gwqvQnC7QkS7QkC4g0KTQ uNC90LDQvdGB0YvCuyDQvdC1INGP0LLQu9GP0LXRgtGB0Y8g0JLQsNGI0LjQvCDQutGA0LXQtNC4 0YLQvtGA0L7QvCDQuCDQutGA0LXQtNC40YLQvdC+0Lkg0L7RgNCz0LDQvdC40LfQsNGG0LjQtdC5 LCDRgNCw0LHQvtG"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "Судебный участок №5 по Кировскому району г.Уфы РБ <msrb021@yandex.ru>",
+   "tema": "Re: Дело № 2-946/2026: прошу сообщить результат рассмотрения возражения",
+   "data": "Fri, 04 Sep 2026 12:35:02 +0500",
+   "kto": "zaymer",
+   "kusok": "PGRpdj7QndCwINCS0LDRiNC1INC+0LHRgNCw0YnQtdC90LjQtSDRgdC+0L7QsdGJ0LDQtdGC0YHR jywg0YfRgtC+INC90LDQtNC70LXQttCw0YnQtSDQvtGE0L7RgNC80LvQtdC90L3QvtC1INC4INC/ 0L7QtNC/0LjRgdCw0L3QvdC+0LUg0LfQsNGP0LLQu9C10L3QuNC1INC+0LEg0L7RgtC80LXQvdC1 INGB0YPQtNC10LHQvdC+0LPQviDQv9GA0LjQutCw0LfQsCDQv9C+INCz0YDQsNC20LTQsNC90YHQ utC+0LzRgyDQtNC10LvRgyAyLTk0Ni8yMDI2INC90LUg0L/QvtGB0YLRg9C/0LDQu9C+INC4INC9 0LUg0YDQsNGB0YH"
   },
   {
    "yashik": "okoteam.top@gmail.com",
@@ -282,5 +382,5 @@
    "oshibka": "error: b'[AUTHENTICATIONFAILED] Invalid credentials (Failure)'"
   }
  ],
- "pochta_proverena": "31.08.2026 18:31"
+ "pochta_proverena": "04.09.2026 19:44"
 }
