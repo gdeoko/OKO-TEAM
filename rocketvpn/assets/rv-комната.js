@@ -90,13 +90,18 @@
     "  return fract((p3.x + p3.y) * p3.z);",
     "}",
     "void main(){",
-    "  vec2 c = vPos.xz / 24.0;",
-    "  float r = length(c);",
+    /* РАДИУС ПО ПЛОСКОСТИ ДИСКА, А НЕ ПО ОДНОЙ ОСИ. Круг стоит в
+       плоскости XY своей геометрии и уже потом кладётся горизонтально
+       поворотом. Брать xz значит брать x и ноль: пол гас полосами по
+       одной стороне и держался во всю длину по другой, а «край»,
+       задуманный как мягкое растворение по окружности, работал как
+       вертикальная штора. */
+    "  float r = length(vPos.xy) / 24.0;",
     "  vec3 color = mix(uC2, uC1, clamp(r * 1.2, 0.0, 1.0));",
     /* Поддельная тень под фигурой, их формула в наших единицах. */
-    "  float shadow = min(1.0, length(vPos * 0.0625 + vec3(1.15, 0.0, -0.55)));",
+    "  float shadow = min(1.0, length(vec3(vPos.x, 0.0, vPos.y) * 0.0625 + vec3(1.15, 0.0, -0.55)));",
     "  shadow = pow(shadow, 2.0);",
-    "  shadow += sin(uTime * 3.3 + vPos.z * 0.31) * 0.1 + 0.1;",
+    "  shadow += sin(uTime * 3.3 + vPos.y * 0.31) * 0.1 + 0.1;",
     "  shadow += sin(uTime * 3.1 + vPos.x * 0.25) * 0.1 + 0.1;",
     "  shadow = mix(0.5, 1.0, shadow);",
     "  color *= mix(vec3(0.5, 0.7, 1.0) * 0.1, vec3(1.0), shadow);",
@@ -182,7 +187,7 @@
     "  float a = pow(v * 3.0, 3.0);",
     "  vec2 экр = gl_FragCoord.xy / 1440.0;",
     "  a += pow(экр.x, 2.0) * 0.15;",
-    "  float r = length(vPos.xz) / 24.0;",
+    "  float r = length(vPos.xy) / 24.0;",
     "  a *= 1.0 - smoothstep(0.55, 1.0, r);",
     "  a *= uAlpha * 0.6;",
     "  if (a < 0.004) discard;",
