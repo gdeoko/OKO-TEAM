@@ -2589,3 +2589,151 @@ html:not(.рв-слова-в-сцене) .rv-дело {
   border: 0; background: none; backdrop-filter: none;
   text-align: left;
 }
+
+
+/* ══ ЛЕНТА ЗАПЕРТА, ПОКА КАМЕРА САДИТСЯ ═══════════════════════════
+   Владелец: «на стартовой загрузке у них нельзя скроллить вниз, пока
+   камера не отпустится и пока загрузка не пройдёт».
+
+   Замок ставит и снимает мир (rv-world.js): он один знает, когда
+   вступление кончилось. Здесь только сам запрет - разметкой, а не
+   скриптом, иначе между отрисовкой страницы и запуском скрипта
+   остаётся окно, в которое ленту успевают дёрнуть.
+
+   overscroll-behavior обязателен вместе с overflow: без него телефон
+   отдаёт жест «потянуть вниз» браузеру и страница дёргается целиком. */
+html.рв-замок,
+html.рв-замок body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+
+/* ══ СТРАНИЦА ВНУТРИ ГЛЫБЫ ЛЬДА ═══════════════════════════════════
+   Сценарий владельца: «если нажать на глыбу, внутрь уходит камера с
+   ускорением, там фон соответствующий, как будто мы внутри льдины, эта
+   иконка с небольшой подсветкой и текст, описание, и кнопка выхода как
+   у них, прямо один в один».
+
+   У igloo это тёмная страница поверх сцены: слева вверху марка, справа
+   вверху «Close» в уголках рамки, ниже «////// Summary» и абзацы
+   моноширинным набором. За текстом просвечивает толща льда - у них
+   видны грани самой глыбы, в которую мы вошли.
+
+   Здесь то же самое. Подложка полупрозрачная и размытая, поэтому лёд,
+   который в этот момент накрыл объектив, остаётся виден за словами и
+   держит обещание «мы внутри предмета», а не «поверх него открылась
+   панель». */
+.rv-внутрь {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; grid-template-rows: auto 1fr;
+  padding: clamp(16px, 3vw, 34px);
+  gap: clamp(18px, 4vh, 44px);
+  color: var(--rv-текст, #E8ECF7);
+  /* Подложка ЛЁГКАЯ: за словами обязана просвечивать толща льда, в
+     которую мы вошли. На плотной заливке кадр выходил чёрным листом с
+     текстом, и обещание «мы внутри предмета» не читалось вовсе. */
+  background: linear-gradient(180deg,
+              rgba(9, 13, 26, 0.30) 0%, rgba(9, 13, 26, 0.62) 46%,
+              rgba(6, 9, 18, 0.86) 100%);
+  -webkit-backdrop-filter: blur(2px) saturate(1.05);
+  backdrop-filter: blur(2px) saturate(1.05);
+  opacity: 0; pointer-events: none;
+  transition: opacity .42s cubic-bezier(.4,0,.2,1);
+}
+.rv-внутрь.рв-видно { opacity: 1; pointer-events: auto; }
+/* На влёте страница ещё не показана, но подложка уже собирается: без
+   этого лёд накрывает объектив и кадр на четверть секунды остаётся
+   пустым. */
+.rv-внутрь.рв-влёт { opacity: .18; }
+
+.rv-внутрь-шапка {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+.rv-внутрь-марка {
+  margin: 0; font-family: var(--rv-моно, ui-monospace, monospace);
+  font-size: clamp(15px, 2.2vw, 22px); letter-spacing: .16em;
+  font-weight: 700; color: #FFFFFF;
+}
+.rv-внутрь-марка i { font-style: normal; color: var(--rv-акцент, #7C8CFF); }
+
+/* Кнопка выхода в уголках рамки - их приём. Уголки рисуются двумя
+   градиентами, а не картинкой: их четыре штуки и они обязаны тянуться
+   за размером кнопки. */
+.rv-внутрь-выход {
+  position: relative;
+  appearance: none; -webkit-appearance: none;
+  background: none; border: 0; cursor: pointer;
+  color: #FFFFFF;
+  font-family: var(--rv-моно, ui-monospace, monospace);
+  font-size: clamp(13px, 1.6vw, 16px); letter-spacing: .12em;
+  padding: clamp(10px, 1.4vw, 14px) clamp(20px, 2.6vw, 30px);
+  min-height: 44px;
+}
+.rv-внутрь-уголки {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(#FFF, #FFF) left top / 12px 1px no-repeat,
+    linear-gradient(#FFF, #FFF) left top / 1px 12px no-repeat,
+    linear-gradient(#FFF, #FFF) right top / 12px 1px no-repeat,
+    linear-gradient(#FFF, #FFF) right top / 1px 12px no-repeat,
+    linear-gradient(#FFF, #FFF) left bottom / 12px 1px no-repeat,
+    linear-gradient(#FFF, #FFF) left bottom / 1px 12px no-repeat,
+    linear-gradient(#FFF, #FFF) right bottom / 12px 1px no-repeat,
+    linear-gradient(#FFF, #FFF) right bottom / 1px 12px no-repeat;
+  opacity: .85;
+  transition: opacity .2s ease;
+}
+.rv-внутрь-выход:hover .rv-внутрь-уголки,
+.rv-внутрь-выход:focus-visible .rv-внутрь-уголки { opacity: 1; }
+
+.rv-внутрь-лист {
+  align-self: start;
+  max-width: min(62ch, 92vw);
+  margin: 0 auto;
+  width: 100%;
+}
+.rv-внутрь-над {
+  margin: 0 0 clamp(10px, 1.6vh, 18px);
+  font-family: var(--rv-моно, ui-monospace, monospace);
+  font-size: clamp(12px, 1.4vw, 15px); letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(198, 210, 240, .62);
+}
+.rv-внутрь-заг {
+  margin: 0 0 clamp(12px, 2vh, 22px);
+  font-family: var(--rv-моно, ui-monospace, monospace);
+  font-size: clamp(22px, 3.4vw, 38px); line-height: 1.24;
+  letter-spacing: .04em; font-weight: 700; color: #FFFFFF;
+}
+.rv-внутрь-текст {
+  margin: 0;
+  font-family: var(--rv-моно, ui-monospace, monospace);
+  font-size: clamp(15px, 1.9vw, 19px); line-height: 1.72;
+  letter-spacing: .01em;
+  color: rgba(226, 233, 250, .92);
+}
+
+/* Пока мы внутри глыбы, лента заперта: мы в предмете, а не на ленте. */
+html.рв-внутри,
+html.рв-внутри body { overflow: hidden !important; overscroll-behavior: none; }
+/* И слой слов акта уходит: он говорит про стену, а мы уже во льду. */
+html.рв-внутри .rv-акт > .rv-кадр > .rv-слой { opacity: 0; pointer-events: none; }
+/* И шапка сайта: она перекрывала марку и кнопку выхода страницы внутри,
+   а действовать в этот момент можно только одним - выйти. */
+html.рв-внутри .rv-шапка,
+html.рв-внутри .rv-орган,
+html.рв-внутри .rv-визитка,
+html.рв-внутри .rv-манифест {
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+/* Блок слов сдвинут вниз: знак стоит в верхней трети кадра, слова под
+   ним. Та же раскладка, что во всех сценах сайта. */
+.rv-внутрь-лист { margin-top: min(34vh, 300px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-внутрь { transition: none; }
+}
