@@ -18,8 +18,11 @@ require_once BASE_PATH . '/core/diploma_html.php';
 
 $cid = (int) ($argv[1] ?? 0);
 $kind = strtolower(trim((string) ($argv[2] ?? 'main')));
+$eng  = strtolower(trim((string) ($argv[3] ?? '')));      // v1/v2 — принудительный движок
+$appId = (int) ($argv[4] ?? 0);                            // 0 — образцовая заявка
 $c = one("SELECT * FROM competitions WHERE id=?", [$cid]);
 if (!$c) { fwrite(STDERR, "Конкурс не найден\n"); exit(1); }
+if (in_array($eng, ['v1', 'v2'], true)) $c['diploma_engine'] = $eng;
 
 $app = [
     'id' => 0, 'number' => (string) $c['code'] . '-2026-00001', 'competition_id' => $cid,
@@ -30,6 +33,13 @@ $app = [
     'city' => 'Россия, город Москва', 'result' => 'ЛАУРЕАТ I СТЕПЕНИ',
     'extra_diploma' => 'ЗА ВЕРНОСТЬ ТРАДИЦИЯМ', 'email' => 'sample@example.org',
 ];
+/* Реальная заявка вместо образцовой: у живых участников длинные названия
+ * учреждений и коллективов, и ровно на них лист расползается. */
+if ($appId > 0) {
+    $real = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if ($real) $app = $real + $app;
+}
+
 $opt = [];
 if ($kind === 'extra')  $opt['extra'] = true;
 if ($kind === 'named')  { $opt['named'] = true;  $opt['person'] = (string) $app['full_name']; }

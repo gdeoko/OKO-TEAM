@@ -726,6 +726,123 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     <div class="lbl">проверка подлинности</div>
   </div>
 </div>
+<?php /* РОВНЫЙ ЛИСТ У СТАРЫХ КОНКУРСОВ.
+   Кегли здесь подбирает PHP, и на образцовых данных лист выглядел собранным.
+   А у живой заявки с длинным названием учреждения строки сжимались, между
+   разделами появлялись то склейки, то провалы, и внизу оставалась пустота:
+   выравнивателя просветов в этой вёрстке не было вовсе. Добавляем ТОЛЬКО его —
+   шрифты, размеры, фон, подписи и рамка утверждённых бланков не трогаются.
+
+   Механика та же, что у сентябрьских бланков: границы букв считаются от
+   ИЗМЕРЕННОЙ базовой линии строки (нулевой inline-block по baseline), а не из
+   метрик шрифта — у части шрифтов они расходятся с раскладкой. Поправка на
+   шрифт и величина шага живут в competitions.diploma_template (ink_cal,
+   fixed_gap) и снимаются замером готового листа. */ ?>
+<script>
+(function(){
+  var FIXG=<?= (float)($tpl['fixed_gap'] ?? 0) ?>;
+  var INKCAL=<?= json_encode((object)((array)($tpl['ink_cal'] ?? [])), JSON_UNESCAPED_UNICODE) ?>;
+  var SC=1;
+  function _leaf(el, last){
+    var e=el;
+    for(var d=0; d<6; d++){
+      var kids=[].filter.call(e.children, function(k){ return k.getClientRects().length && k.textContent.trim(); });
+      if(!kids.length) break;
+      e = last ? kids[kids.length-1] : kids[0];
+    }
+    return e;
+  }
+  function _tnodes(el){
+    var w=document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null), out=[], n;
+    while((n=w.nextNode())){ if(n.nodeValue && n.nodeValue.trim()) out.push(n); }
+    return out;
+  }
+  /* Щуп ставим вплотную к буквам: у строки в две строки щуп в конце блока
+     попадал бы на пустую третью и низ уезжал вниз. */
+  function _base(el, atEnd){
+    var s=document.createElement('span'), y;
+    s.style.cssText='display:inline-block;width:0;height:0;overflow:hidden;vertical-align:baseline';
+    var ns=_tnodes(el);
+    if(!ns.length){
+      if(atEnd) el.appendChild(s); else el.insertBefore(s, el.firstChild);
+      y=s.getBoundingClientRect().top; s.parentNode.removeChild(s); return y;
+    }
+    var r=document.createRange(), n, v, i;
+    if(atEnd){ n=ns[ns.length-1]; v=n.nodeValue; i=v.length; while(i>0 && /\s/.test(v.charAt(i-1))) i--; }
+    else     { n=ns[0];           v=n.nodeValue; i=0;        while(i<v.length && /\s/.test(v.charAt(i))) i++; }
+    r.setStart(n,i); r.setEnd(n,i);
+    r.insertNode(s);
+    y=s.getBoundingClientRect().top;
+    s.parentNode.removeChild(s);
+    el.normalize();
+    return y;
+  }
+  function _glyph(el){
+    var cs=getComputedStyle(el);
+    var cv=_glyph._c||(_glyph._c=document.createElement('canvas')), g=cv.getContext('2d');
+    g.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+    var t=el.textContent.trim()||'Ag';
+    if(cs.textTransform==='uppercase') t=t.toUpperCase();
+    var m=g.measureText(t);
+    return {aa:m.actualBoundingBoxAscent, ad:m.actualBoundingBoxDescent};
+  }
+  function inkBox(el, sel){
+    var r=el.getBoundingClientRect();
+    if(el.tagName==='IMG'||el.classList.contains('logos-row')) return {top:r.top, bottom:r.bottom};
+    var f=_leaf(el,false), l=_leaf(el,true);
+    var gf=_glyph(f), gl=_glyph(l);
+    if(!(gf.aa>0)) return {top:r.top, bottom:r.bottom};
+    var cal=(INKCAL && INKCAL[sel]) || [0,0];
+    var fs=parseFloat(getComputedStyle(el).fontSize)||0;
+    return {top:    _base(f,false) - gf.aa*SC + (parseFloat(cal[0])||0)*fs*SC,
+            bottom: _base(l,true)  + gl.ad*SC + (parseFloat(cal[1])||0)*fs*SC};
+  }
+  function fitOptical(){
+    var cont=document.querySelector('.content'), bb=document.querySelector('.bottom-block');
+    if(!cont||!bb) return;
+    var mm=getComputedStyle(cont).transform.match(/matrix\(([\d.]+)/); if(mm) SC=parseFloat(mm[1]);
+    var PX_MM=document.querySelector('.diploma').getBoundingClientRect().width/210;
+    var names=['.header-legal','.logos-row','.competition-type','.competition-name','.support-line',
+               '.diploma-type','.diploma-degree','.extra-award','.awarded-label','.awarded-name',
+               '.awarded-name-script','.field-list','.gratitude-text'];
+    var els=[], sels=[];
+    names.forEach(function(n){ var e=cont.querySelector(n); if(e){ els.push(e); sels.push(n); } });
+    if(els.length<3) return;
+    /* Воздух между данными и подписями. У старых бланков он ЧАСТЬ УТВЕРЖДЁННОГО
+       ВИДА: на эталоне владельца от последней строки заявки до фамилии
+       председателя почти пять сантиметров, и лист от этого дышит. Выравниватель
+       по умолчанию заполнял бы всю высоту и воздух съедал, поэтому запас берётся
+       из настройки конкурса (competitions.diploma_template.gap_reserve, мм). */
+    var last=els[els.length-1], RESERVE=<?= (float)($tpl['gap_reserve'] ?? 7) ?>;
+    function applyG(G){
+      for(var pass=0; pass<3; pass++){
+        var boxes=els.map(function(e,i){ return inkBox(e, sels[i]); });
+        for(var i=0;i<els.length-1;i++){
+          var cur=(boxes[i+1].top-boxes[i].bottom)/PX_MM;
+          var m=parseFloat(getComputedStyle(els[i]).marginBottom)/PX_MM;
+          els[i].style.marginBottom=Math.max(-6, m+(G-cur)/Math.max(SC,0.01)).toFixed(2)+'mm';
+        }
+      }
+      return (bb.getBoundingClientRect().top-inkBox(last, sels[sels.length-1]).bottom)/PX_MM;
+    }
+    /* Заданный шаг — потолок: длинная заявка ровные 5 мм не вмещает, и тогда
+       берём самый крупный шаг, который ещё не подводит строки к подписям. */
+    var hi = FIXG > 0 ? FIXG : 9.0;
+    if(applyG(hi) >= RESERVE) return;
+    var lo=1.0, best=1.0;
+    for(var k=0;k<8;k++){
+      var G=(lo+hi)/2;
+      if(applyG(G)>=RESERVE){ best=G; lo=G; } else { hi=G; }
+    }
+    applyG(best);
+  }
+  function finish(){ try{ fitOptical(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
+  /* Ждём шрифты: по недогруженному шрифту границы букв считаются неверно. */
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(finish); }
+  else { window.addEventListener('load', finish); }
+  setTimeout(finish, 7000);   // страховка, если fonts.ready так и не разрешился
+})();
+</script>
 </body>
 </html>
 <?php
