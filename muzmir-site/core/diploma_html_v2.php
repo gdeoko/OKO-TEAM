@@ -892,9 +892,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   letter-spacing:<?= $T['ls_degree'] ?? '2px' ?>;text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  /* Звание отодвинуто от слова ДИПЛОМ и придвинуто к «награждается»: раньше оно
-     висело ровно посередине между ними, и связка «звание - кому» разрывалась. */
-  letter-spacing:4px;margin-top:calc(var(--u) * 1);
+  /* Просвет НАД званием отдан ритм-выравнивателю (margin-top:0), иначе
+     фиксированный margin-top не давал уравнять этот просвет с остальными —
+     над званием висел заметно больший зазор, чем между другими блоками. */
+  letter-spacing:4px;margin-top:0;
   margin-bottom:calc(var(--u) * 1);filter:<?= $HALO_D ?>;line-height:1}
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:var(--u)}
@@ -1178,19 +1179,16 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
        строки. Подгоняем по ширине, как название конкурса. */
     fitOne('.awarded-name-script', 13, <?= (float)$T['script_fs'] ?>);
     fitOne('.extra-award', 9, 15);
-    /* Раньше ждали шрифт названия ИМЕННО в весе 900. У части тем шрифт
-       одновесный (Prata у «Мира звёзд», Yeseva One), 900-начертания нет, и
-       проверка не проходила НИКОГДА — уравниватель просветов не запускался, а
-       лист уходил с кривым ритмом. Ждём шрифт в его реальном присутствии (без
-       привязки к 900); загрузку принудительно доводит document.fonts.load ниже. */
-    if(!FAM || !(document.fonts && document.fonts.check) || document.fonts.check('40pt "'+FAM+'"')){
-      fitOptical();
-      document.documentElement.setAttribute('data-title-fit','1');
-    }
+    /* Уравнивание просветов считает границы букв через canvas по ФАКТИЧЕСКОМУ
+       шрифту. Если шрифт названия (Prata, Alegreya SC) ещё не догрузился, canvas
+       меряет запасной шрифт и margin'ы выходят кривыми. Поэтому метку готовности
+       (её ждёт мост перед снимком) снимает ТОЛЬКО finish() после fonts.ready —
+       здесь ритм лишь прогоняется предварительно, без метки. */
+    fitOptical();
   }
-  /* Страховка: если детект шрифта так и не сработал (мост/оффлайн-шрифт),
-     всё равно выравниваем ритм и снимаем стоп-метку, чтобы бланк не ушёл кривым. */
-  function fitForce(){ try{ fitOptical(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
+  /* Финал: гарантированно после полной загрузки шрифтов — прогоняем ритм по
+     верным метрикам и снимаем стоп-метку для моста. */
+  function finish(){ try{ fitTitle(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
   /* РОВНЫЙ ЛИСТ - ПО БУКВАМ, А НЕ ПО РАМКАМ БЛОКОВ.
      Раньше выравнивались margin'ы, и по замерам всё сходилось, а глаз видел
      разнобой: у слова ДИПЛОМ в 58 пунктов рамка строки почти совпадает с
@@ -1254,14 +1252,17 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     applyG(best);
   }
   if(document.fonts && document.fonts.load && FAM){
-    /* Догружаем шрифт названия в РЕАЛЬНОМ присутствии, а не только в 900:
-       у одновесных шрифтов (Prata) запрос 900 отдавал пустой набор и ритм не
-       доводился. */
+    /* Догружаем шрифт названия в его реальном присутствии (не только 900). */
     try{ Promise.all([document.fonts.load('40pt "'+FAM+'"'), document.fonts.load('900 40pt "'+FAM+'"').catch(function(){})]).then(fitTitle, fitTitle); }catch(e){}
   }
-  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(fitTitle); }
+  /* Метку готовности снимаем ТОЛЬКО после полной загрузки шрифтов — тогда ритм
+     посчитан по верным метрикам, и мост снимает уже ровный лист. */
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(finish); }
+  else { window.addEventListener('load', finish); }
   window.addEventListener('load',fitTitle);
-  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>24){ clearInterval(tick); if(document.documentElement.getAttribute('data-title-fit')!=='1') fitForce(); } },120);
+  /* Прогон ритма до загрузки шрифтов (предварительно, без метки) + жёсткая
+     страховка на ~7с, если fonts.ready так и не разрешился. */
+  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>60){ clearInterval(tick); finish(); } },120);
 })();
 </script>
 </body>
