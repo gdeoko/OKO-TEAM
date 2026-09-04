@@ -1079,8 +1079,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 
       <?php $e = $E('fields'); ?>
       <div class="gratitude-text"<?= $D('fields') . _dh_style($e, 11.5) ?>>
-        <?= h($gratitude) ?><br><br>
-        Желаем Вам творческих успехов, процветания и новых побед!
+        <?= h($gratitude) ?><br>Желаем Вам творческих успехов, процветания и новых побед!
       </div>
     <?php endif; ?>
   </div>
@@ -1194,7 +1193,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     /* Звание тоже подгоняется: у дополнительного диплома это не «Лауреат I
        степени», а длинная формулировка вроде «За верность традициям» - при
        жёстком кегле её обрезало краем листа. */
-    fitOne('.diploma-degree', 13, <?= round(40 * $CSCALE, 1) ?>);
+    fitOne('.diploma-degree', 13, <?= round(40 * $CSCALE * max(0.5, min(1.5, (float)($tpl['degree_k'] ?? 1.0))), 1) ?>);
     /* Слово ДИПЛОМ короткое и всегда влезало, а вот БЛАГОДАРНОСТЬ на бланке с
        узкими полями обрезалась краем листа - подгоняем и её. */
     fitOne('.diploma-type', 22, <?= $thanks ? 48 : 58 ?>);

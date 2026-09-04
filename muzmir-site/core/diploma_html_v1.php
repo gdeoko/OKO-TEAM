@@ -377,7 +377,13 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     // на вторую, не влезло и в две — уменьшаем кегль. Разрядка (letter-spacing) учтена:
     // без неё «ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ» обрезалось на «…ИСПОЛНЕН».
     $AVAIL     = 180.0;   // мм полезной ширины (лист 210 мм минус поля/рамки)
-    $degreeBlk = _dh_fit_block($degree, 33.0, 15.0, 0.56, $AVAIL, 4.0, 2);   // ls: .diploma-degree = 4px
+    /* Кегль звания у конкурса свой. У «Мировых Талантов» строка звания на фоне
+     * получалась крупнее остальных бланков — владелец просил чуть убавить.
+     * Держим множителем (competitions.diploma_template.degree_k), а не жёстким
+     * размером: подгонка по длине строки продолжает работать, и «ЛАУРЕАТ I
+     * СТЕПЕНИ» и «ЗА ВЕРНОСТЬ ТРАДИЦИЯМ» остаются в одной пропорции. */
+    $degK = max(0.5, min(1.5, (float) ($tpl['degree_k'] ?? 1.0)));
+    $degreeBlk = _dh_fit_block($degree, 33.0 * $degK, 15.0 * $degK, 0.56, $AVAIL, 4.0, 2);   // ls: .diploma-degree = 4px
     $degreeHtml = $degreeBlk['html'];
     $degreeCss  = $degreeBlk['css'];
 
@@ -687,8 +693,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 
       <?php $e = $E('fields'); ?>
       <div class="gratitude-text"<?= $D('fields') . _dh_style($e, 11.5) ?>>
-        <?= h($gratitude) ?><br><br>
-        Желаем Вам творческих успехов, процветания и новых побед!
+        <?= h($gratitude) ?><br>Желаем Вам творческих успехов, процветания и новых побед!
       </div>
     <?php endif; ?>
   </div>
