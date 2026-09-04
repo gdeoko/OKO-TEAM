@@ -1,8 +1,7 @@
 <?php
 declare(strict_types=1);
-namespace Dip\V2;
-// АВТОСБОРКА диспетчером diploma_html.php: замороженный движок бланка (868989a).
-// Правки вносить в исходную версию и пересобирать, не редактировать вручную.
+namespace Dip\V3;
+// КАНДИДАТ-движок для сверки (80a2ab3); вручную не редактировать.
 /**
  * core/diploma_html.php — HTML-сборщик дипломов и благодарностей.
  * Вёрстка и стили — 1:1 из эталонов Даниэля (docs/assets_daniel/diplom_laureat2.html
@@ -219,56 +218,6 @@ function _dh_style2(array $cfg, string $autoCss = ''): string {
 }
 
 /**
- * ШИРИНА СТРОКИ В МИЛЛИМЕТРАХ ПРИ ЗАДАННОМ КЕГЛЕ (Manrope, полужирный).
- *
- * Точно её знает только браузер, но нам нужна оценка на стороне PHP - до того,
- * как страница отрисована. Прописные буквы шире строчных, пробел и запятая
- * заметно уже; коэффициенты сняты с гарнитуры и дают ошибку в пределах пары
- * процентов, чего для подбора кегля достаточно.
- */
-function _dh_text_w(string $s, float $fsPt): float {
-    $mmPerEm = $fsPt * 0.3528;
-    $w = 0.0;
-    $len = mb_strlen($s);
-    for ($i = 0; $i < $len; $i++) {
-        $ch = mb_substr($s, $i, 1);
-        /* Коэффициенты откалиброваны по готовому бланку: первый набор был снят
-         * «на глаз» и занижал ширину примерно на восемь процентов - расчёт
-         * обещал четыре строки, а браузер выкладывал пять. */
-        if ($ch === ' ')                                  $w += 0.29;
-        elseif (mb_strpos(',.:;!?«»"\'()-–—', $ch) !== false) $w += 0.33;
-        elseif (mb_strpos('мшщюжфыМШЩЮЖФЫ', $ch) !== false)  $w += 0.78;
-        elseif ($ch === mb_strtoupper($ch) && $ch !== mb_strtolower($ch)) $w += 0.68;
-        else                                              $w += 0.575;
-    }
-    return $w * $mmPerEm;
-}
-
-/**
- * НАИБОЛЬШИЙ КЕГЛЬ, ПРИ КОТОРОМ ТЕКСТ УКЛАДЫВАЕТСЯ В ЗАДАННОЕ ЧИСЛО СТРОК.
- *
- * Слова переносятся так же, как это сделает браузер: жадно, по пробелам, без
- * разрыва слова. Если не помещается даже на нижней границе кегля - возвращаем
- * её: лучше строкой больше, чем нечитаемые буквы.
- */
-function _dh_fit_lines(string $text, float $widthMm, float $maxFs, float $minFs, int $maxLines): float {
-    $words = preg_split('~\s+~u', trim($text)) ?: [];
-    if (!$words) return $maxFs;
-    for ($fs = $maxFs; $fs >= $minFs - 0.001; $fs -= 0.1) {
-        $lines = 1; $cur = '';
-        foreach ($words as $wd) {
-            $try = $cur === '' ? $wd : $cur . ' ' . $wd;
-            // Три процента запаса: округления браузера не должны стоить лишней строки.
-            if (_dh_text_w($try, $fs) <= $widthMm * 0.97) { $cur = $try; continue; }
-            $lines++; $cur = $wd;
-            if ($lines > $maxLines) break;
-        }
-        if ($lines <= $maxLines) return round($fs, 1);
-    }
-    return $minFs;
-}
-
-/**
  * Дизайн-тема диплома по названию конкурса: свои шрифты и цвета для названия,
  * слова ДИПЛОМ/БЛАГОДАРНОСТЬ, степени и ФИО. Все шрифты — с кириллицей.
  * Переопределяется ключом diploma_template.theme (cosmos|zenith|theatre|derzhava|classic).
@@ -282,68 +231,60 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'ff_degree' => "'Prata',serif", 'ls_degree' => '3px',
             'ls_name' => '.5px', 'sh_comp' => '0 0 18px rgba(120,200,255,.35)',
             'fonts'   => 'Prata',
-            /* Название набирается СВОЕЙ гарнитурой, отличной от остального листа:
-             * это главная строка, и по ней диплом узнают на фотографии. */
-            'ff_comp' => "'Prata',serif", 'fam_comp' => 'Prata', 'ls_comp' => '4px', 'w_comp' => 0.72,
+            'ff_comp' => "'Prata',serif", 'ls_comp' => '4px',
             'grad_comp'   => 'linear-gradient(180deg,#EAF7FF 0%,#BFE9FF 30%,#7FC9F0 55%,#CDEFFF 80%,#FFFFFF 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6C4 0%,#FFD54F 18%,#FFC107 38%,#D4A017 52%,#B8860B 62%,#FFC107 80%,#FFF3B0 100%)',
-            /* Звание уведено в аметист: рядом с ледяным названием и золотым
-             * словом ДИПЛОМ оно раньше было таким же бело-голубым и читалось как
-             * продолжение заголовка. */
-            'grad_degree' => 'linear-gradient(180deg,#F6F0FF 0%,#DCC8FF 34%,#A98CFF 66%,#EFE6FF 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 35%,#8FD4F5 65%,#E8F9FF 100%)',
             'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
-            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 32, 'script_color' => '#D6F1FF',
+            'script_font' => 'Pacifico', 'ff_script' => "'Pacifico',cursive", 'script_fs' => 36, 'script_color' => '#D6F1FF',
         ],
         // Зенит, триумф: античная классика, тёплое торжественное золото.
         'zenith' => [
             'ff_degree' => "'Forum',serif", 'ls_degree' => '5px',
             'ls_name' => '1px', 'sh_comp' => '0 1px 0 rgba(255,240,200,.5)',
-            'fonts'   => 'Forum&family=Playfair+Display:wght@900',
-            'ff_comp' => "'Playfair Display','Forum',serif", 'fam_comp' => 'Playfair Display', 'ls_comp' => '4px', 'w_comp' => 0.74,
+            'fonts'   => 'Forum',
+            'ff_comp' => "'Forum',serif", 'ls_comp' => '5px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF7D6 0%,#FFE082 25%,#E9C567 45%,#B8860B 58%,#E9C567 75%,#FFF3B0 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFFBE8 0%,#FFE082 20%,#F5C542 40%,#C9971C 55%,#A67C10 65%,#E9C567 82%,#FFF7D6 100%)',
-            // Звание — холодная платина: рядом с золотым названием видно сразу.
-            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#E2E9F5 34%,#9AA6BE 68%,#F0F4FB 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF3C4 30%,#F0CE72 60%,#D4A017 85%,#FFE082 100%)',
             'name_color' => '#FFE99C', 'ff_name' => "'Forum',serif",
-            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 33, 'script_color' => '#FFE99C',
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE99C',
         ],
         // Театр, сцена: бархат и шампань, тёплый кремовый свет рампы.
         'theatre' => [
             'ff_degree' => "'Cormorant Garamond',serif", 'ls_degree' => '4px',
             'ls_name' => '.5px', 'sh_comp' => '0 1px 0 rgba(255,235,190,.45)',
-            'fonts'   => 'Cormorant+Garamond:wght@600;700&family=Alegreya+SC:wght@900',
-            'ff_comp' => "'Alegreya SC','Cormorant Garamond',serif", 'fam_comp' => 'Alegreya SC', 'ls_comp' => '3px', 'w_comp' => 0.76,
+            'fonts'   => 'Cormorant+Garamond:wght@600;700',
+            'ff_comp' => "'Cormorant Garamond',serif", 'ls_comp' => '3px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF6E8 0%,#FFE3B0 30%,#F2BE6A 55%,#D89A3D 70%,#FFDFA6 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF9EC 0%,#FFE7B8 22%,#F4C878 42%,#D89A3D 56%,#B87526 66%,#F2BE6A 82%,#FFF2D8 100%)',
-            // Звание — светлый изумруд сцены, чтобы не повторять золото названия.
-            'grad_degree' => 'linear-gradient(180deg,#EAFFF6 0%,#B6EDD6 34%,#5FBF9B 68%,#DFFBF0 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF0D6 32%,#F2CE8E 62%,#D89A3D 88%,#FFE3B0 100%)',
             'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
-            'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 34, 'script_color' => '#FFE3B0',
+            'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 42, 'script_color' => '#FFE3B0',
         ],
         // Держава: имперское золото с рубиновым отблеском, строгая антиква.
         'derzhava' => [
             'ff_degree' => "'Old Standard TT',serif", 'ls_degree' => '6px',
             'ls_name' => '1px', 'sh_comp' => '0 1px 0 rgba(255,225,170,.5)',
-            'fonts'   => 'Old+Standard+TT:wght@700&family=Yeseva+One',
-            'ff_comp' => "'Yeseva One','Old Standard TT',serif", 'fam_comp' => 'Yeseva One', 'ls_comp' => '3px', 'w_comp' => 0.76,
+            'fonts'   => 'Old+Standard+TT:wght@700',
+            'ff_comp' => "'Old Standard TT',serif", 'ls_comp' => '4px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF3C4 0%,#FFD766 22%,#E8A93C 45%,#B8641B 60%,#E8A93C 78%,#FFE9A6 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6D0 0%,#FFD766 20%,#F0AE3C 40%,#C4571E 55%,#A63E14 63%,#E8A93C 80%,#FFE9A6 100%)',
-            // Звание — светлый багрянец: золото остаётся за названием конкурса.
-            'grad_degree' => 'linear-gradient(180deg,#FFF0EC 0%,#FFC9C2 32%,#E0555F 66%,#FFE3DC 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFEFC0 30%,#F0C868 60%,#D08A20 85%,#FFD766 100%)',
             'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
-            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 32, 'script_color' => '#FFD98F',
+            'script_font' => 'Lobster', 'ff_script' => "'Lobster',cursive", 'script_fs' => 37, 'script_color' => '#FFD98F',
         ],
         // Классика эталона (фолбэк).
         'classic' => [
             'ff_degree' => "'Playfair Display',serif", 'ls_degree' => '3px',
             'ls_name' => '.5px', 'sh_comp' => '0 1px 0 rgba(255,240,210,.45)',
-            'fonts'   => 'Yeseva+One',
-            'ff_comp' => "'Yeseva One','Playfair Display',serif", 'fam_comp' => 'Yeseva One', 'ls_comp' => '3px', 'w_comp' => 0.76,
+            'fonts'   => '',
+            'ff_comp' => "'Playfair Display',serif", 'ls_comp' => '3px',
             'grad_comp'   => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 20%,#C9A84C 45%,#8B6F1F 55%,#C9A84C 75%,#FFE082 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#E2E9F5 34%,#9AA6BE 68%,#F0F4FB 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 25%,#D4A017 55%,#A67C10 75%,#FFC107 100%)',
             'name_color' => '#FFE082', 'ff_name' => "'Playfair Display',serif",
-            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 33, 'script_color' => '#FFE082',
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE082',
         ],
     ];
     $key = (string)($tpl['theme'] ?? '');
@@ -371,46 +312,43 @@ function diploma_theme_on_light(array $T): array {
     $deep = [
         // Космос: глубокая полночная синь с холодным серебром.
         'cosmos' => [
-            'grad_comp'   => 'linear-gradient(180deg,#3A6EAC 0%,#255089 45%,#1B3E6D 70%,#356AA6 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#1B3A63 0%,#12294A 45%,#0C1D36 70%,#1B3A63 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 35%,#4A3607 60%,#8A6A12 100%)',
-            // Звание — аметист: рядом с синим названием видно сразу, но не темнит лист.
-            'grad_degree' => 'linear-gradient(180deg,#8A68D8 0%,#6748B4 55%,#503595 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#1B3A63 0%,#12294A 55%,#0C1D36 100%)',
             'name_color'  => '#12294A', 'script_color' => '#1B3A63',
         ],
         // Зенит: тёмное червонное золото с медью.
         'zenith' => [
-            'grad_comp'   => 'linear-gradient(180deg,#E8C669 0%,#C4901F 28%,#8F5D11 56%,#B8821C 78%,#E2BD5D 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#F2DFA2 0%,#D4A93C 22%,#8A6A12 50%,#D4A93C 74%,#FBF0C8 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#9C6B1A 0%,#7A4F10 38%,#57370A 62%,#9C6B1A 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#7A5FCC 0%,#5A43A6 45%,#432F80 78%,#6B51BC 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#3A2E5C 0%,#2A2145 45%,#1B1630 75%,#3A2E5C 100%)',
             'name_color'  => '#2A2145', 'script_color' => '#3A2E5C',
-            'sh_comp'     => '0 0 14px rgba(212,169,60,.28)',
+            'sh_comp'     => '0 1px 0 rgba(42,33,69,.5), 0 0 14px rgba(212,169,60,.28)',
         ],
         // Театр, искусство: тёмный изумруд с бронзой.
         'theatre' => [
-            'grad_comp'   => 'linear-gradient(180deg,#E3BE5E 0%,#B8871C 28%,#84540E 56%,#AC7A18 78%,#DCB553 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#E3C877 0%,#BF9A34 24%,#7A5E12 50%,#BF9A34 74%,#F0E2AB 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 40%,#4A3607 65%,#8A6A12 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#33B394 0%,#1D9276 45%,#12735C 78%,#2AA687 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#1B5C50 0%,#14483F 45%,#0A241F 75%,#1B5C50 100%)',
             'name_color'  => '#0E332C', 'script_color' => '#14483F',
-            'sh_comp'     => '0 0 14px rgba(191,154,52,.25)',
+            'sh_comp'     => '0 1px 0 rgba(14,51,44,.5), 0 0 14px rgba(191,154,52,.25)',
         ],
         // Держава: тёмный багрянец с золотом.
         'derzhava' => [
             /* Название - густое золото с тёмной прочеканкой, звание - багрянец:
              * две главные строки должны различаться, иначе диплом читается как
              * один сплошной заголовок. */
-            /* Чистое светлое золото - без затемнения и без обводок: тёмные тона
-             * на бумаге выглядели грязно. Отличие от звания даётся цветом. */
-            'grad_comp'   => 'linear-gradient(180deg,#E7C468 0%,#C08C1E 28%,#8E5B10 56%,#B57F1B 78%,#E0BB5C 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#E8C36A 0%,#C79A2E 22%,#8A6A12 48%,#C79A2E 72%,#F2DE9E 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#C79A2E 0%,#9C6B1A 26%,#6B4F0A 52%,#9C6B1A 76%,#D9B45A 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#E8515E 0%,#C82936 42%,#A81A26 74%,#DC414E 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#B02531 0%,#8A1F26 40%,#5C1219 70%,#9E2028 100%)',
             'name_color'  => '#5C1219', 'script_color' => '#7A1B22',
-            'sh_comp'     => '0 0 14px rgba(184,134,43,.25)',
+            'sh_comp'     => '0 1px 0 rgba(92,18,25,.55), 0 0 14px rgba(184,134,43,.25)',
         ],
         // Классика: тёмный кофейный с золотом.
         'classic' => [
-            'grad_comp'   => 'linear-gradient(180deg,#E4BF5F 0%,#B9881D 28%,#85550F 56%,#AD7B19 78%,#DDB654 100%)',
+            'grad_comp'   => 'linear-gradient(180deg,#4A3115 0%,#37230F 45%,#25170A 70%,#4A3115 100%)',
             'grad_dtype'  => 'linear-gradient(180deg,#8A6A12 0%,#6B4F0A 38%,#4A3607 62%,#8A6A12 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#E0663C 0%,#BC4622 55%,#9C3316 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#4A3115 0%,#37230F 60%,#25170A 100%)',
             'name_color'  => '#37230F', 'script_color' => '#4A3115',
         ],
     ];
@@ -465,7 +403,7 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $FIT = function_exists('diploma_fit') ? diploma_fit($bgFile) : [
         'pad_top' => 8.0, 'pad_right' => 12.0, 'pad_bottom' => 7.0, 'pad_left' => 12.0,
         'dark' => true, 'ink' => '#ffffff', 'muted' => 'rgba(255,255,255,.88)',
-        'shadow' => 'none',
+        'shadow' => 'drop-shadow(0 1px 3px rgba(0,0,0,.55))',
     ];
     /* РУЧНАЯ НАСТРОЙКА КОНКУРСА СИЛЬНЕЕ АВТОПОДБОРА.
      *
@@ -474,46 +412,24 @@ function diploma_html(array $c, array $a, array $opt = []): string {
      * яркость выходит высокой, и шапка красилась тёмным по тёмному. Поэтому
      * любое значение можно закрепить в карточке конкурса (diploma_template):
      * поля, тёмный верх, подсветку снизу. */
-    /* sig_reserve — дополнительный зазор между данными участника и блоком
-     * подписей, свой у каждого фона. У «Высшей лиги» подписи стоят высоко (под
-     * ними тёмный мраморный пьедестал, опускать некуда), и штамп председателя
-     * касался строки «Конкурсный номер». Опускать подписи нельзя — поднимаем
-     * данные. */
-    foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left', 'pad_left_bot', 'pad_right_bot', 'sig_reserve'] as $pk) {
+    foreach (['pad_top', 'pad_right', 'pad_bottom', 'pad_left', 'pad_left_bot', 'pad_right_bot'] as $pk) {
         if (isset($tpl[$pk]) && is_numeric($tpl[$pk])) $FIT[$pk] = (float) $tpl[$pk];
     }
-    /* Каким низ листа вышел ПО РИСУНКУ, а не по настройке. Белую подсветку внизу
-     * владелец у части конкурсов снял вручную, но сам фон под номером бланка от
-     * этого светлее не стал: у «Высшей лиги» там тёмный мраморный пьедестал, и
-     * номер с надписью «проверка подлинности» на нём пропадали. Признак нужен
-     * отдельно от настройки, чтобы покрасить служебный угол по факту. */
-    $bottomIsDark = !empty($FIT['fade_bottom']);
     foreach (['dark', 'dark_top', 'fade_bottom'] as $bk) {
         if (isset($tpl[$bk])) $FIT[$bk] = (bool) $tpl[$bk];
     }
-    // Подсветку включили руками — под номером снова светло.
-    if (!empty($FIT['fade_bottom'])) $bottomIsDark = false;
     // Цвета пересобираем после ручных правок, иначе они разойдутся с флагами.
     $FIT['ink']       = $FIT['dark'] ? '#ffffff' : '#2A1A0B';
     $FIT['muted']     = $FIT['dark'] ? 'rgba(255,255,255,.88)' : 'rgba(42,26,11,.86)';
-    /* ТЁМНЫХ ТЕНЕЙ ПОД ТЕКСТОМ НЕТ (правило владельца: выглядит дёшево).
-     * На тёмной подложке белые буквы читаются и без ореола, на светлой бумаге
-     * оставлена только едва заметная светлая подложка-рельеф. */
     $FIT['shadow']    = $FIT['dark']
-        ? 'none'
-        : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))';
+        ? 'drop-shadow(0 1px 3px rgba(0,0,0,.55))'
+        : 'drop-shadow(0 1px 2px rgba(255,255,255,.75))';
     $FIT['ink_top']   = !empty($FIT['dark_top']) ? '#ffffff' : '#2A1A0B';
     $FIT['muted_top'] = !empty($FIT['dark_top']) ? 'rgba(255,255,255,.92)' : 'rgba(42,26,11,.86)';
     /* Во сколько раз сузилась колонка против базовой вёрстки (поля 12+12 мм).
      * На этот коэффициент сжимается всё содержимое листа. Ниже 0.78 не опускаем:
      * дальше текст становится мелким для печати. */
-    /* Одно боковое поле на обе стороны: строки центрируются по середине листа,
-       а не по середине неровной колонки. */
-    $PAD_X  = round(max((float)$FIT['pad_left'], (float)$FIT['pad_right']), 1);
-    $PAD_X_BOT = round(max((float)($FIT['pad_left_bot'] ?? $FIT['pad_left']),
-                           (float)($FIT['pad_right_bot'] ?? $FIT['pad_right'])), 1);
-    $FIT['pad_left'] = $FIT['pad_right'] = $PAD_X;
-    $CSCALE = round(max(0.78, min(1.0, (210 - $PAD_X * 2) / 186)), 3);
+    $CSCALE = round(max(0.78, min(1.0, (210 - $FIT['pad_left'] - $FIT['pad_right']) / 186)), 3);
 
     /* НАЗВАНИЕ КОНКУРСА ДОЛЖНО ВСТАВАТЬ В ОДНУ СТРОКУ.
      *
@@ -525,25 +441,19 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $COMP_FS  = 37.0;
     /* Кегль считаем по фактической ширине строки, а не «на глаз»: у названия
      * есть разрядка между буквами, и она съедает место не хуже самих букв.
-     * Ширина прописной зависит от гарнитуры темы: «Yeseva One» шире «Oranienbaum»
-     * почти в полтора раза, и один общий коэффициент либо ронял кегль у узких
-     * шрифтов, либо ломал строку надвое у широких. */
-    $availMm = (210 - $FIT['pad_left'] - $FIT['pad_right']) / max(0.01, $CSCALE) - 10;
-    /* Разрядка у длинного названия меньше: «НА ВОЛНЕ ИСКУССТВА» с широкой
-     * разрядкой съедало всю строку и вынуждало ставить мелкий кегль. Короткое
-     * название, наоборот, разрежаем сильнее - так оно выглядит торжественнее. */
-    $lsPx    = $compLen > 15 ? 2.0 : ($compLen > 10 ? 3.0 : 5.0);
-    $lsMm    = $lsPx * 0.2646;                   // разрядка названия, мм на знак
+     * Ширина прописной буквы этих гарнитур - примерно 0.63 кегля. */
+    $availMm = (210 - $FIT['pad_left'] - $FIT['pad_right']) / max(0.01, $CSCALE) - 14;
+    $lsMm    = 6 * 0.2646;                       // разрядка названия, мм на знак
+    /* Доля кегля на знак взята с запасом: у прописных этих гарнитур широкие «Д»,
+     * «Ш», «М», и расчёт «в притык» давал перенос на вторую строку. */
+    $perPt   = 0.3528 * 0.72;
+    $COMP_FS = ($availMm - $compLen * $lsMm) / max(1, $compLen) / $perPt;
+    $COMP_FS = round(max(26.0, min(46.0, $COMP_FS * $CSCALE)), 1);
 
     /* Белая подсветка поднята: подписи, печать и номер должны целиком лежать на
      * светлом, иначе на тёмном фоне нижние строки читаются с трудом. */
     $fade    = isset($tpl['fade']) ? max(30, min(160, (int)$tpl['fade'])) : 125;
     $T       = diploma_theme_pick($c, $tpl);
-    /* Кегль названия — уже с учётом гарнитуры темы: строка должна встать в один
-     * ряд и при этом занять ширину листа целиком. */
-    $perPt   = 0.3528 * (float)($T['w_comp'] ?? 0.72);
-    $COMP_FS = ($availMm - $compLen * $lsMm) / max(1, $compLen) / $perPt;
-    $COMP_FS = round(max(30.0, min(66.0, $COMP_FS * $CSCALE)), 1);
     /* На светлом фоне берём глубокий вариант той же темы: цвета остаются
      * «родными» конкурсу, но читаются на бумаге без затемняющей плёнки. */
     if (empty($FIT['dark']) && function_exists(__NAMESPACE__ . '\\diploma_theme_on_light')) {
@@ -723,17 +633,6 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     foreach ($fields as $fk => $fv) {
         $fldLines += max(1, (int)ceil(mb_strlen($fk . ': ' . $fv) / 58));
     }
-    /* Плотный режим вёрстки: длинная заявка или бланк, у которого подписи стоят
-     * высоко (sig_reserve) - там свободного места между данными и подписями
-     * почти нет, и обычный ритм строк упирался в фамилию председателя. */
-    $TIGHT = ($fldLines > 6) || !empty($FIT['sig_reserve']);
-    /* ЕДИНЫЙ ШАГ ОТСТУПОВ. Раньше у каждой строки листа был свой отступ,
-     * набранный на глаз (1.5, 2, 2.4, 3, 3.8 мм), и промежутки между блоками
-     * шли вразнобой - лист читался как собранный из кусков. Теперь все
-     * вертикальные интервалы кратны одному шагу, а на тесном бланке шаг просто
-     * меньше: ритм сохраняется, содержимое умещается. */
-    $U = $TIGHT ? 1.7 : 2.4;
-    $u = static fn(float $k): string => (string) round($U * $k, 2);
     $fldFs = 13.5; $fldLh = 1.62;
     if ($fldLines > 6) {
         $fldFs = max(10.0, round(13.5 * 6 / $fldLines, 1));
@@ -758,40 +657,6 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         . trim((string)($c['name'] ?? 'Название конкурса')) . '»';
     $roleDirector = 'Лауреат международных и всероссийских конкурсов и фестивалей, заслуженный'
         . ' деятель культуры, генеральный директор Культурного центра «Музыкальный Мир»';
-
-    /* РЕГАЛИИ ПОДПИСАНТОВ — РОВНО ЧЕТЫРЕ СТРОКИ.
-     *
-     * Кегль был задан одним числом на все бланки, а ширина колонки под текст у
-     * каждого фона своя: чем шире рамка, тем уже колонка. На «Наследии России»
-     * регалии разъезжались на пять строк, блок подписей вырастал и садился на
-     * нижний орнамент. Считаем фактическую ширину колонки и подбираем кегль так,
-     * чтобы обе подписи уложились в четыре строки - тогда низ листа сходится на
-     * любом фоне. */
-    $sigTextW = (210.0 - ($FIT['pad_left_bot'] ?? $FIT['pad_left']) - ($FIT['pad_right_bot'] ?? $FIT['pad_right']))
-              - 82.0 * $CSCALE - 4.0 /* промежуток сетки */ - 2.0 /* поле справа у текста */;
-    $sigTextW = max(30.0, $sigTextW);
-    $SIG_FS = min(
-        _dh_fit_lines($roleChairman, $sigTextW, 8.1, 5.9, 4),
-        _dh_fit_lines($roleDirector, $sigTextW, 8.1, 5.9, 4)
-    );
-    /* Фамилии подписантов - строго в одну строку: «Галиулин Данил / Дамирович»
-     * на наградном документе выглядит опечаткой. */
-    $SIGN_FS = min(
-        _dh_fit_lines('Галиулин Данил Дамирович', $sigTextW, 10.0, 7.6, 1),
-        _dh_fit_lines('Ильясов Альберт Ильясович', $sigTextW, 10.0, 7.6, 1)
-    );
-    /* Место и год - тоже одной строкой; справа от них стоит номер бланка с QR,
-     * поэтому мерим по ширине за вычетом его поля. */
-    $bottomW = 210.0 - ($FIT['pad_left_bot'] ?? $FIT['pad_left']) - ($FIT['pad_right_bot'] ?? $FIT['pad_right']);
-    $CITY_FS = _dh_fit_lines('Российская Федерация, город Москва - ' . date('Y'),
-                             max(40.0, $bottomW - 24.0), 12.0, 9.0, 1);
-
-    /* НИКАКИХ ОБВОДОК И ТЁМНЫХ ОРЕОЛОВ вокруг названия и звания: пробовали -
-     * буквы обрастали грязным контуром и выглядели хуже, чем без него. Две
-     * главные строки различаются ЦВЕТОМ, а не тенью. На тёмном фоне остаётся
-     * только лёгкая тень для читаемости, на светлой бумаге - ничего. */
-    $HALO_C = 'none';
-    $HALO_D = 'none';
 
     $E = static fn(string $k) => _dh_cfg($tpl, $k);
     $D = static fn(string $k) => $edit ? ' data-el="' . $k . '"' : '';
@@ -830,87 +695,58 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    наезжать на подписи. Поэтому всё содержимое пропорционально уменьшается во
    столько же раз, во сколько сузилась колонка: пропорции и воздух остаются
    прежними, а текст целиком помещается внутрь рисованной рамки. */
-.content{position:relative;z-index:3;height:100%;--u:<?= $U ?>mm;
-  /* Боковые поля ОДИНАКОВЫЕ с двух сторон - берём большее из замеренных.
-     Автоподбор часто даёт слева и справа разные значения (рисунок рамки не
-     идеально симметричен), и тогда каждая центрированная строка стояла со
-     сдвигом: лист выглядел криво собранным. */
-  padding:<?= $FIT['pad_top'] ?>mm <?= $PAD_X ?>mm <?= round(($FIT['pad_bottom'] + 56 + ($FIT['sig_reserve'] ?? 0)) / max(0.01, $CSCALE), 1) ?>mm <?= $PAD_X ?>mm;
+.content{position:relative;z-index:3;height:100%;
+  padding:<?= $FIT['pad_top'] ?>mm <?= $FIT['pad_right'] ?>mm <?= round(($FIT['pad_bottom'] + 52) / max(0.01, $CSCALE), 1) ?>mm <?= $FIT['pad_left'] ?>mm;
   transform:scale(<?= $CSCALE ?>);transform-origin:top center}
 /* Реквизиты и строка поддержки выходят за поля основного текста: вверху листа
    рамка тоньше, места больше, а в узкой колонке эти длинные строки рвались на
    куски посреди слова. Небольшой отрицательный отступ даёт им нужную ширину. */
 .header-legal{text-align:center;font-size:6.9pt;line-height:1.34;color:<?= $FIT['muted_top'] ?? $FIT['muted'] ?>;
-  margin:0 -<?= max(0, round($PAD_X - 9, 1)) ?>mm calc(var(--u) * 1) -<?= max(0, round($PAD_X - 9, 1)) ?>mm}
+  margin:0 -<?= max(0, round($FIT['pad_left'] - 9, 1)) ?>mm 3mm -<?= max(0, round($FIT['pad_right'] - 9, 1)) ?>mm}
 .header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:<?= $FIT['ink_top'] ?? $FIT['ink'] ?>}
 .header-legal .legal-text{font-weight:600;color:<?= $FIT['muted_top'] ?? $FIT['muted'] ?>}
 /* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
 /* Гербы выравниваем по центру равными промежутками: при распределении по краям
    крайние эмблемы прижимались к рамке и ряд выглядел кривым. */
 .logos-row{display:flex;justify-content:center;align-items:center;gap:<?= round(4.5 * $CSCALE, 1) ?>mm;
-  margin-bottom:calc(var(--u) * 1);padding:0}
-.logos-row .logo{width:auto}
+  margin-bottom:2mm;padding:0}
+.logos-row .logo{width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
 .logos-row .logo-prok{height:16mm}
 .logos-row .logo-medal{height:21mm}
 .logos-row .logo-natsproekty{height:19mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
-.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:calc(var(--u) * 1)}
-/* НАЗВАНИЕ КОНКУРСА И ЗВАНИЕ — ДВЕ ГЛАВНЫЕ СТРОКИ ДОКУМЕНТА.
-   Они набраны заливкой-градиентом, и на пёстром фоне их края растворялись: лист
-   читался как ровный текст без выделенных строк. Тонкий цветной контур (двойная
-   тень нулевого смещения — при заливке текста градиентом обычная обводка
-   -webkit-text-stroke закрывает саму заливку) отделяет буквы от рисунка. Цвет
-   контура у названия и у звания РАЗНЫЙ и взят из палитры конкурса: две строки
-   перекликаются, но их не спутать. */
-/* НАЗВАНИЕ КОНКУРСА — ГЛАВНАЯ СТРОКА ЛИСТА.
-   Оно набиралось тем же весом, что и служебные строки вокруг, и на пёстром
-   фоне терялось: человек искал глазами, на каком конкурсе он победил. Кегль
-   поднят, разрядка чуть шире, а вместо размытой тени — тонкая светлая
-   подложка-рельеф под буквами: она отделяет их от орнамента, не пачкая
-   контуром (тёмные ореолы владелец забраковал отдельно). */
+.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:<?= $FIT['ink'] ?>;margin-bottom:1.5mm}
 .competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $COMP_FS ?>pt;font-weight:900;
   text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:<?= $lsPx ?>px;margin-bottom:calc(var(--u) * 1);line-height:1.04;
-  filter:<?= $HALO_C ?>}
+  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
 .support-line{text-align:center;font-family:'Playfair Display',serif;font-size:10.2pt;font-weight:700;
-  line-height:1.28;margin:0 -<?= max(0, round($PAD_X - 11, 1)) ?>mm var(--u) -<?= max(0, round($PAD_X - 11, 1)) ?>mm;
+  line-height:1.28;margin:0 -<?= max(0, round($FIT['pad_left'] - 11, 1)) ?>mm 3mm -<?= max(0, round($FIT['pad_right'] - 11, 1)) ?>mm;
   padding:0;color:<?= $FIT['muted'] ?>}
 .diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:5px;margin-bottom:var(--u);line-height:1}
+  letter-spacing:5px;margin-bottom:1mm;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));line-height:1}
 /* Цифры — только «прописные» (lining): в антиквах тем цифры по умолчанию
    старостильные, и «1 СТЕПЕНИ» печаталось крошечной единицей. */
 .diploma-degree,.awarded-name,.awarded-name-script,.field-list,.diploma-type{
   font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1,"onum" 0}
-/* ЗВАНИЕ — ВТОРАЯ ПО ВАЖНОСТИ СТРОКА. Её читают сразу после названия конкурса,
-   и она же попадает в кадр, когда диплом фотографируют для соцсетей. */
 .diploma-degree{text-align:center;font-family:<?= $T['ff_degree'] ?? $T['ff_comp'] ?>;
-  font-size:<?= round(40 * $CSCALE, 1) ?>pt;font-weight:900;
+  font-size:<?= round(36 * $CSCALE, 1) ?>pt;font-weight:900;
   letter-spacing:<?= $T['ls_degree'] ?? '2px' ?>;text-shadow:<?= $T['sh_comp'] ?? 'none' ?>;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  /* Звание отодвинуто от слова ДИПЛОМ и придвинуто к «награждается»: раньше оно
-     висело ровно посередине между ними, и связка «звание - кому» разрывалась. */
-  letter-spacing:4px;margin-top:calc(var(--u) * 1);
-  margin-bottom:calc(var(--u) * 1);filter:<?= $HALO_D ?>;line-height:1}
-.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:var(--u)}
+  letter-spacing:4px;margin-bottom:2.5mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
+.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:<?= $FIT['ink'] ?>;margin-bottom:1mm}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:<?= round(31 * $CSCALE, 1) ?>pt;
-    font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:var(--u);
+  font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;
   letter-spacing:<?= $T['ls_name'] ?? '0' ?>;
-  filter:<?= $FIT['dark'] ? 'none' : 'drop-shadow(0 1px 1px rgba(255,255,255,.6))' ?>}
-.awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;line-height:1}
+  filter:<?= $FIT['dark'] ? 'drop-shadow(0 2px 4px rgba(0,0,0,.6))' : 'drop-shadow(0 1px 2px rgba(255,255,255,.7))' ?>}
+.awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
 .field-list{padding:0 2mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;
-  /* Поля заявки идут ровным ритмом, а не слипшимся столбиком: свободного места
-     между данными и подписями хватает, и лист выглядит собранным. Длинная
-     заявка (много полей, длинные названия) автоматически идёт плотнее. */
-  /* Плотнее там, где места мало: длинная заявка или бланк, у которого подписи
-     стоят высоко (sig_reserve). Иначе поля упирались в строку с фамилией
-     председателя. */
-  line-height:<?= $TIGHT ? 1.34 : $fldLh ?>;text-align:center}
+  line-height:<?= max(1.3, $fldLh - 0.18) ?>;text-align:center}
 .field-list .field{color:<?= $FIT['ink'] ?>;filter:<?= $FIT['shadow'] ?>}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
 .gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:<?= $FIT['ink'] ?>;filter:<?= $FIT['shadow'] ?>}
@@ -925,73 +761,31 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
    всегда тёмный - на тёмном фоне светлые буквы на белом просто пропадали. */
 .bottom-block{position:absolute;z-index:4;color:#1a1a2a;
   bottom:<?= $FIT['pad_bottom'] ?>mm;
-  left:<?= $PAD_X_BOT ?>mm;
-  right:<?= $PAD_X_BOT ?>mm;
+  left:<?= $FIT['pad_left_bot'] ?? $FIT['pad_left'] ?>mm;
+  right:<?= $FIT['pad_right_bot'] ?? $FIT['pad_right'] ?>mm;
   font-size:<?= round(100 * $CSCALE) ?>%}
 .signatures-grid{display:grid;grid-template-columns:1fr <?= round(82 * $CSCALE) ?>mm;
   grid-template-rows:auto auto;gap:2.5mm 4mm;align-items:center}
-.sig-text-block{font-family:'Manrope',sans-serif;font-size:<?= $SIG_FS ?>pt;line-height:1.18;padding-right:2mm}
-.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:<?= $SIGN_FS ?>pt;white-space:nowrap}
+.sig-text-block{font-family:'Manrope',sans-serif;font-size:8.1pt;line-height:1.18;padding-right:2mm}
+.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:10pt}
 .sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
 .sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
-/* ПОЛОСКА ПОД РОСПИСЬЮ — как в бумажных документах.
-   Роспись висела в воздухе: ни линии, ни опоры, и на печати это читалось как
-   случайный росчерк на листе. Тонкая черта — привычный знак того, что документ
-   подписан, и она же выравнивает обе подписи по одной высоте. Цвет чернильный
-   и полупрозрачный: линия не должна спорить с самой росписью. */
-.sig-line{position:absolute;right:0;bottom:3.5mm;width:48mm;height:0;z-index:1;
-  border-bottom:.25mm solid rgba(26,26,42,.42)}
-/* ШТАМП ОСТАЁТСЯ ВНУТРИ СВОЕЙ СТРОКИ.
-   Он поднимался над строкой подписей и садился на данные участника: у «Высшей
-   лиги» перекрывал «Конкурсный номер» — название номера читалось сквозь печать.
-   Резерв в отступах эту беду не лечит: текст течёт сверху вниз и просто доходит
-   до подписей. Лечится источник — штамп больше не выходит за свою клетку, а его
-   размер уменьшен ровно настолько, чтобы поместиться вместе с круглой печатью. */
-.chairman-stamp{width:auto;max-width:52mm;max-height:15mm;display:block;justify-self:end;transform:translateY(0)}
-/* КРУГЛАЯ ПЕЧАТЬ - СЛЕВА, РОСПИСЬ - СПРАВА (как в бумажном документе и как
-   стоит штамп председателя строкой выше). В потоке печать вылезала за свою
-   колонку и накрывала регалии, а роспись оказывалась левее оттиска - порядок
-   читался наоборот. Печать выведена из потока и прижата к левому краю блока
-   подписи, роспись остаётся справа от неё. */
-.big-seal{position:absolute;left:1mm;top:50%;transform:translateY(-42%);
-  width:31mm;height:auto;opacity:.92;z-index:2;pointer-events:none}
+/* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
+.chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end;transform:translateY(-8mm)}
+.big-seal{width:40mm;height:auto;display:block;justify-self:end;opacity:.92;margin-top:-14mm}
 /* Росписи увеличены в 1.8 раза через scale — позиция не сдвигается */
 .sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
-/* Роспись генерального директора держится правого края своей клетки:
-   при большем увеличении она наползала на круглую печать слева. */
-.sig-signature-2{width:26mm;height:auto;display:block;justify-self:end;
-  transform:scale(1.15);transform-origin:center right}
+.sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 /* Справа внизу стоит номер бланка с QR, поэтому строке места и года оставляем
    под него поле: без этого она заезжала под номер и обе надписи сливались. */
-.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:<?= $CITY_FS ?>pt;
-  font-weight:700;color:#1a1a2a;padding:0 24mm;white-space:nowrap}
+.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;
+  font-weight:700;color:#1a1a2a;padding-right:30mm}
 /* Номер диплома + QR проверки подлинности — правый нижний угол. */
-/* Номер с QR стоит в самом углу листа, а не по полям текста: он служебный,
-   его место - край документа. По полям он уезжал к середине и вверх, и угол
-   выглядел пустым. */
-/* Номер держится правого нижнего угла, но не опускается ниже блока подписей:
-   у «Высшей лиги» внизу тёмный мраморный пьедестал, и в самом углу номер на нём
-   пропадал. */
-/* НОМЕР И QR — ВСЕГДА В ОДНОМ И ТОМ ЖЕ МЕСТЕ.
-   Высота отсчитывалась от полей конкретного бланка, и служебный угол гулял:
-   у «Высшей лиги» номер уезжал на треть листа вверх, у «Мира звёзд» лежал у
-   самого края. На документах одного центра это должно быть одно место — правый
-   нижний угол, — иначе бланки выглядят собранными разными людьми. Читаемость
-   держит собственная подложка (.plate), а не поиск светлого пятна на фоне. */
-.dip-verify{position:absolute;right:10mm;bottom:10mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+.dip-verify{position:absolute;right:<?= $FIT['pad_right_bot'] ?? $FIT['pad_right'] ?>mm;bottom:<?= max(4.0, $FIT['pad_bottom'] - 2) ?>mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .dip-verify .qr svg{width:100%;height:100%;display:block}
-/* НОМЕР ЧИТАЕТСЯ НА ЛЮБОМ ФОНЕ.
-   Он стоит в углу листа, а угол у каждого бланка свой: у «Наследия России» там
-   плотный золотой орнамент, у «На волне искусства» — завиток рамки. Тёмные буквы
-   тонули в узоре, и номер — единственное, по чему документ проверяют в реестре, —
-   переставал читаться. Кладём его на собственную светлую подложку: она заметно
-   меньше QR и не спорит с бланком, но узор из-под букв убирает. */
-.dip-verify .plate{background:rgba(255,255,255,.93);border-radius:1.2mm;padding:.7mm 1.6mm;
-  box-shadow:0 1px 3px rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;gap:.2mm}
-.dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;letter-spacing:.3px;color:#1a1a2a}
-.dip-verify .lbl{font-family:'Manrope',sans-serif;font-size:5.6pt;font-weight:600;text-transform:uppercase;letter-spacing:.4px;
-  color:#3a3a4a}
+.dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
+.dip-verify .lbl{font-family:'Manrope',sans-serif;font-size:5.6pt;font-weight:600;color:#3a3a4a;text-transform:uppercase;letter-spacing:.4px}
 /* Водяной знак «ОБРАЗЕЦ» повторяется ПО ВСЕМУ ПОЛЮ диплома (перекрёстно, по диагонали). */
 .sample-mark{position:absolute;inset:-20%;z-index:9;pointer-events:none;overflow:hidden;
   display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:9mm 18mm;
@@ -1096,7 +890,6 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
           <img class="chairman-stamp" src="<?= $imgDip ?>/stamp.png" alt="">
           <img class="sig-signature-1" src="<?= $imgDip ?>/sig1.png" alt="">
         <?php endif; ?>
-        <span class="sig-line"></span>
       </div>
       <div class="sig-text-block">
         <div class="sig-name">Ильясов Альберт Ильясович</div>
@@ -1107,7 +900,6 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
           <img class="big-seal" src="<?= $imgDip ?>/seal.png" alt="">
           <img class="sig-signature-2" src="<?= $imgDip ?>/sig2.png" alt="">
         <?php endif; ?>
-        <span class="sig-line"></span>
       </div>
     </div>
     <div class="footer-city">Российская Федерация, город Москва - <?= $year ?></div>
@@ -1115,144 +907,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   <?php /* Номер + QR + «проверка подлинности» — ВСЕГДА (номер даже без QR). */ ?>
   <div class="dip-verify">
     <?php if ($qrSvg !== ''): ?><div class="qr"><?= $qrSvg ?></div><?php endif; ?>
-    <div class="plate">
-      <div class="num">№ <?= h($dipNumber) ?></div>
-      <div class="lbl">проверка подлинности</div>
-    </div>
+    <div class="num">№ <?= h($dipNumber) ?></div>
+    <div class="lbl">проверка подлинности</div>
   </div>
 </div>
-<?php /* НАЗВАНИЕ КОНКУРСА ДОВОДИТСЯ ДО ПОЛНОЙ ШИРИНЫ СТРОКИ.
-   PHP считает кегль по средней ширине знака - это оценка, и она намеренно
-   осторожная: у одних гарнитур буквы шире, у других уже, и «в притык» строка
-   ломалась надвое, а сломанное название сдвигало весь лист на подписи. Здесь
-   уже настоящий браузер: когда шрифты загружены, замеряем строку и растим
-   кегль, пока она помещается в одну строку. Скрипт не выполнился - остаётся
-   безопасный кегль из PHP, лист цел. */ ?>
-<script>
-(function(){
-  var FAM=<?= json_encode((string)($T['fam_comp'] ?? ''), JSON_UNESCAPED_UNICODE) ?>;
-  /* Ширину строки меряем диапазоном (Range), а НЕ scrollWidth: у блока с
-     text-align:center переполнение уходит в обе стороны, и scrollWidth всегда
-     равен clientWidth - проверка «влезло?» была всегда ложной, и название
-     оставалось мелким. Range даёт истинную ширину набранного текста. */
-  /* Ширину набранной строки меряем НА ОТДЕЛЬНОМ невидимом двойнике.
-     Прямые замеры обманывают: scrollWidth у центрированного блока равен
-     clientWidth, а Range отдаёт ширину, уже обрезанную рамками контейнера - и
-     то и другое показывало «влезает», когда строка выходила за края листа. */
-  function fitOne(sel, loPt, hiPt){
-    var el=document.querySelector(sel);
-    if(!el) return;
-    var max=el.clientWidth-2;
-    if(max<=0) return;
-    el.style.whiteSpace='nowrap';
-    var cs=getComputedStyle(el);
-    var probe=document.createElement('span');
-    probe.textContent=el.textContent;
-    probe.style.cssText='position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;padding:0;margin:0';
-    probe.style.fontFamily=cs.fontFamily; probe.style.fontWeight=cs.fontWeight;
-    probe.style.fontStyle=cs.fontStyle;   probe.style.letterSpacing=cs.letterSpacing;
-    probe.style.textTransform=cs.textTransform;
-    document.body.appendChild(probe);
-    function textW(fs){ probe.style.fontSize=fs+'pt'; return probe.getBoundingClientRect().width; }
-    var lo=loPt, hi=hiPt, best=lo;
-    for(var i=0;i<26 && hi-lo>0.1;i++){
-      var mid=(lo+hi)/2;
-      if(textW(mid)<=max){ best=mid; lo=mid; } else { hi=mid; }
-    }
-    var fits=textW(best)<=max;
-    probe.parentNode.removeChild(probe);
-    el.style.fontSize=best.toFixed(1)+'pt';
-    if(!fits) el.style.whiteSpace='normal';
-  }
-  function fitTitle(){
-    fitOne('.competition-name', <?= max(18, (int)round($COMP_FS * 0.6)) ?>, <?= (int)round(min(46, max(34, $COMP_FS * 2.6))) ?>);
-    /* Звание тоже подгоняется: у дополнительного диплома это не «Лауреат I
-       степени», а длинная формулировка вроде «За верность традициям» - при
-       жёстком кегле её обрезало краем листа. */
-    fitOne('.diploma-degree', 13, <?= round(40 * $CSCALE, 1) ?>);
-    /* Слово ДИПЛОМ короткое и всегда влезало, а вот БЛАГОДАРНОСТЬ на бланке с
-       узкими полями обрезалась краем листа - подгоняем и её. */
-    fitOne('.diploma-type', 22, <?= $thanks ? 48 : 58 ?>);
-    /* ФИО в благодарности - рукописной строкой: она бывает длинной («Константинопольская
-       Александра Владимировна»), и жёсткий кегль её либо обрезал, либо ронял на две
-       строки. Подгоняем по ширине, как название конкурса. */
-    fitOne('.awarded-name-script', 13, <?= (float)$T['script_fs'] ?>);
-    fitOne('.extra-award', 9, 15);
-    if(!FAM || (document.fonts && document.fonts.check && document.fonts.check('900 40pt "'+FAM+'"'))){
-      fitOptical();
-      document.documentElement.setAttribute('data-title-fit','1');
-    }
-  }
-  /* РОВНЫЙ ЛИСТ - ПО БУКВАМ, А НЕ ПО РАМКАМ БЛОКОВ.
-     Раньше выравнивались margin'ы, и по замерам всё сходилось, а глаз видел
-     разнобой: у слова ДИПЛОМ в 58 пунктов рамка строки почти совпадает с
-     буквами, а у строчки «награждается» в 15 пунктов внутри рамки остаётся
-     воздух межстрочного интервала. Поэтому меряем НАСТОЯЩИЕ границы букв
-     (canvas: actualBoundingBoxAscent/Descent) и уравниваем просветы между ними.
-     Заодно свободное место листа делится на те же просветы поровну, поэтому низ
-     не проваливается и лист выглядит собранным. */
-  function inkBox(el){
-    var r=el.getBoundingClientRect();
-    if(el.tagName==='IMG'||el.classList.contains('logos-row')) return {top:r.top, bottom:r.bottom};
-    var cs=getComputedStyle(el);
-    var cv=inkBox._c||(inkBox._c=document.createElement('canvas')), g=cv.getContext('2d');
-    g.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
-    var m=g.measureText(el.textContent.trim()||'Ag');
-    var fa=m.fontBoundingBoxAscent, fd=m.fontBoundingBoxDescent;
-    var aa=m.actualBoundingBoxAscent, ad=m.actualBoundingBoxDescent;
-    if(!(fa>0)||!(aa>0)) return {top:r.top, bottom:r.bottom};
-    var lh=parseFloat(cs.lineHeight); if(!(lh>0)) lh=r.height;
-    /* Базовая линия ПЕРВОЙ строки блока и последней: между ними может быть
-       несколько строк, поэтому низ считаем от нижней границы блока. */
-    var half=(lh-(fa+fd))/2;
-    return {top:r.top+half+(fa-aa), bottom:r.bottom-half-(fd-ad)};
-  }
-  function fitOptical(){
-    var cont=document.querySelector('.content'), bb=document.querySelector('.bottom-block');
-    if(!cont||!bb) return;
-    var sc=1, mm=getComputedStyle(cont).transform.match(/matrix\(([\d.]+)/); if(mm) sc=parseFloat(mm[1]);
-    var PX_MM=document.querySelector('.diploma').getBoundingClientRect().width/210;
-    var names=['.header-legal','.logos-row','.competition-type','.competition-name','.support-line',
-               '.diploma-type','.diploma-degree','.extra-award','.awarded-label','.awarded-name',
-               '.awarded-name-script','.field-list','.gratitude-text'];
-    var els=[]; names.forEach(function(n){ var e=cont.querySelector(n); if(e) els.push(e); });
-    if(els.length<3) return;
-    var last=els[els.length-1], RESERVE=7;   // мм: воздух между данными и подписями
-
-    /* Ставит между всеми блоками ОДИН И ТОТ ЖЕ просвет между буквами (G, мм) и
-       возвращает, сколько миллиметров осталось до блока подписей. */
-    function applyG(G){
-      for(var pass=0; pass<2; pass++){
-        var boxes=els.map(inkBox);
-        for(var i=0;i<els.length-1;i++){
-          var cur=(boxes[i+1].top-boxes[i].bottom)/PX_MM;          // просвет сейчас, мм листа
-          var m=parseFloat(getComputedStyle(els[i]).marginBottom)/PX_MM;  // отступ, мм колонки
-          /* Отрицательный отступ допустим: у мелкой строки собственный воздух
-             межстрочного интервала бывает БОЛЬШЕ нужного просвета, и без минуса
-             её нельзя подтянуть к соседям - именно так «награждается» стояло
-             ниже остальных строк. Меряем по буквам, поэтому это безопасно. */
-          els[i].style.marginBottom=Math.max(-6, m+(G-cur)/Math.max(sc,0.01)).toFixed(2)+'mm';
-        }
-      }
-      return (bb.getBoundingClientRect().top-inkBox(last).bottom)/PX_MM;
-    }
-    /* Ищем самый крупный просвет, при котором данные ещё не подходят к подписям
-       ближе, чем на RESERVE: лист заполняется целиком, но ничего не налезает. */
-    var lo=1.0, hi=9.0, best=1.0;
-    for(var k=0;k<8;k++){
-      var G=(lo+hi)/2;
-      if(applyG(G)>=RESERVE){ best=G; lo=G; } else { hi=G; }
-    }
-    applyG(best);
-  }
-  if(document.fonts && document.fonts.load && FAM){
-    try{ document.fonts.load('900 40pt "'+FAM+'"').then(fitTitle, fitTitle); }catch(e){}
-  }
-  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(fitTitle); }
-  window.addEventListener('load',fitTitle);
-  var tries=0, tick=setInterval(function(){ fitTitle(); if(++tries>24) clearInterval(tick); },120);
-})();
-</script>
 </body>
 </html>
 <?php
