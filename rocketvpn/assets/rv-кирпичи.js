@@ -90,6 +90,10 @@
     "varying float vRaz;",
     "varying float vMvz;",
     "varying vec3 vWorldPos;",
+    /* Положение в системе камеры нужно фрагменту для взгляда: без
+       вектора на глаз нет ни блика, ни Френеля, и камень остаётся
+       бумагой, как бы точно ни был посчитан рассеянный свет. */
+    "varying vec3 vView;",
     "void main(){",
     "  vUv = uv; vSeed = aSeed; vRaz = aRaz; vLocN = normal;",
     "  vec4 loc = instanceMatrix * vec4(position, 1.0);",
@@ -98,6 +102,7 @@
     "  vWorldPos = loc.xyz;",
     "  vec4 mv = viewMatrix * w;",
     "  vMvz = mv.z;",
+    "  vView = mv.xyz;",
     "  gl_Position = projectionMatrix * mv;",
     "}"
   ].join("\n");
@@ -109,6 +114,7 @@
     "uniform vec3 uGlow;",
     "uniform sampler2D tBlok;",
     "uniform sampler2D tBlokN;",
+    "uniform sampler2D tBlokO;",
     "uniform float uTex;",
     "uniform float uBright;",
     "uniform float uTime;",
@@ -121,6 +127,7 @@
     "varying float vRaz;",
     "varying float vMvz;",
     "varying vec3 vWorldPos;",
+    "varying vec3 vView;",
     "float hash12(vec2 p){",
     "  vec3 p3 = fract(vec3(p.xyx) * 0.1031);",
     "  p3 += dot(p3, p3.yzx + 33.33);",
@@ -135,7 +142,19 @@
     "  vec2 uvT = vUv * 1.2 + vec2(vSeed, fract(vSeed * 7.31));",
     "  vec3 fot = texture2D(tBlok, uvT).rgb;",
     "  vec3 fotN = texture2D(tBlokN, uvT).xyz * 2.0 - 1.0;",
-    "  vec3 n = normalize(vNor + fotN * 0.35 * uTex);",
+    /* РЕЛЬЕФ В ПОЛНУЮ СИЛУ. Было 0.35: карта нормалей снята с настоящей
+       кладки, и придавливать её втрое значит выбрасывать три четверти
+       того, ради чего её снимали. Камень без рельефа читается крашеной
+       фанерой при любом свете. */
+    "  vec3 n = normalize(vNor + fotN * 0.95 * uTex);",
+    /* ── МАТЕРИАЛ ИЗ КАРТЫ ORM ───────────────────────────────────
+       Красный это затенение в порах и швах, зелёный шероховатость,
+       синий металличность (у камня ноль, канал держим для общей
+       выделки с обшивкой). Пока карта не доехала, шероховатость ровная:
+       кирпич выглядит матовым камнем, а не пластиком с ровным лаком. */
+    "  vec3 orm = texture2D(tBlokO, uvT).rgb;",
+    "  float ao = mix(1.0, 0.25 + 0.75 * orm.r, uTex);",
+    "  float rough = clamp(mix(0.78, 0.34 + 0.62 * orm.g, uTex), 0.16, 1.0);",
     /* Свет коридора идёт спереди и сверху: источник в трубе один, и он
        за спиной у человека. Солнца тут нет, мы под поверхностью. */
     "  vec3 sun = normalize(vec3(-0.25, 0.55, 0.79));",
@@ -148,9 +167,47 @@
        осколок выбивался в белое. На снимке доли 0.30 разлетающиеся
        кирпичи читались белыми плитами, а не камнем - при том, что
        позади них тёмный тоннель, и глаз шёл к ним, а не в проём. */
-    "  vec3 color = base * (0.28 + 0.66 * sol) * mix(0.86, 1.04, hemi);",
+    "  vec3 color = base * (0.28 + 0.66 * sol) * mix(0.86, 1.04, hemi) * ao;",
     "  color *= mix(1.0, 0.6, smoothstep(0.5, 1.0, edge));",
     "  color = mix(color, uVerh * 1.02, edge * 0.14);",
+    /* ── БЛИК И ОТСВЕТ ОКРУЖЕНИЯ ─────────────────────────────────
+       Владелец: «главное реализм 1:1 как в реальной жизни на всех
+       текстурах и объектах». Реальная поверхность отражает свет дважды:
+       рассеянно всем телом и зеркально микрогранями. До этой правки в
+       шейдере был только первый член, и кирпич выходил ровным пятном
+       краски: ни направления света по нему прочесть было нельзя, ни
+       того, мокрый он, пыльный или полированный.
+
+       Блик считается по Тровбриджу и Ритцу (GGX): нормальное
+       распределение микрограней, геометрическое затенение Смита и
+       Френель по Шлику. Отражательная способность камня 0.04, как у
+       всех диэлектриков.
+
+       Второй член это отсвет окружения. Настоящей карты неба тут нет, и
+       вместо неё стоит цвет верхнего света, взятый по Френелю: на
+       кромках, повёрнутых от глаза, поверхность отражает почти всё, и
+       именно это делает кромку кромкой. Гладкая поверхность отражает
+       собранно, шершавая размазывает - поэтому вклад падает с ростом
+       шероховатости. */
+    "  vec3 V = normalize(-vView);",
+    "  vec3 Ls = normalize((viewMatrix * vec4(sun, 0.0)).xyz);",
+    "  vec3 Nv = normalize((viewMatrix * vec4(n, 0.0)).xyz);",
+    "  vec3 H = normalize(Ls + V);",
+    "  float NdL = max(dot(Nv, Ls), 0.0);",
+    "  float NdV = max(dot(Nv, V), 0.001);",
+    "  float NdH = max(dot(Nv, H), 0.0);",
+    "  float VdH = max(dot(V, H), 0.0);",
+    "  float al = rough * rough;",
+    "  float al2 = al * al;",
+    "  float zn = NdH * NdH * (al2 - 1.0) + 1.0;",
+    "  float D = al2 / (3.14159265 * zn * zn + 1e-5);",
+    "  float kg = al * 0.5;",
+    "  float Gs = (NdL / (NdL * (1.0 - kg) + kg + 1e-5)) * (NdV / (NdV * (1.0 - kg) + kg + 1e-5));",
+    "  float Fr = 0.04 + 0.96 * pow(1.0 - VdH, 5.0);",
+    "  float blik = D * Gs * Fr / (4.0 * NdL * NdV + 1e-4) * NdL;",
+    "  color += uVerh * clamp(blik, 0.0, 3.0) * 0.55 * ao;",
+    "  float fren = pow(1.0 - NdV, 4.0);",
+    "  color += uVerh * fren * (1.0 - rough) * 0.22 * ao;",
     /* Разлом светится по кромке: кирпич, снявшийся с места, ловит свет
        из проёма. Пик на середине пути, на концах ноль. */
     "  float lom = vRaz * (1.0 - vRaz) * 4.0;",
@@ -253,6 +310,7 @@
 
     М.uТек = { value: null };
     М.uТекН = { value: null };
+    М.uТекО = { value: null };
     М.uТекДоля = { value: 0 };
     М.мат = new T.ShaderMaterial({
       uniforms: {
@@ -260,7 +318,7 @@
         uTen: { value: new T.Color(0x2A3350) },
         uVerh: { value: new T.Color(0x9FA9BC) },
         uGlow: { value: new T.Color(0x8FB4FF) },
-        tBlok: М.uТек, tBlokN: М.uТекН, uTex: М.uТекДоля,
+        tBlok: М.uТек, tBlokN: М.uТекН, tBlokO: М.uТекО, uTex: М.uТекДоля,
         uBright: { value: 1 }, uTime: { value: 0 },
         uHits: { value: [new T.Vector3(), new T.Vector3(), new T.Vector3(),
                          new T.Vector3(), new T.Vector3()] },
@@ -275,7 +333,11 @@
     (function () {
       var загр = new T.TextureLoader(), пришло = 0, анизо = 4;
       try { if (W.r && W.r.capabilities) анизо = Math.max(1, Math.min(8, W.r.capabilities.getMaxAnisotropy())); } catch (e) {}
-      function готово() { if (++пришло >= 2) М.uТекДоля.value = 1; }
+      /* Три карты, а не две: к цвету и рельефу добавилась ORM, из
+         которой берутся затенение в порах и шероховатость. Доля
+         подмеса встаёт, когда доехали ВСЕ ТРИ: рельеф без цвета или
+         блик без затенения дают не «пока попроще», а неправильно. */
+      function готово() { if (++пришло >= 3) М.uТекДоля.value = 1; }
       загр.load("assets/gen/pbr/блок-цвет.webp", function (т) {
         т.colorSpace = T.SRGBColorSpace || т.colorSpace;
         т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
@@ -285,6 +347,13 @@
         т.colorSpace = T.NoColorSpace || T.LinearSRGBColorSpace || т.colorSpace;
         т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
         М.uТекН.value = т; готово();
+      });
+      /* ORM это данные, а не картинка: перевод в яркостное
+         пространство исказил бы и шероховатость, и затенение. */
+      загр.load("assets/gen/pbr/блок-orm.webp", function (т) {
+        т.colorSpace = T.NoColorSpace || T.LinearSRGBColorSpace || т.colorSpace;
+        т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
+        М.uТекО.value = т; готово();
       });
     })();
 
