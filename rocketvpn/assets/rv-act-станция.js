@@ -187,6 +187,7 @@
        доля подмеса, она встаёт в единицу только когда файлы доехали. */
     "uniform sampler2D tBlok;",
     "uniform sampler2D tBlokN;",
+    "uniform sampler2D tBlokO;",
     "uniform float uTex;",
     "uniform float uIntro;",
     "uniform float uH;",
@@ -264,20 +265,52 @@
     "  vec3 zerno = vec3(hash12(vWorld.xy * 48.0), hash12(vWorld.yz * 48.0 + 3.1), hash12(vWorld.zx * 48.0 + 7.7)) - 0.5;",
     /* Пока файлы едут, рельеф даёт хеш-крупа. Как только доехали,
        вместо неё встаёт настоящая карта нормалей. */
-    "  n = normalize(n + mix(zerno * 0.16, fotN * 0.40, uTex));",
+    /* РЕЛЬЕФ В ПОЛНУЮ СИЛУ, как и у стены. Было 0.40: карта нормалей
+       снята с настоящей панели, и придавливать её вдвое значит выбросить
+       половину того, ради чего её снимали. Дом, стена и туннель обязаны
+       быть из одного камня - иначе обещание сценария не сдержано на
+       самом заметном месте, при первом же взгляде. */
+    "  n = normalize(n + mix(zerno * 0.16, fotN * 0.95, uTex));",
+    /* Карта ORM: затенение в порах, шероховатость, металличность. Та же,
+       что у кладки стены - материал один. */
+    "  vec3 orm = texture2D(tBlokO, uvT).rgb;",
+    "  float aoK = mix(1.0, 0.25 + 0.75 * orm.r, uTex);",
+    "  float rough = clamp(mix(0.78, 0.34 + 0.62 * orm.g, uTex), 0.16, 1.0);",
     "  vec3 sun = normalize(vec3(-0.55, 0.78, 0.3));",
     "  float hemi = n.y * 0.5 + 0.5;",
     "  vec3 svet = mix(uNiz, uVerh, hemi);",
     "  float sol = smoothstep(0.02, 0.42, dot(n, sun));",
     "  vec3 vv = normalize(cameraPosition - vWorld);",
-    "  float blik = pow(max(0.0, dot(normalize(sun + vv), n)), 20.0) * 0.3;",
+    /* ── БЛИК ПО МИКРОГРАНЯМ ─────────────────────────────────────
+       Стоял Блинн со степенью двадцать и весом 0.3: одно круглое пятно
+       одинаковой резкости на всей кладке, от которого камень читался
+       крашеным пластиком. Владелец сказал прямо: «главное реализм 1:1
+       как в реальной жизни на всех текстурах».
+
+       Теперь Тровбридж и Ритц с затенением Смита и Френелем по Шлику -
+       тот же закон, что у стены прокола. Резкость блика идёт от карты
+       шероховатости, поэтому на поре он размазан, а на гладком участке
+       собран, и по одному блику видно, из чего сделан камень. */
+    "  vec3 H = normalize(sun + vv);",
+    "  float NdL = max(dot(n, sun), 0.0);",
+    "  float NdV = max(dot(n, vv), 0.001);",
+    "  float NdH = max(dot(n, H), 0.0);",
+    "  float VdH = max(dot(vv, H), 0.0);",
+    "  float al = rough * rough, al2 = al * al;",
+    "  float znm = NdH * NdH * (al2 - 1.0) + 1.0;",
+    "  float Dg = al2 / (3.14159265 * znm * znm + 1e-5);",
+    "  float kg = al * 0.5;",
+    "  float Gs = (NdL / (NdL * (1.0 - kg) + kg + 1e-5)) * (NdV / (NdV * (1.0 - kg) + kg + 1e-5));",
+    "  float Fr = 0.04 + 0.96 * pow(1.0 - VdH, 5.0);",
+    "  float blik = clamp(Dg * Gs * Fr / (4.0 * NdL * NdV + 1e-4) * NdL, 0.0, 3.0) * 0.5;",
+    "  blik += pow(1.0 - NdV, 4.0) * (1.0 - rough) * 0.20;",
     "  vec3 base = mix(uTen, uKamen, 0.3 + 0.7 * sol);",
     "  base *= 0.9 + 0.2 * hash12(floor(vWorld.xz * 2.1) + floor(vWorld.y * 2.1));",
     /* Цвет скана заходит делением на его же среднюю (0.68 из замера
        блок-цвет.webp). Так панель получает настоящую пятнистость, а
        общая светлота кладки остаётся той, на которую настроен весь акт. */
     "  base *= mix(vec3(1.0), fot / 0.68, uTex);",
-    "  float ao = mix(0.3, 1.0, vAO);",
+    "  float ao = mix(0.3, 1.0, vAO) * aoK;",
     /* ЛУННОЕ СОЛНЦЕ, А НЕ ПАВИЛЬОН. У Луны нет атмосферы, рассеивать
        свет нечем, и теневая сторона камня там уходит почти в чёрное.
        Стояло 0.55 подсветки к 0.7 солнца: это земной пасмурный день, от
@@ -815,11 +848,12 @@
        сразу в обоих материалах. */
     М.uТек = { value: null };
     М.uТекН = { value: null };
+    М.uТекО = { value: null };
     М.uТекДоля = { value: 0 };
     var общие = {
       uColor1: град.uColor1, uColor2: град.uColor2, uResolution: град.uResolution,
       uTime: град.uTime, uDen: град.uDen, uIntro: { value: 0 }, uH: { value: R },
-      tBlok: М.uТек, tBlokN: М.uТекН, uTex: М.uТекДоля, uStena: { value: 0 }
+      tBlok: М.uТек, tBlokN: М.uТекН, tBlokO: М.uТекО, uTex: М.uТекДоля, uStena: { value: 0 }
     };
     М.uСтена = общие.uStena;
 
@@ -833,7 +867,10 @@
       try {
         if (W && W.r && W.r.capabilities) анизо = Math.max(1, Math.min(8, W.r.capabilities.getMaxAnisotropy()));
       } catch (e) {}
-      function готово() { if (++пришло >= 2) М.uТекДоля.value = 1; }
+      /* Три карты, а не две: к цвету и рельефу добавилась ORM. Доля
+         подмеса встаёт, когда доехали ВСЕ ТРИ - рельеф без затенения в
+         порах даёт не «пока попроще», а неправильно. */
+      function готово() { if (++пришло >= 3) М.uТекДоля.value = 1; }
       загр.load("assets/gen/pbr/блок-цвет.webp", function (т) {
         т.colorSpace = T.SRGBColorSpace || т.colorSpace;
         т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
@@ -843,6 +880,13 @@
         т.colorSpace = T.NoColorSpace || T.LinearSRGBColorSpace || т.colorSpace;
         т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
         М.uТекН.value = т; готово();
+      });
+      /* ORM это данные, а не картинка: перевод в яркостное пространство
+         исказил бы и шероховатость, и затенение. */
+      загр.load("assets/gen/pbr/блок-orm.webp", function (т) {
+        т.colorSpace = T.NoColorSpace || T.LinearSRGBColorSpace || т.colorSpace;
+        т.wrapS = т.wrapT = T.RepeatWrapping; т.anisotropy = анизо;
+        М.uТекО.value = т; готово();
       });
     })();
     М.кладкаМат = new T.ShaderMaterial({
