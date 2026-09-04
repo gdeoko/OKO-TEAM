@@ -655,11 +655,11 @@ function _send_original_to_orders_bot(array $a, array $comp): void {
     try {
         if (function_exists('diploma_pdf_html')) $clean = diploma_pdf_html($a, ['clean' => true]);
     } catch (\Throwable $e) { $clean = null; }
-    if (!$clean && function_exists('pdf_diploma')) {
-        // Фолбэк — обычный основной бланк. Он с подписью, но хотя бы без надписи
-        // «MAIN_CLEAN» и с правильным номером.
-        try { $clean = pdf_diploma($a, 'main'); } catch (\Throwable $e) { $clean = null; }
-    }
+    /* ПОДМЕНЫ ЗДЕСЬ НЕТ. Раньше при сбое моста в типографию уходил обычный
+     * бланк — с подписью и печатью, хотя оригинал печатают ПОД живую подпись.
+     * Такой макет в производстве хуже, чем отсутствующий: его печатают как есть.
+     * Боевой рендер делает три попытки; не собралось — сообщение уйдёт без
+     * макета, и это видно. */
     $line = "Заказ оригинала — Заявка № {$a['number']}\n"
           . "Конкурс: {$comp['name']}\n"
           . "Участник: {$a['full_name']}\n"
