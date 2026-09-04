@@ -1303,7 +1303,9 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     var els=[], sels=[];
     names.forEach(function(n){ var e=cont.querySelector(n); if(e){ els.push(e); sels.push(n); } });
     if(els.length<3) return;
-    var last=els[els.length-1], RESERVE=7;   // мм: воздух между данными и подписями
+    /* Запас до подписей — из настройки конкурса (gap_reserve, мм), как у старых
+       бланков: на части листов он часть утверждённого вида. */
+    var last=els[els.length-1], RESERVE=<?= (float)($tpl['gap_reserve'] ?? 7) ?>;
 
     /* Ставит между всеми блоками ОДИН И ТОТ ЖЕ просвет между буквами (G, мм) и
        возвращает, сколько миллиметров осталось до блока подписей. */
@@ -1334,13 +1336,32 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
        В таком случае ищем самый крупный шаг, который ещё влезает: лист остаётся
        РОВНЫМ, просто чуть плотнее.
        Без fixed_gap — прежнее поведение: самый крупный шаг до 9 мм. */
+    /* ПОСЛЕДНИЙ БЛОК НЕ ИМЕЕТ ПРАВА НАЕХАТЬ НА ПОДПИСИ.
+       Выравниватель умеет только сдвигать строки. Текст благодарности — сплошной
+       абзац: сжимать в нём нечего, и на бланках, где его много, он ложился прямо
+       на печать и на фамилию председателя. Поэтому, если после выравнивания до
+       подписей осталось меньше запаса, уменьшаем кегль САМОГО блока, пока он не
+       встанет на место. Кегль трогаем только вниз и только у последнего блока. */
+    function shrinkLast(){
+      var fs=parseFloat(getComputedStyle(last).fontSize)*0.75;   // px → pt
+      var minPt=Math.max(6, fs*0.55);
+      for(var k=0;k<14;k++){
+        var left=(bb.getBoundingClientRect().top-inkBox(last, sels[sels.length-1]).bottom)/PX_MM;
+        if(left>=RESERVE) return;
+        fs-=Math.max(0.3, fs*0.05);
+        if(fs<minPt){ last.style.fontSize=minPt.toFixed(1)+'pt'; return; }
+        last.style.fontSize=fs.toFixed(1)+'pt';
+      }
+    }
     var hi = FIXG > 0 ? FIXG : 9.0;
-    if(applyG(hi) >= RESERVE) return;
+    if(applyG(hi) >= RESERVE){ shrinkLast(); return; }
     var lo=1.0, best=1.0;
     for(var k=0;k<8;k++){
       var G=(lo+hi)/2;
       if(applyG(G)>=RESERVE){ best=G; lo=G; } else { hi=G; }
     }
+    applyG(best);
+    shrinkLast();
     applyG(best);
   }
   if(document.fonts && document.fonts.load && FAM){

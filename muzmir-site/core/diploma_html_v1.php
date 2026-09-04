@@ -802,6 +802,52 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     return {top:    _base(f,false) - gf.aa*SC + (parseFloat(cal[0])||0)*fs*SC,
             bottom: _base(l,true)  + gl.ad*SC + (parseFloat(cal[1])||0)*fs*SC};
   }
+  /* СТРОКА НЕ ДОЛЖНА УПИРАТЬСЯ В КРАЙ ЛИСТА.
+     Кегль длинных строк здесь подбирает PHP по прикидке средней ширины буквы.
+     Прикидка врёт: у «ЗА ВЕРНОСТЬ ТРАДИЦИЯМ» с разрядкой она давала «влезает»,
+     а на печати хвост уходил за рамку и обрезался. Меряем набранную строку в
+     браузере и, если она шире колонки, уменьшаем кегль — только уменьшаем,
+     утверждённые размеры коротких строк остаются как есть. */
+  function shrinkToFit(sel, minPt){
+    var el=document.querySelector(sel); if(!el) return;
+    var max=el.clientWidth - 2; if(max<=0) return;
+    var cs=getComputedStyle(el);
+    var probe=document.createElement('span');
+    probe.style.cssText='position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;padding:0;margin:0';
+    probe.style.fontFamily=cs.fontFamily; probe.style.fontWeight=cs.fontWeight;
+    probe.style.fontStyle=cs.fontStyle;   probe.style.letterSpacing=cs.letterSpacing;
+    probe.style.textTransform=cs.textTransform;
+    document.body.appendChild(probe);
+    /* Строка бывает уже разбита на две через <br> — меряем каждую отдельно и
+       берём самую широкую: подгонять надо по ней. */
+    var parts=el.innerHTML.split(/<br\s*\/?>/i).map(function(x){
+      var t=document.createElement('div'); t.innerHTML=x; return (t.textContent||'').trim();
+    }).filter(function(x){ return x!==''; });
+    if(!parts.length) parts=[(el.textContent||'').trim()];
+    function widest(fs){
+      var w=0;
+      probe.style.fontSize=fs+'pt';
+      for(var i=0;i<parts.length;i++){ probe.textContent=parts[i]; w=Math.max(w, probe.getBoundingClientRect().width); }
+      return w;
+    }
+    var cur=parseFloat(cs.fontSize)*0.75;   // px → pt
+    if(widest(cur)<=max){ probe.parentNode.removeChild(probe); return; }
+    var lo=minPt, hi=cur, best=minPt;
+    for(var k=0;k<24 && hi-lo>0.1;k++){
+      var mid=(lo+hi)/2;
+      if(widest(mid)<=max){ best=mid; lo=mid; } else { hi=mid; }
+    }
+    probe.parentNode.removeChild(probe);
+    el.style.fontSize=best.toFixed(1)+'pt';
+  }
+  function fitWidths(){
+    shrinkToFit('.competition-name', 16);
+    shrinkToFit('.diploma-degree', 11);     // «ЗА ВЕРНОСТЬ ТРАДИЦИЯМ» и прочие длинные звания
+    shrinkToFit('.diploma-type', 20);       // БЛАГОДАРНОСТЬ на узких полях
+    shrinkToFit('.awarded-name', 12);
+    shrinkToFit('.awarded-name-script', 12);
+    shrinkToFit('.extra-award', 9);
+  }
   function fitOptical(){
     var cont=document.querySelector('.content'), bb=document.querySelector('.bottom-block');
     if(!cont||!bb) return;
@@ -830,18 +876,38 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
       }
       return (bb.getBoundingClientRect().top-inkBox(last, sels[sels.length-1]).bottom)/PX_MM;
     }
+
+    /* ПОСЛЕДНИЙ БЛОК НЕ ИМЕЕТ ПРАВА НАЕХАТЬ НА ПОДПИСИ.
+       Выравниватель умеет только сдвигать строки. Текст благодарности — сплошной
+       абзац: сжимать в нём нечего, и на бланках, где его много, он ложился прямо
+       на печать и на фамилию председателя. Поэтому, если после выравнивания до
+       подписей осталось меньше запаса, уменьшаем кегль САМОГО блока, пока он не
+       встанет на место. Кегль трогаем только вниз и только у последнего блока. */
+    function shrinkLast(){
+      var fs=parseFloat(getComputedStyle(last).fontSize)*0.75;   // px → pt
+      var minPt=Math.max(6, fs*0.55);
+      for(var k=0;k<14;k++){
+        var left=(bb.getBoundingClientRect().top-inkBox(last, sels[sels.length-1]).bottom)/PX_MM;
+        if(left>=RESERVE) return;
+        fs-=Math.max(0.3, fs*0.05);
+        if(fs<minPt) { last.style.fontSize=minPt.toFixed(1)+'pt'; return; }
+        last.style.fontSize=fs.toFixed(1)+'pt';
+      }
+    }
     /* Заданный шаг — потолок: длинная заявка ровные 5 мм не вмещает, и тогда
        берём самый крупный шаг, который ещё не подводит строки к подписям. */
     var hi = FIXG > 0 ? FIXG : 9.0;
-    if(applyG(hi) >= RESERVE) return;
+    if(applyG(hi) >= RESERVE){ shrinkLast(); return; }
     var lo=1.0, best=1.0;
     for(var k=0;k<8;k++){
       var G=(lo+hi)/2;
       if(applyG(G)>=RESERVE){ best=G; lo=G; } else { hi=G; }
     }
     applyG(best);
+    shrinkLast();
+    applyG(best);
   }
-  function finish(){ try{ fitOptical(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
+  function finish(){ try{ fitWidths(); }catch(e){} try{ fitOptical(); }catch(e){} document.documentElement.setAttribute('data-title-fit','1'); }
   /* Ждём шрифты: по недогруженному шрифту границы букв считаются неверно. */
   if(document.fonts && document.fonts.ready){ document.fonts.ready.then(finish); }
   else { window.addEventListener('load', finish); }
