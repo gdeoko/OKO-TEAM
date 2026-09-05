@@ -282,6 +282,28 @@ if (is_file(BASE_PATH . '/core/curator_awards.php')) {
     }
 }
 
+/* СТОП-КРАН НА ВЫДАЧУ НАГРАДНЫХ МАТЕРИАЛОВ.
+ *
+ * Срок в поле scheduled_at — это ОБЕЩАНИЕ УЧАСТНИКУ: он видит его в кабинете и
+ * в письме. Когда выдачу надо придержать (пересобрали бланк, ждём слова
+ * владельца), раньше правили сам срок — ставили дату вроде 2027-01-01, и
+ * участник читал в кабинете, что награда придёт через год.
+ *
+ * Теперь срок остаётся честным, а придерживает выдачу отдельный ключ:
+ *   php scripts/setting.php diplomas_send_hold 1   — стоп
+ *   php scripts/setting.php diplomas_send_hold 0   — поехали
+ * Всё, что «подошло по сроку» за время стоянки, уйдёт сразу после снятия — по
+ * одному письму в минуту, как обычно. */
+$__hold = (string) (function_exists('setting') ? setting('diplomas_send_hold', '0') : '0');
+if ($__hold === '1') {
+    $__wait = (int) (scalar("SELECT COUNT(*) FROM diplomas
+                              WHERE COALESCE(sent_at,'')='' AND COALESCE(scheduled_at,'')<>''
+                                AND datetime(scheduled_at) <= datetime('now','localtime')") ?? 0);
+    echo "Выдача наградных материалов придержана (diplomas_send_hold=1). Ждут: $__wait\n";
+    cron_log('send_diplomas', "выдача придержана ключом diplomas_send_hold, ждут: $__wait");
+    exit(0);
+}
+
 // 3) Шлём то, что подошло по расписанию (окно ±60 сек), интервал 1 мин между заявками.
 $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name AS comp_name
                 FROM diplomas d

@@ -61,9 +61,18 @@ $w = "1=1"; $args = [];
 if ($f === 'pending') $w .= " AND (d.sent_at IS NULL OR d.sent_at='')";
 if ($f === 'sent')    $w .= " AND d.sent_at IS NOT NULL AND d.sent_at<>''";
 if ($q !== '') {
+    /* ИЩЕМ ПО НОМЕРУ, ФИО И ПОЧТЕ — И ПО НОМЕРУ ЗАКАЗА ТОЖЕ.
+     * Участник спрашивает про свой заказ по его номеру («№47»), а не по номеру
+     * заявки: без этого номер приходилось искать глазами в разделе оригиналов. */
+    $or = []; $oa = [];
     [$sq, $sa] = search_like(['a.full_name','a.group_name','a.number','a.email','a.phone',
                               'a.work_title','a.teacher','a.city','d.number','d.result','c.name'], $q);
-    if ($sq !== '') { $w .= " AND ($sq)"; $args = array_merge($args, $sa); }
+    if ($sq !== '') { $or[] = $sq; $oa = array_merge($oa, $sa); }
+    if (preg_match('/^№?\s*(\d+)$/u', $q, $m)) {
+        $or[] = "a.id IN (SELECT application_id FROM awards_orders WHERE id=?)";
+        $oa[] = (int) $m[1];
+    }
+    if ($or) { $w .= ' AND (' . implode(' OR ', $or) . ')'; $args = array_merge($args, $oa); }
 }
 
 $rowsRaw = all("SELECT d.*, a.id AS app_id, a.number AS app_number, a.full_name, a.group_name,
@@ -160,7 +169,7 @@ ob_start(); ?>
   <input type="hidden" name="p" value="digital">
   <input type="hidden" name="f" value="<?= h($f) ?>">
   <div class="field"><label>Поиск</label>
-    <input name="q" value="<?= h($q) ?>" placeholder="ФИО, коллектив, № заявки, № диплома, почта, телефон, конкурс, звание" style="min-width:300px"></div>
+    <input name="q" value="<?= h($q) ?>" placeholder="№ заказа, № заявки, № диплома, ФИО, коллектив, почта, телефон, конкурс, звание" style="min-width:300px"></div>
   <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Найти</button>
   <?php if ($q !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('digital', ['f'=>$f]) ?>">Сброс</a><?php endif; ?>
 </form>
@@ -203,23 +212,43 @@ ob_start(); ?>
            *
            * У электронных документов платного конкурса своего заказа нет: они
            * входят в оргвзнос, и точкой отсчёта служит оплата участия. */
-          $__oc = ''; $__op = '';
-          foreach ($g['orders'] as $__o) {
-              $__c = trim((string) ($__o['created_at'] ?? ''));
-              if ($__c !== '' && ($__oc === '' || $__c < $__oc)) $__oc = $__c;
-              $__p = trim((string) ($__o['paid_at'] ?? ''));
-              if ($__p !== '' && ($__op === '' || $__p < $__op)) $__op = $__p;
-          }
+          $__ord = $g['orders'];
+          usort($__ord, static fn(array $x, array $y): int
+              => strcmp((string) ($x['created_at'] ?? ''), (string) ($y['created_at'] ?? '')));
+          $__nOrd = count($__ord);
           ?>
-          <div class="small muted" style="margin-top:3px">
-            <?php if ($__oc !== ''): ?>
-              Заказ наград оформлен: <b><?= h(order_dt($__oc, false)) ?></b>
-              <span class="muted">(<?= h(order_ago($__oc)) ?>)</span>
-              <?php if ($__op !== ''): ?> · Оплачен: <b><?= h(order_dt($__op, false)) ?></b><?php endif; ?>
+          <div class="small muted" style="margin-top:3px;line-height:1.55">
+            <?php if ($__nOrd === 1): $__o = $__ord[0]; ?>
+              Заказ №<b><?= (int) $__o['id'] ?></b> оформлен:
+              <b><?= h(order_dt((string) $__o['created_at'])) ?></b>
+              <span class="muted">(<?= h(order_ago((string) $__o['created_at'])) ?>)</span>
+              <?php if (trim((string) ($__o['paid_at'] ?? '')) !== ''): ?>
+                · Оплачен: <b><?= h(order_dt((string) $__o['paid_at'])) ?></b>
+              <?php endif; ?>
+            <?php elseif ($__nOrd > 1): ?>
+              <?php /* НЕСКОЛЬКО ЗАКАЗОВ — ОДНО ПИСЬМО, НО НОМЕРА И ДАТЫ РАЗНЫЕ.
+                       Участник заказывает электронные награды по одной заявке
+                       несколько раз, а письмо уходит одно. Раньше стояла только
+                       самая ранняя дата — и на вопрос «а второй заказ где?»
+                       ответить было нечем. */ ?>
+              <b style="color:var(--a-navy)">Объединённый заказ: <?= (int) $__nOrd ?> заказа в одном письме</b>
+              <?php foreach ($__ord as $__o): ?>
+                <div style="margin-left:2px">
+                  · заказ №<b><?= (int) $__o['id'] ?></b> от
+                  <b><?= h(order_dt((string) $__o['created_at'])) ?></b>
+                  <span class="muted">(<?= h(order_ago((string) $__o['created_at'])) ?>)</span>
+                  <?php if (trim((string) ($__o['paid_at'] ?? '')) !== ''): ?>
+                    · оплачен <?= h(order_dt((string) $__o['paid_at'])) ?>
+                  <?php endif; ?>
+                  <?php if ($__o['names']): ?> · <?= h(implode(', ', $__o['names'])) ?><?php endif; ?>
+                </div>
+              <?php endforeach; ?>
             <?php elseif ((int) ($a['comp_paid'] ?? 0) === 1): ?>
-              Входит в оргвзнос — отдельного заказа нет
+              Входит в оргвзнос — отдельного заказа нет ·
+              заявка оформлена <b><?= h(order_dt((string) ($a['app_created'] ?? ''))) ?></b>
             <?php else: ?>
-              Отдельного заказа наград нет
+              Отдельного заказа наград нет ·
+              заявка оформлена <b><?= h(order_dt((string) ($a['app_created'] ?? ''))) ?></b>
             <?php endif; ?>
           </div>
         </div>

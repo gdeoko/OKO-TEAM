@@ -307,16 +307,36 @@ if ($filter === 'archive') {
     // вкладку «Отменённые», чтобы не смешивались с рабочим списком.
     $where .= " AND status IN ('paid','made')";
 }
-// Поиск по заказам (раньше его не было вовсе — заказ искали глазами по всему списку).
+/* ПОИСК ИЩЕТ ПО ВСЕМУ РАЗДЕЛУ, А НЕ ПО ОТКРЫТОЙ ВКЛАДКЕ.
+ *
+ * Раздел открывается на рабочем списке — это правильно для работы. Но когда
+ * ищут конкретный заказ («что мы ей отправили и по какому треку?»), вкладка
+ * молча прятала отправленное, и выходило, будто заказа нет. Есть запрос —
+ * ищем по всем состояниям, оставляя только рамку раздела: оригиналы почтой.
+ *
+ * Искать надо по трём вещам сразу: по номеру (заказа, заявки, диплома), по ФИО
+ * и по почте. Заказ хранит только копию ФИО и почты на момент покупки, поэтому
+ * добираем ещё и данные заявки — человек мог сменить почту в кабинете.
+ */
 $qOrd = trim((string) input('q'));
 if ($qOrd !== '') {
+    $where = "items NOT LIKE '%\"kind\":\"club\"%' AND items LIKE '%\"kind\":\"original\"%'";
+    $params = [];
+    $or = []; $oa = [];
     [$sq, $sa] = search_like(['full_name','email','phone','competition','result','address','tracking','items'], $qOrd);
-    if ($sq !== '') { $where .= " AND ($sq)"; $params = array_merge($params, $sa); }
-    // Точный поиск по номеру заказа: «№12» или просто «12».
-    if (preg_match('/^№?\s*(\d+)$/u', $qOrd, $m)) {
-        $where = '(' . $where . ') OR id=?';
-        $params[] = (int) $m[1];
-    }
+    if ($sq !== '') { $or[] = $sq; $oa = array_merge($oa, $sa); }
+    // Точный номер заказа: «№12» или просто «12».
+    if (preg_match('/^№?\s*(\d+)$/u', $qOrd, $m)) { $or[] = 'id=?'; $oa[] = (int) $m[1]; }
+    // Номер заявки, ФИО и почта из самой заявки + номер наградного документа.
+    $like = '%' . $qOrd . '%';
+    $or[] = "application_id IN (SELECT a.id FROM applications a
+                                 WHERE a.number LIKE ? OR a.full_name LIKE ? OR a.group_name LIKE ?
+                                    OR a.email LIKE ? OR a.phone LIKE ?
+                                    OR EXISTS (SELECT 1 FROM diplomas d
+                                                WHERE d.application_id = a.id AND d.number LIKE ?))";
+    array_push($oa, $like, $like, $like, $like, $like, $like);
+    $where .= ' AND (' . implode(' OR ', $or) . ')';
+    $params = array_merge($params, $oa);
 }
 $orders = all("SELECT * FROM awards_orders WHERE $where ORDER BY (status='paid') DESC, id DESC LIMIT 300", $params);
 
@@ -340,7 +360,7 @@ ob_start(); ?>
   <input type="hidden" name="p" value="orders">
   <?php if ($filter !== ''): ?><input type="hidden" name="status" value="<?= h($filter) ?>"><?php endif; ?>
   <div class="field"><label>Поиск</label>
-    <input name="q" value="<?= h($qOrd) ?>" placeholder="ФИО, почта, телефон, конкурс, результат, адрес, трек, № заказа" style="min-width:280px"></div>
+    <input name="q" value="<?= h($qOrd) ?>" placeholder="№ заказа, № заявки, № диплома, ФИО, почта, телефон, конкурс, адрес, трек" style="min-width:280px"></div>
   <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Найти</button>
   <?php if ($qOrd !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('orders', $filter !== '' ? ['status'=>$filter] : []) ?>">Сброс</a><?php endif; ?>
 </form>
@@ -387,6 +407,21 @@ $groups = og_groups($orders);
     foreach ($gr['orders'] as $go) {
         foreach (order_items_parse($go) as $p) {
             if ((string) ($p['kind'] ?? '') !== 'original') { $digiCnt += max(1, (int) $p['count']); continue; }
+            /* У КАЖДОЙ НАГРАДЫ — СВОЙ КОНКУРС И СВОЙ ЗАКАЗ.
+             *
+             * В посылке одного человека едут награды из РАЗНЫХ конкурсов и из
+             * разных заказов: «Основной диплом» и «Статуэтка» рядом ничем не
+             * отличались, и при сборке коробки понять, что к чему, было нельзя.
+             * Подписываем конкурс под наградой, а если посылка собрана из
+             * нескольких заказов — ещё и номер заказа с датой. */
+            $p['comp']     = (string) ($go['competition'] ?? '');
+            if ($p['comp'] === '' && !empty($p['application_id'])) {
+                $p['comp'] = (string) (scalar("SELECT c.name FROM applications a
+                                                JOIN competitions c ON c.id=a.competition_id
+                                               WHERE a.id=?", [(int) $p['application_id']]) ?? '');
+            }
+            $p['ord_id']   = (int) $go['id'];
+            $p['ord_when'] = (string) ($go['created_at'] ?? '');
             $items[] = $p;
             $postSum += (int) ($p['price'] ?? 0) * max(1, (int) $p['count']);
         }
@@ -404,9 +439,26 @@ $groups = og_groups($orders);
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--a-card,#F4F6FC);border-bottom:1px solid var(--a-line);">
       <div>
         <b style="font-size:16px;color:var(--a-navy);">
-          <?= count($ids) > 1 ? 'Посылка · заказы №' . h(implode(', №', $ids)) : 'Заказ №' . $oid ?>
+          <?php $__nOrd = count($ids); $__nw = $__nOrd % 10; $__nh = $__nOrd % 100;
+                $__word = ($__nw === 1 && $__nh !== 11) ? 'заказ'
+                        : (($__nw >= 2 && $__nw <= 4 && ($__nh < 12 || $__nh > 14)) ? 'заказа' : 'заказов'); ?>
+          <?= $__nOrd > 1 ? 'Объединённая посылка · ' . $__nOrd . ' ' . $__word : 'Заказ №' . $oid ?>
         </b>
         <span class="muted small"> · <?= h(order_dt((string)$o['created_at'])) ?></span>
+        <?php if (count($ids) > 1): ?>
+          <?php /* ОБЪЕДИНЁННАЯ ПОСЫЛКА НАЗЫВАЕТ КАЖДЫЙ СВОЙ ЗАКАЗ И ЕГО ДАТУ.
+                   Одной строкой «заказы №41, №47» нельзя было понять, что и когда
+                   человек заказывал: сроки изготовления считаются от каждого
+                   заказа отдельно, а участник спрашивает про свой номер. */ ?>
+          <div class="small" style="margin-top:3px;line-height:1.55">
+            <?php foreach ($gr['orders'] as $__i => $__go): ?>
+              <span style="white-space:nowrap">
+                <b style="color:var(--a-navy)">заказ №<?= (int) $__go['id'] ?></b>
+                от <?= h(order_dt((string) ($__go['created_at'] ?? ''))) ?>
+              </span><?= $__i < count($gr['orders']) - 1 ? ' · ' : '' ?>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
         <?php
         /* СРОКИ ВИДНЫ СРАЗУ, БЕЗ ЗАХОДА В ЗАЯВКУ.
          *
@@ -416,10 +468,10 @@ $groups = og_groups($orders);
         $tl = order_timeline($o);
         ?>
         <div class="small muted" style="margin-top:3px;line-height:1.55">
-          Заказ наград оформлен: <b><?= h(order_dt($tl['ordered'], false)) ?></b>
+          Заказ наград оформлен: <b><?= h(order_dt($tl['ordered'])) ?></b>
           <span class="muted">(<?= h(order_ago($tl['ordered'])) ?>)</span>
           <?php if ($tl['paid_at'] !== ''): ?>
-            · Оплачен: <b><?= h(order_dt($tl['paid_at'], false)) ?></b>
+            · Оплачен: <b><?= h(order_dt($tl['paid_at'])) ?></b>
           <?php endif; ?>
           <?php if ($tl['due'] !== ''): ?>
             · Изготовить до:
@@ -521,6 +573,17 @@ $groups = og_groups($orders);
                   <div style="width:104px;height:104px;border-radius:10px;border:1px dashed var(--a-line);display:flex;align-items:center;justify-content:center;color:#9AA;font-size:11px;">нет фото</div>
                 <?php endif; ?>
                 <div class="small" style="margin-top:4px;line-height:1.2;"><?= h($p['item']) ?></div>
+                <?php /* Конкурс — под самой наградой: в коробке едут награды из
+                         разных конкурсов, и при сборке их надо различать. */ ?>
+                <?php if (trim((string) ($p['comp'] ?? '')) !== ''): ?>
+                  <div class="small" style="line-height:1.2;color:var(--a-navy);font-weight:600;"><?= h((string) $p['comp']) ?></div>
+                <?php endif; ?>
+                <?php if (count($ids) > 1 && !empty($p['ord_id'])): ?>
+                  <div class="small muted" style="line-height:1.2;">заказ №<?= (int) $p['ord_id'] ?><?= trim((string) ($p['ord_when'] ?? '')) !== '' ? '<br>' . h(order_dt((string) $p['ord_when'])) : '' ?></div>
+                <?php endif; ?>
+                <?php if (trim((string) ($p['fio'] ?? '')) !== ''): ?>
+                  <div class="small muted" style="line-height:1.2;"><?= h((string) $p['fio']) ?></div>
+                <?php endif; ?>
                 <?php /* Вид позиции подписан у самой награды, а не одной строкой на
                          весь заказ: в одной посылке едут и оригиналы, и электронные. */ ?>
                 <div class="small" style="color:<?= $pk === 'original' ? '#8B6F1F' : '#1E7A46' ?>;">
