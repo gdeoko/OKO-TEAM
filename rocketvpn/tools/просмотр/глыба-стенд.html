@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Стенд глыбы</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #10141c; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<!-- Отдельный стенд под глыбу льда. Полный сайт поднимается минут
+     десять на программном отрисовщике, и правку материала так не
+     погоняешь. Здесь только три глыбы на подложке цвета кладки акта
+     ПЕРИМЕТР (замер кадра: кладка 69/79/97, пол 147/150/153), поэтому
+     кадр выходит за секунды и числа сравнимы с боевыми. -->
+<script src="../../assets/vendor/three.min.js"></script>
+<script src="../../assets/rv-глыба.js"></script>
+<script>
+(function () {
+  "use strict";
+  var T = THREE;
+  var сцена = new T.Scene();
+  var кам = new T.PerspectiveCamera(38, 1440 / 900, 0.1, 400);
+  кам.position.set(0, 0, 12.6);
+  кам.lookAt(0, 0, 0);
+
+  var r = new T.WebGLRenderer({ antialias: true });
+  r.setPixelRatio(1);
+  r.setSize(1440, 900);
+  document.body.appendChild(r.domElement);
+
+  /* ── ПЛЁНКА ────────────────────────────────────────────────────
+     Сцена считается в линейном свете, а на экран идёт sRGB, и между
+     ними в боевой сборке стоит плёнка (assets/rv-real.js): экспозиция
+     0.75, тональная кривая, пол вуали. Без неё стенд отдаёт линейные
+     числа как есть и врёт по яркости втрое - кладка выходит 16/20/29
+     вместо боевых 69/79/97. Здесь ровно те же три строки, что в
+     rv-real.js, чтобы замер стенда сравнивался с замером акта. */
+  var цель = new T.WebGLRenderTarget(1440, 900, {
+    type: T.HalfFloatType, minFilter: T.LinearFilter, magFilter: T.LinearFilter
+  });
+  var камП = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  var сценаП = new T.Scene();
+  сценаП.add(new T.Mesh(new T.PlaneGeometry(2, 2), new T.ShaderMaterial({
+    uniforms: { tD: { value: цель.texture } },
+    vertexShader: [
+      "varying vec2 vUv;",
+      "void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }"
+    ].join("\n"),
+    fragmentShader: [
+      "uniform sampler2D tD;",
+      "varying vec2 vUv;",
+      "void main(){",
+      "  vec3 c = texture2D(tD, vUv).rgb;",
+      "  c *= 0.75;",
+      "  c = (c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14);",
+      "  vec3 pol = vec3(0.010, 0.013, 0.0225);",
+      "  c = pol + (vec3(1.0) - pol) * c;",
+      "  c = clamp(c, 0.0, 1.0);",
+      "  c = mix(12.92 * c, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c));",
+      "  gl_FragColor = vec4(c, 1.0);",
+      "}"
+    ].join("\n")
+  })));
+
+  /* Подложка двумя поясами: сверху кладка, снизу пол. Числа сняты с
+     боевого кадра, чтобы контраст льда к окружению считался по тем же
+     значениям, что и в акте. */
+  var фон = new T.Mesh(
+    new T.PlaneGeometry(60, 34),
+    new T.ShaderMaterial({
+      vertexShader: [
+        "varying vec2 vUv;",
+        "void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }"
+      ].join("\n"),
+      fragmentShader: [
+        "varying vec2 vUv;",
+        "void main(){",
+        "  vec3 kladka = vec3(0.0631, 0.0782, 0.1131);",
+        "  vec3 pol = vec3(0.2874, 0.3005, 0.3149);",
+        "  vec3 c = mix(pol, kladka, smoothstep(0.16, 0.30, vUv.y));",
+        "  float g = fract(sin(dot(floor(vUv * 260.0), vec2(12.9898, 78.233))) * 43758.5);",
+        "  c *= 0.94 + 0.12 * g;",
+        "  gl_FragColor = vec4(c, 1.0);",
+        "}"
+      ].join("\n")
+    })
+  );
+  фон.position.z = -9;
+  сцена.add(фон);
+
+  var мир = { T: T, ступень: 2 };
+  var формы = ["кристалл", "брусок", "плита"];
+  var знаки = ["щит", "шар", "молния"];
+  var глыбы = [];
+  for (var i = 0; i < 3; i++) {
+    var г = window.RV_ГЛЫБА["собрать"](мир, {
+      "форма": формы[i], "иконка": знаки[i], "семя": 17 + i * 13,
+      "размер": 1.7, "выноска": false
+    });
+    г["корень"].position.x = (i - 1) * 4.3;
+    сцена.add(г["корень"]);
+    глыбы.push(г);
+  }
+
+  var часы = 0;
+  window["кадр"] = function (t) {
+    часы = t;
+    for (var i = 0; i < глыбы.length; i++) глыбы[i]["кадр"](0.016, часы, 0);
+    r.setRenderTarget(цель);
+    r.render(сцена, кам);
+    r.setRenderTarget(null);
+    r.render(сценаП, камП);
+  };
+  window["замерГеометрии"] = function () {
+    var из = [];
+    for (var i = 0; i < глыбы.length; i++) {
+      var g = глыбы[i]["лёд"].geometry;
+      var b = g.boundingBox;
+      var ф = g.attributes.aFace, п = g.attributes.position;
+      var сум = 0;
+      for (var k = 0; k < ф.count; k++) сум += ф.getX(k) > 0.5 ? 1 : 0;
+      var зн = глыбы[i]["иконка"];
+      var кб = new T.Box3().setFromObject(зн);
+      из.push({
+        форма: глыбы[i]["форма"],
+        габарит: [+(b.max.x - b.min.x).toFixed(3), +(b.max.y - b.min.y).toFixed(3), +(b.max.z - b.min.z).toFixed(3)],
+        вершин: п.count,
+        гладь: +(сум / ф.count * 100).toFixed(1),
+        знакДоля: [
+          +((кб.max.x - кб.min.x) / ((b.max.x - b.min.x) * 1.7) * 100).toFixed(1),
+          +((кб.max.y - кб.min.y) / ((b.max.y - b.min.y) * 1.7) * 100).toFixed(1),
+          +((кб.max.z - кб.min.z) / ((b.max.z - b.min.z) * 1.7) * 100).toFixed(1)
+        ]
+      });
+    }
+    return из;
+  };
+  window["готово"] = true;
+  window["кадр"](0);
+})();
+</script>
+</body>
+</html>
