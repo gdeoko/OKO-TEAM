@@ -8,5 +8,8 @@
   },
   "devDependencies": {
     "playwright": "^1.63.0"
+  },
+  "dependencies": {
+    "pngjs": "^7.0.0"
   }
 }
