@@ -174,6 +174,22 @@
     "uniform float uPush;",
     "uniform float uMode;",
     "uniform float uFaza;",
+    /* ── ВСПЛЕСК ОТ ТОЧКИ КАСАНИЯ ────────────────────────────────
+       У igloo движение частиц считает настоящая жидкость на видеокарте
+       (пинг-понг FBO 388x388, две цели - положение и скорость), и
+       касание там это SPLAT: местный толчок в точке пальца, радиусом
+       0.22 и силой 35 в их единицах, который расходится и гаснет
+       (densityDissipation 0.88, velocityDissipation 0.98). Числа
+       сверены по их бандлу, свод - docs/РАЗБОР-IGLOO-КОД.md.
+
+       Полного солвера у нас нет и он тут не нужен: главное в их отклике
+       не жидкость сама по себе, а то, что толчок МЕСТНЫЙ - он идёт от
+       точки, где человек тронул, а не двигает фигуру целиком. Это и
+       повторяем: точка касания в местных координатах роя, радиус в её
+       единицах и сила, которая гаснет вместе с фазой.
+
+       uVsplesk.xyz - место касания, uVsplesk.w - радиус. */
+    "uniform vec4 uVsplesk;",
     "varying float vShadow;",
     "varying float vVel;",
     /* Завихрение: три синуса по месту и времени. Их curl-шум четвёртого
@@ -280,6 +296,16 @@
        всегда идёт волной, а не сдвигом всей статуи. */
     "  vec3 otk = otklik(aHome, aRnd, uTime, uMode, uFaza);",
     "  p += otk * uPush * mix(0.72, 1.28, aRnd.y);",
+    /* Всплеск поверх общего движения: чем ближе точка к месту касания,
+       тем сильнее её выносит наружу от него. Спад по гауссиане - у
+       жидкости splat так и устроен. Волна догоняет: множитель фазы
+       сдвинут, поэтому дальние точки трогаются позже ближних. */
+    "  vec3 ot = aHome - uVsplesk.xyz;",
+    "  float dl = length(ot);",
+    "  float bliz = exp(-(dl * dl) / max(0.0001, uVsplesk.w * uVsplesk.w));",
+    "  float hod = clamp(uFaza * 2.2 - dl / max(0.001, uVsplesk.w) * 0.35, 0.0, 1.0);",
+    "  float sila = sin(hod * 3.14159) * bliz * uPush;",
+    "  p += normalize(ot + 0.0001) * sila * uVsplesk.w * 1.9;",
     "  vec4 mv = modelViewMatrix * vec4(p, 1.0);",
     /* ЗАТЕНЕНИЕ ТОЧКИ - их обёрнутый диффуз по нормали поверхности.
        У них нормаль приходит градиентом объёмной текстуры, у нас лежит
@@ -300,7 +326,7 @@
        в #d7ebfa. Отклик на касание это самое быстрое движение роя, и
        именно из него получается вспышка по фигуре, которую владелец
        называет свечением. */
-    "  vVel = 0.0016 + length(w) * 0.0004 + uScatter * 0.006 + length(otk) * uPush * 0.010;",
+    "  vVel = 0.0016 + length(w) * 0.0004 + uScatter * 0.006 + length(otk) * uPush * 0.010 + sila * 0.020;",
     /* Их формула размера. Множитель масштаба нужен потому, что фигура у
        нас крупнее их в несколько раз и камера стоит во столько же раз
        дальше: без него точки схлопнулись бы в субпиксель. */
@@ -382,6 +408,11 @@
     М.uPush = { value: 0 };
     М.uMode = { value: 0 };
     М.uFaza = { value: 0 };
+    /* Место касания в местных координатах роя и радиус всплеска.
+       Радиус 0.22 их единицы при фигуре высотой 1.44 - это шестая часть
+       роста. У нашей ракеты рост около 3.2 местных единиц, значит та же
+       доля даёт примерно 0.5. */
+    М.uVsplesk = { value: new T.Vector4(0, 0, 0, 0.5) };
     М.мат = new T.ShaderMaterial({
       uniforms: {
         uTime: М.uTime, uScatter: М.uScatter,
@@ -389,7 +420,7 @@
         uSize: { value: опц["размер"] != null ? опц["размер"] : 10.0 },
         uScale: М.uScale,
         uVisible: М.uVisible, uAlpha: М.uAlpha, uInitialGlow: М.uInitialGlow,
-        uPush: М.uPush, uMode: М.uMode, uFaza: М.uFaza,
+        uPush: М.uPush, uMode: М.uMode, uFaza: М.uFaza, uVsplesk: М.uVsplesk,
         uLightPos: { value: new T.Vector3(-0.75, 1, -0.1) },
         uColorLight: { value: new T.Color(0xbdc6d4) },
         uColorDark: { value: new T.Color(0x222b42) },
@@ -443,7 +474,8 @@
     return (g.performance && g.performance.now ? g.performance.now() : 0) / 1000;
   }
 
-  function толкнуть(номер) {
+  var _мировая = null;
+  function толкнуть(номер, точкаМира) {
     if (!собрано) return 0;
     var н = номер == null ? (_откл.номер + 1) % ОТКЛИКОВ : (номер | 0) % ОТКЛИКОВ;
     _откл.номер = н;
@@ -451,7 +483,47 @@
     М.uMode.value = н;
     М.uFaza.value = 0;
     М.uPush.value = 0;
+    /* ── ГДЕ ИМЕННО ТРОНУЛИ ──────────────────────────────────────
+       У igloo всплеск идёт от точки пальца, а не от середины фигуры.
+       Точка приходит в мировых координатах, шейдер считает в местных -
+       переводим её узлом роя. Не сказали где - берём середину: отклик
+       тогда расходится из центра, и это честно означает «тронули
+       вообще, а не в конкретном месте». */
+    if (точкаМира && М.рой) {
+      if (!_мировая) _мировая = new T.Vector3();
+      _мировая.copy(точкаМира);
+      М.рой.updateMatrixWorld();
+      М.рой.worldToLocal(_мировая);
+      М.uVsplesk.value.set(_мировая.x, _мировая.y, _мировая.z, М.uVsplesk.value.w);
+    } else {
+      М.uVsplesk.value.set(0, 0, 0, М.uVsplesk.value.w);
+    }
     return н;
+  }
+
+  /* ── КУДА ПОПАЛ ПАЛЕЦ ─────────────────────────────────────────
+     Рой это точки, по ним лучом не попасть: у отдельной точки нет
+     площади, и raycast по Points требует порога, который на нашем
+     размере даёт то попадание, то промах. Берём проще и надёжнее:
+     плоскость, проходящую через середину роя перпендикулярно взгляду.
+     Луч из-под пальца пересекает её всегда, а по фигуре это ровно то
+     место, куда человек смотрел, когда тыкал. */
+  var _луч = null, _плос = null, _точкаМира = null, _норм = null;
+  function точкаКасания(x, y) {
+    if (!собрано || !М.рой || !W || !W.cam) return null;
+    if (!_луч) {
+      _луч = new T.Raycaster();
+      _плос = new T.Plane();
+      _точкаМира = new T.Vector3();
+      _норм = new T.Vector3();
+    }
+    var ш = g.innerWidth || 1, в = g.innerHeight || 1;
+    _луч.setFromCamera({ x: (x / ш) * 2 - 1, y: -(y / в) * 2 + 1 }, W.cam);
+    М.рой.updateMatrixWorld();
+    var серед = new T.Vector3().setFromMatrixPosition(М.рой.matrixWorld);
+    W.cam.getWorldDirection(_норм);
+    _плос.setFromNormalAndCoplanarPoint(_норм, серед);
+    return _луч.ray.intersectPlane(_плос, _точкаМира) ? _точкаМира : серед;
   }
 
   function кадр(dt, часы) {
@@ -514,9 +586,14 @@
     while (у) { if (!у.visible) return false; у = у.parent; }
     return true;
   }
+  var _последнееКасание = { x: -1, y: -1 };
   function откликнуться(мягкий) {
     if (!виденРой()) return;
-    толкнуть();
+    var т = null;
+    if (_последнееКасание.x >= 0) {
+      try { т = точкаКасания(_последнееКасание.x, _последнееКасание.y); } catch (eТ) { т = null; }
+    }
+    толкнуть(null, т);
     var сейчас = (g.performance && g.performance.now ? g.performance.now() : 0) / 1000;
     if (сейчас - _прошлыйЗвук > 0.45) {
       _прошлыйЗвук = сейчас;
@@ -534,7 +611,16 @@
     _когдаКрутил = т;
     откликнуться(true);
   }
-  g.addEventListener("pointerdown", function () { откликнуться(false); }, { passive: true });
+  g.addEventListener("pointerdown", function (е) {
+    _последнееКасание.x = е.clientX; _последнееКасание.y = е.clientY;
+    откликнуться(false);
+  }, { passive: true });
+  /* Мышь без нажатия тоже запоминается: прокрутка колесом идёт под
+     курсором, и всплеск обязан пойти оттуда, а не из середины. */
+  g.addEventListener("pointermove", function (е) {
+    if (е.pointerType === "touch") return;
+    _последнееКасание.x = е.clientX; _последнееКасание.y = е.clientY;
+  }, { passive: true });
   g.addEventListener("wheel", поПрокрутке, { passive: true });
   g.addEventListener("touchmove", поПрокрутке, { passive: true });
   g.addEventListener("scroll", поПрокрутке, { passive: true });
@@ -547,6 +633,9 @@
     "масштаб": масштаб,
     "толкнуть": толкнуть,
     "откликов": function () { return ОТКЛИКОВ; },
+    /* Радиус всплеска наружу: его ставит тот, кто знает размер фигуры
+       в мире. Доля от роста берётся у igloo - шестая часть. */
+    "радиусВсплеска": function (r) { if (М.uVsplesk && r > 0) М.uVsplesk.value.w = r; },
     "узел": function () { return М.рой || null; },
     "замер": function () {
       return {
