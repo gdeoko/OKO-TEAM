@@ -2977,3 +2977,17 @@ html.рв-кабина-есть .рв-фин-кн {
   html.рв-кабина-есть .рв-фин-анк .rv-форма-плита label { font-size: clamp(9px, 5.2cqh, 13px); }
   html.рв-кабина-есть .рв-фин dl { font-size: clamp(10px, 7.4cqh, 15px); }
 }
+
+/* Дека рамы: тела клавиш и свет над ними. Порядок обязателен -
+   колпачок ЗАСЛОНЯЕТ дно ниши, а слой света этого не умеет, он только
+   складывается. Числа и имена классов те же, что у соседей: холсты
+   рисует перенесённый rv-настил.js и знает их по этим именам. */
+.рв-каб .rcf-caps {
+  position: absolute; inset: 0; z-index: 3;
+  pointer-events: none;
+}
+.рв-каб .rcf-instr {
+  position: absolute; inset: 0; z-index: 4;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
