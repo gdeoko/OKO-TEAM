@@ -29,7 +29,13 @@
 import { chromium } from "playwright";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
-const ДОЛИ = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0];
+const ДОЛИ = (process.argv[2] || "0,0.2,0.4,0.5,0.6,0.8,1").split(",").map(Number);
+/* Потолок ожидания. Подтяжка идёт долями остатка (0.075 и 0.15), то есть
+   подход к цели ЭКСПОНЕНЦИАЛЬНЫЙ: последние единицы камера добирает
+   десятками кадров. На программном отрисовщике кадр около секунды, и
+   переезд в двенадцать единиц требует под пятьдесят секунд. Сорока пяти
+   не хватило ровно на одной доле, и это выглядело как «не сходится». */
+const ПОТОЛОК = +(process.argv[3] || 45000);
 
 const бр = await chromium.launch({
   executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
@@ -59,7 +65,7 @@ async function встать(доля) {
     const d = Math.hypot(c.position.x - э[0], c.position.y - э[1], c.position.z - э[2]);
     window.__зазор = d;
     return d < 0.35;
-  }, null, { timeout: 45000, polling: 150 }).then(() => true).catch(() => false);
+  }, null, { timeout: ПОТОЛОК, polling: 150 }).then(() => true).catch(() => false);
   return стр.evaluate(([сош]) => {
     const W = window.RV_WORLD;
     const c = W["мир"]().cam;
