@@ -13,6 +13,7 @@ export NODE_PATH=/opt/node22/lib/node_modules REEL_W=$W
 set +e; source <(base64 -d /home/user/OKO-TEAM/secrets.env.b64) 2>/dev/null; set -e
 
 rm -rf "$W"; mkdir -p "$W"/{vo,foot,ig/html,segs,cover_cand,fr_titles,fr_acc}
+printf '{"type":"commonjs"}' > "$W/package.json"   # override repo-root type:module for capture.js (CommonJS)
 cp $ROOT/pipeline/plan.py $ROOT/pipeline/assemble.py $ROOT/pipeline/audio.py \
    $ROOT/pipeline/build_titles.py $ROOT/pipeline/build_accents.py $ROOT/pipeline/pick_music.py \
    $ROOT/pipeline/capture.js $ROOT/pipeline/ru_stress_dict.py "$W"/

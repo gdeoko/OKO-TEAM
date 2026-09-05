@@ -1,1 +1,7 @@
-cfg/google_tts.key
+# крупные бинарники сборки — хранятся на VPS, не в git
+builds/
+final/
+carousel_final/
+voices/
+*.mp4
+*.mp3

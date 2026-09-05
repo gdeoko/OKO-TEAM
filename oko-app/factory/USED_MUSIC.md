@@ -38,3 +38,10 @@ useful: fs_useful_713517(60с), fs_useful_423665(160с), fs_useful_683821(121с)
 ## 28.07 (~12:20 UTC) — +2 CC0 (viral 658811, sales 819108). Пул: viral 24 / useful 12 / sales 3.
 CC0-музыка под виральные жанры (phonk/dnb/dubstep) на Freesound ограничена — большинство запросов дают не-CC0 или дубли. 24 виральных + пер-ролик обработка (seed/tempo/EQ в audio.py) достаточно, риск слышимого повтора мал. Пул укомплектован, дальше доливать по мере надобности.
 - ФЛАГМАН (rich-pipeline демо) fs_viral_787538 (energetic, seed 787) — VS-ролik «1000$ vs 10000$ квадро», QA 93.
+
+## Партия DIESEL боль/FAQ (2026-09-05)
+- R1 fs_viral_545459.mp3 (viral) — тема «цена под ключ из чего складывается», дедуп used_music.json
+- R2 fs_useful_117782.mp3 (useful) — тема «таможня и документы без простоя», дедуп used_music.json
+- R3 fs_useful_140481.mp3 (useful) — тема «реальные сроки доставки из китая», дедуп used_music.json
+- R4 fs_sales_506495.mp3 (sales) — тема «гарантия год и минимальный заказ», дедуп used_music.json
+- R5 fs_viral_560759.mp3 (viral) — тема «какие категории техники возим», дедуп used_music.json
