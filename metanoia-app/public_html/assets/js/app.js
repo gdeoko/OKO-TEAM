@@ -181,10 +181,9 @@ const DEMO = {
     },
   ],
 
-  children: [
-    { img: 'assets/img/avatars/lion.jpg', name: 'Миша', age: 8, rank: 'Росточек · 220 очков', streak: 12 },
-    { img: 'assets/img/avatars/star.jpg', name: 'Аня', age: 6, rank: 'Зёрнышко · 75 очков', streak: 4 },
-  ],
+  // Детей заводит семья: своих придумывать нельзя. Список наполняется из
+  // формы регистрации и из «Добавить ребёнка».
+  children: [],
 };
 
 /* ───────── УТИЛИТЫ ───────── */
@@ -423,16 +422,30 @@ function renderLessons() {
 /* ───────── РЕНДЕР: ДЕТИ ───────── */
 
 function renderChildren() {
+  // Ранг и дни у ребёнка живые: они же показываются на его экране.
+  const зёрна = (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0;
+  const ранг = (typeof RANKS !== 'undefined' && typeof rankIndex === 'function')
+    ? (RANKS[rankIndex(зёрна)] || {}).name : '';
+  const дней = серияДней();
+  if (!DEMO.children.length) {
+    $('#children').innerHTML = '<div class="children__empty">Здесь появятся профили ваших детей. Нажмите «Добавить ребёнка», это займёт полминуты.</div>';
+    const п = $('#childrenNote'); if (п) п.hidden = true;
+    return;
+  }
   $('#children').innerHTML = DEMO.children.map((c) => `
     <button class="child-card">
       <div class="child-card__avatar"><img src="${c.img}" alt=""></div>
       <div>
         <div class="child-card__name">${c.name}, ${c.age} лет</div>
-        <div class="child-card__rank">${c.rank}</div>
+        <div class="child-card__rank">${(ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна)}</div>
       </div>
-      <div class="child-card__xp">${ICON('flame', 14)} ${c.streak} дн.</div>
+      <div class="child-card__xp">${ICON('flame', 14)} ${дней} дн.</div>
     </button>
   `).join('');
+  // Пока прогресс один на устройство, при двух и более детях об этом честно
+  // предупреждаем: иначе родитель решит, что у второго ребёнка чужие цифры.
+  const примечание = $('#childrenNote');
+  if (примечание) примечание.hidden = DEMO.children.length < 2;
   $$('#children .child-card').forEach((el, i) =>
     el.addEventListener('click', () => openChild(DEMO.children[i])));
 }
@@ -770,7 +783,18 @@ function значкиПересчитать() {
   return CHILD_BADGES;
 }
 
+/* Первый профиль ребёнка или ничего, если семья ещё никого не завела. */
+function первыйРебёнок() { return DEMO.children[0] || null; }
+
+function кРебёнкуИлиВПрофиль() {
+  const р = первыйРебёнок();
+  if (р) { $('#nav').style.display = 'none'; openChild(р); return; }
+  $('#nav').style.display = '';
+  switchTab('profile');
+}
+
 function openChild(c) {
+  if (!c) return кРебёнкуИлиВПрофиль();
   $('#childAvatar').src = c.img;
   $('#childName').textContent = `${c.name}, ${c.age} лет`;
   // Ранг, серия дней и лесенка рангов считаются по настоящему прогрессу,
@@ -2685,7 +2709,7 @@ function setBackLabel(id) {
 
 /* Куда возвращает стрелка «назад»: в профиль ребёнка, если открывали оттуда */
 function backToWhereOpened() {
-  if (gameOpener === 'child') { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); return; }
+  if (gameOpener === 'child') { кРебёнкуИлиВПрофиль(); return; }
   if (gameOpener === 'games') { openGamesHub(); return; }
   $('#nav').style.display = ''; switchTab('profile');
 }
@@ -2698,7 +2722,7 @@ function initPet() {
   $('#petBack')?.addEventListener('click', () => {
     if (gameOpener === 'games') { openGamesHub(); return; }
     $('#nav').style.display = 'none';
-    openChild(DEMO.children[0]);
+    кРебёнкуИлиВПрофиль();
   });
 
   $('#petFeed')?.addEventListener('click', () => {
@@ -3350,7 +3374,7 @@ function initJourney() {
   $('#journeyBack')?.addEventListener('click', () => {
     if (gameOpener === 'games') { openGamesHub(); return; }
     $('#nav').style.display = 'none';
-    openChild(DEMO.children[0]);
+    кРебёнкуИлиВПрофиль();
   });
 }
 
@@ -4594,7 +4618,7 @@ function askAsk(text) {
 
 function initAsk() {
   $('#openAsk')?.addEventListener('click', () => { gameOpener = 'child'; openAsk(); });
-  $('#askBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
+  $('#askBack')?.addEventListener('click', кРебёнкуИлиВПрофиль);
   $('#askForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const v = $('#askField').value.trim();
@@ -4741,7 +4765,7 @@ function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
   $('#openCerts')?.addEventListener('click', openCertificates);
   $('#openShop')?.addEventListener('click', () => { gameOpener = 'child'; openShop(); });
-  $('#shopBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
+  $('#shopBack')?.addEventListener('click', кРебёнкуИлиВПрофиль);
   $('#openDevotional')?.addEventListener('click', () => { gameOpener = 'child'; openDevotional(); });
   $('#devBack')?.addEventListener('click', backToWhereOpened);
   $('#openQuest')?.addEventListener('click', () => { gameOpener = 'child'; openQuest(); });
@@ -4776,7 +4800,7 @@ function initGrowth() {
     if (!certAudio) certAudio = new Audio('assets/audio/cert.mp3');
     try { certAudio.currentTime = 0; certAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
   });
-  $('#ratingBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
+  $('#ratingBack')?.addEventListener('click', кРебёнкуИлиВПрофиль);
   $('#subBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#mPartner')?.addEventListener('click', openPartner);
   $('#partnerBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });

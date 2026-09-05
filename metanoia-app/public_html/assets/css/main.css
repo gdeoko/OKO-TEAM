@@ -2791,3 +2791,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 /* Подпись под значком: за что он даётся */
 .badge-card__how { margin-top: 4px; font-size: 10px; line-height: 1.35; color: var(--gray); }
 .badge-card--locked .badge-card__how { opacity: .85; }
+
+/* Примечание под списком детей */
+.children__note { margin: 6px 0 10px; font-size: 12px; line-height: 1.45; color: var(--gray); }
+
+/* Пустой список детей */
+.children__empty { padding: 14px 16px; border-radius: 14px; background: rgba(201,112,100,.07);
+  font-size: 13px; line-height: 1.5; color: var(--gray); }
