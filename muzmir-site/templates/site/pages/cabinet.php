@@ -505,9 +505,17 @@ $countAppsS = count($seasonApps);
 $countDipS  = count($seasonDiplomas);
 $countGP = 0; $countL1 = 0;
 foreach ($seasonApps as $a) {
-    $r = mb_strtolower((string)($a['result'] ?? ''));
+    $r = mb_strtolower(trim((string)($a['result'] ?? '')));
+    /* ЗВАНИЕ СВЕРЯЕМ ЦЕЛИКОМ, А НЕ ПО КУСКУ СТРОКИ.
+     *
+     * Здесь стояла проверка «содержит "i степ"». В «лауреат III степени» она
+     * находит последнюю «i» перед словом «степени» — и третья степень
+     * засчитывалась как первая. Так же засчитывался и «дипломант I степени»,
+     * хотя дипломант — не лауреат. У участницы с двумя третьими степенями в
+     * кабинете горело достижение «Лауреат I», а уровень рос на 30 очков за
+     * каждую. Сверяем звание с начала строки и по границе слова. */
     if (str_contains($r, 'гран')) $countGP++;
-    elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $countL1++;
+    elseif (preg_match('~^лауреат\s+(?:i|1)\s+степени~u', $r)) $countL1++;
 }
 // Скидка за достижения — максимум 5% и только в рамках сезона (core/loyalty.php).
 $achDiscount = loyalty_discount($uid, (string)($user['email'] ?? ''));

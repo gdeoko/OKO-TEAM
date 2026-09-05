@@ -35,6 +35,32 @@ require_once BASE_PATH . '/core/grade_apply.php';
 
 $dry = in_array('--dry', $argv, true);
 
+/* ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА СИЛЬНЕЕ ЭТОГО СКРИПТА.
+ *
+ * Скрипт переносит машинные разборы в заявки. Раньше он не смотрел на режим
+ * аттестации вовсе: 27.08 при выключенном автомате (режим «подсказка») одним
+ * запуском в заявки легло 205 машинных оценок. Владелец судил руками, а решение
+ * за него уже приняла машина — и понять это по карточке было нельзя.
+ *
+ * Теперь: в режиме «подсказка» и «выключено» скрипт не применяет ничего.
+ * Осознанный разовый прогон — ключом --force, и он пишется в журнал. */
+require_once BASE_PATH . '/core/ai_grader.php';
+$force = in_array('--force', $argv, true);
+$mode  = function_exists('ag_mode') ? ag_mode() : 'off';
+if ($mode !== 'auto' && !$force && !$dry) {
+    fwrite(STDERR, "Режим аттестации сейчас «{$mode}» — машинные оценки не применяются.\n"
+                 . "Включите «полный автомат» в админке или запустите с ключом --force,\n"
+                 . "если решили применить разборы разово и осознанно.\n");
+    exit(2);
+}
+
+/* ЗАЩИТЫ АВТОМАТА ДЕЙСТВУЮТ И ЗДЕСЬ.
+ *
+ * Гран-при, работа без звания, балл у самой границы звания, тревожные признаки,
+ * низкая уверенность — всё это по правилу центра решает человек. Скрипт эти
+ * проверки обходил, и работы, которые автомат сам бы не тронул, применялись
+ * пачкой. Теперь через ag_can_apply() проходят обе дороги. */
+
 $rows = all("SELECT a.id, a.number, a.full_name, a.group_name, a.created_at,
                     c.name AS comp, c.results_mode,
                     r.id AS run_id, r.title, r.total, r.jury_comment, r.extra_award
@@ -63,6 +89,13 @@ foreach ($rows as $r) {
     if ($dry) {
         $say(sprintf('  #%d %s | %s | %s', $id, (string) $r['number'], (string) $r['title'], (string) $r['comp']));
         continue;
+    }
+    if (!$force && function_exists('ag_can_apply')) {
+        $run = one("SELECT * FROM grading_runs WHERE id=?", [(int) $r['run_id']]);
+        if ($run) {
+            [$can, $why] = ag_can_apply((array) $run);
+            if (!$can) { $skip++; $say(sprintf('  #%d %s — оставлено человеку: %s', $id, $who, $why)); continue; }
+        }
     }
     try {
         $res = grade_apply_result($id, (string) $r['title'], [
