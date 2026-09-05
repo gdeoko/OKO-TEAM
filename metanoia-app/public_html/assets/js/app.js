@@ -50,7 +50,7 @@ const DEMO = {
   chats: [
     { img: 'assets/img/avatars/ekaterina.jpg', name: 'Екатерина Павленко', peda: true, pinned: true, last: 'Добро пожаловать в нашу школу!', time: '12:34', unread: 3 },
     { icon: 'comment', name: 'Общий чат школы', last: 'Иван: Спасибо большое!', time: '11:20', unread: 2 },
-    { icon: 'users', name: 'Чат родителей', last: 'Мария: Кто идёт на созвон завтра?', time: '10:05', unread: 0 },
+    { icon: 'users', name: 'Чат родителей', last: 'Мария: Прошли урок про Рождество, дети в восторге', time: '10:05', unread: 0 },
     { icon: 'gamepad', name: 'Чат учеников', last: 'Миша: Я собрал стих за 20 секунд!', time: '09:41', unread: 0 },
     { icon: 'headset', name: 'Поддержка', last: 'Чем можем помочь?', time: 'Вчера', unread: 0 },
   ],
@@ -449,8 +449,8 @@ const STORIES_CONTENT = [
       { img: 'assets/img/ekaterina-story.jpg', overlay: true,
         title: 'Добро пожаловать в Метанойю!',
         sub: 'Я Екатерина — педагог школы. Рада каждой семье. Начинаем путь вместе — с Богом.' },
-      { bg: 'cream', title: 'Первый созвон — завтра в 18:00',
-        sub: '«Притча о блудном сыне». Записаться можно на Главной.' },
+      { bg: 'cream', title: 'Первый урок ждёт вас',
+        sub: '«Пророчества: почему Господь родился на земле». Слушайте голосом или читайте.' },
     ],
   },
   { // Анонс урока
@@ -918,7 +918,7 @@ const CHAT_MSGS = {
       { who: 'Иван', text: 'Спасибо большое!', time: '11:20' },
     ] },
   2: { msgs: [
-      { who: 'Мария', text: 'Кто идёт на созвон завтра?', time: '10:05' },
+      { who: 'Мария', text: 'Прошли урок про Рождество, дети в восторге', time: '10:05' },
       { who: 'Ольга', text: 'Мы записались, дочка ждёт очень.', time: '10:12' },
     ] },
   3: { msgs: [
@@ -1072,7 +1072,7 @@ const NOTIFS = [
   { icon: 'video',  title: 'Новый урок доступен', text: '«Пророчества; почему Господь родился на земле» — начни первым', time: '2 ч назад' },
   { icon: 'trophy', title: 'Миша получил значок «Молниеносный»', text: '10 из 10 в викторине на скорость', time: '5 ч назад' },
   { icon: 'dove',   title: 'Сообщение от Екатерины', text: 'Добро пожаловать в нашу школу!', time: 'вчера' },
-  { icon: 'clock',  title: 'Созвон завтра в 18:00', text: '«Притча о блудном сыне» — вы записаны', time: 'вчера' },
+  { icon: 'book',   title: 'Новый урок в первой главе', text: '«Крещение Господа» — можно проходить', time: 'вчера' },
 ];
 
 function initNotifs() {
@@ -1083,7 +1083,7 @@ function initNotifs() {
     const s = (n.title + ' ' + n.text).toLowerCase();
     if (n.icon === 'dove' || /екатерин|сообщени/.test(s)) { switchTab('chats'); setTimeout(() => openChatView(0), 60); }
     else if (n.icon === 'trophy' || /значок|достижени|сертификат/.test(s)) { switchTab('profile'); }
-    else if (n.icon === 'clock' || /созвон/.test(s)) { switchTab('home'); toast('Созвон завтра в 18:00 — вы записаны 🕊'); }
+    else if (n.icon === 'clock') { switchTab('lessons'); }
     else if (/урок|глав/.test(s)) { switchTab('lessons'); }
     else { switchTab('home'); }
   };
@@ -1304,7 +1304,7 @@ function bindLongPress() {
   });
 }
 
-/* ───────── ЭКРАН УРОКА (динамический, все 36 уроков) ───────── */
+/* ───────── ЭКРАН УРОКА (динамический, все 105 уроков) ───────── */
 
 let currentLesson = 1;
 
