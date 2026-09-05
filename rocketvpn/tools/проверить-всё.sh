@@ -1,61 +1,73 @@
 #!/bin/bash
 # Все живые проверки Rocket VPN подряд, одной командой.
 #
-# ЗАЧЕМ. Проверок стало двенадцать, и запускать их по одной значит
+# ЗАЧЕМ. Проверок стало под два десятка, и запускать их по одной значит
 # рано или поздно забыть ту, которую сегодня как раз и сломали.
 # Каждая печатает ЧИСТО или ГРЯЗНО и отдаёт код возврата, здесь они
 # просто собираются в один список с итогом.
 #
-# Стенд поднимается сам, если его нет, и гасится, если поднимали мы:
-# чужой стенд трогать нельзя, в нём может идти чужая работа.
+# ИМЕНА ПЕРЕМЕННЫХ ЗДЕСЬ ЛАТИНСКИЕ, и это не отступление от правила
+# «идентификаторы по-русски». Оболочка имя переменной кириллицей не
+# принимает вовсе: `ПОРТ=8170` она читает как команду с таким именем и
+# отвечает «command not found». Скрипт при этом завершался кодом ноль,
+# то есть докладывал «всё чисто», не запустив НИ ОДНОЙ проверки.
+# Кириллица остаётся во всём, что человек читает: в выводе и в путях.
 #
 #   bash tools/проверить-всё.sh          все проверки
 #   bash tools/проверить-всё.sh ход      только те, чьё имя содержит «ход»
 set -u
 cd "$(dirname "$0")/.."
 
-ОТБОР="${1:-}"
-ПОРТ=8170
-БАЗА="http://127.0.0.1:$ПОРТ"
-СВОЙ=0
+filter="${1:-}"
+port=8170
+base="http://127.0.0.1:$port"
+own=0
 
-if ! curl -s -o /dev/null -m 5 "$БАЗА/" 2>/dev/null; then
-  echo "поднимаю стенд на $ПОРТ"
+if ! curl -s -o /dev/null -m 5 "$base/" 2>/dev/null; then
+  echo "поднимаю стенд на $port"
   RV_SITE_SECRET=стенд RV_SITE_OPEN=1 RV_SITE_URL=/ PHP_CLI_SERVER_WORKERS=64 \
-    php -S 127.0.0.1:$ПОРТ tools/стенд.php >/tmp/стенд-$ПОРТ.log 2>&1 &
-  СВОЙ=$!
+    php -S 127.0.0.1:$port tools/стенд.php >/tmp/стенд-$port.log 2>&1 &
+  own=$!
   for i in 1 2 3 4 5 6 7 8 9 10; do
-    curl -s -o /dev/null -m 3 "$БАЗА/" 2>/dev/null && break
+    curl -s -o /dev/null -m 3 "$base/" 2>/dev/null && break
     sleep 1
   done
 fi
 
-ЧИСТЫХ=0
-ГРЯЗНЫХ=0
-СПИСОК=""
+clean=0
+dirty=0
+list=""
 
-for ф in tools/checks/*.mjs; do
-  и=$(basename "$ф" .mjs)
+for file in tools/checks/*.mjs; do
+  name=$(basename "$file" .mjs)
   # общее.mjs это не проверка, а общая часть остальных
-  [ "$и" = "общее" ] && continue
-  [ -n "$ОТБОР" ] && [[ "$и" != *"$ОТБОР"* ]] && continue
-  printf '── %-16s ' "$и"
-  выход=$(HTTPS_PROXY= https_proxy= RV_URL="$БАЗА" node "$ф" 2>&1)
-  код=$?
-  if [ $код -eq 0 ]; then
+  [ "$name" = "общее" ] && continue
+  if [ -n "$filter" ]; then
+    case "$name" in
+      *"$filter"*) ;;
+      *) continue ;;
+    esac
+  fi
+  printf '── %-16s ' "$name"
+  out=$(HTTPS_PROXY= https_proxy= RV_URL="$base" node "$file" 2>&1)
+  code=$?
+  if [ $code -eq 0 ]; then
     echo "ЧИСТО"
-    ЧИСТЫХ=$((ЧИСТЫХ + 1))
+    clean=$((clean + 1))
   else
     echo "ГРЯЗНО"
-    echo "$выход" | tail -20 | sed 's/^/      /'
-    ГРЯЗНЫХ=$((ГРЯЗНЫХ + 1))
-    СПИСОК="$СПИСОК $и"
+    echo "$out" | tail -20 | sed 's/^/      /'
+    dirty=$((dirty + 1))
+    list="$list $name"
   fi
 done
 
-[ "$СВОЙ" != "0" ] && kill "$СВОЙ" 2>/dev/null
+[ "$own" != "0" ] && kill "$own" 2>/dev/null
 
 echo
-echo "чистых $ЧИСТЫХ, грязных $ГРЯЗНЫХ"
-[ $ГРЯЗНЫХ -gt 0 ] && { echo "грязные:$СПИСОК"; exit 1; }
+echo "чистых $clean, грязных $dirty"
+if [ $dirty -gt 0 ]; then
+  echo "грязные:$list"
+  exit 1
+fi
 exit 0
