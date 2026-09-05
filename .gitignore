@@ -16,3 +16,6 @@ _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
 metanoia-app/config/.env
+
+# Сборка одним файлом делается перед выкладкой и в репозиторий не кладётся
+_build.html

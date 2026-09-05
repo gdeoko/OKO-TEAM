@@ -12,6 +12,27 @@
 Проверить: "leftover 0". Открыть в Playwright (chromium /opt/pw-browsers/chromium, playwright-core),
 прогнать по экранам, убедиться "ERRORS: NONE".
 
+Собранный файл в репозиторий не кладём, он в .gitignore: это производная от
+исходников, а весит мегабайты.
+
+Размер держат три переменные окружения:
+
+    LESSON_IMGS=3 AUDIO_LESSONS=1 node metanoia-app/tools/build-standalone.cjs /tmp/build.html
+
+`LESSON_IMGS` — сколько уроков берут свои обложки и картинки внутрь текста
+(по умолчанию 8), `AUDIO_LESSONS` — номера уроков, чья озвучка кладётся в файл
+(по умолчанию только первый). Со всеми 105 обложками и всей озвучкой файл
+весит десятки мегабайт, поэтому витрина всегда собирается урезанной, а на
+боевом сервере лежат обычные файлы без всяких ограничений.
+
+Проверять синтаксис встроенного скрипта после каждой правки сборщика:
+
+    node -e "const h=require('fs').readFileSync('/tmp/build.html','utf8');const i=h.indexOf('<script>');require('fs').writeFileSync('/tmp/inline.js',h.slice(i+8,h.indexOf('</script>',i)))" && node --check /tmp/inline.js
+
+Замену кусков кода в сборщике делать только через `split().join()` или
+`replace(re, () => текст)`: строка замены в `String.replace` съедает `$$` и `$&`,
+а в коде приложения есть `const $$`.
+
 ## Задеплоить на живой линк (Higgsfield)
 website_id: 0ce3bb7a-55e3-425c-ac28-8d5e5514903d ; live: https://nimble-bean-709.higgsfield.app
 1. website_repo_access(website_id) → получить repo_url + свежий token + branch main.
