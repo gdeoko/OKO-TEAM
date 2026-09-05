@@ -765,10 +765,14 @@ function значкиПересчитать() {
 function openChild(c) {
   $('#childAvatar').src = c.img;
   $('#childName').textContent = `${c.name}, ${c.age} лет`;
-  $('#childRank').textContent = c.rank;
-  $('#childStreak').textContent = c.streak;
-  const xpMatch = (c.rank.match(/(\d+)\s*XP/) || [])[1];
-  renderRanks(xpMatch ? Number(xpMatch) : 0);
+  // Ранг, серия дней и лесенка рангов считаются по настоящему прогрессу,
+  // а не берутся из строки, записанной при добавлении ребёнка.
+  const зёрна = (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0;
+  const ранг = (typeof RANKS !== 'undefined' && typeof rankIndex === 'function')
+    ? (RANKS[rankIndex(зёрна)] || {}).name : '';
+  $('#childRank').textContent = (ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна);
+  $('#childStreak').textContent = серияДней();
+  renderRanks(зёрна);
   $('#childBadges').innerHTML = значкиПересчитать().map((b) => `
     <div class="badge-card ${b.earned ? '' : 'badge-card--locked'}" title="${b.как || ''}">
       <div class="badge-card__icon">${b.earned ? ICON(b.icon, 22) : ICON('lock', 18)}</div>
