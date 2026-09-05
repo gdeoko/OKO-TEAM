@@ -3573,7 +3573,7 @@ function openCertificates() {
 function certSVG(cert, name) {
   // Годовой диплом убран по правке Екатерины, остались три бланка по главам.
   const line = `успешно завершил(а) ${cert.short}<tspan x="240" dy="26">«${cert.title.split('· ')[1] || cert.title}»</tspan>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="660" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
   <rect width="480" height="660" fill="#FAF8F5"/>
   <rect x="16" y="16" width="448" height="628" fill="none" stroke="#D4A574" stroke-width="3"/>
   <rect x="26" y="26" width="428" height="608" fill="none" stroke="#C97064" stroke-width="1"/>
@@ -3604,6 +3604,18 @@ function openCertView(cert) {
   $('#certView').hidden = false;
 }
 
+/* Ссылка должна побывать в документе, иначе браузер теряет имя файла и
+   сохраняет его как «download». */
+function сохранитьФайл(кусок, имя) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(кусок);
+  a.download = имя;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+
 function downloadCert() {
   if (!currentCert) return;
   const svg = certSVG(currentCert, именаДляСертификата());
@@ -3616,11 +3628,7 @@ function downloadCert() {
     ctx.fillStyle = '#FAF8F5'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     cv.toBlob((blob) => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `Сертификат-Метанойя-${currentCert.key}.png`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      сохранитьФайл(blob, `Сертификат-Метанойя-${currentCert.key}.png`);
       toast('Сертификат сохранён');
     }, 'image/png');
   };
@@ -4152,7 +4160,7 @@ function openAlbumScreen() {
 
 function albumCoverSVG() {
   const b = CHILD_BADGES.filter((x) => x.earned).length;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="660" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
   <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A3A52"/><stop offset="0.7" stop-color="#2c4f6b"/><stop offset="1" stop-color="#C97064"/></linearGradient></defs>
   <rect width="480" height="660" fill="url(#g)"/>
   <rect x="20" y="20" width="440" height="620" fill="none" stroke="#D4A574" stroke-width="2"/>
@@ -4181,11 +4189,7 @@ function downloadAlbum() {
     const ctx = cv.getContext('2d');
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     cv.toBlob((blob) => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'Наш-год-с-Метанойей.png';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      сохранитьФайл(blob, 'Наш-год-с-Метанойей.png');
       toast('Обложка альбома сохранена');
     }, 'image/png');
   };
