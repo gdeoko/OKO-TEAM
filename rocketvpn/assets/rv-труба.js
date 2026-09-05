@@ -278,9 +278,11 @@
        глубину даёт зерну меняться вдоль рукава. Сила падает к дальнему
        концу: там туман уже выбит в белое, и узор по нему у них пропадает
        тоже. */
-    "  vec2 mesto = vec2(vPos.x + vPos.y * 0.31, vPos.z - vPos.y * 0.57);",
-    "  float zerno = sinenoise1(vec3(mesto * 9.0, vPos.y * 0.7)) * 0.5 + 0.5;",
-    "  float inei = smoothstep(0.60, 0.94, zerno) * (1.0 - glub * 0.55);",
+    дешево
+      ? "  float inei = 0.0;"
+      : "  vec2 mesto = vec2(vPos.x + vPos.y * 0.31, vPos.z - vPos.y * 0.57);\n" +
+        "  float zerno = sinenoise1(vec3(mesto * 9.0, vPos.y * 0.7)) * 0.5 + 0.5;\n" +
+        "  float inei = smoothstep(0.60, 0.94, zerno) * (1.0 - glub * 0.55);",
     "  color = mix(color, BELYJ, clamp(inei, 0.0, 1.0) * 0.20);",
     /* Последняя четверть рукава полупрозрачна. Туман не имеет дна: за
        ним стоит зал, и он обязан проступать заранее, а не открываться
