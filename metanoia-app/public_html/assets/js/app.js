@@ -3283,8 +3283,42 @@ function initAuth() {
               | markInvalid(f.email, !f.email.value.includes('@'))
               | markInvalid(f.password, !passOk);
     if (bad) return toast('Проверьте выделенные поля');
+
+    // Без согласия родителя аккаунт не заводим: это школа для детей.
+    const согласия = [f.agree_terms, f.agree_pd];
+    let нетСогласия = false;
+    согласия.forEach((ф) => {
+      if (!ф) return;
+      const плохо = !ф.checked;
+      ф.closest('.consent')?.classList.toggle('consent--bad', плохо);
+      if (плохо) нетСогласия = true;
+    });
+    if (нетСогласия) return toast('Отметьте согласия: без них школа не может завести аккаунт');
+
+    // Запоминаем, на что и когда согласился родитель.
+    localStorage.setItem('mt_consent', JSON.stringify({
+      соглашение: true, персональные: true,
+      письма: !!(f.agree_mail && f.agree_mail.checked),
+      когда: new Date().toISOString(),
+    }));
+
+    // Ребёнок из формы регистрации сразу становится профилем в семье.
+    const имяРебёнка = (f.child_name && f.child_name.value || '').trim();
+    if (имяРебёнка) {
+      const возраст = Math.max(3, Math.min(16, Number(f.child_age && f.child_age.value) || 7));
+      const дети = памятьЧитать('mt_kids', []);
+      if (!дети.some((k) => k.name === имяРебёнка)) {
+        const kid = { name: имяРебёнка, age: возраст, rank: 'Зёрнышко · 0 очков', streak: 0,
+          img: initialAvatar(имяРебёнка, '#C97064') };
+        дети.push(kid);
+        DEMO.children.push(kid);
+        localStorage.setItem('mt_kids', JSON.stringify(дети));
+      }
+    }
+
     localStorage.setItem('mt_auth', '1');
     showApp(f.name.value.trim());
+    if (typeof renderChildren === 'function') renderChildren();
     toast('Добро пожаловать в Метанойю!');
   });
 

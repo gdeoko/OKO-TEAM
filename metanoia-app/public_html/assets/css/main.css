@@ -2780,3 +2780,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   display: flex; align-items: center; justify-content: center; }
 .msg__circle-dur { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center;
   font-size: 12px; color: var(--cream); text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+
+/* Не отмеченное обязательное согласие */
+.consent--bad { color: var(--terracotta); }
+.consent--bad input { outline: 2px solid var(--terracotta); outline-offset: 2px; border-radius: 4px; }
