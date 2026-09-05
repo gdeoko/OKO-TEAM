@@ -1135,7 +1135,7 @@ function lessonContent(n) {
 function lessonStateKey(n) { return 'mt_lesson_' + n; }
 function getLessonState(n) {
   const st = JSON.parse(localStorage.getItem(lessonStateKey(n)) || '{}');
-  return { read: !!st.read, task: !!st.task, test: !!st.test, hw: !!st.hw, done: !!st.done };
+  return { read: !!st.read, task: !!st.task, test: !!st.test, hw: !!st.hw, done: !!st.done, ts: st.ts || 0 };
 }
 function saveLessonState(n, st) { localStorage.setItem(lessonStateKey(n), JSON.stringify(st)); }
 
@@ -1402,7 +1402,8 @@ function wireLesson(n, quiz, task) {
 function finishLessonIfReady(n) {
   const s = getLessonState(n);
   if (s.done || lessonProgress(n) < 100) return;
-  s.done = true; saveLessonState(n, s);
+  s.done = true; s.ts = Date.now(); // день закрытия нужен родительскому отчёту
+  saveLessonState(n, s);
 
   const meta = lessonMeta(n);
   if (meta) {
@@ -3918,7 +3919,8 @@ function arkEnd(win) {
 }
 
 /* ── Магазин за баллы (идея Екатерины #12) ── */
-const SHOP_XP = 340; // демо-баланс ребёнка (в проде — реальный XP)
+/* Баланс лавки — это зёрна друга, других баллов у ребёнка нет. */
+function shopXp() { return (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0; }
 const MERCH = [
   { icon: 'sparkle', name: 'Набор наклеек', cost: 300 },
   { icon: 'book', name: 'Закладка для книг', cost: 700 },
@@ -3929,15 +3931,15 @@ const MERCH = [
 ];
 
 function openShop() {
-  const el = $('#shopTileXp');
-  $('#shopXp').textContent = SHOP_XP;
+  const баланс = shopXp();
+  $('#shopXp').textContent = баланс;
   $('#shopGrid').innerHTML = MERCH.map((m) => {
-    const can = SHOP_XP >= m.cost;
+    const can = баланс >= m.cost;
     return `<div class="shop-card ${can ? '' : 'shop-card--locked'}">
       <div class="shop-card__ic">${ICON(m.icon, 24)}</div>
       <div class="shop-card__name">${m.name}</div>
       <div class="shop-card__cost">${m.cost} очков</div>
-      <button class="shop-card__btn" data-merch="${m.name}" data-cost="${m.cost}" ${can ? '' : 'disabled'}>${can ? 'Обменять' : `ещё ${m.cost - SHOP_XP}`}</button>
+      <button class="shop-card__btn" data-merch="${m.name}" data-cost="${m.cost}" ${can ? '' : 'disabled'}>${can ? 'Обменять' : `ещё ${m.cost - баланс}`}</button>
     </div>`;
   }).join('');
   $$('#shopGrid [data-merch]').forEach((b) => b.addEventListener('click', () => {
@@ -3951,9 +3953,30 @@ function openShop() {
 }
 
 /* ── Годовой альбом «Наш год с Метанойей» (УЛ7) ── */
-const ALBUM = { child: 'Миша', year: '2025–2026', lessons: 24, games: 41, days: 128, temple: 'построен' };
+/* Альбом собирается по настоящему пути ребёнка, а не по образцу.
+   Год берём учебный: с сентября по август. */
+const ALBUM = { child: 'Ученик школы', year: '', lessons: 0, games: 0, days: 0 };
+
+function альбомПоФактам() {
+  const сейчас = new Date();
+  const начало = сейчас.getMonth() >= 8 ? сейчас.getFullYear() : сейчас.getFullYear() - 1;
+  ALBUM.child = именаДляСертификата();
+  ALBUM.year = начало + '–' + (начало + 1);
+  let уроков = 0;
+  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => { if (!l.exam && isLessonDone(l.n)) уроков++; }));
+  ALBUM.lessons = уроков;
+  let игр = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('mt_lvl_')) игр += Number(localStorage.getItem(k) || 0);
+  }
+  ALBUM.games = игр;
+  ALBUM.days = Number(localStorage.getItem('mt_dverse_streak') || 0);
+  return ALBUM;
+}
 
 function openAlbumScreen() {
+  альбомПоФактам();
   const earned = CHILD_BADGES.filter((b) => b.earned);
   $('#albumPages').innerHTML = `
     <div class="alb-page alb-page--cover">
@@ -4258,19 +4281,54 @@ function toggleFq(i) {
 }
 
 /* ── Родительский отчёт за неделю (УЛ2) ── */
-const WREPORT = {
-  child: 'Миша', ava: 'assets/img/avatars/lion.jpg', range: '1–7 июля',
-  lessons: 3, games: 8, streak: 12, streakUp: true,
-  rankNote: 'До ранга «Цветочек» осталось <b>60 очков</b> — это примерно два урока.',
-  tips: [
-    'На этой неделе Миша дважды возвращался к притче о блудном сыне. Хороший момент поговорить о прощении за семейным ужином.',
-    'Серия из 12 дней подряд — похвалите его за постоянство, это важнее скорости.',
-    'Он пока не открывал «Хронологию». Предложите пройти её вместе — заодно повторите порядок событий Писания.',
-  ],
-};
+/* Отчёт собирается по тому, что ребёнок правда делал за последние семь дней.
+   Придуманных чисел здесь нет: если неделя пустая, так и написано. */
+function недельныйОтчёт() {
+  const неделя = Date.now() - 7 * 864e5;
+  let уроков = 0, всегоПройдено = 0;
+  const темы = [];
+  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => {
+    if (l.exam) return;
+    const st = getLessonState(l.n);
+    if (!st.done) return;
+    всегоПройдено++;
+    if (st.ts > неделя) { уроков++; if (темы.length < 2) темы.push(l.title); }
+  }));
+
+  let партии = [];
+  try { партии = JSON.parse(localStorage.getItem('mt_plays') || '[]'); } catch (e) { партии = []; }
+  const игр = партии.filter((t) => t > неделя).length;
+
+  const открытые = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('mt_lvl_')) открытые.push(k.slice(7));
+  }
+
+  const день = (d) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const советы = [];
+  if (темы.length) советы.push('На этой неделе разобрали тему «' + темы[0] + '». Спросите за ужином, что запомнилось больше всего.');
+  const серия = Number(localStorage.getItem('mt_dverse_streak') || 0);
+  if (серия >= 3) советы.push('Серия из ' + серия + ' дней подряд. Похвалите за постоянство, оно важнее скорости.');
+  const нетронутые = (typeof GAMES !== 'undefined' ? GAMES : []).filter((g) => !открытые.includes(g.key));
+  if (нетронутые.length) советы.push('Ещё не открывали игру «' + (нетронутые[0].name || нетронутые[0].title || нетронутые[0].key) + '». Пройдите её вместе, так интереснее.');
+  if (!уроков && !игр) советы.push('На этой неделе занятий не было. Начните с одного урока, он занимает около десяти минут.');
+
+  const до = 5 - (всегоПройдено % 5);
+  return {
+    child: именаДляСертификата(),
+    ava: (DEMO.children[0] && DEMO.children[0].img) || 'assets/img/avatars/lion.jpg',
+    range: день(new Date(неделя)) + ' – ' + день(new Date()),
+    lessons: уроков, games: игр, streak: серия, streakUp: серия > 0,
+    rankNote: всегоПройдено
+      ? 'Пройдено уроков всего: <b>' + всегоПройдено + '</b>. До следующего значка осталось <b>' + до + '</b>.'
+      : 'Пока пройденных уроков нет. Первый значок даётся за пять уроков.',
+    tips: советы,
+  };
+}
 
 function renderWReport() {
-  const w = WREPORT;
+  const w = недельныйОтчёт();
   $('#wreport').innerHTML = `
     <div class="wreport__head">
       <div class="wreport__ava"><img src="${w.ava}" alt=""></div>
@@ -4675,7 +4733,17 @@ function сложность(ключ) {
   return { уровень: л, множитель: 1 + (л - 1) * 0.15, времени: Math.max(0.55, 1 - (л - 1) * 0.07), больше: Math.floor((л - 1) / 2) };
 }
 
+/* Сколько партий сыграно: число нужно родительскому отчёту, а не игре. */
+function отметитьПартию() {
+  let список = [];
+  try { список = JSON.parse(localStorage.getItem('mt_plays') || '[]'); } catch (e) { список = []; }
+  список.push(Date.now());
+  const месяц = Date.now() - 31 * 864e5;
+  localStorage.setItem('mt_plays', JSON.stringify(список.filter((t) => t > месяц)));
+}
+
 function завершитьИгру(ключ, очки, заголовок, текст) {
+  отметитьПартию();
   const зёрна = Math.max(1, Math.round((очки || 10) / 10));
   addSeeds(зёрна, 'за игру');
   const л = поднятьУровень(ключ);
