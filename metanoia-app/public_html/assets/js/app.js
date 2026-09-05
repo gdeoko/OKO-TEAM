@@ -793,10 +793,10 @@ function msgHtml(m, mine, key) {
           <button class="msg__voice-play" aria-label="Прослушать голосовое сообщение">${ICON('play', 15)}</button>
           <div class="msg__wave">${waveBars(m.voice.dur + 7)}</div>
           <span class="msg__voice-dur">${fmtDur(m.voice.dur)}</span></div>`
-      : m.circle ? `<div class="msg__voice" data-voice-key="${key}" data-voice-has="${m.circle.url ? 1 : 0}">
-          <button class="msg__voice-play" aria-label="Пауза">${ICON('circle', 15)}</button>
-          <div class="msg__wave">${waveBars(m.circle.dur + 3)}</div>
-          <span class="msg__voice-dur">видео ${fmtDur(m.circle.dur)}</span></div>`
+      : m.circle ? `<div class="msg__circle" data-voice-key="${key}">
+          <video class="msg__circle-v" playsinline preload="metadata"></video>
+          <button class="msg__circle-play" aria-label="Смотреть видеокружочек">${ICON('play', 18)}</button>
+          <span class="msg__circle-dur">${fmtDur(m.circle.dur)}</span></div>`
       : m.photo ? `<img class="msg__photo" src="${m.photo}" alt="фото">`
       : m.file ? `<div class="msg__file"><div class="msg__file-icon">${ICON('file', 18)}</div>
           <div><div class="msg__file-name">${m.file.name}</div>
@@ -829,6 +829,20 @@ function renderChatMsgs() {
     data.msgs.map((m, i) => (isBlocked(m.who) ? '' : msgHtml(m, false, 'd' + i))).join('') +
     mine.map((m, i) => msgHtml(m, true, 'm' + i)).join('');
   bindLongPress();
+  // Видеокружочки: адрес ставим уже после отрисовки, в разметке его нет.
+  $$('#cvMsgs .msg__circle').forEach((узел) => {
+    const кадр = узел.querySelector('video');
+    const url = адресЗаписи(узел.dataset.voiceKey);
+    if (url) кадр.src = url;
+    const кнопка = узел.querySelector('.msg__circle-play');
+    узел.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!кадр.src) return toast('Демо-запись: реальное видео снимается на телефоне');
+      if (кадр.paused) { кадр.play().catch(() => toast('Не удалось воспроизвести')); кнопка.hidden = true; }
+      else { кадр.pause(); кнопка.hidden = false; }
+    });
+    кадр.addEventListener('ended', () => { кнопка.hidden = false; });
+  });
   $$('#cvMsgs .msg__voice-play').forEach((b) => b.addEventListener('click', (e) => {
     e.stopPropagation();
     const узел = b.closest('.msg__voice');
@@ -2036,7 +2050,10 @@ function initVoice() {
         rec.media.stream.getTracks().forEach((t) => t.stop());
         // Тип обязателен: без него браузер не понимает, что это звук,
         // и запись не проигрывается ни из ссылки, ни из данных.
-        const тип = (rec.media && rec.media.mimeType)
+        // Только основной тип, без списка кодеков: в кодеках бывает запятая
+        // («video/webm;codecs=vp8,opus»), а она обрывает адрес data: и запись
+        // потом не открывается.
+        const тип = ((rec.media && rec.media.mimeType) || '').split(';')[0]
           || (voiceMode === 'audio' ? 'audio/webm' : 'video/webm');
         const кусок = new Blob(rec.chunks, { type: тип });
         // Ссылка blob: живёт до перезагрузки страницы, поэтому запись
