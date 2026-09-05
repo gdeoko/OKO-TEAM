@@ -777,6 +777,12 @@ function pinОчистить() {
 }
 
 function pinОткрыть() {
+  // Родитель может выключить код в настройках, тогда возврат свободный.
+  if (typeof setGet === 'function' && !setGet('p_pin')) {
+    $('#nav').style.display = '';
+    switchTab('profile');
+    return;
+  }
   pinРежим = pinСохранённый() ? 'проверка' : 'создание';
   pinПервый = '';
   pinОчистить();
@@ -2694,6 +2700,7 @@ function startGameMusic() {
 }
 function stopGameMusic() {
   try { if (gameMusic) { gameMusic.pause(); gameMusic.currentTime = 0; } } catch (e) {}
+  конецИгры();  // вышли из игры — досчитали минуты за родительский лимит
 }
 function toggleGameMusic() {
   const off = localStorage.getItem('mt_music_off') === '1';
@@ -2744,6 +2751,7 @@ const GAMES = [
 let gameOpener = 'games'; // откуда открыли temple/journey: 'games' или 'child'
 
 function openGamesHub() {
+  конецИгры();  // возврат в хаб тоже завершает партию по времени
   renderGhub();
   $$('.nav__tab').forEach((b) => b.classList.toggle('nav__tab--active', b.dataset.tab === 'games'));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'games'));
@@ -2765,7 +2773,41 @@ function renderGhub(куда) {
   box.querySelectorAll('[data-game]').forEach((el) => el.addEventListener('click', () => openGame(el.dataset.game)));
 }
 
+/* Ограничение времени игр: родитель включает в настройках, лимит 30 минут
+   в день. Считаем минуты по дню, чтобы вчерашние не переносились. */
+const ИГР_ПРЕДЕЛ = 30 * 60 * 1000;
+
+function игровоеВремя() {
+  const з = памятьЧитать('mt_playtime', {});
+  return (з && з.день === todayKey()) ? Number(з.мс || 0) : 0;
+}
+
+function добавитьИгровоеВремя(мс) {
+  localStorage.setItem('mt_playtime', JSON.stringify({ день: todayKey(), мс: игровоеВремя() + мс }));
+}
+
+let игровойОтсчёт = 0;
+function началоИгры() { игровойОтсчёт = Date.now(); }
+function конецИгры() {
+  if (!игровойОтсчёт) return;
+  добавитьИгровоеВремя(Date.now() - игровойОтсчёт);
+  игровойОтсчёт = 0;
+}
+
+function игратьМожно() {
+  if (typeof setGet !== 'function' || !setGet('p_time')) return true;
+  return игровоеВремя() < ИГР_ПРЕДЕЛ;
+}
+
 function openGame(k) {
+  if (!игратьМожно()) {
+    const осталось = Math.max(0, Math.round((ИГР_ПРЕДЕЛ - игровоеВремя()) / 60000));
+    toast(осталось > 0
+      ? ('На игры сегодня осталось ' + осталось + ' мин')
+      : 'Полчаса игр на сегодня прошли. Загляни в уроки или к другу');
+    return;
+  }
+  началоИгры();
   startGameMusic();
   if (k === 'verse') openVerse('easy');
   else if (k === 'memory') openMemory();
@@ -3555,7 +3597,7 @@ function switchRow(id, icon, name, desc, on) {
     <button class="switch ${on ? 'switch--on' : ''}" id="${id}" role="switch" aria-checked="${on}"></button>
   </div>`;
 }
-const SET_DEFAULTS = { theme: 'light', n_lessons: true, n_msgs: true, n_calls: true, p_pin: true, p_time: false };
+const SET_DEFAULTS = { theme: 'light', n_lessons: true, n_msgs: true, p_pin: true, p_time: false };
 function setGet(k) { const v = localStorage.getItem('mt_set_' + k); return v === null ? SET_DEFAULTS[k] : v === '1'; }
 function setPut(k, v) { localStorage.setItem('mt_set_' + k, v ? '1' : '0'); }
 
@@ -3607,15 +3649,14 @@ function openSettingsScreen() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   $('#setAppearance').innerHTML = switchRow('swTheme', dark ? 'moon' : 'sun', 'Тёмная тема', 'Мягкие тёмные тона для вечернего чтения', dark);
   $('#setNotify').innerHTML =
-    switchRow('swLessons', 'book', 'Новые уроки', 'Уведомлять о новых занятиях', setGet('n_lessons')) +
-    switchRow('swMsgs', 'comment', 'Сообщения', 'Личные сообщения и чаты школы', setGet('n_msgs')) +
-    switchRow('swCalls', 'video', 'Напоминания о созвонах', 'За час до живого занятия', setGet('n_calls'));
+    switchRow('swLessons', 'book', 'Новые уроки', 'Придут на телефон, когда школа включит сервер', setGet('n_lessons')) +
+    switchRow('swMsgs', 'comment', 'Сообщения', 'Придут на телефон, когда школа включит сервер', setGet('n_msgs'));
   $('#setParental').innerHTML =
     switchRow('swPin', 'lock', 'PIN на родительский раздел', 'Защита профиля родителя от детей', setGet('p_pin')) +
     switchRow('swTime', 'clock', 'Ограничение времени игр', '30 минут игр в день', setGet('p_time'));
   hydrateIcons();
   wireSwitch('swTheme', null, (on) => { applyTheme(on ? 'dark' : 'light'); localStorage.setItem('mt_theme', on ? 'dark' : 'light'); openSettingsScreen(); });
-  wireSwitch('swLessons', 'n_lessons'); wireSwitch('swMsgs', 'n_msgs'); wireSwitch('swCalls', 'n_calls');
+  wireSwitch('swLessons', 'n_lessons'); wireSwitch('swMsgs', 'n_msgs');
   wireSwitch('swPin', 'p_pin'); wireSwitch('swTime', 'p_time');
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'settings'));
   $('#nav').style.display = 'none';
