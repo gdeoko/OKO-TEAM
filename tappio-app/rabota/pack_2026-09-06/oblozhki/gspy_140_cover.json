@@ -1,0 +1,41 @@
+{
+  "id": "gspy_140_cover",
+  "type": "video_cover_first_frame",
+  "sluzhit_scenariu": "gspy_140.json (Airbnb 2am Part 2, first frame at 0:00-0:03)",
+  "format": "9:16",
+  "resolution": "1080x1920",
+  "brend": {
+    "klient": "SPY CAMERA FINDER",
+    "hex_accent": "#00D9FF",
+    "hex_accent2": "#66E9FF",
+    "hex_bg": "#050709",
+    "hex_neutral": "#F5F7FA",
+    "font_headline": "Orbitron Black",
+    "font_body": "Syne",
+    "font_mono": "DM Mono",
+    "logo_ref_pervyi_faylom": "tappio-app/factory/assets/logos/spy.png (chistyi znak, prozrachnyi PNG, bez teksta i bez fona)"
+  },
+  "referensy": [
+    "tappio-app/factory/assets/logos/spy.png (PERVYM FILE, chistyi znak Spy, transparent, no text, no background)"
+  ],
+  "servis_generacii": "ChatGPT (GPT Image 4K), zapas Gemini",
+  "chars_count_prompt": 2569,
+  "prompt_english_2000plus": "Ultra cinematic photorealistic vertical composition, exactly 1080 by 1920 pixels, aspect ratio 9:16, morning after scene in a modern short term rental bathroom, soft daylight of 5600 Kelvin streaming diagonally from a frosted window on the left casting long horizontal light bars across a matte concrete wall, matte cinematic film grade with a slight cool teal color grade, physical realism uncompromising, no digital plastic feel, editorial documentary style shot on a full frame sensor with a 50mm equivalent standard lens at f 2.8 aperture giving natural depth of field with soft edge falloff, ISO around 200 for clean shadows and rich highlights, style of a first person true crime opener episode two, sequel visual language matching part one but shifted from midnight dread to morning clarity. Foreground: a woman around thirty five years old with medium length dark brown hair pulled loose over her shoulder, wearing a soft cream cotton hotel robe, standing at the bathroom counter in profile facing the wall mirror at three quarter angle, right hand raised holding a small white cylindrical hair dryer stand attached to the wall about eye level, her fingers curled around the base of the plastic holder as if she has just unclipped it and is turning it slowly toward the light to inspect it, expression of quiet focused suspicion, mouth slightly parted, eyes narrowed on the object in her hand, no fear anymore just method. Middle ground: white porcelain counter with a folded gray hand towel, a small woven basket of complimentary toiletries, a paper coffee cup with the lid on, a smartphone lying flat on the counter with the screen dark, all objects arranged in an intentional off center composition that leaves the right third of the frame open for the negative space that carries the headline. Background: matte concrete wall in warm gray HEX D4CFC4 with visible fine texture, tall vertical mirror to the left reflecting the frosted window and part of the woman face at three quarter view catching a soft rim light along her jaw and cheekbone, on the wall to her right the empty circular mounting bracket where the hair dryer holder used to sit and beside it visible in her hand the holder itself opened at the top revealing a tiny dark round camera lens of about six millimeter diameter set into the plastic interior facing outward toward the room, a controlled photorealistic cyan glow of 6 percent intensity coming from inside the holder body suggesting a small internal LED status light barely visible in daylight, that cyan glow being the only cool saturated accent in the entire scene. Palette limited strictly to warm cream HEX F4E8D5 on the towel and robe, warm gray HEX D4CFC4 on the concrete and porcelain, cool teal cyan HEX 00D9FF only on the lens glint and the tiny internal LED, deep matte dark HEX 050709 in the interior shadow of the opened holder, muted skin tones on the woman with slightly cool color grade for continuity with part one, no other saturated colors anywhere in the frame, no reds no greens no purples. Composition rule of thirds with the hair dryer holder and the woman face at the left third intersection point and the negative space of the concrete wall in the right two thirds where the headline sits, camera at eye level slightly angled 8 degrees toward the mirror to create a subtle Dutch tilt suggesting instability of the moment. On the concrete wall in the right two thirds of the composition, integrated into the scene as if projected softly by daylight, text in Orbitron ExtraBold 88 point weight Black with 3 percent letter spacing, painted in bright cyan HEX 00D9FF with a soft 2 pixel edge glow, reading exactly the words \"THE MORNING\" on the top line and just below in Syne SemiBold 40 point neutral off white HEX F5F7FA at 78 percent opacity the words \"AFTER I FOUND IT\" arranged so both lines occupy the top 22 percent of the composition with an 80 pixel safe margin from the top edge and 80 pixel safe margins on the left and right edges for safe crop zones on TikTok Instagram YouTube. On the concrete wall beside the empty circular mounting bracket, a very small integrated technical label of about 24 point size in DM Mono in a subtle darker gray HEX 6A6560 at 60 percent opacity reads exactly the two words \"WAS EMPTY\" as if hand written by the woman with a pen to mark the discovery, no other typography anywhere. At the very bottom right corner of the frame, 60 pixels from the bottom and 60 pixels from the right, in DM Mono 22 point at 42 percent opacity in soft off white HEX F5F7FA the handle text \"@tappio.app1\" appears as a small watermark. At the very bottom left corner at the same margin the Spy brand mark placeholder is reserved at 60 pixel height for the reference logo which the model composites from the attached reference file. No text overlays outside those described, no captions, no subtitles, no watermarks other than the handle, no external brand marks or third party logos of hotel chains or short term rental platforms anywhere in the scene. Every element must feel like a single documentary photograph, not a poster, mood is morning method after midnight dread, quiet forensic curiosity, absolutely no shock imagery, no gore. Ultra sharp 8K feel, high resolution micro detail on the woven basket fibers and the concrete pores and the plastic ribs of the hair dryer holder and the tiny lens glass reflection, editorial fine art gallery quality photograph mood, deliberate visual continuity with the gspy_139 cover shot to signal to the returning viewer that this is part two of the same story.",
+  "nadpisi_vnutri_prompta": [
+    {"text": "THE MORNING", "font": "Orbitron Black 88pt", "color": "#00D9FF", "pos": "right two thirds, top-center 80px margin"},
+    {"text": "AFTER I FOUND IT", "font": "Syne SemiBold 40pt", "color": "rgba(245,247,250,0.78)", "pos": "under headline 24px gap"},
+    {"text": "WAS EMPTY", "font": "DM Mono 24pt", "color": "rgba(106,101,96,0.60)", "pos": "beside empty circular bracket, hand written feel"},
+    {"text": "@tappio.app1", "font": "DM Mono 22pt", "color": "rgba(245,247,250,0.42)", "pos": "bottom-right 60px margin"}
+  ],
+  "zapreshcheno": [
+    "no product box",
+    "no phone screen turned on",
+    "no visible airbnb or hotel logos",
+    "no additional text overlays after generation",
+    "no long dash character",
+    "no OKO lime #9AFF00 or OKO logo anywhere",
+    "no red glow (belongs to part one, this scene is cool daylight)"
+  ],
+  "postavljaetsya_v_scenarii_kak": "pervyi kadr b1 (2.8 sec, static_hold)",
+  "opisanie_dlia_editora": "Vizualnaya svyaz s Part 1: ta zhe zhenshchina, ta zhe kollortemperatura personazha, no obstanovka smenilas s temnoy spalni na dnevnuyu vannuyu. Ekonomia cvetov: teplaia neytral + tsian tolko na lense. Sohranyaet seriynuyu identichnost dlya vozvraschayushchegosya zritelya."
+}

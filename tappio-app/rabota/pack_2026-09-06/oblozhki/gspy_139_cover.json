@@ -1,0 +1,41 @@
+{
+  "id": "gspy_139_cover",
+  "type": "video_cover_first_frame",
+  "sluzhit_scenariu": "gspy_139.json (Airbnb 2am Part 1, first frame at 0:00-0:03)",
+  "format": "9:16",
+  "resolution": "1080x1920",
+  "brend": {
+    "klient": "SPY CAMERA FINDER",
+    "hex_accent": "#00D9FF",
+    "hex_accent2": "#66E9FF",
+    "hex_bg": "#050709",
+    "hex_neutral": "#F5F7FA",
+    "font_headline": "Orbitron Black",
+    "font_body": "Syne",
+    "font_mono": "DM Mono",
+    "logo_ref_pervyi_faylom": "tappio-app/factory/assets/logos/spy.png (chistyi znak, prozrachnyi PNG, bez teksta i bez fona)"
+  },
+  "referensy": [
+    "tappio-app/factory/assets/logos/spy.png (PERVYM FILE, chistyi znak Spy, transparent, no text, no background)"
+  ],
+  "servis_generacii": "ChatGPT (GPT Image 4K, oplachennaya podpiska, cherez brauzer agenta gpt_us, port 9333, vykhod 10811), zapas Gemini",
+  "chars_count_prompt": 2478,
+  "prompt_english_2000plus": "Ultra cinematic photorealistic vertical composition, exactly 1080 by 1920 pixels, aspect ratio 9:16, dark ambient hotel bedroom shot at two in the morning, low key lighting rating below 0.35 on the exposure scale, deep matte cinematic film look with fine grain at 4 percent intensity, physical realism uncompromising, absolutely no digital sheen or plastic look, no CGI feel, style of an editorial thriller still frame captured on a full frame sensor with an 85mm equivalent portrait lens at f 1.8 aperture giving razor sharp focus on the subject with soft creamy bokeh outside the plane of focus. Foreground: a woman around thirty five years old with medium length dark brown hair, lying awake on her back on white pressed hotel duvet, head resting on a plump white pillow, eyes wide open staring straight up toward the ceiling, expression of quiet dawning fear held perfectly still, only the eyes carrying the emotion, one bare shoulder visible above the duvet catching the faint blue moonlight, subtle catch light in the eye reflecting a single tiny red glowing point overhead. Middle ground: crisp white hotel bedding tucked neatly, small side table on the left with a digital alarm clock showing exactly 2 colon 07 in warm amber red LED at 3200 Kelvin temperature, a smartphone lying face down on the same side table with the screen dark, a paper coffee cup with a slight steam ghost of two centimeters rising from the lid, deliberate composition placing the woman in the lower two thirds of the frame with strong negative space above her head. Background and ceiling area: matte off white plastered ceiling with visible subtle texture and micro shadows, at the exact center top of the ceiling a small circular white smoke detector cover of about six centimeters diameter, at the very center of the smoke detector a single small pinhole camera lens catching a controlled photorealistic red pulse LED of 8 percent core intensity with a soft 12 pixel bloom radius glowing in a slow steady one hertz rhythm frozen at peak brightness of this frame, that red pulse being the only warm accent in the entire otherwise cold palette. Palette limited strictly to deep midnight dark HEX 050709 in shadows, cool teal cyan HEX 00D9FF as a soft rim light along the ceiling and window frame simulating city night sky spilling through nearly closed curtains, warm amber HEX F4C430 only on the alarm clock digits and the red LED pulse HEX FF3333 tiny point on the smoke detector, creamy off white HEX F4E8D5 on the duvet and pillows, no other saturated colors present anywhere in the frame. Composition rule of thirds with the woman face at the lower intersection point and the red LED at the top center intersection point creating a strong diagonal tension line, camera at slight low angle 15 degrees tilted upward emphasizing the looming ceiling and the observer above. On the ceiling, near the edge of the smoke detector, small text integrated into the frame as if part of an editorial title card, written in Orbitron ExtraBold 96 point weight Black with 3 percent letter spacing, painted in bright cyan HEX 00D9FF with a soft 2 pixel glow, reading exactly the words \"IT WAS 2 AM\" on the top line and just below in smaller Syne SemiBold 42 point neutral off white HEX F5F7FA at 78 percent opacity the words \"AND I SAW THE LIGHT\" arranged so both lines occupy the top 22 percent of the composition with an 80 pixel safe margin from the top edge and 80 pixel safe margins on the left and right edges for TikTok Instagram YouTube safe crop zones. At the very bottom right corner of the frame, 60 pixels from the bottom and 60 pixels from the right, in DM Mono 22 point at 42 percent opacity in soft off white HEX F5F7FA the handle text \"@tappio.app1\" appears as a small watermark. At the very bottom left corner at the same margin the Spy brand mark placeholder is reserved at 60 pixel height for the reference logo which will be composited by the model from the attached reference file. No text overlays outside of the ones described above, no additional headlines, no captions, no subtitles, no watermarks other than the handle described, no external brand marks or third party logos anywhere in the scene. Every element in the frame must feel like a single film still, not a poster or an advertisement, the mood must read as a first person true crime documentary opening shot, quiet moment right before a discovery, ambient dread not gore, evidence of privacy invasion staged as everyday hotel comfort. Ultra sharp 8K feel, high resolution micro detail on the woman skin pores and hair strands and the duvet fabric weave and the smoke detector plastic ribbing, editorial fine art gallery quality photograph mood. The entire composition must serve as the opening cover of a three part vertical short film series about hidden cameras in short term rentals and must invite the viewer to swipe up to see what happens next without spelling it out.",
+  "nadpisi_vnutri_prompta": [
+    {"text": "IT WAS 2 AM", "font": "Orbitron Black 96pt", "color": "#00D9FF", "pos": "top-center 80px margin"},
+    {"text": "AND I SAW THE LIGHT", "font": "Syne SemiBold 42pt", "color": "rgba(245,247,250,0.78)", "pos": "under headline 24px gap"},
+    {"text": "@tappio.app1", "font": "DM Mono 22pt", "color": "rgba(245,247,250,0.42)", "pos": "bottom-right 60px margin"}
+  ],
+  "zapreshcheno": [
+    "no product box",
+    "no people other than the described woman",
+    "no visible phone screen turned on",
+    "no logos of Airbnb or hotels or brands",
+    "no additional text overlays applied after generation",
+    "no long dash character in any text",
+    "no OKO green #9AFF00 anywhere",
+    "no OKO team logo"
+  ],
+  "postavljaetsya_v_scenarii_kak": "pervyi kadr b1 (2.8-3.2 sec, static hold, motion=static)",
+  "opisanie_dlia_editora": "Obertka pervogo kadra rolika. Text ulozhen v verkhnyuyu tret, bezopasnaya zona 80px so vsex storon. Logo spy.png kompoziciruem v nizhnem levom uglu vysota 60px pri renderinge, ne nakleivaya. Cenzura fona po prisutstvyu chuzhogo cveta (lilovyi, zeleny) - core.cvet_kadra.py otbrakuet."
+}

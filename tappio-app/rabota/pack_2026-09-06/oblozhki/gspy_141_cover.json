@@ -1,0 +1,44 @@
+{
+  "id": "gspy_141_cover",
+  "type": "video_cover_first_frame",
+  "sluzhit_scenariu": "gspy_141.json (Airbnb 2am Part 3 reveal, first frame at 0:00-0:03)",
+  "format": "9:16",
+  "resolution": "1080x1920",
+  "brend": {
+    "klient": "SPY CAMERA FINDER",
+    "hex_accent": "#00D9FF",
+    "hex_accent2": "#66E9FF",
+    "hex_bg": "#050709",
+    "hex_neutral": "#F5F7FA",
+    "font_headline": "Orbitron Black",
+    "font_body": "Syne",
+    "font_mono": "DM Mono",
+    "logo_ref_pervyi_faylom": "tappio-app/factory/assets/logos/spy.png"
+  },
+  "referensy": [
+    "tappio-app/factory/assets/logos/spy.png (PERVYM FILE, chistyi znak Spy, transparent, no text, no background)"
+  ],
+  "servis_generacii": "ChatGPT (GPT Image 4K), zapas Gemini",
+  "chars_count_prompt": 2612,
+  "prompt_english_2000plus": "Ultra cinematic photorealistic vertical composition, exactly 1080 by 1920 pixels, aspect ratio 9:16, dark hotel bedroom returning to the environment of part one now several minutes later, low key lighting rating below 0.4, matte cinematic film grade with 4 percent fine grain, physical realism uncompromising, absolutely no digital plastic sheen, editorial thriller documentary style shot on a full frame sensor with a 35mm equivalent wide angle prime lens at f 2.2 aperture giving strong subject centered composition with rich creamy edge falloff and slight barrel distortion consistent with a handheld first person perspective, style of a first person true crime series finale reveal shot part three that closes the loop opened in parts one and two. Foreground center of frame: a woman right hand extended forward into the composition holding a modern black smartphone in matte black case at 20 degrees tilt turned toward the camera so the screen fills the largest portion of the frame in the center, the phone screen displaying a native minimal dark scanner interface with four large circular sensor icons arranged in a tight two by two grid, each icon glowing in bright cyan HEX 00D9FF at 12 percent core intensity with a soft 10 pixel bloom radius, the four icons being from top left clockwise a Wi Fi radar circle with three arcs, a Bluetooth stylized runic B glyph, a compass magnetometer needle pointing north, and an infrared thermal sun with rays, each icon labeled underneath in DM Mono 22 point neutral off white HEX F5F7FA reading exactly the four words \"WIFI\" \"BLUETOOTH\" \"MAGNET\" \"INFRARED\" one per icon, above the grid a slim single line text in Orbitron Bold 32 point bright cyan HEX 00D9FF reading exactly the words \"SCANNING ROOM\" and below the grid a live status counter in DM Mono 28 point neutral off white HEX F5F7FA reading exactly the eight characters \"0 : 42 s\" indicating forty two seconds into the sixty second scan cycle, the phone screen slightly overexposed to serve as the primary key light for the entire frame casting a soft cool cyan light across the woman fingers and the bedroom around her. Middle ground: the woman thumb resting near the bottom edge of the phone screen ready to interact but not yet touching, her fingers wrapped naturally around the device, warm skin tones softened by the cyan glow, black cotton pajama sleeve visible extending down her forearm, out of focus behind the phone the white pressed hotel duvet from part one, the alarm clock now showing 2 colon 12 in warm amber red LED at 3200 Kelvin. Background: the smoke detector from part one on the matte off white ceiling barely visible in the background bokeh at the top of the frame with its tiny red pulse LED still glowing at 6 percent intensity as a small warm counterpoint to the dominant cyan foreground, deliberate visual continuity closing the story loop, negative space above the phone and below the phone left dark and quiet for typography. Palette limited strictly to deep midnight dark HEX 050709 as the dominant background, cool teal cyan HEX 00D9FF as the primary color of the phone interface and the ambient key light, small warm amber HEX F4C430 accent only on the clock digits, small warm red LED HEX FF3333 tiny point on the smoke detector in the far background, warm neutral skin tones on the hand, no other saturated colors present anywhere in the frame. Composition rule of thirds with the phone screen filling the center vertical axis and occupying the middle 60 percent of the frame height, the woman hand entering from the lower right creating a natural leading line, camera at eye level directly aimed at the phone screen with a slight downward tilt of 5 degrees to include the alarm clock detail in the lower background. In the negative space above the phone at the top of the frame, integrated text in Orbitron Black 92 point weight with 3 percent letter spacing painted in bright cyan HEX 00D9FF with a soft 2 pixel edge glow reading exactly the words \"PART 3\" on the top line and just below in slightly smaller Orbitron Bold 56 point neutral off white HEX F5F7FA at 82 percent opacity the words \"THE FIX\" arranged so both lines occupy the top 18 percent of the composition with an 80 pixel safe margin from the top edge and 80 pixel safe margins on both left and right for TikTok Instagram YouTube safe crop zones. Below the phone in the lower portion of the frame in the negative space just above the woman wrist a slim single line in Syne SemiBold 34 point neutral off white HEX F5F7FA at 72 percent opacity reads exactly the words \"YOUR PHONE ALREADY HAS THE 4 SENSORS\" arranged so it occupies the bottom 18 percent of the composition with an 80 pixel safe margin from the bottom edge. At the very bottom right corner of the frame, 60 pixels from the bottom and 60 pixels from the right, in DM Mono 22 point at 42 percent opacity in soft off white HEX F5F7FA the handle text \"@tappio.app1\" appears as a small watermark. At the very bottom left corner at the same margin the Spy brand mark placeholder is reserved at 60 pixel height for the reference logo which the model composites from the attached reference file. No text overlays outside those described, no captions, no subtitles, no watermarks other than the handle, no external brand marks or third party logos of hotel chains or short term rental platforms anywhere in the scene. Every element must feel like a single cinematic film still, mood is quiet resolution after two episodes of dread, the reveal that the solution is already in the viewer own pocket, method not fear. Ultra sharp 8K feel, high resolution micro detail on the phone bezel edges the fingerprint smudges on the screen glass the fabric weave of the duvet in the bokeh and the plastic ribs of the smoke detector cover, editorial fine art gallery quality photograph mood, deliberate visual continuity with gspy_139 and gspy_140 covers to close the three part series with a bookend shot.",
+  "nadpisi_vnutri_prompta": [
+    {"text": "PART 3", "font": "Orbitron Black 92pt", "color": "#00D9FF", "pos": "top-center 80px margin"},
+    {"text": "THE FIX", "font": "Orbitron Bold 56pt", "color": "rgba(245,247,250,0.82)", "pos": "under headline 24px gap"},
+    {"text": "SCANNING ROOM", "font": "Orbitron Bold 32pt", "color": "#00D9FF", "pos": "phone screen above grid"},
+    {"text": "WIFI / BLUETOOTH / MAGNET / INFRARED", "font": "DM Mono 22pt", "color": "#F5F7FA", "pos": "under each of 4 grid icons"},
+    {"text": "0 : 42 s", "font": "DM Mono 28pt", "color": "#F5F7FA", "pos": "phone screen below grid"},
+    {"text": "YOUR PHONE ALREADY HAS THE 4 SENSORS", "font": "Syne SemiBold 34pt", "color": "rgba(245,247,250,0.72)", "pos": "bottom-center 80px margin"},
+    {"text": "@tappio.app1", "font": "DM Mono 22pt", "color": "rgba(245,247,250,0.42)", "pos": "bottom-right 60px margin"}
+  ],
+  "zapreshcheno": [
+    "no product box",
+    "no app store screenshots or platform UI",
+    "no logos of Airbnb, hotels, phone manufacturer, or OS",
+    "no additional text overlays after generation",
+    "no long dash character in any text",
+    "no OKO lime #9AFF00 or OKO logo",
+    "no purple, no green, no orange saturated tones"
+  ],
+  "postavljaetsya_v_scenarii_kak": "pervyi kadr b1 (3.0 sec, zin_slow)",
+  "opisanie_dlia_editora": "Zakryvaet trekhcastnyi arc: parts 1 tumnyi ozhidanie, part 2 morning findings, part 3 reveal fix. Vosstonavlivaet vizualnye elementy iz part 1 (smoke detector, klok) v bokeh dlia klosura petli. Cyan dominires v foreground potomu chto scanning UI est kliuchevoi svet stseny."
+}

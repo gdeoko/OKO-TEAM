@@ -1,0 +1,43 @@
+{
+  "id": "gtape_143_cover",
+  "type": "video_cover_first_frame",
+  "sluzhit_scenariu": "gtape_143.json (Tape $900 couch fail-story, first frame at 0:00-0:03)",
+  "format": "9:16",
+  "resolution": "1080x1920",
+  "brend": {
+    "klient": "3D TAPE MEASURE",
+    "hex_accent": "#F4C430",
+    "hex_accent2": "#FFE08A",
+    "hex_bg": "#050709",
+    "hex_neutral": "#F5F7FA",
+    "font_headline": "Orbitron Black",
+    "font_body": "Syne",
+    "font_mono": "DM Mono",
+    "logo_ref_pervyi_faylom": "tappio-app/factory/assets/logos/tape.png"
+  },
+  "referensy": [
+    "tappio-app/factory/assets/logos/tape.png (PERVYM FILE, chistyi znak Tape, transparent, no text, no background)"
+  ],
+  "servis_generacii": "ChatGPT (GPT Image 4K), zapas Gemini",
+  "chars_count_prompt": 2503,
+  "prompt_english_2000plus": "Ultra cinematic photorealistic vertical composition, exactly 1080 by 1920 pixels, aspect ratio 9:16, warm daytime documentary style narrative photograph shot in a narrow residential apartment hallway at midday, key light spilling in from a window at the far end of the hallway at 5200 Kelvin daylight balance mixed with a warm 3200 Kelvin practical wall sconce halfway down the hall creating a subtle two temperature color contrast, matte cinematic film grade with a warm inspirational lift on the highlights and a soft roll off on the shadows, 4 percent fine grain, physical realism uncompromising, absolutely no digital plastic sheen no cartoon feel, style of a first person true story documentary opener that lives between comedy and mild frustration, shot on a full frame sensor with a 35mm equivalent wide angle lens at f 4 aperture giving natural depth of field and slight lens compression that makes the narrow hallway feel even more claustrophobic. Central subject: a large modern gray sectional couch in premium woven fabric wedged awkwardly and diagonally across the narrow apartment doorway approximately three quarters of the way into the hallway from the camera, the couch clearly too wide to fit through the frame of the door by about 12 centimeters visible on both sides, the corner of one couch arm pressed hard against the left door jamb showing a small dent in the fabric, the base of the couch sitting slightly askew on a moving blanket bunched underneath, two brand new furniture delivery straps hanging loosely from the couch back suggesting the delivery attempt has just failed, no people visible in the frame, only the couch and its evidence, a printed shipping label taped to the couch back visible reading in fine DM Mono 14 point neutral dark gray HEX 15181C the four small words \"FRAGILE HANDLE WITH CARE\" and nothing else on the label. Middle ground: the narrow apartment hallway walls in soft off white plaster HEX F4E8D5 with subtle micro texture and a hairline crack running from the ceiling down toward the couch, the doorway frame itself in warm oak wood HEX D4C5A8 with a visible strike plate and a modern brushed brass door handle catching a small warm highlight, the moving blanket in muted forest gray HEX 3A3F3B, on the floor to the right of the couch a metal retractable tape measure in bright brand gold HEX F4C430 lying open showing exactly the numeric reading 82 centimeters on the yellow blade against a small white callout label that appears hand written in DM Mono 24 point neutral dark gray HEX 15181C reading exactly the three words \"DOOR IS 76\" as if the person has just measured the doorway and realized the mistake too late. Background: the far end of the hallway opens to a bright modern living room bathed in warm 5200 Kelvin daylight with a large window and empty floor space where the couch was supposed to end up, that empty space visible just past the wedged couch acting as a subtle visual punchline. Palette limited strictly to warm cream plaster HEX F4E8D5 and warm oak HEX D4C5A8 on the walls and door, cool gray HEX 3A3F3B on the couch and blanket, bright brand gold HEX F4C430 as the primary saturated accent on the tape measure body and on the typography, deep matte dark HEX 050709 in the deepest shadows, no other saturated colors present anywhere in the frame, no cyan no purple no red no green, deliberate three color restraint reading as premium editorial documentary photography. Composition rule of thirds with the wedged couch and the doorway at the middle third and the tape measure at the lower right intersection point drawing the eye to the reveal, camera positioned at floor level looking straight down the hallway toward the doorway with a subtle low angle of 8 degrees emphasizing the immovable width of the couch. In the negative space above the couch and doorway in the top 22 percent of the composition, integrated text in Orbitron Black 108 point weight with 3 percent letter spacing painted in bright brand gold HEX F4C430 with a soft 2 pixel edge glow reading exactly the two characters \"$ 9 0 0\" as one large dollar figure and just below in Orbitron Bold 44 point neutral off white HEX F5F7FA at 88 percent opacity the words \"ONE WRONG NUMBER\" arranged so both lines occupy the top 22 percent with an 80 pixel safe margin from the top edge and 80 pixel safe margins on the left and right for TikTok Instagram YouTube safe crop zones. In the lower portion of the frame in the negative space just above the bottom safe zone, a small integrated one line kicker in Syne SemiBold 34 point neutral off white HEX F5F7FA at 72 percent opacity reads exactly the words \"MEASURED THE WALL, FORGOT THE DOOR\" arranged so it occupies the bottom 12 percent of the composition with an 80 pixel safe margin from the bottom edge. At the very bottom right corner of the frame, 60 pixels from the bottom and 60 pixels from the right, in DM Mono 22 point at 42 percent opacity in soft off white HEX F5F7FA the handle text \"@tappio.app1\" appears as a small watermark. At the very bottom left corner at the same margin the Tape brand mark placeholder is reserved at 60 pixel height for the reference logo which the model composites from the attached reference file. No text overlays outside those described, no captions, no subtitles, no watermarks other than the handle, no external brand marks or third party logos, no furniture retailer branding, no moving company branding anywhere in the scene. Every element must feel like a single documentary photograph, mood is warm rueful comedy of a small painful mistake we all recognize, not humiliation, not shock, the kind of story you tell friends over coffee. Ultra sharp 8K feel, high resolution micro detail on the woven couch fabric weave the door jamb dent the tape measure blade numbers the plaster texture and the label paper fibers, editorial fine art gallery quality photograph mood, deliberate visual candor so the viewer immediately recognizes themselves in the frame and wants to watch how the mistake gets fixed in the video below.",
+  "nadpisi_vnutri_prompta": [
+    {"text": "$ 9 0 0", "font": "Orbitron Black 108pt", "color": "#F4C430", "pos": "top-center 80px margin"},
+    {"text": "ONE WRONG NUMBER", "font": "Orbitron Bold 44pt", "color": "rgba(245,247,250,0.88)", "pos": "under headline 24px gap"},
+    {"text": "DOOR IS 76", "font": "DM Mono 24pt", "color": "#15181C", "pos": "small hand written callout beside tape measure"},
+    {"text": "FRAGILE HANDLE WITH CARE", "font": "DM Mono 14pt", "color": "#15181C", "pos": "shipping label on couch back"},
+    {"text": "MEASURED THE WALL, FORGOT THE DOOR", "font": "Syne SemiBold 34pt", "color": "rgba(245,247,250,0.72)", "pos": "bottom-center 80px margin"},
+    {"text": "@tappio.app1", "font": "DM Mono 22pt", "color": "rgba(245,247,250,0.42)", "pos": "bottom-right 60px margin"}
+  ],
+  "zapreshcheno": [
+    "no people, no faces, no hands",
+    "no ikea or wayfair or furniture retailer logos, no moving company logos",
+    "no additional text overlays after generation",
+    "no long dash character in any text",
+    "no OKO lime #9AFF00 or OKO logo",
+    "no cyan no purple (belong to spy and brain brands)",
+    "no cartoon exaggerated dent, no visible damage beyond a small fabric press"
+  ],
+  "postavljaetsya_v_scenarii_kak": "pervyi kadr b1 (3.0 sec, static_hold)",
+  "opisanie_dlia_editora": "Fail-story hook, warm palette gold + cream, brand kadr chetkiy iz-za goldovogo taipmezhera v kadre. Palitra soznatelno raznyaya s Spy i Brain oblozhkami dlia vizualnoi differentsiatsii treh podbrenov v odnoi lente."
+}
