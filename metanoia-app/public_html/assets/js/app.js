@@ -600,23 +600,38 @@ function initComments() {
 
 /* ───────── ПОИСК ───────── */
 
-const SEARCH_INDEX = [
-  { t: 'lesson', title: 'Пророчества; почему Господь родился на земле', meta: 'Урок 1 · Глава 1 «Жизнь Господа»', age: '5-7 7-10 10-14', theme: 'НЗ' },
-  { t: 'lesson', title: 'Рождение Иоанна Крестителя', meta: 'Урок 2 · Глава 1 «Жизнь Господа»', age: '5-7 7-10', theme: 'НЗ' },
-  { t: 'lesson', title: 'Рождение Господа', meta: 'Урок 3 · Глава 1 «Жизнь Господа»', age: '5-7 7-10', theme: 'НЗ' },
-  { t: 'lesson', title: 'Призвание Аврама', meta: 'Урок 1 · Глава 3 «Израиль»', age: '5-7', theme: 'ВЗ' },
-  { t: 'game', title: 'Собери стих', meta: 'Игра · пазл-слова · бесплатно', age: '5-7 7-10 10-14', theme: 'Молитва' },
-  { t: 'game', title: 'Библейское мемори', meta: 'Игра · память · бесплатно', age: '5-7 7-10', theme: 'ВЗ' },
-  { t: 'game', title: 'Викторина на скорость', meta: 'Игра · квиз · бесплатно', age: '7-10 10-14', theme: 'ВЗ НЗ' },
-  { t: 'game', title: 'Кто это?', meta: 'Игра · угадайка · бесплатно', age: '7-10 10-14', theme: 'ВЗ НЗ' },
-  { t: 'game', title: 'Хронология', meta: 'Игра · сортировка · бесплатно', age: '7-10 10-14', theme: 'ВЗ' },
-  { t: 'game', title: 'Три в ряд: Дары Духа', meta: 'Игра · Метанойя+', age: '5-7 7-10 10-14', theme: 'НЗ', locked: true },
-  { t: 'game', title: 'Давид и Голиаф', meta: 'Игра · Метанойя+', age: '7-10 10-14', theme: 'ВЗ', locked: true },
-  { t: 'game', title: 'Ноев Ковчег', meta: 'Игра · Метанойя+', age: '5-7 7-10', theme: 'ВЗ', locked: true },
-  { t: 'material', title: 'Раскраска «Сотворение мира»', meta: 'Материал · PDF · Метанойя+', age: '5-7', theme: 'ВЗ', locked: true },
-  { t: 'material', title: 'Молитвы для самых маленьких', meta: 'Материал · карточки', age: '5-7', theme: 'Молитва' },
-  { t: 'test', title: 'Тест к уроку 1', meta: 'Тест · 7 вопросов', age: '5-7 7-10 10-14', theme: 'ВЗ' },
-];
+/* Указатель поиска строится из настоящего содержания школы: раньше это был
+   список из пятнадцати строк, и почти любой урок не находился вовсе.
+   Собирается один раз при первом поиске, когда все данные уже загружены. */
+let ПОИСК_КЭШ = null;
+
+function searchIndex() {
+  if (ПОИСК_КЭШ) return ПОИСК_КЭШ;
+  const из = [];
+  (typeof DEMO !== 'undefined' ? DEMO.blocks : []).forEach((b, bi) => {
+    const глава = (b.title || '').replace(/^Глава \d+ · /, '');
+    b.lessons.forEach((l) => {
+      if (l.exam) {
+        из.push({ t: 'test', title: 'Проверка знаний · ' + глава,
+          meta: 'Проверка после главы ' + (bi + 1), age: '5-7 7-10 10-14', theme: bi === 0 ? 'НЗ' : 'ВЗ', n: l.n, bi });
+        return;
+      }
+      из.push({ t: 'lesson', title: l.title,
+        meta: 'Урок ' + (l.cn || l.n) + ' · Глава ' + (bi + 1) + ' «' + глава + '»',
+        age: '5-7 7-10 10-14', theme: bi === 0 ? 'НЗ' : 'ВЗ', n: l.n, bi });
+    });
+  });
+  (typeof GAMES !== 'undefined' ? GAMES : []).forEach((g) => {
+    из.push({ t: 'game', title: g.name, meta: 'Игра · ' + (g.meta || ''),
+      age: '5-7 7-10 10-14', theme: 'ВЗ НЗ', key: g.key });
+  });
+  из.push({ t: 'material', title: 'Раскраска «Сотворение мира»', meta: 'Материал · PDF · Метанойя+', age: '5-7', theme: 'ВЗ', locked: true });
+  из.push({ t: 'material', title: 'Молитвы для самых маленьких', meta: 'Материал · карточки', age: '5-7', theme: 'Молитва' });
+  из.push({ t: 'test', title: 'Тест к уроку 1', meta: 'Тест · 7 вопросов', age: '5-7 7-10 10-14', theme: 'ВЗ' });
+  ПОИСК_КЭШ = из;
+  return из;
+}
+
 
 const SR_ICON = { lesson: 'video', game: 'gamepad', material: 'book', test: 'check' };
 
@@ -644,7 +659,7 @@ function runSearch() {
     empty.querySelector('p').textContent = 'Начни вводить запрос или выбери фильтр — найдём уроки, игры и материалы.';
     return;
   }
-  const found = SEARCH_INDEX.filter((it) => (q.length < 2 || it.title.toLowerCase().includes(q)) && matchesFilters(it, filters));
+  const found = searchIndex().filter((it) => (q.length < 2 || it.title.toLowerCase().includes(q)) && matchesFilters(it, filters));
   empty.style.display = found.length ? 'none' : '';
   if (!found.length) empty.querySelector('p').textContent = `Ничего не найдено по запросу «${$('#searchInput').value}». Попробуй другие слова.`;
   box.innerHTML = found.map((it, i) => `
@@ -671,10 +686,33 @@ const SR_LESSON_N = {
 };
 function openSearchResult(it) {
   if (!it) return;
-  if (it.locked) { toast('Откроется с подпиской Метанойя+'); return; }
-  if (it.t === 'game' && SR_GAME_OPEN[it.title]) { gameOpener = 'games'; SR_GAME_OPEN[it.title](); return; }
-  if ((it.t === 'lesson' || it.t === 'test') && SR_LESSON_N[it.title]) { openLesson(SR_LESSON_N[it.title]); return; }
-  if (it.t === 'lesson' || it.t === 'test') { switchTab('lessons'); return; }
+  // Урок открывается только если до него дошли: замки по порядку никто не отменял.
+  if (it.t === 'lesson' && it.n) {
+    if (typeof isLessonOpen === 'function' && !isLessonOpen(it.n) && !isLessonDone(it.n)) {
+      switchTab('lessons');
+      return toast('Этот урок откроется, когда пройдёшь предыдущие');
+    }
+    openLesson(it.n);
+    return;
+  }
+  if (it.t === 'test') {
+    if (typeof it.bi === 'number' && typeof openExam === 'function') {
+      const б = DEMO.blocks[it.bi];
+      const все = б && б.lessons.filter((x) => !x.exam).every((x) => isLessonDone(x.n));
+      if (!все) { switchTab('lessons'); return toast('Проверка откроется, когда пройдены все уроки главы'); }
+      openExam(it.bi);
+      return;
+    }
+    switchTab('lessons');
+    return;
+  }
+  if (it.t === 'game') {
+    gameOpener = 'games';
+    if (it.key && typeof openGame === 'function') { openGame(it.key); return; }
+    if (SR_GAME_OPEN[it.title]) { SR_GAME_OPEN[it.title](); return; }
+    switchTab('games');
+    return;
+  }
   if (it.t === 'material') { toast('Материалы для скачивания появятся после запуска'); return; }
   toast('Открываю…');
 }
