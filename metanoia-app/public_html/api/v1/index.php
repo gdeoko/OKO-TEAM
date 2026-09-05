@@ -46,6 +46,7 @@ $routes = [
     'auth'          => __DIR__ . '/routes/auth.php',
     'oauth'         => __DIR__ . '/routes/oauth.php',
     'users'         => __DIR__ . '/routes/users.php',
+    'progress'      => __DIR__ . '/routes/progress.php',
     'subscriptions' => __DIR__ . '/routes/subscriptions.php',
     'webhooks'      => __DIR__ . '/routes/webhooks.php',
     'health'        => null, // обрабатывается ниже

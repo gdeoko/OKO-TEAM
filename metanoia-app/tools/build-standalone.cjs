@@ -11,7 +11,7 @@ const MIME = { '.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.svg
 function dataUri(rel){ const abs=path.join(APP,rel); if(!fs.existsSync(abs))return null; const ext=path.extname(abs).toLowerCase(); return `data:${MIME[ext]||'application/octet-stream'};base64,`+fs.readFileSync(abs).toString('base64'); }
 let html = fs.readFileSync(path.join(APP,'index.html'),'utf8');
 const css = fs.readFileSync(path.join(APP,'assets/css/main.css'),'utf8');
-let js = ['icons.js','magic.js','lessons.js','tasks.js','gamedata.js','app.js'].map(f=>fs.readFileSync(path.join(APP,'assets/js',f),'utf8')).join('\n;\n');
+let js = ['sync.js','icons.js','magic.js','lessons.js','tasks.js','gamedata.js','app.js'].map(f=>fs.readFileSync(path.join(APP,'assets/js',f),'utf8')).join('\n;\n');
 
 // Обложки уроков, иллюстрации по ходу текста и картинки друга — картами по имени файла.
 // Аудио уроков в один файл не влезает (25 МБ), поэтому берём только те, что перечислены в AUDIO_LESSONS.

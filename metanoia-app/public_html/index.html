@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#FAF8F5">
+  <!-- Адрес сервера школы. Пусто — приложение работает на устройстве.
+       Впишем сюда https://<домен>/api/v1, когда будет хостинг, и прогресс
+       начнёт переходить между телефоном и планшетом сам. -->
+  <meta name="mt-api" content="">
   <meta name="description" content="Метанойя — христианская онлайн-школа для детей 5–14 лет">
   <title>Метанойя</title>
 
@@ -1083,6 +1087,7 @@
   <!-- Тост для заглушек -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="assets/js/sync.js"></script>
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/magic.js"></script>
   <script src="assets/js/lessons.js"></script>
