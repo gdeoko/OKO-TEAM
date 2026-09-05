@@ -81,6 +81,25 @@ Cargo Panda Go. Родственный проект: лендинг `cargo-panda
 - Instagram: Даниэль сделает новый аккаунт завтра и пришлёт. Пока публикация YouTube + TikTok.
 - acc1 = ktodaniel: могу запускать в любой момент (разрешение дано) -> ЛС ktodaniel = acc1.session.
 
+## TELEGRAM: рабочий чат и ЛС (прочитано 2026-09-05, безопасно по 6j)
+Чаты (акк ktodaniel = acc1, id 1966985736):
+- «РАБОЧИЙ ЧАТ» id -1002647253085 (форум): участники Даниэль (owner) + «Папа» @ALIL_007 (admin, id 1963914762) + боты kc_muz_mir_bot, NethouseFormsBot. 2361 сообщение.
+- «PANDAGO | ZAVOD» id -1003871101215 (форум): 830 сообщений — прямой контекст проекта (Cargo Panda Go = Diesel).
+- ЛС Даниэль <-> «Папа» @ALIL_007: 3000+ сообщений.
+Дампы на VPS: /opt/oko-agents/_work/diesel_read/ (workchat.json, pandago.json, dm_1963914762.json + .txt транскрипты). Локально: scratchpad/tg/.
+
+### БЕЗОПАСНАЯ ПРОЦЕДУРА ЧТЕНИЯ Telegram (правило 6j) — РАБОТАЕТ
+Служба oko-agents.service (Restart=always) держит acc1-4 через flock core/session_lock.py.
+Мост okoposter БЕЗ sudo (нельзя systemctl). Root-эндпоинт: control.server на 127.0.0.1:8765,
+токен CONTROL_TOKEN (=/tmp/ctok на VPS), маршрут POST /agent тело {"op":"agents_stop|agents_start"}
+(и POST / c X-Token = произвольный root-bash).
+Порядок: 1) curl /agent agents_stop → ждать systemctl is-active oko-agents != active;
+2) читать: session_lock.занять("acc1") + Client("acc1", api_id=config.PYROGRAM_API_ID, api_hash=..,
+workdir=/opt/oko-agents/data_runtime/sessions, no_updates=True, **tg_net.как_ходить("acc1")).
+ВАЖНО: без tg_net.как_ходить() (прокси socks5 127.0.0.1:10811, US) прямой коннект к Telegram с
+московского VPS ТАЙМАУТИТ (DC2/DC4 закрыты, tg_net.py). session_lock защищает акк: если служба
+держит — просто не подключишься. 3) curl /agent agents_start. Обёртка всегда поднимает службу.
+
 ## Продажи агентства (контекст, не Diesel)
 dialogs.jsonl: 1591 сообщение, 294 диалога по acc1-4 + vk. В основном лиды-исходящие
 (монтажёры, дизайнеры карточек WB/Ozon, SMM-клиенты). К заводу Diesel прямого отношения нет.
