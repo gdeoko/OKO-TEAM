@@ -2766,3 +2766,6 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .gend__close { font: inherit; font-size: 13px; color: var(--gray); background: none; border: none; cursor: pointer; padding: 6px; }
 [data-theme="dark"] .gend__card { background: #16242F; }
 [data-theme="dark"] .gend__title { color: #EAF0F5; }
+
+/* Прикреплённое домашнее задание */
+.hw-file { margin-top: 8px; font-size: 13px; color: var(--gray); }

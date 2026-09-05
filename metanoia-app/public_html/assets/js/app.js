@@ -1041,7 +1041,7 @@ function initMsgActions() {
     жалобы.push({ чат: cvChatId, текст: (maTarget.text || '').slice(0, 200), когда: Date.now() });
     localStorage.setItem('mt_reports', JSON.stringify(жалобы));
     $('#msgActions').hidden = true;
-    toast('Жалоба ушла Екатерине. Она посмотрит переписку и примет решение');
+    toast('Жалоба записана. Екатерина посмотрит переписку и примет решение');
   });
 
   $('#maBlock')?.addEventListener('click', () => {
@@ -1055,7 +1055,8 @@ function initMsgActions() {
 
 /* ───────── БЕЗОПАСНОСТЬ ЧАТОВ ─────────
    Блокировка собеседника, стоп-слова и предупреждение о личной переписке.
-   Все жалобы и блокировки видны Екатерине в её панели. */
+   Жалобы и блокировки хранятся у ребёнка и уйдут Екатерине вместе с прогрессом,
+   как только у школы появится сервер. */
 
 function blockedList() { return JSON.parse(localStorage.getItem('mt_blocked') || '[]'); }
 function blockPerson(имя) {
@@ -1295,7 +1296,9 @@ function renderLesson(n) {
     <h2 class="section-title">Домашнее задание</h2>
     <div class="card lesson-text">
       <p>${c && c.parentNote ? c.parentNote : 'Нарисуй вместе с родителями то, что тебе запомнилось из урока, и отправь рисунок Екатерине.'}</p>
+      <input type="file" id="hwFile" accept="image/*,.pdf" hidden>
       <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Прикрепить задание</button>
+      <div class="hw-file" id="hwName" hidden></div>
     </div>
 
     <div class="lesson-final" id="lessonFinal"></div>
@@ -1392,10 +1395,28 @@ function wireLesson(n, quiz, task) {
     }
   });
 
-  $('#hwUpload')?.addEventListener('click', () => {
-    const s = getLessonState(n); s.hw = true; saveLessonState(n, s); syncSteps();
-    toast('Задание прикреплено — Екатерина увидит его в своей панели');
+  // Файл выбирается по-настоящему и запоминается на устройстве. Учителю он
+  // уйдёт, когда у школы появится сервер, поэтому обещаний тут не даём.
+  $('#hwUpload')?.addEventListener('click', () => $('#hwFile')?.click());
+  $('#hwFile')?.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 12 * 1024 * 1024) return toast('Файл больше 12 МБ, выберите поменьше');
+    const s = getLessonState(n);
+    s.hw = true; s.hwName = f.name.slice(0, 80); s.hwSize = f.size;
+    saveLessonState(n, s); syncSteps();
+    const метка = $('#hwName');
+    if (метка) { метка.hidden = false; метка.textContent = 'Прикреплено: ' + s.hwName; }
+    $('#hwUpload').textContent = 'Заменить файл';
+    toast('Задание прикреплено');
   });
+  // при открытии урока показываем то, что уже прикрепили
+  const было = getLessonState(n);
+  if (было.hwName) {
+    const метка = $('#hwName');
+    if (метка) { метка.hidden = false; метка.textContent = 'Прикреплено: ' + было.hwName; }
+    if ($('#hwUpload')) $('#hwUpload').textContent = 'Заменить файл';
+  }
 }
 
 /* Урок закрывается сам, как только собраны все три шага */
