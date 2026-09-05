@@ -192,6 +192,20 @@ const DEMO = {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+/* Чтение сохранённого значения. Запись могла испортиться, прийти со старой
+   версии приложения или с другого устройства через перенос прогресса, поэтому
+   разбор всегда в защите, а тип сверяется с ожидаемым. */
+function памятьЧитать(ключ, поумолчанию) {
+  let знач;
+  try { знач = JSON.parse(localStorage.getItem(ключ)); } catch (e) { знач = null; }
+  if (знач === null || знач === undefined) return поумолчанию;
+  if (Array.isArray(поумолчанию)) return Array.isArray(знач) ? знач : поумолчанию;
+  if (поумолчанию && typeof поумолчанию === 'object') {
+    return (знач && typeof знач === 'object' && !Array.isArray(знач)) ? знач : поумолчанию;
+  }
+  return знач;
+}
+
 let toastTimer = null;
 function toast(msg) {
   const el = $('#toast');
@@ -522,7 +536,7 @@ function initStoryViewer() {
 
 /* ───────── ЛАЙКИ (локально) ───────── */
 
-const likes = JSON.parse(localStorage.getItem('mt_likes') || '{}');
+const likes = памятьЧитать('mt_likes', {});
 
 function toggleLike(postId, btn, base) {
   likes[postId] = !likes[postId];
@@ -545,7 +559,7 @@ const DEMO_COMMENTS = {
   2: [ { name: 'Анна', text: 'Наш любимый стих.', time: 'вчера' } ],
   3: [ { name: 'Мария', text: 'Записались! Миша очень ждёт.', time: '30 мин назад' } ],
 };
-let userComments = JSON.parse(localStorage.getItem('mt_comments') || '{}');
+let userComments = памятьЧитать('mt_comments', {});
 let sheetPostId = null;
 
 function openComments(postId) {
@@ -769,7 +783,7 @@ const CHAT_MSGS = {
     ] },
 };
 let cvChatId = null;
-let myMsgs = JSON.parse(localStorage.getItem('mt_msgs2') || '{}');
+let myMsgs = памятьЧитать('mt_msgs2', {});
 
 function msgHtml(m, mine, key) {
   return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-who="${(m.who || '').replace(/"/g, '&quot;')}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
@@ -981,7 +995,7 @@ function initPTR() {
 /* ───────── РЕАКЦИИ И ДЕЙСТВИЯ С СООБЩЕНИЯМИ ───────── */
 
 const REACTIONS = ['heart', 'flame', 'sun', 'sparkles', 'candle', 'bell'];
-let reactions = JSON.parse(localStorage.getItem('mt_react2') || '{}'); // {chatId: {msgKey: [keys]}}
+let reactions = памятьЧитать('mt_react2', {}); // {chatId: {msgKey: [keys]}}
 let maTarget = null;   // { key, mine, text }
 let replyTo = null;    // { who, text }
 
@@ -1037,7 +1051,7 @@ function initMsgActions() {
   });
 
   $('#maReport')?.addEventListener('click', () => {
-    const жалобы = JSON.parse(localStorage.getItem('mt_reports') || '[]');
+    const жалобы = памятьЧитать('mt_reports', []);
     жалобы.push({ чат: cvChatId, текст: (maTarget.text || '').slice(0, 200), когда: Date.now() });
     localStorage.setItem('mt_reports', JSON.stringify(жалобы));
     $('#msgActions').hidden = true;
@@ -1058,7 +1072,7 @@ function initMsgActions() {
    Жалобы и блокировки хранятся у ребёнка и уйдут Екатерине вместе с прогрессом,
    как только у школы появится сервер. */
 
-function blockedList() { return JSON.parse(localStorage.getItem('mt_blocked') || '[]'); }
+function blockedList() { return памятьЧитать('mt_blocked', []); }
 function blockPerson(имя) {
   const л = blockedList();
   if (!л.includes(имя)) { л.push(имя); localStorage.setItem('mt_blocked', JSON.stringify(л)); }
@@ -1135,7 +1149,7 @@ function lessonContent(n) {
 
 function lessonStateKey(n) { return 'mt_lesson_' + n; }
 function getLessonState(n) {
-  const st = JSON.parse(localStorage.getItem(lessonStateKey(n)) || '{}');
+  const st = памятьЧитать(lessonStateKey(n), {});
   return { read: !!st.read, task: !!st.task, test: !!st.test, hw: !!st.hw, done: !!st.done, ts: st.ts || 0 };
 }
 function saveLessonState(n, st) { localStorage.setItem(lessonStateKey(n), JSON.stringify(st)); }
@@ -2281,9 +2295,7 @@ const PET_ПО_УМОЛЧАНИЮ = {
    неполным. Недостающие поля берём из умолчаний, вид сверяем со списком:
    иначе одна кривая запись роняет весь экран. */
 function petПрочитать() {
-  let с = null;
-  try { с = JSON.parse(localStorage.getItem('mt_pet') || 'null'); } catch (e) { с = null; }
-  if (!с || typeof с !== 'object') с = {};
+  const с = памятьЧитать('mt_pet', {});
   const итог = Object.assign({}, PET_ПО_УМОЛЧАНИЮ, с);
   if (!PET_ВИДЫ[итог.вид]) итог.вид = PET_ПО_УМОЛЧАНИЮ.вид;
   ['зёрна', 'сытость', 'радость', 'рост'].forEach((k) => {
@@ -2641,7 +2653,7 @@ function openGamePreview(k) {
 }
 
 /* ── Мягкая монетизация: желания ребёнка (УЛ9) ── */
-function getWishes() { return JSON.parse(localStorage.getItem('mt_wishes') || '[]'); }
+function getWishes() { return памятьЧитать('mt_wishes', []); }
 
 function addWish(key) {
   const w = getWishes();
@@ -3438,8 +3450,7 @@ const CERTIFICATES = [
    главы: смотрим ту же запись, что кладёт экзамен. */
 function certРазмечен() {
   CERTIFICATES.forEach((c, bi) => {
-    let r = null;
-    try { r = JSON.parse(localStorage.getItem('mt_exam_' + bi) || 'null'); } catch (e) { r = null; }
+    const r = памятьЧитать('mt_exam_' + bi, null);
     c.earned = !!(r && r.pct >= 70);
     c.date = c.earned && r.ts
       ? new Date(r.ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -3452,10 +3463,8 @@ function certРазмечен() {
 function именаДляСертификата() {
   const имя = (localStorage.getItem('mt_name') || '').trim();
   if (имя) return имя;
-  try {
-    const дети = JSON.parse(localStorage.getItem('mt_kids') || '[]');
-    if (дети.length && дети[0].name) return дети[0].name;
-  } catch (e) { /* список детей пуст */ }
+  const дети = памятьЧитать('mt_kids', []);
+  if (дети.length && дети[0] && дети[0].name) return дети[0].name;
   return 'Ученик школы';
 }
 
@@ -4133,7 +4142,7 @@ const AVATAR_OPTS = [
 let addkAge = 7, addkPick = 0;
 
 function loadSavedKids() {
-  const saved = JSON.parse(localStorage.getItem('mt_kids') || '[]');
+  const saved = памятьЧитать('mt_kids', []);
   saved.forEach((k) => { if (!DEMO.children.some((c) => c.name === k.name && c.age === k.age)) DEMO.children.push(k); });
 }
 
@@ -4163,7 +4172,7 @@ function saveChild() {
   const img = opt.type === 'img' ? opt.src : initialAvatar(name, opt.color);
   const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 очков', streak: 0, img };
   DEMO.children.push(kid);
-  const saved = JSON.parse(localStorage.getItem('mt_kids') || '[]');
+  const saved = памятьЧитать('mt_kids', []);
   saved.push(kid);
   localStorage.setItem('mt_kids', JSON.stringify(saved));
   renderChildren();
@@ -4265,7 +4274,7 @@ const FQ = {
     { day: 'Воскресенье', text: 'Короткая совместная молитва перед сном.' },
   ],
 };
-let fqDone = JSON.parse(localStorage.getItem('mt_quest') || '[]'); // индексы выполненных
+let fqDone = памятьЧитать('mt_quest', []); // индексы выполненных
 
 function fqProgress() { return { done: fqDone.length, total: FQ.tasks.length }; }
 
@@ -4336,8 +4345,7 @@ function недельныйОтчёт() {
     if (st.ts > неделя) { уроков++; if (темы.length < 2) темы.push(l.title); }
   }));
 
-  let партии = [];
-  try { партии = JSON.parse(localStorage.getItem('mt_plays') || '[]'); } catch (e) { партии = []; }
+  const партии = памятьЧитать('mt_plays', []);
   const игр = партии.filter((t) => t > неделя).length;
 
   const открытые = [];
@@ -4776,8 +4784,7 @@ function сложность(ключ) {
 
 /* Сколько партий сыграно: число нужно родительскому отчёту, а не игре. */
 function отметитьПартию() {
-  let список = [];
-  try { список = JSON.parse(localStorage.getItem('mt_plays') || '[]'); } catch (e) { список = []; }
+  const список = памятьЧитать('mt_plays', []).slice();
   список.push(Date.now());
   const месяц = Date.now() - 31 * 864e5;
   localStorage.setItem('mt_plays', JSON.stringify(список.filter((t) => t > месяц)));
