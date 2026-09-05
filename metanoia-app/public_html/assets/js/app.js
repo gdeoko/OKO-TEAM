@@ -4549,6 +4549,9 @@ function switchLang() {
 const ПЕРЕВОД = {
   'Главная': 'Inicio', 'Игры': 'Juegos', 'Чаты': 'Chats', 'Уроки': 'Lecciones', 'Профиль': 'Perfil',
   'Сегодня': 'Hoy', 'дней подряд': 'días seguidos', 'Перейти': 'Ir', 'Продолжить': 'Continuar',
+  'Поделиться': 'Compartir', 'Пройти ещё раз': 'Repetir',
+  'Откроется после предыдущего': 'Se abre tras la anterior',
+  'Откроется после предыдущего урока': 'Se abre tras la lección anterior',
   'Ежедневный стих': 'Versículo del día', 'Открыть и послушать голосом': 'Abrir y escuchar con voz',
   'Мини-игры': 'Minijuegos', 'Книга': 'Libro', 'Настройки': 'Ajustes', 'Мои дети': 'Mis hijos',
   'Добавить ребёнка': 'Añadir hijo', 'Отчёт за неделю': 'Informe semanal',
