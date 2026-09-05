@@ -35,7 +35,7 @@ if (is_file(BASE_PATH . '/core/mentors.php')) require_once BASE_PATH . '/core/me
 /** Разбор ключей вида --key=value. */
 $opt = [];
 foreach (array_slice($argv, 1) as $arg) {
-    if (preg_match('~^--([a-z]+)(?:=(.*))?$~', $arg, $m)) $opt[$m[1]] = $m[2] ?? '1';
+    if (preg_match('~^--([a-z-]+)(?:=(.*))?$~', $arg, $m)) $opt[$m[1]] = $m[2] ?? '1';
 }
 $dry     = isset($opt['dry']);
 $limit   = (int) ($opt['limit'] ?? 0);
@@ -43,6 +43,11 @@ $fromId  = (int) ($opt['from'] ?? 0);
 $types   = array_filter(array_map('trim', explode(',', (string) ($opt['type'] ?? ''))));
 $comps   = array_filter(array_map('intval', explode(',', (string) ($opt['comp'] ?? ''))));
 $doClean = isset($opt['clean']);
+/* --only-clean: пропустить дипломы участников и заняться только чистыми
+ * бланками. Нужно, когда дипломы уже перерисованы: без этого скрипт гонит
+ * все 252 бланка по второму разу и тратит час впустую. */
+$onlyClean = isset($opt['only-clean']);
+if ($onlyClean) $doClean = true;
 
 /**
  * Номер педагога в списке заявки: бланк благодарности обязан совпасть с реестром.
@@ -78,11 +83,11 @@ $rows = all("SELECT d.*, a.competition_id, a.number app_number
              WHERE " . implode(' AND ', $where) . "
              ORDER BY d.id" . ($limit > 0 ? " LIMIT " . $limit : ""), $args);
 
-printf("Наградных материалов к перерисовке: %d%s\n", count($rows), $dry ? ' (сухой прогон)' : '');
+printf("Наградных материалов к перерисовке: %d%s\n", $onlyClean ? 0 : count($rows), $dry ? ' (сухой прогон)' : '');
 
 $ok = $fail = $same = 0;
 $t0 = microtime(true);
-foreach ($rows as $i => $d) {
+foreach ($onlyClean ? [] : $rows as $i => $d) {
     $a = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
     if (!$a) { $fail++; continue; }
 
@@ -132,7 +137,7 @@ printf("Перерисовано: %d (из них имя файла не мен�
  * рисуем». После перерисовки бланка картинка осталась бы старой, и человек
  * видел бы прежнюю кривую вёрстку, хотя в PDF уже всё выправлено. Сносим —
  * они соберутся заново при первом показе. */
-if (!$dry) {
+if (!$dry && !$onlyClean) {
     $n = 0;
     foreach (glob(BASE_PATH . '/public/diplomas/preview_*.png') ?: [] as $f) { @unlink($f); $n++; }
     printf("Старых картинок-предпросмотров убрано: %d (соберутся заново при показе)\n", $n);
