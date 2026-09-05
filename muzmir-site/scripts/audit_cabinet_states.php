@@ -94,8 +94,11 @@ foreach ($users as $u) {
     $countGP = 0; $countL1 = 0;
     foreach ($seasonApps as $sa) {
         $r = mb_strtolower((string) ($sa['result'] ?? ''));
-        if (str_contains($r, 'гран'))                                          $countGP++;
-        elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ'))      $countL1++;
+        /* Тот же разбор звания, что и в кабинете (result_rank): иначе аудит
+         * подтвердит ошибку вместо того, чтобы её поймать. */
+        $rank = result_rank((string)($a['result'] ?? ''));
+        if ($rank === 'gp')         $countGP++;
+        elseif ($rank === 'laur1')  $countL1++;
     }
     $ach = [
         'first_step'  => $countAppsS >= 1,

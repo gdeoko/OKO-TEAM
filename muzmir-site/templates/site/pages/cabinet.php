@@ -505,17 +505,13 @@ $countAppsS = count($seasonApps);
 $countDipS  = count($seasonDiplomas);
 $countGP = 0; $countL1 = 0;
 foreach ($seasonApps as $a) {
-    $r = mb_strtolower(trim((string)($a['result'] ?? '')));
-    /* ЗВАНИЕ СВЕРЯЕМ ЦЕЛИКОМ, А НЕ ПО КУСКУ СТРОКИ.
-     *
-     * Здесь стояла проверка «содержит "i степ"». В «лауреат III степени» она
-     * находит последнюю «i» перед словом «степени» — и третья степень
-     * засчитывалась как первая. Так же засчитывался и «дипломант I степени»,
-     * хотя дипломант — не лауреат. У участницы с двумя третьими степенями в
-     * кабинете горело достижение «Лауреат I», а уровень рос на 30 очков за
-     * каждую. Сверяем звание с начала строки и по границе слова. */
-    if (str_contains($r, 'гран')) $countGP++;
-    elseif (preg_match('~^лауреат\s+(?:i|1)\s+степени~u', $r)) $countL1++;
+    /* Звание разбирает одна функция на всё приложение — result_rank().
+     * Раньше здесь стояло «содержит "i степ"»: в «ЛАУРЕАТ III СТЕПЕНИ» это
+     * находит последнюю «i» перед словом «степени», и третья степень
+     * засчитывалась за первую. Достижение «Лауреат I» горело у 274 человек. */
+    $rank = result_rank((string)($a['result'] ?? ''));
+    if ($rank === 'gp') $countGP++;
+    elseif ($rank === 'laur1') $countL1++;
 }
 // Скидка за достижения — максимум 5% и только в рамках сезона (core/loyalty.php).
 $achDiscount = loyalty_discount($uid, (string)($user['email'] ?? ''));
@@ -578,13 +574,16 @@ foreach ($apps as $a) {
     if (in_array($st, ['judging','graded','making','made','extra','done'], true)) $cntGraded++;
     elseif ($st === 'rejected') $cntRejected++;
     elseif (in_array($st, ['new','paid','submitted','pending'], true)) $cntPending++;
-    $r = mb_strtolower((string)($a['result'] ?? ''));
-    if     (str_contains($r, 'гран')) $byResult['gp']++;
-    elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $byResult['laur1']++;
-    elseif (str_contains($r, 'ii степ') || str_contains($r, '2 степ')) $byResult['laur2']++;
-    elseif (str_contains($r, 'iii степ') || str_contains($r, '3 степ')) $byResult['laur3']++;
-    elseif ($r !== '' && str_contains($r, 'дипл')) $byResult['dipl']++;
-    elseif ($r !== '') $byResult['other']++;
+    /* Та же беда была и здесь, только грубее: цепочка elseif ловила «i степ»
+     * первой, поэтому ВСЁ со словом «степени» падало в «Лауреат I», а вторая и
+     * третья степени всегда показывали ноль. */
+    $rank = result_rank((string)($a['result'] ?? ''));
+    if     ($rank === 'gp')    $byResult['gp']++;
+    elseif ($rank === 'laur1') $byResult['laur1']++;
+    elseif ($rank === 'laur2') $byResult['laur2']++;
+    elseif ($rank === 'laur3') $byResult['laur3']++;
+    elseif (str_starts_with($rank, 'dipl')) $byResult['dipl']++;
+    elseif ($rank !== '') $byResult['other']++;
 }
 // Деньги участника: подтверждённые платежи за участие + оплаченные заказы наград.
 // Колонка applications.amount_paid не заполняется платёжным потоком, поэтому
