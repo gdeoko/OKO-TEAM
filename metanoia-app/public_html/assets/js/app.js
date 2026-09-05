@@ -789,11 +789,11 @@ function msgHtml(m, mine, key) {
   return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-who="${(m.who || '').replace(/"/g, '&quot;')}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
     ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
     ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="" onerror="this.closest(&quot;.msg&quot;).style.display=&quot;none&quot;">`
-      : m.voice ? `<div class="msg__voice" data-voice="${m.voice.url || ''}">
+      : m.voice ? `<div class="msg__voice" data-voice-key="${key}" data-voice-has="${m.voice.url ? 1 : 0}">
           <button class="msg__voice-play" aria-label="Прослушать голосовое сообщение">${ICON('play', 15)}</button>
           <div class="msg__wave">${waveBars(m.voice.dur + 7)}</div>
           <span class="msg__voice-dur">${fmtDur(m.voice.dur)}</span></div>`
-      : m.circle ? `<div class="msg__voice" data-voice="${m.circle.url || ''}">
+      : m.circle ? `<div class="msg__voice" data-voice-key="${key}" data-voice-has="${m.circle.url ? 1 : 0}">
           <button class="msg__voice-play" aria-label="Пауза">${ICON('circle', 15)}</button>
           <div class="msg__wave">${waveBars(m.circle.dur + 3)}</div>
           <span class="msg__voice-dur">видео ${fmtDur(m.circle.dur)}</span></div>`
@@ -814,6 +814,14 @@ function nameColor(name) {
   return palette[hsum % palette.length];
 }
 
+/* Адрес записи держим в данных, а не в разметке: он весит десятки килобайт. */
+function адресЗаписи(ключ) {
+  if (!ключ || ключ[0] !== 'm') return '';
+  const м = (myMsgs[cvChatId] || [])[Number(ключ.slice(1))];
+  if (!м) return '';
+  return (м.voice && м.voice.url) || (м.circle && м.circle.url) || '';
+}
+
 function renderChatMsgs() {
   const data = CHAT_MSGS[cvChatId] || { msgs: [] };
   const mine = myMsgs[cvChatId] || [];
@@ -823,7 +831,8 @@ function renderChatMsgs() {
   bindLongPress();
   $$('#cvMsgs .msg__voice-play').forEach((b) => b.addEventListener('click', (e) => {
     e.stopPropagation();
-    const url = b.closest('.msg__voice').dataset.voice;
+    const узел = b.closest('.msg__voice');
+    const url = адресЗаписи(узел.dataset.voiceKey);
     if (url) new Audio(url).play().catch(() => toast('Не удалось воспроизвести'));
     else toast('Демо-запись: реальный звук — на телефоне (нужен доступ к микрофону)');
   }));
@@ -2025,7 +2034,23 @@ function initVoice() {
     if (rec.media && rec.media.state !== 'inactive') {
       rec.media.onstop = () => {
         rec.media.stream.getTracks().forEach((t) => t.stop());
-        done(URL.createObjectURL(new Blob(rec.chunks)));
+        // Тип обязателен: без него браузер не понимает, что это звук,
+        // и запись не проигрывается ни из ссылки, ни из данных.
+        const тип = (rec.media && rec.media.mimeType)
+          || (voiceMode === 'audio' ? 'audio/webm' : 'video/webm');
+        const кусок = new Blob(rec.chunks, { type: тип });
+        // Ссылка blob: живёт до перезагрузки страницы, поэтому запись
+        // переводим в данные и кладём в сообщение целиком. Слишком длинную
+        // не сохраняем: память браузера маленькая, честнее сказать об этом.
+        if (кусок.size > 700 * 1024) {
+          toast('Запись длинная, она останется только до перезапуска');
+          done(URL.createObjectURL(кусок));
+          return;
+        }
+        const чтец = new FileReader();
+        чтец.onerror = () => done(URL.createObjectURL(кусок));
+        чтец.onload = () => done(чтец.result);
+        чтец.readAsDataURL(кусок);
       };
       rec.media.stop();
     } else done(null);
@@ -2087,12 +2112,14 @@ function сохранитьСообщения() {
     let выбросили = false;
     Object.keys(myMsgs).forEach((чат) => {
       if (выбросили) return;
-      const i = (myMsgs[чат] || []).findIndex((м) => м && м.photo);
+      const i = (myMsgs[чат] || []).findIndex((м) => м && (м.photo
+        || (м.voice && м.voice.url && м.voice.url.length > 1000)
+        || (м.circle && м.circle.url && м.circle.url.length > 1000)));
       if (i >= 0) { myMsgs[чат].splice(i, 1); выбросили = true; }
     });
     if (!выбросили) break;
   }
-  toast('Память телефона заполнена, старые снимки в переписке убраны');
+  toast('Память телефона заполнена, старые снимки и записи в переписке убраны');
   return false;
 }
 
