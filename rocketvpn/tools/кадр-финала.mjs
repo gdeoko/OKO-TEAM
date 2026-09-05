@@ -27,7 +27,7 @@ await стр.waitForFunction(
   null, { timeout: 240000 }).catch(() => {});
 await стр.waitForTimeout(1500);
 
-console.log("доля  глаз x,y,z             поле  корабль виден  экран л,в,п,н        доля кадра");
+console.log("доля  глаз x,y,z             поле  виден  низ..верх       экран л,в,п,н        доля");
 for (const д of доли) {
   await стр.evaluate((доля) => window.RV_MOTION["кПунктy"]("финал", доля), д);
   await стр.waitForTimeout(900);
@@ -66,7 +66,8 @@ for (const д of доли) {
     д.toFixed(2).padEnd(5),
     (r.гx.toFixed(1) + "," + r.гy.toFixed(1) + "," + r.гz.toFixed(1)).padEnd(21),
     r.поле.toFixed(0).padStart(4),
-    String(r.виден).padStart(7),
+    String(r.виден).padStart(6),
+    ((r.низ == null ? "?" : r.низ) + ".." + (r.верх == null ? "?" : r.верх)).padStart(14),
     r.нет ? r.нет : (r.экран.join(",").padStart(22) + "  " + r.высотаВКадре +
                     (r.заСпиной ? "  за спиной " + r.заСпиной : ""))
   );
