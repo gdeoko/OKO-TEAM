@@ -74,6 +74,21 @@
 
   /* ── Куски GLSL, общие для всех материалов ─────────────────── */
   var ОБЩЕЕ_GLSL = [
+    /* ── ПЛОТНОСТЬ ТУМАНА ИДЁТ ЗА РАССТОЯНИЕМ ДО ПРЕДМЕТА ────────
+       Владелец: «на мобильной версии весь сайт затемнённый, сделать
+       как на ПК по текстурам и освещению».
+
+       Замер средней яркости кадра: монитор 56.9, телефон 42.2. Свет и
+       материалы одни и те же, разное только одно - РАССТОЯНИЕ. Кадр
+       телефона уже, и чтобы дом занял свою долю, камера стоит в 31.7
+       единицы против 20.2 на мониторе. При туманe, заданном числом на
+       единицу пути, дальний план телефона съедало мглой вдвое сильнее,
+       и вся нижняя половина кадра уходила в темень.
+
+       Плотность теперь задаётся снаружи и считается от рабочей
+       дистанции: полная мгла на четырёх её длинах. Тогда на обоих
+       устройствах туман съедает ОДНУ И ТУ ЖЕ долю глубины сцены. */
+    "uniform float uTumanK;",
     "uniform vec3 uColor1;",
     "uniform vec3 uColor2;",
     "uniform vec2 uResolution;",
@@ -94,7 +109,7 @@
        чертой поперёк кадра. Второй - владелец: «нету тумана свечений,
        как у igloo». У них горизонт растворяется в мгле полностью, и
        именно она делает пейзаж бесконечным. */
-    "  float distanceFog = clamp(-mvz * 0.011, 0.0, 1.0);",
+    "  float distanceFog = clamp(-mvz * uTumanK, 0.0, 1.0);",
     "  float heightFog = clamp(1.0 - wy * 0.35, 0.0, 1.0) * 0.25;",
     "  return mix(color, nebo(), clamp(distanceFog + heightFog, 0.0, 1.0));",
     "}",
@@ -622,6 +637,10 @@
     ГРАД.uColor1.value = цвет(ПАЛ.зенит);
     ГРАД.uColor2.value = цвет(ПАЛ.горизонт);
     ГРАД.uResolution.value = new T.Vector2(1, 1);
+    /* Плотность тумана общая для всех материалов Луны: она приходит
+       снаружи и обязана быть одной, иначе грунт, небо и дымка разойдутся
+       по глубине. */
+    if (!ГРАД.uTumanK) ГРАД.uTumanK = { value: 0.011 };
 
     М.корень = new T.Group();
     М.корень.name = "луна";
@@ -632,7 +651,7 @@
 
     /* Небо. */
     М.небоМат = new T.ShaderMaterial({
-      uniforms: { uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
+      uniforms: { uTumanK: ГРАД.uTumanK, uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
                   uTime: ГРАД.uTime, uDen: ГРАД.uDen, uAlpha: { value: 1 } },
       vertexShader: В_НЕБО, fragmentShader: Ф_НЕБО,
       side: T.BackSide, depthWrite: false, transparent: true, fog: false
@@ -652,6 +671,7 @@
     var фактура = реголит();
     М.грунтМат = new T.ShaderMaterial({
       uniforms: {
+        uTumanK: ГРАД.uTumanK,
         uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
         uTime: ГРАД.uTime, uDen: ГРАД.uDen,
         uGrunt: { value: цвет(ПАЛ.грунт) }, uSklon: { value: цвет(ПАЛ.склон) },
@@ -670,7 +690,7 @@
 
     /* Земля. */
     М.земляМат = new T.ShaderMaterial({
-      uniforms: { uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
+      uniforms: { uTumanK: ГРАД.uTumanK, uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
                   uTime: ГРАД.uTime, uDen: ГРАД.uDen,
                   tEarth: { value: null }, uEst: { value: 0 } },
       vertexShader: В_ЗЕМЛЯ, fragmentShader: Ф_ЗЕМЛЯ, fog: false
@@ -750,7 +770,7 @@
 
     /* Дымка свечения: кольцо над грунтом вокруг станции. */
     М.дымкаМат = new T.ShaderMaterial({
-      uniforms: { uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
+      uniforms: { uTumanK: ГРАД.uTumanK, uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
                   uTime: ГРАД.uTime, uDen: ГРАД.uDen, tWind: { value: шум },
                   uCol: { value: цвет(ПАЛ.дымка) }, uSila: { value: ПАЛ.дымкаСила * 1.6 },
                   uPoryv: { value: 0 } },
@@ -795,7 +815,7 @@
       гео.setAttribute("position", new T.BufferAttribute(поз, 3));
       гео.setAttribute("aSeed", new T.BufferAttribute(семя, 1));
       М.пыльМат = new T.ShaderMaterial({
-        uniforms: { uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
+        uniforms: { uTumanK: ГРАД.uTumanK, uColor1: ГРАД.uColor1, uColor2: ГРАД.uColor2, uResolution: ГРАД.uResolution,
                     uTime: ГРАД.uTime, uDen: ГРАД.uDen, uH: { value: 800 },
                     uPoryv: { value: 0 }, uRadius: { value: Rп },
                     uCol: { value: цвет(ПАЛ.пыль) }, uSila: { value: ПАЛ.пыльСила } },
@@ -915,6 +935,13 @@
      поставить НА грунт.
 
      Ставит тот акт, который знает своё место в мире. */
+  /* Плотность тумана ставит тот, кто знает рабочую дистанцию сцены. */
+  function туман(k) {
+    if (!ГРАД || !ГРАД.uTumanK || !(k > 0)) return false;
+    ГРАД.uTumanK.value = k;
+    return true;
+  }
+
   function поставить(x, y, z) {
     if (!М.корень) return false;
     М.корень.position.set(x || 0, y || 0, z || 0);
@@ -937,6 +964,7 @@
     "собрать": собрать,
     "нужна": нужна,
     "поставить": поставить,
+    "туман": туман,
     "подземка": подземка,
     "кадр": кадр,
     "тень": тень,

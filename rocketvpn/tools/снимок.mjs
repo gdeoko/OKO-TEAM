@@ -31,6 +31,9 @@ const долиАрг = (process.argv[3] || "0.45").split(",").map(Number);
 fs.mkdirSync(КУДА, { recursive: true });
 
 const бр = await chromium.launch({
+  /* Браузер берём предустановленный: версия playwright в окружении
+     новее, чем скачанная сборка, и своей она не находит. */
+  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome", 
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--disable-lcd-text", "--force-device-scale-factor=1"]
 });

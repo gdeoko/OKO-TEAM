@@ -19,6 +19,9 @@ const ТЕЛ = { width: 390, height: 844 };
 const какой = process.argv[2] || "оба";
 
 const бр = await chromium.launch({
+  /* Браузер берём предустановленный: версия playwright в окружении
+     новее, чем скачанная сборка, и своей она не находит. */
+  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome", 
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--force-device-scale-factor=1"]
 });

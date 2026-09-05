@@ -74,9 +74,17 @@
           '<span class="rv-внутрь-уголки"></span>Закрыть</button>' +
       '</div>' +
       '<div class="rv-внутрь-лист">' +
-        '<p class="rv-внутрь-над">////// Что это</p>' +
+        '<p class="rv-внутрь-над">////// Что это даёт</p>' +
         '<h3 class="rv-внутрь-заг"></h3>' +
         '<p class="rv-внутрь-текст"></p>' +
+        /* Действия внизу описания - их набор. У igloo под текстом стоит
+           «/// Discover» и ряд ссылок; здесь то же место занимают два
+           живых действия сервиса. */
+        '<p class="rv-внутрь-над rv-внутрь-над2">/// Дальше</p>' +
+        '<p class="rv-внутрь-кнопки">' +
+          '<a class="rv-кн rv-кн-гл" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">Забрать три дня без карты</a>' +
+          '<a class="rv-кн" href="https://t.me/rocketvpnnews" target="_blank" rel="noopener">Канал новостей</a>' +
+        '</p>' +
       '</div>';
     d.body.appendChild(УЗЕЛ);
     ЗАГ = УЗЕЛ.querySelector(".rv-внутрь-заг");
