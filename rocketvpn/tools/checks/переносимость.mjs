@@ -90,11 +90,24 @@ for (const имя of файлы) {
         беды.push(`${имя}:${i + 1} background-clip: text без -webkit-: в Safari текст пропадёт`);
       }
     }
-    /* Запасной ход у requestIdleCallback ищем в тех же строках рядом:
-       и «typeof ... === function», и тернарник по самому имени. */
-    if (/\brequestIdleCallback\s*\(/.test(с) &&
-        !рядом(i, "typeof") && !/\?[\s\S]*:/.test(строки.slice(Math.max(0, i - 2), i + 1).join(""))) {
-      беды.push(`${имя}:${i + 1} requestIdleCallback без запасного хода: в Safari до 17 модуль упадёт`);
+    /* Запасной ход у requestIdleCallback. Способов написать его три, и
+       проверка обязана знать все три, иначе она краснеет на РАБОЧЕМ коде
+       и толкает переписывать его под себя:
+         · typeof g.requestIdleCallback === "function"
+         · g.requestIdleCallback ? … : …
+         · if (g.requestIdleCallback) … else setTimeout(…)
+       Третий и ловился мимо: страховка в rv-коридор.js стояла в той же
+       строке, что и вызов, и проверка честно докладывала о беде,
+       которой нет. Признак страховки один - имя упомянуто ОТДЕЛЬНО от
+       вызова, то есть без скобки следом. */
+    if (/\brequestIdleCallback\s*\(/.test(с)) {
+      const окрест = строки.slice(Math.max(0, i - 3), i + 2).join("\n");
+      const естьСтраховка = окрест.includes("typeof") ||
+        /\?[\s\S]*:/.test(окрест) ||
+        /requestIdleCallback\s*[)&|?]/.test(окрест);
+      if (!естьСтраховка) {
+        беды.push(`${имя}:${i + 1} requestIdleCallback без запасного хода: в Safari до 17 модуль упадёт`);
+      }
     }
     for (const ход of ["structuredClone(", "Object.hasOwn(", ".replaceAll("]) {
       if (с.includes(ход)) {
