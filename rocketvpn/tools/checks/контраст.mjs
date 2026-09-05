@@ -63,10 +63,41 @@ for (const э of [ПК, ТЕЛЕФОН]) {
       const из = [];
       const узлы = а.querySelectorAll(".rv-слой .rv-над, .rv-слой .rv-заг, " +
         ".rv-слой .rv-абз, .rv-слой .rv-сноска, .rv-слой b, .rv-слой span, .rv-слой u");
+      /* ── СПРЯТАН ЛИ УЗЕЛ ОБРЕЗКОЙ У ПРЕДКА ───────────────────────
+         Когда слова подняты в объём (признак `рв-слова-в-сцене`),
+         разметка НЕ удаляется - её читают поисковик и голосовой
+         помощник. Прячется она приёмом «для скринридера»: предку
+         ставится размер в одну точку, overflow hidden и clip-path
+         inset(50%).
+
+         Свой размер такого предка проверка отсеивала (меньше двадцати
+         точек в ширину), а вот его ДЕТЕЙ - нет: getBoundingClientRect
+         отдаёт разметочный прямоугольник, и `b` или `span` внутри
+         обрезанной коробки честно докладывает свои двести точек, хотя
+         на экране его нет ни одной.
+
+         Из-за этого проверка набирала полсотни «промахов» по тексту,
+         которого человек не видит, и краснела на здоровом сайте.
+         Настоящие слова этих актов рисует сцена, и меряться должны
+         они, а не невидимая подложка для поисковика. */
+      const обрезан = (у) => {
+        let п = у.parentElement;
+        while (п && п !== document.body) {
+          const с = getComputedStyle(п);
+          const r = п.getBoundingClientRect();
+          const режет = с.overflow === "hidden" || с.overflow === "clip" ||
+                        с.overflowX === "hidden" || с.overflowY === "hidden";
+          if (режет && (r.width <= 2 || r.height <= 2)) return true;
+          if (с.clipPath && с.clipPath.indexOf("inset(50%") === 0) return true;
+          п = п.parentElement;
+        }
+        return false;
+      };
       for (const у of узлы) {
         const с = getComputedStyle(у);
         if (с.display === "none" || с.visibility === "hidden") continue;
         if (parseFloat(с.opacity) < 0.9) continue;
+        if (обрезан(у)) continue;
         const r = у.getBoundingClientRect();
         if (r.width < 20 || r.height < 8) continue;
         if (r.top < 0 || r.bottom > innerHeight || r.left < 0 || r.right > innerWidth) continue;
