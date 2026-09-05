@@ -44,7 +44,7 @@ js = js.split("'assets/img/cards/exam.jpg'").join('(__LES_IMG["exam"]||"")');
 js = js.split('return `assets/img/chapters/ch${meta ? meta.bi + 1 : 1}.jpg`;')
        .join('return __CHIMG[meta ? meta.bi + 1 : 1] || "";');
 js = js.split("onerror=\"this.onerror=null;this.src='assets/img/chapters/ch${bi + 1}.jpg'\"")
-       .join("onerror=\"this.onerror=null;this.src='${__CHIMG[bi+1]||\\\"\\\"}'\"");
+       .join("onerror=\"this.onerror=null;this.src='${__CHIMG[bi+1]||''}'\"");
 // Стикеры: карта уже собрана ниже, поправляем шаблон пути
 js = js.split('url: `assets/img/stickers/${key}.jpg`').join('url: (__IMG_STICKERS[key] || "")');
 // dynamic image/sticker maps
@@ -59,8 +59,9 @@ js=preboot+js;
 html=html.split('<link rel="stylesheet" href="assets/css/main.css">').join(`<style>\n${css}\n</style>`);
 // Собираем все теги скриптов приложения в один встроенный блок,
 // чтобы порядок файлов в index.html можно было менять без правки сборщика.
+// Замена только функцией: в коде есть $$ и $&, а в строке замены это спецсимволы.
 html = html.replace(/(?:[ \t]*<script src="assets\/js\/[^"]+"><\/script>\s*)+/,
-  `  <script>\n${js}\n</script>\n`);
+  () => `  <script>\n${js}\n</script>\n`);
 html=html.replace(/<link rel="manifest"[^>]*>/g,'');
 const cssRefs=[...new Set((html.match(/\.\.\/img\/[A-Za-z0-9/_-]*\.(?:jpg|jpeg|png|svg|webp)/g)||[]))];
 for(const rel of cssRefs){ const uri=dataUri('assets/'+rel.slice(3)); if(uri)html=html.split(rel).join(uri); }
