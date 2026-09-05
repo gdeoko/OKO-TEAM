@@ -19,10 +19,10 @@ const DEMO = {
 
   feed: [
     {
-      type: 'lesson', label: 'Новый урок',
-      coverImg: 'assets/img/chapters/ch1.jpg',
+      type: 'lesson', n: 1, label: 'Новый урок',
+      coverImg: 'assets/img/lessons/l1.jpg',
       title: 'Урок 1. Пророчества; почему Господь родился на земле',
-      meta: 'Глава 1 «Жизнь Господа» · видеоурок',
+      meta: 'Глава 1 «Жизнь Господа» · читаем и слушаем',
       progress: 40, likes: 24, comments: 7,
     },
     {
@@ -39,11 +39,11 @@ const DEMO = {
       likes: 41, comments: 3,
     },
     {
-      type: 'event', label: 'Анонс созвона',
-      title: 'Притча о блудном сыне',
-      text: 'Живое занятие с Екатериной. Разбираем одну из самых глубоких притч.',
-      meta: 'Завтра · 18:00 (МСК) · мест осталось: 8/50',
-      likes: 18, comments: 5,
+      type: 'lesson', n: 2, label: 'Следующий урок',
+      coverImg: 'assets/img/lessons/l2.jpg',
+      title: 'Урок 2. Рождение Иоанна Крестителя',
+      meta: 'Глава 1 «Жизнь Господа» · откроется после урока 1',
+      progress: 0, likes: 18, comments: 5,
     },
   ],
 
@@ -182,8 +182,8 @@ const DEMO = {
   ],
 
   children: [
-    { img: 'assets/img/avatars/lion.jpg', name: 'Миша', age: 8, rank: 'Росточек · 220 XP', streak: 12 },
-    { img: 'assets/img/avatars/star.jpg', name: 'Аня', age: 6, rank: 'Зёрнышко · 75 XP', streak: 4 },
+    { img: 'assets/img/avatars/lion.jpg', name: 'Миша', age: 8, rank: 'Росточек · 220 очков', streak: 12 },
+    { img: 'assets/img/avatars/star.jpg', name: 'Аня', age: 6, rank: 'Зёрнышко · 75 очков', streak: 4 },
   ],
 };
 
@@ -243,26 +243,6 @@ function renderStories() {
 
 /* ───────── ПРИГЛАСИТЬ СЕМЬЮ (шеринг) ───────── */
 
-function addCallToCalendar(title, desc) {
-  // Ближайший созвон: завтра в 18:00 по местному времени, длительность 1 час
-  const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(18, 0, 0, 0);
-  const end = new Date(d.getTime() + 60 * 60 * 1000);
-  const fmt = (x) => x.getFullYear() + pad2(x.getMonth() + 1) + pad2(x.getDate()) + 'T' + pad2(x.getHours()) + pad2(x.getMinutes()) + '00';
-  const url = (location && location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'https://metanoya.online';
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Metanoya//Calls//RU', 'BEGIN:VEVENT',
-    'UID:' + fmt(d) + '-metanoya@call', 'DTSTAMP:' + fmt(new Date()), 'DTSTART:' + fmt(d), 'DTEND:' + fmt(end),
-    'SUMMARY:МЕТАНОЙА · ' + title, 'DESCRIPTION:' + desc + '\\nСсылка: ' + url, 'URL:' + url,
-    'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Скоро созвон в Метанойе', 'END:VALARM',
-    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
-  try {
-    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'metanoya-sozvon.ics';
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    toast('Добавили в календарь · напомним за час 🕊');
-  } catch (e) { toast('Созвон завтра в 18:00 — ждём вас!'); }
-}
 function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
 function shareInvite() {
@@ -300,16 +280,22 @@ function feedCard(item, idx) {
     </article>`;
   }
 
+  // Живой прогресс урока, если карточка про урок
+  const ln = item.type === 'lesson' ? (item.n || 1) : 0;
+  const pct = ln ? lessonProgress(ln) : (item.progress || 0);
+  const открыт = ln ? isLessonOpen(ln) : true;
+  const надпись = !открыт ? 'Откроется после предыдущего' : (pct > 0 && pct < 100 ? 'Продолжить' : (pct >= 100 ? 'Пройти ещё раз' : 'Перейти'));
+  const запас = ln ? lessonCoverFallback(ln) : '';
+
   return `<article class="card feed-card">
     <div class="feed-card__type">${item.label}</div>
-    ${item.coverImg ? `<div class="feed-card__cover feed-card__cover--img"><img src="${item.coverImg}" alt="" loading="lazy">${ICON('play', 44, 'feed-card__play')}</div>` : ''}
+    ${item.coverImg ? `<div class="feed-card__cover feed-card__cover--img"><img src="${item.coverImg}" alt="" loading="lazy"${запас ? ` onerror="this.onerror=null;this.src='${запас}'"` : ''}></div>` : ''}
     <div class="feed-card__title">${item.title}</div>
     ${item.text ? `<p class="feed-card__text">${item.text}</p>` : ''}
     ${item.meta ? `<div class="feed-card__meta">${item.meta}</div>` : ''}
-    ${item.progress ? `<div class="progress"><div class="progress__fill" style="width:${item.progress}%"></div></div>
-      <div class="feed-card__meta">Пройдено ${item.progress}%</div>` : ''}
-    ${item.type === 'lesson' ? `<button class="btn btn--primary" style="margin-top:12px" data-act="watch">Смотреть</button>` : ''}
-    ${item.type === 'event' ? `<button class="btn btn--outline" style="margin-top:12px;width:auto" data-act="join">Записаться</button>` : ''}
+    ${pct ? `<div class="progress"><div class="progress__fill" style="width:${pct}%"></div></div>
+      <div class="feed-card__meta">Пройдено ${pct}%</div>` : ''}
+    ${item.type === 'lesson' ? `<button class="btn ${открыт ? 'btn--primary' : 'btn--outline'}" style="margin-top:12px" data-act="watch" data-n="${ln}"${открыт ? '' : ' disabled'}>${надпись}</button>` : ''}
     ${actions}
   </article>`;
 }
@@ -327,13 +313,7 @@ function renderFeed() {
   $$('#feed [data-act="share"]').forEach((el) =>
     el.addEventListener('click', shareInvite));
   $$('#feed [data-act="watch"]').forEach((el) =>
-    el.addEventListener('click', () => openLesson(1)));
-  $$('#feed [data-act="join"]').forEach((el) =>
-    el.addEventListener('click', () => {
-      const card = el.closest('.feed-card');
-      const title = card?.querySelector('.feed-card__title')?.textContent || 'Живое занятие';
-      addCallToCalendar(title, 'Живое занятие в христианской школе Метанойя');
-    }));
+    el.addEventListener('click', () => openLesson(Number(el.dataset.n) || 1)));
 }
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
@@ -364,24 +344,44 @@ function renderChats() {
 /* ───────── РЕНДЕР: УРОКИ ───────── */
 
 function renderLessons() {
-  $('#lessons').innerHTML = DEMO.blocks.map((block, bi) => `
-    <div class="block-title">${block.title} <small>${block.range} · награда: ${block.award}</small></div>
-    ${block.lessons.map((l) => `
-      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''} ${l.img ? 'lesson-item--img' : ''}" data-state="${l.state}" data-n="${l.n}" data-bi="${bi}">
-        ${l.img
-          ? `<div class="lesson-item__thumb"><img src="${l.img}" alt="" loading="lazy"><span class="lesson-item__badge">${l.cn || l.n}</span></div>`
-          : `<div class="lesson-item__num">${l.exam ? ICON('crown', 20) : (l.cn || l.n)}</div>`}
-        <div class="lesson-item__body">
-          <div class="lesson-item__title">${l.title}</div>
-          ${l.meta ? `<div class="lesson-item__meta">${l.meta}</div>` : ''}
+  applyLessonLocks();
+  $('#lessons').innerHTML = DEMO.blocks.map((block, bi) => {
+    const пройдено = block.lessons.filter((x) => !x.exam && isLessonDone(x.n)).length;
+    const всего = block.lessons.filter((x) => !x.exam).length;
+    return `
+    <div class="block-title">${block.title}
+      <small>${block.range} · награда: ${block.award} · пройдено ${пройдено} из ${всего}</small></div>
+    ${block.lessons.map((l) => {
+      const pct = l.exam ? 0 : lessonProgress(l.n);
+      const закрыт = l.state === 'locked';
+      const готов = l.state === 'done';
+      return `
+      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''} lesson-item--img" data-state="${l.state}" data-n="${l.n}" data-bi="${bi}">
+        <div class="lesson-item__thumb">
+          <img src="${l.exam ? 'assets/img/cards/exam.jpg' : lessonCover(l.n)}" alt="" loading="lazy"
+               onerror="this.onerror=null;this.src='assets/img/chapters/ch${bi + 1}.jpg'">
+          <span class="lesson-item__badge">${l.exam ? ICON('crown', 15) : (l.cn || l.n)}</span>
+          ${закрыт ? '<span class="lesson-item__veil"></span>' : ''}
         </div>
-        ${l.state === 'locked' ? `<div class="lesson-item__lock">${ICON('lock', 18)}</div>` : ''}
-      </button>
-    `).join('')}
-  `).join('');
+        <div class="lesson-item__body">
+          <div class="lesson-item__title">${l.exam ? l.title : 'Урок ' + (l.cn || l.n) + '. ' + l.title}</div>
+          ${готов ? `<div class="lesson-item__meta lesson-item__meta--done">${ICON('check', 13)} Пройден на 100%</div>`
+            : закрыт ? `<div class="lesson-item__meta">Откроется после предыдущего урока</div>`
+            : pct > 0 ? `<div class="progress progress--thin"><div class="progress__fill" style="width:${pct}%"></div></div>`
+            : (l.meta ? `<div class="lesson-item__meta">${l.meta}</div>` : `<div class="lesson-item__meta">Можно проходить</div>`)}
+        </div>
+        ${закрыт ? `<div class="lesson-item__lock">${ICON('lock', 18)}</div>`
+          : готов ? `<div class="lesson-item__ok">${ICON('check', 16)}</div>` : ''}
+      </button>`;
+    }).join('')}`;
+  }).join('');
 
   $$('#lessons .lesson-item').forEach((el) => {
     el.addEventListener('click', () => {
+      if (el.dataset.state === 'locked') {
+        toast('Сначала пройди предыдущий урок до конца');
+        return;
+      }
       const n = Number(el.dataset.n);
       if (Number.isNaN(n)) {
         // экзамен блока — определяем индекс блока по кнопке
@@ -730,14 +730,18 @@ function initPin() {
 
 /* ───────── ЭКРАН ПЕРЕПИСКИ (этап 3, начало) ───────── */
 
+/* Тридцать стикеров в акварельном стиле школы. Картинки, которых ещё нет,
+   мягко отваливаются: на их месте остаётся значок в стиле бренда. */
 const STICKERS = [
-  'candle:assets/img/stickers/candle.jpg',
-  'heart:assets/img/stickers/heart.jpg',
-  'sun:assets/img/stickers/sun.jpg',
-  'bell:assets/img/stickers/bell.jpg',
-  'sparkles:assets/img/stickers/sparkles.jpg',
-  'flame:assets/img/stickers/flame.jpg',
-].map((s) => { const i = s.indexOf(':'); return { key: s.slice(0, i), url: s.slice(i + 1) }; });
+  ['candle', 'Свеча'], ['heart', 'Сердце'], ['sun', 'Солнышко'], ['bell', 'Колокольчик'],
+  ['sparkles', 'Искры'], ['flame', 'Огонёк'], ['dove', 'Голубь'], ['rainbow', 'Радуга'],
+  ['star', 'Звезда'], ['cross', 'Крестик'], ['lamb', 'Ягнёнок'], ['fish', 'Рыбка'],
+  ['bread', 'Хлеб'], ['grapes', 'Виноград'], ['olive', 'Оливковая ветвь'], ['crown', 'Венец'],
+  ['ark', 'Ковчег'], ['boat', 'Лодка'], ['well', 'Колодец'], ['lamp', 'Светильник'],
+  ['seed', 'Зёрнышко'], ['tree', 'Дерево'], ['flower', 'Цветок'], ['butterfly', 'Бабочка'],
+  ['hands', 'Ладони в молитве'], ['gift', 'Подарок'], ['angel', 'Ангел'], ['church', 'Храм'],
+  ['scroll', 'Свиток'], ['shepherd', 'Пастушок'],
+].map(([key, name]) => ({ key, name, url: `assets/img/stickers/${key}.jpg` }));
 
 const CHAT_MSGS = {
   0: { readonly: true, pinned: 'Правила школы: доброта, уважение, поддержка. Пишем с любовью!',
@@ -768,7 +772,7 @@ let cvChatId = null;
 let myMsgs = JSON.parse(localStorage.getItem('mt_msgs2') || '{}');
 
 function msgHtml(m, mine, key) {
-  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
+  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-who="${(m.who || '').replace(/"/g, '&quot;')}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
     ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
     ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="" onerror="this.closest(&quot;.msg&quot;).style.display=&quot;none&quot;">`
       : m.voice ? `<div class="msg__voice" data-voice="${m.voice.url || ''}">
@@ -800,7 +804,7 @@ function renderChatMsgs() {
   const data = CHAT_MSGS[cvChatId] || { msgs: [] };
   const mine = myMsgs[cvChatId] || [];
   $('#cvMsgs').innerHTML =
-    data.msgs.map((m, i) => msgHtml(m, false, 'd' + i)).join('') +
+    data.msgs.map((m, i) => (isBlocked(m.who) ? '' : msgHtml(m, false, 'd' + i))).join('') +
     mine.map((m, i) => msgHtml(m, true, 'm' + i)).join('');
   bindLongPress();
   $$('#cvMsgs .msg__voice-play').forEach((b) => b.addEventListener('click', (e) => {
@@ -836,6 +840,8 @@ function openChatView(i) {
 function cvSendText() {
   const val = $('#cvField').value.trim();
   if (!val) return;
+  const проверка = проверитьСообщение(val);
+  if (!проверка.ок) { toast(проверка.причина); return; }
   const msg = { text: val, time: 'только что' };
   if (replyTo) { msg.quote = replyTo.text; replyTo = null; $('#cvReplyBar')?.remove(); }
   (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
@@ -856,7 +862,8 @@ function initChatView() {
     const panel = $('#cvStickers');
     if (panel.hidden) {
       panel.innerHTML = STICKERS.map((s) =>
-        `<button data-sticker="${s.url}"><img src="${s.url}" alt="${s.key}"></button>`).join('');
+        `<button data-sticker="${s.url}" title="${s.name}" aria-label="Стикер «${s.name}»">
+          <img src="${s.url}" alt="${s.name}" onerror="this.closest('button').classList.add('stk--noimg');this.remove()"></button>`).join('');
       panel.hidden = false;
       $$('#cvStickers [data-sticker]').forEach((b) =>
         b.addEventListener('click', () => {
@@ -987,8 +994,10 @@ function reactsHtml(chatId, msgKey) {
     `<span class="msg__react msg__react--mine"><img src="assets/img/stickers/${k}.jpg" alt="">${n}</span>`).join('')}</div>`;
 }
 
-function openMsgActions(key, mine, text) {
-  maTarget = { key, mine, text };
+function openMsgActions(key, mine, text, who) {
+  maTarget = { key, mine, text, who: who || '' };
+  const safeRow = document.querySelector('.ma__row--safe');
+  if (safeRow) safeRow.hidden = !!mine;   // на свои сообщения не жалуются
   $('#maReactions').innerHTML = REACTIONS.map((k) =>
     `<button data-react="${k}"><img src="assets/img/stickers/${k}.jpg" alt="${k}"></button>`).join('');
   $$('#maReactions [data-react]').forEach((b) =>
@@ -1026,6 +1035,52 @@ function initMsgActions() {
     renderChatMsgs();
     toast('Сообщение удалено');
   });
+
+  $('#maReport')?.addEventListener('click', () => {
+    const жалобы = JSON.parse(localStorage.getItem('mt_reports') || '[]');
+    жалобы.push({ чат: cvChatId, текст: (maTarget.text || '').slice(0, 200), когда: Date.now() });
+    localStorage.setItem('mt_reports', JSON.stringify(жалобы));
+    $('#msgActions').hidden = true;
+    toast('Жалоба ушла Екатерине. Она посмотрит переписку и примет решение');
+  });
+
+  $('#maBlock')?.addEventListener('click', () => {
+    const автор = maTarget.who || 'этот собеседник';
+    blockPerson(автор);
+    $('#msgActions').hidden = true;
+    renderChatMsgs();
+    toast(`${автор} заблокирован. Его сообщения больше не показываем`);
+  });
+}
+
+/* ───────── БЕЗОПАСНОСТЬ ЧАТОВ ─────────
+   Блокировка собеседника, стоп-слова и предупреждение о личной переписке.
+   Все жалобы и блокировки видны Екатерине в её панели. */
+
+function blockedList() { return JSON.parse(localStorage.getItem('mt_blocked') || '[]'); }
+function blockPerson(имя) {
+  const л = blockedList();
+  if (!л.includes(имя)) { л.push(имя); localStorage.setItem('mt_blocked', JSON.stringify(л)); }
+}
+function isBlocked(имя) { return blockedList().includes(имя); }
+
+/* Стоп-слова: грубость и попытки увести ребёнка из школы наружу */
+const СТОП_СЛОВА = [
+  'дурак', 'дура', 'идиот', 'тупой', 'урод', 'ненавижу',
+  'встретимся', 'мой адрес', 'телефон дай', 'приходи один', 'не говори родителям',
+];
+
+function проверитьСообщение(текст) {
+  const t = String(текст || '').toLowerCase();
+  const плохое = СТОП_СЛОВА.find((w) => t.includes(w));
+  if (!плохое) return { ок: true };
+  const детское = ['не говори родителям', 'приходи один', 'мой адрес', 'телефон дай', 'встретимся'].includes(плохое);
+  return {
+    ок: false,
+    причина: детское
+      ? 'В школьных чатах не договариваются о встречах и не просят личные данные. Если такое написали вам, нажмите «Пожаловаться»'
+      : 'Мы в школе говорим друг с другом по-доброму. Перепишите сообщение помягче',
+  };
 }
 
 function showReplyBar() {
@@ -1047,7 +1102,7 @@ function bindLongPress() {
     let timer = null;
     const start = () => {
       timer = setTimeout(() => {
-        openMsgActions(el.dataset.key, el.dataset.mine === '1', el.dataset.text || '');
+        openMsgActions(el.dataset.key, el.dataset.mine === '1', el.dataset.text || '', el.dataset.who || '');
       }, 450);
     };
     const cancel = () => clearTimeout(timer);
@@ -1079,9 +1134,76 @@ function lessonContent(n) {
 
 function lessonStateKey(n) { return 'mt_lesson_' + n; }
 function getLessonState(n) {
-  return JSON.parse(localStorage.getItem(lessonStateKey(n)) || '{"watch":false,"test":false,"hw":false,"done":false}');
+  const st = JSON.parse(localStorage.getItem(lessonStateKey(n)) || '{}');
+  return { read: !!st.read, task: !!st.task, test: !!st.test, hw: !!st.hw, done: !!st.done };
 }
 function saveLessonState(n, st) { localStorage.setItem(lessonStateKey(n), JSON.stringify(st)); }
+
+/* Урок пройден на 100%: прочитан, задание выполнено, тест сдан.
+   Домашнее задание идёт сверх и на замок следующего урока не влияет. */
+function lessonProgress(n) {
+  const st = getLessonState(n);
+  return (st.read ? 34 : 0) + (st.task ? 33 : 0) + (st.test ? 33 : 0);
+}
+function isLessonDone(n) { return lessonProgress(n) >= 100; }
+
+/* Порядок уроков сквозной по всем главам: 1 открыт всегда,
+   каждый следующий открывается, когда предыдущий пройден на 100% */
+function lessonOrder() {
+  const arr = [];
+  DEMO.blocks.forEach((b, bi) => b.lessons.forEach((l) => { if (!l.exam) arr.push({ n: l.n, bi }); }));
+  return arr;
+}
+function isLessonOpen(n) {
+  const order = lessonOrder();
+  const i = order.findIndex((x) => x.n === n);
+  if (i <= 0) return true;
+  return isLessonDone(order[i - 1].n);
+}
+
+/* Картинки урока: своя обложка и иллюстрации по ходу текста.
+   Файла нет — тег снимается, на его месте ничего не остаётся. */
+function lessonCover(n) {
+  const meta = lessonMeta(n);
+  return `assets/img/lessons/l${n}.jpg`;
+  // запасной путь до обложки главы подставляет onerror в разметке
+}
+function lessonCoverFallback(n) {
+  const meta = lessonMeta(n);
+  return `assets/img/chapters/ch${meta ? meta.bi + 1 : 1}.jpg`;
+}
+function lessonPic(n, i) { return `assets/img/lessons/l${n}-${'abc'[i] || 'a'}.jpg`; }
+function lessonAudio(n) { return `assets/audio/lessons/l${n}.mp3`; }
+
+/* Ближайший урок ребёнка: начатый, иначе первый непройденный */
+function nextOpenLesson() {
+  const order = lessonOrder();
+  const начатый = order.find((x) => { const p = lessonProgress(x.n); return p > 0 && p < 100; });
+  if (начатый) return начатый.n;
+  const свежий = order.find((x) => !isLessonDone(x.n) && isLessonOpen(x.n));
+  return свежий ? свежий.n : order[order.length - 1].n;
+}
+
+/* Блок «Сегодня» на главной: какой урок открыт и что с ним делать */
+function renderTodayLesson() {
+  const box = document.getElementById('todayLesson');
+  if (!box) return;
+  const n = nextOpenLesson();
+  const meta = lessonMeta(n);
+  if (!meta) return;
+  const pct = lessonProgress(n);
+  const num = document.getElementById('todayLessonNum');
+  const title = document.getElementById('todayLessonTitle');
+  const cta = document.getElementById('todayLessonCta');
+  const img = document.getElementById('todayLessonImg');
+  if (num) num.textContent = meta.l.cn || n;
+  if (title) title.textContent = meta.l.title;
+  if (cta) cta.textContent = pct > 0 && pct < 100 ? 'Продолжить' : 'Перейти';
+  if (img) {
+    img.onerror = function () { this.onerror = null; this.src = lessonCoverFallback(n); };
+    img.src = lessonCover(n);
+  }
+}
 
 function openLesson(n) {
   currentLesson = Number(n) || 1;
@@ -1099,30 +1221,41 @@ function renderLesson(n) {
   if (!meta) { body.innerHTML = '<div class="card">Урок не найден.</div>'; return; }
   const title = meta.l.title;
   const cn = meta.l.cn || n;
-  const cover = meta.l.img || `assets/img/chapters/ch${meta.bi + 1}.jpg`;
+  const cover = lessonCover(n);
+  const coverAlt = lessonCoverFallback(n);
 
   // Контент ещё не подгружен (для новых уроков — мягкий фолбэк)
   const story = c && c.story ? c.story : ['Материал этого урока скоро появится здесь. А пока можно пройти другие уроки и игры.'];
   const verse = c && c.verse ? c.verse : { text: 'Бог есть любовь, и пребывающий в любви пребывает в Боге', ref: '1 Ин 4:16' };
   const quiz = c && c.quiz ? c.quiz : [];
   const questions = c && c.questions ? c.questions : [];
+  const task = (window.ЗАДАНИЯ && c) ? ЗАДАНИЯ.собрать(n, c) : null;
+
+  // Иллюстрации по ходу текста: после первого и после третьего абзаца
+  const картинка = (i, подпись) => `<figure class="lesson-pic">
+      <img src="${lessonPic(n, i)}" alt="" loading="lazy" onerror="this.closest('.lesson-pic').remove()">
+      ${подпись ? `<figcaption>${подпись}</figcaption>` : ''}</figure>`;
+
+  const рассказ = story.map((p, i) => {
+    const абзац = `<p>${p}</p>`;
+    if (i === 0) return абзац + картинка(0, '');
+    if (i === 2) return абзац + картинка(1, '');
+    return абзац;
+  }).join('');
 
   body.innerHTML = `
-    <div class="feed-card__cover feed-card__cover--img lesson-cover"><img src="${cover}" alt=""></div>
+    <div class="feed-card__cover feed-card__cover--img lesson-cover">
+      <img src="${cover}" alt="" onerror="this.onerror=null;this.src='${coverAlt}'"></div>
     <h1 class="screen-title" style="margin-top:14px">Урок ${cn}. ${title}</h1>
-    <div class="feed-card__meta">${meta.block.title} · для всех возрастов</div>
+    <div class="feed-card__meta">${meta.block.title} · читаем, слушаем, выполняем задание</div>
 
-    <button class="lesson-voice" id="lessonVoice"><span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать вступление голосом Екатерины</button>
+    <button class="lesson-voice" id="lessonVoice" data-src="${lessonAudio(n)}">
+      <span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать урок голосом Екатерины</button>
 
     <div class="lesson-steps" id="lessonSteps">
-      <div class="lstep ${st.watch ? 'done' : ''}" data-step="watch"><i></i>Просмотрено</div>
+      <div class="lstep ${st.read ? 'done' : ''}" data-step="read"><i></i>Прочитано</div>
+      <div class="lstep ${st.task ? 'done' : ''}" data-step="task"><i></i>Задание</div>
       <div class="lstep ${st.test ? 'done' : ''}" data-step="test"><i></i>Тест</div>
-      <div class="lstep ${st.hw ? 'done' : ''}" data-step="hw"><i></i>ДЗ</div>
-    </div>
-
-    <div class="video-stub" id="videoStub" style="background-image:linear-gradient(to top,rgba(20,35,47,.9),rgba(20,35,47,.35)),url('${cover}')">
-      <div class="video-stub__play">${ICON('play', 26)}</div>
-      <div class="video-stub__cap"><b>Видеоурок</b><span>Появится здесь после записи · пока проходите материалы и тест</span></div>
     </div>
 
     ${c && c.intro ? `<div class="card lesson-text lesson-intro"><p>${c.intro}</p></div>` : ''}
@@ -1134,12 +1267,17 @@ function renderLesson(n) {
     </article>
 
     <h2 class="section-title">Детский пересказ</h2>
-    <div class="card lesson-text">${story.map((p) => `<p>${p}</p>`).join('')}</div>
+    <div class="card lesson-text lesson-story">${рассказ}</div>
 
     ${c && c.golden ? `<div class="card lesson-golden">${ICON('sparkle', 18)}<span>${c.golden}</span></div>` : ''}
 
+    <button class="btn btn--outline lesson-read" id="lessonRead">${st.read ? 'Прочитано ✓' : 'Я прочитал урок'}</button>
+
     ${questions.length ? `<h2 class="section-title">Вопросы для беседы</h2>
       <div class="card lesson-text lesson-questions">${questions.map((q, i) => `<div class="lq"><span class="lq__n">${i + 1}</span>${q}</div>`).join('')}</div>` : ''}
+
+    ${task ? `<h2 class="section-title">Задание</h2>
+      <div class="card task-card ${st.task ? 'task-card--done' : ''}" id="lessonTask">${ЗАДАНИЯ.разметка(task)}</div>` : ''}
 
     ${quiz.length ? `<h2 class="section-title">Проверь себя</h2>
       <div class="card" id="lessonTest">
@@ -1157,37 +1295,73 @@ function renderLesson(n) {
     <h2 class="section-title">Домашнее задание</h2>
     <div class="card lesson-text">
       <p>${c && c.parentNote ? c.parentNote : 'Нарисуй вместе с родителями то, что тебе запомнилось из урока, и отправь рисунок Екатерине.'}</p>
-      <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Загрузить фото рисунка</button>
+      <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Прикрепить задание</button>
     </div>
 
-    <button class="btn btn--primary lesson-done" id="lessonDone">${st.done ? 'Урок пройден ✓' : 'Отметить урок пройденным'}</button>
+    <div class="lesson-final" id="lessonFinal"></div>
   `;
 
   hydrateIcons();
-  wireLesson(n, quiz);
+  wireLesson(n, quiz, task);
+  renderLessonFinal(n);
 }
 
-function wireLesson(n, quiz) {
+/* Итог урока: пока не все три шага, честно показываем чего не хватает */
+function renderLessonFinal(n) {
+  const box = document.getElementById('lessonFinal');
+  if (!box) return;
   const st = getLessonState(n);
+  const pct = lessonProgress(n);
+  const нет = [];
+  if (!st.read) нет.push('прочитать урок');
+  if (!st.task) нет.push('выполнить задание');
+  if (!st.test) нет.push('пройти тест');
+
+  if (pct >= 100) {
+    const nextTitle = nextLessonTitle(n);
+    box.innerHTML = `<div class="lesson-final__ok">${ICON('trophy', 22)}
+      <b>Урок пройден на 100%</b>
+      <span>${nextTitle ? 'Открыт следующий урок: «' + nextTitle + '»' : 'Это последний урок главы'}</span></div>`;
+  } else {
+    box.innerHTML = `<div class="lesson-final__wait">
+      <div class="progress"><div class="progress__fill" style="width:${pct}%"></div></div>
+      <span>Пройдено ${pct}%. Осталось: ${нет.join(', ')}</span></div>`;
+  }
+  hydrateIcons();
+}
+
+function wireLesson(n, quiz, task) {
   const syncSteps = () => {
-    $$('#lessonSteps .lstep').forEach((el) => el.classList.toggle('done', !!getLessonState(n)[el.dataset.step]));
+    const s = getLessonState(n);
+    $$('#lessonSteps .lstep').forEach((el) => el.classList.toggle('done', !!s[el.dataset.step]));
+    renderLessonFinal(n);
+    finishLessonIfReady(n);
   };
 
-  $('#videoStub')?.addEventListener('click', () => {
+  const lv = $('#lessonVoice');
+  if (lv) lessonVoiceButton(lv, lv.dataset.src);
+
+  $('#lessonRead')?.addEventListener('click', () => {
     const s = getLessonState(n);
-    if (!s.watch) { s.watch = true; saveLessonState(n, s); syncSteps(); toast('+20 XP за просмотр (видео появится позже)'); }
-    else toast('Видео появится после записи уроков');
+    if (s.read) return;
+    s.read = true; saveLessonState(n, s);
+    $('#lessonRead').textContent = 'Прочитано ✓';
+    addSeeds(2, 'за прочитанный урок');
+    syncSteps();
   });
 
-  const lv = $('#lessonVoice');
-  if (lv) {
-    let lvAudio = null;
-    lv.addEventListener('click', () => {
-      if (!lvAudio) lvAudio = new Audio('assets/audio/lesson-intro.mp3');
-      lv.classList.add('lesson-voice--playing');
-      try { lvAudio.currentTime = 0; lvAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
-      lvAudio.onended = () => lv.classList.remove('lesson-voice--playing');
-    });
+  if (task && window.ЗАДАНИЯ) {
+    const корень = document.querySelector('#lessonTask .task');
+    if (корень) {
+      if (getLessonState(n).task) корень.classList.add('task--done');
+      ЗАДАНИЯ.оживить(корень, task, () => {
+        const s = getLessonState(n);
+        if (s.task) return;
+        s.task = true; saveLessonState(n, s);
+        addSeeds(3, 'за выполненное задание');
+        syncSteps();
+      });
+    }
   }
 
   $('#testCheck')?.addEventListener('click', () => {
@@ -1208,9 +1382,9 @@ function wireLesson(n, quiz) {
     const pct = Math.round(correct / quiz.length * 100);
     if (pct >= 70) {
       res.className = 'test-result pass';
-      res.textContent = `Отлично! ${correct} из ${quiz.length} (${pct}%) — тест пройден, +15 XP${pct === 100 ? ' и +30 XP за 100%!' : ''}`;
+      res.textContent = `Отлично! ${correct} из ${quiz.length} (${pct}%) — тест пройден${pct === 100 ? ', и все ответы верные!' : ''}`;
       const s = getLessonState(n);
-      if (!s.test) { s.test = true; saveLessonState(n, s); syncSteps(); }
+      if (!s.test) { s.test = true; saveLessonState(n, s); addSeeds(3, 'за пройденный тест'); syncSteps(); }
       if (pct === 100 && window.MAGIC) { const r = $('#testCheck').getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
     } else {
       res.className = 'test-result fail';
@@ -1220,26 +1394,61 @@ function wireLesson(n, quiz) {
 
   $('#hwUpload')?.addEventListener('click', () => {
     const s = getLessonState(n); s.hw = true; saveLessonState(n, s); syncSteps();
-    toast('Загрузка рисунка скоро откроется — шаг засчитан');
+    toast('Задание прикреплено — Екатерина увидит его в своей панели');
   });
+}
 
-  $('#lessonDone')?.addEventListener('click', () => {
-    const s = getLessonState(n); s.done = true; saveLessonState(n, s); syncSteps();
-    $('#lessonDone').textContent = 'Урок пройден ✓';
-    // открыть следующий урок в списке
-    const meta = lessonMeta(n);
-    if (meta) {
-      const idx = meta.block.lessons.findIndex((x) => x.n === n);
-      const next = meta.block.lessons[idx + 1];
-      if (next && next.state === 'locked') { next.state = 'open'; renderLessons(); }
+/* Урок закрывается сам, как только собраны все три шага */
+function finishLessonIfReady(n) {
+  const s = getLessonState(n);
+  if (s.done || lessonProgress(n) < 100) return;
+  s.done = true; saveLessonState(n, s);
+
+  const meta = lessonMeta(n);
+  if (meta) {
+    const order = lessonOrder();
+    const i = order.findIndex((x) => x.n === n);
+    const next = order[i + 1];
+    if (next) {
+      const nl = lessonMeta(next.n);
+      if (nl && nl.l.state === 'locked') nl.l.state = 'open';
     }
-    const nextTitle = nextLessonTitle(n);
-    if (window.MAGIC) MAGIC.rewardModal({
-      icon: 'trophy', title: 'Урок пройден!',
-      subtitle: nextTitle ? `Молодец! Открыт следующий урок: «${nextTitle}».` : 'Молодец! Ты прошёл урок.',
-      xp: 20, voice: 'assets/audio/well-done.mp3',
-    });
-    else toast('+20 XP!');
+  }
+  renderLessons();
+  renderTodayLesson();
+
+  const nextTitle = nextLessonTitle(n);
+  addSeeds(5, 'за пройденный урок');
+  if (window.MAGIC) MAGIC.rewardModal({
+    icon: 'trophy', title: 'Урок пройден!',
+    subtitle: nextTitle ? `Молодец! Открыт следующий урок: «${nextTitle}».` : 'Молодец! Ты прошёл урок.',
+    xp: 20, voice: 'assets/audio/well-done.mp3',
+  });
+  else toast('Урок пройден на 100%');
+}
+
+/* Кнопка озвучки: своя запись урока, при её отсутствии общее вступление */
+function lessonVoiceButton(btn, src) {
+  let audio = null;
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('lesson-voice--playing') && audio) {
+      audio.pause(); btn.classList.remove('lesson-voice--playing'); return;
+    }
+    if (!audio) {
+      audio = new Audio(src || 'assets/audio/lesson-intro.mp3');
+      audio.addEventListener('error', () => {
+        if (audio.dataset && audio.dataset.fallback) return;
+        // своей записи ещё нет: включаем общее вступление голосом Екатерины
+        const a2 = new Audio('assets/audio/lesson-intro.mp3');
+        a2.dataset.fallback = '1';
+        audio = a2;
+        a2.onended = () => btn.classList.remove('lesson-voice--playing');
+        a2.play().catch(() => { btn.classList.remove('lesson-voice--playing'); toast('Не удалось воспроизвести'); });
+      });
+    }
+    btn.classList.add('lesson-voice--playing');
+    try { audio.currentTime = 0; audio.play().catch(() => {}); } catch (e) {}
+    audio.onended = () => btn.classList.remove('lesson-voice--playing');
   });
 }
 
@@ -1251,9 +1460,19 @@ function nextLessonTitle(n) {
   return next && !next.exam ? next.title : '';
 }
 
-function unlockAllLessons() {
-  // Витрина: открываем все уроки и проверки для просмотра (прогресс-геймификация — на бэкенде)
-  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => { if (l.state === 'locked') l.state = 'open'; }));
+/* Замки расставляются по реальному прогрессу: открыт первый урок и тот,
+   чей предыдущий пройден на 100%. Экзамен главы открывается, когда пройдены
+   все её уроки. */
+function applyLessonLocks() {
+  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => {
+    if (l.exam) {
+      const все = b.lessons.filter((x) => !x.exam).every((x) => isLessonDone(x.n));
+      l.state = все ? 'open' : 'locked';
+      return;
+    }
+    if (isLessonDone(l.n)) l.state = 'done';
+    else l.state = isLessonOpen(l.n) ? 'open' : 'locked';
+  }));
 }
 
 function initLesson() {
@@ -1314,7 +1533,9 @@ function renderExam() {
       </div>
     </div>
     <div class="card" id="examQuiz">
-      ${questions.map((q, qi) => `<div class="q" data-q="${qi}">
+      ${questions.map((q, qi) => `<div class="q q--pic" data-q="${qi}">
+        <figure class="q__pic"><img src="${lessonCover(q.from)}" alt="" loading="lazy"
+          onerror="this.closest('.q__pic').remove()"></figure>
         <div class="q__text">${qi + 1}. ${q.q}</div>
         ${q.opts.map((o, oi) => `<label class="q__opt"><input type="radio" name="ex${qi}" value="${oi}"> ${o}</label>`).join('')}
       </div>`).join('')}
@@ -1600,7 +1821,7 @@ function openChallenge() {
     <div class="card"><div class="q__text" style="margin-bottom:12px">${q.q}</div>
       <div id="chOpts">${q.opts.map((o, oi) => `<button class="fam-opt" data-oi="${oi}">${o}</button>`).join('')}</div>
       <div class="test-result" id="chResult" hidden></div></div>` : ''}
-    <button class="btn btn--primary" id="chClaim" style="width:100%;margin-top:16px" ${doneToday ? 'disabled' : ''}>${doneToday ? 'Вызов дня выполнен ✓' : 'Отметить выполненным · +15 XP'}</button>`;
+    <button class="btn btn--primary" id="chClaim" style="width:100%;margin-top:16px" ${doneToday ? 'disabled' : ''}>${doneToday ? 'Вызов дня выполнен ✓' : 'Отметить выполненным · +15 очков'}</button>`;
   hydrateIcons();
   if (q) $$('#chOpts .fam-opt').forEach((el) => el.addEventListener('click', () => {
     $$('#chOpts .fam-opt').forEach((b, i) => { b.disabled = true; if (i === q.answer) b.classList.add('fam-opt--right'); else if (b === el) b.classList.add('fam-opt--wrong'); });
@@ -1613,7 +1834,7 @@ function openChallenge() {
     if (localStorage.getItem('mt_challenge_date') === todayKey()) return;
     localStorage.setItem('mt_challenge_date', todayKey());
     if (window.MAGIC) MAGIC.rewardModal({ icon: 'trophy', title: 'Вызов дня выполнен!', subtitle: 'Возвращайся завтра — новый вызов уже ждёт.', xp: 15 });
-    else toast('+15 XP!');
+    else toast('+15 очков!');
     setTimeout(openGamesHub, 400);
   });
   window.scrollTo({ top: 0 });
@@ -1893,36 +2114,6 @@ function initUserCard() {
 
 /* ───────── РАСПИСАНИЕ СОЗВОНОВ ───────── */
 
-const EVENTS = [
-  { title: 'Притча о блудном сыне', when: 'Завтра · 18:00 (МСК)', seats: 8, total: 50 },
-  { title: 'Знакомство со школой для новых семей', when: 'Суббота · 12:00 (МСК)', seats: 23, total: 50 },
-];
-let myEvents = JSON.parse(localStorage.getItem('mt_events') || '[]');
-
-function renderSchedule() {
-  const box = $('#schedule');
-  if (!box) return;
-  box.innerHTML = EVENTS.map((ev, i) => {
-    const joined = myEvents.includes(i);
-    return `<div class="ev card">
-      <div class="ev__icon">${ICON('video', 22)}</div>
-      <div class="ev__body">
-        <div class="ev__title">${ev.title}</div>
-        <div class="ev__meta">${ICON('clock', 12)} ${ev.when} · мест: ${ev.seats - (joined ? 1 : 0)}/${ev.total}</div>
-      </div>
-      <button class="btn ${joined ? 'btn--outline' : 'btn--primary'} ev__btn" data-ev="${i}">
-        ${joined ? 'Вы записаны' : 'Записаться'}</button>
-    </div>`;
-  }).join('');
-  $$('#schedule [data-ev]').forEach((b) => b.addEventListener('click', () => {
-    const i = Number(b.dataset.ev);
-    if (myEvents.includes(i)) { myEvents = myEvents.filter((x) => x !== i); toast('Запись отменена'); }
-    else { myEvents.push(i); toast('Вы записаны! Напомним за 15 минут до начала'); }
-    localStorage.setItem('mt_events', JSON.stringify(myEvents));
-    renderSchedule();
-  }));
-}
-
 /* ───────── ПОИСК ПО СООБЩЕНИЯМ В ЧАТЕ ───────── */
 
 function initChatSearch() {
@@ -2046,99 +2237,146 @@ function initVerseGame() {
 }
 
 
-/* ───────── МОЙ ХРАМ: растущий SVG (геймификация) ───────── */
+/* ───────── МОЙ ДРУГ: питомец, который растёт вместе с ребёнком ─────────
+   Без раундов и без конца. Кормится зёрнами, зёрна дают уроки, стих дня,
+   добрые дела и мини-игры. Каждый день заглядываешь и заботишься. */
 
-const TEMPLE_STAGES = [
-  'Участок', 'Фундамент', 'Стены', 'Окна', 'Крыша', 'Купол',
-  'Крест', 'Золочение', 'Колокольня', 'Двери', 'Готов!'
-];
-let templeState = JSON.parse(localStorage.getItem('mt_temple') || '{"bricks":34,"decor":[]}');
-if (!templeState.decor) templeState.decor = [];
+const PET_ВИДЫ = {
+  lamb:  { имя: 'Ягнёнок', файл: 'lamb' },
+  dove:  { имя: 'Голубок', файл: 'dove' },
+  lion:  { имя: 'Львёнок', файл: 'lion' },
+};
 
-function templeStageIndex(bricks) {
-  return Math.min(10, Math.floor(bricks / 10)); // 0..10, каждые 10 кирпичей = этап
-}
-
-// Украшения храма — продолжение после 100%
-const TEMPLE_DECOR = [
-  { key: 'garden', icon: 'sprout', name: 'Разбить сад', note: 'Посади вокруг храма живой сад', xp: 30 },
-  { key: 'candles', icon: 'flame', name: 'Зажечь свечи', note: 'Наполни храм тёплым светом', xp: 30 },
-  { key: 'bell', icon: 'church', name: 'Повесить колокол', note: 'Пусть звон созывает на молитву', xp: 40 },
-  { key: 'feast', icon: 'crown', name: 'Праздник освящения', note: 'Собери друзей на большой праздник', xp: 50 },
+const PET_СТАДИИ = [
+  { имя: 'малыш',    порог: 0 },
+  { имя: 'подрос',   порог: 30 },
+  { имя: 'большой',  порог: 70 },
+  { имя: 'сияет',    порог: 100 },
 ];
 
-function templeHeroStage(bricks) {
-  if (bricks >= 100) return 10;
-  if (bricks >= 60) return 6;
-  if (bricks >= 30) return 3;
-  return 0;
+let petState = JSON.parse(localStorage.getItem('mt_pet') || 'null') || {
+  вид: 'lamb', имя: 'Заря', зёрна: 6, сытость: 60, радость: 60, рост: 8,
+  день: '', дневник: [],
+};
+
+function savePet() { localStorage.setItem('mt_pet', JSON.stringify(petState)); }
+
+function petСтадия() {
+  let i = 0;
+  PET_СТАДИИ.forEach((s, k) => { if (petState.рост >= s.порог) i = k; });
+  return i;
 }
 
-function renderTemple(animate) {
-  const bricks = Math.min(100, templeState.bricks);
-  const stage = templeStageIndex(bricks);
-
-  // Красивый визуал: подставляем нужную акварельную иллюстрацию этапа
-  const hs = templeHeroStage(bricks);
-  document.querySelectorAll('#templeHero .temple-hero__img').forEach((im) => {
-    im.classList.toggle('temple-hero__img--on', Number(im.dataset.tstage) === hs);
-  });
-  const hero = document.getElementById('templeHero');
-  if (hero) hero.classList.toggle('temple-hero--complete', bricks >= 100);
-
-  const nm = document.getElementById('templeStageName');
-  if (nm) nm.textContent = bricks >= 100
-    ? 'Храм построен! · «Архитектор веры»'
-    : `Этап ${stage} из 10 · «${TEMPLE_STAGES[stage]}»`;
-  const bar = document.getElementById('templeBar');
-  if (bar) bar.style.width = bricks + '%';
-  const br = document.getElementById('templeBricks');
-  if (br) br.textContent = `${bricks} кирпичиков из 100`;
-
-  const btn = document.getElementById('templeBrick');
-  if (btn) btn.style.display = bricks >= 100 ? 'none' : '';
-
-  renderTempleDecor();
+function petКартинка() {
+  const в = PET_ВИДЫ[petState.вид] || PET_ВИДЫ.lamb;
+  return `assets/img/pet/${в.файл}-${petСтадия() + 1}.jpg`;
 }
 
-function renderTempleDecor() {
-  const wrap = document.getElementById('templeNext');
-  if (!wrap) return;
-  const done = templeState.bricks >= 100;
-  wrap.hidden = !done;
-  if (!done) return;
-  const grid = document.getElementById('templeDecor');
-  if (grid) {
-    grid.innerHTML = TEMPLE_DECOR.map((d) => {
-      const ok = templeState.decor.includes(d.key);
-      return `<button class="tdecor ${ok ? 'tdecor--done' : ''}" data-decor="${d.key}">
-        <span class="tdecor__ic">${ICON(d.icon, 20)}</span>
-        <span class="tdecor__body"><span class="tdecor__name">${d.name}</span><span class="tdecor__note">${d.note}</span></span>
-        <span class="tdecor__xp">${ok ? '✓' : '+' + d.xp}</span>
-      </button>`;
-    }).join('');
-    grid.querySelectorAll('[data-decor]').forEach((b) => b.addEventListener('click', () => addTempleDecor(b.dataset.decor)));
-  }
-  const allDone = TEMPLE_DECOR.every((d) => templeState.decor.includes(d.key));
-  const note = document.getElementById('templeDecorDone');
-  if (note) note.hidden = !allDone;
+function petНастроение() {
+  if (petState.сытость < 25) return 'проголодался';
+  if (petState.радость < 25) return 'скучает по тебе';
+  if (petState.сытость > 75 && petState.радость > 75) return 'сыт и весел';
+  return 'всё хорошо';
 }
 
-function addTempleDecor(key) {
-  if (templeState.decor.includes(key)) return;
-  templeState.decor.push(key);
-  localStorage.setItem('mt_temple', JSON.stringify(templeState));
-  const d = TEMPLE_DECOR.find((x) => x.key === key);
-  renderTempleDecor();
-  if (window.MAGIC) {
-    const el = document.querySelector(`[data-decor="${key}"]`);
-    if (el) { const r = el.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+/* Зёрна начисляются за всё полезное в приложении */
+function addSeeds(n, за) {
+  petState.зёрна += n;
+  petДневник(`+${n} ${склонениеЗёрен(n)} ${за}`);
+  savePet();
+  renderPet();
+  renderPetTile();
+  toast(`+${n} ${склонениеЗёрен(n)} для друга`);
+}
+
+function склонениеЗёрен(n) {
+  const д = n % 10, дд = n % 100;
+  if (дд >= 11 && дд <= 14) return 'зёрен';
+  if (д === 1) return 'зерно';
+  if (д >= 2 && д <= 4) return 'зерна';
+  return 'зёрен';
+}
+
+function petДневник(строка) {
+  const д = new Date();
+  const дд = (n) => (n < 10 ? '0' + n : '' + n);
+  petState.дневник = petState.дневник || [];
+  petState.дневник.unshift({ т: строка, д: дд(д.getDate()) + '.' + дд(д.getMonth() + 1) });
+  petState.дневник = petState.дневник.slice(0, 12);
+}
+
+/* Каждый новый день друг немного голодает и скучает: есть ради чего заходить */
+function petНовыйДень() {
+  const сегодня = todayKey();
+  if (petState.день === сегодня) return;
+  if (petState.день) {
+    petState.сытость = Math.max(0, petState.сытость - 25);
+    petState.радость = Math.max(0, petState.радость - 20);
   }
-  toast(`${d.name} · +${d.xp} XP`);
-  if (TEMPLE_DECOR.every((x) => templeState.decor.includes(x.key)) && window.MAGIC) {
-    setTimeout(() => MAGIC.rewardModal({ icon: 'crown', title: 'Храм освящён!',
-      subtitle: 'Ты украсил свой храм и наполнил его светом. Значок «Хранитель храма» твой!' }), 500);
+  petState.день = сегодня;
+  petState.зёрна += 2;
+  petДневник('+2 зерна за новый день вместе');
+  savePet();
+}
+
+function renderPet() {
+  const img = document.getElementById('petImg');
+  if (img) { img.onerror = function () { this.style.display = 'none'; }; img.src = petКартинка(); }
+  const имя = document.getElementById('petName');
+  if (имя) имя.textContent = petState.имя;
+  const mood = document.getElementById('petMood');
+  if (mood) mood.textContent = petНастроение();
+  const seeds = document.getElementById('petSeeds');
+  if (seeds) seeds.textContent = petState.зёрна;
+  const bar = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, v)) + '%'; };
+  bar('petFedBar', petState.сытость);
+  bar('petJoyBar', petState.радость);
+  bar('petGrowBar', petState.рост);
+
+  const diary = document.getElementById('petDiary');
+  if (diary) {
+    const записи = petState.дневник || [];
+    diary.innerHTML = записи.length
+      ? записи.map((з) => `<div class="pdiary"><span class="pdiary__d">${з.д}</span><span>${з.т}</span></div>`).join('')
+      : '<div class="pdiary pdiary--empty">Тут появится всё, что вы делали вместе</div>';
   }
+}
+
+function renderPetTile() {
+  const img = document.getElementById('petTileImg');
+  if (img) { img.onerror = function () { this.style.display = 'none'; }; img.src = petКартинка(); }
+  const st = document.getElementById('petTileStage');
+  if (st) st.innerHTML = `${PET_ВИДЫ[petState.вид].имя} ${petState.имя} · ${petНастроение()} <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span>`;
+  const bar = document.getElementById('petTileBar');
+  if (bar) bar.style.width = Math.min(100, petState.рост) + '%';
+  const note = document.getElementById('petTileNote');
+  if (note) note.textContent = petState.зёрна > 0
+    ? `У тебя ${petState.зёрна} ${склонениеЗёрен(petState.зёрна)}: покорми и поиграй`
+    : 'Проходи уроки и игры, чтобы собрать зёрна';
+  hydrateIcons();
+}
+
+function petРастёт(на) {
+  const было = petСтадия();
+  petState.рост = Math.min(100, petState.рост + на);
+  savePet();
+  const стало = petСтадия();
+  if (стало > было && window.MAGIC) {
+    MAGIC.rewardModal({
+      icon: 'sprout', title: `${petState.имя} подрос!`,
+      subtitle: `Теперь твой друг ${PET_СТАДИИ[стало].имя}. Ты заботишься о нём каждый день, и это видно.`,
+    });
+  }
+}
+
+function openPetScreen() {
+  petНовыйДень();
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'pet'));
+  $('#nav').style.display = 'none';
+  setBackLabel('petBack');
+  renderPet();
+  renderGhub('#petGames');
+  window.scrollTo({ top: 0 });
 }
 
 function setBackLabel(id) {
@@ -2146,97 +2384,136 @@ function setBackLabel(id) {
   if (b) { b.innerHTML = `<span data-icon="back" data-size="18"></span> ${gameOpener === 'games' ? 'К играм' : 'Профиль ребёнка'}`; hydrateIcons(); }
 }
 
-function openTempleScreen() {
-  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'temple'));
-  $('#nav').style.display = 'none';
-  setBackLabel('templeBack');
-  requestAnimationFrame(() => renderTemple(true));
-  window.scrollTo({ top: 0 });
+
+/* Куда возвращает стрелка «назад»: в профиль ребёнка, если открывали оттуда */
+function backToWhereOpened() {
+  if (gameOpener === 'child') { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); return; }
+  if (gameOpener === 'games') { openGamesHub(); return; }
+  $('#nav').style.display = ''; switchTab('profile');
 }
 
-function initTemple() {
-  $('#openTemple')?.addEventListener('click', () => { gameOpener = 'child'; openTempleScreen(); });
-  $('#templeBack')?.addEventListener('click', () => {
+function initPet() {
+  petНовыйДень();
+  renderPetTile();
+
+  $('#openPet')?.addEventListener('click', () => { gameOpener = 'child'; openPetScreen(); });
+  $('#petBack')?.addEventListener('click', () => {
     if (gameOpener === 'games') { openGamesHub(); return; }
     $('#nav').style.display = 'none';
     openChild(DEMO.children[0]);
   });
-  $('#templeBrick')?.addEventListener('click', () => {
-    const before = templeStageIndex(templeState.bricks);
-    templeState.bricks = Math.min(100, templeState.bricks + 4);
-    localStorage.setItem('mt_temple', JSON.stringify(templeState));
-    renderTemple(true);
-    const after = templeStageIndex(templeState.bricks);
-    if (templeState.bricks >= 100 && window.MAGIC) {
-      const r = document.getElementById('templeHero').getBoundingClientRect();
-      MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 2);
-      setTimeout(() => MAGIC.rewardModal({
-        icon: 'church', title: 'Храм построен!',
-        subtitle: 'Ты получил значок «Архитектор веры». Теперь укрась свой храм — путь продолжается!',
-      }), 400);
-    } else if (after > before) {
-      toast(`Новый этап: «${TEMPLE_STAGES[after]}»!`);
-    } else toast('+4 кирпичика');
+
+  $('#petFeed')?.addEventListener('click', () => {
+    if (petState.зёрна < 1) return toast('Зёрна кончились. Пройди урок или сыграй в игру');
+    petState.зёрна--;
+    petState.сытость = Math.min(100, petState.сытость + 12);
+    petДневник(`${petState.имя} поел`);
+    petРастёт(1);
+    savePet(); renderPet(); renderPetTile();
+    if (petState.сытость >= 100) toast(`${petState.имя} наелся и довольно жмурится`);
+  });
+
+  $('#petPlay')?.addEventListener('click', () => {
+    petState.радость = Math.min(100, petState.радость + 15);
+    petДневник(`играли вместе`);
+    petРастёт(1);
+    savePet(); renderPet(); renderPetTile();
+    const g = GAMES[Math.floor(Math.random() * GAMES.length)];
+    toast(`${petState.имя} зовёт играть: «${g.name}»`);
+    setTimeout(() => openGame(g.key), 600);
+  });
+
+  $('#petPray')?.addEventListener('click', () => {
+    petState.радость = Math.min(100, petState.радость + 10);
+    petДневник('помолились вместе');
+    petРастёт(2);
+    savePet(); renderPet(); renderPetTile();
+    if (window.MAGIC) MAGIC.rewardModal({
+      icon: 'dove', title: 'Вы помолились вместе',
+      subtitle: 'Господи, спасибо за этот день и за друга рядом. Храни нашу семью. Аминь.',
+      voice: 'assets/audio/well-done.mp3',
+    });
+    else toast('Помолились вместе 🕊');
+  });
+
+  $('#petRename')?.addEventListener('click', () => {
+    const имя = prompt('Как зовут твоего друга?', petState.имя);
+    if (имя && имя.trim()) {
+      petState.имя = имя.trim().slice(0, 16);
+      petДневник('теперь его зовут ' + petState.имя);
+      savePet(); renderPet(); renderPetTile();
+    }
   });
 }
 
+/* ───────── МУЗЫКА В ИГРАХ ───────── */
 
-
-
+let gameMusic = null;
+function startGameMusic() {
+  if (localStorage.getItem('mt_music_off') === '1') return;
+  try {
+    if (!gameMusic) {
+      gameMusic = new Audio('assets/audio/game-loop.mp3');
+      gameMusic.loop = true;
+      gameMusic.volume = 0.18;
+      gameMusic.addEventListener('error', () => { gameMusic = null; });
+    }
+    if (gameMusic.paused) gameMusic.play().catch(() => {});
+  } catch (e) {}
+}
+function stopGameMusic() {
+  try { if (gameMusic) { gameMusic.pause(); gameMusic.currentTime = 0; } } catch (e) {}
+}
+function toggleGameMusic() {
+  const off = localStorage.getItem('mt_music_off') === '1';
+  localStorage.setItem('mt_music_off', off ? '0' : '1');
+  if (off) startGameMusic(); else stopGameMusic();
+  return !off;
+}
 
 /* ───────── ХАБ ИГР + МЕМОРИ + ВИКТОРИНА (этап 5) ───────── */
 
-const GAMES = {
-  free: [
-    { key: 'verse', icon: 'book', name: 'Собери стих', meta: 'Пазл-слова · +15–30 XP', play: true,
-      desc: 'Стих Писания рассыпался на слова — собери его в правильном порядке.', bullets: ['Тренирует память Писания', 'Три уровня сложности', '+15–30 XP за стих'] },
-    { key: 'memory', icon: 'sparkle', name: 'Библейское мемори', meta: 'Найди пары · +20 XP', play: true,
-      desc: 'Переворачивай карточки и находи пары символов веры.', bullets: ['8 пар: голубь, храм, крест…', 'Звёзды за скорость', '+20 XP'] },
-    { key: 'quiz', icon: 'flame', name: 'Викторина на скорость', meta: '10 вопросов · +10–30 XP', play: true,
-      desc: 'Отвечай на вопросы по Писанию, пока не закончилось время.', bullets: ['Полоска времени 10 сек', 'Бонус за быстрый ответ', '+10–30 XP'] },
-    { key: 'who', icon: 'search', name: 'Кто это?', meta: 'Угадай по подсказкам · +20 XP', play: true,
-      desc: 'Три подсказки об одном библейском герое. Угадаешь с первой — больше очков.', bullets: ['Чем меньше подсказок — тем больше XP', '10 героев', 'Учит запоминать героев веры'] },
-    { key: 'chrono', icon: 'clock', name: 'Хронология', meta: 'Расставь по порядку · +25 XP', play: true,
-      desc: 'Расставь библейские события в правильном порядке — от сотворения мира до Церкви.', bullets: ['Перетаскивай события', 'Понимание всей истории спасения', '+25 XP'] },
-  ],
-  premium: [
-    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: '3 в ряд · +30 XP', premium: true, play: true,
-      desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Больше 100 уровней', 'Растущая сложность', 'Бустеры и комбо'] },
-    { key: 'exodus', icon: 'map', name: 'Исход: собери манну', meta: 'Собери манну · +25 XP', premium: true, play: true,
-      desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Аркада на время', 'Собирай манну за очки', 'История Исхода'] },
-    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Меткий бросок · +25 XP', premium: true, play: true,
-      desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
-    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Пары животных · +30 XP', premium: true, play: true,
-      desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Пары животных', 'История Ноя'] },
-    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Растущий храм', premium: true, play: true,
-      desc: 'Строй великий храм: собирай кирпичики за уроки и игры, этап за этапом.', bullets: ['Стройка храма', 'Растёт с прогрессом', 'Значок «Архитектор веры»'] },
-    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: '5 глав-историй · +35 XP', premium: true, play: true,
-      desc: 'Приключение в пяти главах: пройди путь веры, делая верный выбор.', bullets: ['5 глав-историй', 'Выбор на каждом шаге', 'История пути к святыне'] },
-    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: '6 историй · +очки', premium: true, play: true,
-      desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', '6 историй', 'Внимание к деталям'] },
-    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Верный выбор · +25 XP', premium: true, play: true,
-      desc: 'Жизненные ситуации и выбор: как поступить по совести и по вере?', bullets: ['Разговор о ценностях', 'Нет «проигрыша»', 'Обсуждай с родителями'] },
-    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: '2 игрока · викторина', premium: true, play: true,
-      desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
-  ],
-  daily: [
-    { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true,
-      desc: 'Двигайся по библейской карте — от Сада Эдема через Египет к Земле обетованной.', bullets: ['Твой путь на карте', 'Остановки-истории', 'Растёт с уроками'] },
-    { key: 'temple-b', icon: 'church', name: 'Строитель храма', meta: 'Растущий храм', play: true,
-      desc: 'Собирай кирпичики за уроки и тесты — и твой храм растёт этап за этапом.', bullets: ['10 этапов стройки', 'Награда за постоянство', 'Значок «Архитектор веры»'] },
-    { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP', play: true,
-      desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и +5 XP.', bullets: ['Тёплая привычка', 'Стрик дней подряд', '+5 XP в день'] },
-    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Задание дня · +15 XP', premium: true, play: true,
-      desc: 'Каждый день — новое маленькое задание: стих, доброе дело, молитва, тест.', bullets: ['Задание на каждый день', 'Награды за серии', 'Только в Метанойя+'] },
-    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Понять притчу · +очки', premium: true, play: true,
-      desc: 'Среди похожих вариантов выбери верное, каноническое толкование притчи.', bullets: ['Учит понимать притчи', 'Одобрено педагогом', 'Для старших детей'] },
-  ],
-};
+const GAMES = [
+  { key: 'verse', icon: 'book', name: 'Собери стих', meta: 'Пазл-слова · +15–30 очков', play: true,
+    desc: 'Стих Писания рассыпался на слова — собери его в правильном порядке.', bullets: ['Тренирует память Писания', 'Три уровня сложности', '+15–30 очков за стих'] },
+  { key: 'memory', icon: 'sparkle', name: 'Библейское мемори', meta: 'Найди пары · +20 очков', play: true,
+    desc: 'Переворачивай карточки и находи пары символов веры.', bullets: ['8 пар: голубь, храм, крест…', 'Звёзды за скорость', '+20 очков'] },
+  { key: 'quiz', icon: 'flame', name: 'Викторина на скорость', meta: '10 вопросов · +10–30 очков', play: true,
+    desc: 'Отвечай на вопросы по Писанию, пока не закончилось время.', bullets: ['Полоска времени 10 сек', 'Бонус за быстрый ответ', '+10–30 очков'] },
+  { key: 'who', icon: 'search', name: 'Кто это?', meta: 'Угадай по подсказкам · +20 очков', play: true,
+    desc: 'Три подсказки об одном библейском герое. Угадаешь с первой — больше очков.', bullets: ['Чем меньше подсказок, тем больше очков', '10 героев', 'Учит запоминать героев веры'] },
+  { key: 'chrono', icon: 'clock', name: 'Хронология', meta: 'Расставь по порядку · +25 очков', play: true,
+    desc: 'Расставь библейские события в правильном порядке — от сотворения мира до Церкви.', bullets: ['Перетаскивай события', 'Понимание всей истории спасения', '+25 очков'] },
+  { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: '3 в ряд · уровни', play: true,
+    desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Уровни растут в сложности', 'Бустеры и комбо', 'Играть можно бесконечно'] },
+  { key: 'exodus', icon: 'map', name: 'Исход: собери манну', meta: 'Аркада на время · очки', play: true,
+    desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Аркада на время', 'Собирай манну за очки', 'История Исхода'] },
+  { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Меткий бросок · очки', play: true,
+    desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
+  { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Пары животных · очки', play: true,
+    desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Пары животных', 'История Ноя'] },
+  { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: '5 глав-историй · очки', play: true,
+    desc: 'Приключение в пяти главах: пройди путь веры, делая верный выбор.', bullets: ['5 глав-историй', 'Выбор на каждом шаге', 'История пути к святыне'] },
+  { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: '6 историй · очки', play: true,
+    desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', '6 историй', 'Внимание к деталям'] },
+  { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Верный выбор · очки', play: true,
+    desc: 'Жизненные ситуации и выбор: как поступить по совести и по вере?', bullets: ['Разговор о ценностях', 'Нет «проигрыша»', 'Обсуждай с родителями'] },
+  { key: 'family', icon: 'users', name: 'Семейный квиз', meta: '2 игрока · викторина', play: true,
+    desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
+  { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true,
+    desc: 'Двигайся по библейской карте — от Сада Эдема через Египет к Земле обетованной.', bullets: ['Твой путь на карте', 'Остановки-истории', 'Растёт с уроками'] },
+  { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 очков', play: true,
+    desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и очки.', bullets: ['Тёплая привычка', 'Серия дней подряд', '+5 очков в день'] },
+  { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Задание дня · +15 очков', play: true,
+    desc: 'Каждый день новое маленькое задание: стих, доброе дело, молитва, тест.', bullets: ['Задание на каждый день', 'Награды за серии', 'Разное каждый день'] },
+  { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Понять притчу · очки', play: true,
+    desc: 'Среди похожих вариантов выбери верное, каноническое толкование притчи.', bullets: ['Учит понимать притчи', 'Одобрено педагогом', 'Для старших детей'] },
+];
 
 let gameOpener = 'games'; // откуда открыли temple/journey: 'games' или 'child'
 
 function openGamesHub() {
-  renderGhub('free');
+  renderGhub();
   $$('.nav__tab').forEach((b) => b.classList.toggle('nav__tab--active', b.dataset.tab === 'games'));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'games'));
   $('#nav').style.display = '';               // игры — теперь основной таб внизу
@@ -2244,46 +2521,44 @@ function openGamesHub() {
   window.scrollTo({ top: 0 });
 }
 
-function renderGhub(cat) {
-  $$('#ghub, .ghub-tab'); // noop
-  $$('.ghub-tab').forEach((b) => b.classList.toggle('ghub-tab--on', b.dataset.gcat === cat));
-  const locked = cat === 'premium';
-  $('#ghub').innerHTML = GAMES[cat].map((g) => `
-    <button class="gcard ${g.play ? 'gcard--play' : 'gcard--locked'}" data-game="${g.key}">
-      ${!g.play ? `<div class="gcard__lock">${ICON('lock', 15)}</div>` : ''}
+/* Все игры одним списком: деления на бесплатные и платные больше нет */
+function renderGhub(куда) {
+  const box = document.querySelector(куда || '#ghub');
+  if (!box) return;
+  box.innerHTML = GAMES.map((g) => `
+    <button class="gcard gcard--play" data-game="${g.key}">
       <div class="gcard__img gcard__img--${g.key}"><img src="assets/img/games/${g.key}.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
       <div class="gcard__name">${g.name}</div>
       <div class="gcard__meta">${g.meta}</div>
     </button>`).join('');
-  $$('#ghub [data-game]').forEach((el) => el.addEventListener('click', () => {
-    const k = el.dataset.game;
-    if (k === 'verse') openVerse('easy');
-    else if (k === 'memory') openMemory();
-    else if (k === 'quiz') openQuiz();
-    else if (k === 'who') openWho();
-    else if (k === 'chrono') openChrono();
-    else if (k === 'journey') { gameOpener = 'games'; openJourneyScreen(); }
-    else if (k === 'temple-b') { gameOpener = 'games'; openTempleScreen(); }
-    else if (k === 'dailyverse') openDailyVerse();
-    else if (k === 'match3') openMatch3();
-    else if (k === 'david') openDavid();
-    else if (k === 'exodus') openExodus();
-    else if (k === 'ark') openArk();
-    else if (k === 'dilemma') openDilemma();
-    else if (k === 'detective') openDetective();
-    else if (k === 'family') openFamily();
-    else if (k === 'challenge') openChallenge();
-    else if (k === 'interpret') openInterpret();
-    else if (k === 'quest') openQuest2();
-    else if (k === 'temple') { gameOpener = 'games'; openTempleScreen(); }
-    else openGamePreview(k);
-  }));
+  box.querySelectorAll('[data-game]').forEach((el) => el.addEventListener('click', () => openGame(el.dataset.game)));
+}
+
+function openGame(k) {
+  startGameMusic();
+  if (k === 'verse') openVerse('easy');
+  else if (k === 'memory') openMemory();
+  else if (k === 'quiz') openQuiz();
+  else if (k === 'who') openWho();
+  else if (k === 'chrono') openChrono();
+  else if (k === 'journey') { gameOpener = 'games'; openJourneyScreen(); }
+  else if (k === 'dailyverse') openDailyVerse();
+  else if (k === 'match3') openMatch3();
+  else if (k === 'david') openDavid();
+  else if (k === 'exodus') openExodus();
+  else if (k === 'ark') openArk();
+  else if (k === 'dilemma') openDilemma();
+  else if (k === 'detective') openDetective();
+  else if (k === 'family') openFamily();
+  else if (k === 'challenge') openChallenge();
+  else if (k === 'interpret') openInterpret();
+  else if (k === 'quest') openQuest2();
+  else openGamePreview(k);
 }
 
 function initGamesHub() {
   $('#openGamesHub')?.addEventListener('click', openGamesHub);
   $('#gamesBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
-  $$('.ghub-tab').forEach((b) => b.addEventListener('click', () => renderGhub(b.dataset.gcat)));
   $('#gpvClose')?.addEventListener('click', () => { $('#gamePreview').hidden = true; });
   $('#whoBack')?.addEventListener('click', openGamesHub);
   $('#whoMore')?.addEventListener('click', () => { const q = WHO[whoState.i]; if (whoState.clue < q.clues.length) { whoState.clue++; whoState.score = Math.max(0, whoState.score); renderWho(); } });
@@ -2310,28 +2585,19 @@ function openGamePreview(k) {
   const g = gameByKey(k); if (!g) return;
   $('#gpvIcon').innerHTML = ICON(g.icon, 34);
   const badge = $('#gpvBadge');
-  badge.className = 'gpv__badge ' + (g.premium ? 'gpv__badge--plus' : 'gpv__badge--soon');
-  badge.textContent = g.premium ? 'Метанойя+' : 'Скоро';
+  badge.className = 'gpv__badge gpv__badge--soon';
+  badge.textContent = 'Скоро';
   $('#gpvName').textContent = g.name;
   $('#gpvDesc').textContent = g.desc || '';
   $('#gpvList').innerHTML = (g.bullets || []).map((b) => `<li>${b}</li>`).join('');
   const cta = $('#gpvCta');
   const note = $('#gpvNote');
   const wish = $('#gpvWish');
-  if (g.premium) {
-    cta.textContent = 'Открыть в Метанойя+';
-    cta.disabled = false;
-    cta.onclick = () => { $('#gamePreview').hidden = true; openSubscribeScreen(); };
-    note.textContent = 'Доступ ко всем играм и материалам Метанойя+';
-    wish.hidden = false;
-    wish.onclick = () => addWish(g.key);
-  } else {
-    cta.textContent = 'Мы уже работаем над ней';
-    cta.disabled = true;
-    cta.onclick = null;
-    note.textContent = 'Игра появится в одном из ближайших обновлений';
-    wish.hidden = true;
-  }
+  cta.textContent = 'Мы уже работаем над ней';
+  cta.disabled = true;
+  cta.onclick = null;
+  note.textContent = 'Игра появится в одном из ближайших обновлений';
+  wish.hidden = true;
   $('#gamePreview').hidden = false;
   hydrateIcons();
 }
@@ -2362,7 +2628,7 @@ function renderWishes() {
       <button class="wish__cta" data-wish="${k}">Открыть</button>
     </div>`;
   }).join('');
-  $$('#wishes [data-wish]').forEach((el) => el.addEventListener('click', openSubscribeScreen));
+  $$('#wishes [data-wish]').forEach((el) => el.addEventListener('click', () => openGame(el.dataset.wish)));
   hydrateIcons();
 }
 
@@ -2622,22 +2888,26 @@ let readerFsIdx = 1;
 const FS_PX = { s: 15, m: 16, l: 18, xl: 21 };
 
 function openBook() {
-  // Книга = уроки программы. Оглавление из глав, чтение — из контента урока.
-  $('#bookToc').innerHTML = DEMO.blocks.map((block) => `
-    <div class="toc-block">${block.title}</div>
-    ${block.lessons.filter((l) => !l.exam).map((l) => {
-      const ready = !!lessonContent(l.n);
-      return `<button class="toc-item ${ready ? '' : 'toc-item--locked'}" data-chapter="${l.n}">
+  /* Книга собирается из ПРОЙДЕННЫХ уроков: текст с картинками, без аудио.
+     Пока ничего не пройдено, честно говорим об этом, а не показываем замки. */
+  const главы = DEMO.blocks.map((block) => {
+    const готовые = block.lessons.filter((l) => !l.exam && isLessonDone(l.n) && lessonContent(l.n));
+    if (!готовые.length) return '';
+    return `<div class="toc-block">${block.title}</div>
+    ${готовые.map((l) => `
+      <button class="toc-item" data-chapter="${l.n}">
         <div class="toc-item__num">${l.cn || l.n}</div>
         <div class="toc-item__t">${l.title}</div>
-        ${ready ? `<span class="toc-item__read">Читать</span>` : `<span data-icon="lock" data-size="15"></span>`}
-      </button>`;
-    }).join('')}
-  `).join('');
+        <span class="toc-item__read">Читать</span>
+      </button>`).join('')}`;
+  }).filter(Boolean).join('');
+
+  $('#bookToc').innerHTML = главы || `<div class="card lesson-text">
+    <p>Книга наполняется сама: каждый пройденный урок становится её главой с картинками.
+    Пройди первый урок, и он появится здесь.</p></div>`;
+
   $$('#bookToc [data-chapter]').forEach((el) => el.addEventListener('click', () => {
-    const n = Number(el.dataset.chapter);
-    if (lessonContent(n)) openReader(n);
-    else toast('Материал этого урока готовит педагог школы');
+    openReader(Number(el.dataset.chapter));
   }));
   hydrateIcons();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'book'));
@@ -2650,26 +2920,25 @@ function openReader(n) {
   const meta = lessonMeta(n);
   if (!c || !meta) { toast('Материал этого урока готовит педагог школы'); return; }
   const title = meta.l.title;
-  const cover = meta.l.img || `assets/img/chapters/ch${meta.bi + 1}.jpg`;
-  const coverImg = `<figure class="reader-cover"><img src="${cover}" alt="" loading="lazy" onerror="this.closest('.reader-cover').remove()"></figure>`;
+  const cover = lessonCover(n);
+  const запас = lessonCoverFallback(n);
+  const coverImg = `<figure class="reader-cover"><img src="${cover}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${запас}'"></figure>`;
   const intro = c.intro ? `<p class="drop">${c.intro}</p>` : '';
   const scripture = c.verse ? `<div class="scripture">${c.verse.text}<cite>${c.verse.ref}</cite></div>` : '';
-  const story = (c.story || []).map((p) => `<p>${p}</p>`).join('');
+
+  // В книге картинки идут по ходу текста, а озвучки нет: это чтение глазами
+  const картинка = (i) => `<figure class="lesson-pic"><img src="${lessonPic(n, i)}" alt="" loading="lazy"
+      onerror="this.closest('.lesson-pic').remove()"></figure>`;
+  const story = (c.story || []).map((p, i) => {
+    if (i === 0) return `<p>${p}</p>` + картинка(0);
+    if (i === 2) return `<p>${p}</p>` + картинка(1);
+    return `<p>${p}</p>`;
+  }).join('');
+
   const golden = c.golden ? `<div class="scripture">${c.golden}</div>` : '';
   const prayer = c.prayer ? `<p><em>${c.prayer}</em></p>` : '';
-  const listenBtn = `<button class="lesson-voice reader-listen" id="readerVoice"><span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать голосом Екатерины</button>`;
   $('#readerTitle').textContent = title;
-  $('#readerBody').innerHTML = `<h2>${title}</h2>${coverImg}${listenBtn}${intro}${scripture}${story}${golden}${prayer}`;
-  const rv = $('#readerVoice');
-  if (rv) {
-    let rvAudio = null;
-    rv.addEventListener('click', () => {
-      if (!rvAudio) rvAudio = new Audio('assets/audio/lesson-intro.mp3');
-      rv.classList.add('lesson-voice--playing');
-      try { rvAudio.currentTime = 0; rvAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
-      rvAudio.onended = () => rv.classList.remove('lesson-voice--playing');
-    });
-  }
+  $('#readerBody').innerHTML = `<h2>${title}</h2>${coverImg}${intro}${scripture}${story}${golden}${prayer}`;
   applyReaderFs();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'reader'));
   $('#nav').style.display = 'none';
@@ -2722,7 +2991,7 @@ function renderRanks(xp) {
     return `<div class="rank ${cls}">
       <div class="rank__icon">${ICON(r.icon, 22)}</div>
       <div class="rank__name">${r.name}</div>
-      <div class="rank__xp">${r.to === Infinity ? r.from + '+' : r.from + '–' + r.to} XP</div>
+      <div class="rank__xp">${r.to === Infinity ? r.from + '+' : r.from + '–' + r.to} очков</div>
     </div>`;
   }).join('');
   // прокрутить к текущему рангу
@@ -2903,14 +3172,6 @@ function initAuth() {
 
 /* ───────── ОБРАТНЫЙ ОТСЧЁТ ДО СОЗВОНА (демо) ───────── */
 
-let callMinutes = 135; // 2ч 15мин
-function tickCountdown() {
-  const h = Math.floor(callMinutes / 60);
-  const m = callMinutes % 60;
-  $('#callCountdown').textContent = h > 0 ? `${h}ч ${m}мин` : `${m}мин`;
-  if (callMinutes > 0) callMinutes -= 1;
-}
-
 /* ───────── SERVICE WORKER (только по http/https, не file://) ───────── */
 
 function initSW() {
@@ -2955,7 +3216,7 @@ function openRatingScreen() {
     return `<div class="pod pod--${place}">
       ${lbAva(c, sorted.indexOf(c), 'pod__ava')}
       <div class="pod__name">${c.name}</div>
-      <div class="pod__xp">${c.xp} XP</div>
+      <div class="pod__xp">${c.xp} очков</div>
       <div class="pod__stand">${place}</div>
     </div>`;
   }).join('');
@@ -2967,7 +3228,7 @@ function openRatingScreen() {
         <div class="lb-row__name">${c.name}${c.me ? ' · это ты' : ''}</div>
         <div class="lb-row__rank">${c.rank}</div>
       </div>
-      <div class="lb-row__xp">${c.xp}<small> XP</small></div>
+      <div class="lb-row__xp">${c.xp}<small> очков</small></div>
     </div>`).join('');
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'rating'));
   $('#nav').style.display = 'none';
@@ -2976,44 +3237,6 @@ function openRatingScreen() {
 }
 
 /* ── Метанойя+ ── */
-const SUB_BENEFITS = [
-  'Дополнительные игры в приложении',
-  'Материалы для практических работ',
-  'Рабочая тетрадь в электронном формате',
-  'Книга «Метанойя» в приложении',
-  'Поддержка школы · для всей семьи',
-];
-const SUB_PLANS = [
-  { key: 'monthly', name: 'Метанойя +', desc: 'Ежемесячно · отмена в любой момент', amt: '690 ₽', per: 'в месяц' },
-];
-let subPlan = 'monthly';
-
-function openSubscribeScreen() {
-  const active = localStorage.getItem('mt_plus') === '1';
-  $('#subBenefits').innerHTML =
-    (active ? `<div class="sub-active">Метанойя+ активна · спасибо, что растёте с нами 🕊</div>` : '') +
-    SUB_BENEFITS.map((b) => `<div class="sub-benefit"><div class="sub-benefit__ic">${ICON('check', 15)}</div>${b}</div>`).join('');
-  renderSubPlans();
-  $('#subCta').textContent = active ? 'Метанойя+ уже активна' : 'Оформить Метанойя+';
-  $('#subCta').disabled = active;
-  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'subscribe'));
-  $('#nav').style.display = 'none';
-  hydrateIcons();
-  window.scrollTo({ top: 0 });
-}
-
-function renderSubPlans() {
-  $('#subPlans').innerHTML = SUB_PLANS.map((p) => `
-    <button class="sub-plan ${p.key === subPlan ? 'sub-plan--on' : ''}" data-plan="${p.key}">
-      ${p.tag ? `<span class="sub-plan__tag">${p.tag}</span>` : ''}
-      <div class="sub-plan__radio">${p.key === subPlan ? ICON('check', 13) : ''}</div>
-      <div class="sub-plan__body"><div class="sub-plan__name">${p.name}</div><div class="sub-plan__desc">${p.desc}</div></div>
-      <div class="sub-plan__price"><div class="sub-plan__amt">${p.amt}</div><div class="sub-plan__per">${p.per}</div></div>
-    </button>`).join('');
-  $$('#subPlans [data-plan]').forEach((el) => el.addEventListener('click', () => { subPlan = el.dataset.plan; renderSubPlans(); hydrateIcons(); }));
-  hydrateIcons();
-}
-
 /* ── Стать партнёром ── */
 const PARTNER_BENEFITS = [
   'Вы помогаете школе оставаться бесплатной для семей',
@@ -3177,7 +3400,6 @@ const CERTIFICATES = [
   { key: 'b1', title: 'Глава 1 · Жизнь Господа', short: 'первую главу', award: 'Ученик Господа', earned: true, date: '8 июля 2026' },
   { key: 'b2', title: 'Глава 2 · Ветхий Завет', short: 'вторую главу', award: 'Странник небес', earned: false },
   { key: 'b3', title: 'Глава 3 · Израиль', short: 'третью главу', award: 'Знаток героев', earned: false },
-  { key: 'year', title: 'Годовой сертификат школы', short: 'годовую программу', award: 'Выпускник «Метанойя»', earned: false, year: true },
 ];
 const CHILD_FOR_CERT = 'Миша';
 
@@ -3300,7 +3522,7 @@ function openDailyVerse() {
   }
   const btn = $('#dverseClaim');
   btn.disabled = claimedToday;
-  btn.textContent = claimedToday ? 'Стих на сегодня прочитан ✓' : 'Прочитал(а) · получить +5 XP';
+  btn.textContent = claimedToday ? 'Стих на сегодня прочитан ✓' : 'Прочитал(а) · получить +5 очков';
   $('#dverseStreak').textContent = streak > 0 ? `🔥 ${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд со стихом дня` : '';
   $('#dailyVerse').hidden = false;
   hydrateIcons();
@@ -3327,7 +3549,7 @@ function claimDailyVerse() {
     MAGIC.celebrate(b.left + b.width / 2, b.top);
   }
   openDailyVerse();
-  toast('+5 XP · стих дня');
+  toast('+5 очков · стих дня');
 }
 
 /* ── Три в ряд: Дары Духа (match-3) ── */
@@ -3713,7 +3935,7 @@ function openShop() {
     return `<div class="shop-card ${can ? '' : 'shop-card--locked'}">
       <div class="shop-card__ic">${ICON(m.icon, 24)}</div>
       <div class="shop-card__name">${m.name}</div>
-      <div class="shop-card__cost">${m.cost} XP</div>
+      <div class="shop-card__cost">${m.cost} очков</div>
       <button class="shop-card__btn" data-merch="${m.name}" data-cost="${m.cost}" ${can ? '' : 'disabled'}>${can ? 'Обменять' : `ещё ${m.cost - SHOP_XP}`}</button>
     </div>`;
   }).join('');
@@ -3874,7 +4096,7 @@ function saveChild() {
   if (!name) { $('#addkName').focus(); toast('Введите имя ребёнка'); return; }
   const opt = AVATAR_OPTS[addkPick];
   const img = opt.type === 'img' ? opt.src : initialAvatar(name, opt.color);
-  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 XP', streak: 0, img };
+  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 очков', streak: 0, img };
   DEMO.children.push(kid);
   const saved = JSON.parse(localStorage.getItem('mt_kids') || '[]');
   saved.push(kid);
@@ -3955,7 +4177,7 @@ function askAsk(text) {
 }
 
 function initAsk() {
-  $('#openAsk')?.addEventListener('click', openAsk);
+  $('#openAsk')?.addEventListener('click', () => { gameOpener = 'child'; openAsk(); });
   $('#askBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#askForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -4038,7 +4260,7 @@ function toggleFq(i) {
 const WREPORT = {
   child: 'Миша', ava: 'assets/img/avatars/lion.jpg', range: '1–7 июля',
   lessons: 3, games: 8, streak: 12, streakUp: true,
-  rankNote: 'До ранга «Цветочек» осталось <b>60 XP</b> — это примерно два урока.',
+  rankNote: 'До ранга «Цветочек» осталось <b>60 очков</b> — это примерно два урока.',
   tips: [
     'На этой неделе Миша дважды возвращался к притче о блудном сыне. Хороший момент поговорить о прощении за семейным ужином.',
     'Серия из 12 дней подряд — похвалите его за постоянство, это важнее скорости.',
@@ -4068,14 +4290,14 @@ function renderWReport() {
 function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
   $('#openCerts')?.addEventListener('click', openCertificates);
-  $('#openShop')?.addEventListener('click', openShop);
+  $('#openShop')?.addEventListener('click', () => { gameOpener = 'child'; openShop(); });
   $('#shopBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
-  $('#openDevotional')?.addEventListener('click', openDevotional);
-  $('#devBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
-  $('#openQuest')?.addEventListener('click', openQuest);
-  $('#questBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#openDevotional')?.addEventListener('click', () => { gameOpener = 'child'; openDevotional(); });
+  $('#devBack')?.addEventListener('click', backToWhereOpened);
+  $('#openQuest')?.addEventListener('click', () => { gameOpener = 'child'; openQuest(); });
+  $('#questBack')?.addEventListener('click', backToWhereOpened);
   $('#openAlbum')?.addEventListener('click', openAlbumScreen);
-  $('#albumBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#albumBack')?.addEventListener('click', backToWhereOpened);
   $('#albumDl')?.addEventListener('click', downloadAlbum);
   initAsk();
   $('#dverseClose')?.addEventListener('click', () => { const a = $('#dverseAudio'); if (a) a.pause(); $('#dailyVerse').hidden = true; });
@@ -4105,7 +4327,6 @@ function initGrowth() {
     try { certAudio.currentTime = 0; certAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
   });
   $('#ratingBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
-  $('#mSubscribe')?.addEventListener('click', openSubscribeScreen);
   $('#subBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#mPartner')?.addEventListener('click', openPartner);
   $('#partnerBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
@@ -4122,16 +4343,12 @@ function initGrowth() {
     if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Спасибо от всего сердца!', subtitle: `Ваш дар ${amt} ₽ поможет школе. Как только подключим оплату — примем с благодарностью 🕊`, xp: 0 });
     else toast('Спасибо за поддержку!');
   });
-  $('#subCta')?.addEventListener('click', () => {
-    localStorage.setItem('mt_plus', '1');
-    const p = SUB_PLANS.find((x) => x.key === subPlan);
-    if (window.MAGIC) MAGIC.rewardModal({ icon: 'crown', title: 'Метанойя+ активирована!', subtitle: `Тариф «${p.name}». Дополнительные игры, личные уроки и сертификаты открыты.`, xp: 0 });
-    else toast('Метанойя+ активирована');
-    setTimeout(openSubscribeScreen, 300);
-  });
   $('#mInvite')?.addEventListener('click', shareInvite);
   $('#mAbout')?.addEventListener('click', openAbout);
-  $('#mPresent')?.addEventListener('click', () => { window.open('/presentation/', '_blank'); });
+  $('#mPrivacy')?.addEventListener('click', () => openDoc('privacy'));
+  $('#privacyBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $$('[data-doc]').forEach((el) => el.addEventListener('click', (e) => { e.preventDefault(); openDoc(el.dataset.doc); }));
+  $('#mLang')?.addEventListener('click', switchLang);
   $('#aboutBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#mSettings')?.addEventListener('click', openSettingsScreen);
   $('#mNotify')?.addEventListener('click', openSettingsScreen);
@@ -4180,8 +4397,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStories();
   renderFeed();
   renderChats();
-  unlockAllLessons();
+  applyLessonLocks();
   renderLessons();
+  renderTodayLesson();
   loadSavedKids();
   renderChildren();
   renderWReport();
@@ -4192,12 +4410,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initSW();
 
-  tickCountdown();
-  setInterval(tickCountdown, 60_000);
-
   $('#dailyVerseBtn').addEventListener('click', openDailyVerse);
   const vt = $('#verseTeaser'); if (vt) vt.textContent = '«' + dailyVerse().t.split(',')[0].split(';')[0] + '…»';
-  $('#joinCall')?.addEventListener('click', () => addCallToCalendar('Притча о блудном сыне', 'Живое занятие с Екатериной в школе Метанойя'));
+  $('#todayLesson')?.addEventListener('click', () => {
+    const n = nextOpenLesson();
+    if (n) openLesson(n);
+  });
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
   $('#searchBtn')?.addEventListener('click', () => {
     $$('.nav__tab').forEach((b) => b.classList.remove('nav__tab--active'));
@@ -4231,14 +4449,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initChatView();
   initChatSearch();
   initVerseGame();
-  initTemple();
+  initPet();
+  applyLang();
   initJourney();
   initBook();
   initGamesHub();
   initMemory();
   initQuiz();
   initGrowth();
-  renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
     window.visualViewport.addEventListener('resize', vvSync);
@@ -4269,3 +4487,93 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 2400);
 });
+
+/* ───────── ДОКУМЕНТЫ: политика и соглашение ───────── */
+
+const ДОКИ = {
+  privacy: {
+    title: 'Политика конфиденциальности',
+    sub: 'Как школа «Метанойя» обращается с данными семьи',
+    parts: [
+      ['Кто обрабатывает данные',
+       'Оператор персональных данных — онлайн-школа духовно-нравственного воспитания «Метанойя», Екатерина Павленко. Связаться можно через раздел «Поддержка» в приложении.'],
+      ['Какие данные мы собираем',
+       'От родителя: имя, адрес электронной почты, страна и город, конфессия по желанию. О ребёнке: имя, возраст, аватар, прогресс по урокам и играм. Технические данные: тип устройства и записи об ошибках, чтобы приложение работало без сбоев.'],
+      ['Зачем они нужны',
+       'Чтобы у ребёнка сохранялся прогресс, открывались следующие уроки и сертификаты, а родитель видел отчёт за неделю. Для писем о новых уроках, если вы на них согласились.'],
+      ['Данные ребёнка',
+       'Профиль ребёнка заводит и ведёт родитель или законный представитель. Согласие на обработку данных ребёнка даёт он же при регистрации. Родительская зона закрыта ПИН-кодом.'],
+      ['Кому мы их передаём',
+       'Никому. Мы не продаём и не передаём данные третьим лицам, не показываем рекламу и не используем данные детей для рекламных целей.'],
+      ['Сколько храним',
+       'Пока у вас есть аккаунт. Вы можете удалить аккаунт и все данные в любой момент через «Поддержку», и мы удалим их в течение 30 дней.'],
+      ['Ваши права',
+       'Вы можете запросить, какие данные о вас хранятся, исправить их, отозвать согласие и удалить аккаунт. Обращение уходит через «Поддержку», отвечаем в течение трёх рабочих дней.'],
+      ['Изменения',
+       'Если политика меняется, мы сообщаем об этом в приложении до того, как изменения вступят в силу.'],
+    ],
+  },
+  terms: {
+    title: 'Пользовательское соглашение',
+    sub: 'Простые правила, по которым мы вместе учимся',
+    parts: [
+      ['О чём это приложение',
+       'Метанойя — христианская онлайн-школа для детей 5-14 лет. Уроки, игры и добрые задания для семейного чтения.'],
+      ['Кто может пользоваться',
+       'Аккаунт заводит взрослый. Внутри аккаунта он добавляет профили детей и отвечает за то, как дети пользуются приложением.'],
+      ['Как себя вести в чатах',
+       'В чатах школы говорим с уважением. Оскорбления, травля, реклама и всё, что вредит детям, запрещены. Мы вправе закрыть доступ тому, кто нарушает это правило.'],
+      ['Материалы школы',
+       'Уроки, тексты, картинки и озвучка принадлежат школе. Их можно читать, слушать и печатать для своей семьи. Публиковать и продавать их отдельно нельзя.'],
+      ['Ваши материалы',
+       'Рисунки и работы, которые ребёнок прикрепляет к уроку, остаются вашими. Мы показываем их только педагогу школы.'],
+      ['Оплата',
+       'Уроки школы доступны без платной подписки внутри приложения.'],
+      ['Ответственность',
+       'Мы стараемся, чтобы приложение работало без сбоев, и чиним поломки как можно быстрее. Мы не отвечаем за перерывы в работе интернета на стороне семьи.'],
+    ],
+  },
+};
+
+function openDoc(kind) {
+  const d = ДОКИ[kind] || ДОКИ.privacy;
+  const box = document.getElementById('privacyBody');
+  if (!box) return;
+  box.innerHTML = `<h1 class="screen-title" style="margin-bottom:4px">${d.title}</h1>
+    <p class="feed-card__meta" style="margin-bottom:16px">${d.sub}</p>
+    ${d.parts.map(([h, t]) => `<div class="card doc__part"><h2>${h}</h2><p>${t}</p></div>`).join('')}
+    <div class="doc__foot">Редакция от 5 сентября 2026 года</div>`;
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'privacy'));
+  const nav = document.getElementById('nav'); if (nav) nav.style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+/* ───────── ЯЗЫК ПРИЛОЖЕНИЯ: русский и испанский ───────── */
+
+const ЯЗЫКИ = { ru: 'Русский', es: 'Español' };
+
+function текущийЯзык() { return localStorage.getItem('mt_lang') || 'ru'; }
+
+function switchLang() {
+  const был = текущийЯзык();
+  const стал = был === 'ru' ? 'es' : 'ru';
+  localStorage.setItem('mt_lang', стал);
+  applyLang();
+  if (стал === 'es') {
+    toast('Idioma español activado. El texto se traduce, la voz de Ekaterina sigue en ruso');
+  } else {
+    toast('Язык переключён на русский');
+  }
+}
+
+function applyLang() {
+  const l = текущийЯзык();
+  document.documentElement.lang = l;
+  document.documentElement.dataset.lang = l;
+  const tag = document.getElementById('mLangTag');
+  if (tag) tag.textContent = ЯЗЫКИ[l];
+  document.querySelectorAll('[data-es]').forEach((el) => {
+    if (!el.dataset.ru) el.dataset.ru = el.textContent;
+    el.textContent = l === 'es' ? el.dataset.es : el.dataset.ru;
+  });
+}

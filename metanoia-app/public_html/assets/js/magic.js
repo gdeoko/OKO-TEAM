@@ -143,7 +143,7 @@ function rewardModal({ icon = 'trophy', title, subtitle, xp, voice }) {
       <div class="reward__badge">${typeof ICON === 'function' ? ICON(icon, 46) : ''}</div>
       <div class="reward__title">${title}</div>
       ${subtitle ? `<div class="reward__sub">${subtitle}</div>` : ''}
-      ${xp ? `<div class="reward__xp">+${xp} XP</div>` : ''}
+      ${xp ? `<div class="reward__xp">+${xp} очков</div>` : ''}
       ${voice ? `<button class="reward__voice" aria-label="Послушать голосом Екатерины">${typeof ICON === 'function' ? ICON('play', 15) : '▶'} Голос Екатерины</button>` : ''}
       <button class="btn btn--primary reward__ok">Отлично!</button>
     </div>`;

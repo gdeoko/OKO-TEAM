@@ -9,15 +9,16 @@
   --terracotta: #C97064;
   --gold:       #D4A574;
   --cream:      #FAF8F5;
-  --gray:       #5A6577;
+  --gray:       #3C4658;
   --success:    #7BC67A;
   --error:      #D46A6A;
   --info:       #7AAED4;
   --warning:    #D4974A;
 
   /* Типографика */
-  --font-head: 'Playfair Display', Georgia, serif;
+  --font-head: 'Montserrat', -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Montserrat', -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Геометрия (раздел 4.7) */
   --radius-card: 12px;
@@ -2567,3 +2568,180 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .nf { width: 100%; text-align: left; cursor: pointer; transition: transform .12s var(--ease), background-color .12s var(--ease); }
 .nf:active { transform: scale(.99); }
 .nf:hover { background: rgba(212,165,116,.06); }
+
+/* ══════════════════════════════════════════════════════════════
+   ПРАВКИ ЕКАТЕРИНЫ (сентябрь 2026)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Заголовки жирные и без засечек, как просила Екатерина.
+   Засечки остаются только там, где это книжная подача. */
+.screen-title, .section-title, .feed-card__title, .block-title,
+.today__eyebrow, .today__call-title, .lesson-item__title { font-weight: 700; letter-spacing: -.2px; }
+.book-cover__title, .reader h2, .scripture, .quote-ref { font-family: var(--font-serif); }
+
+/* Мелкий текст перестал быть блёклым */
+.feed-card__meta, .lesson-item__meta, .chat-item__last,
+.temple__note, .games-tile__desc, .gcard__meta { color: var(--gray); font-weight: 500; }
+
+/* Активный раздел в нижнем меню видно сразу: подложка, вес, точка */
+.nav__tab { position: relative; }
+.nav__tab--active { color: var(--terracotta); font-weight: 700; }
+.nav__tab--active span:last-child { font-weight: 700; }
+.nav__tab--active::before {
+  content: ''; position: absolute; inset: 2px 6px auto; height: 34px;
+  border-radius: 12px; background: rgba(201,112,100,.13); z-index: -1;
+}
+.nav__tab--active::after {
+  content: ''; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px;
+  margin-left: -2.5px; border-radius: 50%; background: var(--terracotta);
+}
+[data-theme="dark"] .nav__tab--active { color: var(--gold); }
+[data-theme="dark"] .nav__tab--active::before { background: rgba(212,165,116,.16); }
+[data-theme="dark"] .nav__tab--active::after { background: var(--gold); }
+
+/* Блок «Сегодня»: следующий урок вместо созвона */
+.today__next-ic { overflow: hidden; padding: 0; }
+.today__next-ic img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+
+/* Карточка урока в списке: номер, картинка, отметки */
+.lesson-item__thumb { position: relative; }
+.lesson-item__veil {
+  position: absolute; inset: 0; border-radius: inherit;
+  background: rgba(26,58,82,.55); backdrop-filter: saturate(.4);
+}
+.lesson-item__ok {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff; background: var(--success);
+}
+.lesson-item__meta--done { color: var(--success); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.lesson-item--done { border-color: rgba(123,198,122,.5); }
+.lesson-item--locked { opacity: .72; }
+.progress--thin { height: 5px; margin-top: 6px; }
+
+/* Иллюстрации по ходу текста урока */
+.lesson-pic { margin: 14px 0; }
+.lesson-pic img {
+  width: 100%; aspect-ratio: 3 / 2; object-fit: cover;
+  border-radius: var(--radius-card); display: block;
+}
+.lesson-pic figcaption { font-size: 12px; color: var(--gray); margin-top: 6px; text-align: center; }
+.lesson-read { width: 100%; margin-top: 14px; }
+
+/* Итог урока: сколько собрано и чего не хватает */
+.lesson-final { margin: 20px 0 8px; }
+.lesson-final__ok {
+  display: grid; gap: 4px; justify-items: center; text-align: center;
+  padding: 18px; border-radius: var(--radius-card);
+  background: linear-gradient(160deg, #F3FAF2, #E6F4E5); color: var(--navy);
+}
+.lesson-final__ok b { font-size: 17px; }
+.lesson-final__ok span { font-size: 13px; color: var(--gray); }
+.lesson-final__wait { display: grid; gap: 8px; padding: 14px; border-radius: var(--radius-card); background: #fff; border: 1px solid rgba(26,58,82,.1); }
+.lesson-final__wait span { font-size: 13px; color: var(--gray); }
+[data-theme="dark"] .lesson-final__wait { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); }
+[data-theme="dark"] .lesson-final__ok { background: linear-gradient(160deg, rgba(123,198,122,.18), rgba(123,198,122,.08)); color: #EAF3EA; }
+
+/* ── Интерактивные задания ── */
+.task-card { padding: 16px; }
+.task__head { display: grid; gap: 4px; margin-bottom: 14px; }
+.task__kind { font-weight: 700; font-size: 16px; color: var(--navy); }
+.task__hint { font-size: 13px; color: var(--gray); }
+[data-theme="dark"] .task__kind { color: #EAF0F5; }
+.task__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.task__col { display: grid; gap: 8px; align-content: start; }
+.task__pool { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.task__pool--grid { display: grid; grid-template-columns: 1fr 1fr; }
+.task__slots { display: grid; gap: 8px; }
+.tcard {
+  font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+  padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(26,58,82,.16);
+  background: #fff; color: var(--navy); transition: transform .16s var(--ease), border-color .16s, background .16s;
+}
+.tcard:active { transform: scale(.97); }
+.tcard--wide { width: 100%; }
+.tcard--big { padding: 16px 12px; text-align: center; font-size: 14px; font-weight: 600; }
+.tcard--syl { font-size: 18px; font-weight: 700; padding: 12px 16px; letter-spacing: 1px; }
+.tcard--sel { border-color: var(--gold); background: rgba(212,165,116,.14); }
+.tcard--ok { border-color: var(--success); background: rgba(123,198,122,.16); color: #2E6B2E; }
+.tcard--miss { border-color: var(--error); background: rgba(212,106,106,.12); animation: tshake .4s; }
+@keyframes tshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+[data-theme="dark"] .tcard { background: rgba(255,255,255,.06); color: #EAF0F5; border-color: rgba(255,255,255,.14); }
+.tslot { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: rgba(123,198,122,.14); font-size: 13px; }
+.tslot__n { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: var(--success); color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.task__verse { font-family: var(--font-serif); font-size: 16px; line-height: 1.6; color: var(--navy); }
+.task__verse cite { display: block; margin-top: 8px; font-size: 12px; font-style: normal; color: var(--gray); }
+[data-theme="dark"] .task__verse { color: #EAF0F5; }
+.task__blank { display: inline-block; min-width: 90px; padding: 0 8px; border-bottom: 2px dashed var(--gold); text-align: center; }
+.task__blank--ok { border-bottom-color: var(--success); color: #2E6B2E; font-weight: 700; }
+.task__built { min-height: 46px; display: grid; place-items: center; font-size: 24px; font-weight: 700; letter-spacing: 2px; color: var(--navy); border-radius: 10px; background: rgba(26,58,82,.05); }
+[data-theme="dark"] .task__built { color: #EAF0F5; background: rgba(255,255,255,.07); }
+.task__reset { margin-top: 10px; font: inherit; font-size: 12px; color: var(--gray); background: none; border: none; cursor: pointer; text-decoration: underline; }
+.task__res { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+.task__res.pass { background: rgba(123,198,122,.18); color: #2E6B2E; }
+.task__res.fail { background: rgba(212,106,106,.14); color: #9B3B3B; }
+.task--done .task__pool, .task--done .task__cols { opacity: .65; pointer-events: none; }
+
+/* ── Мой друг: питомец ── */
+.pet-hero {
+  position: relative; border-radius: 18px; overflow: hidden;
+  aspect-ratio: 3 / 2; background: linear-gradient(160deg, #FDF6EC, #F2E4D0);
+  display: grid; place-items: center;
+}
+.pet-hero__img { width: 100%; height: 100%; object-fit: cover; }
+.pet-hero__glow { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 90%, rgba(212,165,116,.35), transparent 65%); pointer-events: none; }
+.pet-hero__mood {
+  position: absolute; left: 12px; top: 12px; padding: 6px 12px; border-radius: 999px;
+  background: rgba(255,255,255,.92); font-size: 12px; font-weight: 700; color: var(--navy);
+}
+.pet-hero__name {
+  position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 999px; border: none; cursor: pointer;
+  background: rgba(26,58,82,.86); color: #fff; font: inherit; font-size: 15px; font-weight: 700;
+}
+.pet-stats { display: grid; gap: 10px; margin-top: 16px; }
+.pet-stat { display: grid; gap: 5px; }
+.pet-stat__lbl { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--navy); }
+[data-theme="dark"] .pet-stat__lbl { color: #EAF0F5; }
+.progress__fill--joy { background: linear-gradient(90deg, #E08FA0, #C97064); }
+.progress__fill--grow { background: linear-gradient(90deg, #9BD49B, #6FB86F); }
+.pet-seeds {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 16px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(212,165,116,.14); font-size: 14px; color: var(--navy);
+}
+[data-theme="dark"] .pet-seeds { color: #EAF0F5; }
+.pet-seeds__hint { width: 100%; font-size: 12px; color: var(--gray); }
+.pet-acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+.pet-act {
+  display: grid; gap: 4px; justify-items: center; padding: 14px 8px; cursor: pointer;
+  border-radius: 14px; border: 1.5px solid rgba(26,58,82,.12); background: #fff;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--navy);
+  transition: transform .16s var(--ease);
+}
+.pet-act:active { transform: scale(.96); }
+.pet-act em { font-style: normal; font-size: 11px; font-weight: 500; color: var(--gray); }
+[data-theme="dark"] .pet-act { background: rgba(255,255,255,.06); color: #EAF0F5; border-color: rgba(255,255,255,.13); }
+.pdiary { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(26,58,82,.07); font-size: 13px; color: var(--navy); }
+.pdiary__d { flex: 0 0 42px; color: var(--gray); font-size: 12px; }
+.pdiary--empty { color: var(--gray); border: none; }
+[data-theme="dark"] .pdiary { color: #EAF0F5; border-color: rgba(255,255,255,.08); }
+
+/* ── Согласия при регистрации ── */
+.auth__consent { display: grid; gap: 10px; margin: 4px 0 14px; }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-size: 12px; line-height: 1.5; color: var(--gray); cursor: pointer; }
+.consent input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 1px; accent-color: var(--terracotta); }
+.consent__link { font: inherit; color: var(--terracotta); background: none; border: none; padding: 0; text-decoration: underline; cursor: pointer; }
+
+/* ── Документы: политика и соглашение ── */
+.doc__part { margin-bottom: 12px; }
+.doc__part h2 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.doc__part p { font-size: 14px; line-height: 1.65; color: var(--gray); }
+[data-theme="dark"] .doc__part h2 { color: #EAF0F5; }
+.doc__foot { margin: 18px 0 40px; text-align: center; font-size: 12px; color: var(--gray); }
+
+/* Стикер без картинки не оставляет пустую дырку */
+.stk--noimg { background: rgba(212,165,116,.18); border-radius: 10px; }
+
+/* Безопасность в меню сообщения */
+.ma__row--safe { border-top: 1px solid rgba(26,58,82,.08); margin-top: 4px; padding-top: 4px; }
+.ma__row--safe button { color: var(--error); }
