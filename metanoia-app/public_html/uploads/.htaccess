@@ -1,0 +1,9 @@
+# Папка для домашних работ детей. Здесь лежат чужие файлы, поэтому ничего
+# исполняемого отсюда запускать нельзя: только отдача как обычного файла.
+php_flag engine off
+AddType text/plain .php .php3 .php4 .php5 .php7 .phtml .pl .py .cgi .sh .htm .html
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Content-Disposition "attachment"
+</IfModule>
+Options -ExecCGI -Indexes

@@ -184,3 +184,7 @@ curl -s -X POST https://api.<домен>/api/v1/subscriptions/checkout \
 - [ ] HTTPS-only, HSTS, `Secure`+`HttpOnly`+`SameSite` на cookie.
 - [ ] Уникальный `JWT_SECRET`, БД-пользователь без прав на другие схемы.
 - [ ] Регулярный бэкап БД (mysqldump по cron).
+- [ ] Проверить, что `public_html/uploads/.htaccess` доехал на сервер: там лежат
+      домашние работы детей, и оттуда ничего не должно исполняться. На nginx
+      правило то же самое задаётся в конфиге:
+      `location ^~ /uploads/ { default_type text/plain; add_header Content-Disposition attachment; }`
