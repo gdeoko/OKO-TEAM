@@ -26,6 +26,8 @@ const lessonImgs = collect('assets/img/lessons', (f) => {
   const m = f.match(/^l(\d+)/);
   return m ? Number(m[1]) <= LESSON_IMGS : true;
 });
+// Картинка экрана проверки знаний лежит отдельно, но подставляется из той же карты.
+{ const u = dataUri('assets/img/cards/exam.jpg'); if (u) lessonImgs['exam'] = u; }
 const petImgs = collect('assets/img/pet', f=>f.endsWith('.jpg'));
 const lessonAud = {};
 for(const n of AUDIO_LESSONS){ const u=dataUri('assets/audio/lessons/l'+n+'.mp3'); if(u) lessonAud['l'+n]=u; }

@@ -140,11 +140,24 @@ curl -s -X POST https://api.<домен>/api/v1/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"email":"test@ex.ru","password":"Test1234","name":"Тест"}'
 
-# создание счёта Lava (должен вернуть paymentUrl)
+# профиль родителя со списком детей
+curl -s https://api.<домен>/api/v1/users/me -H 'Authorization: Bearer <accessToken>'
+
+# положить и забрать снимок прогресса ребёнка
+curl -s -X PUT https://api.<домен>/api/v1/progress/1 \
+  -H 'Authorization: Bearer <accessToken>' -H 'Content-Type: application/json' \
+  -d '{"rev":1,"state":{"keys":{"mt_lesson_1":"{\"read\":true}"},"xp":5,"level":1}}'
+curl -s https://api.<домен>/api/v1/progress/1 -H 'Authorization: Bearer <accessToken>'
+
+# создание счёта Lava — только если школа вернёт платный тариф
 curl -s -X POST https://api.<домен>/api/v1/subscriptions/checkout \
   -H 'Authorization: Bearer <accessToken>' -H 'Content-Type: application/json' \
   -d '{"offer":"month"}'
 ```
+
+После проверки API включить синхронизацию во фронте: в `public_html/index.html`
+заполнить мета-тег `mt-api` адресом вида `https://api.<домен>/api/v1`. Пустое
+значение оставляет приложение целиком на устройстве.
 
 Проверить: вход Google/Telegram (колбэки), приход вебхука Lava после тестовой
 оплаты, письмо-подтверждение от SendGrid.
