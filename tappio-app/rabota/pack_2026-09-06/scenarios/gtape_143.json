@@ -1,0 +1,97 @@
+{
+  "id": "gtape_143",
+  "app": "tape",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+5%",
+  "grade": "clean_ad",
+  "brand": {
+    "accent": "#F4C430",
+    "accent2": "#FFE08A",
+    "code": "MEASURE",
+    "logo": "tape.png",
+    "name": "3D TAPE MEASURE"
+  },
+  "music": {
+    "queries": [
+      "warm inspiring folk uplift",
+      "cheerful acoustic guitar",
+      "warm optimistic modern"
+    ]
+  },
+  "cover": {
+    "kicker": "TRUE STORY",
+    "top": "THIS COUCH COST",
+    "big": "$900",
+    "sub": "ONE WRONG NUMBER",
+    "q": ["couch furniture living room mistake fit"],
+    "ai": "work/gtape_143/cover_ai.png"
+  },
+  "segments": [
+    {"id": "b1", "text": "This couch cost me nine hundred dollars because I trusted my eye."},
+    {"id": "b2", "text": "I measured the wall. I did not measure the doorway."},
+    {"id": "b3", "text": "It sat in the hallway for two days. Then went back."},
+    {"id": "b4", "text": "Return fee, restocking fee, second delivery."},
+    {"id": "b5", "text": "Your phone already measures both. Wall and door, one scan."},
+    {"id": "b6", "text": "Tap two points, save the project, buy the couch that fits."},
+    {"id": "b7", "text": "Comment MEASURE. Free three days."}
+  ],
+  "shots": [
+    {"q": ["large sectional couch delivery apartment door"], "motion": "static_hold", "dur": 3.0},
+    {"q": ["tape measure wall living room hand"], "motion": "zin_slow", "dur": 2.8},
+    {"q": ["narrow doorway hallway apartment vertical"], "motion": "pandown", "dur": 3.0},
+    {"q": ["couch stuck in hallway funny frustrated"], "motion": "static_hold", "dur": 3.2},
+    {"q": ["moving truck return delivery frustrated"], "motion": "zout", "dur": 2.5},
+    {"q": ["smartphone ar app measuring room lidar"], "motion": "zin_fast", "dur": 3.5},
+    {"q": ["hand tap phone screen two points measurement"], "motion": "static_hold", "dur": 3.0},
+    {"q": ["furniture store shopping happy family"], "motion": "zin_slow", "dur": 2.8}
+  ],
+  "overlays": [
+    {"at": 0.02, "dur": 2.0, "type": "kicker", "text": "TRUE STORY"},
+    {"at": 0.10, "dur": 2.2, "type": "kinetic", "top": "$900", "big": "GONE"},
+    {"at": 0.28, "dur": 2.0, "type": "callout", "text": "Measured wall - forgot door", "pos": "upper"},
+    {"at": 0.44, "dur": 2.5, "type": "checklist", "items": ["Return fee", "Restock fee", "Second delivery", "Two lost days"], "pos": "center"},
+    {"at": 0.62, "dur": 3.0, "type": "kinetic", "top": "PHONE MEASURES", "big": "BOTH"},
+    {"at": 0.80, "dur": 2.5, "type": "callout", "text": "Tap two points", "pos": "center"},
+    {"at": 0.92, "dur": 3.0, "type": "kicker", "text": "Comment MEASURE"}
+  ],
+  "cta": {
+    "text": "Comment MEASURE. Free three days.",
+    "code": "MEASURE",
+    "in_video": true,
+    "in_description": false
+  },
+  "caption": "This couch cost me $900 because I measured the wall and forgot the doorway. Your phone measures both in one scan - tap two points, save the project, buy the furniture that fits. Comment MEASURE for the app. Free three days.\n\nfor search: measure app iphone, ar tape measure, lidar room scan, furniture fit measure, doorway measurement, couch didnt fit, return fee furniture, moving day measure, apartment measure app, phone tape measure, ikea return, sectional too big, room dimensions app, ar measure furniture, moving hack",
+  "yt_title": "This couch cost me $900. One wrong number.",
+  "yt_description_extra": "Free 3-day trial. Comment MEASURE.",
+  "trend_keys": [
+    "$900 couch",
+    "one wrong number",
+    "measure app",
+    "ar tape measure",
+    "lidar",
+    "furniture fit",
+    "doorway",
+    "moving fail"
+  ],
+  "content_type": "sell",
+  "comp_angle": {
+    "title": "This couch cost me $900 (Emily Rayna)",
+    "views": 8900000,
+    "channel": "@emilyrayna",
+    "pattern": "fail-story hook + product as solution + specific dollar amount"
+  },
+  "virality": {
+    "score": 87,
+    "notes": [
+      "fail_story_relatable",
+      "specific_dollar_amount",
+      "product_as_relief",
+      "screen_recording_ar"
+    ],
+    "hook": "This couch cost me nine hundred dollars because I trusted my eye."
+  },
+  "duration_estimate_sec": 30,
+  "brand_kadr_count": 2,
+  "unique_clips": 8,
+  "notes_for_editor": "Brand kadr = AR-scanning screen recording at 0:18-0:21 (LiDAR lines drawing walls) and 0:24 (tap-two-points UI). Gold accent throughout. AR footage MUST be the tap-two-points gesture, not just static app screenshot."
+}

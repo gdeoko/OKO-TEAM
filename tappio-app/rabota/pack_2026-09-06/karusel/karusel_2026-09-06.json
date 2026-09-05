@@ -1,0 +1,124 @@
+{
+  "id": "karusel_2026-09-06",
+  "app": "brain",
+  "format": "4:5",
+  "resolution": "1080x1350",
+  "slides_count": 8,
+  "platform_primary": "instagram",
+  "brand": {
+    "accent": "#9B5DE5",
+    "accent2": "#C89BF0",
+    "code": "FOCUS",
+    "logo": "brain.png",
+    "name": "BRAINOVA"
+  },
+  "cover_topic": "7 signs your brain is on the wrong autopilot (and how to reset in 10 min a day)",
+  "design_system": {
+    "bg": "#050709",
+    "text": "#F5F7FA",
+    "accent": "#9B5DE5",
+    "font_headline": "Orbitron Bold 72-96pt",
+    "font_body": "Syne 32-42pt",
+    "font_mono": "DM Mono 20-24pt",
+    "logo": "brain.png bottom-left 60px margin",
+    "handle": "@tappio.app1 bottom-right 60px margin",
+    "numeration": "top-right corner 1/8 .. 8/8 in DM Mono 24pt cyan",
+    "safe_zone": "80px margin all sides for TT/IG safe crop"
+  },
+  "slides": [
+    {
+      "n": 1,
+      "role": "hook_cover",
+      "visual_prompt": "Ultra minimal cinematic vertical composition, 1080x1350 aspect ratio 4:5, deep midnight background rich matte dark HEX 050709 with subtle radial vignette darker corners, single central visual element: a human brain rendered in soft glowing purple light HEX 9B5DE5 with delicate neural connections shown as thin bioluminescent threads spanning the visual like fiber optics, brain hovering three quarters angle slightly turned to viewer left, translucent glass-like material catching subtle rim light from upper right at 45 degrees, brain surface showing detailed gyri and sulci with anatomical accuracy, physical realism cinematic uncompromising, no digital fake plastic look, no neon overglow, controlled photorealistic bioluminescence with 8 percent core glow intensity and soft 12 pixel bloom radius, no other objects in frame, no cables, no wires, no charts, no icons, no people, no hands, no faces, no product boxes, no external branding visible except the discreet placeholder mono wordmark, entire background empty rich dark space allowing brain composition to breathe with 40 percent negative space top and 30 percent negative space bottom reserved for headline typography, palette limited strictly to background dark HEX 050709, brain glow purple HEX 9B5DE5 core, and soft accent secondary HEX C89BF0 highlights only, no other saturated colors, no orange no cyan no gold present, shot with 85mm equivalent macro lens f 2 aperture giving razor sharp brain surface with soft edge falloff outside frame, ultra sharp 8K feel commercial editorial fine art poster mood, high resolution micro detail on brain fold texture, no watermarks, no logos on brain surface, no text overlays other than a very small placeholder tag at exact bottom center reading Orbitron Bold 18pt slightly greyed color rgba 245 247 250 0.42 spelling \"SWIPE\" with tiny 6px pixel arrow icon after it pointing right at 15 percent opacity, silent invitation not command, editorial gallery-cover mood, minimalism as content strategy, whole slide reads as art curation between two book covers of a psychology essay rather than a marketing carousel.",
+      "text_overlays": [
+        {"text": "7 SIGNS", "font": "Orbitron Black 120pt", "color": "#F5F7FA", "pos": "top-center"},
+        {"text": "YOUR BRAIN IS ON", "font": "Orbitron Bold 42pt", "color": "rgba(245,247,250,0.72)", "pos": "top-center below"},
+        {"text": "THE WRONG AUTOPILOT", "font": "Orbitron Bold 42pt", "color": "#9B5DE5", "pos": "top-center below"}
+      ]
+    },
+    {
+      "n": 2,
+      "role": "sign_1",
+      "headline": "1. You forget why you walked into a room",
+      "body": "The doorway effect - your memory dumps context on every threshold. Untrained brains do this 40 times a day. Trained brains: 6-8.",
+      "visual_prompt": "Minimal vertical composition 1080x1350, empty modern doorway front view in dim ambient purple lit hallway, single door frame centered with 25 percent negative space above for text, no person visible, thin shaft of warm light spilling from beyond the door onto matte concrete floor, purple ambient accent from ceiling recessed light HEX 9B5DE5 at low 15 percent intensity, matte cinematic film grade, subtle grain 4 percent, no signs, no numbers, no clutter, no people, no hands, editorial fine art composition. Palette dark HEX 050709 walls, purple accent HEX 9B5DE5 ambient, warm neutral floor spill HEX D4C5A8. Shot 35mm equivalent f 2.8, physical realism, high 8K feel, ultra sharp door frame detail wood grain visible.",
+      "layout": "text top, image bottom 60%",
+      "num": "2/8"
+    },
+    {
+      "n": 3,
+      "role": "sign_2",
+      "headline": "2. Reading same paragraph three times",
+      "body": "Attentional shift fires every 90 seconds by default. Without training, you re-read without noticing. With training, you catch the drift.",
+      "visual_prompt": "Vertical composition 1080x1350, minimal desk scene overhead angle, open book face down on dark oak wood desk, single warm reading lamp glow on right at 3200K, soft purple ambient from left at 5600K creating cool-warm color contrast, purple accent HEX 9B5DE5, no person no hands no face, one coffee cup steaming lower right corner, cinematic film mood, subtle grain, 50mm equivalent f 2, physical realism, 8K feel, dark background dominant negative space upper 40 percent for text overlay, no other objects, no papers, no phone, no clutter.",
+      "layout": "text top, image bottom 60%",
+      "num": "3/8"
+    },
+    {
+      "n": 4,
+      "role": "sign_3",
+      "headline": "3. Names vanish in 5 seconds after intro",
+      "body": "Working memory holds 4 items max under stress. Untrained brains lose the fifth as soon as it lands.",
+      "visual_prompt": "Vertical composition 1080x1350, extreme minimal, five empty translucent glass jars in a row on dark oak table shot from front slight low angle, four jars glowing softly purple HEX 9B5DE5 from within, fifth jar dark empty and cracked with hairline fractures visible, purple ambient rim light from behind camera, matte cinematic grade, subtle 4 percent grain, no people no hands no labels no numbers on jars, editorial minimalism, deep negative space top 40 percent for text, 85mm equivalent f 2.2, physical realism, 8K micro detail on glass texture.",
+      "layout": "text top, image bottom 60%",
+      "num": "4/8"
+    },
+    {
+      "n": 5,
+      "role": "sign_4",
+      "headline": "4. You reach for phone before your feet touch floor",
+      "body": "First dopamine hit before cortisol clears. Sets low-attention baseline for 4 to 6 hours after.",
+      "visual_prompt": "Vertical composition 1080x1350, close-up of nightstand at bedside, smartphone lying face down on wooden surface with faint purple glow escaping from edges suggesting a lit screen underneath, alarm clock analog 5:47 AM in warm 3200K amber light, dark room ambient purple HEX 9B5DE5 from left side low intensity, cinematic mood matte grade subtle grain, no hands no face no fingers, top 40 percent empty space for headline typography, 50mm equivalent f 2, ultra sharp phone edge detail, physical realism, 8K feel, deliberate two color palette warm amber HEX F4C430 and cool purple HEX 9B5DE5 on dark HEX 050709 background.",
+      "layout": "text top, image bottom 60%",
+      "num": "5/8"
+    },
+    {
+      "n": 6,
+      "role": "sign_5",
+      "headline": "5. Cannot finish an article without checking notifications",
+      "body": "Split attention halves comprehension. Study Stanford 2024 - 47 percent recall drop with second screen.",
+      "visual_prompt": "Vertical composition 1080x1350, minimal desk overhead, single article page on dark surface with typography visible but slightly blurred to suggest inability to focus, second smartphone next to it face up glowing purple HEX 9B5DE5 notification light, both objects shot with shallow depth of field only the phone in razor sharp focus and article softly blurred, matte cinematic grade, 4 percent grain, no hands no fingers no people no faces, top 40 percent empty for text, 85mm equivalent f 1.8, dark background dominant, palette dark HEX 050709 and purple HEX 9B5DE5 exclusive, 8K micro detail on phone bezel.",
+      "layout": "text top, image bottom 60%",
+      "num": "6/8"
+    },
+    {
+      "n": 7,
+      "role": "sign_6_7_combined",
+      "headline": "6. Naps at 3 PM and 7. Cannot remember what you ate yesterday",
+      "body": "Circadian misalignment and hippocampal fatigue. Both reverse with the same 10 minute daily drill.",
+      "visual_prompt": "Vertical composition 1080x1350, split-screen bisected horizontally with clean thin white 2px line dividing frame at exact middle, top half shows dim afternoon lit couch with warm 3200K light streaming from window at 3 PM angle, empty couch with soft cushions no person present just impression of recent occupancy, bottom half shows empty dinner plate on dark oak table with fork and knife placed neatly at rest position, cool purple ambient HEX 9B5DE5 from left, matte cinematic grade with slight cool-to-warm color grade shift between halves, subtle grain 4 percent, no people no hands no faces, top 30 percent of overall composition reserved for headline typography with two lines, 35mm equivalent f 2.8, physical realism, 8K feel, palette limited to warm amber HEX F4E8D5, cool purple HEX 9B5DE5, dark background HEX 050709 exclusively.",
+      "layout": "text top, image bottom 60%, split-screen inside image",
+      "num": "7/8"
+    },
+    {
+      "n": 8,
+      "role": "cta_funnel",
+      "headline": "The 10 minute reset your brain has been waiting for",
+      "body": "Save this. Comment FOCUS for the exact exercises Cambridge researchers used to double sustained attention in 30 days.",
+      "cta_button": "COMMENT FOCUS",
+      "visual_prompt": "Vertical composition 1080x1350, minimal centerpiece of a human brain silhouette rendered in soft purple bioluminescent light HEX 9B5DE5 same style as slide 1 cover but from front three quarters other side to create bookend symmetry, brain surrounded by faint radial glow bloom 12 pixel soft radius, deep dark background HEX 050709 with subtle vignette, no other elements no text no icons no charts no product no people, brain occupies center 40 percent of frame with 30 percent negative space top and 30 percent bottom for headline and CTA button placement, 85mm equivalent f 2, physical realism, 8K micro detail on brain gyri texture matching slide 1 exactly for cover-to-cover book design language, matte cinematic grade, palette exclusively dark HEX 050709 and purple HEX 9B5DE5 with soft accent HEX C89BF0 highlights.",
+      "text_overlays": [
+        {"text": "COMMENT FOCUS", "font": "Orbitron Black 72pt", "color": "#050709", "bg": "#9B5DE5", "padding": "24px 48px", "border_radius": "16px", "pos": "bottom-center 200px margin"}
+      ],
+      "num": "8/8"
+    }
+  ],
+  "caption": "7 signs your brain is on the wrong autopilot. Save this before you scroll on.\n\nMost focus problems are not about willpower. They are default settings your brain runs when it has not been trained recently. The seven signs on the slides are the most reliable markers - if three or more feel familiar, the drill on slide 8 fixes them in about 10 minutes a day for 30 days. Comment FOCUS and I will send the exact exercises Cambridge researchers used in the 2026 study.\n\nfor search: brain training carousel, focus tips, attentional shift, doorway effect, working memory decline, digital detox routine, adhd focus reset, brain rot recovery, cognitive workout daily, 10 minute focus drill, cambridge focus study, saved for later brain, memory improvement steps, attention span reset, mindfulness alternative",
+  "caption_length_check": {
+    "chars": 730,
+    "target": "349-794 (carousel range)",
+    "status": "OK"
+  },
+  "hashtags_count": 0,
+  "hashtags_check": "OK (none)",
+  "cta": {
+    "text": "Save this. Comment FOCUS for the exercises.",
+    "code": "FOCUS",
+    "on_slide_8": true,
+    "in_caption": true
+  },
+  "post_time_msc": "13:00 06.09 (Saturday early afternoon US)",
+  "content_type": "value",
+  "brand_kadr_count": 2,
+  "notes_for_editor": "8 slides consistent design system: dark bg #050709, purple accent #9B5DE5, Orbitron/Syne/DM Mono only. Every slide has: number top-right (2/8..8/8, slide 1 has none), logo bottom-left brain.png at 40px height, @tappio.app1 bottom-right DM Mono 22pt at 42% opacity. Slide 8 has the CTA button in accent color. Save each as karusel_2026-09-06_s1.png .. _s8.png at 1080x1350."
+}

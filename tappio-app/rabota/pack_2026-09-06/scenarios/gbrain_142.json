@@ -1,0 +1,96 @@
+{
+  "id": "gbrain_142",
+  "app": "brain",
+  "voice": "en-US-MichelleNeural",
+  "rate": "+5%",
+  "grade": "clean_ad",
+  "brand": {
+    "accent": "#9B5DE5",
+    "accent2": "#C89BF0",
+    "code": "FOCUS",
+    "logo": "brain.png",
+    "name": "BRAINOVA"
+  },
+  "music": {
+    "queries": [
+      "soft piano science ambient",
+      "warm calm neuro-inspired",
+      "gentle uplifting focus"
+    ]
+  },
+  "cover": {
+    "kicker": "SCIENCE",
+    "top": "YOUR BRAIN",
+    "big": "LOSES FOCUS",
+    "sub": "EVERY 90 SEC",
+    "q": ["brain scan mri neural close up"],
+    "ai": "work/gbrain_142/cover_ai.png"
+  },
+  "segments": [
+    {"id": "b1", "text": "Your brain loses focus every ninety seconds. Neuroscience 2026."},
+    {"id": "b2", "text": "It is called an attentional shift and it is automatic."},
+    {"id": "b3", "text": "Untrained brains dip below reading level after twenty minutes."},
+    {"id": "b4", "text": "Trained brains hold focus for two hours, tested at Cambridge."},
+    {"id": "b5", "text": "The difference is a ten minute daily drill, not more coffee."},
+    {"id": "b6", "text": "Same drill people used in the two hour group."},
+    {"id": "b7", "text": "Save this. Comment FOCUS for the exercises."}
+  ],
+  "shots": [
+    {"q": ["human brain scan animation neurons firing"], "motion": "zin_slow", "dur": 3.2},
+    {"q": ["clock ticking 90 seconds close up"], "motion": "static_hold", "dur": 2.5},
+    {"q": ["person reading book losing focus phone"], "motion": "pandown", "dur": 2.8},
+    {"q": ["line graph declining attention chart"], "motion": "zin_slow", "dur": 3.0},
+    {"q": ["cambridge university library aerial"], "motion": "zout", "dur": 2.5},
+    {"q": ["brain training exercise puzzle interface"], "motion": "zin_slow", "dur": 3.0},
+    {"q": ["hourglass sand time flowing macro"], "motion": "static_hold", "dur": 2.5},
+    {"q": ["woman smiling focused reading laptop"], "motion": "zin_slow", "dur": 2.8}
+  ],
+  "overlays": [
+    {"at": 0.02, "dur": 2.5, "type": "kinetic", "top": "EVERY", "big": "90 SEC"},
+    {"at": 0.20, "dur": 2.0, "type": "callout", "text": "Attentional shift", "pos": "upper"},
+    {"at": 0.36, "dur": 2.5, "type": "bars", "title": "MINUTES OF FOCUS", "unit": "min", "items": [["Untrained", 20], ["Trained", 120]], "pos": "center"},
+    {"at": 0.55, "dur": 1.8, "type": "callout", "text": "Cambridge 2026", "pos": "upper"},
+    {"at": 0.70, "dur": 2.5, "type": "checklist", "items": ["10 min daily", "Attention drill", "Same exercise", "6x more focus"], "pos": "center"},
+    {"at": 0.88, "dur": 3.0, "type": "kicker", "text": "SAVE + COMMENT FOCUS"}
+  ],
+  "cta": {
+    "text": "Save this. Exercises in bio.",
+    "code": "FOCUS",
+    "in_video": false,
+    "in_description": true
+  },
+  "caption": "Your brain loses focus every 90 seconds - untrained. Trained brains hold focus for 2 hours. The difference is a 10 minute daily drill. Comment FOCUS for the exact exercises Cambridge researchers used.\n\nfor search: brain training app, focus exercises daily, attention span improve, 10 minute brain workout, cambridge focus study, adhd focus tips, brain fog fix, memory training app, cognitive workout, mental fitness routine, attentional shift, focus drills, brain rot recovery, brain score improvement, daily mind workout",
+  "yt_title": "Your brain loses focus every 90 seconds. Fix in 10 min.",
+  "yt_description_extra": "Neuroscience-backed. Comment FOCUS for the exercises.",
+  "trend_keys": [
+    "90 seconds",
+    "attentional shift",
+    "10 minutes",
+    "cambridge",
+    "focus training",
+    "brain rot",
+    "attention span",
+    "cognitive workout"
+  ],
+  "content_type": "viral",
+  "comp_angle": {
+    "title": "Dopamine every 90 seconds you scroll (Huberman)",
+    "views": 8000000,
+    "channel": "@hubermanlab",
+    "pattern": "science-fact hook + specific number + solution"
+  },
+  "virality": {
+    "score": 89,
+    "notes": [
+      "shocking_specific_number",
+      "cambridge_authority",
+      "before_after_bars",
+      "save_worthy_actionable"
+    ],
+    "hook": "Your brain loses focus every ninety seconds. Neuroscience 2026."
+  },
+  "duration_estimate_sec": 32,
+  "brand_kadr_count": 2,
+  "unique_clips": 8,
+  "notes_for_editor": "Brand kadr = brain training app screen recording at 0:18 (puzzle interface) and 0:26 (Brain Score climbing graph). Purple accent throughout. Bars overlay MUST show 20 vs 120 with clear disparity. Cambridge shot can be stock aerial."
+}

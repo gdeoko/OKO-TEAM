@@ -1,0 +1,104 @@
+{
+  "id": "gspy_141",
+  "app": "spy",
+  "voice": "en-US-AndrewNeural",
+  "rate": "+8%",
+  "grade": "teal_orange",
+  "series": {
+    "name": "Airbnb night 2am",
+    "part": 3,
+    "of": 3,
+    "note": "Part 3 - product reveal. Screen recording of the app running the 60-second scan. All 4 sensors visible."
+  },
+  "brand": {
+    "accent": "#00D9FF",
+    "accent2": "#66E9FF",
+    "code": "SPY",
+    "logo": "spy.png",
+    "name": "SPY CAMERA FINDER"
+  },
+  "music": {
+    "queries": [
+      "tech beat confident reveal",
+      "modern electronic clean solution",
+      "uplifting tech resolution"
+    ]
+  },
+  "cover": {
+    "kicker": "PART 3",
+    "top": "HOW TO CHECK",
+    "big": "IN 60 SEC",
+    "sub": "ANY ROOM",
+    "q": ["smartphone hand hotel dark room"],
+    "ai": "work/gspy_141/cover_ai.png"
+  },
+  "segments": [
+    {"id": "b1", "text": "You saw parts one and two. Now the fix."},
+    {"id": "b2", "text": "Every phone already has four sensors that catch hidden cameras."},
+    {"id": "b3", "text": "Wi-Fi finds their network. Bluetooth finds their pairing."},
+    {"id": "b4", "text": "Magnetometer finds their metal. Infrared finds their lens."},
+    {"id": "b5", "text": "One app runs all four at once. Any room, sixty seconds."},
+    {"id": "b6", "text": "Free three days. Comment SPY for the link."}
+  ],
+  "shots": [
+    {"q": ["hand holding smartphone hotel room dark"], "motion": "zin_slow", "dur": 3.0},
+    {"q": ["four icons wifi bluetooth magnet infrared animated"], "motion": "static_hold", "dur": 3.5},
+    {"q": ["wifi signal scan interface phone screen"], "motion": "zin_fast", "dur": 2.5},
+    {"q": ["bluetooth device scan blue radar"], "motion": "zin_fast", "dur": 2.5},
+    {"q": ["magnetometer compass sensor visualization"], "motion": "zin_fast", "dur": 2.5},
+    {"q": ["infrared camera flashlight hidden lens reveal"], "motion": "zin_fast", "dur": 2.8},
+    {"q": ["smartphone app scanning animation ui"], "motion": "static_hold", "dur": 3.5},
+    {"q": ["hand holding phone showing scan complete tick"], "motion": "zin_slow", "dur": 2.6}
+  ],
+  "overlays": [
+    {"at": 0.01, "dur": 2.0, "type": "kicker", "text": "PART 3 - THE FIX"},
+    {"at": 0.15, "dur": 3.0, "type": "kinetic", "top": "4 SENSORS", "big": "IN YOUR PHONE"},
+    {"at": 0.32, "dur": 1.4, "type": "callout", "text": "Wi-Fi", "pos": "center"},
+    {"at": 0.42, "dur": 1.4, "type": "callout", "text": "Bluetooth", "pos": "center"},
+    {"at": 0.52, "dur": 1.4, "type": "callout", "text": "Magnetometer", "pos": "center"},
+    {"at": 0.63, "dur": 1.4, "type": "callout", "text": "Infrared", "pos": "center"},
+    {"at": 0.75, "dur": 2.5, "type": "checklist", "items": ["Point phone at room", "Tap scan", "Read the flag", "Sleep safe"], "pos": "center"},
+    {"at": 0.92, "dur": 2.5, "type": "kicker", "text": "Comment SPY"}
+  ],
+  "cta": {
+    "text": "Free three days. Comment SPY for the link.",
+    "code": "SPY",
+    "in_video": true,
+    "in_description": false
+  },
+  "caption": "Part 3 of 3. Your phone already has four sensors that catch hidden cameras: Wi-Fi, Bluetooth, magnetometer, infrared. One app runs all four at once. Any room, sixty seconds. Free three days. Comment SPY.\n\nfor search: hidden camera detector app, 4 sensors phone, wifi bluetooth scanner, magnetometer camera finder, infrared lens detection, airbnb room scan, hotel privacy app, 60 second room check, hidden camera finder ios, spy cam scanner iphone, room safety scan, guest privacy check, travel safety app, hidden device detector, smoke detector camera check",
+  "yt_title": "The 60-second check that finds hidden cameras (Part 3)",
+  "yt_description_extra": "Part 3 - the fix. Free 3-day trial. Comment SPY.",
+  "trend_keys": [
+    "4 sensors",
+    "60 seconds",
+    "wifi bluetooth",
+    "magnetometer",
+    "infrared",
+    "airbnb scan",
+    "hotel privacy",
+    "part 3",
+    "the fix"
+  ],
+  "content_type": "sell",
+  "comp_angle": {
+    "title": "Every phone has 4 hidden sensors (Marcus Hutchins)",
+    "views": 4200000,
+    "channel": "@itsmarcushutchins",
+    "pattern": "part 3 closes the loop, product as solution not ad"
+  },
+  "virality": {
+    "score": 85,
+    "notes": [
+      "series_conclusion",
+      "product_as_solution",
+      "screen_recording_native",
+      "specific_4_number_hook"
+    ],
+    "hook": "You saw parts one and two. Now the fix."
+  },
+  "duration_estimate_sec": 30,
+  "brand_kadr_count": 3,
+  "unique_clips": 8,
+  "notes_for_editor": "Two brand kadr: (1) App icon animation at 0:04, (2) UI screen at 0:22, (3) end card cyan logo at 0:28. Screen recording of scan MUST show all 4 sensor icons lighting up. CTA text overlay stays on last 3s."
+}

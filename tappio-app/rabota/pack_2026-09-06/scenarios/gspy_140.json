@@ -1,0 +1,102 @@
+{
+  "id": "gspy_140",
+  "app": "spy",
+  "voice": "en-US-AndrewNeural",
+  "rate": "+8%",
+  "grade": "teal_orange",
+  "series": {
+    "name": "Airbnb night 2am",
+    "part": 2,
+    "of": 3,
+    "note": "Part 2 - reveal what the object was, still no product mention, escalation of story"
+  },
+  "brand": {
+    "accent": "#00D9FF",
+    "accent2": "#66E9FF",
+    "code": "PRIVACY",
+    "logo": "spy.png",
+    "name": "SPY CAMERA FINDER"
+  },
+  "music": {
+    "queries": [
+      "tension reveal build",
+      "electronic dark investigation",
+      "suspense build ambient"
+    ]
+  },
+  "cover": {
+    "kicker": "PART 2",
+    "top": "I OPENED IT",
+    "big": "AND SAW",
+    "sub": "MYSELF",
+    "q": ["small camera lens close up dark"],
+    "ai": "work/gspy_140/cover_ai.png"
+  },
+  "segments": [
+    {"id": "b1", "text": "Yesterday I told you about the blinking light at 2 AM."},
+    {"id": "b2", "text": "This morning I unscrewed the cover."},
+    {"id": "b3", "text": "Inside was a tiny lens, thirty dollars on Amazon."},
+    {"id": "b4", "text": "It had a memory card. Four days of footage."},
+    {"id": "b5", "text": "I did not press play. I called the police."},
+    {"id": "b6", "text": "One in eight Airbnb rentals has one of these."},
+    {"id": "b7", "text": "Part three tomorrow. How you can check any room in sixty seconds."}
+  ],
+  "shots": [
+    {"q": ["screwdriver unscrewing plastic cover hand"], "motion": "zin_slow", "dur": 3.0},
+    {"q": ["hand opening electronic device slow reveal"], "motion": "zin_fast", "dur": 3.2},
+    {"q": ["small camera lens circuit board macro"], "motion": "static_hold", "dur": 3.8},
+    {"q": ["memory card micro sd tweezers close up"], "motion": "zin_slow", "dur": 2.8},
+    {"q": ["phone dialing 911 emergency call hand"], "motion": "static_hold", "dur": 2.5},
+    {"q": ["airbnb apps browsing thumbnails vertical"], "motion": "pandown", "dur": 3.0},
+    {"q": ["chart infographic 1 in 8 statistic"], "motion": "zout", "dur": 2.8},
+    {"q": ["hotel bedroom generic clean vertical"], "motion": "static_hold", "dur": 2.2}
+  ],
+  "overlays": [
+    {"at": 0.02, "dur": 2.0, "type": "kicker", "text": "PART 2"},
+    {"at": 0.20, "dur": 1.8, "type": "callout", "text": "$30 on Amazon", "pos": "upper"},
+    {"at": 0.42, "dur": 2.5, "type": "kinetic", "top": "4 DAYS", "big": "OF FOOTAGE"},
+    {"at": 0.58, "dur": 2.2, "type": "callout", "text": "I called 911", "pos": "center"},
+    {"at": 0.72, "dur": 3.0, "type": "stat_count", "to": 1, "suffix": " in 8", "label": "AIRBNB RENTALS", "pos": "center"},
+    {"at": 0.90, "dur": 3.0, "type": "kicker", "text": "PART 3 TOMORROW"}
+  ],
+  "cta": {
+    "text": "Part three tomorrow.",
+    "code": "PRIVACY",
+    "in_video": false,
+    "in_description": true
+  },
+  "caption": "Part 2 of 3. I unscrewed the smoke detector. What was inside cost thirty dollars and had a memory card. Four days of footage. Comment PRIVACY for the check I use now on every rental. Part three tomorrow.\n\nfor search: airbnb hidden camera found, smoke detector spy cam, 30 dollar spy camera amazon, hidden camera memory card, airbnb footage police, 1 in 8 rentals, hotel room privacy, guest safety check, hidden lens reveal, airbnb story part 2, spy cam evidence, room privacy inspection, travel safety warning, airbnb security concerns",
+  "yt_title": "I opened the smoke detector. What was inside. (Part 2)",
+  "yt_description_extra": "Part 2 of 3. Comment PRIVACY for what saved me.",
+  "trend_keys": [
+    "part 2",
+    "smoke detector",
+    "hidden camera",
+    "1 in 8",
+    "airbnb",
+    "amazon",
+    "story",
+    "reveal"
+  ],
+  "content_type": "value",
+  "comp_angle": {
+    "title": "Part 2 - what she found",
+    "views": 8500000,
+    "channel": "@himynamespaul_",
+    "pattern": "escalation of series, still no product, statistic drop"
+  },
+  "virality": {
+    "score": 88,
+    "notes": [
+      "series_part_2",
+      "product_hint_but_not_shown",
+      "shocking_stat_drop",
+      "story_escalation"
+    ],
+    "hook": "Yesterday I told you about the blinking light at 2 AM."
+  },
+  "duration_estimate_sec": 32,
+  "brand_kadr_count": 2,
+  "unique_clips": 8,
+  "notes_for_editor": "Still no logo in main body. Bottom-corner cyan 'PART 2 OF 3' throughout. Product shown as absence (I called 911, not: I opened the app)."
+}

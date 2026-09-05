@@ -1,0 +1,105 @@
+{
+  "id": "gspy_139",
+  "app": "spy",
+  "voice": "en-US-AndrewNeural",
+  "rate": "+6%",
+  "grade": "teal_orange",
+  "series": {
+    "name": "Airbnb night 2am",
+    "part": 1,
+    "of": 3,
+    "note": "NO product mentioned in part 1 - pure story hook, product appears in part 3"
+  },
+  "brand": {
+    "accent": "#00D9FF",
+    "accent2": "#66E9FF",
+    "code": "PRIVACY",
+    "logo": "spy.png",
+    "name": "SPY CAMERA FINDER"
+  },
+  "music": {
+    "queries": [
+      "dark ambient tension night",
+      "slow suspense hotel",
+      "quiet unease minimal"
+    ]
+  },
+  "cover": {
+    "kicker": "PART 1",
+    "top": "I FOUND THIS",
+    "big": "AT 2 AM",
+    "sub": "IN MY AIRBNB",
+    "q": [
+      "hotel room dark night lamp"
+    ],
+    "ai": "work/gspy_139/cover_ai.png"
+  },
+  "segments": [
+    {"id": "b1", "text": "It was two in the morning. I could not sleep."},
+    {"id": "b2", "text": "The little red dot on the smoke detector kept blinking."},
+    {"id": "b3", "text": "Except it was blinking in a pattern. Every three seconds. Perfect."},
+    {"id": "b4", "text": "I turned off the lamp and the dot stayed on."},
+    {"id": "b5", "text": "I climbed on a chair and looked closer."},
+    {"id": "b6", "text": "That was not a smoke detector."},
+    {"id": "b7", "text": "Comment PRIVACY. Part two tomorrow."}
+  ],
+  "shots": [
+    {"q": ["hotel bedroom dim lamp night vertical"], "motion": "zin_slow", "dur": 3.2},
+    {"q": ["smoke detector ceiling red led close up"], "motion": "static_hold", "dur": 3.5},
+    {"q": ["red blinking light dark room"], "motion": "zin_slow", "dur": 3.0},
+    {"q": ["bedside lamp switch hand hotel"], "motion": "pandown", "dur": 2.8},
+    {"q": ["chair legs standing bedroom shadow"], "motion": "zout", "dur": 2.5},
+    {"q": ["hand reaching ceiling smoke detector"], "motion": "zin_fast", "dur": 3.0},
+    {"q": ["extreme close smoke detector reveal"], "motion": "static_hold", "dur": 3.8},
+    {"q": ["dark bedroom hallway silent"], "motion": "zin_slow", "dur": 2.4}
+  ],
+  "overlays": [
+    {"at": 0.02, "dur": 1.6, "type": "kicker", "text": "2:07 AM"},
+    {"at": 0.15, "dur": 2.0, "type": "callout", "text": "Every 3 seconds", "pos": "upper"},
+    {"at": 0.42, "dur": 1.8, "type": "kinetic", "top": "LAMP", "big": "OFF"},
+    {"at": 0.55, "dur": 2.4, "type": "callout", "text": "Still blinking", "pos": "center"},
+    {"at": 0.72, "dur": 3.0, "type": "kinetic", "top": "NOT A", "big": "DETECTOR"},
+    {"at": 0.92, "dur": 3.5, "type": "kicker", "text": "PART 2 TOMORROW"}
+  ],
+  "cta": {
+    "text": "Comment PRIVACY. Part two tomorrow.",
+    "code": "PRIVACY",
+    "in_video": true,
+    "in_description": false
+  },
+  "caption": "Part 1 of 3. I could not sleep in my Airbnb last night. Then I noticed the light was blinking in a pattern. What I saw when I climbed on the chair. Comment PRIVACY. Part two drops tomorrow.\n\nfor search: airbnb hidden camera, hotel room safety, travel privacy check, smoke detector cam, room scan tips, airbnb host recording, rental privacy laws, spy cam blinking light, 2am airbnb story, guest safety, hidden lens hotel, room check before sleep, privacy travel hack, airbnb warning signs, camera in smoke detector",
+  "yt_title": "I found this at 2AM in my Airbnb (Part 1)",
+  "yt_description_extra": "Part 1 of a 3-part story. No product this part. Just what happened.",
+  "trend_keys": [
+    "2am",
+    "airbnb",
+    "smoke detector",
+    "blinking",
+    "night",
+    "hotel",
+    "privacy",
+    "story",
+    "part 1"
+  ],
+  "content_type": "viral",
+  "comp_angle": {
+    "title": "I found this in my Airbnb at 2am (Marrakesh series)",
+    "views": 10200000,
+    "channel": "@himynamespaul_",
+    "pattern": "first-person story, no product in part 1, series of 3-5"
+  },
+  "virality": {
+    "score": 92,
+    "notes": [
+      "series_first_part",
+      "no_product_max_reach",
+      "hook_open_loop",
+      "physical_relatable_moment"
+    ],
+    "hook": "It was two in the morning. I could not sleep."
+  },
+  "duration_estimate_sec": 28,
+  "brand_kadr_count": 2,
+  "unique_clips": 8,
+  "notes_for_editor": "NO app logo in part 1. Only ambient dark hotel shots. Brand kadr = subtle 'To be continued' end card in cyan #00D9FF. Product reveal in part 3 (gspy_141)."
+}

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TAPPIO · панель клиента (05.09.2026)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Syne:wght@500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050709;--w:#f5f7fa;--w7:rgba(245,247,250,.72);--w4:rgba(245,247,250,.42);
+    --cyan:#00D9FF;--purple:#9B5DE5;--gold:#F4C430;
+    --card:#0b0e14;--border:rgba(245,247,250,.08);
+    --fh:'Orbitron',sans-serif;--fb:'Syne',sans-serif;--fm:'DM Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--w);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+  body{padding:24px 16px 80px;max-width:1200px;margin:0 auto}
+  h1{font-family:var(--fh);font-weight:900;font-size:clamp(24px,4vw,42px);letter-spacing:.02em;
+    background:linear-gradient(90deg,var(--cyan),var(--purple),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{font-family:var(--fh);font-weight:700;font-size:20px;margin:32px 0 12px;letter-spacing:.02em}
+  .meta{color:var(--w7);font-family:var(--fm);font-size:13px;margin-top:8px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:20px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .card .num{font-family:var(--fh);font-weight:900;font-size:32px;line-height:1}
+  .card .lbl{color:var(--w7);font-family:var(--fm);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-top:6px}
+  .card.spy .num{color:var(--cyan)} .card.brain .num{color:var(--purple)} .card.tape .num{color:var(--gold)}
+  .section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:14px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+  .row:last-child{border-bottom:none}
+  .row .k{color:var(--w7);font-family:var(--fm);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+  .row .v{font-family:var(--fm);font-size:13px}
+  .row .v.ok{color:#4ade80} .row .v.no{color:var(--w4);font-style:italic}
+  .chip{display:inline-block;padding:4px 10px;border-radius:999px;font-family:var(--fm);font-size:11px;letter-spacing:.05em;margin-right:6px}
+  .chip.spy{background:rgba(0,217,255,.14);color:var(--cyan)}
+  .chip.brain{background:rgba(155,93,229,.14);color:var(--purple)}
+  .chip.tape{background:rgba(244,196,48,.14);color:var(--gold)}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-family:var(--fm);font-size:12px}
+  th{color:var(--w7);text-transform:uppercase;letter-spacing:.08em;padding:8px 6px;text-align:left;border-bottom:1px solid var(--border);font-weight:500}
+  td{padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:top}
+  a{color:var(--cyan);text-decoration:none}
+  nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  nav a{padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-family:var(--fm);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--w7)}
+  nav a:hover{color:var(--w);border-color:var(--cyan)}
+  footer{color:var(--w4);font-family:var(--fm);font-size:11px;text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<h1>TAPPIO · панель клиента</h1>
+<div class="meta">Обновлено 05.09.2026 · Александр Мурашко (@a_trafico) · договор №005/2026 ИМПЕРИЯ · окно 60 дней перешло в бонусную аналитику</div>
+
+<nav>
+  <a href="#svodka">Сводка</a><a href="#biznes">Бизнес и факты</a><a href="#brand">Бренд</a>
+  <a href="#lenta">Лента публикаций</a><a href="#socseti">Соцсети</a><a href="#metki">Переходы и метки</a>
+  <a href="#temy">Темы и боли</a><a href="#konkurenty">Конкуренты</a><a href="#sistema">Система роста</a>
+  <a href="#sait">Сайт</a><a href="#baza">База клиентов</a><a href="#dialogi">Диалоги</a>
+  <a href="#rassylki">Рассылки</a><a href="#ankety">Анкеты и формы</a>
+  <a href="#sdelki">Сделки и оплаты</a><a href="#celi">Цели месяца</a>
+</nav>
+
+<h2 id="svodka">1. Сводка</h2>
+<div class="grid">
+  <div class="card spy"><div class="num">148</div><div class="lbl">роликов собрано</div></div>
+  <div class="card"><div class="num">117</div><div class="lbl">запощено</div></div>
+  <div class="card spy"><div class="num">106</div><div class="lbl">TikTok · @tappio.app</div></div>
+  <div class="card"><div class="num">115</div><div class="lbl">YouTube · @tappio_pro</div></div>
+  <div class="card purple"><div class="num" style="color:var(--purple)">5</div><div class="lbl">Instagram · @tappio.app1</div></div>
+  <div class="card tape"><div class="num">123</div><div class="lbl">подписчиков IG @tappio.app1</div></div>
+  <div class="card"><div class="num">3</div><div class="lbl">приложения в работе</div></div>
+  <div class="card"><div class="num" style="color:var(--gold)">USA</div><div class="lbl">гео / English</div></div>
+</div>
+
+<h2 id="biznes">2. Бизнес и факты</h2>
+<div class="section">
+  <div class="row"><span class="k">Ниша</span><span class="v">iOS-приложения (privacy, brain training, AR)</span></div>
+  <div class="row"><span class="k">Приложения</span><span class="v"><span class="chip spy">Spy Camera Finder</span><span class="chip brain">Brainova</span><span class="chip tape">3D Tape Measure</span></span></div>
+  <div class="row"><span class="k">Гео</span><span class="v">USA primary</span></div>
+  <div class="row"><span class="k">Язык контента</span><span class="v">English (US)</span></div>
+  <div class="row"><span class="k">Модель</span><span class="v">in-app subscription (weekly / monthly / yearly)</span></div>
+  <div class="row"><span class="k">Подтверждённые числа</span><span class="v">Spy: 4 sensors, 4 minutes to scan · Tape: LiDAR AR-measure</span></div>
+  <div class="row"><span class="k">Запреты клиента</span><span class="v">хештеги нигде, выдуманные цифры нельзя</span></div>
+  <div class="row"><span class="k">Ценности</span><span class="v">«находит скрытые камеры 4 датчиками телефона»</span></div>
+</div>
+
+<h2 id="brand">3. Бренд</h2>
+<div class="section">
+  <div class="row"><span class="k">Фон</span><span class="v" style="color:#050709;background:#050709;padding:2px 20px;border-radius:4px;border:1px solid var(--border)">#050709</span></div>
+  <div class="row"><span class="k">Spy акцент</span><span class="v" style="color:var(--cyan)">#00D9FF</span></div>
+  <div class="row"><span class="k">Brain акцент</span><span class="v" style="color:var(--purple)">#9B5DE5</span></div>
+  <div class="row"><span class="k">Tape акцент</span><span class="v" style="color:var(--gold)">#F4C430</span></div>
+  <div class="row"><span class="k">Шрифты</span><span class="v" style="font-family:var(--fh)">Orbitron</span> · <span class="v" style="font-family:var(--fb)">Syne</span> · <span class="v" style="font-family:var(--fm)">DM Mono</span></div>
+  <div class="row"><span class="k">Лого</span><span class="v">tappio-app/factory/assets/logos/{spy,brain,tape,tappio}.png</span></div>
+  <div class="row"><span class="k">Голоса</span><span class="v">Spy → AndrewNeural · Brain → MichelleNeural · Tape → ChristopherNeural (edge-tts en-US)</span></div>
+</div>
+
+<h2 id="lenta">4. Лента публикаций (последние 20 запощенных)</h2>
+<div class="section">
+  <table>
+    <thead><tr><th>ID</th><th>App</th><th>TT</th><th>YT</th><th>IG</th><th>метрики</th></tr></thead>
+    <tbody>
+      <tr><td>gtape_114</td><td><span class="chip tape">Tape</span></td><td>92808...</td><td>UkYYzYvQol8</td><td>–</td><td class="v no">нет доступа (Apphud не выдан)</td></tr>
+      <tr><td>gspy_112</td><td><span class="chip spy">Spy</span></td><td>92795...</td><td>PBrgdEEQ53Q</td><td>–</td><td class="v no">нет доступа</td></tr>
+      <tr><td>gbrain_110</td><td><span class="chip brain">Brain</span></td><td>92780...</td><td>ob6cuMmrEBs</td><td>–</td><td class="v no">нет доступа</td></tr>
+      <tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td class="v no">свернуто (117 записей)</td></tr>
+    </tbody>
+  </table>
+  <div class="meta" style="margin-top:14px">Метрика «нет доступа» — Apphud read-only клиентом не выдан (§3.2 договора). Ноль не пишется: пустое поле честно означает «не измерено».</div>
+</div>
+
+<h2 id="socseti">5. Соцсети</h2>
+<div class="section">
+  <div class="row"><span class="k">TikTok @tappio.app</span><span class="v ok">Chrome-сессия на VPS, готова к постингу</span></div>
+  <div class="row"><span class="k">Instagram @tappio.app1</span><span class="v ok">instagrapi живая (pk 4300444197), 123 подписчика</span></div>
+  <div class="row"><span class="k">Instagram @tappio.app.pro</span><span class="v no">заменяется 06.09 новым от клиента</span></div>
+  <div class="row"><span class="k">YouTube @tappio_pro</span><span class="v ok">Data API работает, refresh_token свежий (UChJNuqMcytBhNfR5vsw49HQ)</span></div>
+  <div class="row"><span class="k">Hooppy TT</span><span class="v ok">page 2350868, токен есть</span></div>
+</div>
+
+<h2 id="metki">6. Переходы и метки</h2>
+<div class="section">
+  <div class="row"><span class="k">SPY / PRIVACY</span><span class="v">→ okoteam.top/p/tappio-spy (short)</span></div>
+  <div class="row"><span class="k">BRAIN / FOCUS</span><span class="v">→ okoteam.top/p/tappio-brain</span></div>
+  <div class="row"><span class="k">TAPE / MEASURE</span><span class="v">→ okoteam.top/p/tappio-tape</span></div>
+  <div class="row"><span class="k">CTA 50/50</span><span class="v">чётные ролики — в описании · нечётные — в видео</span></div>
+</div>
+
+<h2 id="temy">7. Темы и боли (из анализа конкурентов)</h2>
+<div class="section">
+  <div class="row"><span class="k">Spy боли</span><span class="v">чужой ужас (нашли камеру в душе), паранойя перед поездкой, подарки-обманки</span></div>
+  <div class="row"><span class="k">Brain боли</span><span class="v">«захожу в комнату — забыл зачем», brain rot (слово года), падение внимания, деградация с возрастом</span></div>
+  <div class="row"><span class="k">Tape боли</span><span class="v">купил диван — не влез, ремонт вслепую, замер один — неудобно, потерял $900</span></div>
+</div>
+
+<h2 id="konkurenty">8. Конкуренты (по дням)</h2>
+<div class="section">
+  <div class="row"><span class="k">Сегодня 05.09.2026</span><span class="v">10 новых каналов: <a href="./2026-09-05-konkurenty.md">полный разбор</a></span></div>
+  <div class="row"><span class="k">Ключевые миллионники</span><span class="v">Pauline (20M), Marcus Hutchins (33M), Kristy Sarah (25M), Huberman (10M)</span></div>
+  <div class="row"><span class="k">Прошлые разборы</span><span class="v">2026-07-16-spy.md (10 каналов), плюс 51 конкурент в контексте v3.6</span></div>
+</div>
+
+<h2 id="sistema">9. Система роста</h2>
+<div class="section">
+  <div class="row"><span class="k">Файл</span><span class="v">03_SISTEMA/sistema_rosta.html · 764 KB · 216 страниц</span></div>
+  <div class="row"><span class="k">7 разделов</span><span class="v">Главная · Бизнес-план (20 блоков) · Чек-лист (10 блоков) · Материалы (12 блоков) · Визуал (10) · Аналитика (10) · Перспективы (10)</span></div>
+  <div class="row"><span class="k">Статус</span><span class="v ok">Готова, согласована клиентом v3.6 от 01.07.2026</span></div>
+</div>
+
+<h2 id="sait">10. Сайт</h2>
+<div class="section">
+  <div class="row"><span class="k">Адрес</span><span class="v"><a href="https://tappio.pro">tappio.pro</a></span></div>
+  <div class="row"><span class="k">Хостинг</span><span class="v">webhost1 · IP 91.236.136.105</span></div>
+  <div class="row"><span class="k">Лид-магниты</span><span class="v ok">4 PDF готовы (по одному на каждое приложение + универсальный)</span></div>
+  <div class="row"><span class="k">Посещаемость</span><span class="v no">нет доступа к аналитике сайта клиента</span></div>
+</div>
+
+<h2 id="baza">11. База клиентов · 12. Диалоги · 13. Рассылки</h2>
+<div class="section">
+  <div class="row"><span class="k">База 11</span><span class="v no">Apphud недоступен — «нет доступа», не ноль</span></div>
+  <div class="row"><span class="k">Диалоги 12</span><span class="v">воронка ловится через кодовые слова + метки коротких ссылок</span></div>
+  <div class="row"><span class="k">Рассылки 13</span><span class="v no">не в плане 06.09, база формируется</span></div>
+</div>
+
+<h2 id="ankety">14. Анкеты и формы</h2>
+<div class="section">
+  <div class="row"><span class="k">Форма сайта</span><span class="v ok">tappio.pro/anketa (собирает email + приложение)</span></div>
+  <div class="row"><span class="k">Лид-магниты</span><span class="v ok">4 PDF выдаются автоматически</span></div>
+</div>
+
+<h2 id="sdelki">15. Сделки и оплаты</h2>
+<div class="section">
+  <div class="row"><span class="k">Установки / trials</span><span class="v no">Apphud недоступен — «нет доступа»</span></div>
+  <div class="row"><span class="k">Paid subscribers</span><span class="v no">нет доступа</span></div>
+  <div class="row"><span class="k">MRR</span><span class="v no">нет доступа</span></div>
+</div>
+
+<h2 id="celi">16. Цели месяца (06.09 → 05.10)</h2>
+<div class="section">
+  <div class="row"><span class="k">Роликов</span><span class="v">5 × 30 = <b>150 роликов</b></span></div>
+  <div class="row"><span class="k">Постов</span><span class="v">1 × 30 = <b>30 постов</b></span></div>
+  <div class="row"><span class="k">Каруселей</span><span class="v">3/неделю × 4.3 = <b>13 каруселей</b></span></div>
+  <div class="row"><span class="k">По приложениям</span><span class="v">Spy 90 (60%) · Brain 30 (20%) · Tape 30 (20%)</span></div>
+  <div class="row"><span class="k">Микс</span><span class="v">viral 50% · value 30% · sell 20%</span></div>
+  <div class="row"><span class="k">Стартовый замер</span><span class="v">148 роликов, 123 подп. IG · медиана просмотров пока «нет доступа»</span></div>
+</div>
+
+<footer>Панель собирается сама каждый обход завода. Стиль клиента: cyan/purple/gold Tappio, фон #050709. Ссылка с ключом клиенту уходит утренним отчётом.</footer>
+
+</body>
+</html>

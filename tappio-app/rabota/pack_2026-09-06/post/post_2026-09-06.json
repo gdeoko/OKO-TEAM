@@ -1,0 +1,76 @@
+{
+  "id": "post_2026-09-06",
+  "app": "spy",
+  "format": "4:5",
+  "resolution": "1080x1350",
+  "platform_primary": "instagram",
+  "platform_extra": ["tiktok_carousel_first_slide"],
+  "brand": {
+    "accent": "#00D9FF",
+    "code": "PRIVACY",
+    "logo": "spy.png",
+    "name": "SPY CAMERA FINDER"
+  },
+  "cover_visual_prompt": "Photorealistic overhead vertical composition, 1080x1350 aspect ratio 4:5, hotel bedroom shot from above at exactly 60 degrees, muted teal orange grade with strong shadow contrast rating 1.35, matte cinematic film look, subtle grain 4 percent, moody midnight ambient with warm bedside lamp glow spilling in from bottom right at 3200K temperature, deep shadow in upper left, key light on center bed sheet at 5600K daylight balance to catch the details, physical realism uncompromising, no digital plastic sheen. Foreground objects arranged on white pressed hotel duvet in flat lay style: a smartphone in matte black case placed at 15 degrees rotation with screen off showing empty reflection, a small circular white smoke detector removed from ceiling lying face up next to it exposing hidden dark lens at exact center, a slim brass hotel keycard, a folded eye mask in navy silk with visible stitching, a small pill of a Bluetooth earbud, a passport in dark navy leather cover with embossed gold seal, a paper coffee cup with steam trail rising two centimeters, all objects arranged with intentional geometric spacing creating diagonal lead from upper left corner to lower right corner. On the smoke detector object surface a very small text label written in Orbitron ExtraBold at 3 percent kerning reads exactly \"NOT A DETECTOR\" in cyan color HEX 00D9FF slightly glowing edge softness 2 pixels. Overhead large negative space along the top 25 percent of the composition reserved for headline typography added later, empty rich dark backdrop of duvet fabric with tight fiber weave texture visible under 85mm equivalent macro lens, sharp focus f 2 aperture giving razor plane at bed level with soft edge falloff outside frame, shot with commercial product photography discipline of Peter Belanger style but with editorial thriller mood, high resolution 8K feel, ultra sharp micro detail on smoke detector plastic ribs and lens glass reflection, no watermarks, no logos on any object except the discreet cyan wordmark, no text overlays other than the object label, no branded objects visible, no product boxes, no packaging, no people, no hands, no fingers, no faces, no reflections of persons, no window in frame, no ceiling in frame, purely the top down flat lay narrative composition, negative space precise for later 5 line headline placement with 96 pixel margin from top edge. The whole scene must read as a first person true crime documentary still frame from a solo travel horror story, quiet moment before a discovery, ambient dread not gore, evidence of privacy invasion staged as everyday hotel comfort, teal cyan detail on smoke detector serving as the only cool accent against the warm bedside light spill, entire palette limited to cool teal shadow HEX 0A1F26, warm creamy duvet HEX F4E8D5, and cyan HEX 00D9FF as sole accent, no other saturated colors present, deliberate cinematic three color restraint.",
+  "cover_visual_references": [
+    "tappio-app/factory/assets/logos/spy.png",
+    "tappio-app/06_APP_SCREENSHOTS/spy_scan_ui.png (if available, adds authenticity)"
+  ],
+  "cover_visual_service": "Gemini image (запас — chatgpt gpt_us когда поднимется)",
+  "cover_visual_forbid": [
+    "no product box",
+    "no people",
+    "no hands",
+    "no faces",
+    "no visible screens turned on",
+    "no logos of Airbnb or hotels",
+    "no watermarks"
+  ],
+  "text_overlays_on_image": [
+    {
+      "text": "5 THINGS I CHECK",
+      "position": "top-center, 96px from top",
+      "font": "Orbitron Black 96pt",
+      "color": "#F5F7FA",
+      "letter_spacing": "0.04em"
+    },
+    {
+      "text": "IN EVERY AIRBNB",
+      "position": "top-center, below headline, 24px gap",
+      "font": "Orbitron Bold 72pt",
+      "color": "#00D9FF",
+      "letter_spacing": "0.04em"
+    },
+    {
+      "text": "BEFORE I SLEEP",
+      "position": "top-center, below sub, 20px gap",
+      "font": "Syne Extra 48pt",
+      "color": "rgba(245,247,250,0.72)",
+      "letter_spacing": "0.02em"
+    },
+    {
+      "text": "@tappio.app1",
+      "position": "bottom-right, 48px margin",
+      "font": "DM Mono 22pt",
+      "color": "rgba(245,247,250,0.42)"
+    }
+  ],
+  "caption": "5 things I check in every Airbnb before I sleep.\n\n1. Smoke detector - unscrew the cover if the LED blinks in a pattern.\n2. Hair dryer holder - a common empty shell for a lens.\n3. Alarm clock face - front dot with a pin hole is a giveaway.\n4. AC vent - shine a flashlight and look for a small round reflection.\n5. Any USB charger in a wall socket - unplug and check the weight.\n\nOne app runs the same scan in sixty seconds without touching a thing. Comment PRIVACY for the link. Free three days.\n\nfor search: airbnb safety, hidden camera check, hotel privacy scan, solo travel safety, airbnb warning signs, smoke detector camera, hair dryer holder camera, alarm clock spy cam, usb charger spy, ac vent camera, room check before sleep, guest safety tips, rental privacy laws, travel privacy hack, discreet hotel scan",
+  "caption_length_check": {
+    "chars": 615,
+    "target": "272-720 (post range)",
+    "status": "OK"
+  },
+  "hashtags_count": 0,
+  "hashtags_check": "OK (none, per client rule 02.09)",
+  "cta": {
+    "text": "Comment PRIVACY for the link. Free three days.",
+    "code": "PRIVACY",
+    "in_image": false,
+    "in_caption": true
+  },
+  "post_time_msc": "10:30 06.09 (Saturday morning, US wake-up)",
+  "content_type": "value",
+  "brand_kadr_count": 1,
+  "notes_for_editor": "Text overlays applied AFTER Gemini generation (top-25% negative space reserved). Do not overlap the smoke detector or the phone. Bottom third of image remains clean of overlays. Save as post_2026-09-06.png at 1080x1350."
+}
