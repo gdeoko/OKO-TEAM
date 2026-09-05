@@ -35,11 +35,27 @@ $apply = isset($opt['apply']);
 $hold  = trim((string) ($opt['hold'] ?? ''));
 $holdTs = $hold !== '' ? (strtotime($hold) ?: 0) : 0;
 
-/** Тот же расчёт, что и при обычной выдаче: пять рабочих дней от результата. */
+/**
+ * СРОК СЧИТАЕТСЯ ОТ ДАТЫ ЗАКАЗА, А НЕ ОТ ОЦЕНКИ ЗАЯВКИ.
+ *
+ * Правило владельца: наградной материал приходит в течение пяти рабочих дней
+ * СО ДНЯ ЗАКАЗА (участникам клуба три, от партнёрского учреждения — быстрее).
+ * Здесь база бралась от результата — и дозаказ, оплаченный 4 сентября,
+ * оказывался «просрочен» и уходил 5-го, на четыре дня раньше обещанного.
+ *
+ * Точка отсчёта у обоих путей одна и та же — момент, когда обязательство
+ * возникло, и он записан в самой строке наградного документа:
+ *   • дозаказ электронных наград — строка заводится при оплате заказа
+ *     (core/orders.php::order_digital_fulfil), created_at = оплата;
+ *   • основной и дополнительный по оргвзносу — строка заводится при выдаче
+ *     результата, created_at = результат.
+ * Поэтому считаем от created_at документа, а не от полей заявки.
+ */
 function dsf_plan(array $a): DateTime {
-    $base = trim((string) ($a['result_send_at'] ?? '')) !== '' ? (string) $a['result_send_at']
+    $base = trim((string) ($a['dcreated'] ?? '')) !== '' ? (string) $a['dcreated']
+          : (trim((string) ($a['result_send_at'] ?? '')) !== '' ? (string) $a['result_send_at']
           : (trim((string) ($a['graded_at'] ?? '')) !== '' ? (string) $a['graded_at']
-          : (string) ($a['created_at'] ?? 'now'));
+          : (string) ($a['created_at'] ?? 'now')));
     $wDays = 5;
     if (!empty($a['user_id']) && function_exists('club_is_active') && club_is_active((int) $a['user_id'])) $wDays = 3;
     $instId = (int) ($a['institution_id'] ?? 0);
@@ -63,7 +79,8 @@ function dsf_plan(array $a): DateTime {
  * чужие строки, а отчёт при этом бодро печатал 82 исправленных срока. Ошибка
  * тихая: совпали всего четыре номера, и два из них — у уже выданных документов.
  * Поэтому поля диплома берём под отдельными именами и никогда не смешиваем. */
-$rows = all("SELECT d.id AS did, d.number AS dnum, d.type AS dtype, d.scheduled_at AS dsched, a.*
+$rows = all("SELECT d.id AS did, d.number AS dnum, d.type AS dtype, d.scheduled_at AS dsched,
+                    d.created_at AS dcreated, a.*
              FROM diplomas d JOIN applications a ON a.id = d.application_id
              WHERE COALESCE(d.sent_at,'') = '' ORDER BY d.id");
 
