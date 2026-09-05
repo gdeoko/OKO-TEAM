@@ -215,6 +215,10 @@ function curator_grant(int $competitionId, array $t): int {
             'teacher'        => (string) $t['teacher'],
             'email'          => (string) $t['email'],
             'works'          => (int) $t['works'],
+            /* ЗДЕСЬ ПУТЬ ОСТАЁТСЯ АБСОЛЮТНЫМ, И ЭТО НАМЕРЕННО.
+             * В отличие от реестра дипломов, эта запись никуда не превращается
+             * в ссылку: файл берут с диска и прикладывают к письму педагогу
+             * (см. is_file ниже). Веб-адрес сломал бы вложение. */
             'pdf_path'       => $pdf,
         ]);
     } catch (\Throwable $e) { return 0; }

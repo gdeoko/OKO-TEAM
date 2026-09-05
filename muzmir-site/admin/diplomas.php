@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
         if ($pdfPath === '' && function_exists('pdf_diploma')) {
             try { $pdfPath = pdf_diploma($app, $dtype); if ($pdfPath) $pdfok++; } catch (Throwable $e) { $pdfPath = ''; }
         }
-        insert('diplomas', ['number'=>$number,'application_id'=>$appId,'type'=>$dtype,'result'=>$recResult,'pdf_path'=>$pdfPath]);
+        insert('diplomas', ['number'=>$number,'application_id'=>$appId,'type'=>$dtype,'result'=>$recResult,'pdf_path'=>diploma_store_path($pdfPath)]);
         $made++;
     }
     audit('diplomas_generate', 'diploma', null, ['made'=>$made,'pdf'=>$pdfok,'type'=>$dtype,'award'=>$special,'skip'=>$skip]);

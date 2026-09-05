@@ -233,7 +233,7 @@ foreach ($fresh as $a) {
             'application_id' => (int)$a['id'],
             'type'           => 'main',
             'result'         => (string)$a['result'],
-            'pdf_path'       => $pdfPath ?: '',
+            'pdf_path'       => diploma_store_path($pdfPath),
             'lang'           => 'ru',
             'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
         ]);
@@ -247,7 +247,7 @@ foreach ($fresh as $a) {
             'application_id' => (int)$a['id'],
             'type'           => 'extra',
             'result'         => (string)$a['extra_diploma'],
-            'pdf_path'       => $pdfExtra ?: '',
+            'pdf_path'       => diploma_store_path($pdfExtra),
             'lang'           => 'ru',
             'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
         ]);
@@ -605,7 +605,7 @@ function _diploma_make_pdf(array $d): string {
         return '';
     }
     if (!$p) return '';
-    try { update('diplomas', ['pdf_path' => $p], 'id=:id', ['id' => (int) $d['id']]); } catch (\Throwable $e) {}
+    try { update('diplomas', ['pdf_path' => diploma_store_path($p)], 'id=:id', ['id' => (int) $d['id']]); } catch (\Throwable $e) {}
     return (string) $p;
 }
 

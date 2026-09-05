@@ -200,7 +200,7 @@ function order_fulfill_digital(int $orderId): int {
             'application_id' => $appId,
             'type'           => $type,
             'result'         => $result,
-            'pdf_path'       => $pdf ?: '',
+            'pdf_path'       => diploma_store_path($pdf),
             'lang'           => 'ru',
             'scheduled_at'   => $sched,
         ]);
