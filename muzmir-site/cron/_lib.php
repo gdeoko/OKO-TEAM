@@ -229,3 +229,42 @@ function cron_rotate_dir(string $dir, string $pattern, int $days): int {
     }
     return $removed;
 }
+
+/**
+ * ХВАТИТ ЛИ МЕСТА НА ДИСКЕ, ЧТОБЫ СНЯТЬ КОПИЮ.
+ *
+ * Резервная копия обязана быть безобиднее того, что она защищает. Копия базы
+ * весит полтора гигабайта, недельный архив — почти пять, и на разделе в 38 ГБ
+ * очередной запуск однажды доедает остаток. Дальше страдает не бэкап: SQLite
+ * перестаёт писать, наградные PDF не сохраняются, рассылка встаёт — то есть
+ * копия своими руками устраивает ровно ту аварию, от которой хранится.
+ *
+ * Поэтому перед началом смотрим свободное место и сравниваем с прикидкой
+ * «сколько займёт», плюс запас $reserveGb на текущую работу сайта.
+ */
+function cron_disk_ok(string $job, float $needGb, float $reserveGb = 2.0): bool {
+    $free = @disk_free_space(BASE_PATH);
+    if ($free === false) return true;          // не смогли измерить — не мешаем работать
+    $freeGb = $free / 1073741824;
+    if ($freeGb >= $needGb + $reserveGb) return true;
+    cron_log($job, sprintf('НЕ ЗАПУСКАЮСЬ: свободно %.1f ГБ, нужно %.1f + запас %.1f. '
+        . 'Место кончится — встанет сайт, а не бэкап.', $freeGb, $needGb, $reserveGb));
+    if (function_exists('tg_notify_admin')) {
+        tg_notify_admin(sprintf('Резервное копирование (%s) не запущено: на диске %.1f ГБ, '
+            . 'для копии нужно около %.1f ГБ. Диск пора чистить.', $job, $freeGb, $needGb));
+    }
+    return false;
+}
+
+/** Размер каталога в байтах (для прикидки, сколько займёт архив). */
+function cron_dir_size(string $dir): float {
+    if (!is_dir($dir)) return 0.0;
+    $sum = 0.0;
+    try {
+        $it = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::LEAVES_ONLY);
+        foreach ($it as $f) { if ($f->isFile()) $sum += (float) $f->getSize(); }
+    } catch (\Throwable $e) { return 0.0; }
+    return $sum;
+}
