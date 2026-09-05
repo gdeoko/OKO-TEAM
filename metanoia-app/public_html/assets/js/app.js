@@ -3496,15 +3496,29 @@ function hydrateIcons() {
 /* ───────── РОСТ: РЕЙТИНГ · МЕТАНОЙЯ+ · НАСТРОЙКИ · ТЁМНАЯ ТЕМА (этап 5) ───────── */
 
 const LB_COLORS = ['#C97064', '#7AAED4', '#D4A574', '#7BC67A', '#9B7AD4', '#5A6577', '#D4974A'];
+/* Соседи по рейтингу пока условные: настоящие ученики появятся, когда школа
+   включит сервер. А вот своя строка настоящая: имя ребёнка и его зёрна. */
 const LEADERBOARD = [
   { name: 'София', xp: 420, rank: 'Цветочек' },
-  { name: 'Миша', xp: 340, rank: 'Росточек', img: 'assets/img/avatars/lion.jpg', me: true },
   { name: 'Даниил', xp: 305, rank: 'Росточек' },
   { name: 'Ева', xp: 260, rank: 'Росточек', img: 'assets/img/avatars/star.jpg' },
   { name: 'Марк', xp: 210, rank: 'Зёрнышко' },
   { name: 'Лиза', xp: 165, rank: 'Зёрнышко' },
   { name: 'Тимофей', xp: 120, rank: 'Зёрнышко' },
 ];
+
+function рейтингСоСвоей() {
+  const зёрна = (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0;
+  const стадия = (typeof PET_СТАДИИ !== 'undefined' && typeof petСтадия === 'function')
+    ? (PET_СТАДИИ[petСтадия()] || {}).имя : '';
+  const своя = {
+    name: (typeof именаДляСертификата === 'function' ? именаДляСертификата() : 'Ты'),
+    xp: зёрна,
+    rank: стадия ? ((PET_ВИДЫ[petState.вид] || PET_ВИДЫ.lamb).имя + ' · ' + стадия) : 'начало пути',
+    me: true,
+  };
+  return [...LEADERBOARD, своя];
+}
 
 function lbAva(c, i, cls) {
   const color = LB_COLORS[i % LB_COLORS.length];
@@ -3513,7 +3527,7 @@ function lbAva(c, i, cls) {
 }
 
 function openRatingScreen() {
-  const sorted = [...LEADERBOARD].sort((a, b) => b.xp - a.xp);
+  const sorted = рейтингСоСвоей().sort((a, b) => b.xp - a.xp);
   const podOrder = [1, 0, 2]; // 2-е, 1-е, 3-е места визуально
   $('#ratingPodium').innerHTML = podOrder.map((rankIdx) => {
     const c = sorted[rankIdx]; if (!c) return '';
@@ -3535,6 +3549,11 @@ function openRatingScreen() {
       </div>
       <div class="lb-row__xp">${c.xp}<small> очков</small></div>
     </div>`).join('');
+  const список = $('#ratingList');
+  const сноска = document.createElement('div');
+  сноска.className = 'lb-note';
+  сноска.textContent = 'Пока рядом показаны примерные ребята. Настоящие ученики школы появятся здесь, когда школа включит сервер.';
+  список.appendChild(сноска);
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'rating'));
   $('#nav').style.display = 'none';
   hydrateIcons();

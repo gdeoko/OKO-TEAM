@@ -2784,3 +2784,6 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 /* Не отмеченное обязательное согласие */
 .consent--bad { color: var(--terracotta); }
 .consent--bad input { outline: 2px solid var(--terracotta); outline-offset: 2px; border-radius: 4px; }
+
+/* Сноска под рейтингом */
+.lb-note { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--gray); text-align: center; }
