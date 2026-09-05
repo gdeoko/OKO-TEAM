@@ -32,13 +32,19 @@
   function ревизия() { return Number(localStorage.getItem('mt_rev') || 0); }
   function поднятьРевизию() { localStorage.setItem('mt_rev', String(ревизия() + 1)); }
 
+  // Снимок на сервере ограничен, поэтому тяжёлые записи не возим. Тяжёлой
+  // бывает переписка со вложенными снимками: их место на сервере чатов.
+  const ПРЕДЕЛ_ЗАПИСИ = 120000;
+
   /** Всё состояние ребёнка одним объектом. */
   function снимок() {
     const s = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || !k.startsWith('mt_') || МЕСТНЫЕ.includes(k)) continue;
-      s[k] = localStorage.getItem(k);
+      const v = localStorage.getItem(k);
+      if (v === null || v.length > ПРЕДЕЛ_ЗАПИСИ) continue;
+      s[k] = v;
     }
     // Числа для родительской зоны берём отдельно, серверу их читать проще.
     let pet = null;
@@ -46,7 +52,8 @@
     return {
       keys: s,
       xp: pet && Number(pet.зёрна) || 0,
-      level: pet && Number(pet.стадия) + 1 || 1,
+      // Стадия друга считается от роста, отдельного поля у неё нет.
+      level: (typeof petСтадия === 'function' ? petСтадия() : 0) + 1,
       streak: {
         current: Number(localStorage.getItem('mt_dverse_streak') || 0),
         best: Number(localStorage.getItem('mt_dverse_best') || 0),
@@ -62,6 +69,7 @@
     let менялось = false;
     Object.keys(keys).forEach((k) => {
       if (!k.startsWith('mt_') || МЕСТНЫЕ.includes(k)) return;
+      if (typeof keys[k] !== 'string') return; // мусор с чужой версии не кладём
       if (localStorage.getItem(k) !== keys[k]) {
         origSetItem.call(localStorage, k, keys[k]);
         менялось = true;

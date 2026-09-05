@@ -859,7 +859,7 @@ function cvSendText() {
   const msg = { text: val, time: 'только что' };
   if (replyTo) { msg.quote = replyTo.text; replyTo = null; $('#cvReplyBar')?.remove(); }
   (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
-  localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
+  сохранитьСообщения();
   $('#cvField').value = '';
   renderChatMsgs();
 }
@@ -882,7 +882,7 @@ function initChatView() {
       $$('#cvStickers [data-sticker]').forEach((b) =>
         b.addEventListener('click', () => {
           (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ sticker: b.dataset.sticker, time: 'только что' });
-          localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
+          сохранитьСообщения();
           panel.hidden = true;
           renderChatMsgs();
         }));
@@ -1044,7 +1044,7 @@ function initMsgActions() {
   $('#maDelete').addEventListener('click', () => {
     const idx = Number(maTarget.key.slice(1));
     (myMsgs[cvChatId] || []).splice(idx, 1);
-    localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
+    сохранитьСообщения();
     $('#msgActions').hidden = true;
     renderChatMsgs();
     toast('Сообщение удалено');
@@ -2019,7 +2019,7 @@ function initVoice() {
         : { circle: { dur, url } };
       msg.time = 'только что';
       (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
-      localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
+      сохранитьСообщения();
       renderChatMsgs();
     };
     if (rec.media && rec.media.state !== 'inactive') {
@@ -2057,6 +2057,45 @@ function initVoice() {
 }
 
 /* вложения через скрепку */
+/* Ужать снимок перед сохранением: длинная сторона не больше предела. */
+function ужатьКартинку(файл, предел, качество) {
+  return new Promise((готово, беда) => {
+    const чтец = new FileReader();
+    чтец.onerror = беда;
+    чтец.onload = () => {
+      const кадр = new Image();
+      кадр.onerror = беда;
+      кадр.onload = () => {
+        const к = Math.min(1, предел / Math.max(кадр.width, кадр.height));
+        const холст = document.createElement('canvas');
+        холст.width = Math.round(кадр.width * к);
+        холст.height = Math.round(кадр.height * к);
+        холст.getContext('2d').drawImage(кадр, 0, 0, холст.width, холст.height);
+        try { готово(холст.toDataURL('image/jpeg', качество)); } catch (e) { готово(чтец.result); }
+      };
+      кадр.src = чтец.result;
+    };
+    чтец.readAsDataURL(файл);
+  });
+}
+
+/* Память браузера не резиновая. Если не влезло, выбрасываем самые старые
+   снимки и пробуем снова, чтобы переписка не потерялась целиком. */
+function сохранитьСообщения() {
+  for (let попытка = 0; попытка < 4; попытка++) {
+    try { localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs)); return true; } catch (e) { /* места нет */ }
+    let выбросили = false;
+    Object.keys(myMsgs).forEach((чат) => {
+      if (выбросили) return;
+      const i = (myMsgs[чат] || []).findIndex((м) => м && м.photo);
+      if (i >= 0) { myMsgs[чат].splice(i, 1); выбросили = true; }
+    });
+    if (!выбросили) break;
+  }
+  toast('Память телефона заполнена, старые снимки в переписке убраны');
+  return false;
+}
+
 function initAttach() {
   $('#cvAttachBtn').addEventListener('click', () => { $('#attachSheet').hidden = false; });
   $('[data-close-attach]').addEventListener('click', () => { $('#attachSheet').hidden = true; });
@@ -2069,12 +2108,13 @@ function initAttach() {
   $('#cvPhotoInput').addEventListener('change', (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ photo: reader.result, time: 'только что' });
+    // Снимок с телефона весит несколько мегабайт и не влезает в память
+    // браузера. Ужимаем до 1024 точек по длинной стороне, этого хватает.
+    ужатьКартинку(f, 1024, 0.75).then((малая) => {
+      (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ photo: малая, time: 'только что' });
+      сохранитьСообщения();
       renderChatMsgs();
-    };
-    reader.readAsDataURL(f);
+    }).catch(() => toast('Не получилось прочитать снимок'));
     e.target.value = '';
   });
   $('#cvFileInput').addEventListener('change', (e) => {
@@ -2083,7 +2123,7 @@ function initAttach() {
     if (f.size > 20 * 1024 * 1024) return toast('Файл больше 20 МБ');
     (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({
       file: { name: f.name, size: (f.size / 1024 / 1024).toFixed(1) + ' МБ' }, time: 'только что' });
-    localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
+    сохранитьСообщения();
     renderChatMsgs();
     e.target.value = '';
   });
