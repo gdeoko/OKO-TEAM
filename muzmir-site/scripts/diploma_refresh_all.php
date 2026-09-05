@@ -145,38 +145,67 @@ if (!$dry && !$onlyClean) {
 
 /* ЧИСТЫЕ БЛАНКИ ДЛЯ ПРОИЗВОДСТВА.
  * По ним печатают оригиналы: подписи и печать ставятся живьём, поэтому бланк
- * собирается отдельно (clean=1) и лежит вне веб-корня. Их вёрстка та же и
- * обновляться должна вместе с остальными. */
+ * собирается отдельно (clean=1) и лежит вне веб-корня.
+ *
+ * ИДЁМ ОТ ФАЙЛОВ, А НЕ ОТ РЕЕСТРА. Имя файла складывается из номера ЗАЯВКИ
+ * (VR-2026-00031), а в реестре у дополнительного и именного номер свой
+ * (VR-2026-00031-E1). Заказ рисует бланк, не подставляя реестровый номер, —
+ * значит и мы не должны: иначе выйдет файл с другим именем, а админка
+ * продолжит показывать прежний, нетронутый. Ссылки на бланки закэшированы в
+ * awards_orders.clean_pdfs по имени файла, и менять его нельзя.
+ * На самом бланке номер печатается верный: его считает маршрут печати
+ * (diploma_make_number), а не имя файла. */
 if ($doClean) {
     $dir = BASE_PATH . '/data/clean_blanks';
     $files = glob($dir . '/*.pdf') ?: [];
     printf("\nЧистых бланков на диске: %d\n", count($files));
-    $seen = [];
-    $cok = $cfail = 0;
+    $cok = $cfail = $cskip = 0;
     $t1 = microtime(true);
-    foreach ($rows as $i => $d) {
-        $a = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
-        if (!$a) continue;
-        $type = (string) ($d['type'] ?? 'main');
-        $who  = trim((string) ($d['result'] ?? ''));
-        $o = ['clean' => true, 'extra' => $type === 'extra', 'thanks' => $type === 'thanks', 'named' => $type === 'named'];
-        $a['diploma_number'] = (string) ($d['number'] ?? '');
-        if (($type === 'named' || $type === 'thanks') && $who !== '') {
-            $o['person'] = $who;
-            if ($type === 'thanks') $o['person_idx'] = diploma_person_index((string) ($a['teacher'] ?? ''), $who);
+    foreach ($files as $n => $f) {
+        $base = basename($f, '.pdf');                       // diploma_vr-2026-00031-extra-clean
+        if (!preg_match('~^diploma_(.+?)-(main|extra|named|thanks)(?:-([0-9a-f]{6}))?-clean$~', $base, $m)) {
+            $cskip++; continue;
         }
-        // Перерисовываем только те бланки, которые уже существуют: остальные
-        // соберутся сами в час производства, лишние файлы плодить незачем.
-        $probe = $dir . '/diploma_' . strtolower((string) preg_replace('/[^a-z0-9]+/i', '-',
-                 (string) $d['number'] . '-' . $type)) . '-clean.pdf';
-        $exists = false;
-        foreach ($files as $f) {
-            if (str_contains(basename($f), strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', (string) $d['number'])))) { $exists = true; break; }
+        [, $slugNum, $type, $tag] = $m + [3 => ''];
+        // Номер заявки восстанавливаем из слага: код-год-номер → КОД-ГОД-НОМЕР.
+        $appNum = mb_strtoupper(str_replace('-', '-', $slugNum));
+        $a = one("SELECT * FROM applications WHERE UPPER(number)=?", [$appNum]);
+        if (!$a) { $cskip++; continue; }
+
+        $o = ['clean' => true, 'extra' => $type === 'extra',
+              'thanks' => $type === 'thanks', 'named' => $type === 'named'];
+        /* У благодарности и именного в имени файла зашиты первые шесть знаков
+         * md5 от ФИО. Перебираем кандидатов заявки и берём того, чей отпечаток
+         * совпал: только так бланк перерисуется в ТОТ ЖЕ файл. */
+        if ($tag !== '' && ($type === 'thanks' || $type === 'named')) {
+            $cands = [];
+            foreach (all("SELECT result FROM diplomas WHERE application_id=? AND type=?",
+                         [(int) $a['id'], $type]) as $d) {
+                $r = trim((string) $d['result']);
+                if ($r !== '') $cands[] = $r;
+            }
+            foreach ([$a['full_name'] ?? '', $a['teacher'] ?? ''] as $extra) {
+                foreach (preg_split('~\s*,\s*~u', (string) $extra) ?: [] as $x) {
+                    $x = trim($x); if ($x !== '') $cands[] = $x;
+                }
+            }
+            $found = '';
+            foreach (array_unique($cands) as $c) {
+                if (substr(md5($c), 0, 6) === $tag) { $found = $c; break; }
+            }
+            if ($found === '') { $cskip++; continue; }       // чужое имя не подставляем
+            $o['person'] = $found;
+            if ($type === 'thanks') $o['person_idx'] = diploma_person_index((string) ($a['teacher'] ?? ''), $found);
         }
-        if (!$exists) continue;
-        if ($dry) { printf("  чистый бланк №%s %s\n", (string) $d['number'], $type); continue; }
+
+        if ($dry) { printf("  %s → %s %s\n", basename($f), $type, $o['person'] ?? ''); continue; }
         try { $p = diploma_pdf_html((array) $a, $o); } catch (\Throwable $e) { $p = null; }
-        if ($p) $cok++; else { $cfail++; printf("  чистый бланк №%s — НЕ СОБРАЛСЯ\n", (string) $d['number']); }
+        if ($p && basename((string) $p) === basename($f)) $cok++;
+        elseif ($p) { $cok++; printf("  %s — собрался под именем %s\n", basename($f), basename((string) $p)); }
+        else { $cfail++; printf("  %s — НЕ СОБРАЛСЯ\n", basename($f)); }
+
+        if (($n + 1) % 20 === 0) printf("  … %d из %d, %.0f c\n", $n + 1, count($files), microtime(true) - $t1);
     }
-    printf("Чистых бланков перерисовано: %d, не собралось: %d, за %.0f мин\n", $cok, $cfail, (microtime(true) - $t1) / 60);
+    printf("Чистых бланков перерисовано: %d, не собралось: %d, пропущено (не опознан): %d, за %.0f мин\n",
+           $cok, $cfail, $cskip, (microtime(true) - $t1) / 60);
 }
