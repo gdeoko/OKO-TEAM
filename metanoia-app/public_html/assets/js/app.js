@@ -637,7 +637,7 @@ function searchIndex() {
     из.push({ t: 'game', title: g.name, meta: 'Игра · ' + (g.meta || ''),
       age: '5-7 7-10 10-14', theme: 'ВЗ НЗ', key: g.key });
   });
-  из.push({ t: 'material', title: 'Раскраска «Сотворение мира»', meta: 'Материал · PDF · Метанойя+', age: '5-7', theme: 'ВЗ', locked: true });
+  из.push({ t: 'material', title: 'Раскраска «Сотворение мира»', meta: 'Материал · PDF · появится после запуска', age: '5-7', theme: 'ВЗ' });
   из.push({ t: 'material', title: 'Молитвы для самых маленьких', meta: 'Материал · карточки', age: '5-7', theme: 'Молитва' });
   из.push({ t: 'test', title: 'Тест к уроку 1', meta: 'Тест · 7 вопросов', age: '5-7 7-10 10-14', theme: 'ВЗ' });
   ПОИСК_КЭШ = из;
@@ -926,7 +926,7 @@ const CHAT_MSGS = {
       { who: 'Аня', sticker: 'assets/img/stickers/sparkles.jpg', time: '09:43' },
     ] },
   4: { msgs: [
-      { who: 'Поддержка', text: 'Здравствуйте! Чем можем помочь? Отвечаем в течение дня, подписчикам Метанойя+ — в течение часа.', time: 'вчера' },
+      { who: 'Поддержка', text: 'Здравствуйте! Чем можем помочь? Отвечаем в течение дня.', time: 'вчера' },
     ] },
 };
 let cvChatId = null;
@@ -2023,7 +2023,7 @@ function openChallenge() {
   $('#nav').style.display = 'none';
   $('#challengeBody').innerHTML = `
     <div class="ch-head"><div class="ch-head__ic">${ICON('trophy', 26)}</div>
-      <div><div class="ch-head__title">Вызов дня</div><div class="ch-head__sub">Тема: ${ch.deed} · Метанойя+</div></div></div>
+      <div><div class="ch-head__title">Вызов дня</div><div class="ch-head__sub">Тема: ${ch.deed}</div></div></div>
     <div class="card ch-task">${ICON('flame', 18)}<p>${ch.task}</p></div>
     ${q ? `<h2 class="section-title">Вопрос дня</h2>
     <div class="card"><div class="q__text" style="margin-bottom:12px">${q.q}</div>
@@ -2912,7 +2912,7 @@ function initGamesHub() {
   $('#quest2Back')?.addEventListener('click', openGamesHub);
 }
 
-/* ── Превью заблокированной / премиум-игры ── */
+/* ── Превью игры ── */
 function gameByKey(k) { return [...GAMES.free, ...GAMES.premium, ...GAMES.daily].find((g) => g.key === k); }
 
 function openGamePreview(k) {
@@ -3617,7 +3617,7 @@ function openRatingScreen() {
   window.scrollTo({ top: 0 });
 }
 
-/* ── Метанойя+ ── */
+
 /* ── Стать партнёром ── */
 const PARTNER_BENEFITS = [
   'Вы помогаете школе оставаться бесплатной для семей',
