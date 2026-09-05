@@ -21,8 +21,9 @@
   const META = document.querySelector('meta[name="mt-api"]');
   const БАЗА = (META && META.content || '').replace(/\/+$/, '');
 
-  // Ключи устройства: тема экрана и звук у каждого свои, их не возим.
-  const МЕСТНЫЕ = ['mt_theme', 'mt_music_off', 'mt_reader_fs', 'mt_dev_day',
+  // Ключи устройства: тема экрана, звук и размер шрифта у каждого свои.
+  // День семейного алтаря, наоборот, общий для семьи и ездит с прогрессом.
+  const МЕСТНЫЕ = ['mt_theme', 'mt_music_off', 'mt_reader_fs',
     'mt_onb', 'mt_auth', 'mt_token', 'mt_child_id', 'mt_rev', 'mt_sync_at'];
 
   const токен = () => localStorage.getItem('mt_token') || '';
