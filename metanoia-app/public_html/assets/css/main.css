@@ -2787,3 +2787,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 /* Сноска под рейтингом */
 .lb-note { margin-top: 12px; font-size: 12px; line-height: 1.5; color: var(--gray); text-align: center; }
+
+/* Подпись под значком: за что он даётся */
+.badge-card__how { margin-top: 4px; font-size: 10px; line-height: 1.35; color: var(--gray); }
+.badge-card--locked .badge-card__how { opacity: .85; }

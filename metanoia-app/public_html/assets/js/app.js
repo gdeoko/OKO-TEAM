@@ -723,17 +723,44 @@ function openSearchResult(it) {
 
 /* ───────── ДЕТСКИЙ ПРОФИЛЬ И PIN ───────── */
 
+/* Значки даются за дело, а не стоят полученными с первого запуска.
+   Условие у каждого своё и считается по тому, что ребёнок правда прошёл. */
 const CHILD_BADGES = [
-  { icon: 'trophy',  name: 'Первооткрыватель', earned: true },
-  { icon: 'flame',   name: 'Верный ученик · 7 дней', earned: true },
-  { icon: 'star',    name: 'Молниеносный', earned: true },
-  { icon: 'comment', name: 'Общительный', earned: true },
-  { icon: 'book',    name: 'Книжный червь', earned: false },
-  { icon: 'gamepad', name: 'Игроман', earned: false },
-  { icon: 'check',   name: 'Снайпер', earned: false },
-  { icon: 'church',  name: 'Архитектор веры', earned: false },
-  { icon: 'cross',   name: 'Ученик Христа', earned: false },
+  { icon: 'trophy',  name: 'Первооткрыватель',      как: 'за первый пройденный урок',        когда: () => уроковПройдено() >= 1 },
+  { icon: 'flame',   name: 'Верный ученик · 7 дней', как: 'за семь дней подряд со стихом дня', когда: () => серияДней() >= 7 },
+  { icon: 'star',    name: 'Молниеносный',           как: 'за пять пройденных уроков',        когда: () => уроковПройдено() >= 5 },
+  { icon: 'comment', name: 'Общительный',            как: 'за первое сообщение в чате школы', когда: () => своихСообщений() >= 1 },
+  { icon: 'book',    name: 'Книжный червь',          как: 'за пятнадцать уроков',             когда: () => уроковПройдено() >= 15 },
+  { icon: 'gamepad', name: 'Игроман',                как: 'за десять сыгранных партий',       когда: () => партийСыграно() >= 10 },
+  { icon: 'check',   name: 'Снайпер',                как: 'за проверку знаний главы',         когда: () => проверокСдано() >= 1 },
+  { icon: 'church',  name: 'Архитектор веры',        как: 'за друга, выросшего до большого',  когда: () => (typeof petСтадия === 'function' ? petСтадия() : 0) >= 2 },
+  { icon: 'cross',   name: 'Ученик Христа',          как: 'за всю первую главу',              когда: () => уроковПройдено() >= 35 },
 ];
+
+function уроковПройдено() {
+  let n = 0;
+  (typeof DEMO !== 'undefined' ? DEMO.blocks : []).forEach((b) => b.lessons.forEach((l) => {
+    if (!l.exam && isLessonDone(l.n)) n++;
+  }));
+  return n;
+}
+function серияДней() { return Number(localStorage.getItem('mt_dverse_streak') || 0); }
+function своихСообщений() {
+  const м = памятьЧитать('mt_msgs2', {});
+  return Object.keys(м).reduce((с, к) => с + ((м[к] || []).length), 0);
+}
+function партийСыграно() { return памятьЧитать('mt_plays', []).length; }
+function проверокСдано() {
+  let n = 0;
+  for (let i = 0; i < 3; i++) { const r = памятьЧитать('mt_exam_' + i, null); if (r && r.pct >= 70) n++; }
+  return n;
+}
+
+/** Пересчитать значки по настоящему прогрессу. */
+function значкиПересчитать() {
+  CHILD_BADGES.forEach((b) => { b.earned = !!(b.когда && b.когда()); });
+  return CHILD_BADGES;
+}
 
 function openChild(c) {
   $('#childAvatar').src = c.img;
@@ -742,10 +769,11 @@ function openChild(c) {
   $('#childStreak').textContent = c.streak;
   const xpMatch = (c.rank.match(/(\d+)\s*XP/) || [])[1];
   renderRanks(xpMatch ? Number(xpMatch) : 0);
-  $('#childBadges').innerHTML = CHILD_BADGES.map((b) => `
-    <div class="badge-card ${b.earned ? '' : 'badge-card--locked'}">
+  $('#childBadges').innerHTML = значкиПересчитать().map((b) => `
+    <div class="badge-card ${b.earned ? '' : 'badge-card--locked'}" title="${b.как || ''}">
       <div class="badge-card__icon">${b.earned ? ICON(b.icon, 22) : ICON('lock', 18)}</div>
       <div class="badge-card__name">${b.name}</div>
+      <div class="badge-card__how">${b.earned ? 'получен' : (b.как || '')}</div>
     </div>`).join('');
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'child'));
   $('#nav').style.display = 'none';
@@ -4314,7 +4342,7 @@ function альбомПоФактам() {
 
 function openAlbumScreen() {
   альбомПоФактам();
-  const earned = CHILD_BADGES.filter((b) => b.earned);
+  const earned = значкиПересчитать().filter((b) => b.earned);
   $('#albumPages').innerHTML = `
     <div class="alb-page alb-page--cover">
       <div class="alb-cover__dove">${ICON('dove', 26)}</div>
@@ -4354,7 +4382,7 @@ function openAlbumScreen() {
 }
 
 function albumCoverSVG() {
-  const b = CHILD_BADGES.filter((x) => x.earned).length;
+  const b = значкиПересчитать().filter((x) => x.earned).length;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="660" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
   <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A3A52"/><stop offset="0.7" stop-color="#2c4f6b"/><stop offset="1" stop-color="#C97064"/></linearGradient></defs>
   <rect width="480" height="660" fill="url(#g)"/>
