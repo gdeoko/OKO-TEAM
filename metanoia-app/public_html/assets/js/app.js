@@ -2272,10 +2272,30 @@ const PET_СТАДИИ = [
   { имя: 'сияет',    порог: 100 },
 ];
 
-let petState = JSON.parse(localStorage.getItem('mt_pet') || 'null') || {
+const PET_ПО_УМОЛЧАНИЮ = {
   вид: 'lamb', имя: 'Заря', зёрна: 6, сытость: 60, радость: 60, рост: 8,
   день: '', дневник: [],
 };
+
+/* Состояние друга могло прийти со старой версии или с другого устройства
+   неполным. Недостающие поля берём из умолчаний, вид сверяем со списком:
+   иначе одна кривая запись роняет весь экран. */
+function petПрочитать() {
+  let с = null;
+  try { с = JSON.parse(localStorage.getItem('mt_pet') || 'null'); } catch (e) { с = null; }
+  if (!с || typeof с !== 'object') с = {};
+  const итог = Object.assign({}, PET_ПО_УМОЛЧАНИЮ, с);
+  if (!PET_ВИДЫ[итог.вид]) итог.вид = PET_ПО_УМОЛЧАНИЮ.вид;
+  ['зёрна', 'сытость', 'радость', 'рост'].forEach((k) => {
+    const n = Number(итог[k]);
+    итог[k] = Number.isFinite(n) ? n : PET_ПО_УМОЛЧАНИЮ[k];
+  });
+  if (typeof итог.имя !== 'string' || !итог.имя.trim()) итог.имя = PET_ПО_УМОЛЧАНИЮ.имя;
+  if (!Array.isArray(итог.дневник)) итог.дневник = [];
+  return итог;
+}
+
+let petState = petПрочитать();
 
 function savePet() { localStorage.setItem('mt_pet', JSON.stringify(petState)); }
 
@@ -2364,7 +2384,7 @@ function renderPetTile() {
   const img = document.getElementById('petTileImg');
   if (img) { img.onerror = function () { this.style.display = 'none'; }; img.src = petКартинка(); }
   const st = document.getElementById('petTileStage');
-  if (st) st.innerHTML = `${PET_ВИДЫ[petState.вид].имя} ${petState.имя} · ${petНастроение()} <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span>`;
+  if (st) st.innerHTML = `${(PET_ВИДЫ[petState.вид] || PET_ВИДЫ.lamb).имя} ${petState.имя} · ${petНастроение()} <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span>`;
   const bar = document.getElementById('petTileBar');
   if (bar) bar.style.width = Math.min(100, petState.рост) + '%';
   const note = document.getElementById('petTileNote');
