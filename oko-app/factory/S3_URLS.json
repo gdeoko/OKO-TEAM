@@ -1,0 +1,17 @@
+{
+ "R1.mp4": "ERR S3UploadFailedError('Failed to upload final/R1.mp4 to oko-media/diesel/gotovo/2026-09-05/reels/R1.mp",
+ "R2.mp4": "ERR S3UploadFailedError('Failed to upload final/R2.mp4 to oko-media/diesel/gotovo/2026-09-05/reels/R2.mp",
+ "R3.mp4": "ERR S3UploadFailedError('Failed to upload final/R3.mp4 to oko-media/diesel/gotovo/2026-09-05/reels/R3.mp",
+ "R4.mp4": "ERR S3UploadFailedError('Failed to upload final/R4.mp4 to oko-media/diesel/gotovo/2026-09-05/reels/R4.mp",
+ "R5.mp4": "ERR S3UploadFailedError('Failed to upload final/R5.mp4 to oko-media/diesel/gotovo/2026-09-05/reels/R5.mp",
+ "s1_cover.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s1_cover.jpg to oko-media/diesel/gotovo/2026-09",
+ "s2_fear1.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s2_fear1.jpg to oko-media/diesel/gotovo/2026-09",
+ "s3_fear2.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s3_fear2.jpg to oko-media/diesel/gotovo/2026-09",
+ "s4_fear3.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s4_fear3.jpg to oko-media/diesel/gotovo/2026-09",
+ "s5_fear4.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s5_fear4.jpg to oko-media/diesel/gotovo/2026-09",
+ "s6_fear5.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s6_fear5.jpg to oko-media/diesel/gotovo/2026-09",
+ "s7_cta.jpg": "ERR S3UploadFailedError('Failed to upload carousel_final/s7_cta.jpg to oko-media/diesel/gotovo/2026-09-0",
+ "DIESEL_POST_tamozhnya.jpg": "ERR S3UploadFailedError('Failed to upload /tmp/claude-0/-home-user-OKO-TEAM/f030879b-0149-59eb-92db-4cad",
+ "DELIVERY_DESCRIPTIONS.md": "ERR S3UploadFailedError('Failed to upload DELIVERY_DESCRIPTIONS.md to oko-media/diesel/gotovo/2026-09-05",
+ "carousel_caption_final.txt": "ERR S3UploadFailedError('Failed to upload carousel_caption_final.txt to oko-media/diesel/gotovo/2026-09-"
+}
