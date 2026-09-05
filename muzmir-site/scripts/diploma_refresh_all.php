@@ -167,10 +167,26 @@ if ($doClean) {
             $cskip++; continue;
         }
         [, $slugNum, $type, $tag] = $m + [3 => ''];
-        // Номер заявки восстанавливаем из слага: код-год-номер → КОД-ГОД-НОМЕР.
-        $appNum = mb_strtoupper(str_replace('-', '-', $slugNum));
-        $a = one("SELECT * FROM applications WHERE UPPER(number)=?", [$appNum]);
-        if (!$a) { $cskip++; continue; }
+        /* В ИМЕНИ ФАЙЛА — НОМЕР ДОКУМЕНТА, А НЕ НОМЕР ЗАЯВКИ.
+         *
+         * Бланк называется по номеру из реестра (diploma_make_number): у
+         * основного он совпадает с номером заявки, а у благодарности и
+         * именного к нему дописан хвост — «VR-2026-00064-T», «-N2». Скрипт
+         * искал заявку по всей строке, такой заявки нет — и 22 бланка молча
+         * оставались старыми: у одного участника благодарность собрана по
+         * новому ритму, а именной по прежнему.
+         *
+         * Ищем по реестру наградных документов. Заодно оттуда берётся и ФИО
+         * получателя (у благодарности и именного оно лежит в result), так что
+         * подбирать его перебором и отпечатком больше не нужно. */
+        $docNum = mb_strtoupper($slugNum);
+        $doc = one("SELECT * FROM diplomas WHERE UPPER(number)=?", [$docNum]);
+        $a = $doc ? one("SELECT * FROM applications WHERE id=?", [(int) $doc['application_id']]) : null;
+        if (!$a) $a = one("SELECT * FROM applications WHERE UPPER(number)=?", [$docNum]);
+        if (!$a) {
+            printf("  %s — ни документа, ни заявки с номером %s (осиротевший бланк)\n", basename($f), $docNum);
+            $cskip++; continue;
+        }
 
         $o = ['clean' => true, 'extra' => $type === 'extra',
               'thanks' => $type === 'thanks', 'named' => $type === 'named'];
@@ -179,6 +195,8 @@ if ($doClean) {
          * совпал: только так бланк перерисуется в ТОТ ЖЕ файл. */
         if ($tag !== '' && ($type === 'thanks' || $type === 'named')) {
             $cands = [];
+            // Имя получателя из самой строки реестра — самый точный источник.
+            if ($doc && trim((string) $doc['result']) !== '') $cands[] = trim((string) $doc['result']);
             foreach (all("SELECT result FROM diplomas WHERE application_id=? AND type=?",
                          [(int) $a['id'], $type]) as $d) {
                 $r = trim((string) $d['result']);
