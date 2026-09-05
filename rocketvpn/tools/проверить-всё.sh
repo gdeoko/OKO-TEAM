@@ -34,6 +34,25 @@ if ! curl -s -o /dev/null -m 5 "$base/" 2>/dev/null; then
   done
 fi
 
+# ── Закрытый стенд для проверки створа ─────────────────────────────
+# Боевой сайт открытая витрина, и обычный стенд поднимается таким же.
+# Створ при этом никуда не делся: им закрывается предпоказ. Проверять
+# его надо там, где он включён, значит нужен второй стенд БЕЗ
+# RV_SITE_OPEN. Проверка сама пропустит себя, если этого адреса нет.
+closed_port=8172
+closed="http://127.0.0.1:$closed_port"
+own_closed=0
+if ! curl -s -o /dev/null -m 5 "$closed/" 2>/dev/null; then
+  RV_SITE_SECRET=стенд RV_SITE_URL=/ \
+    php -S 127.0.0.1:$closed_port tools/стенд.php >/tmp/стенд-$closed_port.log 2>&1 &
+  own_closed=$!
+  for i in 1 2 3 4 5; do
+    curl -s -o /dev/null -m 3 "$closed/" 2>/dev/null && break
+    sleep 1
+  done
+fi
+export RV_CLOSED_URL="$closed"
+
 clean=0
 dirty=0
 list=""
@@ -63,6 +82,7 @@ for file in tools/checks/*.mjs; do
 done
 
 [ "$own" != "0" ] && kill "$own" 2>/dev/null
+[ "$own_closed" != "0" ] && kill "$own_closed" 2>/dev/null
 
 echo
 echo "чистых $clean, грязных $dirty"

@@ -370,7 +370,12 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
         <label><span>Вопрос</span><textarea name="вопрос" rows="3" maxlength="600" placeholder="Что нужно узнать"></textarea></label>
         <p class="rv-анкета-ряд">
           <button type="submit" class="rv-кн rv-кн-гл">Отправить в бот</button>
-          <a class="rv-кн rv-кн-cdn" href="https://rocketcdn.ru/" target="_blank" rel="noopener">Rocket CDN</a>
+          <!-- Ид нужен модулю связки (rv-link.js): он дописывает сюда
+               признак from=vpn и снимает передачу истории на ту
+               сторону. Без ида модуль кнопку не находил, и оба этих
+               действия молча не происходили - проверка связки ловила
+               это как «кнопки ухода в CDN нет». -->
+          <a class="rv-кн rv-кн-cdn" id="rvКcdn" href="https://rocketcdn.ru/" target="_blank" rel="noopener">Rocket CDN</a>
         </p>
         <p class="rv-анкета-итог" id="rvАнкетаИтог" role="status" aria-live="polite"></p>
       </form>
