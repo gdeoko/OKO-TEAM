@@ -711,6 +711,55 @@ function openChild(c) {
 }
 
 let pinBuf = '';
+let pinРежим = 'проверка';   // проверка | создание | повтор
+let pinПервый = '';
+
+/* Код родителя задаёт сама семья при первом входе в родительскую зону.
+   Раньше он был один на всех и равен 1234, то есть не защищал ничего. */
+function pinСохранённый() { return localStorage.getItem('mt_pin') || ''; }
+
+function pinНадпись() {
+  const t = $('#pinTitle'), h = $('#pinHint');
+  if (!t || !h) return;
+  if (pinРежим === 'создание') {
+    t.textContent = 'Придумайте код родителя';
+    h.textContent = 'Четыре цифры. Ребёнок не должен их знать';
+  } else if (pinРежим === 'повтор') {
+    t.textContent = 'Повторите код';
+    h.textContent = 'Введите те же четыре цифры ещё раз';
+  } else {
+    t.textContent = 'Код родителя';
+    h.textContent = 'Чтобы вернуться в профиль родителя, введите код';
+  }
+}
+
+function pinОчистить() {
+  pinBuf = '';
+  $$('#pinDots i').forEach((d) => d.classList.remove('on'));
+}
+
+function pinОткрыть() {
+  pinРежим = pinСохранённый() ? 'проверка' : 'создание';
+  pinПервый = '';
+  pinОчистить();
+  pinНадпись();
+  $('#pinModal').hidden = false;
+}
+
+function pinОшибка() {
+  const dots = $('#pinDots');
+  dots.classList.add('shake');
+  setTimeout(() => { dots.classList.remove('shake'); pinОчистить(); }, 350);
+}
+
+function pinПустить() {
+  $('#pinModal').hidden = true;
+  pinОчистить();
+  $('#nav').style.display = '';
+  switchTab('profile');
+  toast('Вы в профиле родителя');
+}
+
 function initPin() {
   const pad = $('#pinPad');
   pad.innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k) =>
@@ -721,24 +770,34 @@ function initPin() {
     if (key === '⌫') pinBuf = pinBuf.slice(0, -1);
     else if (pinBuf.length < 4) pinBuf += key;
     $$('#pinDots i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length));
-    if (pinBuf.length === 4) {
-      if (pinBuf === '1234') {
-        $('#pinModal').hidden = true;
-        pinBuf = '';
-        $$('#pinDots i').forEach((d) => d.classList.remove('on'));
-        $('#nav').style.display = '';
-        switchTab('profile');
-        toast('Вы в профиле родителя');
-      } else {
-        const dots = $('#pinDots');
-        dots.classList.add('shake');
-        setTimeout(() => { dots.classList.remove('shake'); pinBuf = '';
-          $$('#pinDots i').forEach((d) => d.classList.remove('on')); }, 350);
-      }
+    if (pinBuf.length < 4) return;
+
+    if (pinРежим === 'создание') {
+      pinПервый = pinBuf;
+      pinРежим = 'повтор';
+      pinОчистить();
+      pinНадпись();
+      return;
     }
+    if (pinРежим === 'повтор') {
+      if (pinBuf === pinПервый) {
+        localStorage.setItem('mt_pin', pinBuf);
+        toast('Код сохранён. Он спрашивается при возврате в профиль родителя');
+        pinПустить();
+      } else {
+        pinРежим = 'создание';
+        pinПервый = '';
+        pinНадпись();
+        pinОшибка();
+        toast('Коды не совпали, попробуйте ещё раз');
+      }
+      return;
+    }
+    if (pinBuf === pinСохранённый()) pinПустить();
+    else pinОшибка();
   });
-  $('#pinCancel').addEventListener('click', () => { $('#pinModal').hidden = true; pinBuf = ''; $$('#pinDots i').forEach((d) => d.classList.remove('on')); });
-  $('#childBack').addEventListener('click', () => { $('#pinModal').hidden = false; });
+  $('#pinCancel').addEventListener('click', () => { $('#pinModal').hidden = true; pinОчистить(); });
+  $('#childBack').addEventListener('click', pinОткрыть);
 }
 
 
