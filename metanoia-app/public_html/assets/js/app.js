@@ -1631,8 +1631,7 @@ function answerDilemma(oi) {
   if (chosen.good && window.MAGIC) { const r = fb.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
   $('#dilNext').addEventListener('click', () => {
     if (last) {
-      if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Ты прошёл все ситуации!', subtitle: 'Учиться выбирать добро — это тоже вера. Молодец!', xp: 25 });
-      setTimeout(openGamesHub, 400);
+      завершитьИгру('dilemma', 25, 'Ты прошёл все ситуации!', 'Учиться выбирать добро это тоже вера.');
     } else { dilState.i++; renderDilemma(); window.scrollTo({ top: 0 }); }
   });
 }
@@ -1681,8 +1680,7 @@ function answerDetective(ans) {
   if (right && window.MAGIC) { const r = rv.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
   $('#detNext').addEventListener('click', () => {
     if (last) {
-      if (window.MAGIC) MAGIC.rewardModal({ icon: 'search', title: 'Все дела раскрыты!', subtitle: `Ты настоящий знаток Писания — ${detState.score} очков!`, xp: detState.score });
-      setTimeout(openGamesHub, 400);
+      завершитьИгру('detective', detState.score, 'Все дела раскрыты!', 'Ты настоящий знаток Писания.');
     } else { detState.i++; detState.clue = 1; renderDetective(); window.scrollTo({ top: 0 }); }
   });
 }
@@ -1788,9 +1786,7 @@ function answerFamily(oi) {
 function finishFamily() {
   const [a, b] = famState.scores;
   const title = a === b ? 'Ничья — дружная семья!' : `Победил Игрок ${a > b ? 1 : 2}!`;
-  if (window.MAGIC) MAGIC.rewardModal({ icon: 'users', title, subtitle: `Игрок 1: ${a} · Игрок 2: ${b}. Играть вместе — уже победа.`, xp: 20 });
-  else toast(title);
-  setTimeout(openGamesHub, 500);
+  завершитьИгру('family', 20, title, `Игрок 1: ${a}, игрок 2: ${b}. Играть вместе уже победа.`);
 }
 
 /* ───────── ЕЖЕДНЕВНЫЙ ВЫЗОВ ───────── */
@@ -1880,7 +1876,7 @@ function answerInterpret(oi) {
   fb.innerHTML = `<div class="dil-feedback__row">${ICON(chosen.canonical ? 'check' : 'book', 18)}<span>${chosen.note}</span></div>
     <button class="btn btn--primary" id="intNext" style="width:100%;margin-top:12px">${last ? 'Завершить' : 'Следующий отрывок'}</button>`;
   $('#intNext').addEventListener('click', () => {
-    if (last) { if (window.MAGIC) MAGIC.rewardModal({ icon: 'cross', title: 'Готово!', subtitle: `Ты вникал в смысл Писания — ${intState.score} очков.`, xp: intState.score }); setTimeout(openGamesHub, 400); }
+    if (last) { завершитьИгру('interpret', intState.score, 'Готово!', 'Ты вникал в смысл Писания.'); }
     else { intState.i++; renderInterpret(); window.scrollTo({ top: 0 }); }
   });
 }
@@ -1926,7 +1922,7 @@ function answerQuest2(oi) {
     <button class="btn btn--primary" id="q2Next" style="width:100%;margin-top:12px">${last ? 'Завершить путь' : 'Дальше в путь →'}</button>`;
   if (chosen.correct && window.MAGIC) { const r = fb.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
   $('#q2Next').addEventListener('click', () => {
-    if (last) { if (window.MAGIC) MAGIC.rewardModal({ icon: 'star', title: 'Путь пройден!', subtitle: 'Ты прошёл весь путь веры до конца. Бог хранит идущих за Ним.', xp: 35 }); setTimeout(openGamesHub, 400); }
+    if (last) { завершитьИгру('quest', 35, 'Путь пройден!', 'Ты прошёл весь путь веры до конца. Бог хранит идущих за Ним.'); }
     else { q2State.i++; renderQuest2(); window.scrollTo({ top: 0 }); }
   });
 }
@@ -2680,9 +2676,7 @@ function answerWho(el, q) {
 }
 
 function finishWho() {
-  if (window.MAGIC) MAGIC.rewardModal({ icon: 'search', title: 'Игра пройдена!', subtitle: `Ты узнал героев веры и набрал ${whoState.score} очков.`, xp: whoState.score });
-  else toast(`Готово · ${whoState.score} очков`);
-  setTimeout(openGamesHub, 400);
+  завершитьИгру('who', whoState.score, 'Игра пройдена!', 'Ты узнал героев веры.');
 }
 
 /* ── Хронология (расставь события по порядку) ── */
@@ -2741,9 +2735,8 @@ function checkChrono() {
     if (window.MAGIC) {
       const r = $('#chronoCheck').getBoundingClientRect();
       MAGIC.celebrate(r.left + r.width / 2, r.top);
-      setTimeout(() => MAGIC.rewardModal({ icon: 'clock', title: 'Хронология собрана!', subtitle: 'Ты выстроил события от сотворения мира до Церкви.', xp: 25 }), 300);
-    }
-    setTimeout(openGamesHub, 1600);
+      setTimeout(() => завершитьИгру('chrono', 25, 'Хронология собрана!', 'Ты выстроил события от сотворения мира до Церкви.'), 300);
+    } else завершитьИгру('chrono', 25, 'Хронология собрана!', 'Ты выстроил события от сотворения мира до Церкви.');
   } else {
     res.style.color = 'var(--terracotta)';
     res.textContent = `Правильно на месте: ${correct} из ${CHRONO.length}. Попробуй ещё!`;
@@ -2785,8 +2778,7 @@ function memFlip(el) {
         memState.flipped = []; memState.lock = false; memState.matched++;
         if (memState.matched === MEM_PAIRS.length) {
           const stars = memState.moves <= 12 ? 3 : memState.moves <= 18 ? 2 : 1;
-          if (window.MAGIC) MAGIC.rewardModal({ icon: 'sparkle', title: 'Все пары найдены!',
-            subtitle: `Ходов: ${memState.moves} · ${'★'.repeat(stars)}`, xp: 20 });
+          завершитьИгру('memory', 20, 'Все пары найдены!', `Ходов ${memState.moves}, ${'★'.repeat(stars)}`);
         }
       }, 500);
     } else {
@@ -2850,9 +2842,7 @@ function answerQuiz(pick) {
     if (quizState.i + 1 < QUIZ.length) { quizState.i++; renderQuiz(); }
     else {
       const perfect = quizState.score >= QUIZ.length * 2;
-      if (window.MAGIC) MAGIC.rewardModal({ icon: 'flame', title: 'Викторина пройдена!',
-        subtitle: `Твой результат: ${quizState.score} очков${perfect ? ' · молниеносно!' : ''}`,
-        xp: 10 + quizState.score });
+      завершитьИгру('quiz', 10 + quizState.score, 'Викторина пройдена!', `Твой результат ${quizState.score} очков${perfect ? ', молниеносно!' : ''}`);
     }
   }, 1100);
 }
@@ -3666,11 +3656,8 @@ function m3Tap(r, c) {
 
 function m3End(win) {
   m3.busy = true;
-  if (window.MAGIC) MAGIC.rewardModal(win
-    ? { icon: 'sparkle', title: 'Уровень пройден!', subtitle: `Ты собрал ${m3.score} очков. Дары Духа приумножаются!`, xp: 30 }
-    : { icon: 'flame', title: 'Ходы закончились', subtitle: `Набрано ${m3.score} из ${M3_TARGET}. Попробуй ещё раз — получится!`, xp: 0 });
-  else toast(win ? 'Уровень пройден!' : 'Ходы закончились');
-  setTimeout(openGamesHub, win ? 1600 : 1400);
+  завершитьИгру('match3', m3.score, win ? 'Уровень пройден!' : 'Ходы закончились',
+    win ? 'Дары Духа приумножаются.' : `Набрано ${m3.score} из ${M3_TARGET}. В следующий раз получится.`);
 }
 
 /* ── Давид и Голиаф (меткость по таймингу) ── */
@@ -3751,11 +3738,8 @@ function davidEnd(win) {
   cancelAnimationFrame(david.raf);
   $('#davidFire').disabled = true;
   const xp = win ? 25 : 0;
-  if (window.MAGIC) MAGIC.rewardModal(win
-    ? { icon: 'target', title: 'Голиаф повержен!', subtitle: 'С верой и меткостью даже великан не страшен. Как Давид — ты победил!', xp }
-    : { icon: 'target', title: 'Камни закончились', subtitle: `Попаданий: ${david.hits} из ${DAVID_GOAL}. Давид тоже тренировался — попробуй ещё!`, xp });
-  else toast(win ? 'Голиаф повержен!' : 'Камни закончились');
-  setTimeout(openGamesHub, win ? 1700 : 1400);
+  завершитьИгру('david', win ? 25 : david.hits * 5, win ? 'Голиаф повержен!' : 'Камни закончились',
+    win ? 'С верой и меткостью даже великан не страшен.' : `Попаданий ${david.hits} из ${DAVID_GOAL}. Давид тоже тренировался.`);
 }
 
 /* ── Исход: собери манну (аркада на время) ── */
@@ -3826,11 +3810,8 @@ function exodusEnd() {
   const win = exodus.score >= EXODUS_GOAL;
   exodusStop();
   $$('#exodusField .exodus-item').forEach((e) => e.remove());
-  if (window.MAGIC) MAGIC.rewardModal(win
-    ? { icon: 'sparkle', title: 'Манна собрана!', subtitle: `Ты собрал ${exodus.score} манны, как народ в пустыне. Господь заботится о Своих!`, xp: 25 }
-    : { icon: 'map', title: 'Время вышло', subtitle: `Собрано ${exodus.score} из ${EXODUS_GOAL}. Ещё попытка — и получится!`, xp: exodus.score >= 8 ? 10 : 0 });
-  else toast(win ? 'Манна собрана!' : 'Время вышло');
-  setTimeout(openGamesHub, win ? 1700 : 1400);
+  завершитьИгру('exodus', exodus.score, win ? 'Манна собрана!' : 'Время вышло',
+    win ? 'Ты собрал манну, как народ в пустыне. Господь заботится о Своих.' : `Собрано ${exodus.score} из ${EXODUS_GOAL}.`);
 }
 
 /* ── Ноев Ковчег: собери пары животных ── */
@@ -3909,11 +3890,8 @@ function arkTap(idx) {
 function arkEnd(win) {
   arkStop();
   ark.busy = true;
-  if (window.MAGIC) MAGIC.rewardModal(win
-    ? { icon: 'dove', title: 'Все на борту!', subtitle: 'Ты собрал всех животных парами и спас их от потопа, как Ной. Бог хранит верных!', xp: 30 }
-    : { icon: 'dove', title: 'Вода поднялась', subtitle: `На борту ${ark.pairs} из ${ARK_ANIMALS.length} пар. Попробуй ещё — успеешь!`, xp: ark.pairs >= 4 ? 12 : 0 });
-  else toast(win ? 'Все на борту!' : 'Вода поднялась');
-  setTimeout(openGamesHub, win ? 1800 : 1400);
+  завершитьИгру('ark', win ? 30 : ark.pairs * 3, win ? 'Все на борту!' : 'Вода поднялась',
+    win ? 'Ты собрал всех животных парами, как Ной.' : `На борту ${ark.pairs} из ${ARK_ANIMALS.length} пар.`);
 }
 
 /* ── Магазин за баллы (идея Екатерины #12) ── */
@@ -4566,14 +4544,146 @@ function switchLang() {
   }
 }
 
+/* Словарь интерфейса. Уроки и стихи переводятся отдельно, когда Екатерина
+   пришлёт испанские тексты: машинный перевод Писания мы не ставим. */
+const ПЕРЕВОД = {
+  'Главная': 'Inicio', 'Игры': 'Juegos', 'Чаты': 'Chats', 'Уроки': 'Lecciones', 'Профиль': 'Perfil',
+  'Сегодня': 'Hoy', 'дней подряд': 'días seguidos', 'Перейти': 'Ir', 'Продолжить': 'Continuar',
+  'Ежедневный стих': 'Versículo del día', 'Открыть и послушать голосом': 'Abrir y escuchar con voz',
+  'Мини-игры': 'Minijuegos', 'Книга': 'Libro', 'Настройки': 'Ajustes', 'Мои дети': 'Mis hijos',
+  'Добавить ребёнка': 'Añadir hijo', 'Отчёт за неделю': 'Informe semanal',
+  'Семейный квест недели': 'Misión familiar de la semana', 'Наш год с Метанойей': 'Nuestro año con Metanoia',
+  'О школе · наша миссия': 'Sobre la escuela y nuestra misión', 'Пригласить семью': 'Invitar a la familia',
+  'Настройки аккаунта': 'Ajustes de la cuenta', 'Язык приложения': 'Idioma de la aplicación',
+  'Стать партнёром': 'Hacerse socio', 'Поддержать школу': 'Apoyar la escuela',
+  'Уведомления': 'Notificaciones', 'Родительский контроль': 'Control parental', 'Поддержка': 'Soporte',
+  'Политика конфиденциальности': 'Política de privacidad', 'Выйти': 'Salir',
+  'Мой друг': 'Mi amigo', 'Сытость': 'Alimento', 'Радость': 'Alegría', 'Рост': 'Crecimiento',
+  'Покормить': 'Alimentar', 'Поиграть': 'Jugar', 'Помолиться': 'Orar', 'Дневник друга': 'Diario del amigo',
+  'Во что поиграем': 'A qué jugamos', 'Ранги роста': 'Rangos de crecimiento', 'Мои значки': 'Mis insignias',
+  'Прогресс по главам': 'Progreso por capítulos', 'Путешествие веры': 'Viaje de fe',
+  'Рейтинг недели': 'Ranking de la semana', 'Мои сертификаты': 'Mis certificados',
+  'Магазин за баллы': 'Tienda de puntos', 'Семейный алтарь': 'Altar familiar',
+  'Задать вопрос': 'Hacer una pregunta', 'Прочитано': 'Leído', 'Задание': 'Actividad', 'Тест': 'Test',
+  'Я прочитал урок': 'He leído la lección', 'Цитата из Писания': 'Cita de la Escritura',
+  'Детский пересказ': 'Relato para niños', 'Вопросы для беседы': 'Preguntas para conversar',
+  'Проверь себя': 'Ponte a prueba', 'Помолимся вместе': 'Oremos juntos',
+  'Домашнее задание': 'Tarea', 'Прикрепить задание': 'Adjuntar la tarea',
+  'Проверить ответы': 'Comprobar respuestas', 'Соедини пары': 'Une las parejas',
+  'Расставь по порядку': 'Ordena la historia', 'Вставь слово в стих': 'Completa el versículo',
+  'Собери слово': 'Forma la palabra', 'Найди правильное': 'Encuentra lo correcto',
+  'Собрать заново': 'Empezar de nuevo', 'Все уроки': 'Todas las lecciones',
+  'Вход': 'Entrar', 'Регистрация': 'Registro', 'Создать аккаунт': 'Crear cuenta',
+  'Ваше имя': 'Tu nombre', 'Пароль': 'Contraseña', 'Роль': 'Rol', 'Родитель': 'Padre o madre',
+  'Страна': 'País', 'Город': 'Ciudad', 'Имя': 'Nombre', 'Возраст': 'Edad',
+  'Ещё раз, сложнее': 'Otra vez, más difícil', 'Хватит на сегодня': 'Basta por hoy',
+  'Профиль ребёнка': 'Perfil del niño', 'Профиль родителя': 'Perfil del padre',
+  'Назад': 'Atrás', 'К играм': 'A los juegos', 'Отлично!': '¡Muy bien!',
+};
+
+function собратьТекстовыеУзлы() {
+  const ходок = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(n) {
+      const t = (n.nodeValue || '').trim();
+      if (!t) return NodeFilter.FILTER_REJECT;
+      const p = n.parentElement;
+      if (!p || /SCRIPT|STYLE|SVG|PATH/i.test(p.tagName)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
+  const узлы = [];
+  let n;
+  while ((n = ходок.nextNode())) узлы.push(n);
+  return узлы;
+}
+
 function applyLang() {
   const l = текущийЯзык();
   document.documentElement.lang = l;
   document.documentElement.dataset.lang = l;
   const tag = document.getElementById('mLangTag');
   if (tag) tag.textContent = ЯЗЫКИ[l];
-  document.querySelectorAll('[data-es]').forEach((el) => {
-    if (!el.dataset.ru) el.dataset.ru = el.textContent;
-    el.textContent = l === 'es' ? el.dataset.es : el.dataset.ru;
+
+  собратьТекстовыеУзлы().forEach((узел) => {
+    const было = узел.nodeValue;
+    const ключ = было.trim();
+    if (l === 'es') {
+      const пер = ПЕРЕВОД[ключ];
+      if (пер && !узел.__ru) { узел.__ru = было; узел.nodeValue = было.replace(ключ, пер); }
+    } else if (узел.__ru) {
+      узел.nodeValue = узел.__ru; delete узел.__ru;
+    }
+  });
+
+  document.querySelectorAll('input[placeholder], [aria-label]').forEach((el) => {
+    ['placeholder', 'aria-label'].forEach((атр) => {
+      const v = el.getAttribute(атр);
+      if (!v) return;
+      const запас = 'data-ru-' + атр.replace('aria-', '');
+      if (l === 'es') {
+        const пер = ПЕРЕВОД[v.trim()];
+        if (пер && !el.getAttribute(запас)) { el.setAttribute(запас, v); el.setAttribute(атр, пер); }
+      } else if (el.getAttribute(запас)) {
+        el.setAttribute(атр, el.getAttribute(запас)); el.removeAttribute(запас);
+      }
+    });
+  });
+}
+
+/* ───────── КОНЕЦ ИГРЫ: продолжение и усложнение ─────────
+   Правка Екатерины: игра кончалась за полминуты и выбрасывала в список.
+   Теперь после каждой игры спрашиваем, играть ли дальше, и поднимаем уровень. */
+
+function уровеньИгры(ключ) {
+  return Number(localStorage.getItem('mt_lvl_' + ключ) || 1);
+}
+function поднятьУровень(ключ) {
+  const л = Math.min(20, уровеньИгры(ключ) + 1);
+  localStorage.setItem('mt_lvl_' + ключ, л);
+  return л;
+}
+
+/* Сложность растёт с уровнем: меньше времени, больше элементов */
+function сложность(ключ) {
+  const л = уровеньИгры(ключ);
+  return { уровень: л, множитель: 1 + (л - 1) * 0.15, времени: Math.max(0.55, 1 - (л - 1) * 0.07), больше: Math.floor((л - 1) / 2) };
+}
+
+function завершитьИгру(ключ, очки, заголовок, текст) {
+  const зёрна = Math.max(1, Math.round((очки || 10) / 10));
+  addSeeds(зёрна, 'за игру');
+  const л = поднятьУровень(ключ);
+  const другие = GAMES.filter((x) => x.key !== ключ);
+  const другая = другие[Math.floor(Math.random() * другие.length)];
+
+  let box = document.getElementById('gameEnd');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'gameEnd';
+    box.className = 'gend';
+    document.body.appendChild(box);
+  }
+  box.innerHTML = `
+    <div class="gend__backdrop" data-close></div>
+    <div class="gend__card">
+      <div class="gend__ic">${ICON('trophy', 30)}</div>
+      <div class="gend__title">${заголовок || 'Игра пройдена!'}</div>
+      <div class="gend__sub">${текст || ''}</div>
+      <div class="gend__score">${очки ? '+' + очки + ' очков · ' : ''}+${зёрна} ${склонениеЗёрен(зёрна)} другу</div>
+      <div class="gend__lvl">Следующий заход будет сложнее · уровень ${л}</div>
+      <button class="btn btn--primary gend__again" data-again>Ещё раз, сложнее</button>
+      <button class="btn btn--outline gend__other" data-other>Сыграть в «${другая ? другая.name : 'другую игру'}»</button>
+      <button class="gend__close" data-close>Хватит на сегодня</button>
+    </div>`;
+  hydrateIcons();
+  box.hidden = false;
+
+  box.querySelectorAll('[data-close]').forEach((el) => el.addEventListener('click', () => {
+    box.hidden = true; stopGameMusic(); openGamesHub();
+  }));
+  box.querySelector('[data-again]')?.addEventListener('click', () => { box.hidden = true; openGame(ключ); });
+  box.querySelector('[data-other]')?.addEventListener('click', () => {
+    box.hidden = true;
+    if (другая) openGame(другая.key); else openGamesHub();
   });
 }

@@ -2745,3 +2745,24 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 /* Безопасность в меню сообщения */
 .ma__row--safe { border-top: 1px solid rgba(26,58,82,.08); margin-top: 4px; padding-top: 4px; }
 .ma__row--safe button { color: var(--error); }
+
+/* Конец игры: продолжение и усложнение */
+.gend { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; }
+.gend[hidden] { display: none; }
+.gend__backdrop { position: absolute; inset: 0; background: rgba(20,35,47,.62); backdrop-filter: blur(3px); }
+.gend__card {
+  position: relative; width: 100%; max-width: 340px; display: grid; gap: 10px; justify-items: center;
+  padding: 26px 20px 20px; border-radius: 20px; background: var(--cream); text-align: center;
+  box-shadow: 0 18px 50px rgba(20,35,47,.3); animation: gendIn .28s var(--ease);
+}
+@keyframes gendIn { from { transform: translateY(14px) scale(.96); opacity: 0 } to { transform: none; opacity: 1 } }
+.gend__ic { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(150deg, var(--gold), var(--terracotta)); }
+.gend__title { font-size: 20px; font-weight: 700; color: var(--navy); }
+.gend__sub { font-size: 14px; color: var(--gray); line-height: 1.5; }
+.gend__score { font-size: 14px; font-weight: 700; color: var(--terracotta); }
+.gend__lvl { font-size: 12px; color: var(--gray); }
+.gend__again, .gend__other { width: 100%; margin-top: 4px; }
+.gend__close { font: inherit; font-size: 13px; color: var(--gray); background: none; border: none; cursor: pointer; padding: 6px; }
+[data-theme="dark"] .gend__card { background: #16242F; }
+[data-theme="dark"] .gend__title { color: #EAF0F5; }
