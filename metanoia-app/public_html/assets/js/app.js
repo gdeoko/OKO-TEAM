@@ -260,17 +260,21 @@ function renderStories() {
 function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
 function shareInvite() {
-  const url = (location && location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'https://metanoya.online';
+  // Домен школы даём только настоящий, тот, с которого приложение открыто.
+  // Выдуманный адрес в приглашении хуже, чем приглашение без адреса.
+  const url = (location && /^https?:/.test(location.origin || '')) ? location.origin : '';
   const text = 'Мы учимся в христианской онлайн-школе «Метанойя» — уроки, добрые игры и тёплое сообщество для детей. Присоединяйтесь всей семьёй! 🕊';
-  const data = { title: 'МЕТАНОЙА — школа для детей', text, url };
+  const data = url ? { title: 'МЕТАНОЙА — школа для детей', text, url }
+                   : { title: 'МЕТАНОЙА — школа для детей', text };
+  const целиком = url ? text + '\n' + url : text;
   if (navigator.share) {
     navigator.share(data).then(() => toast('Спасибо, что делитесь! 💛')).catch(() => {});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text + '\n' + url)
+    navigator.clipboard.writeText(целиком)
       .then(() => toast('Приглашение скопировано — отправьте друзьям 💛'))
-      .catch(() => toast('Ссылка: ' + url));
+      .catch(() => toast(целиком));
   } else {
-    toast('Ссылка: ' + url);
+    toast(целиком);
   }
 }
 
