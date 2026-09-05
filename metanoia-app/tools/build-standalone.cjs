@@ -54,9 +54,18 @@ const gimg={}; const gd=path.join(APP,'assets/img/games'); if(fs.existsSync(gd))
 inlineDir('mem','${c.icon}'); inlineDir('ark','${c.img}'); inlineDir('stickers','${k}');
 const chimg={}; for(let i=1;i<=3;i++){const u=dataUri('assets/img/chapters/ch'+i+'.jpg'); if(u)chimg[i]=u;} js='const __CHIMG = '+JSON.stringify(chimg)+';\n'+js; js=js.split('assets/img/chapters/ch${meta.bi + 1}.jpg').join('${__CHIMG[meta.bi+1]||""}');
 
+// В сборке одним файлом соседних файлов нет: работник страницы и манифест
+// не нужны, иначе браузер зря стучится и пишет 404 в консоль.
+js = js.split("navigator.serviceWorker.register('service-worker.js')").join('Promise.resolve()');
 const preboot="try{if(!localStorage.getItem('mt_onb'))localStorage.setItem('mt_onb','1');if(!localStorage.getItem('mt_auth'))localStorage.setItem('mt_auth','1');}catch(e){}\n";
 js=preboot+js;
 html=html.split('<link rel="stylesheet" href="assets/css/main.css">').join(`<style>\n${css}\n</style>`);
+// Шрифты. На боевом сервере они лежат своими файлами, но 470 КБ в один файл
+// не влезают, поэтому витрина берёт те же начертания из сети.
+html=html.split('<link rel="stylesheet" href="assets/css/fonts.css">').join(
+  '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+  + '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900'
+  + '&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">');
 // Собираем все теги скриптов приложения в один встроенный блок,
 // чтобы порядок файлов в index.html можно было менять без правки сборщика.
 // Замена только функцией: в коде есть $$ и $&, а в строке замены это спецсимволы.
