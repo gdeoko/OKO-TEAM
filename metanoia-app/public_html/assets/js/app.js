@@ -2555,11 +2555,22 @@ function petНастроение() {
 /* Зёрна начисляются за всё полезное в приложении */
 function addSeeds(n, за) {
   petState.зёрна += n;
+  зёрнаЗаСегодня(n);
   petДневник(`+${n} ${склонениеЗёрен(n)} ${за}`);
   savePet();
   renderPet();
   renderPetTile();
   toast(`+${n} ${склонениеЗёрен(n)} для друга`);
+}
+
+/* Сколько зёрен собрано сегодня: это число показывает главная. */
+function зёрнаЗаСегодня(прибавить) {
+  const з = памятьЧитать('mt_seeds_today', {});
+  const сегодня = todayKey();
+  const было = (з && з.день === сегодня) ? Number(з.сколько || 0) : 0;
+  if (!прибавить) return было;
+  localStorage.setItem('mt_seeds_today', JSON.stringify({ день: сегодня, сколько: было + прибавить }));
+  return было + прибавить;
 }
 
 function склонениеЗёрен(n) {
@@ -4810,8 +4821,13 @@ function countUp(el, dur = 900) {
   requestAnimationFrame(step);
 }
 function animateHomeStats() {
-  countUp(document.getElementById('streakDays'), 800);
-  countUp(document.getElementById('xpToday'), 1000);
+  // Числа на главной настоящие: серия дней со стихом и зёрна за сегодня.
+  const с = document.getElementById('streakDays');
+  const з = document.getElementById('xpToday');
+  if (с) с.textContent = серияДней();
+  if (з) з.textContent = зёрнаЗаСегодня(0);
+  countUp(с, 800);
+  countUp(з, 1000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
