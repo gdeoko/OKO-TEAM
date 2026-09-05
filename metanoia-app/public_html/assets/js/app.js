@@ -139,7 +139,7 @@ const DEMO = {
       ],
     },
     {
-      title: 'Глава 3 · История народа Божьего — Израиль', range: 'уроки 1–35', award: '«Знаток героев» + сертификат года',
+      title: 'Глава 3 · История народа Божьего — Израиль', range: 'уроки 1–35', award: '«Знаток героев»',
       lessons: [
         { n: 71, cn: 1, title: "Призвание Аврама", state: 'locked' },
         { n: 72, cn: 2, title: "Авраам и ангелы; рождение Исаака", state: 'locked' },
@@ -3387,23 +3387,47 @@ function initSystemTheme() {
 
 /* ── Сертификаты ── */
 const CERTIFICATES = [
-  { key: 'b1', title: 'Глава 1 · Жизнь Господа', short: 'первую главу', award: 'Ученик Господа', earned: true, date: '8 июля 2026' },
-  { key: 'b2', title: 'Глава 2 · Ветхий Завет', short: 'вторую главу', award: 'Странник небес', earned: false },
-  { key: 'b3', title: 'Глава 3 · Израиль', short: 'третью главу', award: 'Знаток героев', earned: false },
+  { key: 'b1', title: 'Глава 1 · Жизнь Господа', short: 'первую главу', award: 'Ученик Господа' },
+  { key: 'b2', title: 'Глава 2 · Ветхий Завет', short: 'вторую главу', award: 'Странник небес' },
+  { key: 'b3', title: 'Глава 3 · Израиль', short: 'третью главу', award: 'Знаток героев' },
 ];
-const CHILD_FOR_CERT = 'Миша';
+
+/* Сертификат считается полученным только после пройденной проверки знаний
+   главы: смотрим ту же запись, что кладёт экзамен. */
+function certРазмечен() {
+  CERTIFICATES.forEach((c, bi) => {
+    let r = null;
+    try { r = JSON.parse(localStorage.getItem('mt_exam_' + bi) || 'null'); } catch (e) { r = null; }
+    c.earned = !!(r && r.pct >= 70);
+    c.date = c.earned && r.ts
+      ? new Date(r.ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '';
+  });
+  return CERTIFICATES;
+}
+
+/* Имя на бланке берём у текущего ребёнка, а не из демонстрационных данных. */
+function именаДляСертификата() {
+  const имя = (localStorage.getItem('mt_name') || '').trim();
+  if (имя) return имя;
+  try {
+    const дети = JSON.parse(localStorage.getItem('mt_kids') || '[]');
+    if (дети.length && дети[0].name) return дети[0].name;
+  } catch (e) { /* список детей пуст */ }
+  return 'Ученик школы';
+}
 
 function openCertificates() {
-  $('#certGrid').innerHTML = CERTIFICATES.map((c) => `
-    <button class="cert-card ${c.earned ? 'cert-card--earned' : 'cert-card--locked'} ${c.year ? 'cert-card--year' : ''}" data-cert="${c.key}">
+  $('#certGrid').innerHTML = certРазмечен().map((c) => `
+    <button class="cert-card ${c.earned ? 'cert-card--earned' : 'cert-card--locked'}" data-cert="${c.key}">
       <div class="cert-card__ribbon">${ICON(c.earned ? 'award' : 'lock', 22)}</div>
       <div class="cert-card__name">${c.title}</div>
-      <div class="cert-card__award">${c.year ? 'Диплом выпускника' : '«' + c.award + '»'}</div>
-      <div class="cert-card__state">${c.earned ? 'Получен · нажми' : 'Завершите блок'}</div>
+      <div class="cert-card__award">«${c.award}»</div>
+      <div class="cert-card__state">${c.earned ? 'Получен · нажми' : 'Пройди проверку знаний главы'}</div>
     </button>`).join('');
   $$('#certGrid [data-cert]').forEach((el) => el.addEventListener('click', () => {
     const c = CERTIFICATES.find((x) => x.key === el.dataset.cert);
-    if (c.earned) openCertView(c); else toast('Сертификат откроется после завершения блока');
+    if (c.earned) openCertView(c); else toast('Сертификат откроется после проверки знаний главы');
   }));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'certificates'));
   $('#nav').style.display = 'none';
@@ -3412,9 +3436,8 @@ function openCertificates() {
 }
 
 function certSVG(cert, name) {
-  const line = cert.year
-    ? `успешно завершил(а) годовую программу<tspan x="240" dy="26">христианской онлайн-школы «Метанойя»</tspan>`
-    : `успешно завершил(а) ${cert.short}<tspan x="240" dy="26">«${cert.title.split('· ')[1] || cert.title}»</tspan>`;
+  // Годовой диплом убран по правке Екатерины, остались три бланка по главам.
+  const line = `успешно завершил(а) ${cert.short}<tspan x="240" dy="26">«${cert.title.split('· ')[1] || cert.title}»</tspan>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
   <rect width="480" height="660" fill="#FAF8F5"/>
   <rect x="16" y="16" width="448" height="628" fill="none" stroke="#D4A574" stroke-width="3"/>
@@ -3442,13 +3465,13 @@ function certSVG(cert, name) {
 let currentCert = null;
 function openCertView(cert) {
   currentCert = cert;
-  $('#certStage').innerHTML = certSVG(cert, CHILD_FOR_CERT);
+  $('#certStage').innerHTML = certSVG(cert, именаДляСертификата());
   $('#certView').hidden = false;
 }
 
 function downloadCert() {
   if (!currentCert) return;
-  const svg = certSVG(currentCert, CHILD_FOR_CERT);
+  const svg = certSVG(currentCert, именаДляСертификата());
   const img = new Image();
   const svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   img.onload = () => {
