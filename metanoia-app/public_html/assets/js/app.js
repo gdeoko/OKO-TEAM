@@ -336,7 +336,14 @@ function renderFeed() {
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
 
+/* Какие чаты уже открывали: демонстрационные счётчики иначе оживают
+   после каждого перезапуска и висят вечно. */
+function применитьПрочитанные() {
+  памятьЧитать('mt_chat_read', []).forEach((i) => { if (DEMO.chats[i]) DEMO.chats[i].unread = 0; });
+}
+
 function renderChats() {
+  применитьПрочитанные();
   $('#chatList').innerHTML = DEMO.chats.map((c) => `
     <button class="chat-item ${c.pinned ? 'chat-item--pinned' : ''}">
       <div class="chat-item__avatar">${c.img ? `<img src="${c.img}" alt="">` : ICON(c.icon, 24)}</div>
@@ -354,6 +361,7 @@ function renderChats() {
     el.addEventListener('click', () => openChatView(i)));
 
   const unreadTotal = DEMO.chats.reduce((s, c) => s + c.unread, 0);
+  // (счётчик уже учитывает прочитанные: их обнуляет применитьПрочитанные)
   const badge = $('#chatsBadge');
   badge.textContent = unreadTotal;
   badge.style.display = unreadTotal ? '' : 'none';
@@ -1006,7 +1014,13 @@ function openChatView(i) {
   $('#cvStickers').hidden = true;
   renderChatMsgs();
   // прочитано
-  if (c.unread) { c.unread = 0; renderChats(); }
+  if (c.unread) {
+    c.unread = 0;
+    // Прочитанное запоминаем, иначе после перезапуска счётчик оживает.
+    const прочитанные = памятьЧитать('mt_chat_read', []);
+    if (!прочитанные.includes(i)) { прочитанные.push(i); localStorage.setItem('mt_chat_read', JSON.stringify(прочитанные)); }
+    renderChats();
+  }
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'chatview'));
   document.body.classList.add('in-chat');
   $('#nav').style.display = 'none';
