@@ -71,7 +71,14 @@ export async function открыть(b, э, параметры = {}) {
   pg.on("console", m => {
     if (m.type() !== "error") return;
     const т = m.text();
-    if (/ERR_CERT_|ERR_PROXY_/.test(т)) return;
+    /* ── ОБРЫВ СВЯЗИ В ПЕСОЧНИЦЕ ТОЖЕ НЕ ОШИБКА САЙТА ────────────
+       К отказу по удостоверению добавился обрыв: прокси песочницы
+       рвёт соединение к соседнему rocketcdn.ru, и в журнал падает
+       ERR_CONNECTION_RESET. Проверка контраста красила этим ГРЯЗНО
+       прогон, где с сайтом всё в порядке. Гасим ровно эти три
+       сетевых отказа и ни одного больше: ошибка самого сайта приходит
+       исключением или другим текстом. */
+    if (/ERR_CERT_|ERR_PROXY_|ERR_CONNECTION_RESET/.test(т)) return;
     ошибки.push("КОНС: " + т.slice(0, 140));
   });
   await pg.goto(адрес(параметры), { waitUntil: "domcontentloaded", timeout: 90000 });
