@@ -29,3 +29,9 @@ oko-app/factory/models/
 __pycache__/
 *.pyc
 oko-app/factory/cfg/google_tts.key
+
+.claude/skills/reels-machine/node_modules/
+oko-app/factory/builds/
+oko-app/factory/voices/
+oko-app/factory/carousel_final/
+oko-app/factory/final/
