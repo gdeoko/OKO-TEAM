@@ -1,0 +1,97 @@
+{
+  "id": "karusel_brain_2026-09-06",
+  "app": "brain",
+  "format": "4:5",
+  "resolution": "1080x1350",
+  "slides_count": 8,
+  "brand": {
+    "accent": "#9B5DE5",
+    "code": "FOCUS",
+    "name": "BRAINOVA",
+    "logo": "brain.png"
+  },
+  "format_type": "useful_carousel",
+  "comp_ref": "Dr Julie metaphor-visual + Ezz Show 'signs' listicle",
+  "cover_topic": "7 signs your focus is leaking (and the 10-minute patch)",
+  "slides": [
+    {
+      "n": 1,
+      "role": "hook",
+      "headline": "7 SIGNS YOUR FOCUS IS LEAKING",
+      "sub": "and the daily patch that holds it"
+    },
+    {
+      "n": 2,
+      "role": "sign",
+      "headline": "1. You reread the same line three times",
+      "body": "Attention slips and rejoins without you noticing. Trained attention catches the slip early."
+    },
+    {
+      "n": 3,
+      "role": "sign",
+      "headline": "2. You reach for the phone mid-sentence",
+      "body": "An open loop your brain runs on autopilot. The patch is noticing the reach before the tap."
+    },
+    {
+      "n": 4,
+      "role": "sign",
+      "headline": "3. Tabs multiply, tasks do not",
+      "body": "Each open tab is a small hole in the bucket. Close to one and the leak slows."
+    },
+    {
+      "n": 5,
+      "role": "sign",
+      "headline": "4. You forget why you walked in",
+      "body": "The doorway wipes short-term context. A trained memory carries it across the threshold."
+    },
+    {
+      "n": 6,
+      "role": "sign",
+      "headline": "5. Afternoons feel like fog",
+      "body": "Focus drains fastest after lunch. A short reset refills it better than caffeine."
+    },
+    {
+      "n": 7,
+      "role": "sign",
+      "headline": "6 and 7. Names vanish, ideas slip",
+      "body": "Working memory holds only a few items under load. Training raises the ceiling."
+    },
+    {
+      "n": 8,
+      "role": "cta",
+      "headline": "The 10-minute patch",
+      "body": "A short daily attention drill closes the holes so the bucket finally holds.",
+      "cta_button": "COMMENT FOCUS"
+    }
+  ],
+  "opis_parts": {
+    "первая": "7 signs your focus is leaking, and the patch that holds it.",
+    "тело": "Most focus problems are not willpower. They are small holes the day punches in your attention: rereading lines, reaching for the phone, tabs that multiply. Swipe through the seven signs. If three feel familiar, the drill on the last slide is for you.",
+    "воронка": "Save this and comment FOCUS for the exercises.",
+    "поиск": [
+      "focus training",
+      "attention span tips",
+      "brain focus signs",
+      "how to focus better",
+      "stop getting distracted",
+      "daily focus drill",
+      "brain fog afternoon",
+      "working memory training",
+      "concentration exercises",
+      "focus like a pro",
+      "attention leak",
+      "deep work habit",
+      "mind training daily",
+      "brain training carousel",
+      "focus reset routine"
+    ]
+  },
+  "opisanie_gotovo": "7 signs your focus is leaking, and the patch that holds it.\n\nMost focus problems are not willpower. They are small holes the day punches in your attention: rereading lines, reaching for the phone, tabs that multiply. Swipe through the seven signs. If three feel familiar, the drill on the last slide is for you.\n\nSave this and comment FOCUS for the exercises.\n\nдля поиска: focus training, attention span tips, brain focus signs, how to focus better, stop getting distracted, daily focus drill, brain fog afternoon, working memory training, concentration exercises, focus like a pro, attention leak, deep work habit, mind training daily, brain training carousel, focus reset routine",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 681,
+    "фраз поиска": 15
+  }
+}

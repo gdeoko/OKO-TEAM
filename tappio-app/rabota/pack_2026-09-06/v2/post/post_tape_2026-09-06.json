@@ -1,0 +1,49 @@
+{
+  "id": "post_tape_2026-09-06",
+  "app": "tape",
+  "format": "4:5",
+  "resolution": "1080x1350",
+  "brand": {
+    "accent": "#F4C430",
+    "code": "MEASURE",
+    "name": "3D TAPE MEASURE",
+    "logo": "tape.png"
+  },
+  "format_type": "useful_checklist",
+  "comp_ref": "Mercury Stardust practical renter-angle + Emily Rayna measure tips",
+  "overlay_title": [
+    "MEASURE THIS",
+    "BEFORE YOU BUY"
+  ],
+  "cover_prompt_hint": "vertical 4:5 flat-lay tape measure + phone AR on wooden floor, gold accent",
+  "opis_parts": {
+    "первая": "Five things to measure before any furniture leaves the store.",
+    "тело": "The wall is the easy one. People forget the doorway width, the hallway turn, the elevator depth, and the ceiling height for tall pieces. One wrong number sends the whole thing back. Point your phone, tap two corners, and every measurement is saved in one project.",
+    "воронка": "Comment MEASURE and try it free for three days.",
+    "поиск": [
+      "measure before buying furniture",
+      "furniture fit tips",
+      "ar tape measure app",
+      "doorway width measure",
+      "will it fit through the door",
+      "apartment furniture measuring",
+      "phone measure app",
+      "lidar room scan",
+      "moving day measuring",
+      "renter furniture tips",
+      "sofa measurement guide",
+      "measure hallway turn",
+      "elevator depth furniture",
+      "measure ceiling height",
+      "furniture returns avoid"
+    ]
+  },
+  "opisanie_gotovo": "Five things to measure before any furniture leaves the store.\n\nThe wall is the easy one. People forget the doorway width, the hallway turn, the elevator depth, and the ceiling height for tall pieces. One wrong number sends the whole thing back. Point your phone, tap two corners, and every measurement is saved in one project.\n\nComment MEASURE and try it free for three days.\n\nдля поиска: measure before buying furniture, furniture fit tips, ar tape measure app, doorway width measure, will it fit through the door, apartment furniture measuring, phone measure app, lidar room scan, moving day measuring, renter furniture tips, sofa measurement guide, measure hallway turn, elevator depth furniture, measure ceiling height, furniture returns avoid",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 747,
+    "фраз поиска": 15
+  }
+}
