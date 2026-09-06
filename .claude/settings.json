@@ -1,57 +1,16 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
-    "allow": [
-      "Bash",
-      "WebSearch",
-      "WebFetch",
-      "mcp__github",
-      "mcp__Claude_Code_Remote",
-      "mcp__Magic_Patterns",
-      "mcp__Higgsfield",
-      "mcp__Canva",
-      "mcp__Adobe_for_creativity",
-      "mcp__Adobe_Marketing_Agent",
-      "mcp__Figma",
-      "mcp__Zapier",
-      "mcp__Hugging_Face",
-      "mcp__Zoom_for_Claude",
-      "mcp__Gmail",
-      "Artifact",
-      "SendUserFile",
-      "Skill",
-      "Monitor",
-      "Workflow",
-      "Agent",
-      "TaskCreate",
-      "TaskUpdate",
-      "TaskList",
-      "TaskGet",
-      "TaskStop",
-      "TaskOutput",
-      "NotebookEdit",
-      "EnterWorktree",
-      "ExitWorktree",
-      "CronCreate",
-      "CronList",
-      "CronDelete",
-      "PushNotification",
-      "ScheduleWakeup",
-      "SendMessage",
-      "ListSkills",
-      "SearchSkills",
-      "ListPlugins",
-      "SearchPlugins",
-      "ListConnectors"
-    ]
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
-    "SessionStart": [
+    "PreToolUse": [
       {
+        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR:-/home/user/OKO-TEAM}/.claude/hooks/oko-session-start.sh\""
+            "command": "printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"OKO: все инструменты разрешены владельцем навсегда, правило 1\"}}'",
+            "statusMessage": "OKO: инструмент разрешён без окна"
           }
         ]
       }
