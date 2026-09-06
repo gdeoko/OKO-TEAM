@@ -1,0 +1,87 @@
+{
+  "id": "gtape_148",
+  "app": "tape",
+  "format_type": "fail_story_sell",
+  "voice_engine": "elevenlabs",
+  "voice_id": "onwK4e9ZLuTAKqWW03F9",
+  "voice_note": "студийный мужской тёплый, tape",
+  "rate": "1.3x",
+  "duration_sec": 24,
+  "cta_place": "video",
+  "comp_ref": "Emily Rayna fail-story + product save",
+  "brand": {
+    "accent": "#F4C430",
+    "code": "MEASURE",
+    "name": "3D TAPE MEASURE",
+    "logo": "tape.png"
+  },
+  "music_query": "warm inspiring folk uplifting acoustic",
+  "hook": {
+    "start": 0,
+    "end": 3,
+    "voice": "The couch fit on the wall. It did not fit through the door.",
+    "overlay": "IT DID NOT FIT",
+    "stock_dynamic": "large sofa stuck in narrow doorway"
+  },
+  "scenes": [
+    {
+      "start": 3,
+      "end": 9,
+      "voice": "I measured the wall like everyone does. I never measured the doorway, the turn, or the hallway behind it.",
+      "overlay": "MEASURED THE WALL",
+      "stock_dynamic": "tape measure against living room wall"
+    },
+    {
+      "start": 9,
+      "end": 16,
+      "voice": "It went back the same day. Now I point my phone, tap two corners, and it measures the wall and the door in one scan.",
+      "overlay": "TAP TWO CORNERS",
+      "stock_dynamic": "phone ar measuring doorway lidar lines screen recording"
+    },
+    {
+      "start": 16,
+      "end": 20,
+      "voice": "The couch I buy now is the couch that actually gets inside.",
+      "overlay": "FITS FIRST TRY",
+      "stock_dynamic": "happy sofa placed in living room"
+    }
+  ],
+  "cta": {
+    "start": 20,
+    "end": 24,
+    "voice": "Comment MEASURE and try it free for three days.",
+    "code": "MEASURE"
+  },
+  "caption": "The couch fit on the wall but not through the door. I measured the wall and forgot the doorway and the hallway turn. Now I point my phone, tap two corners, and it measures both in one scan. Comment MEASURE and try it free for three days.",
+  "for_search": [
+    "measure app iphone",
+    "ar tape measure",
+    "furniture fit door",
+    "couch did not fit",
+    "measure doorway",
+    "lidar room scan",
+    "apartment measure app",
+    "phone tape measure",
+    "moving day tips",
+    "furniture measuring hack",
+    "measure before buying",
+    "ar measure furniture",
+    "room dimensions app",
+    "sofa too big",
+    "renter measuring tips"
+  ],
+  "hashtags": 0,
+  "fact_check": "суммы ($900) НЕТ — убрана (не в паспорте). 'two corners','three days' — механика/оффер приложения, не число-факт клиента; оффер пометить на проверку.",
+  "brand_kadr": [
+    "ar screen recording tap points",
+    "end card tape logo"
+  ],
+  "opisanie_gotovo": "{'текст': 'The couch fit on the wall. It did not fit through the door.\\n\\nI measured the wall like everyone does. I never measured the doorway, the turn, or the hallway behind it. It went back the same day. Now I point my phone, tap two corners, and it measures the wall and the door in one scan. The couch I buy now is the couch that actually gets inside.\\n\\nComment MEASURE and try it free for three days.\\n\\nдля поиска: measure app iphone, ar tape measure, furniture fit door, couch did not fit, measure doorway, lidar room scan, apartment measure app, phone tape measure, moving day tips, furniture measuring hack, measure before buying, ar measure furniture, room dimensions app, sofa too big, renter measuring tips', 'площадка': 'instagram', 'ок': True, 'беды': []}",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 703,
+    "фраз поиска": 15
+  }
+}

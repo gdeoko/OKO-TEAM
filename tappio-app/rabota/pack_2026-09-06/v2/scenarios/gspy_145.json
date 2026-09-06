@@ -1,0 +1,86 @@
+{
+  "id": "gspy_145",
+  "app": "spy",
+  "format_type": "lifehack_demo",
+  "voice_engine": "elevenlabs",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL",
+  "rate": "1.3x",
+  "duration_sec": 26,
+  "cta_place": "video",
+  "comp_ref": "Caitlin Sarian / MalwareTech — physical detection test, viewer checks along",
+  "brand": {
+    "accent": "#00D9FF",
+    "code": "SPY",
+    "name": "SPY CAMERA FINDER",
+    "logo": "spy.png"
+  },
+  "music_query": "clean modern tech light confident",
+  "hook": {
+    "start": 0,
+    "end": 3,
+    "voice": "Three ways to catch a hidden camera with the phone already in your hand.",
+    "overlay": "3 WAYS",
+    "stock_dynamic": "hand holding smartphone hotel room"
+  },
+  "scenes": [
+    {
+      "start": 3,
+      "end": 9,
+      "voice": "One. Turn off the lights and slowly pan your camera across the room. A lens throws back a tiny bright reflection.",
+      "overlay": "1. THE REFLECTION",
+      "stock_dynamic": "dark room phone camera scanning glint"
+    },
+    {
+      "start": 9,
+      "end": 15,
+      "voice": "Two. Put a fingertip on any mirror. If there is a gap between your finger and its reflection, it is normal glass.",
+      "overlay": "2. THE MIRROR TEST",
+      "stock_dynamic": "fingertip touching mirror close up"
+    },
+    {
+      "start": 15,
+      "end": 22,
+      "voice": "Three. Let your phone do all of it at once. It already has four sensors that catch what your eyes miss.",
+      "overlay": "3. LET THE PHONE",
+      "stock_dynamic": "smartphone app scanning animation screen recording"
+    }
+  ],
+  "cta": {
+    "start": 22,
+    "end": 26,
+    "voice": "Comment SPY and I will send you the full room checklist.",
+    "code": "SPY"
+  },
+  "caption": "Three ways to catch a hidden camera with the phone already in your hand. Lights off and pan for a reflection, the fingertip mirror test, and let the four sensors in your phone do the whole sweep at once. Comment SPY for the full room checklist.",
+  "for_search": [
+    "find hidden camera phone",
+    "mirror finger test",
+    "hidden camera reflection",
+    "phone camera detector",
+    "airbnb camera check",
+    "hotel privacy hack",
+    "spy camera finder app",
+    "room sweep phone",
+    "detect hidden lens",
+    "two way mirror test",
+    "travel safety hack",
+    "hidden camera tips",
+    "phone sensors camera",
+    "privacy check hotel",
+    "hidden device scan"
+  ],
+  "hashtags": 0,
+  "fact_check": "'three ways' счётное, 'four sensors' = паспорт sensors=4 (draft). ОК.",
+  "brand_kadr": [
+    "screen recording app scan",
+    "end card spy logo"
+  ],
+  "opisanie_gotovo": "{'текст': 'Three ways to catch a hidden camera with the phone already in your hand.\\n\\nOne. Turn off the lights and slowly pan your camera across the room. A lens throws back a tiny bright reflection. Two. Put a fingertip on any mirror. If there is a gap between your finger and its reflection, it is normal glass. Three. Let your phone do all of it at once. It already has four sensors that catch what your eyes miss.\\n\\nComment SPY and I will send you the full room checklist.\\n\\nдля поиска: find hidden camera phone, mirror finger test, hidden camera reflection, phone camera detector, airbnb camera check, hotel privacy hack, spy camera finder app, room sweep phone, detect hidden lens, two way mirror test, travel safety hack, hidden camera tips, phone sensors camera, privacy check hotel, hidden device scan', 'площадка': 'instagram', 'ок': True, 'беды': []}",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 796,
+    "фраз поиска": 15
+  }
+}

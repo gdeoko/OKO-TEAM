@@ -1,0 +1,80 @@
+{
+  "id": "gspy_146",
+  "app": "spy",
+  "format_type": "shocking_fact_sell",
+  "voice_engine": "elevenlabs",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL",
+  "rate": "1.3x",
+  "duration_sec": 22,
+  "cta_place": "video",
+  "comp_ref": "Rob Braxman — shocking-fact hook, product as solution",
+  "brand": {
+    "accent": "#00D9FF",
+    "code": "SPY",
+    "name": "SPY CAMERA FINDER",
+    "logo": "spy.png"
+  },
+  "music_query": "tech beat confident reveal electronic",
+  "hook": {
+    "start": 0,
+    "end": 4,
+    "voice": "Your phone already carries four sensors that catch a hidden camera.",
+    "overlay": "4 SENSORS",
+    "stock_dynamic": "smartphone glowing sensors macro"
+  },
+  "scenes": [
+    {
+      "start": 4,
+      "end": 10,
+      "voice": "Wi-Fi finds its network. Bluetooth finds its pairing. The magnetometer finds its metal. Infrared finds its lens.",
+      "overlay": "WIFI · BT · MAGNET · IR",
+      "stock_dynamic": "four sensor icons animated wifi bluetooth compass infrared"
+    },
+    {
+      "start": 10,
+      "end": 17,
+      "voice": "Nobody tells you they work together. One app runs all four at once and flags the room while you unpack.",
+      "overlay": "ALL FOUR AT ONCE",
+      "stock_dynamic": "app scanning ui checklist ticks screen recording"
+    }
+  ],
+  "cta": {
+    "start": 17,
+    "end": 22,
+    "voice": "Comment SPY for the link. Three days free.",
+    "code": "SPY"
+  },
+  "caption": "Your phone already carries four sensors that catch a hidden camera: Wi-Fi, Bluetooth, magnetometer, infrared. Nobody tells you they work together. One app runs all four at once. Comment SPY for the link, three days free.",
+  "for_search": [
+    "phone sensors hidden camera",
+    "four sensors detect camera",
+    "wifi bluetooth camera scan",
+    "magnetometer camera finder",
+    "infrared lens detection",
+    "spy camera finder app",
+    "hidden camera detector ios",
+    "airbnb room scan app",
+    "phone privacy scan",
+    "catch hidden camera",
+    "hotel camera detector",
+    "free camera finder trial",
+    "hidden device detector",
+    "room safety scan",
+    "privacy app phone"
+  ],
+  "hashtags": 0,
+  "fact_check": "'four sensors' = паспорт sensors=4 (draft) + цитата паспорта. ОК. 'три дня free' — оффер приложения, не число-факт клиента; пометить как оффер (проверить у клиента).",
+  "brand_kadr": [
+    "4 sensor icons brand",
+    "app scan screen",
+    "end card"
+  ],
+  "opisanie_gotovo": "{'текст': 'Your phone already carries four sensors that catch a hidden camera.\\n\\nWi-Fi finds its network. Bluetooth finds its pairing. The magnetometer finds its metal. Infrared finds its lens. Nobody tells you they work together. One app runs all four at once and flags the room while you unpack.\\n\\nComment SPY for the link. Three days free.\\n\\nдля поиска: phone sensors hidden camera, four sensors detect camera, wifi bluetooth camera scan, magnetometer camera finder, infrared lens detection, spy camera finder app, hidden camera detector ios, airbnb room scan app, phone privacy scan, catch hidden camera, hotel camera detector, free camera finder trial, hidden device detector, room safety scan, privacy app phone', 'площадка': 'instagram', 'ок': True, 'беды': []}",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 703,
+    "фраз поиска": 15
+  }
+}

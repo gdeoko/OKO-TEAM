@@ -1,0 +1,87 @@
+{
+  "id": "gbrain_147",
+  "app": "brain",
+  "format_type": "science_metaphor",
+  "voice_engine": "elevenlabs",
+  "voice_id": "pFZP5JQG7iQjIQuC4Bku",
+  "voice_note": "студийный женский спокойный, brain",
+  "rate": "1.3x",
+  "duration_sec": 26,
+  "cta_place": "description",
+  "comp_ref": "Dr Julie 'stress bucket' metaphor-visual + Huberman calm authority",
+  "brand": {
+    "accent": "#9B5DE5",
+    "code": "FOCUS",
+    "name": "BRAINOVA",
+    "logo": "brain.png"
+  },
+  "music_query": "soft piano science ambient calm",
+  "hook": {
+    "start": 0,
+    "end": 3,
+    "voice": "Your focus is a bucket, and most days it leaks.",
+    "overlay": "THE LEAKING BUCKET",
+    "stock_dynamic": "3d glass bucket glowing purple slow rotate"
+  },
+  "scenes": [
+    {
+      "start": 3,
+      "end": 10,
+      "voice": "Every notification, every open tab, every unfinished thought punches a small hole. By noon the bucket is almost empty.",
+      "overlay": "HOLES",
+      "stock_dynamic": "water draining through holes macro slow motion"
+    },
+    {
+      "start": 10,
+      "end": 18,
+      "voice": "You cannot pour in more coffee to fix a leak. You patch the holes with short daily attention drills that train the mind to hold.",
+      "overlay": "PATCH THE HOLES",
+      "stock_dynamic": "calm person eyes closed breathing focused"
+    },
+    {
+      "start": 18,
+      "end": 22,
+      "voice": "Ten quiet minutes a day, and the bucket finally holds what you put in it.",
+      "overlay": "IT HOLDS",
+      "stock_dynamic": "full glowing bucket steady purple light"
+    }
+  ],
+  "cta": {
+    "start": 22,
+    "end": 26,
+    "voice": "Save this one for tomorrow morning.",
+    "code": "FOCUS"
+  },
+  "caption": "Your focus is a bucket, and most days it leaks. Every notification and open tab punches a hole, and by noon it is empty. Coffee does not fix a leak, short daily attention drills do. Save this and comment FOCUS for the exercises.",
+  "for_search": [
+    "focus training",
+    "attention span fix",
+    "brain focus tips",
+    "how to focus better",
+    "stop getting distracted",
+    "daily focus drill",
+    "brain training app",
+    "mental focus routine",
+    "attention exercises",
+    "focus like a pro",
+    "brain fog fix",
+    "concentration tips",
+    "mind training daily",
+    "deep work habit",
+    "focus bucket metaphor"
+  ],
+  "hashtags": 0,
+  "fact_check": "чисел клиента нет — метафора без выдуманных цифр. 'ten minutes' общий совет, не число-факт клиента; заменить на 'a few quiet minutes' при строгой приёмке.",
+  "brand_kadr": [
+    "brainova app screen",
+    "brain score UI (наложение)"
+  ],
+  "opisanie_gotovo": "{'текст': 'Your focus is a bucket, and most days it leaks.\\n\\nEvery notification, every open tab, every unfinished thought punches a small hole. By noon the bucket is almost empty. You cannot pour in more coffee to fix a leak. You patch the holes with short daily attention drills that train the mind to hold. Ten quiet minutes a day, and the bucket finally holds what you put in it.\\n\\nSave this one for tomorrow morning.\\n\\nдля поиска: focus training, attention span fix, brain focus tips, how to focus better, stop getting distracted, daily focus drill, brain training app, mental focus routine, attention exercises, focus like a pro, brain fog fix, concentration tips, mind training daily, deep work habit, focus bucket metaphor', 'площадка': 'instagram', 'ок': True, 'беды': []}",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 715,
+    "фраз поиска": 15
+  }
+}

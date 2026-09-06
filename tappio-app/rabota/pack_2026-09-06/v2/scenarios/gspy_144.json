@@ -1,0 +1,87 @@
+{
+  "id": "gspy_144",
+  "app": "spy",
+  "format_type": "viral_story",
+  "voice_engine": "elevenlabs",
+  "voice_id": "EXAVITQu4vr4xnSDxMaL",
+  "voice_note": "студийный женский, spy",
+  "rate": "1.3x",
+  "duration_sec": 24,
+  "cta_place": "description",
+  "comp_ref": "Pauline @himynamespaul_ 10.2M — first-person 2am story, no product",
+  "brand": {
+    "accent": "#00D9FF",
+    "code": "PRIVACY",
+    "name": "SPY CAMERA FINDER",
+    "logo": "spy.png"
+  },
+  "music_query": "tense ambient cinematic quiet dread",
+  "hook": {
+    "start": 0,
+    "end": 3,
+    "voice": "I found it in my Airbnb at two in the morning.",
+    "overlay": "2 AM",
+    "stock_dynamic": "dark hotel bedroom night handheld"
+  },
+  "scenes": [
+    {
+      "start": 3,
+      "end": 9,
+      "voice": "A little green dot on the smoke detector, blinking in a pattern that no smoke detector blinks.",
+      "overlay": "BLINKING PATTERN",
+      "stock_dynamic": "ceiling smoke detector close macro"
+    },
+    {
+      "start": 9,
+      "end": 15,
+      "voice": "I stood on the bed, unscrewed the cover, and behind the plastic there was a lens looking straight at the pillow.",
+      "overlay": "A LENS",
+      "stock_dynamic": "hand unscrewing detector cover low light"
+    },
+    {
+      "start": 15,
+      "end": 21,
+      "voice": "It took me four minutes to find it because I knew where these things hide. Most people never look.",
+      "overlay": "4 MINUTES",
+      "stock_dynamic": "woman sitting on bed shocked phone in hand"
+    }
+  ],
+  "cta": {
+    "start": 21,
+    "end": 24,
+    "voice": "Comment PRIVACY and I will show you the exact spots I check first.",
+    "code": "PRIVACY"
+  },
+  "caption": "I found it in my Airbnb at 2 in the morning. A blinking dot on the smoke detector, and behind the cover a lens pointed at the bed. It took four minutes to find because I knew the spots. Most guests never look up. Comment PRIVACY and I will show you the first places I check in every room.",
+  "for_search": [
+    "airbnb hidden camera",
+    "found camera airbnb",
+    "2am airbnb story",
+    "smoke detector camera",
+    "hidden lens hotel",
+    "solo travel safety",
+    "airbnb horror story",
+    "spy cam in rental",
+    "how to find hidden cameras",
+    "hotel room check",
+    "travel safety tips",
+    "guest privacy",
+    "hidden camera smoke detector",
+    "airbnb warning",
+    "room scan before sleep"
+  ],
+  "hashtags": 0,
+  "fact_check": "'four minutes' = паспорт minutes=4 (draft). Прочих чисел нет.",
+  "brand_kadr": [
+    "app icon spy end",
+    "screen SPY UI scan (наложение)"
+  ],
+  "opisanie_gotovo": "{'текст': 'I found it in my Airbnb at two in the morning.\\n\\nA little green dot on the smoke detector, blinking in a pattern that no smoke detector blinks. I stood on the bed, unscrewed the cover, and behind the plastic there was a lens looking straight at the pillow. It took me four minutes to find it because I knew where these things hide. Most people never look.\\n\\nComment PRIVACY and I will show you the exact spots I check first.\\n\\nдля поиска: airbnb hidden camera, found camera airbnb, 2am airbnb story, smoke detector camera, hidden lens hotel, solo travel safety, airbnb horror story, spy cam in rental, how to find hidden cameras, hotel room check, travel safety tips, guest privacy, hidden camera smoke detector, airbnb warning, room scan before sleep', 'площадка': 'instagram', 'ок': True, 'беды': []}",
+  "opisanie_proverka": {
+    "ок": true,
+    "беды": [],
+    "площадка": "instagram",
+    "знаков": 748,
+    "фраз поиска": 15
+  }
+}
