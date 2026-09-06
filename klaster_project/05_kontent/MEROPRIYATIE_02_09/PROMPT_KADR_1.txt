@@ -1,0 +1,146 @@
+ПОСТ 1 — АНОНС. Кадр «Ворота открываются».
+Формат 4:5, ровно 1080x1350 пикселей, locked, никогда не кропится и не letterbox.
+Модель: nano_banana_pro (Higgsfield) либо кабинет ChatGPT, референсом приложить
+фотографии площадки из 04_originals и файл логотипа brandbook/logo.
+
+--------------------------------------------------------------------------------
+
+A single cinematic frame shot at the threshold of a working production block in a
+south Moscow industrial park at 8:40 in the morning, the moment a four by four
+metre roller shutter gate finishes rising and the interior of the hall is opened
+to the yard for the first time that day. This is key art for a campaign, not a
+documentation photograph: dense, layered, worth a second look, built so that a
+person scrolling a feed at thumbnail size stops on it.
+
+CAMERA AND OPTICS. Full frame sensor, 24 mm wide angle, f/4, 1/250 s, ISO 200,
+camera 1.1 metres above the poured concrete apron, tilted up four degrees so the
+gate opening towers slightly and the verticals of the door frame converge just
+enough to read as thrust without looking like a mistake. The camera sits eight
+metres back from the gate, outside in the yard, looking straight into the dark
+hall through the raised shutter. Anamorphic character: a horizontal flare
+stretching off the brightest amber source, oval bokeh in the out of focus
+background, a very faint blue fringe on the extreme left and right edges of the
+frame. Depth of field runs from the foreground steel lettering at two metres to
+the far wall of the hall at forty metres, with the plane of critical focus on the
+group of people in the gate opening at eighteen metres.
+
+FOUR DEPTH PLANES, built deliberately.
+
+NEAR FOREGROUND, lower third of the frame, two metres from the lens, slightly
+soft. Three dimensional standing letters made of brushed and clear anodised
+aluminium, one hundred and eighty millimetres deep with a three millimetre
+chamfer on every edge, standing upright on the wet concrete apron with their
+faces vertical and square to camera, never lying flat on the ground, the baseline
+dead level in frame, every letter exactly the same height. Faces warm white
+#F5F1E8 powder coat at roughness 0.35 under a 0.05 clearcoat; the amber #E8A400
+lives only on the milled side walls at roughness 0.22 and never touches the
+faces. Each letter throws a real hard contact shadow onto the wet apron and each
+one is doubled by a soft reflection in the standing water beneath it. The letters
+read exactly, character by character, the Russian line «БРОКЕР-ТУР 2 СЕНТЯБРЯ».
+This headline block spans at least sixty percent of the frame width and a quarter
+of its height, its cap height no less than a twelfth of the frame height, and it
+holds at a two hundred pixel thumbnail.
+
+SUBJECT PLANE, eighteen metres in, inside the gate opening. A group of five
+people in business outerwear, dark coats and jackets, no hard hats, walking
+forward out of the dark hall toward the camera and toward the light. They are
+rim lit from behind by the interior of the hall and read as near silhouettes with
+warm edges: shoulders, collars, the line of a jaw, a tablet held at hip height in
+one hand, a rolled sheet of drawings under another arm. Faces are not resolved
+and no one is recognisable; they are shapes in motion, caught mid stride, one
+front heel already off the ground. Their contact shadows stretch toward the
+camera across the threshold.
+
+MID GROUND, the gate itself and the frame around it. The corrugated steel shutter
+is stopped at the top of its travel with the last slat still a hand's width from
+the header, the guide rails on both sides scuffed to bright metal by twenty years
+of use, the rubber seal at the sill worn and split at one corner. The reveal of
+the opening is raw concrete with form tie marks and honest chipping at the
+corners, and a black and amber hazard chevron is painted on the sill, half worn
+away by tyres. On the pale grey concrete wall to the left of the gate, at head
+height, the brand mark is fixed as a real object: a twelve toothed gear wheel
+with a clean circular centre holding the stylised figure of a person with arms
+raised to both sides, and beside it the wordmark reading exactly «КЛАСТЕР». It is
+a milled steel plate with real thickness, its own contact shadow and the same
+light as the wall behind it, and it is small — the whole lockup spans under a
+seventh of the frame width and its caps are under a third of the headline caps.
+It appears once, in that one place, and nowhere else in the picture.
+
+DISSOLVING BACKGROUND, forty metres deep inside the hall. Round painted columns
+receding in two rows, a poured seamless floor with old yellow safety marking half
+worn away, and the far end of the hall opening into a second bright rectangle of
+daylight. Between the columns, four hard shafts of morning light cross the space
+diagonally from clerestory windows high on the right wall, and the dust of the
+hall turns slowly inside every shaft. Deep in the background, small and out of
+focus, a scissor lift and a stack of pallets. Nothing in this plane is sharp.
+
+WHAT IS HAPPENING AT THIS EXACT INSTANT. Something crosses between the planes so
+the eye travels: fine construction dust and water vapour roll out of the hall
+through the opened gate toward the camera, catching the backlight and forming a
+soft luminous wedge across the middle of the frame at knee height. Off to the
+left, sixteen metres away and just outside the gate line, a welder is working
+behind a temporary screen: a cone of white hot sparks arcs down and left at about
+twelve metres per second, the sparks within a metre of the source frozen as hard
+white points and those beyond it stretched into short amber traces. On the far
+right edge, the rear of a box truck is backing in, its reversing lamps two hot
+points and one tail light drawing a short red smear along the wet concrete.
+Water still runs off the lower edge of the shutter in three thin threads and
+breaks on the sill.
+
+LIGHT. Three sources, stated and distinct. A 5600 K key comes from the open sky
+behind the camera and rakes the wet apron so every puddle becomes a mirror. A
+6500 K rim source deep inside the hall, from the second doorway at the far end,
+cuts the group of people out of the darkness and edges the top of every shoulder.
+A 2800 K sodium practical hangs on the wall inside the hall, right of frame,
+glowing as a warm point with a soft bloom and throwing a low amber wash across
+the floor. Never one flat wash. Amber is allowed to bloom and flare on its own
+sources.
+
+MATERIALS AND PHYSICS FLOOR. At least three materials of clearly different
+roughness: poured concrete at 0.75, brushed steel at 0.25, wet standing water and
+the clearcoat on the letters at 0.02. True reflections and believable contact
+shadows everywhere; caustics on the wet concrete under the amber practical.
+Black point sits at 6 of 255, so the shadows are deep but never crushed to pure
+black. At most two overlaid effects: the dust volume and the spark trails, and
+nothing else.
+
+PALETTE. Graphite #14171C in the shadows, the shutter and the coats. Pale warm
+grey concrete for the walls and apron, honest and slightly stained. Warm white
+#F5F1E8 for the letter faces and the hard daylight. Amber #E8A400 on the letter
+side walls, the hazard chevron, the sodium practical and the spark traces. Muted
+gold #C9A233 only in the deepest reflections. Rich contrasty grade, film response
+rather than digital flatness, fine grain in the shadows.
+
+TYPOGRAPHY DISCIPLINE. Under the main lettering, set small and calm in the same
+layout, on the darkened band of wet concrete, a supporting line in warm white
+#F5F1E8 condensed capitals at one third of the headline cap height, reading
+exactly «11:00 · 6-Я РАДИАЛЬНАЯ, 17 · КОНФЕРЕНЦ-ЗАЛ». Contrast is set, not hoped
+for: where any type crosses a bright or busy area the ground beneath it is
+darkened. Amber type lives only on graphite or black; on lighter ground the
+letters are warm white or near black, never amber. Type is upright always, no
+italic, no oblique, no script. The outer guillemets in this prompt are delimiters
+and are not drawn. The headline faces camera square, its baseline horizontal,
+never rotated, never running up or down the side of the frame. Nothing crosses
+the characters, no blur, no unplanned line break, eight percent dead margin all
+round. Every Cyrillic letter, digit, space, punctuation mark and the letter Ё
+with its two dots is reproduced exactly as written above, without autocorrection
+or glyph substitution.
+
+WHAT MUST NOT APPEAR. Nothing drawn from an interface: no buttons, swipe arrows,
+link chips, cursors, app icons or screen mock-ups. No text beyond the two lines
+given here: no subtitles, extra numbers, scale bars, street names, addresses,
+watermarks, timestamps, price tags, currency signs, a second logo, invented
+words, Latin placeholder lettering, emoji or icons. No recognisable faces. No
+hard hats or high visibility vests on the group: these are brokers, not builders.
+No flat backdrop behind a floating object, no illustration or painterly look, no
+clip art, no sharpening halo. Do not clad the building in dark perforated panels,
+do not turn it into a glass tower, do not add floors: this is an honest working
+production block of pale warm grey concrete.
+
+FINISH. Photoreal and physically correct, a high end render married to a
+documentary photograph, at the level of a campaign key visual for an industrial
+brand. Composition deliberate rather than centred, built on the diagonal that
+runs from the lower left lettering through the dust wedge to the group in the
+gate. Eight thousand pixels of detail in the plane of focus. The whole frame
+should read, at a glance and at thumbnail size, as one sentence: the gate is
+open, come in.

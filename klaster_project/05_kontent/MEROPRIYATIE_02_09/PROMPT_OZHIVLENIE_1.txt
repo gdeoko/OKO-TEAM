@@ -1,0 +1,155 @@
+ПОСТ 1 — ОЖИВЛЕНИЕ КАДРА «Ворота открываются».
+Runway Gen-4.5, режим image to video, первый кадр — готовая картинка по
+PROMPT_KADR_1.txt. Длительность 10 секунд, соотношение 4:5, 24 кадра в секунду.
+Gen-4.5 на подписке Max, платные кредиты не тратятся.
+
+--------------------------------------------------------------------------------
+
+Animate the attached still as one continuous ten second shot with no cuts, no
+transitions, no dissolves and no change of lens. The still is the first frame and
+its composition is binding: what is drawn there stays where it is drawn, and the
+motion is layered on top of it. This is a single breathing camera move through a
+real place, in the language of a cinema title card for an industrial brand, not a
+slideshow effect and not a parallax card.
+
+THE CAMERA. One move, slow and mechanical, the way a dolly on a track behaves,
+never handheld and never floaty. Over the full ten seconds the camera pushes
+forward along its own axis by roughly two and a half metres, from eight metres in
+front of the gate to five and a half metres, while rising by twelve centimetres
+and losing one degree of its upward tilt. The push is eased at both ends: it
+starts from a dead stop over the first fifteen frames, reaches constant speed by
+second two, holds that speed through second eight, and settles to a stop over the
+last twenty frames without overshoot or bounce. There is no roll, no yaw, no
+whip, no orbit, no crash zoom, no rack focus to a different subject. Focal length
+stays at 24 mm for the entire shot; do not zoom, and do not fake a zoom by
+scaling the frame. Because the camera moves forward physically, the perspective
+of the gate opening must genuinely change: the reveal of the concrete jamb on the
+left opens a little wider, the far wall of the hall grows slightly, the dark
+rectangle of the opening gains about eight percent of its height in frame. Motion
+parallax between the foreground lettering, the gate plane and the far end of the
+hall must be correct and consistent with a real 24 mm lens moving two and a half
+metres, never a flat 2.5D card slide.
+
+THE HEADLINE STAYS ABSOLUTELY STILL AND ABSOLUTELY SHARP. The standing aluminium
+letters in the near foreground are physical objects bolted to the concrete, not
+an overlay: they hold their exact position, their exact spelling and their exact
+proportions for all ten seconds. As the camera pushes in they grow in frame the
+way a real object two metres away grows when the camera closes by two and a half
+metres, and their perspective opens accordingly — the side walls of the letters
+on the left of the block become slightly more visible, the ones on the right
+slightly less. They never wobble, never breathe, never warp, never re-render
+themselves into different letterforms, never gain or lose a character, never drop
+their chamfer, never turn amber on the faces. The Russian line reads exactly
+«БРОКЕР-ТУР 2 СЕНТЯБРЯ» in frame one and reads exactly the same in frame two
+hundred and forty. The supporting line beneath, «11:00 · 6-Я РАДИАЛЬНАЯ, 17 ·
+КОНФЕРЕНЦ-ЗАЛ», is equally locked: same words, same spacing, same case, no
+letter substitution, no Latin characters creeping in, no drift, no flicker, no
+re-typesetting between frames. If any single character cannot be held stable,
+hold the entire text block frozen rather than let it mutate. Nothing passes in
+front of the characters at any point: dust, sparks and people all move behind
+them or outside their bounding box.
+
+THE BRAND MARK STAYS STILL. The milled steel gear-and-figure plate with the
+wordmark «КЛАСТЕР» on the concrete wall left of the gate is a fixed object on a
+fixed wall. It changes only by perspective as the camera advances, it keeps its
+exact geometry — twelve teeth, clean circular centre, figure with arms raised to
+both sides — and it never rotates, never pulses, never gains a glow, never
+duplicates itself elsewhere in frame and never re-spells its wordmark. It does
+not grow into a hero object: it stays a small maker's mark on a wall.
+
+THE PEOPLE. The group of five in dark business outerwear inside the gate opening
+walks forward toward the camera at an unhurried working pace, about 1.2 metres
+per second, covering roughly twelve metres over the ten seconds so they finish
+the shot much closer but still inside the threshold, never reaching the
+foreground and never leaving frame. Their gait is natural and weighted: heel
+strike, roll, push off, a slight vertical bob of three or four centimetres per
+step, arms swinging out of phase with the legs, coats moving a beat behind the
+bodies. They stay backlit silhouettes with warm rims the whole way; as they
+approach, a little more detail resolves at the shoulders and collars but no face
+ever becomes recognisable and no facial features are invented. One of them shifts
+a rolled sheet of drawings from one arm to the other around second six. Another
+glances up and to the right at the light shafts around second four, a small head
+turn of no more than twenty degrees. Their contact shadows stretch and shorten
+correctly as they move relative to the light behind them. Do not add people, do
+not remove people, do not have anyone wave at the camera, and do not let the
+group merge into a single blob.
+
+THE DUST AND VAPOUR. The soft luminous wedge of construction dust and water
+vapour rolling out of the hall is the main living element of the frame. It moves
+slowly outward toward the camera at roughly 0.4 metres per second, turning over
+itself in lazy vortices, thickening and thinning in waves with a period of about
+three seconds so the shot never looks looped. Inside the four hard shafts of
+morning light crossing the hall, individual motes resolve as small bright points
+drifting and tumbling; outside the shafts the same volume is a soft grey haze.
+The wedge must stay volumetric and behave like real airborne matter with mass:
+never a flat animated gradient, never a moving texture pasted over the image,
+never a symmetric particle spray. As the camera pushes in, the near edge of the
+dust passes the lens plane at around second eight and the frame very slightly
+softens in the lower third, then clears again.
+
+THE SPARKS. The welder's cone of sparks off frame left continues in short bursts,
+not as a constant stream: a burst of about one and a half seconds, then two
+seconds of near darkness with only the amber glow of the cooling metal, then
+another burst. During a burst the sparks arc down and to the left at about twelve
+metres per second, the ones close to the source frozen as hard white hot points
+and the ones further out stretched into short amber traces that fade over about
+half a metre. A few land on the wet concrete and die on contact with a tiny puff
+of steam. The light of each burst spills onto the left concrete jamb and the
+nearest letter side walls, lifting them for the duration of the burst and falling
+away again. Sparks never cross the headline block and never reach the group of
+people.
+
+THE WATER. The three thin threads of water still running off the lower edge of
+the shutter continue to fall, break on the sill and scatter. The standing water on
+the apron holds its mirror: as the camera advances, the reflections of the
+letters, of the gate opening and of the amber practical inside the hall slide
+across the surface correctly, in the opposite direction to the camera move. Every
+few seconds a single drop from the shutter hits a puddle and sends out one clean
+concentric ring that expands and dies. Do not add rain, do not add wind ripples
+across the whole surface, do not turn the apron into a mirror-flat CG plane.
+
+THE TRUCK. At the far right edge, the box truck continues backing in very slowly,
+about 0.5 metres per second, its two reversing lamps holding steady and the red
+tail light drawing its short smear along the wet concrete. It never enters the
+central third of the frame and never becomes the subject. Around second seven a
+faint amber turn indicator blinks twice at the extreme edge and stops.
+
+THE LIGHT. Global lighting is stable throughout: the 5600 K open sky key from
+behind camera, the 6500 K rim from the far doorway deep in the hall, the 2800 K
+sodium practical glowing on the interior wall with a soft bloom. The only light
+that changes is the welder's burst, and the only global change is a very slow,
+almost imperceptible lift of the hall interior over the ten seconds — as if the
+morning is genuinely arriving — amounting to no more than a third of a stop in
+the deep background and nothing at all in the foreground. Do not flicker the
+practical, do not pulse the exposure, do not introduce a light that is not in the
+first frame, do not change colour temperature anywhere, do not add lens flares
+that were not there, and do not animate the anamorphic flare into a sweep.
+
+GRADE AND TEXTURE. Grade, contrast, saturation and black point are identical in
+every frame: black point at 6 of 255, rich contrasty film response, fine grain in
+the shadows. The grain must be animated at 24 frames per second like real film
+grain, never frozen as a static overlay and never boiling. Motion blur is
+physically motivated at a 180 degree shutter: the walking figures and the falling
+sparks carry it, the letters and the wall-mounted mark do not, because they are
+not moving relative to the sensor beyond the camera's own advance.
+
+WHAT MUST NOT HAPPEN, stated plainly because these are the failure modes that
+kill this kind of shot. No morphing of any surface into another. No warping or
+rippling of the concrete, the shutter slats, the columns or the ground plane. No
+letters or numbers appearing, disappearing or changing anywhere in frame,
+including on the truck, the walls, the floor marking and the hazard chevron. No
+new signage, no invented Latin text, no watermark, no timestamp, no subtitles, no
+user interface elements, no arrows, no progress bars. No cut, no fade in, no fade
+out, no speed ramp, no slow motion, no time lapse. No camera shake, no
+stabilisation wobble, no rolling shutter skew. No cartoon or painterly styling, no
+neon grading, no orange and teal push. No extra light beams, no god rays beyond
+the four shafts already present in the first frame, no floating embers filling the
+whole frame. Nobody looks at the camera. The gate does not move: it has already
+finished rising and stays at the top of its travel for the whole shot. The
+building does not change: no added floors, no glass, no dark perforated cladding.
+
+THE FEELING. Ten seconds of a real morning at a working industrial park, seen
+from the outside looking in, with the gate already open and people walking out of
+the dark toward the light while the dust turns in the shafts behind them. The
+frame should feel patient and heavy and expensive, the way the opening shot of a
+film feels, and it should end on the same clean readable headline it started on.
