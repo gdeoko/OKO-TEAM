@@ -16,7 +16,7 @@ html,body{width:1080px;height:1920px;background:transparent;overflow:hidden;font
 .ln{overflow:hidden;padding:0 6px 10px}
 .ln .in{display:block;color:#F6F4F1;font-size:104px;line-height:1.0;letter-spacing:1px;white-space:nowrap;
   text-shadow:0 6px 30px rgba(0,0,0,.85),0 2px 4px rgba(0,0,0,.8)}
-.ln.acc .in{color:#FF7A3C}
+.ln.acc .in{color:#EA5920}
 .ln.small .in{font-size:64px}
 </style></head><body>
 <div id="stage"></div>
