@@ -845,10 +845,37 @@
     W = мир; T = мир.T;
     поднято = true;
     собратьРазметку();
+    /* ── ВХОД ПО НАСТОЯЩЕМУ НАЖАТИЮ, А НЕ ПО КАСАНИЮ ─────────────
+       Здесь стоял один `pointerdown`: палец коснулся глыбы - камера
+       ушла внутрь. Прокрутка пальцем НАЧИНАЕТСЯ ровно с такого
+       касания, и владелец написал прямо: «я во время листания вниз
+       невольно задеваю вот эту ледышку, и у меня срабатывает клик,
+       вход внутрь льда - а это уже глюк и неудобство».
+
+       Нажатие от свайпа отличают три вещи, и все три надо спросить:
+       палец отпущен, отпущен близко к месту касания, отпущен быстро.
+       Двенадцать точек это ширина дрожания руки, четыреста
+       миллисекунд - обычный порог долгого нажатия. Прокрутка не
+       укладывается ни в одно из них: она уводит палец на сотни точек.
+
+       Заодно ловим саму прокрутку: страница поехала - касание было
+       свайпом, чем бы оно ни кончилось. */
+    var _нж = null;
+    var _ехали = false;
+    g.addEventListener("scroll", function () { if (_нж) _ехали = true; }, { passive: true });
     d.addEventListener("pointerdown", function (е) {
       if (С.фаза !== 0) return;
-      /* По разметке (кнопки, ссылки, шапка) не ловим: там свои действия. */
       if (е.target && е.target.closest && е.target.closest("a,button,input,textarea,label")) return;
+      _нж = { x: е.clientX, y: е.clientY, t: (g.performance ? g.performance.now() : 0), id: е.pointerId };
+      _ехали = false;
+    }, { passive: true });
+    d.addEventListener("pointercancel", function () { _нж = null; }, { passive: true });
+    d.addEventListener("pointerup", function (е) {
+      var н = _нж; _нж = null;
+      if (!н || С.фаза !== 0 || _ехали) return;
+      if (е.pointerId !== н.id) return;
+      if (Math.abs(е.clientX - н.x) > 12 || Math.abs(е.clientY - н.y) > 12) return;
+      if ((g.performance ? g.performance.now() : 0) - н.t > 400) return;
       var ц = подЛучом(е.clientX, е.clientY);
       if (ц) открыть(ц);
     }, { passive: true });
