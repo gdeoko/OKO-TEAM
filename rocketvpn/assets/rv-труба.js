@@ -1275,8 +1275,14 @@
       uniforms: {
         uTime: М.uTime, uRes: М.uRes, uAlpha: М.uАльфаТруба,
         uLen: { value: ДЛИНА },
-        uC1: { value: new T.Color(0x6a6f7d) },
-        uC2: { value: new T.Color(0xe1e6f1) }
+                /* Тот же серый, что у оболочки подземелья (rv-фон.js): пара
+           0x6a6f7d -> 0xe1e6f1 давала на весь кадр ровное белое поле,
+           в котором не читались ни кольца, ни глубина. Держать эти
+           числа надо ВМЕСТЕ во всех трёх местах - оболочка, стенка
+           шахты и пол зала, - иначе на стыке видно, где кончается одно
+           и начинается другое. */
+        uC1: { value: new T.Color(0x4A505C) },
+        uC2: { value: new T.Color(0xA9B0C0) }
       },
       vertexShader: В_ТУМАН, fragmentShader: фТуман(),
       transparent: true, depthWrite: true, side: T.FrontSide, fog: false
@@ -1324,8 +1330,8 @@
           uTime: М.uTime, uScaleD: М.uScaleD, uRes: М.uRes, uCamZ: М.uCamZ,
           uCamLoc: М.uCamLoc, uUnit: М.uUnit,
           uRingY: { value: высота },
-          uColor1: { value: new T.Color(0x6a6f7d) },
-          uColor2: { value: new T.Color(0xe1e6f1) }
+          uColor1: { value: new T.Color(0x4A505C) },
+          uColor2: { value: new T.Color(0xA9B0C0) }
         },
         vertexShader: В_КОЛЬЦО, fragmentShader: Ф_КОЛЬЦО,
         /* ── ПОЧЕМУ КОЛЬЦО ОБЪЯВЛЕНО ПРОЗРАЧНЫМ, ХОТЯ АЛЬФА У НЕГО РОВНО
