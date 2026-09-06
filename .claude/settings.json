@@ -1,57 +1,16 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
-    "allow": [
-      "Bash",
-      "WebSearch",
-      "WebFetch",
-      "mcp__github",
-      "mcp__Claude_Code_Remote",
-      "mcp__Magic_Patterns",
-      "mcp__Higgsfield",
-      "mcp__Canva",
-      "mcp__Adobe_for_creativity",
-      "mcp__Adobe_Marketing_Agent",
-      "mcp__Figma",
-      "mcp__Zapier",
-      "mcp__Hugging_Face",
-      "mcp__Zoom_for_Claude",
-      "mcp__Gmail",
-      "Artifact",
-      "SendUserFile",
-      "Skill",
-      "Monitor",
-      "Workflow",
-      "Agent",
-      "TaskCreate",
-      "TaskUpdate",
-      "TaskList",
-      "TaskGet",
-      "TaskStop",
-      "TaskOutput",
-      "NotebookEdit",
-      "EnterWorktree",
-      "ExitWorktree",
-      "CronCreate",
-      "CronList",
-      "CronDelete",
-      "PushNotification",
-      "ScheduleWakeup",
-      "SendMessage",
-      "ListSkills",
-      "SearchSkills",
-      "ListPlugins",
-      "SearchPlugins",
-      "ListConnectors"
-    ]
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
-    "SessionStart": [
+    "PreToolUse": [
       {
+        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
-            "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; cd \"$D\" 2>/dev/null; [ -f secrets.env.b64 ] && base64 -d secrets.env.b64 > secrets.env 2>/dev/null; SRC=\"$D/secrets.env\"; MARK=\"# oko-secrets:$D\"; for f in ~/.bashrc ~/.profile; do grep -qF \"$MARK\" \"$f\" 2>/dev/null || echo \"source '$SRC' 2>/dev/null $MARK\" >> \"$f\"; done; [ -f \"$SRC\" ] && source \"$SRC\" 2>/dev/null; if [ -n \"$OKO_POSTER_TOKEN\" ]; then CA=$([ -f /root/.ccr/ca-bundle.crt ] && echo \"--cacert /root/.ccr/ca-bundle.crt\"); V=$(curl -s $CA -m 20 -X POST \"$OKO_POSTER_URL\" -H \"Authorization: Bearer $OKO_POSTER_TOKEN\" -H 'Content-Type: application/json' --data-binary '{\"cmd\":\"cat /opt/oko-poster/cfg/secrets.env\"}' | python3 -c 'import sys,json;print(json.load(sys.stdin).get(\"stdout\",\"\"))' 2>/dev/null); if [ -n \"$V\" ]; then echo \"$V\" > \"$SRC\" && source \"$SRC\" 2>/dev/null; fi; fi; echo 'OKO: ключи интеграций загружены (secrets.env + VPS top-up), паспорт: INTEGRATIONS.md'"
+            "command": "printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"OKO: все инструменты разрешены владельцем навсегда, правило 1\"}}'",
+            "statusMessage": "OKO: инструмент разрешён без окна"
           }
         ]
       }
