@@ -10,9 +10,14 @@ import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 import { DartsStation } from './three/darts.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v43 — касание-вихрь (без дыры) + плавный возврат ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v44 — кино-пасс (bloom+зерно+виньетка), dt-тайминг, throttle ресайза, фикс утечки дротиков, доступность ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -175,6 +180,63 @@ renderer.setPixelRatio(PIXEL_RATIO);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.78;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+// Уважаем системную просьбу «меньше движения» (доступность, укачивание).
+const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ============================================================
+// ПОСТ-ПРОЦЕССИНГ: bloom (свечение неона/кадра) + плёночное зерно + виньетка.
+// Это главный рычаг «кино/реализма»: без него emissive плоский. Пасс тонемаппинга
+// уносим в OutputPass, чтобы bloom складывался в линейном пространстве.
+// ============================================================
+// renderer.toneMapping остаётся ACESFilmic — OutputPass прочитает его и применит один раз в конце.
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(PIXEL_RATIO);
+composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(innerWidth, innerHeight),
+  isMobile ? 0.55 : 0.7,   // strength — на мобиле мягче ради fps
+  0.55,                    // radius
+  0.72                     // threshold — светятся только яркие emissive, не весь кадр
+);
+composer.addPass(bloomPass);
+// Плёночное зерно + виньетка + лёгкая хроматика по краям — кинематографичный финиш.
+const FilmGrainShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    uTime: { value: 0 },
+    uGrain: { value: prefersReduced ? 0.0 : (isMobile ? 0.045 : 0.06) },
+    uVignette: { value: 0.28 },
+    uAberration: { value: prefersReduced ? 0.0 : 0.0016 },
+  },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: `
+    varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float uTime, uGrain, uVignette, uAberration;
+    float rand(vec2 c){ return fract(sin(dot(c, vec2(12.9898,78.233))) * 43758.5453); }
+    void main(){
+      vec2 d = vUv - 0.5;
+      // хроматическая аберрация к краям
+      float r = texture2D(tDiffuse, vUv - d * uAberration).r;
+      float g = texture2D(tDiffuse, vUv).g;
+      float b = texture2D(tDiffuse, vUv + d * uAberration).b;
+      vec3 col = vec3(r, g, b);
+      // плёночное зерно (анимированное)
+      float grain = (rand(vUv * (2.0 + uTime)) - 0.5) * uGrain;
+      col += grain;
+      // мягкая виньетка
+      float vig = smoothstep(0.85, 0.35, length(d) * 1.35);
+      col *= mix(1.0, vig, uVignette);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `,
+};
+const grainPass = new ShaderPass(FilmGrainShader);
+composer.addPass(grainPass);
+const outputPass = new OutputPass();   // тонемап ACES + перевод в sRGB после bloom
+composer.addPass(outputPass);
+renderer.toneMappingExposure = 0.86;   // чуть ярче: bloom тянет верх, тени держит tonemap
 
 const env = new ClubEnvironment(scene, isMobile, renderer);
 if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для подбора ракурса
@@ -1193,7 +1255,7 @@ function animate() {
     // мозг крутится ТОЛЬКО когда туннель полностью закрыт (tunnelBlend≈0). Во время входа/туннеля/выхода
     // вращение ЗАМОРОЖЕНО → на выходе мозг встаёт ТОЧНО ТЕМ ЖЕ боком, что и до входа (та же раскладка,
     // тот же край) — иначе «повёрнут иначе» читается как рыхлость/дырка.
-    if (onBrain && tunnelBlend < 0.001) brainYaw += 0.010;
+    if (onBrain && tunnelBlend < 0.001) brainYaw += 0.6 * dt;   // 0.6 рад/с, одинаково на 60/120 Гц
     particles.rotation.z = 0;
     // на стадии утки частицы повёрнуты ПОД твёрдую утку (DUCK_FACE) → при распаде по скроллу облако
     // совпадает с уткой по форме/размеру; к мозгу плавно раскручиваем к brainYaw.
@@ -1220,22 +1282,35 @@ function animate() {
   // класс tunnel-exit снимается ТОЛЬКО по таймеру в closeBrain (когда текст улетел), а не при tunnelBlend≈0,
   // — иначе текст обрывался (туннель закрывается за 2с, а текст улетает 3.2с).
 
-  renderer.render(scene, camera);
+  grainPass.uniforms.uTime.value = t;
+  composer.render();
 }
 animate();
 // Единый ресайз: холст, камера, высота секций и Lenis всегда = ТЕКУЩЕЙ видимой высоте.
 // Это убирает чёрную полосу снизу и застревание скролла, когда у браузера прячется адресная строка.
-function onResize() {
+let _lastW = 0, _lastH = 0, _resizeRAF = 0;
+function applyResize() {
+  _resizeRAF = 0;
   const w = window.innerWidth;
   const h = (window.visualViewport && window.visualViewport.height) ? Math.round(window.visualViewport.height) : window.innerHeight;
+  // На мобильном адресная строка дёргает высоту постоянно: реагируем только на смену
+  // ширины или заметное (> 90px) изменение высоты, иначе не трогаем тяжёлый setSize.
+  if (w === _lastW && Math.abs(h - _lastH) < 90) {
+    document.documentElement.style.setProperty('--app-h', h + 'px');
+    return;
+  }
+  _lastW = w; _lastH = h;
   document.documentElement.style.setProperty('--app-h', h + 'px');
   camera.aspect = w / h; camera.updateProjectionMatrix();
   renderer.setSize(w, h);
+  composer.setSize(w, h);
+  bloomPass.setSize(w, h);
   if (lenis && typeof lenis.resize === 'function') lenis.resize();
 }
+function onResize() { if (!_resizeRAF) _resizeRAF = requestAnimationFrame(applyResize); }
 addEventListener('resize', onResize);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
-onResize();
+applyResize();
 
 // ============================================================
 // Mute / hover / глич текста

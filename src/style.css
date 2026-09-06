@@ -567,3 +567,15 @@ body.signup-open .su-card { transform: translateY(0) scale(1); }
 #enter-screen .ld-bar i { transition: width .9s cubic-bezier(.4,0,.2,1); }
 #enter-screen.loading .es-btn, #enter-screen.loading .es-hint { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
 #enter-screen.loading .ld-bar { opacity: 1; }
+
+/* Доступность: системная просьба «меньше движения» — гасим тяжёлые CSS-переходы и
+   анимации оформления. 3D-моушен дополнительно приглушается в main.js (prefersReduced:
+   плёночное зерно и хроматика выключаются). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
