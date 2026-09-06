@@ -343,8 +343,8 @@
            числа надо ВМЕСТЕ во всех трёх местах - оболочка, стенка
            шахты и пол зала, - иначе на стыке видно, где кончается одно
            и начинается другое. */
-        uC1: { value: new T.Color(0x4A505C) },
-        uC2: { value: new T.Color(0xA9B0C0) },
+        uC1: { value: new T.Color(0x767D8C) },
+        uC2: { value: new T.Color(0xBFC6D4) },
         uTime: М.uTime, uAlpha: М.uАльфаПол
       },
       vertexShader: В_ПОЛ, fragmentShader: Ф_ПОЛ,

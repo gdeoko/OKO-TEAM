@@ -1281,8 +1281,8 @@
            числа надо ВМЕСТЕ во всех трёх местах - оболочка, стенка
            шахты и пол зала, - иначе на стыке видно, где кончается одно
            и начинается другое. */
-        uC1: { value: new T.Color(0x4A505C) },
-        uC2: { value: new T.Color(0xA9B0C0) }
+        uC1: { value: new T.Color(0x767D8C) },
+        uC2: { value: new T.Color(0xBFC6D4) }
       },
       vertexShader: В_ТУМАН, fragmentShader: фТуман(),
       transparent: true, depthWrite: true, side: T.FrontSide, fog: false
@@ -1330,8 +1330,8 @@
           uTime: М.uTime, uScaleD: М.uScaleD, uRes: М.uRes, uCamZ: М.uCamZ,
           uCamLoc: М.uCamLoc, uUnit: М.uUnit,
           uRingY: { value: высота },
-          uColor1: { value: new T.Color(0x4A505C) },
-          uColor2: { value: new T.Color(0xA9B0C0) }
+          uColor1: { value: new T.Color(0x767D8C) },
+          uColor2: { value: new T.Color(0xBFC6D4) }
         },
         vertexShader: В_КОЛЬЦО, fragmentShader: Ф_КОЛЬЦО,
         /* ── ПОЧЕМУ КОЛЬЦО ОБЪЯВЛЕНО ПРОЗРАЧНЫМ, ХОТЯ АЛЬФА У НЕГО РОВНО
