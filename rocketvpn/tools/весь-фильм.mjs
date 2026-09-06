@@ -8,7 +8,7 @@
    Он НЕ судит. Судит глаз: числа тут только в именах файлов.
 
    Запуск:
-     node tools/весь-фильм.mjs [тел|пк] [куда] [долей на акт]
+     node tools/весь-фильм.mjs [тел|пк] [куда] [долей на акт] [светлая]
 */
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
@@ -17,7 +17,11 @@ const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const КТО = process.argv[2] || "тел";
 const КУДА = process.argv[3] || "/tmp/фильм";
 const ДОЛЕЙ = +(process.argv[4] || 4);
-const ТЕМА = process.env.RV_ТЕМА || "";
+/* ── ТЕМА ЧЕТВЁРТЫМ ДОВОДОМ, А НЕ ПЕРЕМЕННОЙ ОКРУЖЕНИЯ ──────────
+   Оболочка не принимает имя переменной кириллицей: `RV_ТЕМА=светлая`
+   она читает как команду с таким именем и отвечает «command not
+   found». Довод в строке запуска этой беды не знает. */
+const ТЕМА = process.argv[5] || "";
 
 const экран = КТО === "пк"
   ? { w: 1440, h: 900, dpr: 1, mob: false }
@@ -80,6 +84,13 @@ for (const акт of акты) {
       было = п; кругов++;
       await стр.waitForTimeout(250);
     }
+    /* Камера встала - но строка может ещё проявляться. Показ ведёт
+       rv-msdf.js, и на программном отрисовщике потолок кадра растягивает
+       его на секунды: снимок ловил «Стен» вместо «Стена стоит». */
+    await стр.waitForFunction(
+      () => !(window.RV_MSDF && window.RV_MSDF["показИдёт"] && window.RV_MSDF["показИдёт"]()),
+      null, { timeout: 30000, polling: 200 }).catch(() => {});
+    await стр.waitForTimeout(700);
     const имя = `${КУДА}/${String(н).padStart(2, "0")}-${акт}-${доля.toFixed(2)}.png`;
     await стр.screenshot({ path: имя });
     console.log(`  ${акт} ${доля.toFixed(2)}  камера встала за ${кругов}`);
