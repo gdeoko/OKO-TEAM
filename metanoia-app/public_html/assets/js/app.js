@@ -3484,18 +3484,35 @@ function initAuth() {
     $('[data-childblock]').style.display = e.target.value === 'parent' ? '' : 'none';
   });
 
-  $('#loginForm').addEventListener('submit', (e) => {
+  $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target;
     const bad = markInvalid(f.email, !f.email.value.includes('@'))
               | markInvalid(f.password, f.password.value.length < 1);
     if (bad) return toast('Проверьте email и пароль');
+
+    // С сервером вход настоящий, без сервера школа живёт на устройстве.
+    if (window.MT_SYNC && MT_SYNC.естьСервер && MT_SYNC.естьСервер()) {
+      const кнопка = f.querySelector('[type="submit"]');
+      if (кнопка) { кнопка.disabled = true; кнопка.textContent = 'Входим…'; }
+      try {
+        const d = await MT_SYNC.войти(f.email.value.trim(), f.password.value);
+        showApp((d && d.user && d.user.name) || f.email.value.split('@')[0]);
+        toast('С возвращением!');
+      } catch (ошибка) {
+        toast(ошибка && ошибка.message || 'Не получилось войти, попробуйте ещё раз');
+      } finally {
+        if (кнопка) { кнопка.disabled = false; кнопка.textContent = 'Войти'; }
+      }
+      return;
+    }
+
     localStorage.setItem('mt_auth', '1');
     showApp(f.email.value.split('@')[0]);
     toast('С возвращением!');
   });
 
-  $('#registerForm').addEventListener('submit', (e) => {
+  $('#registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target;
     const passOk = f.password.value.length >= 8
@@ -3538,6 +3555,30 @@ function initAuth() {
       }
     }
 
+    // С сервером аккаунт заводится по-настоящему: тогда прогресс ребёнка
+    // переезжает с телефона на планшет и не теряется при смене устройства.
+    if (window.MT_SYNC && MT_SYNC.естьСервер && MT_SYNC.естьСервер()) {
+      const кнопка = f.querySelector('[type="submit"]');
+      if (кнопка) { кнопка.disabled = true; кнопка.textContent = 'Заводим аккаунт…'; }
+      try {
+        await MT_SYNC.зарегистрировать({
+          email: f.email.value.trim(),
+          password: f.password.value,
+          name: f.name.value.trim(),
+          role: (f.role && f.role.value) || 'parent',
+          confession: (f.confession && f.confession.value) || 'undecided',
+          country: (f.country && f.country.value || '').trim(),
+          city: (f.city && f.city.value || '').trim(),
+          child: имяРебёнка ? { name: имяРебёнка,
+            age: Math.max(5, Math.min(14, Number(f.child_age && f.child_age.value) || 7)) } : null,
+        });
+      } catch (ошибка) {
+        if (кнопка) { кнопка.disabled = false; кнопка.textContent = 'Создать аккаунт'; }
+        return toast(ошибка && ошибка.message || 'Сервер не принял регистрацию');
+      }
+      if (кнопка) { кнопка.disabled = false; кнопка.textContent = 'Создать аккаунт'; }
+    }
+
     localStorage.setItem('mt_auth', '1');
     showApp(f.name.value.trim());
     if (typeof renderChildren === 'function') renderChildren();
@@ -3549,7 +3590,40 @@ function initAuth() {
     showApp(null);
     toast('Вы вошли как гость — можно всё посмотреть');
   });
-  $('#forgotBtn').addEventListener('click', () => toast('Восстановление пароля — после подключения почты'));
+  $('#forgotBtn').addEventListener('click', async () => {
+    if (!(window.MT_SYNC && MT_SYNC.естьСервер && MT_SYNC.естьСервер())) {
+      return toast('Пока школа работает без сервера, пароль восстанавливает поддержка');
+    }
+    const поле = $('#loginForm [name="email"]');
+    const почта = (prompt('На какую почту прислать ссылку для нового пароля?',
+      (поле && поле.value) || '') || '').trim();
+    if (!почта) return;
+    if (!почта.includes('@')) return toast('Похоже, в адресе опечатка');
+    try {
+      await MT_SYNC.забылПароль(почта);
+      // Отвечаем одинаково на любую почту: по ответу нельзя узнать, кто учится в школе.
+      toast('Если такая почта у нас есть, письмо со ссылкой уже ушло');
+    } catch (ошибка) {
+      toast(ошибка && ошибка.message || 'Не получилось отправить письмо');
+    }
+  });
+
+  // Переход по ссылке из письма: ?reset=… Спрашиваем новый пароль и входим.
+  (async () => {
+    const ключ = new URLSearchParams(location.search).get('reset');
+    if (!ключ || !(window.MT_SYNC && MT_SYNC.естьСервер && MT_SYNC.естьСервер())) return;
+    const пароль = (prompt('Придумайте новый пароль: минимум 8 знаков, буква и цифра') || '').trim();
+    // Адрес чистим сразу, чтобы ссылка не осталась в истории браузера.
+    history.replaceState(null, '', location.pathname);
+    if (!пароль) return;
+    try {
+      const d = await MT_SYNC.новыйПароль(ключ, пароль);
+      showApp((d && d.user && d.user.name) || null);
+      toast('Пароль обновлён, вы вошли');
+    } catch (ошибка) {
+      toast(ошибка && ошибка.message || 'Ссылка не подошла, попросите новую');
+    }
+  })();
   $$('.auth__oauth').forEach((b) =>
     b.addEventListener('click', () => toast('Вход через ' + (b.dataset.oauth === 'google' ? 'Google' : 'Telegram') + ' — подключается на этапе 1-бэк')));
 }

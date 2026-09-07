@@ -121,6 +121,64 @@ function handle(array $segments, string $method): never
                  WHERE c.parent_id = ?', [(int) $user['id']])->fetchAll();
             Response::ok(['user' => publicUser($user), 'children' => $children]);
 
+        // ── POST /auth/forgot — письмо со ссылкой на новый пароль ──
+        // Отвечаем одинаково и на знакомую, и на незнакомую почту: иначе по
+        // ответу можно перебрать, кто в школе учится.
+        case 'POST forgot':
+            RateLimit::check('forgot:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 10, 3600);
+            $email = strtolower(trim($in['email'] ?? ''));
+            $ответ = ['sent' => true];
+
+            $user = $email !== ''
+                ? DB::query('SELECT * FROM users WHERE email = ?', [$email])->fetch()
+                : null;
+
+            if ($user && (int) $user['is_blocked'] === 0) {
+                DB::query('DELETE FROM password_resets WHERE user_id = ? AND used_at IS NULL',
+                    [(int) $user['id']]);
+                $ключ = bin2hex(random_bytes(32));
+                DB::query(
+                    'INSERT INTO password_resets (user_id, token_hash, expires_at)
+                     VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 2 HOUR))',
+                    [(int) $user['id'], hash('sha256', $ключ)]
+                );
+                $адрес = rtrim((string) Config::get('APP_URL', ''), '/') . '/?reset=' . $ключ;
+                $текст = "Здравствуйте!\n\n"
+                    . "Вы просили новый пароль в приложении школы «Метанойя».\n"
+                    . "Откройте ссылку и задайте его:\n\n$адрес\n\n"
+                    . "Ссылка живёт два часа. Если это были не вы, письмо можно удалить: "
+                    . "пароль останется прежним.\n\nШкола «Метанойя»";
+                Mail::send($email, 'Новый пароль в школе «Метанойя»', $текст);
+            }
+            Response::ok($ответ);
+
+        // ── POST /auth/reset — задать новый пароль по ссылке ──
+        case 'POST reset':
+            RateLimit::check('reset:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 20, 3600);
+            $ключ = (string) ($in['token'] ?? '');
+            $pass = (string) ($in['password'] ?? '');
+            if (mb_strlen($pass) < 8) {
+                Response::error('Пароль короче восьми знаков', 422);
+            }
+            $строка = DB::query(
+                'SELECT * FROM password_resets
+                  WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()',
+                [hash('sha256', $ключ)]
+            )->fetch();
+            if (!$строка) {
+                Response::error('Ссылка устарела. Попросите новую и откройте письмо заново.', 400);
+            }
+            DB::query('UPDATE users SET password_hash = ? WHERE id = ?',
+                [password_hash($pass, PASSWORD_DEFAULT), (int) $строка['user_id']]);
+            DB::query('UPDATE password_resets SET used_at = NOW() WHERE id = ?',
+                [(int) $строка['id']]);
+            // Все прежние входы гасим: пароль меняют и тогда, когда его увели.
+            DB::query('DELETE FROM sessions WHERE user_id = ?', [(int) $строка['user_id']]);
+
+            $user = DB::query('SELECT * FROM users WHERE id = ?',
+                [(int) $строка['user_id']])->fetch();
+            Response::ok(['user' => publicUser($user)] + issueTokens($user));
+
         // ── POST /auth/logout ──────────────────────────────
         case 'POST logout':
             $token = (string) ($in['refresh_token'] ?? '');

@@ -14,6 +14,7 @@ require __DIR__ . '/core/jwt.php';
 require __DIR__ . '/core/auth.php';
 require __DIR__ . '/core/tokens.php';
 require __DIR__ . '/core/ratelimit.php';
+require __DIR__ . '/core/mail.php';
 
 // ── CORS (только свой домен) ───────────────────────────────
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

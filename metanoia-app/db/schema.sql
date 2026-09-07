@@ -83,6 +83,18 @@ CREATE TABLE sessions (
   INDEX idx_sessions_exp (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE password_resets (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT UNSIGNED NOT NULL,
+  token_hash  CHAR(64) NOT NULL UNIQUE,            -- sha256 от ссылки в письме
+  expires_at  DATETIME NOT NULL,
+  used_at     DATETIME NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_resets_user (user_id),
+  INDEX idx_resets_exp (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ───────────────── ОБУЧЕНИЕ ─────────────────
 
 CREATE TABLE blocks (

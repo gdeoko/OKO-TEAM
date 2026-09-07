@@ -24,7 +24,7 @@
   // Ключи устройства: тема экрана, звук и размер шрифта у каждого свои.
   // День семейного алтаря, наоборот, общий для семьи и ездит с прогрессом.
   const МЕСТНЫЕ = ['mt_theme', 'mt_music_off', 'mt_reader_fs',
-    'mt_onb', 'mt_auth', 'mt_token', 'mt_child_id', 'mt_rev', 'mt_sync_at'];
+    'mt_onb', 'mt_auth', 'mt_token', 'mt_refresh', 'mt_child_id', 'mt_rev', 'mt_sync_at'];
 
   const токен = () => localStorage.getItem('mt_token') || '';
   const ребёнок = () => localStorage.getItem('mt_child_id') || '';
@@ -226,6 +226,75 @@
     return null;
   }
 
+  /* ── Вход почтой и паролем ──────────────────────────────
+     Пока адреса сервера нет, эти четыре ручки честно отвечают «нет сервера»,
+     и приложение остаётся целиком на устройстве. Как только в index.html
+     появится mt-api, те же кнопки начинают работать по-настоящему. */
+
+  const естьСервер = () => !!БАЗА;
+
+  /** Разложить ответ входа: токен, имя, первый ребёнок. */
+  function принятьВход(d) {
+    if (!d || !d.access_token) throw new Error('Сервер не выдал токен');
+    localStorage.setItem('mt_token', d.access_token);
+    localStorage.setItem('mt_auth', '1');
+    if (d.refresh_token) localStorage.setItem('mt_refresh', d.refresh_token);
+    if (d.user && d.user.name) localStorage.setItem('mt_name', d.user.name);
+    return d;
+  }
+
+  async function подхватитьРебёнка() {
+    try {
+      const я = await сНастойчивостью(() => запрос('/users/me'));
+      const дети = (я && я.children) || [];
+      if (дети.length) localStorage.setItem('mt_child_id', String(дети[0].id));
+      return дети;
+    } catch (e) { return []; }
+  }
+
+  async function войти(email, пароль) {
+    if (!естьСервер()) return null;
+    const d = await сНастойчивостью(() => запрос('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: email, password: пароль }),
+    }));
+    принятьВход(d);
+    await подхватитьРебёнка();
+    await забрать();
+    return d;
+  }
+
+  async function зарегистрировать(поля) {
+    if (!естьСервер()) return null;
+    const d = await сНастойчивостью(() => запрос('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(поля),
+    }));
+    принятьВход(d);
+    await подхватитьРебёнка();
+    return d;
+  }
+
+  async function забылПароль(email) {
+    if (!естьСервер()) return null;
+    return сНастойчивостью(() => запрос('/auth/forgot', {
+      method: 'POST',
+      body: JSON.stringify({ email: email }),
+    }));
+  }
+
+  async function новыйПароль(ключ, пароль) {
+    if (!естьСервер()) return null;
+    const d = await запрос('/auth/reset', {
+      method: 'POST',
+      body: JSON.stringify({ token: ключ, password: пароль }),
+    });
+    принятьВход(d);
+    await подхватитьРебёнка();
+    await забрать();
+    return d;
+  }
+
   /** Стереть аккаунт на сервере вместе с детьми и прогрессом. */
   async function удалитьАккаунт() {
     if (!включён()) return true; // сервера нет, чистим только телефон
@@ -235,6 +304,11 @@
 
   window.MT_SYNC = {
     включён: включён,
+    естьСервер: естьСервер,
+    войти: войти,
+    зарегистрировать: зарегистрировать,
+    забылПароль: забылПароль,
+    новыйПароль: новыйПароль,
     удалитьАккаунт: удалитьАккаунт,
     завестиРебёнка: завестиРебёнка,
     забрать: забрать,
