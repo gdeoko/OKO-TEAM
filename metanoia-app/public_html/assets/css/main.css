@@ -258,7 +258,7 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .today__verse-cta [data-icon] { color: #fff; }
 .today__verse-go { flex: 0 0 auto; color: #fff; font-size: 22px; font-weight: 700; opacity: .85; padding-right: 4px; }
 [data-theme="dark"] .today__eyebrow, [data-theme="dark"] .today__streak,
-[data-theme="dark"] .today__call-title { color: var(--cream); }
+[data-theme="dark"] .today__call-title { color: #E7EDF3; }
 [data-theme="dark"] .today__call { background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(122,174,212,.1)); border-color: rgba(255,255,255,.1); }
 @keyframes pulse-gold {
   0%, 100% { box-shadow: 0 0 0 0 rgba(212, 165, 116, .45); }
@@ -1141,8 +1141,8 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
   background: rgba(122,174,212,.1); border-radius: 14px; }
 .lesson-prayer .ic { color: var(--blue); flex: 0 0 auto; margin-top: 2px; }
 .lesson-prayer p { font-size: 14px; line-height: 1.6; font-style: italic; color: var(--navy); margin: 0; }
-[data-theme="dark"] .lesson-golden { color: var(--cream); }
-[data-theme="dark"] .lesson-prayer p, [data-theme="dark"] .lesson-intro p { color: var(--cream); }
+[data-theme="dark"] .lesson-golden { color: #E7EDF3; }
+[data-theme="dark"] .lesson-prayer p, [data-theme="dark"] .lesson-intro p { color: #E7EDF3; }
 
 /* проверка знаний (экзамен блока) */
 .exam-head { display: flex; align-items: center; gap: 14px; margin: 6px 0 18px; padding: 16px 18px;
@@ -1196,8 +1196,8 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .dev-head__title { font-family: var(--font-head, 'Playfair Display', serif); font-size: 24px; font-weight: 700; color: var(--navy); margin-top: 4px; line-height: 1.2; }
 .dev-nav { display: flex; gap: 10px; margin-top: 20px; }
 .dev-nav .btn { flex: 1; }
-[data-theme="dark"] .dil-opt, [data-theme="dark"] .det-opt { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.14); color: var(--cream); }
-[data-theme="dark"] .dev-head__title { color: var(--cream); }
+[data-theme="dark"] .dil-opt, [data-theme="dark"] .det-opt { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.14); color: #E7EDF3; }
+[data-theme="dark"] .dev-head__title { color: #E7EDF3; }
 
 /* семейный квиз */
 .fam-turn { text-align: center; padding: 16px; border-radius: 16px; margin-bottom: 14px; color: #fff; }
@@ -1232,8 +1232,8 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .q2-chapter { font-family: var(--font-head, 'Playfair Display', serif); font-size: 20px; font-weight: 700; color: var(--terracotta); margin: 4px 0 10px; }
 .q2-scene p { font-size: 14.5px; line-height: 1.6; }
 .q2-question { font-weight: 700; font-size: 15px; margin: 16px 2px 12px; color: var(--navy); }
-[data-theme="dark"] .fam-opt { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.14); color: var(--cream); }
-[data-theme="dark"] .int-q, [data-theme="dark"] .q2-question { color: var(--cream); }
+[data-theme="dark"] .fam-opt { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.14); color: #E7EDF3; }
+[data-theme="dark"] .int-q, [data-theme="dark"] .q2-question { color: #E7EDF3; }
 
 
 /* ══════════ TELEGRAM-ФУНКЦИИ ЧАТА ══════════ */
@@ -1609,8 +1609,8 @@ body.in-chat .header { display: none; }
   font-size: 13.5px; line-height: 1.55; color: var(--navy); font-style: italic; text-align: center; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 [data-theme="dark"] .tdecor { background: #232a33; border-color: rgba(212,165,116,.3); }
-[data-theme="dark"] .tdecor__name { color: var(--cream); }
-[data-theme="dark"] .temple-next__title { color: var(--cream); }
+[data-theme="dark"] .tdecor__name { color: #E7EDF3; }
+[data-theme="dark"] .temple-next__title { color: #E7EDF3; }
 [data-theme="dark"] .temple-next__note { background: linear-gradient(135deg,#2a2118,#241c14); color: #f4ead6; }
 @media (prefers-reduced-motion: reduce) {
   .temple-hero__img { transition: opacity 300ms; transform: none; }
@@ -1893,6 +1893,9 @@ body.in-chat .header { display: none; }
   font-weight: 700; padding: 2px 9px; border-radius: 20px; }
 
 /* ══ ТЁМНАЯ ТЕМА ══ */
+/* Внимание: в тёмной теме --cream это цвет ФОНА, а не текста. Красить
+   текст через var(--cream) здесь нельзя, он сольётся с подложкой:
+   для светлого текста берём #E7EDF3. */
 [data-theme="dark"] { --cream: #0e1b25; --gray: #9fb0bd; }
 [data-theme="dark"] body { background: #0e1b25; color: #E7EDF3; }
 [data-theme="dark"] .header { background: #14232f; border-bottom-color: rgba(255,255,255,.07); }
@@ -2384,7 +2387,7 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 .exodus-hint { margin: 14px 2px 0; font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.5; }
 [data-theme="dark"] .exodus-bar { background: rgba(255,255,255,.12); }
 [data-theme="dark"] .exodus-field { background: linear-gradient(180deg,#2a2620 0%,#221f1a 100%); }
-[data-theme="dark"] .exodus-start__t { color: var(--cream); }
+[data-theme="dark"] .exodus-start__t { color: #E7EDF3; }
 
 /* ── Ноев Ковчег ── */
 .ark-flood { position: relative; height: 8px; border-radius: 6px; overflow: hidden; margin: 0 0 12px; background: rgba(122,174,212,.18); }
@@ -2504,6 +2507,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .menu-item--invite { color: var(--terracotta); font-weight: 600; }
 .menu-item--invite [data-icon] { color: var(--terracotta); }
 .menu-item--invite .menu-item__tag { background: rgba(201,112,100,.16); color: var(--terracotta); }
+/* В тёмной теме золото на тёмном читается плохо, берём светлое золото. */
+[data-theme="dark"] .menu-item__tag { background: rgba(212,165,116,.16); color: #e0bb85; }
 [data-theme="dark"] .menu-item--invite { color: #e79b90; }
 [data-theme="dark"] .menu-item--invite [data-icon] { color: #e79b90; }
 
@@ -2535,7 +2540,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .about-founder__name { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--navy); }
 .about-founder__role { font-size: 12px; color: var(--terracotta); font-weight: 600; margin-bottom: 5px; }
 .about-founder__body p { font-size: 13px; line-height: 1.5; font-style: italic; color: var(--navy); margin: 0; }
-[data-theme="dark"] .about-mission p, [data-theme="dark"] .about-item__t { color: var(--cream); }
+[data-theme="dark"] .about-mission p, [data-theme="dark"] .about-item__t { color: #E7EDF3; }
 [data-theme="dark"] .about-item { background: #232a33; border-color: rgba(212,165,116,.25); }
 [data-theme="dark"] .about-founder { background: linear-gradient(135deg,#2a2118,#241c14); }
 [data-theme="dark"] .about-founder__name, [data-theme="dark"] .about-founder__body p { color: #f4ead6; }
