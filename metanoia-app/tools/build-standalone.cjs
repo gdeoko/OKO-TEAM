@@ -35,8 +35,8 @@ js = 'const __LES_IMG = '+JSON.stringify(lessonImgs)+';\n'
    + 'const __PET_IMG = '+JSON.stringify(petImgs)+';\n'
    + 'const __LES_AUD = '+JSON.stringify(lessonAud)+';\n' + js;
 js = js.split('return `assets/img/lessons/l${n}.jpg`;').join('return __LES_IMG["l"+n] || "";');
-js = js.split("function lessonPic(n, i) { return `assets/img/lessons/l${n}-${'abc'[i] || 'a'}.jpg`; }")
-       .join("function lessonPic(n, i) { return __LES_IMG['l'+n+'-'+('abc'[i]||'a')] || ''; }");
+js = js.split("function lessonPic(n) { return `assets/img/lessons/l${n}-a.jpg`; }")
+       .join("function lessonPic(n) { return __LES_IMG['l'+n+'-a'] || ''; }");
 js = js.split('function lessonAudio(n) { return `assets/audio/lessons/l${n}.mp3`; }')
        .join('function lessonAudio(n) { return __LES_AUD["l"+n] || ""; }');
 js = js.split('return `assets/img/pet/${в.файл}-${petСтадия() + 1}.jpg`;')
