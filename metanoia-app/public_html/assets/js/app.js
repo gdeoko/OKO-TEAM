@@ -3049,11 +3049,12 @@ function addWish(key) {
 
 function renderWishes() {
   const keys = getWishes();
+  const подарки = памятьЧитать('mt_merch', []);
   const block = $('#wishBlock');
   if (!block) return;
-  if (!keys.length) { block.hidden = true; return; }
+  if (!keys.length && !подарки.length) { block.hidden = true; return; }
   block.hidden = false;
-  $('#wishes').innerHTML = keys.map((k) => {
+  const игры = keys.map((k) => {
     const g = gameByKey(k); if (!g) return '';
     return `<div class="wish">
       <div class="wish__ic">${ICON(g.icon, 18)}</div>
@@ -3061,7 +3062,19 @@ function renderWishes() {
       <button class="wish__cta" data-wish="${k}">Открыть</button>
     </div>`;
   }).join('');
+  const вещи = подарки.map((з) => `<div class="wish">
+      <div class="wish__ic">${ICON('heart', 18)}</div>
+      <div class="wish__body"><div class="wish__name">${з.name}</div>
+        <div class="wish__note">Ребёнок хочет обменять ${з.cost} ${склонениеЗёрен(з.cost)} на это</div></div>
+      <button class="wish__cta" data-merch-del="${з.name}">Убрать</button>
+    </div>`).join('');
+  $('#wishes').innerHTML = игры + вещи;
   $$('#wishes [data-wish]').forEach((el) => el.addEventListener('click', () => openGame(el.dataset.wish)));
+  $$('#wishes [data-merch-del]').forEach((el) => el.addEventListener('click', () => {
+    const остальные = памятьЧитать('mt_merch', []).filter((з) => з.name !== el.dataset.merchDel);
+    localStorage.setItem('mt_merch', JSON.stringify(остальные));
+    renderWishes();
+  }));
   hydrateIcons();
 }
 
@@ -4583,8 +4596,18 @@ function openShop() {
     </div>`;
   }).join('');
   $$('#shopGrid [data-merch]').forEach((b) => b.addEventListener('click', () => {
-    if (window.MAGIC) MAGIC.rewardModal({ icon: 'trophy', title: 'Заявка принята!', subtitle: `Ты обменял баллы на «${b.dataset.merch}». Мы свяжемся с родителями, чтобы передать подарок 🎁`, xp: 0 });
-    else toast('Заявка на подарок принята');
+    // Раньше здесь говорили «мы свяжемся с родителями», а заявка не
+    // сохранялась нигде: ребёнок ждал подарок, о котором никто не знал.
+    // Теперь пожелание ложится в профиль родителя, и решает семья.
+    const список = памятьЧитать('mt_merch', []);
+    if (!список.some((з) => з.name === b.dataset.merch)) {
+      список.push({ name: b.dataset.merch, cost: Number(b.dataset.cost) || 0, when: Date.now() });
+      localStorage.setItem('mt_merch', JSON.stringify(список));
+    }
+    renderWishes();
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Родители узнают!',
+      subtitle: `Пожелание «${b.dataset.merch}» записано. Оно появилось в профиле родителя, зёрна пока остаются у тебя 💛`, xp: 0 });
+    else toast('Пожелание записано, родители его увидят');
   }));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'shop'));
   $('#nav').style.display = 'none';
