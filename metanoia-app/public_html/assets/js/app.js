@@ -357,7 +357,7 @@ function renderChats() {
     <button class="chat-item ${c.pinned ? 'chat-item--pinned' : ''}">
       <div class="chat-item__avatar">${c.img ? `<img src="${c.img}" alt="">` : ICON(c.icon, 24)}</div>
       <div class="chat-item__body">
-        <div class="chat-item__name">${c.name} ${c.peda ? `<span class="chat-item__peda">${ICON('dove', 10)} Педагог</span>` : ''}</div>
+        <div class="chat-item__name">${безопасно(c.name)} ${c.peda ? `<span class="chat-item__peda">${ICON('dove', 10)} Педагог</span>` : ''}</div>
         <div class="chat-item__last">${c.last}</div>
       </div>
       <div class="chat-item__side">
@@ -455,7 +455,7 @@ function renderChildren() {
     <button class="child-card${свой ? ' child-card--now' : ''}" data-kid="${c.лид || ''}">
       <div class="child-card__avatar"><img src="${c.img}" alt=""></div>
       <div>
-        <div class="child-card__name">${c.name}, ${c.age} лет${свой ? ' · сейчас занимается' : ''}</div>
+        <div class="child-card__name">${безопасно(c.name)}, ${безопасно(c.age)} лет${свой ? ' · сейчас занимается' : ''}</div>
         <div class="child-card__rank">${строка}</div>
       </div>
       ${свой ? `<div class="child-card__xp">${ICON('flame', 14)} ${дней} дн.</div>` : ''}
@@ -637,8 +637,8 @@ function renderComments() {
     <div class="cmt">
       <div class="cmt__avatar">${c.img ? `<img src="${c.img}" alt="">` : c.name[0]}</div>
       <div>
-        <div class="cmt__name">${c.name} ${c.peda ? ICON('dove', 11) : ''}</div>
-        <div class="cmt__text">${c.text}</div>
+        <div class="cmt__name">${безопасно(c.name)} ${c.peda ? ICON('dove', 11) : ''}</div>
+        <div class="cmt__text">${безопасно(c.text)}</div>
         <div class="cmt__time">${c.time}</div>
       </div>
     </div>`).join('') : '<div class="empty-state">Пока нет комментариев — будь первым!</div>';
@@ -1053,8 +1053,8 @@ let cvChatId = null;
 let myMsgs = памятьЧитать('mt_msgs2', {});
 
 function msgHtml(m, mine, key) {
-  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-who="${(m.who || '').replace(/"/g, '&quot;')}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
-    ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
+  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-who="${безопасно(m.who || '')}" data-text="${безопасно(m.text || 'стикер')}">
+    ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${безопасно(m.who)}</div>` : ''}
     ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="" onerror="this.closest(&quot;.msg&quot;).style.display=&quot;none&quot;">`
       : m.voice ? `<div class="msg__voice" data-voice-key="${key}" data-voice-has="${m.voice.url ? 1 : 0}">
           <button class="msg__voice-play" aria-label="Прослушать голосовое сообщение">${ICON('play', 15)}</button>
@@ -1066,9 +1066,9 @@ function msgHtml(m, mine, key) {
           <span class="msg__circle-dur">${fmtDur(m.circle.dur)}</span></div>`
       : m.photo ? `<img class="msg__photo" src="${m.photo}" alt="фото">`
       : m.file ? `<div class="msg__file"><div class="msg__file-icon">${ICON('file', 18)}</div>
-          <div><div class="msg__file-name">${m.file.name}</div>
-          <div class="msg__file-size">${m.file.size}</div></div></div>`
-      : `<div class="msg__bubble">${m.quote ? `<div class="msg__quote">${m.quote}</div>` : ''}${m.text}</div>`}
+          <div><div class="msg__file-name">${безопасно(m.file.name)}</div>
+          <div class="msg__file-size">${безопасно(m.file.size)}</div></div></div>`
+      : `<div class="msg__bubble">${m.quote ? `<div class="msg__quote">${безопасно(m.quote)}</div>` : ''}${безопасно(m.text)}</div>`}
     ${reactsHtml(cvChatId, key)}
     <div class="msg__meta">${m.time}${mine ? ICON('check', 11) : ''}</div>
   </div>`;
@@ -3631,6 +3631,19 @@ function initOnboarding() {
   });
 }
 
+/**
+ * Текст от семьи в разметку кладём только через это.
+ * Имя ребёнка, сообщение в чате, комментарий, имя файла: всё это пишет
+ * человек, а мы собираем HTML строками. Без экранирования имя вида
+ * <img src=x onerror=...> выполняет код, и через перенос прогресса это
+ * уезжает на другие устройства семьи.
+ */
+function безопасно(текст) {
+  return String(текст == null ? '' : текст)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function markInvalid(input, bad) {
   input.classList.toggle('field--error', bad);
   return bad;
@@ -3898,7 +3911,7 @@ function openRatingScreen() {
     const place = rankIdx + 1;
     return `<div class="pod pod--${place}">
       ${lbAva(c, sorted.indexOf(c), 'pod__ava')}
-      <div class="pod__name">${c.name}</div>
+      <div class="pod__name">${безопасно(c.name)}</div>
       <div class="pod__xp">${c.xp} очков</div>
       <div class="pod__stand">${place}</div>
     </div>`;
@@ -3908,7 +3921,7 @@ function openRatingScreen() {
       <div class="lb-row__pos">${i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>
       ${lbAva(c, i, 'lb-row__ava')}
       <div class="lb-row__body">
-        <div class="lb-row__name">${c.name}${c.me ? ' · это ты' : ''}</div>
+        <div class="lb-row__name">${безопасно(c.name)}${c.me ? ' · это ты' : ''}</div>
         <div class="lb-row__rank">${c.rank}</div>
       </div>
       <div class="lb-row__xp">${c.xp}<small> очков</small></div>
@@ -4147,6 +4160,8 @@ function openCertificates() {
 
 function certSVG(cert, name) {
   // Годовой диплом убран по правке Екатерины, остались три бланка по главам.
+  // Имя пришло от родителя, а бланк это разметка: экранируем.
+  name = безопасно(name);
   const line = `успешно завершил(а) ${cert.short}<tspan x="240" dy="26">«${cert.title.split('· ')[1] || cert.title}»</tspan>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="660" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
   <rect width="480" height="660" fill="#FAF8F5"/>
@@ -4723,7 +4738,7 @@ function openAlbumScreen() {
       <div class="alb-cover__dove">${ICON('dove', 26)}</div>
       <div class="alb-cover__eyebrow">Семейный альбом</div>
       <div class="alb-cover__title">Наш год<br>с Метанойей</div>
-      <div class="alb-cover__fam">Семья · ${ALBUM.child} и близкие</div>
+      <div class="alb-cover__fam">Семья · ${безопасно(ALBUM.child)} и близкие</div>
       <div class="alb-cover__year">Учебный год ${ALBUM.year}</div>
     </div>
     <div class="alb-page alb-page--light">
@@ -5148,7 +5163,7 @@ function renderWReport() {
   $('#wreport').innerHTML = `
     <div class="wreport__head">
       <div class="wreport__ava"><img src="${w.ava}" alt=""></div>
-      <div><div class="wreport__who">${w.child}</div><div class="wreport__range">${w.range} · итоги недели</div></div>
+      <div><div class="wreport__who">${безопасно(w.child)}</div><div class="wreport__range">${w.range} · итоги недели</div></div>
     </div>
     <div class="wreport__stats">
       <div class="wstat"><div class="wstat__num">${w.lessons}</div><div class="wstat__lbl">уроков<br>пройдено</div></div>
