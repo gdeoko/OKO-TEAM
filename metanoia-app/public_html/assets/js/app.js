@@ -214,6 +214,10 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('toast--show'), 2200);
 }
 
+/* Версия приложения: её называет семья, когда пишет в поддержку, и она же
+   попадает в карточку магазина. Меняется вручную при заметном обновлении. */
+const ВЕРСИЯ_ПРИЛОЖЕНИЯ = '1.0.0';
+
 /* ───────── НАВИГАЦИЯ ПО ТАБАМ ───────── */
 
 function switchTab(tab) {
@@ -4004,11 +4008,19 @@ function openAbout() {
       </div>
     </div>
     <button class="btn btn--outline" id="aboutInvite" style="margin-top:16px">${ICON('heart', 17)} Пригласить семью в школу</button>
+    <div class="about-ver">Версия ${ВЕРСИЯ_ПРИЛОЖЕНИЯ} · сделано OKO TEAM для школы «Метанойя»<br>
+      <a href="policy.html" data-doc="privacy">Политика конфиденциальности</a> ·
+      <a href="terms.html" data-doc="terms">Пользовательское соглашение</a></div>
   `;
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'about'));
   $('#nav').style.display = 'none';
   hydrateIcons();
   $('#aboutInvite')?.addEventListener('click', shareInvite);
+  // Ссылки на документы рисуются вместе с экраном, поэтому вешаем обработчик
+  // здесь: иначе браузер ушёл бы на отдельную страницу и вынес семью из школы.
+  $$('#aboutBody [data-doc]').forEach((el) => el.addEventListener('click', (e) => {
+    e.preventDefault(); openDoc(el.dataset.doc);
+  }));
   window.scrollTo({ top: 0 });
 }
 function aboutCard(icon, title, text) {

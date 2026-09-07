@@ -2813,3 +2813,7 @@ html.в-телеграме .hd { padding-top: 6px; }
 
 /* Ребёнок, который сейчас занимается: карточку видно сразу. */
 .child-card--now { border-color: var(--terracotta); box-shadow: 0 0 0 2px rgba(201, 112, 100, .18); }
+
+/* Подпись с версией внизу «О приложении». */
+.about-ver { margin-top: 18px; text-align: center; font-size: 12px; line-height: 1.7; color: var(--muted, #5A6577); }
+.about-ver a { color: inherit; text-decoration: underline; }
