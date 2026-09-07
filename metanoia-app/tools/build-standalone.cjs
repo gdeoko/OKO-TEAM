@@ -15,12 +15,12 @@ let js = ['telegram.js','sync.js','icons.js','magic.js','lessons.js','tasks.js',
 
 // Обложки уроков, иллюстрации по ходу текста и картинки друга — картами по имени файла.
 // Аудио уроков в один файл не влезает (25 МБ), поэтому берём только те, что перечислены в AUDIO_LESSONS.
-const AUDIO_LESSONS = (process.env.AUDIO_LESSONS || '1').split(',').map(x=>x.trim()).filter(Boolean);
+const AUDIO_LESSONS = (process.env.AUDIO_LESSONS ?? (process.env.SLIM === '1' ? '' : '1')).split(',').map(x=>x.trim()).filter(Boolean);
 function collect(dir, filter){ const abs=path.join(APP,dir); const map={}; if(fs.existsSync(abs))for(const f of fs.readdirSync(abs)){ if(!filter||filter(f)){ const u=dataUri(dir+'/'+f); if(u)map[f.replace(/\.[a-z0-9]+$/,'')]=u; } } return map; }
 // Витрина в один файл не тянет все 105 обложек: git-хост роняет архив больше 3.6 МБ.
 // LESSON_IMGS ограничивает, сколько уроков берём в превью (по умолчанию первые 8).
 // На боевом сервере ограничения нет и картинки лежат файлами.
-const LESSON_IMGS = Number(process.env.LESSON_IMGS || 8);
+const LESSON_IMGS = Number(process.env.LESSON_IMGS || (process.env.SLIM === '1' ? 3 : 8));
 const lessonImgs = collect('assets/img/lessons', (f) => {
   if (!f.endsWith('.jpg')) return false;
   const m = f.match(/^l(\d+)/);
@@ -50,7 +50,11 @@ js = js.split("onerror=\"this.onerror=null;this.src='assets/img/chapters/ch${bi 
 // Стикеры: карта уже собрана ниже, поправляем шаблон пути
 js = js.split('url: `assets/img/stickers/${key}.jpg`').join('url: (__IMG_STICKERS[key] || "")');
 // dynamic image/sticker maps
-function inlineDir(prefix, tokenExpr){ const dir=path.join(APP,'assets/img/'+prefix); const map={}; if(fs.existsSync(dir))for(const f of fs.readdirSync(dir)){ if(f.endsWith('.jpg'))map[f.replace('.jpg','')]=dataUri('assets/img/'+prefix+'/'+f);} const v='__IMG_'+prefix.toUpperCase(); js='const '+v+' = '+JSON.stringify(map)+';\n'+js; js=js.split('assets/img/'+prefix+'/'+tokenExpr+'.jpg').join('${'+v+'['+tokenExpr.slice(2,-1)+']||""}'); }
+// Ужатая витрина: SLIM=1 берёт только часть стикеров и обходится без
+// озвучки. Нужна там, где хост не принимает файл больше нескольких мегабайт.
+const SLIM = process.env.SLIM === '1';
+const STICKERS_MAX = Number(process.env.STICKERS_MAX || (SLIM ? 8 : 999));
+function inlineDir(prefix, tokenExpr){ const dir=path.join(APP,'assets/img/'+prefix); const map={}; let взято=0; if(fs.existsSync(dir))for(const f of fs.readdirSync(dir)){ if(!f.endsWith('.jpg'))continue; if(prefix==='stickers' && взято>=STICKERS_MAX)continue; взято++; map[f.replace('.jpg','')]=dataUri('assets/img/'+prefix+'/'+f);} const v='__IMG_'+prefix.toUpperCase(); js='const '+v+' = '+JSON.stringify(map)+';\n'+js; js=js.split('assets/img/'+prefix+'/'+tokenExpr+'.jpg').join('${'+v+'['+tokenExpr.slice(2,-1)+']||""}'); }
 const stkDir=path.join(APP,'assets/svg/stickers'); const stk={}; if(fs.existsSync(stkDir))for(const f of fs.readdirSync(stkDir)){ if(f.endsWith('.svg'))stk[f.replace('.svg','')]=dataUri('assets/svg/stickers/'+f);} js='const __STK = '+JSON.stringify(stk)+';\n'+js; js=js.split('assets/svg/stickers/${k}.svg').join('${__STK[k]||""}');
 const gimg={}; const gd=path.join(APP,'assets/img/games'); if(fs.existsSync(gd))for(const f of fs.readdirSync(gd)){ if(f.endsWith('.jpg'))gimg[f.replace('.jpg','')]=dataUri('assets/img/games/'+f);} js='const __GAMEIMG = '+JSON.stringify(gimg)+';\n'+js; js=js.split('assets/img/games/${g.key}.jpg').join('${__GAMEIMG[g.key]||""}');
 inlineDir('mem','${c.icon}'); inlineDir('ark','${c.img}'); inlineDir('stickers','${k}');
