@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+android {
+  namespace 'ru.metanoya.app'
+  compileSdk 34
+
+  defaultConfig {
+    applicationId 'ru.metanoya.app'
+    minSdk 23              // Android 6, ниже Trusted Web Activity не живёт
+    targetSdk 34
+    versionCode 1
+    versionName '1.0'
+    resValue 'string', 'app_name', 'Метанойя'
+    // Адрес школы. Меняется в одном месте: здесь и в assetlinks на сервере.
+    manifestPlaceholders = [hostName: 'ЗАМЕНИТЬ.домен.ру', defaultUrl: 'https://ЗАМЕНИТЬ.домен.ру/']
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+      signingConfig signingConfigs.debug   // заменить на свой ключ перед выкладкой
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+dependencies {
+  implementation 'androidx.browser:browser:1.8.0'
+  implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

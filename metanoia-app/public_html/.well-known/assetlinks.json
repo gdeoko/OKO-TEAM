@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "ru.metanoya.app",
+    "sha256_cert_fingerprints": [
+      "ЗАМЕНИТЬ: отпечаток ключа подписи, 32 пары через двоеточие"
+    ]
+  }
+}]

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Куда приложение кладёт то, чем ребёнок делится: домашние работы,
+     сохранённый бланк. Больше ничего наружу не отдаётся. -->
+<paths>
+  <files-path name="downloads" path="downloads/" />
+  <cache-path name="shared" path="shared/" />
+</paths>

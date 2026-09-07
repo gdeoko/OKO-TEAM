@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Связь приложения с сайтом школы. Домен меняется здесь и в
+       assetlinks.json на сервере, иначе сверху появится адресная строка. -->
+  <string name="asset_statements" translatable="false">
+    [{
+      \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+      \"target\": { \"namespace\": \"web\", \"site\": \"https://ЗАМЕНИТЬ.домен.ру\" }
+    }]
+  </string>
+</resources>
