@@ -3106,7 +3106,14 @@ html.рв-кабина-есть .рв-фин-кн {
     right: auto;
     top: var(--рв-каб-в, 12%);
     width: var(--рв-каб-ш, 80%);
-    height: calc(var(--рв-каб-выс, 60%) * 0.72);
+    /* ── КАРТОЧКА ПО СОДЕРЖИМОМУ, А НЕ ПО ДОЛЕ ОКНА ──────────────
+       Высота стояла жёсткой долей окна, и на снимке доли 0.92 под
+       последним вопросом оставалась сотня точек пустого стекла: у
+       соседей карточка кончается там же, где кончается список.
+       Потолок держим прежней долей - список длиннее окна прокрутится
+       внутри, как и прокручивался. */
+    height: auto;
+    max-height: calc(var(--рв-каб-выс, 60%) * 0.72);
   }
   html.рв-кабина-есть .рв-фин-кн {
     top: calc(var(--рв-каб-в, 12%) + var(--рв-каб-выс, 60%) * 0.76);
@@ -3172,6 +3179,7 @@ html.рв-кабина-есть .рв-фин-впр,
 html.рв-кабина-есть .рв-фин-анк { display: flex; flex-direction: column; }
 html.рв-кабина-есть .рв-фин-впр > h3 { flex: 0 0 auto; }
 html.рв-кабина-есть .рв-фин-впр dl,
+html.рв-кабина-есть .рв-фин-впр .рв-впр-список,
 html.рв-кабина-есть .рв-фин-анк .rv-форма-плита {
   flex: 1 1 auto;
   min-height: 0;
@@ -3182,27 +3190,142 @@ html.рв-кабина-есть .рв-фин-анк .rv-форма-плита {
   -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 88%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0, #000 88%, transparent 100%);
 }
-/* Скобки по углам. Два псевдоэлемента на блок: верхний левый и нижний
-   правый. Четыре угла требовали бы четырёх элементов, а по кадру
-   соседей видно, что и двух хватает - глаз достраивает рамку сам. */
-html.рв-кабина-есть .рв-фин-анк::before,
+/* Прежние две скобки на псевдоэлементах отсюда сняты. У соседей на
+   кадре их ЧЕТЫРЕ, и рисует их одна рамка с вырезом - правило ниже,
+   в разделе «карточка панели - стиль соседей». Держать два набора
+   скобок на одном блоке значило бы получить шесть углов. */
+
+
+/* ═══ КАРТОЧКА ПАНЕЛИ - СТИЛЬ СОСЕДЕЙ, ПЕРЕНЕСЁННЫЙ КАК ЕСТЬ ═══════
+   Владелец прислал кадры панели rocketcdn и сказал: «вот так должно
+   быть 1:1 как на cdn и на vpn стиль текстуры размеры шрифты и тд я же
+   сказал скопировать вставить с cdn».
+
+   Ниже перенесены их числа из assets/rc-cockpit.css (.epi-holo) и
+   assets/rc-interior.css: полосатая развёртка через две точки, циановая
+   кромка в тридцать четыре сотых, свечение наружу и скобки прицела по
+   четырём углам через clip-path. Наши прежние две скобки на
+   псевдоэлементах отсюда сняты: у соседей их четыре, и это видно на
+   кадре.
+
+   Цвета их же, разложенные по составляющим для rgba:
+     циан   66,178,220
+     свет  207,233,245
+     глубь   5, 12, 21   */
+html.рв-кабина-есть .рв-фин-впр,
+html.рв-кабина-есть .рв-фин-анк {
+  padding: clamp(14px, 3.4cqh, 26px) clamp(12px, 3.4cqw, 26px);
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 html.рв-кабина-есть .рв-фин-впр::before,
-html.рв-кабина-есть .рв-фин-анк::after,
-html.рв-кабина-есть .рв-фин-впр::after {
+html.рв-кабина-есть .рв-фин-анк::before {
+  content: "";
+  position: absolute; inset: 0;
+  width: auto; height: auto;
+  border-radius: inherit;
+  border: 1px solid rgba(66, 178, 220, .34);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(66, 178, 220, .06) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(5, 12, 21, .72),
+      rgba(5, 12, 21, .84));
+  box-shadow:
+    0 0 60px -18px rgba(66, 178, 220, .7),
+    inset 0 1px 0 rgba(207, 233, 245, .16);
+  pointer-events: none;
+}
+/* Скобки прицела по ЧЕТЫРЁМ углам одной рамкой с вырезом. Их приём:
+   рамка в отступе шесть точек, из которой clip-path оставляет по
+   двадцать две точки в каждом углу. */
+html.рв-кабина-есть .рв-фин-впр::after,
+html.рв-кабина-есть .рв-фин-анк::after {
+  content: "";
+  position: absolute; inset: 6px;
+  left: 6px; top: 6px; right: 6px; bottom: 6px;
+  width: auto; height: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(66, 178, 220, .5);
+  clip-path: polygon(
+    0 0, 22px 0, 22px 1px, 1px 1px, 1px 22px, 0 22px,
+    0 100%, 22px 100%, 22px calc(100% - 1px), 1px calc(100% - 1px), 1px calc(100% - 22px), 0 calc(100% - 22px),
+    100% 100%, calc(100% - 22px) 100%, calc(100% - 22px) calc(100% - 1px), calc(100% - 1px) calc(100% - 1px), calc(100% - 1px) calc(100% - 22px), 100% calc(100% - 22px),
+    100% 0, calc(100% - 22px) 0, calc(100% - 22px) 1px, calc(100% - 1px) 1px, calc(100% - 1px) 22px, 100% 22px);
+  opacity: .9;
+  pointer-events: none;
+}
+html.рв-кабина-есть .рв-фин-впр > * { position: relative; z-index: 1; }
+
+/* Заголовок карточки: мелкий, разрядкой, циановый - как «КОРОТКО О
+   ГЛАВНОМ» на их кадре. Не заголовок раздела, а надпись на приборе. */
+html.рв-кабина-есть .рв-фин-впр > h3 {
+  margin: 0 0 clamp(8px, 2.2cqh, 18px);
+  font-family: var(--rv-шрифт-голос, var(--rv-шрифт));
+  font-size: clamp(10px, 3.4cqh, 15px);
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(159, 224, 246, .95);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .8), 0 0 26px rgba(66, 178, 220, .55);
+}
+
+/* ── СПИСОК ОДНИХ ВОПРОСОВ, ПО РОМБИКУ НА КАЖДЫЙ ─────────────────
+   На кадре соседей в окне панели стоят ВОПРОСЫ и больше ничего:
+   ответов там нет, они раскрываются в ленте выше. Ромбик перед
+   строкой - их же приём. */
+.рв-впр-список {
+  margin: 0; padding: 0;
+  list-style: none;
+  display: flex; flex-direction: column;
+  gap: clamp(8px, 2.6cqh, 20px);
+}
+.рв-впр-список li {
+  position: relative;
+  padding-left: 1.5em;
+  font-family: var(--rv-шрифт);
+  font-size: clamp(11px, 4.4cqh, 17px);
+  line-height: 1.32;
+  color: rgba(232, 242, 250, .96);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, .8);
+}
+/* Ромбик это повёрнутый квадрат, а не символ: у моноширинного шрифта
+   его в наборе нет, и браузер подставлял бы чужой знак. */
+.рв-впр-список li::before {
   content: "";
   position: absolute;
-  width: 14px; height: 14px;
-  pointer-events: none;
-  border: 2px solid rgba(159, 224, 246, .85);
+  left: .18em; top: .46em;
+  width: .44em; height: .44em;
+  background: rgba(95, 200, 239, .95);
+  transform: rotate(45deg);
+  box-shadow: 0 0 10px rgba(95, 200, 239, .6);
 }
-html.рв-кабина-есть .рв-фин-анк::before,
-html.рв-кабина-есть .рв-фин-впр::before {
-  left: 6px; top: 6px; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0;
+
+/* ── РЯД ИЗ ДВУХ КНОПОК И ШИРОКАЯ ПОД НИМИ ───────────────────────
+   Раскладка снята с их кадра: сверху две равные, снизу одна во всю
+   ширину с главным действием. Ни одна из них никуда не едет - место
+   у ряда своё и постоянное. */
+html.рв-кабина-есть .рв-фин-кн {
+  display: flex; flex-direction: column;
+  gap: clamp(6px, 1.6cqh, 12px);
+  align-items: stretch; justify-content: center;
+  flex-wrap: nowrap;
 }
-html.рв-кабина-есть .рв-фин-анк::after,
-html.рв-кабина-есть .рв-фин-впр::after {
-  right: 6px; bottom: 6px; border-left: 0; border-top: 0; border-radius: 0 0 4px 0;
+.рв-кн-ряд { display: flex; gap: clamp(6px, 2cqw, 14px); }
+.рв-кн-ряд > .rv-кн { flex: 1 1 0; justify-content: center; text-align: center; }
+html.рв-кабина-есть .рв-фин-кн .rv-кн {
+  font-size: clamp(11px, 30cqh, 17px);
+  padding: .62em 1em;
+  border-radius: 10px;
+  white-space: nowrap;
 }
+.рв-кн-широкая { width: 100%; justify-content: center; text-align: center; }
+
 /* Заголовок карточки идёт вразрядку, как у них: он подпись прибора, а
    не заголовок статьи. */
 html.рв-кабина-есть .рв-фин h3 {
