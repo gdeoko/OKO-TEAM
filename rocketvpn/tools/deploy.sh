@@ -28,9 +28,35 @@ tar czf "$ARC" "$@"
 MINE=$(md5sum "$ARC" | awk '{print $1}')
 echo "архив $(wc -c < "$ARC") байт, сумма $MINE"
 
-DST=/opt/oko-poster/cab/dep-$STAMP.tgz
+# ПЕРЕВАЛКА ИДЁТ ЧЕРЕЗ /tmp НА VPS, А НЕ ЧЕРЕЗ /opt/oko-poster/cab.
+# Причина замерена: корень на VPS набит под завязку (155 ГБ из 155,
+# свободного ноль), и запись в /opt кончалась «No space left on device».
+# Наружу это вылезало разошедшейся суммой пустого файла
+# (d41d8cd9...427e - сумма нуля байт) и словами «архив не доехал целым».
+# У /tmp на VPS своя tmpfs, до корня ей дела нет, а перевалке нужно
+# меньше мегабайта. Место в /opt чужое - там лежат кластеры и профили
+# контент-завода, и чистить их выкладке сайта не по чину.
+DST=/tmp/rv-dep-$STAMP.tgz
 CH=/tmp/cab/chunks-$STAMP
 mkdir -p "$CH"
+
+# Свободное место на той стороне проверяется ДО заливки: полчаса лить
+# куски в никуда, чтобы потом увидеть разошедшуюся сумму, дороже одного
+# вопроса. Нужно с запасом на архив и его же в base64.
+#
+# Имена переменных тут латинские по той же причине, что и в
+# «проверить-всё.sh»: оболочка кириллическое имя не принимает вовсе и
+# читает `НАДО=823` как команду с таким именем. Кириллица остаётся во
+# всём, что читает человек.
+need_kb=$(( $(wc -c < "$ARC") * 3 / 2 / 1024 + 512 ))
+free_kb=$("$V" 'df -Pk /tmp | awk "NR==2{print \$4}"' | tr -d ' \n')
+case "$free_kb" in
+  ''|*[!0-9]*) echo "не удалось спросить свободное место на VPS (мост молчит)"; exit 1 ;;
+esac
+if [ "$free_kb" -lt "$need_kb" ]; then
+  echo "НЕ ВЫЛОЖЕНО: на VPS в /tmp свободно ${free_kb} КБ, нужно ${need_kb} КБ"
+  exit 1
+fi
 
 # РАЗМЕР КУСКА 8000, И ЭТО ЗАМЕРЕНО, А НЕ ВЗЯТО С ПОТОЛКА. Кусок стоял
 # в 30000 знаков, и в какой-то день мост начал отдавать на него пятисотую
@@ -62,7 +88,7 @@ done
 # в этот файл: репозиторий открытый, и однажды он тут уже лежал открытым
 # текстом. Мост читает строку "Вход | ubuntu / ..." из мастер-хранилища
 # прямо в момент выкладки.
-"$V" 'VAULT=/opt/oko-poster/cfg/OKO_MASTER_VAULT.md; PW=$(grep -m1 -E "^\| *Вход *\| *ubuntu */" "$VAULT" | sed -E "s#.*ubuntu */ *([^ (|]+).*#\\1#"); [ -n "$PW" ] || { echo "НЕ ВЫЛОЖЕНО: пароль не найден в хранилище"; exit 1; }; cd /opt/oko-poster/cab && sshpass -p "$PW" scp -o StrictHostKeyChecking=no dep-'"$STAMP"'.tgz ubuntu@217.19.122.132:/tmp/ 2>&1 | tail -1; sshpass -p "$PW" ssh -o StrictHostKeyChecking=no ubuntu@217.19.122.132 "sudo tar xzf /tmp/dep-'"$STAMP"'.tgz -C /var/www/rocketvpn && ls -la /var/www/rocketvpn/assets/gen 2>&1 | tail -3" 2>&1 | tail -2'
+"$V" 'VAULT=/opt/oko-poster/cfg/OKO_MASTER_VAULT.md; PW=$(grep -m1 -E "^\| *Вход *\| *ubuntu */" "$VAULT" | sed -E "s#.*ubuntu */ *([^ (|]+).*#\\1#"); [ -n "$PW" ] || { echo "НЕ ВЫЛОЖЕНО: пароль не найден в хранилище"; exit 1; }; cd /tmp && sshpass -p "$PW" scp -o StrictHostKeyChecking=no rv-dep-'"$STAMP"'.tgz ubuntu@217.19.122.132:/tmp/dep-'"$STAMP"'.tgz 2>&1 | tail -1; sshpass -p "$PW" ssh -o StrictHostKeyChecking=no ubuntu@217.19.122.132 "sudo tar xzf /tmp/dep-'"$STAMP"'.tgz -C /var/www/rocketvpn && ls -la /var/www/rocketvpn/assets/gen 2>&1 | tail -3" 2>&1 | tail -2'
 "$V" "rm -f $DST $DST.b64" >/dev/null
 rm -rf "$CH" "$ARC"
 echo "выложено: $*"
