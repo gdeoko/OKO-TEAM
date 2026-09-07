@@ -4909,9 +4909,22 @@ function initAsk() {
 }
 
 /* ── Семейный квест недели (УЛ3) ── */
+/** Понедельник и воскресенье текущей недели: «Квест недели · 8–14 сентября». */
+function неделяПодпись() {
+  const мес = ['января','февраля','марта','апреля','мая','июня','июля','августа',
+    'сентября','октября','ноября','декабря'];
+  const сегодня = new Date();
+  const сдвиг = (сегодня.getDay() + 6) % 7; // понедельник первый
+  const пн = new Date(сегодня); пн.setDate(сегодня.getDate() - сдвиг);
+  const вс = new Date(пн); вс.setDate(пн.getDate() + 6);
+  const один = пн.getMonth() === вс.getMonth();
+  return 'Квест недели · ' + пн.getDate() + (один ? '' : ' ' + мес[пн.getMonth()])
+    + '–' + вс.getDate() + ' ' + мес[вс.getMonth()];
+}
+
 const FQ = {
   title: 'Благодарное сердце',
-  sub: 'Квест недели · 1–7 июля',
+  get sub() { return неделяПодпись(); },
   tasks: [
     { day: 'Понедельник', text: 'За ужином каждый скажет одно «спасибо» — Богу или близкому.' },
     { day: 'Среда', text: 'Прочитайте вместе одну главу из книги «Метанойя».' },
@@ -5342,7 +5355,7 @@ function openDoc(kind) {
   box.innerHTML = `<h1 class="screen-title" style="margin-bottom:4px">${d.title}</h1>
     <p class="feed-card__meta" style="margin-bottom:16px">${d.sub}</p>
     ${d.parts.map(([h, t]) => `<div class="card doc__part"><h2>${h}</h2><p>${t}</p></div>`).join('')}
-    <div class="doc__foot">Редакция от 5 сентября 2026 года</div>`;
+    <div class="doc__foot">Редакция от 7 сентября 2026 года</div>`;
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'privacy'));
   const nav = document.getElementById('nav'); if (nav) nav.style.display = 'none';
   window.scrollTo({ top: 0 });
