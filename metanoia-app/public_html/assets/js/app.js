@@ -822,6 +822,60 @@ function openChild(c) {
   $('#childRank').textContent = (ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна);
   $('#childStreak').textContent = серияДней();
   renderRanks(зёрна);
+  // Плитки «Рейтинг» и «Сертификаты» тоже показывали написанное намертво:
+  // «Ты на 2 месте · 340 очков» и «1 из 3 получен» видел даже тот, кто
+  // сегодня открыл приложение впервые.
+  const плиткаР = $('#ratingTile');
+  if (плиткаР) {
+    // Место считаем так же, как на самом экране рейтинга: по убыванию зёрен.
+    const место = (typeof рейтингСоСвоей === 'function')
+      ? (рейтингСоСвоей().sort((a, b) => b.xp - a.xp).findIndex((x) => x.me) + 1) : 0;
+    плиткаР.firstChild.textContent = место > 0
+      ? `Ты на ${место} месте · ${зёрна} ${склонениеЗёрен(зёрна)} `
+      : 'Рейтинг недели ';
+  }
+  const плиткаС = $('#certsTile');
+  if (плиткаС) {
+    const бланки = certРазмечен();
+    const есть = бланки.filter((c) => c.earned).length;
+    плиткаС.firstChild.textContent = есть
+      ? `${есть} из ${бланки.length} получен${есть > 1 ? 'о' : ''} `
+      : 'Пока ни одного: сдай проверку знаний главы ';
+  }
+
+  const плиткаА = $('#devTile');
+  if (плиткаА) {
+    const день = Number(localStorage.getItem('mt_dev_day') || '0') + 1;
+    плиткаА.firstChild.textContent = день > 1
+      ? `День ${день} из 30 вместе с семьёй `
+      : '30 дней вместе с семьёй ';
+  }
+
+  const плиткаП = $('#journeyTile');
+  if (плиткаП && typeof остановкаПути === 'function') {
+    const и = остановкаПути();
+    плиткаП.firstChild.textContent = `Остановка ${и + 1} · «${JOURNEY[и]}» `;
+  }
+
+  const плиткаЛ = $('#shopTileXp');
+  if (плиткаЛ) {
+    плиткаЛ.firstChild.textContent = `Твои баллы: ${зёрна} · обменяй на подарки `;
+  }
+
+  // Прогресс по главам считаем по пройденным урокам этого ребёнка: раньше
+  // здесь стояли намертво написанные «7 / 35», одинаковые у всех.
+  const блоки = $('#childBlocks');
+  if (блоки) {
+    блоки.innerHTML = DEMO.blocks.map((b) => {
+      const уроки = b.lessons.filter((l) => !l.exam);
+      const пройдено = уроки.filter((l) => isLessonDone(l.n)).length;
+      const доля = уроки.length ? Math.round(пройдено / уроки.length * 100) : 0;
+      return `<div class="blockp"><span>${b.title}</span>
+        <div class="progress"><div class="progress__fill" style="width:${доля}%"></div></div>
+        <em>${пройдено} / ${уроки.length}</em></div>`;
+    }).join('');
+  }
+
   $('#childBadges').innerHTML = значкиПересчитать().map((b) => `
     <div class="badge-card ${b.earned ? '' : 'badge-card--locked'}" title="${b.как || ''}">
       <div class="badge-card__icon">${b.earned ? ICON(b.icon, 22) : ICON('lock', 18)}</div>
@@ -3381,7 +3435,14 @@ const JOURNEY = [
   'Сад Эдема', 'Ноев ковчег', 'Египет', 'Синай',
   'Земля обетованная', 'Иерусалим', 'Вифлеем', 'Голгофа', 'Воскресение'
 ];
-let journeyStop = 2; // остановка 3 (0-индекс) — демо
+/* Остановка на карте пути считается по пройденным урокам: девять остановок
+   на 105 уроков, примерно двенадцать уроков на шаг. Раньше здесь стояла
+   намертво третья остановка, и «Египет» видел даже тот, кто не начинал. */
+function остановкаПути() {
+  const всего = (typeof уроковПройдено === 'function') ? уроковПройдено() : 0;
+  const шаг = 105 / JOURNEY.length;
+  return Math.max(0, Math.min(JOURNEY.length - 1, Math.floor(всего / шаг)));
+}
 
 function initJourney() {
   $('#openJourney')?.addEventListener('click', () => { gameOpener = 'child'; openJourneyScreen(); });
@@ -3414,8 +3475,8 @@ function renderJourney() {
   // остановки
   stopsG.innerHTML = JOURNEY.map((name, i) => {
     const pt = stopAt(i);
-    const reached = i <= journeyStop;
-    const isCurrent = i === journeyStop;
+    const reached = i <= остановкаПути();
+    const isCurrent = i === остановкаПути();
     const labelRight = pt.x < 160;
     return `
       ${isCurrent ? `<circle class="j-stop-ring" cx="${pt.x}" cy="${pt.y}" r="14" fill="none" stroke="var(--terracotta)" stroke-width="2"/>` : ''}
@@ -3427,13 +3488,13 @@ function renderJourney() {
   }).join('');
 
   // пройденная часть пути — до текущей остановки
-  const doneLen = (journeyStop / (n - 1)) * L;
+  const doneLen = (остановкаПути() / (n - 1)) * L;
   done.style.strokeDasharray = L;
   done.style.strokeDashoffset = L;
   requestAnimationFrame(() => { done.style.strokeDashoffset = L - doneLen; });
 
   // аватар едет к текущей остановке
-  const cur = stopAt(journeyStop);
+  const cur = stopAt(остановкаПути());
   avatar.style.transform = 'translate(50px, 40px)'; // старт
   requestAnimationFrame(() => { avatar.style.transform = `translate(${cur.x}px, ${cur.y}px)`; });
 }

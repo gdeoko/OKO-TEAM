@@ -455,13 +455,13 @@
       <button class="child-back" id="childBack"><span data-icon="back" data-size="18"></span> Профиль родителя</button>
       <div class="child-head">
         <img class="child-head__avatar" id="childAvatar" src="assets/img/avatars/lion.jpg" alt="">
-        <div class="child-head__name" id="childName">Миша, 8 лет</div>
-        <div class="child-head__rank" id="childRank">Росточек · уровень 2</div>
+        <div class="child-head__name" id="childName"></div>
+        <div class="child-head__rank" id="childRank"></div>
         <div class="xpbar">
           <div class="xpbar__fill" id="childXpFill"></div>
         </div>
-        <div class="xpbar__label" id="childXpLabel">220 / 300 очков до «Цветочка»</div>
-        <div class="child-streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="childStreak">12</b> дней подряд</div>
+        <div class="xpbar__label" id="childXpLabel"></div>
+        <div class="child-streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="childStreak">0</b> дней подряд</div>
       </div>
 
       <button class="ask-tile" id="openAsk">
@@ -490,17 +490,13 @@
       </button>
 
       <h2 class="section-title">Прогресс по главам</h2>
-      <div class="card">
-        <div class="blockp"><span>Глава 1 · Жизнь Господа</span><div class="progress"><div class="progress__fill" style="width:20%"></div></div><em>7 / 35</em></div>
-        <div class="blockp"><span>Глава 2 · Ветхий Завет</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div><em>0 / 35</em></div>
-        <div class="blockp"><span>Глава 3 · Израиль</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div><em>0 / 35</em></div>
-      </div>
+      <div class="card" id="childBlocks"><!-- считается по пройденным урокам --></div>
 
       <h2 class="section-title">Путешествие веры</h2>
       <button class="card temple" id="openJourney" style="width:100%;text-align:left">
         <div class="temple__img"><img src="assets/img/games/journey.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
-          <div class="temple__stage">Остановка 3 · «Египет» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__stage" id="journeyTile">Путешествие веры <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Нажми, чтобы увидеть свой путь на карте</div>
         </div>
       </button>
@@ -509,7 +505,7 @@
       <button class="card temple" id="openRating" style="width:100%;text-align:left">
         <div class="temple__img"><img src="assets/img/cards/rating.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
-          <div class="temple__stage">Ты на 2 месте · 340 очков <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__stage" id="ratingTile">Рейтинг недели <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Посмотри, как растут друзья по школе за эту неделю</div>
         </div>
       </button>
@@ -518,7 +514,7 @@
       <button class="card temple" id="openCerts" style="width:100%;text-align:left">
         <div class="temple__img"><img src="assets/img/cards/certs.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
-          <div class="temple__stage">1 из 3 получен · Глава 1 завершена <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__stage" id="certsTile">Сертификаты за главы <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Именной сертификат за каждую главу — можно скачать</div>
         </div>
       </button>
@@ -536,7 +532,7 @@
       <button class="card temple" id="openDevotional" style="width:100%;text-align:left">
         <div class="temple__img"><img src="assets/img/cards/devotional.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
-          <div class="temple__stage">30 дней вместе с семьёй <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__stage" id="devTile">30 дней вместе с семьёй <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Короткий стих, мысль и вопрос на каждый день — читайте с ребёнком за ужином</div>
         </div>
       </button>
