@@ -124,7 +124,37 @@
     throw последняя;
   }
 
-  async function запрос(путь, опции) {
+  /**
+   * Токен входа живёт час. Раньше по его истечении синхронизация просто
+   * замолкала до следующего входа руками. Теперь по 401 обновляем токен
+   * длинным ключом (он живёт месяц) и повторяем запрос один раз.
+   */
+  let обновляем = null;
+
+  async function обновитьТокен() {
+    const длинный = localStorage.getItem('mt_refresh') || '';
+    if (!длинный) return false;
+    if (обновляем) return обновляем;          // параллельные запросы ждут один обмен
+    обновляем = (async () => {
+      try {
+        const r = await fetch(БАЗА + '/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: длинный }),
+        });
+        const тело = await r.json().catch(() => ({}));
+        const d = тело && тело.data;
+        if (!r.ok || !d || !d.access_token) return false;
+        origSetItem.call(localStorage, 'mt_token', d.access_token);
+        if (d.refresh_token) origSetItem.call(localStorage, 'mt_refresh', d.refresh_token);
+        return true;
+      } catch (e) { return false; }
+      finally { обновляем = null; }
+    })();
+    return обновляем;
+  }
+
+  async function запрос(путь, опции, ужеОбновляли) {
     const r = await fetch(БАЗА + путь, Object.assign({
       headers: {
         'Content-Type': 'application/json',
@@ -133,6 +163,9 @@
     }, опции || {}));
     const тело = await r.json().catch(() => ({}));
     if (!r.ok || тело.success === false) {
+      if (r.status === 401 && !ужеОбновляли && путь !== '/auth/refresh') {
+        if (await обновитьТокен()) return запрос(путь, опции, true);
+      }
       const err = new Error(тело.error || ('Сервер ответил ' + r.status));
       err.code = r.status;
       throw err;
