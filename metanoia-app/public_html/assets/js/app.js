@@ -1389,7 +1389,7 @@ function lessonCoverFallback(n) {
   const meta = lessonMeta(n);
   return `assets/img/chapters/ch${meta ? meta.bi + 1 : 1}.jpg`;
 }
-function lessonPic(n, i) { return `assets/img/lessons/l${n}-${'abc'[i] || 'a'}.jpg`; }
+function lessonPic(n) { return `assets/img/lessons/l${n}-a.jpg`; }
 function lessonAudio(n) { return `assets/audio/lessons/l${n}.mp3`; }
 
 /* Ближайший урок ребёнка: начатый, иначе первый непройденный */
@@ -1453,11 +1453,12 @@ function renderLesson(n) {
       <img src="${lessonPic(n, i)}" alt="" loading="lazy" onerror="this.closest('.lesson-pic').remove()">
       ${подпись ? `<figcaption>${подпись}</figcaption>` : ''}</figure>`;
 
+  // Картинка в тексте одна на урок: обложка уже стоит сверху, вторая иллюстрация
+  // в середине даёт передышку глазам. Ставим её ближе к середине рассказа.
+  const местоКартинки = Math.min(2, Math.max(0, story.length - 1));
   const рассказ = story.map((p, i) => {
     const абзац = `<p>${p}</p>`;
-    if (i === 0) return абзац + картинка(0, '');
-    if (i === 2) return абзац + картинка(1, '');
-    return абзац;
+    return i === местоКартинки ? абзац + картинка(0, '') : абзац;
   }).join('');
 
   body.innerHTML = `
@@ -3271,11 +3272,11 @@ function openReader(n) {
   // В книге картинки идут по ходу текста, а озвучки нет: это чтение глазами
   const картинка = (i) => `<figure class="lesson-pic"><img src="${lessonPic(n, i)}" alt="" loading="lazy"
       onerror="this.closest('.lesson-pic').remove()"></figure>`;
-  const story = (c.story || []).map((p, i) => {
-    if (i === 0) return `<p>${p}</p>` + картинка(0);
-    if (i === 2) return `<p>${p}</p>` + картинка(1);
-    return `<p>${p}</p>`;
-  }).join('');
+  const абзацы = c.story || [];
+  const местоКартинки = Math.min(2, Math.max(0, абзацы.length - 1));
+  const story = абзацы.map((p, i) => (
+    i === местоКартинки ? `<p>${p}</p>` + картинка(0) : `<p>${p}</p>`
+  )).join('');
 
   const golden = c.golden ? `<div class="scripture">${c.golden}</div>` : '';
   const prayer = c.prayer ? `<p><em>${c.prayer}</em></p>` : '';
