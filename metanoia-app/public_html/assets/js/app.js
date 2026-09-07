@@ -1030,7 +1030,9 @@ function openChatView(i) {
   const data = CHAT_MSGS[i] || {};
   $('#cvAvatar').innerHTML = c.img ? `<img src="${c.img}" alt="">` : ICON(c.icon, 20);
   $('#cvName').textContent = c.name;
-  $('#cvStatus').textContent = c.peda ? 'онлайн' : c.dm ? 'родитель · был(а) недавно' : '234 участника, 12 онлайн';
+  // Сколько людей в чате и кто сейчас онлайн, знает сервер. Пока его нет,
+  // чисел не выдумываем: пишем, что это за чат.
+  $('#cvStatus').textContent = c.peda ? 'педагог школы' : c.dm ? 'родитель' : 'чат школы';
   $('#cvPinned').hidden = !data.pinned;
   if (data.pinned) $('#cvPinnedText').textContent = data.pinned;
   $('#cvReadonly').hidden = !data.readonly;
@@ -2385,7 +2387,7 @@ function showUserCard(name) {
   const isPeda = name.includes('Екатерина');
   $('#ucAvatar').innerHTML = isPeda ? '<img src="assets/img/avatars/ekaterina.jpg" alt="">' : name[0];
   $('#ucName').textContent = isPeda ? 'Екатерина Павленко' : name;
-  $('#ucMeta').textContent = isPeda ? 'Педагог школы · онлайн'
+  $('#ucMeta').textContent = isPeda ? 'Педагог школы'
     : p ? `Родитель · ${p.city} · ${p.kids}` : 'Ученик · личные сообщения детям недоступны';
   $('#ucWrite').style.display = (isPeda || p) ? '' : 'none';
   $('#userCard').hidden = false;
@@ -4956,6 +4958,21 @@ document.addEventListener('DOMContentLoaded', () => {
   initPTR();
   showApp(null);
 
+  /* Быстрые ярлыки с домашнего экрана: длинный тап по иконке приложения
+     открывает уроки, стих дня или друга. Без этого ярлыки в манифесте
+     были бы обманом: все три вели бы на главную. */
+  function поЯрлыку() {
+    const куда = (location.hash || '').replace('#', '');
+    if (!куда) return;
+    if (куда === 'lessons') switchTab('lessons');
+    else if (куда === 'verse' && typeof openDailyVerse === 'function') openDailyVerse();
+    else if (куда === 'pet' && typeof openPetScreen === 'function') openPetScreen();
+    else if (куда === 'games') switchTab('games');
+    else if (куда === 'chats') switchTab('chats');
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  window.addEventListener('hashchange', поЯрлыку);
+
   // Splash → онбординг (первый запуск) → вход → приложение
   setTimeout(() => {
     $('#splash').classList.add('splash--hide');
@@ -4967,6 +4984,7 @@ document.addEventListener('DOMContentLoaded', () => {
       hydrateIcons();
     } else {
       animateHomeStats(); // вернувшийся пользователь сразу на главной — оживим числа
+      поЯрлыку();
     }
   }, 2400);
 });

@@ -1,21 +1,42 @@
 {
-  "name": "Метанойя — онлайн-школа",
+  "id": "/",
+  "name": "Метанойя — христианская школа для детей",
   "short_name": "Метанойя",
-  "description": "Христианская онлайн-школа для детей 5–14 лет",
+  "description": "105 уроков, добрые игры, стих дня и живой друг для детей 5–14 лет. Школа духовно-нравственного воспитания Екатерины Павленко.",
   "lang": "ru",
+  "dir": "ltr",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
   "background_color": "#FAF8F5",
   "theme_color": "#FAF8F5",
+  "categories": ["education", "kids", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "assets/img/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "assets/img/icon-72.png",  "sizes": "72x72",   "type": "image/png" },
     { "src": "assets/img/icon-96.png",  "sizes": "96x96",   "type": "image/png" },
     { "src": "assets/img/icon-128.png", "sizes": "128x128", "type": "image/png" },
     { "src": "assets/img/icon-144.png", "sizes": "144x144", "type": "image/png" },
     { "src": "assets/img/icon-152.png", "sizes": "152x152", "type": "image/png" },
-    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "assets/img/icon-384.png", "sizes": "384x384", "type": "image/png" },
-    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "assets/img/screens/home.jpg", "sizes": "540x960", "type": "image/jpeg", "form_factor": "narrow", "label": "Главная: урок дня, стих и друг" },
+    { "src": "assets/img/screens/lessons.jpg", "sizes": "540x960", "type": "image/jpeg", "form_factor": "narrow", "label": "105 уроков в трёх главах" },
+    { "src": "assets/img/screens/lesson.jpg", "sizes": "540x960", "type": "image/jpeg", "form_factor": "narrow", "label": "Урок: читаем, слушаем, выполняем задание" }
+  ],
+  "shortcuts": [
+    { "name": "Уроки", "short_name": "Уроки", "url": "./index.html#lessons",
+      "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Стих дня", "short_name": "Стих дня", "url": "./index.html#verse",
+      "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Мой друг", "short_name": "Друг", "url": "./index.html#pet",
+      "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }] }
   ]
 }
