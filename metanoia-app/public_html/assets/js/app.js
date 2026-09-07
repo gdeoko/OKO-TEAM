@@ -5179,7 +5179,7 @@ function initGrowth() {
   // Esc закрывает открытую модалку/шторку (a11y)
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    const modals = ['#msgActions', '#userCard', '#attachSheet', '#dmSheet', '#sheetWrap', '#certView', '#dailyVerse', '#addChild', '#gamePreview', '#notifPanel', '#pinModal', '#storyViewer'];
+    const modals = ['#msgActions', '#userCard', '#attachSheet', '#dmSheet', '#sheetWrap', '#certView', '#dailyVerse', '#addChild', '#gamePreview', '#notifPanel', '#pinModal', '#storyViewer', '#gameEnd'];
     for (const sel of modals) { const el = $(sel); if (el && !el.hidden) { el.hidden = true; return; } }
   });
   $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
