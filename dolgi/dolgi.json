@@ -192,9 +192,9 @@
  ],
  "banki": [
   {
-   "name": "ВТБ · автокредит",
-   "note": "приоритет №1, залог (машина)",
-   "sum": "просрочка 72 992 ₽ / остаток ~582 т.",
+   "name": "ВТБ · автокредит (залог — машина)",
+   "note": "приоритет №1. Остаток 621 346, ставка 12,9%, платёж 13 717,51/мес (13 число). Банк требует полное погашение - подаём реструктуризацию (каникулы 106-ФЗ недоступны из-за просрочки). Тел. 8 800 100-24-24, чат ВТБ Онлайн.",
+   "sum": "долг с просрочкой и пени 677 222 ₽",
    "cvet": "red"
   },
   {
@@ -272,6 +272,10 @@
   {
    "d": "05.09",
    "t": "Отправлены: идентификация и предложение 6 000 в АйДи Коллект, письмо напрямую кредитору Т-Финанс (предложение 22 000), повтор обращения в Право онлайн."
+  },
+  {
+   "d": "07.09",
+   "t": "ВТБ автокредит: банк требует полное погашение до 06.09. Каникулы 106-ФЗ недоступны (есть просрочка). Готово заявление на реструктуризацию (dolgi/vtb_zayavlenie.txt) и текст для чата банка - подаём через ВТБ Онлайн или отделение."
   }
  ],
  "pisma": [
@@ -317,6 +321,30 @@
   },
   {
    "yashik": "okoteam.top@gmail.com",
+   "ot": "\"tfinance\" <tfinance@mbafin.ru>",
+   "tema": "RE: Договор № 0477650489 (Т-Финанс): встречное предложение и запрос расшифровки",
+   "data": "Mon, 7 Sep 2026 09:58:11 +0300",
+   "kto": "mba",
+   "kusok": "0JTQvtCx0YDRi9C5INC00LXQvdGMISDQnNC10L3RjyDQt9C+0LLRg9GCINCn0LjRgdGC0Y/QutC+ 0LLQsCDQldC60LDRgtC10YDQuNC90LAg0KHQtdGA0LPQtdC10LLQvdCwICjQuNC90LTQuNCy0LjQ tNGD0LDQu9GM0L3Ri9C5INC60L7QtCAyMzgxKSwg0Y8g0YHQv9C10YbQuNCw0LvQuNGB0YIg0LrQ vtC80L/QsNC90LjQuCDQntCe0J4g0J/QmtCeINCcLtCRLtCQLiDQpNC40L3QsNC90YHRiy4gDQrQ ndCw0YjQsCAg0LrQvtC80L/QsNC90LjRjyDQstC10LTQtdGCINGA0LDQsdC+0YLRgyDRgSAxMjIx LDUxICg4ONCe0J4"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "help_y@pvonline.ru <help_y@pvonline.ru>",
+   "tema": "[Подозрительное письмо!]Email клиента (okoteam.top@gmail.com) Договор № 25200746995, цессия СТ-77-2026-11536: предложение о закрытии",
+   "data": "Mon, 7 Sep 2026 08:28:37 +0300",
+   "kto": "pvonline",
+   "kusok": "--------_13016_-1937526336_23328 Content-Type: multipart/alternative; boundary=\"------_7467_-1937526336_23328\" --------_7467_-1937526336_23328 Content-Type: text/plain; charset=\"utf-8\" Content-Transfer-Encoding: base64 0JjRgdGF0L7QtNGP0YnQtdC10J/QuNGB0YzQvNC+4oSWYmJiNWU5NmUtYWE3Yy0x MWYxLTllNzQtMDA1MDU2MTMxM2Iy --------_7467_-1937526336_23328 Content-Type: text/html; charset=\"utf-8\" Content-Transf"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
+   "ot": "help_y@pvonline.ru <help_y@pvonline.ru>",
+   "tema": "[Подозрительное письмо!]Email клиента (okoteam.top@gmail.com) Договор № 25200746995, цессия СТ-77-2026-11536: предложение о закрытии",
+   "data": "Mon, 7 Sep 2026 08:28:36 +0300",
+   "kto": "pvonline",
+   "kusok": "--------_17396_-1937526523_23328 Content-Type: multipart/alternative; boundary=\"------_3231_-1937526523_23328\" --------_3231_-1937526523_23328 Content-Type: text/plain; charset=\"utf-8\" Content-Transfer-Encoding: base64 0JTQvtCx0YDRi9C5INC00LXQvdGMISDQpNCw0LnQuyDQstC+INCy0LvQvtC20LXQ vdC40LguIA0KICAg0JjRgdGF0L7QtNGP0YnQtdC10J/QuNGB0YzQvNC+4oSWYmJi NWU4ZGItYWE3Yy0xMWYxLTllNzQtMDA1MDU2MTMxM2Iy ------"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
    "ot": "<loan@oneclickmoney.ru>",
    "tema": "Обращение №2030A926002030 зарегистрировано",
    "data": "Mon, 31 Aug 2026 21:47:10 +0300",
@@ -357,6 +385,14 @@
   },
   {
    "yashik": "okoteam.top@gmail.com",
+   "ot": "soft <soft@idfeurasia.pro>",
+   "tema": "Re: Договор займа № 431617, ID 005402108: идентификация и предложение о закрытии",
+   "data": "Mon, 07 Sep 2026 10:06:58 +0300",
+   "kto": "idcollect",
+   "kusok": " ----ALT--508e55DdfF43547ACd9B538442162E991788764818 Content-Type: text/plain; charset=utf-8 Content-Transfer-Encoding: base64 0JTQsNC90LjRjdC70Ywg0JDQu9GM0LHQtdGA0YLQvtCy0LjRhywg0JfQtNGA0LDQstGB0YLQstGD 0LnRgtC1LgrQnNC+0LbQtdC8INGB0L/QuNGB0LDRgtGMIDEwJSDQvtGCINGB0YPQvNC80Ysg0LfQ sNC00L7Qu9C20LXQvdC90L7RgdGC0LguCtCc0Ysg0L3QtSDQvdCw0YfQuNGB0LvRj9C10Lwg0L/R gNC+0YbQtdC90YLRiywg0YjRgtGA0LDRhNGLINC40L"
+  },
+  {
+   "yashik": "okoteam.top@gmail.com",
    "ot": "\"support\" <support@mbafin.ru>",
    "tema": "Ответ",
    "data": "Fri, 4 Sep 2026 10:09:31 +0300",
@@ -386,5 +422,5 @@
    "oshibka": "error: b'[AUTHENTICATIONFAILED] Invalid credentials (Failure)'"
   }
  ],
- "pochta_proverena": "05.09.2026 03:00"
+ "pochta_proverena": "07.09.2026 08:31"
 }
