@@ -44,7 +44,14 @@ function handle(array $segments, string $method): never
     $in = Response::input();
     if ($method !== 'POST') Response::error('Метод не поддерживается', 405);
 
-    RateLimit::check('oauth:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 20, 3600);
+    // Вход из мини-приложения Телеграма подписан ключом бота, подобрать его
+    // нельзя, поэтому по адресу считаем щедро: у школьного Wi-Fi и у домашнего
+    // роутера один адрес на всю семью, а то и на весь класс.
+    if (($segments[1] ?? '') === 'telegram-webapp') {
+        RateLimit::check('tgapp:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 300, 3600);
+    } else {
+        RateLimit::check('oauth:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 20, 3600);
+    }
 
     switch ($provider) {
 
@@ -130,6 +137,10 @@ function handle(array $segments, string $method): never
 
             $u = json_decode($data['user'] ?? '[]', true);
             if (!is_array($u) || empty($u['id'])) Response::error('Telegram: нет пользователя', 400);
+
+            // Свой счётчик на телеграм-аккаунт: один пользователь не должен
+            // выбирать общий запас на всю сеть.
+            RateLimit::check('tguser:' . (int) $u['id'], 30, 3600);
 
             $name = trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) ?: ($u['username'] ?? 'Друг');
             $user = oauthUpsert('telegram_id', (int) $u['id'], '', $name, $u['photo_url'] ?? null);

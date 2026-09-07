@@ -79,6 +79,20 @@
     return менялось;
   }
 
+  /** Три попытки с паузой: одна оборванная связь не должна стоить семье прогресса. */
+  async function сНастойчивостью(дело, раз = 3) {
+    let последняя = null;
+    for (let i = 0; i < раз; i++) {
+      try { return await дело(); } catch (e) {
+        последняя = e;
+        // Сервер ответил и отказал (нет прав, чужой профиль) — повтор не поможет.
+        if (e && e.code && e.code >= 400 && e.code < 500) throw e;
+        await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+      }
+    }
+    throw последняя;
+  }
+
   async function запрос(путь, опции) {
     const r = await fetch(БАЗА + путь, Object.assign({
       headers: {
@@ -126,7 +140,7 @@
   async function забрать() {
     if (!включён()) return;
     try {
-      const d = await запрос('/progress/' + ребёнок());
+      const d = await сНастойчивостью(() => запрос('/progress/' + ребёнок()));
       const серверная = Number(d && d.rev || 0);
       if (серверная > ревизия()) {
         if (применить(d.state)) {
@@ -142,7 +156,9 @@
       } else if (серверная < ревизия()) {
         отправить();
       }
-    } catch (e) { /* нет связи — работаем на устройстве */ }
+    } catch (e) {
+      if (window.console) console.warn('Метанойя: прогресс с сервера не пришёл', e && e.message);
+    }
   }
 
   /* ── Перехват записи: любое сохранение приложения помечает правку ── */
@@ -166,20 +182,24 @@
     const подпись = localStorage.getItem('mt_tg_init');
     if (!БАЗА || !подпись || токен()) return;
     try {
-      const d = await запрос('/oauth/telegram-webapp', {
+      const d = await сНастойчивостью(() => запрос('/oauth/telegram-webapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ init_data: подпись }),
-      });
+      }));
       if (d && d.access_token) {
         localStorage.setItem('mt_token', d.access_token);
         localStorage.setItem('mt_auth', '1');
         if (d.user && d.user.name) localStorage.setItem('mt_name', d.user.name);
-        const я = await запрос('/users/me');
+        const я = await сНастойчивостью(() => запрос('/users/me'));
         const дети = (я && я.children) || [];
         if (дети.length) localStorage.setItem('mt_child_id', String(дети[0].id));
       }
-    } catch (e) { /* нет связи или бот не подключён — работаем на устройстве */ }
+    } catch (e) {
+      // Работаем на устройстве, но причину пишем: без неё молчаливый сбой
+      // входа не отличить от «сервера просто нет».
+      if (window.console) console.warn('Метанойя: вход из Телеграма не удался', e && e.message);
+    }
   }
 
   window.addEventListener('load', async () => {

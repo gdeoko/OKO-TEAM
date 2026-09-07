@@ -217,7 +217,13 @@ function toast(msg) {
 /* ───────── НАВИГАЦИЯ ПО ТАБАМ ───────── */
 
 function switchTab(tab) {
-  $$('.nav__tab').forEach((b) => b.classList.toggle('nav__tab--active', b.dataset.tab === tab));
+  $$('.nav__tab').forEach((b) => {
+    const свой = b.dataset.tab === tab;
+    b.classList.toggle('nav__tab--active', свой);
+    // Для чтения с экрана: цвет и жирность видит глаз, а озвучке нужен признак.
+    if (свой) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === tab));
   window.scrollTo({ top: 0 });
 }
