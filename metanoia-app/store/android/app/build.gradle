@@ -9,7 +9,7 @@ android {
     minSdk 23              // Android 6, ниже Trusted Web Activity не живёт
     targetSdk 34
     versionCode 1
-    versionName '1.0'
+    versionName '1.0.0'
     resValue 'string', 'app_name', 'Метанойя'
     // Адрес школы. Меняется в одном месте: здесь и в assetlinks на сервере.
     manifestPlaceholders = [hostName: 'ЗАМЕНИТЬ.домен.ру', defaultUrl: 'https://ЗАМЕНИТЬ.домен.ру/']
