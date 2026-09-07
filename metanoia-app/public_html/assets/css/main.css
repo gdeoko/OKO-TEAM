@@ -1948,6 +1948,9 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .rank__name { color: #EAF0F5; }
 [data-theme="dark"] .toc-item { background: #1b2c3a; }
 [data-theme="dark"] .toc-item__t { color: #EAF0F5; }
+/* Заголовок главы и кружок с номером в книге: в тёмной теме были навы на навы. */
+[data-theme="dark"] .toc-block { color: #F2F6FA; }
+[data-theme="dark"] .toc-item__num { background: rgba(212,165,116,.22); color: #e6c79a; }
 [data-theme="dark"] .reader { color: #E7EDF3; }
 [data-theme="dark"] .reader .scripture { background: linear-gradient(150deg,#22333f,#2a2620); color: #EAF0F5; }
 [data-theme="dark"] .blockp span { color: #EAF0F5; }
