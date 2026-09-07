@@ -160,13 +160,55 @@
     if (document.visibilityState === 'hidden') { clearTimeout(таймер); отправить(); }
   });
 
-  window.addEventListener('load', () => {
+  /* Вход из Телеграма: подпись отдаём серверу, он проверяет её ключом бота
+     и возвращает токен. Ребёнка берём первого в семье, если он уже заведён. */
+  async function войтиИзТелеграма() {
+    const подпись = localStorage.getItem('mt_tg_init');
+    if (!БАЗА || !подпись || токен()) return;
+    try {
+      const d = await запрос('/oauth/telegram-webapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ init_data: подпись }),
+      });
+      if (d && d.access_token) {
+        localStorage.setItem('mt_token', d.access_token);
+        localStorage.setItem('mt_auth', '1');
+        if (d.user && d.user.name) localStorage.setItem('mt_name', d.user.name);
+        const я = await запрос('/users/me');
+        const дети = (я && я.children) || [];
+        if (дети.length) localStorage.setItem('mt_child_id', String(дети[0].id));
+      }
+    } catch (e) { /* нет связи или бот не подключён — работаем на устройстве */ }
+  }
+
+  window.addEventListener('load', async () => {
     sessionStorage.removeItem('mt_sync_reload');
+    await войтиИзТелеграма();
     забрать();
   });
 
+  /* Ребёнок, заведённый в приложении, появляется и на сервере: без этого
+     переносить прогресс некуда. Молча, ошибки не мешают семье работать. */
+  async function завестиРебёнка(имя, возраст) {
+    if (!БАЗА || !токен() || ребёнок()) return null;
+    try {
+      const d = await запрос('/users/children', {
+        method: 'POST',
+        body: JSON.stringify({ name: имя, age: возраст }),
+      });
+      if (d && d.id) {
+        localStorage.setItem('mt_child_id', String(d.id));
+        отправитьПозже();
+        return d.id;
+      }
+    } catch (e) { /* нет связи — заведём при следующем входе */ }
+    return null;
+  }
+
   window.MT_SYNC = {
     включён: включён,
+    завестиРебёнка: завестиРебёнка,
     забрать: забрать,
     отправить: отправить,
     снимок: снимок,

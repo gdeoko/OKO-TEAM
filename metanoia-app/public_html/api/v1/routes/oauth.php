@@ -101,6 +101,42 @@ function handle(array $segments, string $method): never
             Response::ok(['user' => publicUser($user)] + $tokens);
         }
 
+        // ── Мини-приложение в Телеграме (initData) ─────────
+        // Подпись здесь считается иначе, чем у кнопки входа: секрет
+        // выводится из слова WebAppData, а данные приходят строкой запроса.
+        case 'telegram-webapp': {
+            $botToken = (string) Config::get('TELEGRAM_BOT_TOKEN', '');
+            if ($botToken === '') Response::error('Вход через Telegram ещё не подключён', 503);
+
+            $raw = (string) ($in['init_data'] ?? '');
+            if ($raw === '') Response::error('Нет данных Telegram', 400);
+
+            parse_str($raw, $data);
+            $hash = (string) ($data['hash'] ?? '');
+            unset($data['hash'], $data['signature']);
+            if ($hash === '') Response::error('Нет подписи Telegram', 400);
+
+            ksort($data);
+            $pairs = [];
+            foreach ($data as $k => $v) $pairs[] = $k . '=' . $v;
+            $checkString = implode("\n", $pairs);
+            $secret = hash_hmac('sha256', $botToken, 'WebAppData', true);
+            $calc = hash_hmac('sha256', $checkString, $secret);
+            if (!hash_equals($calc, $hash)) Response::error('Telegram: неверная подпись', 401);
+
+            if (time() - (int) ($data['auth_date'] ?? 0) > 86400) {
+                Response::error('Telegram: данные устарели, откройте школу заново', 401);
+            }
+
+            $u = json_decode($data['user'] ?? '[]', true);
+            if (!is_array($u) || empty($u['id'])) Response::error('Telegram: нет пользователя', 400);
+
+            $name = trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) ?: ($u['username'] ?? 'Друг');
+            $user = oauthUpsert('telegram_id', (int) $u['id'], '', $name, $u['photo_url'] ?? null);
+            $tokens = issueTokens($user);
+            Response::ok(['user' => publicUser($user)] + $tokens);
+        }
+
         default:
             Response::error('Провайдер не поддерживается', 404);
     }

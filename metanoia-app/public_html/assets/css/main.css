@@ -2798,3 +2798,14 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 /* Пустой список детей */
 .children__empty { padding: 14px 16px; border-radius: 14px; background: rgba(201,112,100,.07);
   font-size: 13px; line-height: 1.5; color: var(--gray); }
+
+/* ── Школа внутри Телеграма ──
+   Телеграм сам сообщает высоту своего окна: она меньше высоты экрана и
+   меняется, когда открывается клавиатура. Берём её вместо 100vh, иначе
+   низ приложения уезжает под край окна. */
+html.в-телеграме body { min-height: var(--tg-height, 100vh); }
+html.в-телеграме .app { min-height: var(--tg-height, 100vh); }
+html.в-телеграме .cv { height: var(--tg-height, var(--vvh, 100dvh)); }
+/* В Телеграме своя системная стрелка «назад», наша шапка ей не мешает,
+   но верхний отступ нужен поменьше: сверху уже есть панель мессенджера. */
+html.в-телеграме .hd { padding-top: 6px; }

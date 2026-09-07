@@ -26,6 +26,7 @@ const ОБОЛОЧКА = [
   './manifest.json',
   './assets/css/main.css',
   './assets/css/fonts.css',
+  './assets/js/telegram.js',
   './assets/js/sync.js',
   './assets/js/icons.js',
   './assets/js/magic.js',

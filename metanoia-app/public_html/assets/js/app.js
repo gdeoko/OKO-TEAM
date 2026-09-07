@@ -3537,6 +3537,7 @@ function initAuth() {
         дети.push(kid);
         DEMO.children.push(kid);
         localStorage.setItem('mt_kids', JSON.stringify(дети));
+        if (window.MT_SYNC && MT_SYNC.завестиРебёнка) MT_SYNC.завестиРебёнка(имяРебёнка, возраст);
       }
     }
 
@@ -4539,6 +4540,9 @@ function saveChild() {
   const saved = памятьЧитать('mt_kids', []);
   saved.push(kid);
   localStorage.setItem('mt_kids', JSON.stringify(saved));
+  // Если школа уже на сервере, заводим ребёнка и там: иначе прогресс
+  // некуда переносить между телефоном и планшетом.
+  if (window.MT_SYNC && MT_SYNC.завестиРебёнка) MT_SYNC.завестиРебёнка(name, addkAge);
   renderChildren();
   $('#addChild').hidden = true;
   if (window.MAGIC) MAGIC.rewardModal({ icon: 'sparkle', title: 'Ребёнок добавлен!', subtitle: `${name} теперь в вашей семье Метанойя. Начните первый урок вместе.`, xp: 0 });
