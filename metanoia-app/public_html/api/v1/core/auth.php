@@ -5,10 +5,28 @@ declare(strict_types=1);
 
 final class Auth
 {
+    /**
+     * Заголовок Authorization как он до нас дошёл. На части хостингов
+     * Apache отдаёт его под другим именем или только через getallheaders(),
+     * поэтому смотрим во все три места, иначе вход молча отвечает 401.
+     */
+    public static function bearerHeader(): string
+    {
+        foreach (['HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION'] as $ключ) {
+            if (!empty($_SERVER[$ключ])) return (string) $_SERVER[$ключ];
+        }
+        if (function_exists('getallheaders')) {
+            foreach (getallheaders() as $имя => $значение) {
+                if (strcasecmp($имя, 'Authorization') === 0) return (string) $значение;
+            }
+        }
+        return '';
+    }
+
     /** Текущий пользователь или 401. @return array строка users */
     public static function requireUser(): array
     {
-        $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $header = self::bearerHeader();
         if (!preg_match('/^Bearer\s+(\S+)$/', $header, $m)) {
             Response::error('Требуется авторизация', 401);
         }

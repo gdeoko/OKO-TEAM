@@ -32,8 +32,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 
-// ── Rate limiting: 100 запросов/мин на IP ──────────────────
-RateLimit::check($_SERVER['REMOTE_ADDR'] ?? 'unknown', 100, 60);
+// ── Ограничение частоты ────────────────────────────────────
+// Считаем по двум ключам. По адресу предел щедрый: за одним адресом сидит
+// вся семья, а в воскресной школе и целый класс с общим Wi-Fi, и каждый
+// ребёнок шлёт свой прогресс. По токену предел на человека: один аккаунт
+// не должен выбирать запас на всех.
+RateLimit::check($_SERVER['REMOTE_ADDR'] ?? 'unknown', 600, 60);
+
+$bearer = Auth::bearerHeader();
+if ($bearer !== '') {
+    RateLimit::check('tok:' . hash('sha256', $bearer), 120, 60);
+}
 
 // ── Разбор пути: /api/v1/{resource}/{action?}/{id?} ────────
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';

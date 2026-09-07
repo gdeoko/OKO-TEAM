@@ -1,4 +1,14 @@
 RewriteEngine On
+
+# Заголовок Authorization до PHP доходит не везде: на shared-хостингах с
+# FastCGI и LiteSpeed Apache срезает его, и тогда любой вход отвечает 401,
+# хотя код исправен. Прокидываем его руками двумя способами сразу.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+<IfModule mod_setenvif.c>
+  SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ index.php [QSA,L]
 
