@@ -121,8 +121,8 @@
            Серый и есть: 0x4A505C -> 0xA9B0C0, от двадцати девяти до
            шестидесяти семи сотых. Кольца тоннеля и кладка на нём
            читаются, потому что им есть куда быть светлее фона. */
-        uC1: { value: new T.Color(0x767D8C) },
-        uC2: { value: new T.Color(0xBFC6D4) },
+        uC1: { value: new T.Color(0x070A14) },
+        uC2: { value: new T.Color(0x1A2238) },
         uTime: { value: 0 },
         uSila: { value: 0 }
       },
