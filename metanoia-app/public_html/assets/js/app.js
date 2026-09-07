@@ -4695,12 +4695,9 @@ function альбомПоФактам() {
   let уроков = 0;
   DEMO.blocks.forEach((b) => b.lessons.forEach((l) => { if (!l.exam && isLessonDone(l.n)) уроков++; }));
   ALBUM.lessons = уроков;
-  let игр = 0;
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.startsWith('mt_lvl_')) игр += Number(localStorage.getItem(k) || 0);
-  }
-  ALBUM.games = игр;
+  // Партии считаем по записям об играх, а не по сумме уровней: уровень
+  // начинается с единицы, и без единой сыгранной партии сумма уже врала.
+  ALBUM.games = партийСыграно();
   ALBUM.days = Number(localStorage.getItem('mt_dverse_streak') || 0);
   return ALBUM;
 }
