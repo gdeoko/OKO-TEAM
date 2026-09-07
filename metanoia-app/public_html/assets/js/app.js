@@ -3446,7 +3446,7 @@ function showApp(name) {
   if (name) {
     localStorage.setItem('mt_name', name);
   }
-  const stored = localStorage.getItem('mt_name') || 'Даниэль';
+  const stored = localStorage.getItem('mt_name') || 'Друг';
   $('#avatarBtn').textContent = stored[0].toUpperCase();
   $('.profile-head__avatar').textContent = stored[0].toUpperCase();
   $('.profile-head__name').textContent = stored;
@@ -3949,11 +3949,19 @@ function certРазмечен() {
 
 /* Имя на бланке берём у текущего ребёнка, а не из демонстрационных данных. */
 function именаДляСертификата() {
+  // На бланке стоит имя ребёнка, который занимается, а не имя родителя:
+  // mt_name хранит того, кто завёл аккаунт, и для сертификата не годится.
+  const ребёнок = типаАктивныйРебёнок();
+  if (ребёнок && ребёнок.name) return ребёнок.name;
   const имя = (localStorage.getItem('mt_name') || '').trim();
   if (имя) return имя;
-  const дети = памятьЧитать('mt_kids', []);
-  if (дети.length && дети[0] && дети[0].name) return дети[0].name;
   return 'Ученик школы';
+}
+
+/** Активный ребёнок, если функция профилей уже загружена. */
+function типаАктивныйРебёнок() {
+  try { return typeof активныйРебёнок === 'function' ? активныйРебёнок() : null; }
+  catch (e) { return null; }
 }
 
 function openCertificates() {
@@ -4934,7 +4942,7 @@ function недельныйОтчёт() {
   const до = 5 - (всегоПройдено % 5);
   return {
     child: именаДляСертификата(),
-    ava: (DEMO.children[0] && DEMO.children[0].img) || 'assets/img/avatars/lion.jpg',
+    ava: (типаАктивныйРебёнок() || DEMO.children[0] || {}).img || 'assets/img/avatars/lion.jpg',
     range: день(new Date(неделя)) + ' – ' + день(new Date()),
     lessons: уроков, games: игр, streak: серия, streakUp: серия > 0,
     rankNote: всегоПройдено
