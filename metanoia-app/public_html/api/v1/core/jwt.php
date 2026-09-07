@@ -15,6 +15,21 @@ final class JWT
         return base64_decode(strtr($data, '-_', '+/'));
     }
 
+    /**
+     * Ключ подписи. Пустой или короткий ключ означает, что токены может
+     * подделать кто угодно, поэтому лучше честно не запуститься, чем
+     * работать с дырой. Строка JWT_SECRET заводится один раз при установке:
+     * openssl rand -hex 32
+     */
+    private static function secret(): string
+    {
+        $ключ = (string) Config::get('JWT_SECRET', '');
+        if (strlen($ключ) < 32) {
+            Response::error('Сервер не настроен: в config/.env нет JWT_SECRET', 500);
+        }
+        return $ключ;
+    }
+
     /** @param array $claims  доп. поля (sub, role...) */
     public static function issue(array $claims, int $ttlSeconds): string
     {
@@ -23,8 +38,7 @@ final class JWT
             'iat' => time(),
             'exp' => time() + $ttlSeconds,
         ]));
-        $sig = self::b64(hash_hmac('sha256', "$header.$payload",
-            (string) Config::get('JWT_SECRET', ''), true));
+        $sig = self::b64(hash_hmac('sha256', "$header.$payload", self::secret(), true));
         return "$header.$payload.$sig";
     }
 
@@ -34,8 +48,7 @@ final class JWT
         $parts = explode('.', $token);
         if (count($parts) !== 3) return null;
         [$h, $p, $s] = $parts;
-        $expected = self::b64(hash_hmac('sha256', "$h.$p",
-            (string) Config::get('JWT_SECRET', ''), true));
+        $expected = self::b64(hash_hmac('sha256', "$h.$p", self::secret(), true));
         if (!hash_equals($expected, $s)) return null;
         $claims = json_decode(self::unb64($p) ?: '', true);
         if (!is_array($claims)) return null;
