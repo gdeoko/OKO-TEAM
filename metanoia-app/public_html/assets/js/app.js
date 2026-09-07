@@ -438,22 +438,33 @@ function renderChildren() {
     const п = $('#childrenNote'); if (п) п.hidden = true;
     return;
   }
-  $('#children').innerHTML = DEMO.children.map((c) => `
-    <button class="child-card">
+  // Цифры показываем только тому ребёнку, который сейчас занимается: у
+  // остальных свой прогресс, он лежит в своей связке и здесь не виден.
+  const текущий = активныйЛид();
+  $('#children').innerHTML = DEMO.children.map((c) => {
+    // Один ребёнок в семье всегда текущий, даже если номера у записи ещё нет.
+    const свой = DEMO.children.length === 1 || (!!c.лид && String(c.лид) === String(текущий));
+    const строка = свой
+      ? (ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна)
+      : 'Свой прогресс · нажмите, чтобы передать устройство';
+    return `
+    <button class="child-card${свой ? ' child-card--now' : ''}" data-kid="${c.лид || ''}">
       <div class="child-card__avatar"><img src="${c.img}" alt=""></div>
       <div>
-        <div class="child-card__name">${c.name}, ${c.age} лет</div>
-        <div class="child-card__rank">${(ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна)}</div>
+        <div class="child-card__name">${c.name}, ${c.age} лет${свой ? ' · сейчас занимается' : ''}</div>
+        <div class="child-card__rank">${строка}</div>
       </div>
-      <div class="child-card__xp">${ICON('flame', 14)} ${дней} дн.</div>
-    </button>
-  `).join('');
-  // Пока прогресс один на устройство, при двух и более детях об этом честно
-  // предупреждаем: иначе родитель решит, что у второго ребёнка чужие цифры.
+      ${свой ? `<div class="child-card__xp">${ICON('flame', 14)} ${дней} дн.</div>` : ''}
+    </button>`;
+  }).join('');
   const примечание = $('#childrenNote');
   if (примечание) примечание.hidden = DEMO.children.length < 2;
-  $$('#children .child-card').forEach((el, i) =>
-    el.addEventListener('click', () => openChild(DEMO.children[i])));
+  $$('#children .child-card').forEach((el, i) => el.addEventListener('click', () => {
+    const c = DEMO.children[i];
+    const текущийЛид = активныйЛид();
+    if (DEMO.children.length === 1 || (!!c.лид && String(c.лид) === String(текущийЛид))) openChild(c);
+    else заниматьсяКак(c);
+  }));
 }
 
 
@@ -4640,7 +4651,53 @@ let addkAge = 7, addkPick = 0;
 
 function loadSavedKids() {
   const saved = памятьЧитать('mt_kids', []);
+  // Номер ребёнка нужен, чтобы к нему привязать его прогресс на устройстве.
+  // У записей, заведённых раньше, его нет: проставляем при первом чтении.
+  let менялось = false;
+  saved.forEach((k, i) => {
+    if (k && !k.лид) { k.лид = 'k' + Date.now() + i; менялось = true; }
+  });
+  if (менялось) localStorage.setItem('mt_kids', JSON.stringify(saved));
   saved.forEach((k) => { if (!DEMO.children.some((c) => c.name === k.name && c.age === k.age)) DEMO.children.push(k); });
+  if (saved.length && !localStorage.getItem('mt_active_kid')) {
+    localStorage.setItem('mt_active_kid', String(saved[0].лид));
+  }
+}
+
+/** Номер ребёнка, который сейчас занимается. */
+function активныйЛид() {
+  const л = localStorage.getItem('mt_active_kid') || '';
+  if (л) return л;
+  const дети = памятьЧитать('mt_kids', []);
+  return (дети[0] && дети[0].лид) || '';
+}
+
+/** Запись о ребёнке, который сейчас занимается. */
+function активныйРебёнок() {
+  const дети = памятьЧитать('mt_kids', []);
+  const л = активныйЛид();
+  return дети.find((k) => String(k.лид) === String(л)) || дети[0] || null;
+}
+
+/**
+ * Передать устройство другому ребёнку: его уроки, награды и друг свои.
+ * Пока сервера нет, связка лежит на устройстве; с сервером подтягивается
+ * ещё и то, что этот ребёнок прошёл на другом телефоне.
+ */
+async function заниматьсяКак(kid) {
+  if (!kid || !kid.лид) return;
+  if (String(kid.лид) === String(активныйЛид())) return;
+  if (!(window.MT_SYNC && MT_SYNC.сменитьРебёнка)) {
+    toast('Не получилось сменить ребёнка');
+    return;
+  }
+  // Серверный номер берём из памяти, а не из объекта на экране: он мог
+  // прийти с сервера уже после того, как карточка была нарисована.
+  const свежий = памятьЧитать('mt_kids', []).find((k) => String(k.лид) === String(kid.лид)) || kid;
+  toast('Передаём устройство: ' + kid.name);
+  await MT_SYNC.сменитьРебёнка(kid.лид, свежий.sid || '');
+  // Экраны нарисованы прогрессом прежнего ребёнка, честнее перечитать всё.
+  location.reload();
 }
 
 function openAddChild() {
@@ -4667,14 +4724,23 @@ function saveChild() {
   if (!name) { $('#addkName').focus(); toast('Введите имя ребёнка'); return; }
   const opt = AVATAR_OPTS[addkPick];
   const img = opt.type === 'img' ? opt.src : initialAvatar(name, opt.color);
-  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 очков', streak: 0, img };
+  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 очков', streak: 0, img,
+    лид: 'k' + Date.now() };
   DEMO.children.push(kid);
   const saved = памятьЧитать('mt_kids', []);
   saved.push(kid);
   localStorage.setItem('mt_kids', JSON.stringify(saved));
+  if (saved.length === 1) localStorage.setItem('mt_active_kid', String(kid.лид));
   // Если школа уже на сервере, заводим ребёнка и там: иначе прогресс
   // некуда переносить между телефоном и планшетом.
-  if (window.MT_SYNC && MT_SYNC.завестиРебёнка) MT_SYNC.завестиРебёнка(name, addkAge);
+  if (window.MT_SYNC && MT_SYNC.завестиРебёнка) {
+    Promise.resolve(MT_SYNC.завестиРебёнка(name, addkAge)).then((сид) => {
+      if (!сид) return;
+      const список = памятьЧитать('mt_kids', []);
+      const запись = список.find((k) => String(k.лид) === String(kid.лид));
+      if (запись) { запись.sid = сид; localStorage.setItem('mt_kids', JSON.stringify(список)); }
+    });
+  }
   renderChildren();
   $('#addChild').hidden = true;
   if (window.MAGIC) MAGIC.rewardModal({ icon: 'sparkle', title: 'Ребёнок добавлен!', subtitle: `${name} теперь в вашей семье Метанойя. Начните первый урок вместе.`, xp: 0 });

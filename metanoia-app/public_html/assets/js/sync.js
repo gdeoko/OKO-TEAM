@@ -26,6 +26,24 @@
   const МЕСТНЫЕ = ['mt_theme', 'mt_music_off', 'mt_reader_fs',
     'mt_onb', 'mt_auth', 'mt_token', 'mt_refresh', 'mt_child_id', 'mt_rev', 'mt_sync_at'];
 
+  // Семейные ключи: они про семью целиком, а не про одного ребёнка, и при
+  // переключении между детьми остаются на месте.
+  const СЕМЕЙНЫЕ = ['mt_kids', 'mt_active_kid', 'mt_consent', 'mt_pin', 'mt_lang',
+    'mt_msgs2', 'mt_chat_read', 'mt_blocked', 'mt_reports', 'mt_name'];
+
+  /** Ключи прогресса одного ребёнка: всё своё, кроме устройства и семьи. */
+  function ключиРебёнка() {
+    const список = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('mt_')) continue;
+      if (МЕСТНЫЕ.includes(k) || СЕМЕЙНЫЕ.includes(k)) continue;
+      if (k.startsWith('mt_bucket_')) continue;
+      список.push(k);
+    }
+    return список;
+  }
+
   const токен = () => localStorage.getItem('mt_token') || '';
   const ребёнок = () => localStorage.getItem('mt_child_id') || '';
   const включён = () => !!(БАЗА && токен() && ребёнок());
@@ -43,6 +61,8 @@
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || !k.startsWith('mt_') || МЕСТНЫЕ.includes(k)) continue;
+      // Связки других детей на сервер не возим: у каждого ребёнка свой снимок.
+      if (k.startsWith('mt_bucket_')) continue;
       const v = localStorage.getItem(k);
       if (v === null || v.length > ПРЕДЕЛ_ЗАПИСИ) continue;
       s[k] = v;
@@ -70,6 +90,7 @@
     let менялось = false;
     Object.keys(keys).forEach((k) => {
       if (!k.startsWith('mt_') || МЕСТНЫЕ.includes(k)) return;
+      if (k.startsWith('mt_bucket_')) return;
       if (typeof keys[k] !== 'string') return; // мусор с чужой версии не кладём
       if (localStorage.getItem(k) !== keys[k]) {
         origSetItem.call(localStorage, k, keys[k]);
@@ -165,7 +186,8 @@
   const origSetItem = localStorage.setItem.bind(localStorage);
   localStorage.setItem = function (k, v) {
     origSetItem(k, v);
-    if (typeof k === 'string' && k.startsWith('mt_') && !МЕСТНЫЕ.includes(k)) {
+    if (typeof k === 'string' && k.startsWith('mt_') && !МЕСТНЫЕ.includes(k)
+        && !k.startsWith('mt_bucket_')) {
       поднятьРевизию();
       отправитьПозже();
     }
@@ -211,15 +233,19 @@
   /* Ребёнок, заведённый в приложении, появляется и на сервере: без этого
      переносить прогресс некуда. Молча, ошибки не мешают семье работать. */
   async function завестиРебёнка(имя, возраст) {
-    if (!БАЗА || !токен() || ребёнок()) return null;
+    if (!БАЗА || !токен()) return null;
     try {
       const d = await запрос('/users/children', {
         method: 'POST',
         body: JSON.stringify({ name: имя, age: возраст }),
       });
       if (d && d.id) {
-        localStorage.setItem('mt_child_id', String(d.id));
-        отправитьПозже();
+        // Текущим делаем только первого: остальные ждут, пока им передадут
+        // устройство, иначе прогресс уехал бы не тому ребёнку.
+        if (!ребёнок()) {
+          localStorage.setItem('mt_child_id', String(d.id));
+          отправитьПозже();
+        }
         return d.id;
       }
     } catch (e) { /* нет связи — заведём при следующем входе */ }
@@ -243,11 +269,51 @@
     return d;
   }
 
+  /**
+   * Сверяем детей семьи с сервером: у своих записей проставляем серверный
+   * номер, а на новом устройстве заводим карточки детей заново, чтобы
+   * родителю не пришлось вбивать их по второму разу.
+   */
   async function подхватитьРебёнка() {
     try {
       const я = await сНастойчивостью(() => запрос('/users/me'));
       const дети = (я && я.children) || [];
-      if (дети.length) localStorage.setItem('mt_child_id', String(дети[0].id));
+      if (!дети.length) return дети;
+
+      let свои = [];
+      try { свои = JSON.parse(localStorage.getItem('mt_kids') || '[]'); } catch (e) { свои = []; }
+      if (!Array.isArray(свои)) свои = [];
+      const былоПусто = свои.length === 0;
+      let менялось = false;
+
+      дети.forEach((с, i) => {
+        const свой = свои.find((k) => String(k.sid || '') === String(с.id))
+          || свои.find((k) => !k.sid && k.name === с.name);
+        if (свой) {
+          if (String(свой.sid || '') !== String(с.id)) { свой.sid = с.id; менялось = true; }
+        } else {
+          свои.push({ name: с.name, age: с.age || 7, rank: '', streak: 0, img: '',
+            лид: 'k' + Date.now() + i, sid: с.id });
+          менялось = true;
+        }
+      });
+
+      if (менялось) origSetItem.call(localStorage, 'mt_kids', JSON.stringify(свои));
+
+      // Текущим оставляем того, кто уже выбран на этом устройстве.
+      const активный = localStorage.getItem('mt_active_kid') || '';
+      const выбран = свои.find((k) => String(k.лид) === String(активный)) || свои[0];
+      if (выбран) {
+        origSetItem.call(localStorage, 'mt_active_kid', String(выбран.лид));
+        if (выбран.sid) origSetItem.call(localStorage, 'mt_child_id', String(выбран.sid));
+      }
+
+      // На чистом устройстве список детей появился только что: экраны уже
+      // нарисованы пустыми, поэтому один раз перечитываем страницу.
+      if (былоПусто && менялось && !sessionStorage.getItem('mt_kids_reload')) {
+        sessionStorage.setItem('mt_kids_reload', '1');
+        setTimeout(() => location.reload(), 400);
+      }
       return дети;
     } catch (e) { return []; }
   }
@@ -307,6 +373,53 @@
     return d;
   }
 
+  /* ── Переключение между детьми на одном устройстве ──────
+     Прогресс каждого ребёнка лежит своей связкой mt_bucket_<id>. Уходя,
+     складываем текущую связку, приходя — раскладываем нужную и просим у
+     сервера свежую версию именно этого ребёнка. */
+
+  function сложитьСвязку(лид) {
+    if (!лид) return;
+    const связка = {};
+    ключиРебёнка().forEach((k) => { связка[k] = localStorage.getItem(k); });
+    origSetItem.call(localStorage, 'mt_bucket_' + лид, JSON.stringify(связка));
+  }
+
+  function разложитьСвязку(лид) {
+    ключиРебёнка().forEach((k) => localStorage.removeItem(k));
+    let связка = null;
+    try { связка = JSON.parse(localStorage.getItem('mt_bucket_' + лид) || 'null'); } catch (e) { связка = null; }
+    if (связка && typeof связка === 'object') {
+      Object.keys(связка).forEach((k) => {
+        if (typeof связка[k] === 'string') origSetItem.call(localStorage, k, связка[k]);
+      });
+    }
+  }
+
+  /**
+   * Сделать ребёнка текущим. Возвращает true, если страницу надо перерисовать.
+   * @param {string} лид   свой номер ребёнка в этой семье
+   * @param {string} сид   его же номер на сервере, если школа уже на сервере
+   */
+  async function сменитьРебёнка(лид, сид) {
+    const прежний = localStorage.getItem('mt_active_kid') || '';
+    if (!лид || лид === прежний) return false;
+    // То, что ребёнок успел сделать, сначала уезжает на сервер и в связку.
+    try { await отправить(); } catch (e) { /* нет связи — уедет позже */ }
+    сложитьСвязку(прежний);
+
+    origSetItem.call(localStorage, 'mt_active_kid', String(лид));
+    разложитьСвязку(лид);
+    // Ревизия и адрес на сервере теперь другого ребёнка.
+    localStorage.removeItem('mt_rev');
+    localStorage.removeItem('mt_sync_at');
+    if (сид) origSetItem.call(localStorage, 'mt_child_id', String(сид));
+    else localStorage.removeItem('mt_child_id');
+
+    if (включён()) { try { await забрать(); } catch (e) { /* работаем на устройстве */ } }
+    return true;
+  }
+
   /** Стереть аккаунт на сервере вместе с детьми и прогрессом. */
   async function удалитьАккаунт() {
     if (!включён()) return true; // сервера нет, чистим только телефон
@@ -322,6 +435,7 @@
     войтиГуглом: войтиГуглом,
     забылПароль: забылПароль,
     новыйПароль: новыйПароль,
+    сменитьРебёнка: сменитьРебёнка,
     удалитьАккаунт: удалитьАккаунт,
     завестиРебёнка: завестиРебёнка,
     забрать: забрать,
