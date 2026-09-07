@@ -3507,6 +3507,10 @@ function showApp(name) {
   if (name) {
     localStorage.setItem('mt_name', name);
   }
+  const место = (localStorage.getItem('mt_place') || '').trim();
+  const подпись = $('#profilePlace');
+  if (подпись) подпись.textContent = место ? 'Родитель · ' + место : 'Родитель';
+
   const stored = localStorage.getItem('mt_name') || 'Друг';
   $('#avatarBtn').textContent = stored[0].toUpperCase();
   $('.profile-head__avatar').textContent = stored[0].toUpperCase();
@@ -3610,6 +3614,11 @@ function initAuth() {
       if (плохо) нетСогласия = true;
     });
     if (нетСогласия) return toast('Отметьте согласия: без них школа не может завести аккаунт');
+
+    // Город и страна из формы: раньше в профиле у всех стояла «Москва, Россия».
+    const место = [(f.city && f.city.value || '').trim(), (f.country && f.country.value || '').trim()]
+      .filter(Boolean).join(', ');
+    if (место) localStorage.setItem('mt_place', место);
 
     // Запоминаем, на что и когда согласился родитель.
     localStorage.setItem('mt_consent', JSON.stringify({
