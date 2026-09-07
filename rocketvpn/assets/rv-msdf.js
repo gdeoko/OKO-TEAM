@@ -390,6 +390,8 @@
        один раз, за три четверти секунды. Волна от касания и прокрутки
        несёт СВЕЧЕНИЕ по гребню (vWave в цвете и в непрозрачности ниже)
        и не трогает сами знаки. Текст читается всегда. */
+    "uniform float uGlitch;",
+    "uniform float uTime;",
     "uniform vec2 uWaveC;",
     "uniform float uWaveR;",
     "uniform float uWaveW;",
@@ -398,14 +400,23 @@
     "varying float vAlpha;",
     "varying float vWeight;",
     "varying float vWave;",
+    "varying float vGl;",
     "float _linstep(float b, float e, float t){ return clamp((t - b) / (e - b), 0.0, 1.0); }",
     "float falloff(float x, float start, float end, float margin, float progress){",
     "  float m = margin * sign(end - start);",
     "  float p = mix(start - m, end, progress);",
     "  return _linstep(p + m, p, x);",
     "}",
+    "float gh11(float n){ return fract(sin(n * 91.3458) * 47453.5453); }",
     "void main(){",
-    "  float tr1 = falloff(textWeights.x, 0.0, 1.0, 0.1, clamp(uShow1, 0.0, 1.0));",
+    /* ── СТРОКА ВСТАЁТ ЦЕЛИКОМ, А НЕ ПРОТИРАЕТСЯ СЛЕВА НАПРАВО ─────
+       Здесь стоял протир по глифам: буква проявлялась тем позже, чем
+       правее стояла. Владелец: «на месте, разом, красиво исчезает».
+       Протир этому прямо противоречит - он и есть уезжание, только
+       нарисованное прозрачностью. */
+    "  float tr1 = clamp(uShow1, 0.0, 1.0);",
+    "  float gl = clamp(1.0 - tr1, 0.0, 1.0) * uGlitch;",
+    "  vGl = gl;",
     "  vUv = uv;",
     /* Их строка. Ширина столбца и число столбцов вынесены в униформы:
        у нас атлас другого размера, всё остальное до символа то же. */
@@ -429,7 +440,20 @@
        Владелец, глядя на igloo: перебор букв убрать везде, показ
        несёт непрозрачность плюс свечение, которое проходит по
        строке. Строка теперь читается с первого кадра. */
-    "  vAlpha = tr1;",
+    /* ── ПОМЕХА ПОЛОСАМИ ──────────────────────────────────────────
+       Строка режется на горизонтальные полосы, каждая уезжает вбок на
+       своё случайное расстояние, часть полос пропадает совсем. Полоса
+       считается от МЕСТА глифа, а не от его номера, поэтому рвётся вся
+       строка разом и одинаково на любой длине.
+
+       Время входит в номер полосы: рисунок помехи меняется каждый кадр,
+       и глаз читает это дрожью сигнала, а не сдвигом набора. */
+    "  float pol = floor(position.y * 13.0 + floor(uTime * 22.0) * 0.37);",
+    "  float sh = gh11(pol) - 0.5;",
+    "  float drop = step(0.22, gh11(pol + 7.3));",
+    "  vAlpha = tr1 * mix(1.0, drop, gl * 0.85);",
+    "  vec3 poz = position;",
+    "  poz.x += sh * gl * 0.34;",
     "  vWeight = textWeights.x;",
     "  vec4 mv;",
     /* Билборд: разворот лицом к камере с сохранением масштаба. Столбцы
@@ -438,10 +462,10 @@
     "  if (uBillboard > 0.5) {",
     "    vec3 sc = vec3(length(modelMatrix[0].xyz), length(modelMatrix[1].xyz), length(modelMatrix[2].xyz));",
     "    vec3 mid = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;",
-    "    vec3 pv = viewMatrix[0].xyz * (position.x * sc.x) + viewMatrix[1].xyz * (position.y * sc.y);",
+    "    vec3 pv = viewMatrix[0].xyz * (poz.x * sc.x) + viewMatrix[1].xyz * (poz.y * sc.y);",
     "    mv = viewMatrix * vec4(mid + pv, 1.0);",
     "  } else {",
-    "    mv = viewMatrix * modelMatrix * vec4(position, 1.0);",
+    "    mv = viewMatrix * modelMatrix * vec4(poz, 1.0);",
     "  }",
     "  gl_Position = projectionMatrix * mv;",
     "}"
@@ -452,6 +476,7 @@
     "uniform vec3 uColor;",
     "uniform float uOpacity;",
     "uniform float uThickness;",
+    "uniform float uGlitch;",
     "uniform float uHalo;",
     "uniform vec3 uHaloC;",
     "uniform float uHaloA;",
@@ -459,10 +484,26 @@
     "varying float vAlpha;",
     "varying float vWeight;",
     "varying float vWave;",
+    "varying float vGl;",
     "float median(float r, float g, float b){ return max(min(r, g), min(max(r, g), b)); }",
     "void main(){",
     "  vec3 s = texture2D(tMap, vUv).rgb;",
     "  float sd = median(s.r, s.g, s.b);",
+    /* ── РАСЩЕПЛЕНИЕ КАНАЛОВ НА ПОМЕХЕ ────────────────────────────
+       Полосового сдвига хватает, чтобы прочесть помеху, но не хватает,
+       чтобы она читалась КРАСИВОЙ. Настоящий сбой сигнала разводит
+       цветовые каналы: у буквы появляется холодная кайма с одной
+       стороны и тёплая с другой. Берём поле расстояний ещё дважды, с
+       мелким сдвигом по горизонтали, и складываем края обратно. Оба
+       лишних чтения живут только на переходе: при vGl = 0 сдвиг
+       нулевой, и выборки идут в ту же точку. */
+    "  float raz = vGl * 0.010;",
+    "  float sdR = median(texture2D(tMap, vUv + vec2(raz, 0.0)).r,",
+    "                     texture2D(tMap, vUv + vec2(raz, 0.0)).g,",
+    "                     texture2D(tMap, vUv + vec2(raz, 0.0)).b);",
+    "  float sdB = median(texture2D(tMap, vUv - vec2(raz, 0.0)).r,",
+    "                     texture2D(tMap, vUv - vec2(raz, 0.0)).g,",
+    "                     texture2D(tMap, vUv - vec2(raz, 0.0)).b);",
     /* Ширина сглаживания берётся производной самого поля, а не числом.
        Число пришлось бы подбирать под каждый масштаб текста в сцене, а
        производная знает настоящий размер буквы на экране: у дальнего
@@ -493,6 +534,15 @@
        непрозрачность знака, поэтому кайма гаснет по краю так же мягко,
        как гаснет буква. */
     "  if (uHalo > 0.0) col = mix(uHaloC, col, clamp(a / max(aAll, 1e-4), 0.0, 1.0));",
+    /* Каёмка каналов кладётся поверх цвета: холодная слева, тёплая
+       справа, обе гаснут вместе с помехой. */
+    "  if (vGl > 0.001) {",
+    "    float kR = smoothstep(0.5 - w, 0.5 + w, sdR) - a;",
+    "    float kB = smoothstep(0.5 - w, 0.5 + w, sdB) - a;",
+    "    col += vec3(0.55, 0.10, 0.05) * max(kR, 0.0) * vGl;",
+    "    col += vec3(0.05, 0.25, 0.65) * max(kB, 0.0) * vGl;",
+    "    aAll = max(aAll, max(max(kR, kB), 0.0) * vAlpha * uOpacity * 0.85);",
+    "  }",
     "  gl_FragColor = vec4(col, min(1.0, aAll * (1.0 + vWave * 0.55)));",
     "}"
   ].join("\n");
@@ -553,6 +603,23 @@
            граница сглаживания уходит в минус, и буквой становится вся
            четвертинка глифа - под каждым знаком вылезает чёрный
            прямоугольник. */
+        /* ── ГЛИТЧ НА ПОЯВЛЕНИЕ И ГАШЕНИЕ ────────────────────────
+           Владелец, про весь сайт разом: «ВЕСЬ ТЕКСТ, ЗАГОЛОВКИ И
+           ПОДЗАГОЛОВКИ должны появляться и исчезать с красивым эффектом
+           глитча, никак иначе; на месте, разом, красиво исчезает, не
+           уезжает и ничем не перекрывается».
+
+           Сила берётся из самого показа: она равна единице, когда
+           строки нет, и нулю, когда строка стоит целиком. Значит на
+           появлении глитч затихает, на гашении разгорается, и отдельной
+           величины для него держать не нужно.
+
+           uGlitch это выключатель для тех строк, где помеха не к месту
+           (мелкая приборная разметка у глыб). */
+        uGlitch: { value: о["глитч"] == null ? 1 : (о["глитч"] ? 1 : 0) },
+        /* Часы нужны только помехе: без них рисунок полос застыл бы, и
+           вместо дрожи сигнала вышел бы один раз сдвинутый набор. */
+        uTime: { value: 0 },
         uHalo: { value: о["ореол"] == null ? 0 : о["ореол"] },
         uHaloC: { value: new T.Color(о["цветОреола"] == null ? 0x080D16 : о["цветОреола"]) },
         uHaloA: { value: о["силаОреола"] == null ? 0.85 : о["силаОреола"] },
@@ -631,9 +698,17 @@
     if (доля >= 1) волна.жив = false;
   }
 
+  var часыТекста = 0;
   function кадр(dt) {
     var шаг = Math.min(0.1, Math.max(0.001, dt || 0.016));
+    часыТекста += шаг;
     ходВолны(шаг);
+    /* Часы идут у ВСЕХ строк, а не только у живых: помеха работает и на
+       гашении, когда строка уже вышла из очереди появления. */
+    for (var ч = 0; ч < ВСЕ.length; ч++) {
+      var ум = ВСЕ[ч].material && ВСЕ[ч].material.uniforms;
+      if (ум && ум.uTime) ум.uTime.value = часыТекста;
+    }
     for (var i = живые.length - 1; i >= 0; i--) {
       var меш = живые[i];
       var п = меш.userData["показ"];
