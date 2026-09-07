@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium', args:['--no-sandbox','--disable-gpu'] });
+const p = await b.newPage({ viewport:{width:390,height:900}, deviceScaleFactor:2 });
+const битые=[]; p.on('response', r=>{ if(r.status()>=400 && /\.jpg/.test(r.url())) битые.push(r.url().split('/').pop()); });
+await p.route(u=>!u.href.startsWith('http://127.0.0.1'), r=>r.abort());
+await p.goto('http://127.0.0.1:8777/index.html',{waitUntil:'load'});
+await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('mt_onb','1'); localStorage.setItem('mt_auth','1'); });
+await p.reload({waitUntil:'load'});
+await p.waitForSelector('.splash--hide',{timeout:20000}).catch(()=>{});
+await p.waitForTimeout(900);
+await p.evaluate(()=>document.querySelector('.nav__tab[data-tab="lessons"]').click());
+await p.waitForTimeout(600);
+await p.evaluate(()=>{ document.querySelector('.lesson-item[data-n="38"]')?.scrollIntoView({block:'center'}); });
+await p.waitForTimeout(1500);
+console.log('картинки уроков 36-42: ' + await p.evaluate(()=>[36,37,38,39,40,41,42].map(n=>{
+  const и = document.querySelector(`.lesson-item[data-n="${n}"] img`);
+  return n + '→' + (и ? (и.complete && и.naturalWidth>0 ? 'видна' : 'не загрузилась') : 'нет');
+}).join(', ')));
+await p.screenshot({ path:'glava2.png' });
+console.log('битых: ' + (битые.length ? битые.join(',') : 'нет'));
+await b.close();

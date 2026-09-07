@@ -1,0 +1,25 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium', args:['--no-sandbox'] });
+const p = await b.newPage({ viewport:{width:390,height:844} });
+const errs=[]; p.on('pageerror', e=>errs.push(e.message));
+await p.goto('http://127.0.0.1:8777/index.html',{waitUntil:'domcontentloaded'});
+await p.evaluate(()=>{ localStorage.setItem('mt_onb','1'); localStorage.setItem('mt_auth','1'); });
+await p.reload({waitUntil:'domcontentloaded'}); await p.waitForTimeout(2800);
+const до = await p.$$eval('.nav__tab span:last-child', e=>e.map(x=>x.textContent.trim()));
+console.log('ДО: ' + до.join(', '));
+await p.click('.nav__tab[data-tab="profile"]'); await p.waitForTimeout(400);
+await p.click('#mLang'); await p.waitForTimeout(700);
+const после = await p.$$eval('.nav__tab span:last-child', e=>e.map(x=>x.textContent.trim()));
+console.log('ПОСЛЕ ПЕРЕКЛЮЧЕНИЯ: ' + после.join(', '));
+await p.screenshot({ path:'shot-es.png' });
+await p.click('#mLang'); await p.waitForTimeout(700);
+const назад = await p.$$eval('.nav__tab span:last-child', e=>e.map(x=>x.textContent.trim()));
+console.log('ОБРАТНО: ' + назад.join(', '));
+// политика
+await p.click('#mPrivacy').catch(e=>errs.push('политика: '+e.message));
+await p.waitForTimeout(600);
+const док = await p.textContent('.screen--active .screen-title').catch(()=>'нет');
+console.log('ДОКУМЕНТ: ' + док);
+await p.screenshot({ path:'shot-doc.png' });
+console.log('ОШИБКИ: ' + errs.length); errs.slice(0,4).forEach(e=>console.log(e));
+await b.close();

@@ -1,0 +1,35 @@
+// Протухший токен входа обновляется сам, синхронизация не замолкает.
+import { chromium } from 'playwright';
+const B='http://127.0.0.1:8099';
+const почта = 'token' + Date.now() + '@test.ru';
+const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium', args:['--no-sandbox','--disable-gpu'] });
+const errs=[];
+const p = await b.newPage({viewport:{width:390,height:844}});
+p.on('pageerror',e=>errs.push('PAGEERROR: '+e.message));
+p.on('console', m=>{ if(/ОТЛАДКА|великоват|не удался/.test(m.text())) console.log(m.text()); });
+await p.route(u=>!u.href.startsWith('http://127.0.0.1'), r=>r.abort());
+p.on('response', async r=>{ const u=r.url(); if(u.includes('/api/v1/')) console.log('← ' + r.status() + ' ' + u.split('/api/v1')[1]); });
+await p.goto(B+'/_t.html',{waitUntil:'load'});
+await p.evaluate(()=>{localStorage.clear(); localStorage.setItem('mt_onb','1');});
+await p.reload({waitUntil:'load'}); await p.waitForTimeout(1200);
+await p.click('[data-authtab="register"]');
+await p.fill('#registerForm [name="name"]','Мария');
+await p.fill('#registerForm [name="email"]',почта);
+await p.fill('#registerForm [name="password"]','Parol12345');
+await p.fill('#registerForm [name="child_name"]','Соня');
+for (const c of await p.$$('#registerForm input[type=checkbox]')) await c.check().catch(()=>{});
+await p.click('#registerForm [type="submit"]'); await p.waitForTimeout(4000);
+const было = await p.evaluate(()=>({ токен: (localStorage.getItem('mt_token')||'').slice(-8), длинный: !!localStorage.getItem('mt_refresh') }));
+console.log('после регистрации: ' + JSON.stringify(было));
+// портим короткий токен, как будто он протух
+await p.evaluate(()=>{ localStorage.removeItem('mt_sync_at'); localStorage.setItem('mt_token', (localStorage.getItem('mt_token')||'').slice(0,-5) + 'AAAAA'); });
+console.log('--- токен испорчен ---');
+await p.evaluate(()=>localStorage.setItem('mt_lesson_7', JSON.stringify({read:true,task:true,test:true,done:true,ts:Date.now()})));
+await p.waitForTimeout(4000);
+console.log('дёргаем отправку руками: ' + await p.evaluate(async ()=>{ try { await MT_SYNC.отправить(); return 'вернулась'; } catch(e) { return 'ошибка ' + e.message; } }));
+await p.waitForTimeout(3000);
+const стало = await p.evaluate(()=>({ токен: (localStorage.getItem('mt_token')||'').slice(-8), ушло: !!localStorage.getItem('mt_sync_at'), rev: localStorage.getItem('mt_rev') }));
+console.log('после протухания: ' + JSON.stringify(стало));
+console.log('токен сменился: ' + (было.токен !== стало.токен));
+console.log('ОШИБОК: ' + errs.length); errs.slice(0,3).forEach(e=>console.log(e));
+await b.close();

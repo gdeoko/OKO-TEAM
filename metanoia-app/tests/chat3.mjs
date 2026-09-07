@@ -1,0 +1,27 @@
+// Отправленное сообщение должно остаться после перезагрузки.
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium', args:['--no-sandbox','--disable-gpu'] });
+const p = await b.newPage({ viewport:{width:390,height:844} });
+const errs=[]; p.on('pageerror', e=>errs.push(e.message));
+await p.route(u=>!u.href.startsWith('http://127.0.0.1'), r=>r.abort());
+await p.goto('http://127.0.0.1:8777/index.html',{waitUntil:'domcontentloaded'});
+await p.evaluate(()=>{ localStorage.setItem('mt_onb','1'); localStorage.setItem('mt_auth','1'); });
+await p.reload({waitUntil:'domcontentloaded'});
+await p.waitForSelector('.splash--hide',{timeout:20000}).catch(()=>{});
+await p.waitForTimeout(600);
+await p.click('.nav__tab[data-tab="chats"]'); await p.waitForTimeout(500);
+await p.click('.chat-item >> nth=1'); await p.waitForTimeout(700);
+const слово = 'Спасибо за урок ' + Date.now();
+await p.fill('#cvField', слово); await p.waitForTimeout(150);
+await p.click('#cvSend'); await p.waitForTimeout(800);
+const видно = async () => p.evaluate((с)=>document.body.innerText.includes(с), слово);
+console.log('сразу после отправки: ' + await видно());
+console.log('ключи переписки: ' + await p.evaluate(()=>JSON.stringify(Object.keys(localStorage).filter(k=>k.includes('msg')||k.includes('chat')))));
+await p.reload({waitUntil:'domcontentloaded'});
+await p.waitForSelector('.splash--hide',{timeout:20000}).catch(()=>{});
+await p.waitForTimeout(900);
+await p.click('.nav__tab[data-tab="chats"]'); await p.waitForTimeout(500);
+await p.click('.chat-item >> nth=1'); await p.waitForTimeout(800);
+console.log('после перезагрузки: ' + await видно());
+console.log('ОШИБОК: ' + errs.length); errs.slice(0,3).forEach(e=>console.log(e));
+await b.close();

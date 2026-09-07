@@ -1,0 +1,27 @@
+// Имя ребёнка с разметкой не должно ломать экраны и что-то выполнять.
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium', args:['--no-sandbox','--disable-gpu'] });
+const p = await b.newPage({ viewport:{width:390,height:844} });
+const errs=[]; p.on('pageerror',e=>errs.push('PAGEERROR: '+e.message));
+let сработало = false;
+p.on('dialog', d=>{ сработало = true; d.dismiss(); });
+await p.route(u=>!u.href.startsWith('http://127.0.0.1'), r=>r.abort());
+await p.goto('http://127.0.0.1:8777/index.html',{waitUntil:'load'});
+await p.evaluate(()=>{ localStorage.clear(); localStorage.setItem('mt_onb','1'); localStorage.setItem('mt_auth','1');
+  localStorage.setItem('mt_kids', JSON.stringify([{name:'<img src=x onerror="window.__взлом=1;alert(1)">Соня', age:8, img:'', лид:'k1'}]));
+  localStorage.setItem('mt_active_kid','k1'); });
+await p.reload({waitUntil:'load'});
+await p.waitForSelector('.splash--hide',{timeout:20000}).catch(()=>{});
+await p.waitForTimeout(1000);
+await p.evaluate(()=>document.querySelector('.nav__tab[data-tab="profile"]').click());
+await p.waitForTimeout(600);
+console.log('карточка ребёнка: ' + await p.evaluate(()=>document.querySelector('#children .child-card')?.innerText.replace(/\s+/g,' ').slice(0,60)));
+await p.evaluate(()=>openChild(DEMO.children[0])); await p.waitForTimeout(500);
+console.log('экран ребёнка: ' + await p.evaluate(()=>document.getElementById('childName')?.textContent.slice(0,50)));
+console.log('на бланке: ' + await p.evaluate(()=>именаДляСертификата().slice(0,50)));
+await p.evaluate(()=>{ localStorage.setItem('mt_exam_0', JSON.stringify({pct:90, ts:Date.now()})); openCertificates(); });
+await p.waitForTimeout(500);
+console.log('скрипт выполнился: ' + (сработало || await p.evaluate(()=>!!window.__взлом)));
+console.log('картинок-обманок в теле: ' + await p.evaluate(()=>[...document.querySelectorAll('img')].filter(i=>i.getAttribute('src')==='x').length));
+console.log('ОШИБОК: ' + errs.length); errs.slice(0,3).forEach(e=>console.log(e));
+await b.close();
