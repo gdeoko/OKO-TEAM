@@ -74,21 +74,23 @@ APP_ORIGIN=https://app.<домен>       # точный origin фронта (д
 APP_DEBUG=0
 JWT_SECRET=<openssl rand -hex 32>     # длинный случайный секрет
 
-# Оплата Lava.top (X-Api-Key). Отдельного секрета у Lava нет — LAVA_SECRET можно оставить пустым.
-LAVA_API_KEY=<ключ_из_кабинета_Lava>
-LAVA_OFFER_MONTH=3cecb188-cc10-43b4-a034-3b773473a41e   # «Метанойя +» 690 ₽/мес
+# Адрес школы: из него собирается ссылка в письме о новом пароле
+APP_URL=https://app.<домен>
 
 # Соц-входы
 GOOGLE_OAUTH_CLIENT_ID=<из Google Cloud Console>
 TELEGRAM_BOT_TOKEN=<токен @BotFather — ПЕРЕВЫПУСТИТЬ перед продом>
 
-# Почта (100 писем/день бесплатно)
-SENDGRID_API_KEY=<ключ SendGrid>
+# Почта. Пока строки нет, письма складываются в config/письма.log
 MAIL_FROM=noreply@<домен>
+MAIL_FROM_NAME=Метанойя
 ```
 
-Опционально/позже (не блокируют запуск): `LAVA_OFFER_YEAR`, `LAVA_OFFER_LIFETIME`,
-`LAVA_OFFER_DONATION`, `YOUTUBE_API_KEY`, `FIREBASE_SERVER_KEY`.
+Оплату из приложения Екатерина убрала (правки 19.08.2026), поэтому ключи
+`LAVA_*` не нужны. Код приёма платежей в репозитории остался рабочим: если школа
+когда-нибудь вернёт платный тариф, ключи вписываются сюда же.
+
+Опционально/позже (не блокируют запуск): `YOUTUBE_API_KEY`, `FIREBASE_SERVER_KEY`.
 
 ---
 
