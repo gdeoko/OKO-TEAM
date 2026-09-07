@@ -495,10 +495,11 @@ const STORIES_CONTENT = [
         sub: 'Не говори: не могу, не знаю, не понимаю. Сегодня — лучший день, чтобы начать.' },
     ],
   },
-  { // Успехи
+  { // Успехи: своё, а не чужое. Слайд собирается на лету в svRender().
+    успехи: true,
     slides: [
-      { bg: 'cream', title: 'Миша получил значок «Молниеносный»',
-        sub: '10 из 10 в викторине на скорость. Так держать!' },
+      { bg: 'cream', title: 'Первый значок ждёт',
+        sub: 'Пройдите первый урок целиком, и здесь появится ваша награда.' },
     ],
   },
   { // Цитата дня
@@ -514,6 +515,20 @@ function svRender() {
   const story = DEMO.stories[SV.idx];
   const content = STORIES_CONTENT[SV.idx];
   const s = content.slides[SV.slide];
+
+  // История про успехи показывает награду этого ребёнка, а не чужую.
+  if (content.успехи) {
+    const значки = (typeof значкиПересчитать === 'function') ? значкиПересчитать() : [];
+    const мой = значки.filter((b) => b.earned).pop();
+    const имя = (typeof именаДляСертификата === 'function') ? именаДляСертификата() : '';
+    if (мой) {
+      s.title = имя ? `${имя}: значок «${мой.name}»` : `Значок «${мой.name}» получен`;
+      s.sub = (мой.как ? мой.как[0].toUpperCase() + мой.как.slice(1) : '') + '. Так держать!';
+    } else {
+      s.title = 'Первый значок ждёт';
+      s.sub = 'Пройдите первый урок целиком, и здесь появится ваша награда.';
+    }
+  }
 
   $('#svWho').innerHTML = `
     ${story.img ? `<img src="${story.img}" alt="">` : ICON(story.icon, 24)}
@@ -1251,8 +1266,8 @@ function initNotifs() {
 const EXTRA_FEED = [
   { type: 'chapter', label: 'Новая глава книги «Метанойя»', title: 'Глава 1 · Жизнь Господа',
     text: 'Уроки главы в виде книги — читайте всей семьёй.', likes: 12, comments: 2 },
-  { type: 'achievement', label: 'Достижение', title: 'Аня получила значок «Первооткрыватель»',
-    text: 'Первый пройденный урок — начало большого пути!', likes: 31, comments: 4 },
+  { type: 'chapter', label: 'Семейный альбом', title: 'Наш год с Метанойей',
+    text: 'Уроки, значки и семейные квесты за год собираются в книгу на память.', likes: 0, comments: 0 },
   { type: 'quote', label: 'Цитата дня · вчера', img: 'assets/img/quote-bg.jpg',
     title: '«Начало мудрости — страх Господень»', ref: 'Притч. 1:7', likes: 27, comments: 1 },
   { type: 'lesson', label: 'Следующий урок', coverImg: 'assets/img/chapters/ch1.jpg',
