@@ -424,20 +424,29 @@
 
   function сложитьСвязку(лид) {
     if (!лид) return;
-    const связка = {};
-    ключиРебёнка().forEach((k) => { связка[k] = localStorage.getItem(k); });
-    origSetItem.call(localStorage, 'mt_bucket_' + лид, JSON.stringify(связка));
+    const записи = {};
+    ключиРебёнка().forEach((k) => { записи[k] = localStorage.getItem(k); });
+    // Ревизию храним вместе с записями: без неё вернувшийся ребёнок выглядел
+    // бы «нулевым», и сервер затёр бы то, что он прошёл без связи.
+    origSetItem.call(localStorage, 'mt_bucket_' + лид, JSON.stringify({
+      записи: записи,
+      rev: ревизия(),
+      sid: localStorage.getItem('mt_child_id') || '',
+    }));
   }
 
   function разложитьСвязку(лид) {
     ключиРебёнка().forEach((k) => localStorage.removeItem(k));
     let связка = null;
     try { связка = JSON.parse(localStorage.getItem('mt_bucket_' + лид) || 'null'); } catch (e) { связка = null; }
-    if (связка && typeof связка === 'object') {
-      Object.keys(связка).forEach((k) => {
-        if (typeof связка[k] === 'string') origSetItem.call(localStorage, k, связка[k]);
-      });
-    }
+    if (!связка || typeof связка !== 'object') return 0;
+    // Старый формат связки: просто карта ключей, без ревизии.
+    const записи = связка.записи && typeof связка.записи === 'object' ? связка.записи : связка;
+    Object.keys(записи).forEach((k) => {
+      if (k === 'записи' || k === 'rev' || k === 'sid') return;
+      if (typeof записи[k] === 'string') origSetItem.call(localStorage, k, записи[k]);
+    });
+    return Number(связка.rev || 0);
   }
 
   /**
@@ -453,10 +462,11 @@
     сложитьСвязку(прежний);
 
     origSetItem.call(localStorage, 'mt_active_kid', String(лид));
-    разложитьСвязку(лид);
-    // Ревизия и адрес на сервере теперь другого ребёнка.
-    localStorage.removeItem('mt_rev');
+    const свояРевизия = разложитьСвязку(лид);
+    // Адрес на сервере теперь другого ребёнка, а ревизия его собственная.
     localStorage.removeItem('mt_sync_at');
+    if (свояРевизия > 0) origSetItem.call(localStorage, 'mt_rev', String(свояРевизия));
+    else localStorage.removeItem('mt_rev');
     if (сид) origSetItem.call(localStorage, 'mt_child_id', String(сид));
     else localStorage.removeItem('mt_child_id');
 
