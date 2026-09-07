@@ -109,6 +109,17 @@ function handle(array $segments, string $method): never
             DB::query('DELETE FROM children WHERE id = ?', [(int) $child['id']]);
             Response::ok(['id' => (int) $child['id']]);
 
+        // ── DELETE /users/me — удалить аккаунт со всем содержимым ──
+        // Требование магазинов приложений: у семьи должна быть кнопка,
+        // которая стирает всё, а не письмо в поддержку.
+        case 'DELETE me':
+            $id = (int) $user['id'];
+            // Дети, прогресс, серии и сессии уходят каскадом по внешним ключам.
+            DB::query('DELETE FROM sessions WHERE user_id = ?', [$id]);
+            DB::query('DELETE FROM children WHERE parent_id = ?', [$id]);
+            DB::query('DELETE FROM users WHERE id = ?', [$id]);
+            Response::ok(['deleted' => true]);
+
         default:
             Response::error('Не найдено', 404);
     }
