@@ -687,9 +687,8 @@ function searchIndex() {
     из.push({ t: 'game', title: g.name, meta: 'Игра · ' + (g.meta || ''),
       age: '5-7 7-10 10-14', theme: 'ВЗ НЗ', key: g.key });
   });
-  из.push({ t: 'material', title: 'Раскраска «Сотворение мира»', meta: 'Материал · PDF · появится после запуска', age: '5-7', theme: 'ВЗ' });
-  из.push({ t: 'material', title: 'Молитвы для самых маленьких', meta: 'Материал · карточки', age: '5-7', theme: 'Молитва' });
-  из.push({ t: 'test', title: 'Тест к уроку 1', meta: 'Тест · 7 вопросов', age: '5-7 7-10 10-14', theme: 'ВЗ' });
+  // Раскраски, карточки молитв и отдельные тесты из указателя убраны: таких
+  // файлов у школы нет, а поиск обещал их и на нажатие разводил руками.
   ПОИСК_КЭШ = из;
   return из;
 }
@@ -776,7 +775,8 @@ function openSearchResult(it) {
     return;
   }
   if (it.t === 'material') { toast('Материалы для скачивания появятся после запуска'); return; }
-  toast('Открываю…');
+  // Ничего не поняли: ведём в уроки, а не оставляем ребёнка с «Открываю…».
+  switchTab('lessons');
 }
 
 /* ───────── ДЕТСКИЙ ПРОФИЛЬ И PIN ───────── */
@@ -5318,8 +5318,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => $('#searchInput')?.focus(), 100);
     window.scrollTo({ top: 0 });
   });
+  // Пункты меню без обработчика: их не осталось, но если появятся, лучше
+  // честный ответ, чем тишина.
   $$('.menu-item:not([id])').forEach((el) =>
-    el.addEventListener('click', () => toast('Этот раздел скоро появится')));
+    el.addEventListener('click', () => toast('Этот раздел ещё готовим')));
   let searchTimer = null;
   $('#searchInput').addEventListener('input', () => {
     clearTimeout(searchTimer);
