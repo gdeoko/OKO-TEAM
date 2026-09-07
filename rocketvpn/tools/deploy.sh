@@ -32,11 +32,18 @@ DST=/opt/oko-poster/cab/dep-$STAMP.tgz
 CH=/tmp/cab/chunks-$STAMP
 mkdir -p "$CH"
 
+# РАЗМЕР КУСКА 8000, И ЭТО ЗАМЕРЕНО, А НЕ ВЗЯТО С ПОТОЛКА. Кусок стоял
+# в 30000 знаков, и в какой-то день мост начал отдавать на него пятисотую
+# от nginx: тело запроса перестало пролезать. Наружу это вылезало
+# питоновым следом «Expecting value: line 1 column 1» - разбор пустого
+# ответа, - и по нему не догадаться, что дело в размере. Проба по
+# ступеням: 8000 проходит, 12000 уже нет. Берём проходящий предел.
 python3 - "$ARC" "$CH" <<'PY'
 import base64, sys, os
 b = base64.b64encode(open(sys.argv[1], "rb").read()).decode()
-for i in range(0, len(b), 30000):
-    open(os.path.join(sys.argv[2], "%04d" % (i // 30000)), "w").write(b[i:i + 30000])
+ШАГ = 8000
+for i in range(0, len(b), ШАГ):
+    open(os.path.join(sys.argv[2], "%04d" % (i // ШАГ)), "w").write(b[i:i + ШАГ])
 PY
 
 ok=0
