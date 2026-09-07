@@ -135,8 +135,12 @@ function celebrate(originX, originY) {
 /* ───────── МОДАЛКА НАГРАДЫ ───────── */
 
 function rewardModal({ icon = 'trophy', title, subtitle, xp, voice }) {
+  // Два окна награды друг на друге ребёнок закрыть не может: показываем одно.
+  document.querySelectorAll('.reward').forEach((э) => э.remove());
   const wrap = document.createElement('div');
   wrap.className = 'reward';
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
   wrap.innerHTML = `
     <div class="reward__box">
       <div class="reward__halo"></div>
@@ -157,9 +161,20 @@ function rewardModal({ icon = 'trophy', title, subtitle, xp, voice }) {
     audio.play().catch(() => {}); // автозвук может быть заблокирован — тогда по кнопке
     wrap.querySelector('.reward__voice').addEventListener('click', (e) => { e.stopPropagation(); try { audio.currentTime = 0; audio.play(); } catch (x) {} });
   }
-  const close = () => { if (audio) audio.pause(); wrap.classList.remove('reward--on'); setTimeout(() => wrap.remove(), 300); };
+  const close = () => {
+    if (audio) audio.pause();
+    document.removeEventListener('keydown', поКлавише);
+    wrap.classList.remove('reward--on');
+    setTimeout(() => wrap.remove(), 300);
+  };
+  // Окно закрывается и клавишей: на планшете с клавиатурой и на компьютере
+  // родителя иначе приходится целиться в кнопку.
+  function поКлавише(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', поКлавише);
   wrap.querySelector('.reward__ok').addEventListener('click', close);
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+  // Фокус на кнопку: чтение с экрана сразу объявляет окно, а не молчит.
+  setTimeout(() => { try { wrap.querySelector('.reward__ok').focus(); } catch (e) {} }, 60);
 }
 
 window.MAGIC = { ambientMotes, celebrate, rewardModal };
