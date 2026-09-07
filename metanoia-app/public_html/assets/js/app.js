@@ -2515,13 +2515,10 @@ function checkVerse() {
   if (correct) {
     clearInterval(verseTimer);
     const bonus = verseSec < 20 ? 5 : 0;
-    setTimeout(() => {
-      if (window.MAGIC) MAGIC.rewardModal({
-        icon: 'book', title: 'Стих собран!',
-        subtitle: `«${v.text}» — ${v.ref}. Время: ${verseFmt(verseSec)}${bonus ? ' · бонус за скорость!' : ''}`,
-        xp: v.xp + bonus,
-      });
-    }, 500);
+    // Через общий финал: партия считается, другу капают зёрна и ребёнку
+    // предлагают следующий заход, а не выкидывают в список.
+    setTimeout(() => завершитьИгру('verse', v.xp + bonus, 'Стих собран!',
+      `«${v.text}» — ${v.ref}. Время: ${verseFmt(verseSec)}${bonus ? ' · бонус за скорость!' : ''}`), 500);
   } else {
     setTimeout(() => cells.forEach((c) => c.classList.remove('word--wrong')), 600);
     toast('Почти! Проверь порядок слов');
@@ -2903,7 +2900,11 @@ function openGame(k) {
   }
   началоИгры();
   startGameMusic();
-  if (k === 'verse') openVerse('easy');
+  // «Собери стих»: чем выше уровень, тем длиннее стих на следующем заходе.
+  if (k === 'verse') {
+    const л = уровеньИгры('verse');
+    openVerse(л >= 5 ? 'hard' : л >= 3 ? 'medium' : 'easy');
+  }
   else if (k === 'memory') openMemory();
   else if (k === 'quiz') openQuiz();
   else if (k === 'who') openWho();
@@ -3119,7 +3120,10 @@ const MEM_PAIRS = ['dove', 'church', 'cross', 'star', 'book', 'flame', 'heart', 
 let memState = { flipped: [], matched: 0, moves: 0, lock: false };
 
 function openMemory() {
-  const cards = [...MEM_PAIRS, ...MEM_PAIRS].map((icon, i) => ({ icon, i }));
+  // Уровень добавляет пары: на первом заходе поле меньше, дальше труднее.
+  const пар = Math.min(MEM_PAIRS.length, 5 + Math.floor((уровеньИгры('memory') - 1) / 2));
+  const набор = MEM_PAIRS.slice(0, пар);
+  const cards = [...набор, ...набор].map((icon, i) => ({ icon, i }));
   // детерминированная тасовка
   for (let i = cards.length - 1; i > 0; i--) { const j = (i * 7 + 5) % (i + 1); [cards[i], cards[j]] = [cards[j], cards[i]]; }
   memState = { flipped: [], matched: 0, moves: 0, lock: false, cards };
@@ -3147,7 +3151,7 @@ function memFlip(el) {
       setTimeout(() => {
         a2.classList.add('mcard--done'); b2.classList.add('mcard--done');
         memState.flipped = []; memState.lock = false; memState.matched++;
-        if (memState.matched === MEM_PAIRS.length) {
+        if (memState.matched === memState.cards.length / 2) {
           const stars = memState.moves <= 12 ? 3 : memState.moves <= 18 ? 2 : 1;
           завершитьИгру('memory', 20, 'Все пары найдены!', `Ходов ${memState.moves}, ${'★'.repeat(stars)}`);
         }
@@ -3189,10 +3193,12 @@ function renderQuiz() {
   quizState.t = 100;
   clearInterval(quizState.timer);
   const bar = $('#quizBar'); bar.style.width = '100%';
+  // Десять секунд на первом уровне, дальше времени всё меньше, но не меньше пяти.
+  const шаг = Math.max(50, Math.round(100 * сложность('quiz').времени));
   quizState.timer = setInterval(() => {
     quizState.t -= 1; bar.style.width = quizState.t + '%';
     if (quizState.t <= 0) answerQuiz(-1);
-  }, 100);
+  }, шаг);
 }
 
 function answerQuiz(pick) {
@@ -4150,7 +4156,8 @@ function m3Resolve(score) {
 }
 
 function openMatch3() {
-  m3 = { grid: [], score: 0, moves: 18, sel: null, busy: false };
+  m3 = { grid: [], score: 0,
+    moves: Math.max(10, 18 - Math.floor((уровеньИгры('match3') - 1) / 2)), sel: null, busy: false };
   for (let r = 0; r < M3_ROWS; r++) { m3.grid[r] = []; for (let c = 0; c < M3_COLS; c++) m3.grid[r][c] = m3Rand(); }
   m3Resolve(false); // устаканить без очков
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'match3'));
@@ -4218,7 +4225,14 @@ const DAVID_GOAL = 3, DAVID_STONES = 5;
 let david = { stones: DAVID_STONES, hits: 0, pos: 0, dir: 1, speed: 1.6, zoneL: 40, zoneW: 20, raf: 0, busy: false };
 
 function openDavid() {
-  david = { stones: DAVID_STONES, hits: 0, pos: 0, dir: 1, speed: 1.6, zoneL: 40, zoneW: 20, raf: 0, busy: false };
+  const с = сложность('david');
+  david = {
+    stones: Math.max(3, DAVID_STONES - Math.floor((с.уровень - 1) / 3)),
+    hits: 0, pos: 0, dir: 1,
+    speed: Math.min(3, 1.6 * с.множитель),
+    zoneL: 40, zoneW: Math.max(12, Math.round(20 * с.времени)),
+    raf: 0, busy: false,
+  };
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'david'));
   $('#nav').style.display = 'none';
   $('#davidFig').innerHTML = ICON('users', 40);
@@ -4301,12 +4315,17 @@ let exodus = { score: 0, time: EXODUS_TIME, spawn: 0, tick: 0, running: false };
 
 function openExodus() {
   exodusStop();
-  exodus = { score: 0, time: EXODUS_TIME, spawn: 0, tick: 0, running: false };
+  const сИ = сложность('exodus');
+  // Держим игру проходимой: время не ниже двадцати секунд, а цель растёт
+  // медленнее времени, иначе на высоких уровнях собрать манну нельзя вовсе.
+  const времяИсхода = Math.max(20, Math.round(EXODUS_TIME * сИ.времени));
+  const цельИсхода = EXODUS_GOAL + Math.floor((сИ.уровень - 1) / 4);
+  exodus = { score: 0, time: времяИсхода, goal: цельИсхода, spawn: 0, tick: 0, running: false };
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'exodus'));
   $('#nav').style.display = 'none';
   $('#exodusScore').textContent = '0';
-  $('#exodusGoal').textContent = EXODUS_GOAL;
-  $('#exodusTime').textContent = EXODUS_TIME;
+  $('#exodusGoal').textContent = exodus.goal;
+  $('#exodusTime').textContent = exodus.time;
   $('#exodusBar').style.width = '0%';
   const start = $('#exodusStart');
   if (start) start.style.display = '';
@@ -4351,20 +4370,20 @@ function exodusSpawn() {
       if (window.MAGIC) { const r = el.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 2); }
     }
     $('#exodusScore').textContent = exodus.score;
-    $('#exodusBar').style.width = Math.min(100, Math.round(exodus.score / EXODUS_GOAL * 100)) + '%';
+    $('#exodusBar').style.width = Math.min(100, Math.round(exodus.score / exodus.goal * 100)) + '%';
     setTimeout(() => el.remove(), 120);
-    if (exodus.score >= EXODUS_GOAL) exodusEnd();
+    if (exodus.score >= exodus.goal) exodusEnd();
   });
   field.appendChild(el);
   setTimeout(() => { el.classList.add('exodus-item--gone'); setTimeout(() => el.remove(), 200); }, 1150);
 }
 
 function exodusEnd() {
-  const win = exodus.score >= EXODUS_GOAL;
+  const win = exodus.score >= (exodus.goal || EXODUS_GOAL);
   exodusStop();
   $$('#exodusField .exodus-item').forEach((e) => e.remove());
   завершитьИгру('exodus', exodus.score, win ? 'Манна собрана!' : 'Время вышло',
-    win ? 'Ты собрал манну, как народ в пустыне. Господь заботится о Своих.' : `Собрано ${exodus.score} из ${EXODUS_GOAL}.`);
+    win ? 'Ты собрал манну, как народ в пустыне. Господь заботится о Своих.' : `Собрано ${exodus.score} из ${exodus.goal || EXODUS_GOAL}.`);
 }
 
 /* ── Ноев Ковчег: собери пары животных ── */
@@ -4385,18 +4404,21 @@ function openArk() {
   ARK_ANIMALS.forEach((a, i) => { deck.push({ id: i, ...a }); deck.push({ id: i, ...a }); });
   // детерминированная тасовка
   for (let i = deck.length - 1; i > 0; i--) { const j = (i * 7 + 3) % (i + 1); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-  ark = { cards: deck, sel: null, pairs: 0, time: ARK_TIME, tick: 0, busy: false };
+  ark = { cards: deck, sel: null, pairs: 0,
+    time: 0, всего: 0, tick: 0, busy: false };
+  ark.всего = Math.max(20, Math.round(ARK_TIME * сложность('ark').времени));
+  ark.time = ark.всего;
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'ark'));
   $('#nav').style.display = 'none';
   $('#arkTotal').textContent = ARK_ANIMALS.length;
   $('#arkPairs').textContent = '0';
-  $('#arkTime').textContent = ARK_TIME;
+  $('#arkTime').textContent = ark.time;
   $('#arkWater').style.height = '0%';
   renderArk();
   ark.tick = setInterval(() => {
     ark.time--;
     $('#arkTime').textContent = Math.max(0, ark.time);
-    $('#arkWater').style.height = Math.min(100, Math.round((ARK_TIME - ark.time) / ARK_TIME * 100)) + '%';
+    $('#arkWater').style.height = Math.min(100, Math.round((ark.всего - ark.time) / ark.всего * 100)) + '%';
     if (ark.time <= 0) arkEnd(false);
   }, 1000);
   window.scrollTo({ top: 0 });
