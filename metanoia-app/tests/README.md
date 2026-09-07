@@ -9,12 +9,16 @@
 ## Как запустить
 
 ```bash
-# приложение раздаём обычным сервером из public_html
-cd metanoia-app/public_html && python3 -m http.server 8777 &
+# один раз: поставить Playwright рядом с проверками
+cd metanoia-app/tests && npm install
 
-cd metanoia-app/tests
+# приложение раздаём обычным сервером из public_html
+cd ../public_html && python3 -m http.server 8777 &
+
+cd ../tests
 node full.mjs          # одна проверка
 bash всё.sh            # все подряд, по строке на проверку
+python3 kartinki.py    # картинки уроков: пропуски, повторы, размеры
 ```
 
 Нужен Playwright и браузер: в наших контейнерах это

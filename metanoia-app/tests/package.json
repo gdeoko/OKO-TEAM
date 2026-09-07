@@ -1,0 +1,9 @@
+{
+  "name": "metanoya-proverki",
+  "private": true,
+  "description": "Проверки приложения школы Метанойя на настоящем браузере",
+  "type": "module",
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}
