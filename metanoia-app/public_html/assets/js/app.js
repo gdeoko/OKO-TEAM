@@ -4865,7 +4865,15 @@ async function заниматьсяКак(kid) {
   location.reload();
 }
 
+const ДЕТЕЙ_ПРЕДЕЛ = 5; // столько же принимает сервер
+
 function openAddChild() {
+  // Сервер больше пяти профилей не заводит, поэтому и здесь говорим об этом
+  // сразу, а не после заполнения формы.
+  if (памятьЧитать('mt_kids', []).length >= ДЕТЕЙ_ПРЕДЕЛ) {
+    toast('В семье уже ' + ДЕТЕЙ_ПРЕДЕЛ + ' профилей детей, это предел');
+    return;
+  }
   addkAge = 7; addkPick = 0;
   $('#addkName').value = '';
   $('#addkAge').textContent = addkAge;
