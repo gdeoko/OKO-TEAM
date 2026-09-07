@@ -65,6 +65,24 @@
      RV_ТРУБА.масштаб(k, вдоль) - множитель их единиц в наши
      RV_ТРУБА.кадр(доля, dt, часы, поворотВерха)
      RV_ТРУБА.видно(да) · RV_ТРУБА.узел() · RV_ТРУБА.замер() */
+/* ── ПРОЗРАЧНЫЕ ПОЛОТНА ШАХТЫ НЕ ПИШУТ ГЛУБИНУ ─────────────────────
+   Шесть полотен тоннеля - стенка, труба, кольцевой дым, следы, дымка
+   выхода и дым на выходе - стояли прозрачными И ПИШУЩИМИ ГЛУБИНУ.
+   Это сочетание не работает никогда: полотно закрашивает буфер глубины
+   на всю свою площадь, и всё, что окажется за ним, отсекается ещё до
+   растеризации, хотя само полотно почти невидимо.
+
+   Владелец: «половины сайта пустые поля». Замер это и подтвердил
+   числом: в зале с ракетой на доле 0.92 рой частиц стоял в кадре
+   прямоугольником 122..268 по горизонтали и 386..697 по вертикали, при
+   uAlpha 1, uVisible 1 и всех видимых родителях, а яркость в этом месте
+   держалась на 44 из 255 - то есть роя не было. Перед ним, ближе к
+   камере, лежали «труба шахты» и «дым на выходе» с depthWrite true.
+
+   Теперь глубину пишет только непрозрачная геометрия. Порядок между
+   самими полотнами держит renderOrder, он у них расставлен.
+
+*/
 (function (g, d) {
   "use strict";
 
@@ -1310,7 +1328,7 @@
         uC2: { value: new T.Color(0x1A2238) }
       },
       vertexShader: В_ТУМАН, fragmentShader: фТуман(),
-      transparent: true, depthWrite: true, side: T.FrontSide, fog: false
+      transparent: true, depthWrite: false, side: T.FrontSide, fog: false
     });
     М.стенка = new T.Mesh(гТуман, М.мСтенка);
     М.стенка.name = "свет подземелья";
@@ -1326,7 +1344,7 @@
     М.мТруба = new T.ShaderMaterial({
       uniforms: { tWind: { value: ветр }, uTime: М.uTime, uAlpha: М.uАльфаТруба },
       vertexShader: В_ТРУБА, fragmentShader: Ф_ТРУБА,
-      transparent: true, depthWrite: true, blending: T.AdditiveBlending, fog: false
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false
     });
     М.труба = new T.Mesh(гТруба, М.мТруба);
     М.труба.name = "труба шахты";
@@ -1380,7 +1398,7 @@
            и записью глубины: ведёт себя как непрозрачное, но рисуется
            после оболочки. renderOrder -1 ставит его перед всем дымом,
            как и у них. */
-        side: T.FrontSide, transparent: true, depthWrite: true,
+        side: T.FrontSide, transparent: true, depthWrite: false,
         depthTest: true, fog: false
       });
       var м = new T.Mesh(гКольца[к % 2], мКольцо);
@@ -1432,7 +1450,7 @@
         uniforms: { tWind: { value: ветр }, uTime: М.uTime, uScaleD: М.uScaleD,
                     uAlpha: { value: 1 }, uVhod: М.uVhod },
         vertexShader: В_ДЫМ, fragmentShader: Ф_ДЫМ,
-        transparent: true, depthWrite: true,
+        transparent: true, depthWrite: false,
         side: T.DoubleSide, blending: T.AdditiveBlending, fog: false
       }));
       мД.name = "дым кольца " + к;
@@ -1504,7 +1522,7 @@
         uniforms: { tWind: { value: ветр }, uTime: М.uTime, uRes: М.uRes,
                     uAlpha: { value: 0 } },
         vertexShader: В_ПЛОСКО, fragmentShader: Ф_ПОТОЛОК,
-        transparent: true, depthWrite: true,
+        transparent: true, depthWrite: false,
         side: T.DoubleSide, blending: T.AdditiveBlending, fog: false
       }));
     М.потолок.name = "дым на выходе";
@@ -1519,7 +1537,7 @@
       uniforms: { tWind: { value: ветр }, uTime: М.uTime, uRes: М.uRes,
                   uAlpha: { value: 0 } },
       vertexShader: В_ПЛОСКО, fragmentShader: Ф_ПОЛ,
-      transparent: true, depthWrite: true,
+      transparent: true, depthWrite: false,
       side: T.DoubleSide, blending: T.AdditiveBlending, fog: false
     }));
     М.пол.name = "дымка выхода";
