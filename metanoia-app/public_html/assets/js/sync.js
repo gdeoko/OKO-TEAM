@@ -135,6 +135,7 @@
   /* ── Отправка: копим правки и шлём пачкой, а не на каждый клик ── */
   let таймер = null;
   let вПути = false;
+  let вКонфликте = false;   // чтобы объединение не зациклилось
 
   function отправитьПозже() {
     if (!включён()) return;
@@ -153,11 +154,33 @@
       });
       localStorage.setItem('mt_sync_at', String(Date.now()));
     } catch (e) {
-      // 409: на сервере прогресс свежее, значит забираем его и не спорим.
-      if (e.code === 409) { вПути = false; return забрать(); }
+      // 409: на сервере прогресс свежее нашего. Раньше мы просто забирали
+      // серверный снимок, и то, что ребёнок успел пройти без связи, молча
+      // пропадало. Теперь объединяем: своё оставляем, чужое добавляем.
+      if (e.code === 409 && !вКонфликте) {
+        вПути = false; вКонфликте = true;
+        try { await объединить(); } finally { вКонфликте = false; }
+        return;
+      }
       // Связи нет — попробуем в следующий раз, данные никуда не делись.
     }
     вПути = false;
+  }
+
+  /** Слить серверный снимок со своим: свои записи в приоритете. */
+  async function объединить() {
+    try {
+      const d = await запрос('/progress/' + ребёнок());
+      const keys = (d && d.state && d.state.keys) || {};
+      Object.keys(keys).forEach((k) => {
+        if (!k.startsWith('mt_') || МЕСТНЫЕ.includes(k) || k.startsWith('mt_bucket_')) return;
+        if (typeof keys[k] !== 'string') return;
+        // Своего значения нет — берём серверное. Есть — оставляем своё.
+        if (localStorage.getItem(k) === null) origSetItem.call(localStorage, k, keys[k]);
+      });
+      origSetItem.call(localStorage, 'mt_rev', String(Number((d && d.rev) || 0) + 1));
+      await отправить();
+    } catch (e) { /* нет связи — объединим при следующей попытке */ }
   }
 
   async function забрать() {
