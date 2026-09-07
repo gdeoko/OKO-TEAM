@@ -1165,12 +1165,50 @@ function initChatView() {
 
 /* ───────── УВЕДОМЛЕНИЯ ───────── */
 
-const NOTIFS = [
-  { icon: 'video',  title: 'Новый урок доступен', text: '«Пророчества; почему Господь родился на земле» — начни первым', time: '2 ч назад' },
-  { icon: 'trophy', title: 'Миша получил значок «Молниеносный»', text: '10 из 10 в викторине на скорость', time: '5 ч назад' },
-  { icon: 'dove',   title: 'Сообщение от Екатерины', text: 'Добро пожаловать в нашу школу!', time: 'вчера' },
-  { icon: 'book',   title: 'Новый урок в первой главе', text: '«Крещение Господа» — можно проходить', time: 'вчера' },
-];
+/* Уведомления собираются по тому, что происходит у этой семьи. Раньше здесь
+   лежал готовый список, и каждая семья читала, что «Миша получил значок»:
+   Миши у них нет и не было. */
+function уведомления() {
+  const список = [];
+
+  // Следующий открытый урок.
+  const порядок = (typeof lessonOrder === 'function') ? lessonOrder() : [];
+  const открытый = порядок.find((x) => !isLessonDone(x.n) && isLessonOpen(x.n));
+  if (открытый) {
+    const м = lessonMeta(открытый.n);
+    список.push({ icon: 'book', title: 'Урок ' + открытый.n + ' открыт',
+      text: м ? '«' + м.l.title + '» — можно проходить' : 'Можно проходить',
+      time: 'сейчас' });
+  }
+
+  // Последний полученный значок.
+  const значки = (typeof значкиПересчитать === 'function') ? значкиПересчитать() : [];
+  const последний = значки.filter((b) => b.earned).pop();
+  if (последний) {
+    список.push({ icon: 'trophy', title: 'Значок «' + последний.name + '» получен',
+      text: последний.как || 'Смотрите в профиле ребёнка', time: 'сегодня' });
+  }
+
+  // Непрочитанное из школьных чатов.
+  const непрочитано = (typeof DEMO === 'object' && DEMO.chats)
+    ? DEMO.chats.reduce((с, c) => с + (Number(c.unread) || 0), 0) : 0;
+  if (непрочитано > 0) {
+    список.push({ icon: 'dove', title: 'Сообщения от школы',
+      text: 'Непрочитанных: ' + непрочитано, time: 'сегодня' });
+  }
+
+  // Стих дня, если сегодня ещё не читали.
+  if (localStorage.getItem('mt_dverse_date') !== todayKey()) {
+    список.push({ icon: 'sparkle', title: 'Стих дня ждёт',
+      text: 'Короткий стих с озвучкой — минута на двоих', time: 'сегодня' });
+  }
+
+  if (!список.length) {
+    список.push({ icon: 'dove', title: 'Добро пожаловать в школу',
+      text: 'Начните с первого урока, он занимает около десяти минут', time: 'сейчас' });
+  }
+  return список;
+}
 
 function initNotifs() {
   const read = localStorage.getItem('mt_notif_read') === '1';
@@ -1185,6 +1223,7 @@ function initNotifs() {
     else { switchTab('home'); }
   };
   $('#bellBtn').addEventListener('click', () => {
+    const NOTIFS = уведомления();
     $('#notifList').innerHTML = NOTIFS.map((n, i) => `
       <button class="nf ${!read && i < 3 ? 'nf--new' : ''}" data-nf="${i}">
         <div class="nf__icon">${ICON(n.icon, 18)}</div>
@@ -1195,6 +1234,7 @@ function initNotifs() {
         </div>
       </button>`).join('');
     $$('#notifList .nf').forEach((el) => el.addEventListener('click', () => notifGo(NOTIFS[Number(el.dataset.nf)])));
+    $('#bellBadge').textContent = NOTIFS.length;
     $('#notifPanel').hidden = false;
   });
   $('#notifBack').addEventListener('click', () => { $('#notifPanel').hidden = true; });
