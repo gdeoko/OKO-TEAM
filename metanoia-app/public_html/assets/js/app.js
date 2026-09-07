@@ -3624,8 +3624,47 @@ function initAuth() {
       toast(ошибка && ошибка.message || 'Ссылка не подошла, попросите новую');
     }
   })();
-  $$('.auth__oauth').forEach((b) =>
-    b.addEventListener('click', () => toast('Вход через ' + (b.dataset.oauth === 'google' ? 'Google' : 'Telegram') + ' — подключается на этапе 1-бэк')));
+  // Вход через Google и Телеграм. Пока школа без домена, оба ключа пустые,
+  // и кнопки говорят об этом человеческим языком, а не «этап 1-бэк».
+  const мета = (имя) => (document.querySelector('meta[name="' + имя + '"]') || {}).content || '';
+  $$('.auth__oauth').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.oauth === 'telegram') {
+      if (window.MT_TG && MT_TG.внутри) {
+        return toast('Вы и так в Телеграме: школа откроется сама, входить отдельно не нужно');
+      }
+      const бот = мета('mt-bot');
+      if (бот) {
+        window.open('https://t.me/' + бот.replace(/^@/, ''), '_blank', 'noopener');
+        return toast('Откройте школу кнопкой у бота: там вход сам подставит ваше имя');
+      }
+      return toast('Вход через Телеграм включится, когда у школы появится домен');
+    }
+    if (!мета('mt-google')) {
+      return toast('Вход через Google включится, когда у школы появится домен');
+    }
+    // Ключ есть: подгружаем библиотеку Google по требованию. Пока родитель
+    // не нажал кнопку, приложение на чужие серверы не ходит.
+    const пустить = () => {
+      google.accounts.id.initialize({
+        client_id: мета('mt-google'),
+        callback: async (ответ) => {
+          try {
+            await MT_SYNC.войтиГуглом(ответ.credential);
+            showApp(localStorage.getItem('mt_name'));
+            toast('С возвращением!');
+          } catch (ошибка) { toast(ошибка && ошибка.message || 'Google не пустил'); }
+        },
+      });
+      google.accounts.id.prompt();
+    };
+    if (window.google && google.accounts && google.accounts.id) return пустить();
+    const тег = document.createElement('script');
+    тег.src = 'https://accounts.google.com/gsi/client';
+    тег.async = true;
+    тег.onload = пустить;
+    тег.onerror = () => toast('Окно Google не загрузилось, проверьте связь');
+    document.head.appendChild(тег);
+  }));
 }
 
 /* ───────── ОБРАТНЫЙ ОТСЧЁТ ДО СОЗВОНА (демо) ───────── */
