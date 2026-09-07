@@ -3225,18 +3225,6 @@ const BOOK = {
     <p>С Богом можно разговаривать. Это называется молитва — и она не требует особых слов. Можно просто сказать: «Спасибо Тебе за этот день». И Он услышит.</p>`,
   },
 };
-const BOOK_BLOCKS = [
-  { title: 'Блок 1 · «Знакомство с Богом»', chapters: [
-    { n: 1, title: 'Кто такой Бог?', ready: true },
-    { n: 2, title: 'Создание мира', ready: false },
-    { n: 3, title: 'Адам и Ева', ready: false },
-    { n: 4, title: 'Ноев ковчег', ready: false },
-  ]},
-  { title: 'Блок 2 · «Герои веры»', chapters: [
-    { n: 13, title: 'Авраам — друг Божий', ready: false },
-    { n: 14, title: 'Моисей', ready: false },
-  ]},
-];
 let readerFs = ['s','m','l','xl'];
 let readerFsIdx = 1;
 const FS_PX = { s: 15, m: 16, l: 18, xl: 21 };
