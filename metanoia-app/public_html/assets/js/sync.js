@@ -29,7 +29,9 @@
   // Семейные ключи: они про семью целиком, а не про одного ребёнка, и при
   // переключении между детьми остаются на месте.
   const СЕМЕЙНЫЕ = ['mt_kids', 'mt_active_kid', 'mt_consent', 'mt_pin', 'mt_lang',
-    'mt_msgs2', 'mt_chat_read', 'mt_blocked', 'mt_reports', 'mt_name'];
+    'mt_msgs2', 'mt_chat_read', 'mt_blocked', 'mt_reports', 'mt_name',
+    // Семейный алтарь, квест, лента и уведомления — про всю семью сразу.
+    'mt_dev_day', 'mt_quest', 'mt_likes', 'mt_comments', 'mt_react2', 'mt_notif_read'];
 
   /** Ключи прогресса одного ребёнка: всё своё, кроме устройства и семьи. */
   function ключиРебёнка() {
