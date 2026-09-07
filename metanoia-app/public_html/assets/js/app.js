@@ -463,6 +463,7 @@ function renderChildren() {
   }).join('');
   const примечание = $('#childrenNote');
   if (примечание) примечание.hidden = DEMO.children.length < 2;
+  if (typeof applyLang === 'function') applyLang();
   $$('#children .child-card').forEach((el, i) => el.addEventListener('click', () => {
     const c = DEMO.children[i];
     const текущийЛид = активныйЛид();
@@ -901,6 +902,7 @@ function openChild(c) {
       <div class="badge-card__name">${b.name}</div>
       <div class="badge-card__how">${b.earned ? 'получен' : (b.как || '')}</div>
     </div>`).join('');
+  if (typeof applyLang === 'function') applyLang();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'child'));
   $('#nav').style.display = 'none';
   window.scrollTo({ top: 0 });
@@ -5492,6 +5494,13 @@ const ПЕРЕВОД = {
   'Уведомления': 'Notificaciones', 'Родительский контроль': 'Control parental', 'Поддержка': 'Soporte',
   'Политика конфиденциальности': 'Política de privacidad', 'Выйти': 'Salir',
   'Удалить аккаунт и данные': 'Eliminar cuenta y datos',
+  'Свой прогресс · нажмите, чтобы передать устройство':
+    'Su propio progreso · toque para pasarle el dispositivo',
+  'Семейный альбом года': 'Álbum familiar del año',
+  '+50 очков за друга': '+50 puntos por un amigo',
+  'Сертификаты за главы': 'Certificados por capítulos',
+  'Пока ни одного: сдай проверку знаний главы':
+    'Aún ninguno: aprueba la prueba del capítulo',
   'Мой друг': 'Mi amigo', 'Сытость': 'Alimento', 'Радость': 'Alegría', 'Рост': 'Crecimiento',
   'Покормить': 'Alimentar', 'Поиграть': 'Jugar', 'Помолиться': 'Orar', 'Дневник друга': 'Diario del amigo',
   'Во что поиграем': 'A qué jugamos', 'Ранги роста': 'Rangos de crecimiento', 'Мои значки': 'Mis insignias',
