@@ -1887,6 +1887,12 @@ function openExam(bi) {
     }
   });
   examState = { bi, questions, answers: {} };
+  // Проверка длинная, тридцать пять вопросов. Если ребёнка позвали ужинать,
+  // ответы не должны пропасть: держим черновик в памяти устройства.
+  const черновик = памятьЧитать('mt_exam_draft_' + bi, null);
+  if (черновик && черновик.всего === questions.length && черновик.ответы) {
+    examState.answers = черновик.ответы;
+  }
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'exam'));
   $('#nav').style.display = 'none';
   renderExam();
@@ -1925,6 +1931,25 @@ function renderExam() {
       <div class="test-result" id="examResult" hidden></div>
     </div>`;
   hydrateIcons();
+
+  // Возвращаем отмеченное раньше и запоминаем каждый новый ответ.
+  Object.keys(examState.answers || {}).forEach((qi) => {
+    const поле = document.querySelector(`input[name="ex${qi}"][value="${examState.answers[qi]}"]`);
+    if (поле) поле.checked = true;
+  });
+  $$('#examQuiz input[type="radio"]').forEach((поле) => поле.addEventListener('change', () => {
+    const qi = поле.name.replace('ex', '');
+    examState.answers[qi] = Number(поле.value);
+    localStorage.setItem('mt_exam_draft_' + bi, JSON.stringify({
+      всего: total, ответы: examState.answers, когда: Date.now(),
+    }));
+  }));
+
+  const отвечено = Object.keys(examState.answers || {}).length;
+  if (отвечено && отвечено < total) {
+    toast('Продолжаем с того места: отвечено ' + отвечено + ' из ' + total);
+  }
+
   $('#examCheck').addEventListener('click', gradeExam);
 }
 
@@ -1941,6 +1966,10 @@ function gradeExam() {
     else label.classList.add('wrong');
   });
   if (answered < questions.length) return toast('Ответь на все вопросы');
+  // Попытка завершена, черновик больше не нужен: со второго захода ребёнок
+  // начинает с чистого листа, а не с прежними ответами.
+  localStorage.removeItem('mt_exam_draft_' + bi);
+  examState.answers = {};
   const pct = Math.round(correct / questions.length * 100);
   const res = $('#examResult');
   res.hidden = false;
