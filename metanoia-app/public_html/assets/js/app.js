@@ -4080,6 +4080,25 @@ function renderDonate() {
 }
 
 /* ── Настройки ── */
+/* Тема тремя вариантами, а не выключателем: с выключателем «как в
+   системе» терялось навсегда, вернуться к нему было нечем. */
+function темаСтрока(выбор) {
+  const кнопка = (ключ, подпись, значок) => `<button class="theme-pick ${выбор === ключ ? 'theme-pick--on' : ''}"
+      data-theme-pick="${ключ}" aria-pressed="${выбор === ключ}">${ICON(значок, 16)}<span>${подпись}</span></button>`;
+  return `<div class="set-row">
+    <div class="set-row__ic">${ICON('sun', 17)}</div>
+    <div class="set-row__body">
+      <div class="set-row__name">Оформление</div>
+      <div class="set-row__desc">Светлое, тёмное или как в телефоне</div>
+    </div>
+  </div>
+  <div class="theme-picks">
+    ${кнопка('light', 'Светлая', 'sun')}
+    ${кнопка('dark', 'Тёмная', 'moon')}
+    ${кнопка('auto', 'Как в системе', 'clock')}
+  </div>`;
+}
+
 function switchRow(id, icon, name, desc, on) {
   return `<div class="set-row">
     <div class="set-row__ic">${ICON(icon, 17)}</div>
@@ -4145,8 +4164,8 @@ function aboutCard(icon, title, text) {
 }
 
 function openSettingsScreen() {
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  $('#setAppearance').innerHTML = switchRow('swTheme', dark ? 'moon' : 'sun', 'Тёмная тема', 'Мягкие тёмные тона для вечернего чтения', dark);
+  const выбор = localStorage.getItem('mt_theme') || 'auto';
+  $('#setAppearance').innerHTML = темаСтрока(выбор);
   $('#setNotify').innerHTML =
     switchRow('swLessons', 'book', 'Новые уроки', 'Придут на телефон, когда школа включит сервер', setGet('n_lessons')) +
     switchRow('swMsgs', 'comment', 'Сообщения', 'Придут на телефон, когда школа включит сервер', setGet('n_msgs'));
@@ -4154,7 +4173,15 @@ function openSettingsScreen() {
     switchRow('swPin', 'lock', 'PIN на родительский раздел', 'Защита профиля родителя от детей', setGet('p_pin')) +
     switchRow('swTime', 'clock', 'Ограничение времени игр', '30 минут игр в день', setGet('p_time'));
   hydrateIcons();
-  wireSwitch('swTheme', null, (on) => { applyTheme(on ? 'dark' : 'light'); localStorage.setItem('mt_theme', on ? 'dark' : 'light'); openSettingsScreen(); });
+  $$('#setAppearance [data-theme-pick]').forEach((б) => б.addEventListener('click', () => {
+    const режим = б.dataset.themePick;
+    // «Как в системе» — это отсутствие своего выбора: телефон переключил
+    // ночной режим, и школа переключилась вместе с ним.
+    if (режим === 'auto') localStorage.removeItem('mt_theme');
+    else localStorage.setItem('mt_theme', режим);
+    applyTheme(resolveTheme());
+    openSettingsScreen();
+  }));
   wireSwitch('swLessons', 'n_lessons'); wireSwitch('swMsgs', 'n_msgs');
   wireSwitch('swPin', 'p_pin'); wireSwitch('swTime', 'p_time');
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'settings'));

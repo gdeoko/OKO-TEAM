@@ -2835,3 +2835,12 @@ html.в-телеграме .hd { padding-top: 6px; }
 .mail-note p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
 .mail-note .btn { width: 100%; }
 [data-theme="dark"] .mail-note p { color: #E7EDF3; }
+
+/* Выбор оформления: три варианта в ряд, светлая, тёмная и как в системе */
+.theme-picks { display: flex; gap: 8px; padding: 0 15px 14px; }
+.theme-pick { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 11px 6px; border: 1px solid rgba(26,58,82,.14); border-radius: 12px;
+  background: transparent; color: var(--navy); font: 600 12px/1.2 inherit; cursor: pointer; }
+.theme-pick--on { border-color: var(--terracotta); background: rgba(201,112,100,.10); color: var(--terracotta); }
+[data-theme="dark"] .theme-pick { color: #E7EDF3; border-color: rgba(231,237,243,.18); }
+[data-theme="dark"] .theme-pick--on { color: var(--terracotta); border-color: var(--terracotta); }
