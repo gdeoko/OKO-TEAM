@@ -1,0 +1,71 @@
+# ══════════════════════════════════════════════════════════════
+# МЕТАНОЙЯ · корень сайта школы
+#
+# Обычный хостинг из коробки настроен не под приложение. Без этого файла
+# ломаются три вещи сразу: связь приложения Android с сайтом, обновление
+# школы у семей, которые уже её открывали, и звук уроков на части хостингов.
+# ══════════════════════════════════════════════════════════════
+
+# Только по HTTPS. Без сертификата не работают ни мини-приложение в
+# Телеграме, ни обёртки для магазинов, ни микрофон в чатах.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+</IfModule>
+
+# Никаких списков файлов в папках
+Options -Indexes
+
+# Типы, которые часть хостингов не знает. Без первого приложение Android
+# не свяжется с сайтом и покажет адресную строку браузера.
+<IfModule mod_mime.c>
+  AddType application/json .json
+  AddType font/woff2 .woff2
+  AddType audio/mpeg .mp3
+  AddType video/mp4 .mp4
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+  AddCharset UTF-8 .html .css .js .json .svg
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Страница и код: не кэшируем, иначе семья остаётся на вчерашней версии
+  # и не видит новых уроков. Работник страницы сам держит копию для
+  # чтения без сети.
+  <FilesMatch "\.(html|json|js)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  # Картинки, звук и шрифты: адреса не меняются, кладём в память надолго
+  <FilesMatch "\.(jpg|jpeg|png|webp|svg|mp3|mp4|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Микрофон и камера нужны в чатах, остальное закрываем
+  Header set Permissions-Policy "microphone=(self), camera=(self), geolocation=(), payment=()"
+</IfModule>
+
+# Файл связи с приложением Android нужен и без расширения в адресе
+<Files "assetlinks.json">
+  <IfModule mod_headers.c>
+    Header set Content-Type "application/json"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "public, max-age=3600"
+  </IfModule>
+</Files>
+
+# Служебное наружу не отдаём
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(\.env|\.git.*|composer\.(json|lock)|.*\.sql|.*\.log|_build\.html)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# 404 намеренно оставлен обычным: если картинка урока не залилась, это
+# должно быть видно сразу, а не подменяться главной страницей.

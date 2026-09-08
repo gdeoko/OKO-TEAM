@@ -186,6 +186,14 @@ curl -s -X POST https://api.<домен>/api/v1/subscriptions/checkout \
 - [ ] HTTPS-only, HSTS, `Secure`+`HttpOnly`+`SameSite` на cookie.
 - [ ] Уникальный `JWT_SECRET`, БД-пользователь без прав на другие схемы.
 - [ ] Регулярный бэкап БД (mysqldump по cron).
+- [ ] Проверить, что `public_html/.htaccess` доехал на сервер. В нём HTTPS-only,
+      типы файлов, заголовки кэша и отдача `assetlinks.json` как JSON. Без него
+      приложение Android не свяжется с сайтом и покажет адресную строку, а
+      семьи будут неделями сидеть на вчерашней версии школы. Проверка:
+      `curl -sI https://<домен>/index.html | grep -i cache-control` даёт
+      `no-cache`, а `curl -sI https://<домен>/.well-known/assetlinks.json |
+      grep -i content-type` даёт `application/json`. На nginx то же самое
+      задаётся в конфиге сервера, файл .htaccess там не читается.
 - [ ] Проверить, что `public_html/uploads/.htaccess` доехал на сервер: там лежат
       домашние работы детей, и оттуда ничего не должно исполняться. На nginx
       правило то же самое задаётся в конфиге:
