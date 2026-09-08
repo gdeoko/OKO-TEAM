@@ -17,4 +17,5 @@ const немые = await p.evaluate(()=>{
 });
 console.log('кнопок без подписи: ' + немые.length);
 немые.slice(0,25).forEach(э=>console.log('  ' + э));
+console.log("ОШИБОК: " + немые.length);
 await b.close();
