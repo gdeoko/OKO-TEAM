@@ -94,6 +94,7 @@ fi
 say ''
 say '── 4. Права и защита ───────────────────────────────'
 
+[ -f "$ROOT/public_html/.htaccess" ] && good 'корневой .htaccess на месте' || bad 'нет public_html/.htaccess: приложение Android не свяжется с сайтом, а семьи застрянут на старой версии'
 [ -f "$ROOT/public_html/api/v1/.htaccess" ] && good 'api/.htaccess на месте' || bad 'нет public_html/api/v1/.htaccess'
 [ -f "$ROOT/public_html/uploads/.htaccess" ] && good 'uploads/.htaccess на месте' || bad 'нет public_html/uploads/.htaccess'
 mkdir -p "$ROOT/public_html/uploads" && chmod 755 "$ROOT/public_html/uploads" && good 'папка uploads готова'
@@ -120,7 +121,9 @@ fi
 
 say ''
 if [ "$errors" -eq 0 ]; then
-  say 'Готово. Осталось: вписать mt-api, mt-bot и mt-google в public_html/index.html.'
+  say 'Готово. Осталось: вписать mt-api, mt-bot и mt-google в public_html/index.html,'
+  say 'а перед выходом в магазины ещё отпечаток ключа подписи в'
+  say 'public_html/.well-known/assetlinks.json.'
 else
   say "Осталось разобраться с $errors пунктами выше."
 fi
