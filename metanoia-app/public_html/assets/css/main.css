@@ -2825,3 +2825,6 @@ html.в-телеграме .hd { padding-top: 6px; }
 /* Подпись с версией внизу «О приложении». */
 .about-ver { margin-top: 18px; text-align: center; font-size: 12px; line-height: 1.7; color: var(--muted, #5A6577); }
 .about-ver a { color: inherit; text-decoration: underline; }
+
+/* Оговорка под домашним заданием: пока сервера нет, файл никуда не уходит. */
+.hw-note { margin-top: 10px; font-size: 12px; line-height: 1.5; color: var(--gray); }

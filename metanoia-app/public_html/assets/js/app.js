@@ -1659,6 +1659,8 @@ function renderLesson(n) {
       <input type="file" id="hwFile" accept="image/*,.pdf" hidden>
       <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Прикрепить задание</button>
       <div class="hw-file" id="hwName" hidden></div>
+      ${(document.querySelector('meta[name="mt-api"]') || {}).content ? '' :
+        '<p class="hw-note">Пока школа без сервера, файл остаётся на этом устройстве. Педагог получит его, как только сервер включат.</p>'}
     </div>
 
     <div class="lesson-final" id="lessonFinal"></div>
@@ -1768,7 +1770,9 @@ function wireLesson(n, quiz, task) {
     const метка = $('#hwName');
     if (метка) { метка.hidden = false; метка.textContent = 'Прикреплено: ' + s.hwName; }
     $('#hwUpload').textContent = 'Заменить файл';
-    toast('Задание прикреплено');
+    toast((document.querySelector('meta[name="mt-api"]') || {}).content
+      ? 'Задание прикреплено'
+      : 'Задание прикреплено и ждёт на устройстве: педагогу уйдёт с сервером');
   });
   // при открытии урока показываем то, что уже прикрепили
   const было = getLessonState(n);
