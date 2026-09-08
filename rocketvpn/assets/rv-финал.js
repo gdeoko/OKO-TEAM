@@ -427,122 +427,44 @@
 
   /* Даль за остеклением. Не звёздное поле мира, а именно ДАЛЬ: без неё
      в окне стоит чёрный прямоугольник, и кадр читается вырезанным. */
-  function дальХолст() {
-    return холст(512, 512, function (к, ш, в) {
-      /* Даль тёмная намеренно. Первый заход был светлее на две
-         ступени, и на живом снимке окно читалось не космосом, а
-         подсвеченным матовым стеклом: звёзд на нём не видно вовсе.
-         Небо обязано быть темнее любой стены зала, иначе оно
-         перестаёт быть далью. */
-      var гр = к.createLinearGradient(0, 0, 0, в);
-      гр.addColorStop(0, цветСтрокой(Ц.глубь, 1));
-      гр.addColorStop(0.58, цветСтрокой(0x050c18, 1));
-      гр.addColorStop(1, цветСтрокой(0x0a1830, 1));
-      к.fillStyle = гр;
-      к.fillRect(0, 0, ш, в);
-      var сияние = к.createRadialGradient(ш * 0.68, в * 0.78, 0, ш * 0.68, в * 0.78, ш * 0.62);
-      сияние.addColorStop(0, цветСтрокой(Ц.циан, 0.18));
-      сияние.addColorStop(1, цветСтрокой(Ц.циан, 0));
-      к.fillStyle = сияние;
-      к.fillRect(0, 0, ш, в);
-      /* Звёзды: детерминированный разброс, чтобы кадр не менялся между
-         перезагрузками и снимки проверки сходились. */
-      var семя = 20260905;
-      function сл() { семя = (семя * 1103515245 + 12345) % 2147483648; return семя / 2147483648; }
-      /* Звёзды мелкие и частые. Первый заход рисовал их крупными
-         кружками, и в окне получалось не небо, а горох: настоящее
-         звёздное поле читается плотностью, а не размером точки. */
-      for (var i = 0; i < 900; i++) {
-        var x = сл() * ш, y = сл() * в, r = сл() * сл() * 1.3 + 0.35;
-        к.fillStyle = "rgba(232,242,255," + (0.30 + сл() * 0.70).toFixed(2) + ")";
-        к.beginPath(); к.arc(x, y, r, 0, TAU); к.fill();
+  function дальЗаОкном() {
+    var group = new T.Group();
+    group.name = "Орбита за окном";
+    // Distant space stays behind the room; cabin particles never assemble it.
+    group.userData.assemblyIgnore = true;
+    var stars = холст(1024, 512, function (ctx, width, height) {
+      ctx.fillStyle = "#02040a"; ctx.fillRect(0, 0, width, height);
+      var seed = 20260908;
+      function random() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
+      for (var i = 0; i < 700; i++) {
+        var x = random() * width, y = random() * height;
+        var radius = 0.22 + Math.pow(random(), 5) * 0.60;
+        ctx.fillStyle = "rgba(217,232,255," + (0.18 + random() * 0.62).toFixed(2) + ")";
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, TAU); ctx.fill();
       }
-
-      /* ── ПЛАНЕТА ЗА СТЕКЛОМ ──────────────────────────────────
-         Владелец прислал пятый и шестой кадры их финала: в окне рубки
-         стоит Земля, занимая половину проёма. Голое звёздное поле там
-         было первым заходом и читалось дырой в борту - у неба без
-         предмета нет ни масштаба, ни глубины.
-
-         Рисунок повторяет их (rc-interior, planetTex): материки
-         пятнами, а не точками (точки читаются шумом, глазу нужен
-         контур), полярные шапки, облачные завихрения и огни ночных
-         городов вдоль побережий. Проекция другая - у них развёртка на
-         шар, у нас диск на плоской дали, - поэтому всё считается от
-         середины диска. */
-      var пx = ш * 0.62, пy = в * 0.60, пR = ш * 0.30;
-      var шар = к.createRadialGradient(пx - пR * 0.35, пy - пR * 0.40, пR * 0.06,
-                                       пx, пy, пR);
-      шар.addColorStop(0, "#1a6ea8");
-      шар.addColorStop(0.42, "#0a4a80");
-      шар.addColorStop(0.76, "#08223c");
-      шар.addColorStop(1, "#040c18");
-      к.save();
-      к.beginPath(); к.arc(пx, пy, пR, 0, TAU); к.clip();
-      к.fillStyle = шар;
-      к.fillRect(пx - пR, пy - пR, пR * 2, пR * 2);
-
-      /* Материки. Форма собирается синусами по углу: ровный овал
-         читается кляксой, а не сушей. */
-      function суша(cx, cy, rx, ry, пов, цвет) {
-        к.save();
-        к.translate(cx, cy); к.rotate(пов);
-        к.beginPath();
-        var n = 22;
-        for (var k2 = 0; k2 <= n; k2++) {
-          var a = k2 / n * TAU;
-          var w = 0.66 + 0.34 * (Math.sin(a * 3 + cx) * 0.5 + Math.sin(a * 5 + cy) * 0.5 + 1) / 2;
-          var px = Math.cos(a) * rx * w, py = Math.sin(a) * ry * w;
-          if (!k2) к.moveTo(px, py); else к.lineTo(px, py);
-        }
-        к.closePath();
-        к.fillStyle = цвет;
-        к.fill();
-        к.restore();
-      }
-      var мат = [
-        [-0.42, -0.18, 0.24, 0.30, 0.3], [-0.10, 0.30, 0.17, 0.26, -0.4],
-        [0.16, -0.34, 0.30, 0.26, 0.2], [0.34, 0.22, 0.19, 0.28, 0.7],
-        [0.60, -0.10, 0.22, 0.30, -0.2]
-      ];
-      for (var м2 = 0; м2 < мат.length; м2++) {
-        var сx = пx + мат[м2][0] * пR, сy = пy + мат[м2][1] * пR;
-        суша(сx, сy, мат[м2][2] * пR, мат[м2][3] * пR, мат[м2][4], "#123f4a");
-        суша(сx, сy, мат[м2][2] * пR * 0.82, мат[м2][3] * пR * 0.8, мат[м2][4], "#1a5a52");
-      }
-      /* Облачные завихрения: мягкие светлые дуги поверх суши. */
-      к.globalAlpha = 0.16;
-      к.fillStyle = "#dceaf6";
-      for (var о2 = 0; о2 < 70; о2++) {
-        var оx = пx + (сл() * 2 - 1) * пR, оy = пy + (сл() * 2 - 1) * пR;
-        к.beginPath();
-        к.ellipse(оx, оy, пR * (0.06 + сл() * 0.22), пR * (0.02 + сл() * 0.06),
-                  сл() * 1.2 - 0.6, 0, TAU);
-        к.fill();
-      }
-      к.globalAlpha = 1;
-      /* Огни ночных городов вдоль побережий. */
-      к.fillStyle = "rgba(255,214,160,.7)";
-      for (var г2 = 0; г2 < 160; г2++) {
-        к.fillRect(пx + (сл() * 2 - 1) * пR * 0.92,
-                   пy + (сл() * 2 - 1) * пR * 0.92, 1.4, 1.4);
-      }
-      /* Тень: половина шара уходит в ночь, иначе он читается
-         наклейкой, а не телом в свете далёкого солнца. */
-      var ночь = к.createLinearGradient(пx - пR, пy - пR, пx + пR, пy + пR);
-      ночь.addColorStop(0, "rgba(2,5,12,0)");
-      ночь.addColorStop(0.52, "rgba(2,5,12,0.10)");
-      ночь.addColorStop(1, "rgba(2,5,12,0.86)");
-      к.fillStyle = ночь;
-      к.fillRect(пx - пR, пy - пR, пR * 2, пR * 2);
-      к.restore();
-      /* Кромка атмосферы. */
-      var атм = к.createRadialGradient(пx, пy, пR * 0.94, пx, пy, пR * 1.10);
-      атм.addColorStop(0, "rgba(120,190,255,0.30)");
-      атм.addColorStop(1, "rgba(120,190,255,0)");
-      к.fillStyle = атм;
-      к.beginPath(); к.arc(пx, пy, пR * 1.10, 0, TAU); к.fill();
     });
+    var sky = new T.Mesh(new T.PlaneGeometry(80, 50),
+      new T.MeshBasicMaterial({ map: stars, fog: false, depthWrite: false, toneMapped: false }));
+    sky.position.set(0, 1.9, -30); sky.renderOrder = -2; group.add(sky);
+
+    // Reuse the same geographic map already loaded by the lunar scene.
+    var surface = new T.TextureLoader().load("assets/gen/земля-2k.jpg");
+    surface.colorSpace = T.SRGBColorSpace;
+    surface.anisotropy = W.r && W.r.capabilities ? Math.min(8, W.r.capabilities.getMaxAnisotropy()) : 1;
+    var earth = new T.Mesh(new T.SphereGeometry(3.25, W.ступень === 0 ? 40 : 64, 32),
+      new T.MeshStandardMaterial({ map: surface, roughness: 1, metalness: 0,
+        emissiveMap: surface, emissive: 0xffffff, emissiveIntensity: 0.045, fog: false }));
+    earth.name = "Земля за окном";
+    earth.position.set(1.35, 0.65, -13);
+    earth.rotation.set(0.10, 2.15, -0.12);
+    group.add(earth);
+    var atmosphere = new T.Mesh(new T.SphereGeometry(3.30, 48, 24), new T.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+      vertexShader: "varying vec3 vNormal; varying vec3 vEye; void main(){vec4 p=modelViewMatrix*vec4(position,1.); vNormal=normalize(normalMatrix*normal); vEye=-p.xyz; gl_Position=projectionMatrix*p;}",
+      fragmentShader: "varying vec3 vNormal; varying vec3 vEye; void main(){float rim=pow(1.-max(0.,dot(normalize(vNormal),normalize(vEye))),4.); gl_FragColor=vec4(.12,.36,.72,rim*.24);}"
+    }));
+    atmosphere.position.copy(earth.position); group.add(atmosphere);
+    return group;
   }
 
   /* ── Оболочка с вырезами ──────────────────────────────────────
@@ -1075,12 +997,7 @@
          салона стоит чёрный прямоугольник. Числа те же, что в ручной
          сборке ниже, - они посчитаны от размера корабля, а корабль
          один и тот же. */
-      М.даль = new T.Mesh(
-        new T.PlaneGeometry(9, 8),
-        new T.MeshBasicMaterial({ map: дальХолст(), fog: false, depthWrite: false })
-      );
-      М.даль.position.set(0, 1.9, -8.5);
-      М.даль.renderOrder = -1;
+      М.даль = дальЗаОкном();
       М.салон.add(М.даль);
 
       /* Свет зала у соседей свой, и он же был образцом для нашего.
@@ -1167,12 +1084,7 @@
          начинается акт, значит снаружи корабль закрывает её целиком. А
          изнутри конус взгляда через окно на этом расстоянии шириной семь
          метров, и полотна хватает с запасом. */
-      М.даль = new T.Mesh(
-        new T.PlaneGeometry(9, 8),
-        new T.MeshBasicMaterial({ map: дальХолст(), fog: false, depthWrite: false })
-      );
-      М.даль.position.set(0, 1.9, -8.5);
-      М.даль.renderOrder = -1;
+      М.даль = дальЗаОкном();
       М.салон.add(М.даль);
 
       /* Блик стекла. Слабый, аддитивный: остекление без блика читается

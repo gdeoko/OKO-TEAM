@@ -1,7 +1,7 @@
 {
-  "base_commit": "ddaa4e714bfdb459f6921b0ccf6af84bf6f3242f",
-  "base_release": "20260908-r5",
-  "release": "20260908-r6",
+  "base_commit": "0b3018ae1ea91c0df77e37ce026262889b76ebe4",
+  "base_release": "20260908-r4",
+  "release": "20260908-r5",
   "files": [
     {
       "path": "rocketcdn/admin.html",
@@ -19,39 +19,19 @@
       "sha256": "42781434971db7279848e841ef5b0ea622f94fe532ff9cb322a2fdc365d08148"
     },
     {
-      "path": "rocketcdn/assets/rc-panel.js",
-      "base_sha256": "c9fb8c4a7e5e32e4839545c324c3fd74c5e9a5892bc9fcf00b1bfc384cd43587",
-      "sha256": "ad5f19b09c1a87fc0a5752c5a829ceb41341fe34ade8ae3d916a7debc60777eb"
-    },
-    {
-      "path": "rocketcdn/assets/rc-real.js",
-      "base_sha256": "82f4d3a481c6f338ab3e89f7c57d376a2af00112b2c83082c3b794f0b83531ad",
-      "sha256": "3bfe43b4c236637a00245a2ce6182ffda7cdc9daf1ecced84caf4dd1b0ea89f2"
-    },
-    {
       "path": "rocketcdn/index.html",
       "base_sha256": "30dfc919fc97aedca8e245bc636b390de46b5fcb51ce825f58ecdc250c5d36e4",
-      "sha256": "ab9db48383e2d674cebf0bc321acfbd16e8cf589da8ebac159da1a2e8fa048ed"
-    },
-    {
-      "path": "rocketvpn/assets/rc-panel.js",
-      "base_sha256": "c9fb8c4a7e5e32e4839545c324c3fd74c5e9a5892bc9fcf00b1bfc384cd43587",
-      "sha256": "ad5f19b09c1a87fc0a5752c5a829ceb41341fe34ade8ae3d916a7debc60777eb"
+      "sha256": "30dfc919fc97aedca8e245bc636b390de46b5fcb51ce825f58ecdc250c5d36e4"
     },
     {
       "path": "rocketvpn/assets/rv-assembly.js",
       "base_sha256": "750c88c89246b4e99a6834e42e7355504e91df083a157b8fe05d94a332bad31b",
-      "sha256": "277fb8c254f2550c3533cb16576c312410966f8b5d854ce991b43b111d685ff6"
+      "sha256": "750c88c89246b4e99a6834e42e7355504e91df083a157b8fe05d94a332bad31b"
     },
     {
       "path": "rocketvpn/assets/rv-motion.js",
       "base_sha256": "abe61eb1f2fab64a19a666f4fd5585e4370593a050df1d5c96c5a4f91b36d6b6",
       "sha256": "abe61eb1f2fab64a19a666f4fd5585e4370593a050df1d5c96c5a4f91b36d6b6"
-    },
-    {
-      "path": "rocketvpn/assets/rv-real.js",
-      "base_sha256": "45b0fa7e6f3a37168fede76e75416ef208fbf8316249c12d0ac3d91ab0adf5ab",
-      "sha256": "77028384acb5c8ffc006d8b7850d3078d1591a05f58e5084cd20ff0ce21ccf72"
     },
     {
       "path": "rocketvpn/assets/rv-world.js",
@@ -64,19 +44,9 @@
       "sha256": "d0356725295fb654393f2b1ace7805d34f7a88a373e36f6c7977aaf3f3175ffe"
     },
     {
-      "path": "rocketvpn/assets/rv-ореол.js",
-      "base_sha256": "12e73d9d213137025c1385e08185f5dc0f43f4c87b5738e6f8fffe3de467175b",
-      "sha256": "c415a9aa66d55e61828dd9591c264df00c05688811067eb526ef085bbb7765ba"
-    },
-    {
       "path": "rocketvpn/assets/rv-панель-кнопки.js",
       "base_sha256": "9da8b6fa601d06d8a7cf8c34a47594996cae5e1def8a16e194466ee2cef0e709",
       "sha256": "9da8b6fa601d06d8a7cf8c34a47594996cae5e1def8a16e194466ee2cef0e709"
-    },
-    {
-      "path": "rocketvpn/assets/rv-салон-cdn.js",
-      "base_sha256": "6fc64fb5b42c63294dde7b7db28fda70cc5d69b03d97a10429d284c421668dac",
-      "sha256": "fd7e29b3494cf96d0ceb1dc7959662795eb4487ecee57185117a42f793ce9f55"
     },
     {
       "path": "rocketvpn/assets/rv-слово3d.js",
@@ -86,11 +56,11 @@
     {
       "path": "rocketvpn/assets/rv-финал.js",
       "base_sha256": "28b314b8da8ae1b78007c0a105d0880739255a088dd0564cf987139dfb3f777d",
-      "sha256": "70f7d9370763a3027d7f7e46a6992b0eace8b92ae317756cf79506ae8737c598"
+      "sha256": "28b314b8da8ae1b78007c0a105d0880739255a088dd0564cf987139dfb3f777d"
     },
     {
       "path": "rocketvpn/assets/rv.css",
-      "base_sha256": "9d1fe47111e273734240ea5939dd1160e929761119d7eb6210ee4ea8be448369",
+      "base_sha256": "b95a49f3d4c5a1c39333f54e350207557fe1f3230a195560f68d66573d431b39",
       "sha256": "9d1fe47111e273734240ea5939dd1160e929761119d7eb6210ee4ea8be448369"
     },
     {

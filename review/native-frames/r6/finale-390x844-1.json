@@ -1,0 +1,114 @@
+{
+  "scope": "Native scene module inspection; no browser, DOM overlay, scroll controller or device FPS",
+  "three": "160",
+  "width": 390,
+  "height": 844,
+  "progress": 1,
+  "renderer": "ANGLE",
+  "version": "WebGL 1.0 stack-gl 8.1.6",
+  "camera": [
+    0,
+    1.66,
+    -0.2763466393804337
+  ],
+  "pose": {
+    "подход": 70.8,
+    "уход": -3.476,
+    "поле": [
+      46,
+      65,
+      84
+    ],
+    "обзор": 90,
+    "темп": [
+      0.3,
+      0.18
+    ],
+    "на": [
+      0,
+      1.62,
+      -2.9
+    ],
+    "от": [
+      0,
+      1.66,
+      3.2
+    ]
+  },
+  "finale": {
+    "собрано": true,
+    "видно": true,
+    "доля": 1,
+    "салон": true,
+    "распах": 0.73,
+    "распахПредел": 0.73,
+    "чужойКорпус": false,
+    "чужойСалон": true,
+    "щель": 0,
+    "светПроёма": 0,
+    "лампаЗала": 3.4,
+    "лампаПульта": 2.6,
+    "уПульта": true,
+    "снаружи": false,
+    "местоУПульта": {
+      "поле": 84,
+      "даль": 2.523653360619566
+    },
+    "рамки": {
+      "анк": [
+        5.5,
+        36.8,
+        53,
+        16.8
+      ],
+      "впр": [
+        63,
+        36.8,
+        31.5,
+        16.8
+      ],
+      "окно": [
+        6,
+        36.1,
+        88.1,
+        27.5
+      ],
+      "кн": [
+        62.7,
+        56.6,
+        29.7,
+        5.5
+      ]
+    },
+    "люк": {
+      "ширина": 1.94,
+      "высота": 2.1
+    },
+    "зал": {
+      "радиус": 3.05,
+      "высота": 4.2,
+      "глаз": 1.62
+    }
+  },
+  "info": {
+    "frame": 1,
+    "calls": 16,
+    "triangles": 7246,
+    "points": 0,
+    "lines": 0
+  },
+  "programs": 9,
+  "materials": {
+    "MeshPhysicalMaterial": 19,
+    "MeshBasicMaterial": 40,
+    "MeshStandardMaterial": 37,
+    "ShaderMaterial": 2
+  },
+  "distinctColors": 39432,
+  "warnings": [
+    "THREE.WebGLRenderer: Texture has been resized from (768x768) to (512x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (566x1225) to (512x1024)."
+  ],
+  "glErrors": [],
+  "glError": 0
+}

@@ -360,6 +360,12 @@ var envCache = {};
    угол это своя свёртка PMREM, а отражение окружения таких долей
    на глаз не различает. */
 R.env = function (T, renderer, warm, sunDir) {
+  var hdr = false;
+  try {
+    hdr = (renderer.capabilities.isWebGL2 && renderer.extensions.has("EXT_color_buffer_float")) ||
+      renderer.extensions.has("EXT_color_buffer_half_float");
+  } catch (error) {}
+  if (!hdr) return null;
   var shift = 0;
   if (sunDir && (sunDir.x || sunDir.y || sunDir.z)) {
     var u = Math.atan2(sunDir.z, sunDir.x) / (Math.PI * 2) + 0.5;
@@ -667,7 +673,12 @@ R.post = function (T, renderer, opt) {
   var o = opt || {};
   var lvl = o.tier != null ? o.tier : tier();
   var P = { tier: lvl, enabled: true };
-  var half = T.HalfFloatType;
+  var halfRenderable = false;
+  try {
+    halfRenderable = (renderer.capabilities.isWebGL2 && renderer.extensions.has("EXT_color_buffer_float")) ||
+      renderer.extensions.has("EXT_color_buffer_half_float");
+  } catch (error) {}
+  var half = halfRenderable ? T.HalfFloatType : T.UnsignedByteType;
   var size = new T.Vector2();
   renderer.getSize(size);
   var pr = renderer.getPixelRatio();

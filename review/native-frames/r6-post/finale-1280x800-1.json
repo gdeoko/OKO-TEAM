@@ -1,0 +1,117 @@
+{
+  "scope": "Native scene module inspection; no browser, DOM overlay, scroll controller or device FPS",
+  "three": "160",
+  "width": 1280,
+  "height": 800,
+  "progress": 1,
+  "renderer": "ANGLE",
+  "version": "WebGL 1.0 stack-gl 8.1.6",
+  "postProcessing": true,
+  "colorTargetType": 1009,
+  "camera": [
+    0,
+    1.66,
+    -1.1999999999999997
+  ],
+  "pose": {
+    "подход": 70.8,
+    "уход": -4.4,
+    "поле": [
+      46,
+      59,
+      72
+    ],
+    "обзор": 90,
+    "темп": [
+      0.3,
+      0.18
+    ],
+    "на": [
+      0,
+      1.62,
+      -2.9
+    ],
+    "от": [
+      0,
+      1.66,
+      3.2
+    ]
+  },
+  "finale": {
+    "собрано": true,
+    "видно": true,
+    "доля": 1,
+    "салон": true,
+    "распах": 0.73,
+    "распахПредел": 0.73,
+    "чужойКорпус": false,
+    "чужойСалон": true,
+    "щель": 0,
+    "светПроёма": 0,
+    "лампаЗала": 3.4,
+    "лампаПульта": 2.6,
+    "уПульта": true,
+    "снаружи": false,
+    "местоУПульта": {
+      "поле": 72,
+      "даль": 1.6
+    },
+    "рамки": {
+      "анк": [
+        24.1,
+        23.5,
+        30.9,
+        33.6
+      ],
+      "впр": [
+        57.3,
+        23.5,
+        18.6,
+        33.6
+      ],
+      "окно": [
+        24.3,
+        22,
+        51.4,
+        54.2
+      ],
+      "кн": [
+        57.1,
+        63,
+        16.8,
+        10.5
+      ]
+    },
+    "люк": {
+      "ширина": 1.94,
+      "высота": 2.1
+    },
+    "зал": {
+      "радиус": 3.05,
+      "высота": 4.2,
+      "глаз": 1.62
+    }
+  },
+  "info": {
+    "frame": 11,
+    "calls": 36,
+    "triangles": 9054,
+    "points": 0,
+    "lines": 0
+  },
+  "programs": 13,
+  "materials": {
+    "MeshPhysicalMaterial": 19,
+    "MeshBasicMaterial": 40,
+    "MeshStandardMaterial": 48,
+    "ShaderMaterial": 2
+  },
+  "distinctColors": 49647,
+  "warnings": [
+    "THREE.WebGLRenderer: Texture has been resized from (1859x1162) to (1024x1024).",
+    "THREE.WebGLRenderer: Texture has been resized from (800x704) to (512x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (800x704) to (512x512)."
+  ],
+  "glErrors": [],
+  "glError": 0
+}

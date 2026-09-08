@@ -587,6 +587,14 @@
        Без карты окружения металл в сцене выглядит серой краской: ему
        нечего отражать. */
     "окружение": function (T, рисовальщик, сцена) {
+      // Three r160's PMREM uses half-float render targets. Keep direct scene
+      // lighting if the device cannot render them instead of poisoning GL state.
+      var hdr = false;
+      try {
+        hdr = (рисовальщик.capabilities.isWebGL2 && рисовальщик.extensions.has("EXT_color_buffer_float")) ||
+          рисовальщик.extensions.has("EXT_color_buffer_half_float");
+      } catch (error) {}
+      if (!hdr) return null;
       /* ── Павильон вместо картинки ──────────────────────────────
          Прежняя карта рисовалась на холсте 2D: градиент и круглые
          пятна в восемь бит. У такой карты нет ничего ярче единицы, и
@@ -766,7 +774,9 @@
       var второйWebGL = false, полуМожно = false;
       try {
         второйWebGL = !!рисовальщик.capabilities.isWebGL2;
-        полуМожно = второйWebGL || рисовальщик.extensions.has("EXT_color_buffer_half_float");
+        // WebGL 2 alone does not make RGBA16F color-renderable.
+        полуМожно = (второйWebGL && рисовальщик.extensions.has("EXT_color_buffer_float")) ||
+          рисовальщик.extensions.has("EXT_color_buffer_half_float");
       } catch (eК) {}
       var полу = полуМожно ? (T.HalfFloatType || T.FloatType) : T.UnsignedByteType;
 

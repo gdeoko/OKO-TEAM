@@ -23,9 +23,9 @@
     }
     try {
     room.traverse(function (object) {
-      if (!object.isMesh || !object.geometry || Array.isArray(object.material) || !object.visible) return;
+      if (!object.isMesh || !object.geometry || Array.isArray(object.material) || !object.visible || object.userData.assemblyIgnore) return;
       for (var ancestor = object.parent; ancestor && ancestor !== room; ancestor = ancestor.parent) {
-        if (!ancestor.visible) return;
+        if (!ancestor.visible || ancestor.userData.assemblyIgnore) return;
       }
       var material = object.material;
       if (!material || material.transparent || object.isInstancedMesh) return;

@@ -402,7 +402,8 @@
     var второйWebGL = false, полуМожно = false;
     try {
       второйWebGL = !!р.capabilities.isWebGL2;
-      полуМожно = второйWebGL || р.extensions.has("EXT_color_buffer_half_float");
+      полуМожно = (второйWebGL && р.extensions.has("EXT_color_buffer_float")) ||
+        р.extensions.has("EXT_color_buffer_half_float");
     } catch (e) {}
     var тип = полуМожно ? (T.HalfFloatType || T.FloatType) : T.UnsignedByteType;
 

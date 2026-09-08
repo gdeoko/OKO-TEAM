@@ -7,6 +7,42 @@ const vm = require('node:vm');
 const root = process.env.ROCKET_SOURCE_ROOT || path.resolve(__dirname, '../..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const load = (p, c) => vm.runInContext(read(p), c, {filename:p});
+test('VPN cabin upgrades shared hull materials while preserving glass, relief and unlit displays',()=>{
+ const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);
+ const T=f.c.THREE,root=new T.Group(),bump=new T.Texture();
+ const hull=new T.MeshPhongMaterial({color:0x284258,bumpMap:bump,bumpScale:.3,emissive:0x224466,emissiveIntensity:0});
+ const glass=new T.MeshPhongMaterial({transparent:true,opacity:.25,depthWrite:false,side:T.DoubleSide});
+ const glow=new T.MeshBasicMaterial({color:0xffffff});
+ const objects=[hull,hull,glass,glow].map(m=>new T.Mesh(new T.BoxGeometry(),m));objects.forEach(m=>root.add(m));
+ let retired=0;hull.addEventListener('dispose',()=>retired++);
+ f.c.RC_CABIN={build(){f.c.RC_REAL.upgradeTree(T,root,(_mesh,mat)=>({roughness:mat.transparent?.08:.44,metalness:mat.transparent?.1:.78}));return {group:root};}};
+ load('rocketvpn/assets/rv-салон-cdn.js',f.c);
+ f.c.RV_САЛОН_CDN.собрать(T,{width:1280,height:800});
+ assert.ok(objects[0].material.isMeshStandardMaterial);assert.equal(objects[0].material,objects[1].material);
+ assert.equal(objects[0].material.bumpMap,bump);assert.equal(objects[0].material.bumpScale,.3);
+ assert.equal(objects[0].material.emissiveIntensity,0);assert.equal(retired,1);
+ assert.equal(objects[2].material.transparent,true);assert.equal(objects[2].material.opacity,.25);
+ assert.equal(objects[2].material.depthWrite,false);assert.equal(objects[2].material.side,T.DoubleSide);
+ assert.equal(objects[3].material,glow);
+});
+test('VPN and CDN post-processing retain byte targets when float color buffers are unsupported',()=>{
+ for(const version2 of [false,true])for(const supported of [false,true]){
+  const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);const T=f.c.THREE;
+  const r={capabilities:{isWebGL2:version2,maxSamples:version2?4:0},
+   extensions:{has:name=>supported&&name===(version2?'EXT_color_buffer_float':'EXT_color_buffer_half_float')},
+   getSize:v=>v.set(64,32),getPixelRatio:()=>1,getDrawingBufferSize:v=>v.set(64,32)};
+  load('rocketvpn/assets/rv-real.js',f.c);
+  if(!supported)assert.equal(f.c.RV_REAL.окружение(T,r,new T.Scene()),null);
+  const vpn=f.c.RV_REAL.плёнка(T,r,2,64,32,{});
+  assert.equal(vpn.сцена.texture.type,supported?T.HalfFloatType:T.UnsignedByteType);
+  assert.ok(vpn.уровни.every(x=>x.a.texture.type===vpn.сцена.texture.type&&x.b.texture.type===vpn.сцена.texture.type));
+  load('rocketcdn/assets/rc-real.js',f.c);
+  if(!supported)assert.equal(f.c.RC_REAL.env(T,r,false),null);
+  const cdn=f.c.RC_REAL.post(T,r,{tier:2});
+  assert.equal(cdn.scene.texture.type,supported?T.HalfFloatType:T.UnsignedByteType);
+  vpn.dispose();cdn.dispose();
+ }
+});
 function clock() {
   let seq=0, now=0; const jobs=new Map();
   return {set:(fn,ms=0)=>{const id=++seq;jobs.set(id,{fn,at:now+ms});return id;},
@@ -79,14 +115,15 @@ test('Cabin assembly settles onto real transformed surfaces and reverses without
  assembly.dispose();assert.equal(assembly.field.parent,null);
  assert.equal(wall.material,shared);assert.equal(wall.visible,true);
 });
-test('Assembly excludes hidden branches and unused draw ranges, and disposes owned resources once',()=>{
+test('Assembly excludes hidden and distant-space branches and unused draw ranges, and disposes owned resources once',()=>{
  const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);load('rocketvpn/assets/rv-assembly.js',f.c);const T=f.c.THREE;
  const parent=new T.Group(),room=new T.Group(),hidden=new T.Group();parent.add(room);room.add(hidden);hidden.visible=false;
  const shared=new T.MeshStandardMaterial();const ghost=new T.Mesh(new T.BoxGeometry(500,500,500),shared);hidden.add(ghost);
+ const space=new T.Group();space.userData.assemblyIgnore=true;room.add(space);const planet=new T.Mesh(new T.SphereGeometry(100),shared);space.add(planet);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute([0,0,0,1,0,0,0,1,0,100,100,100,101,100,100,100,101,100],3));geo.setDrawRange(0,3);
  const visible=new T.Mesh(geo,shared);room.add(visible);const a=f.c.RV_ASSEMBLY.build(T,room,parent,{tier:0});
  const p=a.field.geometry.attributes.position;for(let i=0;i<p.count;i++){assert.equal(p.getZ(i),0);assert.ok(p.getX(i)>=0&&p.getY(i)>=0&&p.getX(i)+p.getY(i)<=1.00001);}
- assert.equal(ghost.material,shared);let count=0;[visible.material,a.field.material,a.field.geometry].forEach(x=>x.addEventListener('dispose',()=>count++));
+ assert.equal(ghost.material,shared);assert.equal(planet.material,shared);let count=0;[visible.material,a.field.material,a.field.geometry].forEach(x=>x.addEventListener('dispose',()=>count++));
  a.update(.5);a.dispose();a.dispose();a.update(0);assert.equal(count,3);assert.equal(visible.material,shared);assert.equal(visible.visible,true);assert.equal(hidden.visible,false);
 });
 test('VPN rendering respects pixel and texture limits while keeping phone detail',()=>{
