@@ -4,7 +4,7 @@
 # parol*, synclive, tgfull) и те, которым нужна сборка одним файлом
 # (standalone, vitrina): их запускают отдельно, рецепт в README.md.
 cd "$(dirname "$0")"
-LIST="full pravki svoi svyazka semya glavy plitki kolokol istorii lavka wipe3 badges rating cert cert2 exam task5 unread chat chat3 voice circle photo safety book docs lang espanol offline onboard reg kids deti child pin settings search searchopen home verse audio3 games3 narrow uzko dostup tema tema2 tema3 nagrada escape xss xss2 podderzhka chatnote kvest albom predel imya zamok gorod versiya pervyden passlesson glavnaya wreport slozhnost limit share oauthbtn ask downloads certdl stick broken audio font fallback udalenie igry"
+LIST="full pravki svoi svyazka semya glavy plitki kolokol istorii lavka wipe3 badges rating cert cert2 exam task5 unread chat chat3 voice circle photo safety book docs lang espanol offline onboard reg kids deti child pin settings search searchopen home verse audio3 games3 narrow uzko dostup tema tema2 tema3 nagrada escape xss xss2 podderzhka chatnote kvest albom predel imya zamok gorod versiya pervyden passlesson glavnaya wreport slozhnost limit share oauthbtn ask downloads certdl stick broken audio font fallback udalenie igry kniga2"
 bad=0
 for t in $LIST; do
   [ -f "$t.mjs" ] || { printf '%-12s нет файла\n' "$t"; continue; }
