@@ -528,7 +528,7 @@ function mail_senders(): array {
 function mail_route_account(array $row): array {
     // Первый ящик — согласно пулу письма (массовые/награды/личные).
     $pool = mail_pool_for($row);
-    $chain = mail_fallback_accounts([], $pool);
+    $chain = mail_fallback_accounts([], $pool, (string) ($row['to_email'] ?? ''));
     return $chain[0] ?? [];
 }
 
@@ -785,11 +785,39 @@ function mail_pool_for(array $row): string {
  * Массовое письмо никогда не выходит за пределы своего пула — даже если все его
  * ящики отказали: письмо останется в очереди до восстановления канала.
  */
-function mail_fallback_accounts(array $primary = [], string $pool = 'tx'): array {
+function mail_fallback_accounts(array $primary = [], string $pool = 'tx', string $to = ''): array {
     $out = [];
     $key = fn(array $a) => mb_strtolower((string) ($a['user'] ?? ''));
 
-    foreach (mail_pool_names($pool) as $name) {
+    $names = mail_pool_names($pool);
+
+    /* ПОЧТОВОЙ СЛУЖБЕ, КОТОРАЯ НАС НЕ ПРИНИМАЕТ, ПИШЕМ С ДРУГОГО АДРЕСА.
+     *
+     * Mail.ru Group закрыла домен центра: с 25 августа ни одно письмо не прошло,
+     * ответ на каждое — «550 spam message rejected». Под запрет попадают и личные
+     * письма: код для входа, пароль от кабинета, наградной документ. Человек
+     * нажимает «Забыли пароль», письмо у нас отмечается отправленным — и не
+     * приходит. Так участница с ящиком на mail.ru за четыре минуты запросила три
+     * кода и сброс пароля и не получила ничего.
+     *
+     * Пока служба держит дверь закрытой, личные письма на её адреса уходят с
+     * почты центра на Gmail: адрес другой, репутация другая, письмо доходит.
+     * Это касается ТОЛЬКО личной переписки — массовые рассылки как шли через
+     * сервис, так и идут, и Gmail в них не участвует. Обращения в ведомства сюда
+     * тоже не попадают: у них свой пул без Gmail, они принимают только .RU.
+     */
+    // Модуль репутации подключается по месту: mailer грузится и в тех местах,
+    // где рассылок нет вовсе, и тянуть его всегда незачем.
+    if (!function_exists('mrep_cold_allowed') && is_file(BASE_PATH . '/core/mail_reputation.php')) {
+        require_once BASE_PATH . '/core/mail_reputation.php';
+    }
+    if ($to !== '' && in_array($pool, ['tx', 'awards'], true)
+        && function_exists('mrep_cold_allowed') && !mrep_cold_allowed($to)
+        && !empty(mail_account_by_name('main'))) {
+        $names = array_values(array_unique(array_merge(['main'], $names)));
+    }
+
+    foreach ($names as $name) {
         $a = mail_account_by_name($name);
         if ($a && !empty($a['user'])) $out[$key($a)] = $a;
     }
@@ -955,7 +983,7 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         mail_log('стоп-лист (' . $stop . ') не мешает личному письму — ' . $to
                  . ' | ' . mb_substr($subject, 0, 60));
     }
-    $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : [], $pool);
+    $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : [], $pool, $to);
 
     // МАССОВОЕ ПИСЬМО НИКОГДА НЕ УХОДИТ С РАБОЧИХ ЯЩИКОВ ЦЕНТРА.
     //
