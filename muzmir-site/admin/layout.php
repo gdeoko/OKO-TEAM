@@ -18,9 +18,14 @@ function admin_layout(string $title, string $content, string $active = 'dashboar
 <title><?= h($title) ?> — Панель · <?= h(cfgv('org_short')) ?></title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="<?= asset('img/logo_muzmir_256.png') ?>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<?php /* ШРИФТЫ ПАНЕЛИ — СО СВОЕГО СЕРВЕРА.
+     Здесь стояла ссылка на fonts.googleapis.com. Таблица стилей блокирует
+     отрисовку: пока она не пришла, браузер не показывает страницу вообще —
+     ни заголовка, ни меню, ни списка. Из дата-центра Google отвечает за 80 мс,
+     с мобильного интернета в России — как повезёт, и панель на телефоне
+     выглядит как «не открывается», хотя сервер отдал её за 50 мс.
+     Файлы шрифтов лежат в public/assets/fonts, собраны scripts/fonts_localize.py. */ ?>
+<link rel="stylesheet" href="<?= asset('css/fonts.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 <style>
 /* ── Переключатель темы (кнопка в шапке) ─────────────────────── */
@@ -76,7 +81,7 @@ window.MZTheme=(function(){var K='muzmir-admin-theme';
 <div class="admin-shell">
   <aside class="sidebar">
     <div class="sidebar__brand">
-      <img src="<?= logo_data_uri() ?>" alt="Логотип Культурного центра «Музыкальный Мир»">
+      <img src="<?= logo_web_src() ?>" alt="Логотип Культурного центра «Музыкальный Мир»">
       <div><b>Музыкальный&nbsp;Мир</b><span>Панель управления</span></div>
     </div>
     <nav class="sidebar__nav">
@@ -139,15 +144,13 @@ function admin_login_layout(string $error = '', string $email = ''): void {
 <title>Вход в панель — <?= h(cfgv('org_short')) ?></title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="<?= asset('img/logo_muzmir_256.png') ?>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="<?= asset('css/fonts.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 </head>
 <body class="admin">
 <div class="login-wrap">
   <div class="login-card">
-    <img class="logo" src="<?= logo_data_uri() ?>" alt="Логотип">
+    <img class="logo" src="<?= logo_web_src() ?>" alt="Логотип">
     <h1>Панель управления</h1>
     <p class="sub"><?= h(cfgv('org_name')) ?></p>
     <?php if ($error): ?><div class="flash flash--error" style="text-align:left"><?= h($error) ?></div><?php endif; ?>

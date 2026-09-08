@@ -405,6 +405,19 @@ if ($qq !== '') {
 }
 $sqlWhere = implode(' AND ', $where);
 
+/* СПИСОК ОТДАЁМ ПОРЦИЕЙ, А НЕ ЦЕЛИКОМ.
+ *
+ * Здесь стояло LIMIT 120 без вариантов: страница выходила на четверть мегабайта
+ * разметки — сто двадцать карточек, у каждой заголовок, метки и обрезанный текст
+ * последнего сообщения. Сервер отдаёт такое за полсотни миллисекунд, а телефон
+ * на мобильном интернете сначала долго тянет, потом долго раскладывает — и
+ * выглядит это как «не открывается».
+ *
+ * Сорока диалогов хватает на экран и на поиск; остальные — по кнопке. */
+$per  = 40;
+$want = (int) input('n');
+$want = $want > 0 ? min(400, max($per, $want)) : $per;
+
 $dialogs = [];
 try {
     $dialogs = all(
@@ -418,8 +431,12 @@ try {
           WHERE $sqlWhere
        GROUP BY m.session_key
        ORDER BY last_id DESC
-          LIMIT 120", $args);
+          LIMIT " . ($want + 1), $args);
 } catch (\Throwable $e) { $dialogs = []; }
+
+// Лишний диалог запрашивали только затем, чтобы узнать, есть ли продолжение.
+$hasMore = count($dialogs) > $want;
+if ($hasMore) array_pop($dialogs);
 
 // Счётчики каналов.
 $cVk = 0; $cWeb = 0;
@@ -506,6 +523,11 @@ ob_start(); ?>
       </a>
     <?php endforeach; ?>
   </div>
+  <?php if ($hasMore): ?>
+    <div style="margin-top:12px;text-align:center">
+      <a class="btn btn--ghost" href="<?= a_link('chats', array_filter(['ch' => $ch, 'q' => $qq, 'n' => $want + $per])) ?>">Показать ещё <?= $per ?></a>
+    </div>
+  <?php endif; ?>
 <?php endif; ?>
 <?php
 admin_layout('Чат-бот', ob_get_clean(), 'chats');
