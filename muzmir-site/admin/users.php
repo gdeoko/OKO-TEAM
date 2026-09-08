@@ -623,7 +623,9 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
   }
   if ($rf && isset(ROLE_RANK[$rf])) { $w[] = "role=?"; $ua[] = $rf; }
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
-  $users = all("SELECT * FROM users $where ORDER BY (role='owner') DESC, id DESC LIMIT 300", $ua);
+  $takeU = adm_take(50, 'nu');
+  $users = all("SELECT * FROM users $where ORDER BY (role='owner') DESC, id DESC LIMIT " . ($takeU + 1), $ua);
+  $moreU = count($users) > $takeU; if ($moreU) array_pop($users);
   $roles = array_keys(ROLE_RANK);
   $meId  = (int)(current_user()['id'] ?? 0);
   // Кол-во заявок по пользователям (одним запросом, для карточки профиля).
@@ -758,6 +760,8 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
       <?php endforeach; ?>
     </tbody>
   </table></div>
+  <?php adm_more_button($moreU, count($users), 50, 'nu'); ?>
+
   <p class="small muted" style="margin-top:10px">Показано <?= count($users) ?><?= count($users)>=300?' (первые 300)':'' ?>. Роль применяется мгновенно и пишется в аудит-лог.</p>
 
 <?php elseif ($tab === 'subs'):
@@ -770,7 +774,9 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
       if ($_sq !== '') { $w[] = "($_sq)"; $sa = array_merge($sa, $_sa); }
   }
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
-  $subs = all("SELECT * FROM subscribers $where ORDER BY id DESC LIMIT 500", $sa);
+  $takeS = adm_take(50, 'ns');
+  $subs = all("SELECT * FROM subscribers $where ORDER BY id DESC LIMIT " . ($takeS + 1), $sa);
+  $moreS = count($subs) > $takeS; if ($moreS) array_pop($subs);
   $sources = all("SELECT DISTINCT source FROM subscribers WHERE source<>''");
   $allTags = [];
   foreach (all("SELECT tags FROM subscribers WHERE tags<>''") as $t)
@@ -869,6 +875,7 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
     <form id="s_del_<?= $s['id'] ?>" method="post" action="<?= url('/admin/') ?>" style="display:none"><?= csrf_field() ?><input type="hidden" name="do" value="sub_delete"><input type="hidden" name="sid" value="<?= $s['id'] ?>"></form>
     <form id="s_edit_<?= $s['id'] ?>" method="post" action="<?= url('/admin/') ?>" style="display:none"><?= csrf_field() ?><input type="hidden" name="do" value="sub_edit"><input type="hidden" name="sid" value="<?= $s['id'] ?>"></form>
   <?php endforeach; ?>
+  <?php adm_more_button($moreS, count($subs), 50, 'ns'); ?>
   <script>
   (function(){
     var all=document.getElementById('chkAll'), cnt=document.getElementById('selCnt');
@@ -886,8 +893,10 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
   if ($af) { $w[] = "l.action=?"; $la[] = $af; }
   if ($uf) { $w[] = "l.user_id=?"; $la[] = $uf; }
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
+  $takeL = adm_take(50, 'nl');
   $logs = all("SELECT l.*, u.full_name, u.email FROM audit_log l LEFT JOIN users u ON u.id=l.user_id
-               $where ORDER BY l.id DESC LIMIT 200", $la);
+               $where ORDER BY l.id DESC LIMIT " . ($takeL + 1), $la);
+  $moreL = count($logs) > $takeL; if ($moreL) array_pop($logs);
   $actions = all("SELECT DISTINCT action FROM audit_log WHERE action<>'' ORDER BY action");
   $actors  = all("SELECT DISTINCT l.user_id, u.full_name, u.email FROM audit_log l
                   LEFT JOIN users u ON u.id=l.user_id WHERE l.user_id IS NOT NULL ORDER BY u.full_name"); ?>
@@ -915,7 +924,8 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
       <?php endforeach; ?>
     </tbody>
   </table></div>
-  <p class="small muted" style="margin-top:10px">Последние 200 записей<?= ($af||$uf)?' по фильтру':'' ?>. Журнал только для чтения.</p>
+  <?php adm_more_button($moreL, count($logs), 50, 'nl'); ?>
+  <p class="small muted" style="margin-top:10px">Показано <?= count($logs) ?> записей<?= ($af||$uf)?' по фильтру':'' ?>. Журнал только для чтения.</p>
 <?php endif; ?>
 <?php
 $content = ob_get_clean();

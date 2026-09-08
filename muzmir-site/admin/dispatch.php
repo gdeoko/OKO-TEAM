@@ -450,20 +450,32 @@ $matchSearch = function (array $it) use ($ql): bool {
 };
 
 /* ---- 1) Дипломы к отправке ---- */
+/* ДЛИННЫЕ СПИСКИ — ПОРЦИЯМИ.
+ *
+ * На этой странице шесть списков, и каждый брал по три-пять сотен строк.
+ * Вместе выходило две с половиной мегабайты разметки и четыре секунды на
+ * отрисовку — с телефона страница просто не открывалась. Порция общая: одна
+ * кнопка внизу добавляет по шестьдесят строк в каждый список. Отбор и порядок
+ * не менялись, режется только вывод. */
+$takeD = adm_take(60);
+$moreD = false;
 $diplomasRaw = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.user_id, a.number app_number,
                            c.name comp_name
                     FROM diplomas d
                     JOIN applications a ON a.id=d.application_id
                     LEFT JOIN competitions c ON c.id=a.competition_id
                     WHERE d.sent_at IS NULL
-                    ORDER BY (d.scheduled_at IS NULL) ASC, d.scheduled_at ASC, d.id ASC LIMIT 500");
+                    ORDER BY (d.scheduled_at IS NULL) ASC, d.scheduled_at ASC, d.id ASC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($diplomasRaw) > $takeD; if (count($diplomasRaw) > $takeD) array_pop($diplomasRaw);
 /* ---- 2) Письма в очереди ---- */
 $mailsRaw = all("SELECT * FROM mail_queue WHERE status='queued' ORDER BY
-                 (scheduled_at IS NULL OR scheduled_at='') DESC, scheduled_at ASC, id ASC LIMIT 500");
+                 (scheduled_at IS NULL OR scheduled_at='') DESC, scheduled_at ASC, id ASC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($mailsRaw) > $takeD; if (count($mailsRaw) > $takeD) array_pop($mailsRaw);
 /* ---- 3) Заказы в производстве ---- */
 $ordersRaw = all("SELECT * FROM awards_orders
                   WHERE status IN ('paid','made','shipped') AND items NOT LIKE '%\"kind\":\"club\"%'
-                  ORDER BY (status='paid') DESC, id DESC LIMIT 300");
+                  ORDER BY (status='paid') DESC, id DESC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($ordersRaw) > $takeD; if (count($ordersRaw) > $takeD) array_pop($ordersRaw);
 /* ---- 4) Результаты по расписанию (оценены, письмо-результат ещё не ушло) ---- */
 $resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.user_id,
                           a.result, a.result_send_at, c.name comp_name
@@ -471,7 +483,8 @@ $resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group,
                    WHERE a.result <> '' AND COALESCE(a.result_send_at,'') <> ''
                      AND COALESCE(a.result_sent_at,'') = ''
                      AND COALESCE(c.results_mode,'') <> 'list'
-                   ORDER BY a.result_send_at ASC LIMIT 400");
+                   ORDER BY a.result_send_at ASC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($resultsRaw) > $takeD; if (count($resultsRaw) > $takeD) array_pop($resultsRaw);
 /* ---- 4б) Оценённые работы конкурса с оглашением списком ----
    У длинного конкурса результат уходит не по своему расписанию, а в дату
    оглашения, и поля result_send_at у заявки нет. Из-за этого четыре оценённые
@@ -484,7 +497,8 @@ $listRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.
                 WHERE a.result <> '' AND COALESCE(a.result_sent_at,'') = ''
                   AND COALESCE(c.results_mode,'') = 'list'
                   AND COALESCE(c.results_published_at,'') = ''
-                ORDER BY c.results_date ASC, a.id ASC LIMIT 400");
+                ORDER BY c.results_date ASC, a.id ASC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($listRaw) > $takeD; if (count($listRaw) > $takeD) array_pop($listRaw);
 /* ---- Архив отправленных писем ---- */
 /* СПИСОК ОТПРАВЛЕННЫХ — БЕЗ ТЕЛА ПИСЬМА.
  *
@@ -494,11 +508,13 @@ $listRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.
  * и время. Запрос шёл 1,3 секунды и держал процесс. Берём нужные поля. */
 $sentRaw = all("SELECT id, to_email, to_name, subject, status, tries, error, created_at, sent_at,
                        newsletter_id, campaign_type, sent_via, priority, attach
-                  FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
+                  FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($sentRaw) > $takeD; if (count($sentRaw) > $takeD) array_pop($sentRaw);
 /* ---- НЕ ОТПРАВЛЕННЫЕ (провалившиеся) ----
    Раньше письма со status='failed' не показывались нигде: из очереди пропадали,
    в архив не попадали. Со стороны это выглядело как «письма молча не отправляются». */
-$failedRaw = all("SELECT * FROM mail_queue WHERE status='failed' ORDER BY id DESC LIMIT 100");
+$failedRaw = all("SELECT * FROM mail_queue WHERE status='failed' ORDER BY id DESC LIMIT " . ($takeD + 1));
+$moreD = $moreD || count($failedRaw) > $takeD; if (count($failedRaw) > $takeD) array_pop($failedRaw);
 
 /* ---- Состояние почтового канала (диагностика в одну строку) ---- */
 $smtpUser = (string) cfgv('smtp_user', '');
@@ -1148,6 +1164,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   });
 })();
 </script>
+<?php adm_more_button($moreD, $takeD, 60); ?>
 <?php
 $content = ob_get_clean();
 admin_layout('Отправки', $content, 'dispatch');
