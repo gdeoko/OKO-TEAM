@@ -1,0 +1,30 @@
+# Описание проекта для XcodeGen: из него одной командой получается .xcodeproj.
+# На Mac: brew install xcodegen && cd store/ios && xcodegen generate
+name: Metanoya
+options:
+  bundleIdPrefix: ru.metanoya
+  deploymentTarget:
+    iOS: '15.0'
+  createIntermediateGroups: true
+
+targets:
+  Metanoya:
+    type: application
+    platform: iOS
+    sources:
+      - path: Metanoya
+    info:
+      path: Metanoya/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ru.metanoya.app
+        PRODUCT_NAME: Metanoya
+        MARKETING_VERSION: '1.0.0'
+        CURRENT_PROJECT_VERSION: '1'
+        SWIFT_VERSION: '5.0'
+        TARGETED_DEVICE_FAMILY: '1,2'
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: 'YES'
+        GENERATE_INFOPLIST_FILE: 'NO'
+        # Подпись: подставится команда разработчика из Xcode
+        CODE_SIGN_STYLE: Automatic

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Адрес школы. Единственное место, где он стоит в проекте iOS. -->
+  <key>MTSchoolURL</key>
+  <string>https://ЗАМЕНИТЬ.домен.ру/</string>
+
+  <key>CFBundleDisplayName</key>
+  <string>Метанойя</string>
+  <key>CFBundleName</key>
+  <string>Metanoya</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>ru</string>
+
+  <!-- Окно у приложения одно, сцены не нужны -->
+  <key>UILaunchScreen</key>
+  <dict>
+    <key>UIColorName</key>
+    <string>LaunchBackground</string>
+  </dict>
+  <key>UIRequiresFullScreen</key>
+  <true/>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+  </array>
+
+  <!-- Тексты, которые видит семья, когда система спрашивает разрешение -->
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Микрофон нужен для голосовых сообщений в чате с педагогом.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Камера нужна для видеокружочков и снимков в чате с педагогом.</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>Чтобы сохранить сертификат и альбом семьи в фотографии.</string>
+
+  <!-- Школа работает только по HTTPS, послаблений не просим -->
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <false/>
+  </dict>
+
+  <key>ITSAppUsesNonExemptEncryption</key>
+  <false/>
+</dict>
+</plist>

@@ -35,6 +35,12 @@
                  android:resource="@color/cream" />
       <meta-data android:name="androidx.browser.trusted.FILE_PROVIDER_AUTHORITY"
                  android:value="ru.metanoya.app.fileprovider" />
+      <!-- Если на телефоне нет браузера, умеющего доверенное окно (частый
+           случай на устройствах без сервисов Google, а это как раз RuStore),
+           школа открывается во встроенном окне, а не в браузере с адресной
+           строкой. Для магазина это разница между «приложение» и «ярлык». -->
+      <meta-data android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
+                 android:value="webview" />
 
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -49,6 +55,13 @@
         <data android:scheme="https" android:host="${hostName}" />
       </intent-filter>
     </activity>
+
+    <!-- Само встроенное окно для запасного случая -->
+    <activity
+        android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
+        android:exported="false"
+        android:screenOrientation="portrait"
+        android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout" />
 
     <provider
         android:name="androidx.core.content.FileProvider"
