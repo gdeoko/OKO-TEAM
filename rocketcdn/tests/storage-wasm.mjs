@@ -1,0 +1,11 @@
+import { PHP } from '@php-wasm/universal';
+import { loadNodeRuntime } from '@php-wasm/node';
+import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
+const php = new PHP(await loadNodeRuntime('8.3', {emscriptenOptions:{processId:process.pid}}));
+php.mkdir('/app');php.mkdir('/app/tests');
+const src=fileURLToPath(new URL('../',import.meta.url));
+for(const name of ['storage.php','config.php','api.php','cron.php'])php.writeFile('/app/'+name,fs.readFileSync(src+'/'+name));
+php.writeFile('/app/tests/storage.php',fs.readFileSync(src+'/tests/storage.php'));
+const result=await php.run({code:`<?php foreach (['storage.php','config.php','api.php','cron.php'] as $f) { token_get_all(file_get_contents('/app/'.$f), TOKEN_PARSE); echo "syntax OK: $f\n"; } include '/app/tests/storage.php';`});
+console.log(result.text);if(result.errors)console.error(result.errors);process.exit(result.exitCode||0);

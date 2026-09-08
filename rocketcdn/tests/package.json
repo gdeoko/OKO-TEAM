@@ -1,0 +1,11 @@
+{
+  "name": "rocket-regression-checks",
+  "private": true,
+  "scripts": {
+    "test": "node --test rocket-regressions.cjs && node storage-wasm.mjs && node api-wasm.mjs"
+  },
+  "devDependencies": {
+    "@php-wasm/node": "3.1.53",
+    "@php-wasm/universal": "3.1.53"
+  }
+}
