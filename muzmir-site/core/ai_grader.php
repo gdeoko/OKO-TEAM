@@ -348,12 +348,21 @@ function ag_bridge_prepare(string $url, int $maxSec = 900): array {
     $token  = (string) cfgv('poster_token', '');
     if ($poster === '' || $token === '') return $bad('мост не настроен');
 
-    /* Яндекс.Диск и Дзен мост берёт сам — там открытый API и yt-dlp. Остальное
-       (ВК, ОК, RuTube, Облако) умеет только сайт: у него токен сообщества и
-       разобранная механика dispatcher, поэтому прямую ссылку готовим здесь. */
+    /* Яндекс.Диск, Дзен и Облако Mail.ru мост берёт сам — там открытый API и
+       yt-dlp. Остальное (ВК, ОК, RuTube) умеет только сайт: у него токен
+       сообщества, поэтому прямую ссылку готовим здесь.
+     *
+     * ОБЛАКО ОБЯЗАН СПРАШИВАТЬ ТОТ, КТО КАЧАЕТ. Прямую ссылку облако выдаёт под
+     * адрес спросившего: сайт получал рабочую, отдавал её мосту, и у моста она
+     * отвечала 404 и нулём байт. Наружу — «файл пустой»: так провалились все
+     * десять работ, выложенных в Облако Mail.ru. Теперь мост разбирает ссылку
+     * сам (ветка cloud.mail.ru в grade_fetch.sh). */
+    /* Видеохостинги мост тоже берёт сам, своим yt-dlp: прямая ссылка на поток
+     * живёт минуты и часто выдана под адрес спросившего — у моста она рвалась,
+     * и работа помечалась «файл не открывается (закачка оборвалась)». */
     $ask = $url;
     $kind = vf_platform($url);
-    if (!in_array($kind, ['yandex_disk', 'dzen'], true)) {
+    if (!in_array($kind, ['yandex_disk', 'dzen', 'mailru_cloud', 'rutube', 'vk', 'ok'], true)) {
         $link = vf_direct_link($url);
         if (!$link['ok']) return $bad((string) $link['why']);
         $ask = (string) $link['url'];
@@ -466,6 +475,41 @@ function ag_prepare_media(string $path): array {
 }
 
 /**
+ * То же, но файл лежит НА МОСТУ.
+ *
+ * Гонять подготовленную дорожку с моста на сайт только затем, чтобы отправить
+ * её в Google, — лишний переезд по узкому каналу. Мост грузит сам
+ * (/opt/oko-poster/gemini_upload.sh), а сюда возвращает короткую ссылку
+ * files/xxxx, которую и подставляем в запрос оценки.
+ */
+function ag_upload_via_bridge(string $file, string $mime, string $key): array {
+    $poster = rtrim((string) cfgv('poster_url', ''), '/');
+    $token  = (string) cfgv('poster_token', '');
+    if ($poster === '' || $token === '') return ['ok' => false, 'uri' => '', 'why' => 'мост не настроен'];
+
+    $cmd = '/opt/oko-poster/gemini_upload.sh ' . escapeshellarg($file) . ' ' . escapeshellarg($mime)
+         . ' ' . escapeshellarg($key) . ' ' . escapeshellarg(ag_base()) . ' 2>/dev/null';
+    $ch = curl_init($poster);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => 1, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 1800,
+        CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token, 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['cmd' => $cmd], JSON_UNESCAPED_SLASHES),
+    ]);
+    $resp = (string) curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($code !== 200) return ['ok' => false, 'uri' => '', 'why' => 'мост ответил кодом ' . $code];
+
+    $env = json_decode($resp, true);
+    $out = is_array($env) ? trim((string) ($env['stdout'] ?? '')) : trim($resp);
+    $j = json_decode(trim(substr($out, (int) strrpos($out, '{'))), true);
+    if (!is_array($j) || empty($j['ok']) || trim((string) ($j['uri'] ?? '')) === '') {
+        return ['ok' => false, 'uri' => '', 'why' => (string) ($j['why'] ?? 'мост не загрузил запись')];
+    }
+    return ['ok' => true, 'uri' => (string) $j['uri'], 'why' => ''];
+}
+
+/**
  * Загрузка файла в Gemini File API (простой протокол: один запрос со стартом,
  * второй с телом). Возвращает file_uri, который подставляется в запрос оценки.
  */
@@ -493,6 +537,26 @@ function ag_upload(string $file, string $mime, string $key): array {
         return ['ok' => false, 'uri' => '', 'why' => 'сервис не принял начало загрузки'];
     }
     $up = trim($m[1]);
+
+    /* ВТОРОЙ ШАГ ЗАГРУЗКИ ТОЖЕ ОБЯЗАН ИДТИ ЧЕРЕЗ ПРОКСИ.
+     *
+     * Загрузка идёт в два запроса: первый спрашивает, куда лить, второй льёт.
+     * Адрес для второго сервис называет сам — и называет СВОЙ, прямой:
+     * generativelanguage.googleapis.com. Из России этот адрес отвечает
+     * «User location is not supported for the API use» (проверено 8 сентября,
+     * код 400), поэтому у центра всё и ходит через свой прокси. Первый запрос
+     * через прокси проходил, второй уходил напрямую и падал — а наружу это
+     * выглядело как «запись не удалось передать на аттестацию»: 99 таких
+     * отказов за неделю, аттестация встала совсем со 2 сентября.
+     *
+     * Поэтому подменяем у названного адреса хост на прокси, сохраняя путь и
+     * все параметры (в них upload_id, без него загрузка не продолжится). */
+    $baseHost = parse_url($base, PHP_URL_HOST);
+    $upHost   = parse_url($up, PHP_URL_HOST);
+    if ($baseHost && $upHost && $upHost !== $baseHost) {
+        $p = parse_url($up);
+        $up = rtrim($base, '/') . ($p['path'] ?? '') . (isset($p['query']) ? '?' . $p['query'] : '');
+    }
 
     $fh = fopen($file, 'rb');
     $ch = curl_init($up);
@@ -1021,7 +1085,7 @@ function ag_grade_application(int $appId, array $opt = []): array {
     // которой нельзя загрузить один раз, а запросы слать любым ключом: чужой
     // ключ на тот же файл отвечает «нет доступа». Поэтому загрузка вынесена в
     // функцию и повторяется, когда мы переходим к следующему ключу.
-    $uploadAll = static function (string $key) use ($media): array {
+    $uploadAll = static function (string $key) use ($media, $onBridge): array {
         $parts = [];
         // Картинка вместо записи: у работ по изобразительному искусству,
         // прикладному творчеству и фотографии дорожек нет вовсе.
@@ -1031,9 +1095,19 @@ function ag_grade_application(int $appId, array $opt = []): array {
                                    'bmp' => 'image/bmp', 'tif' => 'image/tiff', 'tiff' => 'image/tiff']
                                   [mb_strtolower(pathinfo($img, PATHINFO_EXTENSION))] ?? 'image/jpeg') : '';
         foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg'], [$img, $mimeImg]] as [$f, $mime]) {
-            if ($f === '' || !is_file($f)) continue;
-            $up = ag_upload($f, $mime, $key);
-            if (!$up['ok']) continue;
+            if ($f === '') continue;
+            /* ФАЙЛ ЛЕЖИТ ТАМ, ГДЕ ЕГО ГОТОВИЛИ.
+             *
+             * Дорожки готовит мост — у него быстрый канал, и файлы остаются у
+             * него. Пока разбор делал браузер, этого хватало. Но браузер может
+             * промолчать, и тогда сайт идёт запасным путём, через ключ. А
+             * is_file() по пути моста на сайте всегда ложь: список частей
+             * выходил пустым, и разбор кончался словами «запись не удалось
+             * передать на аттестацию» — 99 таких отказов за неделю, аттестация
+             * стояла с 2 сентября. Значит и грузить должен мост. */
+            $up = $onBridge ? ag_upload_via_bridge($f, $mime, $key)
+                            : (is_file($f) ? ag_upload($f, $mime, $key) : ['ok' => false, 'uri' => '']);
+            if (empty($up['ok'])) continue;
             $parts[] = ['file_data' => ['mime_type' => $mime, 'file_uri' => $up['uri']]];
         }
         return $parts;
