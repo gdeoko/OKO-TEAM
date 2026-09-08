@@ -70,8 +70,8 @@ run() {
   line=$(printf '%s' "$out" | grep -E 'ОШИБОК|ОШИБКИ' | tail -1)
   [ -z "$line" ] && line=$(printf '%s' "$out" | tail -1 | cut -c1-60)
   case "$line" in
-    *": 0"*) printf '%-10s ok\n' "$1" ;;
-    *) printf '%-10s %s\n' "$1" "$line"; fails=$((fails + 1)) ;;
+    *": 0"*) printf '%-10s ok\n' "$1" >&2 ;;
+    *) printf '%-10s %s\n' "$1" "$line" >&2; fails=$((fails + 1)) ;;
   esac
   printf '%s' "$out"
 }
