@@ -7,7 +7,7 @@ const path = require('path');
 const APP = path.resolve(__dirname, '..', 'public_html');
 const OUT = process.argv[2] || path.resolve(__dirname, '..', 'dist', 'progress-page.html');
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-const MIME = { '.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.mp4':'video/mp4','.mp3':'audio/mpeg' };
+const MIME = { '.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.mp4':'video/mp4','.mp3':'audio/mpeg','.woff2':'font/woff2' };
 function dataUri(rel){ const abs=path.join(APP,rel); if(!fs.existsSync(abs))return null; const ext=path.extname(abs).toLowerCase(); return `data:${MIME[ext]||'application/octet-stream'};base64,`+fs.readFileSync(abs).toString('base64'); }
 let html = fs.readFileSync(path.join(APP,'index.html'),'utf8');
 const css = fs.readFileSync(path.join(APP,'assets/css/main.css'),'utf8');
@@ -66,18 +66,23 @@ js = js.split("navigator.serviceWorker.register('service-worker.js')").join('Pro
 const preboot="try{if(!localStorage.getItem('mt_onb'))localStorage.setItem('mt_onb','1');if(!localStorage.getItem('mt_auth'))localStorage.setItem('mt_auth','1');}catch(e){}\n";
 js=preboot+js;
 html=html.split('<link rel="stylesheet" href="assets/css/main.css">').join(`<style>\n${css}\n</style>`);
-// Шрифты. На боевом сервере они лежат своими файлами, но 470 КБ в один файл
-// не влезают, поэтому витрина берёт те же начертания из сети.
-html=html.split('<link rel="stylesheet" href="assets/css/fonts.css">').join(
-  '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-  + '<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900'
-  + '&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">');
+// Шрифты вшиваем начертаниями внутрь файла. Раньше витрина брала их из
+// сети Google: файл был легче на 700 КБ, зато без интернета текст ехал на
+// системный шрифт, а браузер каждого зрителя стучался на чужой сервер.
+let fcss = fs.readFileSync(path.join(APP,'assets/css/fonts.css'),'utf8');
+for(const rel of [...new Set((fcss.match(/\.\.\/fonts\/[A-Za-z0-9_-]+\.woff2/g)||[]))]){
+  const uri = dataUri('assets/'+rel.slice(3)); if(uri) fcss = fcss.split(rel).join(uri);
+}
+html=html.split('<link rel="stylesheet" href="assets/css/fonts.css">').join(`<style>\n${fcss}\n</style>`);
 // Собираем все теги скриптов приложения в один встроенный блок,
 // чтобы порядок файлов в index.html можно было менять без правки сборщика.
 // Замена только функцией: в коде есть $$ и $&, а в строке замены это спецсимволы.
 html = html.replace(/(?:[ \t]*<script src="assets\/js\/[^"]+"><\/script>\s*)+/,
   () => `  <script>\n${js}\n</script>\n`);
 html=html.replace(/<link rel="manifest"[^>]*>/g,'');
+// Витрина одним файлом живёт вне Телеграма: скрипт мини-приложения там
+// только зря стучится наружу и пишет ошибку в консоль.
+html=html.replace(/[ \t]*<script src="https:\/\/telegram\.org[^"]*"><\/script>\s*/g,'');
 const cssRefs=[...new Set((html.match(/\.\.\/img\/[A-Za-z0-9/_-]*\.(?:jpg|jpeg|png|svg|webp)/g)||[]))];
 for(const rel of cssRefs){ const uri=dataUri('assets/'+rel.slice(3)); if(uri)html=html.split(rel).join(uri); }
 const refs=[...new Set((html.match(/assets\/(?:img|svg|video|audio)\/[A-Za-z0-9/_-]*\.(?:jpg|jpeg|png|svg|webp|mp4|mp3)/g)||[]))];
