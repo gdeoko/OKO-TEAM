@@ -1,10 +1,10 @@
-# Rocket — release 2026.09.08-r4
+# Rocket — release 2026.09.08-r5
 
 Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
-Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Current publication status and acceptance limits are recorded in `RELEASE_R4.md`; `RELEASE.md` preserves the earlier r2 report.
+Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Current publication status and acceptance limits are recorded in `RELEASE_R5.md`; `RELEASE_R4.md` and `RELEASE.md` preserve the earlier reports.
 
-The follow-up changes are **deployed** on the client as r4. The final activation passed 19 checks and retained all five pre-existing requests. See `FOLLOWUP_2026-09-08.md` and `VPN_AUDIT_2026-09-08.md`. Current health and rollback use `deploy/followup.py`; original activation scripts remain specific to r2. GPU visual acceptance is still incomplete.
+The follow-up changes are **deployed** on the client as r5. The latest CSS update keeps cabin controls in place if the MSDF font fails and enlarges the answer area on narrow landscape screens. The final activation passed 19 checks and retained all five pre-existing requests. See `FOLLOWUP_2026-09-08.md` and `VPN_AUDIT_2026-09-08.md`. Current health and rollback use `deploy/followup.py`; original activation scripts remain specific to r2. GPU visual acceptance is still incomplete.
 
 ## Changes
 
@@ -35,6 +35,6 @@ This branch is an orphan snapshot, based on `gdeoko/OKO-TEAM` at `6b64106bdde748
 
 `deploy/activate.py --check` verifies release hashes, native PHP syntax and runtime write access. Activation backs up runtime data/configuration, drains old writers, atomically exchanges both roots, resets PHP caches and enables the delivery timer. `--rollback` restores code/configuration while retaining new records. Scripts under `deploy/` target the documented client paths and must not be run on unrelated hosts.
 
-`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r4 release, run `sudo python3 /var/www/rocket-releases/20260908-r4/deploy/followup.py health`. Its `rollback` action restores r3 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
+`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r5 release, run `sudo python3 /var/www/rocket-releases/20260908-r5/deploy/followup.py health`. Its `rollback` action restores r4 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
 
 The clean branch does not revoke credentials exposed in the original repository's history. Rotation of those broader OKO/GitHub access credentials is not established by this release. Photorealism, 8K output, exact Igloo parity and performance across physical devices remain unverified acceptance items.
