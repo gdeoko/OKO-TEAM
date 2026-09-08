@@ -1,0 +1,66 @@
+{
+  "release": "20260908-r7",
+  "source_commit": "c05b1acb3261a27b8ecd38a7b7dff5c2c1310abc",
+  "native": [
+    {
+      "format": "desktop",
+      "width": 640,
+      "height": 400,
+      "checkpoints": 36,
+      "gl_errors": 0,
+      "shader_errors": 0,
+      "event_errors": 0,
+      "act_failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "minimum_distinct_colors": 8538
+    },
+    {
+      "format": "portrait",
+      "width": 390,
+      "height": 844,
+      "checkpoints": 36,
+      "gl_errors": 0,
+      "shader_errors": 0,
+      "event_errors": 0,
+      "act_failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "minimum_distinct_colors": 11158
+    }
+  ],
+  "javascript_checks": {
+    "passed": 46,
+    "failed": 0
+  },
+  "integration_checks": {
+    "passed": 6,
+    "failed": 0
+  },
+  "publication": {
+    "health_checks": 27,
+    "ok": true,
+    "retained_existing_requests": 5,
+    "active": "/var/www/rocket-releases/20260908-r7",
+    "rollback": "/var/www/rocket-releases/20260908-r6"
+  },
+  "github": {
+    "pushed": false,
+    "reason": "Automatic approval review requires explicit payload and destination authorization"
+  },
+  "not_verified": [
+    "Continuous browser 3D flow",
+    "DOM and 3D compositing together",
+    "WebGL 2/HDR",
+    "Space flight visuals",
+    "Physical-device FPS",
+    "Igloo parity",
+    "Photorealism/8K"
+  ]
+}

@@ -134,6 +134,13 @@ function caps() {
 
 /* ── Процедурная среда для отражений металла ─────────────── */
 function envTexture(renderer) {
+  // PMREM in Three r160 requires a renderable half-float target, even
+  // when its input is an ordinary canvas. Retain direct scene lighting
+  // on devices without that extension instead of creating invalid targets.
+  var canRenderHalfFloat = renderer && renderer.extensions &&
+    ((renderer.capabilities.isWebGL2 && renderer.extensions.has("EXT_color_buffer_float")) ||
+      renderer.extensions.has("EXT_color_buffer_half_float"));
+  if (!canRenderHalfFloat) return null;
   var c = document.createElement("canvas");
   c.width = 512; c.height = 256;
   var x = c.getContext("2d");

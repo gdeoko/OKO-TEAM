@@ -49,6 +49,12 @@ function clock() {
     clear:id=>jobs.delete(id), tick(ms=17){now+=ms;const due=[...jobs].filter(([,x])=>x.at<=now);for(const [id,x] of due){if(jobs.delete(id))x.fn(now);}},
     all(){for(let i=0;jobs.size&&i<4000;i++)this.tick(17);assert.equal(jobs.size,0,'animation settles');}};
 }
+test('VPN ship skips its own PMREM generator when float color targets are unavailable',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-корабль.js');
+ f.c.document.createElement=()=>assert.fail('Unsupported environment must not allocate canvas or PMREM');
+ vm.runInContext(between(s,'function envTexture(renderer) {','/* ── Текстура обшивки:'),f.c);
+ for(const isWebGL2 of [false,true])assert.equal(f.c.envTexture({capabilities:{isWebGL2},extensions:{has:()=>false}}),null);
+});
 function classes(){const s=new Set();return {add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x),toggle(x,on){on?s.add(x):s.delete(x);}};}
 function fixture() {
  const time=clock(), events={}, devents={};
