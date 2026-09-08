@@ -35,8 +35,37 @@ function db(): PDO {
 
 /** Хелперы запросов. */
 function q(string $sql, array $args = []): PDOStatement {
+    /* ЖУРНАЛ МЕДЛЕННЫХ ЗАПРОСОВ.
+     *
+     * Страница админки может открываться пять секунд, и по коду не видно,
+     * какой именно запрос столько идёт: их на странице сотни, а тяжёлым
+     * оказывается один, спрятанный в цикле разметки. Так и вышло с
+     * «Рассылками»: счётчики выгружали по сорок тысяч строк, чтобы показать
+     * пять цифр.
+     *
+     * Порог задаётся настройкой db_slow_ms; ноль (по умолчанию) — журнал
+     * выключен и не стоит ничего. Включать на минуту, посмотреть и выключить:
+     * data/logs/slow_sql.log. */
+    static $slowMs = null;
+    if ($slowMs === null) {
+        $slowMs = 0;
+        try { if (function_exists('setting')) $slowMs = (int) setting('db_slow_ms', '0'); }
+        catch (\Throwable $e) { $slowMs = 0; }
+    }
+    if ($slowMs <= 0) {
+        $st = db()->prepare($sql);
+        $st->execute($args);
+        return $st;
+    }
+    $t0 = microtime(true);
     $st = db()->prepare($sql);
     $st->execute($args);
+    $ms = (microtime(true) - $t0) * 1000;
+    if ($ms >= $slowMs) {
+        $line = sprintf("%s %6.0f мс  %s\n", date('H:i:s'), $ms,
+                        preg_replace('~\s+~', ' ', mb_substr(trim($sql), 0, 200)));
+        @file_put_contents(BASE_PATH . '/data/logs/slow_sql.log', $line, FILE_APPEND);
+    }
     return $st;
 }
 function one(string $sql, array $args = []) {
@@ -468,6 +497,24 @@ function db_migrate(PDO $pdo): void {
         "CREATE INDEX IF NOT EXISTS idx_ord_app     ON awards_orders(application_id)",
         "CREATE INDEX IF NOT EXISTS idx_ord_status  ON awards_orders(status)",
         "CREATE INDEX IF NOT EXISTS idx_app_result  ON applications(result_sent_at)",
+        /* СТРАНИЦЫ РАССЫЛОК СЧИТАЮТ ПО СОТНЕ ТЫСЯЧ СТРОК.
+         *
+         * «Рассылки» и «Пульт запуска» открывались по четыре секунды: каждый
+         * счётчик — «ушло сегодня», «ждут по типам», «событий за сутки» — шёл
+         * полным перебором очереди на 134 000 строк и журнала событий на
+         * 120 000. Четыре секунды на страницу означают ещё и занятый процесс
+         * PHP: их четырнадцать, и в такие минуты админка перестаёт открываться
+         * целиком. Индексы убирают перебор. */
+        "CREATE INDEX IF NOT EXISTS idx_queue_sent   ON mail_queue(sent_at)",
+        // Счётчики массовых («ушло сегодня», «за месяц») фильтруют разом по
+        // состоянию, приоритету и дате — по одиночному индексу база всё равно
+        // перебирала девяносто тысяч отправленных строк.
+        "CREATE INDEX IF NOT EXISTS idx_queue_bulk   ON mail_queue(status, priority, sent_at)",
+        "CREATE INDEX IF NOT EXISTS idx_queue_type   ON mail_queue(status, campaign_type)",
+        "CREATE INDEX IF NOT EXISTS idx_ev_time      ON mail_events(event_time)",
+        "CREATE INDEX IF NOT EXISTS idx_ev_email     ON mail_events(email)",
+        "CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_messages(session_key, id)",
+        "CREATE INDEX IF NOT EXISTS idx_sent_to      ON mail_sent(to_email)",
     ] as $ix) {
         try { $pdo->exec($ix); } catch (\Throwable $e) { /* не критично */ }
     }

@@ -99,21 +99,34 @@ function launch_jobs_grouped(): array {
 function launch_mail_stats(): array {
     if (!function_exists('nl_daily_split')) require_once __DIR__ . '/newsletter.php';
     $split = nl_daily_split();
+
+    /* ВСЕ ТИПЫ РАЗОМ, А НЕ ПО ЗАПРОСУ НА КАЖДЫЙ.
+     *
+     * На три типа тут приходилось шесть отдельных COUNT со связкой к рассылкам —
+     * по трети секунды каждый на очереди в 134 000 строк. Пульт открывался две
+     * секунды и всё это время держал процесс PHP; когда таких открытий несколько
+     * подряд, свободные процессы кончаются и админка перестаёт отвечать целиком. */
+    $queuedBy = []; $sentBy = [];
+    try {
+        foreach (all("SELECT COALESCE(q.campaign_type, n.campaign_type, 'konkurs') t,
+                             q.status s, COUNT(*) c
+                        FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+                       WHERE COALESCE(q.priority,0) > 0
+                         AND q.status IN ('queued','paused','sent')
+                    GROUP BY t, s") as $r) {
+            $t = (string) $r['t'];
+            if ((string) $r['s'] === 'sent') $sentBy[$t]   = ($sentBy[$t]   ?? 0) + (int) $r['c'];
+            else                             $queuedBy[$t] = ($queuedBy[$t] ?? 0) + (int) $r['c'];
+        }
+    } catch (\Throwable $e) {}
+
     $out = [];
     foreach (['konkurs' => 'Новые конкурсы', 'vip' => 'ВИП-клуб', 'kabinet' => 'Личный кабинет'] as $t => $lbl) {
         $quota = (int) ($split[$t] ?? 0);
         if ($quota <= 0 && $t === 'kabinet') continue;      // волна кабинета уже отработала
         $sentToday = function_exists('nl_bulk_sent_today_type') ? (int) nl_bulk_sent_today_type($t) : 0;
-        $queued = (int) (scalar(
-            "SELECT COUNT(*) FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
-              WHERE q.status IN ('queued','paused') AND COALESCE(q.priority,0) > 0
-                AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?", [$t]) ?? 0);
-        $sentAll = (int) (scalar(
-            "SELECT COUNT(*) FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
-              WHERE q.status = 'sent' AND COALESCE(q.priority,0) > 0
-                AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?", [$t]) ?? 0);
         $out[$t] = ['label' => $lbl, 'quota' => $quota, 'today' => $sentToday,
-                    'queued' => $queued, 'sent_all' => $sentAll];
+                    'queued' => (int) ($queuedBy[$t] ?? 0), 'sent_all' => (int) ($sentBy[$t] ?? 0)];
     }
     return $out;
 }

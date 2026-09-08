@@ -153,14 +153,59 @@ function nl_admin_recipients(string $audience): array {
     }
 }
 
-/** Число уникальных получателей аудитории (для счётчика в UI). */
+/**
+ * ЧИСЛО ПОЛУЧАТЕЛЕЙ АУДИТОРИИ — СЧИТАЕМ В БАЗЕ, А НЕ В ПАМЯТИ.
+ *
+ * Здесь для каждой из пяти цифр над формой выгружался ВЕСЬ список получателей и
+ * пересчитывался перебором: сорок тысяч строк на «всех», девять тысяч на
+ * участников — и так пять раз при каждом открытии страницы. «Рассылки»
+ * открывались пять секунд, «Пульт запуска» — четыре, и всё это время запрос
+ * держал процесс PHP. Их четырнадцать: пока владелец щёлкал вкладками, места
+ * заканчивались и админка переставала открываться целиком.
+ *
+ * Считает COUNT сама база — по тем же условиям, что и выборка получателей.
+ * Проверку адреса на «похоже на почту» при этом теряем: в счётчике она стоила
+ * дороже, чем даёт, — на отправку всё равно идёт разбор построчно.
+ */
 function nl_admin_count(string $audience): int {
-    $seen = [];
-    foreach (nl_admin_recipients($audience) as $r) {
-        $e = mb_strtolower(trim((string) ($r['email'] ?? '')));
-        if ($e !== '' && filter_var($e, FILTER_VALIDATE_EMAIL)) $seen[$e] = 1;
-    }
-    return count($seen);
+    [$kind, $value] = array_pad(explode(':', $audience, 2), 2, '');
+    $kind = $kind ?: 'all';
+    try {
+        switch ($kind) {
+            case 'subscribers':
+                return (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=1 AND email<>''");
+            case 'participants':
+                return (int) scalar("SELECT COUNT(DISTINCT lower(email)) FROM applications WHERE email<>''");
+            case 'teachers':
+                return (int) scalar(
+                    "SELECT COUNT(*) FROM (
+                        SELECT lower(email) e FROM users
+                         WHERE role='teacher' AND email<>''
+                        UNION
+                        SELECT lower(email) FROM subscribers
+                         WHERE active=1 AND email<>'' AND (tags LIKE '%педагог%' OR tags LIKE '%teacher%'))");
+            case 'paid':
+                return (int) scalar(
+                    "SELECT COUNT(DISTINCT lower(email)) FROM applications
+                      WHERE email<>'' AND status <> 'rejected'
+                        AND (is_paid=1 OR (result IS NOT NULL AND result<>''))");
+            case 'competition':
+                if ((int) $value <= 0) return 0;
+                return (int) scalar("SELECT COUNT(DISTINCT lower(email)) FROM applications
+                                      WHERE competition_id=? AND email<>''", [(int) $value]);
+            case 'segment':
+                if ($value === '') return 0;
+                return (int) scalar("SELECT COUNT(*) FROM subscribers
+                                      WHERE active=1 AND email<>'' AND tags LIKE ?", ['%' . $value . '%']);
+            case 'all':
+            default:
+                return (int) scalar(
+                    "SELECT COUNT(*) FROM (
+                        SELECT lower(email) e FROM subscribers  WHERE active=1 AND email<>''
+                        UNION SELECT lower(email) FROM applications WHERE email<>''
+                        UNION SELECT lower(email) FROM users        WHERE email<>'')");
+        }
+    } catch (\Throwable $e) { return 0; }
 }
 
 /** Человеческая подпись аудитории для списка. */
@@ -506,6 +551,28 @@ if ($action === 'edit' || $action === 'new') {
         foreach (array_filter(array_map('trim', explode(',', (string) $t['tags']))) as $x) $tags[$x] = true;
     $tags = array_keys($tags);
 
+    /* СЧЁТЧИКИ В ВЫПАДАЮЩИХ СПИСКАХ — ОДНИМ ЗАПРОСОМ НА ВЕСЬ СПИСОК.
+     *
+     * Ниже в разметке стояли два цикла, и внутри каждого — свой запрос к базе:
+     * по одному COUNT на каждый конкурс и на каждый тег сегмента. Тридцать
+     * конкурсов и десяток тегов превращались в сорок отдельных проходов по
+     * таблице заявок и подписчиков при КАЖДОМ открытии страницы. Отсюда и
+     * пятисекундные «Рассылки», которые вдобавок держали процесс PHP.
+     *
+     * Считаем всё разом и раскладываем по ключам. */
+    $compCounts = [];
+    foreach (all("SELECT competition_id cid, COUNT(DISTINCT lower(email)) c
+                    FROM applications WHERE email<>'' GROUP BY competition_id") as $r)
+        $compCounts[(int) $r['cid']] = (int) $r['c'];
+
+    $tagCounts = [];
+    if ($tags) {
+        foreach (all("SELECT tags FROM subscribers WHERE active=1 AND tags<>''") as $r) {
+            foreach (array_filter(array_map('trim', explode(',', (string) $r['tags']))) as $x)
+                $tagCounts[$x] = ($tagCounts[$x] ?? 0) + 1;
+        }
+    }
+
     // Счётчики получателей для простых аудиторий (для живого индикатора).
     $counts = [
         'all'          => nl_admin_count('all'),
@@ -563,7 +630,7 @@ if ($action === 'edit' || $action === 'new') {
           <div class="field" id="compBox" style="display:<?= $aud === 'competition' ? 'block' : 'none' ?>">
             <label>Конкурс</label>
             <select name="audience_value_comp" onchange="nlSync()">
-              <?php foreach ($comps as $c): $cc = (int) scalar("SELECT COUNT(DISTINCT email) FROM applications WHERE competition_id=? AND email<>''", [(int) $c['id']]); ?>
+              <?php foreach ($comps as $c): $cc = (int) ($compCounts[(int) $c['id']] ?? 0); ?>
                 <option value="<?= (int) $c['id'] ?>" data-count="<?= $cc ?>" <?= (string) $audVal === (string) $c['id'] ? 'selected' : '' ?>><?= h($c['name']) ?> (<?= $cc ?>)</option>
               <?php endforeach; ?>
               <?php if (!$comps): ?><option value="">Конкурсов пока нет</option><?php endif; ?>
@@ -573,7 +640,7 @@ if ($action === 'edit' || $action === 'new') {
           <div class="field" id="segBox" style="display:<?= $aud === 'segment' ? 'block' : 'none' ?>">
             <label>Тег сегмента</label>
             <select name="audience_value_seg" onchange="nlSync()">
-              <?php foreach ($tags as $t): $tc = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=1 AND tags LIKE ?", ['%' . $t . '%']); ?>
+              <?php foreach ($tags as $t): $tc = (int) ($tagCounts[$t] ?? 0); ?>
                 <option value="<?= h($t) ?>" data-count="<?= $tc ?>" <?= $audVal === $t ? 'selected' : '' ?>><?= h($t) ?> (<?= $tc ?>)</option>
               <?php endforeach; ?>
               <?php if (!$tags): ?><option value="">Тегов пока нет</option><?php endif; ?>

@@ -486,7 +486,15 @@ $listRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.
                   AND COALESCE(c.results_published_at,'') = ''
                 ORDER BY c.results_date ASC, a.id ASC LIMIT 400");
 /* ---- Архив отправленных писем ---- */
-$sentRaw = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
+/* СПИСОК ОТПРАВЛЕННЫХ — БЕЗ ТЕЛА ПИСЬМА.
+ *
+ * «SELECT *» тянул колонку body: в ней вся вёрстка письма, по сотне килобайт
+ * на строку. Триста строк — это тридцать мегабайт, которые читаются с диска,
+ * едут в PHP и там же выбрасываются: в таблице показываются только адрес, тема
+ * и время. Запрос шёл 1,3 секунды и держал процесс. Берём нужные поля. */
+$sentRaw = all("SELECT id, to_email, to_name, subject, status, tries, error, created_at, sent_at,
+                       newsletter_id, campaign_type, sent_via, priority, attach
+                  FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
 /* ---- НЕ ОТПРАВЛЕННЫЕ (провалившиеся) ----
    Раньше письма со status='failed' не показывались нигде: из очереди пропадали,
    в архив не попадали. Со стороны это выглядело как «письма молча не отправляются». */

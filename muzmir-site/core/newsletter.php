@@ -426,26 +426,31 @@ function nl_sent_today(): int {
 
 /** Сколько МАССОВЫХ (priority>0) писем отправлено сегодня — для потолка пула. */
 function nl_bulk_sent_today(): int {
-    $dayStart = date('Y-m-d 00:00:00');
-    return (int) scalar(
-        "SELECT COUNT(*) FROM mail_queue WHERE status = 'sent' AND COALESCE(priority,0) > 0 AND sent_at >= ?",
-        [$dayStart]
-    );
+    // Та же цифра, что и в nl_bulk_counters(): считаем один раз за запрос.
+    // Отдельный COUNT здесь шёл по 350 мс и вызывался из каждого счётчика.
+    return nl_bulk_counters()['today'];
 }
 
 /** Сколько массовых писем конкретного ТИПА (konkurs|vip|kabinet) ушло сегодня — для per-type квот. */
 function nl_bulk_sent_today_type(string $type): int {
-    $dayStart = date('Y-m-d 00:00:00');
-    try {
-        // Тип берём сначала из mail_queue.campaign_type (в т.ч. онбординг кабинета без newsletter),
-        // иначе из связанной рассылки, иначе konkurs.
-        return (int) scalar(
-            "SELECT COUNT(*) FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
-              WHERE q.status = 'sent' AND COALESCE(q.priority,0) > 0 AND q.sent_at >= ?
-                AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?",
-            [$dayStart, $type]
-        );
-    } catch (\Throwable $e) { return 0; }
+    /* ВСЕ ТИПЫ СРАЗУ, ОДНИМ ЗАПРОСОМ.
+     *
+     * Раньше на каждый тип шёл свой COUNT со связкой к рассылкам — четыре
+     * запроса по четыре десятых секунды при каждом открытии «Пульта запуска»,
+     * а вызывают эту функцию и в цикле отправки. Считаем разом и держим в
+     * памяти запроса: цифры нужны согласованные на один момент времени. */
+    static $byType = null;
+    if ($byType === null) {
+        $byType = [];
+        try {
+            foreach (all("SELECT COALESCE(q.campaign_type, n.campaign_type, 'konkurs') t, COUNT(*) c
+                            FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+                           WHERE q.status = 'sent' AND COALESCE(q.priority,0) > 0 AND q.sent_at >= ?
+                        GROUP BY t", [date('Y-m-d 00:00:00')]) as $r)
+                $byType[(string) $r['t']] = (int) $r['c'];
+        } catch (\Throwable $e) { $byType = []; }
+    }
+    return (int) ($byType[$type] ?? 0);
 }
 
 /* =====================================================================
@@ -829,10 +834,44 @@ function nl_failure_kind(string $err): string {
  * след в журнале, чтобы человек разобрался. Ложное срабатывание стоит паузы,
  * пропуск — стоит базы.
  */
+/**
+ * СКОЛЬКО МАССОВЫХ УШЛО СЕГОДНЯ И С НАЧАЛА МЕСЯЦА.
+ *
+ * Эти две цифры спрашивают в десятке мест: пульт, счётчики норм, предохранитель
+ * чистки базы, расчёт дневного темпа. Раньше каждое место считало само, и
+ * условия были написаны так, что индекс не работал: date(sent_at) оборачивает
+ * колонку функцией, а COALESCE(priority,0)>0 — второе такое же место. На
+ * очереди в 134 000 строк один такой COUNT идёт от трети секунды до полутора,
+ * а за одно открытие «Рассылок» их набегало полтора десятка. Отсюда и пять
+ * секунд на страницу — и занятый всё это время процесс PHP.
+ *
+ * Считаем один раз за запрос и сравниваем даты как строки: тогда работает
+ * индекс по sent_at, а не перебор всей таблицы.
+ */
+function nl_bulk_counters(): array {
+    static $c = null;
+    if ($c !== null) return $c;
+    $today = date('Y-m-d');
+    $month = date('Y-m-01');
+    $c = ['today' => 0, 'month' => 0, 'failed_today' => 0];
+    try {
+        $c['today'] = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                      WHERE status='sent' AND COALESCE(priority,0) > 0
+                                        AND sent_at >= ? AND sent_at < ?",
+                                    [$today . ' 00:00:00', $today . ' 23:59:59']) ?? 0);
+        $c['month'] = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                      WHERE status='sent' AND COALESCE(priority,0) > 0
+                                        AND sent_at >= ?", [$month . ' 00:00:00']) ?? 0);
+        $c['failed_today'] = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                             WHERE status='failed' AND COALESCE(priority,0) > 0
+                                               AND COALESCE(NULLIF(sent_at,''), created_at) >= ?",
+                                           [$today . ' 00:00:00']) ?? 0);
+    } catch (\Throwable $e) {}
+    return $c;
+}
+
 function nl_purge_guard_tripped(int $hardNow = 0): bool {
-    $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                                 WHERE status='sent' AND COALESCE(priority,0)>0
-                                   AND date(sent_at)=date('now','localtime')") ?? 0);
+    $sentToday = nl_bulk_counters()['today'];
     // ЗА СУТКИ — значит за сутки. Раньше в этом запросе не было фильтра по дате, и в
     // знаменатель шла ВСЯ история отказов: строки status='failed' не удаляются никогда,
     // так что через месяц работы там копятся тысячи записей. На их фоне доля сегодняшних
@@ -1052,18 +1091,14 @@ function nl_service_month_left(): int {
     $cap = (int) setting('nl_service_month_cap', '0');
     if ($cap <= 0) return PHP_INT_MAX;
 
-    $sent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                            WHERE status='sent' AND COALESCE(priority,0) > 0
-                              AND sent_at >= date('now','localtime','start of month')") ?? 0);
+    $sent = nl_bulk_counters()['month'];
     return max(0, $cap - $sent);
 }
 
 /** Израсходовано за месяц и сколько всего оплачено — для админки и отчётов. */
 function nl_service_month_usage(): array {
     $cap  = (int) setting('nl_service_month_cap', '0');
-    $sent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                            WHERE status='sent' AND COALESCE(priority,0) > 0
-                              AND sent_at >= date('now','localtime','start of month')") ?? 0);
+    $sent = nl_bulk_counters()['month'];
     return [
         'cap'  => $cap,
         'sent' => $sent,
@@ -1105,12 +1140,9 @@ function nl_service_cap_today(): int {
     $cap = min($cap, $ceil);
 
     // Доставляемость плохая — не растём. Считаем только сегодняшние массовые.
-    $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                                 WHERE status='sent' AND COALESCE(priority,0)>0
-                                   AND date(sent_at)=date('now','localtime')") ?? 0);
-    $failToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                                 WHERE status='failed' AND COALESCE(priority,0)>0
-                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now','localtime')") ?? 0);
+    $__c = nl_bulk_counters();
+    $sentToday = $__c['today'];
+    $failToday = $__c['failed_today'];
     if ($sentToday + $failToday >= 200 && $failToday > ($sentToday + $failToday) * 0.05) {
         $prev = $ladder[max(0, min($days - 1, count($ladder) - 1))];
         return min($cap, $prev, $left);
@@ -1328,15 +1360,26 @@ function nl_purge_person(string $email, string $reason = 'недоставка')
 
 /** Сколько массовых ушло сегодня с конкретного ящика. */
 function nl_box_sent_today(string $box): int {
+    /* СЧЁТ ПО ВСЕМ ЯЩИКАМ СРАЗУ.
+     *
+     * Считалось по одному ящику за запрос, и LOWER() поверх колонки не даёт
+     * работать индексу — каждый такой COUNT шёл под секунду. Ящиков несколько,
+     * и спрашивают их и в «Пульте», и в каждом прогоне отправки: набегало по
+     * три-четыре секунды на ровном месте.
+     *
+     * Берём разом, приводим регистр уже в PHP и держим в памяти запроса. */
     if ($box === '') return 0;
-    try {
-        return (int) scalar(
-            "SELECT COUNT(*) FROM mail_queue
-              WHERE status='sent' AND COALESCE(priority,0) > 0
-                AND sent_at >= ? AND LOWER(COALESCE(sent_via,'')) = ?",
-            [date('Y-m-d 00:00:00'), mb_strtolower($box)]
-        );
-    } catch (\Throwable $e) { return 0; }
+    static $byBox = null;
+    if ($byBox === null) {
+        $byBox = [];
+        try {
+            foreach (all("SELECT COALESCE(sent_via,'') v, COUNT(*) c FROM mail_queue
+                           WHERE status='sent' AND COALESCE(priority,0) > 0 AND sent_at >= ?
+                        GROUP BY v", [date('Y-m-d 00:00:00')]) as $r)
+                $byBox[mb_strtolower((string) $r['v'])] = (int) $r['c'];
+        } catch (\Throwable $e) { $byBox = []; }
+    }
+    return (int) ($byBox[mb_strtolower($box)] ?? 0);
 }
 
 /**
