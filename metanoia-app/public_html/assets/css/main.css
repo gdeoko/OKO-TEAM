@@ -2828,3 +2828,10 @@ html.в-телеграме .hd { padding-top: 6px; }
 
 /* Оговорка под домашним заданием: пока сервера нет, файл никуда не уходит. */
 .hw-note { margin-top: 10px; font-size: 12px; line-height: 1.5; color: var(--gray); }
+
+/* Строка про неподтверждённую почту: заметная, но не тревожная. Школа
+   работает и без подтверждения, поэтому цвет тёплый, а не красный. */
+.mail-note { border-left: 3px solid var(--gold); }
+.mail-note p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
+.mail-note .btn { width: 100%; }
+[data-theme="dark"] .mail-note p { color: #E7EDF3; }

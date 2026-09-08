@@ -70,7 +70,7 @@ function handle(array $segments, string $method): never
             DB::query('INSERT INTO audit_log (user_id, action, ip) VALUES (?, "register", ?)',
                 [(int) $user['id'], $_SERVER['REMOTE_ADDR'] ?? null]);
 
-            // TODO этап 2: письмо верификации email
+            письмоПодтверждения($user);
             Response::ok(['user' => publicUser($user)] + issueTokens($user), 201);
 
         // ── POST /auth/login ───────────────────────────────
@@ -179,6 +179,36 @@ function handle(array $segments, string $method): never
                 [(int) $строка['user_id']])->fetch();
             Response::ok(['user' => publicUser($user)] + issueTokens($user));
 
+        // ── POST /auth/verify — подтвердить почту по ссылке ──
+        case 'POST verify':
+            RateLimit::check('verify:' . ($_SERVER['REMOTE_ADDR'] ?? ''), 30, 3600);
+            $ключ = (string) ($in['token'] ?? '');
+            $строка = DB::query(
+                'SELECT * FROM email_verifications
+                  WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()',
+                [hash('sha256', $ключ)]
+            )->fetch();
+            if (!$строка) {
+                Response::error('Ссылка устарела. Попросите новую в профиле.', 400);
+            }
+            DB::query('UPDATE users SET email_verified_at = NOW() WHERE id = ?',
+                [(int) $строка['user_id']]);
+            DB::query('UPDATE email_verifications SET used_at = NOW() WHERE id = ?',
+                [(int) $строка['id']]);
+            $user = DB::query('SELECT * FROM users WHERE id = ?',
+                [(int) $строка['user_id']])->fetch();
+            Response::ok(['user' => publicUser($user)]);
+
+        // ── POST /auth/resend — прислать письмо ещё раз ──────
+        case 'POST resend':
+            $me = Auth::requireUser();
+            RateLimit::check('resend:' . (int) $me['id'], 5, 3600);
+            if (($me['email_verified_at'] ?? null) !== null) {
+                Response::ok(['sent' => false, 'already' => true]);
+            }
+            письмоПодтверждения($me);
+            Response::ok(['sent' => true]);
+
         // ── POST /auth/logout ──────────────────────────────
         case 'POST logout':
             $token = (string) ($in['refresh_token'] ?? '');
@@ -191,4 +221,29 @@ function handle(array $segments, string $method): never
         default:
             Response::error('Не найдено', 404);
     }
+}
+
+/**
+ * Письмо со ссылкой подтверждения почты. Ссылка живёт сутки: родитель
+ * заводит аккаунт вечером, а до почты добирается на следующий день.
+ * Школой можно пользоваться и без подтверждения: ребёнку нельзя мешать
+ * учиться из-за письма, которое застряло у почтовика.
+ */
+function письмоПодтверждения(array $user): void
+{
+    DB::query('DELETE FROM email_verifications WHERE user_id = ? AND used_at IS NULL',
+        [(int) $user['id']]);
+    $ключ = bin2hex(random_bytes(32));
+    DB::query(
+        'INSERT INTO email_verifications (user_id, token_hash, expires_at)
+         VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))',
+        [(int) $user['id'], hash('sha256', $ключ)]
+    );
+    $адрес = rtrim((string) Config::get('APP_URL', ''), '/') . '/?verify=' . $ключ;
+    $текст = "Здравствуйте!\n\n"
+        . "Вы завели аккаунт в школе «Метанойя». Подтвердите почту, чтобы мы\n"
+        . "могли прислать новый пароль, если старый забудется:\n\n$адрес\n\n"
+        . "Ссылка живёт сутки. Школой можно пользоваться и не дожидаясь письма.\n\n"
+        . "Школа «Метанойя»";
+    Mail::send((string) $user['email'], 'Подтвердите почту в школе «Метанойя»', $текст);
 }

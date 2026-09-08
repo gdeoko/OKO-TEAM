@@ -76,7 +76,7 @@ run() {
   printf '%s' "$out"
 }
 
-for t in konflikt tyazhelo token synclive parol parol2 parol3 tgfull; do run "$t" >/dev/null; done
+for t in konflikt tyazhelo token synclive parol parol2 parol3 pochta tgfull; do run "$t" >/dev/null; done
 
 # svoi3 продолжает работу svoi2: ему нужна почта заведённой семьи.
 out=$(run svoi2)

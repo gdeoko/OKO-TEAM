@@ -342,6 +342,14 @@
     localStorage.setItem('mt_auth', '1');
     if (d.refresh_token) localStorage.setItem('mt_refresh', d.refresh_token);
     if (d.user && d.user.name) localStorage.setItem('mt_name', d.user.name);
+    // Подтверждена ли почта: по этой отметке профиль показывает строку
+    // с предложением прислать письмо ещё раз.
+    if (d.user && 'email_verified' in d.user) {
+      try {
+        if (d.user.email_verified) localStorage.setItem('mt_email_ok', '1');
+        else localStorage.removeItem('mt_email_ok');
+      } catch (e) {}
+    }
     return d;
   }
 
@@ -449,6 +457,23 @@
     return d;
   }
 
+  /* Подтверждение почты. Школой пользуются и без него: письмо нужно
+     только для того, чтобы можно было прислать новый пароль. */
+  async function подтвердитьПочту(ключ) {
+    if (!естьСервер()) return null;
+    const d = await запрос('/auth/verify', {
+      method: 'POST',
+      body: JSON.stringify({ token: ключ }),
+    });
+    try { localStorage.setItem('mt_email_ok', '1'); } catch (e) {}
+    return d;
+  }
+
+  async function письмоПодтверждения() {
+    if (!естьСервер() || !токен()) return null;
+    return запрос('/auth/resend', { method: 'POST', body: '{}' });
+  }
+
   /* ── Переключение между детьми на одном устройстве ──────
      Прогресс каждого ребёнка лежит своей связкой mt_bucket_<id>. Уходя,
      складываем текущую связку, приходя — раскладываем нужную и просим у
@@ -521,6 +546,8 @@
     войтиГуглом: войтиГуглом,
     забылПароль: забылПароль,
     новыйПароль: новыйПароль,
+    подтвердитьПочту: подтвердитьПочту,
+    письмоПодтверждения: письмоПодтверждения,
     сменитьРебёнка: сменитьРебёнка,
     удалитьАккаунт: удалитьАккаунт,
     завестиРебёнка: завестиРебёнка,

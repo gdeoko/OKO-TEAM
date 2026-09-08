@@ -3619,6 +3619,18 @@ function renderJourney() {
 
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
+/* Строка про неподтверждённую почту. Показываем её только тогда, когда
+   она о чём-то говорит: сервер есть, семья вошла, почта не отмечена.
+   Учиться подтверждение не мешает, поэтому это строка, а не преграда. */
+function строкаПочты() {
+  const блок = document.getElementById('mailNote');
+  if (!блок) return;
+  const сервер = !!(window.MT_SYNC && MT_SYNC.естьСервер && MT_SYNC.естьСервер());
+  const вошли = !!localStorage.getItem('mt_token');
+  const подтверждена = !!localStorage.getItem('mt_email_ok');
+  блок.hidden = !(сервер && вошли && !подтверждена);
+}
+
 function showApp(name) {
   $('#onboarding').hidden = true;
   $('#auth').hidden = true;
@@ -3628,6 +3640,8 @@ function showApp(name) {
   const место = (localStorage.getItem('mt_place') || '').trim();
   const подпись = $('#profilePlace');
   if (подпись) подпись.textContent = место ? 'Родитель · ' + место : 'Родитель';
+
+  строкаПочты();
 
   const stored = localStorage.getItem('mt_name') || 'Друг';
   $('#avatarBtn').textContent = stored[0].toUpperCase();
@@ -3842,6 +3856,20 @@ function initAuth() {
       toast(ошибка && ошибка.message || 'Ссылка не подошла, попросите новую');
     }
   })();
+  // Переход по ссылке подтверждения почты: ?verify=…
+  (async () => {
+    const ключ = new URLSearchParams(location.search).get('verify');
+    if (!ключ || !(window.MT_SYNC && MT_SYNC.естьСервер && MT_SYNC.естьСервер())) return;
+    history.replaceState(null, '', location.pathname);
+    try {
+      await MT_SYNC.подтвердитьПочту(ключ);
+      строкаПочты();
+      toast('Почта подтверждена');
+    } catch (ошибка) {
+      toast(ошибка && ошибка.message || 'Ссылка устарела, попросите новую в профиле');
+    }
+  })();
+
   // Вход через Google и Телеграм. Пока школа без домена, оба ключа пустые,
   // и кнопки говорят об этом человеческим языком, а не «этап 1-бэк».
   const мета = (имя) => (document.querySelector('meta[name="' + имя + '"]') || {}).content || '';
@@ -5307,6 +5335,19 @@ function initGrowth() {
       try { (await caches.keys()).forEach((имя) => caches.delete(имя)); } catch (e) {}
     }
     location.reload();
+  });
+
+  $('#mailResend')?.addEventListener('click', async (e) => {
+    const кнопка = e.currentTarget;
+    кнопка.disabled = true;
+    try {
+      const d = await MT_SYNC.письмоПодтверждения();
+      if (d && d.already) { toast('Почта уже подтверждена'); строкаПочты(); }
+      else toast('Письмо отправлено, проверьте почту');
+    } catch (ошибка) {
+      toast(ошибка && ошибка.message || 'Письмо не ушло, попробуйте позже');
+    }
+    кнопка.disabled = false;
   });
 
   $('#mLogout')?.addEventListener('click', () => {
