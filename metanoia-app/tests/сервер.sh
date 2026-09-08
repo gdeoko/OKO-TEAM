@@ -65,6 +65,13 @@ open(root + '/public_html/admin/_t.html', 'w').write(
     a.replace('<meta name="mt-api" content="">', адрес))
 PY
 
+# Часть проверок открывает обычную страницу школы на 8777: письмо о новом
+# пароле, например, приходит семье, которая сидит на сайте, а не на копии.
+if ! curl -s -o /dev/null "http://127.0.0.1:8777/index.html"; then
+  ( cd "$ROOT/public_html" && setsid python3 -m http.server 8777 >/dev/null 2>&1 & )
+  for i in $(seq 1 10); do curl -s -o /dev/null "http://127.0.0.1:8777/index.html" && break; sleep 1; done
+fi
+
 rm -rf /tmp/metanoia-rl     # счётчик попыток входа, иначе наши же проверки его выбирают
 
 # ── прогон ────────────────────────────────────────────────────
