@@ -1,0 +1,346 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Панель школы · Метанойя</title>
+<link rel="icon" href="../assets/img/icon-192.png">
+<link rel="stylesheet" href="../assets/css/fonts.css">
+<!--
+  Панель Екатерины. Открывает те же данные, что лежат в базе школы, и
+  ничего сверх них: если семей нет, панель так и пишет. Работает только
+  вместе с сервером, адрес берёт из мета-тега ниже (тот же, что в
+  приложении). Вход только под ролью superadmin.
+-->
+<meta name="mt-api" content="">
+<style>
+:root{
+  --navy:#1A3A52; --terracotta:#C97064; --gold:#D4A574; --cream:#FAF8F5;
+  --fon:#0E1B25; --karta:#152836; --linia:rgba(231,237,243,.12); --tekst:#E7EDF3;
+  --tusklo:#9FB2C0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fon);color:var(--tekst);
+  font:15px/1.55 Montserrat,system-ui,-apple-system,sans-serif}
+a{color:var(--gold)}
+h1,h2{font-family:'Playfair Display',Georgia,serif;margin:0}
+.vhod{max-width:380px;margin:14vh auto;padding:26px 22px;background:var(--karta);
+  border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.vhod h1{font-size:24px;margin-bottom:4px}
+.vhod p{color:var(--tusklo);margin:0 0 20px;font-size:14px}
+label{display:block;font-size:13px;color:var(--tusklo);margin:12px 0 5px}
+input{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--linia);
+  background:#0B1620;color:var(--tekst);font:15px/1.4 inherit}
+input:focus{outline:2px solid var(--terracotta);outline-offset:1px}
+.knopka{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 16px;border-radius:11px;border:0;cursor:pointer;
+  background:var(--terracotta);color:#fff;font:600 14px/1 inherit}
+.knopka--tihaya{background:transparent;border:1px solid var(--linia);color:var(--tekst)}
+.knopka[disabled]{opacity:.55;cursor:default}
+.vhod .knopka{width:100%;margin-top:18px;padding:13px}
+.oshibka{margin-top:12px;color:#F0A9A0;font-size:13px;min-height:18px}
+
+.set{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.bok{background:#0B1620;border-right:1px solid var(--linia);padding:20px 14px;
+  display:flex;flex-direction:column;gap:4px}
+.bok__logo{display:flex;align-items:center;gap:9px;margin:0 6px 18px;font-weight:700;
+  letter-spacing:.14em;font-size:14px}
+.bok__logo img{width:26px;height:26px;border-radius:7px}
+.punkt{display:block;text-align:left;padding:10px 12px;border-radius:10px;border:0;
+  background:transparent;color:var(--tusklo);font:500 14px/1.3 inherit;cursor:pointer}
+.punkt:hover{background:rgba(231,237,243,.06);color:var(--tekst)}
+.punkt--on{background:rgba(201,112,100,.16);color:var(--terracotta);font-weight:600}
+.bok__niz{margin-top:auto;font-size:12px;color:var(--tusklo);padding:0 6px}
+.glavnoe{padding:26px 28px 60px;min-width:0}
+.shapka{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:20px}
+.shapka h2{font-size:22px}
+.shapka__meta{color:var(--tusklo);font-size:13px}
+
+.plitki{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.plitka{background:var(--karta);border-radius:14px;padding:15px 16px}
+.plitka__chislo{font:700 26px/1.1 'Playfair Display',Georgia,serif;color:var(--gold)}
+.plitka__podpis{color:var(--tusklo);font-size:13px;margin-top:4px}
+
+.karta{background:var(--karta);border-radius:14px;padding:6px 0;margin-top:18px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--tusklo);font-weight:600;font-size:12px;
+  text-transform:uppercase;letter-spacing:.06em;padding:11px 16px}
+td{padding:11px 16px;border-top:1px solid var(--linia);vertical-align:middle}
+tr:hover td{background:rgba(231,237,243,.03)}
+.metka{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:600}
+.metka--zakryt{background:rgba(240,169,160,.15);color:#F0A9A0}
+.metka--zhdet{background:rgba(212,165,116,.15);color:var(--gold)}
+.pusto{padding:26px 18px;color:var(--tusklo);text-align:center;font-size:14px}
+.poisk{display:flex;gap:10px;margin-bottom:4px}
+.poisk input{max-width:320px}
+.otkat{overflow-x:auto}
+.tost{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#0B1620;
+  border:1px solid var(--linia);color:var(--tekst);padding:11px 18px;border-radius:12px;
+  font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;
+  transition:opacity .2s}
+.tost--vidno{opacity:1}
+@media (max-width:760px){
+  .set{grid-template-columns:1fr}
+  .bok{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--linia)}
+  .bok__logo{width:100%}
+  .bok__niz{display:none}
+  .glavnoe{padding:18px 14px 50px}
+}
+</style></head><body>
+
+<div id="vhod" class="vhod">
+  <h1>Панель школы</h1>
+  <p>Вход для педагога школы «Метанойя»</p>
+  <form id="formaVhoda">
+    <label for="pochta">Почта</label>
+    <input id="pochta" type="email" autocomplete="username" required>
+    <label for="parol">Пароль</label>
+    <input id="parol" type="password" autocomplete="current-password" required>
+    <button class="knopka" type="submit">Войти</button>
+    <div class="oshibka" id="oshibkaVhoda"></div>
+  </form>
+</div>
+
+<div id="panel" class="set" hidden>
+  <nav class="bok">
+    <div class="bok__logo"><img src="../assets/img/icon-192.png" alt="">МЕТАНОЙЯ</div>
+    <button class="punkt punkt--on" data-razdel="svodka">Сводка</button>
+    <button class="punkt" data-razdel="semi">Семьи</button>
+    <button class="punkt" data-razdel="deti">Ученики</button>
+    <button class="punkt" data-razdel="uroki">Уроки</button>
+    <button class="punkt" data-razdel="moderaciya">Модерация</button>
+    <div class="bok__niz">
+      <div id="ktoVoshel"></div>
+      <button class="knopka knopka--tihaya" id="vyhod" style="margin-top:10px;width:100%">Выйти</button>
+    </div>
+  </nav>
+  <main class="glavnoe">
+    <div class="shapka">
+      <h2 id="zagolovok">Сводка</h2>
+      <div class="shapka__meta" id="podzagolovok"></div>
+    </div>
+    <div id="telo"></div>
+  </main>
+</div>
+
+<div class="tost" id="tost"></div>
+
+<script>
+'use strict';
+
+const БАЗА = (document.querySelector('meta[name="mt-api"]') || {}).content || '';
+const $ = (s) => document.querySelector(s);
+
+/* Текст от людей в разметку не вставляем как есть: имя семьи могут
+   написать со скобками, и панель не должна на этом ломаться. */
+function безопасно(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function тост(текст) {
+  const т = $('#tost');
+  т.textContent = текст;
+  т.classList.add('tost--vidno');
+  setTimeout(() => т.classList.remove('tost--vidno'), 2600);
+}
+
+function токен() { return sessionStorage.getItem('mt_admin_token') || ''; }
+
+async function запрос(путь, настройки) {
+  if (!БАЗА) throw new Error('В мета-теге mt-api не указан адрес сервера школы');
+  const ответ = await fetch(БАЗА.replace(/\/$/, '') + путь, Object.assign({
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + токен(),
+    },
+  }, настройки || {}));
+  const тело = await ответ.json().catch(() => ({}));
+  if (!ответ.ok || !тело.success) {
+    throw new Error((тело && тело.error) || 'Сервер ответил ошибкой ' + ответ.status);
+  }
+  return тело.data;
+}
+
+/* ── Вход ─────────────────────────────────────────────── */
+$('#formaVhoda').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const кнопка = e.target.querySelector('button');
+  кнопка.disabled = true;
+  $('#oshibkaVhoda').textContent = '';
+  try {
+    const ответ = await fetch(БАЗА.replace(/\/$/, '') + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $('#pochta').value.trim(), password: $('#parol').value }),
+    });
+    const тело = await ответ.json().catch(() => ({}));
+    if (!ответ.ok || !тело.success) throw new Error(тело.error || 'Не пускает');
+    if (!тело.data.user || тело.data.user.role !== 'superadmin') {
+      throw new Error('Эта панель только для педагога школы');
+    }
+    sessionStorage.setItem('mt_admin_token', тело.data.access_token);
+    sessionStorage.setItem('mt_admin_name', тело.data.user.name || '');
+    открытьПанель();
+  } catch (ошибка) {
+    $('#oshibkaVhoda').textContent = ошибка.message;
+  }
+  кнопка.disabled = false;
+});
+
+$('#vyhod').addEventListener('click', () => {
+  sessionStorage.removeItem('mt_admin_token');
+  location.reload();
+});
+
+function открытьПанель() {
+  $('#vhod').hidden = true;
+  $('#panel').hidden = false;
+  $('#ktoVoshel').textContent = sessionStorage.getItem('mt_admin_name') || '';
+  показать('svodka');
+}
+
+/* ── Разделы ──────────────────────────────────────────── */
+document.querySelectorAll('[data-razdel]').forEach((кнопка) => {
+  кнопка.addEventListener('click', () => показать(кнопка.dataset.razdel));
+});
+
+const ЗАГОЛОВКИ = {
+  svodka: ['Сводка', 'Живые числа школы прямо сейчас'],
+  semi: ['Семьи', 'Кто зарегистрирован и как давно заходил'],
+  deti: ['Ученики', 'Кто сколько уроков прошёл'],
+  uroki: ['Уроки', 'Какие уроки проходят чаще других'],
+  moderaciya: ['Модерация', 'Что делали с доступами и почему'],
+};
+
+async function показать(раздел) {
+  document.querySelectorAll('[data-razdel]').forEach((к) =>
+    к.classList.toggle('punkt--on', к.dataset.razdel === раздел));
+  const [з, п] = ЗАГОЛОВКИ[раздел] || ['', ''];
+  $('#zagolovok').textContent = з;
+  $('#podzagolovok').textContent = п;
+  $('#telo').innerHTML = '<div class="pusto">Смотрим в базу…</div>';
+  try {
+    if (раздел === 'svodka') return await рисоватьСводку();
+    if (раздел === 'semi') return await рисоватьСемьи('');
+    if (раздел === 'deti') return await рисоватьДетей();
+    if (раздел === 'uroki') return await рисоватьУроки();
+    if (раздел === 'moderaciya') return await рисоватьМодерацию();
+  } catch (ошибка) {
+    $('#telo').innerHTML = '<div class="pusto">' + безопасно(ошибка.message) + '</div>';
+  }
+}
+
+function дата(строка) {
+  if (!строка) return 'ни разу';
+  const д = new Date(String(строка).replace(' ', 'T'));
+  if (isNaN(д)) return безопасно(строка);
+  return д.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: '2-digit' });
+}
+
+async function рисоватьСводку() {
+  const д = await запрос('/admin/svodka');
+  const плитка = (число, подпись) =>
+    `<div class="plitka"><div class="plitka__chislo">${число}</div>
+     <div class="plitka__podpis">${подпись}</div></div>`;
+  $('#telo').innerHTML = `<div class="plitki">
+    ${плитка(д.семей, 'семей в школе')}
+    ${плитка(д.детей, 'учеников')}
+    ${плитка(д.семейЗаНеделю, 'пришли за неделю')}
+    ${плитка(д.заходилиЗаНеделю, 'заходили за неделю')}
+    ${плитка(д.уроковПройдено, 'уроков пройдено всего')}
+    ${плитка(д.почтаНеПодтверждена, 'не подтвердили почту')}
+    ${плитка(д.заблокированы, 'закрыт доступ')}
+    ${плитка(д.записейМодерации, 'записей модерации')}
+  </div>` + (д.семей === 0
+    ? '<div class="pusto">Семей пока нет. Числа появятся здесь сами, как только в школу придёт первая семья.</div>'
+    : '');
+}
+
+async function рисоватьСемьи(поиск) {
+  const д = await запрос('/admin/semi?limit=100&q=' + encodeURIComponent(поиск || ''));
+  const строки = д.семьи.map((с) => `<tr>
+    <td><b>${безопасно(с.name)}</b><br><span style="color:var(--tusklo);font-size:13px">${безопасно(с.email)}</span></td>
+    <td>${безопасно(с.city || '')}</td>
+    <td>${с.detey}</td>
+    <td>${дата(с.created_at)}</td>
+    <td>${дата(с.last_seen_at)}</td>
+    <td>${Number(с.is_blocked) ? '<span class="metka metka--zakryt">доступ закрыт</span>'
+      : (с.email_verified_at ? '' : '<span class="metka metka--zhdet">почта не подтверждена</span>')}</td>
+    <td><button class="knopka knopka--tihaya" data-blok="${с.id}" data-zakryt="${Number(с.is_blocked) ? 0 : 1}">
+      ${Number(с.is_blocked) ? 'Вернуть доступ' : 'Закрыть доступ'}</button></td>
+  </tr>`).join('');
+  $('#telo').innerHTML = `
+    <div class="poisk">
+      <input id="polePoiska" type="search" placeholder="Имя или почта" value="${безопасно(поиск || '')}">
+      <button class="knopka knopka--tihaya" id="knopkaPoiska">Найти</button>
+    </div>
+    <div class="karta otkat">${д.семьи.length ? `<table>
+      <tr><th>Семья</th><th>Город</th><th>Детей</th><th>Пришли</th><th>Были</th><th></th><th></th></tr>
+      ${строки}</table>` : '<div class="pusto">Никого не нашлось.</div>'}</div>`;
+  $('#knopkaPoiska').addEventListener('click', () => рисоватьСемьи($('#polePoiska').value.trim()));
+  $('#polePoiska').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') рисоватьСемьи($('#polePoiska').value.trim());
+  });
+  document.querySelectorAll('[data-blok]').forEach((к) => к.addEventListener('click', async () => {
+    const закрыть = к.dataset.zakryt === '1';
+    if (закрыть && !confirm('Закрыть доступ этой семье? Она выйдет из школы на всех устройствах.')) return;
+    к.disabled = true;
+    try {
+      await запрос('/admin/blokirovka', {
+        method: 'POST',
+        body: JSON.stringify({ id: Number(к.dataset.blok), blocked: закрыть }),
+      });
+      тост(закрыть ? 'Доступ закрыт' : 'Доступ вернули');
+      рисоватьСемьи($('#polePoiska').value.trim());
+    } catch (ошибка) { тост(ошибка.message); к.disabled = false; }
+  }));
+}
+
+async function рисоватьДетей() {
+  const д = await запрос('/admin/deti?limit=100');
+  $('#telo').innerHTML = '<div class="karta otkat">' + (д.дети.length ? `<table>
+    <tr><th>Ученик</th><th>Возраст</th><th>Уроков пройдено</th><th>Очки</th><th>Дней подряд</th><th>Семья</th></tr>
+    ${д.дети.map((р) => `<tr>
+      <td><b>${безопасно(р.name)}</b></td>
+      <td>${р.age}</td>
+      <td>${р.urokov}</td>
+      <td>${р.xp}</td>
+      <td>${р.streak}</td>
+      <td>${безопасно(р.semya)}<br><span style="color:var(--tusklo);font-size:13px">${безопасно(р.email)}</span></td>
+    </tr>`).join('')}</table>`
+    : '<div class="pusto">Учеников пока нет.</div>') + '</div>';
+}
+
+async function рисоватьУроки() {
+  const д = await запрос('/admin/uroki');
+  $('#telo').innerHTML = '<div class="karta otkat">' + (д.уроки.length ? `<table>
+    <tr><th>Урок</th><th>Сколько детей прошло</th></tr>
+    ${д.уроки.map((у) => `<tr><td>Урок ${у.lesson_id}</td><td>${у.proshli}</td></tr>`).join('')}</table>`
+    : '<div class="pusto">Пройденных уроков пока нет. Список наполнится сам, когда дети начнут заниматься.</div>')
+    + '</div>';
+}
+
+async function рисоватьМодерацию() {
+  const д = await запрос('/admin/moderaciya');
+  const слова = { ban: 'закрыт доступ', unban: 'доступ вернули', mute: 'молчание', delete_msg: 'удалено сообщение' };
+  $('#telo').innerHTML = '<div class="karta otkat">' + (д.записи.length ? `<table>
+    <tr><th>Когда</th><th>Что</th><th>Кому</th><th>Кто</th><th>Почему</th></tr>
+    ${д.записи.map((з) => `<tr>
+      <td>${дата(з.created_at)}</td>
+      <td>${безопасно(слова[з.action] || з.action)}</td>
+      <td>${безопасно(з.komu || '')}</td>
+      <td>${безопасно(з.moderator || '')}</td>
+      <td>${безопасно(з.reason || '')}</td>
+    </tr>`).join('')}</table>`
+    : '<div class="pusto">Записей нет. Здесь появится всё, что школа делала с доступами.</div>') + '</div>';
+}
+
+/* Токен живёт час: если он ещё цел, панель откроется сразу. */
+if (токен()) {
+  запрос('/admin/svodka').then(открытьПанель).catch(() => {
+    sessionStorage.removeItem('mt_admin_token');
+  });
+}
+if (!БАЗА) {
+  $('#oshibkaVhoda').textContent = 'В мета-теге mt-api не указан адрес сервера школы';
+}
+</script>
+</body></html>

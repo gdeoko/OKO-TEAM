@@ -186,6 +186,9 @@ curl -s -X POST https://api.<домен>/api/v1/subscriptions/checkout \
 - [ ] HTTPS-only, HSTS, `Secure`+`HttpOnly`+`SameSite` на cookie.
 - [ ] Уникальный `JWT_SECRET`, БД-пользователь без прав на другие схемы.
 - [ ] Регулярный бэкап БД (mysqldump по cron).
+- [ ] Включить панель школы: заполнить `mt-api` в `public_html/admin/index.html`
+      и один раз выполнить `UPDATE users SET role='superadmin' WHERE email='её почта';`.
+      Подробно в `ПАНЕЛЬ-ШКОЛЫ.md`.
 - [ ] Проверить, что `public_html/.htaccess` доехал на сервер. В нём HTTPS-only,
       типы файлов, заголовки кэша и отдача `assetlinks.json` как JSON. Без него
       приложение Android не свяжется с сайтом и покажет адресную строку, а

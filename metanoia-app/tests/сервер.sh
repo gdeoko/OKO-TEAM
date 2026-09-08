@@ -56,10 +56,13 @@ say 'сервер отвечает'
 python3 - "$ROOT" "$PORT" <<'PY'
 import sys
 root, port = sys.argv[1], sys.argv[2]
+адрес = '<meta name="mt-api" content="http://127.0.0.1:%s/api/v1">' % port
 s = open(root + '/public_html/index.html').read()
-s = s.replace('<meta name="mt-api" content="">',
-              '<meta name="mt-api" content="http://127.0.0.1:%s/api/v1">' % port)
-open(root + '/public_html/_t.html', 'w').write(s)
+open(root + '/public_html/_t.html', 'w').write(
+    s.replace('<meta name="mt-api" content="">', адрес))
+a = open(root + '/public_html/admin/index.html').read()
+open(root + '/public_html/admin/_t.html', 'w').write(
+    a.replace('<meta name="mt-api" content="">', адрес))
 PY
 
 rm -rf /tmp/metanoia-rl     # счётчик попыток входа, иначе наши же проверки его выбирают
@@ -82,6 +85,14 @@ for t in konflikt tyazhelo token synclive parol parol2 parol3 pochta tgfull; do 
 out=$(run svoi2)
 mail=$(printf '%s' "$out" | grep 'ПОЧТА:' | awk '{print $2}')
 [ -n "$mail" ] && run svoi3 "$mail" >/dev/null || { say 'svoi3 пропущен: svoi2 не отдал почту'; fails=$((fails + 1)); }
+
+# Панели нужен педагог школы: заводим его и поднимаем до superadmin.
+PEDAGOG="ekat$(date +%s)@test.ru"
+curl -s -X POST "http://127.0.0.1:$PORT/api/v1/auth/register" \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$PEDAGOG\",\"password\":\"Parol12345\",\"name\":\"Екатерина Павленко\",\"role\":\"parent\"}" >/dev/null
+mysql -u root metanoya -e "UPDATE users SET role='superadmin' WHERE email='$PEDAGOG'"
+run panel "$PEDAGOG" >/dev/null
 
 say "--- с замечаниями: $fails"
 exit 0

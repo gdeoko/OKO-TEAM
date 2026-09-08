@@ -59,6 +59,7 @@ $routes = [
     'progress'      => __DIR__ . '/routes/progress.php',
     'subscriptions' => __DIR__ . '/routes/subscriptions.php',
     'webhooks'      => __DIR__ . '/routes/webhooks.php',
+    'admin'         => __DIR__ . '/routes/admin.php',
     'health'        => null, // обрабатывается ниже
 ];
 
