@@ -1,7 +1,7 @@
 {
-  "base_commit": "0b3018ae1ea91c0df77e37ce026262889b76ebe4",
-  "base_release": "20260908-r4",
-  "release": "20260908-r5",
+  "base_commit": "ed8637976396787a52caede250b8817b13b6e414",
+  "base_release": "20260908-r3",
+  "release": "20260908-r4",
   "files": [
     {
       "path": "rocketcdn/admin.html",
@@ -15,12 +15,12 @@
     },
     {
       "path": "rocketcdn/assets/rc-gl.js",
-      "base_sha256": "42781434971db7279848e841ef5b0ea622f94fe532ff9cb322a2fdc365d08148",
+      "base_sha256": "e142d1d64c6a4d6812a72146376f532334a94f534081552ea7caef10248822c9",
       "sha256": "42781434971db7279848e841ef5b0ea622f94fe532ff9cb322a2fdc365d08148"
     },
     {
       "path": "rocketcdn/index.html",
-      "base_sha256": "30dfc919fc97aedca8e245bc636b390de46b5fcb51ce825f58ecdc250c5d36e4",
+      "base_sha256": "ed7d4c64c7c19a2fd091dfc0e9335a2c2a4d65afdbe42803da2e70548ecd1e96",
       "sha256": "30dfc919fc97aedca8e245bc636b390de46b5fcb51ce825f58ecdc250c5d36e4"
     },
     {
@@ -61,7 +61,7 @@
     {
       "path": "rocketvpn/assets/rv.css",
       "base_sha256": "b95a49f3d4c5a1c39333f54e350207557fe1f3230a195560f68d66573d431b39",
-      "sha256": "9d1fe47111e273734240ea5939dd1160e929761119d7eb6210ee4ea8be448369"
+      "sha256": "b95a49f3d4c5a1c39333f54e350207557fe1f3230a195560f68d66573d431b39"
     },
     {
       "path": "rocketvpn/frame.html",

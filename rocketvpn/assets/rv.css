@@ -3513,6 +3513,9 @@ html.rv-no-webgl .rv-акт[data-акт="прокол"],html.rv-no-webgl .rv-а�
 .рв-впр-обёртка { min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .рв-панель-товар { font-size: 1rem; color: var(--rv-текст); }
 .рв-панель-товар b { color: inherit; }
+/* Cabin layout depends on the active scene, not on the optional MSDF font. */
+html.рв-живая-рубка .rv-пульт { position: absolute; inset: 0; padding: 0; }
+html.рв-живая-рубка .рв-фин { position: absolute; }
 html.рв-живая-рубка .рв-фин-впр, html.рв-живая-рубка .рв-фин-игра {
   --rv-текст: #eef2ff; --rv-текст-тихо: #c1cade;
   left: auto; right: max(24px, 8vw); top: max(88px, 17vh);
@@ -3530,7 +3533,7 @@ html.рв-живая-рубка .рв-фин-игра { overflow: auto; }
 html.рв-живая-рубка .рв-фин-кн {
   left: auto; right: max(24px, 8vw); top: calc(max(88px, 17vh) + 72vh - 116px);
   width: min(440px, 43vw); height: 112px; padding: 0; container-type: normal;
-  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: flex-start;
   gap: 8px; overflow: visible; transition: opacity .35s ease;
 }
 html.рв-живая-рубка .рв-фин-кн .rv-кн {
@@ -3547,7 +3550,7 @@ html.рв-живая-рубка .рв-кн-ряд { gap: 8px; }
     right: 16px; top: auto; bottom: max(42px, env(safe-area-inset-bottom)); width: calc(100% - 32px);
   }
 }
-@media (max-height: 520px) and (min-width: 701px) {
+@media (max-height: 520px) and (orientation: landscape) {
   html.рв-живая-рубка .рв-фин-впр, html.рв-живая-рубка .рв-фин-игра {
     top: 72px; height: calc(100% - 204px); width: min(440px, 55vw); right: 24px;
   }
