@@ -7,9 +7,16 @@ const ВЫХОД = '/home/user/OKO-TEAM/metanoia-app/store/screens/';
 fs.mkdirSync(ВЫХОД, { recursive: true });
 
 const РАЗМЕРЫ = [
-  { имя: 'android', ширина: 1080, высота: 1920, масштаб: 2.77 },   // Play и RuStore
-  { имя: 'ios', ширина: 1290, высота: 2796, масштаб: 3.31 },       // App Store 6.7"
+  // Размеры магазины проверяют до пикселя, поэтому берём целый масштаб:
+  // окно телефона умножается на 3 и попадает точно в требуемое.
+  { имя: 'android', ширина: 1080, высота: 1920, масштаб: 3 },      // Play и RuStore, окно 360x640
+  { имя: 'ios', ширина: 1290, высота: 2796, масштаб: 3 },          // App Store 6.7", окно 430x932
 ];
+
+// Снимки уходят в магазин уже после того, как школу поставят на сервер,
+// поэтому снимаем состояние с сервером: иначе в чате видна временная
+// оговорка «пока школа без сервера», и карточка выглядит недоделанной.
+const СЕРВЕР_ДЛЯ_СНИМКА = 'https://metanoya.example/api/v1';
 
 const ЭКРАНЫ = [
   { файл: 'home', подпись: 'Урок дня, стих и живой друг', как: async (p) => {
@@ -57,6 +64,11 @@ for (const р of РАЗМЕРЫ) {
     localStorage.setItem('mt_pet', JSON.stringify({ вид: 'lamb', имя: 'Заря', зёрна: 42, сытость: 80, радость: 85, рост: 34, день: '', дневник: [] }));
     [1, 2, 3].forEach((n) => localStorage.setItem('mt_lesson_' + n, JSON.stringify({ read: true, task: true, test: true, done: true, ts: Date.now() })));
   });
+  await p.addInitScript((адрес) => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const м = document.querySelector('meta[name="mt-api"]'); if (м) м.content = адрес;
+    });
+  }, СЕРВЕР_ДЛЯ_СНИМКА);
   await p.reload({ waitUntil: 'load' });
   await p.waitForSelector('.splash--hide', { timeout: 20000 }).catch(() => {});
   await p.waitForTimeout(1200);
