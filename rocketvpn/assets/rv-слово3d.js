@@ -1309,6 +1309,7 @@
     T = W.T;
     g.RV_MSDF["поднять"](W);
     g.RV_MSDF["готов"](function () {
+      if (!W.готов || d.documentElement.classList.contains("rv-no-webgl")) return;
       var секции = d.querySelectorAll(".rv-акт[data-акт]");
       for (var i = 0; i < секции.length; i++) {
         собрать(секции[i].getAttribute("data-акт"), секции[i]);

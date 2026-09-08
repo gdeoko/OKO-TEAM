@@ -41,6 +41,7 @@
      же сцена решает, показывать ли ворота ангара, и второго источника
      правды заводить нельзя. */
   function игра(открыть) {
+    if (открыть && (!g.RV_WORLD || !g.RV_WORLD["готов"]() || g.RV_WORLD["тихо"]())) return false;
     var гн = гнездо();
     if (!гн) return false;
     гн.hidden = !открыть;
@@ -53,6 +54,9 @@
         var пуск = d.getElementById("rvИграКн");
         if (пуск && пуск.focus) пуск.focus({ preventScroll: true });
       } catch (e) {}
+    } else {
+      var launch = d.querySelector("[data-к-игре]");
+      if (launch && launch.focus) launch.focus({ preventScroll: true });
     }
     return true;
   }
@@ -63,7 +67,7 @@
      доехать плавно. */
   function вНачало() {
     try {
-      g.scrollTo({ top: 0, behavior: "smooth" });
+      g.scrollTo({ top: 0, behavior: g.matchMedia && g.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
     } catch (e) {
       g.scrollTo(0, 0);
     }

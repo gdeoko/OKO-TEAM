@@ -323,6 +323,12 @@
     });
 
     d.addEventListener("keydown", function (е) {
+      if (е.key === "Tab") {
+        var modal = d.documentElement.classList.contains("rv-форма-открыта") ? форма :
+          (d.documentElement.classList.contains("rv-меню-открыто") ? панель : null);
+        if (modal) удержатьФокус(е, modal);
+        return;
+      }
       if (е.key !== "Escape") return;
       if (d.documentElement.classList.contains("rv-форма-открыта")) { формаЗакрыть(); return; }
       if (d.documentElement.classList.contains("rv-меню-открыто")) закрыть();
@@ -332,6 +338,19 @@
 
   var менюТаймер = 0, менюКадр = 0;
   var формаТаймер = 0, формаКадр = 0;
+
+  function удержатьФокус(event, modal) {
+    var nodes = Array.prototype.filter.call(modal.querySelectorAll(
+      'a[href], button, input, textarea, select, [tabindex]:not([tabindex="-1"])'), function (node) {
+      return !node.disabled && node.tabIndex !== -1 && node.getClientRects().length > 0;
+    });
+    if (!nodes.length) return;
+    var first = nodes[0], last = nodes[nodes.length - 1], active = d.activeElement;
+    if (event.shiftKey ? active === first || !modal.contains(active) : active === last || !modal.contains(active)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+  }
 
   function открыть() {
     clearTimeout(менюТаймер); менюТаймер = 0;
@@ -480,6 +499,7 @@
 
   function формаОткрыть() {
     if (!форма) формаСобрать();
+    if (!d.documentElement.classList.contains("rv-форма-открыта")) форма.rvReturnFocus = d.activeElement;
     clearTimeout(формаТаймер); формаТаймер = 0;
     if (формаКадр) g.cancelAnimationFrame(формаКадр);
     форма.hidden = false;
@@ -497,6 +517,7 @@
     clearTimeout(формаТаймер);
     d.documentElement.classList.remove("rv-форма-открыта");
     формаТаймер = setTimeout(function () { формаТаймер = 0; форма.hidden = true; }, 260);
+    if (форма.rvReturnFocus && форма.rvReturnFocus.focus) форма.rvReturnFocus.focus({ preventScroll: true });
   }
 
   /* Строка беды ищется ВНУТРИ своей формы. Раньше она бралась по общему
@@ -513,33 +534,49 @@
   function формаСлать(е) {
     е.preventDefault();
     var ф = е.target;
+    var кн = ф.querySelector(".rv-форма-слать");
+    if (!кн || кн.disabled) return;
     var имя = ф.name.value.trim();
     var связь = ф.contact.value.trim();
     if (!имя) { беда(ф, "Скажите, как к вам обращаться."); ф.name.focus(); return; }
     if (!связь) { беда(ф, "Нужен способ связи: почта, телефон или ник."); ф.contact.focus(); return; }
     if (!ф.consent.checked) { беда(ф, "Без согласия на обработку мы не сможем ответить."); ф.consent.focus(); return; }
     беда(ф, "");
-    var кн = ф.querySelector(".rv-форма-слать");
     кн.disabled = true;
     кн.textContent = "Отправляем…";
-    fetch(API + "?action=lead", {
+    var controller = g.AbortController ? new g.AbortController() : null;
+    var timeout;
+    var request = fetch(API + "?action=lead", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "omit",
+      signal: controller ? controller.signal : undefined,
       body: JSON.stringify({
         site: "vpn", name: имя, contact: связь,
         task: ф.task.value.trim(), website: ф.website.value,
         consent: 1, page: location.pathname
       })
-    }).then(function (о) { return о.json(); }).then(function (о) {
+    }).then(function (о) {
+      return о.json().then(function (data) { if (!о.ok) throw new Error("http"); return data; });
+    });
+    var deadline = new Promise(function (_resolve, reject) {
+      timeout = setTimeout(function () {
+        if (controller) controller.abort();
+        reject(new Error("timeout"));
+      }, 15000);
+    });
+    Promise.race([request, deadline]).then(function (о) {
+      clearTimeout(timeout);
       if (о && о.ok) {
         /* Кнопка «Закрыть» имеет смысл только у окна. В подвале закрывать
            нечего: форма стоит в ленте, и кнопка вела бы в никуда. */
         var вокне = !!ф.closest(".rv-форма");
-        ф.innerHTML = '<h2 class="rv-форма-заг">Приняли</h2>' +
+        ф.innerHTML = '<h2 class="rv-форма-заг" role="status" tabindex="-1">Приняли</h2>' +
           '<p class="rv-форма-под">Ответим на указанный контакт. Спасибо, что написали.</p>' +
           (вокне ? '<button class="rv-кн rv-кн-гл" type="button" id="rvФормаГотово">Закрыть</button>' : "");
         if (вокне) d.getElementById("rvФормаГотово").addEventListener("click", формаЗакрыть);
+        var result = ф.querySelector(".rv-форма-заг");
+        if (result) result.focus({ preventScroll: true });
         try { if (g.RV_СЧЁТ) g.RV_СЧЁТ["событие"]("заявка", вокне ? "меню" : "подвал"); } catch (e) {}
         return;
       }
@@ -548,8 +585,9 @@
          : о && о.error === "too_many" ? "Слишком много обращений подряд. Попробуйте позже."
          : "Не отправилось. Попробуйте ещё раз или напишите в поддержку.");
     }).catch(function () {
+      clearTimeout(timeout);
       кн.disabled = false; кн.textContent = "Отправить";
-      беда(ф, "Сеть не ответила. Попробуйте ещё раз или напишите в поддержку.");
+      беда(ф, "Подтверждение не получено. Проверьте соединение или напишите в поддержку. Текст обращения сохранён в форме.");
     });
   }
 

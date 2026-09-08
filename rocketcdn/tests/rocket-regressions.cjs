@@ -31,6 +31,12 @@ function motion(y=0){const f=fixture();f.c.scrollY=y;f.acts=Array.from({length:4
 }));f.c.document.querySelectorAll=()=>f.acts;load('rocketvpn/assets/rv-motion.js',f.c);f.time.tick();return f;}
 test('VPN reload starts at restored scroll position',()=>{const f=motion(4400);assert.equal(f.c.RV_MOTION.доля('1'),.5);});
 test('VPN resize preserves the act and its progress',()=>{const f=motion(4400);f.c.innerHeight=650;f.emit('resize');f.time.tick();assert.ok(Math.abs(f.c.RV_MOTION.доля('1')-.5)<.001);f.time.all();assert.ok(Math.abs(f.c.RV_MOTION.доля('1')-.5)<.001);});
+test('VPN resize preserves progress in sections with fixed or minimum heights',()=>{
+ const f=fixture();f.c.scrollY=1000;const section={getBoundingClientRect(){return {top:-f.c.scrollY,bottom:2800-f.c.scrollY,height:2800};},getAttribute:()=> 'final',setAttribute:()=>{},style:{setProperty:()=>{}}};
+ f.c.document.querySelectorAll=()=>[section];load('rocketvpn/assets/rv-motion.js',f.c);f.time.all();assert.equal(f.c.RV_MOTION.доля('final'),.5);
+ f.c.innerHeight=600;f.emit('resize');f.time.all();assert.equal(f.c.RV_MOTION.доля('final'),.5);assert.equal(f.c.scrollY,1100);
+ f.c.innerHeight=900;f.emit('resize');f.time.all();assert.equal(f.c.RV_MOTION.доля('final'),.5);assert.equal(f.c.scrollY,950);
+});
 test('VPN camera and act share a coordinate during large forward/reverse scrolls',()=>{const f=motion();for(const y of [7500,1800]){f.c.scrollY=y;f.emit('scroll');for(let i=0;i<15;i++){f.time.tick();const p=f.c.RV_MOTION.позиция();for(let j=0;j<4;j++)assert.ok(Math.abs(f.c.RV_MOTION.доля(String(j))-Math.max(0,Math.min(1,(p-j*3200)/2400)))<1e-9);}f.time.all();assert.equal(f.c.RV_MOTION.позиция(),y);}});
 const settle = async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 function analytics(){const f=fixture();f.sent=[];f.respond=()=>Promise.resolve({ok:true,json:async()=>({ok:true})});f.c.fetch=(url,o)=>{f.sent.push(JSON.parse(o.body));return f.respond();};load('rocketvpn/assets/rv-track.js',f.c);return f;}
@@ -71,6 +77,66 @@ test('Cabin assembly settles onto real transformed surfaces and reverses without
  assembly.update(1,900);assert.equal(wall.material.opacity,1);assert.equal(wall.material.transparent,false);assert.equal(assembly.field.visible,false);
  assembly.update(.5,900);assert.equal(wall.material.transparent,true);assert.equal(shared.transparent,false);assert.equal(shared.opacity,1);
  assembly.dispose();assert.equal(assembly.field.parent,null);
+ assert.equal(wall.material,shared);assert.equal(wall.visible,true);
+});
+test('Assembly excludes hidden branches and unused draw ranges, and disposes owned resources once',()=>{
+ const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);load('rocketvpn/assets/rv-assembly.js',f.c);const T=f.c.THREE;
+ const parent=new T.Group(),room=new T.Group(),hidden=new T.Group();parent.add(room);room.add(hidden);hidden.visible=false;
+ const shared=new T.MeshStandardMaterial();const ghost=new T.Mesh(new T.BoxGeometry(500,500,500),shared);hidden.add(ghost);
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute([0,0,0,1,0,0,0,1,0,100,100,100,101,100,100,100,101,100],3));geo.setDrawRange(0,3);
+ const visible=new T.Mesh(geo,shared);room.add(visible);const a=f.c.RV_ASSEMBLY.build(T,room,parent,{tier:0});
+ const p=a.field.geometry.attributes.position;for(let i=0;i<p.count;i++){assert.equal(p.getZ(i),0);assert.ok(p.getX(i)>=0&&p.getY(i)>=0&&p.getX(i)+p.getY(i)<=1.00001);}
+ assert.equal(ghost.material,shared);let count=0;[visible.material,a.field.material,a.field.geometry].forEach(x=>x.addEventListener('dispose',()=>count++));
+ a.update(.5);a.dispose();a.dispose();a.update(0);assert.equal(count,3);assert.equal(visible.material,shared);assert.equal(visible.visible,true);assert.equal(hidden.visible,false);
+});
+test('VPN rendering respects pixel and texture limits while keeping phone detail',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-world.js');Object.assign(f.c,{g:f.c,W:{ступень:2,плотность:2.6,r:{capabilities:{maxTextureSize:8192}}},мсш:{знач:1}});
+ vm.runInContext(between(s,'  function плотностьСейчас()','  /*'),f.c);
+ for(const [width,height] of [[3840,2160],[7680,4320],[16000,9000]]){f.c.innerWidth=width;f.c.innerHeight=height;const p=f.c.плотностьСейчас();assert.ok(width*height*p*p<=8300000.001);assert.ok(Math.max(width,height)*p<=8192);f.c.мсш.знач=.6;assert.ok(Math.abs(f.c.плотностьСейчас()/p-.6)<1e-9);f.c.мсш.знач=1;}
+ f.c.innerWidth=390;f.c.innerHeight=844;assert.equal(f.c.плотностьСейчас(),2.6);
+});
+test('VPN adaptive rendering reduces sustained overload and can recover on a 60 Hz screen',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-world.js');Object.assign(f.c,{W:{r:{}},мсш:{знач:1,сумма:0,счёт:0,окно:0,старт:0,развороты:0},зажать:(v,a,b)=>Math.max(a,Math.min(b,v)),применитьПлотность:()=>{}});
+ vm.runInContext(between(s,'  function подобратьПлотность(','  var ждём ='),f.c);let ts=1;
+ for(let i=0;i<720;i++){ts+=1000/24;f.c.подобратьПлотность(1/24,ts);}assert.equal(f.c.мсш.знач,.6);
+ for(let i=0;i<2400;i++){ts+=1000/60;f.c.подобратьПлотность(1/60,ts);}assert.ok(f.c.мсш.знач>=.95);assert.notEqual(f.c.мсш.стоп,true);
+});
+test('VPN graphics failure exposes the full document and stops the render state',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-world.js');let hidden=0,reflow=0;Object.assign(f.c,{g:f.c,d:f.c.document,W:{готов:true},RV_ФИНАЛ:{видно:()=>hidden++},RV_MOTION:{обновить:()=>reflow++}});
+ const c=f.c.document.documentElement.classList;['рв-слова-в-сцене','рв-финал-пульт','рв-кабина-есть','рв-живая-рубка'].forEach(x=>c.add(x));
+ vm.runInContext(between(s,'  function запаснойРежим()','  function поднять()'),f.c);f.c.запаснойРежим();assert.equal(f.c.W.готов,false);assert.equal(c.contains('rv-no-webgl'),true);assert.equal(c.contains('рв-слова-в-сцене'),false);assert.equal(hidden,1);assert.equal(reflow,1);
+});
+test('A late font atlas cannot hide readable text after graphics failure',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-слово3d.js');let done;Object.assign(f.c,{g:f.c,d:f.c.document,W:{готов:false},RV_MSDF:{готов:fn=>done=fn},собрать:()=>assert.fail('No retired 3D text build')});
+ const begin=s.indexOf('    g.RV_MSDF["готов"](function () {'),end=s.indexOf('\n    });',begin)+7;vm.runInContext(s.slice(begin,end),f.c);
+ f.c.document.documentElement.classList.add('rv-no-webgl');done();assert.equal(f.c.document.documentElement.classList.contains('рв-слова-в-сцене'),false);
+});
+test('Final game preserves navigation without WebGL and returns keyboard focus after closing',()=>{
+ const f=fixture(),nest={hidden:true},faq={hidden:false};let focus=0;
+ f.c.document.getElementById=id=>id==='rvИграГнездо'?nest:null;f.c.document.querySelector=s=>s==='[data-к-игре]'?{focus:()=>focus++}:faq;
+ f.c.RV_WORLD={готов:()=>false,тихо:()=>false};load('rocketvpn/assets/rv-панель-кнопки.js',f.c);assert.equal(f.c.RV_ПАНЕЛЬ_КНОПКИ.игра(true),false);assert.equal(nest.hidden,true);
+ f.c.RV_WORLD.готов=()=>true;assert.equal(f.c.RV_ПАНЕЛЬ_КНОПКИ.игра(true),true);assert.equal(faq.hidden,true);f.c.RV_ПАНЕЛЬ_КНОПКИ.игра(false);assert.equal(faq.hidden,false);assert.equal(focus,1);
+});
+test('Modal Tab navigation wraps in both directions and skips disabled controls',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-меню.js');Object.assign(f.c,{d:f.c.document});let selected='';
+ const make=(name,disabled=false)=>({disabled,tabIndex:0,getClientRects:()=>[1],focus:()=>selected=name});const first=make('first'),disabled=make('disabled',true),last=make('last');
+ const modal={querySelectorAll:()=>[first,disabled,last],contains:x=>[first,disabled,last].includes(x)};vm.runInContext(between(s,'  function удержатьФокус(','  function открыть()'),f.c);
+ let prevented=0;f.c.document.activeElement=last;f.c.удержатьФокус({shiftKey:false,preventDefault:()=>prevented++},modal);assert.equal(selected,'first');
+ f.c.document.activeElement=first;f.c.удержатьФокус({shiftKey:true,preventDefault:()=>prevented++},modal);assert.equal(selected,'last');assert.equal(prevented,2);
+});
+function formRequest(){
+ const f=fixture(),s=read('rocketvpn/assets/rv-меню.js');Object.assign(f.c,{g:f.c,d:f.c.document,API:'/api',location:{pathname:'/'}});let requests=0,message='';
+ const button={disabled:false,textContent:'Отправить'},input=value=>({value,focus:()=>{}}),form={name:input('Test'),contact:input('test@example.invalid'),task:input('Keep this text'),website:input(''),consent:{checked:true},querySelector:()=>button,closest:()=>null};
+ f.c.беда=(_f,m)=>message=m;f.c.fetch=()=>{requests++;return new Promise(r=>f.resolve=r);};vm.runInContext(between(s,'  function формаСлать(','  function старт()'),f.c);
+ return Object.assign(f,{form,button,event:{preventDefault:()=>{},target:form},requests:()=>requests,message:()=>message});
+}
+test('Form blocks repeated submit, releases a timed-out request and preserves typed text',async()=>{
+ const f=formRequest();f.c.формаСлать(f.event);f.c.формаСлать(f.event);assert.equal(f.requests(),1);assert.equal(f.button.disabled,true);
+ f.time.tick(15001);await settle();assert.equal(f.button.disabled,false);assert.match(f.message(),/Подтверждение не получено/);assert.equal(f.form.task.value,'Keep this text');
+ f.resolve({ok:true,json:async()=>({ok:true})});await settle();assert.equal(f.form.innerHTML,undefined);
+});
+test('Form cannot claim success from a failed HTTP response',async()=>{
+ const f=formRequest();f.c.формаСлать(f.event);f.resolve({ok:false,json:async()=>({ok:true})});await settle();assert.equal(f.form.innerHTML,undefined);assert.equal(f.button.disabled,false);
 });
 test('Manual thrust moves the ship outside the home spline and respects planetary clearance',()=>{
  const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);const T=f.c.THREE,s=read('rocketcdn/assets/rc-flight.js');vm.runInContext(between(s,'function advanceAway(','function frame(ts)'),f.c);

@@ -8,13 +8,16 @@
     room.updateWorldMatrix(true, true);
     parent.updateWorldMatrix(true, false);
     var inverse = new T.Matrix4().copy(parent.matrixWorld).invert();
-    var meshes = [], triangles = [], total = 0;
+    var meshes = [], triangles = [], total = 0, disposed = false;
     var a = new T.Vector3(), b = new T.Vector3(), c = new T.Vector3();
     var ab = new T.Vector3(), ac = new T.Vector3();
     var seed = 71831;
     function random() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
     room.traverse(function (object) {
       if (!object.isMesh || !object.geometry || Array.isArray(object.material) || !object.visible) return;
+      for (var ancestor = object.parent; ancestor && ancestor !== room; ancestor = ancestor.parent) {
+        if (!ancestor.visible) return;
+      }
       var material = object.material;
       if (!material || material.transparent || object.isInstancedMesh) return;
       var attr = object.geometry.getAttribute("position");
@@ -22,15 +25,17 @@
       var matrix = new T.Matrix4().multiplyMatrices(inverse, object.matrixWorld);
       var index = object.geometry.index, count = index ? index.count : attr.count;
       var first = triangles.length;
+      var range = object.geometry.drawRange;
+      var start = Math.max(0, range.start), end = Math.min(count, start + range.count);
       // Surface-area sampling avoids oversized triangles getting too few grains.
-      for (var i = 0; i + 2 < count; i += 3) {
+      for (var i = start; i + 2 < end; i += 3) {
         a.fromBufferAttribute(attr, index ? index.getX(i) : i).applyMatrix4(matrix);
         b.fromBufferAttribute(attr, index ? index.getX(i + 1) : i + 1).applyMatrix4(matrix);
         c.fromBufferAttribute(attr, index ? index.getX(i + 2) : i + 2).applyMatrix4(matrix);
         var area = ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() * 0.5;
         if (!(area > 0.000001)) continue;
         total += area;
-        triangles.push({ a: a.clone(), b: b.clone(), c: c.clone(), end: total });
+        triangles.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, total);
       }
       if (triangles.length === first) return;
       var own = material.clone();
@@ -40,17 +45,19 @@
       own.transparent = true;
       own.depthWrite = false;
       object.material = own;
-      meshes.push({ object: object, material: own, opacity: material.opacity,
-        depthWrite: material.depthWrite, position: object.position.clone(), scale: object.scale.clone() });
+      meshes.push({ object: object, material: own, original: material, visible: object.visible,
+        opacity: material.opacity, depthWrite: material.depthWrite });
     });
     if (!triangles.length) return null;
     var count = options.tier === 0 ? 6000 : (options.tier === 1 ? 14000 : 22000);
     var positions = new Float32Array(count * 3), origins = new Float32Array(count * 3), phases = new Float32Array(count);
     for (var n = 0; n < count; n++) {
-      var pick = random() * total, low = 0, high = triangles.length - 1;
-      while (low < high) { var mid = (low + high) >> 1; if (triangles[mid].end < pick) low = mid + 1; else high = mid; }
-      var tri = triangles[low], u = Math.sqrt(random()), v = random();
-      a.copy(tri.a).multiplyScalar(1 - u).addScaledVector(tri.b, u * (1 - v)).addScaledVector(tri.c, u * v);
+      var pick = random() * total, low = 0, high = triangles.length / 10 - 1;
+      while (low < high) { var mid = (low + high) >> 1; if (triangles[mid * 10 + 9] < pick) low = mid + 1; else high = mid; }
+      var at = low * 10, u = Math.sqrt(random()), v = random();
+      a.fromArray(triangles, at).multiplyScalar(1 - u)
+        .addScaledVector(b.fromArray(triangles, at + 3), u * (1 - v))
+        .addScaledVector(c.fromArray(triangles, at + 6), u * v);
       a.toArray(positions, n * 3);
       var theta = random() * Math.PI * 2, radius = 1.6 + random() * 3.5;
       origins[n * 3] = Math.cos(theta) * radius;
@@ -75,6 +82,7 @@
     return {
       field: field, count: count,
       update: function (progress, pixels) {
+        if (disposed) return;
         var p = Math.max(0, Math.min(1, progress));
         uniforms.progress.value = p;
         uniforms.pixels.value = pixels || 900;
@@ -93,7 +101,17 @@
         });
         settled = complete;
       },
-      dispose: function () { parent.remove(field); geometry.dispose(); material.dispose(); }
+      dispose: function () {
+        if (disposed) return;
+        disposed = true;
+        parent.remove(field); geometry.dispose(); material.dispose();
+        meshes.forEach(function (entry) {
+          if (entry.object.material === entry.material) entry.object.material = entry.original;
+          entry.object.visible = entry.visible;
+          entry.material.dispose();
+        });
+        meshes.length = 0;
+      }
     };
   }
   g.RV_ASSEMBLY = { build: build, smooth: smooth };
