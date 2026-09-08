@@ -313,3 +313,53 @@ function auth_ensure_account(string $email, string $name = ''): int {
     }
     return $uid;
 }
+
+/* ================== ВХОД ПО ССЫЛКЕ ИЗ ПИСЬМА ==================
+ *
+ * Зачем. Участнику центра в среднем сильно за сорок, заявку он подаёт раз в
+ * месяц и пароль к тому времени не помнит. Дальше начинается круг: «Забыли
+ * пароль» → письмо с кодом → письмо не дошло (почтовая служба положила в спам)
+ * → человек пробует ещё раз → и так, пока не позвонит и не скажет «мне ничего
+ * не приходит, я не могу забрать свои дипломы». Именно так вышло у участницы с
+ * ящиком на mail.ru: за четыре минуты три запроса кода и один сброс пароля, и
+ * ни одного дошедшего письма.
+ *
+ * Ссылка входа снимает из этой цепочки самое хрупкое звено — ввод. Человек
+ * нажимает кнопку в письме и оказывается в своём кабинете; пароль он может
+ * задать потом, а может не задавать вовсе.
+ *
+ * Безопасность. Ссылка живёт ограниченный срок и привязана к одному кабинету.
+ * Тот, кто читает почту участника, и без неё войдёт через «Забыли пароль» —
+ * доступ к ящику и так означает доступ к кабинету, ссылка ничего нового не
+ * открывает. Одноразовой её намеренно не делаем: письмо открывают и на
+ * телефоне, и на компьютере, а сгоревшая со второго раза ссылка вернула бы
+ * человека ровно туда, откуда мы его вытаскиваем.
+ */
+function auth_login_token_migrate(): void {
+    foreach (['login_token' => 'TEXT', 'login_expires' => 'TEXT'] as $col => $type) {
+        try { db()->exec("ALTER TABLE users ADD COLUMN $col $type"); } catch (\Throwable $e) {}
+    }
+}
+
+/** Выдаёт ссылку входа для кабинета. Прежняя ссылка при этом перестаёт работать. */
+function auth_login_link(int $userId, int $days = 30): string {
+    auth_login_token_migrate();
+    $token = bin2hex(random_bytes(24));
+    update('users', [
+        'login_token'   => $token,
+        'login_expires' => date('Y-m-d H:i:s', time() + max(1, $days) * 86400),
+    ], 'id=:id', ['id' => $userId]);
+    return rtrim((string) cfgv('base_url', ''), '/') . '/enter?t=' . $token;
+}
+
+/** Кабинет по действующей ссылке входа или null. */
+function auth_by_login_token(string $token): ?array {
+    $token = trim($token);
+    if ($token === '' || !preg_match('~^[a-f0-9]{20,64}$~', $token)) return null;
+    auth_login_token_migrate();
+    return one("SELECT * FROM users
+                 WHERE login_token = ? AND COALESCE(login_token,'') <> ''
+                   AND COALESCE(login_expires,'') <> ''
+                   AND login_expires > datetime('now','localtime')
+                   AND COALESCE(blocked,0) = 0", [$token]);
+}

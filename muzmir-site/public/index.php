@@ -408,6 +408,28 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.(pdf|jpg|png)$#', $route, $m)) {
     readfile($file);
     exit;
 }
+/* ВХОД ПО ССЫЛКЕ ИЗ ПИСЬМА: /enter?t=<токен>
+ *
+ * Человек нажимает кнопку в письме и оказывается в своём кабинете — без пароля
+ * и без кода, которые до него могут просто не дойти. Разбор и сроки — в
+ * core/auth.php::auth_login_link(). */
+if ($route === '/enter') {
+    require_once BASE_PATH . '/core/auth.php';
+    $u = auth_by_login_token((string) ($_GET['t'] ?? ''));
+    if (!$u) {
+        flash('Ссылка входа устарела. Запросите новую или войдите по паролю.', 'error');
+        redirect('/login');
+    }
+    login_user((int) $u['id']);
+    if (function_exists('audit')) audit('login_by_link', 'user', (int) $u['id']);
+    // Почта подтверждена самим фактом перехода: письмо дошло и его открыли.
+    if ((int) ($u['email_verified'] ?? 0) !== 1) {
+        update('users', ['email_verified' => 1], 'id=:id', ['id' => (int) $u['id']]);
+    }
+    flash('Вы вошли в личный кабинет.', 'success');
+    redirect('/cabinet');
+}
+
 // Визуальный просмотр диплома (реальный HTML-шаблон, для реестра и кабинета).
 if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);

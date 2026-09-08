@@ -37,6 +37,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         admin_redirect('users', ['tab'=>'users']);
     }
 
+    /* ССЫЛКА ВХОДА НА ПОЧТУ.
+     *
+     * Половина обращений в поддержку — «не могу войти, ничего не приходит».
+     * Круг всегда один: человек не помнит пароль, просит код, код теряется в
+     * спам-папке почтовой службы, он просит ещё раз. Кнопка разрывает круг:
+     * участнику уходит письмо, где вход — одно нажатие, без пароля и кода. */
+    if ($do === 'login_link') {
+        $uid = (int) input('uid');
+        $u = one("SELECT id, email, full_name FROM users WHERE id=? AND COALESCE(blocked,0)=0", [$uid]);
+        $to = trim((string) ($u['email'] ?? ''));
+        if (!$u || $to === '') {
+            flash('Кабинет не найден или закрыт — ссылку выслать некому.', 'error');
+        } else {
+            require_once BASE_PATH . '/core/auth.php';
+            require_once BASE_PATH . '/core/mailer.php';
+            $link = auth_login_link($uid, 30);
+            $inner = '<h1 style="font-size:22px;margin:0 0 14px;color:#17307A;">Вход в личный кабинет</h1>'
+                . '<p style="margin:0 0 14px;font-size:15px;line-height:1.6;">Здравствуйте! Нажмите кнопку — и Вы окажетесь '
+                . 'в своём кабинете сразу, без пароля и без кода.</p>'
+                . '<p style="text-align:center;margin:22px 0;"><a href="' . h($link) . '" style="display:inline-block;'
+                . 'background:#17307A;color:#fff;text-decoration:none;padding:14px 30px;border-radius:10px;'
+                . 'font-weight:700;font-size:16px;">Войти в личный кабинет</a></p>'
+                . '<p style="margin:0 0 6px;font-size:14px;color:#6C6A63;">Ссылка действует 30 дней и открывает только Ваш кабинет.</p>'
+                . '<p style="margin:0;font-size:14px;line-height:1.6;">Ваш логин: <b>' . h($to) . '</b>. '
+                . 'Пароль можно задать в кабинете, но для входа он не нужен.</p>';
+            $ok = mail_send($to, 'Вход в личный кабинет — Культурный центр «Музыкальный Мир»',
+                            mm_email_layout($inner, ['title' => 'Вход в личный кабинет']), ['pool' => 'tx']);
+            audit('login_link_sent', 'user', $uid, ['ok' => $ok, 'email' => $to]);
+            flash($ok ? ('Ссылка входа отправлена на ' . $to . '.')
+                      : ('Письмо не ушло: ' . (function_exists('mail_last_error') ? mail_last_error() : 'почта недоступна')),
+                  $ok ? 'success' : 'error');
+        }
+        admin_redirect('users', ['id' => $uid]);
+    }
+
     if ($do === 'block_user' || $do === 'unblock_user') {
         $uid = (int) input('uid');
         $target = one("SELECT role FROM users WHERE id=?", [$uid]);
@@ -376,6 +411,14 @@ if (input('action') === 'profile') {
           <div class="field"><label>Роль</label><select name="role"><?php foreach (['user'=>'Участник','jury'=>'Жюри','moderator'=>'Модератор','admin'=>'Админ'] as $rv=>$rl): ?><option value="<?= $rv ?>" <?= $pu['role']===$rv?'selected':'' ?>><?= $rl ?></option><?php endforeach; ?></select></div>
           <?php else: ?><input type="hidden" name="role" value="<?= h((string)$pu['role']) ?>"><?php endif; ?>
           <button class="btn btn--primary btn--sm" type="submit"><?= admin_icon('check') ?>Сохранить</button>
+        </form>
+        <?php /* Человек не помнит пароль, а код входа теряется в спам-папке —
+                 высылаем ссылку, по которой вход в одно нажатие. */ ?>
+        <form method="post" action="<?= url('/admin/') ?>" style="margin-top:12px">
+          <?= csrf_field() ?><input type="hidden" name="do" value="login_link"><input type="hidden" name="uid" value="<?= $puid ?>">
+          <button class="btn btn--navy btn--sm" onclick="return confirm('Выслать участнику ссылку для входа без пароля?')">
+            <?= admin_icon('mail') ?? '' ?>Выслать ссылку входа
+          </button>
         </form>
         <details style="margin-top:12px"><summary class="btn btn--ghost btn--sm">Сменить пароль</summary>
           <form method="post" action="<?= url('/admin/') ?>" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
