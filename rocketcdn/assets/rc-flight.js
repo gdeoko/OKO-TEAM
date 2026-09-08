@@ -3420,7 +3420,7 @@ function assembleWorld() {
      разметки и от плотности кадра не зависит, а космос полутора
      точек не замечает. Подъезд к пульту в салоне поднимет её до
      двойки сам - там пульт рисуется внутри кадра. */
-  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, tiny ? 1.0 : (mob ? 1.35 : 1.8)));
+  r.setPixelRatio(renderRatio(tiny ? 1.0 : (mob ? 1.35 : 1.8), r));
   r.setClearColor(0x02050c, 1);
   этап("слой WebGL");
 
@@ -6258,6 +6258,7 @@ function bindControls() {
        вычитало ход. Корабль дёргался назад на «прибавить», а полоска
        показывала обратное тому, что он делает. */
     var где = e.target && e.target.closest ? e.target : null;
+    if (где && где.closest(".rc-tour-reader")) return;
     /* Пробел принадлежит тому, что в фокусе: на кнопке он её нажимает.
        Раньше пробел на клавише СТОП не нажимал её, а прибавлял ход -
        человек жал «остановиться», и корабль разгонялся. */
@@ -6426,9 +6427,17 @@ function hideHint() {
    вызовом. Поле зрения и геометрия пульта не трогаются нарочно:
    они от плотности не зависят, а пересобирать их на каждой ступени
    регулятора значило бы платить за плавность рывками. */
+function renderRatio(requested, renderer) {
+  var width = Math.max(1, innerWidth), height = Math.max(1, innerHeight);
+  var textureLimit = renderer && renderer.capabilities && renderer.capabilities.maxTextureSize || 4096;
+  var pixelBudget = tiny ? 2400000 : 5500000;
+  return Math.min(Math.max(0.1, requested || 1), g.devicePixelRatio || 1,
+    Math.sqrt(pixelBudget / (width * height)), textureLimit / width, textureLimit / height);
+}
+
 function плотность(v) {
   if (!W3 || !W3.r) return;
-  var нов = Math.max(0.5, Math.min(4, v || 1));
+  var нов = renderRatio(v, W3.r);
   if (Math.abs(W3.r.getPixelRatio() - нов) < 0.005) return;
   W3.r.setPixelRatio(нов);
   W3.r.setSize(innerWidth, innerHeight, false);
@@ -6438,6 +6447,7 @@ function плотность(v) {
 function size() {
   if (!W3 || !F.open) return;
   deckSkinSoon();
+  stageLite(!!F.stage);
   var w = innerWidth, h = innerHeight;
   W3.r.setSize(w, h, false);
   if (W3.post) { try { W3.post.setSize(w, h); } catch (e) {} }
@@ -7908,8 +7918,7 @@ function advanceAway(w3, state, pack, dt, T) {
     if (!w3.manualForward) w3.manualForward = new T.Vector3();
     w3.cam.getWorldDirection(w3.manualForward);
     var travel = state.v * 1800 * dt;
-    w3.cam.position.addScaledVector(w3.manualForward, travel);
-    state.warpV = Math.abs(travel) / Math.max(dt, .001);
+    var allowed = Math.abs(travel), sign = travel < 0 ? -1 : 1, collided = false;
     var activePack = pack;
     if (activePack && activePack.root) {
       var bodies = activePack["тур"] || [];
@@ -7918,17 +7927,31 @@ function advanceAway(w3, state, pack, dt, T) {
         body["узел"].getWorldPosition(w3.tmpB);
         w3.tmpA.copy(w3.cam.position).sub(w3.tmpB);
         var distance = w3.tmpA.length();
-        if (distance >= safe) continue;
-        if (distance < .001) w3.tmpA.copy(w3.manualForward).negate(); else w3.tmpA.multiplyScalar(1 / distance);
-        w3.cam.position.copy(w3.tmpB).addScaledVector(w3.tmpA, safe);
-        state.v *= Math.max(0, 1 - dt * 8);
+        if (distance < safe) {
+          if (distance < .001) w3.tmpA.copy(w3.manualForward).multiplyScalar(-sign);
+          else w3.tmpA.multiplyScalar(1 / distance);
+          w3.cam.position.copy(w3.tmpB).addScaledVector(w3.tmpA, safe + .001);
+          w3.tmpA.copy(w3.cam.position).sub(w3.tmpB);
+          collided = true;
+        }
+        // Sweep the entire step. Endpoint-only checks miss short chords.
+        var b = w3.tmpA.dot(w3.manualForward) * sign;
+        var c = w3.tmpA.lengthSq() - safe * safe, disc = b * b - c;
+        if (b < 0 && disc >= 0) {
+          var entry = -b - Math.sqrt(disc);
+          if (entry <= allowed) { allowed = Math.max(0, entry - .001); collided = true; }
+        }
       }
     }
+    w3.cam.position.addScaledVector(w3.manualForward, sign * allowed);
+    state.warpV = allowed / Math.max(dt, .001);
+    if (collided) state.v *= Math.max(0, 1 - dt * 8);
 }
 
 function frame(ts) {
   if (!F.open) return;
   F.raf = requestAnimationFrame(frame);
+  if (doc.hidden) { F.last = 0; F._stageT = 0; frame._окно = []; return; }
   /* В режиме сцены кадр стоит: камера едет только за прокруткой, и
      тридцати кадров хватает с запасом. Полные шестьдесят жгли
      телефон ровно там, где человек читает вопросы. */
@@ -12102,8 +12125,7 @@ function stageLite(on) {
        ни при какой скорости - это граница, за которой резкость уже
        ничего не добавляет, а заливка растёт. */
     var oldCap = W3["потолокПл"] || 0;
-    var pixelBudget = tiny ? 2400000 : 5500000;
-    W3["потолокПл"] = Math.max(0.85, Math.min(dpr, cap, Math.sqrt(pixelBudget / Math.max(1, innerWidth * innerHeight))));
+    W3["потолокПл"] = renderRatio(Math.max(0.85, cap), W3.r);
     var currentRatio = W3.r.getPixelRatio();
     if (!oldCap || currentRatio > W3["потолокПл"] || oldCap < W3["потолокПл"])
       плотность(W3["потолокПл"]);

@@ -4,7 +4,7 @@ Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
 Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Publication status and acceptance limits are recorded in `RELEASE.md`.
 
-The follow-up VPN source changes are **not yet deployed**. See `VPN_AUDIT_2026-09-08.md` for their scope, completed checks and remaining browser/deployment gates.
+The follow-up VPN, CDN, admin and flight source changes are **not yet deployed**. See `FOLLOWUP_2026-09-08.md` and `VPN_AUDIT_2026-09-08.md`. The prepared r3 overlay uses `deploy/followup.py`; original activation scripts remain specific to r2.
 
 ## Changes
 
@@ -25,7 +25,7 @@ npm ci --prefix rocketcdn/tests --ignore-scripts
 npm test --prefix rocketcdn/tests
 ```
 
-33 JavaScript/geometry checks and 13 isolated API checks pass. Native PHP 8.3 validation on the client for the earlier r2 release covered 12 storage checks, 8 delivery checks, concurrent updates and 3 backup checks; it has not been repeated for the follow-up VPN package. The PHP.wasm suite skips interprocess `flock`. Test senders and test data are isolated.
+43 JavaScript/geometry checks and 13 isolated API checks pass. Native PHP 8.3 validation on the client for the earlier r2 release covered 12 storage checks, 8 delivery checks, concurrent updates and 3 backup checks; it has not been repeated for the follow-up VPN package. The PHP.wasm suite skips interprocess `flock`. Test senders and test data are isolated.
 
 Browser review covers the 17 panel sections, delivery retry, VPN content selection, a real form request against isolated storage, expandable CDN cards, keyboard navigation, and 320px layouts. These checks do **not** certify GPU rendering or real-device FPS: the available browser reports `GL_RENDERER = Disabled`.
 

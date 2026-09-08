@@ -1135,15 +1135,21 @@
     return 3 * о2 * о2 * t * y1 + 3 * о2 * t * t * y2 + t * t * t;
   }
 
+  function закончитьВступление() {
+    var уведомить = !вступВсё;
+    вступВсё = true;
+    заперетьЛенту(false);
+    d.documentElement.classList.remove("рв-вступление");
+    if (уведомить) fire("rv:вступление-конец", {});
+  }
+
   function весВступления(dt) {
     if (вступВсё || !вступл) return 1;
     вступТ += Math.min(0.1, Math.max(0, dt || 0));
     var длина = вступСпешка ? 0.6 : вступл.время;
     var доля = зажать(вступТ / длина, 0, 1);
     if (доля >= 1) {
-      вступВсё = true;
-      try { d.documentElement.classList.remove("рв-вступление"); } catch (e) {}
-      try { fire("rv:вступление-конец", {}); } catch (e) {}
+      закончитьВступление();
       return 1;
     }
     return безье(доля, 0.5, 0, 0.1, 1);
@@ -1205,6 +1211,7 @@
     }
     g.addEventListener("keydown", function (е) {
       if (вступВсё) return;
+      if (е.target && е.target.closest && е.target.closest("input, textarea, select, button, a[href], summary, [contenteditable]")) return;
       var к = е.key;
       if (к === " " || к === "PageDown" || к === "PageUp" ||
           к === "ArrowDown" || к === "ArrowUp" || к === "Home" || к === "End") {
@@ -1243,8 +1250,8 @@
        «вступление не объявилось вовсе»: акт не собрался, мир не
        поднялся, ждать нечего. Полминуты закрывают случай «объявилось,
        но встало»: столько не идёт даже самая медленная посадка. */
-    g.setTimeout(function () { if (!вступл) заперетьЛенту(false); }, 8000);
-    g.setTimeout(function () { if (!вступВсё) заперетьЛенту(false); }, 30000);
+    g.setTimeout(function () { if (!вступл) закончитьВступление(); }, 8000);
+    g.setTimeout(function () { if (!вступВсё) закончитьВступление(); }, 30000);
   })();
 
   /* Место на ленте -> пройденная длина дуги. Внутри отрезка по закону
@@ -2157,11 +2164,14 @@
   /* ── Подъём ───────────────────────────────────────────────────*/
   function запаснойРежим() {
     W.готов = false;
+    закончитьВступление();
     d.documentElement.classList.add("rv-no-webgl");
     ["рв-слова-в-сцене", "рв-финал-пульт", "рв-кабина-есть", "рв-живая-рубка"].forEach(function (name) {
       d.documentElement.classList.remove(name);
     });
     if (g.RV_ФИНАЛ && g.RV_ФИНАЛ["видно"]) g.RV_ФИНАЛ["видно"](false);
+    var игра = d.getElementById("rvИграГнездо");
+    if (игра && !игра.hidden && g.RV_ПАНЕЛЬ_КНОПКИ) g.RV_ПАНЕЛЬ_КНОПКИ["игра"](false);
     if (g.RV_MOTION && g.RV_MOTION["обновить"]) g.RV_MOTION["обновить"]();
   }
 
@@ -2346,6 +2356,7 @@
     ждём = 1;
     g.requestAnimationFrame(function () {
       ждём = 0;
+      if (!W.готов) return;
       применитьПлотность();
       W.cam.aspect = g.innerWidth / g.innerHeight;
       /* Зум ставится до пересчёта матрицы: он часть той же проекции, и

@@ -13,6 +13,15 @@
     var ab = new T.Vector3(), ac = new T.Vector3();
     var seed = 71831;
     function random() { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; }
+    function restoreMeshes() {
+      meshes.forEach(function (entry) {
+        if (entry.object.material === entry.material) entry.object.material = entry.original;
+        entry.object.visible = entry.visible;
+        entry.material.dispose();
+      });
+      meshes.length = 0;
+    }
+    try {
     room.traverse(function (object) {
       if (!object.isMesh || !object.geometry || Array.isArray(object.material) || !object.visible) return;
       for (var ancestor = object.parent; ancestor && ancestor !== room; ancestor = ancestor.parent) {
@@ -105,14 +114,16 @@
         if (disposed) return;
         disposed = true;
         parent.remove(field); geometry.dispose(); material.dispose();
-        meshes.forEach(function (entry) {
-          if (entry.object.material === entry.material) entry.object.material = entry.original;
-          entry.object.visible = entry.visible;
-          entry.material.dispose();
-        });
-        meshes.length = 0;
+        restoreMeshes();
       }
     };
+    } catch (error) {
+      if (field) parent.remove(field);
+      if (geometry) geometry.dispose();
+      if (material) material.dispose();
+      restoreMeshes();
+      throw error;
+    }
   }
   g.RV_ASSEMBLY = { build: build, smooth: smooth };
 })(window);

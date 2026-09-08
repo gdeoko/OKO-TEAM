@@ -1329,9 +1329,15 @@
     var prepare = function () {
       if (!W.готов) return;
       if (!М.сборка && g.RV_ASSEMBLY) {
-        М.сборка = g.RV_ASSEMBLY.build(T, М.салон, М.корень, { tier: ст });
-        if (М.сборка) М.сборка.update(0);
+        try {
+          М.сборка = g.RV_ASSEMBLY.build(T, М.салон, М.корень, { tier: ст });
+          if (М.сборка) М.сборка.update(0);
+        } catch (error) {
+          // The real cabin remains usable if the optional particle field fails.
+          М.сборка = null;
+        }
       }
+      М.целиГотовы = true;
     };
     if (g.requestIdleCallback) g.requestIdleCallback(prepare, { timeout: 1500 });
     else g.setTimeout(prepare, 60);
@@ -1502,7 +1508,7 @@
     /* Салон включаем ровно тогда, когда в щель уже что-то видно.
        Раньше нельзя: обшивка непрозрачная, и зал за ней считался бы
        впустую. */
-    var салонНужен = д > 0.04 && (!g.RV_ASSEMBLY || !!М.сборка);
+    var салонНужен = д > 0.04 && (!g.RV_ASSEMBLY || !!М.целиГотовы);
     if (М.сборка) М.сборка.update(отрезок(д, 0.05, 0.72), W.r && W.r.domElement.height);
     if (М.труба) М.труба.visible = false;
     if (М.салон.visible !== салонНужен) М.салон.visible = салонНужен;

@@ -21,7 +21,7 @@ function fixture() {
  addEventListener:(k,fn)=>(events[k]??=[]).push(fn),removeEventListener:()=>{},
  navigator:{},sessionStorage:{getItem:()=>null,setItem:()=>{}}, location:{pathname:'/'},
  document:{readyState:'complete',referrer:'',documentElement:{clientHeight:800,classList:classes()},
- addEventListener:(k,fn)=>(devents[k]??=[]).push(fn),querySelectorAll:()=>[]}});
+ addEventListener:(k,fn)=>(devents[k]??=[]).push(fn),querySelectorAll:()=>[],getElementById:()=>null}});
  c.window=c;c.scrollTo=(x,y)=>{c.scrollY=typeof x==='object'?x.top:y;};
  return {c,time,emit:(k,e={})=>(events[k]||[]).forEach(f=>f(e)),demit:(k,e={})=>(devents[k]||[]).forEach(f=>f(e))};
 }
@@ -102,9 +102,34 @@ test('VPN adaptive rendering reduces sustained overload and can recover on a 60 
  for(let i=0;i<2400;i++){ts+=1000/60;f.c.подобратьПлотность(1/60,ts);}assert.ok(f.c.мсш.знач>=.95);assert.notEqual(f.c.мсш.стоп,true);
 });
 test('VPN graphics failure exposes the full document and stops the render state',()=>{
- const f=fixture(),s=read('rocketvpn/assets/rv-world.js');let hidden=0,reflow=0;Object.assign(f.c,{g:f.c,d:f.c.document,W:{готов:true},RV_ФИНАЛ:{видно:()=>hidden++},RV_MOTION:{обновить:()=>reflow++}});
+ const f=fixture(),s=read('rocketvpn/assets/rv-world.js');let hidden=0,reflow=0;Object.assign(f.c,{g:f.c,d:f.c.document,W:{готов:true},закончитьВступление:()=>{},RV_ФИНАЛ:{видно:()=>hidden++},RV_MOTION:{обновить:()=>reflow++}});
  const c=f.c.document.documentElement.classList;['рв-слова-в-сцене','рв-финал-пульт','рв-кабина-есть','рв-живая-рубка'].forEach(x=>c.add(x));
  vm.runInContext(between(s,'  function запаснойРежим()','  function поднять()'),f.c);f.c.запаснойРежим();assert.equal(f.c.W.готов,false);assert.equal(c.contains('rv-no-webgl'),true);assert.equal(c.contains('рв-слова-в-сцене'),false);assert.equal(hidden,1);assert.equal(reflow,1);
+});
+function introFixture(){
+ const f=fixture(),s=read('rocketvpn/assets/rv-world.js');
+ Object.assign(f.c,{g:f.c,d:f.c.document,W:{готов:true},вступВсё:false,вступл:null,вступСпешка:false,вступТ:0,
+ fire:name=>f.emit(name),зажать:(x,a,b)=>Math.max(a,Math.min(b,x)),безье:x=>x});
+ const start=s.includes('  function закончитьВступление()')?'  function закончитьВступление()':'  function весВступления(dt)';
+ vm.runInContext(between(s,start,'  /* Место на ленте ->'),f.c);
+ vm.runInContext(between(s,'  function запаснойРежим()','  function поднять()'),f.c);
+ return f;
+}
+test('VPN graphics failure releases wheel, touch and keyboard input immediately',()=>{
+ const f=introFixture();f.c.document.documentElement.classList.add('рв-вступление');f.c.запаснойРежим();
+ let blocked=0;for(const type of ['wheel','touchmove','keydown'])f.emit(type,{key:'PageDown',preventDefault:()=>blocked++});
+ assert.equal(blocked,0);assert.equal(f.c.document.documentElement.classList.contains('рв-замок'),false);
+ assert.equal(f.c.document.documentElement.classList.contains('рв-вступление'),false);
+});
+test('VPN intro watchdog releases event handlers as well as CSS lock',()=>{
+ for(const started of [false,true]){const f=introFixture();if(started)f.c.вступл={время:5.5};f.time.tick(started?30001:8001);
+  let blocked=0;f.emit('wheel',{preventDefault:()=>blocked++});assert.equal(blocked,0);assert.equal(f.c.вступВсё,true);}
+});
+test('VPN queued resize cannot revive a retired renderer',()=>{
+ const f=fixture(),s=read('rocketvpn/assets/rv-world.js');let resized=0;
+ Object.assign(f.c,{g:f.c,W:{готов:true},применитьПлотность:()=>resized++});
+ vm.runInContext(between(s,'  var ждём = 0;','  /* ── Кадр'),f.c);f.c.поРазмеру();f.c.W.готов=false;
+ assert.doesNotThrow(()=>f.time.tick());assert.equal(resized,0);
 });
 test('A late font atlas cannot hide readable text after graphics failure',()=>{
  const f=fixture(),s=read('rocketvpn/assets/rv-слово3d.js');let done;Object.assign(f.c,{g:f.c,d:f.c.document,W:{готов:false},RV_MSDF:{готов:fn=>done=fn},собрать:()=>assert.fail('No retired 3D text build')});
@@ -149,4 +174,58 @@ test('Removed 3D text leaves animation and deferred font queues and cannot rebui
  vm.runInContext(between(read('rocketvpn/assets/rv-msdf.js'),'  function строка(','  function новыйМатериал('),f.c);
  const text=f.c.строка('TEST',{}),pending=f.c.ждут[0];let disposed=0;text.geometry.addEventListener('dispose',()=>disposed++);text.material.addEventListener('dispose',()=>disposed++);f.c.живые.push(text);
  text.userData.rvRelease();text.userData.rvRelease();pending();assert.equal(disposed,2);assert.equal(f.c.ВСЕ.length,0);assert.equal(f.c.ждут.length,0);assert.equal(f.c.живые.length,0);
+});
+test('CDN cabin and flight honor pixel and GPU limits at 8K, then restore phone detail',()=>{
+ const f=fixture(),s=read('rocketcdn/assets/rc-flight.js');Object.assign(f.c,{g:f.c,tiny:false,devicePixelRatio:2});
+ vm.runInContext(between(s,'function renderRatio(','function плотность('),f.c);
+ const renderer={capabilities:{maxTextureSize:4096}};
+ for(const [w,h] of [[7680,4320],[3840,2160],[320,240]]){f.c.innerWidth=w;f.c.innerHeight=h;const ratio=f.c.renderRatio(2,renderer);
+  assert.ok(w*h*ratio*ratio<=5500001);assert.ok(w*ratio<=4096);assert.ok(h*ratio<=4096);}
+ f.c.innerWidth=390;f.c.innerHeight=844;assert.equal(f.c.renderRatio(2,renderer),2);
+});
+test('Failed particle allocation restores the actual cabin materials',()=>{
+ const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);load('rocketvpn/assets/rv-assembly.js',f.c);const T=f.c.THREE;
+ const room=new T.Group(),parent=new T.Group(),material=new T.MeshStandardMaterial(),wall=new T.Mesh(new T.BoxGeometry(),material);room.add(wall);parent.add(room);
+ const broken=Object.assign({},T,{ShaderMaterial:function(){throw new Error('allocation failure');}});
+ assert.throws(()=>f.c.RV_ASSEMBLY.build(broken,room,parent,{tier:0}),/allocation failure/);
+ assert.equal(wall.material,material);assert.equal(wall.visible,true);assert.equal(parent.children.length,1);
+});
+function adminLoadFixture(){
+ const f=fixture(),pending=[],status={textContent:''};Object.assign(f.c,{$:()=>status,состояние:{дней:7,обзор:{old:true},заявки:[],по:{}},
+ зов:(action,body)=>new Promise(resolve=>pending.push({action,body,resolve})),нарисовать:()=>{},операции:()=>{}});
+ vm.runInContext('var загрузкаЗапрос=0;'+between(read('rocketcdn/admin.html'),'function загрузить()','function нарисовать()'),f.c);
+ return {...f,pending,status};
+}
+test('Admin period switching ignores old responses and rejects a partial refresh',async()=>{
+ const f=adminLoadFixture(),a=f.c.загрузить();f.c.состояние.дней=30;const b=f.c.загрузить();
+ for(const job of f.pending.slice(5))job.resolve({ok:true,days:30,items:[]});assert.equal(await b,true);
+ for(const job of f.pending.slice(0,5))job.resolve({ok:true,days:7,items:[]});assert.equal(await a,false);assert.equal(f.c.состояние.обзор.days,30);
+ const c=f.c.загрузить();f.pending.slice(10).forEach((job,i)=>job.resolve(i?{ok:true,days:90}:{ok:false}));
+ assert.equal(await c,false);assert.equal(f.c.состояние.обзор.days,30);assert.match(f.status.textContent,/не удалось/);
+});
+test('Admin request timeout releases the caller and an ambiguous write is not retried',async()=>{
+ const f=fixture();let calls=0;Object.assign(f.c,{API:'/api.php',СВОИ:['/api.php','https://rocketcdn.ru/api.php'],искали:false,состояние:{},fetch:()=>{calls++;return new Promise(()=>{});}});
+ vm.runInContext(between(read('rocketcdn/admin.html'),'function послать(','/* ── Мелочи'),f.c);
+ const pending=f.c.зов('content_save',{content:{}});f.time.tick(15001);await settle();assert.equal((await pending).ok,false);assert.equal(calls,1);
+});
+test('Admin mobile drawer releases the page on close and after desktop resize',()=>{
+ const f=fixture(),nodes={};for(const id of ['#бургер','#бок','#полотно'])nodes[id]={inert:false,setAttribute:()=>{},focus:()=>{}};
+ Object.assign(f.c,{$:s=>nodes[s]||null,innerWidth:320});f.c.document.body={classList:classes()};
+ vm.runInContext(between(read('rocketcdn/admin.html'),'function обновитьМеню()','/* ── Запуск'),f.c);
+ f.c.обновитьМеню();assert.equal(nodes['#бок'].inert,true);assert.equal(nodes['#полотно'].inert,false);
+ f.c.открытьМеню();assert.equal(nodes['#бок'].inert,false);assert.equal(nodes['#полотно'].inert,true);
+ f.c.закрытьМеню();assert.equal(nodes['#полотно'].inert,false);
+ f.c.открытьМеню();f.c.innerWidth=1440;f.c.обновитьМеню();assert.equal(nodes['#полотно'].inert,false);assert.equal(nodes['#бок'].inert,false);
+});
+test('Admin ignores unknown hash sections without building a selector from them',()=>{
+ const f=fixture();Object.assign(f.c,{$$:()=>[{dataset:{р:'дашборд'}}],$:()=>assert.fail('Untrusted hash cannot become a selector'),состояние:{раздел:'дашборд'}});
+ vm.runInContext(between(read('rocketcdn/admin.html'),'function кРазделу(','function обновитьМеню()'),f.c);
+ assert.doesNotThrow(()=>f.c.кРазделу('"]{'));assert.equal(f.c.состояние.раздел,'дашборд');
+});
+test('Flight checks the full movement segment against planetary clearance',()=>{
+ const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);const T=f.c.THREE;
+ vm.runInContext(between(read('rocketcdn/assets/rc-flight.js'),'function advanceAway(','function frame('),f.c);
+ const planet=new T.Group(),root=new T.Group();root.add(planet);const pack={root,'тур':[{'узел':planet,r:60}]};
+ const w={cam:new T.PerspectiveCamera(),tmpA:new T.Vector3(),tmpB:new T.Vector3()};w.cam.position.set(80,0,13.5);const state={v:.3};
+ f.c.advanceAway(w,state,pack,.05,T);assert.ok(w.cam.position.z>0,'must stop at the first boundary, not cross the chord');assert.ok(w.cam.position.length()>=81.2-1e-6);
 });
