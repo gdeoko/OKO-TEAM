@@ -1164,7 +1164,8 @@ function openChatView(i) {
 function cvSendText() {
   const val = $('#cvField').value.trim();
   if (!val) return;
-  const проверка = проверитьСообщение(val);
+  // Чат родителей (3-й в списке) — взрослый, ссылками там делиться можно.
+  const проверка = проверитьСообщение(val, cvChatId === 2);
   if (!проверка.ок) { toast(проверка.причина); return; }
   const msg = { text: val, time: 'только что' };
   if (replyTo) { msg.quote = replyTo.text; replyTo = null; $('#cvReplyBar')?.remove(); }
@@ -1435,8 +1436,31 @@ const СТОП_СЛОВА = [
   'встретимся', 'мой адрес', 'телефон дай', 'приходи один', 'не говори родителям',
 ];
 
-function проверитьСообщение(текст) {
+/* Свои адреса: сама школа и её бот в Телеграме. Всё остальное в детских
+   чатах не пропускаем. Ссылка наружу — самый короткий путь увести
+   ребёнка из школы туда, где за разговором никто не смотрит. */
+function свойАдрес(ссылка) {
+  const бот = ((document.querySelector('meta[name="mt-bot"]') || {}).content || '')
+    .replace(/^@/, '').toLowerCase();
+  const свои = [location.host.toLowerCase(), 'metanoia-180.ru'].filter(Boolean);
+  const s = ссылка.toLowerCase();
+  if (бот && (s.includes('t.me/' + бот) || s.includes('telegram.me/' + бот))) return true;
+  return свои.some((d) => d && (s.includes('//' + d) || s.startsWith(d + '/') || s === d));
+}
+
+function проверитьСообщение(текст, взрослыйЧат) {
   const t = String(текст || '').toLowerCase();
+
+  const ссылки = String(текст || '').match(/(?:https?:\/\/|www\.)[^\s]+|[a-zа-я0-9-]+\.(?:ru|com|net|org|me|io|app|top|su|by|kz|ua|info|online|site|link)(?:\/[^\s]*)?/gi) || [];
+  const чужая = взрослыйЧат ? null : ссылки.find((u) => !свойАдрес(u));
+  if (чужая) {
+    return {
+      ок: false,
+      причина: 'Ссылки на другие сайты в школьных чатах не отправляются. '
+        + 'Если вам прислали такую ссылку, нажмите «Пожаловаться»',
+    };
+  }
+
   const плохое = СТОП_СЛОВА.find((w) => t.includes(w));
   if (!плохое) return { ок: true };
   const детское = ['не говори родителям', 'приходи один', 'мой адрес', 'телефон дай', 'встретимся'].includes(плохое);
