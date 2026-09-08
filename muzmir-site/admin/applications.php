@@ -569,6 +569,13 @@ if ($id = (int) input('id')) {
                 <td class="small">
                   <a class="btn btn--ghost btn--sm" target="_blank" rel="noopener"
                      href="<?= url('/diploma-view/' . rawurlencode((string)$d['number'])) ?>"><?= admin_icon('eye') ?>Предпросмотр</a>
+                  <?php /* Тот же лист файлом — в трёх видах, как и везде. */ ?>
+                  <a class="btn btn--ghost btn--sm" target="_blank" rel="noopener"
+                     href="<?= url('/diploma/' . rawurlencode((string)$d['number']) . '.pdf') ?>">PDF</a>
+                  <a class="btn btn--ghost btn--sm"
+                     href="<?= url('/diploma/' . rawurlencode((string)$d['number']) . '.jpg') ?>">JPG</a>
+                  <a class="btn btn--ghost btn--sm"
+                     href="<?= url('/diploma/' . rawurlencode((string)$d['number']) . '.png') ?>">PNG</a>
                 </td>
               </tr>
             <?php endforeach; ?>

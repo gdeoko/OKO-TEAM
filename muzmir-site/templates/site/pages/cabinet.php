@@ -1256,7 +1256,14 @@ ob_start(); ?>
                   <div><?= $badge('Готов','success') ?></div>
                 </div>
                 <div class="cab-actions" style="margin-top:14px">
+                  <?php /* ТРИ ФОРМАТА ОДНОГО ДОКУМЕНТА.
+                           PDF — чтобы распечатать; JPG и PNG — чтобы отправить в
+                           мессенджер, выложить в сообщество школы, вложить в отчёт:
+                           там PDF открывается через раз. Лист один и тот же, картинка
+                           получается из этого же файла. */ ?>
                   <a class="btn btn--primary" href="<?= url('/diploma/'.$d['number'].'.pdf') ?>" target="_blank" rel="noopener"><?= $icons['dl'] ?> Скачать PDF</a>
+                  <a class="btn btn--ghost" href="<?= url('/diploma/'.$d['number'].'.jpg') ?>"><?= $icons['dl'] ?> JPG</a>
+                  <a class="btn btn--ghost" href="<?= url('/diploma/'.$d['number'].'.png') ?>"><?= $icons['dl'] ?> PNG</a>
                   <button type="button" class="btn btn--ghost" data-dip-resend="<?= h($d['number']) ?>"><?= $icons['mail'] ?> На почту</button>
                   <a class="btn btn--ghost" href="<?= url('/verify/'.$d['number']) ?>" target="_blank" rel="noopener"><?= $icons['qr'] ?> Проверка QR</a>
                 </div>

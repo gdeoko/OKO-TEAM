@@ -320,9 +320,17 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
     }
     http_response_code(404); echo 'Конкурс не найден'; exit;
 }
-// Скачивание PDF диплома по номеру. Всегда отдаёт боевой PDF по НАШЕМУ HTML-шаблону:
-// если файла нет — рендерит через бастион (diploma_pdf_html), фолбэк — GD-генератор.
-if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
+/* НАГРАДНЫЙ ДОКУМЕНТ В ТРЁХ ФОРМАТАХ: PDF, JPG, PNG.
+ *
+ * Лист собирается один — по нашему HTML-шаблону, через бастион. PDF отдаётся как
+ * есть, картинка получается из этого же PDF (core/diploma_render::diploma_raster),
+ * поэтому все три файла совпадают один в один. Второго рендера нет намеренно: он
+ * однажды разойдётся с первым, и под одним номером окажутся два разных документа.
+ *
+ * Картинки нужны потому, что PDF в мессенджере и в ленте сообщества открывается
+ * через раз, а наградой хочется поделиться сразу. */
+if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.(pdf|jpg|png)$#', $route, $m)) {
+    $__fmt = strtolower($m[2]);
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
     if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
     $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
@@ -380,8 +388,22 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
      * соберётся минутой позже: боевой рендер делает три попытки, а страница
      * ниже честно говорит «ещё формируется». */
     if ($file === '') { http_response_code(404); echo 'Диплом ещё формируется, попробуйте через минуту'; exit; }
-    header('Content-Type: application/pdf');
-    header('Content-Disposition: inline; filename="Diploma_' . $d['number'] . '.pdf"');
+
+    if ($__fmt !== 'pdf') {
+        $img = diploma_raster($file, $__fmt);
+        if ($img === null) {
+            http_response_code(503);
+            echo 'Картинка ещё готовится, попробуйте через минуту. PDF доступен сразу.';
+            exit;
+        }
+        $file = $img;
+        // Картинку именно скачивают — её вставляют в отчёт и в пост, а не читают с экрана.
+        header('Content-Type: ' . ($__fmt === 'png' ? 'image/png' : 'image/jpeg'));
+        header('Content-Disposition: attachment; filename="Diploma_' . $d['number'] . '.' . $__fmt . '"');
+    } else {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Diploma_' . $d['number'] . '.pdf"');
+    }
     header('Content-Length: ' . (string) filesize($file));
     readfile($file);
     exit;

@@ -569,7 +569,16 @@ ob_start(); ?>
               <td class="small"><?= h($d['number']) ?></td>
               <td><?= h($d['is_group']?$d['group_name']:$d['full_name']) ?><?= vip_mark((int)($d['user_id'] ?? 0), '', (string)($d['email'] ?? '')) ?><br><span class="small muted"><?= h($d['email']) ?></span></td>
               <td><span class="badge badge--gold"><?= h($d['result']) ?></span></td>
-              <td><?= $d['pdf_path'] ? '<a href="'.h(url($d['pdf_path'])).'" target="_blank">файл</a>' : '<span class="small muted">нет</span>' ?></td>
+              <?php /* ФАЙЛ В ТРЁХ ФОРМАТАХ. Ссылка ведёт не на путь в public, а на
+                       маршрут выдачи: он же проверяет права и умеет отдать тот же
+                       лист картинкой (JPG, PNG), собранной из этого самого PDF. */ ?>
+              <td class="small">
+                <?php if (trim((string) ($d['pdf_path'] ?? '')) !== ''): $__n = rawurlencode((string) $d['number']); ?>
+                  <a href="<?= h(url('/diploma/' . $__n . '.pdf')) ?>" target="_blank" rel="noopener">PDF</a> ·
+                  <a href="<?= h(url('/diploma/' . $__n . '.jpg')) ?>">JPG</a> ·
+                  <a href="<?= h(url('/diploma/' . $__n . '.png')) ?>">PNG</a>
+                <?php else: ?><span class="small muted">нет</span><?php endif; ?>
+              </td>
               <?php // «В очереди» — письмо поставлено, но почта его ещё не отдала: время появится после доставки. ?>
               <td class="small"><?= $d['sent_at']
                     ? h(date('d.m.y H:i', strtotime($d['sent_at'])))

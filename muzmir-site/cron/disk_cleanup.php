@@ -80,4 +80,28 @@ foreach (glob(BASE_PATH.'/data/backups/muzmir_2026-*.sqlite') as $f) {
 }
 $logit("backups: pruned=$cnt files, freed=".round($bytes/1024/1024,1)."MB");
 
+/* 4) КАРТИНКИ НАГРАДНЫХ ДОКУМЕНТОВ (JPG/PNG) СТАРШЕ МЕСЯЦА.
+ *
+ * Наградной документ отдаётся тремя файлами: PDF и та же страница картинкой.
+ * Картинка не хранится вечно — она собирается из PDF по первому обращению за
+ * секунду и лежит рядом как кэш. PNG весит около четырёх мегабайт, и полный
+ * набор по всем дипломам и бланкам занял бы под два гигабайта на разделе, где
+ * свободного места считанные гигабайты.
+ *
+ * Убираем то, к чему месяц не обращались. Исходные PDF не трогаем НИКОГДА:
+ * пропадёт PDF — пропадёт и документ, а картинка соберётся заново сама. */
+$cnt = 0; $bytes = 0;
+foreach ([BASE_PATH.'/public/diplomas', BASE_PATH.'/data/clean_blanks'] as $dir) {
+    foreach (glob($dir.'/*.{jpg,png}', GLOB_BRACE) ?: [] as $f) {
+        $b = basename($f);
+        // Картинки предпросмотра живут по своим правилам, их чистит другой код.
+        if (str_starts_with($b, 'preview_')) continue;
+        // Кэш только там, где рядом лежит исходный лист: чужие картинки не наши.
+        if (!is_file(preg_replace('~\.(jpg|png)$~i', '.pdf', $f))) continue;
+        if (time() - (int) @filemtime($f) < 30*86400) continue;
+        $bytes += (int) @filesize($f); @unlink($f); $cnt++;
+    }
+}
+$logit("картинки дипломов: убрано=$cnt files, freed=".round($bytes/1024/1024,1)."MB");
+
 echo "OK\n";

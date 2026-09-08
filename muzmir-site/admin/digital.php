@@ -283,8 +283,15 @@ ob_start(); ?>
             <td class="small">
               <a class="btn btn--ghost btn--sm" target="_blank" rel="noopener"
                  href="<?= url('/diploma-view/' . rawurlencode((string)$d['number'])) ?>"><?= admin_icon('eye') ?>Смотреть</a>
+              <?php /* ТРИ ФОРМАТА ОДНОГО ЛИСТА. Картинка собирается из того же PDF,
+                       поэтому расходиться им не с чем; JPG и PNG нужны, когда
+                       наградой делятся в переписке или вкладывают в отчёт. */ ?>
               <a class="btn btn--ghost btn--sm" target="_blank" rel="noopener"
                  href="<?= url('/diploma/' . rawurlencode((string)$d['number']) . '.pdf') ?>">PDF</a>
+              <a class="btn btn--ghost btn--sm"
+                 href="<?= url('/diploma/' . rawurlencode((string)$d['number']) . '.jpg') ?>">JPG</a>
+              <a class="btn btn--ghost btn--sm"
+                 href="<?= url('/diploma/' . rawurlencode((string)$d['number']) . '.png') ?>">PNG</a>
             </td>
           </tr>
         <?php endforeach; ?>

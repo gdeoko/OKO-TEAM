@@ -56,9 +56,23 @@ if (($__blank = trim((string) input('blank'))) !== '') {
     // но по этому же закрытому маршруту.
     if (!is_file($abs)) $abs = BASE_PATH . '/public/diplomas/' . $name;
     if (!is_file($abs)) { http_response_code(404); echo 'Бланк не найден'; exit; }
-    header('Content-Type: application/pdf');
+
+    /* ТОТ ЖЕ БЛАНК КАРТИНКОЙ. Типография просит то PDF, то JPG — присылать надо
+     * в том виде, в каком у них принимают. Картинка получается из этого же
+     * файла, поэтому она не может разойтись с тем, что уйдёт в печать. */
+    $__f = strtolower(trim((string) input('fmt')));
+    $__ct = 'application/pdf';
+    if ($__f === 'jpg' || $__f === 'png') {
+        require_once BASE_PATH . '/core/diploma_render.php';
+        $img = diploma_raster($abs, $__f);
+        if ($img === null) { http_response_code(503); echo 'Картинка ещё готовится, попробуйте через минуту.'; exit; }
+        $abs  = $img;
+        $name = basename($img);
+        $__ct = $__f === 'png' ? 'image/png' : 'image/jpeg';
+    }
+    header('Content-Type: ' . $__ct);
     header('Content-Length: ' . (string) filesize($abs));
-    header('Content-Disposition: ' . (input('dl') !== '' ? 'attachment' : 'inline') . '; filename="' . $name . '"');
+    header('Content-Disposition: ' . (input('dl') !== '' || $__f !== '' ? 'attachment' : 'inline') . '; filename="' . $name . '"');
     header('X-Robots-Tag: noindex, nofollow');
     header('Cache-Control: private, no-store');
     readfile($abs);
@@ -620,7 +634,11 @@ $groups = og_groups($orders);
                 <div class="small" style="font-weight:600;line-height:1.3;margin-bottom:6px"><?= h((string)$c['label']) ?></div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <a class="btn btn--navy btn--sm" href="<?= h($u) ?>#toolbar=1" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Печать</a>
-                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>&amp;dl=1"><?= admin_icon('download') ?? '' ?>Скачать</a>
+                  <?php /* Один и тот же лист в трёх видах: PDF в типографию, картинка —
+                           когда её просят приложить в переписке или в отчёт. */ ?>
+                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>&amp;dl=1"><?= admin_icon('download') ?? '' ?>PDF</a>
+                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>&amp;fmt=jpg">JPG</a>
+                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>&amp;fmt=png">PNG</a>
                 </div>
               </div>
             <?php endforeach; ?>

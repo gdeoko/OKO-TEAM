@@ -138,7 +138,10 @@ if (input('do') === 'dip_get' && input('kind') === 'diploma') {
             'label'   => $dipLbl[(string) $x['type']] ?? (string) $x['type'],
             'result'  => (string) $x['result'],
             'preview' => url('/diploma-view/' . rawurlencode((string) $x['number'])),
+            // Один и тот же лист в трёх форматах: картинка собирается из этого же PDF.
             'pdf'     => url('/diploma/' . rawurlencode((string) $x['number']) . '.pdf'),
+            'jpg'     => url('/diploma/' . rawurlencode((string) $x['number']) . '.jpg'),
+            'png'     => url('/diploma/' . rawurlencode((string) $x['number']) . '.png'),
         ];
     }
     json_out([
@@ -1049,8 +1052,15 @@ tr.disp-row.gone{opacity:0;transition:.4s}
           var lab=document.createElement('div'); lab.style.cssText='flex:1;min-width:150px;font-size:13px;color:#17307A;font-weight:600';
           lab.textContent=it.label+(it.result?(' · '+it.result):'');
           var pv=document.createElement('a'); pv.className='btn btn--navy btn--sm'; pv.href=it.preview||'#'; pv.target='_blank'; pv.rel='noopener'; pv.textContent='Предпросмотр';
-          var pd=document.createElement('a'); pd.className='btn btn--ghost btn--sm'; pd.href=it.pdf||'#'; pd.target='_blank'; pd.rel='noopener'; pd.textContent='PDF';
-          row.appendChild(lab); row.appendChild(pv); row.appendChild(pd); D.types.appendChild(row);
+          row.appendChild(lab); row.appendChild(pv);
+          // Три формата одного документа — кнопки рядом, чтобы не искать по разделам.
+          [['PDF',it.pdf,true],['JPG',it.jpg,false],['PNG',it.png,false]].forEach(function(f){
+            if(!f[1]) return;
+            var b=document.createElement('a'); b.className='btn btn--ghost btn--sm'; b.href=f[1];
+            if(f[2]){ b.target='_blank'; b.rel='noopener'; }
+            b.textContent=f[0]; row.appendChild(b);
+          });
+          D.types.appendChild(row);
         });
         if(!(d.items||[]).length){ D.types.innerHTML='<div class="small muted">Дипломы ещё не собраны.</div>'; }
       }).catch(function(){ toast('Сеть недоступна',true); closeDip(); });

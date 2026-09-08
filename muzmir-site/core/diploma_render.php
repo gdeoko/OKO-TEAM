@@ -192,3 +192,60 @@ function diploma_store_path(?string $abs): string {
     if (str_starts_with($abs, $root . '/')) return substr($abs, strlen($root));
     return $abs;
 }
+
+/**
+ * ТОТ ЖЕ ДОКУМЕНТ В КАРТИНКЕ: JPG И PNG.
+ *
+ * Участнику наградной документ нужен не только файлом для печати. Его вставляют
+ * в отчёт, выкладывают в сообщество школы, отправляют бабушке в мессенджер — а
+ * там PDF открывается через раз. Поэтому рядом с PDF отдаём ту же страницу
+ * картинкой.
+ *
+ * КАРТИНКА ОБЯЗАНА СОВПАДАТЬ С ЛИСТОМ ОДИН В ОДИН. Поэтому она не рисуется
+ * заново — она получается из того же самого PDF (pdftoppm, при его отсутствии
+ * Ghostscript). Никакого второго рендера: второй рендер однажды разойдётся с
+ * первым, и участник получит два разных документа под одним номером.
+ *
+ * 200 точек на дюйм — лист A4 выходит 2339×1656 и годится и на экран, и на
+ * печать; JPG около 500 КБ, PNG около 700 КБ. Результат лежит рядом с PDF и
+ * пересобирается, только если PDF новее картинки.
+ *
+ * @param string $pdfAbs путь к готовому PDF
+ * @param string $fmt    'jpg' или 'png'
+ * @return string|null   путь к картинке или null, если собрать не удалось
+ */
+function diploma_raster(string $pdfAbs, string $fmt = 'jpg', int $dpi = 200): ?string {
+    $fmt = strtolower($fmt) === 'png' ? 'png' : 'jpg';
+    if (!is_file($pdfAbs) || filesize($pdfAbs) < 1000) return null;
+
+    $out = preg_replace('~\.pdf$~i', '', $pdfAbs) . '.' . $fmt;
+    // Готовое подходит, пока оно новее исходного листа.
+    if (is_file($out) && filesize($out) > 5000 && filemtime($out) >= filemtime($pdfAbs)) return $out;
+
+    $base = preg_replace('~\.pdf$~i', '', $pdfAbs);   // pdftoppm сам добавит расширение
+    $ppm  = trim((string) @shell_exec('command -v pdftoppm 2>/dev/null'));
+    if ($ppm !== '') {
+        $cmd = escapeshellarg($ppm) . ' -r ' . (int) $dpi . ' -singlefile '
+             . ($fmt === 'png' ? '-png ' : '-jpeg -jpegopt quality=92 ')
+             . escapeshellarg($pdfAbs) . ' ' . escapeshellarg($base) . ' 2>/dev/null';
+        @shell_exec($cmd);
+        clearstatcache(true, $out);
+        if (is_file($out) && filesize($out) > 5000) return $out;
+    }
+
+    // Запасной путь: Ghostscript. Он есть на сервере всегда — им же сжимается PDF.
+    $gs = trim((string) @shell_exec('command -v gs 2>/dev/null'));
+    if ($gs !== '') {
+        $dev = $fmt === 'png' ? 'png16m' : 'jpeg';
+        $cmd = escapeshellarg($gs) . ' -sDEVICE=' . $dev . ' -dFirstPage=1 -dLastPage=1'
+             . ' -r' . (int) $dpi . ' -dTextAlphaBits=4 -dGraphicsAlphaBits=4'
+             . ($fmt === 'jpg' ? ' -dJPEGQ=92' : '')
+             . ' -dNOPAUSE -dQUIET -dBATCH -sOutputFile=' . escapeshellarg($out)
+             . ' ' . escapeshellarg($pdfAbs) . ' 2>/dev/null';
+        @shell_exec($cmd);
+        clearstatcache(true, $out);
+        if (is_file($out) && filesize($out) > 5000) return $out;
+    }
+    @unlink($out);
+    return null;
+}
