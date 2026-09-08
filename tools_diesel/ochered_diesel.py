@@ -17,7 +17,7 @@ import json, os, re, shutil, sys
 МЕДИА = "/var/www/okoteam/3d/diesel/media"
 ОЧЕРЕДЬ = f"{БАЗА}/queue"
 ДЕЛАЙ = len(sys.argv) > 1 and sys.argv[1] == "делай"
-ТИРЕ = "—"
+ТИРЕ = "\u2014"   # длинное тире, самим символом его в репозиторий нельзя
 
 ЕДИНИЦЫ = json.load(open(f"{БАЗА}/cfg/diesel_partiya.json", encoding="utf-8"))
 
