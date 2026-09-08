@@ -488,7 +488,7 @@
     },
     {
       "path": "rocketcdn/assets/rc-cabin.js",
-      "sha": "e6bafc794f5dda570783defac5b37eafd5ad94c1",
+      "sha": "34f4a4331edc555bbf772d6c36723002cd38a78d",
       "base_sha": "556bcebc2f4fc88d715f160ddefeff10c89e0be0",
       "mode": "100644"
     },
@@ -500,7 +500,7 @@
     },
     {
       "path": "rocketcdn/assets/rc-flight.js",
-      "sha": "1af55792259f49c3180398895415c5d707a01b4b",
+      "sha": "82a75b223fcac07b3ab29ad15e6ed302df9e904c",
       "base_sha": "fb6d4363bd114590ea038ca8af70c6397c0f9d6c",
       "mode": "100644"
     },
@@ -524,7 +524,7 @@
     },
     {
       "path": "rocketcdn/assets/rc-real.js",
-      "sha": "505df18da9f00e9e285cc9b650ad3554cb87bea5",
+      "sha": "85e12203e13c35dd6d4d5797b03bb5734ff10179",
       "base_sha": "811f78cd7a63ba383c8f7a94928cae7e78f86fb4",
       "mode": "100644"
     },
@@ -566,7 +566,7 @@
     },
     {
       "path": "rocketcdn/index.html",
-      "sha": "620f698246c27c8ab5e4f5e7257138ef6b34585d",
+      "sha": "78a5b198eaadb362374a6447d350d838d51d4fb7",
       "base_sha": "115162479e787dd7f49490f2ba618d4ca391f1f7",
       "mode": "100644"
     },
@@ -644,7 +644,7 @@
     },
     {
       "path": "rocketcdn/tests/rocket-regressions.cjs",
-      "sha": "a35beba3faa7e028111394d0d245c0112b2391cc",
+      "sha": "1de6be895e1608ba1b269c4c60b84d599fb41db1",
       "base_sha": null,
       "mode": "100644"
     },
@@ -811,5 +811,5 @@
       "mode": "100644"
     }
   ],
-  "release": "20260908-r7"
+  "release": "20260908-r8"
 }

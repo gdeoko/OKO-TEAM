@@ -1,0 +1,87 @@
+{
+  "release": "20260908-r8",
+  "base_commit": "6df75ec187d543c3556fe6726681f9907b415314",
+  "native": [
+    {
+      "format": "desktop",
+      "width": 640,
+      "height": 400,
+      "checkpoints": 23,
+      "gl_errors": 0,
+      "shader_errors": 0,
+      "invalid_transforms": 0,
+      "lifecycle": {
+        "cameraReplaced": true,
+        "cameraInNewScene": true
+      },
+      "screen_downsampling_warnings": 0,
+      "report_sha256": "44ce013598bd22a0b2b2ba958716bc140f0d3d8a10b7adf589251aac3428395f"
+    },
+    {
+      "format": "portrait",
+      "width": 390,
+      "height": 844,
+      "checkpoints": 23,
+      "gl_errors": 0,
+      "shader_errors": 0,
+      "invalid_transforms": 0,
+      "lifecycle": {
+        "cameraReplaced": true,
+        "cameraInNewScene": true
+      },
+      "screen_downsampling_warnings": 0,
+      "report_sha256": "35f5af7bd55ff3192edf2a06712169d523950ed1b275d228688d5dda956a975d"
+    }
+  ],
+  "tests": {
+    "javascript": {
+      "passed": 48,
+      "failed": 0
+    },
+    "api": {
+      "passed": 13,
+      "failed": 0
+    },
+    "storage": {
+      "passed": 12,
+      "failed": 0
+    },
+    "delivery": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 1,
+      "skip_reason": "PHP.wasm lacks native interprocess flock"
+    },
+    "deployment_and_integration": {
+      "passed": 10,
+      "failed": 0
+    }
+  },
+  "publication": [
+    {
+      "health_checks": 28,
+      "ok": true
+    },
+    {
+      "published": "/var/www/rocket-releases/20260908-r8",
+      "previous": "/var/www/rocket-releases/20260908-r7"
+    },
+    {
+      "all_existing_leads_retained": true,
+      "before": 5,
+      "after": 5
+    }
+  ],
+  "browser": {
+    "cdn_script": "assets/rc-gl.js?v=20260908r8",
+    "full_text_reader": "Expanded panel 1, switched to panel 7 with full text visible",
+    "flight_fallback": "Unavailable status closed by Continue to the website",
+    "webgl_available": false
+  },
+  "not_verified": [
+    "Continuous browser 3D/CSS/HUD composition and full touch flight",
+    "Hardware WebGL 2/HDR rendering and physical-device FPS",
+    "Photorealism, 8K output and exact Igloo parity"
+  ],
+  "visual_followup": "Inspect bright cabin micro-highlights and perspective text in hardware browser; native low-resolution frames are not final visual acceptance."
+}

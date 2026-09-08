@@ -51,8 +51,10 @@
     "rollback": "/var/www/rocket-releases/20260908-r6"
   },
   "github": {
-    "pushed": false,
-    "reason": "Automatic approval review requires explicit payload and destination authorization"
+    "pushed": true,
+    "commit": "6df75ec187d543c3556fe6726681f9907b415314",
+    "tree": "a6b93bdefa426c475668d4da15baff4e29703b04",
+    "transport": "Connected GitHub API; exact file tree of authorized local snapshots c05b1ac and b8eb703"
   },
   "not_verified": [
     "Continuous browser 3D flow",

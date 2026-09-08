@@ -3333,11 +3333,18 @@ function disposeFlightWorld() {
   cancelBuild();
   var world = W3;
   W3 = null;
+  // These objects belong to the retired scene. Keeping the old projector
+  // also prevents projBuild from attaching the next camera to its scene.
+  proj = null;
+  projFor = "";
+  cabin = null;
+  stageWallMesh = null;
   F.built = false;
   if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
   if (F.glSlot && g.RC_GL) { g.RC_GL.give(ui.cv); F.glSlot = false; }
   if (ui.cv && g.RC_GL && g.RC_GL.drop) g.RC_GL.drop(ui.cv);
   if (!world) return;
+  if (world.post) { try { world.post.dispose(); } catch (e) {} }
   if (world.scene) { try { убратьДерево(world.scene); } catch (e) {} }
   if (world.r) {
     try { world.r.dispose(); } catch (e) {}
@@ -10526,6 +10533,7 @@ function cabinBuild() {
   cabinBuild.былПульт = !!g.RC_PANEL;
   cabinBuild.когда = (g.performance && g.performance.now) ? Math.round(g.performance.now()) : 0;
   cabin = g.RC_CABIN.build(T, {
+    renderer: W3.r,
     tiny: innerWidth < 760,
     aspect: innerWidth / Math.max(1, innerHeight),
     /* Раму пульта строит проекция, поэтому ей нужно то же самое

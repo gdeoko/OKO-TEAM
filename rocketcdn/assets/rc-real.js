@@ -879,12 +879,19 @@ R.post = function (T, renderer, opt) {
 
   P.set = function (k, v) { if (mComp.uniforms[k]) mComp.uniforms[k].value = v; };
 
+  var disposed = false;
   P.dispose = function () {
+    if (disposed) return;
+    disposed = true;
     P.scene.dispose();
     for (var i = 0; i < уровни.length; i++) { уровни[i].a.dispose(); уровни[i].b.dispose(); }
     уровни.length = 0;
     P.b1 = P.b2 = null;
     mBright.dispose(); mBlur.dispose(); mComp.dispose(); black.dispose();
+    [sBright, sBlur, sComp].forEach(function (scene) {
+      scene.traverse(function (object) { if (object.geometry) object.geometry.dispose(); });
+    });
+    if (R.lastPost === P) R.lastPost = null;
   };
   /* Последний собранный композер: по нему автопроверки видят, дали
      ли цели отсчёты на самом деле, или пришлось уходить в FXAA */

@@ -266,8 +266,9 @@ function ключЭкранов(recs, tiny) {
   return ч.join("\u0001");
 }
 
-function экраныПоКэшу(T, recs, tiny) {
-  var к = ключЭкранов(recs, tiny);
+function экраныПоКэшу(T, recs, tiny, renderer) {
+  var webgl2 = !!(renderer && renderer.capabilities && renderer.capabilities.isWebGL2);
+  var к = ключЭкранов(recs, tiny) + (webgl2 ? "|gl2" : "|gl1");
   if (кэшЭкранов && кэшКлюч === к) return кэшЭкранов;
   if (кэшЭкранов) {
     for (var с = 0; с < кэшЭкранов.length; с++) {
@@ -276,7 +277,7 @@ function экраныПоКэшу(T, recs, tiny) {
   }
   var набор = [];
   for (var i = 0; i < recs.length; i++) {
-    var т = screenTex(T, recs[i], tiny);
+    var т = screenTex(T, recs[i], tiny, renderer);
     /* Общая текстура: снос салона её не трогает, иначе следующий
        заезд получит освобождённую карту и голую стену. */
     т.__общая = true;
@@ -287,7 +288,7 @@ function экраныПоКэшу(T, recs, tiny) {
   return набор;
 }
 
-function screenTex(T, rec, tiny) {
+function screenTex(T, rec, tiny, renderer) {
   var хол = холстЭкрана(tiny), W = хол[0], H = хол[1];
   var c = cnv(W, H), x = c.getContext("2d"), i;
 
@@ -498,7 +499,14 @@ function screenTex(T, rec, tiny) {
   /* Экран смотрит на нас изнанкой цилиндра, а изнанка переворачивает
      развёртку по горизонтали - текст читался зеркально. Отражаем
      карту заранее, и на стене она встаёт как надо. */
-  t.wrapS = T.RepeatWrapping;
+  // Mirroring only needs 1-u inside [0,1], not repeated wrapping.
+  // WebGL 1 otherwise shrinks 784x704 text to 512x512. Keep its
+  // original texels with a clamp/linear sampler; WebGL 2 keeps mipmaps.
+  t.wrapS = T.ClampToEdgeWrapping;
+  if (!(renderer && renderer.capabilities && renderer.capabilities.isWebGL2)) {
+    t.minFilter = T.LinearFilter;
+    t.generateMipmaps = false;
+  }
   t.repeat.x = -1;
   t.offset.x = 1;
   return t;
@@ -1416,7 +1424,7 @@ function build(T, opts) {
   var scrR = R_WALL - 0.14;
   var scrArc = SCR_W / scrR;
   var hoodArc = (SCR_W + 0.22) / (R_WALL - 0.14);
-  var набор = экраныПоКэшу(T, recs, tiny);
+  var набор = экраныПоКэшу(T, recs, tiny, opts.renderer);
   for (i = 1; i <= 7; i++) {
     th = azOf(i);
     var tex = набор[i - 1];
@@ -1646,7 +1654,7 @@ function build(T, opts) {
       if (шрифтВпечён) return;
       шрифтВпечён = true;
       кэшКлюч = "";
-      var новые = экраныПоКэшу(T, recs, tiny);
+      var новые = экраныПоКэшу(T, recs, tiny, opts.renderer);
       for (var si = 0; si < screens.length; si++) {
         var sc = screens[si];
         sc.obj.material.map = новые[sc.i - 1];

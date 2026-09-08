@@ -1,7 +1,7 @@
 {
-  "base_commit": "6df75ec187d543c3556fe6726681f9907b415314",
-  "base_release": "20260908-r7",
-  "release": "20260908-r8",
+  "base_commit": "64096b76b38036b48ae9329046dff576676641c3",
+  "base_release": "20260908-r6",
+  "release": "20260908-r7",
   "files": [
     {
       "path": "rocketcdn/admin.html",
@@ -9,14 +9,9 @@
       "sha256": "36bfcfaeca3fed0e24ef03a03ffaa90d7eaf5b27bd40fc41fb05d38163748304"
     },
     {
-      "path": "rocketcdn/assets/rc-cabin.js",
-      "base_sha256": "158646a38666fb89489fa17b9292043fcf3957b056c8261a750c858a0f3ce035",
-      "sha256": "61e0f712601f98dd11b3450b6e4c51fb73d72d155d097c265e7656b5d9a558a1"
-    },
-    {
       "path": "rocketcdn/assets/rc-flight.js",
       "base_sha256": "d36e7fc1e4159eece5569b6934968d2848fdfc6420aecf08a1fd78bf0d7df83e",
-      "sha256": "97699bafbb514c060a15e8206305fc8cfebed4cd9ee4cdf0d4e04483162a7e10"
+      "sha256": "d36e7fc1e4159eece5569b6934968d2848fdfc6420aecf08a1fd78bf0d7df83e"
     },
     {
       "path": "rocketcdn/assets/rc-gl.js",
@@ -31,12 +26,12 @@
     {
       "path": "rocketcdn/assets/rc-real.js",
       "base_sha256": "3bfe43b4c236637a00245a2ce6182ffda7cdc9daf1ecced84caf4dd1b0ea89f2",
-      "sha256": "a8c82063b061fcb3b964e4352144066172e634e0787846e526bf70c3b13632f1"
+      "sha256": "3bfe43b4c236637a00245a2ce6182ffda7cdc9daf1ecced84caf4dd1b0ea89f2"
     },
     {
       "path": "rocketcdn/index.html",
       "base_sha256": "ab9db48383e2d674cebf0bc321acfbd16e8cf589da8ebac159da1a2e8fa048ed",
-      "sha256": "d214bff23492c0a8e43b8d6a553ee77a5c2892243489fa4d79d08d48518d3324"
+      "sha256": "ab9db48383e2d674cebf0bc321acfbd16e8cf589da8ebac159da1a2e8fa048ed"
     },
     {
       "path": "rocketvpn/assets/rc-panel.js",
@@ -65,7 +60,7 @@
     },
     {
       "path": "rocketvpn/assets/rv-корабль.js",
-      "base_sha256": "bdefe8d4261b14591ca54514e4f9098cf3e68633442634a4740ba074b3d46e10",
+      "base_sha256": "2f58065ac4bff98582aec888129878d582d69e84663e05dddcace499acc0bdf7",
       "sha256": "bdefe8d4261b14591ca54514e4f9098cf3e68633442634a4740ba074b3d46e10"
     },
     {
@@ -95,7 +90,7 @@
     },
     {
       "path": "rocketvpn/assets/rv-труба.js",
-      "base_sha256": "99ff75b1147f57335239d5fe49fd6bb701d637d382e7c20e8f228b208161927e",
+      "base_sha256": "be0f88e9f82e5a222327d70779f8789c3d2d24dc86c29f13d8f203f61ced02cd",
       "sha256": "99ff75b1147f57335239d5fe49fd6bb701d637d382e7c20e8f228b208161927e"
     },
     {
