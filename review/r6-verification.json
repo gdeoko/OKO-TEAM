@@ -1,0 +1,71 @@
+{
+  "source_commit": "14b11aa120733ac14ffaacdd98edd1841d4b2c96",
+  "javascript_tests": {
+    "passed": 45,
+    "failed": 0
+  },
+  "publication": [
+    {
+      "health_checks": 25,
+      "ok": true
+    },
+    {
+      "published": "/var/www/rocket-releases/20260908-r6",
+      "previous": "/var/www/rocket-releases/20260908-r5"
+    },
+    {
+      "all_existing_leads_retained": true,
+      "before": 5,
+      "after": 5
+    }
+  ],
+  "native_frames": [
+    {
+      "path": "review/native-frames/r6/finale-1280x800-1.json",
+      "width": 1280,
+      "height": 800,
+      "progress": 1,
+      "postProcessing": null,
+      "distinctColors": 58696,
+      "glErrors": [],
+      "glError": 0
+    },
+    {
+      "path": "review/native-frames/r6/finale-390x844-1.json",
+      "width": 390,
+      "height": 844,
+      "progress": 1,
+      "postProcessing": null,
+      "distinctColors": 39432,
+      "glErrors": [],
+      "glError": 0
+    },
+    {
+      "path": "review/native-frames/r6-post/finale-1280x800-0.35.json",
+      "width": 1280,
+      "height": 800,
+      "progress": 0.35,
+      "postProcessing": true,
+      "distinctColors": 49637,
+      "glErrors": [],
+      "glError": 0
+    },
+    {
+      "path": "review/native-frames/r6-post/finale-1280x800-1.json",
+      "width": 1280,
+      "height": 800,
+      "progress": 1,
+      "postProcessing": true,
+      "distinctColors": 49647,
+      "glErrors": [],
+      "glError": 0
+    }
+  ],
+  "limits": [
+    "Native scene module inspection only",
+    "No browser DOM overlay or full scroll controller in native frames",
+    "No WebGL 2/HDR verification",
+    "No real-device FPS verification",
+    "No 8K or Igloo 1:1 acceptance"
+  ]
+}

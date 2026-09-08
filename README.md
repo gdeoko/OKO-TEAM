@@ -1,10 +1,10 @@
-# Rocket — release 2026.09.08-r5
+# Rocket — release 2026.09.08-r6
 
 Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
-Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Current publication status and acceptance limits are recorded in `RELEASE_R5.md`; `RELEASE_R4.md` and `RELEASE.md` preserve the earlier reports.
+Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Current publication status and acceptance limits are recorded in `RELEASE_R6.md`; `RELEASE_R5.md`, `RELEASE_R4.md` and `RELEASE.md` preserve the earlier reports.
 
-The follow-up changes are **deployed** on the client as r5. The latest CSS update keeps cabin controls in place if the MSDF font fails and enlarges the answer area on narrow landscape screens. The final activation passed 19 checks and retained all five pre-existing requests. See `FOLLOWUP_2026-09-08.md` and `VPN_AUDIT_2026-09-08.md`. Current health and rollback use `deploy/followup.py`; original activation scripts remain specific to r2. GPU visual acceptance is still incomplete.
+The follow-up changes are **deployed** on the client as r6. This release corrects the cabin PBR adapter and unsupported float render targets, and replaces the VPN backdrop drawing with a textured 3D Earth. The final activation passed 25 checks and retained all five pre-existing requests. See `FOLLOWUP_2026-09-08.md` and `VPN_AUDIT_2026-09-08.md`. Current health and rollback use `deploy/followup.py`; original activation scripts remain specific to r2. Local native WebGL 1 renders of the VPN finale and its post-processing pass without GL errors. Full browser 3D/HDR and physical-device performance acceptance remain incomplete.
 
 ## Changes
 
@@ -25,7 +25,7 @@ npm ci --prefix rocketcdn/tests --ignore-scripts
 npm test --prefix rocketcdn/tests
 ```
 
-43 JavaScript/geometry checks and 13 isolated API checks pass. Native PHP 8.3 validation on the client for the earlier r2 release covered 12 storage checks, 8 delivery checks, concurrent updates and 3 backup checks; it has not been repeated for the follow-up VPN package. The PHP.wasm suite skips interprocess `flock`. Test senders and test data are isolated.
+45 JavaScript/geometry checks and 13 isolated API checks pass. Native PHP 8.3 validation on the client for the earlier r2 release covered 12 storage checks, 8 delivery checks, concurrent updates and 3 backup checks; it has not been repeated for the follow-up VPN package. The PHP.wasm suite skips interprocess `flock`. Test senders and test data are isolated.
 
 The new browser review covers all 17 panel sections, the mobile drawer, VPN FAQ and theme, all seven native CDN cards, and measured VPN footer/admin content widths of 320/390/768/1440px. The game now explains failed 3D initialization on direct launch links in Russian and English. Earlier r2 review covered delivery retry and a real form request against isolated storage. These checks do **not** certify GPU rendering or real-device FPS: the available browser reports `GL_RENDERER = Disabled`.
 
@@ -35,6 +35,6 @@ This branch is an orphan snapshot, based on `gdeoko/OKO-TEAM` at `6b64106bdde748
 
 `deploy/activate.py --check` verifies release hashes, native PHP syntax and runtime write access. Activation backs up runtime data/configuration, drains old writers, atomically exchanges both roots, resets PHP caches and enables the delivery timer. `--rollback` restores code/configuration while retaining new records. Scripts under `deploy/` target the documented client paths and must not be run on unrelated hosts.
 
-`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r5 release, run `sudo python3 /var/www/rocket-releases/20260908-r5/deploy/followup.py health`. Its `rollback` action restores r4 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
+`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r6 release, run `sudo python3 /var/www/rocket-releases/20260908-r6/deploy/followup.py health`. Its `rollback` action restores r5 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
 
 The clean branch does not revoke credentials exposed in the original repository's history. Rotation of those broader OKO/GitHub access credentials is not established by this release. Photorealism, 8K output, exact Igloo parity and performance across physical devices remain unverified acceptance items.
