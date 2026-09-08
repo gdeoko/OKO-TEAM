@@ -57,7 +57,8 @@ def preflight():
                 if not (RELEASE / name).is_file() or hashlib.sha256((RELEASE / name).read_bytes()).hexdigest() != digest]
     if mismatch: raise RuntimeError('Release source mismatch: ' + ', '.join(mismatch[:15]))
     for site in SITES:
-        assert not (Path('/var/www') / site).is_symlink(), 'Already switched or unexpected root'
+        live = Path('/var/www') / site
+        assert not live.is_symlink() or live.resolve() == RELEASE / site, 'Unexpected active root'
         for p in (RELEASE / site).rglob('*.php'):
             if p.name != 'config.local.php': run('php', '-l', str(p))
     check = run('runuser', '-u', 'www-data', '--', 'php', '-r', "require '/var/www/rocketcdn/config.php'; echo json_encode(['external'=>RC_DATA==='/var/www/rocketcdn-data','admin'=>strlen((string)rc_cfg('admin_key'))>12,'writable'=>is_writable(RC_DATA)]);")
@@ -76,6 +77,7 @@ def configure():
         blocks.extend('location = /' + name + ' { return 404; }' for name in private)
         if site == 'rocketvpn':
             blocks.append('location = /api.php { include fastcgi_params; fastcgi_param SCRIPT_FILENAME /var/www/rocketcdn/api.php; fastcgi_pass unix:/run/php/php8.3-fpm.sock; }')
+            blocks.extend('location = ' + path + ' { return 302 https://t.me/RocketCompanyVPN_bot; }' for path in ['/bot', '/bot/'])
         changed, count = re.subn(r'(root\s+/var/www/' + site + r';)', lambda m: m[0] + '\n    ' + '\n    '.join(blocks), original, count=1)
         assert count == 1, 'Unexpected nginx root'
         nginx_conf(site).write_text(changed)

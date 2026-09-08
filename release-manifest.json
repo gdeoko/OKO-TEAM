@@ -6,7 +6,7 @@
   "rocketcdn/admin-operations.php": "fb656c57925b9c37c12165b5a2b57f26c9ec9dc67a399f7a763078d7ffb10ee5",
   "rocketcdn/admin.html": "d356c37a4571fd779fa38e6521242edd3bd22637dda1fa4d2b8db4a289df8352",
   "rocketcdn/app.html": "983b2a1e3512f5e4c5e36564f51794973d352f8c413a61c11745887fd8d4ff60",
-  "rocketcdn/index.html": "f511ae7c8480cc513815be6d991a9ecc6dacd75be501cdebd5e8d92d9e828356",
+  "rocketcdn/index.html": "9b2a312f7aea7e7d7c266c1929f1e46aa246a1fddf109bda123730dfcfa3140e",
   "rocketcdn/config.php": "253f3b61818a6344d8ea25f160f685ac5b76b11a3b2f867729853381bb31b530",
   "rocketcdn/cron.php": "9b977b12f3b68d63cd7b5b7fa6091b1ddd1f1b3094cd1ae0a5762219f04e47b3",
   "rocketcdn/delivery-worker.php": "5529e2f3ce97701d084f2885ca1de8566d9c1702b8b532d6fe9560fc6f46eb28",
@@ -50,5 +50,6 @@
   "rocketvpn/assets/rv-опознаватели.js": "ccd4e006750575809d39a7fc8869c67821a4c8c095a2dd281143ea2c15557725",
   "rocketvpn/assets/rv-пбр.js": "33c30159c13a9a0cb9dae01784ae29687068a266db53c4c628ce602c264aad74",
   "rocketvpn/assets/fonts/plexmono-cyr.woff2": "1d89462e86cb8e87e7e9d6f6635605bd7c3081baca6caaecee84916bf7b60edc",
-  "rocketvpn/assets/fonts/plexmono-lat.woff2": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22"
+  "rocketvpn/assets/fonts/plexmono-lat.woff2": "01d285447409c8a588692162439a038b8cbd7871309ee20267b0d2d91c6e8e22",
+  "rocketcdn/assets/rc-i18n.js": "2bdf500df7885fd3496256738de551af6153caff58b1d1694c04f83077727987"
 }
