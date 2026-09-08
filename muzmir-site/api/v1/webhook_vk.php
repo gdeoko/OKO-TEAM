@@ -151,7 +151,7 @@ function vk_cb_ack_then_process(string $type): void {
 
         // --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон + сохраняем вопрос ---
         // Ответ по существу бот даст утром (cron/chat_offhours_flush.php) или оператор.
-        if ($text !== '' && !chat_is_working_hours()) {
+        if ($text !== '' && chat_offhours_hold()) {
             $d = chat_dialog_get($sessionKey);
             if ((int) ($d['pending_offhours'] ?? 0) !== 1) {
                 $nm  = vk_user_name($peer);

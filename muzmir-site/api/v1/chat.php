@@ -108,7 +108,7 @@ if ($action === 'upload') {
                   'understood' => true, 'reply' => '', 'muted' => $muted]);
     }
     // Вне рабочего времени — шаблон, вопрос сохранён (ответим утром).
-    if (!chat_is_working_hours()) {
+    if (chat_offhours_hold()) {
         $tpl = chat_offhours_template($greetName);
         if ((int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) !== 1) {
             chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s')]);
@@ -201,7 +201,7 @@ if (($muted = chat_bot_muted($sessionKey)) !== '') {
 }
 
 // --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон, вопрос сохранён ---
-if (!chat_is_working_hours()) {
+if (chat_offhours_hold()) {
     $d = chat_dialog_get($sessionKey);
     $tpl = chat_offhours_template($greetName);
     if ((int) ($d['pending_offhours'] ?? 0) !== 1) {
@@ -321,6 +321,30 @@ function chat_maybe_escalate(string $text, ?int $uid, string $sessionKey, string
                  'роспотребнадзор', 'в суд', 'исковое', 'полици'];
     $hit = false;
     foreach ($triggers as $w) if (mb_strpos($t, $w) !== false) { $hit = true; break; }
+
+    /* ДЕНЬГИ ПРОСЯТ ЖИВЫМИ СЛОВАМИ, А НЕ ТОЧНОЙ ФРАЗОЙ ИЗ СПИСКА.
+     *
+     * Список ловил «верните деньги» буквально — и пропускал «Верните мне
+     * деньги», «верните пожалуйста деньги», «хочу вернуть свои деньги».
+     * Проверено 8 сентября: на «Верните мне деньги, я оплатил дважды!»
+     * уведомление владельцу не уходило вовсе, а бот в ответ обещал «передать
+     * в финансовый отдел для оформления возврата». Ровно тот случай, ради
+     * которого оператора и зовут (правило 8а: возвраты проводит только
+     * владелец), проходил мимо него.
+     *
+     * Поэтому про деньги смотрим не фразу, а совпадение смысла: «вернуть» и
+     * «деньги» где угодно в сообщении, двойная оплата, лишнее списание. */
+    if (!$hit) {
+        $money = (mb_strpos($t, 'деньг') !== false || mb_strpos($t, 'оплат') !== false
+               || mb_strpos($t, 'платёж') !== false || mb_strpos($t, 'платеж') !== false
+               || mb_strpos($t, 'списал') !== false || mb_strpos($t, 'списан') !== false);
+        $back  = (mb_strpos($t, 'верн') !== false || mb_strpos($t, 'возврат') !== false
+               || mb_strpos($t, 'обратно') !== false);
+        $twice = (mb_strpos($t, 'дважды') !== false || mb_strpos($t, 'два раза') !== false
+               || mb_strpos($t, 'двойн') !== false || mb_strpos($t, 'повторно списа') !== false
+               || mb_strpos($t, 'лишн') !== false);
+        if ($money && ($back || $twice)) $hit = true;
+    }
     if (!$hit) return;
     try {
         $already = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='escalated'", [$sessionKey]);
