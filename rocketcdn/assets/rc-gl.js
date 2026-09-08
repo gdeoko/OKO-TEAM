@@ -203,6 +203,44 @@ g.RC_GL = {
        Класс на документе прячет всё, что без объёма не работает:
        кнопки полёта не должны обещать то, чего не случится. */
     document.documentElement.classList.add("rc-no3d", "rc-no-webgl");
+    // Explain a failed direct game launch instead of silently showing the landing page.
+    function explainFlight() {
+      var query = new URLSearchParams(location.search);
+      if (query.get("flight") !== "1" || document.getElementById("rc-flight-unavailable")) return;
+      var box = document.createElement("section");
+      box.id = "rc-flight-unavailable";
+      box.setAttribute("aria-labelledby", "rc-flight-unavailable-title");
+      box.setAttribute("role", "status");
+      box.style.cssText = "position:fixed;z-index:10000;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));max-width:480px;margin:auto;padding:24px;box-sizing:border-box;border:1px solid #8296bd;border-radius:18px;background:#0c1527;color:#eff4ff;box-shadow:0 16px 60px #0008;font:16px/1.5 system-ui;max-height:80vh;overflow:auto";
+      var title = document.createElement("h2"), message = document.createElement("p"), close = document.createElement("button"), back = document.createElement("a");
+      title.id = "rc-flight-unavailable-title";
+      title.style.cssText = "margin:0 0 12px;font:600 22px/1.3 system-ui;color:inherit";
+      message.style.cssText = "margin:0 0 20px;color:#cbd7ed";
+      close.type = "button";
+      close.style.cssText = "font:600 16px/1.4 system-ui;padding:12px 16px;min-height:44px;border:1px solid #c3d4f5;border-radius:10px;background:#e5edff;color:#102342;cursor:pointer";
+      back.href = "https://rocketvpn.top/";
+      back.style.cssText = "display:inline-block;min-height:44px;box-sizing:border-box;padding:12px;color:#d9e7ff;text-decoration:underline;font:16px/1.4 system-ui";
+      function label() {
+        var ru = document.documentElement.lang !== "en";
+        title.textContent = ru ? "Полёт недоступен в этом браузере" : "Flight is unavailable in this browser";
+        message.textContent = ru ? "Браузер не смог запустить 3D-графику. Попробуйте открыть игру в другом браузере. Сайт и заявки продолжают работать." : "The browser could not start 3D graphics. Try opening the game in another browser. The website and contact forms remain available.";
+        close.textContent = ru ? "Остаться на сайте" : "Continue to the website";
+        back.textContent = ru ? "Вернуться в VPN" : "Return to VPN";
+      }
+      label();
+      document.addEventListener("rc:lang", label);
+      close.onclick = function () {
+        document.removeEventListener("rc:lang", label);
+        box.remove();
+        var home = document.querySelector('a[href="#top"]');
+        if (home) home.focus();
+      };
+      box.appendChild(title); box.appendChild(message); box.appendChild(close);
+      if (query.get("from") === "vpn") box.appendChild(back);
+      document.body.appendChild(box);
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", explainFlight, {once:true});
+    else explainFlight();
     setTimeout(function () { fire("rc:no3d"); }, 0);
     return;
   }

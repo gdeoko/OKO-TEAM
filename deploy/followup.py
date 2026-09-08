@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Static frontend follow-up for the existing Rocket r2 client installation.
+"""Static frontend follow-up for the existing Rocket client installation.
 
 No credentials, runtime data, PHP application code or nginx routes are changed.
-Run --verify-source locally; server actions require an existing authorized shell.
+Run verify-source locally; server actions require an existing authorized shell.
 """
 from pathlib import Path, PurePosixPath
 import argparse
@@ -11,6 +11,7 @@ import hashlib
 import http.client
 import json
 import os
+import re
 import shutil
 import ssl
 import subprocess
@@ -19,8 +20,13 @@ from urllib.parse import quote
 
 SOURCE = Path(__file__).resolve().parent.parent
 WEB = Path('/var/www')
-BASE = WEB / 'rocket-releases/20260908-r2'
-RELEASE = WEB / 'rocket-releases/20260908-r3'
+CONFIG = json.loads((SOURCE / 'deploy/followup-manifest.json').read_text())
+BASE_NAME = CONFIG.get('base_release', '20260908-r2')
+RELEASE_NAME = CONFIG['release']
+if not all(re.fullmatch(r'[0-9]{8}-r[0-9]+', name) for name in (BASE_NAME, RELEASE_NAME)) or BASE_NAME == RELEASE_NAME:
+    raise RuntimeError('Invalid release names')
+BASE = WEB / 'rocket-releases' / BASE_NAME
+RELEASE = WEB / 'rocket-releases' / RELEASE_NAME
 STAGE = WEB / 'rocket-stage/20260908-r2'
 SITES = ('rocketvpn', 'rocketcdn')
 
@@ -95,7 +101,7 @@ def prepare():
     active_at(BASE)
     verify(BASE, 'base_sha256')
     if RELEASE.exists():
-        raise RuntimeError('r3 directory already exists; inspect it before continuing')
+        raise RuntimeError('Release directory already exists; inspect it before continuing')
     # Preserve ownership, modes and private runtime symlinks in the existing release.
     run('cp', '-a', str(BASE), str(RELEASE))
     copy_frontends(RELEASE)

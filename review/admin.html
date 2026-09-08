@@ -515,6 +515,7 @@ textarea.поле { min-height: 150px; resize: vertical; font-family: ui-monospa
 </nav>
 
 <main class="нет" id="полотно">
+  <p id="состояниеДанных" role="status" aria-live="polite"></p>
 
   <!-- ═══ Дашборд ═══ -->
   <section class="раздел вкл" data-р="дашборд">
@@ -690,15 +691,23 @@ var состояние = {
    Всё POST-ом и всё с пропуском в теле: заголовок потребовал бы
    отдельного разрешения на чужом домене, а тело едет и так. */
 function послать(адрес, действие, тело) {
-  return fetch(адрес + "?action=" + encodeURIComponent(действие), {
+  var controller = window.AbortController ? new window.AbortController() : null, timer;
+  var request = fetch(адрес + "?action=" + encodeURIComponent(действие), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(тело),
-    credentials: "omit"
+    credentials: "omit",
+    signal: controller ? controller.signal : undefined
   }).then(function (о) {
     if (!о.ok) throw new Error("код " + о.status);
     return о.json();
   });
+  var deadline = new Promise(function (_resolve, reject) {
+    timer = setTimeout(function () { if (controller) controller.abort(); reject(new Error("timeout")); }, 15000);
+  });
+  return Promise.race([request, deadline]).then(function (result) {
+    clearTimeout(timer); return result;
+  }, function (error) { clearTimeout(timer); throw error; });
 }
 
 function зов(действие, данные) {
@@ -709,7 +718,8 @@ function зов(действие, данные) {
     /* Свой путь не ответил. Пробуем боевой ровно один раз за сеанс:
        бесконечная чехарда двух адресов на каждом запросе стоила бы
        вдвое дороже и ничего бы не чинила. */
-    if (искали || API === СВОИ[1]) return { ok: false, error: "сеть" };
+    var чтение = ["обзор", "leads", "stats", "operations", "nodes", "content", "связка", "selftest"];
+    if (чтение.indexOf(действие) < 0 || искали || API === СВОИ[1]) return { ok: false, error: "сеть" };
     искали = true;
     API = СВОИ[1];
     return послать(API, действие, тело).catch(function () {
@@ -908,19 +918,31 @@ function подсказки(холст) {
 }
 
 /* ── Загрузка данных ───────────────────────────────────────*/
+var загрузкаЗапрос = 0;
 function загрузить() {
+  var номер = ++загрузкаЗапрос, статус = $("#состояниеДанных");
+  статус.textContent = "Загружаем данные…";
   var ждём = [зов("обзор", { days: состояние.дней }), зов("leads", {})];
   ["cdn", "vpn", "game"].forEach(function (с) {
     ждём.push(зов("stats", { days: состояние.дней, site: с }));
   });
   return Promise.all(ждём).then(function (о) {
-    if (о[0] && о[0].ok) состояние.обзор = о[0];
-    if (о[1] && о[1].ok) состояние.заявки = о[1].items || [];
+    if (номер !== загрузкаЗапрос) return false;
+    if (!о.every(function (ответ) { return ответ && ответ.ok; })) {
+      статус.textContent = состояние.обзор
+        ? "Обновить данные не удалось. Показаны ранее загруженные значения; выбранный период ещё не применён."
+        : "Данные не получены. Проверьте соединение и нажмите обновление.";
+      return false;
+    }
+    состояние.обзор = о[0];
+    состояние.заявки = о[1].items || [];
     ["cdn", "vpn", "game"].forEach(function (с, i) {
-      if (о[2 + i] && о[2 + i].ok) состояние.по[с] = о[2 + i];
+      состояние.по[с] = о[2 + i];
     });
+    статус.textContent = "Данные обновлены: " + new Date().toLocaleTimeString("ru-RU");
     нарисовать();
     операции();
+    return true;
   });
 }
 
@@ -1467,10 +1489,11 @@ function операции() {
 
 /* ── Переключение разделов ─────────────────────────────────*/
 function кРазделу(имя) {
+  var п = $$(".пункт").find(function (item) { return item.dataset.р === имя; });
+  if (!п) return;
   состояние.раздел = имя;
   $$(".пункт").forEach(function (п) { п.classList.toggle("вкл", п.dataset.р === имя); });
   $$(".раздел").forEach(function (р) { р.classList.toggle("вкл", р.dataset.р === имя); });
-  var п = $('.пункт[data-р="' + имя + '"]');
   $("#гдеМы").textContent = "· " + (п ? $("span", п).textContent : имя);
   if (innerWidth <= 1080) закрытьМеню();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1491,17 +1514,35 @@ function кРазделу(имя) {
   if (операционныеРазделы.indexOf(имя) >= 0) операции();
 }
 
-function открытьМеню() { document.body.classList.add("меню"); $("#бургер").setAttribute("aria-expanded", "true"); }
-function закрытьМеню() { document.body.classList.remove("меню"); $("#бургер").setAttribute("aria-expanded", "false"); }
+function обновитьМеню() {
+  var mobile = innerWidth <= 1080;
+  if (!mobile) document.body.classList.remove("меню");
+  var visible = mobile ? document.body.classList.contains("меню") : !document.body.classList.contains("узко");
+  $("#бургер").setAttribute("aria-expanded", String(visible));
+  $("#бок").inert = !visible;
+  $("#бок").setAttribute("aria-hidden", String(!visible));
+  $("#полотно").inert = mobile && visible;
+}
+function открытьМеню() {
+  document.body.classList.add("меню"); обновитьМеню();
+  var first = $(".пункт.вкл", $("#бок")) || $(".пункт", $("#бок"));
+  if (first) first.focus();
+}
+function закрытьМеню() {
+  var wasOpen = document.body.classList.contains("меню");
+  document.body.classList.remove("меню"); обновитьМеню();
+  if (wasOpen) $("#бургер").focus();
+}
 
 /* ── Запуск ────────────────────────────────────────────────*/
 function вПанель() {
   $("#вход").classList.add("нет");
   ["#шапка", "#бок", "#полотно"].forEach(function (с) { $(с).classList.remove("нет"); });
+  обновитьМеню();
   var хеш = (location.hash || "").replace("#", "");
   try { хеш = decodeURIComponent(хеш); } catch (e) { хеш = ""; }
   загрузить().then(function () {
-    if (хеш && $('.пункт[data-р="' + хеш + '"]')) кРазделу(хеш);
+    if (хеш) кРазделу(хеш);
   });
 }
 
@@ -1511,31 +1552,49 @@ function войти(пароль) {
     if (!о.ok) {
       $("#входОшибка").textContent = о.error === "default_key"
         ? "На сервере стоит пароль по умолчанию, панель заблокирована."
-        : "Пароль не подошёл.";
+        : о.error === "сеть" ? "Сервер не ответил. Проверьте соединение и повторите вход." : "Пароль не подошёл.";
       состояние.пароль = "";
       return false;
     }
     if (о.pass) {
       состояние.пропуск = о.pass;
       try { localStorage.setItem("rocket-review-pass", о.pass); } catch (e) {}
+      состояние.пароль = "";
     }
+    $("#пароль").value = "";
     вПанель();
     return true;
   });
 }
 
-$("#войти").onclick = function () { войти($("#пароль").value.trim()); };
+$("#войти").onclick = function () {
+  var button = $("#войти"); if (button.disabled) return;
+  button.disabled = true; $("#входОшибка").textContent = "";
+  войти($("#пароль").value.trim()).then(function () { button.disabled = false; });
+};
 $("#пароль").addEventListener("keydown", function (е) { if (е.key === "Enter") $("#войти").click(); });
 
 $("#бургер").onclick = function () {
   if (innerWidth > 1080) {
     document.body.classList.toggle("узко");
+    обновитьМеню();
     return;
   }
   document.body.classList.contains("меню") ? закрытьМеню() : открытьМеню();
 };
 $("#штора").onclick = закрытьМеню;
-document.addEventListener("keydown", function (е) { if (е.key === "Escape") закрытьМеню(); });
+document.addEventListener("keydown", function (е) {
+  if (е.key === "Escape") закрытьМеню();
+  if (е.key !== "Tab" || !document.body.classList.contains("меню") || innerWidth > 1080) return;
+  var items = [$("#бургер")].concat($$(".пункт, a[href], button", $("#бок"))).filter(function (item) {
+    return !item.disabled && item.tabIndex >= 0 && item.getClientRects().length;
+  });
+  var first = items[0], last = items[items.length - 1], active = document.activeElement;
+  if (!items.length) return;
+  if (items.indexOf(active) < 0 || (!е.shiftKey && active === last) || (е.shiftKey && active === first)) {
+    е.preventDefault(); (е.shiftKey ? last : first).focus();
+  }
+});
 
 $$(".пункт").forEach(function (п) {
   п.setAttribute("role", "button"); п.tabIndex = 0;
@@ -1557,7 +1616,7 @@ $("#обновить").onclick = function () {
   з.style.transition = "transform .7s var(--ход)";
   з.style.transform = "rotate(360deg)";
   setTimeout(function () { з.style.transition = ""; з.style.transform = ""; }, 720);
-  загрузить().then(function () { тост("Данные обновлены"); });
+  загрузить().then(function (ok) { if (ok) тост("Данные обновлены"); });
 };
 
 $("#тема").onclick = function () {
@@ -1630,6 +1689,7 @@ $("#контентСброс").onclick = function () {
    и без пересчёта он растягивается мылом. */
 var таймерРазмера;
 addEventListener("resize", function () {
+  обновитьМеню();
   clearTimeout(таймерРазмера);
   таймерРазмера = setTimeout(нарисовать, 260);
 });
