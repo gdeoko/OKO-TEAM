@@ -8,10 +8,10 @@ import json, os
 OUT = os.path.dirname(os.path.abspath(__file__))
 FUNNEL = "dieselcompany.pro"
 
-# --- воронка + «для поиска» (не хэштеги) — общий хвост описания ---
+# --- воронка + «для поиска» (не хэштеги) - общий хвост описания ---
 def desc(title, body, keys):
     return (body.strip() +
-            "\n\nНапишите город в личку — посчитаем под ключ.\n" + FUNNEL +
+            "\n\nНапишите город в личку - посчитаем под ключ.\n" + FUNNEL +
             "\n\n" + "для поиска: " + ", ".join(keys))
 
 REELS = {

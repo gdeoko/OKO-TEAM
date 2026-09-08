@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# qa_score.py <WORKDIR> <SPEC.json>  — 15-точечная проверка виральности по 100-балльной шкале.
+# qa_score.py <WORKDIR> <SPEC.json>  - 15-точечная проверка виральности по 100-балльной шкале.
 # Оценивает СОБРАННЫЙ ролик (reel.mp4 + meta.json) против спеки и реестров «ноль повторов».
 # Публикуем только при total >= GATE (85). Печатает JSON-отчёт и код возврата 0/1.
 import json,os,sys,re,subprocess,hashlib
@@ -23,6 +23,12 @@ def load(p,default=None):
 def read(p):
     try: return open(p,encoding="utf-8").read()
     except Exception: return ""
+
+ДЛИННОЕ_ТИРЕ = "\u2014"   # его в наших текстах не бывает никогда
+
+def тире_есть(*тексты):
+    """Длинное тире в тексте, который увидит человек. Это стоп, а не минус балл."""
+    return any(ДЛИННОЕ_ТИРЕ in (t or "") for t in тексты)
 
 def score(W,SPEC):
     spec=load(SPEC,{}) or {}
@@ -94,16 +100,20 @@ def score(W,SPEC):
     ok_title=bool(title) and len(title)<=100 and "\\u" not in title and not re.search(r"[Ð-ÿ]{3,}",title)
     R.append(("15.title_clean",5 if ok_title else 0,5,f"{len(title)}c"))
     total=sum(g for _,g,_,_ in R)
-    return total,R,{"dur":D,"music":mk,"combo":sighash,"theme":th,"uniq_mech":uniq}
+    тире=тире_есть(title,desc,meta.get("caption"),meta.get("yt_desc"))
+    return total,R,{"dur":D,"music":mk,"combo":sighash,"theme":th,"uniq_mech":uniq,"тире":тире}
 
 if __name__=="__main__":
     W,SPEC=sys.argv[1],sys.argv[2]
     total,R,info=score(W,SPEC)
-    print(f"QA SCORE: {total}/100   GATE {GATE}   {'PASS ✔' if total>=GATE else 'FAIL �’'}")
+    тире=info.get("тире")
+    прошла = total>=GATE and not тире
+    print(f"QA SCORE: {total}/100   GATE {GATE}   {'PASS' if прошла else 'FAIL'}")
+    if тире: print("  СТОП: длинное тире в заголовке или описании. Только дефис.")
     for name,g,m,note in R:
         bar="●"*g+"·"*(m-g)
         print(f"  {name:<20} {g:>2}/{m:<2} {bar:<12} {note}")
     print("INFO",json.dumps(info,ensure_ascii=False))
-    out={"total":total,"gate":GATE,"pass":total>=GATE,"points":{n:{"got":g,"max":m,"note":x} for n,g,m,x in R},"info":info}
+    out={"total":total,"gate":GATE,"pass":прошла,"тире":bool(тире),"points":{n:{"got":g,"max":m,"note":x} for n,g,m,x in R},"info":info}
     json.dump(out,open(os.path.join(W,"qa_report.json"),"w"),ensure_ascii=False,indent=1)
-    sys.exit(0 if total>=GATE else 1)
+    sys.exit(0 if прошла else 1)
