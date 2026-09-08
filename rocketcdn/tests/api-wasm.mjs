@@ -6,7 +6,7 @@ const source=fileURLToPath(new URL('../',import.meta.url));
 import assert from 'node:assert/strict';
 const php=new PHP(await loadNodeRuntime('8.3',{emscriptenOptions:{processId:process.pid}}));
 php.mkdir('/app');php.mkdir('/data');
-for(const f of ['config.php','storage.php','api.php'])php.writeFile('/app/'+f,fs.readFileSync(source+f));
+for(const f of ['config.php','storage.php','api.php','delivery.php','admin-operations.php','vpn-content-defaults.json'])php.writeFile('/app/'+f,fs.readFileSync(source+f));
 php.writeFile('/app/config.local.php',`<?php return ['data_dir'=>'/data','admin_key'=>'offline-test-only-key','tg_admins'=>[]];`);
 async function call(action,body){const r=await php.run({scriptPath:'/app/api.php',relativeUri:'/?action='+action,method:'POST',headers:{'Content-Type':'application/json'},body:new TextEncoder().encode(JSON.stringify(body))});assert.equal(r.exitCode,0,r.errors);return {status:r.httpStatusCode,data:JSON.parse(r.text)};}
 const e={id:'test:1',t:'длинноесобытиетеста',l:'юникод'};
@@ -22,4 +22,18 @@ let r=await call('nodes_save',{key:'offline-test-only-key',add:JSON.stringify([[
 r=await call('nodes_save',{key:'offline-test-only-key',add:JSON.stringify([['Тест',0,0,0,0]]),hide:'["Скрыт"]'});assert.equal(r.data.ok,true);let nodes=JSON.parse(php.readFileAsText('/data/nodes.json'));assert.equal(nodes.add[0][3],0);assert.equal(nodes.hide[0],'Скрыт');console.log('PASS: node zero values and hidden list persist');
 php.mkdir('/data/content.json');r=await call('content_save',{key:'offline-test-only-key',content:{a:1}});assert.equal(r.status,503);assert.equal(r.data.ok,false);console.log('PASS: failed admin content write returns 503');
 
+php.writeFile('/data/leads.json','{"items":[]}');
+r=await call('lead',{name:'Offline',contact:'test@example.invalid',consent:1});assert.equal(r.data.ok,true);let leads=JSON.parse(php.readFileAsText('/data/leads.json'));assert.equal(Object.keys(leads.items[0].delivery).length,3);assert.equal(leads.items[0].delivery.telegram.status,'pending');console.log('PASS: API persists lead and delivery intent before success');
+r=await call('operations',{});assert.equal(r.data.ok,false);console.log('PASS: operations rejects unauthenticated access');
+r=await call('operations',{key:'offline-test-only-key'});assert.equal(r.data.ok,true);assert.equal(r.data.jobs.length,3);assert.equal(r.data.release.version,'2026.09.08-r2');console.log('PASS: admin sees real persisted delivery state');
+r=await call('settings_save',{key:'offline-test-only-key',brand:'Rocket',lk_url:'javascript:alert(1)',report_hour:9});assert.equal(r.status,422);console.log('PASS: unsafe settings URL rejected');
+const defaults=(await call('content',{site:'vpn'})).data.content;assert.equal(Object.keys(defaults).length,6);
+const copy={'text.1':'<script>alert("x")</script> & Текст VPN'};
+r=await call('content_save',{key:'offline-test-only-key',site:'vpn',content:copy});assert.equal(r.data.ok,true);
+assert.deepEqual((await call('content',{site:'vpn'})).data.content,copy);
+php.mkdir('/vpn');for(const f of ['content.php','frame.html'])php.writeFile('/vpn/'+f,fs.readFileSync(source+'../rocketvpn/'+f));
+const page=await php.run({code:"<?php putenv('RV_CONTENT_PATH=/data/content-vpn.json'); require '/vpn/content.php'; echo rv_frame();"});
+assert.equal(page.exitCode,0,page.errors);assert.ok(page.text.includes('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; Текст VPN'));assert.ok(!page.text.includes(copy['text.1']));console.log('PASS: VPN content persists and renders as escaped plain text');
+r=await call('content_save',{key:'offline-test-only-key',site:'vpn',content:{'unknown.key':'bad'}});assert.equal(r.status,422);assert.deepEqual(JSON.parse(php.readFileAsText('/data/content-vpn.json')),copy);console.log('PASS: invalid VPN content leaves published copy unchanged');
+await call('content_reset',{key:'offline-test-only-key',site:'vpn'});assert.deepEqual((await call('content',{site:'vpn'})).data.content,defaults);console.log('PASS: VPN content reset restores template defaults');
 process.exit(0);

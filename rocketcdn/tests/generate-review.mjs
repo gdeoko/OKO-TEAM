@@ -1,0 +1,21 @@
+import {PHP} from '@php-wasm/universal';import {loadNodeRuntime} from '@php-wasm/node';
+import fs from 'node:fs';import {fileURLToPath} from 'node:url';
+const src=fileURLToPath(new URL('../',import.meta.url)),out=fileURLToPath(new URL('../../review/',import.meta.url));
+const php=new PHP(await loadNodeRuntime('8.3',{emscriptenOptions:{processId:process.pid}}));php.mkdir('/app');php.mkdir('/data');
+for(const name of ['config.php','storage.php','api.php','delivery.php','admin-operations.php','vpn-content-defaults.json'])php.writeFile('/app/'+name,fs.readFileSync(src+name));
+php.writeFile('/app/config.local.php',`<?php return ['data_dir'=>'/data','admin_key'=>'isolated-review-only','tg_admins'=>[]];`);
+const support={id:'demo-001',name:'Тестовое обращение',contact:'@example',task:'Нужна помощь с подключением устройства.',site:'cdn',kind:'support',status:'new',ts:'2026-09-08 12:00:00',delivery:{telegram:{status:'failed',attempts:8,next:0}}};
+php.writeFile('/data/leads.json',JSON.stringify({items:[support]}));
+async function call(action,body={}){const r=await php.run({scriptPath:'/app/api.php',relativeUri:'/?action='+encodeURIComponent(action),method:'POST',body:new TextEncoder().encode(JSON.stringify({key:'isolated-review-only',...body}))});return JSON.parse(r.text);}
+const data={};for(const action of ['обзор','leads','operations','nodes','content'])data[action]=await call(action,{days:7});
+data['content-vpn']=await call('content',{site:'vpn'});
+for(const site of ['cdn','vpn','game'])data['stats-'+site]=await call('stats',{days:7,site});
+data.selftest={ok:true,mail_configured:false,tg_configured:false,data_writable:true};
+data['связка']={ok:true};
+let html=fs.readFileSync(src+'admin.html','utf8');
+html=html.replaceAll('src="assets/','src="cdn/assets/').replaceAll('href="assets/','href="cdn/assets/');
+const mock=`<script>window.ROCKET_REVIEW=true;var fixture=${JSON.stringify(data).replaceAll('<','\\u003c')};window.fetch=function(url,opts){var action=new URL(url,location.href).searchParams.get('action'),body=JSON.parse(opts.body||'{}'),r=fixture[action==='stats'?'stats-'+body.site:action==='content'&&body.site==='vpn'?'content-vpn':action]||{ok:true};if(action==='delivery_retry'){fixture.operations.jobs.forEach(j=>{if(j.id===body.id&&j.channel===body.channel){j.status='pending';j.attempts=0;}})}if(action==='lead_status'){fixture.operations.support.forEach(t=>{if(t.id===body.id)t.status=body.status})}if(action==='settings_save'){fixture.operations.settings=body}return Promise.resolve(new Response(JSON.stringify(r),{status:200,headers:{'Content-Type':'application/json'}}));};</script>`;
+html=html.replace('<body>','<body>'+mock+'<div style="position:fixed;bottom:0;left:0;right:0;z-index:1000;background:#583d13;color:white;text-align:center;font:10px/16px system-ui;pointer-events:none">Предпросмотр интерфейса · искусственные данные</div>');
+html=html.replaceAll('rc-пропуск','rocket-review-pass').replace('})();\n</script>','вПанель();\n})();\n</script>');
+fs.mkdirSync(out,{recursive:true});fs.writeFileSync(out+'admin.html',html);
+console.log('Review admin generated from real isolated API responses.');process.exit(0);

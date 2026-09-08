@@ -7,6 +7,7 @@
    ══════════════════════════════════════════════════════════ */
 
 require __DIR__ . '/config.php';
+require __DIR__ . '/delivery.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
@@ -382,6 +383,7 @@ if ($action === 'lead' || $action === 'callback') {
         'page'    => mb_substr(inp('page'), 0, 120),
     ];
 
+    $lead['delivery'] = rc_delivery_jobs($lead);
     rc_api_update(RC_LEADS, function ($d) use ($lead) {
         $d['items'] = $d['items'] ?? [];
         $d['items'][] = $lead;
@@ -394,68 +396,15 @@ if ($action === 'lead' || $action === 'callback') {
         return $d;
     });
 
-    /* Заявка записана - человеку больше ждать нечего. Отбивки в
-       Телеграм и письма идут уже после ответа. */
-    rc_ответить_и_продолжить(['ok' => true, 'id' => $lead['id']]);
+    out(['ok' => true, 'id' => $lead['id']]);
 
-    /* В Телеграм */
-    $имяСайта = rc_sites()[$lead['site']] ?? 'Rocket CDN';
-    $title = ($lead['kind'] === 'callback' ? 'Заявка на звонок' : 'Новая заявка')
-           . ' · ' . $имяСайта;
-    $txt = "<b>{$title}</b>\n\n"
-         . "Имя: <b>" . htmlspecialchars($name) . "</b>\n"
-         . "Контакт: <code>" . htmlspecialchars($contact) . "</code>\n"
-         . ($company ? "Компания: " . htmlspecialchars($company) . "\n" : '')
-         . ($topic   ? "Направление: " . htmlspecialchars($topic) . "\n" : '')
-         . ($task    ? "\n" . htmlspecialchars($task) . "\n" : '')
-         . "\nВремя: " . date('d.m.Y H:i');
-
-    /* Кнопок «Позвонить» и «Ответить письмом» здесь больше нет.
-
-       Телеграм принимает в кнопке-ссылке только http, https и tg://.
-       На tel: и mailto: он отвечает «Bad Request: inline keyboard
-       button URL is invalid» и НЕ отправляет сообщение целиком. Форма
-       требует телефон или почту, значит одна из этих кнопок была в
-       каждой заявке - и отбивка не уходила ни разу. Человек оставлял
-       заявку, видел «Заявка принята», а в чате команды было пусто.
-
-       Контакт и так стоит в тексте кодом: Телеграм сам делает номер
-       нажимаемым, а по длинному нажатию строка копируется целиком. */
-    $kb = [];
-    $kb[] = [['text' => 'В работе', 'callback_data' => 'lead_work_' . $lead['id']],
-             ['text' => 'Закрыть',  'callback_data' => 'lead_done_' . $lead['id']]];
-    rc_notify($txt, ['inline_keyboard' => $kb], 'tg_topic_form');
-
-    /* Письмо себе */
-    $rows = [
-        'Имя'         => $name,
-        'Контакт'     => $contact,
-        'Компания'    => $company,
-        'Направление' => $topic,
-        'Задача'      => $task,
-        'Страница'    => $lead['page'],
-    ];
-    rc_mail(rc_cfg('mail_to'), $title . ': ' . $name, rc_mail_tpl($title, $rows));
-
-    /* Письмо клиенту, если оставил почту */
-    if ($isMail) {
-        $hi = $lead['lang'] === 'en'
-            ? ['Request received', 'We have your request and will reply shortly. Meanwhile you can create an account and look around the dashboard.', 'Open the dashboard']
-            : ['Заявка принята', 'Мы получили обращение и скоро свяжемся. Пока можно завести аккаунт и осмотреться в личном кабинете.', 'Открыть личный кабинет'];
-        rc_mail($contact, $hi[0] . ' · Rocket CDN', rc_mail_tpl(
-            $hi[0],
-            ['Имя' => $name, 'Контакт' => $contact, 'Направление' => $topic],
-            $hi[1],
-            ['text' => $hi[2], 'url' => rc_cfg('lk_url')]
-        ));
-    }
-
-    exit;
 }
 
 /* ══ Контент сайта для фронта ═════════════════════════════ */
 if ($action === 'content') {
-    $c = rc_json_read(RC_CONTENT, []);
+    $vpn = inp('site') === 'vpn';
+    $c = rc_json_read($vpn ? RC_DATA . '/content-vpn.json' : RC_CONTENT, []);
+    if ($vpn && !$c) $c = json_decode((string)file_get_contents(__DIR__ . '/vpn-content-defaults.json'), true);
     out(['ok' => true, 'content' => $c ?: null]);
 }
 
@@ -483,6 +432,8 @@ if ($action === 'logout') {
    времени в одном кадре. Здесь считается коротко - только то, что
    стоит на плитках дашборда, - а подробности каждый сайт отдаёт по
    своему запросу stats. */
+require __DIR__ . '/admin-operations.php';
+
 if ($action === 'обзор') {
     need_key();
     $days = max(1, min(90, (int)inp('days', 14)));
@@ -657,13 +608,19 @@ if ($action === 'content_save') {
     need_key();
     $c = $body['content'] ?? null;
     if (!is_array($c)) out(['ok' => false, 'error' => 'content']);
-    rc_api_write(RC_CONTENT, $c);
+    if (inp('site') === 'vpn') {
+        $defaults = json_decode((string)file_get_contents(__DIR__ . '/vpn-content-defaults.json'), true);
+        foreach ($c as $key => $value) if (!isset($defaults[$key]) || !is_string($value) || mb_strlen($value) > 2000) {
+            http_response_code(422); out(['ok' => false, 'error' => 'content']);
+        }
+        rc_api_write(RC_DATA . '/content-vpn.json', $c);
+    } else rc_api_write(RC_CONTENT, $c);
     out(['ok' => true]);
 }
 
 if ($action === 'content_reset') {
     need_key();
-    rc_api_write(RC_CONTENT, []);
+    rc_api_write(inp('site') === 'vpn' ? RC_DATA . '/content-vpn.json' : RC_CONTENT, []);
     out(['ok' => true]);
 }
 

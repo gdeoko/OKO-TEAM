@@ -3486,3 +3486,14 @@ html.рв-кабина-есть .рв-фин h3 {
 
    Правило оставлено записью, а не пустым местом: следующий заход не
    должен вернуть карточки обратно как «недостающий текст». */
+
+/* Readable document when the browser cannot create a graphics context. */
+html.rv-no-webgl .rv-мир,html.rv-no-webgl .rv-манифест{display:none!important}
+html.rv-no-webgl .rv-акт{height:auto!important;min-height:0!important}
+html.rv-no-webgl .rv-акт>.rv-кадр{position:relative!important;height:auto!important;min-height:0!important}
+html.rv-no-webgl .rv-акт>.rv-кадр>.rv-слой{position:relative!important;inset:auto!important;transform:none!important;opacity:1!important;visibility:visible!important;max-width:1050px;width:100%;height:auto!important;max-height:none!important;margin:auto;padding:clamp(40px,7vw,88px) max(24px,5vw);box-sizing:border-box}
+html.rv-no-webgl .rv-слой>[data-лист]{opacity:1!important;visibility:visible!important;transform:none!important;position:relative!important;grid-area:auto!important}
+html.rv-no-webgl .rv-визитка{position:relative!important;inset:auto!important;margin:0 auto;padding:76px max(24px,5vw) 0;max-width:1050px;box-sizing:border-box}
+html.rv-no-webgl .rv-заг{font-size:clamp(34px,6vw,72px);line-height:1.06}
+html.rv-no-webgl .rv-абз,html.rv-no-webgl .rv-сноска{max-width:70ch}
+html.rv-no-webgl .rv-акт[data-акт="прокол"],html.rv-no-webgl .rv-акт[data-акт="пуск"]{display:none!important}

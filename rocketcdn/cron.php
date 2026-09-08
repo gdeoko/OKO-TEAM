@@ -12,6 +12,7 @@
 
 require __DIR__ . '/config.php';
 require __DIR__ . '/lib_report.php';
+require __DIR__ . '/backup.php';
 
 $force = (php_sapi_name() === 'cli' && in_array('--now', $argv ?? [], true))
       || (isset($_GET['force']) && ($_GET['key'] ?? '') === rc_cfg('admin_key'));
@@ -19,6 +20,8 @@ $force = (php_sapi_name() === 'cli' && in_array('--now', $argv ?? [], true))
 if (php_sapi_name() !== 'cli' && ($_GET['key'] ?? '') !== rc_cfg('admin_key')) {
     http_response_code(403); exit('forbidden');
 }
+$cronLock = @fopen(RC_DATA . '/cron.lock', 'c');
+if (!$cronLock || !flock($cronLock, LOCK_EX | LOCK_NB)) exit;
 
 $flagFile = RC_DATA . '/cron_state.json';
 $state = rc_json_read($flagFile, []);
@@ -124,19 +127,14 @@ if (($state['health'] ?? '') !== $today && ($force || $hour === 10)) {
 if (($state['backup'] ?? '') !== $today) {
     $dir = RC_DATA . '/backup';
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
-    $snap = [
-        'date'   => $today,
-        'leads'  => rc_json_read(RC_LEADS, []),
-        'binds'  => rc_json_read(RC_DATA . '/bindings.json', []),
-        'content'=> rc_json_read(RC_CONTENT, []),
-    ];
-    @file_put_contents($dir . '/' . $today . '.json',
-        json_encode($snap, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+    $backedUp = rc_backup_snapshot($dir . '/' . $today . '.json');
     foreach (glob($dir . '/*.json') as $f) {
         if (strtotime(basename($f, '.json')) < strtotime('-14 day')) @unlink($f);
     }
-    $state['backup'] = $today;
-    rc_json_write($flagFile, $state);
+    if ($backedUp) {
+        $state['backup'] = $today;
+        rc_json_write($flagFile, $state);
+    } else error_log('Rocket backup: checkpoint not committed');
 }
 
 /* ── Уборка раз в сутки ─────────────────────────────────── */

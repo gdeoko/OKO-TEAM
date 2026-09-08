@@ -1,41 +1,35 @@
-# Rocket recovery — 2026-09-08
+# Rocket — release 2026.09.08-r2
 
-This is an isolated source snapshot for Rocket VPN, Rocket CDN, the space flight and their existing administration panel. It has no parent commit and does not carry the original repository's credentials file or history. No live site has been switched to this snapshot.
+Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
-Source: `gdeoko/OKO-TEAM`, branch `claude/rocket-cdn-website-admin-x5482k`, commit `6b64106bdde7488bee2b6485b210eaf1db4fc395`, plus the recovery changes listed below. Runtime assets are retained. Old audits, screenshots and deployment scripts are excluded.
+Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Publication status and acceptance limits are recorded in `RELEASE.md`.
 
 ## Changes
 
-- VPN camera and acts share one smoothed scroll coordinate. Reload and resize preserve progress.
-- Menu/form close timers and pending opening frames are cancelled on rapid reopen/close. Music resume cancels a scheduled pause.
-- VPN analytics requeues failed requests, retries rejected beacons with keepalive fetch, and resumes after bfcache. Per-document event IDs support server deduplication; the server keeps the latest 25,000–30,000 IDs per site/day, not an unlimited ledger. Beacon acceptance still cannot prove delivery.
-- Analytics event names preserve Cyrillic. A visitor's device is counted once even when a batch contains several views. Dashboard growth compares equal-length periods and does not fabricate a percent when the prior count is zero.
-- JSON writes and updates share a sidecar lock and publish via atomic rename. Failed encoding/writes preserve old data. Corrupt existing JSON is rejected. API mutations return HTTP 503 on storage failure. Native filesystem/concurrency validation remains required before production.
-- Admin node edits retain hidden nodes and zero values, and reject malformed coordinates. Both CSV exporters neutralize leading spreadsheet formulas.
-- Deferred flight construction uses a generation number, with cancellation on world replacement. Restored beacons use planet world coordinates after parenting. Partial world builds release resources. WebGL budget refusal is honored and detached guards stop handling old canvas events.
-- Cancelling docking cancels delayed navigation. `flight=1` triggers the explicit launch once. Returning from CDN lands at the VPN final panel.
-- The final VPN act now owns the mini-game's geometry and updates; the preceding launch act no longer controls it. Closing the panel pauses the game. Visual placement is not accepted yet.
-- Disk monitoring recognizes zero available bytes.
+- VPN uses one progress value for scrolling, camera and acts. Resizing, restored scroll positions, rapid form reopening and music toggles retain their state correctly.
+- The finale retains the full particle scenes, then assembles particles onto actual cabin surfaces. Cabin materials and the control panel appear along the same reversible transition. The final act owns the mini-game. A readable fallback remains available when WebGL cannot start.
+- CDN's 360° cabin has opaque, untonemapped display materials and a higher adaptive resolution ceiling. A native text reader follows the seven wall panels, with expandable content independent of perspective and render resolution.
+- Flight construction cancels retired work, disposes partial scenes and honors the WebGL context budget. Manual thrust moves the camera in remote systems; planet clearance, restored beacon coordinates, docking cancellation, explicit launch and return to the VPN finale are corrected.
+- The shared panel has 17 sections: three-product analytics, requests, support, delivery status/retry, nodes, content, settings and release health. Cyrillic navigation survives reload. CDN and VPN content are separated; late responses cannot replace the selected editor. VPN overrides render as escaped plain text.
+- Atomic JSON publication and stable locks preserve old data on failures. API storage failures return 503. Analytics retries are deduplicated; Cyrillic events, device counts, equal-period comparisons and CSV escaping are corrected.
+- Delivery intent is saved with each request. A separate worker retries individual failed channels without resending confirmed channels. Delivery is **at least once**: an ambiguous provider response can still cause a duplicate.
+- Backups include support records and Telegram offset under a shared checkpoint. A corrupt source cannot replace the previous backup. Native concurrency testing retained all 240 updates from four processes.
 
-## Checks
-
-From the snapshot root:
+## Verification
 
 ```sh
 npm ci --prefix rocketcdn/tests --ignore-scripts
 npm test --prefix rocketcdn/tests
 ```
 
-Results: 19 JavaScript/geometry checks, 12 storage checks and 6 API checks pass (37 total). PHP 8.3 runs in PHP.wasm with isolated synthetic data and no live credentials. Four changed PHP files pass parsing; 93 frontend/inline scripts pass JavaScript parsing. `rocketcdn/tests/storage.php` can also run under native PHP for a storage smoke check.
+23 JavaScript/geometry checks and 13 isolated API checks pass. Native PHP 8.3 validation on the client covers 12 storage checks, 8 delivery checks, concurrent updates and 3 backup checks. The PHP.wasm suite skips interprocess `flock`; the native server covers it. Test senders and test data are isolated.
 
-A comparison using the original source failed 17 of the initial 18 JS checks; some failures are missing newly introduced interfaces, so this is not a claim of 17 independent real-device reproductions.
+Browser review covers the 17 panel sections, delivery retry, VPN content selection, a real form request against isolated storage, expandable CDN cards, keyboard navigation, and 320px layouts. These checks do **not** certify GPU rendering or real-device FPS: the available browser reports `GL_RENDERER = Disabled`.
 
-## Release status and remaining work
+## Source and operations
 
-The September 8 revised server build mentioned in the previous chat was not recovered. Compare it and current live files before applying this snapshot; do not overwrite later work or client configuration/data. The previous chat's new notification queue and 17-section admin build are not established by this snapshot.
+This branch is an orphan snapshot, based on `gdeoko/OKO-TEAM` at `6b64106bdde7488bee2b6485b210eaf1db4fc395`, with recovery and release changes. The live server was compared before overlaying code. Runtime configuration, credentials and customer records remain on the client; they are excluded from Git.
 
-The new particles-to-cabin finale is NOT implemented or visually accepted here. The existing full particle scenes and cockpit remain. GPU visual quality, FPS, mobile layout, gameplay placement, browser resource recovery and complete forms remain acceptance gates. The available cloud browser failed to create a WebGL context; state and geometry checks are not substitutes for GPU testing.
+`deploy/activate.py --check` verifies release hashes, native PHP syntax and runtime write access. Activation backs up runtime data/configuration, drains old writers, atomically exchanges both roots, resets PHP caches and enables the delivery timer. `--rollback` restores code/configuration while retaining new records. Scripts under `deploy/` target the documented client paths and must not be run on unrelated hosts.
 
-Server inspection/deployment is blocked by automatic approval review of the privileged OKO Poster bridge request. No DNS, production configuration, live data, bot notifications or email were modified by this work.
-
-Before release: recover/diff the previous build; rotate the known exposed access key through an approved path; back up current data/config; verify native PHP permissions and concurrent writers; restart/drain old PHP/cron writers before introducing the sidecar-lock protocol; validate nginx API routing and all assets on staging; bump asset versions; run desktop/mobile GPU acceptance; then perform a reversible production switch. Notification durability and unified administration still need the recovered server source and separate verification.
+The clean branch does not revoke credentials exposed in the original repository's history. Rotation of those broader OKO/GitHub access credentials is not established by this release. Photorealism, 8K output, exact Igloo parity and performance across physical devices remain unverified acceptance items.

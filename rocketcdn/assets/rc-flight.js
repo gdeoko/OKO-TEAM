@@ -7903,6 +7903,29 @@ function capName(i) {
   return ru ? список[i]["имя"] : список[i].en;
 }
 
+function advanceAway(w3, state, pack, dt, T) {
+    // Far systems have no spline. Manual thrust follows the pilot's view.
+    if (!w3.manualForward) w3.manualForward = new T.Vector3();
+    w3.cam.getWorldDirection(w3.manualForward);
+    var travel = state.v * 1800 * dt;
+    w3.cam.position.addScaledVector(w3.manualForward, travel);
+    state.warpV = Math.abs(travel) / Math.max(dt, .001);
+    var activePack = pack;
+    if (activePack && activePack.root) {
+      var bodies = activePack["тур"] || [];
+      for (var collisionIndex = 0; collisionIndex < bodies.length; collisionIndex++) {
+        var body = bodies[collisionIndex], safe = body.r * 1.22 + 8;
+        body["узел"].getWorldPosition(w3.tmpB);
+        w3.tmpA.copy(w3.cam.position).sub(w3.tmpB);
+        var distance = w3.tmpA.length();
+        if (distance >= safe) continue;
+        if (distance < .001) w3.tmpA.copy(w3.manualForward).negate(); else w3.tmpA.multiplyScalar(1 / distance);
+        w3.cam.position.copy(w3.tmpB).addScaledVector(w3.tmpA, safe);
+        state.v *= Math.max(0, 1 - dt * 8);
+      }
+    }
+}
+
 function frame(ts) {
   if (!F.open) return;
   F.raf = requestAnimationFrame(frame);
@@ -7983,7 +8006,7 @@ function frame(ts) {
   F._prevV = F.v;
   var surgeGoal = F.stage ? 0 : Math.max(-.72, Math.min(.72, -accelV * 2.1));
   F.camSurge = (F.camSurge || 0) + (surgeGoal - (F.camSurge || 0)) * Math.min(1, dt * 4.6);
-  F.p += F.v * dt;
+  if (!F.away) F.p += F.v * dt;
   /* На упоре маршрута гасим и рычаг. Раньше обнулялся только ход:
      корабль стоит, а рычаг показывает 85 процентов и полоска залита
      на те же 85 - по приборам двигатель работает, по кадру корабль
@@ -8062,6 +8085,8 @@ function frame(ts) {
       w3.cam.position.copy(pos);
     }
     avoid(w3, dt);
+  } else if (!F.stage) {
+    advanceAway(w3, F, built[uniIdx], dt, T);
   }
 
   /* Планеты чужих вселенных живут своей жизнью: вращение, облака,
@@ -8135,7 +8160,7 @@ function frame(ts) {
      пол. Теперь курс сходится сам по себе, а взгляд - только
      насадка на кадр. */
   if (!w3.baseQ) w3.baseQ = w3.cam.quaternion.clone();
-  w3.baseQ.slerp(w3.tmpQ, Math.min(1, dt * 3.2));
+  if (!F.away || F.orbit) w3.baseQ.slerp(w3.tmpQ, Math.min(1, dt * 3.2));
   w3.cam.quaternion.copy(w3.baseQ);
 
   /* Взгляд человека поверх автопилота.
@@ -8147,7 +8172,7 @@ function frame(ts) {
      способом выпрямиться было бы столь же аккуратно докрутить
      мышь обратно, а это работа, а не игра. */
   if (F.free) {
-    var pull = Math.abs(F.v) * 2.4;
+    var pull = F.away && !F.orbit ? 0 : Math.abs(F.v) * 2.4;
     if (F.goal || F.auto || F.orbit) pull = Math.max(pull, 0.9);
     if (pull > 0.01) {
       var kk = Math.min(1, dt * pull);
@@ -8378,8 +8403,7 @@ function frame(ts) {
   var окно = frame._окно || (frame._окно = []);
   окно.push(dt);
   if (окно.length > 40) окно.shift();
-  if (F.stage) окно.length = 0;
-  else if (окно.length >= 24 && ts - (frame._плT || 0) > 1250) {
+  if (окно.length >= 24 && ts - (frame._плT || 0) > 1250) {
     var сорт = окно.slice().sort(function (a, b) { return a - b; });
     var мед = сорт[сорт.length >> 1];
     /* Шаг развёртки: наименьшая виденная медиана. Ниже шести
@@ -8387,7 +8411,8 @@ function frame(ts) {
     frame._шаг = Math.max(0.006, Math.min(frame._шаг || 0.0167, мед));
     var шаг = frame._шаг;
     var тек = w3.r.getPixelRatio();
-    var пол = 0.72, пот = w3["потолокПл"] || тек;
+    var пол = F.stage ? 1 : 0.85, пот = w3["потолокПл"] || тек;
+    пол = Math.min(пол, пот);
     var нов = 0;
     if (мед > Math.max(0.024, шаг * 1.5) && тек > пол) нов = Math.max(пол, тек * 0.85);
     else if (мед < шаг * 1.12 && тек < пот && ts - (frame._внизT || 0) > 4000)
@@ -11560,6 +11585,7 @@ function stageCam(dt) {
   var survey = Math.sin(F.stageT / 4.4) * 0.014 * (1 - ek);
   var yaw = yawT + (Math.PI * 2 - yawT) * ek + survey;
   F.stageYaw = yaw;
+  if (g.RC_CABIN && g.RC_CABIN.readPanel) g.RC_CABIN.readPanel(yaw, k < 0.8);
 
 
 
@@ -12069,14 +12095,18 @@ function stageLite(on) {
        резкой к моменту передачи), игра - прежние 1.35 на телефоне и
        1.8 на мониторе. */
     var cap = on
-      ? (уПульта ? 2.0 : 1.15)
+      ? (tiny ? 1.25 : 2.0)
       : (tiny ? 1.0 : (innerWidth < 760 ? 1.35 : 1.8));
     cap -= Math.max(step, hint > 1 ? hint - 1 : 0) * 0.16;
     /* Потолок запоминаем: выше него регулятор плавности не поднимет
        ни при какой скорости - это граница, за которой резкость уже
        ничего не добавляет, а заливка растёт. */
-    W3["потолокПл"] = Math.max(0.72, Math.min(dpr, cap));
-    плотность(W3["потолокПл"]);
+    var oldCap = W3["потолокПл"] || 0;
+    var pixelBudget = tiny ? 2400000 : 5500000;
+    W3["потолокПл"] = Math.max(0.85, Math.min(dpr, cap, Math.sqrt(pixelBudget / Math.max(1, innerWidth * innerHeight))));
+    var currentRatio = W3.r.getPixelRatio();
+    if (!oldCap || currentRatio > W3["потолокПл"] || oldCap < W3["потолокПл"])
+      плотность(W3["потолокПл"]);
   }
 }
 
@@ -12086,6 +12116,7 @@ addEventListener("rc:degrade", function () {
 });
 
 function stageOff() {
+  if (g.RC_CABIN && g.RC_CABIN.readPanel) g.RC_CABIN.readPanel(0, false);
   stageLite(false);
   F.stageK = 0;
   /* The last scroll segment can already have promoted the parked

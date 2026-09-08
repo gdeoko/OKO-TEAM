@@ -12,6 +12,7 @@
    ══════════════════════════════════════════════════════════ */
 
 require __DIR__ . '/config.php';
+require __DIR__ . '/delivery.php';
 /* Дневной отчёт собирается тем же кодом, что и в cron.php:
    команда /report обязана давать ровно то же, что приходит в 9:00 */
 require __DIR__ . '/lib_report.php';
@@ -618,7 +619,8 @@ for ($loop = 0; $loop < 6; $loop++) {
     if (empty($res['ok']) || empty($res['result'])) continue;
 
     foreach ($res['result'] as $u) {
-        @file_put_contents(OFFSET_FILE, $u['update_id'] + 1);
+        $processed = true;
+        try {
 
         /* ── Нажатия на inline-кнопки ── */
         if (!empty($u['callback_query'])) {
@@ -812,8 +814,21 @@ for ($loop = 0; $loop < 6; $loop++) {
             /* Обычное сообщение от гостя пересылаем команде */
             $from = trim(($msg['from']['first_name'] ?? '') . ' ' . ($msg['from']['last_name'] ?? ''));
             $un = !empty($msg['from']['username']) ? '@' . $msg['from']['username'] : ('id ' . $uid);
-            rc_notify("<b>Сообщение боту</b>\n\nОт: " . htmlspecialchars($from) . " ({$un})\n\n" . htmlspecialchars($text), null, 'tg_topic_form');
-            say($chat, 'Принято. Инженер ответит в ближайшее время.', $uid);
+            $ticket = ['id' => 'tg-' . (int)$u['update_id'], 'site' => 'cdn', 'kind' => 'support',
+                'name' => mb_substr($from, 0, 80), 'contact' => $un, 'task' => mb_substr($text, 0, 2000),
+                'status' => 'new', 'ts' => date('Y-m-d H:i:s'), 'page' => 'telegram'];
+            $ticket['delivery'] = rc_delivery_jobs($ticket);
+            $saved = rc_json_update(RC_LEADS, function ($data) use ($ticket) {
+                foreach ($data['items'] ?? [] as $item) if (($item['id'] ?? '') === $ticket['id']) return $data;
+                $data['items'][] = $ticket;
+                return $data;
+            });
+            if ($saved === false) {
+                // Rewind this update before stopping: never acknowledge lost support.
+                rc_log('Support storage unavailable');
+                exit(1);
+            }
+            say($chat, 'Обращение ' . $ticket['id'] . ' сохранено. Инженер ответит в ближайшее время.', $uid);
             continue;
         }
 
@@ -911,6 +926,14 @@ for ($loop = 0; $loop < 6; $loop++) {
         }
 
         say($chat, 'Не понял команду. ' . txt_help($uid), $uid);
+        } catch (Throwable $e) {
+            $processed = false;
+            throw $e;
+        } finally {
+            if ($processed && file_put_contents(OFFSET_FILE, (string)($u['update_id'] + 1), LOCK_EX) === false) {
+                throw new RuntimeException('Telegram offset persistence failed');
+            }
+        }
     }
 }
 

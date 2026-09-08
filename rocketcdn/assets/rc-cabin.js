@@ -231,7 +231,7 @@ function предел16() {
     var r = g.RC_REAL && g.RC_REAL.renderer;
     var м = r && r.capabilities && r.capabilities.getMaxAnisotropy
       ? r.capabilities.getMaxAnisotropy() : 8;
-    return Math.max(8, Math.min(16, м));
+    return Math.max(1, Math.min(16, м));
   } catch (e) { return 8; }
 }
 
@@ -1433,7 +1433,7 @@ function build(T, opts) {
       new T.CylinderGeometry(scrR, scrR, SCR_H, tiny ? 8 : 14, 1, true,
         thetaOf(th) - scrArc / 2, scrArc),
       new T.MeshBasicMaterial({ map: tex, side: T.BackSide, fog: false,
-        transparent: true, opacity: 0.97, depthWrite: false })
+        toneMapped: false, transparent: false, opacity: 1, depthWrite: true })
     );
     face.position.y = EYE + 0.06;
     face.renderOrder = 6;
@@ -1729,7 +1729,48 @@ function build(T, opts) {
   };
 }
 
+/* The tour keeps a native-resolution reading view. Perspective and the
+   adaptive scene resolution must never make product information inaccessible. */
+var reader = null, readerIndex = -1, readerLanguage = "";
+function readPanel(yaw, visible) {
+  if (!visible) { if (reader) reader.hidden = true; return; }
+  var index = Math.round(((yaw % TAU) + TAU) % TAU / SECT) % 8 - 1;
+  if (index < 0) { if (reader) reader.hidden = true; return; }
+  var lang = doc.documentElement.lang;
+  if (!reader) {
+    var style = doc.createElement("style");
+    style.textContent = ".rc-tour-reader[hidden]{display:none!important}.rc-tour-reader{position:fixed;z-index:170;touch-action:pan-y;cursor:auto;left:max(20px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));width:min(360px,calc(100vw - 40px));max-height:42svh;overflow:auto;background:#08111ef5;border:1px solid #67839c;border-radius:14px;padding:16px 18px;color:#f5f8ff;font:500 16px/1.55 'Golos Text',system-ui,sans-serif;box-shadow:0 12px 44px #0006}.rc-tour-reader summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:1fr auto;gap:6px 12px}.rc-tour-reader summary:focus-visible{outline:2px solid #b3deff;outline-offset:5px}.rc-tour-reader small{font-size:11px;letter-spacing:.1em;color:#b3deff}.rc-tour-reader strong{grid-column:1/-1;font-size:clamp(19px,2vw,24px);line-height:1.25}.rc-tour-reader ul{padding-left:20px;margin:12px 0 0}.rc-tour-reader li+li{margin-top:8px}.rc-tour-reader .rc-reader-action{font-size:12px;color:#b3deff}.rc-tour-reader[open] .rc-reader-action{display:none}@media(max-width:600px){.rc-tour-reader{left:12px;bottom:max(12px,env(safe-area-inset-bottom));width:calc(100vw - 24px);padding:12px 14px;box-sizing:border-box;max-height:38svh;font-size:15px}}";
+    doc.head.appendChild(style);
+    reader = doc.createElement("details");
+    reader.className = "rc-tour-reader";
+    reader.hidden = true;
+    ["pointerdown", "pointerup", "click", "wheel"].forEach(function (name) {
+      reader.addEventListener(name, function (event) { event.stopPropagation(); }, { passive: true });
+    });
+    (doc.querySelector(".rc-flight") || doc.body).appendChild(reader);
+  }
+  if (index !== readerIndex || lang !== readerLanguage) {
+    readerIndex = index; readerLanguage = lang;
+    var rec = grab()[index], ru = lang !== "en";
+    reader.replaceChildren();
+    var summary = doc.createElement("summary");
+    var tag = doc.createElement("small"); tag.textContent = rec.tag;
+    var count = doc.createElement("small"); count.textContent = (index + 1) + " / 7";
+    var heading = doc.createElement("strong"); heading.textContent = rec.h;
+    var hint = doc.createElement("span"); hint.className = "rc-reader-action";
+    hint.textContent = ru ? "Читать полностью +" : "Read more +";
+    summary.append(tag, count, heading, hint);
+    var list = doc.createElement("ul");
+    (rec.lines || []).forEach(function (line) { var li = doc.createElement("li"); li.textContent = line; list.appendChild(li); });
+    reader.append(summary, list);
+    reader.setAttribute("aria-label", ru ? "Бортовая панель" : "Cabin panel");
+  }
+  if (!reader.isConnected) (doc.querySelector(".rc-flight") || doc.body).appendChild(reader);
+  reader.hidden = false;
+}
+
 g.RC_CABIN = {
+  readPanel: readPanel,
   build: build,
   /* Содержимое экранов наружу: проверке нужно видеть, что слова
      меняются вместе с языком страницы */

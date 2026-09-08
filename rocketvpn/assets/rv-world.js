@@ -2168,7 +2168,10 @@
         alpha: false,
         powerPreference: "high-performance"
       });
-    } catch (e) { return false; }
+    } catch (e) {
+      d.documentElement.classList.add("rv-no-webgl");
+      return false;
+    }
 
     W.r.setPixelRatio(W.плотность);
     W.r.setSize(g.innerWidth, g.innerHeight, false);

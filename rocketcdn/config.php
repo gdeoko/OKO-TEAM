@@ -81,6 +81,13 @@ foreach ([RC_DATA, RC_STATS] as $dir) {
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
 }
 
+/* Only these non-secret settings are editable from the shared panel. */
+$publicSettings = json_decode((string)@file_get_contents(RC_DATA . '/public-settings.json'), true);
+if (is_array($publicSettings)) foreach (['brand', 'lk_url', 'report_hour'] as $key) {
+    if (array_key_exists($key, $publicSettings)) $RC[$key] = $publicSettings[$key];
+}
+unset($publicSettings);
+
 /* Привязки чата и тем бот записывает сам по команде /bindchat,
    поэтому руками их в конфиг вносить не нужно. */
 $__bind = RC_DATA . '/bindings.json';
