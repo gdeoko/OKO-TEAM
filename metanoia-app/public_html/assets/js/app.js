@@ -4230,6 +4230,8 @@ function openCertView(cert) {
 /* Ссылка должна побывать в документе, иначе браузер теряет имя файла и
    сохраняет его как «download». */
 function сохранитьФайл(кусок, имя) {
+  // Имя файла только латиницей: часть браузеров теряет кириллицу вместе с
+  // расширением, и снимок сохраняется безымянным куском без .png
   const a = document.createElement('a');
   a.href = URL.createObjectURL(кусок);
   a.download = имя;
@@ -4251,7 +4253,7 @@ function downloadCert() {
     ctx.fillStyle = '#FAF8F5'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     cv.toBlob((blob) => {
-      сохранитьФайл(blob, `Сертификат-Метанойя-${currentCert.key}.png`);
+      сохранитьФайл(blob, `metanoya-sertifikat-${currentCert.key}.png`);
       toast('Сертификат сохранён');
     }, 'image/png');
   };
@@ -4835,7 +4837,7 @@ function downloadAlbum() {
     const ctx = cv.getContext('2d');
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     cv.toBlob((blob) => {
-      сохранитьФайл(blob, 'Наш-год-с-Метанойей.png');
+      сохранитьФайл(blob, 'metanoya-nash-god.png');
       toast('Обложка альбома сохранена');
     }, 'image/png');
   };
