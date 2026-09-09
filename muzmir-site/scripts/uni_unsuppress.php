@@ -104,7 +104,18 @@ foreach ($emails as $em) {
     if (!$apply) { $freed++; printf("  снял бы    %-38s %s\n", $em, implode(',', $causes)); continue; }
 
     $res = uu_call($base . '/suppression/delete.json', ['api_key' => $key, 'email' => $em]);
-    if ($res && (string) ($res['status'] ?? '') === 'success') $freed++;
+    if ($res && (string) ($res['status'] ?? '') === 'success') { $freed++; }
+    /* СУТОЧНЫЙ ЗАПАС СНЯТИЙ У СЕРВИСА КОНЧАЕТСЯ.
+     *
+     * Unisender разрешает снимать пометки ограниченное число раз в сутки и
+     * отвечает кодом 906 «Exceeded the daily email reset limit». Долбить его
+     * дальше бессмысленно: остальные адреса получат тот же ответ, а в отчёте
+     * будет сотня одинаковых «ОШИБКА» вместо понятной причины. Останавливаемся
+     * и говорим, что осталось на завтра. */
+    elseif ((int) ($res['code'] ?? 0) === 906) {
+        printf("\nсуточный запас снятий у сервиса исчерпан — остальное завтра\n");
+        break;
+    }
     else { $err++; printf("  ОШИБКА     %-38s %s\n", $em, mb_substr(json_encode($res, JSON_UNESCAPED_UNICODE), 0, 90)); }
 
     // Сервис считает запросы; спешить некуда — очередь всё равно уходит темпом
