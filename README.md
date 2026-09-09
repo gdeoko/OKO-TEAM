@@ -4,11 +4,11 @@
 
 Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
-Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). **r9 is deployed and ready for client acceptance.** It fixes analytics retries, content-editor races and drafts, cabin material preservation and excessive specular noise. The cabin module is synchronized between CDN and VPN. See `RELEASE_R9.md` and `review/r9-verification.json`.
+Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). **r10 is deployed.** It fixes first-gesture audio startup, stale playback/resume responses, mute cancellation, source-format fallback, and the VPN sound-button interaction. See `RELEASE_R10.md` and `review/r10-verification.json`.
 
-Activation passed 30 server checks and retained all five existing requests. The exact deployed source commit is `d7d45406ba29510c813a7d8b67dfa14eee0cccb3`; r8 remains available for rollback. The final external HTTP check was blocked by this environment and is not claimed as passed.
+The exact deployed source is `598696bf73c2f2b0e63a74db90d1262a0c59f043`. Activation passed 33 server checks and retained all five existing requests; r9 remains available for rollback. All 51 audio assets fully decode, contain a signal and match their served files on the client. The automated suite passes 114 checks, including 18 audio scenarios. Ten external HTTPS checks pass: all four handoff pages, all changed frontend bytes and three audio range requests. The combined 37-check script was cancelled by the environment; only the completed individual checks are claimed.
 
-The new r9 native inspection produced 58 checkpoints: 46 for CDN/flight and 12 for the VPN finale, across landscape and portrait. No GL/shader or scene-event failures were recorded, and the flight camera lifecycle passed. Native PHP 8.3.6 on the client passed 24 isolated checks, including all 240 concurrent writes and coherent backup snapshots. These are native canvas checkpoints and isolated service checks, not physical-device FPS acceptance. The r8 publication and earlier acceptance records remain in the historical release notes.
+The preceding r9 native inspection produced 58 checkpoints: 46 for CDN/flight and 12 for the VPN finale, across landscape and portrait. Graphics source is unchanged in r10. No new browser, physical-device FPS or acoustic acceptance is claimed; the previous reports retain their exact test scope.
 
 The preceding follow-up changes were deployed on the client as r6. This release corrects the cabin PBR adapter and unsupported float render targets, and replaces the VPN backdrop drawing with a textured 3D Earth. The final activation passed 25 checks and retained all five pre-existing requests. See `FOLLOWUP_2026-09-08.md` and `VPN_AUDIT_2026-09-08.md`. Current health and rollback use `deploy/followup.py`; original activation scripts remain specific to r2. Local native WebGL 1 renders of the VPN finale and its post-processing pass without GL errors. Full browser 3D/HDR and physical-device performance acceptance remain incomplete.
 
@@ -31,7 +31,7 @@ npm ci --prefix rocketcdn/tests --ignore-scripts
 npm test --prefix rocketcdn/tests
 ```
 
-54 JavaScript/geometry checks, 13 isolated API checks, 12 storage checks and 7 delivery checks pass for r9. Ten deployment/integration checks and all 24 manifest files also pass. Native PHP 8.3.6 on the client now passes storage, delivery-lock, concurrency and backup checks for r9. The PHP.wasm suite itself skips interprocess `flock`. Test senders and test data are isolated.
+72 JavaScript checks (including 18 audio scenarios), 13 isolated API checks, 12 storage checks, 7 delivery checks and 10 deployment/integration checks pass for r10. All 27 manifest files match. Native PHP 8.3.6 was checked in r9; PHP application code is unchanged. Test senders and records are isolated.
 
 The preceding browser review covered all 17 panel sections, the mobile drawer, VPN FAQ and theme, all seven native CDN cards, and measured VPN footer/admin content widths of 320/390/768/1440px. The game explains failed 3D initialization on direct launch links in Russian and English. Earlier r2 review covered delivery retry and a real form request against isolated storage. These checks do **not** certify GPU rendering or real-device FPS: the available browser reports `GL_RENDERER = Disabled`. The 58 new r9 native frames are documented separately and do not remove that browser limitation.
 
@@ -41,6 +41,6 @@ This branch is an orphan snapshot, based on `gdeoko/OKO-TEAM` at `6b64106bdde748
 
 `deploy/activate.py --check` verifies release hashes, native PHP syntax and runtime write access. Activation backs up runtime data/configuration, drains old writers, atomically exchanges both roots, resets PHP caches and enables the delivery timer. `--rollback` restores code/configuration while retaining new records. Scripts under `deploy/` target the documented client paths and must not be run on unrelated hosts.
 
-`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r9 release, run `sudo python3 /var/www/rocket-releases/20260909-r9/deploy/followup.py health`. Its `rollback` action restores r8 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
+`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r10 release, run `sudo python3 /var/www/rocket-releases/20260909-r10/deploy/followup.py health`. Its `rollback` action restores r9 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
 
 The clean branch does not revoke credentials exposed in the original repository's history. Rotation of those broader OKO/GitHub access credentials is not established by this release. Photorealism, 8K output, exact Igloo parity and performance across physical devices remain unverified acceptance items.

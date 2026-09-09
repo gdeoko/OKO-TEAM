@@ -1,0 +1,16 @@
+{
+  "checked_at_utc": "2026-09-09T18:19:06.254783+00:00",
+  "release": "20260909-r10",
+  "source_commit": "598696bf73c2f2b0e63a74db90d1262a0c59f043",
+  "active_roots": {
+    "rocketcdn": "/var/www/rocket-releases/20260909-r10/rocketcdn",
+    "rocketvpn": "/var/www/rocket-releases/20260909-r10/rocketvpn"
+  },
+  "baseline_requests": 5,
+  "current_requests": 5,
+  "all_baseline_requests_preserved": true,
+  "delivery_timer_active": true,
+  "server_health_checks": 33,
+  "live_audio_hashes_verified": 51,
+  "rollback_release": "20260909-r9"
+}

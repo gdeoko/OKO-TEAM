@@ -1,10 +1,10 @@
 {
   "release": "20260909-r10",
-  "status": "verified_for_publication",
-  "checked_at_utc": "2026-09-09T18:15:18.013241+00:00",
+  "status": "deployed_code_and_http_verified",
+  "checked_at_utc": "2026-09-09T18:26:11.834602+00:00",
   "base_commit": "0ef594b6854ecb85afeb2713f2484fed66d9a276",
   "base_release": "20260909-r9",
-  "source_commit": null,
+  "source_commit": "598696bf73c2f2b0e63a74db90d1262a0c59f043",
   "checks": {
     "javascript_total": 72,
     "audio_scenarios_in_javascript_total": 18,
@@ -43,5 +43,30 @@
     "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play",
     "https://developer.chrome.com/blog/play-returns-promise",
     "https://webkit.org/blog/6784/new-video-policies-for-ios/"
-  ]
+  ],
+  "deployment": {
+    "checked_at_utc": "2026-09-09T18:19:06.254783+00:00",
+    "release": "20260909-r10",
+    "source_commit": "598696bf73c2f2b0e63a74db90d1262a0c59f043",
+    "active_roots": {
+      "rocketcdn": "/var/www/rocket-releases/20260909-r10/rocketcdn",
+      "rocketvpn": "/var/www/rocket-releases/20260909-r10/rocketvpn"
+    },
+    "baseline_requests": 5,
+    "current_requests": 5,
+    "all_baseline_requests_preserved": true,
+    "delivery_timer_active": true,
+    "server_health_checks": 33,
+    "live_audio_hashes_verified": 51,
+    "rollback_release": "20260909-r9"
+  },
+  "external_after_publication": {
+    "passed": 10,
+    "total": 10,
+    "report": "review/r10-public-verification.json",
+    "all_four_handoff_urls_http_200": true,
+    "all_changed_frontend_files_match_release": true,
+    "audio_range_checks_passed": 3,
+    "browser_execution_claimed": false
+  }
 }

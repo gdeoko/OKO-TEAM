@@ -1,0 +1,105 @@
+{
+  "release": "20260909-r10",
+  "source_commit": "598696bf73c2f2b0e63a74db90d1262a0c59f043",
+  "scope": "External HTTPS with certificate validation; page responses, published audio module hashes and audio byte-range delivery. Does not execute browser JavaScript or measure device FPS.",
+  "full_batch": {
+    "completed": false,
+    "reason": "Network approval was cancelled before a decision for the combined 37-check script. Narrow read-only requests completed successfully."
+  },
+  "passed": 10,
+  "total": 10,
+  "checks": [
+    {
+      "bytes": 55879,
+      "content_type": "text/html; charset=UTF-8",
+      "r10_audio_cache_tags": false,
+      "sha256": "a670c11f79f51354f8f4e7fba6407f10df1a378265a786cf3428b947e38da62f",
+      "status": 200,
+      "url": "https://rocketvpn.top/",
+      "kind": "page",
+      "ok": true
+    },
+    {
+      "bytes": 99649,
+      "content_type": "text/html; charset=utf-8",
+      "r10_audio_cache_tags": true,
+      "sha256": "56cb77f51b1e788b48e6351c0f6d6ae65d3dc492ad3cd9fac0a00ca2f72fb585",
+      "status": 200,
+      "url": "https://rocketcdn.ru/",
+      "kind": "page",
+      "ok": true,
+      "published_html_matches_release": true
+    },
+    {
+      "bytes": 99649,
+      "content_type": "text/html; charset=utf-8",
+      "r10_audio_cache_tags": true,
+      "sha256": "56cb77f51b1e788b48e6351c0f6d6ae65d3dc492ad3cd9fac0a00ca2f72fb585",
+      "status": 200,
+      "url": "https://rocketcdn.ru/?flight=1",
+      "kind": "page",
+      "ok": true,
+      "published_html_matches_release": true
+    },
+    {
+      "bytes": 105367,
+      "content_type": "text/html; charset=utf-8",
+      "r10_audio_cache_tags": false,
+      "sha256": "a77b3a9f9deea9eb915a01e3f44dcb97c539d31d45763a853cdced84c3f95ac7",
+      "status": 200,
+      "url": "https://rocketcdn.ru/admin.html",
+      "kind": "page",
+      "ok": true,
+      "published_html_matches_release": true
+    },
+    {
+      "kind": "file",
+      "ok": true,
+      "path": "rocketcdn/assets/rc-music.js",
+      "sha256_matches_release": true,
+      "status": 200,
+      "url": "https://rocketcdn.ru/assets/rc-music.js?v=20260909r10"
+    },
+    {
+      "kind": "file",
+      "ok": true,
+      "path": "rocketcdn/assets/rc-sound.js",
+      "sha256_matches_release": true,
+      "status": 200,
+      "url": "https://rocketcdn.ru/assets/rc-sound.js?v=20260909r10"
+    },
+    {
+      "kind": "file",
+      "ok": true,
+      "path": "rocketvpn/assets/rv-sound.js",
+      "sha256_matches_release": true,
+      "status": 200,
+      "url": "https://rocketvpn.top/assets/rv-sound.js?v=20260909r10"
+    },
+    {
+      "content_range": "bytes 0-1023/525529",
+      "content_type": "audio/webm",
+      "kind": "audio_range",
+      "ok": true,
+      "status": 206,
+      "url": "https://rocketcdn.ru/assets/audio/theme.webm"
+    },
+    {
+      "content_range": "bytes 0-1023/593334",
+      "content_type": "audio/mp4",
+      "kind": "audio_range",
+      "ok": true,
+      "status": 206,
+      "url": "https://rocketcdn.ru/assets/audio/theme.m4a"
+    },
+    {
+      "content_range": "bytes 0-1023/4923977",
+      "content_type": "audio/x-m4a",
+      "kind": "audio_range",
+      "ok": true,
+      "status": 206,
+      "url": "https://rocketvpn.top/assets/snd/fon.m4a"
+    }
+  ],
+  "checked_at_utc": "2026-09-09T18:26:11.834602+00:00"
+}
