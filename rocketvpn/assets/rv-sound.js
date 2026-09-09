@@ -54,6 +54,7 @@
   var вкл = false;
   var собран = false;
   var кнопка = null;
+  var снятьПервыйЖест = null;
 
   /* Подложки. Ключ здесь - имя файла без расширения.
 
@@ -675,7 +676,13 @@
   function включить(да) {
     if (да && !собрать()) return false;
     вкл = !!да;
-    if (К && К.state === "suspended") { try { К.resume(); } catch (e) {} }
+    if (!вкл && снятьПервыйЖест) снятьПервыйЖест();
+    if (вкл && К && К.state === "suspended") {
+      try {
+        var resume = К.resume();
+        if (resume && resume.catch) resume.catch(function () {});
+      } catch (e) {}
+    }
     if (вкл) везтиВсё(текущийАкт());
     if (шина) {
       шина.gain.setTargetAtTime(вкл ? 0.9 : 0, К.currentTime, вкл ? 0.30 : 0.12);
@@ -1047,8 +1054,13 @@
         for (var с = 0; с < события.length; с++) {
           (события[с] === "scroll" ? g : d).removeEventListener(события[с], раз);
         }
+        снятьПервыйЖест = null;
       };
-      var раз = function () {
+      снятьПервыйЖест = снять;
+      var раз = function (event) {
+        var target = event && event.target;
+        if (target && target.closest && target.closest(".rv-звук")) return;
+        try { if (localStorage.getItem(ПАМЯТЬ) === "0") { снять(); return; } } catch (e) {}
         включить(true);
         /* Возобновление контекста идёт обещанием: спрашиваем состояние
            не сразу, а следующим оборотом. Пока оно не «running», ловушка

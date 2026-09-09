@@ -1,0 +1,47 @@
+{
+  "release": "20260909-r10",
+  "status": "verified_for_publication",
+  "checked_at_utc": "2026-09-09T18:15:18.013241+00:00",
+  "base_commit": "0ef594b6854ecb85afeb2713f2484fed66d9a276",
+  "base_release": "20260909-r9",
+  "source_commit": null,
+  "checks": {
+    "javascript_total": 72,
+    "audio_scenarios_in_javascript_total": 18,
+    "prior_r9_audio_failures_reproduced": 13,
+    "api": 13,
+    "storage": 12,
+    "delivery": 7,
+    "deployment_and_integration": 10,
+    "total_automated_checks": 114,
+    "manifest_files": 27,
+    "audio_files_fully_decoded": 51,
+    "non_silent_audio_files": 51
+  },
+  "external_before_publication": {
+    "url": "https://rocketcdn.ru/assets/rc-cabin.js",
+    "status": 200,
+    "sha256_matches_deployed_r9": true
+  },
+  "graphics": {
+    "source_unchanged_since_r9": true,
+    "previous_native_frames": 58,
+    "report": "review/r9-verification.json",
+    "new_graphics_or_device_fps_claimed": false
+  },
+  "browser_acceptance": {
+    "current_browser_control_tool_available": false,
+    "real_device_test_connection_found": false,
+    "completed": false
+  },
+  "acceptance_limits": [
+    "Native browser autoplay and sound output on physical hardware remain unverified",
+    "Sustained browser WebGL 2/HDR and physical-device FPS remain unverified",
+    "Exact photorealism/Igloo parity and 8K output have not been accepted"
+  ],
+  "audio_api_references": [
+    "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play",
+    "https://developer.chrome.com/blog/play-returns-promise",
+    "https://webkit.org/blog/6784/new-video-policies-for-ios/"
+  ]
+}

@@ -317,6 +317,7 @@
     "rocketcdn/storage.php",
     "rocketcdn/tests/README.md",
     "rocketcdn/tests/api-wasm.mjs",
+    "rocketcdn/tests/audio-regressions.cjs",
     "rocketcdn/tests/backup.php",
     "rocketcdn/tests/concurrency.php",
     "rocketcdn/tests/delivery.php",
@@ -523,6 +524,12 @@
       "mode": "100644"
     },
     {
+      "path": "rocketcdn/assets/rc-music.js",
+      "base_sha": "5e013f8a064f4e0321b7c5c1535bf8c608f3baf3",
+      "mode": "100644",
+      "sha": "835007ddc5daa597c60bbc381b027438a15d12db"
+    },
+    {
       "path": "rocketcdn/assets/rc-panel.js",
       "sha": "b455d99ede3787d5d97b3e1f6217b2fdc15ff0c4",
       "base_sha": "4d17eb30ffd94920b26065fb76b832edb79c5498",
@@ -533,6 +540,12 @@
       "sha": "fe4e37763e4b697be0006a6542fa6f6a3c37a922",
       "base_sha": "811f78cd7a63ba383c8f7a94928cae7e78f86fb4",
       "mode": "100644"
+    },
+    {
+      "path": "rocketcdn/assets/rc-sound.js",
+      "base_sha": "d6a963f3d9f908b11a3a6443ce8942c683a54b17",
+      "mode": "100644",
+      "sha": "c4b799b1609e2cf304fbcf06ef57c18511a22e32"
     },
     {
       "path": "rocketcdn/backup.php",
@@ -572,7 +585,7 @@
     },
     {
       "path": "rocketcdn/index.html",
-      "sha": "22363fa6490d0045cc0d79fca8ce570741ccf0de",
+      "sha": "495400e9c8921dfa64dd7bfd951ed5614af7ed92",
       "base_sha": "115162479e787dd7f49490f2ba618d4ca391f1f7",
       "mode": "100644"
     },
@@ -602,7 +615,7 @@
     },
     {
       "path": "rocketcdn/tests/README.md",
-      "sha": "571008247e65fa0d182c7d7f00616e5fdcde2921",
+      "sha": "51ba00bc83f1d806df97aeaba3d912f3cc4c36b9",
       "base_sha": null,
       "mode": "100644"
     },
@@ -611,6 +624,12 @@
       "sha": "5b825a8309102277ee7fbb04aee767fcfb581c6d",
       "base_sha": null,
       "mode": "100644"
+    },
+    {
+      "path": "rocketcdn/tests/audio-regressions.cjs",
+      "base_sha": null,
+      "mode": "100644",
+      "sha": "cac0e15a42f3b1921ce65816752179088961eb4f"
     },
     {
       "path": "rocketcdn/tests/backup.php",
@@ -644,7 +663,7 @@
     },
     {
       "path": "rocketcdn/tests/package.json",
-      "sha": "c1e5f3eaa8ac462e8162ab2906493de42e5545bd",
+      "sha": "e4806ead2e5896e0587a22fce7bb5780c1d72443",
       "base_sha": null,
       "mode": "100644"
     },
@@ -728,7 +747,7 @@
     },
     {
       "path": "rocketvpn/assets/rv-sound.js",
-      "sha": "f636e598ba9b1d89f03257b28feb146f0f9d99f2",
+      "sha": "266b5bd698e5dbd1d71079fe5a49473fac0ade72",
       "base_sha": "28c96a967e100c68ce8a0eba49bec86e8b5e29ad",
       "mode": "100644"
     },
@@ -823,5 +842,5 @@
       "mode": "100644"
     }
   ],
-  "release": "20260909-r9"
+  "release": "20260909-r10"
 }

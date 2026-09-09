@@ -1,0 +1,772 @@
+{
+  "scope": "Complete audio-file decoding with FFmpeg; not browser autoplay, acoustic quality or hardware-speaker acceptance",
+  "files_checked": 51,
+  "files": [
+    {
+      "path": "rocketcdn/assets/audio/theme.webm",
+      "sha256": "bc319b6cf3609b7432312ab5ada73750116424bb8da95571119877e12db97c37",
+      "duration_seconds": 72.008,
+      "streams": [
+        {
+          "codec_name": "opus",
+          "sample_rate": "48000",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -23.4,
+      "peak_volume_db": -7.2
+    },
+    {
+      "path": "rocketcdn/assets/audio/theme.m4a",
+      "sha256": "1c5cc4e1615e344c95fc010cdf0b479a6114a18c5b244e5f6b8eb34cb2264918",
+      "duration_seconds": 72.0,
+      "streams": [
+        {
+          "codec_name": "aac",
+          "sample_rate": "48000",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -23.4,
+      "peak_volume_db": -7.0
+    },
+    {
+      "path": "rocketcdn/assets/snd/hover.mp3",
+      "sha256": "04343cb00408832b88a7eb1efa3ee03dbbe004a1bf60ce9f5099655965fc67f5",
+      "duration_seconds": 0.731429,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.7,
+      "peak_volume_db": -11.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/panel-out.mp3",
+      "sha256": "80fcd30de17a0c65dca7ba7d0c1b2c56c706d6d53eaf54eeb973437efd987b6c",
+      "duration_seconds": 1.123265,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -17.7,
+      "peak_volume_db": -4.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/hyper.mp3",
+      "sha256": "1640be253a29316343f90b668ebe08a59d025f175e490f615408a9dae8353553",
+      "duration_seconds": 3.604898,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -20.5,
+      "peak_volume_db": -5.8
+    },
+    {
+      "path": "rocketcdn/assets/snd/scan.mp3",
+      "sha256": "8457c1be88295f503a2e2bc7e48a8f2ffcb7aa8808aaa3fc2fffbf60f0449292",
+      "duration_seconds": 2.35102,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -27.6,
+      "peak_volume_db": -9.8
+    },
+    {
+      "path": "rocketcdn/assets/snd/arrive.mp3",
+      "sha256": "1b916ca30caf433d5cee76740460f683a72ee64962d17dc1cb98020f609de09e",
+      "duration_seconds": 2.45551,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.9,
+      "peak_volume_db": -6.9
+    },
+    {
+      "path": "rocketcdn/assets/snd/deny.mp3",
+      "sha256": "53ee2d6c53d5131d5f1a1bb8a23caea2b494fa57432988f43fc2fbac86b24e3b",
+      "duration_seconds": 0.914286,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.4,
+      "peak_volume_db": -6.8
+    },
+    {
+      "path": "rocketcdn/assets/snd/alarm.mp3",
+      "sha256": "ef82ac7a01a17a5d1690391dea4794e9b572c324703508d95550d5bdbfcada76",
+      "duration_seconds": 1.906939,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -20.9,
+      "peak_volume_db": -11.7
+    },
+    {
+      "path": "rocketcdn/assets/snd/brake.mp3",
+      "sha256": "bd6279fa680820bdc1a67fb689f9eb271b08ae563b1c9ff333d40bfab6f02a4f",
+      "duration_seconds": 2.037551,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -19.9,
+      "peak_volume_db": -8.1
+    },
+    {
+      "path": "rocketcdn/assets/snd/ignite.mp3",
+      "sha256": "e9be321f8249025c8e72f2f2c652dd505ccdcf0f3e17f7a6b943642197201890",
+      "duration_seconds": 3.239184,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -18.0,
+      "peak_volume_db": -6.4
+    },
+    {
+      "path": "rocketcdn/assets/snd/dock.mp3",
+      "sha256": "e9330631299b5ca417edbdc98df7a7c5d00739ca281ef8e9b97141b022d969c6",
+      "duration_seconds": 2.612245,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -24.0,
+      "peak_volume_db": -5.7
+    },
+    {
+      "path": "rocketcdn/assets/snd/switch.mp3",
+      "sha256": "436540e8356151059eb64245627040008b57027e19c1cb424a579675a3d6496a",
+      "duration_seconds": 0.731429,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -25.8,
+      "peak_volume_db": -1.5
+    },
+    {
+      "path": "rocketcdn/assets/snd/engine.mp3",
+      "sha256": "99047e4fd03af6f3967fd512709742e65d278cbd58818073bf9300f4926c299b",
+      "duration_seconds": 5.041633,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -18.4,
+      "peak_volume_db": -9.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/node.mp3",
+      "sha256": "e7dc8db384f0d5b6890229a4e6eaddadaeb8259683e2b88e578c1e5d8662e1be",
+      "duration_seconds": 0.914286,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.9,
+      "peak_volume_db": -7.5
+    },
+    {
+      "path": "rocketcdn/assets/snd/amb-space.mp3",
+      "sha256": "f07f9b4eb174a1334f7714153005965d292d20ccc230c95b58730079879b642e",
+      "duration_seconds": 8.045714,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.2,
+      "peak_volume_db": -8.5
+    },
+    {
+      "path": "rocketcdn/assets/snd/success.mp3",
+      "sha256": "a0e6dfe40f2c76632359ecac208c9dd112e9b4d50af15deb4e2f1bae5fcfb6ca",
+      "duration_seconds": 2.246531,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -26.8,
+      "peak_volume_db": -10.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/lock.mp3",
+      "sha256": "0623b2cbd5e19fe5251599ea83472b561d34a8ddadfbfb1873f8f9ff8f64edd3",
+      "duration_seconds": 1.123265,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.9,
+      "peak_volume_db": -0.5
+    },
+    {
+      "path": "rocketcdn/assets/snd/boom.mp3",
+      "sha256": "3a133f7031fb9a4fd496a9c07b3ebf73aa4bcbb570ee79486e4317abfe7d97a1",
+      "duration_seconds": 2.612245,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -9.7,
+      "peak_volume_db": -2.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/confirm.mp3",
+      "sha256": "55793a85775364dd8b8d49a10605dfaa38f77d223b18e13acc406fcfc8e3cf4d",
+      "duration_seconds": 1.410612,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -20.7,
+      "peak_volume_db": -5.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/beacon.mp3",
+      "sha256": "995e13e883ee374debd3e7bb9aeb50a5ceaf35e149b7f25c40d5d7847b51d0cd",
+      "duration_seconds": 2.429388,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -23.5,
+      "peak_volume_db": -7.9
+    },
+    {
+      "path": "rocketcdn/assets/snd/climb.mp3",
+      "sha256": "b041465c772ade117676e6f472cefd62050f2edc581c410efad57ef701b07e97",
+      "duration_seconds": 5.041633,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -19.9,
+      "peak_volume_db": -8.7
+    },
+    {
+      "path": "rocketcdn/assets/snd/type.mp3",
+      "sha256": "fb229230de7f5a8a183c0064502fe91fe5ce0cde15288bc0c9866652ad2eff25",
+      "duration_seconds": 0.522449,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -27.9,
+      "peak_volume_db": -15.0
+    },
+    {
+      "path": "rocketcdn/assets/snd/panel-in.mp3",
+      "sha256": "95cbb65de12e431c38156bb2e430349ad4bad0dcc71073705c56ee182588ba29",
+      "duration_seconds": 1.332245,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -23.6,
+      "peak_volume_db": -5.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/reveal.mp3",
+      "sha256": "19fb6e6ea52259de8626c602fef5d9d56ad997c2fcc7ce1e86e8ce39daa414df",
+      "duration_seconds": 1.515102,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -23.5,
+      "peak_volume_db": -1.6
+    },
+    {
+      "path": "rocketcdn/assets/snd/click.mp3",
+      "sha256": "3e4932aec030c9194ace82dee45a901f085aae5ee9427e7b950a57bf534be4f2",
+      "duration_seconds": 0.835918,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -29.2,
+      "peak_volume_db": -7.1
+    },
+    {
+      "path": "rocketcdn/assets/snd/radar.mp3",
+      "sha256": "29e2dd549214bc2b09ee519e60ce571e5c98b6e0007ac869b265e6aa11272af2",
+      "duration_seconds": 1.645714,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.7,
+      "peak_volume_db": -7.7
+    },
+    {
+      "path": "rocketcdn/assets/snd/amb-cabin.mp3",
+      "sha256": "75c3233d6b3fde6c8d36373147ae7b088ecf6595f7e46eb9569057a81e19101f",
+      "duration_seconds": 7.026939,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -19.3,
+      "peak_volume_db": -6.5
+    },
+    {
+      "path": "rocketvpn/assets/snd/sweep.mp3",
+      "sha256": "741b6afbfda44689c8a99d8ccd696468c357209137f1e857532564e1e0739b5d",
+      "duration_seconds": 3.056327,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -20.9,
+      "peak_volume_db": -5.4
+    },
+    {
+      "path": "rocketvpn/assets/snd/hover.mp3",
+      "sha256": "404ab68775cf27a5ac846903cc2b60764dac4752dc11bd29b70041fc1fca0a08",
+      "duration_seconds": 0.626939,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.9,
+      "peak_volume_db": -9.0
+    },
+    {
+      "path": "rocketvpn/assets/snd/bed-shell.mp3",
+      "sha256": "3471967fb4817bb5b7a8d093a59af0e64db5bfe9a091c58b255ca1e6f395919d",
+      "duration_seconds": 11.049796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.2,
+      "peak_volume_db": -2.9
+    },
+    {
+      "path": "rocketvpn/assets/snd/tonnel.mp3",
+      "sha256": "ccd42ca856c2dc71dca7a180358152cc5fe244f761b8550abaf78b734d449bc9",
+      "duration_seconds": 13.740408,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -17.3,
+      "peak_volume_db": -3.3
+    },
+    {
+      "path": "rocketvpn/assets/snd/klik.mp3",
+      "sha256": "de4fafcd6a02593f6635e122cb5a7a7291d7d5830120e3b215cb623d057870ed",
+      "duration_seconds": 0.522449,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -37.5,
+      "peak_volume_db": -9.8
+    },
+    {
+      "path": "rocketvpn/assets/snd/shtab.mp3",
+      "sha256": "bdd6f0caf2a0ae30166e7824e9125a9130772898f5ebf3253fffc429d1db5964",
+      "duration_seconds": 9.038367,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -20.9,
+      "peak_volume_db": -0.4
+    },
+    {
+      "path": "rocketvpn/assets/snd/bed-wall.mp3",
+      "sha256": "b3db60293f417e84ad9099a083bd4f6a11f1e0999acda8ae86c9f0acbb155cc1",
+      "duration_seconds": 11.049796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.6,
+      "peak_volume_db": -11.8
+    },
+    {
+      "path": "rocketvpn/assets/snd/gate.mp3",
+      "sha256": "21af5444556ba19a7dc18618fe7cdb59a384d0f11926d6eea6505d565f3b48ef",
+      "duration_seconds": 4.649796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -19.0,
+      "peak_volume_db": -6.2
+    },
+    {
+      "path": "rocketvpn/assets/snd/dock.mp3",
+      "sha256": "fd85fc39c2330dc542254d0b718a9ee677b140d06bde0d74701eac11fbd6ca01",
+      "duration_seconds": 2.324898,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -23.3,
+      "peak_volume_db": -4.0
+    },
+    {
+      "path": "rocketvpn/assets/snd/prokol.mp3",
+      "sha256": "ab06e350101b509d23c0ea1a1709b17ef76ecdd7ed564ac1f638f18fedb046a7",
+      "duration_seconds": 4.04898,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.5,
+      "peak_volume_db": 0.0
+    },
+    {
+      "path": "rocketvpn/assets/snd/pull.mp3",
+      "sha256": "fe64d4f95fcfbd9aedd8ca5543b0dfeb077035202f10fcd854f95e89b78abf7d",
+      "duration_seconds": 1.541224,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -20.5,
+      "peak_volume_db": -2.6
+    },
+    {
+      "path": "rocketvpn/assets/snd/bed-open.mp3",
+      "sha256": "c15d6a8c5b8f870bc7aa1c3d34edede50220cde54765638234ff85a5ba399268",
+      "duration_seconds": 11.049796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -27.0,
+      "peak_volume_db": -9.8
+    },
+    {
+      "path": "rocketvpn/assets/snd/stena.mp3",
+      "sha256": "c4aafc67e74902deeea3bf77b4d5ce14dfcbb590f89c03d024c8040dcf8908bd",
+      "duration_seconds": 3.030204,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -30.4,
+      "peak_volume_db": -4.9
+    },
+    {
+      "path": "rocketvpn/assets/snd/bed-bridge.mp3",
+      "sha256": "4ea4b6f6a0c8f6e8bcab9e9661452136029da5e708f1adc774606b27c2b8d243",
+      "duration_seconds": 11.049796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -19.0,
+      "peak_volume_db": -5.7
+    },
+    {
+      "path": "rocketvpn/assets/snd/bed-tunnel.mp3",
+      "sha256": "55c0c388ad079c0a082d14078ab46fe1468edca72f0c20e40f0958c99c8acef3",
+      "duration_seconds": 11.049796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.3,
+      "peak_volume_db": -9.4
+    },
+    {
+      "path": "rocketvpn/assets/snd/pick.mp3",
+      "sha256": "79e6c33e31f5ffdf036a7b3e91f4175732336ee92d240ac1bbf6b60f14c218b9",
+      "duration_seconds": 1.410612,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -21.6,
+      "peak_volume_db": -2.5
+    },
+    {
+      "path": "rocketvpn/assets/snd/gul.mp3",
+      "sha256": "f6991dacfc359db642cbd08e549d44d6f9f42a6516a1a0cc18178609a1b6d269",
+      "duration_seconds": 9.038367,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -49.0,
+      "peak_volume_db": -38.0
+    },
+    {
+      "path": "rocketvpn/assets/snd/fon.m4a",
+      "sha256": "1d2dfe12dbbc64d80fb33fd240e9d8beb94db6690b4e691fb7d1508431d06da0",
+      "duration_seconds": 304.413605,
+      "streams": [
+        {
+          "codec_name": "aac",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -13.3,
+      "peak_volume_db": -0.1
+    },
+    {
+      "path": "rocketvpn/assets/snd/tap.mp3",
+      "sha256": "acd8bf080f2f32a75d1b995ee8d40f7f0b016f1d50c1d179cfae3d2f00efffa4",
+      "duration_seconds": 0.626939,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -32.2,
+      "peak_volume_db": -2.5
+    },
+    {
+      "path": "rocketvpn/assets/snd/shell-seal.mp3",
+      "sha256": "b94ca7405deb0029138d07a7799acc9ac608472320681053e0e983e1738d3891",
+      "duration_seconds": 2.76898,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -25.2,
+      "peak_volume_db": -3.2
+    },
+    {
+      "path": "rocketvpn/assets/snd/pusk.mp3",
+      "sha256": "c39f012b1f31898b4fb377c971b5d6ac7d84c7b8dc998a8ac1c4a90eb97e058e",
+      "duration_seconds": 5.041633,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 2
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -5.6,
+      "peak_volume_db": 0.0
+    },
+    {
+      "path": "rocketvpn/assets/snd/impact.mp3",
+      "sha256": "6aad0b2ad269ccf010fbb0913cd6575b40bc7766bdad6a2f200e25a733b3b27a",
+      "duration_seconds": 3.657143,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -14.6,
+      "peak_volume_db": -4.9
+    },
+    {
+      "path": "rocketvpn/assets/snd/bed-net.mp3",
+      "sha256": "94374594aa81b6bd54c41f69f03596ce9e6f9323dbb9fc80cb2066513ac0c463",
+      "duration_seconds": 11.049796,
+      "streams": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1
+        }
+      ],
+      "decode_passed": true,
+      "mean_volume_db": -22.5,
+      "peak_volume_db": -8.6
+    }
+  ],
+  "non_silent_files": 51
+}

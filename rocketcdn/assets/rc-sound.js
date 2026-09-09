@@ -545,14 +545,24 @@ Sound.prototype.chime = function () {
    и был причиной. */
 Sound.prototype.start = function (ответ) {
   var self = this;
+  var version = this._startVersion = (this._startVersion || 0) + 1;
+  this._starting = true;
   var сказал = false;
   function итог(ок) {
     if (сказал) return;
     сказал = true;
+    if (version !== self._startVersion) return;
+    self._starting = false;
     if (typeof ответ === "function") { try { ответ(!!ок); } catch (e) {} }
   }
-  if (!this.ready && !this.build()) { итог(false); return; }
+  // Both media play() and resume() must be requested in the originating gesture.
+  try { localStorage.setItem(KEY, "on"); } catch (e) {}
+  if (g.RC_MUSIC) { try { g.RC_MUSIC.on(); } catch (e) {} }
+  try {
+    if (!this.ready && !this.build()) { итог(false); return; }
+  } catch (e) { итог(false); return; }
   function up() {
+    if (version !== self._startVersion) return;
     var ок = self.fadeIn();
     if (ок) {
       self.space();
@@ -565,9 +575,14 @@ Sound.prototype.start = function (ответ) {
     }
     итог(ок);
   }
-  var r = this.ctx.resume();
+  function failed() {
+    if (version !== self._startVersion) return;
+    self.hint(); итог(false);
+  }
+  var r;
+  try { r = this.ctx.resume(); } catch (e) { failed(); return; }
   if (r && r.then) {
-    r.then(up).catch(function () { self.hint(); итог(false); });
+    r.then(up).catch(failed);
   } else {
     up();
   }
@@ -589,7 +604,6 @@ Sound.prototype.fadeIn = function () {
   this.master.gain.linearRampToValueAtTime(this.music() ? 0.085 : 0.16, t + 1.8);
   this.loop();
   try { localStorage.setItem(KEY, "on"); } catch (e) {}
-  if (g.RC_MUSIC) { try { g.RC_MUSIC.on(); } catch (e) {} }
   сказать(true);
   if (g.RC_track) g.RC_track("sound", "on");
   return true;
@@ -605,8 +619,9 @@ Sound.prototype.music = function () {
    это каша, а заказчик просил фон, который не давит.
 
    Считается это отдельно и по событию, а не один раз на входе.
-   Причина замерена: тему заводит сам fadeIn, но заводит ПОСЛЕ того,
-   как выставил уровень, поэтому на входе музыка ещё не играет. От
+   До r10 тему заводил fadeIn после выставления уровня. Теперь
+   play() вызывается сразу в жесте, но результат всё ещё приходит
+   асинхронно, поэтому на входе музыка может ещё не играть. От
    захода к заходу мастер выходил то 0.16, то 0.085 - разница почти
    вдвое на одном и том же сайте, в зависимости от того, чей вызов
    успел первым. Теперь уровень пересчитывается всякий раз, когда
@@ -619,7 +634,10 @@ Sound.prototype.баланс = function () {
 };
 
 Sound.prototype.stop = function () {
+  this._startVersion = (this._startVersion || 0) + 1;
+  this._starting = false;
   this.on = false;
+  if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
   /* Маятник маяков заводится при включении звука и раньше тикал до
      закрытия вкладки: сигнала он не давал, потому что внутри стоит
      проверка on, но будильник каждые семь секунд держал вкладку
@@ -647,7 +665,8 @@ Sound.prototype.toggle = function () {
      синтезированный слой, и на устройстве без Web Audio, где играет
      одна музыкальная тема, нажатие на горящую кнопку не выключало
      её, а пыталось включить звук заново. */
-  if (this.on || this.music()) this.stop(); else this.start();
+  var pendingMusic = g.RC_MUSIC && g.RC_MUSIC.state && g.RC_MUSIC.state().цель > 0;
+  if (this.on || this._starting || this.music() || pendingMusic) this.stop(); else this.start();
 };
 
 /* Подсказка показывается один раз в жизни */

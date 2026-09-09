@@ -63,6 +63,7 @@ var FADE = 6.0;                       /* секунд на проявление 
 
 var el = null, want = 0, cur = 0, raf = null, last = 0;
 var started = false, killed = false, duckUntil = 0, boosted = false;
+var playVersion = 0, failedSources = [];
 
 /* Человек уже говорил «выключить» - помним это между визитами.
    Ключ общий со звуками ракеты: кнопка в шапке одна на весь звук. */
@@ -89,9 +90,17 @@ function build() {
 
   /* Файла нет или формат не понят - молчим, кнопку возвращаем в
      положение «выключено», чтобы она не врала про играющий звук */
-  el.addEventListener("error", function () {
+  el.addEventListener("error", function (event) {
+    // A failed <source> must not cancel the browser's next supported format.
+    if (event.target !== el) {
+      if (event.target !== a && event.target !== b) return;
+      if (failedSources.indexOf(event.target) < 0) failedSources.push(event.target);
+      if (failedSources.length < 2) return;
+    }
+    playVersion++;
     killed = true;
     want = 0; cur = 0; started = false;
+    try { el.pause(); } catch (e) {}
     root.classList.remove("music-on");
     tell(false);
   }, true);
@@ -114,6 +123,7 @@ function kick() {
 /* Плавность ведём сами: у элемента нет своих переходов громкости,
    а резкое включение как раз и есть то, что бьёт по нервам. */
 function frame(ts) {
+  if (!el || !started) { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; return; }
   var moving = Math.abs(cur - want) > 0.002 || duckUntil > ts || (want > 0 && !started);
   raf = moving ? requestAnimationFrame(frame) : 0;
   if (!raf) last = 0;
@@ -144,19 +154,33 @@ function frame(ts) {
 
 function play() {
   if (!el || killed) return null;
+  var version = ++playVersion;
+  started = false;
+  function success() {
+    if (version !== playVersion) {
+      if (!want || doc.hidden) { try { el.pause(); } catch (e) {} }
+      return;
+    }
+    if (!want || doc.hidden) { el.pause(); started = false; return; }
+    started = true;
+    root.classList.add("music-on");
+    tell(true);
+    завелось();
+    kick();
+  }
+  function failure() {
+    if (version !== playVersion) return;
+    started = false;
+    want = 0; cur = 0;
+    root.classList.remove("music-on");
+    tell(false);
+    неЗавелось();
+  }
   var r = null;
-  try { r = el.play(); } catch (e) { return null; }
+  try { r = el.play(); } catch (e) { failure(); return null; }
   if (r && r.then) {
-    r.then(function () { started = true; завелось(); }).catch(function () {
-      /* Браузер отказал даже после нажатия - значит звука нет, и
-         кнопка обязана это показать, а не гореть «включено» */
-      started = false;
-      want = 0; cur = 0;
-      root.classList.remove("music-on");
-      tell(false);
-      неЗавелось();
-    });
-  } else { started = true; завелось(); }
+    r.then(success, failure);
+  } else success();
   return r;
 }
 
@@ -166,13 +190,17 @@ function play() {
    ради которого браузер вообще разрешает звук. Здесь же начинается
    загрузка файла. */
 function on(level) {
-  if (killed) return;
   /* Слово человека сильнее любого вызова: сказал «выключить» - тема не
      поднимается, кто бы её ни звал. Кнопка звука пишет «on» в этот же
      ключ ДО того, как позвать нас, поэтому собственное нажатие сюда
      не упирается. */
   if (muteChoice()) return;
   build();
+  if (killed) {
+    killed = false;
+    failedSources.length = 0;
+    try { el.load(); } catch (e) {}
+  }
   /* Тема уже идёт, а уровень не задан - оставляем как есть. Иначе
      повторный вызов сбивает громкость к фоновой, а зовут нас часто и
      не только с нуля: fadeIn делает это при каждом включении звука,
@@ -183,15 +211,17 @@ function on(level) {
     tell(true);
     return;
   }
-  want = level === undefined ? VOL : level;
+  want = level === undefined ? (boosted ? 0.55 : VOL) : level;
   if (!started || el.paused) play();
-  root.classList.add("music-on");
-  tell(true);
-  kick();
+  root.classList.toggle("music-on", started);
+  tell(started);
+  if (started) kick();
 }
 
 function silence() {
+  playVersion++;
   want = 0;
+  if (el && !started) { try { el.pause(); } catch (e) {} }
   root.classList.remove("music-on");
   tell(false);
   kick();
@@ -220,7 +250,7 @@ g.RC_MUSIC = {
      трек. Ждать, пока шестисекундное проявление доедет до слышимой
      громкости, кнопка не должна - иначе первые секунды после
      нажатия она показывает «выключено» при играющей музыке. */
-  playing: function () { return !!(el && want > 0 && !el.paused); },
+  playing: function () { return !!(el && started && want > 0 && !el.paused); },
   level: function () { return cur; },
   state: function () {
     return {
@@ -255,7 +285,7 @@ g.RC_MUSIC = {
    показал, что после отказа на прокрутке тема заводилась только с
    ЧЕТВЁРТОГО щелчка. Теперь ожидание кончается за доли секунды. */
 var жест = 0;
-var ЖЕСТЫ = ["pointerdown", "touchstart", "keydown", "wheel", "scroll", "click"];
+var ЖЕСТЫ = ["pointerdown", "pointerup", "touchstart", "touchend", "keydown", "wheel", "scroll", "click"];
 
 /* Тема пошла - откуда бы её ни завели. Ждать первого действия больше
    незачем, и слушатели уходят. Условия «только если попытка была
@@ -264,6 +294,11 @@ var ЖЕСТЫ = ["pointerdown", "touchstart", "keydown", "wheel", "scroll", "cl
    останутся висеть и на следующем щелчке заведут звук по второму
    разу - вместе со сбросом громкости к фоновой. */
 function завелось() {
+  if (g.RC_SOUND && g.RC_SOUND.ready && !g.RC_SOUND.on) {
+    жест = 0;
+    слушатьЖесты(true);
+    return;
+  }
   жест = 2;
   слушатьЖесты(false);
 }
@@ -271,14 +306,16 @@ function завелось() {
 /* Браузер отказал. Обычно это прокрутка колесом: разрешением на звук
    она не считается. Возвращаемся в ожидание настоящего нажатия. */
 function неЗавелось() {
-  if (жест === 1) жест = 0;
+  if (muteChoice() || killed) return;
+  жест = 0;
+  слушатьЖесты(true);
 }
 
 /* Звучит ли на самом деле хоть что-нибудь. Смотрим и на тему, и на
    синтезированный слой: включить могли любой из них, а ждём мы не
    конкретный источник, а звук вообще. */
 function звучит() {
-  if (el && !el.paused && want > 0) return true;
+  if (el && started && !el.paused && want > 0) return true;
   return !!(g.RC_SOUND && g.RC_SOUND.on);
 }
 
@@ -302,7 +339,7 @@ function ответЗвука(ок) {
   if (ок || звучит()) return;
   /* Web Audio на устройстве нет вовсе: синтезу не завестись никогда,
      а тема из файла играть может. Поднимаем одну её. */
-  if (g.RC_SOUND && !g.RC_SOUND.ready) { on(); return; }
+  if (g.RC_SOUND && !g.RC_SOUND.ready) { if (!want) on(); return; }
   неЗавелось();
 }
 
@@ -314,7 +351,9 @@ function слушатьЖесты(вкл) {
 }
 
 function первыйЖест(e) {
-  if (жест) return;
+  if (жест === 2) return;
+  // A press/scroll may remain pending until a browser-approved release gesture.
+  if (жест === 1 && !(e && /^(pointerup|touchend|click|keydown)$/.test(e.type))) return;
   /* Человек уже говорил «выключить» - его слово сильнее заказчика */
   if (muteChoice() || killed) { слушатьЖесты(false); return; }
 
@@ -382,8 +421,13 @@ function wire() {
      Вернулись при включённом звуке - продолжаем с того же места. */
   doc.addEventListener("visibilitychange", function () {
     if (!el || !want) return;
-    if (doc.hidden) { try { el.pause(); } catch (e) {} started = false; }
-    else { play(); kick(); }
+    if (doc.hidden) {
+      playVersion++;
+      try { el.pause(); } catch (e) {}
+      started = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0; last = 0;
+    } else play();
   });
 
   /* Человек сказал «выключить» в другой вкладке - гасим и здесь */

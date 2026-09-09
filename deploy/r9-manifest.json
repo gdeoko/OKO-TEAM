@@ -1,21 +1,21 @@
 {
-  "base_commit": "0ef594b6854ecb85afeb2713f2484fed66d9a276",
-  "base_release": "20260909-r9",
-  "release": "20260909-r10",
+  "base_commit": "f7d7a87319bcc79adcaa8df11c4fe50bd7499d15",
+  "base_release": "20260908-r8",
+  "release": "20260909-r9",
   "files": [
     {
       "path": "rocketcdn/admin.html",
-      "base_sha256": "a77b3a9f9deea9eb915a01e3f44dcb97c539d31d45763a853cdced84c3f95ac7",
+      "base_sha256": "36bfcfaeca3fed0e24ef03a03ffaa90d7eaf5b27bd40fc41fb05d38163748304",
       "sha256": "a77b3a9f9deea9eb915a01e3f44dcb97c539d31d45763a853cdced84c3f95ac7"
     },
     {
       "path": "rocketcdn/assets/rc-app.js",
-      "base_sha256": "2a06f6334e27ac64b6e7704417e2e8ba3ecaf307998c763fcb5427f4770a2dab",
+      "base_sha256": "64f9f4cb377d83cde4ed8820306e89f49db73eb068f2b1fdf064e5206812d920",
       "sha256": "2a06f6334e27ac64b6e7704417e2e8ba3ecaf307998c763fcb5427f4770a2dab"
     },
     {
       "path": "rocketcdn/assets/rc-cabin.js",
-      "base_sha256": "589b2eda4e2ff437ec6fc9d40723b8b96dd3166f3a2494c2f56b750e16f64af6",
+      "base_sha256": "61e0f712601f98dd11b3450b6e4c51fb73d72d155d097c265e7656b5d9a558a1",
       "sha256": "589b2eda4e2ff437ec6fc9d40723b8b96dd3166f3a2494c2f56b750e16f64af6"
     },
     {
@@ -29,33 +29,23 @@
       "sha256": "42781434971db7279848e841ef5b0ea622f94fe532ff9cb322a2fdc365d08148"
     },
     {
-      "path": "rocketcdn/assets/rc-music.js",
-      "base_sha256": "2e464903782de1fbeed0700bc5c0379572287c917d4779d3097a4348b67de6e9",
-      "sha256": "d4333c2b8ff3525381fe0ca2cfa4771b291b57634b13c4ede6ebcaf5cf42fd68"
-    },
-    {
       "path": "rocketcdn/assets/rc-panel.js",
       "base_sha256": "ad5f19b09c1a87fc0a5752c5a829ceb41341fe34ade8ae3d916a7debc60777eb",
       "sha256": "ad5f19b09c1a87fc0a5752c5a829ceb41341fe34ade8ae3d916a7debc60777eb"
     },
     {
       "path": "rocketcdn/assets/rc-real.js",
-      "base_sha256": "ef1ebaab2051fe71145b213de64f27a8ba5f787c07df64e044bbd1e8733e1e93",
+      "base_sha256": "a8c82063b061fcb3b964e4352144066172e634e0787846e526bf70c3b13632f1",
       "sha256": "ef1ebaab2051fe71145b213de64f27a8ba5f787c07df64e044bbd1e8733e1e93"
     },
     {
-      "path": "rocketcdn/assets/rc-sound.js",
-      "base_sha256": "06b9b1764736993c3a4f8817dde8b6a83ce9a3dc90d028282d0019628a69d1d7",
-      "sha256": "6b4c449061985393bb0388f5581d033ef31da367d4771eb5a7e11e73b3f52e23"
-    },
-    {
       "path": "rocketcdn/index.html",
-      "base_sha256": "d6e27696f471cdb8bffee0a31325f40b0fd8c37b3e5407c7d841bdb119667a75",
-      "sha256": "56cb77f51b1e788b48e6351c0f6d6ae65d3dc492ad3cd9fac0a00ca2f72fb585"
+      "base_sha256": "d214bff23492c0a8e43b8d6a553ee77a5c2892243489fa4d79d08d48518d3324",
+      "sha256": "d6e27696f471cdb8bffee0a31325f40b0fd8c37b3e5407c7d841bdb119667a75"
     },
     {
       "path": "rocketvpn/assets/rc-cabin.js",
-      "base_sha256": "589b2eda4e2ff437ec6fc9d40723b8b96dd3166f3a2494c2f56b750e16f64af6",
+      "base_sha256": "0c1e01241fa5bb9f788c29c55435851b9b8fcb3aec968058beda67f2af72d914",
       "sha256": "589b2eda4e2ff437ec6fc9d40723b8b96dd3166f3a2494c2f56b750e16f64af6"
     },
     {
@@ -77,11 +67,6 @@
       "path": "rocketvpn/assets/rv-real.js",
       "base_sha256": "77028384acb5c8ffc006d8b7850d3078d1591a05f58e5084cd20ff0ce21ccf72",
       "sha256": "77028384acb5c8ffc006d8b7850d3078d1591a05f58e5084cd20ff0ce21ccf72"
-    },
-    {
-      "path": "rocketvpn/assets/rv-sound.js",
-      "base_sha256": "1c9c05201a363da6b0138075cdd22f8314dbe9672eae8a5039c384e5a4031808",
-      "sha256": "519d32db894ba45618588908dbfcad5493d96a0f0a9b8713330b36c6c6f28643"
     },
     {
       "path": "rocketvpn/assets/rv-world.js",
