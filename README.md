@@ -4,7 +4,7 @@
 
 Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
-Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). Current publication status and acceptance limits are recorded in `RELEASE_R8.md`; `RELEASE_R7.md`, `RELEASE_R6.md`, `RELEASE_R5.md`, `RELEASE_R4.md` and `RELEASE.md` preserve the earlier reports.
+Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). **r9 is prepared but not deployed.** It fixes CDN/game analytics delivery, content-editor request races and lost drafts, and preservation of authored cabin material properties. Local checks pass; client SSH access and authorization for a separate graphics test environment remain blocked. See `RELEASE_R9.md` and `review/r9-verification.json`. The live r8 publication and its acceptance limits are recorded in `RELEASE_R8.md`; earlier release notes preserve their historical reports.
 
 The client now runs **r8**, which fixes CDN screen-text downsampling on WebGL 1, flight projector/camera lifecycle, and post-processing buffer retirement. The native inspection produced 46 cabin/flight checkpoints across landscape and portrait, with no GL/shader errors and successful world rebuilding. The preceding r7 inspection produced 72 VPN checkpoints. These are selected native canvas frames, not continuous browser or physical-device FPS acceptance. Activation passed 28 server checks and retained all five existing requests. The exact r7 tree is now saved in GitHub as `6df75ec187d543c3556fe6726681f9907b415314`; the main and original Rocket branches remain unchanged.
 
@@ -29,9 +29,9 @@ npm ci --prefix rocketcdn/tests --ignore-scripts
 npm test --prefix rocketcdn/tests
 ```
 
-48 JavaScript/geometry checks and 13 isolated API checks pass. Native PHP 8.3 validation on the client for the earlier r2 release covered 12 storage checks, 8 delivery checks, concurrent updates and 3 backup checks; it has not been repeated for the follow-up VPN package. The PHP.wasm suite skips interprocess `flock`. Test senders and test data are isolated.
+54 JavaScript/geometry checks, 13 isolated API checks, 12 storage checks and 7 delivery checks pass for r9. Ten deployment/integration checks and all 23 manifest files also pass. Native PHP 8.3 validation on the client for the earlier r2 release covered concurrency and backup checks; it has not been repeated for r9. The PHP.wasm suite skips interprocess `flock`. Test senders and test data are isolated.
 
-The new browser review covers all 17 panel sections, the mobile drawer, VPN FAQ and theme, all seven native CDN cards, and measured VPN footer/admin content widths of 320/390/768/1440px. The game now explains failed 3D initialization on direct launch links in Russian and English. Earlier r2 review covered delivery retry and a real form request against isolated storage. These checks do **not** certify GPU rendering or real-device FPS: the available browser reports `GL_RENDERER = Disabled`.
+The preceding browser review covered all 17 panel sections, the mobile drawer, VPN FAQ and theme, all seven native CDN cards, and measured VPN footer/admin content widths of 320/390/768/1440px. The game explains failed 3D initialization on direct launch links in Russian and English. Earlier r2 review covered delivery retry and a real form request against isolated storage. These checks do **not** certify GPU rendering or real-device FPS: the available browser reports `GL_RENDERER = Disabled`. No new r9 graphics frames are claimed.
 
 ## Source and operations
 

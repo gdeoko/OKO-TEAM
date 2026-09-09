@@ -398,7 +398,7 @@ R.toStandard = function (T, mat, opt) {
   var rough = o.roughness != null ? o.roughness : Math.max(0.06, Math.min(0.98, 1 - Math.sqrt(shin / 220)));
   var metal = o.metalness != null ? o.metalness : (mat.specular ? 0.72 : 0.18);
   var kind = o.kind || "hull";
-  var m = R.maps(T, kind);
+  var m = (!mat.roughnessMap || (!mat.normalMap && !mat.bumpMap)) ? R.maps(T, kind) : null;
 
   var s = new T.MeshStandardMaterial({
     color: mat.color ? mat.color.clone() : 0xffffff,
@@ -409,6 +409,19 @@ R.toStandard = function (T, mat, opt) {
        назвал «плоское рисованное». */
     bumpMap: mat.bumpMap || null,
     bumpScale: mat.bumpScale || 0,
+    normalMap: mat.normalMap || null,
+    normalMapType: mat.normalMapType == null ? T.TangentSpaceNormalMap : mat.normalMapType,
+    roughnessMap: mat.roughnessMap || null,
+    metalnessMap: mat.metalnessMap || null,
+    aoMap: mat.aoMap || null,
+    aoMapIntensity: mat.aoMapIntensity == null ? 1 : mat.aoMapIntensity,
+    lightMap: mat.lightMap || null,
+    lightMapIntensity: mat.lightMapIntensity == null ? 1 : mat.lightMapIntensity,
+    displacementMap: mat.displacementMap || null,
+    displacementScale: mat.displacementScale == null ? 1 : mat.displacementScale,
+    displacementBias: mat.displacementBias || 0,
+    envMap: mat.envMap || null,
+    flatShading: mat.flatShading === true,
     alphaMap: mat.alphaMap || null,
     emissiveMap: mat.emissiveMap || null,
     roughness: rough,
@@ -419,8 +432,13 @@ R.toStandard = function (T, mat, opt) {
     fog: mat.fog,
     depthWrite: mat.depthWrite,
     emissive: mat.emissive ? mat.emissive.clone() : 0x000000,
-    emissiveIntensity: mat.emissiveIntensity || 1
+    emissiveIntensity: mat.emissiveIntensity == null ? 1 : mat.emissiveIntensity
   });
+  // Keep the authored render state (masking, depth, blending and polygon
+  // offsets) while changing only the lighting model. Material.copy does not
+  // replace the Standard-specific maps and physical parameters above.
+  T.Material.prototype.copy.call(s, mat);
+  if (mat.normalScale) s.normalScale.copy(mat.normalScale);
   /* Собственный рельеф материала важнее общего: если у поверхности
      уже есть своя карта, детализирующую не навязываем, иначе две
      фактуры дерутся и дают грязь.
@@ -432,9 +450,10 @@ R.toStandard = function (T, mat, opt) {
      Копия делит ту же картинку в памяти видеокарты, поэтому
      стоит она почти ничего. */
   var rep = o.repeat || 3;
-  if (m && !s.bumpMap) {
+  if (m && !s.bumpMap && !s.normalMap) {
     s.normalMap = repeated(T, m.normal, rep);
-    s.normalScale = new T.Vector2(o.normalScale || 0.55, o.normalScale || 0.55);
+    var normalScale = o.normalScale == null ? 0.55 : o.normalScale;
+    s.normalScale.set(normalScale, normalScale);
   }
   if (m && !mat.roughnessMap) {
     s.roughnessMap = repeated(T, m.rough, rep);

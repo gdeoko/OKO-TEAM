@@ -119,35 +119,69 @@ function blocks() {
    Хранилище одно, разрез по сайту едет в адресе запроса. Отправщик
    тоже один, только собирается дважды - иначе очередь и метка сессии
    были бы общими, и события игры уезжали бы в счёт сайта. */
+var trackSession = "";
 function сборщик(сайт) {
+  if (navigator.doNotTrack === "1" || window.doNotTrack === "1") return function () {};
   /* Тот же случай, что и с localStorage: недоступное хранилище
      не должно уносить с собой аналитику и весь модуль следом */
   /* Метка сессии ОБЩАЯ у сайта и игры: это один человек за один
      заход, и считать его дважды значит вдвое завысить уникальных. */
-  var sid = "";
-  try { sid = sessionStorage.getItem("rc_sid") || ""; } catch (e) {}
+  var sid = trackSession;
+  try { sid = sid || sessionStorage.getItem("rc_sid") || ""; } catch (e) {}
   if (!sid) {
     sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
     try { sessionStorage.setItem("rc_sid", sid); } catch (e2) {}
   }
+  trackSession = sid;
   var адрес = API + "?action=track" + (сайт ? "&site=" + сайт : "");
-  var queue = [], timer = null, sent = {};
-  function flush() {
-    if (!queue.length) return;
-    var body = JSON.stringify({ sid: sid, ref: document.referrer, events: queue.splice(0, queue.length) });
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(адрес, new Blob([body], { type: "application/json" }));
-    } else {
-      fetch(адрес, { method: "POST", headers: { "Content-Type": "application/json" }, body: body, keepalive: true }).catch(function () {});
+  var queue = [], timer = null, sent = {}, pending = 0, retries = 0, departed = false;
+  var series = Date.now().toString(36) + Math.random().toString(36).slice(2, 8), sequence = 0;
+  function schedule() {
+    if (timer || departed || !queue.length) return;
+    timer = setTimeout(function () { timer = null; flush(false); },
+      Math.min(30000, 900 * Math.pow(2, Math.min(retries, 6))));
+  }
+  function flush(beacon) {
+    if (!queue.length || (pending && !beacon)) return;
+    clearTimeout(timer); timer = null;
+    var batch = queue.splice(0, 25);
+    var body = JSON.stringify({ sid: sid, ref: document.referrer || "", events: batch });
+    if (beacon && navigator.sendBeacon) {
+      try {
+        if (navigator.sendBeacon(адрес, new Blob([body], { type: "application/json" }))) {
+          if (queue.length) flush(true);
+          return;
+        }
+      } catch (e) {}
     }
+    pending++;
+    function finish(ok) {
+      pending--;
+      // Stable IDs let the API discard a duplicate if it stored a batch but
+      // its response was lost. Refused beacons also take this retry path.
+      if (!ok) { queue = batch.concat(queue).slice(0, 250); retries++; }
+      else retries = 0;
+      schedule();
+    }
+    try {
+      fetch(адрес, { method: "POST", headers: { "Content-Type": "application/json" }, body: body, keepalive: true })
+        .then(function (r) { if (!r.ok) throw new Error("track_http"); return r.json(); })
+        .then(function (r) { finish(!!(r && r.ok)); }, function () { finish(false); });
+    } catch (e) { finish(false); }
   }
   function push(type, label, once) {
-    if (once) { if (sent[type + label]) return; sent[type + label] = 1; }
-    queue.push({ t: type, l: label || "", ts: Date.now() });
-    clearTimeout(timer); timer = setTimeout(flush, 900);
+    if (departed) return;
+    var key = type + "\u0000" + label;
+    if (once) { if (sent[key]) return; sent[key] = 1; }
+    queue.push({ id: series + ":" + (++sequence), t: String(type).slice(0, 20), l: String(label == null ? "" : label).slice(0, 180), ts: Date.now() });
+    if (queue.length > 250) queue.shift();
+    if (queue.length >= 25) flush(false);
+    else schedule();
   }
-  window.addEventListener("pagehide", flush);
-  document.addEventListener("visibilitychange", function () { if (document.hidden) flush(); });
+  window.addEventListener("pagehide", function () { departed = true; flush(true); });
+  window.addEventListener("pageshow", function () { departed = false; schedule(); });
+  window.addEventListener("online", function () { retries = 0; flush(false); });
+  document.addEventListener("visibilitychange", function () { if (document.hidden) flush(true); });
   return push;
 }
 var track = сборщик("");

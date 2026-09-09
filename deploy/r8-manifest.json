@@ -1,26 +1,21 @@
 {
-  "base_commit": "f7d7a87319bcc79adcaa8df11c4fe50bd7499d15",
-  "base_release": "20260908-r8",
-  "release": "20260909-r9",
+  "base_commit": "6df75ec187d543c3556fe6726681f9907b415314",
+  "base_release": "20260908-r7",
+  "release": "20260908-r8",
   "files": [
     {
       "path": "rocketcdn/admin.html",
       "base_sha256": "36bfcfaeca3fed0e24ef03a03ffaa90d7eaf5b27bd40fc41fb05d38163748304",
-      "sha256": "a77b3a9f9deea9eb915a01e3f44dcb97c539d31d45763a853cdced84c3f95ac7"
-    },
-    {
-      "path": "rocketcdn/assets/rc-app.js",
-      "base_sha256": "64f9f4cb377d83cde4ed8820306e89f49db73eb068f2b1fdf064e5206812d920",
-      "sha256": "2a06f6334e27ac64b6e7704417e2e8ba3ecaf307998c763fcb5427f4770a2dab"
+      "sha256": "36bfcfaeca3fed0e24ef03a03ffaa90d7eaf5b27bd40fc41fb05d38163748304"
     },
     {
       "path": "rocketcdn/assets/rc-cabin.js",
-      "base_sha256": "61e0f712601f98dd11b3450b6e4c51fb73d72d155d097c265e7656b5d9a558a1",
+      "base_sha256": "158646a38666fb89489fa17b9292043fcf3957b056c8261a750c858a0f3ce035",
       "sha256": "61e0f712601f98dd11b3450b6e4c51fb73d72d155d097c265e7656b5d9a558a1"
     },
     {
       "path": "rocketcdn/assets/rc-flight.js",
-      "base_sha256": "97699bafbb514c060a15e8206305fc8cfebed4cd9ee4cdf0d4e04483162a7e10",
+      "base_sha256": "d36e7fc1e4159eece5569b6934968d2848fdfc6420aecf08a1fd78bf0d7df83e",
       "sha256": "97699bafbb514c060a15e8206305fc8cfebed4cd9ee4cdf0d4e04483162a7e10"
     },
     {
@@ -35,13 +30,13 @@
     },
     {
       "path": "rocketcdn/assets/rc-real.js",
-      "base_sha256": "a8c82063b061fcb3b964e4352144066172e634e0787846e526bf70c3b13632f1",
-      "sha256": "f1a3c7cc947cca10413cb6eee536c5b595946edece136fd5a5013f79074d9312"
+      "base_sha256": "3bfe43b4c236637a00245a2ce6182ffda7cdc9daf1ecced84caf4dd1b0ea89f2",
+      "sha256": "a8c82063b061fcb3b964e4352144066172e634e0787846e526bf70c3b13632f1"
     },
     {
       "path": "rocketcdn/index.html",
-      "base_sha256": "d214bff23492c0a8e43b8d6a553ee77a5c2892243489fa4d79d08d48518d3324",
-      "sha256": "d6e27696f471cdb8bffee0a31325f40b0fd8c37b3e5407c7d841bdb119667a75"
+      "base_sha256": "ab9db48383e2d674cebf0bc321acfbd16e8cf589da8ebac159da1a2e8fa048ed",
+      "sha256": "d214bff23492c0a8e43b8d6a553ee77a5c2892243489fa4d79d08d48518d3324"
     },
     {
       "path": "rocketvpn/assets/rc-panel.js",

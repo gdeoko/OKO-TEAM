@@ -7,6 +7,21 @@ const vm = require('node:vm');
 const root = process.env.ROCKET_SOURCE_ROOT || path.resolve(__dirname, '../..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const load = (p, c) => vm.runInContext(read(p), c, {filename:p});
+test('CDN PBR conversion preserves authored relief, masking, depth and zero-valued controls',()=>{
+ const f=fixture();load('rocketcdn/assets/vendor/three.min.js',f.c);load('rocketcdn/assets/rc-real.js',f.c);
+ const T=f.c.THREE,normal=new T.Texture(),rough=new T.Texture(),ao=new T.Texture();
+ const source=new T.MeshPhongMaterial({normalMap:normal,normalScale:new T.Vector2(.2,.4),
+  alphaTest:.3,depthTest:false,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,
+  polygonOffsetUnits:-1,emissive:0x224466,emissiveIntensity:0,aoMap:ao,aoMapIntensity:.6});
+ source.roughnessMap=rough;source.name='Authored panel';
+ f.c.RC_REAL.maps=()=>({normal:new T.Texture(),rough:new T.Texture()});
+ const result=f.c.RC_REAL.toStandard(T,source,{roughness:.45,normalScale:0});
+ assert.equal(result.normalMap,normal);assert.deepEqual(Array.from(result.normalScale.toArray()),[.2,.4]);
+ assert.equal(result.roughnessMap,rough);assert.equal(result.aoMap,ao);assert.equal(result.aoMapIntensity,.6);
+ for(const key of ['alphaTest','depthTest','depthWrite','polygonOffset','polygonOffsetFactor','polygonOffsetUnits','emissiveIntensity','name'])assert.equal(result[key],source[key],key);
+ const flat=f.c.RC_REAL.toStandard(T,new T.MeshPhongMaterial(),{normalScale:0});
+ assert.deepEqual(Array.from(flat.normalScale.toArray()),[0,0]);
+});
 test('VPN cabin upgrades shared hull materials while preserving glass, relief and unlit displays',()=>{
  const f=fixture();load('rocketvpn/assets/vendor/three.min.js',f.c);
  const T=f.c.THREE,root=new T.Group(),bump=new T.Texture();
@@ -107,8 +122,64 @@ test('VPN analytics retries storage rejection and recovers after bfcache',async(
 test('VPN rejected beacon falls back to keepalive fetch',async()=>{const f=analytics();f.c.navigator.sendBeacon=()=>false;f.emit('pagehide');await settle();assert.equal(f.sent.length,1);assert.equal(f.sent[0].events[0].t,'view');});
 test('VPN pagehide flushes queued events while first fetch is pending',async()=>{const f=analytics();let done;f.respond=()=>new Promise(r=>done=r);f.time.tick(2100);f.c.RV_СЧЁТ.событие('кнопка','последняя');const beacons=[];f.c.navigator.sendBeacon=(url,body)=>{beacons.push(body);return true;};f.emit('pagehide');assert.equal(beacons.length,1);assert.equal(JSON.parse(await beacons[0].text()).events[0].l,'последняя');done({ok:true,json:async()=>({ok:true})});await settle();});
 function adminFunctions(){const s=read('rocketcdn/admin.html');return s.slice(s.indexOf('function узлыИзТекста('),s.indexOf('function контент()'));}
+function cdnAnalytics(){
+ const f=fixture();f.sent=[];f.respond=()=>Promise.resolve({ok:true,json:async()=>({ok:true})});
+ f.c.API='api.php';f.c.fetch=(url,o)=>{f.sent.push({url,options:o,body:JSON.parse(o.body)});return f.respond();};
+ vm.runInContext(between(read('rocketcdn/assets/rc-app.js'),'var trackSession =','/* Ловим ошибки фронта'),f.c);return f;
+}
+test('CDN and game retry failed deliveries with stable IDs and keep their streams separate',async()=>{
+ const f=cdnAnalytics();f.respond=()=>Promise.reject(new Error('offline'));
+ f.c.RC_track('view','cdn');f.c.RC_track_игра('view','game');f.time.tick(1000);await settle();
+ assert.equal(f.sent.length,2);assert.equal(f.sent[0].body.sid,f.sent[1].body.sid);
+ assert.notEqual(f.sent[0].body.events[0].id,f.sent[1].body.events[0].id);
+ f.respond=()=>Promise.resolve({ok:true,json:async()=>({ok:true})});f.emit('online');await settle();
+ assert.equal(f.sent.length,4);
+ for(let i=0;i<2;i++){assert.equal(f.sent[i].url,f.sent[i+2].url);assert.deepEqual(f.sent[i].body.events,f.sent[i+2].body.events);}
+ assert.equal(f.sent[0].url,'api.php?action=track');assert.equal(f.sent[1].url,'api.php?action=track&site=game');
+});
+test('CDN analytics retries storage rejection, beacon refusal and resumes after bfcache',async()=>{
+ const f=cdnAnalytics();f.respond=()=>Promise.resolve({ok:true,json:async()=>({ok:false})});
+ f.c.RC_track('click','checkout');f.time.tick(1000);await settle();
+ f.respond=()=>Promise.resolve({ok:true,json:async()=>({ok:true})});f.c.navigator.sendBeacon=()=>false;
+ f.emit('pagehide');await settle();assert.equal(f.sent.length,2);assert.equal(f.sent[1].options.keepalive,true);
+ assert.deepEqual(f.sent[0].body.events,f.sent[1].body.events);
+ f.emit('pageshow',{persisted:true});f.c.RC_track('click','returned');f.time.tick(1000);await settle();
+ assert.equal(f.sent.length,3);assert.equal(f.sent[2].body.events[0].l,'returned');
+});
+test('CDN pagehide sends all queued events in API-sized batches while a request is pending',async()=>{
+ const f=cdnAnalytics();let done;f.respond=()=>new Promise(r=>done=r);
+ f.c.RC_track('view','first');f.time.tick(1000);
+ for(let i=0;i<61;i++)f.c.RC_track('click',String(i));
+ const beacons=[];f.c.navigator.sendBeacon=(url,body)=>{beacons.push(body);return true;};
+ f.emit('pagehide');assert.equal(beacons.length,3);
+ const batches=await Promise.all(beacons.map(async b=>JSON.parse(await b.text()).events));
+ assert.deepEqual(batches.map(b=>b.length),[25,25,11]);assert.equal(new Set(batches.flat().map(e=>e.id)).size,61);
+ done({ok:true,json:async()=>({ok:true})});await settle();
+});
+function contentEditor(){
+ const elements={'#контентСайт':{value:'cdn'},'#контентТекст':{value:''},'#контентСохранить':{disabled:false},'#контентСброс':{disabled:false},'#контентОтвет':{textContent:''}},pending=[];
+ const c=vm.createContext({$:s=>elements[s],confirm:()=>true,зов:(action,data)=>new Promise(resolve=>pending.push({action,data,resolve}))});
+ vm.runInContext(between(read('rocketcdn/admin.html'),'var контентЗапрос =','var операционныеРазделы ='),c);
+ return {c,e:elements,pending};
+}
+test('Content reset failure preserves the draft, blocks concurrent writes and cancellation sends nothing',async()=>{
+ const f=contentEditor();f.e['#контентТекст'].value='{"title":"draft"}';
+ f.c.confirm=()=>false;f.c.контентСбросить();assert.equal(f.pending.length,0);f.c.confirm=()=>true;
+ const reset=f.c.контентСбросить();assert.equal(f.e['#контентСайт'].disabled,true);assert.equal(f.e['#контентТекст'].readOnly,true);
+ f.c.контентСохранить();f.c.контентСбросить();assert.equal(f.pending.length,1);
+ f.pending[0].resolve({ok:false});await reset;assert.equal(f.pending.length,1);
+ assert.equal(f.e['#контентТекст'].value,'{"title":"draft"}');assert.equal(f.e['#контентСохранить'].disabled,false);assert.equal(f.e['#контентСайт'].disabled,false);
+});
+test('Late content save cannot unlock or overwrite a later load of the same site',async()=>{
+ const f=contentEditor();f.e['#контентТекст'].value='{}';const save=f.c.контентСохранить();
+ f.e['#контентСайт'].value='vpn';const vpn=f.c.контент();f.e['#контентСайт'].value='cdn';const cdn=f.c.контент();
+ f.pending[0].resolve({ok:true});await save;assert.equal(f.e['#контентСохранить'].disabled,true);
+ f.pending[1].resolve({ok:true,content:{title:'VPN'}});await vpn;
+ f.pending[2].resolve({ok:true,content:{title:'CDN'}});await cdn;
+ assert.equal(f.e['#контентТекст'].value,'{\n  "title": "CDN"\n}');assert.equal(f.e['#контентСохранить'].disabled,false);
+});
 test('Switching content sites ignores late responses and disables saving until the selected copy loads',async()=>{
- const elements={'#контентСайт':{value:'cdn'},'#контентТекст':{value:''},'#контентСохранить':{disabled:false},'#контентОтвет':{textContent:''}},pending=[];
+ const elements={'#контентСайт':{value:'cdn'},'#контентТекст':{value:''},'#контентСохранить':{disabled:false},'#контентСброс':{disabled:false},'#контентОтвет':{textContent:''}},pending=[];
  const c=vm.createContext({$:s=>elements[s],зов:()=>new Promise(r=>pending.push(r))}),s=read('rocketcdn/admin.html');
  vm.runInContext(s.slice(s.indexOf('var контентЗапрос ='),s.indexOf('var операционныеРазделы =')),c);
  const first=c.контент();elements['#контентСайт'].value='vpn';const second=c.контент();assert.equal(elements['#контентСохранить'].disabled,true);

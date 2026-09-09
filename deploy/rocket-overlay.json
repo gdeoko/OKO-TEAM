@@ -470,7 +470,7 @@
     },
     {
       "path": "rocketcdn/admin.html",
-      "sha": "ae58c5bf5eba5b68b80dbcec1aea52eceec38a33",
+      "sha": "1dbec5eef270e098a50df9c2d55e5e04845f34e7",
       "base_sha": "1a4d97b710c07b55a6be9029a875562341fdbff3",
       "mode": "100644"
     },
@@ -484,6 +484,12 @@
       "path": "rocketcdn/app.html",
       "sha": "82cd865f68087cc43c8265ac8378c11b3fb73537",
       "base_sha": "bc19def49c72aa17f023e2639e7bbadad57ed37e",
+      "mode": "100644"
+    },
+    {
+      "path": "rocketcdn/assets/rc-app.js",
+      "sha": "626aa5a24b871733a8cd259ab95ef5138fbcbaa0",
+      "base_sha": "0050b923ef01de80b4a0727a63ea810eb9e5e94e",
       "mode": "100644"
     },
     {
@@ -524,7 +530,7 @@
     },
     {
       "path": "rocketcdn/assets/rc-real.js",
-      "sha": "85e12203e13c35dd6d4d5797b03bb5734ff10179",
+      "sha": "602adb9f4c0558c0d3d46d110c27e4cf4b547e27",
       "base_sha": "811f78cd7a63ba383c8f7a94928cae7e78f86fb4",
       "mode": "100644"
     },
@@ -566,7 +572,7 @@
     },
     {
       "path": "rocketcdn/index.html",
-      "sha": "78a5b198eaadb362374a6447d350d838d51d4fb7",
+      "sha": "22363fa6490d0045cc0d79fca8ce570741ccf0de",
       "base_sha": "115162479e787dd7f49490f2ba618d4ca391f1f7",
       "mode": "100644"
     },
@@ -644,7 +650,7 @@
     },
     {
       "path": "rocketcdn/tests/rocket-regressions.cjs",
-      "sha": "1de6be895e1608ba1b269c4c60b84d599fb41db1",
+      "sha": "84136bf42ee5329995abcde5622fd98b39aef206",
       "base_sha": null,
       "mode": "100644"
     },
@@ -811,5 +817,5 @@
       "mode": "100644"
     }
   ],
-  "release": "20260908-r8"
+  "release": "20260909-r9"
 }
