@@ -1106,12 +1106,38 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         // она встала в 13:11 при открытом окне до 18:00, с обоими ящиками в
         // карантине и тридцатью тысячами писем в очереди. Пул тут ни при чём:
         // следующий ящик получит от сервиса тот же ответ по тому же адресу.
+        $serviceRefused = false;
         if (!$recipientFault) {
             foreach (['отклонил адрес', 'failed_emails', 'no valid recipients',
                       'temporary_unavailable', 'permanent_unavailable', 'unreachable',
                       'skip_dup', 'err_spam_skipped'] as $w) {
-                if (mb_stripos($lastErr, $w) !== false) { $recipientFault = true; break; }
+                if (mb_stripos($lastErr, $w) !== false) { $recipientFault = true; $serviceRefused = true; break; }
             }
+        }
+
+        /* ПАМЯТЬ СЕРВИСА РАССЫЛОК НЕ ДОЛЖНА ОТРЕЗАТЬ ЧЕЛОВЕКА ОТ ЕГО ПИСЬМА.
+         *
+         * Unisender ведёт свой список недоступных адресов и отказывает по нему
+         * САМ, ещё до попытки отправки: «No valid recipients»,
+         * temporary_unavailable. Для массовой рассылки прекратить перебор
+         * правильно — следующий ящик получит от сервиса тот же ответ.
+         *
+         * Но личное письмо — это код входа в кабинет, результат конкурса,
+         * наградной документ. Человек его ждёт, и отказ сервиса про него ничего
+         * не говорит: 9 сентября так не уходил код входа на ЖИВОЙ адрес
+         * ponaroshku40@yandex.ru — сервис отказывал по своей памяти, письмо
+         * десять раз подряд помечалось неудачей, а Яндекс и Gmail доставили бы
+         * его без вопросов.
+         *
+         * Поэтому для личных писем отказ СЕРВИСА перебор не останавливает: идём
+         * к следующему ящику — прямому SMTP центра, затем к Gmail. Отказ самого
+         * почтовика («нет такого ящика», 5.1.x) по-прежнему останавливает: там
+         * спорить не с чем. */
+        $personal = (int) ($opt['priority'] ?? 0) === 0;
+        if ($serviceRefused && $personal && $i + 1 < count($accounts)) {
+            mail_log('сервис отказал по своей памяти (' . $to . ') — личное письмо идёт следующим ящиком');
+            $errors[] = (string) ($acc['user'] ?? 'сервис') . ': ' . $lastErr;
+            continue;
         }
         if ($recipientFault) {
             mail_log('RCPT REJECT ' . $to . ' - ' . $lastErr . ' (ящик не виноват, перебор прекращён)');

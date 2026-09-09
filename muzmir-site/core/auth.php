@@ -306,9 +306,20 @@ function auth_ensure_account(string $email, string $name = ''): int {
                 . mm_email_btn($base . '/login', 'Войти в личный кабинет');
             $html = mm_email_layout($inner, ['title' => 'Ваш личный кабинет открыт']);
             try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+            /* ЛОГИН И ПАРОЛЬ — ЛИЧНОЕ ПИСЬМО, А НЕ РАССЫЛКА.
+             *
+             * Здесь стояло priority = 5. В этой очереди priority значит не
+             * «важность», а «массовое»: всё, что больше нуля, ждёт пульта
+             * рассылок, рабочего окна и суточных норм — и встаёт в хвост
+             * очереди, где с 25 августа лежат двадцать две тысячи писем на
+             * заблокированные адреса Mail.ru.
+             *
+             * Человек в это время стоит на странице входа и ждёт пароль,
+             * который ему только что пообещали. Ноль — личное письмо, уходит
+             * ближайшим проходом очереди и своим пулом, с запасными ящиками. */
             insert('mail_queue', ['to_email' => $email, 'to_name' => $name,
                 'subject' => 'Ваш личный кабинет - «Музыкальный Мир»',
-                'body' => $html, 'status' => 'queued', 'priority' => 5]);
+                'body' => $html, 'status' => 'queued', 'priority' => 0]);
         } catch (\Throwable $e) { /* письмо не должно ломать основной сценарий */ }
     }
     return $uid;
