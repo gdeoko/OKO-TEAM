@@ -15,10 +15,34 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
     $params['access_token'] = $token;
     $params['v'] = cfgv('vk_api_version', '5.199');
 
+    /* «FLOOD CONTROL» — ЭТО НЕ «ПОВТОРИ ЧЕРЕЗ ПОЛСЕКУНДЫ».
+     *
+     * Ошибка 6 значит «слишком часто, подожди мгновение» — её и правда лечит
+     * короткая пауза. Ошибка 9, «Flood control», совсем другая: ВКонтакте
+     * закрывает токен на минуты, и КАЖДЫЙ повтор в эту дверь продлевает срок.
+     *
+     * 8 сентября в 15:30 так и вышло. Заполнение имён собеседников спрашивало
+     * ВК по одному имени за запрос, двадцать пять раз каждые семь минут, а
+     * здешний повтор превращал каждый запрос в четыре. Токен ушёл в блокировку
+     * и остался в ней на сутки: бот перестал отвечать во ВКонтакте, а в админке
+     * появилось «проверьте токен сообщества» — хотя токен был цел.
+     *
+     * Поэтому на девятку — предохранитель. Один отказ закрывает исходящие ко
+     * ВКонтакте на несколько минут (с ростом до часа, если не отпускает), и всё
+     * это время мы к нему не ходим вовсе. Ответы участникам при этом не
+     * теряются: они лежат в переписке, и cron/vk_resend_stuck досылает их,
+     * когда дверь откроется. */
+    $floodUntil = (int) (function_exists('setting') ? setting('vk_flood_until', '0') : 0);
+    if ($floodUntil > time()) {
+        return ['error' => ['error_code' => 9, 'error_msg' => 'Flood control',
+                            'wait_until' => date('H:i', $floodUntil)]];
+    }
+
     // ВК ограничивает частоту (3 запроса в секунду) и иногда отдаёт временные сбои.
     // Раньше один такой отказ означал пост БЕЗ афиши: загрузка молча возвращала пусто.
-    // Теперь временные ошибки повторяем с нарастающей паузой.
-    $tempCodes = [1, 6, 9, 10, 29];   // неизвестная, слишком часто, флуд, внутренняя, лимит
+    // Теперь временные ошибки повторяем с нарастающей паузой. Девятки здесь нет
+    // намеренно — у неё свой, длинный отдых (см. выше).
+    $tempCodes = [1, 6, 10, 29];   // неизвестная, слишком часто, внутренняя, лимит
     $last = ['error' => ['error_msg' => 'нет ответа']];
     for ($try = 1; $try <= 4; $try++) {
         $ch = curl_init('https://api.vk.com/method/' . $method);
@@ -41,7 +65,27 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
                 $last = ['error' => ['error_msg' => 'Bad JSON response']];
             } else {
                 $code = (int) ($d['error']['error_code'] ?? 0);
-                if (!isset($d['error']) || !in_array($code, $tempCodes, true)) return $d;   // успех или окончательный отказ
+                if ($code === 9) {
+                    // Отдых удлиняем, пока служба не отпустит: 5 минут, 10, 20 … до часа.
+                    $prev = (int) (function_exists('setting') ? setting('vk_flood_step', '0') : 0);
+                    $step = min(3600, max(300, $prev * 2));
+                    if (function_exists('set_setting')) {
+                        set_setting('vk_flood_step', (string) $step);
+                        set_setting('vk_flood_until', (string) (time() + $step));
+                    }
+                    _vk_log(sprintf('%s: Flood control — закрываю обращения ко ВК на %d мин', $method, (int) ($step / 60)));
+                    return $d;
+                }
+                if (!isset($d['error'])) {
+                    // Ответила — значит дверь открыта: сбрасываем и отдых, и его длину.
+                    if (function_exists('set_setting') && (int) setting('vk_flood_step', '0') > 0) {
+                        set_setting('vk_flood_step', '0');
+                        set_setting('vk_flood_until', '0');
+                        _vk_log($method . ': ВК снова отвечает, предохранитель снят');
+                    }
+                    return $d;
+                }
+                if (!in_array($code, $tempCodes, true)) return $d;   // окончательный отказ
                 $last = $d;
             }
         }
