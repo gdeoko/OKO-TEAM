@@ -1,0 +1,12 @@
+{
+  "release": "20260909-r9",
+  "source_commit": "d7d45406ba29510c813a7d8b67dfa14eee0cccb3",
+  "checked_at_utc": "2026-09-09T17:31:57.128386+00:00",
+  "server_health_checks": 30,
+  "server_health_passed": true,
+  "served_file_hashes_verified": 23,
+  "existing_requests_retained": 5,
+  "external_http_status": "not_completed_environment_restriction",
+  "external_http_passes_claimed": 0,
+  "details": "Not completed: external HTTP commands were cancelled before network approval, and the web fetch service rejected the URLs. Internal TLS/Host routing, API, 23 served file hashes and timer passed 30 activation checks."
+}

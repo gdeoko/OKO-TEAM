@@ -4,7 +4,9 @@
 
 Rocket VPN, Rocket CDN, the space flight and their shared administration panel.
 
-Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). **r9 is verified and ready for publication.** It fixes analytics retries, content-editor races and drafts, cabin material preservation and excessive specular noise. The cabin module is synchronized between CDN and VPN. See `RELEASE_R9.md` and `review/r9-verification.json`.
+Production addresses: [VPN](https://rocketvpn.top/), [CDN](https://rocketcdn.ru/), [flight](https://rocketcdn.ru/?flight=1), [admin](https://rocketcdn.ru/admin.html). **r9 is deployed and ready for client acceptance.** It fixes analytics retries, content-editor races and drafts, cabin material preservation and excessive specular noise. The cabin module is synchronized between CDN and VPN. See `RELEASE_R9.md` and `review/r9-verification.json`.
+
+Activation passed 30 server checks and retained all five existing requests. The exact deployed source commit is `d7d45406ba29510c813a7d8b67dfa14eee0cccb3`; r8 remains available for rollback. The final external HTTP check was blocked by this environment and is not claimed as passed.
 
 The new r9 native inspection produced 58 checkpoints: 46 for CDN/flight and 12 for the VPN finale, across landscape and portrait. No GL/shader or scene-event failures were recorded, and the flight camera lifecycle passed. Native PHP 8.3.6 on the client passed 24 isolated checks, including all 240 concurrent writes and coherent backup snapshots. These are native canvas checkpoints and isolated service checks, not physical-device FPS acceptance. The r8 publication and earlier acceptance records remain in the historical release notes.
 
@@ -39,6 +41,6 @@ This branch is an orphan snapshot, based on `gdeoko/OKO-TEAM` at `6b64106bdde748
 
 `deploy/activate.py --check` verifies release hashes, native PHP syntax and runtime write access. Activation backs up runtime data/configuration, drains old writers, atomically exchanges both roots, resets PHP caches and enables the delivery timer. `--rollback` restores code/configuration while retaining new records. Scripts under `deploy/` target the documented client paths and must not be run on unrelated hosts.
 
-`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r8 release, run `sudo python3 /var/www/rocket-releases/20260908-r8/deploy/followup.py health`. Its `rollback` action restores r7 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
+`deploy/prepare.py` records the one-off recovery using the original transfer archives; it is not a generic installer. For the active r9 release, run `sudo python3 /var/www/rocket-releases/20260909-r9/deploy/followup.py health`. Its `rollback` action restores r8 without reverting runtime records. `deploy/stage.py` maintains the isolated review routes.
 
 The clean branch does not revoke credentials exposed in the original repository's history. Rotation of those broader OKO/GitHub access credentials is not established by this release. Photorealism, 8K output, exact Igloo parity and performance across physical devices remain unverified acceptance items.

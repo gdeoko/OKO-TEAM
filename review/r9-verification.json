@@ -1,7 +1,7 @@
 {
   "release": "20260909-r9",
-  "status": "verified_for_publication",
-  "checked_at_utc": "2026-09-09T17:25:55.170545+00:00",
+  "status": "deployed_ready_for_client_acceptance",
+  "checked_at_utc": "2026-09-09T17:31:57.128386+00:00",
   "base_commit": "f7d7a87319bcc79adcaa8df11c4fe50bd7499d15",
   "local_checks": {
     "javascript_passed": 54,
@@ -74,8 +74,27 @@
   "remaining_acceptance": [
     "Physical-device FPS and sustained browser 3D motion",
     "Browser WebGL 2/HDR and audio acceptance",
-    "Exact Igloo parity, 8K output and photorealism target"
+    "Exact Igloo parity, 8K output and photorealism target",
+    "External browser post-publication acceptance; this environment could not complete the final external HTTP check"
   ],
   "blocked": [],
-  "graphics_scope": "Native WebGL 1 with original scene/camera modules at fixed checkpoints and modelled scroll; no claim of browser rendering, real-device FPS, HTML/CSS/audio/input acceptance."
+  "graphics_scope": "Native WebGL 1 with original scene/camera modules at fixed checkpoints and modelled scroll; no claim of browser rendering, real-device FPS, HTML/CSS/audio/input acceptance.",
+  "source_commit": "d7d45406ba29510c813a7d8b67dfa14eee0cccb3",
+  "deployment": {
+    "active_roots": {
+      "rocketcdn": "/var/www/rocket-releases/20260909-r9/rocketcdn",
+      "rocketvpn": "/var/www/rocket-releases/20260909-r9/rocketvpn"
+    },
+    "all_baseline_requests_preserved": true,
+    "baseline_requests": 5,
+    "checked_at_utc": "2026-09-09T17:29:31.698228+00:00",
+    "current_requests": 5,
+    "delivery_timer_active": true,
+    "source_commit": "d7d45406ba29510c813a7d8b67dfa14eee0cccb3",
+    "release": "20260909-r9",
+    "server_health_checks": 30,
+    "rollback_release": "20260908-r8",
+    "staging_backup": "/var/backups/rocket/stage-1788974919832899459"
+  },
+  "external_post_deployment_check": "Not completed: external HTTP commands were cancelled before network approval, and the web fetch service rejected the URLs. Internal TLS/Host routing, API, 23 served file hashes and timer passed 30 activation checks."
 }

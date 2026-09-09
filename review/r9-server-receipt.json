@@ -1,0 +1,16 @@
+{
+  "active_roots": {
+    "rocketcdn": "/var/www/rocket-releases/20260909-r9/rocketcdn",
+    "rocketvpn": "/var/www/rocket-releases/20260909-r9/rocketvpn"
+  },
+  "all_baseline_requests_preserved": true,
+  "baseline_requests": 5,
+  "checked_at_utc": "2026-09-09T17:29:31.698228+00:00",
+  "current_requests": 5,
+  "delivery_timer_active": true,
+  "source_commit": "d7d45406ba29510c813a7d8b67dfa14eee0cccb3",
+  "release": "20260909-r9",
+  "server_health_checks": 30,
+  "rollback_release": "20260908-r8",
+  "staging_backup": "/var/backups/rocket/stage-1788974919832899459"
+}
