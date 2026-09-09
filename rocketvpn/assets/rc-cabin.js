@@ -205,7 +205,35 @@ var FONT = "'Golos Text', 'Manrope', system-ui, -apple-system, sans-serif";
 
    Ровно столько и кладём, ни текселем больше: лишние текселя это
    видеопамять на сцене, которую и так просили не утяжелять. */
-var ТЕКС_М_ПК = 530, ТЕКС_М_МОБ = 345;
+/* ── ПЛОТНОСТЬ ПОДНЯТА В ПОЛТОРА РАЗА ────────────────────────────
+   Числа выше посчитаны на попадание один в один: столько текселей,
+   сколько точек кадра приходится на экран. Ровно на этом тексте
+   владелец и сказал: «на сайте cdn этот 360 и весь салон ракеты
+   сделать более качественный и текст читаемый при 360».
+
+   Один в один это предел, ниже которого текст мылится, а не порог, за
+   которым он читается. Буква на экране рубки идёт под углом и в
+   перспективе: видеокарта берёт мип-уровень по СЖАТОЙ оси, и при
+   попадании один в один это уже первый уровень, то есть половина
+   плотности. Полтора раза дают запас ровно на него.
+
+   Цена посчитана, а не прикинута. Экран 1.52 на 1.34 метра, семь штук.
+   Монитор: было 806 на 710 точек, 2.3 МБ на экран, 21 МБ с мипами на
+   весь салон; стало 1216 на 1072, 5.2 МБ на экран, 48 МБ. Телефон:
+   было 524 на 462 и 7 МБ, стало 790 на 698 и 20 МБ. Прибавка 27 МБ на
+   мониторе и 13 на телефоне - это тот случай, когда её просили. */
+var ТЕКС_М_ПК = 800, ТЕКС_М_МОБ = 520;
+
+/* Предел анизотропии видеокарты, но не выше шестнадцати: дальше
+   выигрыш не виден, а на слабых картах выборка стоит времени. */
+function предел16() {
+  try {
+    var r = g.RC_REAL && g.RC_REAL.renderer;
+    var м = r && r.capabilities && r.capabilities.getMaxAnisotropy
+      ? r.capabilities.getMaxAnisotropy() : 8;
+    return Math.max(1, Math.min(16, м));
+  } catch (e) { return 8; }
+}
 
 function холстЭкрана(tiny) {
   var д = tiny ? ТЕКС_М_МОБ : ТЕКС_М_ПК;
@@ -238,8 +266,9 @@ function ключЭкранов(recs, tiny) {
   return ч.join("\u0001");
 }
 
-function экраныПоКэшу(T, recs, tiny) {
-  var к = ключЭкранов(recs, tiny);
+function экраныПоКэшу(T, recs, tiny, renderer) {
+  var webgl2 = !!(renderer && renderer.capabilities && renderer.capabilities.isWebGL2);
+  var к = ключЭкранов(recs, tiny) + (webgl2 ? "|gl2" : "|gl1");
   if (кэшЭкранов && кэшКлюч === к) return кэшЭкранов;
   if (кэшЭкранов) {
     for (var с = 0; с < кэшЭкранов.length; с++) {
@@ -248,7 +277,7 @@ function экраныПоКэшу(T, recs, tiny) {
   }
   var набор = [];
   for (var i = 0; i < recs.length; i++) {
-    var т = screenTex(T, recs[i], tiny);
+    var т = screenTex(T, recs[i], tiny, renderer);
     /* Общая текстура: снос салона её не трогает, иначе следующий
        заезд получит освобождённую карту и голую стену. */
     т.__общая = true;
@@ -259,7 +288,7 @@ function экраныПоКэшу(T, recs, tiny) {
   return набор;
 }
 
-function screenTex(T, rec, tiny) {
+function screenTex(T, rec, tiny, renderer) {
   var хол = холстЭкрана(tiny), W = хол[0], H = хол[1];
   var c = cnv(W, H), x = c.getContext("2d"), i;
 
@@ -462,11 +491,22 @@ function screenTex(T, rec, tiny) {
      ни разу. Ставим: three сам обрежет число до предела видеокарты,
      а лишней памяти анизотропия не берёт вовсе - это выборка, а не
      новые текселя. */
-  t.anisotropy = 8;
+  /* Экранам отдаём предел видеокарты, а не восьмёрку. Анизотропия это
+     число выборок, а не текселей: памяти она не стоит вовсе, и
+     занижать её на единственной поверхности сцены, где стоит ЧИТАЕМЫЙ
+     текст, незачем. Восьмёрка остаётся на клавишах и табличках. */
+  t.anisotropy = предел16();
   /* Экран смотрит на нас изнанкой цилиндра, а изнанка переворачивает
      развёртку по горизонтали - текст читался зеркально. Отражаем
      карту заранее, и на стене она встаёт как надо. */
-  t.wrapS = T.RepeatWrapping;
+  // Mirroring only needs 1-u inside [0,1], not repeated wrapping.
+  // WebGL 1 otherwise shrinks 784x704 text to 512x512. Keep its
+  // original texels with a clamp/linear sampler; WebGL 2 keeps mipmaps.
+  t.wrapS = T.ClampToEdgeWrapping;
+  if (!(renderer && renderer.capabilities && renderer.capabilities.isWebGL2)) {
+    t.minFilter = T.LinearFilter;
+    t.generateMipmaps = false;
+  }
   t.repeat.x = -1;
   t.offset.x = 1;
   return t;
@@ -1019,12 +1059,9 @@ function build(T, opts) {
 
   var hull = hullTex(T, tiny);
   hull.repeat.set(6, 1);
-  /* Салон освещается физически, но материал берём дешёвый.
-     MeshPhongMaterial - полноценный PBR: он считает микрофасеты
-     и окружение на каждый пиксель, и пять ламп салона умножали эту
-     работу впятеро. На телефоне это и был главный тормоз финальной
-     сцены. Phong с бликом даёт ту же картинку интерьера в разы
-     дешевле: сталь читается сталью, обшивка обшивкой. */
+  /* Геометрия создаётся с промежуточными Phong-материалами.
+     В конце сборки RC_REAL заменяет их на Standard с картами
+     поверхности; без этого модуля остаётся исходное освещение. */
   var wallMat = new T.MeshPhongMaterial({
     map: hull, side: T.BackSide,
     color: 0x93aac2
@@ -1384,7 +1421,7 @@ function build(T, opts) {
   var scrR = R_WALL - 0.14;
   var scrArc = SCR_W / scrR;
   var hoodArc = (SCR_W + 0.22) / (R_WALL - 0.14);
-  var набор = экраныПоКэшу(T, recs, tiny);
+  var набор = экраныПоКэшу(T, recs, tiny, opts.renderer);
   for (i = 1; i <= 7; i++) {
     th = azOf(i);
     var tex = набор[i - 1];
@@ -1401,7 +1438,7 @@ function build(T, opts) {
       new T.CylinderGeometry(scrR, scrR, SCR_H, tiny ? 8 : 14, 1, true,
         thetaOf(th) - scrArc / 2, scrArc),
       new T.MeshBasicMaterial({ map: tex, side: T.BackSide, fog: false,
-        transparent: true, opacity: 0.97, depthWrite: false })
+        toneMapped: false, transparent: false, opacity: 1, depthWrite: true })
     );
     face.position.y = EYE + 0.06;
     face.renderOrder = 6;
@@ -1614,7 +1651,7 @@ function build(T, opts) {
       if (шрифтВпечён) return;
       шрифтВпечён = true;
       кэшКлюч = "";
-      var новые = экраныПоКэшу(T, recs, tiny);
+      var новые = экраныПоКэшу(T, recs, tiny, opts.renderer);
       for (var si = 0; si < screens.length; si++) {
         var sc = screens[si];
         sc.obj.material.map = новые[sc.i - 1];
@@ -1646,17 +1683,18 @@ function build(T, opts) {
         }
         /* Пол и палуба: матовые, затёртые ногами */
         if (c === 0xa8bccf) {
-          return { kind: "deck", roughness: 0.62, metalness: 0.42, normalScale: 0.75, envMapIntensity: 0.7, repeat: 5 };
+          return { kind: "deck", roughness: 0.62, metalness: 0.35, normalScale: 0.35, envMapIntensity: 0.7, repeat: 5 };
         }
         /* Рама окна и несущий металл: полированный, ловит блики */
         if (c === style.steel || c === 0x4d5f72) {
-          return { kind: "hull", roughness: 0.29, metalness: 0.92, normalScale: 0.5, envMapIntensity: 1.6, repeat: 3 };
+          return { kind: "hull", roughness: 0.32, metalness: 0.92, normalScale: 0.24, envMapIntensity: 1.6, repeat: 3 };
         }
         /* Клавиши и корпуса приборов: полуматовый крашеный металл */
         if (c === style.panel || c === 0x0f1e2e || c === 0x0e1c2a) {
-          return { kind: "panel", roughness: 0.55, metalness: 0.66, normalScale: 0.62, envMapIntensity: 0.9, repeat: 4 };
+          return { kind: "panel", roughness: 0.55, metalness: 0.12, normalScale: 0.18, envMapIntensity: 0.9, repeat: 4 };
         }
-        return { kind: "hull", roughness: 0.44, metalness: 0.78, normalScale: 0.55, envMapIntensity: 1.15, repeat: 3 };
+        // Coated hull panels reflect as paint, not as exposed polished steel.
+        return { kind: "hull", roughness: 0.52, metalness: 0.14, normalScale: 0.22, envMapIntensity: 1.0, repeat: 3 };
       });
     } catch (eUp) {}
   }
@@ -1697,7 +1735,48 @@ function build(T, opts) {
   };
 }
 
+/* The tour keeps a native-resolution reading view. Perspective and the
+   adaptive scene resolution must never make product information inaccessible. */
+var reader = null, readerIndex = -1, readerLanguage = "";
+function readPanel(yaw, visible) {
+  if (!visible) { if (reader) reader.hidden = true; return; }
+  var index = Math.round(((yaw % TAU) + TAU) % TAU / SECT) % 8 - 1;
+  if (index < 0) { if (reader) reader.hidden = true; return; }
+  var lang = doc.documentElement.lang;
+  if (!reader) {
+    var style = doc.createElement("style");
+    style.textContent = ".rc-tour-reader[hidden]{display:none!important}.rc-tour-reader{position:fixed;z-index:170;touch-action:pan-y;cursor:auto;left:max(20px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));width:min(360px,calc(100vw - 40px));max-height:42svh;overflow:auto;background:#08111ef5;border:1px solid #67839c;border-radius:14px;padding:16px 18px;color:#f5f8ff;font:500 16px/1.55 'Golos Text',system-ui,sans-serif;box-shadow:0 12px 44px #0006}.rc-tour-reader summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:1fr auto;gap:6px 12px}.rc-tour-reader summary:focus-visible{outline:2px solid #b3deff;outline-offset:5px}.rc-tour-reader small{font-size:11px;letter-spacing:.1em;color:#b3deff}.rc-tour-reader strong{grid-column:1/-1;font-size:clamp(19px,2vw,24px);line-height:1.25}.rc-tour-reader ul{padding-left:20px;margin:12px 0 0}.rc-tour-reader li+li{margin-top:8px}.rc-tour-reader .rc-reader-action{font-size:12px;color:#b3deff}.rc-tour-reader[open] .rc-reader-action{display:none}@media(max-width:600px){.rc-tour-reader{left:12px;bottom:max(12px,env(safe-area-inset-bottom));width:calc(100vw - 24px);padding:12px 14px;box-sizing:border-box;max-height:38svh;font-size:15px}}";
+    doc.head.appendChild(style);
+    reader = doc.createElement("details");
+    reader.className = "rc-tour-reader";
+    reader.hidden = true;
+    ["pointerdown", "pointerup", "click", "wheel"].forEach(function (name) {
+      reader.addEventListener(name, function (event) { event.stopPropagation(); }, { passive: true });
+    });
+    (doc.querySelector(".rc-flight") || doc.body).appendChild(reader);
+  }
+  if (index !== readerIndex || lang !== readerLanguage) {
+    readerIndex = index; readerLanguage = lang;
+    var rec = grab()[index], ru = lang !== "en";
+    reader.replaceChildren();
+    var summary = doc.createElement("summary");
+    var tag = doc.createElement("small"); tag.textContent = rec.tag;
+    var count = doc.createElement("small"); count.textContent = (index + 1) + " / 7";
+    var heading = doc.createElement("strong"); heading.textContent = rec.h;
+    var hint = doc.createElement("span"); hint.className = "rc-reader-action";
+    hint.textContent = ru ? "Читать полностью +" : "Read more +";
+    summary.append(tag, count, heading, hint);
+    var list = doc.createElement("ul");
+    (rec.lines || []).forEach(function (line) { var li = doc.createElement("li"); li.textContent = line; list.appendChild(li); });
+    reader.append(summary, list);
+    reader.setAttribute("aria-label", ru ? "Бортовая панель" : "Cabin panel");
+  }
+  if (!reader.isConnected) (doc.querySelector(".rc-flight") || doc.body).appendChild(reader);
+  reader.hidden = false;
+}
+
 g.RC_CABIN = {
+  readPanel: readPanel,
   build: build,
   /* Содержимое экранов наружу: проверке нужно видеть, что слова
      меняются вместе с языком страницы */

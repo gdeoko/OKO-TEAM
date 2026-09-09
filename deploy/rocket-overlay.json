@@ -494,7 +494,7 @@
     },
     {
       "path": "rocketcdn/assets/rc-cabin.js",
-      "sha": "34f4a4331edc555bbf772d6c36723002cd38a78d",
+      "sha": "0632e94ba0c382bbc944d362172b2a72a9935ad2",
       "base_sha": "556bcebc2f4fc88d715f160ddefeff10c89e0be0",
       "mode": "100644"
     },
@@ -530,7 +530,7 @@
     },
     {
       "path": "rocketcdn/assets/rc-real.js",
-      "sha": "602adb9f4c0558c0d3d46d110c27e4cf4b547e27",
+      "sha": "fe4e37763e4b697be0006a6542fa6f6a3c37a922",
       "base_sha": "811f78cd7a63ba383c8f7a94928cae7e78f86fb4",
       "mode": "100644"
     },
@@ -670,6 +670,12 @@
       "path": "rocketcdn/vpn-content-defaults.json",
       "sha": "7d81bc8770d594a3c89fe77c008445388fe52280",
       "base_sha": null,
+      "mode": "100644"
+    },
+    {
+      "path": "rocketvpn/assets/rc-cabin.js",
+      "sha": "0632e94ba0c382bbc944d362172b2a72a9935ad2",
+      "base_sha": "bf33ea189d3b94180ea49983621c787dfcb76efa",
       "mode": "100644"
     },
     {

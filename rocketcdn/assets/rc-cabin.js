@@ -1059,12 +1059,9 @@ function build(T, opts) {
 
   var hull = hullTex(T, tiny);
   hull.repeat.set(6, 1);
-  /* Салон освещается физически, но материал берём дешёвый.
-     MeshPhongMaterial - полноценный PBR: он считает микрофасеты
-     и окружение на каждый пиксель, и пять ламп салона умножали эту
-     работу впятеро. На телефоне это и был главный тормоз финальной
-     сцены. Phong с бликом даёт ту же картинку интерьера в разы
-     дешевле: сталь читается сталью, обшивка обшивкой. */
+  /* Геометрия создаётся с промежуточными Phong-материалами.
+     В конце сборки RC_REAL заменяет их на Standard с картами
+     поверхности; без этого модуля остаётся исходное освещение. */
   var wallMat = new T.MeshPhongMaterial({
     map: hull, side: T.BackSide,
     color: 0x93aac2
@@ -1686,17 +1683,18 @@ function build(T, opts) {
         }
         /* Пол и палуба: матовые, затёртые ногами */
         if (c === 0xa8bccf) {
-          return { kind: "deck", roughness: 0.62, metalness: 0.42, normalScale: 0.75, envMapIntensity: 0.7, repeat: 5 };
+          return { kind: "deck", roughness: 0.62, metalness: 0.35, normalScale: 0.35, envMapIntensity: 0.7, repeat: 5 };
         }
         /* Рама окна и несущий металл: полированный, ловит блики */
         if (c === style.steel || c === 0x4d5f72) {
-          return { kind: "hull", roughness: 0.29, metalness: 0.92, normalScale: 0.5, envMapIntensity: 1.6, repeat: 3 };
+          return { kind: "hull", roughness: 0.32, metalness: 0.92, normalScale: 0.24, envMapIntensity: 1.6, repeat: 3 };
         }
         /* Клавиши и корпуса приборов: полуматовый крашеный металл */
         if (c === style.panel || c === 0x0f1e2e || c === 0x0e1c2a) {
-          return { kind: "panel", roughness: 0.55, metalness: 0.66, normalScale: 0.62, envMapIntensity: 0.9, repeat: 4 };
+          return { kind: "panel", roughness: 0.55, metalness: 0.12, normalScale: 0.18, envMapIntensity: 0.9, repeat: 4 };
         }
-        return { kind: "hull", roughness: 0.44, metalness: 0.78, normalScale: 0.55, envMapIntensity: 1.15, repeat: 3 };
+        // Coated hull panels reflect as paint, not as exposed polished steel.
+        return { kind: "hull", roughness: 0.52, metalness: 0.14, normalScale: 0.22, envMapIntensity: 1.0, repeat: 3 };
       });
     } catch (eUp) {}
   }

@@ -1,0 +1,369 @@
+{
+  "scope": "Native WebGL 1; real world/camera/scroll modules, fixed section geometry; no browser, DOM text, sound or physical-device FPS",
+  "source": "rocketvpn",
+  "modules": [
+    "rv-пбр.js",
+    "rv-real.js",
+    "rv-ореол.js",
+    "rv-world.js",
+    "rv-пыль.js",
+    "rv-коридор.js",
+    "rv-труба.js",
+    "rv-фон.js",
+    "rv-кирпичи.js",
+    "rv-сетка.js",
+    "rv-глыба.js",
+    "rv-снаряды.js",
+    "rv-частицы.js",
+    "rv-ракета.js",
+    "gen/каб/плоская.js",
+    "gen/каб/настил.js",
+    "rv-клавиши.js",
+    "rv-настил.js",
+    "rv-кабина.js",
+    "rv-корабль.js",
+    "gen/cab/meta.js",
+    "gen/cab/flat.js",
+    "gen/cab/deck.js",
+    "rc-keys.js",
+    "rc-deck.js",
+    "rc-panel.js",
+    "rc-cabin.js",
+    "rv-салон-cdn.js",
+    "rv-assembly.js",
+    "rv-финал.js",
+    "rv-комната.js",
+    "rv-луна.js",
+    "rv-act-станция.js",
+    "rv-act-fold.js",
+    "rv-act-bridge.js",
+    "rv-act-пуск.js",
+    "rv-act-финал.js",
+    "rv-motion.js"
+  ],
+  "sourceHashes": {
+    "rv-пбр.js": "33c30159c13a9a0cb9dae01784ae29687068a266db53c4c628ce602c264aad74",
+    "rv-real.js": "77028384acb5c8ffc006d8b7850d3078d1591a05f58e5084cd20ff0ce21ccf72",
+    "rv-ореол.js": "c415a9aa66d55e61828dd9591c264df00c05688811067eb526ef085bbb7765ba",
+    "rv-world.js": "ea5f7cfab68c696d0c7000bbfe5aaa53c22708120b1a30a98134421f4488d38c",
+    "rv-пыль.js": "f3506dec6bae0114c86b5efd0f1deb8eca4cf0de082a680cdbc16520420e2bcc",
+    "rv-коридор.js": "bce7ecc84e84f0a5b302636865b1f28e071bcf1dcd9ad6fbfb349f08eb25aee4",
+    "rv-труба.js": "99ff75b1147f57335239d5fe49fd6bb701d637d382e7c20e8f228b208161927e",
+    "rv-фон.js": "7aaa4d4361aa1538a560a8a3f393149ce5e859c9aa107ec5738d73ff753b462e",
+    "rv-кирпичи.js": "d3b4a25b397256af9d5b41a5448a2b17e93aec19e36ad1307f9a0f383b90c828",
+    "rv-сетка.js": "b3f9f149dbb8b44b350ec83e5bd18063a4dad90f1ca30d2f1b786f3c02a1096c",
+    "rv-глыба.js": "ca9a9483222ee521eca56ae9651682e9e066d358032dedb61ce3a5715f824f3c",
+    "rv-снаряды.js": "ad79a7a4354db4072dd3ae27b5983f91216e1aadfaf2d9cd0e5a055432300589",
+    "rv-частицы.js": "b0c7bba5ec2fef8c48925f6fa1ead224339c7145eccf1f347013b1176ff655e2",
+    "rv-ракета.js": "cd85bbad48856b215c0332287cf4535c5476d6c87502b24b8d6a76f9cc2560f9",
+    "gen/каб/плоская.js": "9bcd01a9cb308396b18c3d76609647cac3337d8e0284b0636cedcf490853ffc6",
+    "gen/каб/настил.js": "4e1c865d5ebf29d9ef620813d97398cd7c5e8b792f951168f3ad2fef375f1574",
+    "rv-клавиши.js": "f01d28ec8ccf1f51c417d6e8ed07d7ed7ba3ea80699b5ef6d45cd337f5565fa7",
+    "rv-настил.js": "00fbf5c484220144d307eb0d09421fcd5d5372421d7c27bac3126ef4798525b8",
+    "rv-кабина.js": "bc621a924b8254729da6a883667adc7f99d0878f39411492fbb535e35c48730c",
+    "rv-корабль.js": "bdefe8d4261b14591ca54514e4f9098cf3e68633442634a4740ba074b3d46e10",
+    "gen/cab/meta.js": "460357b64df0de44558c41ae2e6fc760cb4726802cfa2432506547db5abb6ed2",
+    "gen/cab/flat.js": "073f1336fec33d308e515765828a0c449ac239339cc9cf9a4585844cc0ca165f",
+    "gen/cab/deck.js": "6345fbe33f26c8819e788420c26dfdc3749017ceaaaa0f25542199a1a4935b8b",
+    "rc-keys.js": "a5f61cd0c2da111331e7ecb7c05763d4561c803ac12e6f661dd505f3be21d1a7",
+    "rc-deck.js": "7222ccba41a4d223243dbbbba4d604d22b4a2c5283d2c229e3a38dafba899662",
+    "rc-panel.js": "ad5f19b09c1a87fc0a5752c5a829ceb41341fe34ade8ae3d916a7debc60777eb",
+    "rc-cabin.js": "589b2eda4e2ff437ec6fc9d40723b8b96dd3166f3a2494c2f56b750e16f64af6",
+    "rv-салон-cdn.js": "fd7e29b3494cf96d0ceb1dc7959662795eb4487ecee57185117a42f793ce9f55",
+    "rv-assembly.js": "277fb8c254f2550c3533cb16576c312410966f8b5d854ce991b43b111d685ff6",
+    "rv-финал.js": "70f7d9370763a3027d7f7e46a6992b0eace8b92ae317756cf79506ae8737c598",
+    "rv-комната.js": "c305e0d19cb7e9d36b12712270771fa47be221305b81265755446cad289a8417",
+    "rv-луна.js": "d625f0531b49f7cacff3efbfa7d5eb8cd014d22f3ada3fbd7f7a5994233aa85c",
+    "rv-act-станция.js": "7f40e09f5d3ba3e15ddec1ae8a50de1729aee8108fc5fcdf7716f9f55480d4b5",
+    "rv-act-fold.js": "13de37b5250fed0837db7d677c911d6bf2e89603238f105a94f44180e62a3ae9",
+    "rv-act-bridge.js": "1d4e69b96ded1fb76aa839616f7d9986d8e8dae7773ecef97795af657a4cda01",
+    "rv-act-пуск.js": "cda879fec3ce52e2fbe07ddda98ff8409c37f02d36bbc066e55f5800b53203a8",
+    "rv-act-финал.js": "165802918e4909aa4026954c4f6e1017dfcd2322ec1dc261bdac5cf57da68985",
+    "rv-motion.js": "abe61eb1f2fab64a19a666f4fd5585e4370593a050df1d5c96c5a4f91b36d6b6"
+  },
+  "width": 640,
+  "height": 400,
+  "sections": [
+    {
+      "name": "станция",
+      "start": 0,
+      "size": 1840
+    },
+    {
+      "name": "периметр",
+      "start": 1840,
+      "size": 2800
+    },
+    {
+      "name": "прокол",
+      "start": 4640,
+      "size": 1720
+    },
+    {
+      "name": "рубка",
+      "start": 6360,
+      "size": 1320
+    },
+    {
+      "name": "пуск",
+      "start": 7680,
+      "size": 1320
+    },
+    {
+      "name": "финал",
+      "start": 9000,
+      "size": 1520
+    }
+  ],
+  "shots": [
+    {
+      "label": "forward-5-0.05",
+      "camera": [
+        0.0002798150043761013,
+        22.005850227040863,
+        22.261036607179964
+      ],
+      "quaternion": [
+        -0.00011139421790373943,
+        0.000005154235456310237,
+        -0.0015560983236871904,
+        0.9999987830606439
+      ],
+      "fov": 46.122090334004035,
+      "distinctColors": 18138,
+      "pngSha256": "adc1379cd883df10558c790bf737edffdf5dc18d0067869f3c7ce071c9b482ba",
+      "progress": 9056,
+      "acts": [
+        "пуск",
+        "финал"
+      ],
+      "lastRenderPass": {
+        "frame": 13,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 59,
+        "textures": 22
+      },
+      "failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "glError": 0
+    },
+    {
+      "label": "forward-5-0.5",
+      "camera": [
+        0.00006755942087138624,
+        21.796484528045355,
+        -0.7423047088293727
+      ],
+      "quaternion": [
+        -0.0032786303626189455,
+        -0.000005892751142860228,
+        -0.0017973084188601138,
+        0.9999930100909048
+      ],
+      "fov": 55.928082351963226,
+      "distinctColors": 52843,
+      "pngSha256": "3edccd4813f92aaaff6c9018f1d7ea5333412254956e7618f7ec4f884d92e442",
+      "progress": 9560,
+      "acts": [
+        "финал"
+      ],
+      "lastRenderPass": {
+        "frame": 26,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 90,
+        "textures": 31
+      },
+      "failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "glError": 0
+    },
+    {
+      "label": "forward-5-0.95",
+      "camera": [
+        0.000005568457613139497,
+        21.67184008085676,
+        -4.358271324181764
+      ],
+      "quaternion": [
+        -0.0032786356563841656,
+        1.0903836777841611e-7,
+        0.00003325705967141669,
+        0.9999946247066476
+      ],
+      "fov": 71.96837214784037,
+      "distinctColors": 17400,
+      "pngSha256": "d6fe35a5b183e57e025a0c7439f3ec713114a03a6200c98d81687fc9bed0ac9d",
+      "progress": 10064,
+      "acts": [
+        "финал"
+      ],
+      "lastRenderPass": {
+        "frame": 39,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 90,
+        "textures": 31
+      },
+      "failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "glError": 0
+    },
+    {
+      "label": "reverse-5-0.95",
+      "camera": [
+        0.000022798082819698183,
+        21.66995413124665,
+        -4.358258957299075
+      ],
+      "quaternion": [
+        -0.0032786356291295347,
+        4.365837568321267e-7,
+        0.00013315947724055541,
+        0.9999946163938956
+      ],
+      "fov": 71.96837214784037,
+      "distinctColors": 17424,
+      "pngSha256": "7f98a64aeba729a6d616819041336acc9f3ad774d2a5caab98e52c90b9dec708",
+      "progress": 10064,
+      "acts": [
+        "финал"
+      ],
+      "lastRenderPass": {
+        "frame": 52,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 90,
+        "textures": 31
+      },
+      "failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "glError": 0
+    },
+    {
+      "label": "reverse-5-0.5",
+      "camera": [
+        0.00015473244608152654,
+        21.736187253475197,
+        -0.7419093168649783
+      ],
+      "quaternion": [
+        -0.003278629962083097,
+        0.000006111541038013307,
+        0.0018640400542180057,
+        0.9999928879261578
+      ],
+      "fov": 55.94508557809962,
+      "distinctColors": 53063,
+      "pngSha256": "577e238ef1f0247416cc2f1bf1d3f89d52445429213d8a9eb7713d13802dd502",
+      "progress": 9560,
+      "acts": [
+        "финал"
+      ],
+      "lastRenderPass": {
+        "frame": 65,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 90,
+        "textures": 31
+      },
+      "failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "glError": 0
+    },
+    {
+      "label": "reverse-5-0.05",
+      "camera": [
+        -0.00020805819318354396,
+        21.987873169169696,
+        22.26115448952666
+      ],
+      "quaternion": [
+        0.000230883152613404,
+        -0.0000042952427609825405,
+        0.0014462236387372425,
+        0.9999989275552786
+      ],
+      "fov": 46.145293133143,
+      "distinctColors": 17682,
+      "pngSha256": "fb8bcfff3ed7f41a0db4dde8d76e277950ee80c55baf2ab413fa61cfd041b6a4",
+      "progress": 9056,
+      "acts": [
+        "пуск",
+        "финал"
+      ],
+      "lastRenderPass": {
+        "frame": 78,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 90,
+        "textures": 31
+      },
+      "failures": {
+        "работы": 0,
+        "перваяРабота": null,
+        "акты": 0,
+        "первыйАкт": null
+      },
+      "glError": 0
+    }
+  ],
+  "renderer": "ANGLE",
+  "glErrors": [],
+  "warnings": [
+    "THREE.WebGLRenderer: Texture has been resized from (929x581) to (512x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (768x768) to (512x512)."
+  ],
+  "eventErrors": [],
+  "failures": {
+    "работы": 0,
+    "перваяРабота": null,
+    "акты": 0,
+    "первыйАкт": null
+  }
+}

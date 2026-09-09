@@ -1,7 +1,7 @@
 {
   "release": "20260909-r9",
-  "status": "prepared_not_deployed",
-  "checked_at_utc": "2026-09-09T15:42:09.371683+00:00",
+  "status": "verified_for_publication",
+  "checked_at_utc": "2026-09-09T17:25:55.170545+00:00",
   "base_commit": "f7d7a87319bcc79adcaa8df11c4fe50bd7499d15",
   "local_checks": {
     "javascript_passed": 54,
@@ -9,38 +9,73 @@
     "storage_passed": 12,
     "delivery_passed": 7,
     "deployment_and_integration_passed": 10,
-    "manifest_files_verified": 23
+    "manifest_files_verified": 24
   },
-  "public_current_release": [
+  "client_native_php": {
+    "version": "8.3.6",
+    "storage_passed": 12,
+    "delivery_passed": 8,
+    "concurrency_passed": 1,
+    "backup_passed": 3,
+    "concurrent_updates_retained": 240,
+    "fixture": "Separate temporary directory with public pinned source and synthetic senders; no customer data or real notifications"
+  },
+  "graphics": [
     {
-      "path": "rocketcdn/admin.html",
-      "url": "https://rocketcdn.ru/admin.html",
-      "status": 200,
-      "matches_r8_base": true
+      "label": "refined-desktop",
+      "report": "review/native-flight-r9/refined-desktop/flight.json",
+      "width": 640,
+      "height": 400,
+      "frames": 23,
+      "gl_errors": 0,
+      "event_errors": 0,
+      "renderer": "ANGLE"
     },
     {
-      "path": "rocketcdn/assets/rc-app.js",
-      "url": "https://rocketcdn.ru/assets/rc-app.js",
-      "status": 200,
-      "matches_r8_base": true
+      "label": "refined-portrait",
+      "report": "review/native-flight-r9/refined-portrait/flight.json",
+      "width": 390,
+      "height": 844,
+      "frames": 23,
+      "gl_errors": 0,
+      "event_errors": 0,
+      "renderer": "ANGLE"
     },
     {
-      "path": "rocketcdn/assets/rc-real.js",
-      "url": "https://rocketcdn.ru/assets/rc-real.js",
-      "status": 200,
-      "matches_r8_base": true
+      "label": "vpn-desktop",
+      "report": "review/native-flight-r9/vpn-desktop/world.json",
+      "width": 640,
+      "height": 400,
+      "frames": 6,
+      "gl_errors": 0,
+      "event_errors": 0,
+      "renderer": "ANGLE"
     },
     {
-      "path": "rocketcdn/index.html",
-      "url": "https://rocketcdn.ru/index.html",
-      "status": 200,
-      "matches_r8_base": true
+      "label": "vpn-portrait",
+      "report": "review/native-flight-r9/vpn-portrait/world.json",
+      "width": 390,
+      "height": 844,
+      "frames": 6,
+      "gl_errors": 0,
+      "event_errors": 0,
+      "renderer": "ANGLE"
     }
   ],
-  "blocked": [
-    "SSH key authentication to the existing client server failed.",
-    "Automatic approval review rejected reading the client access entry from the shared server vault.",
-    "Automatic approval review rejected copying code and installing a temporary native graphics test environment on the service server."
+  "graphics_frames": 58,
+  "browser_review": {
+    "cdn_ru_en": "passed",
+    "cdn_readable_fallback": "passed",
+    "admin_synthetic_preview_load": "passed",
+    "admin_content_save_enabled_after_load": "passed",
+    "admin_reset_dialog": "Native confirmation opened; browser automation transport then timed out. Cancel and request-race behavior covered by JS tests.",
+    "renderer": "Disabled"
+  },
+  "remaining_acceptance": [
+    "Physical-device FPS and sustained browser 3D motion",
+    "Browser WebGL 2/HDR and audio acceptance",
+    "Exact Igloo parity, 8K output and photorealism target"
   ],
-  "graphics_scope": "Authored material maps and render-state preservation tested with original Three.js. No new rendered frames or physical-device acceptance in r9. Prior r8 native frames are unchanged and are not proof for r9."
+  "blocked": [],
+  "graphics_scope": "Native WebGL 1 with original scene/camera modules at fixed checkpoints and modelled scroll; no claim of browser rendering, real-device FPS, HTML/CSS/audio/input acceptance."
 }

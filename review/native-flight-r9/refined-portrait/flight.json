@@ -1,0 +1,862 @@
+{
+  "lifecycle": {
+    "cameraReplaced": true,
+    "cameraInNewScene": true
+  },
+  "scope": "Native WebGL 1 with original CDN flight world and camera functions; local lifecycle instrumentation; no HTML/CSS/audio/input acceptance or device FPS",
+  "width": 390,
+  "height": 844,
+  "fixture": {
+    "content": "Cabin fallback records; page HTML content is not loaded",
+    "fontAdapter": "Shipped Latin/Cyrillic subsets, explicit native fallback",
+    "hud": "Canvas-only; the production DOM cockpit and controls are excluded"
+  },
+  "modules": [
+    "rc-real.js",
+    "rc-planets.js",
+    "gen/cab/meta.js",
+    "gen/cab/flat.js",
+    "gen/cab/deck.js",
+    "rc-geo.js",
+    "rc-keys.js",
+    "rc-deck.js",
+    "rc-panel.js",
+    "rc-cabin.js",
+    "rc-flight.js"
+  ],
+  "sourceHashes": {
+    "rc-real.js": "ef1ebaab2051fe71145b213de64f27a8ba5f787c07df64e044bbd1e8733e1e93",
+    "rc-planets.js": "bcf8eb87791d200ce8c14dd9d4a5975fd033512874c1d8ef84cdb20c6442efff",
+    "gen/cab/meta.js": "460357b64df0de44558c41ae2e6fc760cb4726802cfa2432506547db5abb6ed2",
+    "gen/cab/flat.js": "073f1336fec33d308e515765828a0c449ac239339cc9cf9a4585844cc0ca165f",
+    "gen/cab/deck.js": "6345fbe33f26c8819e788420c26dfdc3749017ceaaaa0f25542199a1a4935b8b",
+    "rc-geo.js": "e8b943b828dbf47c426739482b56b69b990d9ab88cc93f475aaa67c54cd1a5a0",
+    "rc-keys.js": "a5f61cd0c2da111331e7ecb7c05763d4561c803ac12e6f661dd505f3be21d1a7",
+    "rc-deck.js": "7222ccba41a4d223243dbbbba4d604d22b4a2c5283d2c229e3a38dafba899662",
+    "rc-panel.js": "ad5f19b09c1a87fc0a5752c5a829ceb41341fe34ade8ae3d916a7debc60777eb",
+    "rc-cabin.js": "589b2eda4e2ff437ec6fc9d40723b8b96dd3166f3a2494c2f56b750e16f64af6",
+    "rc-flight.js": "97699bafbb514c060a15e8206305fc8cfebed4cd9ee4cdf0d4e04483162a7e10"
+  },
+  "checkpoints": [
+    {
+      "label": "stage-front",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000309965520826,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        0.00004530130864733577,
+        0,
+        0.9999999989738957
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 36656,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 46,
+        "textures": 27
+      },
+      "lastRenderPass": {
+        "frame": 9,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "cc9cc797ccfa08e549617e10fb6eb892273f459d3dc859c7f35b67a1aad62856",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-1",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.3826414390523462,
+        0,
+        0.923896925592866
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 24307,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 70,
+        "textures": 44
+      },
+      "lastRenderPass": {
+        "frame": 18,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "d9d174d51b8017e6b02452759c836174bbf06cf9f7651a2d1c8f18ec0413af67",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-2",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.7070746404685595,
+        0,
+        0.7071389204436829
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 48389,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 76,
+        "textures": 49
+      },
+      "lastRenderPass": {
+        "frame": 27,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "9817a201632648acb3e8799353c270d9217c5f6ac051977eca54d5abe5c3a3c0",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-3",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.9238621375210117,
+        0,
+        0.3827254248872256
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 67460,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 85,
+        "textures": 54
+      },
+      "lastRenderPass": {
+        "frame": 36,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "9411a2726c036c036568479a90e5f79aed9ddc9907211ca03c14bf417e3a739f",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-4",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.9999999989670212,
+        0,
+        0.00004545280630425624
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 33224,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 90,
+        "textures": 55
+      },
+      "lastRenderPass": {
+        "frame": 45,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "da6689371f974b33c0c0a0865512ad216d00cfbf82bc4a918bc4456ac73c0d5d",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-5",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.923896925592866,
+        0,
+        -0.38264143905234616
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 26931,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 54,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "5db3d734620fb689a63ce2f73e471abf8abb3dee00becbd35c248d5443fa6fb1",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-6",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.7071389204436831,
+        0,
+        -0.7070746404685593
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 46622,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 63,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "362bb268d6ec0a261c3f78113d1e62b0265a551d6b6a654941782b268bd95089",
+      "glError": 0
+    },
+    {
+      "label": "stage-panel-7",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8.000312464679928,
+        151.71681011715472
+      ],
+      "quaternion": [
+        0,
+        -0.38272542488722583,
+        0,
+        -0.9238621375210115
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 51038,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 72,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "2e02043f24d2084ae944a30629fddbd7d8e1496b779b6b1041043e7032ef04df",
+      "glError": 0
+    },
+    {
+      "label": "stage-console",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": false
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8,
+        150
+      ],
+      "quaternion": [
+        -0.026638274363904944,
+        0,
+        0,
+        0.9996451382060103
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 55957,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 81,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "2ad3537e245e071f81f5f9716f17d387ee25ac9f5fff9c2abd1905ea9b68c3e9",
+      "glError": 0
+    },
+    {
+      "label": "flight-earth",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8,
+        150
+      ],
+      "quaternion": [
+        -0.04762041537952055,
+        0,
+        0,
+        0.998865504479498
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 24249,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 90,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "37ff239e5d19ad9e0932017b3b4bb0dbfbd6852dd3407f598df66605f2cb79d4",
+      "glError": 0
+    },
+    {
+      "label": "flight-moon",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.1525,
+      "camera": [
+        356.69904977910863,
+        68.44124329450577,
+        -184.52339193882975
+      ],
+      "quaternion": [
+        -0.18485397239824342,
+        0.6502447770572133,
+        0.1677960911088972,
+        0.7175341180787009
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 12524,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 99,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "0d9190a6cf2ec84488b0e5ef38fa20f29da3587b6d037fabbb262c41f7c0b07b",
+      "glError": 0
+    },
+    {
+      "label": "flight-mercury",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.115,
+      "camera": [
+        157.43678849298743,
+        49.56701336270078,
+        72.91503492317607
+      ],
+      "quaternion": [
+        -0.03610458050130194,
+        -0.24448817383748156,
+        -0.00882181466315482,
+        0.9689397131434372
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 23449,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 108,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "d5610d3815bbad688a53d03dbc91c8f1330241a140a8775c795d4d623b68bcb6",
+      "glError": 0
+    },
+    {
+      "label": "flight-venus",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.105,
+      "camera": [
+        73.90186653846845,
+        42.74293142178964,
+        117.09461980786537
+      ],
+      "quaternion": [
+        -0.02338287007885797,
+        -0.3118400867451893,
+        -0.007675365778181768,
+        0.9498158192227583
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 23443,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 117,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "59a8f9d527d5d0c27438148f2b89bca49cda761175bd5c196c119edff00495ce",
+      "glError": 0
+    },
+    {
+      "label": "flight-mars",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.2325,
+      "camera": [
+        653.966481976936,
+        -75.21504066534787,
+        -839.1457503955445
+      ],
+      "quaternion": [
+        -0.28946324503767756,
+        0.7062674169628742,
+        0.49535184996404,
+        0.4147576524261502
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 16142,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 126,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "94bfd86f1f87b66471d8ef3b87c0d55c588786a24cddb69ab79ee69365ea7965",
+      "glError": 0
+    },
+    {
+      "label": "flight-jupiter",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.2825,
+      "camera": [
+        1044.1684845072293,
+        69.77054639337449,
+        -957.5597602937438
+      ],
+      "quaternion": [
+        -0.17712780793092894,
+        0.8011194901322577,
+        0.2870228277034834,
+        0.4944200628664991
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 16592,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 135,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "1b9727917041f225ec6c8d93e5ff0036dbcfce042fffb87b8195b7a92c500cac",
+      "glError": 0
+    },
+    {
+      "label": "flight-saturn",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.365,
+      "camera": [
+        1629.6863394044217,
+        380.84265497812754,
+        -1103.9721298012112
+      ],
+      "quaternion": [
+        -0.23446777138698957,
+        0.7655173447018956,
+        0.4251477860957848,
+        0.4222054228917854
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 69254,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 144,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "ca93c34156ec5aa8a73d2579fc414b1860ad11b02f6269d0af1431fd01e2cf2e",
+      "glError": 0
+    },
+    {
+      "label": "flight-uranus",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.4,
+      "camera": [
+        1751.2576204843601,
+        231.42073456012676,
+        -1363.45233774927
+      ],
+      "quaternion": [
+        0.002178714681685152,
+        0.9586712001729736,
+        -0.007860296677208518,
+        0.28439936514941955
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 18178,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 153,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "fe8d204a9364bd553329db31947f87899548a36a03b093a801b9b44703564564",
+      "glError": 0
+    },
+    {
+      "label": "flight-neptune",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.4825,
+      "camera": [
+        2015.489839928713,
+        -57.51580649964568,
+        -1995.2080075472686
+      ],
+      "quaternion": [
+        -0.1427909074538836,
+        -0.15235429877132683,
+        -0.022350231894895576,
+        0.9777010747302256
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 21183,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 162,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "da643e46cbc3683ab855b98994d1c1b4d416d430c8a17620cbf76eb834774f7d",
+      "glError": 0
+    },
+    {
+      "label": "flight-sun",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.3425,
+      "camera": [
+        1497.346745822036,
+        387.0838967670613,
+        -975.7876785539171
+      ],
+      "quaternion": [
+        -0.4221327258870241,
+        -0.2813958077928199,
+        -0.1397736987377187,
+        0.8503432684704416
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 64922,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 171,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "7bb70fefb0184059c5c0045a77fd70b030491d75bc3edf1d4351f2c540df2135",
+      "glError": 0
+    },
+    {
+      "label": "flight-hole",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.5375,
+      "camera": [
+        2292.913246090379,
+        -122.69470492128242,
+        -2379.3763605565287
+      ],
+      "quaternion": [
+        -0.10022543504282008,
+        0.6976969288919287,
+        0.09781568262134731,
+        0.7025709571413891
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 63568,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 96,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 180,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "1b995e607e25fb782173bcb1f79f3050aff1952fa46a25d3aecca8d42265c371",
+      "glError": 0
+    },
+    {
+      "label": "flight-jump",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.8201192029741865,
+      "camera": [
+        579.5823199918186,
+        81.02107470135287,
+        -1245.5624467635864
+      ],
+      "quaternion": [
+        -0.0014345032829178022,
+        0.9622932543816658,
+        0.009022745173958466,
+        0.27186067174455436
+      ],
+      "fov": 112.58980364421141,
+      "distinctColors": 49802,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 97,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 189,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "f280b627b019349f94e923b6df56a28a703c7317c05c419f800d08c644f19556",
+      "glError": 0
+    },
+    {
+      "label": "flight-home",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0.99,
+      "camera": [
+        -196.16796891219732,
+        17.747627892652048,
+        80.90708561311108
+      ],
+      "quaternion": [
+        0.03648921648678831,
+        0.8838914357425058,
+        0.029617208865982153,
+        -0.4653249271640422
+      ],
+      "fov": 98.96824638647786,
+      "distinctColors": 6521,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 97,
+        "textures": 56
+      },
+      "lastRenderPass": {
+        "frame": 198,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "44f283e25242c3a58374a9c0b40a6e48fd5ec9b165390cef2cbe46151ab45ebc",
+      "glError": 0
+    },
+    {
+      "label": "flight-rebuilt",
+      "cabin": {
+        "flat": true,
+        "cameraInScene": true
+      },
+      "progress": 0,
+      "camera": [
+        0,
+        8,
+        150
+      ],
+      "quaternion": [
+        -0.042745869941645254,
+        0,
+        0,
+        0.9990859775829767
+      ],
+      "fov": 98.96501030858235,
+      "distinctColors": 25724,
+      "invalidTransforms": [],
+      "memory": {
+        "geometries": 23,
+        "textures": 16
+      },
+      "lastRenderPass": {
+        "frame": 9,
+        "calls": 1,
+        "triangles": 2,
+        "points": 0,
+        "lines": 0
+      },
+      "pngSha256": "39f50f4f657aa3d76ea867f2aec5194d3dabba94adcfc8e058ba51f2686ec779",
+      "glError": 0
+    }
+  ],
+  "warnings": [
+    "THREE.WebGLRenderer: Texture has been resized from (768x768) to (512x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (566x1225) to (512x1024).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: Texture has been resized from (1280x640) to (1024x512).",
+    "THREE.WebGLRenderer: WEBGL_lose_context extension not supported."
+  ],
+  "glErrors": [],
+  "renderer": "ANGLE"
+}

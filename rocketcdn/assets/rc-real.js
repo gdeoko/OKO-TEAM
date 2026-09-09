@@ -227,10 +227,13 @@ R.maps = function (T, kind) {
   if (cache[k]) return cache[k];
   var size = tier() === 0 ? 128 : 256;
   var set;
-  if (k === "deck") set = { normal: normalTexture(T, size, "deck", 2.1, 21), rough: roughTexture(T, size, 0.34, 0.78, 5) };
-  else if (k === "glass") set = { normal: normalTexture(T, size, "glass", 0.5, 33), rough: roughTexture(T, size, 0.02, 0.14, 9) };
-  else if (k === "panel") set = { normal: normalTexture(T, size, "hull", 1.7, 44), rough: roughTexture(T, size, 0.42, 0.86, 11) };
-  else set = { normal: normalTexture(T, size, "hull", 2.6, 7), rough: roughTexture(T, size, 0.18, 0.62, 3) };
+  // Standard multiplies roughness by the map. These are relative variations,
+  // not a second absolute roughness: the old hull map reduced .44 to about
+  // .17 and turned the dense relief into isolated, flickering mirror glints.
+  if (k === "deck") set = { normal: normalTexture(T, size, "deck", 1.4, 21), rough: roughTexture(T, size, 0.82, 1.0, 5) };
+  else if (k === "glass") set = { normal: normalTexture(T, size, "glass", 0.25, 33), rough: roughTexture(T, size, 0.85, 1.0, 9) };
+  else if (k === "panel") set = { normal: normalTexture(T, size, "hull", 0.8, 44), rough: roughTexture(T, size, 0.88, 1.0, 11) };
+  else set = { normal: normalTexture(T, size, "hull", 1.15, 7), rough: roughTexture(T, size, 0.82, 1.0, 3) };
   cache[k] = set;
   return set;
 };
