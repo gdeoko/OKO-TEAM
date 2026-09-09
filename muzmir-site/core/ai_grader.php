@@ -362,7 +362,7 @@ function ag_bridge_prepare(string $url, int $maxSec = 900): array {
      * и работа помечалась «файл не открывается (закачка оборвалась)». */
     $ask = $url;
     $kind = vf_platform($url);
-    if (!in_array($kind, ['yandex_disk', 'dzen', 'mailru_cloud', 'rutube', 'vk', 'ok'], true)) {
+    if (!in_array($kind, ['yandex_disk', 'dzen', 'rutube', 'vk', 'ok'], true)) {
         $link = vf_direct_link($url);
         if (!$link['ok']) return $bad((string) $link['why']);
         $ask = (string) $link['url'];
@@ -977,6 +977,20 @@ function ag_grade_application(int $appId, array $opt = []): array {
      * файлом через сайт. */
     $onBridge = ag_transport() === 'bridge'
              && (string) (function_exists('setting') ? setting('grade_fetch_on_bridge', '0') : '0') === '1';
+
+    /* ОБЛАКО MAIL.RU ЗАБИРАЕТ ТОЛЬКО САЙТ.
+     *
+     * Публичная раздача облака ведёт себя по-разному в зависимости от того, кто
+     * спрашивает. Сайту она отдаёт файл целиком: 58 мегабайт за две секунды,
+     * проверено 9 сентября. Мосту — не отдаёт: прямая ссылка, полученная
+     * сайтом, у него отвечает 404, а полученная им самим обрывается ровно на
+     * 102 400 байтах, сколько ни проси и с какого сервера ни бери; на явный
+     * Range приходит по 64 килобайта, то есть тысяча запросов на одну работу.
+     *
+     * Спорить с этим незачем: у сайта всё работает. Широкий канал моста нужен
+     * гигабайтным записям с Яндекс.Диска, а работы в облаке — обычные ролики
+     * на десятки мегабайт, сайт справляется. */
+    if ($onBridge && vf_platform($url) === 'mailru_cloud') $onBridge = false;
     $prep = ['ok' => false, 'work' => '', 'pitch' => [], 'shot' => '', 'seconds' => 0];
 
     if ($onBridge) {
