@@ -118,7 +118,13 @@ $id = (int) insert('mail_queue', [
     'subject'       => SUBJ,
     'body'          => '<pre style="font:14px/1.5 monospace;white-space:pre-wrap">' . h($body) . '</pre>',
     'status'        => 'queued',
-    'priority'      => 1,
+    /* PRIORITY У ОЧЕРЕДИ ЗНАЧИТ НЕ «ВАЖНОСТЬ», А «МАССОВОЕ».
+     *
+     * Ноль — личное письмо: подтверждение заявки, код входа, обращение в
+     * ведомство. Больше нуля — массовая рассылка, и такие письма ждут пульта,
+     * окна и суточных норм. Поставленная сгоряча единица отправила это письмо
+     * в хвост двадцати двух тысяч застрявших писем на Mail.ru — оно и не ушло. */
+    'priority'      => 0,
     'campaign_type' => 'official',
     'scheduled_at'  => date('Y-m-d H:i:s', $when),
     'created_at'    => date('Y-m-d H:i:s'),
