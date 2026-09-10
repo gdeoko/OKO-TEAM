@@ -9,10 +9,11 @@
 
    Запуск: node tools/знак-без-льда.mjs */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({ viewport: { width: 1440, height: 900 } });

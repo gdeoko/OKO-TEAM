@@ -10,6 +10,7 @@
 
    Запуск: node tools/снимок-доли.mjs <адрес> <доля> [пк|тел] [файл] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 
 const АДРЕС = process.argv[2] || "http://127.0.0.1:8171/";
 const ДОЛЯ = +(process.argv[3] || 0.92);
@@ -18,7 +19,7 @@ const ФАЙЛ = process.argv[5] || "/tmp/снимок.png";
 const экран = КТО === "тел" ? { width: 390, height: 844 } : { width: 1440, height: 900 };
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--force-device-scale-factor=1"]
 });

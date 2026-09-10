@@ -16,6 +16,7 @@
 
    Запуск: node tools/замер-тоннеля.mjs [ПК|тел] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const ПК = { width: 1440, height: 900 };
@@ -23,7 +24,7 @@ const ТЕЛ = { width: 390, height: 844 };
 const вьюпорт = (process.argv[2] || "ПК") === "тел" ? ТЕЛ : ПК;
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({ viewport: вьюпорт, deviceScaleFactor: 1 });

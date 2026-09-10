@@ -6,6 +6,7 @@
 
    Запуск: node tools/кадр.mjs <акт> <доля> [пк|тел] [тёмная|светлая] [файл] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const АКТ = process.argv[2] || "финал";
@@ -16,7 +17,7 @@ const ФАЙЛ = process.argv[6] || `/tmp/кадр-${АКТ}-${ДОЛЯ}.png`;
 const экран = КТО === "пк" ? { w: 1440, h: 900, моб: false } : { w: 390, h: 844, моб: true };
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--force-device-scale-factor=1"]
 });

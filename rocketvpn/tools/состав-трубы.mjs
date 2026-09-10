@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 const бр = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
 const с = await бр.newPage({ viewport: { width: 1440, height: 900 } });
 await с.goto("http://127.0.0.1:8170/", { waitUntil: "domcontentloaded", timeout: 90000 });

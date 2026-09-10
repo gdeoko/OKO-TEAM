@@ -15,6 +15,7 @@
      node tools/снимок.mjs станция 0.0,0.5,1.0    один акт по долям
    Кадры ложатся в /tmp/кадры. */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
@@ -33,7 +34,7 @@ fs.mkdirSync(КУДА, { recursive: true });
 const бр = await chromium.launch({
   /* Браузер берём предустановленный: версия playwright в окружении
      новее, чем скачанная сборка, и своей она не находит. */
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome", 
+  executablePath: БРАУЗЕР, 
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--disable-lcd-text", "--force-device-scale-factor=1"]
 });

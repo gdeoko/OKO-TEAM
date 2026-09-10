@@ -2,11 +2,12 @@
    Числа хода камеры дважды пропускали пустой кадр, и оба раза это
    ловил снимок. Запуск: node tools/кадры-финала.mjs [доли] [куда] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const доли = (process.argv[2] || "0,0.3,0.55,0.7,0.88,1").split(",").map(Number);
 const куда = process.argv[3] || "/tmp/финал";
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });

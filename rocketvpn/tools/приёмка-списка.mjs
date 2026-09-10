@@ -14,12 +14,13 @@
      node tools/приёмка-списка.mjs тел        только телефон
    Кадры для разбора ложатся в /tmp/приёмка. */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 import { PNG } from "pngjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const КУДА = "/tmp/приёмка";
-const ХРОМ = process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome";
+const ХРОМ = БРАУЗЕР;
 const КОГО = process.argv[2] || "оба";
 
 fs.mkdirSync(КУДА, { recursive: true });

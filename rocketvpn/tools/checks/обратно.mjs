@@ -34,6 +34,7 @@
 
    Запуск: node tools/checks/обратно.mjs [ПК|тел] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "../браузер.mjs";
 import { PNG } from "pngjs";
 import fs from "node:fs";
 
@@ -53,7 +54,7 @@ const ПОРОГ = 12.0;
 const беды = [];
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--disable-lcd-text"]
 });
 const стр = await бр.newPage({ viewport: вьюпорт, deviceScaleFactor: 1 });

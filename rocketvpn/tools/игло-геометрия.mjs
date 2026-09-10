@@ -16,6 +16,7 @@
 
    Запуск: node tools/игло-геометрия.mjs */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -35,7 +36,7 @@ const модели = [];
 console.log("моделей найдено: " + модели.length);
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const ctx = await бр.newContext({ ignoreHTTPSErrors: true });

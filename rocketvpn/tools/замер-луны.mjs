@@ -12,6 +12,7 @@
    Запуск: node tools/замер-луны.mjs            оба кадра
            node tools/замер-луны.mjs тел        только телефон */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const ПК = { width: 1440, height: 900 };
@@ -21,7 +22,7 @@ const какой = process.argv[2] || "оба";
 const бр = await chromium.launch({
   /* Браузер берём предустановленный: версия playwright в окружении
      новее, чем скачанная сборка, и своей она не находит. */
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome", 
+  executablePath: БРАУЗЕР, 
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--force-device-scale-factor=1"]
 });

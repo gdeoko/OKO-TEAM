@@ -11,12 +11,13 @@
 
    Запуск: node tools/цвет-по-теме.mjs [светлая|тёмная] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const ТЕМА = process.argv[2] || "светлая";
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 /* ── ОКНО НАРОЧНО КРОШЕЧНОЕ ────────────────────────────────────────

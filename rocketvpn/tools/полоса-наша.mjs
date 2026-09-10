@@ -10,6 +10,7 @@
 
    Запуск: node tools/полоса-наша.mjs [сколько кадров] [ширина x высота] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import { PNG } from "pngjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
@@ -17,7 +18,7 @@ const СКОЛЬКО = +(process.argv[2] || 40);
 const [Ш, В] = (process.argv[3] || "1440x900").split("x").map(Number);
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({ viewport: { width: Ш, height: В }, deviceScaleFactor: 1 });

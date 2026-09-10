@@ -11,6 +11,7 @@
 
    Запуск: node tools/глыба-снимок.mjs [время в секундах через запятую] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8181";
@@ -20,7 +21,7 @@ const времена = (process.argv[2] || "0,2.4,5.1").split(",").map(Number);
 fs.mkdirSync(КУДА, { recursive: true });
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--disable-lcd-text", "--force-device-scale-factor=1"]
 });

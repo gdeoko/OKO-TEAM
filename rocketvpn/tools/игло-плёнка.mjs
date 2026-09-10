@@ -23,6 +23,7 @@
      node tools/игло-плёнка.mjs 60 900 тел         телефон
    Кадры: /tmp/игло/плёнка-<кто>-NNN.png */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -75,7 +76,7 @@ function достать(адрес) {
 const ПРОПУСК = /(google-analytics|googletagmanager|doubleclick|facebook|hotjar|sentry|clarity|content-autofill|accounts\.google|optimizationguide)/i;
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--disable-lcd-text", "--mute-audio"]
 });

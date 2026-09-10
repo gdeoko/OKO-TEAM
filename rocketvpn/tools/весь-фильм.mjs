@@ -11,6 +11,7 @@
      node tools/весь-фильм.mjs [тел|пк] [куда] [долей на акт] [светлая]
 */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import { mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
@@ -31,7 +32,7 @@ const экран = КТО === "пк"
 mkdirSync(КУДА, { recursive: true });
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({

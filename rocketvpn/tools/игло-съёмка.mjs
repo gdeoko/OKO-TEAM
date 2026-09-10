@@ -13,6 +13,7 @@
 
    Запуск: node tools/игло-съёмка.mjs [шагТочек] [ПК|тел|оба] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -34,7 +35,7 @@ fs.mkdirSync(КУДА, { recursive: true });
    ошибкой сертификата. */
 const ПРОКСИ = process.env.HTTPS_PROXY || process.env.https_proxy || "";
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   proxy: ПРОКСИ ? { server: ПРОКСИ } : undefined,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--disable-lcd-text", "--ignore-certificate-errors"]

@@ -26,6 +26,7 @@
      node tools/игло-зеркало.mjs 300 ПК      свой шаг и только ПК
      node tools/игло-зеркало.mjs 0 ПК тык    съёмка отклика на клики */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -124,7 +125,7 @@ async function навестись(ctx) {
 }
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
          "--disable-lcd-text", "--ignore-certificate-errors", "--mute-audio"]
 });

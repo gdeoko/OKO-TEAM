@@ -9,6 +9,7 @@
 
    Запуск: node tools/кнопки-на-месте.mjs [пк|тел] [шагов] [за шаг] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const КТО = process.argv[2] || "тел";
@@ -17,7 +18,7 @@ const ЗА_ШАГ = +(process.argv[4] || 700);
 const ЭКР = КТО === "пк" ? { width: 1440, height: 900 } : { width: 390, height: 844 };
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({

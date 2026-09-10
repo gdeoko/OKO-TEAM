@@ -9,6 +9,7 @@
 
    Запуск: node tools/центр-ракеты.mjs [пк|тел] [долей] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 import fs from "node:fs";
 import { PNG } from "pngjs";
 
@@ -18,7 +19,7 @@ const ДОЛЕЙ = +(process.argv[3] || 7);
 const ЭКР = КТО === "пк" ? { width: 1440, height: 900 } : { width: 390, height: 844 };
 
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({

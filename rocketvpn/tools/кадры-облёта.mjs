@@ -3,10 +3,11 @@
    облетаем, заголовки сверху по кругу». Проверяем глазами.
    Запуск: node tools/кадры-облёта.mjs [куда] */
 import { chromium } from "playwright";
+import { БРАУЗЕР } from "./браузер.mjs";
 const АДРЕС = process.env.RV_URL || "http://127.0.0.1:8170";
 const куда = process.argv[2] || "/tmp/облёт";
 const бр = await chromium.launch({
-  executablePath: process.env.RV_CHROME || "/opt/pw-browsers/chromium-1234/chrome-linux64/chrome",
+  executablePath: БРАУЗЕР,
   args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
 });
 const стр = await бр.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
