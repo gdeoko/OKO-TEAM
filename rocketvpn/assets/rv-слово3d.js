@@ -1171,8 +1171,12 @@
       while (а.узел.children.length) {
         var стар = а.узел.children[0];
         а.узел.remove(стар);
-        if (стар.geometry) стар.geometry.dispose();
-        if (стар.material) стар.material.dispose();
+        стар.traverse(function (object) {
+          if (object.userData && object.userData.rvRelease) { object.userData.rvRelease(); return; }
+          if (object.geometry) object.geometry.dispose();
+          var materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach(function (material) { if (material) material.dispose(); });
+        });
       }
       /* Раскладку берём у секции, а не по умолчанию: пересборка после
          поворота экрана иначе роняла верхнюю раскладку обратно в левую,
@@ -1305,6 +1309,7 @@
     T = W.T;
     g.RV_MSDF["поднять"](W);
     g.RV_MSDF["готов"](function () {
+      if (!W.готов || d.documentElement.classList.contains("rv-no-webgl")) return;
       var секции = d.querySelectorAll(".rv-акт[data-акт]");
       for (var i = 0; i < секции.length; i++) {
         собрать(секции[i].getAttribute("data-акт"), секции[i]);

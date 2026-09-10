@@ -194,7 +194,13 @@
      туда-сюда, и это то же самое мерцание, только по резкости. */
   var мсш = { знач: 1, сумма: 0, счёт: 0, окно: 0, было: 0, развороты: 0, стоп: false, старт: 0 };
 
-  function плотностьСейчас() { return W.плотность * мсш.знач; }
+  function плотностьСейчас() {
+    var width = Math.max(1, g.innerWidth || 1), height = Math.max(1, g.innerHeight || 1);
+    var budget = W.ступень === 0 ? 2400000 : (W.ступень === 1 ? 4200000 : 8300000);
+    var limit = W.r && W.r.capabilities ? W.r.capabilities.maxTextureSize : 8192;
+    return Math.min(W.плотность, Math.sqrt(budget / (width * height)),
+      (limit || 8192) / Math.max(width, height)) * мсш.знач;
+  }
 
   /* ── Свободные промежутки ─────────────────────────────────────
      Тяжёлое считаем, пока браузеру нечем заняться. Замена через таймер
@@ -269,10 +275,11 @@
 
 
   function крутить() {
-    if (идёт || !ОЧЕРЕДЬ.length) return;
+    if (идёт || !W.готов || !ОЧЕРЕДЬ.length) return;
     идёт = true;
     вТишине(function (дл) {
       идёт = false;
+      if (!W.готов) return;
       актыВКадреВперёд();
       var начало = 0;
       try { начало = performance.now(); } catch (eН) {}
@@ -959,6 +966,10 @@
   /* Один шаг сглаживания. Зовётся из ведения камеры, то есть ровно раз
      на кадр: два вызова за кадр удвоили бы скорость подтяжки. */
   function вестиПрокрутку(dt) {
+    if (g.RV_MOTION && g.RV_MOTION["позиция"]) {
+      яЦель = яСгл = g.RV_MOTION["позиция"]();
+      return;
+    }
     var сырая = g.scrollY || g.pageYOffset || 0;
     if (яСгл == null) { яЦель = сырая; яСгл = сырая; return; }
     var к1 = подтяжкаК(КАМ_СГЛ1, dt), к2 = подтяжкаК(КАМ_СГЛ2, dt);
@@ -1124,15 +1135,21 @@
     return 3 * о2 * о2 * t * y1 + 3 * о2 * t * t * y2 + t * t * t;
   }
 
+  function закончитьВступление() {
+    var уведомить = !вступВсё;
+    вступВсё = true;
+    заперетьЛенту(false);
+    d.documentElement.classList.remove("рв-вступление");
+    if (уведомить) fire("rv:вступление-конец", {});
+  }
+
   function весВступления(dt) {
     if (вступВсё || !вступл) return 1;
     вступТ += Math.min(0.1, Math.max(0, dt || 0));
     var длина = вступСпешка ? 0.6 : вступл.время;
     var доля = зажать(вступТ / длина, 0, 1);
     if (доля >= 1) {
-      вступВсё = true;
-      try { d.documentElement.classList.remove("рв-вступление"); } catch (e) {}
-      try { fire("rv:вступление-конец", {}); } catch (e) {}
+      закончитьВступление();
       return 1;
     }
     return безье(доля, 0.5, 0, 0.1, 1);
@@ -1194,6 +1211,7 @@
     }
     g.addEventListener("keydown", function (е) {
       if (вступВсё) return;
+      if (е.target && е.target.closest && е.target.closest("input, textarea, select, button, a[href], summary, [contenteditable]")) return;
       var к = е.key;
       if (к === " " || к === "PageDown" || к === "PageUp" ||
           к === "ArrowDown" || к === "ArrowUp" || к === "Home" || к === "End") {
@@ -1232,8 +1250,8 @@
        «вступление не объявилось вовсе»: акт не собрался, мир не
        поднялся, ждать нечего. Полминуты закрывают случай «объявилось,
        но встало»: столько не идёт даже самая медленная посадка. */
-    g.setTimeout(function () { if (!вступл) заперетьЛенту(false); }, 8000);
-    g.setTimeout(function () { if (!вступВсё) заперетьЛенту(false); }, 30000);
+    g.setTimeout(function () { if (!вступл) закончитьВступление(); }, 8000);
+    g.setTimeout(function () { if (!вступВсё) закончитьВступление(); }, 30000);
   })();
 
   /* Место на ленте -> пройденная длина дуги. Внутри отрезка по закону
@@ -2144,11 +2162,25 @@
   }
 
   /* ── Подъём ───────────────────────────────────────────────────*/
+  function запаснойРежим() {
+    W.готов = false;
+    закончитьВступление();
+    d.documentElement.classList.add("rv-no-webgl");
+    ["рв-слова-в-сцене", "рв-финал-пульт", "рв-кабина-есть", "рв-живая-рубка"].forEach(function (name) {
+      d.documentElement.classList.remove(name);
+    });
+    if (g.RV_ФИНАЛ && g.RV_ФИНАЛ["видно"]) g.RV_ФИНАЛ["видно"](false);
+    var игра = d.getElementById("rvИграГнездо");
+    if (игра && !игра.hidden && g.RV_ПАНЕЛЬ_КНОПКИ) g.RV_ПАНЕЛЬ_КНОПКИ["игра"](false);
+    if (g.RV_MOTION && g.RV_MOTION["обновить"]) g.RV_MOTION["обновить"]();
+  }
+
   function поднять() {
+    if (тихо) { запаснойРежим(); return false; }
     var T = g.THREE;
-    if (!T) return false;
+    if (!T) { запаснойРежим(); return false; }
     var холст = d.getElementById("rvМир");
-    if (!холст) return false;
+    if (!холст) { запаснойРежим(); return false; }
 
     W.T = T;
     W.ступень = ступень();
@@ -2164,9 +2196,18 @@
         alpha: false,
         powerPreference: "high-performance"
       });
-    } catch (e) { return false; }
+    } catch (e) {
+      запаснойРежим();
+      return false;
+    }
+    холст.addEventListener("webglcontextlost", function (event) {
+      event.preventDefault();
+      // Keep the current visit usable if the OS retires its graphics context.
+      запаснойРежим();
+      W.r.dispose();
+    }, false);
 
-    W.r.setPixelRatio(W.плотность);
+    W.r.setPixelRatio(плотностьСейчас());
     W.r.setSize(g.innerWidth, g.innerHeight, false);
     /* 0x2A3352 вместо 0x090D22. Прежний уголь после плёнки выходил
        яркостью 4 из 255 и на любом кадре, куда небо не доехало, давал
@@ -2235,8 +2276,8 @@
       try { g.RV_REAL["окружение"](T, W.r, W.scene); } catch (eО) {}
       try {
         W.плёнка = g.RV_REAL["плёнка"](T, W.r, W.ступень,
-          Math.round(g.innerWidth * W.плотность),
-          Math.round(g.innerHeight * W.плотность), {});
+          Math.round(g.innerWidth * плотностьСейчас()),
+          Math.round(g.innerHeight * плотностьСейчас()), {});
       } catch (eП) { W.плёнка = null; }
     }
 
@@ -2267,6 +2308,7 @@
      рисуем мы в них, а не в окно. */
   function применитьПлотность() {
     if (!W.r) return;
+    W.плотность = плотностьПо(W.ступень);
     var п = плотностьСейчас();
     W.r.setPixelRatio(п);
     W.r.setSize(g.innerWidth, g.innerHeight, false);
@@ -2289,22 +2331,22 @@
     var чк = мсш.счёт / мсш.сумма;
     мсш.сумма = 0; мсш.счёт = 0; мсш.окно = ts;
     var ш = 0;
-    if (чк < 30 && мсш.знач > 0.75) ш = -0.1;
-    else if (чк > 60 && мсш.знач < 1) ш = 0.1;
+    if (чк < 42 && мсш.знач > 0.6) ш = -0.1;
+    else if (чк > 57 && мсш.знач < 1) ш = 0.05;
     if (!ш) return;
     if (мсш.было && ш !== мсш.было) {
       мсш.развороты++;
-      if (мсш.развороты >= 4) { мсш.стоп = true; return; }
+      if (мсш.развороты >= 4) {
+        мсш.развороты = 0;
+        мсш.окно = ts + 4000;
+        return;
+      }
     }
     мсш.было = ш;
-    /* Пол подбора 0.75, а не 0.6. Ниже этого текст в кадре перестаёт
-       читаться, а ради кадров в секунду терять читаемость нельзя: сайт
-       читают, а не смотрят как заставку. */
-    /* Пол поднят с 0.75 до 0.85 вместе с потолком плотности: см.
-       «ПОТОЛОК СТАРШЕЙ СТУПЕНИ ПОДНЯТ ДО 2.6». Произведение потолка на
-       пол теперь 2.21 против прежних 1.69 - хуже прежнего не станет ни
-       на одном телефоне. */
-    мсш.знач = зажать(Math.round((мсш.знач + ш) * 10) / 10, 0.85, 1);
+    /* Resolution changes slowly; native panel text stays independent of it. */
+    var следующая = зажать(Math.round((мсш.знач + ш) * 20) / 20, 0.6, 1);
+    if (следующая === мсш.знач) return;
+    мсш.знач = следующая;
     применитьПлотность();
   }
 
@@ -2314,6 +2356,7 @@
     ждём = 1;
     g.requestAnimationFrame(function () {
       ждём = 0;
+      if (!W.готов) return;
       применитьПлотность();
       W.cam.aspect = g.innerWidth / g.innerHeight;
       /* Зум ставится до пересчёта матрицы: он часть той же проекции, и
@@ -2375,8 +2418,13 @@
   }
 
   function кадр(ts) {
-    g.requestAnimationFrame(кадр);
     if (!W.готов) return;
+    g.requestAnimationFrame(кадр);
+    if (d.hidden) {
+      прошлое = 0;
+      мсш.старт = 0; мсш.окно = 0; мсш.сумма = 0; мсш.счёт = 0;
+      return;
+    }
     var dtСырой = прошлое ? Math.max(0, (ts - прошлое) / 1000) : 0.016;
     var dt = Math.min(0.05, dtСырой);
     прошлое = ts;
@@ -2389,7 +2437,8 @@
     if (!тихо && путь) {
       перемерить();
       вестиКамеру(dt, dtСырой);
-      var y = g.scrollY || g.pageYOffset || 0;
+      var y = g.RV_MOTION && g.RV_MOTION["позиция"]
+        ? g.RV_MOTION["позиция"]() : (g.scrollY || g.pageYOffset || 0);
       var зп = запасОкна();
       for (i = 0; i < СТАНЦИИ.length; i++) {
         сВидны[СТАНЦИИ[i].имя] = вКадреПоСекции(СТАНЦИИ[i], y, зп);
@@ -2459,9 +2508,14 @@
          достоверности не доехало, прямое рисование. Мир обязан
          появиться на экране без свечения и без плёнки: отказывать в
          содержимом нельзя ни по какой причине. */
-      if (!(g.RV_ОРЕОЛ && g.RV_ОРЕОЛ["кадр"](W))) {
-        if (W.плёнка) W.плёнка.render(W.scene, W.cam, W.часы);
-        else W.r.render(W.scene, W.cam);
+      try {
+        if (!(g.RV_ОРЕОЛ && g.RV_ОРЕОЛ["кадр"](W))) {
+          if (W.плёнка) W.плёнка.render(W.scene, W.cam, W.часы);
+          else W.r.render(W.scene, W.cam);
+        }
+      } catch (renderError) {
+        запаснойРежим();
+        W.r.dispose();
       }
     } else if (пыль) {
       пыль.visible = false;

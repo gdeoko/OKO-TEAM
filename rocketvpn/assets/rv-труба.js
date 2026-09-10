@@ -746,7 +746,10 @@
     /* Их aastep даёт кромку узора шириной ровно в точку экрана: без него
        мелкий рисунок сыплется муаром на подлёте. */
     "float aastep(float threshold, float value){",
-    "  float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.7071068;",
+    "  float afwidth = 0.002;",
+    "  #if __VERSION__ >= 300 || defined(GL_OES_standard_derivatives)",
+    "  afwidth = max(0.00001, length(vec2(dFdx(value), dFdy(value))) * 0.7071068);",
+    "  #endif",
     "  return smoothstep(threshold - afwidth, threshold + afwidth, value);",
     "}",
     "void main(){",
@@ -1420,6 +1423,7 @@
           uRingY: { value: высота + 0.15 }
         },
         vertexShader: В_ПОЛЕ, fragmentShader: Ф_ПОЛЕ,
+        extensions: { derivatives: !!(W.r && W.r.extensions && W.r.extensions.has("OES_standard_derivatives")) },
         transparent: true, depthWrite: false, depthTest: false,
         side: T.FrontSide, blending: T.AdditiveBlending, fog: false
       });

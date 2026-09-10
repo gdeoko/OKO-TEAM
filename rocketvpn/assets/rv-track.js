@@ -53,38 +53,50 @@
   var таймер = 0;
   var ушли = false;
 
+  var вПолёте = 0, повторы = 0, номер = 0;
+  var серия = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  function отложить() {
+    if (таймер || ушли || !очередь.length) return;
+    таймер = setTimeout(function () { таймер = 0; отправить(false); },
+      Math.min(30000, 2000 * Math.pow(2, Math.min(повторы, 4))));
+  }
   function отправить(маяком) {
-    if (!очередь.length) return;
-    var тело = JSON.stringify({
-      sid: метка,
-      ref: d.referrer || "",
-      events: очередь.splice(0, 25)
-    });
+    if (!очередь.length || (вПолёте && !маяком)) return;
     if (таймер) { clearTimeout(таймер); таймер = 0; }
+    var пачка = очередь.splice(0, 25);
+    var тело = JSON.stringify({ sid: метка, ref: d.referrer || "", events: пачка });
+    if (маяком && navigator.sendBeacon) {
+      try {
+        if (navigator.sendBeacon(АДРЕС, new Blob([тело], { type: "text/plain" }))) {
+          if (очередь.length) отправить(true);
+          return;
+        }
+      } catch (e) {}
+    }
+    вПолёте++;
+    function закончить(успех) {
+      вПолёте--;
+      if (!успех) { очередь = пачка.concat(очередь).slice(0, 250); повторы++; }
+      else повторы = 0;
+      отложить();
+    }
     try {
-      /* На уходе только маяк: обычный запрос браузер отменяет вместе
-         с выгрузкой страницы, и последнее событие теряется каждый
-         раз - то есть ровно то, по которому видно, где человек ушёл. */
-      if (маяком && navigator.sendBeacon) {
-        navigator.sendBeacon(АДРЕС, new Blob([тело], { type: "text/plain" }));
-        return;
-      }
       fetch(АДРЕС, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: тело,
-        keepalive: true,
-        credentials: "omit",
-        mode: "cors"
-      }).catch(function () {});
-    } catch (e3) {}
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: тело, keepalive: true, credentials: "omit", mode: "cors"
+      }).then(function (о) {
+        if (!о.ok) throw new Error("track_http");
+        return о.json();
+      }).then(function (о) { закончить(!!(о && о.ok)); }, function () { закончить(false); });
+    } catch (e) { закончить(false); }
   }
 
   function событие(тип, метки) {
     if (ушли) return;
-    очередь.push({ t: String(тип).slice(0, 20), l: String(метки == null ? "" : метки).slice(0, 80) });
+    очередь.push({ id: серия + ":" + (++номер), t: String(тип).slice(0, 20), l: String(метки == null ? "" : метки).slice(0, 80) });
+    if (очередь.length > 250) очередь.shift();
     if (очередь.length >= 5) { отправить(false); return; }
-    if (!таймер) таймер = setTimeout(function () { отправить(false); }, 2000);
+    отложить();
   }
 
   /* ── Заход ─────────────────────────────────────────────── */
@@ -175,6 +187,8 @@
     отправить(true);
   }
   g.addEventListener("pagehide", прощаемся);
+  g.addEventListener("pageshow", function () { ушли = false; отложить(); });
+  g.addEventListener("online", function () { повторы = 0; отправить(false); });
   d.addEventListener("visibilitychange", function () {
     if (d.visibilityState === "hidden") отправить(true);
   });

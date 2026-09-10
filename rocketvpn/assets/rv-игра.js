@@ -162,6 +162,10 @@
     М.прав = створка(8, 7, 0.9, М.мат, false);
     М.корень.add(М.лев);
     М.корень.add(М.прав);
+    var ось = new T.Mesh(new T.BoxGeometry(0.045, 5.4, 0.05), new T.MeshBasicMaterial({ color: 0x9AFFDF }));
+    ось.position.z = 0.55;
+    ось.name = "ось прохода";
+    М.корень.add(ось);
     родитель.add(М.корень);
     М.корень.visible = false;
 

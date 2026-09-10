@@ -158,12 +158,32 @@ a { color: inherit; }
      подложки ровно на разницу. Она чёрная, потому что за кадром лежит
      фон страницы, а не сцена.
 
-     Динамическая единица меряет окно КАК ОНО ЕСТЬ прямо сейчас и едет
-     вместе с адресной строкой. Малая остаётся первой строкой: браузер,
-     который не знает dvh, возьмёт её и получит прежнее поведение
-     вместо сломанной раскладки. */
+     Динамическая единица `dvh` меряет окно КАК ОНО ЕСТЬ прямо сейчас и
+     едет вместе с адресной строкой. Полосу она убирает, но заводит
+     беду похуже: высота липкого кадра МЕНЯЕТСЯ на ходу, объёмный холст
+     пересчитывает пропорции, и вся композиция дёргается ровно в тот
+     миг, когда браузер прячет панель. Владелец увидел это уже после
+     правки и назвал главным багом: «начинаю листать вниз у меня строка
+     поиска в браузере уходит вверх куда-то а снизу черная полоса
+     появляется типо полно экранный режим врубается».
+
+     БЕРЁМ БОЛЬШУЮ ЕДИНИЦУ `lvh`. Это высота окна при СКРЫТЫХ панелях,
+     и она ПОСТОЯННА: браузер не пересчитывает её, когда прячет и
+     показывает адресную строку. Отсюда сразу два свойства, которых не
+     было ни у `svh`, ни у `dvh`: полосы снизу нет (кадр покрывает окно
+     целиком, когда панель уехала) и скачка нет (число не меняется
+     вовсе, пока не повернули телефон).
+
+     Пока панель показана, низ кадра уходит под неё. Для объёмной сцены
+     это правильно: там нет ни строки текста, ни кнопки, только
+     продолжение мира. Отступы содержимого кадра считаются от безопасной
+     области, а не от его нижней кромки.
+
+     Малая единица остаётся первой строкой: браузер, который не знает
+     `lvh`, возьмёт её и получит прежнее поведение вместо сломанной
+     раскладки. */
   height: 100svh;
-  height: 100dvh;
+  height: 100lvh;
   overflow: hidden;
   /* Кромки кадра растворены. Кадр липкий, и на смене акта его уносит
      вверх вместе со всем, что в нём: стеной блокпоста, холстом акта,
@@ -1203,7 +1223,7 @@ html:not(.рв-слова-в-сцене):root[data-тема="светлая"] .r
      тем, что побеждает не то, которое нужно. */
   opacity: calc(var(--вид) * var(--проём, 1));
   transform: translate3d(0, calc((1 - var(--вид)) * 20px
-                                 + (1 - var(--уход, 1)) * 100dvh), 0);
+                                 + (1 - var(--уход, 1)) * 100lvh), 0);
 }
 
 /* ── Карточки как плиты, а не как прямоугольники ───────────────
@@ -1291,7 +1311,7 @@ html:not(.рв-слова-в-сцене):root[data-тема="светлая"] .r
 html.rv-плиты.rv-плёнка-идёт .rv-акт > .rv-кадр > .rv-слой {
   transform: translate3d(var(--пар-x, 0px),
                          calc((1 - var(--вид)) * 20px + var(--пар-y, 0px)
-                              + (1 - var(--уход, 1)) * 100dvh), 0);
+                              + (1 - var(--уход, 1)) * 100lvh), 0);
 }
 html.rv-плиты .rv-слой > .rv-заг {
   transform: translate3d(calc(var(--пар-x, 0px) * .4), calc(var(--пар-y, 0px) * .4), 0);
@@ -1825,7 +1845,7 @@ html.rv-тронул .rv-листай { opacity: 0; pointer-events: none; }
 .rv-форма-плита {
   position: relative;
   width: min(460px, 100%);
-  max-height: calc(100vh - 32px); overflow-y: auto;
+  max-height: calc(100svh - 32px); overflow-y: auto;
   padding: 26px 22px 22px;
   border: 1px solid var(--rv-кромка); border-radius: 6px;
   background: var(--rv-меню-фон);
@@ -3486,3 +3506,81 @@ html.рв-кабина-есть .рв-фин h3 {
 
    Правило оставлено записью, а не пустым местом: следующий заход не
    должен вернуть карточки обратно как «недостающий текст». */
+
+/* Readable document when the browser cannot create a graphics context. */
+html.rv-no-webgl .rv-мир,html.rv-no-webgl .rv-манифест{display:none!important}
+html.rv-no-webgl .rv-акт{height:auto!important;min-height:0!important}
+html.rv-no-webgl .rv-акт>.rv-кадр{position:relative!important;height:auto!important;min-height:0!important}
+html.rv-no-webgl .rv-акт>.rv-кадр>.rv-слой{position:relative!important;inset:auto!important;transform:none!important;opacity:1!important;visibility:visible!important;max-width:1050px;width:100%;height:auto!important;max-height:none!important;margin:auto;padding:clamp(40px,7vw,88px) max(24px,5vw);box-sizing:border-box}
+html.rv-no-webgl .rv-слой>[data-лист]{opacity:1!important;visibility:visible!important;transform:none!important;position:relative!important;grid-area:auto!important}
+html.rv-no-webgl .rv-визитка{position:relative!important;inset:auto!important;margin:0 auto;padding:76px max(24px,5vw) 0;max-width:1050px;box-sizing:border-box}
+html.rv-no-webgl .rv-заг{font-size:clamp(34px,6vw,72px);line-height:1.06}
+html.rv-no-webgl .rv-абз,html.rv-no-webgl .rv-сноска{max-width:70ch}
+html.rv-no-webgl .rv-акт[data-акт="прокол"],html.rv-no-webgl .rv-акт[data-акт="пуск"]{display:none!important}
+
+/* The final controls stay readable over the live room at every render scale. */
+.rv-faq { display: grid; gap: 0; font-size: 1rem; line-height: 1.55; }
+.rv-faq details { border-bottom: 1px solid var(--rv-кромка); }
+.rv-faq summary, .рв-панель-товар > summary {
+  cursor: pointer; min-height: 44px; padding: 12px 0; box-sizing: border-box;
+  font-size: 1rem; font-weight: 500; line-height: 1.45; color: var(--rv-текст);
+}
+.rv-faq summary:focus-visible, .рв-панель-товар > summary:focus-visible {
+  outline: 2px solid #9baeff; outline-offset: 3px; border-radius: 3px;
+}
+.rv-faq p { margin: 0; padding: 0 0 18px; color: var(--rv-текст-тихо); }
+.rv-faq a { color: var(--rv-текст); text-decoration: underline; text-underline-offset: .2em; }
+.рв-впр-обёртка { min-height: 0; overflow: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.рв-панель-товар { font-size: 1rem; color: var(--rv-текст); }
+.рв-панель-товар b { color: inherit; }
+/* Cabin layout depends on the active scene, not on the optional MSDF font. */
+html.рв-живая-рубка .rv-пульт { position: absolute; inset: 0; padding: 0; }
+html.рв-живая-рубка .рв-фин { position: absolute; }
+html.рв-живая-рубка .рв-фин-впр, html.рв-живая-рубка .рв-фин-игра {
+  --rv-текст: #eef2ff; --rv-текст-тихо: #c1cade;
+  left: auto; right: max(24px, 8vw); top: max(88px, 17vh);
+  width: min(440px, 43vw); height: calc(72vh - 128px);
+  box-sizing: border-box; padding: 22px 24px; container-type: normal;
+  background: rgba(8, 14, 28, .96); border: 1px solid rgba(145, 171, 237, .38);
+  border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+  overflow: hidden; transition: opacity .35s ease;
+}
+html.рв-живая-рубка .рв-фин h3 {
+  flex: 0 0 auto; margin: 0 0 12px; font-size: .875rem; letter-spacing: .1em;
+  line-height: 1.5; color: #a8bfff; text-shadow: none;
+}
+html.рв-живая-рубка .рв-фин-игра { overflow: auto; }
+html.рв-живая-рубка .рв-фин-кн {
+  left: auto; right: max(24px, 8vw); top: calc(max(88px, 17vh) + 72vh - 116px);
+  width: min(440px, 43vw); height: 112px; padding: 0; container-type: normal;
+  display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: flex-start;
+  gap: 8px; overflow: visible; transition: opacity .35s ease;
+}
+html.рв-живая-рубка .рв-фин-кн .rv-кн {
+  min-height: 46px; padding: 10px 12px; font-size: .9375rem; line-height: 1.35;
+  white-space: normal; border-radius: 10px; box-sizing: border-box;
+}
+html.рв-живая-рубка .рв-кн-ряд { gap: 8px; }
+@media (max-width: 700px) {
+  html.рв-живая-рубка .рв-фин-впр, html.рв-живая-рубка .рв-фин-игра {
+    right: 16px; top: 92px; width: calc(100% - 32px); height: calc(100% - 260px);
+    padding: 16px 18px;
+  }
+  html.рв-живая-рубка .рв-фин-кн {
+    right: 16px; top: auto; bottom: max(42px, env(safe-area-inset-bottom)); width: calc(100% - 32px);
+  }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  html.рв-живая-рубка .рв-фин-впр, html.рв-живая-рубка .рв-фин-игра {
+    top: 72px; height: calc(100% - 204px); width: min(440px, 55vw); right: 24px;
+  }
+  html.рв-живая-рубка .рв-фин-кн { top: auto; bottom: 16px; right: 24px; width: min(440px, 55vw); }
+}
+html.rv-no-webgl .рв-каб, html.rv-no-webgl .rv-рейка { display: none !important; }
+html.rv-no-webgl .rv-заг, html.rv-no-webgl .rv-заг em { text-shadow: none; filter: none; }
+html.rv-no-webgl .rv-пульт { padding: 32px max(24px, 5vw); max-width: 1050px; margin: auto; box-sizing: border-box; }
+html.rv-no-webgl .рв-фин-впр { padding: 24px; border: 1px solid var(--rv-кромка); border-radius: 16px; background: var(--rv-плита); }
+html.rv-no-webgl .рв-фин-кн { display: flex; flex-direction: column; align-items: stretch; max-width: 480px; padding-top: 20px; }
+html.rv-no-webgl .рв-фин-кн .rv-кн { white-space: normal; min-height: 44px; font-size: 1rem; }
+html.rv-no-webgl .рв-панель-товар > h3 { color: var(--rv-текст); font-size: .875rem; }
+@media (prefers-reduced-motion: reduce) { .рв-фин { transition: none !important; } }

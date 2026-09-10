@@ -44,6 +44,45 @@
 (function (g) {
   "use strict";
 
+  // RC_CABIN builds Phong materials, then asks this adapter to upgrade them.
+  // Supplying only renderer/env silently skipped that step on the VPN site.
+  function upgradeTree(T, root, rules) {
+    if (!root) return 0;
+    var made = new Map(), spent = new Set();
+    root.traverse(function (mesh) {
+      if (!mesh.isMesh || !mesh.material) return;
+      function convert(old) {
+        if (!old || (!old.isMeshPhongMaterial && !old.isMeshLambertMaterial)) return old;
+        var hint = rules ? rules(mesh, old) : {};
+        if (hint === false) return old;
+        hint = hint || {};
+        var key = old.uuid + ":" + JSON.stringify(hint);
+        if (made.has(key)) return made.get(key);
+        var material = new T.MeshStandardMaterial({
+          color: old.color, roughness: hint.roughness == null ? 0.5 : hint.roughness,
+          metalness: hint.metalness == null ? 0.5 : hint.metalness,
+          envMapIntensity: hint.envMapIntensity == null ? 1 : hint.envMapIntensity,
+          map: old.map, alphaMap: old.alphaMap, bumpMap: old.bumpMap,
+          bumpScale: old.bumpScale, normalMap: old.normalMap,
+          emissive: old.emissive, emissiveMap: old.emissiveMap,
+          emissiveIntensity: old.emissiveIntensity == null ? 1 : old.emissiveIntensity,
+          transparent: old.transparent, opacity: old.opacity, side: old.side,
+          depthWrite: old.depthWrite, depthTest: old.depthTest, alphaTest: old.alphaTest,
+          fog: old.fog, vertexColors: old.vertexColors, toneMapped: old.toneMapped,
+          polygonOffset: old.polygonOffset, polygonOffsetFactor: old.polygonOffsetFactor,
+          polygonOffsetUnits: old.polygonOffsetUnits
+        });
+        if (old.normalScale) material.normalScale.copy(old.normalScale);
+        material.name = old.name;
+        made.set(key, material); spent.add(old);
+        return material;
+      }
+      mesh.material = Array.isArray(mesh.material) ? mesh.material.map(convert) : convert(mesh.material);
+    });
+    spent.forEach(function (material) { material.dispose(); });
+    return made.size;
+  }
+
   /* ── Переходник к нашей физике ────────────────────────────────
      rc-panel читает у RC_REAL ровно два поля: рисовальщик (ему нужен
      предел анизотропии) и окружение (карта отражений). rc-cabin ещё
@@ -68,6 +107,7 @@
        наклонную текстуру, у нас те же меши стояли матовыми и мыльными.
        Проверено чтением: RV_WORLD["мир"]() возвращает именно W. */
     g.RC_REAL = {
+      upgradeTree: upgradeTree,
       get renderer() {
         try { var м = W && W["мир"](); return м ? м.r : null; } catch (e) { return null; }
       },

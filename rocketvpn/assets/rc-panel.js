@@ -776,7 +776,9 @@ function build(T, o) {
   });
   mat.normalScale = new T.Vector2(1.2, 1.2);
   try {
-    if (g.RC_REAL && g.RC_REAL.env) { mat.envMap = g.RC_REAL.env; mat.envMapIntensity = 0.55; }
+    if (g.RC_REAL && g.RC_REAL.env && g.RC_REAL.env.isTexture) {
+      mat.envMap = g.RC_REAL.env; mat.envMapIntensity = 0.55;
+    }
   } catch (eE) {}
   api.mat = mat;
 

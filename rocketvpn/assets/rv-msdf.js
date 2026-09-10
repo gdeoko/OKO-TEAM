@@ -591,7 +591,9 @@
     меш.userData["о"] = о;
     меш.userData["показ"] = { пок1: 0, пок2: 0, цель: 0, живёт: false };
 
+    var освобождён = false;
     function собрать() {
+      if (освобождён) return;
       var гео = геометрия(текст, о);
       if (!гео) return;
       меш.geometry.dispose();
@@ -604,6 +606,14 @@
     }
     if (Ш && Т) собрать(); else ждут.push(собрать);
     ВСЕ.push(меш);
+    меш.userData.rvRelease = function () {
+      if (освобождён) return;
+      освобождён = true;
+      var i = ждут.indexOf(собрать); if (i >= 0) ждут.splice(i, 1);
+      i = ВСЕ.indexOf(меш); if (i >= 0) ВСЕ.splice(i, 1);
+      i = живые.indexOf(меш); if (i >= 0) живые.splice(i, 1);
+      меш.geometry.dispose(); меш.material.dispose();
+    };
     return меш;
   }
 
