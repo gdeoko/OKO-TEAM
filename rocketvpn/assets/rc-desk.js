@@ -58,14 +58,13 @@ function qLimit() { return 7; }
 
 var layer = null;      /* .rc-desk - сам экран */
 var body = null;       /* .dsk-body - сменное содержимое */
-var slot = null;       /* .dsk-slot - место, куда переезжают формы */
+var slot = null;       /* .dsk-slot - пустая ячейка под содержимое */
 var state = "menu";
 var swapT = 0, glitchT = 0;
 var raf = null, kPub = -1, onPub = -1;
 /* Что о ступени качества уже сказано слою. Минус один - «ещё ничего»,
    он же приказ сказать заново после пересборки меню. */
 var slowPub = -1;
-var homeLead = null, homeCall = null;
 var lastBoxH = 0;
 
 function t(key, fallback) {
@@ -198,7 +197,6 @@ function esc(s) {
 var qCache = [];
 
 function fillMenu() {
-  homeForms();
   qCache = questions();
   /* Порядок как на настоящем пульте: справочник наверху, на стекле,
      действия внизу, под рукой. Владелец перечислил их именно так -
@@ -323,74 +321,53 @@ function fillAnswer(i) {
   slot.hidden = true;
 }
 
-/* ── Высота раздела заявки закрепляется ──────────────────────
-   Форма физически уезжает на экран панели, и раздел контактов на
-   этот миг становится ниже на добрую тысячу пикселей. Страница
-   укорачивается, браузер зажимает позицию прокрутки, и человека
-   отбрасывает назад - прямо в акте пульта, который он в этот момент
-   и смотрит. Приёмка ловила это раньше на перестройке формы.
+/* ── ДВЕ КНОПКИ ПУЛЬТА ВЕДУТ В ТЕЛЕГРАМ, А НЕ В ПУСТОТУ ────────
+   Здесь жил перенос чужих форм: панель искала на странице `#leadForm`
+   и `#cbForm`, забирала их к себе в ячейку и возвращала обратно, а
+   заодно держала высоту раздела `#contact`, чтобы страница не
+   укоротилась под ногами.
 
-   Поэтому перед первым переездом мы запоминаем высоту раздела и
-   держим её, пока форма гостит на панели. Длина прокрутки не
-   меняется - значит не меняются ни пороги сцены, ни положение
-   камеры, ни то, что видит человек. */
-var pinned = 0;
-function pinHeight(on) {
-  var c = doc.getElementById("contact");
-  if (!c) return;
-  if (on) {
-    if (pinned) return;
-    pinned = Math.round(c.getBoundingClientRect().height);
-    c.style.minHeight = pinned + "px";
-  } else if (pinned) {
-    pinned = 0;
-    c.style.minHeight = "";
-  }
-}
+   Всё это досталось от разметки соседнего сайта. У нас таких форм нет
+   ни одной: на rocketvpn.top вообще нет ни одного поля ввода, весь
+   разговор с человеком идёт в Телеграме. Проверка хвостов показала это
+   тремя строками - «id contact код ищет, а создать его некому», - но
+   беда была не в мёртвых ссылках, а в живых кнопках: «Перезвоните мне»
+   и «Отправить заявку» открывали заголовок и ПУСТОЕ место под ним.
 
-/* ── Формы: переезжают сюда со своих мест ────────────────────
-   Копию делать нельзя: у форм есть проверка полей, отправка,
-   словарь и аналитика, и всё это привязано к самим элементам.
-   Поэтому мы их переносим, запомнив, откуда взяли. */
-function moveForm(form) {
-  if (!form) return;
-  if (form.id === "leadForm" && !homeLead) {
-    homeLead = { parent: form.parentNode, next: form.nextSibling };
+   Теперь обе ведут туда же, куда ведёт весь сайт. Помощь отвечает в
+   @HelpRocketVPN_bot, заявку принимает @RocketCompanyVPN_bot. Экран тот
+   же по устройству, что и ответ на вопрос: заголовок, строка и кнопка
+   возврата, плюс своя кнопка перехода. */
+function связьКуда(kind) {
+  var д = null;
+  try { д = (window.RV_DATA && window.RV_DATA["связь"]) || null; } catch (e) {}
+  if (kind === "call") {
+    return (д && д["помощь"]) || "https://t.me/HelpRocketVPN_bot";
   }
-  if (form.id === "cbForm" && !homeCall) {
-    homeCall = { parent: form.parentNode, next: form.nextSibling };
-  }
-  pinHeight(true);
-  if (form.parentNode !== slot) slot.appendChild(form);
-}
-
-function homeForms(unpin) {
-  var lead = doc.getElementById("leadForm");
-  var call = doc.getElementById("cbForm");
-  if (lead && homeLead && lead.parentNode === slot) {
-    homeLead.parent.insertBefore(lead, homeLead.next);
-  }
-  if (call && homeCall && call.parentNode === slot) {
-    homeCall.parent.insertBefore(call, homeCall.next);
-  }
-  /* Высоту отпускаем только когда экран погас совсем: между двумя
-     состояниями панели форма уезжает и приезжает по нескольку раз,
-     и каждое такое движение снова дёргало бы длину страницы. */
-  if (unpin) pinHeight(false);
+  return (д && д["бот"]) || "https://t.me/RocketCompanyVPN_bot";
 }
 
 function fillForm(kind) {
-  homeForms();
-  var form = doc.getElementById(kind === "call" ? "cbForm" : "leadForm");
+  var зов = kind === "call"
+    ? t("cb.h", "Перезвоните мне")
+    : t("ct.h", "Расскажите о проекте");
+  var строка = kind === "call"
+    ? t("cb.p", "Напишите в поддержку - отвечаем в чате, звонок назначим оттуда же.")
+    : t("ct.p", "Напишите боту: он заведёт заявку и передаст её человеку.");
+  var кн = kind === "call"
+    ? t("cb.btn", "Открыть поддержку")
+    : t("ct.btn", "Открыть бота");
   body.innerHTML =
     '<button type="button" class="dsk-back" data-go="menu">' +
       esc(t("ui.back", "Назад")) + '</button>' +
-    '<div class="dsk-title">' +
-      esc(kind === "call" ? t("cb.h", "Перезвоните мне") : t("ct.h", "Расскажите о проекте")) +
+    '<div class="dsk-title">' + esc(зов) + '</div>' +
+    '<div class="dsk-a">' + esc(строка) + '</div>' +
+    '<div class="dsk-acts">' +
+      '<a class="dsk-b dsk-b-lead" href="' + esc(связьКуда(kind)) + '" ' +
+        'target="_blank" rel="noopener">' + esc(кн) + '</a>' +
     '</div>';
   body.hidden = false;
-  slot.hidden = false;
-  moveForm(form);
+  slot.hidden = true;
 }
 
 /* ── Старт полёта ────────────────────────────────────────────
@@ -649,7 +626,6 @@ function frame() {
       /* Экран погас - формы возвращаются на свои места в разметке,
          иначе они уедут из кадра вместе со слоем и на обычной
          странице их не найдёт ни человек, ни поисковик */
-      homeForms(true);
       state = "menu";
       layer.setAttribute("data-state", "menu");
     }
@@ -671,7 +647,6 @@ doc.addEventListener("click", function (e) {
   var b = e.target.closest ? e.target.closest(".js-callback") : null;
   if (!b) return;
   if (layer && layer.contains(b)) return;
-  homeForms();
 }, true);
 
 /* Смена языка перестраивает вопросы: тексты приходят из словаря */

@@ -231,6 +231,13 @@
   background: rgba(var(--int-cyan-rgb, 66,178,220), .12);
   transition: background .2s linear, border-color .2s linear, transform .12s linear;
 }
+/* Кнопка перехода в Телеграм это ССЫЛКА, а не кнопка: она открывает
+   чужое приложение, и правая кнопка мыши, средний клик и «открыть в
+   новой вкладке» обязаны работать. Стиль тот же, подчёркивание снять. */
+a.dsk-b { text-decoration: none; }
+/* Одна кнопка в ряду занимает весь ряд: половина ширины с пустотой
+   рядом читается недогруженной страницей. */
+.rc-desk .dsk-acts > :only-child { grid-column: 1 / -1; }
 .rc-desk .dsk-b:hover { background: rgba(var(--int-cyan-rgb, 66,178,220), .22); }
 .rc-desk .dsk-b:active { transform: translateY(1px); }
 .rc-desk .dsk-b-lead {
