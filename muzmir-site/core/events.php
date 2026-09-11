@@ -79,7 +79,7 @@ function emit_event(string $type, array $data): void {
                 require_once BASE_PATH . '/core/newsletter.php';
             }
             if (function_exists('mass_sending_enabled')) $massOff = !mass_sending_enabled();
-            if (!$massOff && (string)cfgv('vk_token') !== '') {
+            if (!$massOff && vk_configured()) {
                 require_once BASE_PATH . '/core/vk.php';
                 $vkMsg = _vk_message_from_event($type, $data);
                 if ($vkMsg !== '') vk_wall_post($vkMsg);

@@ -293,7 +293,7 @@ function mailings_run_comps_campaign(
     $queued = mailings_queue_all($recipients, $subject, $html);
 
     $vkOk = false;
-    if ($vkText !== '' && trim((string) cfgv('vk_token', '')) !== '') {
+    if ($vkText !== '' && vk_configured()) {
         $r = vk_wall_post($vkText);
         $vkOk = !isset($r['error']);
         if (!$vkOk) {
@@ -409,7 +409,7 @@ try {
             'Открыт приём заявок: ' . mailings_comp_names($launch) . '.'
         );
         /* ВК: отдельный пост на каждый конкурс с его афишей — шаблон «запуск». */
-        if (trim((string) cfgv('vk_token', '')) !== '') {
+        if (vk_configured()) {
             foreach ($launch as $lc) {
                 $af = BASE_PATH . '/public/uploads/comp/' . (int) $lc['id'] . '/afisha.jpg';
                 $r = (is_file($af) && function_exists('vk_wall_post_with_photo'))
@@ -547,7 +547,7 @@ try {
         ));
         if ($closedComps) {
             $vkOkC = false;
-            if (trim((string) cfgv('vk_token', '')) !== '') {
+            if (vk_configured()) {
                 $r = vk_wall_post(vkt_closed($closedComps));
                 $vkOkC = !isset($r['error']);
                 if (!$vkOkC) {

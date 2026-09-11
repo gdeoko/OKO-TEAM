@@ -102,7 +102,7 @@ try {
         exit(0);
     }
 
-    if (trim((string) cfgv('vk_token', '')) === '') {
+    if (!vk_configured()) {
         cron_log(JOB, 'vk_token (MUZMIR_VK_TOKEN) не настроен - выход');
         cron_unlock(JOB);
         exit(0);

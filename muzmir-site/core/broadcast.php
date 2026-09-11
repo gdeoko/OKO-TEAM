@@ -26,7 +26,7 @@ function broadcast_newsletter_fanout(array $newsletter, int $channels = 0): arra
     $msg .= "\n\n🌐 " . $baseUrl . '/';
 
     // VK community post
-    if (($channels & 1) && function_exists('vk_wall_post') && (string) cfgv('vk_token') !== '') {
+    if (($channels & 1) && function_exists('vk_wall_post') && vk_configured()) {
         try {
             $r = vk_wall_post($msg);
             $res['vk'] = !empty($r) && empty($r['error']);

@@ -28,7 +28,7 @@ const JOB = 'vk_dm_worker';
 if (!cron_lock(JOB, 300)) exit(0);
 
 try {
-    if (trim((string) cfgv('vk_token', '')) === '') { cron_unlock(JOB); exit(0); }
+    if (!vk_configured()) { cron_unlock(JOB); exit(0); }
     if ((string) scalar("SELECT value FROM settings WHERE key='vk_dm_enabled'") === '0') {
         cron_unlock(JOB);
         exit(0);

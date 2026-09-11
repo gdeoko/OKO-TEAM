@@ -41,7 +41,7 @@ const JOB = 'vk_admin_dm';
 
 if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) exit(0);
 if ((string) scalar("SELECT value FROM settings WHERE key='vk_admin_dm_enabled'") === '0') exit(0);
-if (trim((string) cfgv('vk_token', '')) === '') exit(0);
+if (!vk_configured()) exit(0);
 if (!outreach_window_ok()) exit(0);
 if (!cron_lock(JOB, 1800)) exit(0);
 

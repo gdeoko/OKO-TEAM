@@ -16,10 +16,21 @@
  * а в админке появилось «проверьте токен сообщества» — хотя токен был цел.
  * Задание, которое чинило админку, сломало живое общение с людьми.
  *
- * Теперь так: users.get принимает до тысячи идентификаторов за раз, и мы
- * спрашиваем всю пачку ОДНИМ запросом. Раз в час, сотня имён за заход — этого
- * с запасом хватает: новые диалоги появляются десятками в день, а не тысячами.
- * Ответил отказом по темпу — молча уходим до следующего часа.
+ * Теперь так: спрашиваем всю пачку ОДНИМ запросом, раз в час, сотня имён за
+ * заход — этого с запасом хватает: новые диалоги появляются десятками в день,
+ * а не тысячами. Ответил отказом по темпу — молча уходим до следующего часа.
+ *
+ * ИМЕНА БЕРЁМ ИЗ ПЕРЕПИСКИ, А НЕ ИЗ ПРОФИЛЕЙ.
+ *
+ * Ключ сообщества на `users.get` отвечает пустым списком — без ошибки, просто
+ * ничем: читать чужие профили сообществу не положено. Зато
+ * `messages.getConversations` с extended=1 отдаёт вместе с диалогами и
+ * `profiles` — имена ровно тех людей, которые нам написали. Это и правильнее по
+ * смыслу: центр знает по имени собеседника, а не произвольного пользователя ВК.
+ *
+ * Кого перепиской не покрыли (старые диалоги за пределами выдачи) — дозапросим
+ * личным ключом владельца, если он сейчас отвечает. Не отвечает — подписи
+ * подождут, на работу бота это не влияет.
  *
  * Расписание: 23 * * * * (раз в час).
  */
@@ -63,21 +74,45 @@ foreach ($rows as $r) {
 }
 if (!$peers) { echo "новых имён нет\n"; cron_unlock('vk_names_fill'); exit(0); }
 
-$r = vk_api('users.get', ['user_ids' => implode(',', array_keys($peers)), 'fields' => 'first_name,last_name']);
-if (isset($r['error'])) {
-    $msg = (string) ($r['error']['error_msg'] ?? '?');
-    cron_log('vk_names_fill', 'ВК не отдал имена: ' . $msg);
-    echo "ВК не отдал имена: $msg\n";
-    cron_unlock('vk_names_fill');
-    exit(0);
+/* Шаг первый: имена из переписки сообщества. Три страницы по двести диалогов —
+ * это шестьсот последних собеседников, свежие диалоги покрываются целиком. */
+$found = [];                       // peer => «Имя Фамилия»
+$gid   = (int) cfgv('vk_group_id', 211325055);
+for ($page = 0; $page < 3; $page++) {
+    $c = vk_api('messages.getConversations', [
+        'group_id' => $gid, 'count' => 200, 'offset' => $page * 200,
+        'extended' => 1, 'fields' => 'first_name,last_name',
+    ]);
+    if (isset($c['error'])) {
+        $msg = (string) ($c['error']['error_msg'] ?? '?');
+        cron_log('vk_names_fill', 'ВК не отдал переписку: ' . $msg);
+        break;
+    }
+    foreach ((array) ($c['response']['profiles'] ?? []) as $u) {
+        $id = (int) ($u['id'] ?? 0);
+        if ($id > 0) $found[$id] = trim(((string) ($u['first_name'] ?? '')) . ' ' . ((string) ($u['last_name'] ?? '')));
+    }
+    if (count((array) ($c['response']['items'] ?? [])) < 200) break;
+    usleep(350000);
+}
+
+/* Шаг второй: кого перепиской не нашли — личным ключом владельца, одним
+ * запросом. У него свой предохранитель: закрыт — просто пропускаем. */
+$left = array_diff_key($peers, $found);
+$userTok = trim((string) cfgv('vk_token', ''));
+if ($left && $userTok !== '' && (int) setting('vk_flood_until_user', '0') <= time()) {
+    $r = vk_api_with('users.get',
+                     ['user_ids' => implode(',', array_keys($left)), 'fields' => 'first_name,last_name'],
+                     $userTok, 'vk_flood_until_user');
+    foreach ((array) ($r['response'] ?? []) as $u) {
+        $id = (int) ($u['id'] ?? 0);
+        if ($id > 0) $found[$id] = trim(((string) ($u['first_name'] ?? '')) . ' ' . ((string) ($u['last_name'] ?? '')));
+    }
 }
 
 $ok = 0;
-foreach ((array) ($r['response'] ?? []) as $u) {
-    $peer = (int) ($u['id'] ?? 0);
-    if ($peer <= 0 || !isset($peers[$peer])) continue;
-    $name = trim(((string) ($u['first_name'] ?? '')) . ' ' . ((string) ($u['last_name'] ?? '')));
-    if ($name === '') continue;
+foreach ($found as $peer => $name) {
+    if (!isset($peers[$peer]) || trim($name) === '') continue;
     $sk = $peers[$peer];
     try {
         if (function_exists('chat_dialog_set')) chat_dialog_set($sk, ['title' => $name]);
@@ -90,6 +125,6 @@ foreach ((array) ($r['response'] ?? []) as $u) {
     } catch (\Throwable $e) { /* имя не критично */ }
 }
 
-if ($ok > 0) cron_log('vk_names_fill', "имена ВК: сохранено $ok за один запрос");
+if ($ok > 0) cron_log("vk_names_fill", "имена ВК: сохранено $ok");
 cron_unlock('vk_names_fill');
-echo "сохранено $ok из " . count($peers) . " (один запрос к ВК)\n";
+echo "сохранено $ok из " . count($peers) . "\n";

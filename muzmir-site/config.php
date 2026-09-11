@@ -130,7 +130,11 @@ return [
     'vk_client_secret'     => cfg('MUZMIR_VK_CLIENT_SECRET', ''),
     'vk_redirect'          => cfg('MUZMIR_VK_REDIRECT', ''),      // необязательно: переопределить callback URL
     // VK API (авто-постинг, комментарии, рассылки от лица сообщества/пользователя)
-    'vk_token'             => cfg('MUZMIR_VK_TOKEN', ''),
+    // Ключ сообщества — ОСНОВНОЙ (Управление сообществом → Работа с API → Ключи доступа).
+    // Принадлежит сообществу, а не человеку: не гаснет от смены пароля владельца и
+    // не страдает, когда ВК закрывает API его личной странице. См. шапку core/vk.php.
+    'vk_group_token'       => cfg('MUZMIR_VK_GROUP_TOKEN', ''),
+    'vk_token'             => cfg('MUZMIR_VK_TOKEN', ''),          // личный ключ владельца — запасной
     'vk_group_id'          => cfg('MUZMIR_VK_GROUP_ID', '211325055'),
     'vk_group_url'         => cfg('MUZMIR_VK_GROUP_URL', 'https://vk.com/music_world.online'),
     'vk_api_version'       => '5.199',

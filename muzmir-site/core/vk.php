@@ -3,14 +3,73 @@
  * VK API — авто-постинг, работа со стеной, рассылки и т.п. от лица пользователя (Председатель Оргкомитета)
  * или сообщества Культурного центра «Музыкальный Мир» (vk.com/music_world.online, id 211325055, is_admin=1, admin_level=3).
  *
- * Токен лежит в config.local.php (MUZMIR_VK_TOKEN), доступен через cfgv('vk_token').
+ * ДВА КЛЮЧА, И ГЛАВНЫЙ — КЛЮЧ СООБЩЕСТВА.
+ *
+ * `MUZMIR_VK_GROUP_TOKEN` (cfgv 'vk_group_token') выдан самим сообществом
+ * (Управление → Работа с API → Ключи доступа) и принадлежит ему, а не человеку.
+ * `MUZMIR_VK_TOKEN` (cfgv 'vk_token') — личный ключ владельца.
+ *
+ * Раньше весь слой ходил личным ключом, даже туда, где в параметрах стоит
+ * group_id и работа явно идёт от лица сообщества. ВКонтакте это терпел, пока
+ * владелец админ, — и цена такой привычки выяснилась 9 сентября: ВК счёл
+ * страницу владельца взломанной и закрыл ЕЙ доступ к API. Личный ключ ответил
+ * «Flood control» на каждый метод, бот умолк во ВКонтакте на двое суток, а
+ * ключ сообщества всё это время работал безупречно — им просто никто не
+ * пользовался. Личные неприятности владельца не должны останавливать переписку
+ * центра с участниками.
+ *
+ * Поэтому теперь: сперва ключ сообщества, личный — только туда, куда ключ
+ * сообщества не пускают (поиск сообществ, репост, чужие стены). Разбирать
+ * методы по списку не нужно — ВК сам говорит об этом ошибкой, и на неё мы
+ * повторяем вызов личным ключом. Отдых после «девятки» у ключей РАЗДЕЛЬНЫЙ:
+ * закрытый личный ключ не имеет права закрывать переписку сообщества.
+ *
  * Для постинга от имени сообщества передаётся owner_id = -group_id и from_group=1.
  */
 declare(strict_types=1);
 
-/** Базовый вызов метода VK API. $tokenOverride — использовать иной токен (напр. токен сообщества). */
+/**
+ * Вызов метода VK API.
+ *
+ * По умолчанию идёт ключом сообщества, а если тот для метода не годится —
+ * повторяет личным ключом владельца. $tokenOverride обходит выбор целиком.
+ */
 function vk_api(string $method, array $params = [], string $tokenOverride = ''): array {
-    $token = $tokenOverride !== '' ? $tokenOverride : (string) cfgv('vk_token');
+    if ($tokenOverride !== '') return vk_api_with($method, $params, $tokenOverride, 'vk_flood_until');
+
+    $group = trim((string) cfgv('vk_group_token', ''));
+    $user  = trim((string) cfgv('vk_token', ''));
+    if ($group === '') return vk_api_with($method, $params, $user, 'vk_flood_until_user');
+
+    $r = vk_api_with($method, $params, $group, 'vk_flood_until');
+    if ($user === '' || !isset($r['error'])) return $r;
+
+    /* «Этот метод ключу сообщества недоступен» — единственный повод достать
+     * личный ключ. Коды: 15 (доступ запрещён), 27 (нет прав у ключа сообщества),
+     * 3 (метод сообществу неизвестен). Повторять безопасно: вызов, ответивший
+     * ошибкой, ничего не отправил и ничего не опубликовал. */
+    $code = (int) ($r['error']['error_code'] ?? 0);
+    if (!in_array($code, [3, 15, 27], true)) return $r;
+
+    _vk_log($method . ': ключу сообщества метод недоступен (' . $code . '), повторяю личным ключом');
+    return vk_api_with($method, $params, $user, 'vk_flood_until_user');
+}
+
+/**
+ * Настроен ли ВКонтакте вообще.
+ *
+ * Годится ЛЮБОЙ из двух ключей: работа сообщества не должна выключаться оттого,
+ * что личного ключа владельца сейчас нет. Проверки вида «есть ли vk_token» по
+ * коду заменены на этот вызов именно поэтому.
+ */
+function vk_configured(): bool {
+    return trim((string) cfgv('vk_group_token', '')) !== ''
+        || trim((string) cfgv('vk_token', '')) !== '';
+}
+
+/** Один вызов конкретным ключом. $breaker — имя настройки с его собственным отдыхом. */
+function vk_api_with(string $method, array $params, string $token, string $breaker): array {
+    $token = trim($token);
     if ($token === '') return ['error' => ['error_msg' => 'VK token not configured']];
     $params['access_token'] = $token;
     $params['v'] = cfgv('vk_api_version', '5.199');
@@ -32,7 +91,8 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
      * это время мы к нему не ходим вовсе. Ответы участникам при этом не
      * теряются: они лежат в переписке, и cron/vk_resend_stuck досылает их,
      * когда дверь откроется. */
-    $floodUntil = (int) (function_exists('setting') ? setting('vk_flood_until', '0') : 0);
+    $stepKey    = $breaker . '_step';
+    $floodUntil = (int) (function_exists('setting') ? setting($breaker, '0') : 0);
     if ($floodUntil > time()) {
         return ['error' => ['error_code' => 9, 'error_msg' => 'Flood control',
                             'wait_until' => date('H:i', $floodUntil)]];
@@ -67,7 +127,7 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
                 $code = (int) ($d['error']['error_code'] ?? 0);
                 if ($code === 9) {
                     // Отдых удлиняем, пока служба не отпустит: 5 минут, 10, дальше 15.
-                    $prev = (int) (function_exists('setting') ? setting('vk_flood_step', '0') : 0);
+                    $prev = (int) (function_exists('setting') ? setting($stepKey, '0') : 0);
                     /* Потолок отдыха — четверть часа, а не час.
                      * Смысл предохранителя в том, чтобы не долбить закрытую
                      * дверь, а не в том, чтобы позже всех узнать, что её
@@ -77,18 +137,19 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
                      * час. */
                     $step = min(900, max(300, $prev * 2));
                     if (function_exists('set_setting')) {
-                        set_setting('vk_flood_step', (string) $step);
-                        set_setting('vk_flood_until', (string) (time() + $step));
+                        set_setting($stepKey, (string) $step);
+                        set_setting($breaker, (string) (time() + $step));
                     }
-                    _vk_log(sprintf('%s: Flood control — закрываю обращения ко ВК на %d мин', $method, (int) ($step / 60)));
+                    _vk_log(sprintf('%s: Flood control (%s) — закрываю обращения этим ключом на %d мин',
+                                    $method, $breaker, (int) ($step / 60)));
                     return $d;
                 }
                 if (!isset($d['error'])) {
                     // Ответила — значит дверь открыта: сбрасываем и отдых, и его длину.
-                    if (function_exists('set_setting') && (int) setting('vk_flood_step', '0') > 0) {
-                        set_setting('vk_flood_step', '0');
-                        set_setting('vk_flood_until', '0');
-                        _vk_log($method . ': ВК снова отвечает, предохранитель снят');
+                    if (function_exists('set_setting') && (int) setting($stepKey, '0') > 0) {
+                        set_setting($stepKey, '0');
+                        set_setting($breaker, '0');
+                        _vk_log($method . ': ВК снова отвечает, предохранитель снят (' . $breaker . ')');
                     }
                     return $d;
                 }
@@ -440,7 +501,7 @@ function vk_dm_ensure_table(): void {
  * Возвращает число добавленных в очередь.
  */
 function vk_dm_enqueue_dialogs(string $message, string $attachment, string $kind, string $ref): int {
-    if (trim((string) cfgv('vk_token', '')) === '') return 0;
+    if (!vk_configured()) return 0;
     vk_dm_ensure_table();
     $gid = (int) cfgv('vk_group_id', 211325055);
     $ins = db()->prepare("INSERT OR IGNORE INTO vk_dm_queue (peer_id, message, attachment, kind, ref) VALUES (?,?,?,?,?)");
@@ -485,8 +546,19 @@ function vk_user_name(int $peer): string {
     static $cache = [];
     if ($peer <= 0 || $peer >= 2000000000) return ''; // не личка/групповой чат
     if (isset($cache[$peer])) return $cache[$peer];
-    $r = vk_api('users.get', ['user_ids' => $peer, 'fields' => 'first_name']);
-    $name = trim((string) ($r['response'][0]['first_name'] ?? ''));
+
+    /* СПРАШИВАТЬ ВК ЗА ИМЕНЕМ В МОМЕНТ ОТВЕТА — ЛИШНЕЕ.
+     * Ключу сообщества чужие профили читать не положено: `users.get` отвечает
+     * пустым списком, без ошибки. Имена собеседников и так лежат в подписях
+     * диалогов — их раз в час складывает cron/vk_names_fill.php из переписки.
+     * Берём оттуда: и быстрее, и не тратит обращение к ВК на каждый ответ. */
+    $name = '';
+    try {
+        $t = one("SELECT title FROM chat_dialogs WHERE session_key=?", ['vk_' . $peer]);
+        $name = trim((string) ($t['title'] ?? ''));
+    } catch (\Throwable $e) { /* подписи может не быть — не беда */ }
+    if ($name !== '') $name = trim((string) strtok($name, ' '));   // только имя, без фамилии
+
     return $cache[$peer] = $name;
 }
 
@@ -516,14 +588,33 @@ function vk_dm_wall_attachment(array $wallPostResult): string {
 
 /** Проверить рабочий ли токен + права. */
 function vk_health(): array {
-    $u = vk_api('users.get', []);
-    $g = vk_api('groups.getById', ['group_id' => (string) cfgv('vk_group_id', '211325055'), 'fields' => 'members_count,is_admin,admin_level']);
+    /* ЗДОРОВЬЕ ВКонтакте МЕРЯЕТСЯ КЛЮЧОМ СООБЩЕСТВА.
+     *
+     * Раньше здесь первым шёл `users.get` пустым списком — «кто я» личным
+     * ключом. У ключа сообщества никакого «я» нет, он ответил бы ошибкой, и
+     * админка написала бы «проверьте токен сообщества» при совершенно живой
+     * переписке. А 9 сентября вышло наоборот: личный ключ владельца лежал, и
+     * та же надпись пугала, хотя сообщество работало. Поэтому главный вопрос —
+     * отвечает ли ВК ПО ДЕЛУ сообщества; личный ключ проверяется отдельно и
+     * работе не мешает. */
+    $g = vk_api('groups.getById', [
+        'group_id' => (string) cfgv('vk_group_id', '211325055'),
+        'fields'   => 'members_count,is_admin,admin_level',
+    ]);
+    $group = $g['response'][0] ?? ($g['response']['groups'][0] ?? null);
+
+    $userTok = trim((string) cfgv('vk_token', ''));
+    $u = $userTok === '' ? ['error' => ['error_msg' => 'личный ключ не задан']]
+                         : vk_api_with('users.get', [], $userTok, 'vk_flood_until_user');
+
     return [
+        'group_ok'  => $group !== null,
+        'group'     => $group,
         'user_ok'   => isset($u['response'][0]['id']),
         'user'      => $u['response'][0] ?? null,
-        'group_ok'  => isset($g['response'][0]) || isset($g['response']['groups'][0]),
-        'group'     => $g['response'][0] ?? ($g['response']['groups'][0] ?? null),
-        'error'     => $u['error'] ?? ($g['error'] ?? null),
+        'user_note' => isset($u['response'][0]['id']) ? '' :
+                       'личный ключ владельца сейчас не отвечает — на работу сообщества это не влияет',
+        'error'     => $g['error'] ?? null,
     ];
 }
 

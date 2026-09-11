@@ -245,7 +245,7 @@ function owner_vk_peer(): int {
         if ($cached !== null && $cached !== '') {
             return $cached === 'none' ? 0 : (int) $cached;
         }
-        if ((string) cfgv('vk_token') === '') return 0;
+        if (!vk_configured()) return 0;
         if (!function_exists('vk_api')) {
             if (!is_file(BASE_PATH . '/core/vk.php')) return 0;
             require_once BASE_PATH . '/core/vk.php';
