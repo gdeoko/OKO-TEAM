@@ -149,7 +149,7 @@
         uVerh: { value: new T.Color(0xC2C9D8) },
         uGlow: { value: new T.Color(0xBFD4FF) },
         tBlok: цвет, tBlokN: норм, tBlokO: orm, uTex: доля,
-        uBright: { value: 1 }, uTime: { value: 0 },
+        uBright: { value: 1 }, uTime: { value: 0 }, uAlpha: { value: 1 },
         uHits: { value: [new T.Vector3(), new T.Vector3(), new T.Vector3(),
                          new T.Vector3(), new T.Vector3()] },
         uHitPow: { value: [0, 0, 0, 0, 0] }
@@ -266,6 +266,7 @@
     "uniform sampler2D tBlokN;",
     "uniform sampler2D tBlokO;",
     "uniform float uTex;",
+    "uniform float uAlpha;",
     "uniform float uBright;",
     "uniform float uTime;",
     "uniform vec3 uHits[5];",
@@ -604,7 +605,11 @@
     "  float blizko = smoothstep(9.0, 2.0, -vMvz);",
     "  color *= mix(1.0, 0.30, blizko);",
     "  color += (hash12(gl_FragCoord.xy + uTime) - 0.5) / 255.0;",
-    "  gl_FragColor = vec4(color, 1.0);",
+    /* Прозрачность камня. Стене она не нужна и стоит единицей; ракета
+       в зале уступает место металлу и тает по ней. Без своего канала
+       таять было нечем: ShaderMaterial.opacity шейдер не читает, и
+       «гашение» выходило затемнением в чёрный силуэт поверх обшивки. */
+    "  gl_FragColor = vec4(color, uAlpha);",
     "}"
   ].join("\n");
 
