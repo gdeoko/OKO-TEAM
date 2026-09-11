@@ -197,6 +197,47 @@ function mrep_bucket(string $domain): string {
 }
 
 /** Норма домена на сегодня. Пересчитывается раз в сутки по вчерашнему результату. */
+/**
+ * ТОРМОЗ ВНУТРИ ДНЯ.
+ *
+ * Норма пересматривается раз в сутки, по вчерашним событиям. Пока темп был
+ * восемьсот писем, этого хватало: плохой день стоил восьмисот отказов. На
+ * десяти тысячах цена другая — если служба начнёт отбивать в десять утра, мы к
+ * вечеру подарим ей тысячи отказов и вернём домен туда, откуда он только что
+ * выбрался, а узнаем об этом лишь завтра.
+ *
+ * Поэтому норма проверяется и в течение дня. Набралось достаточно событий и
+ * каждое четвёртое письмо отбито — на сегодня хватит: норма опускается до уже
+ * доставленного, то есть отправка по этой службе останавливается до завтра.
+ * Разбор следующего утра решит, снижать ли норму по-настоящему.
+ *
+ * Порог намеренно тот же, что у суточного разбора ($pct >= 25): одно правило,
+ * два момента проверки.
+ */
+function mrep_intraday_brake(string $d, array $family, int $cap, int $probe): int {
+    $in = implode(',', array_fill(0, count($family), '?'));
+    $st = one("SELECT SUM(status='delivered') dl, SUM(status='hard_bounced') hb
+                 FROM mail_events
+                WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) IN ($in)
+                  AND date(created_at) = date('now','localtime')", $family);
+    $dl  = (int) ($st['dl'] ?? 0);
+    $hb  = (int) ($st['hb'] ?? 0);
+    $tot = $dl + $hb;
+    // Меньше двухсот событий — судить рано: утренняя придержка даёт всплеск
+    // отказов, который служба сама же отпускает через час-другой.
+    if ($tot < 200) return $cap;
+    $pct = $hb * 100 / $tot;
+    if ($pct < 25) return $cap;
+
+    $stop = max($probe, $dl);
+    if ($stop < $cap) {
+        q("UPDATE mail_domain_caps SET day_cap=?, note=? WHERE domain=?",
+          [$stop, sprintf('тормоз внутри дня: %d доставлено, %d отказов (%.0f%%) — остановлено до завтра',
+                          $dl, $hb, $pct), $d]);
+    }
+    return $stop;
+}
+
 function mrep_domain_day_cap(string $domain): int {
     static $cache = [];
     $raw = mb_strtolower(trim($domain));
@@ -232,7 +273,7 @@ function mrep_domain_day_cap(string $domain): int {
     // семьдесят лишних гарантированных отказов.
     $cap  = max($probe, (int) $row['day_cap']);
     $when = (string) $row['cap_date'];
-    if ($when === $today) return $cache[$d] = $cap;
+    if ($when === $today) return $cache[$d] = mrep_intraday_brake($d, $family, $cap, $probe);
 
     // Новый день: смотрим, чем кончился прошлый заход в эту службу.
     // СУДИМ ПО ТОМУ, ЧЕМ ДЕНЬ КОНЧИЛСЯ, А НЕ ЧЕМ НАЧАЛСЯ.
