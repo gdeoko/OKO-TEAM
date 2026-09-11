@@ -192,9 +192,17 @@
         <label for="afTask">Задача</label>
         <textarea id="afTask" name="task" placeholder="Что нужно раздавать, какой объём трафика"></textarea>
       </div>
+      <!-- Галочка ПУСТАЯ и со ссылкой на политику, как на главной той же
+           площадки. Здесь стояло `checked` и ссылки не было вовсе: это
+           не согласие, а его имитация - человек ничего не отмечал и
+           документа не видел. Значение `value="1"` тоже как на главной,
+           иначе браузер пришлёт "on" и разбор на сервере разойдётся. -->
       <label class="consent">
-        <input type="checkbox" name="consent" required checked>
-        <span>Соглашаюсь с обработкой персональных данных</span>
+        <input type="checkbox" name="consent" value="1" required>
+        <span>
+          Соглашаюсь с обработкой персональных данных
+          <a href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
+        </span>
       </label>
       <button type="submit" class="btn btn-p" style="width:100%">Отправить заявку</button>
     </form>
