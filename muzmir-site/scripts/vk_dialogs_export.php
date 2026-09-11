@@ -30,9 +30,17 @@ foreach ($argv as $a) {
     if (preg_match('~^--out=(.+)$~', $a, $m))   $out  = $m[1][0] === '/' ? $m[1] : BASE_PATH . '/' . $m[1];
 }
 
-$token = (string) cfgv('vk_token', '');
+/* ПЕРЕПИСКУ СООБЩЕСТВА ЧИТАЕМ КЛЮЧОМ СООБЩЕСТВА.
+ *
+ * Здесь стоял личный ключ владельца, и обучение бота остановилось вместе с ним:
+ * с 3 сентября выгрузка отвечала «User authorization failed: user is blocked»,
+ * эталоны стиля застыли, а ночной крон каждый раз честно писал «ВКонтакте не
+ * отдал ни одного диалога». Переписка принадлежит сообществу — его ключом её и
+ * читаем; личный остаётся запасным на случай, если ключа сообщества нет. */
+$token = trim((string) cfgv('vk_group_token', ''));
+if ($token === '') $token = trim((string) cfgv('vk_token', ''));
 $group = (int) cfgv('vk_group_id', 0);
-if ($token === '' || $group === 0) { fwrite(STDERR, "нет vk_token или vk_group_id\n"); exit(1); }
+if ($token === '' || $group === 0) { fwrite(STDERR, "нет ключа ВК или vk_group_id\n"); exit(1); }
 
 /** Вызов VK API с мягкой обработкой лимита частоты. */
 function vkq(string $method, array $params, string $token): array {
