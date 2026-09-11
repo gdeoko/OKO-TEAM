@@ -224,7 +224,7 @@ function pdf_official_letter(array $o): string {
     } else {
         pl_text($img, $ax, $ay + 22, 22, $navy, $fBold, 'УТВЕРЖДАЮ');
         $ay += 40;
-        foreach (['Генеральный директор', 'Культурного центра', '«Музыкальный Мир»'] as $ln) {
+        foreach (['Председатель аттестационной комиссии', 'Культурного центра', '«Музыкальный Мир»'] as $ln) {
             pl_text($img, $ax, $ay + 14, 14, $muted, $fReg, $ln);
             $ay += 21;
         }
@@ -416,7 +416,7 @@ function pdf_official_letter(array $o): string {
     // ниже — линия рамки. Без верхнего ограничения длинный текст сдвигал блок
     // вниз, и контакты выезжали за рамку листа.
     $fy = min(max($y + 40, $H - 326), $H - 300);
-    pl_text($img, $mL, $fy + 16, 15, $muted, $fReg, 'Генеральный директор');
+    pl_text($img, $mL, $fy + 16, 15, $muted, $fReg, 'Председатель аттестационной комиссии');
     pl_text($img, $mL, $fy + 38, 15, $muted, $fReg, 'Культурного центра');
     pl_text($img, $mL, $fy + 60, 15, $muted, $fReg, '«Музыкальный Мир»');
 

@@ -169,7 +169,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 .leader-card ul li{display:flex;gap:10px;align-items:flex-start;color:var(--text-dim);font-size:.95rem}
 .leader-card ul li svg{width:18px;height:18px;color:var(--gold);flex:none;margin-top:3px}
 
-/* Генеральный директор - витринная стеклянная карточка */
+/* Председатель аттестационной комиссии - витринная стеклянная карточка */
 .ceo-card{display:flex;gap:20px;align-items:center;max-width:640px;margin:0 auto 26px;padding:24px 26px;
   border-radius:20px;background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border:1px solid var(--glass-brd2);position:relative;overflow:hidden;
@@ -362,12 +362,12 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
       <p>Работу центра организует Оргкомитет: формирует положения конкурсов, утверждает состав жюри и следит за соблюдением правил на каждом этапе.</p>
     </div>
 
-    <!-- Генеральный директор -->
+    <!-- Председатель аттестационной комиссии -->
     <div class="ceo-card reveal">
       <div class="ceo-ava"><?= $svg['tie'] ?></div>
       <div class="ceo-info">
         <div class="ceo-name">Ильясов Альберт Ильясович</div>
-        <div class="ceo-role">Генеральный директор</div>
+        <div class="ceo-role">Председатель аттестационной комиссии</div>
         <div class="ceo-sub">Основатель Культурного центра «Музыкальный Мир»</div>
       </div>
     </div>

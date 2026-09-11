@@ -451,7 +451,7 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         $s1n = _dip_setting('sign1_name', 'Галиулин Данил Дамирович');
         $s1d = _dip_setting('sign1_desc', 'Председатель Оргкомитета');
         $s2n = _dip_setting('sign2_name', 'Ильясов Альберт Ильясович');
-        $s2d = _dip_setting('sign2_desc', 'Генеральный директор Культурного центра «Музыкальный Мир», заслуженный деятель культуры');
+        $s2d = _dip_setting('sign2_desc', 'Председатель аттестационной комиссии Культурного центра «Музыкальный Мир», заслуженный деятель культуры');
 
         $sigTop = 1408;
         $descW = 430;

@@ -359,7 +359,7 @@ function ol_render(array $o): string {
         <div class="ol-qr-top"><?= $qrSite ?><small>сайт центра</small></div>
       <?php endif; ?>
       <?php if (empty($o['no_approve'])): ?><div class="word">УТВЕРЖДАЮ</div><?php endif; ?>
-      <div class="who">Генеральный директор<br>Культурного центра<br>«Музыкальный Мир»</div>
+      <div class="who">Председатель аттестационной комиссии<br>Культурного центра<br>«Музыкальный Мир»</div>
       <div class="sigrow">
         <?php if ($sig !== ''): ?><img src="<?= h($sig) ?>" alt=""><?php endif; ?>
         <span class="fio">Ильясов&nbsp;А.&nbsp;И.</span>
@@ -399,7 +399,7 @@ function ol_render(array $o): string {
 
   <div class="ol-foot">
     <div class="ol-sign">
-      <div class="role">Генеральный директор<br>Культурного центра «Музыкальный Мир»</div>
+      <div class="role">Председатель аттестационной комиссии<br>Культурного центра «Музыкальный Мир»</div>
       <div class="who">А.&nbsp;И.&nbsp;Ильясов</div>
       <?php if ($sig !== ''):  ?><img class="sg" src="<?= h($sig) ?>" alt=""><?php endif; ?>
       <?php if ($seal !== ''): ?><img class="sl" src="<?= h($seal) ?>" alt=""><?php endif; ?>

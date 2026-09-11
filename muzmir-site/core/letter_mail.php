@@ -190,7 +190,7 @@ function lm_sign(string $number, bool $withDoc = true): string {
     $out = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;'
          . 'border-top:1px solid ' . $line . '">'
          . '<tr><td style="padding:16px 0 0;font:15px/1.6 Arial,sans-serif;color:' . MM_INK . '">'
-         . 'Генеральный директор<br>Культурного центра «Музыкальный Мир»<br>'
+         . 'Председатель аттестационной комиссии<br>Культурного центра «Музыкальный Мир»<br>'
          . '<b style="color:' . $navy . '">А. И. Ильясов</b>'
          . '</td></tr></table>';
     if ($withDoc) {

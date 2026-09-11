@@ -757,7 +757,7 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         . ' оргкомитета ' . $typeGenM . ' конкурса культуры и искусства «'
         . trim((string)($c['name'] ?? 'Название конкурса')) . '»';
     $roleDirector = 'Лауреат международных и всероссийских конкурсов и фестивалей, заслуженный'
-        . ' деятель культуры, генеральный директор Культурного центра «Музыкальный Мир»';
+        . ' деятель культуры, председатель аттестационной комиссии Культурного центра «Музыкальный Мир»';
 
     /* РЕГАЛИИ ПОДПИСАНТОВ — РОВНО ЧЕТЫРЕ СТРОКИ.
      *
@@ -958,7 +958,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   width:31mm;height:auto;opacity:.92;z-index:2;pointer-events:none}
 /* Росписи увеличены в 1.8 раза через scale — позиция не сдвигается */
 .sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
-/* Роспись генерального директора держится правого края своей клетки:
+/* Роспись председателя аттестационной комиссии держится правого края своей клетки:
    при большем увеличении она наползала на круглую печать слева. */
 .sig-signature-2{width:26mm;height:auto;display:block;justify-self:end;
   transform:scale(1.15);transform-origin:center right}

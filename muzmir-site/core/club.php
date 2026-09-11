@@ -144,7 +144,7 @@ function club_staff_emails(): array {
     $extra = array_filter(array_map('trim', explode(',', (string) (function_exists('setting') ? setting('club_staff_emails', '') : ''))));
     return array_values(array_unique(array_map('mb_strtolower', array_merge([
         'okoteam.top@gmail.com',   // оргкомитет
-        'zamis76@mail.ru',         // владелец, генеральный директор Ильясов А.И.
+        'zamis76@mail.ru',         // владелец, председатель аттестационной комиссии Ильясов А.И.
     ], $extra))));
 }
 

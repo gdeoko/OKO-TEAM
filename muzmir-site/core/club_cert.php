@@ -45,7 +45,7 @@ function club_cert_html(array $user, array $status): string {
     $roleChairman = 'Лауреат международных и всероссийских конкурсов и фестивалей,'
         . ' председатель оргкомитета Культурного центра «Музыкальный Мир»';
     $roleDirector = 'Лауреат международных и всероссийских конкурсов и фестивалей, заслуженный'
-        . ' деятель культуры, генеральный директор Культурного центра «Музыкальный Мир»';
+        . ' деятель культуры, председатель аттестационной комиссии Культурного центра «Музыкальный Мир»';
 
     ob_start(); ?><!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
@@ -99,7 +99,7 @@ function club_cert_html(array $user, array $status): string {
   .fact b{display:block;font-family:'Manrope',sans-serif;font-weight:800;font-size:11.5pt;color:#2A1E06;letter-spacing:.04em}
   .fact span{display:block;margin-top:.8mm;font-size:7.4pt;letter-spacing:.12em;text-transform:uppercase;color:#7A5A12;font-weight:700}
   /* Подписи и печати — как на дипломах */
-  /* Две подписи в РЯД: слева — оргкомитет, справа — генеральный директор.
+  /* Две подписи в РЯД: слева — оргкомитет, справа — председатель аттестационной комиссии.
      У каждой свой блок «подпись + печать», поэтому штампы не наезжают друг на друга
      (в первой версии обе печати стояли у правого края и перекрывались). */
   .bottom{position:absolute;bottom:14mm;left:24mm;right:24mm;z-index:4}
