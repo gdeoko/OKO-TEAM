@@ -1551,9 +1551,22 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
   color: var(--int-lit, #CFE9F5);
   cursor: pointer;
 }
+
+/* ── КРЕСТИК ДОСЬЕ ПОД ПАЛЕЦ ────────────────────────────────────
+   Комментарий выше обещал: «а на телефоне она ещё и крупнее - в неё
+   надо попадать пальцем». Правила, которое это делает, в файле не было
+   ни одного: тридцать четыре точки стояли на всех устройствах. Досье
+   закрывается ТОЛЬКО этой кнопкой, и промах оставляет человека в окне,
+   из которого не выйти.
+
+   Сам рисунок крестика не трогаем, он остаётся шестнадцатым: растёт
+   зона нажатия, а не значок. */
+@media (pointer: coarse), (max-width: 900px) {
+  .rcf-dos-x { width: 44px; height: 44px; flex: 0 0 44px; }
+}
 .rcf-dos-x svg { width: 16px; height: 16px; flex: 0 0 16px; }
 .rcf-dos-h {
-  font-family: var(--f-head, "Bebas Neue", sans-serif);
+  font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(19px, 3.2vh, 27px);
   letter-spacing: .1em;
   color: var(--int-lit, #CFE9F5);
@@ -2109,7 +2122,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
 .rc-flight .rcf-pilot b {
   display: block;
   margin: 8px 0 16px;
-  font-family: var(--f-head, "Bebas Neue", sans-serif);
+  font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(26px, 5vh, 42px);
   letter-spacing: .1em;
   color: var(--int-lit, #CFE9F5);
@@ -2677,7 +2690,7 @@ html.rc-stage #spaceBg { opacity: 0 !important; }
      под него - на телефоне перекрытие тридцать на тридцать точек. */
   padding-right: 42px;
   margin-bottom: 14px;
-  font-family: var(--f-head, "Bebas Neue", sans-serif);
+  font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(20px, 3.4vh, 28px);
   letter-spacing: .12em;
   color: var(--int-lit, #CFE9F5);
@@ -4522,7 +4535,10 @@ html.rc-deep-inside .totop.on {
   .rc-flight .rcf-menu .rcf-nav button,
   .rc-flight .rcf-menu .rcf-uni button {
     min-width: 0;
-    min-height: 38px;
+    /* Сорок четыре, а не тридцать восемь: ниже этого палец промахивается
+       по своей же цели, и правило проекта считает сорок четыре нижней
+       границей для всего, во что тыкают. */
+    min-height: 44px;
     padding: 6px 4px;
     white-space: normal;
     line-height: 1.15;
@@ -4549,8 +4565,20 @@ html.rc-deep-inside .totop.on {
   /* Восемь точек это не подпись, это узор. Замер: на узком 360 кегль
      кнопок целей 8, на лежачем 900 тоже 8 - то есть на экране втрое
      шире буквы такие же мелкие. Держим одиннадцать, как на телефоне. */
+  /* ── ЦЕЛЬ ПОД ПАЛЕЦ, А НЕ ПОД КУРСОР ────────────────────────
+     Высота 34 держалась здесь под кеглем, а условие `max-height:650`
+     ловит ВЕСЬ лежачий телефон: 844x390, 926x428, 800x360. То есть
+     главное действие игры - выбор цели - получало 34 точки на всех
+     телефонах в повороте. Своё же правило проекта (rc-adapt.css,
+     раздел про цели нажатия) требует сорока четырёх, и соседний блок
+     этого же файла даёт хотя бы 38.
+
+     Кегль оставляем одиннадцатый, ради него правило и писалось, а
+     высоту возвращаем к сорока четырём. Место есть: меню прокручивается
+     (внутренняя коробка со своей прокруткой стоит выше по файлу), и
+     пятый ряд просто уезжает под прокрутку, а не жмёт остальные. */
   .rc-flight .rcf-menu .rcf-nav button,
-  .rc-flight .rcf-menu .rcf-uni button { min-height: 34px; font-size: 11px; }
+  .rc-flight .rcf-menu .rcf-uni button { min-height: 44px; font-size: 11px; }
   /* Рукава в две колонки на 360 превращались в кашу: кнопка 94 точки
      шириной, а в ней «ПОЛЕ KEPLER · EXO-2 · реальные многопланетные
      системы телескопа Kepler» - семь строк по одному-два слова с
