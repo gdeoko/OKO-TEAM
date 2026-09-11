@@ -3404,14 +3404,9 @@ function buildWorld() {
      заход построил его заново, а не показывал чёрный кадр. */
   if (g.RC_GL && g.RC_GL.guard) {
     try {
-      g.RC_GL.guard(ui.cv, function () {
-        F.built = false;
-        /* Место уже вернула сама страховка, второй раз не отдаём */
-        F.glSlot = false;
-        if (F.open) close();
-      }, function () {
-        if (ui.cv) ui.cv.style.opacity = "";
-      });
+      /* Место в бюджете уже вернула сама страховка, второй раз не
+         отдаём: это делает контекстОтобран, а не close(). */
+      g.RC_GL.guard(ui.cv, контекстОтобран, контекстВернули);
     } catch (e2) {}
   }
   F.glSlot = true;
@@ -3529,7 +3524,10 @@ function buildWorld() {
      хватает, шестнадцати хватает. Карта у железа спрашивается сама -
      где потолок ниже, возьмём его. */
   var АНИЗО = 4;
-  try { АНИЗО = Math.max(4, Math.min(16, r.capabilities.getMaxAnisotropy())); } catch (eA) {}
+  /* На телефоне потолок восемь: шестнадцать выборок на тексель
+     удваивают цену каждой карты планеты в памяти и в кадре, а на
+     проёме в четыреста точек разницы нет. */
+  try { АНИЗО = Math.max(4, Math.min(mob ? 8 : 16, r.capabilities.getMaxAnisotropy())); } catch (eA) {}
 
   function tex(p) {
     var src = p;
@@ -4084,7 +4082,16 @@ function buildWorld() {
          Карты в webp: те же снимки весят на полтора мегабайта
          меньше, и вход в игру на телефоне не ждёт загрузку двух
          мегабайт текстур. */
-      var dayMap = tex("assets/space/earth-day.webp");
+      /* На телефоне Земля идёт с карты 2048x1024. Полная 4096x2048
+         это 32 МБ видеопамяти на одну карту, а карт две и у каждой
+         мип-уровни. На телефоне владельца финал сайта гас в тёмный
+         экран без единого исключения в журнале, а чёрный холст без
+         ошибки это ровно отобранный браузером контекст: телефон
+         отбирает его за память, а не за код. В проёме рубки шар
+         занимает от силы четыреста точек, разницы между картами глаз
+         не видит, памяти вчетверо меньше. */
+      var ЗЕМЛЯ_К = (mob || (navigator.deviceMemory || 4) <= 4) ? "-2k" : "";
+      var dayMap = tex("assets/space/earth-day" + ЗЕМЛЯ_К + ".webp");
       var m = new T.MeshStandardMaterial({
         map: dayMap,
         roughnessMap: dayMap,
@@ -4106,7 +4113,7 @@ function buildWorld() {
            Сила свечения снижена с 2.35: прежняя карта нигде не
            доходила до полной яркости, и множитель добирал её силой.
            У честной карты города дают единицу сами. */
-        emissiveMap: tex("assets/space/earth-night.webp"),
+        emissiveMap: tex("assets/space/earth-night" + ЗЕМЛЯ_К + ".webp"),
         emissive: new T.Color(0xffc978),
         emissiveIntensity: 1.7,
         /* Окружение планету почти не трогает. Панорама сцены яркая и
@@ -6407,6 +6414,77 @@ function плотность(v) {
   W3.r.setPixelRatio(нов);
   W3.r.setSize(innerWidth, innerHeight, false);
   if (W3.post) { try { W3.post.setSize(innerWidth, innerHeight); } catch (eП) {} }
+  /* Звезда считает свой размер от плотности, с которой её рисуют
+     (uPx), а плотность меняется только здесь. Раньше uPx ставился
+     один раз при сборке мира: регулятор снимал плотность до 0.72,
+     звезда оставалась посчитанной под 1.35, и холст растягивал её
+     ещё вдвое. На снимке владельца это и были мягкие пятна вместо
+     точек. Теперь размер точки в экранных пикселях один и тот же на
+     любой плотности. */
+  try {
+    if (W3.starMats && W3.starMats.уни && W3.starMats.уни.uPx) {
+      W3.starMats.уни.uPx.value = Math.min(2, нов);
+    }
+  } catch (eЗ) {}
+}
+
+/* ── Отобранный контекст ──────────────────────────────────────
+   Раньше потеря контекста закрывала полёт целиком: close() снимал
+   слой и забывал мир, и в финале сайта человек оставался на тёмном
+   экране. Его владелец и прислал с телефона: чёрное поле и едва
+   видимая карточка брифинга поверх. Телефон отбирает контекст за
+   память, а не за ошибку, и почти всегда возвращает через секунду
+   или две; three.js после возврата поднимает программы и карты сам,
+   ему нужно только, чтобы цикл кадра снова пошёл.
+
+   Поэтому: отобрали - останавливаем цикл и ждём. Вернули - размер и
+   цикл заново, тем же миром, в той же точке маршрута. Не вернули за
+   три секунды - пересобираем мир на свежем холсте в том же режиме, в
+   каком были: сцена финала остаётся сценой, полёт полётом, без
+   карточки брифинга поверх. */
+var потеряТ = 0;
+function контекстОтобран() {
+  F.glSlot = false;
+  if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
+  if (потеряТ) clearTimeout(потеряТ);
+  потеряТ = setTimeout(function () {
+    потеряТ = 0;
+    if (!F.open && !F.stage) return;
+    пересобратьМир();
+  }, 3000);
+}
+function контекстВернули() {
+  if (потеряТ) { clearTimeout(потеряТ); потеряТ = 0; }
+  F.glSlot = true;
+  if (ui.cv) ui.cv.style.opacity = "";
+  if (!W3) return;
+  try { size(); } catch (eР) {}
+  if ((F.open || F.stage) && !F.raf) F.raf = requestAnimationFrame(frame);
+}
+function пересобратьМир() {
+  var старый = ui.cv;
+  if (!старый || !старый.parentNode) return;
+  var новый = doc.createElement("canvas");
+  новый.className = "rcf-cv";
+  старый.parentNode.replaceChild(новый, старый);
+  if (g.RC_GL && g.RC_GL.drop) { try { g.RC_GL.drop(старый); } catch (eД) {} }
+  ui.cv = новый;
+  if (W3 && W3.scene) { try { убратьДерево(W3.scene); } catch (eМ) {} }
+  if (W3 && W3.r) { try { W3.r.dispose(); } catch (eР) {} }
+  W3 = null;
+  F.built = false;
+  var к = F.stageK, былоСцена = F.stage, былоОткрыт = F.open;
+  /* Салон строится внутри мира, значит собирается заново вместе с ним */
+  try { cabinDrop(); } catch (eС) {}
+  F.stage = false; F.open = false;
+  if (F.raf) { cancelAnimationFrame(F.raf); F.raf = null; }
+  if (g.RC_track) g.RC_track("glloss", "flight: rebuild", true);
+  if (былоСцена) { try { stage(к); } catch (eСц) {} }
+  else if (былоОткрыт) {
+    F["пересборка"] = true;
+    try { open(); } catch (eО) {}
+    F["пересборка"] = false;
+  }
 }
 
 function size() {
@@ -9151,7 +9229,7 @@ function open() {
      карточку с двумя кнопками значит рвать сцену ровно там, где
      она должна склеиться. Поэтому в акте отлёта брифинга нет -
      корабль просто трогается на автопилоте. */
-  var seamless = fromStage || root.getAttribute("data-act") === "egress";
+  var seamless = fromStage || root.getAttribute("data-act") === "egress" || !!F["пересборка"];
   /* Запоминаем, как вошли: из финала прокруткой или кнопкой посреди
      страницы. От этого зависит, чем выходить. */
   F["изФинала"] = !!seamless;
