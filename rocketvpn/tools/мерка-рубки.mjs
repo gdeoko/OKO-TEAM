@@ -56,7 +56,7 @@ const св = await стр.evaluate(() => {
     if (ф && ф["местоУПульта"]) из.местоУПульта = ф["местоУПульта"];
   } catch (e) {}
   try {
-    из.проёмРубки = window.RV_ФИНАЛ && window.RV_ФИНАЛ["окно"] ? window.RV_ФИНАЛ["окно"]() : null;
+    из.проёмРубки = window.RV_ФИНАЛ && window.RV_ФИНАЛ["окно"] ? window.RV_ФИНАЛ["окно"](true) : null;
   } catch (e) { из.проёмОшибка = e.message.slice(0, 120); }
   try {
     if (window.RC_PANEL && window.RC_PANEL.last) {
