@@ -294,6 +294,17 @@ if ($sk !== '') {
             <?php if ($txt !== ''): ?><div style="white-space:pre-wrap;word-break:break-word"><?= nl2br(h($txt)) ?></div><?php endif; ?>
             <div class="chat-tools" style="margin-top:5px;display:flex;gap:8px">
               <button type="button" class="lnk" style="font-size:11px;color:#2C7BE5;background:none;border:0;cursor:pointer;padding:0" onclick="chatEdit(<?= (int) $m['id'] ?>, this)">изменить</button>
+              <?php if ($txt !== ''): ?>
+              <!-- ВЗЯТЬ ТЕКСТ БОТА В СВОЙ ОТВЕТ.
+                   Раньше оператор выделял ответ бота прямо на странице и копировал
+                   руками. С телефона выделение то и дело начинается на символ позже,
+                   и 11.09 участнику ушло письмо, начинавшееся с «дравствуйте»: пропала
+                   первая буква, а пустые строки размножились — это следы копирования
+                   свёрстанного текста. Кнопка кладёт в поле ответа ИСХОДНЫЙ текст
+                   сообщения, не тронутый вёрсткой, и выделять уже нечего. -->
+              <button type="button" class="lnk" style="font-size:11px;color:#2C7BE5;background:none;border:0;cursor:pointer;padding:0"
+                      data-take="<?= h($txt) ?>" onclick="chatTake(this)">взять в ответ</button>
+              <?php endif; ?>
               <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Удалить это сообщение?')"><?= csrf_field() ?><input type="hidden" name="do" value="del_msg"><input type="hidden" name="mid" value="<?= (int) $m['id'] ?>"><button style="font-size:11px;color:#c0392b;background:none;border:0;cursor:pointer;padding:0">удалить</button></form>
             </div>
             <form method="post" action="<?= url('/admin/') ?>" id="edit<?= (int) $m['id'] ?>" style="display:none;margin-top:6px"><?= csrf_field() ?>
@@ -331,6 +342,17 @@ if ($sk !== '') {
     </style>
     <script>
     function chatEdit(id, btn){ var f=document.getElementById('edit'+id); if(f) f.style.display = f.style.display==='none'?'block':'none'; }
+    /* Переносит текст сообщения в поле ответа целиком и ставит курсор в конец —
+       оператор правит, что нужно, и отправляет. Ничего не выделяется руками,
+       поэтому и потерять первую букву больше негде. */
+    function chatTake(btn){
+      var ta = document.querySelector('.chat-reply textarea');
+      if (!ta) return;
+      ta.value = btn.getAttribute('data-take') || '';
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+      ta.scrollIntoView({block:'center', behavior:'smooth'});
+    }
     (function(){
       var log = document.getElementById('chatLog');
       if (!log) return;
