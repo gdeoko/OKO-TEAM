@@ -1011,14 +1011,45 @@ function show() {
   st.shown = true;
   root.classList.add("rc-inside");
   заглушитьСтраницу(true);
-  if (g.RC_ROCKET && !root.classList.contains("rc-rocket-parked")) {
-    try { g.RC_ROCKET.stop(); root.classList.add("rc-rocket-parked"); } catch (e) {}
-  }
   /* Салон появляется в мире игры тем же кадром, в котором мы
      переступили порог: подмены нет, потому что подменять нечего */
   scene3d(true, 0);
   lastTs = 0;
   if (!raf) raf = requestAnimationFrame(tick);
+  /* ── НАРУЖНАЯ СЦЕНА ГАСНЕТ ПОСЛЕДНЕЙ ──────────────────────
+     Корабль останавливался ЗДЕСЬ ЖЕ, первой строкой, до того как мир
+     игры успевал отдать хоть один кадр. Между этими двумя событиями
+     кадр пуст, и замер это поймал числом: профиль яркости на телефоне
+     давал 26.68, потом 1.32, потом 25.13 - один шаг в чёрное ровно на
+     входе в люк. Раньше провал прикрывала вспышка из проёма, теперь
+     её нет (rc-world.js), и прикрывать его нечем, да и не нужно:
+     достаточно не гасить то, что ещё показывают.
+
+     Ждём первый кадр рубки и только после него паркуем корабль. Если
+     мир игры не поднимется вовсе (нет объёмного слоя, отказ по
+     упрощению), паркуем по сроку в полторы секунды - иначе наружная
+     сцена осталась бы крутиться под рубкой. */
+  var ждём = 0;
+  function паркуй() {
+    if (ждём) { clearInterval(ждём); ждём = 0; }
+    if (!st.shown) return;
+    if (g.RC_ROCKET && !root.classList.contains("rc-rocket-parked")) {
+      try { g.RC_ROCKET.stop(); root.classList.add("rc-rocket-parked"); } catch (e) {}
+    }
+  }
+  var начало = (g.performance && g.performance.now) ? performance.now() : 0;
+  ждём = setInterval(function () {
+    if (!st.shown) { clearInterval(ждём); ждём = 0; return; }
+    var готова = false;
+    /* Ключ у состояния русский: «сцена» это и есть признак того, что
+       слой игры принял кадр и рисует рубку. */
+    try {
+      var сост = (g.RC_FLIGHT && g.RC_FLIGHT.state) ? g.RC_FLIGHT.state() : null;
+      готова = !!(сост && сост["сцена"] && сост["салон"]);
+    } catch (eС) {}
+    var срок = ((g.performance && g.performance.now) ? performance.now() : 0) - начало > 1500;
+    if (готова || срок) паркуй();
+  }, 60);
 }
 
 function hide() {
