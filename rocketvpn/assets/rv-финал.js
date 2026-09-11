@@ -571,7 +571,17 @@
       return т;
     };
     var день = карта("assets/space/earth-day-2k.webp");
-    var earth = new T.Mesh(new T.SphereGeometry(3.25, W.ступень === 0 ? 40 : 64, 32),
+    /* ── РАЗМЕР И МЕСТО ЗЕМЛИ СВЕРЕНЫ С КАДРОМ СОСЕДЕЙ ───────────
+       Замер по снимкам монитора 1440x900: у соседей диск Земли занимает
+       по ширине 480..990 точек, то есть тридцать пять процентов кадра,
+       и стоит центром около (735, 390). У нас было 610..960 - двадцать
+       четыре процента, центр (785, 430): планета мельче и ниже, отчего
+       за стеклом читался не тот же мир, а похожий.
+
+       Радиус поднят с 3.25 до 4.6, центр сдвинут влево и вверх. Числа
+       не на глаз: при поле 72 градуса и расстоянии тринадцать единиц
+       одна единица мира это 76 точек экрана, отсюда и сдвиг. */
+    var earth = new T.Mesh(new T.SphereGeometry(4.6, W.ступень === 0 ? 40 : 64, 32),
       new T.MeshStandardMaterial({
         map: день,
         /* Шероховатость с той же дневной карты: океан на ней тёмный,
@@ -583,11 +593,11 @@
         emissive: new T.Color(0xffc978), emissiveIntensity: 1.7,
         fog: false }));
     earth.name = "Земля за окном";
-    earth.position.set(1.35, 0.65, -13);
+    earth.position.set(0.70, 1.15, -13);
     earth.rotation.set(0.10, 2.15, -0.12);
     /* Облачный слой отдельной сферой чуть шире шара, как у соседей:
        без него планета читается глобусом, а не живой планетой. */
-    var облака = new T.Mesh(new T.SphereGeometry(3.31, W.ступень === 0 ? 40 : 64, 32),
+    var облака = new T.Mesh(new T.SphereGeometry(4.69, W.ступень === 0 ? 40 : 64, 32),
       new T.MeshLambertMaterial({
         map: карта("assets/space/clouds.webp"),
         transparent: true, opacity: 0.55, depthWrite: false, fog: false }));
@@ -607,7 +617,7 @@
     group.add(солнце);
     group.add(солнце.target);
     М.солнцеЗаОкном = солнце;
-    var atmosphere = new T.Mesh(new T.SphereGeometry(3.30, 48, 24), new T.ShaderMaterial({
+    var atmosphere = new T.Mesh(new T.SphereGeometry(4.67, 48, 24), new T.ShaderMaterial({
       transparent: true, depthWrite: false, blending: T.AdditiveBlending,
       vertexShader: "varying vec3 vNormal; varying vec3 vEye; void main(){vec4 p=modelViewMatrix*vec4(position,1.); vNormal=normalize(normalMatrix*normal); vEye=-p.xyz; gl_Position=projectionMatrix*p;}",
       fragmentShader: "varying vec3 vNormal; varying vec3 vEye; void main(){float rim=pow(1.-max(0.,dot(normalize(vNormal),normalize(vEye))),4.); gl_FragColor=vec4(.12,.36,.72,rim*.24);}"
