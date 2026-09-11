@@ -3609,7 +3609,15 @@ html.рв-живая-рубка .рв-кн-ряд { gap: 8px; }
   html.рв-живая-рубка .рв-фин-впр, html.рв-живая-рубка .рв-фин-игра {
     top: 72px; height: calc(100% - 204px); width: min(440px, 55vw); right: 24px;
   }
-  html.рв-живая-рубка .рв-фин-кн { top: auto; bottom: 16px; right: 24px; width: min(440px, 55vw); }
+  /* Тот же счёт, что и в стоячем кадре: кадр взят в полную высоту, и
+     шестнадцать точек от его низа это шестнадцать точек от места, до
+     которого человек не долистает. В лежачем адресная строка ниже, но
+     она есть, и разница единиц закрывает её так же. */
+  html.рв-живая-рубка .рв-фин-кн {
+    top: auto; right: 24px; width: min(440px, 55vw);
+    bottom: 16px;
+    bottom: calc(100lvh - 100svh + 16px);
+  }
 }
 html.rv-no-webgl .рв-каб, html.rv-no-webgl .rv-рейка { display: none !important; }
 html.rv-no-webgl .rv-заг, html.rv-no-webgl .rv-заг em { text-shadow: none; filter: none; }
