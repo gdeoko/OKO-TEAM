@@ -44,6 +44,21 @@ for (const [а, д] of [["прокол", 0.50], ["прокол", 0.90], ["про
       W.scene.traverse((о) => {
         if (о.name !== имя) return;
         о.updateMatrixWorld(true);
+        /* У кладки Box3.setFromObject врёт: сетка это ОДИН брусок, а
+           форма живёт в матрицах экземпляров. Коробка выходила высотой
+           в кирпич независимо от того, сложена ракета или ещё летит.
+           Считаем по самим экземплярам. */
+        if (о.isInstancedMesh) {
+          const м = new W.T.Matrix4(), п = new W.T.Vector3(), кв = new W.T.Quaternion(), мс = new W.T.Vector3();
+          let низ = Infinity, верх = -Infinity;
+          for (let i = 0; i < о.count; i++) {
+            о.getMatrixAt(i, м); м.premultiply(о.matrixWorld); м.decompose(п, кв, мс);
+            низ = Math.min(низ, п.y - Math.abs(мс.y) * 0.5);
+            верх = Math.max(верх, п.y + Math.abs(мс.y) * 0.5);
+          }
+          if (isFinite(низ)) б = [+низ.toFixed(2), +верх.toFixed(2)];
+          return;
+        }
         const к = new W.T.Box3().setFromObject(о);
         if (isFinite(к.min.y)) б = [+к.min.y.toFixed(2), +к.max.y.toFixed(2)];
       });
