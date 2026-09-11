@@ -47,7 +47,7 @@ function vkq(string $method, array $params, string $token): array {
     $params['access_token'] = $token;
     $params['v'] = '5.199';
     for ($try = 0; $try < 5; $try++) {
-        $ch = curl_init('https://api.vk.com/method/' . $method);
+        $ch = curl_init('https://api.vk.ru/method/' . $method);
         curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => http_build_query($params),
                                 CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 45]);
         $raw = curl_exec($ch);

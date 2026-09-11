@@ -270,7 +270,7 @@ function vf_direct_link(string $url): array {
             if ($vid !== '') {
                 $token = function_exists('cfgv') ? trim((string) cfgv('vk_token', '')) : '';
                 if ($token !== '') {
-                    $api = 'https://api.vk.com/method/video.get?videos=' . rawurlencode($vid)
+                    $api = 'https://api.vk.ru/method/video.get?videos=' . rawurlencode($vid)
                          . '&access_token=' . rawurlencode($token) . '&v=5.199';
                     $j = json_decode(vf_http($api)['body'], true);
                     $item = $j['response']['items'][0] ?? null;
@@ -392,7 +392,7 @@ function vf_direct_link(string $url): array {
             }
             $token = function_exists('cfgv') ? trim((string) cfgv('vk_token', '')) : '';
             if ($token === '') return $fail('ВКонтакте: снимок доступен только по токену сообщества');
-            $api = 'https://api.vk.com/method/photos.getById?photos=' . rawurlencode($m[1] . '_' . $m[2])
+            $api = 'https://api.vk.ru/method/photos.getById?photos=' . rawurlencode($m[1] . '_' . $m[2])
                  . '&photo_sizes=1&access_token=' . rawurlencode($token) . '&v=5.199';
             $j = json_decode(vf_http($api)['body'], true);
             $sizes = (array) ($j['response'][0]['sizes'] ?? []);

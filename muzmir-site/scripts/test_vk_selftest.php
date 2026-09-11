@@ -32,7 +32,7 @@ function vk(string $method, array $params, string $token, string $v): array {
         'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
         'content' => http_build_query($params),
     ]]);
-    $raw = @file_get_contents('https://api.vk.com/method/' . $method, false, $ctx);
+    $raw = @file_get_contents('https://api.vk.ru/method/' . $method, false, $ctx);
     $j = json_decode((string) $raw, true);
     return is_array($j) ? $j : ['error' => ['error_msg' => 'нет ответа: ' . substr((string) $raw, 0, 200)]];
 }

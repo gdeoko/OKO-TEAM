@@ -100,7 +100,8 @@ for ($page = 0; $page < 3; $page++) {
  * запросом. У него свой предохранитель: закрыт — просто пропускаем. */
 $left = array_diff_key($peers, $found);
 $userTok = trim((string) cfgv('vk_token', ''));
-if ($left && $userTok !== '' && (int) setting('vk_flood_until_user', '0') <= time()) {
+if ($left && $userTok !== '' && vk_user_key_usable($userTok)
+    && (int) setting('vk_flood_until_user', '0') <= time()) {
     $r = vk_api_with('users.get',
                      ['user_ids' => implode(',', array_keys($left)), 'fields' => 'first_name,last_name'],
                      $userTok, 'vk_flood_until_user');

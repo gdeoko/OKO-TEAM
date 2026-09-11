@@ -50,9 +50,74 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
      * ошибкой, ничего не отправил и ничего не опубликовал. */
     $code = (int) ($r['error']['error_code'] ?? 0);
     if (!in_array($code, [3, 15, 27], true)) return $r;
+    if (!vk_user_key_usable($user)) return $r;
 
     _vk_log($method . ': ключу сообщества метод недоступен (' . $code . '), повторяю личным ключом');
     return vk_api_with($method, $params, $user, 'vk_flood_until_user');
+}
+
+/**
+ * ЗАБЛОКИРОВАННЫЙ АККАУНТ НЕ ТРОГАЕМ ВОВСЕ.
+ *
+ * ВКонтакте на закрытую страницу отвечает кодом 5 «user is blocked» и кладёт в
+ * ответ ban_info со ссылкой на разблокировку. Пока страница закрыта, каждый наш
+ * запрос её личным ключом — это обращение к заблокированному аккаунту с
+ * серверного адреса. Пользы ноль, а выглядит ровно как то, из-за чего страницу
+ * и закрыли. Поэтому: увидели отказ — запомнили хвост ключа и больше им не
+ * ходим. Владелец разблокировал страницу и выдал новый ключ — хвост другой,
+ * запрет снимается сам, ничего руками чистить не нужно.
+ */
+function vk_user_key_usable(string $token): bool {
+    $token = trim($token);
+    if ($token === '' || !function_exists('setting')) return $token !== '';
+    if ((string) setting('vk_user_blocked_tok', '') !== substr($token, -12)) return true;
+
+    /* ЗАПРЕТ ОБЯЗАН УМЕТЬ СНИМАТЬСЯ САМ.
+     * Владелец разблокирует страницу через ban_info.restore_url — и часто тем же
+     * ключом, без выдачи нового. Если держать запрет вечно по хвосту ключа, мы
+     * никогда об этом не узнаем и будем считать живую страницу закрытой. Поэтому
+     * раз в шесть часов пробуем ещё раз: одна проба за полсмены — это не стук в
+     * дверь, а проверка, не открыли ли её. Ответила — отметка снимается в
+     * vk_api_with, как и для любого удачного вызова. */
+    $at = strtotime((string) setting('vk_user_blocked_at', '')) ?: 0;
+    return $at > 0 && (time() - $at) > 6 * 3600;
+}
+
+/**
+ * СПРОСИТЬ У ВК ПРЯМО: НЕ ЗАКРЫТА ЛИ СТРАНИЦА ВЛАДЕЛЬЦА.
+ *
+ * Разные методы отвечают на блокировку ПО-РАЗНОМУ, и это стоило двух суток
+ * поисков несуществующего превышения темпа. `users.get` на закрытой странице
+ * отвечает «error 9, Flood control» — то есть «ты частишь»; а методы, которым
+ * нужна настоящая авторизация (`account.getAppPermissions`,
+ * `messages.getConversations`), говорят честно: «error 5, user is blocked» и
+ * присылают ban_info со ссылкой на разблокировку. На домен это не влияет:
+ * api.vk.ru и api.vk.com отвечают одинаково, проверено обоими.
+ *
+ * Поэтому спрашиваем тем методом, который не врёт. Возвращает ссылку
+ * разблокировки, если страница закрыта, иначе пустую строку.
+ */
+function vk_user_blocked_probe(string $token): string {
+    $token = trim($token);
+    if ($token === '') return '';
+    $r = vk_api_with('account.getAppPermissions', [], $token, 'vk_flood_until_user');
+    $code = (int) ($r['error']['error_code'] ?? 0);
+    if ($code !== 5 || stripos((string) ($r['error']['error_msg'] ?? ''), 'blocked') === false) return '';
+    vk_user_key_mark_blocked($token, (array) $r['error']);
+    return (string) ($r['error']['ban_info']['restore_url'] ?? ' ');
+}
+
+/** Запомнить, что ВК закрыл страницу владельца, и подсказать ссылку восстановления. */
+function vk_user_key_mark_blocked(string $token, array $err): void {
+    if (!function_exists('set_setting')) return;
+    $tail = substr(trim($token), -12);
+    if ((string) setting('vk_user_blocked_tok', '') === $tail) return;   // уже знаем
+    set_setting('vk_user_blocked_tok', $tail);
+    set_setting('vk_user_blocked_at', date('Y-m-d H:i:s'));
+    $url = (string) ($err['ban_info']['restore_url'] ?? '');
+    if ($url !== '') set_setting('vk_user_restore_url', $url);
+    _vk_log('ВК закрыл страницу владельца — личный ключ отключён'
+            . ($url !== '' ? '; разблокировка: ' . $url : ''));
 }
 
 /**
@@ -105,7 +170,10 @@ function vk_api_with(string $method, array $params, string $token, string $break
     $tempCodes = [1, 6, 10, 29];   // неизвестная, слишком часто, внутренняя, лимит
     $last = ['error' => ['error_msg' => 'нет ответа']];
     for ($try = 1; $try <= 4; $try++) {
-        $ch = curl_init('https://api.vk.com/method/' . $method);
+        /* Российский домен: к ВКонтакте ходим прямо, с российского адреса и без
+         * посредников — правило владельца от 11.09.2026. Ответы у api.vk.ru и
+         * api.vk.com одинаковые, дело не в домене (см. vk_user_blocked_probe). */
+        $ch = curl_init('https://api.vk.ru/method/' . $method);
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query($params),
@@ -125,6 +193,13 @@ function vk_api_with(string $method, array $params, string $token, string $break
                 $last = ['error' => ['error_msg' => 'Bad JSON response']];
             } else {
                 $code = (int) ($d['error']['error_code'] ?? 0);
+                /* Страница владельца закрыта — запоминаем и больше этим ключом
+                 * не ходим (см. vk_user_key_usable). Ссылку на разблокировку ВК
+                 * присылает тут же, в ban_info: она пригодится владельцу. */
+                if ($code === 5 && stripos((string) ($d['error']['error_msg'] ?? ''), 'blocked') !== false) {
+                    vk_user_key_mark_blocked($token, (array) $d['error']);
+                    return $d;
+                }
                 if ($code === 9) {
                     // Отдых удлиняем, пока служба не отпустит: 5 минут, 10, дальше 15.
                     $prev = (int) (function_exists('setting') ? setting($stepKey, '0') : 0);
@@ -145,6 +220,13 @@ function vk_api_with(string $method, array $params, string $token, string $break
                     return $d;
                 }
                 if (!isset($d['error'])) {
+                    // Страница владельца снова отвечает — снимаем отметку о блокировке.
+                    if (function_exists('set_setting')
+                        && (string) setting('vk_user_blocked_tok', '') === substr($token, -12)) {
+                        set_setting('vk_user_blocked_tok', '');
+                        set_setting('vk_user_restore_url', '');
+                        _vk_log('страница владельца снова отвечает — личный ключ включён');
+                    }
                     // Ответила — значит дверь открыта: сбрасываем и отдых, и его длину.
                     if (function_exists('set_setting') && (int) setting($stepKey, '0') > 0) {
                         set_setting($stepKey, '0');
@@ -604,8 +686,15 @@ function vk_health(): array {
     $group = $g['response'][0] ?? ($g['response']['groups'][0] ?? null);
 
     $userTok = trim((string) cfgv('vk_token', ''));
-    $u = $userTok === '' ? ['error' => ['error_msg' => 'личный ключ не задан']]
-                         : vk_api_with('users.get', [], $userTok, 'vk_flood_until_user');
+    if ($userTok === '')                    $u = ['error' => ['error_msg' => 'личный ключ не задан']];
+    elseif (!vk_user_key_usable($userTok))  $u = ['error' => ['error_msg' => 'ВК закрыл страницу владельца']];
+    else {
+        // Сперва честный вопрос «не закрыта ли страница» — он же ставит отметку
+        // и запоминает ссылку разблокировки. Закрыта — дальше не идём.
+        $ban = vk_user_blocked_probe($userTok);
+        $u = $ban !== '' ? ['error' => ['error_msg' => 'ВК закрыл страницу владельца']]
+                         : vk_api_with('users.get', ['user_ids' => '1'], $userTok, 'vk_flood_until_user');
+    }
 
     return [
         'group_ok'  => $group !== null,
@@ -613,7 +702,9 @@ function vk_health(): array {
         'user_ok'   => isset($u['response'][0]['id']),
         'user'      => $u['response'][0] ?? null,
         'user_note' => isset($u['response'][0]['id']) ? '' :
-                       'личный ключ владельца сейчас не отвечает — на работу сообщества это не влияет',
+                       'личный ключ владельца сейчас не отвечает — на работу сообщества это не влияет'
+                       . ((string) setting('vk_user_restore_url', '') !== ''
+                          ? '; разблокировка страницы: ' . setting('vk_user_restore_url', '') : ''),
         'error'     => $g['error'] ?? null,
     ];
 }

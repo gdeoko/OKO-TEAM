@@ -210,7 +210,7 @@ if (!function_exists('video_verify')) {
             }
             $tok = function_exists('cfgv') ? (string) cfgv('vk_token', '') : '';
             if ($tok !== '') {
-                $j = _lc_http_json('https://api.vk.com/method/video.get?videos=' . $vid
+                $j = _lc_http_json('https://api.vk.ru/method/video.get?videos=' . $vid
                     . '&access_token=' . rawurlencode($tok) . '&v=5.199');
                 if (is_array($j) && isset($j['response'])) {
                     $item = $j['response']['items'][0] ?? null;
