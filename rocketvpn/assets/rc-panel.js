@@ -776,6 +776,11 @@ function build(T, o) {
   });
   mat.normalScale = new T.Vector2(1.2, 1.2);
   try {
+    /* RC_REAL.env это ФУНКЦИЯ, которая печёт окружение, а не готовая
+       карта: без проверки в envMap материала ложилась сама функция.
+       Три.js считает такое поле истинным, включает ветку окружения в
+       шейдере и берёт у функции mapping, которого нет - отражения на
+       пульте выходили случайными. Спрашиваем текстуру. */
     if (g.RC_REAL && g.RC_REAL.env && g.RC_REAL.env.isTexture) {
       mat.envMap = g.RC_REAL.env; mat.envMapIntensity = 0.55;
     }
