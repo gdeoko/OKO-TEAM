@@ -116,8 +116,8 @@ function vk_user_key_mark_blocked(string $token, array $err): void {
     set_setting('vk_user_blocked_at', date('Y-m-d H:i:s'));
     $url = (string) ($err['ban_info']['restore_url'] ?? '');
     if ($url !== '') set_setting('vk_user_restore_url', $url);
-    _vk_log('ВК закрыл страницу владельца — личный ключ отключён'
-            . ($url !== '' ? '; разблокировка: ' . $url : ''));
+    _vk_log('личный ключ владельца больше не работает — отключён до выдачи нового'
+            . ($url !== '' ? '; разблокировка страницы: ' . $url : ''));
 }
 
 /**
@@ -196,9 +196,17 @@ function vk_api_with(string $method, array $params, string $token, string $break
                 /* Страница владельца закрыта — запоминаем и больше этим ключом
                  * не ходим (см. vk_user_key_usable). Ссылку на разблокировку ВК
                  * присылает тут же, в ban_info: она пригодится владельцу. */
-                if ($code === 5 && stripos((string) ($d['error']['error_msg'] ?? ''), 'blocked') !== false) {
-                    vk_user_key_mark_blocked($token, (array) $d['error']);
-                    return $d;
+                /* Код 5 — «этим ключом работать нельзя»: страница закрыта либо
+                 * ключ умер (владелец сменил пароль, разблокировал страницу,
+                 * отозвал доступ). И то и другое лечится одним — новым ключом,
+                 * а до него ходить сюда незачем: 11.09 разнос записей по
+                 * сообществам делал тридцать обращений в сутки мёртвым ключом. */
+                if ($code === 5) {
+                    $m = (string) ($d['error']['error_msg'] ?? '');
+                    if (stripos($m, 'blocked') !== false || stripos($m, 'invalid access_token') !== false) {
+                        vk_user_key_mark_blocked($token, (array) $d['error']);
+                        return $d;
+                    }
                 }
                 if ($code === 9) {
                     // Отдых удлиняем, пока служба не отпустит: 5 минут, 10, дальше 15.

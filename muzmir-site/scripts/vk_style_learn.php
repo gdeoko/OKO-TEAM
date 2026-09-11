@@ -342,20 +342,40 @@ chat_canon_migrate();
 $db = db();
 $db->beginTransaction();
 try {
-    // Старые эталоны из ВК заменяем целиком: смешивать разбор двух разных
-    // выгрузок незачем, свежий разбор полнее прежнего.
-    q("DELETE FROM chat_style_samples WHERE source='vk_history'");
+    /* ПУСТОЙ РАЗБОР НЕ ИМЕЕТ ПРАВА СТИРАТЬ ПРЕЖНИЙ.
+     *
+     * Здесь сразу шло DELETE, а вставка — как получится. 11.09 выгрузка сменила
+     * ключ на сообщественный, разбор нашёл всего два шаблона, оба отсеялись
+     * фильтрами — и канон обнулился: пропала в том числе запись «Уточните
+     * пожалуйста: название конкурса, ФИО конкурсанта…», самый частый ответ
+     * центра за все годы (43 повтора). Бот остался без канона, и никто бы не
+     * заметил: в отчёте стояло честное «записано шаблонов канона: 0».
+     *
+     * Поэтому решение принимается ПОСЛЕ разбора, по тому, что удалось собрать.
+     * Ничего не собрали — прежнее остаётся на месте. Собрали заметно меньше
+     * прежнего — тоже: разбор одной выгрузки не повод выбрасывать накопленное.
+     * Заменяем, только когда новое не хуже старого. */
     $st = $db->prepare("INSERT INTO chat_style_samples (topic, question, answer, source, created_at)
                         VALUES (?,?,?, 'vk_history', datetime('now','localtime'))");
-    foreach ($picked as $p) $st->execute([$p['topic'], $p['q'], $p['a']]);
+    $oldSamples = (int) scalar("SELECT COUNT(*) FROM chat_style_samples WHERE source='vk_history'");
+    $samplesKept = false;
+    if (count($picked) > 0 && count($picked) >= (int) floor($oldSamples * 0.6)) {
+        q("DELETE FROM chat_style_samples WHERE source='vk_history'");
+        foreach ($picked as $p) $st->execute([$p['topic'], $p['q'], $p['a']]);
+    } else {
+        /* Новых мало — прежние не трогаем, а новые ДОБАВЛЯЕМ к ним без повторов:
+         * материал для обучения от этого только прибавляется. */
+        foreach ($picked as $p) {
+            $dup = scalar("SELECT 1 FROM chat_style_samples WHERE question=? AND answer=?", [$p['q'], $p['a']]);
+            if (!$dup) $st->execute([$p['topic'], $p['q'], $p['a']]);
+        }
+        $samplesKept = true;
+    }
 
     /* КАНОН ПЕРЕЗАПИСЫВАЕМ ТОЛЬКО СВОЙ.
      * Записи, заведённые владельцем руками в админке (source отличный от
      * vk_history), трогать нельзя: он их выверял, а разбор переписки — машинный. */
-    q("DELETE FROM chat_canon WHERE source='vk_history'");
-    $sc = $db->prepare("INSERT INTO chat_canon (topic, triggers, answer, uses, enabled, source, created_at)
-                        VALUES (?,?,?,?,1,'vk_history', datetime('now','localtime'))");
-    $canonSaved = 0; $seenSkel = []; $perTopicCanon = [];
+    $canonRows = []; $seenSkel = []; $perTopicCanon = [];
     foreach ($tpl as $c) {
         // «Прочее» в канон не идёт: по такой теме ничего не подберёшь, а в промпт
         // попадёт случайный текст. Туда же не пускаем эскалацию по телефону —
@@ -398,8 +418,20 @@ try {
          * заказать кубок» подставлялось «Спасибо, вложение получила». */
         if (preg_match('~вложение получил|файл получил|ваш\s+диплом\s+готов'
                      . '|предлагаем вам вступить|вступить в наш~ui', $ans)) continue;
-        $sc->execute([$c['topic'], implode(' | ', array_slice($c['qs'], 0, 3)), $ans, (int) $c['n']]);
-        $canonSaved++;
+        $canonRows[] = [$c['topic'], implode(' | ', array_slice($c['qs'], 0, 3)), $ans, (int) $c['n']];
+    }
+
+    $oldCanon  = (int) scalar("SELECT COUNT(*) FROM chat_canon WHERE source='vk_history'");
+    $canonKept = false;
+    if ($canonRows && count($canonRows) >= (int) floor($oldCanon * 0.6)) {
+        q("DELETE FROM chat_canon WHERE source='vk_history'");
+        $sc = $db->prepare("INSERT INTO chat_canon (topic, triggers, answer, uses, enabled, source, created_at)
+                            VALUES (?,?,?,?,1,'vk_history', datetime('now','localtime'))");
+        foreach ($canonRows as $r) $sc->execute($r);
+        $canonSaved = count($canonRows);
+    } else {
+        $canonSaved = 0;
+        $canonKept  = $oldCanon > 0;
     }
     $db->commit();
 } catch (\Throwable $e) {
@@ -411,3 +443,5 @@ echo "\nзаписано эталонов: " . count($picked)
    . " (всего chat_style_samples: " . scalar("SELECT COUNT(*) FROM chat_style_samples") . ")\n";
 echo "записано шаблонов канона: " . ($canonSaved ?? 0)
    . " (всего chat_canon: " . scalar("SELECT COUNT(*) FROM chat_canon") . ")\n";
+if (!empty($canonKept))   echo "разбор дал меньше прежнего — канон оставлен как был\n";
+if (!empty($samplesKept)) echo "разбор дал меньше прежнего — эталоны оставлены, новые добавлены\n";
