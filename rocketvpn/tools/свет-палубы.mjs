@@ -63,8 +63,17 @@ const экран = КТО === "пк" ? { width: 1440, height: 900 } : { width: 3
    занимает 0.2025 высоты, значит настил смотрит в полосу под ней.
    Земля меряется своей полосой в середине - иначе правка «отсечь
    солнце» выглядела бы улучшением, погасив заодно планету. */
+/* ── МЕРКА ТА ЖЕ, ЧТО НАШЛА ДЕФЕКТ ───────────────────────────────
+   Здесь стояла МЕДИАНА по последним двенадцати процентам высоты, и она
+   давала 4 во всех четырёх состояниях, то есть не видела дефекта вовсе.
+   Дефект нашла другая мерка: СРЕДНЯЯ по последним трём процентам
+   (tools/полоса-во-времени.mjs, там 9 -> 78 -> 9). Медиана широкой
+   полосы яркую узкую кромку не двигает по построению.
+
+   Мерка обязана совпадать с той, которой беду нашли, иначе проба
+   честно докладывает «чисто» о том, чего не мерила. */
 function полосы(файл, h) {
-  const низ0 = Math.round(h * 0.88), низ1 = Math.round(h * 0.99);
+  const низ0 = Math.round(h * 0.97), низ1 = h;
   const сер0 = Math.round(h * 0.30), сер1 = Math.round(h * 0.55);
   const из = execFileSync("python3", ["-c", `
 import sys, statistics
@@ -73,7 +82,7 @@ im = Image.open(sys.argv[1]).convert("L")
 w, h = im.size
 def med(y0, y1):
     d = list(im.crop((0, y0, w, y1)).getdata())
-    return round(statistics.median(d), 1), round(max(d), 1)
+    return round(sum(d) / len(d), 1), round(max(d), 1)
 n = med(${низ0}, ${низ1})
 s = med(${сер0}, ${сер1})
 print(n[0], n[1], s[0], s[1])
@@ -96,9 +105,35 @@ await стр.goto(АДРЕС + "/", { waitUntil: "domcontentloaded", timeout: 12
 await стр.waitForFunction(() => window.RV_WORLD && window.RV_WORLD["мир"] && window.RV_WORLD["мир"](),
                           null, { timeout: 300000 });
 await стр.waitForTimeout(3500);
-await стр.evaluate((д) => window.RV_MOTION["кПунктy"]("финал", д), ДОЛЯ);
+/* ── МЕРИМ НА ПИКЕ ВСПЫШКИ, А НЕ ДО НЕЁ ───────────────────────────
+   Первый заход снимал через тридцать кадров, то есть ДО подъёма, и
+   писал «ни одно состояние не помогает». Полоса при приходе в финал
+   идёт 9 -> 78 -> 9 за несколько секунд, поэтому состояния надо
+   сравнивать на ОДНОЙ фазе: иначе разность состояний смешивается с
+   разностью времени. Приходим прокруткой, как человек, и ждём пик тем
+   же отсчётом, что у замера полосы. */
+const место = await стр.evaluate(() => {
+  const к = window.RV_WORLD["кривая"] ? window.RV_WORLD["кривая"]() : null;
+  if (!к || !к["станции"]) return null;
+  const ф = к["станции"].filter((с) => с["имя"] === "финал")[0];
+  return ф ? Math.round(ф["верх"] + ф["ход"] * 0.99) : null;
+});
+if (место == null) {
+  await стр.evaluate((д) => window.RV_MOTION["кПунктy"]("финал", д), ДОЛЯ);
+} else {
+  for (let i = 1; i <= 90; i++) {
+    await стр.evaluate((y) => window.scrollTo(0, y), Math.round(место * (i / 90)));
+    await стр.evaluate(() => new Promise((г) => {
+      let k = 0; (function ш() { requestAnimationFrame(() => (++k >= 2 ? г() : ш())); })();
+    }));
+  }
+}
 await стр.evaluate(() => new Promise((г) => {
-  let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 30 ? г() : ш())); })();
+  let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 60 ? г() : ш())); })();
+}));
+await стр.waitForTimeout(2000);
+await стр.evaluate(() => new Promise((г) => {
+  let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 24 ? г() : ш())); })();
 }));
 
 /* Кладём в страницу переключатели. Ничего не собираем заново: только
@@ -160,8 +195,10 @@ async function состояние(имя, солнце, гасить, файл) 
     window.__солнцеСлоями(с);
     window.__гаситьРубку(г);
   }, [солнце, гасить]);
+  /* Ровно два кадра: состояние снимается на той же фазе вспышки, а
+     каждый лишний кадр уводит полосу вниз по кривой спада. */
   await стр.evaluate(() => new Promise((г) => {
-    let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 6 ? г() : ш())); })();
+    let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 2 ? г() : ш())); })();
   }));
   await стр.screenshot({ path: файл });
   return Object.assign({ имя: имя }, полосы(файл, экран.height));
