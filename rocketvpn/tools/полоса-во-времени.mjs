@@ -1,0 +1,146 @@
+/* ЯРКОСТЬ НИЗА КАДРА ВО ВРЕМЕНИ, А НЕ ОДНИМ СНИМКОМ.
+
+   ── ПОЧЕМУ ЭТО ПОНАДОБИЛОСЬ ───────────────────────────────────────
+   Беду «палуба светит в финале» я искал четыре круга по одиночным
+   снимкам одной и той же полосы, и числа не складывались:
+
+     два-финала.mjs      64.1, потом 120, потом 104.6
+     свет-палубы.mjs     4 (медиана по широкой полосе)
+     кто-внизу.mjs       9.3 при выдержке 30 кадров
+     кто-внизу.mjs       74.3 при выдержке 80 кадров
+
+   Развязка пришла из самой пробы «кто внизу»: гашение ПУСТОЙ группы
+   «гнездо прокол» (ноль детей) дало полосу 6.1, а гашение всей группы
+   «финал» - 29.3. Пустая группа нарисовать не может ничего. Значит
+   гасил я одно, а мерил другое: полоса ПУЛЬСИРУЕТ сама по себе, и
+   каждый снимок ловил свою фазу.
+
+   Отсюда вывод про инструмент, а не про сцену: одиночным снимком
+   мигающую величину мерить нельзя вовсе. Все четыре числа выше - одно
+   и то же мигание, а разница между ними была шумом, по которому я
+   искал причину.
+
+   ── ЧТО МЕРИТ ЭТА ПРОБА ───────────────────────────────────────────
+   Ту же полосу (средняя яркость последних трёх процентов высоты) много
+   раз подряд, и отдаёт минимум, медиану, максимум и размах. Сразу на
+   обоих сайтах, чтобы сравнение было честным: у соседа мигание может
+   быть точно таким же, и тогда никакой беды нет.
+
+   Запуск: node tools/полоса-во-времени.mjs [пк|тел] [снимков] */
+import { chromium } from "playwright";
+import { execFileSync } from "node:child_process";
+import { БРАУЗЕР } from "./браузер.mjs";
+
+const КТО = process.argv[2] || "пк";
+const СКОЛЬКО = +(process.argv[3] || 24);
+const ДОЛЯ = 0.99;
+const VPN = process.env.RV_URL || "http://127.0.0.1:8170";
+const CDN = process.env.RC_URL || "http://127.0.0.1:8171";
+const экран = КТО === "пк" ? { width: 1440, height: 900 } : { width: 390, height: 844 };
+
+function полоса(файл, h) {
+  const y0 = Math.round(h * 0.97);
+  return +execFileSync("python3", ["-c", `
+import sys
+from PIL import Image
+im = Image.open(sys.argv[1]).convert("L")
+w, h = im.size
+d = list(im.crop((0, ${y0}, w, h)).getdata())
+print(round(sum(d) / len(d), 1))
+`, файл], { encoding: "utf8" }).trim();
+}
+
+const бр = await chromium.launch({
+  executablePath: БРАУЗЕР,
+  args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
+         "--force-device-scale-factor=1"]
+});
+
+async function снять(адрес, готов, довести, метка) {
+  const кон = await бр.newContext({
+    viewport: экран, deviceScaleFactor: 1,
+    isMobile: КТО === "тел", hasTouch: КТО === "тел"
+  });
+  const стр = await кон.newPage();
+  стр.on("pageerror", (e) => console.log(`  ИСКЛ ${метка}: ` + e.message.slice(0, 120)));
+  await стр.goto(адрес + "/", { waitUntil: "domcontentloaded", timeout: 120000 });
+  await стр.waitForFunction(готов, null, { timeout: 300000 });
+  await стр.waitForTimeout(3500);
+  await довести(стр);
+  /* Даём осесть той же выдержкой, что и «два финала»: шестьдесят
+     кадров, две секунды покоя, ещё двадцать. Дальше снимаем подряд. */
+  await стр.evaluate(() => new Promise((г) => {
+    let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 60 ? г() : ш())); })();
+  }));
+  await стр.waitForTimeout(2000);
+  const ряд = [];
+  for (let i = 0; i < СКОЛЬКО; i++) {
+    await стр.evaluate(() => new Promise((г) => {
+      let k = 0; (function ш() { requestAnimationFrame(() => (++k >= 4 ? г() : ш())); })();
+    }));
+    const ф = `/tmp/полоса-${метка}-${i}.png`;
+    await стр.screenshot({ path: ф });
+    ряд.push(полоса(ф, экран.height));
+  }
+  await кон.close();
+  return ряд;
+}
+
+function свод(ряд) {
+  const с = ряд.slice().sort((a, b) => a - b);
+  return {
+    мин: с[0], макс: с[с.length - 1],
+    медиана: с[Math.floor(с.length / 2)],
+    размах: +(с[с.length - 1] - с[0]).toFixed(1)
+  };
+}
+
+const впн = await снять(
+  VPN,
+  () => window.RV_WORLD && window.RV_WORLD["мир"] && window.RV_WORLD["мир"](),
+  async (стр) => { await стр.evaluate((д) => window.RV_MOTION["кПунктy"]("финал", д), ДОЛЯ); },
+  "vpn"
+);
+
+const кдн = await снять(
+  CDN,
+  () => window.RC_GL && window.RC_GL.ready3d,
+  async (стр) => {
+    const высота = await стр.evaluate(() =>
+      Math.max(0, document.documentElement.scrollHeight - window.innerHeight));
+    for (let i = 1; i <= 90; i++) {
+      await стр.evaluate((y) => window.scrollTo(0, y), Math.round(высота * (i / 90)));
+      await стр.evaluate(() => new Promise((г) => {
+        let k = 0; (function ш() { requestAnimationFrame(() => (++k >= 2 ? г() : ш())); })();
+      }));
+    }
+  },
+  "cdn"
+);
+await бр.close();
+
+const сВ = свод(впн), сК = свод(кдн);
+console.log(`ПОЛОСА НИЗА ВО ВРЕМЕНИ ${КТО} ${экран.width}x${экран.height}, снимков ${СКОЛЬКО}`);
+console.log(`  VPN  мин ${сВ.мин}  медиана ${сВ.медиана}  макс ${сВ.макс}  размах ${сВ.размах}`);
+console.log(`       ряд: ${впн.join(" ")}`);
+console.log(`  CDN  мин ${сК.мин}  медиана ${сК.медиана}  макс ${сК.макс}  размах ${сК.размах}`);
+console.log(`       ряд: ${кдн.join(" ")}`);
+
+/* ── ВЕРДИКТ ────────────────────────────────────────────────────
+   Сравниваем МЕДИАНЫ, а не одиночные снимки: у мигающей величины
+   одиночное значение ничего не значит. И отдельно смотрим размах: если
+   он велик у обоих, мигание это приём, а не беда; если только у нас -
+   беда именно в мигании, а не в средней яркости. */
+const беды = [];
+if (сВ.медиана - сК.медиана > 25) {
+  беды.push(`низ кадра ярче соседского по медиане: ${сВ.медиана} против ${сК.медиана}`);
+}
+if (сВ.размах > 30 && сК.размах < 15) {
+  беды.push(`низ кадра мигает только у нас: размах ${сВ.размах} против ${сК.размах}`);
+}
+if (беды.length) {
+  console.log("ГРЯЗНО  низ кадра финала");
+  for (const б of беды) console.log("   " + б);
+  process.exit(1);
+}
+console.log("ЧИСТО  низ кадра финала сходится с соседским");
