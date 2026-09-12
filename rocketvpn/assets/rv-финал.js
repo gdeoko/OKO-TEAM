@@ -447,10 +447,18 @@
     var св = М.чужойСалон && М.чужойСалон.console3;
     var узел = (св && св.group) || (М.чужойСалон && М.чужойСалон.pilotRig)
       || М.пульт || null;
-    if (!узел || !узел.isObject3D || !W || !W.cam) return null;
+    /* ── ОТКАЗ ОБЯЗАН НАЗВАТЬ ПРИЧИНУ ────────────────────────────
+       Первые два прогона мерки вернули голый null с обеих сторон, и по
+       нему нельзя отличить «салона нет» от «узел есть, но коробка
+       пустая». На угадывание ушло два круга. Теперь отказ отвечает
+       словом, и сверка печатает его как есть. */
+    if (!W || !W.cam) return { "нет": "мира или камеры" };
+    if (!М.чужойСалон) return { "нет": "чужого салона (собран свой)" };
+    if (!узел) return { "нет": "узла пульта: console3 " + (св ? "есть без group" : "пуст") };
+    if (!узел.isObject3D) return { "нет": "узел не Object3D: " + typeof узел };
     узел.updateMatrixWorld(true);
     var box = new T.Box3().setFromObject(узел);
-    if (box.isEmpty()) return null;
+    if (box.isEmpty()) return { "нет": "коробка пуста, детей " + (узел.children || []).length };
     var р = box.getSize(new T.Vector3());
     var ц = box.getCenter(new T.Vector3());
     var глаз = W.cam.getWorldPosition(new T.Vector3());
@@ -480,6 +488,7 @@
     return {
       "мир": [+р.x.toFixed(4), +р.y.toFixed(4), +р.z.toFixed(4)],
       "доГлаза": +глаз.distanceTo(ц).toFixed(4),
+      "узел": узел.name || "без имени",
       "кадр": видно < 4 ? null : {
         "лево": +лево.toFixed(4), "право": +право.toFixed(4),
         "верх": +верх.toFixed(4), "низ": +низ.toFixed(4),

@@ -11133,10 +11133,14 @@ function пультМерка() {
   /* `console3` это НЕ узел сцены, а свод модуля пульта: у него есть
      `setPitch`, `caps`, `deck` и поле `group` с настоящим узлом. */
   var узел = (cabin.console3 && cabin.console3.group) || cabin.pilotRig || null;
-  if (!узел || !узел.isObject3D) return null;
+  /* Отказ называет причину: голый null не отличает «пульта нет» от
+     «узел есть, коробка пуста», и на угадывании ушло два круга. */
+  if (!узел) return { "нет": "узла пульта: console3 " +
+    (cabin.console3 ? "есть без group" : "пуст") };
+  if (!узел.isObject3D) return { "нет": "узел не Object3D: " + typeof узел };
   узел.updateMatrixWorld(true);
   var box = new T3.Box3().setFromObject(узел);
-  if (box.isEmpty()) return null;
+  if (box.isEmpty()) return { "нет": "коробка пуста, детей " + (узел.children || []).length };
   var р = box.getSize(new T3.Vector3());
   var ц = box.getCenter(new T3.Vector3());
   var глаз = W3.cam.getWorldPosition(new T3.Vector3());
@@ -11166,6 +11170,7 @@ function пультМерка() {
   return {
     "мир": [+р.x.toFixed(4), +р.y.toFixed(4), +р.z.toFixed(4)],
     "доГлаза": +глаз.distanceTo(ц).toFixed(4),
+    "узел": узел.name || "без имени",
     "кадр": видно < 4 ? null : {
       "лево": +лево.toFixed(4), "право": +право.toFixed(4),
       "верх": +верх.toFixed(4), "низ": +низ.toFixed(4),
