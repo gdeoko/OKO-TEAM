@@ -1,0 +1,11 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForTimeout: Target page, context or browser has been closed
+    at страница (/home/user/OKO-TEAM/rocketcdn/tools/audit/общее.mjs:52:12)
+    at async file:///home/user/OKO-TEAM/rocketcdn/tools/audit/%D0%BF%D0%BE%D0%BB%D1%91%D1%82.mjs:22:24 {
+  log: []
+}
+
+Node.js v22.22.2

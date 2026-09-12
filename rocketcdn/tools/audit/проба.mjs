@@ -1,0 +1,10 @@
+import { АДРЕС, ЭКРАНЫ, браузер } from "./общее.mjs";
+import { ИНСТР } from "./лаг-инстр.mjs";
+const b = await браузер();
+const pg = await b.newPage({ viewport: { width: 1440, height: 900 } });
+pg.on("pageerror", e => console.log("PAGEERR:", e.message.slice(0,200)));
+await pg.addInitScript(ИНСТР);
+await pg.goto(АДРЕС, { waitUntil: "domcontentloaded", timeout: 120000 });
+await pg.waitForTimeout(9000);
+console.log("снимок:", JSON.stringify(await pg.evaluate(() => window.__ЛАГснять()), null, 1).slice(0, 2000));
+await b.close();

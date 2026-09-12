@@ -1,0 +1,17 @@
+Ultra photorealistic macro product photograph of a single recessed instrument cassette from a spacecraft cockpit console, shot with a full-frame camera and a 50mm macro lens at f/5.6, ISO 200, studio-controlled lighting, 8K, tack sharp, commercial hardware photography, the visual language of Mass Effect and The Expanse.
+
+SUBJECT: One rectangular guarded-command cassette, roughly 2:1 landscape proportion, sunk into a heavier surrounding console deck so a machined bezel of about 8mm frames it, with a crisp 45 degree chamfer catching a highlight along the top edge. Countersunk hex screws sit flush in milled recesses at the corners.
+
+CONTENTS OF THE CASSETTE: a single large red toggle switch under a hinged transparent safety guard, the guard raised at 40 degrees on a chrome hinge with a spring visible. The guard glass is scratched and slightly cloudy from use. Around the switch the panel carries diagonal warning hatching in worn orange and black paint, chipped along the edges. To one side two small keys and a key-operated arming lock with a machined cylinder.
+
+MATERIALS: The cassette body and surrounding deck are dark anodized aluminium, colour near #1A222C to #3A414A, with visible micro-scratches, faint brushed grain running horizontally, dust settled in the recesses, a light oil sheen and a few fingerprint smudges around the switches, tiny paint chips on the sharpest chamfer edges exposing brighter raw metal. Physically based rendering discipline: correct roughness variation across surfaces, believable metallic response, sharp small specular highlights, contact ambient occlusion darkening every seam, screw recess and switch collar.
+
+ENGRAVING: Tiny engraved legends sit on the panel next to each control, not on the control itself, in a condensed technical sans serif about 2mm tall, filled with pale warm paint that has worn thin in places. The text is small enough that it reads as authentic instrument labelling rather than as a headline.
+
+LIGHT: A cool blue-white key light rakes in from the upper left at a shallow angle to reveal the brushed grain and the chamfers. A warm amber strip light sits out of frame to the right and lays a soft orange gradient across the right third of the cassette. The backlit keys and the inset screen contribute their own cyan glow into the nearby recesses. Deep, rich shadows in the milled channels. Soft cinematic bloom only on the emissive elements, gentle lens vignette, ACES filmic tone mapping, fine natural film grain.
+
+PALETTE: near-black blue #091320 for the deepest recesses, gunmetal #3A414A for the body, cyan #42B2DC for backlighting and screen graphics, pale #E2E8F0 for the brightest metal highlights, warm amber for the strip light and worn legend paint.
+
+COMPOSITION: The cassette fills the frame edge to edge with a small margin of surrounding deck visible on all sides, so the recessed relationship is unmistakable. Perfectly level horizon, no keystone distortion.
+
+NEGATIVE: no readable words in any real language, no logos, no watermark, no people, no hands, no plastic toy look, no glossy white surfaces, no flat uniform colour fills, no cartoon shading, no lens flare streaks.
