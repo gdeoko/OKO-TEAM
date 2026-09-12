@@ -33,7 +33,7 @@ def _key(env):
     k = os.environ.get(name)
     if not k:
         raise RuntimeError(
-            f"нет {name} в окружении — выполни: source <(base64 -d secrets.env.b64)")
+            f"нет {name} в окружении — выполни: . ~/.oko/secrets.env")
     return k
 
 

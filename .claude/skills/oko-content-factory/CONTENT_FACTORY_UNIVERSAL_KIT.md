@@ -340,7 +340,7 @@ YOUTUBE_CHANNEL_ID_<CLIENT>=UC...
 
 ```bash
 # Автоматически (хук SessionStart):
-source <(base64 -d secrets.env.b64)
+. ~/.oko/secrets.env
 
 # Ручная загрузка:
 source <(base64 -d ../../secrets.env.b64) 2>/dev/null

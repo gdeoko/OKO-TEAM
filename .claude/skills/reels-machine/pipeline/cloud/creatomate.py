@@ -31,7 +31,7 @@ def _key():
     k = os.environ.get("CREATOMATE_API_KEY")
     if not k:
         raise RuntimeError(
-            "нет CREATOMATE_API_KEY — выполни: source <(base64 -d secrets.env.b64)")
+            "нет CREATOMATE_API_KEY — выполни: . ~/.oko/secrets.env")
     return k
 
 
