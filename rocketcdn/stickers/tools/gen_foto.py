@@ -14,6 +14,7 @@
 import os
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -51,13 +52,29 @@ def снять(ключ, абзац, образец):
     среда.update({"CDP": CDP, "РАЗМЕР": "1:1", "ЖДАТЬ": "600",
                   "ПРОЕКТ": "rocketpack",
                   "ССЫЛКИ": ",".join(ссылки)})
-    r = subprocess.run(["node", ДРАЙВЕР, текст, dest], env=среда,
-                       capture_output=True, text=True)
-    ок = os.path.exists(dest) and os.path.getsize(dest) > 50000
-    print("%-10s %s  %s" % (ключ, "снято" if ок else "СОРВАЛОСЬ",
-                            (r.stdout or r.stderr).strip().splitlines()[-1:]))
+
+    # Браузер иногда отказывает мгновенно: занят чужим проектом, пересоздаёт
+    # вкладку, перезапускается службой. Один такой отказ сжёг тринадцать
+    # сюжетов подряд за десять секунд - список просто пролетел насквозь.
+    # Поэтому быстрый отказ это повод подождать, а не потерять сюжет.
+    for заход in range(3):
+        начало = time.time()
+        r = subprocess.run(["node", ДРАЙВЕР, текст, dest], env=среда,
+                           capture_output=True, text=True)
+        ок = os.path.exists(dest) and os.path.getsize(dest) > 50000
+        хвост = (r.stdout or r.stderr).strip().splitlines()[-1:]
+        if ок:
+            print("%-10s снято  %s" % (ключ, хвост))
+            sys.stdout.flush()
+            return True
+        ушло = int(time.time() - начало)
+        print("%-10s осечка за %d с (заход %d)  %s" % (ключ, ушло, заход + 1,
+                                                       хвост))
+        sys.stdout.flush()
+        time.sleep(45 if ушло < 30 else 10)
+    print("%-10s СОРВАЛОСЬ" % ключ)
     sys.stdout.flush()
-    return ок
+    return False
 
 
 def main():
@@ -68,6 +85,7 @@ def main():
             continue
         if not снять(ключ, абзац, образец):
             беда.append(ключ)
+        time.sleep(4)   # не встаём в очередь вплотную к своему же запросу
     print("\nне снято: %s" % (", ".join(беда) if беда else "всё на месте"))
     return 1 if беда else 0
 
