@@ -1,9 +1,9 @@
 [
  {
-  "key": "lock",
-  "file": "lock.webm",
-  "emoji": "🔓",
-  "title": "Замок и ключ"
+  "key": "logo",
+  "file": "logo.webm",
+  "emoji": "💙",
+  "title": "Знак Rocket"
  },
  {
   "key": "bolt",
@@ -106,12 +106,6 @@
   "file": "done.webm",
   "emoji": "🏁",
   "title": "Готово"
- },
- {
-  "key": "logo",
-  "file": "logo.webm",
-  "emoji": "💙",
-  "title": "Знак Rocket"
  },
  {
   "key": "launch",
@@ -244,5 +238,41 @@
   "file": "hello.webm",
   "emoji": "👋",
   "title": "Привет"
+ },
+ {
+  "key": "earth_f",
+  "file": "earth_f.webm",
+  "emoji": "🌎",
+  "title": "Земля, снимок"
+ },
+ {
+  "key": "jupiter_f",
+  "file": "jupiter_f.webm",
+  "emoji": "🟡",
+  "title": "Юпитер, снимок"
+ },
+ {
+  "key": "mars_f",
+  "file": "mars_f.webm",
+  "emoji": "🟥",
+  "title": "Марс, снимок"
+ },
+ {
+  "key": "saturn_f",
+  "file": "saturn_f.webm",
+  "emoji": "💫",
+  "title": "Сатурн, снимок"
+ },
+ {
+  "key": "moon_f",
+  "file": "moon_f.webm",
+  "emoji": "🌑",
+  "title": "Луна, снимок"
+ },
+ {
+  "key": "sun_f",
+  "file": "sun_f.webm",
+  "emoji": "🔆",
+  "title": "Солнце, снимок"
  }
 ]

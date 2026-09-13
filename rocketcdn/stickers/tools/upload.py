@@ -275,6 +275,24 @@ def подменить(pack, items, ключи):
         time.sleep(1.0)
 
 
+def убрать(pack, эмодзи):
+    """Снять из набора названные знаки, остальных не трогая."""
+    r = call("getStickerSet", {"name": pack["name"]})
+    if not r.get("ok"):
+        print("  набора нет: %s" % r.get("description"))
+        return
+    сняли = 0
+    for s_ in r["result"]["stickers"]:
+        if s_.get("emoji") in эмодзи:
+            res = call("deleteStickerFromSet", {"sticker": s_["file_id"]})
+            if res.get("ok"):
+                сняли += 1
+            else:
+                print("    %s: %s" % (s_.get("emoji"), res.get("description")))
+            time.sleep(0.6)
+    print("  снято %d" % сняли)
+
+
 def переставить(pack, items):
     """Выстроить набор в порядке манифеста, не перезаливая его.
 
@@ -311,6 +329,12 @@ def main():
     print("состояние наборов:")
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
+        return 0
+    if "--убрать" in sys.argv:
+        знаки = set(sys.argv[sys.argv.index("--убрать") + 1].split(","))
+        for pack in PACKS:
+            print("  %s: снимаю %s" % (pack["name"], " ".join(знаки)))
+            убрать(pack, знаки)
         return 0
     if "--порядок" in sys.argv:
         for pack in PACKS:
