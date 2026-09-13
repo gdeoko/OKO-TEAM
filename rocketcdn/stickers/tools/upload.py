@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Заливка паков в Telegram через @rocket_cdn_bot.
 
-Два набора из одних и тех же .tgs: обычные стикеры и кастом-эмодзи.
-Telegram берёт анимированные эмодзи тем же форматом 512x512, что и
-стикеры, поэтому пары совпадают файл в файл, а не «похожи».
+Два набора из одних и тех же файлов: обычные стикеры и кастом-эмодзи.
+Telegram берёт эмодзи тем же форматом 512x512, что и стикеры, поэтому
+пары совпадают файл в файл, а не «похожи». Формат берётся по
+расширению: .tgs это вектор, .webm это видеостикер с прозрачностью.
 
     python3 upload.py            залить оба набора
     python3 upload.py --check    только показать состояние наборов
@@ -19,7 +20,8 @@ import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "..", "out")
+# папка выдачи меняется: векторный пак лежит в out, фотопак в out_foto
+OUT = os.environ.get("ROCKET_OUT") or os.path.join(HERE, "..", "out")
 API = "https://api.telegram.org/bot%s"
 
 TOKEN = os.environ.get("ROCKET_BOT_TOKEN", "")
@@ -59,6 +61,15 @@ def call(method, fields, files=None):
                 "description": out[:400] or "запрос оборвался"}
 
 
+def формат(имя):
+    """Telegram различает вектор и видео названием формата, не файлом.
+
+    Ошибиться здесь значит получить отказ «STICKER_FORMAT_INVALID» на
+    каждом кадре, поэтому смотрим расширение, а не помним руками.
+    """
+    return "video" if имя.lower().endswith(".webm") else "animated"
+
+
 def manifest():
     with open(os.path.join(OUT, "manifest.json"), encoding="utf-8") as f:
         return json.load(f)
@@ -81,7 +92,8 @@ def upload(pack, items):
     stickers, files = [], {}
     for i, it in enumerate(first):
         key = "f%d" % i
-        stickers.append({"sticker": "attach://" + key, "format": "animated",
+        stickers.append({"sticker": "attach://" + key,
+                         "format": формат(it["file"]),
                          "emoji_list": [it["emoji"]]})
         files[key] = os.path.join(OUT, it["file"])
     fields = {
@@ -107,7 +119,7 @@ def upload(pack, items):
     print("  создан %s (%d шт)" % (pack["name"], len(first)))
 
     for it in rest:
-        s = {"sticker": "attach://f", "format": "animated",
+        s = {"sticker": "attach://f", "format": формат(it["file"]),
              "emoji_list": [it["emoji"]]}
         for attempt in range(TRIES):
             r = call("addStickerToSet", {
@@ -147,7 +159,7 @@ def fill(pack, items):
         return
     print("  %s: не хватает %d" % (pack["name"], len(miss)))
     for it in miss:
-        s = {"sticker": "attach://f", "format": "animated",
+        s = {"sticker": "attach://f", "format": формат(it["file"]),
              "emoji_list": [it["emoji"]]}
         for _ in range(TRIES):
             res = call("addStickerToSet", {
@@ -180,7 +192,7 @@ def replace(pack, items):
           (pack["name"], len(old), len(items)))
     added = 0
     for it in items:
-        s_ = {"sticker": "attach://f", "format": "animated",
+        s_ = {"sticker": "attach://f", "format": формат(it["file"]),
               "emoji_list": [it["emoji"]]}
         for _ in range(TRIES):
             res = call("addStickerToSet", {

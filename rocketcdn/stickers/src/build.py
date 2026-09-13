@@ -27,8 +27,10 @@ def catalog():
     VPN, потом CDN, в конце реакции для переписки.
     """
     items = []
+    # scenes_daily снят с маршрута 13.09: готовые формы Noto узнаются как
+    # чужие и в паке смотрятся наклейкой из другого набора.
     for mod_name in ("scenes_space", "scenes_vpn", "scenes_cdn",
-                     "scenes_react", "scenes_daily"):
+                     "scenes_react"):
         try:
             mod = __import__(mod_name)
         except ImportError:
