@@ -68,8 +68,9 @@ import foto_sticker as F
 
 
 def main():
-    кадры = sys.argv[1] if len(sys.argv) > 1 else "/opt/oko-poster/rocketpack"
-    выдача = sys.argv[2] if len(sys.argv) > 2 else os.path.join(кадры, "out")
+    дов = [a for a in sys.argv[1:] if not a.startswith("--")]
+    кадры = дов[0] if дов else "/opt/oko-poster/rocketpack"
+    выдача = дов[1] if len(дов) > 1 else os.path.join(кадры, "out")
     # Владелец просит два набора, совпадающих один в один. Совпадение
     # обеспечивается тем, что оба файла собираются из ОДНИХ кадров, а не
     # рисуются дважды: отличается только сторона и плотность сжатия,
@@ -78,12 +79,27 @@ def main():
     os.makedirs(выдача, exist_ok=True)
     os.makedirs(эмодзи, exist_ok=True)
 
+    обновить = "--заново" in sys.argv
     манифест, нет = [], []
     for ключ, знак, подпись, движение, ист, второй in ПАК:
         src = os.path.join(кадры, ист + ".png")
         втор = os.path.join(кадры, второй + ".png") if второй else None
         if not os.path.exists(src) or (втор and not os.path.exists(втор)):
             нет.append(ключ)
+            continue
+
+        # Готовое не пересобирается. Переснятый кадр новее своего стикера,
+        # и только он идёт в работу: полная пересборка тридцати единиц из-за
+        # двух переснятых стоила бы двадцати минут впустую.
+        готов = os.path.join(выдача, ключ + ".webm")
+        мелкий = os.path.join(эмодзи, ключ + ".webm")
+        свежие = [os.path.getmtime(x) for x in (src, втор) if x]
+        if (not обновить and os.path.exists(готов) and os.path.exists(мелкий)
+                and os.path.getmtime(готов) > max(свежие)):
+            манифест.append({"key": ключ, "file": ключ + ".webm",
+                             "emoji": знак, "title": подпись})
+            print("%-10s уже собран" % ключ)
+            sys.stdout.flush()
             continue
         dest, n, br, мал = F.собрать_ключ(src, ключ, движение, выдача, втор,
                                           эмодзи=эмодзи,

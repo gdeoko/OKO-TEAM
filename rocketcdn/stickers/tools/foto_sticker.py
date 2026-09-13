@@ -219,37 +219,53 @@ def кадры(лист, движение="парит"):
 def собрать(кадры_, dest, предел=LIMIT, сторона=None):
     """Кадры -> WEBM VP9 с альфой, весом под потолок Telegram.
 
-    Битрейт подбирается перебором: угадать его нельзя, у гладкого
-    предмета и у сложного он отличается втрое, а пережать «с запасом»
+    Битрейт не угадывается и не перебирается по списку. Перебор от
+    заведомо большого тратил по шесть проходов на единицу, а на трёх
+    десятках единиц это полчаса впустую. Вместо этого делается пробный
+    проход, а дальше вес пересчитывается: у VP9 он идёт за битрейтом
+    почти прямо, поэтому второй проход попадает с первого раза.
+
+    Целимся не «лишь бы влезло», а близко к потолку: недобрать вес
     значит отдать мыло там, где места хватало.
     """
     tmp = dest + ".frames"
     os.makedirs(tmp, exist_ok=True)
     for i, f in enumerate(кадры_):
         f.save(os.path.join(tmp, "%03d.png" % i))
-    лучший = None
-    ставки = (("620k", "460k", "340k", "250k", "180k", "130k") if сторона is None
-              else ("150k", "110k", "85k", "64k", "48k", "34k"))
-    for br in ставки:
+
+    def прогон(br):
         cmd = ["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS),
                "-i", os.path.join(tmp, "%03d.png")]
         if сторона:
             cmd += ["-vf", "scale=%d:%d:flags=lanczos" % (сторона, сторона)]
         cmd += ["-c:v", "libvpx-vp9", "-pix_fmt", "yuva420p",
-                "-b:v", br, "-maxrate", br, "-bufsize", "1M",
-                "-auto-alt-ref", "0", "-deadline", "good", "-cpu-used", "1",
+                "-b:v", "%dk" % br, "-maxrate", "%dk" % br, "-bufsize", "1M",
+                "-auto-alt-ref", "0", "-deadline", "good", "-cpu-used", "2",
                 "-an", dest]
         subprocess.run(cmd, check=True)
-        n = os.path.getsize(dest)
-        if n <= предел:
-            лучший = (br, n)
-            break
-    for f in os.listdir(tmp):
-        os.remove(os.path.join(tmp, f))
-    os.rmdir(tmp)
-    if not лучший:
-        raise SystemExit("не влезло в %d байт даже на %s" % (предел, ставки[-1]))
-    return лучший
+        return os.path.getsize(dest)
+
+    def прибрать():
+        for f in os.listdir(tmp):
+            os.remove(os.path.join(tmp, f))
+        os.rmdir(tmp)
+
+    br = 120 if сторона else 380
+    n = 0
+    for _ in range(4):
+        n = прогон(br)
+        if предел * 0.80 <= n <= предел:
+            прибрать()
+            return "%dk" % br, n
+        br = max(24, int(br * (предел * 0.90) / float(n)))
+    # последний рубеж: попасть в потолок важнее, чем попасть близко к нему
+    while n > предел and br > 24:
+        br = max(24, int(br * 0.8))
+        n = прогон(br)
+    прибрать()
+    if n > предел:
+        raise SystemExit("не влезло в %d байт: %s" % (предел, dest))
+    return "%dk" % br, n
 
 
 def собрать_ключ(src, key, движение, dest_dir, второй=None, эмодзи=None,

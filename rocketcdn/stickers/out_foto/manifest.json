@@ -1,0 +1,188 @@
+[
+ {
+  "key": "logo",
+  "file": "logo.webm",
+  "emoji": "💙",
+  "title": "Знак Rocket"
+ },
+ {
+  "key": "launch",
+  "file": "launch.webm",
+  "emoji": "🚀",
+  "title": "Взлёт"
+ },
+ {
+  "key": "earth",
+  "file": "earth.webm",
+  "emoji": "🌍",
+  "title": "Сеть"
+ },
+ {
+  "key": "jupiter",
+  "file": "jupiter.webm",
+  "emoji": "🟠",
+  "title": "Юпитер"
+ },
+ {
+  "key": "mars",
+  "file": "mars.webm",
+  "emoji": "🔴",
+  "title": "Марс"
+ },
+ {
+  "key": "saturn",
+  "file": "saturn.webm",
+  "emoji": "🪐",
+  "title": "Сатурн"
+ },
+ {
+  "key": "moon",
+  "file": "moon.webm",
+  "emoji": "🌙",
+  "title": "Луна"
+ },
+ {
+  "key": "sun",
+  "file": "sun.webm",
+  "emoji": "☀️",
+  "title": "Солнце"
+ },
+ {
+  "key": "astro",
+  "file": "astro.webm",
+  "emoji": "👨‍🚀",
+  "title": "Космонавт"
+ },
+ {
+  "key": "shield",
+  "file": "shield.webm",
+  "emoji": "🛡",
+  "title": "Щит VPN"
+ },
+ {
+  "key": "lock",
+  "file": "lock.webm",
+  "emoji": "🔓",
+  "title": "Замок и ключ"
+ },
+ {
+  "key": "key",
+  "file": "key.webm",
+  "emoji": "🔑",
+  "title": "Ключ"
+ },
+ {
+  "key": "anon",
+  "file": "anon.webm",
+  "emoji": "🥷",
+  "title": "Анонимность"
+ },
+ {
+  "key": "geo",
+  "file": "geo.webm",
+  "emoji": "🌐",
+  "title": "Смена страны"
+ },
+ {
+  "key": "tunnel",
+  "file": "tunnel.webm",
+  "emoji": "🕳",
+  "title": "Туннель"
+ },
+ {
+  "key": "unblock",
+  "file": "unblock.webm",
+  "emoji": "🚫",
+  "title": "Блок снят"
+ },
+ {
+  "key": "bolt",
+  "file": "bolt.webm",
+  "emoji": "⚡",
+  "title": "Скорость"
+ },
+ {
+  "key": "dc",
+  "file": "dc.webm",
+  "emoji": "🏢",
+  "title": "Свои ЦОД"
+ },
+ {
+  "key": "speed",
+  "file": "speed.webm",
+  "emoji": "🏎",
+  "title": "На пределе"
+ },
+ {
+  "key": "wifi",
+  "file": "wifi.webm",
+  "emoji": "📶",
+  "title": "Раздача"
+ },
+ {
+  "key": "cloud",
+  "file": "cloud.webm",
+  "emoji": "☁️",
+  "title": "Облако"
+ },
+ {
+  "key": "play",
+  "file": "play.webm",
+  "emoji": "▶️",
+  "title": "Стриминг"
+ },
+ {
+  "key": "download",
+  "file": "download.webm",
+  "emoji": "⬇️",
+  "title": "Загрузка"
+ },
+ {
+  "key": "chart",
+  "file": "chart.webm",
+  "emoji": "📈",
+  "title": "Рост"
+ },
+ {
+  "key": "fire",
+  "file": "fire.webm",
+  "emoji": "🔥",
+  "title": "Турбо"
+ },
+ {
+  "key": "ok",
+  "file": "ok.webm",
+  "emoji": "✅",
+  "title": "Готово"
+ },
+ {
+  "key": "bad",
+  "file": "bad.webm",
+  "emoji": "❌",
+  "title": "Не вышло"
+ },
+ {
+  "key": "heart",
+  "file": "heart.webm",
+  "emoji": "❤️",
+  "title": "Спасибо"
+ },
+ {
+  "key": "like",
+  "file": "like.webm",
+  "emoji": "👍",
+  "title": "Одобряю"
+ },
+ {
+  "key": "warn",
+  "file": "warn.webm",
+  "emoji": "⚠️",
+  "title": "Внимание"
+ },
+ {
+  "key": "hello",
+  "file": "hello.webm",
+  "emoji": "👋",
+  "title": "Привет"
+ }
+]
