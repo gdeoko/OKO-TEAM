@@ -28,15 +28,19 @@ BOT = "rocket_cdn_bot"
 
 PACKS = [
     {"kind": "regular",
-     "name": "rocket_space_by_" + BOT,
-     "title": "Rocket CDN · VPN"},
+     "name": "rocket_pack_by_" + BOT,
+     "title": "Rocket Pack"},
     {"kind": "custom_emoji",
-     "name": "rocket_icons_by_" + BOT,
-     "title": "Rocket CDN · VPN иконки"},
+     "name": "rocket_pack_emoji_by_" + BOT,
+     "title": "Rocket Pack"},
 ]
 
-# за один вызов Telegram принимает не больше пятидесяти
-CHUNK = 50
+# Набор создаётся ОДНИМ стикером, остальные досылаются по одному.
+# Запрос с тремя десятками анимаций разом Telegram отбивает лимитом, а
+# на лёгкий запрос отвечает и пропускает.
+CHUNK = 1
+# сколько раз ждать названную паузу, прежде чем сдаться
+TRIES = 24
 
 
 def call(method, fields, files=None):
@@ -85,7 +89,7 @@ def upload(pack, items):
     }
     # Telegram придерживает создание наборов и сам называет паузу.
     # Ждём ровно столько, сколько он просит, и пробуем снова.
-    for attempt in range(4):
+    for attempt in range(TRIES):
         r = call("createNewStickerSet", fields, files)
         if r.get("ok"):
             break
@@ -93,7 +97,7 @@ def upload(pack, items):
         if not wait:
             print("  создание не прошло: %s" % r.get("description"))
             return False
-        print("  Telegram просит подождать %d с, жду" % wait)
+        print("  ждём %d с (попытка %d)" % (wait, attempt + 1))
         time.sleep(wait + 5)
     if not r.get("ok"):
         print("  создание не прошло: %s" % r.get("description"))
@@ -103,7 +107,7 @@ def upload(pack, items):
     for it in rest:
         s = {"sticker": "attach://f", "format": "animated",
              "emoji_list": [it["emoji"]]}
-        for attempt in range(3):
+        for attempt in range(TRIES):
             r = call("addStickerToSet", {
                 "user_id": OWNER, "name": pack["name"],
                 "sticker": json.dumps(s, ensure_ascii=False),
@@ -114,9 +118,13 @@ def upload(pack, items):
             if not wait:
                 break
             time.sleep(wait + 3)
+        else:
+            print("  %s: лимит не отпустил" % it["key"])
         if not r.get("ok"):
             print("  %s не добавлен: %s" % (it["key"], r.get("description")))
-        time.sleep(0.4)   # набор собирается на стороне Telegram не мгновенно
+        else:
+            print("    + %s" % it["key"])
+        time.sleep(1.2)  # набор собирается не мгновенно, не частим
     return True
 
 
@@ -130,11 +138,18 @@ def main():
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
         return 0
+    made = 0
     for pack, have in zip(PACKS, state):
         if have:
             print("  %s уже собран, пропускаю" % pack["name"])
             continue
-        upload(pack, items)
+        if made:
+            # два набора подряд Telegram не даёт создать: второму нужна
+            # своя выдержка, иначе он сразу упирается в тот же лимит
+            print("  выдержка перед вторым набором")
+            time.sleep(90)
+        if upload(pack, items):
+            made += 1
     print("\nссылки:")
     for p in PACKS:
         kind = "addemoji" if p["kind"] == "custom_emoji" else "addstickers"

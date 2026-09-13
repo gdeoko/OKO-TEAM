@@ -224,7 +224,7 @@ def tunnel():
                            name="r%d" % i))
     return [
         layer(rings, name="rings"),
-        layer([BL.rocket("vpn", 96, (C + 46, C - 52), rot=-30)],
+        layer([BL.rocket("vpn", 116, (C + 30, C - 34), rot=-30)],
               name="rocket", scale=pulse([95, 95], [105, 105], times=2)),
     ]
 

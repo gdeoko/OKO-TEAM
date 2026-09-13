@@ -237,7 +237,7 @@ def layer(shapes, name="l", ind=1, start=0, end=DUR, opacity=100,
     }
 
 
-def compose(layers, size, name="sticker", zoom=1.0):
+def compose(layers, size, name="sticker", zoom=1.0, shift=(0.0, 0.0)):
     """Собрать Lottie нужного холста.
 
     Слои нарисованы в 512; для эмодзи весь кадр ужимается одним
@@ -254,15 +254,20 @@ def compose(layers, size, name="sticker", zoom=1.0):
         l = json.loads(json.dumps(lay))
         l["ind"] = i + 1
         ks = l["ks"]
-        # zoom раздвигает картинку от центра холста: без рамки-иллюминатора
-        # объекту положено занимать весь кадр, а не середину
+        # zoom раздвигает картинку от центра холста, shift двигает её
+        # целиком: ими второй проход сборки ставит все предметы пака в
+        # один размер и на один центр
+        dx, dy = shift
+
+        def px(v, i):
+            return (c + (v - c) * zoom + (dx if i == 0 else dy)) * k
+
         if ks["p"]["a"] == 0:
             p = ks["p"]["k"]
-            ks["p"] = val([(c + (p[0] - c) * zoom) * k,
-                           (c + (p[1] - c) * zoom) * k])
+            ks["p"] = val([px(p[0], 0), px(p[1], 1)])
         else:
             for key in ks["p"]["k"]:
-                key["s"] = [(c + (v - c) * zoom) * k for v in key["s"]]
+                key["s"] = [px(v, i) for i, v in enumerate(key["s"])]
         if ks["s"]["a"] == 0:
             ks["s"] = val([v * k * zoom for v in ks["s"]["k"]])
         else:

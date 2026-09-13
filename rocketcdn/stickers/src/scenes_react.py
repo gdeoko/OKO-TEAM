@@ -10,7 +10,7 @@ from tgs import (CYAN, CYAN_DEEP, CYAN_LIT, CYAN_PALE, INK, INK_2, MIST,
                  circle, ellipse, fill, grad, group, gtr, layer, path, pulse,
                  rect, stroke, trim, val)
 import brand_logo as BL
-from parts import C, glow, shadow, sphere
+from parts import C, gloss, glow, shadow, sphere
 
 OK_LIT, OK_GREEN, OK_DEEP = "#8CF5BE", "#3BE08A", "#0E8B4D"
 BAD_LIT, BAD_RED, BAD_DEEP = "#FFB4B4", "#F87171", "#A32626"
@@ -30,8 +30,8 @@ def ok():
         layer([group([glow(C, C, 172, OK_GREEN, op=18)],
                      gtr(opacity=anim([(0, 0), (50, 0), (62, 80), (110, 30),
                                        (180, 30)])), name="g")], name="glow"),
-        layer([sphere(C, C, 150, OK_GREEN, OK_LIT, OK_DEEP, rim="#7BEFB4")],
-              name="disc", scale=pop),
+        layer([sphere(C, C, 150, OK_GREEN, OK_LIT, OK_DEEP, rim="#7BEFB4"),
+               gloss(C, C, 150, op=40)], name="disc", scale=pop),
         layer([group([tick, stroke(WHITE, 30, 100, cap=2), trim(end=draw)],
                      name="t")], name="tick"),
     ]
@@ -47,8 +47,9 @@ def bad():
     b = path([(C + 50, C - 50), (C - 50, C + 50)], closed=False)
     return [
         layer([shadow(C, C + 168, 118, 20, op=24)], name="shadow"),
-        layer([sphere(C, C, 150, BAD_RED, BAD_LIT, BAD_DEEP, rim="#FFA0A0")],
-              name="disc", scale=pulse([100, 100], [103, 103], times=2)),
+        layer([sphere(C, C, 150, BAD_RED, BAD_LIT, BAD_DEEP, rim="#FFA0A0"),
+               gloss(C, C, 150, op=40)], name="disc",
+              scale=pulse([100, 100], [103, 103], times=2)),
         layer([group([a, stroke(WHITE, 28, 100, cap=2), trim(end=d1)],
                      name="a"),
                group([b, stroke(WHITE, 28, 100, cap=2), trim(end=d2)],

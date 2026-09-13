@@ -290,3 +290,33 @@ def sheen(cx, cy, w, h, rot=-24, op=34):
     """Косой блик - кладётся поверх стекла или металла."""
     return group([ellipse(0, 0, w, h), fill(WHITE, op)],
                  gtr(pos=(cx, cy), rot=rot), name="sheen")
+
+
+def gloss(cx, cy, r, op=46, spread=0.72, lift=0.30):
+    """Глянцевая линза сверху предмета.
+
+    Блик-точка говорит про источник света, а вот эта широкая линза - про
+    материал: так выглядит полированный шар или кнопка под стеклом.
+    Гаснет к середине, поэтому низ остаётся матовым.
+    """
+    rx, ry = r * spread, r * spread * 0.62
+    cy2 = cy - r * lift
+    return group([
+        group([ellipse(cx, cy2, rx, ry),
+               grad([(0, WHITE), (0.55, WHITE), (1, WHITE)],
+                    (cx, cy2 - ry), (cx, cy2 + ry),
+                    opacity=val(op))], name="lens"),
+    ], name="gloss")
+
+
+def contact(cx, cy, rx, ry=None, color=INK, op=30):
+    """Контактная тень: узкая тёмная полоска там, где предмет касается.
+
+    Без неё предмет висит в воздухе; с ней - стоит.
+    """
+    ry = ry or rx * 0.16
+    return group([
+        group([ellipse(cx, cy, rx * 1.25, ry * 1.6), fill(color, op * 0.32)],
+              name="soft"),
+        group([ellipse(cx, cy, rx, ry), fill(color, op)], name="core"),
+    ], name="contact")

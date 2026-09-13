@@ -11,7 +11,7 @@ from tgs import (CYAN, CYAN_DEEP, CYAN_LIT, CYAN_PALE, INK, INK_2, MIST,
                  ellipse, fill, grad, grad_stroke, group, gtr, layer,
                  on_circle, path, pulse, rect, stroke, trim, val)
 import brand_logo as BL
-from parts import C, glow, shadow, sphere
+from parts import C, contact, gloss, glow, shadow, sphere
 
 RACK_DARK = "#0C1B2A"
 RACK_MID = "#16324A"
@@ -199,8 +199,9 @@ def play():
                                   (C - 172, C - 172), (C + 172, C + 172), 16),
                       trim(start=val(0), end=ring, offset=val(-90))],
                      name="bar")], name="bar"),
-        layer([sphere(C, C, 124, CYAN, CYAN_PALE, CYAN_DEEP, rim=CYAN_LIT)],
-              name="btn", scale=pulse([98, 98], [104, 104], times=2)),
+        layer([sphere(C, C, 124, CYAN, CYAN_PALE, CYAN_DEEP, rim=CYAN_LIT),
+               gloss(C, C, 124, op=38)], name="btn",
+              scale=pulse([98, 98], [104, 104], times=2)),
         layer([group([path([(-38, -58), (62, 0), (-38, 58)]), fill(WHITE)],
                      gtr(pos=(C + 10, C)), name="tri"),
                group([path([(-38, -58), (62, 0), (-38, 58)]),
@@ -211,8 +212,8 @@ def play():
 
 def download():
     """Загрузка: стрелка идёт вниз, полка подсвечивается ударом."""
-    drop = anim([(0, [C, C - 86]), (58, [C, C + 10]), (72, [C, C - 4]),
-                 (84, [C, C + 6]), (180, [C, C - 86])])
+    drop = anim([(0, [C, C - 104]), (58, [C, C - 12]), (72, [C, C - 26]),
+                 (84, [C, C - 16]), (180, [C, C - 104])])
     hit = anim([(0, 26), (58, 26), (66, 100), (110, 26), (180, 26)])
     return [
         layer([group([
@@ -223,11 +224,11 @@ def download():
                    grad([(0, WHITE), (1, CYAN)], (-72, 18), (72, 110))],
                   name="head"),
         ], gtr(pos=drop), name="arrow")], name="arrow"),
-        layer([group([rect(C, C + 176, 236, 24, 12), fill(CYAN_LIT, hit)],
+        layer([group([rect(C, C + 150, 228, 26, 13), fill(CYAN_LIT, hit)],
                      name="shelf"),
-               group([rect(C, C + 176, 236, 24, 12),
+               group([rect(C, C + 150, 228, 26, 13),
                       grad_stroke([(0, CYAN_LIT), (1, CYAN_DEEP)],
-                                  (C - 118, C + 136), (C + 118, C + 160), 5)],
+                                  (C - 114, C + 137), (C + 114, C + 163), 5)],
                      name="shelf-r")], name="shelf"),
     ]
 

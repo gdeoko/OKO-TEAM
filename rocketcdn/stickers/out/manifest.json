@@ -4,230 +4,230 @@
   "emoji": "🚀",
   "title": "Взлёт",
   "file": "launch.tgs",
-  "bytes": 1822
+  "bytes": 1876
  },
  {
   "key": "logo",
   "emoji": "💙",
   "title": "Знак Rocket",
   "file": "logo.tgs",
-  "bytes": 3923
+  "bytes": 3982
  },
  {
   "key": "earth",
   "emoji": "🌍",
   "title": "Сеть",
   "file": "earth.tgs",
-  "bytes": 1149
+  "bytes": 1179
  },
  {
   "key": "jupiter",
   "emoji": "🟠",
   "title": "Юпитер",
   "file": "jupiter.tgs",
-  "bytes": 968
+  "bytes": 1021
  },
  {
   "key": "mars",
   "emoji": "🔴",
   "title": "Марс",
   "file": "mars.tgs",
-  "bytes": 786
+  "bytes": 828
  },
  {
   "key": "saturn",
   "emoji": "🪐",
   "title": "Сатурн",
   "file": "saturn.tgs",
-  "bytes": 938
+  "bytes": 976
  },
  {
   "key": "moon",
   "emoji": "🌙",
   "title": "Луна",
   "file": "moon.tgs",
-  "bytes": 1986
+  "bytes": 2007
  },
  {
   "key": "sun",
   "emoji": "☀️",
   "title": "Солнце",
   "file": "sun.tgs",
-  "bytes": 1246
+  "bytes": 1299
  },
  {
   "key": "comet",
   "emoji": "☄️",
   "title": "Комета",
   "file": "comet.tgs",
-  "bytes": 721
+  "bytes": 751
  },
  {
   "key": "astro",
   "emoji": "👨‍🚀",
   "title": "Космонавт",
   "file": "astro.tgs",
-  "bytes": 2178
+  "bytes": 2238
  },
  {
   "key": "shield",
   "emoji": "🛡",
   "title": "Щит VPN",
   "file": "shield.tgs",
-  "bytes": 3479
+  "bytes": 3532
  },
  {
   "key": "lock",
   "emoji": "🔒",
   "title": "Защита включена",
   "file": "lock.tgs",
-  "bytes": 1029
+  "bytes": 1105
  },
  {
   "key": "unlock",
   "emoji": "🔓",
   "title": "Доступ открыт",
   "file": "unlock.tgs",
-  "bytes": 946
+  "bytes": 999
  },
  {
   "key": "key",
   "emoji": "🔑",
   "title": "Ключ",
   "file": "key.tgs",
-  "bytes": 774
+  "bytes": 801
  },
  {
   "key": "anon",
   "emoji": "🥷",
   "title": "Анонимность",
   "file": "anon.tgs",
-  "bytes": 1078
+  "bytes": 1134
  },
  {
   "key": "geo",
   "emoji": "🌐",
   "title": "Смена страны",
   "file": "geo.tgs",
-  "bytes": 1035
+  "bytes": 1072
  },
  {
   "key": "tunnel",
   "emoji": "🕳",
   "title": "Туннель",
   "file": "tunnel.tgs",
-  "bytes": 1654
+  "bytes": 1675
  },
  {
   "key": "unblock",
   "emoji": "🚫",
   "title": "Блок снят",
   "file": "unblock.tgs",
-  "bytes": 1662
+  "bytes": 1690
  },
  {
   "key": "bolt",
   "emoji": "⚡",
   "title": "Скорость",
   "file": "bolt.tgs",
-  "bytes": 764
+  "bytes": 796
  },
  {
   "key": "dc",
   "emoji": "🏢",
   "title": "Свои ЦОД",
   "file": "dc.tgs",
-  "bytes": 1404
+  "bytes": 1438
  },
  {
   "key": "speed",
   "emoji": "🏎",
   "title": "На пределе",
   "file": "speed.tgs",
-  "bytes": 1377
+  "bytes": 1413
  },
  {
   "key": "wifi",
   "emoji": "📶",
   "title": "Раздача",
   "file": "wifi.tgs",
-  "bytes": 801
+  "bytes": 819
  },
  {
   "key": "cloud",
   "emoji": "☁️",
   "title": "Облако",
   "file": "cloud.tgs",
-  "bytes": 793
+  "bytes": 848
  },
  {
   "key": "play",
   "emoji": "▶️",
   "title": "Стриминг",
   "file": "play.tgs",
-  "bytes": 1023
+  "bytes": 1154
  },
  {
   "key": "download",
   "emoji": "⬇️",
   "title": "Загрузка",
   "file": "download.tgs",
-  "bytes": 666
+  "bytes": 700
  },
  {
   "key": "chart",
   "emoji": "📈",
   "title": "Рост",
   "file": "chart.tgs",
-  "bytes": 947
+  "bytes": 982
  },
  {
   "key": "fire",
   "emoji": "🔥",
   "title": "Турбо",
   "file": "fire.tgs",
-  "bytes": 988
+  "bytes": 1007
  },
  {
   "key": "ok",
   "emoji": "✅",
   "title": "Готово",
   "file": "ok.tgs",
-  "bytes": 984
+  "bytes": 1115
  },
  {
   "key": "bad",
   "emoji": "❌",
   "title": "Не вышло",
   "file": "bad.tgs",
-  "bytes": 901
+  "bytes": 1031
  },
  {
   "key": "heart",
   "emoji": "❤️",
   "title": "Спасибо",
   "file": "heart.tgs",
-  "bytes": 900
+  "bytes": 972
  },
  {
   "key": "like",
   "emoji": "👍",
   "title": "Одобряю",
   "file": "like.tgs",
-  "bytes": 860
+  "bytes": 877
  },
  {
   "key": "warn",
   "emoji": "⚠️",
   "title": "Внимание",
   "file": "warn.tgs",
-  "bytes": 778
+  "bytes": 813
  },
  {
   "key": "hello",
   "emoji": "👋",
   "title": "Привет",
   "file": "hello.tgs",
-  "bytes": 3832
+  "bytes": 3885
  }
 ]

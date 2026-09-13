@@ -51,6 +51,12 @@ $APP_URL = rtrim(rc_cfg('site_url'), '/') . '/app.html';
    ровно на это и жаловался владелец. */
 $VPN_URL = 'https://rocketvpn.top/';
 
+/* Фирменные наборы Rocket Pack: анимированные стикеры и такие же
+   кастом-эмодзи. Файлы одни и те же, поэтому пары совпадают точно;
+   эмодзи из набора ставятся в постах канала и в подписях. */
+$STICKERS_SET = 'rocket_pack_by_rocket_cdn_bot';
+$EMOJI_SET    = 'rocket_pack_emoji_by_rocket_cdn_bot';
+
 function is_admin($uid) { return in_array((int)$uid, array_map('intval', (array)rc_cfg('tg_admins', [])), true); }
 
 function menu_admin() {
@@ -59,7 +65,8 @@ function menu_admin() {
         [['text' => 'Состояние'], ['text' => 'Тексты сайта']],
         [['text' => 'Сеть'], ['text' => 'Мини-приложение', 'web_app' => ['url' => $GLOBALS['APP_URL']]]],
         [['text' => '🚀 Розыгрыш'], ['text' => 'Топ рефералов']],
-        [['text' => 'Настройки'], ['text' => 'Помощь']],
+        [['text' => 'Стикеры'], ['text' => 'Настройки']],
+        [['text' => 'Помощь']],
     ], 'resize_keyboard' => true, 'is_persistent' => true];
 }
 /* Подписи всех кнопок нижнего меню одним списком. Собираем из самих
@@ -83,7 +90,7 @@ function menu_user() {
         [['text' => 'О сервисе'], ['text' => 'Продукты']],
         [['text' => 'Инфраструктура'], ['text' => 'Мини-приложение', 'web_app' => ['url' => $GLOBALS['APP_URL']]]],
         [['text' => 'Подключение'], ['text' => 'Поддержка']],
-        [['text' => '🚀 Розыгрыш']],
+        [['text' => '🚀 Розыгрыш'], ['text' => 'Стикеры']],
     ], 'resize_keyboard' => true, 'is_persistent' => true];
 }
 function menu_for($uid) { return is_admin($uid) ? menu_admin() : menu_user(); }
@@ -352,6 +359,33 @@ function txt_support() {
         . "Почта: " . (rc_cfg('mail_to') ?: 'info@rocketcdn.ru') . "\n\n"
         . "Опишите вопрос сообщением, мы передадим его дежурному инженеру.";
 }
+/* Раздел «Стикеры». Сначала уходит сам стикер, следом текст с
+   кнопками: человек видит, что получит, ещё до перехода по ссылке. */
+function txt_stickers() {
+    return "<b>Rocket Pack</b>\n\n"
+        . "Набор анимированных стикеров и такой же набор эмодзи: ракета, "
+        . "планеты, щит и замок VPN, скорость и сеть CDN, реакции для чата.\n\n"
+        . "Эмодзи ставятся в сообщениях и подписях, если у вас Premium. "
+        . "Стикеры работают у всех.";
+}
+
+function send_sticker_card($chat, $uid) {
+    $set = rc_tg('getStickerSet', ['name' => $GLOBALS['STICKERS_SET']]);
+    $items = $set['result']['stickers'] ?? [];
+    if ($items) {
+        /* берём знак Rocket - по нему набор узнают сразу */
+        $pick = $items[1] ?? $items[0];
+        rc_tg('sendSticker', ['chat_id' => $chat,
+                              'sticker' => $pick['file_id']]);
+    }
+    say($chat, txt_stickers(), null, [
+        [['text' => 'Добавить стикеры',
+          'url' => 'https://t.me/addstickers/' . $GLOBALS['STICKERS_SET']]],
+        [['text' => 'Добавить эмодзи',
+          'url' => 'https://t.me/addemoji/' . $GLOBALS['EMOJI_SET']]],
+    ]);
+}
+
 function txt_help($uid) {
     if (is_admin($uid)) {
         return "<b>Команды администратора</b>\n\n"
@@ -368,10 +402,11 @@ function txt_help($uid) {
             . "/contest - состояние реферального розыгрыша\n"
             . "/contest_top - таблица приглашений\n"
             . "/contest_winners - гарантированный топ победителей\n"
+            . "/stickers - наборы Rocket Pack\n"
             . "/undo - отменить последнюю правку текста\n\n"
             . "Нижнее меню открывает те же разделы кнопками.";
     }
-    return "Напишите вопрос сообщением, мы ответим. Нижнее меню открывает разделы о сервисе.";
+    return "Напишите вопрос сообщением, мы ответим. Нижнее меню открывает разделы о сервисе.\n\n/stickers - фирменные стикеры и эмодзи Rocket Pack.";
 }
 
 /* ── Данные сети из rc-geo.js ────────────────────────────── */
@@ -784,6 +819,7 @@ for ($loop = 0; $loop < 6; $loop++) {
             continue;
         }
 
+        if ($cmd === '/stickers' || $text === 'Стикеры') { send_sticker_card($chat, $uid); continue; }
         if ($cmd === '/help' || $text === 'Помощь')      { say($chat, txt_help($uid), $uid); continue; }
         if ($text === 'О сервисе')                        { say($chat, txt_about(), $uid); continue; }
         if ($text === 'Продукты')                         { say($chat, txt_products(), $uid); continue; }

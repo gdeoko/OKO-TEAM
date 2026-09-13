@@ -15,7 +15,7 @@ from tgs import (CYAN, CYAN_DEEP, CYAN_LIT, CYAN_PALE, INK, INK_2, MIST,
                  circle, ellipse, fill, grad, grad_stroke, group, gtr, layer,
                  on_circle, path, pulse, rect, stroke, trim, val)
 import brand_logo as BL
-from parts import C, glow, shadow, sphere
+from parts import C, gloss, glow, shadow, sphere
 
 # --- цвета, снятые с текстур NASA на сайте ------------------------------
 JUP_LIT, JUP, JUP_DEEP = "#E8DCC4", "#C8A882", "#7A5C42"
@@ -201,7 +201,7 @@ def moon():
                    fill(MOON_LIT, 22)], name="l"),
         ], name="cr%d" % i) for i, (x, y, r) in enumerate(craters)],
               name="craters"),
-        layer([group([BL.rocket("cdn", 108, (C, C - 208), rot=60)],
+        layer([group([BL.rocket("cdn", 92, (C, C - 178), rot=60)],
                      name="orb")], name="orbit",
               rot=anim([(0, 0), (180, 360)], easing=False)),
     ]
@@ -239,13 +239,13 @@ def sun():
 
 def comet():
     """Комета: горячее ядро и длинный гаснущий хвост."""
-    fly = anim([(0, [C - 200, C - 120]), (180, [C + 210, C + 130])],
+    fly = anim([(0, [C - 44, C - 30]), (180, [C + 86, C + 54])],
                easing=False)
     # клин: широкий у ядра, сходит на нет к хвосту
-    tail = path([(30, -56), (-256, 54, 70, -40, -44, 14),
-                 (-248, 104, 0, -16, 0, 16), (26, 62, -50, -12, 0, 0)])
-    wisp = path([(16, -30), (-192, 40, 56, -24, -36, 10),
-                 (-186, 70, 0, -10, 0, 10), (14, 34, -44, -8, 0, 0)])
+    tail = path([(26, -50), (-186, 42, 54, -32, -34, 12),
+                 (-180, 86, 0, -14, 0, 14), (22, 56, -40, -10, 0, 0)])
+    wisp = path([(14, -26), (-140, 32, 42, -18, -28, 8),
+                 (-136, 56, 0, -8, 0, 8), (12, 30, -34, -6, 0, 0)])
     return [
         layer([group([
             group([tail, grad([(0, CYAN_PALE), (0.42, CYAN), (1, CYAN_DEEP)],

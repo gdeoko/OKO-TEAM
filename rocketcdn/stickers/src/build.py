@@ -37,8 +37,40 @@ def catalog():
     return items
 
 
-def build(only=None):
+# сколько кадра занимает предмет после подгонки: 82% даёт воздух по краям
+# и при этом не мельчит в размере эмодзи
+TARGET = 0.82
+FIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
+                   "out", "fit.json")
+
+
+def fits():
+    """Замеры прошлого прохода: где на самом деле лежит рисунок.
+
+    Первый проход собирает как нарисовано, measure.mjs меряет готовые
+    файлы настоящим плеером, второй проход подгоняет всё в одну сетку.
+    Пока замеров нет, сборка идёт как есть.
+    """
+    try:
+        with open(FIT, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (IOError, ValueError):
+        return {}
+    c = STICKER / 2.0
+    out = {}
+    for key, b in raw.items():
+        # берём большую сторону: предмет вписывается в квадрат целиком
+        zoom = (STICKER * TARGET) / float(max(b["w"], b["h"]))
+        # зум идёт от центра холста и уносит туда же центр рисунка:
+        # точка v становится c + (v - c) * zoom. Сдвигаем ровно на
+        # столько, сколько центр рисунка при этом не добрал до середины.
+        out[key] = (zoom, (-(b["cx"] - c) * zoom, -(b["cy"] - c) * zoom))
+    return out
+
+
+def build(only=None, raw=False):
     out_dir = os.path.abspath(OUT)
+    fit = {} if raw else fits()
     os.makedirs(out_dir, exist_ok=True)
     manifest, problems = [], []
 
@@ -46,7 +78,8 @@ def build(only=None):
         if only and key != only:
             continue
         layers = fn()
-        data = compose(layers, STICKER, name=key)
+        zoom, shift = fit.get(key, (1.0, (0.0, 0.0)))
+        data = compose(layers, STICKER, name=key, zoom=zoom, shift=shift)
         dest = os.path.join(out_dir, "%s.tgs" % key)
         size = save_tgs(data, dest)
         bad = check(data, STICKER, dest)
@@ -55,7 +88,8 @@ def build(only=None):
         manifest.append({"key": key, "emoji": emoji, "title": title,
                          "file": "%s.tgs" % key, "bytes": size})
         mark = "!!" if bad else "ok"
-        print("%s %-9s %6d Б  %s %s" % (mark, key, size, emoji, title))
+        print("%s %-9s %6d Б  x%.2f  %s %s" %
+              (mark, key, size, zoom, emoji, title))
 
     with open(os.path.join(out_dir, "manifest.json"), "w",
               encoding="utf-8") as f:
@@ -75,4 +109,5 @@ def build(only=None):
 
 
 if __name__ == "__main__":
-    sys.exit(build(sys.argv[1] if len(sys.argv) > 1 else None))
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    sys.exit(build(args[0] if args else None, raw="--raw" in sys.argv))
