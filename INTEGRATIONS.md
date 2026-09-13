@@ -381,6 +381,36 @@ bash scratchpad/pexec.sh <(echo '/opt/oko-poster/yandex.sh "https://admin.yandex
 - CDP: `http://127.0.0.1:9222`, playwright — `/opt/oko-poster/node_modules/playwright`.
 - Свой сценарий: `chromium.connectOverCDP('http://127.0.0.1:9222')`.
 
+**ПОРТ 9222 ЗАНЯТ ЯНДЕКСОМ, КАБИНЕТ ChatGPT ЖИВЁТ НА 9334** (проверено
+13.09.2026). На сервере поднимаются оба браузера с одним и тем же
+`--remote-debugging-port=9222`, и порт достаётся тому, кто встал первым, -
+сейчас это профиль `browser/live` (Яндекс). Второй, `profiles/google`,
+работает без отладчика вовсе.
+
+Из-за этого `chatgpt_web.mjs` по умолчанию подключается не туда и отвечает
+`Protocol error (Target.createTarget): Failed to open a new tab` - выглядит
+как «браузер завис», хотя браузер цел и просто не тот. Кабинет ChatGPT
+(`okoteam.top@gmail.com`) держит служба `oko-gpt-browser`, профиль
+`profiles/gpt_us`, отладчик **9334**:
+
+    CDP=http://127.0.0.1:9334 node /opt/oko-poster/chatgpt_web.mjs "<промпт>" /файл.png
+
+Проверять надо профилем, а не наличием ответа на порту:
+
+    pid=$(ss -lptn 'sport = :9222' | grep -oE 'pid=[0-9]+' | head -1 | cut -d= -f2)
+    tr '\0' ' ' < /proc/$pid/cmdline | grep -oE 'user-data-dir=[^ ]+'
+
+Раскладка портов на 13.09.2026: 9222 Яндекс (`browser/live`), 9254 Runway
+(`browser/rwreal`), 9260 Envato, 9333 Gemini (`profiles/gemini_us`),
+9334 ChatGPT (`profiles/gpt_us`), 9350 ВКонтакте (`browser/vk_oko`).
+
+**Файлы туда и обратно.** Мост режет и длинную команду, и длинный ответ
+(около 120 000 знаков), поэтому base64 одним куском молча приходит
+обрезанным. Класть файл - кусками по 60 000 со сверкой md5. Забирать -
+не мостом, а через домен: положить в `/var/www/okoteam/_rp/` (пишется
+только через docker, каталог принадлежит root) и скачать по
+`https://okoteam.top/_rp/<файл>`.
+
 **Грабли.** Поля SMS-кода принимают только `keyboard.type()` посимвольно. Меню
 строки DNS открывается настоящим кликом мыши (`mouse.down/up`), синтетические
 события Яндекс игнорирует; окно ставить 1400×1600, иначе пункт меню уезжает за
