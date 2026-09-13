@@ -153,14 +153,15 @@
     var э = d.querySelector('[data-акт="' + имя + '"]');
     if (!э) return;
     var к = э.getBoundingClientRect();
-    var y = (g.pageYOffset || 0) + к.top;
+    /* Прокрутка живёт в плёнке, а не в документе (`rv-скролл.js`). */
+    var y = (g.RV_СКРОЛЛ ? g.RV_СКРОЛЛ["y"]() : (g.pageYOffset || 0)) + к.top;
     var мягко = true;
     try {
       мягко = !g.matchMedia("(prefers-reduced-motion: reduce)").matches;
     } catch (e) {}
-    try {
-      g.scrollTo({ top: Math.round(y), behavior: мягко ? "smooth" : "auto" });
-    } catch (e2) { g.scrollTo(0, Math.round(y)); }
+    if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["к"](y, мягко);
+    else try { g.scrollTo({ top: Math.round(y), behavior: мягко ? "smooth" : "auto" }); }
+    catch (e2) { g.scrollTo(0, Math.round(y)); }
     закрыть();
   }
 
@@ -233,7 +234,8 @@
     });
     ш.querySelector(".rv-шапка-марка").addEventListener("click", function (е) {
       е.preventDefault();
-      try { g.scrollTo({ top: 0, behavior: "smooth" }); } catch (e2) { g.scrollTo(0, 0); }
+      if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["к"](0, true);
+      else try { g.scrollTo({ top: 0, behavior: "smooth" }); } catch (e2) { g.scrollTo(0, 0); }
     });
     return ш.querySelector(".rv-шапка-право");
   }

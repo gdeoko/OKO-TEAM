@@ -325,7 +325,9 @@
   function следитьЗаПокоем() {
     if (тихо) return;
     var опц = { passive: true };
-    g.addEventListener("scroll", разбудить, опц);
+    /* Прокрутка идёт внутри плёнки и до окна не всплывает. */
+    if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["слушать"](разбудить, опц);
+    else g.addEventListener("scroll", разбудить, опц);
     g.addEventListener("wheel", разбудить, опц);
     g.addEventListener("pointermove", разбудить, опц);
     g.addEventListener("pointerdown", разбудить, опц);

@@ -114,13 +114,27 @@
     }
   }
 
+  /* Прокрутка идёт ВНУТРИ плёнки, документ стоит: так адресная строка
+     телефона не уезжает и высота окна не меняется ни на одном движении
+     пальца (разбор в `assets/rv-скролл.js`). Отсюда и высота, и
+     положение ленты спрашиваются у неё, а не у окна. */
+  function лY() { return (g.RV_СКРОЛЛ && g.RV_СКРОЛЛ["y"]()) || 0; }
+  function лВы() {
+    return (g.RV_СКРОЛЛ && g.RV_СКРОЛЛ["высота"]()) ||
+           g.innerHeight || d.documentElement.clientHeight || 800;
+  }
+  function лК(y) {
+    if (g.RV_СКРОЛЛ) { g.RV_СКРОЛЛ["к"](y); return; }
+    g.scrollTo(0, Math.round(y));
+  }
+
   function пересчитать() {
-    var вы = g.innerHeight || d.documentElement.clientHeight;
+    var вы = лВы();
     for (var i = 0; i < АКТЫ.length; i++) {
       var a = АКТЫ[i];
       var к = a.узел.getBoundingClientRect();
       var ход = ходАкта(к.height, вы);
-      a.верх = к.top + (g.scrollY || g.pageYOffset || 0);
+      a.верх = к.top + лY();
       a.высота = к.height;
       a.ход = ход;
       a.цельСырая = зажать(-к.top / ход);
@@ -168,8 +182,8 @@
     var сгл1 = подтяжка(СГЛ1, dt);
     var сгл2 = подтяжка(СГЛ2, dt);
     var раз60 = Math.min(4, Math.max(0.05, dt * 60));
-    var y = g.scrollY || g.pageYOffset || 0;
-    var вы = Math.max(1, g.innerHeight || d.documentElement.clientHeight);
+    var y = лY();
+    var вы = Math.max(1, лВы());
     if (позиция == null) промежуточная = позиция = y;
     var поводокY = ПОВОДОК_ЭКРАНОВ * вы;
     var цельY = Math.max(позиция - поводокY, Math.min(позиция + поводокY, y));
@@ -286,7 +300,7 @@
     var t = ts || 0;
     var dt = (прошлыйТик && t > прошлыйТик) ? (t - прошлыйТик) / 1000 : 1 / 60;
     прошлыйТик = t;
-    var y = g.scrollY || g.pageYOffset || 0;
+    var y = лY();
     if (y !== последнееY) { последнееY = y; пересчитать(); }
     шаг(dt);
   }
@@ -308,7 +322,7 @@
       ждёмРазмер = 0;
       /* Сохраняем положение в секции до изменения её геометрии.
          Адресная строка и клавиатура не начинают фильм заново. */
-      var прежнийY = g.scrollY || g.pageYOffset || 0;
+      var прежнийY = лY();
       var привязка = null;
       for (var n = 0; n < АКТЫ.length; n++) {
         var старый = АКТЫ[n];
@@ -325,11 +339,10 @@
         if (новый.имя !== привязка.имя) continue;
         var новыйY = новый.верх + привязка.доля * новый.ход +
           привязка.хвост * Math.max(0, новый.высота - новый.ход);
-        try { g.scrollTo({ top: новыйY, behavior: "instant" }); }
-        catch (e) { g.scrollTo(0, новыйY); }
+        лК(новыйY);
         break;
       }
-      промежуточная = позиция = g.scrollY || g.pageYOffset || 0;
+      промежуточная = позиция = лY();
       последнееY = позиция;
       пересчитать();
       /* Размер меняет положение всех актов сразу, поэтому мягкость тут
@@ -352,7 +365,7 @@
         if (k >= 0) п.splice(k, 1);
       };
     },
-    "позиция": function () { return позиция == null ? (g.scrollY || g.pageYOffset || 0) : позиция; },
+    "позиция": function () { return позиция == null ? лY() : позиция; },
     "срывы": function () { return { число: ошибки, причина: последняяОшибка }; },
     "доля": function (имя) {
       for (var i = 0; i < АКТЫ.length; i++) if (АКТЫ[i].имя === имя) return АКТЫ[i].д;
@@ -365,11 +378,11 @@
       for (var i = 0; i < АКТЫ.length; i++) {
         if (АКТЫ[i].имя !== имя) continue;
         var к = АКТЫ[i].узел.getBoundingClientRect();
-        var вы = g.innerHeight || 800;
+        var вы = лВы();
         var ход = ходАкта(к.height, вы);
-        var y = (g.scrollY || 0) + к.top + ход * зажать(доля == null ? 0 : доля);
-        g.scrollTo(0, Math.round(y));
-        промежуточная = позиция = g.scrollY || g.pageYOffset || 0;
+        var y = лY() + к.top + ход * зажать(доля == null ? 0 : доля);
+        лК(y);
+        промежуточная = позиция = лY();
         собрать(); пересчитать();
         /* ── ПРЫЖОК САДИТСЯ НА СЫРУЮ ЦЕЛЬ, А НЕ НА ПРЕЖНЮЮ ────────
            Здесь стояло `сыр = д = цель`, и это снимало сглаживание, но
@@ -417,7 +430,7 @@
        невидимым. С признаком в этом случае просто нет анимации, а
        текст на месте. */
     d.documentElement.classList.add("rv-плёнка-идёт");
-    промежуточная = позиция = g.scrollY || g.pageYOffset || 0;
+    промежуточная = позиция = лY();
     собрать(); пересчитать();
     for (var i = 0; i < АКТЫ.length; i++) АКТЫ[i].цель = АКТЫ[i].сыр = АКТЫ[i].д = АКТЫ[i].цельСырая;
     толкнуть();
@@ -428,13 +441,19 @@
 
        Порог в четыре точки, а не ноль: телефон отдаёт крошечные сдвиги
        прокрутки от касания, которое человек прокруткой не считал. */
+    var узелЛенты = g.RV_СКРОЛЛ ? g.RV_СКРОЛЛ["узел"]() : null;
     var тронул = function () {
-      if ((g.scrollY || g.pageYOffset || 0) < 4) return;
+      if (лY() < 4) return;
       d.documentElement.classList.add("rv-тронул");
-      g.removeEventListener("scroll", тронул);
+      (узелЛенты || g).removeEventListener("scroll", тронул);
     };
-    g.addEventListener("scroll", тронул, { passive: true });
-    g.addEventListener("scroll", толкнуть, { passive: true });
+    if (g.RV_СКРОЛЛ) {
+      g.RV_СКРОЛЛ["слушать"](тронул);
+      g.RV_СКРОЛЛ["слушать"](толкнуть);
+    } else {
+      g.addEventListener("scroll", тронул, { passive: true });
+      g.addEventListener("scroll", толкнуть, { passive: true });
+    }
     g.addEventListener("resize", поРазмеру);
     g.addEventListener("pageshow", function (е) { if (е.persisted) поРазмеру(); });
     /* Появление и скрытие адресной строки на телефоне меняет высоту

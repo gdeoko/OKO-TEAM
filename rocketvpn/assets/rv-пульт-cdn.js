@@ -138,7 +138,8 @@
     }
     if (что === "fly") {
       со.preventDefault(); со.stopPropagation();
-      try { g.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { g.scrollTo(0, 0); }
+      if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["к"](0, true);
+      else try { g.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { g.scrollTo(0, 0); }
     }
   }, true);
 

@@ -914,7 +914,9 @@
        свайпом, чем бы оно ни кончилось. */
     var _нж = null;
     var _ехали = false;
-    g.addEventListener("scroll", function () { if (_нж) _ехали = true; }, { passive: true });
+    var _ехалиТак = function () { if (_нж) _ехали = true; };
+    if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["слушать"](_ехалиТак);
+    else g.addEventListener("scroll", _ехалиТак, { passive: true });
     d.addEventListener("pointerdown", function (е) {
       if (С.фаза !== 0) return;
       if (е.target && е.target.closest && е.target.closest("a,button,input,textarea,label")) return;

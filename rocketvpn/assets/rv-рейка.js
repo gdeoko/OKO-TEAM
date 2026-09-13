@@ -64,17 +64,21 @@
     d.body.appendChild(нить);
 
     подписаться();
-    g.addEventListener("scroll", вести, { passive: true });
+    /* Лента листается внутри плёнки, а не документом: событие
+       прокрутки элемента до окна не всплывает (`assets/rv-скролл.js`). */
+    if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["слушать"](вести);
+    else g.addEventListener("scroll", вести, { passive: true });
     вести();
   }
 
   /* Ход по всей ленте: доля прокрутки документа. Считается от документа,
      а не от суммы актов: в ленте есть подвал, и он тоже часть пути. */
   function долиЛенты() {
-    var в = g.innerHeight || 800;
-    var всего = (d.documentElement.scrollHeight || 0) - в;
+    var С = g.RV_СКРОЛЛ;
+    var в = С ? С["высота"]() : (g.innerHeight || 800);
+    var всего = (С ? С["лента"]() : (d.documentElement.scrollHeight || 0)) - в;
     if (всего <= 0) return 0;
-    return Math.min(1, Math.max(0, (g.scrollY || g.pageYOffset || 0) / всего));
+    return Math.min(1, Math.max(0, (С ? С["y"]() : (g.scrollY || 0)) / всего));
   }
 
   var ждём = 0;
@@ -116,15 +120,13 @@
     for (var i = 0; i < АКТЫ.length; i++) {
       if (АКТЫ[i].имя !== имя) continue;
       var к = АКТЫ[i].узел.getBoundingClientRect();
-      var y = (g.scrollY || g.pageYOffset || 0) + к.top + 4;
+      var y = (g.RV_СКРОЛЛ ? g.RV_СКРОЛЛ["y"]() : (g.scrollY || 0)) + к.top + 4;
       /* Уважаем просьбу убрать движение: там плавный ход это то самое
          движение, от которого человек попросил избавить. */
       var тихо = g.matchMedia && g.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      try {
-        g.scrollTo({ top: Math.round(y), behavior: тихо ? "auto" : "smooth" });
-      } catch (e) {
-        g.scrollTo(0, Math.round(y));
-      }
+      if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["к"](y, !тихо);
+      else try { g.scrollTo({ top: Math.round(y), behavior: тихо ? "auto" : "smooth" }); }
+      catch (e) { g.scrollTo(0, Math.round(y)); }
       return true;
     }
     return false;

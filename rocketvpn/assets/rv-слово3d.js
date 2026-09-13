@@ -1599,14 +1599,17 @@
       if (е.pointerType === "touch") return;
       последнееКасание.x = е.clientX; последнееКасание.y = е.clientY;
     }, { passive: true });
-    g.addEventListener("scroll", function () {
+    var наПрокрутку = function () {
       var t = (g.performance && g.performance.now ? g.performance.now() : Date.now()) / 1000;
       if (t - волнаКогда < 0.42) return;
       волнаКогда = t;
       var x = последнееКасание.x >= 0 ? последнееКасание.x : (g.innerWidth || 1) * 0.5;
       var y = последнееКасание.y >= 0 ? последнееКасание.y : (g.innerHeight || 1) * 0.42;
       пуститьВолну(x, y, true);
-    }, { passive: true });
+    };
+    /* Слушаем плёнку: событие прокрутки элемента до окна не всплывает. */
+    if (g.RV_СКРОЛЛ) g.RV_СКРОЛЛ["слушать"](наПрокрутку);
+    else g.addEventListener("scroll", наПрокрутку, { passive: true });
   }
   завестиВолну();
 

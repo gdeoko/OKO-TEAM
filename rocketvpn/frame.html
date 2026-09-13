@@ -551,6 +551,10 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 
 </div><!-- /плёнка -->
 
+<!-- Дверь к прокрутке идёт ПЕРВОЙ и без отсрочки: лента листается
+     внутри плёнки, документ стоит, и модуль, прочитавший `scrollY`
+     напрямую, получил бы вечный ноль. Разбор в самом файле. -->
+<script src="assets/rv-скролл.js"></script>
 <script src="assets/rv-gate.js"></script>
 <script src="assets/rv-boot.js" defer></script>
 <script src="assets/vendor/three.min.js" defer></script>

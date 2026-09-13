@@ -66,8 +66,10 @@
      а человек всё это время смотрел бы на промотку. Просим браузер
      доехать плавно. */
   function вНачало() {
+    var тихо = !!(g.matchMedia && g.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (g.RV_СКРОЛЛ) { g.RV_СКРОЛЛ["к"](0, !тихо); return; }
     try {
-      g.scrollTo({ top: 0, behavior: g.matchMedia && g.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      g.scrollTo({ top: 0, behavior: тихо ? "instant" : "smooth" });
     } catch (e) {
       g.scrollTo(0, 0);
     }
