@@ -275,6 +275,34 @@ def подменить(pack, items, ключи):
         time.sleep(1.0)
 
 
+def переставить(pack, items):
+    """Выстроить набор в порядке манифеста, не перезаливая его.
+
+    Перезалить набор ради порядка значит сменить file_id у всех тридцати
+    с лишним стикеров, а они уже стоят в чужих чатах и статусах. Telegram
+    умеет двигать стикер по месту, и этого достаточно: идём по списку
+    сверху вниз и каждый ставим на его номер.
+    """
+    r = call("getStickerSet", {"name": pack["name"]})
+    if not r.get("ok"):
+        print("  набора нет: %s" % r.get("description"))
+        return
+    есть = {s_.get("emoji"): s_["file_id"] for s_ in r["result"]["stickers"]}
+    место = 0
+    for it in items:
+        fid = есть.get(it["emoji"])
+        if not fid:
+            print("  %s: в наборе нет" % it["key"])
+            continue
+        res = call("setStickerPositionInSet", {"sticker": fid,
+                                               "position": место})
+        if not res.get("ok"):
+            print("  %s: %s" % (it["key"], res.get("description")))
+        место += 1
+        time.sleep(0.35)
+    print("  выстроено %d" % место)
+
+
 def main():
     if not TOKEN or not OWNER:
         print("нужны ROCKET_BOT_TOKEN и ROCKET_OWNER_ID в окружении")
@@ -283,6 +311,11 @@ def main():
     print("состояние наборов:")
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
+        return 0
+    if "--порядок" in sys.argv:
+        for pack in PACKS:
+            print("  %s" % pack["name"])
+            переставить(pack, manifest(pack))
         return 0
     if "--swap" in sys.argv:
         ключи = set(sys.argv[sys.argv.index("--swap") + 1].split(","))
