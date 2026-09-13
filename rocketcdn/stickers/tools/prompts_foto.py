@@ -312,30 +312,46 @@ no screens, no room, no floor.
 """),
 
 ("speed", "🏎", "На пределе", "пульс", None, """
-A premium photoreal 3D render of a single round instrument gauge, seen straight \
-on, like a high end car speedometer. The bezel is machined chrome with turned \
-concentric grooves and a chamfered lip catching a hard specular arc. The dial \
-face is deep matte ink hex #050C15 with a fine sunburst texture, carrying a \
-crisp tick scale of raised metal marks around the circumference, long marks and \
-short ones, and an arc segment at the high end glowing cyan hex #42B2DC. The \
-needle is polished steel with a counterweight tail and a bright red-orange \
-lacquer tip, swung hard over to the high end of the scale, almost at the stop. \
-A domed glass cover sits over the dial with real refraction and one crescent \
-reflection in the upper left. No numbers, no digits, no text, no letters on the \
-dial.
+A premium photoreal 3D render of a car SPEEDOMETER seen straight on, and it \
+must read unmistakably as a speedometer, never as a clock. The scale is a wide \
+sweep of about 270 degrees running from the LOWER LEFT of the dial, up over the \
+top, round to the LOWER RIGHT, with an obvious empty gap at the bottom where a \
+clock would have its six. Along that sweep sit raised metal tick marks: long \
+major ticks with shorter minor ticks between them, spacing even all the way \
+round. The final third of the sweep, from the top over to the lower right, is \
+covered by a thick raised arc: its first half glows cyan hex #42B2DC, its last \
+half is glossy signal red hex #D0342C, marking the danger zone. --- THE NEEDLE \
+IS THE POINT: one single long needle, polished steel with a short blunt \
+counterweight tail behind the hub and a vivid red-orange lacquer tip, and it is \
+swung ALL THE WAY OVER into the red at the very end of the scale, pointing to \
+the LOWER RIGHT at roughly four-o-clock, almost touching the end stop. There is \
+only ONE needle, no second hand, no minute hand, no third pointer. --- The bezel \
+is machined chrome with turned concentric grooves and a chamfered lip catching a \
+hard specular arc. The dial face is deep matte ink hex #050C15 with a fine \
+sunburst texture. A domed glass cover sits over the dial with real refraction \
+and one crescent reflection in the upper left. No numbers, no digits, no text, \
+no letters, no brand name on the dial.
 """),
 
 ("wifi", "📶", "Раздача", "пульс", None, """
-A premium photoreal 3D render of a signal symbol: four upright bars of \
-increasing height standing in a row, left shortest and right tallest, each a \
-solid rounded-rectangle block with real thickness and softly chamfered edges. \
-The two left bars are brushed cool silver metal, roughness 0.30. The two right \
-bars are thick polished glass tinted cyan hex #42B2DC, lit from within with a \
-bright glowing core and real refraction, throwing a faint cool bounce onto the \
-metal bars beside them. All four sit on a common baseline, evenly spaced, \
-perfectly level. Above and behind the tallest bar arc three thin concentric \
-radio waves of glowing cyan light, each thinner and fainter than the last. No \
-text, no device, no antenna, no phone.
+A premium photoreal 3D render of a signal strength symbol: exactly FOUR upright \
+bars standing in a single row on one common baseline, left shortest and right \
+tallest, rising in four even steps, each bar the same width, separated by equal \
+gaps of about one third of a bar width. Each bar is a solid rounded-rectangle \
+block with real thickness and softly rounded top corners. The two left bars are \
+brushed cool silver metal, roughness 0.30, metalness 1.0, with fine grain and a \
+crisp specular line along the top edge. The two right bars are thick polished \
+glass tinted cyan hex #42B2DC with real refraction and a bright glowing core \
+inside the volume, their edges catching hard white specular lines. Above and \
+behind the tallest bar arc exactly THREE thin concentric radio waves of glowing \
+cyan light, each one thinner and fainter than the one below it, evenly spaced, \
+centred on the top of the tallest bar. --- CRITICAL EDGE QUALITY: every edge of \
+every bar is clean, hard and precisely anti-aliased against the black. There \
+must be NO colour fringing, NO grey or green halo, NO smeared outline, NO \
+speckled dirty border, NO compression noise, NO chromatic edge, NO semi \
+transparent fuzz anywhere around the objects. The silhouette must read as cut \
+from the black with a scalpel. --- The whole group is centred in the frame and \
+sits level; no antenna, no router, no phone, no device, no text.
 """),
 
 ("cloud", "☁️", "Облако", "парит", None, """
