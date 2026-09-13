@@ -54,7 +54,9 @@ def call(method, fields, files=None):
     try:
         return json.loads(out)
     except ValueError:
-        return {"ok": False, "description": out[:400]}
+        # пустой ответ означает оборванный запрос, а не отказ Telegram
+        return {"ok": False, "network": not out.strip(),
+                "description": out[:400] or "запрос оборвался"}
 
 
 def manifest():
@@ -115,9 +117,9 @@ def upload(pack, items):
             if r.get("ok"):
                 break
             wait = (r.get("parameters") or {}).get("retry_after")
-            if not wait:
+            if not wait and not r.get("network"):
                 break
-            time.sleep(wait + 3)
+            time.sleep((wait or 4) + 3)
         else:
             print("  %s: лимит не отпустил" % it["key"])
         if not r.get("ok"):
@@ -126,6 +128,41 @@ def upload(pack, items):
             print("    + %s" % it["key"])
         time.sleep(1.2)  # набор собирается не мгновенно, не частим
     return True
+
+
+def fill(pack, items):
+    """Дослать то, чего в наборе не хватает.
+
+    Сетевой обрыв на одном файле не должен оставлять дыру в паке:
+    сверяем набор с манифестом по эмодзи и досылаем недостающее.
+    """
+    r = call("getStickerSet", {"name": pack["name"]})
+    if not r.get("ok"):
+        print("  набора нет, доборка нечего делать")
+        return
+    have = [x.get("emoji") for x in r["result"]["stickers"]]
+    miss = [it for it in items if it["emoji"] not in have]
+    if not miss:
+        print("  %s полон, %d шт" % (pack["name"], len(have)))
+        return
+    print("  %s: не хватает %d" % (pack["name"], len(miss)))
+    for it in miss:
+        s = {"sticker": "attach://f", "format": "animated",
+             "emoji_list": [it["emoji"]]}
+        for _ in range(TRIES):
+            res = call("addStickerToSet", {
+                "user_id": OWNER, "name": pack["name"],
+                "sticker": json.dumps(s, ensure_ascii=False),
+            }, {"f": os.path.join(OUT, it["file"])})
+            if res.get("ok"):
+                print("    + %s" % it["key"])
+                break
+            wait = (res.get("parameters") or {}).get("retry_after")
+            if not wait and not res.get("network"):
+                print("    %s: %s" % (it["key"], res.get("description")))
+                break
+            time.sleep((wait or 4) + 3)
+        time.sleep(1.2)
 
 
 def main():
@@ -137,6 +174,10 @@ def main():
     print("состояние наборов:")
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
+        return 0
+    if "--fill" in sys.argv:
+        for pack in PACKS:
+            fill(pack, items)
         return 0
     made = 0
     for pack, have in zip(PACKS, state):
