@@ -1,0 +1,233 @@
+[
+ {
+  "key": "launch",
+  "emoji": "🚀",
+  "title": "Взлёт",
+  "file": "launch.tgs",
+  "bytes": 1822
+ },
+ {
+  "key": "logo",
+  "emoji": "💙",
+  "title": "Знак Rocket",
+  "file": "logo.tgs",
+  "bytes": 3923
+ },
+ {
+  "key": "earth",
+  "emoji": "🌍",
+  "title": "Сеть",
+  "file": "earth.tgs",
+  "bytes": 1149
+ },
+ {
+  "key": "jupiter",
+  "emoji": "🟠",
+  "title": "Юпитер",
+  "file": "jupiter.tgs",
+  "bytes": 968
+ },
+ {
+  "key": "mars",
+  "emoji": "🔴",
+  "title": "Марс",
+  "file": "mars.tgs",
+  "bytes": 786
+ },
+ {
+  "key": "saturn",
+  "emoji": "🪐",
+  "title": "Сатурн",
+  "file": "saturn.tgs",
+  "bytes": 938
+ },
+ {
+  "key": "moon",
+  "emoji": "🌙",
+  "title": "Луна",
+  "file": "moon.tgs",
+  "bytes": 1986
+ },
+ {
+  "key": "sun",
+  "emoji": "☀️",
+  "title": "Солнце",
+  "file": "sun.tgs",
+  "bytes": 1246
+ },
+ {
+  "key": "comet",
+  "emoji": "☄️",
+  "title": "Комета",
+  "file": "comet.tgs",
+  "bytes": 721
+ },
+ {
+  "key": "astro",
+  "emoji": "👨‍🚀",
+  "title": "Космонавт",
+  "file": "astro.tgs",
+  "bytes": 2178
+ },
+ {
+  "key": "shield",
+  "emoji": "🛡",
+  "title": "Щит VPN",
+  "file": "shield.tgs",
+  "bytes": 3479
+ },
+ {
+  "key": "lock",
+  "emoji": "🔒",
+  "title": "Защита включена",
+  "file": "lock.tgs",
+  "bytes": 1029
+ },
+ {
+  "key": "unlock",
+  "emoji": "🔓",
+  "title": "Доступ открыт",
+  "file": "unlock.tgs",
+  "bytes": 946
+ },
+ {
+  "key": "key",
+  "emoji": "🔑",
+  "title": "Ключ",
+  "file": "key.tgs",
+  "bytes": 774
+ },
+ {
+  "key": "anon",
+  "emoji": "🥷",
+  "title": "Анонимность",
+  "file": "anon.tgs",
+  "bytes": 1078
+ },
+ {
+  "key": "geo",
+  "emoji": "🌐",
+  "title": "Смена страны",
+  "file": "geo.tgs",
+  "bytes": 1035
+ },
+ {
+  "key": "tunnel",
+  "emoji": "🕳",
+  "title": "Туннель",
+  "file": "tunnel.tgs",
+  "bytes": 1654
+ },
+ {
+  "key": "unblock",
+  "emoji": "🚫",
+  "title": "Блок снят",
+  "file": "unblock.tgs",
+  "bytes": 1662
+ },
+ {
+  "key": "bolt",
+  "emoji": "⚡",
+  "title": "Скорость",
+  "file": "bolt.tgs",
+  "bytes": 764
+ },
+ {
+  "key": "dc",
+  "emoji": "🏢",
+  "title": "Свои ЦОД",
+  "file": "dc.tgs",
+  "bytes": 1404
+ },
+ {
+  "key": "speed",
+  "emoji": "🏎",
+  "title": "На пределе",
+  "file": "speed.tgs",
+  "bytes": 1377
+ },
+ {
+  "key": "wifi",
+  "emoji": "📶",
+  "title": "Раздача",
+  "file": "wifi.tgs",
+  "bytes": 801
+ },
+ {
+  "key": "cloud",
+  "emoji": "☁️",
+  "title": "Облако",
+  "file": "cloud.tgs",
+  "bytes": 793
+ },
+ {
+  "key": "play",
+  "emoji": "▶️",
+  "title": "Стриминг",
+  "file": "play.tgs",
+  "bytes": 1023
+ },
+ {
+  "key": "download",
+  "emoji": "⬇️",
+  "title": "Загрузка",
+  "file": "download.tgs",
+  "bytes": 666
+ },
+ {
+  "key": "chart",
+  "emoji": "📈",
+  "title": "Рост",
+  "file": "chart.tgs",
+  "bytes": 947
+ },
+ {
+  "key": "fire",
+  "emoji": "🔥",
+  "title": "Турбо",
+  "file": "fire.tgs",
+  "bytes": 988
+ },
+ {
+  "key": "ok",
+  "emoji": "✅",
+  "title": "Готово",
+  "file": "ok.tgs",
+  "bytes": 984
+ },
+ {
+  "key": "bad",
+  "emoji": "❌",
+  "title": "Не вышло",
+  "file": "bad.tgs",
+  "bytes": 901
+ },
+ {
+  "key": "heart",
+  "emoji": "❤️",
+  "title": "Спасибо",
+  "file": "heart.tgs",
+  "bytes": 900
+ },
+ {
+  "key": "like",
+  "emoji": "👍",
+  "title": "Одобряю",
+  "file": "like.tgs",
+  "bytes": 860
+ },
+ {
+  "key": "warn",
+  "emoji": "⚠️",
+  "title": "Внимание",
+  "file": "warn.tgs",
+  "bytes": 778
+ },
+ {
+  "key": "hello",
+  "emoji": "👋",
+  "title": "Привет",
+  "file": "hello.tgs",
+  "bytes": 3832
+ }
+]
