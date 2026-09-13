@@ -31,7 +31,14 @@ FPS = 30
 SECONDS = 3.0
 FRAMES = int(FPS * SECONDS)
 TARGET = 0.82       # доля кадра под предмет: та же, что у векторного пака
-LIMIT = 256 * 1024  # потолок веса видеостикера
+LIMIT = 256 * 1024      # потолок веса видеостикера
+# У кастом-эмодзи потолок свой и втрое жёстче, а сторона меньше. Один файл
+# на оба набора Telegram не берёт: 512x512 на 225 кб он отбивает ответом
+# «file is too big». Поэтому эмодзи собирается из ТЕХ ЖЕ кадров, тем же
+# кадрированием и тем же движением, только мельче и плотнее - выглядит
+# один в один, потому что это буквально та же анимация.
+LIMIT_EMO = 64 * 1024
+SIDE_EMO = 100
 
 
 def уже_с_альфой(path):
@@ -184,7 +191,7 @@ def кадры(лист, движение="парит"):
     return out
 
 
-def собрать(кадры_, dest, предел=LIMIT):
+def собрать(кадры_, dest, предел=LIMIT, сторона=None):
     """Кадры -> WEBM VP9 с альфой, весом под потолок Telegram.
 
     Битрейт подбирается перебором: угадать его нельзя, у гладкого
@@ -196,13 +203,17 @@ def собрать(кадры_, dest, предел=LIMIT):
     for i, f in enumerate(кадры_):
         f.save(os.path.join(tmp, "%03d.png" % i))
     лучший = None
-    for br in ("620k", "460k", "340k", "250k", "180k", "130k"):
+    ставки = (("620k", "460k", "340k", "250k", "180k", "130k") if сторона is None
+              else ("150k", "110k", "85k", "64k", "48k", "34k"))
+    for br in ставки:
         cmd = ["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS),
-               "-i", os.path.join(tmp, "%03d.png"),
-               "-c:v", "libvpx-vp9", "-pix_fmt", "yuva420p",
-               "-b:v", br, "-maxrate", br, "-bufsize", "1M",
-               "-auto-alt-ref", "0", "-deadline", "good", "-cpu-used", "1",
-               "-an", dest]
+               "-i", os.path.join(tmp, "%03d.png")]
+        if сторона:
+            cmd += ["-vf", "scale=%d:%d:flags=lanczos" % (сторона, сторона)]
+        cmd += ["-c:v", "libvpx-vp9", "-pix_fmt", "yuva420p",
+                "-b:v", br, "-maxrate", br, "-bufsize", "1M",
+                "-auto-alt-ref", "0", "-deadline", "good", "-cpu-used", "1",
+                "-an", dest]
         subprocess.run(cmd, check=True)
         n = os.path.getsize(dest)
         if n <= предел:
@@ -212,12 +223,17 @@ def собрать(кадры_, dest, предел=LIMIT):
         os.remove(os.path.join(tmp, f))
     os.rmdir(tmp)
     if not лучший:
-        raise SystemExit("не влезло в %d байт даже на 130k" % предел)
+        raise SystemExit("не влезло в %d байт даже на %s" % (предел, ставки[-1]))
     return лучший
 
 
-def собрать_ключ(src, key, движение, dest_dir, второй=None):
-    """Один стикер: кадр (или пара кадров) -> готовый .webm."""
+def собрать_ключ(src, key, движение, dest_dir, второй=None, эмодзи=None):
+    """Один стикер: кадр (или пара кадров) -> готовый .webm.
+
+    Если задана папка под эмодзи, из ТЕХ ЖЕ кадров собирается второй файл
+    мельче и плотнее. Пересчитывать кадры заново нельзя: пара наборов
+    обязана совпадать не «похоже», а движение в движение.
+    """
     rgba = уже_с_альфой(src)
     if rgba is None:
         rgba = снять_с_чёрного(src)
@@ -231,7 +247,11 @@ def собрать_ключ(src, key, движение, dest_dir, второй=N
         ks = кадры(лист, движение)
     dest = os.path.join(dest_dir, key + ".webm")
     br, n = собрать(ks, dest)
-    return dest, n, br
+    мал = None
+    if эмодзи:
+        e = os.path.join(эмодзи, key + ".webm")
+        мал = собрать(ks, e, LIMIT_EMO, SIDE_EMO)[1]
+    return dest, n, br, мал
 
 
 def main():

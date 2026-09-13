@@ -62,24 +62,33 @@ import foto_sticker as F
 def main():
     кадры = sys.argv[1] if len(sys.argv) > 1 else "/opt/oko-poster/rocketpack"
     выдача = sys.argv[2] if len(sys.argv) > 2 else os.path.join(кадры, "out")
+    # Владелец просит два набора, совпадающих один в один. Совпадение
+    # обеспечивается тем, что оба файла собираются из ОДНИХ кадров, а не
+    # рисуются дважды: отличается только сторона и плотность сжатия,
+    # потому что у кастом-эмодзи потолок веса втрое ниже.
+    эмодзи = выдача + "_emo"
     os.makedirs(выдача, exist_ok=True)
+    os.makedirs(эмодзи, exist_ok=True)
 
     манифест, нет = [], []
-    for ключ, эмодзи, подпись, движение, ист, второй in ПАК:
+    for ключ, знак, подпись, движение, ист, второй in ПАК:
         src = os.path.join(кадры, ист + ".png")
         втор = os.path.join(кадры, второй + ".png") if второй else None
         if not os.path.exists(src) or (втор and not os.path.exists(втор)):
             нет.append(ключ)
             continue
-        dest, n, br = F.собрать_ключ(src, ключ, движение, выдача, втор)
+        dest, n, br, мал = F.собрать_ключ(src, ключ, движение, выдача, втор,
+                                          эмодзи=эмодзи)
         манифест.append({"key": ключ, "file": ключ + ".webm",
-                         "emoji": эмодзи, "title": подпись})
-        print("%-10s %3d кб  %-6s %s" % (ключ, n // 1024, br, подпись))
+                         "emoji": знак, "title": подпись})
+        print("%-10s стикер %3d кб (%s), эмодзи %2d кб  %s"
+              % (ключ, n // 1024, br, (мал or 0) // 1024, подпись))
         sys.stdout.flush()
 
-    with open(os.path.join(выдача, "manifest.json"), "w",
-              encoding="utf-8") as f:
-        json.dump(манифест, f, ensure_ascii=False, indent=1)
+    for папка in (выдача, эмодзи):
+        with open(os.path.join(папка, "manifest.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(манифест, f, ensure_ascii=False, indent=1)
     print("\nв паке %d из %d" % (len(манифест), len(ПАК)))
     if нет:
         print("нет кадров: %s" % ", ".join(нет))

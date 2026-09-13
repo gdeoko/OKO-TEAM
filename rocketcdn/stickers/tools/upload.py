@@ -28,13 +28,19 @@ TOKEN = os.environ.get("ROCKET_BOT_TOKEN", "")
 OWNER = os.environ.get("ROCKET_OWNER_ID", "")
 BOT = "rocket_cdn_bot"
 
+# У каждого набора своя папка: файлы те же по рисунку и по движению, но
+# у кастом-эмодзи потолок веса втрое ниже, и 512x512 Telegram отбивает
+# ответом «file is too big». Поэтому эмодзи берутся из пары «_emo»,
+# собранной из ТЕХ ЖЕ кадров.
 PACKS = [
     {"kind": "regular",
      "name": "rocket_pack_by_" + BOT,
-     "title": "Rocket Pack"},
+     "title": "Rocket Pack",
+     "dir": OUT},
     {"kind": "custom_emoji",
      "name": "rocket_pack_emoji_by_" + BOT,
-     "title": "Rocket Pack"},
+     "title": "Rocket Pack",
+     "dir": OUT + "_emo"},
 ]
 
 # Набор создаётся ОДНИМ стикером, остальные досылаются по одному.
@@ -70,9 +76,14 @@ def формат(имя):
     return "video" if имя.lower().endswith(".webm") else "animated"
 
 
-def manifest():
-    with open(os.path.join(OUT, "manifest.json"), encoding="utf-8") as f:
+def manifest(pack=None):
+    папка = (pack or {}).get("dir", OUT)
+    with open(os.path.join(папка, "manifest.json"), encoding="utf-8") as f:
         return json.load(f)
+
+
+def путь(pack, it):
+    return os.path.join(pack.get("dir", OUT), it["file"])
 
 
 def show(pack):
@@ -95,7 +106,7 @@ def upload(pack, items):
         stickers.append({"sticker": "attach://" + key,
                          "format": формат(it["file"]),
                          "emoji_list": [it["emoji"]]})
-        files[key] = os.path.join(OUT, it["file"])
+        files[key] = путь(pack, it)
     fields = {
         "user_id": OWNER, "name": pack["name"], "title": pack["title"],
         "sticker_type": pack["kind"],
@@ -125,7 +136,7 @@ def upload(pack, items):
             r = call("addStickerToSet", {
                 "user_id": OWNER, "name": pack["name"],
                 "sticker": json.dumps(s, ensure_ascii=False),
-            }, {"f": os.path.join(OUT, it["file"])})
+            }, {"f": путь(pack, it)})
             if r.get("ok"):
                 break
             wait = (r.get("parameters") or {}).get("retry_after")
@@ -165,7 +176,7 @@ def fill(pack, items):
             res = call("addStickerToSet", {
                 "user_id": OWNER, "name": pack["name"],
                 "sticker": json.dumps(s, ensure_ascii=False),
-            }, {"f": os.path.join(OUT, it["file"])})
+            }, {"f": путь(pack, it)})
             if res.get("ok"):
                 print("    + %s" % it["key"])
                 break
@@ -198,7 +209,7 @@ def replace(pack, items):
             res = call("addStickerToSet", {
                 "user_id": OWNER, "name": pack["name"],
                 "sticker": json.dumps(s_, ensure_ascii=False),
-            }, {"f": os.path.join(OUT, it["file"])})
+            }, {"f": путь(pack, it)})
             if res.get("ok"):
                 added += 1
                 break
@@ -226,15 +237,14 @@ def main():
     if not TOKEN or not OWNER:
         print("нужны ROCKET_BOT_TOKEN и ROCKET_OWNER_ID в окружении")
         return 1
-    items = manifest()
-    print("в паке %d единиц" % len(items))
+    print("в паке %d единиц" % len(manifest(PACKS[0])))
     print("состояние наборов:")
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
         return 0
     if "--replace" in sys.argv:
         for pack in PACKS:
-            replace(pack, items)
+            replace(pack, manifest(pack))
         print("\nссылки:")
         for p in PACKS:
             kind = "addemoji" if p["kind"] == "custom_emoji" else "addstickers"
@@ -242,7 +252,7 @@ def main():
         return 0
     if "--fill" in sys.argv:
         for pack in PACKS:
-            fill(pack, items)
+            fill(pack, manifest(pack))
         return 0
     made = 0
     for pack, have in zip(PACKS, state):
@@ -254,7 +264,7 @@ def main():
             # своя выдержка, иначе он сразу упирается в тот же лимит
             print("  выдержка перед вторым набором")
             time.sleep(90)
-        if upload(pack, items):
+        if upload(pack, manifest(pack)):
             made += 1
     print("\nссылки:")
     for p in PACKS:
