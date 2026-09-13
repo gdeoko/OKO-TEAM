@@ -651,6 +651,10 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <script src="assets/rv-ореол.js" defer></script>
 <script src="assets/rv-sound.js" defer></script>
 <script src="assets/rv-glb.js" defer></script>
+<!-- Живое звёздное поле идёт ДО мира: мир зовёт его при сборке неба,
+     и опоздавший файл означал бы небо без звёзд навсегда. Оба файла с
+     defer, порядок выполнения у них тот же, что порядок записи. -->
+<script src="assets/rv-звёзды.js" defer></script>
 <script src="assets/rv-world.js" defer></script>
 <script src="assets/rv-пыль.js" defer></script>
 <script src="assets/rv-коридор.js" defer></script>
