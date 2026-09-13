@@ -292,6 +292,26 @@ def _hex(c):
     return None
 
 
+def style_of(el):
+    """Свойства элемента с учётом inline-стиля.
+
+    Редакторы пишут заливку то атрибутом, то в style="fill:#RRGGBB".
+    Noto Emoji, например, только вторым способом - и без разбора style
+    вся графика приезжает чёрной.
+    """
+    out = {}
+    st = el.get("style") or ""
+    for pair in st.split(";"):
+        if ":" in pair:
+            k, v = pair.split(":", 1)
+            out[k.strip()] = v.strip()
+    for k in ("fill", "fill-opacity", "stroke", "stroke-width", "opacity"):
+        v = el.get(k)
+        if v is not None:
+            out[k] = v
+    return out
+
+
 def read_gradients(root):
     """Собрать определения градиентов по id."""
     out = {}
@@ -301,10 +321,14 @@ def read_gradients(root):
             if not gid:
                 continue
             stops = []
-            for s in g.iter(NS + "stop"):
-                off = float(s.get("offset", 0) or 0)
-                col = _hex(s.get("stop-color", "#000000")) or [0, 0, 0]
-                op = float(s.get("stop-opacity", 1) or 1)
+            for st in g.iter(NS + "stop"):
+                sty = style_of(st)
+                off = float(st.get("offset", 0) or 0)
+                col = _hex(sty.get("stop-color",
+                                   st.get("stop-color", "#000000")))
+                col = col or [0, 0, 0]
+                op = float(sty.get("stop-opacity",
+                                   st.get("stop-opacity", 1)) or 1)
                 stops.append((off, col, op))
             if not stops:
                 continue
@@ -386,6 +410,52 @@ def _shape_from(el, m):
     return out
 
 
+def _bbox(shapes):
+    """Габарит набора фигур - по нему отсеивается мусор редактора."""
+    xs, ys = [], []
+    for sh in shapes:
+        if sh["ty"] == "sh":
+            for v in sh["ks"]["k"]["v"]:
+                xs.append(v[0])
+                ys.append(v[1])
+        elif sh["ty"] in ("el", "rc"):
+            px, py = sh["p"]["k"]
+            sx, sy = sh["s"]["k"]
+            xs += [px - sx / 2, px + sx / 2]
+            ys += [py - sy / 2, py + sy / 2]
+    if not xs:
+        return None
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def _is_junk(shapes, w, h):
+    """Направляющие и метки полей, оставшиеся от редактора.
+
+    В файлах Noto лежит сетка Illustrator и красные полоски полей по
+    краям. Они не часть рисунка, но попадают в габарит и портят кадр:
+    знак ужимается, а по краям висят палки. Признак у них общий -
+    фигура длинная, тонкая и прижата к самому краю или лежит за ним.
+    """
+    bb = _bbox(shapes)
+    if not bb:
+        return True
+    x0, y0, x1, y1 = bb
+    bw, bh = x1 - x0, y1 - y0
+    # целиком за пределами листа
+    if x1 < -1 or y1 < -1 or x0 > w + 1 or y0 > h + 1:
+        return True
+    # тонкая полоса во всю сторону, прижатая к краю
+    thin = min(bw, bh) <= max(w, h) * 0.045
+    spans = max(bw, bh) >= max(w, h) * 0.80
+    at_edge = x0 <= 1 or y0 <= 1 or x1 >= w - 1 or y1 >= h - 1
+    if thin and spans and at_edge:
+        return True
+    # заметно вылезает за лист
+    if x0 < -w * 0.08 or y0 < -h * 0.08 or x1 > w * 1.08 or y1 > h * 1.08:
+        return True
+    return False
+
+
 def convert(svg_path, skip_raster=True):
     """SVG -> список групп Lottie в координатах исходного viewBox.
 
@@ -405,23 +475,25 @@ def convert(svg_path, skip_raster=True):
     groups = []
     skipped = []
 
-    def walk(node, m, inherited_op=1.0):
+    def walk(node, m, inherited_op=1.0, inherited_fill=None):
         for el in node:
             tag = el.tag.replace(NS, "")
             if tag in ("defs", "pattern", "linearGradient", "radialGradient",
                        "filter", "clipPath", "mask", "image", "use", "title"):
                 continue
             lm = mul(m, parse_transform(el.get("transform")))
-            op = inherited_op * float(el.get("opacity", 1) or 1)
+            sty = style_of(el)
+            op = inherited_op * float(sty.get("opacity", 1) or 1)
             if tag == "g":
-                walk(el, lm, op)
+                # у группы своя заливка может наследоваться детям
+                walk(el, lm, op, sty.get("fill", inherited_fill))
                 continue
-            f = el.get("fill")
+            f = sty.get("fill", inherited_fill)
             if f is None:
                 f = "#000000"
             if f == "none":
                 continue
-            fo = float(el.get("fill-opacity", 1) or 1) * op
+            fo = float(sty.get("fill-opacity", 1) or 1) * op
             shapes = _shape_from(el, lm)
             if not shapes:
                 continue
@@ -440,6 +512,8 @@ def convert(svg_path, skip_raster=True):
                     continue
                 style = {"ty": "fl", "c": val(col), "o": val(round(fo * 100, 2)),
                          "r": 1}
+            if _is_junk(shapes, w, h):
+                continue
             groups.append({"ty": "gr", "nm": el.get("id") or tag,
                            "it": shapes + [style, {
                                "ty": "tr", "p": val([0, 0]), "a": val([0, 0]),

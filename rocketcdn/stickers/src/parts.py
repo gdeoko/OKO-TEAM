@@ -320,3 +320,56 @@ def contact(cx, cy, rx, ry=None, color=INK, op=30):
               name="soft"),
         group([ellipse(cx, cy, rx, ry), fill(color, op)], name="core"),
     ], name="contact")
+
+
+def limb(cx, cy, r, color, op=42, width=9):
+    """Атмосферный лимб: светящийся ободок по краю шара.
+
+    У планеты с атмосферой край всегда светлее диска - солнце просвечивает
+    её насквозь по касательной. Одна эта деталь отличает планету от шарика.
+    """
+    return group([circle(cx, cy, r - width * 0.4),
+                  stroke(color, width, op)], name="limb")
+
+
+def terminator(cx, cy, r, deep=INK, op=52, shift=0.34):
+    """Терминатор: мягкая граница дня и ночи.
+
+    Плоская тёмная заплата поперёк шара читается грязью. Здесь тень
+    набирается кольцами убывающей плотности от края к освещённой стороне.
+    """
+    out = []
+    for i in range(4):
+        k = i / 3.0
+        out.append(group([
+            circle(cx + r * shift * (0.35 + 0.65 * k),
+                   cy + r * shift * 0.5 * (0.35 + 0.65 * k),
+                   r * (1.0 - 0.02 * i)),
+            grad([(0, deep), (0.55, deep), (1, deep)],
+                 (cx + r, cy + r * 0.6), (cx - r * 0.2, cy - r * 0.3),
+                 kind=2, opacity=val(op / 4.0))], name="t%d" % i))
+    return group(out, name="terminator")
+
+
+def from_svg(d, size, pos=(C, C), src=24.0, flip_y=False):
+    """Фигура из SVG-пути, вписанная в квадрат size и поставленная в pos.
+
+    Сердце и ладонь от руки выходили кривыми: у таких форм важен каждый
+    изгиб, и на глаз их не поставить. Здесь берётся выверенный контур, а
+    разбирает его тот же парсер, что переносит фирменный логотип.
+    """
+    from svg2lottie import parse_path
+    k = float(size) / src
+    out = []
+    for pts, closed in parse_path(d):
+        v, i, o = [], [], []
+        for p in pts:
+            x, y = (p[0] - src / 2) * k + pos[0], (p[1] - src / 2) * k + pos[1]
+            ix, iy = (p[2] - src / 2) * k + pos[0], (p[3] - src / 2) * k + pos[1]
+            ox, oy = (p[4] - src / 2) * k + pos[0], (p[5] - src / 2) * k + pos[1]
+            v.append([x, y])
+            i.append([ix - x, iy - y])
+            o.append([ox - x, oy - y])
+        out.append({"ty": "sh", "ks": val({"i": i, "o": o, "v": v,
+                                           "c": closed})})
+    return out

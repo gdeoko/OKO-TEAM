@@ -18,49 +18,42 @@
   "emoji": "🌍",
   "title": "Сеть",
   "file": "earth.tgs",
-  "bytes": 1179
+  "bytes": 7586
  },
  {
   "key": "jupiter",
   "emoji": "🟠",
   "title": "Юпитер",
   "file": "jupiter.tgs",
-  "bytes": 1021
+  "bytes": 7566
  },
  {
   "key": "mars",
   "emoji": "🔴",
   "title": "Марс",
   "file": "mars.tgs",
-  "bytes": 828
+  "bytes": 4692
  },
  {
   "key": "saturn",
   "emoji": "🪐",
   "title": "Сатурн",
   "file": "saturn.tgs",
-  "bytes": 976
+  "bytes": 3459
  },
  {
   "key": "moon",
   "emoji": "🌙",
   "title": "Луна",
   "file": "moon.tgs",
-  "bytes": 2007
+  "bytes": 6613
  },
  {
   "key": "sun",
   "emoji": "☀️",
   "title": "Солнце",
   "file": "sun.tgs",
-  "bytes": 1299
- },
- {
-  "key": "comet",
-  "emoji": "☄️",
-  "title": "Комета",
-  "file": "comet.tgs",
-  "bytes": 751
+  "bytes": 10787
  },
  {
   "key": "astro",
@@ -78,17 +71,10 @@
  },
  {
   "key": "lock",
-  "emoji": "🔒",
-  "title": "Защита включена",
-  "file": "lock.tgs",
-  "bytes": 1105
- },
- {
-  "key": "unlock",
   "emoji": "🔓",
-  "title": "Доступ открыт",
-  "file": "unlock.tgs",
-  "bytes": 999
+  "title": "Замок и ключ",
+  "file": "lock.tgs",
+  "bytes": 1588
  },
  {
   "key": "key",
@@ -193,35 +179,35 @@
   "emoji": "✅",
   "title": "Готово",
   "file": "ok.tgs",
-  "bytes": 1115
+  "bytes": 1293
  },
  {
   "key": "bad",
   "emoji": "❌",
   "title": "Не вышло",
   "file": "bad.tgs",
-  "bytes": 1031
+  "bytes": 1643
  },
  {
   "key": "heart",
   "emoji": "❤️",
   "title": "Спасибо",
   "file": "heart.tgs",
-  "bytes": 972
+  "bytes": 1332
  },
  {
   "key": "like",
   "emoji": "👍",
   "title": "Одобряю",
   "file": "like.tgs",
-  "bytes": 877
+  "bytes": 3006
  },
  {
   "key": "warn",
   "emoji": "⚠️",
   "title": "Внимание",
   "file": "warn.tgs",
-  "bytes": 813
+  "bytes": 1572
  },
  {
   "key": "hello",
@@ -229,5 +215,145 @@
   "title": "Привет",
   "file": "hello.tgs",
   "bytes": 3885
+ },
+ {
+  "key": "hundred",
+  "emoji": "💯",
+  "title": "Сто из ста",
+  "file": "hundred.tgs",
+  "bytes": 1964
+ },
+ {
+  "key": "bag",
+  "emoji": "💰",
+  "title": "Деньги",
+  "file": "bag.tgs",
+  "bytes": 6194
+ },
+ {
+  "key": "deal",
+  "emoji": "🤝",
+  "title": "Договорились",
+  "file": "deal.tgs",
+  "bytes": 4153
+ },
+ {
+  "key": "smile",
+  "emoji": "😄",
+  "title": "Улыбка",
+  "file": "smile.tgs",
+  "bytes": 3389
+ },
+ {
+  "key": "phone",
+  "emoji": "📲",
+  "title": "Связь",
+  "file": "phone.tgs",
+  "bytes": 2245
+ },
+ {
+  "key": "secure",
+  "emoji": "🔏",
+  "title": "Зашифровано",
+  "file": "secure.tgs",
+  "bytes": 4744
+ },
+ {
+  "key": "pray",
+  "emoji": "🙏",
+  "title": "Спасибо",
+  "file": "pray.tgs",
+  "bytes": 2488
+ },
+ {
+  "key": "blown",
+  "emoji": "🤯",
+  "title": "Взрыв мозга",
+  "file": "blown.tgs",
+  "bytes": 5541
+ },
+ {
+  "key": "cry",
+  "emoji": "😭",
+  "title": "Плачу",
+  "file": "cry.tgs",
+  "bytes": 3416
+ },
+ {
+  "key": "facepalm",
+  "emoji": "🤦",
+  "title": "Рука-лицо",
+  "file": "facepalm.tgs",
+  "bytes": 6128
+ },
+ {
+  "key": "party",
+  "emoji": "🥳",
+  "title": "Праздник",
+  "file": "party.tgs",
+  "bytes": 4554
+ },
+ {
+  "key": "laugh",
+  "emoji": "😂",
+  "title": "Смех",
+  "file": "laugh.tgs",
+  "bytes": 4182
+ },
+ {
+  "key": "popper",
+  "emoji": "🎉",
+  "title": "Хлопушка",
+  "file": "popper.tgs",
+  "bytes": 3800
+ },
+ {
+  "key": "shout",
+  "emoji": "📢",
+  "title": "Объявление",
+  "file": "shout.tgs",
+  "bytes": 3250
+ },
+ {
+  "key": "battery",
+  "emoji": "🔋",
+  "title": "Заряд",
+  "file": "battery.tgs",
+  "bytes": 2208
+ },
+ {
+  "key": "cash",
+  "emoji": "💵",
+  "title": "Наличные",
+  "file": "cash.tgs",
+  "bytes": 2259
+ },
+ {
+  "key": "flyaway",
+  "emoji": "💸",
+  "title": "Деньги улетают",
+  "file": "flyaway.tgs",
+  "bytes": 4976
+ },
+ {
+  "key": "wave",
+  "emoji": "👋",
+  "title": "Привет",
+  "file": "wave.tgs",
+  "bytes": 2687
+ },
+ {
+  "key": "star",
+  "emoji": "🌟",
+  "title": "Звезда",
+  "file": "star.tgs",
+  "bytes": 1766
+ },
+ {
+  "key": "brain",
+  "emoji": "🧠",
+  "title": "Голова работает",
+  "file": "brain.tgs",
+  "bytes": 7731
  }
 ]

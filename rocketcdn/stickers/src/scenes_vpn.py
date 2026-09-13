@@ -85,29 +85,62 @@ def _lock_body(color_top=VIOLET_LIT, color_mid=VIOLET, color_deep=VIOLET_DEEP):
 
 
 def lock():
-    """Замок защёлкивается: дужка садится в корпус, вспыхивает свет."""
-    bow = anim([(0, [C, C - 118]), (44, [C, C - 74]), (58, [C, C - 82]),
-                (70, [C, C - 78]), (180, [C, C - 78])])
-    return [
-        layer([shadow(C, C + 168, 132, 20, op=26)], name="shadow"),
-        layer([group([glow(C, C + 40, 150, VIOLET_LIT, op=22)],
-                     gtr(anchor=(C, C + 40), pos=(C, C + 40),
-                         opacity=anim([(0, 0), (58, 0), (68, 90), (110, 0),
-                                       (180, 0)])), name="g")], name="flash"),
-        layer([_bow()], name="bow", pos=bow),
-        layer(_lock_body(), name="body"),
-    ]
+    """Замок и ключ одной историей: закрыт, ключ вошёл, повернулся, открыт.
 
+    Раньше это были два стикера - закрытый и открытый, - и оба показывали
+    состояние, а не действие. Здесь видно само отпирание.
 
-def unlock():
-    """Замок открыт: дужка отходит, корпус горит зелёным светом доступа."""
-    bow = anim([(0, [C - 44, C - 96]), (90, [C - 44, C - 108]),
-                (180, [C - 44, C - 96])])
+    Все три части живут в координатах холста и привязаны к скважине
+    корпуса: дужка ножками уходит в корпус, ключ входит бородкой ровно
+    в скважину. Сдвиг через слой их разносил - слой двигает содержимое
+    от своего якоря, а не ставит его на место.
+    """
+    hole = (C, C + 34)          # скважина в корпусе, к ней всё и привязано
+    key_home = (hole[0] + 14, hole[1])   # ключ на месте: бородка в скважине
+    key_far = (hole[0] + 258, hole[1] + 4)
+
+    key_in = anim([(0, list(key_far), "out"), (24, list(key_far)),
+                   (52, [hole[0] + 86, hole[1] + 2], "out"),
+                   (68, list(key_home), "snap"), (180, list(key_home))])
+    key_turn = anim([(0, 0), (74, 0), (98, 92, "out"), (108, 82),
+                     (116, 88), (180, 88)])
+    key_op = anim([(0, 0), (22, 0), (30, 100), (180, 100)])
+    # дужка закрыта - ножки в корпусе; открыта - поднялась и качнулась
+    shut, open_ = C - 64, C - 118
+    bow = anim([(0, [C, shut]), (102, [C, shut], "snap"),
+                (124, [C, open_], "out"), (138, [C, open_ + 15]),
+                (150, [C, open_ + 5]), (162, [C, open_ + 9]),
+                (180, [C, open_ + 9])])
+    bow_tilt = anim([(0, 0), (102, 0), (126, -8, "out"), (144, 4),
+                     (160, -2), (180, -2)])
+    body_sc = anim([(0, [100, 100]), (102, [100, 100], "snap"),
+                    (112, [107, 93], "out"), (126, [98, 103]),
+                    (138, [101, 99]), (148, [100, 100]), (180, [100, 100])])
+    flash = anim([(0, 0), (102, 0), (114, 88, "out"), (150, 0), (180, 0)])
     return [
-        layer([shadow(C, C + 168, 132, 20, op=26)], name="shadow"),
-        layer([group([_bow()], gtr(rot=-18), name="b")], name="bow", pos=bow),
-        layer(_lock_body(CYAN_LIT, CYAN, CYAN_DEEP), name="body",
-              scale=pulse([100, 100], [103, 103], times=2)),
+        layer([shadow(C, C + 172, 132, 20, op=26)], name="shadow"),
+        layer([group([glow(hole[0], hole[1], 108, CYAN_LIT, op=30)],
+                     gtr(opacity=flash), name="g")], name="flash"),
+        # дужка: рисуется вокруг нуля, ставится группой на своё место
+        layer([group([_bow()], gtr(pos=bow, rot=bow_tilt), name="b")],
+              name="bow"),
+        layer(_lock_body(), name="body", scale=body_sc),
+        # ключ поворачивается вокруг бородки, поэтому якорь у бородки
+        layer([group([
+            group([circle(92, 0, 42),
+                   grad([(0, CYAN_PALE), (0.4, CYAN), (1, CYAN_DEEP)],
+                        (56, -40), (130, 40))], name="ring"),
+            group([circle(92, 0, 19), fill("#0A1526")], name="ring-hole"),
+            group([circle(80, -18, 9), fill(WHITE, 44)], name="ring-hi"),
+            group([rect(34, 0, 116, 26, 9),
+                   grad([(0, CYAN_LIT), (1, CYAN_DEEP)],
+                        (-24, -13), (92, 13))], name="stem"),
+            group([rect(34, -8, 106, 6, 3), fill(WHITE, 36)], name="hi"),
+            group([rect(-14, 15, 18, 32, 6), fill(CYAN)], name="bit1"),
+            group([rect(12, 13, 15, 28, 5), fill(CYAN)], name="bit2"),
+        ], gtr(pos=key_in, anchor=(-6, 0), rot=key_turn,
+                     opacity=key_op), name="key")],
+              name="key"),
     ]
 
 
@@ -256,8 +289,7 @@ def unblock():
 
 SCENES = [
     ("shield",  shield,  "🛡", "Щит VPN"),
-    ("lock",    lock,    "🔒", "Защита включена"),
-    ("unlock",  unlock,  "🔓", "Доступ открыт"),
+    ("lock",    lock,    "🔓", "Замок и ключ"),
     ("key",     key,     "🔑", "Ключ"),
     ("anon",    anon,    "🥷", "Анонимность"),
     ("geo",     geo,     "🌐", "Смена страны"),

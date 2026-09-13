@@ -15,7 +15,8 @@ from tgs import (CYAN, CYAN_DEEP, CYAN_LIT, CYAN_PALE, INK, INK_2, MIST,
                  circle, ellipse, fill, grad, grad_stroke, group, gtr, layer,
                  on_circle, path, pulse, rect, stroke, trim, val)
 import brand_logo as BL
-from parts import C, gloss, glow, shadow, sphere
+import planet as PL
+from parts import C, glow, limb, shadow, sphere
 
 # --- цвета, снятые с текстур NASA на сайте ------------------------------
 JUP_LIT, JUP, JUP_DEEP = "#E8DCC4", "#C8A882", "#7A5C42"
@@ -88,7 +89,7 @@ def logo_mark():
 
 
 def earth():
-    """Земля: узлы сети вспыхивают по орбите."""
+    """Земля: настоящая текстура NASA, вокруг вспыхивают узлы сети."""
     dots = []
     for i in range(6):
         x, y = on_circle(C, C, 208, i * 60)
@@ -100,19 +101,9 @@ def earth():
             group([circle(x, y, 13), fill(CYAN_PALE, o)], name="d"),
         ], name="n%d" % i))
     return [
-        layer([glow(C, C, 166, CYAN_LIT, op=16, steps=4)], name="atmo"),
-        layer([sphere(C, C, 154, EARTH_SEA, EARTH_LIT, EARTH_DEEP,
-                      rim=CYAN_LIT)], name="globe"),
-        layer([
-            group([ellipse(C - 52, C - 40, 58, 38), fill(EARTH_LAND, 74)],
-                  gtr(rot=-18), name="m1"),
-            group([ellipse(C + 44, C + 22, 50, 44), fill(EARTH_LAND, 70)],
-                  name="m2"),
-            group([ellipse(C - 16, C + 84, 44, 20), fill(EARTH_LAND, 62)],
-                  name="m3"),
-            group([ellipse(C + 68, C - 66, 26, 18), fill(EARTH_LAND, 56)],
-                  name="m4"),
-        ], name="land"),
+        layer([glow(C, C, 158, CYAN_LIT, op=18, steps=4)], name="atmo"),
+        layer([PL.planet("earth", 300, (C, C))], name="globe"),
+        layer([limb(C, C, 150, CYAN_LIT, op=54, width=11)], name="limb"),
         layer([group([ellipse(C, C, 212, 62), stroke(CYAN_LIT, 4, 42)],
                      gtr(pos=(C, C), anchor=(C, C), rot=-16), name="o")],
               name="orbit"),
@@ -121,66 +112,51 @@ def earth():
 
 
 def jupiter():
-    """Юпитер: полосы и красное пятно, цвета сняты с текстуры NASA."""
-    rows = [(-0.62, 0.10, JUP_LIT, 46), (-0.34, 0.13, JUP_BAND, 40),
-            (-0.06, 0.11, JUP_LIT, 34), (0.20, 0.14, JUP_BAND, 44),
-            (0.50, 0.12, JUP_DEEP, 30)]
+    """Юпитер: текстура NASA с полосами и Большим красным пятном."""
     return [
-        layer([shadow(C, C + 186, 120, 18, op=20)], name="shadow"),
-        layer([sphere(C, C, 160, JUP, JUP_LIT, JUP_DEEP, rim=JUP_LIT)],
-              name="ball"),
-        layer(_bands(rows, 160), name="bands"),
-        # Большое красное пятно: оно ниже экватора и вытянуто по широте
-        layer([group([ellipse(C - 58, C + 40, 42, 26), fill(JUP_SPOT, 82)],
-                     gtr(rot=-8), name="spot"),
-               group([ellipse(C - 58, C + 40, 26, 15), fill("#8F3524", 60)],
-                     gtr(rot=-8), name="in")], name="spot",
-              scale=pulse([99, 99], [102, 102], times=2)),
+        layer([shadow(C, C + 176, 118, 18, op=20)], name="shadow"),
+        layer([PL.planet("jupiter", 320, (C, C))], name="ball"),
+        layer([limb(C, C, 160, JUP_LIT, op=30, width=7)], name="limb"),
     ]
 
 
 def mars():
-    """Марс: ржавый шар с тёмными равнинами и полярной шапкой."""
+    """Марс: текстура NASA - ржавые равнины и полярная шапка."""
     return [
-        layer([shadow(C, C + 180, 112, 18, op=20)], name="shadow"),
-        layer([sphere(C, C, 150, MARS, MARS_LIT, MARS_DEEP, rim="#C77A52")],
-              name="ball"),
-        layer([
-            group([ellipse(C - 40, C - 10, 52, 34), fill(MARS_DEEP, 40)],
-                  gtr(rot=-14), name="p1"),
-            group([ellipse(C + 46, C + 44, 40, 26), fill(MARS_DEEP, 34)],
-                  name="p2"),
-            group([ellipse(C + 18, C - 62, 30, 18), fill(MARS_DEEP, 28)],
-                  name="p3"),
-            group([ellipse(C - 6, C - 126, 46, 20), fill(WHITE, 74)],
-                  name="cap"),
-        ], name="surface"),
+        layer([shadow(C, C + 172, 112, 18, op=20)], name="shadow"),
+        layer([PL.planet("mars", 300, (C, C))], name="ball"),
+        layer([limb(C, C, 150, "#E8A97E", op=26, width=6)], name="limb"),
     ]
 
 
 def saturn():
-    """Сатурн: песочный шар и кольцо - половина за ним, половина перед."""
+    """Сатурн: текстура NASA и кольцо, проходящее спереди и сзади.
+
+    Кольца в развёртке нет - оно не часть шара, - поэтому рисуется
+    отдельно, half за планетой, half перед ней.
+    """
     tilt = anim([(0, -16), (90, -21), (180, -16)])
     bob = anim([(0, [C, C + 6]), (90, [C, C - 6]), (180, [C, C + 6])])
-    rows = [(-0.44, 0.11, SAT_LIT, 40), (-0.08, 0.13, "#C9AC7C", 34),
-            (0.32, 0.12, SAT_DEEP, 26)]
     return [
-        layer([group([ellipse(C, C, 232, 62),
+        layer([group([ellipse(C, C, 236, 64),
                       grad_stroke([(0, SAT_DEEP), (0.5, SAT_LIT), (1, SAT)],
-                                  (C - 230, C), (C + 230, C), 22, opacity=64),
+                                  (C - 234, C), (C + 234, C), 24, opacity=62),
                       trim(start=val(50), end=val(100))],
                      gtr(pos=(C, C), anchor=(C, C), rot=tilt), name="far")],
               name="ring-far", pos=bob),
-        layer([sphere(C, C, 148, SAT, SAT_LIT, SAT_DEEP, rim=SAT_LIT)],
-              name="ball", pos=bob),
-        layer(_bands(rows, 148), name="bands", pos=bob),
-        layer([group([ellipse(C, C, 232, 62),
+        layer([PL.planet("saturn", 286, (C, C))], name="ball", pos=bob),
+        layer([limb(C, C, 143, SAT_LIT, op=26, width=6)], name="limb",
+              pos=bob),
+        # тень от кольца ложится поперёк диска
+        layer([group([ellipse(C, C + 14, 146, 14), fill("#4E3F22", 46)],
+                     gtr(pos=(C, C + 14), anchor=(C, C + 14), rot=tilt),
+                     name="sh")], name="ringshadow", pos=bob),
+        layer([group([ellipse(C, C, 236, 64),
                       grad_stroke([(0, SAT), (0.5, SAT_LIT), (1, SAT_DEEP)],
-                                  (C - 230, C), (C + 230, C), 22, opacity=96),
+                                  (C - 234, C), (C + 234, C), 24, opacity=96),
                       trim(start=val(0), end=val(50))],
                      gtr(pos=(C, C), anchor=(C, C), rot=tilt), name="near"),
-               # щель Кассини: тонкий тёмный разрыв в кольце
-               group([ellipse(C, C, 232, 62), stroke(INK, 4, 38),
+               group([ellipse(C, C, 236, 64), stroke(INK, 4, 38),
                       trim(start=val(0), end=val(50))],
                      gtr(pos=(C, C), anchor=(C, C), rot=tilt), name="gap")],
               name="ring-near", pos=bob),
@@ -188,19 +164,9 @@ def saturn():
 
 
 def moon():
-    """Луна: кратеры и ракета, обходящая её по орбите."""
-    craters = [(-44, -36, 26), (34, 14, 19), (-8, 56, 14), (48, -50, 11),
-               (-64, 34, 10), (16, -14, 8)]
+    """Луна: текстура NASA и ракета, обходящая её по орбите."""
     return [
-        layer([sphere(C, C, 146, MOON, MOON_LIT, MOON_DEEP, rim="#C8C8C8")],
-              name="ball"),
-        layer([group([
-            group([circle(C + x, C + y, r), fill(MOON_DEEP, 26)], name="c"),
-            # светлая кромка с одной стороны делает пятно лункой
-            group([circle(C + x - r * 0.16, C + y - r * 0.18, r * 0.82),
-                   fill(MOON_LIT, 22)], name="l"),
-        ], name="cr%d" % i) for i, (x, y, r) in enumerate(craters)],
-              name="craters"),
+        layer([PL.planet("moon", 292, (C, C))], name="ball"),
         layer([group([BL.rocket("cdn", 92, (C, C - 178), rot=60)],
                      name="orb")], name="orbit",
               rot=anim([(0, 0), (180, 360)], easing=False)),
@@ -208,12 +174,12 @@ def moon():
 
 
 def sun():
-    """Солнце: корона дышит, по краю бьют протуберанцы."""
+    """Солнце: текстура NASA, корона дышит, по краю бьют протуберанцы."""
     flares = []
     for i in range(10):
         x, y = on_circle(C, C, 132, i * 36)
         t0 = (i * 17) % 160
-        sc = anim([(0, [100, 60]), (max(1, t0), [100, 128]),
+        sc = anim([(0, [100, 60]), (max(1, t0), [100, 128], "out"),
                    (min(179, t0 + 40), [100, 70]), (180, [100, 60])])
         flares.append(group([path([(-20, 6), (-7, -30, -4, 10, 3, -12),
                                    (0, -62, -6, 16, 6, 16),
@@ -222,42 +188,14 @@ def sun():
                             gtr(pos=(x, y), anchor=(0, 0), scale=sc,
                                 rot=i * 36), name="f%d" % i))
     return [
-        layer([group([glow(C, C, 178, SUN, op=22, steps=4)],
+        layer([group([glow(C, C, 176, SUN, op=24, steps=4)],
                      gtr(scale=pulse([96, 96], [108, 108], times=2),
                          anchor=(C, C), pos=(C, C)), name="g")],
               name="corona"),
         layer(flares, name="flares"),
-        layer([sphere(C, C, 132, SUN, SUN_LIT, SUN_DEEP, rim=SUN_LIT,
-                      rim_op=70)], name="ball",
+        layer([PL.planet("sun", 262, (C, C))], name="ball",
               scale=pulse([99, 99], [103, 103], times=3)),
-        layer([group([ellipse(C - 34, C + 22, 24, 16), fill(SUN_DEEP, 34)],
-                     name="s1"),
-               group([ellipse(C + 40, C - 30, 18, 13), fill(SUN_DEEP, 28)],
-                     name="s2")], name="spots"),
-    ]
-
-
-def comet():
-    """Комета: горячее ядро и длинный гаснущий хвост."""
-    fly = anim([(0, [C - 44, C - 30]), (180, [C + 86, C + 54])],
-               easing=False)
-    # клин: широкий у ядра, сходит на нет к хвосту
-    tail = path([(26, -50), (-186, 42, 54, -32, -34, 12),
-                 (-180, 86, 0, -14, 0, 14), (22, 56, -40, -10, 0, 0)])
-    wisp = path([(14, -26), (-140, 32, 42, -18, -28, 8),
-                 (-136, 56, 0, -8, 0, 8), (12, 30, -34, -6, 0, 0)])
-    return [
-        layer([group([
-            group([tail, grad([(0, CYAN_PALE), (0.42, CYAN), (1, CYAN_DEEP)],
-                              (20, 0), (-244, 84), opacity=val(64))],
-                  name="tail"),
-            group([wisp, grad([(0, WHITE), (1, CYAN_LIT)],
-                              (10, 0), (-186, 54), opacity=val(82))],
-                  name="wisp"),
-            group([glow(0, 0, 66, CYAN_LIT, op=28)], name="halo"),
-            group([circle(0, 0, 38), fill(WHITE)], name="core"),
-            group([circle(-7, -8, 10), fill(WHITE, 92)], name="hi"),
-        ], gtr(pos=fly, rot=6), name="c")], name="comet"),
+        layer([limb(C, C, 131, SUN_LIT, op=44, width=9)], name="limb"),
     ]
 
 
@@ -302,6 +240,5 @@ SCENES = [
     ("saturn",  saturn,    "🪐", "Сатурн"),
     ("moon",    moon,      "🌙", "Луна"),
     ("sun",     sun,       "☀️", "Солнце"),
-    ("comet",   comet,     "☄️", "Комета"),
     ("astro",   astro,     "👨‍🚀", "Космонавт"),
 ]

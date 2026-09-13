@@ -28,7 +28,7 @@ def catalog():
     """
     items = []
     for mod_name in ("scenes_space", "scenes_vpn", "scenes_cdn",
-                     "scenes_react"):
+                     "scenes_react", "scenes_daily"):
         try:
             mod = __import__(mod_name)
         except ImportError:

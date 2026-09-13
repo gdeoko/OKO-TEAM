@@ -165,6 +165,51 @@ def fill(pack, items):
         time.sleep(1.2)
 
 
+def replace(pack, items):
+    """Обновить набор целиком, не пересоздавая его.
+
+    Пересоздание стоило бы новой ссылки и нового лимита на создание.
+    Поэтому новые стикеры досылаются в тот же набор, а старые удаляются
+    после - набор ни секунды не остаётся пустым, ссылка живёт.
+    """
+    r = call("getStickerSet", {"name": pack["name"]})
+    if not r.get("ok"):
+        return upload(pack, items)
+    old = [x["file_id"] for x in r["result"]["stickers"]]
+    print("  %s: было %d, кладу %d новых" %
+          (pack["name"], len(old), len(items)))
+    added = 0
+    for it in items:
+        s_ = {"sticker": "attach://f", "format": "animated",
+              "emoji_list": [it["emoji"]]}
+        for _ in range(TRIES):
+            res = call("addStickerToSet", {
+                "user_id": OWNER, "name": pack["name"],
+                "sticker": json.dumps(s_, ensure_ascii=False),
+            }, {"f": os.path.join(OUT, it["file"])})
+            if res.get("ok"):
+                added += 1
+                break
+            wait = (res.get("parameters") or {}).get("retry_after")
+            if not wait and not res.get("network"):
+                print("    %s: %s" % (it["key"], res.get("description")))
+                break
+            time.sleep((wait or 4) + 3)
+        time.sleep(1.0)
+    print("  добавлено %d, убираю прежние %d" % (added, len(old)))
+    for fid in old:
+        for _ in range(TRIES):
+            res = call("deleteStickerFromSet", {"sticker": fid})
+            if res.get("ok"):
+                break
+            wait = (res.get("parameters") or {}).get("retry_after")
+            if not wait and not res.get("network"):
+                break
+            time.sleep((wait or 4) + 2)
+        time.sleep(0.6)
+    return True
+
+
 def main():
     if not TOKEN or not OWNER:
         print("нужны ROCKET_BOT_TOKEN и ROCKET_OWNER_ID в окружении")
@@ -174,6 +219,14 @@ def main():
     print("состояние наборов:")
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
+        return 0
+    if "--replace" in sys.argv:
+        for pack in PACKS:
+            replace(pack, items)
+        print("\nссылки:")
+        for p in PACKS:
+            kind = "addemoji" if p["kind"] == "custom_emoji" else "addstickers"
+            print("  https://t.me/%s/%s" % (kind, p["name"]))
         return 0
     if "--fill" in sys.argv:
         for pack in PACKS:
