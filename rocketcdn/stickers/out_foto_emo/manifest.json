@@ -108,6 +108,180 @@
   "title": "Готово"
  },
  {
+  "key": "bolt_v",
+  "file": "bolt_v.tgs",
+  "emoji": "🌩",
+  "title": "Разряд, вектор"
+ },
+ {
+  "key": "astro_v",
+  "file": "astro_v.tgs",
+  "emoji": "🧑‍🚀",
+  "title": "Космонавт, вектор"
+ },
+ {
+  "key": "shield_v",
+  "file": "shield_v.tgs",
+  "emoji": "🔰",
+  "title": "Щит, вектор"
+ },
+ {
+  "key": "anon_v",
+  "file": "anon_v.tgs",
+  "emoji": "👤",
+  "title": "Анонимность, вектор"
+ },
+ {
+  "key": "lock_v",
+  "file": "lock_v.tgs",
+  "emoji": "🔒",
+  "title": "Замок, вектор"
+ },
+ {
+  "key": "secure_v",
+  "file": "secure_v.tgs",
+  "emoji": "🔏",
+  "title": "Подпись, вектор"
+ },
+ {
+  "key": "saturn_v",
+  "file": "saturn_v.tgs",
+  "emoji": "🌌",
+  "title": "Сатурн, вектор"
+ },
+ {
+  "key": "earth_v",
+  "file": "earth_v.tgs",
+  "emoji": "🌏",
+  "title": "Земля, вектор"
+ },
+ {
+  "key": "dc_v",
+  "file": "dc_v.tgs",
+  "emoji": "🖥",
+  "title": "ЦОД, вектор"
+ },
+ {
+  "key": "speed_v",
+  "file": "speed_v.tgs",
+  "emoji": "🥇",
+  "title": "Скорость, вектор"
+ },
+ {
+  "key": "wifi_v",
+  "file": "wifi_v.tgs",
+  "emoji": "📳",
+  "title": "Раздача, вектор"
+ },
+ {
+  "key": "cloud_v",
+  "file": "cloud_v.tgs",
+  "emoji": "🌧",
+  "title": "Облако, вектор"
+ },
+ {
+  "key": "play_v",
+  "file": "play_v.tgs",
+  "emoji": "⏩",
+  "title": "Стриминг, вектор"
+ },
+ {
+  "key": "download_v",
+  "file": "download_v.tgs",
+  "emoji": "📥",
+  "title": "Загрузка, вектор"
+ },
+ {
+  "key": "chart_v",
+  "file": "chart_v.tgs",
+  "emoji": "📉",
+  "title": "График, вектор"
+ },
+ {
+  "key": "fire_v",
+  "file": "fire_v.tgs",
+  "emoji": "💧",
+  "title": "Пламя, вектор"
+ },
+ {
+  "key": "star_v",
+  "file": "star_v.tgs",
+  "emoji": "🌟",
+  "title": "Звезда, вектор"
+ },
+ {
+  "key": "ok_v",
+  "file": "ok_v.tgs",
+  "emoji": "☑️",
+  "title": "Готово, вектор"
+ },
+ {
+  "key": "bad_v",
+  "file": "bad_v.tgs",
+  "emoji": "✖️",
+  "title": "Не вышло, вектор"
+ },
+ {
+  "key": "heart_v",
+  "file": "heart_v.tgs",
+  "emoji": "💜",
+  "title": "Сердце, вектор"
+ },
+ {
+  "key": "hundred_v",
+  "file": "hundred_v.tgs",
+  "emoji": "💯",
+  "title": "Сто из ста, вектор"
+ },
+ {
+  "key": "bag_v",
+  "file": "bag_v.tgs",
+  "emoji": "💰",
+  "title": "Деньги, вектор"
+ },
+ {
+  "key": "cash_v",
+  "file": "cash_v.tgs",
+  "emoji": "💵",
+  "title": "Наличные, вектор"
+ },
+ {
+  "key": "flyaway_v",
+  "file": "flyaway_v.tgs",
+  "emoji": "💸",
+  "title": "Деньги улетают, вектор"
+ },
+ {
+  "key": "brain_v",
+  "file": "brain_v.tgs",
+  "emoji": "🧠",
+  "title": "Голова, вектор"
+ },
+ {
+  "key": "blown_v",
+  "file": "blown_v.tgs",
+  "emoji": "🤯",
+  "title": "Взрыв мозга, вектор"
+ },
+ {
+  "key": "facepalm_v",
+  "file": "facepalm_v.tgs",
+  "emoji": "🤦",
+  "title": "Рука-лицо, вектор"
+ },
+ {
+  "key": "phone_v",
+  "file": "phone_v.tgs",
+  "emoji": "📱",
+  "title": "Связь, вектор"
+ },
+ {
+  "key": "shout_v",
+  "file": "shout_v.tgs",
+  "emoji": "📢",
+  "title": "Объявление, вектор"
+ },
+ {
   "key": "launch",
   "file": "launch.webm",
   "emoji": "🚀",
