@@ -430,14 +430,47 @@ function rc_nodes_summary() {
 }
 
 /* ── Сводка аналитики ────────────────────────────────────── */
-function stats_text($days = 7) {
+/* ── АНАЛИТИКА СПРАШИВАЕТСЯ ПО ПЛОЩАДКЕ ──────────────────────
+   Раздел читал файлы CDN напрямую (RC_STATS/день.json) и о втором
+   сайте не знал вовсе: по кнопке «Аналитика» управляющий видел
+   только CDN и не мог посмотреть VPN ни одной командой.
+
+   Площадка стала доводом, а путь к файлу берётся у stat_file - той
+   же функции, которой пишет счётчик. Двух разных способов сложить
+   этот путь быть не должно: разойдутся, и раздел покажет пустоту на
+   живых данных. */
+/* Кнопки под разделом: срок и площадка в одном ряду каждая. Площадка
+   помечается точкой, иначе по кнопкам не понять, чьи числа на экране,
+   а это ровно то различие, которого просил владелец. */
+function stats_kb($days = 7, $сайт = 'cdn') {
+    /* Неизвестное имя приводим к тому же, к чему его приведёт сам
+       раздел: иначе кнопки покажут одну площадку, а числа будут от
+       другой, и спорить с этим человеку будет нечем. */
+    if (!isset(rc_sites()[$сайт]) || $сайт === 'game') $сайт = 'cdn';
+    $срок = [];
+    foreach ([1 => 'Сегодня', 7 => '7 дней', 30 => '30 дней'] as $д => $имя) {
+        $срок[] = ['text' => ($д === (int)$days ? '· ' : '') . $имя,
+                   'callback_data' => 'stats_' . $д . '_' . $сайт];
+    }
+    $площадки = [];
+    foreach (rc_sites() as $с => $имя) {
+        if ($с === 'game') continue;
+        $площадки[] = ['text' => ($с === $сайт ? '· ' : '') . $имя,
+                       'callback_data' => 'stats_' . (int)$days . '_' . $с];
+    }
+    return [$срок, $площадки];
+}
+
+function stats_text($days = 7, $сайт = 'cdn') {
+    $сайт = isset(rc_sites()[$сайт]) ? $сайт : 'cdn';
+    $имяС = rc_sites()[$сайт];
     $days = max(1, min(90, (int)$days));
     $tot = ['views' => 0, 'uniq' => 0, 'leads' => 0, 'callbacks' => 0, 'register' => 0, 'connect' => 0];
     $refs = []; $dev = []; $err = 0;
     $rows = [];
     for ($i = $days - 1; $i >= 0; $i--) {
         $day = date('Y-m-d', strtotime("-{$i} day"));
-        $d = rc_json_read(RC_STATS . '/' . $day . '.json', []);
+        $d = rc_json_read(stat_file($day, $сайт), []);
         $ev = $d['events'] ?? [];
         $row = [
             'day'   => $day,
@@ -458,7 +491,7 @@ function stats_text($days = 7) {
     arsort($refs);
     $conv = $tot['uniq'] ? round(($tot['leads'] + $tot['callbacks']) / $tot['uniq'] * 100, 1) : 0;
 
-    $s = "<b>Аналитика сайта за " . $days . " дн.</b>\n\n"
+    $s = "<b>Аналитика · {$имяС} за " . $days . " дн.</b>\n\n"
        . "Просмотры: <b>{$tot['views']}</b>\n"
        . "Уникальные: <b>{$tot['uniq']}</b>\n"
        . "Клики «Регистрация»: <b>{$tot['register']}</b>\n"
@@ -683,8 +716,8 @@ for ($loop = 0; $loop < 6; $loop++) {
                 rc_tg('editMessageReplyMarkup', ['chat_id' => $chat, 'message_id' => $mid,
                     'reply_markup' => ['inline_keyboard' => [[['text' => 'Заявка ' . $label, 'callback_data' => 'noop']]]]]);
             }
-            if (preg_match('~^stats_(\d+)$~', $data, $m)) {
-                say($chat, stats_text((int)$m[1]), $uid);
+            if (preg_match('~^stats_(\d+)(?:_([a-z]+))?$~', $data, $m)) {
+                say($chat, stats_text((int)$m[1], $m[2] ?? 'cdn'), null, stats_kb((int)$m[1], $m[2] ?? 'cdn'));
             }
 
             /* ── Тексты сайта ── */
@@ -733,26 +766,52 @@ for ($loop = 0; $loop < 6; $loop++) {
         if ($cmd === '/bindchat') {
             if (!is_admin($uid)) { say($chat, 'Команда только для администраторов.', $uid, null, $topic); continue; }
             save_binding('tg_chat', (string)$chat);
-            if ($topic) save_binding('tg_topic_form', (string)$topic);
+            if ($topic) save_binding('tg_topic_form_cdn', (string)$topic);
             say($chat, "Чат привязан.\nid чата: <code>{$chat}</code>"
-                . ($topic ? "\nтема для заявок: <code>{$topic}</code>" : '')
-                . "\n\nЧтобы задать темы для ошибок и аналитики, напишите в нужной теме /bindtopic errors или /bindtopic stats.",
+                . ($topic ? "\nтема для заявок CDN: <code>{$topic}</code>" : '')
+                . "\n\nОстальные ветки закрепляются из самой ветки:\n"
+                . "<code>/bindtopic cdn stats</code>, <code>/bindtopic vpn stats</code>,\n"
+                . "<code>/bindtopic cdn errors</code>, <code>/bindtopic vpn errors</code>,\n"
+                . "<code>/bindtopic cdn forms</code>.",
                 $uid, null, $topic);
             continue;
         }
         if ($cmd === '/bindtopic') {
             if (!is_admin($uid)) continue;
-            $map = ['errors' => 'tg_topic_error', 'stats' => 'tg_topic_stat', 'forms' => 'tg_topic_form'];
-            $k = $map[strtolower($arg)] ?? null;
-            if (!$k) { say($chat, 'Укажите: /bindtopic forms, /bindtopic errors или /bindtopic stats', $uid, null, $topic); continue; }
+            /* ── У КАЖДОЙ ПЛОЩАДКИ СВОИ ВЕТКИ ────────────────────────
+               Команда была одна на всё («/bindtopic stats»), и ветка
+               получалась одна на два сайта: аналитика VPN уходила в
+               ветку CDN. Владелец: «должно быть по веткам своим, как
+               CDN».
+
+               Площадка теперь называется первым словом. Старый вид без
+               неё оставлен и означает CDN: он записан в закрепе чата, и
+               ломать закреплённую подсказку правкой кода нельзя. */
+            $виды = ['errors' => 'error', 'stats' => 'stat', 'forms' => 'form'];
+            $слова = preg_split('~\s+~', mb_strtolower(trim($arg)), -1, PREG_SPLIT_NO_EMPTY);
+            $сайт = 'cdn'; $вид = '';
+            if (count($слова) >= 2 && isset(rc_sites()[$слова[0]])) { $сайт = $слова[0]; $вид = $слова[1]; }
+            elseif (count($слова) === 1) { $вид = $слова[0]; }
+            $к = isset($виды[$вид]) ? 'tg_topic_' . $виды[$вид] . '_' . $сайт : null;
+            if (!$к) {
+                say($chat, "Укажите площадку и раздел:\n<code>/bindtopic cdn stats</code>\n"
+                    . "<code>/bindtopic vpn stats</code>\n<code>/bindtopic vpn errors</code>\n"
+                    . "Разделы: forms, errors, stats. Площадки: cdn, vpn.", $uid, null, $topic);
+                continue;
+            }
             save_binding('tg_chat', (string)$chat);
-            save_binding($k, (string)($topic ?: ''));
-            say($chat, 'Тема закреплена за разделом «' . htmlspecialchars($arg) . '».', $uid, null, $topic);
+            save_binding($к, (string)($topic ?: ''));
+            $имяС = rc_sites()[$сайт] ?? $сайт;
+            say($chat, 'Ветка закреплена: ' . htmlspecialchars($имяС) . ' · ' . htmlspecialchars($вид) . '.', $uid, null, $topic);
             continue;
         }
         if ($cmd === '/unbind') {
             if (!is_admin($uid)) continue;
-            foreach (['tg_chat', 'tg_topic_form', 'tg_topic_error', 'tg_topic_stat'] as $k) save_binding($k, '');
+            $ключи = ['tg_chat', 'tg_topic_form', 'tg_topic_error', 'tg_topic_stat'];
+            foreach (array_keys(rc_sites()) as $с) {
+                foreach (['form', 'error', 'stat'] as $в) $ключи[] = 'tg_topic_' . $в . '_' . $с;
+            }
+            foreach ($ключи as $k) save_binding($k, '');
             say($chat, 'Привязка чата снята. Уведомления снова уходят администраторам в личку.', $uid, null, $topic);
             continue;
         }
@@ -768,8 +827,20 @@ for ($loop = 0; $loop < 6; $loop++) {
             if (preg_match('~^ref_([A-F0-9]{6,16})$~i', $arg, $rm)) {
                 contest_remember_ref($uid, $rm[1]);
             }
+            /* ── ОДИН БОТ НА ДВЕ ПЛОЩАДКИ ────────────────────────
+               Бот заводился под один сайт и здоровался его именем.
+               Теперь он ведёт и CDN, и VPN: аналитику, заявки и
+               ошибки обоих. Владелец: «1 бот и 1 чат под CDN и VPN,
+               и всё там - и админка, и аналитика, и формы, но чтобы
+               было различие».
+
+               Различие в том, что видит человек. Управляющему бот
+               представляется общим именем проекта и сразу говорит,
+               что площадок две. Посетителю он остаётся лицом CDN:
+               этот бот стоит в меню сайта CDN, и «Rocket Project» ему
+               ничего не скажет. */
             $hi = is_admin($uid)
-                ? "<b>Rocket CDN</b>\nПанель управления сайтом.\n\nНижнее меню открывает аналитику, заявки и данные сети. Мини-приложение показывает сайт прямо в Телеграме."
+                ? "<b>Rocket Project</b>\nПанель управления площадками.\n\nCDN и VPN в одном месте: аналитика, заявки, ошибки и тексты у каждой свои. Нижнее меню открывает разделы, мини-приложение показывает сайт прямо в Телеграме."
                 : "<b>Rocket CDN</b>\n<i>Fast. Reliable. Global.</i>\n\nГлобальная сеть доставки контента. Выберите раздел в меню внизу или откройте мини-приложение.";
             $inline = [[['text' => 'Открыть мини-приложение', 'web_app' => ['url' => $APP_URL]]],
                        [['text' => 'Сайт RocketVPN', 'url' => $VPN_URL]],
@@ -818,12 +889,15 @@ for ($loop = 0; $loop < 6; $loop++) {
         }
 
         if ($cmd === '/stats' || $text === 'Аналитика') {
-            $days = (int)$arg ?: 7;
-            say($chat, stats_text($days), null, [[
-                ['text' => 'Сегодня', 'callback_data' => 'stats_1'],
-                ['text' => '7 дней',  'callback_data' => 'stats_7'],
-                ['text' => '30 дней', 'callback_data' => 'stats_30'],
-            ]]);
+            /* Довод команды это либо число дней, либо имя площадки, либо
+               и то и другое: «/stats vpn», «/stats 30», «/stats vpn 30».
+               Разбираем по смыслу слова, а не по его месту. */
+            $days = 7; $сайтС = 'cdn';
+            foreach (preg_split('~\s+~', mb_strtolower($arg), -1, PREG_SPLIT_NO_EMPTY) as $сл) {
+                if (ctype_digit($сл)) $days = (int)$сл;
+                elseif (isset(rc_sites()[$сл])) $сайтС = $сл;
+            }
+            say($chat, stats_text($days, $сайтС), null, stats_kb($days, $сайтС));
             continue;
         }
         if ($cmd === '/leads' || $text === 'Заявки') { say($chat, leads_text(8), $uid); continue; }
@@ -852,7 +926,10 @@ for ($loop = 0; $loop < 6; $loop++) {
         if ($cmd === '/report') {
             /* Принудительный отчёт: расписание в 9:00 это не сдвигает,
                cron.php сам держит отметку дня в cron_state.json */
-            say($chat, rc_report_daily(), $uid);
+            /* Отчёт по требованию даём по КАЖДОЙ площадке, как его даёт
+               расписание: спросить «что вчера было» и получить половину
+               картины хуже, чем не спрашивать. */
+            foreach (rc_report_sites(1, 1) as $к) say($chat, rc_report_daily($к), $uid);
             rc_admin_log($uid, 'отчёт по требованию');
             continue;
         }

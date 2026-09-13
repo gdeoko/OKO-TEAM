@@ -9,7 +9,7 @@ if (!defined('RC_ROOT')) require __DIR__ . '/config.php';
 function rc_stats_range($back = 1, $len = 1, $site = 'cdn') {
     $r = ['views' => 0, 'uniq' => 0, 'leads' => 0, 'callbacks' => 0, 'register' => 0,
           'connect' => 0, 'errors' => 0, 'refs' => [], 'devices' => [], 'nodes' => [],
-          'searches' => [], 'scroll' => [], 'days' => []];
+          'searches' => [], 'scroll' => [], 'акты' => [], 'days' => []];
     for ($i = 0; $i < $len; $i++) {
         $day = date('Y-m-d', strtotime('-' . ($back + $i) . ' day'));
         $d = rc_json_read(stat_file($day, $site), []);
@@ -30,7 +30,7 @@ function rc_stats_range($back = 1, $len = 1, $site = 'cdn') {
         $r['register'] += $row['register'];
         $r['connect'] += (int)($ev['connect'] ?? 0);
         $r['errors'] += array_sum($d['errors'] ?? []);
-        foreach (['refs', 'devices', 'nodes', 'searches', 'scroll'] as $k) {
+        foreach (['refs', 'devices', 'nodes', 'searches', 'scroll', 'акты'] as $k) {
             foreach (($d[$k] ?? []) as $kk => $vv) $r[$k][$kk] = ($r[$k][$kk] ?? 0) + $vv;
         }
     }
@@ -49,12 +49,21 @@ function rc_delta($now, $was) {
     return ' (' . ($p > 0 ? '+' : '') . $p . '%)';
 }
 
-function rc_report_daily() {
-    $y = rc_stats_range(1, 1);
-    $p = rc_stats_range(2, 1);
+/* ── У КАЖДОЙ ПЛОЩАДКИ СВОЙ ОТЧЁТ, А НЕ ХВОСТ В ЧУЖОМ ─────────
+   Отчёт собирался только по CDN, а VPN и игра шли тремя строчками в
+   его конце под заголовком «Остальные площадки». Владелец: «по VPN
+   сделать всё так же, но в другие ветки».
+
+   Поэтому сборка стала разбором ОДНОЙ названной площадки, а рассылку
+   по веткам делает расписание: сколько площадок, столько сообщений, у
+   каждого свой заголовок и своя ветка. Хвоста больше нет вовсе. */
+function rc_report_daily($сайт = 'cdn') {
+    $имяС = rc_sites()[$сайт] ?? $сайт;
+    $y = rc_stats_range(1, 1, $сайт);
+    $p = rc_stats_range(2, 1, $сайт);
     $date = date('d.m.Y', strtotime('-1 day'));
 
-    $s = "<b>Аналитика · Rocket CDN за {$date}</b>\n\n"
+    $s = "<b>Аналитика · {$имяС} за {$date}</b>\n\n"
        . "Просмотры: <b>{$y['views']}</b>" . rc_delta($y['views'], $p['views']) . "\n"
        . "Уникальные: <b>{$y['uniq']}</b>" . rc_delta($y['uniq'], $p['uniq']) . "\n"
        . "Клики «Регистрация»: <b>{$y['register']}</b>" . rc_delta($y['register'], $p['register']) . "\n"
@@ -82,49 +91,48 @@ function rc_report_daily() {
         $i = 0;
         foreach ($y['nodes'] as $k => $v) { $s .= "· " . htmlspecialchars($k) . ": {$v}\n"; if (++$i >= 5) break; }
     }
-    if (!$y['views']) $s .= "\nЗа сутки посещений не было.";
-
-    $s .= rc_report_sites_tail(1, 1);
-    return $s;
-}
-
-/* Хвост отчёта по остальным площадкам.
-
-   Подробный разбор оставляем за Rocket CDN: там воронка, города и
-   регистрации. По VPN и игре в чат идёт короткая строка - просмотры,
-   люди, заявки. Полный разбор на три сайта не читается с телефона, а
-   отчёт читают именно с телефона.
-
-   Площадка без единого посещения за сутки в отчёт не попадает: строка
-   «ноль, ноль, ноль» каждый день приучает не читать отчёт вовсе. */
-function rc_report_sites_tail($back = 1, $len = 1) {
-    $s = '';
-    foreach (rc_sites() as $к => $имя) {
-        if ($к === 'cdn') continue;
-        $r = rc_stats_range($back, $len, $к);
-        if (!$r['views'] && !$r['leads'] && !$r['callbacks']) continue;
-        $s .= "\n<b>" . htmlspecialchars($имя) . "</b>\n"
-            . "Просмотры: <b>{$r['views']}</b>, люди: <b>{$r['uniq']}</b>";
-        $з = $r['leads'] + $r['callbacks'];
-        if ($з) $s .= ", заявки: <b>{$з}</b>";
-        $s .= "\n";
+    /* Акты фильма считает только VPN: по ним видно, на каком месте
+       человек уходит, и это там главный вопрос. У CDN такого поля нет
+       вовсе, поэтому раздел появляется сам по данным. */
+    if (!empty($y['акты'])) {
+        $s .= "\n<b>Докуда доходили по фильму</b>\n";
+        $i = 0;
+        foreach ($y['акты'] as $k => $v) { $s .= "· " . htmlspecialchars($k) . ": {$v}\n"; if (++$i >= 8) break; }
     }
-    if ($s !== '') $s = "\n<b>Остальные площадки</b>\n" . $s;
+    if (!$y['views']) $s .= "\nЗа сутки посещений не было.";
     return $s;
 }
 
-function rc_report_period($len = 7, $title = 'Итоги периода') {
-    $now = rc_stats_range(1, $len);
-    $was = rc_stats_range(1 + $len, $len);
-    $s = "<b>{$title}</b>\n\n"
+/* ── КОМУ СЕГОДНЯ ЕСТЬ ЧТО СКАЗАТЬ ───────────────────────────
+   Площадка без единого посещения за сутки отчёта не получает: строка
+   «ноль, ноль, ноль» каждый день приучает не читать отчёт вовсе. У
+   CDN отчёт идёт всегда - это основной сайт, и его молчание само по
+   себе новость.
+
+   Игра отдельного отчёта не получает: у неё нет ни своих суток, ни
+   своей ветки, она часть пути по сайту VPN. */
+function rc_report_sites($back = 1, $len = 1) {
+    $из = [];
+    foreach (rc_sites() as $к => $имя) {
+        if ($к === 'game') continue;
+        if ($к === 'cdn') { $из[] = $к; continue; }
+        $r = rc_stats_range($back, $len, $к);
+        if ($r['views'] || $r['leads'] || $r['callbacks']) $из[] = $к;
+    }
+    return $из;
+}
+
+function rc_report_period($len = 7, $title = 'Итоги периода', $сайт = 'cdn') {
+    $имяС = rc_sites()[$сайт] ?? $сайт;
+    $now = rc_stats_range(1, $len, $сайт);
+    $was = rc_stats_range(1 + $len, $len, $сайт);
+    $s = "<b>{$title} · {$имяС}</b>\n\n"
        . "Просмотры: <b>{$now['views']}</b>" . rc_delta($now['views'], $was['views']) . "\n"
        . "Уникальные: <b>{$now['uniq']}</b>" . rc_delta($now['uniq'], $was['uniq']) . "\n"
        . "Клики «Регистрация»: <b>{$now['register']}</b>" . rc_delta($now['register'], $was['register']) . "\n"
        . "Заявки: <b>" . ($now['leads'] + $now['callbacks']) . "</b>"
        . rc_delta($now['leads'] + $now['callbacks'], $was['leads'] + $was['callbacks']) . "\n"
        . "Конверсия: <b>{$now['conv']}%</b>\n";
-
-    $s .= rc_report_sites_tail(1, $len);
 
     $s .= "\n<b>По дням</b>\n<code>";
     foreach ($now['days'] as $r) {

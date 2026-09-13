@@ -35,7 +35,15 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $raw    = file_get_contents('php://input');
 $body   = $raw ? (json_decode($raw, true) ?: []) : [];
 
-function out($d) { echo json_encode($d, JSON_UNESCAPED_UNICODE); exit; }
+/* Второй довод это код ответа. Без него отказ уезжал с кодом 200, и
+   отличить «не приняли» от «приняли» можно было только чтением тела -
+   в соседнем проекте ровно на этом шесть отказов приёма файла
+   выглядели успехом, и браузер показывал человеку галочку. */
+function out($d, $код = 200) {
+    if ($код !== 200) http_response_code((int)$код);
+    echo json_encode($d, JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 /* Ответить человеку сейчас, а долгие дела доделать после ответа.
 
@@ -303,7 +311,7 @@ if ($action === 'track') {
         $list = array_slice($fresh, 0, 5);
         $имяС = rc_sites()[$сайт] ?? $сайт;
         rc_notify("<b>Ошибка · " . htmlspecialchars($имяС) . "</b>\n<code>"
-            . htmlspecialchars(implode("\n", $list)) . "</code>", null, 'tg_topic_error');
+            . htmlspecialchars(implode("\n", $list)) . "</code>", null, 'tg_topic_error', $сайт);
     }
     out(['ok' => true]);
 }
@@ -320,6 +328,19 @@ if ($action === 'lead' || $action === 'callback') {
     $trap    = inp('website');           /* ловушка для ботов */
 
     if ($trap !== '')            out(['ok' => true]);
+    /* ── ФОРМА ЕСТЬ НЕ У КАЖДОЙ ПЛОЩАДКИ ───────────────────────
+       Слово заказчика: «форму обратной связи не нужно на VPN, а на
+       CDN можно оставить». Разметку с VPN мы убрали, но дверь на
+       сервере обязана закрыться тоже: адрес api остаётся общим, и
+       заявку на закрытую площадку можно послать мимо страницы.
+
+       Отвечаем 404, а не «ок»: тихое «принято» на непринятую заявку
+       это ровно то враньё, из-за которого потом ищут потерянные
+       обращения. Список площадок с формой лежит настройкой. */
+    $формаГде = (array)rc_cfg('lead_sites', ['cdn']);
+    if ($формаГде && !in_array(rc_site(), $формаГде, true)) {
+        out(['ok' => false, 'error' => 'lead_disabled'], 404);
+    }
     if ($name === '')            out(['ok' => false, 'error' => 'name']);
     $isMail  = (bool)filter_var($contact, FILTER_VALIDATE_EMAIL);
     $isPhone = strlen(preg_replace('~\D~', '', $contact)) >= 10;
@@ -401,7 +422,7 @@ if ($action === 'lead' || $action === 'callback') {
     $kb = [];
     $kb[] = [['text' => 'В работе', 'callback_data' => 'lead_work_' . $lead['id']],
              ['text' => 'Закрыть',  'callback_data' => 'lead_done_' . $lead['id']]];
-    rc_notify($txt, ['inline_keyboard' => $kb], 'tg_topic_form');
+    rc_notify($txt, ['inline_keyboard' => $kb], 'tg_topic_form', $lead['site']);
 
     /* Письмо себе */
     $rows = [
@@ -813,11 +834,26 @@ if ($action === 'связка') {
         'бот' => $бот ? ['имя' => $бот['username'] ?? '', 'id' => $бот['id'] ?? 0] : null,
         'хвостТокена' => $токен === '' ? '' : substr($токен, -6),
         'чат' => (string)$чат,
-        'темы' => [
-            'формы'    => (string)rc_cfg('tg_topic_form'),
-            'ошибки'   => (string)rc_cfg('tg_topic_error'),
-            'аналитика'=> (string)rc_cfg('tg_topic_stat'),
-        ],
+        /* Показываем не три числа, а карту: по какой площадке куда
+           уйдёт сообщение. Пустая клетка это площадка без своей ветки -
+           её сообщения падают в общую, и по трём числам это было
+           неотличимо от «всё настроено». */
+        'темы' => (function () {
+            $к = ['общие' => [
+                'формы'     => (string)rc_cfg('tg_topic_form'),
+                'ошибки'    => (string)rc_cfg('tg_topic_error'),
+                'аналитика' => (string)rc_cfg('tg_topic_stat'),
+            ]];
+            foreach (rc_sites() as $с => $имя) {
+                if ($с === 'game') continue;
+                $к[$имя] = [
+                    'формы'     => (string)rc_topic('form', $с),
+                    'ошибки'    => (string)rc_topic('error', $с),
+                    'аналитика' => (string)rc_topic('stat', $с),
+                ];
+            }
+            return $к;
+        })(),
         'админы' => rc_cfg('tg_admins'),
         'сайты' => $сайты,
     ]);
@@ -829,9 +865,17 @@ if ($action === 'связка') {
 if ($action === 'связка_проба') {
     need_key();
     $из = [];
-    foreach (['tg_topic_form' => 'Формы', 'tg_topic_error' => 'Ошибки', 'tg_topic_stat' => 'Аналитика'] as $к => $имя) {
-        $из[$имя] = rc_notify("<b>Проба связи · {$имя}</b>\nОбщая панель на связи, уведомления доходят.", null, $к)
-            ? 'дошло' : 'не дошло';
+    foreach (rc_sites() as $с => $имяС) {
+        if ($с === 'game') continue;
+        foreach (['form' => 'Формы', 'error' => 'Ошибки', 'stat' => 'Аналитика'] as $в => $имя) {
+            /* Форма есть не у каждой площадки: пробовать ветку, которой
+               по решению заказчика не будет, значит писать в чат
+               сообщение ни о чём. */
+            if ($в === 'form' && !in_array($с, (array)rc_cfg('lead_sites', ['cdn']), true)) continue;
+            $из[$имяС . ' · ' . $имя] =
+                rc_notify("<b>Проба связи · {$имяС} · {$имя}</b>\nПанель на связи, уведомления доходят.", null, $в, $с)
+                ? 'дошло' : 'не дошло';
+        }
     }
     out(['ok' => true, 'темы' => $из]);
 }
