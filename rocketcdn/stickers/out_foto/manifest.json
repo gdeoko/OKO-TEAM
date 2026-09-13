@@ -1,21 +1,21 @@
 [
  {
-  "key": "logo",
-  "file": "logo.webm",
-  "emoji": "💙",
-  "title": "Знак Rocket"
+  "key": "lock",
+  "file": "lock.webm",
+  "emoji": "🔓",
+  "title": "Замок и ключ"
  },
  {
-  "key": "launch",
-  "file": "launch.webm",
-  "emoji": "🚀",
-  "title": "Взлёт"
+  "key": "bolt",
+  "file": "bolt.webm",
+  "emoji": "⚡",
+  "title": "Разряд"
  },
  {
   "key": "earth",
   "file": "earth.webm",
   "emoji": "🌍",
-  "title": "Сеть"
+  "title": "Земля"
  },
  {
   "key": "jupiter",
@@ -48,6 +48,78 @@
   "title": "Солнце"
  },
  {
+  "key": "power",
+  "file": "power.webm",
+  "emoji": "🔌",
+  "title": "Включить"
+ },
+ {
+  "key": "gear",
+  "file": "gear.webm",
+  "emoji": "⚙️",
+  "title": "Настройки"
+ },
+ {
+  "key": "radar",
+  "file": "radar.webm",
+  "emoji": "📡",
+  "title": "Мониторинг"
+ },
+ {
+  "key": "traffic",
+  "file": "traffic.webm",
+  "emoji": "📊",
+  "title": "Трафик"
+ },
+ {
+  "key": "timer",
+  "file": "timer.webm",
+  "emoji": "⏱",
+  "title": "Отклик"
+ },
+ {
+  "key": "node",
+  "file": "node.webm",
+  "emoji": "🔗",
+  "title": "Соединение"
+ },
+ {
+  "key": "battery",
+  "file": "battery.webm",
+  "emoji": "🔋",
+  "title": "Заряд"
+ },
+ {
+  "key": "star",
+  "file": "star.webm",
+  "emoji": "⭐",
+  "title": "Звезда"
+ },
+ {
+  "key": "bell",
+  "file": "bell.webm",
+  "emoji": "🔔",
+  "title": "Уведомление"
+ },
+ {
+  "key": "done",
+  "file": "done.webm",
+  "emoji": "🏁",
+  "title": "Готово"
+ },
+ {
+  "key": "logo",
+  "file": "logo.webm",
+  "emoji": "💙",
+  "title": "Знак Rocket"
+ },
+ {
+  "key": "launch",
+  "file": "launch.webm",
+  "emoji": "🚀",
+  "title": "Взлёт"
+ },
+ {
   "key": "astro",
   "file": "astro.webm",
   "emoji": "👨‍🚀",
@@ -58,12 +130,6 @@
   "file": "shield.webm",
   "emoji": "🛡",
   "title": "Щит VPN"
- },
- {
-  "key": "lock",
-  "file": "lock.webm",
-  "emoji": "🔓",
-  "title": "Замок и ключ"
  },
  {
   "key": "key",
@@ -94,12 +160,6 @@
   "file": "unblock.webm",
   "emoji": "🚫",
   "title": "Блок снят"
- },
- {
-  "key": "bolt",
-  "file": "bolt.webm",
-  "emoji": "⚡",
-  "title": "Скорость"
  },
  {
   "key": "dc",
