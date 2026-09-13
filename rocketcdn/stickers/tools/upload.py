@@ -233,6 +233,48 @@ def replace(pack, items):
     return True
 
 
+def подменить(pack, items, ключи):
+    """Заменить в наборе только названные единицы, не трогая остальные.
+
+    Целиком набор перезаливать нельзя: у остальных тридцати стикеров
+    поменялись бы file_id, а они уже стоят в чужих чатах и в статусах.
+    Поэтому новый кладётся в конец, переставляется на место старого и
+    только потом старый убирается - место в ряду сохраняется.
+    """
+    r = call("getStickerSet", {"name": pack["name"]})
+    if not r.get("ok"):
+        print("  набора нет: %s" % r.get("description"))
+        return
+    было = r["result"]["stickers"]
+    по_эмодзи = {}
+    for i, s_ in enumerate(было):
+        по_эмодзи.setdefault(s_.get("emoji"), (i, s_["file_id"]))
+
+    for it in items:
+        if it["key"] not in ключи:
+            continue
+        место = по_эмодзи.get(it["emoji"])
+        if not место:
+            print("  %s: в наборе не нашёлся" % it["key"])
+            continue
+        индекс, старый = место
+        s_ = {"sticker": "attach://f", "format": формат(it["file"]),
+              "emoji_list": [it["emoji"]]}
+        res = call("addStickerToSet", {
+            "user_id": OWNER, "name": pack["name"],
+            "sticker": json.dumps(s_, ensure_ascii=False),
+        }, {"f": путь(pack, it)})
+        if not res.get("ok"):
+            print("  %s не лёг: %s" % (it["key"], res.get("description")))
+            continue
+        сейчас = call("getStickerSet", {"name": pack["name"]})
+        новый = сейчас["result"]["stickers"][-1]["file_id"]
+        call("setStickerPositionInSet", {"sticker": новый, "position": индекс})
+        call("deleteStickerFromSet", {"sticker": старый})
+        print("    ~ %s на месте %d" % (it["key"], индекс))
+        time.sleep(1.0)
+
+
 def main():
     if not TOKEN or not OWNER:
         print("нужны ROCKET_BOT_TOKEN и ROCKET_OWNER_ID в окружении")
@@ -241,6 +283,12 @@ def main():
     print("состояние наборов:")
     state = [show(p) for p in PACKS]
     if "--check" in sys.argv:
+        return 0
+    if "--swap" in sys.argv:
+        ключи = set(sys.argv[sys.argv.index("--swap") + 1].split(","))
+        for pack in PACKS:
+            print("  %s: меняю %s" % (pack["name"], ", ".join(sorted(ключи))))
+            подменить(pack, manifest(pack), ключи)
         return 0
     if "--replace" in sys.argv:
         for pack in PACKS:
