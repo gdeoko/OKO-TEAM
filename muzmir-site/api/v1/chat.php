@@ -95,7 +95,24 @@ if ($action === 'upload') {
     }
     try { chat_dialog_set($sessionKey, ['channel' => 'web', 'title' => $greetName]); } catch (\Throwable $e) {}
 
-    // Ничего не распознали (или нет ключа Gemini) — просто подтверждаем получение вложения.
+    /* Ничего не распознали (или нет ключа Gemini) — подтверждаем получение вложения.
+     *
+     * НО СНАЧАЛА — ГРАФИК. Это подтверждение стояло ВЫШЕ проверки нерабочего
+     * времени, и человек, приславший ночью одно вложение без подписи, получал
+     * живой ответ «Спасибо, вложение получила», а на следующую свою реплику, уже
+     * с текстом, — «сейчас нерабочее время». Сначала ответили, потом сказали, что
+     * не работаем: со стороны участника это поломка. Вложение — такое же
+     * обращение, как текст, и на него распространяется то же расписание. */
+    if ($derived === '' && chat_offhours_hold()) {
+        $first = (int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) !== 1;
+        $tpl   = $first ? chat_offhours_template($greetName) : '';
+        if ($first) {
+            chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s')]);
+            try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']); } catch (\Throwable $e) {}
+        }
+        json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey,
+                  'understood' => false, 'reply' => $tpl, 'offhours' => true]);
+    }
     if ($derived === '') {
         $ack = 'Спасибо, вложение получила. Подскажите, пожалуйста, по какому вопросу — заявка, оплата, результаты или наградные материалы, — и я помогу.';
         json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey,
@@ -202,14 +219,24 @@ if (($muted = chat_bot_muted($sessionKey)) !== '') {
 
 // --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон, вопрос сохранён ---
 if (chat_offhours_hold()) {
-    $d = chat_dialog_get($sessionKey);
-    $tpl = chat_offhours_template($greetName);
-    if ((int) ($d['pending_offhours'] ?? 0) !== 1) {
+    /* ШАБЛОН ПРО НЕРАБОЧЕЕ ВРЕМЯ — ОДИН РАЗ ЗА ВЕЧЕР, А НЕ НА КАЖДУЮ РЕПЛИКУ.
+     *
+     * Флаг pending_offhours выставлялся под условием, а вот отправка шаблона
+     * стояла НИЖЕ этого условия — то есть безусловно. Человек, написавший три
+     * сообщения подряд, получал три одинаковых «сейчас нерабочее время»:
+     * 13 сентября Елена написала про брак в дипломе, прислала два фото и
+     * добавила «разберитесь пожалуйста» — и дважды получила одну и ту же
+     * отписку. Во ВКонтакте это сделано правильно с самого начала: сказали
+     * один раз и молчим до утра. Здесь теперь так же. */
+    $d     = chat_dialog_get($sessionKey);
+    $first = (int) ($d['pending_offhours'] ?? 0) !== 1;
+    $tpl   = $first ? chat_offhours_template($greetName) : '';
+    if ($first) {
         chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s')]);
+        try {
+            insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']);
+        } catch (\Throwable $e) {}
     }
-    try {
-        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']);
-    } catch (\Throwable $e) {}
     json_out(['ok' => true, 'reply' => $tpl, 'actions' => [], 'image' => null, 'session' => $sessionKey, 'offhours' => true]);
 }
 // Рабочее время: снимаем «нерабочий» флаг, если он оставался.
