@@ -253,13 +253,17 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
            кабинет: там человек заводит подписку и платит. Бот уходит на
            третью кнопку, тихую по виду, - он никуда не делся, но больше
            не перехватывает основной путь. -->
+      <!-- ── ДВЕ КНОПКИ, И ИМЕННО ЭТИ ─────────────────────────────
+           Владелец по составу первого экрана: «в hero, где дом, ставим 2
+           кнопки. 1. Тест-драйв 24 часа - ссылку на rocketweb.top.
+           2. Открыть в Telegram - ссылку на @RocketCompanyVPN_bot».
+
+           «Оставить заявку» отсюда снята: третья кнопка на первом экране
+           делила внимание на три части, а форма никуда не делась - она
+           открыта кнопкой в шапке и стоит в конце ленты. -->
       <p class="rv-кнопки">
-        <a class="rv-кн rv-кн-гл" href="https://rocketweb.top" target="_blank" rel="noopener">Забрать 24 часа без карты</a>
-        <!-- Ведёт в окно формы, а не в подвал: пока лента идёт объёмным
-             фильмом, подвал снят из потока (панель это последний кадр), и
-             якорь в него никуда не приводил. Окно формы открыто всегда. -->
-        <a class="rv-кн" href="#форма">Оставить заявку</a>
-        <a class="rv-кн рв-кн-бот" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">Открыть бот в Telegram</a>
+        <a class="rv-кн rv-кн-гл" href="https://rocketweb.top" target="_blank" rel="noopener">Тест-драйв 24 часа</a>
+        <a class="rv-кн рв-кн-бот" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">Открыть в Telegram</a>
       </p>
     </div>
   </div>
@@ -496,11 +500,19 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
         <li><b>Один ключ на все устройства</b><span>Маршрут проверяется каждые тридцать секунд и переводится сам. Сутки тест-драйва без карты.</span></li>
       </ul>
     </div>
-    <!-- Кнопка одна и стоит внизу. Номера групп с нуля: вступления у
+    <!-- ── У РАКЕТЫ ЗОВЁМ В КАНАЛ, А НЕ ПРОДАЁМ ВТОРОЙ РАЗ ────────
+         Владелец: «где ракета, предлагаю поставить кнопку "Следите за
+         обновлениями" - https://t.me/rocketvpnnews».
+
+         Это верно по месту: предложение подписки человек уже видел на
+         первом экране, и повторять его у ракеты значит просить дважды
+         одно и то же. Канал же продолжает разговор после того, как
+         фильм кончился.
+
+         Кнопка одна и стоит внизу. Номера групп с нуля: вступления у
          акта нет, поэтому единственный раздел это «финал:0». -->
     <div class="rv-дело" data-сектор="финал:0">
-      <a class="rv-кн rv-кн-гл" href="https://rocketweb.top" target="_blank" rel="noopener">Забрать 24 часа без карты</a>
-      <a class="rv-кн рв-кн-бот" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">Бот в Telegram</a>
+      <a class="rv-кн rv-кн-гл" href="https://t.me/rocketvpnnews" target="_blank" rel="noopener">Следите за обновлениями</a>
     </div>
     <div class="rv-пульт" aria-label="Панель управления">
       <!-- Native expandable answers remain usable without WebGL. -->
@@ -584,7 +596,7 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
            «Начать полёт», у нас «Запустить VPN». -->
       <div class="рв-фин рв-фин-кн">
         <div class="рв-кн-ряд">
-          <a class="rv-кн" href="https://rocketcdn.ru/?from=vpn&amp;flight=1" data-к-игре="1">Запустить игру</a>
+          <a class="rv-кн" href="https://rocketcdn.ru/?from=vpn&amp;flight=1" data-к-игре="1">Погрузиться</a>
           <button type="button" class="rv-кн rv-кн-назад" data-фин-назад="1">Назад</button>
         </div>
         <a class="rv-кн rv-кн-гл рв-кн-широкая" href="https://rocketweb.top" target="_blank" rel="noopener">Запустить VPN</a>
