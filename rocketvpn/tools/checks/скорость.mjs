@@ -19,7 +19,7 @@
 
    Запуск: RV_URL=http://127.0.0.1:8170 node tools/checks/скорость.mjs
 */
-import { браузер, открыть, доложить } from "./общее.mjs";
+import { браузер, открыть, доложить, лентаВсего, кПрокрутке } from "./общее.mjs";
 
 const ТЕЛЕФОН = { имя: "телефон", vp: { width: 390, height: 844 }, dpr: 2, mob: true };
 const ПК = { имя: "ПК", vp: { width: 1440, height: 900 }, dpr: 1, mob: false };
@@ -155,10 +155,12 @@ for (const э of [ПК, ТЕЛЕФОН]) {
     requestAnimationFrame(шаг);
   });
 
-  const ВСЕГО = await pg.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  /* Длину ленты и саму прокрутку берём у ленты: окно её не двигает,
+     документ отдаёт высоту экрана. Разбор в общее.mjs. */
+  const ВСЕГО = await лентаВсего(pg);
   const ШАГОВ = 40;
   for (let i = 1; i <= ШАГОВ; i++) {
-    await pg.evaluate((y) => window.scrollTo(0, y), Math.round((ВСЕГО * i) / ШАГОВ));
+    await кПрокрутке(pg, (ВСЕГО * i) / ШАГОВ);
     /* ── ЖДЁМ КАДРЫ, А НЕ МИЛЛИСЕКУНДЫ ─────────────────────────
        Стояло 160 миллисекунд на шаг. На живой машине это десяток
        кадров, здесь - четверть кадра, и за все сорок шагов набиралось

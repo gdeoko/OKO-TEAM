@@ -17,7 +17,7 @@
 import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { браузер, открыть, кАкту, доложить } from "./общее.mjs";
+import { браузер, открыть, кАкту, доложить, лентаВсего, кПрокрутке } from "./общее.mjs";
 
 const КУДА = (process.env.RV_СНИМКИ || join(tmpdir(), "rv-посадка")) + "/";
 mkdirSync(КУДА, { recursive: true });
@@ -303,7 +303,9 @@ for (const э of ЭКРАНЫ) {
   }
 
   /* Подвал: он не акт, но у него та же беда с шириной. */
-  await pg.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  /* В самый низ ленты. Окно её не двигает: прокрутка своя, разбор в
+     общее.mjs. */
+  await кПрокрутке(pg, await лентаВсего(pg));
   await pg.waitForTimeout(900);
   const подвал = await pg.evaluate(() => {
     const п = document.querySelector(".rv-подвал");

@@ -15,7 +15,7 @@
 import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { браузер, открыть, ПК, ТЕЛЕФОН, доложить } from "./общее.mjs";
+import { браузер, открыть, ПК, ТЕЛЕФОН, доложить, кДолеЛенты } from "./общее.mjs";
 
 const беды = [];
 const b = await браузер();
@@ -43,10 +43,10 @@ async function ждатьСлова(pg) {
 }
 
 async function поставить(pg, доля) {
-  await pg.evaluate((д) => {
-    const h = document.documentElement.scrollHeight - innerHeight;
-    window.scrollTo(0, Math.round(h * д));
-  }, доля);
+  /* Лента у сайта своя, и окно её не двигает вовсе - разбор в
+     общее.mjs, `кДолеЛенты`. Пока здесь стоял window.scrollTo, эта
+     проверка мерила неподвижную страницу. */
+  await кДолеЛенты(pg, доля);
   await pg.waitForTimeout(420);
   await ждатьСлова(pg);
   return pg.evaluate(() => (window.RV_WORLD && window.RV_WORLD["ход"] ? window.RV_WORLD["ход"]() : null));

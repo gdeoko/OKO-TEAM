@@ -97,7 +97,13 @@ export const ПОРОГИ = {
 const СНЯТЬ = (шаг) => {
   const W = window.RV_WORLD;
   if (!W || !W["проба"]) return { нет: "у мира нет пробы" };
-  const высота = document.documentElement.scrollHeight - window.innerHeight;
+  /* Длина ленты у сайта своя: документ прибит к окну и отдаёт высоту
+     экрана. Разбор в общее.mjs, `лентаВсего`. Здесь код идёт внутри
+     страницы, импортировать нечего, поэтому спрашиваем напрямую. */
+  const _скр = window.RV_СКРОЛЛ;
+  const высота = (_скр && _скр["лента"] && _скр["высота"])
+    ? Math.max(0, _скр["лента"]() - _скр["высота"]())
+    : (document.documentElement.scrollHeight - window.innerHeight);
   const слой = document.querySelector(".rv-слой");
   const персп = слой ? parseFloat(getComputedStyle(слой).perspective) || 0 : 0;
   const зум = W["ход"]()["зум"] || 1;
@@ -280,7 +286,8 @@ for (const э of ЭКРАНЫ) {
   for (let k = 0; k <= 8; k++) {
     const y = Math.round(снимок.высота * k / 8);
     const п = await pg.evaluate((yy) => new Promise(г => {
-      window.scrollTo(0, yy);
+      const с = window.RV_СКРОЛЛ;
+      if (с && с["к"]) с["к"](yy, false); else window.scrollTo(0, yy);
       requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
         const слой = document.querySelector(".rv-слой");
         const х = window.RV_WORLD["ход"]();
