@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru" data-тема="тёмная">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Rocket · Полёт</title>
+
+<!-- Rocket VPN. Страница полёта: игра на СВОЁМ домене.
+
+     ЗАЧЕМ ОНА ЕСТЬ. Кнопка «Погрузиться» уводила человека на
+     rocketcdn.ru. Заказчик попросил убрать этот переход: VPN и CDN у
+     него разные зоны бизнеса, и свободная дорожка из одного в другой
+     связывает их между собой на глазах у любого посетителя.
+
+     Игра при этом остаётся: она просто живёт здесь же. Модули те же,
+     что на соседнем сайте, скопированы файлами и дальше правятся
+     вместе с ним; расхождение ловит сверка сумм.
+
+     ПОЧЕМУ ОТДЕЛЬНАЯ СТРАНИЦА, А НЕ ЧАСТЬ ПЛЁНКИ. Игра тянет
+     three.js, четырнадцать своих модулей и три мегабайта текстур. На
+     главной странице это означало бы платить за них каждому, кто
+     просто читает про VPN. Здесь они грузятся только тому, кто нажал
+     «Погрузиться».
+
+     ПОЧЕМУ ЧЕРЕЗ index.php, А НЕ ПРЯМЫМ ИМЕНЕМ. У сайта один вход, и
+     он проверяет ключ. Прямое имя файла обошло бы створ - ровно так
+     первая сборка и утекла наружу. Файл закрыт правилом в .htaccess,
+     отдаёт его index.php по признаку flight=1. -->
+
+<link rel="preconnect" href="">
+<link rel="stylesheet" href="assets/rc-flight.css">
+<style>
+  :root{ color-scheme: dark }
+  html,body{ margin:0; padding:0; height:100%; background:#04070E; color:#E8F0FA;
+    font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    overscroll-behavior:none }
+  /* Заставка живёт до тех пор, пока игра не взяла экран на себя.
+     Пустой чёрный экран на время загрузки трёх мегабайт читается как
+     сломанная страница, и человек уходит, не дождавшись. */
+  .нач{ position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:22px; text-align:center;
+    padding:24px; z-index:5 }
+  .нач h1{ font:700 clamp(22px,5vw,34px)/1.15 "Bebas Neue",Impact,sans-serif;
+    letter-spacing:2px; text-transform:uppercase; margin:0 }
+  .нач p{ margin:0; max-width:30ch; color:#8FA6BE; font-size:14px }
+  .нач .лого{ width:64px; height:64px; opacity:.95 }
+  .пуск{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:15px 28px; border:0; border-radius:14px; cursor:pointer;
+    background:linear-gradient(100deg,#42B2DC,#8A9CFF); color:#04121B;
+    font:700 15px/1 system-ui,sans-serif; letter-spacing:.4px;
+    transition:filter .2s ease, transform .2s ease
+  }
+  .пуск:hover{ filter:brightness(1.08) }
+  .пуск:active{ transform:scale(.98) }
+  .пуск svg{ width:18px; height:18px; stroke:currentColor; fill:none;
+    stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round }
+  .назад{ position:fixed; left:14px; top:14px; z-index:6;
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 14px 9px 11px; border-radius:11px;
+    border:1px solid #1D2A3A; background:rgba(8,13,22,.82);
+    color:#8FA6BE; font:600 12.5px/1 system-ui,sans-serif;
+    text-decoration:none; backdrop-filter:blur(6px) }
+  .назад:hover{ color:#E8F0FA; border-color:#2E4460 }
+  .назад svg{ width:14px; height:14px; stroke:currentColor; fill:none;
+    stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round }
+  @media (prefers-reduced-motion:reduce){ .пуск{ transition:none } }
+</style>
+</head>
+<body>
+
+<a class="назад" href="./">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+  На сайт
+</a>
+
+<div class="нач" id="нач">
+  <svg class="лого" viewBox="0 0 24 24" fill="none" stroke="#42B2DC" stroke-width="1.4"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+    <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+  </svg>
+  <h1>Полёт</h1>
+  <p>Солнечная система, планеты по снимкам NASA и сеть узлов. Управление мышью
+     или пальцем, выход в любой момент.</p>
+  <button type="button" class="пуск js-flight" id="пуск">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+    </svg>
+    Погрузиться
+  </button>
+</div>
+
+<script>
+/* Режим игры на этом домене ВСЕГДА свой, и переключателя нет.
+
+   На соседнем сайте RC_VPN умеет менять режим сцены и уводить человека
+   на другой домен. Здесь такого хода быть не должно: заказчик просил
+   закрыть дорожку между сайтами в обе стороны. Заглушка ставится ДО
+   загрузки модулей, поэтому rc-vpn.js на неё не наступит.
+
+   Отдаём тот же режим, что на соседнем сайте по умолчанию: сцена
+   собрана под него, и другое значение поменяло бы наполнение игры. */
+window.RC_VPN = {
+  mode: function () { return "cdn"; },
+  setMode: function () {},
+  onMode: function () {},
+  ссылка: function () { return ""; },
+  открыт: function () { return false; }
+};
+
+/* Заставка уходит, как только игра взяла экран: её слой ставит на
+   корень признак, и ждать чего-то ещё не надо. Запасной срок стоит на
+   случай, когда признак не пришёл вовсе - пустой экран под заставкой
+   лучше, чем заставка поверх работающей игры. */
+(function () {
+  var н = document.getElementById("нач");
+  var к = document.getElementById("пуск");
+  if (!н || !к) return;
+  к.addEventListener("click", function () {
+    setTimeout(function () { н.style.display = "none"; }, 900);
+  });
+})();
+</script>
+
+<!-- Порядок тот же, что на соседнем сайте: rc-gl подтягивает три.js и
+     четырнадцать модулей сам, по нажатию кнопки с классом js-flight.
+     Ставить их тегами заранее нельзя - это те самые три мегабайта. -->
+<script defer src="assets/rc-i18n.js"></script>
+<script defer src="assets/rc-sound.js"></script>
+<script defer src="assets/rc-music.js"></script>
+<script defer src="assets/rc-geo.js"></script>
+<script defer src="assets/rc-motion.js"></script>
+<script defer src="assets/rc-holo.js"></script>
+<script defer src="assets/rc-desk.js"></script>
+<script defer src="assets/rc-gl.js"></script>
+</body>
+</html>

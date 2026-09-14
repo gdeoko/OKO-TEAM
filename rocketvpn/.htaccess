@@ -1,7 +1,7 @@
 # Rocket VPN. Плёнка наружу не отдаётся: единственный вход - index.php,
 # он проверяет ключ. Без этого правила створ обходится набором полного
 # имени файла, что и случилось в первой сборке.
-<FilesMatch "^(frame|stvor)\.html$">
+<FilesMatch "^(frame|stvor|igra)\.html$">
   Require all denied
 </FilesMatch>
 
