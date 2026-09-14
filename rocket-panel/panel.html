@@ -1,0 +1,2045 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rocket · проекты</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Палитра клиента: синий знака Rocket и фиолетовый их сайта.
+     Фон почти прозрачный - под ним живой космос, и плотные карточки
+     закрыли бы его целиком. */
+  --bg:#04070D; --card:rgba(13,20,31,.72); --card2:rgba(18,27,41,.66);
+  --bd:#1E2B3C;
+  --tx:#EAF2FA; --tx2:#93A6BD;
+  --ak:#42B2DC; --ak2:#8A9CFF; --ok:#3BD97E; --wait:#F5C542; --idle:#6B7B8F;
+  --lime:#42B2DC;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--tx);
+  font:15px/1.6 Montserrat,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding-block:0;
+}
+a{color:var(--ak);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── шапка ─────────────────────────────────────────────── */
+header{
+  position:sticky;top:0;z-index:20;background:rgba(4,7,13,.88);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+}
+.burger{
+  width:40px;height:40px;flex:0 0 40px;border:1px solid var(--bd);border-radius:11px;
+  background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer
+}
+.burger svg{width:18px;height:18px;stroke:var(--tx);fill:none;stroke-width:2;stroke-linecap:round}
+.hname{font-family:"Bebas Neue",Impact,sans-serif;font-size:21px;letter-spacing:1.6px;text-transform:uppercase}
+.hsub{font-size:12px;color:var(--tx2);margin-top:1px}
+
+/* ── раскладка ─────────────────────────────────────────── */
+.wrap{display:flex;gap:0;align-items:flex-start}
+nav{
+  width:250px;flex:0 0 250px;border-right:1px solid var(--bd);
+  padding:16px 12px 40px;position:sticky;top:69px;max-height:calc(100vh - 69px);overflow:auto
+}
+nav button{
+  display:flex;width:100%;gap:10px;align-items:center;text-align:left;
+  background:transparent;border:0;color:var(--tx2);padding:11px 12px;border-radius:11px;
+  font:inherit;font-size:14px;cursor:pointer;margin-bottom:2px
+}
+nav button .n{
+  width:22px;height:22px;flex:0 0 22px;border-radius:7px;background:var(--card2);
+  border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--tx2)
+}
+nav button.on{background:var(--card);color:var(--tx)}
+nav button.on .n{background:var(--ak);border-color:var(--ak);color:#04121B}
+main{flex:1;min-width:0;padding:20px 16px 60px;max-width:980px}
+
+/* ── карточки ──────────────────────────────────────────── */
+.sec{display:none}
+.sec.on{display:block}
+h2{font-family:"Bebas Neue",Impact,sans-serif;font-size:30px;margin:0 0 3px;
+  letter-spacing:1.4px;text-transform:uppercase;line-height:1.05;
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.lead{color:var(--tx2);font-size:14px;margin:0 0 18px}
+.card{
+  background:var(--card);border:1px solid var(--bd);border-radius:16px;
+  padding:16px;margin-bottom:12px;backdrop-filter:blur(9px)
+}
+.card h3{margin:0 0 10px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card h3 i{width:6px;height:6px;border-radius:50%;background:var(--ak);display:block;flex:0 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.kv{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:11px 13px}
+.kv b{display:block;font-size:11px;font-weight:600;color:var(--tx2);
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
+.kv span{font-size:14px;word-break:break-word}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+
+/* ── состояние ─────────────────────────────────────────── */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.7px;padding:4px 9px;border-radius:999px;
+  border:1px solid;white-space:nowrap}
+.st.ok{color:var(--ok);border-color:rgba(59,217,126,.35);background:rgba(59,217,126,.08)}
+.st.go{color:var(--ak);border-color:rgba(66,178,220,.35);background:rgba(66,178,220,.08)}
+.st.wait{color:var(--wait);border-color:rgba(245,166,35,.35);background:rgba(245,166,35,.08)}
+.st.idle{color:var(--idle);border-color:rgba(107,123,143,.3);background:rgba(107,123,143,.07)}
+
+/* ── список шагов ──────────────────────────────────────── */
+ul.steps{list-style:none;margin:0;padding:0}
+ul.steps li{padding:9px 0 9px 26px;position:relative;border-bottom:1px solid var(--bd);font-size:14px}
+ul.steps li:last-child{border-bottom:0}
+ul.steps li::before{
+  content:"";position:absolute;left:4px;top:15px;width:8px;height:8px;border-radius:50%;
+  border:2px solid var(--idle)
+}
+ul.steps li.done::before{background:var(--ok);border-color:var(--ok)}
+ul.steps li.now::before{background:var(--ak);border-color:var(--ak);
+  box-shadow:0 0 0 4px rgba(66,178,220,.15)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--tx2);font-weight:600}
+td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.q{border-left:2px solid var(--wait);padding:2px 0 2px 12px;margin:10px 0;color:var(--tx)}
+.note{color:var(--tx2);font-size:13px}
+.tag{display:inline-block;font-size:11px;padding:3px 8px;border-radius:7px;
+  background:var(--card2);border:1px solid var(--bd);color:var(--tx2);margin:0 5px 5px 0}
+
+/* ── телефон ───────────────────────────────────────────── */
+@media (max-width:860px){
+  nav{
+    position:fixed;inset:69px 0 auto 0;width:100%;max-width:none;flex:none;
+    background:rgba(4,7,13,.97);border-right:0;border-bottom:1px solid var(--bd);z-index:15;
+    max-height:calc(100vh - 69px);display:none;padding:12px
+  }
+  nav.open{display:block}
+  main{padding:16px 14px 56px}
+  h2{font-size:19px}
+}
+@media (min-width:861px){ .burger{display:none} }
+/* ═══ ГЛАВНАЯ В СТИЛЕ ОКО ═══════════════════════════════════
+   Бренд КЛИЕНТА, а не наш: синий знака Rocket #42B2DC и фиолетовый
+   их сайта #8A9CFF. Наш лайм тут был бы чужим - панель открыта у
+   клиента и стоит рядом с его сайтами. Заголовки Bebas Neue, текст
+   Montserrat. Никаких эмодзи, отметки рисуются кружком и рамкой,
+   а не значком из шрифта. */
+
+.home{position:relative;min-height:calc(100vh - 69px);padding:0}
+/* Холст лежит под всей панелью, а не внутри раздела: внутри main
+   у него своя область наложения, и фиксированный холст накрывал
+   шапку с меню. */
+#fon{
+  position:fixed;inset:0;width:100%;height:100%;z-index:0;
+  pointer-events:none;display:block
+}
+.wrap{position:relative;z-index:1}
+
+/* ── шапка главной ─────────────────────────────────────── */
+.hero{padding:52px 4px 34px;text-align:center}
+.hero .logo{
+  width:92px;height:92px;display:block;margin:0 auto 18px;
+  /* Лайм у знака уже свой, добавляем только свечение вокруг. */
+  filter:drop-shadow(0 0 26px rgba(66,178,220,.42))
+}
+.hero h1{
+  font-family:"Bebas Neue",Impact,"Arial Narrow Bold",sans-serif;
+  font-size:clamp(46px,13vw,78px);line-height:.92;letter-spacing:2px;
+  margin:0;color:var(--tx);text-transform:uppercase
+}
+.hero .sub{
+  margin:10px 0 0;font-size:12px;letter-spacing:4.5px;text-transform:uppercase;
+  color:var(--lime);font-weight:600
+}
+
+/* ── плитки ────────────────────────────────────────────── */
+.tiles{display:flex;flex-direction:column;gap:10px;padding:0 2px 56px}
+.tile{
+  display:flex;align-items:center;gap:15px;width:100%;text-align:left;
+  background:rgba(11,17,27,.70);border:1px solid var(--bd);border-radius:16px;
+  padding:16px 17px;cursor:pointer;color:var(--tx);font:inherit;
+  backdrop-filter:blur(6px);
+  transition:border-color .22s ease, transform .22s ease, background .22s ease
+}
+.tile:hover,.tile:focus-visible{
+  border-color:rgba(66,178,220,.55);background:rgba(14,22,34,.86);
+  transform:translateY(-2px);outline:none
+}
+.tile .idx{
+  font-family:"Bebas Neue",Impact,sans-serif;font-size:30px;line-height:1;
+  color:var(--lime);opacity:.85;flex:0 0 auto;min-width:38px;letter-spacing:1px
+}
+.tile .body{display:flex;flex-direction:column;min-width:0;flex:1}
+.tile .nm{
+  font-family:"Bebas Neue",Impact,sans-serif;font-size:22px;line-height:1.1;
+  letter-spacing:1.1px;text-transform:uppercase
+}
+.tile .ds{font-size:12.5px;color:var(--tx2);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:860px){
+  .tile .ds{white-space:normal;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+}
+
+/* ── отметки ───────────────────────────────────────────── */
+.mark{
+  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
+  font-size:10.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  padding:6px 11px;border-radius:999px;border:1px solid;white-space:nowrap
+}
+.mark i{width:7px;height:7px;border-radius:50%;display:block;flex:0 0 7px}
+.mark.ok{color:var(--lime);border-color:rgba(66,178,220,.42);background:rgba(66,178,220,.10)}
+.mark.ok i{background:var(--lime)}
+.mark.go{color:var(--lime);border-color:rgba(66,178,220,.6);background:rgba(66,178,220,.15)}
+.mark.go i{background:var(--lime);animation:пульс 1.9s ease-in-out infinite}
+.mark.wait{color:#F5C542;border-color:rgba(245,197,66,.38);background:rgba(245,197,66,.08)}
+.mark.wait i{background:#F5C542}
+.mark.idle{color:#7C8A74;border-color:rgba(124,138,116,.32);background:rgba(124,138,116,.07)}
+.mark.idle i{background:#7C8A74}
+@keyframes пульс{
+  0%,100%{box-shadow:0 0 0 0 rgba(66,178,220,.6)}
+  70%{box-shadow:0 0 0 7px rgba(66,178,220,0)}
+}
+
+/* ── назад из проекта ──────────────────────────────────── */
+.back{
+  display:inline-flex;align-items:center;gap:8px;background:transparent;border:0;
+  color:var(--lime);font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  padding:0;margin:0 0 14px;letter-spacing:.4px
+}
+.back svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* ── телефон ───────────────────────────────────────────── */
+@media (max-width:860px){
+  .hero{padding:38px 2px 26px}
+  .hero .logo{width:74px;height:74px;margin-bottom:14px}
+  .tile{padding:14px;gap:12px}
+  .tile .idx{font-size:25px;min-width:32px}
+  .tile .nm{font-size:19px}
+  /* На узком экране плитка становится сеткой: номер слева на обе
+     строки, название сверху, отметка снизу. В одну строку отметка
+     съедала описание до трёх слов, и плитка переставала что-либо
+     говорить. */
+  .tile{
+    display:grid;grid-template-columns:auto 1fr;
+    grid-template-areas:"idx body" "idx mark";
+    column-gap:12px;row-gap:8px;align-items:center
+  }
+  .tile .idx{grid-area:idx;align-self:center}
+  .tile .body{grid-area:body;min-width:0}
+  .tile .mark{grid-area:mark;justify-self:start}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .mark.go i{animation:none}
+  .tile{transition:none}
+}
+
+/* ═══ РАЗДЕЛ КАЗИНО: КАРТОЧКИ И ИНФОГРАФИКА ══════════════════
+   Всё нарисовано кодом: ни одной картинки, ни одной сторонней
+   библиотеки. Страница открывается с телефона по мобильной сети,
+   и каждый лишний файл это секунда ожидания.
+
+   Оживает всё одинаково: узел получает класс «вжив», когда доезжает
+   до экрана. Пока не доехал - стоит в начальном положении. Так
+   человек видит, как число набегает и как линия рисуется, а не
+   застаёт готовую картинку. */
+
+.chip{
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  padding:4px 9px;border-radius:999px;margin-left:auto;
+  color:#5FE3B0;border:1px solid rgba(95,227,176,.4);background:rgba(95,227,176,.1)
+}
+
+/* ── крупные числа ─────────────────────────────────────── */
+.nums{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;margin:0 0 12px
+}
+.num{
+  background:linear-gradient(160deg,rgba(66,178,220,.11),rgba(138,156,255,.05));
+  border:1px solid var(--bd);border-radius:16px;padding:15px 14px;text-align:center
+}
+.num b{
+  display:block;font-family:"Bebas Neue",Impact,sans-serif;font-size:34px;line-height:1;
+  letter-spacing:.5px;
+  background:linear-gradient(100deg,var(--ak),var(--ak2));
+  -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.num span{display:block;font-size:11.5px;color:var(--tx2);margin-top:5px;letter-spacing:.2px}
+
+/* ── дорожка плана ─────────────────────────────────────── */
+ol.road{list-style:none;margin:14px 0 0;padding:0;position:relative}
+ol.road::before{
+  content:"";position:absolute;left:13px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(180deg,var(--ak),var(--ak2));
+  transform:scaleY(0);transform-origin:top;
+  transition:transform 1.5s cubic-bezier(.22,.8,.3,1)
+}
+ol.road.вжив::before{transform:scaleY(1)}
+ol.road li{
+  position:relative;padding:0 0 16px 40px;counter-increment:шаг;
+  opacity:0;transform:translateY(9px);
+  transition:opacity .5s ease,transform .5s ease
+}
+ol.road.вжив li{opacity:1;transform:none}
+ol.road li::before{
+  content:counter(шаг,decimal-leading-zero);
+  position:absolute;left:0;top:-1px;width:28px;height:28px;border-radius:50%;
+  background:var(--card2);border:2px solid var(--ak);color:var(--ak);
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center
+}
+ol.road li b{display:block;font-size:14.5px;font-weight:700;margin-bottom:2px}
+ol.road li{font-size:13px;color:var(--tx2)}
+ol.road li b{color:var(--tx)}
+
+/* ── график ────────────────────────────────────────────── */
+.chart{margin-top:14px}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart .grid line{stroke:var(--bd);stroke-width:1}
+.chart .lbl text{fill:var(--tx2);font-size:11px;font-family:inherit}
+.chart .dots circle{fill:var(--ak);opacity:0;transition:opacity .4s ease}
+.chart .dots circle.big{fill:var(--ak2)}
+.chart .line{stroke-dasharray:1000;stroke-dashoffset:1000;
+  transition:stroke-dashoffset 1.9s cubic-bezier(.3,.7,.3,1)}
+.chart .area{opacity:0;transition:opacity 1.1s ease .5s}
+.chart.вжив .line{stroke-dashoffset:0}
+.chart.вжив .area{opacity:1}
+.chart.вжив .dots circle{opacity:1}
+.chart.вжив .dots circle:nth-child(1){transition-delay:.55s}
+.chart.вжив .dots circle:nth-child(2){transition-delay:.8s}
+.chart.вжив .dots circle:nth-child(3){transition-delay:1.05s}
+.chart.вжив .dots circle:nth-child(4){transition-delay:1.3s}
+.chart.вжив .dots circle:nth-child(5){transition-delay:1.55s}
+.chart-note{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;font-size:12.5px;color:var(--tx2)}
+.chart-note i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.chart-note .d1{background:var(--ak)}
+.chart-note .d2{background:var(--ak2)}
+
+/* ── агенты ────────────────────────────────────────────── */
+.agents{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:12px}
+.ag{
+  background:var(--card2);border:1px solid var(--bd);border-radius:13px;padding:13px;
+  font-size:12.5px;color:var(--tx2);position:relative;overflow:hidden;
+  opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease
+}
+.agents.вжив .ag{opacity:1;transform:none}
+.ag b{display:block;font-size:13.5px;color:var(--tx);margin-bottom:3px}
+.ag::after{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--ak),var(--ak2))
+}
+
+/* ── игры ──────────────────────────────────────────────── */
+.games{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.games span{
+  font-size:12.5px;padding:7px 12px;border-radius:10px;
+  background:var(--card2);border:1px solid var(--bd);color:var(--tx);
+  opacity:0;transform:scale(.9);transition:opacity .34s ease,transform .34s ease
+}
+.games.вжив span{opacity:1;transform:none}
+.games span:hover{border-color:rgba(66,178,220,.5)}
+
+/* ── форматы завода ────────────────────────────────────── */
+.fmts{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+.fmt{position:relative;background:var(--card2);border:1px solid var(--bd);
+  border-radius:11px;padding:10px 13px;display:flex;justify-content:space-between;
+  align-items:center;overflow:hidden;font-size:13px}
+.fmt::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w);
+  background:linear-gradient(90deg,rgba(66,178,220,.30),rgba(138,156,255,.13));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 1.15s cubic-bezier(.22,.8,.3,1)
+}
+.fmts.вжив .fmt::before{transform:scaleX(1)}
+.fmt b,.fmt span{position:relative;z-index:1}
+.fmt span{color:var(--ak);font-weight:700;font-size:12.5px}
+
+/* ── пачки соцсетей ────────────────────────────────────── */
+.packs{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.packs i{
+  width:20px;height:20px;border-radius:6px;display:block;
+  background:var(--card2);border:1px solid var(--bd);
+  opacity:0;transform:scale(.5);transition:opacity .3s ease,transform .3s ease
+}
+.packs.вжив i{opacity:1;transform:none;
+  background:linear-gradient(150deg,rgba(66,178,220,.55),rgba(138,156,255,.3));
+  border-color:rgba(66,178,220,.45)}
+
+td.num2,th.num2{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+@media (max-width:860px){
+  .num b{font-size:28px}
+  ol.road li{padding-left:36px}
+  .packs i{width:17px;height:17px}
+}
+@media (prefers-reduced-motion:reduce){
+  ol.road::before,ol.road li,.chart .line,.chart .area,.chart .dots circle,
+  .ag,.games span,.fmt::before,.packs i{transition:none !important}
+  ol.road::before{transform:scaleY(1)}
+  ol.road li,.ag,.games span,.packs i{opacity:1;transform:none}
+  .chart .line{stroke-dashoffset:0}
+  .chart .area,.chart .dots circle{opacity:1}
+  .fmt::before{transform:scaleX(1)}
+}
+
+/* ═══ ВТОРАЯ ОЧЕРЕДЬ ИНФОГРАФИКИ ════════════════════════════ */
+
+/* ── схема системы ─────────────────────────────────────── */
+.arch{margin-top:14px}
+.arch svg{width:100%;height:auto;display:block;overflow:visible}
+.arch .node rect{
+  fill:rgba(18,27,41,.9);stroke:var(--bd);stroke-width:1;
+  opacity:0;transform:translateX(-10px);transition:opacity .5s ease,transform .5s ease
+}
+.arch .node.out rect{transform:translateX(10px)}
+.arch .node text{
+  fill:var(--tx);font-size:12px;text-anchor:middle;font-family:inherit;
+  opacity:0;transition:opacity .5s ease .1s
+}
+.arch.вжив .node rect,.arch.вжив .node text{opacity:1;transform:none}
+.arch .wires path{
+  stroke-dasharray:400;stroke-dashoffset:400;
+  transition:stroke-dashoffset 1.3s cubic-bezier(.3,.7,.3,1) .25s
+}
+.arch.вжив .wires path{stroke-dashoffset:0}
+.arch .pk{opacity:0;transition:opacity .6s ease 1.4s}
+.arch.вжив .pk{opacity:1}
+.arch .core circle{
+  fill:rgba(66,178,220,.13);stroke:url(#aG);stroke-width:2;
+  transform-origin:330px 150px;transform:scale(.4);opacity:0;
+  transition:transform .7s cubic-bezier(.2,1.5,.4,1) .2s,opacity .5s ease .2s
+}
+.arch.вжив .core circle{transform:scale(1);opacity:1}
+.arch .coreT{fill:var(--tx);font-size:15px;font-weight:700;text-anchor:middle;
+  letter-spacing:1.5px;opacity:0;transition:opacity .5s ease .6s}
+.arch .coreS{fill:var(--tx2);font-size:9.5px;text-anchor:middle;
+  opacity:0;transition:opacity .5s ease .7s}
+.arch.вжив .coreT,.arch.вжив .coreS{opacity:1}
+
+/* ── сроки по дням ─────────────────────────────────────── */
+.gantt{margin-top:14px}
+.g-row{display:grid;grid-template-columns:170px 1fr;align-items:center;gap:12px;margin-bottom:8px}
+.g-row > span{font-size:12.5px;color:var(--tx2)}
+.g-row i{
+  position:relative;display:block;height:26px;border-radius:8px;
+  background:var(--card2);border:1px solid var(--bd);overflow:hidden
+}
+.g-row i::before{
+  content:"";position:absolute;top:0;bottom:0;left:var(--l);width:var(--w);
+  background:linear-gradient(90deg,rgba(66,178,220,.85),rgba(138,156,255,.7));
+  border-radius:7px;transform:scaleX(0);transform-origin:left;
+  transition:transform .9s cubic-bezier(.22,.8,.3,1)
+}
+.gantt.вжив .g-row i::before{transform:scaleX(1)}
+.g-row i b{
+  position:absolute;left:var(--l);top:0;height:26px;width:var(--w);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;color:#04121B;z-index:1;
+  opacity:0;transition:opacity .4s ease .55s
+}
+.gantt.вжив .g-row i b{opacity:1}
+.g-scale{display:flex;justify-content:space-between;margin-top:6px;padding-left:182px;
+  font-size:10.5px;color:var(--tx2);letter-spacing:.5px}
+
+/* ── воронка ───────────────────────────────────────────── */
+.funnel{margin-top:14px;display:flex;flex-direction:column;gap:7px;align-items:center}
+.funnel .f{
+  width:var(--w);min-width:180px;background:linear-gradient(90deg,rgba(66,178,220,.30),rgba(138,156,255,.16));
+  border:1px solid var(--bd);border-radius:11px;padding:11px 14px;text-align:center;
+  transform:scaleX(.2);opacity:0;transform-origin:center;
+  transition:transform .65s cubic-bezier(.22,.8,.3,1),opacity .5s ease
+}
+.funnel.вжив .f{transform:none;opacity:1}
+.funnel .f b{display:block;font-size:13.5px}
+.funnel .f span{display:block;font-size:11px;color:var(--tx2);margin-top:2px}
+
+/* ── штат против агентов ───────────────────────────────── */
+.vs{margin-top:14px}
+.vs-h,.vs-r{display:grid;grid-template-columns:130px 1fr 1fr;gap:10px;align-items:center}
+.vs-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--tx2);
+  padding-bottom:7px;border-bottom:1px solid var(--bd);margin-bottom:9px}
+.vs-r{margin-bottom:7px}
+.vs-r > span{font-size:12.5px;color:var(--tx)}
+.vs-r i,.vs-r u{
+  display:block;height:24px;border-radius:7px;text-decoration:none;font-style:normal;
+  font-size:10.5px;line-height:24px;padding:0 9px;white-space:nowrap;overflow:hidden;
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .8s cubic-bezier(.22,.8,.3,1)
+}
+.vs-r i{background:rgba(245,197,66,.18);border:1px solid rgba(245,197,66,.3);color:#F5C542;
+  width:var(--w);min-width:78px}
+.vs-r u{background:linear-gradient(90deg,rgba(66,178,220,.5),rgba(138,156,255,.3));
+  border:1px solid rgba(66,178,220,.45);color:var(--tx);width:max(var(--w),118px)}
+.vs.вжив .vs-r i,.vs.вжив .vs-r u{transform:none}
+
+/* ── три гео ───────────────────────────────────────────── */
+.geo{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.geo .g{
+  background:var(--card2);border:1px solid var(--bd);border-radius:13px;padding:13px;
+  opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease
+}
+.geo.вжив .g{opacity:1;transform:none}
+.geo .g b{display:block;font-family:"Bebas Neue",Impact,sans-serif;font-size:18px;
+  letter-spacing:1px;color:var(--ak);margin-bottom:6px}
+.geo .g span{display:block;font-size:11.5px;color:var(--tx2);padding:3px 0;
+  border-top:1px solid var(--bd)}
+.geo .g span:first-of-type{border-top:0}
+.geo .core2{background:linear-gradient(160deg,rgba(66,178,220,.16),rgba(138,156,255,.07));
+  border-color:rgba(66,178,220,.38)}
+.geo .core2 b{color:var(--ak2)}
+
+@media (max-width:860px){
+  .g-row{grid-template-columns:120px 1fr;gap:9px}
+  .g-row > span{font-size:11.5px}
+  .g-scale{padding-left:129px}
+  .vs-h,.vs-r{grid-template-columns:96px 1fr 1fr;gap:7px}
+  .vs-r > span{font-size:11.5px}
+  .vs-r i,.vs-r u{font-size:9.5px;padding:0 6px;min-width:0}
+  .vs-r u{width:max(var(--w),86px)}
+  .funnel .f{min-width:150px}
+}
+@media (prefers-reduced-motion:reduce){
+  .arch .node rect,.arch .node text,.arch .wires path,.arch .pk,.arch .core circle,
+  .arch .coreT,.arch .coreS,.g-row i::before,.g-row i b,.funnel .f,
+  .vs-r i,.vs-r u,.geo .g{transition:none !important}
+  .arch .node rect,.arch .node text,.arch .pk,.arch .coreT,.arch .coreS,
+  .g-row i b,.funnel .f,.geo .g{opacity:1;transform:none}
+  .arch .wires path{stroke-dashoffset:0}
+  .arch .core circle{transform:scale(1);opacity:1}
+  .g-row i::before,.funnel .f,.vs-r i,.vs-r u{transform:none}
+}
+
+
+/* ── деньги проекта ────────────────────────────────────── */
+.money{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.m-side{background:var(--card2);border:1px solid var(--bd);border-radius:14px;padding:14px}
+.m-h{font-size:10.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--tx2);margin-bottom:7px}
+.m-v b{font-family:"Bebas Neue",Impact,sans-serif;font-size:27px;line-height:1.1;letter-spacing:.5px;color:var(--tx)}
+.m-v.small b{font-size:17px;color:var(--tx2)}
+.m-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.06);margin:10px 0 7px;overflow:hidden}
+.m-bar i{display:block;height:100%;width:var(--w);border-radius:4px;
+  transform:scaleX(0);transform-origin:left;transition:transform 1.1s cubic-bezier(.22,.8,.3,1)}
+.m-bar i.ok{background:linear-gradient(90deg,#3BD97E,#42B2DC)}
+.m-bar i.wait{background:linear-gradient(90deg,#F5C542,#F59B42)}
+.money.вжив .m-bar i{transform:none}
+.m-n{font-size:11px;color:var(--tx2)}
+@media (max-width:560px){ .money{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ .m-bar i{transition:none;transform:none} }
+
+
+/* ── кошелёк на главной ────────────────────────────────── */
+.pay{
+  margin:0 2px 56px;background:rgba(11,17,27,.74);border:1px solid var(--bd);
+  border-radius:16px;padding:15px 16px;backdrop-filter:blur(8px)
+}
+.pay-h{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.pay-t{font-family:"Bebas Neue",Impact,sans-serif;font-size:19px;letter-spacing:1.3px;
+  text-transform:uppercase;color:var(--tx)}
+.pay-net{
+  font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  padding:4px 9px;border-radius:999px;color:var(--ak);
+  border:1px solid rgba(66,178,220,.42);background:rgba(66,178,220,.10)
+}
+.pay-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pay-row code{
+  flex:1 1 260px;min-width:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12.5px;line-height:1.5;color:var(--tx);word-break:break-all;
+  background:var(--card2);border:1px solid var(--bd);border-radius:11px;padding:11px 13px
+}
+.pay-b{
+  display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;
+  background:linear-gradient(100deg,var(--ak),var(--ak2));border:0;border-radius:11px;
+  padding:12px 16px;color:#04121B;font:inherit;font-size:13.5px;font-weight:700;
+  cursor:pointer;transition:filter .2s ease,transform .2s ease
+}
+.pay-b:hover{filter:brightness(1.08)}
+.pay-b:active{transform:scale(.97)}
+.pay-b svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.pay-b.ok{background:linear-gradient(100deg,#3BD97E,#42B2DC)}
+.pay-n{margin-top:10px;font-size:11.5px;color:var(--tx2)}
+@media (max-width:560px){
+  .pay-b{width:100%;justify-content:center}
+  .pay-row code{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){ .pay-b{transition:none} }
+
+
+/* ═══ КНОПКИ: ОДИН ЯЗЫК НА ВСЮ ПАНЕЛЬ ═════════════════════════
+   Три вида и больше не заводим. Обычная с рамкой, главная с
+   заливкой, и подпись-кнопка внутри плитки. Разнобой в кнопках
+   человек читает как разнобой в работе. */
+
+/* ── «Открыть» внутри плитки ───────────────────────────── */
+.tile .tgo{
+  display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
+  font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  padding:9px 14px;border-radius:11px;white-space:nowrap;
+  color:var(--ak);border:1px solid rgba(66,178,220,.38);
+  background:rgba(66,178,220,.09);
+  transition:background .22s ease,border-color .22s ease,color .22s ease
+}
+.tile .tgo svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .22s ease}
+.tile:hover .tgo,.tile:focus-visible .tgo{
+  background:linear-gradient(100deg,var(--ak),var(--ak2));
+  border-color:transparent;color:#04121B
+}
+.tile:hover .tgo svg{transform:translateX(3px)}
+
+/* ── ряд кнопок ────────────────────────────────────────── */
+.btns{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 16px;border-radius:12px;font-size:13.5px;font-weight:600;
+  color:var(--tx);text-decoration:none;
+  border:1px solid var(--bd);background:var(--card2);
+  transition:border-color .22s ease,background .22s ease,transform .22s ease
+}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .22s ease}
+.btn:hover{border-color:rgba(66,178,220,.55);background:rgba(66,178,220,.10);
+  text-decoration:none;transform:translateY(-1px)}
+.btn:hover svg{transform:translateX(3px)}
+.btn:active{transform:translateY(0)}
+.btn.prime{
+  background:linear-gradient(100deg,var(--ak),var(--ak2));border-color:transparent;
+  color:#04121B;font-weight:700
+}
+.btn.prime:hover{filter:brightness(1.08);background:linear-gradient(100deg,var(--ak),var(--ak2))}
+
+/* ── «Все проекты» ─────────────────────────────────────── */
+.back{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 15px 9px 12px;border-radius:11px;
+  border:1px solid var(--bd);background:var(--card2);
+  color:var(--tx2);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  margin:0 0 16px;letter-spacing:.3px;
+  transition:border-color .22s ease,color .22s ease,background .22s ease
+}
+.back:hover{border-color:rgba(66,178,220,.5);color:var(--tx);background:rgba(66,178,220,.08)}
+.back svg{transition:transform .22s ease}
+.back:hover svg{transform:translateX(-3px)}
+
+/* ── боковое меню ──────────────────────────────────────── */
+nav button{
+  border:1px solid transparent;
+  transition:background .2s ease,color .2s ease,border-color .2s ease
+}
+nav button:hover{background:var(--card2);color:var(--tx)}
+nav button.on{border-color:rgba(66,178,220,.3)}
+
+/* ── телефон ───────────────────────────────────────────── */
+@media (max-width:860px){
+  .tile{
+    grid-template-columns:auto 1fr auto;
+    grid-template-areas:"idx body body" "idx mark tgo"
+  }
+  .tile .tgo{grid-area:tgo;justify-self:end;margin-top:0;padding:8px 12px}
+  .btns{flex-direction:column}
+  .btn{justify-content:space-between;width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .tile .tgo,.tile .tgo svg,.btn,.btn svg,.back,.back svg,nav button{transition:none}
+  .tile:hover .tgo svg,.btn:hover svg,.back:hover svg{transform:none}
+}
+
+
+/* ── подписание договора ───────────────────────────────── */
+.sgn{margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)}
+.sgn-wait,.sgn-ask,.sgn-ok{display:none}
+.sgn[data-vid="wait"] .sgn-wait,
+.sgn[data-vid="ask"] .sgn-ask,
+.sgn[data-vid="ok"] .sgn-ok{display:block}
+.sgn .btns{margin-top:0}
+.sgn-n{display:block;margin-top:9px;font-size:11.5px;color:var(--tx2);line-height:1.5}
+.sgn-q{font-size:13.5px;margin-bottom:11px}
+.sgn-badge{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:11px 16px;border-radius:12px;
+  background:linear-gradient(100deg,rgba(59,217,126,.18),rgba(66,178,220,.10));
+  border:1px solid rgba(59,217,126,.45);color:#3BD97E;
+  font-family:"Bebas Neue",Impact,sans-serif;font-size:19px;letter-spacing:1.4px
+}
+.sgn-badge svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.6;
+  stroke-linecap:round;stroke-linejoin:round}
+.sgn-when{margin-top:9px;font-size:12px;color:var(--tx2)}
+.sgn-err{margin-top:9px;font-size:12px;color:#F5C542}
+.sgn-err:empty{display:none}
+.sgn .btn[disabled]{opacity:.55;pointer-events:none}
+
+</style>
+
+<canvas id="fon" aria-hidden="true"></canvas>
+
+<header>
+  <div class="burger" id="burger" role="button" tabindex="0" aria-label="Меню">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </div>
+  <div>
+    <div class="hname">Rocket</div>
+    <div class="hsub">шесть проектов · Сетевой Администратор</div>
+  </div>
+</header>
+
+<div class="wrap">
+<nav id="nav">
+  <button class="on" data-s="home"><span class="n">&#9670;</span> Главная</button>
+  <button data-s="p1"><span class="n">1</span> Rocket Project</button>
+  <button data-s="p6"><span class="n">2</span> Личный кабинет</button>
+  <button data-s="p2"><span class="n">3</span> Онлайн игра</button>
+  <button data-s="p3"><span class="n">4</span> AI-аватар</button>
+  <button data-s="p4"><span class="n">5</span> Карты лояльности</button>
+  <button data-s="p5"><span class="n">6</span> Партнёрка</button>
+</nav>
+
+<main>
+
+<!-- ═══ ГЛАВНАЯ ═══════════════════════════════════════════
+     Меню и отметки, больше ничего. Живой фон рисуется холстом:
+     редкие узлы и связи между ними, как сеть доставки у клиента.
+     На телефоне узлов меньше, плотность холста зажата двойкой, а
+     при системной просьбе меньше движения фон замирает вовсе. -->
+<section class="sec home on" id="home">
+  <div class="hero">
+    <img class="logo" src="data:image/png;base64,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" alt="OKO" width="288" height="269">
+    <h1>Rocket</h1>
+    <p class="sub">Шесть проектов</p>
+  </div>
+
+  <div class="tiles">
+    <button class="tile" data-s="p1">
+      <span class="idx">01</span>
+      <span class="body">
+        <span class="nm">Rocket Project</span>
+        <span class="ds">Два сайта, игра, админка, аналитика</span>
+      </span>
+      <span class="mark ok"><i></i>Сдан 14.09</span>
+          <span class="tgo">Посмотреть<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+    </button>
+
+    <button class="tile" data-s="p6">
+      <span class="idx">02</span>
+      <span class="body">
+        <span class="nm">Личный кабинет</span>
+        <span class="ds">Кабинет хостинга: Билайн, биллинг, вход по телефону</span>
+      </span>
+      <span class="mark wait"><i></i>Ждём документацию</span>
+          <span class="tgo">Открыть<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+    </button>
+
+    <button class="tile" data-s="p2">
+      <span class="idx">03</span>
+      <span class="body">
+        <span class="nm">Онлайн игра</span>
+        <span class="ds">Сборка под ключ, доля 25 процентов у OKO</span>
+      </span>
+      <span class="mark go"><i></i>В работе</span>
+          <span class="tgo">Открыть<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+    </button>
+
+    <button class="tile" data-s="p3">
+      <span class="idx">04</span>
+      <span class="body">
+        <span class="nm">AI-аватар</span>
+        <span class="ds">Видеообщение, пять персонажей, реализм</span>
+      </span>
+      <span class="mark wait"><i></i>Созвон</span>
+          <span class="tgo">Открыть<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+    </button>
+
+    <button class="tile" data-s="p4">
+      <span class="idx">05</span>
+      <span class="body">
+        <span class="nm">Карты лояльности</span>
+        <span class="ds">Бот и мини-приложение, Айко, Wallet</span>
+      </span>
+      <span class="mark idle"><i></i>Ждём пример</span>
+          <span class="tgo">Открыть<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+    </button>
+
+    <button class="tile" data-s="p5">
+      <span class="idx">06</span>
+      <span class="body">
+        <span class="nm">Партнёрка</span>
+        <span class="ds">Договор, комиссия в обе стороны</span>
+      </span>
+      <span class="mark wait" id="dogMark"><i></i>Договор готов</span>
+          <span class="tgo">Открыть<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+    </button>
+  </div>
+
+  <!-- ── ОПЛАТА ────────────────────────────────────────────
+       Адрес кошелька и кнопка копирования. Адрес длинный, руками его
+       не перепечатывают - переписывают с ошибкой, и перевод уходит в
+       никуда без возврата. Поэтому кнопка, а не просто текст. -->
+  <div class="pay">
+    <div class="pay-h">
+      <span class="pay-t">Оплата</span>
+      <span class="pay-net">USDT · TRC20</span>
+    </div>
+    <div class="pay-row">
+      <code id="wallet">TAEM8bfpc15H2bDHdScFt6AKF8dqxtKrLD</code>
+      <button class="pay-b" id="copyW" type="button" aria-label="Скопировать адрес кошелька">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="9" width="11" height="11" rx="2"/>
+          <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
+        </svg>
+        <span>Копировать</span>
+      </button>
+    </div>
+    <div class="pay-n">Сеть только TRC20. Перевод в другой сети не дойдёт и не вернётся.</div>
+  </div>
+
+  <!-- ── РАБОЧИЙ ЧАТ ───────────────────────────────────────
+       Ветки заведены под проекты: каждое обсуждение лежит в своей,
+       и через месяц не приходится листать общую ленту, чтобы найти,
+       о чём договорились. -->
+  <div class="card">
+    <h3><i></i>Рабочий чат <span class="chip">ROCKET PROJECT</span></h3>
+    <p class="note">Пять веток под проекты. Всё, что обсуждаем, ложится в свою ветку
+      и не теряется в общей ленте.</p>
+    <div class="grid">
+      <div class="kv"><b>Ветка Rocket</b><span>сайты, игра, админка, аналитика</span></div>
+      <div class="kv"><b>Ветка Казино</b><span>онлайн игра, план сборки, доли</span></div>
+      <div class="kv"><b>Ветка Ai-аватар</b><span>видеособеседник, персонажи, железо</span></div>
+      <div class="kv"><b>Ветка Карты лояльности</b><span>бот, мини-приложение, Айко</span></div>
+      <div class="kv"><b>Ветка Переговоры</b><span>партнёрка, серверы, общие условия</span></div>
+    </div>
+    <div class="btns">
+      <a class="btn" href="https://t.me/+Z5bJAnrpFZoxMDMy" target="_blank" rel="noopener">Открыть рабочий чат<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </div>
+
+  <!-- ── БЛИЖАЙШИЕ ШАГИ ────────────────────────────────────
+       Один список на все шесть проектов: что чьё и чего ждём.
+       Без него каждый проект ждёт другого, и неделя уходит впустую. -->
+  <div class="card">
+    <h3><i></i>Ближайшие шаги</h3>
+    <ul class="steps">
+      <li class="now">Личный кабинет: ждём документацию API Билайн и биллинга BILLmanager, дальше созвон по вектору</li>
+      <li class="now">Онлайн игра: названия и логотипы от OKO на выбор, юрисдикция и гео от клиента</li>
+      <li class="now">AI-аватар: созвон, замеры задержки и стоимости минуты до любой цены</li>
+      <li class="now">Карты лояльности: пример готового бота от клиента, затем счёт по сертификатам</li>
+      <li class="now">Партнёрка: подпись договора П-1409/2026 второй стороной</li>
+      <li>Сайт VPN: правки по плавности и текстам, разбор домена в Телеграме</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ═══ 1. ROCKET PROJECT ═══════════════════════════════ -->
+<section class="sec" id="p1">
+  <button class="back" data-s="home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Все проекты</button>
+  <h2>Rocket Project <span class="st ok">сдан 14 сентября</span></h2>
+  <p class="lead">Два сайта, игра между ними, общая админка и аналитика в Телеграм.
+    Сайт VPN для физлиц, сайт CDN для юрлиц и ИП: разные аудитории, разные тексты.</p>
+
+  <div class="card">
+    <h3><i></i>Доступы</h3>
+    <div class="grid">
+      <div class="kv"><b>Сайт CDN</b><span><a href="https://rocketcdn.ru" target="_blank" rel="noopener">rocketcdn.ru</a></span></div>
+      <div class="kv"><b>Сайт VPN</b><span><a href="https://rocketvpn.top" target="_blank" rel="noopener">rocketvpn.top</a></span></div>
+      <div class="kv"><b>Игра</b><span><a href="https://rocketcdn.ru/?flight=1" target="_blank" rel="noopener">rocketcdn.ru/?flight=1</a></span></div>
+      <div class="kv"><b>Админка CDN</b><span><a href="https://rocketcdn.ru/admin.html" target="_blank" rel="noopener">rocketcdn.ru/admin.html</a></span></div>
+      <div class="kv"><b>Админка VPN</b><span><a href="https://rocketvpn.top/admin.html" target="_blank" rel="noopener">rocketvpn.top/admin.html</a></span></div>
+      <div class="kv"><b>Пароль админки</b><span class="mono">LbnRuyZ4JWDXBXDrkvGQ</span></div>
+      <div class="kv"><b>Бот аналитики</b><span><a href="https://t.me/rocket_cdn_bot" target="_blank" rel="noopener">@rocket_cdn_bot</a></span></div>
+      <div class="kv"><b>Чат аналитики</b><span><a href="https://t.me/+Ajip_2t4t3Q2N2I6" target="_blank" rel="noopener">Rocket • Project</a></span></div>
+      <div class="kv"><b>Кабинет клиента</b><span><a href="https://rocketweb.top" target="_blank" rel="noopener">rocketweb.top</a></span></div>
+      <div class="kv"><b>Бот VPN</b><span><a href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">@RocketCompanyVPN_bot</a></span></div>
+      <div class="kv"><b>Новости VPN</b><span><a href="https://t.me/rocketvpnnews" target="_blank" rel="noopener">rocketvpnnews</a></span></div>
+      <div class="kv"><b>Исходники</b><span><a href="https://github.com/gdeoko/OKO-TEAM/pull/7" target="_blank" rel="noopener">PR № 7</a></span></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">Панель одна на оба сайта, разделы переключаются в меню: Rocket CDN,
+    RocketVPN, Игра. Ветки чата разведены: заявки с форм, ошибки, аналитика CDN, аналитика VPN.</p>
+
+    <div class="btns">
+      <a class="btn" href="https://rocketcdn.ru" target="_blank" rel="noopener">Открыть сайт CDN<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+      <a class="btn" href="https://rocketvpn.top" target="_blank" rel="noopener">Открыть сайт VPN<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+      <a class="btn prime" href="https://rocketcdn.ru/?flight=1" target="_blank" rel="noopener">Запустить игру<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Что сделано</h3>
+    <ul class="steps">
+      <li class="done">Сайт rocketcdn.ru: разделы, формы, тарифы, заявки в Телеграм</li>
+      <li class="done">Сайт rocketvpn.top: трёхмерная сцена по сценарию, дом, стена, тоннель, ракета</li>
+      <li class="done">Космическая игра: Солнечная система, планеты по снимкам NASA, сеть узлов CDN</li>
+      <li class="done">Связка сайтов: из VPN и из CDN человек попадает в игру и возвращается обратно</li>
+      <li class="done">Промо-бот розыгрыша: рефералка, призы, честность по хешу, рассылка</li>
+      <li class="done">Общая админка с аналитикой по обоим сайтам, разведение по веткам чата</li>
+      <li class="done">Космос доведён: пятна убраны, небо резкое, спутник и комета переделаны</li>
+      <li class="done">Форма обратной связи снята с VPN по слову руководства</li>
+      <li class="done">Чёрная дыра убрана из игры полностью</li>
+      <li class="done">Наборы стикеров и премиум-эмодзи Rocket, бонусом</li>
+      <li class="done">Тексты и кнопки по слову клиента: везде тест-драйв 24 часа, кнопка ведёт в кабинет rocketweb.top, бот отдельной кнопкой</li>
+      <li class="done">Музыка сайта VPN: присланный трек поставлен, звуковые эффекты на местах</li>
+      <li class="done">Права на промо-бота розыгрыша переданы клиенту</li>
+      <li class="done">Форма обратной связи с VPN снята: почта на сайте не заводится по слову клиента</li>
+    </ul>
+  </div>
+
+  <!-- ── ХВОСТЫ ────────────────────────────────────────────
+       Проект сдан, но три вещи договорены и остаются в работе.
+       Держим их списком здесь, а не в переписке: через неделю
+       переписку никто не перечитывает. -->
+  <div class="card">
+    <h3><i></i>Что остаётся доделать</h3>
+    <ul class="steps">
+      <li class="now">Плавность на слабых телефонах: класс устройства по замеру кадра, постобработка в половинном разрешении, запекание света, модели по актам, потолок 30 кадров на слабом классе</li>
+      <li class="now">Рывок при старте: прогрев шейдеров до первого кадра, текстуры в формате видеокарты, заливка в память под заставкой</li>
+      <li class="now">Тексты VPN короче: тестировщик прочитал как «много букв», прокрутка должна вставать на каждой мысли, а не течь водой</li>
+      <li class="now">Карточки листаются пальцем влево и вправо</li>
+      <li class="now">Домен rocketvpn.top у части устройств открывается ботом: запись bot.rocketvpn.top A 217.19.122.132, дальше ждём обновления по кэшу</li>
+      <li>Чат-бот с мозгом проектов на оба сайта, предложение в силе</li>
+    </ul>
+    <p class="note" style="margin:12px 0 0">Приёмка правок по кадрам: снимки с одних и тех же
+    точек камеры до и после, сравнение попиксельно. Видом сайт измениться не должен, меняется
+    только то, как он идёт на телефоне.</p>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Наборы Telegram <span class="chip">бонусом</span></h3>
+    <p class="note">Стикеры и премиум-эмодзи Rocket. Ставятся в один клик, работают
+      у всех участников чата.</p>
+    <div class="grid">
+      <div class="kv"><b>Стикеры</b><span><a href="https://t.me/addstickers/rocket_pack_by_rocket_cdn_bot" target="_blank" rel="noopener">rocket_pack</a></span></div>
+      <div class="kv"><b>Премиум-эмодзи</b><span><a href="https://t.me/addemoji/rocket_pack_emoji_by_rocket_cdn_bot" target="_blank" rel="noopener">rocket_pack_emoji</a></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Деньги по проекту</h3>
+    <div class="tw"><table>
+      <tr><th>За что</th><th class="num2">Договорились</th><th class="num2">Получено</th><th>Состояние</th></tr>
+      <tr><td>Промо-бот розыгрыша с рефералкой</td><td class="num2">15 000 ₽</td>
+          <td class="num2">15 000 ₽</td><td><span class="st ok">закрыт</span></td></tr>
+      <tr><td>Сайт Rocket CDN</td><td class="num2">52 000 ₽</td>
+          <td class="num2">52 000 ₽</td><td><span class="st ok">закрыт</span></td></tr>
+      <tr><td>Сайт RocketVPN</td><td class="num2">22 000 ₽</td>
+          <td class="num2">по сверке</td><td><span class="st ok">закрыт</span></td></tr>
+      <tr><td>Игра, космический полёт</td><td class="num2">1 000 $</td>
+          <td class="num2">1 000 $</td><td><span class="st ok">закрыт</span></td></tr>
+    </table></div>
+
+    <div class="money" data-live>
+      <div class="m-side">
+        <div class="m-h">Получено</div>
+        <div class="m-v"><b data-to="67000" data-sep="1" data-suf=" ₽">0</b></div>
+        <div class="m-v small"><b data-to="1000" data-suf=" $">0</b></div>
+        <div class="m-bar"><i class="ok" style="--w:100%"></i></div>
+        <div class="m-n">бот, сайт CDN и игра закрыты полностью</div>
+      </div>
+      <div class="m-side">
+        <div class="m-h">К оплате</div>
+        <div class="m-v"><b data-to="0" data-sep="1" data-suf=" ₽">0</b></div>
+        <div class="m-v small">долгов нет</div>
+        <div class="m-bar"><i class="ok" style="--w:0%"></i></div>
+        <div class="m-n">сверено сторонами 14 сентября</div>
+      </div>
+    </div>
+
+    <p class="note" style="margin:12px 0 0">Рубли и доллары стоят раздельно нарочно:
+    курс на день каждой оплаты разный, и одна сложенная сумма выглядела бы точной,
+    не будучи ею. Двести долларов пришли авансом за игру, остаток восемьсот пришёл
+    14 сентября в USDT TRC20, перевод виден в сети.</p>
+
+    <p class="note" style="margin:8px 0 0">По сайту VPN отдельного поступления в таблице нет:
+    стороны сверились в переписке 14 сентября словами «за VPN, CDN и игру долгов нет», и обе
+    сверку подтвердили. Строка закрыта по этой сверке, а не по отдельному платежу: писать сюда
+    сумму, которой не было отдельным переводом, значит выдумать её.</p>
+  </div>
+</section>
+
+<!-- ═══ 2. КАЗИНО ═══════════════════════════════════════ -->
+<section class="sec" id="p2">
+  <button class="back" data-s="home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Все проекты</button>
+  <h2>Онлайн игра <span class="st go">в работе</span></h2>
+  <p class="lead">Максимальная сборка: приложение, три сайта под разные гео, бот,
+    двадцать игр, агенты вместо сотрудников и контент-завод на тысячу роликов в месяц.</p>
+
+  <!-- ── КАК НАЗЫВАЕМ ──────────────────────────────────────
+       Слово решает, какие к проекту предъявят требования. Казино
+       это лицензии и надзор, игра с той же механикой живёт по другим
+       правилам, и рынок это уже прошёл. -->
+  <div class="card">
+    <h3><i></i>Почему игра, а не казино</h3>
+    <p class="note">Классическое казино это лицензии, надзор и юрисдикция. Мы делаем
+      игру, внутри которой работает механика казино: шансы, раунды, честность по
+      отпечатку. Так устроены самые крупные проекты в Телеграме, у них те же механики
+      и никаких лицензий. Название и логотип OKO приносит вариантами, выбираем вместе.</p>
+  </div>
+
+  <!-- ── ДОЛЯ ──────────────────────────────────────────────
+       Договорённость с созвона 14 сентября. Держим её на виду, потому
+       что через полгода спор о доле решается записанным условием, а
+       не памятью двоих. -->
+  <div class="card">
+    <h3><i></i>Кто в проекте <span class="chip">договорено 14.09</span></h3>
+    <div class="grid">
+      <div class="kv"><b>Клиент</b><span>инвестор: разработка, контент, реклама</span></div>
+      <div class="kv"><b>OKO</b><span>сборка под ключ и развитие продукта</span></div>
+      <div class="kv"><b>Доля OKO</b><span>25 процентов чистой прибыли</span></div>
+      <div class="kv"><b>После запуска</b><span>OKO остаётся: обновления, починка, рост</span></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">Договорённость голосом на созвоне 14 сентября:
+      OKO собирает проект под ключ и после сдачи становится совладельцем с четвертью чистой
+      прибыли, продолжая вести и усиливать продукт. Условие просится в договор до начала
+      сборки: устная договорённость держится ровно до первого расхождения в цифрах.</p>
+  </div>
+
+  <!-- ── РЕШЕНИЯ С СОЗВОНА ─────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Решения с созвона</h3>
+    <ul class="steps">
+      <li class="done">Механика считается кодом и кронами, а не нейросетью: один упавший сервис не имеет права остановить всю схему</li>
+      <li class="done">Сбой переводит участок на свою ручную механику, игрок этого не замечает; полная остановка только при крупном сбое, с честной табличкой о технических работах</li>
+      <li class="done">Пятнадцать-двадцать человек штата закрываются автоматизацией: это главная статья экономии</li>
+      <li class="done">На запуск десять-пятнадцать игр, дальше каждая обнова добавляет новые</li>
+      <li class="done">Сначала тесты форматов, потом веб-версия и три лендинга, затем ещё три под другие гео</li>
+      <li class="done">Гео не только русское: английский язык и Америка в планах с самого начала</li>
+      <li class="done">Приложения в магазины: там свой поток скачиваний, он считается отдельным каналом</li>
+      <li class="now">Названия и логотипы: OKO приносит варианты, выбираем вместе</li>
+    </ul>
+  </div>
+
+  <!-- ── ЧИСЛА ─────────────────────────────────────────── -->
+  <div class="nums" data-live>
+    <div class="num"><b data-to="1000000" data-sep="1" data-suf=" ₽">0</b><span>стоимость сборки</span></div>
+    <div class="num"><b data-to="30" data-suf=" %">0</b><span>взнос при старте</span></div>
+    <div class="num"><b data-to="30" data-suf=" дней">0</b><span>сборка и запуск</span></div>
+    <div class="num"><b data-to="6" data-suf=" мес">0</b><span>окупаемость</span></div>
+  </div>
+
+  <!-- ── ПЛАН ЗАПУСКА ──────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>План запуска</h3>
+    <p class="note">Тринадцать шагов. Каркас поднимается за пятнадцать дней, дальше идут
+      игры и наработки. Общий срок около месяца на всю сборку, подключения и запуск.</p>
+    <ol class="road" data-live>
+      <li><b>Определение формата</b>Ниша, гео, юрисдикция, валюты, какие механики первыми</li>
+      <li><b>Сборка приложения</b>Ядро, честность раундов, кошелёк, кабинет игрока, супер-админка</li>
+      <li><b>Три сайта под разные гео</b>Свой язык, своя валюта, свой набор платежей и свой домен</li>
+      <li><b>Сборка бота</b>Телеграм: вход, баланс, игры, рефералка, уведомления о выигрышах</li>
+      <li><b>AI-агенты внутри</b>Поддержка, модерация, выплаты, аналитика, дожим - без штата</li>
+      <li><b>Внедрение автоматизаций</b>Всё, что делается по правилу, делается кодом, а не руками</li>
+      <li><b>Сервисы и оплаты</b>Карты, крипта, кошельки, СБП по гео, выводы и сверка</li>
+      <li><b>Двадцать игр и больше</b>Краш, колесо, кости, кейсы, слоты, рулетка, мины, лесенка</li>
+      <li><b>Публикация приложения</b>Play Market, RuStore, App Store и прямая установка</li>
+      <li><b>Крипта и кошельки</b>USDT TRC20, TON, сеть кошельков, автоматический вывод</li>
+      <li><b>Ставки</b>Линия, экспресс, живые события поверх игрового ядра</li>
+      <li><b>Контент-завод</b>Пять форматов, от тысячи роликов в месяц</li>
+      <li><b>Раскачка</b>Пятьдесят пачек соцсетей, закуп рекламы, поиск креаторов</li>
+    </ol>
+  </div>
+
+  <!-- ── АРХИТЕКТУРА ───────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Как это устроено внутри</h3>
+    <p class="note">Одно ядро, четыре входа и пять служб вокруг. Игрок заходит откуда
+      угодно, платит чем угодно, а считает всё одно место. По связям идут пакеты: это
+      и есть живые запросы между частями.</p>
+    <div class="arch" data-live>
+      <svg viewBox="0 0 660 300" role="img" aria-label="Схема системы">
+        <defs>
+          <linearGradient id="aG" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#42B2DC"/><stop offset="100%" stop-color="#8A9CFF"/>
+          </linearGradient>
+          <filter id="aGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- связи -->
+        <g class="wires" fill="none" stroke="url(#aG)" stroke-width="1.5" opacity=".55">
+          <path id="w1" d="M120,58 C215,58 215,150 300,150"/>
+          <path id="w2" d="M120,120 C215,120 215,150 300,150"/>
+          <path id="w3" d="M120,182 C215,182 215,150 300,150"/>
+          <path id="w4" d="M120,244 C215,244 215,150 300,150"/>
+          <path id="w5" d="M360,150 C445,150 445,58 540,58"/>
+          <path id="w6" d="M360,150 C445,150 445,120 540,120"/>
+          <path id="w7" d="M360,150 C445,150 445,182 540,182"/>
+          <path id="w8" d="M360,150 C445,150 445,244 540,244"/>
+        </g>
+
+        <!-- пакеты бегут по связям -->
+        <g class="pk" fill="#BFEFFF">
+          <circle r="3"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#w1"/></animateMotion></circle>
+          <circle r="3"><animateMotion dur="3.1s" begin="0.4s" repeatCount="indefinite"><mpath href="#w2"/></animateMotion></circle>
+          <circle r="3"><animateMotion dur="2.9s" begin="0.9s" repeatCount="indefinite"><mpath href="#w3"/></animateMotion></circle>
+          <circle r="3"><animateMotion dur="3.4s" begin="1.3s" repeatCount="indefinite"><mpath href="#w4"/></animateMotion></circle>
+          <circle r="3" fill="#C9D4FF"><animateMotion dur="2.7s" begin="0.2s" repeatCount="indefinite"><mpath href="#w5"/></animateMotion></circle>
+          <circle r="3" fill="#C9D4FF"><animateMotion dur="3.2s" begin="0.7s" repeatCount="indefinite"><mpath href="#w6"/></animateMotion></circle>
+          <circle r="3" fill="#C9D4FF"><animateMotion dur="2.8s" begin="1.1s" repeatCount="indefinite"><mpath href="#w7"/></animateMotion></circle>
+          <circle r="3" fill="#C9D4FF"><animateMotion dur="3.5s" begin="1.6s" repeatCount="indefinite"><mpath href="#w8"/></animateMotion></circle>
+        </g>
+
+        <!-- входы -->
+        <g class="node in">
+          <rect x="8" y="40" width="112" height="36" rx="10"/><text x="64" y="63">Приложение</text>
+          <rect x="8" y="102" width="112" height="36" rx="10"/><text x="64" y="125">Три сайта</text>
+          <rect x="8" y="164" width="112" height="36" rx="10"/><text x="64" y="187">Телеграм-бот</text>
+          <rect x="8" y="226" width="112" height="36" rx="10"/><text x="64" y="249">Мини-апп</text>
+        </g>
+
+        <!-- ядро -->
+        <g class="core" filter="url(#aGlow)">
+          <circle cx="330" cy="150" r="46"/>
+        </g>
+        <text class="coreT" x="330" y="146">ЯДРО</text>
+        <text class="coreS" x="330" y="163">честность раундов</text>
+
+        <!-- службы -->
+        <g class="node out">
+          <rect x="540" y="40" width="112" height="36" rx="10"/><text x="596" y="63">Платежи</text>
+          <rect x="540" y="102" width="112" height="36" rx="10"/><text x="596" y="125">Агенты</text>
+          <rect x="540" y="164" width="112" height="36" rx="10"/><text x="596" y="187">Админка</text>
+          <rect x="540" y="226" width="112" height="36" rx="10"/><text x="596" y="249">Аналитика</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── СРОКИ ПО ДНЯМ ─────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Сборка по дням</h3>
+    <p class="note">Каркас за пятнадцать дней, дальше игры и наработки. Полосы идут
+      внахлёст: пока пишутся игры, уже собираются сайты и заводятся платежи.</p>
+    <div class="gantt" data-live>
+      <div class="g-row"><span>Каркас и ядро</span>
+        <i style="--l:0%;--w:50%"><b>1-15</b></i></div>
+      <div class="g-row"><span>Двадцать игр</span>
+        <i style="--l:33%;--w:60%"><b>10-28</b></i></div>
+      <div class="g-row"><span>Три сайта и бот</span>
+        <i style="--l:40%;--w:43%"><b>12-25</b></i></div>
+      <div class="g-row"><span>Платежи и крипта</span>
+        <i style="--l:50%;--w:33%"><b>15-25</b></i></div>
+      <div class="g-row"><span>Агенты и автоматизации</span>
+        <i style="--l:57%;--w:33%"><b>17-27</b></i></div>
+      <div class="g-row"><span>Магазины и публикация</span>
+        <i style="--l:80%;--w:20%"><b>24-30</b></i></div>
+      <div class="g-row"><span>Контент-завод и раскачка</span>
+        <i style="--l:87%;--w:13%"><b>26-30</b></i></div>
+      <div class="g-scale"><span>день 1</span><span>10</span><span>20</span><span>30</span></div>
+    </div>
+  </div>
+
+  <!-- ── ВОРОНКА ИГРОКА ────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Путь игрока</h3>
+    <p class="note">Воронка считается на каждом шаге, и каждый шаг ведёт свой агент.
+      Доли поставлены ориентиром: живые числа встанут сюда с первой недели работы,
+      выдуманные цифры мы в отчёт не пишем.</p>
+    <div class="funnel" data-live>
+      <div class="f" style="--w:100%"><b>Увидел ролик</b><span>ориентир</span></div>
+      <div class="f" style="--w:74%"><b>Перешёл по метке</b><span>своя ссылка у каждой единицы</span></div>
+      <div class="f" style="--w:52%"><b>Установил или открыл</b><span>приложение, сайт или бот</span></div>
+      <div class="f" style="--w:34%"><b>Зарегистрировался</b><span>агент встречает и ведёт</span></div>
+      <div class="f" style="--w:19%"><b>Первый депозит</b><span>крипта или карта по гео</span></div>
+      <div class="f" style="--w:11%"><b>Вернулся снова</b><span>агент возврата поднимает спящих</span></div>
+    </div>
+  </div>
+
+  <!-- ── ШТАТ ПРОТИВ АГЕНТОВ ───────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Штат против агентов</h3>
+    <p class="note">Шесть участков, которые обычно закрывают людьми. Агенты работают
+      круглосуточно, на языке каждого гео и без пауз между сменами.</p>
+    <div class="vs" data-live>
+      <div class="vs-h"><span>Участок</span><span>Штатом</span><span>Агентом</span></div>
+      <div class="vs-r"><span>Поддержка</span><i style="--w:100%">3 смены</i><u style="--w:14%">круглосуточно</u></div>
+      <div class="vs-r"><span>Модерация</span><i style="--w:78%">2 человека</i><u style="--w:10%">постоянно</u></div>
+      <div class="vs-r"><span>Выплаты</span><i style="--w:62%">оператор</i><u style="--w:8%">по правилу</u></div>
+      <div class="vs-r"><span>Аналитика</span><i style="--w:55%">аналитик</i><u style="--w:8%">сводка дня</u></div>
+      <div class="vs-r"><span>Возврат</span><i style="--w:70%">маркетолог</i><u style="--w:10%">по стадиям</u></div>
+      <div class="vs-r"><span>Контент</span><i style="--w:92%">команда</i><u style="--w:12%">завод</u></div>
+    </div>
+  </div>
+
+  <!-- ── ТРИ ГЕО ───────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Три гео, один движок</h3>
+    <p class="note">Три сайта на общем ядре. Меняются язык, валюта, набор платежей и
+      домен, игровая часть остаётся той же. Четвёртое гео потом добавляется копией.</p>
+    <div class="geo" data-live>
+      <div class="g"><b>Гео 1</b><span>свой язык</span><span>свой платёжный провайдер</span><span>свой домен</span></div>
+      <div class="g"><b>Гео 2</b><span>свой язык</span><span>своя валюта</span><span>свой домен</span></div>
+      <div class="g"><b>Гео 3</b><span>свой язык</span><span>крипта основным</span><span>свой домен</span></div>
+      <div class="g core2"><b>Общее ядро</b><span>игры и честность</span><span>админка</span><span>агенты</span></div>
+    </div>
+  </div>
+
+  <!-- ── ЭКОНОМИКА ─────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Экономика проекта</h3>
+    <p class="note">Ожидаемый оборот около десяти миллионов рублей в месяц. При аудитории
+      от тридцати тысяч пользователей потолок поднимается до трёх-пяти миллионов долларов
+      в месяц. Окупаемость около шести месяцев после запуска.</p>
+    <div class="chart" data-live>
+      <svg viewBox="0 0 640 240" role="img" aria-label="Рост оборота по месяцам">
+        <defs>
+          <linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#42B2DC" stop-opacity=".42"/>
+            <stop offset="100%" stop-color="#42B2DC" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gLine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#42B2DC"/>
+            <stop offset="100%" stop-color="#8A9CFF"/>
+          </linearGradient>
+        </defs>
+        <g class="grid">
+          <line x1="40" y1="30" x2="620" y2="30"/><line x1="40" y1="80" x2="620" y2="80"/>
+          <line x1="40" y1="130" x2="620" y2="130"/><line x1="40" y1="180" x2="620" y2="180"/>
+        </g>
+        <path class="area" d="M40,200 L140,186 L240,150 L340,104 L440,66 L540,40 L620,32 L620,200 Z" fill="url(#gArea)"/>
+        <path class="line" d="M40,200 L140,186 L240,150 L340,104 L440,66 L540,40 L620,32"
+              fill="none" stroke="url(#gLine)" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <g class="dots">
+          <circle cx="140" cy="186" r="3.4"/><circle cx="240" cy="150" r="3.4"/>
+          <circle cx="340" cy="104" r="3.4"/><circle cx="440" cy="66" r="3.4"/>
+          <circle cx="540" cy="40" r="4.6" class="big"/>
+        </g>
+        <g class="lbl">
+          <text x="40" y="222">запуск</text><text x="240" y="222">2 мес</text>
+          <text x="440" y="222">4 мес</text><text x="600" y="222" text-anchor="end">6 мес</text>
+        </g>
+      </svg>
+      <div class="chart-note">
+        <span><i class="d1"></i>оборот выходит на 10 млн ₽ в месяц</span>
+        <span><i class="d2"></i>от 30 000 пользователей потолок 3-5 млн $</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── АГЕНТЫ ВМЕСТО ШТАТА ───────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Агенты вместо сотрудников</h3>
+    <p class="note">Внутри работают агенты, и это главная статья экономии: те же задачи
+      закрываются без найма. Каждый агент ведёт свой участок и отчитывается в админку.</p>
+    <div class="agents" data-live>
+      <div class="ag"><b>Поддержка</b>Отвечает игрокам круглосуточно на языке гео</div>
+      <div class="ag"><b>Модерация</b>Мультиаккаунты, подозрительные ставки, сговор</div>
+      <div class="ag"><b>Выплаты</b>Проверка заявки, лимиты, автоматический вывод</div>
+      <div class="ag"><b>Аналитика</b>Сводка дня, удержание, где теряются игроки</div>
+      <div class="ag"><b>Возврат</b>Пишет тем, кто ушёл, поднимает спящих</div>
+      <div class="ag"><b>Контент</b>Ведёт ленты, отвечает в комментариях, собирает заявки</div>
+    </div>
+  </div>
+
+  <!-- ── ИГРЫ ──────────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Игры на запуске</h3>
+    <p class="note">От двадцати механик. Все идут на одном ядре честности: загаданное число,
+      его отпечаток заранее, раскрытие после раунда и публичная страница проверки.
+      Механика уже написана и отработала на промо-боте розыгрыша.</p>
+    <div class="games" data-live>
+      <span>Краш</span><span>Колесо</span><span>Кости</span><span>Кейсы</span>
+      <span>Слоты</span><span>Рулетка</span><span>Мины</span><span>Лесенка</span>
+      <span>Башня</span><span>Блэкджек</span><span>Баккара</span><span>Покер</span>
+      <span>Двойная</span><span>Плинко</span><span>Хай-лоу</span><span>Кено</span>
+      <span>Скретч</span><span>Колесо дня</span><span>Дуэль</span><span>Быстрая лотерея</span>
+    </div>
+  </div>
+
+  <!-- ── КОНТЕНТ-ЗАВОД ─────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Контент-завод <span class="chip">месяц бонусом</span></h3>
+    <p class="note">Пять форматов, от тысячи роликов в месяц. Первый месяц идёт бонусом
+      внутри оплаты сборки. Каждая единица проходит наряд из сорока четырёх этапов:
+      разведка десяти конкурентов, хук из семи вариантов, цель в числах, метка со своей
+      ссылкой и кодовым словом, замер результата через двое суток.</p>
+    <div class="fmts" data-live>
+      <div class="fmt" style="--w:26%"><b>Вирал</b><span>26 %</span></div>
+      <div class="fmt" style="--w:22%"><b>Новости</b><span>22 %</span></div>
+      <div class="fmt" style="--w:20%"><b>Польза</b><span>20 %</span></div>
+      <div class="fmt" style="--w:18%"><b>История</b><span>18 %</span></div>
+      <div class="fmt" style="--w:14%"><b>Фильмы</b><span>14 %</span></div>
+    </div>
+    <div class="grid" style="margin-top:14px">
+      <div class="kv"><b>Роликов в месяц</b><span>от 1 000</span></div>
+      <div class="kv"><b>Пачек соцсетей</b><span>более 50</span></div>
+      <div class="kv"><b>Площадки</b><span>YouTube, TikTok, Instagram и другие</span></div>
+      <div class="kv"><b>Сверх завода</b><span>закуп рекламы, поиск креаторов</span></div>
+    </div>
+  </div>
+
+  <!-- ── СОЦСЕТИ ───────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Пятьдесят пачек соцсетей</h3>
+    <p class="note">Пачка это связка аккаунтов на одну личность со своим выходом в сеть.
+      Пятьдесят пачек дают охват, который не рубится блокировкой одной из них:
+      падает пачка, лента продолжается с остальных.</p>
+    <div class="packs" data-live aria-label="50 пачек аккаунтов"></div>
+    <p class="note" style="margin:12px 0 0">Счёт постинга: тридцать-пятьдесят аккаунтов,
+      по десять роликов в день с каждого. Отдельный формат раскачки, который сейчас берёт
+      больше всех: нарезка популярного фильма на сорок-пятьдесят секунд, поверх логотип и
+      адрес площадки. Такие ролики уходят на два-три миллиона просмотров почти каждый,
+      потому что фильм люди смотрят и без нас.</p>
+  </div>
+
+  <!-- ── ПЛАТЕЖИ И ПЛОЩАДКИ ────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Оплаты и площадки</h3>
+    <div class="grid">
+      <div class="kv"><b>Крипта</b><span>USDT TRC20, TON, сеть кошельков</span></div>
+      <div class="kv"><b>Карты и СБП</b><span>по каждому гео свой провайдер</span></div>
+      <div class="kv"><b>Вывод</b><span>автоматический, с лимитами и проверкой</span></div>
+      <div class="kv"><b>Магазины</b><span>Play Market, RuStore, App Store</span></div>
+      <div class="kv"><b>Прямая установка</b><span>на случай снятия из магазина</span></div>
+      <div class="kv"><b>Сайты</b><span>три гео, свои домены и языки</span></div>
+    </div>
+  </div>
+
+  <!-- ── ДЕНЬГИ ────────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Деньги</h3>
+    <div class="tw"><table>
+      <tr><th>Когда</th><th class="num2">Сколько</th><th>За что</th></tr>
+      <tr><td>При старте</td><td class="num2">от 300 000 ₽</td><td>30 процентов, технический расход и место в плане</td></tr>
+      <tr><td>Ежемесячно</td><td class="num2">остаток долями</td><td>по факту сделанного за месяц, актом</td></tr>
+      <tr><td><b>Итого</b></td><td class="num2"><b>около 1 000 000 ₽</b></td><td>закуп рекламы считается отдельно</td></tr>
+    </table></div>
+    <p class="note" style="margin:12px 0 0">Работа следующего месяца начинается после оплаты
+      предыдущего. Оплата криптой или счётом. Первый месяц контент-завода входит в эту сумму
+      и отдельно не считается.</p>
+  </div>
+
+  <!-- ── ДАЛЬШЕ ────────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Что дальше после запуска</h3>
+    <ul class="steps">
+      <li class="done">Отработка один-два месяца на живом трафике</li>
+      <li class="now">Франшиза: панель выдачи площадок, кабинет владельца, процент с каждого</li>
+      <li>Масштабирование по гео: новый язык, новые платежи, тот же движок</li>
+      <li>Рост до трёх-пяти миллионов долларов оборота при аудитории от тридцати тысяч</li>
+    </ul>
+  </div>
+
+  <!-- ── РЕШИТЬ ────────────────────────────────────────── -->
+  <div class="card">
+    <h3><i></i>Решить до старта</h3>
+    <div class="q">Юрисдикция площадки и гео аудитории. От этого зависят проверка личности
+      игрока, отсечка регионов и выбор платёжного провайдера. Всё это ложится в код на
+      первом этапе, переделывать потом дорого.</div>
+    <div class="q">Платёжный провайдер по каждому из трёх гео: свой у клиента или подбираем.</div>
+    <div class="q">Какие механики из двадцати идут в первую пятёрку на запуск.</div>
+    <div class="q">Бюджет закупа рекламы: он считается отдельно от сборки.</div>
+    <div class="q">Название и логотип площадки: OKO приносит варианты, слово за клиентом.</div>
+    <div class="q">Доля 25 процентов записывается в договор до начала сборки, вместе с тем,
+      как считается чистая прибыль и когда она выплачивается.</div>
+  </div>
+</section>
+
+  <!-- ═══ 3. AI-АВАТАР ════════════════════════════════════ -->
+<section class="sec" id="p3">
+  <button class="back" data-s="home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Все проекты</button>
+  <h2>AI-аватар на сайте <span class="st wait">созвон</span></h2>
+  <p class="lead">Видеообщение с живым собеседником на экране: пять готовых персонажей,
+    реальное время, любой язык.</p>
+
+  <div class="card">
+    <h3><i></i>Что собираем</h3>
+    <ul class="steps">
+      <li class="done">Формат: видеообщение прямо на сайте, как звонок по видеосвязи</li>
+      <li class="done">Пять готовых персонажей на выбор, своего человек не создаёт</li>
+      <li class="done">Главное требование к картинке: живой вид, чтобы собеседник читался человеком, а не нарисованным лицом</li>
+      <li class="done">Ответ в реальном времени, любой язык, у каждого персонажа свой характер</li>
+      <li class="done">Цель шире развлечения: приучить людей говорить с ИИ, видя лицо</li>
+      <li class="done">Продавать клиент умеет сам: знает рынок, канал и спрос</li>
+      <li class="now">Созвон по Zoom, послеобеденное время</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Чем закрываем технически</h3>
+    <div class="grid">
+      <div class="kv"><b>Основа</b><span>код Джарвиса плюс аватар</span></div>
+      <div class="kv"><b>Рабочий пример</b><span>онлайн-урок с аватаром куратора</span></div>
+      <div class="kv"><b>Железо</b><span>RTX 6000 и A100 клиента</span></div>
+      <div class="kv"><b>Связка</b><span>сервер, агенты, n8n</span></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">Железо у клиента своё: шесть RTX 6000 и две A100. Аватар в реальном
+    времени упирается именно в карты, и это снимает главную статью расходов.</p>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Что важно знать</h3>
+    <div class="q">На проект уже смотрит второй подрядчик: женщина по видео-ИИ, ей заказали платное ТЗ,
+      ответ она даёт в понедельник. Наше преимущество на созвоне - живой рабочий пример и своё железо
+      у клиента, а не обещание.</div>
+    <div class="q">Нужны замеры: задержка ответа, стоимость минуты разговора, сколько разговоров тянет
+      одна карта. Без этих чисел цена будет выдумкой.</div>
+  </div>
+</section>
+
+<!-- ═══ 4. КАРТЫ ЛОЯЛЬНОСТИ ═════════════════════════════ -->
+<section class="sec" id="p4">
+  <button class="back" data-s="home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Все проекты</button>
+  <h2>Карты лояльности <span class="st idle">ждём пример</span></h2>
+  <p class="lead">Телеграм-бот и мини-приложение, которые выпускают карту в Apple Wallet
+    и Google Pay.</p>
+
+  <div class="card">
+    <h3><i></i>Задача</h3>
+    <ul class="steps">
+      <li class="done">Бот выпускает электронную карту лояльности человеку в кошелёк телефона</li>
+      <li class="done">Рядом с ботом мини-приложение: карта, баланс, история, точки</li>
+      <li class="done">Интеграция с системой лояльности Айко, документация по API есть</li>
+      <li class="done">Собираем так, чтобы потом подключалось к другим проектам клиента: один движок, разные заведения</li>
+      <li class="now">Открытый вопрос: выпуск карт без своего аккаунта разработчика Apple и Google</li>
+      <li class="now">Ориентир от клиента: готовый бот другой компании, @alpindustriaBot</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Что проверить до оценки</h3>
+    <div class="q">Выпуск карт без своего сертификата делается через сервис-посредник, который держит
+      сертификат у себя. Это абонентская плата за карту, и её надо посчитать до цены проекта:
+      иначе она всплывёт уже после договора.</div>
+    <div class="q">Сколько карт в месяц планируется и сколько точек Айко подключается.</div>
+  </div>
+</section>
+
+<!-- ═══ 5. ПАРТНЁРКА ════════════════════════════════════ -->
+<section class="sec" id="p5">
+  <button class="back" data-s="home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Все проекты</button>
+  <h2>Партнёрка <span class="st idle" id="dogSt">договор готов, ждём подписи</span></h2>
+  <p class="lead">Обмен клиентами и комиссия в обе стороны.</p>
+
+  <div class="card">
+    <h3><i></i>О чём договорились в переписке</h3>
+    <ul class="steps">
+      <li class="done">Клиент передаёт нам горячих клиентов за комиссию</li>
+      <li class="done">Мы советуем его сервис и берём комиссию, названо до 20 процентов</li>
+      <li class="done">Серверы: обычная виртуальная машина 1 000 ₽ в месяц, в белых списках 10 000 ₽</li>
+      <li class="done">Видеокарты по партнёрке: 1-3 карты минус 20 процентов от цены, 4-6 минус 25, от 7 минус 30</li>
+      <li class="now">Договор берём эталоном тот, что уже подписан с ИП Герасимов К. Г.</li>
+      <li>Срок на старт 11 месяцев</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Реквизиты эталона</h3>
+    <div class="grid">
+      <div class="kv"><b>Сторона</b><span>ИП Герасимов Кирилл Григорьевич</span></div>
+      <div class="kv"><b>ОГРНИП</b><span class="mono">323710000006717</span></div>
+      <div class="kv"><b>ИНН</b><span class="mono">712400830140</span></div>
+      <div class="kv"><b>Город</b><span>Тула</span></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">Документ приложен и служит образцом структуры. Поля второй стороны
+    заполняются её реквизитами, ник из переписки реквизитом не является.</p>
+  </div>
+
+  <div class="card" id="dog">
+    <h3><i></i>Договор партнёрства <span class="chip">№ П-1409/2026</span></h3>
+    <p class="note">Договор о совместной деятельности, 15 разделов, срок 11 месяцев,
+      доли 50 на 50. Со стороны OKO подписан и скреплён печатью, дата 14 сентября
+      2026 года. Поля второй стороны пустые: их заполняет подписант своими
+      реквизитами, ник из переписки реквизитом не является.</p>
+
+    <div class="btns">
+      <a class="btn" href="dogovor-partnyorstva.pdf" target="_blank" rel="noopener">Открыть PDF<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></a>
+      <a class="btn" href="dogovor-partnyorstva.docx" download>Скачать DOCX<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></a>
+    </div>
+
+    <!-- ── ПОДПИСАНИЕ ────────────────────────────────────────
+         Две ступени нарочно: подпись это действие, которое потом
+         обсуждают, и случайное касание на телефоне не должно его
+         ставить. Состояние хранит сервер, а не браузер: подпись,
+         видимая только тому, кто нажал, ничего не доказывает. -->
+    <div class="sgn" id="sgn" data-vid="wait">
+      <div class="sgn-wait">
+        <button class="btn prime" type="button" id="sgnGo">Подписать договор<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21c3-1 5-2 7-4l8-8a2.8 2.8 0 0 0-4-4l-8 8c-2 2-3 4-4 7z"/><path d="M13 5l6 6"/></svg></button>
+        <span class="sgn-n">Нажатие равно подписи по разделу 14: переписка и подтверждение
+          в мессенджере признаны Сторонами письменной формой.</span>
+      </div>
+
+      <div class="sgn-ask">
+        <div class="sgn-q">Подписываете договор № П-1409/2026 на этих условиях?</div>
+        <div class="btns">
+          <button class="btn prime" type="button" id="sgnYes">Да, подписываю<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
+          <button class="btn" type="button" id="sgnNo">Отмена</button>
+        </div>
+      </div>
+
+      <div class="sgn-ok">
+        <div class="sgn-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Подписано</span></div>
+        <div class="sgn-when" id="sgnWhen"></div>
+      </div>
+
+      <div class="sgn-err" id="sgnErr"></div>
+    </div>
+  </div>
+
+  <!-- ── ВСТРЕЧНАЯ ПОКУПКА ─────────────────────────────────
+       Партнёрка работает в обе стороны, и первый заказ идёт от нас
+       к клиенту. Держим его здесь, чтобы условие и цена не остались
+       в переписке. -->
+  <div class="card">
+    <h3><i></i>Первый заказ от нас <span class="chip">проект Защитник</span></h3>
+    <div class="grid">
+      <div class="kv"><b>Машина</b><span>2 ядра, 32 ГБ памяти, диск 5-10 ГБ</span></div>
+      <div class="kv"><b>Домены</b><span>три сайта: английский, французский, испанский</span></div>
+      <div class="kv"><b>Белые списки</b><span>не нужны</span></div>
+      <div class="kv"><b>Доступ</b><span>консоль и root, вход через браузер</span></div>
+      <div class="kv"><b>Цена</b><span>считает клиент</span></div>
+      <div class="kv"><b>API хостера</b><span>в разработке, пока руками</span></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">Сайты для Латинской Америки, Африки и Франции,
+      к ним общая админ-панель. Машина заводится руками и передаётся доступом: панель
+      управления у клиента ещё собирается, и это как раз то, что мы для него и делаем.</p>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Что решить</h3>
+    <div class="q">Процент в обе стороны: одинаковый или разный по видам услуг.</div>
+    <div class="q">Что считается приведённым клиентом и с какого момента идёт комиссия.</div>
+  </div>
+</section>
+
+<!-- ═══ 6. ЛИЧНЫЙ КАБИНЕТ ═══════════════════════════════
+     Новый проект с созвона 14 сентября: кабинет хостинга, из которого
+     человек сам заводит сервер, платит и управляет. -->
+<section class="sec" id="p6">
+  <button class="back" data-s="home"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Все проекты</button>
+  <h2>Личный кабинет <span class="st wait">ждём документацию</span></h2>
+  <p class="lead">Кабинет клиента для хостинга: сервер, CDN, оплата и управление
+    в одном месте, и всё по одной кнопке.</p>
+
+  <div class="card">
+    <h3><i></i>Что делаем</h3>
+    <ul class="steps">
+      <li class="done">Регистрация и вход: номер телефона и код в сообщении, так требует закон</li>
+      <li class="done">Госуслуги как способ входа не берём: для нашей аудитории это лишний шаг</li>
+      <li class="done">Свой никнейм и пароль, чтобы каждый раз не вводить почту</li>
+      <li class="done">Заказ и управление: серверы, CDN, тарифы, продления</li>
+      <li class="now">Интеграция с API поставщика, документацию присылает клиент</li>
+      <li class="now">Биллинг BILLmanager: клиент покупает и присылает документацию</li>
+      <li>Созвон после разбора обеих документаций, там раскладываем векторы</li>
+    </ul>
+  </div>
+
+  <!-- ── БАЗА КЛИЕНТОВ ─────────────────────────────────────
+       Главное требование клиента, и оно не про удобство, а про то,
+       чьи это клиенты через год. -->
+  <div class="card">
+    <h3><i></i>База клиентов остаётся у нас</h3>
+    <div class="q">Почты клиентов поставщику не уходят. В его систему передаётся
+      номер аккаунта, а почта живёт только в нашей базе. Иначе через год база окажется
+      у поставщика, и работать с этими людьми он сможет уже без нас.</div>
+    <div class="q">Человек регистрируется в кабинете, код на почту отправляет наше
+      приложение, не сторонний сервис. По API уходят только те, кто начал пользоваться
+      услугой, и уходят номером аккаунта.</div>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Каким должен быть кабинет</h3>
+    <div class="grid">
+      <div class="kv"><b>Ориентир</b><span>Beget: минимализм и понятное меню слева</span></div>
+      <div class="kv"><b>Не ориентир</b><span>Timeweb: там перегружено</span></div>
+      <div class="kv"><b>Меню</b><span>разделы слева, подменю раскрывается по клику</span></div>
+      <div class="kv"><b>Правило</b><span>чем меньше кликов до действия, тем выше доходимость</span></div>
+    </div>
+    <p class="note" style="margin:12px 0 0">Вектор клиента: всё для человека по одной
+      кнопке, сложное убрано под капот. Это не только про красоту, это про деньги:
+      каждый лишний шаг между желанием и оплатой отсекает часть людей.</p>
+  </div>
+
+  <div class="card">
+    <h3><i></i>Чего ждём, чтобы начать</h3>
+    <ul class="steps">
+      <li class="now">Документация API поставщика</li>
+      <li class="now">Доступ и документация BILLmanager после покупки</li>
+      <li>Одобрение оператора на отправку кодов: три-четыре дня, ставим в план заранее</li>
+    </ul>
+    <p class="note" style="margin:12px 0 0">Срок ориентировочно две-три недели с момента,
+      когда обе документации на руках. Числа точнее встанут после их разбора: называть
+      срок раньше, чем видел API, значит выдумать его.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* Разделы переключаются без перезагрузки: панель открывают с телефона,
+   и каждый лишний запрос это секунда ожидания на мобильной сети. */
+(function () {
+  var кнопки = document.querySelectorAll("nav button");
+  var разделы = document.querySelectorAll(".sec");
+  var меню = document.getElementById("nav");
+  function открыть(имя) {
+    for (var i = 0; i < кнопки.length; i++) {
+      кнопки[i].classList.toggle("on", кнопки[i].getAttribute("data-s") === имя);
+    }
+    for (var j = 0; j < разделы.length; j++) {
+      разделы[j].classList.toggle("on", разделы[j].id === имя);
+    }
+    меню.classList.remove("open");
+    /* Адрес меняем без прыжка. Присваивание location.hash заставляет
+       браузер прокрутить страницу к элементу с этим id, и заголовок
+       раздела уезжал под приклеенную шапку сразу после прокрутки
+       наверх. replaceState пишет адрес и не двигает страницу. */
+    try {
+      if (history.replaceState) history.replaceState(null, "", "#" + имя);
+      else location.hash = имя;
+    } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  /* Переключает всё с меткой data-s: пункт меню, плитку главной и
+     кнопку «назад». Отдельные обработчики на каждый вид разъехались
+     бы при первой правке. */
+  var все = document.querySelectorAll("[data-s]");
+  for (var k = 0; k < все.length; k++) {
+    все[k].addEventListener("click", function () {
+      открыть(this.getAttribute("data-s"));
+    });
+  }
+  var б = document.getElementById("burger");
+  б.addEventListener("click", function () { меню.classList.toggle("open"); });
+  б.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); меню.classList.toggle("open"); }
+  });
+  var из = (location.hash || "").replace("#", "");
+  if (из && document.getElementById(из)) открыть(из);
+})();
+/* ═══ ЖИВОЙ ФОН: КОСМОС ═══════════════════════════════════
+   Тот же приём, что на okoteam.top/kp - полностью процедурный
+   космос, который весит ноль и реально движется. Здесь он в цветах
+   Rocket: холодный синий и фиолетовый вместо нашего лайма. Космос
+   тут не украшение, у клиента весь бренд про ракету и полёт.
+
+   Четыре слоя, и каждый нужен:
+
+     ДЫМКА      два больших мягких пятна, они дают глубину. Без них
+                фон читается плоской чернотой с крошкой поверх.
+     МЛЕЧНЫЙ    наклонная полоса сгущения. Ровно рассыпанные звёзды
+                глаз читает шумом, полоса делает из шума небо.
+     ЗВЁЗДЫ     три слоя с разной скоростью. Разная скорость и есть
+                параллакс: ближние обгоняют дальние, и плоскость
+                превращается в объём.
+     КОМЕТА     редкая, раз в несколько секунд. Она даёт кадру
+                событие: без неё фон живой, но однообразный.
+
+   Что сделано ради телефона:
+     1. Плотность холста зажата двойкой. Фон во всю страницу на
+        экране с тройной плотностью это восемь миллионов точек на
+        кадр, и телефон греется ни за что.
+     2. Кадр не рисуется, когда вкладку свернули.
+     3. Системная просьба «меньше движения» останавливает всё:
+        рисуем один кадр и выходим.
+     4. Звёзд на узком экране вдвое меньше, дымка мягче. */
+(function () {
+  var хл = document.getElementById("fon");
+  if (!хл || !хл.getContext) return;
+  var к = хл.getContext("2d", { alpha: false });
+  var тихо = false;
+  try { тихо = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+  var W = 0, H = 0, ПЛ = 1, узко = false;
+  var СЛОИ = [], ДЫМКА = [], ПОЛОСА = [], КОМЕТЫ = [], доКометы = 2.2;
+  var т0 = performance.now(), прошлый = т0, сдвиг = 0;
+
+  function сл(a, b) { return a + Math.random() * (b - a); }
+
+  function собрать() {
+    узко = W < 760;
+    /* Три слоя: дальний мелкий и тусклый, ближний крупный и яркий.
+       Скорость растёт вместе с размером - так и работает параллакс. */
+    var план = [
+      { n: узко ? 120 : 210, ск: 1.4, р: [0.4, 0.9], я: [0.22, 0.5] },
+      { n: узко ? 70 : 120, ск: 4.5, р: [0.7, 1.4], я: [0.38, 0.78] },
+      { n: узко ? 34 : 58, ск: 11, р: [1.0, 1.9], я: [0.6, 1.0] }
+    ];
+    СЛОИ = план.map(function (с) {
+      var р = [];
+      for (var i = 0; i < с.n; i++) {
+        р.push({ x: Math.random(), y: Math.random(), r: сл(с.р[0], с.р[1]),
+                 я: сл(с.я[0], с.я[1]), ф: Math.random() * 6.283, с: сл(0.5, 2) });
+      }
+      return { ск: с.ск, зв: р };
+    });
+
+    /* Дымка холодная: синий, фиолетовый и бирюзовый по бренду. */
+    var цв = [[66, 178, 220], [138, 156, 255], [64, 210, 200], [96, 140, 240]];
+    ДЫМКА = [];
+    for (var k = 0; k < (узко ? 3 : 4); k++) {
+      ДЫМКА.push({ x: сл(0.06, 0.94), y: сл(0.02, 0.72), р: сл(0.55, 1.15),
+                   ц: цв[k % цв.length], ф: Math.random() * 6.283,
+                   д: сл(0.03, 0.085), п: сл(0.045, 0.115) });
+    }
+
+    ПОЛОСА = [];
+    for (var m = 0; m < (узко ? 70 : 130); m++) {
+      ПОЛОСА.push({ u: Math.random(), о: сл(-0.055, 0.055), r: сл(0.4, 1.2),
+                    я: сл(0.18, 0.6), ф: Math.random() * 6.283 });
+    }
+    КОМЕТЫ = [];
+  }
+
+  function размер() {
+    ПЛ = Math.min(2, window.devicePixelRatio || 1);
+    W = хл.clientWidth; H = хл.clientHeight;
+    хл.width = Math.max(1, Math.round(W * ПЛ));
+    хл.height = Math.max(1, Math.round(H * ПЛ));
+    к.setTransform(ПЛ, 0, 0, ПЛ, 0, 0);
+    собрать();
+  }
+
+  function кадр(сейчас) {
+    var t = (сейчас - т0) / 1000;
+    var дт = Math.min(0.05, (сейчас - прошлый) / 1000);
+    прошлый = сейчас;
+    if (!тихо) сдвиг += дт;
+
+    /* Основа не чёрная, а глубокий сине-чёрный с подсветкой сверху:
+       чистый чёрный на телефоне выглядит выключенным экраном. */
+    var г = к.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.3, Math.max(W, H) * 0.95);
+    г.addColorStop(0, "#0A1420");
+    г.addColorStop(0.55, "#060C15");
+    г.addColorStop(1, "#03060B");
+    к.fillStyle = г;
+    к.fillRect(0, 0, W, H);
+
+    /* ── дымка ── */
+    for (var d = 0; d < ДЫМКА.length; d++) {
+      var о = ДЫМКА[d];
+      var дх = Math.sin(t * о.д + о.ф) * 0.03;
+      var ду = Math.cos(t * о.д * 0.8 + о.ф) * 0.02;
+      var цx = (о.x + дх) * W, цy = (о.y + ду) * H;
+      var рад = о.р * Math.max(W, H) * 0.42;
+      var дг = к.createRadialGradient(цx, цy, 0, цx, цy, рад);
+      var c = о.ц;
+      дг.addColorStop(0, "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + о.п.toFixed(3) + ")");
+      дг.addColorStop(1, "rgba(" + c[0] + "," + c[1] + "," + c[2] + ",0)");
+      к.fillStyle = дг;
+      к.fillRect(цx - рад, цy - рад, рад * 2, рад * 2);
+    }
+
+    /* ── полоса Млечного Пути ──
+       Наклонная синусоида поперёк кадра: большой круг на развёртке
+       неба рисуется именно так, а прямая читалась бы линейкой. */
+    for (var p = 0; p < ПОЛОСА.length; p++) {
+      var з = ПОЛОСА[p];
+      var u = (з.u + сдвиг * 0.004) % 1;
+      var x = u * W;
+      var y = H * (0.34 + Math.sin(u * 5.4 + 0.6) * 0.14 + з.о);
+      var мер = 0.72 + 0.28 * Math.sin(t * 1.6 + з.ф);
+      к.fillStyle = "rgba(198,224,255," + (з.я * мер).toFixed(3) + ")";
+      к.beginPath(); к.arc(x, y, з.r, 0, 6.283); к.fill();
+    }
+
+    /* ── звёзды слоями ── */
+    for (var s = 0; s < СЛОИ.length; s++) {
+      var сл2 = СЛОИ[s];
+      for (var i = 0; i < сл2.зв.length; i++) {
+        var зв = сл2.зв[i];
+        var сх = (зв.x - сдвиг * сл2.ск * 0.0016) % 1;
+        if (сх < 0) сх += 1;
+        var мерц = 0.68 + 0.32 * Math.sin(t * зв.с + зв.ф);
+        к.fillStyle = "rgba(226,240,255," + (зв.я * мерц).toFixed(3) + ")";
+        к.beginPath();
+        к.arc(сх * W, зв.y * H, зв.r, 0, 6.283);
+        к.fill();
+      }
+    }
+
+    /* ── комета ──
+       Не чаще раза в несколько секунд и всегда одна: две сразу
+       читаются салютом, а не небом. */
+    if (!тихо) {
+      доКометы -= дт;
+      if (доКометы <= 0 && КОМЕТЫ.length === 0) {
+        доКометы = сл(6, 13);
+        КОМЕТЫ.push({ x: сл(-0.1, 0.5) * W, y: сл(0.05, 0.5) * H,
+                      vx: сл(190, 300), vy: сл(70, 130), ж: 1 });
+      }
+      for (var кк = КОМЕТЫ.length - 1; кк >= 0; кк--) {
+        var ко = КОМЕТЫ[кк];
+        ко.x += ко.vx * дт; ко.y += ко.vy * дт; ко.ж -= дт * 0.5;
+        if (ко.ж <= 0 || ко.x > W + 120 || ко.y > H + 120) { КОМЕТЫ.splice(кк, 1); continue; }
+        var дл = 120;
+        var хв = к.createLinearGradient(ко.x, ко.y, ко.x - дл, ко.y - дл * (ко.vy / ко.vx));
+        хв.addColorStop(0, "rgba(190,230,255," + (0.7 * ко.ж).toFixed(3) + ")");
+        хв.addColorStop(1, "rgba(120,190,255,0)");
+        к.strokeStyle = хв; к.lineWidth = 1.7;
+        к.beginPath();
+        к.moveTo(ко.x, ко.y);
+        к.lineTo(ко.x - дл, ко.y - дл * (ко.vy / ко.vx));
+        к.stroke();
+        к.fillStyle = "rgba(226,244,255," + (0.9 * ко.ж).toFixed(3) + ")";
+        к.beginPath(); к.arc(ко.x, ко.y, 1.8, 0, 6.283); к.fill();
+      }
+    }
+  }
+
+  var ход = 0;
+  function крутить(сейчас) {
+    ход = 0;
+    кадр(сейчас);
+    if (!тихо && !document.hidden) ход = requestAnimationFrame(крутить);
+  }
+  function пуск() {
+    if (ход) cancelAnimationFrame(ход);
+    прошлый = performance.now();
+    if (тихо || document.hidden) { кадр(прошлый); return; }
+    ход = requestAnimationFrame(крутить);
+  }
+
+  var ждём = 0;
+  addEventListener("resize", function () {
+    clearTimeout(ждём);
+    ждём = setTimeout(function () { размер(); пуск(); }, 160);
+  });
+  document.addEventListener("visibilitychange", пуск);
+
+  размер();
+  пуск();
+})();
+
+/* ═══ ОЖИВЛЕНИЕ ИНФОГРАФИКИ ═══════════════════════════════
+   Один наблюдатель на все блоки с меткой data-live. Доехал блок до
+   экрана - получает класс «вжив», дальше всё делает CSS. Почему так,
+   а не по таймеру от загрузки: страница длинная, и график в самом
+   низу успел бы отыграть задолго до того, как человек до него
+   доскроллит, то есть не отыграл бы вовсе.
+
+   Числа набегают отдельно: это не CSS-переход, а счёт по кадрам.
+   Ход кладём по кривой ease-out - ровный счёт выглядит механическим,
+   а замедление к концу читается как «доехало».
+
+   Просьба «меньше движения» отключает и то, и другое: класс ставится
+   сразу всем, счётчики показывают конечные значения. */
+(function () {
+  var тихо = false;
+  try { тихо = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+  /* Пачки соцсетей рисуем кодом: пятьдесят одинаковых строк в
+     разметке это пятьдесят строк, которые никто не станет читать. */
+  var пачки = document.querySelector(".packs");
+  if (пачки && !пачки.children.length) {
+    for (var п = 0; п < 50; п++) {
+      var i = document.createElement("i");
+      i.style.transitionDelay = (п * 0.018).toFixed(3) + "s";
+      пачки.appendChild(i);
+    }
+  }
+
+  /* Задержки внутри блоков: списки оживают по одному элементу, а не
+     все разом. Ставим их здесь, а не в стилях, чтобы не плодить
+     полсотни правил под каждый порядковый номер. */
+  function лесенка(узлы, шаг) {
+    for (var i = 0; i < узлы.length; i++) {
+      узлы[i].style.transitionDelay = (i * шаг).toFixed(3) + "s";
+    }
+  }
+  var д = document.querySelector("ol.road");
+  if (д) лесенка(д.children, 0.075);
+  var а = document.querySelector(".agents");
+  if (а) лесенка(а.children, 0.07);
+  var г = document.querySelector(".games");
+  if (г) лесенка(г.children, 0.028);
+  var ф = document.querySelector(".fmts");
+  if (ф) лесенка(ф.children, 0.11);
+
+  /* Пробел между тысячами: миллион без него читается как набор
+     цифр, и глаз спотыкается ровно на том числе, ради которого
+     счётчик и стоит. */
+  function вид(ч, знаков, эл) {
+    var т = ч.toFixed(знаков);
+    if (!эл.getAttribute("data-sep")) return т;
+    var части = т.split(".");
+    части[0] = части[0].replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
+    return части.join(".");
+  }
+
+  function счёт(эл) {
+    var до = parseFloat(эл.getAttribute("data-to")) || 0;
+    var знаков = parseInt(эл.getAttribute("data-dec") || "0", 10);
+    var хвост = эл.getAttribute("data-suf") || "";
+    if (тихо) { эл.textContent = вид(до, знаков, эл) + хвост; return; }
+    var т0 = 0, ДЛИНА = 1100;
+    function шаг(now) {
+      if (!т0) т0 = now;
+      var p = Math.min(1, (now - т0) / ДЛИНА);
+      var к = 1 - Math.pow(1 - p, 3);
+      эл.textContent = вид(до * к, знаков, эл) + хвост;
+      if (p < 1) requestAnimationFrame(шаг);
+    }
+    requestAnimationFrame(шаг);
+  }
+
+  function завести(узел) {
+    узел.classList.add("вжив");
+    var числа = узел.querySelectorAll("[data-to]");
+    for (var i = 0; i < числа.length; i++) счёт(числа[i]);
+  }
+
+  var живые = document.querySelectorAll("[data-live]");
+  if (тихо || !("IntersectionObserver" in window)) {
+    for (var k = 0; k < живые.length; k++) завести(живые[k]);
+    return;
+  }
+  var наблюдатель = new IntersectionObserver(function (записи) {
+    for (var j = 0; j < записи.length; j++) {
+      if (!записи[j].isIntersecting) continue;
+      завести(записи[j].target);
+      наблюдатель.unobserve(записи[j].target);
+    }
+  }, { threshold: 0.18, rootMargin: "0px 0px -40px 0px" });
+  for (var m = 0; m < живые.length; m++) наблюдатель.observe(живые[m]);
+
+  setTimeout(function () {
+    var спящие = document.querySelectorAll("[data-live]:not(.вжив)");
+    for (var i = 0; i < спящие.length; i++) {
+      var к = спящие[i].getBoundingClientRect();
+      if (к.top < innerHeight * 1.6) завести(спящие[i]);
+    }
+  }, 1500);
+
+  /* Раздел показывается переключателем, а не прокруткой, и в этот
+     момент наблюдатель уже отработал по скрытому узлу: он считает
+     скрытое невидимым и молчит. Поэтому при открытии раздела
+     проверяем его блоки заново. */
+  document.addEventListener("click", function (e) {
+    var т = e.target.closest ? e.target.closest("[data-s]") : null;
+    if (!т) return;
+    setTimeout(function () {
+      var сейчас = document.querySelectorAll(".sec.on [data-live]:not(.вжив)");
+      for (var n = 0; n < сейчас.length; n++) {
+        var к = сейчас[n].getBoundingClientRect();
+        if (к.top < innerHeight && к.bottom > 0) завести(сейчас[n]);
+      }
+    }, 60);
+  });
+})();
+
+/* ═══ КОПИРОВАНИЕ АДРЕСА ══════════════════════════════════
+   Современный путь через буфер обмена браузера, запасной - через
+   временное поле и старую команду. Запасной нужен не для красоты:
+   доступ к буферу браузер даёт только на защищённом соединении и
+   только по действию человека, и в вебвью Телеграма он иногда
+   закрыт. Без запасного пути кнопка молча ничего не делала бы. */
+(function () {
+  var к = document.getElementById("copyW");
+  var а = document.getElementById("wallet");
+  if (!к || !а) return;
+  var подпись = к.querySelector("span");
+  var было = подпись.textContent, ждём = 0;
+
+  function сказать(текст, удача) {
+    подпись.textContent = текст;
+    к.classList.toggle("ok", !!удача);
+    clearTimeout(ждём);
+    ждём = setTimeout(function () {
+      подпись.textContent = было;
+      к.classList.remove("ok");
+    }, 1800);
+  }
+
+  function старым(текст) {
+    var п = document.createElement("textarea");
+    п.value = текст;
+    п.setAttribute("readonly", "");
+    п.style.position = "fixed";
+    п.style.left = "-9999px";
+    document.body.appendChild(п);
+    п.select();
+    var вышло = false;
+    try { вышло = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(п);
+    return вышло;
+  }
+
+  к.addEventListener("click", function () {
+    var текст = а.textContent.trim();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(текст).then(function () {
+        сказать("Скопировано", true);
+      }, function () {
+        сказать(старым(текст) ? "Скопировано" : "Выделите вручную", старым(текст));
+      });
+      return;
+    }
+    сказать(старым(текст) ? "Скопировано" : "Выделите вручную", старым(текст));
+  });
+})();
+
+/* ═══ ПОДПИСЬ ПОД ДОГОВОРОМ ═══════════════════════════════
+   Состояние спрашиваем у сервера при открытии панели и после
+   нажатия. Панель открывают и с телефона, и с компьютера, и
+   владелец смотрит её отдельно: отметка обязана быть одна на
+   всех, а не своя в каждом браузере. */
+(function () {
+  var б = document.getElementById("sgn");
+  if (!б) return;
+  var да = document.getElementById("sgnYes");
+  var нет = document.getElementById("sgnNo");
+  var жми = document.getElementById("sgnGo");
+  var когда = document.getElementById("sgnWhen");
+  var беда = document.getElementById("sgnErr");
+  var отметкаРаздела = document.getElementById("dogSt");
+  var отметкаПлитки = document.getElementById("dogMark");
+
+  function показать(д) {
+    if (д && д["подписан"]) {
+      б.setAttribute("data-vid", "ok");
+      когда.textContent = д["когда"] ? "Подписано " + д["когда"] : "";
+      if (отметкаРаздела) {
+        отметкаРаздела.textContent = "подписан";
+        отметкаРаздела.className = "st ok";
+      }
+      if (отметкаПлитки) {
+        отметкаПлитки.className = "mark ok";
+        отметкаПлитки.innerHTML = "<i></i>Договор подписан";
+      }
+      return;
+    }
+    б.setAttribute("data-vid", "wait");
+  }
+
+  function спросить(способ, тело) {
+    /* Панель иногда открывают с диска как файл: тогда запроса нет
+       вовсе, и кнопка обязана остаться на месте, а не показать
+       ошибку. Поэтому любая неудача это просто молчание. */
+    if (!window.fetch || location.protocol === "file:") return Promise.resolve(null);
+    return fetch("sign.php", {
+      method: способ,
+      credentials: "same-origin",
+      headers: тело ? { "Content-Type": "application/x-www-form-urlencoded" } : {},
+      body: тело || undefined
+    }).then(function (о) { return о.ok ? о.json() : null; })
+      .catch(function () { return null; });
+  }
+
+  жми.addEventListener("click", function () { б.setAttribute("data-vid", "ask"); });
+  нет.addEventListener("click", function () { б.setAttribute("data-vid", "wait"); });
+
+  да.addEventListener("click", function () {
+    да.setAttribute("disabled", "");
+    беда.textContent = "";
+    спросить("POST", "podpis=1").then(function (д) {
+      да.removeAttribute("disabled");
+      if (д && д["подписан"]) { показать(д); return; }
+      беда.textContent = "Подпись не записалась. Повторите через минуту.";
+      б.setAttribute("data-vid", "wait");
+    });
+  });
+
+  спросить("GET").then(показать);
+})();
+</script>
+</html>
