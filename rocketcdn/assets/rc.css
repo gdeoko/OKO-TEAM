@@ -912,22 +912,75 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   transition: opacity var(--fast), visibility var(--fast), transform var(--fast), box-shadow var(--fast);
 }
 .totop.on { opacity: 1; visibility: visible; transform: none; }
-/* ── КНОПКА «НАВЕРХ» УСТУПАЕТ МЕСТО ПУЗЫРЮ ЧАТА ─────────────
-   Виджет чата (rc-chat.js) ставит свой круглый пузырь снизу справа -
-   ровно туда, где стоит эта кнопка. Две круглые кнопки в одной точке
-   это не косметика: одна перекрывает другую, и человек жмёт не то, что
-   видит.
 
-   Поднимаем свою над чужой. Число взято по пузырю Chatwoot: 64 точки
-   сам пузырь плюс его отступ, отсюда 96 - и между кнопками остаётся
-   видимый зазор, а не стык.
+/* ── ЧАТ С МЕНЕДЖЕРОМ ───────────────────────────────────────
+   Родной пузырь Chatwoot спрятан (rc-chat.js, hideMessageBubble): у
+   него ровно один вид, нарисованный не под этот сайт. Кнопка своя и
+   живёт в той же семье, что «наверх» рядом: круг, фирменная заливка,
+   та же тень. Две разные круглые кнопки в одном углу выглядели бы
+   набором из двух разных наборов.
 
-   Признак ставит сам виджет и ТОЛЬКО когда он поднялся: не доехал чат
-   (сеть, блокировщик, служба легла) - кнопка остаётся на месте, а не
-   висит посреди пустоты. */
-:root.rc-чат-есть .totop {
-  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+   КРУПНЕЕ СОСЕДКИ НА ДВЕНАДЦАТЬ ТОЧЕК. Написать человеку это главное
+   действие в этом углу, «наверх» служебное, и размер обязан это
+   говорить раньше подписи. Разница меньше десяти точек читается как
+   неровность вёрстки, а не как порядок.
+
+   СТОИТ ЭТАЖОМ ВЫШЕ. Слово владельца: «нужно выше куда-то». Свой этаж
+   считается от соседки: 18 её отступ, 44 её рост, 14 зазор между ними.
+   Зазор виден глазом и не даёт промахнуться пальцем. */
+.rc-chat-btn {
+  position: fixed; right: 18px; z-index: 181;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--grad-btn); color: #fff; border: 0; cursor: pointer;
+  box-shadow: 0 10px 26px -8px rgba(10, 88, 151, .8);
+  transition: transform var(--fast), box-shadow var(--fast), background var(--fast);
+  /* Появляется ростом из точки: кнопка приходит через секунду после
+     страницы, и мгновенное возникновение читается как сбой отрисовки. */
+  animation: rc-chat-in .34s cubic-bezier(.2, .9, .3, 1.2) both;
 }
+.rc-chat-btn svg { width: 26px; height: 26px; }
+.rc-chat-btn:hover { background: var(--grad-btn-hi); transform: translateY(-2px); }
+.rc-chat-btn:active { transform: translateY(0); }
+@keyframes rc-chat-in { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+
+/* Огонёк «мы на месте». Обводка цветом фона отделяет его от заливки
+   кнопки: без неё зелёная точка на синем круге читается пятном. */
+.rc-chat-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #34D399; border: 2px solid var(--bg-2);
+}
+
+/* Телефон: кнопки «наверх» там нет вовсе (rc-adapt.css), поэтому чат
+   занимает её этаж - иначе он висел бы над пустым местом. */
+@media (max-width: 768px) {
+  .rc-chat-btn {
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    width: 52px; height: 52px;
+  }
+  .rc-chat-btn svg { width: 24px; height: 24px; }
+}
+
+/* Строка в шторке меню. Лежит в разметке всегда, чтобы её перевёл
+   словарь, а показывается только когда чату есть что открыть: мёртвая
+   строка меню хуже отсутствующей. */
+#rcЧатМеню { display: none; }
+:root.rc-чат-есть #rcЧатМеню { display: flex; }
+#rcЧатМеню { color: var(--accent-tx); gap: var(--sp-2); }
+#rcЧатМеню svg { width: 20px; height: 20px; flex: none; }
+/* Значок и подпись идут парой слева, стрелка-огонёк справа - так же,
+   как устроены остальные строки меню. */
+#rcЧатМеню .rc-chat-menu-in { display: inline-flex; align-items: center; gap: 10px; }
+#rcЧатМеню .rc-chat-menu-hint {
+  font-size: var(--fs-2); font-weight: 500; color: var(--tx-3);
+}
+
+/* Панель разговора рисует сама служба. Единственное, что ей правим, -
+   этаж: у неё свой отступ снизу, и на телефоне она садилась на
+   подсказку прокрутки. */
+.woot-widget-holder { z-index: 190 !important; }
 .totop svg { width: 19px; height: 19px; }
 
 /* ── Адаптив ──────────────────────────────────────────────── */

@@ -42,6 +42,11 @@ var RU = {
   "a11y.epilogue": "Эпилог",
   "a11y.close":    "Закрыть",
   "a11y.totop":    "Наверх",
+  /* Чат с менеджером: своя кнопка и строка в меню. Пузырь
+     Chatwoot спрятан, поэтому подписи наши. */
+  "chat.open":     "Написать менеджеру",
+  "chat.menu":     "Чат с менеджером",
+  "chat.hint":     "в рабочее время",
 
   /* Заголовок вкладки и описание для выдачи. Раньше их не менял
      никто: английская страница жила с русским заголовком, а
@@ -355,6 +360,8 @@ var EN = {
   "a11y.sound": "Sound", "a11y.menu": "Menu", "a11y.rack": "Rocket CDN data center rack in 3D",
   "a11y.globe": "Rocket CDN network map: locations on the globe", "a11y.flight": "Demo flight",
   "a11y.epilogue": "Epilogue", "a11y.close": "Close", "a11y.totop": "Back to top",
+  "chat.open": "Message a manager", "chat.menu": "Chat with a manager",
+  "chat.hint": "business hours",
   "meta.title": "Rocket CDN - content delivery at maximum speed",
   "meta.desc": "Content delivery network: {nodes} locations, three owned data centers, 99.9% SLA and over 3 Tbit/s across Russia.",
 
