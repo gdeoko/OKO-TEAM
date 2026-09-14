@@ -579,25 +579,46 @@ g.RC_GL = {
      Ракета от этого не пропадает: она просто начинает собираться
      после события load, а не до него. Человеку до корабля прокручивать
      больше половины ленты. */
+  /* ── ВЕРДИКТ О ВИДЕОКАРТЕ ЖИВЁТ ДАЛЬШЕ ЭТОЙ ФУНКЦИИ ──────────
+     Раньше он складывался в `slow` и на этом кончался: отсюда он
+     отвечает только на вопрос «когда грузить», а качество ракеты
+     (rc-rocket.js, `tiny`) решается отдельно и СМОТРИТ ТОЛЬКО НА
+     ПАМЯТЬ И ЯДРА. Дешёвый телефон с восемью ядрами и четырьмя
+     гигабайтами проходит там как сильный, и буфер ему ставится
+     телефонный, а не слабый - при графике начального уровня. Ровно
+     об этом писал заказчик: на его Infinix двадцать-тридцать кадров.
+
+     Спрашивать карту второй раз в другом модуле нельзя: два списка
+     моделей разойдутся молча. Публикуем ОДИН вердикт.
+
+     Разделяем и два разных «слабо»: сеть и процессор говорят, КОГДА
+     грузить, видеокарта говорит, С КАКИМ БУФЕРОМ рисовать. Поэтому
+     проверку карты делаем всегда, а не только когда `slow` ещё ложь -
+     иначе на слабом канале карта не спрашивается вовсе. */
+  var слабаяКарта = false;
   try {
     var пам = navigator.deviceMemory || 8;
     var ядер = navigator.hardwareConcurrency || 4;
     if (пам <= 4 || ядер <= 4) slow = true;
-    if (!slow) {
-      var к = document.createElement("canvas");
-      var гл = к.getContext("webgl") || к.getContext("experimental-webgl");
-      var р = гл && гл.getExtension("WEBGL_debug_renderer_info");
-      var им = р ? String(гл.getParameter(р.UNMASKED_RENDERER_WEBGL) || "") : "";
-      var н = им.toLowerCase();
-      if (н && (/mali-?g(31|37|51|52|57)\b/.test(н) ||
-                /mali-?(t6|t7|t8|450|400)/.test(н) ||
-                /powervr.*(ge8|ge7|rogue ge)/.test(н) ||
-                /adreno.*\b(3[0-9]{2}|4[0-9]{2}|5[0-9]{2}|60[0-9]|610)\b/.test(н) ||
-                /swiftshader|llvmpipe|software/.test(н))) slow = true;
-      var пот = гл && гл.getExtension("WEBGL_lose_context");
-      if (пот) пот.loseContext();
-    }
+    var к = document.createElement("canvas");
+    var гл = к.getContext("webgl") || к.getContext("experimental-webgl");
+    var р = гл && гл.getExtension("WEBGL_debug_renderer_info");
+    var им = р ? String(гл.getParameter(р.UNMASKED_RENDERER_WEBGL) || "") : "";
+    var н = им.toLowerCase();
+    if (н && (/mali-?g(31|37|51|52|57)\b/.test(н) ||
+              /mali-?(t6|t7|t8|450|400)/.test(н) ||
+              /powervr.*(ge8|ge7|rogue ge)/.test(н) ||
+              /adreno.*\b(3[0-9]{2}|4[0-9]{2}|5[0-9]{2}|60[0-9]|610)\b/.test(н) ||
+              /swiftshader|llvmpipe|software/.test(н))) слабаяКарта = true;
+    if (слабаяКарта) slow = true;
+    var пот = гл && гл.getExtension("WEBGL_lose_context");
+    if (пот) пот.loseContext();
   } catch (eК) {}
+  /* Имя расширения может отсутствовать вовсе (приватное окно, Safari):
+     тогда вердикт ЛОЖЬ, а не «слабая». Чужое железо по умолчанию
+     считаем исправным, иначе мы срежем буфер всем, кто закрыл имя
+     карты. */
+  g.RC_СЛАБАЯ_КАРТА = слабаяКарта;
 
   if (!slow) go();
   else if (document.readyState === "complete") setTimeout(go, 400);
