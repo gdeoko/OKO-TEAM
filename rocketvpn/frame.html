@@ -689,14 +689,10 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      показе. Оба нужны только финалу, поэтому и стоят рядом с ним. -->
 <script src="assets/gen/каб/плоская.js" defer></script>
 <script src="assets/gen/каб/настил.js" defer></script>
-<script src="assets/rv-клавиши.js" defer></script>
-<script src="assets/rv-настил.js" defer></script>
-<script src="assets/rv-кабина.js" defer></script>
 <!-- Корабль соседнего сайта целиком: обшивка, люк, створки, салон за
      ними, площадка с разметкой и огнями. Идёт ПОСЛЕ настила: салон в
      проёме печёт снимок рубки вместе с декой, и без неё в люке стояла
      бы голая картинка без клавиш. -->
-<script src="assets/rv-корабль.js" defer></script>
 <!-- ═══ САЛОН ФИНАЛА - ФАЙЛЫ СОСЕДЕЙ КАК ЕСТЬ ═══════════════════
      Владелец: «зайди в файлы и код сайта cdn и скопируй ctrl c ctrl v
      из сайта cdn в сайт vpn всю финальную сцену с ракетой и вход в неё
@@ -728,14 +724,9 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <!-- Мост к пульту соседей: подписи, доли камеры и действия кнопок.
      Стоит ПЕРЕД самим пультом: тот спрашивает RC_INTERIOR в первом
      же кадре, и пустой ответ погасил бы меню навсегда. -->
-<script src="assets/rv-пульт-cdn.js" defer></script>
 <script src="assets/rc-desk.js" defer></script>
-<script src="assets/rv-салон-cdn.js" defer></script>
-<script src="assets/rv-финал.js" defer></script>
-<script src="assets/rv-комната.js" defer></script>
 <script src="assets/rv-msdf.js" defer></script>
 <script src="assets/rv-слово3d.js" defer></script>
-<script src="assets/rv-игра.js" defer></script>
 <!-- rv-анкета.js отсюда убран вместе с файлом. Он искал в разметке
      форму #rvАнкета, а её тут нет с тех пор, как анкету признали дублем:
      все три копии формы (окно шапки, плита подвала, пульт финала) кладёт
@@ -744,7 +735,6 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
      страницы за то, чтобы ничего не сделать. -->
 <!-- Две клавиши панели и «Назад». Обработчика у них не было ни в одном
      модуле: признаки в разметке стояли, а нажатие не делало ничего. -->
-<script src="assets/rv-панель-кнопки.js" defer></script>
 <!-- Порядок этих строк не важен: каждый акт ждёт события готовности
      мира и кладёт себя в ядро сам. -->
 <!-- Луна идёт ПЕРЕД станцией: станция зовёт её фабрику при сборке, и
@@ -752,10 +742,8 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <script src="assets/rv-луна.js" defer></script>
 <script src="assets/rv-act-станция.js" defer></script>
 <script src="assets/rv-act-fold.js" defer></script>
-<script src="assets/rv-act-финал.js" defer></script>
 <!-- Титры кладут слова В САМУ СЦЕНУ. Идут после актов: гнёзда
      станций заводят акты, и титру нужно готовое гнездо. -->
-<script src="assets/rv-титры.js" defer></script>
 <script src="assets/rv-слово.js" defer></script>
 <script src="assets/rv-опознаватели.js" defer></script>
 <script src="assets/rv-data.js" defer></script>
@@ -771,5 +759,79 @@ html,body{margin:0;background:#05060C;color:#E8EAF6}
 <!-- Счётчик общей панели: события уходят на rocketcdn.ru с пометкой site=vpn -->
 <script src="assets/rv-меню.js" defer></script>
 <script src="assets/rv-track.js" defer></script>
+<!-- ── МОДУЛИ ФИНАЛА ЕДУТ ПОЗЖЕ ПЕРВОГО ЭКРАНА ──────────────────
+     Двенадцать файлов на 694 КБ нужны только последнему акту: корабль,
+     салон, пульт, комната, титры. Стояли они в общем списке и грузились
+     вместе со всем, то есть человек на первом экране платил за них
+     скачиванием И разбором. Разбор на слабом телефоне стоит дороже
+     скачивания: это работа процессора, и она идёт до первого кадра.
+
+     Теперь они приезжают, когда прогрев мира кончился. До финала
+     человеку прокручивать больше половины ленты, времени у них с
+     запасом.
+
+     ПОЧЕМУ СПИСОК ЛЕЖИТ РАЗМЕТКОЙ, А НЕ В КОДЕ. Метку версии на адреса
+     ставит сервер (rv_версии в index.php), и находит он их по виду
+     src="assets/...". В JSON ниже адреса записаны ровно так же, поэтому
+     метка на них встаёт сама, без единой правки в PHP. Без метки
+     браузер держал бы старый файл неделю после выкладки.
+
+     ПОЧЕМУ ПРИШЕДШИЙ ИЗ КОСМОСА ГРУЗИТ ИХ СРАЗУ. Человек с меткой
+     from=cdn попадает НЕ на первый экран, а прямо в акт выхода, к
+     пульту. Ждать прогрева ему нельзя: он окажется в финале раньше,
+     чем приедет финал. -->
+<script type="application/json" id="rvПоздние">[
+  {"src":"assets/rv-клавиши.js"},
+  {"src":"assets/rv-настил.js"},
+  {"src":"assets/rv-кабина.js"},
+  {"src":"assets/rv-корабль.js"},
+  {"src":"assets/rv-пульт-cdn.js"},
+  {"src":"assets/rv-салон-cdn.js"},
+  {"src":"assets/rv-финал.js"},
+  {"src":"assets/rv-комната.js"},
+  {"src":"assets/rv-игра.js"},
+  {"src":"assets/rv-панель-кнопки.js"},
+  {"src":"assets/rv-act-финал.js"},
+  {"src":"assets/rv-титры.js"}
+]</script>
+<script>
+(function (g, d) {
+  "use strict";
+  var узел = d.getElementById("rvПоздние");
+  if (!узел) return;
+  var список;
+  try { список = JSON.parse(узел.textContent) || []; } catch (e) { return; }
+  var поехали = false;
+
+  /* Грузим СТРОГО по очереди: модули опираются друг на друга (финал
+     собирает салон, салон берёт клавиши), и параллельная загрузка
+     дала бы их в случайном порядке. Ждать ответа каждого дешевле, чем
+     ловить потом плавающую ошибку раз в двадцать заходов. */
+  function дальше(i) {
+    if (i >= список.length) return;
+    var т = d.createElement("script");
+    т.src = список[i].src;
+    т.async = false;
+    т.onload = т.onerror = function () { дальше(i + 1); };
+    d.head.appendChild(т);
+  }
+
+  function пуск() {
+    if (поехали) return;
+    поехали = true;
+    дальше(0);
+  }
+
+  var изКосмоса = /[?&]from=cdn/i.test(g.location.search || "");
+  if (изКосмоса) { пуск(); return; }
+
+  g.addEventListener("rv:прогрет", пуск);
+  /* Запасной срок. Прогрев может не случиться вовсе - отказ шейдера,
+     старый браузер, отключённая трёхмерность, - и тогда финал не
+     приехал бы никогда. Пять секунд это заведомо позже первого экрана
+     и заведомо раньше, чем человек домотает до конца. */
+  setTimeout(пуск, 5000);
+})(window, document);
+</script>
 </body>
 </html>
