@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Брокер-тур «Кластер» · 2 сентября, 11:00</title>
+<meta name="description" content="Брокер-тур по бизнес-парку «Кластер» 2 сентября в 11:00. Свободные блоки с метражами и ставками, осмотр территории, контакты управляющей компании. Регистрация в боте.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Брокер-тур «Кластер» · 2 сентября, 11:00">
+<meta property="og:description" content="Свободные блоки со ставками на дату тура, осмотр территории, приз за первую сделку сентября. Регистрация в боте.">
+<meta property="og:image" content="https://clusterspace.ru/assets/img/real/hero_front.jpg">
+<meta name="theme-color" content="#0E1116">
+<link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1116; --bg2:#14171C; --bg3:#1C2129; --line:#262C35; --line2:#1E232B;
+  --w:#F2F4F7; --w7:rgba(242,244,247,.72); --w5:rgba(242,244,247,.5); --w3:rgba(242,244,247,.3);
+  --acc:#E8A400; --acc2:rgba(232,164,0,.13); --green:#1F9D6B;
+  --r:16px; --r2:11px; --wrap:1180px;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+body{background:var(--bg); color:var(--w);
+  font:16px/1.62 Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden}
+img{max-width:100%; display:block}
+a{color:inherit; text-decoration:none}
+.wrap{max-width:var(--wrap); margin:0 auto; padding:0 22px}
+
+/* шапка */
+.nav{position:sticky; top:0; z-index:50; background:rgba(14,17,22,.93);
+  backdrop-filter:blur(12px); border-bottom:1px solid var(--line2)}
+.nav-in{display:flex; align-items:center; gap:16px; padding:14px 22px; max-width:var(--wrap); margin:0 auto}
+.logo{display:flex; align-items:center; gap:11px}
+.logo-m{width:36px; height:36px; border-radius:10px; background:var(--acc); color:#0E1116;
+  display:grid; place-items:center; font:800 16px/1 Oswald,sans-serif}
+.logo b{font:700 16px/1.1 Oswald,sans-serif; letter-spacing:.04em; text-transform:uppercase}
+.logo span{display:block; font-size:11px; color:var(--w3); letter-spacing:.08em; text-transform:uppercase}
+.nav-cta{margin-left:auto; display:flex; gap:10px; align-items:center}
+.tel{font:600 15px/1 Manrope; color:var(--w7); white-space:nowrap}
+.btn{display:inline-block; border:1px solid var(--line); background:var(--bg2); color:var(--w);
+  border-radius:var(--r2); padding:12px 20px; font:700 14px/1 Manrope; cursor:pointer;
+  transition:.16s; white-space:nowrap}
+.btn:hover{border-color:var(--acc); transform:translateY(-1px)}
+.btn.pri{background:var(--acc); border-color:var(--acc); color:#0E1116}
+.btn.pri:hover{box-shadow:0 10px 26px rgba(232,164,0,.28)}
+.btn.big{padding:16px 30px; font-size:15.5px}
+
+/* первый экран */
+.hero{position:relative; min-height:min(88vh,760px); display:flex; align-items:flex-end;
+  overflow:hidden; border-bottom:1px solid var(--line2)}
+.hero-bg{position:absolute; inset:0}
+.hero-bg img{width:100%; height:100%; object-fit:cover; transform:scale(1.04);
+  animation:slowzoom 24s ease-in-out infinite alternate}
+@keyframes slowzoom{to{transform:scale(1.12)}}
+.hero-bg::after{content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(14,17,22,.72) 0%,rgba(14,17,22,.82) 45%,var(--bg) 100%)}
+.hero-in{position:relative; padding:80px 0 54px; width:100%}
+.pill{display:inline-flex; align-items:center; gap:9px; background:var(--acc2);
+  border:1px solid rgba(232,164,0,.35); color:var(--acc); border-radius:999px;
+  padding:9px 16px; font:700 12.5px/1 Manrope; letter-spacing:.08em; text-transform:uppercase;
+  margin-bottom:22px}
+.hero h1{font:700 clamp(32px,6.4vw,64px)/1.02 Oswald,sans-serif; text-transform:uppercase;
+  letter-spacing:.01em; margin-bottom:16px; max-width:16ch}
+.hero p{color:var(--w7); font-size:17.5px; max-width:56ch; margin-bottom:26px}
+.hero-cta{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+.hero-note{color:var(--w5); font-size:13.5px}
+.meta{display:flex; flex-wrap:wrap; gap:26px; margin-top:34px; padding-top:24px;
+  border-top:1px solid rgba(255,255,255,.09)}
+.meta div b{display:block; font:700 20px/1.15 Oswald,sans-serif; margin-bottom:3px}
+.meta div span{font-size:12.5px; color:var(--w5); letter-spacing:.04em; text-transform:uppercase}
+
+section{padding:64px 0}
+.eyebrow{font:700 12px/1 Manrope; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--acc); margin-bottom:13px}
+h2{font:700 clamp(24px,3.6vw,38px)/1.12 Oswald,sans-serif; text-transform:uppercase;
+  margin-bottom:14px}
+.sub{color:var(--w7); max-width:62ch; margin-bottom:30px}
+
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(268px,1fr)); gap:16px}
+.card{background:var(--bg2); border:1px solid var(--line2); border-radius:var(--r);
+  padding:26px 24px; transition:.18s}
+.card:hover{border-color:var(--acc); transform:translateY(-2px)}
+.card-n{width:38px; height:38px; border-radius:10px; background:var(--acc2); color:var(--acc);
+  display:grid; place-items:center; font:700 15px/1 Oswald,sans-serif; margin-bottom:14px}
+.card h3{font:700 17px/1.3 Manrope; margin-bottom:8px}
+.card p{color:var(--w7); font-size:14.6px}
+
+.prog{display:grid; gap:12px}
+.step{display:grid; grid-template-columns:96px minmax(0,1fr); gap:18px; align-items:start;
+  background:var(--bg2); border:1px solid var(--line2); border-radius:var(--r); padding:20px 22px}
+.step time{font:700 17px/1.2 Oswald,sans-serif; color:var(--acc)}
+.step h3{font:700 16px/1.35 Manrope; margin-bottom:5px}
+.step p{color:var(--w7); font-size:14.6px}
+
+.specs{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:12px}
+.spec{background:var(--bg2); border:1px solid var(--line2); border-radius:var(--r2); padding:20px 18px}
+.spec b{display:block; font:700 25px/1.1 Oswald,sans-serif; color:var(--acc); margin-bottom:5px}
+.spec span{font-size:13.2px; color:var(--w7)}
+
+.gal{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px}
+.gal img{border-radius:var(--r2); border:1px solid var(--line2); height:100%;
+  object-fit:cover; aspect-ratio:4/3; transition:.2s}
+.gal a:hover img{border-color:var(--acc); transform:scale(1.01)}
+
+.road{background:var(--bg2); border:1px solid var(--line2); border-radius:var(--r); padding:28px 26px}
+.road ul{list-style:none; display:grid; gap:12px}
+.road li{display:grid; grid-template-columns:26px 1fr; gap:12px; color:var(--w7); font-size:15px}
+.road li i{width:9px; height:9px; border-radius:50%; background:var(--acc); margin-top:8px}
+
+.final{background:linear-gradient(160deg,var(--bg2) 0%,rgba(232,164,0,.07) 100%);
+  border:1px solid rgba(232,164,0,.28); border-radius:var(--r); padding:42px 34px; text-align:center}
+.final h2{margin-bottom:12px}
+.final p{color:var(--w7); max-width:52ch; margin:0 auto 24px}
+
+footer{border-top:1px solid var(--line2); padding:34px 0 60px; color:var(--w5); font-size:14px}
+.foot-in{display:flex; flex-wrap:wrap; gap:18px; align-items:center}
+.foot-in a{color:var(--acc)}
+
+@media (max-width:760px){
+  section{padding:44px 0}
+  .hero-in{padding:56px 0 40px}
+  .step{grid-template-columns:1fr; gap:8px}
+  .meta{gap:18px}
+  .final{padding:30px 20px}
+  .nav .tel{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-in">
+    <a class="logo" href="https://clusterspace.ru">
+      <span class="logo-m">К</span>
+      <span><b>Кластер</b><span>бизнес-парк</span></span>
+    </a>
+    <div class="nav-cta">
+      <a class="tel" href="tel:+79853310271">8 985 331 02 71</a>
+      <a class="btn pri" href="https://t.me/klaster_broker_bot" target="_blank" rel="noopener">Регистрация</a>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-bg"><img src="https://clusterspace.ru/assets/img/real/hero_front.jpg" alt="Бизнес-парк Кластер"></div>
+  <div class="hero-in">
+    <div class="wrap">
+      <div class="pill">2 сентября · 11:00 · конференц-зал</div>
+      <h1>Брокер-тур «Кластер»</h1>
+      <p>Показываем свободные блоки со ставками на дату тура, проходим территорию
+         и отдаём данные, с которыми можно выходить на сделку в тот же день.</p>
+      <div class="hero-cta">
+        <a class="btn pri big" href="https://t.me/klaster_broker_bot" target="_blank" rel="noopener">Зарегистрироваться в боте</a>
+        <span class="hero-note">Билет с номером и ссылка для приглашений придут сразу</span>
+      </div>
+      <div class="meta">
+        <div><b>2 сентября</b><span>вторник</span></div>
+        <div><b>11:00</b><span>сбор с 10:40</span></div>
+        <div><b>6-я Радиальная, 17</b><span>4 этаж, конференц-зал</span></div>
+        <div><b>15 минут</b><span>шаттл от Царицыно</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Что забираете в тот же день</div>
+    <h2>Материал, с которым выходят на сделку</h2>
+    <p class="sub">Брокеру нужны цифры, по которым можно выйти к клиенту сегодня.
+       Мы отдаём их на встрече в готовом виде.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="card-n">01</div>
+        <h3>Список свободных блоков на 2 сентября</h3>
+        <p>Метражи, ставки в ₽/м² в месяц с НДС, OPEX по строкам и дата актуальности.</p>
+      </div>
+      <div class="card">
+        <div class="card-n">02</div>
+        <h3>Технические параметры под клиента</h3>
+        <p>Нагрузка на перекрытие по этажам, выделенная мощность на блок, габариты ворот и лифтов.</p>
+      </div>
+      <div class="card">
+        <div class="card-n">03</div>
+        <h3>Контакты управляющей компании</h3>
+        <p>Прямая связь с теми, кто принимает решение по ставке и срокам, без длинной цепочки.</p>
+      </div>
+      <div class="card">
+        <div class="card-n">04</div>
+        <h3>Приз за первую сделку сентября</h3>
+        <p>Отдельная награда от управляющей компании. Что именно, расскажем на встрече.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg2); border-top:1px solid var(--line2); border-bottom:1px solid var(--line2)">
+  <div class="wrap">
+    <div class="eyebrow">Программа</div>
+    <h2>2 часа по делу</h2>
+    <div class="prog">
+      <div class="step"><time>10:40</time>
+        <div><h3>Сбор гостей</h3><p>Конференц-зал на 4 этаже административного здания, кофе.</p></div></div>
+      <div class="step"><time>11:00</time>
+        <div><h3>Презентация площадки</h3><p>Что за объект, кто здесь работает, какие блоки свободны и по каким ставкам.</p></div></div>
+      <div class="step"><time>11:30</time>
+        <div><h3>Обход территории</h3><p>Маршрут машины от КПП до ворот блока, разворотная площадка, ворота 4×4, лифты, кран-балка.</p></div></div>
+      <div class="step"><time>12:15</time>
+        <div><h3>Осмотр свободных блоков</h3><p>Смотрим помещения разного метража: от небольших под лёгкое производство до крупных.</p></div></div>
+      <div class="step"><time>12:45</time>
+        <div><h3>Вопросы и условия работы</h3><p>Агентское вознаграждение, регистрация клиентов, порядок показов.</p></div></div>
+      <div class="step"><time>13:10</time>
+        <div><h3>Розыгрыш и завершение</h3><p>Кардхолдеры с гравировкой всем участникам, объявление приза за первую сделку.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Объект</div>
+    <h2>Цифры, которые спросит ваш клиент</h2>
+    <p class="sub">Данные собственника на август 2026 года. Полный технический паспорт
+       отдаём на встрече.</p>
+    <div class="specs">
+      <div class="spec"><b>50 000 м²</b><span>общая площадь комплекса</span></div>
+      <div class="spec"><b>100-12 000 м²</b><span>блоки под аренду</span></div>
+      <div class="spec"><b>5 т/м²</b><span>нагрузка на первом этаже, 1,2 т/м² на верхних</span></div>
+      <div class="spec"><b>20-300 кВт</b><span>мощность на блок, 5 МВт на здание</span></div>
+      <div class="spec"><b>6-12 м</b><span>высота потолков</span></div>
+      <div class="spec"><b>4×4 и 3×3 м</b><span>габариты ворот</span></div>
+      <div class="spec"><b>2 × 5 т</b><span>грузовые лифты, кран-балка 2,5 т</span></div>
+      <div class="spec"><b>550</b><span>машиномест на территории</span></div>
+      <div class="spec"><b>100</b><span>производств из 6 отраслей</span></div>
+      <div class="spec"><b>вне КРТ</b><span>участок не входит в перечень решений</span></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="eyebrow">Территория</div>
+    <h2>Как это выглядит</h2>
+    <div class="gal">
+      <a href="https://clusterspace.ru/assets/img/real/facade_long.jpg" target="_blank" rel="noopener">
+        <img src="https://clusterspace.ru/assets/img/real/facade_long.jpg" alt="Фасад комплекса" loading="lazy"></a>
+      <a href="https://clusterspace.ru/assets/img/real/gates.jpg" target="_blank" rel="noopener">
+        <img src="https://clusterspace.ru/assets/img/real/gates.jpg" alt="Ворота блока" loading="lazy"></a>
+      <a href="https://clusterspace.ru/assets/img/real/conference.jpg" target="_blank" rel="noopener">
+        <img src="https://clusterspace.ru/assets/img/real/conference.jpg" alt="Конференц-зал" loading="lazy"></a>
+      <a href="https://clusterspace.ru/assets/img/real/complex_front.jpg" target="_blank" rel="noopener">
+        <img src="https://clusterspace.ru/assets/img/real/complex_front.jpg" alt="Территория" loading="lazy"></a>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg2); border-top:1px solid var(--line2); border-bottom:1px solid var(--line2)">
+  <div class="wrap">
+    <div class="eyebrow">Как добраться</div>
+    <h2>6-я Радиальная, 17</h2>
+    <div class="road">
+      <ul>
+        <li><i></i><span><strong>Шаттл от метро Царицыно</strong> — бесплатный, дорога 15 минут.
+          Расписание пришлём после регистрации.</span></li>
+        <li><i></i><span><strong>На машине</strong> — 5 км от МКАД, круглосуточный въезд,
+          550 машиномест на территории, парковка для гостей у административного здания.</span></li>
+        <li><i></i><span><strong>Метро Каспийская</strong> — открытие в 2027 году, 7 минут пешком.</span></li>
+        <li><i></i><span><strong>МЦД Котляково</strong> — ветка Подольск-Нахабино, 2028 год, 2 минуты пешком.</span></li>
+        <li><i></i><span><strong>Точка сбора</strong> — административное здание, 4 этаж, конференц-зал.
+          Встречаем у входа с 10:40.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="final">
+      <h2>Регистрация в боте</h2>
+      <p>Билет с номером и персональная ссылка для приглашений приходят сразу.
+         Приглашённый засчитывается после того, как сам зарегистрировался.</p>
+      <a class="btn pri big" href="https://t.me/klaster_broker_bot" target="_blank" rel="noopener">Получить билет</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <div>Бизнес-парк «Кластер» · 6-я Радиальная, 17с1, Москва</div>
+    <div><a href="tel:+79853310271">8 985 331 02 71</a> · <a href="mailto:arenda@activity.su">arenda@activity.su</a></div>
+    <div><a href="https://clusterspace.ru">clusterspace.ru</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

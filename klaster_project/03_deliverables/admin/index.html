@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ru" data-tema="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Кластер — панель управления</title>
+<link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/assets/favicon/apple-touch-icon.png">
+<style>
+/* Шрифты берём с самого сайта, наружу не ходим ни за чем */
+@font-face{font-family:Oswald;src:url(/assets/fonts/oswald-cyr-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:Oswald;src:url(/assets/fonts/oswald-cyr-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:Manrope;src:url(/assets/fonts/manrope-cyr-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:Manrope;src:url(/assets/fonts/manrope-cyr-400.woff2) format('woff2');font-weight:400;font-display:swap}
+
+*{margin:0;padding:0;box-sizing:border-box;min-width:0}
+:root{
+  --зол:#E0BC5A; --зол2:#C9A227; --зол3:#8A6A18;
+  --фон:#0B0E13; --щит:#111620; --карта:rgba(255,255,255,.038);
+  --кант:rgba(255,255,255,.09); --кант2:rgba(224,188,90,.28);
+  --т1:#F2F4F8; --т2:rgba(242,244,248,.72); --т3:rgba(242,244,248,.46); --т4:rgba(242,244,248,.24);
+  --син:#6FA8FF; --зел:#5FD08A; --крас:#FF7B72; --r:14px;
+  --ш:0 10px 34px rgba(0,0,0,.42);
+}
+:root[data-tema="light"]{
+  --фон:#F4F5F7; --щит:#fff; --карта:rgba(10,14,20,.03);
+  --кант:rgba(10,14,20,.1); --кант2:rgba(160,120,20,.3);
+  --т1:#0D1117; --т2:rgba(13,17,23,.74); --т3:rgba(13,17,23,.5); --т4:rgba(13,17,23,.26);
+  --зол:#9A7614; --зол2:#B8901F;
+  --ш:0 8px 26px rgba(10,14,20,.1);
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--фон);color:var(--т1);font:400 15px/1.5 Manrope,system-ui,sans-serif;
+     -webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,.загл{font-family:Oswald,sans-serif;font-weight:700;letter-spacing:.01em;text-transform:uppercase}
+a{color:var(--зол);text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+svg{display:block}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--кант);border-radius:9px}
+
+/* ================= ВХОД ================= */
+.вход{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:22px;
+      background:radial-gradient(1100px 620px at 18% 8%,rgba(224,188,90,.13),transparent 60%),var(--фон)}
+.вход-к{width:min(390px,100%);background:var(--щит);border:1px solid var(--кант);
+        border-radius:20px;padding:34px 28px;box-shadow:var(--ш);text-align:center}
+.вход-к img{width:78px;height:78px;object-fit:contain;margin:0 auto 14px}
+.вход-к .загл{font-size:27px;color:var(--зол)}
+.вход-к .под{color:var(--т3);font-size:13px;margin:5px 0 22px}
+.поле{width:100%;background:var(--карта);border:1px solid var(--кант);border-radius:11px;
+      padding:13px 15px;outline:none;transition:border-color .2s}
+.поле:focus{border-color:var(--кант2)}
+.кн{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+    border:1px solid var(--кант);background:var(--карта);color:var(--т1);
+    border-radius:11px;padding:11px 16px;transition:.18s;white-space:nowrap}
+.кн:hover{border-color:var(--кант2);background:rgba(224,188,90,.09)}
+.кн-о{background:linear-gradient(180deg,var(--зол),var(--зол2));color:#15100A;border:0;font-weight:700}
+.кн-о:hover{filter:brightness(1.07)}
+.кн[disabled]{opacity:.5;cursor:default}
+.вход .кн-о{width:100%;margin-top:12px;padding:13px}
+.ошибка{color:var(--крас);font-size:13px;min-height:18px;margin-top:10px}
+
+/* ================= ОБОЛОЧКА ================= */
+.прил{display:none;min-height:100vh}
+.прил.видно{display:grid;grid-template-columns:246px 1fr}
+.бок{background:var(--щит);border-right:1px solid var(--кант);padding:18px 12px;
+     display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.бок-шап{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+.бок-шап img{width:38px;height:38px;object-fit:contain}
+.бок-шап b{font-family:Oswald;font-size:19px;letter-spacing:.02em;color:var(--зол);text-transform:uppercase}
+.бок-шап span{display:block;font-size:10px;letter-spacing:.16em;color:var(--т3);text-transform:uppercase}
+.пункт{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:10px;cursor:pointer;
+       color:var(--т2);transition:.16s;border:1px solid transparent}
+.пункт svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.7}
+.пункт:hover{background:var(--карта);color:var(--т1)}
+.пункт.вкл{background:rgba(224,188,90,.11);border-color:var(--кант2);color:var(--зол)}
+.ветки{display:none;margin:2px 0 6px 30px;border-left:1px solid var(--кант);padding-left:9px}
+.ветки.раскрыт{display:block}
+.ветка{padding:7px 9px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--т2)}
+.ветка:hover{background:var(--карта);color:var(--т1)}
+.ветка.вкл{color:var(--зол);background:rgba(224,188,90,.10)}
+.агент{background:var(--карта);border:1px solid var(--кант);border-radius:14px;padding:14px 16px;
+ margin-bottom:9px}
+.агент b{display:block;font-size:14.5px;margin-bottom:3px}
+.агент .что{color:var(--т2);font-size:13px;line-height:1.5}
+.агент .когда{color:var(--т3);font-size:12px;margin-top:8px;display:flex;gap:12px;flex-wrap:wrap}
+.агент .жив{width:8px;height:8px;border-radius:50%;background:#3ecf7a;display:inline-block;
+ margin-right:6px;vertical-align:middle}
+.агент .молчит{background:#e0bc5a}
+.агент .стоит{background:#e06a5a}
+.пункт .счёт{margin-left:auto;font-size:11px;color:var(--т3);background:var(--карта);
+             border-radius:20px;padding:2px 7px}
+.бок-низ{margin-top:auto;padding-top:14px;display:flex;gap:8px}
+.бок-низ .кн{flex:1;padding:9px;font-size:13px}
+
+.осн{padding:22px 26px 60px;min-width:0}
+.шапка{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.шапка h1{font-size:25px}
+.шапка .пояс{color:var(--т3);font-size:13px}
+.шапка .право{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.бург{display:none}
+
+/* ================= КАРТОЧКИ ================= */
+.сетка{display:grid;gap:14px}
+.с4{grid-template-columns:repeat(4,1fr)}
+.с3{grid-template-columns:repeat(3,1fr)}
+.с2{grid-template-columns:repeat(2,1fr)}
+.карта{background:var(--карта);border:1px solid var(--кант);border-radius:var(--r);padding:16px 17px}
+.карта.свет{background:var(--щит)}
+.карта h3{font-size:13px;letter-spacing:.09em;color:var(--т3);margin-bottom:12px}
+.цифра{font-family:Oswald;font-weight:700;font-size:38px;line-height:1;letter-spacing:.01em}
+.цифра.зол{color:var(--зол)}
+.подпись{color:var(--т3);font-size:12.5px;margin-top:6px}
+.дельта{font-size:12px;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:8px}
+.д-плюс{background:rgba(95,208,138,.14);color:var(--зел)}
+.д-ноль{background:var(--карта);color:var(--т3)}
+
+/* пустое состояние: главный герой этой панели, пока цифр нет */
+.пусто{border:1px dashed var(--кант);border-radius:var(--r);padding:22px;text-align:center;color:var(--т3)}
+.пусто b{display:block;color:var(--т2);font-size:14px;margin-bottom:6px;font-family:Oswald;letter-spacing:.04em;text-transform:uppercase}
+.пусто p{font-size:13px;line-height:1.55;max-width:560px;margin:0 auto}
+.пусто .знак{width:34px;height:34px;margin:0 auto 12px;opacity:.4;stroke:currentColor;fill:none;stroke-width:1.5}
+
+/* ================= ТАБЛИЦЫ ================= */
+.обёртка{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+th{font-family:Oswald;font-weight:500;letter-spacing:.07em;font-size:11.5px;color:var(--т3);
+   text-align:left;padding:9px 11px;border-bottom:1px solid var(--кант);white-space:nowrap;text-transform:uppercase}
+td{padding:11px;border-bottom:1px solid var(--кант);vertical-align:top}
+tbody tr:hover{background:var(--карта)}
+.метка{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;
+       background:var(--карта);border:1px solid var(--кант);color:var(--т2);white-space:nowrap}
+.метка.зол{border-color:var(--кант2);color:var(--зол)}
+
+/* ================= ГРАФИКИ (свои, без библиотек) ================= */
+.холст{width:100%;height:180px;display:block}
+.лег{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--т3)}
+.лег i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px}
+
+/* полосы */
+.полосы{display:flex;flex-direction:column;gap:9px}
+.полоса{display:grid;grid-template-columns:150px 1fr 52px;gap:10px;align-items:center;font-size:13px}
+.полоса .жёлоб{height:8px;background:var(--карта);border-radius:8px;overflow:hidden}
+.полоса .нить{height:100%;background:linear-gradient(90deg,var(--зол2),var(--зол));border-radius:8px;transition:width .5s}
+.полоса .кон{text-align:right;color:var(--т2);font-variant-numeric:tabular-nums}
+.полоса .имя{color:var(--т2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* воронка */
+.ворон{display:flex;flex-direction:column;gap:8px}
+.ворон .ш{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+          background:var(--карта);border:1px solid var(--кант);border-radius:10px;padding:10px 13px}
+.ворон .ш b{font-variant-numeric:tabular-nums}
+.ворон .отвал{font-size:11.5px;color:var(--т3);text-align:center}
+
+.лента-э{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--кант)}
+.лента-э .кто{font-weight:700;font-size:13px}
+.лента-э .когда{color:var(--т4);font-size:11.5px}
+
+.полоска{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.чип{font-size:12.5px;padding:6px 12px;border-radius:20px;border:1px solid var(--кант);
+     background:var(--карта);cursor:pointer;color:var(--т2)}
+.чип.вкл{border-color:var(--кант2);color:var(--зол);background:rgba(224,188,90,.1)}
+
+.строка-меж{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.строка-меж .поле{width:auto;flex:1;min-width:180px;padding:9px 13px}
+
+.раздел{display:none}
+.раздел.вкл{display:block;animation:въезд .26s ease}
+@keyframes въезд{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+.точка{width:7px;height:7px;border-radius:50%;background:var(--зел);display:inline-block;
+       box-shadow:0 0 0 0 rgba(95,208,138,.6);animation:пульс 2.2s infinite}
+@keyframes пульс{70%{box-shadow:0 0 0 8px rgba(95,208,138,0)}100%{box-shadow:0 0 0 0 rgba(95,208,138,0)}}
+
+/* ================= ТЕЛЕФОН ================= */
+@media (max-width:900px){
+  .прил.видно{grid-template-columns:1fr}
+  .бок{position:fixed;left:0;top:0;bottom:0;width:252px;z-index:40;transform:translateX(-102%);
+       transition:transform .26s;height:100dvh}
+  .бок.открыт{transform:none;box-shadow:0 0 44px rgba(0,0,0,.55)}
+  .бург{display:inline-flex}
+  .осн{padding:16px 14px 60px}
+  .шапка h1{font-size:20px}
+  .с4,.с3,.с2{grid-template-columns:1fr}
+  .цифра{font-size:31px}
+  .полоса{grid-template-columns:104px 1fr 44px;font-size:12.5px}
+  .затемн{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:39}
+}
+@media (min-width:901px){.затемн{display:none}}
+@media print{.бок,.шапка .право,.бург{display:none}.прил.видно{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ================= ВХОД ================= -->
+<div class="вход" id="вход">
+  <div class="вход-к">
+    <img src="/assets/logo/aktiviti-emblem@2x.png" alt="Кластер" onerror="this.style.display='none'">
+    <div class="загл">Кластер</div>
+    <div class="под">Панель управления</div>
+    <input class="поле" id="пароль" type="password" placeholder="Пароль" autocomplete="current-password">
+    <button class="кн кн-о" id="кнВойти">Войти</button>
+    <div class="ошибка" id="ошВход"></div>
+  </div>
+</div>
+
+<!-- ================= ПРИЛОЖЕНИЕ ================= -->
+<div class="прил" id="прил">
+  <aside class="бок" id="бок">
+    <div class="бок-шап">
+      <img src="/assets/logo/aktiviti-emblem@2x.png" alt="" onerror="this.style.display='none'">
+      <div><b>Кластер</b><span>панель</span></div>
+    </div>
+    <div class="пункт вкл" data-р="свод" onclick="иди('свод')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      <span>Дашборд</span><span class="точка" style="margin-left:auto"></span></div>
+    <div class="пункт" data-р="сайт" onclick="иди('сайт')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18a15 15 0 010-18"/></svg>
+      <span>Сайт</span></div>
+    <div class="пункт" data-р="площадки" onclick="иди('площадки')">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      <span>Площадки</span></div>
+    <div class="ветки" id="ветка-площадки">
+      <div class="ветка" data-р="площадки:instagram" onclick="иди('площадки:instagram')">Instagram</div>
+      <div class="ветка" data-р="площадки:telegram" onclick="иди('площадки:telegram')">Telegram</div>
+      <div class="ветка" data-р="площадки:vk" onclick="иди('площадки:vk')">ВКонтакте</div>
+      <div class="ветка" data-р="площадки:youtube" onclick="иди('площадки:youtube')">YouTube</div>
+      <div class="ветка" data-р="площадки:dzen" onclick="иди('площадки:dzen')">Дзен</div>
+      <div class="ветка" data-р="площадки:vc" onclick="иди('площадки:vc')">vc.ru</div>
+    </div>
+    <div class="пункт" data-р="лента" onclick="иди('лента')">
+      <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.9 8.9 0 01-4-.9L3 21l2-4a8.4 8.4 0 01-1-4 8.4 8.4 0 018.5-8.4A8.4 8.4 0 0121 11.5z"/></svg>
+      <span>Лента</span></div>
+    <div class="пункт" data-р="заявки" onclick="иди('заявки')">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+      <span>Заявки</span><span class="счёт" id="счЗаявки">0</span></div>
+    <div class="пункт" data-р="брокеры" onclick="иди('брокеры')">
+      <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>
+      <span>Брокеры</span><span class="счёт" id="счБрокеров">0</span></div>
+    <div class="пункт" data-р="публикации" onclick="иди('публикации')">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 10h16M9 10v9"/></svg>
+      <span>Публикации</span><span class="счёт" id="счПостов">0</span></div>
+    <div class="пункт" data-р="контент" onclick="иди('контент')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      <span>Контент</span></div>
+    <div class="пункт" data-р="подписчики" onclick="иди('подписчики')">
+      <svg viewBox="0 0 24 24"><path d="M17 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 20v-2a4 4 0 00-3-3.9"/></svg>
+      <span>Подписчики</span></div>
+    <div class="пункт" data-р="агенты" onclick="иди('агенты')">
+      <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01M9.5 16.5h5"/></svg>
+      <span>Агенты</span><span class="счёт" id="счАгентов">0</span></div>
+    <div class="пункт" data-р="настройки" onclick="иди('настройки')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.6 1.6 0 008 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1H2a2 2 0 110-4h.1A1.6 1.6 0 004.6 8a1.6 1.6 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9a1.6 1.6 0 001-1.5V2a2 2 0 114 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8V9a1.6 1.6 0 001.5 1H22a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
+      <span>Настройки</span></div>
+    <div class="бок-низ">
+      <button class="кн" onclick="тема()" title="Тема">Тема</button>
+      <button class="кн" onclick="выйти()">Выйти</button>
+    </div>
+  </aside>
+
+  <main class="осн">
+    <div class="шапка">
+      <button class="кн бург" onclick="бок()" aria-label="Меню">
+        <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div>
+        <h1 id="заглРаздела">Дашборд</h1>
+        <div class="пояс" id="поясРаздела">Общая картина по сайту и площадкам</div>
+      </div>
+      <div class="право">
+        <span class="пояс" id="обновлено"></span>
+        <button class="кн" onclick="обновить()">Обновить</button>
+        <button class="кн" onclick="window.print()">Печать</button>
+      </div>
+    </div>
+
+    <section class="раздел вкл" id="р-свод"></section>
+    <section class="раздел" id="р-сайт"></section>
+    <section class="раздел" id="р-площадки"></section>
+    <section class="раздел" id="р-лента"></section>
+    <section class="раздел" id="р-заявки"></section>
+    <section class="раздел" id="р-брокеры"></section>
+    <section class="раздел" id="р-публикации"></section>
+    <section class="раздел" id="р-контент"></section>
+    <section class="раздел" id="р-подписчики"></section>
+    <section class="раздел" id="р-агенты"></section>
+    <section class="раздел" id="р-настройки"></section>
+  </main>
+</div>
+
+<script>
+'use strict';
+/* ==========================================================================
+   Панель «Кластер». Данные берём только с сервера, ничего не выдумываем.
+   Где сервер сказал «данных нет», рисуем честное объяснение, а не нули с потолка.
+   Проверка пароля на входе тут только для удобства: настоящая защита в api.php,
+   без правильной куки он не отдаёт ни строчки.
+   ========================================================================== */
+
+var API = 'api.php';
+var СЕЙЧАС = 'свод';
+var КЭШ = {};
+
+/* ---------- мелочи ---------- */
+function $(с, к){ return (к||document).querySelector(с); }
+function щит(т){ return String(t2(т)).replace(/[&<>"']/g, function(с){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[с]; }); }
+function t2(в){ return в === null || в === undefined ? '' : в; }
+function число(н){
+  if (н === null || н === undefined) return '—';
+  return String(н).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+function датка(с){
+  if (!с) return '';
+  var д = new Date(с);
+  if (isNaN(д)) return щит(с);
+  return д.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+function пусто(загл, текст){
+  return '<div class="пусто">' +
+    '<svg class="знак" viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M8 12h8"/></svg>' +
+    '<b>' + щит(загл) + '</b><p>' + щит(текст) + '</p></div>';
+}
+
+/* ---------- сеть ---------- */
+async function взять(что, ещё){
+  var у = API + '?что=' + encodeURIComponent(что) + (ещё || '');
+  try {
+    var о = await fetch(у, {credentials:'same-origin'});
+    if (о.status === 401){ выйти(true); return null; }
+    if (!о.ok) return {ошибка:'сервер ответил ' + о.status};
+    return await о.json();
+  } catch(e){ return {ошибка:'сеть недоступна'}; }
+}
+
+/* ---------- вход ---------- */
+async function войти(){
+  var п = $('#пароль').value;
+  var э = $('#ошВход');
+  $('#кнВойти').disabled = true; э.textContent = '';
+  try{
+    var о = await fetch(API + '?что=вход', {method:'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify({пароль: п})});
+    var д = await о.json().catch(function(){ return {}; });
+    if (о.ok && д['ок']){ $('#вход').style.display='none'; $('#прил').classList.add('видно'); обновить(); }
+    else э.textContent = д['ошибка'] || 'Пароль не подошёл';
+  } catch(e){ э.textContent = 'Сервер не ответил'; }
+  $('#кнВойти').disabled = false;
+}
+function выйти(тихо){
+  if (!тихо) fetch(API + '?что=выход', {credentials:'same-origin'}).catch(function(){});
+  $('#прил').classList.remove('видно');
+  $('#вход').style.display = '';
+  $('#пароль').value = '';
+}
+$('#кнВойти').addEventListener('click', войти);
+$('#пароль').addEventListener('keydown', function(е){ if (е.key === 'Enter') войти(); });
+
+/* ---------- тема и меню ---------- */
+function тема(){
+  var к = document.documentElement;
+  var н = к.getAttribute('data-tema') === 'light' ? 'dark' : 'light';
+  к.setAttribute('data-tema', н);
+  try{ localStorage.setItem('klaster-тема', н); }catch(e){}
+  рисуй();
+}
+(function(){ try{ var с = localStorage.getItem('klaster-тема');
+  if (с) document.documentElement.setAttribute('data-tema', с); }catch(e){} })();
+function бок(){
+  var б = $('#бок'); б.classList.toggle('открыт');
+  var з = $('.затемн');
+  if (б.classList.contains('открыт') && !з){
+    var d = document.createElement('div'); d.className = 'затемн'; d.onclick = бок; document.body.appendChild(d);
+  } else if (з) з.remove();
+}
+
+/* ---------- навигация ---------- */
+var ЗАГОЛОВКИ = {
+  свод:['Дашборд','Общая картина по сайту и площадкам'],
+  сайт:['Сайт','Посещения, источники, клики и воронка заявки'],
+  площадки:['Площадки','Аудитория и отдача каждой соцсети'],
+  лента:['Лента','Комментарии и упоминания со всех площадок'],
+  заявки:['Заявки','Всё, что пришло с формы на сайте'],
+  публикации:['Публикации','Что вышло, где и с какой отдачей'],
+  контент:['Контент','План публикаций и готовые материалы'],
+  подписчики:['Подписчики','База контактов и рассылки'],
+  агенты:['Агенты','Кто работает на площадках и что принёс'],
+  настройки:['Настройки','Подключения, доступы и выгрузка']
+};
+/* Адрес раздела может быть с веткой: «площадки:instagram». Слева от
+   двоеточия раздел, справа фильтр внутри него. */
+var ПЛОЩАДКИ_ИМЕНА = {instagram:'Instagram', telegram:'Telegram', vk:'ВКонтакте',
+  youtube:'YouTube', dzen:'Дзен', vc:'vc.ru'};
+function иди(р){
+  СЕЙЧАС = р;
+  var части = String(р).split(':');
+  var раздел = части[0], ветка = части[1] || '';
+  var пункты = document.querySelectorAll('.пункт');
+  for (var i=0;i<пункты.length;i++) пункты[i].classList.toggle('вкл', пункты[i].getAttribute('data-р') === раздел);
+  var ветки = document.querySelectorAll('.ветка');
+  for (var k=0;k<ветки.length;k++) ветки[k].classList.toggle('вкл', ветки[k].getAttribute('data-р') === р);
+  var список = $('#ветка-площадки');
+  if (список) список.classList.toggle('раскрыт', раздел === 'площадки');
+  var разделы = document.querySelectorAll('.раздел');
+  for (var j=0;j<разделы.length;j++) разделы[j].classList.toggle('вкл', разделы[j].id === 'р-' + раздел);
+  $('#заглРаздела').textContent = ЗАГОЛОВКИ[раздел][0] + (ветка ? ' · ' + (ПЛОЩАДКИ_ИМЕНА[ветка]||ветка) : '');
+  $('#поясРаздела').textContent = ЗАГОЛОВКИ[раздел][1];
+  if ($('#бок').classList.contains('открыт')) бок();
+  загрузить(раздел, ветка);
+}
+
+/* ========================= ГРАФИКИ СВОИМИ РУКАМИ ========================= */
+function цвет(имя){ return getComputedStyle(document.documentElement).getPropertyValue(имя).trim(); }
+
+/** Линия по дням. точки: [{имя, знач}] */
+function линия(холст, точки){
+  var к = холст.getContext('2d');
+  var дп = window.devicePixelRatio || 1;
+  var Ш = холст.clientWidth, В = холст.clientHeight;
+  холст.width = Ш*дп; холст.height = В*дп; к.setTransform(дп,0,0,дп,0,0);
+  к.clearRect(0,0,Ш,В);
+  if (!точки.length) return;
+  var поле = {л:34, п:8, в:12, н:22};
+  var ш = Ш - поле.л - поле.п, в = В - поле.в - поле.н;
+  var макс = Math.max(1, Math.max.apply(null, точки.map(function(т){ return т.знач; })));
+  var шагX = точки.length > 1 ? ш/(точки.length-1) : 0;
+  var X = function(i){ return поле.л + i*шагX; };
+  var Y = function(з){ return поле.в + в - (з/макс)*в; };
+
+  // сетка и подписи по вертикали
+  к.strokeStyle = цвет('--кант'); к.lineWidth = 1;
+  к.fillStyle = цвет('--т4'); к.font = '10px Manrope, sans-serif'; к.textAlign = 'right';
+  for (var с=0;с<=3;с++){
+    var y = поле.в + в - (с/3)*в;
+    к.beginPath(); к.moveTo(поле.л, y); к.lineTo(Ш-поле.п, y); к.stroke();
+    к.fillText(String(Math.round(макс*с/3)), поле.л-6, y+3);
+  }
+  // заливка
+  var гр = к.createLinearGradient(0, поле.в, 0, поле.в+в);
+  гр.addColorStop(0, 'rgba(224,188,90,.30)'); гр.addColorStop(1, 'rgba(224,188,90,0)');
+  к.beginPath(); к.moveTo(X(0), поле.в+в);
+  точки.forEach(function(т,i){ к.lineTo(X(i), Y(т.знач)); });
+  к.lineTo(X(точки.length-1), поле.в+в); к.closePath();
+  к.fillStyle = гр; к.fill();
+  // сама линия
+  к.beginPath();
+  точки.forEach(function(т,i){ i ? к.lineTo(X(i), Y(т.знач)) : к.moveTo(X(i), Y(т.знач)); });
+  к.strokeStyle = цвет('--зол'); к.lineWidth = 2; к.lineJoin = 'round'; к.stroke();
+  // подписи снизу: первая, середина, последняя
+  к.fillStyle = цвет('--т4'); к.textAlign = 'center';
+  [0, Math.floor(точки.length/2), точки.length-1].forEach(function(i){
+    if (точки[i]) к.fillText(точки[i].имя.slice(5).replace('-','.'), X(i), В-6);
+  });
+}
+
+/** Кольцо. доли: [{имя, знач}] */
+function кольцо(холст, доли){
+  var к = холст.getContext('2d');
+  var дп = window.devicePixelRatio || 1;
+  var Ш = холст.clientWidth, В = холст.clientHeight;
+  холст.width = Ш*дп; холст.height = В*дп; к.setTransform(дп,0,0,дп,0,0);
+  к.clearRect(0,0,Ш,В);
+  var всего = доли.reduce(function(с,д){ return с + д.знач; }, 0);
+  var цх = Ш/2, цy = В/2, р = Math.min(Ш,В)/2 - 8, т = 15;
+  if (!всего){
+    к.beginPath(); к.arc(цх,цy,р-т/2,0,Math.PI*2); к.strokeStyle = цвет('--кант'); к.lineWidth = т; к.stroke();
+    return;
+  }
+  var цвета = [цвет('--зол'), цвет('--син'), цвет('--зел'), цвет('--зол3'), цвет('--т4')];
+  var угол = -Math.PI/2;
+  доли.forEach(function(д,i){
+    var шаг = (д.знач/всего)*Math.PI*2;
+    к.beginPath(); к.arc(цх,цy,р-т/2, угол, угол+шаг);
+    к.strokeStyle = цвета[i % цвета.length]; к.lineWidth = т; к.lineCap = 'butt'; к.stroke();
+    угол += шаг;
+  });
+  к.fillStyle = цвет('--т1'); к.textAlign = 'center';
+  к.font = '700 21px Oswald, sans-serif';
+  к.fillText(число(всего), цх, цy+4);
+  к.fillStyle = цвет('--т4'); к.font = '10px Manrope, sans-serif';
+  к.fillText('всего', цх, цy+19);
+}
+
+function полосы(пары, всего){
+  var м = Math.max(1, всего || Math.max.apply(null, пары.map(function(п){ return п[1]; }).concat([1])));
+  return '<div class="полосы">' + пары.map(function(п){
+    return '<div class="полоса"><span class="имя" title="'+щит(п[0])+'">'+щит(п[0])+'</span>' +
+      '<span class="жёлоб"><span class="нить" style="width:'+Math.round(п[1]/м*100)+'%"></span></span>' +
+      '<span class="кон">'+число(п[1])+'</span></div>';
+  }).join('') + '</div>';
+}
+
+/* ========================= РАЗДЕЛЫ ========================= */
+
+async function загрузить(р, ветка){
+  var у = $('#р-' + р);
+  if (!у.innerHTML) у.innerHTML = '<div class="пусто"><p>Загружаем</p></div>';
+  var д = await взять(р === 'свод' ? 'свод' : р);
+  if (!д) return;
+  КЭШ[р] = д;
+  ({свод:рисСвод, сайт:рисСайт, площадки:рисПлощадки, лента:рисЛента, заявки:рисЗаявки,
+    брокеры:рисБрокеры,
+    публикации:рисПубликации, контент:рисКонтент, подписчики:рисПодписчики,
+    агенты:рисАгенты, настройки:рисНастройки})[р](д, у, ветка || '');
+  $('#обновлено').textContent = 'обновлено ' + new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+function рисуй(){ if (КЭШ[СЕЙЧАС]) загрузить(СЕЙЧАС); }
+function обновить(){ загрузить(СЕЙЧАС); }
+
+/* ---------- агенты ---------- */
+/* Что показываем: кто из агентов за что отвечает, когда отработал последний
+   раз и что принёс. Цифры берём из ответа сервера, ничего не досочиняем:
+   агент, от которого давно нет вестей, так и подписан. */
+var АГЕНТЫ = [
+  {код:'сбор', имя:'Сборщик площадок',
+   что:'Раз в час снимает подписчиков, просмотры и охваты со всех аккаунтов и кладёт в панель.'},
+  {код:'трекер', имя:'Трекер сайта',
+   что:'Считает посещения, источники, клики и шаги формы прямо на clusterspace.ru.'},
+  {код:'заявки', имя:'Приём заявок',
+   что:'Забирает форму с сайта, пишет в журнал и уводит уведомление в рабочий чат.'},
+  {код:'лента', имя:'Лента комментариев',
+   что:'Собирает комментарии и упоминания по площадкам, чтобы ответ не потерялся.'},
+  {код:'публикатор', имя:'Публикатор',
+   что:'Ставит согласованный контент в очередь и выкладывает по расписанию.'}
+];
+function рисАгенты(д, у){
+  if (д && д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var сост = (д && д.агенты) || {};
+  var живых = 0;
+  var карточки = АГЕНТЫ.map(function(а){
+    var с = сост[а.код] || {};
+    var класс = с.состояние === 'работает' ? 'жив' :
+                (с.состояние === 'молчит' ? 'жив молчит' : 'жив стоит');
+    if (с.состояние === 'работает') живых++;
+    var строки = [];
+    строки.push('последний раз: ' + (с.когда || 'сведений нет'));
+    if (с.принёс) строки.push('принёс: ' + с.принёс);
+    if (с.почему) строки.push(с.почему);
+    return '<div class="агент"><b><span class="' + класс + '"></span>' + а.имя + '</b>' +
+           '<div class="что">' + а.что + '</div>' +
+           '<div class="когда">' + строки.map(function(т){ return '<span>' + т + '</span>'; }).join('') +
+           '</div></div>';
+  }).join('');
+  var счёт = $('#счАгентов'); if (счёт) счёт.textContent = живых;
+  у.innerHTML = '<div class="сетка с2"><div>' + карточки + '</div>' +
+    '<div class="карта"><h3>Как это работает</h3>' +
+    '<p class="пояс">Агенты живут на сервере и работают по расписанию. Панель показывает ' +
+    'их последний ответ: если агент молчит дольше суток, это видно сразу, а не через месяц ' +
+    'по пустым цифрам.</p></div></div>';
+}
+
+/* ---------- дашборд ---------- */
+function рисСвод(д, у){
+  if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var с = д.сайт || {};
+  var дни = Object.keys(с.по_дням || {}).map(function(к){ return {имя:к, знач:с.по_дням[к]}; });
+  $('#счЗаявки').textContent = число(д.заявок || 0);
+
+  var в = д.воронка || {};
+  var шаги = [['Зашли на сайт', в.заход||0], ['Открыли подбор', в.подбор||0],
+              ['Начали форму', в.форма_начата||0], ['Отправили заявку', в.форма_отправлена||0]];
+
+  у.innerHTML =
+    '<div class="сетка с4">' +
+      карточка('Посещений за 30 дней', с.посещений, с.есть_данные ? '' : с.почему_пусто) +
+      карточка('Уникальных', с.уникальных, с.есть_данные ? '' : 'Появится вместе с посещениями') +
+      карточка('Заявок с сайта', д.заявок, д.заявок ? '' : 'Форма работает, заявок пока не было') +
+      карточка('Аудитория площадок', д.аудитория, д.аудитория_почему) +
+    '</div>' +
+
+    '<div class="сетка с2" style="margin-top:14px">' +
+      '<div class="карта"><h3>Посещения по дням</h3>' +
+        (дни.length ? '<canvas class="холст" id="хСвод"></canvas>' :
+          пусто('Пока пусто', с.почему_пусто || 'Маячок поставлен, ждём первых заходов')) + '</div>' +
+      '<div class="карта"><h3>Воронка до заявки</h3>' + воронка(шаги) + '</div>' +
+    '</div>' +
+
+    '<div class="карта" style="margin-top:14px"><h3>Площадки</h3>' + таблПлощадок(д.площадки) + '</div>' +
+
+    '<div class="карта" style="margin-top:14px"><h3>Последние заявки</h3>' +
+      ((д.заявки_последние && д.заявки_последние.length)
+        ? таблЗаявок(д.заявки_последние)
+        : пусто('Заявок пока нет',
+            'Форма на сайте проверена и работает: уведомление уходит в бот руководителям и на почту. Как придёт первая заявка, она появится здесь.')) +
+    '</div>';
+
+  if (дни.length) линия($('#хСвод'), дни);
+}
+
+function карточка(имя, знач, почему){
+  var есть = знач !== null && знач !== undefined;
+  return '<div class="карта свет"><h3>' + щит(имя) + '</h3>' +
+    '<div class="цифра' + (есть && знач ? ' зол' : '') + '">' + (есть ? число(знач) : '—') + '</div>' +
+    (почему ? '<div class="подпись">' + щит(почему) + '</div>' : '') + '</div>';
+}
+
+function воронка(шаги){
+  var верх = шаги[0][1] || 0;
+  var из = '<div class="ворон">';
+  шаги.forEach(function(ш, i){
+    из += '<div class="ш"><span>' + щит(ш[0]) + '</span><b>' + число(ш[1]) + '</b></div>';
+    if (i < шаги.length-1){
+      var а = ш[1], б = шаги[i+1][1];
+      var т = а ? Math.round(б/а*100) : null;
+      из += '<div class="отвал">' + (т === null ? 'нет данных' : 'дошли ' + т + '%') + '</div>';
+    }
+  });
+  из += '</div>';
+  if (!верх) из += '<div class="подпись" style="margin-top:10px">Воронка оживёт с первым посетителем сайта.</div>';
+  return из;
+}
+
+/* ---------- сайт ---------- */
+function рисСайт(д, у){
+  if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var дни = Object.keys(д.по_дням || {}).map(function(к){ return {имя:к, знач:д.по_дням[к]}; });
+  var ист = Object.keys(д.источники || {}).map(function(к){ return [к, д.источники[к]]; });
+  var стр = Object.keys(д.страницы || {}).map(function(к){ return [к, д.страницы[к]]; });
+  var кл  = Object.keys(д.клики || {}).map(function(к){ return [имяЦели(к), д.клики[к]]; });
+  var уст = Object.keys(д.устройства || {}).map(function(к){ return {имя:к, знач:д.устройства[к]}; });
+  var гл  = ['25','50','75','100'].map(function(п){ return [п + '% страницы', (д.глубина||{})[п] || 0]; });
+
+  if (!д.есть_данные){
+    у.innerHTML = пусто('Цифр по сайту ещё нет', д.почему_пусто) +
+      '<div class="карта" style="margin-top:14px"><h3>Что будем видеть</h3><div class="подпись">' +
+      'Посещения и уникальных по дням, откуда пришли, какие разделы читают, с телефона или с компьютера, ' +
+      'до какого места долистывают, сколько раз нажали на телефон, на заявку, на презентацию, на расписание шаттла ' +
+      'и на подбор помещения, и полную воронку от захода до отправленной формы.</div></div>';
+    return;
+  }
+
+  у.innerHTML =
+    '<div class="сетка с4">' +
+      карточка('Посещений', д.посещений, '') +
+      карточка('Уникальных', д.уникальных, '') +
+      карточка('Заявок из формы', (д.воронка||{}).форма_отправлена, '') +
+      карточка('Открывали подбор', (д.воронка||{}).подбор, '') +
+    '</div>' +
+    '<div class="сетка с2" style="margin-top:14px">' +
+      '<div class="карта"><h3>Посещения по дням</h3><canvas class="холст" id="хСайт"></canvas></div>' +
+      '<div class="карта"><h3>Устройства</h3><canvas class="холст" id="хУстр"></canvas>' + легенда(уст) + '</div>' +
+    '</div>' +
+    '<div class="сетка с2" style="margin-top:14px">' +
+      '<div class="карта"><h3>Откуда пришли</h3>' + (ист.length ? полосы(ист) : пусто('Пусто','Источники появятся с первыми заходами')) + '</div>' +
+      '<div class="карта"><h3>Что смотрят</h3>' + (стр.length ? полосы(стр) : пусто('Пусто','Список страниц появится с первыми заходами')) + '</div>' +
+    '</div>' +
+    '<div class="сетка с2" style="margin-top:14px">' +
+      '<div class="карта"><h3>Нажатия</h3>' + (кл.length ? полосы(кл) : пусто('Пусто','Пока никто ничего не нажимал')) + '</div>' +
+      '<div class="карта"><h3>Долистывают до</h3>' + полосы(гл) + '</div>' +
+    '</div>' +
+    '<div class="карта" style="margin-top:14px"><h3>Воронка</h3>' +
+      воронка([['Зашли', (д.воронка||{}).заход||0], ['Открыли подбор', (д.воронка||{}).подбор||0],
+               ['Начали форму', (д.воронка||{}).форма_начата||0], ['Отправили', (д.воронка||{}).форма_отправлена||0]]) +
+    '</div>';
+  линия($('#хСайт'), дни);
+  кольцо($('#хУстр'), уст);
+}
+function имяЦели(к){
+  return {phone:'Телефон', lead:'Кнопка заявки', presentation:'Презентация', shuttle:'Расписание шаттла',
+          selector:'Подбор помещения', whatsapp:'WhatsApp', telegram:'Telegram', mail:'Почта', other:'Прочее'}[к] || к;
+}
+function легенда(доли){
+  var ц = ['--зол','--син','--зел','--зол3','--т4'];
+  return '<div class="лег">' + доли.map(function(д,i){
+    return '<span><i style="background:'+цвет(ц[i%ц.length])+'"></i>'+щит(д.имя)+' · '+число(д.знач)+'</span>';
+  }).join('') + '</div>';
+}
+
+/* ---------- площадки ---------- */
+function таблПлощадок(п){
+  if (!п || !п.площадки) return пусто('Нет данных','Сборщик метрик ещё не отработал');
+  var к = п.площадки;
+  var строки = Object.keys(к).map(function(ключ){
+    var о = к[ключ], д = о.данные;
+    var под = д && typeof д.подписчиков === 'number' ? число(д.подписчиков) : '—';
+    return '<tr><td>' + (о.адрес ? '<a href="'+щит(о.адрес)+'" target="_blank" rel="noopener">'+щит(о.имя)+'</a>' : щит(о.имя)) + '</td>' +
+      '<td>' + под + '</td>' +
+      '<td>' + (д && typeof д.публикаций === 'number' ? число(д.публикаций) : '—') + '</td>' +
+      '<td>' + (д && typeof д.просмотров === 'number' ? число(д.просмотров) : '—') + '</td>' +
+      '<td><span class="метка' + (д ? ' зол' : '') + '">' + (д ? 'снимается' : щит(о.почему || 'нет данных')) + '</span></td></tr>';
+  }).join('');
+  return '<div class="обёртка"><table><thead><tr><th>Площадка</th><th>Аудитория</th><th>Публикаций</th><th>Просмотров</th><th>Состояние</th></tr></thead><tbody>' + строки + '</tbody></table></div>';
+}
+
+function рисПлощадки(д, у, ветка){
+  /* Ветка это фильтр по одной площадке: показываем только её карточку,
+     чтобы разговор про Instagram не тонул в шести колонках. */
+  if (ветка && д && д.площадки){
+    var только = {};
+    Object.keys(д.площадки).forEach(function(к){
+      if (к.toLowerCase().indexOf(ветка) >= 0) только[к] = д.площадки[к];
+    });
+    if (Object.keys(только).length) д = Object.assign({}, д, {площадки: только});
+  }
+  if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var к = д.площадки || {};
+  var карты = Object.keys(к).map(function(ключ){
+    var о = к[ключ], дан = о.данные;
+    return '<div class="карта свет"><h3>' + щит(о.имя) + '</h3>' +
+      '<div class="цифра' + (дан && дан.подписчиков ? ' зол' : '') + '">' +
+        (дан && typeof дан.подписчиков === 'number' ? число(дан.подписчиков) : '—') + '</div>' +
+      '<div class="подпись">' + (дан ? 'подписчиков' : щит(о.почему)) + '</div>' +
+      (о.адрес ? '<div style="margin-top:10px"><a href="'+щит(о.адрес)+'" target="_blank" rel="noopener">открыть</a></div>' : '') +
+      '</div>';
+  }).join('');
+  у.innerHTML = '<div class="сетка с3">' + карты + '</div>' +
+    '<div class="карта" style="margin-top:14px"><h3>Сводка</h3>' + таблПлощадок(д) + '</div>' +
+    (д.обновлено ? '<div class="подпись" style="margin-top:10px">Метрики сняты ' + датка(д.обновлено) + '</div>'
+                 : '<div class="подпись" style="margin-top:10px">Сборщик метрик ещё ни разу не отработал. Он ходит по площадкам раз в час и складывает цифры сюда.</div>');
+}
+
+/* ---------- лента ---------- */
+function рисЛента(д, у){
+  var з = д.записи || [];
+  if (!з.length){
+    у.innerHTML = пусто('Комментариев пока нет', д.почему ||
+      'На площадках ещё нет публикаций, поэтому и обсуждать нечего. Как выйдет первый пост, сюда начнут падать комментарии и упоминания со всех площадок сразу, с пометкой, ответили мы или нет.');
+    return;
+  }
+  у.innerHTML = '<div class="карта">' + з.map(function(э){
+    return '<div class="лента-э"><div><div class="кто">' + щит(э.автор) + ' <span class="метка">' + щит(э.площадка) + '</span></div>' +
+      '<div>' + щит(э.текст) + '</div><div class="когда">' + датка(э.время) + '</div></div></div>';
+  }).join('') + '</div>';
+}
+
+/* ---------- заявки ---------- */
+function таблЗаявок(з){
+  return '<div class="обёртка"><table><thead><tr><th>Когда</th><th>Имя</th><th>Телефон</th><th>Компания</th>' +
+    '<th>Что нужно</th><th>Площадь</th><th>Источник</th></tr></thead><tbody>' +
+    з.map(function(с){
+      return '<tr><td>' + датка(с.ts) + '</td><td>' + щит(с.name) + '</td>' +
+        '<td><a href="tel:' + щит(с.phone) + '">' + щит(с.phone) + '</a></td>' +
+        '<td>' + щит(с.company) + '</td><td>' + щит(с.space_type) + '</td>' +
+        '<td>' + щит(с.area) + '</td><td>' + щит(с.source) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+function рисЗаявки(д, у){
+  var з = д.записи || [];
+  $('#счЗаявки').textContent = число(з.length);
+  if (!з.length){
+    у.innerHTML = пусто('Заявок пока нет',
+      'Форма на сайте проверена: заявка уходит в бот четверым руководителям, на почту и в журнал. Как только придёт первая, она встанет сюда, и её можно будет выгрузить в CSV.');
+    return;
+  }
+  у.innerHTML =
+    '<div class="строка-меж"><input class="поле" id="поискЗаявок" placeholder="Поиск по имени, телефону, компании">' +
+    '<a class="кн" href="' + API + '?что=выгрузка&таблица=заявки">Выгрузить CSV</a></div>' +
+    '<div class="карта" id="телоЗаявок">' + таблЗаявок(з) + '</div>';
+  $('#поискЗаявок').addEventListener('input', function(){
+    var q = this.value.toLowerCase().trim();
+    var ф = !q ? з : з.filter(function(с){
+      return JSON.stringify(с).toLowerCase().indexOf(q) >= 0; });
+    $('#телоЗаявок').innerHTML = ф.length ? таблЗаявок(ф) : пусто('Ничего не нашлось','Попробуйте другой запрос');
+  });
+}
+
+
+
+/* ---------- брокеры ---------- */
+function таблБрокеров(з){
+  return '<table class="табл"><thead><tr><th>№</th><th>Агентство</th><th>Контакт</th>' +
+    '<th>Телефон</th><th>Почта</th><th>Статус</th><th>Запрос клиента</th></tr></thead><tbody>' +
+    з.map(function(б){
+      var знак = б.статус === 'зарегистрирован'
+        ? '<span class="метка зел">' + щит(б.билет || 'записан') + '</span>'
+        : '<span class="метка">ждём</span>';
+      var формат = б.формат === 'лично' ? ' лично' : (б.формат === 'онлайн' ? ' онлайн' : '');
+      return '<tr><td>' + (б.n || '') + '</td><td>' + щит(б.агентство) + '</td><td>' + щит(б.имя) + '</td>' +
+        '<td>' + щит(б.телефон) + '</td><td>' + (б.почта ? щит(б.почта) : '<span class="метка">нет</span>') + '</td>' +
+        '<td>' + знак + формат + '</td><td>' + щит((б.запрос || '').slice(0, 60)) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+function рисБрокеры(д, у){
+  if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var з = д.записи || [], сс = д.со_стороны || [];
+  $('#счБрокеров').textContent = число(д.дошли || 0);
+  var плитки =
+    '<div class="сетка с4">' +
+    карточка('Агентств в базе', д.всего, 'файл управляющей компании') +
+    карточка('Зарегистрировались', д.дошли, 'дошли до бота и получили билет') +
+    карточка('Ещё не записались', д.ждём, 'этим звоним и пишем лично') +
+    карточка('Пришли со стороны', сс.length, 'с постов и по приглашениям') +
+    '</div>';
+  var сбоку = сс.length
+    ? '<div class="карта"><h3>Регистрации вне базы агентств</h3><table class="табл"><thead><tr>' +
+      '<th>Кто</th><th>Телефон</th><th>Билет</th><th>Запрос клиента</th></tr></thead><tbody>' +
+      сс.map(function(с){
+        return '<tr><td>' + щит(с.кто) + '</td><td>' + щит(с.телефон) + '</td><td>' + щит(с.билет) +
+          '</td><td>' + щит((с.запрос || '').slice(0, 60)) + '</td></tr>'; }).join('') +
+      '</tbody></table></div>'
+    : '';
+  у.innerHTML = плитки + '<div style="height:14px"></div>' +
+    '<div class="строка-меж"><input class="поле" id="поискБрокеров" ' +
+    'placeholder="Поиск по агентству, имени, телефону"></div>' +
+    '<div class="карта" id="телоБрокеров">' + таблБрокеров(з) + '</div>' +
+    (сбоку ? '<div style="height:14px"></div>' + сбоку : '');
+  $('#поискБрокеров').addEventListener('input', function(){
+    var q = this.value.toLowerCase().trim();
+    var ф = !q ? з : з.filter(function(б){ return JSON.stringify(б).toLowerCase().indexOf(q) >= 0; });
+    $('#телоБрокеров').innerHTML = ф.length ? таблБрокеров(ф) : пусто('Ничего не нашлось','Попробуйте другой запрос');
+  });
+}
+
+/* ---------- публикации ---------- */
+function рисПубликации(д, у){
+  if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var з = д.записи || [], и = д.итог || {}, пп = д.по_площадкам || {};
+  $('#счПостов').textContent = число(и.постов || 0);
+  var переходы = д.переходы_с_площадок || {};
+  var пар = Object.keys(переходы).map(function(к){ return [к, переходы[к]]; });
+
+  var шапка =
+    '<div class="сетка с4">' +
+      карточка('Публикаций', и.постов, и.постов ? '' : 'Ещё ничего не выходило') +
+      карточка('Просмотров', и.просмотров, и.постов ? '' : 'Появятся с первым постом') +
+      карточка('Реакций и лайков', и.лайков, '') +
+      карточка('Переходов на сайт', пар.length ? пар.reduce(function(с,п){ return с+п[1]; },0) : 0,
+               пар.length ? 'считаем своим трекером' : 'считаем своим трекером, пока переходов нет') +
+    '</div>' +
+    '<div class="сетка с2" style="margin-top:14px">' +
+      '<div class="карта"><h3>Переходы на сайт по площадкам</h3>' +
+        (пар.length ? полосы(пар) : пусто('Пока пусто',
+          'Как пойдут посты со ссылкой на сайт, тут будет видно, какая площадка реально приводит людей, а какая только собирает лайки.')) + '</div>' +
+      '<div class="карта"><h3>Отдача по площадкам</h3>' +
+        (Object.keys(пп).length ? таблПлощадкиПостов(пп) : пусто('Пока пусто','Появится с первыми публикациями')) + '</div>' +
+    '</div>';
+
+  if (!з.length){
+    у.innerHTML = шапка + '<div class="карта" style="margin-top:14px"><h3>Лента публикаций</h3>' +
+      пусто('Публикаций ещё не было', д.почему) + '</div>';
+    return;
+  }
+  у.innerHTML = шапка +
+    '<div class="строка-меж" style="margin-top:14px">' +
+      '<input class="поле" id="поискПостов" placeholder="Поиск по теме и площадке">' +
+      '<a class="кн" href="' + API + '?что=выгрузка&таблица=публикации">Выгрузить CSV</a></div>' +
+    '<div class="карта" id="телоПостов">' + таблПостов(з) + '</div>';
+  var поле = $('#поискПостов');
+  if (поле) поле.addEventListener('input', function(){
+    var q = this.value.toLowerCase().trim();
+    var ф = !q ? з : з.filter(function(п){ return JSON.stringify(п).toLowerCase().indexOf(q) >= 0; });
+    $('#телоПостов').innerHTML = ф.length ? таблПостов(ф) : пусто('Ничего не нашлось','Попробуйте другой запрос');
+  });
+}
+function таблПостов(з){
+  return '<div class="обёртка"><table><thead><tr><th>Когда</th><th>Площадка</th><th>Тема</th>' +
+    '<th>Формат</th><th>Просмотры</th><th>Лайки</th><th>Комменты</th><th>Репосты</th><th>Переходы</th></tr></thead><tbody>' +
+    з.map(function(п){
+      var м = п.метрики || {};
+      var т = п.ссылка ? '<a href="' + щит(п.ссылка) + '" target="_blank" rel="noopener">' + щит(п.тема) + '</a>' : щит(п.тема);
+      return '<tr><td>' + датка(п.когда) + '</td><td>' + щит(п.площадка) + '</td><td>' + т + '</td>' +
+        '<td><span class="метка">' + щит(п.формат) + '</span></td>' +
+        '<td>' + число(м.просмотров) + '</td><td>' + число(м.лайков) + '</td>' +
+        '<td>' + число(м.комментариев) + '</td><td>' + число(м.репостов) + '</td>' +
+        '<td>' + число(м.переходов) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+function таблПлощадкиПостов(пп){
+  return '<div class="обёртка"><table><thead><tr><th>Площадка</th><th>Постов</th><th>Просмотры</th>' +
+    '<th>Лайки</th><th>Комменты</th></tr></thead><tbody>' +
+    Object.keys(пп).map(function(к){
+      var о = пп[к];
+      return '<tr><td>' + щит(к) + '</td><td>' + число(о.постов) + '</td><td>' + число(о.просмотров) +
+        '</td><td>' + число(о.лайков) + '</td><td>' + число(о.комментариев) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+/* ---------- контент ---------- */
+function рисКонтент(д, у){
+  var з = д.записи || [];
+  if (!з.length){
+    у.innerHTML = пусто('Контент-план ещё не заполнен', д.почему ||
+      'Здесь будет календарь: что и когда выходит на каждой площадке, в каком статусе, и сколько материалов уже снято и лежит готовым.') +
+      '<div class="карта" style="margin-top:14px"><h3>Что уже снято</h3>' +
+      '<div class="подпись">Готовые материалы лежат на нашем сервере и ждут запуска: шесть роликов по территории ' +
+      '(фасад, ворота, внутренний проезд, переговорная, конференц-зал, общий вид) и четыре кадра планировок блоков. ' +
+      'Как согласуем план, они разойдутся по площадкам.</div></div>';
+    return;
+  }
+  у.innerHTML = '<div class="обёртка"><table><thead><tr><th>Дата</th><th>Площадка</th><th>Тема</th><th>Формат</th><th>Статус</th></tr></thead><tbody>' +
+    з.map(function(с){
+      return '<tr><td>' + датка(с.дата) + '</td><td>' + щит(с.площадка) + '</td><td>' + щит(с.тема) + '</td>' +
+        '<td>' + щит(с.формат) + '</td><td><span class="метка">' + щит(с.статус) + '</span></td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+/* ---------- подписчики ---------- */
+function рисПодписчики(д, у){
+  var б = д.база || [], р = д.рассылки || [];
+  у.innerHTML =
+    '<div class="сетка с3">' +
+      карточка('Контактов в базе', б.length, б.length ? '' : 'База наполнится с заявок и подписок') +
+      карточка('Рассылок отправлено', р.length, р.length ? '' : 'Рассылки ещё не запускали') +
+      карточка('Площадок подключено', 5, 'Telegram, YouTube, Instagram, Дзен, vc.ru') +
+    '</div>' +
+    '<div class="карта" style="margin-top:14px"><h3>База контактов</h3>' +
+      (б.length ? '<div class="строка-меж"><a class="кн" href="' + API + '?что=выгрузка&таблица=подписчики">Выгрузить CSV</a></div>'
+                : пусто('Пока пусто', д.почему || 'База наполнится с заявок с сайта и с подписок на площадках')) +
+    '</div>' +
+    '<div class="карта" style="margin-top:14px"><h3>Рассылки</h3>' +
+      (р.length ? '' : пусто('Рассылок не было','Здесь будет история отправок: сколько ушло, сколько дошло, сколько открыли и перешли')) +
+    '</div>';
+}
+
+/* ---------- настройки ---------- */
+function рисНастройки(д, у){
+  if (д.ошибка){ у.innerHTML = пусто('Сервер не ответил', д.ошибка); return; }
+  var п = д.площадки || {};
+  var строки = Object.keys(п).map(function(к){
+    var о = п[к];
+    return '<tr><td>' + щит(о.имя) + '</td>' +
+      '<td>' + (о.адрес ? '<a href="'+щит(о.адрес)+'" target="_blank" rel="noopener">'+щит(о.адрес)+'</a>' : '—') + '</td>' +
+      '<td><span class="метка' + (о.снимается ? ' зол' : '') + '">' + (о.снимается ? 'метрики снимаются' : 'ждём подключения') + '</span></td></tr>';
+  }).join('');
+  var т = д.трекер || {};
+  у.innerHTML =
+    '<div class="сетка с3">' +
+      карточка('Событий на сайте сегодня', т.событий_сегодня, т.событий_сегодня ? '' : 'Маячок стоит, ждём первого посетителя') +
+      карточка('Трекер', т.стоит ? 1 : 0, т.стоит ? 'работает и пишет события' : 'не настроен') +
+      '<div class="карта свет"><h3>Сбор метрик площадок</h3><div class="подпись" style="margin-top:8px">' +
+        ((д.сборщик && д.сборщик.последний_запуск) ? 'последний раз ' + датка(д.сборщик.последний_запуск)
+                                                   : 'ещё ни разу не отрабатывал') + '</div></div>' +
+    '</div>' +
+    '<div class="карта" style="margin-top:14px"><h3>Подключения</h3><div class="обёртка"><table><thead><tr>' +
+      '<th>Площадка</th><th>Адрес</th><th>Состояние</th></tr></thead><tbody>' + строки + '</tbody></table></div></div>' +
+    '<div class="карта" style="margin-top:14px"><h3>Выгрузка данных</h3><div class="строка-меж">' +
+      '<a class="кн" href="' + API + '?что=выгрузка&таблица=заявки">Заявки CSV</a>' +
+      '<a class="кн" href="' + API + '?что=выгрузка&таблица=подписчики">Подписчики CSV</a>' +
+      '<a class="кн" href="' + API + '?что=выгрузка&таблица=события">События сайта CSV</a></div></div>' +
+    '<div class="карта" style="margin-top:14px"><h3>Журнал действий</h3><div id="журнал">загружаем</div></div>';
+  взять('журнал').then(function(ж){
+    if (!ж || !ж.записи) return;
+    $('#журнал').innerHTML = ж.записи.length
+      ? '<div class="обёртка"><table><thead><tr><th>Когда</th><th>Что</th></tr></thead><tbody>' +
+        ж.записи.slice(0,60).map(function(з){
+          return '<tr><td>' + датка(з.время) + '</td><td>' + щит(з.что) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>'
+      : пусто('Пусто','Журнал начнёт заполняться с первого входа в панель');
+  });
+}
+
+/* ---------- запуск ---------- */
+взять('кто').then(function(о){
+  if (о && о.вошли){ $('#вход').style.display='none'; $('#прил').classList.add('видно'); обновить(); }
+});
+setInterval(function(){ if ($('#прил').classList.contains('видно')) обновить(); }, 120000);
+window.addEventListener('resize', function(){ if (КЭШ[СЕЙЧАС]) рисуй(); });
+</script>
+</body>
+</html>
