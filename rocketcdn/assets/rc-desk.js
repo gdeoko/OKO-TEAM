@@ -398,7 +398,39 @@ function homeForms(unpin) {
   if (unpin) pinHeight(false);
 }
 
-function fillForm(kind) {
+function связьКуда(kind) {
+  var д = null;
+  try { д = (window.RV_DATA && window.RV_DATA["связь"]) || null; } catch (e) {}
+  if (kind === "call") {
+    return (д && д["помощь"]) || "https://t.me/HelpRocketVPN_bot";
+  }
+  return (д && д["бот"]) || "https://t.me/RocketCompanyVPN_bot";
+}
+
+function fillFormТелеграм(kind) {
+  var зов = kind === "call"
+    ? t("cb.h", "Перезвоните мне")
+    : t("ct.h", "Расскажите о проекте");
+  var строка = kind === "call"
+    ? t("cb.p", "Напишите в поддержку - отвечаем в чате, звонок назначим оттуда же.")
+    : t("ct.p", "Напишите боту: он заведёт заявку и передаст её человеку.");
+  var кн = kind === "call"
+    ? t("cb.btn", "Открыть поддержку")
+    : t("ct.btn", "Открыть бота");
+  body.innerHTML =
+    '<button type="button" class="dsk-back" data-go="menu">' +
+      esc(t("ui.back", "Назад")) + '</button>' +
+    '<div class="dsk-title">' + esc(зов) + '</div>' +
+    '<div class="dsk-a">' + esc(строка) + '</div>' +
+    '<div class="dsk-acts">' +
+      '<a class="dsk-b dsk-b-lead" href="' + esc(связьКуда(kind)) + '" ' +
+        'target="_blank" rel="noopener">' + esc(кн) + '</a>' +
+    '</div>';
+  body.hidden = false;
+  slot.hidden = true;
+}
+
+function fillFormПереносом(kind) {
   homeForms();
   var form = doc.getElementById(kind === "call" ? "cbForm" : "leadForm");
   body.innerHTML =
@@ -410,6 +442,30 @@ function fillForm(kind) {
   body.hidden = false;
   slot.hidden = false;
   moveForm(form);
+}
+
+/* ── ОДИН ФАЙЛ НА ДВА САЙТА ──────────────────────────────────
+   Копии пульта разошлись, и разошлись по делу: у Rocket CDN на
+   странице есть формы заявки, и панель переносит их к себе физически
+   (копию делать нельзя, у форм своя проверка полей и своя отправка).
+   У Rocket VPN полей ввода нет ни одного: весь разговор с человеком
+   идёт в Телеграме, и обе кнопки пульта ведут туда.
+
+   Сводить к одному ПОВЕДЕНИЮ было бы ошибкой - оба верны для своего
+   сайта. Сводим к одному ФАЙЛУ: ветку выбирает сама страница по тому,
+   есть на ней формы или нет. Два файла с близким содержимым означают,
+   что однажды правку внесут только в один, и панели разъедутся снова -
+   ровно это и случилось.
+
+   Спрашиваем страницу, а не домен: домен пришлось бы держать списком и
+   он молча перестал бы совпадать при первом же переезде. */
+function естьФормы() {
+  return !!(doc.getElementById("leadForm") || doc.getElementById("cbForm"));
+}
+
+function fillForm(kind) {
+  if (естьФормы()) fillFormПереносом(kind);
+  else fillFormТелеграм(kind);
 }
 
 /* ── Старт полёта ────────────────────────────────────────────
