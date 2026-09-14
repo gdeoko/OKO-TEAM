@@ -77,15 +77,45 @@ const кдн = await снять(
   CDN,
   () => window.RC_GL && window.RC_GL.ready3d,
   async (стр) => {
-    /* Досюда доезжаем прокруткой: финал у соседа это конец ленты. */
-    const высота = await стр.evaluate(() =>
-      Math.max(0, document.documentElement.scrollHeight - window.innerHeight));
-    for (let i = 1; i <= 90; i++) {
-      await стр.evaluate((y) => window.scrollTo(0, y), Math.round(высота * (i / 90)));
-      await стр.evaluate(() => new Promise((г) => {
-        let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 2 ? г() : ш())); })();
-      }));
+    /* Досюда доезжаем прокруткой: финал у соседа это конец ленты.
+
+       ── ДОЕЗД ПРОВЕРЯЕТСЯ, А НЕ ПОДРАЗУМЕВАЕТСЯ ────────────────
+       Прокрутка срывалась примерно в каждом третьем запуске: лента
+       ещё достраивалась, высота под ногами менялась, и девяносто
+       шагов кончались, не дойдя до пульта. Наружу это выходило не
+       ошибкой, а ЧИСЛАМИ: глаз на -6.38 над настилом, дистанция 148,
+       наклон ноль, лампы в базовых силах rc-cabin. Такой отчёт
+       выглядит как найденное расхождение рубок, и по нему можно
+       чинить то, что не сломано.
+
+       Спрашиваем саму рубку, доехали ли: глаз обязан стоять в
+       человеческий рост над настилом. Не доехали - досылаем в конец
+       и ждём ещё. Молчаливого срыва после этого не остаётся: либо
+       рубка отвечает, либо мерка честно говорит, что не доехала. */
+    const доКонца = async () => {
+      const высота = await стр.evaluate(() =>
+        Math.max(0, document.documentElement.scrollHeight - window.innerHeight));
+      for (let i = 1; i <= 90; i++) {
+        await стр.evaluate((y) => window.scrollTo(0, y), Math.round(высота * (i / 90)));
+        await стр.evaluate(() => new Promise((г) => {
+          let i = 0; (function ш() { requestAnimationFrame(() => (++i >= 2 ? г() : ш())); })();
+        }));
+      }
+    };
+    const вКресле = () => стр.evaluate(() => {
+      const з = window.RC_FLIGHT && window.RC_FLIGHT["замерРубки"]
+        && window.RC_FLIGHT["замерРубки"]();
+      const в = з && з["глазНадНастилом"];
+      return typeof в === "number" && в > 0.8 && в < 3.0;
+    });
+    await доКонца();
+    for (let круг = 1; круг <= 4 && !(await вКресле()); круг++) {
+      console.log(`  (доезд ${круг}: рубка ещё не в кресле, досылаю)`);
+      await стр.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await стр.waitForTimeout(1500);
+      await доКонца();
     }
+    if (!(await вКресле())) console.log("  ВНИМАНИЕ: до финала CDN доехать не удалось");
   },
   () => (window.RC_FLIGHT && window.RC_FLIGHT["замерРубки"])
     ? window.RC_FLIGHT["замерРубки"]() : { нет: "нет замерРубки" }
