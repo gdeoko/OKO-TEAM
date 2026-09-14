@@ -559,6 +559,46 @@ g.RC_GL = {
     if (c && (c.saveData || /(^|-)(2g|3g)$/.test(c.effectiveType || ""))) slow = true;
   } catch (e) {}
 
+  /* ── СЛАБАЯ МАШИНА ЖДЁТ ТАК ЖЕ, КАК СЛАБЫЙ КАНАЛ ─────────────
+     Условие выше смотрит только на СЕТЬ. На дешёвом телефоне с
+     обычным 4G оно говорит «быстро», и полтора мегабайта кода игры и
+     ракеты едут на первой секунде вместе со шрифтами и первым
+     экраном.
+
+     Узкое место там не канал, а процессор: полтора мегабайта надо не
+     только скачать, но и РАЗОБРАТЬ, и этот разбор идёт до первого
+     кадра. Замер первого экрана на соседнем сайте: те же семьсот
+     килобайт модулей, убранные с критического пути, дали минус 2.8
+     секунды до готовности страницы.
+
+     Видеокарту спрашиваем по той же причине, по которой её спрашивает
+     ступень качества на соседнем сайте: у дешёвого телефона восемь
+     ядер и четыре гигабайта при графике начального уровня, и по
+     памяти с ядрами он выглядит середняком.
+
+     Ракета от этого не пропадает: она просто начинает собираться
+     после события load, а не до него. Человеку до корабля прокручивать
+     больше половины ленты. */
+  try {
+    var пам = navigator.deviceMemory || 8;
+    var ядер = navigator.hardwareConcurrency || 4;
+    if (пам <= 4 || ядер <= 4) slow = true;
+    if (!slow) {
+      var к = document.createElement("canvas");
+      var гл = к.getContext("webgl") || к.getContext("experimental-webgl");
+      var р = гл && гл.getExtension("WEBGL_debug_renderer_info");
+      var им = р ? String(гл.getParameter(р.UNMASKED_RENDERER_WEBGL) || "") : "";
+      var н = им.toLowerCase();
+      if (н && (/mali-?g(31|37|51|52|57)\b/.test(н) ||
+                /mali-?(t6|t7|t8|450|400)/.test(н) ||
+                /powervr.*(ge8|ge7|rogue ge)/.test(н) ||
+                /adreno.*\b(3[0-9]{2}|4[0-9]{2}|5[0-9]{2}|60[0-9]|610)\b/.test(н) ||
+                /swiftshader|llvmpipe|software/.test(н))) slow = true;
+      var пот = гл && гл.getExtension("WEBGL_lose_context");
+      if (пот) пот.loseContext();
+    }
+  } catch (eК) {}
+
   if (!slow) go();
   else if (document.readyState === "complete") setTimeout(go, 400);
   else addEventListener("load", function () { setTimeout(go, 400); }, { once: true });
