@@ -219,8 +219,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         admin_redirect('orders');
     }
     if ($do === 'delivered' && $ids) {
-        foreach ($ids as $i) update('awards_orders', ['status' => 'delivered', 'delivered_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
-        flash('Отмечено как доставленное' . $manyNote($ids) . '.', 'success');
+        /* «ДОСТАВЛЕНО» — ЭТО СОБЫТИЕ ДЛЯ УЧАСТНИКА, А НЕ ТОЛЬКО ОТМЕТКА У НАС.
+         *
+         * Владелец смотрит трек, видит, что посылка дошла, и ставит статус. До
+         * сих пор на этом всё и заканчивалось: человек не знал ничего. Посылка
+         * лежала в отделении и через пятнадцать дней уезжала обратно, а
+         * наградной материал приходилось изготавливать и слать заново.
+         *
+         * Теперь по этой же кнопке участнику уходит письмо: в каком отделении
+         * посылка, адрес и режим работы отделения, карта — и до какого числа
+         * она там хранится. Адрес ОТДЕЛЕНИЯ по индексу, а не адрес доставки из
+         * заявки: забирают в отделении, это разные адреса. */
+        if (!function_exists('order_notify_arrived') && is_file(BASE_PATH . '/core/order_arrived.php')) {
+            require_once BASE_PATH . '/core/order_arrived.php';
+        }
+        $sent = 0;
+        foreach ($ids as $i) {
+            update('awards_orders', ['status' => 'delivered', 'delivered_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+            if (function_exists('order_notify_arrived')) {
+                // Пятнадцать дней хранения считаем от сегодняшнего дня: точной
+                // даты прибытия у нас без службы отслеживания нет, а назвать
+                // срок человеку важнее, чем промолчать.
+                if (order_notify_arrived((int) $i, '', date('d.m.Y', time() + 15 * 86400))) $sent++;
+            }
+        }
+        flash('Отмечено как доставленное' . $manyNote($ids) . '.'
+              . ($sent > 0 ? ' Участнику ушло письмо, где забрать посылку (' . $sent . ').'
+                           : ' Письмо о получении не ушло — вероятно, уже отправлялось раньше.'),
+              'success');
         admin_redirect('orders');
     }
     if ($do === 'redispatch' && $oid) {

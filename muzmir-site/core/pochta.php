@@ -138,6 +138,21 @@ function pochta_migrate(): void {
 function pochta_history(string $track): array {
     $track = strtoupper(preg_replace('~\s+~', '', $track) ?? '');
     if ($track === '') return [];
+
+    /* ОТСЛЕЖИВАНИЕ — ОТДЕЛЬНАЯ СЛУЖБА, А НЕ «ОТПРАВКА».
+     *
+     * Здесь стоял вызов `/1.0/tracking/<номер>` на otpravka-api, и он не
+     * существует: Почта отвечает 407 «Error namespace or mask or method not
+     * found». То есть история не приходила НИКОГДА, а таблица состояний
+     * заполнялась пустыми строками с пометкой «Почта не отдала историю».
+     *
+     * Настоящий адрес — SOAP `tracking.russianpost.ru/rtm34`, и доступ к нему
+     * выдаётся ОТДЕЛЬНО от «Отправки»: своя пара логин-пароль. Пока её нет,
+     * честно возвращаем пусто — пусть в админке будет видно «нет данных», а не
+     * выдуманный статус. */
+    $h = pochta_track_soap($track);
+    if ($h) return $h;
+
     $r = pochta_api('/1.0/tracking/' . rawurlencode($track));
     if ($r['code'] !== 200 || !is_array($r['data'])) return [];
 
@@ -197,6 +212,91 @@ function pochta_refresh(string $track, int $orderId = 0): array {
         insert('pochta_tracks', $row);
     }
     return $row;
+}
+
+/**
+ * ИСТОРИЯ ПОСЫЛКИ ЧЕРЕЗ СЛУЖБУ ОТСЛЕЖИВАНИЯ (SOAP rtm34).
+ *
+ * Доступ: POCHTA_TRACK_LOGIN / POCHTA_TRACK_PASSWORD. Их выдаёт Почта после
+ * подключения услуги «Сервис отслеживания» на tracking.pochta.ru — это НЕ те
+ * же логин и пароль, что у кабинета «Отправка». Нет доступа — возвращаем
+ * пустой массив, и вызывающий сам решает, что делать.
+ *
+ * Бесплатный тариф службы — 100 запросов в сутки на один номер и ограничение
+ * по частоте, поэтому вызывать её надо из крона по расписанию, а не на каждый
+ * показ страницы.
+ */
+function pochta_track_soap(string $track): array {
+    $get = static function (string $k) {
+        $v = getenv($k);
+        if (($v === false || $v === '') && function_exists('cfg')) $v = cfg($k, '');
+        if (($v === false || $v === '') && function_exists('cfgv')) $v = cfgv(strtolower($k), '');
+        return trim((string) $v);
+    };
+    $login = $get('POCHTA_TRACK_LOGIN');
+    $pass  = $get('POCHTA_TRACK_PASSWORD');
+    if ($login === '' || $pass === '') return [];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+        . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"'
+        . ' xmlns:oper="http://russianpost.org/operationhistory"'
+        . ' xmlns:data="http://russianpost.org/operationhistory/data"'
+        . ' xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">'
+        . '<soap:Header/><soap:Body><oper:getOperationHistory>'
+        . '<data:OperationHistoryRequest>'
+        . '<data:Barcode>' . htmlspecialchars($track, ENT_XML1) . '</data:Barcode>'
+        . '<data:MessageType>0</data:MessageType><data:Language>RUS</data:Language>'
+        . '</data:OperationHistoryRequest>'
+        . '<data:AuthorizationHeader soapenc:mustUnderstand="1">'
+        . '<data:login>' . htmlspecialchars($login, ENT_XML1) . '</data:login>'
+        . '<data:password>' . htmlspecialchars($pass, ENT_XML1) . '</data:password>'
+        . '</data:AuthorizationHeader>'
+        . '</oper:getOperationHistory></soap:Body></soap:Envelope>';
+
+    $ch = curl_init('https://tracking.russianpost.ru/rtm34');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_POSTFIELDS => $xml,
+        CURLOPT_HTTPHEADER => ['Content-Type: text/xml; charset=utf-8', 'SOAPAction: ""'],
+        CURLOPT_TIMEOUT => 30, CURLOPT_CONNECTTIMEOUT => 12,
+    ]);
+    $resp = (string) curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    if ($code !== 200 || $resp === '') return [];
+
+    $prev = libxml_use_internal_errors(true);
+    $doc  = simplexml_load_string($resp);
+    libxml_use_internal_errors($prev);
+    if (!$doc) return [];
+
+    $out = [];
+    foreach ($doc->xpath('//*[local-name()="historyRecord"]') ?: [] as $rec) {
+        $pick = static function ($node, string $path): string {
+            $r = $node->xpath($path);
+            return $r ? trim((string) $r[0]) : '';
+        };
+        $type = $pick($rec, './/*[local-name()="OperationParameters"]/*[local-name()="OperType"]/*[local-name()="Name"]');
+        $attr = $pick($rec, './/*[local-name()="OperationParameters"]/*[local-name()="OperAttr"]/*[local-name()="Name"]');
+        $out[] = [
+            'at'        => $pick($rec, './/*[local-name()="OperationParameters"]/*[local-name()="OperDate"]'),
+            'operation' => trim($type . ($attr !== '' ? ', ' . $attr : '')),
+            'place'     => $pick($rec, './/*[local-name()="AddressParameters"]/*[local-name()="OperationAddress"]/*[local-name()="Description"]'),
+            'index'     => $pick($rec, './/*[local-name()="AddressParameters"]/*[local-name()="OperationAddress"]/*[local-name()="Index"]'),
+        ];
+    }
+    usort($out, static fn($a, $b) => strtotime((string) $a['at']) <=> strtotime((string) $b['at']));
+    return $out;
+}
+
+/** Подключена ли служба отслеживания (отдельная от «Отправки»). */
+function pochta_track_ready(): bool {
+    $get = static function (string $k) {
+        $v = getenv($k);
+        if (($v === false || $v === '') && function_exists('cfg')) $v = cfg($k, '');
+        if (($v === false || $v === '') && function_exists('cfgv')) $v = cfgv(strtolower($k), '');
+        return trim((string) $v);
+    };
+    return $get('POCHTA_TRACK_LOGIN') !== '' && $get('POCHTA_TRACK_PASSWORD') !== '';
 }
 
 /** Последнее известное состояние посылки из базы (без обращения к Почте). */
