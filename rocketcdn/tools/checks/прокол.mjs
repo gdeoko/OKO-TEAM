@@ -44,8 +44,31 @@ const беды = [];
 const b = await браузер();
 const pg = await b.newPage({ viewport: ПК.vp, deviceScaleFactor: 1 });
 const ошибки = [];
+/* ── ЧУЖОЙ ДОМЕН НЕ НАША ОШИБКА ────────────────────────────────
+   На сайте стоит виджет чата, и его пакет приезжает с
+   chat.rocketcdn.ru. В песочнице у браузера нет доверия к сертификату
+   прокси, и запрос падает с ERR_CERT_AUTHORITY_INVALID. Проверка от
+   этого краснела целиком, хотя её собственный предмет проходил: замер
+   печатал «прокол вызвал уход: да», «холст после хода: убран»,
+   «причал VPN зовёт прокол: да» - и рядом ГРЯЗНО из-за чужого
+   сертификата.
+
+   На боевом домене сертификат настоящий, проверено запросом:
+   https://chat.rocketcdn.ru/packs/js/sdk.js отвечает 200. Отказ живёт
+   только в песочнице.
+
+   Тот же заслон уже стоит в `общее.mjs` и `форма.mjs`, здесь его
+   недоставало. Свои сообщения остаются все до одного: проверка,
+   которая краснеет из-за чужого сертификата, перестаёт что-либо
+   значить. */
+const чужое = /chat\.rocketcdn\.ru|ERR_CERT_AUTHORITY_INVALID/;
 pg.on("pageerror", e => ошибки.push("PE: " + e.message));
-pg.on("console", m => { if (m.type() === "error") ошибки.push("CE: " + m.text().slice(0, 140)); });
+pg.on("console", m => {
+  if (m.type() !== "error") return;
+  const т = m.text();
+  if (чужое.test(т)) return;
+  ошибки.push("CE: " + т.slice(0, 140));
+});
 
 await pg.goto(АДРЕС, { waitUntil: "domcontentloaded", timeout: 180000 });
 await pg.waitForTimeout(7000);
