@@ -323,7 +323,7 @@ function payment_for_order(int $orderId): ?array {
  * @param string $reason     причина (уходит в description, до 250 симв.).
  * @return array ['ok'=>bool, 'id'=>?string, 'status'=>?string, 'error'=>?string]
  */
-function yukassa_refund(string $paymentId, float $amountRub, string $reason = ''): array {
+function yukassa_refund(string $paymentId, float $amountRub, string $reason = '', array $receipt = []): array {
     $shop = cfgv('yukassa_shop');
     $secret = cfgv('yukassa_secret');
     if (!$shop || !$secret) return ['ok' => false, 'error' => 'ЮKassa не настроена (нет shop/secret).'];
@@ -335,6 +335,35 @@ function yukassa_refund(string $paymentId, float $amountRub, string $reason = ''
         'amount'     => ['value' => number_format($amountRub, 2, '.', ''), 'currency' => 'RUB'],
     ];
     if ($reason !== '') $body['description'] = mb_substr($reason, 0, 250);
+
+    /* ЧЕК ВОЗВРАТА — ТАКОЙ ЖЕ ОБЯЗАТЕЛЬНЫЙ ДОКУМЕНТ, КАК ЧЕК ОПЛАТЫ.
+     *
+     * Оплата у нас фискальная: в /v3/payments уходит receipt с почтой
+     * плательщика, и человек получает чек. Возврат же уходил без чека вовсе —
+     * деньги возвращались, а кассового документа об этом не появлялось ни у
+     * участника, ни в отчётности. Для самозанятого (НПД) это дыра в учёте:
+     * приход зафиксирован, расход нет.
+     *
+     * $receipt — ['email' => почта, 'items' => [['description','amount'], ...]].
+     * Состав пишем настоящий (что именно возвращаем), а не «возврат по заказу»:
+     * в чеке человек должен узнать свою покупку. */
+    if (!empty($receipt['email']) && !empty($receipt['items'])
+        && filter_var((string) $receipt['email'], FILTER_VALIDATE_EMAIL)) {
+        $items = [];
+        foreach ((array) $receipt['items'] as $it) {
+            $sum = (float) ($it['amount'] ?? 0);
+            if ($sum <= 0) continue;
+            $items[] = [
+                'description'     => mb_substr((string) ($it['description'] ?? 'Наградной материал'), 0, 128),
+                'quantity'        => '1.00',
+                'amount'          => ['value' => number_format($sum, 2, '.', ''), 'currency' => 'RUB'],
+                'vat_code'        => 1,                 // без НДС (самозанятый/НПД)
+                'payment_mode'    => 'full_payment',
+                'payment_subject' => 'service',
+            ];
+        }
+        if ($items) $body['receipt'] = ['customer' => ['email' => (string) $receipt['email']], 'items' => $items];
+    }
 
     $ik = 'rf-' . $paymentId . '-' . substr(hash('sha256', $paymentId . '|' . $amountRub . '|' . $reason), 0, 16);
     $ch = curl_init('https://api.yookassa.ru/v3/refunds');
