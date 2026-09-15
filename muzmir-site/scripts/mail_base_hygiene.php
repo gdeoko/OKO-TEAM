@@ -54,8 +54,26 @@ $shown = 0;
 foreach ($dead as $d => $c) { if ($shown++ >= 15) break; printf("      %-34s %d\n", $d, $c); }
 
 /* ── 2. Адреса с повторными отказами ─────────────────────────────────────── */
+/* ОТКАЗ ЯЩИКА И ОТКАЗ ЗА НАС — РАЗНЫЕ ВЕЩИ.
+ *
+ * Считались все события hard_bounced подряд, а среди них есть err_spam_skipped
+ * и родня: это значит, что письмо ДАЖЕ НЕ ПЫТАЛИСЬ доставить — сервис рассылок
+ * отбросил его сам, потому что наш домен в те дни был закрыт (см.
+ * mrep_service_skipped в core/mail_reputation.php). Про чужой ящик это не
+ * говорит ничего. В итоге живые участники получали пожизненный стоп-лист за то,
+ * что у НАС была блокировка: Величко Е. В. (helen-sweet@bk.ru) закрыли 14.09 по
+ * трём таким «отказам» 17-19 августа — при том, что 13 сентября она спокойно
+ * получила код для входа и написала в чат.
+ *
+ * Считаем только настоящие отказы почтовика. */
 $rep = all("SELECT LOWER(email) e, COUNT(*) c FROM mail_events
-             WHERE status='hard_bounced' GROUP BY e HAVING c >= 2");
+             WHERE status='hard_bounced'
+               AND COALESCE(comment,'') NOT LIKE '%err_spam_skipped%'
+               AND COALESCE(comment,'') NOT LIKE '%skip_dup_unreachable%'
+               AND COALESCE(comment,'') NOT LIKE '%skip_dup_temp_unreachable%'
+               AND COALESCE(comment,'') NOT LIKE '%skip_unsubscribed%'
+               AND COALESCE(comment,'') NOT LIKE '%skip_complained%'
+             GROUP BY e HAVING c >= 2");
 printf("\n  адресов с двумя и более отказами: %d\n", count($rep));
 
 /* ── 3. Битые адреса ─────────────────────────────────────────────────────── */
