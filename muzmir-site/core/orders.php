@@ -94,7 +94,21 @@ function order_fulfill_digital(int $orderId): int {
      * упёрлась бы в занятые номера. */
     $namedSeq = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type='named'", [$appId]);
     foreach ($items as $it) {
-        if (!is_array($it) || (string) ($it['kind'] ?? '') !== 'digital') continue;
+        if (!is_array($it)) continue;
+        /* ПЕЧАТНЫЙ ДОКУМЕНТ ТОЖЕ ПОПАДАЕТ В РЕЕСТР.
+         *
+         * Здесь стояло «не digital — пропускаем», и это молча вычёркивало из
+         * реестра все печатные оригиналы. А QR стоит на ОБОИХ бланках и ведёт на
+         * одну и ту же страницу /verify: человек получал бумажный диплом, наводил
+         * камеру и читал «документ не найден». Ровно это и случилось с заказом
+         * №53 (VR-2026-00018): диплом напечатан, отправлен, вручён — и для
+         * проверки подлинности его не существует.
+         *
+         * Разница между электронным и печатным не в реестре, а в доставке:
+         * электронный уходит письмом по scheduled_at, печатный едет почтой и
+         * письмом уходить не должен — поэтому расписания у него нет. */
+        $kind = (string) ($it['kind'] ?? '');
+        if ($kind !== 'digital' && $kind !== 'original') continue;
         $type = $map[mb_strtolower(trim((string) ($it['item'] ?? '')))] ?? '';
         if ($type === '') continue;
         // ФИО получателя из заказа. Правило владельца: одна благодарность =
@@ -113,9 +127,29 @@ function order_fulfill_digital(int $orderId): int {
             : (($type === 'thanks' || $type === 'named') ? $person : (string) ($a['result'] ?? ''));
 
         $dup = $type === 'thanks' || $type === 'named'
-            ? one("SELECT id FROM diplomas WHERE application_id=? AND type=? AND COALESCE(result,'')=?",
+            ? one("SELECT id, kind, scheduled_at, sent_at FROM diplomas WHERE application_id=? AND type=? AND COALESCE(result,'')=?",
                   [$appId, $type, $result])
-            : one("SELECT id FROM diplomas WHERE application_id=? AND type=?", [$appId, $type]);
+            : one("SELECT id, kind, scheduled_at, sent_at FROM diplomas WHERE application_id=? AND type=?", [$appId, $type]);
+
+        /* ОДИН ДОКУМЕНТ — ОДНА ЗАПИСЬ В РЕЕСТРЕ, ДАЖЕ ЕСЛИ НОСИТЕЛЯ ДВА.
+         *
+         * Человек вправе заказать и файл, и печатный бланк одного и того же
+         * диплома: это один документ с одним номером, просто выданный дважды.
+         * Считать второй носитель «повторной оплатой» и звать владельца
+         * разбираться нельзя — оплата тут честная и вопроса не содержит.
+         * Дописываем носитель к существующей записи; если раньше был только
+         * печатный, а теперь заказан электронный — ставим расписание отправки. */
+        if ($dup && (string) ($dup['kind'] ?? '') !== $kind) {
+            $upd = ['kind' => 'both'];
+            if ($kind === 'digital' && trim((string) ($dup['scheduled_at'] ?? '')) === ''
+                                    && trim((string) ($dup['sent_at'] ?? '')) === '') {
+                $upd['scheduled_at'] = $sched;
+            }
+            update('diplomas', $upd, 'id=:id', ['id' => (int) $dup['id']]);
+            $created++;
+            continue;
+        }
+
         /* ПОВТОРНАЯ ОПЛАТА НЕ ПРОГЛАТЫВАЕТСЯ МОЛЧА.
          *
          * Защита от дубля нужна: повторный вызов выдачи по тому же заказу не
@@ -202,7 +236,10 @@ function order_fulfill_digital(int $orderId): int {
             'result'         => $result,
             'pdf_path'       => diploma_store_path($pdf),
             'lang'           => 'ru',
-            'scheduled_at'   => $sched,
+            'kind'           => $kind,
+            // Расписание — только у электронного. Печатный едет почтой, и письма
+            // с файлом участнику не полагается: он заплатил за бланк, а не за PDF.
+            'scheduled_at'   => $kind === 'digital' ? $sched : null,
         ]);
         $created++;
     }
@@ -877,6 +914,8 @@ function order_mark_shipped_parcel(array $orderIds, string $track): bool {
     foreach ($orders as $o) {
         update('awards_orders', ['status' => 'shipped', 'tracking' => $track, 'shipped_at' => date('Y-m-d H:i:s')],
                'id=:id', ['id' => (int) $o['id']]);
+        // Бланк уехал — значит, документ выдан и реестр обязан его подтверждать.
+        order_mark_printed_issued((int) $o['id']);
     }
 
     $order = $orders[0];
@@ -1062,4 +1101,33 @@ function order_ago(string $s): string {
     $tail = ($d % 10 === 1 && $d % 100 !== 11) ? 'день'
           : ((in_array($d % 10, [2,3,4], true) && !in_array($d % 100, [12,13,14], true)) ? 'дня' : 'дней');
     return $d . ' ' . $tail . ' назад';
+}
+
+/**
+ * ПЕЧАТНЫЙ ДОКУМЕНТ УШЁЛ ПОЧТОЙ — ЗНАЧИТ, ОН УЖЕ ВЫДАН.
+ *
+ * Реестр /verify подтверждает только выданные документы: иначе через него можно
+ * было бы узнать чужой результат раньше самого участника. У электронного диплома
+ * момент выдачи очевиден — ушло письмо. У печатного письма нет вовсе, и без
+ * отдельной отметки бланк с QR оставался бы «не найден» навсегда.
+ *
+ * Отметку ставим, когда заказ уходит почтой (изготовлен/отправлен/доставлен).
+ * sent_at при этом не трогаем: по нему крон отличает неотправленное письмо, и у
+ * комбинированного заказа (файл + бланк) письмо ещё впереди.
+ */
+function order_mark_printed_issued(int $orderId): int
+{
+    $o = one("SELECT application_id FROM awards_orders WHERE id=?", [$orderId]);
+    $appId = (int) ($o['application_id'] ?? 0);
+    if (!$appId) return 0;
+
+    $rows = all("SELECT id FROM diplomas
+                  WHERE application_id=? AND kind IN ('original','both') AND COALESCE(issued_at,'')=''",
+                [$appId]);
+    $now = date('Y-m-d H:i:s');
+    foreach ($rows as $r) {
+        update('diplomas', ['issued_at' => $now], 'id=:id', ['id' => (int) $r['id']]);
+    }
+    if ($rows && function_exists('app_status_sync')) app_status_sync($appId);
+    return count($rows);
 }

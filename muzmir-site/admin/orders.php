@@ -236,6 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sent = 0;
         foreach ($ids as $i) {
             update('awards_orders', ['status' => 'delivered', 'delivered_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+            // Страховка для заказов, которым «отправлено» не проставляли: вручённый
+            // бланк обязан проверяться в реестре, как бы его ни отметили у нас.
+            if (function_exists('order_mark_printed_issued')) order_mark_printed_issued((int) $i);
             if (function_exists('order_notify_arrived')) {
                 // Пятнадцать дней хранения считаем от сегодняшнего дня: точной
                 // даты прибытия у нас без службы отслеживания нет, а назвать

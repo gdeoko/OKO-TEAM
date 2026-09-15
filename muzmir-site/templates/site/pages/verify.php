@@ -27,9 +27,15 @@ if ($number !== '') {
                   JOIN applications a ON a.id=d.application_id
                   LEFT JOIN competitions c ON c.id=a.competition_id
                   WHERE d.number=?", [$number]);
-        // Документ, который ещё не выдан участнику, в реестре не подтверждаем:
-        // иначе через реестр можно узнать результат раньше самого участника.
-        if ($d && trim((string) ($d['sent_at'] ?? '')) === '') $d = null;
+        /* Документ, который ещё не выдан участнику, в реестре не подтверждаем:
+         * иначе через реестр можно узнать результат раньше самого участника.
+         *
+         * Выдан — это либо ушло письмо (sent_at, электронный), либо бланк уехал
+         * почтой (issued_at, печатный). Проверка только по sent_at считала
+         * невыданным КАЖДЫЙ печатный диплом: письма у него нет и не будет,
+         * а QR на бланке ведёт именно сюда. */
+        if ($d && trim((string) ($d['sent_at'] ?? '')) === ''
+               && trim((string) ($d['issued_at'] ?? '')) === '') $d = null;
     }
 }
 
@@ -50,7 +56,7 @@ if ($d) {
     insert('verify_log', ['diploma_number' => $number, 'ip' => client_ip()]);
     q("UPDATE diplomas SET verified_count = verified_count + 1 WHERE id=?", [(int)$d['id']]);
     $result = $d['result'] ?: $d['app_result'];
-    $issued = ru_date(substr((string)($d['sent_at'] ?: $d['created_at']), 0, 10));
+    $issued = ru_date(substr((string)($d['sent_at'] ?: ($d['issued_at'] ?: $d['created_at'])), 0, 10));
     $vcount = (int)$d['verified_count'] + 1;
 }
 
@@ -451,6 +457,9 @@ ob_start(); ?>
   </div>
 </div>
 
+<?php /* Запасной разборщик QR для браузеров без BarcodeDetector (весь iOS).
+         Грузится отложенно: страница проверки по номеру работает и без него. */ ?>
+<script src="<?= h(asset('js/jsqr.min.js')) ?>" defer></script>
 <script>
 (function(){
   var base = <?= json_encode($verifyBase, JSON_UNESCAPED_SLASHES) ?>;
@@ -510,15 +519,48 @@ ob_start(); ?>
     go(num);
   }
 
+  /* РАЗБОР КАДРА. Два пути, и второй обязателен.
+   *
+   * BarcodeDetector умеет разбирать кадр сам и быстро, но его нет в Safari —
+   * то есть НИ НА ОДНОМ айфоне. Раньше проверка стояла до запроса камеры, и на
+   * айфоне кнопка просто не включала камеру: человек с бумажным дипломом в руках
+   * упирался в «браузер не поддерживает». Поэтому есть запасной разбор своими
+   * руками: кадр перерисовывается в canvas и читается jsQR. Библиотека лежит у
+   * нас, а не на чужом CDN: сайт обязан работать, когда CDN недоступен.
+   */
+  var canvas = null, cctx = null;
+
+  function decodeFrame(){
+    if(detector){
+      return detector.detect(video).then(function(codes){
+        return (codes && codes.length && codes[0].rawValue) ? codes[0].rawValue : '';
+      });
+    }
+    if(typeof jsQR !== 'function') return Promise.resolve('');
+    try{
+      var w = video.videoWidth, h = video.videoHeight;
+      if(!w || !h) return Promise.resolve('');
+      // Больше 640 по длинной стороне разбирать незачем: QR читается и так,
+      // а на слабом телефоне полный кадр съедает всю плавность.
+      var k = Math.min(1, 640 / Math.max(w, h));
+      var cw = Math.round(w * k), ch = Math.round(h * k);
+      if(!canvas){ canvas = document.createElement('canvas'); cctx = canvas.getContext('2d', { willReadFrequently: true }); }
+      if(canvas.width !== cw || canvas.height !== ch){ canvas.width = cw; canvas.height = ch; }
+      cctx.drawImage(video, 0, 0, cw, ch);
+      var img = cctx.getImageData(0, 0, cw, ch);
+      var res = jsQR(img.data, cw, ch, { inversionAttempts: 'attemptBoth' });
+      return Promise.resolve(res && res.data ? res.data : '');
+    }catch(e){ return Promise.resolve(''); }
+  }
+
   function tick(){
-    if(!scanning || !detector) return;
+    if(!scanning) return;
     if(video.readyState >= 2){
-      detector.detect(video).then(function(codes){
-        if(scanning && codes && codes.length && codes[0].rawValue){
-          handleResult(codes[0].rawValue);
-          return;
-        }
-        if(scanning) requestAnimationFrame(tick);
+      decodeFrame().then(function(raw){
+        if(!scanning) return;
+        if(raw){ handleResult(raw); return; }
+        // Своими руками разбирать каждый кадр дорого — идём через раз.
+        if(detector) requestAnimationFrame(tick); else setTimeout(tick, 120);
       }).catch(function(){
         if(scanning) setTimeout(tick, 250);
       });
@@ -528,8 +570,9 @@ ob_start(); ?>
   }
 
   function startScan(){
-    // Fallback: без BarcodeDetector обработать кадр не сможем — честно сообщаем.
-    if(!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    // Камеры нет вовсе (старый браузер или страница открыта не по https) —
+    // только тут честно разводим руками.
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
       if(qrMsg) qrMsg.classList.add('show');
       return;
     }
@@ -541,15 +584,30 @@ ob_start(); ?>
     }).then(function(s){
       stream = s;
       video.srcObject = s;
+      video.setAttribute('playsinline', '');      // iOS иначе уводит видео в полный экран
       return video.play().catch(function(){});
     }).then(function(){
-      try{ detector = new BarcodeDetector({ formats: ['qr_code'] }); }
-      catch(e){ detector = new BarcodeDetector(); }
+      detector = null;
+      if('BarcodeDetector' in window){
+        try{ detector = new BarcodeDetector({ formats: ['qr_code'] }); }
+        catch(e){ try{ detector = new BarcodeDetector(); }catch(e2){ detector = null; } }
+      }
       scanning = true;
       setStatus('Наведите камеру на QR-код диплома.');
       requestAnimationFrame(tick);
-    }).catch(function(){
-      setStatus('Не удалось получить доступ к камере. Разрешите доступ или введите номер вручную.');
+    }).catch(function(err){
+      // Разные отказы — разные советы. «Разрешите доступ» человеку, который
+      // ничего не запрещал, а просто открыл сайт по http, не помогает никак.
+      var name = (err && err.name) || '';
+      var msg = 'Не удалось включить камеру. Введите номер диплома вручную — он напечатан на бланке.';
+      if(name === 'NotAllowedError' || name === 'SecurityError'){
+        msg = 'Браузер не пустил к камере. Разрешите доступ к камере для этого сайта в настройках браузера — или введите номер вручную.';
+      } else if(name === 'NotFoundError' || name === 'OverconstrainedError'){
+        msg = 'Камера не найдена. Введите номер диплома вручную — он напечатан на бланке.';
+      } else if(name === 'NotReadableError'){
+        msg = 'Камера занята другим приложением. Закройте его и попробуйте снова.';
+      }
+      setStatus(msg);
     });
   }
 
