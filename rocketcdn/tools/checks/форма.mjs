@@ -32,7 +32,14 @@ const b = await браузер();
 const pg = await b.newPage({ viewport: ПК.vp, deviceScaleFactor: 1 });
 const ошибки = [];
 pg.on("pageerror", (e) => ошибки.push("PE: " + e.message));
-pg.on("console", (m) => { if (m.type() === "error") ошибки.push("CE: " + m.text().slice(0, 140)); });
+/* Чужой домен не наша ошибка: разбор в tools/checks/общее.mjs. */
+const чужое = /chat\.rocketcdn\.ru|ERR_CERT_AUTHORITY_INVALID/;
+pg.on("console", (m) => {
+  if (m.type() !== "error") return;
+  const т = m.text();
+  if (чужое.test(т)) return;
+  ошибки.push("CE: " + т.slice(0, 140));
+});
 
 await pg.goto(АДРЕС, { waitUntil: "load", timeout: 180000 });
 await pg.waitForTimeout(4000);
