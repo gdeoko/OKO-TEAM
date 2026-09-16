@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8"><title>приёмка пульта</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  .wrap{position:fixed;inset:0}
+  .wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .wrap canvas{position:absolute;inset:0;mix-blend-mode:screen;pointer-events:none}
+  .сетка{position:absolute;inset:0;pointer-events:none}
+</style>
+<div class="wrap"><img id="кадр" alt=""><canvas id="сетка" class="сетка"></canvas></div>
+<script src="../assets/rc-keys.js"></script>
+<script src="../assets/gen/cab/flat.js"></script>
+<script src="../assets/gen/cab/deck.js"></script>
+<script src="../assets/rc-deck.js"></script>
+<script>
+var портрет = innerHeight > innerWidth;
+var вид = портрет ? "высокая" : "широкая";
+var meta = window.RC_CAB_FLAT[вид];
+document.getElementById("кадр").src = "../" + meta["файл"];
+var d = RC_DECK.создать();
+document.querySelector(".wrap").appendChild(d.canvas);
+d.вид(meta, window.RC_CAB_DECK[вид], true);
+function размер(){ d.размер(innerWidth, innerHeight, Math.min(3, devicePixelRatio||1)); }
+размер(); addEventListener("resize", размер);
+d.данные({ тангаж: 0.12, крен: -0.08, курс: 128, скорость: 0.72, высота: 0.44,
+  метки: [{a:0.8,r:0.55},{a:2.4,r:0.8},{a:4.1,r:0.35},{a:5.4,r:0.68}] });
+d.нажать(2);
+var t = 0;
+(function тик(){ t += 0.016; d.кадр(0.016); requestAnimationFrame(тик); })();
+/* Контуры ниш для приёмки: включаются #контур в адресе */
+if (location.hash === "#контур") {
+  var cv = document.getElementById("сетка"), c = cv.getContext("2d");
+  function контур(){
+    cv.width = innerWidth; cv.height = innerHeight;
+    var п = RC_DECK.покрытие(meta, cv.width, cv.height);
+    var D = window.RC_CAB_DECK[вид];
+    function q(o,col){ c.strokeStyle=col; c.lineWidth=2; c.beginPath();
+      for(var i=0;i<4;i++){var x=п.ox+o[i][0]*п.dw,y=п.oy+o[i][1]*п.dh;
+        i?c.lineTo(x,y):c.moveTo(x,y);} c.closePath(); c.stroke(); }
+    D["экраны"].forEach(function(e){ q(e["угол"], "#ff3b30"); });
+    D["полосы"].forEach(function(p){ q(p["угол"], "#ffd60a"); });
+  }
+  контур(); addEventListener("resize", контур);
+}
+</script>
