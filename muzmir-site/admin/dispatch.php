@@ -131,7 +131,8 @@ if (input('do') === 'dip_get' && input('kind') === 'diploma') {
     // предпросмотром и PDF, чтобы редактор показал предпросмотр по каждому типу.
     $dipLbl = ['main' => 'Основной диплом', 'named' => 'Именной диплом', 'extra' => 'Спец-награда', 'thanks' => 'Благодарность педагогу'];
     $items = [];
-    foreach (all("SELECT id, number, type, result FROM diplomas WHERE application_id=? ORDER BY CASE type WHEN 'main' THEN 1 WHEN 'extra' THEN 2 WHEN 'named' THEN 3 WHEN 'thanks' THEN 4 ELSE 5 END, id", [$aid]) as $x) {
+    // Печатные сюда не показываем: «Отправки» — про письма, бланк едет почтой.
+    foreach (all("SELECT id, number, type, result FROM diplomas WHERE application_id=? AND COALESCE(kind,'digital') <> 'original' ORDER BY CASE type WHEN 'main' THEN 1 WHEN 'extra' THEN 2 WHEN 'named' THEN 3 WHEN 'thanks' THEN 4 ELSE 5 END, id", [$aid]) as $x) {
         $items[] = [
             'id'      => (int) $x['id'],
             'type'    => (string) $x['type'],
@@ -178,7 +179,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($kind === 'diploma' && ($id || $appG)) {
         $ids = [];
         if ($appG > 0) {
-            $ids = array_map('intval', array_column(all("SELECT id FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appG]), 'id'));
+            $ids = array_map('intval', array_column(all("SELECT id FROM diplomas
+                                                           WHERE application_id=? AND sent_at IS NULL
+                                                             AND COALESCE(kind,'digital') <> 'original'", [$appG]), 'id'));
         } elseif ($id) { $ids = [$id]; }
         if (!$ids && !in_array($do, ['dip_save'], true)) disp_done(false, 'Дипломы заявки не найдены.');
         $inHolder = $ids ? implode(',', array_fill(0, count($ids), '?')) : '0';
@@ -203,7 +206,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             audit('dispatch_sendnow', 'diploma', $ids[0] ?? 0, ['app' => $targetApp, 'count' => count($ids), 'ok' => $r['ok']]);
             disp_done($r['ok'], $r['msg'], $r['ok'] ? ['remove' => true] : []);
         } elseif ($do === 'cancel') {
-            q("DELETE FROM diplomas WHERE id IN ($inHolder) AND sent_at IS NULL", $ids);
+            q("DELETE FROM diplomas WHERE id IN ($inHolder) AND sent_at IS NULL
+                                        AND COALESCE(kind,'digital') <> 'original'", $ids);
             audit('dispatch_cancel', 'diploma', $ids[0] ?? 0, ['app' => $appG, 'count' => count($ids)]);
             disp_done(true, 'Плановая отправка дипломов заявки отменена.', ['remove' => true]);
         } elseif ($do === 'dip_save') {

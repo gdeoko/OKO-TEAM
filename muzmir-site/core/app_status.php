@@ -176,8 +176,15 @@ function app_state(array $app, bool $forAdmin = false): array {
     if ($appId && function_exists('all')) {
         try {
             $out['diplomas'] = all(
+                /* Печатный бланк (kind='original') в этот список не идёт: здесь
+                 * считается ЭЛЕКТРОННАЯ выдача — что уже ушло письмом и что ещё
+                 * ждёт срока. Печатный письмом не уходит, и в кабинете он
+                 * выглядел бы как файл, который человеку задолжали, хотя он
+                 * покупал бумагу. Судьба печатного видна в разделе оригиналов
+                 * и в реестре /verify. */
                 "SELECT id, number, type, result, pdf_path, scheduled_at, sent_at
                    FROM diplomas WHERE application_id=?
+                    AND COALESCE(kind,'digital') <> 'original'
                   ORDER BY CASE type WHEN 'main' THEN 1 WHEN 'extra' THEN 2 WHEN 'named' THEN 3
                                      WHEN 'thanks' THEN 4 ELSE 5 END, id",
                 [$appId]

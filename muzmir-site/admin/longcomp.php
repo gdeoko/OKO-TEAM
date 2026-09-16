@@ -40,7 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($do === 'delete' && $aid) {
         q("DELETE FROM applications WHERE id=? AND competition_id=?", [$aid, $cid]);
-        q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$aid]);
+        /* Печатный бланк из реестра не вычёркиваем: он уже напечатан и на руках,
+         * а без записи QR с него ведёт в «документ не найден». */
+        q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL
+                                  AND COALESCE(kind,'digital') <> 'original'", [$aid]);
         audit('longcomp_delete', 'application', $aid, ['competition' => $cid]);
         flash('Заявка удалена.', 'success');
         admin_redirect('longcomp', ['competition' => $cid]);

@@ -56,8 +56,14 @@ $q = trim((string) input('q'));
 $f = (string) input('f') ?: ($q !== '' ? 'all' : 'pending');   // pending | sent | all
 if (!in_array($f, ['pending', 'sent', 'all'], true)) $f = 'pending';
 
-// Все электронные документы с данными заявки и конкурса.
-$w = "1=1"; $args = [];
+/* ЭЛЕКТРОННЫЕ — ЗДЕСЬ, ПЕЧАТНЫЕ — В ОРИГИНАЛАХ. НЕ СМЕШИВАТЬ.
+ *
+ * Печатный бланк тоже стоит в реестре (иначе QR с него не проверяется), но
+ * этому разделу он чужой: письмом он не уходит, срока письма у него нет, и в
+ * состоянии он показывался как «Без срока» — при том, что документ давно
+ * напечатан и вручён. А кнопка «Отправить сейчас» отправила бы человеку файл,
+ * которого он не покупал. Место печатного — раздел оригиналов. */
+$w = "COALESCE(d.kind,'digital') <> 'original'"; $args = [];
 if ($f === 'pending') $w .= " AND (d.sent_at IS NULL OR d.sent_at='')";
 if ($f === 'sent')    $w .= " AND d.sent_at IS NOT NULL AND d.sent_at<>''";
 if ($q !== '') {
@@ -145,12 +151,16 @@ if ($groups) {
 // Счётчики вкладок считаем ТЕМ ЖЕ запросом, что и список — с JOIN на заявки.
 // Иначе дипломы, чья заявка удалена, попадали в счётчик, но не в список, и вкладка
 // показывала «В изготовлении · 12» при пустом списке.
+// Печатные из счёта исключены той же меркой, что и из списка: иначе вкладка
+// обещает работу, которой в этом разделе нет.
 $cntPending = (int) (scalar("SELECT COUNT(DISTINCT d.application_id) FROM diplomas d
                              JOIN applications a ON a.id = d.application_id
-                            WHERE d.sent_at IS NULL OR d.sent_at=''") ?? 0);
+                            WHERE COALESCE(d.kind,'digital') <> 'original'
+                              AND (d.sent_at IS NULL OR d.sent_at='')") ?? 0);
 $cntSent    = (int) (scalar("SELECT COUNT(DISTINCT d.application_id) FROM diplomas d
                              JOIN applications a ON a.id = d.application_id
-                            WHERE d.sent_at IS NOT NULL AND d.sent_at<>''") ?? 0);
+                            WHERE COALESCE(d.kind,'digital') <> 'original'
+                              AND d.sent_at IS NOT NULL AND d.sent_at<>''") ?? 0);
 // Дипломы-сироты (заявка удалена) — чинить нечего, но админ должен о них знать.
 $cntOrphan  = (int) (scalar("SELECT COUNT(*) FROM diplomas d
                               WHERE NOT EXISTS (SELECT 1 FROM applications a WHERE a.id = d.application_id)") ?? 0);

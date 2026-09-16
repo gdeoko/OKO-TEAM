@@ -132,8 +132,16 @@ function dops_ensure_queue_col(): void {
 }
 
 /** Все дипломы заявки (осн./доп./именной/благодарность) в порядке показа. */
+/* ТОЛЬКО ТО, ЧТО УХОДИТ ПИСЬМОМ.
+ *
+ * Отсюда собирается письмо участнику, поэтому печатный бланк (kind='original')
+ * сюда не попадает: человек заплатил за бумагу, а не за файл, и слать ему PDF
+ * мы не вправе. Заодно без этого «Отправить сейчас» считало печатный
+ * неотправленным вечно, а «все документы отправлены» не наступало никогда.
+ * Комбинированный заказ (kind='both') остаётся: у него электронная часть есть. */
 function dops_diplomas(int $appId): array {
-    return all("SELECT * FROM diplomas WHERE application_id=?
+    return all("SELECT * FROM diplomas
+                 WHERE application_id=? AND COALESCE(kind,'digital') <> 'original'
                  ORDER BY CASE type WHEN 'main' THEN 1 WHEN 'extra' THEN 2 WHEN 'named' THEN 3
                                     WHEN 'thanks' THEN 4 ELSE 5 END, id", [$appId]);
 }
