@@ -68,6 +68,38 @@ const PROMPT = <<<'TXT'
 непонятен.
 TXT;
 
+/**
+ * СОХРАНИТЬ РАЗБОР, НЕ ПОТЕРЯВ НИ УЖЕ РАЗОБРАННОЕ, НИ ЕЩЁ НЕ ТРОНУТОЕ.
+ *
+ * В файле всегда лежат ВСЕ письма: разобранные — с вердиктом, остальные — с
+ * пометкой «не прочитано». Иначе следующий проход не знает, сколько работы
+ * осталось, а владелец по файлу не видит полной картины.
+ *
+ * @param string $out    путь к файлу
+ * @param array  $report что разобрано в этом проходе (по порядку)
+ * @param array  $done   что было разобрано раньше (id => запись)
+ * @param array  $rows   все письма из базы
+ */
+function ml_save(string $out, array $report, array $done, array $rows): void
+{
+    $byId = [];
+    foreach ($done as $id => $row)  $byId[(int) $id] = $row;
+    foreach ($report as $row)       $byId[(int) ($row['id'] ?? 0)] = $row;
+
+    $all = [];
+    foreach ($rows as $r) {
+        $id = (int) $r['id'];
+        $all[] = $byId[$id] ?? ['id' => $id, 'region' => (string) $r['region'],
+                                'title' => (string) $r['title'], 'support' => 'не прочитано'];
+    }
+    // Пишем через временный файл: обрыв на середине записи не должен оставить
+    // за собой обрезанный JSON, который следующий проход прочитает как пустой.
+    $tmp = $out . '.tmp';
+    if (@file_put_contents($tmp, json_encode($all, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)) !== false) {
+        @rename($tmp, $out);
+    }
+}
+
 $where = $only ? ('WHERE id IN (' . implode(',', $only) . ')') : '';
 $rows  = all("SELECT id, region, title, letter_date, source_email, image_path, file_path
                 FROM ministry_letters $where ORDER BY id");
@@ -86,6 +118,8 @@ if (is_file($out)) {
     if ($done) echo 'уже разобрано ранее: ' . count($done) . "\n";
 }
 $n = ['yes' => 0, 'no' => 0, 'unclear' => 0, 'нет документа' => 0, 'не прочитано' => 0];
+$blank = 0;          // пустых ответов подряд
+$stoppedEarly = false;
 
 foreach ($rows as $r) {
     if (isset($done[(int) $r['id']])) { $report[] = $done[(int) $r['id']]; $n[(string) $done[(int) $r['id']]['support']] = ($n[(string) $done[(int) $r['id']]['support']] ?? 0) + 1; continue; }
@@ -129,9 +163,23 @@ foreach ($rows as $r) {
         $report[] = ['id' => (int) $r['id'], 'region' => (string) $r['region'],
                      'title' => (string) $r['title'], 'support' => 'не прочитано', 'raw' => mb_substr($ans, 0, 200)];
         printf("#%-4d %-14s %s\n", $r['id'], 'не прочитано', mb_substr((string) $r['region'], 0, 34));
+        /* КОНЧИЛАСЬ СУТОЧНАЯ КВОТА — ВЫХОДИМ, А НЕ МОЛОТИМ ВХОЛОСТУЮ.
+         *
+         * После исчерпания квоты модель не отвечает ни на одно письмо, а каждая
+         * попытка стоит трёх заходов с двадцатисекундным отдыхом. Сотня
+         * оставшихся писем — это час бессмысленной работы, и всё это время
+         * разобранное не сохранено. Десять пустых ответов подряд означают не
+         * десять нечитаемых сканов, а закрытую дверь: останавливаемся и
+         * говорим об этом вслух. */
+        if (++$blank >= 10) {
+            echo "\nквота на сегодня исчерпана (10 пустых ответов подряд) — останавливаюсь\n";
+            $stoppedEarly = true;
+            break;
+        }
         usleep(400000);
         continue;
     }
+    $blank = 0;
 
     $sup = (string) ($j['support'] ?? 'unclear');
     if (!isset($n[$sup])) $sup = 'unclear';
@@ -146,10 +194,25 @@ foreach ($rows as $r) {
     printf("#%-4d %-14s %-34s %s\n", $r['id'], $sup, mb_substr((string) $r['region'], 0, 34),
            mb_substr((string) ($j['what'] ?? ''), 0, 90));
 
+    /* ПИШЕМ ПОСЛЕ КАЖДОГО ПИСЬМА, А НЕ В КОНЦЕ.
+     *
+     * Разбор идёт часами и упирается то в квоту, то в перезапуск. Файл
+     * сохранялся один раз, последней строкой — и всё разобранное за проход
+     * пропадало, если процесс не доживал до неё. Так 16 сентября сгорели
+     * прежние сорок писем. Запись дешёвая, письмо — нет. */
+    ml_save($out, $report, $done, $rows);
+
     sleep(5);                       // ~12 запросов в минуту — в пределах бесплатной квоты
 }
 
-file_put_contents($out, json_encode($report, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+ml_save($out, $report, $done, $rows);
 echo "\nИТОГО: ";
 foreach ($n as $k => $v) echo "$k $v; ";
 echo "\nразбор: $out\n";
+if ($stoppedEarly) {
+    $left = 0;
+    foreach (json_decode((string) @file_get_contents($out), true) ?: [] as $x) {
+        if ((string) ($x['support'] ?? '') === 'не прочитано') $left++;
+    }
+    echo "осталось разобрать: $left — продолжить завтра, квота суточная\n";
+}
