@@ -20,9 +20,9 @@ const DEMO = {
   feed: [
     {
       type: 'lesson', n: 1, label: 'Новый урок',
-      coverImg: 'assets/img/lessons/l1.jpg',
-      title: 'Урок 1. Пророчества; почему Господь родился на земле',
-      meta: 'Глава 1 «Жизнь Господа» · читаем и слушаем',
+      coverImg: 'assets/img/lessons/reading/l1_1.jpg',
+      title: 'Урок 1. Почему Господь родился на земле',
+      meta: 'Глава 1 «Жизнь Господа» · читаем и выполняем задание',
       progress: 40, likes: 24, comments: 7,
     },
     {
@@ -485,13 +485,13 @@ const STORIES_CONTENT = [
         title: 'Добро пожаловать в Метанойю!',
         sub: 'Я Екатерина — педагог школы. Рада каждой семье. Начинаем путь вместе — с Богом.' },
       { bg: 'cream', title: 'Первый урок ждёт вас',
-        sub: '«Пророчества: почему Господь родился на земле». Слушайте голосом или читайте.' },
+        sub: '«Почему Господь родился на земле». Читайте вместе с ребёнком.' },
     ],
   },
   { // Анонс урока
     slides: [
-      { img: 'assets/img/covers/lesson-1.jpg', overlay: true,
-        title: 'Урок 1 уже открыт', sub: '«Пророчества» — начни путешествие с первого урока.' },
+      { img: 'assets/img/lessons/reading/l1_1.jpg', overlay: true,
+        title: 'Урок 1 уже открыт', sub: '«Почему Господь родился на земле» — начни путешествие с первого урока.' },
     ],
   },
   { // Мотивация
@@ -742,7 +742,7 @@ const SR_GAME_OPEN = {
   'Давид и Голиаф': openDavid, 'Ноев Ковчег': openArk,
 };
 const SR_LESSON_N = {
-  'Пророчества; почему Господь родился на земле': 1, 'Рождение Иоанна Крестителя': 2,
+  'Почему Господь родился на земле': 1, 'Рождение Иоанна Крестителя': 2,
   'Рождение Господа': 3, 'Призвание Аврама': 71,
 };
 function openSearchResult(it) {
@@ -1637,21 +1637,42 @@ function wirePager() {
   const track = pager.querySelector('.lp-track');
   const dots = Array.prototype.slice.call(pager.querySelectorAll('.lp-dot'));
   const cur = pager.querySelector('#lpCur');
+  const prev = pager.querySelector('.lp-btn[data-dir="-1"]');
+  const next = pager.querySelector('.lp-btn[data-dir="1"]');
   const total = dots.length || 1;
   const idx = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
   const upd = () => {
     const i = Math.min(total - 1, Math.max(0, idx()));
     if (cur) cur.textContent = i + 1;
-    dots.forEach((d, j) => d.classList.toggle('on', j === i));
+    dots.forEach((d, j) => { d.classList.toggle('on', j === i); d.setAttribute('aria-current', j === i ? 'true' : 'false'); });
+    if (prev) prev.disabled = i <= 0;
+    if (next) next.disabled = i >= total - 1;
+  };
+  const goto = (i) => {
+    i = Math.min(total - 1, Math.max(0, i));
+    if (cur) cur.textContent = i + 1;                 // мгновенно, не ждём конца прокрутки
+    track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
   };
   track.addEventListener('scroll', () => { clearTimeout(track._t); track._t = setTimeout(upd, 60); }, { passive: true });
-  pager.querySelectorAll('.lp-btn').forEach((b) => b.addEventListener('click', () => {
-    const i = Math.min(total - 1, Math.max(0, idx() + Number(b.dataset.dir)));
-    track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
-  }));
-  dots.forEach((d) => d.addEventListener('click', () => {
-    track.scrollTo({ left: Number(d.dataset.to) * track.clientWidth, behavior: 'smooth' });
-  }));
+  if (prev) prev.addEventListener('click', () => goto(idx() - 1));
+  if (next) next.addEventListener('click', () => goto(idx() + 1));
+  dots.forEach((d) => d.addEventListener('click', () => goto(Number(d.dataset.to))));
+  // стрелки клавиатуры, пока открыт экран урока с читалкой
+  if (!window.__lpKeys) {
+    window.__lpKeys = true;
+    document.addEventListener('keydown', (e) => {
+      const pg = document.getElementById('lessonPager');
+      const scr = document.querySelector('.screen--active');
+      if (!pg || !scr || scr.dataset.screen !== 'lesson') return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const tr = pg.querySelector('.lp-track');
+        const i = Math.round(tr.scrollLeft / Math.max(1, tr.clientWidth)) + (e.key === 'ArrowRight' ? 1 : -1);
+        const n = pg.querySelectorAll('.lp-dot').length || 1;
+        tr.scrollTo({ left: Math.min(n - 1, Math.max(0, i)) * tr.clientWidth, behavior: 'smooth' });
+      }
+    });
+  }
+  upd();
 }
 
 function renderLesson(n) {
@@ -1689,7 +1710,7 @@ function renderLesson(n) {
     <div class="feed-card__cover feed-card__cover--img lesson-cover">
       <img src="${cover}" alt="" onerror="this.onerror=null;this.src='${coverAlt}'"></div>
     <h1 class="screen-title" style="margin-top:14px">Урок ${cn}. ${title}</h1>
-    <div class="feed-card__meta">${meta.block.title} · читаем, слушаем, выполняем задание</div>
+    <div class="feed-card__meta">${meta.block.title} · ${c && c.needsVoice ? 'читаем и выполняем задание' : 'читаем, слушаем, выполняем задание'}</div>
 
     ${c && c.needsVoice ? '' : `<button class="lesson-voice" id="lessonVoice" data-src="${lessonAudio(n)}">
       <span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать урок голосом Екатерины</button>`}

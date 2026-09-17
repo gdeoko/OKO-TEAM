@@ -2873,6 +2873,7 @@ html.в-телеграме .hd { padding-top: 6px; }
   display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
 }
 .lp-btn:active { transform: scale(.94); }
+.lp-btn:disabled { opacity: .32; cursor: default; pointer-events: none; }
 .lp-dots { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 60%; }
 .lp-dot {
   width: 8px; height: 8px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
