@@ -4189,7 +4189,7 @@ function setPut(k, v) { localStorage.setItem('mt_set_' + k, v ? '1' : '0'); }
 function openAbout() {
   $('#aboutBody').innerHTML = `
     <div class="about-hero">
-      <img class="about-hero__bg" src="assets/img/covers/lesson-1.jpg" alt="">
+      <img class="about-hero__bg" src="assets/img/lessons/reading/l1_1.jpg" alt="">
       <div class="about-hero__scrim"></div>
       <div class="about-hero__inner">
         <div class="about-hero__eyebrow">Христианская онлайн-школа</div>
