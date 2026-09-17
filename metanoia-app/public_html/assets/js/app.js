@@ -59,20 +59,20 @@ const DEMO = {
     {
       title: 'Глава 1 · Новый Завет «Жизнь Господа»', range: 'уроки 1–35', award: '«Ученик Господа»',
       lessons: [
-        { n: 1, cn: 1, title: "Пророчества; почему Господь родился на земле", state: 'open' },
+        { n: 1, cn: 1, title: "Почему Господь родился на земле", state: 'open' },
         { n: 2, cn: 2, title: "Рождение Иоанна Крестителя", state: 'locked' },
         { n: 3, cn: 3, title: "Рождение Господа", state: 'locked' },
         { n: 4, cn: 4, title: "Поклонение волхвов", state: 'locked' },
-        { n: 5, cn: 5, title: "Отрок Иисус поражает учёных", state: 'locked' },
+        { n: 5, cn: 5, title: "Иисус удивляет учителей", state: 'locked' },
         { n: 6, cn: 6, title: "Крещение Господа", state: 'locked' },
         { n: 7, cn: 7, title: "Первые ученики", state: 'locked' },
-        { n: 8, cn: 8, title: "Чудо в Кане (превращение воды в вино)", state: 'locked' },
-        { n: 9, cn: 9, title: "Купальня Вифезда", state: 'locked' },
-        { n: 10, cn: 10, title: "Избрание двенадцати апостолов", state: 'locked' },
-        { n: 11, cn: 11, title: "Нагорная проповедь: как молиться", state: 'locked' },
-        { n: 12, cn: 12, title: "Нагорная проповедь: не заботьтесь ни о чём", state: 'locked' },
-        { n: 13, cn: 13, title: "Нагорная проповедь: дом, построенный на камне", state: 'locked' },
-        { n: 14, cn: 14, title: "Господь исцеляет прокажённого и слугу", state: 'locked' },
+        { n: 8, cn: 8, title: "Чудо в Кане", state: 'locked' },
+        { n: 9, cn: 9, title: "У купальни Вифезда", state: 'locked' },
+        { n: 10, cn: 10, title: "Двенадцать имён", state: 'locked' },
+        { n: 11, cn: 11, title: "Молитва без зрителей", state: 'locked' },
+        { n: 12, cn: 12, title: "Птицы, цветы и завтрашний день", state: 'locked' },
+        { n: 13, cn: 13, title: "Дом, который устоял", state: 'locked' },
+        { n: 14, cn: 14, title: "Прикосновение и одно слово", state: 'locked' },
         { n: 15, cn: 15, title: "Вдова из Наина", state: 'locked' },
         { n: 16, cn: 16, title: "Притча о сеятеле", state: 'locked' },
         { n: 17, cn: 17, title: "Воскрешение дочери Иаира", state: 'locked' },
@@ -1553,7 +1553,8 @@ function isLessonOpen(n) {
 /* Картинки урока: своя обложка и иллюстрации по ходу текста.
    Файла нет — тег снимается, на его месте ничего не остаётся. */
 function lessonCover(n) {
-  const meta = lessonMeta(n);
+  const c = lessonContent(n);
+  if (c && c.cover) return c.cover;          // авторская обложка урока (материал Екатерины)
   return `assets/img/lessons/l${n}.jpg`;
   // запасной путь до обложки главы подставляет onerror в разметке
 }
@@ -1561,7 +1562,15 @@ function lessonCoverFallback(n) {
   const meta = lessonMeta(n);
   return `assets/img/chapters/ch${meta ? meta.bi + 1 : 1}.jpg`;
 }
-function lessonPic(n) { return `assets/img/lessons/l${n}-a.jpg`; }
+function lessonPic(n) {
+  const c = lessonContent(n);
+  if (c && c.pages && c.pages.length) {           // урок Екатерины: берём её иллюстрацию из рассказа
+    const p = c.pages.find((x) => x.img);
+    if (p && p.img) return p.img;
+    if (c.cover) return c.cover;
+  }
+  return `assets/img/lessons/l${n}-a.jpg`;
+}
 function lessonAudio(n) { return `assets/audio/lessons/l${n}.mp3`; }
 
 /* Ближайший урок ребёнка: начатый, иначе первый непройденный */
@@ -1602,6 +1611,49 @@ function openLesson(n) {
   window.scrollTo({ top: 0 });
 }
 
+/* Иллюстрированная читалка урока: одна история, страница за страницей,
+   картинка Екатерины и её текст. Листается свайпом, стрелками и точками. */
+function lessonPagerHTML(pages) {
+  const slides = pages.map((p, i) => `
+    <figure class="lp-slide" data-i="${i}">
+      ${p.img ? `<img class="lp-img" src="${p.img}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+      <figcaption class="lp-text">${p.text}</figcaption>
+    </figure>`).join('');
+  const dots = pages.map((_, i) => `<button class="lp-dot${i === 0 ? ' on' : ''}" data-to="${i}" aria-label="Страница ${i + 1}"></button>`).join('');
+  return `<div class="lesson-pager" id="lessonPager">
+    <div class="lp-track">${slides}</div>
+    <div class="lp-nav">
+      <button class="lp-btn" data-dir="-1" aria-label="Предыдущая страница">‹</button>
+      <div class="lp-dots">${dots}</div>
+      <button class="lp-btn" data-dir="1" aria-label="Следующая страница">›</button>
+    </div>
+    <div class="lp-count"><span id="lpCur">1</span> / ${pages.length}</div>
+  </div>`;
+}
+
+function wirePager() {
+  const pager = document.getElementById('lessonPager');
+  if (!pager) return;
+  const track = pager.querySelector('.lp-track');
+  const dots = Array.prototype.slice.call(pager.querySelectorAll('.lp-dot'));
+  const cur = pager.querySelector('#lpCur');
+  const total = dots.length || 1;
+  const idx = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  const upd = () => {
+    const i = Math.min(total - 1, Math.max(0, idx()));
+    if (cur) cur.textContent = i + 1;
+    dots.forEach((d, j) => d.classList.toggle('on', j === i));
+  };
+  track.addEventListener('scroll', () => { clearTimeout(track._t); track._t = setTimeout(upd, 60); }, { passive: true });
+  pager.querySelectorAll('.lp-btn').forEach((b) => b.addEventListener('click', () => {
+    const i = Math.min(total - 1, Math.max(0, idx() + Number(b.dataset.dir)));
+    track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+  }));
+  dots.forEach((d) => d.addEventListener('click', () => {
+    track.scrollTo({ left: Number(d.dataset.to) * track.clientWidth, behavior: 'smooth' });
+  }));
+}
+
 function renderLesson(n) {
   const meta = lessonMeta(n);
   const c = lessonContent(n);
@@ -1639,8 +1691,8 @@ function renderLesson(n) {
     <h1 class="screen-title" style="margin-top:14px">Урок ${cn}. ${title}</h1>
     <div class="feed-card__meta">${meta.block.title} · читаем, слушаем, выполняем задание</div>
 
-    <button class="lesson-voice" id="lessonVoice" data-src="${lessonAudio(n)}">
-      <span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать урок голосом Екатерины</button>
+    ${c && c.needsVoice ? '' : `<button class="lesson-voice" id="lessonVoice" data-src="${lessonAudio(n)}">
+      <span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать урок голосом Екатерины</button>`}
 
     <div class="lesson-steps" id="lessonSteps">
       <div class="lstep ${st.read ? 'done' : ''}" data-step="read"><i></i>Прочитано</div>
@@ -1650,14 +1702,16 @@ function renderLesson(n) {
 
     ${c && c.intro ? `<div class="card lesson-text lesson-intro"><p>${c.intro}</p></div>` : ''}
 
+    ${c && c.subtitle ? `<div class="lesson-epigraph">${c.subtitle}</div>` : ''}
+
     <h2 class="section-title">Цитата из Писания</h2>
     <article class="card feed-card feed-card--quote">
       <div class="feed-card__title">«${verse.text}»</div>
       <div class="quote-ref">${verse.ref}</div>
     </article>
 
-    <h2 class="section-title">Детский пересказ</h2>
-    <div class="card lesson-text lesson-story">${рассказ}</div>
+    <h2 class="section-title">${c && c.pages ? 'Урок' : 'Детский пересказ'}</h2>
+    ${c && c.pages && c.pages.length ? lessonPagerHTML(c.pages) : `<div class="card lesson-text lesson-story">${рассказ}</div>`}
 
     ${c && c.golden ? `<div class="card lesson-golden">${ICON('sparkle', 18)}<span>${c.golden}</span></div>` : ''}
 
@@ -1696,6 +1750,7 @@ function renderLesson(n) {
   `;
 
   hydrateIcons();
+  wirePager();
   wireLesson(n, quiz, task);
   renderLessonFinal(n);
 }
@@ -3494,7 +3549,7 @@ function openReader(n) {
   const scripture = c.verse ? `<div class="scripture">${c.verse.text}<cite>${c.verse.ref}</cite></div>` : '';
 
   // В книге картинки идут по ходу текста, а озвучки нет: это чтение глазами
-  const картинка = (i) => `<figure class="lesson-pic"><img src="${lessonPic(n, i)}" alt="" loading="lazy"
+  const картинка = (i) => `<figure class="lesson-pic"><img src="${lessonPic(n, i)}" alt=""
       onerror="this.closest('.lesson-pic').remove()"></figure>`;
   const абзацы = c.story || [];
   const местоКартинки = Math.min(2, Math.max(0, абзацы.length - 1));
