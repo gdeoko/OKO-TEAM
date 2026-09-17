@@ -10,8 +10,8 @@ await p.waitForSelector('.splash--hide',{timeout:20000}).catch(()=>{});
 await p.waitForTimeout(600);
 // следим за создаваемыми на лету плеерами
 await p.evaluate(()=>{ window.__плееры=[]; const O=window.Audio; window.Audio=function(s){ const a=new O(s); window.__плееры.push(a); return a; }; });
-await p.click('.nav__tab[data-tab="lessons"]'); await p.waitForTimeout(400);
-await p.click('.lesson-item'); await p.waitForTimeout(800);
+// урок 20 идёт на нашем тексте, его озвучка на месте (у 1-14 кнопки нет намеренно)
+await p.evaluate(()=>openLesson(20)); await p.waitForTimeout(800);
 console.log('АДРЕС В КНОПКЕ: ' + await p.$eval('#lessonVoice', e=>e.dataset.src));
 await p.click('#lessonVoice');
 await p.waitForTimeout(3500);
