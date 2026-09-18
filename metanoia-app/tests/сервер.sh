@@ -41,6 +41,10 @@ s = s.replace('DB_NAME=metanoia', 'DB_NAME=metanoya')
 s = s.replace('DB_USER=', 'DB_USER=mt', 1).replace('DB_PASS=', 'DB_PASS=mt', 1)
 s = re.sub(r'^APP_ORIGIN=.*$', 'APP_ORIGIN=http://127.0.0.1:8777', s, flags=re.M)
 s = re.sub(r'^JWT_SECRET=.*$', 'JWT_SECRET=' + secrets.token_hex(32), s, flags=re.M)
+# Вход по подписи Телеграма сервер проверяет ключом бота. Настоящий ключ
+# школы сюда не тащим: берём выдуманный, но один и тот же для сервера и
+# для проверки, этого хватает, чтобы пройти весь круг подписи честно.
+s = re.sub(r'^TELEGRAM_BOT_TOKEN=.*$', 'TELEGRAM_BOT_TOKEN=111222333:PROVERKA-metanoya-test-bot-token', s, flags=re.M)
 open(root + '/config/.env', 'w').write(s)
 PY
 
@@ -71,6 +75,11 @@ if ! curl -s -o /dev/null "http://127.0.0.1:8777/index.html"; then
   ( cd "$ROOT/public_html" && setsid python3 -m http.server 8777 >/dev/null 2>&1 & )
   for i in $(seq 1 10); do curl -s -o /dev/null "http://127.0.0.1:8777/index.html" && break; sleep 1; done
 fi
+
+# Подпись входа в мини-приложение Телеграма: собираем сами тем же ключом,
+# что лежит в .env. Раньше она бралась из файла, положенного руками, и на
+# новой машине проверка просто падала, хотя приложение было в порядке.
+python3 podpis-tg.py || { say "подпись Телеграма не собралась"; exit 1; }
 
 rm -rf /tmp/metanoia-rl     # счётчик попыток входа, иначе наши же проверки его выбирают
 
