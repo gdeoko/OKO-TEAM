@@ -83,7 +83,11 @@ if (is_file(BASE_PATH . '/core/text_format.php')) require_once BASE_PATH . '/cor
 // Солист ИЛИ коллектив — строго одно из двух. При коллективе ФИО НЕ вносится, и наоборот.
 $isGroup = (int) (input('is_group') ? 1 : 0);
 $groupRaw = trim((string) input('group_name'));
-$fioRaw   = function_exists('v_fio') ? v_fio(input('full_name')) : trim((string) input('full_name'));
+/* Имя приводим мягко: кавычки, инициалы и латиница остаются на месте.
+ * v_fio() вырезала всё, кроме кириллицы, и название коллектива, вписанное
+ * в это поле, приходило искалеченным уже с формы. */
+require_once BASE_PATH . '/core/app_fields.php';
+$fioRaw   = app_person_normalize((string) input('full_name'));
 
 if ($isGroup) {
     // Коллектив: имя коллектива в «ёлочках», ФИО очищаем.

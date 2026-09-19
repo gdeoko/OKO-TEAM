@@ -48,7 +48,8 @@ foreach (array_values($rowsIn) as $i => $r) {
     if (!is_array($r)) continue;
     $rowNum = $i + 1;
     $fullNameRaw = trim((string) ($r['full_name'] ?? ''));
-    $fullName = function_exists('v_fio') && $fullNameRaw !== '' ? v_fio($fullNameRaw) : $fullNameRaw;
+    require_once BASE_PATH . '/core/app_fields.php';   // общие правила приведения полей
+    $fullName = $fullNameRaw !== '' ? app_person_normalize($fullNameRaw) : $fullNameRaw;
     if (mb_strlen($fullName) < 3) {
         $errors[] = ['row' => $rowNum, 'message' => 'Не указано или некорректно ФИО ученика']; continue;
     }

@@ -211,9 +211,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     // Аудит только реально изменившихся полей.
     $changed = [];
     foreach ($data as $k => $v) if ((string)($cur[$k] ?? '') !== (string)$v) $changed[$k] = $v;
-    audit('application_edit', 'application', $id, ['changed' => array_keys($changed)]);
+    /* «ИЗМЕНЕНИЙ НЕТ» — САМЫЙ ОБМАНЧИВЫЙ ОТВЕТ АДМИНКИ.
+     *
+     * Поля приводятся к принятому виду, и бывает, что вписанное после этого
+     * совпадает с прежним значением: правка выглядит как потерянная, человек
+     * жмёт «Сохранить» ещё и ещё. Говорим прямо, какое поле и во что свёрнуто,
+     * чтобы не гадать. */
+    $kept = [];
+    foreach ($data as $k => $v) {
+        $in0 = trim((string) ($in[$k] ?? ''));
+        if (!isset($changed[$k]) && $in0 !== '' && $in0 !== (string) $v) $kept[] = $k;
+    }
+    audit('application_edit', 'application', $id, ['changed' => array_keys($changed), 'kept' => $kept]);
+    $note = '';
+    if (!$changed && $kept) {
+        $note = ' Вписанное приведено к принятому виду и совпало с прежним значением ('
+              . implode(', ', $kept) . ').';
+    }
     flash(($changed ? 'Данные заявки обновлены (' . count($changed) . ').' : 'Изменений нет.')
-          . ($dmsg !== '' ? ' ' . $dmsg : ''), $changed ? 'success' : 'info');
+          . $note . ($dmsg !== '' ? ' ' . $dmsg : ''), $changed ? 'success' : 'info');
     admin_redirect('applications', ['id' => $id]);
 }
 

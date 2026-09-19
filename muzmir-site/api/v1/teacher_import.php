@@ -73,7 +73,8 @@ foreach ($lines as $i => $row) {
     $videoRaw = trim((string) ($row[3] ?? ''));
     // Дата рождения из импортируемого файла больше не нужна — оставляем только категорию.
 
-    $fullName = function_exists('v_fio') && $fullNameRaw !== '' ? v_fio($fullNameRaw) : $fullNameRaw;
+    require_once BASE_PATH . '/core/app_fields.php';   // общие правила приведения полей
+    $fullName = $fullNameRaw !== '' ? app_person_normalize($fullNameRaw) : $fullNameRaw;
     if (mb_strlen($fullName) < 3) {
         $errors[] = ['row' => $rowNum, 'message' => 'Не указано или некорректно ФИО ученика'];
         continue;
