@@ -199,6 +199,26 @@ class Каталог(unittest.TestCase):
             self.assertGreaterEqual(len(c.scenes), 3,
                                     f"{раздел}/{кат}: меньше трёх сценариев")
 
+    def test_кнопки_бота_ведут_туда_куда_написано(self):
+        """Кнопку рисует bot.py, а разбирает он же по префиксу. Разойдутся —
+        человек нажмёт и не получит ничего, и молча."""
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        разделы = {b["callback_data"] for r in bot.MENU["inline_keyboard"]
+                   for b in r if b["callback_data"].startswith("s:")}
+        self.assertEqual(разделы, {f"s:{s.key}" for s in catalog.SECTIONS})
+        for sec in catalog.SECTIONS:
+            for r in bot.cats_kb(sec)["inline_keyboard"]:
+                d = r[0]["callback_data"]
+                if d.startswith("c:"):
+                    _, sk, ck = d.split(":", 2)
+                    catalog.category(sk, ck)          # упадёт, если разошлось
+            for cat in sec.cats:
+                for r in bot.scenes_kb(sec, cat)["inline_keyboard"]:
+                    for b in r:
+                        if b["callback_data"].startswith("sc:"):
+                            catalog.scene(b["callback_data"][3:])
+
     def test_неизвестное_падает_явно(self):
         with self.assertRaises(KeyError):
             catalog.scene("нет-такого")

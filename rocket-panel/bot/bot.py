@@ -16,6 +16,7 @@ import os, sys, time, json, uuid, threading, traceback
 import requests
 
 import pricing
+import catalog
 from store import Store, NotEnoughTokens
 from gpu import Gpu, GpuError
 
@@ -74,11 +75,24 @@ def kb(rows):
 
 # ---------- экраны ----------
 
-MENU = kb([
-    [("Фото", "m:photo"), ("Фото по образцу", "m:photo_ref")],
-    [("Ролик", "m:video"), ("Оживить фото", "m:animate")],
-    [("Баланс", "m:balance"), ("Пополнить", "m:buy")],
-])
+# Каталог стоит первым нарочно: описывать сцену словами умеет
+# меньшинство, а платят все. Свой промпт остаётся рядом и бесплатно —
+# у конкурента он заперт за подпиской.
+MENU = kb(
+    [[(s.title, f"s:{s.key}")] for s in catalog.SECTIONS] +
+    [[("Свой промпт — фото", "m:photo"), ("Свой промпт — ролик", "m:video")],
+     [("Баланс", "m:balance"), ("Пополнить", "m:buy")]]
+)
+
+
+def cats_kb(sec):
+    return kb([[(c.button(), f"c:{sec.key}:{c.key}")] for c in sec.cats] +
+              [[("Назад", "m:menu")]])
+
+
+def scenes_kb(sec, cat):
+    return kb([[(sc.button(), f"sc:{sc.key}")] for sc in cat.scenes] +
+              [[("К категориям", f"s:{sec.key}"), ("Меню", "m:menu")]])
 
 
 def greet(u):
@@ -237,8 +251,8 @@ def on_text(chat, u, text):
 
 def on_photo(chat, u, file_id):
     st = waiting.get(u)
-    if not st or st["kind"] not in ("photo_ref", "animate"):
-        send(chat, "Если хочешь работать с этим фото — выбери «Фото по образцу» или «Оживить фото».", MENU)
+    if not st:
+        send(chat, "Сначала выбери сценарий или режим.", MENU)
         return
     f = tg("getFile", file_id=file_id).get("result", {})
     path = f.get("file_path")
@@ -252,6 +266,14 @@ def on_photo(chat, u, file_id):
         send(chat, f"Не приняла фото: {str(e)[:150]}")
         return
     st["photo"] = name
+
+    # Пришли из каталога — промпт уже готов, спрашивать нечего.
+    if st.get("scene"):
+        waiting.pop(u, None)
+        sc = catalog.scene(st["scene"])
+        launch(chat, u, sc.job, sc.prompt, name)
+        return
+
     waiting[u] = st
     send(chat, "Фото принято. Теперь напиши, что с ним сделать — по-английски.")
 
@@ -309,6 +331,33 @@ def on_callback(cb):
                    f"· {s['tokens']} жетонов в запас\n"
                    "<i>Жетоны запаса действуют, пока идёт подписка.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
+        return
+
+    if data.startswith("s:"):
+        answer(cid)
+        sec = catalog.section(data.split(":", 1)[1])
+        send(chat, f"<b>{sec.title}</b>\n{sec.note}", cats_kb(sec))
+        return
+
+    if data.startswith("c:"):
+        answer(cid)
+        _, sk, ck = data.split(":", 2)
+        sec, cat = catalog.section(sk), catalog.category(sk, ck)
+        send(chat, f"<b>{cat.title}</b>\nВыбери сценарий — цена на кнопке.",
+             scenes_kb(sec, cat))
+        return
+
+    if data.startswith("sc:"):
+        answer(cid)
+        sc = catalog.scene(data.split(":", 1)[1])
+        есть = store.balance(u)
+        if есть < sc.tokens:
+            send(chat, f"<b>{sc.title}</b> стоит {sc.tokens} жет., "
+                       f"на балансе {есть}.", buy_kb())
+            return
+        waiting[u] = {"kind": sc.job, "scene": sc.key}
+        send(chat, f"<b>{sc.title}</b> — {sc.tokens} жет.\n\n"
+                   "Пришли фото, с которым работаем.")
         return
 
     if data.startswith("m:"):
