@@ -1,6 +1,7 @@
 """Проверки денег. Деньги — единственное, где ошибка стоит дорого."""
 import os, time, tempfile, unittest
 import pricing
+import catalog
 from store import Store, NotEnoughTokens
 
 
@@ -105,14 +106,20 @@ class Цены(unittest.TestCase):
                 pricing.tokens_per_usd(s), лучший_пакет,
                 f"{s['id']}: жетоны по подписке выгоднее пакета — она съест пакеты")
 
-    def test_мы_дешевле_конкурента_по_каждой_подписке(self):
-        """Цены сняты в боте Exclusive AI 20.09.2026. Держимся ниже по
-        всей лестнице, но не обваливаемся: его цены рынком приняты."""
+    def test_каждая_подписка_ровно_на_четверть_дешевле(self):
+        """Обещание владельца: −25 % к конкуренту по КАЖДОМУ тарифу.
+        Цены сняты в боте Exclusive AI 20.09.2026. Допуск только вниз:
+        округление вверх съело бы часть скидки."""
+        порог = 1 - pricing.СКИДКА_К_РЫНКУ
         for s in pricing.SUBS:
             доля = pricing.sub_vs_market(s)
-            self.assertLess(доля, 1.0, f"{s['id']}: мы не дешевле конкурента")
-            self.assertGreater(доля, 0.7,
-                               f"{s['id']}: дешевле конкурента на {(1-доля)*100:.0f}% — перебор")
+            self.assertLessEqual(
+                доля, порог,
+                f"{s['id']}: {s['rub']} ₽ против {s['market_rub']} ₽ — "
+                f"скидка всего {(1-доля)*100:.1f}%")
+            self.assertGreater(
+                доля, порог - 0.02,
+                f"{s['id']}: дешевле на {(1-доля)*100:.1f}% — отдаём лишнее")
 
     def test_длинный_срок_дешевле_в_пересчёте_на_день(self):
         for план in pricing.PLANS:
@@ -132,12 +139,75 @@ class Цены(unittest.TestCase):
         for s in pricing.SUBS:
             self.assertGreaterEqual(s["параллельно"], 2)
             self.assertGreaterEqual(s["макс_сек"], 15)
-            self.assertTrue(s["свой_промпт"])
+            self.assertGreater(s["tokens"], 0)
+
+    def test_у_старшего_плана_есть_своя_причина_существовать(self):
+        """ULTRA дороже PRO втрое, и одной скорости за такие деньги мало.
+        Постоянство лица — то, чего у конкурента нет вовсе."""
+        ultra = [s for s in pricing.SUBS if s["план"] == "ULTRA"]
+        self.assertTrue(all(s["лицо_держится"] for s in ultra))
+        pro = [s for s in pricing.SUBS if s["план"] == "PRO"]
+        self.assertFalse(any(s["лицо_держится"] for s in pro),
+                         "если лицо держится и в PRO, за что брать ULTRA")
 
     def test_подарок_новичку_не_кормит(self):
         """Подарок — попробовать, а не пользоваться бесплатно."""
         self.assertLess(pricing.WELCOME_TOKENS, pricing.job("video_2").tokens,
                         "на подарок не должно хватать ролика")
+
+
+class Каталог(unittest.TestCase):
+    """Каталог — наш ответ на главную находку у конкурента: люди не пишут
+    промпты, они выбирают из списка."""
+
+    def test_ключи_сценариев_не_повторяются(self):
+        """Ключ уходит в callback_data кнопки. Совпадут — человек нажмёт
+        одно, получит другое."""
+        все = [sc.key for s in catalog.SECTIONS for c in s.cats for sc in c.scenes]
+        self.assertEqual(len(все), len(set(все)), "есть одинаковые ключи сценариев")
+        self.assertEqual(len(все), len(catalog.SCENE))
+
+    def test_callback_влезает_в_телеграм(self):
+        """Телеграм режет callback_data на 64 байтах. Длинный ключ молча
+        ломает кнопку — проверяем с запасом на приставку."""
+        for key in catalog.SCENE:
+            данные = f"sc:{key}".encode()
+            self.assertLessEqual(len(данные), 64, f"{key}: callback длиннее 64 байт")
+
+    def test_у_каждого_сценария_есть_цена(self):
+        for key, sc in catalog.SCENE.items():
+            self.assertIn(sc.job, pricing.JOBS, f"{key}: вид генерации не из прайса")
+            self.assertGreater(sc.tokens, 0, f"{key}: нулевая цена")
+
+    def test_цена_стоит_на_каждой_кнопке(self):
+        """Наше отличие от конкурента: он прячет цену до загрузки фото.
+        Если кнопка её потеряет, отличие исчезнет молча."""
+        for key, sc in catalog.SCENE.items():
+            self.assertIn("жет.", sc.button(), f"{key}: на кнопке нет цены")
+            self.assertIn(str(sc.tokens), sc.button(), f"{key}: на кнопке не та цена")
+
+    def test_промпты_на_английском_и_не_пустые(self):
+        """Модель обучена на английском, русский промпт даёт мусор."""
+        for key, sc in catalog.SCENE.items():
+            self.assertGreater(len(sc.prompt), 40, f"{key}: промпт слишком короткий")
+            кириллица = [c for c in sc.prompt if "а" <= c.lower() <= "я"]
+            self.assertFalse(кириллица, f"{key}: в промпте кириллица — {kirill(sc)}")
+
+    def test_в_каждой_категории_есть_что_показать(self):
+        """Пустая категория на витрине хуже её отсутствия."""
+        for (раздел, кат), c in catalog.CATEGORY.items():
+            self.assertGreaterEqual(len(c.scenes), 3,
+                                    f"{раздел}/{кат}: меньше трёх сценариев")
+
+    def test_неизвестное_падает_явно(self):
+        with self.assertRaises(KeyError):
+            catalog.scene("нет-такого")
+        with self.assertRaises(KeyError):
+            catalog.section("нет-такого")
+
+
+def kirill(sc):
+    return "".join(c for c in sc.prompt if "а" <= c.lower() <= "я")[:30]
 
 
 class Подписка(unittest.TestCase):
