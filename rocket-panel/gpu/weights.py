@@ -31,24 +31,32 @@ def get(repo, pats, dest, label):
             print(f"  не вышло: {str(e)[:90]}")
     return None
 
-print("=== VAE для Chroma (пробую зеркала по очереди)")
-vae=None
-for repo,pat in [("black-forest-labs/FLUX.1-schnell", r"^ae\.safetensors$"),
-                 ("Comfy-Org/Lumina_Image_2.0_Repackaged", r"ae\.safetensors$"),
-                 ("lodestones/Chroma1-HD", r"ae\.safetensors$|vae.*safetensors$"),
-                 ("silveroxides/Chroma1-HD-GGUF", r"ae\.safetensors$|vae.*safetensors$"),
-                 ("Comfy-Org/flux1-schnell", r"ae\.safetensors$|vae.*safetensors$"),
-                 ("Kijai/flux-fp8", r"ae\.safetensors$")]:
-    vae=get(repo,[pat],"vae","flux-vae")
-    if vae: break
-if not vae: print("  !!! VAE для Chroma не нашла")
+# ВТОРОЕ ПОКОЛЕНИЕ. Две сборки «всё в одном» вместо пяти файлов:
+# ускорители, кодировщик и VAE уже внутри, отдельные text_encoders и vae
+# не нужны. Прежние Chroma, Wan 2.2 5B, T5 и FLUX VAE УДАЛЕНЫ — если они
+# остались на диске с прошлой установки, их можно смело стереть, это
+# 33 ГБ.
+#
+# Обе под Apache 2.0: лицензия не ограничивает ни содержание, ни
+# коммерческое использование. Именно поэтому не берём ничего на базе
+# FLUX.1-dev, Pony и NoobAI.
+
+print("=== ФОТО — Qwen-Image-Edit-Rapid-AIO (NSFW v23), ~28 ГБ")
+фото=get("Phr00t/Qwen-Image-Edit-Rapid-AIO",
+         [r"NSFW.*v23.*\.safetensors$", r"NSFW.*\.safetensors$", r"\.safetensors$"],
+         "checkpoints","qwen-rapid")
+if not фото: print("  !!! сборка для фото не скачалась — панель не поднимется")
 
 print()
-print("=== WAN 2.2 — видео")
-R="Comfy-Org/Wan_2.2_ComfyUI_Repackaged"
-get(R,[r"wan2\.2_ti2v_5B_fp16\.safetensors$"],"diffusion_models","wan-5B")
-get(R,[r"umt5_xxl_fp8_e4m3fn_scaled\.safetensors$"],"text_encoders","umt5")
-get(R,[r"wan2\.2_vae\.safetensors$"],"vae","wan-vae")
+print("=== ВИДЕО — WAN2.2-14B-Rapid-AllInOne (mega NSFW v12.2), ~23 ГБ")
+# Автор сборки объявил, что больше её не обновляет: работать не
+# перестанет, но новых версий не будет. Поэтому имя версии фиксировано,
+# а не «возьми самое свежее».
+видео=get("Phr00t/WAN2.2-14B-Rapid-AllInOne",
+          [r"mega.*nsfw.*v12\.2.*\.safetensors$", r"mega.*nsfw.*\.safetensors$",
+           r"mega.*\.safetensors$"],
+          "checkpoints","wan-rapid")
+if not видео: print("  !!! сборка для видео не скачалась — видео работать не будет")
 
 print()
 print("=== ИТОГО")

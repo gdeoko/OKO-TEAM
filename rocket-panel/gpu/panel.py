@@ -1,5 +1,36 @@
 #!/usr/bin/env python3
-"""Панель генерации ROCKET. Chroma (фото) + Wan 2.2 (видео) через ComfyUI."""
+"""Панель генерации ROCKET. Второе поколение моделей.
+
+    фото  — Qwen-Rapid-AIO-NSFW-v23  (база Qwen-Image-Edit-2511), 28,4 ГБ
+    видео — wan2.2-rapid-mega-aio-nsfw-v12.2 (база Wan 2.2 A14B), 23,3 ГБ
+
+Обе сборки Apache 2.0 и обе «всё в одном»: ускорители, кодировщик и VAE
+уже внутри, поэтому грузятся ОДНИМ узлом CheckpointLoaderSimple, а не
+тремя. Прежние Chroma и Wan 2.2 5B удалены — эти две их заменяют
+целиком, освободилось 33 ГБ.
+
+## Две вещи, на которых легко обжечься
+
+**CFG=1 и 4 шага — не опечатка.** Ускорители влиты в сборку. Обычные
+26 шагов при CFG 4 их ЛОМАЮТ: картинка выходит пережжённой, а время
+растёт в шесть раз.
+
+**Референс идёт в УСЛОВИЕ, а не в латент.** У классической перерисовки
+исходник задаёт каркас кадра, и сменить позу нельзя. Здесь снимки
+попадают в `TextEncodeQwenImageEditPlus` как часть условия — каркас
+модель строит заново. Проверено: из портрета в кафе по запросу «та же
+женщина в полный рост на пляже» вышел полный рост на пляже с тем же
+лицом. Отличие от исходника 77,2 против 28,7 у прежнего способа.
+
+Узел берёт РОВНО ТРИ снимка: image1, image2, image3 — отсюда потолок в
+три референса, он не выдуман.
+
+## Память
+
+Замеры на нашей A6000 (47,4 ГБ): фото 1536×1536 — 46,5 ГБ, вертикальное
+видео 720×1280 — 45,5 ГБ. Карта забита на 97 %. Фото и видео на одной
+карте держать можно, мозг с голосом — уже нет.
+"""
 import json, time, uuid, os, threading, urllib.request
 from flask import Flask, request, jsonify, send_file, Response
 
@@ -7,6 +38,14 @@ COMFY="http://127.0.0.1:8188"
 OUT="/home/ubuntu/ComfyUI/output"; IN="/home/ubuntu/ComfyUI/input"
 app=Flask(__name__); app.config["MAX_CONTENT_LENGTH"]=48*1024*1024
 JOBS={}
+
+# Имена файлов сборок. Меняются при обновлении — держим в одном месте.
+CKPT_PHOTO="Qwen-Rapid-AIO-NSFW-v23.safetensors"
+CKPT_VIDEO="wan2.2-rapid-mega-aio-nsfw-v12.2.safetensors"
+
+# Ускорители внутри сборок: больше шагов и выше CFG их ломают.
+STEPS=4
+CFG=1.0
 
 # Wan обучен на китайском негативе — он работает лучше английского
 WAN_NEG=("色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，"
@@ -17,74 +56,106 @@ PHOTO_NEG=("low quality, worst quality, blurry, out of focus, jpeg artifacts, de
            "disfigured, bad anatomy, mutated hands, fused fingers, extra fingers, extra limbs, "
            "malformed limbs, asymmetric eyes, watermark, signature, text")
 
-def _chroma_base(p, neg, steps, cfg, seed, sched="beta"):
-    return {
-     "1":{"class_type":"UnetLoaderGGUF","inputs":{"unet_name":"Chroma1-HD-Q8_0.gguf"}},
-     "13":{"class_type":"ModelSamplingAuraFlow","inputs":{"model":["1",0],"shift":1.0}},
-     "2":{"class_type":"CLIPLoader","inputs":{"clip_name":"t5xxl_fp8_e4m3fn_scaled.safetensors","type":"chroma"}},
-     "3":{"class_type":"VAELoader","inputs":{"vae_name":"ae.safetensors"}},
-     "4":{"class_type":"CLIPTextEncode","inputs":{"clip":["2",0],"text":p}},
-     "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["2",0],"text":neg or PHOTO_NEG}},
-     "7":{"class_type":"KSampler","inputs":{"model":["13",0],"positive":["4",0],"negative":["5",0],
-          "seed":seed,"steps":steps,"cfg":cfg,"sampler_name":"euler","scheduler":sched,"denoise":1.0}},
-     "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["3",0]}},
-    }
+MAX_REF=3          # столько снимков берёт TextEncodeQwenImageEditPlus
 
-def wf_photo(p,w,h,steps,cfg,seed,image=None,denoise=0.75,neg=None):
-    g=_chroma_base(p,neg,steps,cfg,seed)
-    g["9"]={"class_type":"SaveImage","inputs":{"images":["8",0],"filename_prefix":"photo"}}
-    if image:
-        g["10"]={"class_type":"LoadImage","inputs":{"image":image,"upload":"image"}}
-        g["11"]={"class_type":"ImageScale","inputs":{"image":["10",0],"width":w,"height":h,
-                 "upscale_method":"lanczos","crop":"center"}}
-        g["12"]={"class_type":"VAEEncode","inputs":{"pixels":["11",0],"vae":["3",0]}}
-        g["7"]["inputs"]["latent_image"]=["12",0]
-        g["7"]["inputs"]["denoise"]=round(float(denoise),2)
+
+def _фото_база(p, neg, seed, images=None):
+    """Общий каркас фото-графа. images — до трёх имён файлов."""
+    g={
+     "1":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_PHOTO}},
+     "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":neg or PHOTO_NEG}},
+     "7":{"class_type":"KSampler","inputs":{"model":["1",0],"positive":["4",0],"negative":["5",0],
+          "seed":seed,"steps":STEPS,"cfg":CFG,"sampler_name":"euler","scheduler":"simple",
+          "denoise":1.0}},
+     "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
+    }
+    images=[x for x in (images or []) if x][:MAX_REF]
+    if images:
+        # Снимки в УСЛОВИЕ: каркас кадра модель строит заново.
+        узел={"clip":["1",1],"prompt":p,"vae":["1",2]}
+        for i,имя in enumerate(images,1):
+            g[f"3{i}"]={"class_type":"LoadImage","inputs":{"image":имя,"upload":"image"}}
+            узел[f"image{i}"]=[f"3{i}",0]
+        g["4"]={"class_type":"TextEncodeQwenImageEditPlus","inputs":узел}
     else:
-        g["6"]={"class_type":"EmptySD3LatentImage","inputs":{"width":w,"height":h,"batch_size":1}}
-        g["7"]["inputs"]["latent_image"]=["6",0]
+        g["4"]={"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":p}}
     return g
 
-def wf_inpaint(p,steps,cfg,seed,image,mask,denoise=1.0,feather=24,grow=8,neg=None):
-    """Перерисовка по маске: белое в маске переписывается, остальное остаётся пиксель в пиксель."""
-    g=_chroma_base(p,neg,steps,cfg,seed)
-    g["10"]={"class_type":"LoadImage","inputs":{"image":image,"upload":"image"}}
+
+def wf_photo(p,w,h,seed,images=None,neg=None):
+    """Текст в фото и фото в фото — один граф, разница в наличии снимков."""
+    g=_фото_база(p,neg,seed,images)
+    g["9"]={"class_type":"SaveImage","inputs":{"images":["8",0],"filename_prefix":"photo"}}
+    if not images:
+        g["6"]={"class_type":"EmptySD3LatentImage","inputs":{"width":w,"height":h,"batch_size":1}}
+        g["7"]["inputs"]["latent_image"]=["6",0]
+    else:
+        # Размер задаёт первый снимок, растянутый до нужного кадра.
+        g["40"]={"class_type":"ImageScale","inputs":{"image":["31",0],"width":w,"height":h,
+                 "upscale_method":"lanczos","crop":"center"}}
+        g["41"]={"class_type":"VAEEncode","inputs":{"pixels":["40",0],"vae":["1",2]}}
+        g["7"]["inputs"]["latent_image"]=["41",0]
+    return g
+
+
+def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None):
+    """Правка по области: белое в маске переписывается, остальное остаётся
+    пиксель в пиксель. Композит в конце обязателен — без него модель
+    подменяет и то, что не просили."""
+    g=_фото_база(p,neg,seed,[image])
     g["20"]={"class_type":"LoadImage","inputs":{"image":mask,"upload":"image"}}
     g["21"]={"class_type":"ImageToMask","inputs":{"image":["20",0],"channel":"red"}}
-    g["22"]={"class_type":"GrowMask","inputs":{"mask":["21",0],"expand":int(grow),"tapered_corners":True}}
-    g["23"]={"class_type":"FeatherMask","inputs":{"mask":["22",0],"left":int(feather),"top":int(feather),
-             "right":int(feather),"bottom":int(feather)}}
-    g["12"]={"class_type":"VAEEncode","inputs":{"pixels":["10",0],"vae":["3",0]}}
-    g["24"]={"class_type":"SetLatentNoiseMask","inputs":{"samples":["12",0],"mask":["23",0]}}
+    g["22"]={"class_type":"GrowMask","inputs":{"mask":["21",0],"expand":int(grow),
+             "tapered_corners":True}}
+    g["23"]={"class_type":"FeatherMask","inputs":{"mask":["22",0],"left":int(feather),
+             "top":int(feather),"right":int(feather),"bottom":int(feather)}}
+    g["41"]={"class_type":"VAEEncode","inputs":{"pixels":["31",0],"vae":["1",2]}}
+    g["24"]={"class_type":"SetLatentNoiseMask","inputs":{"samples":["41",0],"mask":["23",0]}}
     g["7"]["inputs"]["latent_image"]=["24",0]
-    g["7"]["inputs"]["denoise"]=round(float(denoise),2)
-    g["25"]={"class_type":"ImageCompositeMasked","inputs":{"destination":["10",0],"source":["8",0],
-             "mask":["23",0],"x":0,"y":0,"resize_source":False}}
+    g["25"]={"class_type":"ImageCompositeMasked","inputs":{"destination":["31",0],
+             "source":["8",0],"mask":["23",0],"x":0,"y":0,"resize_source":False}}
     g["9"]={"class_type":"SaveImage","inputs":{"images":["25",0],"filename_prefix":"inpaint"}}
     return g
 
-def wf_video(p,w,h,frames,steps,cfg,seed,image=None,neg=None,shift=8.0):
+
+def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
+    """Три режима одним графом, по числу снимков:
+
+        нет снимков  — текст в видео
+        один         — оживление, снимок становится ПЕРВЫМ кадром
+        два          — первый и последний кадр, движение приходит ко второму
+
+    Второй случай берёт WanFirstLastFrameToVideo: у сборки VACE внутри,
+    и это её главное умение поверх обычного i2v.
+    """
+    images=[x for x in (images or []) if x][:2]
     g={
-     "1":{"class_type":"UNETLoader","inputs":{"unet_name":"wan2.2_ti2v_5B_fp16.safetensors","weight_dtype":"default"}},
+     "1":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_VIDEO}},
      "12":{"class_type":"ModelSamplingSD3","inputs":{"model":["1",0],"shift":float(shift)}},
-     "2":{"class_type":"CLIPLoader","inputs":{"clip_name":"umt5_xxl_fp8_e4m3fn_scaled.safetensors","type":"wan"}},
-     "3":{"class_type":"VAELoader","inputs":{"vae_name":"wan2.2_vae.safetensors"}},
-     "4":{"class_type":"CLIPTextEncode","inputs":{"clip":["2",0],"text":p}},
-     "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["2",0],"text":neg or WAN_NEG}},
-     "6":{"class_type":"Wan22ImageToVideoLatent","inputs":{"vae":["3",0],"width":w,"height":h,
-          "length":frames,"batch_size":1}},
-     "7":{"class_type":"KSampler","inputs":{"model":["12",0],"positive":["4",0],"negative":["5",0],
-          "latent_image":["6",0],"seed":seed,"steps":steps,"cfg":cfg,
+     "4":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":p}},
+     "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":neg or WAN_NEG}},
+     "7":{"class_type":"KSampler","inputs":{"model":["12",0],"seed":seed,"steps":STEPS,"cfg":CFG,
           "sampler_name":"uni_pc","scheduler":"simple","denoise":1.0}},
-     "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["3",0]}},
+     "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
      "9":{"class_type":"SaveAnimatedWEBP","inputs":{"images":["8",0],"filename_prefix":"video",
           "fps":24.0,"lossless":False,"quality":90,"method":"default"}},
     }
-    if image:
-        g["10"]={"class_type":"LoadImage","inputs":{"image":image,"upload":"image"}}
-        g["11"]={"class_type":"ImageScale","inputs":{"image":["10",0],"width":w,"height":h,
-                 "upscale_method":"lanczos","crop":"center"}}
-        g["6"]["inputs"]["start_image"]=["11",0]
+    общее={"positive":["4",0],"negative":["5",0],"vae":["1",2],
+           "width":w,"height":h,"length":frames,"batch_size":1}
+    for i,имя in enumerate(images,1):
+        g[f"3{i}"]={"class_type":"LoadImage","inputs":{"image":имя,"upload":"image"}}
+        g[f"4{i}"]={"class_type":"ImageScale","inputs":{"image":[f"3{i}",0],"width":w,"height":h,
+                    "upscale_method":"lanczos","crop":"center"}}
+    if len(images)>=2:
+        g["6"]={"class_type":"WanFirstLastFrameToVideo",
+                "inputs":{**общее,"start_image":["41",0],"end_image":["42",0]}}
+    elif images:
+        g["6"]={"class_type":"WanImageToVideo","inputs":{**общее,"start_image":["41",0]}}
+    else:
+        g["6"]={"class_type":"WanImageToVideo","inputs":общее}
+    g["7"]["inputs"]["positive"]=["6",0]
+    g["7"]["inputs"]["negative"]=["6",1]
+    g["7"]["inputs"]["latent_image"]=["6",2]
     return g
 
 def run(jid, graph):
@@ -121,28 +192,43 @@ SZ={"photo":{"vert":(768,1344),"sq":(1024,1024),"horiz":(1344,768)},
 
 @app.post("/api/gen")
 def gen():
+    """Запуск задания.
+
+    Снимки принимаются списком `images`; одиночный `image` понимается
+    тоже — так старый вызывающий код не ломается на первом же запросе.
+    Шаги и CFG из запроса НЕ берём: ускорители внутри сборок, и чужие
+    значения их ломают. Пусть лучше панель будет упрямой, чем выдаст
+    пережжённый кадр за деньги клиента.
+    """
     d=request.get_json(force=True)
     mode=d.get("mode","photo"); p=(d.get("prompt") or "").strip()
     if not p: return jsonify(error="Не написан запрос"),400
     seed=int(d.get("seed") or 0) or int(time.time()*1000)%(10**9)
     neg=(d.get("neg") or "").strip() or None
-    img=d.get("image") or None
-    steps=int(d.get("steps") or (26 if mode!="video" else 20))
-    cfg=float(d.get("cfg") or (4.0 if mode!="video" else 5.0))
+    images=d.get("images") or ([d["image"]] if d.get("image") else [])
+    images=[x for x in images if x]
     if mode=="inpaint":
-        if not img or not d.get("mask"): return jsonify(error="Нужны фото и обведённая область"),400
-        g=wf_inpaint(p,steps,cfg,seed,img,d["mask"],float(d.get("denoise",1.0)),
+        if not images or not d.get("mask"):
+            return jsonify(error="Нужны фото и обведённая область"),400
+        g=wf_inpaint(p,seed,images[0],d["mask"],
                      int(d.get("feather",24)),int(d.get("grow",8)),neg)
         w=h=0
     elif mode=="photo":
+        if len(images)>MAX_REF:
+            return jsonify(error=f"Модель берёт не больше {MAX_REF} снимков"),400
         w,h=SZ["photo"].get(d.get("size","vert"),(768,1344))
-        g=wf_photo(p,w,h,steps,cfg,seed,img,float(d.get("denoise",0.75)),neg)
+        g=wf_photo(p,w,h,seed,images,neg)
     else:
+        if len(images)>2:
+            return jsonify(error="Видео берёт первый и последний кадр, не больше"),400
         w,h=SZ["video"].get(d.get("size","vert"),(704,1280))
-        frames=min(121,max(25,int(float(d.get("secs",2))*24)+1))
-        g=wf_video(p,w,h,frames,steps,cfg,seed,img,neg,float(d.get("shift",8.0)))
+        # Длина кратна 4 плюс 1 — требование узлов Wan.
+        сек=max(1.0,min(10.0,float(d.get("secs",5))))
+        frames=int(сек*24)//4*4+1
+        g=wf_video(p,w,h,frames,seed,images,neg,float(d.get("shift",8.0)))
     jid=uuid.uuid4().hex[:8]
-    JOBS[jid]={"state":"run","sec":0,"mode":mode,"seed":seed,"w":w,"h":h}
+    JOBS[jid]={"state":"run","sec":0,"mode":mode,"seed":seed,"w":w,"h":h,
+               "refs":len(images)}
     threading.Thread(target=run,args=(jid,g),daemon=True).start()
     return jsonify(job=jid,seed=seed)
 
