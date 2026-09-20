@@ -18,6 +18,7 @@ import requests
 import pricing
 import catalog
 import prompts
+import payments
 import emoji
 import ui
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -34,6 +35,11 @@ store = Store(os.environ.get("ROCKET_DB", "rocket_bot.db"))
 gpu = Gpu(os.environ.get("ROCKET_GPU_URL", ""),
           os.environ.get("ROCKET_GPU_USER", "rocket"),
           os.environ.get("ROCKET_GPU_PASS", ""))
+
+# Какие обновления слушаем. pre_checkout_query обязателен: без него
+# оплата звёздами отменяется через 10 секунд.
+ОБНОВЛЕНИЯ = ["message", "edited_message", "callback_query",
+              "pre_checkout_query", "shipping_query"]
 
 # Сколько секунд ролика просить у панели. Ключ вида несёт длину, но
 # читать её разбором строки в трёх местах — способ однажды разойтись.
@@ -324,12 +330,49 @@ def on_callback(cb):
         answer(cid); send(chat, price_list(), buy_kb()); return
 
     if data.startswith("buy:"):
-        answer(cid, "Оплата скоро")
+        answer(cid)
         p = pricing.pack(data.split(":", 1)[1])
-        send(chat, f"Пакет <b>{p['hearts']} сердечек</b> за "
-                   f"<b>{p['rub']} ₽</b>. Не сгорают.\n"
-                   f"<i>У других тот же объём — {p['market_rub']} ₽.</i>\n\n"
-                   "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
+        send(chat, ui.текст_пакета(p), ui.меню_способов(p["id"]))
+        return
+
+    if data.startswith("pay:stars:"):
+        answer(cid)
+        сч = payments.счёт_звёздами(data.rsplit(":", 1)[1])
+        tg("sendInvoice", chat_id=chat, **{k: (json.dumps(v) if k == "prices" else v)
+                                           for k, v in сч.items()})
+        return
+
+    if data.startswith("pay:crypto:"):
+        pid = data.rsplit(":", 1)[1]
+        try:
+            сч = payments.счёт_криптой(pid, u)
+        except payments.ОшибкаОплаты as e:
+            answer(cid, "Крипта пока недоступна")
+            send(chat, f"Оплата криптой не настроена: {e}\n\n"
+                       "Пока можно оплатить звёздами.", ui.меню_способов(pid))
+            return
+        answer(cid)
+        store.remember_invoice(u, сч["invoice_id"], pid)
+        send(chat, f"Счёт на <b>${сч['usd']}</b> создан. Живёт час.",
+             ui.клава([[ui.кнопка("Оплатить", url=сч["url"], иконка=emoji.КАРТА)],
+                       [ui.кнопка("Я оплатил, проверь", f"chk:{сч['invoice_id']}")],
+                       [ui.кнопка("Назад", "m:buy", emoji.ВЛЕВО)]]))
+        return
+
+    if data.startswith("chk:"):
+        инв = data.split(":", 1)[1]
+        try:
+            статус = payments.проверить_счёт(инв)
+        except payments.ОшибкаОплаты as e:
+            answer(cid, "Не смогла проверить"); return
+        if статус != "paid":
+            answer(cid, "Оплата ещё не пришла" if статус == "active" else "Счёт истёк")
+            return
+        зачислено = зачислить_крипту(u, инв)
+        answer(cid, "Зачислено" if зачислено else "Уже зачислено раньше")
+        if зачислено:
+            send(chat, f"Оплата пришла. Баланс: "
+                       f"<b>{emoji.баланс(store.balance(u))}</b>", MENU)
         return
 
     if data.startswith("c:"):
@@ -403,14 +446,66 @@ def on_callback(cb):
     answer(cid)
 
 
+def зачислить_крипту(u, invoice_id):
+    """Зачисление по крипто-счёту. Возвращает, случилось ли начисление.
+
+    Защита от двойного зачисления здесь обязательна: человек может
+    нажать «я оплатил» десять раз, и вебхук придёт сверх того."""
+    pid = store.take_invoice(u, invoice_id)
+    if not pid:
+        return False
+    p = pricing.pack(pid)
+    store.credit(u, p["hearts"], "paid", f"крипта, пакет {pid}",
+                 meta={"invoice": invoice_id})
+    return True
+
+
+def on_pre_checkout(q):
+    """Ответить НАДО за 10 секунд, иначе Телеграм отменит платёж.
+
+    Поэтому сначала отвечаем, и только потом что-либо делаем. Проверка
+    payload — единственное, что успеваем: она не ходит в сеть."""
+    try:
+        payments.разобрать_payload(q.get("invoice_payload"))
+        ок, ошибка = True, None
+    except Exception as e:
+        ок, ошибка = False, f"Не узнала пакет: {str(e)[:100]}"
+    tg("answerPreCheckoutQuery", pre_checkout_query_id=q["id"],
+       ok=ок, **({"error_message": ошибка} if ошибка else {}))
+
+
+def on_paid(chat, u, оплата):
+    """successful_payment: звёзды пришли, зачисляем сердечки."""
+    try:
+        p = payments.разобрать_payload(оплата.get("invoice_payload"))
+    except payments.ОшибкаОплаты as e:
+        send(chat, "Оплата прошла, но я не поняла, какой пакет. "
+                   "Напиши в поддержку — разберёмся руками, деньги не пропадут.")
+        print("ОПЛАТА БЕЗ ПАКЕТА:", u, оплата, flush=True)
+        return
+    # Идентификатор списания сохраняем ОБЯЗАТЕЛЬНО: без него звёзды
+    # не вернуть, refundStarPayment требует именно его.
+    store.credit(u, p["hearts"], "paid", f"звёзды, пакет {p['id']}",
+                 meta={"charge": оплата.get("telegram_payment_charge_id"),
+                       "stars": оплата.get("total_amount")})
+    send(chat, f"Спасибо. Зачислено <b>{emoji.баланс(p['hearts'])}</b>.\n"
+               f"Баланс: <b>{emoji.баланс(store.balance(u))}</b>", MENU)
+
+
 def on_update(up):
     if "callback_query" in up:
         on_callback(up["callback_query"]); return
+    if "pre_checkout_query" in up:
+        on_pre_checkout(up["pre_checkout_query"]); return
     msg = up.get("message") or up.get("edited_message")
     if not msg:
         return
     chat = msg["chat"]["id"]; u = msg["from"]["id"]
     username = msg["from"].get("username")
+
+    if "successful_payment" in msg:
+        store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
+        on_paid(chat, u, msg["successful_payment"]); return
 
     if "photo" in msg:
         store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
@@ -453,8 +548,15 @@ def main():
     offset = None
     while True:
         try:
+            # allowed_updates перечисляем ЯВНО. Документация: «If not
+            # specified, the previous setting will be used» — то есть
+            # однажды суженный где-то список останется суженным, и
+            # pre_checkout_query перестанет приходить молча. Платежи
+            # будут отваливаться без единой записи в журнале.
             r = requests.get(f"{API}/getUpdates",
-                             params={"timeout": 30, "offset": offset}, timeout=45).json()
+                             params={"timeout": 30, "offset": offset,
+                                     "allowed_updates": json.dumps(ОБНОВЛЕНИЯ)},
+                             timeout=45).json()
             for up in r.get("result", []):
                 offset = up["update_id"] + 1
                 try:

@@ -4,6 +4,7 @@ import pricing
 import catalog
 import prompts
 import emoji
+import payments
 import store
 from store import Store, NotEnoughHearts
 
@@ -324,6 +325,116 @@ class Каталог(unittest.TestCase):
             catalog.scene("нет-такого")
         with self.assertRaises(KeyError):
             catalog.category("нет-такого")
+
+
+class Оплата(unittest.TestCase):
+    """Деньги на входе. Ошибка здесь стоит дороже всего: либо человек
+    заплатил и не получил, либо получил не заплатив."""
+
+    def setUp(self):
+        self.f = tempfile.mktemp(suffix=".db")
+        self.s = Store(self.f)
+        self.s.ensure_user(900, "кто")
+
+    def tearDown(self):
+        for suf in ("", "-wal", "-shm"):
+            try: os.remove(self.f + suf)
+            except OSError: pass
+
+    def test_звёзды_целые_и_не_меньше_одной(self):
+        """total_amount в звёздах — целое число: «in the smallest units
+        of the currency», а дробных звёзд не бывает."""
+        for p in pricing.PACKS:
+            з = payments.звёзд_за(p["rub"])
+            self.assertIsInstance(з, int)
+            self.assertGreaterEqual(з, 1)
+
+    def test_пересчёт_в_звёзды_идёт_ВВЕРХ(self):
+        """Единственное место прайса, где округляем вверх. Вниз тут
+        означало бы продать пакет дешевле объявленного рубля, а на
+        рублёвой цене держится обещание скидки в четверть."""
+        import math
+        for p in pricing.PACKS:
+            точно = p["rub"] * payments.ЗВЁЗД_ЗА_РУБЛЬ
+            self.assertGreaterEqual(payments.звёзд_за(p["rub"]), точно)
+            self.assertEqual(payments.звёзд_за(p["rub"]), math.ceil(точно))
+
+    def test_счёт_звёздами_собран_как_требует_api(self):
+        """Пустой provider_token и XTR — иначе Телеграм не примет счёт."""
+        сч = payments.счёт_звёздами("p3")
+        self.assertEqual(сч["provider_token"], "")
+        self.assertEqual(сч["currency"], "XTR")
+        self.assertEqual(len(сч["prices"]), 1)
+        self.assertIsInstance(сч["prices"][0]["amount"], int)
+
+    def test_payload_возвращает_тот_же_пакет(self):
+        """По payload из successful_payment мы понимаем, что зачислять.
+        Разойдётся — человек заплатит за одно, получит другое."""
+        for p in pricing.PACKS:
+            сч = payments.счёт_звёздами(p["id"])
+            self.assertEqual(payments.разобрать_payload(сч["payload"])["id"],
+                             p["id"])
+
+    def test_чужой_payload_падает_явно(self):
+        """Зачислить непонятно что хуже, чем не зачислить ничего."""
+        for плохой in ("", None, "мусор", "pack:нетакого:1", "sub:p1:1"):
+            with self.assertRaises(Exception):
+                payments.разобрать_payload(плохой)
+
+    def test_крипто_счёт_зачисляется_ровно_один_раз(self):
+        """Человек жмёт «я оплатил» десять раз, а сверху приходит
+        вебхук. Без защиты он получил бы десять пакетов."""
+        self.s.remember_invoice(900, "inv1", "p2")
+        первый = self.s.take_invoice(900, "inv1")
+        self.assertEqual(первый, "p2")
+        for _ in range(5):
+            self.assertIsNone(self.s.take_invoice(900, "inv1"))
+
+    def test_чужой_счёт_не_зачисляется(self):
+        """invoice_id можно подсмотреть. Счёт принадлежит человеку."""
+        self.s.remember_invoice(900, "inv2", "p2")
+        self.s.ensure_user(901, "другой")
+        self.assertIsNone(self.s.take_invoice(901, "inv2"))
+        self.assertEqual(self.s.take_invoice(900, "inv2"), "p2")
+
+    def test_подпись_вебхука_проверяется(self):
+        """Без проверки подписи зачислить сердечки может кто угодно,
+        прислав поддельное «оплачено»."""
+        import hashlib, hmac
+        старый = payments.CRYPTOBOT_ТОКЕН
+        payments.CRYPTOBOT_ТОКЕН = "тест-токен"
+        try:
+            тело = b'{"status":"paid"}'
+            ключ = hashlib.sha256(b"\xd1\x82" + b"est-token") if False else None
+            верная = hmac.new(hashlib.sha256("тест-токен".encode()).digest(),
+                              тело, hashlib.sha256).hexdigest()
+            self.assertTrue(payments.подпись_вебхука_верна(тело, верная))
+            self.assertFalse(payments.подпись_вебхука_верна(тело, "0" * 64))
+            self.assertFalse(payments.подпись_вебхука_верна(тело, ""))
+            self.assertFalse(payments.подпись_вебхука_верна(b'{"status":"nope"}', верная))
+        finally:
+            payments.CRYPTOBOT_ТОКЕН = старый
+
+    def test_крипта_без_токена_падает_понятно(self):
+        """Не настроено — говорим это словами, а не пятисотой ошибкой."""
+        старый = payments.CRYPTOBOT_ТОКЕН
+        payments.CRYPTOBOT_ТОКЕН = ""
+        try:
+            with self.assertRaises(payments.ОшибкаОплаты):
+                payments.счёт_криптой("p1", 900)
+        finally:
+            payments.CRYPTOBOT_ТОКЕН = старый
+
+    def test_бот_слушает_предоплатный_запрос(self):
+        """На pre_checkout_query надо ответить за 10 секунд, иначе
+        платёж отменяется. Документация: «If not specified, the previous
+        setting will be used» — значит список обновлений обязан быть
+        перечислен явно, иначе однажды суженный останется суженным."""
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        self.assertIn("pre_checkout_query", bot.ОБНОВЛЕНИЯ)
+        self.assertIn("message", bot.ОБНОВЛЕНИЯ)
+        self.assertIn("callback_query", bot.ОБНОВЛЕНИЯ)
 
 
 def kirill(sc):
