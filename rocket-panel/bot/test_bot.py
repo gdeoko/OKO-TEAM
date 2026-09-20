@@ -106,7 +106,7 @@ class Цены(unittest.TestCase):
         конкурентом (фото = 12 💎). Двенадцать кристаллов в сердечке
         снимают оба."""
         его = {"photo": 12, "inpaint": 12, "video_5": 60, "video_10": 96,
-               "video_15": 156, "video_20": 240, "sound": 170, "animate": 60}
+               "sound": 170, "animate": 60}
         self.assertEqual({k: j.crystals for k, j in pricing.JOBS.items()}, его)
         self.assertEqual(pricing.job("photo").hearts, 1,
                          "фото обязано стоить ровно одно сердечко")
@@ -157,12 +157,26 @@ class Цены(unittest.TestCase):
         self.assertFalse(any(s["лицо_держится"] for s in pricing.SUBS if s["план"] == "PRO"),
                          "если лицо держится и в PRO, за что брать ULTRA")
 
-    def test_длинный_ролик_и_высокое_качество_под_планом(self):
-        """Замок — это право КУПИТЬ, а не бесплатная генерация. Если
-        снять его со всего, подписке нечего продавать."""
-        self.assertEqual(pricing.job("video_15").plan, "PRO")
-        self.assertEqual(pricing.job("video_20").plan, "ULTRA")
-        self.assertIsNone(pricing.job("video_5").plan, "короткий ролик должен быть всем")
+    def test_высокое_качество_под_планом(self):
+        """Замок — это право КУПИТЬ, а не бесплатная генерация. Раньше
+        он висел на длине ролика; потолок в 10 секунд его оттуда снял,
+        и теперь подписке продавать нечего, кроме разрешения, скорости
+        и лица. Снимем и отсюда — продавать станет нечего совсем."""
+        self.assertEqual(pricing.quality("q4k")["plan"], "PRO")
+        self.assertEqual(pricing.quality("q8k")["plan"], "ULTRA")
+        self.assertIsNone(pricing.quality("hd")["plan"], "HD должен быть всем")
+        self.assertIsNone(pricing.job("video_10").plan,
+                          "десятисекундный ролик — наш потолок, он для всех")
+
+    def test_роликов_длиннее_потолка_нет(self):
+        """Решение владельца: больше десяти секунд не делаем. Правило
+        живёт тут, а не в голове: иначе следующая правка прайса тихо
+        вернёт двадцатисекундный ролик."""
+        for k, j in pricing.JOBS.items():
+            if k.startswith("video_"):
+                сек = int(k.split("_")[1])
+                self.assertLessEqual(сек, pricing.МАКС_СЕК,
+                                     f"{k}: длиннее потолка в {pricing.МАКС_СЕК} с")
 
     def test_подарок_новичку_доводит_до_результата(self):
         """У конкурента за приглашение дают 10 💎 при цене фото 12 — не
