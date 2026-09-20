@@ -68,58 +68,59 @@ class Деньги(unittest.TestCase):
 
 
 class Цены(unittest.TestCase):
+    """Все цифры сверяются с живым прайсом Exclusive AI от 20.09.2026."""
+
     def test_ни_один_тариф_не_в_минус(self):
         for key, j in pricing.JOBS.items():
-            self.assertGreater(j.price_usd, j.cost_usd,
-                               f"{key}: цена {j.price_usd} ниже себестоимости {j.cost_usd}")
+            self.assertGreater(j.rub(), j.cost_rub,
+                               f"{key}: цена {j.rub():.0f} ₽ ниже затрат {j.cost_rub:.2f} ₽")
 
-    def test_пакет_отдаёт_жетоны_с_бонусом(self):
-        self.assertEqual(pricing.pack_total("p2"), 700 + 100)
-
-    def test_чем_больше_пакет_тем_дешевле_жетон(self):
-        rates = [pricing.pack(p["id"])["usd"] / pricing.pack_total(p["id"])
-                 for p in pricing.PACKS]
-        self.assertEqual(rates, sorted(rates, reverse=True),
-                         "крупный пакет должен быть выгоднее мелкого")
-
-    def test_неизвестный_вид_генерации_падает_явно(self):
-        with self.assertRaises(KeyError):
-            pricing.job("нет-такого")
-
-    def test_мы_дешевле_рынка_но_не_на_порядок(self):
-        """Первая версия тарифов была в 33 раза ниже рынка — это не скидка,
-        а подарок. Держимся в коридоре: дешевле, но в разумных пределах."""
-        for key, j in pricing.JOBS.items():
-            k = j.cheaper_than_market
-            self.assertIsNotNone(k, f"{key}: не с чем сравнить рынок")
-            self.assertGreater(k, 1.5, f"{key}: мы не дешевле рынка ({k:.1f}x)")
-            self.assertLess(k, 6, f"{key}: мы дешевле рынка в {k:.0f} раз — недозарабатываем")
-
-    def test_подписка_не_дешёвый_способ_купить_жетоны(self):
-        """Запас жетонов в подписке идёт по курсу ХУЖЕ крупного пакета.
-        Иначе подписку начнут брать вместо пакетов, и вторая касса
-        (продажа генераций) схлопнется — ровно то, чего конкурент
-        избегает, вообще не давая генераций по подписке."""
-        лучший_пакет = max(pricing.tokens_per_usd(p) for p in pricing.PACKS)
-        for s in pricing.SUBS:
-            self.assertLessEqual(
-                pricing.tokens_per_usd(s), лучший_пакет,
-                f"{s['id']}: жетоны по подписке выгоднее пакета — она съест пакеты")
+    def test_каждый_пакет_ровно_на_четверть_дешевле(self):
+        """Обещание владельца. Допуск только вниз: округление вверх съело
+        бы часть скидки."""
+        порог = 1 - pricing.СКИДКА_К_РЫНКУ
+        for p in pricing.PACKS:
+            доля = pricing.vs_market(p)
+            self.assertLessEqual(доля, порог,
+                                 f"{p['id']}: {p['rub']} против {p['market_rub']} — "
+                                 f"скидка всего {(1-доля)*100:.1f}%")
+            self.assertGreater(доля, порог - 0.02,
+                               f"{p['id']}: скидка {(1-доля)*100:.1f}% — отдаём лишнее")
 
     def test_каждая_подписка_ровно_на_четверть_дешевле(self):
-        """Обещание владельца: −25 % к конкуренту по КАЖДОМУ тарифу.
-        Цены сняты в боте Exclusive AI 20.09.2026. Допуск только вниз:
-        округление вверх съело бы часть скидки."""
         порог = 1 - pricing.СКИДКА_К_РЫНКУ
         for s in pricing.SUBS:
-            доля = pricing.sub_vs_market(s)
-            self.assertLessEqual(
-                доля, порог,
-                f"{s['id']}: {s['rub']} ₽ против {s['market_rub']} ₽ — "
-                f"скидка всего {(1-доля)*100:.1f}%")
-            self.assertGreater(
-                доля, порог - 0.02,
-                f"{s['id']}: дешевле на {(1-доля)*100:.1f}% — отдаём лишнее")
+            доля = pricing.vs_market(s)
+            self.assertLessEqual(доля, порог,
+                                 f"{s['id']}: скидка всего {(1-доля)*100:.1f}%")
+            self.assertGreater(доля, порог - 0.02,
+                               f"{s['id']}: скидка {(1-доля)*100:.1f}% — отдаём лишнее")
+
+    def test_генерация_стоит_столько_же_жетонов_сколько_у_него_кристаллов(self):
+        """На этом держится вся сверка: одинаковые единицы, разная цена
+        пакета. Разойдётся — «на четверть дешевле» станет неправдой."""
+        его = {"photo": 12, "inpaint": 12, "video_5": 60, "video_10": 96,
+               "video_15": 156, "video_20": 240, "sound": 170, "animate": 60}
+        self.assertEqual({k: j.tokens for k, j in pricing.JOBS.items()}, его)
+
+    def test_надбавка_за_качество_не_дороже_чем_у_него(self):
+        for q in pricing.QUALITY:
+            self.assertLessEqual(q["add"], q["market_add"],
+                                 f"{q['id']}: надбавка выше, чем у конкурента")
+
+    def test_чем_больше_пакет_тем_дешевле_жетон(self):
+        курсы = [pricing.tokens_per_rub(p) for p in pricing.PACKS]
+        self.assertEqual(курсы, sorted(курсы),
+                         "крупный пакет должен быть выгоднее мелкого")
+
+    def test_подписка_не_дешёвый_способ_купить_жетоны(self):
+        """Подарок в подписке идёт по курсу ХУЖЕ любого пакета. Иначе
+        подписку возьмут вместо пакетов, и вторая касса схлопнется —
+        ровно то, чего конкурент избегает, не давая генераций вовсе."""
+        лучший = pricing.best_pack_rate()
+        for s in pricing.SUBS:
+            self.assertLess(pricing.tokens_per_rub(s), лучший,
+                            f"{s['id']}: жетоны по подписке выгоднее пакета")
 
     def test_длинный_срок_дешевле_в_пересчёте_на_день(self):
         for план in pricing.PLANS:
@@ -131,29 +132,36 @@ class Цены(unittest.TestCase):
         pro = {s["период"]: s["rub"] for s in pricing.SUBS if s["план"] == "PRO"}
         for s in pricing.SUBS:
             if s["план"] == "ULTRA":
-                self.assertGreater(s["rub"], pro[s["период"]],
-                                   f"{s['id']}: ULTRA не дороже PRO")
-
-    def test_у_каждой_подписки_есть_что_продавать(self):
-        """Подписка продаёт возможности, а не объём: без них она пустая."""
-        for s in pricing.SUBS:
-            self.assertGreaterEqual(s["параллельно"], 2)
-            self.assertGreaterEqual(s["макс_сек"], 15)
-            self.assertGreater(s["tokens"], 0)
+                self.assertGreater(s["rub"], pro[s["период"]], f"{s['id']}: ULTRA не дороже PRO")
 
     def test_у_старшего_плана_есть_своя_причина_существовать(self):
         """ULTRA дороже PRO втрое, и одной скорости за такие деньги мало.
         Постоянство лица — то, чего у конкурента нет вовсе."""
-        ultra = [s for s in pricing.SUBS if s["план"] == "ULTRA"]
-        self.assertTrue(all(s["лицо_держится"] for s in ultra))
-        pro = [s for s in pricing.SUBS if s["план"] == "PRO"]
-        self.assertFalse(any(s["лицо_держится"] for s in pro),
+        self.assertTrue(all(s["лицо_держится"] for s in pricing.SUBS if s["план"] == "ULTRA"))
+        self.assertFalse(any(s["лицо_держится"] for s in pricing.SUBS if s["план"] == "PRO"),
                          "если лицо держится и в PRO, за что брать ULTRA")
 
-    def test_подарок_новичку_не_кормит(self):
-        """Подарок — попробовать, а не пользоваться бесплатно."""
-        self.assertLess(pricing.WELCOME_TOKENS, pricing.job("video_2").tokens,
+    def test_длинный_ролик_и_высокое_качество_под_планом(self):
+        """Замок — это право КУПИТЬ, а не бесплатная генерация. Если
+        снять его со всего, подписке нечего продавать."""
+        self.assertEqual(pricing.job("video_15").plan, "PRO")
+        self.assertEqual(pricing.job("video_20").plan, "ULTRA")
+        self.assertIsNone(pricing.job("video_5").plan, "короткий ролик должен быть всем")
+
+    def test_подарок_новичку_доводит_до_результата(self):
+        """У конкурента за приглашение дают 10 💎 при цене фото 12 — не
+        хватает даже на одну генерацию. Такой подарок только злит."""
+        фото = pricing.job("photo").tokens
+        self.assertGreaterEqual(pricing.WELCOME_TOKENS, фото * 2)
+        self.assertGreaterEqual(pricing.REFERRAL_INVITEE, фото)
+        self.assertLess(pricing.WELCOME_TOKENS, pricing.job("video_5").tokens,
                         "на подарок не должно хватать ролика")
+
+    def test_неизвестное_падает_явно(self):
+        for f, arg in ((pricing.job, "нет"), (pricing.pack, "нет"),
+                       (pricing.sub, "нет"), (pricing.quality, "нет")):
+            with self.assertRaises(KeyError):
+                f(arg)
 
 
 class Каталог(unittest.TestCase):
