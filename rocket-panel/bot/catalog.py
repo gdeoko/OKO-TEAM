@@ -39,12 +39,12 @@ class Scene:
         self.negative = negative
 
     @property
-    def tokens(self):
-        return pricing.job(self.job).tokens
+    def hearts(self):
+        return pricing.job(self.job).hearts
 
     def button(self):
         """Подпись кнопки. Цена в ней обязательна — это наше отличие."""
-        return f"{self.title} · {self.tokens} жет."
+        return f"{self.title} · {self.hearts} ♥"
 
 
 class Category:

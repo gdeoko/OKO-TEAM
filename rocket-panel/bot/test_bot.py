@@ -16,9 +16,9 @@ class Деньги(unittest.TestCase):
             except OSError: pass
 
     def test_новичку_дарим_жетоны(self):
-        u, new = self.s.ensure_user(1, "vasya", welcome=pricing.WELCOME_TOKENS)
+        u, new = self.s.ensure_user(1, "vasya", welcome=pricing.WELCOME_HEARTS)
         self.assertTrue(new)
-        self.assertEqual(self.s.balance(1), pricing.WELCOME_TOKENS)
+        self.assertEqual(self.s.balance(1), pricing.WELCOME_HEARTS)
 
     def test_повторный_старт_не_дарит_второй_раз(self):
         self.s.ensure_user(1, welcome=30)
@@ -96,20 +96,36 @@ class Цены(unittest.TestCase):
             self.assertGreater(доля, порог - 0.02,
                                f"{s['id']}: скидка {(1-доля)*100:.1f}% — отдаём лишнее")
 
-    def test_генерация_стоит_столько_же_жетонов_сколько_у_него_кристаллов(self):
-        """На этом держится вся сверка: одинаковые единицы, разная цена
-        пакета. Разойдётся — «на четверть дешевле» станет неправдой."""
+    def test_сердечко_это_ровно_двенадцать_его_кристаллов(self):
+        """На этом держится вся сверка: цена в сердечках умножается на 12
+        и сравнивается с его кристаллами. Разойдётся — «на четверть
+        дешевле» станет неправдой.
+
+        Требований было два, и они сталкивались: владелец хотел счёт
+        по-людски (фото = 1), а обещание скидки требует общих единиц с
+        конкурентом (фото = 12 💎). Двенадцать кристаллов в сердечке
+        снимают оба."""
         его = {"photo": 12, "inpaint": 12, "video_5": 60, "video_10": 96,
                "video_15": 156, "video_20": 240, "sound": 170, "animate": 60}
-        self.assertEqual({k: j.tokens for k, j in pricing.JOBS.items()}, его)
+        self.assertEqual({k: j.crystals for k, j in pricing.JOBS.items()}, его)
+        self.assertEqual(pricing.job("photo").hearts, 1,
+                         "фото обязано стоить ровно одно сердечко")
+
+    def test_пересчёт_в_сердечки_всегда_вниз(self):
+        """Вверх — значит отъесть часть обещанной скидки. Видео со звуком
+        стоит 170 💎, это 14,17 сердечка; отдаём за 14."""
+        for k, j in pricing.JOBS.items():
+            self.assertLessEqual(j.hearts * pricing.КРИСТАЛЛОВ_В_СЕРДЦЕ,
+                                 j.crystals, f"{k}: округлили вверх")
+        self.assertEqual(pricing.job("sound").hearts, 14)
 
     def test_надбавка_за_качество_не_дороже_чем_у_него(self):
         for q in pricing.QUALITY:
-            self.assertLessEqual(q["add"], q["market_add"],
+            self.assertLessEqual(q["crystals"], q["market_crystals"],
                                  f"{q['id']}: надбавка выше, чем у конкурента")
 
     def test_чем_больше_пакет_тем_дешевле_жетон(self):
-        курсы = [pricing.tokens_per_rub(p) for p in pricing.PACKS]
+        курсы = [pricing.hearts_per_rub(p) for p in pricing.PACKS]
         self.assertEqual(курсы, sorted(курсы),
                          "крупный пакет должен быть выгоднее мелкого")
 
@@ -119,7 +135,7 @@ class Цены(unittest.TestCase):
         ровно то, чего конкурент избегает, не давая генераций вовсе."""
         лучший = pricing.best_pack_rate()
         for s in pricing.SUBS:
-            self.assertLess(pricing.tokens_per_rub(s), лучший,
+            self.assertLess(pricing.hearts_per_rub(s), лучший,
                             f"{s['id']}: жетоны по подписке выгоднее пакета")
 
     def test_длинный_срок_дешевле_в_пересчёте_на_день(self):
@@ -151,10 +167,10 @@ class Цены(unittest.TestCase):
     def test_подарок_новичку_доводит_до_результата(self):
         """У конкурента за приглашение дают 10 💎 при цене фото 12 — не
         хватает даже на одну генерацию. Такой подарок только злит."""
-        фото = pricing.job("photo").tokens
-        self.assertGreaterEqual(pricing.WELCOME_TOKENS, фото * 2)
+        фото = pricing.job("photo").hearts
+        self.assertGreaterEqual(pricing.WELCOME_HEARTS, фото * 2)
         self.assertGreaterEqual(pricing.REFERRAL_INVITEE, фото)
-        self.assertLess(pricing.WELCOME_TOKENS, pricing.job("video_5").tokens,
+        self.assertLess(pricing.WELCOME_HEARTS, pricing.job("video_5").hearts,
                         "на подарок не должно хватать ролика")
 
     def test_неизвестное_падает_явно(self):
@@ -185,14 +201,14 @@ class Каталог(unittest.TestCase):
     def test_у_каждого_сценария_есть_цена(self):
         for key, sc in catalog.SCENE.items():
             self.assertIn(sc.job, pricing.JOBS, f"{key}: вид генерации не из прайса")
-            self.assertGreater(sc.tokens, 0, f"{key}: нулевая цена")
+            self.assertGreater(sc.hearts, 0, f"{key}: нулевая цена")
 
     def test_цена_стоит_на_каждой_кнопке(self):
         """Наше отличие от конкурента: он прячет цену до загрузки фото.
         Если кнопка её потеряет, отличие исчезнет молча."""
         for key, sc in catalog.SCENE.items():
-            self.assertIn("жет.", sc.button(), f"{key}: на кнопке нет цены")
-            self.assertIn(str(sc.tokens), sc.button(), f"{key}: на кнопке не та цена")
+            self.assertIn("♥", sc.button(), f"{key}: на кнопке нет цены")
+            self.assertIn(str(sc.hearts), sc.button(), f"{key}: на кнопке не та цена")
 
     def test_промпты_на_английском_и_не_пустые(self):
         """Модель обучена на английском, русский промпт даёт мусор."""
