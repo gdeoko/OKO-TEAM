@@ -17,6 +17,9 @@ import requests
 
 import pricing
 import catalog
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "brand-amberry"))
+import brand
 from store import Store, NotEnoughTokens
 from gpu import Gpu, GpuError
 
@@ -97,7 +100,7 @@ def scenes_kb(sec, cat):
 
 def greet(u):
     return (
-        "<b>Здесь героини оживают.</b>\n\n"
+        f"<b>{brand.NAME}</b> — {brand.TAGLINE.lower()}.\n\n"
         "Опиши словами, что хочешь увидеть — получишь фото или ролик.\n"
         "Можно прислать своё фото: поза, сцена и одежда меняются, лицо остаётся.\n\n"
         f"На старте дарю <b>{pricing.WELCOME_TOKENS} жетонов</b> — хватит попробовать.\n\n"
@@ -305,7 +308,7 @@ def on_callback(cb):
                 mark = "ok" if j["state"] == "ok" else "сбой"
                 lines.append(f"· {pricing.job(j['kind']).title} — {mark}")
         code = store.user(u)["ref_code"]
-        me = os.environ.get("ROCKET_BOT_NAME", "bot")
+        me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
         lines.append(f"\nЗови друзей: <code>https://t.me/{me}?start={code}</code>")
         lines.append(f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> жетонов.")
         send(chat, "\n".join(lines), MENU); return

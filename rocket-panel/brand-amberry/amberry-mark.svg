@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>AMBERRY — знак</title>
+  <desc>Гроздь костянок малины. Под ней янтарное свечение — «amber», спрятанный в имени.</desc>
+  <defs>
+    <filter id="g" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#000000"/>
+  <g filter="url(#g)">
+    <circle cx="136.0" cy="168.0" r="40.0" fill="#FF0A8C"/>
+    <circle cx="216.0" cy="168.0" r="40.0" fill="#FF0A8C"/>
+    <circle cx="296.0" cy="168.0" r="40.0" fill="#FF0A8C"/>
+    <circle cx="376.0" cy="168.0" r="40.0" fill="#FF0A8C"/>
+    <circle cx="176.0" cy="237.3" r="40.0" fill="#FF0A8C"/>
+    <circle cx="256.0" cy="237.3" r="40.0" fill="#FF0A8C"/>
+    <circle cx="336.0" cy="237.3" r="40.0" fill="#FF0A8C"/>
+    <circle cx="216.0" cy="306.6" r="40.0" fill="#FF0A8C"/>
+    <circle cx="296.0" cy="306.6" r="40.0" fill="#FF0A8C"/>
+    <circle cx="256.0" cy="375.8" r="40.0" fill="#FF0A8C"/>
+    <path d="M252,132 L176,82 L202,130 Z" fill="#FF0A8C"/>
+  </g>
+</svg>
