@@ -95,7 +95,14 @@ def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
         lines.append(f"{j.title} — <b>{j.tokens}</b> жет. · {j.note}")
-    lines.append("\n<b>Пакеты</b>\n")
+    photo = pricing.job("photo").tokens
+    lines.append("\n<b>Подписка на месяц</b> — выгоднее всего\n")
+    for s in pricing.SUBS:
+        extra = " · без очереди" if s["priority"] else ""
+        lines.append(f"{s['title']} — <b>{pricing.rub(s['usd'])} ₽</b> · "
+                     f"{s['tokens']} жет. ≈ {s['tokens'] // photo} фото{extra}")
+    lines.append("<i>Жетоны подписки действуют месяц.</i>")
+    lines.append("\n<b>Пакеты</b> — не сгорают никогда\n")
     for p in pricing.PACKS:
         total = pricing.pack_total(p["id"])
         bonus = f"  <i>+{p['bonus']} в подарок</i>" if p["bonus"] else ""
@@ -104,7 +111,8 @@ def price_list():
 
 
 def buy_kb():
-    rows = []
+    rows = [[(f"{s['title']} — {pricing.rub(s['usd'])} ₽/мес", f"sub:{s['id']}")]
+            for s in pricing.SUBS]
     for p in pricing.PACKS:
         total = pricing.pack_total(p["id"])
         rows.append([(f"{total} жет. — {pricing.rub(p['usd'])} ₽", f"buy:{p['id']}")])
@@ -256,7 +264,14 @@ def on_callback(cb):
     if data == "m:balance":
         answer(cid)
         h = store.history(u, 5)
-        lines = [f"Баланс: <b>{store.balance(u)} жетонов</b>\n"]
+        lines = [f"Баланс: <b>{store.balance(u)} жетонов</b>"]
+        active = store.sub_active(u)
+        if active:
+            row = store.user(u)
+            left = max(0, (row["sub_until"] - int(time.time())) // 86400)
+            lines.append(f"Подписка <b>{pricing.sub(active)['title']}</b> — "
+                         f"{row['sub']} жет., ещё {left} дн.")
+        lines.append("")
         if h:
             lines.append("<b>Последние</b>")
             for j in h:
@@ -275,7 +290,16 @@ def on_callback(cb):
         answer(cid, "Оплата скоро")
         p = pricing.pack(data.split(":", 1)[1])
         send(chat, f"Пакет <b>{pricing.pack_total(p['id'])} жетонов</b> за "
-                   f"<b>{pricing.rub(p['usd'])} ₽</b>.\n\n"
+                   f"<b>{pricing.rub(p['usd'])} ₽</b>. Не сгорают.\n\n"
+                   "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
+        return
+
+    if data.startswith("sub:"):
+        answer(cid, "Оплата скоро")
+        s = pricing.sub(data.split(":", 1)[1])
+        send(chat, f"Подписка <b>{s['title']}</b> — <b>{pricing.rub(s['usd'])} ₽</b> в месяц, "
+                   f"{s['tokens']} жетонов.\n"
+                   "<i>Жетоны действуют до конца оплаченного месяца.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
         return
 

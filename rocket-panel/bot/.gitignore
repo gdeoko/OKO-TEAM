@@ -1,0 +1,4 @@
+rocket_bot.db
+rocket_bot.db-wal
+rocket_bot.db-shm
+__pycache__/
