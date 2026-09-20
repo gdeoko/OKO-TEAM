@@ -32,14 +32,31 @@
 
 # Общее для всех кадров. Один экземпляр: разойдётся по сценариям —
 # и правка освещения превратится в сорок правок.
-ТЕЛО = (
-    "The woman from the uploaded reference photograph, her face preserved "
+# Два варианта первого блока. Разница не косметическая: у режимов без
+# входного фото нет лица, которое надо сохранять, и требование «сохрани
+# её черты» для них бессмысленно — модель начинает искать референс,
+# которого нет.
+ТЕЛО_ПО_ФОТО = (
+    "The woman from the supplied reference photograph, her face preserved "
     "exactly: same bone structure, same eye shape and colour, same nose, "
     "same lips, same eyebrows, same hairline, same skin tone and the same "
     "individual marks, moles and freckles. Identity must be unmistakable — "
     "someone who knows her recognises her instantly. Do not beautify, do "
     "not slim, do not symmetrise, do not change her apparent age."
 )
+
+ТЕЛО_БЕЗ_ФОТО = (
+    "One woman, adult, invented for this frame and belonging to no real "
+    "person. Give her a specific, memorable face rather than an average "
+    "one: a definite bone structure, an asymmetry that reads as real, a "
+    "face a viewer could pick out of a crowd afterwards. Her face must be "
+    "identical in every frame and every variation produced from this "
+    "description."
+)
+
+# Старое имя оставлено: тесты и каталог ссылаются на «face preserved
+# exactly» как на признак того, что блок сохранения лица на месте.
+ТЕЛО = ТЕЛО_ПО_ФОТО
 
 КОЖА = (
     "Skin rendered as real skin: visible pores across the nose and cheeks, "
@@ -120,31 +137,54 @@
     "duplicate, cropped head, floating limbs, mutated"
 )
 
-# Куски, которые добавляются по виду работы, а не по сценарию.
+# Куски по СЕМЕЙСТВУ режима, а не по каждому виду отдельно: пяти- и
+# десятисекундный ролик отличаются длиной, а не словами.
+#
+# Ключи совпадают с приставками видов из pricing.JOBS: t2i, i2i,
+# inpaint, t2v, i2v, sound.
 ПО_ВИДУ = {
-    "photo": (
-        "A single still photograph. The whole frame is one exposure: one "
+    "t2i": (
+        "A single still photograph, built from this description alone — no "
+        "reference image is supplied. The whole frame is one exposure: one "
         "light direction, one white balance, one grain structure."
     ),
-    "inpaint": (
-        "Change ONLY what this scenario describes. Everything else in the "
-        "uploaded photograph stays byte-for-byte as it was: the face, the "
-        "hair, the pose, the background, the light direction, the grain. "
-        "The edited region must match the surrounding frame in colour "
-        "temperature, noise and sharpness so the seam is invisible at full "
-        "resolution."
+    "i2i": (
+        "Reference photographs are supplied. Take the person from them and "
+        "rebuild the frame completely around her according to this "
+        "scenario: the pose, the framing, the distance, the surroundings "
+        "and the clothing are all yours to compose from scratch. You are "
+        "NOT retouching the original frame and NOT bound by its "
+        "composition — only the person must survive it unchanged. Where "
+        "several references are supplied, they show the same person from "
+        "different angles or show garments to be used; read them together "
+        "rather than averaging them into a blur."
     ),
-    "animate": (
-        "Animate the uploaded photograph into a short vertical clip, 9:16. "
-        "The first frame is the photograph itself, unchanged. Motion is "
-        "small, continuous and physically plausible: breathing that lifts "
-        "the chest, a slow blink, hair settling, fabric shifting with the "
-        "body. The face must stay the same face in every single frame — no "
-        "drift, no morph, no identity change between the first frame and "
-        "the last. No cuts, no teleporting, no sudden speed changes."
+    "inpaint": (
+        "Change ONLY the region marked in the supplied mask. Everything "
+        "outside it stays byte-for-byte as it was: the face, the hair, the "
+        "pose, the background, the light direction, the grain. The edited "
+        "region must match the surrounding frame in colour temperature, "
+        "noise and sharpness so the seam is invisible at full resolution."
+    ),
+    "t2v": (
+        "A short vertical clip, 9:16, built from this description alone — "
+        "no starting frame is supplied. Motion is continuous and "
+        "physically plausible throughout; the camera and the subject "
+        "behave like a real camera and a real body. The same face in every "
+        "frame from the first to the last — no drift, no morph, no "
+        "identity change. No cuts, no teleporting, no sudden speed changes."
+    ),
+    "i2v": (
+        "Animate the supplied photograph into a vertical clip, 9:16. The "
+        "first frame is that photograph itself, unchanged. If a second "
+        "image is supplied it is the LAST frame, and the motion must "
+        "arrive at it smoothly rather than cutting to it. Motion is small, "
+        "continuous and physically plausible: breathing that lifts the "
+        "chest, a slow blink, hair settling, fabric shifting with the "
+        "body. The face must stay the same face in every single frame."
     ),
     "sound": (
-        "Animate the uploaded photograph into a vertical clip with speech, "
+        "Animate the supplied photograph into a vertical clip with speech, "
         "9:16. Lips must match the audio precisely: closures on b, p and m, "
         "teeth on f and v, an open jaw on broad vowels. Jaw, cheeks and "
         "throat move with the mouth; the whole face participates, not the "
@@ -152,6 +192,12 @@
         "and micro-movements. The face must stay the same face throughout."
     ),
 }
+
+
+def семейство(вид):
+    """Вид генерации -> семейство промпта. t2v_5 и t2v_10 отличаются
+    длиной, а не словами, поэтому текст у них общий."""
+    return вид.rsplit("_", 1)[0] if вид[-1].isdigit() else вид
 
 
 class Блок:
@@ -177,10 +223,12 @@ def собрать(вид, блок):
     Порядок намеренный: модели внимательнее к началу, поэтому сначала
     кто и что, потом где и при каком свете, и только в конце техника.
     """
-    if вид not in ПО_ВИДУ:
+    сем = семейство(вид)
+    if сем not in ПО_ВИДУ:
         raise KeyError(f"неизвестный вид работы: {вид}")
 
-    куски = [ТЕЛО, ПО_ВИДУ[вид]]
+    по_фото = сем in ("i2i", "inpaint", "i2v", "sound")
+    куски = [ТЕЛО_ПО_ФОТО if по_фото else ТЕЛО_БЕЗ_ФОТО, ПО_ВИДУ[сем]]
     for поле in ("гардероб", "поза", "обстановка", "свет", "камера",
                  "настроение", "ещё"):
         значение = getattr(блок, поле)

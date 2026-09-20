@@ -55,6 +55,13 @@ class Scene:
     def hearts(self):
         return pricing.job(self.job).hearts
 
+    @property
+    def фото_нужно(self):
+        """Сколько снимков просить. Берётся из прайса, а не хранится
+        рядом: свойство модели, и двух источников правды тут быть не
+        должно."""
+        return pricing.job(self.job).фото_нужно
+
     def button(self):
         """Подпись кнопки. Цена в ней обязательна — это наше отличие."""
         return f"{self.title} · {self.hearts} ♥"
@@ -76,6 +83,28 @@ def _сц(key, title, job, подпись, **поля):
     return Scene(key, title, job, Блок(**поля), подпись)
 
 
+def _СЦ_БЕЛЬЁ(key, title, job, подпись, **поля):
+    """Бельё — фото по фото, а не правка по маске: маску человек должен
+    обвести руками, а тут менять нужно всю одежду. Референсов до трёх:
+    можно приложить фото героини и фото нужного белья."""
+    return Scene(key, title, "i2i", Блок(**поля), подпись)
+
+
+def _СЦ_ФОТО(key, title, job, подпись, **поля):
+    """Обстановка меняется целиком, поэтому фото-по-фото, а не правка
+    области: у Qwen-Image-Edit референс идёт в условие, и каркас кадра
+    строится заново — позу и план можно поменять полностью."""
+    return Scene(key, title, "i2i", Блок(**поля), подпись)
+
+
+def _СЦ_ОЖИВИТЬ(key, title, job, подпись, **поля):
+    return Scene(key, title, "i2v_5", Блок(**поля), подпись)
+
+
+def _СЦ_ЗВУК(key, title, job, подпись, **поля):
+    return Scene(key, title, "sound", Блок(**поля), подпись)
+
+
 # ---------------------------------------------------------------------
 # КАТЕГОРИИ
 #
@@ -90,7 +119,7 @@ CATEGORIES = [
         "lingerie", "Бельё", "Переодеть в то, чего на фото не было",
         иконка="КОРСЕТ",
         scenes=[
-            _сц("lg_satin", "Атласная сорочка", "inpaint",
+            _СЦ_БЕЛЬЁ("lg_satin", "Атласная сорочка", "inpaint",
                 "Шёлк по фигуре, свет ловится по краю",
                 гардероб="Replace her clothing with a deep magenta satin slip "
                          "nightdress, bias-cut so it falls on the diagonal and "
@@ -102,7 +131,7 @@ CATEGORIES = [
                      "satin shows one bright ridge per fold and the rest falls "
                      "into shadow."),
 
-            _сц("lg_lace", "Кружево", "inpaint",
+            _СЦ_БЕЛЬЁ("lg_lace", "Кружево", "inpaint",
                 "Чёрное кружево, кожа читается сквозь рисунок",
                 гардероб="Replace her clothing with a black lace bralette and "
                          "matching high-waisted briefs. The lace is fine "
@@ -115,7 +144,7 @@ CATEGORIES = [
                      "lace reads as an openwork pattern rather than a flat "
                      "black shape."),
 
-            _сц("lg_silk_robe", "Шёлковый халат", "inpaint",
+            _СЦ_БЕЛЬЁ("lg_silk_robe", "Шёлковый халат", "inpaint",
                 "Наброшен, не запахнут, пояс свободно",
                 гардероб="Replace her clothing with a long silk kimono robe in "
                          "deep wine, worn open over matching underwear, the "
@@ -126,7 +155,7 @@ CATEGORIES = [
                 поза="One shoulder slipped free of the robe, the fabric caught "
                      "at the upper arm."),
 
-            _сц("lg_sport", "Спортивный комплект", "inpaint",
+            _СЦ_БЕЛЬЁ("lg_sport", "Спортивный комплект", "inpaint",
                 "Топ и легинсы, матовая ткань",
                 гардероб="Replace her clothing with a fitted matte-black "
                          "sports bra and high-waisted seamless leggings. The "
@@ -137,7 +166,7 @@ CATEGORIES = [
                 свет="Clean even light from the front, the kind used for "
                      "activewear catalogue photography."),
 
-            _сц("lg_white", "Белый комплект", "inpaint",
+            _СЦ_БЕЛЬЁ("lg_white", "Белый комплект", "inpaint",
                 "Простое хлопковое, утренний свет",
                 гардероб="Replace her clothing with a simple white cotton "
                          "bralette and briefs, unlined, with a narrow ribbed "
@@ -146,7 +175,7 @@ CATEGORIES = [
                 свет="Cool diffuse morning light from a window, soft shadows, "
                      "everything low in contrast and quiet."),
 
-            _сц("lg_stockings", "Чулки", "inpaint",
+            _СЦ_БЕЛЬЁ("lg_stockings", "Чулки", "inpaint",
                 "Тонкие чулки с кружевной резинкой",
                 гардероб="Add sheer black hold-up stockings with a wide "
                          "scalloped lace band at the upper thigh and a fine "
@@ -162,7 +191,7 @@ CATEGORIES = [
         "scene", "Обстановка", "Перенести героиню в другое место",
         иконка="КАБЛУК",
         scenes=[
-            _сц("sc_bed", "Шёлковая постель", "photo",
+            _СЦ_ФОТО("sc_bed", "Шёлковая постель", "photo",
                 "Утро, смятый шёлк, свет из-за штор",
                 обстановка="A wide bed dressed in ivory silk, the sheets "
                            "deeply creased from a night of sleep, one pillow "
@@ -174,7 +203,7 @@ CATEGORIES = [
                 свет="Morning sun through sheer curtains, diffuse and warm, "
                      "throwing long soft shadows across the bedding."),
 
-            _сц("sc_studio", "Чёрная студия", "photo",
+            _СЦ_ФОТО("sc_studio", "Чёрная студия", "photo",
                 "Один источник, всё остальное в темноте",
                 обстановка="A professional photo studio against seamless "
                            "black paper, nothing else in frame.",
@@ -185,7 +214,7 @@ CATEGORIES = [
                 настроение="Severe, controlled, expensive — the register of a "
                            "fashion test shot."),
 
-            _сц("sc_bath", "Ванная", "photo",
+            _СЦ_ФОТО("sc_bath", "Ванная", "photo",
                 "Пар, запотевшее стекло, мокрая кожа",
                 обстановка="A dim tiled bathroom, steam hanging in the air, "
                            "a large mirror fogged at the edges, warm water "
@@ -196,7 +225,7 @@ CATEGORIES = [
                 ещё="Her skin is damp: water beading on the shoulders and "
                     "collarbone, hair heavy and wet at the ends."),
 
-            _сц("sc_hotel", "Ночной отель", "photo",
+            _СЦ_ФОТО("sc_hotel", "Ночной отель", "photo",
                 "Город в окне, лампа у кровати",
                 обстановка="A high-floor hotel room at night. A floor-to-"
                            "ceiling window fills one side of the frame with a "
@@ -206,7 +235,7 @@ CATEGORIES = [
                      "window, meeting on her face — warm on one cheek, cool on "
                      "the other."),
 
-            _сц("sc_pool", "У бассейна", "photo",
+            _СЦ_ФОТО("sc_pool", "У бассейна", "photo",
                 "Вода, отражения, полуденное солнце",
                 обстановка="The edge of a swimming pool at midday, turquoise "
                            "water throwing rippling caustic reflections onto "
@@ -216,7 +245,7 @@ CATEGORIES = [
                      "moving reflected light from the water playing across the "
                      "underside of her chin and arms."),
 
-            _сц("sc_neon", "Неоновый переулок", "photo",
+            _СЦ_ФОТО("sc_neon", "Неоновый переулок", "photo",
                 "Мокрый асфальт, розовые вывески",
                 обстановка="A narrow city alley at night after rain. Wet "
                            "asphalt mirrors a row of neon signs in magenta and "
@@ -227,7 +256,7 @@ CATEGORIES = [
                      "between them.",
                 настроение="Cinematic, charged, slightly dangerous."),
 
-            _сц("sc_nature", "Поле на закате", "photo",
+            _СЦ_ФОТО("sc_nature", "Поле на закате", "photo",
                 "Высокая трава, контровой свет",
                 обстановка="An open field of tall dry grass at golden hour, "
                            "the horizon low and distant, a line of trees far "
@@ -237,7 +266,7 @@ CATEGORIES = [
                      "by bounce from the ground. Visible lens flare and warm "
                      "atmospheric haze."),
 
-            _сц("sc_car", "Заднее сиденье", "photo",
+            _СЦ_ФОТО("sc_car", "Заднее сиденье", "photo",
                 "Салон ночью, свет фонарей по лицу",
                 обстановка="The back seat of a car at night, dark leather, "
                            "the city sliding past outside the window.",
@@ -253,7 +282,7 @@ CATEGORIES = [
         "animate", "Оживить", "Фото начинает двигаться",
         иконка="БЛЁСТКИ",
         scenes=[
-            _сц("an_breath", "Дыхание", "animate",
+            _СЦ_ОЖИВИТЬ("an_breath", "Дыхание", "animate",
                 "Самое спокойное — грудь, ресницы, прядь",
                 поза="She holds the pose of the photograph. Only the chest "
                      "rises and falls with slow breathing, the eyelids close "
@@ -261,28 +290,28 @@ CATEGORIES = [
                      "settles across the cheek.",
                 настроение="Calm, unhurried, almost still."),
 
-            _сц("an_look", "Взгляд в камеру", "animate",
+            _СЦ_ОЖИВИТЬ("an_look", "Взгляд в камеру", "animate",
                 "Отводит глаза и возвращает взгляд",
                 поза="Her eyes drift away from the lens, linger for a moment, "
                      "then come back and settle directly on the camera. The "
                      "head turns only a few degrees with them.",
                 настроение="Direct, unhurried, holding the viewer."),
 
-            _сц("an_smile", "Улыбка", "animate",
+            _СЦ_ОЖИВИТЬ("an_smile", "Улыбка", "animate",
                 "Улыбка рождается медленно и доходит до глаз",
                 поза="A smile builds slowly from the corners of the mouth, "
                      "reaching the eyes last so the cheeks lift and the outer "
                      "corners crease. It arrives and stays; it does not flash "
                      "on and off."),
 
-            _сц("an_hair", "Поправляет волосы", "animate",
+            _СЦ_ОЖИВИТЬ("an_hair", "Поправляет волосы", "animate",
                 "Заправляет прядь за ухо",
                 поза="She lifts one hand, catches a loose strand of hair and "
                      "tucks it behind her ear, then lowers the hand back. The "
                      "hand must remain anatomically correct throughout the "
                      "movement, fingers never merging with the hair or face."),
 
-            _сц("an_turn", "Поворот к камере", "animate",
+            _СЦ_ОЖИВИТЬ("an_turn", "Поворот к камере", "animate",
                 "Поворачивается через плечо",
                 поза="She begins turned three-quarters away and rotates "
                      "smoothly toward the lens, the shoulders leading and the "
@@ -290,7 +319,7 @@ CATEGORIES = [
                      "face must remain the same face through every degree of "
                      "the turn."),
 
-            _сц("an_wind", "Ветер", "animate",
+            _СЦ_ОЖИВИТЬ("an_wind", "Ветер", "animate",
                 "Волосы и ткань живут от ветра",
                 поза="She stays still. A steady breeze lifts and moves her "
                      "hair in continuous strands and stirs the fabric she is "
@@ -298,7 +327,7 @@ CATEGORIES = [
                 ещё="Motion in the hair is strand-level and continuous, never "
                     "a single rigid mass moving as one piece."),
 
-            _сц("an_push", "Наезд камеры", "animate",
+            _СЦ_ОЖИВИТЬ("an_push", "Наезд камеры", "animate",
                 "Камера медленно приближается",
                 камера="A slow, steady push-in toward her face over the whole "
                        "clip, as if on a dolly — constant speed, no easing at "
@@ -312,14 +341,14 @@ CATEGORIES = [
         "voice", "Со звуком", "Фото заговорит вашим текстом",
         иконка="ЭФИР",
         scenes=[
-            _сц("vo_hello", "Приветствие", "sound",
+            _СЦ_ЗВУК("vo_hello", "Приветствие", "sound",
                 "Смотрит в камеру и здоровается",
                 поза="She looks directly into the lens and speaks the supplied "
                      "line as a greeting, warm and unhurried, with small "
                      "natural head movements on the stressed syllables.",
                 настроение="Welcoming, close, as if speaking to one person."),
 
-            _сц("vo_whisper", "Шёпотом", "sound",
+            _СЦ_ЗВУК("vo_whisper", "Шёпотом", "sound",
                 "Близко к камере, вполголоса",
                 поза="She leans slightly toward the lens and speaks the "
                      "supplied line quietly, almost under her breath. Lip "
@@ -328,19 +357,19 @@ CATEGORIES = [
                        "vertical frame.",
                 настроение="Intimate, confidential, quiet."),
 
-            _сц("vo_invite", "Приглашение", "sound",
+            _СЦ_ЗВУК("vo_invite", "Приглашение", "sound",
                 "Зовёт за собой, жест рукой",
                 поза="She speaks the supplied line and, on its final words, "
                      "lifts one hand in a small beckoning gesture. The hand "
                      "stays anatomically correct throughout."),
 
-            _сц("vo_laugh", "С улыбкой", "sound",
+            _СЦ_ЗВУК("vo_laugh", "С улыбкой", "sound",
                 "Говорит, улыбаясь, с короткой паузой на смешок",
                 поза="She speaks the supplied line with a smile running under "
                      "it, breaking once into a short soft laugh before "
                      "finishing. The laugh moves the shoulders slightly."),
 
-            _сц("vo_story", "Рассказ", "sound",
+            _СЦ_ЗВУК("vo_story", "Рассказ", "sound",
                 "Длиннее, спокойнее, с паузами",
                 поза="She delivers the supplied line as a short story: even "
                      "pace, real pauses between sentences where she looks "

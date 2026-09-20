@@ -17,6 +17,7 @@ import requests
 
 import pricing
 import catalog
+import prompts
 import emoji
 import ui
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -34,7 +35,11 @@ gpu = Gpu(os.environ.get("ROCKET_GPU_URL", ""),
           os.environ.get("ROCKET_GPU_USER", "rocket"),
           os.environ.get("ROCKET_GPU_PASS", ""))
 
-# что пользователь делает прямо сейчас: tg_id -> {"kind":..., "photo":...}
+# Сколько секунд ролика просить у панели. Ключ вида несёт длину, но
+# читать её разбором строки в трёх местах — способ однажды разойтись.
+СЕКУНДЫ = {"t2v_5": 5, "t2v_10": 10, "i2v_5": 5, "i2v_10": 10, "sound": 5}
+
+# что пользователь делает прямо сейчас: tg_id -> {"kind":..., "фото":[...]}
 waiting = {}
 busy = set()          # у кого уже считается задание
 lock = threading.Lock()
@@ -122,10 +127,9 @@ def buy_kb():
 
 # ---------- генерация ----------
 
-SIZES = {"photo": "vert", "photo_ref": "vert", "video": "vert", "animate": "vert"}
 
 
-def run_job(chat, u, kind, prompt, photo_name=None):
+def run_job(chat, u, kind, prompt, photos=None):
     """Считает задание и отдаёт результат. Крутится в отдельном потоке."""
     job = pricing.job(kind)
     jid = uuid.uuid4().hex[:10]
@@ -138,17 +142,25 @@ def run_job(chat, u, kind, prompt, photo_name=None):
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
 
-        params = {"prompt": prompt, "size": SIZES.get(kind, "vert"),
-                  "steps": 4, "cfg": 1.0, "seed": 0}
-        if kind in ("photo", "photo_ref"):
+        # steps=4 и cfg=1 — не опечатка. У второго поколения моделей
+        # (Qwen-Rapid-AIO, wan2.2-rapid-mega-aio) ускорители встроены в
+        # сборку, и обычные 26 шагов при cfg 4 их ЛОМАЮТ.
+        params = {"prompt": prompt, "size": "vert",
+                  "steps": 4, "cfg": 1.0, "seed": 0,
+                  "neg": prompts.НЕГАТИВ}
+        сем = prompts.семейство(kind)
+        if сем in ("t2i", "i2i"):
             params["mode"] = "photo"
-            if photo_name:
-                params["image"] = photo_name
+        elif сем == "inpaint":
+            params["mode"] = "inpaint"
         else:
             params["mode"] = "video"
-            params["secs"] = 2
-            if photo_name:
-                params["image"] = photo_name
+            params["secs"] = СЕКУНДЫ.get(kind, 5)
+        # Панель принимает список: у фото-по-фото до трёх референсов, у
+        # видео первый кадр и необязательный последний.
+        if photos:
+            params["images"] = list(photos)
+            params["image"] = photos[0]      # совместимость со старой панелью
 
         gid, seed = gpu.start(**params)
 
@@ -193,13 +205,13 @@ def run_job(chat, u, kind, prompt, photo_name=None):
             busy.discard(u)
 
 
-def launch(chat, u, kind, prompt, photo_name=None):
+def launch(chat, u, kind, prompt, photos=None):
     with lock:
         if u in busy:
             send(chat, "Одно задание уже считается. Дождись его, потом запускай следующее.")
             return
         busy.add(u)
-    threading.Thread(target=run_job, args=(chat, u, kind, prompt, photo_name), daemon=True).start()
+    threading.Thread(target=run_job, args=(chat, u, kind, prompt, photos or []), daemon=True).start()
 
 
 # ---------- разбор сообщений ----------
@@ -232,18 +244,30 @@ def on_text(chat, u, text):
         send(chat, "Сначала выбери, что делаем.", MENU)
         return
     kind = st["kind"]
-    if kind in ("photo_ref", "animate") and not st.get("photo"):
+    job = pricing.job(kind)
+    if job.нужно_фото and not st.get("фото"):
         waiting[u] = st
-        send(chat, "Жду фото. Пришли картинку.")
+        send(chat, ui.просьба_о_фото(job))
         return
-    launch(chat, u, kind, text.strip(), st.get("photo"))
+    launch(chat, u, kind, text.strip(), st.get("фото") or [])
 
 
 def on_photo(chat, u, file_id):
+    """Приём снимка. Копим до максимума, который берёт модель.
+
+    Копим, а не запускаем на первом: у фото-по-фото моделей до трёх
+    референсов, и запуск на первом отбирал бы у человека остальные два
+    молча."""
     st = waiting.get(u)
     if not st:
         send(chat, "Сначала выбери сценарий или режим.", MENU)
         return
+    job = pricing.job(st["kind"])
+    собрано = st.setdefault("фото", [])
+    if len(собрано) >= job.макс_фото > 0:
+        send(chat, f"Больше {job.макс_фото} модель не возьмёт.")
+        return
+
     f = tg("getFile", file_id=file_id).get("result", {})
     path = f.get("file_path")
     if not path:
@@ -251,21 +275,26 @@ def on_photo(chat, u, file_id):
         return
     data = requests.get(f"https://api.telegram.org/file/bot{TOKEN}/{path}", timeout=60).content
     try:
-        name = gpu.upload("photo.jpg", data)
+        name = gpu.upload(f"ref{len(собрано)+1}.jpg", data)
     except GpuError as e:
         send(chat, f"Не приняла фото: {str(e)[:150]}")
         return
-    st["photo"] = name
+    собрано.append(name)
 
-    # Пришли из каталога — промпт уже готов, спрашивать нечего.
+    # Пришли из каталога — промпт готов. Набрали максимум — запускаем
+    # сами, не заставляя жать лишнюю кнопку.
     if st.get("scene"):
-        waiting.pop(u, None)
         sc = catalog.scene(st["scene"])
-        launch(chat, u, sc.job, sc.prompt, name)
+        if len(собрано) >= job.макс_фото:
+            waiting.pop(u, None)
+            launch(chat, u, sc.job, sc.prompt, собрано)
+            return
+        send(chat, ui.просьба_о_фото(job, len(собрано)),
+             ui.меню_сбора_фото(sc, len(собрано)))
         return
 
-    waiting[u] = st
-    send(chat, "Фото принято. Теперь напиши, что с ним сделать — по-английски.")
+    send(chat, f"Снимков принято: {len(собрано)}. "
+               "Теперь напиши, что с ними сделать — <b>по-английски</b>.")
 
 
 def on_callback(cb):
@@ -325,36 +354,52 @@ def on_callback(cb):
             send(chat, ui.текст_оплаты(), ui.меню_оплаты())
             return
         answer(cid)
-        waiting[u] = {"kind": sc.job, "scene": sc.key}
-        send(chat, f"<b>{sc.title}</b> — {sc.hearts} ♥\n\n"
-                   "Пришли фото, с которым работаем.")
+        job = pricing.job(sc.job)
+        if not job.нужно_фото:
+            launch(chat, u, sc.job, sc.prompt, [])
+            return
+        waiting[u] = {"kind": sc.job, "scene": sc.key, "фото": []}
+        send(chat, ui.просьба_о_фото(job), ui.меню_сбора_фото(sc, 0))
+        return
+
+    if data.startswith("run:"):
+        # Человек сказал «хватит», не добрав до максимума.
+        sc = catalog.scene(data.split(":", 1)[1])
+        st = waiting.get(u)
+        if not st or not st.get("фото"):
+            answer(cid, "Сначала пришли фото"); return
+        answer(cid)
+        waiting.pop(u, None)
+        launch(chat, u, sc.job, sc.prompt, st["фото"])
+        return
+
+    if data.startswith("undo:"):
+        sc = catalog.scene(data.split(":", 1)[1])
+        st = waiting.get(u)
+        if st and st.get("фото"):
+            st["фото"].pop()
+        n = len(st["фото"]) if st else 0
+        answer(cid, "Убрала")
+        send(chat, ui.просьба_о_фото(pricing.job(sc.job), n),
+             ui.меню_сбора_фото(sc, n))
         return
 
     if data == "m:free":
         answer(cid)
-        waiting[u] = {"kind": "photo"}
-        j = pricing.job("photo")
-        send(chat, f"<b>Свой промпт</b> — {j.hearts} ♥\n\n"
-                   "У конкурента это платная функция под замком. У нас "
-                   "доступна всем.\n\nОпиши словами, что сгенерировать. "
-                   "<b>По-английски</b> — модель обучена на нём, русский "
-                   "даёт мусор.", MENU)
+        send(chat, ui.текст_своего_промпта(), ui.меню_своего_промпта())
         return
 
-    if data.startswith("m:"):
+    if data.startswith("free:"):
         kind = data.split(":", 1)[1]
+        j = pricing.job(kind)
         answer(cid)
-        if kind == "video":
-            kind = "video_5"
-        if kind in ("photo_ref", "animate"):
-            waiting[u] = {"kind": kind}
-            send(chat, "Пришли фото, с которым работаем.")
-        else:
-            waiting[u] = {"kind": kind}
-            j = pricing.job(kind)
-            send(chat, f"<b>{j.title}</b> — {j.hearts} ♥\n\n"
-                       "Опиши словами, что сгенерировать. <b>По-английски.</b>")
+        waiting[u] = {"kind": kind, "фото": []}
+        хвост = ("\n\n" + ui.сколько_фото(j) + " Сначала фото, потом описание."
+                 if j.нужно_фото else "")
+        send(chat, f"<b>{j.title}</b> — {j.hearts} ♥{хвост}\n\n"
+                   "Опиши словами, что сделать. <b>По-английски.</b>", MENU)
         return
+
     answer(cid)
 
 
