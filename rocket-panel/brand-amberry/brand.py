@@ -26,7 +26,7 @@ MUTE = "#8A8792"
 _ЗДЕСЬ = pathlib.Path(__file__).parent
 MARK_SVG = _ЗДЕСЬ / "amberry-mark.svg"        # вектор: знак + надпись
 AVATAR_PNG = _ЗДЕСЬ / "amberry-avatar-512.png"  # аватарка из вектора
-HERO_JPG = _ЗДЕСЬ / "amberry-70-hero.jpg"       # парадный рендер с фоном
+HERO_JPG = _ЗДЕСЬ / "amberry-hero.jpg"          # парадный рендер с фоном
 
 
 def logo_data_uri():
