@@ -9,7 +9,7 @@ import pathlib
 
 NAME = "AMBERRY"
 TAGLINE = "Оживляет любое фото"
-BOT = "@amberry_ai_bot"
+BOT = "@theamberrybot"
 CHANNEL = "@amberryneon"
 SUPPORT = "@amberry_support_bot"
 
@@ -24,9 +24,9 @@ WHITE = "#FFFFFF"
 MUTE = "#8A8792"
 
 _ЗДЕСЬ = pathlib.Path(__file__).parent
-MARK_SVG = _ЗДЕСЬ / "amberry-mark.svg"
-LOCKUP_SVG = _ЗДЕСЬ / "amberry-lockup.svg"
-AVATAR_PNG = _ЗДЕСЬ / "amberry-avatar-512.png"
+MARK_SVG = _ЗДЕСЬ / "amberry-mark.svg"        # вектор: знак + надпись
+AVATAR_PNG = _ЗДЕСЬ / "amberry-avatar-512.png"  # аватарка из вектора
+HERO_JPG = _ЗДЕСЬ / "amberry-70-hero.jpg"       # парадный рендер с фоном
 
 
 def logo_data_uri():
