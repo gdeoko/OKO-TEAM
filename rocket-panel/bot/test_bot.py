@@ -99,10 +99,11 @@ class Цены(unittest.TestCase):
         по-людски (фото = 1), а обещание скидки требует общих единиц с
         конкурентом (фото = 12 💎). Двенадцать кристаллов в сердечке
         снимают оба."""
-        его = {"photo": 12, "inpaint": 12, "video_5": 60, "video_10": 96,
-               "sound": 170, "animate": 60}
+        его = {"t2i": 12, "i2i": 12, "inpaint": 12,
+               "t2v_5": 60, "t2v_10": 96, "i2v_5": 60, "i2v_10": 96,
+               "sound": 170}
         self.assertEqual({k: j.crystals for k, j in pricing.JOBS.items()}, его)
-        self.assertEqual(pricing.job("photo").hearts, 1,
+        self.assertEqual(pricing.job("t2i").hearts, 1,
                          "фото обязано стоить ровно одно сердечко")
 
     def test_пересчёт_в_сердечки_всегда_вниз(self):
@@ -112,6 +113,41 @@ class Цены(unittest.TestCase):
             self.assertLessEqual(j.hearts * pricing.КРИСТАЛЛОВ_В_СЕРДЦЕ,
                                  j.crystals, f"{k}: округлили вверх")
         self.assertEqual(pricing.job("sound").hearts, 14)
+
+    def test_сколько_фото_просим_совпадает_с_тем_что_берёт_модель(self):
+        """Интерфейс обязан просить ровно столько снимков, сколько примет
+        модель. Разойдутся — человек пришлёт три, а уйдёт один, и он об
+        этом не узнает.
+
+        Числа не выдуманы: Qwen-Image-Edit берёт до трёх референсов
+        (они идут в условие, а не в латент), видео с VACE — первый кадр
+        и необязательный последний."""
+        ожидаем = {"t2i": (0, 0), "i2i": (1, 3), "inpaint": (1, 1),
+                   "t2v_5": (0, 0), "t2v_10": (0, 0),
+                   "i2v_5": (1, 2), "i2v_10": (1, 2), "sound": (1, 1)}
+        self.assertEqual({k: j.фото_нужно for k, j in pricing.JOBS.items()},
+                         ожидаем)
+        self.assertEqual(pricing.МАКС_РЕФЕРЕНСОВ, 3)
+
+    def test_у_каждого_вида_есть_свой_текст_режима(self):
+        """Промпт собирается по семейству вида. Появится вид без
+        семейства — сборка упадёт на первом же сценарии, но лучше
+        поймать это тестом."""
+        import prompts
+        for k in pricing.JOBS:
+            self.assertIn(prompts.семейство(k), prompts.ПО_ВИДУ,
+                          f"{k}: нет текста режима")
+
+    def test_режимы_без_фото_не_требуют_лица_с_фото(self):
+        """У текста-в-фото нет входного снимка, и требование «сохрани её
+        черты» для него бессмысленно: модель начинает искать референс,
+        которого нет."""
+        import prompts
+        без = prompts.собрать("t2i", prompts.Блок())
+        self.assertNotIn("face preserved exactly", без)
+        self.assertIn("belonging to no real person", без)
+        с_фото = prompts.собрать("i2i", prompts.Блок())
+        self.assertIn("face preserved exactly", с_фото)
 
     def test_надбавка_за_качество_не_дороже_чем_у_него(self):
         for q in pricing.QUALITY:
@@ -128,7 +164,7 @@ class Цены(unittest.TestCase):
         живёт тут, а не в голове: иначе следующая правка прайса тихо
         вернёт двадцатисекундный ролик."""
         for k, j in pricing.JOBS.items():
-            if k.startswith("video_"):
+            if k.startswith(("t2v_", "i2v_")):
                 сек = int(k.split("_")[1])
                 self.assertLessEqual(сек, pricing.МАКС_СЕК,
                                      f"{k}: длиннее потолка в {pricing.МАКС_СЕК} с")
@@ -136,10 +172,10 @@ class Цены(unittest.TestCase):
     def test_подарок_новичку_доводит_до_результата(self):
         """У конкурента за приглашение дают 10 💎 при цене фото 12 — не
         хватает даже на одну генерацию. Такой подарок только злит."""
-        фото = pricing.job("photo").hearts
+        фото = pricing.job("t2i").hearts
         self.assertGreaterEqual(pricing.WELCOME_HEARTS, фото * 2)
         self.assertGreaterEqual(pricing.REFERRAL_INVITEE, фото)
-        self.assertLess(pricing.WELCOME_HEARTS, pricing.job("video_5").hearts,
+        self.assertLess(pricing.WELCOME_HEARTS, pricing.job("t2v_5").hearts,
                         "на подарок не должно хватать ролика")
 
     def test_подписок_нет_ни_в_каком_виде(self):
