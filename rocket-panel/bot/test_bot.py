@@ -94,19 +94,45 @@ class Цены(unittest.TestCase):
             self.assertGreater(k, 1.5, f"{key}: мы не дешевле рынка ({k:.1f}x)")
             self.assertLess(k, 6, f"{key}: мы дешевле рынка в {k:.0f} раз — недозарабатываем")
 
-    def test_подписка_выгоднее_любого_пакета(self):
-        """Иначе подписку никто не возьмёт, а она — главный доход."""
-        best_pack = max(pricing.tokens_per_usd(p) for p in pricing.PACKS)
+    def test_подписка_не_дешёвый_способ_купить_жетоны(self):
+        """Запас жетонов в подписке идёт по курсу ХУЖЕ крупного пакета.
+        Иначе подписку начнут брать вместо пакетов, и вторая касса
+        (продажа генераций) схлопнется — ровно то, чего конкурент
+        избегает, вообще не давая генераций по подписке."""
+        лучший_пакет = max(pricing.tokens_per_usd(p) for p in pricing.PACKS)
         for s in pricing.SUBS:
-            if s["id"] == "s1":
-                continue  # «Проба» нарочно невыгодна: это вход, не тариф
-            self.assertGreater(pricing.tokens_per_usd(s), best_pack,
-                               f"{s['id']}: подписка не выгоднее крупного пакета")
+            self.assertLessEqual(
+                pricing.tokens_per_usd(s), лучший_пакет,
+                f"{s['id']}: жетоны по подписке выгоднее пакета — она съест пакеты")
 
-    def test_чем_дороже_подписка_тем_дешевле_жетон(self):
-        rates = [pricing.tokens_per_usd(s) for s in pricing.SUBS]
-        self.assertEqual(rates, sorted(rates),
-                         "старшая подписка должна давать лучший курс")
+    def test_мы_дешевле_конкурента_по_каждой_подписке(self):
+        """Цены сняты в боте Exclusive AI 20.09.2026. Держимся ниже по
+        всей лестнице, но не обваливаемся: его цены рынком приняты."""
+        for s in pricing.SUBS:
+            доля = pricing.sub_vs_market(s)
+            self.assertLess(доля, 1.0, f"{s['id']}: мы не дешевле конкурента")
+            self.assertGreater(доля, 0.7,
+                               f"{s['id']}: дешевле конкурента на {(1-доля)*100:.0f}% — перебор")
+
+    def test_длинный_срок_дешевле_в_пересчёте_на_день(self):
+        for план in pricing.PLANS:
+            дни = [pricing.sub_rub_per_day(s) for s in pricing.SUBS if s["план"] == план]
+            self.assertEqual(дни, sorted(дни, reverse=True),
+                             f"{план}: длинный срок должен быть выгоднее короткого")
+
+    def test_ultra_дороже_pro_на_каждом_сроке(self):
+        pro = {s["период"]: s["rub"] for s in pricing.SUBS if s["план"] == "PRO"}
+        for s in pricing.SUBS:
+            if s["план"] == "ULTRA":
+                self.assertGreater(s["rub"], pro[s["период"]],
+                                   f"{s['id']}: ULTRA не дороже PRO")
+
+    def test_у_каждой_подписки_есть_что_продавать(self):
+        """Подписка продаёт возможности, а не объём: без них она пустая."""
+        for s in pricing.SUBS:
+            self.assertGreaterEqual(s["параллельно"], 2)
+            self.assertGreaterEqual(s["макс_сек"], 15)
+            self.assertTrue(s["свой_промпт"])
 
     def test_подарок_новичку_не_кормит(self):
         """Подарок — попробовать, а не пользоваться бесплатно."""

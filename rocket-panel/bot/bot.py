@@ -95,14 +95,16 @@ def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
         lines.append(f"{j.title} — <b>{j.tokens}</b> жет. · {j.note}")
-    photo = pricing.job("photo").tokens
-    lines.append("\n<b>Подписка на месяц</b> — выгоднее всего\n")
-    for s in pricing.SUBS:
-        extra = " · без очереди" if s["priority"] else ""
-        lines.append(f"{s['title']} — <b>{pricing.rub(s['usd'])} ₽</b> · "
-                     f"{s['tokens']} жет. ≈ {s['tokens'] // photo} фото{extra}")
-    lines.append("<i>Жетоны подписки действуют месяц.</i>")
-    lines.append("\n<b>Пакеты</b> — не сгорают никогда\n")
+    for план, свойства in pricing.PLANS.items():
+        lines.append(f"\n<b>{план}</b> — {свойства['параллельно']} генерации разом · "
+                     f"очередь {свойства['очередь']} · ролик до {свойства['макс_сек']} с · "
+                     f"{свойства['качество']} · свой промпт\n")
+        for s in pricing.SUBS:
+            if s["план"] != план:
+                continue
+            lines.append(f"{s['title'].split('|')[1].strip()} — <b>{s['rub']} ₽</b>"
+                         f"  <i>+{s['tokens']} жет.</i>")
+    lines.append("\n<b>Пакеты жетонов</b> — не сгорают никогда\n")
     for p in pricing.PACKS:
         total = pricing.pack_total(p["id"])
         bonus = f"  <i>+{p['bonus']} в подарок</i>" if p["bonus"] else ""
@@ -111,7 +113,7 @@ def price_list():
 
 
 def buy_kb():
-    rows = [[(f"{s['title']} — {pricing.rub(s['usd'])} ₽/мес", f"sub:{s['id']}")]
+    rows = [[(f"{s['title']} — {s['rub']} ₽", f"sub:{s['id']}")]
             for s in pricing.SUBS]
     for p in pricing.PACKS:
         total = pricing.pack_total(p["id"])
@@ -270,7 +272,7 @@ def on_callback(cb):
             row = store.user(u)
             left = max(0, (row["sub_until"] - int(time.time())) // 86400)
             lines.append(f"Подписка <b>{pricing.sub(active)['title']}</b> — "
-                         f"{row['sub']} жет., ещё {left} дн.")
+                         f"{row['sub']} жет. в запасе, ещё {left} дн.")
         lines.append("")
         if h:
             lines.append("<b>Последние</b>")
@@ -297,9 +299,14 @@ def on_callback(cb):
     if data.startswith("sub:"):
         answer(cid, "Оплата скоро")
         s = pricing.sub(data.split(":", 1)[1])
-        send(chat, f"Подписка <b>{s['title']}</b> — <b>{pricing.rub(s['usd'])} ₽</b> в месяц, "
-                   f"{s['tokens']} жетонов.\n"
-                   "<i>Жетоны действуют до конца оплаченного месяца.</i>\n\n"
+        send(chat, f"<b>{s['title']}</b> — <b>{s['rub']} ₽</b>\n\n"
+                   f"· {s['параллельно']} генерации одновременно\n"
+                   f"· очередь {s['очередь']}\n"
+                   f"· ролик до {s['макс_сек']} секунд\n"
+                   f"· качество до {s['качество']}\n"
+                   f"· свой промпт вместо шаблонов\n"
+                   f"· {s['tokens']} жетонов в запас\n"
+                   "<i>Жетоны запаса действуют, пока идёт подписка.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
         return
 
