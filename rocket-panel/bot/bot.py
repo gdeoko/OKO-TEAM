@@ -103,8 +103,8 @@ def greet(u):
         f"<b>{brand.NAME}</b> — {brand.TAGLINE.lower()}.\n\n"
         "Опиши словами, что хочешь увидеть — получишь фото или ролик.\n"
         "Можно прислать своё фото: поза, сцена и одежда меняются, лицо остаётся.\n\n"
-        f"На старте дарю <b>{pricing.WELCOME_TOKENS} жетонов</b> — хватит попробовать.\n\n"
-        f"Баланс: <b>{store.balance(u)} жетонов</b>"
+        f"На старте дарю <b>{pricing.WELCOME_HEARTS} сердечек</b> — хватит попробовать.\n\n"
+        f"Баланс: <b>{store.balance(u)} сердечек</b>"
     )
 
 
@@ -112,10 +112,10 @@ def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
         замок = f" · по {j.plan}" if j.plan else ""
-        lines.append(f"{j.title} — <b>{j.tokens}</b> жет. · {j.note}{замок}")
+        lines.append(f"{j.title} — <b>{j.hearts}</b> ♥ · {j.note}{замок}")
     lines.append("\n<i>Жетон стоит от "
-                 f"{pricing.rub_per_token('p7'):.1f} до "
-                 f"{pricing.rub_per_token('p1'):.1f} ₽ — смотря какой пакет.</i>")
+                 f"{pricing.rub_per_heart('p7'):.1f} до "
+                 f"{pricing.rub_per_heart('p1'):.1f} ₽ — смотря какой пакет.</i>")
     for план, свойства in pricing.PLANS.items():
         лицо = " · лицо героини не плывёт" if свойства["лицо_держится"] else ""
         lines.append(f"\n<b>{план}</b> — {свойства['параллельно']} генерации разом · "
@@ -125,10 +125,10 @@ def price_list():
             if s["план"] != план:
                 continue
             lines.append(f"{s['title'].split('|')[1].strip()} — <b>{s['rub']} ₽</b>"
-                         f"  <i>+{s['tokens']} жет.</i>")
-    lines.append("\n<b>Пакеты жетонов</b> — не сгорают никогда\n")
+                         f"  <i>+{s['hearts']} ♥</i>")
+    lines.append("\n<b>Пакеты сердечек</b> — не сгорают никогда\n")
     for p in pricing.PACKS:
-        lines.append(f"{p['tokens']} жет. — <b>{p['rub']} ₽</b>"
+        lines.append(f"{p['hearts']} ♥ — <b>{p['rub']} ₽</b>"
                      f"  <s>{p['market_rub']} ₽ у других</s>")
     return "\n".join(lines)
 
@@ -137,7 +137,7 @@ def buy_kb():
     rows = [[(f"{s['title']} — {s['rub']} ₽", f"sub:{s['id']}")]
             for s in pricing.SUBS]
     for p in pricing.PACKS:
-        rows.append([(f"{p['tokens']} жет. — {p['rub']} ₽", f"buy:{p['id']}")])
+        rows.append([(f"{p['hearts']} ♥ — {p['rub']} ₽", f"buy:{p['id']}")])
     rows.append([("Назад", "m:menu")])
     return kb(rows)
 
@@ -153,9 +153,9 @@ def run_job(chat, u, kind, prompt, photo_name=None):
     jid = uuid.uuid4().hex[:10]
     charged = False
     try:
-        store.spend(u, job.tokens, f"{job.title}", meta={"job": jid})
+        store.spend(u, job.hearts, f"{job.title}", meta={"job": jid})
         charged = True
-        store.job_start(jid, u, kind, prompt, job.tokens)
+        store.job_start(jid, u, kind, prompt, job.hearts)
 
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
@@ -187,7 +187,7 @@ def run_job(chat, u, kind, prompt, photo_name=None):
         if mid:
             tg("deleteMessage", chat_id=chat, message_id=mid)
 
-        cap = f"{job.title} · {res.get('sec')} с · осталось {store.balance(u)} жет."
+        cap = f"{job.title} · {res.get('sec')} с · осталось {store.balance(u)} ♥"
         if files[0].lower().endswith((".webp", ".gif", ".mp4")):
             tg("sendAnimation", chat_id=chat, caption=cap,
                _files={"animation": (files[0], data)})
@@ -201,12 +201,12 @@ def run_job(chat, u, kind, prompt, photo_name=None):
         send(chat, f"Не хватает жетонов: нужно <b>{e.need}</b>, есть <b>{e.have}</b>.", buy_kb())
     except GpuError as e:
         if charged:
-            store.refund(u, job.tokens, f"осечка генерации: {str(e)[:80]}")
+            store.refund(u, job.hearts, f"осечка генерации: {str(e)[:80]}")
         store.job_done(jid, error=str(e)[:300])
         send(chat, f"Не получилось: {str(e)[:200]}\n\nЖетоны вернула — <b>{store.balance(u)}</b>.", MENU)
     except Exception as e:
         if charged:
-            store.refund(u, job.tokens, "внутренняя ошибка")
+            store.refund(u, job.hearts, "внутренняя ошибка")
         store.job_done(jid, error=str(e)[:300])
         print("СБОЙ:", traceback.format_exc()[:800], flush=True)
         send(chat, f"Что-то сломалось у меня. Жетоны вернула — <b>{store.balance(u)}</b>.", MENU)
@@ -232,7 +232,7 @@ def on_start(chat, u, username, arg):
         inviter = store.by_ref_code(arg.strip())
         if inviter and inviter["tg_id"] != u:
             invited_by = inviter["tg_id"]
-    user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_TOKENS,
+    user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS,
                                      invited_by=invited_by)
     if is_new and invited_by:
         store.credit(invited_by, pricing.REFERRAL_INVITER, "welcome", f"привёл {u}")
@@ -286,7 +286,7 @@ def on_photo(chat, u, file_id):
 def on_callback(cb):
     data = cb["data"]; chat = cb["message"]["chat"]["id"]
     u = cb["from"]["id"]; cid = cb["id"]
-    store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_TOKENS)
+    store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_HEARTS)
 
     if data == "m:menu":
         answer(cid); send(chat, "Что делаем?", MENU); return
@@ -294,13 +294,13 @@ def on_callback(cb):
     if data == "m:balance":
         answer(cid)
         h = store.history(u, 5)
-        lines = [f"Баланс: <b>{store.balance(u)} жетонов</b>"]
+        lines = [f"Баланс: <b>{store.balance(u)} сердечек</b>"]
         active = store.sub_active(u)
         if active:
             row = store.user(u)
             left = max(0, (row["sub_until"] - int(time.time())) // 86400)
             lines.append(f"Подписка <b>{pricing.sub(active)['title']}</b> — "
-                         f"{row['sub']} жет. в запасе, ещё {left} дн.")
+                         f"{row['sub']} ♥ в запасе, ещё {left} дн.")
         lines.append("")
         if h:
             lines.append("<b>Последние</b>")
@@ -319,7 +319,7 @@ def on_callback(cb):
     if data.startswith("buy:"):
         answer(cid, "Оплата скоро")
         p = pricing.pack(data.split(":", 1)[1])
-        send(chat, f"Пакет <b>{p['tokens']} жетонов</b> за "
+        send(chat, f"Пакет <b>{p['hearts']} сердечек</b> за "
                    f"<b>{p['rub']} ₽</b>. Не сгорают.\n"
                    f"<i>У других тот же объём — {p['market_rub']} ₽.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
@@ -334,7 +334,7 @@ def on_callback(cb):
                    f"· ролик до {s['макс_сек']} секунд\n"
                    + ("· лицо героини не плывёт между кадрами\n" if s["лицо_держится"] else "") +
                    f"· качество до {s['качество']}\n"
-                   f"· {s['tokens']} жетонов в запас\n"
+                   f"· {s['hearts']} сердечек в запас\n"
                    "<i>Жетоны запаса действуют, пока идёт подписка.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
         return
@@ -357,12 +357,12 @@ def on_callback(cb):
         answer(cid)
         sc = catalog.scene(data.split(":", 1)[1])
         есть = store.balance(u)
-        if есть < sc.tokens:
-            send(chat, f"<b>{sc.title}</b> стоит {sc.tokens} жет., "
+        if есть < sc.hearts:
+            send(chat, f"<b>{sc.title}</b> стоит {sc.hearts} ♥, "
                        f"на балансе {есть}.", buy_kb())
             return
         waiting[u] = {"kind": sc.job, "scene": sc.key}
-        send(chat, f"<b>{sc.title}</b> — {sc.tokens} жет.\n\n"
+        send(chat, f"<b>{sc.title}</b> — {sc.hearts} ♥\n\n"
                    "Пришли фото, с которым работаем.")
         return
 
@@ -377,7 +377,7 @@ def on_callback(cb):
         else:
             waiting[u] = {"kind": kind}
             j = pricing.job(kind)
-            send(chat, f"<b>{j.title}</b> — {j.tokens} жет.\n\n"
+            send(chat, f"<b>{j.title}</b> — {j.hearts} ♥\n\n"
                        "Опиши словами, что сгенерировать. <b>По-английски.</b>")
         return
     answer(cid)
@@ -393,7 +393,7 @@ def on_update(up):
     username = msg["from"].get("username")
 
     if "photo" in msg:
-        store.ensure_user(u, username, welcome=pricing.WELCOME_TOKENS)
+        store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
         on_photo(chat, u, msg["photo"][-1]["file_id"]); return
 
     text = (msg.get("text") or "").strip()
@@ -401,7 +401,7 @@ def on_update(up):
         parts = text.split(maxsplit=1)
         on_start(chat, u, username, parts[1] if len(parts) > 1 else None); return
     if text in ("/menu", "/help"):
-        store.ensure_user(u, username, welcome=pricing.WELCOME_TOKENS)
+        store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
         send(chat, "Что делаем?", MENU); return
     if text == "/prices":
         send(chat, price_list(), MENU); return
@@ -415,11 +415,11 @@ def on_update(up):
         send(chat, f"<b>Сводка</b>\n"
                    f"Людей: {s['users']}, платящих: {s['paying']}\n"
                    f"Генераций: {s['jobs_ok']} удачных, {s['jobs_err']} осечек\n"
-                   f"Потрачено жетонов: {s['tokens_spent']}\n"
+                   f"Потрачено сердечек: {s['tokens_spent']}\n"
                    f"Карта: {free}/{total} ГБ свободно, очередь {q}")
         return
 
-    store.ensure_user(u, username, welcome=pricing.WELCOME_TOKENS)
+    store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
     on_text(chat, u, text)
 
 
