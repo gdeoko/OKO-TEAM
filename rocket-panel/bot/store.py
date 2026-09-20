@@ -1,20 +1,27 @@
-"""Хранилище бота: пользователи, жетоны, история. SQLite, без внешних служб.
+"""Хранилище бота: пользователи, сердечки, история. SQLite, без внешних служб.
 
-Три кармана жетонов:
-    sub      — выданы подпиской, СГОРАЮТ в конце оплаченного месяца
-    welcome  — подарены на старте и за приглашения, могут быть ограничены
+Два кармана сердечек:
+    welcome  — подарены на старте и за приглашения
     paid     — куплены, НЕ СГОРАЮТ НИКОГДА
 
-Тратим в порядке sub → welcome → paid, то есть сначала то, что скорее
-всего пропадёт. Так человек не теряет деньги из-за порядка списания:
-купленное уходит последним и ждёт его сколько угодно.
+Тратим в порядке welcome → paid: сначала подаренное, потом оплаченное.
+Так человек не теряет деньги из-за порядка списания — купленное уходит
+последним и ждёт его сколько угодно.
+
+## Подписки нет
+
+Решение владельца 21.09.2026: у нас только покупка сердечек. Раньше
+здесь был третий карман `sub` — сгорающий в конце оплаченного месяца.
+Он убран, а остатки из него при первом открытии базы переносятся в
+`paid`: человек за это заплатил, и наше решение поменять модель не
+повод отобрать у него сердечки.
 """
 
 import sqlite3, time, secrets, json
 from contextlib import contextmanager
 
-# Порядок списания: что сгорит раньше, то и тратим первым.
-PURSES = ("sub", "welcome", "paid")
+# Порядок списания: сначала подаренное, потом оплаченное.
+PURSES = ("welcome", "paid")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -22,9 +29,6 @@ CREATE TABLE IF NOT EXISTS users (
   username     TEXT,
   welcome      INTEGER NOT NULL DEFAULT 0,
   paid         INTEGER NOT NULL DEFAULT 0,
-  sub          INTEGER NOT NULL DEFAULT 0,
-  sub_id       TEXT,
-  sub_until    INTEGER,
   ref_code     TEXT UNIQUE,
   invited_by   INTEGER,
   created_at   INTEGER NOT NULL,
@@ -56,9 +60,9 @@ CREATE INDEX IF NOT EXISTS ix_jobs_user   ON jobs(tg_id, at);
 """
 
 
-class NotEnoughTokens(Exception):
+class NotEnoughHearts(Exception):
     def __init__(self, need, have):
-        super().__init__(f"Нужно {need} жетонов, на балансе {have}")
+        super().__init__(f"Нужно {need} сердечек, на балансе {have}")
         self.need, self.have = need, have
 
 
@@ -71,17 +75,29 @@ class Store:
 
     @staticmethod
     def _migrate(c):
-        """Достраивает столбцы, которых не было в прежних версиях базы.
+        """Приводит старую базу к нынешней схеме.
 
-        Боевая база уже живёт с людьми и их купленными жетонами, поэтому
-        схему меняем только добавлением — ничего не пересоздаём.
+        Боевая база уже живёт с людьми и их купленными сердечками,
+        поэтому ничего не пересоздаём.
+
+        Главное здесь — подписочный карман `sub`. Он отменён, но у кого-то
+        в нём могли остаться сердечки. Переносим их в `paid`, а не гасим:
+        человек за них заплатил, и смена нашей модели — не повод отобрать.
+        Перенос виден в истории, чтобы на него можно было сослаться.
         """
         have = {r["name"] for r in c.execute("PRAGMA table_info(users)")}
-        for name, decl in (("sub", "INTEGER NOT NULL DEFAULT 0"),
-                           ("sub_id", "TEXT"),
-                           ("sub_until", "INTEGER")):
-            if name not in have:
-                c.execute(f"ALTER TABLE users ADD COLUMN {name} {decl}")
+        if "sub" not in have:
+            return
+        now = int(time.time())
+        for r in c.execute("SELECT tg_id, sub FROM users WHERE sub > 0").fetchall():
+            c.execute("UPDATE users SET paid=paid+? WHERE tg_id=?", (r["sub"], r["tg_id"]))
+            c.execute("INSERT INTO ledger(tg_id,delta,purse,reason,at) VALUES(?,?,?,?,?)",
+                      (r["tg_id"], -r["sub"], "sub", "подписки больше нет, остаток перенесён", now))
+            c.execute("INSERT INTO ledger(tg_id,delta,purse,reason,at) VALUES(?,?,?,?,?)",
+                      (r["tg_id"], r["sub"], "paid", "перенос с отменённой подписки", now))
+        for стлб in ("sub", "sub_id", "sub_until"):
+            if стлб in have:
+                c.execute(f"ALTER TABLE users DROP COLUMN {стлб}")
 
     @contextmanager
     def _db(self):
@@ -133,14 +149,12 @@ class Store:
     # --- жетоны ---
 
     def balance(self, tg_id):
-        """Сколько жетонов доступно. Просроченную подписку сначала гасим,
-        иначе человек увидит на балансе то, чем уже не может заплатить."""
-        self.expire_sub(tg_id)
+        """Сколько сердечек доступно."""
         u = self.user(tg_id)
         return sum(u[p] for p in PURSES) if u else 0
 
     def credit(self, tg_id, amount, purse, reason, meta=None):
-        """Начислить. purse: sub | welcome | paid."""
+        """Начислить. purse: welcome | paid."""
         if amount <= 0:
             raise ValueError("начисление должно быть положительным")
         if purse not in PURSES:
@@ -155,19 +169,17 @@ class Store:
         return self.balance(tg_id)
 
     def spend(self, tg_id, amount, reason, meta=None):
-        """Списать в порядке sub → welcome → paid: что раньше сгорит, то
-        раньше и тратим."""
+        """Списать в порядке welcome → paid: сначала подаренное."""
         if amount <= 0:
             raise ValueError("списание должно быть положительным")
-        self.expire_sub(tg_id)
         with self._db() as c:
             cols = ",".join(PURSES)
             r = c.execute(f"SELECT {cols} FROM users WHERE tg_id=?", (tg_id,)).fetchone()
             if not r:
-                raise NotEnoughTokens(amount, 0)
+                raise NotEnoughHearts(amount, 0)
             have = sum(r[p] for p in PURSES)
             if have < amount:
-                raise NotEnoughTokens(amount, have)
+                raise NotEnoughHearts(amount, have)
             now = int(time.time())
             m = json.dumps(meta, ensure_ascii=False) if meta else None
             left = amount
@@ -184,62 +196,10 @@ class Store:
         return self.balance(tg_id)
 
     def refund(self, tg_id, amount, reason):
-        """Вернуть за нашу осечку. Возвращаем в купленные: человек не должен
-        терять деньги из-за того, что у нас упала генерация.
-
-        Нарочно не в карман подписки, даже если списано было оттуда:
-        подписочные сгорят в конце месяца, и возврат пропал бы вместе с
-        ними. За нашу осечку человек не должен остаться ни с чем."""
+        """Вернуть за нашу осечку. Возвращаем в купленные — тот карман,
+        что не сгорает никогда: за нашу осечку человек не должен
+        остаться ни с чем."""
         return self.credit(tg_id, amount, "paid", reason)
-
-    # --- подписка ---
-
-    def subscribe(self, tg_id, sub_id, tokens, days=30, reason=None):
-        """Оформить или продлить подписку.
-
-        Остаток прошлого месяца НЕ переносится: подписка — это месячная
-        норма, а не накопительный счёт. Иначе человек копит три месяца,
-        отписывается и ещё полгода пользуется.
-        """
-        if tokens <= 0:
-            raise ValueError("подписка должна давать жетоны")
-        now = int(time.time())
-        until = now + days * 86400
-        with self._db() as c:
-            r = c.execute("SELECT sub FROM users WHERE tg_id=?", (tg_id,)).fetchone()
-            if not r:
-                raise KeyError(f"нет такого пользователя: {tg_id}")
-            if r["sub"]:
-                c.execute("INSERT INTO ledger(tg_id,delta,purse,reason,at) VALUES(?,?,?,?,?)",
-                          (tg_id, -r["sub"], "sub", "остаток прошлого месяца сгорел", now))
-            c.execute("UPDATE users SET sub=?, sub_id=?, sub_until=? WHERE tg_id=?",
-                      (tokens, sub_id, until, tg_id))
-            c.execute("INSERT INTO ledger(tg_id,delta,purse,reason,at) VALUES(?,?,?,?,?)",
-                      (tg_id, tokens, "sub", reason or f"подписка {sub_id}", now))
-        return self.balance(tg_id)
-
-    def expire_sub(self, tg_id, now=None):
-        """Погасить жетоны подписки, если месяц кончился. Возвращает,
-        сколько сгорело."""
-        now = int(time.time()) if now is None else now
-        with self._db() as c:
-            r = c.execute("SELECT sub,sub_until FROM users WHERE tg_id=?", (tg_id,)).fetchone()
-            if not r or not r["sub_until"] or r["sub_until"] > now:
-                return 0
-            burned = r["sub"]
-            c.execute("UPDATE users SET sub=0, sub_id=NULL, sub_until=NULL WHERE tg_id=?", (tg_id,))
-            if burned:
-                c.execute("INSERT INTO ledger(tg_id,delta,purse,reason,at) VALUES(?,?,?,?,?)",
-                          (tg_id, -burned, "sub", "подписка кончилась, жетоны сгорели", now))
-            return burned
-
-    def sub_active(self, tg_id, now=None):
-        """Действует ли подписка прямо сейчас. Возвращает её id или None."""
-        now = int(time.time()) if now is None else now
-        u = self.user(tg_id)
-        if u and u["sub_until"] and u["sub_until"] > now:
-            return u["sub_id"]
-        return None
 
     # --- задания ---
 

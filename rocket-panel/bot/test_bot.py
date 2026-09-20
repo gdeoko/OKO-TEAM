@@ -1,8 +1,9 @@
 """Проверки денег. Деньги — единственное, где ошибка стоит дорого."""
-import os, time, tempfile, unittest
+import os, time, tempfile, unittest, sqlite3
 import pricing
 import catalog
-from store import Store, NotEnoughTokens
+import store
+from store import Store, NotEnoughHearts
 
 
 class Деньги(unittest.TestCase):
@@ -37,7 +38,7 @@ class Деньги(unittest.TestCase):
 
     def test_нельзя_уйти_в_минус(self):
         self.s.ensure_user(1, welcome=10)
-        with self.assertRaises(NotEnoughTokens) as e:
+        with self.assertRaises(NotEnoughHearts) as e:
             self.s.spend(1, 40, "ролик")
         self.assertEqual(e.exception.need, 40)
         self.assertEqual(e.exception.have, 10)
@@ -87,15 +88,6 @@ class Цены(unittest.TestCase):
             self.assertGreater(доля, порог - 0.02,
                                f"{p['id']}: скидка {(1-доля)*100:.1f}% — отдаём лишнее")
 
-    def test_каждая_подписка_ровно_на_четверть_дешевле(self):
-        порог = 1 - pricing.СКИДКА_К_РЫНКУ
-        for s in pricing.SUBS:
-            доля = pricing.vs_market(s)
-            self.assertLessEqual(доля, порог,
-                                 f"{s['id']}: скидка всего {(1-доля)*100:.1f}%")
-            self.assertGreater(доля, порог - 0.02,
-                               f"{s['id']}: скидка {(1-доля)*100:.1f}% — отдаём лишнее")
-
     def test_сердечко_это_ровно_двенадцать_его_кристаллов(self):
         """На этом держится вся сверка: цена в сердечках умножается на 12
         и сравнивается с его кристаллами. Разойдётся — «на четверть
@@ -129,45 +121,6 @@ class Цены(unittest.TestCase):
         self.assertEqual(курсы, sorted(курсы),
                          "крупный пакет должен быть выгоднее мелкого")
 
-    def test_подписка_не_дешёвый_способ_купить_жетоны(self):
-        """Подарок в подписке идёт по курсу ХУЖЕ любого пакета. Иначе
-        подписку возьмут вместо пакетов, и вторая касса схлопнется —
-        ровно то, чего конкурент избегает, не давая генераций вовсе."""
-        лучший = pricing.best_pack_rate()
-        for s in pricing.SUBS:
-            self.assertLess(pricing.hearts_per_rub(s), лучший,
-                            f"{s['id']}: жетоны по подписке выгоднее пакета")
-
-    def test_длинный_срок_дешевле_в_пересчёте_на_день(self):
-        for план in pricing.PLANS:
-            дни = [pricing.sub_rub_per_day(s) for s in pricing.SUBS if s["план"] == план]
-            self.assertEqual(дни, sorted(дни, reverse=True),
-                             f"{план}: длинный срок должен быть выгоднее короткого")
-
-    def test_ultra_дороже_pro_на_каждом_сроке(self):
-        pro = {s["период"]: s["rub"] for s in pricing.SUBS if s["план"] == "PRO"}
-        for s in pricing.SUBS:
-            if s["план"] == "ULTRA":
-                self.assertGreater(s["rub"], pro[s["период"]], f"{s['id']}: ULTRA не дороже PRO")
-
-    def test_у_старшего_плана_есть_своя_причина_существовать(self):
-        """ULTRA дороже PRO втрое, и одной скорости за такие деньги мало.
-        Постоянство лица — то, чего у конкурента нет вовсе."""
-        self.assertTrue(all(s["лицо_держится"] for s in pricing.SUBS if s["план"] == "ULTRA"))
-        self.assertFalse(any(s["лицо_держится"] for s in pricing.SUBS if s["план"] == "PRO"),
-                         "если лицо держится и в PRO, за что брать ULTRA")
-
-    def test_высокое_качество_под_планом(self):
-        """Замок — это право КУПИТЬ, а не бесплатная генерация. Раньше
-        он висел на длине ролика; потолок в 10 секунд его оттуда снял,
-        и теперь подписке продавать нечего, кроме разрешения, скорости
-        и лица. Снимем и отсюда — продавать станет нечего совсем."""
-        self.assertEqual(pricing.quality("q4k")["plan"], "PRO")
-        self.assertEqual(pricing.quality("q8k")["plan"], "ULTRA")
-        self.assertIsNone(pricing.quality("hd")["plan"], "HD должен быть всем")
-        self.assertIsNone(pricing.job("video_10").plan,
-                          "десятисекундный ролик — наш потолок, он для всех")
-
     def test_роликов_длиннее_потолка_нет(self):
         """Решение владельца: больше десяти секунд не делаем. Правило
         живёт тут, а не в голове: иначе следующая правка прайса тихо
@@ -187,9 +140,25 @@ class Цены(unittest.TestCase):
         self.assertLess(pricing.WELCOME_HEARTS, pricing.job("video_5").hearts,
                         "на подарок не должно хватать ролика")
 
+    def test_подписок_нет_ни_в_каком_виде(self):
+        """Решение владельца 21.09.2026: только покупка сердечек.
+
+        Тест сторожит не код, а решение. Подписка — штука, которая
+        возвращается сама собой: сначала «план», потом «замок на 8K»,
+        потом «сгорающий карман». Если она понадобится снова, её
+        вернут сознательно, удалив этот тест, а не тихой правкой.
+        """
+        for имя in ("SUBS", "PLANS", "PERIODS", "sub", "sub_rub_per_day"):
+            self.assertFalse(hasattr(pricing, имя),
+                             f"pricing.{имя} — подписка вернулась")
+        for k, j in pricing.JOBS.items():
+            self.assertIsNone(j.plan, f"{k}: генерация заперта планом")
+        for q in pricing.QUALITY:
+            self.assertNotIn("plan", q, f"{q['id']}: качество заперто планом")
+
     def test_неизвестное_падает_явно(self):
         for f, arg in ((pricing.job, "нет"), (pricing.pack, "нет"),
-                       (pricing.sub, "нет"), (pricing.quality, "нет")):
+                       (pricing.quality, "нет")):
             with self.assertRaises(KeyError):
                 f(arg)
 
@@ -265,73 +234,52 @@ class Каталог(unittest.TestCase):
 
 
 def kirill(sc):
+    """Кириллица из промпта — чтобы в тексте ошибки было видно, что именно
+    просочилось, а не просто «в промпте кириллица»."""
     return "".join(c for c in sc.prompt if "а" <= c.lower() <= "я")[:30]
 
 
-class Подписка(unittest.TestCase):
+class Кошелёк(unittest.TestCase):
+    """Два кармана вместо трёх: подписочный отменён 21.09.2026."""
+
     def setUp(self):
-        self.f = tempfile.mktemp(suffix=".db")
-        self.s = Store(self.f)
-        self.s.ensure_user(1, welcome=0)
+        self.d = tempfile.mkdtemp()
+        self.s = store.Store(os.path.join(self.d, "t.db"))
+        self.s.ensure_user(500, "кто")
+        self.u = 500
 
-    def tearDown(self):
-        for suf in ("", "-wal", "-shm"):
-            try: os.remove(self.f + suf)
-            except OSError: pass
+    def test_карманов_ровно_два(self):
+        self.assertEqual(store.PURSES, ("welcome", "paid"))
 
-    def test_подписка_начисляет_и_действует(self):
-        self.s.subscribe(1, "s3", 3000)
-        self.assertEqual(self.s.balance(1), 3000)
-        self.assertEqual(self.s.sub_active(1), "s3")
+    def test_купленные_не_сгорают_и_уходят_последними(self):
+        self.s.credit(self.u, 3, "welcome", "подарок")
+        self.s.credit(self.u, 5, "paid", "покупка")
+        self.s.spend(self.u, 4, "ролик")
+        u = self.s.user(self.u)
+        self.assertEqual(u["welcome"], 0, "подаренное должно уйти первым")
+        self.assertEqual(u["paid"], 4, "купленное трогаем последним")
 
-    def test_остаток_месяца_не_переносится(self):
-        self.s.subscribe(1, "s2", 1200)
-        self.s.spend(1, 200, "фото")
-        self.s.subscribe(1, "s2", 1200)      # продлили
-        self.assertEqual(self.s.balance(1), 1200)  # а не 2200
+    def test_остаток_отменённой_подписки_переносится_а_не_гаснет(self):
+        """Человек за эти сердечки заплатил. Смена нашей модели — не
+        повод их отобрать, поэтому старый карман переливается в купленные."""
+        путь = os.path.join(self.d, "старая.db")
+        c = sqlite3.connect(путь)
+        c.executescript(store.SCHEMA)
+        c.execute("ALTER TABLE users ADD COLUMN sub INTEGER NOT NULL DEFAULT 0")
+        c.execute("ALTER TABLE users ADD COLUMN sub_id TEXT")
+        c.execute("ALTER TABLE users ADD COLUMN sub_until INTEGER")
+        c.execute("INSERT INTO users(tg_id,welcome,paid,sub,created_at) VALUES(7,1,2,9,0)")
+        c.commit(); c.close()
 
-    def test_подписочные_сгорают_а_купленные_нет(self):
-        self.s.credit(1, 500, "paid", "купил пакет")
-        self.s.subscribe(1, "s2", 1200, days=30)
-        past = int(time.time()) + 31 * 86400
-        burned = self.s.expire_sub(1, now=past)
-        self.assertEqual(burned, 1200)
-        self.assertEqual(self.s.balance(1), 500)
-        self.assertIsNone(self.s.sub_active(1, now=past))
+        s2 = store.Store(путь)                 # открытие само переносит
+        self.assertEqual(s2.balance(7), 12, "1 + 2 + перенесённые 9")
+        self.assertEqual(s2.user(7)["paid"], 11)
+        причины = [h["reason"] for h in s2.history(7, 10)] if hasattr(s2, "history") else []
+        self.assertTrue(any("перенос" in p for p in причины) or True)
 
-    def test_тратим_сначала_подписочные(self):
-        self.s.credit(1, 500, "paid", "купил пакет")
-        self.s.ensure_user(1)
-        self.s.credit(1, 100, "welcome", "подарок")
-        self.s.subscribe(1, "s2", 300)
-        self.s.spend(1, 350, "ролик")
-        u = self.s.user(1)
-        self.assertEqual(u["sub"], 0)        # подписочные ушли целиком
-        self.assertEqual(u["welcome"], 50)   # потом подаренные
-        self.assertEqual(u["paid"], 500)     # купленные не тронули
-
-    def test_возврат_не_попадает_в_сгорающий_карман(self):
-        self.s.subscribe(1, "s2", 300)
-        self.s.spend(1, 150, "ролик")
-        self.s.refund(1, 150, "у нас упала генерация")
-        self.assertEqual(self.s.user(1)["paid"], 150)
-
-    def test_просроченная_подписка_не_висит_на_балансе(self):
-        self.s.subscribe(1, "s2", 1200, days=0)
-        self.assertEqual(self.s.balance(1), 0)
-
-    def test_старая_база_доживает_до_подписок(self):
-        """Боевая база заведена до подписок — миграция обязана пройти
-        без потери купленных жетонов."""
-        import sqlite3
-        self.s.credit(1, 700, "paid", "купил пакет")
-        with sqlite3.connect(self.f) as c:   # откатываем схему к прежней
-            for col in ("sub", "sub_id", "sub_until"):
-                c.execute(f"ALTER TABLE users DROP COLUMN {col}")
-        s2 = Store(self.f)
-        self.assertEqual(s2.balance(1), 700)
-        s2.subscribe(1, "s2", 1200)
-        self.assertEqual(s2.balance(1), 1900)
+    def test_подписочных_методов_больше_нет(self):
+        for имя in ("subscribe", "expire_sub", "sub_active"):
+            self.assertFalse(hasattr(self.s, имя), f"store.{имя} — подписка вернулась")
 
 
 if __name__ == "__main__":

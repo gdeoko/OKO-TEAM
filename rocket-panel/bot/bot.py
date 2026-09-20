@@ -20,7 +20,7 @@ import catalog
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "..", "brand-amberry"))
 import brand
-from store import Store, NotEnoughTokens
+from store import Store, NotEnoughHearts
 from gpu import Gpu, GpuError
 
 TOKEN = os.environ.get("ROCKET_BOT_TOKEN", "")
@@ -111,31 +111,25 @@ def greet(u):
 def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
-        замок = f" · по {j.plan}" if j.plan else ""
-        lines.append(f"{j.title} — <b>{j.hearts}</b> ♥ · {j.note}{замок}")
-    lines.append("\n<i>Жетон стоит от "
-                 f"{pricing.rub_per_heart('p7'):.1f} до "
-                 f"{pricing.rub_per_heart('p1'):.1f} ₽ — смотря какой пакет.</i>")
-    for план, свойства in pricing.PLANS.items():
-        лицо = " · лицо героини не плывёт" if свойства["лицо_держится"] else ""
-        lines.append(f"\n<b>{план}</b> — {свойства['параллельно']} генерации разом · "
-                     f"очередь {свойства['очередь']} · "
-                     f"{свойства['качество']}{лицо}\n")
-        for s in pricing.SUBS:
-            if s["план"] != план:
-                continue
-            lines.append(f"{s['title'].split('|')[1].strip()} — <b>{s['rub']} ₽</b>"
-                         f"  <i>+{s['hearts']} ♥</i>")
+        lines.append(f"{j.title} — <b>{j.hearts}</b> ♥ · {j.note}")
+    lines.append("")
+    for q in pricing.QUALITY[1:]:
+        доп = f"+{q['hearts']} ♥" if q["hearts"] else "бесплатно"
+        lines.append(f"{q['title']} — {доп}")
+    lines.append("\n<b>Подписки нет.</b> Платишь только за то, что сделал: "
+                 "ни абонентской платы, ни сгорающих остатков, "
+                 "ни функций за замком.")
     lines.append("\n<b>Пакеты сердечек</b> — не сгорают никогда\n")
     for p in pricing.PACKS:
         lines.append(f"{p['hearts']} ♥ — <b>{p['rub']} ₽</b>"
                      f"  <s>{p['market_rub']} ₽ у других</s>")
+    lines.append(f"\n<i>Сердечко стоит от {pricing.rub_per_heart('p7'):.0f} до "
+                 f"{pricing.rub_per_heart('p1'):.0f} ₽ — смотря какой пакет.</i>")
     return "\n".join(lines)
 
 
 def buy_kb():
-    rows = [[(f"{s['title']} — {s['rub']} ₽", f"sub:{s['id']}")]
-            for s in pricing.SUBS]
+    rows = []
     for p in pricing.PACKS:
         rows.append([(f"{p['hearts']} ♥ — {p['rub']} ₽", f"buy:{p['id']}")])
     rows.append([("Назад", "m:menu")])
@@ -197,7 +191,7 @@ def run_job(chat, u, kind, prompt, photo_name=None):
         store.job_done(jid, file=files[0])
         send(chat, "Что дальше?", MENU)
 
-    except NotEnoughTokens as e:
+    except NotEnoughHearts as e:
         send(chat, f"Не хватает жетонов: нужно <b>{e.need}</b>, есть <b>{e.have}</b>.", buy_kb())
     except GpuError as e:
         if charged:
@@ -294,14 +288,7 @@ def on_callback(cb):
     if data == "m:balance":
         answer(cid)
         h = store.history(u, 5)
-        lines = [f"Баланс: <b>{store.balance(u)} сердечек</b>"]
-        active = store.sub_active(u)
-        if active:
-            row = store.user(u)
-            left = max(0, (row["sub_until"] - int(time.time())) // 86400)
-            lines.append(f"Подписка <b>{pricing.sub(active)['title']}</b> — "
-                         f"{row['sub']} ♥ в запасе, ещё {left} дн.")
-        lines.append("")
+        lines = [f"Баланс: <b>{store.balance(u)} сердечек</b>", ""]
         if h:
             lines.append("<b>Последние</b>")
             for j in h:
@@ -310,7 +297,7 @@ def on_callback(cb):
         code = store.user(u)["ref_code"]
         me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
         lines.append(f"\nЗови друзей: <code>https://t.me/{me}?start={code}</code>")
-        lines.append(f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> жетонов.")
+        lines.append(f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> ♥.")
         send(chat, "\n".join(lines), MENU); return
 
     if data == "m:buy":
@@ -322,19 +309,6 @@ def on_callback(cb):
         send(chat, f"Пакет <b>{p['hearts']} сердечек</b> за "
                    f"<b>{p['rub']} ₽</b>. Не сгорают.\n"
                    f"<i>У других тот же объём — {p['market_rub']} ₽.</i>\n\n"
-                   "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
-        return
-
-    if data.startswith("sub:"):
-        answer(cid, "Оплата скоро")
-        s = pricing.sub(data.split(":", 1)[1])
-        send(chat, f"<b>{s['title']}</b> — <b>{s['rub']} ₽</b>\n\n"
-                   f"· {s['параллельно']} генерации одновременно\n"
-                   f"· очередь {s['очередь']}\n"
-                   + ("· лицо героини не плывёт между кадрами\n" if s["лицо_держится"] else "") +
-                   f"· качество до {s['качество']}\n"
-                   f"· {s['hearts']} сердечек в запас\n"
-                   "<i>Жетоны запаса действуют, пока идёт подписка.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
         return
 
