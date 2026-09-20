@@ -17,6 +17,8 @@ import requests
 
 import pricing
 import catalog
+import emoji
+import ui
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "..", "brand-amberry"))
 import brand
@@ -81,31 +83,13 @@ def kb(rows):
 # Каталог стоит первым нарочно: описывать сцену словами умеет
 # меньшинство, а платят все. Свой промпт остаётся рядом и бесплатно —
 # у конкурента он заперт за подпиской.
-MENU = kb(
-    [[(s.title, f"s:{s.key}")] for s in catalog.SECTIONS] +
-    [[("Свой промпт — фото", "m:photo"), ("Свой промпт — ролик", "m:video")],
-     [("Баланс", "m:balance"), ("Пополнить", "m:buy")]]
-)
+MENU = ui.главное_меню()
+buy_kb = ui.меню_оплаты
+price_list = ui.текст_оплаты
 
 
-def cats_kb(sec):
-    return kb([[(c.button(), f"c:{sec.key}:{c.key}")] for c in sec.cats] +
-              [[("Назад", "m:menu")]])
-
-
-def scenes_kb(sec, cat):
-    return kb([[(sc.button(), f"sc:{sc.key}")] for sc in cat.scenes] +
-              [[("К категориям", f"s:{sec.key}"), ("Меню", "m:menu")]])
-
-
-def greet(u):
-    return (
-        f"<b>{brand.NAME}</b> — {brand.TAGLINE.lower()}.\n\n"
-        "Опиши словами, что хочешь увидеть — получишь фото или ролик.\n"
-        "Можно прислать своё фото: поза, сцена и одежда меняются, лицо остаётся.\n\n"
-        f"На старте дарю <b>{pricing.WELCOME_HEARTS} сердечек</b> — хватит попробовать.\n\n"
-        f"Баланс: <b>{store.balance(u)} сердечек</b>"
-    )
+def greet(u, имя=None):
+    return ui.шапка_главного(store.balance(u), имя)
 
 
 def price_list():
@@ -231,8 +215,15 @@ def on_start(chat, u, username, arg):
     if is_new and invited_by:
         store.credit(invited_by, pricing.REFERRAL_INVITER, "welcome", f"привёл {u}")
         store.credit(u, pricing.REFERRAL_INVITEE, "welcome", "пришёл по приглашению")
-        send(invited_by, f"По твоей ссылке пришёл человек. +{pricing.REFERRAL_INVITER} жетонов.")
-    send(chat, greet(u), MENU)
+        send(invited_by, f"По твоей ссылке пришёл человек. +{pricing.REFERRAL_INVITER} ♥.")
+    # Нижнее меню и inline-кнопки нельзя повесить на одно сообщение:
+    # Телеграм принимает только одну разметку. Поэтому сначала короткое
+    # сообщение, которое ставит нижнее меню, следом — само приветствие.
+    if is_new:
+        send(chat, f"Добро пожаловать. Дарю "
+                   f"<b>{emoji.баланс(pricing.WELCOME_HEARTS)}</b> на пробу.",
+             ui.НИЖНЕЕ)
+    send(chat, greet(u, username), MENU)
 
 
 def on_text(chat, u, text):
@@ -312,31 +303,42 @@ def on_callback(cb):
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
         return
 
-    if data.startswith("s:"):
-        answer(cid)
-        sec = catalog.section(data.split(":", 1)[1])
-        send(chat, f"<b>{sec.title}</b>\n{sec.note}", cats_kb(sec))
-        return
-
     if data.startswith("c:"):
         answer(cid)
-        _, sk, ck = data.split(":", 2)
-        sec, cat = catalog.section(sk), catalog.category(sk, ck)
-        send(chat, f"<b>{cat.title}</b>\nВыбери сценарий — цена на кнопке.",
-             scenes_kb(sec, cat))
+        cat = catalog.category(data.split(":", 1)[1])
+        send(chat, ui.шапка_категории(cat), ui.меню_категории(cat))
         return
 
     if data.startswith("sc:"):
         answer(cid)
         sc = catalog.scene(data.split(":", 1)[1])
+        send(chat, ui.шапка_сценария(sc, store.balance(u)), ui.меню_сценария(sc))
+        return
+
+    if data.startswith("go:"):
+        # Проверка баланса ЗДЕСЬ, а не на показе сценария: между показом
+        # и нажатием человек мог потратить сердечки в другом окне.
+        sc = catalog.scene(data.split(":", 1)[1])
         есть = store.balance(u)
         if есть < sc.hearts:
-            send(chat, f"<b>{sc.title}</b> стоит {sc.hearts} ♥, "
-                       f"на балансе {есть}.", buy_kb())
+            answer(cid, f"Нужно {sc.hearts} ♥, на балансе {есть}")
+            send(chat, ui.текст_оплаты(), ui.меню_оплаты())
             return
+        answer(cid)
         waiting[u] = {"kind": sc.job, "scene": sc.key}
         send(chat, f"<b>{sc.title}</b> — {sc.hearts} ♥\n\n"
                    "Пришли фото, с которым работаем.")
+        return
+
+    if data == "m:free":
+        answer(cid)
+        waiting[u] = {"kind": "photo"}
+        j = pricing.job("photo")
+        send(chat, f"<b>Свой промпт</b> — {j.hearts} ♥\n\n"
+                   "У конкурента это платная функция под замком. У нас "
+                   "доступна всем.\n\nОпиши словами, что сгенерировать. "
+                   "<b>По-английски</b> — модель обучена на нём, русский "
+                   "даёт мусор.", MENU)
         return
 
     if data.startswith("m:"):
