@@ -108,7 +108,11 @@ def greet(u):
 def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
-        lines.append(f"{j.title} — <b>{j.tokens}</b> жет. · {j.note}")
+        замок = f" · по {j.plan}" if j.plan else ""
+        lines.append(f"{j.title} — <b>{j.tokens}</b> жет. · {j.note}{замок}")
+    lines.append("\n<i>Жетон стоит от "
+                 f"{pricing.rub_per_token('p7'):.1f} до "
+                 f"{pricing.rub_per_token('p1'):.1f} ₽ — смотря какой пакет.</i>")
     for план, свойства in pricing.PLANS.items():
         лицо = " · лицо героини не плывёт" if свойства["лицо_держится"] else ""
         lines.append(f"\n<b>{план}</b> — {свойства['параллельно']} генерации разом · "
@@ -121,9 +125,8 @@ def price_list():
                          f"  <i>+{s['tokens']} жет.</i>")
     lines.append("\n<b>Пакеты жетонов</b> — не сгорают никогда\n")
     for p in pricing.PACKS:
-        total = pricing.pack_total(p["id"])
-        bonus = f"  <i>+{p['bonus']} в подарок</i>" if p["bonus"] else ""
-        lines.append(f"{total} жет. — {pricing.rub(p['usd'])} ₽{bonus}")
+        lines.append(f"{p['tokens']} жет. — <b>{p['rub']} ₽</b>"
+                     f"  <s>{p['market_rub']} ₽ у других</s>")
     return "\n".join(lines)
 
 
@@ -131,8 +134,7 @@ def buy_kb():
     rows = [[(f"{s['title']} — {s['rub']} ₽", f"sub:{s['id']}")]
             for s in pricing.SUBS]
     for p in pricing.PACKS:
-        total = pricing.pack_total(p["id"])
-        rows.append([(f"{total} жет. — {pricing.rub(p['usd'])} ₽", f"buy:{p['id']}")])
+        rows.append([(f"{p['tokens']} жет. — {p['rub']} ₽", f"buy:{p['id']}")])
     rows.append([("Назад", "m:menu")])
     return kb(rows)
 
@@ -314,8 +316,9 @@ def on_callback(cb):
     if data.startswith("buy:"):
         answer(cid, "Оплата скоро")
         p = pricing.pack(data.split(":", 1)[1])
-        send(chat, f"Пакет <b>{pricing.pack_total(p['id'])} жетонов</b> за "
-                   f"<b>{pricing.rub(p['usd'])} ₽</b>. Не сгорают.\n\n"
+        send(chat, f"Пакет <b>{p['tokens']} жетонов</b> за "
+                   f"<b>{p['rub']} ₽</b>. Не сгорают.\n"
+                   f"<i>У других тот же объём — {p['market_rub']} ₽.</i>\n\n"
                    "Приём оплаты ещё подключается — напиши в поддержку.", MENU)
         return
 
@@ -364,7 +367,7 @@ def on_callback(cb):
         kind = data.split(":", 1)[1]
         answer(cid)
         if kind == "video":
-            kind = "video_2"
+            kind = "video_5"
         if kind in ("photo_ref", "animate"):
             waiting[u] = {"kind": kind}
             send(chat, "Пришли фото, с которым работаем.")
