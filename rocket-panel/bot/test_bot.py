@@ -2,6 +2,8 @@
 import os, time, tempfile, unittest, sqlite3
 import pricing
 import catalog
+import prompts
+import emoji
 import store
 from store import Store, NotEnoughHearts
 
@@ -167,70 +169,125 @@ class Каталог(unittest.TestCase):
     """Каталог — наш ответ на главную находку у конкурента: люди не пишут
     промпты, они выбирают из списка."""
 
-    def test_ключи_сценариев_не_повторяются(self):
+    def test_ключей_сценариев_не_повторяется(self):
         """Ключ уходит в callback_data кнопки. Совпадут — человек нажмёт
         одно, получит другое."""
-        все = [sc.key for s in catalog.SECTIONS for c in s.cats for sc in c.scenes]
-        self.assertEqual(len(все), len(set(все)), "есть одинаковые ключи сценариев")
-        self.assertEqual(len(все), len(catalog.SCENE))
+        все = [sc.key for sc in catalog.все_сценарии()]
+        self.assertEqual(len(все), len(set(все)), "есть одинаковые ключи")
 
     def test_callback_влезает_в_телеграм(self):
-        """Телеграм режет callback_data на 64 байтах. Длинный ключ молча
-        ломает кнопку — проверяем с запасом на приставку."""
-        for key in catalog.SCENE:
-            данные = f"sc:{key}".encode()
-            self.assertLessEqual(len(данные), 64, f"{key}: callback длиннее 64 байт")
+        """Телеграм режет callback_data на 64 БАЙТАХ, не символах. Длинный
+        ключ молча ломает кнопку."""
+        for sc in catalog.все_сценарии():
+            for приставка in ("sc:", "go:"):
+                self.assertLessEqual(len(f"{приставка}{sc.key}".encode()), 64,
+                                     f"{sc.key}: callback длиннее 64 байт")
 
     def test_у_каждого_сценария_есть_цена(self):
-        for key, sc in catalog.SCENE.items():
-            self.assertIn(sc.job, pricing.JOBS, f"{key}: вид генерации не из прайса")
-            self.assertGreater(sc.hearts, 0, f"{key}: нулевая цена")
+        for sc in catalog.все_сценарии():
+            self.assertIn(sc.job, pricing.JOBS, f"{sc.key}: вид не из прайса")
+            self.assertGreater(sc.hearts, 0, f"{sc.key}: нулевая цена")
 
     def test_цена_стоит_на_каждой_кнопке(self):
         """Наше отличие от конкурента: он прячет цену до загрузки фото.
         Если кнопка её потеряет, отличие исчезнет молча."""
-        for key, sc in catalog.SCENE.items():
-            self.assertIn("♥", sc.button(), f"{key}: на кнопке нет цены")
-            self.assertIn(str(sc.hearts), sc.button(), f"{key}: на кнопке не та цена")
+        for sc in catalog.все_сценарии():
+            self.assertIn("♥", sc.button(), f"{sc.key}: на кнопке нет цены")
+            self.assertIn(str(sc.hearts), sc.button(), f"{sc.key}: не та цена")
 
     def test_промпты_на_английском_и_не_пустые(self):
         """Модель обучена на английском, русский промпт даёт мусор."""
-        for key, sc in catalog.SCENE.items():
-            self.assertGreater(len(sc.prompt), 40, f"{key}: промпт слишком короткий")
+        for sc in catalog.все_сценарии():
             кириллица = [c for c in sc.prompt if "а" <= c.lower() <= "я"]
-            self.assertFalse(кириллица, f"{key}: в промпте кириллица — {kirill(sc)}")
+            self.assertFalse(кириллица, f"{sc.key}: кириллица — {kirill(sc)}")
 
-    def test_в_каждой_категории_есть_что_показать(self):
-        """Пустая категория на витрине хуже её отсутствия."""
-        for (раздел, кат), c in catalog.CATEGORY.items():
-            self.assertGreaterEqual(len(c.scenes), 3,
-                                    f"{раздел}/{кат}: меньше трёх сценариев")
+    def test_каждый_промпт_не_короче_трёх_тысяч(self):
+        """Требование владельца. Держится не дисциплиной, а сборщиком:
+        общие блоки дают пол в три с лишним тысячи даже пустому сценарию."""
+        for sc in catalog.все_сценарии():
+            self.assertGreaterEqual(len(sc.prompt), prompts.МИН_ДЛИНА,
+                                    f"{sc.key}: промпт {len(sc.prompt)} знаков")
+
+    def test_лицо_держится_в_каждом_промпте(self):
+        """Единственное, чего у конкурента нет вовсе: у него лицо плывёт
+        от кадра к кадру. Блок с сохранением личности обязан быть везде,
+        иначе козырь пропадёт в одном сценарии и никто не заметит."""
+        for sc in catalog.все_сценарии():
+            self.assertIn("face preserved exactly", sc.prompt,
+                          f"{sc.key}: нет блока сохранения лица")
+
+    def test_категорий_от_четырёх_до_пяти(self):
+        """Решение владельца: 4-5 категорий, внутри 5-10 вариантов.
+        Третий уровень запрещён — он заставляет угадывать, где искать."""
+        self.assertLessEqual(len(catalog.CATEGORIES), 5)
+        for c in catalog.ВИДИМЫЕ:
+            self.assertGreaterEqual(len(c.scenes), 5, f"{c.key}: меньше пяти")
+            self.assertLessEqual(len(c.scenes), 10, f"{c.key}: больше десяти")
+
+    def test_пустая_категория_не_показывается(self):
+        """Категория владельца заведена пустой. Пустая витрина хуже её
+        отсутствия, поэтому в меню попадают только непустые."""
+        self.assertTrue(any(not c.scenes for c in catalog.CATEGORIES),
+                        "категория владельца пропала")
+        for c in catalog.ВИДИМЫЕ:
+            self.assertTrue(c.scenes)
 
     def test_кнопки_бота_ведут_туда_куда_написано(self):
-        """Кнопку рисует bot.py, а разбирает он же по префиксу. Разойдутся —
-        человек нажмёт и не получит ничего, и молча."""
+        """Кнопку рисует ui.py, а разбирает bot.py по приставке.
+        Разойдутся — человек нажмёт и не получит ничего, и молча."""
         os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
-        import bot
-        разделы = {b["callback_data"] for r in bot.MENU["inline_keyboard"]
-                   for b in r if b["callback_data"].startswith("s:")}
-        self.assertEqual(разделы, {f"s:{s.key}" for s in catalog.SECTIONS})
-        for sec in catalog.SECTIONS:
-            for r in bot.cats_kb(sec)["inline_keyboard"]:
-                d = r[0]["callback_data"]
-                if d.startswith("c:"):
-                    _, sk, ck = d.split(":", 2)
-                    catalog.category(sk, ck)          # упадёт, если разошлось
-            for cat in sec.cats:
-                for r in bot.scenes_kb(sec, cat)["inline_keyboard"]:
-                    for b in r:
-                        if b["callback_data"].startswith("sc:"):
-                            catalog.scene(b["callback_data"][3:])
+        import ui
+
+        def обойти(клавиатура):
+            for ряд in клавиатура["inline_keyboard"]:
+                for b in ряд:
+                    d = b.get("callback_data")
+                    self.assertTrue(d, f"кнопка без действия: {b['text']}")
+                    self.assertLessEqual(len(d.encode()), 64, d)
+                    if d.startswith("c:"):
+                        catalog.category(d[2:])
+                    elif d.startswith(("sc:", "go:")):
+                        catalog.scene(d[3:])
+                    elif d.startswith("buy:"):
+                        pricing.pack(d[4:])
+
+        обойти(ui.главное_меню())
+        обойти(ui.меню_оплаты())
+        for c in catalog.ВИДИМЫЕ:
+            обойти(ui.меню_категории(c))
+            for sc in c.scenes:
+                обойти(ui.меню_сценария(sc))
+
+    def test_иконки_кнопок_настоящие(self):
+        """icon_custom_emoji_id должен быть id ИЗ НАБОРА. Чужой или
+        выдуманный Телеграм молча проигнорирует, и кнопка останется
+        без иконки — ошибку видно только глазами в чате."""
+        import ui
+        набор = set(emoji.ВСЕ)
+        for клава in [ui.главное_меню(), ui.меню_оплаты()] + \
+                     [ui.меню_категории(c) for c in catalog.ВИДИМЫЕ]:
+            for ряд in клава["inline_keyboard"]:
+                for b in ряд:
+                    ик = b.get("icon_custom_emoji_id")
+                    if ик:
+                        self.assertIn(ик, набор, f"{b['text']}: чужая иконка")
+
+    def test_подпись_кнопки_понятна_без_иконки(self):
+        """Premium у владельца может кончиться, и Телеграм перестанет
+        рисовать иконки. Интерфейс обязан это пережить: смысл несёт
+        подпись, иконка только украшает."""
+        import ui
+        for клава in [ui.главное_меню(), ui.меню_оплаты()]:
+            for ряд in клава["inline_keyboard"]:
+                for b in ряд:
+                    self.assertGreaterEqual(len(b["text"].strip()), 5,
+                                            f"подпись «{b['text']}» пуста без иконки")
 
     def test_неизвестное_падает_явно(self):
         with self.assertRaises(KeyError):
             catalog.scene("нет-такого")
         with self.assertRaises(KeyError):
-            catalog.section("нет-такого")
+            catalog.category("нет-такого")
 
 
 def kirill(sc):

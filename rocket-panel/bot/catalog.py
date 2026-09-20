@@ -1,42 +1,55 @@
-"""Каталог готовых сценариев. Второй по важности файл после цен.
+"""Каталог сценариев. Второй по важности файл после цен.
 
-Зачем он вообще. Разбор конкурента 20.09.2026 показал главное: его
-продукт — это не окно ввода, а КАТАЛОГ из под двух сотен готовых
-сценариев по категориям. Человек ничего не пишет, он тыкает кнопку.
-Свободный промпт у него заперт за подпиской и продаётся как апгрейд.
+## Почему каталог, а не окно ввода
 
-Мы строили промпт-первый интерфейс, и это ошибка: описывать сцену
+Разбор конкурента 20.09.2026 показал главное: его продукт — не поле для
+промпта, а КАТАЛОГ из 232 готовых сценариев по категориям. Человек
+ничего не пишет, он тыкает кнопку. Свободный промпт у него заперт за
+подпиской и продаётся как апгрейд.
+
+Мы строили промпт-первый интерфейс, и это была ошибка: описывать сцену
 словами умеет меньшинство, а платят все.
 
-Чем отличаемся от него — три вещи, и все три нарочно:
+## Устройство
+
+Категория → сценарий. Никаких разделов сверху: решение владельца
+21.09.2026 — «4-5 категорий, внутри 5-10 вариантов, не более». Два
+уровня вместо трёх, потому что третий заставляет человека угадывать,
+в каком разделе искать «переодеть в бельё».
+
+Сценарий не хранит текст промпта. Он объявляет, чем отличается
+(гардероб, поза, свет, обстановка), а полный промпт от трёх тысяч
+знаков собирает `prompts.собрать` — см. там, почему так.
+
+## Чем отличаемся от конкурента, и всё нарочно
 
   1. ЦЕНА ВИДНА ВЕЗДЕ. У него цена всплывает единственный раз — после
-     того, как человек выбрал сценарий и загрузил фото. Мы пишем цену на
-     каждой кнопке, до выбора. Стоит это ноль, а доверия прибавляет.
+     того, как человек выбрал сценарий и загрузил фото. Мы пишем цену
+     на каждой кнопке, до выбора. Стоит это ноль, а доверия прибавляет.
   2. СВОЙ ПРОМПТ ДОСТУПЕН ВСЕМ. У него это платная функция под замком.
-     У нас модель без цензуры своя, и запирать её нет смысла: каталог и
-     так удобнее, а «свой промпт бесплатно» — честный довод в нашу
-     пользу. Подписка при этом не пустеет: она продаёт скорость,
-     параллельность, длину, качество и постоянство лица.
+     Подписки у нас нет вовсе, запирать нечем и незачем.
   3. ЛИЦО ДЕРЖИТСЯ. У него лицо героини плывёт от кадра к кадру —
-     проверено на его же боте. Это наш главный козырь, и он в ULTRA.
-
-Устройство: раздел → категория → сценарий. Сценарий несёт готовый
-промпт и вид генерации, по которому считается цена из pricing.JOBS.
+     проверено на его же боте. Это наш главный козырь, и он вшит в
+     каждый промпт блоком ТЕЛО.
 """
 
 import pricing
+import prompts
+
+Блок = prompts.Блок
 
 
 class Scene:
     """Готовый сценарий: что покажем человеку и что отправим модели."""
 
-    def __init__(self, key, title, job, prompt, negative=""):
+    def __init__(self, key, title, job, блок, подпись=""):
         self.key = key
         self.title = title
         self.job = job                # ключ из pricing.JOBS — отсюда цена
-        self.prompt = prompt
-        self.negative = negative
+        self.блок = блок
+        self.подпись = подпись        # строка под картинкой в боте
+        self.prompt = prompts.собрать(job, блок)
+        self.negative = prompts.НЕГАТИВ
 
     @property
     def hearts(self):
@@ -48,192 +61,334 @@ class Scene:
 
 
 class Category:
-    def __init__(self, key, title, scenes):
+    def __init__(self, key, title, подзаголовок, scenes, иконка=""):
         self.key = key
         self.title = title
+        self.подзаголовок = подзаголовок
         self.scenes = scenes
+        self.иконка = иконка          # премиум-эмодзи, см. emoji.py
 
     def button(self):
         return f"{self.title} · {len(self.scenes)}"
 
 
-class Section:
-    def __init__(self, key, title, note, cats):
-        self.key = key
-        self.title = title
-        self.note = note
-        self.cats = cats
-
-    @property
-    def scenes(self):
-        return [s for c in self.cats for s in c.scenes]
+def _сц(key, title, job, подпись, **поля):
+    return Scene(key, title, job, Блок(**поля), подпись)
 
 
-# Слова, общие для всей съёмки. Держим в одном месте: иначе каждый
-# сценарий обрастёт своим хвостом качества, и они разойдутся.
-КАЧЕСТВО = ("photorealistic, natural skin texture with pores, soft "
-            "cinematic lighting, 85mm lens, shallow depth of field, "
-            "sharp focus on eyes, 8k, highly detailed")
-НЕГАТИВ = ("cartoon, anime, 3d render, plastic skin, deformed hands, "
-           "extra fingers, watermark, text, blurry, lowres")
+# ---------------------------------------------------------------------
+# КАТЕГОРИИ
+#
+# Пять штук. Внутри 5-8 сценариев: больше десяти в одном списке человек
+# уже не читает, а листает.
+# ---------------------------------------------------------------------
 
+CATEGORIES = [
 
-def _ph(key, title, prompt):
-    return Scene(key, title, "photo", f"{prompt}, {КАЧЕСТВО}", НЕГАТИВ)
+    # -----------------------------------------------------------------
+    Category(
+        "lingerie", "Бельё", "Переодеть в то, чего на фото не было",
+        иконка="КОРСЕТ",
+        scenes=[
+            _сц("lg_satin", "Атласная сорочка", "inpaint",
+                "Шёлк по фигуре, свет ловится по краю",
+                гардероб="Replace her clothing with a deep magenta satin slip "
+                         "nightdress, bias-cut so it falls on the diagonal and "
+                         "traces the body without gripping it. Thin spaghetti "
+                         "straps, a straight neckline, a hem that ends "
+                         "mid-thigh. The satin is heavy and cool, catching a "
+                         "long specular highlight down every fold.",
+                свет="A single soft key from the side, low and warm, so the "
+                     "satin shows one bright ridge per fold and the rest falls "
+                     "into shadow."),
 
+            _сц("lg_lace", "Кружево", "inpaint",
+                "Чёрное кружево, кожа читается сквозь рисунок",
+                гардероб="Replace her clothing with a black lace bralette and "
+                         "matching high-waisted briefs. The lace is fine "
+                         "Chantilly with a floral motif, scalloped along every "
+                         "edge, semi-sheer so the skin tone shows through the "
+                         "open ground of the pattern while the denser motifs "
+                         "stay opaque. Delicate elastic at the band, a small "
+                         "satin bow at the centre front.",
+                свет="Soft frontal light with a second dim light behind, so the "
+                     "lace reads as an openwork pattern rather than a flat "
+                     "black shape."),
 
-def _ed(key, title, prompt):
-    return Scene(key, title, "inpaint", f"{prompt}, {КАЧЕСТВО}", НЕГАТИВ)
+            _сц("lg_silk_robe", "Шёлковый халат", "inpaint",
+                "Наброшен, не запахнут, пояс свободно",
+                гардероб="Replace her clothing with a long silk kimono robe in "
+                         "deep wine, worn open over matching underwear, the "
+                         "sash loose and hanging rather than tied. Wide sleeves "
+                         "falling past the wrist, a heavy hem that swings. The "
+                         "silk is slightly crushed, showing the soft broken "
+                         "sheen of a fabric that has been worn.",
+                поза="One shoulder slipped free of the robe, the fabric caught "
+                     "at the upper arm."),
 
+            _сц("lg_sport", "Спортивный комплект", "inpaint",
+                "Топ и легинсы, матовая ткань",
+                гардероб="Replace her clothing with a fitted matte-black "
+                         "sports bra and high-waisted seamless leggings. The "
+                         "fabric is technical knit with a soft dry hand, no "
+                         "shine, flat-locked seams following the body, a wide "
+                         "supportive underband. Subtle compression where the "
+                         "band meets skin.",
+                свет="Clean even light from the front, the kind used for "
+                     "activewear catalogue photography."),
 
-def _an(key, title, prompt):
-    return Scene(key, title, "animate", prompt, НЕГАТИВ)
+            _сц("lg_white", "Белый комплект", "inpaint",
+                "Простое хлопковое, утренний свет",
+                гардероб="Replace her clothing with a simple white cotton "
+                         "bralette and briefs, unlined, with a narrow ribbed "
+                         "band and no ornament at all. The cotton is soft, "
+                         "slightly worn, faintly translucent where it stretches.",
+                свет="Cool diffuse morning light from a window, soft shadows, "
+                     "everything low in contrast and quiet."),
 
+            _сц("lg_stockings", "Чулки", "inpaint",
+                "Тонкие чулки с кружевной резинкой",
+                гардероб="Add sheer black hold-up stockings with a wide "
+                         "scalloped lace band at the upper thigh and a fine "
+                         "seam running up the back of the leg. The denier is "
+                         "low, so the skin tone reads clearly through the "
+                         "nylon, darkening slightly at the band and toe.",
+                камера="Framed to include the full length of the legs."),
+        ],
+    ),
 
-SECTIONS = [
-    Section(
-        "scene", "Сцена по образцу",
-        "Пришли фото — поставим героиню в любую обстановку, лицо останется",
-        [
-            Category("bedroom", "Спальня", [
-                _ph("bed_silk", "Шёлковая постель",
-                    "woman lying on white silk bedsheets, morning light "
-                    "through sheer curtains, relaxed pose"),
-                _ph("bed_window", "У окна на рассвете",
-                    "woman sitting on bed by a large window at sunrise, "
-                    "warm backlight, silhouette rim light"),
-                _ph("bed_mirror", "Перед зеркалом",
-                    "woman in front of a full length mirror in a dim "
-                    "bedroom, reflection visible, moody lighting"),
-            ]),
-            Category("studio", "Студия", [
-                _ph("st_black", "Чёрный фон",
-                    "studio portrait against seamless black backdrop, "
-                    "single softbox from the left, deep shadows"),
-                _ph("st_white", "Белый циклорама",
-                    "full body studio shot on white cyclorama, even "
-                    "high key lighting, editorial fashion style"),
-                _ph("st_neon", "Неон",
-                    "studio shot with magenta and cyan neon tubes, "
-                    "wet look skin highlights, cyberpunk mood"),
-            ]),
-            Category("water", "Вода", [
-                _ph("w_shower", "Душ",
-                    "woman in a glass shower cabin, water droplets on "
-                    "skin and glass, steam, backlit"),
-                _ph("w_pool", "Бассейн ночью",
-                    "woman at the edge of a lit swimming pool at night, "
-                    "water reflections on skin"),
-                _ph("w_bath", "Ванна с пеной",
-                    "woman in a bathtub with foam, candles around, "
-                    "warm low light"),
-            ]),
-            Category("outdoor", "На улице", [
-                _ph("o_beach", "Пляж на закате",
-                    "woman on an empty beach at golden hour, wind in "
-                    "hair, sun flare"),
-                _ph("o_forest", "Лес",
-                    "woman in a misty pine forest, soft diffused "
-                    "daylight, moss and ferns"),
-                _ph("o_roof", "Крыша в городе",
-                    "woman on a rooftop at night, city bokeh lights "
-                    "behind, cool blue tones"),
-            ]),
-        ]),
+    # -----------------------------------------------------------------
+    Category(
+        "scene", "Обстановка", "Перенести героиню в другое место",
+        иконка="КАБЛУК",
+        scenes=[
+            _сц("sc_bed", "Шёлковая постель", "photo",
+                "Утро, смятый шёлк, свет из-за штор",
+                обстановка="A wide bed dressed in ivory silk, the sheets "
+                           "deeply creased from a night of sleep, one pillow "
+                           "pushed aside. A bedroom in soft focus behind: a "
+                           "low headboard, a lamp switched off, sheer curtains "
+                           "moving slightly.",
+                поза="Lying on her side across the sheets, propped on one "
+                     "forearm, the other hand resting near her face.",
+                свет="Morning sun through sheer curtains, diffuse and warm, "
+                     "throwing long soft shadows across the bedding."),
 
-    Section(
-        "edit", "Правка фото",
-        "Обведи пальцем что поменять — лицо не тронем",
-        [
-            Category("outfit", "Одежда", [
-                _ed("e_swim", "Купальник",
-                    "wearing a swimsuit, natural fit and folds"),
-                _ed("e_lace", "Кружевное бельё",
-                    "wearing white lace lingerie, delicate fabric detail"),
-                _ed("e_dress", "Вечернее платье",
-                    "wearing an elegant evening dress, silk fabric"),
-                _ed("e_sport", "Спортивное",
-                    "wearing fitted sportswear, gym setting"),
-            ]),
-            Category("angle", "Ракурс и поза", [
-                _ed("a_side", "Повернуть боком",
-                    "turned to the side, three quarter view, same person"),
-                _ed("a_back", "Повернуть спиной",
-                    "viewed from behind, looking over the shoulder"),
-                _ed("a_close", "Крупный план",
-                    "close up portrait framing, head and shoulders"),
-            ]),
-            Category("light", "Свет и стиль", [
-                _ed("l_golden", "Тёплый закат",
-                    "warm golden hour light on the subject"),
-                _ed("l_noir", "Чёрно-белое",
-                    "black and white film noir lighting, hard shadows"),
-                _ed("l_film", "Плёнка",
-                    "35mm film grain, muted colors, analog look"),
-            ]),
-        ]),
+            _сц("sc_studio", "Чёрная студия", "photo",
+                "Один источник, всё остальное в темноте",
+                обстановка="A professional photo studio against seamless "
+                           "black paper, nothing else in frame.",
+                свет="A single large softbox at forty-five degrees camera "
+                     "left, feathered so the far side of the body falls into "
+                     "deep shadow. A thin rim light from behind separates the "
+                     "shoulder and hair from the black.",
+                настроение="Severe, controlled, expensive — the register of a "
+                           "fashion test shot."),
 
-    Section(
-        "video", "Оживить фото",
-        "Фото оживает: движение, камера, свет",
-        [
-            Category("soft", "Спокойное", [
-                _an("v_breath", "Дыхание и взгляд",
-                    "subtle breathing, slow blink, slight head turn "
-                    "toward camera, hair moves gently"),
-                _an("v_smile", "Улыбка",
-                    "slowly breaks into a soft smile, eyes narrow warmly"),
-                _an("v_hair", "Поправляет волосы",
-                    "raises hand and brushes hair behind the ear, "
-                    "natural arm motion"),
-            ]),
-            Category("camera", "Движение камеры", [
-                _an("v_push", "Наезд",
-                    "slow dolly push in toward the subject, shallow "
-                    "depth of field"),
-                _an("v_orbit", "Облёт",
-                    "camera orbits slowly around the subject, parallax"),
-                _an("v_tilt", "Панорама снизу вверх",
-                    "camera tilts up slowly from feet to face, smooth "
-                    "steady motion, subject stays still and breathes"),
-            ]),
-            Category("move", "Движение героини", [
-                _an("v_turn", "Поворот к камере",
-                    "turns body toward the camera and looks directly "
-                    "into the lens"),
-                _an("v_walk", "Шаг навстречу",
-                    "takes a step toward the camera, confident walk"),
-                _an("v_stretch", "Потягивается",
-                    "stretches arms slowly above the head, arching back"),
-            ]),
-        ]),
+            _сц("sc_bath", "Ванная", "photo",
+                "Пар, запотевшее стекло, мокрая кожа",
+                обстановка="A dim tiled bathroom, steam hanging in the air, "
+                           "a large mirror fogged at the edges, warm water "
+                           "still running. Small droplets condensing on every "
+                           "cold surface.",
+                свет="One warm bulb above and to the side, its light scattered "
+                     "by the steam into a soft glow.",
+                ещё="Her skin is damp: water beading on the shoulders and "
+                    "collarbone, hair heavy and wet at the ends."),
+
+            _сц("sc_hotel", "Ночной отель", "photo",
+                "Город в окне, лампа у кровати",
+                обстановка="A high-floor hotel room at night. A floor-to-"
+                           "ceiling window fills one side of the frame with a "
+                           "city skyline far below, out of focus into points "
+                           "of amber and white. A single bedside lamp is lit.",
+                свет="Warm lamplight from inside, cool city light from the "
+                     "window, meeting on her face — warm on one cheek, cool on "
+                     "the other."),
+
+            _сц("sc_pool", "У бассейна", "photo",
+                "Вода, отражения, полуденное солнце",
+                обстановка="The edge of a swimming pool at midday, turquoise "
+                           "water throwing rippling caustic reflections onto "
+                           "everything above it. Pale stone, a folded towel, "
+                           "nothing else.",
+                свет="Hard overhead sun softened by a passing cloud, plus the "
+                     "moving reflected light from the water playing across the "
+                     "underside of her chin and arms."),
+
+            _сц("sc_neon", "Неоновый переулок", "photo",
+                "Мокрый асфальт, розовые вывески",
+                обстановка="A narrow city alley at night after rain. Wet "
+                           "asphalt mirrors a row of neon signs in magenta and "
+                           "cold blue. Steam rising from a grate, brick walls "
+                           "close on both sides.",
+                свет="Hard coloured neon from two directions, magenta from the "
+                     "left and cold blue from behind, with deep unlit shadow "
+                     "between them.",
+                настроение="Cinematic, charged, slightly dangerous."),
+
+            _сц("sc_nature", "Поле на закате", "photo",
+                "Высокая трава, контровой свет",
+                обстановка="An open field of tall dry grass at golden hour, "
+                           "the horizon low and distant, a line of trees far "
+                           "behind in haze.",
+                свет="The sun low and directly behind her, rimming the hair "
+                     "and shoulders in gold, the front of the body lit softly "
+                     "by bounce from the ground. Visible lens flare and warm "
+                     "atmospheric haze."),
+
+            _сц("sc_car", "Заднее сиденье", "photo",
+                "Салон ночью, свет фонарей по лицу",
+                обстановка="The back seat of a car at night, dark leather, "
+                           "the city sliding past outside the window.",
+                свет="Streetlights passing overhead sweep bands of warm light "
+                     "across her face and the seat, leaving everything else "
+                     "nearly black.",
+                камера="Shot close, from the seat beside her, at eye level."),
+        ],
+    ),
+
+    # -----------------------------------------------------------------
+    Category(
+        "animate", "Оживить", "Фото начинает двигаться",
+        иконка="БЛЁСТКИ",
+        scenes=[
+            _сц("an_breath", "Дыхание", "animate",
+                "Самое спокойное — грудь, ресницы, прядь",
+                поза="She holds the pose of the photograph. Only the chest "
+                     "rises and falls with slow breathing, the eyelids close "
+                     "once in a natural blink, and a single strand of hair "
+                     "settles across the cheek.",
+                настроение="Calm, unhurried, almost still."),
+
+            _сц("an_look", "Взгляд в камеру", "animate",
+                "Отводит глаза и возвращает взгляд",
+                поза="Her eyes drift away from the lens, linger for a moment, "
+                     "then come back and settle directly on the camera. The "
+                     "head turns only a few degrees with them.",
+                настроение="Direct, unhurried, holding the viewer."),
+
+            _сц("an_smile", "Улыбка", "animate",
+                "Улыбка рождается медленно и доходит до глаз",
+                поза="A smile builds slowly from the corners of the mouth, "
+                     "reaching the eyes last so the cheeks lift and the outer "
+                     "corners crease. It arrives and stays; it does not flash "
+                     "on and off."),
+
+            _сц("an_hair", "Поправляет волосы", "animate",
+                "Заправляет прядь за ухо",
+                поза="She lifts one hand, catches a loose strand of hair and "
+                     "tucks it behind her ear, then lowers the hand back. The "
+                     "hand must remain anatomically correct throughout the "
+                     "movement, fingers never merging with the hair or face."),
+
+            _сц("an_turn", "Поворот к камере", "animate",
+                "Поворачивается через плечо",
+                поза="She begins turned three-quarters away and rotates "
+                     "smoothly toward the lens, the shoulders leading and the "
+                     "head following, ending looking directly at camera. The "
+                     "face must remain the same face through every degree of "
+                     "the turn."),
+
+            _сц("an_wind", "Ветер", "animate",
+                "Волосы и ткань живут от ветра",
+                поза="She stays still. A steady breeze lifts and moves her "
+                     "hair in continuous strands and stirs the fabric she is "
+                     "wearing, which ripples and settles with real weight.",
+                ещё="Motion in the hair is strand-level and continuous, never "
+                    "a single rigid mass moving as one piece."),
+
+            _сц("an_push", "Наезд камеры", "animate",
+                "Камера медленно приближается",
+                камера="A slow, steady push-in toward her face over the whole "
+                       "clip, as if on a dolly — constant speed, no easing at "
+                       "the end, no handheld shake. The subject herself moves "
+                       "only with breathing and one blink."),
+        ],
+    ),
+
+    # -----------------------------------------------------------------
+    Category(
+        "voice", "Со звуком", "Фото заговорит вашим текстом",
+        иконка="ЭФИР",
+        scenes=[
+            _сц("vo_hello", "Приветствие", "sound",
+                "Смотрит в камеру и здоровается",
+                поза="She looks directly into the lens and speaks the supplied "
+                     "line as a greeting, warm and unhurried, with small "
+                     "natural head movements on the stressed syllables.",
+                настроение="Welcoming, close, as if speaking to one person."),
+
+            _сц("vo_whisper", "Шёпотом", "sound",
+                "Близко к камере, вполголоса",
+                поза="She leans slightly toward the lens and speaks the "
+                     "supplied line quietly, almost under her breath. Lip "
+                     "movement is small and precise; the jaw barely opens.",
+                камера="Very close framing, the face filling most of the "
+                       "vertical frame.",
+                настроение="Intimate, confidential, quiet."),
+
+            _сц("vo_invite", "Приглашение", "sound",
+                "Зовёт за собой, жест рукой",
+                поза="She speaks the supplied line and, on its final words, "
+                     "lifts one hand in a small beckoning gesture. The hand "
+                     "stays anatomically correct throughout."),
+
+            _сц("vo_laugh", "С улыбкой", "sound",
+                "Говорит, улыбаясь, с короткой паузой на смешок",
+                поза="She speaks the supplied line with a smile running under "
+                     "it, breaking once into a short soft laugh before "
+                     "finishing. The laugh moves the shoulders slightly."),
+
+            _сц("vo_story", "Рассказ", "sound",
+                "Длиннее, спокойнее, с паузами",
+                поза="She delivers the supplied line as a short story: even "
+                     "pace, real pauses between sentences where she looks "
+                     "briefly away and back, eyebrows moving with the sense of "
+                     "the words.",
+                настроение="Relaxed, conversational, unperformed."),
+        ],
+    ),
+
+    # -----------------------------------------------------------------
+    # ВАША КАТЕГОРИЯ. Механизм готов, тексты за владельцем.
+    #
+    # Формулировки откровенных сценариев пишет владелец — я собрала под
+    # них всё остальное: категория появится в меню сама, цена встанет на
+    # кнопку, промпт соберётся до нужной длины, оплата и возврат уже
+    # работают. Добавить сценарий — три строки по образцу выше:
+    #
+    #     _сц("ключ", "Название", "inpaint", "подпись под картинкой",
+    #         гардероб="...", поза="...", свет="..."),
+    #
+    # Поля любые из prompts.Блок: гардероб, поза, обстановка, свет,
+    # камера, настроение, ещё. Текст — по-английски. Пустая категория в
+    # меню не показывается, так что до наполнения её никто не увидит.
+    Category(
+        "own", "Своё", "Сценарии владельца",
+        иконка="ОГОНЬ",
+        scenes=[],
+    ),
 ]
 
-SECTION = {s.key: s for s in SECTIONS}
-CATEGORY = {(s.key, c.key): c for s in SECTIONS for c in s.cats}
-SCENE = {sc.key: sc for s in SECTIONS for c in s.cats for sc in c.scenes}
+# Категория без сценариев в меню не показывается.
+ВИДИМЫЕ = [c for c in CATEGORIES if c.scenes]
 
-
-def section(key):
-    if key not in SECTION:
-        raise KeyError(f"неизвестный раздел: {key}")
-    return SECTION[key]
-
-
-def category(section_key, cat_key):
-    k = (section_key, cat_key)
-    if k not in CATEGORY:
-        raise KeyError(f"неизвестная категория: {section_key}/{cat_key}")
-    return CATEGORY[k]
+_ПО_КЛЮЧУ = {s.key: s for c in CATEGORIES for s in c.scenes}
+_КАТЕГОРИИ = {c.key: c for c in CATEGORIES}
 
 
 def scene(key):
-    if key not in SCENE:
+    if key not in _ПО_КЛЮЧУ:
         raise KeyError(f"неизвестный сценарий: {key}")
-    return SCENE[key]
+    return _ПО_КЛЮЧУ[key]
 
 
-def count():
-    return {"разделов": len(SECTIONS),
-            "категорий": len(CATEGORY),
-            "сценариев": len(SCENE)}
+def category(key):
+    if key not in _КАТЕГОРИИ:
+        raise KeyError(f"неизвестная категория: {key}")
+    return _КАТЕГОРИИ[key]
+
+
+def все_сценарии():
+    return list(_ПО_КЛЮЧУ.values())
