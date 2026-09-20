@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>MARA — знак</title>
+  <desc>Треугольник и его отражение, разобранное на строчки: то, что внизу, не существует.</desc>
+  <defs>
+    <pattern id="scan" width="8" height="9" patternUnits="userSpaceOnUse">
+      <rect width="8" height="5" fill="#fff"/></pattern>
+    <linearGradient id="dim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="ghost">
+      <rect x="0" y="264" width="512" height="230" fill="url(#scan)" mask="url(#dimmask)"/>
+    </mask>
+    <mask id="dimmask"><rect x="0" y="264" width="512" height="230" fill="url(#dim)"/></mask>
+    <filter id="g" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="13" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#000000"/>
+  <g filter="url(#g)">
+    <path d="M256,92 L420,256 L92,256 Z" fill="#FF0A8C"/>
+    <path d="M256,420 L420,264 L92,264 Z" fill="#FF0A8C" mask="url(#ghost)"/>
+  </g>
+</svg>
