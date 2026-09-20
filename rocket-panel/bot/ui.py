@@ -32,6 +32,7 @@ import json
 
 import catalog
 import emoji
+import payments
 import pricing
 
 
@@ -220,6 +221,24 @@ def меню_сбора_фото(sc, собрано):
                      кнопка("Начать заново", f"go:{sc.key}")])
     ряды.append([кнопка("Отмена", "m:menu", emoji.ВЛЕВО)])
     return клава(ряды)
+
+
+def текст_пакета(p):
+    звёзд = payments.звёзд_за(p["rub"])
+    return (f"{emoji.тег(emoji.СЕРДЦА, '♥')} <b>{p['hearts']} сердечек</b> "
+            f"за <b>{p['rub']} ₽</b>\n"
+            f"<s>{p['market_rub']} ₽ у других</s>\n\n"
+            f"Не сгорают никогда.\n\n"
+            f"Звёздами — {звёзд} ★, криптой — по курсу.")
+
+
+def меню_способов(pack_id):
+    return клава([
+        [кнопка("Telegram Stars", f"pay:stars:{pack_id}",
+                emoji.БЛЕСК, стиль="primary")],
+        [кнопка("Криптовалютой", f"pay:crypto:{pack_id}", emoji.КАРТА)],
+        [кнопка("Назад", "m:buy", emoji.ВЛЕВО)],
+    ])
 
 
 def текст_оплаты():

@@ -55,6 +55,13 @@ CREATE TABLE IF NOT EXISTS jobs (
   at        INTEGER NOT NULL,
   done_at   INTEGER
 );
+CREATE TABLE IF NOT EXISTS invoices (
+  invoice_id TEXT PRIMARY KEY,
+  tg_id      INTEGER NOT NULL,
+  pack_id    TEXT NOT NULL,
+  at         INTEGER NOT NULL,
+  credited_at INTEGER
+);
 CREATE INDEX IF NOT EXISTS ix_ledger_user ON ledger(tg_id, at);
 CREATE INDEX IF NOT EXISTS ix_jobs_user   ON jobs(tg_id, at);
 """
@@ -200,6 +207,32 @@ class Store:
         что не сгорает никогда: за нашу осечку человек не должен
         остаться ни с чем."""
         return self.credit(tg_id, amount, "paid", reason)
+
+    # --- счета крипты ---
+
+    def remember_invoice(self, tg_id, invoice_id, pack_id):
+        with self._db() as c:
+            c.execute("INSERT OR IGNORE INTO invoices(invoice_id,tg_id,pack_id,at) "
+                      "VALUES(?,?,?,?)",
+                      (str(invoice_id), tg_id, pack_id, int(time.time())))
+
+    def take_invoice(self, tg_id, invoice_id):
+        """Забрать счёт под зачисление РОВНО ОДИН раз.
+
+        Возвращает пакет, если счёт этого человека и ещё не зачислен;
+        иначе None. Отметка ставится в той же транзакции, что и
+        проверка: человек жмёт «я оплатил» десять раз подряд, а вебхук
+        приходит сверх того — без этого он получил бы десять пакетов.
+        """
+        with self._db() as c:
+            r = c.execute("SELECT pack_id FROM invoices WHERE invoice_id=? "
+                          "AND tg_id=? AND credited_at IS NULL",
+                          (str(invoice_id), tg_id)).fetchone()
+            if not r:
+                return None
+            c.execute("UPDATE invoices SET credited_at=? WHERE invoice_id=?",
+                      (int(time.time()), str(invoice_id)))
+            return r["pack_id"]
 
     # --- задания ---
 
