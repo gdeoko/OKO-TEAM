@@ -213,6 +213,11 @@
     # две единственные поломки, которые владелец назвал сам, глядя на
     # результат: «в референсе маленькая грудь, а на выходе огромные
     # сиськи и тело сорокалетней».
+    # ПОРНО-ГЛЯНЕЦ. Прогон 22.09.2026: в парных сценах тела выходили
+    # намасленными и блестящими — вид коммерческого порно, который
+    # владелец забраковал ещё на одиночных.
+    "oiled skin, body oil, wet shiny skin, glossy plastic skin, "
+    "greasy highlights, airbrushed porn look, "
     "large breasts, big breasts, huge breasts, enlarged bust, busty, "
     "voluptuous, curvy, breast implants, boob job, heavy chest, "
     "cleavage added, push-up effect, "
