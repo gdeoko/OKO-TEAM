@@ -2340,5 +2340,77 @@ class УбратьИзБота(unittest.TestCase):
         self.assertIn("ref", ключи, "«как на твоём фото» пропало")
 
 
+class ТелоНеСклеивается(unittest.TestCase):
+    """Прогон 22.09.2026 на крупных планах: лицо вставало прямо над
+    пахом, появлялось второе туловище, кисти прирастали к промежности.
+    У пары та же беда с обратным знаком — там слипались двое."""
+
+    def одиночка(self):
+        return catalog.scene("un_close").prompt_фото()
+
+    def пара(self):
+        return catalog.scene("pf_mf_near").prompt_фото()
+
+    def test_одиночке_сказано_одно_тело(self):
+        p = self.одиночка()
+        self.assertIn("ONE single continuous body", p)
+        self.assertNotIn("EXACTLY TWO bodies", p)
+
+    def test_паре_сказано_ровно_два_тела(self):
+        p = self.пара()
+        self.assertIn("EXACTLY TWO bodies", p)
+        self.assertNotIn(
+            "ONE single continuous body", p,
+            "«одно туловище, одна голова» в парной сцене — указание "
+            "слепить двоих в одного")
+
+    def test_запрет_на_склейку_в_негативе(self):
+        neg = prompts.НЕГАТИВ
+        for слово in ("duplicated torso", "face on top of crotch",
+                      "fused breasts", "collage"):
+            self.assertIn(слово, neg)
+
+
+class ГолыеОстаютсяГолымиДоКонца(unittest.TestCase):
+    """Парный вариант «рядом» вышел в бикини и шортах: откровенного
+    действия у него нет, требование наготы стояло только в начале, а в
+    конце стояла ткань, которая мнётся и прижимается к коже."""
+
+    def test_у_пары_нагота_повторена_последней_строкой(self):
+        p = catalog.scene("pf_mf_near").prompt_фото()
+        хвост = p.strip().rsplit("\n\n", 1)[-1]
+        self.assertIn("BOTH OF THEM ARE NAKED", хвост)
+
+    def test_про_ткань_молчим_когда_одежды_нет(self):
+        сц = catalog.scene("pf_mf_near")
+        self.assertFalse(сц.блок.гардероб, "у варианта появился гардероб")
+        self.assertNotIn("Fabric behaves as fabric", сц.prompt_фото())
+
+    def test_про_ткань_говорим_когда_одежда_названа(self):
+        """Откровенные строки живут не в коде, а в правках владельца, —
+        поэтому проверяем сам сборщик на блоке с названной одеждой."""
+        сц = catalog.scene("un_close")
+        блок = catalog.Блок(**{п: getattr(сц.блок, п)
+                               for п in catalog.Блок.__slots__})
+        self.assertFalse(prompts.одежда_названа(блок))
+        блок.откровенное = "She peels the lace bra off and drops it."
+        self.assertTrue(prompts.одежда_названа(блок))
+        p = prompts.собрать("i2i", блок)
+        self.assertIn("Fabric behaves as fabric", p)
+
+
+class КожаМатовая(unittest.TestCase):
+    """Намасленные тела владелец забраковал дважды. Запрета мало:
+    сборка слушает утверждение лучше, чем запрет."""
+
+    def test_матовость_сказана_положительно(self):
+        p = catalog.scene("un_close").prompt_фото()
+        self.assertIn("MATTE and DRY", p)
+
+    def test_в_мужской_сцене_слова_breasts_нет(self):
+        p = catalog.scene("pf_mm_near").prompt_фото()
+        self.assertNotIn("breasts", p.lower())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
