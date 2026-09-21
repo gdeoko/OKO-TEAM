@@ -1250,6 +1250,17 @@ class ПорядокБлоковВПромпте(unittest.TestCase):
         sc = catalog.scene(ключ)
         return p, sc
 
+    def test_якорь_личности_в_первых_строках(self):
+        """Когда подробный блок внешности уехал вниз, «Интим»
+        развалился: вместо героини в кадре оказались чужие люди, в
+        одном даже мужчина. Наверх поставлена одна фраза — кто в кадре."""
+        p, _ = self.порядок("ph_close")
+        self.assertIn("THE WOMAN FROM THE REFERENCE", p[:1100])
+
+    def test_у_пары_якорь_про_двоих(self):
+        p = catalog.scene("pf_mf_near").промпт()
+        self.assertIn("THE TWO PEOPLE FROM THE REFERENCE", p[:1100])
+
     def test_первым_идёт_задание(self):
         p, _ = self.порядок()
         self.assertTrue(p.startswith("EDIT THIS PHOTOGRAPH"))
