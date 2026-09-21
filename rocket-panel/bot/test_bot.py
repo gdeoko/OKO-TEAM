@@ -271,13 +271,37 @@ class Каталог(unittest.TestCase):
             self.assertGreaterEqual(len(c.scenes), 5, f"{c.key}: меньше пяти")
             self.assertLessEqual(len(c.scenes), 10, f"{c.key}: больше десяти")
 
-    def test_пустая_категория_не_показывается(self):
-        """Категория владельца заведена пустой. Пустая витрина хуже её
-        отсутствия, поэтому в меню попадают только непустые."""
-        self.assertTrue(any(not c.scenes for c in catalog.CATEGORIES),
-                        "категория владельца пропала")
-        for c in catalog.ВИДИМЫЕ:
-            self.assertTrue(c.scenes)
+    def test_популярное_появляется_только_когда_есть_данные(self):
+        """Пустое «Популярное» на самом видном месте — худший первый
+        экран: человек жмёт то, что выглядит главным, и попадает в
+        пустоту. Поэтому категория считается из базы и до первых
+        заказов не показывается вовсе."""
+        import store as _store
+        s = Store(tempfile.mktemp(suffix=".db"))
+        s.ensure_user(1, welcome=99)
+        self.assertIsNone(catalog.популярная_категория(s),
+                          "пустое Популярное показано")
+
+        сц = catalog.CATEGORIES[0].scenes[0]
+        for i in range(3):
+            s.job_start(f"j{i}", 1, сц.job, "p", 1, scene=сц.key)
+            s.job_done(f"j{i}", file="o.png", path="p", tg_file_id="x", size=1)
+        топ = catalog.популярная_категория(s)
+        self.assertIsNotNone(топ)
+        self.assertEqual([x.key for x in топ.scenes], [сц.key])
+
+    def test_популярное_считается_по_удачным(self):
+        """Осечка не говорит, что сценарий нравится — она говорит, что
+        у нас что-то сломалось. Поднимать по ней сценарий в топ было бы
+        издевательством."""
+        s = Store(tempfile.mktemp(suffix=".db"))
+        s.ensure_user(1, welcome=99)
+        сц = catalog.CATEGORIES[0].scenes[0]
+        for i in range(5):
+            s.job_start(f"e{i}", 1, сц.job, "p", 1, scene=сц.key)
+            s.job_done(f"e{i}", error="карта упала")
+        self.assertIsNone(catalog.популярная_категория(s))
+
 
     def test_кнопки_бота_ведут_туда_куда_написано(self):
         """Кнопку рисует ui.py, а разбирает bot.py по приставке.

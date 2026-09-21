@@ -112,9 +112,18 @@ def kb(rows):
 # Каталог стоит первым нарочно: описывать сцену словами умеет
 # меньшинство, а платят все. Свой промпт остаётся рядом и бесплатно —
 # у конкурента он заперт за подпиской.
-MENU = ui.главное_меню()
 buy_kb = ui.меню_оплаты
 price_list = ui.текст_оплаты
+
+
+def меню():
+    """Главное меню собирается КАЖДЫЙ раз, а не один при запуске:
+    «Популярное» считается из базы и меняется само. Собранное однажды,
+    оно застыло бы на той картине, какая была в момент старта службы."""
+    return ui.главное_меню(catalog.популярная_категория(store))
+
+
+MENU = меню()
 
 
 def greet(u, имя=None):
@@ -151,15 +160,18 @@ def buy_kb():
 
 
 
-def run_job(chat, u, kind, prompt, photos=None):
-    """Считает задание и отдаёт результат. Крутится в отдельном потоке."""
+def run_job(chat, u, kind, prompt, photos=None, scene=None):
+    """Считает задание и отдаёт результат. Крутится в отдельном потоке.
+
+    `scene` — ключ сценария из каталога, если человек пришёл кнопкой.
+    Из него считается «Популярное»."""
     job = pricing.job(kind)
     jid = uuid.uuid4().hex[:10]
     charged = False
     try:
         store.spend(u, job.coins, f"{job.title}", meta={"job": jid})
         charged = True
-        store.job_start(jid, u, kind, prompt, job.coins)
+        store.job_start(jid, u, kind, prompt, job.coins, scene=scene)
 
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
@@ -238,13 +250,15 @@ def run_job(chat, u, kind, prompt, photos=None):
             busy.discard(u)
 
 
-def launch(chat, u, kind, prompt, photos=None):
+def launch(chat, u, kind, prompt, photos=None, scene=None):
     with lock:
         if u in busy:
             send(chat, "Одно задание уже считается. Дождись его, потом запускай следующее.")
             return
         busy.add(u)
-    threading.Thread(target=run_job, args=(chat, u, kind, prompt, photos or []), daemon=True).start()
+    threading.Thread(target=run_job,
+                     args=(chat, u, kind, prompt, photos or [], scene),
+                     daemon=True).start()
 
 
 # ---------- разбор сообщений ----------
@@ -333,7 +347,7 @@ def позвать_друзей(chat, u):
 # четыре кнопки падали в «Сначала выбери, что делаем» — клавиатура
 # висела на экране и не делала ничего.
 НИЖНИЕ_КНОПКИ = {
-    "Создать":    lambda chat, u: send(chat, "Что делаем?", MENU),
+    "Создать":    lambda chat, u: send(chat, "Что делаем?", меню()),
     "Баланс":     показать_кабинет,
     "Мои работы": показать_работы,
     "Пополнить":  lambda chat, u: send(chat, price_list(), buy_kb()),
@@ -395,7 +409,7 @@ def on_photo(chat, u, file_id):
         sc = catalog.scene(st["scene"])
         if len(собрано) >= job.макс_фото:
             waiting.pop(u, None)
-            launch(chat, u, sc.job, sc.prompt, собрано)
+            launch(chat, u, sc.job, sc.prompt, собрано, scene=sc.key)
             return
         send(chat, ui.просьба_о_фото(job, len(собрано)),
              ui.меню_сбора_фото(sc, len(собрано)))
@@ -411,7 +425,7 @@ def on_callback(cb):
     store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_COINS)
 
     if data == "m:menu":
-        answer(cid); send(chat, "Что делаем?", MENU); return
+        answer(cid); send(chat, "Что делаем?", меню()); return
 
     if data in ("m:balance", "m:cab"):
         answer(cid); показать_кабинет(chat, u, cb["from"].get("first_name")); return
@@ -516,7 +530,7 @@ def on_callback(cb):
         answer(cid)
         job = pricing.job(sc.job)
         if not job.нужно_фото:
-            launch(chat, u, sc.job, sc.prompt, [])
+            launch(chat, u, sc.job, sc.prompt, [], scene=sc.key)
             return
         waiting[u] = {"kind": sc.job, "scene": sc.key, "фото": []}
         send(chat, ui.просьба_о_фото(job), ui.меню_сбора_фото(sc, 0))
@@ -530,7 +544,7 @@ def on_callback(cb):
             answer(cid, "Сначала пришли фото"); return
         answer(cid)
         waiting.pop(u, None)
-        launch(chat, u, sc.job, sc.prompt, st["фото"])
+        launch(chat, u, sc.job, sc.prompt, st["фото"], scene=sc.key)
         return
 
     if data.startswith("undo:"):
@@ -634,7 +648,7 @@ def on_update(up):
         on_start(chat, u, username, parts[1] if len(parts) > 1 else None); return
     if text in ("/menu", "/help"):
         store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
-        send(chat, "Что делаем?", MENU); return
+        send(chat, "Что делаем?", меню()); return
     if text == "/prices":
         send(chat, price_list(), MENU); return
     if text == "/scenes":
