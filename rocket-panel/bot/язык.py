@@ -331,6 +331,14 @@ def job_note(job, яз):
                    "en": "No photo needed - a description is enough."},
     "фото.один":  {"ru": "Нужен <b>один</b> снимок.",
                    "en": "One photo needed."},
+    "фото.порядок_мж": {
+        "ru": "Порядок важен: <b>первым пришли мужчину</b>, вторым - женщину.",
+        "en": "The order matters: <b>send the man first</b>, the woman second.",
+    },
+    "фото.порядок_равный": {
+        "ru": "Порядок любой - в кадре оба будут на своих местах.",
+        "en": "Any order - both will be placed correctly.",
+    },
     "фото.пара": {
         "ru": "Нужны <b>два</b> снимка - по одному на человека. "
               "Первым пришли того, кто в сценарии первый.",

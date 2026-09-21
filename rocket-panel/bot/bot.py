@@ -641,7 +641,7 @@ def on_photo(chat, u, file_id):
             waiting.pop(u, None)
             пустить_сценарий(chat, u, sc, собрано, м)
             return
-        send(chat, ui.просьба_о_фото(job, len(собрано), sc.фото_нужно, я),
+        send(chat, ui.текст_сбора_фото(sc, job, len(собрано), я),
              ui.меню_сбора_фото(sc, len(собрано), я))
         return
 
@@ -850,7 +850,7 @@ def on_callback(cb):
         job = pricing.job(sc.job)
         waiting[u] = {"kind": sc.job, "scene": sc.key, "место": м.key,
                       "фото": []}
-        send(chat, ui.просьба_о_фото(job, 0, sc.фото_нужно, я),
+        send(chat, ui.текст_сбора_фото(sc, job, 0, я),
              ui.меню_сбора_фото(sc, 0, я))
         return
 
@@ -877,7 +877,7 @@ def on_callback(cb):
             st["фото"].pop()
         n = len(st["фото"]) if st else 0
         answer(cid, t("фото.убрала", я))
-        send(chat, ui.просьба_о_фото(pricing.job(sc.job), n, sc.фото_нужно, я),
+        send(chat, ui.текст_сбора_фото(sc, pricing.job(sc.job), n, я),
              ui.меню_сбора_фото(sc, n, я))
         return
 
