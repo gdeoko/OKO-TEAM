@@ -1271,6 +1271,25 @@ class СложениеБуквальноеИПовторённое(unittest.Test
         self.assertIn("Each woman in this frame", p)
 
 
+class ДействиеПоказываетсяВКонце(unittest.TestCase):
+    """«Снимает лифчик», «снимает трусики» — это ДВИЖЕНИЕ, и модель
+    брала его первый кадр: одетая женщина. Прогон 22.09.2026 отдал так
+    два варианта подряд."""
+
+    def test_сказано_что_одежда_уже_снята(self):
+        for ключ in ("ph_below", "ph_push"):
+            p = catalog.scene(ключ).промпт()
+            self.assertIn("ALREADY OFF", p, ключ)
+            self.assertIn("the undressing is finished", p, ключ)
+
+    def test_стоит_сразу_за_действием(self):
+        """В хвосте промпта оно проигрывает описанию кадра."""
+        sc = catalog.scene("ph_push")
+        p = sc.промпт()
+        self.assertLess(p.index("ALREADY OFF"), p.index(prompts.КОЖА))
+        self.assertGreater(p.index("ALREADY OFF"), p.index(sc.откровенное))
+
+
 class РезультатВсегдаОткровенный(unittest.TestCase):
     """18+ и одетый кадр — это брак, за который заплачено.
 
