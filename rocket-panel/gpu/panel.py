@@ -215,7 +215,22 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
         g["6"]={"class_type":"WanFirstLastFrameToVideo",
                 "inputs":{**общее,"start_image":["41",0],"end_image":["42",0]}}
     elif images:
-        g["6"]={"class_type":"WanImageToVideo","inputs":{**общее,"start_image":["41",0]}}
+        # VACE, А НЕ ОБЫЧНЫЙ i2v. Замер на карте 22.09.2026, один кадр,
+        # один текст, одно зерно, отличался только этот узел:
+        #
+        #   WanImageToVideo(start_image)  чужая женщина УЖЕ НА НУЛЕВОМ
+        #                                 кадре: другое лицо, другая
+        #                                 грудь, другая комната
+        #   WanVaceToVideo(reference_image)  она же: то же лицо, та же
+        #                                 грудь, тот же фон, и держится
+        #                                 до конца ролика
+        #
+        # Сборка `wan2.2-rapid-mega-aio` грузится как WAN21_Vace, и
+        # снимок она принимает только через вход VACE. Через start_image
+        # кадр до неё просто не доходил — отсюда и «вообще другой
+        # человек», на который жаловался владелец.
+        g["6"]={"class_type":"WanVaceToVideo",
+                "inputs":{**общее,"strength":1.0,"reference_image":["41",0]}}
     else:
         g["6"]={"class_type":"WanImageToVideo","inputs":общее}
     g["7"]["inputs"]["positive"]=["6",0]
@@ -229,8 +244,13 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
 ВИДЕО_FPS=24
 
 
-def собрать_mp4(кадры):
+def собрать_mp4(кадры, ждём=None):
     """Список PNG-кадров -> один mp4. Возвращает [имя mp4] или кадры.
+
+    `ждём` — сколько кадров заказывали. VACE отдаёт БОЛЬШЕ: впереди
+    приезжает сам опорный снимок, развёрнутый в четыре кадра (у VAE
+    сжатие по времени четырёхкратное). В ролике это выглядит как
+    полсекунды стоп-кадра в начале, поэтому лишнее спереди срезается.
 
     Кадры уходят в ffmpeg списком, а не маской `%05d`: нумерация в
     ComfyUI сквозная по всем заданиям, и маска поймала бы чужие кадры
@@ -242,6 +262,10 @@ def собрать_mp4(кадры):
     """
     if not кадры:
         return кадры
+    лишние=[]
+    if ждём and len(кадры)>ждём:
+        лишние=кадры[:len(кадры)-ждём]
+        кадры=кадры[len(кадры)-ждём:]
     список=os.path.join(OUT, f"кадры_{uuid.uuid4().hex[:8]}.txt")
     mp4=f"{ВИДЕО_ПРЕФИКС}_{uuid.uuid4().hex[:8]}.mp4"
     try:
@@ -260,7 +284,7 @@ def собрать_mp4(кадры):
                         "-vf","scale=trunc(iw/2)*2:trunc(ih/2)*2",
                         os.path.join(OUT,mp4)],check=True,timeout=600)
         if os.path.getsize(os.path.join(OUT,mp4))>0:
-            for к in кадры:
+            for к in кадры+лишние:
                 try: os.remove(os.path.join(OUT,к))
                 except OSError: pass
             return [mp4]
@@ -327,7 +351,7 @@ def run(jid, graph):
                             if f.get("type")=="output": files.append(f["filename"])
                 if st.get("status_str")=="success" and files:
                     if files[0].startswith(ВИДЕО_ПРЕФИКС+"_"):
-                        files=собрать_mp4(files)
+                        files=собрать_mp4(files, j.get("кадров"))
                     else:
                         files=[в_mp4(f) for f in files]
                     j.update(state="ok",files=files,sec=round(time.time()-t0,1))
@@ -422,7 +446,7 @@ def gen():
         g=wf_video(p,w,h,frames,seed,images,neg,float(d.get("shift",8.0)))
     jid=uuid.uuid4().hex[:8]
     JOBS[jid]={"state":"run","sec":0,"mode":mode,"seed":seed,"w":w,"h":h,
-               "refs":len(images)}
+               "refs":len(images),"кадров":frames if mode=="video" else None}
     threading.Thread(target=run,args=(jid,g),daemon=True).start()
     return jsonify(job=jid,seed=seed)
 
