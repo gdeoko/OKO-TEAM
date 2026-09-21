@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS users (
   ref_code     TEXT UNIQUE,
   invited_by   INTEGER,
   created_at   INTEGER NOT NULL,
-  blocked      INTEGER NOT NULL DEFAULT 0
+  blocked      INTEGER NOT NULL DEFAULT 0,
+  quality      TEXT NOT NULL DEFAULT 'hd'
 );
 CREATE TABLE IF NOT EXISTS ledger (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,6 +107,9 @@ class Store:
                 c.execute(f"ALTER TABLE jobs ADD COLUMN {стлб} {тип}")
 
         have = {r["name"] for r in c.execute("PRAGMA table_info(users)")}
+        if "quality" not in have:
+            c.execute("ALTER TABLE users ADD COLUMN quality TEXT NOT NULL DEFAULT 'hd'")
+
         if "sub" not in have:
             return
         now = int(time.time())
@@ -165,6 +169,78 @@ class Store:
         with self._db() as c:
             r = c.execute("SELECT * FROM users WHERE ref_code=?", (code,)).fetchone()
             return dict(r) if r else None
+
+    # --- личный кабинет ---
+
+    def set_quality(self, tg_id, qid):
+        """Качество по умолчанию. Проверку допустимости делает вызывающий
+        через pricing.quality() — сюда попадает уже известное значение."""
+        with self._db() as c:
+            c.execute("UPDATE users SET quality=? WHERE tg_id=?", (qid, tg_id))
+
+    def quality(self, tg_id):
+        u = self.user(tg_id)
+        return (u or {}).get("quality") or "hd"
+
+    def сводка(self, tg_id):
+        """Всё о человеке одним запросом — для кабинета.
+
+        Считается по журналу, а не отдельными счётчиками: счётчик можно
+        забыть увеличить при новом виде списания, а журнал ведётся на
+        каждое движение и разойтись с балансом не может.
+        """
+        with self._db() as c:
+            потрачено = c.execute(
+                "SELECT COALESCE(-SUM(delta),0) n FROM ledger"
+                " WHERE tg_id=? AND delta<0", (tg_id,)).fetchone()["n"]
+            куплено = c.execute(
+                "SELECT COALESCE(SUM(delta),0) n FROM ledger"
+                " WHERE tg_id=? AND delta>0 AND purse='paid'", (tg_id,)).fetchone()["n"]
+            работ = c.execute(
+                "SELECT COUNT(*) n FROM jobs WHERE tg_id=? AND state='ok'",
+                (tg_id,)).fetchone()["n"]
+            осечек = c.execute(
+                "SELECT COUNT(*) n FROM jobs WHERE tg_id=? AND state='err'",
+                (tg_id,)).fetchone()["n"]
+            позвано = c.execute(
+                "SELECT COUNT(*) n FROM users WHERE invited_by=?",
+                (tg_id,)).fetchone()["n"]
+            за_друзей = c.execute(
+                "SELECT COALESCE(SUM(delta),0) n FROM ledger"
+                " WHERE tg_id=? AND delta>0 AND reason LIKE '%друг%'",
+                (tg_id,)).fetchone()["n"]
+            записей = c.execute(
+                "SELECT COUNT(*) n FROM ledger WHERE tg_id=?", (tg_id,)).fetchone()["n"]
+        return {"потрачено": потрачено, "куплено": куплено, "работ": работ,
+                "осечек": осечек, "позвано": позвано, "за_друзей": за_друзей,
+                "записей": записей}
+
+    def забыть(self, tg_id):
+        """Стирает человека и всё, что о нём известно.
+
+        Для сервиса 18+ это не украшение: человек имеет право уйти
+        насовсем, и «уйти» не должно означать «строки остались, просто
+        мы их не показываем». Возвращает, что именно удалено, — чтобы
+        ответ человеку был конкретным, а не «всё удалено, поверьте».
+
+        Файлы работ стираются отдельно, вызывающим (archive), — база о
+        диске ничего не знает и знать не должна.
+        """
+        with self._db() as c:
+            итог = {
+                "работ": c.execute("SELECT COUNT(*) n FROM jobs WHERE tg_id=?",
+                                   (tg_id,)).fetchone()["n"],
+                "записей": c.execute("SELECT COUNT(*) n FROM ledger WHERE tg_id=?",
+                                     (tg_id,)).fetchone()["n"],
+            }
+            c.execute("DELETE FROM jobs WHERE tg_id=?", (tg_id,))
+            c.execute("DELETE FROM ledger WHERE tg_id=?", (tg_id,))
+            c.execute("DELETE FROM invoices WHERE tg_id=?", (tg_id,))
+            # Приглашённые остаются в системе, но ссылка на ушедшего
+            # обнуляется: иначе в базе висит указатель на несуществующего.
+            c.execute("UPDATE users SET invited_by=NULL WHERE invited_by=?", (tg_id,))
+            c.execute("DELETE FROM users WHERE tg_id=?", (tg_id,))
+        return итог
 
     # --- коины ---
 

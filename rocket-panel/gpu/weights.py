@@ -8,7 +8,13 @@ def files(repo):
     try: return api.list_repo_files(repo, token=TOK)
     except Exception as e: print(f"  -- {repo}: {str(e)[:70]}"); return []
 
-def get(repo, pats, dest, label):
+def get(repo, pats, dest, label, минимум=1e8):
+    """`минимум` — с какого размера считать файл уже скачанным.
+
+    Сто мегабайт годятся для сборок на десятки гигабайт, но апскейлер
+    весит 64 МБ, и с тем же порогом он качался бы заново при каждом
+    запуске: проверка «есть и больше порога» его никогда не признаёт.
+    """
     fs=files(repo)
     if not fs: return None
     for pat in pats:
@@ -17,7 +23,7 @@ def get(repo, pats, dest, label):
         f=m[0]
         d=os.path.join(BASE,dest); os.makedirs(d,exist_ok=True)
         out=os.path.join(d, os.path.basename(f))
-        if os.path.exists(out) and os.path.getsize(out)>1e8:
+        if os.path.exists(out) and os.path.getsize(out)>минимум:
             print(f"  уже есть: {os.path.basename(f)}"); return out
         try:
             print(f"  качаю [{label}] {repo} :: {f}", flush=True)
@@ -57,6 +63,26 @@ print("=== ВИДЕО — WAN2.2-14B-Rapid-AllInOne (mega NSFW v12.2), ~23 ГБ"
            r"mega.*\.safetensors$"],
           "checkpoints","wan-rapid")
 if not видео: print("  !!! сборка для видео не скачалась — видео работать не будет")
+
+print()
+print("=== АПСКЕЙЛЕР — 4x-UltraSharp, ~64 МБ")
+# Нужен для 2K/4K/8K. Сами модели рисуют в своём разрешении (у Qwen это
+# 768x1344 по вертикали), и гнать диффузию выше обучающего размера
+# бессмысленно — получаются швы и вторые головы. Разрешение поднимается
+# ПОСЛЕ, отдельным проходом, как это делают все.
+#
+# Без него 2K/4K/8K продавать нельзя: доплата за качество будет
+# браться, а картинка останется прежней.
+апскейл=get("Kim2091/UltraSharp",
+            [r"4x-UltraSharp\.pth$", r"UltraSharp.*\.pth$", r"\.pth$"],
+            "upscale_models","ultrasharp", минимум=1e7)
+if not апскейл:
+    апскейл=get("uwg/upscaler",
+                [r"4x-UltraSharp\.pth$", r"ESRGAN/4x-UltraSharp\.pth$"],
+                "upscale_models","ultrasharp-зеркало", минимум=1e7)
+if not апскейл:
+    print("  !!! апскейлер не скачался — ВЫКЛЮЧИТЬ 2K/4K/8K в прайсе,")
+    print("      иначе доплата берётся, а картинка не меняется")
 
 print()
 print("=== ИТОГО")
