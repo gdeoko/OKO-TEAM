@@ -163,9 +163,19 @@
     "blended into one face and never swapped between the bodies."
 )
 
+# Про кожу сказано ДВАЖДЫ и по-разному: «настоящая» — и отдельно
+# «матовая, сухая». Одних запретов (oiled skin, body oil) не хватило:
+# на прогоне 22.09 тела продолжали блестеть. Дистиллированная сборка
+# слушает утверждение лучше, чем запрет, поэтому матовость сказана
+# положительно, в лоб.
 КОЖА = (
     "Real skin: visible pores, fine hair, uneven tone, natural blemishes. "
-    "No plastic smoothing, no airbrushing."
+    "No plastic smoothing, no airbrushing. The skin is MATTE and DRY — "
+    "soft diffuse sheen at most, never oiled, never wet-looking, never "
+    # «chest», а не «breasts»: этот кусок общий, он достаётся и мужским
+    # сценам, где про грудь говорить нечего (тест «у двух мужчин про
+    # грудь молчим»).
+    "glistening, no baby-oil highlights on the chest, belly or thighs."
 )
 
 АНАТОМИЯ = (
@@ -193,8 +203,19 @@
     "Natural colour, daylight white balance, nothing oversaturated."
 )
 
+# «ОДНО ТЕЛО» — находка прогона 22.09.2026. На крупных интимных планах
+# сборка сваливала в один кадр лицо сверху и пах снизу как две
+# отдельные картинки: получалось второе туловище, руки прирастали к
+# паху, грудь сливалась в полосу. Референс поясной, а просят кадр во
+# весь рост — модель дорисовывала недостающее, вместо того чтобы взять
+# один непрерывный план. Требование непрерывности тела снимает это.
 КОМПОЗИЦИЯ = (
-    "Whole subject inside the frame, nothing important cropped away."
+    "Whole subject inside the frame, nothing important cropped away. "
+    "ONE single continuous body: one head, one torso, two arms, two "
+    "legs, all joined the way a real body joins. Head, chest, belly and "
+    "hips follow one another in the natural order and at natural "
+    "distances — never a face stacked directly on top of a crotch, "
+    "never a second torso, never hands growing out of the wrong place."
 )
 
 КАЧЕСТВО = (
@@ -239,7 +260,15 @@
     "asymmetric eyes, crossed eyes, extra teeth, watermark, signature, "
     "text, caption, logo, username, frame, border, jpeg artifacts, "
     "oversaturated, blown highlights, crushed blacks, blurry, "
-    "out of focus, lowres, duplicate, cropped head, floating limbs, mutated"
+    "out of focus, lowres, duplicate, cropped head, floating limbs, "
+    # СКЛЕЙКА ТЕЛА. Прогон 22.09.2026, крупные интимные планы: лицо
+    # ставилось прямо над пахом, появлялось второе туловище, кисти
+    # прирастали к промежности, грудь слипалась в сплошную полосу.
+    "mutated, duplicated torso, two bodies merged, second body, "
+    "face on top of crotch, head attached to pelvis, "
+    "disconnected body parts, hands merged into body, "
+    "fused breasts, breasts merged into one mass, "
+    "collage, split image, stacked images, picture within a picture"
 )
 
 # Куски по СЕМЕЙСТВУ режима, а не по каждому виду отдельно: пяти- и
