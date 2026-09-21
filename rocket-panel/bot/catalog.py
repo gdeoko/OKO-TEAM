@@ -253,6 +253,33 @@ CATEGORIES = [
                        "shoulder height.",
                 обстановка="Dark room, no visible background detail."),
 
+            _СЦ_РАЗДЕТЬ("un_sit", "Сидя",
+                "На краю кровати, свет из-за спины",
+                поза="Seated on the edge of a bed, feet on the floor, weight "
+                     "on one hip so the spine curves. Forearms resting on the "
+                     "thighs, head lowered a little and turned toward the "
+                     "lens.",
+                свет="A warm lamp behind and to one side, so the outline of "
+                     "the shoulders and the top of the thighs is drawn in "
+                     "light while the front stays in soft shadow. A weak "
+                     "bounce from a wall in front lifts the face just enough "
+                     "to read.",
+                камера="50mm at f/2, lens at her eye level, three-quarter "
+                       "length.",
+                обстановка="A dim bedroom, the bed unmade behind her."),
+
+            _СЦ_РАЗДЕТЬ("un_kneel", "На коленях",
+                "Низкая точка, свет сверху",
+                поза="Kneeling, sitting back on the heels, spine long, "
+                     "shoulders open, hands resting on the thighs. Chin "
+                     "level, eyes to the lens.",
+                свет="A single source high overhead and slightly forward, so "
+                     "the light falls down the front of the body and the "
+                     "floor around her goes dark. No fill.",
+                камера="50mm at f/2.8, lens at her chest height so the angle "
+                       "is level with her rather than looking down at her.",
+                обстановка="Bare dark floor, the background unlit."),
+
             _СЦ_РАЗДЕТЬ("un_shower", "Под водой",
                 "Мокрая кожа, пар, стекло в каплях",
                 поза="Standing under running water, head tipped back, hair "
@@ -353,6 +380,31 @@ CATEGORIES = [
                      "by bounce from the ground. Visible lens flare and warm "
                      "atmospheric haze."),
 
+            _СЦ_ФОТО("sc_house", "Гостиная",
+                "Большой дом, вечер, тёплые лампы",
+                обстановка="A wide living room in an expensive house: a low "
+                           "linen sofa, a dark wooden floor, floor-to-ceiling "
+                           "windows showing a garden gone dark. A few warm "
+                           "lamps at different heights, none of them "
+                           "overhead.",
+                свет="Pools of warm tungsten light with real darkness between "
+                     "them — the room is lit by lamps, not by a film crew. "
+                     "She sits inside one of those pools.",
+                камера="35mm at f/2, full length, camera at seated eye "
+                       "height, far enough back that the room reads."),
+
+            _СЦ_ФОТО("sc_office", "Кабинет",
+                "Стол, жалюзи, полосы света",
+                обстановка="A private office after hours: a heavy desk, a "
+                           "leather chair, shelves in shadow, venetian blinds "
+                           "across one whole wall.",
+                свет="Hard light through the blinds laying parallel bars "
+                     "across the room, across the desk and across her body. "
+                     "The bars must follow the form they fall on, bending "
+                     "over curves rather than staying straight.",
+                камера="50mm at f/2.8, waist-up, camera at standing eye "
+                       "height."),
+
             _СЦ_ФОТО("sc_car", "Заднее сиденье",
                 "Салон ночью, свет фонарей по лицу",
                 обстановка="The back seat of a car at night, dark leather, "
@@ -366,64 +418,103 @@ CATEGORIES = [
 
     # -----------------------------------------------------------------
     Category(
-        "animate", "Оживить", "Фото начинает двигаться",
+        "animate", "Действие", "Фото начинает двигаться",
         иконка="БЛЁСТКИ",
         scenes=[
-            _СЦ_ОЖИВИТЬ("an_breath", "Дыхание",
-                "Самое спокойное — грудь, ресницы, прядь",
-                поза="She holds the pose of the photograph. Only the chest "
-                     "rises and falls with slow breathing, the eyelids close "
-                     "once in a natural blink, and a single strand of hair "
-                     "settles across the cheek.",
-                настроение="Calm, unhurried, almost still."),
+            # Разложено по РАКУРСУ И ДВИЖЕНИЮ КАМЕРЫ, а не по действию.
+            # Так устроен и каталог конкурента, просто он этого не
+            # говорит: «Минет 1/2/3 / в профиль / крупным планом /
+            # глубокий / горловой / грубый» — это одно действие и восемь
+            # ракурсов, написанных восемью отдельными текстами.
+            #
+            # У нас ракурс, свет и объектив собираются кодом, а что
+            # происходит в кадре, владелец пишет один раз на сценарий в
+            # ОТКРОВЕННОЕ.txt. Те же восемь вариантов без восьми текстов.
+            _СЦ_ОЖИВИТЬ("ac_pov", "От первого лица",
+                "Камера на месте зрителя, руки в кадре",
+                камера="Point-of-view: the camera IS the viewer's eyes, held "
+                       "at head height, 28mm wide so the hands entering the "
+                       "bottom of the frame read at natural size. Slight "
+                       "hand-held drift, never a tripod-locked stillness.",
+                настроение="Intimate and immediate, as if the viewer is in "
+                           "the room rather than watching a screen."),
 
-            _СЦ_ОЖИВИТЬ("an_look", "Взгляд в камеру",
-                "Отводит глаза и возвращает взгляд",
-                поза="Her eyes drift away from the lens, linger for a moment, "
-                     "then come back and settle directly on the camera. The "
-                     "head turns only a few degrees with them.",
-                настроение="Direct, unhurried, holding the viewer."),
+            _СЦ_ОЖИВИТЬ("ac_close", "Крупный план",
+                "Лицо и плечи во весь кадр",
+                камера="85mm at f/2, tight on the face and shoulders. The "
+                       "camera holds still and lets the movement happen "
+                       "inside the frame rather than chasing it.",
+                свет="A soft key close to the lens axis so the face stays "
+                     "open and readable throughout."),
 
-            _СЦ_ОЖИВИТЬ("an_smile", "Улыбка",
-                "Улыбка рождается медленно и доходит до глаз",
-                поза="A smile builds slowly from the corners of the mouth, "
-                     "reaching the eyes last so the cheeks lift and the outer "
-                     "corners crease. It arrives and stays; it does not flash "
-                     "on and off."),
+            _СЦ_ОЖИВИТЬ("ac_side", "Сбоку",
+                "Профиль, силуэт читается по контуру",
+                камера="50mm at f/2.8, square to her side so the whole body "
+                       "reads in profile. Camera at chest height, static.",
+                свет="Strong backlight from behind her so the profile is "
+                     "drawn as a bright contour against a dark background, "
+                     "with only a weak fill from the front."),
 
-            _СЦ_ОЖИВИТЬ("an_hair", "Поправляет волосы",
-                "Заправляет прядь за ухо",
-                поза="She lifts one hand, catches a loose strand of hair and "
-                     "tucks it behind her ear, then lowers the hand back. The "
-                     "hand must remain anatomically correct throughout the "
-                     "movement, fingers never merging with the hair or face."),
+            _СЦ_ОЖИВИТЬ("ac_above", "Сверху",
+                "Съёмка сверху вниз",
+                камера="35mm looking down at roughly sixty degrees from "
+                       "above. Held steady; the height is the point, not the "
+                       "movement of the rig.",
+                свет="An overhead source just behind the camera, so the light "
+                     "and the lens agree and there are no shadows thrown "
+                     "toward the viewer."),
 
-            _СЦ_ОЖИВИТЬ("an_turn", "Поворот к камере",
-                "Поворачивается через плечо",
-                поза="She begins turned three-quarters away and rotates "
-                     "smoothly toward the lens, the shoulders leading and the "
-                     "head following, ending looking directly at camera. The "
-                     "face must remain the same face through every degree of "
-                     "the turn."),
+            _СЦ_ОЖИВИТЬ("ac_below", "Снизу",
+                "Съёмка с низкой точки",
+                камера="35mm from just above floor level, tilted up. Low "
+                       "angles exaggerate: keep the lens at 35mm and the "
+                       "distance honest so the body does not distort.",
+                свет="A key from above and behind so the underside stays in "
+                     "shadow and the shoulders and jaw catch the light."),
 
-            _СЦ_ОЖИВИТЬ("an_wind", "Ветер",
-                "Волосы и ткань живут от ветра",
-                поза="She stays still. A steady breeze lifts and moves her "
-                     "hair in continuous strands and stirs the fabric she is "
-                     "wearing, which ripples and settles with real weight.",
-                ещё="Motion in the hair is strand-level and continuous, never "
-                    "a single rigid mass moving as one piece."),
-
-            _СЦ_ОЖИВИТЬ("an_push", "Наезд камеры",
+            _СЦ_ОЖИВИТЬ("ac_push", "Наезд",
                 "Камера медленно приближается",
-                камера="A slow, steady push-in toward her face over the whole "
-                       "clip, as if on a dolly — constant speed, no easing at "
-                       "the end, no handheld shake. The subject herself moves "
-                       "only with breathing and one blink."),
+                камера="A slow, continuous dolly-in over the whole clip — the "
+                       "frame tightens by about a third from first to last. "
+                       "Constant speed, no easing at the end, no zoom: the "
+                       "perspective must change as a real camera moving "
+                       "forward, not as a crop."),
+
+            _СЦ_ОЖИВИТЬ("ac_pull", "Отъезд",
+                "Камера отъезжает, открывая сцену",
+                камера="A slow dolly-out: the clip opens tight and widens to "
+                       "reveal the surroundings. Constant speed, the subject "
+                       "staying centred as the frame grows."),
+
+            _СЦ_ОЖИВИТЬ("ac_back", "Со спины",
+                "Спина в кадре, взгляд через плечо",
+                камера="85mm at f/2 from behind, framed from mid-back up. "
+                       "Static camera.",
+                поза="Back to the lens throughout; at some point the head "
+                     "turns far enough over the shoulder that one eye meets "
+                     "the camera, then returns."),
+
+            _СЦ_ОЖИВИТЬ("ac_mirror", "В зеркале",
+                "Отражение и спина одновременно",
+                камера="50mm, off-axis so the lens never appears in the "
+                       "glass. Static.",
+                обстановка="A tall mirror filling most of the frame.",
+                ещё="The reflection stays a true reflection for every frame: "
+                    "same body, same motion, correctly reversed, lit from the "
+                    "same direction. Reflections are where identity usually "
+                    "breaks — the face in the glass must be the same face."),
+
+            _СЦ_ОЖИВИТЬ("ac_slow", "Замедленно",
+                "Движение вдвое медленнее обычного",
+                камера="85mm at f/1.8, static, tight enough that small "
+                       "movements fill the frame.",
+                ещё="Everything moves at roughly half speed: hair settles "
+                    "slowly, fabric falls slowly, a blink takes twice as "
+                    "long. Motion blur stays consistent with that slowness "
+                    "rather than being frozen sharp."),
         ],
     ),
 
-    # -----------------------------------------------------------------
     Category(
         "voice", "Со звуком", "Фото заговорит вашим текстом",
         иконка="ЭФИР",
@@ -480,18 +571,64 @@ CATEGORIES = [
     # Поля любые из prompts.Блок: гардероб, поза, обстановка, свет,
     # камера, настроение, ещё. Текст — по-английски. Пустая категория в
     # меню не показывается, так что до наполнения её никто не увидит.
-    Category(
-        "own", "Своё", "Сценарии владельца",
-        иконка="ОГОНЬ",
-        scenes=[],
-    ),
 ]
+
+# Категории «Своё» здесь нет, и это не забывчивость. Она была заведена
+# пустой под сценарии владельца — до того, как появился
+# `ОТКРОВЕННОЕ.txt`. Теперь владелец наполняет ЛЮБОЙ сценарий любой
+# категории, а отдельная пустая категория только дублировала бы и файл,
+# и кнопку «Свой промпт».
+#
+# «Популярное» тоже не здесь: оно не список, а запрос к базе —
+# `популярная_категория()` ниже.
 
 # Категория без сценариев в меню не показывается.
 ВИДИМЫЕ = [c for c in CATEGORIES if c.scenes]
 
 _ПО_КЛЮЧУ = {s.key: s for c in CATEGORIES for s in c.scenes}
 _КАТЕГОРИИ = {c.key: c for c in CATEGORIES}
+
+
+# ---------------------------------------------------------------------
+# ПОПУЛЯРНОЕ
+#
+# Не список, а запрос к базе. У конкурента такая категория есть в обоих
+# разделах, и это единственная его категория, которая не стоит труда:
+# она считается из статистики, а не пишется руками.
+#
+# Показывается только когда есть из чего считать. Пустое «Популярное» на
+# старте — худший первый экран: человек жмёт то, что выглядит главным,
+# и попадает в пустоту.
+# ---------------------------------------------------------------------
+
+ПОПУЛЯРНЫХ = 8
+
+
+class Популярное:
+    """Категория-обёртка. Ведёт себя как обычная, но список сценариев
+    берётся из базы и меняется сам."""
+
+    key = "top"
+    title = "Популярное"
+    подзаголовок = "Что чаще всего заказывают"
+    иконка = "ОГОНЬ"
+
+    def __init__(self, scenes):
+        self.scenes = scenes
+
+    def button(self):
+        return f"{self.title} · {len(self.scenes)}"
+
+
+def популярная_категория(store, сколько=ПОПУЛЯРНЫХ):
+    """Собирает «Популярное» по статистике. Нет данных — вернёт None, и
+    категория просто не появится в меню."""
+    try:
+        верх = store.популярное(сколько)
+    except Exception:
+        return None
+    сцены = [_ПО_КЛЮЧУ[к] for к, _ in верх if к in _ПО_КЛЮЧУ]
+    return Популярное(сцены) if сцены else None
 
 
 def scene(key):

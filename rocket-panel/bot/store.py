@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   id        TEXT PRIMARY KEY,
   tg_id     INTEGER NOT NULL,
   kind      TEXT NOT NULL,
+  scene     TEXT,
   prompt    TEXT,
   coins    INTEGER NOT NULL,
   state     TEXT NOT NULL,
@@ -101,7 +102,7 @@ class Store:
         # не умеет добавить колонку, которая уже есть.
         есть_у_jobs = {r["name"] for r in c.execute("PRAGMA table_info(jobs)")}
         for стлб, тип in (("path", "TEXT"), ("tg_file_id", "TEXT"),
-                          ("size", "INTEGER")):
+                          ("size", "INTEGER"), ("scene", "TEXT")):
             if стлб not in есть_у_jobs:
                 c.execute(f"ALTER TABLE jobs ADD COLUMN {стлб} {тип}")
 
@@ -318,12 +319,36 @@ class Store:
 
     # --- задания ---
 
-    def job_start(self, job_id, tg_id, kind, prompt, coins):
+    def job_start(self, job_id, tg_id, kind, prompt, coins, scene=None):
+        """`scene` — ключ сценария из каталога, если человек пришёл
+        кнопкой, а не своим промптом. Из него считается «Популярное»:
+        без него пришлось бы гадать по тексту промпта."""
         with self._db() as c:
             c.execute(
-                "INSERT INTO jobs(id,tg_id,kind,prompt,coins,state,at) VALUES(?,?,?,?,?,?,?)",
-                (job_id, tg_id, kind, prompt, coins, "run", int(time.time())),
+                "INSERT INTO jobs(id,tg_id,kind,scene,prompt,coins,state,at)"
+                " VALUES(?,?,?,?,?,?,?,?)",
+                (job_id, tg_id, kind, scene, prompt, coins, "run", int(time.time())),
             )
+
+    def популярное(self, сколько=8, дней=30):
+        """Какие сценарии заказывают чаще всего.
+
+        Считаем по УДАЧНЫМ заказам: осечка не говорит о том, что
+        сценарий нравится — она говорит, что у нас что-то сломалось, и
+        поднимать по ней сценарий в топ было бы издевательством.
+
+        Окно в месяц, а не за всё время: иначе первые популярные
+        сценарии останутся наверху навсегда и новые в список не
+        попадут никогда.
+        """
+        с_какого = int(time.time()) - дней * 86400
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT scene, COUNT(*) n FROM jobs"
+                " WHERE state='ok' AND scene IS NOT NULL AND at >= ?"
+                " GROUP BY scene ORDER BY n DESC, scene LIMIT ?",
+                (с_какого, сколько)).fetchall()
+        return [(r["scene"], r["n"]) for r in rs]
 
     def job_done(self, job_id, file=None, error=None,
                  path=None, tg_file_id=None, size=None):
