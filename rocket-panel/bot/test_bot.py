@@ -6,6 +6,7 @@ import prompts
 import emoji
 import payments
 import store
+import archive
 from store import Store, NotEnoughCoins
 
 
@@ -484,6 +485,131 @@ class Кошелёк(unittest.TestCase):
     def test_подписочных_методов_больше_нет(self):
         for имя in ("subscribe", "expire_sub", "sub_active"):
             self.assertFalse(hasattr(self.s, имя), f"store.{имя} — подписка вернулась")
+
+
+class Архив(unittest.TestCase):
+    """Сгенерированное обязано оставаться у нас.
+
+    Это не про удобство: видеокарта арендуется почасово и её диск
+    стирается при возврате, а телеграм хранит файл только по file_id.
+    Работа, не записанная в момент выдачи, потеряна навсегда — чинить
+    задним числом нечего.
+    """
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp()
+        self.прежний = archive.КОРЕНЬ
+        archive.КОРЕНЬ = os.path.join(self.d, "works")
+
+    def tearDown(self):
+        archive.КОРЕНЬ = self.прежний
+
+    def test_работа_ложится_на_диск_и_читается_обратно(self):
+        отн = archive.сохранить(42, "abc123", "out.png", b"\x89PNG-data")
+        self.assertTrue(archive.есть(отн))
+        self.assertEqual(archive.байты(отн), b"\x89PNG-data")
+
+    def test_у_каждого_своя_папка(self):
+        а = archive.сохранить(1, "j1", "a.png", b"1")
+        б = archive.сохранить(2, "j2", "b.png", b"2")
+        self.assertTrue(а.startswith("1" + os.sep))
+        self.assertTrue(б.startswith("2" + os.sep))
+
+    def test_имя_файла_с_панели_не_уводит_за_пределы_архива(self):
+        """Имя приходит с чужой стороны. Расширение из него — всё, что
+        попадает в путь, и только из белого списка."""
+        отн = archive.сохранить(5, "../../../etc/passwd", "x.png", b"z")
+        полный = os.path.abspath(os.path.join(archive.КОРЕНЬ, отн))
+        корень = os.path.abspath(archive.КОРЕНЬ)
+        self.assertTrue(полный.startswith(корень + os.sep), полный)
+
+    def test_чужое_расширение_не_проходит(self):
+        отн = archive.сохранить(5, "j", "вирус.sh", b"z")
+        self.assertTrue(отн.endswith(".bin"), отн)
+
+    def test_оборванной_записи_не_остаётся(self):
+        archive.сохранить(9, "j", "a.png", "целое".encode())
+        файлы = os.listdir(os.path.join(archive.КОРЕНЬ, "9"))
+        self.assertEqual(файлы, ["j.png"], "недописанный .part остался на диске")
+
+    def test_пропавший_файл_это_не_падение(self):
+        self.assertIsNone(archive.байты("42/нет.png"))
+        self.assertIsNone(archive.байты(None))
+
+    def test_человека_можно_забыть_целиком(self):
+        archive.сохранить(77, "j1", "a.png", b"1")
+        archive.сохранить(77, "j2", "b.png", b"2")
+        self.assertTrue(archive.забыть_человека(77))
+        self.assertFalse(archive.забыть_человека(77), "второй раз удалять нечего")
+
+
+class НижнееМеню(unittest.TestCase):
+    """Кнопка на экране обязана что-то делать.
+
+    Нижняя клавиатура шлёт обычный ТЕКСТ, а не callback. Пока таблицы
+    обработчиков не было, все четыре кнопки падали в «Сначала выбери,
+    что делаем»: клавиатура висела постоянно и не делала ничего, а
+    заметить это по коду нельзя — ни одна строка не падает.
+    """
+
+    def test_у_каждой_кнопки_есть_обработчик(self):
+        import ui, bot
+        подписи = [к["text"] for ряд in ui.НИЖНЕЕ["keyboard"] for к in ряд]
+        for п in подписи:
+            self.assertIn(п, bot.НИЖНИЕ_КНОПКИ, f"кнопка «{п}» ведёт в никуда")
+
+    def test_лишних_обработчиков_нет(self):
+        """Обратная сторона: обработчик без кнопки — мёртвый код, и по
+        нему потом чинят то, чего человек не видит."""
+        import ui, bot
+        подписи = {к["text"] for ряд in ui.НИЖНЕЕ["keyboard"] for к in ряд}
+        self.assertEqual(set(bot.НИЖНИЕ_КНОПКИ) - подписи, set())
+
+
+class РаботыВБазе(unittest.TestCase):
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp()
+        self.s = Store(os.path.join(self.d, "b.db"))
+        self.s.ensure_user(1, "kto", welcome=5)
+
+    def test_у_задания_есть_оба_адреса(self):
+        """Один диск — каждый показ это лишняя заливка. Один file_id —
+        работа живёт у чужой стороны, которая нам ничего не должна."""
+        self.s.job_start("j1", 1, "t2i", "p", 1)
+        self.s.job_done("j1", file="out.png", path="1/j1.png",
+                        tg_file_id="AgACX", size=1234)
+        j = self.s.job("j1")
+        self.assertEqual(j["state"], "ok")
+        self.assertEqual(j["path"], "1/j1.png")
+        self.assertEqual(j["tg_file_id"], "AgACX")
+        self.assertEqual(j["size"], 1234)
+
+    def test_показывать_нечего_значит_в_работы_не_попадает(self):
+        self.s.job_start("j2", 1, "t2i", "p", 1)
+        self.s.job_done("j2", file="out.png")          # ни пути, ни file_id
+        self.assertEqual(self.s.works(1), [], "работа без адреса показана как готовая")
+
+    def test_осечка_в_работы_не_попадает(self):
+        self.s.job_start("j3", 1, "t2i", "p", 1)
+        self.s.job_done("j3", error="карта упала")
+        self.assertEqual(self.s.works(1), [])
+
+    def test_старая_база_получает_колонки_архива(self):
+        """Боевая база уже живёт с людьми: колонки добавляются, а не
+        пересоздаются вместе с таблицей."""
+        путь = os.path.join(self.d, "старая.db")
+        c = sqlite3.connect(путь)
+        c.executescript(store.SCHEMA)
+        for стлб in ("path", "tg_file_id", "size"):
+            c.execute(f"ALTER TABLE jobs DROP COLUMN {стлб}")
+        c.commit(); c.close()
+
+        s2 = Store(путь)                      # открытие само чинит схему
+        s2.ensure_user(1, "kto", welcome=1)
+        s2.job_start("j", 1, "t2i", "p", 1)
+        s2.job_done("j", file="o.png", path="1/j.png", tg_file_id="X", size=7)
+        self.assertEqual(s2.works(1)[0]["tg_file_id"], "X")
 
 
 if __name__ == "__main__":

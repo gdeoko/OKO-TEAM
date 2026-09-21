@@ -15,6 +15,7 @@
 import os, sys, time, json, uuid, threading, traceback
 import requests
 
+import archive
 import pricing
 import catalog
 import prompts
@@ -64,6 +65,23 @@ def tg(method, **params):
     except Exception as e:
         print("TG сбой:", method, str(e)[:150], flush=True)
         return {"ok": False}
+
+
+def file_id_из(ответ):
+    """Достаёт file_id из ответа на sendPhoto/sendAnimation/sendVideo.
+
+    Им работу можно переслать человеку ещё раз бесплатно — файл уже у
+    телеграма, заливать второй раз нечего. У фото приходит лесенка
+    размеров, берём последний: он самый большой.
+    """
+    r = (ответ or {}).get("result") or {}
+    for ключ in ("animation", "video", "document"):
+        if isinstance(r.get(ключ), dict):
+            return r[ключ].get("file_id")
+    фото = r.get("photo")
+    if isinstance(фото, list) and фото:
+        return фото[-1].get("file_id")
+    return None
 
 
 def send(chat, text, kb=None, **kw):
@@ -183,14 +201,25 @@ def run_job(chat, u, kind, prompt, photos=None):
         if mid:
             tg("deleteMessage", chat_id=chat, message_id=mid)
 
+        # Сначала в архив, потом человеку. Именно в таком порядке:
+        # диск наш, телеграм чужой, и если что-то упадёт между двумя
+        # действиями — пусть у нас останется работа без отправки, а не
+        # отправка без работы. Восстановить второе нечем.
+        путь = None
+        try:
+            путь = archive.сохранить(u, jid, files[0], data)
+        except OSError as e:
+            print("АРХИВ не пишется:", str(e)[:200], flush=True)
+
         cap = f"{job.title} · {res.get('sec')} с · осталось {store.balance(u)} {pricing.СИМВОЛ}"
         if files[0].lower().endswith((".webp", ".gif", ".mp4")):
-            tg("sendAnimation", chat_id=chat, caption=cap,
-               _files={"animation": (files[0], data)})
+            о = tg("sendAnimation", chat_id=chat, caption=cap,
+                   _files={"animation": (files[0], data)})
         else:
-            tg("sendPhoto", chat_id=chat, caption=cap,
-               _files={"photo": (files[0], data)})
-        store.job_done(jid, file=files[0])
+            о = tg("sendPhoto", chat_id=chat, caption=cap,
+                   _files={"photo": (files[0], data)})
+        store.job_done(jid, file=files[0], path=путь,
+                       tg_file_id=file_id_из(о), size=len(data))
         send(chat, "Что дальше?", MENU)
 
     except NotEnoughCoins as e:
@@ -244,7 +273,83 @@ def on_start(chat, u, username, arg):
     send(chat, greet(u, username), MENU)
 
 
+def показать_работы(chat, u, сколько=5):
+    """«Мои работы»: присылаем последние готовые ещё раз.
+
+    Сначала пробуем telegram file_id — пересылка по нему бесплатна и
+    мгновенна. Не вышло (телеграм файл забыл, а он имеет на это право)
+    — поднимаем байты из нашего архива. Нет ни того, ни другого —
+    честно говорим, что работа была, но показать нечем, вместо того
+    чтобы делать вид, будто её не существовало.
+    """
+    работы = store.works(u, сколько)
+    if not работы:
+        send(chat, "Работ пока нет. Сделаем первую?", MENU)
+        return
+    send(chat, f"<b>Твои работы</b> — последние {len(работы)}")
+    for j in работы:
+        подпись = pricing.job(j["kind"]).title
+        видео = (j["file"] or "").lower().endswith((".webp", ".gif", ".mp4"))
+        метод = "sendAnimation" if видео else "sendPhoto"
+        поле = "animation" if видео else "photo"
+
+        о = tg(метод, chat_id=chat, caption=подпись,
+               **{поле: j["tg_file_id"]}) if j["tg_file_id"] else {"ok": False}
+        if о.get("ok"):
+            continue
+
+        данные = archive.байты(j["path"])
+        if данные:
+            о = tg(метод, chat_id=chat, caption=подпись,
+                   _files={поле: (j["file"] or "work", данные)})
+            # Телеграм выдал новый file_id — запоминаем, чтобы в
+            # следующий раз снова обойтись без заливки.
+            if о.get("ok"):
+                store.job_done(j["id"], file=j["file"], path=j["path"],
+                               tg_file_id=file_id_из(о), size=j["size"])
+                continue
+        send(chat, f"· {подпись} — файл не сохранился, показать нечем.")
+    send(chat, "Что дальше?", MENU)
+
+
+def показать_баланс(chat, u):
+    h = store.history(u, 5)
+    lines = [f"Баланс: <b>{store.balance(u)} коинов</b>", ""]
+    if h:
+        lines.append("<b>Последние</b>")
+        for j in h:
+            mark = "ok" if j["state"] == "ok" else "сбой"
+            lines.append(f"· {pricing.job(j['kind']).title} — {mark}")
+    send(chat, "\n".join(lines), MENU)
+
+
+def позвать_друзей(chat, u):
+    code = store.user(u)["ref_code"]
+    me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
+    send(chat,
+         f"Зови друзей: <code>https://t.me/{me}?start={code}</code>\n"
+         f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> {pricing.СИМВОЛ}, "
+         f"ему самому — <b>{pricing.REFERRAL_INVITEE}</b>.", MENU)
+
+
+# Нижнее меню шлёт обычный текст, а не callback. Без этой таблицы все
+# четыре кнопки падали в «Сначала выбери, что делаем» — клавиатура
+# висела на экране и не делала ничего.
+НИЖНИЕ_КНОПКИ = {
+    "Создать":         lambda chat, u: send(chat, "Что делаем?", MENU),
+    "Баланс":          показать_баланс,
+    "Мои работы":      показать_работы,
+    "Позвать друзей":  позвать_друзей,
+}
+
+
 def on_text(chat, u, text):
+    кнопка = НИЖНИЕ_КНОПКИ.get(text.strip())
+    if кнопка:
+        waiting.pop(u, None)      # передумал на полпути — это нормально
+        кнопка(chat, u)
+        return
+
     st = waiting.pop(u, None)
     if not st:
         send(chat, "Сначала выбери, что делаем.", MENU)
@@ -312,19 +417,10 @@ def on_callback(cb):
         answer(cid); send(chat, "Что делаем?", MENU); return
 
     if data == "m:balance":
-        answer(cid)
-        h = store.history(u, 5)
-        lines = [f"Баланс: <b>{store.balance(u)} коинов</b>", ""]
-        if h:
-            lines.append("<b>Последние</b>")
-            for j in h:
-                mark = "ok" if j["state"] == "ok" else "сбой"
-                lines.append(f"· {pricing.job(j['kind']).title} — {mark}")
-        code = store.user(u)["ref_code"]
-        me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
-        lines.append(f"\nЗови друзей: <code>https://t.me/{me}?start={code}</code>")
-        lines.append(f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> {pricing.СИМВОЛ}.")
-        send(chat, "\n".join(lines), MENU); return
+        answer(cid); показать_баланс(chat, u); позвать_друзей(chat, u); return
+
+    if data == "m:works":
+        answer(cid); показать_работы(chat, u); return
 
     if data == "m:buy":
         answer(cid); send(chat, price_list(), buy_kb()); return

@@ -51,6 +51,9 @@ CREATE TABLE IF NOT EXISTS jobs (
   coins    INTEGER NOT NULL,
   state     TEXT NOT NULL,
   file      TEXT,
+  path      TEXT,
+  tg_file_id TEXT,
+  size      INTEGER,
   error     TEXT,
   at        INTEGER NOT NULL,
   done_at   INTEGER
@@ -92,6 +95,16 @@ class Store:
         человек за них заплатил, и смена нашей модели — не повод отобрать.
         Перенос виден в истории, чтобы на него можно было сослаться.
         """
+        # Архив работ. `file` — имя на арендованной видеокарте, оно
+        # умирает вместе с арендой; `path` и `tg_file_id` — два адреса,
+        # которые переживают возврат карты. Добавляем по одному: SQLite
+        # не умеет добавить колонку, которая уже есть.
+        есть_у_jobs = {r["name"] for r in c.execute("PRAGMA table_info(jobs)")}
+        for стлб, тип in (("path", "TEXT"), ("tg_file_id", "TEXT"),
+                          ("size", "INTEGER")):
+            if стлб not in есть_у_jobs:
+                c.execute(f"ALTER TABLE jobs ADD COLUMN {стлб} {тип}")
+
         have = {r["name"] for r in c.execute("PRAGMA table_info(users)")}
         if "sub" not in have:
             return
@@ -243,10 +256,26 @@ class Store:
                 (job_id, tg_id, kind, prompt, coins, "run", int(time.time())),
             )
 
-    def job_done(self, job_id, file=None, error=None):
+    def job_done(self, job_id, file=None, error=None,
+                 path=None, tg_file_id=None, size=None):
+        """Итог задания. `path` — где работа лежит у НАС, `tg_file_id` —
+        как переслать её даром. Оба необязательны по отдельности, но
+        задание без обоих показать потом нечем."""
         with self._db() as c:
-            c.execute("UPDATE jobs SET state=?, file=?, error=?, done_at=? WHERE id=?",
-                      ("ok" if file else "err", file, error, int(time.time()), job_id))
+            c.execute(
+                "UPDATE jobs SET state=?, file=?, path=?, tg_file_id=?, size=?,"
+                " error=?, done_at=? WHERE id=?",
+                ("ok" if file else "err", file, path, tg_file_id, size,
+                 error, int(time.time()), job_id))
+
+    def works(self, tg_id, limit=10):
+        """Готовые работы человека — только те, что есть чем показать."""
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT * FROM jobs WHERE tg_id=? AND state='ok'"
+                " AND (tg_file_id IS NOT NULL OR path IS NOT NULL)"
+                " ORDER BY at DESC LIMIT ?", (tg_id, limit)).fetchall()
+            return [dict(r) for r in rs]
 
     def job(self, job_id):
         with self._db() as c:
