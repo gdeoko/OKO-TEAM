@@ -239,7 +239,13 @@
         "rather than averaging them into a blur."
     ),
     "i2i_фон": (
-        "Reference photographs are supplied. KEEP THE SETTING OF THE "
+        "EDIT THE SUPPLIED PHOTOGRAPH. Do not generate a new picture "
+        "from scratch: start from that exact frame and change only what "
+        "this scenario asks for. The clothing comes off and the pose and "
+        "the framing follow the scenario; everything else — the room, the "
+        "furniture, the objects, the light, the colours, the person — "
+        "stays as it is in the photograph. "
+        "KEEP THE SETTING OF THE "
         "REFERENCE: the same room or place, the same furniture and "
         "objects, the same wall and floor materials, the same time of day, "
         "the same light sources in the same positions and of the same "
@@ -255,7 +261,9 @@
         "than in the reference while still coming from the same windows "
         "and lamps. "
         "Where several references are supplied, they show the same person "
-        "and the same place from different angles; read them together."
+        "and the same place from different angles; read them together. "
+        "To say it once more, because it is the whole job: this is an "
+        "EDIT of that photograph, not a new photograph inspired by it."
     ),
     "i2i_пара": (
         "Two reference photographs are supplied, one person in each. Build "
@@ -356,7 +364,16 @@ def собрать(вид, блок, фон="новый", пара=False):
         ключ = "i2i_фон"
     else:
         ключ = сем
-    куски = [ТЕЛО_ПАРА if пара else ТЕЛО_ПО_ФОТО, ПО_ВИДУ[ключ]]
+    # ПОРЯДОК ПЕРВЫХ ДВУХ БЛОКОВ РЕШАЕТ, ЧТО ПОЛУЧИТСЯ.
+    #
+    # Обычно первым идёт сохранение человека, а следом режим. Но когда
+    # обстановка берётся с референса, работа — это ПРАВКА присланного
+    # снимка, и сказать об этом надо первым словом: модель читает начало
+    # промпта как задание, а всё дальнейшее как подробности. Скажешь
+    # сперва «вот женщина, вот её лицо» — она и строит новую женщину.
+    если_правка = (ключ == "i2i_фон")
+    тело = ТЕЛО_ПАРА if пара else ТЕЛО_ПО_ФОТО
+    куски = [ПО_ВИДУ[ключ], тело] if если_правка else [тело, ПО_ВИДУ[ключ]]
     # Строка владельца часто задаёт ПОЗУ, а поза есть и у сценария.
     # «Стоит раком» против «повёрнута на сорок градусов, вес на дальней
     # ноге» — прямое противоречие, и модель разрешает его как придётся:
