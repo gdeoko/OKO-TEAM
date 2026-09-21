@@ -22,6 +22,8 @@ import prompts
 import payments
 import emoji
 import ui
+import язык
+from язык import t
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "..", "brand-amberry"))
 import brand
@@ -103,58 +105,57 @@ def answer(cb_id, text=None):
     tg("answerCallbackQuery", callback_query_id=cb_id, text=text or "")
 
 
-def kb(rows):
-    return {"inline_keyboard": [[{"text": t, "callback_data": d} for t, d in row] for row in rows]}
-
-
 # ---------- экраны ----------
 
 # Каталог стоит первым нарочно: описывать сцену словами умеет
 # меньшинство, а платят все. Свой промпт остаётся рядом и бесплатно —
 # у конкурента он заперт за подпиской.
-buy_kb = ui.меню_оплаты
-price_list = ui.текст_оплаты
+
+def яз(u):
+    """Язык человека. Спрашивается у базы на КАЖДОМ экране.
+
+    Не кэшируется в памяти процесса: бот один, людей много, и кэш на
+    модуле означал бы ответ на языке того, кто написал последним.
+    Запрос дешёвый — одна строка по первичному ключу.
+    """
+    return store.язык(u)
 
 
-def меню():
+def меню(u=None):
     """Главное меню собирается КАЖДЫЙ раз, а не один при запуске:
-    «Популярное» считается из базы и меняется само. Собранное однажды,
-    оно застыло бы на той картине, какая была в момент старта службы."""
-    return ui.главное_меню(catalog.популярная_категория(store))
-
-
-# Меню НЕ кэшируется: названия кнопок владелец правит на странице
-# каталога, и они обязаны доезжать до бота без перезапуска.
+    «Популярное» считается из базы и меняется само, названия кнопок
+    владелец правит на странице каталога, а язык у каждого свой.
+    Собранное однажды, оно застыло бы на всех трёх сразу."""
+    return ui.главное_меню(catalog.популярная_категория(store),
+                           яз(u) if u else "ru")
 
 
 def greet(u, имя=None):
-    return ui.шапка_главного(store.balance(u), имя)
+    return ui.шапка_главного(store.balance(u), имя, яз(u))
 
 
-def price_list():
-    lines = ["<b>Сколько стоит</b>\n"]
+def price_list(u=None):
+    я = яз(u) if u else "ru"
+    lines = [t("оп.сколько_стоит", я), ""]
     for j in pricing.В_ПРОДАЖЕ:
-        lines.append(f"{j.title} — <b>{j.coins}</b> {pricing.СИМВОЛ} · {j.note}")
-    lines.append("\n<i>Одна цена за работу. Разрешение поднимаем всем и "
-                 "всегда — доплат за качество нет.</i>")
-    lines.append("\n<b>Подписки нет.</b> Платишь только за то, что сделал: "
-                 "ни абонентской платы, ни сгорающих остатков, "
-                 "ни функций за замком.")
-    lines.append("\n<b>Пакеты коинов</b> — не сгорают никогда\n")
+        lines.append(t("оп.строка_вида_нота", я, что=язык.job_title(j, я),
+                       цена=j.coins, символ=pricing.СИМВОЛ,
+                       нота=язык.job_note(j, я)))
+    lines.append("\n<i>" + t("оп.одна_цена", я) + "</i>")
+    lines.append("\n" + t("оп.подписки_нет", я))
+    lines.append("\n" + t("оп.пакеты", я) + "\n")
     for p in pricing.PACKS:
-        lines.append(f"{p['coins']} {pricing.СИМВОЛ} — <b>{p['rub']} ₽</b>"
-                     f"  <s>{p['market_rub']} ₽ у других</s>")
-    lines.append(f"\n<i>Коин стоит от {pricing.rub_per_coin('p7'):.0f} до "
-                 f"{pricing.rub_per_coin('p1'):.0f} ₽ — смотря какой пакет.</i>")
+        lines.append(t("оп.пакет_строка", я, коинов=p["coins"],
+                       символ=pricing.СИМВОЛ, рублей=p["rub"],
+                       рынок=p["market_rub"]))
+    lines.append("\n" + t("оп.вилка", я,
+                          дешевле=f"{pricing.rub_per_coin('p7'):.0f}",
+                          дороже=f"{pricing.rub_per_coin('p1'):.0f}"))
     return "\n".join(lines)
 
 
-def buy_kb():
-    rows = []
-    for p in pricing.PACKS:
-        rows.append([(f"{p['coins']} {pricing.СИМВОЛ} — {p['rub']} ₽", f"buy:{p['id']}")])
-    rows.append([("Назад", "m:menu")])
-    return kb(rows)
+def buy_kb(u=None):
+    return ui.меню_оплаты(яз(u) if u else "ru")
 
 
 # ---------- генерация ----------
@@ -216,29 +217,34 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
     Решение владельца 21.09.2026.
     """
     job = pricing.job(kind)
+    я = яз(u)
+    что = язык.job_title(job, я).lower()
     jid = uuid.uuid4().hex[:10]
     charged = False
     try:
+        # В базу пишется РУССКОЕ название вида работы, а не то, что
+        # видел человек: это наша бухгалтерия, и она обязана читаться
+        # одинаково независимо от того, на каком языке сидел клиент.
         store.spend(u, job.coins, f"{job.title}", meta={"job": jid})
         charged = True
         store.job_start(jid, u, kind, prompt, job.coins, scene=scene)
 
-        m = send(chat, f"Считаю {job.title.lower()}…")
+        m = send(chat, t("ген.считаю", я, что=что))
         mid = m.get("result", {}).get("message_id")
 
         def tick(sec):
             if mid and sec and sec % 10 == 0:
-                edit(chat, mid, f"Считаю {job.title.lower()}… {sec} с")
+                edit(chat, mid, t("ген.считаю_сек", я, что=что, сек=sec))
 
         if цепочка:
             # Первый проход. Его результат человеку НЕ отдаётся и в
             # архив не кладётся: это полуфабрикат, и «Мои работы»,
             # набитые промежуточными кадрами, только запутают.
             if mid:
-                edit(chat, mid, "Считаю кадр…")
+                edit(chat, mid, t("ген.считаю_кадр", я))
             имя, кадр, _ = _проход("i2i", prompt_фото or prompt, photos, tick)
             if mid:
-                edit(chat, mid, f"Кадр готов. Считаю {job.title.lower()}…")
+                edit(chat, mid, t("ген.кадр_готов", я, что=что))
             photos = [gpu.upload(имя, кадр)]
 
         файл, data, сек = _проход(kind, prompt, photos, tick)
@@ -257,7 +263,9 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         except OSError as e:
             print("АРХИВ не пишется:", str(e)[:200], flush=True)
 
-        cap = f"{job.title} · {res.get('sec')} с · осталось {store.balance(u)} {pricing.СИМВОЛ}"
+        cap = t("ген.подпись", я, что=язык.job_title(job, я),
+                сек=res.get("sec"),
+                баланс=f"{store.balance(u)} {pricing.СИМВОЛ}")
         if files[0].lower().endswith((".webp", ".gif", ".mp4")):
             о = tg("sendAnimation", chat_id=chat, caption=cap,
                    _files={"animation": (files[0], data)})
@@ -266,21 +274,22 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
                    _files={"photo": (files[0], data)})
         store.job_done(jid, file=files[0], path=путь,
                        tg_file_id=file_id_из(о), size=len(data))
-        send(chat, "Что дальше?", меню())
+        send(chat, t("гл.что_дальше", я), меню(u))
 
     except NotEnoughCoins as e:
-        send(chat, f"Не хватает коинов: нужно <b>{e.need}</b>, есть <b>{e.have}</b>.", buy_kb())
+        send(chat, t("ген.не_хватает", я, нужно=e.need, есть=e.have), buy_kb(u))
     except GpuError as e:
         if charged:
             store.refund(u, job.coins, f"осечка генерации: {str(e)[:80]}")
         store.job_done(jid, error=str(e)[:300])
-        send(chat, f"Не получилось: {str(e)[:200]}\n\nКоины вернула — <b>{store.balance(u)}</b>.", меню())
+        send(chat, t("ген.осечка", я, почему=str(e)[:200],
+                     баланс=store.balance(u)), меню(u))
     except Exception as e:
         if charged:
             store.refund(u, job.coins, "внутренняя ошибка")
         store.job_done(jid, error=str(e)[:300])
         print("СБОЙ:", traceback.format_exc()[:800], flush=True)
-        send(chat, f"Что-то сломалось у меня. Коины вернула — <b>{store.balance(u)}</b>.", меню())
+        send(chat, t("ген.сломалось", я, баланс=store.balance(u)), меню(u))
     finally:
         with lock:
             busy.discard(u)
@@ -292,12 +301,12 @@ def оживить(chat, u, старое, байты):
     работает с файлами на своей стороне."""
     with lock:
         if u in busy:
-            send(chat, "Одно задание уже считается. Дождись его.")
+            send(chat, t("ген.занято", яз(u)))
             return
     try:
         имя = gpu.upload(старое["file"] or "frame.png", байты)
     except GpuError as e:
-        send(chat, f"Не смогла отправить кадр на карту: {str(e)[:150]}")
+        send(chat, t("ген.кадр_не_ушёл", яз(u), почему=str(e)[:150]))
         return
     # Промпт берём ТОТ ЖЕ: ролик должен продолжать этот кадр, а не
     # уводить в сторону. Обстановку менять не надо — она уже в кадре.
@@ -309,7 +318,7 @@ def launch(chat, u, kind, prompt, photos=None, scene=None,
            цепочка=False, prompt_фото=None):
     with lock:
         if u in busy:
-            send(chat, "Одно задание уже считается. Дождись его, потом запускай следующее.")
+            send(chat, t("ген.занято", яз(u)))
             return
         busy.add(u)
     threading.Thread(target=run_job,
@@ -320,26 +329,31 @@ def launch(chat, u, kind, prompt, photos=None, scene=None,
 
 # ---------- разбор сообщений ----------
 
-def on_start(chat, u, username, arg):
+def on_start(chat, u, username, arg, lang=None):
     invited_by = None
     if arg:
         inviter = store.by_ref_code(arg.strip())
         if inviter and inviter["tg_id"] != u:
             invited_by = inviter["tg_id"]
     user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_COINS,
-                                     invited_by=invited_by)
+                                     invited_by=invited_by, lang=lang)
+    я = яз(u)
     if is_new and invited_by:
         store.credit(invited_by, pricing.REFERRAL_INVITER, "welcome", f"привёл {u}")
         store.credit(u, pricing.REFERRAL_INVITEE, "welcome", "пришёл по приглашению")
-        send(invited_by, f"По твоей ссылке пришёл человек. +{pricing.REFERRAL_INVITER} {pricing.СИМВОЛ}.")
+        # Приглашение уходит ПРИГЛАСИВШЕМУ — и на ЕГО языке, а не на
+        # языке того, кто пришёл. Разные люди, разные настройки.
+        send(invited_by, t("каб.пришёл_друг", яз(invited_by),
+                           сколько=pricing.REFERRAL_INVITER,
+                           символ=pricing.СИМВОЛ))
     # Нижнее меню и inline-кнопки нельзя повесить на одно сообщение:
     # Телеграм принимает только одну разметку. Поэтому сначала короткое
     # сообщение, которое ставит нижнее меню, следом — само приветствие.
     if is_new:
-        send(chat, f"Добро пожаловать. Дарю "
-                   f"<b>{emoji.баланс(pricing.WELCOME_COINS)}</b> на пробу.",
-             ui.НИЖНЕЕ)
-    send(chat, greet(u, username), меню())
+        send(chat, t("гл.добро", я,
+                     подарок=emoji.баланс(pricing.WELCOME_COINS, я)),
+             ui.нижнее(я))
+    send(chat, greet(u, username), меню(u))
 
 
 def показать_работы(chat, u, сколько=5):
@@ -351,13 +365,14 @@ def показать_работы(chat, u, сколько=5):
     честно говорим, что работа была, но показать нечем, вместо того
     чтобы делать вид, будто её не существовало.
     """
+    я = яз(u)
     работы = store.works(u, сколько)
     if not работы:
-        send(chat, "Работ пока нет. Сделаем первую?", меню())
+        send(chat, t("раб.пусто", я), меню(u))
         return
-    send(chat, f"<b>Твои работы</b> — последние {len(работы)}")
+    send(chat, t("раб.список", я, сколько=len(работы)))
     for j in работы:
-        подпись = pricing.job(j["kind"]).title
+        подпись = язык.job_title(pricing.job(j["kind"]), я)
         видео = (j["file"] or "").lower().endswith((".webp", ".gif", ".mp4"))
         метод = "sendAnimation" if видео else "sendPhoto"
         поле = "animation" if видео else "photo"
@@ -377,14 +392,15 @@ def показать_работы(chat, u, сколько=5):
                 store.job_done(j["id"], file=j["file"], path=j["path"],
                                tg_file_id=file_id_из(о), size=j["size"])
                 continue
-        send(chat, f"· {подпись} — файл не сохранился, показать нечем.")
-    send(chat, "Что дальше?", меню())
+        send(chat, t("раб.нет_файла", я, что=подпись))
+    send(chat, t("гл.что_дальше", я), меню(u))
 
 
 def показать_кабинет(chat, u, имя=None):
+    я = яз(u)
     send(chat,
-         ui.текст_кабинета(store.balance(u), store.сводка(u), имя),
-         ui.меню_кабинета())
+         ui.текст_кабинета(store.balance(u), store.сводка(u), имя, я),
+         ui.меню_кабинета(я))
 
 
 def показать_баланс(chat, u):
@@ -394,21 +410,28 @@ def показать_баланс(chat, u):
 def позвать_друзей(chat, u):
     code = store.user(u)["ref_code"]
     me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
-    send(chat,
-         f"Зови друзей: <code>https://t.me/{me}?start={code}</code>\n"
-         f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> {pricing.СИМВОЛ}, "
-         f"ему самому — <b>{pricing.REFERRAL_INVITEE}</b>.", меню())
+    send(chat, t("каб.зови", яз(u), ссылка=f"https://t.me/{me}?start={code}",
+                 ему=pricing.REFERRAL_INVITER, другу=pricing.REFERRAL_INVITEE,
+                 символ=pricing.СИМВОЛ), меню(u))
 
 
 # Нижнее меню шлёт обычный текст, а не callback. Без этой таблицы все
 # четыре кнопки падали в «Сначала выбери, что делаем» — клавиатура
 # висела на экране и не делала ничего.
-НИЖНИЕ_КНОПКИ = {
-    "Создать":    lambda chat, u: send(chat, "Что делаем?", меню()),
-    "Баланс":     показать_кабинет,
-    "Мои работы": показать_работы,
-    "Пополнить":  lambda chat, u: send(chat, price_list(), buy_kb()),
+ДЕЙСТВИЯ_НИЗА = {
+    "низ.создать":  lambda chat, u: send(chat, t("гл.что_делаем", яз(u)), меню(u)),
+    "низ.баланс":   показать_кабинет,
+    "низ.работы":   показать_работы,
+    "низ.пополнить": lambda chat, u: send(chat, price_list(u), buy_kb(u)),
 }
+
+# Узнаём кнопку на ЛЮБОМ из языков, а не только на текущем. Человек
+# переключил язык — снизу до следующего сообщения висит старая
+# клавиатура, и её нажатие обязано сработать, а не упасть в «сначала
+# выбери, что делаем».
+НИЖНИЕ_КНОПКИ = {t(ключ, я): действие
+                 for ключ, действие in ДЕЙСТВИЯ_НИЗА.items()
+                 for я in язык.ЯЗЫКИ}
 
 
 def on_text(chat, u, text):
@@ -420,13 +443,13 @@ def on_text(chat, u, text):
 
     st = waiting.pop(u, None)
     if not st:
-        send(chat, "Сначала выбери, что делаем.", меню())
+        send(chat, t("гл.сначала_выбери", яз(u)), меню(u))
         return
     kind = st["kind"]
     job = pricing.job(kind)
     if job.нужно_фото and not st.get("фото"):
         waiting[u] = st
-        send(chat, ui.просьба_о_фото(job))
+        send(chat, ui.просьба_о_фото(job, яз=яз(u)))
         return
     пустить_своё(chat, u, kind, text.strip(), st.get("фото") or [])
 
@@ -458,9 +481,10 @@ def on_photo(chat, u, file_id):
     Копим, а не запускаем на первом: у фото-по-фото моделей до трёх
     референсов, и запуск на первом отбирал бы у человека остальные два
     молча."""
+    я = яз(u)
     st = waiting.get(u)
     if not st:
-        send(chat, "Сначала выбери сценарий или режим.", меню())
+        send(chat, t("гл.сначала_сценарий", я), меню(u))
         return
     job = pricing.job(st["kind"])
     sc = catalog.scene(st["scene"]) if st.get("scene") else None
@@ -469,19 +493,19 @@ def on_photo(chat, u, file_id):
     мин, макс = sc.фото_нужно if sc else job.фото_нужно
     собрано = st.setdefault("фото", [])
     if len(собрано) >= макс > 0:
-        send(chat, f"Больше {макс} модель не возьмёт.")
+        send(chat, t("фото.перебор", я, макс=макс))
         return
 
     f = tg("getFile", file_id=file_id).get("result", {})
     path = f.get("file_path")
     if not path:
-        send(chat, "Не смогла забрать фото, пришли ещё раз.")
+        send(chat, t("фото.не_забрала", я))
         return
     data = requests.get(f"https://api.telegram.org/file/bot{TOKEN}/{path}", timeout=60).content
     try:
         name = gpu.upload(f"ref{len(собрано)+1}.jpg", data)
     except GpuError as e:
-        send(chat, f"Не приняла фото: {str(e)[:150]}")
+        send(chat, t("фото.не_приняла", я, почему=str(e)[:150]))
         return
     собрано.append(name)
 
@@ -492,21 +516,35 @@ def on_photo(chat, u, file_id):
             waiting.pop(u, None)
             пустить_сценарий(chat, u, sc, собрано)
             return
-        send(chat, ui.просьба_о_фото(job, len(собрано), sc.фото_нужно),
-             ui.меню_сбора_фото(sc, len(собрано)))
+        send(chat, ui.просьба_о_фото(job, len(собрано), sc.фото_нужно, я),
+             ui.меню_сбора_фото(sc, len(собрано), я))
         return
 
-    send(chat, f"Снимков принято: {len(собрано)}. "
-               "Теперь напиши, что с ними сделать — <b>по-английски</b>.")
+    send(chat, t("фото.теперь_текст", я, сколько=len(собрано)))
 
 
 def on_callback(cb):
     data = cb["data"]; chat = cb["message"]["chat"]["id"]
     u = cb["from"]["id"]; cid = cb["id"]
-    store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_COINS)
+    store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_COINS,
+                      lang=язык.по_телеграму(cb["from"].get("language_code")))
+    я = яз(u)
 
     if data == "m:menu":
-        answer(cid); send(chat, "Что делаем?", меню()); return
+        answer(cid); send(chat, t("гл.что_делаем", я), меню(u)); return
+
+    if data == "m:lang":
+        # Переключатель на два положения: языков ровно два, и отдельный
+        # экран выбора из двух кнопок был бы лишним нажатием.
+        answer(cid)
+        новый = "en" if я == "ru" else "ru"
+        store.сменить_язык(u, новый)
+        # Нижняя клавиатура живёт в чате, а не в сообщении: не
+        # переслать её здесь — и снизу навсегда останутся кнопки на
+        # прежнем языке.
+        send(chat, t("каб.язык_сменён", новый), ui.нижнее(новый))
+        показать_кабинет(chat, u, cb["from"].get("first_name"))
+        return
 
     if data in ("m:balance", "m:cab"):
         answer(cid); показать_кабинет(chat, u, cb["from"].get("first_name")); return
@@ -519,11 +557,10 @@ def on_callback(cb):
         answer(cid)
         старое = store.job(data.split(":", 1)[1])
         if not старое or старое["tg_id"] != u:
-            send(chat, "Эта работа не найдена."); return
+            send(chat, t("раб.не_найдена", я)); return
         байты = archive.байты(старое["path"])
         if not байты:
-            send(chat, "Файл не сохранился, оживить нечем. "
-                       "Сделай кадр заново."); return
+            send(chat, t("раб.нечем_оживить", я)); return
         оживить(chat, u, старое, байты); return
 
     if data == "m:works":
@@ -535,7 +572,8 @@ def on_callback(cb):
 
     if data == "m:forget":
         answer(cid)
-        send(chat, ui.текст_удаления(store.сводка(u)), ui.меню_удаления()); return
+        send(chat, ui.текст_удаления(store.сводка(u), я),
+             ui.меню_удаления(я)); return
 
     if data == "m:forget:yes":
         answer(cid)
@@ -547,19 +585,17 @@ def on_callback(cb):
         except OSError as e:
             print("АРХИВ не чистится:", str(e)[:200], flush=True)
         итог = store.забыть(u)
-        send(chat, f"Удалено: работ — <b>{итог['работ']}</b>, "
-                   f"записей — <b>{итог['записей']}</b>.\n"
-                   f"Файлы работ стёрты с диска.\n\n"
-                   f"<i>/start заведёт всё заново, с нуля.</i>")
+        send(chat, t("уд.готово", я, работ=итог["работ"],
+                     записей=итог["записей"]))
         return
 
     if data == "m:buy":
-        answer(cid); send(chat, price_list(), buy_kb()); return
+        answer(cid); send(chat, price_list(u), buy_kb(u)); return
 
     if data.startswith("buy:"):
         answer(cid)
         p = pricing.pack(data.split(":", 1)[1])
-        send(chat, ui.текст_пакета(p), ui.меню_способов(p["id"]))
+        send(chat, ui.текст_пакета(p, я), ui.меню_способов(p["id"], я))
         return
 
     if data.startswith("pay:stars:"):
@@ -574,16 +610,17 @@ def on_callback(cb):
         try:
             сч = payments.счёт_криптой(pid, u)
         except payments.ОшибкаОплаты as e:
-            answer(cid, "Крипта пока недоступна")
-            send(chat, f"Оплата криптой не настроена: {e}\n\n"
-                       "Пока можно оплатить звёздами.", ui.меню_способов(pid))
+            answer(cid, t("оп.крипта_нет", я))
+            send(chat, t("оп.крипта_не_настроена", я, почему=e),
+                 ui.меню_способов(pid, я))
             return
         answer(cid)
         store.remember_invoice(u, сч["invoice_id"], pid)
-        send(chat, f"Счёт на <b>${сч['usd']}</b> создан. Живёт час.",
-             ui.клава([[ui.кнопка("Оплатить", url=сч["url"], иконка=emoji.КАРТА)],
-                       [ui.кнопка("Я оплатил, проверь", f"chk:{сч['invoice_id']}")],
-                       [ui.кнопка("Назад", "m:buy", emoji.ВЛЕВО)]]))
+        send(chat, t("оп.счёт", я, сумма=сч["usd"]),
+             ui.клава([[ui.кнопка(t("кн.оплатить", я), url=сч["url"],
+                                  иконка=emoji.КАРТА)],
+                       [ui.кнопка(t("кн.проверь", я), f"chk:{сч['invoice_id']}")],
+                       [ui.кнопка(t("кн.назад", я), "m:buy", emoji.ВЛЕВО)]]))
         return
 
     if data.startswith("chk:"):
@@ -591,21 +628,22 @@ def on_callback(cb):
         try:
             статус = payments.проверить_счёт(инв)
         except payments.ОшибкаОплаты as e:
-            answer(cid, "Не смогла проверить"); return
+            answer(cid, t("оп.не_проверила", я)); return
         if статус != "paid":
-            answer(cid, "Оплата ещё не пришла" if статус == "active" else "Счёт истёк")
+            answer(cid, t("оп.ещё_не_пришла" if статус == "active"
+                          else "оп.счёт_истёк", я))
             return
         зачислено = зачислить_крипту(u, инв)
-        answer(cid, "Зачислено" if зачислено else "Уже зачислено раньше")
+        answer(cid, t("оп.зачислено" if зачислено else "оп.уже_зачислено", я))
         if зачислено:
-            send(chat, f"Оплата пришла. Баланс: "
-                       f"<b>{emoji.баланс(store.balance(u))}</b>", меню())
+            send(chat, t("оп.пришла", я, баланс=emoji.баланс(store.balance(u), я)),
+                 меню(u))
         return
 
     if data.startswith("r:"):
         answer(cid)
         р = catalog.раздел(data.split(":", 1)[1])
-        send(chat, ui.текст_раздела(р), ui.меню_раздела(р))
+        send(chat, ui.текст_раздела(р, я), ui.меню_раздела(р, я))
         return
 
     if data.startswith("c:"):
@@ -616,8 +654,8 @@ def on_callback(cb):
         cat = (catalog.популярная_категория(store) if ключ == "top"
                else catalog.category(ключ))
         if not cat or not cat.scenes:
-            send(chat, "Тут пока пусто.", меню()); return
-        send(chat, ui.шапка_категории(cat), ui.меню_категории(cat))
+            send(chat, t("гл.пусто", я), меню(u)); return
+        send(chat, ui.шапка_категории(cat, я), ui.меню_категории(cat, я))
         return
 
     if data.startswith("own:"):
@@ -627,13 +665,14 @@ def on_callback(cb):
         под = catalog.category(data.split(":", 1)[1])
         kind = catalog.СВОБОДНЫЕ[под.key]
         waiting[u] = {"kind": kind, "фото": []}
-        send(chat, ui.текст_своего_промпта(под), меню())
+        send(chat, ui.текст_своего_промпта(под, я), меню(u))
         return
 
     if data.startswith("sc:"):
         answer(cid)
         sc = catalog.scene(data.split(":", 1)[1])
-        send(chat, ui.шапка_сценария(sc, store.balance(u)), ui.меню_сценария(sc))
+        send(chat, ui.шапка_сценария(sc, store.balance(u), я),
+             ui.меню_сценария(sc, я))
         return
 
     if data.startswith("go:"):
@@ -642,14 +681,15 @@ def on_callback(cb):
         sc = catalog.scene(data.split(":", 1)[1])
         есть = store.balance(u)
         if есть < sc.coins:
-            answer(cid, f"Нужно {sc.coins} {pricing.СИМВОЛ}, на балансе {есть}")
-            send(chat, ui.текст_оплаты(), ui.меню_оплаты())
+            answer(cid, t("сц.мало_коинов", я,
+                          цена=f"{sc.coins} {pricing.СИМВОЛ}", баланс=есть))
+            send(chat, ui.текст_оплаты(я), ui.меню_оплаты(я))
             return
         answer(cid)
         job = pricing.job(sc.job)
         waiting[u] = {"kind": sc.job, "scene": sc.key, "фото": []}
-        send(chat, ui.просьба_о_фото(job, 0, sc.фото_нужно),
-             ui.меню_сбора_фото(sc, 0))
+        send(chat, ui.просьба_о_фото(job, 0, sc.фото_нужно, я),
+             ui.меню_сбора_фото(sc, 0, я))
         return
 
     if data.startswith("run:"):
@@ -658,7 +698,8 @@ def on_callback(cb):
         st = waiting.get(u)
         собрано = (st or {}).get("фото") or []
         if len(собрано) < sc.фото_нужно[0]:
-            answer(cid, f"Нужно снимков: {sc.фото_нужно[0]}"); return
+            answer(cid, t("фото.сколько_нести", я,
+                          сколько=sc.фото_нужно[0])); return
         answer(cid)
         waiting.pop(u, None)
         пустить_сценарий(chat, u, sc, собрано)
@@ -670,9 +711,9 @@ def on_callback(cb):
         if st and st.get("фото"):
             st["фото"].pop()
         n = len(st["фото"]) if st else 0
-        answer(cid, "Убрала")
-        send(chat, ui.просьба_о_фото(pricing.job(sc.job), n, sc.фото_нужно),
-             ui.меню_сбора_фото(sc, n))
+        answer(cid, t("фото.убрала", я))
+        send(chat, ui.просьба_о_фото(pricing.job(sc.job), n, sc.фото_нужно, я),
+             ui.меню_сбора_фото(sc, n, я))
         return
 
     if data == "m:free":
@@ -680,7 +721,7 @@ def on_callback(cb):
         # раздела. Телеграм хранит их вечно, и нажать её могут завтра.
         answer(cid)
         р = catalog.раздел("own")
-        send(chat, ui.текст_раздела(р), ui.меню_раздела(р))
+        send(chat, ui.текст_раздела(р, я), ui.меню_раздела(р, я))
         return
 
     answer(cid)
@@ -719,8 +760,7 @@ def on_paid(chat, u, оплата):
     try:
         p = payments.разобрать_payload(оплата.get("invoice_payload"))
     except payments.ОшибкаОплаты as e:
-        send(chat, "Оплата прошла, но я не поняла, какой пакет. "
-                   "Напиши в поддержку — разберёмся руками, деньги не пропадут.")
+        send(chat, t("оп.пакет_не_узнан", яз(u)))
         print("ОПЛАТА БЕЗ ПАКЕТА:", u, оплата, flush=True)
         return
     # Идентификатор списания сохраняем ОБЯЗАТЕЛЬНО: без него звёзды
@@ -728,8 +768,9 @@ def on_paid(chat, u, оплата):
     store.credit(u, p["coins"], "paid", f"звёзды, пакет {p['id']}",
                  meta={"charge": оплата.get("telegram_payment_charge_id"),
                        "stars": оплата.get("total_amount")})
-    send(chat, f"Спасибо. Зачислено <b>{emoji.баланс(p['coins'])}</b>.\n"
-               f"Баланс: <b>{emoji.баланс(store.balance(u))}</b>", меню())
+    я = яз(u)
+    send(chat, t("оп.спасибо", я, сколько=emoji.баланс(p["coins"], я),
+                 баланс=emoji.баланс(store.balance(u), я)), меню(u))
 
 
 def on_update(up):
@@ -742,24 +783,38 @@ def on_update(up):
         return
     chat = msg["chat"]["id"]; u = msg["from"]["id"]
     username = msg["from"].get("username")
+    # Язык телеграма едет с КАЖДЫМ сообщением, но ставится только
+    # новичку: `ensure_user` не перезаписывает уже выбранный, иначе
+    # выбор человека отменялся бы при каждом нажатии.
+    lang = язык.по_телеграму(msg["from"].get("language_code"))
+    завести = lambda: store.ensure_user(u, username,
+                                        welcome=pricing.WELCOME_COINS, lang=lang)
 
     if "successful_payment" in msg:
-        store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
+        завести()
         on_paid(chat, u, msg["successful_payment"]); return
 
     if "photo" in msg:
-        store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
+        завести()
         on_photo(chat, u, msg["photo"][-1]["file_id"]); return
 
     text = (msg.get("text") or "").strip()
     if text.startswith("/start"):
         parts = text.split(maxsplit=1)
-        on_start(chat, u, username, parts[1] if len(parts) > 1 else None); return
+        on_start(chat, u, username, parts[1] if len(parts) > 1 else None,
+                 lang=lang); return
     if text in ("/menu", "/help"):
-        store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
-        send(chat, "Что делаем?", меню()); return
+        завести()
+        send(chat, t("гл.что_делаем", яз(u)), меню(u)); return
     if text == "/prices":
-        send(chat, price_list(), меню()); return
+        завести()
+        send(chat, price_list(u), меню(u)); return
+    if text == "/lang":
+        завести()
+        новый = "en" if яз(u) == "ru" else "ru"
+        store.сменить_язык(u, новый)
+        send(chat, t("каб.язык_сменён", новый), ui.нижнее(новый))
+        send(chat, t("гл.что_делаем", новый), меню(u)); return
     if text == "/scenes":
         # Владельцу: где в каталоге ещё пусто. Без этого узнать, какие
         # сценарии он уже наполнил, можно только зайдя на сервер.
@@ -800,7 +855,7 @@ def on_update(up):
                    f"Карта: {free}/{total} ГБ свободно, очередь {q}")
         return
 
-    store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
+    завести()
     on_text(chat, u, text)
 
 
