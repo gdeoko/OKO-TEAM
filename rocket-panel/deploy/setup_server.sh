@@ -19,42 +19,47 @@
 
 set -euo pipefail
 
-ДОМ=/opt/amberry           # код
-ДАННЫЕ=/srv/amberry        # база и архив работ — то, что нельзя терять
-ПОЛЬЗОВАТЕЛЬ=amberry
-РЕПО=https://github.com/gdeoko/OKO-TEAM.git
-ВЕТКА=claude/rocket-webcam-sborka
+# Имена переменных ЛАТИНИЦЕЙ. Bash принимает в имени только ASCII, и на
+# кириллическом имени скрипт падает на первой же строке с невнятным
+# «No such file or directory». Комментарии по-русски — их шелл не
+# читает.
 
-шаг() { printf '\n=== %s ===\n' "$1"; }
+HOME_DIR=/opt/amberry           # код
+DATA_DIR=/srv/amberry        # база и архив работ — то, что нельзя терять
+BOT_USER=amberry
+REPO=https://github.com/gdeoko/OKO-TEAM.git
+BRANCH=claude/rocket-webcam-sborka
+
+step() { printf '\n=== %s ===\n' "$1"; }
 
 [ "$(id -u)" = 0 ] || { echo "нужен root"; exit 1; }
 
-шаг "Пакеты"
+step "Пакеты"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq --no-install-recommends \
     python3 python3-venv python3-pip git curl ca-certificates \
     ffmpeg sqlite3 ufw fail2ban unattended-upgrades
 
-шаг "Пользователь и каталоги"
-id -u "$ПОЛЬЗОВАТЕЛЬ" >/dev/null 2>&1 || useradd -r -m -d "$ДАННЫЕ" -s /usr/sbin/nologin "$ПОЛЬЗОВАТЕЛЬ"
-mkdir -p "$ДОМ" "$ДАННЫЕ/works"
-chown -R "$ПОЛЬЗОВАТЕЛЬ:$ПОЛЬЗОВАТЕЛЬ" "$ДАННЫЕ"
+step "Пользователь и каталоги"
+id -u "$BOT_USER" >/dev/null 2>&1 || useradd -r -m -d "$DATA_DIR" -s /usr/sbin/nologin "$BOT_USER"
+mkdir -p "$HOME_DIR" "$DATA_DIR/works"
+chown -R "$BOT_USER:$BOT_USER" "$DATA_DIR"
 
-шаг "Код"
-if [ -d "$ДОМ/.git" ]; then
-    git -C "$ДОМ" fetch --depth 1 origin "$ВЕТКА"
-    git -C "$ДОМ" reset --hard "origin/$ВЕТКА"
+step "Код"
+if [ -d "$HOME_DIR/.git" ]; then
+    git -C "$HOME_DIR" fetch --depth 1 origin "$BRANCH"
+    git -C "$HOME_DIR" reset --hard "origin/$BRANCH"
 else
-    git clone --depth 1 -b "$ВЕТКА" "$РЕПО" "$ДОМ"
+    git clone --depth 1 -b "$BRANCH" "$REPO" "$HOME_DIR"
 fi
 
-шаг "Питон"
-[ -d "$ДОМ/.venv" ] || python3 -m venv "$ДОМ/.venv"
-"$ДОМ/.venv/bin/pip" install -q --upgrade pip
-"$ДОМ/.venv/bin/pip" install -q requests
+step "Питон"
+[ -d "$HOME_DIR/.venv" ] || python3 -m venv "$HOME_DIR/.venv"
+"$HOME_DIR/.venv/bin/pip" install -q --upgrade pip
+"$HOME_DIR/.venv/bin/pip" install -q requests
 
-шаг "Настройки"
+step "Настройки"
 # Файл с ключами кладётся отдельно и сюда не попадает: в git секретам
 # не место, а перезапись этого файла скриптом стёрла бы рабочий токен.
 if [ ! -f /etc/amberry.env ]; then
@@ -77,7 +82,7 @@ else
 fi
 chmod 600 /etc/amberry.env
 
-шаг "Служба"
+step "Служба"
 cat > /etc/systemd/system/amberry.service <<UNIT
 [Unit]
 Description=AMBERRY telegram bot
@@ -86,10 +91,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=$ПОЛЬЗОВАТЕЛЬ
-WorkingDirectory=$ДОМ/rocket-panel/bot
+User=$BOT_USER
+WorkingDirectory=$HOME_DIR/rocket-panel/bot
 EnvironmentFile=/etc/amberry.env
-ExecStart=$ДОМ/.venv/bin/python bot.py
+ExecStart=$HOME_DIR/.venv/bin/python bot.py
 Restart=always
 RestartSec=5
 
@@ -99,21 +104,21 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=$ДАННЫЕ
+ReadWritePaths=$DATA_DIR
 UNIT
 systemctl daemon-reload
 systemctl enable amberry >/dev/null
 
-шаг "Брандмауэр"
+step "Брандмауэр"
 # Правила ставятся до включения: иначе ufw enable обрывает текущую
 # сессию SSH и сервер остаётся без доступа.
 ufw allow 22/tcp >/dev/null
 ufw --force enable >/dev/null
 ufw status | head -5
 
-шаг "Готово"
-echo "Код:     $ДОМ"
-echo "Данные:  $ДАННЫЕ (база + архив работ)"
+step "Готово"
+echo "Код:     $HOME_DIR"
+echo "Данные:  $DATA_DIR (база + архив работ)"
 echo "Ключи:   /etc/amberry.env"
 echo
 if grep -q '^ROCKET_BOT_TOKEN=$' /etc/amberry.env; then
