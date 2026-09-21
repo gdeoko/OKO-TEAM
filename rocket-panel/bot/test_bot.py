@@ -669,6 +669,18 @@ class СтрокиВладельца(unittest.TestCase):
                 self.assertIn(f"{s.key} =", текст,
                               f"в файле нет строки для сценария {s.key}")
 
+    def test_русская_подпись_не_уходит_модели(self):
+        """Модель обучена на английском. Подпись — для человека, и в
+        промпт ей попадать нельзя: русский текст там даёт мусор."""
+        f = tempfile.mktemp(suffix=".txt")
+        open(f, "w", encoding="utf-8").write(
+            "un_close = She is standing still. | стоит\n")
+        англ, рус = catalog._строки_владельца(f)["un_close"]
+        s = catalog.Scene("un_close", "Т", "i2i",
+                          prompts.Блок(откровенное=англ), "п", фон="референс")
+        self.assertIn("She is standing still.", s.prompt)
+        self.assertNotIn("стоит", s.prompt)
+
     def test_строка_владельца_попадает_в_промпт(self):
         б = prompts.Блок(обстановка="A room.", откровенное="MARKER-TEXT-HERE")
         p = prompts.собрать("i2i", б)
@@ -696,15 +708,90 @@ class СтрокиВладельца(unittest.TestCase):
         f = tempfile.mktemp(suffix=".txt")
         open(f, "w", encoding="utf-8").write(
             "# комментарий\n\nпросто строка без равно\n"
-            "un_close = Something happens.\n"
-            "un_full =\n"                       # пустое значение
-            "  un_bed  =  Padded text.  \n")    # лишние пробелы
+            "un_close = Something happens. | смеётся\n"
+            "un_full =\n"                          # пустое значение
+            "  un_back  =  Padded.  |  подпись  \n"  # лишние пробелы
+            "un_three = Only english, no caption.\n")  # подписи нет
         d = catalog._строки_владельца(f)
-        self.assertEqual(d, {"un_close": "Something happens.",
-                             "un_bed": "Padded text."})
+        self.assertEqual(d, {"un_close": ("Something happens.", "смеётся"),
+                             "un_back": ("Padded.", "подпись"),
+                             "un_three": ("Only english, no caption.", "")})
 
     def test_нет_файла_это_не_падение(self):
         self.assertEqual(catalog._строки_владельца("/нет/такого/файла.txt"), {})
+
+
+class ОткудаБерётсяФон(unittest.TestCase):
+    """«Раздеть» и «Обстановка» — разные товары, и разница именно в фоне.
+
+    Пока «Раздеть» задавала своё место, обе категории делали одно и то
+    же разными словами, и человек платил дважды за одно.
+    """
+
+    def test_раздеть_берёт_обстановку_с_фото(self):
+        for s in catalog.category("undress").scenes:
+            self.assertEqual(s.фон, "референс", f"{s.key}: сочиняет своё место")
+            self.assertFalse(s.своё_место, f"{s.key}: объявил своё место")
+            self.assertIn("KEEP THE SETTING", s.prompt,
+                          f"{s.key}: промпт не велит сохранить обстановку")
+
+    def test_раздеть_не_опирается_на_мебель(self):
+        """Обстановка приходит с фото, а на нём может не быть ни
+        кровати, ни зеркала, ни душа. Сценарий, который их требует, на
+        уличном снимке даёт бред."""
+        мебель = ("bed", "mirror", "shower", "sheet", "bathtub", "sofa")
+        for s in catalog.category("undress").scenes:
+            свои = " ".join([s.блок.поза, s.блок.обстановка, s.блок.свет,
+                             s.блок.ещё]).lower()
+            for м in мебель:
+                self.assertNotIn(м, свои, f"{s.key}: завязан на {м}")
+
+    def test_обстановка_сочиняет_место_и_называет_его(self):
+        for s in catalog.category("scene").scenes:
+            self.assertEqual(s.фон, "новый", f"{s.key}: не меняет место")
+            self.assertTrue(s.своё_место, f"{s.key}: не назвал место")
+            self.assertNotIn("KEEP THE SETTING", s.prompt)
+
+    def test_оживление_всегда_на_фоне_фото(self):
+        """У фото-в-видео первым кадром идёт сам снимок — обстановка
+        там с него, иначе и быть не может."""
+        for c in ("animate", "voice"):
+            for s in catalog.category(c).scenes:
+                self.assertFalse(s.своё_место, f"{s.key}: объявил своё место")
+                self.assertEqual(s.место, "как на твоём фото")
+
+
+class ЧеловекВидитЗаЧтоПлатит(unittest.TestCase):
+    """Оплата идёт ДО результата. Название и цена этого не объясняют."""
+
+    def setUp(self):
+        import ui
+        self.ui = ui
+
+    def test_на_экране_есть_место(self):
+        for c in catalog.CATEGORIES:
+            for s in c.scenes:
+                э = self.ui.шапка_сценария(s, 100)
+                self.assertIn("Место:", э, f"{s.key}: не сказано где")
+
+    def test_у_кадровых_сценариев_назван_ракурс(self):
+        for c in ("undress", "animate", "voice"):
+            for s in catalog.category(c).scenes:
+                э = self.ui.шапка_сценария(s, 100)
+                self.assertIn("Ракурс:", э, f"{s.key}: не сказан ракурс")
+
+    def test_действие_показывается_когда_владелец_его_назвал(self):
+        s = catalog.Scene("x", "Т", "i2i", prompts.Блок(поза="p"), "кадр",
+                          фон="референс")
+        s.действие = "делает что-то"
+        э = self.ui.шапка_сценария(s, 100)
+        self.assertIn("Действие: <b>делает что-то</b>", э)
+
+    def test_ненаписанное_действие_не_выдумывается(self):
+        s = catalog.Scene("y", "Т", "i2i", prompts.Блок(поза="p"), "кадр",
+                          фон="референс")
+        s.действие = ""
+        self.assertNotIn("Действие:", self.ui.шапка_сценария(s, 100))
 
 
 class Раскладка(unittest.TestCase):

@@ -137,6 +137,13 @@
 # Ключи совпадают с приставками видов из pricing.JOBS: i2i, i2v, sound.
 # Режимов без входного снимка больше нет — см. pricing.БЕЗ_ФОТО.
 ПО_ВИДУ = {
+    # Фото-в-фото бывает ДВУХ видов, и это разные товары.
+    #
+    # «Новое место» — обстановку сочиняем с нуля.
+    # «То же место» — обстановку берём с присланного фото.
+    #
+    # Раньше был только первый, и обе категории каталога делали одно и
+    # то же разными словами.
     "i2i": (
         "Reference photographs are supplied. Take the person from them and "
         "rebuild the frame completely around her according to this "
@@ -147,6 +154,25 @@
         "several references are supplied, they show the same person from "
         "different angles or show garments to be used; read them together "
         "rather than averaging them into a blur."
+    ),
+    "i2i_фон": (
+        "Reference photographs are supplied. KEEP THE SETTING OF THE "
+        "REFERENCE: the same room or place, the same furniture and "
+        "objects, the same wall and floor materials, the same time of day, "
+        "the same light sources in the same positions and of the same "
+        "colour temperature. Read the surroundings out of the reference "
+        "and rebuild THAT place — do not invent a different one and do not "
+        "fall back to a studio backdrop. "
+        "What DOES change is the camera and the clothing: the viewpoint, "
+        "the focal length, the distance and the crop are set by this "
+        "scenario, so the room is seen from a new angle. Reconstruct what "
+        "that new angle would reveal of the same room, consistent with "
+        "what the reference shows. The light must arrive from the same "
+        "real sources, which means highlights and shadows fall differently "
+        "than in the reference while still coming from the same windows "
+        "and lamps. "
+        "Where several references are supplied, they show the same person "
+        "and the same place from different angles; read them together."
     ),
     "inpaint": (
         "Change ONLY the region marked in the supplied mask. Everything "
@@ -210,7 +236,7 @@ class Блок:
         self.ещё = ещё
 
 
-def собрать(вид, блок):
+def собрать(вид, блок, фон="новый"):
     """Сценарий + общие блоки -> готовый промпт.
 
     Порядок намеренный: модели внимательнее к началу, поэтому сначала
@@ -219,8 +245,11 @@ def собрать(вид, блок):
     сем = семейство(вид)
     if сем not in ПО_ВИДУ:
         raise KeyError(f"неизвестный вид работы: {вид}")
+    if фон not in ("новый", "референс"):
+        raise ValueError(f"фон бывает «новый» или «референс», а не {фон!r}")
 
-    куски = [ТЕЛО_ПО_ФОТО, ПО_ВИДУ[сем]]
+    ключ = "i2i_фон" if (сем == "i2i" and фон == "референс") else сем
+    куски = [ТЕЛО_ПО_ФОТО, ПО_ВИДУ[ключ]]
     # Откровенная часть идёт ВТОРЫМ блоком, сразу за сохранением лица.
     # Модели внимательнее к началу промпта: уехав в конец, она начинает
     # проигрывать обстановке и свету — то есть ровно тому, ради чего
