@@ -250,6 +250,25 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None):
             busy.discard(u)
 
 
+def оживить(chat, u, старое, байты):
+    """Готовый кадр -> ролик. Отдельно от launch, потому что снимок
+    надо сперва залить на карту: в архиве он лежит у нас, а панель
+    работает с файлами на своей стороне."""
+    with lock:
+        if u in busy:
+            send(chat, "Одно задание уже считается. Дождись его.")
+            return
+    try:
+        имя = gpu.upload(старое["file"] or "frame.png", байты)
+    except GpuError as e:
+        send(chat, f"Не смогла отправить кадр на карту: {str(e)[:150]}")
+        return
+    # Промпт берём ТОТ ЖЕ: ролик должен продолжать этот кадр, а не
+    # уводить в сторону. Обстановку менять не надо — она уже в кадре.
+    launch(chat, u, "i2v_5", старое["prompt"] or "", [имя],
+           scene=старое["scene"])
+
+
 def launch(chat, u, kind, prompt, photos=None, scene=None):
     with lock:
         if u in busy:
@@ -429,6 +448,21 @@ def on_callback(cb):
 
     if data in ("m:balance", "m:cab"):
         answer(cid); показать_кабинет(chat, u, cb["from"].get("first_name")); return
+
+    if data.startswith("anim:"):
+        # «Оживить это»: берём готовый кадр из АРХИВА и делаем его
+        # первым кадром ролика. Перезагружать ничего не нужно — файл
+        # наш. Именно так и работает фото-в-видео: start_image это
+        # буквально первый кадр, а не подсказка.
+        answer(cid)
+        старое = store.job(data.split(":", 1)[1])
+        if not старое or старое["tg_id"] != u:
+            send(chat, "Эта работа не найдена."); return
+        байты = archive.байты(старое["path"])
+        if not байты:
+            send(chat, "Файл не сохранился, оживить нечем. "
+                       "Сделай кадр заново."); return
+        оживить(chat, u, старое, байты); return
 
     if data == "m:works":
         answer(cid); показать_работы(chat, u); return
