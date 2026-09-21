@@ -624,6 +624,71 @@ class Кабинет(unittest.TestCase):
         self.assertEqual(self.s.balance(2), 3)
 
 
+class ПремиумИконкиВТексте(unittest.TestCase):
+    """Под премиум-иконкой — ровно один эмодзи, и никак иначе.
+
+    Проверено на живом боте 21.09.2026 через sendMessage:
+
+        буква «C»      -> ENTITY_TEXT_INVALID
+        два эмодзи     -> ENTITY_TEXT_INVALID
+        один эмодзи    -> ok
+
+    Цена ошибки несоразмерна: Телеграм отбивает ВСЁ сообщение, а не
+    портит значок. Из-за этого бот при первом запуске не мог ответить
+    на /start вовсе — экран приветствия складывал слово AMBERRY из
+    премиум-букв.
+    """
+
+    def test_буква_под_иконкой_не_проходит(self):
+        with self.assertRaises(ValueError):
+            emoji.тег(emoji.МОНЕТА, "C")
+
+    def test_два_эмодзи_не_проходят(self):
+        with self.assertRaises(ValueError):
+            emoji.тег(emoji.МОНЕТА, "😏😏")
+
+    def test_пустой_запасной_не_проходит(self):
+        with self.assertRaises(ValueError):
+            emoji.тег("123", "")
+
+    def test_у_каждой_иконки_есть_запасной_символ(self):
+        """Иначе `тег()` без явного запасного упадёт на живом экране."""
+        имена = [n for n in dir(emoji)
+                 if n.isupper() and isinstance(getattr(emoji, n), str)
+                 and getattr(emoji, n).isdigit()]
+        for n in имена:
+            self.assertIn(getattr(emoji, n), emoji.ЗАПАСНОЙ,
+                          f"у иконки {n} нет запасного символа")
+
+    def test_все_запасные_это_один_эмодзи(self):
+        for i, з in emoji.ЗАПАСНОЙ.items():
+            self.assertTrue(emoji._один_эмодзи(з), f"{i}: запасной {з!r} не эмодзи")
+
+    def test_шапка_это_простой_текст(self):
+        """Название премиум-буквами невозможно: буква не эмодзи."""
+        self.assertNotIn("tg-emoji", emoji.шапка())
+        self.assertEqual(emoji.шапка(), emoji.ИМЯ)
+
+    def test_ни_один_экран_не_кладёт_под_иконку_не_эмодзи(self):
+        """Сквозная проверка: собираем реальные экраны и смотрим, что
+        внутри каждого tg-emoji ровно один эмодзи."""
+        import ui
+        экраны = [ui.шапка_главного(5, "Ника"), ui.текст_оплаты(),
+                  ui.текст_пакета(pricing.PACKS[0]),
+                  ui.текст_кабинета(5, {"работ": 1, "осечек": 0, "потрачено": 1,
+                                        "куплено": 1, "позвано": 0,
+                                        "за_друзей": 0, "записей": 1}, "Ника")]
+        экраны += [ui.шапка_категории(c) for c in catalog.ВИДИМЫЕ]
+        import re as _re
+        нашли = 0
+        for э in экраны:
+            for внутри in _re.findall(r'<tg-emoji emoji-id="\d+">(.*?)</tg-emoji>', э):
+                нашли += 1
+                self.assertTrue(emoji._один_эмодзи(внутри),
+                                f"под иконкой {внутри!r} — Телеграм отобьёт экран")
+        self.assertGreater(нашли, 0, "иконок в экранах не нашлось вовсе")
+
+
 class БезВидеокарты(unittest.TestCase):
     """Бот обязан жить без карты.
 
