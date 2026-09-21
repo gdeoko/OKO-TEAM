@@ -64,8 +64,19 @@ import prompts
 
 
 def _строки_владельца(путь=None):
-    """Читает `ключ = текст` из файла. Пустой файл и отсутствие файла —
-    не ошибка: сценарии соберутся без откровенной части."""
+    """Читает `ключ = английский текст | русская подпись`.
+
+    Два поля, потому что у них разные читатели. Английский уходит
+    МОДЕЛИ: она обучена на английском, русский даёт мусор. Русская
+    подпись показывается ЧЕЛОВЕКУ на экране сценария, до оплаты — он
+    должен понимать, за какое действие платит, а не догадываться по
+    названию ракурса.
+
+    Подписи нет — остаётся только английский, и на экране действие не
+    называется. Это хуже, но не поломка.
+
+    Пустой файл и отсутствие файла — тоже не ошибка.
+    """
     out = {}
     try:
         with open(путь or ФАЙЛ_ОТКРОВЕННОГО, encoding="utf-8") as f:
@@ -73,10 +84,11 @@ def _строки_владельца(путь=None):
                 строка = строка.strip()
                 if not строка or строка.startswith("#") or "=" not in строка:
                     continue
-                ключ, _, текст = строка.partition("=")
-                текст = текст.strip()
-                if текст:
-                    out[ключ.strip()] = текст
+                ключ, _, хвост = строка.partition("=")
+                англ, _, рус = хвост.partition("|")
+                англ, рус = англ.strip(), рус.strip()
+                if англ:
+                    out[ключ.strip()] = (англ, рус)
     except OSError:
         pass
     return out
@@ -88,18 +100,33 @@ def _строки_владельца(путь=None):
 class Scene:
     """Готовый сценарий: что покажем человеку и что отправим модели."""
 
-    def __init__(self, key, title, job, блок, подпись=""):
+    def __init__(self, key, title, job, блок, подпись="", фон="новый",
+                 место=""):
         self.key = key
         self.title = title
         self.job = job                # ключ из pricing.JOBS — отсюда цена
+        # `фон` — откуда берётся обстановка:
+        #   "референс" — та же, что на присланном фото (категория «Раздеть»)
+        #   "новый"    — сочиняем с нуля (остальные)
+        # Без этого различия «Раздеть» и «Обстановка» делали одно и то
+        # же разными словами.
+        self.фон = фон
+        # Сценарий либо задаёт СВОЁ место («Обстановка»), либо берёт его
+        # с присланного фото. Второе — не поблажка, а факт: у «Раздеть»
+        # так задумано, а у оживления первым кадром идёт сам снимок, и
+        # обстановка там буквально с него, иначе и быть не может.
+        self.своё_место = bool(место)
+        self.место = место or "как на твоём фото"
         # Строка владельца подставляется по ключу сценария. Задана в
         # блоке напрямую — она сильнее: так можно проверить сборку, не
         # трогая файл.
+        англ, рус = ОТКРОВЕННОЕ.get(key, ("", ""))
         if not блок.откровенное:
-            блок.откровенное = ОТКРОВЕННОЕ.get(key, "")
+            блок.откровенное = англ
+        self.действие = рус           # по-русски, человеку на экран
         self.блок = блок
-        self.подпись = подпись        # строка под картинкой в боте
-        self.prompt = prompts.собрать(job, блок)
+        self.подпись = подпись        # строка под названием в боте
+        self.prompt = prompts.собрать(job, блок, фон=фон)
         self.negative = prompts.НЕГАТИВ
 
     @property
@@ -140,16 +167,26 @@ def _сц(key, title, job, подпись, **поля):
 
 
 def _СЦ_РАЗДЕТЬ(key, title, подпись, **поля):
-    """Фото по фото, а не правка по маске: маску человек должен обвести
-    руками, а здесь меняется состояние целиком. Референсов до трёх."""
-    return Scene(key, title, "i2i", Блок(**поля), подпись)
+    """«Раздеть» — ТА ЖЕ обстановка, что на присланном фото.
+
+    Меняются только ракурс, план и одежда. Оговорка, которую стоит
+    помнить: при смене ракурса фон не остаётся пиксель в пиксель —
+    другой угол видит другую часть комнаты, и модель достраивает ту же
+    комнату с новой точки. Похоже и узнаваемо, но не идентично; чтобы
+    было идентично, нужна правка по маске, а рисовать маску в телеграме
+    нечем.
+    """
+    return Scene(key, title, "i2i", Блок(**поля), подпись, фон="референс")
 
 
-def _СЦ_ФОТО(key, title, подпись, **поля):
-    """Обстановка меняется целиком, поэтому фото-по-фото, а не правка
-    области: у Qwen-Image-Edit референс идёт в условие, и каркас кадра
-    строится заново — позу и план можно поменять полностью."""
-    return Scene(key, title, "i2i", Блок(**поля), подпись)
+def _СЦ_ФОТО(key, title, подпись, место="", **поля):
+    """«Обстановка» — НОВОЕ место, сочиняем с нуля.
+
+    `место` — как это место называется по-русски. Показывается человеку
+    на экране сценария до оплаты: он должен понимать, что покупает
+    перенос именно в спальню, а не гадать по названию кнопки.
+    """
+    return Scene(key, title, "i2i", Блок(**поля), подпись, место=место)
 
 
 def _СЦ_ОЖИВИТЬ(key, title, подпись, **поля):
@@ -171,142 +208,95 @@ CATEGORIES = [
 
     # -----------------------------------------------------------------
     Category(
-        "undress", "Раздеть", "Снять с героини то, что на ней надето",
+        "undress", "Раздеть", "Та же обстановка, что на твоём фото",
         иконка="СТРИНГИ",
         scenes=[
-            # У каждого сценария этой категории свой ПЛАН и свой СВЕТ —
-            # то есть то, чем кадр отличается технически. Что именно
-            # происходит в кадре, дописывает владелец в ОТКРОВЕННОЕ.txt
-            # по ключу сценария. Пустая строка там — не поломка:
-            # сценарий соберётся и покажет героиню в заданном плане.
+            # ОБСТАНОВКА БЕРЁТСЯ С ПРИСЛАННОГО ФОТО (фон="референс" в
+            # помощнике). Поэтому ни один сценарий здесь не имеет права
+            # опираться на мебель: «лёжа на кровати» бессмысленно, если
+            # человек прислал фото на улице. Всё, что требует кровати,
+            # зеркала или душа, живёт в «Обстановке» — там место наше.
+            #
+            # Здесь только РАКУРС, ПЛАН И ПОЗА — они работают где угодно.
             _СЦ_РАЗДЕТЬ("un_close", "Крупный план",
-                "От груди и выше, мягкий боковой свет",
+                "От груди и выше",
                 поза="Head and shoulders turned a few degrees off the lens so "
                      "the neck reads long, chin level, weight settled on one "
                      "side. Shoulders relaxed and down, not braced.",
-                свет="One large soft key from camera left at forty-five "
-                     "degrees and slightly above the eyeline, a weak fill from "
-                     "the right at a quarter of its strength. A narrow rim "
-                     "from behind separates the shoulder and the jaw from the "
-                     "background.",
                 камера="85mm at f/1.8, chest-up, lens at eye level. Shallow "
-                       "depth so the background falls away completely.",
-                обстановка="Plain deep-grey backdrop two metres behind her, "
-                           "unlit and featureless."),
+                       "depth so the room behind her falls away softly — it "
+                       "stays the same room, just out of focus."),
 
             _СЦ_РАЗДЕТЬ("un_full", "В полный рост",
-                "Вся фигура, жёсткий свет, чёткая тень",
+                "Вся фигура целиком",
                 поза="Standing, weight on the back leg so the hips tilt, the "
                      "front knee soft and turned slightly inward. Spine long, "
                      "one shoulder dropped.",
-                свет="A single hard source high and to the right, no fill at "
-                     "all, so the shadow edge is crisp and the body reads as "
-                     "form rather than as a flat shape. The cast shadow falls "
-                     "long across the floor into frame.",
                 камера="35mm at f/4, full length with a hand of space above "
-                       "the head and the floor line visible. Camera at hip "
-                       "height so the proportions stay honest.",
-                обстановка="Bare concrete floor and a seamless pale wall."),
-
-            _СЦ_РАЗДЕТЬ("un_bed", "Лёжа",
-                "Смятая постель, свет из окна сбоку",
-                поза="Lying on her side across rumpled sheets, the lower arm "
-                     "folded under the head, the upper knee drawn forward. "
-                     "The body describes a long S-curve from shoulder to ankle.",
-                свет="Cool daylight through a window just out of frame at "
-                     "camera left, raking along the body so every fold of the "
-                     "sheet casts its own small shadow. Warm bounce from the "
-                     "wooden floor fills the underside faintly.",
-                камера="50mm at f/2, shot from just above her eye level "
-                       "looking slightly down the length of the body.",
-                обстановка="A bed with white linen sheets pulled loose, "
-                           "pillows pushed aside, a dim room beyond."),
-
-            _СЦ_РАЗДЕТЬ("un_mirror", "У зеркала",
-                "Отражение и спина в одном кадре",
-                поза="Standing close to a tall mirror, front toward the glass, "
-                     "back toward the lens. The face is visible only in the "
-                     "reflection and must be the same face there — reflections "
-                     "are where identity usually breaks.",
-                свет="A warm bulb above the mirror lighting the reflected "
-                     "front, and a cooler window light behind the camera "
-                     "grazing her back. Two colour temperatures, kept apart.",
-                камера="50mm at f/2.8, positioned off-axis so the lens itself "
-                       "does not appear in the glass.",
-                обстановка="A tall frameless mirror against a bedroom wall, "
-                           "the room behind softly out of focus.",
-                ещё="The mirror shows a true reflection: the same body, the "
-                    "same pose, reversed correctly, with the same lighting "
-                    "arriving from the same direction. No second person."),
+                       "the head. Camera at hip height so the proportions "
+                       "stay honest. Enough of the room is in frame to read "
+                       "where she is."),
 
             _СЦ_РАЗДЕТЬ("un_back", "Со спины",
                 "Спина и линия плеч, взгляд через плечо",
                 поза="Back to the lens, head turned far enough over the "
                      "shoulder that one eye and the line of the cheek are "
-                     "visible. Shoulder blades drawn together, spine defined, "
-                     "one hand resting at the nape.",
-                свет="A soft key behind and above the camera so the whole "
-                     "back is evenly lit, plus a hard kicker from the far side "
-                     "drawing a bright line down the outer edge of the arm "
-                     "and hip.",
+                     "visible. Shoulder blades drawn together, spine defined.",
                 камера="85mm at f/2, from mid-back up, lens slightly below "
-                       "shoulder height.",
-                обстановка="Dark room, no visible background detail."),
+                       "shoulder height."),
+
+            _СЦ_РАЗДЕТЬ("un_three", "В три четверти",
+                "Вполоборота, самый выгодный разворот",
+                поза="Turned about forty degrees away from the lens with the "
+                     "head brought back toward it — the angle that shows both "
+                     "the line of the waist and the front at once. Weight on "
+                     "the far leg.",
+                камера="50mm at f/2, three-quarter length, lens at chest "
+                       "height."),
 
             _СЦ_РАЗДЕТЬ("un_sit", "Сидя",
-                "На краю кровати, свет из-за спины",
-                поза="Seated on the edge of a bed, feet on the floor, weight "
-                     "on one hip so the spine curves. Forearms resting on the "
-                     "thighs, head lowered a little and turned toward the "
-                     "lens.",
-                свет="A warm lamp behind and to one side, so the outline of "
-                     "the shoulders and the top of the thighs is drawn in "
-                     "light while the front stays in soft shadow. A weak "
-                     "bounce from a wall in front lifts the face just enough "
-                     "to read.",
+                "Сидит на том, что есть в месте съёмки",
+                поза="Seated on whatever the reference setting offers to sit "
+                     "on — read it out of the photograph rather than "
+                     "inventing furniture. Feet down, weight on one hip so "
+                     "the spine curves, forearms resting on the thighs, head "
+                     "lowered a little and turned toward the lens.",
                 камера="50mm at f/2, lens at her eye level, three-quarter "
-                       "length.",
-                обстановка="A dim bedroom, the bed unmade behind her."),
+                       "length."),
 
             _СЦ_РАЗДЕТЬ("un_kneel", "На коленях",
                 "Низкая точка, свет сверху",
                 поза="Kneeling, sitting back on the heels, spine long, "
                      "shoulders open, hands resting on the thighs. Chin "
                      "level, eyes to the lens.",
-                свет="A single source high overhead and slightly forward, so "
-                     "the light falls down the front of the body and the "
-                     "floor around her goes dark. No fill.",
                 камера="50mm at f/2.8, lens at her chest height so the angle "
-                       "is level with her rather than looking down at her.",
-                обстановка="Bare dark floor, the background unlit."),
+                       "is level with her rather than looking down at her."),
 
-            _СЦ_РАЗДЕТЬ("un_shower", "Под водой",
-                "Мокрая кожа, пар, стекло в каплях",
-                поза="Standing under running water, head tipped back, hair "
-                     "pushed away from the face by the stream, one hand at the "
-                     "back of the neck.",
-                свет="A single overhead source through steam, so the light "
-                     "arrives soft and volumetric and every droplet on the "
-                     "skin carries its own tiny highlight.",
-                камера="50mm at f/2.8, waist-up, lens at chest height, "
-                       "slightly angled up.",
-                обстановка="A walk-in shower with dark stone and a glass "
-                           "screen beaded with condensation.",
-                ещё="Water behaves as water: it runs in continuous threads "
-                    "over the shoulders, pools in the collarbones, and beads "
-                    "where it meets skin. Wet hair is heavy, separated into "
-                    "ropes, and darker than dry hair. Wet skin is glossier "
-                    "but still porous — never plastic."),
+            _СЦ_РАЗДЕТЬ("un_low", "Снизу вверх",
+                "Съёмка с низкой точки",
+                поза="Standing, seen from below. Chin level — a low angle "
+                     "with a raised chin reads as posing; level reads as "
+                     "presence.",
+                камера="35mm from just above knee height, tilted up. Keep the "
+                       "focal length at 35mm and the distance honest so the "
+                       "body does not distort; low angles exaggerate on their "
+                       "own."),
+
+            _СЦ_РАЗДЕТЬ("un_over", "Сверху вниз",
+                "Съёмка с высокой точки",
+                поза="Seen from above, face turned up to the lens, one "
+                     "shoulder forward.",
+                камера="35mm at roughly sixty degrees above her, held steady. "
+                       "The height is the point, not movement of the rig."),
         ],
     ),
 
-    # -----------------------------------------------------------------
     Category(
         "scene", "Обстановка", "Перенести героиню в другое место",
         иконка="КАБЛУК",
         scenes=[
             _СЦ_ФОТО("sc_bed", "Шёлковая постель",
-                "Утро, смятый шёлк, свет из-за штор",
+                "Утро, смятый шёлк, свет из-за штор", место="спальня",
                 обстановка="A wide bed dressed in ivory silk, the sheets "
                            "deeply creased from a night of sleep, one pillow "
                            "pushed aside. A bedroom in soft focus behind: a "
@@ -318,7 +308,7 @@ CATEGORIES = [
                      "throwing long soft shadows across the bedding."),
 
             _СЦ_ФОТО("sc_studio", "Чёрная студия",
-                "Один источник, всё остальное в темноте",
+                "Один источник, всё остальное в темноте", место="фотостудия",
                 обстановка="A professional photo studio against seamless "
                            "black paper, nothing else in frame.",
                 свет="A single large softbox at forty-five degrees camera "
@@ -328,19 +318,8 @@ CATEGORIES = [
                 настроение="Severe, controlled, expensive — the register of a "
                            "fashion test shot."),
 
-            _СЦ_ФОТО("sc_bath", "Ванная",
-                "Пар, запотевшее стекло, мокрая кожа",
-                обстановка="A dim tiled bathroom, steam hanging in the air, "
-                           "a large mirror fogged at the edges, warm water "
-                           "still running. Small droplets condensing on every "
-                           "cold surface.",
-                свет="One warm bulb above and to the side, its light scattered "
-                     "by the steam into a soft glow.",
-                ещё="Her skin is damp: water beading on the shoulders and "
-                    "collarbone, hair heavy and wet at the ends."),
-
             _СЦ_ФОТО("sc_hotel", "Ночной отель",
-                "Город в окне, лампа у кровати",
+                "Город в окне, лампа у кровати", место="номер отеля",
                 обстановка="A high-floor hotel room at night. A floor-to-"
                            "ceiling window fills one side of the frame with a "
                            "city skyline far below, out of focus into points "
@@ -350,7 +329,7 @@ CATEGORIES = [
                      "the other."),
 
             _СЦ_ФОТО("sc_pool", "У бассейна",
-                "Вода, отражения, полуденное солнце",
+                "Вода, отражения, полуденное солнце", место="у бассейна",
                 обстановка="The edge of a swimming pool at midday, turquoise "
                            "water throwing rippling caustic reflections onto "
                            "everything above it. Pale stone, a folded towel, "
@@ -360,7 +339,7 @@ CATEGORIES = [
                      "underside of her chin and arms."),
 
             _СЦ_ФОТО("sc_neon", "Неоновый переулок",
-                "Мокрый асфальт, розовые вывески",
+                "Мокрый асфальт, розовые вывески", место="ночная улица",
                 обстановка="A narrow city alley at night after rain. Wet "
                            "asphalt mirrors a row of neon signs in magenta and "
                            "cold blue. Steam rising from a grate, brick walls "
@@ -371,7 +350,7 @@ CATEGORIES = [
                 настроение="Cinematic, charged, slightly dangerous."),
 
             _СЦ_ФОТО("sc_nature", "Поле на закате",
-                "Высокая трава, контровой свет",
+                "Высокая трава, контровой свет", место="поле на закате",
                 обстановка="An open field of tall dry grass at golden hour, "
                            "the horizon low and distant, a line of trees far "
                            "behind in haze.",
@@ -380,21 +359,8 @@ CATEGORIES = [
                      "by bounce from the ground. Visible lens flare and warm "
                      "atmospheric haze."),
 
-            _СЦ_ФОТО("sc_house", "Гостиная",
-                "Большой дом, вечер, тёплые лампы",
-                обстановка="A wide living room in an expensive house: a low "
-                           "linen sofa, a dark wooden floor, floor-to-ceiling "
-                           "windows showing a garden gone dark. A few warm "
-                           "lamps at different heights, none of them "
-                           "overhead.",
-                свет="Pools of warm tungsten light with real darkness between "
-                     "them — the room is lit by lamps, not by a film crew. "
-                     "She sits inside one of those pools.",
-                камера="35mm at f/2, full length, camera at seated eye "
-                       "height, far enough back that the room reads."),
-
             _СЦ_ФОТО("sc_office", "Кабинет",
-                "Стол, жалюзи, полосы света",
+                "Стол, жалюзи, полосы света", место="кабинет",
                 обстановка="A private office after hours: a heavy desk, a "
                            "leather chair, shelves in shadow, venetian blinds "
                            "across one whole wall.",
@@ -405,8 +371,42 @@ CATEGORIES = [
                 камера="50mm at f/2.8, waist-up, camera at standing eye "
                        "height."),
 
+            _СЦ_ФОТО("sc_mirror", "У зеркала",
+                "Отражение и спина в одном кадре", место="комната с зеркалом",
+                обстановка="A tall frameless mirror against a bedroom wall, "
+                           "the room behind it softly out of focus.",
+                поза="Standing close to the mirror, front toward the glass, "
+                     "back toward the lens. The face is visible only in the "
+                     "reflection.",
+                свет="A warm bulb above the mirror lighting the reflected "
+                     "front, a cooler window light behind the camera grazing "
+                     "her back. Two colour temperatures, kept apart.",
+                камера="50mm at f/2.8, off-axis so the lens never appears in "
+                       "the glass.",
+                ещё="The mirror shows a true reflection: same body, same "
+                    "pose, reversed correctly, lit from the same direction. "
+                    "Reflections are where identity usually breaks — the face "
+                    "in the glass must be the same face. No second person."),
+
+            _СЦ_ФОТО("sc_shower", "Под душем",
+                "Мокрая кожа, пар, стекло в каплях", место="душевая",
+                обстановка="A walk-in shower with dark stone and a glass "
+                           "screen beaded with condensation.",
+                поза="Standing under running water, head tipped back, hair "
+                     "pushed away from the face by the stream, one hand at "
+                     "the back of the neck.",
+                свет="A single overhead source through steam, so the light "
+                     "arrives soft and volumetric and every droplet carries "
+                     "its own tiny highlight.",
+                камера="50mm at f/2.8, waist-up, lens at chest height.",
+                ещё="Water behaves as water: it runs in continuous threads "
+                    "over the shoulders, pools in the collarbones, beads "
+                    "where it meets skin. Wet hair is heavy, separated into "
+                    "ropes, darker than dry hair. Wet skin is glossier but "
+                    "still porous — never plastic."),
+
             _СЦ_ФОТО("sc_car", "Заднее сиденье",
-                "Салон ночью, свет фонарей по лицу",
+                "Салон ночью, свет фонарей по лицу", место="салон машины",
                 обстановка="The back seat of a car at night, dark leather, "
                            "the city sliding past outside the window.",
                 свет="Streetlights passing overhead sweep bands of warm light "
