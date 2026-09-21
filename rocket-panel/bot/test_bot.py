@@ -151,10 +151,18 @@ class Цены(unittest.TestCase):
         с_фото = prompts.собрать("i2i", prompts.Блок())
         self.assertIn("face preserved exactly", с_фото)
 
-    def test_надбавка_за_качество_не_дороже_чем_у_него(self):
-        for q in pricing.QUALITY:
-            self.assertLessEqual(q["crystals"], q["market_crystals"],
-                                 f"{q['id']}: надбавка выше, чем у конкурента")
+    def test_ступеней_качества_нет(self):
+        """Решение владельца 21.09.2026: 2K/4K/8K с доплатой убраны —
+        лишний выбор перед каждой работой, за который ещё и платят.
+
+        Тест сторожит не код, а решение: ступени возвращаются сами
+        собой, потому что «у конкурента же есть». Понадобятся снова —
+        вернут сознательно, удалив этот тест.
+        """
+        for имя in ("QUALITY", "quality", "КАЧЕСТВО_ПРИМЕНИМО",
+                    "доплата_за_качество"):
+            self.assertFalse(hasattr(pricing, имя),
+                             f"pricing.{имя} — ступени вернулись")
 
     def test_чем_больше_пакет_тем_дешевле_коин(self):
         курсы = [pricing.coins_per_rub(p) for p in pricing.PACKS]
@@ -193,12 +201,9 @@ class Цены(unittest.TestCase):
                              f"pricing.{имя} — подписка вернулась")
         for k, j in pricing.JOBS.items():
             self.assertIsNone(j.plan, f"{k}: генерация заперта планом")
-        for q in pricing.QUALITY:
-            self.assertNotIn("plan", q, f"{q['id']}: качество заперто планом")
 
     def test_неизвестное_падает_явно(self):
-        for f, arg in ((pricing.job, "нет"), (pricing.pack, "нет"),
-                       (pricing.quality, "нет")):
+        for f, arg in ((pricing.job, "нет"), (pricing.pack, "нет")):
             with self.assertRaises(KeyError):
                 f(arg)
 
@@ -543,53 +548,41 @@ class Архив(unittest.TestCase):
         self.assertFalse(archive.забыть_человека(77), "второй раз удалять нечего")
 
 
-class Качество(unittest.TestCase):
-    """Доплата берётся только за то, что мы делаем.
+class ПодъёмРазрешения(unittest.TestCase):
+    """Разрешение поднимается всем и всегда, одним проходом.
 
-    2K/4K/8K раньше стояли в прайсе, продавались — и не доходили до
-    панели вовсе: бот передавал только соотношение сторон. Человек
-    платил за слово.
+    Диффузия идёт в родном разрешении модели: просить у Qwen кадр вдвое
+    выше обучающего — это швы и вторые головы. Подъём делается после,
+    отдельным узлом, и он же единственный.
     """
 
-    def setUp(self):
-        self.d = tempfile.mkdtemp()
-        self.s = Store(os.path.join(self.d, "b.db"))
-        self.s.ensure_user(1, welcome=0)
+    def панель(self):
+        путь = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "..", "gpu", "panel.py")
+        return open(путь, encoding="utf-8").read()
 
-    def test_за_качество_на_видео_не_берём(self):
-        """Апскейлить каждый кадр ролика мы не станем — значит и денег
-        за это не берём. Правило продублировано в панели, и разойтись
-        им нельзя."""
-        for вид in ("t2v_5", "t2v_10", "i2v_5", "i2v_10", "sound"):
-            for q in pricing.QUALITY:
-                self.assertEqual(pricing.доплата_за_качество(вид, q["id"]), 0,
-                                 f"{вид} + {q['id']}: доплата за неприменимое")
+    def test_панель_поднимает_разрешение(self):
+        т = self.панель()
+        self.assertIn("ImageUpscaleWithModel", т, "прохода апскейла нет")
+        self.assertIn("UpscaleModelLoader", т)
+        self.assertIn("ВЫХОД=(1152,2048)", т.replace(" ", ""))
 
-    def test_за_качество_на_фото_берём_как_в_прайсе(self):
-        for вид in ("t2i", "i2i", "inpaint"):
-            for q in pricing.QUALITY:
-                self.assertEqual(pricing.доплата_за_качество(вид, q["id"]),
-                                 q["coins"], f"{вид} + {q['id']}")
+    def test_ступеней_в_панели_тоже_нет(self):
+        """Прайс и панель обязаны сходиться. Останется лестница в одном
+        из двух — снова разойдутся цена и то, что получает человек."""
+        т = self.панель()
+        for след in ('"q2k"', '"q4k"', '"q8k"', 'd.get("quality"'):
+            self.assertNotIn(след, т, f"в панели остался {след}")
 
-    def test_2k_бесплатно_а_не_отсутствует(self):
-        """У конкурента 2K заперто подпиской. У нас — даром, и это довод,
-        который стоит не потерять при правке прайса."""
-        self.assertEqual(pricing.quality("q2k")["coins"], 0)
-        self.assertGreater(pricing.quality("q2k")["market_crystals"], 0)
+    def test_видео_не_апскейлится(self):
+        """Апскейлить каждый кадр ролика — минуты карты и файл, который
+        телеграм не пропустит. Подъём есть только у фото и правки."""
+        т = self.панель()
+        начало = т.index("def wf_video")
+        конец = т.find("\ndef ", начало + 1)
+        видео = т[начало:конец if конец > 0 else len(т)]
+        self.assertNotIn("_апскейл", видео)
 
-    def test_список_применимости_совпадает_с_видами_фото(self):
-        фото = {k for k in pricing.JOBS
-                if not k.startswith(("t2v", "i2v")) and k != "sound"}
-        self.assertEqual(pricing.КАЧЕСТВО_ПРИМЕНИМО, фото)
-
-    def test_ступени_качества_есть_в_панели(self):
-        """Прайс и панель обязаны знать одни и те же ступени. Появится
-        ступень только в прайсе — её продадут, а панель молча отдаст
-        родное разрешение."""
-        путь = os.path.join(os.path.dirname(__file__), "..", "gpu", "panel.py")
-        текст = open(путь, encoding="utf-8").read()
-        for q in pricing.QUALITY:
-            self.assertIn(f'"{q["id"]}"', текст, f'панель не знает {q["id"]}')
 
 
 class Кабинет(unittest.TestCase):
@@ -598,14 +591,6 @@ class Кабинет(unittest.TestCase):
         self.d = tempfile.mkdtemp()
         self.s = Store(os.path.join(self.d, "b.db"))
         self.s.ensure_user(1, "kto", welcome=5)
-
-    def test_качество_по_умолчанию_самое_дешёвое(self):
-        self.assertEqual(self.s.quality(1), "hd")
-        self.assertEqual(pricing.quality("hd")["coins"], 0)
-
-    def test_качество_запоминается(self):
-        self.s.set_quality(1, "q4k")
-        self.assertEqual(self.s.quality(1), "q4k")
 
     def test_сводка_считается_по_журналу(self):
         self.s.credit(1, 20, "paid", "пакет")
@@ -637,16 +622,6 @@ class Кабинет(unittest.TestCase):
         self.assertIsNotNone(self.s.user(2))
         self.assertIsNone(self.s.user(2)["invited_by"])
         self.assertEqual(self.s.balance(2), 3)
-
-    def test_старая_база_получает_колонку_качества(self):
-        путь = os.path.join(self.d, "старая.db")
-        c = sqlite3.connect(путь)
-        c.executescript(store.SCHEMA)
-        c.execute("ALTER TABLE users DROP COLUMN quality")
-        c.execute("INSERT INTO users(tg_id,welcome,created_at) VALUES(9,1,0)")
-        c.commit(); c.close()
-        s2 = Store(путь)
-        self.assertEqual(s2.quality(9), "hd")
 
 
 class НижнееМеню(unittest.TestCase):
