@@ -1271,6 +1271,50 @@ class СложениеБуквальноеИПовторённое(unittest.Test
         self.assertIn("Each woman in this frame", p)
 
 
+class ВыборФигуры(unittest.TestCase):
+    """Прочитать сложение со снимка машиной не вышло: CLIP на проверке
+    22.09.2026 отвечал «маленькая» на что угодно, разброс 0.58-0.83 и
+    никакой связи с тем, что на фото. Значит, выбирает человек, а
+    умолчание остаётся стройным — модель ошибается в большую сторону."""
+
+    def setUp(self):
+        import ui
+        self.ui = ui
+        self.s = Store(os.path.join(tempfile.mkdtemp(), "b.db"))
+        self.s.ensure_user(1, "kto", welcome=5)
+
+    def test_три_положения_и_все_в_промпте(self):
+        self.assertEqual(set(self.ui.ФИГУРЫ), set(prompts.СЛОЖЕНИЕ))
+
+    def test_умолчание_стройное(self):
+        self.assertEqual(prompts.СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ, "стройная")
+        p = catalog.scene("un_full").промпт()
+        self.assertIn(prompts.СЛОЖЕНИЕ["стройная"], p)
+
+    def test_выбор_доезжает_до_промпта(self):
+        p = catalog.scene("un_full").промпт(сложение="пышная")
+        self.assertIn(prompts.СЛОЖЕНИЕ["пышная"], p)
+        self.assertNotIn(prompts.СЛОЖЕНИЕ["стройная"], p)
+
+    def test_выбор_помнится(self):
+        """Человек носит снимки одного и того же человека; спрашивать
+        каждый раз значит спрашивать зря."""
+        self.assertEqual(self.s.сложение(1), "")
+        self.s.сменить_сложение(1, "пышная")
+        self.assertEqual(self.s.сложение(1), "пышная")
+
+    def test_кнопка_показывает_текущее(self):
+        клава = self.ui.меню_сценария(catalog.scene("un_full"), "ru", None, "пышная")
+        тексты = [b["text"] for р in клава["inline_keyboard"] for b in р]
+        self.assertTrue(any("Пышная" in т for т in тексты), тексты)
+
+    def test_экран_выбора_предлагает_все_три(self):
+        клава = self.ui.меню_фигуры(catalog.scene("un_full"))
+        данные = [b.get("callback_data","") for р in клава["inline_keyboard"] for b in р]
+        for к in self.ui.ФИГУРЫ:
+            self.assertIn(f"fg:{к}:un_full", данные)
+
+
 class ПорядокСнимковУПары(unittest.TestCase):
     """Узел модели берёт снимки без подписей ролей: сказать «на первом
     он, на втором она» технически нечем, единственная зацепка — слова
