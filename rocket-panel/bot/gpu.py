@@ -17,7 +17,21 @@ class Gpu:
         self.auth = base64.b64encode(f"{login}:{password}".encode()).decode()
         self.timeout = timeout
 
+    @property
+    def настроена(self):
+        """Адрес панели задан. Карта арендуется почасово, и бо́льшую
+        часть времени её нет вовсе — это нормальное состояние, а не
+        поломка."""
+        return bool(self.base)
+
     def _req(self, path, data=None, files=None, method=None):
+        # Адреса нет — говорим об этом своей ошибкой. Без этой проверки
+        # urllib.request.Request падал с ValueError «unknown url type:
+        # '/api/stats'», а ValueError никто не ловит: бот не запускался
+        # вовсе, хотя без карты обязан работать — баланс, пакеты,
+        # оплата, кабинет и архив от неё не зависят.
+        if not self.настроена:
+            raise GpuError("видеокарта не подключена (нет ROCKET_GPU_URL)")
         url = f"{self.base}/{path.lstrip('/')}"
         headers = {"Authorization": f"Basic {self.auth}"}
         body = None
@@ -36,8 +50,11 @@ class Gpu:
         elif data is not None:
             body = json.dumps(data).encode()
             headers["Content-Type"] = "application/json"
-        req = urllib.request.Request(url, data=body, headers=headers, method=method)
         try:
+            # Сборка запроса ВНУТРИ try: кривой адрес роняет уже её, и
+            # раньше эта ошибка пролетала мимо всех обработчиков.
+            req = urllib.request.Request(url, data=body, headers=headers,
+                                         method=method)
             with urllib.request.urlopen(req, timeout=self.timeout) as r:
                 raw = r.read()
                 ctype = r.headers.get("Content-Type", "")

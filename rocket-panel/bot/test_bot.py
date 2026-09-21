@@ -624,6 +624,40 @@ class Кабинет(unittest.TestCase):
         self.assertEqual(self.s.balance(2), 3)
 
 
+class БезВидеокарты(unittest.TestCase):
+    """Бот обязан жить без карты.
+
+    Карта арендуется почасово: её берут под нагрузку и возвращают,
+    поэтому «карты нет» — обычное состояние, а не авария. Баланс,
+    пакеты, оплата, кабинет, архив и «Мои работы» от неё не зависят.
+
+    Первый боевой запуск на сервере упал именно здесь: при пустом
+    адресе панели urllib ронял ValueError «unknown url type:
+    '/api/stats'» ещё до try, и бот не поднимался вовсе.
+    """
+
+    def setUp(self):
+        from gpu import Gpu
+        self.g = Gpu("", "rocket", "")
+
+    def test_ненастроенная_карта_видна_как_ненастроенная(self):
+        self.assertFalse(self.g.настроена)
+
+    def test_проверка_живости_не_падает_а_отвечает_нет(self):
+        self.assertFalse(self.g.alive())
+
+    def test_любой_вызов_даёт_нашу_ошибку_а_не_чужую(self):
+        from gpu import GpuError
+        with self.assertRaises(GpuError):
+            self.g.free_vram()
+        with self.assertRaises(GpuError):
+            self.g.start(prompt="x", mode="photo")
+
+    def test_настроенная_карта_видна_как_настроенная(self):
+        from gpu import Gpu
+        self.assertTrue(Gpu("http://1.2.3.4:8000", "rocket", "x").настроена)
+
+
 class НижнееМеню(unittest.TestCase):
     """Кнопка на экране обязана что-то делать.
 
