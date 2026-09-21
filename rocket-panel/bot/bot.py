@@ -333,10 +333,10 @@ def позвать_друзей(chat, u):
 # четыре кнопки падали в «Сначала выбери, что делаем» — клавиатура
 # висела на экране и не делала ничего.
 НИЖНИЕ_КНОПКИ = {
-    "Создать":         lambda chat, u: send(chat, "Что делаем?", MENU),
-    "Баланс":          показать_баланс,
-    "Мои работы":      показать_работы,
-    "Позвать друзей":  позвать_друзей,
+    "Создать":    lambda chat, u: send(chat, "Что делаем?", MENU),
+    "Баланс":     показать_кабинет,
+    "Мои работы": показать_работы,
+    "Пополнить":  lambda chat, u: send(chat, price_list(), buy_kb()),
 }
 
 
@@ -637,6 +637,30 @@ def on_update(up):
         send(chat, "Что делаем?", MENU); return
     if text == "/prices":
         send(chat, price_list(), MENU); return
+    if text == "/scenes":
+        # Владельцу: где в каталоге ещё пусто. Без этого узнать, какие
+        # сценарии он уже наполнил, можно только зайдя на сервер.
+        if u not in ADMINS:
+            send(chat, "Не для тебя."); return
+        строки = ["<b>Сценарии</b>", ""]
+        пусто = 0
+        for c in catalog.CATEGORIES:
+            if not c.scenes:
+                continue
+            строки.append(f"<b>{c.title}</b>")
+            for s in c.scenes:
+                if s.наполнен:
+                    строки.append(f"  + {s.key} — {s.title}")
+                else:
+                    пусто += 1
+                    строки.append(f"  <i>· {s.key} — {s.title}</i>")
+            строки.append("")
+        строки.append(f"Пусто: <b>{пусто}</b> из "
+                      f"{sum(len(c.scenes) for c in catalog.CATEGORIES)}.")
+        строки.append("<i>Заполняется в ОТКРОВЕННОЕ.txt, одна строка на "
+                      "сценарий. После правки: systemctl restart amberry</i>")
+        send(chat, "\n".join(строки)); return
+
     if text == "/stats":
         if u not in ADMINS:
             send(chat, "Не для тебя."); return
