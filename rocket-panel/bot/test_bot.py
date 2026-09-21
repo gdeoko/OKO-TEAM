@@ -1235,6 +1235,34 @@ class ОткудаБерётсяФон(unittest.TestCase):
                                  f"{s.key} / {м and м.key}")
 
 
+class ПорядокБлоковВПромпте(unittest.TestCase):
+    """Владелец 22.09.2026: «позы, ракурсы и 18+ не так, как я
+    написал». Его строка и поза стояли ПОСЕРЕДИНЕ промпта — ровно там,
+    где модель пролистывает."""
+
+    def порядок(self, ключ="un_three"):
+        p = catalog.scene(ключ).промпт()
+        sc = catalog.scene(ключ)
+        return p, sc
+
+    def test_первым_идёт_задание(self):
+        p, _ = self.порядок()
+        self.assertTrue(p.startswith("EDIT THIS PHOTOGRAPH"))
+
+    def test_действие_владельца_раньше_внешности(self):
+        p, sc = self.порядок()
+        self.assertLess(p.index(sc.откровенное), p.index(prompts.ТЕЛО_ПО_ФОТО))
+
+    def test_поза_и_камера_раньше_внешности(self):
+        p, sc = self.порядок()
+        self.assertLess(p.index(sc.блок.поза), p.index(prompts.ТЕЛО_ПО_ФОТО))
+        self.assertLess(p.index(sc.блок.камера), p.index(prompts.ТЕЛО_ПО_ФОТО))
+
+    def test_техника_в_конце(self):
+        p, _ = self.порядок()
+        self.assertLess(p.index(prompts.ТЕЛО_ПО_ФОТО), p.index(prompts.КАЧЕСТВО))
+
+
 class СложениеБуквальноеИПовторённое(unittest.TestCase):
     """Замер 21.09.2026: модель выполняет прилагательные и не выполняет
     условия. «Грудь того размера, какой показывает силуэт» для неё
@@ -1242,7 +1270,7 @@ class СложениеБуквальноеИПовторённое(unittest.Test
 
     def test_в_промпте_буквальные_слова(self):
         p = catalog.scene("un_full").промпт()
-        self.assertIn("SMALL NATURAL BREASTS", p)
+        self.assertIn("SMALL, ALMOST FLAT CHEST", p)
 
     def test_условий_про_силуэт_не_осталось(self):
         """Они не работают, а место занимают и создают ощущение, что
@@ -1256,7 +1284,7 @@ class СложениеБуквальноеИПовторённое(unittest.Test
         середине - там, где стоит откровенная строка владельца."""
         p = catalog.scene("un_full").промпт()
         хвост = p[len(p) // 2:]
-        self.assertIn("SMALL NATURAL BREASTS", хвост)
+        self.assertIn("SMALL, ALMOST FLAT CHEST", хвост)
         self.assertIn("FINAL CHECK", хвост)
 
     def test_у_двух_мужчин_про_грудь_молчим(self):
