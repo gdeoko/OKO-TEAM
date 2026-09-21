@@ -60,19 +60,48 @@ PHOTO_NEG=("low quality, worst quality, blurry, out of focus, jpeg artifacts, de
 MAX_REF=3          # столько снимков берёт TextEncodeQwenImageEditPlus
 
 
-def _фото_база(p, neg, seed, images=None):
-    """Общий каркас фото-графа. images — до трёх имён файлов."""
+def шаги_под_denoise(denoise):
+    """Сколько шагов просить, чтобы РЕАЛЬНО прошло STEPS.
+
+    KSampler при denoise<1 стартует не с нуля и отрабатывает только
+    хвост расписания: при steps=4 и denoise=0.5 сэмплер делает ДВА шага.
+    На обычной модели это просто грязнее, на четырёхшаговой сборке —
+    каша. Поэтому шаги поднимаем обратно.
+    """
+    denoise=max(0.05,min(1.0,float(denoise)))
+    return max(STEPS, int(round(STEPS/denoise)))
+
+
+def _фото_база(p, neg, seed, images=None, denoise=1.0):
+    """Общий каркас фото-графа. images — до трёх имён файлов.
+
+    `denoise` — СКОЛЬКО ОТ ИСХОДНИКА ОСТАВИТЬ, и это не тонкая
+    настройка, а разница между двумя товарами.
+
+    При denoise=1.0 стартовый латент стирается целиком: снимок влияет
+    на кадр только через `TextEncodeQwenImageEditPlus`, то есть через
+    условие. Лицо модель старается сохранить, а комнату сочиняет
+    заново — сколько ни пиши в промпте «оставь ту же обстановку».
+    Ровно это и случилось у владельца 21.09.2026: он не выбирал место,
+    а героиня оказалась в чужом помещении.
+
+    При denoise<1 исходник переживает часть шагов, и обстановка, поза и
+    сложение остаются узнаваемыми. Это и есть «фон с референса».
+    """
     g={
      "1":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_PHOTO}},
      "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":neg or PHOTO_NEG}},
      "7":{"class_type":"KSampler","inputs":{"model":["1",0],"positive":["4",0],"negative":["5",0],
-          "seed":seed,"steps":STEPS,"cfg":CFG,"sampler_name":"euler","scheduler":"simple",
-          "denoise":1.0}},
+          "seed":seed,"steps":шаги_под_denoise(denoise),"cfg":CFG,
+          "sampler_name":"euler","scheduler":"simple",
+          "denoise":max(0.05,min(1.0,float(denoise)))}},
      "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
     }
     images=[x for x in (images or []) if x][:MAX_REF]
     if images:
-        # Снимки в УСЛОВИЕ: каркас кадра модель строит заново.
+        # Снимки идут в УСЛОВИЕ: так модель держит лицо и сложение.
+        # Каркас кадра (обстановка, поза) приходит не отсюда, а из
+        # стартового латента — и только при denoise<1, см. `_фото_база`.
         узел={"clip":["1",1],"prompt":p,"vae":["1",2]}
         for i,имя in enumerate(images,1):
             g[f"3{i}"]={"class_type":"LoadImage","inputs":{"image":имя,"upload":"image"}}
@@ -83,9 +112,13 @@ def _фото_база(p, neg, seed, images=None):
     return g
 
 
-def wf_photo(p,w,h,seed,images=None,neg=None):
+def wf_photo(p,w,h,seed,images=None,neg=None,denoise=1.0):
     """Текст в фото и фото в фото — один граф, разница в наличии снимков."""
-    g=_фото_база(p,neg,seed,images)
+    # Без снимков стартового латента нет вовсе, и частичный denoise
+    # означал бы недосчитанный шум вместо картинки.
+    if not images:
+        denoise=1.0
+    g=_фото_база(p,neg,seed,images,denoise)
     g,выход=_апскейл(g,["8",0])
     g["9"]={"class_type":"SaveImage","inputs":{"images":выход,"filename_prefix":"photo"}}
     if not images:
@@ -261,7 +294,11 @@ def gen():
         if len(images)>MAX_REF:
             return jsonify(error=f"Модель берёт не больше {MAX_REF} снимков"),400
         w,h=SZ["photo"].get(d.get("size","vert"),(768,1344))
-        g=wf_photo(p,w,h,seed,images,neg)
+        # `denoise` — единственное, что мы берём у вызывающего кроме
+        # текста и снимков: это не настройка сэмплера, а выбор товара
+        # (см. `_фото_база`). Шаги и CFG по-прежнему наши.
+        g=wf_photo(p,w,h,seed,images,neg,
+                   max(0.3,min(1.0,float(d.get("denoise",1.0)))))
     else:
         if len(images)>2:
             return jsonify(error="Видео берёт первый и последний кадр, не больше"),400
