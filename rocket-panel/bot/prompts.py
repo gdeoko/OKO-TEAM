@@ -77,8 +77,9 @@
 # три положения. Пока её нет, работает умолчание.
 СЛОЖЕНИЕ = {
     "стройная": (
-        "Petite, slim, delicate build with SMALL NATURAL BREASTS, a "
-        "slender torso and narrow hips."
+        "Petite and slim, with SMALL NATURAL BREASTS — a small A cup, "
+        "high and barely there on a slender chest, never a handful — a "
+        "narrow ribcage, a flat stomach and narrow hips."
     ),
     "средняя": (
         "An average, natural build with medium natural breasts — neither "
@@ -152,8 +153,7 @@
     "both of them together. FACE preserved exactly for each of them: same "
     "bone structure, same eyes, same nose, same lips, same marks — both "
     "instantly recognisable. Each keeps their own hair, skin tone "
-    "and build; breasts stay exactly the size the clothed silhouette "
-    "shows and are never enlarged. They share one light, one floor and "
+    "and build. They share one light, one floor and "
     "one perspective, touching where the scenario says they touch — no "
     "collage, no floating second figure, honest scale between them. "
     "TWO different people, and the two faces stay two faces: never "
@@ -257,7 +257,13 @@
         "the scenario; everything else stays exactly as it is in the "
         "photo — the same room, the same objects, the same light, the "
         "same time of day. This is an edit of that frame, not a new "
-        "picture inspired by it."
+        "picture inspired by it. "
+        "THE BACKDROP IS COPIED, NOT CHOSEN: whatever is behind her in "
+        "the photograph is behind her in the result, in the same colour "
+        "and the same material. A plain studio backdrop stays a plain "
+        "studio backdrop of the same grey. Do NOT move her to a bedroom, "
+        "a bed, a hotel room, a pool, a beach or a sofa — no furniture "
+        "appears that was not in the photograph."
     ),
     "i2i_пара": (
         "Two references, one person in each. Build a single new frame "
@@ -348,12 +354,35 @@ class Блок:
 #
 # Поэтому требование о сложении повторяется последним — коротко и без
 # оговорок, уже после всего.
-ПОСЛЕДНЕЕ = (
-    "FINAL CHECK, outranking every word above: this is HER body. Breasts "
-    "exactly the size the clothed reference shows and no larger, her own "
-    "waist and hips, her own young face, her own room. She is not a porn "
-    "model and this is not a studio — glamour added here is a defect."
+ПОСЛЕДНЕЕ_ХВОСТ = (
+    "Her own waist, her own hips, her own young face. She is not a porn "
+    "model and this is not a glamour shoot; anything added to flatter "
+    "her is a defect."
 )
+
+# То же самое без «её»: у сцены из двух мужчин женского тела в кадре
+# нет, и «her own hips» там читается как указание одного из них
+# переделать.
+ПОСЛЕДНЕЕ_БЕЗ_ПОЛА = (
+    "FINAL CHECK, outranking every word above: these are the bodies and "
+    "the faces from the references, unchanged. Nothing is idealised, "
+    "nothing is added to flatter them."
+)
+
+
+def последнее(сложение_текст):
+    """Повтор требования о сложении в самом конце промпта.
+
+    Раньше тут стояло «грудь ровно того размера, какой показывает
+    одетый референс» — то же условие, которое модель не выполняет,
+    только в конце. Теперь в конце повторяются ТЕ ЖЕ БУКВАЛЬНЫЕ СЛОВА,
+    что и в начале: модель внимательна к началу и к концу, а провисает
+    в середине — там, где стоит откровенная строка владельца.
+    """
+    if not сложение_текст:
+        return ПОСЛЕДНЕЕ_БЕЗ_ПОЛА
+    return ("FINAL CHECK, outranking every word above: " + сложение_текст
+            + " " + ПОСЛЕДНЕЕ_ХВОСТ)
 
 
 # Что дописывается к ролику вместо всего снятого выше. Одна строка, и
@@ -413,12 +442,14 @@ def собрать(вид, блок, фон="новый", пара=False, сло
     # Пустая строка — НЕ «умолчание», а «не говорить вовсе»: у сцены из
     # двух мужчин слова про грудь и узкие бёдра сделали бы из одного из
     # них женщину.
+    текст_сложения = ""
     if сложение != "":
-        текст = СЛОЖЕНИЕ.get(сложение or СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ,
-                             СЛОЖЕНИЕ[СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ])
+        текст_сложения = СЛОЖЕНИЕ.get(сложение or СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ,
+                                      СЛОЖЕНИЕ[СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ])
         # У пары то же самое, но адресно: иначе описание женской фигуры
         # достаётся обоим, и мужчина уезжает в женскую сторону.
-        куски.append(f"Each woman in this frame: {текст}" if пара else текст)
+        куски.append(f"Each woman in this frame: {текст_сложения}"
+                     if пара else текст_сложения)
     # Строка владельца часто задаёт ПОЗУ, а поза есть и у сценария.
     # «Стоит раком» против «повёрнута на сорок градусов, вес на дальней
     # ноге» — прямое противоречие, и модель разрешает его как придётся:
@@ -443,7 +474,7 @@ def собрать(вид, блок, фон="новый", пара=False, сло
             куски.append(значение.strip())
     куски += [КОЖА, АНАТОМИЯ, ТКАНЬ, КОМПОЗИЦИЯ, КАМЕРА_ОБЩЕЕ, ЦВЕТ, КАЧЕСТВО]
     if сем == "i2i":
-        куски.append(ПОСЛЕДНЕЕ)
+        куски.append(последнее(текст_сложения))
     return "\n\n".join(куски)
 
 

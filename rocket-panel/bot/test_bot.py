@@ -1235,6 +1235,42 @@ class ОткудаБерётсяФон(unittest.TestCase):
                                  f"{s.key} / {м and м.key}")
 
 
+class СложениеБуквальноеИПовторённое(unittest.TestCase):
+    """Замер 21.09.2026: модель выполняет прилагательные и не выполняет
+    условия. «Грудь того размера, какой показывает силуэт» для неё
+    пустой звук, «SMALL NATURAL BREASTS» — приказ."""
+
+    def test_в_промпте_буквальные_слова(self):
+        p = catalog.scene("un_full").промпт()
+        self.assertIn("SMALL NATURAL BREASTS", p)
+
+    def test_условий_про_силуэт_не_осталось(self):
+        """Они не работают, а место занимают и создают ощущение, что
+        требование высказано."""
+        p = catalog.scene("un_full").промпт()
+        self.assertNotIn("the size her clothed silhouette shows", p)
+        self.assertNotIn("exactly the size the clothed reference shows", p)
+
+    def test_требование_повторено_в_конце(self):
+        """Модель внимательна к началу и к концу, а провисает в
+        середине - там, где стоит откровенная строка владельца."""
+        p = catalog.scene("un_full").промпт()
+        хвост = p[len(p) // 2:]
+        self.assertIn("SMALL NATURAL BREASTS", хвост)
+        self.assertIn("FINAL CHECK", хвост)
+
+    def test_у_двух_мужчин_про_грудь_молчим(self):
+        p = catalog.scene("pf_mm_near").промпт()
+        self.assertNotIn("BREASTS", p.upper().replace("BREAST SIZE", ""))
+
+    def test_у_пары_сложение_адресное(self):
+        """Иначе описание женской фигуры достаётся и мужчине."""
+        # pr_* — ролики; у них сложения нет вовсе (см. короткую сборку
+        # i2v). Берём фотографию-зеркало.
+        p = catalog.scene("pf_mf_near").промпт()
+        self.assertIn("Each woman in this frame", p)
+
+
 class РезультатВсегдаОткровенный(unittest.TestCase):
     """18+ и одетый кадр — это брак, за который заплачено.
 
