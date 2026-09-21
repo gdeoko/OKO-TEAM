@@ -123,7 +123,8 @@ def меню():
     return ui.главное_меню(catalog.популярная_категория(store))
 
 
-MENU = меню()
+# Меню НЕ кэшируется: названия кнопок владелец правит на странице
+# каталога, и они обязаны доезжать до бота без перезапуска.
 
 
 def greet(u, имя=None):
@@ -132,7 +133,7 @@ def greet(u, имя=None):
 
 def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
-    for j in pricing.JOBS.values():
+    for j in pricing.В_ПРОДАЖЕ:
         lines.append(f"{j.title} — <b>{j.coins}</b> {pricing.СИМВОЛ} · {j.note}")
     lines.append("\n<i>Одна цена за работу. Разрешение поднимаем всем и "
                  "всегда — доплат за качество нет.</i>")
@@ -160,11 +161,60 @@ def buy_kb():
 
 
 
-def run_job(chat, u, kind, prompt, photos=None, scene=None):
+def _проход(kind, prompt, photos, на_тик=None):
+    """Один проход по карте. Возвращает (имя файла, байты, секунды).
+
+    Вынесено из run_job, потому что проходов бывает два: см. `цепочка`.
+    """
+    # steps=4 и cfg=1 — не опечатка. У второго поколения моделей
+    # (Qwen-Rapid-AIO, wan2.2-rapid-mega-aio) ускорители встроены в
+    # сборку, и обычные 26 шагов при cfg 4 их ЛОМАЮТ.
+    params = {"prompt": prompt, "size": "vert",
+              "steps": 4, "cfg": 1.0, "seed": 0,
+              "neg": prompts.НЕГАТИВ}
+    сем = prompts.семейство(kind)
+    if сем in ("t2i", "i2i"):
+        params["mode"] = "photo"
+    elif сем == "inpaint":
+        params["mode"] = "inpaint"
+    else:
+        params["mode"] = "video"
+        params["secs"] = СЕКУНДЫ.get(kind, 5)
+    # Панель принимает список: у фото-по-фото до трёх референсов, у
+    # видео первый кадр и необязательный последний.
+    if photos:
+        params["images"] = list(photos)
+        params["image"] = photos[0]      # совместимость со старой панелью
+
+    gid, _seed = gpu.start(**params)
+    res = gpu.wait(gid, limit=900, on_tick=на_тик)
+    files = res.get("files") or []
+    if not files:
+        raise GpuError("пустой результат")
+    return files[0], gpu.fetch(files[0]), res.get("sec")
+
+
+def run_job(chat, u, kind, prompt, photos=None, scene=None,
+            цепочка=False, prompt_фото=None):
     """Считает задание и отдаёт результат. Крутится в отдельном потоке.
 
     `scene` — ключ сценария из каталога, если человек пришёл кнопкой.
-    Из него считается «Популярное»."""
+    Из него считается «Популярное».
+
+    `цепочка` — ВИДЕО ЧЕРЕЗ ПРОМЕЖУТОЧНОЕ ФОТО, и это не оптимизация, а
+    единственный способ отдать то, за что заплачено.
+
+        `WanImageToVideo.start_image` — БУКВАЛЬНО первый кадр ролика, а
+        не подсказка. Ролик не может раздеть человека и не может
+        перенести его в другое место: что пришло на вход, то и стоит в
+        первом кадре. Отправив одетое фото прямо в видео, мы отдали бы
+        одетый ролик — за полную цену.
+
+    Поэтому проходов два: сперва фото по референсам (`prompt_фото`),
+    потом оно же оживляется тем же сценарием. Человек этого не видит и
+    платит ОДИН раз, по цене ролика: второй проход — наша кухня.
+    Решение владельца 21.09.2026.
+    """
     job = pricing.job(kind)
     jid = uuid.uuid4().hex[:10]
     charged = False
@@ -176,38 +226,24 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None):
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
 
-        # steps=4 и cfg=1 — не опечатка. У второго поколения моделей
-        # (Qwen-Rapid-AIO, wan2.2-rapid-mega-aio) ускорители встроены в
-        # сборку, и обычные 26 шагов при cfg 4 их ЛОМАЮТ.
-        params = {"prompt": prompt, "size": "vert",
-                  "steps": 4, "cfg": 1.0, "seed": 0,
-                  "neg": prompts.НЕГАТИВ}
-        сем = prompts.семейство(kind)
-        if сем in ("t2i", "i2i"):
-            params["mode"] = "photo"
-        elif сем == "inpaint":
-            params["mode"] = "inpaint"
-        else:
-            params["mode"] = "video"
-            params["secs"] = СЕКУНДЫ.get(kind, 5)
-        # Панель принимает список: у фото-по-фото до трёх референсов, у
-        # видео первый кадр и необязательный последний.
-        if photos:
-            params["images"] = list(photos)
-            params["image"] = photos[0]      # совместимость со старой панелью
-
-        gid, seed = gpu.start(**params)
-
         def tick(sec):
             if mid and sec and sec % 10 == 0:
                 edit(chat, mid, f"Считаю {job.title.lower()}… {sec} с")
 
-        res = gpu.wait(gid, limit=900, on_tick=tick)
-        files = res.get("files") or []
-        if not files:
-            raise GpuError("пустой результат")
+        if цепочка:
+            # Первый проход. Его результат человеку НЕ отдаётся и в
+            # архив не кладётся: это полуфабрикат, и «Мои работы»,
+            # набитые промежуточными кадрами, только запутают.
+            if mid:
+                edit(chat, mid, "Считаю кадр…")
+            имя, кадр, _ = _проход("i2i", prompt_фото or prompt, photos, tick)
+            if mid:
+                edit(chat, mid, f"Кадр готов. Считаю {job.title.lower()}…")
+            photos = [gpu.upload(имя, кадр)]
 
-        data = gpu.fetch(files[0])
+        файл, data, сек = _проход(kind, prompt, photos, tick)
+        files = [файл]
+        res = {"sec": сек}
         if mid:
             tg("deleteMessage", chat_id=chat, message_id=mid)
 
@@ -230,7 +266,7 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None):
                    _files={"photo": (files[0], data)})
         store.job_done(jid, file=files[0], path=путь,
                        tg_file_id=file_id_из(о), size=len(data))
-        send(chat, "Что дальше?", MENU)
+        send(chat, "Что дальше?", меню())
 
     except NotEnoughCoins as e:
         send(chat, f"Не хватает коинов: нужно <b>{e.need}</b>, есть <b>{e.have}</b>.", buy_kb())
@@ -238,13 +274,13 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None):
         if charged:
             store.refund(u, job.coins, f"осечка генерации: {str(e)[:80]}")
         store.job_done(jid, error=str(e)[:300])
-        send(chat, f"Не получилось: {str(e)[:200]}\n\nКоины вернула — <b>{store.balance(u)}</b>.", MENU)
+        send(chat, f"Не получилось: {str(e)[:200]}\n\nКоины вернула — <b>{store.balance(u)}</b>.", меню())
     except Exception as e:
         if charged:
             store.refund(u, job.coins, "внутренняя ошибка")
         store.job_done(jid, error=str(e)[:300])
         print("СБОЙ:", traceback.format_exc()[:800], flush=True)
-        send(chat, f"Что-то сломалось у меня. Коины вернула — <b>{store.balance(u)}</b>.", MENU)
+        send(chat, f"Что-то сломалось у меня. Коины вернула — <b>{store.balance(u)}</b>.", меню())
     finally:
         with lock:
             busy.discard(u)
@@ -269,7 +305,8 @@ def оживить(chat, u, старое, байты):
            scene=старое["scene"])
 
 
-def launch(chat, u, kind, prompt, photos=None, scene=None):
+def launch(chat, u, kind, prompt, photos=None, scene=None,
+           цепочка=False, prompt_фото=None):
     with lock:
         if u in busy:
             send(chat, "Одно задание уже считается. Дождись его, потом запускай следующее.")
@@ -277,6 +314,7 @@ def launch(chat, u, kind, prompt, photos=None, scene=None):
         busy.add(u)
     threading.Thread(target=run_job,
                      args=(chat, u, kind, prompt, photos or [], scene),
+                     kwargs={"цепочка": цепочка, "prompt_фото": prompt_фото},
                      daemon=True).start()
 
 
@@ -301,7 +339,7 @@ def on_start(chat, u, username, arg):
         send(chat, f"Добро пожаловать. Дарю "
                    f"<b>{emoji.баланс(pricing.WELCOME_COINS)}</b> на пробу.",
              ui.НИЖНЕЕ)
-    send(chat, greet(u, username), MENU)
+    send(chat, greet(u, username), меню())
 
 
 def показать_работы(chat, u, сколько=5):
@@ -315,7 +353,7 @@ def показать_работы(chat, u, сколько=5):
     """
     работы = store.works(u, сколько)
     if not работы:
-        send(chat, "Работ пока нет. Сделаем первую?", MENU)
+        send(chat, "Работ пока нет. Сделаем первую?", меню())
         return
     send(chat, f"<b>Твои работы</b> — последние {len(работы)}")
     for j in работы:
@@ -340,7 +378,7 @@ def показать_работы(chat, u, сколько=5):
                                tg_file_id=file_id_из(о), size=j["size"])
                 continue
         send(chat, f"· {подпись} — файл не сохранился, показать нечем.")
-    send(chat, "Что дальше?", MENU)
+    send(chat, "Что дальше?", меню())
 
 
 def показать_кабинет(chat, u, имя=None):
@@ -359,7 +397,7 @@ def позвать_друзей(chat, u):
     send(chat,
          f"Зови друзей: <code>https://t.me/{me}?start={code}</code>\n"
          f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> {pricing.СИМВОЛ}, "
-         f"ему самому — <b>{pricing.REFERRAL_INVITEE}</b>.", MENU)
+         f"ему самому — <b>{pricing.REFERRAL_INVITEE}</b>.", меню())
 
 
 # Нижнее меню шлёт обычный текст, а не callback. Без этой таблицы все
@@ -382,7 +420,7 @@ def on_text(chat, u, text):
 
     st = waiting.pop(u, None)
     if not st:
-        send(chat, "Сначала выбери, что делаем.", MENU)
+        send(chat, "Сначала выбери, что делаем.", меню())
         return
     kind = st["kind"]
     job = pricing.job(kind)
@@ -390,7 +428,28 @@ def on_text(chat, u, text):
         waiting[u] = st
         send(chat, ui.просьба_о_фото(job))
         return
-    launch(chat, u, kind, text.strip(), st.get("фото") or [])
+    пустить_своё(chat, u, kind, text.strip(), st.get("фото") or [])
+
+
+def пустить_сценарий(chat, u, sc, фото):
+    """Запуск кнопки каталога. Двухшаговость решает сам сценарий."""
+    launch(chat, u, sc.job, sc.prompt, фото, scene=sc.key,
+           цепочка=sc.двухшаговый, prompt_фото=sc.prompt_фото)
+
+
+def пустить_своё(chat, u, kind, текст, фото):
+    """Запуск своего промпта.
+
+    Описание человека проходит тем же сборщиком, что и каталог, и к
+    нему дописывается обязательная строка — иначе восемнадцать плюс
+    выдаёт одетый кадр (см. prompts.свой). Видео идёт двумя проходами по
+    той же причине, что и в каталоге: ролик не раздевает.
+    """
+    обяз = catalog.обязательная_строка()
+    промпт = prompts.свой(текст, kind, обязательное=обяз)
+    видео = prompts.семейство(kind) == "i2v"
+    launch(chat, u, kind, промпт, фото, цепочка=видео,
+           prompt_фото=prompts.свой(текст, "i2i", обязательное=обяз))
 
 
 def on_photo(chat, u, file_id):
@@ -401,12 +460,16 @@ def on_photo(chat, u, file_id):
     молча."""
     st = waiting.get(u)
     if not st:
-        send(chat, "Сначала выбери сценарий или режим.", MENU)
+        send(chat, "Сначала выбери сценарий или режим.", меню())
         return
     job = pricing.job(st["kind"])
+    sc = catalog.scene(st["scene"]) if st.get("scene") else None
+    # Сколько снимков брать, решает СЦЕНАРИЙ, а не вид работы: парной
+    # сцене нужно ровно два, по одному на человека, при том же i2v_5.
+    мин, макс = sc.фото_нужно if sc else job.фото_нужно
     собрано = st.setdefault("фото", [])
-    if len(собрано) >= job.макс_фото > 0:
-        send(chat, f"Больше {job.макс_фото} модель не возьмёт.")
+    if len(собрано) >= макс > 0:
+        send(chat, f"Больше {макс} модель не возьмёт.")
         return
 
     f = tg("getFile", file_id=file_id).get("result", {})
@@ -424,13 +487,12 @@ def on_photo(chat, u, file_id):
 
     # Пришли из каталога — промпт готов. Набрали максимум — запускаем
     # сами, не заставляя жать лишнюю кнопку.
-    if st.get("scene"):
-        sc = catalog.scene(st["scene"])
-        if len(собрано) >= job.макс_фото:
+    if sc:
+        if len(собрано) >= макс:
             waiting.pop(u, None)
-            launch(chat, u, sc.job, sc.prompt, собрано, scene=sc.key)
+            пустить_сценарий(chat, u, sc, собрано)
             return
-        send(chat, ui.просьба_о_фото(job, len(собрано)),
+        send(chat, ui.просьба_о_фото(job, len(собрано), sc.фото_нужно),
              ui.меню_сбора_фото(sc, len(собрано)))
         return
 
@@ -537,13 +599,35 @@ def on_callback(cb):
         answer(cid, "Зачислено" if зачислено else "Уже зачислено раньше")
         if зачислено:
             send(chat, f"Оплата пришла. Баланс: "
-                       f"<b>{emoji.баланс(store.balance(u))}</b>", MENU)
+                       f"<b>{emoji.баланс(store.balance(u))}</b>", меню())
+        return
+
+    if data.startswith("r:"):
+        answer(cid)
+        р = catalog.раздел(data.split(":", 1)[1])
+        send(chat, ui.текст_раздела(р), ui.меню_раздела(р))
         return
 
     if data.startswith("c:"):
         answer(cid)
-        cat = catalog.category(data.split(":", 1)[1])
+        ключ = data.split(":", 1)[1]
+        # «Популярное» живёт не в дереве, а в базе, и по ключу его там
+        # нет: пересчитываем заново, иначе кнопка ведёт в ошибку.
+        cat = (catalog.популярная_категория(store) if ключ == "top"
+               else catalog.category(ключ))
+        if not cat or not cat.scenes:
+            send(chat, "Тут пока пусто.", меню()); return
         send(chat, ui.шапка_категории(cat), ui.меню_категории(cat))
+        return
+
+    if data.startswith("own:"):
+        # Свой промпт: сначала референс, потом описание. Вид работы
+        # определён подразделом — см. catalog.СВОБОДНЫЕ.
+        answer(cid)
+        под = catalog.category(data.split(":", 1)[1])
+        kind = catalog.СВОБОДНЫЕ[под.key]
+        waiting[u] = {"kind": kind, "фото": []}
+        send(chat, ui.текст_своего_промпта(под), меню())
         return
 
     if data.startswith("sc:"):
@@ -563,22 +647,21 @@ def on_callback(cb):
             return
         answer(cid)
         job = pricing.job(sc.job)
-        if not job.нужно_фото:
-            launch(chat, u, sc.job, sc.prompt, [], scene=sc.key)
-            return
         waiting[u] = {"kind": sc.job, "scene": sc.key, "фото": []}
-        send(chat, ui.просьба_о_фото(job), ui.меню_сбора_фото(sc, 0))
+        send(chat, ui.просьба_о_фото(job, 0, sc.фото_нужно),
+             ui.меню_сбора_фото(sc, 0))
         return
 
     if data.startswith("run:"):
         # Человек сказал «хватит», не добрав до максимума.
         sc = catalog.scene(data.split(":", 1)[1])
         st = waiting.get(u)
-        if not st or not st.get("фото"):
-            answer(cid, "Сначала пришли фото"); return
+        собрано = (st or {}).get("фото") or []
+        if len(собрано) < sc.фото_нужно[0]:
+            answer(cid, f"Нужно снимков: {sc.фото_нужно[0]}"); return
         answer(cid)
         waiting.pop(u, None)
-        launch(chat, u, sc.job, sc.prompt, st["фото"], scene=sc.key)
+        пустить_сценарий(chat, u, sc, собрано)
         return
 
     if data.startswith("undo:"):
@@ -588,24 +671,16 @@ def on_callback(cb):
             st["фото"].pop()
         n = len(st["фото"]) if st else 0
         answer(cid, "Убрала")
-        send(chat, ui.просьба_о_фото(pricing.job(sc.job), n),
+        send(chat, ui.просьба_о_фото(pricing.job(sc.job), n, sc.фото_нужно),
              ui.меню_сбора_фото(sc, n))
         return
 
     if data == "m:free":
+        # Старая кнопка из сообщений, отправленных до перехода на три
+        # раздела. Телеграм хранит их вечно, и нажать её могут завтра.
         answer(cid)
-        send(chat, ui.текст_своего_промпта(), ui.меню_своего_промпта())
-        return
-
-    if data.startswith("free:"):
-        kind = data.split(":", 1)[1]
-        j = pricing.job(kind)
-        answer(cid)
-        waiting[u] = {"kind": kind, "фото": []}
-        хвост = ("\n\n" + ui.сколько_фото(j) + " Сначала фото, потом описание."
-                 if j.нужно_фото else "")
-        send(chat, f"<b>{j.title}</b> — {j.coins} {pricing.СИМВОЛ}{хвост}\n\n"
-                   "Опиши словами, что сделать. <b>По-английски.</b>", MENU)
+        р = catalog.раздел("own")
+        send(chat, ui.текст_раздела(р), ui.меню_раздела(р))
         return
 
     answer(cid)
@@ -654,7 +729,7 @@ def on_paid(chat, u, оплата):
                  meta={"charge": оплата.get("telegram_payment_charge_id"),
                        "stars": оплата.get("total_amount")})
     send(chat, f"Спасибо. Зачислено <b>{emoji.баланс(p['coins'])}</b>.\n"
-               f"Баланс: <b>{emoji.баланс(store.balance(u))}</b>", MENU)
+               f"Баланс: <b>{emoji.баланс(store.balance(u))}</b>", меню())
 
 
 def on_update(up):
@@ -684,7 +759,7 @@ def on_update(up):
         store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
         send(chat, "Что делаем?", меню()); return
     if text == "/prices":
-        send(chat, price_list(), MENU); return
+        send(chat, price_list(), меню()); return
     if text == "/scenes":
         # Владельцу: где в каталоге ещё пусто. Без этого узнать, какие
         # сценарии он уже наполнил, можно только зайдя на сервер.
@@ -692,21 +767,23 @@ def on_update(up):
             send(chat, "Не для тебя."); return
         строки = ["<b>Сценарии</b>", ""]
         пусто = 0
-        for c in catalog.CATEGORIES:
-            if not c.scenes:
-                continue
-            строки.append(f"<b>{c.title}</b>")
-            for s in c.scenes:
-                if s.наполнен:
-                    строки.append(f"  + {s.key} — {s.title}")
-                else:
-                    пусто += 1
-                    строки.append(f"  <i>· {s.key} — {s.title}</i>")
-            строки.append("")
+        for р in catalog.РАЗДЕЛЫ:
+            for c in р.подразделы:
+                if not c.scenes:
+                    continue
+                строки.append(f"<b>{р.title} · {c.title}</b>")
+                for s in c.scenes:
+                    if s.наполнен:
+                        строки.append(f"  + {s.key} — {s.title}")
+                    else:
+                        пусто += 1
+                        строки.append(f"  <i>· {s.key} — {s.title}</i>")
+                строки.append("")
         строки.append(f"Пусто: <b>{пусто}</b> из "
-                      f"{sum(len(c.scenes) for c in catalog.CATEGORIES)}.")
-        строки.append("<i>Заполняется в ОТКРОВЕННОЕ.txt, одна строка на "
-                      "сценарий. После правки: systemctl restart amberry</i>")
+                      f"{len(catalog.все_сценарии())}.")
+        строки.append(f"<i>Заполняется на странице каталога: "
+                      f"{os.environ.get('AMBERRY_ADMIN_URL', 'адрес в ДОСТУПАХ')}. "
+                      f"Перезапускать бота не нужно.</i>")
         send(chat, "\n".join(строки)); return
 
     if text == "/stats":

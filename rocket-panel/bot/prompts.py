@@ -52,6 +52,33 @@
 # блок сохранения лица на месте.
 ТЕЛО = ТЕЛО_ПО_ФОТО
 
+# Парные сцены: людей двое, и референсов двое.
+#
+# ЧЕСТНО О ПРЕДЕЛЕ. Узел `TextEncodeQwenImageEditPlus` принимает
+# `image1..image3` БЕЗ подписей ролей: сказать модели «на первом снимке
+# мужчина, на втором женщина» технически нечем — в кодировщик уходит
+# один общий текст и безымянный список картинок. Слова «first reference»
+# в тексте ниже — единственная доступная зацепка, и работает она через
+# раз: модель может перепутать, кто где, или смешать двоих в одного.
+#
+# Поэтому здесь упор не на «кто первый», а на то, что людей РОВНО ДВОЕ и
+# они РАЗНЫЕ. Смешение двух лиц в одно — самый частый брак парных
+# сцен, и стоит он дороже перепутанного порядка.
+ТЕЛО_ПАРА = (
+    "TWO different people are shown, and two reference photographs are "
+    "supplied — one person per reference. Each person's face is preserved "
+    "exactly from their own reference: same bone structure, same eye shape "
+    "and colour, same nose, same lips, same eyebrows, same hairline, same "
+    "skin tone, same individual marks and moles. The person from the FIRST "
+    "reference and the person from the SECOND reference must remain two "
+    "clearly distinct individuals — never blended into one face, never "
+    "duplicated so that both figures share the same face, never reduced to "
+    "a single person. Both must be recognisable to someone who knows them. "
+    "Do not beautify, do not slim, do not symmetrise, do not change their "
+    "apparent ages. Exactly two people in frame: no third figure, no "
+    "reflection read as a third person, no stray limb belonging to nobody."
+)
+
 КОЖА = (
     "Skin rendered as real skin: visible pores across the nose and cheeks, "
     "fine vellus hair catching the light along the jaw and forearms, subtle "
@@ -174,6 +201,21 @@
         "Where several references are supplied, they show the same person "
         "and the same place from different angles; read them together."
     ),
+    "i2i_пара": (
+        "Two reference photographs are supplied, one person in each. Build "
+        "a single new frame containing BOTH of them together, according to "
+        "this scenario: the pose of each, how they are arranged relative to "
+        "one another, the distance, the framing, the surroundings and the "
+        "clothing are all yours to compose from scratch. You are NOT "
+        "retouching either original frame and NOT bound by either "
+        "composition — only the two people must survive unchanged. "
+        "They must occupy the same physical space consistently: one light, "
+        "one floor plane, one perspective, contact between them where the "
+        "scenario says there is contact, with the skin compressing where it "
+        "presses. Scale them honestly against each other — a head is a head "
+        "height, an arm reaches as far as an arm reaches. No collage, no "
+        "two photographs pasted side by side, no floating second figure."
+    ),
     "inpaint": (
         "Change ONLY the region marked in the supplied mask. Everything "
         "outside it stays byte-for-byte as it was: the face, the hair, the "
@@ -236,11 +278,15 @@ class Блок:
         self.ещё = ещё
 
 
-def собрать(вид, блок, фон="новый"):
+def собрать(вид, блок, фон="новый", пара=False):
     """Сценарий + общие блоки -> готовый промпт.
 
     Порядок намеренный: модели внимательнее к началу, поэтому сначала
     кто и что, потом где и при каком свете, и только в конце техника.
+
+    `пара` — в кадре двое, и референсов двое. Меняет первый блок и
+    описание режима: см. ТЕЛО_ПАРА о том, почему порядок референсов
+    ненадёжен и что с этим сделано.
     """
     сем = семейство(вид)
     if сем not in ПО_ВИДУ:
@@ -248,8 +294,13 @@ def собрать(вид, блок, фон="новый"):
     if фон not in ("новый", "референс"):
         raise ValueError(f"фон бывает «новый» или «референс», а не {фон!r}")
 
-    ключ = "i2i_фон" if (сем == "i2i" and фон == "референс") else сем
-    куски = [ТЕЛО_ПО_ФОТО, ПО_ВИДУ[ключ]]
+    if сем == "i2i" and пара:
+        ключ = "i2i_пара"
+    elif сем == "i2i" and фон == "референс":
+        ключ = "i2i_фон"
+    else:
+        ключ = сем
+    куски = [ТЕЛО_ПАРА if пара else ТЕЛО_ПО_ФОТО, ПО_ВИДУ[ключ]]
     # Откровенная часть идёт ВТОРЫМ блоком, сразу за сохранением лица.
     # Модели внимательнее к началу промпта: уехав в конец, она начинает
     # проигрывать обстановке и свету — то есть ровно тому, ради чего
@@ -267,3 +318,48 @@ def собрать(вид, блок, фон="новый"):
 
 def длина_ок(текст):
     return len(текст) >= МИН_ДЛИНА
+
+
+# ---------------------------------------------------------------------
+# СВОЙ ПРОМПТ
+#
+# Человек пишет сам — и пишет, как правило, одну строку: «на диване»,
+# «в машине». Отправить это модели как есть значит отдать ему кадр,
+# собранный из ничего: без сохранения лица, без кожи, без анатомии рук,
+# без запретов. Он заплатит коин и получит чужую женщину с шестью
+# пальцами.
+#
+# Поэтому своё описание проходит тем же сборщиком, что и каталог: его
+# текст встаёт на место сценария, всё остальное добавляется одинаково.
+#
+# Плюс ОБЯЗАТЕЛЬНАЯ СТРОКА (требование владельца 21.09.2026): бот
+# восемнадцать плюс, и результат без раздевания — это не результат, за
+# который платили. Строка правится на странице каталога: ключ
+# `_обязательное`, поле «для модели».
+# ---------------------------------------------------------------------
+
+ОБЯЗАТЕЛЬНОЕ_КЛЮЧ = "_обязательное"
+
+ОБЯЗАТЕЛЬНОЕ_ПО_УМОЛЧАНИЮ = (
+    "The person from the reference is fully nude, wearing no clothing at "
+    "all. This is an explicit adult scene, exactly as described above."
+)
+
+ОБЯЗАТЕЛЬНОЕ_РУС = (
+    "Человек на референсе обязательно голый, без одежды; сцена "
+    "обязательно интимная, как описано в промпте."
+)
+
+
+def свой(текст, вид, обязательное=None, фон="новый", пара=False):
+    """Описание человека -> полный промпт по тем же правилам, что каталог.
+
+    Описание уходит в тот же слот, что и строка владельца у сценария:
+    вторым блоком, сразу за сохранением лица. Обязательная строка идёт
+    СРАЗУ ЗА ним, а не в конец — в конце она проигрывает обстановке и
+    свету, и модель выдаёт одетый кадр.
+    """
+    строка = (текст or "").strip()
+    обяз = ОБЯЗАТЕЛЬНОЕ_ПО_УМОЛЧАНИЮ if обязательное is None else обязательное.strip()
+    вместе = "\n\n".join(x for x in (строка, обяз) if x)
+    return собрать(вид, Блок(откровенное=вместе), фон=фон, пара=пара)
