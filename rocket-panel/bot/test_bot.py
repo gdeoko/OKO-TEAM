@@ -6,7 +6,7 @@ import prompts
 import emoji
 import payments
 import store
-from store import Store, NotEnoughHearts
+from store import Store, NotEnoughCoins
 
 
 class Деньги(unittest.TestCase):
@@ -19,10 +19,10 @@ class Деньги(unittest.TestCase):
             try: os.remove(self.f + suf)
             except OSError: pass
 
-    def test_новичку_дарим_жетоны(self):
-        u, new = self.s.ensure_user(1, "vasya", welcome=pricing.WELCOME_HEARTS)
+    def test_новичку_дарим_коины(self):
+        u, new = self.s.ensure_user(1, "vasya", welcome=pricing.WELCOME_COINS)
         self.assertTrue(new)
-        self.assertEqual(self.s.balance(1), pricing.WELCOME_HEARTS)
+        self.assertEqual(self.s.balance(1), pricing.WELCOME_COINS)
 
     def test_повторный_старт_не_дарит_второй_раз(self):
         self.s.ensure_user(1, welcome=30)
@@ -41,7 +41,7 @@ class Деньги(unittest.TestCase):
 
     def test_нельзя_уйти_в_минус(self):
         self.s.ensure_user(1, welcome=10)
-        with self.assertRaises(NotEnoughHearts) as e:
+        with self.assertRaises(NotEnoughCoins) as e:
             self.s.spend(1, 40, "ролик")
         self.assertEqual(e.exception.need, 40)
         self.assertEqual(e.exception.have, 10)
@@ -91,29 +91,29 @@ class Цены(unittest.TestCase):
             self.assertGreater(доля, порог - 0.02,
                                f"{p['id']}: скидка {(1-доля)*100:.1f}% — отдаём лишнее")
 
-    def test_сердечко_это_ровно_двенадцать_его_кристаллов(self):
-        """На этом держится вся сверка: цена в сердечках умножается на 12
+    def test_коин_это_ровно_двенадцать_его_кристаллов(self):
+        """На этом держится вся сверка: цена в коинах умножается на 12
         и сравнивается с его кристаллами. Разойдётся — «на четверть
         дешевле» станет неправдой.
 
         Требований было два, и они сталкивались: владелец хотел счёт
         по-людски (фото = 1), а обещание скидки требует общих единиц с
-        конкурентом (фото = 12 💎). Двенадцать кристаллов в сердечке
+        конкурентом (фото = 12 💎). Двенадцать кристаллов в коине
         снимают оба."""
         его = {"t2i": 12, "i2i": 12, "inpaint": 12,
                "t2v_5": 60, "t2v_10": 96, "i2v_5": 60, "i2v_10": 96,
                "sound": 170}
         self.assertEqual({k: j.crystals for k, j in pricing.JOBS.items()}, его)
-        self.assertEqual(pricing.job("t2i").hearts, 1,
-                         "фото обязано стоить ровно одно сердечко")
+        self.assertEqual(pricing.job("t2i").coins, 1,
+                         "фото обязано стоить ровно один коин")
 
-    def test_пересчёт_в_сердечки_всегда_вниз(self):
+    def test_пересчёт_в_коины_всегда_вниз(self):
         """Вверх — значит отъесть часть обещанной скидки. Видео со звуком
-        стоит 170 💎, это 14,17 сердечка; отдаём за 14."""
+        стоит 170 💎, это 14,17 коина; отдаём за 14."""
         for k, j in pricing.JOBS.items():
-            self.assertLessEqual(j.hearts * pricing.КРИСТАЛЛОВ_В_СЕРДЦЕ,
+            self.assertLessEqual(j.coins * pricing.КРИСТАЛЛОВ_В_КОИНЕ,
                                  j.crystals, f"{k}: округлили вверх")
-        self.assertEqual(pricing.job("sound").hearts, 14)
+        self.assertEqual(pricing.job("sound").coins, 14)
 
     def test_сколько_фото_просим_совпадает_с_тем_что_берёт_модель(self):
         """Интерфейс обязан просить ровно столько снимков, сколько примет
@@ -155,8 +155,8 @@ class Цены(unittest.TestCase):
             self.assertLessEqual(q["crystals"], q["market_crystals"],
                                  f"{q['id']}: надбавка выше, чем у конкурента")
 
-    def test_чем_больше_пакет_тем_дешевле_жетон(self):
-        курсы = [pricing.hearts_per_rub(p) for p in pricing.PACKS]
+    def test_чем_больше_пакет_тем_дешевле_коин(self):
+        курсы = [pricing.coins_per_rub(p) for p in pricing.PACKS]
         self.assertEqual(курсы, sorted(курсы),
                          "крупный пакет должен быть выгоднее мелкого")
 
@@ -173,14 +173,14 @@ class Цены(unittest.TestCase):
     def test_подарок_новичку_доводит_до_результата(self):
         """У конкурента за приглашение дают 10 💎 при цене фото 12 — не
         хватает даже на одну генерацию. Такой подарок только злит."""
-        фото = pricing.job("t2i").hearts
-        self.assertGreaterEqual(pricing.WELCOME_HEARTS, фото * 2)
+        фото = pricing.job("t2i").coins
+        self.assertGreaterEqual(pricing.WELCOME_COINS, фото * 2)
         self.assertGreaterEqual(pricing.REFERRAL_INVITEE, фото)
-        self.assertLess(pricing.WELCOME_HEARTS, pricing.job("t2v_5").hearts,
+        self.assertLess(pricing.WELCOME_COINS, pricing.job("t2v_5").coins,
                         "на подарок не должно хватать ролика")
 
     def test_подписок_нет_ни_в_каком_виде(self):
-        """Решение владельца 21.09.2026: только покупка сердечек.
+        """Решение владельца 21.09.2026: только покупка коинов.
 
         Тест сторожит не код, а решение. Подписка — штука, которая
         возвращается сама собой: сначала «план», потом «замок на 8K»,
@@ -223,14 +223,14 @@ class Каталог(unittest.TestCase):
     def test_у_каждого_сценария_есть_цена(self):
         for sc in catalog.все_сценарии():
             self.assertIn(sc.job, pricing.JOBS, f"{sc.key}: вид не из прайса")
-            self.assertGreater(sc.hearts, 0, f"{sc.key}: нулевая цена")
+            self.assertGreater(sc.coins, 0, f"{sc.key}: нулевая цена")
 
     def test_цена_стоит_на_каждой_кнопке(self):
         """Наше отличие от конкурента: он прячет цену до загрузки фото.
         Если кнопка её потеряет, отличие исчезнет молча."""
         for sc in catalog.все_сценарии():
-            self.assertIn("♥", sc.button(), f"{sc.key}: на кнопке нет цены")
-            self.assertIn(str(sc.hearts), sc.button(), f"{sc.key}: не та цена")
+            self.assertIn("😏", sc.button(), f"{sc.key}: на кнопке нет цены")
+            self.assertIn(str(sc.coins), sc.button(), f"{sc.key}: не та цена")
 
     def test_промпты_на_английском_и_не_пустые(self):
         """Модель обучена на английском, русский промпт даёт мусор."""
@@ -398,7 +398,7 @@ class Оплата(unittest.TestCase):
         self.assertEqual(self.s.take_invoice(900, "inv2"), "p2")
 
     def test_подпись_вебхука_проверяется(self):
-        """Без проверки подписи зачислить сердечки может кто угодно,
+        """Без проверки подписи зачислить коины может кто угодно,
         прислав поддельное «оплачено»."""
         import hashlib, hmac
         старый = payments.CRYPTOBOT_ТОКЕН
@@ -464,7 +464,7 @@ class Кошелёк(unittest.TestCase):
         self.assertEqual(u["paid"], 4, "купленное трогаем последним")
 
     def test_остаток_отменённой_подписки_переносится_а_не_гаснет(self):
-        """Человек за эти сердечки заплатил. Смена нашей модели — не
+        """Человек за эти коины заплатил. Смена нашей модели — не
         повод их отобрать, поэтому старый карман переливается в купленные."""
         путь = os.path.join(self.d, "старая.db")
         c = sqlite3.connect(путь)

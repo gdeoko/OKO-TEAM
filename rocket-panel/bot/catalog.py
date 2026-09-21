@@ -52,8 +52,8 @@ class Scene:
         self.negative = prompts.НЕГАТИВ
 
     @property
-    def hearts(self):
-        return pricing.job(self.job).hearts
+    def coins(self):
+        return pricing.job(self.job).coins
 
     @property
     def фото_нужно(self):
@@ -64,7 +64,7 @@ class Scene:
 
     def button(self):
         """Подпись кнопки. Цена в ней обязательна — это наше отличие."""
-        return f"{self.title} · {self.hearts} ♥"
+        return f"{self.title} · {self.coins} {pricing.СИМВОЛ}"
 
 
 class Category:

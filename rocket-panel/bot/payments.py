@@ -91,8 +91,8 @@ def счёт_звёздами(pack_id):
     p = pricing.pack(pack_id)
     звёзд = звёзд_за(p["rub"])
     return {
-        "title": f"{p['hearts']} сердечек",
-        "description": (f"{p['hearts']} ♥ на баланс AMBERRY. "
+        "title": f"{p['coins']} коинов",
+        "description": (f"{p['coins']} {pricing.СИМВОЛ} на баланс AMBERRY. "
                         f"Не сгорают. У других тот же объём — "
                         f"{p['market_rub']} ₽."),
         # payload возвращается в successful_payment — по нему и узнаём,
@@ -101,7 +101,7 @@ def счёт_звёздами(pack_id):
         "payload": f"pack:{p['id']}:{int(time.time())}",
         "provider_token": "",             # пусто = звёзды
         "currency": ВАЛЮТА_ЗВЁЗД,
-        "prices": [{"label": f"{p['hearts']} ♥", "amount": звёзд}],
+        "prices": [{"label": f"{p['coins']} {pricing.СИМВОЛ}", "amount": звёзд}],
     }
 
 
@@ -138,7 +138,7 @@ def счёт_криптой(pack_id, tg_id):
     r = _крипто(
         "createInvoice",
         currency_type="fiat", fiat="USD", amount=str(долларов),
-        description=f"{p['hearts']} сердечек AMBERRY",
+        description=f"{p['coins']} коинов AMBERRY",
         payload=f"pack:{p['id']}:{tg_id}:{int(time.time())}",
         allow_comments=False, allow_anonymous=False,
         expires_in=3600,
@@ -160,7 +160,7 @@ def подпись_вебхука_верна(тело_байты, подпись
     """Проверка подписи вебхука CryptoBot.
 
     Ключ — SHA-256 от токена, дальше HMAC по телу запроса. Без этой
-    проверки зачислить сердечки может кто угодно, послав нам поддельный
+    проверки зачислить коины может кто угодно, послав нам поддельный
     «оплачено».
     """
     if not CRYPTOBOT_ТОКЕН or not подпись:

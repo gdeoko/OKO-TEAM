@@ -66,7 +66,7 @@ def клава(ряды):
 НИЖНЕЕ = {
     "keyboard": [[
         {"text": "Создать", "icon_custom_emoji_id": emoji.БЛЁСТКИ},
-        {"text": "Баланс", "icon_custom_emoji_id": emoji.СЕРДЦЕ},
+        {"text": "Баланс", "icon_custom_emoji_id": emoji.МОНЕТА},
     ], [
         {"text": "Мои работы", "icon_custom_emoji_id": emoji.ПАПКА},
         {"text": "Позвать друзей", "icon_custom_emoji_id": emoji.БАНТ},
@@ -86,8 +86,8 @@ def главное_меню():
             for c in catalog.ВИДИМЫЕ]
     ряды.append([кнопка("Свой промпт", "m:free", emoji.НОУТ)])
     ряды.append([
-        кнопка("Баланс", "m:balance", emoji.СЕРДЦЕ),
-        кнопка("Пополнить", "m:buy", emoji.СЕРДЦА, стиль="primary"),
+        кнопка("Баланс", "m:balance", emoji.МОНЕТА),
+        кнопка("Пополнить", "m:buy", emoji.МОНЕТЫ, стиль="primary"),
     ])
     return клава(ряды)
 
@@ -100,7 +100,7 @@ def меню_категории(cat):
 
 def меню_сценария(sc):
     return клава([
-        [кнопка(f"Сделать · {sc.hearts} ♥", f"go:{sc.key}",
+        [кнопка(f"Сделать · {sc.coins} {pricing.СИМВОЛ}", f"go:{sc.key}",
                 emoji.ПАЛЕЦ, стиль="primary")],
         [кнопка("Другой сценарий", f"c:{_категория_сценария(sc).key}", emoji.ВЛЕВО),
          кнопка("Меню", "m:menu")],
@@ -125,7 +125,7 @@ def меню_своего_промпта():
     for k in СВОЙ_ПРОМПТ:
         j = pricing.job(k)
         ик = emoji.НОУТ if not j.нужно_фото else emoji.ПАПКА
-        ряды.append([кнопка(f"{j.title} · {j.hearts} ♥", f"free:{k}", ик)])
+        ряды.append([кнопка(f"{j.title} · {j.coins} {pricing.СИМВОЛ}", f"free:{k}", ик)])
     ряды.append([кнопка("Назад", "m:menu", emoji.ВЛЕВО)])
     return клава(ряды)
 
@@ -138,15 +138,15 @@ def текст_своего_промпта():
         j = pricing.job(k)
         вход = "без фото" if not j.нужно_фото else (
             f"до {j.макс_фото} фото" if j.макс_фото > 1 else "одно фото")
-        строки.append(f"{j.title} — <b>{j.hearts} ♥</b>, {вход}")
+        строки.append(f"{j.title} — <b>{j.coins} {pricing.СИМВОЛ}</b>, {вход}")
     строки.append("\n<i>Описание — по-английски: модели обучены на нём, "
                   "русский даёт мусор.</i>")
     return "\n".join(строки)
 
 
 def меню_оплаты():
-    ряды = [[кнопка(f"{p['hearts']} ♥ — {p['rub']} ₽", f"buy:{p['id']}",
-                    emoji.СЕРДЦА)] for p in pricing.PACKS]
+    ряды = [[кнопка(f"{p['coins']} {pricing.СИМВОЛ} — {p['rub']} ₽", f"buy:{p['id']}",
+                    emoji.МОНЕТЫ)] for p in pricing.PACKS]
     ряды.append([кнопка("Назад", "m:menu", emoji.ВЛЕВО)])
     return клава(ряды)
 
@@ -159,7 +159,7 @@ def шапка_главного(баланс, имя=None):
         f"{emoji.шапка()}\n\n"
         f"{привет}пришли фото — и оно оживёт, переоденется или заговорит.\n\n"
         f"Баланс: <b>{emoji.баланс(баланс)}</b>\n"
-        f"<i>1 ♥ — одно фото. Ролик 5 секунд — 5 ♥.</i>"
+        f"<i>1 {pricing.СИМВОЛ} — одно фото. Ролик 5 секунд — 5 {pricing.СИМВОЛ}.</i>"
     )
 
 
@@ -189,14 +189,14 @@ def сколько_фото(job):
 
 def шапка_сценария(sc, баланс):
     job = pricing.job(sc.job)
-    хватает = баланс >= sc.hearts
-    итог = (f"Спишем <b>{sc.hearts} ♥</b>, останется {баланс - sc.hearts}."
+    хватает = баланс >= sc.coins
+    итог = (f"Спишем <b>{sc.coins} {pricing.СИМВОЛ}</b>, останется {баланс - sc.coins}."
             if хватает else
-            f"Нужно <b>{sc.hearts} ♥</b>, на балансе {баланс}. "
-            f"{emoji.тег(emoji.СЕРДЦЕ_КОНТУР, '♡')} Пополни — и сделаем.")
+            f"Нужно <b>{sc.coins} {pricing.СИМВОЛ}</b>, на балансе {баланс}. "
+            f"{emoji.тег(emoji.МОНЕТА_ПУСТО, pricing.СИМВОЛ)} Пополни — и сделаем.")
     return (f"<b>{sc.title}</b>\n"
             f"<i>{sc.подпись}</i>\n\n"
-            f"{job.title} · {sc.hearts} ♥\n"
+            f"{job.title} · {sc.coins} {pricing.СИМВОЛ}\n"
             f"{сколько_фото(job)}\n\n{итог}")
 
 
@@ -215,7 +215,7 @@ def просьба_о_фото(job, собрано=0):
 def меню_сбора_фото(sc, собрано):
     ряды = []
     if собрано:
-        ряды.append([кнопка(f"Хватит, поехали · {sc.hearts} ♥", f"run:{sc.key}",
+        ряды.append([кнопка(f"Хватит, поехали · {sc.coins} {pricing.СИМВОЛ}", f"run:{sc.key}",
                             emoji.ПАЛЕЦ, стиль="primary")])
         ряды.append([кнопка("Убрать последнее", f"undo:{sc.key}"),
                      кнопка("Начать заново", f"go:{sc.key}")])
@@ -225,7 +225,7 @@ def меню_сбора_фото(sc, собрано):
 
 def текст_пакета(p):
     звёзд = payments.звёзд_за(p["rub"])
-    return (f"{emoji.тег(emoji.СЕРДЦА, '♥')} <b>{p['hearts']} сердечек</b> "
+    return (f"{emoji.тег(emoji.МОНЕТЫ, pricing.СИМВОЛ)} <b>{p['coins']} коинов</b> "
             f"за <b>{p['rub']} ₽</b>\n"
             f"<s>{p['market_rub']} ₽ у других</s>\n\n"
             f"Не сгорают никогда.\n\n"
@@ -242,15 +242,15 @@ def меню_способов(pack_id):
 
 
 def текст_оплаты():
-    строки = [f"{emoji.тег(emoji.СЕРДЦА, '♥')} <b>Сердечки</b>", ""]
+    строки = [f"{emoji.тег(emoji.МОНЕТЫ, pricing.СИМВОЛ)} <b>Коины</b>", ""]
     for j in pricing.JOBS.values():
-        строки.append(f"{j.title} — <b>{j.hearts}</b> ♥")
+        строки.append(f"{j.title} — <b>{j.coins}</b> {pricing.СИМВОЛ}")
     строки += ["", "<b>Подписки нет.</b> Платишь только за то, что сделал: "
                    "ни абонентской платы, ни сгорающих остатков, "
                    "ни функций за замком.", "",
                "<b>Пакеты</b> — не сгорают никогда", ""]
     for p in pricing.PACKS:
-        строки.append(f"{p['hearts']} ♥ — <b>{p['rub']} ₽</b>   "
+        строки.append(f"{p['coins']} {pricing.СИМВОЛ} — <b>{p['rub']} ₽</b>   "
                       f"<s>{p['market_rub']} ₽ у других</s>")
     return "\n".join(строки)
 
