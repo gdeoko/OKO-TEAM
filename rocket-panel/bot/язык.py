@@ -331,6 +331,28 @@ def job_note(job, яз):
                    "en": "No photo needed - a description is enough."},
     "фото.один":  {"ru": "Нужен <b>один</b> снимок.",
                    "en": "One photo needed."},
+    # --- ФИГУРА ---
+    #
+    # Читать сложение со снимка машиной не вышло: CLIP на проверке
+    # 22.09.2026 отвечал «маленькая» на что угодно, разброс 0.58-0.83 и
+    # никакой связи с тем, что на фото. Значит, выбирает человек.
+    "фиг.кнопка":   {"ru": "Фигура: {что}", "en": "Figure: {что}"},
+    "фиг.стройная": {"ru": "Стройная, маленькая грудь",
+                     "en": "Slim, small breasts"},
+    "фиг.средняя":  {"ru": "Обычная, средняя грудь",
+                     "en": "Average, medium breasts"},
+    "фиг.пышная":   {"ru": "Пышная, большая грудь",
+                     "en": "Full figured, large breasts"},
+    "фиг.заголовок": {
+        "ru": "<b>Фигура на результате</b>\n\nБери ту, что на твоём снимке. "
+              "Не выберешь - сделаю стройную: ошибается модель всегда в "
+              "большую сторону, и лишнюю грудь дорисовать проще, чем убрать.",
+        "en": "<b>The figure in the result</b>\n\nPick the one in your photo. "
+              "If you skip it I use slim: the model always errs on the big "
+              "side, and adding is easier than taking away.",
+    },
+    "фиг.сменено": {"ru": "Фигура: {что}", "en": "Figure: {что}"},
+
     "фото.порядок_мж": {
         "ru": "Порядок важен: <b>первым пришли мужчину</b>, вторым - женщину.",
         "en": "The order matters: <b>send the man first</b>, the woman second.",

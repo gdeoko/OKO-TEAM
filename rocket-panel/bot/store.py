@@ -139,6 +139,13 @@ class Store:
         if "kb_ver" not in have:
             c.execute("ALTER TABLE users ADD COLUMN kb_ver TEXT")
 
+        # Выбранное человеком сложение: «стройная» / «средняя» /
+        # «пышная». Пусто — значит не выбирал, работает умолчание кода.
+        # Помнится между работами: один и тот же человек обычно приносит
+        # снимки одного и того же человека.
+        if "build" not in have:
+            c.execute("ALTER TABLE users ADD COLUMN build TEXT")
+
         # Ступени качества отменены — колонка выбора убирается. База
         # могла успеть её получить: миграция идёт по факту, а не по
         # памяти о том, разворачивали мы ту версию или нет.
@@ -233,6 +240,16 @@ class Store:
         with self._db() as c:
             c.execute("UPDATE users SET kb_ver=? WHERE tg_id=?", (версия, tg_id))
         return True
+
+    def сложение(self, tg_id):
+        """Какое сложение выбрал человек. Пусто — умолчание кода."""
+        u = self.user(tg_id)
+        return (u or {}).get("build") or ""
+
+    def сменить_сложение(self, tg_id, ключ):
+        with self._db() as c:
+            c.execute("UPDATE users SET build=? WHERE tg_id=?", (ключ, tg_id))
+        return ключ
 
     def язык(self, tg_id, по_умолчанию="ru"):
         u = self.user(tg_id)
