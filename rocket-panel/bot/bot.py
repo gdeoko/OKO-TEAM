@@ -125,10 +125,8 @@ def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
         lines.append(f"{j.title} — <b>{j.coins}</b> {pricing.СИМВОЛ} · {j.note}")
-    lines.append("")
-    for q in pricing.QUALITY[1:]:
-        доп = f"+{q['coins']} {pricing.СИМВОЛ}" if q["coins"] else "бесплатно"
-        lines.append(f"{q['title']} — {доп}")
+    lines.append("\n<i>Одна цена за работу. Разрешение поднимаем всем и "
+                 "всегда — доплат за качество нет.</i>")
     lines.append("\n<b>Подписки нет.</b> Платишь только за то, что сделал: "
                  "ни абонентской платы, ни сгорающих остатков, "
                  "ни функций за замком.")
@@ -158,18 +156,10 @@ def run_job(chat, u, kind, prompt, photos=None):
     job = pricing.job(kind)
     jid = uuid.uuid4().hex[:10]
     charged = False
-    # Качество берётся из кабинета и стоит доплату с КАЖДОЙ работы.
-    # Списываем одной суммой: два списания за одну кнопку человек читает
-    # как «сняли дважды», сколько ни объясняй.
-    кач = pricing.quality(store.quality(u))
-    доплата = pricing.доплата_за_качество(kind, кач["id"])
-    цена = job.coins + доплата
     try:
-        store.spend(u, цена, f"{job.title}"
-                    + (f" · {кач['title']}" if доплата else ""),
-                    meta={"job": jid, "quality": кач["id"]})
+        store.spend(u, job.coins, f"{job.title}", meta={"job": jid})
         charged = True
-        store.job_start(jid, u, kind, prompt, цена)
+        store.job_start(jid, u, kind, prompt, job.coins)
 
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
@@ -179,15 +169,7 @@ def run_job(chat, u, kind, prompt, photos=None):
         # сборку, и обычные 26 шагов при cfg 4 их ЛОМАЮТ.
         params = {"prompt": prompt, "size": "vert",
                   "steps": 4, "cfg": 1.0, "seed": 0,
-                  "neg": prompts.НЕГАТИВ,
-                  # `size` — это соотношение сторон (вертикаль), `quality`
-                  # — разрешение. Две разные вещи, и раньше панели
-                  # передавали только первую: 4K и 8K стояли в прайсе,
-                  # продавались, но на картинку не влияли никак.
-                  # 2K стоит ноль, но применяется — поэтому смотрим на
-                  # применимость к виду работы, а не на доплату.
-                  "quality": (кач["id"] if kind in pricing.КАЧЕСТВО_ПРИМЕНИМО
-                              else "hd")}
+                  "neg": prompts.НЕГАТИВ}
         сем = prompts.семейство(kind)
         if сем in ("t2i", "i2i"):
             params["mode"] = "photo"
@@ -330,8 +312,8 @@ def показать_работы(chat, u, сколько=5):
 
 def показать_кабинет(chat, u, имя=None):
     send(chat,
-         ui.текст_кабинета(store.balance(u), store.сводка(u), store.quality(u), имя),
-         ui.меню_кабинета(store.quality(u)))
+         ui.текст_кабинета(store.balance(u), store.сводка(u), имя),
+         ui.меню_кабинета())
 
 
 def показать_баланс(chat, u):
@@ -440,19 +422,6 @@ def on_callback(cb):
     if data == "m:ref":
         answer(cid); позвать_друзей(chat, u); return
 
-    if data == "m:quality":
-        answer(cid)
-        send(chat, ui.текст_качества(), ui.меню_качества(store.quality(u))); return
-
-    if data.startswith("q:"):
-        qid = data.split(":", 1)[1]
-        try:
-            q = pricing.quality(qid)
-        except KeyError:
-            answer(cid, "Такого качества нет"); return
-        store.set_quality(u, qid)
-        answer(cid, f"Теперь {q['title']}")
-        показать_кабинет(chat, u, cb["from"].get("first_name")); return
 
     if data == "m:forget":
         answer(cid)

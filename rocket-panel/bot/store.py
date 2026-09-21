@@ -32,8 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
   ref_code     TEXT UNIQUE,
   invited_by   INTEGER,
   created_at   INTEGER NOT NULL,
-  blocked      INTEGER NOT NULL DEFAULT 0,
-  quality      TEXT NOT NULL DEFAULT 'hd'
+  blocked      INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS ledger (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,8 +106,11 @@ class Store:
                 c.execute(f"ALTER TABLE jobs ADD COLUMN {стлб} {тип}")
 
         have = {r["name"] for r in c.execute("PRAGMA table_info(users)")}
-        if "quality" not in have:
-            c.execute("ALTER TABLE users ADD COLUMN quality TEXT NOT NULL DEFAULT 'hd'")
+        # Ступени качества отменены — колонка выбора убирается. База
+        # могла успеть её получить: миграция идёт по факту, а не по
+        # памяти о том, разворачивали мы ту версию или нет.
+        if "quality" in have:
+            c.execute("ALTER TABLE users DROP COLUMN quality")
 
         if "sub" not in have:
             return
@@ -172,15 +174,6 @@ class Store:
 
     # --- личный кабинет ---
 
-    def set_quality(self, tg_id, qid):
-        """Качество по умолчанию. Проверку допустимости делает вызывающий
-        через pricing.quality() — сюда попадает уже известное значение."""
-        with self._db() as c:
-            c.execute("UPDATE users SET quality=? WHERE tg_id=?", (qid, tg_id))
-
-    def quality(self, tg_id):
-        u = self.user(tg_id)
-        return (u or {}).get("quality") or "hd"
 
     def сводка(self, tg_id):
         """Всё о человеке одним запросом — для кабинета.
