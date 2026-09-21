@@ -4,6 +4,7 @@ import pricing
 import catalog
 import prompts
 import данные
+import места
 import язык
 import emoji
 import payments
@@ -168,7 +169,7 @@ class Цены(unittest.TestCase):
         import prompts
         self.assertFalse(hasattr(prompts, "ТЕЛО_БЕЗ_ФОТО"),
                          "блок «лица нет, придумай» вернулся")
-        self.assertIn("face preserved exactly",
+        self.assertIn("FACE preserved exactly",
                       prompts.собрать("i2i", prompts.Блок()))
 
 
@@ -280,31 +281,43 @@ class Каталог(unittest.TestCase):
             # У одиночной сцены «her face preserved exactly», у парной
             # «each person's face is preserved exactly» — общее в обеих
             # ровно это.
-            self.assertIn("preserved exactly", sc.prompt,
+            self.assertIn("FACE preserved exactly", sc.prompt,
                           f"{sc.key}: нет блока сохранения лица")
 
-    def test_три_раздела_и_в_каждом_подразделы(self):
+    def test_три_раздела_и_в_каждом_дети(self):
         """Решение владельца 21.09.2026: три раздела — Раздеть, Видео,
-        Свой промпт, — и внутри каждого подразделы."""
+        Свой промпт, — и внутри каждого свои ветки."""
         self.assertEqual([р.key for р in catalog.РАЗДЕЛЫ],
                          ["undress", "video", "own"])
         for р in catalog.РАЗДЕЛЫ:
-            self.assertTrue(р.подразделы, f"{р.key}: нет подразделов")
+            self.assertTrue(р.дети, f"{р.key}: нет детей")
 
-    def test_в_подразделе_от_пяти_до_десяти_вариантов(self):
-        """Меньше пяти — подраздел не стоит нажатия; больше десяти
-        человек уже не читает, а листает."""
+    def test_у_соло_в_фото_две_ветки_а_у_группового_ни_одной(self):
+        """Дерево неровное нарочно: «Раздеть · Соло» делится на
+        раздевание и интим, а «Групповое» показывает варианты сразу."""
+        соло = catalog.узел("un_solo")
+        self.assertEqual([д.key for д in соло.дети], ["un_here", "un_intim"])
+        self.assertFalse(соло.scenes)
+        группа = catalog.узел("un_group")
+        self.assertFalse(группа.дети)
+        self.assertTrue(группа.scenes)
+
+    def test_в_подразделе_не_меньше_пяти_вариантов(self):
+        """Меньше пяти — узел не стоит нажатия.
+
+        Верхней границы больше нет: в «Групповом» восемнадцать по
+        решению владельца — три состава одним списком, без промежуточной
+        кнопки выбора состава."""
         for c in catalog.ВИДИМЫЕ:
             self.assertGreaterEqual(len(c.scenes), 5, f"{c.key}: меньше пяти")
-            self.assertLessEqual(len(c.scenes), 10, f"{c.key}: больше десяти")
 
-    def test_у_каждого_сценария_есть_свой_подраздел(self):
-        """Кнопка «Назад» на экране сценария ведёт в его подраздел.
+    def test_у_каждого_сценария_есть_свой_узел(self):
+        """Кнопка «Назад» на экране сценария ведёт в его ветку.
         Потеряется связь — вести будет некуда."""
         for sc in catalog.все_сценарии():
-            self.assertIsNotNone(sc.подраздел, f"{sc.key}: без подраздела")
-            self.assertIn(sc, sc.подраздел.scenes)
-            self.assertIsNotNone(sc.подраздел.раздел, f"{sc.key}: без раздела")
+            self.assertIsNotNone(sc.узел, f"{sc.key}: без узла")
+            self.assertIn(sc, sc.узел.scenes)
+            self.assertIsNotNone(sc.узел.родитель, f"{sc.key}: узел без родителя")
 
     def test_популярное_появляется_только_когда_есть_данные(self):
         """Пустое «Популярное» на самом видном месте — худший первый
@@ -782,13 +795,72 @@ class ПравкиВладельца(unittest.TestCase):
         Пустое поле означает «вернуть как было», а не «стереть»."""
         catalog.подставить({"un_close": {"название": "МОЁ"}})
         д = catalog.дерево()
-        ключи = [р["ключ"] for р in д["разделы"]]
-        self.assertEqual(ключи, ["undress", "video", "own"])
-        варианты = д["разделы"][0]["подразделы"][0]["варианты"]
-        первый = [в for в in варианты if в["ключ"] == "un_close"][0]
+        self.assertEqual([р["ключ"] for р in д["разделы"]],
+                         ["undress", "video", "own"])
+        все = []
+
+        def собрать(в):
+            все.extend(в["варианты"])
+            for д_ in в["дети"]:
+                собрать(д_)
+        for р in д["разделы"]:
+            собрать(р)
+        первый = [в for в in все if в["ключ"] == "un_close"][0]
         self.assertEqual(первый["название"], "МОЁ")
         self.assertEqual(первый["название_по_умолчанию"], "Крупный план")
         self.assertGreaterEqual(первый["промпт_длина"], prompts.МИН_ДЛИНА)
+
+    def test_зеркала_на_странице_не_показываются(self):
+        """Та же строка вторым экземпляром означала бы две копии одного
+        текста, которые однажды разойдутся."""
+        д = catalog.дерево()
+        ключи = []
+
+        def собрать(в):
+            ключи.extend(x["ключ"] for x in в["варианты"])
+            for д_ in в["дети"]:
+                собрать(д_)
+        for р in д["разделы"]:
+            собрать(р)
+        self.assertEqual(len(ключи), len(catalog.оригиналы()))
+        self.assertNotIn("ph_close", ключи)
+        self.assertIn("ac_close", ключи)
+
+    def test_страница_говорит_где_ещё_работает_строка(self):
+        """Владелец пишет строку в «Видео · Соло», а работает она ещё и
+        фотографией. Не сказать об этом — значит удивить его ценой."""
+        д = catalog.дерево()
+        все = []
+
+        def собрать(в):
+            все.extend(в["варианты"])
+            for д_ in в["дети"]:
+                собрать(д_)
+        for р in д["разделы"]:
+            собрать(р)
+        ac = [в for в in все if в["ключ"] == "ac_close"][0]
+        self.assertTrue(ac["работает_ещё"], "зеркало не показано")
+        self.assertEqual(ac["работает_ещё"][0]["коины"], 1)
+
+    def test_места_отдаются_странице(self):
+        д = catalog.дерево()
+        ключи = [м["ключ"] for м in д["места"]]
+        self.assertIn("sc_bed", ключи)
+        self.assertIn("sc_office", ключи)
+        self.assertNotIn("ref", ключи, "«как на твоём фото» не правится")
+
+    def test_кириллица_в_поле_для_модели_ловится(self):
+        """Самая дорогая опечатка: модель молчит, а брак виден только на
+        готовой картинке, когда коины уже списаны."""
+        self.assertTrue(catalog.кириллица("Секс раком"))
+        self.assertFalse(catalog.кириллица("Sex from behind"))
+        catalog.подставить({"un_close": {"строка": "Всё по-русски"}})
+        try:
+            self.assertIn("un_close", catalog.с_кириллицей())
+            catalog.подставить({"un_close": {"строка": "All in English"}})
+            self.assertNotIn("un_close", catalog.с_кириллицей())
+        finally:
+            catalog.перечитать()
 
     def test_страница_правит_только_известные_ключи(self):
         известные = catalog.известные_ключи()
@@ -804,12 +876,18 @@ class ПравкиВладельца(unittest.TestCase):
     def test_строка_идёт_в_начало_а_не_в_хвост(self):
         """Модели внимательнее к началу промпта. Уехав в конец,
         откровенная часть начинает проигрывать свету и обстановке —
-        то есть ровно то, ради чего сценарий заводили, не случается."""
+        то есть ровно то, ради чего сценарий заводили, не случается.
+
+        Меряем не долей от длины, а порядком блоков: блок соответствия
+        референсу вырос втрое по просьбе владельца, и доля сдвинулась бы
+        сама, ничего не сломав."""
         б = prompts.Блок(обстановка="A room.", свет="Soft light.",
                          откровенное="MARKER")
         p = prompts.собрать("i2i", б)
-        self.assertLess(p.index("MARKER"), len(p) // 3,
-                        "строка владельца уехала в хвост промпта")
+        self.assertLess(p.index("MARKER"), p.index("A room."),
+                        "строка владельца уехала за обстановку")
+        self.assertLess(p.index("MARKER"), p.index(prompts.КОЖА[:40]),
+                        "строка владельца уехала в технический хвост")
 
     def test_пустая_строка_не_ломает_сценарий(self):
         """Владелец может не заполнить ничего — бот обязан работать."""
@@ -862,49 +940,54 @@ class ВидеоЧерезФото(unittest.TestCase):
             self.assertEqual(s.двухшаговый, видео, f"{s.key}")
 
     def test_фото_сценарии_одношаговые(self):
-        for s in catalog.category("un_here").scenes:
-            self.assertFalse(s.двухшаговый, f"{s.key}")
+        for ключ in ("un_here", "un_intim", "un_group"):
+            for s in catalog.узел(ключ).scenes:
+                self.assertFalse(s.двухшаговый, f"{s.key}")
 
     def test_у_видео_есть_промпт_для_кадра(self):
         s = catalog.scene("ac_close")
         self.assertIn("Animate the supplied photograph", s.prompt)
-        self.assertNotIn("Animate the supplied photograph", s.prompt_фото)
-        self.assertGreaterEqual(len(s.prompt_фото), prompts.МИН_ДЛИНА)
+        self.assertNotIn("Animate the supplied photograph", s.prompt_фото())
+        self.assertGreaterEqual(len(s.prompt_фото()), prompts.МИН_ДЛИНА)
 
 
 class ПарныеСцены(unittest.TestCase):
     """Двое в кадре — двое референсов, по снимку на человека."""
 
     def test_три_состава_по_шесть_расстановок(self):
-        for ключ in ("vi_mf", "vi_ff", "vi_mm"):
-            self.assertEqual(len(catalog.category(ключ).scenes), 6)
+        """Восемнадцать в одном списке: три состава на шесть
+        расстановок. Промежуточной кнопки выбора состава нет —
+        решение владельца."""
+        for ключ in ("vi_group", "un_group"):
+            self.assertEqual(len(catalog.узел(ключ).scenes), 18)
+        составы = {s.состав_коротко for s in catalog.узел("vi_group").scenes}
+        self.assertEqual(составы, {"МЖ", "ЖЖ", "ММ"})
 
     def test_паре_нужны_ровно_два_снимка(self):
         """Запуск с одним референсом отдал бы одного человека там, где
         заплачено за двоих."""
-        for s in catalog.category("vi_mf").scenes:
+        for s in catalog.узел("vi_group").scenes:
             self.assertEqual(s.фото_нужно, (2, 2), f"{s.key}")
 
     def test_промпт_запрещает_слипание_лиц(self):
         """Смешение двух лиц в одно — самый частый брак парных сцен, и
         стоит он дороже перепутанного порядка референсов."""
-        for s in catalog.category("vi_ff").scenes:
-            self.assertIn("never blended into one face", s.prompt_фото)
-            self.assertIn("TWO different people", s.prompt_фото)
+        for s in catalog.узел("vi_group").scenes:
+            self.assertIn("never blended into one face", s.prompt_фото())
+            self.assertIn("TWO different people", s.prompt_фото())
 
     def test_состав_назван_в_промпте(self):
-        self.assertIn("is a man", catalog.scene("pr_mf_near").prompt_фото)
+        self.assertIn("is a man", catalog.scene("pr_mf_near").prompt_фото())
         self.assertIn("Both people are women",
-                      catalog.scene("pr_ff_near").prompt_фото)
+                      catalog.scene("pr_ff_near").prompt_фото())
         self.assertIn("Both people are men",
-                      catalog.scene("pr_mm_near").prompt_фото)
+                      catalog.scene("pr_mm_near").prompt_фото())
 
     def test_пара_не_обещает_обстановку_с_фото(self):
         """Второй человек приходит со своего снимка. «Та же комната»
         было бы враньём на экране оплаты."""
-        for s in catalog.category("vi_mm").scenes:
-            self.assertEqual(s.фон, "новый")
-            self.assertNotIn("KEEP THE SETTING", s.prompt_фото)
+        for s in catalog.узел("vi_group").scenes:
+            self.assertNotIn("KEEP THE SETTING", s.prompt_фото())
 
 
 class ОткудаБерётсяФон(unittest.TestCase):
@@ -915,9 +998,8 @@ class ОткудаБерётсяФон(unittest.TestCase):
     """
 
     def test_раздеть_берёт_обстановку_с_фото(self):
-        for s in catalog.category("un_here").scenes:
+        for s in catalog.узел("un_here").scenes:
             self.assertEqual(s.фон, "референс", f"{s.key}: сочиняет своё место")
-            self.assertFalse(s.своё_место, f"{s.key}: объявил своё место")
             self.assertIn("KEEP THE SETTING", s.prompt,
                           f"{s.key}: промпт не велит сохранить обстановку")
 
@@ -926,24 +1008,30 @@ class ОткудаБерётсяФон(unittest.TestCase):
         кровати, ни зеркала, ни душа. Сценарий, который их требует, на
         уличном снимке даёт бред."""
         мебель = ("bed", "mirror", "shower", "sheet", "bathtub", "sofa")
-        for s in catalog.category("un_here").scenes:
+        for s in catalog.узел("un_here").scenes:
             свои = " ".join([s.блок.поза, s.блок.обстановка, s.блок.свет,
                              s.блок.ещё]).lower()
             for м in мебель:
                 self.assertNotIn(м, свои, f"{s.key}: завязан на {м}")
 
-    def test_обстановка_сочиняет_место_и_называет_его(self):
-        for s in catalog.category("un_place").scenes:
-            self.assertEqual(s.фон, "новый", f"{s.key}: не меняет место")
-            self.assertTrue(s.своё_место, f"{s.key}: не назвал место")
-            self.assertNotIn("KEEP THE SETTING", s.prompt)
+    def test_выбранное_место_заменяет_обстановку(self):
+        """Место — добавка к любому варианту, а не отдельная кнопка."""
+        s = catalog.scene("un_close")
+        свой = s.прompt if False else s.промпт()
+        self.assertIn("KEEP THE SETTING", свой)
+        с_душем = s.промпт(место=места.место("sc_shower"))
+        self.assertNotIn("KEEP THE SETTING", с_душем)
+        self.assertIn("walk-in shower", с_душем)
 
-    def test_оживление_соло_всегда_на_фоне_фото(self):
-        """У соло-ролика первый кадр делается по референсу той же сцены
-        — обстановка там с него, иначе и быть не может."""
-        for s in catalog.category("vi_solo").scenes:
-            self.assertFalse(s.своё_место, f"{s.key}: объявил своё место")
-            self.assertEqual(s.место, "как на твоём фото")
+    def test_место_не_трогает_ракурс_варианта(self):
+        """Иначе «Крупный план в душе» перестал бы быть крупным планом."""
+        s = catalog.scene("un_close")
+        с_душем = s.промпт(место=места.место("sc_shower"))
+        self.assertIn("85mm at f/1.8, chest-up", с_душем)
+
+    def test_как_на_фото_ничего_не_добавляет(self):
+        s = catalog.scene("un_close")
+        self.assertEqual(s.промпт(), s.промпт(место=места.КАК_НА_ФОТО))
 
 
 class ЧеловекВидитЗаЧтоПлатит(unittest.TestCase):
@@ -965,11 +1053,12 @@ class ЧеловекВидитЗаЧтоПлатит(unittest.TestCase):
                 self.assertIn("Место:", э, f"{s.key}: не сказано где")
 
     def test_у_пары_на_экране_назван_состав(self):
-        for s in catalog.category("vi_mf").scenes:
+        """Акты у МЖ, ЖЖ и ММ владелец писал разные, и человек должен
+        видеть, за какой платит: в общем списке имена совпадают."""
+        for s in catalog.узел("vi_group").scenes:
             э = self.ui.шапка_сценария(s, 100)
-            self.assertIn("В кадре: <b>мужчина и женщина</b>", э)
+            self.assertIn("В кадре: <b>" + s.пара + "</b>", э)
             self.assertIn("Расстановка:", э)
-            self.assertNotIn("Место:", э, f"{s.key}: обещает место, которого нет")
 
     def test_у_кадровых_сценариев_назван_ракурс(self):
         for c in ("un_here", "vi_solo"):
@@ -1007,15 +1096,16 @@ class Раскладка(unittest.TestCase):
                 self.assertTrue(pricing.job(s.job).нужно_фото,
                                 f"{s.key}: сценарий без входного фото")
 
-    def test_подразделы_по_видам_работы(self):
+    def test_узлы_по_видам_работы(self):
         по_ключу = {c.key: {s.job for s in c.scenes} for c in catalog.ВИДИМЫЕ}
         self.assertEqual(по_ключу.get("un_here"), {"i2i"})
-        self.assertEqual(по_ключу.get("un_place"), {"i2i"})
+        self.assertEqual(по_ключу.get("un_intim"), {"i2i"})
+        self.assertEqual(по_ключу.get("un_group"), {"i2i"})
         self.assertEqual(по_ключу.get("vi_solo"), {"i2v_5"})
-        self.assertEqual(по_ключу.get("vi_mf"), {"i2v_5"})
+        self.assertEqual(по_ключу.get("vi_group"), {"i2v_5"})
 
     def test_свой_промпт_знает_свой_вид_работы(self):
-        for под in catalog.раздел("own").подразделы:
+        for под in catalog.узел("own").дети:
             self.assertIn(под.key, catalog.СВОБОДНЫЕ)
             self.assertIn(catalog.СВОБОДНЫЕ[под.key], pricing.JOBS)
 
@@ -1322,17 +1412,17 @@ class ДваЯзыка(unittest.TestCase):
                          if "а" <= c.lower() <= "я"]
             self.assertFalse(кириллица, f"{s.key}: кириллица в английском")
 
-    def test_разделы_и_подразделы_названы_по_английски(self):
-        for р in catalog.РАЗДЕЛЫ:
-            self.assertIn(р.key, язык.РАЗДЕЛЫ_EN, f"{р.key}: нет перевода")
-            for под in р.подразделы:
-                self.assertIn(под.key, язык.ПОДРАЗДЕЛЫ_EN,
-                              f"{под.key}: нет перевода")
+    def test_узлы_названы_по_английски(self):
+        for у in catalog.УЗЛЫ:
+            self.assertIn(у.key, язык.УЗЛЫ_EN, f"{у.key}: нет перевода")
 
     def test_места_и_составы_названы_по_английски(self):
+        for м in catalog.видимые_места():
+            self.assertIn(м.key, язык.МЕСТА_КНОПКИ_EN, f"{м.key}: нет перевода")
+            кириллица = [c for c in catalog.место_назв(м, "en")
+                         if "а" <= c.lower() <= "я"]
+            self.assertFalse(кириллица, f"{м.key}: кириллица в английском")
         for s in catalog.все_сценарии():
-            if s.своё_место:
-                self.assertIn(s.место, язык.МЕСТА_EN, f"{s.key}: место без перевода")
             if s.пара:
                 self.assertIn(s.пара, язык.СОСТАВЫ_EN, f"{s.key}: состав без перевода")
 
@@ -1390,10 +1480,13 @@ class ДваЯзыка(unittest.TestCase):
     def test_английский_интерфейс_без_кириллицы(self):
         """Кроме значка валюты: 😏 — не буква, он одинаков везде."""
         экраны = [
-            self.ui.шапка_сценария(catalog.scene("sc_bed"), 100, "en"),
+            self.ui.шапка_сценария(catalog.scene("un_close"), 100, "en"),
+            self.ui.шапка_сценария(catalog.scene("un_close"), 100, "en",
+                                   места.место("sc_shower")),
+            self.ui.текст_мест(catalog.scene("un_close"), "en"),
             self.ui.текст_оплаты("en"),
-            self.ui.текст_раздела(catalog.раздел("undress"), "en"),
-            self.ui.текст_своего_промпта(catalog.category("own_photo"), "en"),
+            self.ui.текст_узла(catalog.узел("undress"), "en"),
+            self.ui.текст_своего_промпта(catalog.узел("own_photo"), "en"),
         ]
         for э in экраны:
             кириллица = [c for c in э if "а" <= c.lower() <= "я"]
@@ -1448,39 +1541,37 @@ class УбратьИзБота(unittest.TestCase):
         self.assertNotIn(catalog.scene("un_close"), под.видимые)
         self.assertTrue(catalog.scene("un_close").скрыт)
 
-    def test_убранный_подраздел_прячет_свои_варианты(self):
-        """Иначе спрятанный подраздел исчезал бы из меню, а его сценарии
+    def test_убранный_узел_прячет_свои_варианты(self):
+        """Иначе спрятанная ветка исчезала бы из меню, а её сценарии
         оставались бы в «Популярном» и открывались по старым кнопкам."""
         catalog.подставить({"un_here": {"скрыт": "1"}})
-        self.assertTrue(catalog.category("un_here").скрыт)
-        for s in catalog.category("un_here").scenes:
-            self.assertTrue(s.скрыт, f"{s.key} пережил скрытие подраздела")
+        self.assertTrue(catalog.узел("un_here").скрыт)
+        for s in catalog.узел("un_here").scenes:
+            self.assertTrue(s.скрыт, f"{s.key} пережил скрытие ветки")
 
-    def test_убранный_раздел_прячет_всё_внутри(self):
-        catalog.подставить({"video": {"скрыт": "1"}})
-        self.assertTrue(catalog.раздел("video").пустой)
-        for под in catalog.раздел("video").подразделы:
-            self.assertTrue(под.скрыт)
-            for s in под.scenes:
-                self.assertTrue(s.скрыт)
+    def test_скрытие_идёт_вглубь_на_все_уровни(self):
+        """Дерево теперь трёхуровневое, и раздел обязан уносить с собой
+        не только детей, но и внуков."""
+        catalog.подставить({"undress": {"скрыт": "1"}})
+        р = catalog.узел("undress")
+        self.assertTrue(р.пустой)
+        self.assertTrue(catalog.узел("un_solo").скрыт)
+        self.assertTrue(catalog.узел("un_intim").скрыт, "внук пережил")
+        for s in р.все_сцены:
+            self.assertTrue(s.скрыт, f"{s.key} пережил скрытие раздела")
 
-    def test_подраздел_без_вариантов_не_показывается(self):
+    def test_узел_без_вариантов_не_показывается(self):
         """Кнопка, ведущая в пустой список, — нажатие впустую и назад."""
-        под = catalog.category("vi_mm")
-        catalog.подставить({s.key: {"скрыт": "1"} for s in под.scenes})
-        self.assertTrue(под.пустой)
-        self.assertNotIn(под, catalog.раздел("video").видимые)
-
-    def test_раздел_без_подразделов_не_показывается(self):
-        под = catalog.раздел("undress").подразделы
-        catalog.подставить({p.key: {"скрыт": "1"} for p in под})
-        self.assertTrue(catalog.раздел("undress").пустой)
+        у = catalog.узел("un_intim")
+        catalog.подставить({s.ключ_правок: {"скрыт": "1"} for s in у.scenes})
+        self.assertTrue(у.пустой)
+        self.assertNotIn(у, catalog.узел("un_solo").видимые_дети)
 
     def test_свой_промпт_не_пустеет_от_отсутствия_вариантов(self):
         """Там вариантов нет по устройству: клиент пишет описание сам."""
         catalog.подставить({})
-        self.assertFalse(catalog.раздел("own").пустой)
-        for под in catalog.раздел("own").подразделы:
+        self.assertFalse(catalog.узел("own").пустой)
+        for под in catalog.узел("own").дети:
             self.assertFalse(под.пустой, под.key)
 
     def test_убранное_пропадает_из_меню(self):
@@ -1531,10 +1622,16 @@ class УбратьИзБота(unittest.TestCase):
         self.assertFalse(catalog.scene("un_close").скрыт)
 
     def test_вернуть_можно_тем_же_нажатием(self):
-        catalog.подставить({"sc_bed": {"скрыт": "1"}})
-        self.assertTrue(catalog.scene("sc_bed").скрыт)
-        catalog.подставить({"sc_bed": {"скрыт": ""}})
-        self.assertFalse(catalog.scene("sc_bed").скрыт)
+        catalog.подставить({"un_full": {"скрыт": "1"}})
+        self.assertTrue(catalog.scene("un_full").скрыт)
+        catalog.подставить({"un_full": {"скрыт": ""}})
+        self.assertFalse(catalog.scene("un_full").скрыт)
+
+    def test_место_тоже_прячется(self):
+        catalog.подставить({"sc_studio": {"скрыт": "1"}})
+        ключи = [м.key for м in catalog.видимые_места()]
+        self.assertNotIn("sc_studio", ключи)
+        self.assertIn("ref", ключи, "«как на твоём фото» пропало")
 
 
 if __name__ == "__main__":

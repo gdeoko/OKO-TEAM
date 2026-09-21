@@ -18,6 +18,7 @@ import requests
 import archive
 import pricing
 import catalog
+import места
 import prompts
 import payments
 import emoji
@@ -454,10 +455,24 @@ def on_text(chat, u, text):
     пустить_своё(chat, u, kind, text.strip(), st.get("фото") or [])
 
 
-def пустить_сценарий(chat, u, sc, фото):
+def _место(ключ):
+    """Ключ места -> место. Неизвестный ключ (старая кнопка из
+    переписки, спрятанное место) откатывается к «как на твоём фото»:
+    это всегда осмысленный кадр, а падение — нет."""
+    if not ключ:
+        return места.КАК_НА_ФОТО
+    try:
+        м = места.место(ключ)
+    except KeyError:
+        return места.КАК_НА_ФОТО
+    return места.КАК_НА_ФОТО if catalog.скрыт(ключ) else м
+
+
+def пустить_сценарий(chat, u, sc, фото, место=None):
     """Запуск кнопки каталога. Двухшаговость решает сам сценарий."""
-    launch(chat, u, sc.job, sc.prompt, фото, scene=sc.key,
-           цепочка=sc.двухшаговый, prompt_фото=sc.prompt_фото)
+    место = место or места.КАК_НА_ФОТО
+    launch(chat, u, sc.job, sc.промпт(место=место), фото, scene=sc.key,
+           цепочка=sc.двухшаговый, prompt_фото=sc.prompt_фото(место))
 
 
 def пустить_своё(chat, u, kind, текст, фото):
@@ -513,8 +528,9 @@ def on_photo(chat, u, file_id):
     # сами, не заставляя жать лишнюю кнопку.
     if sc:
         if len(собрано) >= макс:
+            м = _место(st.get("место"))
             waiting.pop(u, None)
-            пустить_сценарий(chat, u, sc, собрано)
+            пустить_сценарий(chat, u, sc, собрано, м)
             return
         send(chat, ui.просьба_о_фото(job, len(собрано), sc.фото_нужно, я),
              ui.меню_сбора_фото(sc, len(собрано), я))
@@ -648,31 +664,33 @@ def on_callback(cb):
         answer(cid)
         send(chat, t("гл.убрано", я), меню(u))
 
-    if data.startswith("r:"):
-        р = catalog.раздел(data.split(":", 1)[1])
-        if р.пустой:
-            return убрано()
-        answer(cid)
-        send(chat, ui.текст_раздела(р, я), ui.меню_раздела(р, я))
-        return
-
-    if data.startswith("c:"):
+    # Один переход на все уровни дерева: у «Соло» внутри есть ещё
+    # разбивка, у «Группового» нет, и отдельные callback'ы на раздел и
+    # подраздел означали бы третий — при следующей же правке дерева.
+    if data.startswith("n:") or data.startswith("r:") or data.startswith("c:"):
         ключ = data.split(":", 1)[1]
         # «Популярное» живёт не в дереве, а в базе, и по ключу его там
         # нет: пересчитываем заново, иначе кнопка ведёт в ошибку.
-        cat = (catalog.популярная_категория(store) if ключ == "top"
-               else catalog.category(ключ))
-        if not cat or not cat.видимые:
-            return убрано()
+        if ключ == "top":
+            у = catalog.популярная_категория(store)
+            if not у or not у.видимые:
+                return убрано()
+        else:
+            try:
+                у = catalog.узел(ключ)
+            except KeyError:
+                return убрано()
+            if у.пустой:
+                return убрано()
         answer(cid)
-        send(chat, ui.шапка_категории(cat, я), ui.меню_категории(cat, я))
+        send(chat, ui.текст_узла(у, я), ui.меню_узла(у, я))
         return
 
     if data.startswith("own:"):
         # Свой промпт: сначала референс, потом описание. Вид работы
         # определён подразделом — см. catalog.СВОБОДНЫЕ.
         answer(cid)
-        под = catalog.category(data.split(":", 1)[1])
+        под = catalog.узел(data.split(":", 1)[1])
         if под.скрыт:
             return убрано()
         kind = catalog.СВОБОДНЫЕ[под.key]
@@ -681,20 +699,34 @@ def on_callback(cb):
         return
 
     if data.startswith("sc:"):
+        # «sc:ключ» или «sc:ключ:место» — вторая часть появляется, когда
+        # человек выбрал обстановку и вернулся на экран сценария.
+        части = data.split(":")
+        sc = catalog.scene(части[1])
+        if sc.скрыт:
+            return убрано()
+        м = _место(части[2]) if len(части) > 2 else места.КАК_НА_ФОТО
+        answer(cid)
+        send(chat, ui.шапка_сценария(sc, store.balance(u), я, м),
+             ui.меню_сценария(sc, я, м))
+        return
+
+    if data.startswith("pl:"):
         sc = catalog.scene(data.split(":", 1)[1])
         if sc.скрыт:
             return убрано()
         answer(cid)
-        send(chat, ui.шапка_сценария(sc, store.balance(u), я),
-             ui.меню_сценария(sc, я))
+        send(chat, ui.текст_мест(sc, я), ui.меню_мест(sc, я))
         return
 
     if data.startswith("go:"):
         # Проверка баланса ЗДЕСЬ, а не на показе сценария: между показом
         # и нажатием человек мог потратить коины в другом окне.
-        sc = catalog.scene(data.split(":", 1)[1])
+        части = data.split(":")
+        sc = catalog.scene(части[1])
         if sc.скрыт:
             return убрано()
+        м = _место(части[2]) if len(части) > 2 else места.КАК_НА_ФОТО
         есть = store.balance(u)
         if есть < sc.coins:
             answer(cid, t("сц.мало_коинов", я,
@@ -703,7 +735,8 @@ def on_callback(cb):
             return
         answer(cid)
         job = pricing.job(sc.job)
-        waiting[u] = {"kind": sc.job, "scene": sc.key, "фото": []}
+        waiting[u] = {"kind": sc.job, "scene": sc.key, "место": м.key,
+                      "фото": []}
         send(chat, ui.просьба_о_фото(job, 0, sc.фото_нужно, я),
              ui.меню_сбора_фото(sc, 0, я))
         return
@@ -719,8 +752,9 @@ def on_callback(cb):
             answer(cid, t("фото.сколько_нести", я,
                           сколько=sc.фото_нужно[0])); return
         answer(cid)
+        м = _место((st or {}).get("место"))
         waiting.pop(u, None)
-        пустить_сценарий(chat, u, sc, собрано)
+        пустить_сценарий(chat, u, sc, собрано, м)
         return
 
     if data.startswith("undo:"):
@@ -738,8 +772,8 @@ def on_callback(cb):
         # Старая кнопка из сообщений, отправленных до перехода на три
         # раздела. Телеграм хранит их вечно, и нажать её могут завтра.
         answer(cid)
-        р = catalog.раздел("own")
-        send(chat, ui.текст_раздела(р, я), ui.меню_раздела(р, я))
+        у = catalog.узел("own")
+        send(chat, ui.текст_узла(у, я), ui.меню_узла(у, я))
         return
 
     answer(cid)
