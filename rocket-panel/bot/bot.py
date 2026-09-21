@@ -144,14 +144,10 @@ def price_list(u=None):
                        нота=язык.job_note(j, я)))
     lines.append("\n<i>" + t("оп.одна_цена", я) + "</i>")
     lines.append("\n" + t("оп.подписки_нет", я))
-    lines.append("\n" + t("оп.пакеты", я) + "\n")
-    for p in pricing.PACKS:
-        lines.append(t("оп.пакет_строка", я, коинов=p["coins"],
-                       символ=pricing.СИМВОЛ, рублей=p["rub"],
-                       рынок=p["market_rub"]))
-    lines.append("\n" + t("оп.вилка", я,
-                          дешевле=f"{pricing.rub_per_coin('p7'):.0f}",
-                          дороже=f"{pricing.rub_per_coin('p1'):.0f}"))
+    # Цены пакетов в тексте НЕ повторяются: они стоят на кнопках прямо
+    # под сообщением. Дважды одно и то же человек не читает — он
+    # пролистывает, и пролистывает вместе с тем, что было важно.
+    lines.append("\n" + t("оп.пакеты", я))
     return "\n".join(lines)
 
 
@@ -278,7 +274,8 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         send(chat, t("гл.что_дальше", я), меню(u))
 
     except NotEnoughCoins as e:
-        send(chat, t("ген.не_хватает", я, нужно=e.need, есть=e.have), buy_kb(u))
+        send(chat, t("ген.не_хватает", я, нужно=e.need, есть=e.have),
+             ui.мало_коинов(я))
     except GpuError as e:
         if charged:
             store.refund(u, job.coins, f"осечка генерации: {str(e)[:80]}")
@@ -409,11 +406,26 @@ def показать_баланс(chat, u):
 
 
 def позвать_друзей(chat, u):
+    """Готовое приглашение в одно нажатие.
+
+    Раньше бот выдавал ссылку и предлагал человеку самому придумать,
+    что к ней написать. Так реферальная программа не работает: писать
+    текст про порно-бота своими словами неловко, и до отправки доходят
+    единицы. Теперь текст написан за него, а кнопка открывает родной
+    выбор чата с уже подставленным сообщением.
+    """
+    я = яз(u)
     code = store.user(u)["ref_code"]
     me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
-    send(chat, t("каб.зови", яз(u), ссылка=f"https://t.me/{me}?start={code}",
-                 ему=pricing.REFERRAL_INVITER, другу=pricing.REFERRAL_INVITEE,
-                 символ=pricing.СИМВОЛ), меню(u))
+    ссылка = f"https://t.me/{me}?start={code}"
+    текст = t("пригл.текст", я, ссылка=ссылка,
+              другу=f"{pricing.REFERRAL_INVITEE} {pricing.СИМВОЛ}")
+    send(chat, "\n\n".join([
+        t("пригл.заголовок", я),
+        t("пригл.как", я, ему=f"{pricing.REFERRAL_INVITER} {pricing.СИМВОЛ}",
+          другу=f"{pricing.REFERRAL_INVITEE} {pricing.СИМВОЛ}"),
+        t("пригл.ссылка_моя", я, ссылка=ссылка),
+    ]), ui.меню_приглашения(ссылка, текст, я))
 
 
 # Нижнее меню шлёт обычный текст, а не callback. Без этой таблицы все
@@ -421,8 +433,8 @@ def позвать_друзей(chat, u):
 # висела на экране и не делала ничего.
 ДЕЙСТВИЯ_НИЗА = {
     "низ.создать":  lambda chat, u: send(chat, t("гл.что_делаем", яз(u)), меню(u)),
-    "низ.баланс":   показать_кабинет,
-    "низ.работы":   показать_работы,
+    "низ.файлы":    показать_работы,
+    "низ.кабинет":  показать_кабинет,
     "низ.пополнить": lambda chat, u: send(chat, price_list(u), buy_kb(u)),
 }
 
@@ -731,7 +743,7 @@ def on_callback(cb):
         if есть < sc.coins:
             answer(cid, t("сц.мало_коинов", я,
                           цена=f"{sc.coins} {pricing.СИМВОЛ}", баланс=есть))
-            send(chat, ui.текст_оплаты(я), ui.меню_оплаты(я))
+            send(chat, ui.текст_оплаты(я), ui.мало_коинов(я))
             return
         answer(cid)
         job = pricing.job(sc.job)
