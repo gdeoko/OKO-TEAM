@@ -37,12 +37,30 @@
 # её черты» для них бессмысленно — модель начинает искать референс,
 # которого нет.
 ТЕЛО_ПО_ФОТО = (
-    "The woman from the supplied reference photograph, her face preserved "
-    "exactly: same bone structure, same eye shape and colour, same nose, "
-    "same lips, same eyebrows, same hairline, same skin tone and the same "
-    "individual marks, moles and freckles. Identity must be unmistakable — "
-    "someone who knows her recognises her instantly. Do not beautify, do "
-    "not slim, do not symmetrise, do not change her apparent age."
+    "The woman from the supplied reference photograph, reproduced one to "
+    "one. "
+    "FACE preserved exactly: same bone structure, same jaw and cheekbones, "
+    "same eye shape, spacing and colour, same nose, same lips, same "
+    "eyebrows, same hairline, same individual marks, moles and freckles. "
+    "Identity must be unmistakable — someone who knows her recognises her "
+    "instantly at a glance. "
+    "BODY preserved exactly as it is in the reference: the same build and "
+    "the same amount of flesh on it. If she is slim in the reference she "
+    "stays slim; if she is full-figured she stays full-figured; if she is "
+    "athletic she stays athletic. Same shoulder width, same waist, same "
+    "hips, same thighs, same height and the same proportions between them. "
+    "Same breast size and shape, same buttocks, same belly — not one size "
+    "larger and not one size smaller. Same apparent age. "
+    "SKIN preserved exactly: the same tone and undertone across the whole "
+    "body, the same tan lines if there are any, the same texture, the same "
+    "birthmarks and scars in the same places. "
+    "HAIR preserved exactly: same colour, same length, same density, same "
+    "texture, same parting, same hairline. "
+    "This is a photograph of THAT person, not a model who resembles her. "
+    "Do not beautify, do not slim, do not enlarge anything, do not "
+    "symmetrise, do not smooth, do not idealise, do not give her a "
+    "fashion-model or fitness-influencer body she does not have. Any "
+    "departure from the reference is a defect, even a flattering one."
 )
 
 
@@ -66,17 +84,27 @@
 # сцен, и стоит он дороже перепутанного порядка.
 ТЕЛО_ПАРА = (
     "TWO different people are shown, and two reference photographs are "
-    "supplied — one person per reference. Each person's face is preserved "
-    "exactly from their own reference: same bone structure, same eye shape "
+    "supplied — one person per reference. Each person is reproduced one to "
+    "one from their OWN reference. "
+    "FACE preserved exactly for each: same bone structure, same eye shape "
     "and colour, same nose, same lips, same eyebrows, same hairline, same "
-    "skin tone, same individual marks and moles. The person from the FIRST "
-    "reference and the person from the SECOND reference must remain two "
-    "clearly distinct individuals — never blended into one face, never "
-    "duplicated so that both figures share the same face, never reduced to "
-    "a single person. Both must be recognisable to someone who knows them. "
-    "Do not beautify, do not slim, do not symmetrise, do not change their "
-    "apparent ages. Exactly two people in frame: no third figure, no "
-    "reflection read as a third person, no stray limb belonging to nobody."
+    "individual marks and moles. "
+    "BODY preserved exactly for each: the same build and the same amount of "
+    "flesh on it — slim stays slim, full-figured stays full-figured, "
+    "athletic stays athletic. Same height, same shoulders, waist, hips and "
+    "thighs, same breast size and shape, same buttocks, same belly, same "
+    "apparent age. SKIN the same tone and texture as in that person's own "
+    "reference; HAIR the same colour, length and texture. The two of them "
+    "keep whatever difference in height and build the references show — do "
+    "not even them out. "
+    "The person from the FIRST reference and the person from the SECOND "
+    "reference must remain two clearly distinct individuals — never blended "
+    "into one face, never duplicated so that both figures share the same "
+    "face, never reduced to a single person. Both must be recognisable to "
+    "someone who knows them. Do not beautify, do not slim, do not enlarge, "
+    "do not idealise either of them. Exactly two people in frame: no third "
+    "figure, no reflection read as a third person, no stray limb belonging "
+    "to nobody."
 )
 
 КОЖА = (
@@ -151,21 +179,39 @@
 )
 
 КАЧЕСТВО = (
-    "Photorealistic. Ultra sharp where focus lands, 8K detail, high "
-    "dynamic range, professional retouching standard — the level of a "
-    "paid editorial shoot, not a snapshot and not a render."
+    "A real photograph taken with a real camera of a real person in a real "
+    "room. Photorealistic to the point of being indistinguishable from an "
+    "ordinary photo: ultra sharp where focus lands, 8K detail, high dynamic "
+    "range, professional retouching standard — the level of a paid "
+    "editorial shoot, not a snapshot and not a render. Nothing stylised, "
+    "nothing illustrated, nothing computer-generated in its look."
 )
 
+# Негатив сторожит ровно то, что просил владелец: результат обязан
+# совпадать с референсом, а не быть «лучше» него. Поэтому здесь не
+# только привычный брак (лишние пальцы, пластиковая кожа), но и
+# ПРИУКРАШИВАНИЕ — оно портит сходство, а выглядит как удача, и потому
+# опаснее откровенного брака.
 НЕГАТИВ = (
-    "cartoon, anime, illustration, painting, 3d render, cgi, doll, "
-    "plastic skin, waxy skin, airbrushed, beauty filter, poreless, "
+    "cartoon, anime, illustration, painting, drawing, 3d render, cgi, "
+    "doll, figurine, video game character, plastic skin, waxy skin, "
+    "airbrushed, beauty filter, poreless, smoothed skin, instagram face, "
+    "generic model face, stock photo model, "
+    "different person, changed face, distorted face, face swap artifacts, "
+    "different body type, slimmer than reference, thinner waist, "
+    "slimmed down, weight loss, fatter than reference, enlarged breasts, "
+    "bigger breasts, smaller breasts, enlarged buttocks, wider hips, "
+    "longer legs, changed height, changed proportions, idealized body, "
+    "fitness model body, hourglass figure added, "
+    "changed hair colour, changed hair length, changed skin tone, "
+    "tanned differently, removed moles, removed freckles, removed scars, "
+    "younger face, older face, changed age, "
     "deformed hands, extra fingers, missing fingers, fused fingers, "
     "extra limbs, malformed limbs, bad anatomy, broken proportions, "
-    "distorted face, changed face, different person, asymmetric eyes, "
-    "crossed eyes, extra teeth, watermark, signature, text, caption, "
-    "logo, username, frame, border, jpeg artifacts, oversaturated, "
-    "blown highlights, crushed blacks, blurry, out of focus, lowres, "
-    "duplicate, cropped head, floating limbs, mutated"
+    "asymmetric eyes, crossed eyes, extra teeth, watermark, signature, "
+    "text, caption, logo, username, frame, border, jpeg artifacts, "
+    "oversaturated, blown highlights, crushed blacks, blurry, "
+    "out of focus, lowres, duplicate, cropped head, floating limbs, mutated"
 )
 
 # Куски по СЕМЕЙСТВУ режима, а не по каждому виду отдельно: пяти- и

@@ -130,42 +130,41 @@ def job_note(job, яз):
 # Ключ -> (название кнопки, подпись-ракурс).
 # ---------------------------------------------------------------------
 
-РАЗДЕЛЫ_EN = {
-    "undress": ("Undress", "Your photo, without the clothes"),
-    "video":   ("Video", "The photo starts moving"),
-    "own":     ("Your own prompt", "Describe it yourself"),
-}
-
-ПОДРАЗДЕЛЫ_EN = {
-    "un_here":   ("Same place", "The setting stays as in your photo"),
-    "un_place":  ("Another place", "Move her somewhere else"),
+# Узлы дерева: ключ -> (название кнопки, подзаголовок).
+УЗЛЫ_EN = {
+    "undress":   ("Undress", "Your photo, without the clothes"),
+    "un_solo":   ("Solo", "One woman"),
+    "un_here":   ("Undressing", "Angle, framing, pose — without the clothes"),
+    "un_intim":  ("Intimate", "What the clips do, as a photograph"),
+    "un_group":  ("Couples", "Two people. Two photos needed — one per person"),
+    "video":     ("Video", "The photo starts moving"),
     "vi_solo":   ("Solo", "One woman"),
-    "vi_mf":     ("Couple M+F", "Two people: a man and a woman. Two photos needed — one per person"),
-    "vi_ff":     ("Couple F+F", "Two people: two women. Two photos needed — one per person"),
-    "vi_mm":     ("Couple M+M", "Two people: two men. Two photos needed — one per person"),
+    "vi_group":  ("Couples", "Two people. Two photos needed — one per person"),
+    "own":       ("Your own prompt", "Describe it yourself"),
     "own_photo": ("Photo", "A reference and a description — you get a photo"),
     "own_video": ("Video", "A reference and a description — you get a clip"),
     "top":       ("Most wanted", "What gets ordered most"),
+}
+
+# Места: ключ -> (название кнопки, подпись).
+МЕСТА_КНОПКИ_EN = {
+    "ref":       ("As in your photo", "The setting stays as on your shot"),
+    "sc_bed":    ("Silk sheets", "Morning, crumpled silk, light through the curtains"),
+    "sc_studio": ("Black studio", "One light, everything else in darkness"),
+    "sc_hotel":  ("Hotel at night", "The city in the window, a lamp by the bed"),
+    "sc_pool":   ("By the pool", "Water, reflections, midday sun"),
+    "sc_neon":   ("Neon alley", "Wet asphalt, pink signs"),
+    "sc_nature": ("Outdoors", "Tall grass, sunset light"),
+    "sc_office": ("At school", "An empty classroom after lessons, light from the windows"),
+    "sc_mirror": ("At the mirror", "Reflection and back in one frame"),
+    "sc_shower": ("In the shower", "Wet skin, steam, beaded glass"),
+    "sc_car":    ("Back seat", "Night interior, streetlights across the body"),
 }
 
 СОСТАВЫ_EN = {
     "мужчина и женщина": "a man and a woman",
     "две женщины": "two women",
     "двое мужчин": "two men",
-}
-
-МЕСТА_EN = {
-    "как на твоём фото": "as in your photo",
-    "спальня": "a bedroom",
-    "фотостудия": "a photo studio",
-    "номер отеля": "a hotel room",
-    "у бассейна": "by the pool",
-    "ночная улица": "a night street",
-    "поле на закате": "a field at sunset",
-    "школьный класс": "a school classroom",
-    "комната с зеркалом": "a room with a mirror",
-    "душевая": "a shower",
-    "салон машины": "a car interior",
 }
 
 СЦЕНАРИИ_EN = {
@@ -180,17 +179,6 @@ def job_note(job, яз):
     "un_over":  ("From above", "Shot from a high angle"),
     "un_lie":   ("Lying down", "Horizontal, camera above her"),
     "un_lean":  ("Leaning", "Standing, leaning on what is nearby"),
-    # Раздеть · Другое место
-    "sc_bed":    ("Silk sheets", "Morning, crumpled silk, light through the curtains"),
-    "sc_studio": ("Black studio", "One light, everything else in darkness"),
-    "sc_hotel":  ("Hotel at night", "The city in the window, a lamp by the bed"),
-    "sc_pool":   ("By the pool", "Water, reflections, midday sun"),
-    "sc_neon":   ("Neon alley", "Wet asphalt, pink signs"),
-    "sc_nature": ("Field at sunset", "Tall grass, backlight"),
-    "sc_office": ("School", "An empty classroom after lessons, light from the windows"),
-    "sc_mirror": ("At the mirror", "Reflection and back in one frame"),
-    "sc_shower": ("In the shower", "Wet skin, steam, beaded glass"),
-    "sc_car":    ("Back seat", "Night interior, streetlights across the face"),
     # Видео · Соло
     "ac_pov":    ("Point of view", "The camera is the viewer, hands in frame"),
     "ac_close":  ("Close-up", "Face and shoulders fill the frame"),
@@ -235,6 +223,7 @@ def job_note(job, яз):
     "кн.пополнить": {"ru": "Пополнить", "en": "Top up"},
     "кн.сделать":   {"ru": "Сделать · {цена}", "en": "Make it · {цена}"},
     "кн.другой":    {"ru": "Другой вариант", "en": "Another option"},
+    "кн.место":     {"ru": "Выбрать место", "en": "Choose the place"},
     "кн.поехали":   {"ru": "Хватит, поехали · {цена}",
                      "en": "That's enough, go · {цена}"},
     "кн.убрать":    {"ru": "Убрать последнее", "en": "Remove the last one"},
@@ -292,6 +281,12 @@ def job_note(job, яз):
     "сц.расстановка": {"ru": "Расстановка: <b>{что}</b>",
                        "en": "Arrangement: <b>{что}</b>"},
     "сц.место":       {"ru": "Место: <b>{что}</b>", "en": "Place: <b>{что}</b>"},
+    "место.заголовок": {"ru": "<b>Где снимать · {что}</b>",
+                        "en": "<b>Where to shoot · {что}</b>"},
+    "место.цена_та_же": {
+        "ru": "<i>Место на цену не влияет — выбирай любое.</i>",
+        "en": "<i>The place does not change the price — pick any.</i>",
+    },
     "сц.место_и":     {"ru": "Место: <b>{что}</b> — {подпись}",
                        "en": "Place: <b>{что}</b> — {подпись}"},
     "сц.ракурс":      {"ru": "Ракурс: <b>{что}</b>", "en": "Framing: <b>{что}</b>"},
