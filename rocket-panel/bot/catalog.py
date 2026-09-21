@@ -617,17 +617,30 @@ def _СЦ_ОЖИВИТЬ(key, title, подпись, **поля):
              "by bounce from the ground. Visible lens flare and warm "
              "atmospheric haze."),
 
-    _СЦ_ФОТО("sc_office", "Кабинет",
-        "Стол, жалюзи, полосы света", место="кабинет",
-        обстановка="A private office after hours: a heavy desk, a "
-                   "leather chair, shelves in shadow, venetian blinds "
-                   "across one whole wall.",
-        свет="Hard light through the blinds laying parallel bars "
-             "across the room, across the desk and across her body. "
-             "The bars must follow the form they fall on, bending "
-             "over curves rather than staying straight.",
-        камера="50mm at f/2.8, waist-up, camera at standing eye "
-               "height."),
+    # Владелец переименовал эту кнопку в «Школу», а промпт остался про
+    # кабинет с кожаным креслом и жалюзи — кнопка обещала одно, модель
+    # рисовала другое. Обстановка переписана под класс: названия кнопок
+    # его, а место, свет и объектив мои, и расходиться им нельзя.
+    _СЦ_ФОТО("sc_office", "Школа",
+        "Пустой класс после уроков, свет из окон", место="школьный класс",
+        обстановка="An empty classroom after the school day has ended. "
+                   "Rows of plain wooden desks with chairs pushed in, a "
+                   "large dark green chalkboard along one wall with "
+                   "faint chalk traces left on it, a teacher's desk in "
+                   "front of it, tall windows down the opposite side. "
+                   "The room is empty of other people.",
+        поза="Seated sideways on the teacher's desk at the front of the "
+             "room, or leaning back against its edge — read the space "
+             "and choose one. Weight settled on one hip, spine long, "
+             "head turned toward the lens.",
+        свет="Late afternoon sun coming in low and warm through the tall "
+             "windows, throwing long window-shaped rectangles across the "
+             "floor and the desks. Those rectangles must bend over "
+             "whatever they fall on rather than staying flat. The far "
+             "side of the room stays in cool shadow.",
+        камера="50mm at f/2.8, three-quarter length, camera at standing "
+               "eye height, angled down the room so the rows of desks "
+               "recede and give the frame depth."),
 
     _СЦ_ФОТО("sc_mirror", "У зеркала",
         "Отражение и спина в одном кадре", место="комната с зеркалом",
