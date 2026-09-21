@@ -111,6 +111,16 @@
     "texture floating above the surface."
 )
 
+СТАРШИНСТВО = (
+    "The action described immediately above is what is actually "
+    "happening, and it defines the position of the body. A pose is "
+    "described further down as well: wherever the two disagree, the "
+    "action above wins and the pose below is adjusted to fit it or "
+    "dropped. Everything else in that description — the camera angle, "
+    "the focal length, the framing and distance, the lighting and the "
+    "surroundings — still applies in full and is not overridden."
+)
+
 КАМЕРА_ОБЩЕЕ = (
     "Shot on a full-frame camera with a fast prime lens. Focus locked on "
     "the eyes with the nearer eye critically sharp; falloff natural and "
@@ -301,12 +311,23 @@ def собрать(вид, блок, фон="новый", пара=False):
     else:
         ключ = сем
     куски = [ТЕЛО_ПАРА if пара else ТЕЛО_ПО_ФОТО, ПО_ВИДУ[ключ]]
+    # Строка владельца часто задаёт ПОЗУ, а поза есть и у сценария.
+    # «Стоит раком» против «повёрнута на сорок градусов, вес на дальней
+    # ноге» — прямое противоречие, и модель разрешает его как придётся:
+    # то одно, то другое, на одном и том же промпте. Поэтому у строки
+    # владельца объявлено старшинство, явно и один раз.
+    #
+    # Старшинство только над ПОЗОЙ. Ракурс, объектив, свет и обстановка
+    # остаются за сценарием: они и есть то, за что человек выбрал именно
+    # эту кнопку, и отдавать их одной строке нельзя.
     # Откровенная часть идёт ВТОРЫМ блоком, сразу за сохранением лица.
     # Модели внимательнее к началу промпта: уехав в конец, она начинает
     # проигрывать обстановке и свету — то есть ровно тому, ради чего
     # сценарий и заводили, не случается.
     if getattr(блок, "откровенное", ""):
         куски.append(блок.откровенное.strip())
+        if блок.поза:
+            куски.append(СТАРШИНСТВО)
     for поле in ("гардероб", "поза", "обстановка", "свет", "камера",
                  "настроение", "ещё"):
         значение = getattr(блок, поле)

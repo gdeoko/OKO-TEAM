@@ -1220,5 +1220,37 @@ class РаботыВБазе(unittest.TestCase):
         self.assertEqual(s2.works(1)[0]["tg_file_id"], "X")
 
 
+class СтрокаВладельцаСильнееПозы(unittest.TestCase):
+    """Строка владельца часто задаёт позу, а поза есть и у сценария.
+
+    «Стоит раком» против «повёрнута на сорок градусов, вес на дальней
+    ноге» — прямое противоречие, и модель разрешает его как придётся:
+    то одно, то другое, на одном и том же промпте.
+    """
+
+    def test_старшинство_объявлено(self):
+        б = prompts.Блок(поза="Standing, weight on the far leg.",
+                         откровенное="On all fours.")
+        p = prompts.собрать("i2i", б)
+        self.assertIn(prompts.СТАРШИНСТВО, p)
+        self.assertLess(p.index(prompts.СТАРШИНСТВО), p.index("weight on the far leg"),
+                        "старшинство объявлено ПОСЛЕ спорной позы")
+
+    def test_без_позы_сценария_старшинство_не_нужно(self):
+        """Спорить не с чем — лишний абзац только разбавляет промпт."""
+        б = prompts.Блок(камера="50mm.", откровенное="On all fours.")
+        self.assertNotIn(prompts.СТАРШИНСТВО, prompts.собрать("i2i", б))
+
+    def test_без_строки_владельца_старшинства_нет(self):
+        б = prompts.Блок(поза="Standing, weight on the far leg.")
+        self.assertNotIn(prompts.СТАРШИНСТВО, prompts.собрать("i2i", б))
+
+    def test_ракурс_и_свет_остаются_за_сценарием(self):
+        """Старшинство только над позой. Ракурс и свет — это и есть то,
+        за что человек выбрал именно эту кнопку."""
+        self.assertIn("camera angle", prompts.СТАРШИНСТВО)
+        self.assertIn("not overridden", prompts.СТАРШИНСТВО)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
