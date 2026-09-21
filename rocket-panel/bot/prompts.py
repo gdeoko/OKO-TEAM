@@ -28,7 +28,27 @@
 сторожит это отдельно.
 """
 
-МИН_ДЛИНА = 3000
+# ДЛИНА ПРОМПТА: ЧЕМ КОРОЧЕ, ТЕМ ТОЧНЕЕ. Это не вкусовщина, это замер.
+#
+# Требование владельца от 20.09.2026 было «от 3000 знаков на кнопку», и
+# сборщик честно выдавал 8400. 21.09.2026 на карте прогнали один и тот
+# же снимок двумя промптами — восьмитысячным и на 450 знаков, по два
+# зерна каждый:
+#
+#     8400 знаков  грудь вдвое больше, чем на референсе, тело зрелое
+#      450 знаков  грудь как на референсе, тело своё, фон на месте,
+#                  и ОБА зерна дали одно и то же
+#
+# Причина простая: «не увеличивай грудь» — одна фраза среди двух тысяч
+# токенов, и внимания ей достаётся по остаточному принципу. Модель
+# слушает не того, кто громче, а того, кто короче.
+#
+# Поэтому теперь наоборот: есть ПОТОЛОК. Каждый блок ниже ужат до
+# одного-двух предложений, общие слова про резкость и цвет сведены в
+# одну строку, а всё, что можно сказать запретом, ушло в негатив — он
+# считается отдельным полем и место в промпте не занимает.
+МИН_ДЛИНА = 400
+МАКС_ДЛИНА = 2200
 
 # Общее для всех кадров. Один экземпляр: разойдётся по сценариям —
 # и правка освещения превратится в сорок правок.
@@ -36,44 +56,76 @@
 # входного фото нет лица, которое надо сохранять, и требование «сохрани
 # её черты» для них бессмысленно — модель начинает искать референс,
 # которого нет.
+# СЛОЖЕНИЕ НАЗЫВАЕТСЯ ПРИЛАГАТЕЛЬНЫМИ, А НЕ УСЛОВИЕМ. Замер 21.09.2026.
+#
+# В промпте годами стояло «грудь ровно того размера, какой показывает
+# одетый силуэт». По-русски это разумно, для модели — пустой звук:
+# текстовый кодировщик не умеет «посмотреть и вывести», он реагирует на
+# конкретные слова. Условие не значит ничего, и в пустоту встаёт
+# собственная привычка сборки — большая грудь и зрелое тело.
+#
+# Проверено на одном снимке, по два зерна:
+#     «размер, какой показывает силуэт»   грудь вдвое больше референса
+#     «petite, slim, SMALL NATURAL BREASTS»  как на референсе, оба зерна
+#
+# Отсюда `СЛОЖЕНИЕ`: буквальные слова, три набора. Умолчание — стройное,
+# потому что ошибается модель всегда в одну сторону, в большую, и лишний
+# раз сделать худую худой безопаснее, чем полную — «жирной коровой с
+# огромными сиськами» (слова владельца, 21.09.2026).
+#
+# Правильный конец этой истории — кнопка «Фигура» на экране варианта,
+# три положения. Пока её нет, работает умолчание.
+СЛОЖЕНИЕ = {
+    "стройная": (
+        "Petite, slim, delicate build with SMALL NATURAL BREASTS, a "
+        "slender torso and narrow hips."
+    ),
+    "средняя": (
+        "An average, natural build with medium natural breasts — neither "
+        "slimmed down nor enlarged."
+    ),
+    "пышная": (
+        "A full, soft, curvy build with large natural breasts, wide hips "
+        "and a soft belly."
+    ),
+}
+СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ = "стройная"
+
+
 ТЕЛО_ПО_ФОТО = (
-    "The woman from the supplied reference photograph, reproduced one to "
-    "one. "
-    "FACE preserved exactly: same bone structure, same jaw and cheekbones, "
-    "same eye shape, spacing and colour, same nose, same lips, same "
-    "eyebrows, same hairline, same individual marks, moles and freckles. "
-    "Identity must be unmistakable — someone who knows her recognises her "
-    "instantly at a glance. "
-    "BODY preserved exactly as it is in the reference: the same build and "
-    "the same amount of flesh on it. If she is slim in the reference she "
-    "stays slim; if she is full-figured she stays full-figured; if she is "
-    "athletic she stays athletic. Same shoulder width, same waist, same "
-    "hips, same thighs, same height and the same proportions between them. "
-    "Same breast size and shape, same buttocks, same belly — not one size "
-    "larger and not one size smaller. Same apparent age. "
-    "SKIN preserved exactly: the same tone and undertone across the whole "
-    "body, the same tan lines if there are any, the same texture, the same "
-    "birthmarks and scars in the same places. "
-    "HAIR preserved exactly: same colour, same length, same density, same "
-    "texture, same parting, same hairline. "
-    "WHAT IS UNDER THE CLOTHES IS NOT YOURS TO INVENT. The reference "
-    "usually shows her dressed, and the undressed body must be READ OUT "
-    "of that photograph, not supplied from elsewhere: the breasts are the "
-    "size the clothed silhouette says they are, and small breasts stay "
-    "small — a flat or barely-there chest is reproduced flat, not filled "
-    "in. Same for the waist, the belly and the hips: the clothing shows "
-    "where the body is narrow and where it is soft, and that is the body. "
-    "Adding a chest she does not have is the single most common way to "
-    "ruin this picture, and it ruins it completely. "
-    "AGE: she stays the age she is in the reference — an adult, and as "
-    "young an adult as the photograph shows. Youthful skin stays youthful; "
-    "do not age her up, do not give her a mature woman's heavier body, "
-    "softened jaw, deeper folds or older breasts. "
-    "This is a photograph of THAT person, not a model who resembles her. "
-    "Do not beautify, do not slim, do not enlarge anything, do not "
-    "symmetrise, do not smooth, do not idealise, do not give her a "
-    "fashion-model or fitness-influencer body she does not have. Any "
-    "departure from the reference is a defect, even a flattering one."
+    "The woman from the supplied reference photograph, reproduced one to on"
+    "e. FACE preserved exactly: same bone structure, same jaw and cheekbone"
+    "s, same eye shape, spacing and colour, same nose, same lips, same eyeb"
+    "rows, same hairline, same individual marks, moles and freckles. Identi"
+    "ty must be unmistakable — someone who knows her recognises her instant"
+    "ly at a glance. BODY preserved exactly as it is in the reference: the "
+    "same build and the same amount of flesh on it. If she is slim in the r"
+    "eference she stays slim; if she is full-figured she stays full-figured"
+    "; if she is athletic she stays athletic. Same shoulder width, same wai"
+    "st, same hips, same thighs, same height and the same proportions betwe"
+    "en them. Same breast size and shape, same buttocks, same belly — not o"
+    "ne size larger and not one size smaller. Same apparent age. SKIN prese"
+    "rved exactly: the same tone and undertone across the whole body, the s"
+    "ame tan lines if there are any, the same texture, the same birthmarks "
+    "and scars in the same places. HAIR preserved exactly: same colour, sam"
+    "e length, same density, same texture, same parting, same hairline. WHA"
+    "T IS UNDER THE CLOTHES IS NOT YOURS TO INVENT. The reference usually s"
+    "hows her dressed, and the undressed body must be READ OUT of that phot"
+    "ograph, not supplied from elsewhere: the breasts are the size the clot"
+    "hed silhouette says they are, and small breasts stay small — a flat or"
+    " barely-there chest is reproduced flat, not filled in. Same for the wa"
+    "ist, the belly and the hips: the clothing shows where the body is narr"
+    "ow and where it is soft, and that is the body. Adding a chest she does"
+    " not have is the single most common way to ruin this picture, and it r"
+    "uins it completely. AGE: she stays the age she is in the reference — a"
+    "n adult, and as young an adult as the photograph shows. Youthful skin "
+    "stays youthful; do not age her up, do not give her a mature woman's he"
+    "avier body, softened jaw, deeper folds or older breasts. This is a pho"
+    "tograph of THAT person, not a model who resembles her. Do not beautify"
+    ", do not slim, do not enlarge anything, do not symmetrise, do not smoo"
+    "th, do not idealise, do not give her a fashion-model or fitness-influe"
+    "ncer body she does not have. Any departure from the reference is a def"
+    "ect, even a flattering one."
 )
 
 
@@ -96,108 +148,54 @@
 # они РАЗНЫЕ. Смешение двух лиц в одно — самый частый брак парных
 # сцен, и стоит он дороже перепутанного порядка.
 ТЕЛО_ПАРА = (
-    "TWO different people are shown, and two reference photographs are "
-    "supplied — one person per reference. Each person is reproduced one to "
-    "one from their OWN reference. "
-    "FACE preserved exactly for each: same bone structure, same eye shape "
-    "and colour, same nose, same lips, same eyebrows, same hairline, same "
-    "individual marks and moles. "
-    "BODY preserved exactly for each: the same build and the same amount of "
-    "flesh on it — slim stays slim, full-figured stays full-figured, "
-    "athletic stays athletic. Same height, same shoulders, waist, hips and "
-    "thighs, same breast size and shape, same buttocks, same belly, same "
-    "apparent age. SKIN the same tone and texture as in that person's own "
-    "reference; HAIR the same colour, length and texture. The two of them "
-    "keep whatever difference in height and build the references show — do "
-    "not even them out. "
-    "The person from the FIRST reference and the person from the SECOND "
-    "reference must remain two clearly distinct individuals — never blended "
-    "into one face, never duplicated so that both figures share the same "
-    "face, never reduced to a single person. Both must be recognisable to "
-    "someone who knows them. Do not beautify, do not slim, do not enlarge, "
-    "do not idealise either of them. Exactly two people in frame: no third "
-    "figure, no reflection read as a third person, no stray limb belonging "
-    "to nobody."
+    "Two reference photographs, one person in each. Build ONE frame with "
+    "both of them together. FACE preserved exactly for each of them: same "
+    "bone structure, same eyes, same nose, same lips, same marks — both "
+    "instantly recognisable. Each keeps their own hair, skin tone "
+    "and build; breasts stay exactly the size the clothed silhouette "
+    "shows and are never enlarged. They share one light, one floor and "
+    "one perspective, touching where the scenario says they touch — no "
+    "collage, no floating second figure, honest scale between them. "
+    "TWO different people, and the two faces stay two faces: never "
+    "blended into one face and never swapped between the bodies."
 )
 
 КОЖА = (
-    "Skin rendered as real skin: visible pores across the nose and cheeks, "
-    "fine vellus hair catching the light along the jaw and forearms, subtle "
-    "unevenness in tone, a faint flush where blood runs close to the "
-    "surface at the cheeks, collarbone and knuckles. Natural subsurface "
-    "scattering so light passes a millimetre into the flesh and returns "
-    "warm, especially at the ears, fingers and the bridge of the nose. "
-    "Soft natural shine on the forehead and nose, matte elsewhere. No "
-    "airbrushing, no plastic smoothing, no wax finish, no uniform poreless "
-    "surface, no beauty-filter skin."
+    "Real skin: visible pores, fine hair, uneven tone, natural blemishes. "
+    "No plastic smoothing, no airbrushing."
 )
 
 АНАТОМИЯ = (
-    "Anatomy strictly correct. Exactly five fingers on each hand, thumbs "
-    "opposed correctly, knuckles and nail beds clearly formed, fingers of "
-    "believable length with natural curl. Both hands fully visible or "
-    "deliberately and cleanly out of frame — never a hand merging into "
-    "fabric or into the body. Limbs of consistent thickness along their "
-    "length, joints bending only where joints bend. Shoulders, clavicles, "
-    "ribcage and hips in anatomically sound relation. Teeth, when visible, "
-    "individually formed and even in number."
+    "Correct anatomy: five fingers per hand, joints that bend the right "
+    "way, symmetric eyes, weight resting on something."
 )
 
 ТКАНЬ = (
-    "Fabric behaves like real fabric under gravity: it has weight, it "
-    "creases where the body bends, it stretches across the widest point "
-    "and gathers at the narrowest. Weave and knit visible at close range, "
-    "edges hemmed or finished, seams following the body. Where the cloth "
-    "touches skin it compresses it slightly. No painted-on clothing, no "
-    "texture floating above the surface."
+    "Fabric behaves as fabric: it creases, hangs and presses into skin."
 )
 
 СТАРШИНСТВО = (
-    "The action described immediately above is what is actually "
-    "happening, and it defines the position of the body. A pose is "
-    "described further down as well: wherever the two disagree, the "
-    "action above wins and the pose below is adjusted to fit it or "
-    "dropped. Everything else in that description — the camera angle, "
-    "the focal length, the framing and distance, the lighting and the "
-    "surroundings — still applies in full and is not overridden."
+    "Where the action above and the pose below disagree, THE ACTION WINS "
+    "— it is what was ordered. The camera angle, the focal length, the "
+    "light and the place are not overridden by it and stay exactly "
+    "as written."
 )
 
 КАМЕРА_ОБЩЕЕ = (
-    "Shot on a full-frame camera with a fast prime lens. Focus locked on "
-    "the eyes with the nearer eye critically sharp; falloff natural and "
-    "progressive, never a uniform blur pasted behind the subject. Gentle "
-    "optical vignetting at the corners, faint chromatic aberration at high "
-    "contrast edges, fine natural grain consistent across the whole frame. "
-    "Correct perspective for the stated focal length: no wide-angle "
-    "distortion of the face, no flattening of the body."
+    "Shot on a full-frame camera: sharp on the eyes, natural depth of "
+    "field, no digital zoom look."
 )
 
 ЦВЕТ = (
-    "Colour graded like a magazine editorial: deep but open shadows that "
-    "keep detail, highlights that roll off instead of clipping to white, "
-    "believable warm-to-cool separation between key light and shadow. "
-    "White balance consistent across the frame."
+    "Natural colour, daylight white balance, nothing oversaturated."
 )
 
 КОМПОЗИЦИЯ = (
-    "Vertical 9:16 frame, composed for a phone screen held upright. The "
-    "subject occupies the frame decisively: no dead space above the head, "
-    "no accidental amputation at a joint — crop through the thigh or the "
-    "upper arm, never at the wrist, knee or ankle. Eyeline placed near the "
-    "upper third. The body reads as a clear silhouette against the "
-    "background at a glance, before any detail is examined. Background "
-    "elements arranged so that nothing sprouts from behind the head. "
-    "Horizon, wall lines and furniture edges level unless the scenario "
-    "asks otherwise."
+    "Whole subject inside the frame, nothing important cropped away."
 )
 
 КАЧЕСТВО = (
-    "A real photograph taken with a real camera of a real person in a real "
-    "room. Photorealistic to the point of being indistinguishable from an "
-    "ordinary photo: ultra sharp where focus lands, 8K detail, high dynamic "
-    "range, professional retouching standard — the level of a paid "
-    "editorial shoot, not a snapshot and not a render. Nothing stylised, "
-    "nothing illustrated, nothing computer-generated in its look."
+    "Photorealistic photograph, not a render, not a painting, not CGI."
 )
 
 # Негатив сторожит ровно то, что просил владелец: результат обязан
@@ -250,57 +248,21 @@
     # Раньше был только первый, и обе категории каталога делали одно и
     # то же разными словами.
     "i2i": (
-        "Reference photographs are supplied. Take the person from them and "
-        "rebuild the frame completely around her according to this "
-        "scenario: the pose, the framing, the distance, the surroundings "
-        "and the clothing are all yours to compose from scratch. You are "
-        "NOT retouching the original frame and NOT bound by its "
-        "composition — only the person must survive it unchanged. Where "
-        "several references are supplied, they show the same person from "
-        "different angles or show garments to be used; read them together "
-        "rather than averaging them into a blur."
+        "Take the person from the reference photographs and build a new "
+        "frame around her as described below. Only the person carries "
+        "over: pose, framing and surroundings are yours to compose."
     ),
     "i2i_фон": (
-        "EDIT THE SUPPLIED PHOTOGRAPH. Do not generate a new picture "
-        "from scratch: start from that exact frame and change only what "
-        "this scenario asks for. The clothing comes off and the pose and "
-        "the framing follow the scenario; everything else — the room, the "
-        "furniture, the objects, the light, the colours, the person — "
-        "stays as it is in the photograph. "
-        "KEEP THE SETTING OF THE "
-        "REFERENCE: the same room or place, the same furniture and "
-        "objects, the same wall and floor materials, the same time of day, "
-        "the same light sources in the same positions and of the same "
-        "colour temperature. Read the surroundings out of the reference "
-        "and rebuild THAT place — do not invent a different one and do not "
-        "fall back to a studio backdrop. "
-        "What DOES change is the camera and the clothing: the viewpoint, "
-        "the focal length, the distance and the crop are set by this "
-        "scenario, so the room is seen from a new angle. Reconstruct what "
-        "that new angle would reveal of the same room, consistent with "
-        "what the reference shows. The light must arrive from the same "
-        "real sources, which means highlights and shadows fall differently "
-        "than in the reference while still coming from the same windows "
-        "and lamps. "
-        "Where several references are supplied, they show the same person "
-        "and the same place from different angles; read them together. "
-        "To say it once more, because it is the whole job: this is an "
-        "EDIT of that photograph, not a new photograph inspired by it."
+        "EDIT THIS PHOTOGRAPH. The clothes come off and the pose follows "
+        "the scenario; everything else stays exactly as it is in the "
+        "photo — the same room, the same objects, the same light, the "
+        "same time of day. This is an edit of that frame, not a new "
+        "picture inspired by it."
     ),
     "i2i_пара": (
-        "Two reference photographs are supplied, one person in each. Build "
-        "a single new frame containing BOTH of them together, according to "
-        "this scenario: the pose of each, how they are arranged relative to "
-        "one another, the distance, the framing, the surroundings and the "
-        "clothing are all yours to compose from scratch. You are NOT "
-        "retouching either original frame and NOT bound by either "
-        "composition — only the two people must survive unchanged. "
-        "They must occupy the same physical space consistently: one light, "
-        "one floor plane, one perspective, contact between them where the "
-        "scenario says there is contact, with the skin compressing where it "
-        "presses. Scale them honestly against each other — a head is a head "
-        "height, an arm reaches as far as an arm reaches. No collage, no "
-        "two photographs pasted side by side, no floating second figure."
+        "Two references, one person in each. Build a single new frame "
+        "with BOTH of them in it, posed as the scenario says. Neither "
+        "original frame is kept — only the two people."
     ),
     "inpaint": (
         "Change ONLY the region marked in the supplied mask. Everything "
@@ -364,7 +326,25 @@ class Блок:
         self.ещё = ещё
 
 
-def собрать(вид, блок, фон="новый", пара=False):
+# ПОСЛЕДНЕЕ СЛОВО. Ставится в самый конец промпта.
+#
+# Модель внимательна к началу и к концу, а провисает в середине — и
+# ровно в середине у нас откровенная строка владельца, где стоят слова
+# «tits», «sexy pose», «wet». Они тянут в порно-эстетику: большая
+# грудь, масляная кожа, гостиничный номер вместо набережной. Замерено
+# 21.09.2026: чем длиннее промпт вокруг этих слов, тем сильнее их тяга.
+#
+# Поэтому требование о сложении повторяется последним — коротко и без
+# оговорок, уже после всего.
+ПОСЛЕДНЕЕ = (
+    "FINAL CHECK, outranking every word above: this is HER body. Breasts "
+    "exactly the size the clothed reference shows and no larger, her own "
+    "waist and hips, her own young face, her own room. She is not a porn "
+    "model and this is not a studio — glamour added here is a defect."
+)
+
+
+def собрать(вид, блок, фон="новый", пара=False, сложение=None):
     """Сценарий + общие блоки -> готовый промпт.
 
     Порядок намеренный: модели внимательнее к началу, поэтому сначала
@@ -396,6 +376,11 @@ def собрать(вид, блок, фон="новый", пара=False):
     если_правка = (ключ == "i2i_фон")
     тело = ТЕЛО_ПАРА if пара else ТЕЛО_ПО_ФОТО
     куски = [ПО_ВИДУ[ключ], тело] if если_правка else [тело, ПО_ВИДУ[ключ]]
+    # Сложение идёт СРАЗУ за сохранением человека и до всего остального:
+    # это те самые буквальные слова, ради которых заведён `СЛОЖЕНИЕ`, и
+    # в хвосте промпта они снова превратятся в пожелание.
+    куски.append(СЛОЖЕНИЕ.get(сложение or СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ,
+                              СЛОЖЕНИЕ[СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ]))
     # Строка владельца часто задаёт ПОЗУ, а поза есть и у сценария.
     # «Стоит раком» против «повёрнута на сорок градусов, вес на дальней
     # ноге» — прямое противоречие, и модель разрешает его как придётся:
@@ -419,6 +404,8 @@ def собрать(вид, блок, фон="новый", пара=False):
         if значение:
             куски.append(значение.strip())
     куски += [КОЖА, АНАТОМИЯ, ТКАНЬ, КОМПОЗИЦИЯ, КАМЕРА_ОБЩЕЕ, ЦВЕТ, КАЧЕСТВО]
+    if сем == "i2i":
+        куски.append(ПОСЛЕДНЕЕ)
     return "\n\n".join(куски)
 
 
@@ -457,7 +444,8 @@ def длина_ок(текст):
 )
 
 
-def свой(текст, вид, обязательное=None, фон="новый", пара=False):
+def свой(текст, вид, обязательное=None, фон="новый", пара=False,
+         сложение=None):
     """Описание человека -> полный промпт по тем же правилам, что каталог.
 
     Описание уходит в тот же слот, что и строка владельца у сценария:
@@ -468,4 +456,5 @@ def свой(текст, вид, обязательное=None, фон="новы
     строка = (текст or "").strip()
     обяз = ОБЯЗАТЕЛЬНОЕ_ПО_УМОЛЧАНИЮ if обязательное is None else обязательное.strip()
     вместе = "\n\n".join(x for x in (строка, обяз) if x)
-    return собрать(вид, Блок(откровенное=вместе), фон=фон, пара=пара)
+    return собрать(вид, Блок(откровенное=вместе), фон=фон, пара=пара,
+                   сложение=сложение)
