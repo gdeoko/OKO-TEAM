@@ -4,6 +4,7 @@ import pricing
 import catalog
 import prompts
 import данные
+import язык
 import emoji
 import payments
 import store
@@ -704,10 +705,11 @@ class ПравкиВладельца(unittest.TestCase):
         данные.сохранить({"un_close": {"название": "Своё имя",
                                        "строка": "Something happens.",
                                        "строка_рус": "смеётся"}}, f)
-        self.assertEqual(данные.загрузить(f)["un_close"],
-                         {"название": "Своё имя",
-                          "строка": "Something happens.",
-                          "строка_рус": "смеётся"})
+        записано = данные.загрузить(f)["un_close"]
+        self.assertEqual(записано["название"], "Своё имя")
+        self.assertEqual(записано["строка"], "Something happens.")
+        self.assertEqual(записано["строка_рус"], "смеётся")
+        self.assertEqual(set(записано), set(данные.ПОЛЯ))
 
     def test_битый_файл_не_роняет_бота(self):
         """Файл правит страница, а страницу — человек. Обрыв записи, чужая
@@ -756,7 +758,7 @@ class ПравкиВладельца(unittest.TestCase):
                                         "строка_рус": "стоит"}})
         self.assertIn("She is standing still.", s.prompt)
         self.assertNotIn("стоит", s.prompt)
-        self.assertEqual(s.действие, "стоит")
+        self.assertEqual(s.действие("ru"), "стоит")
 
     def test_правка_файла_подхватывается_без_перезапуска(self):
         """Владелец жмёт «Сохранить» в браузере и идёт в телеграм. Бота
@@ -1039,10 +1041,11 @@ class НижнееМенюБезИконок(unittest.TestCase):
 
     def test_в_нижнем_меню_нет_иконок(self):
         import ui
-        for ряд in ui.НИЖНЕЕ["keyboard"]:
-            for к in ряд:
-                self.assertNotIn("icon_custom_emoji_id", к,
-                                 f"иконка на нижней кнопке «{к['text']}»")
+        for я in язык.ЯЗЫКИ:
+            for ряд in ui.нижнее(я)["keyboard"]:
+                for к in ряд:
+                    self.assertNotIn("icon_custom_emoji_id", к,
+                                     f"иконка на нижней кнопке «{к['text']}»")
 
     def test_в_сообщениях_иконки_есть(self):
         """Обратная сторона: убрать их везде — тоже не то, о чём речь."""
@@ -1161,16 +1164,22 @@ class НижнееМеню(unittest.TestCase):
     """
 
     def test_у_каждой_кнопки_есть_обработчик(self):
+        """И на каждом языке. Человек переключил язык — снизу до
+        следующего сообщения висит старая клавиатура, и её нажатие
+        обязано сработать."""
         import ui, bot
-        подписи = [к["text"] for ряд in ui.НИЖНЕЕ["keyboard"] for к in ряд]
-        for п in подписи:
-            self.assertIn(п, bot.НИЖНИЕ_КНОПКИ, f"кнопка «{п}» ведёт в никуда")
+        for я in язык.ЯЗЫКИ:
+            for ряд in ui.нижнее(я)["keyboard"]:
+                for к in ряд:
+                    self.assertIn(к["text"], bot.НИЖНИЕ_КНОПКИ,
+                                  f"кнопка «{к['text']}» ({я}) ведёт в никуда")
 
     def test_лишних_обработчиков_нет(self):
         """Обратная сторона: обработчик без кнопки — мёртвый код, и по
         нему потом чинят то, чего человек не видит."""
         import ui, bot
-        подписи = {к["text"] for ряд in ui.НИЖНЕЕ["keyboard"] for к in ряд}
+        подписи = {к["text"] for я in язык.ЯЗЫКИ
+                   for ряд in ui.нижнее(я)["keyboard"] for к in ряд}
         self.assertEqual(set(bot.НИЖНИЕ_КНОПКИ) - подписи, set())
 
 
@@ -1250,6 +1259,178 @@ class СтрокаВладельцаСильнееПозы(unittest.TestCase):
         за что человек выбрал именно эту кнопку."""
         self.assertIn("camera angle", prompts.СТАРШИНСТВО)
         self.assertIn("not overridden", prompts.СТАРШИНСТВО)
+
+
+class ДваЯзыка(unittest.TestCase):
+    """Бот один, люди в нём разные. Язык — свойство человека, а не
+    процесса: двое с разными языками пишут одновременно."""
+
+    def setUp(self):
+        import ui
+        self.ui = ui
+        self.s = Store(tempfile.mktemp(suffix=".db"))
+
+    def test_язык_берётся_из_телеграма_один_раз(self):
+        """`language_code` приходит с КАЖДЫМ сообщением. Перезаписывать
+        им выбор человека значит отменять этот выбор при каждом
+        нажатии."""
+        self.s.ensure_user(1, "vasya", lang="en")
+        self.assertEqual(self.s.язык(1), "en")
+        self.s.сменить_язык(1, "ru")
+        self.s.ensure_user(1, "vasya", lang="en")     # снова пришло от TG
+        self.assertEqual(self.s.язык(1), "ru", "телеграм отменил выбор человека")
+
+    def test_старым_людям_язык_проставится_при_первом_заходе(self):
+        """У пришедших до двуязычия он пуст — это «ещё не спрашивали»,
+        а не «русский»."""
+        self.s.ensure_user(2, "old")
+        self.s.сменить_язык(2, None)
+        self.s.ensure_user(2, "old", lang="en")
+        self.assertEqual(self.s.язык(2), "en")
+
+    def test_разбор_кода_телеграма(self):
+        self.assertEqual(язык.по_телеграму("ru"), "ru")
+        self.assertEqual(язык.по_телеграму("ru-RU"), "ru")
+        self.assertEqual(язык.по_телеграму("en"), "en")
+        self.assertEqual(язык.по_телеграму("de"), "en")
+        self.assertEqual(язык.по_телеграму(None), "en")
+
+    def test_каждая_строка_переведена(self):
+        """Забытый перевод виден только тому, кто открыл бот на
+        английском, — то есть не нам."""
+        for ключ, пара in язык.СТРОКИ.items():
+            self.assertTrue(пара.get("ru"), f"{ключ}: нет русского")
+            self.assertTrue(пара.get("en"), f"{ключ}: нет английского")
+
+    def test_подстановки_совпадают_в_обоих_языках(self):
+        """Лишняя `{скобка}` в переводе роняет экран на KeyError, и
+        падает он только у англоязычного человека."""
+        import re
+        for ключ, пара in язык.СТРОКИ.items():
+            поля = {я: set(re.findall(r"\{(\w+)\}", пара[я])) for я in ("ru", "en")}
+            self.assertEqual(поля["ru"], поля["en"],
+                             f"{ключ}: разные подстановки {поля}")
+
+    def test_неизвестный_ключ_не_роняет_бота(self):
+        self.assertEqual(язык.t("нет.такого", "en"), "нет.такого")
+
+    def test_весь_каталог_назван_по_английски(self):
+        for s in catalog.все_сценарии():
+            self.assertTrue(s.назв("en"), f"{s.key}: нет английского названия")
+            self.assertTrue(s.подп("en"), f"{s.key}: нет английской подписи")
+            кириллица = [c for c in s.назв("en") + s.подп("en")
+                         if "а" <= c.lower() <= "я"]
+            self.assertFalse(кириллица, f"{s.key}: кириллица в английском")
+
+    def test_разделы_и_подразделы_названы_по_английски(self):
+        for р in catalog.РАЗДЕЛЫ:
+            self.assertIn(р.key, язык.РАЗДЕЛЫ_EN, f"{р.key}: нет перевода")
+            for под in р.подразделы:
+                self.assertIn(под.key, язык.ПОДРАЗДЕЛЫ_EN,
+                              f"{под.key}: нет перевода")
+
+    def test_места_и_составы_названы_по_английски(self):
+        for s in catalog.все_сценарии():
+            if s.своё_место:
+                self.assertIn(s.место, язык.МЕСТА_EN, f"{s.key}: место без перевода")
+            if s.пара:
+                self.assertIn(s.пара, язык.СОСТАВЫ_EN, f"{s.key}: состав без перевода")
+
+    def test_экраны_собираются_на_обоих_языках(self):
+        """Дешёвый, но самый полезный тест: проходит по всем экранам и
+        ловит любую несостыковку подстановок."""
+        сц = catalog.scene("un_close")
+        пара = catalog.scene("pr_mf_near")
+        for я in язык.ЯЗЫКИ:
+            экраны = [
+                self.ui.шапка_главного(5, "Вася", я),
+                self.ui.текст_раздела(catalog.раздел("video"), я),
+                self.ui.шапка_категории(catalog.category("un_here"), я),
+                self.ui.шапка_сценария(сц, 100, я),
+                self.ui.шапка_сценария(сц, 0, я),
+                self.ui.шапка_сценария(пара, 100, я),
+                self.ui.просьба_о_фото(pricing.job("i2i"), 0, None, я),
+                self.ui.просьба_о_фото(pricing.job("i2v_5"), 1, (2, 2), я),
+                self.ui.просьба_о_фото(pricing.job("i2i"), 2, (1, 3), я),
+                self.ui.просьба_о_фото(pricing.job("i2i"), 3, (1, 3), я),
+                self.ui.текст_своего_промпта(catalog.category("own_video"), я),
+                self.ui.текст_кабинета(5, {"работ": 2, "осечек": 1,
+                                           "потрачено": 3, "куплено": 10,
+                                           "позвано": 1, "за_друзей": 2,
+                                           "записей": 4}, "Вася", я),
+                self.ui.текст_удаления({"работ": 1, "записей": 2}, я),
+                self.ui.текст_оплаты(я),
+                self.ui.текст_пакета(pricing.PACKS[0], я),
+            ]
+            for э in экраны:
+                self.assertTrue(э.strip(), f"{я}: пустой экран")
+                self.assertNotIn("{", э, f"{я}: неподставленная скобка: {э[:80]}")
+
+    def test_кнопки_собираются_на_обоих_языках(self):
+        сц = catalog.scene("pr_ff_near")
+        for я in язык.ЯЗЫКИ:
+            клавы = [
+                self.ui.главное_меню(None, я),
+                self.ui.меню_раздела(catalog.раздел("own"), я),
+                self.ui.меню_категории(catalog.category("vi_solo"), я),
+                self.ui.меню_сценария(сц, я),
+                self.ui.меню_сбора_фото(сц, 2, я),
+                self.ui.меню_кабинета(я),
+                self.ui.меню_оплаты(я),
+                self.ui.меню_способов("p1", я),
+                self.ui.меню_удаления(я),
+                self.ui.под_результатом("j1", "фото", я),
+            ]
+            for к in клавы:
+                for ряд in к["inline_keyboard"]:
+                    for b in ряд:
+                        self.assertTrue(b["text"].strip(), f"{я}: пустая кнопка")
+                        self.assertNotIn("{", b["text"], f"{я}: {b['text']}")
+
+    def test_английский_интерфейс_без_кириллицы(self):
+        """Кроме значка валюты: 😏 — не буква, он одинаков везде."""
+        экраны = [
+            self.ui.шапка_сценария(catalog.scene("sc_bed"), 100, "en"),
+            self.ui.текст_оплаты("en"),
+            self.ui.текст_раздела(catalog.раздел("undress"), "en"),
+            self.ui.текст_своего_промпта(catalog.category("own_photo"), "en"),
+        ]
+        for э in экраны:
+            кириллица = [c for c in э if "а" <= c.lower() <= "я"]
+            self.assertFalse(кириллица, f"кириллица в английском: {кириллица}")
+
+    def test_английская_подпись_действия_падает_на_строку_модели(self):
+        """Владелец не обязан писать короткую английскую подпись. Чем
+        показывать пусто на экране оплаты, лучше показать техничную
+        строку для модели — она хотя бы правдива."""
+        catalog.подставить({"un_close": {"строка": "SHE DOES SOMETHING",
+                                         "строка_рус": "делает"}})
+        try:
+            s = catalog.scene("un_close")
+            self.assertEqual(s.действие("en"), "SHE DOES SOMETHING")
+            self.assertEqual(s.действие("ru"), "делает")
+            catalog.подставить({"un_close": {"строка": "SHE DOES SOMETHING",
+                                             "строка_eng": "does it"}})
+            self.assertEqual(s.действие("en"), "does it")
+        finally:
+            catalog.перечитать()
+
+    def test_название_кнопки_правится_на_каждом_языке_отдельно(self):
+        catalog.подставить({"un_full": {"название": "РУС",
+                                        "название_en": "ENG"}})
+        try:
+            s = catalog.scene("un_full")
+            self.assertEqual(s.назв("ru"), "РУС")
+            self.assertEqual(s.назв("en"), "ENG")
+        finally:
+            catalog.перечитать()
+
+    def test_пустое_название_не_оставляет_кнопку_пустой(self):
+        """Лучше не тот язык, чем пустой прямоугольник."""
+        catalog.подставить({})
+        for s in catalog.все_сценарии():
+            for я in язык.ЯЗЫКИ:
+                self.assertTrue(s.button(я).strip())
 
 
 if __name__ == "__main__":

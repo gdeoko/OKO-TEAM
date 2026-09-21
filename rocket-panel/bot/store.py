@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS users (
   ref_code     TEXT UNIQUE,
   invited_by   INTEGER,
   created_at   INTEGER NOT NULL,
-  blocked      INTEGER NOT NULL DEFAULT 0
+  blocked      INTEGER NOT NULL DEFAULT 0,
+  lang         TEXT
 );
 CREATE TABLE IF NOT EXISTS ledger (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,6 +108,13 @@ class Store:
                 c.execute(f"ALTER TABLE jobs ADD COLUMN {стлб} {тип}")
 
         have = {r["name"] for r in c.execute("PRAGMA table_info(users)")}
+        # Язык интерфейса. У тех, кто пришёл до двуязычия, он пуст —
+        # это не «русский», а «ещё не спрашивали»: при первом же заходе
+        # он проставится по языку телеграма, и человек не окажется
+        # молча переведён на чужой.
+        if "lang" not in have:
+            c.execute("ALTER TABLE users ADD COLUMN lang TEXT")
+
         # Ступени качества отменены — колонка выбора убирается. База
         # могла успеть её получить: миграция идёт по факту, а не по
         # памяти о том, разворачивали мы ту версию или нет.
@@ -145,21 +153,37 @@ class Store:
             r = c.execute("SELECT * FROM users WHERE tg_id=?", (tg_id,)).fetchone()
             return dict(r) if r else None
 
-    def ensure_user(self, tg_id, username=None, welcome=0, invited_by=None):
-        """Заводит пользователя, если его нет. Возвращает (пользователь, новый?)."""
+    def ensure_user(self, tg_id, username=None, welcome=0, invited_by=None,
+                    lang=None):
+        """Заводит пользователя, если его нет. Возвращает (пользователь, новый?).
+
+        `lang` проставляется ТОЛЬКО когда у человека его ещё нет. Он
+        приходит из телеграма при каждом сообщении, и перезаписывать им
+        сохранённый выбор значило бы отменять этот выбор при каждом
+        нажатии: человек переключил на английский, а следующее же
+        сообщение вернуло русский.
+        """
         u = self.user(tg_id)
         if u:
+            правки, значения = [], []
             if username and u["username"] != username:
-                with self._db() as c:
-                    c.execute("UPDATE users SET username=? WHERE tg_id=?", (username, tg_id))
+                правки.append("username=?"); значения.append(username)
                 u["username"] = username
+            if lang and not u.get("lang"):
+                правки.append("lang=?"); значения.append(lang)
+                u["lang"] = lang
+            if правки:
+                with self._db() as c:
+                    c.execute(f"UPDATE users SET {','.join(правки)} WHERE tg_id=?",
+                              (*значения, tg_id))
             return u, False
         code = secrets.token_urlsafe(6)
         with self._db() as c:
             c.execute(
-                "INSERT INTO users(tg_id,username,welcome,ref_code,invited_by,created_at)"
-                " VALUES(?,?,?,?,?,?)",
-                (tg_id, username, welcome, code, invited_by, int(time.time())),
+                "INSERT INTO users(tg_id,username,welcome,ref_code,invited_by,"
+                "created_at,lang) VALUES(?,?,?,?,?,?,?)",
+                (tg_id, username, welcome, code, invited_by, int(time.time()),
+                 lang),
             )
             if welcome:
                 c.execute(
@@ -167,6 +191,15 @@ class Store:
                     (tg_id, welcome, "welcome", "подарок при старте", int(time.time())),
                 )
         return self.user(tg_id), True
+
+    def язык(self, tg_id, по_умолчанию="ru"):
+        u = self.user(tg_id)
+        return (u or {}).get("lang") or по_умолчанию
+
+    def сменить_язык(self, tg_id, lang):
+        with self._db() as c:
+            c.execute("UPDATE users SET lang=? WHERE tg_id=?", (lang, tg_id))
+        return lang
 
     def by_ref_code(self, code):
         with self._db() as c:
