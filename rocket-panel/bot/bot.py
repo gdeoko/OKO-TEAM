@@ -302,7 +302,17 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         cap = t("ген.подпись", я, что=язык.job_title(job, я),
                 сек=res.get("sec"),
                 баланс=f"{store.balance(u)} {pricing.СИМВОЛ}")
-        if files[0].lower().endswith((".webp", ".gif", ".mp4")):
+        низ = files[0].lower()
+        if низ.endswith(".mp4"):
+            # Ролик уходит ВИДЕО, а не анимацией: у видео есть плеер,
+            # перемотка и сохранение в галерею. Владелец 22.09.2026
+            # получил `video_00003_.webp` вложением на 3,8 МБ — его
+            # телефон показал файл, а не ролик (чинилось на карте,
+            # `panel.в_mp4`).
+            о = tg("sendVideo", chat_id=chat, caption=cap,
+                   supports_streaming=True,
+                   _files={"video": (files[0], data)})
+        elif низ.endswith((".webp", ".gif")):
             о = tg("sendAnimation", chat_id=chat, caption=cap,
                    _files={"animation": (files[0], data)})
         else:
@@ -415,9 +425,13 @@ def показать_работы(chat, u, сколько=5):
     send(chat, t("раб.список", я, сколько=len(работы)))
     for j in работы:
         подпись = язык.job_title(pricing.job(j["kind"]), я)
-        видео = (j["file"] or "").lower().endswith((".webp", ".gif", ".mp4"))
-        метод = "sendAnimation" if видео else "sendPhoto"
-        поле = "animation" if видео else "photo"
+        низ = (j["file"] or "").lower()
+        if низ.endswith(".mp4"):
+            метод, поле = "sendVideo", "video"
+        elif низ.endswith((".webp", ".gif")):
+            метод, поле = "sendAnimation", "animation"
+        else:
+            метод, поле = "sendPhoto", "photo"
 
         о = tg(метод, chat_id=chat, caption=подпись,
                **{поле: j["tg_file_id"]}) if j["tg_file_id"] else {"ok": False}
