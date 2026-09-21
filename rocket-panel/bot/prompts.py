@@ -210,12 +210,26 @@
 # весь рост — модель дорисовывала недостающее, вместо того чтобы взять
 # один непрерывный план. Требование непрерывности тела снимает это.
 КОМПОЗИЦИЯ = (
-    "Whole subject inside the frame, nothing important cropped away. "
+    "Whole subject inside the frame, nothing important cropped away."
+)
+
+# Требование непрерывности тела РАЗНОЕ у одиночки и у пары, и спутать
+# их нельзя: «одно туловище, одна голова» в парной сцене — прямое
+# указание слепить двоих в одного.
+ОДНО_ТЕЛО = (
     "ONE single continuous body: one head, one torso, two arms, two "
     "legs, all joined the way a real body joins. Head, chest, belly and "
     "hips follow one another in the natural order and at natural "
     "distances — never a face stacked directly on top of a crotch, "
     "never a second torso, never hands growing out of the wrong place."
+)
+
+ДВА_ТЕЛА = (
+    "EXACTLY TWO bodies in the frame and no one else: two heads, four "
+    "arms, four legs, each body continuous and correctly joined. No "
+    "third person, no extra face in the background, no spare limb "
+    "belonging to nobody. Neither face is ever stacked on top of the "
+    "other one's body."
 )
 
 КАЧЕСТВО = (
@@ -422,6 +436,30 @@ class Блок:
 )
 
 
+# Одежда, которую вообще может назвать вариант или человек. Список
+# нужен ровно для одного решения: говорить ли про поведение ткани.
+# Ошибка в меньшую сторону безобидна — пропадёт одно предложение.
+ОДЕЖДА_СЛОВА = (
+    "dress", "skirt", "shirt", "blouse", "bra", "panties", "knickers",
+    "lingerie", "stockings", "tights", "swimsuit", "bikini", "shorts",
+    "jeans", "sweater", "uniform", "leggings", "corset", "blazer",
+    "hoodie", "jacket", "trousers",
+)
+
+
+def одежда_названа(блок):
+    """Названа ли одежда СОБСТВЕННЫМИ словами сцены или человека.
+
+    Смотрим только в гардероб и в откровенную строку — не в свои же
+    служебные абзацы. Иначе получается круг: фраза «ни бикини, ни
+    шорт» сама включает разговор о ткани, ради запрета которого она и
+    написана.
+    """
+    текст = " ".join((getattr(блок, "гардероб", "") or "",
+                      getattr(блок, "откровенное", "") or "")).lower()
+    return any(с in текст for с in ОДЕЖДА_СЛОВА)
+
+
 def последнее(сложение_текст):
     """Повтор требования о сложении в самом конце промпта.
 
@@ -567,9 +605,25 @@ def собрать(вид, блок, фон="новый", пара=False, сло
                 куски.append(значение.strip())
 
     # 5. ТЕХНИКА и 6. ПОВТОР.
-    куски += [КОЖА, АНАТОМИЯ, ТКАНЬ, КОМПОЗИЦИЯ, КАМЕРА_ОБЩЕЕ, ЦВЕТ, КАЧЕСТВО]
+    куски += [КОЖА, АНАТОМИЯ]
+    # Про ткань говорим, ТОЛЬКО если одежда в тексте уже названа —
+    # гардеробом варианта или строкой человека («снимает платье»).
+    # В сцене, где одежды нет вовсе, «ткань мнётся и прижимается к
+    # коже» работает как подсказка одеть человека: 22.09.2026 парный
+    # вариант «рядом» вышел в бикини и шортах ровно с ней в тексте.
+    if одежда_названа(блок):
+        куски.append(ТКАНЬ)
+    куски += [КОМПОЗИЦИЯ, ДВА_ТЕЛА if пара else ОДНО_ТЕЛО,
+              КАМЕРА_ОБЩЕЕ, ЦВЕТ, КАЧЕСТВО]
     if сем == "i2i":
         куски.append(последнее(текст_сложения))
+        # Нагота повторяется САМОЙ ПОСЛЕДНЕЙ строкой — по той же
+        # причине, по которой повторяется сложение: модель читает
+        # начало и конец. У пары без откровенного действия («рядом»,
+        # «лицом к лицу») требование стояло только в начале, и оба
+        # выходили одетыми со своих референсов.
+        if пара:
+            куски.append(ПАРА_ГОЛЫЕ_ХВОСТ)
     return "\n\n".join(куски)
 
 
@@ -622,6 +676,14 @@ def длина_ок(текст):
     "BOTH people in the frame are fully nude. Neither of them keeps any "
     "clothing or underwear from their reference photograph — not the "
     "man's shorts, not the woman's bikini, nothing."
+)
+
+# То же самое в одну строку, для самого конца промпта. Стоит отдельно,
+# а не повтором, потому что после «FINAL CHECK» длинный абзац уже не
+# читается — нужна короткая последняя команда.
+ПАРА_ГОЛЫЕ_ХВОСТ = (
+    "AND BOTH OF THEM ARE NAKED: no bikini, no shorts, no underwear, "
+    "no clothing of any kind on either body."
 )
 
 # КОРОТКИЙ ЯКОРЬ ЛИЧНОСТИ. Одно предложение в самом начале.
