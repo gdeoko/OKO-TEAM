@@ -1385,6 +1385,16 @@ class ДействиеПоказываетсяВКонце(unittest.TestCase):
             self.assertIn("ALREADY OFF", p, ключ)
             self.assertIn("the undressing is finished", p, ключ)
 
+    def test_у_пары_раздеваются_оба(self):
+        """Обязательная строка владельца написана про одного. Прогон
+        22.09.2026: женщина голая, мужчина в серых шортах с его листа."""
+        p = catalog.scene("pf_mf_near").промпт()
+        self.assertIn("BOTH people in the frame are fully nude", p)
+        self.assertIn("not the man's shorts", p)
+
+    def test_одиночной_сцене_про_обоих_не_говорим(self):
+        self.assertNotIn("BOTH people", catalog.scene("un_full").промпт())
+
     def test_стоит_сразу_за_действием(self):
         """В хвосте промпта оно проигрывает описанию кадра."""
         sc = catalog.scene("ph_push")
