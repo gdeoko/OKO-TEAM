@@ -257,18 +257,33 @@
         "frame around her as described below. Only the person carries "
         "over: pose, framing and surroundings are yours to compose."
     ),
+    # ДВА СПИСКА, И ОБА ОБЯЗАТЕЛЬНЫ.
+    #
+    # Сперва здесь было сказано «оставь всё как есть, кроме одежды» — и
+    # прогон 22.09.2026 отдал семь одинаковых кадров: фон, лицо и
+    # сложение держались идеально, а «Вид сзади», «Раком» и «Лёжа на
+    # спине» выглядели одной и той же стоящей вполоборота. Модель
+    # поняла буквально: не менять ничего.
+    #
+    # Поэтому теперь два списка. Что КОПИРУЕТСЯ — место, свет, время
+    # суток. Что МЕНЯЕТСЯ — одежда, поза, ракурс, план. Без второго
+    # списка товара нет: вариант и есть поза с ракурсом, за них платят.
     "i2i_фон": (
-        "EDIT THIS PHOTOGRAPH. The clothes come off and the pose follows "
-        "the scenario; everything else stays exactly as it is in the "
-        "photo — the same room, the same objects, the same light, the "
-        "same time of day. This is an edit of that frame, not a new "
-        "picture inspired by it. "
-        "THE BACKDROP IS COPIED, NOT CHOSEN: whatever is behind her in "
-        "the photograph is behind her in the result, in the same colour "
-        "and the same material. A plain studio backdrop stays a plain "
-        "studio backdrop of the same grey. Do NOT move her to a bedroom, "
-        "a bed, a hotel room, a pool, a beach or a sofa — no furniture "
-        "appears that was not in the photograph."
+        "EDIT THIS PHOTOGRAPH: keep the PLACE, change the PERSON'S POSE. "
+        "COPIED from the photograph and not invented: the room or "
+        "backdrop behind her, its colour and material, the objects in "
+        "it, the light and the direction it comes from, the time of day. "
+        "A plain studio backdrop stays the same plain studio backdrop of "
+        "the same grey. No bedroom, hotel, pool or beach appears, and no "
+        "furniture that was not already there. "
+        "CHANGED according to the scenario below: her clothes come off "
+        "entirely, and her POSE, her position in the frame, the CAMERA "
+        "ANGLE and the CROP are the scenario's to set. They must clearly "
+        "differ from the photograph — if the scenario says she lies "
+        "down, she lies down; if it says the camera is low, the camera "
+        "is low; if it says a close-up, the frame closes in. Copying her "
+        "pose from the photograph is as much a failure as inventing a "
+        "new room."
     ),
     "i2i_пара": (
         "Two references, one person in each. Build a single new frame "
