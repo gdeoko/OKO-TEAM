@@ -543,6 +543,112 @@ class Архив(unittest.TestCase):
         self.assertFalse(archive.забыть_человека(77), "второй раз удалять нечего")
 
 
+class Качество(unittest.TestCase):
+    """Доплата берётся только за то, что мы делаем.
+
+    2K/4K/8K раньше стояли в прайсе, продавались — и не доходили до
+    панели вовсе: бот передавал только соотношение сторон. Человек
+    платил за слово.
+    """
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp()
+        self.s = Store(os.path.join(self.d, "b.db"))
+        self.s.ensure_user(1, welcome=0)
+
+    def test_за_качество_на_видео_не_берём(self):
+        """Апскейлить каждый кадр ролика мы не станем — значит и денег
+        за это не берём. Правило продублировано в панели, и разойтись
+        им нельзя."""
+        for вид in ("t2v_5", "t2v_10", "i2v_5", "i2v_10", "sound"):
+            for q in pricing.QUALITY:
+                self.assertEqual(pricing.доплата_за_качество(вид, q["id"]), 0,
+                                 f"{вид} + {q['id']}: доплата за неприменимое")
+
+    def test_за_качество_на_фото_берём_как_в_прайсе(self):
+        for вид in ("t2i", "i2i", "inpaint"):
+            for q in pricing.QUALITY:
+                self.assertEqual(pricing.доплата_за_качество(вид, q["id"]),
+                                 q["coins"], f"{вид} + {q['id']}")
+
+    def test_2k_бесплатно_а_не_отсутствует(self):
+        """У конкурента 2K заперто подпиской. У нас — даром, и это довод,
+        который стоит не потерять при правке прайса."""
+        self.assertEqual(pricing.quality("q2k")["coins"], 0)
+        self.assertGreater(pricing.quality("q2k")["market_crystals"], 0)
+
+    def test_список_применимости_совпадает_с_видами_фото(self):
+        фото = {k for k in pricing.JOBS
+                if not k.startswith(("t2v", "i2v")) and k != "sound"}
+        self.assertEqual(pricing.КАЧЕСТВО_ПРИМЕНИМО, фото)
+
+    def test_ступени_качества_есть_в_панели(self):
+        """Прайс и панель обязаны знать одни и те же ступени. Появится
+        ступень только в прайсе — её продадут, а панель молча отдаст
+        родное разрешение."""
+        путь = os.path.join(os.path.dirname(__file__), "..", "gpu", "panel.py")
+        текст = open(путь, encoding="utf-8").read()
+        for q in pricing.QUALITY:
+            self.assertIn(f'"{q["id"]}"', текст, f'панель не знает {q["id"]}')
+
+
+class Кабинет(unittest.TestCase):
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp()
+        self.s = Store(os.path.join(self.d, "b.db"))
+        self.s.ensure_user(1, "kto", welcome=5)
+
+    def test_качество_по_умолчанию_самое_дешёвое(self):
+        self.assertEqual(self.s.quality(1), "hd")
+        self.assertEqual(pricing.quality("hd")["coins"], 0)
+
+    def test_качество_запоминается(self):
+        self.s.set_quality(1, "q4k")
+        self.assertEqual(self.s.quality(1), "q4k")
+
+    def test_сводка_считается_по_журналу(self):
+        self.s.credit(1, 20, "paid", "пакет")
+        self.s.spend(1, 7, "фото")
+        св = self.s.сводка(1)
+        self.assertEqual(св["куплено"], 20)
+        self.assertEqual(св["потрачено"], 7)
+
+    def test_приглашённые_считаются(self):
+        self.s.ensure_user(2, welcome=1, invited_by=1)
+        self.s.ensure_user(3, welcome=1, invited_by=1)
+        self.assertEqual(self.s.сводка(1)["позвано"], 2)
+
+    def test_удаление_стирает_всё_и_говорит_сколько(self):
+        self.s.credit(1, 10, "paid", "пакет")
+        self.s.job_start("j", 1, "t2i", "p", 1)
+        self.s.job_done("j", file="o.png", path="1/j.png", tg_file_id="X", size=1)
+        итог = self.s.забыть(1)
+        self.assertEqual(итог["работ"], 1)
+        self.assertGreater(итог["записей"], 0)
+        self.assertIsNone(self.s.user(1))
+        self.assertEqual(self.s.works(1), [])
+
+    def test_приглашённые_переживают_уход_пригласившего(self):
+        """Человек ушёл — его приглашённые остаются людьми со своим
+        балансом, а не строками с указателем в пустоту."""
+        self.s.ensure_user(2, welcome=3, invited_by=1)
+        self.s.забыть(1)
+        self.assertIsNotNone(self.s.user(2))
+        self.assertIsNone(self.s.user(2)["invited_by"])
+        self.assertEqual(self.s.balance(2), 3)
+
+    def test_старая_база_получает_колонку_качества(self):
+        путь = os.path.join(self.d, "старая.db")
+        c = sqlite3.connect(путь)
+        c.executescript(store.SCHEMA)
+        c.execute("ALTER TABLE users DROP COLUMN quality")
+        c.execute("INSERT INTO users(tg_id,welcome,created_at) VALUES(9,1,0)")
+        c.commit(); c.close()
+        s2 = Store(путь)
+        self.assertEqual(s2.quality(9), "hd")
+
+
 class НижнееМеню(unittest.TestCase):
     """Кнопка на экране обязана что-то делать.
 

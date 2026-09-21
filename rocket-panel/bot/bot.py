@@ -158,10 +158,18 @@ def run_job(chat, u, kind, prompt, photos=None):
     job = pricing.job(kind)
     jid = uuid.uuid4().hex[:10]
     charged = False
+    # Качество берётся из кабинета и стоит доплату с КАЖДОЙ работы.
+    # Списываем одной суммой: два списания за одну кнопку человек читает
+    # как «сняли дважды», сколько ни объясняй.
+    кач = pricing.quality(store.quality(u))
+    доплата = pricing.доплата_за_качество(kind, кач["id"])
+    цена = job.coins + доплата
     try:
-        store.spend(u, job.coins, f"{job.title}", meta={"job": jid})
+        store.spend(u, цена, f"{job.title}"
+                    + (f" · {кач['title']}" if доплата else ""),
+                    meta={"job": jid, "quality": кач["id"]})
         charged = True
-        store.job_start(jid, u, kind, prompt, job.coins)
+        store.job_start(jid, u, kind, prompt, цена)
 
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
@@ -171,7 +179,15 @@ def run_job(chat, u, kind, prompt, photos=None):
         # сборку, и обычные 26 шагов при cfg 4 их ЛОМАЮТ.
         params = {"prompt": prompt, "size": "vert",
                   "steps": 4, "cfg": 1.0, "seed": 0,
-                  "neg": prompts.НЕГАТИВ}
+                  "neg": prompts.НЕГАТИВ,
+                  # `size` — это соотношение сторон (вертикаль), `quality`
+                  # — разрешение. Две разные вещи, и раньше панели
+                  # передавали только первую: 4K и 8K стояли в прайсе,
+                  # продавались, но на картинку не влияли никак.
+                  # 2K стоит ноль, но применяется — поэтому смотрим на
+                  # применимость к виду работы, а не на доплату.
+                  "quality": (кач["id"] if kind in pricing.КАЧЕСТВО_ПРИМЕНИМО
+                              else "hd")}
         сем = prompts.семейство(kind)
         if сем in ("t2i", "i2i"):
             params["mode"] = "photo"
@@ -312,15 +328,14 @@ def показать_работы(chat, u, сколько=5):
     send(chat, "Что дальше?", MENU)
 
 
+def показать_кабинет(chat, u, имя=None):
+    send(chat,
+         ui.текст_кабинета(store.balance(u), store.сводка(u), store.quality(u), имя),
+         ui.меню_кабинета(store.quality(u)))
+
+
 def показать_баланс(chat, u):
-    h = store.history(u, 5)
-    lines = [f"Баланс: <b>{store.balance(u)} коинов</b>", ""]
-    if h:
-        lines.append("<b>Последние</b>")
-        for j in h:
-            mark = "ok" if j["state"] == "ok" else "сбой"
-            lines.append(f"· {pricing.job(j['kind']).title} — {mark}")
-    send(chat, "\n".join(lines), MENU)
+    показать_кабинет(chat, u)
 
 
 def позвать_друзей(chat, u):
@@ -416,11 +431,48 @@ def on_callback(cb):
     if data == "m:menu":
         answer(cid); send(chat, "Что делаем?", MENU); return
 
-    if data == "m:balance":
-        answer(cid); показать_баланс(chat, u); позвать_друзей(chat, u); return
+    if data in ("m:balance", "m:cab"):
+        answer(cid); показать_кабинет(chat, u, cb["from"].get("first_name")); return
 
     if data == "m:works":
         answer(cid); показать_работы(chat, u); return
+
+    if data == "m:ref":
+        answer(cid); позвать_друзей(chat, u); return
+
+    if data == "m:quality":
+        answer(cid)
+        send(chat, ui.текст_качества(), ui.меню_качества(store.quality(u))); return
+
+    if data.startswith("q:"):
+        qid = data.split(":", 1)[1]
+        try:
+            q = pricing.quality(qid)
+        except KeyError:
+            answer(cid, "Такого качества нет"); return
+        store.set_quality(u, qid)
+        answer(cid, f"Теперь {q['title']}")
+        показать_кабинет(chat, u, cb["from"].get("first_name")); return
+
+    if data == "m:forget":
+        answer(cid)
+        send(chat, ui.текст_удаления(store.сводка(u)), ui.меню_удаления()); return
+
+    if data == "m:forget:yes":
+        answer(cid)
+        # Сначала файлы, потом база: упадём между — останутся строки без
+        # файлов, что честнее, чем файлы без строк. Файл без строки в
+        # базе не найдёт уже никто, и он просто займёт диск навсегда.
+        try:
+            archive.забыть_человека(u)
+        except OSError as e:
+            print("АРХИВ не чистится:", str(e)[:200], flush=True)
+        итог = store.забыть(u)
+        send(chat, f"Удалено: работ — <b>{итог['работ']}</b>, "
+                   f"записей — <b>{итог['записей']}</b>.\n"
+                   f"Файлы работ стёрты с диска.\n\n"
+                   f"<i>/start заведёт всё заново, с нуля.</i>")
+        return
 
     if data == "m:buy":
         answer(cid); send(chat, price_list(), buy_kb()); return

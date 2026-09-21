@@ -36,6 +36,7 @@ from flask import Flask, request, jsonify, send_file, Response
 
 COMFY="http://127.0.0.1:8188"
 OUT="/home/ubuntu/ComfyUI/output"; IN="/home/ubuntu/ComfyUI/input"
+UPSCALE_DIR="/home/ubuntu/ComfyUI/models/upscale_models"
 app=Flask(__name__); app.config["MAX_CONTENT_LENGTH"]=48*1024*1024
 JOBS={}
 
@@ -82,10 +83,11 @@ def _фото_база(p, neg, seed, images=None):
     return g
 
 
-def wf_photo(p,w,h,seed,images=None,neg=None):
+def wf_photo(p,w,h,seed,images=None,neg=None,qid="hd"):
     """Текст в фото и фото в фото — один граф, разница в наличии снимков."""
     g=_фото_база(p,neg,seed,images)
-    g["9"]={"class_type":"SaveImage","inputs":{"images":["8",0],"filename_prefix":"photo"}}
+    g,выход=_апскейл(g,["8",0],qid)
+    g["9"]={"class_type":"SaveImage","inputs":{"images":выход,"filename_prefix":"photo"}}
     if not images:
         g["6"]={"class_type":"EmptySD3LatentImage","inputs":{"width":w,"height":h,"batch_size":1}}
         g["7"]["inputs"]["latent_image"]=["6",0]
@@ -98,7 +100,7 @@ def wf_photo(p,w,h,seed,images=None,neg=None):
     return g
 
 
-def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None):
+def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None,qid="hd"):
     """Правка по области: белое в маске переписывается, остальное остаётся
     пиксель в пиксель. Композит в конце обязателен — без него модель
     подменяет и то, что не просили."""
@@ -114,7 +116,11 @@ def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None):
     g["7"]["inputs"]["latent_image"]=["24",0]
     g["25"]={"class_type":"ImageCompositeMasked","inputs":{"destination":["31",0],
              "source":["8",0],"mask":["23",0],"x":0,"y":0,"resize_source":False}}
-    g["9"]={"class_type":"SaveImage","inputs":{"images":["25",0],"filename_prefix":"inpaint"}}
+    # Апскейл ПОСЛЕ композита. Наоборот нельзя: композит склеивает
+    # правку с исходником пиксель в пиксель, а у поднятой картинки и
+    # исходника размеры разные — шов пойдёт по всей маске.
+    g,выход=_апскейл(g,["25",0],qid)
+    g["9"]={"class_type":"SaveImage","inputs":{"images":выход,"filename_prefix":"inpaint"}}
     return g
 
 
@@ -190,6 +196,55 @@ def run(jid, graph):
 SZ={"photo":{"vert":(768,1344),"sq":(1024,1024),"horiz":(1344,768)},
     "video":{"vert":(704,1280),"sq":(960,960),"horiz":(1280,704)}}
 
+# Ступени качества: во сколько раз поднять готовый кадр.
+#
+# Диффузия идёт в РОДНОМ разрешении модели и только в нём. Просить у
+# Qwen-Image-Edit кадр вдвое выше обучающего — это швы, вторые головы и
+# растянутые лица; дороже и хуже одновременно. Разрешение поднимается
+# после, отдельным проходом через 4x-UltraSharp, а лишнее снимается
+# lanczos'ом до точной цифры.
+#
+# 8K гоняет апскейлер ДВАЖДЫ: одного прохода 4x от 768x1344 хватает на
+# 4K с запасом, а до 4320x7680 пришлось бы растягивать интерполяцией —
+# то есть продавать пустые пиксели.
+КАЧЕСТВО={
+    "hd":  {"проходов":0,"до":None},              # как рисует модель
+    "q2k": {"проходов":1,"до":(1152,2048)},
+    "q4k": {"проходов":1,"до":(2160,3840)},
+    "q8k": {"проходов":2,"до":(4320,7680)},
+}
+АПСКЕЙЛЕР="4x-UltraSharp.pth"
+
+
+def _апскейл(g, вход, qid, узел=90):
+    """Досыпает узлы подъёма разрешения и отдаёт (граф, новый выход).
+
+    `вход` — пара [узел, слот] с готовой картинкой. Если ступень ничего
+    не требует или апскейлера нет на диске, возвращает вход как есть:
+    отдать кадр в родном разрешении лучше, чем уронить задание, за
+    которое уже списаны коины.
+    """
+    k=КАЧЕСТВО.get(qid or "hd")
+    if not k or not k["проходов"]:
+        return g, вход
+    if not os.path.exists(os.path.join(UPSCALE_DIR, АПСКЕЙЛЕР)):
+        print(f"апскейлер {АПСКЕЙЛЕР} не найден — отдаю родное разрешение", flush=True)
+        return g, вход
+    g[str(узел)]={"class_type":"UpscaleModelLoader",
+                  "inputs":{"model_name":АПСКЕЙЛЕР}}
+    текущий=вход
+    for i in range(k["проходов"]):
+        n=str(узел+1+i)
+        g[n]={"class_type":"ImageUpscaleWithModel",
+              "inputs":{"upscale_model":[str(узел),0],"image":текущий}}
+        текущий=[n,0]
+    w,h=k["до"]
+    n=str(узел+10)
+    g[n]={"class_type":"ImageScale",
+          "inputs":{"image":текущий,"width":w,"height":h,
+                    "upscale_method":"lanczos","crop":"center"}}
+    return g, [n,0]
+
 @app.post("/api/gen")
 def gen():
     """Запуск задания.
@@ -207,18 +262,25 @@ def gen():
     neg=(d.get("neg") or "").strip() or None
     images=d.get("images") or ([d["image"]] if d.get("image") else [])
     images=[x for x in images if x]
+    # Ступень качества. Видео её НЕ берёт: апскейлить каждый кадр
+    # десятисекундного ролика — это минуты карты и гигабайты файла,
+    # которые телеграм всё равно не пропустит. Бот за качество на видео
+    # и не берёт доплату, эти два решения обязаны совпадать.
+    qid=d.get("quality","hd")
+    if qid not in КАЧЕСТВО: qid="hd"
     if mode=="inpaint":
         if not images or not d.get("mask"):
             return jsonify(error="Нужны фото и обведённая область"),400
         g=wf_inpaint(p,seed,images[0],d["mask"],
-                     int(d.get("feather",24)),int(d.get("grow",8)),neg)
+                     int(d.get("feather",24)),int(d.get("grow",8)),neg,qid)
         w=h=0
     elif mode=="photo":
         if len(images)>MAX_REF:
             return jsonify(error=f"Модель берёт не больше {MAX_REF} снимков"),400
         w,h=SZ["photo"].get(d.get("size","vert"),(768,1344))
-        g=wf_photo(p,w,h,seed,images,neg)
+        g=wf_photo(p,w,h,seed,images,neg,qid)
     else:
+        qid="hd"
         if len(images)>2:
             return jsonify(error="Видео берёт первый и последний кадр, не больше"),400
         w,h=SZ["video"].get(d.get("size","vert"),(704,1280))
@@ -228,7 +290,7 @@ def gen():
         g=wf_video(p,w,h,frames,seed,images,neg,float(d.get("shift",8.0)))
     jid=uuid.uuid4().hex[:8]
     JOBS[jid]={"state":"run","sec":0,"mode":mode,"seed":seed,"w":w,"h":h,
-               "refs":len(images)}
+               "refs":len(images),"quality":qid}
     threading.Thread(target=run,args=(jid,g),daemon=True).start()
     return jsonify(job=jid,seed=seed)
 
