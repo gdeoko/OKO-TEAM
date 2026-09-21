@@ -309,15 +309,27 @@ class Каталог(unittest.TestCase):
         for р in catalog.РАЗДЕЛЫ:
             self.assertTrue(р.дети, f"{р.key}: нет детей")
 
-    def test_у_соло_в_фото_две_ветки_а_у_группового_ни_одной(self):
-        """Дерево неровное нарочно: «Раздеть · Соло» делится на
-        раздевание и интим, а «Групповое» показывает варианты сразу."""
+    def test_и_соло_и_групповое_делятся_дальше(self):
+        """«Соло» — на раздевание и интим, «Групповое» — на составы.
+        Решение владельца 21.09.2026, третье за сутки по этому дереву."""
         соло = catalog.узел("un_solo")
         self.assertEqual([д.key for д in соло.дети], ["un_here", "un_intim"])
         self.assertFalse(соло.scenes)
-        группа = catalog.узел("un_group")
-        self.assertFalse(группа.дети)
-        self.assertTrue(группа.scenes)
+        for ключ, ожидаем in (("un_group", ["un_mf", "un_ff", "un_mm"]),
+                              ("vi_group", ["vi_mf", "vi_ff", "vi_mm"])):
+            узел = catalog.узел(ключ)
+            self.assertEqual([д.key for д in узел.дети], ожидаем)
+            self.assertFalse(узел.scenes, f"{ключ}: варианты мимо составов")
+
+    def test_составы_не_смешиваются(self):
+        """Каждый состав видит только свои варианты: владелец пишет для
+        МЖ, ЖЖ и ММ разные акты."""
+        for ключ, состав in (("vi_mf", "мужчина и женщина"),
+                             ("vi_ff", "две женщины"),
+                             ("vi_mm", "двое мужчин")):
+            сцены = catalog.узел(ключ).scenes
+            self.assertEqual(len(сцены), 6)
+            self.assertEqual({s.пара for s in сцены}, {состав})
 
     def test_в_подразделе_не_меньше_пяти_вариантов(self):
         """Меньше пяти — узел не стоит нажатия.
@@ -1046,7 +1058,7 @@ class ВидеоЧерезФото(unittest.TestCase):
 
     def test_фото_сценарии_одношаговые(self):
         for ключ in ("un_here", "un_intim", "un_group"):
-            for s in catalog.узел(ключ).scenes:
+            for s in catalog.узел(ключ).все_сцены:
                 self.assertFalse(s.двухшаговый, f"{s.key}")
 
     def test_у_видео_есть_промпт_для_кадра(self):
@@ -1060,24 +1072,23 @@ class ПарныеСцены(unittest.TestCase):
     """Двое в кадре — двое референсов, по снимку на человека."""
 
     def test_три_состава_по_шесть_расстановок(self):
-        """Восемнадцать в одном списке: три состава на шесть
-        расстановок. Промежуточной кнопки выбора состава нет —
-        решение владельца."""
         for ключ in ("vi_group", "un_group"):
-            self.assertEqual(len(catalog.узел(ключ).scenes), 18)
-        составы = {s.состав_коротко for s in catalog.узел("vi_group").scenes}
+            у = catalog.узел(ключ)
+            self.assertEqual(len(у.все_сцены), 18)
+            self.assertEqual(len(у.дети), 3)
+        составы = {s.состав_коротко for s in catalog.узел("vi_group").все_сцены}
         self.assertEqual(составы, {"МЖ", "ЖЖ", "ММ"})
 
     def test_паре_нужны_ровно_два_снимка(self):
         """Запуск с одним референсом отдал бы одного человека там, где
         заплачено за двоих."""
-        for s in catalog.узел("vi_group").scenes:
+        for s in catalog.узел("vi_group").все_сцены:
             self.assertEqual(s.фото_нужно, (2, 2), f"{s.key}")
 
     def test_промпт_запрещает_слипание_лиц(self):
         """Смешение двух лиц в одно — самый частый брак парных сцен, и
         стоит он дороже перепутанного порядка референсов."""
-        for s in catalog.узел("vi_group").scenes:
+        for s in catalog.узел("vi_group").все_сцены:
             self.assertIn("never blended into one face", s.prompt_фото())
             self.assertIn("TWO different people", s.prompt_фото())
 
@@ -1091,7 +1102,7 @@ class ПарныеСцены(unittest.TestCase):
     def test_пара_не_обещает_обстановку_с_фото(self):
         """Второй человек приходит со своего снимка. «Та же комната»
         было бы враньём на экране оплаты."""
-        for s in catalog.узел("vi_group").scenes:
+        for s in catalog.узел("vi_group").все_сцены:
             self.assertNotIn("KEEP THE SETTING", s.prompt_фото())
 
 
@@ -1160,7 +1171,7 @@ class ЧеловекВидитЗаЧтоПлатит(unittest.TestCase):
     def test_у_пары_на_экране_назван_состав(self):
         """Акты у МЖ, ЖЖ и ММ владелец писал разные, и человек должен
         видеть, за какой платит: в общем списке имена совпадают."""
-        for s in catalog.узел("vi_group").scenes:
+        for s in catalog.узел("vi_group").все_сцены:
             э = self.ui.шапка_сценария(s, 100)
             self.assertIn("В кадре: <b>" + s.пара + "</b>", э)
             self.assertIn("Расстановка:", э)
@@ -1205,9 +1216,9 @@ class Раскладка(unittest.TestCase):
         по_ключу = {c.key: {s.job for s in c.scenes} for c in catalog.ВИДИМЫЕ}
         self.assertEqual(по_ключу.get("un_here"), {"i2i"})
         self.assertEqual(по_ключу.get("un_intim"), {"i2i"})
-        self.assertEqual(по_ключу.get("un_group"), {"i2i"})
+        self.assertEqual(по_ключу.get("un_mf"), {"i2i"})
         self.assertEqual(по_ключу.get("vi_solo"), {"i2v_5"})
-        self.assertEqual(по_ключу.get("vi_group"), {"i2v_5"})
+        self.assertEqual(по_ключу.get("vi_mm"), {"i2v_5"})
 
     def test_свой_промпт_знает_свой_вид_работы(self):
         for под in catalog.узел("own").дети:
