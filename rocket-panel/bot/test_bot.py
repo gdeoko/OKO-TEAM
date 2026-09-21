@@ -1028,10 +1028,15 @@ class ПравкиВладельца(unittest.TestCase):
         б = prompts.Блок(обстановка="A room.", свет="Soft light.",
                          откровенное="MARKER")
         p = prompts.собрать("i2i", б)
-        self.assertLess(p.index("MARKER"), p.index("A room."),
-                        "строка владельца уехала за обстановку")
+        # Обстановка теперь стоит ВЫШЕ строки владельца — и только
+        # когда место выбрано: выбранное место и есть работа, оно
+        # обязано стоять там же, где задание (прогон 22.09.2026: восемь
+        # мест дали восемь одинаковых студийных кадров).
+        self.assertLess(p.index("A room."), p.index("MARKER"))
         self.assertLess(p.index("MARKER"), p.index(prompts.КОЖА[:40]),
                         "строка владельца уехала в технический хвост")
+        self.assertLess(p.index("MARKER"), p.index(prompts.ТЕЛО_ПО_ФОТО[:40]),
+                        "строка владельца уехала за описание внешности")
 
     def test_пустая_строка_не_ломает_сценарий(self):
         """Владелец может не заполнить ничего — бот обязан работать."""
@@ -1261,6 +1266,23 @@ class ПорядокБлоковВПромпте(unittest.TestCase):
     def test_техника_в_конце(self):
         p, _ = self.порядок()
         self.assertLess(p.index(prompts.ТЕЛО_ПО_ФОТО), p.index(prompts.КАЧЕСТВО))
+
+
+class ВыбранноеМестоСтоитВНачале(unittest.TestCase):
+    """Прогон 22.09.2026: восемь выбранных мест дали восемь одинаковых
+    студийных кадров — обстановка стояла в середине промпта."""
+
+    def test_место_сразу_за_заданием(self):
+        p = catalog.scene("un_full").промпт(место=места.место("sc_hotel"))
+        отель = p.index("A high-floor hotel room")
+        self.assertLess(отель, 400, "место уехало вглубь промпта")
+
+    def test_без_места_обстановку_не_выдумываем(self):
+        """Место не выбрано — задник копируется со снимка, описывать
+        нечего."""
+        p = catalog.scene("un_full").промпт()
+        self.assertNotIn("A high-floor hotel room", p)
+        self.assertIn("COPIED from the photograph", p)
 
 
 class СложениеБуквальноеИПовторённое(unittest.TestCase):
