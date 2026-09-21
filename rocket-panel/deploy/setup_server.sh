@@ -87,9 +87,26 @@ AMBERRY_ADMIN_URL=
 ENV
     echo "создан /etc/amberry.env — вписать ключи"
 else
-    echo "/etc/amberry.env уже есть, не трогаю"
+    echo "/etc/amberry.env уже есть, значения не трогаю"
 fi
 chmod 600 /etc/amberry.env
+
+# Новые настройки ДОПИСЫВАЮТСЯ в существующий файл. Без этого сервер,
+# развёрнутый вчера, не получает ни одной настройки, добавленной
+# сегодня: файл есть — значит не трогаем, — и служба молча стартует без
+# них. Дописывается только отсутствующий ключ; вписанные значения не
+# переписываются никогда.
+for KV in \
+    "AMBERRY_DATA_DIR=$DATA_DIR" \
+    "AMBERRY_ADMIN_USER=amberry" \
+    "AMBERRY_ADMIN_PASS=" \
+    "AMBERRY_ADMIN_PORT=8090" \
+    "AMBERRY_ADMIN_URL="
+do
+    K=${KV%%=*}
+    grep -q "^$K=" /etc/amberry.env || { echo "$KV" >> /etc/amberry.env
+                                         echo "добавлено $K"; }
+done
 
 step "Служба"
 cat > /etc/systemd/system/amberry.service <<UNIT
@@ -183,7 +200,10 @@ fi
 
 IP_PUB=$(curl -s -m 10 https://api.ipify.org || hostname -I | awk '{print $1}')
 ADMIN_HOST="${IP_PUB//./-}.nip.io"
-ADMIN_PORT=$(grep '^AMBERRY_ADMIN_PORT=' /etc/amberry.env | cut -d= -f2)
+# `|| true` здесь обязательно: при pipefail пустой grep роняет весь
+# скрипт на ровном месте — присваивание считается упавшим, хотя нас
+# устраивает и пустой ответ.
+ADMIN_PORT=$(grep '^AMBERRY_ADMIN_PORT=' /etc/amberry.env | cut -d= -f2 || true)
 ADMIN_PORT=${ADMIN_PORT:-8090}
 
 cat > /etc/caddy/Caddyfile <<CADDY
