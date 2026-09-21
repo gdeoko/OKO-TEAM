@@ -48,6 +48,21 @@ CKPT_VIDEO="wan2.2-rapid-mega-aio-nsfw-v12.2.safetensors"
 STEPS=4
 CFG=1.0
 
+# CFG У ФОТО — 1.5, И ЭТО НЕ ПРОТИВОРЕЧИЕ СКАЗАННОМУ ВЫШЕ.
+#
+# При CFG=1.0 классификаторной подсказки нет вовсе, а значит НЕГАТИВНЫЙ
+# ПРОМПТ МОДЕЛЬ НЕ ВИДИТ. Шестьдесят слов «не увеличивай грудь, не
+# старь лицо» лежали мёртвым грузом — считался только положительный.
+#
+# Замерено на карте 21.09.2026, один снимок и один промпт:
+#     cfg 1.0  негатив не работает
+#     cfg 1.5  негатив работает, картинка целая, +4 с
+#     cfg 2.5  картинка пережжена и постеризована — ускоритель сломан
+#
+# Полтора — ровно столько, сколько эта сборка терпит. Поднимать выше
+# нельзя, и проверять это заново не надо: результат выше.
+CFG_ФОТО=1.5
+
 # Wan обучен на китайском негативе — он работает лучше английского
 WAN_NEG=("色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，"
          "最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，"
@@ -92,7 +107,7 @@ def _фото_база(p, neg, seed, images=None, denoise=1.0):
      "1":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_PHOTO}},
      "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":neg or PHOTO_NEG}},
      "7":{"class_type":"KSampler","inputs":{"model":["1",0],"positive":["4",0],"negative":["5",0],
-          "seed":seed,"steps":шаги_под_denoise(denoise),"cfg":CFG,
+          "seed":seed,"steps":шаги_под_denoise(denoise),"cfg":CFG_ФОТО,
           "sampler_name":"euler","scheduler":"simple",
           "denoise":max(0.05,min(1.0,float(denoise)))}},
      "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
