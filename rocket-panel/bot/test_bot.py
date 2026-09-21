@@ -1057,8 +1057,12 @@ class СвойПромпт(unittest.TestCase):
 
     def test_обязательное_не_уезжает_в_хвост(self):
         p = prompts.свой("in a car", "i2i")
+        # Раньше мерилось «в первой половине». Половина сдвинулась,
+        # когда общие блоки ужали: теперь до обязательной строки стоят
+        # только правка снимка, сохранение человека и сложение.
         self.assertLess(p.index(prompts.ОБЯЗАТЕЛЬНОЕ_ПО_УМОЛЧАНИЮ),
-                        len(p) // 2, "обязательная строка уехала в хвост")
+                        p.index(prompts.КОЖА),
+                        "обязательная строка уехала за описание кадра")
 
 
 class ВидеоЧерезФото(unittest.TestCase):
@@ -1120,7 +1124,7 @@ class ПарныеСцены(unittest.TestCase):
         """Второй человек приходит со своего снимка. «Та же комната»
         было бы враньём на экране оплаты."""
         for s in catalog.узел("vi_group").все_сцены:
-            self.assertNotIn("KEEP THE SETTING", s.prompt_фото())
+            self.assertNotIn("EDIT THIS PHOTOGRAPH", s.prompt_фото())
 
 
 class ОткудаБерётсяФон(unittest.TestCase):
@@ -1133,8 +1137,8 @@ class ОткудаБерётсяФон(unittest.TestCase):
     def test_раздеть_берёт_обстановку_с_фото(self):
         for s in catalog.узел("un_here").scenes:
             self.assertEqual(s.фон, "референс", f"{s.key}: сочиняет своё место")
-            self.assertIn("KEEP THE SETTING", s.prompt,
-                          f"{s.key}: промпт не велит сохранить обстановку")
+            self.assertIn("EDIT THIS PHOTOGRAPH", s.prompt,
+                          f"{s.key}: кадру не велено править снимок, а не сочинять новый")
 
     def test_раздеть_не_опирается_на_мебель(self):
         """Обстановка приходит с фото, а на нём может не быть ни
@@ -1151,9 +1155,9 @@ class ОткудаБерётсяФон(unittest.TestCase):
         """Место — добавка к любому варианту, а не отдельная кнопка."""
         s = catalog.scene("un_close")
         свой = s.прompt if False else s.промпт()
-        self.assertIn("KEEP THE SETTING", свой)
+        self.assertIn("EDIT THIS PHOTOGRAPH", свой)
         с_душем = s.промпт(место=места.место("sc_shower"))
-        self.assertNotIn("KEEP THE SETTING", с_душем)
+        self.assertNotIn("EDIT THIS PHOTOGRAPH", с_душем)
         self.assertIn("walk-in shower", с_душем)
 
     def test_место_не_трогает_ракурс_варианта(self):
@@ -1175,7 +1179,7 @@ class ОткудаБерётсяФон(unittest.TestCase):
                 continue
             self.assertTrue(s.фон_с_референса(),
                             f"{s.key}: выдумывает место, которого не просили")
-            self.assertIn("KEEP THE SETTING", s.prompt_фото(),
+            self.assertIn("EDIT THIS PHOTOGRAPH", s.prompt_фото(),
                           f"{s.key}: кадру не велено сохранить обстановку")
 
     def test_правка_снимка_объявлена_первым_словом(self):
@@ -1184,13 +1188,13 @@ class ОткудаБерётсяФон(unittest.TestCase):
         строила новую женщину - на замере 21.09.2026 лицо менялось
         заметно. Теперь первым идёт «ПРАВЬ ЭТОТ СНИМОК»."""
         начало = catalog.scene("un_full").промпт()[:60]
-        self.assertIn("EDIT THE SUPPLIED PHOTOGRAPH", начало)
+        self.assertIn("EDIT THIS PHOTOGRAPH", начало)
 
     def test_у_нового_места_задание_прежнее(self):
         """Выбрал место - снимок уже не правится, а пересобирается, и
         объявлять правку было бы враньём."""
         с_душем = catalog.scene("un_full").промпт(место=места.место("sc_shower"))
-        self.assertNotIn("EDIT THE SUPPLIED PHOTOGRAPH", с_душем[:60])
+        self.assertNotIn("EDIT THIS PHOTOGRAPH", с_душем[:60])
 
     def test_фон_с_референса_знает_про_место(self):
         """От этого ответа зависит denoise, а от denoise — останется ли
@@ -1217,7 +1221,7 @@ class ОткудаБерётсяФон(unittest.TestCase):
                 if prompts.семейство(s.job) != "i2i":
                     continue
                 self.assertEqual(s.фон_с_референса(м),
-                                 "KEEP THE SETTING" in s.промпт(место=м),
+                                 "EDIT THIS PHOTOGRAPH" in s.промпт(место=м),
                                  f"{s.key} / {м and м.key}")
 
 
@@ -1240,7 +1244,10 @@ class РезультатВсегдаОткровенный(unittest.TestCase):
         s = catalog.scene("un_close")
         текст = s.промпт()
         где = текст.index(catalog.обязательная_строка())
-        self.assertLess(где, len(текст) // 2, "уехала в хвост промпта")
+        # Не «в первой половине», а ДО позы и техники: перед ней стоят
+        # только правка снимка, сохранение человека и сложение — три
+        # блока, и все три обязаны идти раньше.
+        self.assertLess(где, текст.index(s.блок.поза), "уехала за позу")
 
     def test_правка_владельца_подхватывается(self):
         """Строка правится на странице каталога и обязана доезжать до
