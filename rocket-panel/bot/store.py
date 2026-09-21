@@ -1,6 +1,6 @@
-"""Хранилище бота: пользователи, сердечки, история. SQLite, без внешних служб.
+"""Хранилище бота: пользователи, коины, история. SQLite, без внешних служб.
 
-Два кармана сердечек:
+Два кармана коинов:
     welcome  — подарены на старте и за приглашения
     paid     — куплены, НЕ СГОРАЮТ НИКОГДА
 
@@ -10,11 +10,11 @@
 
 ## Подписки нет
 
-Решение владельца 21.09.2026: у нас только покупка сердечек. Раньше
+Решение владельца 21.09.2026: у нас только покупка коинов. Раньше
 здесь был третий карман `sub` — сгорающий в конце оплаченного месяца.
 Он убран, а остатки из него при первом открытии базы переносятся в
 `paid`: человек за это заплатил, и наше решение поменять модель не
-повод отобрать у него сердечки.
+повод отобрать у него коины.
 """
 
 import sqlite3, time, secrets, json
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   tg_id     INTEGER NOT NULL,
   kind      TEXT NOT NULL,
   prompt    TEXT,
-  tokens    INTEGER NOT NULL,
+  coins    INTEGER NOT NULL,
   state     TEXT NOT NULL,
   file      TEXT,
   error     TEXT,
@@ -67,9 +67,9 @@ CREATE INDEX IF NOT EXISTS ix_jobs_user   ON jobs(tg_id, at);
 """
 
 
-class NotEnoughHearts(Exception):
+class NotEnoughCoins(Exception):
     def __init__(self, need, have):
-        super().__init__(f"Нужно {need} сердечек, на балансе {have}")
+        super().__init__(f"Нужно {need} коинов, на балансе {have}")
         self.need, self.have = need, have
 
 
@@ -84,11 +84,11 @@ class Store:
     def _migrate(c):
         """Приводит старую базу к нынешней схеме.
 
-        Боевая база уже живёт с людьми и их купленными сердечками,
+        Боевая база уже живёт с людьми и их купленными коинами,
         поэтому ничего не пересоздаём.
 
         Главное здесь — подписочный карман `sub`. Он отменён, но у кого-то
-        в нём могли остаться сердечки. Переносим их в `paid`, а не гасим:
+        в нём могли остаться коины. Переносим их в `paid`, а не гасим:
         человек за них заплатил, и смена нашей модели — не повод отобрать.
         Перенос виден в истории, чтобы на него можно было сослаться.
         """
@@ -153,10 +153,10 @@ class Store:
             r = c.execute("SELECT * FROM users WHERE ref_code=?", (code,)).fetchone()
             return dict(r) if r else None
 
-    # --- жетоны ---
+    # --- коины ---
 
     def balance(self, tg_id):
-        """Сколько сердечек доступно."""
+        """Сколько коинов доступно."""
         u = self.user(tg_id)
         return sum(u[p] for p in PURSES) if u else 0
 
@@ -183,10 +183,10 @@ class Store:
             cols = ",".join(PURSES)
             r = c.execute(f"SELECT {cols} FROM users WHERE tg_id=?", (tg_id,)).fetchone()
             if not r:
-                raise NotEnoughHearts(amount, 0)
+                raise NotEnoughCoins(amount, 0)
             have = sum(r[p] for p in PURSES)
             if have < amount:
-                raise NotEnoughHearts(amount, have)
+                raise NotEnoughCoins(amount, have)
             now = int(time.time())
             m = json.dumps(meta, ensure_ascii=False) if meta else None
             left = amount
@@ -236,11 +236,11 @@ class Store:
 
     # --- задания ---
 
-    def job_start(self, job_id, tg_id, kind, prompt, tokens):
+    def job_start(self, job_id, tg_id, kind, prompt, coins):
         with self._db() as c:
             c.execute(
-                "INSERT INTO jobs(id,tg_id,kind,prompt,tokens,state,at) VALUES(?,?,?,?,?,?,?)",
-                (job_id, tg_id, kind, prompt, tokens, "run", int(time.time())),
+                "INSERT INTO jobs(id,tg_id,kind,prompt,coins,state,at) VALUES(?,?,?,?,?,?,?)",
+                (job_id, tg_id, kind, prompt, coins, "run", int(time.time())),
             )
 
     def job_done(self, job_id, file=None, error=None):
@@ -268,4 +268,4 @@ class Store:
             jobs_err = c.execute("SELECT COUNT(*) n FROM jobs WHERE state='err'").fetchone()["n"]
             spent = c.execute("SELECT COALESCE(-SUM(delta),0) n FROM ledger WHERE delta<0").fetchone()["n"]
             return {"users": users, "paying": paying, "jobs_ok": jobs_ok,
-                    "jobs_err": jobs_err, "tokens_spent": spent}
+                    "jobs_err": jobs_err, "coins_spent": spent}

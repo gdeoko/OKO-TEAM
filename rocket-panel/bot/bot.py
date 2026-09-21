@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Телеграм-бот генерации. Фото и видео по запросу, оплата жетонами.
+"""Телеграм-бот генерации. Фото и видео по запросу, оплата коинами.
 
 Запуск:
     export ROCKET_BOT_TOKEN=...      токен от BotFather
@@ -24,7 +24,7 @@ import ui
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "..", "brand-amberry"))
 import brand
-from store import Store, NotEnoughHearts
+from store import Store, NotEnoughCoins
 from gpu import Gpu, GpuError
 
 TOKEN = os.environ.get("ROCKET_BOT_TOKEN", "")
@@ -106,27 +106,27 @@ def greet(u, имя=None):
 def price_list():
     lines = ["<b>Сколько стоит</b>\n"]
     for j in pricing.JOBS.values():
-        lines.append(f"{j.title} — <b>{j.hearts}</b> ♥ · {j.note}")
+        lines.append(f"{j.title} — <b>{j.coins}</b> {pricing.СИМВОЛ} · {j.note}")
     lines.append("")
     for q in pricing.QUALITY[1:]:
-        доп = f"+{q['hearts']} ♥" if q["hearts"] else "бесплатно"
+        доп = f"+{q['coins']} {pricing.СИМВОЛ}" if q["coins"] else "бесплатно"
         lines.append(f"{q['title']} — {доп}")
     lines.append("\n<b>Подписки нет.</b> Платишь только за то, что сделал: "
                  "ни абонентской платы, ни сгорающих остатков, "
                  "ни функций за замком.")
-    lines.append("\n<b>Пакеты сердечек</b> — не сгорают никогда\n")
+    lines.append("\n<b>Пакеты коинов</b> — не сгорают никогда\n")
     for p in pricing.PACKS:
-        lines.append(f"{p['hearts']} ♥ — <b>{p['rub']} ₽</b>"
+        lines.append(f"{p['coins']} {pricing.СИМВОЛ} — <b>{p['rub']} ₽</b>"
                      f"  <s>{p['market_rub']} ₽ у других</s>")
-    lines.append(f"\n<i>Сердечко стоит от {pricing.rub_per_heart('p7'):.0f} до "
-                 f"{pricing.rub_per_heart('p1'):.0f} ₽ — смотря какой пакет.</i>")
+    lines.append(f"\n<i>Коин стоит от {pricing.rub_per_coin('p7'):.0f} до "
+                 f"{pricing.rub_per_coin('p1'):.0f} ₽ — смотря какой пакет.</i>")
     return "\n".join(lines)
 
 
 def buy_kb():
     rows = []
     for p in pricing.PACKS:
-        rows.append([(f"{p['hearts']} ♥ — {p['rub']} ₽", f"buy:{p['id']}")])
+        rows.append([(f"{p['coins']} {pricing.СИМВОЛ} — {p['rub']} ₽", f"buy:{p['id']}")])
     rows.append([("Назад", "m:menu")])
     return kb(rows)
 
@@ -141,9 +141,9 @@ def run_job(chat, u, kind, prompt, photos=None):
     jid = uuid.uuid4().hex[:10]
     charged = False
     try:
-        store.spend(u, job.hearts, f"{job.title}", meta={"job": jid})
+        store.spend(u, job.coins, f"{job.title}", meta={"job": jid})
         charged = True
-        store.job_start(jid, u, kind, prompt, job.hearts)
+        store.job_start(jid, u, kind, prompt, job.coins)
 
         m = send(chat, f"Считаю {job.title.lower()}…")
         mid = m.get("result", {}).get("message_id")
@@ -183,7 +183,7 @@ def run_job(chat, u, kind, prompt, photos=None):
         if mid:
             tg("deleteMessage", chat_id=chat, message_id=mid)
 
-        cap = f"{job.title} · {res.get('sec')} с · осталось {store.balance(u)} ♥"
+        cap = f"{job.title} · {res.get('sec')} с · осталось {store.balance(u)} {pricing.СИМВОЛ}"
         if files[0].lower().endswith((".webp", ".gif", ".mp4")):
             tg("sendAnimation", chat_id=chat, caption=cap,
                _files={"animation": (files[0], data)})
@@ -193,19 +193,19 @@ def run_job(chat, u, kind, prompt, photos=None):
         store.job_done(jid, file=files[0])
         send(chat, "Что дальше?", MENU)
 
-    except NotEnoughHearts as e:
-        send(chat, f"Не хватает жетонов: нужно <b>{e.need}</b>, есть <b>{e.have}</b>.", buy_kb())
+    except NotEnoughCoins as e:
+        send(chat, f"Не хватает коинов: нужно <b>{e.need}</b>, есть <b>{e.have}</b>.", buy_kb())
     except GpuError as e:
         if charged:
-            store.refund(u, job.hearts, f"осечка генерации: {str(e)[:80]}")
+            store.refund(u, job.coins, f"осечка генерации: {str(e)[:80]}")
         store.job_done(jid, error=str(e)[:300])
-        send(chat, f"Не получилось: {str(e)[:200]}\n\nЖетоны вернула — <b>{store.balance(u)}</b>.", MENU)
+        send(chat, f"Не получилось: {str(e)[:200]}\n\nКоины вернула — <b>{store.balance(u)}</b>.", MENU)
     except Exception as e:
         if charged:
-            store.refund(u, job.hearts, "внутренняя ошибка")
+            store.refund(u, job.coins, "внутренняя ошибка")
         store.job_done(jid, error=str(e)[:300])
         print("СБОЙ:", traceback.format_exc()[:800], flush=True)
-        send(chat, f"Что-то сломалось у меня. Жетоны вернула — <b>{store.balance(u)}</b>.", MENU)
+        send(chat, f"Что-то сломалось у меня. Коины вернула — <b>{store.balance(u)}</b>.", MENU)
     finally:
         with lock:
             busy.discard(u)
@@ -228,18 +228,18 @@ def on_start(chat, u, username, arg):
         inviter = store.by_ref_code(arg.strip())
         if inviter and inviter["tg_id"] != u:
             invited_by = inviter["tg_id"]
-    user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS,
+    user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_COINS,
                                      invited_by=invited_by)
     if is_new and invited_by:
         store.credit(invited_by, pricing.REFERRAL_INVITER, "welcome", f"привёл {u}")
         store.credit(u, pricing.REFERRAL_INVITEE, "welcome", "пришёл по приглашению")
-        send(invited_by, f"По твоей ссылке пришёл человек. +{pricing.REFERRAL_INVITER} ♥.")
+        send(invited_by, f"По твоей ссылке пришёл человек. +{pricing.REFERRAL_INVITER} {pricing.СИМВОЛ}.")
     # Нижнее меню и inline-кнопки нельзя повесить на одно сообщение:
     # Телеграм принимает только одну разметку. Поэтому сначала короткое
     # сообщение, которое ставит нижнее меню, следом — само приветствие.
     if is_new:
         send(chat, f"Добро пожаловать. Дарю "
-                   f"<b>{emoji.баланс(pricing.WELCOME_HEARTS)}</b> на пробу.",
+                   f"<b>{emoji.баланс(pricing.WELCOME_COINS)}</b> на пробу.",
              ui.НИЖНЕЕ)
     send(chat, greet(u, username), MENU)
 
@@ -306,7 +306,7 @@ def on_photo(chat, u, file_id):
 def on_callback(cb):
     data = cb["data"]; chat = cb["message"]["chat"]["id"]
     u = cb["from"]["id"]; cid = cb["id"]
-    store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_HEARTS)
+    store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_COINS)
 
     if data == "m:menu":
         answer(cid); send(chat, "Что делаем?", MENU); return
@@ -314,7 +314,7 @@ def on_callback(cb):
     if data == "m:balance":
         answer(cid)
         h = store.history(u, 5)
-        lines = [f"Баланс: <b>{store.balance(u)} сердечек</b>", ""]
+        lines = [f"Баланс: <b>{store.balance(u)} коинов</b>", ""]
         if h:
             lines.append("<b>Последние</b>")
             for j in h:
@@ -323,7 +323,7 @@ def on_callback(cb):
         code = store.user(u)["ref_code"]
         me = os.environ.get("ROCKET_BOT_NAME", brand.BOT.lstrip("@"))
         lines.append(f"\nЗови друзей: <code>https://t.me/{me}?start={code}</code>")
-        lines.append(f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> ♥.")
+        lines.append(f"За каждого — <b>{pricing.REFERRAL_INVITER}</b> {pricing.СИМВОЛ}.")
         send(chat, "\n".join(lines), MENU); return
 
     if data == "m:buy":
@@ -389,11 +389,11 @@ def on_callback(cb):
 
     if data.startswith("go:"):
         # Проверка баланса ЗДЕСЬ, а не на показе сценария: между показом
-        # и нажатием человек мог потратить сердечки в другом окне.
+        # и нажатием человек мог потратить коины в другом окне.
         sc = catalog.scene(data.split(":", 1)[1])
         есть = store.balance(u)
-        if есть < sc.hearts:
-            answer(cid, f"Нужно {sc.hearts} ♥, на балансе {есть}")
+        if есть < sc.coins:
+            answer(cid, f"Нужно {sc.coins} {pricing.СИМВОЛ}, на балансе {есть}")
             send(chat, ui.текст_оплаты(), ui.меню_оплаты())
             return
         answer(cid)
@@ -439,7 +439,7 @@ def on_callback(cb):
         waiting[u] = {"kind": kind, "фото": []}
         хвост = ("\n\n" + ui.сколько_фото(j) + " Сначала фото, потом описание."
                  if j.нужно_фото else "")
-        send(chat, f"<b>{j.title}</b> — {j.hearts} ♥{хвост}\n\n"
+        send(chat, f"<b>{j.title}</b> — {j.coins} {pricing.СИМВОЛ}{хвост}\n\n"
                    "Опиши словами, что сделать. <b>По-английски.</b>", MENU)
         return
 
@@ -455,7 +455,7 @@ def зачислить_крипту(u, invoice_id):
     if not pid:
         return False
     p = pricing.pack(pid)
-    store.credit(u, p["hearts"], "paid", f"крипта, пакет {pid}",
+    store.credit(u, p["coins"], "paid", f"крипта, пакет {pid}",
                  meta={"invoice": invoice_id})
     return True
 
@@ -475,7 +475,7 @@ def on_pre_checkout(q):
 
 
 def on_paid(chat, u, оплата):
-    """successful_payment: звёзды пришли, зачисляем сердечки."""
+    """successful_payment: звёзды пришли, зачисляем коины."""
     try:
         p = payments.разобрать_payload(оплата.get("invoice_payload"))
     except payments.ОшибкаОплаты as e:
@@ -485,10 +485,10 @@ def on_paid(chat, u, оплата):
         return
     # Идентификатор списания сохраняем ОБЯЗАТЕЛЬНО: без него звёзды
     # не вернуть, refundStarPayment требует именно его.
-    store.credit(u, p["hearts"], "paid", f"звёзды, пакет {p['id']}",
+    store.credit(u, p["coins"], "paid", f"звёзды, пакет {p['id']}",
                  meta={"charge": оплата.get("telegram_payment_charge_id"),
                        "stars": оплата.get("total_amount")})
-    send(chat, f"Спасибо. Зачислено <b>{emoji.баланс(p['hearts'])}</b>.\n"
+    send(chat, f"Спасибо. Зачислено <b>{emoji.баланс(p['coins'])}</b>.\n"
                f"Баланс: <b>{emoji.баланс(store.balance(u))}</b>", MENU)
 
 
@@ -504,11 +504,11 @@ def on_update(up):
     username = msg["from"].get("username")
 
     if "successful_payment" in msg:
-        store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
+        store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
         on_paid(chat, u, msg["successful_payment"]); return
 
     if "photo" in msg:
-        store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
+        store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
         on_photo(chat, u, msg["photo"][-1]["file_id"]); return
 
     text = (msg.get("text") or "").strip()
@@ -516,7 +516,7 @@ def on_update(up):
         parts = text.split(maxsplit=1)
         on_start(chat, u, username, parts[1] if len(parts) > 1 else None); return
     if text in ("/menu", "/help"):
-        store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
+        store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
         send(chat, "Что делаем?", MENU); return
     if text == "/prices":
         send(chat, price_list(), MENU); return
@@ -530,11 +530,11 @@ def on_update(up):
         send(chat, f"<b>Сводка</b>\n"
                    f"Людей: {s['users']}, платящих: {s['paying']}\n"
                    f"Генераций: {s['jobs_ok']} удачных, {s['jobs_err']} осечек\n"
-                   f"Потрачено сердечек: {s['tokens_spent']}\n"
+                   f"Потрачено коинов: {s['coins_spent']}\n"
                    f"Карта: {free}/{total} ГБ свободно, очередь {q}")
         return
 
-    store.ensure_user(u, username, welcome=pricing.WELCOME_HEARTS)
+    store.ensure_user(u, username, welcome=pricing.WELCOME_COINS)
     on_text(chat, u, text)
 
 
