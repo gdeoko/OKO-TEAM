@@ -640,21 +640,31 @@ def on_callback(cb):
                  меню(u))
         return
 
-    if data.startswith("r:"):
+    # Кнопка из СТАРОГО сообщения может вести в пункт, убранный
+    # владельцем вчера: телеграм хранит переписку вечно, и нажать её
+    # могут в любой момент. Молча показать убранное нельзя — человек
+    # заплатит за то, чего в боте уже нет.
+    def убрано():
         answer(cid)
+        send(chat, t("гл.убрано", я), меню(u))
+
+    if data.startswith("r:"):
         р = catalog.раздел(data.split(":", 1)[1])
+        if р.пустой:
+            return убрано()
+        answer(cid)
         send(chat, ui.текст_раздела(р, я), ui.меню_раздела(р, я))
         return
 
     if data.startswith("c:"):
-        answer(cid)
         ключ = data.split(":", 1)[1]
         # «Популярное» живёт не в дереве, а в базе, и по ключу его там
         # нет: пересчитываем заново, иначе кнопка ведёт в ошибку.
         cat = (catalog.популярная_категория(store) if ключ == "top"
                else catalog.category(ключ))
-        if not cat or not cat.scenes:
-            send(chat, t("гл.пусто", я), меню(u)); return
+        if not cat or not cat.видимые:
+            return убрано()
+        answer(cid)
         send(chat, ui.шапка_категории(cat, я), ui.меню_категории(cat, я))
         return
 
@@ -663,14 +673,18 @@ def on_callback(cb):
         # определён подразделом — см. catalog.СВОБОДНЫЕ.
         answer(cid)
         под = catalog.category(data.split(":", 1)[1])
+        if под.скрыт:
+            return убрано()
         kind = catalog.СВОБОДНЫЕ[под.key]
         waiting[u] = {"kind": kind, "фото": []}
         send(chat, ui.текст_своего_промпта(под, я), меню(u))
         return
 
     if data.startswith("sc:"):
-        answer(cid)
         sc = catalog.scene(data.split(":", 1)[1])
+        if sc.скрыт:
+            return убрано()
+        answer(cid)
         send(chat, ui.шапка_сценария(sc, store.balance(u), я),
              ui.меню_сценария(sc, я))
         return
@@ -679,6 +693,8 @@ def on_callback(cb):
         # Проверка баланса ЗДЕСЬ, а не на показе сценария: между показом
         # и нажатием человек мог потратить коины в другом окне.
         sc = catalog.scene(data.split(":", 1)[1])
+        if sc.скрыт:
+            return убрано()
         есть = store.balance(u)
         if есть < sc.coins:
             answer(cid, t("сц.мало_коинов", я,
@@ -695,6 +711,8 @@ def on_callback(cb):
     if data.startswith("run:"):
         # Человек сказал «хватит», не добрав до максимума.
         sc = catalog.scene(data.split(":", 1)[1])
+        if sc.скрыт:
+            return убрано()
         st = waiting.get(u)
         собрано = (st or {}).get("фото") or []
         if len(собрано) < sc.фото_нужно[0]:
@@ -828,14 +846,17 @@ def on_update(up):
                     continue
                 строки.append(f"<b>{р.title} · {c.title}</b>")
                 for s in c.scenes:
-                    if s.наполнен:
+                    if s.скрыт:
+                        строки.append(f"  <s>{s.key} — {s.title}</s>")
+                    elif s.наполнен:
                         строки.append(f"  + {s.key} — {s.title}")
                     else:
                         пусто += 1
                         строки.append(f"  <i>· {s.key} — {s.title}</i>")
                 строки.append("")
-        строки.append(f"Пусто: <b>{пусто}</b> из "
-                      f"{len(catalog.все_сценарии())}.")
+        видно = sum(1 for s in catalog.все_сценарии() if not s.скрыт)
+        строки.append(f"Пусто: <b>{пусто}</b>, видно в боте: <b>{видно}</b> "
+                      f"из {len(catalog.все_сценарии())}.")
         строки.append(f"<i>Заполняется на странице каталога: "
                       f"{os.environ.get('AMBERRY_ADMIN_URL', 'адрес в ДОСТУПАХ')}. "
                       f"Перезапускать бота не нужно.</i>")

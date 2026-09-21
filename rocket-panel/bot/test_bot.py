@@ -1399,19 +1399,16 @@ class ДваЯзыка(unittest.TestCase):
             кириллица = [c for c in э if "а" <= c.lower() <= "я"]
             self.assertFalse(кириллица, f"кириллица в английском: {кириллица}")
 
-    def test_английская_подпись_действия_падает_на_строку_модели(self):
-        """Владелец не обязан писать короткую английскую подпись. Чем
-        показывать пусто на экране оплаты, лучше показать техничную
-        строку для модели — она хотя бы правдива."""
+    def test_английскому_клиенту_показывается_строка_модели(self):
+        """Третьего поля под английскую подпись нет нарочно: владелец
+        уже написал английский текст для модели, и он описывает ровно
+        то же самое. Просить написать это дважды незачем."""
         catalog.подставить({"un_close": {"строка": "SHE DOES SOMETHING",
                                          "строка_рус": "делает"}})
         try:
             s = catalog.scene("un_close")
             self.assertEqual(s.действие("en"), "SHE DOES SOMETHING")
             self.assertEqual(s.действие("ru"), "делает")
-            catalog.подставить({"un_close": {"строка": "SHE DOES SOMETHING",
-                                             "строка_eng": "does it"}})
-            self.assertEqual(s.действие("en"), "does it")
         finally:
             catalog.перечитать()
 
@@ -1431,6 +1428,113 @@ class ДваЯзыка(unittest.TestCase):
         for s in catalog.все_сценарии():
             for я in язык.ЯЗЫКИ:
                 self.assertTrue(s.button(я).strip())
+
+
+class УбратьИзБота(unittest.TestCase):
+    """Владелец убирает лишнее со страницы.
+
+    Именно УБИРАЕТ, а не удаляет: сценарий — это три с лишним тысячи
+    знаков промпта в коде, и стёртый из браузера он бы не вернулся.
+    """
+
+    def tearDown(self):
+        catalog.перечитать()
+
+    def test_убранный_вариант_исчезает_из_подраздела(self):
+        под = catalog.category("un_here")
+        было = len(под.видимые)
+        catalog.подставить({"un_close": {"скрыт": "1"}})
+        self.assertEqual(len(под.видимые), было - 1)
+        self.assertNotIn(catalog.scene("un_close"), под.видимые)
+        self.assertTrue(catalog.scene("un_close").скрыт)
+
+    def test_убранный_подраздел_прячет_свои_варианты(self):
+        """Иначе спрятанный подраздел исчезал бы из меню, а его сценарии
+        оставались бы в «Популярном» и открывались по старым кнопкам."""
+        catalog.подставить({"un_here": {"скрыт": "1"}})
+        self.assertTrue(catalog.category("un_here").скрыт)
+        for s in catalog.category("un_here").scenes:
+            self.assertTrue(s.скрыт, f"{s.key} пережил скрытие подраздела")
+
+    def test_убранный_раздел_прячет_всё_внутри(self):
+        catalog.подставить({"video": {"скрыт": "1"}})
+        self.assertTrue(catalog.раздел("video").пустой)
+        for под in catalog.раздел("video").подразделы:
+            self.assertTrue(под.скрыт)
+            for s in под.scenes:
+                self.assertTrue(s.скрыт)
+
+    def test_подраздел_без_вариантов_не_показывается(self):
+        """Кнопка, ведущая в пустой список, — нажатие впустую и назад."""
+        под = catalog.category("vi_mm")
+        catalog.подставить({s.key: {"скрыт": "1"} for s in под.scenes})
+        self.assertTrue(под.пустой)
+        self.assertNotIn(под, catalog.раздел("video").видимые)
+
+    def test_раздел_без_подразделов_не_показывается(self):
+        под = catalog.раздел("undress").подразделы
+        catalog.подставить({p.key: {"скрыт": "1"} for p in под})
+        self.assertTrue(catalog.раздел("undress").пустой)
+
+    def test_свой_промпт_не_пустеет_от_отсутствия_вариантов(self):
+        """Там вариантов нет по устройству: клиент пишет описание сам."""
+        catalog.подставить({})
+        self.assertFalse(catalog.раздел("own").пустой)
+        for под in catalog.раздел("own").подразделы:
+            self.assertFalse(под.пустой, под.key)
+
+    def test_убранное_пропадает_из_меню(self):
+        import ui
+        catalog.подставить({"video": {"скрыт": "1"}})
+        подписи = [b["text"] for ряд in ui.главное_меню()["inline_keyboard"]
+                   for b in ряд]
+        self.assertNotIn("Видео", подписи)
+        self.assertIn("Раздеть", подписи)
+
+    def test_убранное_не_попадает_в_популярное(self):
+        """«Популярное» считается по прошлым заказам: убранный вчера
+        сценарий иначе остался бы в нём ещё месяц, на видном месте."""
+        s = Store(tempfile.mktemp(suffix=".db"))
+        s.ensure_user(1, welcome=99)
+        for i, ключ in enumerate(("un_close", "un_full")):
+            s.job_start(f"j{i}", 1, "i2i", "p", 1, scene=ключ)
+            s.job_done(f"j{i}", file="o.png", path="p", tg_file_id="x", size=1)
+        catalog.подставить({})
+        self.assertEqual(len(catalog.популярная_категория(s).scenes), 2)
+        catalog.подставить({"un_close": {"скрыт": "1"}})
+        осталось = [x.key for x in catalog.популярная_категория(s).scenes]
+        self.assertEqual(осталось, ["un_full"])
+
+    def test_страница_вправе_прятать_разделы_и_подразделы(self):
+        известные = catalog.известные_ключи()
+        self.assertIn("undress", известные)
+        self.assertIn("un_here", известные)
+        self.assertIn("un_close", известные)
+
+    def test_всё_спрятать_нельзя(self):
+        """Бот с пустым меню и без единой кнопки, за которую платят.
+        Ошибиться так легко, а заметить трудно: страница выглядит
+        полной, скрытые пункты с неё никуда не деваются."""
+        всё = {s.key: {"скрыт": "1"} for s in catalog.все_сценарии()}
+        self.assertFalse(catalog.что_то_осталось(всё))
+        всё.pop("un_close")
+        self.assertTrue(catalog.что_то_осталось(всё))
+
+    def test_проверка_не_портит_текущие_правки(self):
+        """`что_то_осталось` примеряет ещё не сохранённое. Оставить
+        примерку в кэше значило бы применить к боту то, что владелец не
+        сохранял."""
+        catalog.подставить({"un_full": {"название": "МОЁ"}})
+        catalog.что_то_осталось({s.key: {"скрыт": "1"}
+                                 for s in catalog.все_сценарии()})
+        self.assertEqual(catalog.scene("un_full").title, "МОЁ")
+        self.assertFalse(catalog.scene("un_close").скрыт)
+
+    def test_вернуть_можно_тем_же_нажатием(self):
+        catalog.подставить({"sc_bed": {"скрыт": "1"}})
+        self.assertTrue(catalog.scene("sc_bed").скрыт)
+        catalog.подставить({"sc_bed": {"скрыт": ""}})
+        self.assertFalse(catalog.scene("sc_bed").скрыт)
 
 
 if __name__ == "__main__":
