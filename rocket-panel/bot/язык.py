@@ -137,15 +137,15 @@ def job_note(job, яз):
     "un_here":   ("Undressing", "Angle, framing, pose - without the clothes"),
     "un_intim":  ("Intimate", "What the clips do, as a photograph"),
     "un_group":  ("Couples", "Two people. Two photos needed - one per person"),
-    "un_mf":     ("M+F", "a man and a woman"),
-    "un_ff":     ("F+F", "two women"),
-    "un_mm":     ("M+M", "two men"),
+    "un_mf":     ("M+F couple", "a man and a woman"),
+    "un_ff":     ("F+F lesbian", "two women"),
+    "un_mm":     ("M+M gay", "two men"),
     "video":     ("Video", "The photo starts moving"),
     "vi_solo":   ("Solo", "One woman"),
     "vi_group":  ("Couples", "Two people. Two photos needed - one per person"),
-    "vi_mf":     ("M+F", "a man and a woman"),
-    "vi_ff":     ("F+F", "two women"),
-    "vi_mm":     ("M+M", "two men"),
+    "vi_mf":     ("M+F couple", "a man and a woman"),
+    "vi_ff":     ("F+F lesbian", "two women"),
+    "vi_mm":     ("M+M gay", "two men"),
     "own":       ("Your own prompt", "Describe it yourself"),
     "own_photo": ("Photo", "A reference and a description - you get a photo"),
     "own_video": ("Video", "A reference and a description - you get a clip"),
@@ -223,6 +223,10 @@ def job_note(job, яз):
     "низ.файлы":    {"ru": "🗂️ Файлы",   "en": "🗂️ Files"},
     "низ.кабинет":  {"ru": "🛠️ Кабинет", "en": "🛠️ Account"},
     "низ.пополнить": {"ru": "🩷 Пополнить", "en": "🩷 Top up"},
+    "низ.обновлено": {
+        "ru": "Меню снизу обновилось.",
+        "en": "The menu below has been updated.",
+    },
 
     # --- кнопки, встречающиеся везде ---
     "кн.назад":     {"ru": "Назад",  "en": "Back"},
@@ -280,9 +284,16 @@ def job_note(job, яз):
         "en": "Elsewhere your own prompt is a paid feature behind a lock. "
               "Here it is open to everyone.",
     },
+    # Цена НАЗЫВАЕТСЯ ОДИН РАЗ — строкой над списком. С кнопок владелец
+    # её снял 21.09.2026: в подразделе вид работы один, и «· 1 💞»
+    # повторялось на каждой из тринадцати кнопок.
     "подр.сценариев": {
-        "ru": "{n} {слово}. Цена на каждой кнопке.",
-        "en": "{n} {слово}. The price is on every button.",
+        "ru": "{n} {слово}, любой - {что} за {цена}.",
+        "en": "{n} {слово}, any of them - {что} for {цена}.",
+    },
+    "подр.сценариев_просто": {
+        "ru": "{n} {слово}. Цена - на экране варианта, до оплаты.",
+        "en": "{n} {слово}. The price is on the variant screen, before you pay.",
     },
 
     # --- экран сценария ---
@@ -377,12 +388,35 @@ def job_note(job, яз):
     },
 
     # --- генерация ---
-    "ген.считаю":      {"ru": "Считаю {что}…", "en": "Working on the {что}…"},
-    "ген.считаю_сек":  {"ru": "Считаю {что}… {сек} с",
-                        "en": "Working on the {что}… {сек} s"},
-    "ген.считаю_кадр": {"ru": "Считаю кадр…", "en": "Working on the frame…"},
-    "ген.кадр_готов":  {"ru": "Кадр готов. Считаю {что}…",
-                        "en": "Frame ready. Working on the {что}…"},
+    # --- ЭКРАН ОЖИДАНИЯ ---
+    #
+    # «Считаю фото по фото…» владелец забраковал 21.09.2026, и он прав:
+    # это название пункта в прайсе, а не то, чего человек ждёт. Он ждёт,
+    # что с его снимка снимут одежду.
+    #
+    # Строки сменяют друг друга по ходу счёта (`ui.ожидание`). Они не
+    # врут: раздевание, лицо, кожа и свет — это ровно то, что собрано в
+    # промпте, в этом порядке. Обещать проценты готовности мы не можем —
+    # карта их не сообщает, и выдуманная полоска «87 %», застрявшая на
+    # минуту, злит сильнее честного «идёт счёт».
+    "ген.шаг.раздеваю": {"ru": "Раздеваю твоё фото…",
+                         "en": "Taking the clothes off your photo…"},
+    "ген.шаг.лицо":     {"ru": "Слежу, чтобы лицо осталось твоим…",
+                         "en": "Making sure the face stays yours…"},
+    "ген.шаг.тело":     {"ru": "Сверяю фигуру и кожу с референсом…",
+                         "en": "Matching the figure and the skin to the reference…"},
+    "ген.шаг.свет":     {"ru": "Довожу свет и тени…",
+                         "en": "Settling the light and the shadows…"},
+    "ген.шаг.почти":    {"ru": "Почти готово…", "en": "Almost there…"},
+    "ген.шаг.кадр":     {"ru": "Готовлю первый кадр…",
+                         "en": "Preparing the first frame…"},
+    "ген.шаг.оживляю":  {"ru": "Оживляю кадр…", "en": "Bringing the frame to life…"},
+    "ген.шаг.движение": {"ru": "Ставлю дыхание и движение…",
+                         "en": "Adding the breathing and the motion…"},
+    "ген.шаг.склейка":  {"ru": "Собираю ролик…", "en": "Assembling the clip…"},
+    "ген.секунд":       {"ru": "{сек} с", "en": "{сек} s"},
+    "ген.кадр_готов":   {"ru": "Кадр готов. Оживляю…",
+                         "en": "Frame ready. Bringing it to life…"},
     "ген.подпись":     {"ru": "{что} · {сек} с · осталось {баланс}",
                         "en": "{что} · {сек} s · {баланс} left"},
     "ген.занято": {

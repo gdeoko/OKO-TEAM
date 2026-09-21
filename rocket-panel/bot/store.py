@@ -23,6 +23,11 @@ from contextlib import contextmanager
 # Порядок списания: сначала подаренное, потом оплаченное.
 PURSES = ("welcome", "paid")
 
+# Баланс безлимитного. Не бесконечность и не ноль: число проходит через
+# те же проверки «хватает ли», подписи и отчёты, что и обычный баланс,
+# и нигде не требует отдельной ветки. Видно, что оно не настоящее.
+БЕЗЛИМИТ = 999_999
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
   tg_id        INTEGER PRIMARY KEY,
@@ -79,8 +84,19 @@ class NotEnoughCoins(Exception):
 
 
 class Store:
-    def __init__(self, path="rocket_bot.db"):
+    def __init__(self, path="rocket_bot.db", безлимит=()):
         self.path = path
+        # КОМУ НЕ СЧИТАЕМ КОИНЫ. Владелец и админ смотрят бот не как
+        # покупатели: они проверяют варианты подряд, и с каждой пробой
+        # у них убывал бы баланс, который они же себе и начисляют.
+        #
+        # Список принимает и числовой id, и @username: у владельца под
+        # рукой обычно второе, а id он знает не всегда. Сравнение по
+        # username — уступка удобству, и она имеет цену: username в
+        # телеграме можно сменить и занять чужой. Поэтому здесь только
+        # ДВА-ТРИ СВОИХ ЧЕЛОВЕКА, и это не механизм раздачи льгот.
+        self.безлимит = {str(x).lstrip("@").lower()
+                         for x in безлимит if str(x).strip()}
         with self._db() as c:
             c.executescript(SCHEMA)
             self._migrate(c)
@@ -114,6 +130,14 @@ class Store:
         # молча переведён на чужой.
         if "lang" not in have:
             c.execute("ALTER TABLE users ADD COLUMN lang TEXT")
+
+        # Версия нижней клавиатуры, которую человек реально получил.
+        # Reply-клавиатура живёт в чате, а не в сообщении: поменяв
+        # подписи, мы обязаны прислать её заново, иначе у давних людей
+        # внизу навсегда остаются прежние кнопки. Пусто — значит ещё
+        # ни одной новой не присылали.
+        if "kb_ver" not in have:
+            c.execute("ALTER TABLE users ADD COLUMN kb_ver TEXT")
 
         # Ступени качества отменены — колонка выбора убирается. База
         # могла успеть её получить: миграция идёт по факту, а не по
@@ -191,6 +215,24 @@ class Store:
                     (tg_id, welcome, "welcome", "подарок при старте", int(time.time())),
                 )
         return self.user(tg_id), True
+
+    def низ_устарел(self, tg_id, версия):
+        """Висит ли у человека прежняя нижняя клавиатура.
+
+        Отвечает и СРАЗУ ЗАПОМИНАЕТ новую версию: вызывающий обязан
+        после «да» прислать клавиатуру. Так выбрано нарочно — иначе
+        между ответом и записью влезает второе сообщение того же
+        человека, и он получает две одинаковые клавиатуры подряд.
+
+        Не прислать после «да» — потерять обновление до следующей
+        правки подписей. Это лучше, чем слать его при каждом нажатии.
+        """
+        u = self.user(tg_id)
+        if not u or u.get("kb_ver") == версия:
+            return False
+        with self._db() as c:
+            c.execute("UPDATE users SET kb_ver=? WHERE tg_id=?", (версия, tg_id))
+        return True
 
     def язык(self, tg_id, по_умолчанию="ru"):
         u = self.user(tg_id)
@@ -271,8 +313,20 @@ class Store:
 
     # --- коины ---
 
+    def безлимитный(self, tg_id):
+        """Этому человеку коины не считаются — см. `__init__`."""
+        if not self.безлимит:
+            return False
+        if str(tg_id) in self.безлимит:
+            return True
+        u = self.user(tg_id)
+        имя = (u or {}).get("username") or ""
+        return имя.lower() in self.безлимит
+
     def balance(self, tg_id):
         """Сколько коинов доступно."""
+        if self.безлимитный(tg_id):
+            return БЕЗЛИМИТ
         u = self.user(tg_id)
         return sum(u[p] for p in PURSES) if u else 0
 
@@ -295,6 +349,11 @@ class Store:
         """Списать в порядке welcome → paid: сначала подаренное."""
         if amount <= 0:
             raise ValueError("списание должно быть положительным")
+        # У безлимитного не списываем и в книгу не пишем: запись о
+        # списании, которого не было, испортила бы и историю, и отчёт
+        # «потрачено» в кабинете.
+        if self.безлимитный(tg_id):
+            return БЕЗЛИМИТ
         with self._db() as c:
             cols = ",".join(PURSES)
             r = c.execute(f"SELECT {cols} FROM users WHERE tg_id=?", (tg_id,)).fetchone()
