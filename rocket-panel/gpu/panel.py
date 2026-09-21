@@ -31,7 +31,7 @@
 видео 720×1280 — 45,5 ГБ. Карта забита на 97 %. Фото и видео на одной
 карте держать можно, мозг с голосом — уже нет.
 """
-import json, time, uuid, os, threading, urllib.request
+import json, time, uuid, os, subprocess, threading, urllib.request
 from flask import Flask, request, jsonify, send_file, Response
 
 COMFY="http://127.0.0.1:8188"
@@ -212,6 +212,40 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
     g["7"]["inputs"]["latent_image"]=["6",2]
     return g
 
+def в_mp4(имя):
+    """Анимированный WEBP -> MP4. Возвращает имя файла, который отдавать.
+
+    ComfyUI без сторонних узлов умеет сохранять ролик только
+    анимированным WEBP (`SaveAnimatedWEBP`), и владелец получил в
+    телеграме файл `video_00003_.webp` на 3,8 МБ: телефон показывает
+    его вложением, а не видео, перемотки нет, в галерею не сохраняется.
+    Ставить ради этого VideoHelperSuite не нужно — ffmpeg на карте уже
+    есть, и один вызов решает дело.
+
+    H.264 + yuv420p + faststart — то, что играет везде, включая
+    телеграм на айфоне. Не вышло — возвращаем исходный webp: отдать
+    хоть что-то лучше, чем уронить работу, за которую списаны коины.
+    """
+    if not имя.lower().endswith(".webp"):
+        return имя
+    исх=os.path.join(OUT,имя)
+    mp4=имя[:-5]+".mp4"
+    цель=os.path.join(OUT,mp4)
+    try:
+        subprocess.run(["ffmpeg","-y","-loglevel","error","-i",исх,
+                        "-c:v","libx264","-pix_fmt","yuv420p","-crf","20",
+                        "-movflags","+faststart",
+                        # Ширина и высота обязаны быть чётными, иначе
+                        # libx264 отказывается вовсе.
+                        "-vf","scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                        цель],check=True,timeout=300)
+        if os.path.getsize(цель)>0:
+            return mp4
+    except Exception as e:
+        print("mp4 не собрался:", str(e)[:200], flush=True)
+    return имя
+
+
 def run(jid, graph):
     j=JOBS[jid]
     try:
@@ -232,6 +266,7 @@ def run(jid, graph):
                         for f in (v.get(k) or []):
                             if f.get("type")=="output": files.append(f["filename"])
                 if st.get("status_str")=="success" and files:
+                    files=[в_mp4(f) for f in files]
                     j.update(state="ok",files=files,sec=round(time.time()-t0,1))
                 else:
                     j.update(state="err",error=" ".join(str(x)[:300] for x in st.get("messages",[])[-3:]) or "не получилось")
