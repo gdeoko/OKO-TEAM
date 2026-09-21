@@ -191,8 +191,19 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
      "7":{"class_type":"KSampler","inputs":{"model":["12",0],"seed":seed,"steps":STEPS,"cfg":CFG,
           "sampler_name":"uni_pc","scheduler":"simple","denoise":1.0}},
      "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
-     "9":{"class_type":"SaveAnimatedWEBP","inputs":{"images":["8",0],"filename_prefix":"video",
-          "fps":24.0,"lossless":False,"quality":90,"method":"default"}},
+     # КАДРАМИ, А НЕ АНИМИРОВАННЫМ WEBP.
+     #
+     # `SaveAnimatedWEBP` — единственный узел для роликов в голом
+     # ComfyUI, и он отдаёт файл, который телеграм показывает вложением,
+     # а не видео. Перегнать его в mp4 не выходит: ffmpeg не читает
+     # анимированный webp от ComfyUI («invalid TIFF header in Exif
+     # data», проверено на карте 22.09.2026).
+     #
+     # Поэтому webp не появляется вовсе: кадры ложатся отдельными PNG, а
+     # mp4 собирается из них (`собрать_mp4`). Заодно уходит лишнее
+     # сжатие с потерями посередине.
+     "9":{"class_type":"SaveImage","inputs":{"images":["8",0],
+          "filename_prefix":ВИДЕО_ПРЕФИКС}},
     }
     общее={"positive":["4",0],"negative":["5",0],"vae":["1",2],
            "width":w,"height":h,"length":frames,"batch_size":1}
@@ -211,6 +222,55 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
     g["7"]["inputs"]["negative"]=["6",1]
     g["7"]["inputs"]["latent_image"]=["6",2]
     return g
+
+# По этой приставке в имени файла видно, что это КАДРЫ РОЛИКА, а не
+# фотография: `run` собирает из них mp4 и удаляет исходники.
+ВИДЕО_ПРЕФИКС="vfr"
+ВИДЕО_FPS=24
+
+
+def собрать_mp4(кадры):
+    """Список PNG-кадров -> один mp4. Возвращает [имя mp4] или кадры.
+
+    Кадры уходят в ffmpeg списком, а не маской `%05d`: нумерация в
+    ComfyUI сквозная по всем заданиям, и маска поймала бы чужие кадры
+    соседнего ролика.
+
+    H.264 + yuv420p + faststart — то, что играет везде, включая
+    телеграм на айфоне. Не собралось — отдаём кадры как есть: пусть
+    человек получит хоть что-то, работа уже оплачена.
+    """
+    if not кадры:
+        return кадры
+    список=os.path.join(OUT, f"кадры_{uuid.uuid4().hex[:8]}.txt")
+    mp4=f"{ВИДЕО_ПРЕФИКС}_{uuid.uuid4().hex[:8]}.mp4"
+    try:
+        with open(список,"w",encoding="utf-8") as f:
+            for к in кадры:
+                f.write(f"file '{os.path.join(OUT,к)}'\n")
+                f.write(f"duration {1.0/ВИДЕО_FPS}\n")
+            # Последний кадр в concat-демуксере надо назвать дважды,
+            # иначе его длительность теряется и ролик короче на кадр.
+            f.write(f"file '{os.path.join(OUT,кадры[-1])}'\n")
+        subprocess.run(["ffmpeg","-y","-loglevel","error","-f","concat",
+                        "-safe","0","-i",список,"-fps_mode","cfr",
+                        "-r",str(ВИДЕО_FPS),"-c:v","libx264",
+                        "-pix_fmt","yuv420p","-crf","20",
+                        "-movflags","+faststart",
+                        "-vf","scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                        os.path.join(OUT,mp4)],check=True,timeout=600)
+        if os.path.getsize(os.path.join(OUT,mp4))>0:
+            for к in кадры:
+                try: os.remove(os.path.join(OUT,к))
+                except OSError: pass
+            return [mp4]
+    except Exception as e:
+        print("mp4 не собрался:", str(e)[:200], flush=True)
+    finally:
+        try: os.remove(список)
+        except OSError: pass
+    return кадры
+
 
 def в_mp4(имя):
     """Анимированный WEBP -> MP4. Возвращает имя файла, который отдавать.
@@ -266,7 +326,10 @@ def run(jid, graph):
                         for f in (v.get(k) or []):
                             if f.get("type")=="output": files.append(f["filename"])
                 if st.get("status_str")=="success" and files:
-                    files=[в_mp4(f) for f in files]
+                    if files[0].startswith(ВИДЕО_ПРЕФИКС+"_"):
+                        files=собрать_mp4(files)
+                    else:
+                        files=[в_mp4(f) for f in files]
                     j.update(state="ok",files=files,sec=round(time.time()-t0,1))
                 else:
                     j.update(state="err",error=" ".join(str(x)[:300] for x in st.get("messages",[])[-3:]) or "не получилось")
