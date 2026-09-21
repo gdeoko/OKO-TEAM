@@ -105,6 +105,13 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=$DATA_DIR
+
+# Без [Install] служба не включается в автозапуск: systemctl enable
+# ругается, что юнит «не предназначен для включения», и бот тихо не
+# поднимается после перезагрузки — а перезагрузку сервер переживёт
+# когда-нибудь сам, без спроса.
+[Install]
+WantedBy=multi-user.target
 UNIT
 systemctl daemon-reload
 systemctl enable amberry >/dev/null
