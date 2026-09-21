@@ -45,17 +45,11 @@
     "not slim, do not symmetrise, do not change her apparent age."
 )
 
-ТЕЛО_БЕЗ_ФОТО = (
-    "One woman, adult, invented for this frame and belonging to no real "
-    "person. Give her a specific, memorable face rather than an average "
-    "one: a definite bone structure, an asymmetry that reads as real, a "
-    "face a viewer could pick out of a crowd afterwards. Her face must be "
-    "identical in every frame and every variation produced from this "
-    "description."
-)
 
-# Старое имя оставлено: тесты и каталог ссылаются на «face preserved
-# exactly» как на признак того, что блок сохранения лица на месте.
+# Референс есть ВСЕГДА (решение владельца 21.09.2026), поэтому вариант
+# «лица нет, придумай» удалён целиком. Старое имя оставлено: каталог и
+# тесты ссылаются на «face preserved exactly» как на признак того, что
+# блок сохранения лица на месте.
 ТЕЛО = ТЕЛО_ПО_ФОТО
 
 КОЖА = (
@@ -140,14 +134,9 @@
 # Куски по СЕМЕЙСТВУ режима, а не по каждому виду отдельно: пяти- и
 # десятисекундный ролик отличаются длиной, а не словами.
 #
-# Ключи совпадают с приставками видов из pricing.JOBS: t2i, i2i,
-# inpaint, t2v, i2v, sound.
+# Ключи совпадают с приставками видов из pricing.JOBS: i2i, i2v, sound.
+# Режимов без входного снимка больше нет — см. pricing.БЕЗ_ФОТО.
 ПО_ВИДУ = {
-    "t2i": (
-        "A single still photograph, built from this description alone — no "
-        "reference image is supplied. The whole frame is one exposure: one "
-        "light direction, one white balance, one grain structure."
-    ),
     "i2i": (
         "Reference photographs are supplied. Take the person from them and "
         "rebuild the frame completely around her according to this "
@@ -165,14 +154,6 @@
         "pose, the background, the light direction, the grain. The edited "
         "region must match the surrounding frame in colour temperature, "
         "noise and sharpness so the seam is invisible at full resolution."
-    ),
-    "t2v": (
-        "A short vertical clip, 9:16, built from this description alone — "
-        "no starting frame is supplied. Motion is continuous and "
-        "physically plausible throughout; the camera and the subject "
-        "behave like a real camera and a real body. The same face in every "
-        "frame from the first to the last — no drift, no morph, no "
-        "identity change. No cuts, no teleporting, no sudden speed changes."
     ),
     "i2v": (
         "Animate the supplied photograph into a vertical clip, 9:16. The "
@@ -195,19 +176,31 @@
 
 
 def семейство(вид):
-    """Вид генерации -> семейство промпта. t2v_5 и t2v_10 отличаются
+    """Вид генерации -> семейство промпта. i2v_5 и i2v_10 отличаются
     длиной, а не словами, поэтому текст у них общий."""
     return вид.rsplit("_", 1)[0] if вид[-1].isdigit() else вид
 
 
 class Блок:
-    """Одна грань сценария. Пустые не попадают в текст."""
+    """Одна грань сценария. Пустые не попадают в текст.
+
+    `откровенное` — строка ВЛАДЕЛЬЦА. Она не пишется здесь и не живёт в
+    коде: её место в `ОТКРОВЕННОЕ.txt`, где одна строка на сценарий.
+    Разделение простое и постоянное: всё, что делает кадр работой, а не
+    браком — свет, объектив, анатомия, кожа, ткань, композиция, запреты
+    — собирается автоматически и одинаково для всех сценариев; что
+    именно происходит в кадре, владелец пишет сам.
+
+    Слот необязателен: пустой сценарий собирается и работает, просто
+    показывает героиню в заданной обстановке без явного действия.
+    """
 
     __slots__ = ("гардероб", "поза", "обстановка", "свет", "камера",
-                 "настроение", "ещё")
+                 "настроение", "ещё", "откровенное")
 
     def __init__(self, гардероб="", поза="", обстановка="", свет="",
-                 камера="", настроение="", ещё=""):
+                 камера="", настроение="", ещё="", откровенное=""):
+        self.откровенное = откровенное
         self.гардероб = гардероб
         self.поза = поза
         self.обстановка = обстановка
@@ -227,8 +220,13 @@ def собрать(вид, блок):
     if сем not in ПО_ВИДУ:
         raise KeyError(f"неизвестный вид работы: {вид}")
 
-    по_фото = сем in ("i2i", "inpaint", "i2v", "sound")
-    куски = [ТЕЛО_ПО_ФОТО if по_фото else ТЕЛО_БЕЗ_ФОТО, ПО_ВИДУ[сем]]
+    куски = [ТЕЛО_ПО_ФОТО, ПО_ВИДУ[сем]]
+    # Откровенная часть идёт ВТОРЫМ блоком, сразу за сохранением лица.
+    # Модели внимательнее к началу промпта: уехав в конец, она начинает
+    # проигрывать обстановке и свету — то есть ровно тому, ради чего
+    # сценарий и заводили, не случается.
+    if getattr(блок, "откровенное", ""):
+        куски.append(блок.откровенное.strip())
     for поле in ("гардероб", "поза", "обстановка", "свет", "камера",
                  "настроение", "ещё"):
         значение = getattr(блок, поле)

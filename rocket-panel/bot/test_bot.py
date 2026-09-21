@@ -101,11 +101,9 @@ class Цены(unittest.TestCase):
         по-людски (фото = 1), а обещание скидки требует общих единиц с
         конкурентом (фото = 12 💎). Двенадцать кристаллов в коине
         снимают оба."""
-        его = {"t2i": 12, "i2i": 12, "inpaint": 12,
-               "t2v_5": 60, "t2v_10": 96, "i2v_5": 60, "i2v_10": 96,
-               "sound": 170}
+        его = {"i2i": 12, "i2v_5": 60, "i2v_10": 96, "sound": 170}
         self.assertEqual({k: j.crystals for k, j in pricing.JOBS.items()}, его)
-        self.assertEqual(pricing.job("t2i").coins, 1,
+        self.assertEqual(pricing.job("i2i").coins, 1,
                          "фото обязано стоить ровно один коин")
 
     def test_пересчёт_в_коины_всегда_вниз(self):
@@ -124,9 +122,8 @@ class Цены(unittest.TestCase):
         Числа не выдуманы: Qwen-Image-Edit берёт до трёх референсов
         (они идут в условие, а не в латент), видео с VACE — первый кадр
         и необязательный последний."""
-        ожидаем = {"t2i": (0, 0), "i2i": (1, 3), "inpaint": (1, 1),
-                   "t2v_5": (0, 0), "t2v_10": (0, 0),
-                   "i2v_5": (1, 2), "i2v_10": (1, 2), "sound": (1, 1)}
+        ожидаем = {"i2i": (1, 3), "i2v_5": (1, 2), "i2v_10": (1, 2),
+                   "sound": (1, 1)}
         self.assertEqual({k: j.фото_нужно for k, j in pricing.JOBS.items()},
                          ожидаем)
         self.assertEqual(pricing.МАКС_РЕФЕРЕНСОВ, 3)
@@ -140,16 +137,23 @@ class Цены(unittest.TestCase):
             self.assertIn(prompts.семейство(k), prompts.ПО_ВИДУ,
                           f"{k}: нет текста режима")
 
-    def test_режимы_без_фото_не_требуют_лица_с_фото(self):
-        """У текста-в-фото нет входного снимка, и требование «сохрани её
-        черты» для него бессмысленно: модель начинает искать референс,
-        которого нет."""
+    def test_референс_нужен_всегда(self):
+        """Решение владельца 21.09.2026: текст-в-фото и текст-в-видео
+        убраны. Бот продаёт одно — «пришли СВОЁ фото, и оно изменится»,
+        и генерация из ничего решает другую задачу другого человека.
+
+        Тест сторожит решение: вид без входного снимка вернётся тихо,
+        первой же правкой прайса, и лицо в нём держать будет не из чего.
+        """
+        self.assertEqual(pricing.БЕЗ_ФОТО, ())
+        for k, j in pricing.JOBS.items():
+            self.assertTrue(j.нужно_фото, f"{k}: работает без референса")
         import prompts
-        без = prompts.собрать("t2i", prompts.Блок())
-        self.assertNotIn("face preserved exactly", без)
-        self.assertIn("belonging to no real person", без)
-        с_фото = prompts.собрать("i2i", prompts.Блок())
-        self.assertIn("face preserved exactly", с_фото)
+        self.assertFalse(hasattr(prompts, "ТЕЛО_БЕЗ_ФОТО"),
+                         "блок «лица нет, придумай» вернулся")
+        self.assertIn("face preserved exactly",
+                      prompts.собрать("i2i", prompts.Блок()))
+
 
     def test_ступеней_качества_нет(self):
         """Решение владельца 21.09.2026: 2K/4K/8K с доплатой убраны —
@@ -182,10 +186,10 @@ class Цены(unittest.TestCase):
     def test_подарок_новичку_доводит_до_результата(self):
         """У конкурента за приглашение дают 10 💎 при цене фото 12 — не
         хватает даже на одну генерацию. Такой подарок только злит."""
-        фото = pricing.job("t2i").coins
+        фото = pricing.job("i2i").coins
         self.assertGreaterEqual(pricing.WELCOME_COINS, фото * 2)
         self.assertGreaterEqual(pricing.REFERRAL_INVITEE, фото)
-        self.assertLess(pricing.WELCOME_COINS, pricing.job("t2v_5").coins,
+        self.assertLess(pricing.WELCOME_COINS, pricing.job("i2v_5").coins,
                         "на подарок не должно хватать ролика")
 
     def test_подписок_нет_ни_в_каком_виде(self):
@@ -606,7 +610,7 @@ class Кабинет(unittest.TestCase):
 
     def test_удаление_стирает_всё_и_говорит_сколько(self):
         self.s.credit(1, 10, "paid", "пакет")
-        self.s.job_start("j", 1, "t2i", "p", 1)
+        self.s.job_start("j", 1, "i2i", "p", 1)
         self.s.job_done("j", file="o.png", path="1/j.png", tg_file_id="X", size=1)
         итог = self.s.забыть(1)
         self.assertEqual(итог["работ"], 1)
@@ -622,6 +626,111 @@ class Кабинет(unittest.TestCase):
         self.assertIsNotNone(self.s.user(2))
         self.assertIsNone(self.s.user(2)["invited_by"])
         self.assertEqual(self.s.balance(2), 3)
+
+
+class СтрокиВладельца(unittest.TestCase):
+    """Что происходит в кадре, пишет владелец — отдельным файлом.
+
+    Разделение постоянное: общее и техническое (лицо, кожа, анатомия,
+    ткань, свет, объектив, композиция, запреты) собирается кодом и
+    одинаково для всех сценариев; откровенная часть живёт в
+    `ОТКРОВЕННОЕ.txt` по ключу сценария.
+    """
+
+    def test_файл_есть_и_в_нём_каждый_сценарий(self):
+        self.assertTrue(os.path.exists(catalog.ФАЙЛ_ОТКРОВЕННОГО))
+        текст = open(catalog.ФАЙЛ_ОТКРОВЕННОГО, encoding="utf-8").read()
+        for c in catalog.CATEGORIES:
+            for s in c.scenes:
+                self.assertIn(f"{s.key} =", текст,
+                              f"в файле нет строки для сценария {s.key}")
+
+    def test_строка_владельца_попадает_в_промпт(self):
+        б = prompts.Блок(обстановка="A room.", откровенное="MARKER-TEXT-HERE")
+        p = prompts.собрать("i2i", б)
+        self.assertIn("MARKER-TEXT-HERE", p)
+
+    def test_строка_идёт_в_начало_а_не_в_хвост(self):
+        """Модели внимательнее к началу промпта. Уехав в конец,
+        откровенная часть начинает проигрывать свету и обстановке —
+        то есть ровно то, ради чего сценарий заводили, не случается."""
+        б = prompts.Блок(обстановка="A room.", свет="Soft light.",
+                         откровенное="MARKER")
+        p = prompts.собрать("i2i", б)
+        self.assertLess(p.index("MARKER"), len(p) // 3,
+                        "строка владельца уехала в хвост промпта")
+
+    def test_пустая_строка_не_ломает_сценарий(self):
+        """Файл может быть пуст целиком — бот обязан работать."""
+        б = prompts.Блок(обстановка="A room.", откровенное="")
+        p = prompts.собрать("i2i", б)
+        self.assertGreaterEqual(len(p), prompts.МИН_ДЛИНА)
+
+    def test_разбор_файла_терпит_мусор(self):
+        """Правит файл человек, а не программа: комментарии, пустые
+        строки и строка без «=» не должны ронять бота."""
+        f = tempfile.mktemp(suffix=".txt")
+        open(f, "w", encoding="utf-8").write(
+            "# комментарий\n\nпросто строка без равно\n"
+            "un_close = Something happens.\n"
+            "un_full =\n"                       # пустое значение
+            "  un_bed  =  Padded text.  \n")    # лишние пробелы
+        d = catalog._строки_владельца(f)
+        self.assertEqual(d, {"un_close": "Something happens.",
+                             "un_bed": "Padded text."})
+
+    def test_нет_файла_это_не_падение(self):
+        self.assertEqual(catalog._строки_владельца("/нет/такого/файла.txt"), {})
+
+
+class Раскладка(unittest.TestCase):
+    """Категории разложены по логике конкурента, названия свои.
+
+    У него фото-в-фото разложено по ОБСТАНОВКЕ, а оживление по
+    ДЕЙСТВИЮ. Прежняя наша раскладка была по одежде («Бельё») — это
+    логика мягкого фотобота, и владелец справедливо спросил, что она
+    тут делает.
+    """
+
+    def test_все_сценарии_требуют_референса(self):
+        for c in catalog.CATEGORIES:
+            for s in c.scenes:
+                self.assertTrue(pricing.job(s.job).нужно_фото,
+                                f"{s.key}: сценарий без входного фото")
+
+    def test_категории_по_видам_работы(self):
+        по_ключу = {c.key: {s.job for s in c.scenes} for c in catalog.CATEGORIES}
+        self.assertEqual(по_ключу.get("undress"), {"i2i"})
+        self.assertEqual(по_ключу.get("scene"), {"i2i"})
+        self.assertEqual(по_ключу.get("animate"), {"i2v_5"})
+        self.assertEqual(по_ключу.get("voice"), {"sound"})
+
+    def test_категории_бельё_больше_нет(self):
+        ключи = {c.key for c in catalog.CATEGORIES}
+        self.assertNotIn("lingerie", ключи)
+
+
+class НижнееМенюБезИконок(unittest.TestCase):
+    """Решение владельца 21.09.2026: иконки только в сообщениях.
+
+    Нижняя клавиатура видна всегда и служит навигацией. Премиум-значки
+    в ней соревнуются за внимание с кнопками в сообщении, где они и
+    должны работать.
+    """
+
+    def test_в_нижнем_меню_нет_иконок(self):
+        import ui
+        for ряд in ui.НИЖНЕЕ["keyboard"]:
+            for к in ряд:
+                self.assertNotIn("icon_custom_emoji_id", к,
+                                 f"иконка на нижней кнопке «{к['text']}»")
+
+    def test_в_сообщениях_иконки_есть(self):
+        """Обратная сторона: убрать их везде — тоже не то, о чём речь."""
+        import ui
+        с_иконкой = [b for ряд in ui.главное_меню()["inline_keyboard"]
+                     for b in ряд if "icon_custom_emoji_id" in b]
+        self.assertGreater(len(с_иконкой), 0, "иконки пропали и из сообщений")
 
 
 class ПремиумИконкиВТексте(unittest.TestCase):
@@ -756,7 +865,7 @@ class РаботыВБазе(unittest.TestCase):
     def test_у_задания_есть_оба_адреса(self):
         """Один диск — каждый показ это лишняя заливка. Один file_id —
         работа живёт у чужой стороны, которая нам ничего не должна."""
-        self.s.job_start("j1", 1, "t2i", "p", 1)
+        self.s.job_start("j1", 1, "i2i", "p", 1)
         self.s.job_done("j1", file="out.png", path="1/j1.png",
                         tg_file_id="AgACX", size=1234)
         j = self.s.job("j1")
@@ -766,12 +875,12 @@ class РаботыВБазе(unittest.TestCase):
         self.assertEqual(j["size"], 1234)
 
     def test_показывать_нечего_значит_в_работы_не_попадает(self):
-        self.s.job_start("j2", 1, "t2i", "p", 1)
+        self.s.job_start("j2", 1, "i2i", "p", 1)
         self.s.job_done("j2", file="out.png")          # ни пути, ни file_id
         self.assertEqual(self.s.works(1), [], "работа без адреса показана как готовая")
 
     def test_осечка_в_работы_не_попадает(self):
-        self.s.job_start("j3", 1, "t2i", "p", 1)
+        self.s.job_start("j3", 1, "i2i", "p", 1)
         self.s.job_done("j3", error="карта упала")
         self.assertEqual(self.s.works(1), [])
 
@@ -787,7 +896,7 @@ class РаботыВБазе(unittest.TestCase):
 
         s2 = Store(путь)                      # открытие само чинит схему
         s2.ensure_user(1, "kto", welcome=1)
-        s2.job_start("j", 1, "t2i", "p", 1)
+        s2.job_start("j", 1, "i2i", "p", 1)
         s2.job_done("j", file="o.png", path="1/j.png", tg_file_id="X", size=7)
         self.assertEqual(s2.works(1)[0]["tg_file_id"], "X")
 
