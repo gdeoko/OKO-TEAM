@@ -109,30 +109,19 @@ class Место:
     # действие читались чётко.
     Место("sc_amberry", "Студия AMBERRY",
           "Чёрный фон, розовый неон, тела в чистом свете",
-          обстановка="A dark studio built as a neon set: seamless black "
-                     "walls and black floor, and behind the subjects a "
-                     "wall of hot magenta-pink neon tubing — long "
-                     "horizontal bars and one broad glowing arc — burning "
-                     "against the black, its glow falling off into "
-                     "darkness at the edges of the frame. The floor is "
-                     "black and faintly glossy, catching a soft pink "
-                     "reflection of the tubes. Nothing else in the room: "
-                     "no furniture, no props, no text, no signage, no "
-                     "logo.",
-          свет="Two separate lighting systems, and they must not be "
-               "confused. The MAGENTA NEON sits BEHIND the subjects: it "
-               "rims the shoulders, the waist, the hips and the thighs "
-               "with a thin hot pink edge and separates every body "
-               "cleanly from the black background. The BODIES themselves "
-               "are lit from the front by a large soft white key light "
-               "slightly above the lens, with a white fill on the "
-               "opposite side: skin stays its own natural colour, "
-               "neither pink nor blue, and every curve, every muscle and "
-               "every point of contact between the bodies is clearly "
-               "readable. Nothing important falls into shadow, nothing "
-               "is blown out.",
-          ещё="Glossy, expensive, club-grade — the look of a high-end "
-              "studio shoot, not a dim room with a neon sign in it."),
+          обстановка="A black studio set: seamless black walls and a "
+                     "glossy black floor. Behind the subjects, a wall of "
+                     "hot magenta-pink neon tubing — horizontal bars and "
+                     "one broad glowing arc — burns against the black and "
+                     "lays a pink reflection on the floor. Nothing else: "
+                     "no furniture, no props, no text.",
+          свет="The magenta neon is BEHIND them and only rims their "
+               "shoulders, waist and thighs with hot pink, separating "
+               "each body from the black. The bodies themselves are lit "
+               "from the front by a large soft white light: skin keeps "
+               "its own colour, and every curve and every point of "
+               "contact stays clearly readable.",
+          ещё="Glossy and expensive, a high-end studio shoot."),
 
     Место("sc_neon", "Неоновый переулок",
           "Мокрый асфальт, розовые вывески",
