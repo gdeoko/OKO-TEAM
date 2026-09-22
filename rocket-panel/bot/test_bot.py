@@ -2412,5 +2412,41 @@ class КожаМатовая(unittest.TestCase):
         self.assertNotIn("breasts", p.lower())
 
 
+class НегативПоКадру(unittest.TestCase):
+    """Утверждения «ровно двое» и «оба голые» дожали не всё: у пары
+    «Сверху» набиралась куча из трёх лиц, а на «От первого лица» один
+    оставался в бикини. Негатив при CFG 1.5 живой — он и добивает."""
+
+    def test_одиночке_запрещён_второй_человек(self):
+        n = catalog.scene("un_close").negative
+        self.assertIn("two people", n)
+        self.assertIn("third person", n)
+
+    def test_паре_второй_человек_НЕ_запрещён(self):
+        n = catalog.scene("pf_mf_near").negative
+        self.assertNotIn("two people", n)
+        self.assertIn("third person", n, "третий лишний и у пары")
+
+    def test_в_голой_сцене_одежда_запрещена(self):
+        for ключ in ("un_close", "pf_mf_pov", "pf_ff_face"):
+            self.assertIn("bikini", catalog.scene(ключ).negative, ключ)
+
+    def test_если_одежда_названа_её_не_запрещаем(self):
+        сц = catalog.scene("un_close")
+        блок = catalog.Блок(**{п: getattr(сц.блок, п)
+                               for п in catalog.Блок.__slots__})
+        блок.откровенное = "She slips the bikini top off her shoulders."
+        n = prompts.негатив(prompts.собрать("i2i", блок))
+        self.assertNotIn("bikini", n,
+                         "человек сам написал про бикини, а мы его запретили")
+
+    def test_негатив_собирается_из_текста_а_не_из_прокидки(self):
+        """Промпт — источник правды: негатив выводится из него, и
+        поэтому одинаково верен и для каталога, и для своего описания."""
+        self.assertIn("two people", prompts.негатив("любой текст без пары"))
+        self.assertNotIn("two people",
+                         prompts.негатив("... EXACTLY TWO bodies ..."))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
