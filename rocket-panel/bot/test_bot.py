@@ -2564,6 +2564,63 @@ class ОдеждуНеНазываемВПоложительномТексте(u
             self.assertIn(вещь, n, f"«{вещь}» пропала из негатива")
 
 
+class ТриЖёсткихПравилаВладельца(unittest.TestCase):
+    """22.09.2026, дословно: «у девушек не должно быть хуев», «более 2
+    человек в кадре не должно быть», «вся анатомия тел должна быть
+    идеальная, чтобы не было каши сросшихся конечностей».
+
+    Первое держит `ЧленНеСтираетсяИНеПоявляетсяЛишний` ниже, два
+    других — здесь. Правила постоянные, поэтому проверяются на ВСЕХ
+    кнопках сразу: одиночных, парных, на всех составах.
+    """
+
+    def все_сцены(self):
+        return [s for р in catalog.РАЗДЕЛЫ for s in р.все_сцены]
+
+    def test_третий_человек_запрещён_везде(self):
+        for s in self.все_сцены():
+            n = s.negative.lower()
+            for слово in ("third person", "extra person", "extra head",
+                          "three heads", "crowd"):
+                self.assertIn(слово, n, f"{s.key}: «{слово}» не запрещено")
+
+    def test_каша_из_тел_запрещена_везде(self):
+        for s in self.все_сцены():
+            n = s.negative.lower()
+            for слово in ("merged bodies", "conjoined bodies",
+                          "shared torso", "third arm", "third leg",
+                          "extra foot", "detached hand"):
+                self.assertIn(слово, n, f"{s.key}: «{слово}» не запрещено")
+
+    def test_у_пары_конечности_посчитаны_вслух(self):
+        """Запрета мало: сборка рисует, что названо. Поэтому в
+        положительном тексте сказано, сколько чего есть и откуда оно
+        растёт, — прослеживаемость работает там, где слово
+        «правильно» не работает."""
+        for ключ in ("pf_mf_near", "pf_ff_close", "pf_mm_near"):
+            p = catalog.scene(ключ).prompt_фото()
+            self.assertIn("four arms and four legs", p, ключ)
+            self.assertIn("traceable", p, ключ)
+
+    def test_у_одиночки_конечности_посчитаны_вслух(self):
+        p = catalog.scene("un_close").prompt_фото()
+        self.assertIn("two hands and two feet", p)
+        self.assertIn("traceable", p)
+
+    def test_поломки_в_положительном_тексте_не_названы(self):
+        """Замер 22.09.2026: фраза «never a separate strip of face
+        pasted above the body» УВЕЛИЧИЛА число коллажей. Сборка рисует
+        названное даже под отрицанием, поэтому поломки живут только в
+        негативе."""
+        for s in self.все_сцены():
+            p = s.prompt_фото()
+            for поломка in ("third person", "extra face", "spare limb",
+                            "second torso", "merged", "collage"):
+                self.assertNotIn(
+                    поломка, p.lower(),
+                    f"{s.key}: «{поломка}» названа в положительном тексте")
+
+
 class ЧленНеСтираетсяИНеПоявляетсяЛишний(unittest.TestCase):
     """Прогон 22.09.2026, обе стороны одной ошибки.
 
@@ -2588,19 +2645,32 @@ class ЧленНеСтираетсяИНеПоявляетсяЛишний(unitt
             n = catalog.scene(ключ).negative
             self.assertNotIn("smooth featureless crotch", n, ключ)
 
-    def test_у_пары_женщин_член_запрещён(self):
-        """«В ЖЖ лесби не должно быть членов вообще» — владелец,
-        22.09.2026, после трёх кадров подряд."""
-        n = catalog.scene("pf_ff_close").negative.lower()
-        for слово in ("penis", "phallus", "male genitals", "futanari"):
-            self.assertIn(слово, n, f"«{слово}» не запрещено в ЖЖ")
+    def test_женщине_член_запрещён_на_каждой_кнопке(self):
+        """«У девушек не должно быть хуев, это анатомия» — владелец,
+        22.09.2026, жёсткое правило после четырёх кадров подряд.
 
-    def test_у_одиночной_кнопки_этого_запрета_нет(self):
-        """Фотографию присылает клиент, и клиент бывает мужчиной: там
-        такой запрет стёр бы его самого."""
-        for ключ in ("un_full", "ac_close"):
+        Раньше запрет стоял только у пары женщин: я боялась, что на
+        одиночной кнопке он сотрёт клиента-мужчину. Боялась зря —
+        одиночная сборка написана про женщину насквозь (женские
+        местоимения, грудь в каждом описании сложения), мужчины в ней
+        нет и стирать нечего.
+        """
+        for ключ in ("pf_ff_close", "un_full", "un_close", "ac_close",
+                     "ac_side", "un_three"):
             n = catalog.scene(ключ).negative.lower()
-            self.assertNotIn("male genitals", n, ключ)
+            for слово in ("penis", "phallus", "male genitals", "futanari"):
+                self.assertIn(слово, n, f"{ключ}: «{слово}» не запрещено")
+
+    def test_одиночная_сборка_и_правда_женская(self):
+        """Основание для запрета выше: если сборка вдруг станет
+        бесполой, запрет придётся пересматривать, и тест об этом
+        скажет раньше, чем владелец увидит кадр."""
+        import re
+        p = catalog.scene("un_full").промпт()
+        ж = len(re.findall(r"\b(her|she|hers)\b", p, re.I))
+        м = len(re.findall(r"\b(his|him)\b", p, re.I))
+        self.assertGreater(ж, 5, "женских местоимений почти нет")
+        self.assertEqual(0, м, "в одиночной сборке появился мужчина")
 
 
 class УПарыВсёВоМножественномЧисле(unittest.TestCase):
