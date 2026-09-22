@@ -1266,10 +1266,45 @@ function launch_run_due(bool $force = false): int {
         $channels = array_filter(array_map('trim', explode(',', (string) $j['channels'])));
         try {
             $res = launch_fire((int) $j['competition_id'], $wave, $channels, '', false);
+            $rep = (array) ($res['report'] ?? []);
+            /* УПАВШИЙ КАНАЛ БОЛЬШЕ НЕ ПРЯЧЕТСЯ ЗА СТАТУСОМ «ВЫПОЛНЕНО».
+             *
+             * launch_fire не бросает исключение, когда ВКонтакте отказал или ключ
+             * не настроен: он просто пишет это словами в отчёт. Задание при этом
+             * закрывалось как 'done', и в пульте всё выглядело благополучно.
+             * Так 22.09.2026 пропала волна «осталось 3 дня»: на стену не ушло
+             * (сгорел ключ), в личные не ушло (ключ рассылки не заведён), и никто
+             * об этом не узнал до вопроса владельца.
+             *
+             * Теперь отчёт разбирается: всё прошло — 'done', часть каналов
+             * упала — 'partial', не прошло ничего — 'failed'. И в обоих плохих
+             * случаях владельцу уходит сообщение в Telegram. */
+            $bad = [];
+            foreach ($rep as $ch => $txt) {
+                $t = mb_strtolower(trim((string) $txt));
+                if ($t === '' || preg_match('~^(ошибка|сбой)|не настроен|не удалось|failed|error~u', $t)) $bad[] = $ch;
+            }
+            $st = !$bad ? 'done' : (count($bad) >= count($rep) ? 'failed' : 'partial');
             update('launch_jobs', [
-                'status' => 'done', 'done_at' => $now->format('Y-m-d H:i:s'),
-                'report' => json_encode($res['report'] ?? [], JSON_UNESCAPED_UNICODE),
+                'status' => $st, 'done_at' => $now->format('Y-m-d H:i:s'),
+                'report' => json_encode($rep, JSON_UNESCAPED_UNICODE),
             ], 'id=:id', ['id' => $jid]);
+            if ($bad) {
+                if (!function_exists('owner_tg_send') && is_file(BASE_PATH . '/core/notify_owner.php')) {
+                    require_once BASE_PATH . '/core/notify_owner.php';
+                }
+                if (function_exists('owner_tg_send')) {
+                    $lines = [];
+                    foreach ($rep as $ch => $txt) $lines[] = ($ch . ': ' . mb_substr((string) $txt, 0, 160));
+                    try {
+                        owner_tg_send('launch',
+                            '<b>Волна «' . htmlspecialchars($wave) . '» прошла не полностью</b>' . "\n"
+                            . 'задание #' . $jid . ', конкурс ' . (int) $j['competition_id'] . "\n\n"
+                            . htmlspecialchars(implode("\n", $lines)));
+                    } catch (\Throwable $e) {}
+                }
+                error_log('launch_run_due: волна ' . $wave . ' #' . $jid . ' — упали каналы: ' . implode(',', $bad));
+            }
             $done++;
         } catch (\Throwable $e) {
             // Помечаем СБОЕМ, а не возвращаем в очередь: часть волны могла уже уйти,

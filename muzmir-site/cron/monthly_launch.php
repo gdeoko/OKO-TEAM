@@ -143,7 +143,7 @@ $say('блок «личный кабинет» в письме: включён (
 /* ── 3. План волн месяца ────────────────────────────────────────────────── */
 
 $already = (int) (scalar(
-    "SELECT COUNT(*) FROM launch_jobs WHERE status IN ('scheduled','running','done')
+    "SELECT COUNT(*) FROM launch_jobs WHERE status IN ('scheduled','running','done','partial')
       AND strftime('%Y-%m', run_at) = ?", [$tag]) ?? 0);
 if ($already > 0) {
     $say("план месяца уже стоит ($already заданий) — не трогаем");

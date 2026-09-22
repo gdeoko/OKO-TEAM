@@ -24,7 +24,7 @@ require_once __DIR__ . '/launch_run.php';
 /** Идёт ли сейчас кампания: есть выполненные или запланированные задания. */
 function launch_campaign_active(): bool {
     launch_migrate();
-    return (int) scalar("SELECT COUNT(*) FROM launch_jobs WHERE status IN ('scheduled','done','running','failed')") > 0;
+    return (int) scalar("SELECT COUNT(*) FROM launch_jobs WHERE status IN ('scheduled','done','partial','running','failed')") > 0;
 }
 
 /** Дата старта текущей кампании (первое выполненное задание) или ''. */
@@ -74,7 +74,7 @@ function launch_jobs_grouped(): array {
     launch_migrate();
     $rows = all("SELECT j.*, c.name AS comp_name
                    FROM launch_jobs j LEFT JOIN competitions c ON c.id = j.competition_id
-                  WHERE j.status IN ('scheduled','done','cancelled','running','failed')
+                  WHERE j.status IN ('scheduled','done','partial','cancelled','running','failed')
                   ORDER BY j.run_at ASC, j.id ASC");
     $order = ['launch_vk' => 1, 'launch_mail' => 2, 'campaign_vip' => 3, 'campaign_kabinet' => 4,
               'launch' => 5, 'd3' => 6, 'last' => 7, 'closed' => 8, 'results' => 9];
@@ -242,10 +242,14 @@ function launch_control_html(): string {
   <?php else: foreach ($groups as $w => $g):
     $nRun  = (int) ($g['running'] ?? 0);
     $nFail = (int) ($g['failed'] ?? 0);
-    $isDone = $g['done'] > 0 && $g['scheduled'] === 0 && $nRun === 0 && $nFail === 0;
-    $isCancelled = $g['cancelled'] > 0 && $g['done'] === 0 && $g['scheduled'] === 0 && $nRun === 0 && $nFail === 0;
+    // Часть каналов упала (ключ сгорел, сервис не настроен): волна ушла наполовину,
+    // и это нужно видеть отдельно от полного успеха и от полного сбоя.
+    $nPart = (int) ($g['partial'] ?? 0);
+    $isDone = $g['done'] > 0 && $g['scheduled'] === 0 && $nRun === 0 && $nFail === 0 && $nPart === 0;
+    $isCancelled = $g['cancelled'] > 0 && $g['done'] === 0 && $g['scheduled'] === 0 && $nRun === 0 && $nFail === 0 && $nPart === 0;
     if ($nRun > 0)       { $tone = 'making';   $lbl = 'Выполняется сейчас'; }
     elseif ($nFail > 0)  { $tone = 'rejected'; $lbl = 'Сбой — нужен разбор'; }
+    elseif ($nPart > 0)  { $tone = 'rejected'; $lbl = 'Ушло не полностью — нужен разбор'; }
     else {
         $tone = $isDone ? 'made' : ($isCancelled ? 'rejected' : 'making');
         $lbl  = $isDone ? 'Выполнено' : ($isCancelled ? 'Убрано из плана' : 'В плане');
