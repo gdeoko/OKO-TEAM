@@ -473,8 +473,43 @@ class Блок:
 ОДЕТЫЕ = (
     "clothed, dressed, partially dressed, underwear, lingerie, bra, "
     "panties, knickers, thong, bikini, swimsuit, shorts, boxers, "
-    "stockings, dress, skirt, shirt, top, covered breasts, covered crotch"
+    "stockings, dress, skirt, shirt, top, covered breasts, covered crotch, "
+    # НАЗВАНО ТО, ЧТО НА РЕФЕРЕНСАХ. Прогон 22.09.2026: модели на
+    # снимках сняты в купальниках — розовый у неё, серый у второй,
+    # серые шорты у него, — и Qwen Edit тащит их в кадр, даже когда в
+    # тексте сказано «полностью голые». Общего слова «bikini» мало:
+    # в запретах должны стоять те же куски, которые сборка рисует —
+    # лямки, верх, низ.
+    "bikini top, bikini bottom, bikini straps, bra strap, shoulder strap, "
+    "swim trunks, grey shorts, swimwear"
 )
+
+# ЧЕМ УТВЕРЖДАТЬ НАГОТУ. Отрицание одежды против купальника с
+# референса не работает (см. ОДЕТЫЕ выше) — работает утверждение того,
+# чего в одежде НЕ БЫВАЕТ. Замер 22.09.2026, шесть кругов по четыре
+# зерна: «both are completely naked» оставляло лифчик на 9 кадрах из
+# 12; формулировки ниже — ни на одном.
+СОСКИ_ВИДНЫ = ("Her chest is bare skin and her own nipples are in plain "
+               "view; her hips are bare skin as well.")
+# Со спины сосков не видно, и утверждение про них молчит — тогда
+# лифчик возвращается. Для видов сзади своя формула, про спину.
+СПИНА_ГОЛАЯ = ("Her whole back is bare skin from her shoulders down to "
+               "her waist, with no strap and no band anywhere on it.")
+
+# Мужская анатомия, наоборот, СТИРАЕТСЯ: стоящий во весь рост мужчина
+# читается сборкой как обнажённый портрет, и пах выходит гладким.
+# Помогает только запрет самой пустоты.
+ЧЛЕН_НЕ_СТЁРТ = "smooth featureless crotch, no penis, censored"
+
+# А в сцене ДВУХ ЖЕНЩИН сборка дорисовывает член между их ног — на
+# слове «мастурбирует», на позе «раком», на любом откровенном действии.
+# Владелец ловил это трижды: «у девушки хуй», «в ЖЖ лесби не должно
+# быть членов вообще».
+# Запрет стоит ТОЛЬКО у пары женщин, где состав известен наверняка. У
+# одиночной кнопки его нет намеренно: фотографию присылает клиент, и
+# клиент бывает мужчиной — там этот запрет стёр бы его самого.
+МУЖСКОЕ_ЛИШНЕЕ = ("penis, cock, phallus, male genitals, futanari, "
+                  "intersex, man")
 
 
 def негатив(промпт):
@@ -494,6 +529,13 @@ def негатив(промпт):
         куски.append(ТОЛЬКО_ОДИН)
     if "Fabric behaves as fabric" not in промпт:
         куски.append(ОДЕТЫЕ)
+    # Запрет пустого паха ставим ТОЛЬКО там, где член в кадре и должен
+    # быть: в женской сцене он сам по себе становится подсказкой, и
+    # сборка рисует его девушке — владелец ловил это трижды.
+    if "erect penis" in промпт:
+        куски.append(ЧЛЕН_НЕ_СТЁРТ)
+    elif "Both people are women" in промпт:
+        куски.append(МУЖСКОЕ_ЛИШНЕЕ)
     return ", ".join(куски)
 
 
@@ -583,16 +625,26 @@ def первое_предложение_акта(блок):
 #     формулировка ниже, с названной анатомией  2 из 2
 # Своя формулировка на каждый состав: в ЖЖ мужская анатомия — это не
 # оговорка, а другой кадр.
+# Про КАЖДОГО ОТДЕЛЬНО и через то, чего в одежде не бывает. Общее
+# «оба раздеты догола» раздевало одного из двоих: множественное число
+# сборка применяет к тому, кто ей ближе. Прогон 22.09.2026 — на
+# блондинке оставался лифчик с её же референса в 9 кадрах из 12, пока
+# нагота не стала утверждением про соски и голую спину.
 ПАРА_РАЗДЕТЫ_ДОГОЛА = {
-    "mf": ("Both of them are stripped bare: her naked body and his naked "
-           "body, skin against skin, his bare thighs and buttocks and "
-           "erect penis fully exposed, nothing covering either of them."),
-    "ff": ("Both women are stripped bare: two naked female bodies, skin "
-           "against skin, breasts and hips and thighs fully exposed, "
-           "nothing covering either of them."),
-    "mm": ("Both men are stripped bare: two naked male bodies, skin "
-           "against skin, bare chests, thighs and buttocks and erect "
-           "penises fully exposed, nothing covering either of them."),
+    "mf": ("Her chest is bare skin with her own nipples in plain view, "
+           "her hips are bare skin and her back is bare skin with no "
+           "strap on it. He is bare from his chest down to his knees, "
+           "nothing on his hips: his erect penis is in plain view, of an "
+           "ordinary human size, growing from his own hips."),
+    "ff": ("The first woman's chest is bare skin with her own nipples in "
+           "plain view, her hips are bare skin and her back is bare skin "
+           "with no strap on it. The second woman's chest is bare skin "
+           "with her own nipples in plain view and her hips are bare "
+           "skin as well."),
+    "mm": ("The first man is bare from his chest down to his knees, his "
+           "erect penis in plain view growing from his own hips. The "
+           "second man is bare the same way, nothing on his hips and his "
+           "erect penis in plain view."),
 }
 
 # Сложение одной фразой: в короткий промпт абзац на 319 знаков не
