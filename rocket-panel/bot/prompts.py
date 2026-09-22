@@ -770,18 +770,24 @@ def длина_ок(текст):
 # референсе голый». Прогон 22.09.2026 показал, чем это кончается в
 # парных сценах: женщина голая, а мужчина в серых шортах — ровно в
 # тех, в которых он стоит на своём листе.
+# НАЗВАННАЯ ОДЕЖДА ПОЯВЛЯЕТСЯ, ДАЖЕ КОГДА ЕЁ ЗАПРЕЩАЮТ. Замер
+# 22.09.2026: здесь стояло «не мужские шорты, не женское бикини» — и на
+# кадрах выходили ровно розовое бикини и серые шорты. Диффузионная
+# модель рисует названное; отрицание перед словом она держит слабо, а
+# само слово — крепко. Поэтому в положительном тексте одежда не
+# называется ВООБЩЕ, а запрет живёт только в негативе, где ему и место.
 ПАРА_ОБА_ГОЛЫЕ = (
-    "BOTH people in the frame are fully nude. Neither of them keeps any "
-    "clothing or underwear from their reference photograph — not the "
-    "man's shorts, not the woman's bikini, nothing."
+    "BOTH people in the frame are completely bare: skin only, from "
+    "shoulders to feet, on both of them. Neither keeps anything they "
+    "were wearing in their reference photograph."
 )
 
 # То же самое в одну строку, для самого конца промпта. Стоит отдельно,
 # а не повтором, потому что после «FINAL CHECK» длинный абзац уже не
 # читается — нужна короткая последняя команда.
 ПАРА_ГОЛЫЕ_ХВОСТ = (
-    "AND BOTH OF THEM ARE NAKED: no bikini, no shorts, no underwear, "
-    "no clothing of any kind on either body."
+    "AND BOTH OF THEM ARE NAKED: bare skin on both bodies, nothing worn, "
+    "nothing covering anything."
 )
 
 # КОРОТКИЙ ЯКОРЬ ЛИЧНОСТИ. Одно предложение в самом начале.

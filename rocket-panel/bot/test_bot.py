@@ -1,5 +1,5 @@
 """Проверки денег. Деньги — единственное, где ошибка стоит дорого."""
-import os, time, tempfile, unittest, sqlite3
+import os, re, time, tempfile, unittest, sqlite3
 import pricing
 import catalog
 import prompts
@@ -1477,8 +1477,11 @@ class ДействиеПоказываетсяВКонце(unittest.TestCase):
         """Обязательная строка владельца написана про одного. Прогон
         22.09.2026: женщина голая, мужчина в серых шортах с его листа."""
         p = catalog.scene("pf_mf_near").промпт()
-        self.assertIn("BOTH people in the frame are fully nude", p)
-        self.assertIn("not the man's shorts", p)
+        self.assertIn("BOTH people in the frame are completely bare", p)
+        # Названий одежды тут больше нет ВООБЩЕ: модель рисует
+        # названное, и «не мужские шорты» выдавали ровно шорты.
+        # См. `ОдеждуНеНазываемВПоложительномТексте`.
+        self.assertIn("Neither keeps anything they were wearing", p)
 
     def test_одиночной_сцене_про_обоих_не_говорим(self):
         self.assertNotIn("BOTH people", catalog.scene("un_full").промпт())
@@ -2491,6 +2494,33 @@ class НегативПоКадру(unittest.TestCase):
         self.assertIn("two people", prompts.негатив("любой текст без пары"))
         self.assertNotIn("two people",
                          prompts.негатив("... EXACTLY TWO bodies ..."))
+
+
+class ОдеждуНеНазываемВПоложительномТексте(unittest.TestCase):
+    """Замер 22.09.2026: в промпте стояло «не мужские шорты, не женское
+    бикини» — и на кадрах выходили ровно розовое бикини и серые шорты.
+    Модель рисует названное; отрицание перед словом она держит слабо, а
+    само слово — крепко. Запрет живёт в негативе, где ему и место."""
+
+    ВЕЩИ = ("bikini", "shorts", "underwear", "bra", "panties", "lingerie",
+            "swimsuit")
+
+    def названо(self, ключ):
+        """Целыми словами: «bra» иначе находится внутри «braced»."""
+        p = catalog.scene(ключ).prompt_фото().lower()
+        return [в for в in self.ВЕЩИ
+                if re.search(rf"\b{в}s?\b", p)]
+
+    def test_в_промпте_пары_вещей_не_названо(self):
+        self.assertEqual([], self.названо("pf_mf_near"))
+
+    def test_в_промпте_одиночки_тоже(self):
+        self.assertEqual([], self.названо("un_close"))
+
+    def test_но_в_негативе_они_есть(self):
+        n = catalog.scene("pf_mf_near").negative.lower()
+        for вещь in self.ВЕЩИ:
+            self.assertIn(вещь, n, f"«{вещь}» пропала из негатива")
 
 
 class УПарыВсёВоМножественномЧисле(unittest.TestCase):
