@@ -20,7 +20,7 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
   </td></tr>
 </table>
 
-<p style="margin:0 0 6px;">Подлинность диплома можно проверить по QR-коду на самом документе или скачать копию по кнопке ниже.</p>
+<p style="margin:0 0 6px;">Подлинность диплома можно проверить по QR-коду на самом наградном материале или скачать копию по кнопке ниже.</p>
 
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 6px;">
   <tr><td style="border-radius:12px;background:#C79322;background:linear-gradient(135deg,#C79322,#E3B94F);">

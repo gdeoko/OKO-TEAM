@@ -250,7 +250,7 @@ html{scroll-behavior:smooth}
   <div class="container">
     <div class="card reveal club-member-card">
       <!-- Именная карта участника: горизонтальная визитка с фото. Печати здесь нет —
-           печать ставится только на документах, на карте участника — логотип центра. -->
+           печать ставится только на наградных материалах, на карте участника — логотип центра. -->
       <div class="club-vcard" role="img"
            aria-label="Именная карта участника Клуба: <?= h($memberName) ?><?= $memberCardNo !== '' ? ', номер ' . h($memberCardNo) : '' ?>">
         <div class="club-vc-in">

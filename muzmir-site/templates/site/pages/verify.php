@@ -253,7 +253,7 @@ ob_start(); ?>
     <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head reveal" style="margin-bottom:26px">
       <p class="eyebrow">Проверка подлинности</p>
-      <h2>Реестр наградных документов</h2>
+      <h2>Реестр наградных материалов</h2>
       <div class="gold-rule"></div>
     </div>
 
@@ -267,7 +267,7 @@ ob_start(); ?>
         <div class="field--float">
           <input type="text" id="vfyNum" name="number" placeholder=" " inputmode="latin"
                  value="<?= h($number) ?>" aria-label="Номер диплома">
-          <label for="vfyNum">Номер документа</label>
+          <label for="vfyNum">Номер наградного материала</label>
         </div>
         <button type="button" class="vfy-qr-btn" id="vfyQrBtn" aria-label="Сканировать QR-код диплома" title="Сканировать QR-код">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -316,7 +316,7 @@ ob_start(); ?>
             <img class="cert-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип Культурного центра «Музыкальный Мир»">
           </div>
           <div class="cert-org">Культурный центр «Музыкальный Мир»</div>
-          <div class="cert-sub">наградной документ</div>
+          <div class="cert-sub">наградной материал</div>
           <div class="cert-laurel" aria-hidden="true">
             <span class="ln"></span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5 5.4.5-4.1 3.6 1.2 5.3L12 18.9 7.1 21.4l1.2-5.3L4.2 7.5 9.6 7z"/></svg>
@@ -337,7 +337,7 @@ ob_start(); ?>
             <?php if ($d['nomination']): ?><div class="fld"><span>Номинация</span><strong><?= h($d['nomination']) ?></strong></div><?php endif; ?>
             <?php /* Педагог, учреждение и город здесь больше не печатаются: это
                      персональные данные третьих лиц, а для подтверждения подлинности
-                     они не нужны — документ и так на руках у того, кто проверяет. */ ?>
+                     они не нужны — наградной материал и так на руках у того, кто проверяет. */ ?>
             <?php if ($issued): ?><div class="fld"><span>Дата выдачи</span><strong><?= h($issued) ?></strong></div><?php endif; ?>
             <div class="fld mono"><span>Номер</span><strong><?= h($d['number']) ?></strong></div>
           </div>
@@ -352,7 +352,7 @@ ob_start(); ?>
       /* ПОЛНЫЙ БЛАНК ЗДЕСЬ БОЛЬШЕ НЕ ПОКАЗЫВАЕМ.
          На бланке напечатаны ФИО ребёнка, педагог, учреждение и город — то есть
          ровно то, что мы только что убрали из карточки выше. Оставить рядом врезку
-         с самим документом означало бы не закрыть утечку, а просто перенести её
+         с самим наградным материалом означало бы не закрыть утечку, а просто перенести её
          на строку ниже. Свой диплом участник открывает в личном кабинете или по
          подписанной ссылке из письма; для проверки подлинности достаточно карточки.
          Сотруднику и владельцу заявки просмотр по-прежнему доступен. */
@@ -374,7 +374,7 @@ ob_start(); ?>
 
       <div class="cert-meta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
-        Сведения предоставлены реестром Культурного центра «Музыкальный Мир» и подтверждают подлинность документа<?php if(isset($vcount) && $vcount>1): ?> - проверялся <?= (int)$vcount ?> раз<?php endif; ?>.
+        Сведения предоставлены реестром Культурного центра «Музыкальный Мир» и подтверждают подлинность наградного материала<?php if(isset($vcount) && $vcount>1): ?> - проверялся <?= (int)$vcount ?> раз<?php endif; ?>.
       </div>
       <style>
       .dip-visual{margin:26px auto 0;max-width:560px;text-align:center}
@@ -416,7 +416,7 @@ ob_start(); ?>
         <h1><?= $verifyLimited ? 'Слишком много проверок' : 'Диплом не найден' ?></h1>
         <p><?= $verifyLimited
               ? 'С этого адреса за последний час было слишком много обращений к реестру. Повторите проверку немного позже.'
-              : 'В реестре нет документа с таким номером — либо он ещё не выдан участнику.' ?></p>
+              : 'В реестре нет наградного материала с таким номером — либо он ещё не выдан участнику.' ?></p>
         <div class="num">№ <?= h($number ?: '-') ?></div>
       </div>
 
@@ -623,4 +623,4 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 $ttl = $d ? ('Диплом № ' . $number) : 'Проверка диплома';
-render_page($ttl, $content, ['active' => '', 'meta' => 'Проверка подлинности наградных документов Культурного центра «Музыкальный Мир» по номеру или QR-коду.']);
+render_page($ttl, $content, ['active' => '', 'meta' => 'Проверка подлинности наградных материалов Культурного центра «Музыкальный Мир» по номеру или QR-коду.']);

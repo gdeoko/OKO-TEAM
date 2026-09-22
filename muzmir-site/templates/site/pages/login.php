@@ -55,7 +55,7 @@ ob_start(); ?>
              style="width:64px;height:64px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 12px;display:block">
         <p class="eyebrow" style="margin-bottom:2px">Личный кабинет</p>
         <h1 style="font-size:1.9rem;margin:0 0 6px">Вход</h1>
-        <p style="color:var(--muted);font-size:.9rem;margin:0">Войдите в один клик - мы сохраним Ваши заявки, результаты и наградные документы.</p>
+        <p style="color:var(--muted);font-size:.9rem;margin:0">Войдите в один клик - мы сохраним Ваши заявки, результаты и наградные материалы.</p>
       </div>
 
       <div class="auth-social" style="display:grid;gap:12px">

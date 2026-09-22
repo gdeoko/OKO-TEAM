@@ -209,7 +209,7 @@ ob_start(); ?>
 
       <!-- Быстрые показатели -->
       <div class="grid grid-4 pro-stats reveal">
-        <div class="stat"><b data-count="<?= count($items) ?>">0</b><span>Наградных документов</span></div>
+        <div class="stat"><b data-count="<?= count($items) ?>">0</b><span>Наградных материалов</span></div>
         <div class="stat"><b data-count="<?= $laureateTotal ?>">0</b><span>Лауреатских званий</span></div>
         <div class="stat"><b data-count="<?= $grandPrixCount ?>">0</b><span>Гран-при</span></div>
         <div class="stat"><b data-count="<?= count($competitions) ?>">0</b><span>Конкурсов</span></div>
@@ -294,7 +294,7 @@ ob_start(); ?>
       <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
         <h1 style="font-size:clamp(1.6rem,4vw,2.4rem)">Портфолио пока не опубликовано</h1>
-        <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Публичная страница участника появляется, когда его работы получают оценку жюри и наградные документы. Проверьте ссылку или посмотрите действующие конкурсы.</p>
+        <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Публичная страница участника появляется, когда его работы получают оценку жюри и наградные материалы. Проверьте ссылку или посмотрите действующие конкурсы.</p>
         <a class="btn btn--primary" href="<?= url('/competitions') ?>">Действующие конкурсы</a>
       </div>
     <?php endif; ?>
@@ -304,7 +304,7 @@ ob_start(); ?>
 $content = ob_get_clean();
 $ttl = $artist ? $artist['name'] : 'Портфолио участника';
 $metaDesc = $artist
-    ? 'Портфолио участника ' . $artist['name'] . ': ' . count($items) . ' наградных документов, ' . count($competitions) . ' конкурсов Культурного центра «Музыкальный Мир». Проверка подлинности дипломов онлайн.'
+    ? 'Портфолио участника ' . $artist['name'] . ': ' . count($items) . ' наградных материалов, ' . count($competitions) . ' конкурсов Культурного центра «Музыкальный Мир». Проверка подлинности дипломов онлайн.'
     : 'Портфолио участника конкурсов Культурного центра «Музыкальный Мир».';
 
 // JSON-LD Person — для индексации персональной страницы участника.

@@ -350,7 +350,7 @@ function annual_report(?int $year = null): string {
             ['value' => (string) $participantsYear,       'label' => 'Заявок участников'],
             ['value' => (string) $citiesReached,           'label' => 'Городов-участников'],
             ['value' => (string) $districtsReached . ' из 8', 'label' => 'Федеральных округов охвачено'],
-            ['value' => (string) $diplomasYear,            'label' => 'Наградных документов оформлено'],
+            ['value' => (string) $diplomasYear,            'label' => 'Наградных материалов оформлено'],
         ]);
 
         $doc->heading('2', 'Показатели за всё время работы центра');

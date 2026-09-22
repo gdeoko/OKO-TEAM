@@ -303,7 +303,7 @@ ob_start(); ?>
       <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
         <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>
         <h2>Результаты готовятся к публикации</h2>
-        <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Конкурс завершён, наградные документы формируются. Итоги появятся на этой странице в ближайшее время.</p>
+        <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Конкурс завершён, наградные материалы формируются. Итоги появятся на этой странице в ближайшее время.</p>
         <a class="btn btn--primary" href="<?= url('/competition/' . $c['slug']) ?>">О конкурсе</a>
       </div>
     <?php else: ?>

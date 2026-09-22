@@ -1,6 +1,6 @@
 <?php
 /**
- * Операции над отправками: результат аттестации и наградные документы.
+ * Операции над отправками: результат аттестации и наградные материалы.
  *
  * Одна и та же логика нужна в трёх местах админки — «Заявки» (карточка),
  * «Отправки» (живой пульт) и «Заказы электронных». Раньше она была написана
@@ -116,7 +116,7 @@ function dops_result_cancel(int $appId): array {
     return ['ok' => true, 'msg' => 'Плановая отправка результата отменена.'];
 }
 
-/* ========================== НАГРАДНЫЕ ДОКУМЕНТЫ ========================== */
+/* ========================== НАГРАДНЫЕ материалЫ ========================== */
 
 /**
  * Ленивая колонка diplomas.queue_id — номер письма в mail_queue, которым ушёл
@@ -147,17 +147,17 @@ function dops_diplomas(int $appId): array {
 }
 
 /**
- * Отправить наградные документы заявки ОДНИМ письмом прямо сейчас.
+ * Отправить наградные материалы заявки ОДНИМ письмом прямо сейчас.
  * $duplicate=true — повторная отправка уже отправленных.
  * Используется общий рендер письма из cron/send_diplomas.php (тот же вид, что у участника).
  */
 function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
     $items = dops_diplomas($appId);
-    if (!$items) return ['ok' => false, 'msg' => 'По заявке нет наградных документов.'];
+    if (!$items) return ['ok' => false, 'msg' => 'По заявке нет наградных материалов.'];
 
     $pending = array_values(array_filter($items, fn($d) => trim((string) ($d['sent_at'] ?? '')) === ''));
     $send    = $duplicate ? $items : $pending;
-    if (!$send) return ['ok' => false, 'msg' => 'Все документы уже отправлены. Используйте «Продублировать».'];
+    if (!$send) return ['ok' => false, 'msg' => 'Все наградные материалы уже отправлены. Используйте «Продублировать».'];
 
     $a = one("SELECT a.*, c.name AS comp_name FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$appId]);
@@ -209,7 +209,7 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
     // НЕ УШЛО — ЗНАЧИТ НЕ УШЛО.
     //
     // Раньше время отправки проставлялось независимо от результата: оргкомитет
-    // жал «Отправить сейчас», видел «Наградные документы отправлены», диплом
+    // жал «Отправить сейчас», видел «Наградные материалы отправлены», диплом
     // помечался отправленным — а письма не было. Понять это можно было только со
     // слов участника. Теперь при сбое письмо кладётся в очередь целиком (все
     // вложения, а не первое), диплом остаётся неотправленным, и в ответе прямо
@@ -257,7 +257,7 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
           ['ok' => $ok, 'count' => $cnt, 'queued' => $queued, 'error' => mb_substr($why, 0, 200)]);
 
     if ($ok) {
-        return ['ok' => true, 'msg' => ($duplicate ? 'Письмо с наградами отправлено повторно' : 'Наградные документы отправлены')
+        return ['ok' => true, 'msg' => ($duplicate ? 'Письмо с наградами отправлено повторно' : 'Наградные материалы отправлены')
             . ' (' . $cnt . ' шт., одним письмом на ' . $to . ').'
             . ($switched !== '' ? ' Основная почта не ответила, отправлено с резервной: ' . $switched . '.' : '')];
     }
@@ -268,19 +268,19 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
     return ['ok' => false, 'msg' => 'Письмо не отправлено и в очередь не встало: ' . mb_substr($why, 0, 200)];
 }
 
-/** Перенести отправку всех неотправленных наградных документов заявки. */
+/** Перенести отправку всех неотправленных наградных материалов заявки. */
 function dops_diplomas_resched(int $appId, string $dt): array {
     $norm = dops_norm_dt($dt);
     if ($norm === '') return ['ok' => false, 'msg' => 'Укажите дату и время.'];
     $n = q("UPDATE diplomas SET scheduled_at=?, send_tries=0
              WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$norm, $appId])->rowCount();
-    if ($n === 0) return ['ok' => false, 'msg' => 'Нет неотправленных документов для переноса.'];
+    if ($n === 0) return ['ok' => false, 'msg' => 'Нет неотправленных наградных материалов для переноса.'];
     app_status_sync($appId);
     audit('diplomas_resched', 'application', $appId, ['at' => $norm, 'count' => $n]);
     return ['ok' => true, 'msg' => 'Отправка наград перенесена на ' . dops_dt($norm) . ' (' . $n . ' шт.).'];
 }
 
-/** Отменить плановую отправку наградных документов (удаляет неотправленные). */
+/** Отменить плановую отправку наградных материалов (удаляет неотправленные). */
 function dops_diplomas_cancel(int $appId): array {
     // ЧТО СНОСИМ — ЗНАТЬ НАДО ДО УДАЛЕНИЯ.
     //
@@ -290,7 +290,7 @@ function dops_diplomas_cancel(int $appId): array {
     // числе оплаченные заказом — не восстановит никто, поэтому говорим прямо, что
     // именно исчезло и что придётся выпустить руками.
     $doomed = all("SELECT type FROM diplomas WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$appId]);
-    if (!$doomed) return ['ok' => false, 'msg' => 'Нет запланированных документов.'];
+    if (!$doomed) return ['ok' => false, 'msg' => 'Нет запланированных наградных материалов.'];
     $manual = 0;
     foreach ($doomed as $d) if (!in_array((string) ($d['type'] ?? ''), ['main', 'extra'], true)) $manual++;
     $c = one("SELECT c.results_mode, c.is_paid FROM applications a
