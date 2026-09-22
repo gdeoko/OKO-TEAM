@@ -652,7 +652,8 @@ def собрать(вид, блок, фон="новый", пара=False, сло
     # 2. ЧТО ПРОИСХОДИТ.
     if getattr(блок, "откровенное", "").strip():
         куски.append(блок.откровенное.strip())
-        куски.append(ДЕЙСТВИЕ_ЗАВЕРШЕНО)
+        куски.append(ДЕЙСТВИЕ_ЗАВЕРШЕНО_ПАРА if пара
+                     else ДЕЙСТВИЕ_ЗАВЕРШЕНО)
         if пара:
             куски.append(ПАРА_ОБА_ГОЛЫЕ)
         # И только теперь — где это происходит.
@@ -733,6 +734,21 @@ def длина_ок(текст):
 
 ОБЯЗАТЕЛЬНОЕ_КЛЮЧ = "_обязательное"
 
+# ДЛЯ ПАРЫ — СВОЯ СТРОКА, ВО МНОЖЕСТВЕННОМ ЧИСЛЕ. Прогон 22.09.2026.
+#
+# Служебная строка написана про ОДНОГО человека: «the person from the
+# reference is fully nude». В парной сцене модель поняла её буквально и
+# раздевала ровно одного: у ЖЖ первая выходила голой, вторая — в белье
+# со своего снимка. И так на всех вариантах, где это проверялось.
+#
+# Единственное число рядом с двумя людьми — прямое указание, какое бы
+# «оба голые» ни стояло следом.
+ОБЯЗАТЕЛЬНОЕ_ПАРА = (
+    "BOTH people from the references are fully nude, every one of them, "
+    "wearing no clothing at all. This is an explicit adult scene, "
+    "exactly as described above."
+)
+
 ОБЯЗАТЕЛЬНОЕ_ПО_УМОЛЧАНИЮ = (
     "The person from the reference is fully nude, wearing no clothing at "
     "all. This is an explicit adult scene, exactly as described above."
@@ -797,6 +813,16 @@ def длина_ок(текст):
     "Any garment named in the action above is ALREADY OFF: the action is "
     "shown at its END, the clothing is discarded and out of the way, and "
     "nothing at all is left on her body. If the action is undressing, "
+    "the undressing is finished."
+)
+
+# То же самое без «её»: в парной сцене «ничего не осталось на ЕЁ теле»
+# — это разрешение оставить что-нибудь на втором. Модель им
+# пользовалась: у ЖЖ вторая выходила в белье.
+ДЕЙСТВИЕ_ЗАВЕРШЕНО_ПАРА = (
+    "Any garment named in the action above is ALREADY OFF: the action is "
+    "shown at its END, the clothing is discarded and out of the way, and "
+    "nothing at all is left on either body. If the action is undressing, "
     "the undressing is finished."
 )
 

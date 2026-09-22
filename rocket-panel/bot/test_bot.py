@@ -1502,7 +1502,12 @@ class РезультатВсегдаОткровенный(unittest.TestCase):
     def test_обязательная_строка_в_каждом_варианте(self):
         обяз = catalog.обязательная_строка()
         for s in catalog.все_сценарии():
-            self.assertIn(обяз, s.промпт(), s.key)
+            # У пары строка своя, во множественном числе: единственное
+            # число рядом с двумя людьми модель понимает буквально и
+            # раздевает одного (прогон 22.09.2026, ЖЖ: первая голая,
+            # вторая в белье).
+            нужная = prompts.ОБЯЗАТЕЛЬНОЕ_ПАРА if s.пара else обяз
+            self.assertIn(нужная, s.промпт(), s.key)
 
     def test_обязательная_строка_стоит_в_начале(self):
         """В конце она проигрывает обстановке и свету — ровно так и
@@ -2486,6 +2491,29 @@ class НегативПоКадру(unittest.TestCase):
         self.assertIn("two people", prompts.негатив("любой текст без пары"))
         self.assertNotIn("two people",
                          prompts.негатив("... EXACTLY TWO bodies ..."))
+
+
+class УПарыВсёВоМножественномЧисле(unittest.TestCase):
+    """Прогон 22.09.2026, ЖЖ: первая выходила голой, вторая — в белье
+    со своего снимка. Виновато было единственное число: две служебные
+    строки написаны про ОДНОГО человека («the person», «on her body»),
+    и рядом с двумя людьми модель поняла их буквально."""
+
+    def test_нагота_объявлена_про_обоих(self):
+        p = catalog.scene("pf_ff_close").prompt_фото()
+        self.assertIn("BOTH people from the references are fully nude", p)
+        self.assertNotIn("The person from the reference is fully nude", p)
+
+    def test_снятая_одежда_не_привязана_к_одному_телу(self):
+        p = catalog.scene("pf_ff_close").prompt_фото()
+        self.assertIn("left on either body", p)
+        self.assertNotIn("left on her body", p)
+
+    def test_у_одиночки_единственное_число_осталось(self):
+        """Там оно верное, и менять его незачем."""
+        p = catalog.scene("un_close").prompt_фото()
+        self.assertIn("The person from the reference is fully nude", p)
+        self.assertIn("left on her body", p)
 
 
 if __name__ == "__main__":
