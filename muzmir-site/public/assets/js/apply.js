@@ -916,8 +916,19 @@
       fillPayAmount();
       saveDraft();
     }
+    /* ОДИН НОМЕР — ОДИН КОНКУРС.
+       Галочки звали отметить всё сразу, и одна и та же запись уходила в три
+       конкурса: жюри оценивало одно выступление трижды. Когда правило включено
+       (data-one на списке), выбор ведёт себя как переключатель — отметил другой
+       конкурс, прежний снялся. Сервер проверяет то же самое ещё раз. */
+    var oneComp = !!document.querySelector('.comp-list[data-one="1"]');
     $$('input[name="competition_ids[]"]').forEach(function (r) {
-      r.addEventListener('change', recomputePaid);
+      r.addEventListener('change', function () {
+        if (oneComp && r.checked) {
+          $$('input[name="competition_ids[]"]').forEach(function (o) { if (o !== r) o.checked = false; });
+        }
+        recomputePaid();
+      });
     });
     /* КОНКУРС ЭЛИТНОГО КЛУБА ПРОВЕРЯЕМ И ПРИ ВХОДЕ ПО ССЫЛКЕ.
        С афиши, календаря и главной человек попадает сюда с уже отмеченным
@@ -927,6 +938,7 @@
     clubNotice($$('input[name="competition_ids[]"]:checked'));
     // Кнопка «Выбрать все»
     var selAll = document.getElementById('mzApplySelectAll');
+    if (selAll && oneComp) selAll.hidden = true;
     if (selAll) selAll.addEventListener('click', function(){
       var boxes = $$('input[name="competition_ids[]"]');
       var allChecked = boxes.every(function(b){return b.checked;});
