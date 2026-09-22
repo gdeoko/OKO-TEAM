@@ -37,16 +37,32 @@ class Место:
     """Обстановка, которую можно подставить к любому варианту."""
 
     def __init__(self, key, title, подпись, обстановка, свет="", ещё="",
-                 референс=False):
+                 референс=False, кратко=""):
         self.key = key
         self.title = title
         self.подпись = подпись          # человеку на экран выбора
         self.обстановка = обстановка
         self.свет = свет
+        # КОРОТКАЯ ФОРМА — для парных сцен. Замер 22.09.2026: у пары
+        # промпт на 5343 знака терял то место, то позу, то наготу, а на
+        # 709 знаках всё встало сразу. Полное описание туда не влезает.
+        # Не задано — берём по первому предложению обстановки и света.
+        self._кратко = кратко
         self.ещё = ещё
         # «Как на твоём фото» — не место, а его отсутствие: обстановка
         # берётся с присланного снимка, и добавлять нечего.
         self.референс = референс
+
+    @property
+    def кратко(self):
+        if self._кратко:
+            return self._кратко
+        куски = []
+        for текст in (self.обстановка, self.свет):
+            текст = (текст or "").strip()
+            if текст:
+                куски.append(текст.split(". ")[0].rstrip(".") + ".")
+        return " ".join(куски)
 
 
 # «Как на твоём фото» стоит первым и выбран по умолчанию. Это и самый
@@ -121,7 +137,11 @@ class Место:
                "from the front by a large soft white light: skin keeps "
                "its own colour, and every curve and every point of "
                "contact stays clearly readable.",
-          ещё="Glossy and expensive, a high-end studio shoot."),
+          ещё="Glossy and expensive, a high-end studio shoot.",
+          кратко="Black studio, a wall of hot pink neon tubes glowing "
+                 "behind them, glossy black floor; the neon rims their "
+                 "bodies from behind while a soft white light from the "
+                 "front keeps the skin its own colour."),
 
     Место("sc_neon", "Неоновый переулок",
           "Мокрый асфальт, розовые вывески",

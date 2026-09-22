@@ -324,8 +324,12 @@ class Каталог(unittest.TestCase):
             # У одиночной сцены «her face preserved exactly», у парной
             # «each person's face is preserved exactly» — общее в обеих
             # ровно это.
-            self.assertIn("FACE preserved exactly", sc.prompt,
-                          f"{sc.key}: нет блока сохранения лица")
+            # У пары сборка короткая, и то же требование сказано в
+            # ней иначе: лица берутся с референсов.
+            держит = ("FACE preserved exactly" in sc.prompt
+                      or "both faces are the ones from the references"
+                      in sc.prompt)
+            self.assertTrue(держит, f"{sc.key}: нет блока сохранения лица")
 
     def test_три_раздела_и_в_каждом_дети(self):
         """Решение владельца 21.09.2026: три раздела — Раздеть, Видео,
@@ -1134,8 +1138,11 @@ class ПарныеСцены(unittest.TestCase):
         """Смешение двух лиц в одно — самый частый брак парных сцен, и
         стоит он дороже перепутанного порядка референсов."""
         for s in catalog.узел("vi_group").все_сцены:
-            self.assertIn("never blended into one face", s.prompt_фото())
-            self.assertIn("TWO different people", s.prompt_фото())
+            # Короткая парная сборка говорит то же короче: лица — с
+            # референсов, а слипание запрещено негативом.
+            self.assertIn("both faces are the ones from the references",
+                          s.prompt_фото())
+            self.assertIn("duplicated face", s.negative)
 
     def test_состав_назван_в_промпте(self):
         self.assertIn("is a man", catalog.scene("pr_mf_near").prompt_фото())
@@ -1268,7 +1275,7 @@ class ПорядокБлоковВПромпте(unittest.TestCase):
 
     def test_у_пары_якорь_про_двоих(self):
         p = catalog.scene("pf_mf_near").промпт()
-        self.assertIn("THE TWO PEOPLE FROM THE REFERENCE", p[:1100])
+        self.assertIn("the two people from the reference photos", p[:1100])
 
     def test_первым_идёт_задание(self):
         p, _ = self.порядок()
@@ -1356,7 +1363,7 @@ class СложениеБуквальноеИПовторённое(unittest.Test
         # pr_* — ролики; у них сложения нет вовсе (см. короткую сборку
         # i2v). Берём фотографию-зеркало.
         p = catalog.scene("pf_mf_near").промпт()
-        self.assertIn("Each woman in this frame", p)
+        self.assertIn("She is petite with a small, almost flat chest", p)
 
 
 class СвойПромптТожеПравитСнимок(unittest.TestCase):
@@ -1477,11 +1484,14 @@ class ДействиеПоказываетсяВКонце(unittest.TestCase):
         """Обязательная строка владельца написана про одного. Прогон
         22.09.2026: женщина голая, мужчина в серых шортах с его листа."""
         p = catalog.scene("pf_mf_near").промпт()
-        self.assertIn("BOTH people in the frame are completely bare", p)
-        # Названий одежды тут больше нет ВООБЩЕ: модель рисует
-        # названное, и «не мужские шорты» выдавали ровно шорты.
+        self.assertIn("Both of them are stripped bare", p)
+        # Мужская нагота названа ПРЯМО и анатомично: общего «оба голые»
+        # сборке не хватало — замер дал 1 кадр из 2 против 2 из 2.
+        self.assertIn("erect penis fully exposed", p)
+        # Названий одежды тут нет ВООБЩЕ: модель рисует названное, и
+        # «не мужские шорты» выдавали ровно шорты.
         # См. `ОдеждуНеНазываемВПоложительномТексте`.
-        self.assertIn("Neither keeps anything they were wearing", p)
+        self.assertIn("nothing covering either of them", p)
 
     def test_одиночной_сцене_про_обоих_не_говорим(self):
         self.assertNotIn("BOTH people", catalog.scene("un_full").промпт())
@@ -1509,8 +1519,18 @@ class РезультатВсегдаОткровенный(unittest.TestCase):
             # число рядом с двумя людьми модель понимает буквально и
             # раздевает одного (прогон 22.09.2026, ЖЖ: первая голая,
             # вторая в белье).
-            нужная = prompts.ОБЯЗАТЕЛЬНОЕ_ПАРА if s.пара else обяз
-            self.assertIn(нужная, s.промпт(), s.key)
+            if s.пара and prompts.семейство(s.job) == "i2i":
+                # У парной ФОТОГРАФИИ сборка короткая, и служебная
+                # строка в неё не идёт: нагота объявлена своим
+                # предложением, с названной анатомией — см.
+                # `ПАРА_РАЗДЕТЫ_ДОГОЛА`. У парного РОЛИКА сборка
+                # прежняя: там первый кадр приходит готовой
+                # фотографией, и длина ему не мешает.
+                self.assertIn("stripped bare", s.промпт(), s.key)
+            elif s.пара:
+                self.assertIn(prompts.ОБЯЗАТЕЛЬНОЕ_ПАРА, s.промпт(), s.key)
+            else:
+                self.assertIn(обяз, s.промпт(), s.key)
 
     def test_обязательная_строка_стоит_в_начале(self):
         """В конце она проигрывает обстановке и свету — ровно так и
@@ -2389,11 +2409,11 @@ class ТелоНеСклеивается(unittest.TestCase):
     def test_одиночке_сказано_одно_тело(self):
         p = self.одиночка()
         self.assertIn("ONE single continuous body", p)
-        self.assertNotIn("EXACTLY TWO bodies", p)
+        self.assertNotIn("Exactly two people in the frame", p)
 
     def test_паре_сказано_ровно_два_тела(self):
         p = self.пара()
-        self.assertIn("EXACTLY TWO bodies", p)
+        self.assertIn("Exactly two people in the frame", p)
         self.assertNotIn(
             "ONE single continuous body", p,
             "«одно туловище, одна голова» в парной сцене — указание "
@@ -2403,14 +2423,17 @@ class ТелоНеСклеивается(unittest.TestCase):
         """Стояло пятнадцатым блоком из двадцати одного и не работало:
         у пары «Сверху» набиралась куча из трёх лиц. Негатив до них
         доходил и не побеждал — помог только перенос вверх."""
-        for ключ in ("un_close", "pf_mf_above"):
-            блоки = catalog.scene(ключ).prompt_фото().split("\n\n")
-            где = [i for i, b in enumerate(блоки)
-                   if "ONE single continuous body" in b
-                   or "EXACTLY TWO bodies" in b]
-            self.assertTrue(где, ключ)
-            self.assertLess(где[0], 4,
-                            f"{ключ}: «сколько людей» уехало в середину")
+        # У одиночки — блоками, у пары сборка короткая и блоков в ней
+        # нет вовсе; там меряем долей текста.
+        блоки = catalog.scene("un_close").prompt_фото().split("\n\n")
+        где = [i for i, b in enumerate(блоки)
+               if "ONE single continuous body" in b]
+        self.assertTrue(где, "un_close")
+        self.assertLess(где[0], 4, "«сколько людей» уехало в середину")
+
+        p = catalog.scene("pf_mf_above").prompt_фото()
+        self.assertLess(p.index("Exactly two people in the frame"),
+                        len(p) * 2 // 3)
 
     def test_запрет_на_склейку_в_негативе(self):
         neg = prompts.НЕГАТИВ
@@ -2424,10 +2447,13 @@ class ГолыеОстаютсяГолымиДоКонца(unittest.TestCase):
     действия у него нет, требование наготы стояло только в начале, а в
     конце стояла ткань, которая мнётся и прижимается к коже."""
 
-    def test_у_пары_нагота_повторена_последней_строкой(self):
+    def test_у_пары_нагота_стоит_в_первой_трети(self):
+        """Повтор в хвосте был лекарством от ДЛИНЫ: в пятитысячном
+        промпте начало и конец — единственное, что модель читала. У
+        короткой парной сборки хвоста нет, весь текст и есть начало.
+        Поэтому проверяем не повтор, а место."""
         p = catalog.scene("pf_mf_near").prompt_фото()
-        хвост = p.strip().rsplit("\n\n", 1)[-1]
-        self.assertIn("BOTH OF THEM ARE NAKED", хвост)
+        self.assertLess(p.index("stripped bare"), len(p) // 3)
 
     def test_про_ткань_молчим_когда_одежды_нет(self):
         сц = catalog.scene("pf_mf_near")
@@ -2531,12 +2557,12 @@ class УПарыВсёВоМножественномЧисле(unittest.TestCase
 
     def test_нагота_объявлена_про_обоих(self):
         p = catalog.scene("pf_ff_close").prompt_фото()
-        self.assertIn("BOTH people from the references are fully nude", p)
+        self.assertIn("Both women are stripped bare", p)
         self.assertNotIn("The person from the reference is fully nude", p)
 
     def test_снятая_одежда_не_привязана_к_одному_телу(self):
         p = catalog.scene("pf_ff_close").prompt_фото()
-        self.assertIn("left on either body", p)
+        self.assertIn("nothing covering either of them", p)
         self.assertNotIn("left on her body", p)
 
     def test_у_одиночки_единственное_число_осталось(self):
@@ -2544,6 +2570,56 @@ class УПарыВсёВоМножественномЧисле(unittest.TestCase
         p = catalog.scene("un_close").prompt_фото()
         self.assertIn("The person from the reference is fully nude", p)
         self.assertIn("left on her body", p)
+
+
+class ПарныйПромптКороткий(unittest.TestCase):
+    """Замер 22.09.2026, «Секс раком», четыре круга по два зерна.
+
+    Длинный парный промпт (5343 знака) НИ РАЗУ не дал всё нужное
+    сразу: что ни подними наверх, вытесняется другое.
+
+        место первым        неон идеальный, акта и наготы нет
+        акт выше места      поза пошла, неон исчез
+        одежда не названа   одно зерно голое, позы нет
+        акт стал заданием   поза на обоих, нагота и неон ушли
+        709 ЗНАКОВ          неон, поза, грудь, лица, двое — сразу
+
+    Дело не в порядке, а в длине: модель держит примерно первую тысячу
+    знаков. У одиночной сцены есть вторая опора — присланный снимок в
+    стартовом латенте; у пары латент стирается целиком, и лишний текст
+    только мешает."""
+
+    def test_парное_фото_укладывается_в_тысячу_с_небольшим(self):
+        for s in catalog.все_сценарии():
+            if s.пара and prompts.семейство(s.job) == "i2i":
+                self.assertLess(len(s.prompt_фото()), 1200, s.key)
+
+    def test_одиночную_сборку_не_тронули(self):
+        """У неё есть опора на снимок, и там длина работает: 12 кнопок
+        из 12 по лицу."""
+        self.assertGreater(len(catalog.scene("un_close").prompt_фото()), 3000)
+
+    def test_состав_назван_иначе_ЖЖ_станет_МЖ(self):
+        жж = catalog.scene("pf_ff_near").prompt_фото()
+        мж = catalog.scene("pf_mf_near").prompt_фото()
+        self.assertIn("Both people are women", жж)
+        self.assertIn("the second reference is a woman", мж)
+
+    def test_мужская_анатомия_только_там_где_мужчина(self):
+        self.assertNotIn("penis", catalog.scene("pf_ff_near").prompt_фото())
+        self.assertIn("penis", catalog.scene("pf_mf_near").prompt_фото())
+
+    def test_негатив_узнаёт_короткую_сборку(self):
+        """Иначе паре запретят второго человека — то есть сломают саму
+        кнопку."""
+        self.assertNotIn("two people",
+                         catalog.scene("pf_mf_near").negative)
+
+    def test_место_подставляется_короткой_формой(self):
+        м = места.место("sc_amberry")
+        p = catalog.scene("pf_mf_near").промпт(место=м)
+        self.assertIn("hot pink neon tubes", p)
+        self.assertLess(len(p), 1200)
 
 
 if __name__ == "__main__":
