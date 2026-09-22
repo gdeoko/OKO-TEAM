@@ -219,20 +219,31 @@
 # Требование непрерывности тела РАЗНОЕ у одиночки и у пары, и спутать
 # их нельзя: «одно туловище, одна голова» в парной сцене — прямое
 # указание слепить двоих в одного.
+# СЧЁТ ТЕЛ И КОНЕЧНОСТЕЙ — вслух и только про то, что ДОЛЖНО быть.
+# Поломки отсюда убраны намеренно: сборка рисует названное даже под
+# отрицанием. Замер 22.09.2026 — фраза «never a separate strip of face
+# pasted above the body» УВЕЛИЧИЛА число коллажей; те же поломки,
+# перенесённые в негатив (ЛИШНИЕ_ЛЮДИ, КАША_ИЗ_ТЕЛ), их убрали.
+#
+# Работает при этом не слово «правильно», а ПРОСЛЕЖИВАЕМОСТЬ: каждая
+# конечность названа растущей из своего места. Тем же приёмом ушёл
+# фантомный фаллос на соло — рука, прослеженная от плеча, перестала
+# читаться сборкой как отдельный предмет.
 ОДНО_ТЕЛО = (
-    "ONE single continuous body: one head, one torso, two arms, two "
-    "legs, all joined the way a real body joins. Head, chest, belly and "
-    "hips follow one another in the natural order and at natural "
-    "distances — never a face stacked directly on top of a crotch, "
-    "never a second torso, never hands growing out of the wrong place."
+    "ONE single continuous body: one head on her own neck, one torso, "
+    "two arms growing from her own shoulders, two legs growing from her "
+    "own hips — two hands and two feet in all, and every one of them "
+    "traceable back along its own limb to the place it grows from. Head, "
+    "chest, belly and hips follow one another in the natural order and "
+    "at natural distances, as in a single unretouched photograph."
 )
 
 ДВА_ТЕЛА = (
-    "EXACTLY TWO bodies in the frame and no one else: two heads, four "
-    "arms, four legs, each body continuous and correctly joined. No "
-    "third person, no extra face in the background, no spare limb "
-    "belonging to nobody. Neither face is ever stacked on top of the "
-    "other one's body."
+    "EXACTLY TWO bodies in the frame: two heads, each on its own neck, "
+    "four arms and four legs, four hands and four feet in all. Every "
+    "limb is traceable back along itself to the one body it grows from, "
+    "and the two bodies keep their own outlines where they touch, each "
+    "whole and separate, as in a single unretouched photograph."
 )
 
 КАЧЕСТВО = (
@@ -465,11 +476,34 @@ class Блок:
 # Хвосты именно ПО КАДРУ, а не общие: «two people» нельзя запрещать
 # парной сцене, а одежду нельзя запрещать там, где человек сам про неё
 # написал.
+# ТРЕТЬЕГО В КАДРЕ НЕТ. Правило владельца от 22.09.2026, жёсткое:
+# «более 2 человек в кадре не должно быть». Ловилось на парных сценах —
+# в позе 69 приходила третья девушка, на «отлизывает сзади» — четвёртая
+# голова у края. Считаем вслух: лишние головы, лишние лица, ряд голов,
+# кто-то на фоне.
 ЛИШНИЕ_ЛЮДИ = (
-    "third person, three people, extra person, extra head, second head, "
-    "duplicated face, cloned face, crowd, people in the background"
+    "third person, third woman, third man, three people, four people, "
+    "extra person, extra head, third head, fourth head, extra face, "
+    "three heads, four heads, row of heads, duplicated face, cloned "
+    "face, crowd, group, people in the background, someone in the "
+    "background, bystander, onlooker"
 )
 ТОЛЬКО_ОДИН = "two people, second person, couple, another woman, another man"
+
+# АНАТОМИЯ ЦЕЛАЯ. Второе жёсткое правило владельца от 22.09.2026:
+# «вся анатомия тел должна быть идеальная, чтобы не было каши
+# сросшихся конечностей». В парных сценах ломалось ровно это: тела
+# срастались тазами, у одной выходила третья рука, ступня оказывалась
+# ничьей. Общего «bad anatomy» на это не хватало — перечислено
+# поимённо то, что сборка рисует.
+КАША_ИЗ_ТЕЛ = (
+    "merged bodies, fused bodies, conjoined bodies, bodies growing into "
+    "each other, shared torso, shared limb, limb belonging to no one, "
+    "third arm, third leg, fifth limb, extra foot, three feet, three "
+    "hands, extra arms, extra legs, arm without a shoulder, leg without "
+    "a hip, detached hand, detached foot, floating hand, twisted neck, "
+    "head rotated backwards, impossible contortion, melted anatomy"
+)
 ОДЕТЫЕ = (
     "clothed, dressed, partially dressed, underwear, lingerie, bra, "
     "panties, knickers, thong, bikini, swimsuit, shorts, boxers, "
@@ -501,15 +535,20 @@ class Блок:
 # Помогает только запрет самой пустоты.
 ЧЛЕН_НЕ_СТЁРТ = "smooth featureless crotch, no penis, censored"
 
-# А в сцене ДВУХ ЖЕНЩИН сборка дорисовывает член между их ног — на
-# слове «мастурбирует», на позе «раком», на любом откровенном действии.
-# Владелец ловил это трижды: «у девушки хуй», «в ЖЖ лесби не должно
-# быть членов вообще».
-# Запрет стоит ТОЛЬКО у пары женщин, где состав известен наверняка. У
-# одиночной кнопки его нет намеренно: фотографию присылает клиент, и
-# клиент бывает мужчиной — там этот запрет стёр бы его самого.
-МУЖСКОЕ_ЛИШНЕЕ = ("penis, cock, phallus, male genitals, futanari, "
-                  "intersex, man")
+# А ЖЕНЩИНЕ сборка дорисовывает член — на слове «мастурбирует», на позе
+# «раком», на любом откровенном действии. Владелец ловил это четырежды
+# и 22.09.2026 закрыл вопрос жёстким правилом: «у девушек не должно
+# быть хуев, это анатомия».
+#
+# Поэтому запрет стоит ВЕЗДЕ, где в сцене нет мужчины, — и у пары
+# женщин, и у одиночной кнопки. Одиночная сборка написана про женщину
+# насквозь (22 женских местоимения, ни одного мужского, и всюду грудь),
+# так что стереть мужчину этот запрет не может: мужчины там и не было.
+# Единственное исключение — сцены, где член назван в самом кадре: МЖ и
+# ММ. Их отбирает `негатив()` по словам «erect penis» в промпте.
+МУЖСКОЕ_ЛИШНЕЕ = ("penis, cock, phallus, erect penis, male genitals, "
+                  "testicles, futanari, intersex, hermaphrodite, "
+                  "man, male body")
 
 
 def негатив(промпт):
@@ -519,7 +558,7 @@ def негатив(промпт):
     есть источник правды. В нём видно, пара это или один, и названа ли
     в кадре одежда.
     """
-    куски = [НЕГАТИВ, ЛИШНИЕ_ЛЮДИ]
+    куски = [НЕГАТИВ, ЛИШНИЕ_ЛЮДИ, КАША_ИЗ_ТЕЛ]
     # Признака два, потому что сборки две: длинная (одиночная) и
     # короткая (парная). Пропустить парную значило бы запретить ей
     # второго человека — то есть сломать саму кнопку.
@@ -532,9 +571,12 @@ def негатив(промпт):
     # Запрет пустого паха ставим ТОЛЬКО там, где член в кадре и должен
     # быть: в женской сцене он сам по себе становится подсказкой, и
     # сборка рисует его девушке — владелец ловил это трижды.
+    # Мужчина в кадре есть ровно там, где его анатомия названа самой
+    # сборкой. Тогда сторожим обратное — чтобы пах не вышел гладким.
+    # Везде остальном это женская сцена, и член в ней запрещён.
     if "erect penis" in промпт:
         куски.append(ЧЛЕН_НЕ_СТЁРТ)
-    elif "Both people are women" in промпт:
+    else:
         куски.append(МУЖСКОЕ_ЛИШНЕЕ)
     return ", ".join(куски)
 
@@ -676,8 +718,15 @@ def собрать_пару(блок, сложение=None, своя_строк
     if сложение != "":
         куски.append(СЛОЖЕНИЕ_КРАТКО.get(сложение or СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ,
                                          СЛОЖЕНИЕ_КРАТКО[СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ]))
+    # Счёт людей И конечностей одной фразой: в парной сборке места на
+    # отдельный абзац нет (см. заметку о длине выше), а обе поломки
+    # владелец назвал одним правилом — «больше двух не должно быть, и
+    # анатомия идеальная, без каши сросшихся конечностей».
     куски.append("Exactly two people in the frame, and both faces are the "
-                 "ones from the references.")
+                 "ones from the references. Two heads, four arms and four "
+                 "legs in all, every limb traceable to the one body it "
+                 "grows from, both bodies whole and separate where they "
+                 "touch.")
     # СОСТАВ. Каталог кладёт его первым абзацем «ещё»: «на первом
     # снимке мужчина, на втором женщина» или «обе женщины». Без него
     # ЖЖ превращается в МЖ — единственное, чем эти кнопки и
