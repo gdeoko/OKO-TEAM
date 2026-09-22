@@ -176,11 +176,25 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
     """Три режима одним графом, по числу снимков:
 
         нет снимков  — текст в видео
-        один         — оживление, снимок становится ПЕРВЫМ кадром
-        два          — первый и последний кадр, движение приходит ко второму
+        один         — оживление снимка
+        два          — ролик с двумя людьми, оба с референсов
 
-    Второй случай берёт WanFirstLastFrameToVideo: у сборки VACE внутри,
-    и это её главное умение поверх обычного i2v.
+    СНИМКИ ИДУТ ЧЕРЕЗ VACE, И ЭТО ЕДИНСТВЕННЫЙ ПУТЬ, КОТОРЫЙ РАБОТАЕТ.
+    Замеры на карте 22.09.2026, один и тот же кадр, один текст, одно
+    зерно, отличался ровно узел:
+
+        WanImageToVideo(start_image)        чужая женщина с нулевого
+                                            кадра
+        WanFirstLastFrameToVideo(start/end) то же самое, чужая
+        WanVaceToVideo(reference_image)     она же: лицо, грудь, фон —
+                                            и держится до конца
+
+    Сборка грузится как WAN21_Vace и снимок принимает только своим
+    входом; мимо него кадр до модели не доходит вовсе. Поэтому режима
+    «первый и последний кадр» больше нет: эта сборка его обещание не
+    держит. Два снимка теперь значат двух ЛЮДЕЙ — оба уходят в
+    `reference_image` одним пакетом, и оба остаются собой. Ровно так
+    их и присылает бот в парных роликах.
     """
     images=[x for x in (images or []) if x][:2]
     g={
@@ -212,8 +226,12 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
         g[f"4{i}"]={"class_type":"ImageScale","inputs":{"image":[f"3{i}",0],"width":w,"height":h,
                     "upscale_method":"lanczos","crop":"center"}}
     if len(images)>=2:
-        g["6"]={"class_type":"WanFirstLastFrameToVideo",
-                "inputs":{**общее,"start_image":["41",0],"end_image":["42",0]}}
+        # Оба снимка одним пакетом: VACE берёт reference_image как
+        # набор, и каждый человек в наборе остаётся собой.
+        g["43"]={"class_type":"ImageBatch",
+                 "inputs":{"image1":["41",0],"image2":["42",0]}}
+        g["6"]={"class_type":"WanVaceToVideo",
+                "inputs":{**общее,"strength":1.0,"reference_image":["43",0]}}
     elif images:
         # VACE, А НЕ ОБЫЧНЫЙ i2v. Замер на карте 22.09.2026, один кадр,
         # один текст, одно зерно, отличался только этот узел:
@@ -438,7 +456,7 @@ def gen():
                    max(0.3,min(1.0,float(d.get("denoise",1.0)))))
     else:
         if len(images)>2:
-            return jsonify(error="Видео берёт первый и последний кадр, не больше"),400
+            return jsonify(error="Видео берёт не больше двух снимков"),400
         w,h=SZ["video"].get(d.get("size","vert"),(704,1280))
         # Длина кратна 4 плюс 1 — требование узлов Wan.
         сек=max(1.0,min(10.0,float(d.get("secs",5))))
