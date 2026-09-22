@@ -2364,6 +2364,19 @@ class ТелоНеСклеивается(unittest.TestCase):
             "«одно туловище, одна голова» в парной сцене — указание "
             "слепить двоих в одного")
 
+    def test_сколько_людей_сказано_в_начале(self):
+        """Стояло пятнадцатым блоком из двадцати одного и не работало:
+        у пары «Сверху» набиралась куча из трёх лиц. Негатив до них
+        доходил и не побеждал — помог только перенос вверх."""
+        for ключ in ("un_close", "pf_mf_above"):
+            блоки = catalog.scene(ключ).prompt_фото().split("\n\n")
+            где = [i for i, b in enumerate(блоки)
+                   if "ONE single continuous body" in b
+                   or "EXACTLY TWO bodies" in b]
+            self.assertTrue(где, ключ)
+            self.assertLess(где[0], 4,
+                            f"{ключ}: «сколько людей» уехало в середину")
+
     def test_запрет_на_склейку_в_негативе(self):
         neg = prompts.НЕГАТИВ
         for слово in ("duplicated torso", "face on top of crotch",
