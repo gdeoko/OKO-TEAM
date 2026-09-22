@@ -197,7 +197,7 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0):
     # сборку, и обычные 26 шагов при cfg 4 их ЛОМАЮТ.
     params = {"prompt": prompt, "size": "vert",
               "steps": 4, "cfg": 1.0, "seed": 0,
-              "neg": prompts.НЕГАТИВ, "denoise": denoise}
+              "neg": prompts.негатив(prompt), "denoise": denoise}
     сем = prompts.семейство(kind)
     if сем in ("t2i", "i2i"):
         params["mode"] = "photo"

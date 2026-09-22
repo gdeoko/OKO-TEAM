@@ -96,40 +96,33 @@
 СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ = "стройная"
 
 
+# ДЛИННОЕ ОПИСАНИЕ ВНЕШНОСТИ МЕШАЛО ВНЕШНОСТИ. Замер 22.09.2026.
+#
+# Здесь лежали 2267 знаков перечисления: то же лицо, те же скулы, те же
+# родинки, тот же загар, та же ключица. Треть всего промпта, и стояла
+# она ровно в мёртвой середине — там, где модель пролистывает.
+#
+# Двенадцать кнопок, одно зерно, один референс, отличалось только это
+# место:
+#
+#     2267 знаков  Ника на 11 кадрах из 12, на «сверху» вышла брюнетка,
+#                  кожа местами намасленная, «крупный план» расплывался
+#      300 знаков  Ника на 12 из 12, грудь маленькая везде, кожа
+#                  матовая, ракурсы читаются по кнопкам
+#
+# Сокращение не ослабило сходство, а усилило: внешность держат якорь
+# личности в начале, стартовый латент и негатив, а перечисление только
+# разбавляло всё остальное — позу, ракурс и откровенную строку, ради
+# которых человек и нажал кнопку.
 ТЕЛО_ПО_ФОТО = (
-    "The woman from the supplied reference photograph, reproduced one to on"
-    "e. FACE preserved exactly: same bone structure, same jaw and cheekbone"
-    "s, same eye shape, spacing and colour, same nose, same lips, same eyeb"
-    "rows, same hairline, same individual marks, moles and freckles. Identi"
-    "ty must be unmistakable — someone who knows her recognises her instant"
-    "ly at a glance. BODY preserved exactly as it is in the reference: the "
-    "same build and the same amount of flesh on it. If she is slim in the r"
-    "eference she stays slim; if she is full-figured she stays full-figured"
-    "; if she is athletic she stays athletic. Same shoulder width, same wai"
-    "st, same hips, same thighs, same height and the same proportions betwe"
-    "en them. Same breast size and shape, same buttocks, same belly — not o"
-    "ne size larger and not one size smaller. Same apparent age. SKIN prese"
-    "rved exactly: the same tone and undertone across the whole body, the s"
-    "ame tan lines if there are any, the same texture, the same birthmarks "
-    "and scars in the same places. HAIR preserved exactly: same colour, sam"
-    "e length, same density, same texture, same parting, same hairline. WHA"
-    "T IS UNDER THE CLOTHES IS NOT YOURS TO INVENT. The reference usually s"
-    "hows her dressed, and the undressed body must be READ OUT of that phot"
-    "ograph, not supplied from elsewhere: the breasts are the size the clot"
-    "hed silhouette says they are, and small breasts stay small — a flat or"
-    " barely-there chest is reproduced flat, not filled in. Same for the wa"
-    "ist, the belly and the hips: the clothing shows where the body is narr"
-    "ow and where it is soft, and that is the body. Adding a chest she does"
-    " not have is the single most common way to ruin this picture, and it r"
-    "uins it completely. AGE: she stays the age she is in the reference — a"
-    "n adult, and as young an adult as the photograph shows. Youthful skin "
-    "stays youthful; do not age her up, do not give her a mature woman's he"
-    "avier body, softened jaw, deeper folds or older breasts. This is a pho"
-    "tograph of THAT person, not a model who resembles her. Do not beautify"
-    ", do not slim, do not enlarge anything, do not symmetrise, do not smoo"
-    "th, do not idealise, do not give her a fashion-model or fitness-influe"
-    "ncer body she does not have. Any departure from the reference is a def"
-    "ect, even a flattering one."
+    "The woman from the reference photograph, one to one. FACE "
+    "preserved exactly, and with it her hair, her skin, her body and "
+    "her apparent age — an adult, and as young an adult as the "
+    "photograph shows. WHAT IS "
+    "UNDER THE CLOTHES IS NOT YOURS TO INVENT: it is read out of that "
+    "photograph, and a small or flat chest stays small. Do not "
+    "beautify, do not slim, do not enlarge, do not age her up. Any "
+    "departure from the reference is a defect, even a flattering one."
 )
 
 
@@ -445,6 +438,44 @@ class Блок:
     "jeans", "sweater", "uniform", "leggings", "corset", "blazer",
     "hoodie", "jacket", "trousers",
 )
+
+
+# ДВА ХВОСТА НЕГАТИВА, КОТОРЫЕ ЗАВИСЯТ ОТ КАДРА. Прогон 22.09.2026.
+#
+# Положительный текст уже говорит и «ровно двое», и «оба голые». На
+# части кнопок этого не хватило: у пары «Сверху» и «Крупный план»
+# набиралась куча из трёх лиц, а на «Лицом к лицу» и «От первого лица»
+# один из двоих оставался в белье со своего референса. Негатив при
+# CFG 1.5 живой, и запрет добивает то, что утверждение не дожало.
+#
+# Хвосты именно ПО КАДРУ, а не общие: «two people» нельзя запрещать
+# парной сцене, а одежду нельзя запрещать там, где человек сам про неё
+# написал.
+ЛИШНИЕ_ЛЮДИ = (
+    "third person, three people, extra person, extra head, second head, "
+    "duplicated face, cloned face, crowd, people in the background"
+)
+ТОЛЬКО_ОДИН = "two people, second person, couple, another woman, another man"
+ОДЕТЫЕ = (
+    "clothed, dressed, partially dressed, underwear, lingerie, bra, "
+    "panties, knickers, thong, bikini, swimsuit, shorts, boxers, "
+    "stockings, dress, skirt, shirt, top, covered breasts, covered crotch"
+)
+
+
+def негатив(промпт):
+    """Негатив под КОНКРЕТНЫЙ кадр, выведенный из его же текста.
+
+    Ничего не надо прокидывать через полпрограммы: собранный промпт и
+    есть источник правды. В нём видно, пара это или один, и названа ли
+    в кадре одежда.
+    """
+    куски = [НЕГАТИВ, ЛИШНИЕ_ЛЮДИ]
+    if "EXACTLY TWO bodies" not in промпт:
+        куски.append(ТОЛЬКО_ОДИН)
+    if "Fabric behaves as fabric" not in промпт:
+        куски.append(ОДЕТЫЕ)
+    return ", ".join(куски)
 
 
 def одежда_названа(блок):
