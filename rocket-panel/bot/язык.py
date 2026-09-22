@@ -159,6 +159,8 @@ def job_note(job, яз):
     "sc_studio": ("Black studio", "One light, everything else in darkness"),
     "sc_hotel":  ("Hotel at night", "The city in the window, a lamp by the bed"),
     "sc_pool":   ("By the pool", "Water, reflections, midday sun"),
+    "sc_amberry": ("AMBERRY studio",
+                  "Black set, pink neon, bodies in clean light"),
     "sc_neon":   ("Neon alley", "Wet asphalt, pink signs"),
     "sc_nature": ("Outdoors", "Tall grass, sunset light"),
     "sc_office": ("At school", "An empty classroom after lessons, light from the windows"),

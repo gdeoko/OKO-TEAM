@@ -98,6 +98,42 @@ class Место:
                "moving reflected light from the water playing across the "
                "underside of the chin, the arms and the thighs."),
 
+    # ФИРМЕННАЯ СТУДИЯ. Просьба владельца 22.09.2026: место в стиле
+    # самого бота — чёрный фон и розовый неон, как на лого, — чтобы
+    # такие кадры шли в примеры на витрину.
+    #
+    # Неон легко съедает тело: он красив, но красит кожу в свой цвет и
+    # топит фигуру в темноте. Поэтому здесь неон отвечает ТОЛЬКО за
+    # фон и за контур, а тела освещает отдельный мягкий белый источник
+    # спереди — ради того, что владелец и просил: чтобы фигура и
+    # действие читались чётко.
+    Место("sc_amberry", "Студия AMBERRY",
+          "Чёрный фон, розовый неон, тела в чистом свете",
+          обстановка="A dark studio built as a neon set: seamless black "
+                     "walls and black floor, and behind the subjects a "
+                     "wall of hot magenta-pink neon tubing — long "
+                     "horizontal bars and one broad glowing arc — burning "
+                     "against the black, its glow falling off into "
+                     "darkness at the edges of the frame. The floor is "
+                     "black and faintly glossy, catching a soft pink "
+                     "reflection of the tubes. Nothing else in the room: "
+                     "no furniture, no props, no text, no signage, no "
+                     "logo.",
+          свет="Two separate lighting systems, and they must not be "
+               "confused. The MAGENTA NEON sits BEHIND the subjects: it "
+               "rims the shoulders, the waist, the hips and the thighs "
+               "with a thin hot pink edge and separates every body "
+               "cleanly from the black background. The BODIES themselves "
+               "are lit from the front by a large soft white key light "
+               "slightly above the lens, with a white fill on the "
+               "opposite side: skin stays its own natural colour, "
+               "neither pink nor blue, and every curve, every muscle and "
+               "every point of contact between the bodies is clearly "
+               "readable. Nothing important falls into shadow, nothing "
+               "is blown out.",
+          ещё="Glossy, expensive, club-grade — the look of a high-end "
+              "studio shoot, not a dim room with a neon sign in it."),
+
     Место("sc_neon", "Неоновый переулок",
           "Мокрый асфальт, розовые вывески",
           обстановка="A narrow city alley at night after rain. Wet asphalt "
