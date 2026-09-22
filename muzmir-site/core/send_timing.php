@@ -10,7 +10,7 @@
  *       задана дата    → строго в эту дату/время;
  *       без галочки и без даты → моментально.
  *   • НАГРАДНОЙ МАТЕРИАЛ (осн./доп. дипломы) — через N рабочих дней ПОСЛЕ результата,
- *     тоже только в рабочее окно. N=5, для участников ВИП-клуба N=3.
+ *     тоже только в рабочее окно. N=5, для участников Элитного клуба N=3.
  */
 declare(strict_types=1);
 
@@ -73,7 +73,7 @@ if (!function_exists('result_plan_at')) {
      * @param string $submittedAt дата подачи (created_at)
      * @param bool   $auto        галочка «авто по сроку»
      * @param string $dateStr     ручная дата (если галочка снята)
-     * @param int    $wdays       рабочих дней для авто (5 или 3 ВИП)
+     * @param int    $wdays       рабочих дней для авто (5 или 3 для Элитного клуба)
      */
     function result_plan_at(string $submittedAt, bool $auto, string $dateStr, int $wdays): \DateTime {
         if ($auto) {

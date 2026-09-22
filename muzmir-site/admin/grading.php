@@ -896,7 +896,7 @@ if ($id = (int) input('id')) {
             <div style="font-weight:700;margin-bottom:6px">Когда отправить результат участнику?</div>
             <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:8px">
               <input type="checkbox" name="auto_send" id="autoSendChk" value="1" checked style="margin-top:3px">
-              <span>Автоматически по сроку <b>(по умолчанию)</b><br><span class="small muted">5 рабочих дней от даты подачи (ВИП — 3; вс — нерабочий), окно 9:00–18:00 МСК. Если срок вышел — ближайшее рабочее утро.</span></span>
+              <span>Автоматически по сроку <b>(по умолчанию)</b><br><span class="small muted">5 рабочих дней от даты подачи (Элитный клуб — 3; вс — нерабочий), окно 9:00–18:00 МСК. Если срок вышел — ближайшее рабочее утро.</span></span>
             </label>
             <!-- Появляется только когда снята галочка «авто» -->
             <div id="manualBox" style="display:none;padding-left:26px;border-left:2px solid var(--a-line)">

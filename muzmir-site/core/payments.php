@@ -21,7 +21,7 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
     $body = [
         'amount'       => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
         'capture'      => true,
-        // Подписка ВИП-клуба: просим ЮKassa сохранить способ оплаты, чтобы следующие
+        // Подписка Элитного клуба: просим ЮKassa сохранить способ оплаты, чтобы следующие
         // периоды списывались автоматически (cron/club_billing.php) без участия плательщика.
         'save_payment_method' => !empty($meta['save_payment_method']),
         // Возврат с ЮKassa — на страницу ожидания оплаты (спиннер → окно успеха).
@@ -73,7 +73,7 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
 
 /**
  * Автосписание по сохранённому способу оплаты (рекуррент ЮKassa).
- * Используется для продления подписки ВИП-клуба без участия плательщика.
+ * Используется для продления подписки Элитного клуба без участия плательщика.
  * Возвращает ['id','status'] или null при ошибке сети/конфигурации.
  */
 function yukassa_charge_saved(int $amount, string $paymentMethodId, string $description, array $meta = []): ?array {
@@ -710,7 +710,7 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                 try { order_dispatch_production((int) $orderId); } catch (\Throwable $e) { error_log('order_dispatch_production: ' . $e->getMessage()); }
             }
             // ЭЛЕКТРОННЫЕ: создаём наградные документы и планируем отправку —
-            // ВИП-клуб через 3 рабочих дня, остальные через 5 (важно для длинного
+            // Элитный клуб через 3 рабочих дня, остальные через 5 (важно для длинного
             // бесплатного конкурса, где награды не входят в участие и заказываются).
             if (function_exists('order_fulfill_digital')) {
                 try { order_fulfill_digital((int) $orderId); } catch (\Throwable $e) { error_log('order_fulfill_digital: ' . $e->getMessage()); }
@@ -738,13 +738,13 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                     'period' => $clubMonths >= 12 ? 'year' : 'month',
                     'payment_method_id' => (string) (($obj['payment_method']['saved'] ?? false) ? ($obj['payment_method']['id'] ?? '') : ''),
                 ]);
-                // Уведомление владельца: вступление/продление ВИП-клуба.
+                // Уведомление владельца: вступление/продление Элитного клуба.
                 if (!function_exists('owner_notify') && is_file(__DIR__ . '/notify_owner.php')) {
                     require_once __DIR__ . '/notify_owner.php';
                 }
                 if (function_exists('owner_notify')) {
                     $cu2 = one("SELECT full_name, email FROM users WHERE id=?", [$cuid]);
-                    owner_notify('ВИП-КЛУБ', 'Новое членство в клубе', 'Оплата подписки клуба прошла успешно.', [
+                    owner_notify('ЭЛИТНЫЙ КЛУБ', 'Новое членство в клубе', 'Оплата подписки клуба прошла успешно.', [
                         'Участник'  => trim((string) ($cu2['full_name'] ?? '')) ?: ('user #' . $cuid),
                         'Email'     => (string) ($cu2['email'] ?? ''),
                         'Действует до' => (string) ($clubSt['expires_at'] ?? ''),

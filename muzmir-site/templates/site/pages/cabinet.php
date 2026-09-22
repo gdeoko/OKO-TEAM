@@ -468,7 +468,7 @@ if ($nameSrc !== '') {
 $initials = mb_strtoupper($initials);
 $avatar = trim((string)($user['avatar'] ?? ''));
 
-/* --- Клуб постоянных участников: ВИП-галочка и строка статуса в настройках --- */
+/* --- Клуб постоянных участников: галочка Элитного клуба и строка статуса в настройках --- */
 if (!function_exists('club_status') && is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
 $club = function_exists('club_status') ? club_status($uid) : ['active' => false, 'expires_at' => null];
 $isVip = !empty($club['active']);
@@ -673,7 +673,7 @@ ob_start(); ?>
 .cab-item--danger .cab-item-lbl{color:var(--error,#B3261E);font-weight:700}
 .cab-item--danger .cab-item-ic{background:#B3392E}
 .cab-item--danger:hover{background:color-mix(in srgb,#B3392E 8%,transparent)}
-/* --- ВИП-галочка члена Клуба (в шапке, рядом с именем) --- */
+/* --- галочка Элитного клуба члена Клуба (в шапке, рядом с именем) --- */
 .cab-vip{display:inline-flex;vertical-align:-2px;margin-left:6px;width:20px;height:20px;flex:none;
   filter:drop-shadow(0 2px 5px rgba(199,147,34,.55))}
 .cab-vip svg{width:100%;height:100%}
@@ -913,13 +913,13 @@ ob_start(); ?>
         <div class="cab-panel" id="tab-apps" role="tabpanel">
           <h2>Мои заявки и результаты</h2>
 
-          <?php /* Напоминание о ВИП-клубе: встроенная полоса в потоке страницы —
+          <?php /* Напоминание о Элитном клубе: встроенная полоса в потоке страницы —
                     НЕ всплывающее окно, ничего не перекрывает. Тем, кто уже в клубе,
                     вместо неё показывается статус членства. */ ?>
           <?php if (empty($club['active'])): ?>
             <div class="cab-vip-hint">
               <div class="cab-vip-hint__txt">
-                <b>ВИП-клуб — выгоднее на <?= (int) mm_vip_discount() ?>%</b>
+                <b>Элитный клуб — выгоднее на <?= (int) mm_vip_discount() ?>%</b>
                 <span>Скидка <?= (int) mm_vip_discount() ?>% на участие и награды, результаты и дипломы за 3 рабочих дня вместо 5, бесплатный конкурс каждый месяц.</span>
               </div>
               <a class="btn btn--primary btn--sm" href="<?= url('/club') ?>">Подробнее</a>
@@ -927,7 +927,7 @@ ob_start(); ?>
           <?php else: ?>
             <div class="cab-vip-hint cab-vip-hint--on">
               <div class="cab-vip-hint__txt">
-                <b>Вы участник ВИП-клуба</b>
+                <b>Вы участник Элитного клуба</b>
                 <span>Скидка <?= (int) ($club['discount'] ?? mm_vip_discount()) ?>% применяется автоматически, сроки — 3 рабочих дня.
                   <?= !empty($club['staff']) ? 'Доступ оргкомитета — бессрочно.'
                       : (!empty($club['expires_local']) ? 'Действует до ' . h(ru_date(substr((string)$club['expires_local'],0,10))) . '.' : '') ?></span>
@@ -1404,7 +1404,7 @@ ob_start(); ?>
             <p class="cab-meta" style="margin:12px 0 0">
               Скидка за достижения — не более <?= (int)LOYALTY_MAX_PCT ?>%. Вместе с реферальной
               суммарная скидка на аккаунт не превышает <?= (int)DISCOUNT_CAP_NO_CLUB ?>%
-              (участники ВИП-клуба — по условиям клуба).
+              (участники Элитного клуба — по условиям клуба).
             </p>
           </div>
 
@@ -1905,7 +1905,7 @@ ob_start(); ?>
                 if(d&&d.ok&&d.deleted){var card=adel.closest('.cab-card');if(card)card.remove();}
                 else{adel.disabled=false;alert((d&&d.error)||'Не удалось удалить заявку.');}
               });return;}
-            // Запрос комментария и рекомендации жюри (только ВИП-клуб).
+            // Запрос комментария и рекомендации жюри (только Элитный клуб).
             var jreq=e.target.closest('[data-jury-req]');
             if(jreq){e.preventDefault();var jid=jreq.getAttribute('data-jury-req');jreq.disabled=true;jreq.textContent='Отправляем…';
               var fd=new FormData();fd.append('application_id',jid);fd.append('_csrf',csrf());

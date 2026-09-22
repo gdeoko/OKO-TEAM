@@ -6,7 +6,7 @@ $preselect = input('competition', '');
 // Заказ ИЗ ЗАЯВКИ: /order-awards?app={id} — данные подставляются из заявки участника,
 // повторно ничего вводить не нужно. Трофей ограничивается аттестационным результатом.
 require_once BASE_PATH . '/core/orders.php';
-// Скидка ВИП-клуба (20%) — показываем перечёркнутые цены прямо в каталоге наград.
+// Скидка Элитного клуба (20%) — показываем перечёркнутые цены прямо в каталоге наград.
 $clubPct = 0;
 if (($_cu = current_user()) && is_file(BASE_PATH . '/core/club.php')) {
     require_once BASE_PATH . '/core/club.php';
@@ -522,7 +522,7 @@ ob_start(); ?>
 (function () {
   var PRICES = <?= json_encode($priceMatrix, JSON_UNESCAPED_UNICODE) ?>;
   var META = <?= json_encode($itemsMeta, JSON_UNESCAPED_UNICODE) ?>;
-  // Скидка ВИП-клуба: цены показываются перечёркнутыми, рядом — цена участника.
+  // Скидка Элитного клуба: цены показываются перечёркнутыми, рядом — цена участника.
   var CLUB_PCT = <?= (int) $clubPct ?>;
   function clubPrice(n) { return CLUB_PCT > 0 ? Math.max(0, Math.round(n * (100 - CLUB_PCT) / 100)) : n; }
 
@@ -600,7 +600,7 @@ ob_start(); ?>
     // Итог: для члена клуба — перечёркнутая полная сумма и цена со скидкой.
     totalEl.innerHTML = (CLUB_PCT > 0 && totalFull > total)
       ? '<s style="opacity:.55;font-weight:400;margin-right:8px">' + money(totalFull) + '</s>' + money(total) +
-        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">ВИП-клуб −' + CLUB_PCT + '%</span>'
+        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">Элитный клуб −' + CLUB_PCT + '%</span>'
       : money(total);
     recipientBlock.style.display = hasOriginal() ? '' : 'none';
   }

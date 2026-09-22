@@ -142,7 +142,7 @@ function launch_email_html(array $c, string $wave, array $siblings = []): string
     $reviewsUrl = url('/reviews');
     $compsUrl   = url('/konkursi');
     // Клуб постоянных участников живёт на /club. Раньше здесь стоял url('/vip') —
-    // такого роута в public/index.php нет, страница отдавала 404. Кнопка «ВИП-клуб»
+    // такого роута в public/index.php нет, страница отдавала 404. Кнопка «Элитный клуб»
     // есть в КАЖДОМ письме запуска (кроме результатов), то есть в волне на всю базу
     // 8286 подписчиков ссылка вела в никуда.
     $vipUrl     = url('/club');
@@ -182,7 +182,7 @@ function launch_email_html(array $c, string $wave, array $siblings = []): string
     if ($wave === 'results') { $btns[] = ['Результаты и заказ наград', url('/results/' . (string) ($c['slug'] ?? ''))]; $btns[] = ['Оставить отзыв', $reviewsUrl]; }
     $btns[] = ['Личный кабинет', $cabUrl];
     $btns[] = ['Другие конкурсы', $compsUrl];
-    if ($wave !== 'results') $btns[] = ['ВИП-клуб', $vipUrl];
+    if ($wave !== 'results') $btns[] = ['Элитный клуб', $vipUrl];
 
     if (function_exists('mm_email_tx')) {
         $hero = function_exists('mm_cta_primary')
@@ -213,7 +213,7 @@ function launch_email_ctype(string $wave): string {
 
 /**
  * Красивое письмо кампании с переопределениями из пульта запуска.
- * $ctype: konkurs (все конкурсы в одном письме) | vip (ВИП-клуб). Возвращает [subject, body].
+ * $ctype: konkurs (все конкурсы в одном письме) | vip (Элитный клуб). Возвращает [subject, body].
  * (kabinet идёт отдельным персональным онбордингом с логином/паролем — не через этот билдер.)
  */
 function launch_email_build(string $ctype): array {
@@ -310,13 +310,13 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     // Внутренние (не редактируемые в пульте) волны запуска:
     //   launch_vk       — ПЕРСОНАЛЬНЫЙ пост ВК по каждому конкурсу (стена+сторис, своя афиша);
     //   launch_mail      — ОБЩЕЕ письмо-открытие по всем конкурсам (4 афиши в одном письме) + in-app;
-    //   campaign_vip     — письмо-приглашение в ВИП-клуб (аудитория ВИП, своя квота);
+    //   campaign_vip     — письмо-приглашение в Элитный клуб (аудитория Элитного клуба, своя квота);
     //   campaign_kabinet — письмо о возможностях личного кабинета (аудитория зарег. пользователей).
     $internalWaves = ['launch_vk', 'launch_mail', 'campaign_vip', 'campaign_kabinet'];
     if (!isset(launch_waves()[$wave]) && !in_array($wave, $internalWaves, true)) return ['ok' => false, 'msg' => 'Неизвестная волна'];
     // Правило владельца: «осталось 3 дня / последний день / приём закрыт» НЕ идут на почту —
     // только in-app всем + пост ВКонтакте (с авто-сторис) + рассылка в личку. На почту идёт
-    // только открытие конкурсов и ВИП-клуб (и результаты длинного — участникам).
+    // только открытие конкурсов и Элитный клуб (и результаты длинного — участникам).
     if (in_array($wave, ['d3', 'last', 'closed'], true)) {
         $channels = array_values(array_diff($channels, ['email']));
         if (!$channels) $channels = ['inapp', 'vk_wall'];
@@ -507,16 +507,16 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 $report['email'] = 'онбординг «личный кабинет»: в очередь ' . (int) $queued;
             }
         } elseif ($wave === 'campaign_vip') {
-            // ВИП-клуб — красивое письмо (как раздел сайта, без цен), аудитория ВИП, квота 100/день.
+            // Элитный клуб — красивое письмо (как раздел сайта, без цен), аудитория Элитного клуба, квота 100/день.
             [$vsubj, $vbody] = launch_email_build('vip');
             if ($dry) {
                 $cnt = count(function_exists('nl_resolve_recipients') ? nl_resolve_recipients('vip') : []);
-                $report['email'] = 'кампания «ВИП-клуб» → получателей: ' . $cnt . ' (квота 100/день)';
+                $report['email'] = 'кампания «Элитный клуб» → получателей: ' . $cnt . ' (квота 100/день)';
             } else {
                 try {
                     $nid = insert('newsletters', ['subject' => $vsubj, 'body' => $vbody, 'audience' => 'vip', 'campaign_type' => 'vip', 'status' => 'draft']);
                     $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
-                    $report['email'] = 'кампания «ВИП-клуб»: в очередь ' . (int) $queued;
+                    $report['email'] = 'кампания «Элитный клуб»: в очередь ' . (int) $queued;
                 } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
             }
         } else {
@@ -663,7 +663,7 @@ function launch_send_slot(\DateTime $from): \DateTime {
  *       — launch_vk       — ПЕРСОНАЛЬНЫЙ пост ВК (стена+сторис) по КАЖДОМУ конкурсу (своя афиша);
  *       — launch_mail      — ОБЩЕЕ письмо «4 афиши в одном» по всей базе + in-app всем (гейт: конкурсы
  *                            становятся видимыми на сайте);
- *       — campaign_vip     — письмо-приглашение в ВИП-клуб (+15 мин, аудитория ВИП, квота 75/день);
+ *       — campaign_vip     — письмо-приглашение в Элитный клуб (+15 мин, аудитория Элитного клуба, квота 75/день);
  *       — campaign_kabinet — письмо о возможностях личного кабинета (+30 мин, квота 75/день);
  *   • общие посты месяца (ВК+in-app, БЕЗ e-mail): 22 09:00 «3 дня», 25 09:00 «последний день»,
  *     25 18:00 «приём закрыт» (закрытие приёма);
@@ -735,7 +735,7 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
         $planned['launch_mail'] = ['run_at' => $runLaunch, 'channels' => $mailCh];
     }
 
-    // 3) Отдельных волн «ВИП-клуб» и «личный кабинет» БОЛЬШЕ НЕТ (правило владельца,
+    // 3) Отдельных волн «Элитный клуб» и «личный кабинет» БОЛЬШЕ НЕТ (правило владельца,
     //    август 2026): оба блока входят в объединённое письмо волны launch_mail.
     //    Раньше здесь заводились ещё два задания (+15 и +30 минут), и человек получал
     //    три письма подряд, а база проходилась за два с лишним месяца вместо одного.
@@ -848,7 +848,7 @@ function launch_panel_html(): string {
     $sched = array_values(array_filter($jobs, fn($j) => $j['status'] === 'scheduled'));
     $doneJobs = array_values(array_filter($jobs, fn($j) => $j['status'] === 'done'));
     $waveShort = ['launch' => 'Открытие', 'launch_vk' => 'Пост ВК (конкурс)', 'launch_mail' => 'Письмо-открытие',
-                  'campaign_vip' => 'ВИП-клуб', 'campaign_kabinet' => 'Личный кабинет',
+                  'campaign_vip' => 'Элитный клуб', 'campaign_kabinet' => 'Личный кабинет',
                   'd3' => '3 дня', 'last' => 'Последний', 'closed' => 'Закрыт', 'results' => 'Результаты'];
     $post = url('/admin/?p=launch');
 
@@ -983,7 +983,7 @@ function launch_panel_html(): string {
         уходит всем, кому письмо ещё не доставлено — ждать следующего месяца не нужно. Тем, кто уже получил, письмо не меняется.</p>
         <?php
         // Три email-блока с ВИЗУАЛЬНЫМ редактором (contenteditable, как в «Отправках»):
-        // общая база (200/день), ВИП-клуб (100/день), личный кабинет (100/день).
+        // общая база (200/день), Элитный клуб (100/день), личный кабинет (100/день).
         $mailBlock = function (string $ctype, string $title, string $desc, string $quotaKey, int $quotaDef, string $bodyHtml) use ($post): string {
             $subj  = (string) (function_exists('setting') ? setting('launch_mail_subject:' . $ctype, '') : '');
             $quota = (int) (function_exists('setting') ? setting($quotaKey, (string) $quotaDef) : $quotaDef);
@@ -1014,7 +1014,7 @@ function launch_panel_html(): string {
             <?php return (string) ob_get_clean();
         };
         // ОДНО ОБЪЕДИНЁННОЕ ПИСЬМО (правило владельца, август 2026).
-        // Отдельные блоки «ВИП-клуб» и «Личный кабинет» из пульта убраны: теперь это
+        // Отдельные блоки «Элитный клуб» и «Личный кабинет» из пульта убраны: теперь это
         // три части одного письма, и редактируются они в одном месте — иначе легко
         // отредактировать шаблон, который никуда не уходит.
         if (!function_exists('launch_combo_inner')) require_once BASE_PATH . '/core/launch_combo.php';

@@ -57,7 +57,7 @@ $forms  = FORMATIONS();
 $awards = all("SELECT * FROM awards_prices WHERE competition_id = ?", [$c['id']]);
 if (!$awards) $awards = all("SELECT * FROM awards_prices WHERE competition_id IS NULL ORDER BY id");
 
-/* Скидка ВИП-клуба — показываем так же, как в афише и наградах: полная цена
+/* Скидка Элитного клуба — показываем так же, как в афише и наградах: полная цена
    зачёркнута, рядом цена участника Клуба. Считает всё равно сервер. */
 $clubPct = 0;
 $__cu = function_exists('current_user') ? current_user() : null;

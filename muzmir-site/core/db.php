@@ -461,7 +461,7 @@ function db_migrate(PDO $pdo): void {
         ['awards_orders', 'clean_pdfs',    "TEXT DEFAULT ''"],
         ['awards_orders', 'kind',          "TEXT DEFAULT 'original'"], // original|digital|club|mixed
         ['awards_orders', 'amount_full',   'INTEGER DEFAULT 0'],       // цена до клубной скидки
-        ['awards_orders', 'discount_pct',  'INTEGER DEFAULT 0'],       // применённая скидка ВИП, %
+        ['awards_orders', 'discount_pct',  'INTEGER DEFAULT 0'],       // применённая скидка Элитного клуба, %
         ['awards_orders', 'scheduled_at',  'TEXT'],                    // план отправки электронных
         ['awards_orders', 'sent_at',       'TEXT'],                    // факт отправки электронных
         ['awards_orders', 'canceled_at',   'TEXT'],                    // время отмены (админ)

@@ -31,7 +31,7 @@ if ($u) { $SECTIONS[] = ['/logout', 'Выйти', '<path d="M9 21H5a2 2 0 0 1-2-
 
 ob_start(); ?>
 <style>
-/* --- ВИП-плашка над сеткой разделов --- */
+/* --- плашка Элитного клуба над сеткой разделов --- */
 .vip-banner{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;
   width:100%;margin:0 0 18px;padding:18px 20px;border-radius:20px;text-decoration:none;color:var(--text);
   background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
@@ -72,7 +72,7 @@ ob_start(); ?>
       <input type="search" id="menuSearchInput" placeholder="Поиск раздела…" autocomplete="off" aria-label="Поиск раздела">
     </div>
 
-    <a class="vip-banner reveal" href="<?= url('/club') ?>" aria-label="Закрытый ВИП-клуб — привилегии, скидки и закрытые конкурсы">
+    <a class="vip-banner reveal" href="<?= url('/club') ?>" aria-label="Закрытый Элитный клуб — привилегии, скидки и закрытые конкурсы">
       <span class="vip-shine" aria-hidden="true"></span>
       <span class="vip-banner-ic" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -80,7 +80,7 @@ ob_start(); ?>
         </svg>
       </span>
       <span class="vip-banner-txt">
-        <span class="vip-banner-title">Закрытый ВИП-клуб</span>
+        <span class="vip-banner-title">Закрытый Элитный клуб</span>
         <span class="vip-banner-sub">Привилегии, скидки и закрытые конкурсы для участников клуба</span>
       </span>
       <svg class="vip-banner-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>

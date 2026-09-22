@@ -1,6 +1,6 @@
 <?php
 /**
- * ВИП-КЛУБ: КТО КУПИЛ, ДО КАКОГО ЧИСЛА И ЧТО У НЕГО ПРОИСХОДИТ.
+ * ЭЛИТНЫЙ КЛУБ: КТО КУПИЛ, ДО КАКОГО ЧИСЛА И ЧТО У НЕГО ПРОИСХОДИТ.
  *
  * Членство в клубе видно было только по галочке рядом с фамилией: чтобы узнать,
  * когда человек вступил, до какого числа действует членство и что у него в работе,
@@ -305,7 +305,7 @@ if ($viewUid > 0) {
     <?php endif; ?>
     <?php
     $content = ob_get_clean();
-    admin_layout('ВИП-клуб · ' . (trim((string) ($u['full_name'] ?? '')) ?: (string) $u['email']), $content, 'club');
+    admin_layout('Элитный клуб · ' . (trim((string) ($u['full_name'] ?? '')) ?: (string) $u['email']), $content, 'club');
     return;
 }
 
@@ -341,7 +341,7 @@ foreach ($rows as $r) {
 ?>
 <div class="page-head">
   <div>
-    <h1>ВИП-клуб</h1>
+    <h1>Элитный клуб</h1>
     <div class="small muted">Кто состоит в клубе, до какого числа действует членство и что у каждого в работе.</div>
   </div>
 </div>
@@ -431,4 +431,4 @@ foreach ($rows as $r) {
 <?php endif; ?>
 <?php
 $content = ob_get_clean();
-admin_layout('ВИП-клуб', $content, 'club');
+admin_layout('Элитный клуб', $content, 'club');

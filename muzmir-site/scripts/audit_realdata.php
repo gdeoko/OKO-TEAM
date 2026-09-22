@@ -232,8 +232,8 @@ if ($ava !== '') {
     }
 }
 
-/* ───────── галочки ВИП: у кого стоят, тот и правда в клубе ───────── */
-sec('Галочка ВИП соответствует реальному членству');
+/* ───────── галочки Элитного клуба: у кого стоят, тот и правда в клубе ───────── */
+sec('Галочка Элитного клуба соответствует реальному членству');
 $members = all("SELECT user_id FROM club_members WHERE active=1 AND expires_at > datetime('now','localtime')");
 foreach (array_slice($members, 0, 5) as $m) {
     $mid = (int) $m['user_id'];

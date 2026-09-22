@@ -206,7 +206,7 @@ html body{padding-top:0 !important}
     <a href="<?= url('/awards') ?>" class="<?= $act === '/awards' ? 'is-active' : '' ?>">Награды</a>
     <a href="<?= url('/regulations') ?>" class="<?= $act === '/regulations' ? 'is-active' : '' ?>">Положения</a>
     <a href="<?= url('/calendar') ?>" class="<?= $act === '/calendar' ? 'is-active' : '' ?>">Календарь</a>
-    <a href="<?= url('/club') ?>" class="<?= $act === '/club' ? 'is-active' : '' ?>">ВИП-клуб</a>
+    <a href="<?= url('/club') ?>" class="<?= $act === '/club' ? 'is-active' : '' ?>">Элитный клуб</a>
     <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($act, ['/cabinet','/login','/register','/notifications'], true) ? 'is-active' : '' ?>"><?= $u ? 'Профиль' : 'Вход' ?></a>
   </nav>
   <div class="app-header-actions">

@@ -475,7 +475,7 @@ if ($id = (int) input('id')) {
 
             <label class="small muted">Когда отправить результат участнику</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 10px">
-              <label class="small"><input type="checkbox" name="auto_send" value="1" checked> по сроку (5 раб. дней от подачи, ВИП — 3)</label>
+              <label class="small"><input type="checkbox" name="auto_send" value="1" checked> по сроку (5 раб. дней от подачи, Элитный клуб — 3)</label>
               <input type="datetime-local" name="send_at" title="Или точное время">
             </div>
 

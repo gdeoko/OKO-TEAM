@@ -156,4 +156,4 @@ $reach = (int) scalar(
          WHERE COALESCE(u.email,'')<>'' AND COALESCE(u.blocked,0)=0 AND COALESCE(u.notify_email,1)=1
            AND COALESCE(u.role,'user') NOT IN ('owner','admin','orgcom'))"
 );
-echo "Аудитория ВИП-волны (UNION, как в коде): $reach\n";
+echo "Аудитория волны Элитного клуба (UNION, как в коде): $reach\n";

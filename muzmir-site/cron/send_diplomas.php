@@ -424,7 +424,7 @@ function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime 
     // они всегда уходят через N рабочих дней от ДАТЫ ПОДАЧИ заявки.
 
     // Короткие платные: наградные дипломы — через N рабочих дней ПОСЛЕ РЕЗУЛЬТАТА
-    //    (result_send_at), N=5 (ВИП-клуб — 3), вс — нерабочий, только рабочее окно
+    //    (result_send_at), N=5 (Элитный клуб — 3), вс — нерабочий, только рабочее окно
     //    9:00-18:00 МСК. Если срок уже прошёл — ближайшее рабочее окно (никогда ночью).
     if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
     require_once BASE_PATH . '/core/send_timing.php';

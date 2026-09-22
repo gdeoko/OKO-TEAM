@@ -11,7 +11,7 @@ require_once BASE_PATH . '/core/loyalty.php';
  * Соблазн — не показывать его тем, кто не в Клубе. Но тогда он и не продаёт
  * ничего: человек не знает, что пропускает. Показываем всем с пометкой, а
  * замок стоит на сервере (api/v1/apply.php). */
-/* Конкурс ВИП-клуба стоит ПЕРВЫМ: он с призовым фондом, и именно его участник
+/* Конкурс Элитного клуба стоит ПЕРВЫМ: он с призовым фондом, и именно его участник
    должен увидеть раньше остальных, а не искать в конце списка. */
 $comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg,cover,end_date,
                      COALESCE(club_only,0) club_only
@@ -75,7 +75,7 @@ $jsCfg = [
     'nominations'  => $noms,
     // Формы исполнения строго по номинации (apply.js перестраивает селект при выборе).
     'formations'   => FORMATIONS_MAP(),
-    // Скидка ВИП-клуба — цены в форме показываются перечёркнутыми.
+    // Скидка Элитного клуба — цены в форме показываются перечёркнутыми.
     'clubPct'      => (function () {
         $u = current_user();
         if (!$u || !is_file(BASE_PATH . '/core/club.php')) return 0;
@@ -196,7 +196,7 @@ ob_start(); ?>
 .co-body--cover .badge--vip{background:var(--grad-gold) !important;color:var(--gold-fg) !important;
   border-color:rgba(255,255,255,.55) !important;font-weight:800}
 
-/* Конкурс ВИП-клуба: золотая рамка и строка призового фонда. */
+/* Конкурс Элитного клуба: золотая рамка и строка призового фонда. */
 .co-body--vip{border:2px solid var(--gold) !important;box-shadow:0 10px 34px rgba(199,147,34,.28)}
 .co-body--vip.co-body--cover{min-height:186px}
 .comp-opt input:checked + .co-body--vip{box-shadow:0 0 0 3px var(--gold),0 14px 38px rgba(199,147,34,.42)}
@@ -444,7 +444,7 @@ ob_start(); ?>
                         else { echo $apFull . ' ₽'; }
                       ?></span>
                       <?php if ((int)$c['club_only']): ?>
-                        <span class="badge badge--vip">Только для ВИП-клуба</span>
+                        <span class="badge badge--vip">Только для Элитного клуба</span>
                       <?php endif; ?>
                     </span>
                     <?php if ((int)$c['club_only']): ?>

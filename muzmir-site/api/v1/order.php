@@ -154,7 +154,7 @@ $uid = current_user()['id'] ?? null;
 // распространяется), и ниже в проверках состава заказа.
 $isClubOrder = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
 
-// СКИДКА ВИП-КЛУБА НА НАГРАДЫ (её здесь не было вовсе — клубная скидка работала
+// СКИДКА ЭЛИТНОГО КЛУБА НА НАГРАДЫ (её здесь не было вовсе — клубная скидка работала
 // только при подаче заявки). Членство даёт 20% на весь наградной материал.
 $clubPctOrder = 0;
 if ($uid && !$isClubOrder) {
@@ -528,7 +528,7 @@ $orderId = insert('awards_orders', [
 // --- заглушка создания платежа ЮKassa (сумма — серверная) ---
 $payment = yukassa_create_payment(
     $amount,
-    $isClubOrder ? 'Членство в ВИП-клубе «Музыкальный Мир»' : ('Наградные материалы, заказ №' . $orderId),
+    $isClubOrder ? 'Членство в Элитном клубе «Музыкальный Мир»' : ('Наградные материалы, заказ №' . $orderId),
     [
         'order_id' => $orderId,
         'email'    => mb_strtolower(input('email')),
@@ -588,7 +588,7 @@ if ($orderIsFree) {
         try {
             $isClub = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
             owner_notify(
-                $isClub ? 'ВИП-КЛУБ' : 'ЗАКАЗЫ НАГРАД',
+                $isClub ? 'ЭЛИТНЫЙ КЛУБ' : 'ЗАКАЗЫ НАГРАД',
                 $isClub ? 'Заявка на вступление в клуб (заказ №' . $orderId . ')' : 'Новый заказ наград №' . $orderId,
                 '',
                 [

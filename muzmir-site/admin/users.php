@@ -167,14 +167,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (function_exists('club_boot')) club_boot();
             q("UPDATE club_members SET active=0 WHERE user_id=?", [$uid]);
             audit('club_cancel', 'user', $uid);
-            flash('Членство ВИП-клуба отменено.', 'success');
+            flash('Членство Элитного клуба отменено.', 'success');
             admin_redirect('users', $backP);
         }
         if ($do === 'grant_vip') {
             $months = (int) input('months') === 12 ? 12 : 1;
             if (function_exists('club_grant')) club_grant($uid, $months, 'manual');
             audit('club_grant', 'user', $uid, ['months'=>$months]);
-            flash('ВИП-клуб выдан на ' . ($months === 12 ? '1 год' : '1 месяц') . '.', 'success');
+            flash('Элитный клуб выдан на ' . ($months === 12 ? '1 год' : '1 месяц') . '.', 'success');
             admin_redirect('users', $backP);
         }
         if ($do === 'del_diploma') {
@@ -429,17 +429,17 @@ if (input('action') === 'profile') {
         </details>
       </div>
 
-      <!-- ВИП-клуб -->
+      <!-- Элитный клуб -->
       <div class="card">
-        <h3 style="margin:0 0 12px"><?= admin_icon('trophy') ?>ВИП-клуб</h3>
+        <h3 style="margin:0 0 12px"><?= admin_icon('trophy') ?>Элитный клуб</h3>
         <?php if (!empty($club['active'])): ?>
           <p style="margin:0 0 10px">Статус: <b style="color:#1E7A44">активен</b><?= !empty($club['expires_local']) ? ' до ' . h(date('d.m.Y', strtotime((string)$club['expires_local']))) : '' ?>. Скидка <?= (int)($club['discount']??0) ?>%.</p>
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
             <?= csrf_field() ?><input type="hidden" name="do" value="cancel_vip"><input type="hidden" name="uid" value="<?= $puid ?>">
-            <button class="btn btn--ghost btn--sm" style="color:#8b2f2f;border-color:#d99" onclick="return confirm('Отменить членство ВИП-клуба?')"><?= admin_icon('x') ?>Отменить подписку</button>
+            <button class="btn btn--ghost btn--sm" style="color:#8b2f2f;border-color:#d99" onclick="return confirm('Отменить членство Элитного клуба?')"><?= admin_icon('x') ?>Отменить подписку</button>
           </form>
         <?php elseif ($isVip): ?>
-          <p style="margin:0 0 10px">ВИП по роли (владелец/оргкомитет) — бессрочно.</p>
+          <p style="margin:0 0 10px">Членство по роли (владелец/оргкомитет) — бессрочно.</p>
         <?php else: ?>
           <p style="margin:0 0 10px" class="muted">Членство не активно.</p>
           <form method="post" action="<?= url('/admin/') ?>" style="display:flex;gap:8px;flex-wrap:wrap">

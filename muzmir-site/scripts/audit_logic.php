@@ -75,10 +75,10 @@ is_eq('пн 11:00 → сейчас',      $slot->format('Y-m-d H'), '2026-08-10 
 $slot = next_working_slot(new DateTime('2026-08-08 17:59:00'));   // сб конец окна
 is_eq('сб 17:59 → сейчас',      $slot->format('Y-m-d H'), '2026-08-08 17');
 
-// ВИП 3 дня против обычных 5 — награды строго быстрее
+// Элитный клуб 3 дня против обычных 5 — награды строго быстрее
 $vip = working_days_add('2026-08-03 10:00:00', 3);
 $reg = working_days_add('2026-08-03 10:00:00', 5);
-is_true('ВИП (3 дн) раньше обычного (5 дн)', $vip < $reg, $vip->format('d.m') . ' < ' . $reg->format('d.m'));
+is_true('Элитный клуб (3 дн) раньше обычного (5 дн)', $vip < $reg, $vip->format('d.m') . ' < ' . $reg->format('d.m'));
 
 // result_plan_at
 $p = result_plan_at('2026-08-03 10:00:00', false, '', 5);
@@ -194,8 +194,8 @@ is_true('включено → mass_sending_enabled() = true', mass_sending_enabl
 mass_sending_set($was);
 is_true('исходное состояние восстановлено', mass_sending_enabled() === $was, $was ? 'вкл' : 'выкл');
 
-/* ───────────────────────── 6. ВИП-КЛУБ ───────────────────────── */
-sec('ВИП-клуб: команда, скидка, привилегии');
+/* ───────────────────────── 6. ЭЛИТНЫЙ КЛУБ ───────────────────────── */
+sec('Элитный клуб: команда, скидка, привилегии');
 $staff = club_staff_emails();
 is_true('оргкомитет okoteam.top@gmail.com в команде', club_is_staff_email('okoteam.top@gmail.com'), implode(', ', $staff));
 is_true('владелец zamis76@mail.ru в команде',        club_is_staff_email('zamis76@mail.ru'));

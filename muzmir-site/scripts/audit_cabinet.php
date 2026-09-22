@@ -1,6 +1,6 @@
 <?php
 /**
- * АУДИТ ЛИЧНОГО КАБИНЕТА И ВИП-КЛУБА — через реальные страницы и обработчики.
+ * АУДИТ ЛИЧНОГО КАБИНЕТА И ЭЛИТНОГО КЛУБА — через реальные страницы и обработчики.
  * Проверяет: статусы и статистику на живых данных, окно правки заявки (2 рабочих дня),
  * полный состав полей правки, достижения сезона, привилегии клуба до и после подписки,
  * кнопку запроса комментария жюри, исключение членов клуба из массового приглашения.
@@ -263,14 +263,14 @@ $pct = loyalty_discount($uid, $USER_MAIL);
 chk('скидка за достижения не больше 5%', $pct <= LOYALTY_MAX_PCT, "$pct% при $seasonApps заявках");
 chk('в кабинете есть блок достижений', stripos($cab['body'], 'Достижения') !== false);
 
-/* ───────── ВИП-клуб: до и после подписки ───────── */
-sec('ВИП-клуб: состояние ДО подписки');
+/* ───────── Элитный клуб: до и после подписки ───────── */
+sec('Элитный клуб: состояние ДО подписки');
 q("UPDATE club_members SET active=0, expires_at=datetime('now','localtime','-1 day') WHERE user_id=?", [$uid]);
 chk('клуб неактивен', !club_is_active($uid));
 chk('скидка клуба = 0%', club_discount_percent($uid) === 0, club_discount_percent($uid) . '%');
 $cab = http($UJAR, $BASE . '/cabinet');
 chk('в кабинете предлагают вступить в клуб',
-    stripos($cab['body'], 'ВИП-клуб') !== false || stripos($cab['body'], 'Клуб') !== false);
+    stripos($cab['body'], 'Элитный клуб') !== false || stripos($cab['body'], 'Клуб') !== false);
 $appG = one("SELECT * FROM applications WHERE user_id=? AND COALESCE(result,'')<>'' LIMIT 1", [$uid]);
 if ($appG) {
     chk('без клуба кнопки запроса комментария жюри нет',
@@ -283,14 +283,14 @@ if ($appG) {
         substr((string) ($j['error'] ?? $r['body']), 0, 120));
 }
 
-sec('ВИП-клуб: состояние ПОСЛЕ подписки');
+sec('Элитный клуб: состояние ПОСЛЕ подписки');
 club_grant($uid, 1, 'audit_test', ['period' => 'month']);
 chk('клуб активен', club_is_active($uid));
 chk('скидка клуба = 20%', club_discount_percent($uid) === mm_vip_discount(), club_discount_percent($uid) . '%');
 $st = club_status($uid);
 chk('срок членства проставлен', trim((string) ($st['expires_at'] ?? '')) !== '', (string) ($st['expires_at'] ?? ''));
 $cab = http($UJAR, $BASE . '/cabinet');
-chk('в кабинете появилась ВИП-галочка', stripos($cab['body'], 'cab-vip') !== false);
+chk('в кабинете появилась галочка Элитного клуба', stripos($cab['body'], 'cab-vip') !== false);
 chk('в кабинете виден срок членства', stripos($cab['body'], 'Клуб') !== false);
 if ($appG) {
     chk('появилась кнопка запроса комментария жюри',
@@ -304,7 +304,7 @@ if ($appG) {
         substr((string) ($j['error'] ?? $j['message'] ?? $r['body']), 0, 140));
 }
 
-sec('ВИП-клуб: привилегии применяются автоматически');
+sec('Элитный клуб: привилегии применяются автоматически');
 $paid = one("SELECT * FROM competitions WHERE is_paid=1 AND status='open' LIMIT 1");
 if ($paid) {
     $r = http($UJAR, $BASE . '/apply?competition=' . $paid['slug']);
@@ -323,7 +323,7 @@ if ($appO) {
 // Сроки: клуб — 3 рабочих дня, обычный участник — 5.
 $vipPlan = working_days_add(date('Y-m-d H:i:s'), 3);
 $regPlan = working_days_add(date('Y-m-d H:i:s'), 5);
-chk('ВИП получает награды раньше обычного участника', $vipPlan < $regPlan,
+chk('Элитный клуб получает награды раньше обычного участника', $vipPlan < $regPlan,
     $vipPlan->format('d.m') . ' < ' . $regPlan->format('d.m'));
 
 sec('Массовое приглашение в клуб не идёт действующим членам');
@@ -450,7 +450,7 @@ foreach (['Название номера','Форма исполнения','С�
     chk("в карточке заявки видно поле «{$__fld}»", str_contains($cab2['body'], $__fld));
 }
 
-sec('ВИП-клуб: именная карта, сертификат и цены со скидкой');
+sec('Элитный клуб: именная карта, сертификат и цены со скидкой');
 require_once BASE_PATH . '/core/club_cert.php';
 $cardNo = club_card_no($uid);
 chk('номер именной карты выдан', $cardNo !== '', $cardNo);
@@ -481,7 +481,7 @@ chk('в афише конкурсов видна клубная цена',
     strpos($compPage['body'], 'cc-fee--club') !== false && strpos($compPage['body'], 'cc-clubtag') !== false);
 chk('в афише полная цена зачёркнута', preg_match('~cc-fee--club.*?<s>\d+~s', $compPage['body']) === 1);
 
-sec('ВИП-клуб: снятие привилегий по истечении');
+sec('Элитный клуб: снятие привилегий по истечении');
 q("UPDATE club_members SET expires_at=datetime('now','localtime','-1 hour') WHERE user_id=?", [$uid]);
 chk('после истечения клуб неактивен', !club_is_active($uid));
 chk('после истечения скидка обнулилась', club_discount_percent($uid) === 0, club_discount_percent($uid) . '%');

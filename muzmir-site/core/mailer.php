@@ -76,7 +76,7 @@ function mm_email_layout(string $inner, array $opt = []): string {
     if ($email !== '') $contacts .= '<div style="margin-top:2px;">Почта: ' . $email . '</div>';
     if ($hours !== '') $contacts .= '<div style="margin-top:2px;">Режим работы: ' . $hours . '</div>';
 
-    // Карточка ВИП-клуба — в каждом письме (отключается явным ['vip'=>false]).
+    // Карточка Элитного клуба — в каждом письме (отключается явным ['vip'=>false]).
     $vipCard = (($opt['vip'] ?? true) && function_exists('mm_vip_card')) ? mm_vip_card() : '';
 
     $unsubUrl = trim((string) ($opt['unsubscribe_url'] ?? ''));
@@ -206,7 +206,7 @@ function mm_actions_row(array $buttons): string {
 
 /**
  * Промо-блок: другие конкурсы центра.
- * Кнопка ВИП-клуба отсюда убрана — она дублировала бы полноценную карточку клуба
+ * Кнопка Элитного клуба отсюда убрана — она дублировала бы полноценную карточку клуба
  * (mm_vip_card), которая теперь стоит в каждом письме перед подвалом.
  */
 function mm_promo_block(): string {
@@ -219,7 +219,7 @@ function mm_promo_block(): string {
 /**
  * Богатый ТРАНЗАКЦИОННЫЙ лейаут письма (результаты, дипломы, заказы, дожимы):
  * логотип, выделенная первичная CTA вверху, контент, ряд вторичных кнопок,
- * промо (ВИП/другие конкурсы), соцканалы (ВК/MAX) и контакты. БЕЗ «отписаться»
+ * промо (Элитный клуб, другие конкурсы), соцканалы (ВК/MAX) и контакты. БЕЗ «отписаться»
  * (это транзакционные письма — булк-подпись провоцирует спам-фильтр Яндекса).
  * $opt: preheader, hero (HTML первичной CTA, напр. mm_cta_primary(...)),
  *       actions ([[label,url],...]), promo(bool, по умолч. true), social(bool, по умолч. true),
@@ -259,7 +259,7 @@ function mm_email_tx(string $inner, array $opt = []): string {
         . '<tr><td style="padding:30px 32px 22px;font-size:15px;line-height:1.7;">' . $hero . $inner . $thanks . '</td></tr>'
         . ($actions !== '' ? '<tr><td style="padding:0 28px 6px;">' . $actions . '</td></tr>' : '')
         . ($promo !== '' ? '<tr><td style="padding:0 28px 8px;">' . $promo . '</td></tr>' : '')
-        // Карточка ВИП-клуба — в каждом письме центра, перед подвалом.
+        // Карточка Элитного клуба — в каждом письме центра, перед подвалом.
         // Отключается только явным ['vip'=>false] (например, в самом письме про клуб).
         . ((($opt['vip'] ?? true) && function_exists('mm_vip_card'))
               ? '<tr><td style="padding:0 28px 10px;">' . mm_vip_card() . '</td></tr>' : '')
@@ -273,7 +273,7 @@ function mm_email_tx(string $inner, array $opt = []): string {
 }
 
 /**
- * Скидка члена ВИП-клуба, % — единственный источник правды для сайта, писем,
+ * Скидка члена Элитного клуба, % — единственный источник правды для сайта, писем,
  * подачи заявки и заказа наград. Меняется настройкой settings.club_discount.
  */
 function mm_vip_discount(): int {
@@ -286,7 +286,7 @@ function mm_vip_discount(): int {
 function mm_vip_days(): int { return 3; }
 
 /**
- * КАРТОЧКА ВИП-КЛУБА — компактный золотой блок, который ставится в КАЖДОЕ письмо
+ * КАРТОЧКА ЭЛИТНОГО КЛУБА — компактный золотой блок, который ставится в КАЖДОЕ письмо
  * центра (как контакты в подвале). Привилегии перечислены по убыванию важности:
  * скидка 20% на всё → ускоренные сроки → бесплатный конкурс ежемесячно → далее.
  * Вёрстка — только таблицы и инлайн-стили (стабильно во всех почтовиках).
@@ -333,11 +333,11 @@ function mm_vip_card(array $opt = []): string {
         . '<tr><td style="border-radius:16px;padding:18px 18px 16px;'
         . 'background:' . $gold . ';background:linear-gradient(135deg,' . $gold2 . ' 0%,' . $gold . ' 55%,#B8892B 100%);">'
         . '<div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:' . $navy . ';font-weight:700;opacity:.75;">Закрытый клуб центра</div>'
-        . '<div style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:' . $navy . ';margin:3px 0 0;line-height:1.25;">ВИП-клуб «Музыкальный&nbsp;Мир»</div>'
+        . '<div style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:' . $navy . ';margin:3px 0 0;line-height:1.25;">Элитный клуб «Музыкальный&nbsp;Мир»</div>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:11px 0 0;">' . $rows . '</table>'
         . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:13px 0 0;"><tr>'
         . '<td style="border-radius:10px;background:' . $navy . ';">'
-        . '<a href="' . h($url) . '" style="display:inline-block;padding:11px 26px;color:' . $gold2 . ';text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;">Вступить в ВИП-клуб →</a>'
+        . '<a href="' . h($url) . '" style="display:inline-block;padding:11px 26px;color:' . $gold2 . ';text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;">Вступить в Элитный клуб →</a>'
         . '</td></tr></table>'
         . '</td></tr></table>';
 }
@@ -545,7 +545,7 @@ function mail_last_error(?string $set = null): string {
 /**
  * РАЗДЕЛЕНИЕ ПОЧТОВЫХ ПУЛОВ (правило владельца, август 2026).
  *
- *   bulk   — МАССОВЫЕ рассылки (запуск конкурсов, ВИП-клуб, личный кабинет).
+ *   bulk   — МАССОВЫЕ рассылки (запуск конкурсов, Элитный клуб, личный кабинет).
  *            Только news@ и novosti@музыкальный-мир.рф — рассылочные ящики.
  *            В контактах они не публикуются: людям для связи даём
  *            kulturniy.centr.mir@gmail.com и nagradi.on@музыкальный-мир.рф.

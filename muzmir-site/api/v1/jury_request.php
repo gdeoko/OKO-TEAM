@@ -1,7 +1,7 @@
 <?php
 /**
- * Запрос комментария и рекомендации жюри — ТОЛЬКО для участников ВИП-клуба,
- * по СВОЕЙ ОЦЕНЁННОЙ заявке. Запрос уходит владельцу (раздел ВИП-клуба: email+TG+VK)
+ * Запрос комментария и рекомендации жюри — ТОЛЬКО для участников Элитного клуба,
+ * по СВОЕЙ ОЦЕНЁННОЙ заявке. Запрос уходит владельцу (раздел Элитного клуба: email+TG+VK)
  * и фиксируется в jury_comment_requests (для изготовления комментария/рекомендации).
  */
 declare(strict_types=1);
@@ -18,7 +18,7 @@ $uid = (int) $u['id'];
 // Только член клуба.
 if (!function_exists('club_is_active') && is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
 if (!function_exists('club_is_active') || !club_is_active($uid)) {
-    json_out(['ok' => false, 'error' => 'Комментарий и рекомендация жюри доступны только участникам ВИП-клуба.'], 403);
+    json_out(['ok' => false, 'error' => 'Комментарий и рекомендация жюри доступны только участникам Элитного клуба.'], 403);
 }
 
 $appId = (int) input('application_id');
@@ -47,12 +47,12 @@ if ($exists) json_out(['ok' => true, 'already' => true, 'message' => 'Запро
 try { insert('jury_comment_requests', ['application_id' => $appId, 'user_id' => $uid, 'status' => 'new']); } catch (\Throwable $e) {}
 audit('jury_comment_request', 'application', $appId, ['user' => $uid]);
 
-// Уведомление владельца в раздел ВИП-клуба (email + Telegram + VK).
+// Уведомление владельца в раздел Элитного клуба (email + Telegram + VK).
 if (is_file(BASE_PATH . '/core/notify_owner.php')) {
     require_once BASE_PATH . '/core/notify_owner.php';
     if (function_exists('owner_notify')) {
         $adminUrl = rtrim((string) cfgv('base_url'), '/') . '/admin/?p=grading&id=' . $appId;
-        owner_notify('ВИП-КЛУБ', 'Запрос комментария и рекомендации жюри', 'Участник ВИП-клуба запросил комментарий и рекомендацию жюри по оценённой заявке — изготовить и отправить.', [
+        owner_notify('ЭЛИТНЫЙ КЛУБ', 'Запрос комментария и рекомендации жюри', 'Участник Элитного клуба запросил комментарий и рекомендацию жюри по оценённой заявке — изготовить и отправить.', [
             'Заявка'   => (string) $a['number'],
             'Конкурс'  => (string) ($a['comp_name'] ?? ''),
             'Участник' => (string) $a['full_name'],

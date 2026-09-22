@@ -6,7 +6,7 @@
  */
 declare(strict_types=1);
 
-// Отметить запрос комментария жюри (ВИП) выполненным.
+// Отметить запрос комментария жюри (Элитный клуб) выполненным.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'jury_req_done') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('dashboard'); }
     if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
@@ -215,7 +215,7 @@ $compSlices = [];
 foreach ($compPal as $k => $col) if (($compByStatus[$k] ?? 0) > 0) $compSlices[] = ['label' => comp_status_ru($k), 'value' => $compByStatus[$k], 'color' => $col];
 
 ob_start();
-// Запросы комментариев/рекомендаций жюри от участников ВИП-клуба (изготовить и отправить).
+// Запросы комментариев/рекомендаций жюри от участников Элитного клуба (изготовить и отправить).
 $juryReqs = [];
 if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
     $juryReqs = all("SELECT r.*, a.number, a.full_name, a.email, a.result, a.jury_comment, c.name comp_name
@@ -227,7 +227,7 @@ if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
 ?>
 <?php if ($juryReqs): ?>
 <div class="card" style="margin-bottom:20px;border:1px solid var(--a-gold,#C79322)">
-  <div class="section-title" style="margin-bottom:8px"><h3>ВИП-клуб · запросы комментария и рекомендации жюри <span class="badge badge--gold"><?= count($juryReqs) ?></span></h3></div>
+  <div class="section-title" style="margin-bottom:8px"><h3>Элитный клуб · запросы комментария и рекомендации жюри <span class="badge badge--gold"><?= count($juryReqs) ?></span></h3></div>
   <p class="small muted" style="margin:-4px 0 12px">Участники клуба запросили комментарий и рекомендацию жюри по оценённой заявке — изготовить и отправить. «Открыть заявку» → впишите комментарий и сохраните.</p>
   <div class="table-wrap"><table class="tbl">
     <thead><tr><th>Заявка</th><th>Участник</th><th>Конкурс · результат</th><th>Комментарий</th><th>Действия</th></tr></thead>

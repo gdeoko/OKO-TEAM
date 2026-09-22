@@ -85,7 +85,7 @@ $icons = [
 ];
 $kindLabel = ['original' => 'Оригинал (почтой)', 'digital' => 'Электронный', 'club' => 'Клуб'];
 
-// Скидка ВИП-клуба (20%) действует и в каталоге наград: цена показывается
+// Скидка Элитного клуба (20%) действует и в каталоге наград: цена показывается
 // перечёркнутой, рядом — цена участника клуба. Сервер считает сумму сам
 // (api/v1/order.php), здесь — честное отображение, чтобы итог совпадал.
 $clubPct = 0;
@@ -179,7 +179,7 @@ ob_start(); ?>
 
     <div class="aw-comp-list">
       <?php
-        /* Конкурс ВИП-клуба показываем первым — он с призовым фондом. */
+        /* Конкурс Элитного клуба показываем первым — он с призовым фондом. */
         usort($comps, static fn($a,$b) => ((int)($b['club_only'] ?? 0)) <=> ((int)($a['club_only'] ?? 0)));
       ?>
       <?php foreach ($comps as $i => $c):
@@ -697,7 +697,7 @@ ob_start(); ?>
 <script>
 (function(){
   var KIND_LABEL = {"original":"Оригинал","digital":"Электронный","club":"Клуб"};
-  var CLUB_PCT = <?= (int) $clubPct ?>;   // скидка ВИП-клуба, %
+  var CLUB_PCT = <?= (int) $clubPct ?>;   // скидка Элитного клуба, %
   var cart = [];
   var $ = function(s,r){return (r||document).querySelector(s);};
   var fab=$('#cartFab'), sheet=$('#cartSheet'), itemsBox=$('#cartItems'), emptyBox=$('#cartEmpty'),
@@ -896,7 +896,7 @@ ob_start(); ?>
     // Итог для участника клуба: перечёркнутая полная сумма и цена со скидкой.
     totalEl.innerHTML = (CLUB_PCT>0 && totalFull>total)
       ? '<s style="opacity:.55;font-weight:400;margin-right:8px">'+totalFull.toLocaleString('ru-RU')+' \u20BD</s>'+total.toLocaleString('ru-RU')+' \u20BD'+
-        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">ВИП-клуб \u2212'+CLUB_PCT+'%</span>'
+        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">Элитный клуб \u2212'+CLUB_PCT+'%</span>'
       : total.toLocaleString('ru-RU')+' \u20BD';
     countEl.textContent=count; fab.hidden=count===0; emptyBox.hidden=count>0; form.hidden=count===0;
     // Адрес доставки нужен ТОЛЬКО если в корзине есть оригинал (кубок/статуэтка/медаль/оригинал диплома).

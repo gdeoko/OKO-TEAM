@@ -568,7 +568,7 @@ $groups = og_groups($orders);
             // суммы и на сколько, иначе непонятно, почему в кассе меньше прайса.
             $ofull = (int)($o['amount_full'] ?? 0); $opct = (int)($o['discount_pct'] ?? 0);
             if ($ofull > (int)$o['amount']): ?> · было <s><?= number_format($ofull, 0, '.', ' ') ?> ₽</s><?php
-              if ($opct > 0): ?>, скидка <?= $opct ?>%<?= vip_kind((int)($o['user_id'] ?? 0)) === 'club' ? ' — участник ВИП-клуба' : '' ?><?php endif;
+              if ($opct > 0): ?>, скидка <?= $opct ?>%<?= vip_kind((int)($o['user_id'] ?? 0)) === 'club' ? ' — участник Элитного клуба' : '' ?><?php endif;
             endif; ?></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
             <a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['do'=>'print','id'=>(int)$o['id'],'orders'=>$idsS]) ?>" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Лист для посылки</a>

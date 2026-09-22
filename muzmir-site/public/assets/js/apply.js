@@ -628,7 +628,7 @@
     // Подписи «за что скидка», как в наградах и /club.
     function reasons() {
       var out = [];
-      if (d.club > 0)      out.push('ВИП-клуб −' + d.club + '%');
+      if (d.club > 0)      out.push('Элитный клуб −' + d.club + '%');
       if (d.loyalty > 0)   out.push('Достижения −' + d.loyalty + '%');
       if (d.referral > 0)  out.push((d.credit > 0 ? 'Бонус приглашающего' : 'Промокод') + ' −' + d.referral + '%');
       if (extraRef > 0 && d.referral === 0) out.push('Промокод −' + extraRef + '% (после подачи)');
@@ -919,7 +919,7 @@
     $$('input[name="competition_ids[]"]').forEach(function (r) {
       r.addEventListener('change', recomputePaid);
     });
-    /* КОНКУРС ВИП-КЛУБА ПРОВЕРЯЕМ И ПРИ ВХОДЕ ПО ССЫЛКЕ.
+    /* КОНКУРС ЭЛИТНОГО КЛУБА ПРОВЕРЯЕМ И ПРИ ВХОДЕ ПО ССЫЛКЕ.
        С афиши, календаря и главной человек попадает сюда с уже отмеченным
        конкурсом (?competition=...). События change при этом нет, а проверка
        членства висела только на нём: участник со стороны спокойно проходил всю

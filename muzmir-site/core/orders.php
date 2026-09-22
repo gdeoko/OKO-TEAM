@@ -45,7 +45,7 @@ function orders_migrate(): void {
  *
  * Вызывается при успешной оплате заказа (core/payments.php). Создаёт записи в
  * diplomas по оплаченным электронным позициям и планирует отправку:
- *   • участник ВИП-клуба — через 3 рабочих дня от оплаты;
+ *   • участник Элитного клуба — через 3 рабочих дня от оплаты;
  *   • обычный участник  — через 5 рабочих дней.
  * Дальше письмо уходит кроном send_diplomas по scheduled_at, одним письмом на заявку.
  *
@@ -75,7 +75,7 @@ function order_fulfill_digital(int $orderId): int {
     $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
     if (!$a) return 0;
 
-    // Срок: ВИП-клуб — 3 рабочих дня, остальные — 5 (от момента оплаты заказа).
+    // Срок: Элитный клуб — 3 рабочих дня, остальные — 5 (от момента оплаты заказа).
     if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
     require_once BASE_PATH . '/core/send_timing.php';
     $uid    = (int) ($o['user_id'] ?? $a['user_id'] ?? 0);

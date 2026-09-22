@@ -139,7 +139,7 @@ function club_expired(int $limit = 100): array {
  * почта надёжнее, если роль в базе ещё не проставлена.
  */
 
-/** Почты команды центра (безлимитный ВИП, синяя галочка). */
+/** Почты команды центра (безлимитное членство, синяя галочка). */
 function club_staff_emails(): array {
     $extra = array_filter(array_map('trim', explode(',', (string) (function_exists('setting') ? setting('club_staff_emails', '') : ''))));
     return array_values(array_unique(array_map('mb_strtolower', array_merge([
@@ -252,7 +252,7 @@ function club_local(string $utc): string {
 
 /**
  * Тип галочки у пользователя:
- *   'club' — СИНЯЯ: участник ВИП-клуба (пока подписка активна). Синяя выбрана намеренно
+ *   'club' — СИНЯЯ: участник Элитного клуба (пока подписка активна). Синяя выбрана намеренно
  *            (Даниэль): в списках админки она читается как «проверенный» — сразу видно,
  *            что перед тобой член клуба со скидкой и ускоренными сроками.
  *   'team' — ЗОЛОТАЯ: владелец, оргкомитет, администраторы центра. Привилегии клуба у них
@@ -267,7 +267,7 @@ function vip_kind(?int $uid, string $role = '', string $email = ''): string {
     // ЕСЛИ ЕСТЬ АККАУНТ — решает только он. Почту из строки списка (в заявке это
     // контакт участника, а не логин) для опознания команды НЕ используем: участник,
     // написавший в форме почту центра, получал золотую галочку оргкомитета вместо
-    // синей галочки ВИП-клуба.
+    // синей галочки Элитного клуба.
     if ($uid && $uid > 0) {
         if (function_exists('club_is_staff') && club_is_staff((int) $uid)) return 'team';
         return (function_exists('club_is_active') && club_is_active((int) $uid)) ? 'club' : '';
@@ -284,12 +284,12 @@ function is_vip_user(?int $uid, string $role = '', string $email = ''): bool {
 
 /**
  * Галочка для админ-списков.
- * СИНЯЯ — участник ВИП-клуба, ЗОЛОТАЯ — команда центра (безлимит).
+ * СИНЯЯ — участник Элитного клуба, ЗОЛОТАЯ — команда центра (безлимит).
  */
 function vip_badge(string $kind = 'club'): string {
     $isTeam = $kind === 'team';
     $fill   = $isTeam ? '#C79322' : '#2C7BE5';
-    $title  = $isTeam ? 'Оргкомитет центра · безлимитный доступ' : 'Участник ВИП-клуба';
+    $title  = $isTeam ? 'Оргкомитет центра · безлимитный доступ' : 'Участник Элитного клуба';
     return '<span title="' . $title . '" style="display:inline-flex;vertical-align:-3px;margin-left:4px">'
         . '<svg width="16" height="16" viewBox="0 0 24 24" fill="' . $fill . '">'
         . '<path d="M12 2l2.5 2.1 3.2-.5 1.1 3.1 3 1.3-1 3 1 3-3 1.3-1.1 3.1-3.2-.5L12 22l-2.5-2.1-3.2.5-1.1-3.1-3-1.3 1-3-1-3 3-1.3 1.1-3.1 3.2.5z"/>'

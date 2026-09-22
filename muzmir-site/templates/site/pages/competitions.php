@@ -56,7 +56,7 @@ $icoArrow  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 $icoCal    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>';
 $icoCoin   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.2c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.6-2.5 1.6-2.5.7-2.5 1.7 1 1.7 2.5 1.7 2.5-.7 2.5-1.7"/></svg>';
 
-/* Скидка ВИП-клуба показывается и в афише конкурсов — так же, как в разделе наград:
+/* Скидка Элитного клуба показывается и в афише конкурсов — так же, как в разделе наград:
    полная цена зачёркнута, рядом цена участника Клуба. Сервер считает взнос сам
    (api/v1/apply.php → discount_breakdown), здесь только честное отображение. */
 $clubPct = 0;

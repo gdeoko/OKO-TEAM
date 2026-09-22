@@ -313,7 +313,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
                         FROM competitions WHERE status='open' ORDER BY is_paid ASC, sort ASC, id ASC");
     } catch (\Throwable $e) { $comps = []; }
 
-    /* КОНКУРС ВИП-КЛУБА НЕ ЗОВЁМ ВСЕЙ БАЗОЙ. Он бесплатный, но подать заявку
+    /* КОНКУРС ЭЛИТНОГО КЛУБА НЕ ЗОВЁМ ВСЕЙ БАЗОЙ. Он бесплатный, но подать заявку
      * может только участник клуба: в общей строке «участие бесплатное» он читался
      * как открытый для всех, люди подавали заявки, и их приходилось отклонять.
      * В перечислении его нет; отдельной строкой ниже сказано, для кого он. */
@@ -368,7 +368,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
         $out .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px">'
              . '<tr><td style="background:' . MM_IVORY . ';border-left:4px solid ' . $navy . ';'
              . 'border-radius:0 10px 10px 0;padding:14px 18px;font:15px/1.6 Arial,sans-serif;color:' . $ink . '">'
-             . '<b>' . h(implode(', ', $cn)) . ' - только для участников ВИП-клуба.</b> '
+             . '<b>' . h(implode(', ', $cn)) . ' - только для участников Элитного клуба.</b> '
              . 'Участие в нём тоже бесплатное и входит в членство, а по итогам года среди лауреатов '
              . 'и обладателей Гран-при вручается призовой фонд 100 000 ₽.'
              . '</td></tr></table>';
@@ -407,7 +407,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $disc = max(1, (int) setting('club_discount', '20'));
     $out .= LC_VIP_OPEN
          . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
-         . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">ВИП-клуб постоянных участников</h2>'
+         . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Элитный клуб постоянных участников</h2>'
          . $p('Для педагогов и активных участников - привилегии, ранние результаты и особые условия.')
          /* ПУНКТЫ — ИЗ ОБЩЕГО СПИСКА (core/club_perks.php).
           * Здесь стоял свой набор, набранный руками, и он разошёлся со страницей
@@ -424,7 +424,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
                return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
                     . $rows . '</table>';
            })()
-         . mm_email_btn($base . '/club', 'Вступить в ВИП-клуб', 'navy')
+         . mm_email_btn($base . '/club', 'Вступить в Элитный клуб', 'navy')
          . LC_VIP_CLOSE;
 
     return $out;

@@ -161,7 +161,7 @@ function an_line_svg(array $series, string $color): string {
 $evRu = [
     'pageview' => 'Просмотр', 'click' => 'Клик', 'application' => 'Заявка',
     'payment' => 'Оплата', 'order' => 'Заказ наград', 'order_paid' => 'Заказ оплачен',
-    'club' => 'ВИП-клуб', 'club_join' => 'Вступление в клуб', 'club_order' => 'Заказ клуба',
+    'club' => 'Элитный клуб', 'club_join' => 'Вступление в клуб', 'club_order' => 'Заказ клуба',
     'subscribe' => 'Подписка', 'chat_start' => 'Диалог чат-бота', 'register' => 'Регистрация',
     'followup' => 'Дожим', 'analytics' => 'Аналитика',
 ];
