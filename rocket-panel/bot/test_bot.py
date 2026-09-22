@@ -1482,16 +1482,22 @@ class ДействиеПоказываетсяВКонце(unittest.TestCase):
 
     def test_у_пары_раздеваются_оба(self):
         """Обязательная строка владельца написана про одного. Прогон
-        22.09.2026: женщина голая, мужчина в серых шортах с его листа."""
+        22.09.2026: женщина голая, мужчина в серых шортах с его листа.
+
+        Нагота проверяется по СМЫСЛУ, а не по прежней букве «stripped
+        bare»: та формулировка отрицала одежду, и купальник с референса
+        её пересиливал. Теперь про каждого сказано то, чего в одежде не
+        бывает, — про её соски и про его член.
+        """
         p = catalog.scene("pf_mf_near").промпт()
-        self.assertIn("Both of them are stripped bare", p)
+        self.assertIn("her own nipples in plain view", p)
         # Мужская нагота названа ПРЯМО и анатомично: общего «оба голые»
         # сборке не хватало — замер дал 1 кадр из 2 против 2 из 2.
-        self.assertIn("erect penis fully exposed", p)
+        self.assertIn("his erect penis is in plain view", p)
         # Названий одежды тут нет ВООБЩЕ: модель рисует названное, и
         # «не мужские шорты» выдавали ровно шорты.
         # См. `ОдеждуНеНазываемВПоложительномТексте`.
-        self.assertIn("nothing covering either of them", p)
+        self.assertIn("nothing on his hips", p)
 
     def test_одиночной_сцене_про_обоих_не_говорим(self):
         self.assertNotIn("BOTH people", catalog.scene("un_full").промпт())
@@ -1526,7 +1532,7 @@ class РезультатВсегдаОткровенный(unittest.TestCase):
                 # `ПАРА_РАЗДЕТЫ_ДОГОЛА`. У парного РОЛИКА сборка
                 # прежняя: там первый кадр приходит готовой
                 # фотографией, и длина ему не мешает.
-                self.assertIn("stripped bare", s.промпт(), s.key)
+                self.assertIn("in plain view", s.промпт(), s.key)
             elif s.пара:
                 self.assertIn(prompts.ОБЯЗАТЕЛЬНОЕ_ПАРА, s.промпт(), s.key)
             else:
@@ -2453,7 +2459,7 @@ class ГолыеОстаютсяГолымиДоКонца(unittest.TestCase):
         короткой парной сборки хвоста нет, весь текст и есть начало.
         Поэтому проверяем не повтор, а место."""
         p = catalog.scene("pf_mf_near").prompt_фото()
-        self.assertLess(p.index("stripped bare"), len(p) // 3)
+        self.assertLess(p.index("bare skin"), len(p) // 3)
 
     def test_про_ткань_молчим_когда_одежды_нет(self):
         сц = catalog.scene("pf_mf_near")
@@ -2548,6 +2554,54 @@ class ОдеждуНеНазываемВПоложительномТексте(u
         for вещь in self.ВЕЩИ:
             self.assertIn(вещь, n, f"«{вещь}» пропала из негатива")
 
+    def test_купальники_с_референсов_названы_поимённо(self):
+        """Модели на референсах сняты в купальниках, и Qwen Edit тащит
+        их в кадр. Общего слова «bikini» не хватило: сборка рисовала
+        лямки и верх. Поэтому в запретах стоят те же куски."""
+        n = catalog.scene("pf_mf_near").negative.lower()
+        for вещь in ("bikini top", "bikini straps", "bra strap",
+                     "grey shorts", "swim trunks"):
+            self.assertIn(вещь, n, f"«{вещь}» пропала из негатива")
+
+
+class ЧленНеСтираетсяИНеПоявляетсяЛишний(unittest.TestCase):
+    """Прогон 22.09.2026, обе стороны одной ошибки.
+
+    У стоящего во весь рост мужчины сборка рисовала гладкий пах: кадр
+    читался ею как обнажённый портрет. Помог только запрет самой
+    пустоты — «smooth featureless crotch, no penis, censored».
+
+    Но тот же запрет в ЖЕНСКОЙ сцене работает наоборот: слово «penis» в
+    негативе сборка берёт как подсказку и дорисовывает член девушке.
+    Владелец ловил это трижды («у девушки хуй»). Поэтому запрет стоит
+    РОВНО ТАМ, где член в кадре и должен быть.
+    """
+
+    def test_в_сцене_с_мужчиной_запрет_пустоты_есть(self):
+        for ключ in ("pf_mf_near", "pf_mm_near"):
+            n = catalog.scene(ключ).negative
+            self.assertIn("smooth featureless crotch", n, ключ)
+            self.assertIn("no penis", n, ключ)
+
+    def test_в_женской_сцене_этого_запрета_нет(self):
+        for ключ in ("pf_ff_close", "un_full", "ac_close"):
+            n = catalog.scene(ключ).negative
+            self.assertNotIn("smooth featureless crotch", n, ключ)
+
+    def test_у_пары_женщин_член_запрещён(self):
+        """«В ЖЖ лесби не должно быть членов вообще» — владелец,
+        22.09.2026, после трёх кадров подряд."""
+        n = catalog.scene("pf_ff_close").negative.lower()
+        for слово in ("penis", "phallus", "male genitals", "futanari"):
+            self.assertIn(слово, n, f"«{слово}» не запрещено в ЖЖ")
+
+    def test_у_одиночной_кнопки_этого_запрета_нет(self):
+        """Фотографию присылает клиент, и клиент бывает мужчиной: там
+        такой запрет стёр бы его самого."""
+        for ключ in ("un_full", "ac_close"):
+            n = catalog.scene(ключ).negative.lower()
+            self.assertNotIn("male genitals", n, ключ)
+
 
 class УПарыВсёВоМножественномЧисле(unittest.TestCase):
     """Прогон 22.09.2026, ЖЖ: первая выходила голой, вторая — в белье
@@ -2556,13 +2610,16 @@ class УПарыВсёВоМножественномЧисле(unittest.TestCase
     и рядом с двумя людьми модель поняла их буквально."""
 
     def test_нагота_объявлена_про_обоих(self):
+        """Про КАЖДУЮ отдельно. Множественное «обе голые» сборка
+        применяла к той, что ей ближе, и вторая оставалась в лифчике."""
         p = catalog.scene("pf_ff_close").prompt_фото()
-        self.assertIn("Both women are stripped bare", p)
+        self.assertIn("The first woman's chest is bare skin", p)
+        self.assertIn("The second woman's chest is bare skin", p)
         self.assertNotIn("The person from the reference is fully nude", p)
 
     def test_снятая_одежда_не_привязана_к_одному_телу(self):
         p = catalog.scene("pf_ff_close").prompt_фото()
-        self.assertIn("nothing covering either of them", p)
+        self.assertEqual(2, p.count("her own nipples in plain view"))
         self.assertNotIn("left on her body", p)
 
     def test_у_одиночки_единственное_число_осталось(self):
