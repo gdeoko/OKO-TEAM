@@ -243,7 +243,8 @@
     "four arms and four legs, four hands and four feet in all. Every "
     "limb is traceable back along itself to the one body it grows from, "
     "and the two bodies keep their own outlines where they touch, each "
-    "whole and separate, as in a single unretouched photograph."
+    "whole and separate, as in a single unretouched photograph. Every "
+    "elbow and knee bends forwards only, never backwards."
 )
 
 КАЧЕСТВО = (
@@ -502,7 +503,9 @@ class Блок:
     "third arm, third leg, fifth limb, extra foot, three feet, three "
     "hands, extra arms, extra legs, arm without a shoulder, leg without "
     "a hip, detached hand, detached foot, floating hand, twisted neck, "
-    "head rotated backwards, impossible contortion, melted anatomy"
+    "head rotated backwards, impossible contortion, melted anatomy, "
+    "knee bent backwards, knee bent the wrong way, inverted knee, "
+    "elbow bent backwards, leg bent inside out, impossible joint"
 )
 ОДЕТЫЕ = (
     "clothed, dressed, partially dressed, underwear, lingerie, bra, "
@@ -726,7 +729,8 @@ def собрать_пару(блок, сложение=None, своя_строк
                  "ones from the references. Two heads, four arms and four "
                  "legs in all, every limb traceable to the one body it "
                  "grows from, both bodies whole and separate where they "
-                 "touch.")
+                 "touch; every elbow and knee bends forwards only, "
+                 "never backwards.")
     # СОСТАВ. Каталог кладёт его первым абзацем «ещё»: «на первом
     # снимке мужчина, на втором женщина» или «обе женщины». Без него
     # ЖЖ превращается в МЖ — единственное, чем эти кнопки и

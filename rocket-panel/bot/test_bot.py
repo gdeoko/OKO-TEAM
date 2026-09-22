@@ -2602,6 +2602,24 @@ class ТриЖёсткихПравилаВладельца(unittest.TestCase):
             self.assertIn("four arms and four legs", p, ключ)
             self.assertIn("traceable", p, ключ)
 
+    def test_суставы_гнутся_в_свою_сторону(self):
+        """Владелец поймал на готовом кадре ЖЖ: тело целое, рук и ног
+        ровно по две, а колено вывернуто назад. Общее «bad anatomy»
+        такое не ловит — сустав назван отдельно.
+
+        В положительном тексте это сказано ТОЛЬКО парам: у одиночной
+        сборки место обязано остаться в первой трети промпта (см.
+        `ВыбранноеМестоСтоитВНачале`), и лишнее предложение выдавливает
+        его оттуда. У одиночек сустав сторожит негатив."""
+        for ключ in ("pf_mf_near", "pf_ff_close"):
+            p = catalog.scene(ключ).prompt_фото()
+            self.assertIn("bends forwards only", p, ключ)
+        for s in self.все_сцены():
+            n = s.negative.lower()
+            for слово in ("knee bent backwards", "inverted knee",
+                          "elbow bent backwards"):
+                self.assertIn(слово, n, f"{s.key}: «{слово}» не запрещено")
+
     def test_у_одиночки_конечности_посчитаны_вслух(self):
         p = catalog.scene("un_close").prompt_фото()
         self.assertIn("two hands and two feet", p)
