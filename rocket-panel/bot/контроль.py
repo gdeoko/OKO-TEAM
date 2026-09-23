@@ -142,8 +142,10 @@ import urllib.request
                  "camera."],
     "un_sit": ["Exactly one woman, alone in the picture.",
                "She has female anatomy only and no penis.",
-               "She sits with her knees wide apart and her vulva open to "
-               "the camera."],
+               "She sits with her knees wide apart and her bare vulva open "
+               "to the camera. A short skirt pushed up around her waist is "
+               "correct and expected; nothing covers her vulva or her "
+               "breasts."],
     "un_lie": ["Exactly one woman, alone in the picture.",
                "She has female anatomy only and no penis.",
                "She lies on her back with her legs apart."],
@@ -240,8 +242,23 @@ def требования(ключ_сцены):
     return []
 
 
+# КНОПКИ, ГДЕ ОДЕЖДА В КАДРЕ — ЭТО ЗАМЫСЕЛ, А НЕ БРАК.
+#
+# «Раздвинуть ножки» снята как сцена в задранной школьной юбке, и так
+# она владельцем и принята («SHE IS WEARING A SHORT SKIRT AND NOTHING
+# ELSE» — дословно в постановке). «Снимает трусики» и «Снимает лифчик»
+# тем более: там вещь и есть действие. Общий запрет одежды для них
+# означал бы, что приёмка бракует ровно тот кадр, который утверждён.
+ОДЕЖДА_ПО_ЗАМЫСЛУ = {"un_sit", "ph_push", "ph_below"}
+
+
 def вопрос(ключ_сцены):
-    пункты = ОБЩЕЕ + требования(ключ_сцены)
+    к = str(ключ_сцены or "")
+    свои = требования(ключ_сцены)
+    общие = ОБЩЕЕ
+    if any(к.endswith(с) for с in ОДЕЖДА_ПО_ЗАМЫСЛУ):
+        общие = [п for п in ОБЩЕЕ if "wearing any clothing" not in п]
+    пункты = общие + свои
     строки = "\n".join(f"{i}. {т}" for i, т in enumerate(пункты, 1))
     return (
         "You are checking one generated photograph before it is delivered "

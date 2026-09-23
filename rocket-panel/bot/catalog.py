@@ -543,6 +543,259 @@ class Узел:
 
 
 
+# ЖЁСТКАЯ ПОСТАНОВКА ОДИНОЧНЫХ КНОПОК.
+#
+# То же решение, что у пар, и по той же причине. Раздевание и интим
+# владелец принял 22.09.2026 по конкретным кадрам, но в боте эти кнопки
+# собирались ОБЩЕЙ геометрией — своими словами про ракурс и план. На
+# контрольном прогоне 23.09 это и вылезло: «Мастурбация раком» пришла
+# фронтальной сидя вместо вида сзади, у «Раздвинуть ножки» на бёдрах
+# осталась юбка.
+#
+# Здесь лежит текст, НА КОТОРОМ КАДР И ВЫШЕЛ, слово в слово. Поля
+# «гардероб», «поза» и «камера» при этом молчат: они спорили бы с ним
+# за ту же роль (`prompts.собрать`).
+ЖЁСТКАЯ_ОДИНОЧНАЯ = {
+    # «Крупный план» — кадр pR16_un_close__4242.
+    "un_close": (
+        "CLOSE SHOT. She lies on her back on the black floor with her "
+        "legs wide apart and her hips near the camera: her bare vulva "
+        "fills the CENTRE of the frame in sharp close-up, the labia in "
+        "plain view. Her bare breasts are just beyond it, two separate "
+        "breasts with her own nipples, and her whole face is at the top "
+        "of the picture, lifted to the lens and in focus. BOTH OF HER "
+        "ARMS ARE WHOLE AND IN THE PICTURE: each one comes down from "
+        "her own shoulder, past her own ribs, to her hand on her own "
+        "thigh — shoulder, upper arm, elbow, forearm and hand all "
+        "visible in one unbroken line on each side. Her whole face is "
+        "inside the frame. Her chest is bare skin and her own nipples "
+        "are in plain view; her hips are bare skin as well. She is a "
+        "woman. Between her thighs there is her own bare vulva and "
+        "nothing else. Her anatomy is female only. ONE single "
+        "continuous body: one head on her own neck, one torso, two arms "
+        "growing from her own shoulders, two legs growing from her own "
+        "hips — two hands and two feet in all, and every one of them "
+        "traceable back along its own limb to the place it grows from. "
+        "Head, chest, belly and hips follow one another in the natural "
+        "order and at natural distances, as in a single unretouched "
+        "photograph. Only one person in the frame."),
+    # «В полный рост» — кадр pR5_un_full__777.
+    "un_full": (
+        "FULL-LENGTH SHOT, her whole body from her hair down to her "
+        "bare feet inside the frame. She stands on the black floor "
+        "facing the camera, her weight on one leg and her hips turned a "
+        "little, her bare breasts and her bare vulva both in plain "
+        "view. One of her own hands has come down between her own "
+        "thighs and her fingers rest on her vulva; the whole arm is "
+        "visible from her shoulder to that hand. Her face is to the "
+        "lens. Her face is inside the frame. Her chest is bare skin and "
+        "her own small nipples are in plain view; her hips are bare "
+        "skin too, nothing across them. She is a woman. Between her "
+        "thighs there is her own bare vulva and nothing else. Her "
+        "anatomy is female only. One whole unbroken body, one head on "
+        "her own neck, two arms from her own shoulders, two legs. Only "
+        "one person in the frame."),
+    # «Вид сзади» — кадр pR5_un_back__1337.
+    "un_back": (
+        "The camera is BEHIND HER. She stands on the black floor with "
+        "her legs slightly apart and HAS LEANED FORWARD from the hips, "
+        "so that her buttocks are raised toward the lens and her bare "
+        "vulva shows between her thighs from behind at the CENTRE of "
+        "the frame. She has turned her head over her shoulder and part "
+        "of her face is to the camera. Her hands rest on her own "
+        "thighs. Her face is inside the frame. Her chest is bare skin "
+        "and her own small nipples are in plain view; her hips are bare "
+        "skin too, nothing across them. She is a woman. Between her "
+        "thighs there is her own bare vulva and nothing else. Her "
+        "anatomy is female only. One whole unbroken body, one head on "
+        "her own neck, two arms from her own shoulders, two legs. Only "
+        "one person in the frame."),
+    # «Поставить раком» — кадр pK_un_three__22.
+    "un_three": (
+        "She is on her hands and knees on the floor, half-turned to the "
+        "camera: both palms flat on the floor in front of her, knees "
+        "apart, back arched down, buttocks raised. Her head is turned "
+        "back over her shoulder so her face is to the lens. Her "
+        "buttocks and her vulva are seen from behind. Her hands stay on "
+        "the floor. Only one person in the frame. She is a woman and "
+        "her anatomy is female only: breasts, a vulva, and her own two "
+        "hands. Between her thighs there is her vulva and nothing else. "
+        "One unbroken body: her head on her neck, her arms growing from "
+        "her own shoulders, in a single continuous photograph. Her body "
+        "is the body from the reference: Not aged, not enlarged. She is "
+        "completely naked. Skin is"),
+    # «Раздвинуть ножки» — кадр pR17_un_sit__1337.
+    "un_sit": (
+        "She sits on the black floor with her knees up and her legs "
+        "wide apart, facing the camera. SHE IS WEARING A SHORT SKIRT "
+        "AND NOTHING ELSE: the skirt is pushed up around her waist and "
+        "there is nothing under it, so her bare vulva is in plain view "
+        "between her open thighs at the CENTRE of the frame. Above the "
+        "skirt she is bare and her own nipples are in plain view. BOTH "
+        "OF HER ARMS REACH BACK BEHIND HER AND PROP HER UP: each one "
+        "runs from her own shoulder through elbow and forearm to its "
+        "one hand flat on the floor behind her hip, and both of those "
+        "lines are visible from shoulder to hand. She looks at the "
+        "camera with her lips slightly parted. Her whole face is inside "
+        "the frame. SHE HAS TWO ARMS AND TWO HANDS IN THE PICTURE AND "
+        "NO MORE. Each arm starts at her own shoulder and runs unbroken "
+        "through upper arm, elbow, forearm and wrist to its one hand, "
+        "and both of those lines are visible. ONE single continuous "
+        "body: one head on her own neck, one torso, two arms growing "
+        "from her own shoulders, two legs growing from her own hips — "
+        "two hands and two feet in all, and every one of them traceable "
+        "back along its own limb to the place it grows from. Head, "
+        "chest, belly and hips follow one another in the natural order "
+        "and at natural distances, as in a single unretouched "
+        "photograph. Only one person in the frame."),
+    # «Лёжа на спине» — кадр pR16_un_lie__4242.
+    "un_lie": (
+        "She lies on her back on the black floor with her knees raised "
+        "and her legs wide apart. THE CAMERA IS IN FRONT OF HER HIPS, "
+        "level with them, looking straight at her bare vulva, which is "
+        "at the CENTRE of the frame. Beyond it her bare breasts and her "
+        "whole face are in the same picture, her head lifted to the "
+        "lens. BOTH OF HER ARMS ARE WHOLE AND IN THE PICTURE: each one "
+        "comes down from her own shoulder, past her own ribs, to her "
+        "hand resting on the floor beside her own hip — shoulder, upper "
+        "arm, elbow, forearm and hand all visible in one unbroken line "
+        "on each side. Her whole face is inside the frame. Her chest is "
+        "bare skin and her own nipples are in plain view; her hips are "
+        "bare skin as well. She is a woman. Between her thighs there is "
+        "her own bare vulva and nothing else. Her anatomy is female "
+        "only. ONE single continuous body: one head on her own neck, "
+        "one torso, two arms growing from her own shoulders, two legs "
+        "growing from her own hips — two hands and two feet in all, and "
+        "every one of them traceable back along its own limb to the "
+        "place it grows from. Head, chest, belly and hips follow one "
+        "another in the natural order and at natural distances, as in a "
+        "single unretouched photograph. Only one person in the frame."),
+    # «Мастурбация крупно» — кадр pI3_ac_close__4242.
+    "ph_close": (
+        "She sits facing the camera SQUARE ON, not turned to either "
+        "side, her knees wide apart and her thighs open straight toward "
+        "the lens, her vulva at the centre of the frame. Her own right "
+        "arm comes down from her own shoulder to her hand between her "
+        "thighs: her palm is against her vulva and two of her own "
+        "fingers are pushed inside it, the labia parted around them. "
+        "Both her bare breasts and her whole face are square to the "
+        "camera above. Her face is inside the frame and turned to the "
+        "camera. She is completely naked: nothing on her breasts, "
+        "nothing on her hips, bare skin everywhere. She is a woman. "
+        "Between her thighs there is her own bare vulva and nothing "
+        "else in front of it but her own fingers. Her anatomy is female "
+        "only. One whole unbroken body, one head on her own neck, two "
+        "arms growing from her own shoulders, two legs. Only one person "
+        "in the frame."),
+    # «Мастурбация сбоку» — кадр pR4_ac_side__777.
+    "ph_side": (
+        "She lies on her side on the floor, her body along the frame, "
+        "the upper leg drawn up so her thighs are open toward the "
+        "camera and her bare vulva is in plain view. Her own upper arm "
+        "comes down from her own shoulder, past her ribs and her hip, "
+        "to her hand between her own thighs: her palm is against her "
+        "vulva and two of her own fingers are pushed inside it, her "
+        "labia parted around them. Her bare breast and her face are in "
+        "the same frame, her head turned to the lens. Her face is "
+        "inside the frame and turned to the camera. She is completely "
+        "naked: nothing on her breasts, nothing on her hips, bare skin "
+        "everywhere. She is a woman. Between her thighs there is her "
+        "own bare vulva and nothing else in front of it but her own "
+        "fingers. Her anatomy is female only. One whole unbroken body, "
+        "one head on her own neck, two arms growing from her own "
+        "shoulders, two legs. Only one person in the frame."),
+    # «Мастурбация раком» — кадр pR9_ac_above__777.
+    "ph_above": (
+        "She kneels on all fours on the floor, side-on to the camera, "
+        "knees apart, back arched down, buttocks raised, her head "
+        "turned back over her shoulder so her face is to the lens. Her "
+        "left palm stays flat on the floor holding her up. HER RIGHT "
+        "ARM HAS COME DOWN OFF THE FLOOR AND REACHES FORWARD UNDER HER "
+        "OWN BELLY, in between her own thighs from the front: the whole "
+        "arm is visible from her shoulder to her hand, and her fingers "
+        "are on her own vulva, which is open to the camera between her "
+        "raised thighs. Her face is inside the frame and turned to the "
+        "camera. She is completely naked: nothing on her breasts, "
+        "nothing on her hips, bare skin everywhere. She is a woman. "
+        "Between her thighs there is her own bare vulva and nothing "
+        "else in front of it but her own fingers. Her anatomy is female "
+        "only. One whole unbroken body, one head on her own neck, two "
+        "arms growing from her own shoulders, two legs. Only one person "
+        "in the frame."),
+    # «Снимает лифчик (майку)» — кадр pZ3_ac_below__4242.
+    "ph_below": (
+        "She stands facing the camera and IS IN THE ACT OF PULLING HER "
+        "TOP OFF OVER HER HEAD: the garment is already up around her "
+        "raised arms above her shoulders, her own two bare breasts are "
+        "fully uncovered and in plain view at the CENTRE of the frame, "
+        "the nipples bare. Her face is below her raised arms, turned to "
+        "the lens and clear of the cloth. Nothing is left on her chest. "
+        "Her whole face is inside the frame. She is a woman, her "
+        "anatomy is female only. One whole unbroken body, one head on "
+        "her own neck, two arms from her own shoulders, two legs. Only "
+        "one person in the frame."),
+    # «Снимает трусики» — кадр pR21_ac_push__777.
+    "ph_push": (
+        "THE CAMERA IS BEHIND HER. She stands with her legs slightly "
+        "apart, wearing a short plain skirt pushed up over her hips and "
+        "nothing else, and she has BENT FORWARD from the waist so her "
+        "bare buttocks are raised toward the lens. She has hooked her "
+        "thumbs into a small pair of panties and IS PULLING THEM DOWN: "
+        "they are already halfway down her thighs, well below her hips, "
+        "and her bare buttocks and her bare vulva are uncovered and in "
+        "plain view from behind at the CENTRE of the frame. Her head is "
+        "turned back over her shoulder and her face is to the camera. "
+        "She is a grown woman in her twenties. Her whole face is inside "
+        "the frame. She is a woman, her anatomy is female only. One "
+        "whole unbroken body, one head on her own neck, two arms from "
+        "her own shoulders, two legs. Only one person in the frame."),
+    # «Мастурбация с игрушкой» — кадр pG6_sh_three__777.
+    "ph_back": (
+        "THREE-QUARTER VIEW, the camera a little to her left and level "
+        "with her hips. She sits on the black floor with her knees wide "
+        "apart and her thighs open, her vulva at the CENTRE of the "
+        "frame and seen slightly from the side. The toy is A SHORT "
+        "STUBBY PINK VIBRATOR, no longer than her own hand from wrist "
+        "to fingertips and as thick as two fingers — a small egg-shaped "
+        "toy, not a long wand. HER VULVA HAS SWALLOWED THE UPPER HALF "
+        "OF IT: that half is gone from sight inside her and her "
+        "stretched labia close tightly around the middle of the toy, "
+        "where it goes in. Only the lower half is still out in the air. "
+        "ONLY HER RIGHT HAND IS ON THE TOY: its fingers are closed "
+        "around the lower half, and that arm runs unbroken from her own "
+        "right shoulder down to it. HER LEFT HAND IS NOWHERE NEAR THE "
+        "TOY — it rests on her own left knee, and its arm runs unbroken "
+        "from her own left shoulder. Two arms and two hands in the "
+        "picture and no more. HER VULVA IS VERY WET: it glistens with "
+        "her own clear arousal, and a thin trail of clear fluid runs "
+        "down from it onto the floor beneath her. Her whole face is "
+        "inside the frame. Her chest is bare skin and her own nipples "
+        "are in plain view; her hips are bare skin as well. She is a "
+        "woman and her anatomy is female only. Between her thighs there "
+        "is her own bare vulva and nothing else. ONE single continuous "
+        "body: one head on her own neck, one torso, two arms growing "
+        "from her own shoulders, two legs growing from her own hips — "
+        "two hands and two feet in all, and every one of them traceable "
+        "back along its own limb to the place it grows from. Head, "
+        "chest, belly and hips follow one another in the natural order "
+        "and at natural distances, as in a single unretouched "
+        "photograph. Only one person in the frame."),
+}
+
+
+def _ЖЁСТКО_ДЛЯ(key):
+    """Постановка для ключа сцены. Ролик и его фотография — одна
+    кнопка с двумя ключами («ac_close» и «ph_close»), и кадр у них
+    обязан быть один: ролик считается двумя проходами, и первый из них
+    эта самая фотография."""
+    if key in ЖЁСТКАЯ_ОДИНОЧНАЯ:
+        return ЖЁСТКАЯ_ОДИНОЧНАЯ[key]
+    if key.startswith("ac_"):
+        return ЖЁСТКАЯ_ОДИНОЧНАЯ.get("ph_" + key[3:], "")
+    return ""
+
+
+
 def _СЦ_РАЗДЕТЬ(key, title, подпись, **поля):
     """«Раздевание» — по умолчанию ТА ЖЕ обстановка, что на снимке.
 
@@ -554,6 +807,8 @@ def _СЦ_РАЗДЕТЬ(key, title, подпись, **поля):
     Выберет человек место — обстановка заменится на него, см.
     `Scene.промпт`.
     """
+    if _ЖЁСТКО_ДЛЯ(key):
+        поля["жёстко"] = _ЖЁСТКО_ДЛЯ(key)
     return Scene(key, title, "i2i", Блок(**поля), подпись, фон="референс")
 
 
@@ -571,6 +826,8 @@ def _СЦ_ОЖИВИТЬ(key, title, подпись, **поля):
     На сам видео-проход признак не влияет: там кадр уже наш и
     обстановка в нём уже правильная.
     """
+    if _ЖЁСТКО_ДЛЯ(key):
+        поля["жёстко"] = _ЖЁСТКО_ДЛЯ(key)
     return Scene(key, title, "i2v_5", Блок(**поля), подпись, фон="референс")
 
 
@@ -582,6 +839,8 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
     наезд на весь клип» в неподвижном кадре — мусор, а «замедленно» не
     значит ничего.
     """
+    if _ЖЁСТКО_ДЛЯ(key):
+        поля["жёстко"] = _ЖЁСТКО_ДЛЯ(key)
     return Scene(key, title, "i2i", Блок(**поля), подпись, фон="референс",
                  зеркало=зеркало)
 
