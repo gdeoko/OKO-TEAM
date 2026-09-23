@@ -1,5 +1,6 @@
 """Проверки денег. Деньги — единственное, где ошибка стоит дорого."""
-import os, re, time, tempfile, unittest, sqlite3
+import os, re, json, time, tempfile, unittest, sqlite3
+from unittest import mock
 import pricing
 import catalog
 import prompts
@@ -3003,6 +3004,97 @@ class ПарныйПромптКороткий(unittest.TestCase):
         # А место обязано доезжать и до жёсткой постановки тоже.
         self.assertIn("hot pink neon tubes",
                       catalog.scene("pf_mf_near").промпт(место=м))
+
+
+class ПриёмкаКадра(unittest.TestCase):
+    """Идеального кадра с первого раза эта сборка не даёт: поза держится
+    постановкой, а брак даёт ЗЕРНО — на восьми зёрнах одной кнопки
+    один-два кадра выходят с вывернутой рукой, остатком белья или
+    срезанной головой. Владелец потребовал «всегда идеально», и
+    единственный честный способ это дать — не отдавать брак: посмотреть
+    на свой же кадр и переснять другим зерном."""
+
+    def setUp(self):
+        import контроль
+        self.к = контроль
+        self.было = dict(os.environ)
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self.было)
+
+    def test_у_каждой_видимой_кнопки_есть_требования(self):
+        """Кнопка без требований проходит приёмку молча — то есть её у
+        неё нет вовсе. Такое должно ловиться здесь, а не на клиенте."""
+        пусто = [s.key for s in catalog.все_сценарии()
+                 if not s.скрыт and not self.к.требования(s.key)]
+        self.assertEqual([], пусто, "кнопки без требований приёмки")
+
+    def test_требования_понимают_обе_приставки(self):
+        """У фотографии ключ `pf_mf_near`, у ролика `pr_mf_near`, а
+        требования к кадру одни и те же."""
+        self.assertEqual(self.к.требования("pf_mf_near"),
+                         self.к.требования("pr_mf_near"))
+        self.assertTrue(self.к.требования("un_close"))
+
+    def test_в_вопросе_есть_и_общее_и_своё(self):
+        в = self.к.вопрос("pf_mf_behind")
+        self.assertIn("wearing any clothing", в)          # общее
+        self.assertIn("lies flat on his stomach", в)      # своё
+        self.assertIn("JSON", в)
+
+    def test_без_ключа_приёмка_молчит(self):
+        """Нет бесплатного ключа — кадр уходит как раньше. Проверка не
+        имеет права задержать оплаченную работу."""
+        os.environ.pop("GEMINI_KEY_FREE", None)
+        os.environ.pop("AMBERRY_QC_KEY", None)
+        self.assertFalse(self.к.включена())
+        годен, _ = self.к.проверить(b"", "pf_mf_near")
+        self.assertTrue(годен)
+
+    def test_платный_ключ_не_берётся(self):
+        """Правило владельца про деньги: бесплатное можно, за платное
+        спрашивают. Приёмка ходит ТОЛЬКО бесплатным ключом."""
+        os.environ.pop("GEMINI_KEY_FREE", None)
+        os.environ.pop("AMBERRY_QC_KEY", None)
+        os.environ["GEMINI_KEY_PAID"] = "платный"
+        os.environ["GEMINI_API_KEYS"] = "платный2"
+        self.assertEqual("", self.к.ключ())
+
+    def test_осечка_модели_не_бракует_кадр(self):
+        os.environ["GEMINI_KEY_FREE"] = "ключ"
+        with mock.patch("urllib.request.urlopen",
+                        side_effect=OSError("сеть молчит")):
+            годен, почему = self.к.проверить(b"png", "pf_mf_near")
+        self.assertTrue(годен, почему)
+
+    def test_мусор_в_ответе_не_бракует_кадр(self):
+        os.environ["GEMINI_KEY_FREE"] = "ключ"
+        with mock.patch.object(self.к, "_разобрать", return_value=None), \
+             mock.patch("urllib.request.urlopen",
+                        side_effect=OSError("не важно")):
+            годен, _ = self.к.проверить(b"png", "pf_mf_near")
+        self.assertTrue(годен)
+
+    def test_ответ_читается_даже_в_обёртке(self):
+        """Модель любит обернуть JSON в ```json — разбор это переживает."""
+        r = self.к._разобрать('```json\n{"ok": false, "bad": [1]}\n```')
+        self.assertEqual(False, r["ok"])
+        self.assertEqual([1], r["bad"])
+
+    def test_плохой_кадр_бракуется(self):
+        os.environ["GEMINI_KEY_FREE"] = "ключ"
+        ответ = json.dumps({"candidates": [{"content": {"parts": [
+            {"text": '{"ok": false, "bad": [1], "why": "she is wearing shorts"}'}
+        ]}}]}).encode()
+        класс = mock.MagicMock()
+        класс.read.return_value = ответ
+        класс.__enter__ = lambda s: s
+        with mock.patch("urllib.request.urlopen", return_value=класс), \
+             mock.patch("json.load", return_value=json.loads(ответ)):
+            годен, почему = self.к.проверить(b"png", "pf_mf_near")
+        self.assertFalse(годен)
+        self.assertIn("shorts", почему)
 
 
 if __name__ == "__main__":
