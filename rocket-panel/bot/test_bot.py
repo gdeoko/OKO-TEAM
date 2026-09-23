@@ -11,6 +11,7 @@ import emoji
 import payments
 import store
 import archive
+import примеры
 from store import Store, NotEnoughCoins
 
 
@@ -3252,6 +3253,129 @@ class ОпораПоГлубине(unittest.TestCase):
         with mock.patch.object(bot, "gpu", Карта()):
             bot._проход("i2i", "текст", ["a.png"])
         self.assertNotIn("опора", поймано)
+
+    def test_у_каждой_поставленной_кнопки_своя_подпись(self):
+        """Названия владелец переписал сам («Кунилингус», «Наездница»),
+        а подписи остались от ОБЩЕЙ геометрии, по которой кнопки
+        собирались до жёсткой постановки. Выходило «Кунилингус · Двое
+        рядом, камера напротив» — описание кадра, которого больше нет.
+        """
+        for ключ in catalog.С_ОПОРОЙ:
+            сц = catalog.scene(ключ)
+            self.assertIn(сц.ключ_правок, catalog.ПОДПИСЬ_ПОД_ПОСТАНОВКУ,
+                          ключ)
+            self.assertEqual(сц.подп(),
+                             catalog.ПОДПИСЬ_ПОД_ПОСТАНОВКУ[сц.ключ_правок])
+
+    def test_своя_подпись_владельца_сильнее(self):
+        catalog.подставить({"pr_mf_near": {"подпись": "как он скажет"}})
+        try:
+            self.assertEqual(catalog.scene("pf_mf_near").подп(),
+                             "как он скажет")
+        finally:
+            catalog.перечитать()
+
+    def test_страница_показывает_подпись_клиента(self):
+        """Владелец правит название, глядя на описание кнопки. Описание
+        обязано быть то же, что у клиента."""
+        д = catalog.дерево()
+
+        def найти(узлы):
+            for у in узлы:
+                for с in у.get("дети", []) or []:
+                    р = найти([с]) if с.get("вид") != "сценарий" else None
+                    if р:
+                        return р
+                    if с.get("ключ") == "pf_mf_near":
+                        return с
+            return None
+
+        строка = json.dumps(д, ensure_ascii=False)
+        self.assertIn(catalog.ПОДПИСЬ_ПОД_ПОСТАНОВКУ["pr_mf_near"], строка)
+
+
+class ПримерПодКнопкой(unittest.TestCase):
+    """До 23.09.2026 человек выбирал кнопку по одному НАЗВАНИЮ:
+    «Мастурбация раком» и «Мастурбация сбоку» — две строки в столбик, а
+    чем они отличаются, видно только после оплаты. Владелец потребовал
+    показывать принятый кадр примером под каждой кнопкой."""
+
+    def setUp(self):
+        self.папка = tempfile.mkdtemp()
+        self.эталоны = tempfile.mkdtemp()
+        примеры.ПАПКА = self.папка
+        примеры.ЭТАЛОНЫ = self.эталоны
+        примеры.ПАМЯТЬ = os.path.join(self.папка, "file_id.json")
+        примеры.забыть_всё()
+
+    def положить(self, относительный):
+        путь = os.path.join(self.эталоны, относительный)
+        os.makedirs(os.path.dirname(путь), exist_ok=True)
+        from PIL import Image
+        Image.new("RGB", (1344, 768), (40, 20, 30)).save(путь)
+        return путь
+
+    def test_у_каждой_принятой_кнопки_есть_кадр(self):
+        """Список кадров и список кнопок с опорой — об одном и том же
+        наборе: это 21 кадр, который владелец отобрал."""
+        ключи = {catalog.scene(к).ключ_правок for к in catalog.С_ОПОРОЙ}
+        self.assertEqual(ключи, set(примеры.КАДР))
+
+    def test_кнопке_без_принятого_кадра_пример_не_подставляем(self):
+        """Чужой кадр под кнопкой — обещание, которого бот не сдержит."""
+        for ключ in ("ph_mirror", "own_photo", "un_low"):
+            try:
+                сц = catalog.scene(ключ)
+            except KeyError:
+                continue
+            self.assertEqual(примеры.исходник(сц), "", ключ)
+
+    def test_подзаголовок_называет_раздел_и_вид(self):
+        self.assertEqual(примеры.подзаголовок(catalog.scene("pf_mf_near")),
+                         "МЖ ПАРА · ФОТО")
+        self.assertEqual(примеры.подзаголовок(catalog.scene("pr_mf_near")),
+                         "МЖ ПАРА · ВИДЕО")
+
+    def test_карточка_собирается_и_не_меняет_размер_кадра(self):
+        """Правило владельца от 23.09: без обрезаний, без изменения
+        размера, без чёрных полей — надписи ложатся поверх кадра."""
+        from PIL import Image
+        сц = catalog.scene("pf_mf_near")
+        self.положить(примеры.КАДР[сц.ключ_правок])
+        путь = примеры.собрать(сц, "ru")
+        self.assertTrue(os.path.exists(путь))
+        self.assertEqual(Image.open(путь).size, (1344, 768))
+
+    def test_второй_раз_карточку_не_пересобираем(self):
+        сц = catalog.scene("pf_mf_near")
+        self.положить(примеры.КАДР[сц.ключ_правок])
+        путь = примеры.собрать(сц, "ru")
+        было = os.path.getmtime(путь)
+        time.sleep(0.01)
+        self.assertEqual(примеры.собрать(сц, "ru"), путь)
+        self.assertEqual(os.path.getmtime(путь), было)
+
+    def test_подменённый_кадр_забывает_старый_file_id(self):
+        """Телеграм помнит картинку по `file_id` вечно. Подменили
+        эталон — человек обязан увидеть новый кадр, а не тот, что
+        телеграм запомнил полгода назад."""
+        сц = catalog.scene("pf_mf_near")
+        путь = self.положить(примеры.КАДР[сц.ключ_правок])
+        примеры.помнить(сц, "ru", "СТАРЫЙ")
+        self.assertEqual(примеры.помню(сц, "ru"), "СТАРЫЙ")
+        os.utime(путь, (0, 0))
+        self.assertIsNone(примеры.помню(сц, "ru"))
+
+    def test_экран_кнопки_открывается_и_без_картинки(self):
+        """За экраном кнопки оплата. Не собрался пример — уходит текст,
+        но экран открывается всегда."""
+        import bot
+        ушло = []
+        with mock.patch.object(bot, "send",
+                               lambda *a, **к: ушло.append(a)), \
+             mock.patch.object(bot, "_пример_сцены", lambda *a, **к: False):
+            bot.показать_сценарий(1, 1, catalog.scene("pf_mf_near"), None, "ru")
+        self.assertEqual(len(ушло), 1)
 
 
 if __name__ == "__main__":

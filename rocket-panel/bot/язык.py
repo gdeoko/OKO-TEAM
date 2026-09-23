@@ -198,6 +198,51 @@ def job_note(job, яз):
     "ac_back":   ("From behind", "Back in frame, a look over the shoulder"),
     "ac_mirror": ("In the mirror", "Reflection and back at once"),
     "ac_slow":   ("Slow motion", "Everything at half speed"),
+
+    # ПОСТАВЛЕННЫЕ КНОПКИ — те, что владелец принял по кадру и
+    # переименовал сам. Русское имя он написал на странице каталога,
+    # английского там нет вовсе, и до 23.09.2026 англичанин видел
+    # умолчание из кода: «Секс раком» приходил к нему как «Side by
+    # side», а «Кунилингус» у ЖЖ — как то же самое «Side by side», хотя
+    # это разные кнопки с разными кадрами. Имена ниже описывают ТОТ ЖЕ
+    # принятый кадр, что и русские.
+    #
+    # Ключи парных — `pr_*`: это `ключ_правок`, общий у фотографии и
+    # ролика. Поиск по нему идёт ПЕРЕД `РАССТАНОВКИ_EN`, поэтому общая
+    # геометрия сюда больше не подставляется.
+    "un_close":  ("Close-up", "Lying back, legs apart, close on the hips"),
+    "un_three":  ("On all fours", "On all fours, half-turned, face to the lens"),
+    "un_sit":    ("Legs apart", "Sitting, knees apart, skirt pushed up"),
+    "un_lie":    ("On her back", "On her back, camera level with the hips"),
+    "ac_close":  ("Touching herself, close",
+                  "Sitting facing the camera, hand between her legs"),
+    "ac_side":   ("Touching herself, from the side",
+                  "On her side along the frame, hand between her legs"),
+    "ac_above":  ("Touching herself on all fours",
+                  "On all fours from the side, hand behind between her legs"),
+    "ac_back":   ("With a toy", "Sitting three-quarter, with a toy"),
+    "ac_below":  ("Taking her top off",
+                  "Standing, pulling the top over her head"),
+    "ac_push":   ("Taking her panties off",
+                  "From behind, bent forward, sliding them down"),
+    "pr_mf_near":   ("From behind",
+                     "She is on all fours, he kneels behind her"),
+    "pr_mf_face":   ("Riding him",
+                     "He lies on his back, she is on top facing the camera"),
+    "pr_mf_behind": ("Going down on her",
+                     "She half-sits, he is between her legs"),
+    "pr_mf_pov":    ("Going down on him",
+                     "He stands, she kneels in front of him"),
+    "pr_ff_near":   ("Going down on her",
+                     "One sits on the edge of the bed, the other kneels"),
+    "pr_ff_face":   ("From behind, lying",
+                     "One lies on her side, the other behind her"),
+    "pr_ff_behind": ("Both on all fours",
+                     "Both on all fours, camera behind and low"),
+    "pr_ff_close":  ("From behind, standing",
+                     "One bent over, the other behind, side view"),
+    "pr_ff_pov":    ("Going down on her, lying",
+                     "One half-sits on pillows, the other between her legs"),
 }
 
 # Расстановки пар: ключ расстановки -> (название, подпись). Состав
