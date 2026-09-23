@@ -1013,6 +1013,9 @@ def _пара(состав_key, состав_рус, состав_англ, ра
     # расстановка одинакова для всех троих, и смешивать её с составом
     # значило бы держать одну и ту же геометрию в трёх экземплярах.
     поля["ещё"] = "\n\n".join(x for x in (состав_англ, поля.get("ещё", "")) if x)
+    жёстко = ЖЁСТКАЯ_ПОСТАНОВКА.get((состав_key, расст_key))
+    if жёстко:
+        поля["жёстко"] = жёстко
     if приставка == "pf":
         # У фотографии нет дрожания камеры и нет «в течение клипа».
         поля.pop("камера", None)
@@ -1031,6 +1034,51 @@ def _пара(состав_key, состав_рус, состав_англ, ра
     "Focus on the nearer person's eye, the second face still clearly "
     "resolved."
 )
+
+# ЖЁСТКАЯ ПОСТАНОВКА ОТДЕЛЬНЫХ КНОПОК.
+#
+# Обычная парная сцена собирается из строки владельца плюс общая
+# геометрия расстановки — и каждый раз выходит «что-то похожее».
+# Там, где владелец отобрал конкретный кадр на живом прогоне и сказал
+# «чтобы у всех был такой ракурс и поза», похожего мало: ракурс и поза
+# вписываются дословно и уезжают в промпт сразу за актом.
+#
+# Ключ — состав плюс расстановка. Текст — тот самый, на котором кадр и
+# вышел; переписывать его «покрасивее» нельзя: сборка чувствительна к
+# каждому слову (проверено девятью кругами на «Раком» — стоило
+# заменить «completely naked» на более сильную формулировку, и на
+# мужчине три круга подряд возвращались серые шорты с референса).
+ЖЁСТКАЯ_ПОСТАНОВКА = {
+    # «Секс раком», МЖ. Отобрано владельцем 23.09.2026 (кадр
+    # pRK9_rk9__777). Три его требования, все три здесь: рука не
+    # закрывает место соединения, лицо мужчины в кадре, вход виден.
+    ("mf", "near"): (
+        # Текст слово в слово с прогона RK9, зерно 777 — включая
+        # наготу обоих: в проверенном кадре она названа ЗДЕСЬ, а не
+        # общим блоком ниже, и порядок слов сборка чувствует.
+        "Camera at the side of the bed and TURNED TWENTY-FIVE DEGREES "
+        "AROUND TOWARD HER BACK, low. Both of their heads are fully "
+        "inside the frame. THE WOMAN is on all fours on the bed facing "
+        "LEFT, her back arched and her bare buttocks raised toward the "
+        "man; she is completely naked, her own nipples in plain view and "
+        "nothing on her chest at all, and she looks back over "
+        "her shoulder at the camera. THE MAN KNEELS UPRIGHT BEHIND "
+        "HER; HE HAS NOTHING ON HIM AT ALL, his own hips and his own "
+        "thighs are bare skin and UNCOVERED, HIS WHOLE FACE IS "
+        "INSIDE THE FRAME and he "
+        "is looking down at her. HER OWN VULVA IS SEEN FROM BEHIND "
+        "between her open thighs AND HIS ERECT PENIS IS GOING INTO IT "
+        "\u2014 a real grown man\u2019s penis, full adult size, made of his "
+        "own bare skin and the same colour as his body, never an "
+        "object \u2014 that place is at the CENTRE of the picture, open to "
+        "the camera, with nothing in front of it. BOTH OF HIS HANDS "
+        "ARE HIGH UP ON HER BACK, far away from her hips: one lies "
+        "flat BETWEEN HER SHOULDER BLADES, the other holds her WAIST "
+        "just under her ribs. Neither of his hands is on her buttocks, "
+        "on her hips or anywhere near where their bodies join. BOTH OF "
+        "HER ARMS run from her own shoulders to her two hands flat on "
+        "the mattress under her chest."),
+}
 
 КАМЕРА_ФОТО = {
     "pov": "Point-of-view: 28mm wide at head height, the camera standing "
