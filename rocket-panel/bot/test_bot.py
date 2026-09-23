@@ -3506,5 +3506,67 @@ class ДлинныйРолик(unittest.TestCase):
         self.assertEqual(поймано["limit"], bot.ЖДЁМ["i2v_10"])
 
 
+class ПриёмкаНаКарте(unittest.TestCase):
+    """Облачную приёмку пробовали: у Gemini «платный» ключ оказался на
+    бесплатном тарифе (20 запросов в сутки), у Claude API нулевой
+    баланс. Проверка, работающая первые двадцать кадров в сутки, - не
+    проверка. Карта уже оплачена, и CLIP на её процессоре считает
+    картинку меньше секунды."""
+
+    class Карта:
+        def __init__(self, ответы):
+            self.ответы = list(ответы)
+            self.звали = 0
+
+        def start(self, **п):
+            return "j%d" % self.звали, 1
+
+        def wait(self, *a, **к):
+            о = self.ответы[min(self.звали, len(self.ответы) - 1)]
+            self.звали += 1
+            return {"files": ["f.png"], "sec": 1, "приёмка": о}
+
+        def fetch(self, имя):
+            return b"x"
+
+    def test_вердикт_карты_доезжает(self):
+        import bot
+        карта = self.Карта([{"ок": True, "причины": ["годен"]}])
+        with mock.patch.object(bot, "gpu", карта):
+            _, _, _, вердикт = bot._проход("i2i", "т", ["a.png"])
+        self.assertEqual(вердикт["ок"], True)
+
+    def test_брак_с_карты_переснимается(self):
+        import bot
+        карта = self.Карта([{"ок": False, "причины": ["одежда в кадре"]},
+                            {"ок": True, "причины": ["годен"]}])
+        with mock.patch.object(bot, "gpu", карта):
+            bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
+        self.assertEqual(карта.звали, 2, "брак не пересняли")
+
+    def test_облако_не_дёргаем_когда_карта_ответила(self):
+        """Тот же кадр и тот же вопрос, только дороже и с квотой."""
+        import bot
+        спрашивали = []
+        карта = self.Карта([{"ок": True, "причины": ["годен"]}])
+        with mock.patch.object(bot, "gpu", карта), \
+             mock.patch.object(bot.контроль, "проверить",
+                               lambda *a: спрашивали.append(a) or (True, "")):
+            bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
+        self.assertEqual(спрашивали, [])
+
+    def test_без_вердикта_карты_работает_прежний_путь(self):
+        """Старая панель поля не пришлёт, и бот обязан пережить это."""
+        import bot
+        карта = self.Карта([None])
+        спрашивали = []
+        with mock.patch.object(bot, "gpu", карта), \
+             mock.patch.object(bot.контроль, "включена", lambda: True), \
+             mock.patch.object(bot.контроль, "проверить",
+                               lambda *a: спрашивали.append(a) or (True, "")):
+            bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
+        self.assertEqual(len(спрашивали), 1)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
