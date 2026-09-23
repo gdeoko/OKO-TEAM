@@ -55,6 +55,7 @@ import urllib.parse
 import urllib.request
 
 import pricing
+import франшиза
 
 # Сколько звёзд в рубле. Сверить с кабинетом бота и поправить: цена
 # звезды у Телеграма зависит от страны и меняется.
@@ -105,9 +106,46 @@ def счёт_звёздами(pack_id):
     }
 
 
+def счёт_звёздами_франшизы():
+    """Франшиза — не коины, и считать её пакетом нельзя: коины сгорают
+    в генерациях, а свой бот покупается один раз навсегда."""
+    звёзд = звёзд_за(франшиза.РУБЛЕЙ)
+    return {
+        "title": "Свой бот AMBERRY",
+        "description": (f"Твой бот на нашем движке: те же кнопки, те же "
+                        f"кадры, твоё имя. {франшиза.ДОЛЯ}% выручки "
+                        f"остаётся тебе."),
+        "payload": f"fr:{int(time.time())}",
+        "provider_token": "",
+        "currency": ВАЛЮТА_ЗВЁЗД,
+        "prices": [{"label": "Свой бот", "amount": звёзд}],
+    }
+
+
+def счёт_криптой_франшизы(tg_id):
+    r = _крипто(
+        "createInvoice",
+        currency_type="fiat", fiat="USD", amount=str(франшиза.ДОЛЛАРОВ),
+        description="Свой бот AMBERRY (франшиза)",
+        payload=f"fr:{tg_id}:{int(time.time())}",
+        allow_comments=False, allow_anonymous=False,
+        expires_in=3600,
+    )
+    return {"url": r.get("bot_invoice_url") or r.get("pay_url"),
+            "invoice_id": r["invoice_id"], "usd": франшиза.ДОЛЛАРОВ}
+
+
+def это_франшиза(payload):
+    return (payload or "").split(":")[0] == "fr"
+
+
 def разобрать_payload(payload):
     """payload из successful_payment -> пакет. Падает явно: зачислить
-    непонятно что хуже, чем не зачислить ничего."""
+    непонятно что хуже, чем не зачислить ничего.
+
+    Франшизу сюда НЕ пускаем: у неё нет пакета и зачислять по ней
+    нечего. Её отлавливает `это_франшиза` до вызова.
+    """
     части = (payload or "").split(":")
     if len(части) < 2 or части[0] != "pack":
         raise ОшибкаОплаты(f"непонятный payload: {payload!r}")

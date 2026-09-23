@@ -330,6 +330,64 @@ def job_note(job, яз):
         "ru": "Передала твоё сообщение. Ответим сюда же.",
         "en": "Your message is with us. We will answer right here."},
     "подд.ответ": {"ru": "Ответ поддержки:", "en": "Support:"},
+
+    # --- ФРАНШИЗА: свой бот клиента на нашем движке ---
+    "фр.кнопка": {"ru": "Свой бот", "en": "Your own bot"},
+    "фр.экран": {
+        "ru": ("<b>СВОЙ БОТ НА НАШЕМ ДВИЖКЕ</b>\n\n"
+               "Тот же движок, те же кнопки, те же кадры - но твоё имя, "
+               "твоя аватарка, твои клиенты.\n\n"
+               "<b>Что делаешь ты:</b> заводишь бота у @BotFather и "
+               "присылаешь сюда его токен. Одно сообщение.\n"
+               "<b>Что делаем мы:</b> сервер, видеокарта, модели, каталог, "
+               "оплаты, панель, обновления. Всё уже стоит и работает.\n\n"
+               "<b>Деньги:</b> {доля}% выручки твоего бота остаётся тебе. "
+               "Считаем помесячно, платим на твои реквизиты.\n\n"
+               "<b>Цена:</b> {рублей} ₽ или {долларов} $ - один раз."),
+        "en": ("<b>YOUR OWN BOT ON OUR ENGINE</b>\n\n"
+               "Same engine, same buttons, same frames - your name, your "
+               "avatar, your clients.\n\n"
+               "<b>Your part:</b> create a bot with @BotFather and send us "
+               "its token. One message.\n"
+               "<b>Our part:</b> server, GPU, models, catalogue, payments, "
+               "admin panel, updates. All of it already runs.\n\n"
+               "<b>Money:</b> {доля}% of your bot's revenue stays with you. "
+               "Counted monthly, paid to your details.\n\n"
+               "<b>Price:</b> {долларов} $ or {рублей} ₽ - once."),
+    },
+    "фр.купить": {"ru": "Хочу свой бот", "en": "I want my own bot"},
+    "фр.обложка_под": {
+        "ru": "Франшиза AMBERRY · {долларов} $ или {рублей} ₽",
+        "en": "AMBERRY franchise · {долларов} $ or {рублей} RUB"},
+    "фр.обложка_низ": {
+        "ru": "Тот же движок, твоё имя, {доля}% выручки твои",
+        "en": "Same engine, your name, {доля}% of the revenue is yours"},
+    "фр.как_платим": {
+        "ru": "Чем платишь? {рублей} ₽ звёздами или {долларов} $ криптой.",
+        "en": "How do you pay? {рублей} RUB in Stars or {долларов} USD in crypto."},
+    "фр.уже_куплено": {
+        "ru": "Франшиза у тебя уже есть. Состояние: {состояние}.",
+        "en": "You already have the franchise. State: {состояние}."},
+    "фр.жду_токен": {
+        "ru": ("Оплата прошла. Теперь пришли <b>токен бота</b> из "
+               "@BotFather одним сообщением - он выглядит так:\n"
+               "<code>1234567890:AAH...</code>\n\n"
+               "Токен видим только мы, в переписке он не останется."),
+        "en": ("Paid. Now send the <b>bot token</b> from @BotFather in one "
+               "message - it looks like this:\n"
+               "<code>1234567890:AAH...</code>\n\n"
+               "Only we see the token, it will not stay in the chat.")},
+    "фр.токен_принят": {
+        "ru": ("Принято, бот {бот} подключён к очереди на запуск. "
+               "Напишем сюда, когда он оживёт."),
+        "en": ("Got it, bot {бот} is queued for launch. We will write here "
+               "when it goes live.")},
+    "фр.токен_не_тот": {
+        "ru": "Не вышло: {почему}. Пришли токен ещё раз.",
+        "en": "Did not work: {почему}. Send the token again."},
+    "фр.запущен": {
+        "ru": "Твой бот {бот} запущен. Работай.",
+        "en": "Your bot {бот} is live. Go ahead."},
     "гл.убрано": {
         "ru": "Этого больше нет в боте. Вот что есть сейчас.",
         "en": "That is no longer in the bot. Here is what there is now.",

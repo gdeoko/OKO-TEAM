@@ -98,6 +98,20 @@ CREATE TABLE IF NOT EXISTS mailings (
   at       INTEGER NOT NULL,
   done_at  INTEGER
 );
+CREATE TABLE IF NOT EXISTS partners (
+  tg_id       INTEGER PRIMARY KEY,
+  username    TEXT,
+  оплачено    INTEGER NOT NULL DEFAULT 0,
+  валюта      TEXT,
+  токен       TEXT,
+  бот         TEXT,
+  состояние   TEXT NOT NULL DEFAULT 'ждёт токен',
+  доля        INTEGER NOT NULL DEFAULT 50,
+  выручка     INTEGER NOT NULL DEFAULT 0,
+  выплачено   INTEGER NOT NULL DEFAULT 0,
+  at          INTEGER NOT NULL,
+  запущен_at  INTEGER
+);
 CREATE INDEX IF NOT EXISTS ix_ledger_user ON ledger(tg_id, at);
 CREATE INDEX IF NOT EXISTS ix_jobs_user   ON jobs(tg_id, at);
 CREATE INDEX IF NOT EXISTS ix_events_at   ON events(at);
@@ -749,3 +763,76 @@ class Store:
                 " FROM jobs j LEFT JOIN users u ON u.tg_id=j.tg_id"
                 " ORDER BY j.at DESC LIMIT ?", (limit,)).fetchall()
             return [dict(r) for r in rs]
+
+    # --- франшиза ---
+    #
+    # Человек покупает свой бот на нашем движке и делится выручкой.
+    # Здесь только УЧЁТ: кто купил, какой у него бот, сколько он собрал
+    # и сколько ему уже отдали.
+    #
+    # ДЕНЕГ ЭТОТ КОД НЕ ДВИГАЕТ И ДВИГАТЬ НЕ БУДЕТ. Выплату партнёру
+    # делает владелец руками; панель только считает, сколько причитается,
+    # и показывает список. Перевод необратим, а ошибка в доле или в
+    # адресе не откатывается ничем.
+
+    def партнёр_завести(self, tg_id, username, оплачено, валюта):
+        with self._db() as c:
+            c.execute(
+                "INSERT INTO partners(tg_id,username,оплачено,валюта,at)"
+                " VALUES(?,?,?,?,?)"
+                " ON CONFLICT(tg_id) DO UPDATE SET"
+                "   оплачено=оплачено+excluded.оплачено,"
+                "   username=excluded.username",
+                (tg_id, username, оплачено, валюта, int(time.time())))
+            return dict(c.execute("SELECT * FROM partners WHERE tg_id=?",
+                                  (tg_id,)).fetchone())
+
+    def партнёр(self, tg_id):
+        with self._db() as c:
+            r = c.execute("SELECT * FROM partners WHERE tg_id=?",
+                          (tg_id,)).fetchone()
+            return dict(r) if r else None
+
+    def партнёр_токен(self, tg_id, токен, бот):
+        with self._db() as c:
+            c.execute("UPDATE partners SET токен=?, бот=?,"
+                      " состояние='в работе' WHERE tg_id=?",
+                      (токен, бот, tg_id))
+
+    def партнёр_состояние(self, tg_id, состояние):
+        with self._db() as c:
+            если_запущен = ", запущен_at=?" if состояние == "запущен" else ""
+            д = [состояние] + ([int(time.time())] if если_запущен else []) \
+                + [tg_id]
+            c.execute(f"UPDATE partners SET состояние=?{если_запущен}"
+                      " WHERE tg_id=?", д)
+
+    def партнёр_учёт(self, tg_id, выручка=None, выплачено=None, доля=None):
+        поля, д = [], []
+        for имя, зн in (("выручка", выручка), ("выплачено", выплачено),
+                        ("доля", доля)):
+            if зн is not None:
+                поля.append(f"{имя}=?")
+                д.append(int(зн))
+        if not поля:
+            return
+        with self._db() as c:
+            c.execute("UPDATE partners SET " + ",".join(поля) + " WHERE tg_id=?",
+                      д + [tg_id])
+
+    def партнёры(self):
+        with self._db() as c:
+            rs = c.execute("SELECT * FROM partners ORDER BY at DESC").fetchall()
+            итог = []
+            for r in rs:
+                п = dict(r)
+                # Токен наружу не отдаём: это ключ от чужого бота.
+                # Панель показывает хвост, полный забирает отдельным
+                # запросом, и только когда владелец его попросит.
+                т = п.pop("токен", "") or ""
+                п["токен_хвост"] = ("…" + т[-6:]) if т else ""
+                п["есть_токен"] = bool(т)
+                п["к_выплате"] = max(
+                    0, п["выручка"] * п["доля"] // 100 - п["выплачено"])
+                итог.append(п)
+            return итог

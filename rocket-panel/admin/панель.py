@@ -263,6 +263,16 @@ iframe{width:100%;height:78vh;border:1px solid var(--край);border-radius:16p
     <div class="карта"><h3>Цены видов работ</h3><div id="т_работы_цены"></div></div>
   </section>
 
+  <section id="р_франшиза"><h2>Франшиза</h2>
+    <div class="карта" id="фр_итого"></div>
+    <div class="карта обёртка"><div id="т_франшиза"></div></div>
+    <div class="карта"><h3>О выплатах</h3>
+      <p class="когда" style="margin:0">Панель только считает, сколько
+      причитается партнёру. Перевод делает владелец руками: он необратим,
+      а ошибка в доле или в реквизитах не откатывается ничем. После
+      перевода впишите сумму в «Выплачено».</p></div>
+  </section>
+
   <section id="р_каталог"><h2>Каталог кнопок</h2>
     <div class="карта" style="padding:8px"><iframe src="/каталог" title="Каталог"></iframe></div>
   </section>
@@ -288,6 +298,7 @@ const РАЗДЕЛЫ = [
   ["поддержка","Поддержка","M21 12a8 8 0 1 1-3-6.2L21 4v6h-6"],
   ["рассылка","Рассылка","M3 6l9 6 9-6M3 6h18v12H3z"],
   ["услуги","Услуги","M12 3v18M7 7h7a3 3 0 0 1 0 6H8a3 3 0 0 0 0 6h8"],
+  ["франшиза","Франшиза","M5 20h14M7 20V9l5-5 5 5v11M10 20v-5h4v5"],
   ["каталог","Каталог","M4 5h7v14H4zM13 5h7v14h-7z"],
 ];
 let непрочитано = 0;
@@ -483,6 +494,44 @@ const ЗАГРУЗКА = {
       </table></div>`;
   },
 
+  async франшиза(){
+    const д = await взять("/api/франшиза");
+    $("#фр_итого").innerHTML = `
+      <div class="плитки" style="margin:0">
+        <div class="плитка"><div class="цифра">${д.партнёры.length}</div>
+          <div class="подпись">Партнёров</div></div>
+        <div class="плитка"><div class="цифра">${д.к_выплате_всего}</div>
+          <div class="подпись">К выплате, ₽</div></div>
+        <div class="плитка"><div class="цифра">${д.цена_руб} ₽</div>
+          <div class="подпись">Цена франшизы</div></div>
+      </div>`;
+    $("#т_франшиза").innerHTML = д.партнёры.length ? `<table class="карточками">
+      <tr><th>Кто</th><th>Бот</th><th>Состояние</th><th>Выручка</th>
+          <th>Доля</th><th>Выплачено</th><th>К выплате</th><th></th></tr>
+      ${д.партнёры.map(п=>`<tr>
+        <td data-л="Кто"><b>${п.username?"@"+эк(п.username):эк(п.tg_id)}</b>
+          <div class="когда">${эк(п.tg_id)}</div></td>
+        <td data-л="Бот">${эк(п.бот||"-")}
+          ${п.есть_токен?`<div class="когда">токен ${эк(п.токен_хвост)}
+            <button class="кн тихая" style="padding:2px 8px;font-size:11px"
+              data-токен="${п.tg_id}">показать</button></div>`:""}</td>
+        <td data-л="Состояние"><select data-сост="${п.tg_id}"
+            style="max-width:150px">
+          ${["ждёт токен","в работе","запущен","остановлен"].map(с=>
+            `<option${с===п.состояние?" selected":""}>${с}</option>`).join("")}
+        </select></td>
+        <td data-л="Выручка"><input data-поле="выручка" data-кто="${п.tg_id}"
+          value="${п.выручка}" inputmode="numeric" style="max-width:110px"></td>
+        <td data-л="Доля"><input data-поле="доля" data-кто="${п.tg_id}"
+          value="${п.доля}" inputmode="numeric" style="max-width:80px"></td>
+        <td data-л="Выплачено"><input data-поле="выплачено" data-кто="${п.tg_id}"
+          value="${п.выплачено}" inputmode="numeric" style="max-width:110px"></td>
+        <td data-л="К выплате"><b>${п.к_выплате}</b></td>
+        <td><button class="кн" data-учёт="${п.tg_id}">Записать</button></td>
+      </tr>`).join("")}</table>` :
+      '<div class="пусто">Франшизу ещё никто не купил</div>';
+  },
+
   каталог(){},
 };
 
@@ -508,6 +557,20 @@ document.addEventListener("click", async e => {
       ЗАГРУЗКА.люди();
     } else if(б.dataset.диалог){
       открыть_диалог(+б.dataset.диалог);
+    } else if(б.dataset.токен){
+      const д = await взять("/api/франшиза/токен/"+б.dataset.токен);
+      prompt("Токен бота партнёра (скопируйте и закройте):", д.токен||"");
+    } else if(б.dataset["учёт"]){
+      const кто = б.dataset["учёт"];
+      const поле = и => {
+        const э = document.querySelector(
+          `input[data-кто="${кто}"][data-поле="${и}"]`);
+        return э ? +э.value || 0 : undefined;
+      };
+      await послать("/api/франшиза/учёт", {tg_id:+кто,
+        выручка:поле("выручка"), доля:поле("доля"),
+        выплачено:поле("выплачено")});
+      ЗАГРУЗКА.франшиза();
     } else if(б.dataset.пакет){
       await послать("/api/услуги/спрятать",
         {ид:б.dataset.пакет, скрыт: б.dataset.как==="1"});
@@ -583,6 +646,16 @@ async function ход(){
 }
 
 $("#поиск").addEventListener("keydown", e => { if(e.key==="Enter") ЗАГРУЗКА.люди(); });
+document.addEventListener("change", async e => {
+  const с = e.target.closest("select[data-сост]");
+  if(!с) return;
+  try{
+    await послать("/api/франшиза/состояние",
+      {tg_id:+с.dataset["сост"], состояние:с.value});
+    ЗАГРУЗКА.франшиза();
+  }catch(ош){ alert("Не вышло: "+ош.message); }
+});
+
 $("#кому").addEventListener("change", сколько_кому);
 async function сколько_кому(){
   const д = await взять("/api/рассылка/сколько?кому="+

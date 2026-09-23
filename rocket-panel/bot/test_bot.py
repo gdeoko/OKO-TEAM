@@ -12,6 +12,7 @@ import payments
 import store
 import archive
 import примеры
+import франшиза
 from store import Store, NotEnoughCoins
 
 
@@ -3376,6 +3377,90 @@ class ПримерПодКнопкой(unittest.TestCase):
              mock.patch.object(bot, "_пример_сцены", lambda *a, **к: False):
             bot.показать_сценарий(1, 1, catalog.scene("pf_mf_near"), None, "ru")
         self.assertEqual(len(ушло), 1)
+
+
+class Франшиза(unittest.TestCase):
+    """Свой бот клиента на нашем движке. Самый дорогой товар бота и
+    единственный, за которым стоит не генерация, а обязательство."""
+
+    def test_кнопка_на_видном_месте(self):
+        """Владелец просил поставить её на видное место: отдельной
+        широкой строкой в главном меню, а не в ряду с пополнением."""
+        import ui
+        кб = ui.главное_меню(яз="ru")["inline_keyboard"]
+        ряд = [р for р in кб if any(к.get("callback_data") == "m:fr" for к in р)]
+        self.assertEqual(len(ряд), 1, "кнопки франшизы в меню нет")
+        self.assertEqual(len(ряд[0]), 1, "франшиза делит ряд с чем-то ещё")
+
+    def test_франшизу_можно_снять_как_и_всё_остальное(self):
+        import ui
+        catalog.подставить({"франшиза": {"скрыт": "1"}})
+        try:
+            кб = ui.главное_меню(яз="ru")["inline_keyboard"]
+            self.assertFalse(any(к.get("callback_data") == "m:fr"
+                                 for р in кб for к in р))
+        finally:
+            catalog.перечитать()
+
+    def test_франшиза_не_пакет_и_коинов_не_даёт(self):
+        """Коины сгорают в генерациях, а свой бот покупается один раз
+        навсегда. Пропустить франшизу через разбор пакета значило бы
+        зачислить человеку коины вместо бота."""
+        self.assertTrue(payments.это_франшиза("fr:123"))
+        self.assertFalse(payments.это_франшиза("pack:p3:1"))
+        with self.assertRaises(payments.ОшибкаОплаты):
+            payments.разобрать_payload("fr:123")
+
+    def test_счёт_франшизы_собирается(self):
+        сч = payments.счёт_звёздами_франшизы()
+        self.assertTrue(сч["payload"].startswith("fr:"))
+        self.assertGreater(сч["prices"][0]["amount"], 0)
+
+    def test_токен_узнаётся_по_виду(self):
+        """Грубая проверка до сетевого запроса: отсекает вставленное
+        «привет», а настоящую проверку делает сам телеграм."""
+        self.assertTrue(франшиза.похоже_на_токен(
+            "1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"))
+        for мимо in ("привет", "", "123:abc", "1234567890",
+                     "1234567890:AAH"):
+            self.assertFalse(франшиза.похоже_на_токен(мимо), мимо)
+
+    def test_кривой_токен_до_сети_не_доходит(self):
+        имя, беда = франшиза.чей_бот("не токен")
+        self.assertEqual(имя, "")
+        self.assertIn("BotFather", беда)
+
+    def test_токен_показывается_хвостом(self):
+        """Это ключ от чужого бота. Целиком он наружу не ходит."""
+        т = "1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"
+        спрятан = франшиза.спрятать(т)
+        self.assertNotIn(т, спрятан)
+        self.assertTrue(спрятан.endswith(т[-6:]))
+
+    def test_токен_не_уезжает_в_поддержку(self):
+        """Вольная строка уходит письмом владельцу. Токен похож на
+        вольную строку, и без перехвата ключ от чужого бота лёг бы в
+        переписку открытым текстом."""
+        import bot
+        ушло = []
+        партнёр = {"tg_id": 7, "бот": None, "состояние": "ждёт токен"}
+        принято = []
+
+        class База:
+            def партнёр(self, u):
+                return партнёр
+
+        with mock.patch.object(bot, "store", База()), \
+             mock.patch.object(bot, "принять_токен",
+                               lambda *a: принято.append(a)), \
+             mock.patch.object(bot, "в_поддержку",
+                               lambda *a: ушло.append(a)), \
+             mock.patch.object(bot, "обновить_низ", lambda *a: None), \
+             mock.patch.object(bot, "яз", lambda u: "ru"):
+            bot.on_text(7, 7,
+                        "1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw")
+        self.assertEqual(len(принято), 1)
+        self.assertEqual(ушло, [])
 
 
 if __name__ == "__main__":
