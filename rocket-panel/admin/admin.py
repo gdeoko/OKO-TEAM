@@ -61,7 +61,18 @@ sys.path.insert(0, os.path.join(ЗДЕСЬ, "..", "brand-amberry"))
 import catalog          # noqa: E402
 import данные           # noqa: E402
 import prompts          # noqa: E402
+import pricing          # noqa: E402
 import brand            # noqa: E402
+import store as _store  # noqa: E402
+
+import панель           # noqa: E402
+import сводка           # noqa: E402
+
+# База бота. Панель читает ту же самую, что бот пишет, — отдельной
+# копии нет и быть не может: цифры в панели обязаны совпадать с тем,
+# что человек видит у себя в боте секунду назад.
+БАЗА = os.environ.get("ROCKET_DB", "rocket_bot.db")
+store = _store.Store(БАЗА)
 
 ПОЛЬЗОВАТЕЛЬ = os.environ.get("AMBERRY_ADMIN_USER", "amberry")
 ПАРОЛЬ = os.environ.get("AMBERRY_ADMIN_PASS", "")
@@ -90,8 +101,12 @@ def проверить_пароль(заголовок, кто):
     except Exception:
         return False
     логин, _, пароль = сырое.partition(":")
-    ок = (hmac.compare_digest(логин, ПОЛЬЗОВАТЕЛЬ)
-          and hmac.compare_digest(пароль, ПАРОЛЬ))
+    # Сравниваем БАЙТЫ. `compare_digest` на строках отказывается
+    # работать, если в них есть не-ASCII, и падает TypeError — то есть
+    # пароль с кириллицей или с «ё» ронял всю страницу пятисоткой
+    # вместо честного «нужен пароль», и понять почему было невозможно.
+    ок = (hmac.compare_digest(логин.encode(), ПОЛЬЗОВАТЕЛЬ.encode())
+          and hmac.compare_digest(пароль.encode(), ПАРОЛЬ.encode()))
     if ок:
         _ПРОМАХИ.pop(кто, None)
     else:
@@ -643,23 +658,145 @@ class Обработчик(BaseHTTPRequestHandler):
         иначе адрес работает из curl и не работает из браузера."""
         return unquote(self.path.split("?", 1)[0])
 
+    def поле(self, имя):
+        """Значение из строки запроса. Кириллица приезжает процентами —
+        как и в самом адресе, см. `путь`."""
+        _, _, хвост = self.path.partition("?")
+        for кусок in хвост.split("&"):
+            ключ, _, зн = кусок.partition("=")
+            if unquote(ключ) == имя:
+                return unquote(зн.replace("+", " "))
+        return ""
+
+    def тело(self, предел=200_000):
+        длина = int(self.headers.get("Content-Length") or 0)
+        if длина > предел:
+            raise ValueError("слишком длинно")
+        return json.loads(self.rfile.read(длина).decode("utf-8") or "{}")
+
     def do_GET(self):
         if not self._впустить():
             return
-        if self.путь in ("/", "/index.html"):
+        п = self.путь
+        if п in ("/", "/index.html"):
+            self._ответ(200, панель.страница(brand.logo_data_uri()),
+                        "text/html; charset=utf-8")
+            return
+        # Прежняя страница кнопок цела и живёт своим адресом: панель
+        # показывает её разделом «Каталог» в рамке. Переписывать то, чем
+        # владелец пользуется каждый день, ради одного вида — лишний
+        # риск на ровном месте.
+        if п == "/каталог":
             self._ответ(200, страница(), "text/html; charset=utf-8")
             return
-        if self.путь == "/api/дерево":
+        if п == "/api/дерево":
             catalog.перечитать()
             self._ответ(200, catalog.дерево())
             return
+        if п == "/api/сводка":
+            self._ответ(200, сводка.срез(store, pricing, catalog))
+            return
+        if п == "/api/люди":
+            self._ответ(200, {"люди": store.люди(self.поле("поиск"))})
+            return
+        if п == "/api/оплаты":
+            self._ответ(200, {"оплаты": store.оплаты()})
+            return
+        if п == "/api/работы":
+            рр = store.работы_все()
+            for р in рр:
+                р["имя"] = _имя_работы(р)
+            self._ответ(200, {"работы": рр})
+            return
+        if п == "/api/поддержка":
+            self._ответ(200, {"диалоги": store.поддержка_диалоги()})
+            return
+        if п.startswith("/api/поддержка/"):
+            кто = п.rsplit("/", 1)[1]
+            if not кто.isdigit():
+                self._ответ(400, {"ошибка": "нужен номер"})
+                return
+            человек = store.user(int(кто)) or {}
+            self._ответ(200, {"письма": store.поддержка_диалог(int(кто)),
+                              "username": человек.get("username")})
+            return
+        if п == "/api/рассылки":
+            self._ответ(200, {"рассылки": store.рассылки()})
+            return
+        if п == "/api/рассылка/ход":
+            self._ответ(200, {"ход": сводка.состояние()})
+            return
+        if п == "/api/рассылка/сколько":
+            кому = self.поле("кому") or "всем"
+            self._ответ(200, {"сколько": len(store.рассылка_кому(кому))})
+            return
+        if п == "/api/услуги":
+            self._ответ(200, сводка.услуги(pricing, catalog))
+            return
         self._ответ(404, {"ошибка": "нет такой страницы"})
+
+    def _действие(self, путь, д):
+        """Кнопки панели. Каждое действие отвечает тем, что изменилось,
+        — страница по ответу перерисовывает только свой раздел."""
+        if путь == "/api/человек/блок":
+            store.заблокировать(int(д["tg_id"]), bool(д.get("блок", True)))
+            self._ответ(200, {"ок": True})
+            return
+        if путь == "/api/человек/удалить":
+            # Удаление необратимо и стирает переписку, оплаты и работы.
+            # Подтверждение спрашивает страница; здесь только делаем.
+            итог = store.забыть(int(д["tg_id"]))
+            self._ответ(200, {"ок": True, "удалено": итог})
+            return
+        if путь == "/api/поддержка/ответ":
+            текст = (д.get("текст") or "").strip()
+            if not текст:
+                self._ответ(400, {"ошибка": "пустой ответ"})
+                return
+            ушло, насмерть = сводка.ответить(store, int(д["tg_id"]), текст)
+            self._ответ(200, {"ушло": ушло,
+                              "почему": "человек выгнал бота" if насмерть
+                                        else ("" if ушло else "телеграм не принял")})
+            return
+        if путь == "/api/рассылка":
+            текст = (д.get("текст") or "").strip()
+            if not текст:
+                self._ответ(400, {"ошибка": "пустое письмо"})
+                return
+            ид, сколько = сводка.разослать(store, текст,
+                                           д.get("кому") or "всем")
+            print(f"рассылка {ид}: {сколько} адресатов", flush=True)
+            self._ответ(200, {"ид": ид, "сколько": сколько})
+            return
+        if путь == "/api/услуги/спрятать":
+            ид = str(д.get("ид") or "")
+            if ид not in {p["id"] for p in pricing.PACKS}:
+                self._ответ(400, {"ошибка": "нет такой ступени"})
+                return
+            правки = dict(данные.загрузить())
+            своё = dict(правки.get("pack:" + ид) or {})
+            своё["скрыт"] = "1" if д.get("скрыт") else "0"
+            правки["pack:" + ид] = своё
+            данные.сохранить(правки)
+            catalog.перечитать()
+            self._ответ(200, {"ок": True})
+            return
+        self._ответ(404, {"ошибка": "нет такого действия"})
 
     def do_POST(self):
         if not self._впустить():
             return
         if not self.путь.startswith("/api/"):
             self._ответ(404, {"ошибка": "нет такой страницы"})
+            return
+        if self.путь != "/api/сохранить":
+            # Всё, кроме сохранения каталога, — действия панели. У них
+            # своё тело запроса, и прогонять его через разбор правок
+            # каталога нельзя: он ждёт совсем другой словарь.
+            try:
+                self._действие(self.путь, self.тело())
+            except Exception as e:                      # noqa: BLE001
+                self._ответ(400, {"ошибка": str(e)[:200]})
             return
         длина = int(self.headers.get("Content-Length") or 0)
         if длина > 1_000_000:
@@ -690,6 +827,19 @@ class Обработчик(BaseHTTPRequestHandler):
         print(f"сохранено {записей} записей, наполнено {наполнено}", flush=True)
         self._ответ(200, {"записей": записей, "наполнено": наполнено,
                           "чужих_ключей": чужих})
+
+
+def _имя_работы(р):
+    """Что человеку показывать вместо ключа сценария."""
+    if р.get("scene"):
+        try:
+            return catalog.scene(р["scene"]).title
+        except KeyError:
+            pass
+    try:
+        return pricing.job(р["kind"]).title
+    except KeyError:
+        return р.get("kind") or ""
 
 
 def main():

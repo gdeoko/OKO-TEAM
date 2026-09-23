@@ -12,7 +12,7 @@
 Зависимости: requests. Больше ничего.
 """
 
-import os, sys, time, json, uuid, threading, traceback
+import os, sys, time, json, uuid, html, threading, traceback
 import requests
 
 import archive
@@ -449,6 +449,7 @@ def on_start(chat, u, username, arg, lang=None):
             invited_by = inviter["tg_id"]
     user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_COINS,
                                      invited_by=invited_by, lang=lang)
+    store.событие(u, "вход", "новый" if is_new else "возврат")
     я = яз(u)
     if is_new and invited_by:
         store.credit(invited_by, pricing.REFERRAL_INVITER, "welcome", f"привёл {u}")
@@ -614,7 +615,10 @@ def on_text(chat, u, text):
 
     st = waiting.pop(u, None)
     if not st:
-        send(chat, t("гл.сначала_выбери", яз(u)), меню(u))
+        # Вольная строка вне всякого сценария — это письмо в поддержку.
+        # Раньше бот отвечал «Сначала выбери, что делаем», и человек,
+        # написавший «не пришла оплата», получал инструкцию по меню.
+        в_поддержку(chat, u, text)
         return
     kind = st["kind"]
     job = pricing.job(kind)
@@ -623,6 +627,22 @@ def on_text(chat, u, text):
         send(chat, ui.просьба_о_фото(job, яз=яз(u)))
         return
     пустить_своё(chat, u, kind, text.strip(), st.get("фото") or [])
+
+
+def в_поддержку(chat, u, текст):
+    """Письмо человека владельцу. Ответ придёт из админ-панели.
+
+    Пишется в базу ДО уведомления: телеграм у админа может быть
+    недоступен, а письмо потерять нельзя — за ним обычно деньги.
+    """
+    store.поддержка_записать(u, "человек", текст)
+    store.событие(u, "поддержка")
+    send(chat, t("подд.приняли", яз(u)), меню(u))
+    кто = store.user(u) or {}
+    подпись = "@" + кто["username"] if кто.get("username") else str(u)
+    for админ in ADMINS:
+        send(админ, f"<b>Поддержка</b> от {подпись} (<code>{u}</code>)\n\n"
+                    f"{html.escape(текст)[:3000]}")
 
 
 def _место(ключ):
@@ -787,6 +807,10 @@ def on_callback(cb):
     store.ensure_user(u, cb["from"].get("username"), welcome=pricing.WELCOME_COINS,
                       lang=язык.по_телеграму(cb["from"].get("language_code")))
     я = яз(u)
+    # СЛЕД. Одна строка на нажатие — это всё, что знает панель о том,
+    # куда люди ходят и на какой кнопке уходят. Пишется ДО разбора
+    # `data`: интересны и нажатия, которые ничем не кончились.
+    store.событие(u, "кнопка", data[:80])
     # Владелец жмёт inline-кнопки, а не пишет текст, и прежняя нижняя
     # клавиатура иначе висела бы у него до первого набранного слова.
     обновить_низ(chat, u, я)
@@ -855,8 +879,14 @@ def on_callback(cb):
         answer(cid); send(chat, price_list(u), buy_kb(u)); return
 
     if data.startswith("buy:"):
+        # Спрятанную ступень нельзя купить и по старой кнопке из
+        # переписки: иначе «убрал» на странице означало бы только «не
+        # показываю новым», а деньги по ней всё равно принимались бы.
+        ид = data.split(":", 1)[1]
+        if catalog.скрыт("pack:" + ид):
+            return убрано()
         answer(cid)
-        p = pricing.pack(data.split(":", 1)[1])
+        p = pricing.pack(ид)
         send(chat, ui.текст_пакета(p, я), ui.меню_способов(p["id"], я))
         return
 

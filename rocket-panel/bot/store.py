@@ -72,8 +72,37 @@ CREATE TABLE IF NOT EXISTS invoices (
   at         INTEGER NOT NULL,
   credited_at INTEGER
 );
+CREATE TABLE IF NOT EXISTS events (
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  tg_id  INTEGER NOT NULL,
+  вид    TEXT NOT NULL,
+  ключ   TEXT,
+  at     INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS support (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  tg_id   INTEGER NOT NULL,
+  откого  TEXT NOT NULL,
+  текст   TEXT NOT NULL,
+  прочитано INTEGER NOT NULL DEFAULT 0,
+  at      INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS mailings (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  текст    TEXT NOT NULL,
+  кому     TEXT NOT NULL,
+  всего    INTEGER NOT NULL DEFAULT 0,
+  дошло    INTEGER NOT NULL DEFAULT 0,
+  отказ    INTEGER NOT NULL DEFAULT 0,
+  состояние TEXT NOT NULL DEFAULT 'ждёт',
+  at       INTEGER NOT NULL,
+  done_at  INTEGER
+);
 CREATE INDEX IF NOT EXISTS ix_ledger_user ON ledger(tg_id, at);
 CREATE INDEX IF NOT EXISTS ix_jobs_user   ON jobs(tg_id, at);
+CREATE INDEX IF NOT EXISTS ix_events_at   ON events(at);
+CREATE INDEX IF NOT EXISTS ix_events_user ON events(tg_id, at);
+CREATE INDEX IF NOT EXISTS ix_support_at  ON support(at);
 """
 
 
@@ -322,6 +351,12 @@ class Store:
             c.execute("DELETE FROM jobs WHERE tg_id=?", (tg_id,))
             c.execute("DELETE FROM ledger WHERE tg_id=?", (tg_id,))
             c.execute("DELETE FROM invoices WHERE tg_id=?", (tg_id,))
+            # След в боте и переписка с поддержкой — тоже «всё, что о
+            # нём известно», и в переписке лежит написанное им самим.
+            # Таблицы заведены позже этого метода, и не дописать их сюда
+            # значило бы оставлять после ухода человека его же письма.
+            c.execute("DELETE FROM events WHERE tg_id=?", (tg_id,))
+            c.execute("DELETE FROM support WHERE tg_id=?", (tg_id,))
             # Приглашённые остаются в системе, но ссылка на ушедшего
             # обнуляется: иначе в базе висит указатель на несуществующего.
             c.execute("UPDATE users SET invited_by=NULL WHERE invited_by=?", (tg_id,))
@@ -501,3 +536,216 @@ class Store:
             spent = c.execute("SELECT COALESCE(-SUM(delta),0) n FROM ledger WHERE delta<0").fetchone()["n"]
             return {"users": users, "paying": paying, "jobs_ok": jobs_ok,
                     "jobs_err": jobs_err, "coins_spent": spent}
+
+    # --- след человека в боте ---
+    #
+    # Заведено 23.09.2026 под админ-панель: владелец захотел видеть «все
+    # клики, посещения, генерации». Баланс и работы база держала и
+    # раньше, а вот ЧТО человек нажимал по дороге, не оставалось нигде —
+    # и было невозможно сказать, на какой кнопке люди уходят.
+    #
+    # Пишется одной строкой на событие и НИКОГДА не роняет бота: след
+    # это наблюдение, а не работа, за которую заплачено. Упало — молча
+    # пропускаем.
+
+    def событие(self, tg_id, вид, ключ=None):
+        try:
+            with self._db() as c:
+                c.execute("INSERT INTO events(tg_id,вид,ключ,at)"
+                          " VALUES(?,?,?,?)",
+                          (tg_id, вид, ключ, int(time.time())))
+        except sqlite3.Error as e:
+            print("след не записался:", str(e)[:120], flush=True)
+
+    def события_по_дням(self, дней=14, вид=None):
+        """[(дата, сколько)] по дням, старые первыми — под график."""
+        с = int(time.time()) - дней * 86400
+        усл = " AND вид=?" if вид else ""
+        д = [с] + ([вид] if вид else [])
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT date(at,'unixepoch') д, COUNT(*) n FROM events"
+                " WHERE at>=?" + усл + " GROUP BY д ORDER BY д", д).fetchall()
+            return [(r["д"], r["n"]) for r in rs]
+
+    def топ_кнопок(self, дней=30, сколько=12):
+        с = int(time.time()) - дней * 86400
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT ключ, COUNT(*) n FROM events"
+                " WHERE вид='кнопка' AND ключ IS NOT NULL AND at>=?"
+                " GROUP BY ключ ORDER BY n DESC LIMIT ?",
+                (с, сколько)).fetchall()
+            return [(r["ключ"], r["n"]) for r in rs]
+
+    # --- поддержка ---
+
+    def поддержка_записать(self, tg_id, откого, текст):
+        with self._db() as c:
+            c.execute("INSERT INTO support(tg_id,откого,текст,at)"
+                      " VALUES(?,?,?,?)",
+                      (tg_id, откого, текст[:4000], int(time.time())))
+
+    def поддержка_диалоги(self, limit=50):
+        """Последнее сообщение каждого собеседника, свежие первыми."""
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT s.tg_id, u.username, MAX(s.at) at,"
+                "  SUM(CASE WHEN s.прочитано=0 AND s.откого='человек'"
+                "      THEN 1 ELSE 0 END) новых,"
+                "  COUNT(*) всего"
+                " FROM support s LEFT JOIN users u ON u.tg_id=s.tg_id"
+                " GROUP BY s.tg_id ORDER BY at DESC LIMIT ?",
+                (limit,)).fetchall()
+            return [dict(r) for r in rs]
+
+    def поддержка_диалог(self, tg_id, limit=100):
+        with self._db() as c:
+            rs = c.execute("SELECT * FROM support WHERE tg_id=?"
+                           " ORDER BY at DESC LIMIT ?",
+                           (tg_id, limit)).fetchall()
+            c.execute("UPDATE support SET прочитано=1 WHERE tg_id=?", (tg_id,))
+            return [dict(r) for r in reversed(rs)]
+
+    def поддержка_непрочитано(self):
+        with self._db() as c:
+            return c.execute("SELECT COUNT(*) n FROM support"
+                             " WHERE прочитано=0 AND откого='человек'"
+                             ).fetchone()["n"]
+
+    # --- рассылки ---
+
+    def рассылка_завести(self, текст, кому):
+        with self._db() as c:
+            cur = c.execute("INSERT INTO mailings(текст,кому,at)"
+                            " VALUES(?,?,?)",
+                            (текст, кому, int(time.time())))
+            return cur.lastrowid
+
+    def рассылка_кому(self, кому):
+        """Кому уйдёт: «всем», «платившим», «без оплат»."""
+        where = {"всем": "", "платившим": " AND paid_ever=1",
+                 "без оплат": " AND paid_ever=0"}.get(кому, "")
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT tg_id FROM ("
+                "  SELECT u.tg_id tg_id,"
+                "    (SELECT COUNT(*) FROM ledger l WHERE l.tg_id=u.tg_id"
+                "       AND l.purse='paid' AND l.delta>0) > 0 paid_ever"
+                "  FROM users u WHERE u.blocked=0"
+                ") WHERE 1=1" + where).fetchall()
+            return [r["tg_id"] for r in rs]
+
+    def рассылка_итог(self, ид, всего=None, дошло=None, отказ=None,
+                      состояние=None):
+        поля, д = [], []
+        for имя, зн in (("всего", всего), ("дошло", дошло), ("отказ", отказ),
+                        ("состояние", состояние)):
+            if зн is not None:
+                поля.append(f"{имя}=?")
+                д.append(зн)
+        if состояние in ("готова", "оборвана"):
+            поля.append("done_at=?")
+            д.append(int(time.time()))
+        if not поля:
+            return
+        with self._db() as c:
+            c.execute("UPDATE mailings SET " + ",".join(поля) + " WHERE id=?",
+                      д + [ид])
+
+    def рассылки(self, limit=20):
+        with self._db() as c:
+            rs = c.execute("SELECT * FROM mailings ORDER BY at DESC LIMIT ?",
+                           (limit,)).fetchall()
+            return [dict(r) for r in rs]
+
+    # --- люди для панели ---
+
+    def люди(self, поиск="", limit=200, offset=0):
+        """Список с балансом, тратами и числом работ — под таблицу."""
+        усл, д = "", []
+        if поиск:
+            усл = (" WHERE CAST(u.tg_id AS TEXT) LIKE ?"
+                   " OR IFNULL(u.username,'') LIKE ?")
+            д = [f"%{поиск}%", f"%{поиск}%"]
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT u.tg_id, u.username, u.created_at, u.blocked, u.lang,"
+                "  u.invited_by,"
+                "  (SELECT COALESCE(SUM(delta),0) FROM ledger l"
+                "     WHERE l.tg_id=u.tg_id) баланс,"
+                "  (SELECT COALESCE(SUM(delta),0) FROM ledger l"
+                "     WHERE l.tg_id=u.tg_id AND l.purse='paid' AND l.delta>0)"
+                "   куплено,"
+                "  (SELECT COUNT(*) FROM jobs j WHERE j.tg_id=u.tg_id"
+                "     AND j.state='ok') работ"
+                " FROM users u" + усл +
+                " ORDER BY u.created_at DESC LIMIT ? OFFSET ?",
+                д + [limit, offset]).fetchall()
+            return [dict(r) for r in rs]
+
+    def заблокировать(self, tg_id, да=True):
+        with self._db() as c:
+            c.execute("UPDATE users SET blocked=? WHERE tg_id=?",
+                      (1 if да else 0, tg_id))
+
+    def сводка_панели(self, дней=30):
+        """Числа для плиток и графиков. Один заход в базу на всё."""
+        с = int(time.time()) - дней * 86400
+        сутки = int(time.time()) - 86400
+        with self._db() as c:
+            один = lambda q, *d: c.execute(q, d).fetchone()[0]     # noqa: E731
+            деньги = c.execute(
+                "SELECT date(at,'unixepoch') д, COALESCE(SUM(delta),0) n"
+                " FROM ledger WHERE purse='paid' AND delta>0 AND at>=?"
+                " GROUP BY д ORDER BY д", (с,)).fetchall()
+            работы = c.execute(
+                "SELECT date(at,'unixepoch') д, COUNT(*) n FROM jobs"
+                " WHERE at>=? GROUP BY д ORDER BY д", (с,)).fetchall()
+            новые = c.execute(
+                "SELECT date(created_at,'unixepoch') д, COUNT(*) n FROM users"
+                " WHERE created_at>=? GROUP BY д ORDER BY д", (с,)).fetchall()
+            return {
+                "людей": один("SELECT COUNT(*) FROM users"),
+                "людей_сутки": один(
+                    "SELECT COUNT(*) FROM users WHERE created_at>=?", сутки),
+                "платящих": один(
+                    "SELECT COUNT(DISTINCT tg_id) FROM ledger"
+                    " WHERE purse='paid' AND delta>0"),
+                "куплено": один(
+                    "SELECT COALESCE(SUM(delta),0) FROM ledger"
+                    " WHERE purse='paid' AND delta>0"),
+                "потрачено": один(
+                    "SELECT COALESCE(-SUM(delta),0) FROM ledger WHERE delta<0"),
+                "работ": один("SELECT COUNT(*) FROM jobs WHERE state='ok'"),
+                "работ_сутки": один(
+                    "SELECT COUNT(*) FROM jobs WHERE state='ok' AND at>=?",
+                    сутки),
+                "брака": один("SELECT COUNT(*) FROM jobs WHERE state='err'"),
+                "заблокированных": один(
+                    "SELECT COUNT(*) FROM users WHERE blocked=1"),
+                "поддержка_новых": self.поддержка_непрочитано(),
+                "деньги_по_дням": [(r["д"], r["n"]) for r in деньги],
+                "работы_по_дням": [(r["д"], r["n"]) for r in работы],
+                "новые_по_дням": [(r["д"], r["n"]) for r in новые],
+            }
+
+    # --- списки для панели ---
+
+    def оплаты(self, limit=300):
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT l.at, l.tg_id, l.delta, l.reason, u.username"
+                " FROM ledger l LEFT JOIN users u ON u.tg_id=l.tg_id"
+                " WHERE l.purse='paid' AND l.delta>0"
+                " ORDER BY l.at DESC LIMIT ?", (limit,)).fetchall()
+            return [dict(r) for r in rs]
+
+    def работы_все(self, limit=300):
+        with self._db() as c:
+            rs = c.execute(
+                "SELECT j.id, j.at, j.tg_id, j.kind, j.scene, j.coins,"
+                "  j.state, j.error, u.username"
+                " FROM jobs j LEFT JOIN users u ON u.tg_id=j.tg_id"
+                " ORDER BY j.at DESC LIMIT ?", (limit,)).fetchall()
+            return [dict(r) for r in rs]
