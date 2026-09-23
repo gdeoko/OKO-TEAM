@@ -1150,6 +1150,43 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "it. BOTH OF HER HANDS lie flat on his chest, BOTH OF HIS "
         "HANDS hold her hips — every arm runs from its own shoulder "
         "through its elbow to its one hand."),
+
+    # «Минет», МЖ. Снято 23.09.2026 (прогон BJ, все восемь зёрен
+    # держат позу). Три прежних круга владелец забраковал: он просил
+    # видеть обоих целиком, а сборка ставила двоих в полный рост
+    # лицами на одной высоте — минета в кадре не было вовсе.
+    #
+    # Разницу роста сборка слышит НЕ ПРИЛАГАТЕЛЬНЫМИ («он выше»), а
+    # отношением частей тел друг к другу. Отсюда фраза про макушку у
+    # его пояса и бёдра на уровне её лица — трогать её нельзя, на ней
+    # всё и держится.
+    #
+    # Лист вертикальный (умолчание): стоящий во весь рост человек в
+    # горизонтальный лист не влезает, на нём три круга подряд срезало
+    # голову.
+    ("mf", "pov"): (
+        "Explicit photograph, TALL VERTICAL FRAME, camera at the side "
+        "of them and at the height of her face, far enough back that "
+        "BOTH OF THEIR FACES AND BOTH WHOLE BODIES ARE INSIDE THE "
+        "FRAME. THE MAN STANDS UPRIGHT on the floor at the RIGHT, "
+        "completely naked, both feet on the floor and his whole body "
+        "from his head to his feet inside the picture; his face is "
+        "turned down toward her. THE WOMAN KNEELS ON THE FLOOR IN "
+        "FRONT OF HIM at the LEFT, completely naked, sitting back on "
+        "her heels; her own nipples are in plain view and her bare "
+        "thighs and hips are uncovered. BECAUSE HE STANDS AND SHE "
+        "KNEELS, THE TOP OF HER HEAD ONLY REACHES HIS WAIST, AND HIS "
+        "HIPS ARE EXACTLY LEVEL WITH HER FACE. HIS ERECT PENIS GOES "
+        "STRAIGHT FROM HIS OWN HIPS INTO HER OPEN MOUTH — a real "
+        "grown man's penis, full adult size, made of his own bare skin "
+        "and the same colour as his body, never an object — her lips "
+        "are closed around it and her cheeks are drawn in. THAT PLACE "
+        "IS AT THE CENTRE OF THE PICTURE with nothing in front of it. "
+        "HER OWN HAND is closed around it near his hips and her other "
+        "arm hangs down to her thigh; ONE OF HIS HANDS rests in her "
+        "hair, the other hangs down at his own side — every arm runs "
+        "from its own shoulder through its elbow to its one hand. She "
+        "looks up at his face."),
 }
 
 КАМЕРА_ФОТО = {
