@@ -3064,13 +3064,26 @@ class ПриёмкаКадра(unittest.TestCase):
         годен, _ = self.к.проверить(b"", "pf_mf_near")
         self.assertTrue(годен)
 
-    def test_платный_ключ_не_берётся(self):
-        """Правило владельца про деньги: бесплатное можно, за платное
-        спрашивают. Приёмка ходит ТОЛЬКО бесплатным ключом."""
+    def test_бесплатный_ключ_тратится_первым(self):
+        """Платный разрешён владельцем 23.09.2026 ТОЛЬКО как запасной:
+        бесплатная квота кончается за день, и без подмены приёмка молча
+        пропускает брак. Порядок обязан остаться прежним."""
+        os.environ["GEMINI_KEY_FREE"] = "бесплатный"
+        os.environ["GEMINI_KEY_PAID"] = "платный"
+        self.assertEqual("бесплатный", self.к.ключ())
+
+    def test_платный_подхватывает_когда_бесплатного_нет(self):
         os.environ.pop("GEMINI_KEY_FREE", None)
         os.environ.pop("AMBERRY_QC_KEY", None)
         os.environ["GEMINI_KEY_PAID"] = "платный"
-        os.environ["GEMINI_API_KEYS"] = "платный2"
+        self.assertEqual("платный", self.к.ключ())
+
+    def test_общая_связка_ключей_не_берётся(self):
+        """`GEMINI_API_KEYS` — пара ключей агентов ОКО, и разрешения на
+        неё не было. Приёмка знает ровно два имени."""
+        for имя in ("GEMINI_KEY_FREE", "AMBERRY_QC_KEY", "GEMINI_KEY_PAID"):
+            os.environ.pop(имя, None)
+        os.environ["GEMINI_API_KEYS"] = "чужая_пара"
         self.assertEqual("", self.к.ключ())
 
     def test_осечка_модели_не_бракует_кадр(self):
