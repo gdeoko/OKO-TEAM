@@ -1118,6 +1118,38 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "her own shoulder down to its elbow on the mattress behind her "
         "and on to its one hand flat on the bed, and both arms are "
         "plainly visible. She looks down at him with her lips parted."),
+
+    # «Наездница», МЖ. Отобрано владельцем 23.09.2026 (кадр
+    # pNZ_nzd__55). Кнопка живёт на расстановке «лицом к лицу»: сама
+    # поза «лицом к лицу» с этой сборки не снимается (тела лежат одно
+    # на другом по всей длине, тазы слипаются в одну массу, а на
+    # попытку вытащить член сборка рисует его ЕЙ), и владелец её снял.
+    #
+    # Здесь работает обратное: тела встречаются в ОДНОЙ точке и на
+    # разной высоте — он лежит, она сидит. Этим же держатся «Раком» и
+    # «Кунилингус».
+    #
+    # Нельзя убирать утверждение мужской анатомии («HE IS A MAN AND HIS
+    # ANATOMY IS MALE ONLY»): член по тексту внутри неё, снаружи его
+    # почти нет — рисовать в паху нечего, и 22.09.2026 сборка залила
+    # мужской пах женской анатомией.
+    ("mf", "face"): (
+        "Explicit photograph, TALL VERTICAL FRAME, camera at the foot "
+        "of the bed. THE MAN LIES FLAT ON HIS BACK on the bed with his "
+        "head on a pillow at the far end AND HIS FACE INSIDE THE "
+        "FRAME, completely naked. HE IS A MAN AND HIS ANATOMY IS MALE "
+        "ONLY: between his legs there are his own male genitals — his "
+        "erect penis growing from his own hips, of an ordinary human "
+        "size — and nothing else at all. THE WOMAN SITS ASTRIDE HIS "
+        "HIPS facing the camera, upright and completely naked, her own "
+        "nipples in plain view, her knees down on the mattress on "
+        "either side of him. SHE IS SITTING DOWN ON HIS ERECT PENIS: "
+        "it goes up into her from below and the place where their two "
+        "bodies join is plainly visible, his own bare hips and the "
+        "base of his penis in view beneath her, her vulva wet around "
+        "it. BOTH OF HER HANDS lie flat on his chest, BOTH OF HIS "
+        "HANDS hold her hips — every arm runs from its own shoulder "
+        "through its elbow to its one hand."),
 }
 
 КАМЕРА_ФОТО = {
