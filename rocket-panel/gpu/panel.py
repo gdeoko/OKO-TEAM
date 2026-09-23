@@ -52,6 +52,8 @@ from flask import Flask, request, jsonify, send_file, Response
 COMFY="http://127.0.0.1:8188"
 OUT="/home/ubuntu/ComfyUI/output"; IN="/home/ubuntu/ComfyUI/input"
 UPSCALE_DIR="/home/ubuntu/ComfyUI/models/upscale_models"
+CKPT_DIR="/home/ubuntu/ComfyUI/models/checkpoints"
+CN_DIR="/home/ubuntu/ComfyUI/models/controlnet"
 app=Flask(__name__); app.config["MAX_CONTENT_LENGTH"]=48*1024*1024
 JOBS={}
 
@@ -149,6 +151,7 @@ CN_UNION="Qwen-Image-InstantX-ControlNet-Union.safetensors"
 ОПОРЫ="/home/ubuntu/ГЛУБИНА"
 ОПОРА_СИЛА=1.4
 ОПОРА_ДО=0.60
+ОПОР_ЖДЁМ=21          # столько кадров принял владелец
 
 
 def шаги_под_denoise(denoise):
@@ -650,6 +653,38 @@ def recent():
         fs.sort(reverse=True); return jsonify(files=[f for _,f in fs[:30]])
     except Exception: return jsonify(files=[])
 
+# ГОТОВНОСТЬ КАРТЫ. Заведено 23.09.2026 после переезда на A100.
+#
+# Карта арендуется почасово и меняется целиком: модели переезжают
+# копией, а всё, что ставилось руками, молча остаётся на прежней. Так и
+# вышло — на новой карте не оказалось ffmpeg, и ролик уходил бы клиенту
+# СОТНЕЙ PNG вместо видео. Ошибки при этом нет: задание успешно, файлы
+# отданы, в журнале одна строка «mp4 не собрался».
+#
+# Поэтому список того, без чего карта не работает, лежит в коде и
+# проверяется при запуске и по запросу.
+def готовность():
+    беды=[]
+    if not shutil.which("ffmpeg"):
+        беды.append("нет ffmpeg: ролик уйдёт кадрами вместо видео")
+    for имя,путь in (("сборка фото", os.path.join(CKPT_DIR,CKPT_PHOTO)),
+                     ("сборка видео", os.path.join(CKPT_DIR,CKPT_VIDEO)),
+                     ("апскейлер", os.path.join(UPSCALE_DIR,АПСКЕЙЛЕР)),
+                     ("ControlNet", os.path.join(CN_DIR,CN_UNION))):
+        if not os.path.exists(путь):
+            беды.append(f"нет файла «{имя}»: {путь}")
+    сколько=len([f for f in os.listdir(ОПОРЫ)
+                 if f.endswith(".png")]) if os.path.isdir(ОПОРЫ) else 0
+    if сколько < ОПОР_ЖДЁМ:
+        беды.append(f"опор по глубине {сколько} из {ОПОР_ЖДЁМ}: "
+                    f"кнопки без опоры выдадут не ту позу")
+    return {"готова": not беды, "беды": беды}
+
+
+@app.get("/api/готовность")
+def готовность_ответ():
+    return jsonify(готовность())
+
 @app.get("/api/stats")
 def stats():
     try:
@@ -667,4 +702,13 @@ def index():
                     mimetype="text/html; charset=utf-8")
 
 if __name__=="__main__":
+    # Ругаемся при запуске, а не при первом заказе: беду видно в
+    # журнале службы сразу после переезда на новую карту, а не через
+    # день, когда клиент получит ролик кадрами.
+    _г=готовность()
+    for _б in _г["беды"]:
+        print("КАРТА НЕ ГОТОВА:", _б, flush=True)
+    if _г["готова"]:
+        print("карта готова: ffmpeg, сборки, апскейлер, ControlNet, опоры",
+              flush=True)
     app.run(host="127.0.0.1",port=8090,threaded=True)

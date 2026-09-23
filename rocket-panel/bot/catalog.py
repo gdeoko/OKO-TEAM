@@ -715,35 +715,53 @@ class Узел:
         "one head on her own neck, two arms growing from her own "
         "shoulders, two legs. Only one person in the frame."),
     # «Мастурбация раком» — кадр pR9_ac_above__777.
+    # ПЕРЕПИСАНО 23.09.2026 ПО ПРИНЯТОМУ КАДРУ.
+    #
+    # Текст описывал не тот кадр, который владелец принял: «стоит на
+    # четвереньках боком к камере, правая рука из-под живота». На
+    # принятом кадре она СТОИТ НА НОГАХ, нагнувшись от пояса, камера
+    # сзади и низко, обе руки заведены назад. Опора по глубине держала
+    # принятую позу, текст тянул в другую - и выходила третья, сидя.
+    # Из 21 кнопки промахивались ровно эти две, и обе по одной причине.
     "ph_above": (
-        "She kneels on all fours on the floor, side-on to the camera, "
-        "knees apart, back arched down, buttocks raised, her head "
-        "turned back over her shoulder so her face is to the lens. Her "
-        "left palm stays flat on the floor holding her up. HER RIGHT "
-        "ARM HAS COME DOWN OFF THE FLOOR AND REACHES FORWARD UNDER HER "
-        "OWN BELLY, in between her own thighs from the front: the whole "
-        "arm is visible from her shoulder to her hand, and her fingers "
-        "are on her own vulva, which is open to the camera between her "
-        "raised thighs. Her face is inside the frame and turned to the "
-        "camera. She is completely naked: nothing on her breasts, "
-        "nothing on her hips, bare skin everywhere. She is a woman. "
-        "Between her thighs there is her own bare vulva and nothing "
-        "else in front of it but her own fingers. Her anatomy is female "
-        "only. One whole unbroken body, one head on her own neck, two "
-        "arms growing from her own shoulders, two legs. Only one person "
-        "in the frame."),
+        "She is completely naked: nothing on her breasts, nothing on her "
+        "hips, bare skin everywhere. SHE STANDS ON BOTH FEET WITH HER LEGS "
+        "STRAIGHT AND WIDE APART AND HAS BENT FORWARD FROM THE WAIST, her "
+        "back roughly level with the floor. THE CAMERA IS BEHIND HER AND "
+        "LOW, at the height of her hips: her bare buttocks fill the CENTRE "
+        "of the frame and her own bare vulva is open to the lens between "
+        "her thighs from behind, with nothing in front of it but her own "
+        "fingers. BOTH OF HER ARMS COME DOWN BEHIND HER OWN BACK, past her "
+        "own buttocks, and both hands meet between her thighs from behind: "
+        "the arms are visible from her shoulders to her hands. Her head is "
+        "turned back over her own shoulder at the top of the frame, and her "
+        "whole face is inside the frame and looking into the lens. She is a "
+        "woman, her anatomy is female only. One whole unbroken body, one "
+        "head on her own neck, two arms growing from her own shoulders, two "
+        "legs. Only one person in the frame."),
     # «Снимает лифчик (майку)» — кадр pZ3_ac_below__4242.
+    # ПЕРЕПИСАНО 23.09.2026 ПО ПРИНЯТОМУ КАДРУ, см. «ph_above» выше.
+    #
+    # Текст говорил «стягивает майку ЧЕРЕЗ ГОЛОВУ, руки подняты выше
+    # плеч, лицо под руками». На принятом кадре она держит подол на
+    # уровне груди и лицо открыто. Модель, разрываясь между двумя
+    # позами, рисовала ДВА тела разом: в кадре появлялось второе лицо.
     "ph_below": (
-        "She stands facing the camera and IS IN THE ACT OF PULLING HER "
-        "TOP OFF OVER HER HEAD: the garment is already up around her "
-        "raised arms above her shoulders, her own two bare breasts are "
-        "fully uncovered and in plain view at the CENTRE of the frame, "
-        "the nipples bare. Her face is below her raised arms, turned to "
-        "the lens and clear of the cloth. Nothing is left on her chest. "
-        "Her whole face is inside the frame. She is a woman, her "
-        "anatomy is female only. One whole unbroken body, one head on "
-        "her own neck, two arms from her own shoulders, two legs. Only "
-        "one person in the frame."),
+        "FULL-LENGTH SHOT, her whole body from her hair down to her bare "
+        "feet inside the frame. She stands facing the camera SQUARE ON. SHE "
+        "IS WEARING A PLAIN WHITE T-SHIRT AND NOTHING ELSE AT ALL: below "
+        "the shirt she is bare skin, her own bare vulva in plain view, no "
+        "underwear of any kind. SHE HAS TAKEN THE HEM OF THE SHIRT IN BOTH "
+        "HANDS AND LIFTED IT UP TO JUST ABOVE HER OWN BREASTS, so the cloth "
+        "is bunched in a band across her collarbones and BOTH OF HER BARE "
+        "BREASTS ARE FULLY UNCOVERED below it, the nipples bare and in "
+        "plain view at the CENTRE of the frame. Her hands stay at the hem, "
+        "at the height of her own chest; her arms are NOT raised above her "
+        "head and the shirt is NOT over her face. Her whole face is inside "
+        "the frame, above the shirt, turned to the lens. She is a woman, "
+        "her anatomy is female only. One whole unbroken body, one head on "
+        "her own neck, two arms from her own shoulders, two legs. Only one "
+        "person in the frame."),
     # «Снимает трусики» — кадр pR21_ac_push__777.
     "ph_push": (
         "THE CAMERA IS BEHIND HER. She stands with her legs slightly "
