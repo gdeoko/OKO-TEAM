@@ -1063,8 +1063,13 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "man; she is completely naked, her own nipples in plain view and "
         "nothing on her chest at all, and she looks back over "
         "her shoulder at the camera. THE MAN KNEELS UPRIGHT BEHIND "
-        "HER; HE HAS NOTHING ON HIM AT ALL, his own hips and his own "
-        "thighs are bare skin and UNCOVERED, HIS WHOLE FACE IS "
+        # «completely naked» и ничего больше. Замер 23.09.2026 по
+        # восемь зёрен: эта дословная фраза — 6 кадров из 8 без
+        # одежды; мои «усиления» («ничего на нём нет», «голые
+        # бёдра», «голые ягодицы», веса в скобках) давали 2–4 из 8.
+        # Шорты лезут с референса, и чем длиннее объяснение, тем
+        # слабее утверждение.
+        "HER, completely naked, HIS WHOLE FACE IS "
         "INSIDE THE FRAME and he "
         "is looking down at her. HER OWN VULVA IS SEEN FROM BEHIND "
         "between her open thighs AND HIS ERECT PENIS IS GOING INTO IT "

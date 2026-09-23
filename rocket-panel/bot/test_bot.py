@@ -2508,7 +2508,13 @@ class ГолыеОстаютсяГолымиДоКонца(unittest.TestCase):
         короткой парной сборки хвоста нет, весь текст и есть начало.
         Поэтому проверяем не повтор, а место."""
         p = catalog.scene("pf_mf_near").prompt_фото()
-        self.assertLess(p.index("bare skin"), len(p) // 3)
+        # Якорь не один: обычная сборка говорит «bare skin», жёсткая
+        # постановка — «completely naked». Замер 23.09.2026 показал, что
+        # вторая формулировка держит одежду лучше (6 кадров из 8 против
+        # 3), поэтому проверяем МЕСТО наготы, а не конкретные слова.
+        место = min(p.index(с) for с in ("bare skin", "completely naked")
+                    if с in p)
+        self.assertLess(место, len(p) // 3)
 
     def test_про_ткань_молчим_когда_одежды_нет(self):
         сц = catalog.scene("pf_mf_near")
