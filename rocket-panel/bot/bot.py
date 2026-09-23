@@ -187,7 +187,7 @@ def buy_kb(u=None):
 
 
 
-def _проход(kind, prompt, photos, на_тик=None, denoise=1.0):
+def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист="vert"):
     """Один проход по карте. Возвращает (имя файла, байты, секунды).
 
     Вынесено из run_job, потому что проходов бывает два: см. `цепочка`.
@@ -198,7 +198,7 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0):
     # величины живут в `gpu/panel.py`: у фото STEPS_ФОТО=8 и
     # CFG_ФОТО=2.0 — те самые, на которых сняты все эталонные кадры, —
     # у видео STEPS=4 и CFG=1.0.
-    params = {"prompt": prompt, "size": "vert",
+    params = {"prompt": prompt, "size": лист,
               "steps": 4, "cfg": 1.0, "seed": 0,
               "neg": prompts.негатив(prompt), "denoise": denoise}
     сем = prompts.семейство(kind)
@@ -245,6 +245,10 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
     Решение владельца 21.09.2026.
     """
     job = pricing.job(kind)
+    # Лист считается ОДИН раз, до проходов: у ролика первый кадр и сам
+    # ролик обязаны быть одного листа, иначе движение поедет по чужой
+    # композиции.
+    лист = catalog.лист(scene)
     я = яз(u)
     jid = uuid.uuid4().hex[:10]
     charged = False
@@ -277,7 +281,7 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
             # архив не кладётся: это полуфабрикат, и «Мои работы»,
             # набитые промежуточными кадрами, только запутают.
             имя, кадр, _ = _проход("i2i", prompt_фото or prompt, photos, tick,
-                                   denoise=denoise)
+                                   denoise=denoise, лист=лист)
             шаг = "видео"
             if mid:
                 edit(chat, mid, t("ген.кадр_готов", я))
@@ -286,7 +290,8 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         # Второй проход оживляет НАШ кадр, а не присланный снимок:
         # обстановка в нём уже правильная, и гасить её нечем и незачем.
         файл, data, сек = _проход(kind, prompt, photos, tick,
-                                  denoise=1.0 if цепочка else denoise)
+                                  denoise=1.0 if цепочка else denoise,
+                                  лист=лист)
         files = [файл]
         res = {"sec": сек}
         if mid:

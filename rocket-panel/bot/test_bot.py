@@ -1736,6 +1736,20 @@ class ЖёсткаяПостановка(unittest.TestCase):
     def test_у_фотографии_постановка_есть(self):
         self.assertIn(self.ЯКОРЬ, catalog.scene("pf_mf_near").prompt)
 
+    def test_лист_у_кнопки_совпадает_с_листом_эталона(self):
+        """Бот всегда просил вертикаль, а «Раком» и «Кунилингус»
+        владелец отбирал на горизонтальных кадрах: двое лежат поперёк
+        листа, и в вертикальный эта поза не влезает — сборка её
+        перестраивает. Клиент получал не то, что утверждено."""
+        self.assertEqual(catalog.лист("pf_mf_near"), "horiz")
+        self.assertEqual(catalog.лист("pf_mf_behind"), "horiz")
+        self.assertEqual(catalog.лист("pf_mf_face"), "vert")
+        # У ролика лист тот же: он начинается с кадра.
+        self.assertEqual(catalog.лист("pr_mf_near"), "horiz")
+        # Всё остальное — прежняя вертикаль.
+        for ключ in ("un_close", "pf_ff_near", "pf_mm_above"):
+            self.assertEqual(catalog.лист(ключ), "vert", ключ)
+
     def test_у_кунилингуса_своя_постановка(self):
         for ключ in ("pf_mf_behind", "pr_mf_behind"):
             self.assertIn(self.ЯКОРЬ_К, catalog.scene(ключ).prompt_фото(), ключ)
