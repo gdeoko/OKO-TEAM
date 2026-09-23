@@ -1718,9 +1718,37 @@ class ЖёсткаяПостановка(unittest.TestCase):
     """
 
     ЯКОРЬ = "TURNED TWENTY-FIVE DEGREES"
+    # «Кунилингус» МЖ: своя постановка, свой якорь.
+    ЯКОРЬ_К = "lies flat on his stomach between those open thighs"
 
     def test_у_фотографии_постановка_есть(self):
         self.assertIn(self.ЯКОРЬ, catalog.scene("pf_mf_near").prompt)
+
+    def test_у_кунилингуса_своя_постановка(self):
+        for ключ in ("pf_mf_behind", "pr_mf_behind"):
+            self.assertIn(self.ЯКОРЬ_К, catalog.scene(ключ).prompt_фото(), ключ)
+
+    def test_кунилингус_не_протёк_в_женскую_и_мужскую_пару(self):
+        for ключ in ("pf_ff_behind", "pf_mm_behind", "pf_mf_near"):
+            self.assertNotIn(self.ЯКОРЬ_К, catalog.scene(ключ).prompt, ключ)
+
+    def test_у_кунилингуса_мужчина_не_запрещён(self):
+        """Та самая поломка 23.09.2026: у кнопки нет слов «erect penis»,
+        и негатив уезжал в женскую ветку с «man, male body»."""
+        n = catalog.scene("pf_mf_behind").negative
+        self.assertNotIn("man, male body", n)
+        self.assertNotIn("penis, cock", n)
+
+    def test_руки_мужчины_названы_рано_а_нагота_раньше(self):
+        """Порядок в постановке «Кунилингуса» — не украшение: руки
+        отдельным предложением отодвигали наготу за первую тысячу
+        знаков, и возвращались серые шорты."""
+        # Мера тут АБСОЛЮТНАЯ, а не доля: сборка держит примерно первую
+        # тысячу знаков, и от того, длинный ли хвост промпта, это число
+        # не зависит.
+        p = catalog.scene("pf_mf_behind").prompt
+        self.assertLess(p.index("HIS WHOLE BACK IS BARE SKIN"), 1000)
+        self.assertIn("both of his forearms flat on the mattress", p)
 
     def test_у_ролика_первый_кадр_тот_же(self):
         """Ролик начинается с КАДРА, и раздевает человека именно он.
