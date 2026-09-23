@@ -16,6 +16,7 @@ import os, sys, time, json, uuid, threading, traceback
 import requests
 
 import archive
+import контроль
 import pricing
 import catalog
 import места
@@ -187,7 +188,8 @@ def buy_kb(u=None):
 
 
 
-def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист="vert"):
+def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист="vert",
+            зерно=0):
     """Один проход по карте. Возвращает (имя файла, байты, секунды).
 
     Вынесено из run_job, потому что проходов бывает два: см. `цепочка`.
@@ -215,12 +217,53 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
         params["images"] = list(photos)
         params["image"] = photos[0]      # совместимость со старой панелью
 
+    if зерно:
+        params["seed"] = зерно
     gid, _seed = gpu.start(**params)
     res = gpu.wait(gid, limit=900, on_tick=на_тик)
     files = res.get("files") or []
     if not files:
         raise GpuError("пустой результат")
     return files[0], gpu.fetch(files[0]), res.get("sec")
+
+
+# СКОЛЬКО РАЗ ПЕРЕСНИМАТЬ БРАК.
+#
+# Три попытки, не больше. Жёсткая постановка держит позу, брак даёт
+# зерно — на восьми зёрнах одной кнопки плохих один-два. При трёх
+# попытках вероятность отдать брак падает примерно с одной пятой до
+# одной сотой, а ждать человек будет дольше ТОЛЬКО когда первый кадр
+# и правда никуда не годился.
+#
+# Больше трёх не ставим по той же причине, по какой приёмка молча
+# пропускает кадр при своей осечке: человек заплатил и ждёт работу, а
+# не нашу борьбу за совершенство.
+ПОПЫТОК = int(os.environ.get("AMBERRY_QC_TRIES", "3"))
+
+
+def _фото_с_приёмкой(kind, prompt, photos, на_тик=None, denoise=1.0,
+                     лист="vert", scene=None):
+    """Снять кадр и показать его приёмке. Брак — снять заново.
+
+    Возвращает то же, что `_проход`. Последняя попытка отдаётся как
+    есть: лучше кадр с огрехом, чем ничего за уплаченные коины.
+    """
+    последний = None
+    for попытка in range(1, ПОПЫТОК + 1):
+        имя, данные, сек = _проход(kind, prompt, photos, на_тик, denoise,
+                                   лист)
+        последний = (имя, данные, сек)
+        if not контроль.включена():
+            return последний
+        годен, почему = контроль.проверить(данные, scene)
+        if годен:
+            if попытка > 1:
+                print(f"приёмка: годен с {попытка}-й попытки ({scene})",
+                      flush=True)
+            return последний
+        print(f"приёмка: брак {попытка}/{ПОПЫТОК} ({scene}) — {почему}",
+              flush=True)
+    return последний
 
 
 def run_job(chat, u, kind, prompt, photos=None, scene=None,
@@ -280,8 +323,9 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
             # Первый проход. Его результат человеку НЕ отдаётся и в
             # архив не кладётся: это полуфабрикат, и «Мои работы»,
             # набитые промежуточными кадрами, только запутают.
-            имя, кадр, _ = _проход("i2i", prompt_фото or prompt, photos, tick,
-                                   denoise=denoise, лист=лист)
+            имя, кадр, _ = _фото_с_приёмкой(
+                "i2i", prompt_фото or prompt, photos, tick,
+                denoise=denoise, лист=лист, scene=scene)
             шаг = "видео"
             if mid:
                 edit(chat, mid, t("ген.кадр_готов", я))
@@ -289,9 +333,15 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
 
         # Второй проход оживляет НАШ кадр, а не присланный снимок:
         # обстановка в нём уже правильная, и гасить её нечем и незачем.
-        файл, data, сек = _проход(kind, prompt, photos, tick,
-                                  denoise=1.0 if цепочка else denoise,
-                                  лист=лист)
+        # Приёмка смотрит ФОТО. У ролика смотреть нечего: движение
+        # она не оценит, а первый кадр уже прошёл приёмку выше.
+        снять = (_фото_с_приёмкой if prompts.семейство(kind) in ("t2i", "i2i")
+                 else _проход)
+        файл, data, сек = снять(kind, prompt, photos, tick,
+                                denoise=1.0 if цепочка else denoise,
+                                лист=лист, **({"scene": scene}
+                                              if снять is _фото_с_приёмкой
+                                              else {}))
         files = [файл]
         res = {"sec": сек}
         if mid:
