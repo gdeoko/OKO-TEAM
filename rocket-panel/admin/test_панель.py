@@ -257,5 +257,67 @@ class Рассылка(unittest.TestCase):
         self.assertEqual(len(self.store.поддержка_диалог(self.живой)), 1)
 
 
+class ФраншизаВПанели(unittest.TestCase):
+    """Самый дорогой товар бота. Здесь важнее всего две вещи: токен
+    чужого бота наружу не сыплется, и деньги панель не двигает."""
+
+    @classmethod
+    def setUpClass(cls):
+        поднять()
+
+    def setUp(self):
+        self.store = admin.store
+        self.кто = 880_000 + int(time.time() * 1000) % 1000
+        self.store.ensure_user(self.кто, "партнёр")
+        self.store.партнёр_завести(self.кто, "партнёр", 8000, "RUB")
+        self.токен = "1234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"
+        self.store.партнёр_токен(self.кто, self.токен, "@чужойбот")
+
+    def test_в_списке_токена_нет_целиком(self):
+        """Общий список уезжает в исходный код страницы. Ключ от чужого
+        бота там лежать не должен."""
+        код, д = зайти("/api/франшиза")
+        self.assertEqual(код, 200)
+        self.assertNotIn(self.токен, json.dumps(д, ensure_ascii=False))
+        мой = [п for п in д["партнёры"] if п["tg_id"] == self.кто][0]
+        self.assertTrue(мой["есть_токен"])
+        self.assertTrue(мой["токен_хвост"].endswith(self.токен[-6:]))
+
+    def test_полный_токен_отдельным_запросом(self):
+        код, д = зайти(f"/api/франшиза/токен/{self.кто}")
+        self.assertEqual(код, 200)
+        self.assertEqual(д["токен"], self.токен)
+
+    def test_к_выплате_считается_по_доле(self):
+        зайти("/api/франшиза/учёт", {"tg_id": self.кто, "выручка": 10000,
+                                     "доля": 50, "выплачено": 1000})
+        _, д = зайти("/api/франшиза")
+        мой = [п for п in д["партнёры"] if п["tg_id"] == self.кто][0]
+        self.assertEqual(мой["к_выплате"], 4000)
+
+    def test_переплату_в_минус_не_уводим(self):
+        """Выплатили больше, чем насчитали, - к выплате ноль, а не долг
+        партнёра перед нами."""
+        зайти("/api/франшиза/учёт", {"tg_id": self.кто, "выручка": 1000,
+                                     "доля": 50, "выплачено": 900})
+        _, д = зайти("/api/франшиза")
+        мой = [п for п in д["партнёры"] if п["tg_id"] == self.кто][0]
+        self.assertEqual(мой["к_выплате"], 0)
+
+    def test_кнопки_выплатить_в_панели_нет(self):
+        """Перевод необратим, а ошибка в доле или в реквизитах не
+        откатывается ничем. Панель только считает."""
+        _, тело = зайти("/")
+        self.assertNotIn("/api/франшиза/выплатить", тело)
+        self.assertIn("Перевод делает владелец руками", тело)
+
+    def test_состояние_меняется(self):
+        код, _ = зайти("/api/франшиза/состояние",
+                       {"tg_id": self.кто, "состояние": "запущен"})
+        self.assertEqual(код, 200)
+        self.assertEqual(self.store.партнёр(self.кто)["состояние"], "запущен")
+        self.assertIsNotNone(self.store.партнёр(self.кто)["запущен_at"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
