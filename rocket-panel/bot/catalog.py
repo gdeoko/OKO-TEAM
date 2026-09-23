@@ -1083,6 +1083,41 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "on her hips or anywhere near where their bodies join. BOTH OF "
         "HER ARMS run from her own shoulders to her two hands flat on "
         "the mattress under her chest."),
+
+    # «Кунилингус», МЖ. Отобрано владельцем 23.09.2026 (кадр
+    # pMP2_mp__33). Геометрия взята 1:1 у принятого кадра ЖЖ, как он и
+    # просил: она полусидит на подушках слева, он лежит ничком между её
+    # раздвинутыми бёдрами лицом у вульвы.
+    #
+    # Два места здесь нельзя трогать, оба выстраданы:
+    #
+    #   1. РУКИ МУЖЧИНЫ названы ВНУТРИ его же предложения, шестью
+    #      словами. Отдельным предложением они тоже рисуются — но
+    #      отодвигают «HIS WHOLE BACK IS BARE SKIN» за первую тысячу
+    #      знаков, и с референса возвращаются серые шорты (два круга
+    #      подряд, по восемь зёрен). Без рук вовсе торс без плеч
+    #      достраивается вывернутой рукой — владелец это и поймал.
+    #   2. Порядок: нагота обоих утверждается ДО описания рук и ног.
+    ("mf", "behind"): (
+        "Explicit photograph, camera at the side of the bed. THE WOMAN "
+        "HALF-SITS leaning back against a pile of pillows at the LEFT "
+        "of the frame. SHE HAS NOTHING ON HER BODY AT ALL: her chest "
+        "is bare skin and her own nipples are in plain view, her belly "
+        "and hips are bare skin, and her own bare wet vulva is "
+        "uncovered between her open thighs. BOTH OF HER LEGS LIE ON "
+        "THE MATTRESS, spread wide apart from each other, knees down "
+        "and only slightly bent — neither leg is lifted into the air. "
+        "THE MAN lies flat on his stomach between those open thighs, "
+        "completely naked, his body stretched straight out to the "
+        "RIGHT, both of his forearms flat on the mattress alongside "
+        "her thighs with an open hand at the end of each, his face at "
+        "the vulva with his tongue out and licking it, seen in "
+        "profile. HIS WHOLE BACK IS BARE SKIN from his shoulders down "
+        "to his waist, and his bare buttocks are uncovered too. THE "
+        "WOMAN IS PROPPED UP ON BOTH OF HER ELBOWS: each arm runs from "
+        "her own shoulder down to its elbow on the mattress behind her "
+        "and on to its one hand flat on the bed, and both arms are "
+        "plainly visible. She looks down at him with her lips parted."),
 }
 
 КАМЕРА_ФОТО = {
