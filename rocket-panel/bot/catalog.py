@@ -1187,6 +1187,112 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "hair, the other hangs down at his own side — every arm runs "
         "from its own shoulder through its elbow to its one hand. She "
         "looks up at his face."),
+
+    # «Кунилингус», ЖЖ. Принято владельцем 22.09.2026 (кадр
+    # pPU_puL__1337). Она сидит на краю кровати, вторая на коленях на полу между её
+    # коленями. Механика разницы высот — ни одна нога не висит,
+    # колени гнутся вперёд просто потому, что человек сидит.
+    ("ff", "near"): (
+        "Explicit photograph, camera in front of them. THE BLONDE SITS "
+        "ON THE EDGE OF THE BED facing the camera, both feet flat on "
+        "the floor and her knees wide apart; she has nothing on her at "
+        "all, her own nipples are in plain view and her own bare wet "
+        "vulva is uncovered between her knees. BOTH OF HER ARMS ARE IN "
+        "THE PICTURE: each one runs from her own shoulder through its "
+        "elbow to its one hand flat on the mattress beside her own hip. "
+        "THE DARK-HAIRED ONE KNEELS ON THE FLOOR between the blonde's "
+        "knees with her back to the camera, her head at the vulva, her "
+        "tongue out and licking it, her face turned to the side so it "
+        "can be seen; her whole back is bare skin with no strap and no "
+        "band anywhere on it. BOTH OF HER ARMS ARE IN THE PICTURE TOO: "
+        "each one runs from her own shoulder through its elbow to its "
+        "one hand resting on the blonde's thigh."),
+
+    # «Отлизывает сзади (лёжа)», ЖЖ. Принято владельцем 22.09.2026 (кадр
+    # pK4_k_lying__33). Обе головы низко у разных краёв кадра, бёдра между ними, тела
+    # не накладываются. Наготу здесь утверждает одна фраза
+    # «Both completely naked» — убрать её нельзя, другой в кадре нет.
+    ("ff", "face"): (
+        "THE BLONDE lies on her front at the LEFT of the frame, rolled "
+        "onto her side so that her hip and buttocks turn up toward the "
+        "camera: her head rests low at the left edge, her face turned "
+        "to the lens and clearly visible, and one of her own hands "
+        "reaches back to spread her buttock open. Her raised buttocks "
+        "and her vulva between them are at the centre of the picture. "
+        "THE DARK-HAIRED ONE comes in from the RIGHT with her upper "
+        "body low and her head at the same height, her face in profile "
+        "pressed between the blonde's buttocks from behind, her tongue "
+        "on the blonde's vulva. Both heads are low, one at each end of "
+        "the frame, the hips between them; the two bodies do not "
+        "overlap. Side view from the level of the mattress, wide "
+        "horizontal frame, both whole bodies inside it from head to "
+        "foot. Both completely naked, bare skin."),
+
+    # «Отлизывает раком (стоя)», ЖЖ. Принято владельцем 22.09.2026 (кадр
+    # pK4_k_stand__2024). Разница высот: одна стоит согнувшись, вторая на коленях на полу.
+    # Ключ — рост: на четвереньках таз низко, и стоящая на коленях
+    # до него не достаёт, отсюда «лицо в пояснице» на ранних кругах.
+    ("ff", "close"): (
+        "SIDE VIEW — the camera is beside them, not behind them. THE "
+        "BLONDE STANDS on the floor at the LEFT with her legs apart and "
+        "HAS BENT FAR FORWARD from the hips, her hands on her own "
+        "knees, her back horizontal and her buttocks raised high at the "
+        "RIGHT, her head turned back over her shoulder so her whole "
+        "face is to the lens and her own bare breasts hang free below "
+        "her chest. THE DARK-HAIRED ONE IS DOWN ON THE FLOOR BEHIND HER "
+        "at the RIGHT, sitting back on her heels and crouched low with "
+        "her head below the blonde's raised buttocks and tilted up into "
+        "them: HER MOUTH IS PRESSED ON THE BLONDE'S VULVA from behind, "
+        "her own face seen in profile. One woman stands high, the other "
+        "is low on the floor. The blonde's chest is bare skin with her "
+        "own nipples in plain view, her hips are bare skin and her back "
+        "is bare skin with no strap and no band on it. The dark-haired "
+        "one's chest is bare skin with her own nipples in plain view "
+        "and her hips are bare skin."),
+
+    # «Вдвоём раком», ЖЖ. Принято владельцем 22.09.2026 (кадр
+    # pK4_k_two__33). Контакта нет вовсе: обе на четвереньках рядом, параллельно, с
+    # просветом между телами. Самая устойчивая механика раздела —
+    # пересечения нет, ломаться нечему.
+    ("ff", "behind"): (
+        "THE CAMERA IS BEHIND THEM, low down. TWO NAKED WOMEN ARE ON "
+        "ALL FOURS SIDE BY SIDE on the bed, both facing away from the "
+        "camera, their bodies PARALLEL and NOT TOUCHING each other at "
+        "all, with dark bedding visible in the gap between them. THE "
+        "BLONDE is on the LEFT and THE DARK-HAIRED ONE is on the RIGHT. "
+        "Both have their knees apart, their backs arched down and their "
+        "bare buttocks raised toward the lens, so that BOTH OF THEIR "
+        "BARE VULVAS SHOW BETWEEN THEIR THIGHS FROM BEHIND, side by "
+        "side across the middle of the picture. Each has turned her "
+        "head back over her own shoulder and both faces are to the "
+        "camera, smiling. THE BLONDE has nothing on her: her chest is "
+        "bare skin with her own nipples in plain view and her hips are "
+        "bare skin. THE DARK-HAIRED ONE has nothing on her either: her "
+        "chest is bare skin with her own nipples in plain view, and HER "
+        "HIPS AND BUTTOCKS ARE BARE SKIN — no panties on her."),
+
+    # «Кунилингус лёжа», ЖЖ. Принято владельцем 22.09.2026 (кадр
+    # pPR_prE__1337). Торцами в линию. Кадр владелец показал сам и переснимать
+    # запретил: «зачем ты что-то меняешь, я же показал какой».
+    ("ff", "pov"): (
+        "Explicit photograph, camera at the side of the bed. THE BLONDE "
+        "HALF-SITS leaning back against a pile of pillows at the LEFT "
+        "of the frame. SHE HAS NOTHING ON HER BODY AT ALL: her chest is "
+        "bare skin and her own nipples are in plain view, her belly and "
+        "hips are bare skin, and her own bare wet vulva is uncovered "
+        "between her open thighs. BOTH OF HER LEGS LIE ON THE MATTRESS, "
+        "spread wide apart from each other, knees down and only "
+        "slightly bent — neither leg is lifted into the air. THE DARK- "
+        "HAIRED ONE lies flat on her stomach between those open thighs, "
+        "her body stretched straight out to the RIGHT, her face at the "
+        "vulva with her tongue out and licking it, seen in profile. HER "
+        "WHOLE BACK IS BARE SKIN from her shoulders down to her waist, "
+        "with no strap and no band anywhere on it, and her bare "
+        "buttocks are uncovered too. THE BLONDE IS PROPPED UP ON BOTH "
+        "OF HER ELBOWS: each arm runs from her own shoulder down to its "
+        "elbow on the mattress behind her and on to its one hand flat "
+        "on the bed, and both arms are plainly visible. She looks down "
+        "at her with her lips parted."),
 }
 
 КАМЕРА_ФОТО = {
@@ -1377,6 +1483,12 @@ def scene(key):
     "mf_near": "horiz",      # Секс раком
     "mf_behind": "horiz",    # Кунилингус
     "mf_face": "vert",       # Наездница
+    "mf_pov": "vert",        # Минет — стоящий человек в горизонталь не влезает
+    "ff_near": "vert",       # Кунилингус
+    "ff_face": "horiz",      # Отлизывает сзади (лёжа) — тела поперёк листа
+    "ff_close": "vert",      # Отлизывает раком (стоя)
+    "ff_behind": "horiz",    # Вдвоём раком — обе поперёк листа
+    "ff_pov": "horiz",       # Кунилингус лёжа — тела торцами в линию
 }
 
 
