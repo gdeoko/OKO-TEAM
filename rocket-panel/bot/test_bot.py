@@ -2582,6 +2582,32 @@ class НегативПоКадру(unittest.TestCase):
         self.assertNotIn("two people",
                          prompts.негатив("... EXACTLY TWO bodies ..."))
 
+    def test_мужчину_не_запрещаем_даже_когда_члена_в_кадре_нет(self):
+        """«Кунилингус» МЖ: мужчина лежит ничком, своего паха не видно,
+        слова «erect penis» в кадре нет. Прежний признак читал такую
+        сцену как женскую и слал в негатив «man, male body» — кнопка
+        запрещала собственного мужчину, и восемь кадров вышли кашей."""
+        п = ("THE MAN lies flat on his stomach between those open thighs, "
+             "completely naked, his face at the vulva with his tongue out. "
+             "One man and one woman, nobody else.")
+        n = prompts.негатив(п)
+        for слово in ("man, male body", "penis, cock"):
+            self.assertNotIn(слово, n, "кнопка МЖ запрещает мужчину")
+        self.assertIn("vulva on the man", n, "мужчина обязан остаться мужчиной")
+
+    def test_в_женской_сцене_мужское_по_прежнему_запрещено(self):
+        """Обратная половина того же правила: где мужчины нет, там член
+        девушке дорисовывать нельзя."""
+        n = prompts.негатив("She lies on her back, her own nipples in "
+                            "plain view. Two women only.")
+        self.assertIn("man, male body", n)
+
+    def test_признак_мужчины_не_ловится_случайным_словом(self):
+        """«woman» содержит «man» — признак обязан смотреть на слова
+        сборки, а не на подстроку."""
+        self.assertFalse(prompts.мужчина_в_кадре(
+            "The woman and the other woman, a human being, romance."))
+
 
 class ОдеждуНеНазываемВПоложительномТексте(unittest.TestCase):
     """Замер 22.09.2026: в промпте стояло «не мужские шорты, не женское
