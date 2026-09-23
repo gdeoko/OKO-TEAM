@@ -50,17 +50,27 @@ import urllib.request
 # Формулировки короткие и проверяемые глазами. «Красиво», «эстетично»,
 # «качественно» сюда не годятся: на них модель отвечает согласием, и
 # приёмка превращается в штамп.
+# КАЛИБРОВКА 23.09.2026. Первый список был строже — и забраковал
+# кадры, которые владелец ПРИНЯЛ: «у мужчины шесть пальцев», «лишняя
+# кисть на её голове». Пальцы эта сборка не рисует идеально почти
+# никогда, а владелец такие кадры утвердил; значит, придирка к пальцам
+# — не приёмка, а способ сжечь три генерации и отдать в итоге тот же
+# кадр.
+#
+# Здесь остались только те дефекты, из-за которых владелец кадры
+# ЗАБРАКОВЫВАЛ на самом деле: одежда, вывернутый сустав, отрезанная
+# голова, чужая анатомия и не та поза. Счёт пальцев и мелкая
+# анатомия кисти убраны нарочно.
 ОБЩЕЕ = [
     "Nobody in the picture is wearing any clothing, underwear, bikini, "
     "shorts or fabric of any kind. Leftover clothing on the hips, chest "
     "or thighs counts as a defect.",
-    "Every arm and every leg belongs to a body it visibly grows from. "
-    "No extra limb, no limb without a body, no hand without an arm.",
-    "Every elbow and knee bends forwards only. A joint bent backwards "
-    "or inside out is a defect.",
-    "Each hand has five fingers, not more and not fewer.",
-    "Every person's head is fully inside the picture. A head cut off by "
-    "the edge of the frame is a defect.",
+    "No arm or leg grows out of the wrong place: no limb without a body "
+    "and no body part fused into another person. Judge only what is "
+    "plainly wrong at a glance, not small details of the hands.",
+    "No elbow or knee is bent backwards or inside out.",
+    "Every person's head is inside the picture and not cut off by the "
+    "edge of the frame.",
 ]
 
 # ЧТО ИМЕННО ДОЛЖНО БЫТЬ В КАДРЕ У КАЖДОЙ КНОПКИ.
@@ -200,11 +210,23 @@ for _к in ("mm_above", "mm_close", "mm_near", "mm_face", "mm_behind",
            "mm_pov"):
     ТРЕБОВАНИЯ.setdefault(_к, _ПАРА_ММ)
 
-# Модель: та, что сейчас живая у ключа. Проверено 23.09.2026 —
-# `gemini-2.0-flash` снята («no longer available»), `gemini-3.6-flash`
-# отдаёт 503. Работает `gemini-3.5-flash`, и он же стоит в
-# `GEMINI_MODEL` у остальных проектов OKO.
-МОДЕЛЬ = os.environ.get("AMBERRY_QC_MODEL", "gemini-3.5-flash")
+# КАКОЙ МОДЕЛЬЮ СМОТРИМ — СПИСКОМ, А НЕ ОДНОЙ.
+#
+# Имена моделей у Gemini живут своей жизнью, и проверено это на себе
+# 23.09.2026: `gemini-2.0-flash` снята («no longer available»),
+# `gemini-3.5-flash` отвечает бесплатному ключу и отдаёт 503 платному,
+# `gemini-3.5-flash-lite` — 400 на тот же запрос, а
+# `gemini-3-flash-preview` работает у платного. Держать одно имя
+# значит однажды молча остаться без приёмки: она и так молчит при
+# любой осечке, и этого никто не заметит.
+#
+# Поэтому список. Первая ответившая запоминается до перезапуска.
+МОДЕЛИ = [м.strip() for м in os.environ.get(
+    "AMBERRY_QC_MODELS",
+    "gemini-3.5-flash,gemini-3-flash-preview,gemini-flash-latest"
+).split(",") if м.strip()]
+_живая = None
+
 АДРЕС = ("https://generativelanguage.googleapis.com/v1beta/models/"
          "%s:generateContent?key=%s")
 
@@ -320,28 +342,36 @@ def проверить(байты, ключ_сцены, таймаут=45):
             "thinkingConfig": {"thinkingBudget": 0},
             # И просим сразу JSON, а не текст с ```json вокруг.
             "responseMimeType": "application/json"}}
+    global _живая
     текст = None
-    for попытка in range(3):
-        try:
-            запрос = urllib.request.Request(
-                АДРЕС % (МОДЕЛЬ, к),
-                data=json.dumps(тело).encode(),
-                headers={"Content-Type": "application/json"})
-            с = urllib.request.urlopen(запрос, timeout=таймаут)
-            ответ = json.load(с)
-            текст = ответ["candidates"][0]["content"]["parts"][0]["text"]
+    порядок = ([_живая] if _живая else []) + [м for м in МОДЕЛИ if м != _живая]
+    последняя = ""
+    for модель in порядок:
+        for попытка in range(2):
+            try:
+                запрос = urllib.request.Request(
+                    АДРЕС % (модель, к),
+                    data=json.dumps(тело).encode(),
+                    headers={"Content-Type": "application/json"})
+                с = urllib.request.urlopen(запрос, timeout=таймаут)
+                ответ = json.load(с)
+                текст = ответ["candidates"][0]["content"]["parts"][0]["text"]
+                _живая = модель
+                break
+            except Exception as e:
+                последняя = str(e)
+                # 429 — минутный предел у КЛЮЧА, он отпускает сам:
+                # ждём и повторяем той же моделью. Всё остальное (400,
+                # 404, 503) означает, что эта модель этому ключу не
+                # годится — идём к следующей, без паузы.
+                if ("429" in последняя or "503" in последняя) and попытка < 1:
+                    time.sleep(6)
+                    continue
+                break
+        if текст is not None:
             break
-        except Exception as e:
-            строка = str(e)
-            # 429 у бесплатного ключа — не поломка, а минутный предел:
-            # он отпускает сам. Ждём и пробуем ещё раз, но ровно
-            # дважды: человек ждёт свою работу, а не нашу настойчивость.
-            if "429" in строка and попытка < 2:
-                time.sleep(8 * (попытка + 1))
-                continue
-            print("приёмка: осечка", строка[:150], flush=True)
-            return True, "осечка проверки"
     if текст is None:
+        print("приёмка: осечка", последняя[:150], flush=True)
         return True, "осечка проверки"
     разбор = _разобрать(текст)
     if not разбор:

@@ -382,6 +382,13 @@ class Scene:
         # см. `prompts.собрать`.
         if self.пара and self.key.split("_")[1] == "mm":
             сложение = ""
+        # ДВИЖЕНИЕ — только ролику. У фотографии его нет и быть не
+        # может, а «движение» в тексте неподвижного кадра сборка
+        # честно пытается нарисовать смазом.
+        if prompts.семейство(вид) in ("i2v", "t2v"):
+            дв = движение(self.key)
+            if дв:
+                блок.движение = дв
         return prompts.собрать(вид, блок, фон=фон, пара=bool(self.пара),
                                сложение=сложение,
                                # Своя строка — это та, что НАПИСАЛ
@@ -781,6 +788,23 @@ class Узел:
         "and at natural distances, as in a single unretouched "
         "photograph. Only one person in the frame."),
 }
+
+
+def движение(ключ_сцены):
+    """Что именно движется в ролике этой кнопки.
+
+    Ключей у кнопки два-три (`pr_mf_near`, `pf_mf_near`, `ac_close` и
+    `ph_close`), движение одно — как и кадр.
+    """
+    к = str(ключ_сцены or "")
+    if к.startswith("ac_"):
+        к = "ph_" + к[3:]
+    if к in ДВИЖЕНИЕ:
+        return ДВИЖЕНИЕ[к]
+    for приставка in ("pr_", "pf_", "vi_", "un_", "ph_"):
+        if к.startswith(приставка) and к[len(приставка):] in ДВИЖЕНИЕ:
+            return ДВИЖЕНИЕ[к[len(приставка):]]
+    return ""
 
 
 def _ЖЁСТКО_ДЛЯ(key):
@@ -1554,6 +1578,154 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "on the bed, and both arms are plainly visible. She looks down "
         "at her with her lips parted."),
 }
+
+
+# ДВИЖЕНИЕ РОЛИКА — СВОЁ У КАЖДОЙ КНОПКИ.
+#
+# Ролик собирался общим текстом: «движение маленькое и правдоподобное —
+# дыхание поднимает грудь, медленное моргание, волосы оседают». Для
+# портрета это верно, для кнопки «Секс раком» — нет: человек платит за
+# секс, а получает неподвижную пару, которая дышит. Проверено живым
+# роликом 23.09.2026: поза и лица держатся все пять секунд (это
+# хорошо), но акта в кадре нет.
+#
+# Правила те же, что у фотографической постановки:
+#   1. называть, ЧТО движется и ЧЕМ («его бёдра вперёд-назад», а не
+#      «они занимаются сексом»);
+#   2. рядом всегда список НЕИЗМЕННОГО — у этой сборки главный брак
+#      ролика не «мало движения», а подмена лица и позы за пять секунд;
+#   3. ритм словами, не числами: числа сборка не считает, а внимание
+#      на них тратит;
+#   4. камера стоит: «наезд» и «облёт» — это другой кадр, а значит
+#      другая поза и другие лица.
+ДВИЖЕНИЕ = {
+    "mf_near": (
+        "THE MOTION IS THE SEX ITSELF: his hips move forward and back "
+        "against her buttocks in a steady unhurried rhythm, and her "
+        "body rocks forward with each push; her breasts sway underneath "
+        "her, her hair moves with her head. His hands stay where they "
+        "are on her back. Their bodies stay joined the whole time."),
+    "mf_face": (
+        "THE MOTION IS THE SEX ITSELF: she rides him, her hips rising "
+        "and settling down onto him again in a steady unhurried rhythm, "
+        "her breasts moving with her body, her hair falling forward and "
+        "back. He stays on his back beneath her, his hands on her hips. "
+        "They stay joined the whole time."),
+    "mf_behind": (
+        "THE MOTION IS THE LICKING: his head moves slowly against her "
+        "vulva, his tongue working, his jaw and lips in motion; her "
+        "hips lift and press toward his mouth, her belly rises and "
+        "falls, her head tips back and her lips part. His forearms stay "
+        "on the mattress."),
+    "mf_pov": (
+        "THE MOTION IS THE BLOWJOB: her head moves forward and back "
+        "along him in a steady unhurried rhythm, her lips closed around "
+        "him, her cheeks hollowing; her hand moves with her mouth. He "
+        "stands still on his feet, his hand resting in her hair, his "
+        "chest rising with his breath as he looks down at her."),
+    "ff_near": (
+        "THE MOTION IS THE LICKING: the kneeling one's head moves "
+        "slowly at the vulva, her tongue working; the seated one's hips "
+        "press toward her, her belly rises and falls, her head tips "
+        "back and her lips part. Both women's hands stay where they "
+        "are."),
+    "ff_face": (
+        "THE MOTION IS THE LICKING: the one behind moves her face "
+        "slowly against the other's vulva, her tongue out and working; "
+        "the one lying down presses her hips back toward that mouth and "
+        "her own hand keeps holding her buttock open. Her breathing "
+        "lifts her ribs."),
+    "ff_close": (
+        "THE MOTION IS THE LICKING: the crouching one's head works at "
+        "the standing one's vulva from behind; the standing one pushes "
+        "her buttocks back toward that mouth in a slow rhythm, her "
+        "hanging breasts swaying with her, her face still turned back "
+        "over her shoulder."),
+    "ff_behind": (
+        "THE MOTION IS SLOW AND SHARED: both women rock their hips "
+        "backward toward the camera in the same unhurried rhythm, their "
+        "backs arching and settling, their hanging breasts swaying, "
+        "their heads still turned back over their shoulders. They never "
+        "touch each other and the gap between their bodies stays open."),
+    "ff_pov": (
+        "THE MOTION IS THE LICKING: the one lying on her stomach moves "
+        "her head slowly at the other's vulva, tongue working; the one "
+        "half-sitting presses her hips toward that mouth, her belly "
+        "rising and falling, her head tipping back. She stays propped "
+        "on both elbows."),
+    "un_close": (
+        "THE MOTION IS SMALL AND HERS: her hips shift and tilt toward "
+        "the lens, her thighs open a little wider and settle, her belly "
+        "rises and falls with her breath, her head lifts and her lips "
+        "part."),
+    "un_full": (
+        "THE MOTION IS SMALL AND HERS: her weight shifts slowly from "
+        "one leg to the other, her hips roll with it, her hands move "
+        "over her own thighs and belly, her hair settles, her chest "
+        "rises with her breath."),
+    "un_back": (
+        "THE MOTION IS SMALL AND HERS: she rocks her hips slowly back "
+        "toward the lens and settles again, her back arching a little "
+        "deeper, her hands sliding on her own thighs, her head turning "
+        "further over her shoulder to hold the camera."),
+    "un_three": (
+        "THE MOTION IS SMALL AND HERS: she rocks back and forward on "
+        "her hands and knees in a slow rhythm, her back arching and "
+        "settling, her hanging breasts swaying with her, her head "
+        "staying turned to the lens."),
+    "un_sit": (
+        "THE MOTION IS SMALL AND HERS: her knees open a little wider "
+        "and settle, her hips tilt toward the lens, her hands move on "
+        "her own thighs, her belly rises and falls, her head tips back "
+        "and her lips part."),
+    "un_lie": (
+        "THE MOTION IS SMALL AND HERS: her knees sway open and back, "
+        "her hips roll slowly, her belly rises and falls with her "
+        "breath, her head turns on the floor and her lips part."),
+    "ph_close": (
+        "THE MOTION IS HER OWN HAND: her fingers move on her vulva in a "
+        "slow steady rhythm, her wrist and forearm moving with them; "
+        "her hips press up toward her hand, her belly rises and falls, "
+        "her head tips back and her lips part."),
+    "ph_side": (
+        "THE MOTION IS HER OWN HAND: her fingers work between her "
+        "thighs in a slow steady rhythm; her upper knee lifts and "
+        "settles, her ribs rise with her breath, her head turns on the "
+        "floor."),
+    "ph_above": (
+        "THE MOTION IS HER OWN HAND: the hand reaching under her belly "
+        "works at her vulva in a slow steady rhythm; she rocks back and "
+        "forward on her knees with it, her back arching and settling, "
+        "her head staying turned to the lens."),
+    "ph_below": (
+        "THE MOTION IS THE UNDRESSING FINISHING: the garment comes the "
+        "rest of the way up and off over her head and away, her breasts "
+        "settle free, her hair falls back into place, her chest rises "
+        "with her breath and her eyes come back to the lens."),
+    "ph_push": (
+        "THE MOTION IS THE UNDRESSING FINISHING: her thumbs draw the "
+        "panties further down her thighs, her hips tilt back toward the "
+        "lens as she bends a little deeper, her head stays turned over "
+        "her shoulder."),
+    "ph_back": (
+        "THE MOTION IS HER OWN HAND ON THE TOY: she moves it in a slow "
+        "steady rhythm, her wrist and forearm moving with it; her hips "
+        "press toward her hand, her thighs open wider and settle, her "
+        "head tips back and her lips part."),
+}
+
+
+# Что не меняется — один хвост на все кнопки, и он длиннее самого
+# движения. Так и задумано: см. пункт 2 выше.
+ВИДЕО_ДЕРЖАТЬ_КАДР = (
+    "Everything else holds still and unchanged for the whole clip: "
+    "the same faces, the same bodies, the same hair, the same room "
+    "and the same light as in the first frame. The camera does not "
+    "move, does not zoom and does not cut — one continuous shot "
+    "from one fixed point. Nobody stands up, turns around or "
+    "changes the pose; the pose of the first frame is the pose of "
+    "every frame. Nothing is added to the frame and nobody new "
+    "appears.")
 
 КАМЕРА_ФОТО = {
     "pov": "Point-of-view: 28mm wide at head height, the camera standing "
