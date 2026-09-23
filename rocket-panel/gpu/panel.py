@@ -151,6 +151,19 @@ CN_UNION="Qwen-Image-InstantX-ControlNet-Union.safetensors"
 ОПОРЫ="/home/ubuntu/ГЛУБИНА"
 ОПОРА_СИЛА=1.4
 ОПОРА_ДО=0.60
+
+# КНОПКИ, У КОТОРЫХ СВОЯ СИЛА.
+#
+# Общая цифра — компромисс, и на паре кнопок он выходит боком. Сильная
+# опора тащит в кадр не только позу, но и то, что на карте глубины
+# рядом с человеком: на «Снимает лифчик» кадр в полный рост, пол под
+# ней читается как «близко», и при 1,4 модель дорисовывала в этом месте
+# ВТОРОЕ ТЕЛО. Одинаково на трёх зёрнах подряд — значит дело не в зерне.
+#
+# Поэтому исключения держим поимённо, а не подгоняем общую цифру под
+# худшую кнопку: девятнадцати остальным 1,4 нужна, см. «Поставить
+# раком».
+ОПОРА_СВОЯ={}
 ОПОР_ЖДЁМ=21          # столько кадров принял владелец
 
 
@@ -256,7 +269,7 @@ def _опора(g,w,h,имя,сила,до):
 
 
 def wf_photo(p,w,h,seed,images=None,neg=None,denoise=1.0,
-             опора=None,опора_сила=None,опора_до=None):
+             опора=None,опора_сила=None,опора_до=None,ключ_опоры=""):
     """Текст в фото и фото в фото — один граф, разница в наличии снимков."""
     # Без снимков стартового латента нет вовсе, и частичный denoise
     # означал бы недосчитанный шум вместо картинки.
@@ -264,9 +277,10 @@ def wf_photo(p,w,h,seed,images=None,neg=None,denoise=1.0,
         denoise=1.0
     g=_фото_база(p,neg,seed,images,denoise)
     if опора:
+        своя=ОПОРА_СВОЯ.get(ключ_опоры or "", (ОПОРА_СИЛА, ОПОРА_ДО))
         g=_опора(g,w,h,опора,
-                 ОПОРА_СИЛА if опора_сила is None else опора_сила,
-                 ОПОРА_ДО if опора_до is None else опора_до)
+                 своя[0] if опора_сила is None else опора_сила,
+                 своя[1] if опора_до is None else опора_до)
     g,выход=_апскейл(g,["8",0],лист=(w,h))
     g["9"]={"class_type":"SaveImage","inputs":{"images":выход,"filename_prefix":"photo"}}
     if not images:
@@ -486,6 +500,35 @@ def в_mp4(имя):
     return имя
 
 
+# ПРИЁМКА НА КАРТЕ, А НЕ В ОБЛАКЕ.
+#
+# Облачную пробовали: у Gemini «платный» ключ оказался на бесплатном
+# тарифе (20 запросов в сутки), у Claude API нулевой баланс. Проверка,
+# которая работает первые двадцать кадров в сутки, — не проверка.
+# Карта уже оплачена, и CLIP на ПРОЦЕССОРЕ считает одну картинку
+# меньше секунды: быстрее, чем генерация, ради которой всё и затевалось.
+#
+# Смотрим только там, где есть с чем сравнивать, то есть у кнопок с
+# опорой. У своего промпта эталона нет и быть не может.
+#
+# Приёмка НИКОГДА не роняет задание: её осечка — это наша беда, а не
+# человека, который уже заплатил. Не сошлось — отдаём кадр как есть и
+# пишем причину в ответ, дальше решает бот.
+def принять(файлы, ключ):
+    if not ключ or not файлы:
+        return None
+    имя=файлы[0]
+    if имя.lower().endswith((".mp4",".webp",".gif")):
+        return None          # ролик приёмка не оценит: он про движение
+    try:
+        import приёмка as оценка
+        годен,причины=оценка.проверить(os.path.join(OUT,имя),ключ)
+        return {"ок":bool(годен),"причины":причины}
+    except Exception as e:
+        print("приёмка не сработала:", str(e)[:200], flush=True)
+        return None
+
+
 def run(jid, graph):
     j=JOBS[jid]
     try:
@@ -510,7 +553,8 @@ def run(jid, graph):
                         files=собрать_mp4(files, j.get("кадров"))
                     else:
                         files=[в_mp4(f) for f in files]
-                    j.update(state="ok",files=files,sec=round(time.time()-t0,1))
+                    j.update(state="ok",files=files,sec=round(time.time()-t0,1),
+                             приёмка=принять(files, j.get("опора")))
                 else:
                     j.update(state="err",error=" ".join(str(x)[:300] for x in st.get("messages",[])[-3:]) or "не получилось")
                 return
@@ -629,7 +673,8 @@ def gen():
         g=wf_photo(p,w,h,seed,images,neg,
                    max(0.3,min(1.0,float(d.get("denoise",1.0)))),
                    опора_файл(d.get("опора")),
-                   d.get("опора_сила"),d.get("опора_до"))
+                   d.get("опора_сила"),d.get("опора_до"),
+                   str(d.get("опора") or ""))
     else:
         if len(images)>2:
             return jsonify(error="Видео берёт не больше двух снимков"),400
@@ -641,7 +686,9 @@ def gen():
         g=wf_video(p,w,h,frames,seed,images,neg,float(d.get("shift",8.0)))
     jid=uuid.uuid4().hex[:8]
     JOBS[jid]={"state":"run","sec":0,"mode":mode,"seed":seed,"w":w,"h":h,
-               "refs":len(images),"кадров":frames if mode=="video" else None}
+               "refs":len(images),"кадров":frames if mode=="video" else None,
+               # Ключ кнопки нужен приёмке: по нему она берёт эталон.
+               "опора":(d.get("опора") or "") if mode=="photo" else ""}
     threading.Thread(target=run,args=(jid,g),daemon=True).start()
     return jsonify(job=jid,seed=seed)
 
