@@ -1750,6 +1750,19 @@ class ЖёсткаяПостановка(unittest.TestCase):
         for ключ in ("un_close", "pf_ff_near", "pf_mm_above"):
             self.assertEqual(catalog.лист(ключ), "vert", ключ)
 
+    def test_у_минета_своя_постановка_и_без_старого_объектива(self):
+        """«Минет» стоит на расстановке «от первого лица», и её
+        объектив («лица второго не видно») прямо противоречит просьбе
+        владельца видеть обоих. Постановка обязана его вытеснить."""
+        for ключ in ("pf_mf_pov", "pr_mf_pov"):
+            p = catalog.scene(ключ).prompt_фото()
+            self.assertIn("THE TOP OF HER HEAD ONLY REACHES HIS WAIST", p, ключ)
+            self.assertNotIn("Point-of-view", p, ключ)
+            self.assertNotIn("never their face", p, ключ)
+        # У ЖЖ и ММ та же расстановка осталась прежней.
+        self.assertNotIn("THE TOP OF HER HEAD",
+                         catalog.scene("pf_ff_pov").prompt)
+
     def test_у_кунилингуса_своя_постановка(self):
         for ключ in ("pf_mf_behind", "pr_mf_behind"):
             self.assertIn(self.ЯКОРЬ_К, catalog.scene(ключ).prompt_фото(), ключ)
