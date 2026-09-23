@@ -1550,7 +1550,17 @@ class РезультатВсегдаОткровенный(unittest.TestCase):
                 # `ПАРА_РАЗДЕТЫ_ДОГОЛА`. У парного РОЛИКА сборка
                 # прежняя: там первый кадр приходит готовой
                 # фотографией, и длина ему не мешает.
-                self.assertIn("in plain view", s.промпт(), s.key)
+                #
+                # «Completely naked» принимается наравне с «in plain
+                # view», и это не послабление. У «Отлизывает сзади
+                # (лёжа)» женщина лежит НА ЖИВОТЕ: сосков в таком
+                # кадре не видно физически, и требовать их — значит
+                # воевать с собственной позой. Гарантия та же: в кадре
+                # нет одежды.
+                п = s.промпт()
+                self.assertTrue(
+                    "in plain view" in п or "completely naked" in п.lower(),
+                    s.key)
             elif s.пара:
                 self.assertIn(prompts.ОБЯЗАТЕЛЬНОЕ_ПАРА, s.промпт(), s.key)
             else:
@@ -1762,6 +1772,41 @@ class ЖёсткаяПостановка(unittest.TestCase):
         # У ЖЖ и ММ та же расстановка осталась прежней.
         self.assertNotIn("THE TOP OF HER HEAD",
                          catalog.scene("pf_ff_pov").prompt)
+
+    def test_у_всех_пяти_кнопок_ЖЖ_своя_постановка(self):
+        """Раздел ЖЖ владелец принял 22.09 целиком: пять кнопок, пять
+        отобранных кадров. До 23.09 в боте не стояло ни одной — кнопки
+        собирались общей геометрией и давали «что-то похожее»."""
+        якоря = {
+            "pf_ff_near": "SITS ON THE EDGE OF THE BED",
+            "pf_ff_face": "rolled onto her side",
+            "pf_ff_close": "HAS BENT FAR FORWARD",
+            "pf_ff_behind": "PARALLEL and NOT TOUCHING",
+            "pf_ff_pov": "lies flat on her stomach between those open thighs",
+        }
+        for ключ, якорь in якоря.items():
+            self.assertIn(якорь, catalog.scene(ключ).prompt, ключ)
+            # И в первом кадре ролика тоже: ролик начинается с фото.
+            self.assertIn(якорь,
+                          catalog.scene(ключ.replace("pf_", "pr_")).prompt_фото(),
+                          ключ)
+
+    def test_постановка_ЖЖ_не_протекла_в_МЖ_и_ММ(self):
+        for ключ in ("pf_mf_near", "pf_mm_near", "pf_mf_face"):
+            self.assertNotIn("PARALLEL and NOT TOUCHING",
+                             catalog.scene(ключ).prompt, ключ)
+
+    def test_у_каждой_постановки_есть_своя_нагота(self):
+        """Жёсткая постановка ПОДАВЛЯЕТ общий блок про наготу: он
+        написан про безымянных «двоих» и рядом с дословным текстом
+        спорит с ним. Значит, каждая постановка обязана объявлять
+        наготу сама — иначе кнопка молча начнёт отдавать одетых."""
+        for (состав, расст), текст in catalog.ЖЁСТКАЯ_ПОСТАНОВКА.items():
+            т = текст.lower()
+            self.assertTrue(
+                "completely naked" in т or "in plain view" in т
+                or "nothing on her" in т,
+                f"{состав}_{расст}: в постановке не объявлена нагота")
 
     def test_у_кунилингуса_своя_постановка(self):
         for ключ in ("pf_mf_behind", "pr_mf_behind"):
@@ -2868,10 +2913,15 @@ class УПарыВсёВоМножественномЧисле(unittest.TestCase
 
     def test_нагота_объявлена_про_обоих(self):
         """Про КАЖДУЮ отдельно. Множественное «обе голые» сборка
-        применяла к той, что ей ближе, и вторая оставалась в лифчике."""
+        применяла к той, что ей ближе, и вторая оставалась в лифчике.
+
+        Проверяем ПРАВИЛО, а не мои служебные слова: у сцены с жёсткой
+        постановкой общий блок подавлен, и нагота каждой названа
+        словами самого отобранного кадра («The blonde's chest is bare
+        skin… The dark-haired one's chest is bare skin…»)."""
         p = catalog.scene("pf_ff_close").prompt_фото()
-        self.assertIn("The first woman's chest is bare skin", p)
-        self.assertIn("The second woman's chest is bare skin", p)
+        self.assertEqual(2, p.count("chest is bare skin"),
+                         "нагота названа не про обеих")
         self.assertNotIn("The person from the reference is fully nude", p)
 
     def test_снятая_одежда_не_привязана_к_одному_телу(self):
