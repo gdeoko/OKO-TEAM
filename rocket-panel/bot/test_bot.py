@@ -3463,5 +3463,48 @@ class Франшиза(unittest.TestCase):
         self.assertEqual(ушло, [])
 
 
+class ДлинныйРолик(unittest.TestCase):
+    """Десятисекундный ролик считается сильно дольше пятисекундного: у
+    видеомодели внимание идёт по всему ролику разом, и цена растёт не
+    вдвое от удвоения длины, а гораздо круче."""
+
+    def панель(self):
+        путь = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "..", "gpu", "panel.py")
+        return open(путь, encoding="utf-8").read()
+
+    def test_длинный_ролик_считается_мельче(self):
+        т = self.панель().replace(" ", "")
+        self.assertIn('"video_длинное"', т)
+        self.assertIn("ДЛИННОЕ_С=7.0", т)
+        self.assertIn('лист="video_длинное"ifсек>=ДЛИННОЕ_Сelse"video"', т)
+
+    def test_ждём_карту_дольше_на_длинном(self):
+        """Своим же таймаутом мы отдавали ОШИБКУ за восемь коинов, пока
+        карта честно считала ролик."""
+        import bot
+        self.assertGreater(bot.ЖДЁМ["i2v_10"], bot.ЖДЁМ["i2v_5"])
+        self.assertGreaterEqual(bot.ЖДЁМ["i2v_10"], 2400)
+
+    def test_ожидание_берётся_по_виду_работы(self):
+        import bot
+        поймано = {}
+
+        class Карта:
+            def start(self, **п):
+                return "j1", 1
+
+            def wait(self, jid, limit=None, on_tick=None):
+                поймано["limit"] = limit
+                return {"files": ["f.png"], "sec": 1}
+
+            def fetch(self, имя):
+                return b"x"
+
+        with mock.patch.object(bot, "gpu", Карта()):
+            bot._проход("i2v_10", "текст", ["a.png"])
+        self.assertEqual(поймано["limit"], bot.ЖДЁМ["i2v_10"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
