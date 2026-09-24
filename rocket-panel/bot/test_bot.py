@@ -3847,3 +3847,47 @@ class СнимкиПереживаютСонКарты(unittest.TestCase):
             self.assertFalse(os.path.exists(п))
         finally:
             self.bot.СНИМКИ = старое
+
+
+class КлиентНеВидитВнутренностей(unittest.TestCase):
+    """24.09.2026 живому человеку прилетело «Не приняла фото: [Errno 13]
+    Permission denied: /srv/amberry/снимки/...». Он не знает, что это,
+    чинить ему нечего, и выглядит это как сломанный сервис.
+
+    Техническая причина принадлежит журналу и базе. Человеку
+    принадлежит ответ на вопрос «что мне теперь делать»."""
+
+    ТЕХНИЧЕСКОЕ = ("errno", "traceback", "permission denied", "/srv/",
+                   "/opt/", "/home/", "http 5", "httperror", "urlopen",
+                   "exception", "none type", "nonetype")
+
+    def test_в_строках_ошибок_нет_подстановки_причины(self):
+        """Сама подстановка и есть дыра: что в неё попадёт, никто не
+        знает заранее."""
+        for ключ in ("фото.не_приняла", "ген.осечка", "ген.кадр_не_ушёл"):
+            for яз_ in ("ru", "en"):
+                self.assertNotIn("{почему}", язык.СТРОКИ[ключ][яз_],
+                                 f"{ключ} ({яз_})")
+
+    def test_ошибки_говорят_что_делать(self):
+        for ключ in ("фото.не_приняла", "ген.осечка", "ген.кадр_не_ушёл"):
+            т = язык.СТРОКИ[ключ]["ru"].lower()
+            self.assertTrue("ещё раз" in т or "попроб" in т, ключ)
+
+    def test_ни_в_одной_строке_нет_технического_мусора(self):
+        for ключ, пер in язык.СТРОКИ.items():
+            for яз_, текст in пер.items():
+                if not isinstance(текст, str):
+                    continue
+                for мусор in self.ТЕХНИЧЕСКОЕ:
+                    self.assertNotIn(мусор, текст.lower(), f"{ключ} ({яз_})")
+
+    def test_причина_уходит_в_журнал(self):
+        """Убрать из сообщения мало: если причину нигде не записать, мы
+        останемся без единой зацепки."""
+        import inspect
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        и = inspect.getsource(bot.run_job) + inspect.getsource(bot.on_photo)
+        self.assertIn("print(", и)
+        self.assertIn("str(e)", и)
