@@ -3793,3 +3793,57 @@ class КартаПросыпаетсяПодЗапрос(unittest.TestCase):
             self.assertEqual(g.base, "https://из-файла")
         finally:
             gpu_mod.ФАЙЛ_АДРЕСА = старый
+
+
+class СнимкиПереживаютСонКарты(unittest.TestCase):
+    """Карта гасится в простое и поднимается ДРУГОЙ машиной: её диск
+    исчезает вместе с ней. Снимок, залитый на карту заранее, к моменту
+    задания не существует."""
+
+    def setUp(self):
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        self.bot = bot
+
+    def test_снимок_ложится_к_нам_а_не_на_карту(self):
+        """Иначе человек, приславший фото при спящей карте, получает
+        «фото не принято», ещё ничего не заказав."""
+        import inspect
+        и = inspect.getsource(self.bot.on_photo)
+        self.assertIn("схоронить", и)
+        self.assertNotIn("gpu.upload", и)
+
+    def test_на_карту_снимки_уходят_после_подъёма(self):
+        """И всё ещё до списания: не приняла карта фото, человек за
+        это платить не должен."""
+        import inspect
+        и = inspect.getsource(self.bot.run_job)
+        подъём = и.find("железо.нужна")
+        отдача = и.find("отдать_карте")
+        деньги = и.find("store.spend")
+        self.assertGreater(подъём, 0)
+        self.assertGreater(отдача, подъём, "снимки уходят до подъёма карты")
+        self.assertLess(отдача, деньги, "снимки уходят после списания")
+
+    def test_снимки_прибираются(self):
+        import inspect
+        self.assertIn("прибрать(свои)", inspect.getsource(self.bot.run_job))
+
+    def test_готовый_кадр_не_гоняется_туда_сюда(self):
+        """У ролика второй проход берёт НАШ кадр, уже лежащий на карте:
+        это имя, а не путь, и заливать его заново незачем."""
+        self.assertEqual(self.bot.отдать_карте(["photo_00042_.png"]),
+                         ["photo_00042_.png"])
+
+    def test_схоронить_и_прибрать(self):
+        import tempfile
+        д = tempfile.mkdtemp()
+        старое = self.bot.СНИМКИ
+        try:
+            self.bot.СНИМКИ = д
+            п = self.bot.схоронить(7, 1, b"\x89PNG")
+            self.assertTrue(os.path.exists(п))
+            self.bot.прибрать([п])
+            self.assertFalse(os.path.exists(п))
+        finally:
+            self.bot.СНИМКИ = старое
