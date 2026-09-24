@@ -2963,3 +2963,29 @@ html.в-телеграме .hd { padding-top: 6px; }
   .today__call-ic { order: 1; }
   .today__call-go { order: 3; flex: 1 1 100%; text-align: center; }
 }
+
+/* ══════ Обложка книги на узком телефоне ══════
+   «МЕТАНОЙЯ» набрана в 40 пикселей с разрядкой, и на 320 px последняя
+   буква уезжала за край обложки, а подзаголовок срезало. Размер теперь
+   считается от ширины самой обложки, поэтому название целиком видно на
+   любом телефоне и не мельчит на большом. */
+.book-cover--img .book-cover__title {
+  font-size: clamp(26px, 9.2vw, 40px);
+  letter-spacing: clamp(1px, .5vw, 2px);
+  overflow-wrap: anywhere;
+}
+.book-cover--img .book-cover__eyebrow { overflow-wrap: anywhere; }
+/* Текст лежит поверх акварели, и у маяка небо светлое: золотая строка на
+   нём пропадала. Затемнение снизу усилено, а у самих строк своя мягкая
+   тень, чтобы читалось на любой обложке, какую бы картинку ни поставили. */
+.book-cover__scrim { background: linear-gradient(to top,
+  rgba(20,35,47,.92) 0%, rgba(20,35,47,.62) 38%, rgba(20,35,47,.18) 62%, rgba(20,35,47,0) 82%); }
+.book-cover--img .book-cover__eyebrow,
+.book-cover--img .book-cover__title,
+.book-cover--img .book-cover__sub,
+.book-cover--img .book-cover__author { text-shadow: 0 1px 6px rgba(12,22,30,.55); }
+
+@media (max-width: 359px) {
+  .book-cover__inner { padding: 18px 16px 20px; }
+  .book-cover--img { min-height: 300px; }
+}
