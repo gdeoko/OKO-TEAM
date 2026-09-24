@@ -479,3 +479,85 @@ class ПрайсВАдминке(unittest.TestCase):
         self.assertIn("себестоимость", self.html)
         self.assertNotIn('data-в="seconds"', self.html)
         self.assertNotIn('data-в="секунд_карты"', self.html)
+
+
+class СвоиКнопкиНаСтраницеКаталога(unittest.TestCase):
+    """Владелец: «добавлять какие-то новые промпты и кнопки… полное
+    редактирование всего»."""
+
+    def setUp(self):
+        import admin
+        self.html = admin.страница()
+
+    def test_есть_форма_заведения(self):
+        for кусок in ("формаДобавления", "data-завести", "Завести кнопку",
+                      "/api/каталог/добавить"):
+            self.assertIn(кусок, self.html, кусок)
+
+    def test_есть_все_поля_новой_кнопки(self):
+        for поле in ("название", "строка_рус", "строка", "вид"):
+            self.assertIn('data-н="%s"' % поле, self.html, поле)
+
+    def test_вид_выбирается_из_прайса(self):
+        """Цена у своей кнопки берётся из вида работ, а не пишется
+        руками: иначе она разошлась бы с прайсом."""
+        for вид in ("i2i", "i2v_5", "i2v_10"):
+            self.assertIn('value="%s"' % вид, self.html, вид)
+
+    def test_удаление_только_у_своих(self):
+        """У кнопки из кода за спиной три тысячи знаков промпта.
+        Стёртая из браузера, она бы не вернулась."""
+        self.assertIn("в.свой ?", self.html)
+        self.assertIn("data-снести", self.html)
+        self.assertIn("/api/каталог/удалить", self.html)
+
+    def test_удаление_спрашивает_подтверждение(self):
+        i = self.html.index("async function снести")
+        self.assertIn("confirm(", self.html[i:i + 300])
+
+    def test_страница_перерисовывается_после_правки(self):
+        """Владелец жмёт «завести» и должен сразу увидеть кнопку."""
+        i = self.html.index("async function завести")
+        self.assertIn("загрузить()", self.html[i:i + 900])
+
+
+class РучкиКаталогаВАдминке(unittest.TestCase):
+
+    def setUp(self):
+        import tempfile
+        import данные
+        self.старый = данные.ФАЙЛ
+        данные.ФАЙЛ = os.path.join(tempfile.mkdtemp(), "каталог.json")
+        import catalog
+        catalog.перечитать()
+        self.catalog = catalog
+
+    def tearDown(self):
+        import данные
+        данные.ФАЙЛ = self.старый
+        self.catalog.перечитать()
+
+    def test_заведение_и_удаление_через_каталог(self):
+        к = self.catalog.добавить_свой(название="Проба", строка="she waves",
+                                       вид="i2i", узел_="un_here")
+        self.assertIn(к, [с["ключ"] for с in self._варианты()])
+        свои = [с for с in self._варианты() if с.get("свой")]
+        self.assertEqual([с["ключ"] for с in свои], [к])
+        self.assertTrue(self.catalog.убрать_свой(к))
+        self.assertNotIn(к, [с["ключ"] for с in self._варианты()])
+
+    def test_кнопки_из_кода_не_помечены_своими(self):
+        свои = [с for с in self._варианты() if с.get("свой")]
+        self.assertEqual(свои, [])
+
+    def _варианты(self):
+        из = []
+
+        def обойти(у):
+            из.extend(у.get("варианты") or [])
+            for д in (у.get("дети") or []):
+                обойти(д)
+
+        for р in self.catalog.дерево()["разделы"]:
+            обойти(р)
+        return из
