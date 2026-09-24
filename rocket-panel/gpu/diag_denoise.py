@@ -3,7 +3,11 @@
 import json,time,uuid,urllib.request,os
 from PIL import Image
 import numpy as np
-API="http://127.0.0.1:8188"; OUT="/home/ubuntu/ComfyUI/output"; IN="/home/ubuntu/ComfyUI/input"
+API="http://127.0.0.1:8188"
+# Корень установки — переменной, а не текстом: на Hyperstack это
+# /home/ubuntu, на поде Vast /root (см. ДОМ в panel.py).
+ДОМ=os.environ.get("ROCKET_HOME","/home/ubuntu")
+OUT=os.path.join(ДОМ,"ComfyUI/output"); IN=os.path.join(ДОМ,"ComfyUI/input")
 REF="up_c829b971_ref.png"
 
 def post(g):

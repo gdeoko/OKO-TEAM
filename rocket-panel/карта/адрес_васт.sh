@@ -10,12 +10,24 @@
 # Бот перечитывает файл перед каждым обращением (см. gpu.ФАЙЛ_АДРЕСА),
 # так что смена туннеля доезжает до него сама, без перезапуска.
 #
-# Имена переменных латиницей: bash кириллицу в именах не берёт.
+# Имена переменных латиницей: bash кириллицу в именах не берёт. За одну
+# сессию на этом споткнулись восемь раз: падает не строка объявления, а
+# что-то позже и с невнятным «not a valid identifier».
+#
+# ГДЕ КАРТА — В ОТДЕЛЬНОМ ФАЙЛЕ, А НЕ ЗДЕСЬ.
+#
+# Хост и порт у Vast меняются при КАЖДОЙ новой машине, и меняются оба:
+# прокси может переехать с ssh1 на ssh5, порт всегда новый. Держать их
+# в теле скрипта значит править его при каждой смене карты и каждый раз
+# рисковать опечаткой в единственном месте, которое связывает бота с
+# картой. Теперь они в `/etc/amberry-card.env`, и смена карты — это две
+# строки в конфиге.
 set -u
-KEY=/root/.ssh/vast_amberry
-HOST=root@ssh1.vast.ai
-PORT=14390
-FILE=/srv/amberry/карта_адрес.txt
+[ -r /etc/amberry-card.env ] && . /etc/amberry-card.env
+KEY=${VAST_KEY:-/root/.ssh/vast_amberry}
+HOST=${VAST_HOST:-root@ssh1.vast.ai}
+PORT=${VAST_PORT:-14390}
+FILE=${VAST_ADDR_FILE:-/srv/amberry/карта_адрес.txt}
 SSHOPT="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20"
 
 NEW=$(timeout 40 ssh $SSHOPT -i $KEY -p $PORT $HOST \

@@ -49,11 +49,23 @@ A100 (sm_80) он молча отдаёт ПОЛНОСТЬЮ ЧЁРНЫЕ кад
 import json, time, uuid, os, shutil, subprocess, threading, urllib.request
 from flask import Flask, request, jsonify, send_file, Response
 
-COMFY="http://127.0.0.1:8188"
-OUT="/home/ubuntu/ComfyUI/output"; IN="/home/ubuntu/ComfyUI/input"
-UPSCALE_DIR="/home/ubuntu/ComfyUI/models/upscale_models"
-CKPT_DIR="/home/ubuntu/ComfyUI/models/checkpoints"
-CN_DIR="/home/ubuntu/ComfyUI/models/controlnet"
+COMFY=os.environ.get("ROCKET_COMFY","http://127.0.0.1:8188")
+
+# ДОМ — КОРЕНЬ УСТАНОВКИ, А НЕ КОНСТАНТА.
+#
+# На Hyperstack это была обычная виртуалка с юзером `ubuntu`, и путь
+# `/home/ubuntu` стоял в семи местах прямым текстом. На Vast под — это
+# docker, внутри root, и дом там `/root`; в следующей площадке он будет
+# третий. Каждый такой переезд ломал панель молча: ComfyUI поднимался,
+# а панель не находила ни сборок, ни выхода, и первый же заказ падал.
+#
+# Поэтому корень задаётся переменной окружения. Умолчание оставлено
+# прежним, чтобы старая установка продолжала работать без правок.
+ДОМ=os.environ.get("ROCKET_HOME","/home/ubuntu")
+OUT=os.path.join(ДОМ,"ComfyUI/output"); IN=os.path.join(ДОМ,"ComfyUI/input")
+UPSCALE_DIR=os.path.join(ДОМ,"ComfyUI/models/upscale_models")
+CKPT_DIR=os.path.join(ДОМ,"ComfyUI/models/checkpoints")
+CN_DIR=os.path.join(ДОМ,"ComfyUI/models/controlnet")
 app=Flask(__name__); app.config["MAX_CONTENT_LENGTH"]=48*1024*1024
 JOBS={}
 
@@ -205,8 +217,8 @@ CN_UNION="Qwen-Image-InstantX-ControlNet-Union.safetensors"
 }
 
 # Где лежат опоры каждого вида и как он называется у ControlNet Union.
-ВИДЫ_ОПОР={"глубина":("/home/ubuntu/ГЛУБИНА","depth"),
-           "поза":("/home/ubuntu/ПОЗЫ","openpose")}
+ВИДЫ_ОПОР={"глубина":(os.path.join(ДОМ,"ГЛУБИНА"),"depth"),
+           "поза":(os.path.join(ДОМ,"ПОЗЫ"),"openpose")}
 ОПОРЫ=ВИДЫ_ОПОР[ОПОРА_ВИД][0]
 ОПОР_ЖДЁМ=21          # столько кадров принял владелец
 
@@ -249,7 +261,12 @@ def шаги_под_denoise(denoise):
 # просьба. Сила берётся из выбора человека в боте: у «пышной» ноль, у
 # «стройной» полная. Умолчание «как на фото» берёт середину — оно и
 # есть признание, что точного размера мы не знаем.
-ЛОРЫ_DIR="/data/ComfyUI/models/loras"
+# Путь от того же корня, что и остальные модели (см. ДОМ). Раньше тут
+# стоял `/data/ComfyUI/models/loras` — отдельный диск конкретной машины
+# Hyperstack. На любой другой площадке такого диска нет, и панель
+# сообщала «нет файла лоры» на карте, где лора лежала рядом с прочими
+# моделями.
+ЛОРЫ_DIR=os.path.join(ДОМ,"ComfyUI/models/loras")
 ЛОРА_ПЛОСКАЯ="flat_chest_qwen.safetensors"
 
 
@@ -943,7 +960,7 @@ def stats():
 
 @app.get("/")
 def index():
-    return Response(open("/home/ubuntu/panel.html",encoding="utf-8").read(),
+    return Response(open(os.path.join(ДОМ,"panel.html"),encoding="utf-8").read(),
                     mimetype="text/html; charset=utf-8")
 
 if __name__=="__main__":

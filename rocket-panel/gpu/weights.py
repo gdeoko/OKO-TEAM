@@ -85,6 +85,23 @@ if not апскейл:
     print("  !!! апскейлер не скачался — фото пойдут в родном 768x1344")
 
 print()
+print("=== CONTROLNET — Qwen-Image InstantX Union, ~4 ГБ")
+# Без него панель поднимается, но КНОПКИ С ОПОРОЙ выдают не ту позу:
+# `wf_photo` молча собирает граф без ControlNet, а человек платит за
+# конкретный ракурс. До 24.09.2026 этого файла в списке не было вовсе —
+# он оставался с ручной установки первой карты и при переезде на любую
+# другую площадку просто не появлялся.
+#
+# Имя файла обязано совпасть с `CN_UNION` в panel.py: ComfyUI ищет
+# ControlNet по имени, а не по содержимому.
+cn=get("Comfy-Org/Qwen-Image-InstantX-ControlNets",
+       [r"Qwen-Image-InstantX-ControlNet-Union\.safetensors$",
+        r"ControlNet-Union\.safetensors$"],
+       "controlnet","controlnet-union")
+if not cn:
+    print("  !!! ControlNet не скачался — кнопки с опорой дадут не ту позу")
+
+print()
 print("=== ИТОГО")
 tot=0
 for root,_,fs_ in os.walk(BASE):
