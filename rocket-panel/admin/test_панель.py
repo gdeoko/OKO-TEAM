@@ -321,3 +321,63 @@ class ФраншизаВПанели(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class ЗапретВАдминке(unittest.TestCase):
+    """Владелец правит список слов сам, из панели. Базовые слова про
+    детей при этом остаются в коде: добавлять и гасить ложные
+    срабатывания можно сколько угодно, снести детскую защиту двумя
+    кликами — нет."""
+
+    def setUp(self):
+        import tempfile
+        self.д = tempfile.mkdtemp()
+        os.environ["ROCKET_BAN_FILE"] = os.path.join(self.д, "з.json")
+        import importlib
+        import запрет
+        importlib.reload(запрет)
+        self.з = запрет
+
+    def test_базовые_показываются_но_не_сохраняются(self):
+        было = list(self.з.СЛОВА)
+        self.з.записать(свои=["своё"], исключения=[])
+        with open(self.з.НАСТРОЙКА, encoding="utf-8") as ф:
+            в_файле = json.load(ф)
+        self.assertNotIn("базовые", в_файле)
+        for с in ("child", "детск"):
+            self.assertNotIn(с, в_файле.get("свои", []))
+        self.assertEqual(self.з.СЛОВА, было)
+        self.assertIn("child", self.з.состояние()["базовые"])
+
+    def test_базовое_не_убрать_через_свои(self):
+        """Даже если кто-то пришлёт пустой список — база на месте."""
+        self.з.записать(свои=[], исключения=[])
+        self.assertTrue(self.з.нельзя("naked child")[0])
+        self.assertTrue(self.з.нельзя("малолетка")[0])
+
+    def test_своё_слово_запрещает(self):
+        self.assertFalse(self.з.нельзя("совсем безобидно")[0])
+        self.з.записать(свои=["безобидно"])
+        self.assertTrue(self.з.нельзя("совсем безобидно")[0])
+
+    def test_исключение_гасит_ложное(self):
+        """Ради этого исключения и заведены: ложная придирка чинится
+        владельцем за минуту, не дожидаясь правки в коде."""
+        self.assertTrue(self.з.нельзя("малолетка вина")[0])
+        self.з.записать(исключения=["малолетка вина"])
+        self.assertFalse(self.з.нельзя("малолетка вина урожая")[0])
+        # но само слово по-прежнему запрещено
+        self.assertTrue(self.з.нельзя("малолетка")[0])
+
+    def test_состояние_отдаёт_всё_что_нужно_экрану(self):
+        с = self.з.состояние()
+        for к in ("базовые", "свои", "исключения", "взрослый_с"):
+            self.assertIn(к, с)
+        self.assertEqual(с["взрослый_с"], 18)
+
+    def test_в_панели_есть_раздел_и_ручки(self):
+        import панель
+        html = панель.страница("data:,")
+        self.assertIn('id="р_запрет"', html)
+        self.assertIn("/api/запрет/проверить", html)
+        self.assertIn("/api/запрет/сохранить", html)
