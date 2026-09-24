@@ -568,6 +568,35 @@ def job_note(job, яз):
                          "en": "Frame ready. Bringing it to life…"},
     "ген.подпись":     {"ru": "{что} · {сек} с · осталось {баланс}",
                         "en": "{что} · {сек} s · {баланс} left"},
+    # КАРТА ПРОСЫПАЕТСЯ. Человеку говорим правду и говорим коротко.
+    #
+    # Соблазн написать «идёт подготовка» велик, но первый за вечер
+    # заказчик ждёт минуты, а не секунды, и молчаливая полоска читается
+    # как поломка. Поэтому называем срок вслух и показываем счётчик.
+    "ген.бужу": {
+        "ru": "Включаю видеокарту. Она выключается, когда никто не "
+              "работает, поэтому первый запуск за вечер занимает пару "
+              "минут. Коины пока не списаны.",
+        "en": "Starting the graphics card. It shuts down when nobody is "
+              "working, so the first run of the evening takes a couple of "
+              "minutes. No coins spent yet.",
+    },
+    "ген.бужу_идёт": {
+        "ru": "Включаю видеокарту… {сек} с",
+        "en": "Starting the graphics card… {сек}s",
+    },
+    "ген.карта_не_встала": {
+        "ru": "Сейчас нет свободной видеокарты. Такое бывает в часы "
+              "нагрузки. Коины не списаны, попробуй через десять минут.",
+        "en": "No free graphics card right now. It happens at peak hours. "
+              "No coins spent, try again in ten minutes.",
+    },
+    "ген.карта_сломалась": {
+        "ru": "Не получилось включить видеокарту. Коины не списаны, мы "
+              "уже смотрим, в чём дело.",
+        "en": "Could not start the graphics card. No coins spent, we are "
+              "already looking into it.",
+    },
     "ген.занято": {
         "ru": "Одно задание уже считается. Дождись его, потом запускай следующее.",
         "en": "One job is already running. Wait for it, then start the next.",
