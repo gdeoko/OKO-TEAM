@@ -36,7 +36,7 @@ from PIL import Image
 from transformers import CLIPModel, CLIPProcessor
 
 МОДЕЛЬ = "openai/clip-vit-large-patch14"
-ФАЙЛ = os.environ.get("AMBERRY_ЭТАЛОНЫ_NPZ", "/home/ubuntu/etalony.npz")
+ФАЙЛ = os.environ.get("AMBERRY_ETALONS_NPZ", "/home/ubuntu/etalony.npz")
 _м = _п = None
 
 
