@@ -444,3 +444,38 @@ class ЗапретыДобавляютсяИУдаляются(unittest.TestCase
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class ПрайсВАдминке(unittest.TestCase):
+    """Владелец: «нужно сделать всё редактируемым… ну и цены менять»."""
+
+    def setUp(self):
+        import панель
+        self.html = панель.страница("data:,")
+
+    def test_раздел_и_ручки(self):
+        self.assertIn('id="р_прайс"', self.html)
+        for ручка in ("/api/прайс/сохранить", "/api/прайс/вернуть"):
+            self.assertIn(ручка, self.html, ручка)
+
+    def test_ступени_добавляются_и_удаляются(self):
+        for кусок in ("пр_ступень", "data-снять", "Удалить", "пр_вернуть"):
+            self.assertIn(кусок, self.html, кусок)
+
+    def test_правятся_все_поля_ступени(self):
+        """Поля ступени рисует JS, поэтому проверяем вызовы, а не
+        готовую разметку: в исходнике страницы их ещё нет."""
+        for поле in ("id", "coins", "rub", "market_rub"):
+            self.assertIn('"%s"' % поле, self.html, поле)
+        self.assertIn('data-п="${ключ}"', self.html)
+
+    def test_правятся_все_поля_вида(self):
+        for поле in ("title", "crystals", "note", "в_продаже"):
+            self.assertIn('data-в="%s"' % поле, self.html, поле)
+
+    def test_себестоимость_только_показывается(self):
+        """Секунды карты — замер, а не решение: правка сделала бы
+        расчёт маржи враньём, которое выглядит как правда."""
+        self.assertIn("себестоимость", self.html)
+        self.assertNotIn('data-в="seconds"', self.html)
+        self.assertNotIn('data-в="секунд_карты"', self.html)
