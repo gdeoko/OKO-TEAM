@@ -60,10 +60,10 @@ import prompts
 }
 
 ДАННЫЕ = os.environ.get("AMBERRY_DATA_DIR", "/srv/amberry")
-ЭТАЛОНЫ = os.environ.get("AMBERRY_ЭТАЛОНЫ", os.path.join(ДАННЫЕ, "эталоны"))
-ПАПКА = os.environ.get("AMBERRY_ПРИМЕРЫ", os.path.join(ДАННЫЕ, "примеры"))
+ЭТАЛОНЫ = os.environ.get("AMBERRY_ETALONS_DIR", os.path.join(ДАННЫЕ, "эталоны"))
+ПАПКА = os.environ.get("AMBERRY_SAMPLES_DIR", os.path.join(ДАННЫЕ, "примеры"))
 ЗНАК = os.environ.get(
-    "AMBERRY_ЗНАК",
+    "AMBERRY_WATERMARK",
     os.path.join(os.path.dirname(os.path.abspath(__file__)),
                  "..", "brand-amberry", "amberry-icon-256.png"))
 

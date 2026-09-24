@@ -3923,3 +3923,26 @@ class КартуБудитТолькоКнопкаГенерации(unittest.Te
     def test_это_место_внутри_задания(self):
         import inspect
         self.assertIn("железо.нужна(", inspect.getsource(self.bot.run_job))
+
+
+class ИменаПеременныхОкруженияЛатиницей(unittest.TestCase):
+    """Настройки лежат в /etc/amberry.env и подгружаются шелловской
+    строкой `. /etc/amberry.env`. bash кириллицу в ИМЕНИ переменной не
+    понимает: `AMBERRY_ПРОСТОЙ=20` даёт «command not found», и весь
+    файл настроек молча читается наполовину.
+
+    Python такие имена принимает, поэтому ошибка не видна, пока не
+    позовёшь из крона. В этой работе грабля попадалась трижды."""
+
+    def test_ни_одного_кириллического_имени(self):
+        import glob
+        import re
+        корень = os.path.dirname(os.path.abspath(__file__))
+        плохие = []
+        for путь in glob.glob(os.path.join(корень, "..", "**", "*.py"),
+                              recursive=True):
+            with open(путь, encoding="utf-8") as ф:
+                for имя in re.findall(r'environ\.get\(\s*"([^"]+)"', ф.read()):
+                    if re.search(r"[А-Яа-яЁё]", имя):
+                        плохие.append(f"{os.path.basename(путь)}: {имя}")
+        self.assertEqual(плохие, [], "кириллица в именах переменных окружения")

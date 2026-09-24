@@ -25,7 +25,7 @@ import os
 import subprocess
 import time
 
-УПРАВЛЕНИЕ = os.environ.get("AMBERRY_КАРТА",
+УПРАВЛЕНИЕ = os.environ.get("AMBERRY_CARD_TOOL",
                             "/opt/amberry-card/карта.py")
 # ПОДЪЁМ КАРТЫ ИДЁТ ЧЕРЕЗ sudo, И ЭТО НЕ ЛЕНЬ.
 #
@@ -42,7 +42,7 @@ import time
 # полного цикла — около четырёх минут; берём вдвое с запасом, потому
 # что упереться в собственный таймаут на третьей минуте хуже, чем
 # подождать лишнее.
-ЖДЁМ_ПОДЪЁМА = int(os.environ.get("AMBERRY_ЖДЁМ_ПОДЪЁМА", "600"))
+ЖДЁМ_ПОДЪЁМА = int(os.environ.get("AMBERRY_WAKE_WAIT", "600"))
 
 
 def включено():

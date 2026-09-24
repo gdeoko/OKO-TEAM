@@ -59,7 +59,7 @@ from PIL import Image, ImageDraw, ImageFont
 БЕЛЫЙ = (255, 255, 255)
 СЕРЫЙ = (208, 205, 214)
 
-ШРИФТЫ = os.environ.get("AMBERRY_ШРИФТЫ", "/home/ubuntu/шрифты")
+ШРИФТЫ = os.environ.get("AMBERRY_FONTS_DIR", "/home/ubuntu/шрифты")
 
 # Доли от высоты кадра. Вертикальный кадр выше горизонтального в 1.75
 # раза, и если задать размеры в точках, на вертикали надписи окажутся
