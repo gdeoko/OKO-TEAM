@@ -3891,3 +3891,35 @@ class КлиентНеВидитВнутренностей(unittest.TestCase):
         и = inspect.getsource(bot.run_job) + inspect.getsource(bot.on_photo)
         self.assertIn("print(", и)
         self.assertIn("str(e)", и)
+
+
+class КартуБудитТолькоКнопкаГенерации(unittest.TestCase):
+    """Владелец: «нужно это сделать только когда нажимает кнопку
+    генерировать». Проверка нашла ровно одну дыру — кнопку «оживить»:
+    она заливала кадр на карту ДО пробуждения и при спящей карте
+    отвечала «кадр не ушёл», хотя карту надо было просто поднять."""
+
+    def setUp(self):
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        self.bot = bot
+
+    def test_оживить_не_трогает_карту(self):
+        import inspect
+        и = inspect.getsource(self.bot.оживить)
+        self.assertNotIn("gpu.upload", и)
+        self.assertIn("схоронить", и)
+
+    def test_приём_фото_не_трогает_карту(self):
+        import inspect
+        self.assertNotIn("gpu.", inspect.getsource(self.bot.on_photo))
+
+    def test_карту_будят_из_одного_места(self):
+        """Чем больше мест, тем больше шансов однажды забыть."""
+        import inspect
+        исходник = inspect.getsource(self.bot)
+        self.assertEqual(исходник.count("железо.нужна("), 1)
+
+    def test_это_место_внутри_задания(self):
+        import inspect
+        self.assertIn("железо.нужна(", inspect.getsource(self.bot.run_job))
