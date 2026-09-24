@@ -4,7 +4,21 @@
 и ожидание результата — вся логика схем на стороне панели.
 """
 
-import json, time, base64, urllib.request, urllib.error, urllib.parse
+import json, os, time, base64, urllib.request, urllib.error, urllib.parse
+
+# ГДЕ ЛЕЖИТ ЖИВОЙ АДРЕС КАРТЫ.
+#
+# Карта гасится в простое и поднимается заново под запрос, а туннель
+# `trycloudflare` при каждом подъёме выдаёт НОВЫЙ адрес. Раньше адрес
+# брался из переменной окружения — то есть чтобы бот о нём узнал, бота
+# надо перезапустить. А будит карту сам бот, посреди запроса живого
+# человека: перезапуск в этот момент убил бы и запрос, и деньги за него.
+#
+# Поэтому адрес читается из ФАЙЛА и перечитывается перед каждым
+# обращением. Файл пишет `карта.py` сразу после подъёма. Нет файла —
+# берём переменную окружения, как раньше.
+ФАЙЛ_АДРЕСА = os.environ.get("ROCKET_GPU_URL_FILE",
+                             "/srv/amberry/карта_адрес.txt")
 
 
 class GpuError(Exception):
@@ -13,9 +27,21 @@ class GpuError(Exception):
 
 class Gpu:
     def __init__(self, base_url, login, password, timeout=30):
-        self.base = base_url.rstrip("/")
+        self._из_env = (base_url or "").rstrip("/")
         self.auth = base64.b64encode(f"{login}:{password}".encode()).decode()
         self.timeout = timeout
+
+    @property
+    def base(self):
+        """Адрес панели на СЕЙЧАС, а не на момент запуска бота."""
+        try:
+            with open(ФАЙЛ_АДРЕСА, encoding="utf-8") as ф:
+                из_файла = ф.read().strip().rstrip("/")
+            if из_файла:
+                return из_файла
+        except OSError:
+            pass
+        return self._из_env
 
     @property
     def настроена(self):

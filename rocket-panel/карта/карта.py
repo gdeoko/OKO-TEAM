@@ -1,0 +1,465 @@
+"""Карта AMBERRY: поднять под нагрузку, погасить в простое.
+
+## Почему не гибернация, хотя её и просили
+
+Гибернация (усыпить машину, потом разбудить) на Hyperstack выглядит
+готовым решением, но у неё есть строка в документации, которая всё
+меняет:
+
+    «hardware resources are not reserved during hibernation…
+     if the required resources are unavailable, you will not be able
+     to restore the VM until the selected flavor is back in stock»
+
+То есть спящая машина НЕ держит за собой карту. Замер 24.09.2026, с
+разницей в сорок минут: свободных обычных A100 в CANADA-1 было 3, стало
+0 — наш же запрос на создание получил отказ «Not Enough Stock». Усыпив
+карту на ночь, мы каждое утро играли бы в лотерею: вернут — не вернут.
+
+Раз железо всё равно не забронировано, гибернация покупает только
+скорость пробуждения — и берёт за это дорого: она работает лишь на
+обычных (не спотовых) машинах, а это +25 % к часу, плюс корневой диск
+тарифицируется и во сне.
+
+Поэтому карта здесь не усыпляется, а УДАЛЯЕТСЯ и создаётся заново. Это
+медленнее на пару минут, зато:
+  * работает на споте — самом дешёвом железе;
+  * умеет ПЕРЕБИРАТЬ железо: нет A100 — берём H100 или L40, лишь бы
+    человек получил свою работу;
+  * во сне не стоит ничего, кроме тома с моделями (300 ГБ, ~21 $/мес).
+
+## Что переживает удаление
+
+Всё ценное — на отдельном томе `rocket-models`: модели (58 ГБ),
+ComfyUI со своим venv и узлами, опоры, эталоны, нормы, наши скрипты и
+файлы служб. Корневой диск — расходник, его содержимое ставится заново
+скриптом `загрузка.sh` за три минуты.
+
+## Это ещё и защита от беды, которая уже близко
+
+В правилах Hyperstack: при балансе ниже нуля машины уходят в
+гибернацию, а машины на флаворах БЕЗ гибернации — «will be permanently
+deleted instead». Наша спотовая карта именно такая. То есть кончившийся
+баланс не приостанавливал бы работу, а стирал карту насовсем. С этим
+хозяйством такое событие перестаёт быть катастрофой: пополнили баланс,
+подняли карту заново, всё на месте.
+
+## Как пользоваться
+
+    python3 карта.py статус
+    python3 карта.py поднять        # создать и завести, обновить бота
+    python3 карта.py погасить       # удалить машину (том остаётся)
+    python3 карта.py обслужить      # для крона: спать/просыпаться по расписанию
+"""
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+
+КЛЮЧ = os.environ.get("HYPERSTACK_API_KEY", "")
+БАЗА = "https://infrahub-api.nexgencloud.com/v1"
+ИМЯ = "rocket-gpu-a100"
+СРЕДА = "default-CANADA-1"
+ОБРАЗ = "Ubuntu Server 24.04 LTS R570 CUDA 12.8 with Docker"
+КЛЮЧ_SSH = "rocket-gpu"
+ТОМ_ID = 50175                      # rocket-models, 300 ГБ Cloud-SSD
+# ЖИВЁТ ЭТО НА СЕРВЕРЕ БОТА, А НЕ НА МОСТУ, И НЕ ПО УДОБСТВУ.
+#
+# Мост (104.171.132.45) до API Hyperstack не достучится: их Cloudflare
+# отдаёт ему «Attention Required» вместо ответа. Сервер бота
+# (62.112.10.168) отвечает нормально — проверено. Так даже правильнее:
+# бот сам будит свою карту и сам себе переписывает адрес, без третьего
+# участника, который может лежать.
+SSH_KEY = os.environ.get("ROCKET_GPU_KEY", "/root/.ssh/rocket_gpu")
+ENV_БОТА = "/etc/amberry.env"
+# Живой адрес панели. Бот перечитывает этот файл перед КАЖДЫМ
+# обращением (см. `ФАЙЛ_АДРЕСА` в bot/gpu.py) — поэтому будить карту
+# можно посреди запроса человека, не перезапуская бота.
+ФАЙЛ_АДРЕСА = os.environ.get("ROCKET_GPU_URL_FILE",
+                             "/srv/amberry/карта_адрес.txt")
+# Замок: пока один подъём идёт, второй не начинается. Без него два
+# человека, нажавшие кнопку одновременно, создали бы две машины — и
+# платили бы мы за обе.
+ЗАМОК = "/run/amberry-карта.lock"
+СОСТОЯНИЕ = "/srv/amberry/карта_состояние.json"
+ЗАГРУЗКА = os.path.join(os.path.dirname(os.path.abspath(__file__)), "загрузка.sh")
+
+# ЖЕЛЕЗО ПЕРЕБИРАЕТСЯ ПО ПОРЯДКУ, И ПОРЯДОК ЭТОТ — ЦЕНА ПРОТИВ НАЛИЧИЯ.
+#
+# Первым идёт спот-A100: на нём всё замерено и он дешевле всех. Дальше
+# спот-H100 — дороже, но вдвое быстрее, и его почти всегда много.
+# Спот-L40 последний: 48 ГБ памяти нашей сборке хватает, но впритык.
+#
+# Обычных (не спотовых) машин в списке нет НАРОЧНО. Они дороже на
+# четверть, а единственное их преимущество — гибернация — нам не нужно
+# и, как показано выше, ничего не гарантирует.
+# Цены сверены с прайсом Hyperstack 24.09.2026, $/час.
+ЖЕЛЕЗО = [
+    ("n3-A100x1-spot", "A100-80G-PCIe-spot", 1.08),
+    ("n3-H100x1-spot", "H100-80G-PCIe-spot", 2.00),
+    ("n3-L40x1-spot",  "L40-spot",           0.80),
+]
+
+
+# ЗАГОЛОВОК БРАУЗЕРА ОБЯЗАТЕЛЕН. Перед API Hyperstack стоит Cloudflare,
+# и на `Python-urllib/3.x` он отвечает 403, хотя тот же запрос curl-ом с
+# той же машины проходит. Час на это не жалко потратить один раз.
+БРАУЗЕР = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+           "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+
+
+def зов(путь, метод="GET", тело=None, таймаут=60):
+    r = urllib.request.Request(
+        БАЗА + путь,
+        data=json.dumps(тело).encode() if тело is not None else None,
+        headers={"api_key": КЛЮЧ, "Content-Type": "application/json",
+                 "User-Agent": БРАУЗЕР, "Accept": "application/json"},
+        method=метод)
+    try:
+        return json.load(urllib.request.urlopen(r, timeout=таймаут))
+    except urllib.error.HTTPError as e:
+        try:
+            return json.load(e)
+        except Exception:                                # noqa: BLE001
+            return {"status": False, "message": "HTTP %s" % e.code}
+
+
+def машина():
+    """Наша карта или None. Ищем по имени: id меняется при пересоздании."""
+    for в in (зов("/core/virtual-machines") or {}).get("instances", []):
+        if в.get("name") == ИМЯ:
+            return в
+    return None
+
+
+def склад():
+    """{модель: сколько свободно одиночных} в нашем регионе."""
+    из = {}
+    for р in (зов("/core/stocks") or {}).get("stocks", []):
+        if р.get("region") != СРЕДА.split("-", 1)[1] and р.get("region") != "CANADA-1":
+            continue
+        for м in р.get("models", []):
+            из[м.get("model")] = (м.get("configurations") or {}).get("1x", 0)
+    return из
+
+
+def ssh(адрес, команда, таймаут=900, ввод=None):
+    return subprocess.run(
+        ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null",
+         "-o", "ConnectTimeout=20", "-i", SSH_KEY, "ubuntu@" + адрес, команда],
+        input=ввод, capture_output=True, text=True, timeout=таймаут)
+
+
+def ждать(условие, сколько, шаг=5, что=""):
+    т0 = time.time()
+    while time.time() - т0 < сколько:
+        з = условие()
+        if з:
+            return з
+        time.sleep(шаг)
+    raise RuntimeError("не дождались: " + что)
+
+
+def поднять():
+    """Создать карту, завести её и переключить бота. Возвращает адрес панели."""
+    м = машина()
+    if м and м.get("status") == "ACTIVE":
+        print("карта уже поднята:", м.get("floating_ip"), flush=True)
+        return завести(м["floating_ip"])
+
+    ест = склад()
+    беды = []
+    for флавор, модель, цена in ЖЕЛЕЗО:
+        if ест.get(модель, 0) < 1:
+            беды.append("%s: нет на складе" % флавор)
+            continue
+        print("беру %s (%.2f $/час)" % (флавор, цена), flush=True)
+        о = зов("/core/virtual-machines", "POST", {
+            "name": ИМЯ, "environment_name": СРЕДА, "image_name": ОБРАЗ,
+            "flavor_name": флавор, "key_name": КЛЮЧ_SSH, "count": 1,
+            "assign_floating_ip": True})
+        if not о.get("status"):
+            беды.append("%s: %s" % (флавор, о.get("message")))
+            continue
+        ид = o_ид(о)
+        м = ждать(lambda: (лишь_наша(ид) or {}).get("floating_ip") and лишь_наша(ид),
+                  900, 10, "машина не стала ACTIVE")
+        # Том подключается ПОСЛЕ создания: при создании его приложить
+        # нельзя, а без него на карте нет ни моделей, ни ComfyUI.
+        открыть_ssh(ид)
+        зов("/core/virtual-machines/%s/attach-volumes" % ид, "POST",
+            {"volume_ids": [ТОМ_ID]})
+        ждать(lambda: том_на_месте(ид), 300, 5, "том не подключился")
+        return завести(м["floating_ip"])
+    raise RuntimeError("железа нет нигде: " + "; ".join(беды))
+
+
+def o_ид(о):
+    и = о.get("instances") or []
+    return (и[0] if и else о.get("instance", {})).get("id")
+
+
+def лишь_наша(ид):
+    for в in (зов("/core/virtual-machines") or {}).get("instances", []):
+        if в.get("id") == ид and в.get("status") == "ACTIVE":
+            return в
+    return None
+
+
+def том_на_месте(ид):
+    о = зов("/core/virtual-machines/%s" % ид) or {}
+    в = о.get("instance") or {}
+    return any(т.get("status") == "ATTACHED"
+               for т in (в.get("volume_attachments") or []))
+
+
+# ВХОД ПО SSH ОТКРЫВАЕТСЯ ЗАНОВО НА КАЖДОЙ НОВОЙ МАШИНЕ.
+#
+# Правило «пускать 22-й порт только с моста» живёт не отдельным щитом,
+# а НА САМОЙ машине (`security_rules` в её описании; список щитов
+# аккаунта пуст). Свежая машина получает только исходящие правила, то
+# есть недоступна по ssh вовсе — и вся загрузка встала бы на первом
+# шаге. Поэтому правило ставится сразу после создания.
+# Кого пускать на 22-й порт. Сервер бота — потому что отсюда идёт
+# загрузка; мост — потому что с него удобно чинить руками.
+СВОИ = ["62.112.10.168/32", "104.171.132.45/32"]
+
+
+def открыть_ssh(ид):
+    for адрес in СВОИ:
+        о = зов("/core/virtual-machines/%s/sg-rules" % ид, "POST", {
+            "direction": "ingress", "protocol": "tcp", "ethertype": "IPv4",
+            "port_range_min": 22, "port_range_max": 22,
+            "remote_ip_prefix": адрес})
+        print("вход по ssh для %s: %s" % (адрес, о.get("message") or о.get("status")),
+              flush=True)
+
+
+def завести(адрес):
+    """Прогнать загрузку и переключить бота на новый адрес туннеля."""
+    ждать(lambda: ssh(адрес, "echo ok", 60).returncode == 0, 600, 10, "ssh не отвечает")
+    with open(ЗАГРУЗКА, encoding="utf-8") as ф:
+        сц = ф.read()
+    р = ssh(адрес, "cat > /tmp/загрузка.sh && bash /tmp/загрузка.sh", ввод=сц)
+    print(р.stdout[-3000:], flush=True)
+    if р.returncode != 0:
+        print(р.stderr[-2000:], file=sys.stderr, flush=True)
+        raise RuntimeError("загрузка карты не прошла")
+    адреса = [с.split("=", 1)[1].strip() for с in р.stdout.splitlines()
+              if с.startswith("АДРЕС=")]
+    if not адреса:
+        raise RuntimeError("не прочитали адрес туннеля")
+    сказать_боту(адреса[-1])
+    return адреса[-1]
+
+
+def сказать_боту(адрес):
+    """Записать живой адрес туда, откуда бот его читает.
+
+    БОТ НЕ ПЕРЕЗАПУСКАЕТСЯ, и это главное. Будит карту он сам, посреди
+    запроса живого человека: перезапуск в этот момент оборвал бы и
+    запрос, и списанные за него коины. Файл он перечитывает перед
+    каждым обращением.
+
+    Переменная в `/etc/amberry.env` правится заодно — чтобы при
+    обычном перезапуске бот стартовал уже с верным адресом.
+    """
+    os.makedirs(os.path.dirname(ФАЙЛ_АДРЕСА), exist_ok=True)
+    врем = ФАЙЛ_АДРЕСА + ".новый"
+    with open(врем, "w", encoding="utf-8") as ф:
+        ф.write(адрес + "\n")
+    os.replace(врем, ФАЙЛ_АДРЕСА)      # подменяем целиком: бот не
+    # должен прочитать полуфайл
+    subprocess.run(
+        ["bash", "-c", "sed -i 's#^ROCKET_GPU_URL=.*#ROCKET_GPU_URL=%s#' %s"
+         % (адрес, ENV_БОТА)], capture_output=True, text=True, timeout=60)
+    print("адрес записан:", адрес, flush=True)
+
+
+def отметить(что, **поля):
+    """Короткая запись о состоянии — для крона и для человека."""
+    д = {"что": что, "когда": int(time.time())}
+    д.update(поля)
+    try:
+        os.makedirs(os.path.dirname(СОСТОЯНИЕ), exist_ok=True)
+        with open(СОСТОЯНИЕ, "w", encoding="utf-8") as ф:
+            json.dump(д, ф, ensure_ascii=False)
+    except OSError:
+        pass
+
+
+def нужна():
+    """Карта должна работать ПРЯМО СЕЙЧАС. Вызывает бот перед заданием.
+
+    Возвращает адрес панели. Если карта уже поднята — отвечает мгновенно
+    и ничего не трогает.
+    """
+    import fcntl
+    м = машина()
+    if м and м.get("status") == "ACTIVE" and панель_жива():
+        return открыть_адрес()
+    with open(ЗАМОК, "a+") as з:
+        # Ждём чужой подъём, а не начинаем свой: карта одна.
+        fcntl.flock(з, fcntl.LOCK_EX)
+        try:
+            м = машина()
+            if м and м.get("status") == "ACTIVE" and панель_жива():
+                return открыть_адрес()
+            отметить("поднимаю")
+            адрес = поднять()
+            отметить("поднята", адрес=адрес)
+            return адрес
+        finally:
+            fcntl.flock(з, fcntl.LOCK_UN)
+
+
+def открыть_адрес():
+    try:
+        with open(ФАЙЛ_АДРЕСА, encoding="utf-8") as ф:
+            return ф.read().strip()
+    except OSError:
+        return ""
+
+
+def панель_жива():
+    """Машина бывает ACTIVE, а панель на ней — нет: после жёсткой
+    перезагрузки, на полпути загрузки, при упавшем туннеле. Верим
+    только ответу самой панели."""
+    адрес = открыть_адрес()
+    if not адрес:
+        return False
+    try:
+        import urllib.request as u
+        import base64 as b
+        р = u.Request(адрес.rstrip("/") + "/api/stats")
+        р.add_header("Authorization", "Basic " + b.b64encode(
+            ("rocket:" + os.environ.get("ROCKET_GPU_PASS", "")).encode()).decode())
+        return u.urlopen(р, timeout=15).status == 200
+    except Exception:                                    # noqa: BLE001
+        return False
+
+
+def погасить():
+    м = машина()
+    if not м:
+        print("карты нет — гасить нечего", flush=True)
+        return
+    адрес = м.get("floating_ip")
+    if адрес:
+        # Останавливаем службы по-человечески, чтобы том отцепился
+        # чистым. Спот-машину провайдер рубит без предупреждения, и
+        # документация честно пишет, что том от этого может испортиться;
+        # своё-то выключение мы обязаны делать аккуратно.
+        ssh(адрес, "sudo systemctl stop rocket-panel comfyui rocket-tunnel caddy; "
+                   "sync; sudo umount /data || true", 180)
+    о = зов("/core/virtual-machines/%s" % м["id"], "DELETE")
+    print("гашу карту %s: %s" % (м["id"], о.get("message")), flush=True)
+
+
+# СКОЛЬКО ЖДАТЬ ПЕРЕД ГАШЕНИЕМ.
+#
+# Час — не осторожность, а расчёт. Подъём карты стоит человеку около
+# четырёх минут ожидания; час простоя стоит нам 1,08 $. Гасить через
+# десять минут значило бы будить её по пять раз за вечер и каждый раз
+# заставлять кого-то ждать — сэкономив центы. Час покрывает обычную
+# паузу между заказами одного человека и всё равно срезает ночь
+# целиком, а ночь у нас — это две трети суток.
+ПРОСТОЙ_МИНУТ = int(os.environ.get("AMBERRY_ПРОСТОЙ", "60"))
+БАЗА_БОТА = os.environ.get("ROCKET_DB", "/srv/amberry/amberry.db")
+
+
+def последняя_работа():
+    """Когда последний раз что-то считали. None — не знаем."""
+    import sqlite3
+    try:
+        с = sqlite3.connect("file:%s?mode=ro" % БАЗА_БОТА, uri=True, timeout=10)
+        try:
+            р = с.execute("select max(created_at) from jobs").fetchone()
+        finally:
+            с.close()
+        return int(р[0]) if р and р[0] else None
+    except Exception as e:                               # noqa: BLE001
+        print("база бота не прочиталась:", str(e)[:120], flush=True)
+        return None
+
+
+def обслужить():
+    """Для крона: погасить карту, если она давно никому не нужна.
+
+    БУДИТЬ ПО РАСПИСАНИЮ НЕ НАДО. Карта поднимается сама, когда человек
+    нажимает кнопку (`нужна`), и заранее угадывать этот момент незачем —
+    угадаешь неверно, заплатишь за пустые часы.
+
+    НЕ ГАСИМ, ПОКА ЧТО-ТО СЧИТАЕТСЯ. Очередь панели спрашивается у неё
+    самой: задание живёт минуты, и погасить карту посреди него значит
+    забрать у человека оплаченную работу.
+    """
+    м = машина()
+    if not м:
+        print("карты нет — гасить нечего", flush=True)
+        return
+    занята = очередь()
+    if занята:
+        print("карта считает (%s в очереди) — не трогаю" % занята, flush=True)
+        return
+    когда = последняя_работа()
+    if когда is None:
+        # Не смогли прочитать базу — НЕ гасим. Ошибиться в эту сторону
+        # значит оставить включённую карту; в другую — оборвать работу.
+        print("не знаю, когда была последняя работа — не гашу", flush=True)
+        return
+    простой = (time.time() - когда) / 60.0
+    if простой < ПРОСТОЙ_МИНУТ:
+        print("простой %.0f мин из %d — рано" % (простой, ПРОСТОЙ_МИНУТ), flush=True)
+        return
+    print("простой %.0f мин — гашу" % простой, flush=True)
+    погасить()
+    отметить("погашена", простой=round(простой))
+
+
+def очередь():
+    """Сколько заданий на карте прямо сейчас. 0 — свободна."""
+    адрес = открыть_адрес()
+    if not адрес:
+        return 0
+    try:
+        import urllib.request as u
+        import base64 as b
+        р = u.Request(адрес.rstrip("/") + "/api/stats")
+        р.add_header("Authorization", "Basic " + b.b64encode(
+            ("rocket:" + os.environ.get("ROCKET_GPU_PASS", "")).encode()).decode())
+        return int(json.load(u.urlopen(р, timeout=15)).get("queue", 0))
+    except Exception:                                    # noqa: BLE001
+        # Панель не отвечает — считаем, что работы нет: иначе повисшая
+        # панель держала бы карту включённой вечно.
+        return 0
+
+
+def статус():
+    м = машина()
+    if not м:
+        print("карта: НЕ ПОДНЯТА")
+    else:
+        print("карта: %s %s %s %s" % (м.get("name"), м.get("status"),
+                                      (м.get("flavor") or {}).get("name"),
+                                      м.get("floating_ip")))
+    print("склад:", json.dumps(склад(), ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    команда = sys.argv[1] if len(sys.argv) > 1 else "статус"
+    if not КЛЮЧ:
+        sys.exit("нет HYPERSTACK_API_KEY")
+    if команда == "поднять":
+        print("ПАНЕЛЬ:", поднять())
+    elif команда == "нужна":
+        print("ПАНЕЛЬ:", нужна())
+    elif команда == "погасить":
+        погасить()
+        отметить("погашена вручную")
+    elif команда == "обслужить":
+        обслужить()
+    else:
+        статус()
