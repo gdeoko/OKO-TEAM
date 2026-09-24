@@ -92,8 +92,30 @@
         "A full, soft, curvy build with large natural breasts, wide hips "
         "and a soft belly."
     ),
+    # ПО УМОЛЧАНИЮ С 24.09.2026 — «как на фото».
+    #
+    # Раньше умолчанием была «стройная», и она ПЕРЕБИВАЛА референс:
+    # пышная клиентка получала модельное тело, а выбор «пышная» в боте
+    # вдобавок спорил с постоянным негативом, который запрещал
+    # «busty, curvy». Требование владельца: «возраст, фигура, форма
+    # тела, цвет кожи — максимально как на референсе».
+    #
+    # Текст тут не описывает фигуру, а ЗАПРЕЩАЕТ её сочинять. Пустая
+    # строка не годилась бы: без единого слова о теле сборка валится в
+    # собственное умолчание — модельную фигуру, — и именно это видно на
+    # замере 24.09.2026.
+    "как_на_фото": (
+        "HER BUILD IS READ OUT OF THE REFERENCE PHOTOGRAPH AND NOT "
+        "INVENTED: the same bust size and the same shape of it, the same "
+        "waist, the same belly, the same hips and thighs, the same "
+        "shoulders, the same height and the same proportions, the same "
+        "weight. A soft belly stays a soft belly and a flat chest stays "
+        "flat. She is not slimmed, not enlarged, not toned, not "
+        "straightened and not turned into a model; she is the woman in "
+        "that photograph with her clothes off."
+    ),
 }
-СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ = "стройная"
+СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ = "как_на_фото"
 
 
 # ДЛИННОЕ ОПИСАНИЕ ВНЕШНОСТИ МЕШАЛО ВНЕШНОСТИ. Замер 22.09.2026.
@@ -114,14 +136,24 @@
 # личности в начале, стартовый латент и негатив, а перечисление только
 # разбавляло всё остальное — позу, ракурс и откровенную строку, ради
 # которых человек и нажал кнопку.
+# ВОЗРАСТ ТЕПЕРЬ СИММЕТРИЧЕН. Было «an adult, and as young an adult as
+# the photograph shows... do not age her up» — то есть запрет старить
+# при разрешении молодить. Требование владельца от 24.09.2026: возраст
+# максимально как на референсе. Молодить — такая же подмена человека,
+# как и старить, и «моложе» тут ещё и опаснее: снимок присылает
+# взрослый человек, и уводить его вид к детскому нельзя ни на сколько.
+# Поэтому здесь сказано И то, И другое: её собственные годы, и она
+# взрослая.
 ТЕЛО_ПО_ФОТО = (
     "The woman from the reference photograph, one to one. FACE "
     "preserved exactly, and with it her hair, her skin, her body and "
-    "her apparent age — an adult, and as young an adult as the "
-    "photograph shows. WHAT IS "
+    "HER OWN AGE: she looks exactly as old as she looks in that "
+    "photograph, no younger and no older, and she is an adult woman. "
+    "WHAT IS "
     "UNDER THE CLOTHES IS NOT YOURS TO INVENT: it is read out of that "
     "photograph, and a small or flat chest stays small. Do not "
-    "beautify, do not slim, do not enlarge, do not age her up. Any "
+    "beautify, do not slim, do not enlarge, do not age her up and do "
+    "not make her look younger than she is. Any "
     "departure from the reference is a defect, even a flattering one."
 )
 
@@ -262,23 +294,31 @@
     "airbrushed, beauty filter, poreless, smoothed skin, instagram face, "
     "generic model face, stock photo model, "
     "different person, changed face, distorted face, face swap artifacts, "
-    # БЮСТ И ВОЗРАСТ стоят первыми в этом списке не по алфавиту. Это
-    # две единственные поломки, которые владелец назвал сам, глядя на
-    # результат: «в референсе маленькая грудь, а на выходе огромные
-    # сиськи и тело сорокалетней».
     # ПОРНО-ГЛЯНЕЦ. Прогон 22.09.2026: в парных сценах тела выходили
     # намасленными и блестящими — вид коммерческого порно, который
     # владелец забраковал ещё на одиночных.
     "oiled skin, body oil, wet shiny skin, glossy plastic skin, "
     "greasy highlights, airbrushed porn look, "
-    "large breasts, big breasts, huge breasts, enlarged bust, busty, "
-    "voluptuous, curvy, breast implants, boob job, heavy chest, "
-    "cleavage added, push-up effect, "
-    "mature woman, middle-aged, milf, older woman, aged skin, "
-    "sagging skin, deep nasolabial folds, jowls, thickened waist, "
+    # ЗАПРЕТОВ «НЕ ПЫШНАЯ» И «НЕ ВЗРОСЛАЯ» ЗДЕСЬ БОЛЬШЕ НЕТ, и это
+    # правка 24.09.2026 по требованию владельца «фигура и возраст
+    # максимально как на референсе».
+    #
+    # Они стояли постоянными, на КАЖДОМ кадре: «large breasts, busty,
+    # voluptuous, curvy» и «mature woman, milf, older woman». Пышной
+    # клиентке это запрещало быть пышной, а взрослой — быть своего
+    # возраста, и спорило с её же собственным снимком. Заодно оно
+    # спорило с выбором «пышная» в самом боте: положительный промпт
+    # просил большую грудь, а негатив её запрещал.
+    #
+    # Теперь эти запреты живут в `ХУДОБА_И_МОЛОДОСТЬ` и подклеиваются
+    # ТОЛЬКО когда человек сам выбрал «стройная»: там они не спорят ни
+    # с промптом, ни с референсом. Симметричные запреты («толще, чем на
+    # референсе», «моложе», «старше») остаются постоянными — они как
+    # раз и держат сходство.
     "different body type, slimmer than reference, thinner waist, "
     "slimmed down, weight loss, fatter than reference, enlarged breasts, "
     "bigger breasts, smaller breasts, enlarged buttocks, wider hips, "
+    "narrower hips, flattened belly, belly removed, waist snatched, "
     "longer legs, changed height, changed proportions, idealized body, "
     "fitness model body, hourglass figure added, "
     "changed hair colour, changed hair length, changed skin tone, "
@@ -467,9 +507,11 @@ class Блок:
 # Поэтому требование о сложении повторяется последним — коротко и без
 # оговорок, уже после всего.
 ПОСЛЕДНЕЕ_ХВОСТ = (
-    "Her own waist, her own hips, her own young face. She is not a porn "
-    "model and this is not a glamour shoot; anything added to flatter "
-    "her is a defect."
+    # «her own young face» было тем же перекосом, что и в `ТЕЛО_ПО_ФОТО`:
+    # оно просило молодость, а не её собственный возраст. См. там же.
+    "Her own waist, her own hips, her own face at her own age. She is "
+    "not a porn model and this is not a glamour shoot; anything added "
+    "to flatter her is a defect."
 )
 
 # То же самое без «её»: у сцены из двух мужчин женского тела в кадре
@@ -618,6 +660,19 @@ def мужчина_в_кадре(промпт):
     return any(м in т for м in МУЖСКИЕ_СЛОВА)
 
 
+# Запреты, которые годятся ТОЛЬКО при явном выборе «стройная».
+#
+# До 24.09.2026 они стояли в постоянном негативе и запрещали пышной
+# клиентке быть пышной. Здесь они остаются потому, что у «стройной»
+# сборка охотно дорисовывает грудь: владелец ловил это сам — «в
+# референсе маленькая грудь, а на выходе огромные сиськи».
+ХУДОБА_И_МОЛОДОСТЬ = (
+    "large breasts, big breasts, huge breasts, enlarged bust, busty, "
+    "voluptuous, curvy, breast implants, boob job, heavy chest, "
+    "cleavage added, push-up effect, thickened waist"
+)
+
+
 def негатив(промпт):
     """Негатив под КОНКРЕТНЫЙ кадр, выведенный из его же текста.
 
@@ -626,6 +681,13 @@ def негатив(промпт):
     в кадре одежда.
     """
     куски = [НЕГАТИВ, ЛИШНИЕ_ЛЮДИ, КАША_ИЗ_ТЕЛ]
+    # «Не пышная» ставится, только когда человек сам выбрал «стройную».
+    # Признак берём из самого промпта, как и всё остальное здесь: текст
+    # сложения в нём уже стоит, и второго источника правды заводить
+    # незачем.
+    if (СЛОЖЕНИЕ_КРАТКО["стройная"] in промпт
+            or СЛОЖЕНИЕ["стройная"][:60] in промпт):
+        куски.append(ХУДОБА_И_МОЛОДОСТЬ)
     # Признака два, потому что сборки две: длинная (одиночная) и
     # короткая (парная). Пропустить парную значило бы запретить ей
     # второго человека — то есть сломать саму кнопку.
@@ -769,6 +831,11 @@ def первое_предложение_акта(блок):
     "стройная": "She is petite with a small, almost flat chest.",
     "средняя": "She has an average build with medium natural breasts.",
     "пышная": "She is full and curvy with large natural breasts.",
+    # У парной сборки жёсткий лимит длины, поэтому здесь коротко — но
+    # про то же самое: тело не сочиняем, а читаем со снимка.
+    "как_на_фото": ("Her build is read out of her reference photograph "
+                    "and not invented: same bust, same waist, same hips, "
+                    "same weight."),
 }
 
 ПАРА_ТЕХНИКА = "Photorealistic, matte skin, correct hands."
