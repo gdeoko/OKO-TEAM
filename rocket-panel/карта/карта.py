@@ -58,6 +58,30 @@ import time
 import urllib.error
 import urllib.request
 
+def _добрать_настройки(файл="/etc/amberry.env"):
+    """Дочитать недостающее из настроек бота.
+
+    ЗАПУСКАЮТ НАС ПО-РАЗНОМУ, И ОКРУЖЕНИЕ КАЖДЫЙ РАЗ РАЗНОЕ. Из крона
+    настройки подгружаются строкой `. /etc/amberry.env`. А из бота нас
+    зовут через `sudo -n`, и sudo окружение ВЫЧИЩАЕТ — первый живой
+    запрос упал на «нет HYPERSTACK_API_KEY», хотя ключ был на месте.
+    Полагаться на то, что позовут правильно, нельзя: программа должна
+    находить своё сама.
+    """
+    try:
+        with open(файл, encoding="utf-8") as ф:
+            строки = ф.read().splitlines()
+    except OSError:
+        return
+    for с in строки:
+        с = с.strip()
+        if not с or с.startswith("#") or "=" not in с:
+            continue
+        имя, знач = с.split("=", 1)
+        os.environ.setdefault(имя.strip(), знач.strip().strip('"').strip("'"))
+
+
+_добрать_настройки()
 КЛЮЧ = os.environ.get("HYPERSTACK_API_KEY", "")
 БАЗА = "https://infrahub-api.nexgencloud.com/v1"
 ИМЯ = "rocket-gpu-a100"
