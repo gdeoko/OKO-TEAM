@@ -368,7 +368,8 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
     try:
         photos = отдать_карте(photos)
     except (GpuError, OSError) as e:
-        send(chat, t("фото.не_приняла", я, почему=str(e)[:150]))
+        print("снимок не ушёл на карту:", str(e)[:200], flush=True)
+        send(chat, t("фото.не_приняла", я))
         with lock:
             busy.discard(u)
         прибрать(свои)
@@ -471,8 +472,8 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         if charged:
             store.refund(u, job.coins, f"осечка генерации: {str(e)[:80]}")
         store.job_done(jid, error=str(e)[:300])
-        send(chat, t("ген.осечка", я, почему=str(e)[:200],
-                     баланс=store.balance(u)), меню(u))
+        print("осечка генерации:", str(e)[:300], flush=True)
+        send(chat, t("ген.осечка", я, баланс=store.balance(u)), меню(u))
     except Exception as e:
         if charged:
             store.refund(u, job.coins, "внутренняя ошибка")
@@ -497,7 +498,8 @@ def оживить(chat, u, старое, байты):
     try:
         имя = gpu.upload(старое["file"] or "frame.png", байты)
     except GpuError as e:
-        send(chat, t("ген.кадр_не_ушёл", яз(u), почему=str(e)[:150]))
+        print("кадр не ушёл на карту:", str(e)[:200], flush=True)
+        send(chat, t("ген.кадр_не_ушёл", яз(u)))
         return
     # Промпт берём ТОТ ЖЕ: ролик должен продолжать этот кадр, а не
     # уводить в сторону. Обстановку менять не надо — она уже в кадре.
@@ -514,8 +516,16 @@ def оживить(chat, u, старое, байты):
 
 
 def схоронить(u, номер, данные):
-    """Сохранить присланный снимок у себя. Возвращает путь."""
+    """Сохранить присланный снимок у себя. Возвращает путь.
+
+    Папка создаётся с правами на запись ТЕКУЩЕМУ пользователю. Первый
+    раз её завели руками из-под root, а бот работает под `amberry` — и
+    живой человек получил «Permission denied» вместо ответа. Создавать
+    её должен тот, кто в неё пишет.
+    """
     os.makedirs(СНИМКИ, exist_ok=True)
+    if not os.access(СНИМКИ, os.W_OK):
+        raise OSError(f"нет прав на запись в {СНИМКИ}")
     путь = os.path.join(СНИМКИ, f"{u}_{номер}_{uuid.uuid4().hex[:6]}.jpg")
     with open(путь, "wb") as ф:
         ф.write(данные)
@@ -993,7 +1003,9 @@ def on_photo(chat, u, file_id):
     try:
         собрано.append(схоронить(u, len(собрано) + 1, data))
     except OSError as e:
-        send(chat, t("фото.не_приняла", я, почему=str(e)[:150]))
+        # Техническая причина - нам в журнал, человеку - что делать.
+        print("снимок не сохранился:", str(e)[:200], flush=True)
+        send(chat, t("фото.не_приняла", я))
         return
 
     # Пришли из каталога — промпт готов. Набрали максимум — запускаем
