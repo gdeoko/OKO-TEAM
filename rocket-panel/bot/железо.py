@@ -27,6 +27,17 @@ import time
 
 УПРАВЛЕНИЕ = os.environ.get("AMBERRY_КАРТА",
                             "/opt/amberry-card/карта.py")
+# ПОДЪЁМ КАРТЫ ИДЁТ ЧЕРЕЗ sudo, И ЭТО НЕ ЛЕНЬ.
+#
+# Бот работает под `amberry`, а поднять карту без root нельзя: ключ от
+# карты лежит в /root/.ssh, замок в /run, адрес пишется в
+# /etc/amberry.env. Первая версия звала карту напрямую, и живой запрос
+# упал на «Permission denied: /run/amberry-карта.lock».
+#
+# Права выданы ровно на одну команду и ни на что больше — см.
+# /etc/sudoers.d/amberry-karta. Отдавать боту root целиком ради
+# запуска одной программы значит чинить дырку дверью.
+ЗОВ = ["sudo", "-n", "/usr/bin/python3", УПРАВЛЕНИЕ, "нужна"]
 # Подъём карты: создание машины, том, пакеты, ComfyUI, туннель. Замер
 # полного цикла — около четырёх минут; берём вдвое с запасом, потому
 # что упереться в собственный таймаут на третьей минуте хуже, чем
@@ -61,9 +72,8 @@ def нужна(gpu, на_тик=None):
     if not включено():
         return False, "нет"
 
-    п = subprocess.Popen(["python3", УПРАВЛЕНИЕ, "нужна"],
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         text=True)
+    п = subprocess.Popen(ЗОВ, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, text=True)
     т0 = time.time()
     последний = -1
     while п.poll() is None:
