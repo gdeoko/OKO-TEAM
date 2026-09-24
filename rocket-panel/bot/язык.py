@@ -611,6 +611,12 @@ def job_note(job, яз):
         "ru": "Такой запрос я не выполняю. Коины не списаны.",
         "en": "I do not process this kind of request. No coins spent.",
     },
+    "ген.карта_занята": {
+        "ru": "Карта сейчас считает чужую работу. Подожди пару минут и "
+              "нажми ещё раз. Коины не списаны.",
+        "en": "The card is busy with another job right now. Wait a couple of "
+              "minutes and press again. No coins spent.",
+    },
     "ген.занято": {
         "ru": "Одно задание уже считается. Дождись его, потом запускай следующее.",
         "en": "One job is already running. Wait for it, then start the next.",
