@@ -80,7 +80,12 @@
         "Petite and slim with a SMALL, ALMOST FLAT CHEST: tiny natural "
         "breasts, an A cup at most, barely a swell above the ribs, wide "
         "apart and set high, with small nipples. No cleavage, no "
-        "roundness, no weight to them — a slender teenage-slim ribcage, "
+        # «teenage-slim» убрано 24.09.2026. По-английски teenage — это
+        # ровно «подростковая», 13–19 лет, а не «молодая» (young). Мы
+        # этой строкой просили у сборки подростковое телосложение в
+        # каждом кадре с кнопкой «стройная». Нужный смысл — «худая»,
+        # он и остался.
+        "roundness, no weight to them — a slender narrow ribcage, "
         "a flat stomach and narrow hips. If the result shows a handful, "
         "it is wrong."
     ),

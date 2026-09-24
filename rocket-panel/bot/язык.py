@@ -604,6 +604,13 @@ def job_note(job, яз):
         "en": "Could not start the graphics card. No coins spent, we are "
               "already looking into it.",
     },
+    # Отказ по запрету на детей. Коротко и без объяснений: спорить
+    # тут не о чем, а подсказывать, какое слово не понравилось, значит
+    # подсказывать обход.
+    "запрет.нельзя": {
+        "ru": "Такой запрос я не выполняю. Коины не списаны.",
+        "en": "I do not process this kind of request. No coins spent.",
+    },
     "ген.занято": {
         "ru": "Одно задание уже считается. Дождись его, потом запускай следующее.",
         "en": "One job is already running. Wait for it, then start the next.",

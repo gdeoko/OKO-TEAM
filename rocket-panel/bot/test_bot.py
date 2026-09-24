@@ -3946,3 +3946,69 @@ class ИменаПеременныхОкруженияЛатиницей(unittes
                     if re.search(r"[А-Яа-яЁё]", имя):
                         плохие.append(f"{os.path.basename(путь)}: {имя}")
         self.assertEqual(плохие, [], "кириллица в именах переменных окружения")
+
+
+class ЗапретНаДетей(unittest.TestCase):
+    """Список нарочно УЗКИЙ: только слова, которые не значат ничего,
+    кроме ребёнка. Каждое лишнее слово здесь — отказ живому клиенту,
+    который ничего плохого не просил."""
+
+    def setUp(self):
+        import запрет
+        self.з = запрет
+
+    def test_ловит_то_что_было_в_базе(self):
+        """Эти два заказа бот 24.09.2026 выполнил."""
+        for т in ("A flat-chested little girl in the same outfit outdoors",
+                  "naked child on a bed"):
+            self.assertTrue(self.з.нельзя(т)[0], т)
+
+    def test_ловит_возраст_цифрами(self):
+        for т in ("she is 14 years old", "12yo girl", "ей 12", "ему 9"):
+            self.assertTrue(self.з.нельзя(т)[0], т)
+
+    def test_взрослый_возраст_проходит(self):
+        for т in ("a 25 years old woman", "ей 19", "18 years old", "ей 30"):
+            self.assertFalse(self.з.нельзя(т)[0], т)
+
+    def test_школьная_форма_это_костюм_а_не_ребёнок(self):
+        """Решение владельца 24.09.2026: школьная форма и школьница —
+        ролевая одежда, её носит и взрослая женщина. Запрет на эти
+        слова закрыл бы обычный взрослый заказ."""
+        for т in ("She stands wearing a school uniform and a skirt",
+                  "schoolgirl roleplay, adult woman 22 years old",
+                  "в школьной форме, 25 лет"):
+            self.assertFalse(self.з.нельзя(т)[0], т)
+
+    def test_ласковые_слова_проходят(self):
+        """«Малышка», «детка», «baby», «девочка» в речи — это обращение
+        к взрослой, а не к ребёнку."""
+        for т in ("малышка в чулках", "детка, иди сюда", "baby come here",
+                  "девочка моя, разденься", "teen style outfit on an adult"):
+            self.assertFalse(self.з.нельзя(т)[0], т)
+
+    def test_простые_обходы_не_работают(self):
+        for т in ("дееееетское", "l o l i", "c h i l d"):
+            self.assertTrue(self.з.нельзя(т)[0], т)
+
+    def test_склейка_не_плодит_ложных(self):
+        """Сплошное удаление пробелов дало бы «milk idea» -> «milkidea»,
+        где внутри «kid». Поэтому склеиваются только цепочки одиночных
+        букв."""
+        for т in ("milk idea", "final office work", "the kid next door".replace("kid", "man")):
+            self.assertFalse(self.з.нельзя(т)[0], т)
+
+    def test_проверка_стоит_до_денег(self):
+        import inspect
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        и = inspect.getsource(bot.пустить_своё)
+        self.assertIn("запрет.нельзя", и)
+        self.assertLess(и.find("запрет.нельзя"), и.find("launch("))
+
+    def test_отказ_не_подсказывает_обход(self):
+        """Назвать слово, которое не понравилось, значит подсказать,
+        как его обойти."""
+        т = язык.СТРОКИ["запрет.нельзя"]["ru"]
+        self.assertNotIn("{", т)
+        self.assertIn("оин", т)
