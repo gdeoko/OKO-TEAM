@@ -8,10 +8,102 @@ const APP = path.resolve(__dirname, '..', 'public_html');
 const OUT = process.argv[2] || path.resolve(__dirname, '..', 'dist', 'progress-page.html');
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 const MIME = { '.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.mp4':'video/mp4','.mp3':'audio/mpeg','.woff2':'font/woff2' };
-function dataUri(rel){ const abs=path.join(APP,rel); if(!fs.existsSync(abs))return null; const ext=path.extname(abs).toLowerCase(); return `data:${MIME[ext]||'application/octet-stream'};base64,`+fs.readFileSync(abs).toString('base64'); }
+// Картинки в витрине лежат в base64 прямо в HTML, и каждый килобайт исходника
+// становится в файле полутора. Поэтому для витрины картинки ужимаются: на
+// боевом сервере лежат полные файлы, а в один файл идут лёгкие копии.
+// Ужимает отдельный скрипт на Pillow; нет Pillow — собираем как есть.
+const { execFileSync } = require('child_process');
+const УЖИМАТЬ = process.env.SHOWCASE_SHRINK !== '0';
+const КЭШ = path.join(require('os').tmpdir(), 'mt-vitrina-img');
+const ужатые = new Map();
+let жмём = false;
+if (УЖИМАТЬ) {
+  try {
+    execFileSync('python3', ['-c', 'import PIL'], { stdio: 'ignore' });
+    жмём = true;
+  } catch (e) {
+    console.log('Pillow не найден, картинки идут в витрину как есть');
+  }
+}
+
+function подготовитьУжатие(пути) {
+  if (!жмём || !пути.length) return;
+  const вход = пути.map((rel) => path.join(APP, rel)).filter((p) => fs.existsSync(p)).join('\n');
+  if (!вход) return;
+  let вывод = '';
+  try {
+    вывод = execFileSync('python3', [path.join(__dirname, 'ujat-dlya-vitriny.py'), КЭШ],
+      { input: вход, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } catch (e) {
+    console.log('ужать картинки не вышло, идут как есть');
+    return;
+  }
+  for (const строка of вывод.split('\n')) {
+    const [исх, копия] = строка.split('\t');
+    if (исх && копия) ужатые.set(исх, копия);
+  }
+}
+
+/* Озвучка урока читается тринадцать минут и весит мегабайты. На боевом
+   сервере это обычный файл и качается по ходу, а в витрине он лежит целиком
+   в тексте страницы. Для витрины пережимаем в моно 32 кбит: голос Екатерины
+   слышно так же, а вес втрое меньше. */
+let жмёмЗвук = false;
+try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); жмёмЗвук = УЖИМАТЬ; }
+catch (e) { console.log('ffmpeg не найден, звук идёт в витрину как есть'); }
+
+function ужатьЗвук(abs) {
+  if (!жмёмЗвук || fs.statSync(abs).size < 400 * 1024) return abs;
+  fs.mkdirSync(КЭШ, { recursive: true });
+  const копия = path.join(КЭШ, 'a32_' + abs.replace(/[\\/]/g, '_'));
+  try {
+    if (!fs.existsSync(копия) || fs.statSync(копия).mtimeMs < fs.statSync(abs).mtimeMs) {
+      execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', abs, '-ac', '1', '-ar', '22050',
+        '-c:a', 'libmp3lame', '-b:a', '32k', копия], { stdio: 'ignore' });
+    }
+  } catch (e) { return abs; }
+  return (fs.existsSync(копия) && fs.statSync(копия).size < fs.statSync(abs).size) ? копия : abs;
+}
+
+function dataUri(rel){
+  const abs0=path.join(APP,rel);
+  if(!fs.existsSync(abs0))return null;
+  const ext=path.extname(abs0).toLowerCase();
+  let abs = abs0;
+  if (ext==='.jpg'||ext==='.jpeg'||ext==='.png') abs = ужатые.get(abs0)||abs0;
+  else if (ext==='.mp3') abs = ужатьЗвук(abs0);
+  let тип = MIME[ext]||'application/octet-stream';
+  if (abs!==abs0 && ext!=='.mp3') тип = 'image/jpeg';
+  return `data:${тип};base64,`+fs.readFileSync(abs).toString('base64');
+}
 let html = fs.readFileSync(path.join(APP,'index.html'),'utf8');
 const css = fs.readFileSync(path.join(APP,'assets/css/main.css'),'utf8');
-let js = ['telegram.js','sync.js','icons.js','magic.js','lessons.js','workbook.js','tasks.js','gamedata.js','app.js'].map(f=>fs.readFileSync(path.join(APP,'assets/js',f),'utf8')).join('\n;\n');
+
+// Ужимаем все картинки приложения разом, одним запуском: по файлу за вызов
+// сборка растянулась бы на минуты.
+{
+  const собрать = (каталог) => {
+    const итог = [];
+    const абс = path.join(APP, каталог);
+    if (!fs.existsSync(абс)) return итог;
+    for (const f of fs.readdirSync(абс)) {
+      const полный = path.join(абс, f);
+      if (fs.statSync(полный).isDirectory()) итог.push(...собрать(каталог + '/' + f));
+      else if (/\.(jpg|jpeg|png)$/i.test(f)) итог.push(каталог + '/' + f);
+    }
+    return итог;
+  };
+  подготовитьУжатие(собрать('assets/img'));
+}
+// Список файлов берём из самого index.html, а не переписываем руками: иначе
+// новый файл приложения тихо не попадает в витрину. На этом уже попались —
+// shkola.js с героями и словарём урока в сборку не входил.
+const порядокJs = [...html.matchAll(/<script src="assets\/js\/([^"]+)"><\/script>/g)].map(m=>m[1]);
+if (!порядокJs.length) throw new Error('в index.html не нашлось ни одного скрипта приложения');
+for (const f of порядокJs) {
+  if (!fs.existsSync(path.join(APP,'assets/js',f))) throw new Error('нет файла скрипта: '+f);
+}
+let js = порядокJs.map(f=>fs.readFileSync(path.join(APP,'assets/js',f),'utf8')).join('\n;\n');
 
 // Обложки уроков, иллюстрации по ходу текста и картинки друга — картами по имени файла.
 // Аудио уроков в один файл не влезает (25 МБ), поэтому берём только те, что перечислены в AUDIO_LESSONS.
@@ -35,8 +127,11 @@ js = 'const __LES_IMG = '+JSON.stringify(lessonImgs)+';\n'
    + 'const __PET_IMG = '+JSON.stringify(petImgs)+';\n'
    + 'const __LES_AUD = '+JSON.stringify(lessonAud)+';\n' + js;
 js = js.split('return `assets/img/lessons/l${n}.jpg`;').join('return __LES_IMG["l"+n] || "";');
-js = js.split("function lessonPic(n) { return `assets/img/lessons/l${n}-a.jpg`; }")
-       .join("function lessonPic(n) { return __LES_IMG['l'+n+'-a'] || ''; }");
+// Запасная иллюстрация урока: правим саму строку возврата, а не всю функцию.
+// Функция с тех пор обросла разбором её страниц, и замена целиком перестала
+// срабатывать молча — путь оставался в витрине битой ссылкой.
+js = js.split('return `assets/img/lessons/l${n}-a.jpg`;')
+       .join("return __LES_IMG['l'+n+'-a'] || '';");
 js = js.split('function lessonAudio(n) { return `assets/audio/lessons/l${n}.mp3`; }')
        .join('function lessonAudio(n) { return __LES_AUD["l"+n] || ""; }');
 js = js.split('return `assets/img/pet/${в.файл}-${petСтадия() + 1}.jpg`;')
@@ -58,6 +153,22 @@ function inlineDir(prefix, tokenExpr){ const dir=path.join(APP,'assets/img/'+pre
 const stkDir=path.join(APP,'assets/svg/stickers'); const stk={}; if(fs.existsSync(stkDir))for(const f of fs.readdirSync(stkDir)){ if(f.endsWith('.svg'))stk[f.replace('.svg','')]=dataUri('assets/svg/stickers/'+f);} js='const __STK = '+JSON.stringify(stk)+';\n'+js; js=js.split('assets/svg/stickers/${k}.svg').join('${__STK[k]||""}');
 const gimg={}; const gd=path.join(APP,'assets/img/games'); if(fs.existsSync(gd))for(const f of fs.readdirSync(gd)){ if(f.endsWith('.jpg'))gimg[f.replace('.jpg','')]=dataUri('assets/img/games/'+f);} js='const __GAMEIMG = '+JSON.stringify(gimg)+';\n'+js; js=js.split('assets/img/games/${g.key}.jpg').join('${__GAMEIMG[g.key]||""}');
 inlineDir('mem','${c.icon}'); inlineDir('ark','${c.img}'); inlineDir('stickers','${k}');
+// Картинки внутри игр собираются в коде: символ по теме хода и обложка игры.
+// В одном файле путей нет, поэтому подставляем те же карты.
+js = js.split("return 'assets/img/mem/' + имя + '.jpg';")
+       .join('return __IMG_MEM[имя] || "";');
+js = js.split('const свой = игра ? `assets/img/games/${игра}.jpg` : \'\';')
+       .join("const свой = игра ? (__GAMEIMG[игра] || '') : '';");
+// Портреты помощников и общий кадр: пути лежат строками в shkola.js.
+const geroi = {};
+const gerDir = path.join(APP, 'assets/img/geroi');
+if (fs.existsSync(gerDir)) {
+  for (const f of fs.readdirSync(gerDir)) {
+    if (!f.endsWith('.jpg')) continue;
+    js = js.split("'assets/img/geroi/" + f + "'").join("'" + dataUri('assets/img/geroi/' + f) + "'");
+    geroi[f] = 1;
+  }
+}
 const chimg={}; for(let i=1;i<=3;i++){const u=dataUri('assets/img/chapters/ch'+i+'.jpg'); if(u)chimg[i]=u;} js='const __CHIMG = '+JSON.stringify(chimg)+';\n'+js; js=js.split('assets/img/chapters/ch${meta.bi + 1}.jpg').join('${__CHIMG[meta.bi+1]||""}');
 
 // В сборке одним файлом соседних файлов нет: работник страницы и манифест
@@ -85,6 +196,18 @@ html=html.replace(/<link rel="manifest"[^>]*>/g,'');
 html=html.replace(/[ \t]*<script src="https:\/\/telegram\.org[^"]*"><\/script>\s*/g,'');
 const cssRefs=[...new Set((html.match(/\.\.\/img\/[A-Za-z0-9/_-]*\.(?:jpg|jpeg|png|svg|webp)/g)||[]))];
 for(const rel of cssRefs){ const uri=dataUri('assets/'+rel.slice(3)); if(uri)html=html.split(rel).join(uri); }
+// Иллюстрации уроков Екатерины лежат в lessons.js прямыми путями, по девять
+// на урок. Вшивать все сто двадцать шесть — это двадцать два мегабайта в
+// витрине, которую хост и так еле принимает. Берём столько же уроков, сколько
+// и обложек (LESSON_IMGS), остальные на витрине показываются заглушкой, а на
+// боевом сервере лежат файлами и открываются все.
+const читалка = /assets\/img\/lessons\/reading\/l(\d+)_\d+\.jpg/g;
+const лишние = new Set();
+for (const m of html.matchAll(читалка)) {
+  if (Number(m[1]) > LESSON_IMGS) лишние.add(m[0]);
+}
+for (const rel of лишние) html = html.split('"' + rel + '"').join('null');
+
 const refs=[...new Set((html.match(/assets\/(?:img|svg|video|audio)\/[A-Za-z0-9/_-]*\.(?:jpg|jpeg|png|svg|webp|mp4|mp3)/g)||[]))];
 let inlined=0; for(const rel of refs){ const uri=dataUri(rel); if(uri){ html=html.split(rel).join(uri); inlined++; } }
 fs.writeFileSync(OUT, html);

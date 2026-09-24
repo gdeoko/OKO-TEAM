@@ -13,7 +13,7 @@
        что вход ещё не подключён. -->
   <meta name="mt-bot" content="">
   <meta name="mt-google" content="">
-  <meta name="description" content="Метанойя — христианская онлайн-школа для детей 5–14 лет">
+  <meta name="description" content="Метанойя — христианская онлайн-школа для детей 7–10 лет">
   <title>Метанойя</title>
 
   <!-- Превью ссылки при отправке родителям (Telegram/WhatsApp/VK) -->
@@ -21,10 +21,10 @@
   <meta property="og:site_name" content="Метанойя">
   <meta property="og:locale" content="ru_RU">
   <meta property="og:title" content="Метанойя — христианская школа для детей">
-  <meta property="og:description" content="Уроки, добрые игры и стих дня для детей 5–14 лет. Свет веры — просто и с любовью.">
+  <meta property="og:description" content="Уроки, добрые игры и стих дня для детей 7–10 лет. Свет веры — просто и с любовью.">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Метанойя — христианская школа для детей">
-  <meta name="twitter:description" content="Уроки, добрые игры и стих дня для детей 5–14 лет. Свет веры — просто и с любовью.">
+  <meta name="twitter:description" content="Уроки, добрые игры и стих дня для детей 7–10 лет. Свет веры — просто и с любовью.">
 
   <!-- Добавление на домашний экран (iOS) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -305,7 +305,7 @@
           <span class="today__streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="streakDays">12</b> дней подряд</span>
         </div>
         <div class="today__pills">
-          <span class="tpill tpill--xp">+<b id="xpToday">45</b> очков сегодня</span>
+          <span class="tpill tpill--xp">+<b id="xpToday">0</b> <span id="xpTodayWord">баллов</span> сегодня</span>
           <span class="tpill tpill--rank"><span data-icon="sprout" data-size="13"></span> Росточек</span>
         </div>
         <button class="today__call today__next" id="todayLesson">
@@ -339,14 +339,14 @@
         <input type="search" id="searchInput" aria-label="Поиск по урокам, играм и материалам" placeholder="Поиск уроков, игр, материалов..." autocomplete="off">
       </div>
       <div class="tabs-row">
-        <button class="tab-chip tab-chip--active">Рекомендуем</button>
-        <button class="tab-chip">Популярное</button>
-        <button class="tab-chip">Новое</button>
+        <button class="tab-chip tab-chip--active" data-srtab="all">Всё</button>
+        <button class="tab-chip" data-srtab="next">Что дальше</button>
+        <button class="tab-chip" data-srtab="done">Пройдено</button>
       </div>
+      <div class="search-hist" id="searchHist" hidden></div>
       <div class="filter-row">
-        <button class="filter-chip">5–7</button>
-        <button class="filter-chip">7–10</button>
-        <button class="filter-chip">10–14</button>
+        <button class="filter-chip">6–8 лет</button>
+        <button class="filter-chip">9–11 лет</button>
         <button class="filter-chip">Видео</button>
         <button class="filter-chip">Игра</button>
         <button class="filter-chip">Тест</button>
@@ -357,7 +357,7 @@
       </div>
       <div class="empty-state" id="searchEmpty">
         <div class="empty-state__icon"><span data-icon="search" data-size="40"></span></div>
-        <p>Начни вводить запрос — найдём уроки, игры и материалы.</p>
+        <p>Начни вводить запрос, выбери фильтр или вкладку — найдём уроки, игры и материалы.</p>
       </div>
       <div class="feed" id="searchResults"></div>
     </section>
@@ -442,7 +442,7 @@
       <h2 class="section-title">Настройки</h2>
       <div class="menu-list">
         <button class="menu-item" id="mAbout"><span data-icon="dove" data-size="18"></span>О школе · наша миссия</button>
-        <button class="menu-item menu-item--invite" id="mInvite"><span data-icon="heart" data-size="18"></span>Пригласить семью<span class="menu-item__tag">+50 очков за друга</span></button>
+        <button class="menu-item menu-item--invite" id="mInvite"><span data-icon="heart" data-size="18"></span>Пригласить семью<span class="menu-item__tag">+50 баллов за друга</span></button>
         <button class="menu-item" id="mSettings"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
         <button class="menu-item" id="mLang"><span data-icon="map" data-size="18"></span>Язык приложения<span class="menu-item__tag" id="mLangTag">Русский</span></button>
         <button class="menu-item menu-item--partner" id="mPartner"><span data-icon="dove" data-size="18"></span>Стать партнёром</button>
@@ -530,7 +530,7 @@
         <div class="temple__img"><img src="assets/img/cards/shop.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage" id="shopTileXp">Твои баллы · обменяй на подарки <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
-          <div class="temple__note">Копи очки за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
+          <div class="temple__note">Копи баллы за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
         </div>
       </button>
 
@@ -764,7 +764,7 @@
     <section class="screen" data-screen="games">
       <button class="child-back" id="gamesBack"><span data-icon="back" data-size="18"></span> Профиль</button>
       <h1 class="screen-title" style="margin-bottom:4px">Мини-игры</h1>
-      <p class="feed-card__meta" style="margin-bottom:14px">Игры с библейской тематикой. За каждую игру начисляются очки и зёрна для друга.</p>
+      <p class="feed-card__meta" style="margin-bottom:14px">Игры с библейской тематикой. За каждую игру начисляются баллы школы и зёрна для друга.</p>
       <div class="ghub" id="ghub"></div>
     </section>
 
@@ -857,7 +857,7 @@
       <button class="child-back" id="shopBack"><span data-icon="back" data-size="18"></span> Назад</button>
       <div class="shop-head">
         <div class="shop-head__label">У тебя баллов</div>
-        <div class="shop-head__xp"><span data-icon="flame" data-size="22"></span> <span id="shopXp">340</span> очков</div>
+        <div class="shop-head__xp"><span data-icon="flame" data-size="22"></span> <span id="shopXp">0</span> <span id="shopXpWord">баллов</span></div>
         <div class="shop-head__note">Копи баллы за уроки, тесты и игры — и обменивай на подарки школы</div>
       </div>
       <div class="shop-grid" id="shopGrid"></div>
@@ -932,7 +932,7 @@
       <button class="child-back" id="ratingBack"><span data-icon="back" data-size="18"></span> Назад</button>
       <div class="rating-head">
         <div class="rating-head__title">Рейтинг недели</div>
-        <div class="rating-head__meta">Обновляется каждый понедельник · собирай очки в играх и уроках</div>
+        <div class="rating-head__meta">Обновляется каждый понедельник · собирай баллы в уроках и играх</div>
       </div>
       <div class="rating-podium" id="ratingPodium"></div>
       <div class="rating-list" id="ratingList"></div>
@@ -1104,6 +1104,7 @@
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/magic.js"></script>
   <script src="assets/js/lessons.js"></script>
+  <script src="assets/js/shkola.js"></script>
   <script src="assets/js/workbook.js"></script>
   <script src="assets/js/tasks.js"></script>
   <script src="assets/js/gamedata.js"></script>

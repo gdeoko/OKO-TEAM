@@ -273,8 +273,8 @@ function shareInvite() {
   // Выдуманный адрес в приглашении хуже, чем приглашение без адреса.
   const url = (location && /^https?:/.test(location.origin || '')) ? location.origin : '';
   const text = 'Мы учимся в христианской онлайн-школе «Метанойя» — уроки, добрые игры и тёплое сообщество для детей. Присоединяйтесь всей семьёй! 🕊';
-  const data = url ? { title: 'МЕТАНОЙА — школа для детей', text, url }
-                   : { title: 'МЕТАНОЙА — школа для детей', text };
+  const data = url ? { title: 'МЕТАНОЙЯ — школа для детей', text, url }
+                   : { title: 'МЕТАНОЙЯ — школа для детей', text };
   const целиком = url ? text + '\n' + url : text;
   if (navigator.share) {
     navigator.share(data).then(() => toast('Спасибо, что делитесь! 💛')).catch(() => {});
@@ -433,9 +433,9 @@ function renderLessons() {
 
 function renderChildren() {
   // Ранг и дни у ребёнка живые: они же показываются на его экране.
-  const зёрна = (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0;
+  const баллы = баллыШколы();
   const ранг = (typeof RANKS !== 'undefined' && typeof rankIndex === 'function')
-    ? (RANKS[rankIndex(зёрна)] || {}).name : '';
+    ? (RANKS[rankIndex(баллы)] || {}).name : '';
   const дней = серияДней();
   if (!DEMO.children.length) {
     $('#children').innerHTML = '<div class="children__empty">Здесь появятся профили ваших детей. Нажмите «Добавить ребёнка», это займёт полминуты.</div>';
@@ -449,7 +449,7 @@ function renderChildren() {
     // Один ребёнок в семье всегда текущий, даже если номера у записи ещё нет.
     const свой = DEMO.children.length === 1 || (!!c.лид && String(c.лид) === String(текущий));
     const строка = свой
-      ? (ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна)
+      ? (ранг ? ранг + ' · ' : '') + баллы + ' ' + склонениеБаллов(баллы)
       : 'Свой прогресс · нажмите, чтобы передать устройство';
     return `
     <button class="child-card${свой ? ' child-card--now' : ''}" data-kid="${c.лид || ''}">
@@ -667,6 +667,13 @@ function initComments() {
    Собирается один раз при первом поиске, когда все данные уже загружены. */
 let ПОИСК_КЭШ = null;
 
+/* Возрастные ступени взяты из её рабочей тетради: младшим она предлагает
+   рассказывать ответ взрослому, старшим — записывать и объяснять. Уроки
+   написаны сразу для обеих, а несколько игр требуют чтения и рассуждения,
+   поэтому честно помечены только старшей. */
+const ОБЕ_СТУПЕНИ = '6-8 9-11';
+const ТОЛЬКО_СТАРШИЕ = ['detective', 'interpret'];
+
 function searchIndex() {
   if (ПОИСК_КЭШ) return ПОИСК_КЭШ;
   const из = [];
@@ -675,17 +682,17 @@ function searchIndex() {
     b.lessons.forEach((l) => {
       if (l.exam) {
         из.push({ t: 'test', title: 'Проверка знаний · ' + глава,
-          meta: 'Проверка после главы ' + (bi + 1), age: '5-7 7-10 10-14', theme: bi === 0 ? 'НЗ' : 'ВЗ', n: l.n, bi });
+          meta: 'Проверка после главы ' + (bi + 1), age: ОБЕ_СТУПЕНИ, theme: bi === 0 ? 'НЗ' : 'ВЗ', n: l.n, bi });
         return;
       }
       из.push({ t: 'lesson', title: l.title,
         meta: 'Урок ' + (l.cn || l.n) + ' · Глава ' + (bi + 1) + ' «' + глава + '»',
-        age: '5-7 7-10 10-14', theme: bi === 0 ? 'НЗ' : 'ВЗ', n: l.n, bi });
+        age: ОБЕ_СТУПЕНИ, theme: bi === 0 ? 'НЗ' : 'ВЗ', n: l.n, bi });
     });
   });
   (typeof GAMES !== 'undefined' ? GAMES : []).forEach((g) => {
     из.push({ t: 'game', title: g.name, meta: 'Игра · ' + (g.meta || ''),
-      age: '5-7 7-10 10-14', theme: 'ВЗ НЗ', key: g.key });
+      age: ТОЛЬКО_СТАРШИЕ.includes(g.key) ? '9-11' : ОБЕ_СТУПЕНИ, theme: 'ВЗ НЗ', key: g.key });
   });
   // Раскраски, карточки молитв и отдельные тесты из указателя убраны: таких
   // файлов у школы нет, а поиск обещал их и на нажатие разводил руками.
@@ -701,28 +708,104 @@ function activeSearchFilters() {
 }
 function matchesFilters(it, filters) {
   const FMAP = {
-    '5–7': () => it.age && it.age.includes('5-7'), '7–10': () => it.age && it.age.includes('7-10'),
-    '10–14': () => it.age && it.age.includes('10-14'),
+    '6–8 лет': () => it.age && it.age.includes('6-8'),
+    '9–11 лет': () => it.age && it.age.includes('9-11'),
     'Видео': () => it.t === 'lesson', 'Игра': () => it.t === 'game', 'Тест': () => it.t === 'test',
     'Ветхий Завет': () => it.theme === 'ВЗ', 'Новый Завет': () => it.theme === 'НЗ',
     'Молитва': () => /молитв/i.test(it.title), 'Притчи': () => /притч/i.test(it.title),
   };
   return filters.every((f) => (FMAP[f] ? FMAP[f]() : true));
 }
+/* Вкладки поиска. Раньше их было три — «Рекомендуем», «Популярное»,
+   «Новое», — и все три ничего не меняли: нажимаешь, а список тот же.
+   «Популярное» и «Новое» честно посчитать нечем, пока нет сервера, поэтому
+   оставили то, что считается прямо на устройстве: что ребёнку делать дальше
+   и к чему он может вернуться. */
+function активнаяВкладкаПоиска() {
+  const э = document.querySelector('.tabs-row .tab-chip--active');
+  return (э && э.dataset.srtab) || 'all';
+}
+
+function подходитВкладке(it, вкладка) {
+  if (вкладка === 'all') return true;
+  const пройден = it.t === 'lesson' && it.n && isLessonDone(it.n);
+  const сыграно = it.t === 'game' && it.key && сыгранаЛиИгра(it.key);
+  if (вкладка === 'done') return пройден || сыграно;
+  // «Что дальше»: недоделанное и то, до чего ребёнок уже дошёл.
+  if (пройден || сыграно) return false;
+  if (it.t === 'lesson' && it.n && typeof isLessonOpen === 'function') return isLessonOpen(it.n);
+  // Проверка главы — дело не ближайшее, пока в главе не начато ни одного урока.
+  if (it.t === 'test') return началаЛиГлава(it.bi);
+  return true;
+}
+
+/* Начата ли глава: хоть один её урок пройден. Нужно, чтобы проверка знаний
+   по третьей главе не висела в «Что дальше» у ребёнка с первого дня. */
+function началаЛиГлава(bi) {
+  const блок = (typeof DEMO !== 'undefined' ? DEMO.blocks : [])[bi];
+  if (!блок) return false;
+  return блок.lessons.some((l) => !l.exam && isLessonDone(l.n));
+}
+
+/* Игра считается пройденной, когда партия дошла до конца: только тогда
+   поднимается её уровень. Открыть и выйти — не в счёт. */
+function сыгранаЛиИгра(ключ) {
+  return Number(localStorage.getItem('mt_lvl_' + ключ) || 1) > 1;
+}
+
+/* История запросов: последние десять, чтобы не набирать снова. */
+const ИСТОРИЯ_ПОИСКА = 'mt_search_hist';
+
+function запомнитьЗапрос(q) {
+  if (!q || q.length < 2) return;
+  const было = памятьЧитать(ИСТОРИЯ_ПОИСКА, []).filter((x) => x !== q);
+  было.unshift(q);
+  localStorage.setItem(ИСТОРИЯ_ПОИСКА, JSON.stringify(было.slice(0, 10)));
+}
+
+function renderSearchHist() {
+  const box = $('#searchHist');
+  if (!box) return;
+  const пустой = !$('#searchInput').value.trim();
+  const список = памятьЧитать(ИСТОРИЯ_ПОИСКА, []);
+  if (!пустой || !список.length) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `<span class="search-hist__t">Искали раньше</span>
+    ${список.map((q) => `<button class="search-hist__q">${безопасно(q)}</button>`).join('')}
+    <button class="search-hist__clr">Очистить</button>`;
+  box.querySelectorAll('.search-hist__q').forEach((b) => b.addEventListener('click', () => {
+    $('#searchInput').value = b.textContent;
+    runSearch();
+  }));
+  box.querySelector('.search-hist__clr')?.addEventListener('click', () => {
+    localStorage.removeItem(ИСТОРИЯ_ПОИСКА);
+    renderSearchHist();
+  });
+}
+
 function runSearch() {
   const q = $('#searchInput').value.trim().toLowerCase();
   const box = $('#searchResults');
   const empty = $('#searchEmpty');
   const filters = activeSearchFilters();
-  if (q.length < 2 && !filters.length) {
+  const вкладка = активнаяВкладкаПоиска();
+  renderSearchHist();
+  if (q.length < 2 && !filters.length && вкладка === 'all') {
     box.innerHTML = '';
     empty.style.display = '';
-    empty.querySelector('p').textContent = 'Начни вводить запрос или выбери фильтр — найдём уроки, игры и материалы.';
+    empty.querySelector('p').textContent = 'Начни вводить запрос, выбери фильтр или вкладку — найдём уроки, игры и материалы.';
     return;
   }
-  const found = searchIndex().filter((it) => (q.length < 2 || it.title.toLowerCase().includes(q)) && matchesFilters(it, filters));
+  const found = searchIndex().filter((it) => (q.length < 2 || it.title.toLowerCase().includes(q))
+    && matchesFilters(it, filters) && подходитВкладке(it, вкладка));
   empty.style.display = found.length ? 'none' : '';
-  if (!found.length) empty.querySelector('p').textContent = `Ничего не найдено по запросу «${$('#searchInput').value}». Попробуй другие слова.`;
+  if (!found.length) {
+    empty.querySelector('p').textContent = q.length >= 2
+      ? `Ничего не найдено по запросу «${$('#searchInput').value}». Попробуй другие слова.`
+      : (вкладка === 'done'
+        ? 'Пока ничего не пройдено. Начни с первого урока — он ждёт тебя.'
+        : 'Здесь пусто. Сними фильтры или посмотри вкладку «Всё».');
+  }
   box.innerHTML = found.map((it, i) => `
     <button class="sr" data-sr="${i}">
       <div class="sr__icon sr__icon--${it.t}">${ICON(SR_ICON[it.t], 20)}</div>
@@ -831,27 +914,29 @@ function кРебёнкуИлиВПрофиль() {
 }
 
 function openChild(c) {
-  if (!c) return кРебёнкуИлиВПрофиль();
-  $('#childAvatar').src = c.img;
-  $('#childName').textContent = `${c.name}, ${c.age} лет`;
+  if (!c || !c.name) return кРебёнкуИлиВПрофиль();
+  $('#childAvatar').src = c.img || '';
+  // Возраст мог потеряться при переносе с другого устройства: тогда показываем
+  // одно имя, а не «Миша, undefined лет».
+  $('#childName').textContent = c.age ? `${c.name}, ${c.age} лет` : c.name;
   // Ранг, серия дней и лесенка рангов считаются по настоящему прогрессу,
   // а не берутся из строки, записанной при добавлении ребёнка.
-  const зёрна = (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0;
+  const баллы = баллыШколы();
   const ранг = (typeof RANKS !== 'undefined' && typeof rankIndex === 'function')
-    ? (RANKS[rankIndex(зёрна)] || {}).name : '';
-  $('#childRank').textContent = (ранг ? ранг + ' · ' : '') + зёрна + ' ' + склонениеЗёрен(зёрна);
+    ? (RANKS[rankIndex(баллы)] || {}).name : '';
+  $('#childRank').textContent = (ранг ? ранг + ' · ' : '') + баллы + ' ' + склонениеБаллов(баллы);
   $('#childStreak').textContent = серияДней();
-  renderRanks(зёрна);
+  renderRanks(баллы);
   // Плитки «Рейтинг» и «Сертификаты» тоже показывали написанное намертво:
   // «Ты на 2 месте · 340 очков» и «1 из 3 получен» видел даже тот, кто
   // сегодня открыл приложение впервые.
   const плиткаР = $('#ratingTile');
   if (плиткаР) {
-    // Место считаем так же, как на самом экране рейтинга: по убыванию зёрен.
+    // Место считаем так же, как на самом экране рейтинга: по убыванию баллов.
     const место = (typeof рейтингСоСвоей === 'function')
       ? (рейтингСоСвоей().sort((a, b) => b.xp - a.xp).findIndex((x) => x.me) + 1) : 0;
     плиткаР.firstChild.textContent = место > 0
-      ? `Ты на ${место} месте · ${зёрна} ${склонениеЗёрен(зёрна)} `
+      ? `Ты на ${место} месте · ${баллы} ${склонениеБаллов(баллы)} `
       : 'Рейтинг недели ';
   }
   const плиткаС = $('#certsTile');
@@ -879,7 +964,7 @@ function openChild(c) {
 
   const плиткаЛ = $('#shopTileXp');
   if (плиткаЛ) {
-    плиткаЛ.firstChild.textContent = `Твои баллы: ${зёрна} · обменяй на подарки `;
+    плиткаЛ.firstChild.textContent = `Твои баллы: ${баллы} · обменяй на подарки `;
   }
 
   // Прогресс по главам считаем по пройденным урокам этого ребёнка: раньше
@@ -1695,6 +1780,13 @@ function renderLesson(n) {
   // Страница рабочей тетради Екатерины: сердце урока, размышление, миссия.
   const тетрадь = (window.TETRAD || {})[n] || null;
 
+  // Подзаголовок и стих. В её тетради у каждого урока свои, в текстах глав —
+  // общий девиз. Тетрадь точнее, поэтому она главнее, а девиз остаётся запасным.
+  const подзаголовокУрока = (тетрадь && тетрадь.подзаголовок) || (c && c.subtitle) || '';
+  const стихУрока = (тетрадь && тетрадь.стих)
+    ? { text: тетрадь.стих.текст, ref: тетрадь.стих.ссылка }
+    : verse;
+
   // Иллюстрации по ходу текста: после первого и после третьего абзаца
   const картинка = (i, подпись) => `<figure class="lesson-pic">
       <img src="${lessonPic(n, i)}" alt="" loading="lazy" onerror="this.closest('.lesson-pic').remove()">
@@ -1707,6 +1799,15 @@ function renderLesson(n) {
     const абзац = `<p>${p}</p>`;
     return i === местоКартинки ? абзац + картинка(0, '') : абзац;
   }).join('');
+
+  // Помощники школы: Милана в начале, Еммануил в середине, Эван в конце.
+  // Еммануил берёт первый вопрос урока — свой, а не придуманный за неё.
+  const словарь = (window.SLOVAR || {})[n] || null;
+  const вспомни = (window.VSPOMNI || {})[n] || null;
+  // Один и тот же вопрос дважды на экране — это шум. Первый забирает
+  // Еммануил, остальные остаются семье для беседы.
+  const вопросЕммануила = questions[0] || '';
+  const вопросыБеседы = вопросЕммануила ? questions.slice(1) : questions;
 
   body.innerHTML = `
     <div class="feed-card__cover feed-card__cover--img lesson-cover">
@@ -1723,18 +1824,26 @@ function renderLesson(n) {
       <div class="lstep ${st.test ? 'done' : ''}" data-step="test"><i></i>Тест</div>
     </div>
 
+    ${n === 1 ? знакомствоСГероями() : ''}
+
     ${c && c.intro ? `<div class="card lesson-text lesson-intro"><p>${c.intro}</p></div>` : ''}
 
-    ${c && c.subtitle ? `<div class="lesson-epigraph">${c.subtitle}</div>` : ''}
+    ${подзаголовокУрока ? `<div class="lesson-epigraph">${безопасно(подзаголовокУрока)}</div>` : ''}
+
+    ${помощник('милана')}
+
+    ${повторениеПрошлого(n)}
 
     <h2 class="section-title">Цитата из Писания</h2>
     <article class="card feed-card feed-card--quote">
-      <div class="feed-card__title">«${verse.text}»</div>
-      <div class="quote-ref">${verse.ref}</div>
+      <div class="feed-card__title">«${безопасно(стихУрока.text)}»</div>
+      <div class="quote-ref">${безопасно(стихУрока.ref)}</div>
     </article>
 
     <h2 class="section-title">${c && c.pages ? 'Урок' : 'Детский пересказ'}</h2>
     ${c && c.pages && c.pages.length ? lessonPagerHTML(c.pages) : `<div class="card lesson-text lesson-story">${рассказ}</div>`}
+
+    ${помощник('еммануил', вопросЕммануила)}
 
     ${c && c.golden ? `<div class="card lesson-golden">${ICON('sparkle', 18)}<span>${c.golden}</span></div>` : ''}
 
@@ -1745,8 +1854,8 @@ function renderLesson(n) {
 
     <button class="btn btn--outline lesson-read" id="lessonRead">${st.read ? 'Прочитано ✓' : 'Я прочитал урок'}</button>
 
-    ${questions.length ? `<h2 class="section-title">Вопросы для беседы</h2>
-      <div class="card lesson-text lesson-questions">${questions.map((q, i) => `<div class="lq"><span class="lq__n">${i + 1}</span>${q}</div>`).join('')}</div>` : ''}
+    ${вопросыБеседы.length ? `<h2 class="section-title">Вопросы для беседы</h2>
+      <div class="card lesson-text lesson-questions">${вопросыБеседы.map((q, i) => `<div class="lq"><span class="lq__n">${i + 1}</span>${q}</div>`).join('')}</div>` : ''}
 
     ${task ? `<h2 class="section-title">Задание</h2>
       <div class="card task-card ${st.task ? 'task-card--done' : ''}" id="lessonTask">${ЗАДАНИЯ.разметка(task)}</div>` : ''}
@@ -1761,6 +1870,21 @@ function renderLesson(n) {
           <div class="wb-sit__q wb-sit__q--good">${безопасно(с.добро)}</div>
           <div class="wb-sit__q">${безопасно(с.без)}</div>
         </div>`).join('')}
+      </div>` : ''}
+
+    ${словарь ? `<h2 class="section-title">Наши открытия</h2>
+      ${помощник('эван')}
+      <div class="card slovar">
+        ${словарь.map((с) => `<div class="slovar__row">
+          <div class="slovar__w">${безопасно(с.слово)}</div>
+          <div class="slovar__s">${безопасно(с.коротко)}</div>
+          <p class="slovar__t">${безопасно(с.толкование)}</p>
+        </div>`).join('')}
+      </div>` : ''}
+
+    ${вспомни ? `<div class="card vspomni">
+        <div class="vspomni__t">Вспомни перед тестом</div>
+        <ol class="vspomni__list">${вспомни.map((в) => `<li>${безопасно(в)}</li>`).join('')}</ol>
       </div>` : ''}
 
     ${quiz.length ? `<h2 class="section-title">Проверь себя</h2>
@@ -1785,6 +1909,9 @@ function renderLesson(n) {
           `<li>${безопасно(ш)}</li>`).join('')}</ol>
         <div class="wb-missiya__end">Перед фото объясни смысл. Закончи мысль:
           <i>${безопасно(тетрадь.миссия.закончи)}</i></div>
+        <p class="wb-missiya__age">Если тебе 6-8 лет, рисуй, выбирай и рассказывай взрослому.
+          Если 9-11, дополняй ответы своими словами и объясняй, почему ты так думаешь.</p>
+        <p class="wb-missiya__age">Пройди тест и прикрепи фото задания — очки дают оба шага.</p>
       </div>` : `<p>${c && c.parentNote ? c.parentNote : 'Нарисуй вместе с родителями то, что тебе запомнилось из урока, и отправь рисунок Екатерине.'}</p>`}
       <input type="file" id="hwFile" accept="image/*,.pdf" hidden>
       <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Прикрепить задание</button>
@@ -1794,12 +1921,140 @@ function renderLesson(n) {
     </div>
 
     <div class="lesson-final" id="lessonFinal"></div>
+    <div class="tetrad-final" id="tetradFinal"></div>
   `;
 
   hydrateIcons();
   wirePager();
   wireLesson(n, quiz, task);
   renderLessonFinal(n);
+  renderTetradFinal(n);
+}
+
+/* ───────── ПОМОЩНИКИ ШКОЛЫ ─────────
+   Её три героя со слайда «Познакомимся». Она просила прицепить их в начале,
+   в середине и в конце урока — как помощников, а не как украшение. Поэтому
+   у каждого своя работа: Милана зовёт слушать, Еммануил задаёт вопрос по
+   рассказу, Эван разбирает слова. Если помощников нет в сборке, урок
+   выглядит как раньше. */
+
+function помощник(ключ, своиСлова) {
+  const г = (window.GEROI || {})[ключ];
+  if (!г) return '';
+  const текст = (своиСлова || '').trim() || г.слова;
+  if (!текст) return '';
+  return `<div class="pomosh pomosh--${безопасно(г.место)}">
+    <img class="pomosh__face" src="${безопасно(г.портрет)}" alt="${безопасно(г.имя)}"
+      loading="lazy" onerror="this.remove()">
+    <div class="pomosh__body">
+      <div class="pomosh__name">${безопасно(г.имя)}</div>
+      <p class="pomosh__say">${безопасно(текст)}</p>
+    </div>
+  </div>`;
+}
+
+/* Её методика, из анкеты: «любая тема на уроке закрепляется в конце урока,
+   а в начале следующего повторяется». Закрепление — словарь «Наши открытия»
+   в конце. Повторение — эта строка в начале следующего урока. Показываем
+   только то, что ребёнок уже проходил, и только словами Екатерины. */
+function повторениеПрошлого(n) {
+  const прошлый = (window.SLOVAR || {})[n - 1];
+  if (!прошлый || !прошлый.length || !isLessonDone(n - 1)) return '';
+  return `<div class="card povtor">
+    <div class="povtor__t">Вспомним урок ${n - 1}</div>
+    <div class="povtor__row">${прошлый.map((с) =>
+      `<span class="povtor__w">${безопасно(с.слово)}<i>${безопасно(с.коротко)}</i></span>`).join('')}</div>
+  </div>`;
+}
+
+function знакомствоСГероями() {
+  const все = Object.values(window.GEROI || {});
+  if (!все.length) return '';
+  return `<h2 class="section-title">Познакомимся</h2>
+    <div class="card znak">
+      <img class="znak__photo" src="${безопасно(window.GEROI_ФОТО || '')}" alt="Милана, Еммануил и Эван"
+        loading="lazy" onerror="this.remove()">
+      <div class="znak__list">
+        ${все.map((г) => `<div class="znak__one">
+          <div class="znak__name">${безопасно(г.имя)}</div>
+          <div class="znak__who">${безопасно(г.кто)}</div>
+        </div>`).join('')}
+      </div>
+      <div class="znak__call">${безопасно(window.GEROI_ЗОВ || '')}</div>
+    </div>`;
+}
+
+/* ───────── ФИНАЛ ТЕТРАДИ ─────────
+   Последние две страницы её рабочей тетради: четыре урока сходятся в одну
+   дорогу. Показываем в последнем уроке тетради и только когда он пройден:
+   на бумаге эта страница тоже заполняется в самом конце. Написанное
+   остаётся на устройстве — это личные слова ребёнка, а не ответ на проверку. */
+
+function тетрадьКлюч(номер) { return 'mt_tetrad_' + номер; }
+
+function renderTetradFinal(n) {
+  const box = document.getElementById('tetradFinal');
+  if (!box) return;
+  const ф = (window.TETRAD || {}).финал;
+  box.innerHTML = '';
+  if (!ф || ф.после !== n || !isLessonDone(n)) return;
+
+  const записи = памятьЧитать(тетрадьКлюч(ф.номер), {});
+  const поле = (ключ, начало) => `<textarea class="tf-in" data-tf="${безопасно(ключ)}"
+    rows="2" placeholder="${безопасно(начало)}">${безопасно(записи[ключ] || '')}</textarea>`;
+
+  box.innerHTML = `
+    <h2 class="section-title">${безопасно(ф.заголовок)} ${ф.номер}</h2>
+    <div class="card tf">
+      <div class="tf__head">
+        <div class="tf__sub">${безопасно(ф.подзаголовок)}</div>
+        <p class="tf__lead">${безопасно(ф.лид)}</p>
+        <p class="tf__age">${безопасно(ф.возраст)}</p>
+      </div>
+
+      <div class="tf__road">
+        ${ф.фонари.map((л, i) => `<div class="tf-lamp">
+          <div class="tf-lamp__top">
+            <span class="tf-lamp__n">${i + 1}</span>
+            <span class="tf-lamp__mark">${безопасно(л.метка)}</span>
+          </div>
+          <div class="tf-lamp__t">${безопасно(л.шапка)}</div>
+          ${поле('фонарь' + i, л.начало)}
+        </div>`).join('')}
+      </div>
+
+      <div class="tf-block">
+        <div class="tf-block__t">${безопасно(ф.главное.шапка)}</div>
+        <div class="tf-block__s">${безопасно(ф.главное.подпись)}</div>
+        ${поле('главное', ф.главное.вопрос)}
+      </div>
+
+      <div class="tf-done">
+        <div class="tf-done__t">${безопасно(ф.завершение.шапка)}</div>
+        <div class="tf-done__s">${безопасно(ф.завершение.подпись)}</div>
+        <p class="tf-done__idea">${безопасно(ф.завершение.мысль)}</p>
+        ${ф.завершение.поля.map((п) => `<div class="tf-block">
+          <div class="tf-block__t">${безопасно(п.шапка)}</div>
+          <div class="tf-block__s">${безопасно(п.подпись)}</div>
+          ${поле(п.ключ, п.вопрос)}
+        </div>`).join('')}
+        <div class="tf-sign">
+          <span>${безопасно((активныйРебёнок() || {}).name || 'Имя')}</span>
+          <span>${new Date().toLocaleDateString('ru-RU')}</span>
+        </div>
+        <p class="tf-done__end">${безопасно(ф.завершение.итог)}</p>
+        <div class="tf-next">${безопасно(ф.завершение.дальше)}</div>
+      </div>
+    </div>`;
+
+  // Пишем по ходу: ребёнок может уйти с экрана и вернуться, ничего не потеряв.
+  box.querySelectorAll('[data-tf]').forEach((эл) => {
+    эл.addEventListener('input', () => {
+      const было = памятьЧитать(тетрадьКлюч(ф.номер), {});
+      было[эл.dataset.tf] = эл.value.slice(0, 600);
+      localStorage.setItem(тетрадьКлюч(ф.номер), JSON.stringify(было));
+    });
+  });
 }
 
 /* Итог урока: пока не все три шага, честно показываем чего не хватает */
@@ -1831,6 +2086,8 @@ function wireLesson(n, quiz, task) {
     const s = getLessonState(n);
     $$('#lessonSteps .lstep').forEach((el) => el.classList.toggle('done', !!s[el.dataset.step]));
     renderLessonFinal(n);
+    // Финал тетради открывается ровно в тот момент, когда урок дошёл до 100%.
+    renderTetradFinal(n);
     finishLessonIfReady(n);
   };
 
@@ -1903,8 +2160,13 @@ function wireLesson(n, quiz, task) {
     if (!f) return;
     if (f.size > 12 * 1024 * 1024) return toast('Файл больше 12 МБ, выберите поменьше');
     const s = getLessonState(n);
+    // «Пройди тест и отправь фото задания — за оба шага ты получишь XP»: так
+    // обещает её тетрадь, поэтому творческая миссия тоже кормит друга.
+    // Замена файла ничего не добавляет, награда одна на урок.
+    const впервые = !s.hw;
     s.hw = true; s.hwName = f.name.slice(0, 80); s.hwSize = f.size;
     saveLessonState(n, s); syncSteps();
+    if (впервые) addSeeds(3, 'за творческую миссию');
     const метка = $('#hwName');
     if (метка) { метка.hidden = false; метка.textContent = 'Прикреплено: ' + s.hwName; }
     $('#hwUpload').textContent = 'Заменить файл';
@@ -2153,6 +2415,7 @@ function renderDilemma() {
   const d = DIL()[dilState.i];
   $('#dilemmaNum').textContent = dilState.i + 1;
   $('#dilemmaTotal').textContent = DIL().length;
+  игроваяКартинка('dilemma', d.title + ' ' + d.situation);
   $('#dilemmaBody').innerHTML = `
     <div class="card dil-situation"><div class="dil-situation__t">${d.title}</div><p>${d.situation}</p></div>
     <div class="dil-opts" id="dilOpts">
@@ -2207,6 +2470,8 @@ function renderDetective() {
   $('#detNum').textContent = detState.i + 1;
   $('#detTotal').textContent = DET().length;
   $('#detScore').textContent = detState.score;
+  // По уликам, а не по ответу: иначе картинка выдаст разгадку.
+  игроваяКартинка('detective', c.clues.slice(0, detState.clue).join(' '));
   $('#detBody').innerHTML = `
     <div class="det-clues">${c.clues.slice(0, detState.clue).map((cl, i) => `<div class="det-clue"><span class="det-clue__n">Улика ${i + 1}</span>${cl}</div>`).join('')}</div>
     ${detState.clue < c.clues.length ? `<button class="btn btn--outline" id="detMore" style="width:100%;margin-bottom:12px">Ещё улика (−5 очков)</button>` : ''}
@@ -2370,7 +2635,7 @@ function openChallenge() {
     <div class="card"><div class="q__text" style="margin-bottom:12px">${q.q}</div>
       <div id="chOpts">${q.opts.map((o, oi) => `<button class="fam-opt" data-oi="${oi}">${o}</button>`).join('')}</div>
       <div class="test-result" id="chResult" hidden></div></div>` : ''}
-    <button class="btn btn--primary" id="chClaim" style="width:100%;margin-top:16px" ${doneToday ? 'disabled' : ''}>${doneToday ? 'Вызов дня выполнен ✓' : 'Отметить выполненным · +15 очков'}</button>`;
+    <button class="btn btn--primary" id="chClaim" style="width:100%;margin-top:16px" ${doneToday ? 'disabled' : ''}>${doneToday ? 'Вызов дня выполнен ✓' : 'Отметить выполненным · +15 баллов'}</button>`;
   hydrateIcons();
   if (q) $$('#chOpts .fam-opt').forEach((el) => el.addEventListener('click', () => {
     $$('#chOpts .fam-opt').forEach((b, i) => { b.disabled = true; if (i === q.answer) b.classList.add('fam-opt--right'); else if (b === el) b.classList.add('fam-opt--wrong'); });
@@ -2383,7 +2648,7 @@ function openChallenge() {
     if (localStorage.getItem('mt_challenge_date') === todayKey()) return;
     localStorage.setItem('mt_challenge_date', todayKey());
     if (window.MAGIC) MAGIC.rewardModal({ icon: 'trophy', title: 'Вызов дня выполнен!', subtitle: 'Возвращайся завтра — новый вызов уже ждёт.', xp: 15 });
-    else toast('+15 очков!');
+    else toast('+15 баллов!');
     setTimeout(openGamesHub, 400);
   });
   window.scrollTo({ top: 0 });
@@ -2407,6 +2672,7 @@ function renderInterpret() {
   $('#intNum').textContent = intState.i + 1;
   $('#intTotal').textContent = INT().length;
   $('#intScore').textContent = intState.score;
+  игроваяКартинка('interpret', c.passage);
   intState.answered = false;
   $('#intBody').innerHTML = `
     <article class="card feed-card feed-card--quote"><div class="feed-card__title">«${c.passage}»</div><div class="quote-ref">${c.ref}</div></article>
@@ -2861,8 +3127,17 @@ const PET_СТАДИИ = [
   { имя: 'сияет',    порог: 100 },
 ];
 
+/* Два разных счёта, и путать их нельзя.
+
+   `баллы` — счёт школы. Растут за уроки, тесты, игры и стих дня и никогда
+   не убывают: по ним считается ранг ребёнка, место в рейтинге и лавка.
+   Так их называет и Екатерина: «получи баллы за знания».
+
+   `зёрна` — корм для друга. Начисляются вместе с баллами и тратятся на
+   кормёжку. Раньше счётчик был один на всё, и ребёнок, покормивший
+   ягнёнка, терял ранг и деньги в лавке. */
 const PET_ПО_УМОЛЧАНИЮ = {
-  вид: 'lamb', имя: 'Заря', зёрна: 6, сытость: 60, радость: 60, рост: 8,
+  вид: 'lamb', имя: 'Заря', зёрна: 6, баллы: 6, сытость: 60, радость: 60, рост: 8,
   день: '', дневник: [],
 };
 
@@ -2873,10 +3148,15 @@ function petПрочитать() {
   const с = памятьЧитать('mt_pet', {});
   const итог = Object.assign({}, PET_ПО_УМОЛЧАНИЮ, с);
   if (!PET_ВИДЫ[итог.вид]) итог.вид = PET_ПО_УМОЛЧАНИЮ.вид;
-  ['зёрна', 'сытость', 'радость', 'рост'].forEach((k) => {
+  ['зёрна', 'баллы', 'сытость', 'радость', 'рост'].forEach((k) => {
     const n = Number(итог[k]);
     итог[k] = Number.isFinite(n) ? n : PET_ПО_УМОЛЧАНИЮ[k];
   });
+  // Запись со старой версии знала только зёрна. Берём их как начальные баллы:
+  // так ребёнок ничего не теряет при обновлении.
+  if (!Number.isFinite(Number(с.баллы))) итог.баллы = итог.зёрна;
+  // Баллы школы не убывают ни при каких обстоятельствах.
+  if (итог.баллы < итог.зёрна) итог.баллы = итог.зёрна;
   if (typeof итог.имя !== 'string' || !итог.имя.trim()) итог.имя = PET_ПО_УМОЛЧАНИЮ.имя;
   if (!Array.isArray(итог.дневник)) итог.дневник = [];
   return итог;
@@ -2904,15 +3184,30 @@ function petНастроение() {
   return 'всё хорошо';
 }
 
-/* Зёрна начисляются за всё полезное в приложении */
+/* За всё полезное в приложении: баллы школе, зёрна другу. Числа одинаковые,
+   но живут по-разному — баллы копятся, зёрна тратятся на кормёжку. */
 function addSeeds(n, за) {
   petState.зёрна += n;
+  petState.баллы += n;
   зёрнаЗаСегодня(n);
   petДневник(`+${n} ${склонениеЗёрен(n)} ${за}`);
   savePet();
   renderPet();
   renderPetTile();
-  toast(`+${n} ${склонениеЗёрен(n)} для друга`);
+  toast(`+${n} ${склонениеБаллов(n)} и ${n} ${склонениеЗёрен(n)} другу`);
+}
+
+/* Счёт школы: ранг, рейтинг, лавка и сертификаты считаются по нему. */
+function баллыШколы() {
+  return (typeof petState === 'object' && petState) ? Number(petState.баллы || 0) : 0;
+}
+
+function склонениеБаллов(n) {
+  const д = n % 10, дд = n % 100;
+  if (дд >= 11 && дд <= 14) return 'баллов';
+  if (д === 1) return 'балл';
+  if (д >= 2 && д <= 4) return 'балла';
+  return 'баллов';
 }
 
 /* Сколько зёрен собрано сегодня: это число показывает главная. */
@@ -2923,6 +3218,17 @@ function зёрнаЗаСегодня(прибавить) {
   if (!прибавить) return было;
   localStorage.setItem('mt_seeds_today', JSON.stringify({ день: сегодня, сколько: было + прибавить }));
   return было + прибавить;
+}
+
+/* Сколько игр на самом деле. Раньше число стояло в тексте руками и отстало
+   от списка: обещали девятнадцать, а было семнадцать. Считаем по списку. */
+function сколькоИгр() { return (typeof GAMES !== 'undefined' ? GAMES.length : 0); }
+function склонениеИгр(n) {
+  const д = n % 10, дд = n % 100;
+  if (дд >= 11 && дд <= 14) return 'добрых игр';
+  if (д === 1) return 'добрая игра';
+  if (д >= 2 && д <= 4) return 'добрые игры';
+  return 'добрых игр';
 }
 
 function склонениеЗёрен(n) {
@@ -2951,6 +3257,7 @@ function petНовыйДень() {
   }
   petState.день = сегодня;
   petState.зёрна += 2;
+  petState.баллы += 2;
   petДневник('+2 зерна за новый день вместе');
   savePet();
 }
@@ -3139,9 +3446,9 @@ const GAMES = [
     desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
   { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true,
     desc: 'Двигайся по библейской карте — от Сада Эдема через Египет к Земле обетованной.', bullets: ['Твой путь на карте', 'Остановки-истории', 'Растёт с уроками'] },
-  { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 очков', play: true,
-    desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и очки.', bullets: ['Тёплая привычка', 'Серия дней подряд', '+5 очков в день'] },
-  { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Задание дня · +15 очков', play: true,
+  { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 баллов', play: true,
+    desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и очки.', bullets: ['Тёплая привычка', 'Серия дней подряд', '+5 баллов в день'] },
+  { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Задание дня · +15 баллов', play: true,
     desc: 'Каждый день новое маленькое задание: стих, доброе дело, молитва, тест.', bullets: ['Задание на каждый день', 'Награды за серии', 'Разное каждый день'] },
   { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Понять притчу · очки', play: true,
     desc: 'Среди похожих вариантов выбери верное, каноническое толкование притчи.', bullets: ['Учит понимать притчи', 'Одобрено педагогом', 'Для старших детей'] },
@@ -3198,6 +3505,67 @@ function игратьМожно() {
   return игровоеВремя() < ИГР_ПРЕДЕЛ;
 }
 
+/* ───────── КАРТИНКИ ВНУТРИ ИГР ─────────
+   Её замечание по играм: «смыслы классные, но опять скучно в них, так как
+   там просто серо и тексты» и «Возможно ли добавить ещё картинки прям
+   внутрь игр? Во все игры».
+
+   Поэтому у каждой игры под шапкой стоит её же иллюстрация, а там, где у
+   хода есть свой герой или тема, картинка меняется вместе с ходом. Берём
+   только то, что в школе уже нарисовано: обложки игр и символы из мемори.
+   Ничего не выдумываем: не нашли подходящего — остаётся обложка игры. */
+
+const ИГРА_СИМВОЛЫ = {
+  book: /библи|писани|книг|свиток|заповед|закон/i,
+  church: /храм|церков|скини|жертвенник|алтар|иерусалим/i,
+  cross: /крест|распят|голгоф|спасени|искуплени/i,
+  crown: /цар|власт|престол|соломон|саул|давид|корон/i,
+  // Коротких слов вроде «ной» здесь нет намеренно: они попадаются внутри
+  // других слов и уводят картинку не туда.
+  dove: /голуб|крещени|ковчег|потоп|радуг|дух святой/i,
+  flame: /огон|пламя|купин|свеч|светильник|пятидесятниц|илия/i,
+  heart: /любов|доброт|милосерд|прощени|сердц|друг|ближн/i,
+  star: /звезд|волхв|рождеств|вифлеем|небо|обещани|пророч/i,
+};
+
+function символКартинка(текст) {
+  for (const [имя, правило] of Object.entries(ИГРА_СИМВОЛЫ)) {
+    if (правило.test(текст || '')) return 'assets/img/mem/' + имя + '.jpg';
+  }
+  return '';
+}
+
+/* Ставим картинку в игру. Блок один на экран и живёт сразу под шапкой. */
+/* У пары игр экран называется не так, как игра: картинку ищем по игре. */
+const ЭКРАН_ИГРЫ = { quest2: 'quest' };
+
+function игроваяКартинка(ключ, тема, подпись) {
+  const экран = document.querySelector(`[data-screen="${ключ}"]`)
+    || document.querySelector('.screen--active');
+  if (!экран) return;
+  let блок = экран.querySelector('.game-art');
+  if (!блок) {
+    блок = document.createElement('figure');
+    блок.className = 'game-art';
+    блок.innerHTML = '<img alt="" loading="lazy"><figcaption></figcaption>';
+    // Обычно под шапкой игры, а где шапки нет — сразу под кнопкой «Назад».
+    const шапка = экран.querySelector('.verse-head') || экран.querySelector('.child-back');
+    if (!шапка) return;
+    шапка.insertAdjacentElement('afterend', блок);
+  }
+  const игра = ЭКРАН_ИГРЫ[ключ] || ключ;
+  const свой = игра ? `assets/img/games/${игра}.jpg` : '';
+  const адрес = символКартинка(тема) || свой;
+  const кадр = блок.querySelector('img');
+  // Битая ссылка не должна оставлять пустую рамку посреди игры.
+  кадр.onerror = () => { блок.hidden = true; };
+  if (кадр.getAttribute('src') !== адрес) кадр.src = адрес;
+  const подп = блок.querySelector('figcaption');
+  подп.textContent = подпись || '';
+  подп.hidden = !подпись;
+  блок.hidden = !адрес;
+}
+
 function openGame(k) {
   if (!игратьМожно()) {
     const осталось = Math.max(0, Math.round((ИГР_ПРЕДЕЛ - игровоеВремя()) / 60000));
@@ -3208,6 +3576,13 @@ function openGame(k) {
   }
   началоИгры();
   startGameMusic();
+  // Стих дня открывается окном поверх игр. Если уйти в другую игру, не
+  // закрыв его, оно останется висеть над новым экраном.
+  const стих = $('#dailyVerse');
+  if (стих && !стих.hidden) {
+    const звук = $('#dverseAudio'); if (звук) звук.pause();
+    стих.hidden = true;
+  }
   // «Собери стих»: чем выше уровень, тем длиннее стих на следующем заходе.
   if (k === 'verse') {
     const л = уровеньИгры('verse');
@@ -3230,6 +3605,13 @@ function openGame(k) {
   else if (k === 'interpret') openInterpret();
   else if (k === 'quest') openQuest2();
   else openGamePreview(k);
+
+  // Обложка игры — это запасной вариант. Если игра уже поставила свою
+  // картинку по теме хода, не перебиваем её.
+  const экран = document.querySelector('.screen--active');
+  if (экран && экран.dataset.screen && !экран.querySelector('.game-art')) {
+    игроваяКартинка(экран.dataset.screen);
+  }
 }
 
 function initGamesHub() {
@@ -3343,6 +3725,8 @@ function renderWho() {
   const q = WHO[whoState.i];
   $('#whoNum').textContent = whoState.i + 1;
   $('#whoScore').textContent = whoState.score;
+  // Картинка по подсказкам, а не по имени героя: имя — это и есть ответ.
+  игроваяКартинка('who', q.clues.slice(0, whoState.clue).join(' '));
   $('#whoClues').innerHTML = q.clues.slice(0, whoState.clue).map((c, i) =>
     `<div class="who-clue"><span class="who-clue__n">Подсказка ${i + 1}</span>${c}</div>`).join('');
   $('#whoMore').disabled = whoState.clue >= q.clues.length;
@@ -3508,6 +3892,7 @@ function renderQuiz() {
   const q = QUIZ[quizState.i];
   $('#quizNum').textContent = quizState.i + 1;
   $('#quizQ').textContent = q.q;
+  игроваяКартинка('quiz', q.q);
   $('#quizOpts').innerHTML = q.opts.map((o, k) => `<button class="qopt" data-opt="${k}">${o}</button>`).join('');
   $$('#quizOpts .qopt').forEach((el) => el.addEventListener('click', () => answerQuiz(Number(el.dataset.opt))));
   // таймер 10 сек
@@ -3667,7 +4052,7 @@ function renderRanks(xp) {
     return `<div class="rank ${cls}">
       <div class="rank__icon">${ICON(r.icon, 22)}</div>
       <div class="rank__name">${r.name}</div>
-      <div class="rank__xp">${r.to === Infinity ? r.from + '+' : r.from + '–' + r.to} очков</div>
+      <div class="rank__xp">${r.to === Infinity ? r.from + '+' : r.from + '–' + r.to} баллов</div>
     </div>`;
   }).join('');
   // прокрутить к текущему рангу
@@ -3916,7 +4301,7 @@ function initAuth() {
       const возраст = Math.max(3, Math.min(16, Number(f.child_age && f.child_age.value) || 7));
       const дети = памятьЧитать('mt_kids', []);
       if (!дети.some((k) => k.name === имяРебёнка)) {
-        const kid = { name: имяРебёнка, age: возраст, rank: 'Зёрнышко · 0 очков', streak: 0,
+        const kid = { name: имяРебёнка, age: возраст, rank: 'Зёрнышко · 0 баллов', streak: 0,
           img: initialAvatar(имяРебёнка, '#C97064') };
         дети.push(kid);
         DEMO.children.push(kid);
@@ -4073,7 +4458,7 @@ function hydrateIcons() {
 
 const LB_COLORS = ['#C97064', '#7AAED4', '#D4A574', '#7BC67A', '#9B7AD4', '#5A6577', '#D4974A'];
 /* Соседи по рейтингу пока условные: настоящие ученики появятся, когда школа
-   включит сервер. А вот своя строка настоящая: имя ребёнка и его зёрна. */
+   включит сервер. А вот своя строка настоящая: имя ребёнка и его баллы. */
 const LEADERBOARD = [
   { name: 'София', xp: 420, rank: 'Цветочек' },
   { name: 'Даниил', xp: 305, rank: 'Росточек' },
@@ -4084,12 +4469,11 @@ const LEADERBOARD = [
 ];
 
 function рейтингСоСвоей() {
-  const зёрна = (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0;
   const стадия = (typeof PET_СТАДИИ !== 'undefined' && typeof petСтадия === 'function')
     ? (PET_СТАДИИ[petСтадия()] || {}).имя : '';
   const своя = {
     name: (typeof именаДляСертификата === 'function' ? именаДляСертификата() : 'Ты'),
-    xp: зёрна,
+    xp: баллыШколы(),
     rank: стадия ? ((PET_ВИДЫ[petState.вид] || PET_ВИДЫ.lamb).имя + ' · ' + стадия) : 'начало пути',
     me: true,
   };
@@ -4111,7 +4495,7 @@ function openRatingScreen() {
     return `<div class="pod pod--${place}">
       ${lbAva(c, sorted.indexOf(c), 'pod__ava')}
       <div class="pod__name">${безопасно(c.name)}</div>
-      <div class="pod__xp">${c.xp} очков</div>
+      <div class="pod__xp">${c.xp} баллов</div>
       <div class="pod__stand">${place}</div>
     </div>`;
   }).join('');
@@ -4123,7 +4507,7 @@ function openRatingScreen() {
         <div class="lb-row__name">${безопасно(c.name)}${c.me ? ' · это ты' : ''}</div>
         <div class="lb-row__rank">${c.rank}</div>
       </div>
-      <div class="lb-row__xp">${c.xp}<small> очков</small></div>
+      <div class="lb-row__xp">${c.xp}<small> баллов</small></div>
     </div>`).join('');
   const список = $('#ratingList');
   const сноска = document.createElement('div');
@@ -4226,19 +4610,27 @@ function openAbout() {
       <div class="about-hero__scrim"></div>
       <div class="about-hero__inner">
         <div class="about-hero__eyebrow">Христианская онлайн-школа</div>
-        <h1 class="about-hero__title">МЕТАНОЙА</h1>
+        <h1 class="about-hero__title">МЕТАНОЙЯ</h1>
         <p class="about-hero__sub">«Слово Твоё — светильник ноге моей»</p>
       </div>
     </div>
     <div class="about-mission card">
       <div class="about-mission__ic">${ICON('dove', 26)}</div>
-      <p>Мы помогаем детям 5–14 лет узнать Бога сердцем — через тёплые уроки, добрые игры и живое общение. Как маяк ведёт корабли сквозь туман, так Слово мягко ведёт детское сердце к свету.</p>
+      <p>Мы помогаем детям 7–10 лет, возраста начальной школы, узнать Бога сердцем — через тёплые уроки, добрые игры и живое общение. Как маяк ведёт корабли сквозь туман, так Слово мягко ведёт детское сердце к свету.</p>
+    </div>
+    <div class="card about-word">
+      <div class="about-word__t">Что значит «Метанойя»</div>
+      <p>Метанойя — это «перемена ума», разворот на 180 градусов к Богу. Отсюда и название школы,
+        и адрес её сайта.</p>
+      <div class="about-word__t">Для кого школа</div>
+      <p>Для всех христианских семей: православных, протестантов, католиков. Мы говорим о вере
+        живым языком, без церковнославянского, и не заменяем церковь — помогаем семье жить верой дома.</p>
     </div>
     <h2 class="section-title">Что получает ребёнок</h2>
     <div class="about-grid">
       ${aboutCard('book', '105 уроков', 'Три главы: жизнь Господа, Ветхий Завет, путь Израиля — по возрасту и с любовью')}
-      ${aboutCard('star', '19 добрых игр', 'Библейские истории оживают в играх — учиться радостно, а не скучно')}
-      ${aboutCard('church', 'Мой храм и путь', 'Каждый урок строит храм веры и ведёт по карте библейского путешествия')}
+      ${aboutCard('star', сколькоИгр() + ' ' + склонениеИгр(сколькоИгр()), 'Библейские истории оживают в играх — учиться радостно, а не скучно')}
+      ${aboutCard('map', 'Путешествие веры', 'Каждый пройденный урок двигает ребёнка дальше по библейской карте')}
       ${aboutCard('comment', 'Тёплое сообщество', 'Педагог рядом, семьи поддерживают друг друга, детям — безопасно')}
       ${aboutCard('crown', 'Награды и рост', 'Баллы, значки, именные сертификаты — виден каждый шаг ребёнка')}
       ${aboutCard('shield', 'Спокойствие родителей', 'Родительская зона под PIN, бережный контроль, чистое содержание')}
@@ -4251,6 +4643,22 @@ function openAbout() {
         <p>«Я мечтаю, чтобы каждый ребёнок узнал, как сильно он любим Богом. Эта школа — мой ответ на эту любовь».</p>
       </div>
     </div>
+    <h2 class="section-title">Школа в сети</h2>
+    <div class="card about-links">
+      <p class="about-links__note">Это страницы для взрослых. Из детского раздела наружу ничего не ведёт.</p>
+      ${[
+        ['share', 'Сайт школы', 'metanoia-180.ru', 'https://metanoia-180.ru'],
+        ['comment', 'Телеграм', '@metanoia_180', 'https://t.me/metanoia_180'],
+        ['star', 'Инстаграм', '@mama_s_bogom', 'https://instagram.com/mama_s_bogom'],
+        ['play', 'Ютуб', '@mama_s_bogom', 'https://youtube.com/@mama_s_bogom'],
+        ['users', 'Написать Екатерине', '@ekaterina_pawlenko', 'https://t.me/ekaterina_pawlenko'],
+      ].map(([иконка, имя, подпись, адрес]) => `
+        <a class="about-link" href="${адрес}" target="_blank" rel="noopener noreferrer">
+          <span class="about-link__ic">${ICON(иконка, 18)}</span>
+          <span class="about-link__t">${имя}<i>${подпись}</i></span>
+        </a>`).join('')}
+    </div>
+
     <button class="btn btn--outline" id="aboutInvite" style="margin-top:16px">${ICON('heart', 17)} Пригласить семью в школу</button>
     <div class="about-ver">Версия ${ВЕРСИЯ_ПРИЛОЖЕНИЯ} · сделано OKO TEAM для школы «Метанойя»<br>
       <a href="policy.html" data-doc="privacy">Политика конфиденциальности</a> ·
@@ -4497,7 +4905,7 @@ function openDailyVerse() {
   }
   const btn = $('#dverseClaim');
   btn.disabled = claimedToday;
-  btn.textContent = claimedToday ? 'Стих на сегодня прочитан ✓' : 'Прочитал(а) · получить +5 очков';
+  btn.textContent = claimedToday ? 'Стих на сегодня прочитан ✓' : 'Прочитал(а) · получить +5 баллов';
   $('#dverseStreak').textContent = streak > 0 ? `🔥 ${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд со стихом дня` : '';
   $('#dailyVerse').hidden = false;
   hydrateIcons();
@@ -4524,7 +4932,7 @@ function claimDailyVerse() {
     MAGIC.celebrate(b.left + b.width / 2, b.top);
   }
   openDailyVerse();
-  toast('+5 очков · стих дня');
+  toast('+5 баллов · стих дня');
 }
 
 /* ── Три в ряд: Дары Духа (match-3) ── */
@@ -4896,8 +5304,9 @@ function arkEnd(win) {
 }
 
 /* ── Магазин за баллы (идея Екатерины #12) ── */
-/* Баланс лавки — это зёрна друга, других баллов у ребёнка нет. */
-function shopXp() { return (typeof petState === 'object' && petState) ? Number(petState.зёрна || 0) : 0; }
+/* В лавке ребёнок смотрит на баллы школы, а не на корм для друга:
+   покормить ягнёнка и остаться без подарка — так быть не должно. */
+function shopXp() { return баллыШколы(); }
 const MERCH = [
   { icon: 'sparkle', name: 'Набор наклеек', cost: 300 },
   { icon: 'book', name: 'Закладка для книг', cost: 700 },
@@ -4910,12 +5319,14 @@ const MERCH = [
 function openShop() {
   const баланс = shopXp();
   $('#shopXp').textContent = баланс;
+  const слово = $('#shopXpWord');
+  if (слово) слово.textContent = склонениеБаллов(баланс);
   $('#shopGrid').innerHTML = MERCH.map((m) => {
     const can = баланс >= m.cost;
     return `<div class="shop-card ${can ? '' : 'shop-card--locked'}">
       <div class="shop-card__ic">${ICON(m.icon, 24)}</div>
       <div class="shop-card__name">${m.name}</div>
-      <div class="shop-card__cost">${m.cost} очков</div>
+      <div class="shop-card__cost">${m.cost} баллов</div>
       <button class="shop-card__btn" data-merch="${m.name}" data-cost="${m.cost}" ${can ? '' : 'disabled'}>${can ? 'Обменять' : `ещё ${m.cost - баланс}`}</button>
     </div>`;
   }).join('');
@@ -4930,7 +5341,7 @@ function openShop() {
     }
     renderWishes();
     if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Родители узнают!',
-      subtitle: `Пожелание «${b.dataset.merch}» записано. Оно появилось в профиле родителя, зёрна пока остаются у тебя 💛`, xp: 0 });
+      subtitle: `Пожелание «${b.dataset.merch}» записано. Оно появилось в профиле родителя, баллы пока остаются у тебя 💛`, xp: 0 });
     else toast('Пожелание записано, родители его увидят');
   }));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'shop'));
@@ -5154,7 +5565,7 @@ function saveChild() {
   if (!name) { $('#addkName').focus(); toast('Введите имя ребёнка'); return; }
   const opt = AVATAR_OPTS[addkPick];
   const img = opt.type === 'img' ? opt.src : initialAvatar(name, opt.color);
-  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 очков', streak: 0, img,
+  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 баллов', streak: 0, img,
     лид: 'k' + Date.now() };
   DEMO.children.push(kid);
   const saved = памятьЧитать('mt_kids', []);
@@ -5542,11 +5953,16 @@ function countUp(el, dur = 900) {
   requestAnimationFrame(step);
 }
 function animateHomeStats() {
-  // Числа на главной настоящие: серия дней со стихом и зёрна за сегодня.
+  // Числа на главной настоящие: серия дней со стихом и баллы за сегодня.
   const с = document.getElementById('streakDays');
   const з = document.getElementById('xpToday');
   if (с) с.textContent = серияДней();
-  if (з) з.textContent = зёрнаЗаСегодня(0);
+  if (з) {
+    const сегодня = зёрнаЗаСегодня(0);
+    з.textContent = сегодня;
+    const слово = document.getElementById('xpTodayWord');
+    if (слово) слово.textContent = склонениеБаллов(сегодня);
+  }
   countUp(с, 800);
   countUp(з, 1000);
 }
@@ -5595,15 +6011,21 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(runSearch, 300); // debounce по ТЗ
   });
+  // Запрос попадает в историю, когда ребёнок закончил набирать, а не на
+  // каждой букве: иначе в истории лежали бы огрызки слов.
+  $('#searchInput').addEventListener('change', () =>
+    запомнитьЗапрос($('#searchInput').value.trim()));
+  $('#searchInput').addEventListener('blur', () =>
+    запомнитьЗапрос($('#searchInput').value.trim()));
   $$('.filter-chip').forEach((el) =>
     el.addEventListener('click', () => { el.classList.toggle('filter-chip--active'); runSearch(); }));
   $$('.tabs-row .tab-chip').forEach((el) =>
-    el.addEventListener('click', () => { $$('.tabs-row .tab-chip').forEach((t) => t.classList.remove('tab-chip--active')); el.classList.add('tab-chip--active'); runSearch(); }));
-  $$('.tab-chip').forEach((el) =>
     el.addEventListener('click', () => {
-      $$('.tab-chip').forEach((c) => c.classList.remove('tab-chip--active'));
+      $$('.tabs-row .tab-chip').forEach((t) => t.classList.remove('tab-chip--active'));
       el.classList.add('tab-chip--active');
+      runSearch();
     }));
+  renderSearchHist();
 
   initOnboarding();
   initAuth();
@@ -5698,7 +6120,7 @@ const ДОКИ = {
     sub: 'Простые правила, по которым мы вместе учимся',
     parts: [
       ['О чём это приложение',
-       'Метанойя — христианская онлайн-школа для детей 5-14 лет. Уроки, игры и добрые задания для семейного чтения.'],
+       'Метанойя — христианская онлайн-школа для детей 7-10 лет. Уроки, игры и добрые задания для семейного чтения.'],
       ['Кто может пользоваться',
        'Аккаунт заводит взрослый. Внутри аккаунта он добавляет профили детей и отвечает за то, как дети пользуются приложением.'],
       ['Как себя вести в чатах',
@@ -5783,7 +6205,7 @@ const ПЕРЕВОД = {
   'Свой прогресс · нажмите, чтобы передать устройство':
     'Su propio progreso · toque para pasarle el dispositivo',
   'Семейный альбом года': 'Álbum familiar del año',
-  '+50 очков за друга': '+50 puntos por un amigo',
+  '+50 баллов за друга': '+50 puntos por un amigo',
   'Сертификаты за главы': 'Certificados por capítulos',
   'Пока ни одного: сдай проверку знаний главы':
     'Aún ninguno: aprueba la prueba del capítulo',
