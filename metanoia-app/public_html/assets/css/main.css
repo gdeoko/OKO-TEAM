@@ -2935,3 +2935,31 @@ html.в-телеграме .hd { padding-top: 6px; }
 [data-theme="dark"] .wb-sit + .wb-sit,
 [data-theme="dark"] .task-step + .task-step,
 [data-theme="dark"] .wb-missiya__end { border-color: rgba(231,237,243,.14); }
+
+/* ══════ Узкий телефон: шапка ══════
+   На 320 px название упиралось прямо в лупу: между ними не было зазора,
+   и «МЕТАНОЙЯ» читалось вместе со значком. Даём левой части право
+   сжиматься, правой запрещаем, и держим зазор в любом случае. */
+.header__left { min-width: 0; flex: 1 1 auto; }
+.header__right { flex: 0 0 auto; margin-left: 12px; }
+.header__name { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+
+@media (max-width: 359px) {
+  .header__name { font-size: 14px; letter-spacing: 1.4px; }
+  .header__logo { width: 30px; height: 30px; }
+  .header__right { gap: 8px; margin-left: 8px; }
+}
+
+/* ══════ Узкий телефон: карточка «открыт урок» ══════
+   На 320 px длинное название урока обрезалось посреди слова:
+   «Поклонен…волхвов». Разрешаем переносить слово по слогам, а сам
+   «Перейти» на самых узких экранах уводим под текст, чтобы он не
+   отъедал ширину у заголовка. */
+.today__call-title { overflow-wrap: anywhere; hyphens: auto; }
+
+@media (max-width: 359px) {
+  .today__call { flex-wrap: wrap; row-gap: 10px; }
+  .today__call-body { flex: 1 1 100%; order: 2; }
+  .today__call-ic { order: 1; }
+  .today__call-go { order: 3; flex: 1 1 100%; text-align: center; }
+}
