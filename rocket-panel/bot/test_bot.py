@@ -4047,3 +4047,63 @@ class ЧужаяРаботаНеУбивается(unittest.TestCase):
         for ключ in ("ген.карта_не_встала", "ген.карта_занята",
                      "ген.карта_сломалась"):
             self.assertIn(ключ, и, ключ)
+
+
+class КронНеГаситПосредиРаботы(unittest.TestCase):
+    """Поймано 24.09.2026 на живой карте: крон погасил её посреди
+    счёта, в журнале «простой 25 мин — гашу».
+
+    Простой считался по времени НАЧАЛА задания — `done_at` у
+    работающего пуст. Десятисекундный ролик идёт двадцать с лишним
+    минут, и на двадцать первой минуте крон видит «простой 21 минута»
+    и удаляет карту вместе с чужой оплаченной работой."""
+
+    def setUp(self):
+        import importlib.util
+        import os as o
+        путь = o.path.join(o.path.dirname(o.path.abspath(__file__)),
+                           "..", "карта", "карта.py")
+        o.environ.setdefault("HYPERSTACK_API_KEY", "тест")
+        спец = importlib.util.spec_from_file_location("карта_модуль", путь)
+        self.к = importlib.util.module_from_spec(спец)
+        спец.loader.exec_module(self.к)
+
+    def _база(self, строки):
+        import sqlite3
+        import tempfile
+        п = os.path.join(tempfile.mkdtemp(), "b.db")
+        c = sqlite3.connect(п)
+        c.execute("create table jobs(id text, at int, done_at int)")
+        c.executemany("insert into jobs values(?,?,?)", строки)
+        c.commit(); c.close()
+        return п
+
+    def test_начатое_без_итога_держит_карту(self):
+        import time as t
+        self.к.БАЗА_БОТА = self._база([("ролик", int(t.time()) - 25 * 60, None)])
+        self.assertEqual(self.к.незаконченные(), 1)
+
+    def test_законченное_карту_не_держит(self):
+        import time as t
+        сейчас = int(t.time())
+        self.к.БАЗА_БОТА = self._база([("кадр", сейчас - 25 * 60, сейчас - 24 * 60)])
+        self.assertEqual(self.к.незаконченные(), 0)
+
+    def test_старьё_не_держит_карту_вечно(self):
+        """След упавшего задания — не работа."""
+        import time as t
+        self.к.БАЗА_БОТА = self._база([("зависло", int(t.time()) - 5 * 3600, None)])
+        self.assertEqual(self.к.незаконченные(), 0)
+
+    def test_нечитаемая_база_читается_как_работа(self):
+        """Ошибиться в эту сторону стоит часа аренды, в другую —
+        чужого ролика."""
+        self.к.БАЗА_БОТА = "/нет/такого/файла.db"
+        self.assertEqual(self.к.незаконченные(), 1)
+
+    def test_проверка_стоит_раньше_очереди(self):
+        """На очередь полагаться нельзя: занятая панель молчит, а
+        молчание читается как «ноль работ»."""
+        import inspect
+        и = inspect.getsource(self.к.обслужить)
+        self.assertLess(и.find("незаконченные()"), и.find("очередь()"))
