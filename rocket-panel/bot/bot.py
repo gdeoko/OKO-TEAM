@@ -354,8 +354,10 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         if буд_id:
             tg("deleteMessage", chat_id=chat, message_id=буд_id)
         if not готова:
-            send(chat, t("ген.карта_не_встала" if почему == "нет_железа"
-                         else "ген.карта_сломалась", я))
+            ключ = {"нет_железа": "ген.карта_не_встала",
+                    "занята": "ген.карта_занята"}.get(почему,
+                                                      "ген.карта_сломалась")
+            send(chat, t(ключ, я))
             store.событие(u, "карта", почему)
             with lock:
                 busy.discard(u)
