@@ -746,22 +746,51 @@ class Узел:
     # плеч, лицо под руками». На принятом кадре она держит подол на
     # уровне груди и лицо открыто. Модель, разрываясь между двумя
     # позами, рисовала ДВА тела разом: в кадре появлялось второе лицо.
+    # ВТОРАЯ ПРАВКА, 24.09.2026: УБРАНО ПРОТИВОРЕЧИЕ В САМОМ ТЕКСТЕ.
+    #
+    # Текст требовал «её вульва на виду» И кадр в полный рост
+    # одновременно. В полный рост она размером с ноготь, и сборка
+    # разрешала спор по-своему: пририсовывала внизу кадра ОГРОМНОЕ тело
+    # крупным планом. На трёх зёрнах подряд, при любой силе опоры и при
+    # любом её виде - значит дело не в опоре, а в требовании.
+    #
+    # Теперь низ описан как «ничего под рубашкой», без «на виду»: это
+    # ровно то, что на принятом кадре.
+    #
+    # ЗАПРЕТ «в кадре нет никого, кроме неё» ПРОБОВАЛИ И УБРАЛИ. Один
+    # раз он дал идеальный кадр, но на четырёх зёрнах подряд не
+    # повторился: положительный промпт не умеет запрещать, он рисует
+    # то, что названо, и названное второе тело приходит охотнее.
+    # Запреты живут в негативе, и там они уже есть.
+    #
+    # ЭТА КНОПКА - ЕДИНСТВЕННАЯ ИЗ ДВАДЦАТИ ОДНОЙ, ГДЕ ПРИНЯТЫЙ КАДР
+    # ПОВТОРИТЬ НЕ УДАЛОСЬ. Перепробовано 24.09.2026: сила опоры 0,8 /
+    # 1,0 / 1,15 / 1,25 / 1,4, срок 0,3 и 0,6, погашенный пол на карте
+    # глубины, опора скелетом вместо глубины, две редакции текста.
+    # Расклад везде один из двух: либо стойка в полный рост и второе
+    # тело внизу кадра, либо чистый кадр, но она СИДИТ. Выбрано второе
+    # (опора скелетом, см. `ОПОРА_СВОЯ` в панели): действие на кадре
+    # верное - майка поднята, грудь открыта, - а второе тело это брак,
+    # который виден с первого взгляда.
+    #
+    # По-хорошему нужен НОВЫЙ ЭТАЛОН этой кнопки, снятый сидя, или
+    # решение владельца оставить как есть.
     "ph_below": (
         "FULL-LENGTH SHOT, her whole body from her hair down to her bare "
         "feet inside the frame. She stands facing the camera SQUARE ON. SHE "
         "IS WEARING A PLAIN WHITE T-SHIRT AND NOTHING ELSE AT ALL: below "
-        "the shirt she is bare skin, her own bare vulva in plain view, no "
-        "underwear of any kind. SHE HAS TAKEN THE HEM OF THE SHIRT IN BOTH "
-        "HANDS AND LIFTED IT UP TO JUST ABOVE HER OWN BREASTS, so the cloth "
-        "is bunched in a band across her collarbones and BOTH OF HER BARE "
-        "BREASTS ARE FULLY UNCOVERED below it, the nipples bare and in "
-        "plain view at the CENTRE of the frame. Her hands stay at the hem, "
-        "at the height of her own chest; her arms are NOT raised above her "
-        "head and the shirt is NOT over her face. Her whole face is inside "
-        "the frame, above the shirt, turned to the lens. She is a woman, "
-        "her anatomy is female only. One whole unbroken body, one head on "
-        "her own neck, two arms from her own shoulders, two legs. Only one "
-        "person in the frame."),
+        "the hem she is bare skin all the way down, no underwear of any "
+        "kind. SHE HAS TAKEN THE HEM OF THE SHIRT IN BOTH HANDS AND LIFTED "
+        "IT UP TO JUST ABOVE HER OWN BREASTS, so the cloth is bunched in a "
+        "band across her collarbones and BOTH OF HER BARE BREASTS ARE FULLY "
+        "UNCOVERED below it, the nipples bare and in plain view at the "
+        "CENTRE of the frame. Her hands stay at the hem, at the height of "
+        "her own chest; her arms are NOT raised above her head and the "
+        "shirt is NOT over her face. Her whole face is inside the frame, "
+        "above the shirt, turned to the lens. She is a woman, her anatomy "
+        "is female only. One whole unbroken body, one head on her own neck, "
+        "two arms from her own shoulders, two legs. Only one person in the "
+        "frame."),
     # «Снимает трусики» — кадр pR21_ac_push__777.
     "ph_push": (
         "THE CAMERA IS BEHIND HER. She stands with her legs slightly "
