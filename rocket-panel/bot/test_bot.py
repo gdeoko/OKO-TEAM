@@ -4256,3 +4256,121 @@ class УдалённаяСтупеньНеГаситВитрину(unittest.Test
         self.assertEqual(pricing.средний_пакет()["id"], "одна")
         self.assertGreater(pricing.job("i2v_5").rub(), 0)
         self.assertEqual(pricing.скидка("одна"), 0)
+
+
+class СвоиКнопкиВладельца(unittest.TestCase):
+    """Владелец: «добавлять какие-то новые промпты и кнопки… полное
+    редактирование всего».
+
+    До этого каталог был закрытым списком: правились названия и
+    откровенные строки, а завести НОВУЮ кнопку можно было только
+    правкой кода, то есть чужими руками и с выкладкой.
+    """
+
+    def setUp(self):
+        import tempfile
+        import данные
+        self.папка = данные.ФАЙЛ
+        данные.ФАЙЛ = os.path.join(tempfile.mkdtemp(), "каталог.json")
+        catalog.перечитать()
+
+    def tearDown(self):
+        import данные
+        данные.ФАЙЛ = self.папка
+        catalog.перечитать()
+
+    def test_кнопка_заводится_и_попадает_в_ветку(self):
+        к = catalog.добавить_свой(название="Моя кнопка", строка="she waves",
+                                  вид="i2i", узел_="un_here")
+        s = catalog.scene(к)
+        self.assertEqual(s.назв("ru"), "Моя кнопка")
+        self.assertEqual(s.узел.key, "un_here")
+        self.assertIn(к, [x.key for x in catalog.узел("un_here").scenes])
+
+    def test_технический_слой_у_своей_кнопки_тот_же(self):
+        """Своя кнопка получает свет, объектив, анатомию, кожу и
+        запреты ровно такие же, как кнопка из кода: этот слой
+        собирается автоматически и от способа заведения не зависит.
+        Иначе своя кнопка давала бы брак, а владелец решил бы, что дело
+        в его строке."""
+        к = catalog.добавить_свой(название="Проба",
+                                  строка="she slowly removes her coat",
+                                  вид="i2i", узел_="un_here")
+        свой = catalog.scene(к).prompt
+        кодовый = catalog.scene("un_close").prompt
+        свои_ = {x.strip() for x in свой.split(".") if len(x.strip()) > 40}
+        код_ = {x.strip() for x in кодовый.split(".") if len(x.strip()) > 40}
+        self.assertGreater(len(свои_ & код_) / len(свои_), 0.8)
+        self.assertIn("removes her coat", свой)
+        self.assertTrue(catalog.scene(к).negative)
+
+    def test_цена_берётся_из_вида(self):
+        ф = catalog.добавить_свой(название="Ф", строка="x", вид="i2i",
+                                  узел_="un_here")
+        в = catalog.добавить_свой(название="В", строка="x", вид="i2v_5",
+                                  узел_="un_here")
+        self.assertEqual(catalog.scene(ф).coins, pricing.job("i2i").coins)
+        self.assertEqual(catalog.scene(в).coins, pricing.job("i2v_5").coins)
+
+    def test_пересборка_не_плодит_двойников(self):
+        к = catalog.добавить_свой(название="Раз", строка="x", узел_="un_here")
+        for _ in range(3):
+            catalog.перечитать()
+        сколько = sum(1 for x in catalog.узел("un_here").scenes if x.key == к)
+        self.assertEqual(сколько, 1)
+
+    def test_перенос_в_другую_ветку_не_оставляет_хвоста(self):
+        import данные
+        к = catalog.добавить_свой(название="Раз", строка="x", узел_="un_here")
+        п = catalog.текущие_правки()
+        п[к]["узел"] = "un_intim"
+        данные.сохранить(п)
+        catalog.перечитать()
+        self.assertEqual(catalog.scene(к).узел.key, "un_intim")
+        self.assertNotIn(к, [x.key for x in catalog.узел("un_here").scenes])
+
+    def test_несуществующая_ветка_не_теряет_кнопку(self):
+        """Иначе владелец завёл бы кнопку и искал, куда она делась."""
+        к = catalog.добавить_свой(название="Раз", строка="x",
+                                  узел_="такой_ветки_нет")
+        self.assertTrue(catalog.scene(к).узел)
+
+    def test_своя_удаляется_насовсем(self):
+        к = catalog.добавить_свой(название="Раз", строка="x", узел_="un_here")
+        self.assertTrue(catalog.убрать_свой(к))
+        self.assertNotIn(к, catalog.свои())
+        with self.assertRaises(KeyError):
+            catalog.scene(к)
+
+    def test_кнопку_из_кода_удалить_нельзя(self):
+        """У неё за спиной три тысячи знаков промпта: свет, объектив,
+        анатомия, поведение ткани. Стёртая из браузера, она бы не
+        вернулась. Такие прячутся, а не удаляются."""
+        self.assertFalse(catalog.убрать_свой("un_close"))
+        self.assertTrue(catalog.scene("un_close").prompt)
+
+    def test_своя_запись_не_перебивает_кнопку_из_кода(self):
+        """Запись с ключом кодовой кнопки не имеет права подменить её
+        сценарий строкой из браузера."""
+        import данные
+        п = catalog.текущие_правки()
+        п["un_close"] = {"свой": "1", "название": "Подмена", "строка": "x",
+                         "вид": "i2i", "узел": "un_here", "подпись": "",
+                         "название_en": "", "строка_рус": "", "скрыт": ""}
+        данные.сохранить(п)
+        catalog.перечитать()
+        self.assertGreater(len(catalog.scene("un_close").prompt), 3000)
+        self.assertNotIn("un_close", catalog.свои())
+
+    def test_ключи_не_сталкиваются(self):
+        ключи = [catalog.добавить_свой(название="Раз", строка="x",
+                                       узел_="un_here") for _ in range(3)]
+        self.assertEqual(len(set(ключи)), 3)
+
+    def test_ключ_влезает_в_callback_телеграма(self):
+        """Ключ уезжает в `callback_data`, где 64 байта на всё, и
+        кириллица в процентах съела бы их втрое быстрее."""
+        к = catalog.добавить_свой(название="Очень длинное русское название",
+                                  строка="x", узел_="un_here")
+        self.assertTrue(к.isascii())
+        self.assertLess(len(("sc:" + к).encode()), 64)
