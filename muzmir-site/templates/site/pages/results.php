@@ -191,12 +191,14 @@ ob_start(); ?>
 .res-total{text-align:center;color:var(--muted);font-size:.9rem;margin:0 0 16px}
 
 .res-search{position:sticky;top:74px;z-index:5;margin:0 auto 34px;max-width:560px}
-.res-search .field--float{margin:0}
+.res-search .rs-lbl{display:block;margin:0 0 6px 2px;font-weight:700;font-size:.9rem;color:var(--text-dim)}
+.res-search .rs-box{position:relative}
+/* Справа стоит лупа — оставляем под неё поле, иначе длинный запрос уезжает под значок. */
+.res-search .rs-box>input{padding:14px 46px 14px 16px;min-height:52px;box-shadow:var(--shadow-card)}
 .res-search .rs-ic{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--gold-deep);pointer-events:none}
 [data-theme="dark"] .res-search .rs-ic{color:var(--gold)}
 .res-count{text-align:center;color:var(--muted);font-size:.86rem;margin:-20px 0 30px}
 
-.res-search .field--float>input{box-shadow:var(--shadow-card)}
 /* СТРОКА РЕЗУЛЬТАТА.
  *
  * В одном ряду должно уместиться всё, за чем человек пришёл: кто выступал, с
@@ -323,9 +325,15 @@ ob_start(); ?>
       </div>
 
       <div class="res-search reveal">
-        <div class="field--float">
-          <input type="search" id="resSearch" placeholder=" " autocomplete="off" aria-label="Поиск по фамилии, коллективу, названию номера или номеру диплома">
-          <label for="resSearch">Найдите себя: фамилия, коллектив, название номера</label>
+        <?php /* ПОДПИСЬ НАД ПОЛЕМ, А НЕ ВНУТРИ НЕГО.
+                 Здесь стояла «плавающая» метка: она лежит поверх поля и уезжает
+                 вверх, когда человек начинает печатать. Подпись длинная, а поле
+                 на телефоне узкое — метка не успевала уйти из-под курсора и
+                 налезала на набранный текст, читалось как каша. Подпись вынесена
+                 наружу, а внутри поля — обычная подсказка. */ ?>
+        <label class="rs-lbl" for="resSearch">Найдите себя в списке</label>
+        <div class="rs-box">
+          <input type="search" id="resSearch" placeholder="Фамилия, коллектив, номер" autocomplete="off" aria-label="Поиск по фамилии, коллективу, названию номера или номеру диплома">
           <svg class="rs-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         </div>
       </div>
