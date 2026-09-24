@@ -104,18 +104,63 @@
     # строка не годилась бы: без единого слова о теле сборка валится в
     # собственное умолчание — модельную фигуру, — и именно это видно на
     # замере 24.09.2026.
+    # СЛОВА ПОДОБРАНЫ ЗАМЕРОМ, А НЕ ПО СМЫСЛУ. Первая редакция этого
+    # текста говорила «HER BUILD IS READ OUT OF THE REFERENCE
+    # PHOTOGRAPH», дальше шли «shape», «proportions», «weight»,
+    # «toned», «straightened», «turned into a model». По-русски это
+    # описание живого тела, а сборка прочитала его как задание на
+    # скульптуру: на кнопке «Поставить раком» вместо женщины выходила
+    # гипсовая статуя. Замер 24.09.2026, одно зерно, одна кнопка,
+    # менялся только этот абзац (цветность кадра, у нормальных 14…89):
+    #
+    #     как на фото (первая редакция)   1,8   гипс
+    #     стройная                       13,1   живой кадр
+    #     средняя                        12,2   живой кадр
+    #
+    # Поэтому здесь нет ни одного слова из словаря ваяния. Тело
+    # называется телом, части — частями, а «модель» уточнена до
+    # «fashion model», чтобы её нельзя было прочитать как трёхмерную.
     "как_на_фото": (
-        "HER BUILD IS READ OUT OF THE REFERENCE PHOTOGRAPH AND NOT "
-        "INVENTED: the same bust size and the same shape of it, the same "
+        "HER BODY IS COPIED FROM THE REFERENCE PHOTOGRAPH AND NOT "
+        "INVENTED: the same breasts and the same size of them, the same "
         "waist, the same belly, the same hips and thighs, the same "
-        "shoulders, the same height and the same proportions, the same "
-        "weight. A soft belly stays a soft belly and a flat chest stays "
-        "flat. She is not slimmed, not enlarged, not toned, not "
-        "straightened and not turned into a model; she is the woman in "
-        "that photograph with her clothes off."
+        "shoulders, the same height. A soft belly stays a soft belly and "
+        "a flat chest stays flat. She is not made slimmer, not made "
+        "bigger, not made fitter and not turned into a fashion model; "
+        "she is the same real woman as in the photograph, "
+        "photographed with her clothes off."
     ),
 }
 СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ = "как_на_фото"
+
+# РАЗМЕР ГРУДИ СЛОВАМИ НЕ ДЕЛАЕТСЯ — ЕГО ДЕЛАЮТ ВЕСА.
+#
+# Замер 24.09.2026 на снимке худой плоской клиентки, un_full, одно
+# зерно: «как на фото», «стройная» (SMALL, ALMOST FLAT CHEST), прямой
+# приказ «плоская остаётся плоской» и вся лестница denoise от 1,00 до
+# 0,70 дали ОДНУ И ТУ ЖЕ круглую грудь. Шесть попыток, ни одна не
+# сдвинула размер: у сборки свой прочный навык, и текстом он не
+# правится. Она и сама его не переступает — из четырёх заказанных ей
+# «женщин с плоской грудью» плоской вышла одна.
+#
+# Поэтому размер ушёл на карту, в лору `Flat Chest (Qwen)`, а здесь
+# лежит только сила. Выбрал человек — верим человеку: своё тело он
+# знает лучше любой меры. Не выбирал («как на фото») — карта меряет
+# снимок сама и включает лору, только если грудь ПЛОСКАЯ наверняка
+# (`плоскость_по_снимку` в gpu/приёмка.py).
+ПЛОСКОСТЬ_ЛОРЫ = {
+    "стройная": 1.0,
+    # Средняя — это и есть то, что сборка рисует сама, без лоры.
+    "средняя": 0.0,
+    "пышная": 0.0,
+    "как_на_фото": "авто",
+}
+
+
+def плоскость(сложение):
+    """Сила лоры плоской груди для выбранного сложения."""
+    return ПЛОСКОСТЬ_ЛОРЫ.get(сложение or СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ,
+                              ПЛОСКОСТЬ_ЛОРЫ[СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ])
 
 
 # ДЛИННОЕ ОПИСАНИЕ ВНЕШНОСТИ МЕШАЛО ВНЕШНОСТИ. Замер 22.09.2026.
@@ -337,7 +382,14 @@
     "face on top of crotch, head attached to pelvis, "
     "disconnected body parts, hands merged into body, "
     "fused breasts, breasts merged into one mass, "
-    "collage, split image, stacked images, picture within a picture"
+    "collage, split image, stacked images, picture within a picture, "
+    # ГИПС И ЧЁРНО-БЕЛОЕ. Замер 24.09.2026: на части зёрен вместо
+    # женщины выходила серая скульптура — кожа без цвета, свет
+    # студийный, поза верная. Приёмка такие кадры пропускала (статуя
+    # голая, состав тот), поэтому ловим с двух сторон: здесь запретом,
+    # на карте — проверкой цветности.
+    "statue, sculpture, marble, plaster cast, clay model, mannequin, "
+    "monochrome, greyscale, black and white, desaturated, colourless skin"
 )
 
 # Куски по СЕМЕЙСТВУ режима, а не по каждому виду отдельно: пяти- и
@@ -833,9 +885,11 @@ def первое_предложение_акта(блок):
     "пышная": "She is full and curvy with large natural breasts.",
     # У парной сборки жёсткий лимит длины, поэтому здесь коротко — но
     # про то же самое: тело не сочиняем, а читаем со снимка.
-    "как_на_фото": ("Her build is read out of her reference photograph "
-                    "and not invented: same bust, same waist, same hips, "
-                    "same weight."),
+    # Те же слова, что и в длинном: без «build», «weight» и прочего
+    # словаря ваяния — см. замер над `СЛОЖЕНИЕ["как_на_фото"]`.
+    "как_на_фото": ("Her body is copied from her reference photograph "
+                    "and not invented: same breasts, same waist, same "
+                    "hips, same belly."),
 }
 
 ПАРА_ТЕХНИКА = "Photorealistic, matte skin, correct hands."
