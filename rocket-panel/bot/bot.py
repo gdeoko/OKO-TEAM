@@ -202,7 +202,7 @@ def buy_kb(u=None):
 
 
 def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист="vert",
-            зерно=0, опора=""):
+            зерно=0, опора="", плоскость=0.0):
     """Один проход по карте. Возвращает (имя файла, байты, секунды).
 
     Вынесено из run_job, потому что проходов бывает два: см. `цепочка`.
@@ -221,6 +221,10 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
     # по-старому, поэтому пустое поле не отправляем вовсе.
     if опора:
         params["опора"] = опора
+    # Сила лоры плоской груди. Ноль не шлём вовсе: панель тогда и граф
+    # строит без лоры, а лишний узел — лишний повод ему сломаться.
+    if плоскость:
+        params["плоскость"] = плоскость
     сем = prompts.семейство(kind)
     if сем in ("t2i", "i2i"):
         params["mode"] = "photo"
@@ -264,7 +268,7 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
 
 
 def _фото_с_приёмкой(kind, prompt, photos, на_тик=None, denoise=1.0,
-                     лист="vert", scene=None):
+                     лист="vert", scene=None, плоскость=0.0):
     """Снять кадр и показать его приёмке. Брак — снять заново.
 
     Возвращает то же, что `_проход`. Последняя попытка отдаётся как
@@ -274,7 +278,8 @@ def _фото_с_приёмкой(kind, prompt, photos, на_тик=None, denois
     for попытка in range(1, ПОПЫТОК + 1):
         имя, данные, сек, с_карты = _проход(kind, prompt, photos, на_тик,
                                             denoise, лист,
-                                            опора=catalog.опора(scene))
+                                            опора=catalog.опора(scene),
+                                            плоскость=плоскость)
         последний = (имя, данные, сек)
         if с_карты is not None:
             # Карта посмотрела сама. Второй раз спрашивать облако не о
@@ -296,7 +301,7 @@ def _фото_с_приёмкой(kind, prompt, photos, на_тик=None, denois
 
 
 def run_job(chat, u, kind, prompt, photos=None, scene=None,
-            цепочка=False, prompt_фото=None, denoise=1.0):
+            цепочка=False, prompt_фото=None, denoise=1.0, плоскость=0.0):
     """Считает задание и отдаёт результат. Крутится в отдельном потоке.
 
     `scene` — ключ сценария из каталога, если человек пришёл кнопкой.
@@ -354,7 +359,8 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
             # набитые промежуточными кадрами, только запутают.
             имя, кадр, _ = _фото_с_приёмкой(
                 "i2i", prompt_фото or prompt, photos, tick,
-                denoise=denoise, лист=лист, scene=scene)
+                denoise=denoise, лист=лист, scene=scene,
+                плоскость=плоскость)
             шаг = "видео"
             if mid:
                 edit(chat, mid, t("ген.кадр_готов", я))
@@ -368,7 +374,11 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
                  else _проход)
         итог = снять(kind, prompt, photos, tick,
                      denoise=1.0 if цепочка else denoise,
-                     лист=лист, **({"scene": scene}
+                     лист=лист, **({"scene": scene,
+                                    # Ролик оживляет НАШ голый кадр: грудь
+                                    # на нём уже той величины, и второй
+                                    # раз её править нечем и незачем.
+                                    "плоскость": 0.0 if цепочка else плоскость}
                                    if снять is _фото_с_приёмкой else {}))
         файл, data, сек = итог[:3]
         files = [файл]
@@ -449,7 +459,7 @@ def оживить(chat, u, старое, байты):
 
 
 def launch(chat, u, kind, prompt, photos=None, scene=None,
-           цепочка=False, prompt_фото=None, denoise=1.0):
+           цепочка=False, prompt_фото=None, denoise=1.0, плоскость=0.0):
     with lock:
         if u in busy:
             send(chat, t("ген.занято", яз(u)))
@@ -458,7 +468,7 @@ def launch(chat, u, kind, prompt, photos=None, scene=None,
     threading.Thread(target=run_job,
                      args=(chat, u, kind, prompt, photos or [], scene),
                      kwargs={"цепочка": цепочка, "prompt_фото": prompt_фото,
-                             "denoise": denoise},
+                             "denoise": denoise, "плоскость": плоскость},
                      daemon=True).start()
 
 
@@ -820,7 +830,8 @@ def пустить_сценарий(chat, u, sc, фото, место=None):
     launch(chat, u, sc.job, sc.промпт(место=место, сложение=сл), фото,
            scene=sc.key, цепочка=sc.двухшаговый,
            prompt_фото=sc.prompt_фото(место, сл),
-           denoise=DENOISE_ФОН if sc.фон_с_референса(место) else 1.0)
+           denoise=DENOISE_ФОН if sc.фон_с_референса(место) else 1.0,
+           плоскость=prompts.плоскость(сл))
 
 
 def пустить_своё(chat, u, kind, текст, фото):
@@ -844,7 +855,7 @@ def пустить_своё(chat, u, kind, текст, фото):
     launch(chat, u, kind, промпт, фото, цепочка=видео,
            prompt_фото=prompts.свой(текст, "i2i", обязательное=обяз,
                                     сложение=сл, фон="референс"),
-           denoise=DENOISE_ФОН)
+           denoise=DENOISE_ФОН, плоскость=prompts.плоскость(сл))
 
 
 def on_photo(chat, u, file_id):

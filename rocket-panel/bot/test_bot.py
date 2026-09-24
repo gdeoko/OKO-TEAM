@@ -1442,7 +1442,7 @@ class СложениеБуквальноеИПовторённое(unittest.Test
         там своя, короткая. Проверяем, что умолчание в неё попадает, а
         не вылетает по длине."""
         p = catalog.scene("pf_mf_near").промпт()
-        self.assertIn("read out of her reference photograph", p)
+        self.assertIn("copied from her reference photograph", p)
 
 
 class СвойПромптТожеПравитСнимок(unittest.TestCase):
@@ -1465,6 +1465,52 @@ class СвойПромптТожеПравитСнимок(unittest.TestCase):
         p = prompts.свой("поворачивается", "i2v_5")
         self.assertLess(len(p), 1600, "ролику снова достался весь промпт фото")
         self.assertIn("Nothing and nobody is replaced", p)
+
+
+class РазмерГрудиДелаютВеса(unittest.TestCase):
+    """Замер 24.09.2026: ни одно слово размера не держит. На снимке
+    худой плоской клиентки «как на фото», «стройная» (SMALL, ALMOST
+    FLAT CHEST), прямой приказ «плоская остаётся плоской» и вся
+    лестница denoise 1,00…0,70 дали одну и ту же круглую грудь.
+    Поэтому размер ушёл в лору на карте, а здесь — только её сила."""
+
+    def test_стройная_просит_лору_целиком(self):
+        self.assertEqual(prompts.плоскость("стройная"), 1.0)
+
+    def test_пышной_и_средней_лора_не_нужна(self):
+        """Средняя — это и есть то, что сборка рисует сама. Лора
+        пышной означала бы уменьшенную грудь, то есть ровно ту беду,
+        из-за которой всё затевалось, только наоборот."""
+        self.assertEqual(prompts.плоскость("пышная"), 0.0)
+        self.assertEqual(prompts.плоскость("средняя"), 0.0)
+
+    def test_умолчание_отдаёт_решение_карте(self):
+        """«Как на фото» и значит «мы не знаем»: меряет карта."""
+        self.assertEqual(prompts.плоскость(None), "авто")
+        self.assertEqual(prompts.плоскость("как_на_фото"), "авто")
+
+    def test_у_каждой_фигуры_есть_сила(self):
+        for к in prompts.СЛОЖЕНИЕ:
+            self.assertIn(к, prompts.ПЛОСКОСТЬ_ЛОРЫ, к)
+
+    def test_сила_доезжает_до_карты(self):
+        """Иначе выбор человека останется картинкой на кнопке."""
+        import inspect
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        self.assertIn("плоскость", inspect.signature(bot.launch).parameters)
+        self.assertIn("плоскость", inspect.signature(bot._проход).parameters)
+        исходник = inspect.getsource(bot._проход)
+        self.assertIn('params["плоскость"]', исходник)
+
+    def test_ролик_второй_раз_грудь_не_правит(self):
+        """Ролик оживляет НАШ уже голый кадр: грудь на нём нужной
+        величины, и вторая лора только испортила бы движение."""
+        import inspect
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        self.assertIn('0.0 if цепочка else плоскость',
+                      inspect.getsource(bot.run_job))
 
 
 class ВыборФигуры(unittest.TestCase):
@@ -1493,8 +1539,29 @@ class ВыборФигуры(unittest.TestCase):
         self.assertEqual(prompts.СЛОЖЕНИЕ_ПО_УМОЛЧАНИЮ, "как_на_фото")
         p = catalog.scene("un_full").промпт()
         self.assertIn(prompts.СЛОЖЕНИЕ["как_на_фото"], p)
-        self.assertIn("HER BUILD IS READ OUT OF THE REFERENCE PHOTOGRAPH", p)
+        self.assertIn("HER BODY IS COPIED FROM THE REFERENCE PHOTOGRAPH", p)
         self.assertNotIn(prompts.СЛОЖЕНИЕ["стройная"], p)
+
+    def test_в_умолчании_нет_слов_ваяния(self):
+        """Первая редакция говорила «BUILD… shape… proportions…
+        weight… not toned, not straightened, not turned into a model»,
+        и сборка прочитала это как задание на скульптуру: на
+        «Поставить раком» выходил гипс (цветность 1,8 при норме 14…89).
+        Слова должны остаться про живое тело."""
+        т = prompts.СЛОЖЕНИЕ["как_на_фото"] + prompts.СЛОЖЕНИЕ_КРАТКО["как_на_фото"]
+        for слово in ("build", "shape", "proportions", "weight",
+                      "toned", "straightened"):
+            self.assertNotIn(слово, т.lower(), слово)
+        # «модель» осталась, но уточнённая: трёхмерной её не прочесть.
+        self.assertNotIn("into a model", т)
+
+    def test_гипс_запрещён_постоянно(self):
+        """Ловим с двух сторон: здесь запретом, на карте — проверкой
+        цветности (gpu/приёмка.py, БЕСЦВЕТНЫЙ)."""
+        н = prompts.негатив(catalog.scene("un_full").промпт())
+        for слово in ("statue", "sculpture", "plaster cast", "monochrome",
+                      "black and white"):
+            self.assertIn(слово, н, слово)
 
     def test_умолчание_не_запрещает_полноту(self):
         """Постоянный негатив когда-то запрещал busty/curvy всем подряд
