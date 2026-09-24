@@ -46,6 +46,8 @@
 
   function собрать(n, c) {
     if (!c) return null;
+    // Задания Екатерины из её рабочей тетради. Их на урок бывает несколько,
+    // поэтому принимаем и одно задание, и список: показываем все по очереди.
     const свои = (typeof window !== 'undefined' && window.TASKS) ? window.TASKS[n] : null;
     if (свои) return свои;
 
@@ -153,6 +155,11 @@
 
   function разметка(з) {
     if (!з) return '';
+    if (Array.isArray(з)) {
+      return з.map((одно, i) => `<div class="task-step" data-step="${i}">
+        ${з.length > 1 ? `<div class="task-step__n">Задание ${i + 1} из ${з.length}</div>` : ''}
+        ${разметка(одно)}</div>`).join('');
+    }
     const шапка = `<div class="task__head"><span class="task__kind">${з.заголовок}</span>
       <span class="task__hint">${з.подсказка}</span></div>`;
 
@@ -206,6 +213,16 @@
 
   function оживить(корень, з, готово) {
     if (!корень || !з) return;
+    // Список заданий: очко даём, когда сделаны все, а не первое попавшееся.
+    if (Array.isArray(з)) {
+      const блоки = корень.querySelectorAll('.task-step .task');
+      let сделано = 0;
+      з.forEach((одно, i) => оживить(блоки[i], одно, () => {
+        сделано++;
+        if (сделано === з.length && typeof готово === 'function') готово();
+      }));
+      return;
+    }
     const res = корень.querySelector('.task__res');
     const победа = (текст) => {
       res.hidden = false;

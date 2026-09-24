@@ -1692,6 +1692,8 @@ function renderLesson(n) {
   const quiz = c && c.quiz ? c.quiz : [];
   const questions = c && c.questions ? c.questions : [];
   const task = (window.ЗАДАНИЯ && c) ? ЗАДАНИЯ.собрать(n, c) : null;
+  // Страница рабочей тетради Екатерины: сердце урока, размышление, миссия.
+  const тетрадь = (window.TETRAD || {})[n] || null;
 
   // Иллюстрации по ходу текста: после первого и после третьего абзаца
   const картинка = (i, подпись) => `<figure class="lesson-pic">
@@ -1736,6 +1738,11 @@ function renderLesson(n) {
 
     ${c && c.golden ? `<div class="card lesson-golden">${ICON('sparkle', 18)}<span>${c.golden}</span></div>` : ''}
 
+    ${тетрадь && тетрадь.сердце ? `<h2 class="section-title">Сердце урока</h2>
+      <div class="card wb-heart"><div class="wb-heart__t">Главная мысль</div>
+        <p>${безопасно(тетрадь.сердце)}</p>
+        ${тетрадь.заметка ? `<p class="wb-heart__note">${безопасно(тетрадь.заметка)}</p>` : ''}</div>` : ''}
+
     <button class="btn btn--outline lesson-read" id="lessonRead">${st.read ? 'Прочитано ✓' : 'Я прочитал урок'}</button>
 
     ${questions.length ? `<h2 class="section-title">Вопросы для беседы</h2>
@@ -1743,6 +1750,18 @@ function renderLesson(n) {
 
     ${task ? `<h2 class="section-title">Задание</h2>
       <div class="card task-card ${st.task ? 'task-card--done' : ''}" id="lessonTask">${ЗАДАНИЯ.разметка(task)}</div>` : ''}
+
+    ${тетрадь && тетрадь.размышление ? `<h2 class="section-title">Подумай</h2>
+      <div class="card wb-dumay">
+        <p class="wb-dumay__lead">Представь каждую ситуацию. Если тебе 6-8 лет, расскажи ответ взрослому.
+          Если 9-11, запиши коротко. Сначала назови выбор добра, потом выбор без света.</p>
+        ${тетрадь.размышление.map((с, i) => `<div class="wb-sit">
+          <div class="wb-sit__n">Ситуация ${i + 1}</div>
+          <div class="wb-sit__t">${безопасно(с.что)}</div>
+          <div class="wb-sit__q wb-sit__q--good">${безопасно(с.добро)}</div>
+          <div class="wb-sit__q">${безопасно(с.без)}</div>
+        </div>`).join('')}
+      </div>` : ''}
 
     ${quiz.length ? `<h2 class="section-title">Проверь себя</h2>
       <div class="card" id="lessonTest">
@@ -1757,9 +1776,16 @@ function renderLesson(n) {
     ${c && c.prayer ? `<h2 class="section-title">Помолимся вместе</h2>
       <div class="card lesson-prayer">${ICON('dove', 18)}<p>${c.prayer}</p></div>` : ''}
 
-    <h2 class="section-title">Домашнее задание</h2>
+    <h2 class="section-title">${тетрадь && тетрадь.миссия ? 'Творческая миссия' : 'Домашнее задание'}</h2>
     <div class="card lesson-text">
-      <p>${c && c.parentNote ? c.parentNote : 'Нарисуй вместе с родителями то, что тебе запомнилось из урока, и отправь рисунок Екатерине.'}</p>
+      ${тетрадь && тетрадь.миссия ? `<div class="wb-missiya">
+        <div class="wb-missiya__name">${безопасно(тетрадь.миссия.имя)}</div>
+        <div class="wb-missiya__mat"><b>Материалы.</b> ${безопасно(тетрадь.миссия.материалы)}</div>
+        <ol class="wb-missiya__steps">${тетрадь.миссия.шаги.map((ш) =>
+          `<li>${безопасно(ш)}</li>`).join('')}</ol>
+        <div class="wb-missiya__end">Перед фото объясни смысл. Закончи мысль:
+          <i>${безопасно(тетрадь.миссия.закончи)}</i></div>
+      </div>` : `<p>${c && c.parentNote ? c.parentNote : 'Нарисуй вместе с родителями то, что тебе запомнилось из урока, и отправь рисунок Екатерине.'}</p>`}
       <input type="file" id="hwFile" accept="image/*,.pdf" hidden>
       <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Прикрепить задание</button>
       <div class="hw-file" id="hwName" hidden></div>
@@ -1821,9 +1847,16 @@ function wireLesson(n, quiz, task) {
   });
 
   if (task && window.ЗАДАНИЯ) {
-    const корень = document.querySelector('#lessonTask .task');
+    // У заданий Екатерины на урок бывает несколько блоков: тогда оживляем
+    // всю карточку целиком, движок сам разложит их по очереди.
+    const корень = Array.isArray(task)
+      ? document.querySelector('#lessonTask')
+      : document.querySelector('#lessonTask .task');
     if (корень) {
-      if (getLessonState(n).task) корень.classList.add('task--done');
+      if (getLessonState(n).task) {
+        корень.classList.add('task--done');
+        корень.querySelectorAll('.task').forEach((т) => т.classList.add('task--done'));
+      }
       ЗАДАНИЯ.оживить(корень, task, () => {
         const s = getLessonState(n);
         if (s.task) return;

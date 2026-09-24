@@ -2888,3 +2888,50 @@ html.в-телеграме .hd { padding-top: 6px; }
 [data-theme="dark"] .lp-dot { background: rgba(255, 255, 255, .28); }
 [data-theme="dark"] .lp-dot.on { background: var(--gold); }
 [data-theme="dark"] .lesson-epigraph { color: #E6B9A6; }
+
+/* ══════ Рабочая тетрадь Екатерины ══════
+   Сердце урока, размышление о трёх ситуациях, творческая миссия.
+   Оформление спокойное: это места, где ребёнок думает и говорит со
+   взрослым, а не жмёт кнопки, поэтому никаких ярких заливок. */
+
+.wb-heart { border-left: 3px solid var(--gold); }
+.wb-heart__t { font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--terracotta); font-weight: 700; margin-bottom: 6px; }
+.wb-heart p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--navy); }
+.wb-heart__note { margin-top: 10px !important; font-size: 13px !important; color: #5A6577 !important; }
+
+.wb-dumay__lead { margin: 0 0 14px; font-size: 13px; line-height: 1.5; color: #5A6577; }
+.wb-sit + .wb-sit { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(26,58,82,.08); }
+.wb-sit__n { font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--terracotta); font-weight: 700; }
+.wb-sit__t { font-weight: 600; margin: 4px 0 8px; color: var(--navy); line-height: 1.45; }
+.wb-sit__q { font-size: 14px; line-height: 1.5; color: #3C4658; padding-left: 14px;
+  position: relative; }
+.wb-sit__q::before { content: '·'; position: absolute; left: 4px; color: var(--gold); font-weight: 700; }
+.wb-sit__q + .wb-sit__q { margin-top: 5px; }
+.wb-sit__q--good::before { content: '✓'; font-size: 11px; color: #4C9A6A; }
+
+.wb-missiya__name { font-family: 'Playfair Display', Georgia, serif; font-size: 19px;
+  color: var(--navy); margin-bottom: 8px; }
+.wb-missiya__mat { font-size: 13px; line-height: 1.5; color: #5A6577; margin-bottom: 12px; }
+.wb-missiya__steps { margin: 0 0 12px; padding-left: 20px; }
+.wb-missiya__steps li { margin-bottom: 7px; line-height: 1.5; color: var(--navy); }
+.wb-missiya__end { font-size: 14px; line-height: 1.5; color: #3C4658;
+  border-top: 1px solid rgba(26,58,82,.08); padding-top: 10px; }
+.wb-missiya__end i { color: var(--terracotta); }
+
+/* Несколько заданий подряд: между ними видно границу и номер */
+.task-step + .task-step { margin-top: 18px; padding-top: 16px;
+  border-top: 1px solid rgba(26,58,82,.10); }
+.task-step__n { font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--terracotta); font-weight: 700; margin-bottom: 8px; }
+
+[data-theme="dark"] .wb-heart p,
+[data-theme="dark"] .wb-sit__t,
+[data-theme="dark"] .wb-missiya__name,
+[data-theme="dark"] .wb-missiya__steps li { color: #E7EDF3; }
+[data-theme="dark"] .wb-sit__q,
+[data-theme="dark"] .wb-missiya__end { color: #C3D0DA; }
+[data-theme="dark"] .wb-sit + .wb-sit,
+[data-theme="dark"] .task-step + .task-step,
+[data-theme="dark"] .wb-missiya__end { border-color: rgba(231,237,243,.14); }
