@@ -449,7 +449,7 @@ def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None):
     return g
 
 
-def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
+def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0,сэмплер=None,планировщик=None,steps=None):
     """Три режима одним графом, по числу снимков:
 
         нет снимков  — текст в видео
@@ -479,8 +479,10 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
      "12":{"class_type":"ModelSamplingSD3","inputs":{"model":["1",0],"shift":float(shift)}},
      "4":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":p}},
      "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":neg or WAN_NEG}},
-     "7":{"class_type":"KSampler","inputs":{"model":["12",0],"seed":seed,"steps":STEPS,"cfg":CFG,
-          "sampler_name":"uni_pc","scheduler":"simple","denoise":1.0}},
+     "7":{"class_type":"KSampler","inputs":{"model":["12",0],"seed":seed,
+          "steps":int(steps or STEPS),"cfg":CFG,
+          "sampler_name":сэмплер or САМПЛЕР_ВИДЕО,
+          "scheduler":планировщик or ПЛАНИРОВЩИК_ВИДЕО,"denoise":1.0}},
      "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
      # КАДРАМИ, А НЕ АНИМИРОВАННЫМ WEBP.
      #
@@ -535,6 +537,22 @@ def wf_video(p,w,h,frames,seed,images=None,neg=None,shift=8.0):
 
 # По этой приставке в имени файла видно, что это КАДРЫ РОЛИКА, а не
 # фотография: `run` собирает из них mp4 и удаляет исходники.
+# СЭМПЛЕР И ПЛАНИРОВЩИК — ПО РЕКОМЕНДАЦИИ АВТОРА СБОРКИ.
+#
+# До 24.09.2026 тут стояли `uni_pc` + `simple`, взятые наугад. Автор
+# wan2.2-rapid-mega-aio пишет рекомендацию отдельно для КАЖДОЙ версии,
+# и для нашей v12 это `dpmpp_sde` + `beta` (карточка модели на
+# HuggingFace, раздел CHANGELOG).
+#
+# На дистиллированной модели в ЧЕТЫРЕ шага сэмплер решает почти всё:
+# шагов мало, и каждый обязан попасть. Владелец 24.09.2026 о роликах
+# на `uni_pc`: «движения повторяются нереалистично, лицо и глаза
+# плывут, рука сквозь тело проходит».
+#
+# Смена сэмплера НИЧЕГО не стоит по времени — те же четыре шага.
+САМПЛЕР_ВИДЕО=os.environ.get("ROCKET_VIDEO_SAMPLER","dpmpp_sde")
+ПЛАНИРОВЩИК_ВИДЕО=os.environ.get("ROCKET_VIDEO_SCHEDULER","beta")
+
 ВИДЕО_ПРЕФИКС="vfr"
 
 # ШЕСТНАДЦАТЬ КАДРОВ В СЕКУНДУ, ПОТОМУ ЧТО СТОЛЬКО У МОДЕЛИ.
@@ -832,7 +850,8 @@ def gen():
         w,h=SZ[лист].get(d.get("size","vert"),SZ[лист]["vert"])
         # Родная частота модели, а не 24 — см. `ВИДЕО_FPS`.
         frames=int(сек*ВИДЕО_FPS)//4*4+1
-        g=wf_video(p,w,h,frames,seed,images,neg,float(d.get("shift",8.0)))
+        g=wf_video(p,w,h,frames,seed,images,neg,float(d.get("shift",8.0)),
+                   d.get("сэмплер"),d.get("планировщик"),d.get("шагов"))
     jid=uuid.uuid4().hex[:8]
     JOBS[jid]={"state":"run","sec":0,"mode":mode,"seed":seed,"w":w,"h":h,
                "refs":len(images),"кадров":frames if mode=="video" else None,
