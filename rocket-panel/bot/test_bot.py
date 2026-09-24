@@ -1503,6 +1503,26 @@ class РазмерГрудиДелаютВеса(unittest.TestCase):
         исходник = inspect.getsource(bot._проход)
         self.assertIn('params["плоскость"]', исходник)
 
+    def test_у_мж_меряется_женский_снимок(self):
+        """Мужская грудь для этой меры «плоская» всегда: замер дал
+        0,97 и 1,00 на двух мужских снимках. Наведи её на первый
+        снимок сцены МЖ — и лору на полной силе получит ЖЕНЩИНА."""
+        self.assertEqual(catalog.женский_снимок("pf_mf_near"), 1)
+        self.assertEqual(catalog.женский_снимок("pf_mf_pov"), 1)
+
+    def test_у_остальных_меряется_первый(self):
+        for к in ("un_full", "ph_close", "pf_ff_near", "pf_mm_near", None):
+            self.assertEqual(catalog.женский_снимок(к), 0, к)
+
+    def test_номер_снимка_доезжает_до_карты(self):
+        import inspect
+        os.environ.setdefault("ROCKET_BOT_TOKEN", "test")
+        import bot
+        self.assertIn('params["женский_снимок"]',
+                      inspect.getsource(bot._проход))
+        self.assertIn("catalog.женский_снимок(scene)",
+                      inspect.getsource(bot._фото_с_приёмкой))
+
     def test_ролик_второй_раз_грудь_не_правит(self):
         """Ролик оживляет НАШ уже голый кадр: грудь на нём нужной
         величины, и вторая лора только испортила бы движение."""
