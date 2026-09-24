@@ -237,6 +237,38 @@ iframe{width:100%;height:78vh;border:1px solid var(--край);border-radius:16p
     <div class="карта" id="сп_диалоги"></div>
     <div class="карта" id="сп_переписка" style="display:none"></div></section>
 
+  <section id="р_прайс"><h2>Прайс</h2>
+    <div class="карта">
+      <h3>Ступени покупки коинов</h3>
+      <p class="когда">Правится всё: сколько коинов, сколько рублей, цена
+         у конкурента. Порядок не важен — ступени сами встают по
+         возрастанию цены. Пустой список вернёт цены из кода: магазин без
+         кнопки «купить» хуже старой цены.</p>
+      <div id="пр_пакеты" style="margin-top:12px"></div>
+      <div class="ряд" style="margin-top:10px">
+        <button class="кн" id="пр_ступень">Добавить ступень</button>
+        <span class="когда" id="пр_ход"></span>
+      </div>
+    </div>
+
+    <div class="карта">
+      <h3>Виды работ</h3>
+      <p class="когда">Цена в кристаллах (12 кристаллов = 1 коин),
+         название и подпись под кнопкой. «В продаже» снимает кнопку из
+         бота, но цену и название оставляет: у снятого вида остаётся
+         история прошлых генераций, и стёртый он уронил бы «Мои работы».
+         Себестоимость считается по замеру карты и не правится.</p>
+      <div id="пр_виды" style="margin-top:12px"></div>
+    </div>
+
+    <div class="карта">
+      <div class="ряд" style="justify-content:space-between">
+        <span class="когда" id="пр_итог"></span>
+        <button class="кн тихая" id="пр_вернуть">Вернуть цены из кода</button>
+      </div>
+    </div>
+  </section>
+
   <section id="р_запрет"><h2>Запрет слов</h2>
     <div class="карта">
       <h3>Примерка</h3>
@@ -350,6 +382,7 @@ const РАЗДЕЛЫ = [
   ["услуги","Услуги","M12 3v18M7 7h7a3 3 0 0 1 0 6H8a3 3 0 0 0 0 6h8"],
   ["франшиза","Франшиза","M5 20h14M7 20V9l5-5 5 5v11M10 20v-5h4v5"],
   ["каталог","Каталог","M4 5h7v14H4zM13 5h7v14h-7z"],
+  ["прайс","Прайс","M7 7h.01M3 11V5a2 2 0 0 1 2-2h6l10 10-8 8L3 11z"],
   ["запрет","Запрет слов","M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M5.6 5.6l12.8 12.8"],
 ];
 let непрочитано = 0;
@@ -372,6 +405,106 @@ function открыть(к){
   document.body.classList.remove("меню_открыто");
   (ЗАГРУЗКА[к]||(()=>{}))();
 }
+
+// ---- прайс ----
+let ПРАЙС = {пакеты:[], виды:[], как_в_коде:true};
+
+function поле_прайса(знач, ключ, к, шир){
+  return `<input value="${эк(знач)}" data-п="${ключ}" data-к="${к}"
+            style="width:${шир||86}px">`;
+}
+
+function рисовать_прайс(){
+  $("#пр_пакеты").innerHTML = `
+    <div class="ряд когда" style="gap:8px;padding-bottom:6px">
+      <span style="width:86px">код</span><span style="width:86px">коинов</span>
+      <span style="width:86px">рублей</span><span style="width:86px">у рынка</span>
+      <span style="flex:1">за коин</span></div>` +
+    (ПРАЙС.пакеты||[]).map((п,i) => `
+      <div class="ряд" style="gap:8px;padding:5px 0;border-bottom:1px solid var(--край)">
+        ${поле_прайса(п.id,"id",i)}
+        ${поле_прайса(п.coins,"coins",i)}
+        ${поле_прайса(п.rub,"rub",i)}
+        ${поле_прайса(п.market_rub,"market_rub",i)}
+        <span class="когда" style="flex:1">${(п.rub/п.coins).toFixed(0)} ₽</span>
+        <button class="кн тихая" data-снять="${i}">Удалить</button>
+      </div>`).join("");
+
+  $("#пр_виды").innerHTML = (ПРАЙС.виды||[]).map((в,i) => `
+    <div style="padding:9px 0;border-bottom:1px solid var(--край)">
+      <div class="ряд" style="gap:8px;flex-wrap:wrap">
+        <input value="${эк(в.title)}" data-в="title" data-к="${i}"
+               style="flex:1;min-width:150px">
+        <input value="${эк(в.crystals)}" data-в="crystals" data-к="${i}"
+               style="width:80px" title="кристаллов">
+        <label class="когда" style="display:flex;align-items:center;gap:5px">
+          <input type="checkbox" data-в="в_продаже" data-к="${i}"
+                 ${в.в_продаже ? "checked" : ""}>в продаже</label>
+      </div>
+      <div class="ряд" style="gap:8px;margin-top:6px">
+        <input value="${эк(в.note)}" data-в="note" data-к="${i}"
+               style="flex:1;min-width:150px" placeholder="подпись под кнопкой">
+      </div>
+      <div class="когда" style="margin-top:5px">
+        ${эк(в.key)} · ${в.coins} коин · себестоимость ${в.себестоимость_руб} ₽
+        · клиенту ${в.цена_руб} ₽
+        · снимков ${в.фото_нужно[0]}–${в.фото_нужно[1]}
+      </div>
+    </div>`).join("");
+
+  $("#пр_вернуть").style.display = ПРАЙС.как_в_коде ? "none" : "";
+  $("#пр_итог").textContent = ПРАЙС.как_в_коде
+    ? "цены как в коде" : "цены правлены из админки";
+
+  document.querySelectorAll("#пр_пакеты [data-п]").forEach(э => {
+    э.onchange = () => {
+      const п = ПРАЙС.пакеты[+э.dataset.к];
+      п[э.dataset.п] = э.dataset.п === "id" ? э.value.trim() : +э.value;
+      сохранить_прайс();
+    };
+  });
+  document.querySelectorAll("#пр_пакеты [data-снять]").forEach(б => {
+    б.onclick = () => {
+      ПРАЙС.пакеты.splice(+б.dataset.снять, 1);
+      сохранить_прайс();
+    };
+  });
+  document.querySelectorAll("#пр_виды [data-в]").forEach(э => {
+    э.onchange = () => {
+      const в = ПРАЙС.виды[+э.dataset.к];
+      в[э.dataset.в] = э.type === "checkbox" ? э.checked
+                     : (э.dataset.в === "crystals" ? +э.value : э.value);
+      сохранить_прайс();
+    };
+  });
+}
+
+async function сохранить_прайс(){
+  $("#пр_ход").textContent = "сохраняю…";
+  const виды = {};
+  (ПРАЙС.виды||[]).forEach(в => {
+    виды[в.key] = {title: в.title, crystals: в.crystals, note: в.note,
+                   в_продаже: в.в_продаже, фото_нужно: в.фото_нужно};
+  });
+  ПРАЙС = await послать("/api/прайс/сохранить",
+                        {пакеты: ПРАЙС.пакеты, виды});
+  рисовать_прайс();
+  $("#пр_ход").textContent = "";
+}
+
+$("#пр_ступень").onclick = () => {
+  const п = ПРАЙС.пакеты || [];
+  const пос = п[п.length-1] || {coins:5, rub:250, market_rub:359};
+  п.push({id: "p" + (п.length+1), coins: пос.coins*2,
+          rub: пос.rub*2, market_rub: пос.market_rub*2});
+  сохранить_прайс();
+};
+
+$("#пр_вернуть").onclick = async () => {
+  if (!confirm("Вернуть все цены к тем, что в коде? Твои правки пропадут.")) return;
+  ПРАЙС = await послать("/api/прайс/вернуть", {});
+  рисовать_прайс();
+};
 
 // ---- запрет слов ----
 let ЗАП = {слова:[], исключения:[], базовые:[], как_базовые:true};
@@ -498,6 +631,10 @@ function полосы(куда, пары){
 
 /* ---------- разделы ---------- */
 const ЗАГРУЗКА = {
+  async прайс(){
+    ПРАЙС = await взять("/api/прайс");
+    рисовать_прайс();
+  },
   async запрет(){
     ЗАП = await взять("/api/запрет");
     рисовать_запрет();

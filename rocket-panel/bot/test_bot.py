@@ -4107,3 +4107,152 @@ class КронНеГаситПосредиРаботы(unittest.TestCase):
         import inspect
         и = inspect.getsource(self.к.обслужить)
         self.assertLess(и.find("незаконченные()"), и.find("очередь()"))
+
+
+class ПрайсПравитсяИзАдминки(unittest.TestCase):
+    """Владелец: «нужно сделать всё редактируемым… ну и цены менять».
+
+    Цена — то, что он двигает чаще всего и всегда срочно. Через код это
+    правка, коммит, выкладка и перезапуск; через файл — кнопка.
+    """
+
+    def setUp(self):
+        import tempfile
+        import прайс
+        self.старый = прайс.ФАЙЛ
+        прайс.ФАЙЛ = os.path.join(tempfile.mkdtemp(), "прайс.json")
+        pricing.вернуть_как_в_коде()
+
+    def tearDown(self):
+        import прайс
+        pricing.вернуть_как_в_коде()
+        прайс.ФАЙЛ = self.старый
+        pricing.свериться(силой=True)
+
+    def test_цена_вида_меняется(self):
+        было = pricing.job("i2i").crystals
+        pricing.записать(виды={"i2i": {"crystals": было * 2}})
+        self.assertEqual(pricing.job("i2i").crystals, было * 2)
+
+    def test_правку_видят_те_кто_взял_ссылку_раньше(self):
+        """САМОЕ ВАЖНОЕ ЗДЕСЬ. `JOBS`, `PACKS` и `В_ПРОДАЖЕ` разошлись
+        по интерфейсу, меню, сводке и админке, и половина этих мест
+        взяла ссылку один раз при загрузке. Если правка создаст НОВЫЕ
+        объекты, часть бота продолжит считать по старой цене — молча и
+        на живых оплатах."""
+        меню = pricing.В_ПРОДАЖЕ          # как делает bot.py и ui.py
+        виды = pricing.JOBS
+        пакеты = pricing.PACKS
+        pricing.записать(виды={"i2i": {"crystals": 99}})
+        self.assertEqual(виды["i2i"].crystals, 99)
+        self.assertIn(99, [j.crystals for j in меню])
+        pricing.записать(пакеты=[{"id": "p1", "coins": 7, "rub": 300,
+                                  "market_rub": 400}])
+        self.assertEqual([п["coins"] for п in пакеты], [7])
+
+    def test_вид_снимается_с_продажи_но_не_пропадает(self):
+        """У снятого вида остаётся история: `store.works` спрашивает у
+        прайса заголовок по ключу, и стёртый вид уронил бы «Мои
+        работы» на первой же прошлой генерации."""
+        pricing.записать(виды={"i2v_10": {"в_продаже": False}})
+        self.assertNotIn("i2v_10", [j.key for j in pricing.В_ПРОДАЖЕ])
+        self.assertEqual(pricing.job("i2v_10").title, "Оживить фото 10 с")
+
+    def test_ступень_добавляется_и_удаляется(self):
+        п = [dict(x) for x in pricing.ПАКЕТЫ_ПО_УМОЛЧАНИЮ]
+        п.append({"id": "p9", "coins": 1000, "rub": 30000,
+                  "market_rub": 42000})
+        pricing.записать(пакеты=п)
+        self.assertEqual(pricing.pack("p9")["coins"], 1000)
+        pricing.записать(пакеты=п[:3])
+        self.assertEqual(len(pricing.PACKS), 3)
+        with self.assertRaises(KeyError):
+            pricing.pack("p9")
+
+    def test_ступени_всегда_по_возрастанию(self):
+        """`скидка()` считает выгоду от ПЕРВОЙ ступени. На списке,
+        введённом вразнобой, она показала бы минус."""
+        pricing.записать(пакеты=[
+            {"id": "b", "coins": 100, "rub": 4000, "market_rub": 5000},
+            {"id": "a", "coins": 5, "rub": 250, "market_rub": 359}])
+        self.assertEqual([п["id"] for п in pricing.PACKS], ["a", "b"])
+        self.assertGreater(pricing.скидка("b"), 0)
+
+    def test_пустой_прайс_не_гасит_витрину(self):
+        """Магазин без единой кнопки «купить» хуже старой цены."""
+        pricing.записать(пакеты=[])
+        self.assertEqual(pricing.PACKS, pricing.ПАКЕТЫ_ПО_УМОЛЧАНИЮ)
+
+    def test_нулевая_цена_не_роняет_расчёт(self):
+        """Ноль коинов или ноль рублей — деление на ноль в курсе, то
+        есть упавшая витрина у всех сразу."""
+        pricing.записать(пакеты=[
+            {"id": "z", "coins": 0, "rub": 0, "market_rub": 0},
+            {"id": "ok", "coins": 5, "rub": 250, "market_rub": 359}])
+        self.assertEqual([п["id"] for п in pricing.PACKS], ["ok"])
+        self.assertGreater(pricing.best_pack_rate(), 0)
+
+    def test_снимков_больше_чем_модель_возьмёт_не_просим(self):
+        """Иначе человек присылает четвёртый снимок УЖЕ ПОСЛЕ ОПЛАТЫ и
+        получает отказ."""
+        pricing.записать(виды={"i2i": {"фото_нужно": [1, 99]}})
+        self.assertEqual(pricing.job("i2i").макс_фото,
+                         pricing.ПОТОЛОК_СНИМКОВ)
+
+    def test_откат_к_коду(self):
+        pricing.записать(виды={"i2i": {"crystals": 777, "title": "чушь"}})
+        pricing.вернуть_как_в_коде()
+        self.assertEqual(pricing.job("i2i").crystals,
+                         pricing.ВИДЫ_ПО_УМОЛЧАНИЮ["i2i"]["crystals"])
+        self.assertTrue(pricing.состояние()["как_в_коде"])
+
+    def test_новая_ступень_из_кода_доезжает_до_бота(self):
+        """Файл держит ТОЛЬКО изменённое. Иначе заведённая в коде
+        ступень затиралась бы вчерашним снимком прайса."""
+        pricing.записать(виды={"i2i": {"crystals": 13}})
+        self.assertEqual(len(pricing.PACKS),
+                         len(pricing.ПАКЕТЫ_ПО_УМОЛЧАНИЮ))
+
+    def test_секунды_карты_не_правятся(self):
+        """Это замер, а не решение. Выдуманное число сделало бы расчёт
+        маржи враньём, которое выглядит как правда."""
+        было = pricing.job("i2v_5").seconds
+        pricing.записать(виды={"i2v_5": {"seconds": 1.0, "crystals": 60}})
+        self.assertEqual(pricing.job("i2v_5").seconds, было)
+
+
+class УдалённаяСтупеньНеГаситВитрину(unittest.TestCase):
+    """Найдено тестами 24.09.2026, до выкладки.
+
+    Цена работы в рублях считалась от ступени «p3» по имени. С тех пор
+    как ступени правятся из админки, «p3» — это ступень, которую
+    владелец вправе удалить; `pack("p3")` кидал KeyError, и гасли разом
+    витрина бота и страница прайса в админке.
+    """
+
+    def setUp(self):
+        import tempfile
+        import прайс
+        self.старый = прайс.ФАЙЛ
+        прайс.ФАЙЛ = os.path.join(tempfile.mkdtemp(), "прайс.json")
+        pricing.вернуть_как_в_коде()
+
+    def tearDown(self):
+        import прайс
+        pricing.вернуть_как_в_коде()
+        прайс.ФАЙЛ = self.старый
+        pricing.свериться(силой=True)
+
+    def test_без_p3_цены_считаются(self):
+        pricing.записать(пакеты=[п for п in pricing.ПАКЕТЫ_ПО_УМОЛЧАНИЮ
+                                 if п["id"] != "p3"])
+        self.assertGreater(pricing.job("i2i").rub(), 0)
+        self.assertGreater(pricing.rub_per_coin(), 0)
+        self.assertTrue(pricing.состояние()["виды"])
+
+    def test_одна_ступень_тоже_считается(self):
+        pricing.записать(пакеты=[{"id": "одна", "coins": 5, "rub": 250,
+                                  "market_rub": 359}])
+        self.assertEqual(pricing.средний_пакет()["id"], "одна")
+        self.assertGreater(pricing.job("i2v_5").rub(), 0)
+        self.assertEqual(pricing.скидка("одна"), 0)
