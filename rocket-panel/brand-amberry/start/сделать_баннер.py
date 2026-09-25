@@ -39,11 +39,30 @@ a mouth of average width. Elegant sloping shoulders, a long neck,
 straight confident posture. Luminous natural skin with real pore texture.
 Minimal makeup, natural brows, natural lip colour.
 
+HER FIGURE. A full, curvaceous hourglass build — this is the single most
+important change from the previous version of this banner, and the
+BUST is the part that must change most. She has a large, full, heavy
+chest: a deep neckline of cleavage, real volume and natural downward
+weight filling the halter top completely so the fabric is stretched
+taut over it, a visible soft swell above the neckline. The previous
+attempt left her flat chested and that is exactly what must not happen
+again. Pair that bust with a clearly nipped narrow waist, wide rounded
+hips and full rounded glutes, strong shapely thighs. The silhouette should read as unmistakably voluptuous and
+womanly from across a room, at thumbnail size, before any detail is
+legible: a pronounced waist to hip ratio, a clear S curve through the
+torso and hip. Soft realistic flesh with believable weight and gentle
+skin dynamics, never rigid or plastic, never airbrushed into a
+mannequin. She is an adult woman in her mid twenties with a mature,
+developed figure. Her FACE stays exactly as specified above and in the
+reference sheet — the build changes, the person does not.
+
 HER POSE. Confident editorial stance, not a catalogue pose. Turned about
-thirty degrees from camera with her weight on one hip, head turned back
-over her shoulder, looking into the lens with a small easy smile. One
+twenty degrees from camera, facing mostly TOWARDS the lens so her chest
+and waistline are fully visible, weight on one hip to throw the hip out
+in a strong S curve, chin slightly down, looking into the lens with a
+small easy smile. Her front is to the camera, not her back. One
 hand lifted to run her fingers back through her hair near the temple, the
-other arm relaxed along her side, fingers softly separated. Framed from mid thigh up, her full height fitting the frame height with clear margin above her hair. Exactly five clearly rendered fingers on each visible hand,
+other arm relaxed along her side, fingers softly separated. Framed from mid calf up so the full hip and thigh line reads, her full height fitting the frame height with clear margin above her hair. Exactly five clearly rendered fingers on each visible hand,
 correct knuckle and nail anatomy.
 
 WARDROBE. Modest mainstream fashion swimwear in a single solid neon pink,
