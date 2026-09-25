@@ -303,3 +303,56 @@ class ПоддержкаИПриглашение(unittest.TestCase):
         т = язык.СТРОКИ["пригл.готовое"]["ru"].lower()
         for слово in ("реферал", "бонус мне", "я получу"):
             self.assertNotIn(слово, т)
+
+
+class ОтветАдминаВБоте(unittest.TestCase):
+    """Админ отвечает прямо в боте, и клиент не узнаёт, кто это был.
+
+    Требование владельца прямое: наши контакты не светятся нигде.
+    Здесь оно проверяется, а не подразумевается.
+    """
+
+    def setUp(self):
+        import ui
+        self.ui = ui
+
+    def _кн(self, клава):
+        return [(к.get("text"), к.get("callback_data") or к.get("url"))
+                for р in клава["inline_keyboard"] for к in р]
+
+    def test_под_обращением_есть_ответить_и_закрыть(self):
+        кн = self._кн(self.ui.меню_обращения(777))
+        данные = [д for _, д in кн]
+        self.assertIn("sup:rep:777", данные)
+        self.assertIn("sup:done:777", данные)
+
+    def test_кнопки_написать_в_личку_нет(self):
+        """Она открыла бы приватный чат админа с клиентом - то есть
+        показала бы имя, фамилию и @ник того, кто отвечает."""
+        кн = self._кн(self.ui.меню_обращения(777))
+        for текст, д in кн:
+            self.assertNotIn("личк", (текст or "").lower())
+            self.assertNotIn("t.me/", (д or ""))
+
+    def test_у_закрытого_обращения_действий_нет(self):
+        """Иначе на одно обращение уходит два ответа от разных людей."""
+        к = self.ui.меню_обращения(777, закрыто=True)
+        данные = [д for _, д in self._кн(к)] if к else []
+        self.assertNotIn("sup:rep:777", данные)
+        self.assertNotIn("sup:done:777", данные)
+
+    def test_ответ_клиенту_не_содержит_данных_админа(self):
+        """Подпись у ответа одна на всех - «Ответ поддержки»."""
+        import язык
+        for яз_ in ("ru", "en"):
+            т = язык.СТРОКИ["подд.ответ"][яз_]
+            self.assertNotIn("@", т)
+            self.assertNotIn("t.me", т)
+
+    def test_чужой_не_может_ответить_за_админа(self):
+        """Кнопка приходит в личный чат админа, но callback подделать
+        можно - код обязан проверять, а не верить кнопке."""
+        текст = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "bot.py"), encoding="utf-8").read()
+        кусок = текст.split('if data.startswith("sup:"):', 1)[1][:400]
+        self.assertIn("u not in ADMINS", кусок)
