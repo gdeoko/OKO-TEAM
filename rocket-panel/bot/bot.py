@@ -702,6 +702,25 @@ def прибрать(снимки):
                 pass
 
 
+def на_своей_карте(chat, u, kind, prompt, photos=None, scene=None, **kw):
+    """Задание целиком на одной карте (см. gpu.выбрать).
+
+    Снимки, номер задания и готовый файл живут на той карте, где их
+    создали. Карта закрепляется за потоком до конца задания - и
+    освобождается в любом исходе, иначе её счётчик занятости рос бы от
+    каждой осечки и она перестала бы получать работу.
+    """
+    род = "фото" if prompts.семейство(kind) in ("t2i", "i2i", "inpaint") else "видео"
+    try:
+        gpu.выбрать(род)
+    except Exception:                                   # noqa: BLE001
+        pass            # выбрать не вышло - задание пойдёт на основную
+    try:
+        run_job(chat, u, kind, prompt, photos, scene, **kw)
+    finally:
+        gpu.отпустить()
+
+
 def launch(chat, u, kind, prompt, photos=None, scene=None,
            цепочка=False, prompt_фото=None, denoise=1.0, плоскость=0.0):
     with lock:
@@ -709,7 +728,7 @@ def launch(chat, u, kind, prompt, photos=None, scene=None,
             send(chat, t("ген.занято", яз(u)))
             return
         busy.add(u)
-    threading.Thread(target=run_job,
+    threading.Thread(target=на_своей_карте,
                      args=(chat, u, kind, prompt, photos or [], scene),
                      kwargs={"цепочка": цепочка, "prompt_фото": prompt_фото,
                              "denoise": denoise, "плоскость": плоскость},

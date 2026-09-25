@@ -22,25 +22,62 @@
 # рисковать опечаткой в единственном месте, которое связывает бота с
 # картой. Теперь они в `/etc/amberry-card.env`, и смена карты — это две
 # строки в конфиге.
+#
+# НЕСКОЛЬКО КАРТ (25.09.2026). Основная - /etc/amberry-card.env, каждая
+# дополнительная - свой файл /etc/amberry-cards.d/<имя>.env с теми же
+# VAST_HOST и VAST_PORT. Добавить карту на день рекламы = положить файл;
+# убрать = удалить файл. У каждой карты свой адрес в
+# /srv/amberry/карты/<имя>.txt, а в общий файл бота они ложатся по
+# строке: основная первой. Бот раздаёт задания между строками сам
+# (bot/gpu.py).
 set -u
-[ -r /etc/amberry-card.env ] && . /etc/amberry-card.env
-KEY=${VAST_KEY:-/root/.ssh/vast_amberry}
-HOST=${VAST_HOST:-root@ssh1.vast.ai}
-PORT=${VAST_PORT:-14390}
-FILE=${VAST_ADDR_FILE:-/srv/amberry/карта_адрес.txt}
+KEY_DEFAULT=/root/.ssh/vast_amberry
+FILE=/srv/amberry/карта_адрес.txt
+DIR=/srv/amberry/карты
 SSHOPT="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20"
+mkdir -p "$DIR"
 
-NEW=$(timeout 40 ssh $SSHOPT -i $KEY -p $PORT $HOST \
-        "grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /var/log/tunnel.log 2>/dev/null | tail -1" \
-      2>/dev/null)
+# Список карт: «имя файл-настроек». Основная всегда первая.
+CARDS="main /etc/amberry-card.env"
+for F in /etc/amberry-cards.d/*.env; do
+  [ -r "$F" ] || continue
+  CARDS="$CARDS
+$(basename "$F" .env) $F"
+done
 
-# Пустой ответ — НЕ повод стирать адрес. Под мог на минуту отвалиться,
-# а бот без адреса перестанет генерировать вовсе. Старый адрес хотя бы
-# может ожить; пустой не оживёт никогда.
-[ -n "$NEW" ] || { echo "$(date +%F\ %T) под молчит — оставляю прежний адрес"; exit 0; }
+LIVE=""
+while read -r NAME CONF; do
+  [ -n "$NAME" ] || continue
+  VAST_HOST=""; VAST_PORT=""; VAST_KEY=""; VAST_ADDR_FILE=""
+  [ -r "$CONF" ] && . "$CONF"
+  [ -n "$VAST_HOST" ] && [ -n "$VAST_PORT" ] || continue
+  [ "$NAME" = main ] && [ -n "$VAST_ADDR_FILE" ] && FILE=$VAST_ADDR_FILE
+  NEW=$(timeout 40 ssh -n $SSHOPT -i "${VAST_KEY:-$KEY_DEFAULT}" -p "$VAST_PORT" "$VAST_HOST" \
+          "grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /var/log/tunnel.log 2>/dev/null | tail -1" \
+        2>/dev/null)
+  # Пустой ответ - НЕ повод стирать адрес: под мог на минуту
+  # отвалиться, старый адрес хотя бы может ожить, пустой - никогда.
+  if [ -n "$NEW" ]; then
+    OLD=$(cat "$DIR/$NAME.txt" 2>/dev/null || true)
+    if [ "$NEW" != "$OLD" ]; then
+      printf '%s' "$NEW" > "$DIR/$NAME.txt"
+      echo "$(date +%F\ %T) $NAME: новый адрес $NEW"
+    fi
+  else
+    echo "$(date +%F\ %T) $NAME: под молчит - оставляю прежний адрес"
+  fi
+  [ -s "$DIR/$NAME.txt" ] && LIVE="$LIVE$(cat "$DIR/$NAME.txt")
+"
+done <<LIST
+$CARDS
+LIST
 
-OLD=$(cat "$FILE" 2>/dev/null || true)
-if [ "$NEW" != "$OLD" ]; then
-  printf '%s' "$NEW" > "$FILE"
-  echo "$(date +%F\ %T) новый адрес: $NEW"
+# Пусто - общий файл не трогаем по той же причине.
+[ -n "$LIVE" ] || exit 0
+NEWALL=$(printf '%s' "$LIVE" | sed '/^$/d')
+OLDALL=$(cat "$FILE" 2>/dev/null || true)
+if [ "$NEWALL" != "$OLDALL" ]; then
+  printf '%s\n' "$NEWALL" > "$FILE.tmp" && mv -f "$FILE.tmp" "$FILE"
+  chmod 644 "$FILE"
+  echo "$(date +%F\ %T) карт в работе: $(printf '%s\n' "$NEWALL" | wc -l)"
 fi

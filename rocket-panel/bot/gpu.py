@@ -4,7 +4,7 @@
 и ожидание результата — вся логика схем на стороне панели.
 """
 
-import json, os, time, base64, urllib.request, urllib.error, urllib.parse
+import json, os, time, base64, threading, urllib.request, urllib.error, urllib.parse
 
 # ГДЕ ЛЕЖИТ ЖИВОЙ АДРЕС КАРТЫ.
 #
@@ -25,23 +25,89 @@ class GpuError(Exception):
     pass
 
 
+# НЕСКОЛЬКО КАРТ. В файле адресов - по строке на карту, основная
+# первой (пишет карта/адрес_васт.sh). Задание держится за ОДНУ карту от
+# загрузки снимков до скачивания результата: файлы и номер задания живут
+# на той карте, где их создали, и соседняя про них не знает. Поэтому
+# карта выбирается в начале задания и хранится в потоке (`выбрать`).
+#
+# КАК ВЫБИРАЕМ. Короче очередь - лучше. При равной очереди - карта, на
+# которой последним считался тот же РОД работы (фото или видео): сборки
+# фото и видео весят 28 и 23 ГБ, и карта, получившая вперемешку фото и
+# ролик, перекидывает их с диска - на одной карте это стоило одиннадцати
+# минут ожидания в час пик. Два рода на двух картах перекидывать нечего.
+ШТРАФ_ЧУЖОГО_РОДА = 1.5     # в «местах очереди»
+
+
 class Gpu:
     def __init__(self, base_url, login, password, timeout=30):
         self._из_env = (base_url or "").rstrip("/")
         self.auth = base64.b64encode(f"{login}:{password}".encode()).decode()
         self.timeout = timeout
+        self._поток = threading.local()
+        self._род_карты = {}          # адрес -> какой род считал последним
+        self._занято = {}             # адрес -> сколько заданий мы на неё отдали
+        self._замок = threading.Lock()
+
+    def карты(self):
+        """Все адреса на СЕЙЧАС, а не на момент запуска бота."""
+        try:
+            with open(ФАЙЛ_АДРЕСА, encoding="utf-8") as ф:
+                адреса = [с.strip().rstrip("/") for с in ф
+                          if с.strip() and not с.lstrip().startswith("#")]
+            if адреса:
+                return адреса
+        except OSError:
+            pass
+        return [self._из_env] if self._из_env else []
 
     @property
     def base(self):
-        """Адрес панели на СЕЙЧАС, а не на момент запуска бота."""
-        try:
-            with open(ФАЙЛ_АДРЕСА, encoding="utf-8") as ф:
-                из_файла = ф.read().strip().rstrip("/")
-            if из_файла:
-                return из_файла
-        except OSError:
-            pass
-        return self._из_env
+        """Карта этого задания, а без выбора - основная."""
+        своя = getattr(self._поток, "карта", None)
+        if своя:
+            return своя
+        к = self.карты()
+        return к[0] if к else ""
+
+    def выбрать(self, род=None):
+        """Закрепить за текущим потоком лучшую карту. Возвращает адрес.
+
+        Одна карта - никаких опросов, как было всегда. Несколько - каждая
+        спрашивается о своей очереди коротко; молчащая пропускается, чтобы
+        задание не ушло на мёртвую машину.
+        """
+        все = self.карты()
+        if len(все) <= 1:
+            self._поток.карта = все[0] if все else None
+            return self._поток.карта
+        лучшая, счёт_лучшей = None, None
+        for адрес in все:
+            try:
+                s = self._req("api/stats", адрес=адрес, timeout=6)
+                очередь = int((s or {}).get("queue") or 0)
+            except GpuError:
+                continue
+            with self._замок:
+                очередь = max(очередь, self._занято.get(адрес, 0))
+                чужой = род and self._род_карты.get(адрес) not in (None, род)
+            счёт = очередь + (ШТРАФ_ЧУЖОГО_РОДА if чужой else 0)
+            if счёт_лучшей is None or счёт < счёт_лучшей:
+                лучшая, счёт_лучшей = адрес, счёт
+        лучшая = лучшая or все[0]
+        with self._замок:
+            self._занято[лучшая] = self._занято.get(лучшая, 0) + 1
+            if род:
+                self._род_карты[лучшая] = род
+        self._поток.карта = лучшая
+        return лучшая
+
+    def отпустить(self):
+        карта = getattr(self._поток, "карта", None)
+        if карта:
+            with self._замок:
+                self._занято[карта] = max(0, self._занято.get(карта, 0) - 1)
+        self._поток.карта = None
 
     @property
     def настроена(self):
@@ -50,15 +116,16 @@ class Gpu:
         поломка."""
         return bool(self.base)
 
-    def _req(self, path, data=None, files=None, method=None):
+    def _req(self, path, data=None, files=None, method=None, адрес=None,
+             timeout=None):
         # Адреса нет — говорим об этом своей ошибкой. Без этой проверки
         # urllib.request.Request падал с ValueError «unknown url type:
         # '/api/stats'», а ValueError никто не ловит: бот не запускался
         # вовсе, хотя без карты обязан работать — баланс, пакеты,
         # оплата, кабинет и архив от неё не зависят.
-        if not self.настроена:
+        if not (адрес or self.настроена):
             raise GpuError("видеокарта не подключена (нет ROCKET_GPU_URL)")
-        url = f"{self.base}/{path.lstrip('/')}"
+        url = f"{адрес or self.base}/{path.lstrip('/')}"
         headers = {"Authorization": f"Basic {self.auth}"}
         body = None
         if files:
@@ -81,7 +148,7 @@ class Gpu:
             # раньше эта ошибка пролетала мимо всех обработчиков.
             req = urllib.request.Request(url, data=body, headers=headers,
                                          method=method)
-            with urllib.request.urlopen(req, timeout=self.timeout) as r:
+            with urllib.request.urlopen(req, timeout=timeout or self.timeout) as r:
                 raw = r.read()
                 ctype = r.headers.get("Content-Type", "")
                 return json.loads(raw) if "json" in ctype else raw
