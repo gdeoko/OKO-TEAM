@@ -59,6 +59,15 @@ the narrow waist. No soft belly, no roll or fold over the waistband, no
 pooch below the navel, no thickness through the middle. She trains: the
 waist is hard and flat while the chest and hips are full.
 
+HER WAIST IS THE NARROWEST POINT OF THE WHOLE FIGURE and it must be
+dramatically narrow - a true model waist. It cuts in sharply just under
+the ribs and stays tight all the way to the hip bones, so that the
+outline of her body makes a clean deep hourglass: wide chest, very
+narrow middle, wide hips. The difference between waist and hip must be
+obvious at a glance, an exaggerated editorial waist to hip ratio. Small
+ribcage, tight compact midsection, nothing thick or straight through
+the middle.
+
 The skin across her whole midsection is SMOOTH AND UNBROKEN from the
 ribs to the hip bones - one clean continuous surface, taut over the
 muscle, with no crease, no fold, no pinch, no gathered line at the
@@ -75,25 +84,22 @@ mannequin. She is an adult woman in her mid twenties with a mature,
 developed figure. Her FACE stays exactly as specified above and in the
 reference sheet — the build changes, the person does not.
 
-HER POSE. Confident editorial stance, not a catalogue pose. THREE
-QUARTER VIEW, turned roughly forty five degrees away from the lens, so
-that the camera sees her bust in three quarter profile AND the full
-round line of her hip and backside at the same time. This single pose
-has to show both, because both are the point of the picture.
+HER POSE. Confident editorial stance, not a catalogue pose. SHE FACES
+THE CAMERA, front on, turned only about twenty degrees off the lens, so
+her chest and her whole waistline are open to camera and fully visible.
+Her front is to the camera, not her back.
 
-Weight on the far leg, the near hip pushed back and out towards camera
-so the glutes read big, round and high with a clean curve away from the
-waist. Chest lifted and turned just enough towards the lens that the
-cleavage still reads. Head turned back over her shoulder to the camera,
-chin slightly down, a small easy smile. One hand lifted into her hair,
-the other relaxed along her thigh.
+Weight on one leg with that hip pushed out sideways, so the hip and
+thigh flare wide against the narrow waist and the curve reads even from
+the front. Chin slightly down, looking into the lens with a small easy
+smile. One hand lifted into her hair, the other relaxed along her thigh.
 
-The arch is in the LOWER BACK ONLY - a long lumbar curve that lifts the
-backside - while the spine above it stays long and stretched, ribcage
-pulled up away from the hips, shoulders back and down. She does not
-bend, lean or compress sideways at the waist: side bending is what
-gathers the skin of the flank into folds, and there must be none. The
-stretch through her middle is what keeps it smooth. One
+Her spine is LONG AND STRAIGHT, torso lifted and elongated, ribcage
+pulled up away from the hips, shoulders back and down. The S curve comes
+from the HIPS ONLY. She does not bend, lean or compress sideways at the
+waist: side bending is what gathers the skin of the flank into folds,
+and there must be none. The stretch through her middle is what keeps it
+smooth. One
 hand lifted to run her fingers back through her hair near the temple, the
 other arm relaxed along her side, fingers softly separated. Framed from the knees up so the whole backside and hip line fits in frame with room to spare, her full height fitting the frame height with clear margin above her hair. Exactly five clearly rendered fingers on each visible hand,
 correct knuckle and nail anatomy.
@@ -152,7 +158,8 @@ smoothing, no CGI doll look.
              "belly fat, soft stomach, belly roll, muffin top, thick waist, "
              "skin fold, skin crease, wrinkled stomach, pinched waist skin, "
              "love handles, side roll, bent torso, compressed waist, "
-             "flat backside, small hips, boyish figure, "
+             "flat backside, small hips, boyish figure, wide waist, "
+             "straight torso, thick midsection, rectangular silhouette, "
              "grey background, washed out blacks")
 
 
