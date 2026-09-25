@@ -80,7 +80,8 @@ class ПутьПисьма(Основа):
         self.store.ensure_user(КЛИЕНТ, "ivan", welcome=10)
         ветка = self.п.от_клиента(письмо(КЛИЕНТ, "не пришли коины")["message"])
         создана = self.tg.где("createForumTopic")[0]
-        self.assertEqual(создана["name"], "🔴 Иван · @ivan")
+        self.assertEqual(создана["name"], "Иван · @ivan")
+        self.assertEqual(создана["icon_custom_emoji_id"], "5379748062124056162")
         карточка = self.tg.где("sendMessage")[0]
         self.assertEqual(карточка["message_thread_id"], ветка)
         self.assertIn("Баланс", карточка["text"])
@@ -108,7 +109,8 @@ class ПутьПисьма(Основа):
         # copyMessage не несёт автора; пересылки быть не должно
         self.assertEqual(self.tg.где("forwardMessage"), [])
         self.assertEqual(self.store.ветка(КЛИЕНТ)["состояние"], "work")
-        self.assertTrue(self.tg.где("editForumTopic")[0]["name"].startswith("🟢"))
+        self.assertEqual(self.tg.где("editForumTopic")[0]["icon_custom_emoji_id"],
+                         "5417915203100613993")
 
     def test_реплай_менеджера_становится_цитатой_у_клиента(self):
         ветка = self.п.от_клиента(письмо(КЛИЕНТ, "вопрос", mid=77)["message"])
@@ -226,11 +228,13 @@ class Группа(Основа):
         форум = {"id": ГРУППА, "type": "supergroup", "is_forum": True}
         self.п.обновление(self._сообщение(ВЛАДЕЛЕЦ, форум))
         имена = [п["name"] for п in self.tg.где("createForumTopic")]
-        self.assertEqual(имена, ["📌 Как отвечать", "📝 Шаблоны ответов",
-                                 "🔔 Новые обращения"])
+        self.assertEqual(имена, ["Как отвечать", "Шаблоны ответов",
+                                 "Новые обращения"])
+        self.assertTrue(all(п.get("icon_custom_emoji_id")
+                            for п in self.tg.где("createForumTopic")))
         self.assertEqual(len(self.tg.где("pinChatMessage")), 3)
         self.assertEqual(self.tg.где("editGeneralForumTopic")[0]["name"],
-                         "💬 Общий чат")
+                         "Общий чат")
         self.п.настроить()
         self.assertEqual(len(self.tg.где("createForumTopic")), 3)
 

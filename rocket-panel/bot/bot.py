@@ -1850,6 +1850,11 @@ def on_update(up):
     msg = up.get("message") or up.get("edited_message")
     if not msg:
         return
+    # Только личка. Бот сидит админом в группе поддержки, и без этой
+    # строки отвечал бы менеджерам в группе «я бот генерации» на каждое
+    # их сообщение (25.09.2026 так и случилось в «Общем чате»).
+    if msg["chat"].get("type") != "private":
+        return
     chat = msg["chat"]["id"]; u = msg["from"]["id"]
     username = msg["from"].get("username")
     # Язык телеграма едет с КАЖДЫМ сообщением, но ставится только
