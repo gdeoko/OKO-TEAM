@@ -55,6 +55,7 @@ import urllib.parse
 import urllib.request
 
 import pricing
+import безлимит
 import франшиза
 
 # Сколько звёзд в рубле. Сверить с кабинетом бота и поправить: цена
@@ -109,7 +110,7 @@ def счёт_звёздами(pack_id):
 def счёт_звёздами_франшизы():
     """Франшиза — не коины, и считать её пакетом нельзя: коины сгорают
     в генерациях, а свой бот покупается один раз навсегда."""
-    звёзд = звёзд_за(франшиза.РУБЛЕЙ)
+    звёзд = звёзд_за(франшиза.рублей())
     return {
         "title": "Свой бот AMBERRY",
         "description": (f"Твой бот на нашем движке: те же кнопки, те же "
@@ -206,3 +207,36 @@ def подпись_вебхука_верна(тело_байты, подпись
     ключ = hashlib.sha256(CRYPTOBOT_ТОКЕН.encode()).digest()
     свой = hmac.new(ключ, тело_байты, hashlib.sha256).hexdigest()
     return hmac.compare_digest(свой, подпись)
+
+
+def счёт_звёздами_безлимита():
+    """Безлимит на месяц. Не пакет и не франшиза: пакет это коины,
+    франшиза покупается навсегда, а это срок, который кончится."""
+    звёзд = звёзд_за(безлимит.рублей())
+    return {
+        "title": "Безлимит AMBERRY на месяц",
+        "description": (f"Месяц без коинов. Первые {безлимит.БЫСТРЫХ} "
+                        f"работ в быстрой полосе, дальше безлимитно в "
+                        f"общей очереди. Автопродления нет."),
+        "payload": f"unlim:{int(time.time())}",
+        "provider_token": "",
+        "currency": ВАЛЮТА_ЗВЁЗД,
+        "prices": [{"label": "Безлимит на месяц", "amount": звёзд}],
+    }
+
+
+def счёт_криптой_безлимита(tg_id):
+    r = _крипто(
+        "createInvoice",
+        currency_type="fiat", fiat="USD", amount=str(безлимит.ДОЛЛАРОВ),
+        description="Безлимит AMBERRY на месяц",
+        payload=f"unlim:{tg_id}:{int(time.time())}",
+        allow_comments=False, allow_anonymous=False,
+        expires_in=3600,
+    )
+    return {"url": r.get("bot_invoice_url") or r.get("pay_url"),
+            "invoice_id": r["invoice_id"], "usd": безлимит.ДОЛЛАРОВ}
+
+
+def это_безлимит(payload):
+    return безлимит.это_безлимит(payload)

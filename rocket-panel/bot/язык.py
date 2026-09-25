@@ -310,8 +310,12 @@ def job_note(job, яз):
 
     # --- главный экран ---
     "гл.шапка": {
-        "ru": "{привет}пришли фото - и оно оживёт, переоденется или заговорит.",
-        "en": "{привет}send a photo - and it will move, change or speak.",
+        # «Заговорит» убрано 25.09.2026: видео со звуком в продаже нет
+        # (`pricing.JOBS["sound"].в_продаже = False`), и обещать его на
+        # первом же экране значит начинать знакомство с невыполнимого.
+        # Осталось ровно то, что бот умеет сегодня.
+        "ru": "{привет}раздень любое фото и оживи его в пару нажатий.",
+        "en": "{привет}undress any photo and bring it to life in two taps.",
     },
     "гл.баланс":  {"ru": "Баланс: <b>{баланс}</b>", "en": "Balance: <b>{баланс}</b>"},
     "гл.цены":    {"ru": "1 {символ} - одно фото. Ролик 5 секунд - 5 {символ}.",
@@ -923,5 +927,47 @@ def job_note(job, яз):
             "Questions, disputes and refunds go through support in the "
             "bot. Every message gets an answer."
         ),
+    },
+
+    # --- БЕЗЛИМИТ ---
+    "безл.медленно": {
+        "ru": "Быстрые работы на этот месяц кончились - дальше "
+              "безлимитно, но в порядке общей очереди. Жду, пока "
+              "освободится карта.",
+        "en": "Your fast jobs for this month are used up - from here it "
+              "is unlimited but in the general queue. Waiting for the "
+              "GPU to free up.",
+    },
+    "безл.куплен": {
+        "ru": "Безлимит включён до <b>{до}</b>.\n"
+              "Быстрых работ: <b>{быстрых}</b>, дальше без счёта.",
+        "en": "Unlimited is on until <b>{до}</b>.\n"
+              "Fast jobs: <b>{быстрых}</b>, then no counting at all.",
+    },
+    "безл.кнопка": {"ru": "Безлимит на месяц", "en": "Unlimited month"},
+    "безл.экран": {
+        "ru": ("<b>БЕЗЛИМИТ НА МЕСЯЦ</b>\n\n"
+               "Месяц без коинов: фото и ролики без счёта.\n\n"
+               "<b>Первые {быстрых} работ</b> идут в быстрой полосе, "
+               "наравне со всеми.\n"
+               "<b>Дальше</b> - безлимитно, но в порядке общей очереди: "
+               "задание уходит на карту, когда она освободится.\n\n"
+               "Так сделано честно: карта одна, и занять её целиком "
+               "означало бы оставить без генерации тех, кто платит "
+               "поштучно.\n\n"
+               "<b>Цена:</b> {долларов} $ или {рублей} ₽ за месяц. "
+               "Автопродления нет - месяц кончится сам."),
+        "en": ("<b>UNLIMITED MONTH</b>\n\n"
+               "A month with no coins: photos and clips without "
+               "counting.\n\n"
+               "<b>The first {быстрых} jobs</b> run in the fast lane, "
+               "same as everyone else.\n"
+               "<b>After that</b> - unlimited, but in the general "
+               "queue: your job goes to the GPU when it frees up.\n\n"
+               "This is the honest way: there is one GPU, and taking it "
+               "whole would leave the pay-per-job people with "
+               "nothing.\n\n"
+               "<b>Price:</b> ${долларов} or {рублей} RUB a month. "
+               "No auto-renewal - the month simply ends."),
     },
 }
