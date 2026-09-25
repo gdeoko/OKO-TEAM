@@ -846,6 +846,16 @@ class Обработчик(BaseHTTPRequestHandler):
         if п == "/api/услуги":
             self._ответ(200, сводка.услуги(pricing, catalog))
             return
+        if п == "/api/карта":
+            # Остаток на Vast и расход - пишет сторож карты
+            # (карта/сторож_vast.py, крон раз в 15 минут).
+            try:
+                with open(os.environ.get("VAST_NOW_FILE", "/srv/amberry/vast.json"),
+                          encoding="utf-8") as ф:
+                    self._ответ(200, json.load(ф))
+            except (OSError, ValueError):
+                self._ответ(200, {})
+            return
         if п == "/api/реклама":
             # Каналы для закупки рекламы: собираются скриптом
             # реклама/оценка.py и лежат рядом файлом.
