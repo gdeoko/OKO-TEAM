@@ -1,0 +1,12 @@
+[Unit]
+# ВСЕ КОПИИ ПАРТНЁРОВ ОДНОЙ РУЧКОЙ.
+#
+# Ради `systemctl restart amberry-partners.target` после выкладки
+# нового кода: копий будет столько, сколько продано франшиз, и
+# перезапускать их поимённо - способ однажды забыть одну и оставить
+# партнёра на позапрошлой версии.
+Description=AMBERRY partner bots
+After=amberry.service
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,43 @@
+[Unit]
+# КОПИЯ БОТА ДЛЯ ПАРТНЁРА. Одна служба на партнёра, %i - его tg_id.
+#
+# Копия - это ТОТ ЖЕ КОД с другим env-файлом, и никакой второй ветки
+# исходников под неё нет нарочно. Форк движка под каждого партнёра
+# означал бы, что правка цены или починка генерации доезжает до копий
+# вручную и по одной; здесь `systemctl restart amberry-partners.target`
+# поднимает их все на новом коде разом.
+Description=AMBERRY bot (partner %i)
+After=network-online.target amberry.service
+Wants=network-online.target
+PartOf=amberry-partners.target
+
+[Service]
+Type=simple
+User=amberry
+WorkingDirectory=/opt/amberry/rocket-panel/bot
+
+# ДВА ФАЙЛА, И ПОРЯДОК ВАЖЕН. Первый - общее: карта, ключи моделей,
+# курс звёзд. Второй - личное партнёра: его токен, его база, его папка
+# работ; он же ПЕРЕКРЫВАЕТ общее, поэтому идёт вторым.
+EnvironmentFile=/etc/amberry.env
+EnvironmentFile=/etc/amberry/%i.env
+
+ExecStart=/opt/amberry/.venv/bin/python bot.py
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+# Писать копия имеет право ТОЛЬКО в свою папку. Общий /srv/amberry
+# остаётся читаемым (ProtectSystem=strict делает его read-only, не
+# закрывая чтение) - оттуда копия берёт каталог сценариев, заставку и
+# запреты по симлинкам. Отдельной строки ReadOnlyPaths тут нет
+# нарочно: она бы перекрыла вложенный ReadWritePaths и копия потеряла
+# бы свою же базу.
+ReadWritePaths=/srv/amberry/partners/%i
+
+[Install]
+WantedBy=amberry-partners.target

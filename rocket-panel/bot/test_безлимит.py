@@ -13,6 +13,7 @@ import unittest
 import безлимит
 import курс
 import store as store_mod
+import язык
 import франшиза
 
 
@@ -215,6 +216,21 @@ class Условия(unittest.TestCase):
         self.assertFalse(self.s.условия_показать(999))
         self.assertEqual(self.s.условия_когда(999), 0)
 
+    def test_первая_строка_объявляет_тематику(self):
+        """«Тематика Adult» обязана стоять В САМОМ ПЕРВОМ СООБЩЕНИИ, а
+        не только в описании бота у @BotFather.
+
+        Описание видит тот, кто открыл карточку бота. Пришедший по
+        прямой ссылке из рекламы не видит его никогда: у него сразу
+        кнопка «Начать». Первое сообщение видят все без исключения, и
+        только оно годится как предупреждение о том, куда человек
+        попал."""
+        for яз in ("ru", "en"):
+            первая = язык.СТРОКИ["усл.коротко"][яз].split("\n")[0]
+            self.assertIn("dult", первая, яз)
+            self.assertIn("18", первая, яз)
+            self.assertTrue(первая.startswith("<b>"), яз)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
@@ -275,3 +291,64 @@ class Документы(unittest.TestCase):
         import ui
         для_кнопки = ui.меню_согласия("ru")["inline_keyboard"][0][0]
         self.assertEqual(для_кнопки.get("callback_data"), "m:terms")
+
+
+class ПартнёрскаяКопия(unittest.TestCase):
+    """Копия бота у партнёра: что в ней отличается, а что обязано
+    совпадать с головным ботом до кнопки.
+
+    Франшиза продаётся как «тот же бот под твоим именем». Любое
+    отличие, кроме одного намеренного, - это не франшиза, а урезанная
+    версия, за которую человек заплатил полную цену.
+    """
+
+    def setUp(self):
+        import ui
+        self.ui = ui
+        self.было = ui.ПАРТНЁРСКИЙ
+
+    def tearDown(self):
+        self.ui.ПАРТНЁРСКИЙ = self.было
+
+    def _кнопки(self):
+        м = self.ui.главное_меню(популярное=None, яз="ru")
+        return [к.get("callback_data") for ряд in м["inline_keyboard"]
+                for к in ряд]
+
+    def test_у_нас_франшиза_в_меню_есть(self):
+        self.ui.ПАРТНЁРСКИЙ = False
+        self.assertIn("m:fr", self._кнопки())
+
+    def test_у_партнёра_франшизы_нет(self):
+        """Партнёр не перепродаёт движок дальше: клиент, купивший
+        франшизу у партнёра, уходит из нашей цепочки выручки, а
+        отвечаем за его копию всё равно мы."""
+        self.ui.ПАРТНЁРСКИЙ = True
+        self.assertNotIn("m:fr", self._кнопки())
+
+    def test_остальное_меню_у_партнёра_то_же(self):
+        """Единственное отличие копии - франшиза. Проверяем прямым
+        сравнением, а не перечислением: список кнопок растёт, и
+        забытая в нём новинка молча пропала бы у партнёров."""
+        self.ui.ПАРТНЁРСКИЙ = False
+        наше = [к for к in self._кнопки() if к != "m:fr"]
+        self.ui.ПАРТНЁРСКИЙ = True
+        self.assertEqual(self._кнопки(), наше)
+
+    def test_признак_читается_из_окружения(self):
+        """Из окружения, а не из каталога: каталог у всех копий ОБЩИЙ
+        файл, и спрятать кнопку через него значит спрятать её у себя.
+        """
+        import importlib
+        старое = os.environ.get("AMBERRY_PARTNER")
+        try:
+            os.environ["AMBERRY_PARTNER"] = "777"
+            self.assertTrue(importlib.reload(self.ui).ПАРТНЁРСКИЙ)
+            os.environ.pop("AMBERRY_PARTNER")
+            self.assertFalse(importlib.reload(self.ui).ПАРТНЁРСКИЙ)
+        finally:
+            if старое is None:
+                os.environ.pop("AMBERRY_PARTNER", None)
+            else:
+                os.environ["AMBERRY_PARTNER"] = старое
+            importlib.reload(self.ui)
