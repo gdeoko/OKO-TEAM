@@ -392,6 +392,26 @@ def job_note(job, яз):
                "Напишем сюда, когда он оживёт."),
         "en": ("Got it, bot {бот} is queued for launch. We will write here "
                "when it goes live.")},
+    # ЗАПУСК ИДЁТ ПРЯМО СЕЙЧАС, и он занимает секунды, а не минуты.
+    # Строка нужна ровно затем, чтобы эти секунды не выглядели как
+    # «отправил ключ от своего бота и ничего не произошло».
+    "фр.поднимаем": {
+        "ru": "Токен принят. Поднимаю твоего бота, это займёт полминуты.",
+        "en": "Token accepted. Bringing your bot up, this takes half a minute."},
+    "фр.бот_готов": {
+        "ru": ("Готово. {бот} работает - открой его и нажми «Начать».\n\n"
+               "Внутри всё то же самое: те же сценарии, та же карта, те же "
+               "цены. Клиенты и деньги там твои."),
+        "en": ("Done. {бот} is live - open it and press Start.\n\n"
+               "Everything inside is the same: same scenarios, same card, "
+               "same prices. The clients and the money there are yours.")},
+    "фр.поднимем_сами": {
+        "ru": ("Токен принят и сохранён, но бот с первого раза не поднялся. "
+               "Мы уже это видим и включим сами - делать тебе ничего не "
+               "нужно, напишем сюда."),
+        "en": ("Token accepted and saved, but the bot did not come up on the "
+               "first try. We can see it and will start it ourselves - "
+               "nothing for you to do, we will write here.")},
     "фр.токен_не_тот": {
         "ru": "Не вышло: {почему}. Пришли токен ещё раз.",
         "en": "Did not work: {почему}. Send the token again."},
