@@ -4441,3 +4441,15 @@ class ПостояннаяКартаНеБудится(unittest.TestCase):
         его не должно быть видно вовсе, иначе кто-нибудь однажды
         позовёт подъём."""
         self.assertFalse(self.железо.включено())
+
+
+class ТолькоЛичка(unittest.TestCase):
+    def test_в_группе_бот_молчит(self):
+        import bot
+        ушло = []
+        with mock.patch.object(bot, "send", lambda *a, **к: ушло.append(a)):
+            bot.on_update({"message": {
+                "message_id": 1, "text": "привет",
+                "chat": {"id": -1004431962780, "type": "supergroup"},
+                "from": {"id": 6547482131}}})
+        self.assertEqual(ушло, [])
