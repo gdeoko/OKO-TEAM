@@ -172,7 +172,7 @@ def для_журнала(msg):
 
 class Поддержка:
     def __init__(self, store, tg, группа=None, админы=(), бот="theamberrybot",
-                 подд="AMBERRYsupport_bot", обложка=None):
+                 подд="AMBERRYsupport_bot", обложка=None, аватар=None):
         self.store = store
         self.tg = tg
         self._группа = int(группа) if группа else None
@@ -180,6 +180,7 @@ class Поддержка:
         self.бот = бот
         self.подд = подд
         self.обложка = обложка
+        self.аватар = аватар
         self.напомнили = set()
 
     # ---------- группа ----------
@@ -216,6 +217,10 @@ class Поддержка:
         if not г:
             return
         self.tg("editGeneralForumTopic", chat_id=г, name=ОБЩИЙ)
+        if (self.аватар and os.path.exists(self.аватар)
+                and not self.store.настройка("аватар.группа")):
+            if self.tg("setChatPhoto", chat_id=г, файл=self.аватар).get("ok"):
+                self.store.настройка_записать("аватар.группа", 1)
         for ключ, имя in СЛУЖЕБНЫЕ:
             if self.store.настройка(ключ):
                 continue
