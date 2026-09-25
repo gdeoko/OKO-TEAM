@@ -246,24 +246,33 @@ class Рассылка(unittest.TestCase):
 
     def test_недошедший_ответ_в_переписку_не_пишется(self):
         """Иначе в переписке остаются наши реплики, которых человек не
-        видел, и следующий разговор идёт мимо."""
-        сводка.написать = lambda кому, текст, клава=None: (False, False)
-        ушло, _ = сводка.ответить(self.store, self.живой, "ответ")
+        видел, и следующий разговор идёт мимо. Ответ с сайта уходит от
+        бота поддержки и дублируется в ветку клиента."""
+        import поддержка
+        вызовы = []
+        отказ = {"да": True}
+
+        def tg(метод, **поля):
+            вызовы.append((метод, поля))
+            if метод == "sendMessage" and поля["chat_id"] == self.живой \
+                    and отказ["да"]:
+                return {"ok": False, "description": "bot was blocked by the user"}
+            return {"ok": True, "result": {"message_id": 1}}
+
+        self.store.ветка_записать(self.живой, 42, "Живой", None)
+        п = поддержка.Поддержка(self.store, tg, группа=-100123)
+        ушло, насмерть = сводка.ответить(self.store, self.живой, "ответ", п=п)
         self.assertFalse(ушло)
+        self.assertTrue(насмерть)
         self.assertEqual(self.store.поддержка_диалог(self.живой), [])
-        ушло_с = {}
-        def поймать(кому, текст, клава=None):
-            ушло_с["клава"] = клава
-            return True, False
-        сводка.написать = поймать
-        ушло, _ = сводка.ответить(self.store, self.живой, "ответ")
+        отказ["да"] = False
+        вызовы.clear()
+        ушло, _ = сводка.ответить(self.store, self.живой, "ответ", п=п)
         self.assertTrue(ушло)
         self.assertEqual(len(self.store.поддержка_диалог(self.живой)), 1)
-        # Ответ из админки уходит так же, как из бота: с кнопкой
-        # «Вопрос решён», чтобы клиент мог закрыть диалог сам.
-        данные = [к.get("callback_data") for р in
-                  ушло_с["клава"]["inline_keyboard"] for к in р]
-        self.assertIn("cl:done", данные)
+        в_ветку = [п_ for м, п_ in вызовы if м == "sendMessage"
+                   and п_.get("message_thread_id") == 42]
+        self.assertIn("ответ", в_ветку[0]["text"])
 
 
 class ФраншизаВПанели(unittest.TestCase):

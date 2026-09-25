@@ -1,0 +1,23 @@
+[Unit]
+Description=AMBERRY support bot (@AMBERRYsupport_bot -> группа с ветками)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=amberry
+WorkingDirectory=/opt/amberry/rocket-panel/bot
+# Токен бота поддержки и id группы лежат в том же файле, что и у
+# основного бота: AMBERRY_SUPPORT_TOKEN, AMBERRY_SUPPORT_GROUP.
+EnvironmentFile=/etc/amberry.env
+ExecStart=/opt/amberry/.venv/bin/python поддержка_бот.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/amberry
+
+[Install]
+WantedBy=multi-user.target

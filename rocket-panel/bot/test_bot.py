@@ -3608,9 +3608,9 @@ class Франшиза(unittest.TestCase):
         self.assertTrue(спрятан.endswith(т[-6:]))
 
     def test_токен_не_уезжает_в_поддержку(self):
-        """Вольная строка уходит письмом владельцу. Токен похож на
-        вольную строку, и без перехвата ключ от чужого бота лёг бы в
-        переписку открытым текстом."""
+        """Токен похож на вольную строку, а на вольную строку бот
+        отвечает подсказкой про поддержку. Без перехвата ключ от чужого
+        бота ушёл бы мимо приёма токена."""
         import bot
         ушло = []
         партнёр = {"tg_id": 7, "бот": None, "состояние": "ждёт токен"}
@@ -3623,8 +3623,8 @@ class Франшиза(unittest.TestCase):
         with mock.patch.object(bot, "store", База()), \
              mock.patch.object(bot, "принять_токен",
                                lambda *a: принято.append(a)), \
-             mock.patch.object(bot, "в_поддержку",
-                               lambda *a: ушло.append(a)), \
+             mock.patch.object(bot, "send",
+                               lambda *a, **к: ушло.append(a)), \
              mock.patch.object(bot, "обновить_низ", lambda *a: None), \
              mock.patch.object(bot, "яз", lambda u: "ru"):
             bot.on_text(7, 7,
