@@ -46,8 +46,10 @@ chest: a deep neckline of cleavage, real volume and natural downward
 weight filling the halter top completely so the fabric is stretched
 taut over it, a visible soft swell above the neckline. The previous
 attempt left her flat chested and that is exactly what must not happen
-again. Pair that bust with wide rounded hips and full
-rounded glutes and strong shapely thighs.
+again. Pair that bust with wide rounded hips and a
+large, full, high and rounded backside - heavy and shapely, projecting
+clearly behind the line of her back, the single widest point of her
+silhouette - over strong shapely thighs.
 
 HER MIDSECTION IS THE OTHER HALF OF THIS, and it must go the OPPOSITE
 way from the bust and hips: a flat, taut, athletic stomach. Tight
@@ -73,19 +75,27 @@ mannequin. She is an adult woman in her mid twenties with a mature,
 developed figure. Her FACE stays exactly as specified above and in the
 reference sheet — the build changes, the person does not.
 
-HER POSE. Confident editorial stance, not a catalogue pose. Turned about
-twenty degrees from camera, facing mostly TOWARDS the lens so her chest
-and waistline are fully visible, weight on one hip so the S curve comes from
-the HIPS ONLY, chin slightly down, looking into the lens with a small
-easy smile. Her front is to the camera, not her back.
+HER POSE. Confident editorial stance, not a catalogue pose. THREE
+QUARTER VIEW, turned roughly forty five degrees away from the lens, so
+that the camera sees her bust in three quarter profile AND the full
+round line of her hip and backside at the same time. This single pose
+has to show both, because both are the point of the picture.
 
-Her spine is LONG AND STRAIGHT, torso lifted and elongated, ribcage
+Weight on the far leg, the near hip pushed back and out towards camera
+so the glutes read big, round and high with a clean curve away from the
+waist. Chest lifted and turned just enough towards the lens that the
+cleavage still reads. Head turned back over her shoulder to the camera,
+chin slightly down, a small easy smile. One hand lifted into her hair,
+the other relaxed along her thigh.
+
+The arch is in the LOWER BACK ONLY - a long lumbar curve that lifts the
+backside - while the spine above it stays long and stretched, ribcage
 pulled up away from the hips, shoulders back and down. She does not
 bend, lean or compress sideways at the waist: side bending is what
-gathers the skin of the flank into folds, and there must be none.
-The stretch through her middle is what keeps it smooth. One
+gathers the skin of the flank into folds, and there must be none. The
+stretch through her middle is what keeps it smooth. One
 hand lifted to run her fingers back through her hair near the temple, the
-other arm relaxed along her side, fingers softly separated. Framed from mid calf up so the full hip and thigh line reads, her full height fitting the frame height with clear margin above her hair. Exactly five clearly rendered fingers on each visible hand,
+other arm relaxed along her side, fingers softly separated. Framed from the knees up so the whole backside and hip line fits in frame with room to spare, her full height fitting the frame height with clear margin above her hair. Exactly five clearly rendered fingers on each visible hand,
 correct knuckle and nail anatomy.
 
 WARDROBE. Modest mainstream fashion swimwear in a single solid neon pink,
@@ -142,6 +152,7 @@ smoothing, no CGI doll look.
              "belly fat, soft stomach, belly roll, muffin top, thick waist, "
              "skin fold, skin crease, wrinkled stomach, pinched waist skin, "
              "love handles, side roll, bent torso, compressed waist, "
+             "flat backside, small hips, boyish figure, "
              "grey background, washed out blacks")
 
 
