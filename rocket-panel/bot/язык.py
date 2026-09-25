@@ -970,4 +970,151 @@ def job_note(job, яз):
                "<b>Price:</b> ${долларов} or {рублей} RUB a month. "
                "No auto-renewal - the month simply ends."),
     },
+
+    # --- ПУБЛИЧНАЯ ОФЕРТА ---
+    #
+    # Отдельно от условий нарочно. Условия это правила поведения, а
+    # оферта - коммерческое предложение: что продаём, почём, как
+    # платят и что будет с деньгами. Их путают, и зря: на споре про
+    # деньги человек ищет вторую, а не первую.
+    "оферта.текст": {
+        "ru": (
+            "<b>ПУБЛИЧНАЯ ОФЕРТА</b>\n\n"
+
+            "Этот текст - предложение заключить договор на условиях "
+            "ниже. Оплата любого тарифа означает согласие с ними "
+            "целиком.\n\n"
+
+            "<b>1. Что продаётся</b>\n"
+            "Доступ к автоматической обработке изображений: "
+            "генерация фотографий и коротких видео по присланному "
+            "снимку и выбранному сценарию. Услуга оказывается "
+            "программой, без участия человека.\n\n"
+
+            "<b>2. Коины</b>\n"
+            "Коины - внутренняя единица учёта работ. Это не "
+            "электронные деньги, не валюта и не ценная бумага. Они не "
+            "обмениваются обратно на деньги, не передаются другим "
+            "людям и не имеют срока сгорания.\n"
+            "Стоимость коина зависит от объёма пакета и указана в боте "
+            "на момент покупки.\n\n"
+
+            "<b>3. Тарифы</b>\n"
+            "Пакеты коинов - оплата за объём работ.\n"
+            "Безлимит на месяц - срок вместо объёма: первые работы "
+            "идут в быстрой полосе, дальше без счёта, но в общей "
+            "очереди. Точные числа указаны на экране тарифа. "
+            "Автопродления нет.\n"
+            "Свой бот (партнёрство) - разовый платёж за запуск бота на "
+            "нашем движке под вашим именем, с долей выручки, названной "
+            "на экране предложения.\n\n"
+
+            "<b>4. Оплата и момент оказания услуги</b>\n"
+            "Оплата принимается доступными в боте способами. Коины "
+            "зачисляются сразу после подтверждения платежа.\n"
+            "Услуга считается оказанной в момент выдачи результата. "
+            "Работа, не выполненная по нашей вине, коинов не стоит: "
+            "они возвращаются на баланс автоматически.\n\n"
+
+            "<b>5. Возврат</b>\n"
+            "Результат сгенерирован - услуга оказана, и субъективная "
+            "оценка результата основанием для возврата не является: "
+            "генерация невоспроизводима и создаётся заново каждый раз.\n"
+            "Возврат рассматривается при техническом сбое, двойном "
+            "списании или неоказании услуги. Обращение - через "
+            "поддержку в боте.\n\n"
+
+            "<b>6. Ограничения</b>\n"
+            "Услуга недоступна лицам младше 18 лет. Запрещено "
+            "присылать изображения несовершеннолетних и людей, не "
+            "давших согласия. Нарушение прекращает доступ без "
+            "возврата остатка.\n\n"
+
+            "<b>7. Ответственность</b>\n"
+            "Сервис работает на арендованных вычислительных "
+            "мощностях. Круглосуточная безотказность не гарантируется: "
+            "возможны очереди, паузы на обслуживание и сбои.\n"
+            "Ответственность за использование полученных изображений "
+            "несёт тот, кто их заказал.\n\n"
+
+            "<b>8. Изменения</b>\n"
+            "Цены, состав тарифов и текст оферты могут изменяться. "
+            "Действующая редакция - всегда по этой ссылке. Изменения "
+            "не затрагивают уже оплаченное.\n\n"
+
+            "<b>9. Связь</b>\n"
+            "Все обращения - через поддержку в боте @theamberrybot. "
+            "Отвечаем на каждое."
+        ),
+        "en": (
+            "<b>PUBLIC OFFER</b>\n\n"
+
+            "This text is an offer to enter into an agreement on the "
+            "terms below. Paying for any tariff means accepting them in "
+            "full.\n\n"
+
+            "<b>1. What is sold</b>\n"
+            "Access to automated image processing: generation of "
+            "photos and short videos from an uploaded picture and a "
+            "chosen scenario. The service is performed by software, "
+            "without human involvement.\n\n"
+
+            "<b>2. Coins</b>\n"
+            "Coins are an internal unit for counting jobs. They are not "
+            "electronic money, not a currency and not a security. They "
+            "are not exchanged back into money, not transferable and do "
+            "not expire.\n"
+            "The price of a coin depends on the pack size and is shown "
+            "in the bot at the moment of purchase.\n\n"
+
+            "<b>3. Tariffs</b>\n"
+            "Coin packs - payment for a volume of work.\n"
+            "Unlimited month - a period instead of a volume: the first "
+            "jobs run in the fast lane, after that without counting but "
+            "in the general queue. Exact numbers are shown on the "
+            "tariff screen. There is no auto-renewal.\n"
+            "Your own bot (partnership) - a one-time payment to launch "
+            "a bot on our engine under your name, with the revenue "
+            "share stated on the offer screen.\n\n"
+
+            "<b>4. Payment and when the service is rendered</b>\n"
+            "Payment is accepted by the methods available in the bot. "
+            "Coins are credited right after the payment is "
+            "confirmed.\n"
+            "The service is rendered at the moment the result is "
+            "delivered. Work that fails through our fault costs no "
+            "coins: they return to the balance automatically.\n\n"
+
+            "<b>5. Refunds</b>\n"
+            "Once a result is generated the service is rendered, and a "
+            "subjective opinion of the result is not grounds for a "
+            "refund: generation is not reproducible and is created "
+            "anew every time.\n"
+            "Refunds are considered for technical failures, double "
+            "charges or services not rendered. Contact support in the "
+            "bot.\n\n"
+
+            "<b>6. Restrictions</b>\n"
+            "The service is not available to anyone under 18. "
+            "Uploading images of minors or of people who did not "
+            "consent is forbidden. Breaking this ends access with no "
+            "refund of the remaining balance.\n\n"
+
+            "<b>7. Liability</b>\n"
+            "The service runs on rented computing power. "
+            "Round-the-clock availability is not guaranteed: queues, "
+            "maintenance pauses and failures happen.\n"
+            "Responsibility for the use of the produced images lies "
+            "with the person who ordered them.\n\n"
+
+            "<b>8. Changes</b>\n"
+            "Prices, the set of tariffs and the text of this offer may "
+            "change. The current version is always at this link. "
+            "Changes do not affect what has already been paid for.\n\n"
+
+            "<b>9. Contact</b>\n"
+            "All enquiries go through support in @theamberrybot. Every "
+            "one gets an answer."
+        ),
+    },
 }
