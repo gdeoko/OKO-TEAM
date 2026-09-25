@@ -46,8 +46,18 @@ chest: a deep neckline of cleavage, real volume and natural downward
 weight filling the halter top completely so the fabric is stretched
 taut over it, a visible soft swell above the neckline. The previous
 attempt left her flat chested and that is exactly what must not happen
-again. Pair that bust with a clearly nipped narrow waist, wide rounded
-hips and full rounded glutes, strong shapely thighs. The silhouette should read as unmistakably voluptuous and
+again. Pair that bust with wide rounded hips and full
+rounded glutes and strong shapely thighs.
+
+HER MIDSECTION IS THE OTHER HALF OF THIS, and it must go the OPPOSITE
+way from the bust and hips: a flat, taut, athletic stomach. Tight
+abdominal wall with a faint visible line down the centre and the soft
+suggestion of upper abs, the obliques cutting a clean sharp line into
+the narrow waist. No soft belly, no roll or fold over the waistband, no
+pooch below the navel, no thickness through the middle. She trains: the
+waist is hard and flat while the chest and hips are full. That contrast
+between a heavy bust, a hard flat stomach and wide hips IS the
+silhouette being asked for. The silhouette should read as unmistakably voluptuous and
 womanly from across a room, at thumbnail size, before any detail is
 legible: a pronounced waist to hip ratio, a clear S curve through the
 torso and hip. Soft realistic flesh with believable weight and gentle
@@ -116,6 +126,7 @@ smoothing, no CGI doll look.
 ОТРИЦАНИЕ = ("child, teenager, underage, blurry, deformed hands, extra "
              "fingers, extra limbs, warped anatomy, plastic skin, "
              "misspelled text, garbled letters, watermark, second person, "
+             "belly fat, soft stomach, belly roll, muffin top, thick waist, "
              "grey background, washed out blacks")
 
 
