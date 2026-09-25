@@ -134,6 +134,10 @@ return [
     // Принадлежит сообществу, а не человеку: не гаснет от смены пароля владельца и
     // не страдает, когда ВК закрывает API его личной странице. См. шапку core/vk.php.
     'vk_group_token'       => cfg('MUZMIR_VK_GROUP_TOKEN', ''),
+    /* Ключ сообщества, выданный через OAuth (group_ids): у него есть право на
+       стену, которого ключ из настроек сообщества не получает. Им идут
+       публикации, фотографии и истории; переписка остаётся на прежнем. */
+    'vk_wall_token'        => cfg('MUZMIR_VK_WALL_TOKEN', ''),
     'vk_token'             => cfg('MUZMIR_VK_TOKEN', ''),          // личный ключ владельца — запасной
     'vk_group_id'          => cfg('MUZMIR_VK_GROUP_ID', '211325055'),
     'vk_group_url'         => cfg('MUZMIR_VK_GROUP_URL', 'https://vk.com/music_world.online'),

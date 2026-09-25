@@ -37,6 +37,22 @@ declare(strict_types=1);
 function vk_api(string $method, array $params = [], string $tokenOverride = ''): array {
     if ($tokenOverride !== '') return vk_api_with($method, $params, $tokenOverride, 'vk_flood_until');
 
+    /* ДВА КЛЮЧА СООБЩЕСТВА, И ОНИ УМЕЮТ РАЗНОЕ.
+     *
+     * Ключ из настроек сообщества («Работа с API») ведёт переписку, но публиковать
+     * на стену им нельзя: ВКонтакте отвечает «нельзя вызвать с текущими
+     * разрешениями» (15/1133). Ключ сообщества, полученный через OAuth с
+     * параметром group_ids, право на стену имеет — зато в нём нет сообщений.
+     *
+     * Держим оба и выбираем по методу: стена, фотографии, истории и документы —
+     * ключом OAuth (vk_wall_token), всё остальное — прежним. Так переписка
+     * остаётся живой, а публикации снова уходят. Ключ не задан — работаем как
+     * раньше, ничего не меняется. */
+    $wall = trim((string) cfgv('vk_wall_token', ''));
+    if ($wall !== '' && preg_match('~^(wall|photos|stories|docs|video)\.~i', $method)) {
+        return vk_api_with($method, $params, $wall, 'vk_flood_until');
+    }
+
     $group = trim((string) cfgv('vk_group_token', ''));
     $user  = trim((string) cfgv('vk_token', ''));
     if ($group === '') return vk_api_with($method, $params, $user, 'vk_flood_until_user');
