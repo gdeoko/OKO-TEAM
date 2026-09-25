@@ -38,3 +38,4 @@ rocket-panel/*/rocket_bot.db
 
 # Закрытый паспорт AMBERRY: боевые пароли и токены. В git не место.
 AMBERRY_ПАСПОРТ_ЗАКРЫТЫЙ.md
+AMBERRY_ДОСТУПЫ.md
