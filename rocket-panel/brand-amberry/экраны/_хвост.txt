@@ -1,0 +1,70 @@
+
+
+ОТРИЦАНИЕ = ("child, teenager, underage, blurry, deformed hands, extra "
+             "fingers, extra limbs, warped anatomy, plastic skin, "
+             "misspelled text, garbled letters, wrapped text, text running off frame, "
+             "watermark, second person, "
+             "belly fat, soft stomach, belly roll, muffin top, thick waist, "
+             "skin fold, skin crease, wrinkled stomach, pinched waist skin, "
+             "love handles, side roll, bent torso, compressed waist, "
+             "flat backside, small hips, boyish figure, wide waist, "
+             "straight torso, thick midsection, rectangular silhouette, "
+             "bare face, no makeup, washed out features, pale flat lips, "
+             "invisible brows, wet hair, "
+             "grey background, washed out blacks")
+
+
+def картинка_в_дата(путь):
+    with open(путь, "rb") as ф:
+        д = base64.b64encode(ф.read()).decode()
+    вид = "png" if путь.lower().endswith(".png") else "jpeg"
+    return "data:image/%s;base64,%s" % (вид, д)
+
+
+def зов(путь, тело=None, метод=None, таймаут=180):
+    данные = json.dumps(тело).encode() if тело is not None else None
+    з = urllib.request.Request(БАЗА + путь, data=данные, method=метод,
+                               headers={"Authorization": "Bearer " + КЛЮЧ,
+                                        "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(з, timeout=таймаут) as о:
+            return json.load(о)
+    except urllib.error.HTTPError as e:
+        тело_ошибки = e.read().decode("utf-8", "replace")[:900]
+        return {"_http": e.code, "_ошибка": тело_ошибки}
+
+
+референсы = [картинка_в_дата(p) for p in sys.argv[1:] if os.path.exists(p)]
+print("референсов приложено: %d" % len(референсы), flush=True)
+
+тело = {"model": МОДЕЛЬ, "prompt": ПРОМПТ,
+        "aspect_ratio": "16:9", "resolution": "2K",
+        "negative_prompt": ОТРИЦАНИЕ}
+if референсы:
+    # У агрегаторов поле называется по-разному; шлём оба ходовых имени.
+    # Лишнее поле сервер обычно игнорирует, а недостающее стоило бы нам
+    # генерации без референса — то есть другой девушки.
+    тело["image"] = референсы
+    тело["image_urls"] = референсы
+
+о = зов("/images/generations", тело)
+print("ответ:", json.dumps({k: v for k, v in о.items() if k != "data"},
+                           ensure_ascii=False)[:600], flush=True)
+tid = (о.get("data") or {}).get("taskId") or о.get("taskId") or о.get("id")
+if not tid:
+    print("ЗАДАЧА НЕ СОЗДАНА"); raise SystemExit(1)
+print("задача:", tid, flush=True)
+
+н = time.time()
+while time.time() - н < 900:
+    time.sleep(6)
+    с = зов("/images/generations?task_id=" + str(tid), метод="GET")
+    д = с.get("data") or с
+    сост = (д.get("state") or д.get("status") or "").lower()
+    if сост in ("completed", "succeeded", "success"):
+        print("ГОТОВО за %.0f с" % (time.time() - н), flush=True)
+        print(json.dumps(д, ensure_ascii=False)[:1200], flush=True)
+        break
+    if сост in ("failed", "error"):
+        print("ОШИБКА:", json.dumps(д, ensure_ascii=False)[:800]); break
+    print("  %s ... %.0f с" % (сост or "?", time.time() - н), flush=True)
