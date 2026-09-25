@@ -85,10 +85,16 @@ import sys,json;print((json.load(sys.stdin).get('files') or [''])[0])")
   #
   # -nostdin ОБЯЗАТЕЛЕН: иначе ffmpeg вычитывает остаток этого скрипта
   # как свой вход, и следующие строки молча исчезают.
+  # crf 26 и -tune stillimage, а не crf 20: петля уходит человеку при
+  # КАЖДОМ заходе в раздел, пока телеграм не запомнит её file_id, и
+  # два с половиной мегабайта на экран меню - это секунды ожидания на
+  # мобильном интернете ради украшения. В кадре почти ничего не
+  # движется, поэтому лишние биты тратятся на шум, а не на картинку:
+  # вдвое меньше при той же видимой чёткости.
   ffmpeg -nostdin -y -v error -i "/tmp/$KEY.raw.mp4" \
     -filter_complex "[0:v]split[a][b];[b]reverse[r];[a][r]concat=n=2:v=1[v]" \
-    -map "[v]" -an -c:v libx264 -pix_fmt yuv420p -crf 20 \
-    -movflags +faststart "$DIR/$KEY.mp4"
+    -map "[v]" -an -c:v libx264 -preset slow -crf 26 -tune stillimage \
+    -pix_fmt yuv420p -movflags +faststart "$DIR/$KEY.mp4"
   chown amberry:amberry "$DIR/$KEY.mp4"
   echo "$KEY: готово, $(stat -c%s "$DIR/$KEY.mp4") байт"
 done
