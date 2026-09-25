@@ -804,12 +804,14 @@ def job_note(job, яз):
     # «принимаю» нет нарочно — её жмут не читая, осмысленнее согласие от
     # этого не делается, а вход в продукт она загораживает.
     "усл.коротко": {
-        "ru": "Продолжая пользоваться ботом, ты соглашаешься с условиями "
+        "ru": "<b>Тематика Adult. Только 18+.</b>\n\n"
+              "Продолжая пользоваться ботом, ты соглашаешься с условиями "
               "использования и офертой.\n\n"
               "Коротко: тебе есть 18, снимки ты присылаешь свои или тех, "
               "кто разрешил, и результат ты не выдаёшь за настоящую "
               "съёмку.",
-        "en": "By continuing to use this bot you accept the terms of use "
+        "en": "<b>Adult content. 18+ only.</b>\n\n"
+              "By continuing to use this bot you accept the terms of use "
               "and the offer.\n\n"
               "In short: you are 18 or older, you upload photos of "
               "yourself or of people who agreed to it, and you do not "
