@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import os, re
 from huggingface_hub import HfApi, hf_hub_download
-api=HfApi(); BASE="/home/ubuntu/ComfyUI/models"
+# Дом сборки: /root на Vast, /home/ubuntu на прежней Hyperstack.
+# Жёсткий /home/ubuntu клал модели мимо ComfyUI на Vast.
+api=HfApi(); BASE=os.path.join(os.environ.get("ROCKET_HOME","/home/ubuntu"),"ComfyUI","models")
 TOK=os.environ.get("HF_TOKEN") or None
 
 def files(repo):
