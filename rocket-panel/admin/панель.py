@@ -21,6 +21,7 @@
     Рассылка    письмо всем или части, с ходом отправки
     Услуги      ступени оплаты и цены видов работ, можно спрятать
     Каталог     прежняя страница кнопок, целиком
+    Реклама     каналы для закупки: аудит аудитории, контакты, цена, план
 
 Данные страница берёт у `/api/*` (см. `admin.py`), ничего не считает
 сама и ничего не хранит между заходами.
@@ -156,6 +157,27 @@ textarea{min-height:120px;resize:vertical}
 .метка.ок{background:rgba(49,208,122,.16);color:var(--зелёный)}
 .метка.плохо{background:rgba(255,77,94,.16);color:var(--красный)}
 .метка.тихо{background:#1B1723;color:var(--тихо)}
+.рк_сетка{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.рк{background:var(--карта);border:1px solid var(--край);border-radius:16px;padding:14px;
+  display:flex;flex-direction:column;gap:9px;position:relative}
+.рк.в_плане{border-color:var(--неон);box-shadow:0 0 0 1px var(--неон) inset}
+.рк .шапка{display:flex;gap:10px;align-items:flex-start}
+.рк .назв{font-weight:800;font-size:15px;line-height:1.25;word-break:break-word}
+.рк .ник{color:var(--тихо);font-size:12px}
+.рк .цифры{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.рк .цифры div{background:#0B0910;border:1px solid var(--край);border-radius:10px;padding:7px 8px}
+.рк .цифры b{display:block;font-size:15px}
+.рк .цифры span{color:var(--тихо);font-size:11px}
+.рк ul{margin:0;padding-left:16px;font-size:12px;line-height:1.45}
+.рк li.п{color:var(--красный)} .рк li.о{color:#F5B83D} .рк li.х{color:var(--зелёный)}
+.рк .цена{font-size:20px;font-weight:800}
+.рк .цена small{display:block;color:var(--тихо);font-size:11px;font-weight:600}
+.рк .низ{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.рк .низ .кн{flex:1;justify-content:center;text-decoration:none;white-space:nowrap;font-size:13px;padding:10px 12px}
+.метка.жёлтая{background:rgba(245,184,61,.16);color:#F5B83D}
+.чип{border:1px solid var(--край);background:#0B0910;color:var(--текст);border-radius:999px;
+  padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
+.чип.тут{border-color:var(--неон);color:var(--неон)}
 
 /* ПУЗЫРЬ: pre-wrap только на ТЕКСТЕ, не на всём пузыре. Раньше он
    стоял на пузыре целиком, и перенос с отступом из самого шаблона
@@ -396,6 +418,15 @@ iframe{width:100%;height:78vh;border:1px solid var(--край);border-radius:16p
       перевода впишите сумму в «Выплачено».</p></div>
   </section>
 
+  <section id="р_реклама"><h2>Реклама в каналах</h2>
+    <div class="плитки" id="рк_план"></div>
+    <div class="карта">
+      <div class="ряд" id="рк_фильтры"></div>
+      <p class="когда" id="рк_про" style="margin:10px 0 0"></p>
+    </div>
+    <div id="рк_список" class="рк_сетка"></div>
+  </section>
+
   <section id="р_каталог"><h2>Каталог кнопок</h2>
     <div class="карта" style="padding:8px"><iframe src="/каталог" title="Каталог"></iframe></div>
   </section>
@@ -423,6 +454,7 @@ const РАЗДЕЛЫ = [
   ["услуги","Услуги","M12 3v18M7 7h7a3 3 0 0 1 0 6H8a3 3 0 0 0 0 6h8"],
   ["франшиза","Франшиза","M5 20h14M7 20V9l5-5 5 5v11M10 20v-5h4v5"],
   ["каталог","Каталог","M4 5h7v14H4zM13 5h7v14h-7z"],
+  ["реклама","Реклама","M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"],
   ["прайс","Прайс","M7 7h.01M3 11V5a2 2 0 0 1 2-2h6l10 10-8 8L3 11z"],
   ["запрет","Запрет слов","M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M5.6 5.6l12.8 12.8"],
 ];
@@ -671,7 +703,95 @@ function полосы(куда, пары){
 }
 
 /* ---------- разделы ---------- */
+
+// ---- реклама ----
+let РК = {каналы:[]}, РК_ФИЛЬТР = "все", РК_СОРТ = "вердикт";
+const РК_ПЛАН_КЛЮЧ = "amberry_рк_план";
+function рк_план(){ try { return new Set(JSON.parse(localStorage.getItem(РК_ПЛАН_КЛЮЧ)||"[]")); }
+                    catch(e){ return new Set(); } }
+function рк_сохранить(н){ try { localStorage.setItem(РК_ПЛАН_КЛЮЧ, JSON.stringify([...н])); } catch(e){} }
+const рк_число = n => (n||0).toLocaleString("ru-RU");
+const рк_кратко = n => n>=1e6 ? (n/1e6).toFixed(1).replace(".0","")+" млн"
+                   : n>=1e3 ? Math.round(n/1e3)+" тыс" : String(n||0);
+function рк_контакт(к){
+  const а = к.контакты && к.контакты[0];
+  return а ? "https://t.me/"+а : "https://t.me/"+к.u;
+}
+function рисовать_рекламу(){
+  const план = рк_план();
+  const группы = ["все","в плане","живой","с оговорками","рискованный",
+                  ...new Set(РК.каналы.map(к=>к.группа))];
+  $("#рк_фильтры").innerHTML = группы.map(г =>
+    `<button class="чип ${г===РК_ФИЛЬТР?"тут":""}" data-рк-ф="${эк(г)}">${эк(г)}</button>`).join("") +
+    `<select id="рк_сорт" style="width:auto;margin-left:auto">
+       ${[["вердикт","сначала живые"],["охват","по охвату"],["цена","дешевле"],["err","по вовлечённости"],["выгода","дешёвый просмотр"]]
+         .map(([к,и])=>`<option value="${к}" ${к===РК_СОРТ?"selected":""}>${и}</option>`).join("")}
+     </select>`;
+  $("#рк_про").innerHTML = `Собрано ${эк(РК.собрано)} по публичным лентам каналов и рейтингам TGStat.
+    <b>Цена - оценка</b> по рыночной цене за тысячу просмотров, точную называет админ канала.
+    Переходы - 1% от охвата поста, осторожно. Отметьте каналы - внизу сложится план закупки.`;
+  const пор = {"живой":0,"с оговорками":1,"рискованный":2};
+  let сп = РК.каналы.filter(к => РК_ФИЛЬТР==="все" ? true
+          : РК_ФИЛЬТР==="в плане" ? план.has(к.u)
+          : (к.вердикт===РК_ФИЛЬТР || к.группа===РК_ФИЛЬТР));
+  const сорт = {вердикт:(а,б)=>пор[а.вердикт]-пор[б.вердикт]||б.охват-а.охват,
+                охват:(а,б)=>б.охват-а.охват, цена:(а,б)=>а.цена-б.цена,
+                err:(а,б)=>б.err-а.err,
+                выгода:(а,б)=>а.цена/Math.max(а.охват,1)-б.цена/Math.max(б.охват,1)};
+  сп.sort(сорт[РК_СОРТ]);
+  $("#рк_список").innerHTML = сп.map(к => {
+    const м = к.вердикт==="живой"?"ок":к.вердикт==="рискованный"?"плохо":"жёлтая";
+    const пункты = [...к.плохо.map(т=>`<li class="п">${эк(т)}</li>`),
+                    ...к.так_себе.map(т=>`<li class="о">${эк(т)}</li>`),
+                    ...к.хорошо.map(т=>`<li class="х">${эк(т)}</li>`)].join("");
+    const в = план.has(к.u);
+    return `<div class="рк ${в?"в_плане":""}">
+      <div class="шапка"><div style="flex:1">
+        <div class="назв">${эк(к.название)}</div>
+        <div class="ник">@${эк(к.u)} · ${эк(к.группа)}</div></div>
+        <span class="метка ${м}">${эк(к.вердикт)}</span></div>
+      <div class="цифры">
+        <div><b>${рк_кратко(к.подписчиков)}</b><span>подписчиков</span></div>
+        <div><b>${рк_кратко(к.охват)}</b><span>охват поста</span></div>
+        <div><b>${к.err}%</b><span>ERR</span></div></div>
+      <ul>${пункты}</ul>
+      <div class="ряд" style="justify-content:space-between">
+        <div class="цена">≈ ${рк_число(к.цена)} ₽<small>${эк(к.цена_откуда)} · ~${рк_число(к.переходов)} переходов</small></div>
+        <div class="когда" style="text-align:right">${к.контакты.length?к.контакты.map(c=>"@"+эк(c)).join("<br>"):"контакт в описании<br>не указан"}</div>
+      </div>
+      <div class="низ">
+        <a class="кн тихая" href="https://t.me/${эк(к.u)}" target="_blank" rel="noopener noreferrer">Открыть канал</a>
+        <a class="кн" href="${эк(рк_контакт(к))}" target="_blank" rel="noopener noreferrer">Купить рекламу</a>
+        <button class="кн тихая" data-рк-план="${эк(к.u)}" style="flex:0 0 auto">${в?"Убрать":"В план"}</button>
+      </div></div>`;
+  }).join("") || `<div class="карта когда">Нет каналов под этот фильтр</div>`;
+  const выбр = РК.каналы.filter(к=>план.has(к.u));
+  const сумма = выбр.reduce((с,к)=>с+к.цена,0), охв = выбр.reduce((с,к)=>с+к.охват,0),
+        пер = выбр.reduce((с,к)=>с+к.переходов,0);
+  $("#рк_план").innerHTML = [
+    ["Каналов в плане", выбр.length, "из "+РК.каналы.length],
+    ["Бюджет, ≈ ₽", рк_число(сумма), ""],
+    ["Охват, просмотров", рк_кратко(охв), ""],
+    ["Переходов в бота, ≈", рк_число(пер), пер?"≈ "+Math.round(сумма/пер)+" ₽ за переход":""],
+  ].map(([п,ц,д])=>`<div class="плитка"><div class="цифра">${ц}</div>
+     <div class="подпись">${п}</div><div class="прирост">${д}</div></div>`).join("");
+}
+document.addEventListener("click", е => {
+  const ф = е.target.closest("[data-рк-ф]");
+  if (ф){ РК_ФИЛЬТР = ф.getAttribute("data-рк-ф"); рисовать_рекламу(); return; }
+  const п = е.target.closest("[data-рк-план]");
+  if (п){ const н = рк_план(), u = п.getAttribute("data-рк-план");
+          н.has(u) ? н.delete(u) : н.add(u); рк_сохранить(н); рисовать_рекламу(); }
+});
+document.addEventListener("change", е => {
+  if (е.target.id==="рк_сорт"){ РК_СОРТ = е.target.value; рисовать_рекламу(); }
+});
+
 const ЗАГРУЗКА = {
+  async реклама(){
+    РК = await взять("/api/реклама");
+    рисовать_рекламу();
+  },
   async прайс(){
     ПРАЙС = await взять("/api/прайс");
     рисовать_прайс();

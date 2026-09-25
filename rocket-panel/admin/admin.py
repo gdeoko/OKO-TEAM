@@ -846,6 +846,16 @@ class Обработчик(BaseHTTPRequestHandler):
         if п == "/api/услуги":
             self._ответ(200, сводка.услуги(pricing, catalog))
             return
+        if п == "/api/реклама":
+            # Каналы для закупки рекламы: собираются скриптом
+            # реклама/оценка.py и лежат рядом файлом.
+            try:
+                with open(os.path.join(ЗДЕСЬ, "реклама", "каналы.json"),
+                          encoding="utf-8") as ф:
+                    self._ответ(200, json.load(ф))
+            except (OSError, ValueError):
+                self._ответ(200, {"собрано": "", "каналы": []})
+            return
         if п == "/api/франшиза":
             self._ответ(200, сводка.партнёры(store, франшиза))
             return

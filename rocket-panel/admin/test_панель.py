@@ -87,9 +87,22 @@ class Панель(unittest.TestCase):
         код, тело = зайти("/")
         self.assertEqual(код, 200)
         self.assertIn("AMBERRY", тело)
+        # Ссылки на каналы телеграма в разделе «Реклама» - это переход
+        # по нажатию, а не загрузка: сами по себе они никуда не ходят, а
+        # noreferrer не даёт телеграму узнать адрес панели.
+        self.assertIn('rel="noopener noreferrer"', тело)
+        чистое = (тело.replace("http://127.0.0.1", "")
+                      .replace('"https://t.me/"', "").replace("https://t.me/", ""))
         for чужое in ("http://", "https://", "//cdn", "fonts.googleapis"):
-            self.assertNotIn(чужое, тело.replace("http://127.0.0.1", ""),
-                             f"в странице осталось {чужое}")
+            self.assertNotIn(чужое, чистое, f"в странице осталось {чужое}")
+
+    def test_реклама_отдаёт_каналы(self):
+        код, д = зайти("/api/реклама")
+        self.assertEqual(код, 200)
+        self.assertGreaterEqual(len(д["каналы"]), 50)
+        for к in д["каналы"]:
+            self.assertGreaterEqual(к["подписчиков"], 50000)
+            self.assertIn(к["вердикт"], ("живой", "с оговорками", "рискованный"))
 
     def test_в_панели_нет_эмодзи(self):
         """Правило владельца: только SVG-значки."""
