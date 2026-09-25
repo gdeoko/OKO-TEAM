@@ -247,14 +247,23 @@ class Рассылка(unittest.TestCase):
     def test_недошедший_ответ_в_переписку_не_пишется(self):
         """Иначе в переписке остаются наши реплики, которых человек не
         видел, и следующий разговор идёт мимо."""
-        сводка.написать = lambda кому, текст: (False, False)
+        сводка.написать = lambda кому, текст, клава=None: (False, False)
         ушло, _ = сводка.ответить(self.store, self.живой, "ответ")
         self.assertFalse(ушло)
         self.assertEqual(self.store.поддержка_диалог(self.живой), [])
-        сводка.написать = lambda кому, текст: (True, False)
+        ушло_с = {}
+        def поймать(кому, текст, клава=None):
+            ушло_с["клава"] = клава
+            return True, False
+        сводка.написать = поймать
         ушло, _ = сводка.ответить(self.store, self.живой, "ответ")
         self.assertTrue(ушло)
         self.assertEqual(len(self.store.поддержка_диалог(self.живой)), 1)
+        # Ответ из админки уходит так же, как из бота: с кнопкой
+        # «Вопрос решён», чтобы клиент мог закрыть диалог сам.
+        данные = [к.get("callback_data") for р in
+                  ушло_с["клава"]["inline_keyboard"] for к in р]
+        self.assertIn("cl:done", данные)
 
 
 class ФраншизаВПанели(unittest.TestCase):

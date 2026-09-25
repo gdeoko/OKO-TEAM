@@ -971,7 +971,7 @@ class Обработчик(BaseHTTPRequestHandler):
             self._ответ(200, {"ок": True, "удалено": итог})
             return
         if путь == "/api/поддержка/закрыть":
-            store.поддержка_закрыть(int(д["tg_id"]))
+            сводка.закрыть_диалог(store, int(д["tg_id"]))
             self._ответ(200, {"ок": True})
             return
         if путь == "/api/поддержка/ответ":

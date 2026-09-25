@@ -271,6 +271,32 @@ def job_note(job, яз):
     "низ.кабинет":  {"ru": "🛠️ Кабинет", "en": "🛠️ Account"},
     "низ.пополнить": {"ru": "🩷 Пополнить", "en": "🩷 Top up"},
     "низ.поддержка": {"ru": "💬 Поддержка", "en": "💬 Support"},
+    "низ.завершить": {"ru": "✅ Завершить диалог", "en": "✅ End chat"},
+    "низ.отойти":    {"ru": "↩️ Отойти", "en": "↩️ Step away"},
+    "кн.завершить": {"ru": "Завершить диалог", "en": "End chat"},
+    "кн.решено":    {"ru": "Вопрос решён", "en": "Solved"},
+    "подд.открыт": {
+        "ru": "Передали. Ответим здесь же - обычно в течение часа.\n\n"
+              "Пиши сюда всё, что важно: можно скриншоты. Решится вопрос "
+              "- нажми «Завершить диалог».",
+        "en": "Sent. We will answer right here - usually within an hour."
+              "\n\nWrite everything that matters, screenshots too. When "
+              "it is solved, press «End chat».",
+    },
+    "подд.подключился": {
+        "ru": "К диалогу подключилась поддержка.",
+        "en": "Support has joined the chat.",
+    },
+    "подд.завершён": {
+        "ru": "Диалог с поддержкой завершён. Остались вопросы - нажми "
+              "«Поддержка» снизу.",
+        "en": "The support chat is closed. Any other question - press "
+              "«Support» below.",
+    },
+    "подд.уже_закрыт": {
+        "ru": "Диалог уже закрыт.",
+        "en": "The chat is already closed.",
+    },
     "низ.вернул": {
         "ru": "Меню снизу на месте.",
         "en": "The menu below is back.",

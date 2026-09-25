@@ -125,6 +125,23 @@ CREATE TABLE IF NOT EXISTS support_closed (
   tg_id  INTEGER PRIMARY KEY,
   at     INTEGER NOT NULL
 );
+-- ДИАЛОГ С ПОДДЕРЖКОЙ КАК СЕССИЯ. Открыт, пока closed_at пуст.
+-- В базе, а не в памяти бота: бот перезапускается при каждой
+-- выкладке, и живой разговор посреди вопроса об оплате рвался бы -
+-- ответ админа уходил бы в поддержку как вопрос к самому себе.
+CREATE TABLE IF NOT EXISTS support_dialog (
+  tg_id      INTEGER PRIMARY KEY,
+  admin      INTEGER,
+  opened_at  INTEGER NOT NULL,
+  last_at    INTEGER NOT NULL,
+  closed_at  INTEGER
+);
+-- С КЕМ АДМИН ГОВОРИТ ПРЯМО СЕЙЧАС. Один активный на админа: всё,
+-- что он пишет боту, уходит этому клиенту.
+CREATE TABLE IF NOT EXISTS support_active (
+  admin  INTEGER PRIMARY KEY,
+  tg_id  INTEGER NOT NULL
+);
 """
 
 
@@ -749,6 +766,101 @@ class Store:
                 итог.append(д)
             итог.sort(key=lambda д: (not д["ждёт"], -д["at"]))
             return итог
+
+    # --- ДИАЛОГ ПОДДЕРЖКИ ------------------------------------------
+    #
+    # Сутки тишины закрывают диалог сами. Иначе он висел бы открытым
+    # вечно, и через неделю клиентский «спасибо» падал бы в давно
+    # решённый разговор, а админ, который его когда-то взял, получал
+    # бы сообщения по делу, о котором уже забыл.
+    ДИАЛОГ_ЖИВЁТ = 24 * 3600
+
+    def диалог(self, tg_id):
+        """Открытый диалог клиента или None."""
+        with self._db() as c:
+            r = c.execute("SELECT * FROM support_dialog WHERE tg_id=?"
+                          " AND closed_at IS NULL", (tg_id,)).fetchone()
+            if not r:
+                return None
+            if time.time() - r["last_at"] > self.ДИАЛОГ_ЖИВЁТ:
+                c.execute("UPDATE support_dialog SET closed_at=?"
+                          " WHERE tg_id=?", (int(time.time()), tg_id))
+                c.execute("DELETE FROM support_active WHERE tg_id=?",
+                          (tg_id,))
+                return None
+            return dict(r)
+
+    def диалог_открыть(self, tg_id):
+        """Открыть или продлить. Возвращает (диалог, новый ли)."""
+        было = self.диалог(tg_id)
+        сейчас = int(time.time())
+        with self._db() as c:
+            if было:
+                c.execute("UPDATE support_dialog SET last_at=? WHERE tg_id=?",
+                          (сейчас, tg_id))
+                было["last_at"] = сейчас
+                return было, False
+            c.execute("INSERT INTO support_dialog(tg_id,admin,opened_at,"
+                      "last_at,closed_at) VALUES(?,NULL,?,?,NULL)"
+                      " ON CONFLICT(tg_id) DO UPDATE SET admin=NULL,"
+                      " opened_at=excluded.opened_at, last_at=excluded.last_at,"
+                      " closed_at=NULL", (tg_id, сейчас, сейчас))
+        return self.диалог(tg_id), True
+
+    def диалог_писал_ли(self, tg_id):
+        """Писал ли клиент что-то в ЭТОМ диалоге. Первое письмо сессии
+        - повод позвать админов карточкой, остальные идут коротко."""
+        д = self.диалог(tg_id)
+        if not д:
+            return False
+        with self._db() as c:
+            return bool(c.execute(
+                "SELECT 1 FROM support WHERE tg_id=? AND откого='человек'"
+                " AND at>=? LIMIT 1", (tg_id, д["opened_at"])).fetchone())
+
+    def диалог_взять(self, tg_id, админ):
+        """Админ берёт диалог и делает его активным. Возвращает, кто
+        вёл его до этого (None - никто)."""
+        д = self.диалог(tg_id)
+        if not д:
+            return None
+        with self._db() as c:
+            c.execute("UPDATE support_dialog SET admin=? WHERE tg_id=?",
+                      (админ, tg_id))
+            # Прежний ведущий теряет этого клиента: иначе двое писали бы
+            # ему параллельно, и каждый думал бы, что отвечает он один.
+            c.execute("DELETE FROM support_active WHERE tg_id=? AND admin<>?",
+                      (tg_id, админ))
+            c.execute("INSERT INTO support_active(admin,tg_id) VALUES(?,?)"
+                      " ON CONFLICT(admin) DO UPDATE SET tg_id=excluded.tg_id",
+                      (админ, tg_id))
+        return д.get("admin")
+
+    def админ_активный(self, админ):
+        """С кем админ говорит сейчас. Закрытый диалог не считается."""
+        with self._db() as c:
+            r = c.execute("SELECT tg_id FROM support_active WHERE admin=?",
+                          (админ,)).fetchone()
+        if not r:
+            return None
+        if not self.диалог(r["tg_id"]):
+            self.админ_отойти(админ)
+            return None
+        return r["tg_id"]
+
+    def админ_отойти(self, админ):
+        with self._db() as c:
+            c.execute("DELETE FROM support_active WHERE admin=?", (админ,))
+
+    def диалог_закрыть(self, tg_id):
+        """Закрыть диалог. Возвращает, кто из админов его вёл."""
+        д = self.диалог(tg_id)
+        with self._db() as c:
+            c.execute("UPDATE support_dialog SET closed_at=? WHERE tg_id=?"
+                      " AND closed_at IS NULL", (int(time.time()), tg_id))
+            c.execute("DELETE FROM support_active WHERE tg_id=?", (tg_id,))
+        self.поддержка_закрыть(tg_id)
+        return (д or {}).get("admin")
 
     def поддержка_закрыть(self, tg_id):
         """Закрыть обращение без ответа: спам, «спасибо», решилось само.
