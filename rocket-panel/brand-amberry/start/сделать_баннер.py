@@ -37,7 +37,29 @@ with a dark limbal ring; light cool skin; a wide face with generous
 cheekbone span, large eyes set wide apart, a softly concave nose bridge,
 a mouth of average width. Elegant sloping shoulders, a long neck,
 straight confident posture. Luminous natural skin with real pore texture.
-Minimal makeup, natural brows, natural lip colour.
+FULL EVENING GLAM MAKEUP, professionally applied - this is a lit
+advertising shoot, not a morning selfie, and a bare face reads as
+«just out of the shower» against all this neon.
+
+Eyes done and done strongly: smoky shadow blended warm through the
+socket, a clean black winged liner lifting the outer corner, tightlined
+upper lash line, thick fluttery lashes with real separation, a touch of
+inner corner highlight so the grey blue iris pops against the dark.
+Brows groomed, brushed up and defined with a clear tail, a shade deeper
+than her hair so they frame the face instead of vanishing into it.
+
+Skin finished like a campaign: smooth luminous base, soft contour under
+the cheekbone and along the jaw, warm blush swept high on the cheek,
+and a bright highlight on the cheekbone, brow bone, bridge of the nose
+and cupid's bow catching the magenta light.
+
+Lips full and glossy in a rich berry pink close to the brand magenta,
+lined cleanly, with a wet shine in the centre.
+
+Her FEATURES stay exactly as specified - same face, same bone
+structure, same person. Makeup adds definition and contrast, it does
+not restyle her into someone else, and the skin still shows real pore
+texture rather than an airbrushed mask.
 
 HER FIGURE. A full, curvaceous hourglass build — this is the single most
 important change from the previous version of this banner, and the
@@ -160,6 +182,8 @@ smoothing, no CGI doll look.
              "love handles, side roll, bent torso, compressed waist, "
              "flat backside, small hips, boyish figure, wide waist, "
              "straight torso, thick midsection, rectangular silhouette, "
+             "bare face, no makeup, washed out features, pale flat lips, "
+             "invisible brows, wet hair, "
              "grey background, washed out blacks")
 
 
