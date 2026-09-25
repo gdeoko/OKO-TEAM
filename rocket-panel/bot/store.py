@@ -142,6 +142,36 @@ CREATE TABLE IF NOT EXISTS support_active (
   admin  INTEGER PRIMARY KEY,
   tg_id  INTEGER NOT NULL
 );
+-- ВЕТКИ ГРУППЫ ПОДДЕРЖКИ. Один клиент - одна ветка (тема форума) в
+-- группе менеджеров; вернулся через месяц - открывается ЕГО ветка, и
+-- вся прежняя переписка перед глазами. Состояние: wait (ждёт ответа),
+-- work (ответили), closed (закрыто).
+CREATE TABLE IF NOT EXISTS support_topics (
+  tg_id      INTEGER PRIMARY KEY,
+  thread_id  INTEGER NOT NULL,
+  имя        TEXT,
+  username   TEXT,
+  откуда     TEXT,
+  состояние  TEXT NOT NULL DEFAULT 'wait',
+  at         INTEGER NOT NULL,
+  last_at    INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_topics_thread ON support_topics(thread_id);
+-- КАКОЕ СООБЩЕНИЕ ЧЕМУ СООТВЕТСТВУЕТ. Менеджер отвечает реплаем на
+-- письмо клиента в ветке - клиент видит ответ цитатой к своему
+-- письму, и наоборот. Без этой связи цитаты терялись бы.
+CREATE TABLE IF NOT EXISTS support_links (
+  group_msg  INTEGER NOT NULL,
+  tg_id      INTEGER NOT NULL,
+  client_msg INTEGER NOT NULL,
+  PRIMARY KEY (group_msg)
+);
+CREATE INDEX IF NOT EXISTS ix_links_client ON support_links(tg_id, client_msg);
+-- Настройки бота поддержки: id группы, номера служебных веток.
+CREATE TABLE IF NOT EXISTS support_settings (
+  ключ   TEXT PRIMARY KEY,
+  знач   TEXT
+);
 """
 
 
@@ -739,12 +769,14 @@ class Store:
         """
         with self._db() as c:
             rs = c.execute(
-                "SELECT s.tg_id, u.username, MAX(s.at) at,"
+                "SELECT s.tg_id, COALESCE(u.username, t.username) username,"
+                "  t.thread_id, t.имя, MAX(s.at) at,"
                 "  SUM(CASE WHEN s.прочитано=0 AND s.откого='человек'"
                 "      THEN 1 ELSE 0 END) новых,"
                 "  COUNT(*) всего,"
                 "  MAX(CASE WHEN s.откого='человек' THEN s.at END) его_at"
                 " FROM support s LEFT JOIN users u ON u.tg_id=s.tg_id"
+                " LEFT JOIN support_topics t ON t.tg_id=s.tg_id"
                 " GROUP BY s.tg_id ORDER BY at DESC LIMIT ?",
                 (limit,)).fetchall()
             итог = []
@@ -767,100 +799,81 @@ class Store:
             итог.sort(key=lambda д: (not д["ждёт"], -д["at"]))
             return итог
 
-    # --- ДИАЛОГ ПОДДЕРЖКИ ------------------------------------------
-    #
-    # Сутки тишины закрывают диалог сами. Иначе он висел бы открытым
-    # вечно, и через неделю клиентский «спасибо» падал бы в давно
-    # решённый разговор, а админ, который его когда-то взял, получал
-    # бы сообщения по делу, о котором уже забыл.
-    ДИАЛОГ_ЖИВЁТ = 24 * 3600
+    # --- ВЕТКИ ГРУППЫ ПОДДЕРЖКИ ------------------------------------
 
-    def диалог(self, tg_id):
-        """Открытый диалог клиента или None."""
+    def настройка(self, ключ, умолч=None):
         with self._db() as c:
-            r = c.execute("SELECT * FROM support_dialog WHERE tg_id=?"
-                          " AND closed_at IS NULL", (tg_id,)).fetchone()
-            if not r:
-                return None
-            if time.time() - r["last_at"] > self.ДИАЛОГ_ЖИВЁТ:
-                c.execute("UPDATE support_dialog SET closed_at=?"
-                          " WHERE tg_id=?", (int(time.time()), tg_id))
-                c.execute("DELETE FROM support_active WHERE tg_id=?",
-                          (tg_id,))
-                return None
-            return dict(r)
+            r = c.execute("SELECT знач FROM support_settings WHERE ключ=?",
+                          (ключ,)).fetchone()
+        return r["знач"] if r else умолч
 
-    def диалог_открыть(self, tg_id):
-        """Открыть или продлить. Возвращает (диалог, новый ли)."""
-        было = self.диалог(tg_id)
+    def настройка_записать(self, ключ, знач):
+        with self._db() as c:
+            c.execute("INSERT INTO support_settings(ключ,знач) VALUES(?,?)"
+                      " ON CONFLICT(ключ) DO UPDATE SET знач=excluded.знач",
+                      (ключ, None if знач is None else str(знач)))
+
+    def ветка(self, tg_id):
+        with self._db() as c:
+            r = c.execute("SELECT * FROM support_topics WHERE tg_id=?",
+                          (tg_id,)).fetchone()
+        return dict(r) if r else None
+
+    def ветка_чья(self, thread_id):
+        """Чей клиент в этой ветке. None - служебная или чужая ветка."""
+        with self._db() as c:
+            r = c.execute("SELECT tg_id FROM support_topics WHERE thread_id=?",
+                          (thread_id,)).fetchone()
+        return r["tg_id"] if r else None
+
+    def ветка_записать(self, tg_id, thread_id, имя=None, username=None,
+                       откуда=None):
         сейчас = int(time.time())
         with self._db() as c:
-            if было:
-                c.execute("UPDATE support_dialog SET last_at=? WHERE tg_id=?",
-                          (сейчас, tg_id))
-                было["last_at"] = сейчас
-                return было, False
-            c.execute("INSERT INTO support_dialog(tg_id,admin,opened_at,"
-                      "last_at,closed_at) VALUES(?,NULL,?,?,NULL)"
-                      " ON CONFLICT(tg_id) DO UPDATE SET admin=NULL,"
-                      " opened_at=excluded.opened_at, last_at=excluded.last_at,"
-                      " closed_at=NULL", (tg_id, сейчас, сейчас))
-        return self.диалог(tg_id), True
+            c.execute(
+                "INSERT INTO support_topics(tg_id,thread_id,имя,username,"
+                "откуда,состояние,at,last_at) VALUES(?,?,?,?,?,'wait',?,?)"
+                " ON CONFLICT(tg_id) DO UPDATE SET thread_id=excluded.thread_id,"
+                " имя=excluded.имя, username=excluded.username,"
+                " откуда=COALESCE(excluded.откуда, support_topics.откуда),"
+                " состояние='wait', last_at=excluded.last_at",
+                (tg_id, thread_id, имя, username, откуда, сейчас, сейчас))
 
-    def диалог_писал_ли(self, tg_id):
-        """Писал ли клиент что-то в ЭТОМ диалоге. Первое письмо сессии
-        - повод позвать админов карточкой, остальные идут коротко."""
-        д = self.диалог(tg_id)
-        if not д:
-            return False
+    def ветка_состояние(self, tg_id, состояние):
         with self._db() as c:
-            return bool(c.execute(
-                "SELECT 1 FROM support WHERE tg_id=? AND откого='человек'"
-                " AND at>=? LIMIT 1", (tg_id, д["opened_at"])).fetchone())
+            c.execute("UPDATE support_topics SET состояние=?, last_at=?"
+                      " WHERE tg_id=?", (состояние, int(time.time()), tg_id))
 
-    def диалог_взять(self, tg_id, админ):
-        """Админ берёт диалог и делает его активным. Возвращает, кто
-        вёл его до этого (None - никто)."""
-        д = self.диалог(tg_id)
-        if not д:
-            return None
+    def ветки_ждут(self, дольше):
+        """Ветки, где клиент ждёт ответа дольше `дольше` секунд."""
+        с = int(time.time()) - дольше
         with self._db() as c:
-            c.execute("UPDATE support_dialog SET admin=? WHERE tg_id=?",
-                      (админ, tg_id))
-            # Прежний ведущий теряет этого клиента: иначе двое писали бы
-            # ему параллельно, и каждый думал бы, что отвечает он один.
-            c.execute("DELETE FROM support_active WHERE tg_id=? AND admin<>?",
-                      (tg_id, админ))
-            c.execute("INSERT INTO support_active(admin,tg_id) VALUES(?,?)"
-                      " ON CONFLICT(admin) DO UPDATE SET tg_id=excluded.tg_id",
-                      (админ, tg_id))
-        return д.get("admin")
+            rs = c.execute("SELECT * FROM support_topics WHERE состояние='wait'"
+                           " AND last_at<=?", (с,)).fetchall()
+        return [dict(r) for r in rs]
 
-    def админ_активный(self, админ):
-        """С кем админ говорит сейчас. Закрытый диалог не считается."""
+    def ветка_откуда(self, tg_id, откуда):
         with self._db() as c:
-            r = c.execute("SELECT tg_id FROM support_active WHERE admin=?",
-                          (админ,)).fetchone()
-        if not r:
-            return None
-        if not self.диалог(r["tg_id"]):
-            self.админ_отойти(админ)
-            return None
-        return r["tg_id"]
+            c.execute("UPDATE support_topics SET откуда=? WHERE tg_id=?",
+                      (откуда, tg_id))
 
-    def админ_отойти(self, админ):
+    def связь_записать(self, group_msg, tg_id, client_msg):
         with self._db() as c:
-            c.execute("DELETE FROM support_active WHERE admin=?", (админ,))
+            c.execute("INSERT OR REPLACE INTO support_links(group_msg,tg_id,"
+                      "client_msg) VALUES(?,?,?)", (group_msg, tg_id, client_msg))
 
-    def диалог_закрыть(self, tg_id):
-        """Закрыть диалог. Возвращает, кто из админов его вёл."""
-        д = self.диалог(tg_id)
+    def связь_у_клиента(self, group_msg):
+        """(tg_id, id письма у клиента) для сообщения в группе."""
         with self._db() as c:
-            c.execute("UPDATE support_dialog SET closed_at=? WHERE tg_id=?"
-                      " AND closed_at IS NULL", (int(time.time()), tg_id))
-            c.execute("DELETE FROM support_active WHERE tg_id=?", (tg_id,))
-        self.поддержка_закрыть(tg_id)
-        return (д or {}).get("admin")
+            r = c.execute("SELECT tg_id, client_msg FROM support_links"
+                          " WHERE group_msg=?", (group_msg,)).fetchone()
+        return (r["tg_id"], r["client_msg"]) if r else (None, None)
+
+    def связь_в_группе(self, tg_id, client_msg):
+        with self._db() as c:
+            r = c.execute("SELECT group_msg FROM support_links WHERE tg_id=?"
+                          " AND client_msg=?", (tg_id, client_msg)).fetchone()
+        return r["group_msg"] if r else None
 
     def поддержка_закрыть(self, tg_id):
         """Закрыть обращение без ответа: спам, «спасибо», решилось само.

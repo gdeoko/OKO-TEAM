@@ -271,32 +271,10 @@ def job_note(job, яз):
     "низ.кабинет":  {"ru": "🛠️ Кабинет", "en": "🛠️ Account"},
     "низ.пополнить": {"ru": "🩷 Пополнить", "en": "🩷 Top up"},
     "низ.поддержка": {"ru": "💬 Поддержка", "en": "💬 Support"},
+    # Кнопки прежней поддержки внутри бота. Их больше не присылаем, но
+    # у кого-то они ещё висят внизу - бот узнаёт их и меняет клавиатуру.
     "низ.завершить": {"ru": "✅ Завершить диалог", "en": "✅ End chat"},
     "низ.отойти":    {"ru": "↩️ Отойти", "en": "↩️ Step away"},
-    "кн.завершить": {"ru": "Завершить диалог", "en": "End chat"},
-    "кн.решено":    {"ru": "Вопрос решён", "en": "Solved"},
-    "подд.открыт": {
-        "ru": "Передали. Ответим здесь же - обычно в течение часа.\n\n"
-              "Пиши сюда всё, что важно: можно скриншоты. Решится вопрос "
-              "- нажми «Завершить диалог».",
-        "en": "Sent. We will answer right here - usually within an hour."
-              "\n\nWrite everything that matters, screenshots too. When "
-              "it is solved, press «End chat».",
-    },
-    "подд.подключился": {
-        "ru": "К диалогу подключилась поддержка.",
-        "en": "Support has joined the chat.",
-    },
-    "подд.завершён": {
-        "ru": "Диалог с поддержкой завершён. Остались вопросы - нажми "
-              "«Поддержка» снизу.",
-        "en": "The support chat is closed. Any other question - press "
-              "«Support» below.",
-    },
-    "подд.уже_закрыт": {
-        "ru": "Диалог уже закрыт.",
-        "en": "The chat is already closed.",
-    },
     "низ.вернул": {
         "ru": "Меню снизу на месте.",
         "en": "The menu below is back.",
@@ -362,31 +340,32 @@ def job_note(job, яз):
     "гл.сначала_сценарий": {"ru": "Сначала выбери сценарий или режим.",
                             "en": "Pick a scenario or a mode first."},
     "гл.пусто": {"ru": "Тут пока пусто.", "en": "Nothing here yet."},
-    # ПОДДЕРЖКА. Раньше на любую вольную строку бот отвечал «Сначала
-    # выбери, что делаем» — и человек, который писал «не пришла оплата»,
-    # получал в ответ инструкцию по меню. Теперь такое письмо уходит
-    # владельцу, а человеку честно говорится, что оно ушло.
-    "подд.приняли": {
-        "ru": "Передала твоё сообщение. Ответим сюда же.",
-        "en": "Your message is with us. We will answer right here."},
+    # ПОДДЕРЖКА - отдельный бот @AMBERRYsupport_bot (схема от 25.09.2026).
+    # Здесь только экран с кнопкой туда.
     "кн.поддержка": {"ru": "Поддержка", "en": "Support"},
+    "кн.написать_в_поддержку": {"ru": "Написать в поддержку",
+                                "en": "Message support"},
     "подд.экран": {
         "ru": "<b>ПОДДЕРЖКА</b>\n\n"
-              "Напиши сюда прямо в чат, что случилось - и мы ответим "
-              "здесь же.\n\n"
-              "Пиши подробно: что делал, за что платил, когда. "
-              "По одной фразе «не работает» мы сможем только "
-              "переспросить, и ты потеряешь день.\n\n"
-              "Деньги, оплаты и споры - тоже сюда.",
+              "Вопросы по оплате, коинам и работам решает наш менеджер "
+              "в отдельном чате поддержки. Нажми кнопку ниже и опиши, "
+              "что случилось, - можно приложить скриншот или чек.\n\n"
+              "Отвечаем обычно в течение 15 минут.",
         "en": "<b>SUPPORT</b>\n\n"
-              "Just write here in the chat what happened - we will "
-              "answer in the same place.\n\n"
-              "Please be specific: what you did, what you paid for and "
-              "when. To «it does not work» we can only ask again, and "
-              "you lose a day.\n\n"
-              "Payments and disputes go here too.",
+              "Questions about payments, coins and works are handled by "
+              "our manager in a separate support chat. Press the button "
+              "below and describe what happened - a screenshot or a "
+              "receipt helps.\n\n"
+              "We usually reply within 15 minutes.",
     },
-    "подд.ответ": {"ru": "Ответ поддержки:", "en": "Support:"},
+    "подд.вольная": {
+        "ru": "Я бот генерации и переписку не веду. Если есть вопрос - "
+              "напиши в поддержку, менеджер ответит в течение 15 минут. "
+              "А чтобы создать работу, нажми «🫦 Создать» внизу.",
+        "en": "I am a generation bot and do not chat. If you have a "
+              "question, message support - a manager replies within 15 "
+              "minutes. To create a work, press «🫦 Create» below.",
+    },
 
     # --- ФРАНШИЗА: свой бот клиента на нашем движке ---
     # Название кнопки переименовано владельцем 25.09.2026: «Свой бот»
