@@ -28,10 +28,15 @@ $PY -m pip install -q --break-system-packages huggingface_hub gguf sentencepiece
 $PY -c "import flask, torch; print('flask и torch на месте:', torch.__version__)"
 cd $BASE/custom_nodes
 [ -d ComfyUI-GGUF ] || git clone --depth 1 https://github.com/city96/ComfyUI-GGUF.git >/dev/null 2>&1
+# Препроцессоры поз и глубины: без них кнопки с опорой дают не ту позу.
+if [ ! -d comfyui_controlnet_aux ]; then
+  git clone --depth 1 https://github.com/Fannovel16/comfyui_controlnet_aux.git >/dev/null 2>&1
+  $PY -m pip install -q --break-system-packages -r comfyui_controlnet_aux/requirements.txt >/dev/null 2>&1
+fi
 cd $BASE
 echo "=== ComfyUI $(date -u +%H:%M:%S)"
 
-$PY /root/weights.py 2>&1 | grep -viE "warning|warnings.warn"
+ROCKET_HOME=/root $PY /root/weights.py 2>&1 | grep -viE "warning|warnings.warn"
 echo "=== модели $(date -u +%H:%M:%S)"
 
 if ! command -v caddy >/dev/null; then
