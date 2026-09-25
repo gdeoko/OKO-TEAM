@@ -218,3 +218,60 @@ class Условия(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class Документы(unittest.TestCase):
+    """Страница на telegra.ph и кнопки-ссылки на неё."""
+
+    def setUp(self):
+        import оферта
+        self.о = оферта
+        self.файл = os.path.join(tempfile.mkdtemp(), "оферта.json")
+        self.старый, оферта.ФАЙЛ = оферта.ФАЙЛ, self.файл
+
+    def tearDown(self):
+        self.о.ФАЙЛ = self.старый
+
+    def test_жирная_строка_целиком_становится_заголовком(self):
+        """Иначе телеграф лепит её вплотную к тексту, и выходит
+        «1. ВозрастБот делает материалы для взрослых»."""
+        узлы = self.о._текст_в_узлы("<b>1. Возраст</b>\nБоту 18+.")
+        self.assertEqual(узлы[0]["tag"], "h4")
+        self.assertEqual(узлы[0]["children"], ["1. Возраст"])
+        self.assertEqual(узлы[1]["tag"], "p")
+
+    def test_жирное_внутри_строки_остаётся_жирным(self):
+        узлы = self.о._текст_в_узлы("Цена: <b>500 $</b> разово.")
+        дети = узлы[0]["children"]
+        self.assertTrue(any(isinstance(д, dict) and д.get("tag") == "b"
+                            for д in дети))
+        self.assertNotEqual(узлы[0]["tag"], "h4")
+
+    def test_абзацы_делятся_пустой_строкой(self):
+        узлы = self.о._текст_в_узлы("Первый.\n\nВторой.")
+        self.assertEqual(len(узлы), 2)
+
+    def test_два_раздела_разделены_чертой(self):
+        узлы = self.о.собрать("<b>А</b>\nраз", "<b>Б</b>\nдва")
+        self.assertIn({"tag": "hr"}, узлы)
+
+    def test_нет_файла_нет_ссылки(self):
+        """Бот обязан подняться и без опубликованной страницы: тогда
+        условия показываются текстом, как раньше."""
+        self.assertEqual(self.о.ссылка(), "")
+
+    def test_кнопки_ведут_ссылкой_когда_страница_есть(self):
+        import json as _j
+        import ui
+        with open(self.файл, "w", encoding="utf-8") as ф:
+            _j.dump({"token": "t", "path": "p",
+                     "url": "https://telegra.ph/проба"}, ф)
+        для_кнопки = ui.меню_согласия("ru")["inline_keyboard"][0][0]
+        self.assertEqual(для_кнопки.get("url"), "https://telegra.ph/проба")
+        self.assertNotIn("callback_data", для_кнопки,
+                         "кнопка-ссылка не должна слать callback")
+
+    def test_без_страницы_кнопка_остаётся_рабочей(self):
+        import ui
+        для_кнопки = ui.меню_согласия("ru")["inline_keyboard"][0][0]
+        self.assertEqual(для_кнопки.get("callback_data"), "m:terms")
