@@ -54,7 +54,8 @@ def main():
                   подд=os.environ.get("AMBERRY_SUPPORT_NAME",
                                       "AMBERRYsupport_bot"),
                   обложка=os.path.join(os.environ.get(
-                      "AMBERRY_COVERS_DIR", "/srv/amberry/экраны"), "sup.jpg"))
+                      "AMBERRY_COVERS_DIR", "/srv/amberry/экраны"), "sup.jpg"),
+                  аватар="/srv/amberry/поддержка/аватар-группа.jpg")
     if п.группа:
         п.настроить()
     print("поддержка запущена, группа:", п.группа, flush=True)
