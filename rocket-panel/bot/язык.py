@@ -298,6 +298,9 @@ def job_note(job, яз):
     "кн.работы":    {"ru": "Мои работы", "en": "My works"},
     "кн.друзья":    {"ru": "Позвать друзей", "en": "Invite friends"},
     "кн.удалить":   {"ru": "Удалить мои данные", "en": "Delete my data"},
+    "кн.условия":   {"ru": "Условия и требования",
+                     "en": "Terms and conditions"},
+    "кн.ознакомиться": {"ru": "Ознакомиться", "en": "Read them"},
     "кн.удалить_да": {"ru": "Да, удалить всё", "en": "Yes, delete everything"},
     "кн.язык":      {"ru": "Language · English", "en": "Язык · русский"},
     "кн.звёзды":    {"ru": "Telegram Stars", "en": "Telegram Stars"},
@@ -788,5 +791,137 @@ def job_note(job, яз):
               "разберёмся руками, деньги не пропадут.",
         "en": "The payment went through but I could not tell which pack it was. "
               "Write to support - we will sort it out by hand, the money is safe.",
+    },
+
+    # --- УСЛОВИЯ ИСПОЛЬЗОВАНИЯ ---
+    #
+    # Показываются ОДИН раз, следом за приветствием, и дальше живут в
+    # кабинете. Согласие даётся самим пользованием: отдельной кнопки
+    # «принимаю» нет нарочно — её жмут не читая, осмысленнее согласие от
+    # этого не делается, а вход в продукт она загораживает.
+    "усл.коротко": {
+        "ru": "Продолжая пользоваться ботом, ты соглашаешься с условиями "
+              "использования и офертой.\n\n"
+              "Коротко: тебе есть 18, снимки ты присылаешь свои или тех, "
+              "кто разрешил, и результат ты не выдаёшь за настоящую "
+              "съёмку.",
+        "en": "By continuing to use this bot you accept the terms of use "
+              "and the offer.\n\n"
+              "In short: you are 18 or older, you upload photos of "
+              "yourself or of people who agreed to it, and you do not "
+              "pass the result off as a real photograph.",
+    },
+    "усл.текст": {
+        "ru": (
+            "<b>УСЛОВИЯ И ТРЕБОВАНИЯ</b>\n\n"
+
+            "<b>1. Возраст</b>\n"
+            "Бот делает материалы для взрослых. Пользуясь им, ты "
+            "подтверждаешь, что тебе исполнилось 18 лет.\n\n"
+
+            "<b>2. Чьи снимки можно присылать</b>\n"
+            "Только свои - или тех взрослых людей, которые на это "
+            "согласились. Запрещено присылать снимки:\n"
+            "• несовершеннолетних, в любом виде и с любой целью;\n"
+            "• людей, которые не давали согласия;\n"
+            "• чужие фото из интернета, соцсетей и переписок.\n\n"
+            "Это главное правило бота. Нарушение - блокировка без "
+            "возврата остатка коинов.\n\n"
+
+            "<b>3. Что нельзя делать с результатом</b>\n"
+            "Выдавать за настоящую фотосъёмку, публиковать как "
+            "доказательство чего-либо, использовать для шантажа, "
+            "травли, клеветы или преследования. Результат - "
+            "сгенерированное изображение, а не снимок реального "
+            "события.\n\n"
+
+            "<b>4. Коины и деньги</b>\n"
+            "Коины - внутренний счётчик работ, а не электронные деньги. "
+            "Они не обмениваются обратно на рубли и не переводятся "
+            "другим.\n"
+            "Коины списываются за выполненную работу. Если работа не "
+            "получилась по нашей вине, коины возвращаются на баланс "
+            "автоматически.\n"
+            "Результат не понравился по вкусу - это не осечка: "
+            "генерация выполнена, коины списаны. Считай это как "
+            "проявленную плёнку.\n"
+            "Спорный случай - напиши в поддержку, разберём руками.\n\n"
+
+            "<b>5. Хранение</b>\n"
+            "Присланные снимки нужны только для работы и хранятся "
+            "ограниченное время. Готовые работы лежат в разделе "
+            "«Файлы». Удалить всё разом - кнопка «Удалить мои данные» "
+            "в кабинете; после неё восстановить нельзя.\n\n"
+
+            "<b>6. Работа сервиса</b>\n"
+            "Бот работает на арендованной видеокарте. Мы не обещаем "
+            "круглосуточной безотказности: возможны очереди, паузы на "
+            "обслуживание и редкие сбои. Незавершённая из-за сбоя работа "
+            "коинов не стоит.\n\n"
+
+            "<b>7. Изменения</b>\n"
+            "Цены, набор сценариев и эти условия могут меняться. "
+            "Действующая редакция - всегда здесь, в кабинете.\n\n"
+
+            "<b>8. Связь</b>\n"
+            "Вопросы, споры, возвраты - только через поддержку в боте. "
+            "Отвечаем на каждое обращение."
+        ),
+        "en": (
+            "<b>TERMS AND CONDITIONS</b>\n\n"
+
+            "<b>1. Age</b>\n"
+            "This bot produces adult material. By using it you confirm "
+            "that you are 18 or older.\n\n"
+
+            "<b>2. Whose photos you may upload</b>\n"
+            "Your own - or those of adults who agreed to it. You may "
+            "not upload photos of:\n"
+            "• minors, in any form and for any purpose;\n"
+            "• people who did not consent;\n"
+            "• strangers taken from the internet, social media or "
+            "private chats.\n\n"
+            "This is the bot's main rule. Breaking it means a ban with "
+            "no refund of remaining coins.\n\n"
+
+            "<b>3. What you may not do with the result</b>\n"
+            "Pass it off as a real photograph, publish it as evidence "
+            "of anything, or use it for blackmail, defamation or "
+            "harassment. The result is a generated image, not a "
+            "photograph of a real event.\n\n"
+
+            "<b>4. Coins and money</b>\n"
+            "Coins are an internal counter of jobs, not electronic "
+            "money. They are not exchanged back into currency and are "
+            "not transferable.\n"
+            "Coins are spent on completed work. If a job fails through "
+            "our fault, the coins return to your balance "
+            "automatically.\n"
+            "Not liking the result is not a failure: the generation ran "
+            "and the coins were spent. Think of it as a developed "
+            "film.\n"
+            "If something looks wrong, write to support and we will "
+            "sort it out by hand.\n\n"
+
+            "<b>5. Storage</b>\n"
+            "Uploaded photos are needed only for the job and are kept "
+            "for a limited time. Finished work lives in «Files». To "
+            "erase everything at once use «Delete my data» in your "
+            "account; after that nothing can be restored.\n\n"
+
+            "<b>6. Service</b>\n"
+            "The bot runs on a rented GPU. We do not promise "
+            "round-the-clock availability: queues, maintenance pauses "
+            "and rare failures happen. Work that fails for that reason "
+            "costs no coins.\n\n"
+
+            "<b>7. Changes</b>\n"
+            "Prices, the set of scenarios and these terms may change. "
+            "The current version is always here, in your account.\n\n"
+
+            "<b>8. Contact</b>\n"
+            "Questions, disputes and refunds go through support in the "
+            "bot. Every message gets an answer."
+        ),
     },
 }
