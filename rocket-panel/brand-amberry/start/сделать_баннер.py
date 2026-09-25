@@ -158,8 +158,12 @@ THE TYPOGRAPHY, built as real neon in the scene. The word "AMBERRY" in a
 wide geometric sans serif, all capitals, generously letterspaced, glowing
 hot magenta #FF0A8C as a genuine neon tube with a white hot inner core,
 soft bloom and a clean reflection on the wet floor, sitting in the LEFT HALF of the frame, vertically centred, directly under the berry mark. Below it, much smaller and calmer,
-the line "ОЖИВЛЯЕТ ЛЮБОЕ ФОТО" in clean white #FFFFFF capitals, widely
-letterspaced, lit softly rather than glowing. Both lines spelled EXACTLY
+the line "РАЗДЕВАЕТ И ОЖИВЛЯЕТ ЛЮБОЕ ФОТО" in clean white #FFFFFF
+capitals, lit softly rather than glowing. This line is LONGER than the
+word above it, so letterspace it only moderately and set it narrower
+than AMBERRY: it must fit on ONE single line inside the left half,
+never wrapping to a second line and never running wider than the neon
+word above it or past the edge of the frame. Both lines spelled EXACTLY
 as written here, with correct Cyrillic letterforms on the second line. No
 other text, no watermark, no signature, no UI elements, no buttons, no
 phone frame.
@@ -176,7 +180,8 @@ smoothing, no CGI doll look.
 
 ОТРИЦАНИЕ = ("child, teenager, underage, blurry, deformed hands, extra "
              "fingers, extra limbs, warped anatomy, plastic skin, "
-             "misspelled text, garbled letters, watermark, second person, "
+             "misspelled text, garbled letters, wrapped text, text running off frame, "
+             "watermark, second person, "
              "belly fat, soft stomach, belly roll, muffin top, thick waist, "
              "skin fold, skin crease, wrinkled stomach, pinched waist skin, "
              "love handles, side roll, bent torso, compressed waist, "
