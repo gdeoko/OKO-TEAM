@@ -117,18 +117,20 @@ import urllib.request
     "cab": {
         "надпись": ("ЛИЧНЫЙ КАБИНЕТ", "ТВОЙ БАЛАНС И РАБОТЫ"),
         "поза": (
-            "She stands three quarters to camera beside a tall floating "
-            "panel of magenta light, one hand raised with the index "
-            "finger just touching its surface as if tapping a control, "
-            "head turned to the lens over her shoulder with a soft "
-            "attentive smile. Relaxed, unhurried, at home here."),
+            "She stands facing the camera, weight on one hip, both arms "
+            "relaxed and open at her sides with the palms turned "
+            "slightly forward in a calm welcoming gesture, as if saying "
+            "«this is yours». Head level, looking straight into the "
+            "lens with a soft warm smile. Relaxed, unhurried, at home "
+            "here."),
         "сцена": (
-            "The floating panel is a simple vertical rectangle of soft "
-            "magenta glow with a few abstract glowing bars and a small "
-            "raspberry mark on it - suggestive of an interface but "
-            "carrying NO readable text, no numbers and no icons. Two "
-            "smaller glowing panels hover further back, out of focus. "
-            "All of them reflect on the wet floor."),
+            "Around her, several glowing magenta picture frames of "
+            "different sizes float in the dark at different depths, "
+            "empty and softly lit from within, like a gallery hung in "
+            "mid air - her saved work waiting on the walls. The frames "
+            "are plain glowing rectangles with nothing drawn inside "
+            "them. Fine magenta particles drift between them. The "
+            "frames reflect on the wet floor."),
     },
 }
 
