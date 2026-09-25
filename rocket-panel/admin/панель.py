@@ -157,11 +157,52 @@ textarea{min-height:120px;resize:vertical}
 .метка.плохо{background:rgba(255,77,94,.16);color:var(--красный)}
 .метка.тихо{background:#1B1723;color:var(--тихо)}
 
-.пузырь{max-width:78%;padding:9px 13px;border-radius:14px;margin-bottom:8px;
-  white-space:pre-wrap;word-break:break-word}
-.пузырь.он{background:#191521;border-bottom-left-radius:5px}
+/* ПУЗЫРЬ: pre-wrap только на ТЕКСТЕ, не на всём пузыре. Раньше он
+   стоял на пузыре целиком, и перенос с отступом из самого шаблона
+   печатались перед словами - первая строка каждого письма уезжала
+   вправо. */
+.пузырь{max-width:80%;padding:9px 13px;border-radius:16px;margin-bottom:6px;
+  word-break:break-word;line-height:1.4}
+.пузырь .т{white-space:pre-wrap}
+.пузырь.он{background:#1D1827;border-bottom-left-radius:5px}
 .пузырь.мы{background:linear-gradient(135deg,var(--неон),var(--неон2));
   color:#fff;margin-left:auto;border-bottom-right-radius:5px}
+.пузырь.мы .когда{color:rgba(255,255,255,.72);text-align:right}
+.день{text-align:center;font-size:11px;color:var(--тихо);margin:14px 0 8px;
+  letter-spacing:.06em;text-transform:uppercase}
+
+/* СПИСОК ОБРАЩЕНИЙ - карточками, а не таблицей. В таблице кнопка
+   «Открыть» на телефоне вылезала за край карточки; здесь нажимается
+   вся строка, и кнопка не нужна вовсе. */
+.обр{display:flex;gap:12px;align-items:flex-start;padding:13px 12px;
+  border-radius:14px;cursor:pointer;border:1px solid transparent;
+  transition:background .15s}
+.обр:hover{background:#17131F}
+.обр+.обр{margin-top:4px}
+.обр.ждёт{border-color:rgba(255,10,140,.35);background:rgba(255,10,140,.06)}
+.обр .обр-круг{flex:none;width:40px;height:40px;border-radius:50%;
+  display:grid;place-items:center;font-weight:800;font-size:15px;
+  background:#231C2E;color:var(--неон)}
+.обр .обр-тело{flex:1;min-width:0}
+.обр .обр-верх{display:flex;justify-content:space-between;gap:8px}
+.обр .обр-кто{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.обр .обр-превью{color:var(--тихо);font-size:13px;margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.чипы{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.чип{border:1px solid var(--край);border-radius:999px;padding:6px 13px;
+  font-size:13px;font-weight:700;background:transparent;color:inherit;cursor:pointer}
+.чип.да{background:var(--неон);border-color:var(--неон);color:#fff}
+
+/* ДИАЛОГ: шапка, лента, поле ответа прилипает к низу. */
+.шапка-д{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.шапка-д .шд-тело{flex:1;min-width:0}
+.факты{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.факт{font-size:12px;padding:3px 9px;border-radius:999px;background:#1D1827}
+.лента{max-height:50vh;overflow:auto;padding:4px 2px 8px}
+.низ-д{position:sticky;bottom:0;background:var(--карта,#120F18);padding-top:8px}
+.быстро{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;
+  scrollbar-width:none}
+.быстро .чип{white-space:nowrap;font-weight:600}
 .когда{font-size:11px;color:var(--тихо);margin-top:3px}
 
 .пусто{color:var(--тихо);padding:22px 0;text-align:center}
@@ -712,19 +753,36 @@ const ЗАГРУЗКА = {
   },
 
   async поддержка(){
+    clearInterval(обновлять_диалог); открыт_диалог = null;
     $("#сп_переписка").style.display = "none";
+    $("#сп_диалоги").style.display = "";
     const д = await взять("/api/поддержка");
-    непрочитано = д.диалоги.reduce((s,x)=>s+x.новых,0); меню(); открыть_подсветить();
-    $("#сп_диалоги").innerHTML = д.диалоги.length ? `<table>
-      <tr><th>Кто</th><th>Последнее</th><th>Писем</th><th></th></tr>
-      ${д.диалоги.map(р=>`<tr><td>
-        <b>${р.username?"@"+эк(р.username):эк(р.tg_id)}</b>
-        ${р.новых?`<span class="счёт" style="background:var(--неон);color:#fff;
-          border-radius:999px;padding:1px 7px;font-size:11px">${р.новых}</span>`:""}
-        </td><td>${дата(р.at)}</td><td>${р.всего}</td>
-        <td><button class="кн тихая" data-диалог="${р.tg_id}">Открыть</button></td>
-      </tr>`).join("")}</table>` :
-      '<div class="пусто">Писем пока не было</div>';
+    непрочитано = д.диалоги.filter(x=>x.ждёт).length; меню(); открыть_подсветить();
+    const ждут = д.диалоги.filter(x=>x.ждёт);
+    // Фильтр по умолчанию - «Ждут ответа»: это и есть работа на сегодня.
+    // Все переписки подряд нужны реже, их держим одним нажатием дальше.
+    const список = фильтр_подд==="ждут" ? ждут : д.диалоги;
+    $("#сп_диалоги").innerHTML = `
+      <div class="чипы">
+        <button class="чип ${фильтр_подд==="ждут"?"да":""}" data-фильтр="ждут">
+          Ждут ответа · ${ждут.length}</button>
+        <button class="чип ${фильтр_подд==="все"?"да":""}" data-фильтр="все">
+          Все · ${д.диалоги.length}</button>
+      </div>` + (список.length ? список.map(р=>`
+      <div class="обр ${р.ждёт?"ждёт":""}" data-диалог="${р.tg_id}">
+        <div class="обр-круг">${эк(((р.username||"?")[0]||"?").toUpperCase())}</div>
+        <div class="обр-тело">
+          <div class="обр-верх"><span class="обр-кто">${р.username?"@"+эк(р.username):эк(р.tg_id)}</span>
+            <span class="когда" style="margin:0">${дата(р.at)}</span></div>
+          <div class="обр-превью">${р.последний==="мы"?"Вы: ":""}${эк(р.последнее)}</div>
+          <div class="ряд" style="gap:6px;margin-top:6px">
+            ${р.ждёт?'<span class="метка плохо">ждёт ответа</span>'
+              : р.закрыто?'<span class="метка тихо">закрыто</span>'
+              : '<span class="метка ок">отвечено</span>'}
+            <span class="метка тихо">${р.всего} писем</span></div>
+        </div></div>`).join("")
+      : `<div class="пусто">${фильтр_подд==="ждут"
+            ? "Все ответы даны" : "Писем пока не было"}</div>`);
   },
 
   async рассылка(){
@@ -819,6 +877,13 @@ function открыть_подсветить(){
 
 /* ---------- действия ---------- */
 document.addEventListener("click", async e => {
+  // Карточка обращения - не кнопка, а строка целиком: на телефоне в
+  // неё попадают пальцем, а не целятся в маленькое «Открыть».
+  const обр = e.target.closest(".обр[data-диалог]");
+  if(обр && !e.target.closest("button")){
+    открыть_диалог(+обр.dataset.диалог).catch(ош=>alert("Не вышло: "+ош.message));
+    return;
+  }
   const б = e.target.closest("button");
   if(!б) return;
   try{
@@ -893,6 +958,15 @@ document.addEventListener("click", async e => {
       await послать("/api/рассылка", {текст:т, кому:$("#кому").value});
       $("#письмо").value = "";
       ход();
+    } else if(б.dataset.фильтр){
+      фильтр_подд = б.dataset.фильтр; ЗАГРУЗКА.поддержка();
+    } else if(б.dataset.быстро){
+      const поле = $("#ответ");
+      if(поле){ поле.value = (поле.value ? поле.value.trimEnd()+"\n\n" : "")
+        + БЫСТРО[+б.dataset.быстро]; поле.focus(); }
+    } else if(б.id==="закрыть_обр"){
+      await послать("/api/поддержка/закрыть", {tg_id:+б.dataset.кому});
+      ЗАГРУЗКА.поддержка();
     } else if(б.id==="назад_к_списку"){
       ЗАГРУЗКА.поддержка();
     } else if(б.id==="ответить"){
@@ -909,28 +983,86 @@ document.addEventListener("click", async e => {
   }catch(ош){ alert("Не вышло: "+ош.message); б.disabled = false; }
 });
 
-async function открыть_диалог(id){
+// БЫСТРЫЕ ОТВЕТЫ. Самые частые реплики поддержки одним нажатием - в
+// поле, а не сразу клиенту: шаблон почти всегда надо дописать под
+// человека, и отправка без правки выглядит как ответ робота.
+const БЫСТРО = [
+  "Уточни, пожалуйста: что делал, какой раздел и примерно во сколько.",
+  "Проверили - коины за неудачную генерацию вернулись на баланс.",
+  "Оплата дошла, коины зачислены. Обнови меню - /start.",
+  "Смотрим, ответим здесь же в течение часа.",
+  "Попробуй другое фото: лицо целиком, без масок и сильных фильтров.",
+];
+
+let фильтр_подд = "ждут", открыт_диалог = null, обновлять_диалог = null;
+let видно_писем = 0;
+
+function день(ts){
+  return new Date(ts*1000).toLocaleDateString("ru-RU",
+    {day:"numeric", month:"long"});
+}
+
+async function открыть_диалог(id, тихо){
   const д = await взять("/api/поддержка/"+id);
+  // Автообновление перерисовывает только если пришло новое - иначе
+  // поле ответа сбрасывалось бы под пальцами каждые десять секунд.
+  if(тихо && д.письма.length === видно_писем) return;
+  const черновик = тихо && $("#ответ") ? $("#ответ").value : "";
+  видно_писем = д.письма.length;
+  открыт_диалог = id;
   $("#сп_диалоги").style.display = "none";
   const о = $("#сп_переписка");
   о.style.display = "";
+  let был = "";
+  const лента = д.письма.map(п=>{
+    const дн = день(п.at);
+    const раздел = дн!==был ? `<div class="день">${дн}</div>` : "";
+    был = дн;
+    return раздел + `<div class="пузырь ${п.откого==="мы"?"мы":"он"}"><div class="т">${эк(п.текст)}</div><div class="когда">${new Date(п.at*1000).toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})}</div></div>`;
+  }).join("");
   о.innerHTML = `
-    <div class="ряд" style="justify-content:space-between;margin-bottom:12px">
-      <b>${д.username?"@"+эк(д.username):эк(id)}</b>
-      <button class="кн тихая" id="назад_к_списку">К списку</button></div>
-    <div style="max-height:52vh;overflow:auto;margin-bottom:12px">
-      ${д.письма.map(п=>`<div class="пузырь ${п.откого==="мы"?"мы":"он"}">
-        ${эк(п.текст)}<div class="когда">${дата(п.at)}</div></div>`).join("")}
+    <div class="шапка-д">
+      <button class="кн тихая" id="назад_к_списку" aria-label="К списку">←</button>
+      <div class="кружок" style="width:40px;height:40px;border-radius:50%;
+        display:grid;place-items:center;font-weight:800;background:#231C2E;
+        color:var(--неон)">${эк(((д.username||"?")[0]||"?").toUpperCase())}</div>
+      <div class="шд-тело"><b>${д.username?"@"+эк(д.username):"без ника"}</b>
+        <div class="когда" style="margin:0">${эк(id)}</div></div>
+      <button class="кн тихая" id="закрыть_обр" data-кому="${id}">Закрыть</button>
     </div>
-    <textarea id="ответ" placeholder="Ответ человеку"></textarea>
-    <div class="ряд" style="margin-top:10px">
-      <button class="кн" id="ответить" data-кому="${id}">Ответить</button></div>`;
+    <div class="факты">
+      <span class="факт">Баланс ${д.баланс}</span>
+      <span class="факт">Куплено ${д.куплено}</span>
+      <span class="факт">Работ ${д.работ}</span>
+      ${д.осечек?`<span class="факт" style="color:var(--красный)">Осечек ${д.осечек}</span>`:""}
+      ${д.с?`<span class="факт">С ${дата(д.с)}</span>`:""}
+    </div>
+    <div class="лента">${лента || '<div class="пусто">Писем нет</div>'}</div>
+    <div class="низ-д">
+      <div class="быстро">${БЫСТРО.map((т,н)=>
+        `<button class="чип" data-быстро="${н}">${эк(т.length>34?т.slice(0,32)+"…":т)}</button>`).join("")}</div>
+      <textarea id="ответ" placeholder="Ответ уйдёт от имени бота. Ctrl+Enter - отправить"
+        style="min-height:84px">${эк(черновик)}</textarea>
+      <div class="ряд" style="margin-top:8px;justify-content:space-between">
+        <span class="когда" style="margin:0">Клиент не увидит ни имени, ни ника</span>
+        <button class="кн" id="ответить" data-кому="${id}">Отправить</button></div>
+    </div>`;
   o_прокрутить(о);
+  clearInterval(обновлять_диалог);
+  обновлять_диалог = setInterval(()=>{
+    if(открыт_диалог===id && document.visibilityState==="visible")
+      открыть_диалог(id, true).catch(()=>{});
+  }, 10000);
 }
 function o_прокрутить(о){
-  const л = о.querySelector("div[style*='overflow:auto']");
+  const л = о.querySelector(".лента");
   if(л) л.scrollTop = л.scrollHeight;
 }
+document.addEventListener("keydown", e=>{
+  if(e.target && e.target.id==="ответ" && e.key==="Enter" && (e.ctrlKey||e.metaKey)){
+    e.preventDefault(); const б=$("#ответить"); if(б) б.click();
+  }
+});
 
 /* Ход рассылки опрашивается раз в две секунды и только пока она идёт:
    полоса, которая дёргается на пустом месте, читается как поломка. */
