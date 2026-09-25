@@ -89,3 +89,68 @@ def работает(tg_id):
     """
     ок, сказал = _позвать("состояние", str(int(tg_id)), ждём=20)
     return сказал.strip() == "active"
+
+
+# --- ВЫРУЧКА КОПИИ ------------------------------------------------------
+#
+# Половину денег партнёру не выплатить, не зная его выручки, а база у
+# копии СВОЯ - наш бот в неё не пишет и не видит её. Поэтому админка
+# читает её файл напрямую: копии живут на том же сервере, и это
+# дешевле и надёжнее, чем заставлять каждую копию докладывать о
+# каждой оплате по сети.
+#
+# Открываем ТОЛЬКО НА ЧТЕНИЕ (`mode=ro`): копия работает и пишет в эту
+# же базу прямо сейчас, и админка не имеет права ни блокировать её, ни
+# что-то в ней менять.
+
+БАЗЫ = os.environ.get("AMBERRY_PARTNERS_DIR", "/srv/amberry/partners")
+
+
+def база(tg_id):
+    return os.path.join(БАЗЫ, str(int(tg_id)), "amberry.db")
+
+
+def выручка(tg_id):
+    """Рублей заработала копия партнёра за всё время.
+
+    Нет базы (копию ещё не запускали) - ноль, а не ошибка: партнёр
+    может заплатить и прислать токен позже.
+    """
+    import json as _json
+    import sqlite3
+    п = база(tg_id)
+    if not os.path.exists(п):
+        return 0
+    всего = 0
+    try:
+        c = sqlite3.connect("file:%s?mode=ro" % п, uri=True, timeout=5)
+        try:
+            for (м,) in c.execute("SELECT meta FROM ledger"
+                                  " WHERE purse='paid' AND meta IS NOT NULL"):
+                try:
+                    всего += int((_json.loads(м) or {}).get("руб") or 0)
+                except (ValueError, TypeError):
+                    continue
+        finally:
+            c.close()
+    except Exception as e:                              # noqa: BLE001
+        print("выручка копии %s не прочиталась: %s" % (tg_id, str(e)[:120]),
+              flush=True)
+        return 0
+    return всего
+
+
+def клиентов(tg_id):
+    """Сколько людей у партнёра. Показывает, живёт ли копия вообще."""
+    import sqlite3
+    п = база(tg_id)
+    if not os.path.exists(п):
+        return 0
+    try:
+        c = sqlite3.connect("file:%s?mode=ro" % п, uri=True, timeout=5)
+        try:
+            return c.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        finally:
+            c.close()
+    except Exception:                                   # noqa: BLE001
+        return 0

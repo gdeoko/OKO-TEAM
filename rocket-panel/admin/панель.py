@@ -764,6 +764,8 @@ const ЗАГРУЗКА = {
           <div class="подпись">Партнёров</div></div>
         <div class="плитка"><div class="цифра">${д.к_выплате_всего}</div>
           <div class="подпись">К выплате, ₽</div></div>
+        <div class="плитка"><div class="цифра">${д.выручка_копий} ₽</div>
+          <div class="подпись">Заработали копии</div></div>
         <div class="плитка"><div class="цифра">${д.цена_руб} ₽</div>
           <div class="подпись">Цена франшизы</div></div>
       </div>`;
@@ -781,14 +783,17 @@ const ЗАГРУЗКА = {
         <td data-л="Работает">${п.есть_токен?`
           <button class="кн ${п.жив?"":"тихая"}" data-рубильник="${п.tg_id}"
             data-включить="${п.жив?0:1}">${п.жив?"Выключить":"Включить"}</button>
-          <div class="когда">${п.жив?"копия отвечает":"копия погашена"}</div>
+          <div class="когда">${п.жив?"копия отвечает":"копия погашена"}<br>
+            ${п.клиентов} клиентов · ${п.выручка_копии} ₽</div>
           `:'<span class="когда">нет токена</span>'}</td>
         <td data-л="Состояние"><select data-сост="${п.tg_id}"
             style="max-width:150px">
           ${["ждёт токен","в работе","запущен","остановлен"].map(с=>
             `<option${с===п.состояние?" selected":""}>${с}</option>`).join("")}
         </select></td>
-        <td data-л="Выручка"><input data-поле="выручка" data-кто="${п.tg_id}"
+        <td data-л="Выручка"><div class="когда">бот насчитал
+          ${п.выручка_копии} ₽</div>
+          <input data-поле="выручка" data-кто="${п.tg_id}"
           value="${п.выручка}" inputmode="numeric" style="max-width:110px"></td>
         <td data-л="Доля"><input data-поле="доля" data-кто="${п.tg_id}"
           value="${п.доля}" inputmode="numeric" style="max-width:80px"></td>
