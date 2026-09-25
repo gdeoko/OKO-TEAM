@@ -117,6 +117,14 @@ CREATE INDEX IF NOT EXISTS ix_jobs_user   ON jobs(tg_id, at);
 CREATE INDEX IF NOT EXISTS ix_events_at   ON events(at);
 CREATE INDEX IF NOT EXISTS ix_events_user ON events(tg_id, at);
 CREATE INDEX IF NOT EXISTS ix_support_at  ON support(at);
+-- КОГДА ОБРАЩЕНИЕ ЗАКРЫЛИ. Отдельной таблицей, а не строкой в support:
+-- там переписка, и служебная отметка «закрыто» в ней читалась бы как
+-- реплика. Закрыто, пока закрытие свежее последнего письма человека:
+-- написал снова - обращение открылось само, без чьих-то рук.
+CREATE TABLE IF NOT EXISTS support_closed (
+  tg_id  INTEGER PRIMARY KEY,
+  at     INTEGER NOT NULL
+);
 """
 
 
@@ -704,18 +712,55 @@ class Store:
                       " VALUES(?,?,?,?)",
                       (tg_id, откого, текст[:4000], int(time.time())))
 
-    def поддержка_диалоги(self, limit=50):
-        """Последнее сообщение каждого собеседника, свежие первыми."""
+    def поддержка_диалоги(self, limit=100):
+        """Собеседники поддержки: ждущие ответа первыми, дальше свежие.
+
+        «Ждёт ответа» считается по ПОСЛЕДНЕМУ ПИСЬМУ, а не по флагу
+        «прочитано». Прочитать и не ответить - самое частое, что
+        случается с обращением, и именно такие флаг и прятал: открыл
+        на телефоне в метро, счётчик погас, человек ждёт третий день.
+        """
         with self._db() as c:
             rs = c.execute(
                 "SELECT s.tg_id, u.username, MAX(s.at) at,"
                 "  SUM(CASE WHEN s.прочитано=0 AND s.откого='человек'"
                 "      THEN 1 ELSE 0 END) новых,"
-                "  COUNT(*) всего"
+                "  COUNT(*) всего,"
+                "  MAX(CASE WHEN s.откого='человек' THEN s.at END) его_at"
                 " FROM support s LEFT JOIN users u ON u.tg_id=s.tg_id"
                 " GROUP BY s.tg_id ORDER BY at DESC LIMIT ?",
                 (limit,)).fetchall()
-            return [dict(r) for r in rs]
+            итог = []
+            for r in rs:
+                д = dict(r)
+                последнее = c.execute(
+                    "SELECT откого, текст FROM support WHERE tg_id=?"
+                    " ORDER BY at DESC, id DESC LIMIT 1",
+                    (д["tg_id"],)).fetchone()
+                закрыто = c.execute(
+                    "SELECT at FROM support_closed WHERE tg_id=?",
+                    (д["tg_id"],)).fetchone()
+                д["последнее"] = (последнее["текст"] if последнее else "")[:140]
+                д["последний"] = последнее["откого"] if последнее else ""
+                д["закрыто"] = bool(закрыто and д["его_at"]
+                                    and закрыто["at"] >= д["его_at"])
+                д["ждёт"] = (д["последний"] == "человек"
+                             and not д["закрыто"])
+                итог.append(д)
+            итог.sort(key=lambda д: (not д["ждёт"], -д["at"]))
+            return итог
+
+    def поддержка_закрыть(self, tg_id):
+        """Закрыть обращение без ответа: спам, «спасибо», решилось само.
+
+        Новое письмо человека откроет его снова - см. support_closed.
+        """
+        with self._db() as c:
+            c.execute("INSERT INTO support_closed(tg_id,at) VALUES(?,?)"
+                      " ON CONFLICT(tg_id) DO UPDATE SET at=excluded.at",
+                      (tg_id, int(time.time())))
+            c.execute("UPDATE support SET прочитано=1 WHERE tg_id=?",
+                      (tg_id,))
 
     def поддержка_диалог(self, tg_id, limit=100):
         with self._db() as c:
