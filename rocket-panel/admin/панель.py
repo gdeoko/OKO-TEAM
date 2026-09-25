@@ -174,6 +174,11 @@ textarea{min-height:120px;resize:vertical}
 .рк .цена small{display:block;color:var(--тихо);font-size:11px;font-weight:600}
 .рк .низ{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
 .рк .низ .кн{flex:1;justify-content:center;text-decoration:none;white-space:nowrap;font-size:13px;padding:10px 12px}
+.способы{display:flex;flex-direction:column;gap:6px}
+.способ{display:flex;justify-content:space-between;gap:10px;align-items:center;text-decoration:none;
+  color:var(--текст);background:#0B0910;border:1px solid var(--край);border-radius:10px;padding:8px 10px;font-size:13px}
+.способ b{font-weight:800;word-break:break-all}
+.способ span{color:var(--тихо);font-size:11px;text-align:right}
 .метка.жёлтая{background:rgba(245,184,61,.16);color:#F5B83D}
 .чип{border:1px solid var(--край);background:#0B0910;color:var(--текст);border-radius:999px;
   padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer}
@@ -713,13 +718,24 @@ function рк_сохранить(н){ try { localStorage.setItem(РК_ПЛАН_�
 const рк_число = n => (n||0).toLocaleString("ru-RU");
 const рк_кратко = n => n>=1e6 ? (n/1e6).toFixed(1).replace(".0","")+" млн"
                    : n>=1e3 ? Math.round(n/1e3)+" тыс" : String(n||0);
-function рк_контакт(к){
-  const а = к.контакты && к.контакты[0];
-  return а ? "https://t.me/"+а : "https://t.me/"+к.u;
+function рк_биржа(к){ return (к.купить||[]).find(x=>x.вид==="биржа"&&x.принимает); }
+function рк_главная(к){
+  const б = рк_биржа(к);
+  if (б) return {url:б.url, текст:"Купить на Telega.in"};
+  const л = (к.купить||[]).find(x=>x.ник);
+  return л ? {url:"https://t.me/"+л.ник, текст:"Написать @"+л.ник}
+           : {url:"https://t.me/"+к.u, текст:"Открыть канал"};
+}
+function рк_способы(к){
+  return (к.купить||[]).map(x => x.вид==="биржа"
+    ? `<a class="способ" href="${эк(x.url)}" target="_blank" rel="noopener noreferrer">
+         <b>Telega.in</b><span>${x.принимает?"сделка с гарантией, оплата сразу":"заявки сейчас закрыты"}</span></a>`
+    : `<a class="способ" href="https://t.me/${эк(x.ник)}" target="_blank" rel="noopener noreferrer">
+         <b>@${эк(x.ник)}</b><span>${эк(x.вид)}</span></a>`).join("");
 }
 function рисовать_рекламу(){
   const план = рк_план();
-  const группы = ["все","в плане","живой","с оговорками","рискованный",
+  const группы = ["все","купить сразу","в плане","живой","с оговорками","рискованный",
                   ...new Set(РК.каналы.map(к=>к.группа))];
   $("#рк_фильтры").innerHTML = группы.map(г =>
     `<button class="чип ${г===РК_ФИЛЬТР?"тут":""}" data-рк-ф="${эк(г)}">${эк(г)}</button>`).join("") +
@@ -728,11 +744,13 @@ function рисовать_рекламу(){
          .map(([к,и])=>`<option value="${к}" ${к===РК_СОРТ?"selected":""}>${и}</option>`).join("")}
      </select>`;
   $("#рк_про").innerHTML = `Собрано ${эк(РК.собрано)} по публичным лентам каналов и рейтингам TGStat.
-    <b>Цена - оценка</b> по рыночной цене за тысячу просмотров, точную называет админ канала.
+    Цена с пометкой «Telega.in» - настоящая цена биржи, там можно оплатить сразу со сделкой-гарантией.
+    Остальные - <b>оценка</b> по рыночной цене за тысячу просмотров, точную называет админ.
     Переходы - 1% от охвата поста, осторожно. Отметьте каналы - внизу сложится план закупки.`;
   const пор = {"живой":0,"с оговорками":1,"рискованный":2};
   let сп = РК.каналы.filter(к => РК_ФИЛЬТР==="все" ? true
           : РК_ФИЛЬТР==="в плане" ? план.has(к.u)
+          : РК_ФИЛЬТР==="купить сразу" ? !!рк_биржа(к)
           : (к.вердикт===РК_ФИЛЬТР || к.группа===РК_ФИЛЬТР));
   const сорт = {вердикт:(а,б)=>пор[а.вердикт]-пор[б.вердикт]||б.охват-а.охват,
                 охват:(а,б)=>б.охват-а.охват, цена:(а,б)=>а.цена-б.цена,
@@ -755,13 +773,11 @@ function рисовать_рекламу(){
         <div><b>${рк_кратко(к.охват)}</b><span>охват поста</span></div>
         <div><b>${к.err}%</b><span>ERR</span></div></div>
       <ul>${пункты}</ul>
-      <div class="ряд" style="justify-content:space-between">
-        <div class="цена">≈ ${рк_число(к.цена)} ₽<small>${эк(к.цена_откуда)} · ~${рк_число(к.переходов)} переходов</small></div>
-        <div class="когда" style="text-align:right">${к.контакты.length?к.контакты.map(c=>"@"+эк(c)).join("<br>"):"контакт в описании<br>не указан"}</div>
-      </div>
+      <div class="цена">${к.цена_откуда.startsWith("цена Telega")?"":"≈ "}${рк_число(к.цена)} ₽<small>${эк(к.цена_откуда)} · ~${рк_число(к.переходов)} переходов</small></div>
+      <div class="способы">${рк_способы(к)}</div>
       <div class="низ">
         <a class="кн тихая" href="https://t.me/${эк(к.u)}" target="_blank" rel="noopener noreferrer">Открыть канал</a>
-        <a class="кн" href="${эк(рк_контакт(к))}" target="_blank" rel="noopener noreferrer">Купить рекламу</a>
+        <a class="кн" href="${эк(рк_главная(к).url)}" target="_blank" rel="noopener noreferrer">${эк(рк_главная(к).текст)}</a>
         <button class="кн тихая" data-рк-план="${эк(к.u)}" style="flex:0 0 auto">${в?"Убрать":"В план"}</button>
       </div></div>`;
   }).join("") || `<div class="карта когда">Нет каналов под этот фильтр</div>`;
