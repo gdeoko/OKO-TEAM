@@ -924,6 +924,46 @@ class Store:
             c.execute("UPDATE partners SET " + ",".join(поля) + " WHERE tg_id=?",
                       д + [tg_id])
 
+    def выручка_записать(self, tg_id, рублей, за_что, ссылка=""):
+        """Отметить выручку, не трогая баланс коинов.
+
+        Нужна для товаров, которые коинами НЕ являются: безлимит и
+        франшиза. Пакеты коинов попадают в тот же журнал сами, через
+        `credit`, - там рубли пишутся в `meta`.
+
+        Одна строка в `ledger` с нулевой дельтой: карман и сумма
+        записаны, баланс не сдвинулся. Отдельную таблицу заводить
+        незачем - вся выручка обязана лежать в одном месте, иначе
+        половину партнёру посчитают по половине источников.
+        """
+        with self._db() as c:
+            c.execute(
+                "INSERT INTO ledger(tg_id,delta,purse,reason,meta,at)"
+                " VALUES(?,0,'paid',?,?,?)",
+                (tg_id, за_что,
+                 json.dumps({"руб": int(рублей), "счёт": ссылка},
+                            ensure_ascii=False),
+                 int(time.time())))
+
+    def выручка_всего(self):
+        """Сколько рублей принёс ЭТОТ бот за всё время.
+
+        Считается по журналу, а не по сумме цен в прайсе: цены меняются,
+        и прошлогодняя оплата обязана остаться в той сумме, за которую
+        её продали. Поэтому рубли пишутся в `meta` в момент оплаты, а
+        здесь только складываются.
+        """
+        всего = 0
+        with self._db() as c:
+            for (м,) in c.execute(
+                    "SELECT meta FROM ledger WHERE purse='paid'"
+                    " AND meta IS NOT NULL"):
+                try:
+                    всего += int((json.loads(м) or {}).get("руб") or 0)
+                except (ValueError, TypeError):
+                    continue
+        return всего
+
     def партнёры(self):
         with self._db() as c:
             rs = c.execute("SELECT * FROM partners ORDER BY at DESC").fetchall()

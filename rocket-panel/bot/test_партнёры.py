@@ -198,3 +198,58 @@ class КассаБезКлючей(unittest.TestCase):
         self.assertIn("pay:bill:s", кн)
         self.assertNotIn("pay:stars:s", кн)
         self.assertNotIn("pay:crypto:s", кн)
+
+
+class ВыручкаКопии(unittest.TestCase):
+    """Половину денег партнёру не выплатить, не зная его выручки."""
+
+    def setUp(self):
+        import store as store_mod
+        self.д = tempfile.mkdtemp()
+        self.было, партнёры.БАЗЫ = партнёры.БАЗЫ, self.д
+        os.makedirs(os.path.join(self.д, "42"))
+        self.s = store_mod.Store(os.path.join(self.д, "42", "amberry.db"))
+        self.s.ensure_user(1, "kto", welcome=0)
+
+    def tearDown(self):
+        партнёры.БАЗЫ = self.было
+
+    def test_копии_нет_значит_ноль_а_не_падение(self):
+        """Партнёр может заплатить и прислать токен назавтра."""
+        self.assertEqual(партнёры.выручка(999), 0)
+        self.assertEqual(партнёры.клиентов(999), 0)
+
+    def test_рубли_из_оплат_складываются(self):
+        self.s.credit(1, 30, "paid", "счёт, пакет s", meta={"руб": 490})
+        self.s.credit(1, 80, "paid", "счёт, пакет m", meta={"руб": 1190})
+        self.assertEqual(партнёры.выручка(42), 1680)
+
+    def test_подарки_в_выручку_не_идут(self):
+        """welcome - это наши коины, а не чьи-то деньги."""
+        self.s.credit(1, 2, "welcome", "подарок при старте")
+        self.assertEqual(партнёры.выручка(42), 0)
+
+    def test_безлимит_считается_хотя_коинов_не_даёт(self):
+        """Месяц безлимита баланс не трогает, но деньги за него
+        приходят - и половина их партнёрская."""
+        self.s.выручка_записать(1, 85000, "безлимит", "inv1")
+        self.assertEqual(партнёры.выручка(42), 85000)
+        self.assertEqual(self.s.balance(1), 0)
+
+    def test_оплата_без_рублей_не_ломает_счёт(self):
+        """Старые записи рублей не содержат: до 25.09 их не писали."""
+        self.s.credit(1, 30, "paid", "звёзды, пакет s",
+                      meta={"charge": "abc", "stars": 300})
+        self.s.credit(1, 30, "paid", "счёт, пакет s", meta={"руб": 490})
+        self.assertEqual(партнёры.выручка(42), 490)
+
+    def test_клиенты_считаются(self):
+        self.s.ensure_user(2, "kto2", welcome=0)
+        self.assertEqual(партнёры.клиентов(42), 2)
+
+    def test_читаем_только_на_чтение(self):
+        """Копия работает и пишет в эту же базу прямо сейчас: админка
+        не имеет права ни блокировать её, ни что-то в ней менять."""
+        текст = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "партнёры.py"), encoding="utf-8").read()
+        self.assertIn("mode=ro", текст)

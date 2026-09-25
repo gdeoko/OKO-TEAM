@@ -1656,10 +1656,11 @@ def зачислить_счёт(u, invoice_id):
         return True
     if что == "unlim":
         store.безлимит_дать(u, безлимит.СЕКУНД, безлимит.БЫСТРЫХ)
+        store.выручка_записать(u, безлимит.рублей(), "безлимит", invoice_id)
         return True
     p_ = pricing.pack(что)
     store.credit(u, p_["coins"], "paid", f"счёт, пакет {что}",
-                 meta={"invoice": invoice_id})
+                 meta={"invoice": invoice_id, "руб": p_["rub"]})
     return True
 
 
@@ -1717,6 +1718,7 @@ def on_paid(chat, u, оплата):
         return
     if payments.это_безлимит(payload):
         до = store.безлимит_дать(u, безлимит.СЕКУНД, безлимит.БЫСТРЫХ)
+        store.выручка_записать(u, безлимит.рублей(), "безлимит", "stars")
         я = яз(u)
         send(chat, t("безл.куплен", я,
                      до=time.strftime("%d.%m.%Y", time.localtime(до)),
@@ -1733,9 +1735,15 @@ def on_paid(chat, u, оплата):
         return
     # Идентификатор списания сохраняем ОБЯЗАТЕЛЬНО: без него звёзды
     # не вернуть, refundStarPayment требует именно его.
+    # РУБЛИ ПИШУТСЯ В КАЖДУЮ ОПЛАТУ, и это не украшение отчёта.
+    # В ledger лежат КОИНЫ, а партнёру причитается половина ДЕНЕГ.
+    # Восстанавливать рубли задним числом было бы нечем: цена пакета
+    # меняется, и прошлогодняя оплата пересчиталась бы по сегодняшнему
+    # прайсу. Поэтому сумма фиксируется в момент оплаты.
     store.credit(u, p["coins"], "paid", f"звёзды, пакет {p['id']}",
                  meta={"charge": оплата.get("telegram_payment_charge_id"),
-                       "stars": оплата.get("total_amount")})
+                       "stars": оплата.get("total_amount"),
+                       "руб": pricing.pack(p["id"])["rub"]})
     я = яз(u)
     send(chat, t("оп.спасибо", я, сколько=emoji.баланс(p["coins"], я),
                  баланс=emoji.баланс(store.balance(u), я)), меню(u))
