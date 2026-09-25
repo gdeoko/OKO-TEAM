@@ -55,7 +55,14 @@ abdominal wall with a faint visible line down the centre and the soft
 suggestion of upper abs, the obliques cutting a clean sharp line into
 the narrow waist. No soft belly, no roll or fold over the waistband, no
 pooch below the navel, no thickness through the middle. She trains: the
-waist is hard and flat while the chest and hips are full. That contrast
+waist is hard and flat while the chest and hips are full.
+
+The skin across her whole midsection is SMOOTH AND UNBROKEN from the
+ribs to the hip bones - one clean continuous surface, taut over the
+muscle, with no crease, no fold, no pinch, no gathered line at the
+side of the waist and nothing spilling over the waistband. Flawless
+editorial retouch quality on the body while the face and skin stay
+natural and pored. That contrast
 between a heavy bust, a hard flat stomach and wide hips IS the
 silhouette being asked for. The silhouette should read as unmistakably voluptuous and
 womanly from across a room, at thumbnail size, before any detail is
@@ -68,9 +75,15 @@ reference sheet — the build changes, the person does not.
 
 HER POSE. Confident editorial stance, not a catalogue pose. Turned about
 twenty degrees from camera, facing mostly TOWARDS the lens so her chest
-and waistline are fully visible, weight on one hip to throw the hip out
-in a strong S curve, chin slightly down, looking into the lens with a
-small easy smile. Her front is to the camera, not her back. One
+and waistline are fully visible, weight on one hip so the S curve comes from
+the HIPS ONLY, chin slightly down, looking into the lens with a small
+easy smile. Her front is to the camera, not her back.
+
+Her spine is LONG AND STRAIGHT, torso lifted and elongated, ribcage
+pulled up away from the hips, shoulders back and down. She does not
+bend, lean or compress sideways at the waist: side bending is what
+gathers the skin of the flank into folds, and there must be none.
+The stretch through her middle is what keeps it smooth. One
 hand lifted to run her fingers back through her hair near the temple, the
 other arm relaxed along her side, fingers softly separated. Framed from mid calf up so the full hip and thigh line reads, her full height fitting the frame height with clear margin above her hair. Exactly five clearly rendered fingers on each visible hand,
 correct knuckle and nail anatomy.
@@ -127,6 +140,8 @@ smoothing, no CGI doll look.
              "fingers, extra limbs, warped anatomy, plastic skin, "
              "misspelled text, garbled letters, watermark, second person, "
              "belly fat, soft stomach, belly roll, muffin top, thick waist, "
+             "skin fold, skin crease, wrinkled stomach, pinched waist skin, "
+             "love handles, side roll, bent torso, compressed waist, "
              "grey background, washed out blacks")
 
 
