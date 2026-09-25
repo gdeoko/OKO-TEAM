@@ -114,6 +114,22 @@ import urllib.request
             "of light. Fine magenta particles trail along the streams. "
             "The branching light reflects across the wet floor."),
     },
+    "sup": {
+        "надпись": ("ПОДДЕРЖКА", "НАПИШИ - РАЗБЕРЁМСЯ"),
+        "поза": (
+            "She stands facing the camera, weight on one hip, both "
+            "hands relaxed at her sides, one palm turned slightly "
+            "outward in a calm open gesture. Head level and turned "
+            "just a little to the lens, warm attentive smile, direct "
+            "friendly eye contact - listening, not selling. No hand "
+            "near her face or head."),
+        "сцена": (
+            "Beside her, two rounded speech bubbles drawn in glowing "
+            "magenta neon float in the dark at different heights, one "
+            "larger and one smaller, completely EMPTY with nothing "
+            "written inside them. Soft magenta particles drift between "
+            "them. Both bubbles reflect on the wet floor."),
+    },
     "cab": {
         "надпись": ("ЛИЧНЫЙ КАБИНЕТ", "ТВОЙ БАЛАНС И РАБОТЫ"),
         "поза": (
