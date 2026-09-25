@@ -342,6 +342,23 @@ def job_note(job, яз):
     "подд.приняли": {
         "ru": "Передала твоё сообщение. Ответим сюда же.",
         "en": "Your message is with us. We will answer right here."},
+    "кн.поддержка": {"ru": "Поддержка", "en": "Support"},
+    "подд.экран": {
+        "ru": "<b>ПОДДЕРЖКА</b>\n\n"
+              "Напиши сюда прямо в чат, что случилось - и мы ответим "
+              "здесь же.\n\n"
+              "Пиши подробно: что делал, за что платил, когда. "
+              "По одной фразе «не работает» мы сможем только "
+              "переспросить, и ты потеряешь день.\n\n"
+              "Деньги, оплаты и споры - тоже сюда.",
+        "en": "<b>SUPPORT</b>\n\n"
+              "Just write here in the chat what happened - we will "
+              "answer in the same place.\n\n"
+              "Please be specific: what you did, what you paid for and "
+              "when. To «it does not work» we can only ask again, and "
+              "you lose a day.\n\n"
+              "Payments and disputes go here too.",
+    },
     "подд.ответ": {"ru": "Ответ поддержки:", "en": "Support:"},
 
     # --- ФРАНШИЗА: свой бот клиента на нашем движке ---
@@ -734,6 +751,30 @@ def job_note(job, яз):
               "different pose, different background, no clothes. Or a clip."
               "\n\nThe face and the figure stay exactly the same, that is "
               "the point.\n\nMy link gives you {другу} to try: {ссылка}",
+    },
+    "кн.открыть_бота": {"ru": "Открыть AMBERRY", "en": "Open AMBERRY"},
+    # ЭТО СООБЩЕНИЕ ЧИТАЕТ ДРУГ, а не наш человек. Поэтому оно
+    # написано от лица приглашающего и без слова «реферальная»: то,
+    # что за переход кому-то что-то начислят, получателя не касается и
+    # только снижает доверие к совету.
+    "пригл.готовое": {
+        "ru": "Раздевает и оживляет любое фото.\n\n"
+              "Присылаешь снимок - получаешь другой: другая поза, другой "
+              "фон, без одежды. Или ролик. Лицо и фигура остаются ровно "
+              "те же, это главное.\n\n"
+              "Держи <b>{другу}</b> на пробу - по кнопке ниже.",
+        "en": "Undresses any photo and brings it to life.\n\n"
+              "Send a shot, get another one: different pose, different "
+              "background, no clothes. Or a clip. The face and the body "
+              "stay exactly the same, that is the point.\n\n"
+              "Here is <b>{другу}</b> to try - use the button below.",
+    },
+    "пригл.перешли": {
+        "ru": "Готовое приглашение ниже - <b>перешли его друзьям</b>. "
+              "Кнопка внутри работает у всех, ссылка уже твоя.",
+        "en": "A ready invitation is below - <b>forward it to your "
+              "friends</b>. The button inside works for everyone and the "
+              "link is already yours.",
     },
     "пригл.ссылка_моя": {"ru": "Твоя ссылка: <code>{ссылка}</code>",
                          "en": "Your link: <code>{ссылка}</code>"},
