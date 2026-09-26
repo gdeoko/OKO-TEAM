@@ -6,47 +6,156 @@
     "площадки перестают видеть в них одного человека, а люди не переходят",
     "из TikTok в инсту за продолжением.",
     "Имена НЕ русские и НЕ намекают на страну: бот идёт на англоязычную",
-    "аудиторию тоже, а 'Ника из Москвы' там читается как дешёвая сетка."
+    "аудиторию тоже, а 'Ника из Москвы' там читается как дешёвая сетка.",
+    "",
+    "УТВЕРЖДЕНО 26.09 владельцем: ник через ПОДЧЁРКИВАНИЕ (@nika_amberry),",
+    "имя аккаунта с сердцем 🩷, ссылка в шапке - с меткой источника ad_<имя>.",
+    "Метка работает из коробки: bot.py ловит любой ?start=ad_* и кладёт его",
+    "в users.источник, дальше он виден в админке в отчёте по источникам.",
+    "",
+    "Поле 'шапка_запас' - формулировка без слов про раздевание. Держим её",
+    "наготове: первая строка оффера прямо называет то, за что Instagram и",
+    "TikTok сносят аккаунт по первой жалобе. Меняем по слову владельца."
   ],
   "ника": {
     "имя": "Nika",
     "лицо_бренда": true,
-    "внешность": "платиновая блондинка, серо-голубые глаза, спортивная",
+    "внешность": "тёплая пепельная блондинка с загаром, гладкие волосы назад, мягкие черты, серо-голубые глаза - ровно та, что на заставке бота; НЕ белая платина с резкими чертами, это была первая неверная проба",
     "характер": "холодная уверенность, дразнит молча, почти не улыбается",
     "о_чём": "главное лицо AMBERRY: она и есть та девушка с заставки бота",
-    "ник": "nika.amberry",
-    "шапка": "the face of AMBERRY · made by AI, and you can tell? 🍓"
+    "ник": "nika_amberry",
+    "имя_аккаунта": "Nika 🩷 Amberry",
+    "имя_аккаунта_без_эмодзи": "Nika • Amberry",
+    "почта": "",
+    "пароль": "nika_amberry_(@)8",
+    "метка": "ad_nika",
+    "ссылка": "https://t.me/theamberrybot?start=ad_nika",
+    "шапка_ig": [
+      "🩷 Here I show as much as they let me — the rest is in the bot",
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free — link below ↓"
+    ],
+    "шапка_tiktok": [
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free ↓"
+    ],
+    "шапка_запас": [
+      "🩷 Here I show as much as they let me — the rest is in the bot",
+      "🫦 Any photo starts moving — yours, mine, anyone's",
+      "📲 First one free ↓"
+    ],
+    "описание_yt": "Here I show as much as they let me — the rest is in the bot.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_nika\nFirst one is free."
   },
   "мира": {
     "имя": "Mira",
     "внешность": "чёрные волны, изумрудные глаза, аристократичные черты",
     "характер": "властная, немногословная, смотрит как на подчинённого",
     "о_чём": "вечер, дорогие интерьеры, взгляд сверху вниз",
-    "ник": "mira.amberry",
-    "шапка": "expensive taste · AI · AMBERRY 🍓"
+    "ник": "mira_amberry",
+    "имя_аккаунта": "Mira 🩷 Amberry",
+    "имя_аккаунта_без_эмодзи": "Mira • Amberry",
+    "почта": "",
+    "пароль": "mira_amberry_(@)8",
+    "метка": "ad_mira",
+    "ссылка": "https://t.me/theamberrybot?start=ad_mira",
+    "шапка_ig": [
+      "🩷 I decide who sees what. In the bot you decide",
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free — link below ↓"
+    ],
+    "шапка_tiktok": [
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free ↓"
+    ],
+    "шапка_запас": [
+      "🩷 I decide who sees what. In the bot you decide",
+      "🫦 Any photo starts moving — yours, mine, anyone's",
+      "📲 First one free ↓"
+    ],
+    "описание_yt": "I decide who sees what. In the bot you decide.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_mira\nFirst one is free."
   },
   "ева": {
     "имя": "Eva",
     "внешность": "медно-рыжая, веснушки, нефритовые глаза",
     "характер": "тёплая, смешливая, своя в доску",
     "о_чём": "утро, свет из окна, домашнее и живое - противовес Мире",
-    "ник": "eva.amberry",
-    "шапка": "soft mornings, sharp mind · AI girl · AMBERRY 🍓"
+    "ник": "eva_amberry",
+    "имя_аккаунта": "Eva 🩷 Amberry",
+    "имя_аккаунта_без_эмодзи": "Eva • Amberry",
+    "почта": "",
+    "пароль": "eva_amberry_(@)8",
+    "метка": "ad_eva",
+    "ссылка": "https://t.me/theamberrybot?start=ad_eva",
+    "шапка_ig": [
+      "🩷 In the feed I'm a good girl. In the bot — we'll see",
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free — link below ↓"
+    ],
+    "шапка_tiktok": [
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free ↓"
+    ],
+    "шапка_запас": [
+      "🩷 In the feed I'm a good girl. In the bot — we'll see",
+      "🫦 Any photo starts moving — yours, mine, anyone's",
+      "📲 First one free ↓"
+    ],
+    "описание_yt": "In the feed I'm a good girl. In the bot — we'll see.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_eva\nFirst one is free."
   },
   "юки": {
     "имя": "Yuki",
     "внешность": "азиатка, прямые чёрные волосы, шторки-чёлка, графичные стрелки",
     "характер": "спокойная, загадочная, говорит мало и в точку",
     "о_чём": "неон, дождь, город ночью - самая киношная из пяти",
-    "ник": "yuki.amberry",
-    "шапка": "neon nights · AI · AMBERRY 🍓"
+    "ник": "yuki_amberry",
+    "имя_аккаунта": "Yuki 🩷 Amberry",
+    "имя_аккаунта_без_эмодзи": "Yuki • Amberry",
+    "почта": "",
+    "пароль": "yuki_amberry_(@)8",
+    "метка": "ad_yuki",
+    "ссылка": "https://t.me/theamberrybot?start=ad_yuki",
+    "шапка_ig": [
+      "🩷 I'm quiet on camera only. Everything else stayed in the bot",
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free — link below ↓"
+    ],
+    "шапка_tiktok": [
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free ↓"
+    ],
+    "шапка_запас": [
+      "🩷 I'm quiet on camera only. Everything else stayed in the bot",
+      "🫦 Any photo starts moving — yours, mine, anyone's",
+      "📲 First one free ↓"
+    ],
+    "описание_yt": "I'm quiet on camera only. Everything else stayed in the bot.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_yuki\nFirst one is free."
   },
   "сая": {
     "имя": "Saya",
     "внешность": "латина, бронзовая кожа, тёмные кудри, карамельные пряди",
     "характер": "громкая, весёлая, флиртует открыто",
     "о_чём": "танец, движение, жара - самая динамичная, под TikTok",
-    "ник": "saya.amberry",
-    "шапка": "turn the music up · AI · AMBERRY 🍓"
+    "ник": "saya_amberry",
+    "имя_аккаунта": "Saya 🩷 Amberry",
+    "имя_аккаунта_без_эмодзи": "Saya • Amberry",
+    "почта": "",
+    "пароль": "saya_amberry_(@)8",
+    "метка": "ad_saya",
+    "ссылка": "https://t.me/theamberrybot?start=ad_saya",
+    "шапка_ig": [
+      "🩷 The dance doesn't end where the video cuts off",
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free — link below ↓"
+    ],
+    "шапка_tiktok": [
+      "🫦 Takes off the extra and brings any photo to life",
+      "📲 First one free ↓"
+    ],
+    "шапка_запас": [
+      "🩷 The dance doesn't end where the video cuts off",
+      "🫦 Any photo starts moving — yours, mine, anyone's",
+      "📲 First one free ↓"
+    ],
+    "описание_yt": "The dance doesn't end where the video cuts off.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_saya\nFirst one is free."
   }
 }
