@@ -74,7 +74,39 @@ def сцена(ракурс="un_full"):
                 "panties", "knickers", "thong")
 
 
-def снять(кадр, ракурс="un_full", выход=None, зерно=202609, только_верх=True):
+# КОРОТКАЯ ПРАВКА ВМЕСТО СЦЕНАРИЯ БОТА.
+#
+# Промпт бота - это готовая постановка: он несёт свою обстановку, свой
+# свет и свой ракурс, потому что у клиента кадр случайный и его надо
+# привести к приличному виду. Нам нужно обратное: кадр уже наш, он
+# третья опора ролика, и совпасть он обязан до пикселя. Замер: после
+# прохода бота яркость низа кадра падала со 114 до 44 - сцена темнела,
+# и в ролике на шестой секунде менялась комната.
+#
+# Поэтому здесь своя строка, короткая и только про одежду. Панель у нас
+# правит кадр редактирующей моделью, а ей короткая просьба понятнее
+# длинной постановки.
+СВОЯ_ПРАВКА = (
+    "Keep this exact photograph as it is: the same woman, the same face, "
+    "the same pose, the same hands, the same hair, the same background, "
+    "the same daylight, the same colours, the same framing and the same "
+    "crop. Change one single thing and nothing else: her swimsuit top is "
+    "no longer there and her chest is bare skin with her own nipples in "
+    "plain view. Her black bikini bottoms stay exactly where they are, "
+    "unchanged and clearly visible. Everything else in the picture stays "
+    "pixel for pixel the same."
+)
+СВОЙ_НЕГАТИВ = (
+    "different background, changing background, dark background, night, "
+    "studio backdrop, indoors, bed, changing light, changing pose, "
+    "changing framing, zoom, crop change, different woman, changing face, "
+    "bikini top, bra, covered chest, hands covering chest, "
+    "extra limbs, extra fingers, deformed hands, text, watermark"
+)
+
+
+def снять(кадр, ракурс="un_full", выход=None, зерно=202609, только_верх=True,
+          своя=True):
     if not БАЗА or not ВХОД[0]:
         raise SystemExit("нет ROCKET_GPU_URL / USER / PASS")
     с = сцена(ракурс)
@@ -90,8 +122,12 @@ def снять(кадр, ракурс="un_full", выход=None, зерно=202
     if not имя:
         raise SystemExit("кадр не залился: " + о.text[:200])
 
-    промпт = с.prompt + КАДР + (ТОЛЬКО_ВЕРХ if только_верх else "")
-    негатив = с.negative
+    if своя:
+        промпт, негатив = СВОЯ_ПРАВКА, СВОЙ_НЕГАТИВ
+        только_верх = False
+    else:
+        промпт = с.prompt + КАДР + (ТОЛЬКО_ВЕРХ if только_верх else "")
+        негатив = с.negative
     if только_верх:
         for вещь in НИЗ_ОСТАВИТЬ:
             негатив = негатив.replace(вещь + ", ", "").replace(", " + вещь, "")
