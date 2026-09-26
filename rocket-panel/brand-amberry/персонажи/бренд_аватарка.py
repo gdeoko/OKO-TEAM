@@ -63,6 +63,27 @@ import time
         "frame, over her shoulders, its baseline about one eighth of the "
         "frame height above the bottom edge, letters bright enough to "
         "read against her skin and the dark."),
+    # Лицо главное, знак - подписью. Низ по центральной оси - самое
+    # безопасное место при круглой обрезке: там круг ещё широк, в
+    # отличие от левого и правого краёв, где осевая раскладка потеряла
+    # «A» и «Y».
+    "низ": (
+        "HER PLACEMENT. She is CENTRED and dominant in the square: a "
+        "close head-and-shoulders portrait, her face filling roughly "
+        "fifty five percent of the frame height, eyes on the upper third "
+        "line, cropped just below the collarbones. She is the subject of "
+        "the picture - the branding is a small signature, not a second "
+        "subject competing with her. "
+        "THE LOGO AND THE WORD form one compact signature block CENTRED "
+        "along the bottom of the frame, sitting over her shoulder and the "
+        "dark: the berry mark SMALL, about one tenth of the frame width, "
+        "with the word AMBERRY directly beneath it, narrower than one "
+        "third of the frame width, both glowing softly. The whole block "
+        "occupies only the lowest sixth of the frame, its bottom edge "
+        "about one twelfth of the frame height above the bottom of the "
+        "square, and it stays well inside the middle third horizontally "
+        "so a round crop can never touch it. It must read as a discreet "
+        "watermark signature, small and calm, never large or shouting."),
 }
 
 ПРОМПТ = """
