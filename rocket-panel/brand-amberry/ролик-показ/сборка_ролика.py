@@ -201,18 +201,17 @@ async function main(){
   for(let s=1;s<=26;s++){tm.textContent='0:'+String(s).padStart(2,'0');
     pg.style.width=Math.round(s/26*100)+'%';scroll();await sleep(150);}
   await sleep(300);
-  // результат
+  // результат приходит СРАЗУ замазанным - как будто голое фото уже
+  // прислали, просто прикрыто. Никакого резкого кадра: класс hide стоит
+  // с самого появления, картинка рендерится уже под мутью.
   const r=row('bot',`<img class="av" src="${AV}"><div class="bub" style="padding:14px">
-    <div class="reswrap" id="rw"><img src="__РЕЗ__">
+    <div class="reswrap hide" id="rw"><img src="__РЕЗ__">
       <div class="px"></div><div class="frame"></div>
       <div class="cap"><img class="lg" src="__ЛОГО__">
         <div class="t">ПРОДОЛЖЕНИЕ В БОТЕ</div><div class="h">@theamberrybot</div></div>
     </div></div>`);
   scroll();await sleep(400);scroll();
-  await sleep(1500);            // результат виден резким мгновение
-  document.getElementById('rw').classList.add('hide');   // уходит в муть
-  scroll();
-  await sleep(3000);
+  await sleep(4000);            // замазанный результат держим в кадре
   // аутро
   document.getElementById('outro').classList.add('on');
   await sleep(2600);
