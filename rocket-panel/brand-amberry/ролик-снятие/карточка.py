@@ -16,10 +16,12 @@
 ЛЮБОЕ ФОТО», «ПЕРВОЕ ФОТО БЕСПЛАТНО», значок Telegram с ником, призыв.
 Разный в ней ровно один элемент - призыв.
 
-ФОНА У КАРТОЧКИ НЕТ. Под ней продолжает двигаться мутный силуэт, и это
-половина смысла: ролик не обрывается стоп-кадром, видно, что там что-то
-происходит. Читаемость даёт не фон, а затемнение к низу и неоновая
-обводка букв - то же решение, что в `../цензура/замутить.py`.
+ФОНА И ЗАТЕМНЕНИЯ У КАРТОЧКИ НЕТ. Под ней продолжает двигаться мутный
+силуэт, и это половина смысла: ролик не обрывается стоп-кадром, видно,
+что там что-то происходит. Тёмную подложку владелец отверг 26.09.2026 -
+смотрится дёшево. Читаемость держится на свечении по самим буквам:
+плотная тень вплотную к глифу плюс мягкий ореол. Под текстом видно кадр,
+а не прямоугольник.
 
 БЛОК СТОИТ В ЦЕНТРЕ. Решение владельца 26.09.2026: в середине кадра
 карточка закрывает собой ещё часть того, что показывать нельзя, то есть
@@ -72,28 +74,29 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
    как замысел: глаз должен увидеть, что так задумано. */
 #рамка{position:absolute;inset:12px;border:5px solid var(--pink);border-radius:32px;
   box-shadow:0 0 46px #ff0a8c66,inset 0 0 46px #ff0a8c2e}
-/* Затемнение ПОЛОСОЙ ПО ЦЕНТРУ, а не к низу. Решение владельца
-   26.09.2026: карточка стоит в середине кадра и закрывает собой ещё
-   часть того, что показывать нельзя, - то есть работает не только как
-   подпись, но и как вторая ступень цензуры поверх мути. Верх и низ
-   остаются открытыми: там и видно, что силуэт продолжает двигаться. */
-#тень{position:absolute;inset:0;background:linear-gradient(to bottom,
-  rgba(7,6,10,0) 6%,rgba(7,6,10,.60) 24%,rgba(7,6,10,.92) 42%,
-  rgba(7,6,10,.92) 66%,rgba(7,6,10,.60) 84%,rgba(7,6,10,0) 97%)}
+/* ЗАТЕМНЕНИЯ НЕТ. Решение владельца 26.09.2026: тёмная подложка под
+   текстом смотрится дёшево, и от неё отказались совсем - остаётся одна
+   муть. Читаемость даёт не прямоугольник, а свечение по самим буквам:
+   плотная тень вплотную к глифу плюс мягкий ореол. Тень идёт за буквой,
+   а не за блоком, поэтому кадр остаётся открытым целиком. */
 #блок{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
   display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 48px}
 #блок .lg{width:190px;height:190px;filter:drop-shadow(0 0 46px #ff0a8caa)}
 .headline{font-family:M9;font-size:82px;line-height:1.04;text-align:center;color:#fff;
-  text-transform:uppercase;letter-spacing:1px;text-shadow:0 4px 28px #000c}
-.headline .hi{color:var(--pink);text-shadow:0 0 30px var(--pink),0 4px 28px #000c}
-.free{font-family:M9;font-size:50px;color:#fff;letter-spacing:1px;text-shadow:0 4px 24px #000c}
+  text-transform:uppercase;letter-spacing:1px;
+  text-shadow:0 2px 6px rgba(0,0,0,.92),0 0 22px rgba(0,0,0,.75),0 0 54px rgba(0,0,0,.55)}
+.headline .hi{color:var(--pink);
+  text-shadow:0 0 30px var(--pink),0 2px 6px rgba(0,0,0,.92),0 0 26px rgba(0,0,0,.7)}
+.free{font-family:M9;font-size:50px;color:#fff;letter-spacing:1px;
+  text-shadow:0 2px 6px rgba(0,0,0,.92),0 0 22px rgba(0,0,0,.7)}
 .free span{color:var(--lime);text-shadow:0 0 24px #9aff0088}
 .tgline{display:flex;align-items:center;gap:16px}
 .tgline svg{width:54px;height:54px;filter:drop-shadow(0 0 12px #2aabee88)}
-.nk{font-family:M7;font-size:44px;color:#cfe0ee;text-shadow:0 3px 20px #000c}
+.nk{font-family:M7;font-size:44px;color:#cfe0ee;
+  text-shadow:0 2px 6px rgba(0,0,0,.92),0 0 20px rgba(0,0,0,.7)}
 .cta{font-family:M9;font-size:56px;white-space:nowrap;color:var(--pink);text-shadow:0 0 26px var(--pink);
   padding:22px 48px;border:4px solid var(--pink);border-radius:22px;
-  box-shadow:0 0 34px #ff0a8c55,inset 0 0 22px #ff0a8c22;background:rgba(10,7,16,.34)}
+  box-shadow:0 0 34px #ff0a8c55,inset 0 0 22px #ff0a8c22;background:transparent}
 """
 
 # Кнопка бота, вынутая из чата. Стиль тот же, что в самом боте
@@ -111,6 +114,16 @@ body{display:flex;align-items:center;justify-content:center}
   box-shadow:0 14px 48px #000a}
 .btn.горячая{border-color:var(--pink);color:#fff;
   box-shadow:0 0 38px #ff0a8c66,0 14px 48px #000a}
+/* Стеклянная плитка: полупрозрачная, с розовым свечением. Красивее
+   плотной и сидит на кадре как часть монтажа, но на светлом и на
+   розовом кадре выцветает - проверять на клубном неоне, а не только
+   на дневной кухне. */
+.btn.стекло{background:linear-gradient(135deg,rgba(255,10,140,.30),rgba(122,43,255,.20));
+  border-color:var(--pink);color:#fff;text-shadow:0 2px 14px #000a;
+  box-shadow:0 0 54px #ff0a8c88,0 14px 48px #0008}
+.btn.стекло2{background:linear-gradient(135deg,rgba(24,10,26,.72),rgba(18,8,32,.72));
+  border-color:var(--pink);color:#fff;text-shadow:0 2px 14px #000c;
+  box-shadow:0 0 54px #ff0a8c99,0 14px 48px #0009}
 /* Нажатие - вспышка розовым ПОВЕРХ тёмной плитки, а не вместо неё. */
 .btn.нажата{border-color:var(--pink);color:#fff;
   background:linear-gradient(135deg,#3a0c26,#2a1040);
@@ -131,7 +144,7 @@ def html_карточки(призыв, ш, в):
              .replace("__Ш__", str(ш)).replace("__В__", str(в)))
     return f"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <style>{стиль}</style></head><body>
-<div id="рамка"></div><div id="тень"></div>
+<div id="рамка"></div>
 <div id="блок">
   <img class="lg" src="{b64(ЛОГО, 'image/png')}">
   <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО</div>
