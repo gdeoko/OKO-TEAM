@@ -10,16 +10,17 @@
 Разойдутся два описания одного и того же - разойдётся и вид.
 
     python3 карточка.py карточка out.png "ПРОДОЛЖЕНИЕ В БОТЕ" [неон]
-    python3 карточка.py кнопка   out.png "Раздеть" [стекло|стекло2|горячая|нажата]
+    python3 карточка.py кнопка   out.png "Раздеть" [нажата]
 
 КАРТОЧКА ОДНА НА ОБА ФОРМАТА. Разница только в подложке: Формату 1 -
 тёмный неоновый фон (`неон`), Формату 2 - ничего, под ней идёт мутный
 кадр. Сам блок, его состав и расстановка одинаковы, и живут в одном
 месте: два описания одного и того же неизбежно разойдутся.
 
-КНОПКИ ПРОЗРАЧНЫЕ. Решение владельца 26.09.2026: плотная чёрная плитка
-смотрится дёшево, даже если она точная копия кнопки из бота. По умолчанию
-`стекло`; `горячая` и `нажата` оставлены в коде, но в ход не идут.
+КНОПКИ ПРОЗРАЧНЫЕ, И ТЁМНОГО В НИХ НЕТ. Решение владельца 26.09.2026:
+плотная чёрная плитка смотрится дёшево, даже будучи точной копией кнопки
+бота. Осталось розовое стекло со свечением, состояний два: обычное и
+нажатое.
 
 СОСТАВ КАРТОЧКИ ПОСТОЯНЕН и меняться не должен: лого, «РАЗДЕНЬ И ОЖИВИ
 ЛЮБОЕ ФОТО», «ПЕРВОЕ ФОТО БЕСПЛАТНО», значок Telegram с ником, призыв.
@@ -102,21 +103,39 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
 #блок{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
   display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 48px}
 #блок .lg{width:190px;height:190px;filter:drop-shadow(0 0 46px #ff0a8caa)}
+/* НЕОНОВАЯ ТРУБКА ВМЕСТО ТЁМНЫХ ТЕНЕЙ. Решение владельца 26.09.2026:
+   тёмного нет нигде - ни подложек, ни обводок, ни теней под буквами.
+   Читаемость даёт свет, а не темнота: ядро буквы белое, вокруг цветное
+   свечение в три слоя. Такая строка держится и на светлом кадре, и на
+   чёрном, и выглядит дороже плоской заливки - это тот же приём, что у
+   `неон()` в ../цензура/замутить.py и на аватарках. */
 .headline{font-family:M9;font-size:82px;line-height:1.04;text-align:center;color:#fff;
   text-transform:uppercase;letter-spacing:1px;
-  text-shadow:0 2px 6px rgba(0,0,0,.92),0 0 22px rgba(0,0,0,.75),0 0 54px rgba(0,0,0,.55)}
-.headline .hi{color:var(--pink);
-  text-shadow:0 0 30px var(--pink),0 2px 6px rgba(0,0,0,.92),0 0 26px rgba(0,0,0,.7)}
+  text-shadow:0 0 8px rgba(255,255,255,.9),0 0 26px rgba(255,255,255,.45),
+    0 0 58px rgba(255,10,140,.55),0 0 110px rgba(255,10,140,.35)}
+.headline .hi{color:#fff;
+  text-shadow:0 0 7px #fff,0 0 18px var(--pink),0 0 40px var(--pink),0 0 84px var(--pink)}
 .free{font-family:M9;font-size:50px;color:#fff;letter-spacing:1px;
-  text-shadow:0 2px 6px rgba(0,0,0,.92),0 0 22px rgba(0,0,0,.7)}
-.free span{color:var(--lime);text-shadow:0 0 24px #9aff0088}
+  text-shadow:0 0 7px rgba(255,255,255,.9),0 0 24px rgba(255,255,255,.4),
+    0 0 52px rgba(255,10,140,.45)}
+.free span{color:#fff;
+  text-shadow:0 0 7px #fff,0 0 18px var(--lime),0 0 40px var(--lime),0 0 78px #9aff00aa}
+/* Контур по букве - РОЗОВЫЙ, а не тёмный. На светлом кадре белая буква
+   с белым же свечением сливается с фоном, и единственное, что ей нужно,
+   это край. Тёмная обводка его дала бы, но владелец тёмное снял; цветная
+   трубка даёт тот же край и остаётся в бренде. paint-order кладёт контур
+   ПОД заливку, иначе он съедает тонкие штрихи букв. */
+.headline,.free{-webkit-text-stroke:3px rgba(255,10,140,.92);paint-order:stroke fill}
+.cta{-webkit-text-stroke:2px rgba(255,10,140,.85);paint-order:stroke fill}
+.nk{-webkit-text-stroke:2px rgba(122,43,255,.85);paint-order:stroke fill}
 .tgline{display:flex;align-items:center;gap:16px}
-.tgline svg{width:54px;height:54px;filter:drop-shadow(0 0 12px #2aabee88)}
-.nk{font-family:M7;font-size:44px;color:#cfe0ee;
-  text-shadow:0 2px 6px rgba(0,0,0,.92),0 0 20px rgba(0,0,0,.7)}
-.cta{font-family:M9;font-size:56px;white-space:nowrap;color:var(--pink);text-shadow:0 0 26px var(--pink);
+.tgline svg{width:54px;height:54px;filter:drop-shadow(0 0 16px #2aabeecc)}
+.nk{font-family:M7;font-size:44px;color:#fff;
+  text-shadow:0 0 7px rgba(255,255,255,.85),0 0 22px rgba(122,43,255,.8),0 0 48px rgba(122,43,255,.5)}
+.cta{font-family:M9;font-size:56px;white-space:nowrap;color:#fff;
+  text-shadow:0 0 7px #fff,0 0 18px var(--pink),0 0 42px var(--pink),0 0 82px var(--pink);
   padding:22px 48px;border:4px solid var(--pink);border-radius:22px;
-  box-shadow:0 0 34px #ff0a8c55,inset 0 0 22px #ff0a8c22;background:transparent}
+  box-shadow:0 0 38px #ff0a8c77,inset 0 0 26px #ff0a8c2e;background:transparent}
 """
 
 # Кнопка бота, вынутая из чата. Стиль тот же, что в самом боте
@@ -125,29 +144,20 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
 # поверх чужого видео.
 КНОПКА = ОБЩЕЕ + """
 body{display:flex;align-items:center;justify-content:center}
-/* Плитка ПЛОТНАЯ, а не полупрозрачная. backdrop-filter здесь бесполезен:
-   кнопка снимается отдельным кадром, позади неё пусто, размывать нечего -
-   а поверх светлого кадра полупрозрачная плитка выцветает в розовое
-   пятно и перестаёт быть похожей на кнопку бота. */
-.btn{background:#0e1620;border:3px solid #24384a;border-radius:26px;
-  padding:32px 60px;color:#dbe7f2;font-family:M7;font-size:52px;white-space:nowrap;
-  box-shadow:0 14px 48px #000a}
-.btn.горячая{border-color:var(--pink);color:#fff;
-  box-shadow:0 0 38px #ff0a8c66,0 14px 48px #000a}
-/* Стеклянная плитка: полупрозрачная, с розовым свечением. Красивее
-   плотной и сидит на кадре как часть монтажа, но на светлом и на
-   розовом кадре выцветает - проверять на клубном неоне, а не только
-   на дневной кухне. */
-.btn.стекло{background:linear-gradient(135deg,rgba(255,10,140,.30),rgba(122,43,255,.20));
-  border-color:var(--pink);color:#fff;text-shadow:0 2px 14px #000a;
-  box-shadow:0 0 54px #ff0a8c88,0 14px 48px #0008}
-.btn.стекло2{background:linear-gradient(135deg,rgba(24,10,26,.72),rgba(18,8,32,.72));
-  border-color:var(--pink);color:#fff;text-shadow:0 2px 14px #000c;
-  box-shadow:0 0 54px #ff0a8c99,0 14px 48px #0009}
-/* Нажатие - вспышка розовым ПОВЕРХ тёмной плитки, а не вместо неё. */
-.btn.нажата{border-color:var(--pink);color:#fff;
-  background:linear-gradient(135deg,#3a0c26,#2a1040);
-  box-shadow:0 0 78px #ff0a8ccc,0 0 30px #ff0a8c88 inset,0 14px 48px #000a}
+/* КНОПКА СТЕКЛЯННАЯ, ТЁМНОГО В НЕЙ НЕТ. Решение владельца 26.09.2026:
+   плотная тёмная плитка смотрится дёшево, даже будучи точной копией
+   кнопки бота, и тёмная тень под стеклянной - тоже. Осталось розовое
+   стекло со свечением: держится светом, а не темнотой.
+   backdrop-filter здесь бесполезен - кнопка снимается отдельным кадром,
+   позади неё пусто, размывать нечего. */
+.btn{background:linear-gradient(135deg,rgba(255,10,140,.30),rgba(122,43,255,.20));
+  border:3px solid var(--pink);border-radius:26px;
+  padding:32px 60px;color:#fff;font-family:M7;font-size:52px;white-space:nowrap;
+  text-shadow:0 0 7px rgba(255,255,255,.9),0 0 22px var(--pink),0 0 48px var(--pink);
+  box-shadow:0 0 54px #ff0a8c88,inset 0 0 30px #ff0a8c2e}
+/* Нажатие - та же плитка, вспышка ярче. */
+.btn.нажата{box-shadow:0 0 96px #ff0a8ccc,inset 0 0 44px #ff0a8c55;
+  background:linear-gradient(135deg,rgba(255,10,140,.46),rgba(122,43,255,.30))}
 """
 
 ТГ_ЗНАК = ('<svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 '
@@ -227,7 +237,7 @@ def карточка(выход, призыв=None, ш=1080, в=1920, фон=Fal
     return asyncio.run(снять(html_карточки(призыв, ш, в, фон), выход, ш, в))
 
 
-def кнопка(выход, текст, состояние="стекло", ш=760, в=200):
+def кнопка(выход, текст, состояние="", ш=760, в=200):
     return asyncio.run(снять(html_кнопки(текст, состояние, ш, в), выход, ш, в))
 
 
@@ -240,6 +250,6 @@ if __name__ == "__main__":
         print(карточка(выход, арг[2] if len(арг) > 2 else None,
                        фон=(len(арг) > 3 and арг[3] == "неон")))
     elif что == "кнопка":
-        print(кнопка(выход, арг[2], арг[3] if len(арг) > 3 else "стекло"))
+        print(кнопка(выход, арг[2], арг[3] if len(арг) > 3 else ""))
     else:
         raise SystemExit(__doc__)
