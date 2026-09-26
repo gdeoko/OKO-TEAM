@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from store import Store
-from поддержка import Поддержка, ПРАВИЛА, ШАБЛОНЫ
+from поддержка import Поддержка, ПРАВИЛА, ШАБЛОНЫ, brand
 
 ГРУППА = -1003000000001
 ВЛАДЕЛЕЦ = 6547482131
@@ -265,6 +265,21 @@ class Клиент(Основа):
         for текст in [ПРАВИЛА] + [т for _, т in ШАБЛОНЫ]:
             self.assertNotIn("ktodaniel", текст)
             self.assertNotIn("t.me/", текст)
+
+    def test_адрес_бота_поддержки_совпадает_с_брендом(self):
+        """Адрес попадает в закреплённые правила группы менеджеров, и
+        неверный отправлял бы их писать несуществующему боту.
+
+        Он тут и разошёлся: в `brand.py` стоял `@amberry_support_bot`, а
+        в `поддержка.py` и `поддержка_бот.py` - `AMBERRYsupport_bot`.
+        Два адреса, один из них чужой, и понять который - неоткуда.
+        Теперь оба берутся из бренда, а тест сторожит, что их не впишут
+        строкой снова.
+        """
+        правила = ПРАВИЛА.format(подд=self.п.подд)
+        self.assertIn(brand.SUPPORT.lstrip("@"), правила)
+        self.assertEqual(self.п.подд, brand.SUPPORT.lstrip("@"))
+        self.assertEqual(self.п.бот, brand.BOT.lstrip("@"))
 
 
 if __name__ == "__main__":
