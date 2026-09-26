@@ -135,6 +135,13 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 # Сцены. Обстановка бытовая, верхняя вещь - та, которую снимают через
 # голову: свободная футболка, толстовка, рубашка. Узкое платье не
 # годится, модель не снимет его убедительно.
+#
+# ВЕРХНЯЯ ВЕЩЬ - ТОЛЬКО ВЕРХ, НИКАКОГО НИЗА. В зале первая редакция
+# надела поверх купальника футболку И шорты. Футболка ушла через голову,
+# а шорты остались - и на стыке с отрезком в купальнике низ сменился
+# рывком, вместе с придуманным моделью розовым верхом. Низ обязан быть
+# один и тот же во всех трёх отрезках, значит это всегда купальник, а
+# сверху одна вещь, снимаемая через голову.
 СЦЕНЫ = [
     {
         "имя": "бассейн-день",
@@ -161,9 +168,10 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
         "фигура": "fit hourglass figure with a defined waist",
         "сцена": (
             "Standing in a bright modern gym, grey equipment softly out of "
-            "focus behind her, even ceiling light. Over her sports swimsuit "
-            "top she wears a loose black training t-shirt and matching "
-            "shorts. Confident direct gaze."),
+            "focus behind her, even ceiling light. Over her swimsuit she "
+            "wears one loose black training t-shirt and nothing else - no "
+            "shorts, no leggings, the t-shirt long enough to reach the top "
+            "of her thighs. Confident direct gaze."),
     },
     {
         "имя": "сауна-вечер",
