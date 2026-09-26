@@ -426,6 +426,12 @@ iframe{width:100%;height:78vh;border:1px solid var(--край);border-radius:16p
   </section>
 
   <section id="р_реклама"><h2>Реклама в каналах</h2>
+    <div class="карта"><h3>Откуда приходят люди</h3>
+      <div id="рк_источники"></div>
+      <p class="когда" style="margin:10px 0 0">Ссылка канала:
+        <code>https://t.me/theamberrybot?start=ad_&lt;канал&gt;</code> - метка
+        пишется человеку один раз, при первом входе. По ней видно, какая
+        закупка окупилась, а какая нет.</p></div>
     <div class="плитки" id="рк_план"></div>
     <div class="карта">
       <div class="ряд" id="рк_фильтры"></div>
@@ -711,8 +717,33 @@ function полосы(куда, пары){
 
 /* ---------- разделы ---------- */
 
+// ---- откуда приходят люди ----
+async function источники(){
+  const д = await взять("/api/источники");
+  const сп = (д.источники||[]).filter(и=>и.пришло>0);
+  if (!сп.length){ $("#рк_источники").innerHTML = `<div class="когда">Пока никто не приходил по меткам</div>`; return; }
+  $("#рк_источники").innerHTML = `<table class="карточками">
+    <tr><th>Откуда</th><th>Пришло</th><th>Оплатили</th><th>Доля</th><th>Рублей</th><th>С пришедшего</th></tr>
+    ${сп.map(и=>{
+      const за = и.оплатили ? Math.round(и.рублей/и.пришло) : 0;
+      const канал = и.откуда.startsWith("ad_") ? и.откуда.slice(3) : и.откуда;
+      return `<tr>
+        <td data-л="Откуда">${и.откуда.startsWith("ad_")
+          ? `<a href="https://t.me/${эк(канал)}" target="_blank" rel="noopener noreferrer">@${эк(канал)}</a>`
+          : эк(канал)}</td>
+        <td data-л="Пришло">${и.пришло}</td>
+        <td data-л="Оплатили">${и.оплатили}</td>
+        <td data-л="Доля">${и.доля}%</td>
+        <td data-л="Рублей">${(и.рублей||0).toLocaleString("ru-RU")}</td>
+        <td>${за ? за+" ₽ с пришедшего" : "оплат ещё нет"}</td></tr>`;}).join("")}
+  </table>`;
+}
+
 // ---- реклама ----
 let РК = {каналы:[]}, РК_ФИЛЬТР = "все", РК_СОРТ = "вердикт";
+// Имя бота для ссылок закупки. Меняется вместе с ботом, поэтому одно
+// место, а не подстановка в каждой карточке.
+const БОТ = "theamberrybot";
 const РК_ПЛАН_КЛЮЧ = "amberry_рк_план";
 function рк_план(){ try { return new Set(JSON.parse(localStorage.getItem(РК_ПЛАН_КЛЮЧ)||"[]")); }
                     catch(e){ return new Set(); } }
@@ -781,6 +812,8 @@ function рисовать_рекламу(){
         <a class="кн тихая" href="https://t.me/${эк(к.u)}" target="_blank" rel="noopener noreferrer">Открыть канал</a>
         <a class="кн" href="${эк(рк_главная(к).url)}" target="_blank" rel="noopener noreferrer">${эк(рк_главная(к).текст)}</a>
         <button class="кн тихая" data-рк-план="${эк(к.u)}" style="flex:0 0 auto">${в?"Убрать":"В план"}</button>
+        <button class="кн тихая" data-рк-ссылка="${эк(к.u)}" style="flex:0 0 auto"
+          title="Ссылка с меткой канала: по ней видно, сколько людей он привёл">Ссылка</button>
       </div></div>`;
   }).join("") || `<div class="карта когда">Нет каналов под этот фильтр</div>`;
   const выбр = РК.каналы.filter(к=>план.has(к.u));
@@ -797,6 +830,15 @@ function рисовать_рекламу(){
 document.addEventListener("click", е => {
   const ф = е.target.closest("[data-рк-ф]");
   if (ф){ РК_ФИЛЬТР = ф.getAttribute("data-рк-ф"); рисовать_рекламу(); return; }
+  const сс = е.target.closest("[data-рк-ссылка]");
+  if (сс){
+    const канал = сс.getAttribute("data-рк-ссылка");
+    const адрес = `https://t.me/${БОТ}?start=ad_${канал}`;
+    navigator.clipboard?.writeText(адрес).then(
+      ()=>{ сс.textContent = "Скопирована"; setTimeout(()=>сс.textContent="Ссылка", 1500); },
+      ()=>prompt("Ссылка для закупки:", адрес));
+    return;
+  }
   const п = е.target.closest("[data-рк-план]");
   if (п){ const н = рк_план(), u = п.getAttribute("data-рк-план");
           н.has(u) ? н.delete(u) : н.add(u); рк_сохранить(н); рисовать_рекламу(); }
@@ -830,6 +872,7 @@ const ЗАГРУЗКА = {
   async реклама(){
     РК = await взять("/api/реклама");
     рисовать_рекламу();
+    источники().catch(()=>{});
   },
   async прайс(){
     ПРАЙС = await взять("/api/прайс");

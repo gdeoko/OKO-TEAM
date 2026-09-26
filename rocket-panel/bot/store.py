@@ -250,6 +250,13 @@ class Store:
         if "quality" in have:
             c.execute("ALTER TABLE users DROP COLUMN quality")
 
+        # ОТКУДА ПРИШЁЛ ЧЕЛОВЕК. Метка из ссылки `?start=ad_<канал>`:
+        # по ней видно, какая закупка привела людей и какая из них
+        # окупилась. Пусто у всех, кто пришёл до учёта и по прямой
+        # ссылке - это «сам нашёл», а не «неизвестно откуда».
+        if "источник" not in have:
+            c.execute("ALTER TABLE users ADD COLUMN источник TEXT")
+
         # Когда человеку показали условия использования. Пусто — значит
         # ещё не показывали, и при следующем входе он их увидит.
         #
@@ -304,8 +311,13 @@ class Store:
             return dict(r) if r else None
 
     def ensure_user(self, tg_id, username=None, welcome=0, invited_by=None,
-                    lang=None):
+                    lang=None, источник=None):
         """Заводит пользователя, если его нет. Возвращает (пользователь, новый?).
+
+        `источник` записывается ТОЛЬКО новичку и только один раз: человек
+        пришёл по рекламе одного канала, а потом сто раз жал /start - и
+        затирать первую метку значило бы приписывать его последнему
+        каналу, по ссылке которого он случайно зашёл.
 
         `lang` проставляется ТОЛЬКО когда у человека его ещё нет. Он
         приходит из телеграма при каждом сообщении, и перезаписывать им
@@ -331,9 +343,9 @@ class Store:
         with self._db() as c:
             c.execute(
                 "INSERT INTO users(tg_id,username,welcome,ref_code,invited_by,"
-                "created_at,lang) VALUES(?,?,?,?,?,?,?)",
+                "created_at,lang,источник) VALUES(?,?,?,?,?,?,?,?)",
                 (tg_id, username, welcome, code, invited_by, int(time.time()),
-                 lang),
+                 lang, (источник or None)),
             )
             if welcome:
                 c.execute(
@@ -341,6 +353,43 @@ class Store:
                     (tg_id, welcome, "welcome", "подарок при старте", int(time.time())),
                 )
         return self.user(tg_id), True
+
+    def источники(self, дней=90):
+        """Откуда пришли люди и сколько денег принесли.
+
+        Считается по журналу, а не по счётчикам: «оплатил» это первая
+        покупка в `paid`, «рублей» - сумма из пометки оплаты (`руб` в
+        meta). Канал без единой оплаты тоже в списке: он и есть ответ на
+        вопрос, куда больше не нести деньги.
+        """
+        с = int(time.time()) - дней * 86400
+        with self._db() as c:
+            строки = c.execute(
+                "SELECT COALESCE(u.источник,'сам нашёл') откуда,"
+                "  COUNT(*) пришло,"
+                "  SUM(CASE WHEN EXISTS(SELECT 1 FROM ledger l WHERE l.tg_id=u.tg_id"
+                "      AND l.purse='paid' AND l.delta>0) THEN 1 ELSE 0 END) оплатили,"
+                "  MIN(u.created_at) первый, MAX(u.created_at) последний"
+                " FROM users u WHERE u.created_at>=?"
+                " GROUP BY откуда ORDER BY пришло DESC", (с,)).fetchall()
+            итог = []
+            for р in строки:
+                д = dict(р)
+                деньги = c.execute(
+                    "SELECT l.meta FROM ledger l JOIN users u ON u.tg_id=l.tg_id"
+                    " WHERE COALESCE(u.источник,'сам нашёл')=? AND l.purse='paid'"
+                    " AND l.delta>0 AND l.meta IS NOT NULL", (д["откуда"],)).fetchall()
+                рублей = 0
+                for м in деньги:
+                    try:
+                        рублей += int((json.loads(м["meta"]) or {}).get("руб") or 0)
+                    except (ValueError, TypeError):
+                        pass
+                д["рублей"] = рублей
+                д["доля"] = (round(100 * д["оплатили"] / д["пришло"], 1)
+                             if д["пришло"] else 0)
+                итог.append(д)
+            return итог
 
     def низ_устарел(self, tg_id, версия):
         """Висит ли у человека прежняя нижняя клавиатура.

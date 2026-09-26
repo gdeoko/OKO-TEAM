@@ -746,13 +746,21 @@ def on_start(chat, u, username, arg, lang=None, имя=None):
     приветствия: ник бывает вроде «xxx_dark_2007», а бывает пустым
     вовсе. Кабинет по имени здоровался и раньше, старт — нет.
     """
-    invited_by = None
+    invited_by, источник = None, None
     if arg:
-        inviter = store.by_ref_code(arg.strip())
-        if inviter and inviter["tg_id"] != u:
-            invited_by = inviter["tg_id"]
+        arg = arg.strip()
+        # ОТКУДА ПРИШЁЛ. `ad_<канал>` - метка закупки: по ней в админке
+        # видно, какой канал привёл людей и сколько они заплатили. Всё
+        # остальное - реферальный код друга, как было.
+        if arg.startswith("ad_") and len(arg) > 3:
+            источник = arg[:64]
+        else:
+            inviter = store.by_ref_code(arg)
+            if inviter and inviter["tg_id"] != u:
+                invited_by = inviter["tg_id"]
     user, is_new = store.ensure_user(u, username, welcome=pricing.WELCOME_COINS,
-                                     invited_by=invited_by, lang=lang)
+                                     invited_by=invited_by, lang=lang,
+                                     источник=источник)
     store.событие(u, "вход", "новый" if is_new else "возврат")
     я = яз(u)
     if is_new and invited_by:

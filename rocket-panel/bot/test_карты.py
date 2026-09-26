@@ -95,3 +95,52 @@ class НесколькоКарт(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Источники(unittest.TestCase):
+    """Откуда пришёл человек: метка закупки в ссылке ?start=ad_<канал>."""
+
+    def setUp(self):
+        import tempfile, os
+        from store import Store
+        self.tmp = tempfile.TemporaryDirectory()
+        self.s = Store(os.path.join(self.tmp.name, "t.db"))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_метка_пишется_новичку_и_не_затирается(self):
+        """Человек пришёл по рекламе одного канала и сто раз жал /start:
+        приписать его последней ссылке значило бы соврать про закупку."""
+        self.s.ensure_user(1, "a", welcome=2, источник="ad_dvachannel")
+        self.s.ensure_user(1, "a", welcome=2, источник="ad_другой")
+        self.assertEqual(self.s.user(1)["источник"], "ad_dvachannel")
+
+    def test_сводка_считает_оплативших_и_рубли(self):
+        self.s.ensure_user(1, "a", welcome=2, источник="ad_kanal")
+        self.s.ensure_user(2, "b", welcome=2, источник="ad_kanal")
+        self.s.ensure_user(3, "c", welcome=2)
+        self.s.credit(2, 10, "paid", "пакет", meta={"руб": 480})
+        по = {x["откуда"]: x for x in self.s.источники()}
+        self.assertEqual((по["ad_kanal"]["пришло"], по["ad_kanal"]["оплатили"],
+                          по["ad_kanal"]["рублей"]), (2, 1, 480))
+        self.assertEqual(по["сам нашёл"]["пришло"], 1)
+
+    def test_реферальный_код_не_путается_с_меткой(self):
+        import bot
+        from unittest import mock
+        кого = {}
+        with mock.patch.object(bot, "store", self.s), \
+             mock.patch.object(bot, "send", lambda *a, **к: {"ok": True, "result": {}}), \
+             mock.patch.object(bot, "экран", lambda *a, **к: None), \
+             mock.patch.object(bot, "в_меню", lambda *a, **к: None), \
+             mock.patch.object(bot, "показать_условия", lambda *a, **к: None,
+                               create=True):
+            self.s.ensure_user(77, "друг", welcome=2)
+            код = self.s.user(77)["ref_code"]
+            bot.on_start(5, 5, "новый", код)
+            bot.on_start(6, 6, "рекламный", "ad_toporlive")
+        self.assertEqual(self.s.user(5)["invited_by"], 77)
+        self.assertIsNone(self.s.user(5)["источник"])
+        self.assertEqual(self.s.user(6)["источник"], "ad_toporlive")
+        self.assertIsNone(self.s.user(6)["invited_by"])
