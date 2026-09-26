@@ -27,7 +27,20 @@
 import html
 import json
 import os
+import sys
 import time
+
+# АДРЕСА БОТОВ - ИЗ БРЕНДА, А НЕ СТРОКАМИ ЗДЕСЬ. Они попадают в
+# закреплённые правила группы менеджеров, и стоявшая тут строка
+# `AMBERRYsupport_bot` разошлась с `brand.SUPPORT`
+# (`@amberry_support_bot`): один из двух адресов был чужим, а правила
+# отправляли менеджеров писать именно по нему.
+#
+# Модуль от этого не перестаёт проверяться без сети: `brand` - одни
+# константы и пути к файлам, ни одного обращения наружу.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "brand-amberry"))
+import brand
 
 # ИКОНКИ ВЕТОК. Боту можно ставить только эмодзи из списка
 # getForumTopicIconStickers - номера оттуда.
@@ -179,8 +192,9 @@ def для_журнала(msg):
 
 
 class Поддержка:
-    def __init__(self, store, tg, группа=None, админы=(), бот="theamberrybot",
-                 подд="AMBERRYsupport_bot", обложка=None, аватар=None):
+    def __init__(self, store, tg, группа=None, админы=(),
+                 бот=brand.BOT.lstrip("@"), подд=brand.SUPPORT.lstrip("@"),
+                 обложка=None, аватар=None):
         self.store = store
         self.tg = tg
         self._группа = int(группа) if группа else None

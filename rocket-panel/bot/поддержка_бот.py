@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Бот поддержки @AMBERRYsupport_bot. Логика - в `поддержка.py`.
+"""Бот поддержки. Логика - в `поддержка.py`.
+
+Своего имени этот файл не держит: адрес бота поддержки берётся из
+`brand.SUPPORT`, как и все прочие адреса AMBERRY. Раньше он стоял здесь
+строкой - и разошёлся с брендом: в `brand.py` было
+`@amberry_support_bot`, а тут и в `поддержка.py` - `AMBERRYsupport_bot`.
+Адрес попадает в закреплённые правила группы менеджеров, то есть
+неверный отправлял бы их писать несуществующему боту.
 
 Запуск (служба amberry-support):
     AMBERRY_SUPPORT_TOKEN=...   токен бота поддержки
@@ -12,6 +19,7 @@
 
 import json
 import os
+import sys
 import time
 import traceback
 
@@ -19,6 +27,10 @@ import requests
 
 from store import Store
 from поддержка import Поддержка
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "brand-amberry"))
+import brand
 
 ТОКЕН = os.environ.get("AMBERRY_SUPPORT_TOKEN", "")
 API = "https://api.telegram.org/bot" + ТОКЕН
@@ -50,9 +62,10 @@ def main():
     п = Поддержка(store, tg,
                   группа=os.environ.get("AMBERRY_SUPPORT_GROUP") or None,
                   админы=АДМИНЫ,
-                  бот=os.environ.get("ROCKET_BOT_NAME", "theamberrybot"),
+                  бот=os.environ.get("ROCKET_BOT_NAME",
+                                     brand.BOT.lstrip("@")),
                   подд=os.environ.get("AMBERRY_SUPPORT_NAME",
-                                      "AMBERRYsupport_bot"),
+                                      brand.SUPPORT.lstrip("@")),
                   обложка=os.path.join(os.environ.get(
                       "AMBERRY_COVERS_DIR", "/srv/amberry/экраны"), "sup.jpg"),
                   аватар="/srv/amberry/поддержка/аватар-группа.jpg")
