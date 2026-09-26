@@ -66,22 +66,22 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent;
 ВИДЫ = {}
 
 ВИДЫ["кнопка"] = ОБЩЕЕ + """
-.э{padding:32px 60px;font-family:M7;font-size:52px;white-space:nowrap}
+.э{padding:38px 72px;font-family:M7;font-size:66px;white-space:nowrap}
 .э.нажата{box-shadow:0 0 40px #ff0a8cff,0 0 120px #ff0a8ccc,inset 0 0 60px #ff0a8c77;
   background:linear-gradient(135deg,rgba(255,10,140,.62),rgba(122,43,255,.42))}
 """
 
 ВИДЫ["пузырь"] = ОБЩЕЕ + """
-.э{display:flex;align-items:center;gap:22px;padding:26px 38px 26px 26px;
-  font-family:M7;font-size:44px;max-width:__Ш__px;line-height:1.25}
-.э img{width:84px;height:84px;border-radius:50%;flex:0 0 84px;
+.э{display:flex;align-items:center;gap:26px;padding:30px 44px 30px 30px;
+  font-family:M7;font-size:54px;max-width:__Ш__px;line-height:1.25}
+.э img{width:100px;height:100px;border-radius:50%;flex:0 0 100px;
   box-shadow:0 0 24px #ff0a8c99}
 """
 
 ВИДЫ["работа"] = ОБЩЕЕ + """
-.э{display:flex;flex-direction:column;gap:18px;padding:28px 44px;font-family:M7;font-size:46px}
+.э{display:flex;flex-direction:column;gap:20px;padding:32px 52px;font-family:M7;font-size:56px}
 .стр{display:flex;align-items:center;gap:20px;white-space:nowrap}
-.круг{width:48px;height:48px;border-radius:50%;border:6px solid rgba(255,255,255,.25);
+.круг{width:58px;height:58px;border-radius:50%;border:7px solid rgba(255,255,255,.25);
   border-top-color:#fff;box-shadow:0 0 18px var(--roz)}
 .пол{height:12px;border-radius:8px;background:rgba(255,255,255,.18);overflow:hidden;
   box-shadow:inset 0 0 14px #ff0a8c55}
@@ -90,26 +90,26 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent;
 """
 
 ВИДЫ["цена"] = ОБЩЕЕ + """
-.э{display:flex;align-items:center;gap:20px;padding:26px 46px;font-family:M9;font-size:50px;
+.э{display:flex;align-items:center;gap:24px;padding:30px 54px;font-family:M9;font-size:60px;
   white-space:nowrap}
-.э img{width:66px;height:66px}
+.э img{width:80px;height:80px}
 .э b{color:#fff;-webkit-text-stroke:2px rgba(154,255,0,.9);
   text-shadow:0 0 8px #fff,0 0 22px var(--lime),0 0 46px var(--lime)}
 """
 
 ВИДЫ["готово"] = ОБЩЕЕ + """
-.э{display:flex;align-items:center;gap:20px;padding:26px 46px;font-family:M7;font-size:46px;
+.э{display:flex;align-items:center;gap:24px;padding:30px 54px;font-family:M7;font-size:56px;
   white-space:nowrap;border-color:var(--lime);
   background:linear-gradient(135deg,rgba(154,255,0,.26),rgba(122,43,255,.22));
   box-shadow:0 0 30px #9aff00cc,0 0 78px #9aff0066,inset 0 0 40px #9aff0033}
-.э .г{font-size:56px;color:#fff;-webkit-text-stroke:2px rgba(154,255,0,.9);
+.э .г{font-size:68px;color:#fff;-webkit-text-stroke:2px rgba(154,255,0,.9);
   text-shadow:0 0 8px #fff,0 0 24px var(--lime)}
 """
 
 ВИДЫ["списано"] = ОБЩЕЕ + """
-.э{display:flex;align-items:center;gap:16px;padding:20px 38px;font-family:M9;font-size:52px;
+.э{display:flex;align-items:center;gap:20px;padding:24px 46px;font-family:M9;font-size:62px;
   white-space:nowrap}
-.э img{width:58px;height:58px}
+.э img{width:72px;height:72px}
 """
 
 
@@ -183,7 +183,10 @@ def расклад(семя, до_мути):
             "пузырь": сл.choice(ПУЗЫРИ), "работа": сл.choice(РАБОТЫ),
             "цена": сл.choice(ЦЕНЫ), "готово": сл.choice(ГОТОВО),
             "списано": "−1 коин"}[в_], "нажатие": False})
+    ВЕС = {"пузырь": 0, "цена": 0, "кнопка": 1,
+           "работа": 2, "списано": 2, "готово": 3}
     сл.shuffle(набор)
+    набор.sort(key=lambda э: ВЕС[э["вид"]])
 
     # Раскладываем по времени встык, с паузами, и по высоте - в нижней
     # трети, но не всегда на одном месте: лента не должна узнавать кадр.
