@@ -339,56 +339,6 @@ iframe{width:100%;height:78vh;border:1px solid var(--край);border-radius:16p
     </div>
   </section>
 
-  <section id="р_запрет"><h2>Запрет слов</h2>
-    <div class="карта">
-      <h3>Примерка</h3>
-      <p class="когда">Вставь фразу и посмотри, что с ней будет. Проверка
-         идёт тем же кодом, что и в боте.</p>
-      <div class="ряд" style="margin-top:8px">
-        <input id="зап_проба" placeholder="например: school uniform, 22 years old"
-               style="flex:1;min-width:220px">
-        <button class="кн" id="зап_проверить">Проверить</button>
-      </div>
-      <div id="зап_итог" style="margin-top:10px"></div>
-      <p class="когда" style="margin-top:10px">Кроме списка ниже есть одно
-         правило в коде, его из панели не убрать: возраст цифрами меньше 18
-         («14 лет», «14 years old», «12yo»). Оно срабатывает даже при пустом
-         списке слов.</p>
-    </div>
-
-    <div class="карта">
-      <h3>Запрещённые слова</h3>
-      <p class="когда">Сравнение идёт ЦЕЛЫМИ СЛОВАМИ: <b>child</b> не
-         поймает «childish» или «kidney». Нужно любое окончание —
-         поставь звёздочку: <b>детск*</b> ловит «детское» и «детская».
-         Регистр и растянутые буквы не важны. Правится как угодно:
-         добавил, удалил, работает сразу.</p>
-      <div class="ряд" style="margin-top:8px">
-        <input id="зап_новое" placeholder="слово, оборот или корень*"
-               style="flex:1;min-width:200px">
-        <button class="кн" id="зап_добавить">Добавить</button>
-      </div>
-      <div id="зап_слова_список" style="margin-top:12px;max-height:420px;
-           overflow:auto"></div>
-      <div class="ряд" style="margin-top:12px;justify-content:space-between">
-        <span class="когда" id="зап_ход"></span>
-        <button class="кн тихая" id="зап_вернуть">Вернуть базовый список</button>
-      </div>
-    </div>
-
-    <div class="карта">
-      <h3>Исключения</h3>
-      <p class="когда">Обороты, при которых запрет не срабатывает вовсе.
-         Самый быстрый способ погасить ложную придирку, не трогая список.</p>
-      <div class="ряд" style="margin-top:8px">
-        <input id="зап_новое_искл" placeholder="оборот, который разрешён"
-               style="flex:1;min-width:200px">
-        <button class="кн" id="зап_добавить_искл">Добавить</button>
-      </div>
-      <div id="зап_искл_список" style="margin-top:12px"></div>
-    </div>
-  </section>
-
   <section id="р_рассылка"><h2>Рассылка</h2>
     <div class="карта">
       <h3>Новое письмо</h3>
@@ -479,7 +429,6 @@ const РАЗДЕЛЫ = [
   ["каталог","Каталог","M4 5h7v14H4zM13 5h7v14h-7z"],
   ["реклама","Реклама","M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"],
   ["прайс","Прайс","M7 7h.01M3 11V5a2 2 0 0 1 2-2h6l10 10-8 8L3 11z"],
-  ["запрет","Запрет слов","M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M5.6 5.6l12.8 12.8"],
   ["сервисы","Сервисы и оплата","M2 7h20v10H2zM2 11h20M6 15h4"],
 ];
 let непрочитано = 0;
@@ -602,133 +551,6 @@ $("#пр_вернуть").onclick = async () => {
   ПРАЙС = await послать("/api/прайс/вернуть", {});
   рисовать_прайс();
 };
-
-// ---- запрет слов ----
-let ЗАП = {слова:[], исключения:[], базовые:[], как_базовые:true};
-
-function строка_запрета(с, какие){
-  return `<div class="ряд" style="justify-content:space-between;gap:8px;
-            padding:7px 0;border-bottom:1px solid var(--край)">
-            <span>${эк(с)}</span>
-            <button class="кн тихая" data-убрать="${эк(с)}"
-                    data-какие="${какие}">Удалить</button>
-          </div>`;
-}
-
-function рисовать_запрет(){
-  const пусто = `<p class="когда">Пусто. Запрет не работает вовсе.</p>`;
-  $("#зап_слова_список").innerHTML = (ЗАП.слова||[]).length
-    ? ЗАП.слова.map(с => строка_запрета(с, "слова")).join("") : пусто;
-  $("#зап_искл_список").innerHTML = (ЗАП.исключения||[]).length
-    ? ЗАП.исключения.map(с => строка_запрета(с, "исключения")).join("")
-    : `<p class="когда">Пока пусто.</p>`;
-  $("#зап_вернуть").style.display = ЗАП.как_базовые ? "none" : "";
-  document.querySelectorAll("[data-убрать]").forEach(б => {
-    б.onclick = () => {
-      const к = б.dataset.какие;
-      ЗАП[к] = ЗАП[к].filter(x => x !== б.dataset.убрать);
-      сохранить_запрет();
-    };
-  });
-}
-
-async function сохранить_запрет(){
-  $("#зап_ход").textContent = "сохраняю…";
-  ЗАП = await послать("/api/запрет/сохранить",
-                      {слова: ЗАП.слова, исключения: ЗАП.исключения});
-  рисовать_запрет();
-  $("#зап_ход").textContent = `слов ${ЗАП.слова.length}`;
-  setTimeout(()=>{$("#зап_ход").textContent="";}, 3000);
-}
-
-function добавить_запрет(поле, какие){
-  const з = поле.value.trim();
-  if (!з) return;
-  if (!ЗАП[какие].includes(з)) ЗАП[какие].push(з);
-  поле.value = "";
-  сохранить_запрет();
-}
-
-$("#зап_добавить").onclick = () => добавить_запрет($("#зап_новое"), "слова");
-$("#зап_добавить_искл").onclick =
-  () => добавить_запрет($("#зап_новое_искл"), "исключения");
-$("#зап_новое").addEventListener("keydown",
-  e => { if (e.key==="Enter") $("#зап_добавить").click(); });
-$("#зап_новое_искл").addEventListener("keydown",
-  e => { if (e.key==="Enter") $("#зап_добавить_искл").click(); });
-
-$("#зап_вернуть").onclick = async () => {
-  if (!confirm("Вернуть список слов к базовому? Твои правки в нём пропадут.")) return;
-  ЗАП = await послать("/api/запрет/вернуть", {});
-  рисовать_запрет();
-};
-
-$("#зап_проверить").onclick = async () => {
-  const текст = $("#зап_проба").value.trim();
-  if (!текст) return;
-  const о = await послать("/api/запрет/проверить", {текст});
-  $("#зап_итог").innerHTML = о.запрещено
-    ? `<span class="метка плохо">запрещено</span> поймало слово
-       <b>${эк(о.слово)}</b>`
-    : `<span class="метка ок">пройдёт</span> ни одно слово не сработало`;
-};
-
-$("#серв_скрыть").onclick = () => { сервисы_скрыты = !сервисы_скрыты; применить_тайны(); };
-$("#серв_обновить").onclick = сервисы;
-$("#бургер").onclick = () => document.body.classList.toggle("меню_открыто");
-$("#тень").onclick = () => document.body.classList.remove("меню_открыто");
-addEventListener("hashchange", () => открыть(хэш()));
-
-async function взять(п){
-  const о = await fetch(п, {headers:{"Accept":"application/json"}});
-  if(!о.ok) throw new Error(await о.text());
-  return о.json();
-}
-async function послать(п, тело){
-  const о = await fetch(п, {method:"POST",
-    headers:{"Content-Type":"application/json"}, body:JSON.stringify(тело)});
-  const д = await о.json().catch(()=>({}));
-  if(!о.ok) throw new Error(д.ошибка || о.status);
-  return д;
-}
-
-/* ---------- графики ---------- */
-/* Столбики: по одному на день. Подписей у столбиков нет нарочно —
-   тридцать дат на телефоне превращаются в серую кашу; вместо них
-   подпись у крайних и всплывающая у каждого. */
-function столбики(куда, пары, цвет){
-  const у = $(куда);
-  if(!пары || !пары.length){ у.innerHTML = '<div class="пусто">Пока пусто</div>'; return; }
-  const Ш=Math.max(pairsШ(пары),300), В=140, макс=Math.max(...пары.map(p=>p[1]),1);
-  const ш = Ш/пары.length;
-  const столб = пары.map((p,i)=>{
-    const h = Math.max(2, p[1]/макс*(В-26));
-    return `<rect x="${i*ш+ш*0.15}" y="${В-18-h}" width="${ш*0.7}" height="${h}"
-      rx="2" fill="${цвет}"><title>${эк(p[0])}: ${p[1]}</title></rect>`;
-  }).join("");
-  у.innerHTML =
-    `<svg viewBox="0 0 ${Ш} ${В}" width="100%" height="${В}" preserveAspectRatio="none">
-       ${столб}
-     </svg>
-     <div class="когда" style="display:flex;justify-content:space-between">
-       <span>${эк(пары[0][0])}</span><span>макс ${макс}</span>
-       <span>${эк(пары[пары.length-1][0])}</span></div>`;
-}
-const pairsШ = п => п.length*18;
-
-function полосы(куда, пары){
-  const у = $(куда);
-  if(!пары.length){ у.innerHTML='<div class="пусто">Пока пусто</div>'; return; }
-  const макс = Math.max(...пары.map(p=>p.сколько),1);
-  у.innerHTML = пары.map(p=>`
-    <div style="margin-bottom:9px">
-      <div class="ряд" style="justify-content:space-between">
-        <span>${эк(p.имя)}</span><b>${p.сколько}</b></div>
-      <div class="полоса"><i style="width:${p.сколько/макс*100}%"></i></div>
-    </div>`).join("");
-}
-
-/* ---------- разделы ---------- */
 
 // ---- откуда приходят люди ----
 // СЕРВИСЫ. Страница показывает доступы открытым текстом - так велел
@@ -957,10 +779,6 @@ const ЗАГРУЗКА = {
   async прайс(){
     ПРАЙС = await взять("/api/прайс");
     рисовать_прайс();
-  },
-  async запрет(){
-    ЗАП = await взять("/api/запрет");
-    рисовать_запрет();
   },
   async сводка(){
     const д = await взять("/api/сводка");
