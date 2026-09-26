@@ -89,6 +89,11 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 # делала: под футболкой модель нарисовала белый низ, а на втором кадре
 # был чёрный - на стыке отрезков это читается как подмена, и «единое
 # видео» рассыпается на два ролика. Вещь описывается тут один раз.
+КУПАЛЬНИК_НИЗ = (
+    "plain matte black high-leg bikini bottoms sitting high on the hips, "
+    "one solid black colour, no pattern"
+)
+
 КУПАЛЬНИК_ВЕЩЬ = (
     "a modern open two-piece swimsuit in plain matte BLACK, the same one "
     "in every shot: a black triangle bikini top on thin black string "
@@ -97,11 +102,19 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "colour, no pattern, no text, neatly worn and well fitted"
 )
 
+# ВЕРХНЯЯ ВЕЩЬ ПЛОТНАЯ, И СКВОЗЬ НЕЁ НИЧЕГО НЕ ВИДНО. Первая редакция
+# говорила, что под одеждой купальник, и модель рисовала его ПОВЕРХ
+# майки: тонкая ткань просвечивала, и чёрный верх читался как принт с
+# лифчиком на футболке. В кадре «одета» купальника не должно быть видно
+# вовсе - он есть, но его не показывают.
 ОДЕТА = (
-    "UNDERNEATH her outer clothing she is wearing " + КУПАЛЬНИК_ВЕЩЬ + ". "
-    "The outer garment stays fully on and fully covers her in this photo, "
-    "and whatever shows at the hips below its hem is that same black "
-    "swimsuit and nothing else."
+    "She wears a plain, thick, completely opaque cotton top in one solid "
+    "colour, with no print, no pattern, no logo and no lettering on it. "
+    "The fabric is heavy jersey that light does not pass through at all: "
+    "nothing underneath it shows through, no outline, no shadow, no strap, "
+    "no seam of anything worn beneath. The top covers her chest and torso "
+    "completely and reaches the top of her thighs. "
+    "In this photo she looks exactly as if she were simply dressed."
 )
 # КУПАЛЬНИК ОТКРЫТЫЙ И СОВРЕМЕННЫЙ - как у моделей на наших эталонах.
 #
@@ -149,7 +162,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
         "сцена": (
             "Standing at the edge of an outdoor hotel swimming pool on a "
             "bright summer day, turquoise water and sun loungers behind her, "
-            "palm shadows on the tiles. Over her swimsuit she wears a loose "
+            "palm shadows on the tiles. She wears a loose "
             "oversized white cotton t-shirt reaching mid-thigh, hair tied up "
             "in a high bun. She stands facing the camera, weight on one leg, "
             "calm friendly expression. Clean midday sunlight."),
@@ -159,8 +172,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
         "фигура": "slim figure with soft natural proportions",
         "сцена": (
             "Standing on a sandy beach in the late golden hour, calm sea and "
-            "a low warm sun behind her, soft rim light on her hair. Over her "
-            "swimsuit she wears a light grey oversized hoodie reaching the "
+            "a low warm sun behind her, soft rim light on her hair. She wears a light grey oversized hoodie reaching the "
             "hips, sleeves pushed up, barefoot on the sand. Half-smile."),
     },
     {
@@ -168,8 +180,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
         "фигура": "fit hourglass figure with a defined waist",
         "сцена": (
             "Standing in a bright modern gym, grey equipment softly out of "
-            "focus behind her, even ceiling light. Over her swimsuit she "
-            "wears one loose black training t-shirt and nothing else - no "
+            "focus behind her, even ceiling light. She wears one loose black training t-shirt and nothing else - no "
             "shorts, no leggings, the t-shirt long enough to reach the top "
             "of her thighs. Confident direct gaze."),
     },
@@ -178,8 +189,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
         "фигура": "average natural build, realistic everyday proportions",
         "сцена": (
             "Standing in the warm wooden anteroom of a spa, soft amber "
-            "light, wooden benches and towels behind her, faint steam. Over "
-            "her swimsuit she wears a soft white waffle robe, open and loose "
+            "light, wooden benches and towels behind her, faint steam. She wears a soft white waffle robe, open and loose "
             "but fully covering, belt tied. Calm and unhurried."),
     },
 ]
@@ -226,10 +236,11 @@ def забрать(лицо, номер, вид, задача):
 def сделать(лицо, номер, вид="одежда", мягче=False):
     с = СЦЕНЫ[номер]
     вещь = КУПАЛЬНИК_ВЕЩЬ_МЯГЧЕ if мягче else КУПАЛЬНИК_ВЕЩЬ
-    одета = ("UNDERNEATH her outer clothing she is wearing " + вещь + ". "
-             "The outer garment stays fully on and fully covers her in this "
-             "photo, and whatever shows at the hips below its hem is that "
-             "same black swimsuit and nothing else.")
+    # В кадре «одета» купальник НЕ УПОМИНАЕТСЯ ВООБЩЕ. Стоит сказать про
+    # него хоть слово - и модель рисует его ПОВЕРХ футболки: чёрный верх
+    # читается как принт с лифчиком. Он под одеждой, но в этом кадре его
+    # не существует.
+    одета = ОДЕТА
     купальник = ("She wears ONLY her swimsuit in this photo - the outer "
                  "garment is gone, not held, not in frame. She is wearing "
                  + вещь + ". Her pose, the place, the light and the framing "
