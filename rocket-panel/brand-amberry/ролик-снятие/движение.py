@@ -88,31 +88,29 @@ import requests
 # Наготу закрывает МОНТАЖ, а не запрет модели: в соцсети уходит версия с
 # мутью с нужной секунды, в телеграм-канал - та же генерация без мути.
 ШАГИ["всё"] = (
-    # ВРЕМЯ НАЗВАНО ВСЛУХ. Первая редакция описывала три действия подряд
-    # без секунд - модель взяла первое и зациклила его на все десять:
-    # десять секунд поднимала и опускала футболку, до купальника не
-    # дошла. Wan держит последовательность, только когда ей сказано,
-    # ЧТО КОГДА, и когда в отрицаниях прямо стоит запрет на повтор.
-    "A single continuous ten-second take, one locked-off camera, one "
-    "room, one woman, no cut. Each action happens ONCE and is finished "
-    "before the next begins; nothing is repeated. "
-    "SECONDS 0 TO 1: she stands facing the camera, hands at her sides, "
-    "and looks into the lens. "
-    "SECONDS 1 TO 3: she grips the hem of her loose top with both hands, "
-    "pulls it straight up over her head, takes it off completely and "
-    "throws it away out of the frame. The top is gone for the rest of the "
-    "take and never comes back. She is now in her swimsuit. "
-    "SECONDS 3 TO 5: she reaches behind her neck, unties the strings of "
-    "her swimsuit top, and lets it fall away from her body and drop out "
-    "of frame. It is gone and never comes back. "
-    "SECONDS 5 TO 7: she hooks her thumbs into the sides of her swimsuit "
-    "bottoms, slides them down her legs and steps out of them, and they "
-    "are gone from the frame too. "
-    "SECONDS 7 TO 10: she stands undressed in the same spot, facing the "
-    "camera, breathing calmly, her hair settling, and looks into the lens "
-    "again. "
-    "Through all of it she stays in exactly the same place, the camera "
-    "never moves, the background never changes, the light never changes. "
+    # ДВА ДЕЙСТВИЯ, НЕ ТРИ. Замер 26.09.2026: на нашей сборке одна
+    # генерация уверенно доводит до конца ОДНО действие. Три подряд она
+    # читает как одно и зацикливает его - две пробы по десять секунд
+    # подряд поднимали и опускали футболку, купальника не касаясь, и
+    # отметки времени в промпте этого не изменили.
+    #
+    # Поэтому сюжет ужат: вещь уходит через голову и сразу за ней
+    # развязывается купальник. Низ не трогаем вовсе - к этому месту кадр
+    # в соцсетях уже закрыт мутью, а в телеграме хватает и этого.
+    "A single continuous take, one locked-off camera, one place, one "
+    "woman, no cut. Two things happen, each exactly once, one after the "
+    "other, and neither is repeated. "
+    "FIRST, right away: she grips the hem of her loose top with both "
+    "hands, pulls it straight up over her head, takes it off completely "
+    "and throws it out of the frame. The top is gone and never comes back "
+    "on. She is left in her swimsuit. "
+    "IMMEDIATELY AFTER THAT, without pausing and without lowering her "
+    "arms: she reaches behind her neck, unties the strings of her swimsuit "
+    "top, and lets it slip down off her body and out of the frame. It is "
+    "gone and never comes back on. "
+    "She stays in exactly the same spot the whole time, facing the camera, "
+    "calm, her hair moving naturally with her arms. The camera never "
+    "moves, the background never changes, the light never changes. "
     "Photorealistic, stable facial features, correct anatomy, smooth "
     "continuous motion."
 )
