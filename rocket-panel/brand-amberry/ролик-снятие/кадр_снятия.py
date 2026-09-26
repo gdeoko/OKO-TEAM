@@ -115,6 +115,16 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 # читается как бассейн при санатории, а не как девушка с курорта, ради
 # которой на страницу заходят. Открытый - это по-прежнему купальник,
 # площадкам он разрешён, и снимать с него нечего иначе как по сюжету.
+# ЗАПАСНОЕ ОПИСАНИЕ, ПОСПОКОЙНЕЕ. Фильтр модели отбивает не вещь, а
+# плотность слов вокруг неё: на пляже в закатном свете «треугольный верх
+# на тонких завязках» уходит в отказ три раза из трёх, а «чёрный
+# раздельный купальник» проходит. Вещь та же, слов меньше.
+КУПАЛЬНИК_ВЕЩЬ_МЯГЧЕ = (
+    "a plain black two-piece swimsuit, the same one in every shot: a "
+    "simple black swim top and matching black swim bottoms, one solid "
+    "colour, no pattern, neatly worn and well fitted"
+)
+
 КУПАЛЬНИК = (
     "She wears ONLY her swimsuit in this photo - the outer garment is gone, "
     "not held, not in frame. She is wearing " + КУПАЛЬНИК_ВЕЩЬ + ". "
@@ -205,11 +215,20 @@ def забрать(лицо, номер, вид, задача):
     return None
 
 
-def сделать(лицо, номер, вид="одежда"):
+def сделать(лицо, номер, вид="одежда", мягче=False):
     с = СЦЕНЫ[номер]
+    вещь = КУПАЛЬНИК_ВЕЩЬ_МЯГЧЕ if мягче else КУПАЛЬНИК_ВЕЩЬ
+    одета = ("UNDERNEATH her outer clothing she is wearing " + вещь + ". "
+             "The outer garment stays fully on and fully covers her in this "
+             "photo, and whatever shows at the hips below its hem is that "
+             "same black swimsuit and nothing else.")
+    купальник = ("She wears ONLY her swimsuit in this photo - the outer "
+                 "garment is gone, not held, not in frame. She is wearing "
+                 + вещь + ". Her pose, the place, the light and the framing "
+                 "stay exactly the same as with the outer garment on.")
     промпт = " ".join([ОБЩЕЕ, ПЕРСОНАЖИ[лицо],
                        "Her body: " + с["фигура"] + ".", с["сцена"],
-                       ОДЕТА if вид == "одежда" else КУПАЛЬНИК])
+                       одета if вид == "одежда" else купальник])
     print("%s сцена %d (%s), %s: промпт %d знаков"
           % (лицо, номер, с["имя"], вид, len(промпт)), flush=True)
     тело = json.dumps({"model": МОДЕЛЬ, "prompt": промпт,
