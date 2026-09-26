@@ -58,7 +58,23 @@ def сцена(ракурс="un_full"):
 )
 
 
-def снять(кадр, ракурс="un_full", выход=None, зерно=202609):
+# СНИМАЕМ ТОЛЬКО ВЕРХ. Последний кадр ролика - это то, к чему модель
+# ведёт движение, и если на нём нет вообще ничего, она снимает всё разом
+# и низ пропадает где-то по дороге, сам собой. С низом на месте
+# последовательность читается: одежда, купальник, снятый лифчик.
+#
+# Запреты бота на нижнюю часть купальника при этом надо СНЯТЬ: они
+# написаны под полную наготу и стирают ровно то, что мы оставляем.
+ТОЛЬКО_ВЕРХ = (
+    " She is topless: her chest is bare. Her black bikini bottoms stay "
+    "exactly where they are, fully in place on her hips, untouched and "
+    "unchanged, and they are clearly visible in the photo."
+)
+НИЗ_ОСТАВИТЬ = ("bikini bottom", "bikini bottoms", "swim bottoms",
+                "panties", "knickers", "thong")
+
+
+def снять(кадр, ракурс="un_full", выход=None, зерно=202609, только_верх=True):
     if not БАЗА or not ВХОД[0]:
         raise SystemExit("нет ROCKET_GPU_URL / USER / PASS")
     с = сцена(ракурс)
@@ -74,9 +90,14 @@ def снять(кадр, ракурс="un_full", выход=None, зерно=202
     if not имя:
         raise SystemExit("кадр не залился: " + о.text[:200])
 
+    промпт = с.prompt + КАДР + (ТОЛЬКО_ВЕРХ if только_верх else "")
+    негатив = с.negative
+    if только_верх:
+        for вещь in НИЗ_ОСТАВИТЬ:
+            негатив = негатив.replace(вещь + ", ", "").replace(", " + вещь, "")
     тело = {"mode": "photo", "size": "vert", "seed": зерно,
             "images": [имя], "image": имя,
-            "prompt": с.prompt + КАДР, "neg": с.negative,
+            "prompt": промпт, "neg": негатив,
             "steps": 8, "cfg": 2.0, "denoise": 1.0}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
