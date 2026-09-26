@@ -160,11 +160,23 @@ class Gpu:
     # --- операции ---
 
     def alive(self):
-        try:
-            s = self._req("api/stats")
-            return isinstance(s, dict) and "total" in s
-        except GpuError:
-            return False
+        """Жива ЛЮБАЯ из карт, а не только первая.
+
+        Бот спрашивает это перед каждой генерацией (`железо.нужна`), и до
+        появления второй карты вопрос был об одной машине. Спрашивать
+        только первую нельзя: встанет основная - и бот откажет всем,
+        хотя соседняя карта свободна. А встать она может буднично, от
+        кончившихся на Vast денег.
+        """
+        своя = getattr(self._поток, "карта", None)
+        for адрес in ([своя] if своя else self.карты()):
+            try:
+                s = self._req("api/stats", адрес=адрес)
+                if isinstance(s, dict) and "total" in s:
+                    return True
+            except GpuError:
+                continue
+        return False
 
     def free_vram(self):
         s = self._req("api/stats")
