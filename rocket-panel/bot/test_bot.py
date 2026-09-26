@@ -12,6 +12,7 @@ import payments
 import store
 import archive
 import примеры
+import ui
 import франшиза
 from store import Store, NotEnoughCoins
 
@@ -822,6 +823,104 @@ class Кабинет(unittest.TestCase):
         self.assertIsNotNone(self.s.user(2))
         self.assertIsNone(self.s.user(2)["invited_by"])
         self.assertEqual(self.s.balance(2), 3)
+
+
+class ДоскаРефереров(unittest.TestCase):
+    """Доска — ответ на находку из разбора конкурента: реферальную
+    программу двигает не размер награды, а видимое место в списке.
+
+    Главное свойство доски проверяется первым: она НЕ НАЗЫВАЕТ ИМЁН.
+    """
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp()
+        self.s = Store(os.path.join(self.d, "b.db"))
+        for хозяин in (1, 2, 3):
+            self.s.ensure_user(хозяин, f"ник{хозяин}")
+        for i in range(10, 17):
+            self.s.ensure_user(i, invited_by=1)      # семеро
+        for i in range(20, 23):
+            self.s.ensure_user(i, invited_by=2)      # трое
+        self.s.ensure_user(30, invited_by=3)         # один
+
+    def test_в_доске_нет_ни_имён_ни_номеров(self):
+        """Бот у нас 18+. «@ник привёл семерых» — это заявление о
+        человеке, которого он никому не давал делать, и рядом с кнопкой
+        «удалить меня насовсем» оно выглядело бы издевательством.
+
+        Поэтому проверяется не вид строки, а состав данных: ни ника, ни
+        tg_id наружу не выходит вовсе — подставить их некуда.
+        """
+        доска = self.s.доска_рефереров(5, tg_id=1)
+        плоско = repr(доска)
+        for хозяин in (1, 2, 3):
+            self.assertNotIn(f"ник{хозяин}", плоско)
+        self.assertEqual(set(доска), {"верх", "моё"})
+        self.assertTrue(all(isinstance(n, int) for n in доска["верх"]))
+
+    def test_счёты_по_убыванию_и_не_длиннее_просимого(self):
+        self.assertEqual(self.s.доска_рефереров(5)["верх"], [7, 3, 1])
+        self.assertEqual(self.s.доска_рефереров(2)["верх"], [7, 3])
+
+    def test_своё_место_видно_каждому_кто_звал(self):
+        self.assertEqual(self.s.доска_рефереров(5, tg_id=1)["моё"],
+                         {"место": 1, "позвано": 7})
+        self.assertEqual(self.s.доска_рефереров(5, tg_id=3)["моё"],
+                         {"место": 3, "позвано": 1})
+
+    def test_кто_никого_не_звал_места_не_имеет(self):
+        """Не «последнее место», а никакого: человек в соревнование не
+        входил, и ставить его в хвост значит попрекать."""
+        self.s.ensure_user(99)
+        self.assertIsNone(self.s.доска_рефереров(5, tg_id=99)["моё"])
+
+    def test_у_равных_счётов_место_одинаковое(self):
+        """Как в спорте: двое с равным счётом — оба первые, следующий
+        сразу третий, второго места нет вовсе. Делить место по времени
+        регистрации нечестно и человеку необъяснимо."""
+        s = Store(os.path.join(self.d, "c.db"))
+        for хозяин in (1, 2, 3):
+            s.ensure_user(хозяин)
+        for i in (10, 11, 12):
+            s.ensure_user(i, invited_by=1)
+        for i in (20, 21, 22):
+            s.ensure_user(i, invited_by=2)
+        s.ensure_user(30, invited_by=3)
+        self.assertEqual(s.доска_рефереров(5, tg_id=1)["моё"]["место"], 1)
+        self.assertEqual(s.доска_рефереров(5, tg_id=2)["моё"]["место"], 1)
+        self.assertEqual(s.доска_рефереров(5, tg_id=3)["моё"]["место"], 3)
+
+    def test_начисленный_руками_коин_доску_не_двигает(self):
+        """Доска про пришедших людей, а не про выплаты. Иначе её сдвинул
+        бы любой подарок владельца «за друга»."""
+        было = self.s.доска_рефереров(5, tg_id=3)["моё"]["место"]
+        self.s.credit(3, 100, "welcome", "за друга, руками")
+        self.assertEqual(self.s.доска_рефереров(5, tg_id=3)["моё"]["место"], было)
+
+    def test_пустая_доска_не_падает_и_зовёт_на_первое_место(self):
+        s = Store(os.path.join(self.d, "d.db"))
+        s.ensure_user(1)
+        доска = s.доска_рефереров(5, tg_id=1)
+        self.assertEqual(доска["верх"], [])
+        self.assertIsNone(доска["моё"])
+        текст = ui.текст_доски(доска)
+        self.assertIn("Первое место свободно", текст)
+
+    def test_текст_доски_объясняет_отсутствие_имён(self):
+        """Список голых чисел без объяснения читается как недоделка, и
+        догадка будет обратная тому, что сделано нарочно."""
+        for яз in язык.ЯЗЫКИ:
+            текст = ui.текст_доски(self.s.доска_рефереров(5, tg_id=2), яз)
+            self.assertIn(язык.t("доска.без_имён", яз), текст)
+
+    def test_доска_на_обоих_языках_и_со_склонением(self):
+        текст = ui.текст_доски(self.s.доска_рефереров(5, tg_id=3), "ru")
+        self.assertIn("7 друзей", текст)
+        self.assertIn("3 друга", текст)
+        self.assertIn("1 друг", текст)
+        англ = ui.текст_доски(self.s.доска_рефереров(5, tg_id=3), "en")
+        self.assertIn("7 friends", англ)
+        self.assertIn("1 friend", англ)
 
 
 class ПравкиВладельца(unittest.TestCase):
