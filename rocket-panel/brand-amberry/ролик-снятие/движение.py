@@ -88,22 +88,33 @@ import requests
 # Наготу закрывает МОНТАЖ, а не запрет модели: в соцсети уходит версия с
 # мутью с нужной секунды, в телеграм-канал - та же генерация без мути.
 ШАГИ["всё"] = (
-    "One continuous unbroken shot of the same woman in the same place, "
-    "the camera locked off on a tripod the whole time, no cut, no jump. "
-    "First she stands facing the camera, relaxed, and looks into the lens. "
-    "Then she takes the hem of her loose top with both hands, pulls it "
-    "upward and off over her head in one smooth motion, and lets it drop "
-    "out of frame, so that she is left in her swimsuit. "
-    "Then, without pausing, she reaches behind her neck, unties her "
-    "swimsuit top, slips it off her shoulders and lets it fall away, and "
-    "then slides her swimsuit bottoms down and steps out of them, until "
-    "she is standing undressed. "
-    "She stays in exactly the same spot the whole time, facing the camera, "
-    "with the same calm expression; her hair moves naturally with her "
-    "arms. The background never changes. "
-    "Camera locked off, no zoom, no pan, no shake. Photorealistic, stable "
-    "facial features, correct anatomy, smooth continuous motion, "
-    "consistent lighting from the first frame to the last."
+    # ВРЕМЯ НАЗВАНО ВСЛУХ. Первая редакция описывала три действия подряд
+    # без секунд - модель взяла первое и зациклила его на все десять:
+    # десять секунд поднимала и опускала футболку, до купальника не
+    # дошла. Wan держит последовательность, только когда ей сказано,
+    # ЧТО КОГДА, и когда в отрицаниях прямо стоит запрет на повтор.
+    "A single continuous ten-second take, one locked-off camera, one "
+    "room, one woman, no cut. Each action happens ONCE and is finished "
+    "before the next begins; nothing is repeated. "
+    "SECONDS 0 TO 1: she stands facing the camera, hands at her sides, "
+    "and looks into the lens. "
+    "SECONDS 1 TO 3: she grips the hem of her loose top with both hands, "
+    "pulls it straight up over her head, takes it off completely and "
+    "throws it away out of the frame. The top is gone for the rest of the "
+    "take and never comes back. She is now in her swimsuit. "
+    "SECONDS 3 TO 5: she reaches behind her neck, unties the strings of "
+    "her swimsuit top, and lets it fall away from her body and drop out "
+    "of frame. It is gone and never comes back. "
+    "SECONDS 5 TO 7: she hooks her thumbs into the sides of her swimsuit "
+    "bottoms, slides them down her legs and steps out of them, and they "
+    "are gone from the frame too. "
+    "SECONDS 7 TO 10: she stands undressed in the same spot, facing the "
+    "camera, breathing calmly, her hair settling, and looks into the lens "
+    "again. "
+    "Through all of it she stays in exactly the same place, the camera "
+    "never moves, the background never changes, the light never changes. "
+    "Photorealistic, stable facial features, correct anatomy, smooth "
+    "continuous motion."
 )
 
 ШАГИ["результат"] = (
@@ -129,6 +140,10 @@ import requests
 # У шага «всё» свой негатив: общий запрещал ровно то, ради чего задание и
 # ставится, и модель останавливалась на первом действии.
 НЕГАТИВ_ВСЁ = (
+    # Запрет на повтор стоит ПЕРВЫМ: именно он ломался в первой пробе.
+    "repeating the same motion, looping, doing the same action twice, "
+    "putting clothing back on, pulling the shirt back down, garment "
+    "reappearing, hesitating, stalling, "
     "cut, jump cut, scene change, changing background, changing location, "
     "changing outfit colour, second person, camera movement, zoom, pan, "
     "shake, walking away, turning away, extra limbs, extra fingers, "
