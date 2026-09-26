@@ -79,12 +79,27 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "modest full-coverage swimwear of the kind worn at a public pool, and "
     "the outer garment stays fully on and fully covers her in this photo."
 )
+# КУПАЛЬНИК ОТКРЫТЫЙ И СОВРЕМЕННЫЙ - как у моделей на наших эталонах.
+#
+# ФИЛЬТР МОДЕЛИ ОТКАЗАЛ 26.09.2026 (CONTENT_MODERATION) на первой
+# редакции этого куска. Отказ дала не сама вещь, а оговорки вокруг неё:
+# «ничего не соскальзывает, ничего не отодвинуто, ничего не прозрачно».
+# Отрицание НАЗЫВАЕТ то, чего мы избегаем, и фильтр читает названное, а
+# не отрицание. Описывать вещь спокойно, как в каталоге одежды, и не
+# перечислять, чего с ней не происходит.
+# Закрытый спортивный, снятый первой пробой, для ленты не годится: он
+# читается как бассейн при санатории, а не как девушка с курорта, ради
+# которой на страницу заходят. Открытый - это по-прежнему купальник,
+# площадкам он разрешён, и снимать с него нечего иначе как по сюжету.
 КУПАЛЬНИК = (
     "She wears ONLY her swimsuit in this photo - the outer garment is gone, "
-    "not held, not in frame. Modest full-coverage sporty swimwear of the "
-    "kind worn at a public pool, ordinary and unremarkable, exactly the "
-    "swimsuit she was wearing underneath. Her pose, the place, the light "
-    "and the framing stay exactly the same as with the outer garment on."
+    "not held, not in frame. A modern open two-piece swimsuit of the kind "
+    "worn on a resort beach: a triangle bikini top on thin string straps "
+    "over the shoulders, tied at the back, and matching high-leg bikini "
+    "bottoms sitting high on the hips. One plain solid colour, no pattern, "
+    "no text, smooth matte swim fabric, neatly worn and well fitted. "
+    "Her pose, the place, the light and the framing stay exactly the same "
+    "as with the outer garment on."
 )
 
 # Сцены. Обстановка бытовая, верхняя вещь - та, которую снимают через
