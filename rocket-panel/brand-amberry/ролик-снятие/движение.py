@@ -71,6 +71,41 @@ import requests
     "continuous motion, consistent lighting."
 )
 
+# ОДНА ГЕНЕРАЦИЯ НА ВЕСЬ РОЛИК. Решение владельца 26.09.2026, и оно
+# отменяет три отрезка.
+#
+# Три задания с трёх кадров давали три фона, три позы и придуманный
+# моделью розовый верх - швы приходилось прятать, и всё равно они были
+# видны. Здесь сюжет целиком отдаётся модели одним заданием: один фон,
+# одна камера, одна девушка, непрерывное движение от первого кадра до
+# последнего. Шва нет не потому, что он спрятан, а потому что его нет.
+#
+# ПОЧЕМУ РАНЬШЕ НЕ ПОЛУЧАЛОСЬ: в промпте стояло «купальник остаётся на
+# месте». Модель честно это исполняла - снимала футболку и замирала,
+# продолжения в сюжете не было вовсе. Сборка у нас NSFW и умеет снять
+# сцену до конца, ей просто ни разу не дали этого сделать.
+#
+# Наготу закрывает МОНТАЖ, а не запрет модели: в соцсети уходит версия с
+# мутью с нужной секунды, в телеграм-канал - та же генерация без мути.
+ШАГИ["всё"] = (
+    "One continuous unbroken shot of the same woman in the same place, "
+    "the camera locked off on a tripod the whole time, no cut, no jump. "
+    "First she stands facing the camera, relaxed, and looks into the lens. "
+    "Then she takes the hem of her loose top with both hands, pulls it "
+    "upward and off over her head in one smooth motion, and lets it drop "
+    "out of frame, so that she is left in her swimsuit. "
+    "Then, without pausing, she reaches behind her neck, unties her "
+    "swimsuit top, slips it off her shoulders and lets it fall away, and "
+    "then slides her swimsuit bottoms down and steps out of them, until "
+    "she is standing undressed. "
+    "She stays in exactly the same spot the whole time, facing the camera, "
+    "with the same calm expression; her hair moves naturally with her "
+    "arms. The background never changes. "
+    "Camera locked off, no zoom, no pan, no shake. Photorealistic, stable "
+    "facial features, correct anatomy, smooth continuous motion, "
+    "consistent lighting from the first frame to the last."
+)
+
 ШАГИ["результат"] = (
     "She stands in the same spot and keeps living in the frame: she "
     "breathes, her shoulders settle, her long hair stirs and falls, she "
@@ -88,9 +123,18 @@ import requests
     "away, second person, extra limbs, extra fingers, deformed hands, "
     "warped anatomy, morphing body, melting fabric, face distortion, "
     "changing face, changing hair color, flickering, duplicate person, "
-    "text, letters, watermark, logo, blurry, low quality, swimsuit "
-    "removed, swimsuit strap pulled, undressing further, exposed chest, "
-    "bare chest, topless, nudity"
+    "text, letters, watermark, logo, blurry, low quality"
+)
+
+# У шага «всё» свой негатив: общий запрещал ровно то, ради чего задание и
+# ставится, и модель останавливалась на первом действии.
+НЕГАТИВ_ВСЁ = (
+    "cut, jump cut, scene change, changing background, changing location, "
+    "changing outfit colour, second person, camera movement, zoom, pan, "
+    "shake, walking away, turning away, extra limbs, extra fingers, "
+    "deformed hands, warped anatomy, morphing body, face distortion, "
+    "changing face, changing hair colour, flickering, duplicate person, "
+    "text, letters, watermark, logo, blurry, low quality"
 )
 
 
@@ -115,7 +159,8 @@ def залить(кадр):
 def заказать(имя, шаг="одежда", секунд=5, зерно=202609):
     тело = {"mode": "video", "secs": секунд, "size": "vert", "seed": зерно,
             "images": [имя], "сэмплер": "euler_ancestral",
-            "планировщик": "beta", "prompt": ШАГИ[шаг], "neg": НЕГАТИВ}
+            "планировщик": "beta", "prompt": ШАГИ[шаг],
+            "neg": НЕГАТИВ_ВСЁ if шаг == "всё" else НЕГАТИВ}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
     задание = (о.json() or {}).get("job")
