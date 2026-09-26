@@ -8,7 +8,18 @@
 `../экраны/оживить_экраны.sh` оживляет обложки разделов.
 
     export ROCKET_GPU_URL=... ROCKET_GPU_USER=... ROCKET_GPU_PASS=...
-    python3 движение.py вход-ника-бассейн-день.jpg [выход.mp4] [номер сцены]
+    python3 движение.py <кадр.jpg> <шаг> [выход.mp4] [секунд]
+
+ТРИ ШАГА - ТРИ ОТДЕЛЬНЫХ ЗАДАНИЯ, каждое со своего кадра:
+
+    одежда    из кадра «одета»      - снимает футболку через голову
+    купальник из кадра «в купальнике» - заводит руки к завязке
+    результат из кадра «результат»    - движение продолжается под мутью
+
+Одним заданием это не снять: режима «первый кадр в последний» на нашей
+сборке нет (снят 22.09.2026, отдавал чужое лицо), а два снимка в одном
+задании значат двух ЛЮДЕЙ. Зато у каждого отрезка своя резкая опора, и
+качество не доживает до пятой секунды деградации.
 
 АДРЕС ПАНЕЛИ МЕНЯЕТСЯ. Она висит на быстром туннеле Cloudflare, и он
 берёт новое имя при каждом перезапуске. Если панель не отвечает - адрес
@@ -30,7 +41,9 @@ import requests
 БАЗА = os.environ.get("ROCKET_GPU_URL", "").rstrip("/")
 ВХОД = (os.environ.get("ROCKET_GPU_USER", ""), os.environ.get("ROCKET_GPU_PASS", ""))
 
-ДВИЖЕНИЕ = (
+ШАГИ = {}
+
+ШАГИ["одежда"] = (
     "The woman takes the hem of her loose outer top with both hands and "
     "pulls it upward and off over her head in one smooth natural motion, "
     "then lets the garment drop out of frame and lowers her arms. "
@@ -40,6 +53,31 @@ import requests
     "the same calm expression; her hair falls back into place and moves "
     "softly. The background stays exactly as it is, only faint natural "
     "movement of light and air. "
+    "Camera locked off on a tripod, no zoom, no pan, no shake. "
+    "Photorealistic, stable facial features, correct anatomy, smooth "
+    "continuous motion, consistent lighting."
+)
+
+ШАГИ["купальник"] = (
+    "The woman slowly raises both hands and brings them up behind her "
+    "neck, to the tie of her swimsuit top, and holds them there as if she "
+    "is about to undo it. Her swimsuit stays completely in place on her "
+    "body the whole time, untouched and unmoved. "
+    "She keeps standing in exactly the same spot, facing the camera, calm "
+    "and unhurried; her hair moves softly with the motion of her arms. "
+    "The background stays exactly as it is. "
+    "Camera locked off on a tripod, no zoom, no pan, no shake. "
+    "Photorealistic, stable facial features, correct anatomy, smooth "
+    "continuous motion, consistent lighting."
+)
+
+ШАГИ["результат"] = (
+    "She stands in the same spot and keeps living in the frame: she "
+    "breathes, her shoulders settle, her long hair stirs and falls, she "
+    "shifts her weight slightly from one foot to the other and turns a "
+    "few degrees, her hands move slowly and naturally at her sides. "
+    "The water and the palm shadows behind her keep moving in the warm "
+    "air. Nothing is added and nothing is taken away. "
     "Camera locked off on a tripod, no zoom, no pan, no shake. "
     "Photorealistic, stable facial features, correct anatomy, smooth "
     "continuous motion, consistent lighting."
@@ -74,10 +112,10 @@ def залить(кадр):
     return имя
 
 
-def заказать(имя, секунд=5, зерно=202609):
+def заказать(имя, шаг="одежда", секунд=5, зерно=202609):
     тело = {"mode": "video", "secs": секунд, "size": "vert", "seed": зерно,
             "images": [имя], "сэмплер": "euler_ancestral",
-            "планировщик": "beta", "prompt": ДВИЖЕНИЕ, "neg": НЕГАТИВ}
+            "планировщик": "beta", "prompt": ШАГИ[шаг], "neg": НЕГАТИВ}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
     задание = (о.json() or {}).get("job")
@@ -119,12 +157,14 @@ def забрать(файл, выход):
     return выход
 
 
-def снять(кадр, выход=None, секунд=5, зерно=202609):
+def снять(кадр, шаг="одежда", выход=None, секунд=5, зерно=202609):
     _проверь()
-    выход = выход or os.path.join(ТУТ, "движение.mp4")
-    print("заливаю кадр:", os.path.basename(кадр), flush=True)
+    if шаг not in ШАГИ:
+        raise SystemExit("шаг %s неизвестен: %s" % (шаг, ", ".join(ШАГИ)))
+    выход = выход or os.path.join(ТУТ, "движение-%s.mp4" % шаг)
+    print("заливаю кадр:", os.path.basename(кадр), "шаг", шаг, flush=True)
     имя = залить(кадр)
-    задание = заказать(имя, секунд, зерно)
+    задание = заказать(имя, шаг, секунд, зерно)
     print("задание", задание, flush=True)
     файл = ждать(задание)
     забрать(файл, выход)
@@ -136,5 +176,6 @@ if __name__ == "__main__":
     арг = sys.argv[1:]
     if not арг:
         raise SystemExit(__doc__)
-    снять(арг[0], арг[1] if len(арг) > 1 else None,
-          int(арг[2]) if len(арг) > 2 else 5)
+    снять(арг[0], арг[1] if len(арг) > 1 else "одежда",
+          арг[2] if len(арг) > 2 else None,
+          int(арг[3]) if len(арг) > 3 else 5)

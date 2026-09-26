@@ -59,9 +59,20 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "She stands upright and square to the camera, weight evenly on both "
     "feet, shoulders level, arms hanging relaxed at her sides, hands open "
     "and empty, holding nothing. "
+    # КАМЕРА РОВНО, А НЕ СВЕРХУ. «Камера на высоте груди» модель читала
+    # как пожелание и всё равно ставила её выше головы, глядя вниз: кадр
+    # получался съёмкой сверху, плечи широкие, ноги короткие. Помогает
+    # не высота, а НАКЛОН, названный прямо: ось объектива горизонтальна,
+    # съёмка в упор, горизонт по центру кадра.
     "Framing is identical every time: she is centred in the vertical "
     "frame, the top of her head a little below the upper edge, the crop "
-    "at mid-thigh, the camera at chest height and perfectly level. "
+    "at mid-thigh. "
+    "The camera stands on a tripod at the height of her chest and the "
+    "lens axis is strictly horizontal - a straight-on eye-level shot. "
+    "The horizon line runs across the middle of the frame, behind her at "
+    "chest height. The camera is NOT above her and NOT tilted downward, "
+    "it does not look down at her from a high angle. Her figure is seen "
+    "edge-on and her legs keep their full natural length in the frame. "
     "Photo-real skin with pores and fine texture, no plastic airbrushing, "
     "no beauty filter. Sharp focus on the subject, clean exposure, no "
     "motion blur on the face. Quality: 8K, ultra sharp, true-to-life color. "
@@ -74,10 +85,23 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 # Одежда и купальник описываются ОТДЕЛЬНО, а сцена - общая. Так два
 # кадра остаются одним и тем же местом, светом и позой, и различаются
 # ровно тем, чем должны.
+# ОДИН КУПАЛЬНИК НА ОБА КАДРА, И ЦВЕТ НАЗВАН. Первая проба этого не
+# делала: под футболкой модель нарисовала белый низ, а на втором кадре
+# был чёрный - на стыке отрезков это читается как подмена, и «единое
+# видео» рассыпается на два ролика. Вещь описывается тут один раз.
+КУПАЛЬНИК_ВЕЩЬ = (
+    "a modern open two-piece swimsuit in plain matte BLACK, the same one "
+    "in every shot: a black triangle bikini top on thin black string "
+    "straps over the shoulders, tied at the back, and matching black "
+    "high-leg bikini bottoms sitting high on the hips, one solid black "
+    "colour, no pattern, no text, neatly worn and well fitted"
+)
+
 ОДЕТА = (
-    "She wears an ordinary sporty swimsuit UNDERNEATH her outer clothing, "
-    "modest full-coverage swimwear of the kind worn at a public pool, and "
-    "the outer garment stays fully on and fully covers her in this photo."
+    "UNDERNEATH her outer clothing she is wearing " + КУПАЛЬНИК_ВЕЩЬ + ". "
+    "The outer garment stays fully on and fully covers her in this photo, "
+    "and whatever shows at the hips below its hem is that same black "
+    "swimsuit and nothing else."
 )
 # КУПАЛЬНИК ОТКРЫТЫЙ И СОВРЕМЕННЫЙ - как у моделей на наших эталонах.
 #
@@ -93,11 +117,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 # площадкам он разрешён, и снимать с него нечего иначе как по сюжету.
 КУПАЛЬНИК = (
     "She wears ONLY her swimsuit in this photo - the outer garment is gone, "
-    "not held, not in frame. A modern open two-piece swimsuit of the kind "
-    "worn on a resort beach: a triangle bikini top on thin string straps "
-    "over the shoulders, tied at the back, and matching high-leg bikini "
-    "bottoms sitting high on the hips. One plain solid colour, no pattern, "
-    "no text, smooth matte swim fabric, neatly worn and well fitted. "
+    "not held, not in frame. She is wearing " + КУПАЛЬНИК_ВЕЩЬ + ". "
     "Her pose, the place, the light and the framing stay exactly the same "
     "as with the outer garment on."
 )
