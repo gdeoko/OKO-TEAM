@@ -13,9 +13,15 @@
 стриптиз, и жалоба приходит не за кадр, а за намёк.
 
     export APIMODELS_KEY=...
+    python3 кадр_снятия.py ника 0          пара кадров одной сцены
     python3 кадр_снятия.py ника            все сцены
-    python3 кадр_снятия.py ника 0          одну
-    python3 кадр_снятия.py забрать ника 0 <taskId>
+    python3 кадр_снятия.py забрать ника 0 одежда <taskId>
+
+ПАРА, А НЕ ОДИН КАДР. На сцену делается два снимка: «одета» и «в
+купальнике». Сцена, поза, свет и обстановка у них описаны ОДНИМ текстом -
+разойдётся описание, разойдётся и картинка, а их потом стыковать в одном
+ролике. Третий кадр, результат, APIMODELS не сделает: его делает наша
+карта тем же путём, которым бот обслуживает клиента.
 """
 import json
 import os
@@ -47,13 +53,26 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "Photo-real skin with pores and fine texture, no plastic airbrushing, "
     "no beauty filter. Sharp focus on the subject, clean exposure, no "
     "motion blur on the face. Quality: 8K, ultra sharp, true-to-life color. "
-    "She wears an ordinary sporty swimsuit UNDERNEATH her outer clothing, "
-    "modest full-coverage swimwear of the kind worn at a public pool, and "
-    "the outer garment stays fully on in this photo. "
     "Strictly no text, no letters, no watermarks, no logos, no borders, no "
     "collage, no additional people, no extra limbs, no extra fingers, no "
     "deformed hands, no nudity, no underwear, no lingerie, no see-through "
     "fabric, nothing revealing."
+)
+
+# Одежда и купальник описываются ОТДЕЛЬНО, а сцена - общая. Так два
+# кадра остаются одним и тем же местом, светом и позой, и различаются
+# ровно тем, чем должны.
+ОДЕТА = (
+    "She wears an ordinary sporty swimsuit UNDERNEATH her outer clothing, "
+    "modest full-coverage swimwear of the kind worn at a public pool, and "
+    "the outer garment stays fully on and fully covers her in this photo."
+)
+КУПАЛЬНИК = (
+    "She wears ONLY her swimsuit in this photo - the outer garment is gone, "
+    "not held, not in frame. Modest full-coverage sporty swimwear of the "
+    "kind worn at a public pool, ordinary and unremarkable, exactly the "
+    "swimsuit she was wearing underneath. Her pose, the place, the light "
+    "and the framing stay exactly the same as with the outer garment on."
 )
 
 # Сцены. Обстановка бытовая, верхняя вещь - та, которую снимают через
@@ -117,7 +136,7 @@ def зов(аргументы):
     return о.get("data") or {}
 
 
-def забрать(лицо, номер, задача):
+def забрать(лицо, номер, вид, задача):
     """Ждать задачу и положить файл. Состояние в поле state, не status."""
     было = ""
     for _ in range(180):
@@ -128,8 +147,8 @@ def забрать(лицо, номер, задача):
             было = сост
         ссылки = д.get("resultUrls") or []
         if ссылки:
-            путь = os.path.join(ТУТ, "вход-%s-%s.jpg"
-                                % (лицо, СЦЕНЫ[номер]["имя"]))
+            путь = os.path.join(ТУТ, "вход-%s-%s-%s.jpg"
+                                % (лицо, СЦЕНЫ[номер]["имя"], вид))
             subprocess.run(["curl", "-s", "-m", "180", "-o", путь, ссылки[0]],
                            check=True, timeout=200)
             print("  готово:", путь, os.path.getsize(путь), "байт", flush=True)
@@ -142,12 +161,13 @@ def забрать(лицо, номер, задача):
     return None
 
 
-def сделать(лицо, номер):
+def сделать(лицо, номер, вид="одежда"):
     с = СЦЕНЫ[номер]
     промпт = " ".join([ОБЩЕЕ, ПЕРСОНАЖИ[лицо],
-                       "Her body: " + с["фигура"] + ".", с["сцена"]])
-    print("%s сцена %d (%s): промпт %d знаков"
-          % (лицо, номер, с["имя"], len(промпт)), flush=True)
+                       "Her body: " + с["фигура"] + ".", с["сцена"],
+                       ОДЕТА if вид == "одежда" else КУПАЛЬНИК])
+    print("%s сцена %d (%s), %s: промпт %d знаков"
+          % (лицо, номер, с["имя"], вид, len(промпт)), flush=True)
     тело = json.dumps({"model": МОДЕЛЬ, "prompt": промпт,
                        "aspect_ratio": "9:16", "resolution": "2K"})
     д = зов(["-X", "POST", БАЗА + "/images/generations", "-d", тело])
@@ -156,7 +176,7 @@ def сделать(лицо, номер):
         print("  не приняли задачу:", str(д)[:300])
         return None
     print("  задача", задача, flush=True)
-    return забрать(лицо, номер, задача)
+    return забрать(лицо, номер, вид, задача)
 
 
 if __name__ == "__main__":
@@ -164,10 +184,11 @@ if __name__ == "__main__":
     if not КЛЮЧ:
         raise SystemExit("нет APIMODELS_KEY")
     if арг and арг[0] == "забрать":
-        _, лицо, номер, задача = арг
-        забрать(лицо, int(номер), задача)
+        _, лицо, номер, вид, задача = арг
+        забрать(лицо, int(номер), вид, задача)
     else:
         лицо = (арг[0] if арг else "ника").lower()
         номера = [int(арг[1])] if len(арг) > 1 else range(len(СЦЕНЫ))
         for н in номера:
-            сделать(лицо, н)
+            for вид in ("одежда", "купальник"):
+                сделать(лицо, н, вид)
