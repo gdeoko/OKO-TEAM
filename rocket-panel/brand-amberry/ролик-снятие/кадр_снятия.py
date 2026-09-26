@@ -50,6 +50,18 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "The figure is visible from head to at least mid-thigh, standing "
     "naturally with a relaxed posture, facing the camera, both arms free "
     "and away from the body, nothing cropped awkwardly. "
+    # ПОЗА, ПРИЧЁСКА И КАДР ЗАДАНЫ ЗДЕСЬ, А НЕ В СЦЕНЕ. Два снимка
+    # стыкуются в одном ролике: если на первом пучок, а на втором
+    # распущенные волосы, склейка читается как подмена человека. Первая
+    # проба разошлась ровно так - и причёской, и планом.
+    "Her hair is worn down, straight and loose, falling in front of both "
+    "shoulders, parted in the middle, exactly the same way in every shot. "
+    "She stands upright and square to the camera, weight evenly on both "
+    "feet, shoulders level, arms hanging relaxed at her sides, hands open "
+    "and empty, holding nothing. "
+    "Framing is identical every time: she is centred in the vertical "
+    "frame, the top of her head a little below the upper edge, the crop "
+    "at mid-thigh, the camera at chest height and perfectly level. "
     "Photo-real skin with pores and fine texture, no plastic airbrushing, "
     "no beauty filter. Sharp focus on the subject, clean exposure, no "
     "motion blur on the face. Quality: 8K, ultra sharp, true-to-life color. "
@@ -97,8 +109,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
             "Standing on a sandy beach in the late golden hour, calm sea and "
             "a low warm sun behind her, soft rim light on her hair. Over her "
             "swimsuit she wears a light grey oversized hoodie reaching the "
-            "hips, sleeves pushed up, barefoot on the sand. Facing the "
-            "camera, relaxed stance, half-smile."),
+            "hips, sleeves pushed up, barefoot on the sand. Half-smile."),
     },
     {
         "имя": "зал-день",
@@ -107,8 +118,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
             "Standing in a bright modern gym, grey equipment softly out of "
             "focus behind her, even ceiling light. Over her sports swimsuit "
             "top she wears a loose black training t-shirt and matching "
-            "shorts, hair in a ponytail. Facing the camera, both hands "
-            "relaxed at her sides, confident direct gaze."),
+            "shorts. Confident direct gaze."),
     },
     {
         "имя": "сауна-вечер",
@@ -117,8 +127,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
             "Standing in the warm wooden anteroom of a spa, soft amber "
             "light, wooden benches and towels behind her, faint steam. Over "
             "her swimsuit she wears a soft white waffle robe, open and loose "
-            "but fully covering, belt tied. Facing the camera, calm and "
-            "unhurried."),
+            "but fully covering, belt tied. Calm and unhurried."),
     },
 ]
 
