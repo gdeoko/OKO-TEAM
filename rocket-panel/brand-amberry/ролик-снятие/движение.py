@@ -115,6 +115,24 @@ import requests
     "continuous motion."
 )
 
+# ОДНО ДЕЙСТВИЕ С КАДРА В КУПАЛЬНИКЕ. Последнее, что можно проверить
+# бесплатно: три пробы подряд показали, что сборка не ведёт сюжет из
+# двух и более шагов, но одно действие она делает. Здесь ей оставлено
+# ровно одно - снять купальник.
+ШАГИ["снять"] = (
+    "A single continuous take, one locked-off camera, one place, one "
+    "woman, no cut. One thing happens, exactly once, and it is finished "
+    "by the end: she reaches behind her neck, unties the strings of her "
+    "swimsuit top, slips it off her shoulders and lets it drop out of the "
+    "frame, then slides her swimsuit bottoms down and steps out of them, "
+    "and stands there undressed, facing the camera. "
+    "Nothing is ever put back on. She stays in exactly the same spot the "
+    "whole time, the camera never moves, the background never changes, "
+    "the light never changes. "
+    "Photorealistic, stable facial features, correct anatomy, smooth "
+    "continuous motion."
+)
+
 ШАГИ["результат"] = (
     "She stands in the same spot and keeps living in the frame: she "
     "breathes, her shoulders settle, her long hair stirs and falls, she "
@@ -173,7 +191,7 @@ def заказать(имя, шаг="одежда", секунд=5, зерно=2
     тело = {"mode": "video", "secs": секунд, "size": "vert", "seed": зерно,
             "images": [имя], "сэмплер": "euler_ancestral",
             "планировщик": "beta", "prompt": ШАГИ[шаг],
-            "neg": НЕГАТИВ_ВСЁ if шаг == "всё" else НЕГАТИВ}
+            "neg": НЕГАТИВ_ВСЁ if шаг in ("всё", "снять") else НЕГАТИВ}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
     задание = (о.json() or {}).get("job")
