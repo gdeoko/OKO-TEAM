@@ -39,7 +39,20 @@ def шрифт(путь):
         return base64.b64encode(ф.read()).decode()
 
 
-def html(лицо, входное, результат):
+# CTA-призывы: на каждый ролик свой, чередуем. Заголовок в интро при этом
+# ПОСТОЯННЫЙ («Раздень и оживи любое фото») - это лицо продукта, а CTA
+# внизу разный, чтобы лента не примелькалась.
+ПРИЗЫВЫ = [
+    "ССЫЛКА В КОММЕНТАРИЯХ",
+    "ПОДРОБНЕЕ — В ПРОФИЛЕ",
+    "ПРОДОЛЖЕНИЕ В TELEGRAM",
+    "ЖМИ ССЫЛКУ В ШАПКЕ",
+    "ПЕРВАЯ — БЕСПЛАТНО",
+    "ССЫЛКА ПОД ВИДЕО",
+]
+
+
+def html(лицо, входное, результат, cta):
     m900 = шрифт(os.path.join(ФОНТЫ, "montserrat-v31-cyrillic_latin-900.ttf"))
     m700 = шрифт(os.path.join(ФОНТЫ, "montserrat-v31-cyrillic_latin-700.ttf"))
     m500 = шрифт(os.path.join(ФОНТЫ, "montserrat-v31-cyrillic_latin-500.ttf")) \
@@ -50,7 +63,8 @@ def html(лицо, входное, результат):
     рез = b64(результат, "image/jpeg")
     return ШАБЛОН.replace("__M900__", m900).replace("__M700__", m700) \
         .replace("__M500__", m500).replace("__АВАТАР__", авт) \
-        .replace("__ЛОГО__", лого).replace("__ВХОД__", вх).replace("__РЕЗ__", рез)
+        .replace("__ЛОГО__", лого).replace("__ВХОД__", вх).replace("__РЕЗ__", рез) \
+        .replace("__CTA__", cta)
 
 
 ШАБЛОН = r"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
@@ -60,9 +74,37 @@ def html(лицо, входное, результат):
 @font-face{font-family:M5;src:url(data:font/ttf;base64,__M500__)}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--pink:#FF0A8C;--vio:#7A2BFF;--bg:#0b1016;--bot:#17212b;--usr:#2b1830}
-html,body{width:1080px;height:1920px;overflow:hidden;background:#000;font-family:M5,Arial,sans-serif}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0a0710;font-family:M5,Arial,sans-serif}
+/* красивый фон под всё: тёмный неоновый градиент, а не чёрный */
+#bg{position:absolute;inset:0;background:
+  radial-gradient(70% 45% at 50% 22%,#2a0f2a 0%,#160a1e 45%,#0a0710 100%);overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:float 9s ease-in-out infinite}
+.orb.p{width:560px;height:560px;background:var(--pink);top:-140px;left:-120px}
+.orb.v{width:520px;height:520px;background:var(--vio);bottom:-160px;right:-140px;animation-delay:-4s}
+.orb.p2{width:360px;height:360px;background:#ff2aa0;bottom:20%;left:-120px;opacity:.35;animation-delay:-2s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(70px,50px) scale(1.08)}}
 #tg{position:absolute;inset:0;background:
-  radial-gradient(120% 60% at 50% 0%,#141d27 0%,var(--bg) 60%);display:flex;flex-direction:column}
+  radial-gradient(120% 60% at 50% 0%,rgba(20,29,39,.96) 0%,rgba(11,16,22,.97) 60%);
+  display:flex;flex-direction:column;opacity:0;transition:opacity .5s ease}
+#tg.on{opacity:1}
+/* ИНТРО */
+#intro{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:56px;opacity:0;transition:opacity .45s ease}
+#intro.on{opacity:1}
+#intro.gone{opacity:0;pointer-events:none}
+.tgico{width:210px;height:210px;filter:drop-shadow(0 0 40px #2aabee88);
+  transform:scale(.4);opacity:0;transition:transform .6s cubic-bezier(.2,1.4,.4,1),opacity .5s}
+#intro.on .tgico{transform:scale(1);opacity:1}
+.headline{font-family:M9;font-size:104px;line-height:1.02;text-align:center;color:#fff;
+  text-transform:uppercase;padding:0 70px;letter-spacing:1px;
+  opacity:0;transform:translateY(40px);transition:opacity .6s ease .25s,transform .6s cubic-bezier(.2,1.1,.3,1) .25s}
+#intro.on .headline{opacity:1;transform:none}
+.headline .hi{color:var(--pink);text-shadow:0 0 34px var(--pink)}
+.introbrand{display:flex;align-items:center;gap:18px;opacity:0;transition:opacity .5s ease .5s}
+#intro.on .introbrand{opacity:1}
+.introbrand img{width:70px;height:70px}
+.introbrand span{font-family:M9;font-size:52px;letter-spacing:4px;
+  background:linear-gradient(90deg,var(--pink),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
 /* шапка */
 #hdr{height:132px;background:#17212b;display:flex;align-items:center;padding:0 34px;gap:24px;
   box-shadow:0 1px 0 #0006;z-index:5}
@@ -131,20 +173,36 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#000;font-family
 .cap .t{font-family:M9;font-size:42px;color:#fff;text-shadow:0 0 20px var(--pink)}
 .cap .h{font-family:M7;font-size:30px;color:var(--vio);margin-top:8px;
   text-shadow:0 0 14px var(--vio)}
-/* аутро */
-#outro{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 40%,#1a0f18,#07060a 70%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;opacity:0;
-  transition:opacity .8s ease;z-index:20}
+/* аутро - красивее, быстрее, короче. Свой непрозрачный неоновый фон,
+   иначе чат просвечивает сквозь него. */
+#outro{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:26px;opacity:0;transition:opacity .35s ease;overflow:hidden;
+  background:radial-gradient(75% 55% at 50% 38%,#2c1030 0%,#170a20 46%,#0a0710 100%)}
+#outro .oorb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+#outro .oorb.p{width:520px;height:520px;background:var(--pink);top:-120px;right:-120px}
+#outro .oorb.v{width:480px;height:480px;background:var(--vio);bottom:-140px;left:-120px}
+#outro>*{position:relative;z-index:1}
 #outro.on{opacity:1}
-#outro img{width:300px;height:300px;filter:drop-shadow(0 0 50px #ff0a8caa)}
-#outro .wm{font-family:M9;font-size:120px;letter-spacing:6px;
-  background:linear-gradient(90deg,var(--pink),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
+#outro .lg{width:260px;height:260px;filter:drop-shadow(0 0 50px #ff0a8caa);
+  transform:scale(.6);opacity:0;transition:transform .5s cubic-bezier(.2,1.4,.4,1),opacity .4s}
+#outro.on .lg{transform:scale(1);opacity:1}
+#outro .wm{font-family:M9;font-size:118px;letter-spacing:6px;
+  background:linear-gradient(90deg,var(--pink),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:0;transform:translateY(24px);transition:opacity .4s ease .12s,transform .4s ease .12s}
+#outro.on .wm{opacity:1;transform:none}
+#outro .tgline{display:flex;align-items:center;gap:16px;opacity:0;transition:opacity .4s ease .22s}
+#outro.on .tgline{opacity:1}
+#outro .tgline svg{width:56px;height:56px}
 #outro .nk{font-family:M7;font-size:46px;color:#fff}
-#outro .cta{font-family:M9;font-size:52px;color:var(--pink);margin-top:10px;text-shadow:0 0 24px var(--pink)}
+#outro .cta{font-family:M9;font-size:56px;color:var(--pink);margin-top:8px;text-shadow:0 0 26px var(--pink);
+  padding:20px 44px;border:4px solid var(--pink);border-radius:22px;box-shadow:0 0 34px #ff0a8c55;
+  opacity:0;transform:scale(.9);transition:opacity .4s ease .3s,transform .4s cubic-bezier(.2,1.4,.4,1) .3s}
+#outro.on .cta{opacity:1;transform:none}
 .inp{height:120px;background:#17212b;display:flex;align-items:center;padding:0 40px;gap:24px}
 .inp .f{flex:1;color:#5d6b79;font-size:34px}
 .inp .clip,.inp .mic{color:#6c7c8c;font-size:44px;font-family:M7}
 </style></head><body>
+<div id="bg"><div class="orb p"></div><div class="orb v"></div><div class="orb p2"></div></div>
 <div id="tg">
   <div id="hdr">
     <div class="back">‹</div>
@@ -154,11 +212,17 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#000;font-family
   <div id="chat"></div>
   <div class="inp"><div class="clip">📎</div><div class="f">Сообщение…</div><div class="mic">🎙</div></div>
 </div>
+<div id="intro">
+  <svg class="tgico" viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"/></svg>
+  <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span><br>ЛЮБОЕ ФОТО</div>
+  <div class="introbrand"><img src="__ЛОГО__"><span>AMBERRY</span></div>
+</div>
 <div id="outro">
-  <img src="__ЛОГО__">
+  <div class="oorb p"></div><div class="oorb v"></div>
+  <img class="lg" src="__ЛОГО__">
   <div class="wm">AMBERRY</div>
-  <div class="nk">@theamberrybot</div>
-  <div class="cta">ПЕРВАЯ — БЕСПЛАТНО</div>
+  <div class="tgline"><svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"/></svg><span class="nk">@theamberrybot</span></div>
+  <div class="cta">__CTA__</div>
 </div>
 <script>
 const chat=document.getElementById('chat');
@@ -169,7 +233,13 @@ function row(cls,html){const d=document.createElement('div');d.className='row '+
   setTimeout(scroll,500);return d;}
 const AV='__АВАТАР__';
 async function main(){
-  await sleep(700);
+  // ИНТРО: иконка Telegram + постоянный заголовок, на пару секунд
+  await sleep(300);
+  document.getElementById('intro').classList.add('on');
+  await sleep(2100);
+  document.getElementById('intro').classList.add('gone');
+  document.getElementById('tg').classList.add('on');
+  await sleep(500);
   // приветствие + меню
   const hello=row('bot',`<img class="av" src="${AV}"><div class="bub">
     <div class="slogan">AMBERRY раздевает и оживляет любое фото.</div>
@@ -212,9 +282,9 @@ async function main(){
     </div></div>`);
   scroll();await sleep(400);scroll();
   await sleep(4000);            // замазанный результат держим в кадре
-  // аутро
+  // аутро - быстро появляется, держим пару секунд
   document.getElementById('outro').classList.add('on');
-  await sleep(2600);
+  await sleep(2000);
   window.__done=true;
 }
 main();
@@ -260,7 +330,15 @@ def главное(арг):
     входное = арг[1]
     результат = арг[2]
     выход = арг[3] if len(арг) > 3 else os.path.join(ТУТ, "показ-%s.mp4" % лицо)
-    h = html(лицо, входное, результат)
+    # CTA: пятым аргументом можно задать явно; иначе чередуем по кругу,
+    # чтобы у каждого ролика был свой призыв. Индекс - от имени файла
+    # выхода, чтобы серия по одному лицу не повторяла призыв подряд.
+    if len(арг) > 4 and арг[4]:
+        cta = арг[4]
+    else:
+        cta = ПРИЗЫВЫ[sum(map(ord, os.path.basename(выход))) % len(ПРИЗЫВЫ)]
+    print("CTA:", cta, flush=True)
+    h = html(лицо, входное, результат, cta)
     hp = os.path.join(ТУТ, ".экран-%s.html" % лицо)
     with open(hp, "w", encoding="utf-8") as ф:
         ф.write(h)
