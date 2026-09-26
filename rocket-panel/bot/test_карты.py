@@ -65,6 +65,24 @@ class НесколькоКарт(unittest.TestCase):
         self.г.отпустить()
         self.assertEqual(self.г.выбрать("фото"), "https://a")
 
+    def test_жива_любая_карта_а_не_только_первая(self):
+        """Встала основная - бот обязан работать на запасной, а не
+        отказывать всем: деньги на Vast кончаются буднично."""
+        self.карты("https://a", "https://b")
+        self.мёртвые = {"https://a"}
+        self.assertTrue(self.г.alive())
+        self.мёртвые = {"https://a", "https://b"}
+        self.assertFalse(self.г.alive())
+
+    def test_взятая_карта_проверяется_своя(self):
+        """Задание уже на карте - спрашиваем именно её: соседняя живая
+        не делает живым мёртвое задание."""
+        self.карты("https://a", "https://b")
+        self.очереди = {"https://a": 0, "https://b": 9}
+        self.г.выбрать("фото")                      # уйдёт на a
+        self.мёртвые = {"https://a"}
+        self.assertFalse(self.г.alive())
+
     def test_осечка_освобождает_карту(self):
         self.карты("https://a", "https://b")
         import bot
