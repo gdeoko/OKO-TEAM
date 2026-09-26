@@ -10,6 +10,7 @@
 Разойдутся два описания одного и того же - разойдётся и вид.
 
     python3 карточка.py карточка out.png "ПРОДОЛЖЕНИЕ В БОТЕ" [неон]
+    python3 карточка.py ряд      каталог/ "ПРОДОЛЖЕНИЕ В БОТЕ" [неон]
     python3 карточка.py кнопка   out.png "Раздеть" [нажата]
 
 КАРТОЧКА ОДНА НА ОБА ФОРМАТА. Разница только в подложке: Формату 1 -
@@ -90,7 +91,28 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
 #фон .orb.v{width:480px;height:480px;background:var(--vio);bottom:-140px;left:-120px}
 """
 
-КАРТОЧКА = ОБЩЕЕ + ФОН + """
+ЖИВАЯ = """
+/* ПОЯВЛЕНИЕ. Карточка проявляется, а не выскакивает готовой: выскочившая
+   читается как баннер поверх чужого видео, проявленная - как часть
+   ролика. Для съёмки покадрово все анимации ПОСТАВЛЕНЫ НА ПАУЗУ, а нужный
+   момент выбирается отрицательной задержкой: браузер тогда рисует кадр
+   ровно этого мгновения. Это единственный способ снять анимацию с
+   прозрачностью - видео с альфой Chromium не пишет. */
+#блок>*{animation-duration:.85s;animation-fill-mode:both;
+  animation-timing-function:cubic-bezier(.2,1.25,.35,1);animation-play-state:paused}
+#блок .lg{animation-name:всплыть}
+#блок .headline{animation-name:поднять;animation-delay:.10s}
+#блок .free{animation-name:поднять;animation-delay:.20s}
+#блок .tgline{animation-name:поднять;animation-delay:.28s}
+#блок .cta{animation-name:вырасти;animation-delay:.36s}
+#рамка{animation:проявить .85s both;animation-play-state:paused}
+@keyframes всплыть{from{opacity:0;transform:scale(.55) translateY(26px)}to{opacity:1;transform:none}}
+@keyframes поднять{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
+@keyframes вырасти{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}
+@keyframes проявить{from{opacity:0}to{opacity:1}}
+"""
+
+КАРТОЧКА = ОБЩЕЕ + ФОН + ЖИВАЯ + """
 /* Неоновая рамка по краю. Без неё муть читается как брак кодека, а не
    как замысел: глаз должен увидеть, что так задумано. */
 #рамка{position:absolute;inset:12px;border:5px solid var(--pink);border-radius:32px;
@@ -134,8 +156,9 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
   text-shadow:0 0 7px rgba(255,255,255,.85),0 0 22px rgba(122,43,255,.8),0 0 48px rgba(122,43,255,.5)}
 .cta{font-family:M9;font-size:56px;white-space:nowrap;color:#fff;
   text-shadow:0 0 7px #fff,0 0 18px var(--pink),0 0 42px var(--pink),0 0 82px var(--pink);
-  padding:22px 48px;border:4px solid var(--pink);border-radius:22px;
-  box-shadow:0 0 38px #ff0a8c77,inset 0 0 26px #ff0a8c2e;background:transparent}
+  padding:22px 48px;border:5px solid var(--pink);border-radius:22px;
+  box-shadow:0 0 26px #ff0a8cbb,0 0 70px #ff0a8c66,inset 0 0 30px #ff0a8c33;
+  background:linear-gradient(135deg,rgba(255,10,140,.18),rgba(122,43,255,.12))}
 """
 
 # Кнопка бота, вынутая из чата. Стиль тот же, что в самом боте
@@ -150,14 +173,15 @@ body{display:flex;align-items:center;justify-content:center}
    стекло со свечением: держится светом, а не темнотой.
    backdrop-filter здесь бесполезен - кнопка снимается отдельным кадром,
    позади неё пусто, размывать нечего. */
-.btn{background:linear-gradient(135deg,rgba(255,10,140,.30),rgba(122,43,255,.20));
-  border:3px solid var(--pink);border-radius:26px;
+.btn{background:linear-gradient(135deg,rgba(255,10,140,.42),rgba(122,43,255,.30));
+  border:5px solid var(--pink);border-radius:26px;
   padding:32px 60px;color:#fff;font-family:M7;font-size:52px;white-space:nowrap;
-  text-shadow:0 0 7px rgba(255,255,255,.9),0 0 22px var(--pink),0 0 48px var(--pink);
-  box-shadow:0 0 54px #ff0a8c88,inset 0 0 30px #ff0a8c2e}
+  -webkit-text-stroke:2px rgba(255,10,140,.9);paint-order:stroke fill;
+  text-shadow:0 0 8px #fff,0 0 24px var(--pink),0 0 52px var(--pink);
+  box-shadow:0 0 30px #ff0a8ccc,0 0 78px #ff0a8c77,inset 0 0 40px #ff0a8c44}
 /* Нажатие - та же плитка, вспышка ярче. */
-.btn.нажата{box-shadow:0 0 96px #ff0a8ccc,inset 0 0 44px #ff0a8c55;
-  background:linear-gradient(135deg,rgba(255,10,140,.46),rgba(122,43,255,.30))}
+.btn.нажата{box-shadow:0 0 40px #ff0a8cff,0 0 120px #ff0a8ccc,inset 0 0 60px #ff0a8c77;
+  background:linear-gradient(135deg,rgba(255,10,140,.62),rgba(122,43,255,.42))}
 """
 
 ТГ_ЗНАК = ('<svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 '
@@ -193,6 +217,18 @@ def html_карточки(призыв, ш, в, фон=False):
   for(var р=56;р>26 && c.scrollWidth>есть;р-=2) c.style.fontSize=р+'px';
   document.documentElement.dataset.fit='1';
 }})();
+/* Момент анимации: снимаем кадр за кадром, сдвигая задержку назад.
+   Собственная задержка элемента сохраняется, иначе порядок появления
+   рассыплется и всё выскочит разом. */
+window.момент=function(t){{
+  document.querySelectorAll('#блок>*,#рамка').forEach(function(э){{
+    var своя=parseFloat(э.dataset.задержка||'');
+    if(isNaN(своя)){{ своя=parseFloat(getComputedStyle(э).animationDelay)||0;
+                      э.dataset.задержка=своя; }}
+    э.style.animationDelay=(своя-t)+'s';
+  }});
+  document.documentElement.dataset.кадр=String(t);
+}};
 </script></body></html>"""
 
 
@@ -223,12 +259,46 @@ async def снять(html, выход, ш, в):
         try:                                     # карточка подгоняет призыв сама
             await стр.wait_for_function("()=>document.documentElement.dataset.fit==='1'",
                                         timeout=3000)
+            await стр.evaluate("()=>window.момент && window.момент(3)")
         except Exception:
-            pass                                 # у кнопки подгонки нет
+            pass                                 # у кнопки ни подгонки, ни анимации
         await стр.screenshot(path=выход, omit_background=True)
         await бр.close()
     os.remove(врем)
     return выход
+
+
+async def _снять_ряд(html, каталог, кадров, секунд, ш, в):
+    from playwright.async_api import async_playwright
+    os.makedirs(каталог, exist_ok=True)
+    врем = os.path.join(каталог, "_кадр.html")
+    with open(врем, "w", encoding="utf-8") as ф:
+        ф.write(html)
+    пути = []
+    async with async_playwright() as p:
+        бр = await p.chromium.launch(headless=True, args=["--no-sandbox",
+             "--force-color-profile=srgb", "--disable-lcd-text"])
+        к = await бр.new_context(viewport={"width": ш, "height": в},
+                                 device_scale_factor=1)
+        стр = await к.new_page()
+        await стр.goto("file://" + os.path.abspath(врем), wait_until="load")
+        await стр.wait_for_timeout(300)
+        for i in range(кадров):
+            t = секунд * i / max(1, кадров - 1)
+            await стр.evaluate("t=>window.момент(t)", t)
+            п = os.path.join(каталог, "кадр%03d.png" % i)
+            await стр.screenshot(path=п, omit_background=True)
+            пути.append(п)
+        await бр.close()
+    os.remove(врем)
+    return пути
+
+
+def ряд(каталог, призыв=None, кадров=26, секунд=1.25, ш=1080, в=1920, фон=False):
+    """Последовательность кадров появления карточки. Ею ffmpeg и накрывает муть."""
+    призыв = призыв or ПРИЗЫВЫ[0]
+    return asyncio.run(_снять_ряд(html_карточки(призыв, ш, в, фон),
+                                  каталог, кадров, секунд, ш, в))
 
 
 def карточка(выход, призыв=None, ш=1080, в=1920, фон=False):
@@ -249,6 +319,10 @@ if __name__ == "__main__":
     if что == "карточка":
         print(карточка(выход, арг[2] if len(арг) > 2 else None,
                        фон=(len(арг) > 3 and арг[3] == "неон")))
+    elif что == "ряд":
+        пути = ряд(выход, арг[2] if len(арг) > 2 else None,
+                   фон=(len(арг) > 3 and арг[3] == "неон"))
+        print(len(пути), "кадров в", выход)
     elif что == "кнопка":
         print(кнопка(выход, арг[2], арг[3] if len(арг) > 3 else ""))
     else:

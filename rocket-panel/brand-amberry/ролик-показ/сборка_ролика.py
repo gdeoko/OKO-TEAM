@@ -159,11 +159,11 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#0a0710;font-fam
 /* результат + муть */
 .reswrap{position:relative;width:600px;height:750px;border-radius:26px;overflow:hidden}
 .reswrap img{width:100%;height:100%;object-fit:cover;filter:blur(0);transition:filter 1.1s ease}
-.reswrap.hide img{filter:blur(60px) saturate(1.1)}
-.px{position:absolute;inset:0;background-size:34px 34px;
-  background-image:linear-gradient(#0004 1px,transparent 1px),linear-gradient(90deg,#0004 1px,transparent 1px);
-  opacity:0;transition:opacity 1.1s ease}
-.reswrap.hide .px{opacity:1}
+/* Пиксельная сетка убрана решением владельца 26.09.2026: квадраты на
+   движении мерцают и кадр рябит в глазах. Осталось одно размытие, и раз
+   оно теперь одно - взято заметно крепче прежних 60px: слабое размытие
+   восстановимо и оставляет читаемый силуэт. */
+.reswrap.hide img{filter:blur(96px) saturate(1.1)}
 .frame{position:absolute;inset:14px;border:5px solid var(--pink);border-radius:22px;
   box-shadow:0 0 40px #ff0a8c66,inset 0 0 40px #ff0a8c33;opacity:0;transition:opacity .9s ease}
 .reswrap.hide .frame{opacity:1}
@@ -276,7 +276,7 @@ async function main(){
   // с самого появления, картинка рендерится уже под мутью.
   const r=row('bot',`<img class="av" src="${AV}"><div class="bub" style="padding:14px">
     <div class="reswrap hide" id="rw"><img src="__РЕЗ__">
-      <div class="px"></div><div class="frame"></div>
+      <div class="frame"></div>
       <div class="cap"><img class="lg" src="__ЛОГО__">
         <div class="t">ПРОДОЛЖЕНИЕ В БОТЕ</div><div class="h">@theamberrybot</div></div>
     </div></div>`);
