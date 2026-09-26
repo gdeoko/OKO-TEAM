@@ -44,10 +44,10 @@ def шрифт(путь):
 # внизу разный, чтобы лента не примелькалась.
 ПРИЗЫВЫ = [
     "ССЫЛКА В КОММЕНТАРИЯХ",
-    "ПОДРОБНЕЕ — В ПРОФИЛЕ",
+    "ССЫЛКА В ПРОФИЛЕ",
+    "ПОДРОБНЕЕ В БОТЕ",
     "ПРОДОЛЖЕНИЕ В TELEGRAM",
     "ЖМИ ССЫЛКУ В ШАПКЕ",
-    "ПЕРВАЯ — БЕСПЛАТНО",
     "ССЫЛКА ПОД ВИДЕО",
 ]
 
@@ -183,20 +183,28 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#0a0710;font-fam
 #outro .oorb.v{width:480px;height:480px;background:var(--vio);bottom:-140px;left:-120px}
 #outro>*{position:relative;z-index:1}
 #outro.on{opacity:1}
-#outro .lg{width:260px;height:260px;filter:drop-shadow(0 0 50px #ff0a8caa);
+#outro .lg{width:190px;height:190px;filter:drop-shadow(0 0 46px #ff0a8caa);
   transform:scale(.6);opacity:0;transition:transform .5s cubic-bezier(.2,1.4,.4,1),opacity .4s}
 #outro.on .lg{transform:scale(1);opacity:1}
-#outro .wm{font-family:M9;font-size:118px;letter-spacing:6px;
-  background:linear-gradient(90deg,var(--pink),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent;
+/* эталонный заголовок - всегда один и тот же */
+#outro .headline{font-family:M9;font-size:82px;line-height:1.04;text-align:center;color:#fff;
+  text-transform:uppercase;padding:0 60px;letter-spacing:1px;
   opacity:0;transform:translateY(24px);transition:opacity .4s ease .12s,transform .4s ease .12s}
-#outro.on .wm{opacity:1;transform:none}
-#outro .tgline{display:flex;align-items:center;gap:16px;opacity:0;transition:opacity .4s ease .22s}
+#outro.on .headline{opacity:1;transform:none}
+#outro .headline .hi{color:var(--pink);text-shadow:0 0 30px var(--pink)}
+/* первое фото бесплатно - всегда */
+#outro .free{font-family:M9;font-size:50px;color:#fff;letter-spacing:1px;
+  opacity:0;transition:opacity .4s ease .2s}
+#outro.on .free{opacity:1}
+#outro .free span{color:#9AFF00;text-shadow:0 0 24px #9aff0088}
+#outro .tgline{display:flex;align-items:center;gap:16px;opacity:0;transition:opacity .4s ease .26s}
 #outro.on .tgline{opacity:1}
-#outro .tgline svg{width:56px;height:56px}
-#outro .nk{font-family:M7;font-size:46px;color:#fff}
-#outro .cta{font-family:M9;font-size:56px;color:var(--pink);margin-top:8px;text-shadow:0 0 26px var(--pink);
-  padding:20px 44px;border:4px solid var(--pink);border-radius:22px;box-shadow:0 0 34px #ff0a8c55;
-  opacity:0;transform:scale(.9);transition:opacity .4s ease .3s,transform .4s cubic-bezier(.2,1.4,.4,1) .3s}
+#outro .tgline svg{width:54px;height:54px}
+#outro .nk{font-family:M7;font-size:44px;color:#cfe0ee}
+/* CTA - всегда разный */
+#outro .cta{font-family:M9;font-size:56px;color:var(--pink);margin-top:6px;text-shadow:0 0 26px var(--pink);
+  padding:22px 48px;border:4px solid var(--pink);border-radius:22px;box-shadow:0 0 34px #ff0a8c55;
+  opacity:0;transform:scale(.9);transition:opacity .4s ease .34s,transform .4s cubic-bezier(.2,1.4,.4,1) .34s}
 #outro.on .cta{opacity:1;transform:none}
 .inp{height:120px;background:#17212b;display:flex;align-items:center;padding:0 40px;gap:24px}
 .inp .f{flex:1;color:#5d6b79;font-size:34px}
@@ -212,15 +220,11 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#0a0710;font-fam
   <div id="chat"></div>
   <div class="inp"><div class="clip">📎</div><div class="f">Сообщение…</div><div class="mic">🎙</div></div>
 </div>
-<div id="intro">
-  <svg class="tgico" viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"/></svg>
-  <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span><br>ЛЮБОЕ ФОТО</div>
-  <div class="introbrand"><img src="__ЛОГО__"><span>AMBERRY</span></div>
-</div>
 <div id="outro">
   <div class="oorb p"></div><div class="oorb v"></div>
   <img class="lg" src="__ЛОГО__">
-  <div class="wm">AMBERRY</div>
+  <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО</div>
+  <div class="free">ПЕРВОЕ ФОТО <span>БЕСПЛАТНО</span></div>
   <div class="tgline"><svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"/></svg><span class="nk">@theamberrybot</span></div>
   <div class="cta">__CTA__</div>
 </div>
@@ -233,13 +237,9 @@ function row(cls,html){const d=document.createElement('div');d.className='row '+
   setTimeout(scroll,500);return d;}
 const AV='__АВАТАР__';
 async function main(){
-  // ИНТРО: иконка Telegram + постоянный заголовок, на пару секунд
-  await sleep(300);
-  document.getElementById('intro').classList.add('on');
-  await sleep(2100);
-  document.getElementById('intro').classList.add('gone');
+  // Без интро: сразу экран бота - первые секунды это хук, иначе закроют.
   document.getElementById('tg').classList.add('on');
-  await sleep(500);
+  await sleep(250);
   // приветствие + меню
   const hello=row('bot',`<img class="av" src="${AV}"><div class="bub">
     <div class="slogan">AMBERRY раздевает и оживляет любое фото.</div>
