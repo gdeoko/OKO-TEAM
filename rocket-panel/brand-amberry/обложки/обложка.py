@@ -105,22 +105,19 @@ def промпт(заголовок, подзаголовок, ник="@theamber
         "Subheadline directly beneath it, in a lighter weight at roughly "
         "forty percent of the headline size, one line: \"%s\". "
         "\n"
-        "Handle along the bottom strip, small, in a clean medium weight: "
-        "\"%s\". "
-        "\n"
+
         "The headline is pure white with a thin magenta %s outline traced "
         "around each glyph and a soft outer glow in the same colour, like a "
-        "neon tube. The subheadline is lime %s. The handle is white at "
-        "seventy percent opacity. All text is horizontally centred. Letters "
+        "neon tube. The subheadline is lime %s. All text is horizontally centred. Letters "
         "must never overlap the woman's face. Text must never run off the "
         "edge of the frame: if a line is too long, set it smaller rather than "
         "cropping it. "
         "\n\n"
-        "THE LOGO. The first supplied reference image is the brand mark. "
-        "Place it small in the upper left corner, at about nine percent of "
-        "the frame width, exactly as supplied: do not redraw it, do not "
-        "recolour it, do not stretch it, do not add a wordmark next to it, do "
-        "not invent a different logo. Leave clean space around it. "
+        "THE LOGO. Do NOT draw any logo, brand mark, icon, emblem or wordmark "
+        "anywhere in this image. The first supplied reference image is shown "
+        "to you only so you match the brand colours: the real mark is added "
+        "afterwards, as an exact file, into the clean bottom band. A mark "
+        "drawn by you would be a second, wrong logo in the same frame. "
         "\n\n"
         "MOOD AND CRAFT. The overall feeling is premium, nocturnal, a little "
         "dangerous, closer to a film poster than to an advertisement. "
@@ -133,7 +130,102 @@ def промпт(заголовок, подзаголовок, ник="@theamber
         "fingers, deformed hands, distorted face, nudity, underwear, "
         "see-through fabric, emoji, arrows, badges, price tags, QR codes. "
         "Quality: 8K, ultra sharp, commercial poster grade."
-        % (роз, вио, заголовок, подзаголовок, ник, роз, лайм))
+        % (роз, вио, заголовок, подзаголовок, роз, лайм))
+
+
+# ЗНАК И ПОДПИСЬ ВШИВАЮТСЯ КОДОМ, А НЕ РИСУЮТСЯ МОДЕЛЬЮ.
+#
+# Канон завода про текст внутри промпта остаётся: заголовок и подзаголовок
+# модель пишет сама. Но знак бренда - отдельное правило («лого неизменно
+# никогда»): нарисованный моделью, он похож, а не точен, и рядом с точным
+# файлом даёт два лого в одном кадре. Значок Telegram по той же причине:
+# узнаваемая форма, которую модель уверенно портит.
+#
+# Поэтому низ кадра генерится пустым, а сюда кодом ложатся настоящий знак
+# и строка с ником.
+ЗНАК = os.path.join(os.path.dirname(ТУТ), "amberry-icon-512-alpha.png")
+ТГ_ЗНАК = ('<svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 '
+           '256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 '
+           '191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 '
+           '6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 '
+           '89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 '
+           '20.8 2.7 17.2 19.5z"/></svg>')
+
+
+def подпись(выход, ник="@theamberrybot", ш=1080, в=460):
+    """Прозрачный PNG: знак, под ним значок Telegram и ник."""
+    import asyncio
+    import base64
+    from playwright.async_api import async_playwright
+
+    with open(ЗНАК, "rb") as ф:
+        лого = "data:image/png;base64," + base64.b64encode(ф.read()).decode()
+    шрифты = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts"
+    with open(os.path.join(шрифты, "montserrat-v31-cyrillic_latin-700.ttf"), "rb") as ф:
+        м7 = base64.b64encode(ф.read()).decode()
+
+    разметка = (
+        "<!doctype html><html><head><meta charset=\"utf-8\"><style>"
+        "@font-face{font-family:M7;src:url(data:font/ttf;base64,%s)}"
+        "*{margin:0;padding:0;box-sizing:border-box}"
+        "html,body{width:%dpx;height:%dpx;"
+        # Мягкий градиент снизу, а не плашка: правило «тёмного нет нигде»
+        # про наложения в РОЛИКЕ, где кадр движется. На обложке фигура
+        # часто доходит до низа, и без градиента знак ложится прямо на
+        # тело - так и вышло в первой пробе.
+        "background:linear-gradient(to bottom,rgba(0,0,0,0) 0%%,"
+        "rgba(0,0,0,.35) 26%%,rgba(0,0,0,.78) 58%%,rgba(0,0,0,.94) 100%%);"
+        "display:flex;flex-direction:column;align-items:center;"
+        "justify-content:flex-end;gap:16px;padding-bottom:30px}"
+        ".знак{width:148px;height:148px;object-fit:contain;"
+        # Знак стоит поверх кадра, и кадр под ним бывает светлым: без
+        # плотной подложки из собственного свечения он теряется на коже.
+        "filter:drop-shadow(0 0 18px rgba(0,0,0,.9)) "
+        "drop-shadow(0 0 34px rgba(255,10,140,.85)) "
+        "drop-shadow(0 0 70px rgba(255,10,140,.45))}"
+        ".ник{display:flex;align-items:center;gap:14px;font-family:M7;"
+        "font-size:46px;color:#fff;letter-spacing:.5px;"
+        "text-shadow:0 0 10px rgba(0,0,0,.55),0 0 26px rgba(255,10,140,.5)}"
+        ".ник svg{width:52px;height:52px;"
+        "filter:drop-shadow(0 0 14px rgba(42,171,238,.85))}"
+        "</style></head><body>"
+        "<img class=\"знак\" src=\"%s\">"
+        "<div class=\"ник\">%s<span>%s</span></div>"
+        "</body></html>" % (м7, ш, в, лого, ТГ_ЗНАК, ник))
+
+    async def снять():
+        врем = выход + ".html"
+        with open(врем, "w", encoding="utf-8") as ф:
+            ф.write(разметка)
+        async with async_playwright() as p:
+            бр = await p.chromium.launch(headless=True, args=["--no-sandbox"])
+            к = await бр.new_context(viewport={"width": ш, "height": в},
+                                     device_scale_factor=1)
+            стр = await к.new_page()
+            await стр.goto("file://" + os.path.abspath(врем), wait_until="load")
+            await стр.wait_for_timeout(260)
+            await стр.screenshot(path=выход, omit_background=True)
+            await бр.close()
+        os.remove(врем)
+        return выход
+
+    return asyncio.run(снять())
+
+
+def вшить_подпись(картинка, ник="@theamberrybot"):
+    """Кладёт знак и ник в чистую нижнюю полосу готовой обложки."""
+    п = подпись(картинка + ".подпись.png", ник)
+    врем = картинка + ".свод.png"
+    ffmpeg = "/usr/local/bin/ffmpeg" if os.path.exists("/usr/local/bin/ffmpeg") else "ffmpeg"
+    subprocess.run([ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+                    "-i", картинка, "-i", п,
+                    "-filter_complex",
+                    "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,"
+                    "crop=1080:1920[ф];[ф][1:v]overlay=0:H-h",
+                    врем], check=True)
+    os.replace(врем, картинка)
+    os.remove(п)
+    return картинка
 
 
 def зов(аргументы, таймаут=90):
@@ -173,7 +265,9 @@ def сделать(формат, заголовок, подзаголовок, �
         if ссылки:
             subprocess.run(["curl", "-s", "-m", "180", "-o", выход, ссылки[0]],
                            check=True, timeout=200)
-            print("готово:", выход, os.path.getsize(выход), "байт", flush=True)
+            вшить_подпись(выход, ник)
+            print("готово:", выход, os.path.getsize(выход), "байт",
+                  "(знак и ник вшиты)", flush=True)
             return выход
         if сост in ("failed", "error"):
             raise RuntimeError("отказ: " + str(д)[:300])
