@@ -61,17 +61,29 @@ def лист(кадры, кол=5, ш=320, в=180):
     return л
 
 
-def спросить(картинка, ключ=None, модель=None):
+def спросить(картинка, ключ=None, модель=None, попыток=4):
+    """Вопрос модели. Возвращает (разбор, причина_отказа).
+
+    БЕСПЛАТНЫЙ КЛЮЧ ДАЁТ 20 ЗАПРОСОВ В МИНУТУ, дальше 429. Первый заход
+    по тридцати лентам дал двадцать два «отказа» подряд - и это была не
+    защита модели, а упёршаяся квота: в ответе лежал RESOURCE_EXHAUSTED и
+    точное «retry in 48s». Поэтому ошибки теперь РАЗБИРАЮТСЯ, а не
+    сваливаются в пустоту: 429 - подождать столько, сколько просят, и
+    повторить; блокировка по содержанию - записать её причину; всё
+    остальное - записать текст.
+
+    Платный ключ тут не годится: тратить деньги без слова владельца
+    нельзя, а бесплатного хватает, если идти в его темпе.
+    """
+    import re
+    import time
     база = os.environ.get("GEMINI_BASE_URL", "").rstrip("/")
     ключ = ключ or os.environ.get("GEMINI_KEY_FREE") or os.environ.get("GEMINI_API_KEY")
     модель = модель or os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
     буфер = io.BytesIO()
     картинка.save(буфер, format="JPEG", quality=82)
-    # ЗАЩИТА МОДЕЛИ РЕЖЕТ ИМЕННО ТО, ЧТО НАМ НУЖНО. Лист с бельём она
-    # закрывает целиком и отвечает пустотой - так ушли и бурлеск, и
-    # нудистские ленты. Задача у нас разметочная: назвать, что в кадре, а
-    # не создать его. Поэтому пороги ставим на «только явное», и нагота
-    # по-прежнему отсекается - но уже нашим правилом, а не молчанием.
+    # Задача разметочная: назвать, что в кадре. Пороги на «только явное»,
+    # а наготу отсекает наше правило, а не молчание модели.
     пороги = [{"category": к, "threshold": "BLOCK_ONLY_HIGH"} for к in (
         "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT",
         "HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH")]
@@ -81,23 +93,46 @@ def спросить(картинка, ключ=None, модель=None):
                          "data": base64.b64encode(буфер.getvalue()).decode()}},
     ]}]}
     url = "%s/v1beta/models/%s:generateContent?key=%s" % (база, модель, ключ)
-    п = subprocess.run(["curl", "-s", "-m", "180", url,
-                        "-H", "Content-Type: application/json",
-                        "--data-binary", "@-"],
-                       input=json.dumps(тело), capture_output=True, text=True)
-    try:
-        о = json.loads(п.stdout)
-        т = о["candidates"][0]["content"]["parts"][-1]["text"]
-    except Exception:
-        return None
-    т = т.strip().strip("`")
-    if т.startswith("json"):
-        т = т[4:]
-    н, к = т.find("{"), т.rfind("}")
-    try:
-        return json.loads(т[н:к+1])
-    except Exception:
-        return None
+
+    последняя = "нет ответа"
+    for заход in range(попыток):
+        п = subprocess.run(["curl", "-s", "-m", "180", url,
+                            "-H", "Content-Type: application/json",
+                            "--data-binary", "@-"],
+                           input=json.dumps(тело), capture_output=True, text=True)
+        try:
+            о = json.loads(п.stdout)
+        except Exception:
+            последняя = "ответ не разобрать"
+            time.sleep(5)
+            continue
+        if "error" in о:
+            код = о["error"].get("code")
+            текст = о["error"].get("message", "")
+            if код == 429:
+                м = re.search(r"retry in ([\d.]+)s", текст)
+                пауза = min(90.0, float(м.group(1)) + 2 if м else 30.0)
+                последняя = "квота, ждём %.0f с" % пауза
+                time.sleep(пауза)
+                continue
+            return None, "ошибка %s: %s" % (код, текст[:120])
+        причина = (о.get("promptFeedback") or {}).get("blockReason")
+        if причина:
+            return None, "защита: %s" % причина
+        try:
+            т = о["candidates"][0]["content"]["parts"][-1]["text"]
+        except Exception:
+            стоп = (о.get("candidates") or [{}])[0].get("finishReason")
+            return None, "пустой ответ (%s)" % (стоп or "без причины")
+        т = т.strip().strip("`")
+        if т.startswith("json"):
+            т = т[4:]
+        н, к = т.find("{"), т.rfind("}")
+        try:
+            return json.loads(т[н:к+1]), None
+        except Exception:
+            return None, "JSON не разобрать"
+    return None, последняя
 
 
 def годные(ответ):
@@ -120,7 +155,7 @@ def оценить(ид, сколько=25):
         return None
     шаг = max(1, len(ф) // сколько)
     кадры = [(os.path.join(папка, x), int(x.split(".")[0])) for x in ф[::шаг]][:сколько]
-    ответ = спросить(лист(кадры))
+    ответ, причина = спросить(лист(кадры))
     номера = годные(ответ)
     os.makedirs(ОТВЕТЫ, exist_ok=True)
     # ПУСТОЙ ОТВЕТ - НЕ НОЛЬ ГОДНЫХ. Модель либо не ответила, либо лист
@@ -128,7 +163,7 @@ def оценить(ид, сколько=25):
     # разные вещи: ноль означает «посмотрели и не нашли», отказ означает
     # «не смотрели». Путать их нельзя: во втором случае лента не оценена.
     итог = {"ид": ид, "кадров": len(кадры), "годных": len(номера),
-            "отказ": ответ is None,
+            "отказ": ответ is None, "причина": причина,
             "секунды": [кадры[n-1][1] for n in номера if n <= len(кадры)],
             "ответ": ответ}
     with open(os.path.join(ОТВЕТЫ, ид + ".json"), "w", encoding="utf-8") as о:
@@ -142,7 +177,7 @@ if __name__ == "__main__":
         if not и:
             print("%-42s нет миниатюр" % ид[:42], flush=True)
         elif и["отказ"]:
-            print("%-42s ОТКАЗ модели (лист срезан защитой)" % ид[:42], flush=True)
+            print("%-42s ОТКАЗ: %s" % (ид[:42], и.get("причина")), flush=True)
         else:
             print("%-42s годных %d из %d" % (ид[:42], и["годных"], и["кадров"]),
                   flush=True)
