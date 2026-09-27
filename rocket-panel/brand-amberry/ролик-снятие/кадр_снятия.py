@@ -23,8 +23,10 @@
 ролике. Третий кадр, результат, APIMODELS не сделает: его делает наша
 карта тем же путём, которым бот обслуживает клиента.
 """
+import hashlib
 import json
 import os
+import random
 import subprocess
 import sys
 import time
@@ -56,9 +58,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     # проба разошлась ровно так - и причёской, и планом.
     "Her hair is worn down, straight and loose, falling in front of both "
     "shoulders, parted in the middle, exactly the same way in every shot. "
-    "She stands upright and square to the camera, weight evenly on both "
-    "feet, shoulders level, arms hanging relaxed at her sides, hands open "
-    "and empty, holding nothing. "
+    "__ПОЗА__ "
     # КАМЕРА РОВНО, А НЕ СВЕРХУ. «Камера на высоте груди» модель читала
     # как пожелание и всё равно ставила её выше головы, глядя вниз: кадр
     # получался съёмкой сверху, плечи широкие, ноги короткие. Помогает
@@ -80,6 +80,54 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "fabric, nothing revealing."
 )
 
+# ПОЗА И ПЛАН МЕНЯЮТСЯ ОТ РОЛИКА К РОЛИКУ. Требование владельца
+# 27.09.2026: «не всегда стояла, не всегда в полный рост - может сидит,
+# может лежит, может прислонившись, может в полкадра».
+#
+# Лента из пяти лиц по три ролика в день - это пятнадцать роликов в
+# сутки. Пятнадцать одинаковых стоек в одинаковой крупности читаются как
+# один и тот же ролик, перекрашенный пятнадцать раз, и зритель пролистнёт
+# всю пачку по первому кадру.
+#
+# ЧТО МОЖНО, А ЧТО НЕТ. Поза обязана оставить снимаемую вещь достижимой
+# для рук и видимой в кадре:
+#   * подформат «низ» - только стоя: сидя и лёжа вещь некуда вести по
+#     ногам, а переступить через неё нельзя;
+#   * подформат «верх» - можно всё, вещь уходит вверх.
+# Поэтому у каждой позы записано, какому роду она годится.
+ПОЗЫ = {
+    "прямо": ("She stands upright and square to the camera, weight evenly "
+              "on both feet, shoulders level, arms hanging relaxed at her "
+              "sides, hands open and empty, holding nothing.",
+              ("верх", "низ")),
+    "бедро": ("She stands facing the camera with her weight on one leg and "
+              "the other knee slightly bent, one hand resting on her hip, "
+              "the other arm relaxed at her side, shoulders level.",
+              ("верх", "низ")),
+    "вполоборота": ("She stands turned about thirty degrees away from the "
+                    "camera, looking back into the lens over her shoulder, "
+                    "her weight on the back leg, both arms free and away "
+                    "from her body.",
+                    ("верх", "низ")),
+    "опирается": ("She stands leaning her shoulder and upper back against "
+                  "the wall beside her, one foot crossed over the other, "
+                  "both arms free and away from her body, looking into the "
+                  "camera.",
+                  ("верх",)),
+    "сидит": ("She is sitting on the edge in front of her, upright and "
+              "facing the camera, her legs together and hanging down, both "
+              "hands resting on the edge beside her hips, shoulders level.",
+              ("верх",)),
+    "лежит": ("She is lying back on the lounger, propped up on her elbows, "
+              "her upper body raised towards the camera, her legs straight "
+              "and together, looking into the lens.",
+              ("верх",)),
+}
+
+# ПЛАН тоже не один на все ролики. У «низа» он всегда широкий - вещи надо
+# куда ехать; у «верха» может быть и поясной, там движение идёт вверх.
+ПЛАНЫ_РОДА = {"верх": ("бедро", "пояс", "бедро"), "низ": ("голень",)}
+
 # КРУПНОСТЬ У ДВУХ ПОДФОРМАТОВ РАЗНАЯ, и это не украшение.
 #
 # Верхнюю вещь снимают через голову - движение идёт вверх, и кадра по
@@ -89,18 +137,23 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 # Поэтому у подформата «низ» кадр шире: видно ноги до середины голени,
 # и вещи есть куда уехать на глазах у зрителя.
 ПЛАН = {
-    "верх": "The figure is visible from head to at least mid-thigh,",
-    "низ": "The figure is visible from head to mid-calf, both legs well "
-           "inside the frame down to the lower shins,",
+    "бедро": "The figure is visible from head to at least mid-thigh,",
+    "голень": "The figure is visible from head to mid-calf, both legs well "
+              "inside the frame down to the lower shins,",
+    "пояс": "The figure is visible from head to just below the hips, a "
+            "waist-up shot,",
 }
 КРОП = {
-    "верх": "Framing is identical every time: she is centred in the "
-            "vertical frame, the top of her head a little below the upper "
-            "edge, the crop at mid-thigh.",
-    "низ": "Framing is identical every time: she is centred in the "
-           "vertical frame, the top of her head a little below the upper "
-           "edge, the crop at mid-calf, with her knees and shins clearly "
-           "in the picture.",
+    "бедро": "Framing is identical in both shots of this pair: she is "
+             "centred in the vertical frame, the top of her head a little "
+             "below the upper edge, the crop at mid-thigh.",
+    "голень": "Framing is identical in both shots of this pair: she is "
+              "centred in the vertical frame, the top of her head a little "
+              "below the upper edge, the crop at mid-calf, with her knees "
+              "and shins clearly in the picture.",
+    "пояс": "Framing is identical in both shots of this pair: she is "
+            "centred in the vertical frame, the top of her head a little "
+            "below the upper edge, the crop just below the hips.",
 }
 
 # Одежда и купальник описываются ОТДЕЛЬНО, а сцена - общая. Так два
@@ -206,6 +259,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
 СЦЕНЫ = [
     {
         "имя": "бассейн-день",
+        "опора": True,
         "фигура": "toned athletic build, defined waist, long legs",
         "сцена": (
             "Standing at the edge of an outdoor hotel swimming pool on a "
@@ -225,6 +279,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     },
     {
         "имя": "зал-день",
+        "опора": True,
         "фигура": "fit hourglass figure with a defined waist",
         "сцена": (
             "Standing in a bright modern gym, grey equipment softly out of "
@@ -259,6 +314,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     },
     {
         "имя": "сауна-вечер",
+        "опора": True,
         "фигура": "average natural build, realistic everyday proportions",
         "сцена": (
             "Standing in the warm wooden anteroom of a spa, soft amber "
@@ -321,12 +377,24 @@ def сделать(лицо, номер, вид="одежда", мягче=False
                  + вещь + ". Her pose, the place, the light and the framing "
                  "stay exactly the same as with the outer garment on.")
     род = с.get("род", "верх")
-    общее = ОБЩЕЕ.replace("__ПЛАН__", ПЛАН[род]).replace("__КРОП__", КРОП[род])
+    # Поза и план - СВОИ у каждой сцены и каждого лица, но постоянные:
+    # семя из имени сцены и лица, чтобы пара кадров одной сцены сошлась,
+    # а соседние ролики разошлись.
+    сл = random.Random(hashlib.sha1(
+        ("поза|%s|%s" % (лицо, с["имя"])).encode()).hexdigest())
+    годные = [к for к, (_, роды) in ПОЗЫ.items()
+              if род in роды and (к not in ("опирается", "сидит", "лежит")
+                                  or с.get("опора"))]
+    поза = с.get("поза") or сл.choice(годные)
+    план = с.get("план") or сл.choice(ПЛАНЫ_РОДА[род])
+    общее = (ОБЩЕЕ.replace("__ПЛАН__", ПЛАН[план])
+             .replace("__КРОП__", КРОП[план])
+             .replace("__ПОЗА__", ПОЗЫ[поза][0]))
     промпт = " ".join([общее, ПЕРСОНАЖИ[лицо],
                        "Her body: " + с["фигура"] + ".", с["сцена"],
                        одета if вид == "одежда" else купальник])
-    print("%s сцена %d (%s), %s: промпт %d знаков"
-          % (лицо, номер, с["имя"], вид, len(промпт)), flush=True)
+    print("%s сцена %d (%s), %s: поза %s, план %s, промпт %d знаков"
+          % (лицо, номер, с["имя"], вид, поза, план, len(промпт)), flush=True)
     тело = json.dumps({"model": МОДЕЛЬ, "prompt": промпт,
                        "aspect_ratio": "9:16", "resolution": "2K"})
     д = зов(["-X", "POST", БАЗА + "/images/generations", "-d", тело])
