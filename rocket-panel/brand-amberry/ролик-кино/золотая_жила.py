@@ -44,9 +44,19 @@ from concurrent.futures import ThreadPoolExecutor
 ПОРОГ_ЦВЕТА = 14
 
 
-def кандидаты(от=1955, до=1985, сколько=300):
-    """Полнометражные фильмы в общественном достоянии за годы."""
-    q = ('collection:(feature_films) AND licenseurl:(*publicdomain*) '
+def кандидаты(от=1955, до=1985, сколько=300, широко=True):
+    """Фильмы в общественном достоянии за годы.
+
+    ШИРОКО - это не тот же список побольше, а другой порядок величины.
+    Коллекция `feature_films` держит 960 лент нужных лет; общий поиск по
+    метке общественного достояния с готовой копией h.264 - больше семи
+    тысяч. Разница в том, что половина лент лежит в `_unsorted` и в
+    сборные коллекции не попала: искать только по `feature_films` -
+    значит не увидеть их вовсе.
+    """
+    q = ('licenseurl:(*publicdomain*) AND mediatype:(movies) '
+         'AND format:(h.264) AND date:[%d TO %d]' % (от, до)) if широко else (
+         'collection:(feature_films) AND licenseurl:(*publicdomain*) '
          'AND date:[%d TO %d]' % (от, до))
     п = urllib.parse.urlencode({"q": q, "rows": сколько, "output": "json"})
     п += ("&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year"
@@ -143,18 +153,24 @@ def главное(от=1955, до=1985, сколько=120):
     лен = кандидаты(от, до, сколько)
     print("лент в выборке: %d" % len(лен), flush=True)
     итог = []
-    for i, д in enumerate(лен, 1):
+    счёт = [0]
+
+    def один(д):
         о = оценить(д["identifier"])
+        счёт[0] += 1
+        if счёт[0] % 50 == 0:
+            print("  ... просмотрено %d из %d" % (счёт[0], len(лен)), flush=True)
         if not о:
-            continue
+            return None
         о["название"] = str(д.get("title", ""))[:40]
         о["год"] = д.get("year", "?")
-        итог.append(о)
-        if о["горячих"] >= 4:
-            print("  %-40s %-5s горячих %2d из %2d" % (
-                о["ид"][:40], о["год"], о["горячих"], о["кадров"]), flush=True)
-        if i % 20 == 0:
-            print("  ... просмотрено %d" % i, flush=True)
+        return о
+
+    # Время уходит на сеть, а не на счёт: восемь лент разом вместо одной.
+    with ThreadPoolExecutor(max_workers=8) as пул:
+        for о in пул.map(один, лен):
+            if о:
+                итог.append(о)
     итог.sort(key=lambda о: (-о["горячих"], -о["доля"]))
     print("\n== ЖИЛА: где кожи больше всего ==", flush=True)
     for о in итог[:25]:
