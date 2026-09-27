@@ -170,6 +170,27 @@ import requests
     "anatomy, real cloth physics, smooth continuous motion."
 )
 
+# ПРОБА РАДИ ОПОР, а не ради ролика. Чтобы вещь снималась по-настоящему,
+# сборке нужны опоры, расставленные по ПУТИ вещи. Взять их неоткуда,
+# кроме как из её же генерации: просим снять одну вещь с одной опоры,
+# смотрим, как она это делает, и вырезаем кадры пути.
+ШАГИ["низ-купальник"] = (
+    "A single continuous take, one locked-off camera, one place, one "
+    "woman, no cut. One thing happens, slowly and completely. "
+    "She rests both hands on her hips, then hooks her thumbs under the "
+    "sides of her swimsuit bottoms and draws them down: over her hips, "
+    "down her thighs, past her knees, down to her ankles, the fabric "
+    "keeping its shape as real cloth does. She steps out of them with one "
+    "foot and then the other and pushes them away out of the frame. "
+    "Her swim top stays exactly where it is on her chest the whole time "
+    "and is never touched. "
+    "Then she straightens up, rests her hands at her sides and stands "
+    "calmly, facing the camera. Nothing is ever put back on. She stays in "
+    "the same spot, the camera never moves, the background never changes, "
+    "the light never changes. Photorealistic, stable facial features, "
+    "correct anatomy, real cloth physics, smooth continuous motion."
+)
+
 ШАГИ["результат"] = (
     "She stands in the same spot and keeps living in the frame: she "
     "breathes, her shoulders settle, her long hair stirs and falls, she "
@@ -232,7 +253,8 @@ def заказать(имя, шаг="одежда", секунд=5, зерно=2
     тело = {"mode": "video", "secs": секунд, "size": "vert", "seed": зерно,
             "images": [имя], "сэмплер": "euler_ancestral",
             "планировщик": "beta", "prompt": ШАГИ[шаг],
-            "neg": (НЕГАТИВ_ВСЁ if шаг in ("всё", "снять", "низ-одежда")
+            "neg": (НЕГАТИВ_ВСЁ if шаг in ("всё", "снять", "низ-одежда",
+                                        "низ-купальник")
                   else НЕГАТИВ)}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
