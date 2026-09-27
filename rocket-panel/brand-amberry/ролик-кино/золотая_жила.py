@@ -54,8 +54,15 @@ def кандидаты(от=1955, до=1985, сколько=300, широко=Tr
     сборные коллекции не попала: искать только по `feature_films` -
     значит не увидеть их вовсе.
     """
-    q = ('licenseurl:(*publicdomain*) AND mediatype:(movies) '
-         'AND format:(h.264) AND date:[%d TO %d]' % (от, до)) if широко else (
+    # БЕЗ ОГРАНИЧЕНИЯ ПО КОЛЛЕКЦИИ СЕТЬ ТАЩИТ НЕ КИНО. Проба по всей метке
+    # общественного достояния принесла наверх слушания в Конгрессе, «Цену
+    # удачи», индийский телесериал, мультфильмы и аэробику Джейн Фонды:
+    # кожи там сколько угодно, фильмов нет. Поэтому широкий поиск - это
+    # feature_films ПЛЮС feature_films_unsorted, где лежит вторая половина
+    # каталога, а не «всё подряд».
+    q = ('collection:(feature_films OR feature_films_unsorted) '
+         'AND licenseurl:(*publicdomain*) '
+         'AND date:[%d TO %d]' % (от, до)) if широко else (
          'collection:(feature_films) AND licenseurl:(*publicdomain*) '
          'AND date:[%d TO %d]' % (от, до))
     п = urllib.parse.urlencode({"q": q, "rows": сколько, "output": "json"})
