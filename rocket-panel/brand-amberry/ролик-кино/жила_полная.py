@@ -19,6 +19,7 @@
 import json
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ТУТ)
@@ -47,15 +48,24 @@ def главное(от=1955, до=1985, сколько=960):
     print("лент в списке: %d" % len(ленты), flush=True)
     имена = {д["identifier"]: д for д in ленты}
 
-    # Сито 1: кожа
+    # Сито 1: кожа. ЛЕНТЫ ИДУТ ПАРАЛЛЕЛЬНО - время тут тратится не на
+    # счёт, а на ожидание сети: сорок миниатюр по 10 КБ с archive.org.
+    # По одной ленте за раз проход занимал час, шестью сразу - минуты.
     первое = []
-    for i, ид in enumerate(имена, 1):
+    сделано = [0]
+
+    def один(ид):
         о = Ж.оценить(ид)
-        if о and о["горячих"] >= МИН_ГОРЯЧИХ:
-            первое.append(о)
-        if i % 25 == 0:
-            print("  кожа: %d из %d, прошло %d" % (i, len(имена), len(первое)),
-                  flush=True)
+        сделано[0] += 1
+        if сделано[0] % 25 == 0:
+            print("  кожа: %d из %d, прошло %d" % (сделано[0], len(имена),
+                  len(первое)), flush=True)
+        return о
+
+    with ThreadPoolExecutor(max_workers=6) as пул:
+        for о in пул.map(один, list(имена)):
+            if о and о["горячих"] >= МИН_ГОРЯЧИХ:
+                первое.append(о)
     print("после маски кожи: %d лент" % len(первое), flush=True)
 
     # Сито 2: взгляд
