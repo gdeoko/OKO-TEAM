@@ -33,6 +33,9 @@ import time
     "1": "https://okoteam.top/gen-ref/ref-f1-12569.jpg",
     "2": "https://okoteam.top/gen-ref/ref-f2-12570.jpg",
     "3": "https://okoteam.top/gen-ref/ref-f3-12570.jpg",
+    # У формата 4 референса кадра нет: обложка делается по описанию, а
+    # кадр фильма чёрно-белый и для обложки в бренде не годится.
+    "4": "https://okoteam.top/gen-ref/ref-f2-12570.jpg",
 }
 
 # Бренд: чёрный плюс розовый неон и лайм, Bebas Neue и Montserrat.
