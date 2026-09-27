@@ -100,14 +100,20 @@ import requests
     "A single continuous take, one locked-off camera, one place, one "
     "woman, no cut. Two things happen, each exactly once, one after the "
     "other, and neither is repeated. "
-    "FIRST, right away: she grips the hem of her loose top with both "
-    "hands, pulls it straight up over her head, takes it off completely "
-    "and throws it out of the frame. The top is gone and never comes back "
-    "on. She is left in her swimsuit. "
+    # СНЯТИЕ ОПИСЫВАЕТСЯ РУКАМИ. Правка владельца 27.09.2026: вещь
+    # «просто исчезала». Один глагол модель исполняет одним скачком -
+    # пальцы, край ткани и путь вещи по телу названы по отдельности.
+    "FIRST, right away: she takes the hem of her loose top in both hands, "
+    "low at her waist, pulls it up along her body, over her head and off "
+    "her arms, holding the cloth in her hands the whole way, and throws "
+    "it out of the frame. The top is gone and never comes back on. She is "
+    "left in her swimsuit. "
     "IMMEDIATELY AFTER THAT, without pausing and without lowering her "
-    "arms: she reaches behind her neck, unties the strings of her swimsuit "
-    "top, and lets it slip down off her body and out of the frame. It is "
-    "gone and never comes back on. "
+    "arms: she reaches behind her neck with both hands, pulls the ends of "
+    "the strings of her swimsuit top until the knot comes undone, the "
+    "straps fall loose over her shoulders, and the top slides down off "
+    "her body into her hand; she drops it out of the frame. It is gone "
+    "and never comes back on. "
     "She stays in exactly the same spot the whole time, facing the camera, "
     "calm, her hair moving naturally with her arms. The camera never "
     "moves, the background never changes, the light never changes. "
@@ -122,15 +128,46 @@ import requests
 ШАГИ["снять"] = (
     "A single continuous take, one locked-off camera, one place, one "
     "woman, no cut. One thing happens, exactly once, and it is finished "
-    "by the end: she reaches behind her neck, unties the strings of her "
-    "swimsuit top, slips it off her shoulders and lets it drop out of the "
-    "frame, then slides her swimsuit bottoms down and steps out of them, "
-    "and stands there undressed, facing the camera. "
+    "by the end: she reaches behind her neck with both hands, pulls the "
+    "ends of the strings until the knot comes undone, the straps fall "
+    "loose over her shoulders and the swimsuit top slides down off her "
+    "body into her hand and out of the frame; then she hooks her thumbs "
+    "under the sides of her swimsuit bottoms, draws them down over her "
+    "hips, down her thighs past her knees, steps out of them with one "
+    "foot and then the other, and stands there undressed, facing the "
+    "camera. Cloth behaves like real cloth and stays in her hands while "
+    "she pulls it. "
     "Nothing is ever put back on. She stays in exactly the same spot the "
     "whole time, the camera never moves, the background never changes, "
     "the light never changes. "
     "Photorealistic, stable facial features, correct anatomy, smooth "
     "continuous motion."
+)
+
+# ПОДФОРМАТ «СНИМАЕТ НИЗ». Зеркало верхнего, но механика снятия описана
+# ПОДРОБНО, по шагам руками. Правка владельца 27.09.2026: в первом ролике
+# «лифчик просто исчезает» - модель телепортировала вещь вместо того,
+# чтобы снять её. Общие слова «takes it off» она и исполняет общо;
+# пальцы, пояс, движение по ногам и переступание читаются как настоящее
+# снятие, потому что названы по отдельности.
+ШАГИ["низ-одежда"] = (
+    "A single continuous take, one locked-off camera, one place, one "
+    "woman, no cut. One thing happens, slowly and completely, and it is "
+    "finished well before the end. "
+    "She looks into the camera, then takes the waistband of her skirt with "
+    "both hands, one hand at each hip. She pushes it down off her hips, "
+    "and the skirt slides down her thighs, past her knees and down to her "
+    "ankles, keeping its shape as real cloth does. She steps out of it "
+    "with one foot and then the other, picks it up and drops it away out "
+    "of the frame. "
+    "Now she is in her swimsuit: the swim top stays exactly where it is, "
+    "untouched, and her swimsuit bottoms stay exactly where they are. She "
+    "straightens up, rests her hands at her sides and looks into the "
+    "camera, standing calmly. "
+    "Nothing is ever put back on. She stays in the same spot the whole "
+    "time, the camera never moves, the background never changes, the "
+    "light never changes. Photorealistic, stable facial features, correct "
+    "anatomy, real cloth physics, smooth continuous motion."
 )
 
 ШАГИ["результат"] = (
@@ -160,6 +197,10 @@ import requests
     "repeating the same motion, looping, doing the same action twice, "
     "putting clothing back on, pulling the shirt back down, garment "
     "reappearing, hesitating, stalling, "
+    # Телепорт вещи - то же самое, что её возврат, только наоборот, и
+    # запрещать его надо так же прямо.
+    "clothing vanishing, garment disappearing instantly, clothes fading "
+    "out, teleporting clothing, cloth dissolving, "
     "cut, jump cut, scene change, changing background, changing location, "
     "changing outfit colour, second person, camera movement, zoom, pan, "
     "shake, walking away, turning away, extra limbs, extra fingers, "
@@ -191,7 +232,8 @@ def заказать(имя, шаг="одежда", секунд=5, зерно=2
     тело = {"mode": "video", "secs": секунд, "size": "vert", "seed": зерно,
             "images": [имя], "сэмплер": "euler_ancestral",
             "планировщик": "beta", "prompt": ШАГИ[шаг],
-            "neg": НЕГАТИВ_ВСЁ if шаг in ("всё", "снять") else НЕГАТИВ}
+            "neg": (НЕГАТИВ_ВСЁ if шаг in ("всё", "снять", "низ-одежда")
+                  else НЕГАТИВ)}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
     задание = (о.json() or {}).get("job")

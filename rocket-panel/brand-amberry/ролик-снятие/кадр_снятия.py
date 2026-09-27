@@ -47,7 +47,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "smartphone camera, 9:16 vertical framing, casual everyday photo, not a "
     "studio editorial. Natural composition, slight handheld feel, honest "
     "colors. "
-    "The figure is visible from head to at least mid-thigh, standing "
+    "__ПЛАН__ standing "
     "naturally with a relaxed posture, facing the camera, both arms free "
     "and away from the body, nothing cropped awkwardly. "
     # ПОЗА, ПРИЧЁСКА И КАДР ЗАДАНЫ ЗДЕСЬ, А НЕ В СЦЕНЕ. Два снимка
@@ -64,9 +64,7 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     # получался съёмкой сверху, плечи широкие, ноги короткие. Помогает
     # не высота, а НАКЛОН, названный прямо: ось объектива горизонтальна,
     # съёмка в упор, горизонт по центру кадра.
-    "Framing is identical every time: she is centred in the vertical "
-    "frame, the top of her head a little below the upper edge, the crop "
-    "at mid-thigh. "
+    "__КРОП__ "
     "The camera stands on a tripod at the height of her chest and the "
     "lens axis is strictly horizontal - a straight-on eye-level shot. "
     "The horizon line runs across the middle of the frame, behind her at "
@@ -81,6 +79,29 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "deformed hands, no nudity, no underwear, no lingerie, no see-through "
     "fabric, nothing revealing."
 )
+
+# КРУПНОСТЬ У ДВУХ ПОДФОРМАТОВ РАЗНАЯ, и это не украшение.
+#
+# Верхнюю вещь снимают через голову - движение идёт вверх, и кадра по
+# середину бедра хватает. Нижнюю снимают ВНИЗ, по ногам: в кадре,
+# обрезанном по бедро, вещь уходит за нижний край и снятие читается как
+# «просто исчезла» - ровно то, что владелец забраковал 27.09.2026.
+# Поэтому у подформата «низ» кадр шире: видно ноги до середины голени,
+# и вещи есть куда уехать на глазах у зрителя.
+ПЛАН = {
+    "верх": "The figure is visible from head to at least mid-thigh,",
+    "низ": "The figure is visible from head to mid-calf, both legs well "
+           "inside the frame down to the lower shins,",
+}
+КРОП = {
+    "верх": "Framing is identical every time: she is centred in the "
+            "vertical frame, the top of her head a little below the upper "
+            "edge, the crop at mid-thigh.",
+    "низ": "Framing is identical every time: she is centred in the "
+           "vertical frame, the top of her head a little below the upper "
+           "edge, the crop at mid-calf, with her knees and shins clearly "
+           "in the picture.",
+}
 
 # Одежда и купальник описываются ОТДЕЛЬНО, а сцена - общая. Так два
 # кадра остаются одним и тем же местом, светом и позой, и различаются
@@ -145,6 +166,33 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
     "as with the outer garment on."
 )
 
+# ВТОРОЙ ПОДФОРМАТ: СНИМАЕТ НИЗ. Решение владельца 27.09.2026.
+#
+# Всё устроено зеркально верхнему: сверху на ней купальный топ и он
+# остаётся на месте до самого конца, а снимается сначала нижняя вещь
+# (шорты, юбка, парео), под которой низ купальника, и уже потом сам низ
+# купальника. Формат тот же, лента другая - и одна героиня даёт вдвое
+# больше роликов из тех же сцен.
+#
+# ВЕРХ В КАДРЕ «ОДЕТА» УЖЕ ВИДЕН, и это не оплошность: девушка в
+# купальном топе и шортах - обычное пляжное фото, площадкам к нему не
+# придраться. Закрывать её сверху нечем и незачем: снимать-то будут низ.
+# ОДНА ВЕЩЬ НА БЁДРАХ, БЕЗ СЛОЁВ. Первая проба сказала «джинсовые шорты»
+# - модель надела И шорты, И юбку поверх них. Снимать пришлось бы две
+# вещи подряд, а сборка за одну генерацию уверенно доводит одно действие.
+ОДЕТ_НИЗ = (
+    "Over her swimsuit bottoms she wears EXACTLY ONE plain, thick, "
+    "completely opaque garment on her hips and nothing else there - one "
+    "single layer, no second garment over or under it: it sits at her "
+    "natural waist and covers her hips and the tops of her thighs entirely. The fabric is heavy and "
+    "light does not pass through it at all: nothing underneath it shows "
+    "through, no outline, no seam, no edge of anything worn beneath. "
+    "Her swimsuit top stays plainly visible on her, exactly as it is, and "
+    "it is not touched in this photo. "
+    "In this photo she looks exactly as if she were simply dressed for the "
+    "beach."
+)
+
 # Сцены. Обстановка бытовая, верхняя вещь - та, которую снимают через
 # голову: свободная футболка, толстовка, рубашка. Узкое платье не
 # годится, модель не снимет его убедительно.
@@ -183,6 +231,31 @@ from сделать_аватарки import ПЕРСОНАЖИ                  
             "focus behind her, even ceiling light. She wears one loose black training t-shirt and nothing else - no "
             "shorts, no leggings, the t-shirt long enough to reach the top "
             "of her thighs. Confident direct gaze."),
+    },
+    # --- подформат «снимает низ» ---------------------------------------
+    {
+        "имя": "пирс-день",
+        "род": "низ",
+        "фигура": "toned athletic build, long legs, defined waist",
+        "сцена": (
+            "Standing on a sunlit wooden jetty over clear blue sea, the "
+            "open water and a bright sky behind her, weathered planks "
+            "under her bare feet. She wears one plain black cotton mini "
+            "skirt on her hips and nothing else over her swimsuit, and "
+            "her black swim top is worn plainly on her. "
+            "Wind moves her hair a little. Calm bright daylight, an "
+            "ordinary holiday photo."),
+    },
+    {
+        "имя": "терраса-утро",
+        "род": "низ",
+        "фигура": "slim figure with soft natural proportions",
+        "сцена": (
+            "Standing on the stone terrace of a seaside villa in the "
+            "morning, white walls, green plants in pots and the sea far "
+            "below behind her. She wears a light linen wrap skirt tied at "
+            "the waist, reaching mid-thigh, and her black swim top is worn "
+            "plainly on her. Soft warm morning light, relaxed half-smile."),
     },
     {
         "имя": "сауна-вечер",
@@ -240,12 +313,16 @@ def сделать(лицо, номер, вид="одежда", мягче=False
     # него хоть слово - и модель рисует его ПОВЕРХ футболки: чёрный верх
     # читается как принт с лифчиком. Он под одеждой, но в этом кадре его
     # не существует.
-    одета = ОДЕТА
+    # Род сцены решает, что на ней надето сверх купальника: верхняя вещь
+    # (её снимут через голову) или нижняя (её снимут с бёдер).
+    одета = ОДЕТ_НИЗ if с.get("род") == "низ" else ОДЕТА
     купальник = ("She wears ONLY her swimsuit in this photo - the outer "
                  "garment is gone, not held, not in frame. She is wearing "
                  + вещь + ". Her pose, the place, the light and the framing "
                  "stay exactly the same as with the outer garment on.")
-    промпт = " ".join([ОБЩЕЕ, ПЕРСОНАЖИ[лицо],
+    род = с.get("род", "верх")
+    общее = ОБЩЕЕ.replace("__ПЛАН__", ПЛАН[род]).replace("__КРОП__", КРОП[род])
+    промпт = " ".join([общее, ПЕРСОНАЖИ[лицо],
                        "Her body: " + с["фигура"] + ".", с["сцена"],
                        одета if вид == "одежда" else купальник])
     print("%s сцена %d (%s), %s: промпт %d знаков"

@@ -105,8 +105,36 @@ def сцена(ракурс="un_full"):
 )
 
 
+# ПОДФОРМАТ «СНИМАЕТ НИЗ»: третья опора зеркальная. Снят низ купальника,
+# ВЕРХ ОСТАЁТСЯ НА МЕСТЕ - иначе модель по дороге снимет и его, и
+# последовательность «юбка - купальник - без низа» рассыплется в одно
+# смазанное действие.
+ПРАВКА_НИЗ = (
+    "Keep this exact photograph as it is: the same woman, the same face, "
+    "the same pose, the same hands, the same hair, the same background, "
+    "the same daylight, the same colours, the same framing and the same "
+    "crop. Change one single thing and nothing else: her swimsuit bottoms "
+    "are no longer there and her hips and groin are bare skin. Her black "
+    "swim top stays exactly where it is on her chest, unchanged and "
+    "clearly visible. Everything else in the picture stays pixel for "
+    "pixel the same."
+)
+НЕГАТИВ_НИЗ = (
+    "different background, changing background, dark background, night, "
+    "studio backdrop, indoors, bed, changing light, changing pose, "
+    "changing framing, zoom, crop change, different woman, changing face, "
+    "bikini bottoms, swim bottoms, panties, shorts, skirt, covered hips, "
+    "hands covering hips, bare chest, topless, removed top, "
+    "extra limbs, extra fingers, deformed hands, text, watermark"
+)
+
+
+# СИЛА ПРАВКИ. При denoise=1.0 модель пишет кадр заново и переизобретает
+# сцену: 27.09.2026 у опоры «снят низ» пропал пирс, а море и небо стали
+# плоской заливкой - в ролике это читалось бы как смена места. Меньшая
+# сила оставляет исходный кадр на месте и меняет только то, что названо.
 def снять(кадр, ракурс="un_full", выход=None, зерно=202609, только_верх=True,
-          своя=True):
+          своя=True, что="верх", сила=1.0, шагов=8):
     if not БАЗА or not ВХОД[0]:
         raise SystemExit("нет ROCKET_GPU_URL / USER / PASS")
     с = сцена(ракурс)
@@ -123,7 +151,8 @@ def снять(кадр, ракурс="un_full", выход=None, зерно=202
         raise SystemExit("кадр не залился: " + о.text[:200])
 
     if своя:
-        промпт, негатив = СВОЯ_ПРАВКА, СВОЙ_НЕГАТИВ
+        промпт, негатив = ((ПРАВКА_НИЗ, НЕГАТИВ_НИЗ) if что == "низ"
+                           else (СВОЯ_ПРАВКА, СВОЙ_НЕГАТИВ))
         только_верх = False
     else:
         промпт = с.prompt + КАДР + (ТОЛЬКО_ВЕРХ if только_верх else "")
@@ -134,7 +163,7 @@ def снять(кадр, ракурс="un_full", выход=None, зерно=202
     тело = {"mode": "photo", "size": "vert", "seed": зерно,
             "images": [имя], "image": имя,
             "prompt": промпт, "neg": негатив,
-            "steps": 8, "cfg": 2.0, "denoise": 1.0}
+            "steps": шагов, "cfg": 2.0, "denoise": сила}
     о = requests.post(БАЗА + "/api/gen", auth=ВХОД, json=тело, timeout=180)
     о.raise_for_status()
     задание = (о.json() or {}).get("job")
