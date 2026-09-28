@@ -60,7 +60,7 @@ COMFY = "http://127.0.0.1:8188"
 
 # Кнопки, для которых кадр есть, но какой именно — знает только
 # владелец. Печатаются в конце, чтобы он ответил одним списком.
-БЕЗ_ПАРЫ = ["ph_back", "pf_ff_near", "pf_ff_face", "pf_ff_close",
+БЕЗ_ПАРЫ = ["pf_ff_near", "pf_ff_face", "pf_ff_close",
             "pf_ff_behind", "pf_ff_pov", "pf_mf_near", "pf_mf_face",
             "pf_mf_behind", "pf_mf_pov"]
 

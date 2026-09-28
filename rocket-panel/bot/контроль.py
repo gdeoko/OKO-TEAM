@@ -176,9 +176,6 @@ import urllib.request
     "ph_push": ["Exactly one woman, alone in the picture.",
                 "She has female anatomy only and no penis.",
                 "She is pulling her panties down."],
-    "ph_back": ["Exactly one woman, alone in the picture.",
-                "She has female anatomy only and no penis.",
-                "A sex toy is in her hand at her vulva."],
 }
 
 

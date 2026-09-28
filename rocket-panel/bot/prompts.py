@@ -244,13 +244,49 @@ def плоскость(сложение):
 # слушает утверждение лучше, чем запрет, поэтому матовость сказана
 # положительно, в лоб.
 КОЖА = (
-    "Real skin: visible pores, fine hair, uneven tone, natural blemishes. "
+    # ЧЁРНЫЕ ТОЧКИ И ВОЛОСКИ ПРОСИЛ ЭТОТ САМЫЙ АБЗАЦ (28.09.2026).
+    #
+    # Здесь стояло «visible pores, fine hair, uneven tone, natural
+    # blemishes». `natural blemishes` это пятнышки, родинки и прыщики,
+    # `fine hair` - тонкие волоски. Сборка послушно их рисовала, и
+    # владелец видел то, что мы сами заказали: «чёрные точки на теле»,
+    # «растительность».
+    #
+    # Поры остаются: без них кожа и правда пластиковая. А вот
+    # «naturally uneven tone» УБРАН 28.09.2026 - это он заказывал
+    # светлые пятна, которые владелец увидел на паху, бедре и вокруг
+    # сосков. Сборка 18+ понимает «неровный тон» по-своему и рисует
+    # СЛЕДЫ ЗАГАРА от купальника: полупрозрачные белёсые фигуры с
+    # резкими краями, похожие на забытое бельё.
+    #
+    # Одного удаления мало: следы загара модель рисует и по привычке,
+    # потому что тело загорелое. Поэтому ровный загар назван прямо, а
+    # не оставлен на догадку.
+    "Real skin with visible pores. Her skin "
+    "is CLEAN: no scattered dark specks, no soot, no dirt on it. "
+    "HER TAN IS COMPLETELY EVEN over her entire body: the same colour "
+    "on her chest, her breasts, her belly, her hips and her thighs as "
+    "on her arms and shoulders. There are NO TAN LINES anywhere, no "
+    "bikini marks, no swimsuit marks, no paler untanned patches, no "
+    "white strips or triangles of lighter skin, no two-tone skin. She "
+    "was never wearing anything that left a mark. "
+    "Any mole or freckle she already has on the reference photo stays "
+    "exactly where it is - nothing is added and nothing is removed. "
     "No plastic smoothing, no airbrushing. The skin is MATTE and DRY — "
     "soft diffuse sheen at most, never oiled, never wet-looking, never "
     # «chest», а не «breasts»: этот кусок общий, он достаётся и мужским
     # сценам, где про грудь говорить нечего (тест «у двух мужчин про
     # грудь молчим»).
-    "glistening, no baby-oil highlights on the chest, belly or thighs."
+    "glistening, no baby-oil highlights on the chest, belly or thighs. "
+    # ЖЁСТКОЕ ПРАВИЛО ВЛАДЕЛЬЦА 28.09.2026: волосы только на голове.
+    # Сказано утверждением, а не запретом, по той же причине, что и
+    # матовость выше: дистиллированная сборка слушает утверждение
+    # лучше. Запрет продублирован в негативе - одного мало, проверено
+    # на блеске кожи.
+    "Her body is COMPLETELY HAIRLESS below the head: the pubic area is "
+    "bare smooth skin with no hair at all, and so are the legs, the "
+    "underarms, the belly and the forearms. The ONLY hair anywhere in "
+    "the picture is the hair on her head."
 )
 
 АНАТОМИЯ = (
@@ -348,7 +384,29 @@ def плоскость(сложение):
     # намасленными и блестящими — вид коммерческого порно, который
     # владелец забраковал ещё на одиночных.
     "oiled skin, body oil, wet shiny skin, glossy plastic skin, "
+    # Следы загара - жалоба владельца 28.09.2026: белёсые фигуры с
+    # резкими краями на паху, бедре и вокруг сосков, похожие на
+    # забытое бельё. Запрет тут вспомогательный: на этой сборке
+    # негатив при низком CFG почти не слышен, работает абзац про
+    # ровный загар в КОЖА. Обе меры вместе, потому что поодиночке
+    # ни одна не сняла пятна целиком.
+    "tan lines, tan line, bikini marks, swimsuit marks, bikini tan, "
+    "untanned patches, pale untanned skin, white strips of skin, "
+    "two-tone skin, uneven tan, sunburn line, ghost of underwear, "
+    "translucent clothing remnants, leftover clothing outline, "
     "greasy highlights, airbrushed porn look, "
+    # ВОЛОСЫ ТОЛЬКО НА ГОЛОВЕ (владелец 28.09.2026). Утверждение стоит
+    # в КОЖА, здесь запрет: на сложных ракурсах сборка дорисовывала
+    # растительность даже при чистом описании.
+    "pubic hair, pubes, body hair, leg hair, armpit hair, arm hair, "
+    "belly hair, happy trail, hairy, stubble, "
+    # ЧЁРНЫЕ ТОЧКИ, но НЕ родинки. Разницу назвал владелец: родинки с
+    # референса трогать нельзя, а выдуманные крапины - это брак.
+    # Поэтому здесь нет ни «moles», ни «freckles»: они в негативе
+    # запретили бы и настоящие. Запрещается ровно артефакт - россыпь
+    # тёмных точек, которой на присланном снимке не было.
+    "random black dots on skin, scattered dark speckles, noise dots, "
+    "dirt specks, soot specks, acne, pimples, "
     # ЗАПРЕТОВ «НЕ ПЫШНАЯ» И «НЕ ВЗРОСЛАЯ» ЗДЕСЬ БОЛЬШЕ НЕТ, и это
     # правка 24.09.2026 по требованию владельца «фигура и возраст
     # максимально как на референсе».
@@ -372,6 +430,15 @@ def плоскость(сложение):
     "longer legs, changed height, changed proportions, idealized body, "
     "fitness model body, hourglass figure added, "
     "changed hair colour, changed hair length, changed skin tone, "
+    # «removed moles, removed freckles» ОСТАЮТСЯ, и это слово владельца
+    # 28.09.2026: «это если они есть на теле девушки, если поставишь
+    # запрет, она уберёт и с реального референса тоже».
+    #
+    # Здесь речь о родинках, которые НА СНИМКЕ уже есть: сводить их
+    # значит менять внешность человека, ради сохранения которой всё и
+    # затевалось. Выдуманные крапины - другая беда, и запрет на них
+    # ниже назван своими словами (чёрные точки, крапины, грязь), а не
+    # «родинки».
     "tanned differently, removed moles, removed freckles, removed scars, "
     "younger face, older face, changed age, "
     "deformed hands, extra fingers, missing fingers, fused fingers, "

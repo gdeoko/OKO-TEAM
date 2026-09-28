@@ -201,7 +201,6 @@ def job_note(job, яз):
     "ac_below":  ("From below", "Shot from a low angle"),
     "ac_push":   ("Push in", "The camera moves slowly closer"),
     "ac_pull":   ("Pull out", "The camera pulls back, revealing the scene"),
-    "ac_back":   ("From behind", "Back in frame, a look over the shoulder"),
     "ac_mirror": ("In the mirror", "Reflection and back at once"),
     "ac_slow":   ("Slow motion", "Everything at half speed"),
 
@@ -226,7 +225,6 @@ def job_note(job, яз):
                   "On her side along the frame, hand between her legs"),
     "ac_above":  ("Touching herself on all fours",
                   "On all fours from the side, hand behind between her legs"),
-    "ac_back":   ("With a toy", "Sitting three-quarter, with a toy"),
     "ac_below":  ("Taking her top off",
                   "Standing, pulling the top over her head"),
     "ac_push":   ("Taking her panties off",

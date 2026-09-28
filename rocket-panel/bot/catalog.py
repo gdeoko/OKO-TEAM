@@ -1006,37 +1006,6 @@ class Узел:
         "the frame. She is a woman, her anatomy is female only. One "
         "whole unbroken body, one head on her own neck, two arms from "
         "her own shoulders, two legs. Only one person in the frame."),
-    # «Мастурбация с игрушкой» — кадр pG6_sh_three__777.
-    "ph_back": (
-        "THREE-QUARTER VIEW, the camera a little to her left and level "
-        "with her hips. She sits on the black floor with her knees wide "
-        "apart and her thighs open, her vulva at the CENTRE of the "
-        "frame and seen slightly from the side. The toy is A SHORT "
-        "STUBBY PINK VIBRATOR, no longer than her own hand from wrist "
-        "to fingertips and as thick as two fingers — a small egg-shaped "
-        "toy, not a long wand. HER VULVA HAS SWALLOWED THE UPPER HALF "
-        "OF IT: that half is gone from sight inside her and her "
-        "stretched labia close tightly around the middle of the toy, "
-        "where it goes in. Only the lower half is still out in the air. "
-        "ONLY HER RIGHT HAND IS ON THE TOY: its fingers are closed "
-        "around the lower half, and that arm runs unbroken from her own "
-        "right shoulder down to it. HER LEFT HAND IS NOWHERE NEAR THE "
-        "TOY — it rests on her own left knee, and its arm runs unbroken "
-        "from her own left shoulder. Two arms and two hands in the "
-        "picture and no more. HER VULVA IS VERY WET: it glistens with "
-        "her own clear arousal, and a thin trail of clear fluid runs "
-        "down from it onto the floor beneath her. Her whole face is "
-        "inside the frame. Her chest is bare skin and her own nipples "
-        "are in plain view; her hips are bare skin as well. She is a "
-        "woman and her anatomy is female only. Between her thighs there "
-        "is her own bare vulva and nothing else. ONE single continuous "
-        "body: one head on her own neck, one torso, two arms growing "
-        "from her own shoulders, two legs growing from her own hips — "
-        "two hands and two feet in all, and every one of them traceable "
-        "back along its own limb to the place it grows from. Head, "
-        "chest, belly and hips follow one another in the natural order "
-        "and at natural distances, as in a single unretouched "
-        "photograph. Only one person in the frame."),
 }
 
 
@@ -1300,12 +1269,6 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
                "body and a good part of the room are in frame. Camera "
                "at hip height so the proportions stay honest."),
 
-    _ФОТО_ЗЕРКАЛО("ph_back", "ac_back", "Со спины",
-        "Спина в кадре, взгляд через плечо",
-        камера="85mm at f/2 from behind, framed from mid-back up.",
-        поза="Back to the lens, head turned far enough over the "
-             "shoulder that one eye and the line of the cheek are "
-             "visible."),
 
     _ФОТО_ЗЕРКАЛО("ph_mirror", "ac_mirror", "В зеркале",
         "Отражение и спина одновременно",
@@ -1395,13 +1358,6 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
                "reveal the surroundings. Constant speed, the subject "
                "staying centred as the frame grows."),
 
-    _СЦ_ОЖИВИТЬ("ac_back", "Со спины",
-        "Спина в кадре, взгляд через плечо",
-        камера="85mm at f/2 from behind, framed from mid-back up. "
-               "Static camera.",
-        поза="Back to the lens throughout; at some point the head "
-             "turns far enough over the shoulder that one eye meets "
-             "the camera, then returns."),
 
     _СЦ_ОЖИВИТЬ("ac_mirror", "В зеркале",
         "Отражение и спина одновременно",
@@ -1612,7 +1568,6 @@ def _пара(состав_key, состав_рус, состав_англ, ра
     "ac_close":     "Сидя лицом к камере, рука между ног",
     "ac_side":      "Лёжа на боку вдоль кадра, рука между ног",
     "ac_above":     "На четвереньках сбоку, рука сзади между ног",
-    "ac_back":      "Сидя в три четверти, с игрушкой",
     "ac_below":     "Стоя, снимает верх через голову",
     "ac_push":      "Со спины, наклонилась, стягивает трусики",
     # МЖ пара
@@ -2005,11 +1960,6 @@ def _пара(состав_key, состав_рус, состав_англ, ра
         "panties further down her thighs, her hips tilt back toward the "
         "lens as she bends a little deeper, her head stays turned over "
         "her shoulder."),
-    "ph_back": (
-        "THE MOTION IS HER OWN HAND ON THE TOY: she moves it in a slow "
-        "steady rhythm, her wrist and forearm moving with it; her hips "
-        "press toward her hand, her thighs open wider and settle, her "
-        "head tips back and her lips part."),
 }
 
 
@@ -2253,7 +2203,7 @@ def лист(ключ_сцены):
 # человеку не ту позу, которую он нажал.
 С_ОПОРОЙ = frozenset((
     "un_close", "un_full", "un_back", "un_three", "un_sit", "un_lie",
-    "ph_close", "ph_side", "ph_above", "ph_back", "ph_below", "ph_push",
+    "ph_close", "ph_side", "ph_above", "ph_below", "ph_push",
     "pf_mf_near", "pf_mf_face", "pf_mf_behind", "pf_mf_pov",
     "pf_ff_near", "pf_ff_face", "pf_ff_behind", "pf_ff_close", "pf_ff_pov",
 ))
