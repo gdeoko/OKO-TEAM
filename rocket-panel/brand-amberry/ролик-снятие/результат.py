@@ -105,6 +105,36 @@ def сцена(ракурс="un_full"):
 )
 
 
+# ПОДФОРМАТ «СНЯТО ВСЁ» - для ПОСТА. Комната, поза, свет и кадр
+# остаются, уходит вся одежда разом.
+#
+# Зачем отдельная правка. СВОЯ_ПРАВКА намеренно оставляет низ: в ролике
+# на этом держится последовательность «одежда - купальник - снятый
+# лифчик». Пост живёт обратным: рядом стоят два кадра, и если на правом
+# что-то осталось, контраст «одета - раздета» не читается вовсе. А
+# промпт каталога решает задачу по-своему - приносит собственную
+# постановку и меняет комнату на студийный фон, и тогда пара перестаёт
+# быть одним и тем же кадром.
+ПРАВКА_ВСЁ = (
+    "Keep this exact photograph as it is: the same woman, the same face, "
+    "the same pose, the same hands, the same hair, the same room, the "
+    "same window, the same lamp, the same bed, the same night light, the "
+    "same colours, the same framing and the same crop. Change one single "
+    "thing and nothing else: the dress she wears is no longer there and "
+    "her body is bare skin, nothing covering it, no underwear, no straps, "
+    "no fabric anywhere on her. Everything else in the picture stays "
+    "pixel for pixel the same."
+)
+НЕГАТИВ_ВСЁ = (
+    "different background, changing background, studio backdrop, grey "
+    "backdrop, plain background, outdoors, changing light, changing pose, "
+    "changing framing, zoom, crop change, different woman, changing face, "
+    "dress, slip, satin, bra, bikini, panties, knickers, thong, underwear, "
+    "lingerie, covered body, fabric on skin, hands covering body, "
+    "extra limbs, extra fingers, deformed hands, text, watermark"
+)
+
+
 # ПОДФОРМАТ «СНИМАЕТ НИЗ»: третья опора зеркальная. Снят низ купальника,
 # ВЕРХ ОСТАЁТСЯ НА МЕСТЕ - иначе модель по дороге снимет и его, и
 # последовательность «юбка - купальник - без низа» рассыплется в одно
@@ -162,8 +192,10 @@ def снять(кадр, ракурс="un_full", выход=None, зерно=202
         промпт, негатив = с.prompt, с.negative
         только_верх = False
     elif своя:
-        промпт, негатив = ((ПРАВКА_НИЗ, НЕГАТИВ_НИЗ) if что == "низ"
-                           else (СВОЯ_ПРАВКА, СВОЙ_НЕГАТИВ))
+        промпт, негатив = {
+            "низ": (ПРАВКА_НИЗ, НЕГАТИВ_НИЗ),
+            "всё": (ПРАВКА_ВСЁ, НЕГАТИВ_ВСЁ),
+        }.get(что, (СВОЯ_ПРАВКА, СВОЙ_НЕГАТИВ))
         только_верх = False
     else:
         промпт = с.prompt + КАДР + (ТОЛЬКО_ВЕРХ if только_верх else "")
@@ -217,7 +249,9 @@ if __name__ == "__main__":
     # --как-бот: промпт каталога без наших добавок. Для поста нужен
     # именно он - клиент получает от бота ровно это.
     как_бот = "--как-бот" in а
-    а = [x for x in а if x != "--как-бот"]
+    всё = "--всё" in а
+    а = [x for x in а if x not in ("--как-бот", "--всё")]
+    что = "как_бот" if как_бот else ("всё" if всё else "верх")
     снять(а[0], а[1] if len(а) > 1 else "un_full",
           выход=а[2] if len(а) > 2 else None,
-          своя=not как_бот, что="как_бот" if как_бот else "верх")
+          своя=not как_бот, что=что)
