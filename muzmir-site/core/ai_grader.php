@@ -360,7 +360,10 @@ function ag_bridge_prepare(string $url, int $maxSec = 900): array {
     /* Видеохостинги мост тоже берёт сам, своим yt-dlp: прямая ссылка на поток
      * живёт минуты и часто выдана под адрес спросившего — у моста она рвалась,
      * и работа помечалась «файл не открывается (закачка оборвалась)». */
-    $ask = $url;
+    /* Ссылку приводим к каноническому виду: адрес, скопированный со страницы
+       сообщества, ни yt-dlp, ни разбор по шаблону не узнают. */
+    $url  = function_exists('vf_canon_url') ? vf_canon_url($url) : $url;
+    $ask  = $url;
     $kind = vf_platform($url);
     if (!in_array($kind, ['yandex_disk', 'dzen', 'rutube', 'vk', 'ok'], true)) {
         $link = vf_direct_link($url);

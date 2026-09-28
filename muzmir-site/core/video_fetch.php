@@ -46,12 +46,39 @@ function vf_platform(string $url): string {
      * vk.com/photo<id>_<id>. Такая ссылка определялась как «площадка не
      * поддерживается», и фоторабота до жюри не доезжала. */
     if (preg_match('~(?:vk\.com|vk\.ru|m\.vk\.com)/photo-?\d+_\d+~i', $u))  return 'vk_photo';
+    /* ЗАПИСЬ ОТКРЫТА СО СТРАНИЦЫ СООБЩЕСТВА.
+     *
+     * Участник копирует адрес из строки браузера, когда смотрит видео прямо в
+     * сообществе, и получается vk.ru/имя_сообщества?z=video-123_456. Запись та
+     * же самая, но площадка определялась как «не поддерживается», и работа до
+     * жюри не доезжала вовсе. Узнаём её по части z=video с номерами. */
+    if (preg_match('~(?:vk\.com|vk\.ru|m\.vk\.com)/[^?]*\?.*z=video-?\d+_\d+~i', $u)) return 'vk';
     if (str_contains($u, 'rutube.ru'))                                    return 'rutube';
     if (str_contains($u, 'ok.ru'))                                        return 'ok';
     if (str_contains($u, 'dzen.ru') || str_contains($u, 'zen.yandex'))    return 'dzen';
     if (str_contains($u, 'drive.google'))                                 return 'google_drive';
     if (preg_match('~\.(mp4|mov|m4v|webm|mkv|avi)(\?|$)~i', $u))          return 'direct';
     return 'unknown';
+}
+
+/**
+ * ССЫЛКА К ВИДУ, КОТОРЫЙ УЗНАЮТ ВСЕ.
+ *
+ * Участник копирует адрес из строки браузера, когда смотрит запись прямо в
+ * сообществе: vk.ru/имя_сообщества?z=video-123_456. Запись обычная, но ни
+ * yt-dlp на мосту, ни разбор по шаблону такую ссылку не узнают — мост качал по
+ * ней HTML-страницу и отвечал «файл не открывается». Приводим к каноническому
+ * виду vk.ru/video-123_456 до того, как ссылку кто-то попытается открыть.
+ *
+ * Ссылки других видов возвращаются как есть.
+ */
+function vf_canon_url(string $url): string {
+    $u = trim($url);
+    if ($u === '') return $u;
+    if (preg_match('~(?:vk\.com|vk\.ru|m\.vk\.com)/[^?]*\?.*z=(video|clip)(-?\d+_\d+(?:_[A-Za-z0-9]+)?)~i', $u, $m)) {
+        return 'https://vk.ru/' . mb_strtolower($m[1]) . $m[2];
+    }
+    return $u;
 }
 
 /* Обычный браузерный отпечаток. Площадки узнают служебные User-Agent и отдают
