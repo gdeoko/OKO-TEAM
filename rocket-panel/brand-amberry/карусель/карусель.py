@@ -96,20 +96,49 @@ def зов(аргументы, ключ):
     return json.loads(р.stdout or "{}")
 
 
+ЗАДАЧИ = os.path.join(ТУТ, ".задачи.json")
+
+
+def задачи(новое=None):
+    """Начатые задачи живут на диске между запусками.
+
+    Процесс сборки дважды убивали снаружи посреди ожидания картинки. Сама
+    картинка при этом делалась и оставалась у APIMODELS, а мы теряли и её,
+    и пять центов: заново запущенный слайд платил второй раз за уже
+    оплаченное. Теперь taskId ложится на диск сразу после приёма задачи, и
+    следующий запуск дожидается СТАРОЙ задачи вместо новой.
+    """
+    было = {}
+    if os.path.exists(ЗАДАЧИ):
+        было = json.load(open(ЗАДАЧИ, encoding="utf-8"))
+    if новое is None:
+        return было
+    было.update(новое)
+    json.dump(было, open(ЗАДАЧИ, "w", encoding="utf-8"), ensure_ascii=False)
+    return было
+
+
 def сделать(промпт, образцы, ключ, имя):
     """Одна картинка. Образцы - список ссылок или data-URI, знак первым."""
-    тело = json.dumps({"model": МОДЕЛЬ, "prompt": промпт, "aspect_ratio": "4:5",
-                       "image": образцы, "image_urls": образцы})
-    п = subprocess.run(
-        ["curl", "-s", "-m", "180", "-H", "Authorization: Bearer " + ключ,
-         "-H", "Content-Type: application/json", "-X", "POST",
-         БАЗА + "/images/generations", "--data-binary", "@-"],
-        input=тело, capture_output=True, text=True, timeout=210)
-    д = json.loads(п.stdout or "{}").get("data", {})
-    з = д.get("taskId")
-    if not з:
-        print("  %s: задачу не приняли: %s" % (имя, п.stdout[:200]), flush=True)
-        return None
+    з = задачи().get(имя)
+    if з:
+        print("  %s: дожидаюсь начатой задачи %s" % (имя, з), flush=True)
+    else:
+        тело = json.dumps({"model": МОДЕЛЬ, "prompt": промпт,
+                           "aspect_ratio": "4:5",
+                           "image": образцы, "image_urls": образцы})
+        п = subprocess.run(
+            ["curl", "-s", "-m", "180", "-H", "Authorization: Bearer " + ключ,
+             "-H", "Content-Type: application/json", "-X", "POST",
+             БАЗА + "/images/generations", "--data-binary", "@-"],
+            input=тело, capture_output=True, text=True, timeout=210)
+        д = json.loads(п.stdout or "{}").get("data", {})
+        з = д.get("taskId")
+        if not з:
+            print("  %s: задачу не приняли: %s" % (имя, п.stdout[:200]),
+                  flush=True)
+            return None
+        задачи({имя: з})
     for _ in range(150):
         р = зов([БАЗА + "/images/generations?task_id=" + з], ключ).get("data", {})
         с = (р.get("state") or "").lower()
@@ -118,10 +147,12 @@ def сделать(промпт, образцы, ключ, имя):
             цель = os.path.join(ТУТ, имя + ".png")
             subprocess.run(["curl", "-sL", "-o", цель, url], check=True)
             к_канону(цель)
+            задачи({имя: None})
             print("  %s готов" % имя, flush=True)
             return цель
         if с in ("fail", "failed", "error"):
             print("  %s: ОШИБКА %s" % (имя, str(р)[:200]), flush=True)
+            задачи({имя: None})
             return None
         time.sleep(4)
     print("  %s: не дождались" % имя, flush=True)
