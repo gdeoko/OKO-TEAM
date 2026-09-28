@@ -220,22 +220,32 @@ def знак_датой():
   "not a cartoon."),
 
  ("3-выбор",
-  "SCENE: the same smartphone, same hand, same dark glossy table, now tilted "
-  "a few degrees, the neon reflections falling differently on the table. ON "
-  "THE PHONE SCREEN: the same dark Telegram-style chat, scrolled one step "
-  "further. A short message bubble at the top reads in white Russian text: "
-  "\"РАЗДЕТЬ\" as a heading and under it in lighter grey \"Твоё фото, без "
-  "одежды\". These two Russian strings must be reproduced letter for "
-  "letter exactly as written here, not paraphrased and not replaced with "
-  "any other Russian word - they are the real wording of the product menu. "
-  "At the top of the chat screen there is a small round avatar showing the "
-  "brand mark from the attached reference file, and beside it the name "
-  "\"AMBERRY\" in white; this is the only copy of the mark in the frame. "
-  "Below the bubble two wide rounded dark buttons with white "
-  "Russian text centred: \"СОЛО\" and \"ГРУППОВОЕ\". The first button "
-  "\"СОЛО\" glows hot pink as if just pressed. Under them a narrow row of "
-  "two smaller buttons reading \"НАЗАД\" and \"МЕНЮ\". TEXT OUTSIDE THE "
-  "PHONE: none. Every Russian word spelled correctly, letters unbroken."),
+  # ДВЕ ПЕРЕСЪЁМКИ ПОДРЯД: модель смягчала надпись сама - сперва до
+  # «ПЕРЕОДЕТЬСЯ», потом до «ОДЕТЬ». Спотыкалась она не о слово
+  # «РАЗДЕТЬ» (на слайде 2 оно встало с первого раза), а о пару с
+  # подписью «Твоё фото, без одежды» под ним. Подпись заменена на
+  # настоящие подписи кнопок бота - «Одна героиня» и «Двое в кадре».
+  "SCENE: the woman sits at a dark glossy bar counter in a room lit only "
+  "by tall vertical pink neon tubes, turned away from camera and looking "
+  "back over her bare shoulder straight into the lens, wearing the same "
+  "champagne satin slip dress on thin straps. She holds a modern "
+  "smartphone upright in her raised hand at the left third of the frame, "
+  "screen fully towards the camera, sharp and legible. HIGH ON THE WALL "
+  "behind her, small, glows a neon sign of the brand mark from the "
+  "attached reference file - this is the only copy of the mark in the "
+  "frame. ON THE PHONE SCREEN: a dark Telegram-style chat. A message "
+  "bubble at the top carries one word as a heading in white Russian "
+  "capitals: \"РАЗДЕТЬ\". Below the bubble two wide rounded dark "
+  "buttons stacked vertically, each with a white Russian title and a "
+  "smaller grey Russian line under it: the first reads \"СОЛО\" with "
+  "\"Одна героиня\" beneath, the second reads \"ГРУППОВОЕ\" with "
+  "\"Двое в кадре\" beneath. The first button glows hot pink as if just "
+  "pressed. Under them a narrow row of two smaller buttons reading "
+  "\"НАЗАД\" and \"МЕНЮ\". Every one of these Russian strings must be "
+  "reproduced letter for letter exactly as written here - they are the "
+  "real wording of the product menu, they are not to be paraphrased and "
+  "not to be replaced by any other Russian word. TEXT OUTSIDE THE PHONE: "
+  "none at all. Every Russian word spelled correctly, letters unbroken."),
 
  ("4-кнопки",
   "SCENE: the same smartphone held in the same hand, this time seen almost "
