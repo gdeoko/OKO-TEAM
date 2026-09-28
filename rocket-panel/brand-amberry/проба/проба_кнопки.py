@@ -34,7 +34,10 @@ import time
 БОТ = "/opt/amberry/rocket-panel/bot"
 sys.path.insert(0, БОТ)
 ТУТ = os.path.dirname(os.path.abspath(__file__))
-ВХОД = os.environ.get("ПРОБА_ВХОД", os.path.join(
+# ИМЯ ПЕРЕМЕННОЙ ЛАТИНИЦЕЙ. Кириллическое bash не считает
+# идентификатором: `export ПРОБА_ВХОД=...` падает с «not a valid
+# identifier», и скрипт тихо берёт умолчание вместо того, что передали.
+ВХОД = os.environ.get("PROBA_VHOD", os.path.join(
     os.path.dirname(ТУТ), "ролик-снятие", "вход-ника-отель-ночь-одежда.jpg"))
 
 import catalog          # noqa: E402
