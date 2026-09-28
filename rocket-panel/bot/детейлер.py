@@ -70,9 +70,17 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
              "reference: her exact eyes, her exact nose, her exact lips, "
              "her exact eyebrows, her exact jawline and face shape. Keep "
              "the head angle, the lighting and the skin tone of the FIRST "
-             "image. Real human skin with visible pores and "
-             "fine peach-fuzz hair, individual separated eyelashes, "
-             "natural lip texture. Sharp critical focus, 85mm lens, "
+             "image. Real human skin with visible pores, individual "
+             "separated eyelashes, natural lip texture. "
+             # Ровный тон назван ПРЯМО. На проходе с denoise 0.90 зона
+             # переписывается почти целиком, и слова про поры и пушок
+             # модель поняла как приглашение: первая боевая пачка
+             # 28.09.2026 вернула лицо, усыпанное веснушками, которых
+             # на референсе нет вовсе. Сходство по эмбеддингу при этом
+             # осталось 0.908 - мера крапин не видит, а глаз видит сразу.
+             "Her complexion is EVEN and CLEAN: no freckles, no moles, "
+             "no dark spots, no blemishes, no speckles, no scattered "
+             "dots on her face. Sharp critical focus, 85mm lens, "
              "neutral daylight. Matte skin, no gloss, no oil, no "
              "airbrushing, no plastic smoothing."),
     "грудь": ("A close-up photograph of a woman's bare chest, anatomically "
@@ -88,7 +96,9 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
             "oil, no plastic smoothing."),
 }
 
-НЕГАТИВ = ("blurry, smudged, out of focus, mushy, melted, deformed, "
+НЕГАТИВ = ("freckles, moles, dark spots, skin blemishes, speckles, "
+           "scattered dots on skin, acne, pimples, "
+           "blurry, smudged, out of focus, mushy, melted, deformed, "
            "malformed, extra limb, missing limb, plastic skin, waxy skin, "
            "poreless, airbrushed, oiled skin, wet shiny skin, glossy, "
            "cartoon, illustration, painting, 3d render, cgi, doll, "
