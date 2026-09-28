@@ -9,6 +9,26 @@
 declare(strict_types=1);
 
 /**
+ * Разбор ответа ЮKassa: это платёж или отказ кассы?
+ * У ошибки ЮKassa тоже есть поле id («type»:«error»), поэтому одного id мало.
+ * Без этой проверки отказ кассы читался как созданный платёж: участник видел
+ * «платёж создан», но ссылки на оплату не получал, а в payments ложился id
+ * ошибки — по нему потом ничего не сверить (касса отвечает 404 not_found).
+ * Отказ пишется в журнал сервера, чтобы причина была видна сразу.
+ */
+function yk_answer(?string $resp, int $code, string $where): ?array {
+    $GLOBALS['YK_LAST_CODE'] = $code;   // код последнего ответа — по нему сверка отличает «платёж не наш» от обрыва сети
+    $d = json_decode((string) $resp, true);
+    if (!is_array($d) || empty($d['id'])) return null;
+    if (($d['type'] ?? '') === 'error' || $code < 200 || $code >= 300) {
+        @error_log('[yukassa] ' . $where . ': отказ кассы, код ' . $code . ' '
+            . (string) ($d['code'] ?? '') . ' ' . (string) ($d['description'] ?? ''));
+        return null;
+    }
+    return $d;
+}
+
+/**
  * Создание платежа ЮKassa (заглушка, пока магазин не верифицирован).
  * Если ключи не заданы — возвращает stub. Все ошибки cURL — тихий фолбэк на null.
  */
@@ -57,10 +77,11 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
     ]);
     $resp = curl_exec($ch);
     $err = curl_errno($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     if ($err || !$resp) return null;
-    $data = json_decode($resp, true);
-    if (!is_array($data) || empty($data['id'])) return null;
+    $data = yk_answer($resp, $code, 'создание платежа');
+    if (!$data) return null;
     return [
         'id'               => $data['id'],
         'status'           => $data['status'] ?? 'pending',
@@ -107,10 +128,12 @@ function yukassa_charge_saved(int $amount, string $paymentMethodId, string $desc
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Idempotence-Key: ' . bin2hex(random_bytes(16))],
         CURLOPT_TIMEOUT        => 15,
     ]);
-    $resp = curl_exec($ch); $err = curl_errno($ch); curl_close($ch);
+    $resp = curl_exec($ch); $err = curl_errno($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
     if ($err || !$resp) return null;
-    $data = json_decode($resp, true);
-    if (!is_array($data) || empty($data['id'])) return null;
+    $data = yk_answer($resp, $code, 'автосписание по сохранённому способу');
+    if (!$data) return null;
     return ['id' => (string) $data['id'], 'status' => (string) ($data['status'] ?? 'pending')];
 }
 
@@ -273,10 +296,10 @@ function yukassa_get_payment(string $id): ?array {
     ]);
     $resp = curl_exec($ch);
     $err = curl_errno($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     if ($err || !$resp) return null;
-    $d = json_decode($resp, true);
-    return (is_array($d) && !empty($d['id'])) ? $d : null;
+    return yk_answer($resp, $code, 'чтение статуса платежа ' . $id);
 }
 
 /**

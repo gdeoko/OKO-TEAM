@@ -49,9 +49,23 @@ try {
     $checked = 0; $succeeded = 0; $changed = 0;
     foreach ($rows as $p) {
         $pid = (string) $p['yukassa_id'];
+        $GLOBALS['YK_LAST_CODE'] = 0;
         $obj = yukassa_get_payment($pid);
         $checked++;
-        if (!$obj) continue;
+        if (!$obj) {
+            /* ПЛАТЁЖ НЕ НАШ — БОЛЬШЕ ЕГО НЕ СПРАШИВАЕМ.
+             * Касса отвечает 404 not_found на платежи чужого магазина (остались
+             * после смены кассы) и на записи, куда из-за прежней ошибки разбора
+             * попал id отказа кассы вместо id платежа. Оплатить по такой записи
+             * нельзя — ссылки на оплату у неё нет. Гасим, чтобы сверка каждые две
+             * минуты не стучала в кассу зря. Обрыв сети (код 0) не трогаем. */
+            if ((int) ($GLOBALS['YK_LAST_CODE'] ?? 0) === 404) {
+                update('payments', ['status' => 'canceled'], 'id=:id', ['id' => (int) $p['id']]);
+                cron_log(JOB, 'платёж ' . $pid . ' касса не знает (404) — помечен отменённым');
+                $changed++;
+            }
+            continue;
+        }
         $newStatus = (string) ($obj['status'] ?? '');
         if ($newStatus === '' || $newStatus === $p['status']) continue;
         $became = payment_apply_status($pid, $newStatus, $obj);
