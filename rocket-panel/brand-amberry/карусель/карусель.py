@@ -364,7 +364,24 @@ def собрать(лицо_url, ключ, только=None):
     return готовые
 
 
+def один_в_поле():
+    """Второй такой же процесс не запускается.
+
+    Два запуска подряд дожидались ОДНОЙ задачи и писали картинку в один
+    файл одновременно - на выходе получился обрезанный PNG, который
+    PIL уже не открывал. Замок снимается сам, когда процесса больше нет.
+    """
+    замок = os.path.join(ТУТ, ".замок")
+    if os.path.exists(замок):
+        чей = open(замок).read().strip()
+        if чей.isdigit() and os.path.exists("/proc/" + чей):
+            raise SystemExit("сборка уже идёт, процесс %s" % чей)
+    open(замок, "w").write(str(os.getpid()))
+    return замок
+
+
 if __name__ == "__main__":
+    замок = один_в_поле()
     ключ = os.environ.get("APIMODELS_KEY", "")
     if not ключ:
         raise SystemExit("нет APIMODELS_KEY")
@@ -372,5 +389,9 @@ if __name__ == "__main__":
     if not лицо:
         raise SystemExit("нужна ссылка на фото модели дня")
     только = sys.argv[2].split(",") if len(sys.argv) > 2 else None
-    for п in собрать(лицо, ключ, только):
-        print(п)
+    try:
+        for п in собрать(лицо, ключ, только):
+            print(п)
+    finally:
+        if os.path.exists(замок):
+            os.remove(замок)
