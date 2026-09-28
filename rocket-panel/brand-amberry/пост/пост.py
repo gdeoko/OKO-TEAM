@@ -20,7 +20,12 @@
 руками ставятся только две фотографии - то же исключение, что у
 последнего слайда карусели.
 
-    python3 пост.py <одетая.jpg> <результат-муть.jpg> [выход.jpg]
+ФОРМАТ ГОРИЗОНТАЛЬНЫЙ ВСЕГДА. Правило владельца от 28.09.2026: пост
+идёт либо 4:3, либо 16:9, вертикали в постах нет. 4:3 берётся по
+умолчанию - при двух вертикальных панелях рядом он плотнее; 16:9 даёт
+ту же раскладку шире и ниже, и берётся для разнообразия.
+
+    python3 пост.py <одетая.jpg> <результат-муть.jpg> [выход.jpg] [16:9]
 """
 import base64
 import hashlib
@@ -37,7 +42,9 @@ from PIL import Image, ImageFilter
 БАЗА = "https://api.apimodels.app/v1"
 МОДЕЛЬ = "gpt-image-2"
 ЗНАК = os.path.join(БРЕНД, "amberry-icon-512-alpha.png")
-Ш, В = 1080, 1350
+ФОРМАТЫ = {"4:3": (1440, 1080), "16:9": (1920, 1080)}
+ФОРМАТ = "4:3"
+Ш, В = ФОРМАТЫ[ФОРМАТ]
 
 ЗАГОЛОВОК = "СЛЕВА ТВОЁ ФОТО"
 ПОДЗАГОЛОВОК = "Справа - что вернул бот"
@@ -47,9 +54,11 @@ from PIL import Image, ImageFilter
 ЛЕВЫЙ_КЛЮЧ = (0, 255, 0)
 ПРАВЫЙ_КЛЮЧ = (255, 0, 255)
 
-ПРОМПТ = (
- "Vertical 4:5 image, 1080x1350 pixels, a premium social media post card "
- "for an adult-oriented Telegram bot brand called AMBERRY. This image is a "
+def промпт():
+ return (
+ "Horizontal %s image, %dx%d pixels, a premium social media post card "
+ % (ФОРМАТ, Ш, В) +
+  "for an adult-oriented Telegram bot brand called AMBERRY. This image is a "
  "DESIGNED CARD, not a photograph: it is a dark layout with typography, a "
  "brand lockup and two empty picture placeholders. Overall art direction: "
  "deep near-black background (#0A0A0C) with a subtle vertical gradient, hot "
@@ -57,8 +66,11 @@ from PIL import Image, ImageFilter
  "behind everything at the left and right edges, soft volumetric haze, a "
  "faint glossy reflection along the very bottom, cinematic contrast, "
  "commercial design quality, ultra sharp, 8K, no banding, no noise. "
- "LAYOUT, from top to bottom, with generous even margins of about sixty "
- "pixels on the left and right. "
+ "LAYOUT. The card is WIDE, not tall, and the layout uses that width: the "
+ "headline block sits at the top across the full width, the two picture "
+ "placeholders sit side by side in the middle occupying most of the height, "
+ "and the brand lockup sits at the bottom. Margins are even, about sixty "
+ "pixels on every side, and nothing touches an edge. "
  "FIRST, in the top area, two lines of Russian text, centred, never "
  "touching the edges. The headline is the largest text in the whole image, "
  "heavy condensed geometric uppercase sans, pure white core with a thin hot "
@@ -136,16 +148,17 @@ def задачи(новое=None):
 
 def оправа(ключ, имя="оправа"):
     """Карточка без фотографий: текст, лого, две цветные панели."""
-    цель = os.path.join(ТУТ, имя + ".png")
+    цель = os.path.join(ТУТ, "%s-%s.png" % (имя, ФОРМАТ.replace(":", "x")))
     if os.path.exists(цель):
         print("оправа уже есть, не переделываю", flush=True)
         return цель
-    отпечаток = hashlib.sha1(ПРОМПТ.encode("utf-8")).hexdigest()[:12]
+    текст = промпт()
+    отпечаток = hashlib.sha1((ФОРМАТ + текст).encode("utf-8")).hexdigest()[:12]
     было = задачи().get(имя) or {}
     з = было.get("id") if было.get("промпт") == отпечаток else None
     if not з:
-        тело = json.dumps({"model": МОДЕЛЬ, "prompt": ПРОМПТ,
-                           "aspect_ratio": "4:5",
+        тело = json.dumps({"model": МОДЕЛЬ, "prompt": текст,
+                           "aspect_ratio": ФОРМАТ,
                            "image": [знак_датой()], "image_urls": [знак_датой()]})
         п = subprocess.run(
             ["curl", "-s", "-m", "180", "-H", "Authorization: Bearer " + ключ,
@@ -187,7 +200,15 @@ def окно(кадр, ключ_цвета, допуск=70):
                 сx.append(x); сy.append(y)
     if len(сx) < 500:
         return None
-    return (min(сx), min(сy), max(сx) + шаг, max(сy) + шаг)
+    # Кромка. По краю заливка смешивается с неоновой рамкой, и такие
+    # пиксели маска не берёт - в первой сборке вдоль левой панели
+    # осталась тонкая зелёная полоса. Фотография кладётся на несколько
+    # пикселей шире найденного, съедая переход; на саму рамку это не
+    # заходит, она дальше.
+    к = 4
+    ш, в = кадр.size
+    return (max(0, min(сx) - к), max(0, min(сy) - к),
+            min(ш, max(сx) + шаг + к), min(в, max(сy) + шаг + к))
 
 
 def домутить(и):
@@ -251,5 +272,11 @@ if __name__ == "__main__":
         raise SystemExit("нет APIMODELS_KEY")
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
-    выход = sys.argv[3] if len(sys.argv) > 3 else os.path.join(ТУТ, "пост.jpg")
+    хвост = [а for а in sys.argv[3:]]
+    if "16:9" in хвост:
+        ФОРМАТ = "16:9"
+        Ш, В = ФОРМАТЫ[ФОРМАТ]
+        хвост = [а for а in хвост if а != "16:9"]
+    выход = хвост[0] if хвост else os.path.join(
+        ТУТ, "пост-%s.jpg" % ФОРМАТ.replace(":", "x"))
     print(собрать(sys.argv[1], sys.argv[2], выход, ключ))
