@@ -947,3 +947,98 @@ class ИконкаВкладкиОтдаётся(unittest.TestCase):
         путь = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "admin.py")
         self.assertIn('"/favicon.ico"', open(путь, encoding="utf-8").read())
+
+
+class МодерацияПоДетскимСнимкам(unittest.TestCase):
+    """Решение владельца и сетевого администратора 28.09.2026.
+
+        Даниэль:  Или автоматически поставить блокировку? 3 = блок
+        Админ:    ну так то лучше автоматом
+        Даниэль:  Иногда просто в 18 лет даже молодо выглядит
+        Админ:    или после 3 предупреждений чтобы нам саппорт приходил
+                  запрос на ручную блокировку (модерацию)
+        Даниэль:  даже человек по фото не поймет 17 или 18
+        Админ:    согласен
+
+    Автоблокировки нет. Три отказа поднимают заявку, блокирует человек.
+    """
+
+    def setUp(self):
+        import панель
+        self.html = панель.страница("data:,")
+
+    def test_на_экране_есть_список_и_обе_кнопки(self):
+        for кусок in ("фт_модерация", "data-блок", "снять-пред"):
+            self.assertIn(кусок, self.html, кусок)
+
+    def test_сказано_что_бот_не_блокирует_сам(self):
+        """Иначе менеджер решит, что бот уже заблокировал, и не сделает
+        ничего."""
+        self.assertIn("автоматически бот никого не блокирует",
+                      self.html.lower())
+
+    def test_ручка_снятия_есть(self):
+        self.assertIn("/api/возраст/снять", self.html)
+
+
+class СчётПредупреждений(unittest.TestCase):
+    """Считает `предупреждения`, а не админка: счёт обязан совпадать с
+    журналом, по которому потом объясняются с человеком."""
+
+    def setUp(self):
+        import importlib
+        import os
+        import sys
+        бот = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "bot")
+        if бот not in sys.path:
+            sys.path.insert(0, бот)
+        import предупреждения
+        importlib.reload(предупреждения)
+        self.п = предупреждения
+        import store as _s
+        import tempfile
+        self.файл = tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
+        self.store = _s.Store(self.файл)
+        self.store.ensure_user(777, username="кто")
+
+    def test_порог_три(self):
+        self.assertEqual(self.п.ПОРОГ, 3)
+
+    def test_заявка_поднимается_на_третьем_и_один_раз(self):
+        подъёмы = []
+        for i in range(5):
+            сколько, нужна = self.п.засчитать(
+                self.store, 777, "на снимке несовершеннолетний",
+                {"отпечаток": f"кадр{i}"})
+            подъёмы.append(нужна)
+        self.assertEqual(подъёмы, [False, False, True, False, False],
+                         "заявка обязана подняться ровно на третьем")
+
+    def test_один_и_тот_же_снимок_это_одно_предупреждение(self):
+        """Люди пересылают фото повторно, когда не поняли отказ. Это не
+        новая попытка, и считать её за новую нельзя."""
+        for _ in range(4):
+            self.п.засчитать(self.store, 777, "отказ", {"отпечаток": "один"})
+        self.assertEqual(self.п.счёт(self.store, 777), 1)
+
+    def test_снятие_очищает_счёт(self):
+        for i in range(3):
+            self.п.засчитать(self.store, 777, "отказ", {"отпечаток": f"к{i}"})
+        self.assertEqual(self.п.счёт(self.store, 777), 3)
+        self.п.снять(self.store, 777)
+        self.assertEqual(self.п.счёт(self.store, 777), 0)
+
+    def test_в_списке_модерации_видно_счёт_и_состояние(self):
+        for i in range(3):
+            self.п.засчитать(self.store, 777, "отказ", {"отпечаток": f"к{i}"})
+        сп = self.п.на_модерации(self.store)
+        свой = [ч for ч in сп if ч["tg_id"] == 777]
+        self.assertTrue(свой)
+        self.assertEqual(свой[0]["предупреждений"], 3)
+        self.assertTrue(свой[0]["на_модерации"])
+
+    def test_письмо_говорит_что_решает_человек(self):
+        т = self.п.письмо_модератору(777, "кто", 3, "оценка 15")
+        self.assertIn("НЕ заблокирован", т)
+        self.assertIn("решение за человеком", т)
