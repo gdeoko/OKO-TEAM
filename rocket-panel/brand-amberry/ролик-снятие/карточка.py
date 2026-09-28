@@ -201,7 +201,7 @@ body{display:flex;align-items:center;justify-content:center}
            '17.2 19.5z"/></svg>')
 
 
-def html_карточки(призыв, ш, в, фон=False):
+def html_карточки(призыв, ш, в, фон=False, рамка=True):
     стиль = (КАРТОЧКА.replace("__M9__", шрифт("montserrat-v31-cyrillic_latin-900.ttf"))
              .replace("__M7__", шрифт("montserrat-v31-cyrillic_latin-700.ttf"))
              .replace("__Ш__", str(ш)).replace("__В__", str(в)))
@@ -209,7 +209,7 @@ def html_карточки(призыв, ш, в, фон=False):
                 '<div class="orb v"></div></div>') if фон else ''
     return f"""<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <style>{стиль}</style></head><body>
-{подложка}<div id="рамка"></div>
+{подложка}{'<div id="рамка"></div>' if рамка else ''}
 <div id="блок">
   <img class="lg" src="{b64(ЛОГО, 'image/png')}">
   <div class="имя">Amberry</div>
@@ -311,10 +311,11 @@ def ряд(каталог, призыв=None, кадров=26, секунд=1.25
                                   каталог, кадров, секунд, ш, в))
 
 
-def карточка(выход, призыв=None, ш=1080, в=1920, фон=False):
+def карточка(выход, призыв=None, ш=1080, в=1920, фон=False, рамка=True):
     """фон=True - вид Формата 1 (тёмный неон), фон=False - Формата 2 (прозрачно)."""
     призыв = призыв or ПРИЗЫВЫ[0]
-    return asyncio.run(снять(html_карточки(призыв, ш, в, фон), выход, ш, в))
+    return asyncio.run(снять(html_карточки(призыв, ш, в, фон, рамка),
+                             выход, ш, в))
 
 
 def кнопка(выход, текст, состояние="", ш=760, в=200):

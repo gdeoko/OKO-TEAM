@@ -117,6 +117,7 @@ def сделать(промпт, образцы, ключ, имя):
             url = (р.get("resultUrls") or [""])[0]
             цель = os.path.join(ТУТ, имя + ".png")
             subprocess.run(["curl", "-sL", "-o", цель, url], check=True)
+            к_канону(цель)
             print("  %s готов" % имя, flush=True)
             return цель
         if с in ("fail", "failed", "error"):
@@ -125,6 +126,20 @@ def сделать(промпт, образцы, ключ, имя):
         time.sleep(4)
     print("  %s: не дождались" % имя, flush=True)
     return None
+
+
+def к_канону(путь):
+    """1080x1350 ровно. Модель отдаёт что придётся: 912x1152 это 0.792, а
+    не 0.8, и в ленте такой слайд обрежется сам, по своему усмотрению."""
+    from PIL import Image
+    и = Image.open(путь)
+    if и.size == (1080, 1350):
+        return путь
+    к = max(1080 / и.width, 1350 / и.height)
+    и = и.resize((round(и.width * к), round(и.height * к)), Image.LANCZOS)
+    x, y = (и.width - 1080) // 2, (и.height - 1350) // 2
+    и.crop((x, y, x + 1080, y + 1350)).save(путь)
+    return путь
 
 
 def знак_датой():
@@ -179,7 +194,13 @@ def знак_датой():
   "THE PHONE SCREEN: the same dark Telegram-style chat, scrolled one step "
   "further. A short message bubble at the top reads in white Russian text: "
   "\"РАЗДЕТЬ\" as a heading and under it in lighter grey \"Твоё фото, без "
-  "одежды\". Below the bubble two wide rounded dark buttons with white "
+  "одежды\". These two Russian strings must be reproduced letter for "
+  "letter exactly as written here, not paraphrased and not replaced with "
+  "any other Russian word - they are the real wording of the product menu. "
+  "At the top of the chat screen there is a small round avatar showing the "
+  "brand mark from the attached reference file, and beside it the name "
+  "\"AMBERRY\" in white; this is the only copy of the mark in the frame. "
+  "Below the bubble two wide rounded dark buttons with white "
   "Russian text centred: \"СОЛО\" and \"ГРУППОВОЕ\". The first button "
   "\"СОЛО\" glows hot pink as if just pressed. Under them a narrow row of "
   "two smaller buttons reading \"НАЗАД\" and \"МЕНЮ\". TEXT OUTSIDE THE "
@@ -211,10 +232,24 @@ def знак_датой():
 ]
 
 
-def собрать(лицо_url, ключ):
+def собрать(лицо_url, ключ, только=None):
+    """только - список имён слайдов; готовые на диске пропускаются.
+
+    Фоновый запуск всей пачки разом дважды обрывался молча: процесс
+    убивали снаружи посреди второго слайда, и лог кончался на строке с
+    длиной промпта. Поэтому слайды берутся поштучно, а уже собранные
+    не переделываются - переделка стоила бы по пять центов за штуку.
+    """
     знак = знак_датой()
     готовые = []
     for имя, сцена in СЛАЙДЫ:
+        if только and имя not in только:
+            continue
+        есть = os.path.join(ТУТ, имя + ".png")
+        if os.path.exists(есть):
+            print("%s уже есть, не переделываю" % имя, flush=True)
+            готовые.append(есть)
+            continue
         промпт = " ".join([ОБЩЕЕ, ЛИЦО, сцена])
         print("%s: промпт %d знаков" % (имя, len(промпт)), flush=True)
         if len(промпт) < 3000:
@@ -234,5 +269,6 @@ if __name__ == "__main__":
     лицо = sys.argv[1] if len(sys.argv) > 1 else ""
     if not лицо:
         raise SystemExit("нужна ссылка на фото модели дня")
-    for п in собрать(лицо, ключ):
+    только = sys.argv[2].split(",") if len(sys.argv) > 2 else None
+    for п in собрать(лицо, ключ, только):
         print(п)
