@@ -101,10 +101,11 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
 #блок>*{animation-duration:.85s;animation-fill-mode:both;
   animation-timing-function:cubic-bezier(.2,1.25,.35,1);animation-play-state:paused}
 #блок .lg{animation-name:всплыть}
-#блок .headline{animation-name:поднять;animation-delay:.10s}
-#блок .free{animation-name:поднять;animation-delay:.20s}
-#блок .tgline{animation-name:поднять;animation-delay:.28s}
-#блок .cta{animation-name:вырасти;animation-delay:.36s}
+#блок .имя{animation-name:поднять;animation-delay:.06s}
+#блок .headline{animation-name:поднять;animation-delay:.14s}
+#блок .free{animation-name:поднять;animation-delay:.24s}
+#блок .tgline{animation-name:поднять;animation-delay:.32s}
+#блок .cta{animation-name:вырасти;animation-delay:.40s}
 #рамка{animation:проявить .85s both;animation-play-state:paused}
 @keyframes всплыть{from{opacity:0;transform:scale(.55) translateY(26px)}to{opacity:1;transform:none}}
 @keyframes поднять{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
@@ -124,7 +125,15 @@ html,body{width:__Ш__px;height:__В__px;overflow:hidden;background:transparent}
    а не за блоком, поэтому кадр остаётся открытым целиком. */
 #блок{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
   display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 48px}
-#блок .lg{width:190px;height:190px;filter:drop-shadow(0 0 46px #ff0a8caa)}
+#блок .lg{width:164px;height:164px;filter:drop-shadow(0 0 46px #ff0a8caa)}
+/* ИМЯ БРЕНДА ПОД ЗНАКОМ. До 28.09.2026 в аутро были знак и обещание, а
+   слова AMBERRY не было нигде - человек видел ягоду, но не знал, как
+   называется то, что ему предлагают. Неон тот же, что у знака: у
+   продукта одно лицо во всех форматах. */
+#блок .имя{font-family:M9;font-size:62px;line-height:1;letter-spacing:9px;
+  text-indent:9px;color:#fff;text-transform:uppercase;margin-top:6px;
+  -webkit-text-stroke:3px rgba(255,10,140,.92);paint-order:stroke fill;
+  text-shadow:0 0 8px #fff,0 0 26px #FF0A8C,0 0 60px #FF0A8C}
 /* НЕОНОВАЯ ТРУБКА ВМЕСТО ТЁМНЫХ ТЕНЕЙ. Решение владельца 26.09.2026:
    тёмного нет нигде - ни подложек, ни обводок, ни теней под буквами.
    Читаемость даёт свет, а не темнота: ядро буквы белое, вокруг цветное
@@ -203,6 +212,7 @@ def html_карточки(призыв, ш, в, фон=False):
 {подложка}<div id="рамка"></div>
 <div id="блок">
   <img class="lg" src="{b64(ЛОГО, 'image/png')}">
+  <div class="имя">Amberry</div>
   <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО</div>
   <div class="free">ПЕРВОЕ ФОТО <span>БЕСПЛАТНО</span></div>
   <div class="tgline">{ТГ_ЗНАК}<span class="nk">@theamberrybot</span></div>

@@ -23,11 +23,23 @@ import urllib.parse
 # Запросы про ТЕЛО В ДВИЖЕНИИ. Танец, замедление, вода, волосы, походка -
 # то, на чём лента останавливается.
 ЗАПРОСЫ = [
+    # Тело в движении: танец, замедление, вода, волосы, походка.
     "woman dancing bikini", "sensual dance woman", "woman dancing slow motion",
     "bikini model posing", "woman body slow motion", "woman hair slow motion",
     "woman walking pool slow motion", "woman swimwear fashion",
     "woman lingerie dance", "woman stretching body", "girl dancing summer",
     "woman splashing water slow motion",
+    # Сцена и обстановка. Добавлено 28.09.2026: на одних «танцах» пул
+    # упирался в десяток клипов и ролики начинали повторяться. Эти запросы
+    # берут ту же эстетику, но через место - спальня, отель, душ, зеркало,
+    # красный свет. Замер по Pexels: 19 запросов дают 1 776 вертикальных
+    # клипов 5-40 секунд, и это только три страницы выдачи из многих.
+    "sensual woman", "lingerie", "boudoir", "woman dancing bedroom",
+    "silk robe", "bikini pool", "woman shower", "seductive look",
+    "woman bed morning", "hotel room woman", "wet hair woman",
+    "woman stockings", "slow dance woman", "woman red light",
+    "woman mirror lingerie", "woman silhouette window",
+    "woman getting dressed", "woman heels close up", "woman lips close up",
 ]
 # Отсекаем до скачивания: дети, семья, мужчина главным героем, свадьбы.
 МИМО = ("child", "kid", "baby", "family", "wedding", "senior", "elderly",
@@ -47,17 +59,38 @@ def ключ():
     return ""
 
 
-def искать(запрос, страница=1):
+def искать(запрос, страница=1, попыток=4):
+    """Поиск по Pexels. 429 - подождать и повторить, а не считать пустотой.
+
+    У бесплатного ключа есть часовой потолок запросов, и при его
+    исчерпании Pexels отвечает JSON-ом `{"status":429,...}` - без поля
+    `videos`. Прежний код брал `.get("videos", [])` и получал пустой
+    список: в логе выходило «кандидатов: 0», как будто по тридцати одному
+    запросу в стоке нет ни одного ролика. Это тот же промах, что был с
+    квотой у модели: ошибку нельзя молча превращать в «ничего не нашлось»,
+    иначе сбор данных тихо останавливается и никто этого не замечает.
+    """
+    import time
     адрес = "https://api.pexels.com/videos/search?" + urllib.parse.urlencode({
         "query": запрос, "orientation": "portrait", "size": "large",
-        "per_page": 30, "page": страница})
-    р = subprocess.run(["curl", "-s", "-m", "60", адрес,
-                        "-H", "Authorization: " + ключ()],
-                       capture_output=True, timeout=90)
-    тело = р.stdout.decode("utf-8", "replace")
-    if not тело.lstrip().startswith("{"):
-        raise RuntimeError("Pexels ответил не json: " + тело[:120])
-    return json.loads(тело).get("videos", [])
+        "per_page": 80, "page": страница})
+    for заход in range(попыток):
+        р = subprocess.run(["curl", "-s", "-m", "60", адрес,
+                            "-H", "Authorization: " + ключ()],
+                           capture_output=True, timeout=90)
+        тело = р.stdout.decode("utf-8", "replace")
+        if not тело.lstrip().startswith("{"):
+            raise RuntimeError("Pexels ответил не json: " + тело[:120])
+        ответ = json.loads(тело)
+        if "videos" in ответ:
+            return ответ["videos"]
+        if ответ.get("status") == 429 or "Throttle" in str(ответ.get("code", "")):
+            пауза = 60 * (заход + 1)
+            print("  Pexels: потолок запросов, ждём %d с" % пауза, flush=True)
+            time.sleep(пауза)
+            continue
+        raise RuntimeError("Pexels: " + тело[:160])
+    raise RuntimeError("Pexels: потолок запросов не отпустил")
 
 
 def годится(в):
@@ -97,11 +130,13 @@ def собрать(сколько=12, папка="кандидаты"):
                               "страница": в.get("url", "")})
     print("кандидатов: %d" % len(кандидаты), flush=True)
 
-    # По два на запрос, иначе вся подборка приедет из одной съёмки.
+    # По ТРИ на запрос, иначе вся подборка приедет из одной съёмки. Было
+    # два при двенадцати запросах; с тридцатью одним запросом потолок
+    # поднят - пул нужен большой, чтобы ролики не повторялись месяцами.
     кандидаты.sort(key=lambda к: -(к["ш"] * к["в"]))
     выбор, занято = [], {}
     for к in кандидаты:
-        if занято.get(к["запрос"], 0) >= 2:
+        if занято.get(к["запрос"], 0) >= 3:
             continue
         занято[к["запрос"]] = занято.get(к["запрос"], 0) + 1
         выбор.append(к)
