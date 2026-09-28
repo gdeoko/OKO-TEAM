@@ -13,6 +13,13 @@ getUpdates - отсюда и берётся id, без угадывания.
     python3 в_телеграм.py              найти чат и отправить
     python3 в_телеграм.py -1001234567  отправить в названный чат
     python3 в_телеграм.py --чаты       только показать, что бот видит
+    python3 в_телеграм.py --ждать      ждать первого сообщения и отправить
+
+ПОДПИСКА НА СОБЫТИЯ ШИРЕ, ЧЕМ ПО УМОЛЧАНИЮ. У бота стояли только
+`message`, `edited_message` и `callback_query`, и событие о добавлении
+его в чат Телеграм ПРОСТО ВЫБРОСИЛ: обновления вне allowed_updates не
+копятся в очереди, их не существует. Поэтому список типов передаётся
+явно при каждом опросе.
 """
 import json
 import os
@@ -48,9 +55,19 @@ def зов(токен, метод, данные=None, файлы=None):
     return json.loads(р.stdout or "{}")
 
 
-def чаты(токен):
-    """Групповые чаты, которые бот видел. Личные переписки не в счёт."""
-    о = зов(токен, "getUpdates", {"limit": "100"})
+ТИПЫ = json.dumps(["message", "edited_message", "channel_post",
+                   "callback_query", "my_chat_member", "chat_member"])
+
+
+def чаты(токен, ожидание=0):
+    """Групповые чаты, которые бот видел. Личные переписки не в счёт.
+
+    ожидание - секунды длинного опроса. Бот-администратор видит в группе
+    все сообщения, поэтому первое же слово в чате даёт нам его id.
+    """
+    о = зов(токен, "getUpdates",
+            {"limit": "100", "allowed_updates": ТИПЫ,
+             "timeout": str(ожидание)})
     найдено = {}
     for у in о.get("result", []):
         for к in ("message", "my_chat_member", "channel_post",
@@ -89,8 +106,12 @@ if __name__ == "__main__":
     токен = os.environ.get("OKONTENT_BOT_TOKEN", "")
     if not токен:
         raise SystemExit("нет OKONTENT_BOT_TOKEN")
-    арг = [а for а in sys.argv[1:] if а != "--чаты"]
+    арг = [а for а in sys.argv[1:] if not а.startswith("--")]
     видно = чаты(токен)
+    if "--ждать" in sys.argv:
+        while not видно:
+            print("жду первого сообщения в чате...", flush=True)
+            видно = чаты(токен, ожидание=50)
     if "--чаты" in sys.argv:
         print(json.dumps(видно, ensure_ascii=False, indent=1) if видно
               else "бот не видит ни одного группового чата")
