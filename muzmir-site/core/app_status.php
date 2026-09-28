@@ -464,3 +464,46 @@ function app_norm_key(string $s): string {
     $s = preg_replace('~[\s\-–—_.,;:!?]+~u', ' ', $s) ?? $s;
     return trim($s);
 }
+
+/**
+ * НОМЕРА УЖЕ ВЫДАННЫХ ПО ЗАЯВКЕ ДОКУМЕНТОВ.
+ *
+ * Выдан — значит ушёл письмом (sent_at) или уехал почтой бланком (issued_at).
+ * Такой документ у человека на руках, его номер напечатан рядом с QR-кодом, и
+ * отменить выдачу задним числом нельзя.
+ *
+ * Нужно перед удалением заявки. Удаление оставляло диплом сиротой: сама запись
+ * в реестре оставалась, а страница проверки без заявки отвечала «документ не
+ * найден» — человек с настоящим бланком выглядел обманщиком. Так вышло с
+ * MZ-2026-00042 и VR-2026-00147.
+ *
+ * @return string[] номера выданных документов (пусто — заявку удалять можно)
+ */
+function app_issued_docs(int $appId): array
+{
+    if ($appId <= 0) return [];
+    try {
+        $rows = all("SELECT number FROM diplomas
+                      WHERE application_id=?
+                        AND (COALESCE(sent_at,'') <> '' OR COALESCE(issued_at,'') <> '')
+                      ORDER BY id", [$appId]);
+    } catch (\Throwable $e) { return []; }
+    return array_values(array_filter(array_map(static fn(array $r): string => (string) $r['number'], $rows)));
+}
+
+/**
+ * Отобрать из списка заявок те, по которым документы уже выданы.
+ * @return array{0:int[],1:int[],2:string[]} [можно удалять, нельзя, номера выданных]
+ */
+function app_split_deletable(array $ids): array
+{
+    $ok = []; $no = []; $docs = [];
+    foreach ($ids as $id) {
+        $id = (int) $id;
+        if ($id <= 0) continue;
+        $issued = app_issued_docs($id);
+        if ($issued) { $no[] = $id; $docs = array_merge($docs, $issued); }
+        else $ok[] = $id;
+    }
+    return [$ok, $no, $docs];
+}

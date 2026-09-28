@@ -21,12 +21,27 @@ if ($number !== '') {
     if (function_exists('rate_ok') && !rate_ok('verify:' . client_ip(), 40, 3600)) {
         $verifyLimited = true;
     } else {
+        /* ЗАЯВКА МОГЛА ИСЧЕЗНУТЬ — ДОКУМЕНТ ОТ ЭТОГО НЕ ПЕРЕСТАЛ БЫТЬ НАСТОЯЩИМ.
+         *
+         * Здесь стояло обязательное соединение с заявкой (JOIN). Стоило заявку
+         * удалить — и выданный диплом пропадал из реестра: человек с бланком в
+         * руках наводил камеру и читал «документ не найден». Так случилось с
+         * MZ-2026-00042: диплом выдан 11 сентября, заявка удалена позже.
+         *
+         * Запись диплома самодостаточна: номер, вид, звание и дата выдачи лежат
+         * в ней самой. Конкурс, если заявки уже нет, узнаём по приставке номера
+         * (VR-2026-00042 → код конкурса VR) — она и печатается на бланке. */
         $d = one("SELECT d.*, a.full_name, a.nomination, a.work_title, a.user_id,
                          a.result AS app_result, c.name AS comp_name, c.type AS comp_type
                   FROM diplomas d
-                  JOIN applications a ON a.id=d.application_id
+                  LEFT JOIN applications a ON a.id=d.application_id
                   LEFT JOIN competitions c ON c.id=a.competition_id
                   WHERE d.number=?", [$number]);
+        if ($d && trim((string) ($d['comp_name'] ?? '')) === ''
+               && preg_match('~^([A-Z]+)-~', $number, $mc)) {
+            $cc = one("SELECT name, type FROM competitions WHERE code=? ORDER BY id DESC LIMIT 1", [$mc[1]]);
+            if ($cc) { $d['comp_name'] = (string) $cc['name']; $d['comp_type'] = (string) $cc['type']; }
+        }
         /* Документ, который ещё не выдан участнику, в реестре не подтверждаем:
          * иначе через реестр можно узнать результат раньше самого участника.
          *
@@ -328,12 +343,21 @@ ob_start(); ?>
           </div>
 
           <?php if ($result): ?><div class="cert-result"><?= h($result) ?></div><?php endif; ?>
-          <div class="cert-name"><?= h(verify_short_name((string) $d['full_name'])) ?></div>
-          <?php if ($d['work_title']): ?><p class="cert-work"><?= h(wt_show((string) $d['work_title'])) ?></p><?php endif; ?>
+          <?php /* Заявки может уже не быть (её удалили после выдачи) — тогда ФИО и
+                   работы в реестре нет. Пустую строку не рисуем: подлинность
+                   подтверждают номер, звание и дата, а не фамилия. */ ?>
+          <?php if (trim((string) ($d['full_name'] ?? '')) !== ''): ?>
+            <div class="cert-name"><?= h(verify_short_name((string) $d['full_name'])) ?></div>
+          <?php endif; ?>
+          <?php if (!empty($d['work_title'])): ?><p class="cert-work"><?= h(wt_show((string) $d['work_title'])) ?></p><?php endif; ?>
 
           <div class="cert-grid">
             <div class="fld"><span>Конкурс</span><strong><?= h($d['comp_name'] ?: 'Конкурс Культурного центра «Музыкальный Мир»') ?></strong></div>
-            <div class="fld"><span>Тип</span><strong><?= $d['comp_type']==='national' ? 'Всероссийский' : 'Международный' ?></strong></div>
+            <?php /* Без конкурса тип неизвестен, и угадывать его нельзя: «Международный»
+                     по умолчанию — это утверждение, которого мы не проверяли. */ ?>
+            <?php if (!empty($d['comp_type'])): ?>
+              <div class="fld"><span>Тип</span><strong><?= $d['comp_type']==='national' ? 'Всероссийский' : 'Международный' ?></strong></div>
+            <?php endif; ?>
             <?php if ($d['nomination']): ?><div class="fld"><span>Номинация</span><strong><?= h($d['nomination']) ?></strong></div><?php endif; ?>
             <?php /* Педагог, учреждение и город здесь больше не печатаются: это
                      персональные данные третьих лиц, а для подтверждения подлинности

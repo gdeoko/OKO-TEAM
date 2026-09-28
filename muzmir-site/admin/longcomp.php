@@ -39,6 +39,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         admin_redirect('longcomp', ['competition' => $cid]);
     }
     if ($do === 'delete' && $aid) {
+        // Выданный документ отменить нельзя: заявка остаётся, диплом проверяется.
+        if (!function_exists('app_issued_docs') && is_file(BASE_PATH . '/core/app_status.php')) {
+            require_once BASE_PATH . '/core/app_status.php';
+        }
+        $issued = function_exists('app_issued_docs') ? app_issued_docs($aid) : [];
+        if ($issued) {
+            flash('Заявку нельзя удалить: по ней уже выданы наградные материалы ('
+                . implode(', ', $issued) . '). Документ на руках у участника.', 'error');
+            admin_redirect('longcomp', ['competition' => $cid]);
+        }
         q("DELETE FROM applications WHERE id=? AND competition_id=?", [$aid, $cid]);
         /* Печатный бланк из реестра не вычёркиваем: он уже напечатан и на руках,
          * а без записи QR с него ведёт в «документ не найден». */

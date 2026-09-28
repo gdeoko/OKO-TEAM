@@ -106,9 +106,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
             audit('applications_bulk', 'application', null, ['action'=>'mark_new','ids'=>$ids]);
             flash('Возвращено в новые: ' . count($ids) . '.', 'success');
         } elseif ($act === 'delete') {
-            q("DELETE FROM applications WHERE id IN ($in)", $ids);
-            audit('applications_bulk', 'application', null, ['action'=>'delete','ids'=>$ids]);
-            flash('Удалено заявок: ' . count($ids) . '.', 'success');
+            /* ЗАЯВКУ С ВЫДАННЫМ ДОКУМЕНТОМ НЕ УДАЛЯЕМ.
+             * Диплом остаётся сиротой, и страница проверки отвечает «документ не
+             * найден» — человек с настоящим бланком выглядит обманщиком. */
+            if (!function_exists('app_split_deletable')) require_once BASE_PATH . '/core/app_status.php';
+            [$canDel, $keep, $docs] = app_split_deletable($ids);
+            if ($canDel) {
+                $inDel = implode(',', array_fill(0, count($canDel), '?'));
+                q("DELETE FROM applications WHERE id IN ($inDel)", $canDel);
+                audit('applications_bulk', 'application', null, ['action'=>'delete','ids'=>$canDel]);
+            }
+            $msg = $canDel ? ('Удалено заявок: ' . count($canDel) . '.') : 'Ничего не удалено.';
+            if ($keep) {
+                $msg .= ' Оставлено ' . count($keep) . ': по ним уже выданы наградные материалы ('
+                      . implode(', ', array_slice($docs, 0, 5)) . (count($docs) > 5 ? ' и др.' : '')
+                      . ') — документ на руках у участника, и в реестре он должен остаться.';
+            }
+            flash($msg, $keep ? 'error' : 'success');
         } elseif ($act === 'flag_suspicious') {
             q("UPDATE applications SET flag='suspicious' WHERE id IN ($in)", $ids);
             audit('applications_flag', 'application', null, ['ids'=>$ids]);
@@ -169,9 +183,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'delete_app') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
     $id = (int) input('id');
     if ($id > 0) {
-        q("DELETE FROM applications WHERE id=?", [$id]);
-        audit('application_delete', 'application', $id, []);
-        flash('Заявка удалена.', 'success');
+        // Выданный документ отменить нельзя — см. app_issued_docs().
+        if (!function_exists('app_issued_docs')) require_once BASE_PATH . '/core/app_status.php';
+        $issued = app_issued_docs($id);
+        if ($issued) {
+            flash('Заявку нельзя удалить: по ней уже выданы наградные материалы ('
+                . implode(', ', $issued) . '). Документ на руках у участника, и в реестре'
+                . ' он должен остаться проверяемым.', 'error');
+        } else {
+            q("DELETE FROM applications WHERE id=?", [$id]);
+            audit('application_delete', 'application', $id, []);
+            flash('Заявка удалена.', 'success');
+        }
     }
     admin_redirect('applications');
 }
