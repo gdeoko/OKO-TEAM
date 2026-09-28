@@ -321,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
             ? mail_template('generic', [
                 'title'     => 'Ваш диплом (повторно)',
                 'name'      => (string) $name,
-                'message'   => 'Повторно направляем Ваш диплом № ' . $d['number'] . ' по конкурсу «' . $d['comp'] . '». Документ в формате PDF приложен к этому письму.',
+                'message'   => 'Повторно направляем Ваш диплом № ' . $d['number'] . ' по конкурсу «' . $d['comp'] . '». Наградной материал в формате PDF приложен к этому письму.',
                 'preheader' => 'Диплом № ' . $d['number'] . ' — во вложении.',
               ])
             : '<p>Здравствуйте, ' . h($name) . '.</p><p>Повторно направляем Ваш диплом № ' . h($d['number']) . ' по конкурсу «' . h($d['comp']) . '».</p>';
@@ -332,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
         $pdfAbs = '';
         if (function_exists('_diploma_files')) { [$pdfAbs] = _diploma_files($d); }
         if ($pdfAbs === '') {
-            flash('У этого диплома нет готового PDF — письмо не отправлено. Сгенерируйте документ и повторите.', 'error');
+            flash('У этого диплома нет готового PDF — письмо не отправлено. Сгенерируйте материал и повторите.', 'error');
             admin_redirect('diplomas', array_filter(['competition'=>$comp,'tab'=>'sent']));
         }
         $qid = insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$pdfAbs]);

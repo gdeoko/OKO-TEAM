@@ -22,7 +22,7 @@ $sig    = trim((string) ($_GET['s'] ?? ''));
 $expected = $number !== '' ? substr(hash_hmac('sha256', 'partner-doc:' . $number, pay_secret()), 0, 16) : '';
 $sigOk    = ($number !== '' && $sig !== '' && hash_equals($expected, $sig));
 
-$docType = 'документ';
+$docType = 'наградной материал';
 $org     = '';
 $fio     = '';
 $issued  = '';
@@ -49,7 +49,7 @@ if (str_starts_with($number, 'ИП-')) {
 
 $valid = $sigOk && $inRegistry;
 $reason = '';
-if (!$sigOk) $reason = 'подпись документа не совпала';
+if (!$sigOk) $reason = 'подпись наградного материала не совпала';
 elseif (!$inRegistry) $reason = 'номера нет в реестре центра';
 
 ?><!doctype html>
@@ -84,13 +84,13 @@ elseif (!$inRegistry) $reason = 'номера нет в реестре цент�
 <div class="card">
   <div class="head">
     <div class="ic"><?= $valid ? '&#10003;' : '&#10007;' ?></div>
-    <h1><?= $valid ? 'Документ подлинный' : 'Документ не подтверждён' ?></h1>
+    <h1><?= $valid ? 'Наградной материал подлинный' : 'Наградной материал не подтверждён' ?></h1>
     <p><?= $valid
-        ? 'Документ выдан Оргкомитетом Культурного центра «Музыкальный Мир» и зарегистрирован в реестре'
-        : 'Не удалось подтвердить документ: ' . htmlspecialchars($reason, ENT_QUOTES) ?></p>
+        ? 'Наградной материал выдан Оргкомитетом Культурного центра «Музыкальный Мир» и зарегистрирован в реестре'
+        : 'Не удалось подтвердить наградной материал: ' . htmlspecialchars($reason, ENT_QUOTES) ?></p>
   </div>
   <div class="body">
-    <div class="row"><div class="k">Тип документа</div><div class="v"><?= htmlspecialchars($docType, ENT_QUOTES) ?></div></div>
+    <div class="row"><div class="k">Вид наградного материала</div><div class="v"><?= htmlspecialchars($docType, ENT_QUOTES) ?></div></div>
     <div class="row"><div class="k">Номер</div><div class="v" style="font-family:monospace"><?= htmlspecialchars($number, ENT_QUOTES) ?></div></div>
     <?php if ($org): ?><div class="row"><div class="k">Организация</div><div class="v"><?= htmlspecialchars($org, ENT_QUOTES) ?></div></div><?php endif; ?>
     <?php if ($fio): ?><div class="row"><div class="k">Адресат</div><div class="v"><?= htmlspecialchars($fio, ENT_QUOTES) ?></div></div><?php endif; ?>
@@ -104,7 +104,7 @@ elseif (!$inRegistry) $reason = 'номера нет в реестре цент�
     </div>
     <?php else: ?>
     <div class="note" style="background:#FDF1F1;border-color:#E6C0C0;color:#8C2F2F">
-      Если Вы уверены, что документ подлинный — свяжитесь: <b>+7 (999) 504-88-99</b>,
+      Если Вы уверены, что наградной материал подлинный — свяжитесь: <b>+7 (999) 504-88-99</b>,
       <a href="mailto:kc@музыкальный-мир.рф" style="color:#8C2F2F">kc@музыкальный-мир.рф</a>.
     </div>
     <?php endif; ?>

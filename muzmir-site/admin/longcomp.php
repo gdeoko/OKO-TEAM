@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $issued = function_exists('app_issued_docs') ? app_issued_docs($aid) : [];
         if ($issued) {
             flash('Заявку нельзя удалить: по ней уже выданы наградные материалы ('
-                . implode(', ', $issued) . '). Документ на руках у участника.', 'error');
+                . implode(', ', $issued) . '). Наградной материал на руках у участника.', 'error');
             admin_redirect('longcomp', ['competition' => $cid]);
         }
         q("DELETE FROM applications WHERE id=? AND competition_id=?", [$aid, $cid]);

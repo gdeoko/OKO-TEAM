@@ -411,7 +411,7 @@ function partner_view_thanks(string $base, array $p, array $s, int $instId): voi
     <div class="card">
       <h3 style="margin:0 0 8px">Выданные благодарности</h3>
       <div class="table-wrap"><table>
-        <thead><tr><th>№ документа</th><th>Кому</th><th>Роль</th><th>Статус</th><th>Отправлено</th></tr></thead>
+        <thead><tr><th>№ материала</th><th>Кому</th><th>Роль</th><th>Статус</th><th>Отправлено</th></tr></thead>
         <tbody>
         <?php foreach ($issued as $t): ?>
           <tr>

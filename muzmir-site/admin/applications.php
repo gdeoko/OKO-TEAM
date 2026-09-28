@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
             if ($keep) {
                 $msg .= ' Оставлено ' . count($keep) . ': по ним уже выданы наградные материалы ('
                       . implode(', ', array_slice($docs, 0, 5)) . (count($docs) > 5 ? ' и др.' : '')
-                      . ') — документ на руках у участника, и в реестре он должен остаться.';
+                      . ') — наградной материал на руках у участника, и в реестре он должен остаться.';
             }
             flash($msg, $keep ? 'error' : 'success');
         } elseif ($act === 'flag_suspicious') {
@@ -188,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'delete_app') {
         $issued = app_issued_docs($id);
         if ($issued) {
             flash('Заявку нельзя удалить: по ней уже выданы наградные материалы ('
-                . implode(', ', $issued) . '). Документ на руках у участника, и в реестре'
+                . implode(', ', $issued) . '). Наградной материал на руках у участника, и в реестре'
                 . ' он должен остаться проверяемым.', 'error');
         } else {
             q("DELETE FROM applications WHERE id=?", [$id]);
@@ -507,7 +507,7 @@ if ($id = (int) input('id')) {
                     onclick="return confirm('Сохранить итог и отправить результат участнику прямо сейчас?')">Сохранить и отправить сейчас</button>
             <div class="small muted" style="margin-top:8px">
               Если итог изменится, а результат участнику ещё не ушёл — неотправленный диплом
-              будет пересоздан с новым званием. Уже отправленные документы не трогаются.
+              будет пересоздан с новым званием. Уже отправленные наградные материалы не трогаются.
             </div>
           </form>
         </details>
@@ -573,10 +573,10 @@ if ($id = (int) input('id')) {
         </div>
       <?php endif; ?>
 
-      <!-- ---- НАГРАДНЫЕ ДОКУМЕНТЫ ---- -->
+      <!-- ---- НАГРАДНЫЕ МАТЕРИАЛЫ ---- -->
       <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
-          <b>Наградные документы <span class="small muted">(<?= (int)$st['diplomas_sent'] ?> из <?= (int)$st['diplomas_total'] ?> отправлено)</span></b>
+          <b>Наградные материалы <span class="small muted">(<?= (int)$st['diplomas_sent'] ?> из <?= (int)$st['diplomas_total'] ?> отправлено)</span></b>
           <?php if ($st['diplomas_total'] > 0): ?>
             <span class="small">
               <?php if ($st['diplomas_sent'] === $st['diplomas_total']): ?>
@@ -589,10 +589,10 @@ if ($id = (int) input('id')) {
         </div>
 
         <?php if (!$st['diplomas']): ?>
-          <p class="small muted" style="margin:10px 0 0">Документы ещё не сформированы — появятся после аттестации (создаёт cron/send_diplomas).</p>
+          <p class="small muted" style="margin:10px 0 0">Наградные материалы ещё не сформированы — появятся после аттестации (создаёт cron/send_diplomas).</p>
         <?php else: ?>
           <div class="table-wrap" style="margin-top:10px"><table class="tbl">
-            <thead><tr><th>Документ</th><th>Номер</th><th>Состояние</th><th>Просмотр</th></tr></thead>
+            <thead><tr><th>Материал</th><th>Номер</th><th>Состояние</th><th>Просмотр</th></tr></thead>
             <tbody>
             <?php foreach ($st['diplomas'] as $d):
               $sent = trim((string)($d['sent_at'] ?? '')); $plan = trim((string)($d['scheduled_at'] ?? '')); ?>
@@ -628,7 +628,7 @@ if ($id = (int) input('id')) {
               <button class="btn btn--ghost btn--sm" name="do" value="dip_resched">Перенести</button>
               <button class="btn btn--primary btn--sm" name="do" value="dip_sendnow"><?= admin_icon('send') ?>Отправить сейчас</button>
               <button class="btn btn--ghost btn--sm" name="do" value="dip_cancel" style="color:#C0392B;border-color:#C0392B"
-                      onclick="return confirm('Отменить плановую отправку наград? Документы будут пересозданы автоматически.')">Отменить</button>
+                      onclick="return confirm('Отменить плановую отправку наград? Наградные материалы будут пересозданы автоматически.')">Отменить</button>
             <?php endif; ?>
             <?php if ($st['diplomas_sent'] > 0): ?>
               <button class="btn btn--navy btn--sm" name="do" value="dip_dup"

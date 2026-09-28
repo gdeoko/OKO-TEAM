@@ -278,7 +278,7 @@ try {
         $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
         $inner = '<h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:23px;color:#17307A;font-weight:700;">Поделитесь впечатлением</h1>'
                . '<p style="margin:0 0 12px;">' . $hello . '</p>'
-               . '<p style="margin:0 0 16px;">Вы участвовали в конкурсе «' . h((string) $a['comp_name']) . '» и получили наградные документы. '
+               . '<p style="margin:0 0 16px;">Вы участвовали в конкурсе «' . h((string) $a['comp_name']) . '» и получили наградные материалы. '
                . 'Нам очень важно Ваше мнение — расскажите, как всё прошло. Ваш отзыв помогает другим участникам и вдохновляет нас. Это займёт минуту.</p>';
         $html = function_exists('mm_email_tx') ? mm_email_tx($inner, [
             'preheader' => 'Расскажите о конкурсе «' . (string) $a['comp_name'] . '»',

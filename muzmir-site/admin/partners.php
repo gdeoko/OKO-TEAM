@@ -286,7 +286,7 @@ $abTotal = (int) (($ab['a']['n'] ?? 0) + ($ab['b']['n'] ?? 0));
         <p class="small muted">Партнёр ещё не заказывал благодарности.</p>
       <?php else: ?>
         <div class="table-wrap"><table class="tbl">
-          <thead><tr><th>№ документа</th><th>Кому</th><th>Роль</th><th>Статус</th><th>План. отправка</th><th>Отправлено</th><th>Действия</th></tr></thead>
+          <thead><tr><th>№ материала</th><th>Кому</th><th>Роль</th><th>Статус</th><th>План. отправка</th><th>Отправлено</th><th>Действия</th></tr></thead>
           <tbody>
           <?php foreach ($th as $t): ?>
             <tr>

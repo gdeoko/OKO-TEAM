@@ -360,7 +360,7 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.(pdf|jpg|png)$#', $route, $m)) {
     $__sigOk = $__sig !== '' && diploma_sign_ok((string) $d['number'], $__sig);
     if (!$__mine && !$__staff && !$__sigOk) {
         http_response_code(403);
-        echo 'Этот документ доступен только участнику. Войдите в личный кабинет — все Ваши дипломы там.';
+        echo 'Этот наградной материал доступен только участнику. Войдите в личный кабинет — все Ваши дипломы там.';
         exit;
     }
     // НАГРАДНЫЙ МАТЕРИАЛ ОТКРЫВАЕТСЯ НЕ РАНЬШЕ, ЧЕМ УХОДИТ НА ПОЧТУ.
@@ -458,7 +458,7 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     $__sigOk2 = $__sig !== '' && diploma_sign_ok((string) $d['number'], $__sig);
     if (!$__mine && !$__staff && !$__sigOk2) {
         http_response_code(403);
-        echo 'Этот документ доступен только участнику. Проверить подлинность диплома по номеру можно на странице «Проверка документа».';
+        echo 'Этот наградной материал доступен только участнику. Проверить подлинность диплома по номеру можно на странице «Проверка наградного материала».';
         exit;
     }
     // До отправки бланк не показываем даже владельцу: см. соседний маршрут.
@@ -491,14 +491,14 @@ if (preg_match('#^/letter-view/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
     ol_migrate();
     $__num = $m[1] . '/' . $m[2];
     $__row = one("SELECT * FROM official_letters WHERE number=?", [$__num]);
-    if (!$__row) { http_response_code(404); echo 'Документ не найден'; exit; }
+    if (!$__row) { http_response_code(404); echo 'Наградной материал не найден'; exit; }
 
     $__me    = function_exists('current_user') ? current_user() : null;
     $__staff = function_exists('user_can') && $__me && user_can('moderator');
     $__sig   = (string) ($_GET['s'] ?? '');
     if (!$__staff && !($__sig !== '' && hash_equals(ol_sign($__num), $__sig))) {
         http_response_code(403);
-        echo 'Документ доступен по ссылке из письма. Проверить его подлинность по номеру можно на странице «Проверка документа».';
+        echo 'Наградной материал доступен по ссылке из письма. Проверить его подлинность по номеру можно на странице «Проверка наградного материала».';
         exit;
     }
     $__html = ol_html_for($__num, [
