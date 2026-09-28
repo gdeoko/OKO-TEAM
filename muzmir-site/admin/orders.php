@@ -199,7 +199,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 . ' в «Изменить адрес» и повторите.', 'error');
             admin_redirect('orders');
         }
-        foreach ($ids as $i) update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+        foreach ($ids as $i) {
+            update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+            /* ДОКУМЕНТ НАПЕЧАТАН — ЗНАЧИТ, ОН УЖЕ ЕСТЬ, И QR НА НЁМ ОБЯЗАН РАБОТАТЬ.
+             *
+             * Отметка стояла на отправке, и между печатью и почтой свежий бланк
+             * отвечал «документ не найден»: первым же его проверяет тот, кто
+             * печатал, и видит поломку там, где её нет. Секрета тут никакого:
+             * печатный оригинал человек заказывает УЖЕ ЗНАЯ свой результат, а в
+             * реестре видно ровно то, что напечатано на самом бланке. */
+            if (function_exists('order_mark_printed_issued')) order_mark_printed_issued((int) $i);
+        }
         flash('Отмечено как изготовленное' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');
     }
