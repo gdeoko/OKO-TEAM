@@ -22,6 +22,7 @@ APIMODELS отвечает `code:200` на любое лишнее поле и �
     python3 карусель.py <лицо> [выход]
 """
 import base64
+import hashlib
 import json
 import os
 import subprocess
@@ -120,7 +121,11 @@ def задачи(новое=None):
 
 def сделать(промпт, образцы, ключ, имя):
     """Одна картинка. Образцы - список ссылок или data-URI, знак первым."""
-    з = задачи().get(имя)
+    # Начатая задача годится, только если промпт с тех пор не менялся:
+    # иначе дождёмся картинки по старому тексту и не заметим этого.
+    отпечаток = hashlib.sha1(промпт.encode("utf-8")).hexdigest()[:12]
+    было = задачи().get(имя) or {}
+    з = было.get("id") if было.get("промпт") == отпечаток else None
     if з:
         print("  %s: дожидаюсь начатой задачи %s" % (имя, з), flush=True)
     else:
@@ -138,7 +143,7 @@ def сделать(промпт, образцы, ключ, имя):
             print("  %s: задачу не приняли: %s" % (имя, п.stdout[:200]),
                   flush=True)
             return None
-        задачи({имя: з})
+        задачи({имя: {"id": з, "промпт": отпечаток}})
     for _ in range(150):
         р = зов([БАЗА + "/images/generations?task_id=" + з], ключ).get("data", {})
         с = (р.get("state") or "").lower()
@@ -183,8 +188,18 @@ def знак_датой():
 # пришедший по карусели, видит в боте ровно те же надписи. Из шести кнопок
 # раздевания взяты четыре самые сдержанные: карусель уходит в Instagram и
 # TikTok, и подпись вроде «юбка задрана» снимает не ролик, а аккаунт.
+# Каждый слайд это имя, заголовок, подзаголовок, способ подачи текста и
+# сцена. Заголовки и подзаголовки НЕ рисуются кодом: они уходят в промпт
+# и рождаются внутри кадра вместе с ним - правило владельца от 28.09.2026.
+# Руками собирается только последний слайд, и только потому, что под ним
+# настоящий результат бота (`финал.py`).
+#
+# ПОДАЧА чередуется по правилу канона «в половине единиц текст и лого
+# живут внутри сцены»: "предмет" - надпись существует в кадре вещью
+# (неоновая вывеска, буквы на стекле, свет на столе), "набор" - чистая
+# типографика в тёмном пустом месте кадра.
 СЛАЙДЫ = [
- ("1-хук",
+ ("1-хук", "ОДНО ФОТО", "И ОНА УЖЕ ДВИГАЕТСЯ", "предмет",
   "SCENE: the woman stands three quarters to camera in a dim luxury hotel "
   "suite at night, floor to ceiling window behind her with a blurred city "
   "far below, a warm bedside lamp on the right, an unmade white bed at the "
@@ -194,37 +209,37 @@ def знак_датой():
   "straight into the lens. ON THE WALL far behind her, small and clearly in "
   "the background, hangs a neon sign of the brand mark from the attached "
   "reference file, glowing hot pink, with its light reflected in the glossy "
-  "floor - this is the only copy of the mark in the frame. TEXT: across the "
-  "lower third, over the darkest part of the frame and never over her face "
-  "or body, set two lines of Russian text. First line, large and heavy: "
-  "\"ОДНО ФОТО\". Second line directly under it, same weight, slightly "
-  "smaller: \"И ОНА УЖЕ ДВИГАЕТСЯ\". Both lines white with a thin hot pink "
-  "neon outline. Nothing else is written anywhere in the image."),
+  "floor - this is the only copy of the mark in the frame. The headline and "
+  "the subheadline described below exist in this scene as a second neon "
+  "sign mounted on the dark wall in the lower third, its tubes glowing and "
+  "reflected in the floor, never as a flat caption laid over the photo."),
 
- ("2-меню",
+ ("2-меню", "ЗАГРУЖАЕШЬ ФОТО", "Бот отвечает меню", "набор",
   "SCENE: a realistic photograph of a modern smartphone held upright in a "
-  "woman's hand with a soft pink manicure, the phone fills most of the "
-  "frame, shot slightly from above over a dark glossy table with neon pink "
-  "reflections. ON THE PHONE SCREEN: a dark Telegram-style chat interface, "
-  "true to a messenger, with a dark grey background. At the top of the "
-  "screen a small round avatar showing the brand mark from the attached "
-  "reference file, and beside it the account name \"AMBERRY\" in white. "
-  "Below it a photo message showing the woman from the attached reference "
-  "photograph in her satin slip dress, small, as a sent picture inside the "
-  "chat bubble. Under the photo, four wide rounded dark buttons stacked "
-  "vertically, each with white Russian text centred: \"ПОПУЛЯРНОЕ\", "
-  "\"РАЗДЕТЬ\", \"ВИДЕО\", \"СВОЙ ПРОМПТ\". The second button "
-  "\"РАЗДЕТЬ\" is highlighted with a hot pink glow as if being pressed, a "
-  "faint fingertip touching it. TEXT OUTSIDE THE PHONE: none at all. The "
-  "interface must look like a real messenger screenshot, crisp and legible, "
-  "not a cartoon."),
+  "woman's hand with a soft pink manicure, the phone occupies the lower two "
+  "thirds of the frame, shot slightly from above over a dark glossy table "
+  "with neon pink reflections, the top of the frame left as clean dark "
+  "space for the headline. ON THE PHONE SCREEN: a dark Telegram-style chat "
+  "interface, true to a messenger, with a dark grey background. At the top "
+  "of the screen a small round avatar showing the brand mark from the "
+  "attached reference file, and beside it the account name \"AMBERRY\" in "
+  "white. Below it a photo message showing the woman from the attached "
+  "reference photograph in her satin slip dress, small, as a sent picture "
+  "inside the chat bubble. Under the photo, four wide rounded dark buttons "
+  "stacked vertically, each with white Russian text centred: "
+  "\"ПОПУЛЯРНОЕ\", \"РАЗДЕТЬ\", \"ВИДЕО\", \"СВОЙ ПРОМПТ\". The "
+  "second button \"РАЗДЕТЬ\" is highlighted with a hot pink glow as if "
+  "being pressed, a faint fingertip touching it. The interface must look "
+  "like a real messenger screenshot, crisp and legible, not a cartoon."),
 
- ("3-выбор",
-  # ДВЕ ПЕРЕСЪЁМКИ ПОДРЯД: модель смягчала надпись сама - сперва до
-  # «ПЕРЕОДЕТЬСЯ», потом до «ОДЕТЬ». Спотыкалась она не о слово
-  # «РАЗДЕТЬ» (на слайде 2 оно встало с первого раза), а о пару с
-  # подписью «Твоё фото, без одежды» под ним. Подпись заменена на
-  # настоящие подписи кнопок бота - «Одна героиня» и «Двое в кадре».
+ ("3-выбор", "ВЫБИРАЕШЬ РЕЖИМ", "Одна или двое в кадре", "предмет",
+  # ДВЕ ПОДМЕНЫ И ОДИН ОТКАЗ. Модель сама меняла надпись кнопки - сперва
+  # на «ПЕРЕОДЕТЬСЯ», потом на «ОДЕТЬ», - а требование воспроизвести
+  # «РАЗДЕТЬ / Твоё фото, без одежды» буква в букву вернулось отказом
+  # CONTENT_MODERATION. Спотыкается она не о слово «РАЗДЕТЬ» (на слайде 2
+  # оно встало с первого раза кнопкой в ряду), а о пару с подписью «без
+  # одежды». Подпись заменена на настоящие подписи кнопок бота - «Одна
+  # героиня» и «Двое в кадре» (catalog.py, un_solo и un_group).
   "SCENE: the woman sits at a dark glossy bar counter in a room lit only "
   "by tall vertical pink neon tubes, turned away from camera and looking "
   "back over her bare shoulder straight into the lens, wearing the same "
@@ -241,36 +256,80 @@ def знак_датой():
   "\"Одна героиня\" beneath, the second reads \"ГРУППОВОЕ\" with "
   "\"Двое в кадре\" beneath. The first button glows hot pink as if just "
   "pressed. Under them a narrow row of two smaller buttons reading "
-  "\"НАЗАД\" and \"МЕНЮ\". Every one of these Russian strings must be "
-  "reproduced letter for letter exactly as written here - they are the "
-  "real wording of the product menu, they are not to be paraphrased and "
-  "not to be replaced by any other Russian word. TEXT OUTSIDE THE PHONE: "
-  "none at all. Every Russian word spelled correctly, letters unbroken."),
+  "\"НАЗАД\" and \"МЕНЮ\". These Russian strings are the real wording "
+  "of the product menu and are reproduced letter for letter. The headline "
+  "and subheadline described below exist in this scene as glowing letters "
+  "written across the dark mirrored wall behind her, in the clean space to "
+  "the right of the neon mark, never as a flat caption over the photo."),
 
- ("4-кнопки",
+ ("4-кнопки", "ВЫБИРАЕШЬ РАКУРС", "План и поза - из каталога", "набор",
   "SCENE: the same smartphone held in the same hand, this time seen almost "
-  "straight on, the dark room and pink neon tubes reflected along the glass "
-  "edge. ON THE PHONE SCREEN: the same dark chat, now showing a list of "
-  "choices. A heading bubble in white Russian text reads \"РАЗДЕВАНИЕ\" "
-  "and under it in grey \"Ракурс, план, поза\". Below it four wide rounded "
-  "dark buttons stacked vertically, each with white Russian text centred and "
-  "fully readable: \"СТОЯ ВО ВЕСЬ РОСТ\", \"СО СПИНЫ\", \"ВПОЛОБОРОТА\", "
-  "\"ЛЁЖА НА СПИНЕ\". The third button glows hot pink as if being chosen. "
-  "TEXT OUTSIDE THE PHONE: none. The screen must read as a genuine messenger "
-  "menu, sharp and believable."),
+  "straight on in the lower two thirds of the frame, the dark room and pink "
+  "neon tubes reflected along the glass edge, the top of the frame left as "
+  "clean dark space for the headline. ON THE PHONE SCREEN: the same dark "
+  "chat, now showing a list of choices. A heading bubble in white Russian "
+  "text reads \"РАЗДЕВАНИЕ\" and under it in grey \"Ракурс, план, "
+  "поза\". Below it four wide rounded dark buttons stacked vertically, "
+  "each with white Russian text centred and fully readable: \"СТОЯ ВО "
+  "ВЕСЬ РОСТ\", \"СО СПИНЫ\", \"ВПОЛОБОРОТА\", \"ЛЁЖА НА СПИНЕ\". "
+  "The third button glows hot pink as if being chosen. The screen must "
+  "read as a genuine messenger menu, sharp and believable."),
 
- ("5-ждём",
-  "SCENE: the same smartphone lying flat now on the dark glossy table, the "
+ ("5-ждём", "ПОЛМИНУТЫ", "И результат у тебя", "предмет",
+  "SCENE: the same smartphone lying flat on the dark glossy table, the "
   "woman's hand withdrawn to the edge of frame, pink neon reflected across "
   "the table surface, a shallow depth of field so the far edge of the table "
   "melts into darkness. ON THE PHONE SCREEN: the dark chat with a single "
   "message bubble in the centre. Inside it a thin circular progress ring "
   "glowing hot pink, partly filled, and under the ring two lines of Russian "
   "text in white: \"ГЕНЕРИРУЮ\" on the first line and \"это займёт "
-  "полминуты\" in smaller lighter grey on the second. Nothing else on the "
-  "screen. TEXT OUTSIDE THE PHONE: none. The whole slide should feel like a "
-  "held breath: dark, quiet, one glowing ring."),
+  "полминуты\" in smaller lighter grey on the second. The headline and "
+  "subheadline described below exist in this scene as pink neon lettering "
+  "standing on the table behind the phone and reflected in its polished "
+  "surface, never as a flat caption over the photo. The whole slide should "
+  "feel like a held breath: dark, quiet, one glowing ring."),
 ]
+
+
+def текстовый_блок(заголовок, подзаголовок, подача, номер, всего):
+    """Заголовок, подзаголовок и нумерация - куском промпта, а не кодом.
+
+    Правило владельца от 28.09.2026: весь текст слайда, вся разметка и
+    нумерация прописываются в едином промпте. Руками не ставится ничего,
+    кроме последнего слайда, где под аутро лежит настоящий кадр бота.
+    """
+    если_предмет = (
+        "These two Russian lines are not a caption pasted on top of the "
+        "picture: they are a real object inside the scene as the scene "
+        "description says, lit by the same light, casting the same "
+        "reflections, standing in the same perspective as everything "
+        "around them. ")
+    если_набор = (
+        "These two Russian lines are set as clean typography in the empty "
+        "dark part of the frame, never over her face or body, with at "
+        "least sixty pixels of clear space on every side. ")
+    return (
+        " TEXT OF THE SLIDE. The slide carries exactly three pieces of "
+        "Russian text and nothing else beyond what the scene description "
+        "already puts on the phone screen. "
+        "HEADLINE, the largest text in the frame, heavy condensed "
+        "uppercase, pure white core with a thin hot pink neon outline and "
+        "a soft outer glow, reading exactly: \"%s\". "
+        "SUBHEADLINE, directly under the headline, the same family at "
+        "roughly half the size, lighter weight, reading exactly: \"%s\". "
+        "%s"
+        "SLIDE NUMBER, in the top right corner of the frame, small and "
+        "quiet, about one fortieth of the frame height, a thin hot pink "
+        "rounded outline badge with white text inside reading exactly: "
+        "\"%d/%d\". It must never touch the edge of the frame and never "
+        "overlap anything else. "
+        "Every Russian letter is spelled exactly as written here, "
+        "unbroken, not duplicated, not transliterated, with no extra word "
+        "invented and no word dropped. No other text of any kind appears "
+        "anywhere in the image."
+        % (заголовок, подзаголовок,
+           если_предмет if подача == "предмет" else если_набор,
+           номер, всего))
 
 
 def собрать(лицо_url, ключ, только=None):
@@ -283,7 +342,8 @@ def собрать(лицо_url, ключ, только=None):
     """
     знак = знак_датой()
     готовые = []
-    for имя, сцена in СЛАЙДЫ:
+    всего = len(СЛАЙДЫ) + 1          # плюс последний, собранный кодом
+    for номер, (имя, заг, подзаг, подача, сцена) in enumerate(СЛАЙДЫ, 1):
         if только and имя not in только:
             continue
         есть = os.path.join(ТУТ, имя + ".png")
@@ -291,7 +351,8 @@ def собрать(лицо_url, ключ, только=None):
             print("%s уже есть, не переделываю" % имя, flush=True)
             готовые.append(есть)
             continue
-        промпт = " ".join([ОБЩЕЕ, ЛИЦО, сцена])
+        промпт = " ".join([ОБЩЕЕ, ЛИЦО, сцена]) + текстовый_блок(
+            заг, подзаг, подача, номер, всего)
         print("%s: промпт %d знаков" % (имя, len(промпт)), flush=True)
         if len(промпт) < 3000:
             print("  КОРОТКО, канон требует от 3000 - слайд не идёт", flush=True)
