@@ -1,7 +1,4 @@
-/* ТЕМА «ПЛАНЕТА» ДЛЯ ПРИЛОЖЕНИЯ ROCKET VPN
-
-   Вариант первый из трёх, названных Даниэлем: «планета вращающаяся -
-   это 1 вариант, и что-то из неё летит на пинги вначале».
+/* ROCKET VPN, ТЕМА «ПЛАНЕТА»
 
    ── РАЗМЕР СЧИТАЕТСЯ ОТ ВЫСОТЫ ЭКРАНА, А НЕ ЗАПИСАН В ТОЧКАХ ──────
    Приложение открывают на телефонах от 320 до 1290 точек шириной, и
@@ -9,39 +6,55 @@
    единица одна: сотая доля высоты окна, поделённая на рост эталонного
    экрана. Всё остальное считается от неё.
 
-   Отсюда и ответ на главную претензию клиента («качество изображений
-   низкое, при увеличении расплывается»): картинки нет вовсе, есть
-   вёрстка. Её пересчитывают под любой размер и любую плотность точек,
-   и она остаётся резкой там, где растр давно поплыл. */
+   Отсюда и ответ на главную претензию владельца («качество изображений
+   низкое, при увеличении расплывается»): картинки нет, есть вёрстка.
+   Её пересчитывают под любой размер и любую плотность точек.
+
+   ── СТЕКЛО, А НЕ МУТЬ ─────────────────────────────────────────────
+   Слово Даниэля по кадру: «муть какая-то появилась, нужно чтобы она
+   была глянцевая прозрачная стеклянная премиум, с каким-то свечением
+   неоновым крутым, чтобы всё чёткое было, резкое, детализированное».
+
+   Муть и стекло делаются разными вещами, и первый сбор перепутал их.
+   Муть это ровная полупрозрачная заливка поверх размытого фона: она
+   гасит и фон, и содержимое. Стекло это ЧЁТКАЯ кромка, глянцевый блик
+   по верхнему краю, косой отсвет по поверхности и резкая тень под
+   низом. Размытие под стеклом при этом сильное - именно оно отделяет
+   карточку от фона, - а сама карточка остаётся резкой до пикселя.
+
+   Неон здесь тонкий: линия в один пиксель и плотное свечение вокруг
+   неё. Широкое мягкое сияние без линии читается не неоном, а тем же
+   туманом, от которого владелец и отказался. */
 
 :root {
   --синий:      #2f7bff;
   --синий-свет: #8fd6ff;
-  --лёд:        #d9f0ff;
-  --бумага:     #eef2fb;
-  --тихий:      #949cb0;
-  --хорошо:     #47d18a;
-  --средне:     #f0b445;
+  --лёд:        #dff2ff;
+  --бумага:     #eef3fc;
+  --тихий:      #9aa3b8;
+  --хорошо:     #3ddc97;
+  --средне:     #ffb648;
   --мёртвый:    #5a6172;
-  --стекло:     rgba(255,255,255,.055);
-  --кромка:     rgba(255,255,255,.085);
+  --золото:     #ffcf5c;
+
+  /* Стекло одной записью: все карточки экрана обязаны быть одним
+     материалом. Разойдутся - интерфейс развалится на лоскуты. */
+  --стекло-фон: linear-gradient(157deg, rgba(255,255,255,.10), rgba(255,255,255,.028) 46%, rgba(255,255,255,.062));
+  --стекло-край: rgba(255,255,255,.13);
+  --стекло-тень:
+    inset 0 1px 0 rgba(255,255,255,.26),
+    inset 0 -1px 0 rgba(255,255,255,.05),
+    inset 0 0 2.4rem rgba(120,180,255,.05),
+    0 .7rem 2.2rem rgba(0,0,0,.45);
 }
 
-/* Единица роста. Эталон 932 точки высоты (iPhone 15 Pro Max), и один
-   рем это десять точек на нём. На экране другой высоты рем меняется
-   сам, и весь макет едет следом целиком, а не кусками. */
 html { font-size: calc(100vh / 93.2); }
-/* ── НА ТЕЛЕФОНЕ ВЫСОТА ОКНА МЕНЯЕТСЯ НА ХОДУ ──────────────────
-   Адресная строка браузера уезжает при прокрутке, и вместе с ней
-   меняется высота окна. Единица vh считается по БОЛЬШОЙ высоте, то
-   есть без адресной строки: пока она на экране, низ макета уходит за
-   край, и нижняя навигация оказывается под ней.
-
-   Единица dvh меряет то, что видно прямо сейчас. Старая строка выше
-   остаётся запасной: браузеры без dvh просто её и возьмут. */
-@supports (height: 100dvh) {
-  html { font-size: calc(100dvh / 93.2); }
-}
+/* На телефоне адресная строка уезжает при прокрутке, и вместе с ней
+   меняется высота окна. Единица vh считается по БОЛЬШОЙ высоте, то есть
+   без адресной строки: пока она на экране, низ макета уходит за край и
+   нижняя навигация оказывается под ней. Единица dvh меряет то, что
+   видно прямо сейчас; строка выше остаётся запасной. */
+@supports (height: 100dvh) { html { font-size: calc(100dvh / 93.2); } }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -63,11 +76,13 @@ html { font-size: calc(100vh / 93.2); }
 }
 
 body {
-  background: #04060c;
+  background: #03050b;
   font-family: "Голос", system-ui, sans-serif;
   color: var(--бумага);
   display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; min-height: 100dvh; overflow: hidden;
+  min-height: 100vh; min-height: 100dvh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 .телефон {
@@ -75,50 +90,59 @@ body {
   width: 100vw; height: 100vh; height: 100dvh; max-width: 100vw;
   overflow: hidden;
   display: flex; flex-direction: column;
-  background: #05070f;
+  background: #03050b;
   isolation: isolate;
 }
+
+/* ── ОБЩЕЕ СТЕКЛО ────────────────────────────────────────────────
+   Косой отсвет по поверхности идёт отдельным слоем: он обязан лежать
+   ПОД содержимым карточки, иначе перекроет текст. */
+.стекло {
+  position: relative;
+  background: var(--стекло-фон);
+  border: 1px solid var(--стекло-край);
+  box-shadow: var(--стекло-тень);
+  -webkit-backdrop-filter: blur(1.8rem) saturate(175%);
+          backdrop-filter: blur(1.8rem) saturate(175%);
+  overflow: hidden;
+}
+.стекло::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: linear-gradient(113deg, rgba(255,255,255,.085) 0%, rgba(255,255,255,0) 34%,
+              rgba(255,255,255,0) 62%, rgba(255,255,255,.05) 100%);
+}
+.стекло > * { position: relative; z-index: 1; }
 
 /* ── НЕБО: ГАЛАКТИКА НА ВЕСЬ ЭКРАН ───────────────────────────────
    Слово Даниэля: «космос красивый из игры и планеты вдалеке разные,
    как галактика, вселенная с планетами разными».
 
-   Всё нарисовано градиентами и четырьмя снимками планет из космоса
-   игры Rocket CDN. Ни одного полноэкранного растра: фоновая картинка в
-   1290 точек шириной весит под мегабайт, мылится на планшете и всё
-   равно повторяется у каждого второго. Градиент занимает килобайты и
-   резок на любой плотности.
+   Всё нарисовано градиентами и четырьмя снимками планет из космоса игры
+   Rocket CDN. Ни одного полноэкранного растра: фоновая картинка в 1290
+   точек весит под мегабайт, мылится на планшете и всё равно
+   повторяется. Градиент занимает килобайты и резок на любой плотности. */
+.небо { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #03050b; }
 
-   Звёзд две россыпи с разной величиной и разным дыханием. Одна россыпь
-   мерцает целиком и читается миганием экрана; две, дышащие вразнобой,
-   читаются небом. */
-.небо { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-
-/* Полоса Млечного Пути наискось через весь экран. Наклон и размытие
-   подобраны так, чтобы она проходила ЗА кнопкой и за списком, а не
-   упиралась в них: полоса, обрывающаяся у карточки, читается ошибкой
-   вёрстки. */
 .млечный {
   position: absolute; left: -35%; top: -12%; width: 170%; height: 124%;
   transform: rotate(-24deg);
-  background:
-    linear-gradient(90deg, transparent 0%, rgba(150,170,255,.05) 18%,
-      rgba(198,186,255,.13) 38%, rgba(160,205,255,.16) 52%,
-      rgba(198,186,255,.10) 68%, transparent 92%);
-  filter: blur(2.6rem);
-  opacity: .9;
+  background: linear-gradient(90deg, transparent 0%, rgba(150,170,255,.05) 18%,
+    rgba(198,186,255,.12) 38%, rgba(160,205,255,.15) 52%, rgba(198,186,255,.09) 68%, transparent 92%);
+  filter: blur(2.2rem);
 }
 
 .туманность {
   position: absolute; inset: -10%;
   background:
-    radial-gradient(38% 26% at 22% 16%, rgba(47,123,255,.30), transparent 70%),
-    radial-gradient(30% 22% at 84% 34%, rgba(150,88,255,.22), transparent 72%),
-    radial-gradient(34% 24% at 62% 78%, rgba(0,190,220,.16), transparent 74%),
-    radial-gradient(26% 20% at 12% 68%, rgba(255,110,160,.12), transparent 74%);
-  filter: blur(2.2rem);
+    radial-gradient(34% 22% at 20% 14%, rgba(47,123,255,.26), transparent 72%),
+    radial-gradient(26% 18% at 86% 32%, rgba(150,88,255,.18), transparent 74%),
+    radial-gradient(30% 20% at 64% 80%, rgba(0,190,220,.13), transparent 76%);
+  filter: blur(1.6rem);
 }
 
+/* Звёзды точками градиента: точка остаётся точкой при любой плотности
+   экрана, а звёздное небо в webp на третьей плотности превращается в
+   кашу. Две россыпи дышат вразнобой: одна читалась бы миганием. */
 .звёзды {
   position: absolute; inset: 0;
   background:
@@ -158,216 +182,138 @@ body {
 @keyframes мерцание { 0%,100% { opacity: .7 } 50% { opacity: 1 } }
 
 /* ── ПЛАНЕТЫ ВДАЛЕКЕ ────────────────────────────────────────────
-   Каждая это круг с картой из космоса игры Rocket CDN, ночная сторона
-   и тонкая освещённая кромка. Карта не крутится: на таком размере
-   оборот не прочесть, а лишняя анимация стоит кадров на телефоне.
+   Каждая это круг с картой из космоса игры, ночная сторона и тонкая
+   освещённая кромка. Карта не крутится: на таком размере оборот не
+   прочесть, а лишняя анимация стоит кадров на телефоне.
 
-   ── ПЛОТНЫЕ И ТЁМНЫЕ, А НЕ БЛЕДНЫЕ ──────────────────────────────
-   Первый сбор сделал их полупрозрачными и обвёл белым ореолом. В кадре
-   это дало не планеты, а светлые пятна: Юпитер под строкой поиска
-   читался засветкой объектива, Сатурн у Турции - грязью на стекле.
-   Бледность на тёмном фоне не отодвигает предмет вдаль, она его
-   растворяет.
-
-   Даль делается иначе: цвет остаётся насыщенным, но общая яркость
-   уходит вниз, и добавляется ночная сторона с той же стороны, откуда
-   светит солнце у Земли. Планета остаётся планетой, при этом она
-   темнее интерфейса и с ним не спорит.
-
-   ── СТОЯТ В НИЖНЕЙ ПОЛОВИНЕ, ЗА СПИСКОМ ─────────────────────────
-   Там, где карточки серверов полупрозрачны. Слово Даниэля: «когда
-   молния по ним бьёт, на фоне лучше становится видно планеты». Значит
-   планеты обязаны быть именно ПОД карточками, а не в пустом углу. */
+   РЕЗКИЕ, А НЕ РАЗМЫТЫЕ. Пробовалось и то, и другое. Бледные с белым
+   ореолом дали светлые пятна: Юпитер под строкой поиска читался
+   засветкой объектива. Расфокусировка в другую сторону превратила его в
+   кремовую дымку. Даль здесь делается ТЕМНОТОЙ относительно
+   интерфейса, а резкость остаётся: владелец просил «чтобы всё чёткое
+   было, резкое, детализированное». */
 .далёкая { position: absolute; border-radius: 50%; pointer-events: none; }
-
 .далёкая i {
   position: absolute; inset: 0; border-radius: 50%; display: block;
   background-size: cover; background-position: 42% 50%;
-  /* Лёгкая расфокусировка это не украшение: глаз читает нерезкое как
-     далёкое, и планета перестаёт спорить с текстом поверх неё, сама
-     при этом оставаясь планетой. */
-  /* Расфокусировка мелкая, а яркость умеренная. Проба на живой
-     странице показала перегиб в другую сторону: при .54 и размытии в
-     .12 рема Юпитер превратился в кремовую дымку у левого края, и
-     планеты снова стали не видны. Даль читается ТЕМНОТОЙ относительно
-     интерфейса, а не растворением. */
-  filter: saturate(1.5) contrast(1.16) brightness(.72) blur(.05rem);
+  filter: saturate(1.5) contrast(1.2) brightness(.78);
 }
 /* Ночная сторона и освещённая кромка. Солнце то же, что у Земли:
    сверху слева. Два источника света на одном экране читаются ошибкой. */
 .далёкая::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%; z-index: 1;
   background: radial-gradient(125% 125% at 26% 22%,
-    rgba(255,255,255,.14) 0%, rgba(0,0,0,0) 34%,
-    rgba(3,5,12,.62) 74%, rgba(3,5,12,.92) 100%);
+    rgba(255,255,255,.15) 0%, rgba(0,0,0,0) 34%, rgba(3,5,12,.6) 74%, rgba(3,5,12,.92) 100%);
 }
 .далёкая::after {
   content: ""; position: absolute; inset: -.12rem; border-radius: 50%; z-index: 2;
-  box-shadow: inset .12rem .1rem .5rem rgba(255,245,225,.22);
+  box-shadow: inset .12rem .1rem .55rem rgba(255,246,228,.26);
 }
 
-.далёкая.юпитер { left: -4.6rem; top: 48rem; width: 15rem;  height: 15rem;  opacity: .95; }
+.далёкая.юпитер { left: -4.6rem; top: 48rem; width: 15rem;  height: 15rem;  }
 .далёкая.юпитер i { background-image: url("ассеты/jupiter.webp"); }
-
-.далёкая.сатурн { right: -2.8rem; top: 65rem; width: 9.4rem; height: 9.4rem; opacity: .95; }
+.далёкая.сатурн { right: -2.8rem; top: 65rem; width: 9.4rem; height: 9.4rem; }
 .далёкая.сатурн i { background-image: url("ассеты/saturn.webp"); }
 /* Кольцо рисуется, а не берётся из картинки: в развёртке его нет
-   вовсе, а без кольца Сатурн это просто бежевый шар. Передняя дуга
-   кольца обязана проходить ПОВЕРХ шара, задняя за ним, поэтому кольцо
-   лежит отдельным узлом с зазором под планету. */
+   вовсе, а без кольца Сатурн это просто бежевый шар. */
 .далёкая.сатурн u {
   position: absolute; left: 50%; top: 50%;
   width: 17rem; height: 4.6rem; display: block; z-index: 3;
   transform: translate(-50%,-50%) rotate(-17deg);
   border-radius: 50%;
-  border: .18rem solid rgba(214,192,152,.42);
-  box-shadow: 0 0 .7rem rgba(214,192,152,.14);
+  border: .18rem solid rgba(220,199,160,.48);
+  box-shadow: 0 0 .6rem rgba(220,199,160,.16);
 }
-
-.далёкая.марс   { right: 5.2rem; top: 43rem; width: 4.2rem; height: 4.2rem; opacity: .85; }
+.далёкая.марс   { right: 5.2rem; top: 43rem; width: 4.2rem; height: 4.2rem; }
 .далёкая.марс i { background-image: url("ассеты/mars.webp"); }
-
-.далёкая.нептун { left: 3.2rem;  top: 80rem; width: 5.4rem; height: 5.4rem; opacity: .88; }
+.далёкая.нептун { left: 3.2rem;  top: 80rem; width: 5.4rem; height: 5.4rem; }
 .далёкая.нептун i { background-image: url("ассеты/neptune.webp"); }
 
-/* ── ПЛАНЕТА ─────────────────────────────────────────────────────
-   Шар стоит ровно по центру кнопки, а не «где-то сверху». Кнопка сидит
-   на 21.25 рема от верха экрана (статусбар 5.4, шапка 5.2, слоган 2.4,
-   половина своего места 8.25), значит верх шара это 21.25 минус
-   радиус. Числа сходятся арифметикой, а не подбором. */
-/* ── ШАР НЕ ЛЕЗЕТ НА НАЗВАНИЕ ──────────────────────────────────
-   Слово Даниэля: «сверху планета Земля так же, но чтобы не перекрывала
-   название сверху». В прошлом сборе шар в тридцать ремов начинался на
-   6.25 и материк приходился ровно на «Rocket VPN».
+/* ── ПЛАНЕТА ЗЕМЛЯ ──────────────────────────────────────────────
+   Шар стоит ровно по центру кнопки. Кнопка сидит на 21.25 рема от
+   верха экрана (статусбар 5.4, шапка 5.2, слоган 2.4, половина своего
+   места 8.25), значит верх шара это 21.25 минус радиус. Числа сходятся
+   арифметикой, а не подбором.
 
-   Двадцать пять ремов с началом на 8.75 держат центр шара на той же
-   линии, что и центр кнопки (21.25 рема от верха экрана), а верхняя
-   кромка уходит под шапку лишь на полтора рема, где вуаль и так гасит
-   всё почти дочерна. Название лежит на чистом тёмном. */
+   Слово Даниэля: «сверху планета Земля так же, но чтобы не перекрывала
+   название сверху». В прошлом сборе шар начинался на 6.25 и материк
+   приходился ровно на «Rocket VPN». */
 .планета-место {
-  position: absolute;
-  left: 50%; top: 8.75rem;
+  position: absolute; left: 50%; top: 8.75rem;
   width: 25rem; height: 25rem;
   transform: translateX(-50%);
   z-index: 1; pointer-events: none;
 }
-
 .планета {
-  position: absolute; inset: 0;
-  border-radius: 50%; overflow: hidden;
-  box-shadow:
-    inset -1.0rem -0.5rem 3.0rem rgba(0,0,0,.55),
-    inset  0.6rem  0.5rem 2.4rem rgba(143,214,255,.22);
+  position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+  box-shadow: inset -1rem -.5rem 3rem rgba(0,0,0,.5), inset .6rem .5rem 2.4rem rgba(143,214,255,.22);
 }
-
-/* Три карты крутятся одновременно и с одинаковым шагом, иначе
-   материки разъедутся с собственными огнями. Облака идут медленнее
-   намеренно: у настоящей Земли они и движутся иначе, и от этой
-   разницы шар читается объёмным, а не наклейкой. */
 .огни, .кора, .облака {
   position: absolute; inset: 0;
-  background-size: 200% 100%;
-  background-repeat: repeat-x;
+  background-size: 200% 100%; background-repeat: repeat-x;
 }
-
-/* Ночная сторона: снимок городских огней NASA. Лежит подложкой и
-   видна там, где дневная карта сошла на нет. */
 .огни {
   background-image: url("ассеты/земля-ночь.webp");
   animation: оборот 78s linear infinite;
   filter: brightness(1.9) saturate(1.3);
 }
-
 /* ── ТЕРМИНАТОР ДЕЛАЕТ МАСКА, А НЕ ЗАТЕМНЕНИЕ ──────────────────
-   Дневную карту можно было просто притушить к краю, и это дало бы
-   серый шар. Здесь она сходит на нет по маске, открывая под собой огни
-   городов. Маска стоит на месте, а карта под ней едет, поэтому граница
-   дня и ночи держится там, где светит солнце, и материки вплывают в
-   неё сами.
-
-   ── ЯРЧЕ, ЧЕМ В ПЕРВОМ СБОРЕ ───────────────────────────────────
-   Слово Даниэля по кадру: «землю бери планету, только не сильно
-   тёмную». Дневная сторона поднята по яркости, тень у края ослаблена,
-   а ночная половина обрезана: у настоящего шара день занимает большую
-   часть видимого диска, если солнце не сбоку. */
+   Дневную карту можно было притушить к краю, и это дало бы серый шар.
+   Здесь она сходит на нет по маске, открывая под собой огни городов.
+   Маска стоит на месте, а карта под ней едет, поэтому граница дня и
+   ночи держится там, где светит солнце, и материки вплывают в неё. */
 .кора {
   background-image: url("ассеты/земля-день.webp");
   animation: оборот 78s linear infinite;
-  filter: saturate(1.22) brightness(1.30) contrast(1.02);
-  -webkit-mask-image: linear-gradient(101deg,
-      rgba(0,0,0,1) 0%, rgba(0,0,0,1) 54%,
-      rgba(0,0,0,.72) 68%, rgba(0,0,0,.22) 80%, rgba(0,0,0,0) 90%);
-          mask-image: linear-gradient(101deg,
-      rgba(0,0,0,1) 0%, rgba(0,0,0,1) 54%,
-      rgba(0,0,0,.72) 68%, rgba(0,0,0,.22) 80%, rgba(0,0,0,0) 90%);
+  filter: saturate(1.24) brightness(1.32) contrast(1.04);
+  -webkit-mask-image: linear-gradient(101deg, #000 0%, #000 54%, rgba(0,0,0,.72) 68%, rgba(0,0,0,.22) 80%, transparent 90%);
+          mask-image: linear-gradient(101deg, #000 0%, #000 54%, rgba(0,0,0,.72) 68%, rgba(0,0,0,.22) 80%, transparent 90%);
 }
-
 .облака {
   background-image: url("ассеты/облака.webp");
   animation: оборот 128s linear infinite;
   opacity: .58;
-  -webkit-mask-image: linear-gradient(101deg,
-      rgba(0,0,0,1) 0%, rgba(0,0,0,1) 56%, rgba(0,0,0,.4) 74%, rgba(0,0,0,0) 88%);
-          mask-image: linear-gradient(101deg,
-      rgba(0,0,0,1) 0%, rgba(0,0,0,1) 56%, rgba(0,0,0,.4) 74%, rgba(0,0,0,0) 88%);
+  -webkit-mask-image: linear-gradient(101deg, #000 0%, #000 56%, rgba(0,0,0,.4) 74%, transparent 88%);
+          mask-image: linear-gradient(101deg, #000 0%, #000 56%, rgba(0,0,0,.4) 74%, transparent 88%);
 }
-
 @keyframes оборот { from { background-position-x: 0 } to { background-position-x: -200% } }
 
-/* Потемнение к краю шара. Свет падает сверху слева, значит и блик там
-   же, а нижний правый край уходит в тень. Держим его мягким: клиент
-   просил не тёмную планету. */
 .тень {
   position: absolute; inset: 0;
-  background:
-    radial-gradient(130% 130% at 24% 20%, rgba(255,255,255,.16) 0%, rgba(0,0,0,0) 40%,
-                    rgba(2,4,10,.26) 78%, rgba(2,4,10,.52) 100%);
+  background: radial-gradient(130% 130% at 24% 20%, rgba(255,255,255,.17) 0%, rgba(0,0,0,0) 40%,
+              rgba(2,4,10,.24) 78%, rgba(2,4,10,.5) 100%);
 }
-
-/* Атмосфера по краю. Тонкая, холодная, ярче с теневой стороны: так она
-   выглядит на снимках с орбиты. */
 .кромка {
-  position: absolute; inset: -0.35rem;
-  border-radius: 50%;
-  box-shadow:
-    inset 0 0 1.3rem rgba(143,214,255,.7),
-    inset 0 0 3.6rem rgba(47,123,255,.34);
+  position: absolute; inset: -.35rem; border-radius: 50%;
+  box-shadow: inset 0 0 1.3rem rgba(143,214,255,.75), inset 0 0 3.6rem rgba(47,123,255,.36);
 }
-
 .ореол {
-  position: absolute; inset: -5rem;
-  border-radius: 50%;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(47,123,255,.26), rgba(47,123,255,.07) 52%, transparent 70%);
+  position: absolute; inset: -5rem; border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(47,123,255,.24), rgba(47,123,255,.06) 52%, transparent 70%);
   filter: blur(1.2rem);
   animation: дыхание 7s ease-in-out infinite;
 }
 @keyframes дыхание { 0%,100% { opacity: .78; transform: scale(1) } 50% { opacity: 1; transform: scale(1.04) } }
 
-/* Вуаль над планетой: тёмный градиент, гуще у верхней кромки экрана и
-   у нижней, прозрачный посередине. Шар от этого не тускнеет там, где
-   на него смотрят, а надписи ложатся на тёмное. */
+/* Вуаль: тёмный градиент над шаром, гуще у верхней кромки экрана и у
+   нижней, прозрачный посередине. Шар не тускнеет там, где на него
+   смотрят, а надписи ложатся на тёмное. */
 .вуаль {
-  position: absolute; left: 0; right: 0; top: 0; height: 42rem;
+  position: absolute; left: 0; right: 0; top: -10.6rem; height: 42rem;
   z-index: 2; pointer-events: none;
   background: linear-gradient(180deg,
-    rgba(5,7,15,.96) 0%,
-    rgba(5,7,15,.94) 14%,
-    rgba(5,7,15,.80) 22%,
-    rgba(5,7,15,.50) 28%,
-    rgba(5,7,15,.20) 32%,
-    rgba(5,7,15,0)   36%,
-    rgba(5,7,15,0)   72%,
-    rgba(5,7,15,.48) 85%,
-    rgba(5,7,15,.92) 95%,
-    #05070f          100%);
+    rgba(3,5,11,.96) 0%, rgba(3,5,11,.94) 14%, rgba(3,5,11,.8) 22%,
+    rgba(3,5,11,.5) 28%, rgba(3,5,11,.2) 32%, rgba(3,5,11,0) 36%,
+    rgba(3,5,11,0) 72%, rgba(3,5,11,.48) 85%, rgba(3,5,11,.92) 95%, #03050b 100%);
 }
 
-/* ── СТАТУСБАР ──────────────────────────────────────────────────── */
+/* ── СТАТУСБАР И ШАПКА ─────────────────────────────────────────── */
 .статус {
-  position: relative; z-index: 4;
+  position: relative; z-index: 6; flex: none;
   height: 5.4rem;
   display: flex; align-items: center; justify-content: space-between;
   padding: 1.2rem 2.4rem 0;
+  padding-top: max(1.2rem, env(safe-area-inset-top));
   font-size: 1.55rem; font-weight: 600; letter-spacing: .02em;
 }
 .часы { font-variant-numeric: tabular-nums; }
@@ -375,79 +321,79 @@ body {
 .знак { height: 1.25rem; width: auto; fill: currentColor; }
 .знак.батарея { height: 1.35rem; }
 
-/* ── ШАПКА ──────────────────────────────────────────────────────── */
 .шапка {
-  position: relative; z-index: 4;
+  position: relative; z-index: 6; flex: none;
   height: 5.2rem;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 1.8rem;
 }
 .кругляш {
-  width: 4rem; height: 4rem; border-radius: 1.3rem;
-  border: 1px solid var(--кромка);
-  background: var(--стекло);
-  backdrop-filter: blur(1rem);
+  width: 4rem; height: 4rem; border-radius: 1.3rem; flex: none;
+  border: 1px solid var(--стекло-край);
+  background: var(--стекло-фон);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 .4rem 1.2rem rgba(0,0,0,.4);
+  -webkit-backdrop-filter: blur(1.4rem); backdrop-filter: blur(1.4rem);
   display: grid; place-items: center;
-  color: var(--бумага); cursor: pointer;
-  overflow: hidden;
+  color: var(--бумага); cursor: pointer; overflow: hidden;
 }
 .кругляш svg { width: 1.9rem; height: auto; fill: currentColor; }
 .кругляш.корона {
-  color: #ffcf5c;
-  border-color: rgba(255,207,92,.34);
-  background: rgba(255,207,92,.10);
-  box-shadow: 0 0 1.6rem rgba(255,207,92,.22);
+  color: var(--золото);
+  border-color: rgba(255,207,92,.42);
+  background: linear-gradient(157deg, rgba(255,207,92,.20), rgba(255,207,92,.05));
+  box-shadow: inset 0 1px 0 rgba(255,231,168,.5), 0 0 1.4rem rgba(255,207,92,.34), 0 .4rem 1.2rem rgba(0,0,0,.4);
 }
-.кругляш.корона svg { width: 2.1rem; filter: drop-shadow(0 0 .5rem rgba(255,207,92,.7)); }
+.кругляш.корона svg { width: 2.1rem; filter: drop-shadow(0 0 .5rem rgba(255,207,92,.85)); }
 
 .знак-места { display: flex; align-items: center; gap: .7rem; }
-.лого { width: 3.1rem; height: 3.1rem; object-fit: contain; filter: drop-shadow(0 .2rem .6rem rgba(0,0,0,.6)); }
+.лого { width: 3.1rem; height: 3.1rem; object-fit: contain; filter: drop-shadow(0 .2rem .6rem rgba(0,0,0,.7)); }
 .имя { font-size: 2.15rem; font-weight: 700; letter-spacing: -.01em; }
-.имя b { font-weight: 700; color: var(--бумага); }
-.имя i { font-style: normal; color: var(--синий); text-shadow: 0 0 1.4rem rgba(47,123,255,.6); }
+.имя b { color: var(--бумага); }
+.имя i { font-style: normal; color: var(--синий); text-shadow: 0 0 1.6rem rgba(47,123,255,.8); }
 
-/* Слоган стоит в одну строку и не переносится: в первом сборе он шёл
-   двумя строками через весь шар и спорил с логотипом за место. */
+/* ── ЭКРАНЫ ─────────────────────────────────────────────────────── */
+.экраны { position: relative; z-index: 4; flex: 1; min-height: 0; }
+.экран {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column;
+  opacity: 0;
+}
+.экран.тут { display: flex; animation: вплывает .28s ease forwards; }
+@keyframes вплывает { from { opacity: 0; transform: translateY(1.2rem) } to { opacity: 1; transform: none } }
+
 .слоган {
-  position: relative; z-index: 4;
+  position: relative; z-index: 4; flex: none;
   text-align: center;
   font-size: 1.02rem; font-weight: 600;
   letter-spacing: .13em; text-transform: uppercase;
-  color: rgba(238,242,251,.7);
+  color: rgba(238,243,252,.72);
   padding: .1rem 2.4rem 0;
   line-height: 1.4;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  text-shadow: 0 .2rem .8rem rgba(0,0,0,.8);
+  text-shadow: 0 .2rem .8rem rgba(0,0,0,.85);
 }
 
 /* ── КНОПКА ПОДКЛЮЧЕНИЯ ─────────────────────────────────────────
    Слово Даниэля: «оформление свечение кнопки сверху и снизу красивее
-   сделай».
-
-   Кольцо собрано из четырёх вещей, и каждая делает своё:
-     сияние      мягкий купол света НАД кнопкой и ПОД ней;
-     кольцо      неоновый обод, светящий наружу и внутрь;
-     бегунок     светлая дуга, обходящая обод по кругу;
-     волны       два расходящихся круга со сдвигом по времени.
-
-   Купол вытянут по вертикали намеренно: свет, ровно размазанный во все
-   стороны, читается пятном. Вытянутый вверх и вниз читается лучом,
-   который держит центр экрана. */
+   сделай». Кольцо собрано из четырёх вещей: купол света над кнопкой и
+   под ней, неоновый обод, бегущая по ободу дуга и два расходящихся
+   круга. Купол вытянут по вертикали намеренно: свет, ровно размазанный
+   во все стороны, читается пятном; вытянутый вверх и вниз читается
+   лучом, который держит центр экрана. */
 .пуск-место {
-  position: relative; z-index: 4;
+  position: relative; z-index: 4; flex: none;
   height: 16.5rem;
   display: grid; place-items: center;
 }
-
 .сияние {
   position: absolute; left: 50%; top: 50%;
   width: 26rem; height: 34rem;
   transform: translate(-50%, -50%);
   pointer-events: none;
   background:
-    radial-gradient(42% 50% at 50% 50%, rgba(47,123,255,.34), rgba(47,123,255,.10) 48%, transparent 72%),
-    radial-gradient(26% 34% at 50% 18%, rgba(143,214,255,.30), transparent 70%),
-    radial-gradient(26% 34% at 50% 82%, rgba(47,123,255,.26), transparent 70%);
+    radial-gradient(42% 50% at 50% 50%, rgba(47,123,255,.32), rgba(47,123,255,.09) 48%, transparent 72%),
+    radial-gradient(26% 34% at 50% 18%, rgba(143,214,255,.28), transparent 70%),
+    radial-gradient(26% 34% at 50% 82%, rgba(47,123,255,.24), transparent 70%);
   filter: blur(1.6rem);
   animation: сияние-дышит 4.6s ease-in-out infinite;
 }
@@ -465,42 +411,36 @@ body {
 }
 .пуск:active { transform: scale(.955); }
 
+/* Неон: тонкая линия и плотное свечение вокруг неё, а не широкий
+   мягкий ореол. Широкий ореол без линии читается туманом. */
 .кольцо {
   position: absolute; inset: 0; border-radius: 50%;
-  border: .26rem solid rgba(96,168,255,.85);
+  border: .2rem solid rgba(126,190,255,.95);
   box-shadow:
-    0 0 1.2rem rgba(47,123,255,.75),
-    0 0 3.2rem rgba(47,123,255,.45),
-    0 0 6.4rem rgba(47,123,255,.22),
-    inset 0 0 1.6rem rgba(143,214,255,.40);
+    0 0 .5rem rgba(126,190,255,.95),
+    0 0 1.6rem rgba(47,123,255,.8),
+    0 0 4.4rem rgba(47,123,255,.42),
+    inset 0 0 1.2rem rgba(143,214,255,.55);
+  transition: border-color .4s ease, box-shadow .4s ease;
 }
-
-/* Бегунок: светлая дуга по ободу. Сделана коническим градиентом с
-   маской-кольцом, поэтому это одна вращающаяся заливка, а не десяток
-   узлов. */
 .бегунок {
   position: absolute; inset: -.1rem; border-radius: 50%;
-  background: conic-gradient(from 0deg,
-    transparent 0deg, transparent 250deg,
-    rgba(217,240,255,.10) 286deg,
-    rgba(217,240,255,.95) 342deg,
-    rgba(143,214,255,.25) 352deg,
-    transparent 360deg);
-  -webkit-mask: radial-gradient(circle, transparent calc(50% - .34rem), #000 calc(50% - .34rem));
-          mask: radial-gradient(circle, transparent calc(50% - .34rem), #000 calc(50% - .34rem));
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 250deg,
+    rgba(223,242,255,.12) 286deg, rgba(223,242,255,1) 342deg, rgba(143,214,255,.3) 352deg, transparent 360deg);
+  -webkit-mask: radial-gradient(circle, transparent calc(50% - .3rem), #000 calc(50% - .3rem));
+          mask: radial-gradient(circle, transparent calc(50% - .3rem), #000 calc(50% - .3rem));
   animation: бег 3.6s linear infinite;
-  filter: drop-shadow(0 0 .7rem rgba(143,214,255,.95));
 }
 @keyframes бег { to { transform: rotate(360deg) } }
 
 .волна-круг {
   position: absolute; inset: -1.6rem; border-radius: 50%;
-  border: .16rem solid rgba(96,168,255,.5);
+  border: .14rem solid rgba(110,180,255,.55);
   animation: круги 3.6s cubic-bezier(.2,.6,.3,1) infinite;
 }
 .волна-круг.вторая { animation-delay: 1.8s; }
 @keyframes круги {
-  0%   { transform: scale(.88); opacity: .75 }
+  0%   { transform: scale(.88); opacity: .8 }
   60%  { opacity: .14 }
   100% { transform: scale(1.30); opacity: 0 }
 }
@@ -509,153 +449,194 @@ body {
   position: relative;
   width: 11.5rem; height: 11.5rem; border-radius: 50%;
   background:
-    radial-gradient(72% 72% at 50% 24%, rgba(47,123,255,.46), rgba(5,9,20,.94) 74%),
-    rgba(5,9,20,.90);
-  border: 1px solid rgba(143,214,255,.34);
-  backdrop-filter: blur(1.4rem);
+    radial-gradient(72% 72% at 50% 22%, rgba(47,123,255,.44), rgba(4,7,16,.95) 74%),
+    rgba(4,7,16,.92);
+  border: 1px solid rgba(143,214,255,.38);
+  -webkit-backdrop-filter: blur(1.6rem); backdrop-filter: blur(1.6rem);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: .35rem;
-  color: var(--бумага);
-  box-shadow: inset 0 .4rem 2.4rem rgba(143,214,255,.16);
+  gap: .3rem; color: var(--бумага);
+  box-shadow: inset 0 .4rem 2.4rem rgba(143,214,255,.18), inset 0 1px 0 rgba(255,255,255,.2);
 }
 .рубильник {
-  width: 3.1rem; height: auto; color: var(--лёд); margin-bottom: .35rem;
-  filter: drop-shadow(0 0 .9rem rgba(143,214,255,.95));
+  width: 3.1rem; height: auto; color: var(--лёд); margin-bottom: .3rem;
+  filter: drop-shadow(0 0 .8rem rgba(143,214,255,1));
+  transition: color .4s ease, filter .4s ease;
 }
-.пуск-слово { font-size: 1.62rem; font-weight: 600; text-shadow: 0 0 1.4rem rgba(143,214,255,.5); }
-.пуск-сноска { font-size: 1.12rem; color: var(--тихий); letter-spacing: .1em; }
+.пуск-слово { font-size: 1.58rem; font-weight: 600; text-shadow: 0 0 1.4rem rgba(143,214,255,.55); }
+.пуск-сноска {
+  font-size: 1.1rem; color: var(--тихий); letter-spacing: .1em;
+  font-variant-numeric: tabular-nums;
+}
 
-/* Толчок по нажатию: обод коротко вспыхивает и расходится. Отдельным
-   классом, чтобы нажатие читалось даже там, где палец уже отпущен. */
+/* Три состояния кнопки. Кнопка без состояния «подключается» выглядит
+   сломанной: человек нажал, а ничего не изменилось. */
+html.подключаемся .бегунок { animation-duration: .9s; }
+html.подключаемся .кольцо { border-color: rgba(255,207,92,.9); box-shadow: 0 0 .5rem rgba(255,207,92,.9), 0 0 1.8rem rgba(255,180,60,.75), 0 0 4.4rem rgba(255,180,60,.35), inset 0 0 1.2rem rgba(255,220,150,.5); }
+html.подключаемся .рубильник { color: #ffe1a8; filter: drop-shadow(0 0 .8rem rgba(255,207,92,1)); }
+
+html.подключено .кольцо { border-color: rgba(61,220,151,.95); box-shadow: 0 0 .5rem rgba(61,220,151,.95), 0 0 1.8rem rgba(61,220,151,.75), 0 0 4.8rem rgba(61,220,151,.4), inset 0 0 1.2rem rgba(150,255,210,.5); }
+html.подключено .рубильник { color: #b8ffdd; filter: drop-shadow(0 0 .9rem rgba(61,220,151,1)); }
+html.подключено .сияние { background:
+  radial-gradient(42% 50% at 50% 50%, rgba(61,220,151,.30), rgba(61,220,151,.08) 48%, transparent 72%),
+  radial-gradient(26% 34% at 50% 18%, rgba(160,255,215,.26), transparent 70%),
+  radial-gradient(26% 34% at 50% 82%, rgba(61,220,151,.22), transparent 70%); }
+html.подключено .волна-круг { border-color: rgba(61,220,151,.5); }
+
 .пуск.толчок .кольцо { animation: вспышка-обода .5s ease-out; }
 @keyframes вспышка-обода {
-  0%   { box-shadow: 0 0 1.2rem rgba(47,123,255,.75), 0 0 3.2rem rgba(47,123,255,.45), inset 0 0 1.6rem rgba(143,214,255,.4) }
-  25%  { box-shadow: 0 0 2.6rem rgba(160,220,255,1), 0 0 7.0rem rgba(47,123,255,.85), inset 0 0 3.0rem rgba(217,240,255,.8) }
-  100% { box-shadow: 0 0 1.2rem rgba(47,123,255,.75), 0 0 3.2rem rgba(47,123,255,.45), inset 0 0 1.6rem rgba(143,214,255,.4) }
+  0%   { transform: scale(1) }
+  22%  { transform: scale(1.06) }
+  100% { transform: scale(1) }
 }
 
-/* ── ЛИСТ ───────────────────────────────────────────────────────── */
+/* ── ЛИСТ И КАРТОЧКИ ────────────────────────────────────────────── */
 .лист {
   position: relative; z-index: 4;
   flex: 1; min-height: 0;
   display: flex; flex-direction: column; gap: 1.1rem;
   padding: 0 1.8rem;
 }
+.лист-полный { overflow-y: auto; padding-bottom: 1.4rem; scrollbar-width: none; }
+.лист-полный::-webkit-scrollbar { display: none; }
 
-.полоса, .плитка, .поиск {
-  border: 1px solid var(--кромка);
-  background: var(--стекло);
-  backdrop-filter: blur(1.4rem);
-  border-radius: 1.6rem;
-  color: var(--бумага);
-  overflow: hidden;
+.шапка-экрана {
+  flex: none; display: flex; align-items: baseline; gap: 1rem;
+  padding: .6rem .2rem .2rem;
 }
+.шапка-экрана.с-назад { align-items: center; }
+.шапка-экрана h2 { font-size: 2.4rem; font-weight: 700; letter-spacing: -.01em; }
+.счёт { margin-left: auto; font-size: 1.15rem; color: var(--тихий); }
+.назад {
+  width: 3.6rem; height: 3.6rem; border-radius: 1.2rem; flex: none;
+  border: 1px solid var(--стекло-край); background: var(--стекло-фон);
+  color: var(--бумага); display: grid; place-items: center; cursor: pointer;
+}
+.назад svg { width: .9rem; height: auto; }
 
 .полоса.подписка {
-  height: 5.4rem;
+  height: 5.4rem; flex: none;
   display: flex; align-items: center; gap: 1.2rem;
-  padding: 0 1.5rem;
-  border-color: rgba(255,207,92,.22);
-  background: linear-gradient(100deg, rgba(255,207,92,.12), rgba(255,255,255,.04) 46%);
-  box-shadow: 0 0 2.4rem rgba(255,207,92,.10);
-  cursor: pointer;
+  padding: 0 1.5rem; border-radius: 1.6rem;
+  border-color: rgba(255,207,92,.3);
+  background: linear-gradient(157deg, rgba(255,207,92,.16), rgba(255,207,92,.03) 50%, rgba(255,207,92,.08));
+  box-shadow: inset 0 1px 0 rgba(255,231,168,.34), 0 0 2rem rgba(255,207,92,.14), 0 .7rem 2.2rem rgba(0,0,0,.45);
+  cursor: pointer; color: var(--бумага);
 }
 .корона-мелкая {
-  width: 2.9rem; height: 2.9rem; border-radius: .9rem;
+  width: 2.9rem; height: 2.9rem; border-radius: .9rem; flex: none;
   display: grid; place-items: center;
-  background: rgba(255,207,92,.16); color: #ffcf5c;
-  box-shadow: inset 0 0 1.2rem rgba(255,207,92,.28);
+  background: rgba(255,207,92,.18); color: var(--золото);
+  box-shadow: inset 0 0 1.2rem rgba(255,207,92,.34), inset 0 1px 0 rgba(255,231,168,.4);
 }
 .корона-мелкая svg { width: 1.7rem; fill: currentColor; }
 .подписка-текст { flex: 1; display: flex; flex-direction: column; gap: .15rem; text-align: left; }
-.подписка-текст b { font-size: 1.42rem; font-weight: 600; }
-.подписка-текст i { font-style: normal; font-size: 1.16rem; color: var(--тихий); }
+.подписка-текст b { font-size: 1.4rem; font-weight: 600; }
+.подписка-текст i { font-style: normal; font-size: 1.14rem; color: var(--тихий); }
 .шеврон { width: .8rem; height: auto; color: var(--тихий); flex: none; }
 
-.пара { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
-.плитка { height: 6.4rem; display: flex; align-items: center; gap: .85rem; padding: 0 1.1rem; cursor: pointer; }
+.пара { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; flex: none; }
+.плитка {
+  height: 6.4rem; border-radius: 1.6rem;
+  display: flex; align-items: center; gap: .85rem; padding: 0 1.1rem;
+  cursor: pointer; color: var(--бумага); text-align: left;
+}
 .плитка-знак {
-  width: 2.5rem; height: 2.5rem; border-radius: .8rem;
+  width: 2.5rem; height: 2.5rem; border-radius: .8rem; flex: none;
   display: grid; place-items: center;
-  background: rgba(47,123,255,.18); color: var(--синий-свет); flex: none;
-  box-shadow: inset 0 0 1rem rgba(47,123,255,.3);
+  background: rgba(47,123,255,.22); color: var(--синий-свет);
+  box-shadow: inset 0 0 1rem rgba(47,123,255,.4), inset 0 1px 0 rgba(255,255,255,.18);
 }
 .плитка-знак svg { width: 1.3rem; fill: currentColor; }
 .плитка-текст { flex: 1; display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
-/* Заголовок плитки идёт в две строки. «Оптимальный сервер» в половину
-   ширины одной строкой не лезет и обрезался многоточием: на коллаже
-   клиента он стоит двумя строками, так и делаем. */
-.плитка-текст b { font-size: 1.22rem; font-weight: 600; line-height: 1.12; }
-.плитка-текст i { font-style: normal; font-size: 1.05rem; color: var(--тихий); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Заголовок плитки идёт в две строки: «Оптимальный сервер» в половину
+   ширины одной строкой не лезет и обрезался многоточием. */
+.плитка-текст b { font-size: 1.2rem; font-weight: 600; line-height: 1.12; }
+.плитка-текст i { font-style: normal; font-size: 1.02rem; color: var(--тихий); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .тумблер {
   width: 3.4rem; height: 1.95rem; border-radius: 1rem; flex: none;
-  background: rgba(255,255,255,.12); position: relative;
-  transition: background .22s ease, box-shadow .22s ease;
+  background: rgba(255,255,255,.14); position: relative;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.4);
+  transition: background .24s ease, box-shadow .24s ease;
 }
-.тумблер.вкл { background: var(--синий); box-shadow: 0 0 1.4rem rgba(47,123,255,.7); }
+.тумблер.вкл {
+  background: linear-gradient(180deg, #4d8cff, var(--синий));
+  box-shadow: 0 0 1.2rem rgba(47,123,255,.8), inset 0 1px 0 rgba(255,255,255,.34);
+}
 .шарик {
   position: absolute; top: .22rem; left: .22rem;
   width: 1.5rem; height: 1.5rem; border-radius: 50%; background: #fff;
-  transition: left .22s cubic-bezier(.2,.9,.3,1.4);
-  box-shadow: 0 .1rem .4rem rgba(0,0,0,.4);
+  transition: left .24s cubic-bezier(.2,.9,.3,1.5);
+  box-shadow: 0 .1rem .4rem rgba(0,0,0,.45);
 }
 .тумблер.вкл .шарик { left: 1.68rem; }
 
-.поиск { height: 4.4rem; display: flex; align-items: center; gap: 1rem; padding: 0 1.4rem; }
+.строка-поиска { display: flex; gap: 1.1rem; flex: none; }
+.поиск {
+  flex: 1; height: 4.4rem; border-radius: 1.6rem;
+  display: flex; align-items: center; gap: 1rem; padding: 0 1.4rem;
+}
 .лупа { width: 1.6rem; height: auto; color: var(--тихий); flex: none; }
-.подсказка { flex: 1; font-size: 1.3rem; color: var(--тихий); }
-.ползунки { width: 1.7rem; height: auto; color: var(--тихий); flex: none; }
+.поиск input {
+  flex: 1; min-width: 0;
+  border: 0; background: none; outline: none;
+  font-family: inherit; font-size: 1.3rem; color: var(--бумага);
+}
+.поиск input::placeholder { color: var(--тихий); }
+.поиск input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+.обновить {
+  width: 4.4rem; height: 4.4rem; border-radius: 1.6rem; flex: none;
+  display: grid; place-items: center; cursor: pointer;
+  color: var(--синий-свет);
+}
+.обновить svg { width: 1.8rem; height: auto; fill: currentColor; }
+.обновить.крутится svg { animation: оборот-значка .8s cubic-bezier(.4,0,.2,1); }
+@keyframes оборот-значка { to { transform: rotate(360deg) } }
 
 /* ── СПИСОК СЕРВЕРОВ ────────────────────────────────────────────── */
 .список {
-  position: relative; flex: 1; min-height: 0;
+  position: relative;
+  flex: 1; min-height: 0;
   display: flex; flex-direction: column; gap: .5rem;
   overflow: hidden;
 }
+.список.длинный { overflow: visible; flex: none; }
+.ничего { text-align: center; color: var(--тихий); font-size: 1.3rem; padding: 3rem 0; }
 
-/* Все десять стран обязаны быть в кадре: строка стояла твёрдой
-   высотой, и на первом снимке Франция была обрезана пополам, а ОАЭ не
-   влезли вовсе. Ровно на этих двух строках показывается потухший
-   серый след, ради которого всё и затевалось. */
-/* ── СТРОКА ЭТО ПОЛУПРОЗРАЧНАЯ КАРТОЧКА ────────────────────────
-   Слово Даниэля: «все кнопки серверов сделать полупрозрачные, и когда
-   молния по ним бьёт, на фоне лучше становится видно планеты».
-
-   Заливка держится на четырёх сотых белого. Этого хватает, чтобы
-   карточка читалась карточкой на любом куске фона, и мало настолько,
-   что галактика за ней видна всегда. Размытия под карточкой НЕТ
-   намеренно: backdrop-filter размазал бы планеты в ровное пятно, а по
-   слову владельца их должно быть видно.
-
-   Все десять стран обязаны быть в кадре: строка стояла твёрдой
-   высотой, и на первом снимке Франция была обрезана пополам, а ОАЭ не
-   влезли вовсе. Ровно на этих двух строках показывается потухшая
-   молния, ради которой всё и затевалось. */
+/* Строка это карточка того же стекла, что и всё остальное. Слово
+   Даниэля: «все кнопки серверов сделать полупрозрачные, и когда молния
+   по ним бьёт, на фоне лучше становится видно планеты». */
 .ряд {
   position: relative;
-  flex: 1 1 0; min-height: 3.2rem; max-height: 4.4rem;
+  flex: 1 1 0; min-height: 3.4rem; max-height: 4.6rem;
   display: flex; align-items: center; gap: 1.1rem;
   padding: 0 1.1rem;
-  border-radius: 1.2rem;
-  border: 1px solid rgba(255,255,255,.07);
-  background: rgba(255,255,255,.04);
-  cursor: pointer;
-  overflow: hidden;
-  transition: background .28s ease, box-shadow .28s ease, border-color .28s ease;
+  border-radius: 1.3rem;
+  border: 1px solid var(--стекло-край);
+  background: var(--стекло-фон);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 .4rem 1.4rem rgba(0,0,0,.38);
+  -webkit-backdrop-filter: blur(1.6rem) saturate(170%);
+          backdrop-filter: blur(1.6rem) saturate(170%);
+  cursor: pointer; overflow: hidden;
+  font-family: inherit; color: var(--бумага); text-align: left;
+  transition: background .28s ease, box-shadow .28s ease, border-color .28s ease,
+              backdrop-filter .28s ease, transform .16s cubic-bezier(.2,.9,.3,1.2);
 }
+.список.длинный .ряд { flex: none; height: 5.2rem; }
+.ряд:active { transform: scale(.99); }
 
 .точка {
   width: 1.7rem; height: 1.7rem; border-radius: 50%; flex: none;
-  border: .17rem solid rgba(255,255,255,.26);
-  transition: border-color .22s ease, box-shadow .22s ease, background .22s ease;
+  border: .17rem solid rgba(255,255,255,.28);
+  transition: border-color .24s ease, box-shadow .24s ease, background .24s ease;
 }
 .ряд.выбран .точка {
   border-color: var(--синий-свет);
   background: radial-gradient(circle, var(--синий-свет) 0 38%, transparent 40%);
-  box-shadow: 0 0 1.2rem rgba(143,214,255,.8);
+  box-shadow: 0 0 1.2rem rgba(143,214,255,.9);
 }
-.ряд.выбран { background: rgba(47,123,255,.10); box-shadow: inset 0 0 0 1px rgba(47,123,255,.22); }
+.ряд.выбран { border-color: rgba(47,123,255,.5); box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 0 1.6rem rgba(47,123,255,.3), 0 .4rem 1.4rem rgba(0,0,0,.38); }
 
 /* Флаги рисуются, а не кладутся картинкой: эмодзи-флаг выглядит
    по-разному на каждой системе и на части Android не рисуется вовсе, а
@@ -663,7 +644,7 @@ body {
 .флаг {
   width: 2.5rem; height: 1.8rem; border-radius: .35rem; flex: none;
   position: relative; overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 .1rem .4rem rgba(0,0,0,.5);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 .1rem .4rem rgba(0,0,0,.55);
 }
 .ф-ru { background: linear-gradient(#fff 0 33.3%, #1a3fa8 33.3% 66.6%, #d2202f 66.6%); }
 .ф-nl { background: linear-gradient(#ae1c28 0 33.3%, #fff 33.3% 66.6%, #21468b 66.6%); }
@@ -671,188 +652,957 @@ body {
 .ф-de { background: linear-gradient(#111 0 33.3%, #dd0000 33.3% 66.6%, #ffce00 66.6%); }
 .ф-fr { background: linear-gradient(90deg, #21468b 0 33.3%, #fff 33.3% 66.6%, #d2202f 66.6%); }
 .ф-jp { background: #fff; }
-.ф-jp::after { content: ""; position: absolute; left: 50%; top: 50%; width: .95rem; height: .95rem;
-  border-radius: 50%; background: #bc002d; transform: translate(-50%,-50%); }
+.ф-jp::after { content: ""; position: absolute; left: 50%; top: 50%; width: .95rem; height: .95rem; border-radius: 50%; background: #bc002d; transform: translate(-50%,-50%); }
 .ф-tr { background: #e30a17; }
-.ф-tr::after { content: ""; position: absolute; left: .52rem; top: 50%; width: 1.05rem; height: 1.05rem;
-  border-radius: 50%; background: #fff; transform: translateY(-50%); box-shadow: .34rem 0 0 -.02rem #e30a17; }
+.ф-tr::after { content: ""; position: absolute; left: .52rem; top: 50%; width: 1.05rem; height: 1.05rem; border-radius: 50%; background: #fff; transform: translateY(-50%); box-shadow: .34rem 0 0 -.02rem #e30a17; }
 .ф-sg { background: linear-gradient(#ed2939 0 50%, #fff 50%); }
-.ф-sg::after { content: ""; position: absolute; left: .35rem; top: .28rem; width: .82rem; height: .82rem;
-  border-radius: 50%; background: #fff; box-shadow: .26rem 0 0 -.02rem #ed2939; }
+.ф-sg::after { content: ""; position: absolute; left: .35rem; top: .28rem; width: .82rem; height: .82rem; border-radius: 50%; background: #fff; box-shadow: .26rem 0 0 -.02rem #ed2939; }
 .ф-us { background: repeating-linear-gradient(#b22234 0 .26rem, #fff .26rem .52rem); }
 .ф-us::after { content: ""; position: absolute; left: 0; top: 0; width: 1.15rem; height: .95rem; background: #3c3b6e; }
 .ф-ae { background: linear-gradient(#00732f 0 33.3%, #fff 33.3% 66.6%, #111 66.6%); }
 .ф-ae::after { content: ""; position: absolute; left: 0; top: 0; width: .62rem; height: 100%; background: #ce1126; }
 
-.страна { flex: 1; font-size: 1.36rem; font-weight: 500; }
+.страна { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .05rem; }
+.страна b { font-size: 1.34rem; font-weight: 600; line-height: 1.15; }
+.страна i { font-style: normal; font-size: 1rem; color: var(--тихий); }
+.список:not(.длинный) .страна i { display: none; }
 
-/* ── ВМЕСТО ПАЛОК СИГНАЛА - МОЛНИЯ ─────────────────────────────
-   Слово Даниэля: «вместо этих иконок поставить молнии, иконки ровные
-   красивые, и вот под карточками уже эта молния по всем проходит,
-   красиво освещает, и гореть остаются иконки те, где пинг есть».
+/* ── СЛЕД МОЛНИИ НА КАЖДОМ СЕРВЕРЕ ─────────────────────────────
+   Слово клиента, дословно: «сначала молния прошивает список серверов, а
+   затем после неё остаются следы молнии на каждом сервере. На тех
+   серверах где есть пинг - молния переливается. Там где нет пинга,
+   остался серый силуэт молнии будто было но погасло».
 
-   Значок один контур, без зубцов и лишних точек: на полутора ремах
-   любая мелкая деталь превращается в грязь.
+   Значок это МАСКА, а под ней едет градиент. Заливку контура градиентом
+   из CSS не задать, а маска решает это одной строкой и остаётся
+   векторной: резкой на любой плотности экрана.
 
-   ── ДО РАЗРЯДА ОНИ НЕ ГОРЯТ, И ЭТО СМЫСЛ, А НЕ УКРАШЕНИЕ ────────
-   Пока замер не прошёл, значок тусклый и число серое. Разряд проходит
-   сверху вниз, и за ним значки остаются гореть, а числа набирают свой
-   цвет. Человек видит не «мигнуло красиво», а «связь проверена вот у
-   этих, и вот их отклик». Там, где ответа нет, значок так и остаётся
-   потухшим, а справа стоит «н/д». */
+   До замера значка нет вовсе - только бледная тень фигуры. Разряд
+   прошёл, и на живых серверах он загорается переливом и остаётся
+   гореть; на мёртвых так и стоит серым силуэтом. */
 .заряд {
-  width: 1.8rem; height: 1.8rem; flex: none;
-  display: grid; place-items: center;
-  color: rgba(238,242,251,.20);
-  transition: color .3s ease, filter .3s ease, transform .3s cubic-bezier(.2,.9,.3,1.4);
+  --фигура: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'><path d='M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z'/></svg>");
+  width: 1.5rem; height: 2.1rem; flex: none;
+  -webkit-mask: var(--фигура) center / contain no-repeat;
+          mask: var(--фигура) center / contain no-repeat;
+  background: rgba(238,243,252,.16);
+  transition: background .32s ease, filter .32s ease, transform .32s cubic-bezier(.2,.9,.3,1.4);
 }
-.заряд svg { width: 1.15rem; height: auto; fill: currentColor; }
+
+/* Перелив: светлая волна идёт по фигуре снизу вверх и наискось. Шаг
+   градиента подобран так, чтобы блик был узким: широкий блик читается
+   не переливом, а просто мигающим значком. */
+@keyframes перелив { from { background-position: 0% 50% } to { background-position: -260% 50% } }
 
 .ряд.заряжен .заряд {
-  color: var(--хорошо);
-  filter: drop-shadow(0 0 .7rem rgba(71,209,138,.85));
+  background: linear-gradient(112deg,
+    #1c8f5f 0%, #3ddc97 26%, #eafff6 44%, #3ddc97 62%, #1c8f5f 100%);
+  background-size: 260% 100%;
+  animation: перелив 2.6s linear infinite;
+  filter: drop-shadow(0 0 .7rem rgba(61,220,151,.85));
 }
 .ряд.середина.заряжен .заряд {
-  color: var(--средне);
-  filter: drop-shadow(0 0 .7rem rgba(240,180,69,.85));
+  background: linear-gradient(112deg, #8a5a10 0%, #ffb648 26%, #fff3dc 44%, #ffb648 62%, #8a5a10 100%);
+  background-size: 260% 100%;
+  animation: перелив 2.6s linear infinite;
+  filter: drop-shadow(0 0 .7rem rgba(255,182,72,.85));
 }
 .ряд.бьёт .заряд {
-  color: var(--лёд);
-  filter: drop-shadow(0 0 1.1rem rgba(217,240,255,1));
-  transform: scale(1.22);
+  background: #f6fdff;
+  animation: none;
+  filter: drop-shadow(0 0 1.3rem rgba(223,242,255,1)) drop-shadow(0 0 2.6rem rgba(47,123,255,.9));
+  transform: scale(1.26);
 }
-.ряд.нет .заряд,
-.ряд.нет.заряжен .заряд,
-.ряд.нет.бьёт .заряд {
-  color: rgba(150,158,176,.26);
-  filter: none; transform: none;
+/* Серый силуэт: был, да погас. Ни перелива, ни свечения. */
+.ряд.нет .заряд, .ряд.нет.заряжен .заряд, .ряд.нет.бьёт .заряд {
+  background: rgba(152,160,178,.26);
+  animation: none; filter: none; transform: none;
 }
 
 .пинг {
   font-family: "Плекс", ui-monospace, monospace;
-  font-size: 1.18rem; font-weight: 500;
-  color: rgba(238,242,251,.30);
-  min-width: 6.4rem; text-align: right; flex: none;
-  transition: color .3s ease, text-shadow .3s ease;
+  font-size: 1.16rem; font-weight: 500;
+  color: rgba(238,243,252,.3);
+  min-width: 6.2rem; text-align: right; flex: none;
+  transition: color .32s ease, text-shadow .32s ease;
 }
 .ряд.заряжен .пинг { color: var(--хорошо); }
 .ряд.середина.заряжен .пинг { color: var(--средне); }
 .ряд.нет .пинг, .ряд.нет.заряжен .пинг { color: var(--мёртвый); }
 
-.звезда { width: 1.7rem; height: 1.7rem; flex: none; position: relative; opacity: .5; }
-.звезда::after {
-  content: ""; position: absolute; inset: 0;
-  background: currentColor; color: var(--тихий);
-  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-  transform: scale(.92);
+.звезда {
+  width: 2.2rem; height: 2.2rem; flex: none;
+  display: grid; place-items: center;
+  color: rgba(255,255,255,.26); cursor: pointer;
+  transition: color .24s ease, transform .24s cubic-bezier(.2,.9,.3,1.5), filter .24s ease;
 }
+.звезда svg { width: 1.5rem; height: auto; fill: currentColor; pointer-events: none; }
+.звезда.горит { color: var(--золото); filter: drop-shadow(0 0 .7rem rgba(255,207,92,.9)); transform: scale(1.1); }
 
 /* ── МОЛНИЯ ПО КОЛОНКЕ ПИНГОВ ───────────────────────────────────
-   Клиент обвёл зелёным столбец миллисекунд и спросил: «Это же пинги?
-   И по ним молнию да?». Ствол идёт именно там.
+   Слой лежит ПОВЕРХ строк: слово Даниэля «и молния поверх текста
+   как-то». Строки при этом не двигаются ни на точку, палец попадает
+   туда же, куда и до удара.
 
-   Разряд это ТРИ линии одна поверх другой: широкое размытое сияние,
-   средний ореол и раскалённая белая сердцевина. Одной линией молния
-   не светится, сколько ей ни задавай толщину, и в первом сборе она
-   читалась царапиной на стекле. */
-.молния { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
-
-/* Пять обводок одного пути: от широкой и почти прозрачной до тонкой
-   белой. Разбор, почему не размытие, стоит в экран.js у сборки нитей. */
+   Разряд это пять обводок одного пути: от широкой и почти прозрачной
+   до тонкой белой. Размытия нет вовсе. Сперва оно делалось свойством
+   CSS filter: blur(), потом своим фильтром SVG, и оба раза размытый
+   слой уезжал влево почти на половину ширины списка - в кадре посреди
+   строк висело синее пятно. Замер рамок поймал это числом: жила стояла
+   на x 296..368, её же сияние с тем же путём на 99..171. */
+.молния {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 5; pointer-events: none; overflow: visible;
+}
 .нить { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .нить.дым      { stroke: rgba(47,123,255,.10); stroke-width: 17; }
-.нить.дальний  { stroke: rgba(47,123,255,.18); stroke-width: 11; }
-.нить.средний  { stroke: rgba(96,168,255,.34); stroke-width: 6.5; }
-.нить.ближний  { stroke: rgba(180,226,255,.72); stroke-width: 3.2; }
-.нить.жила     { stroke: #f4fcff; stroke-width: 1.5; }
-
+.нить.дальний  { stroke: rgba(47,123,255,.20); stroke-width: 11; }
+.нить.средний  { stroke: rgba(96,168,255,.38); stroke-width: 6.5; }
+.нить.ближний  { stroke: rgba(190,232,255,.78); stroke-width: 3.2; }
+.нить.жила     { stroke: #f6fdff; stroke-width: 1.5; }
 .нить.мёртвая.дым     { stroke: rgba(130,138,156,.05); stroke-width: 12; }
 .нить.мёртвая.дальний { stroke: rgba(130,138,156,.10); stroke-width: 8; }
 .нить.мёртвая.средний { stroke: rgba(150,158,176,.20); stroke-width: 4.6; }
 .нить.мёртвая.ближний { stroke: rgba(176,184,200,.38); stroke-width: 2.2; }
 .нить.мёртвая.жила    { stroke: rgba(200,206,218,.5);  stroke-width: 1; }
-
 g.тает { animation: след .5s ease-out forwards; }
 @keyframes след { to { opacity: 0 } }
+.голова { fill: #f6fdff; stroke: rgba(143,214,255,.55); stroke-width: 7; paint-order: stroke; opacity: 0; }
 
-/* Голова светится тем же способом, что и нити: своим фильтром SVG, а
-   не тенью из CSS. Иначе она уезжает вместе с размытием. */
-/* Голова светится тем же приёмом: белое ядро и два кольца вокруг него
-   обводкой. Тень из CSS уезжала вместе с размытием. */
-.голова { fill: #f4fcff; stroke: rgba(143,214,255,.55); stroke-width: 7; opacity: 0; paint-order: stroke; }
-
-/* Удар по ряду: ряд светлеет, число пинга загорается, кружок выбора
-   получает ободок. Всё возвращается само, без второго кадра. */
-/* Удар СНИМАЕТ заливку, а не добавляет её. Так и просил владелец:
-   пока разряд идёт по строке, сквозь неё видно галактику, и только
-   кромка карточки горит холодным светом. */
+/* ── УДАР ПО СТРОКЕ: СТЕКЛО СТАНОВИТСЯ ПРОЗРАЧНЫМ ──────────────
+   Слово Даниэля: «когда молния по ним бьёт, на фоне лучше становится
+   видно планеты». Обычно карточка матовая, и это и есть стекло. Под
+   ударом заливка сходит почти в ноль, а размытие падает с 1.6 рема до
+   двух точек: матовое стекло на миг становится прозрачным, и галактика
+   за ним видна резко. Кромка при этом загорается неоном. */
 .ряд.бьёт {
-  background: rgba(255,255,255,.005);
-  border-color: rgba(143,214,255,.55);
-  box-shadow: 0 0 1.8rem rgba(47,123,255,.45), inset 0 0 1.6rem rgba(47,123,255,.12);
-}
-.ряд.бьёт .пинг { color: #eaf7ff; text-shadow: 0 0 1.4rem rgba(217,240,255,1), 0 0 2.8rem rgba(47,123,255,.8); }
-.ряд.бьёт .точка { border-color: var(--синий-свет); box-shadow: 0 0 1.1rem rgba(143,214,255,.75); }
-
-/* Мёртвый ряд не вспыхивает: он получает серый след, и это ровно то, о
-   чём просил клиент - «там где нету, молния потухшая, серый след». */
-.ряд.нет.бьёт {
   background: rgba(255,255,255,.01);
-  border-color: rgba(150,158,176,.24);
+  border-color: rgba(143,214,255,.75);
+  -webkit-backdrop-filter: blur(2px) saturate(190%);
+          backdrop-filter: blur(2px) saturate(190%);
+  box-shadow:
+    0 0 .4rem rgba(143,214,255,.7),
+    0 0 1.8rem rgba(47,123,255,.55),
+    inset 0 0 1.6rem rgba(47,123,255,.14);
+}
+.ряд.бьёт .пинг { color: #eaf7ff; text-shadow: 0 0 1.4rem rgba(223,242,255,1), 0 0 2.8rem rgba(47,123,255,.85); }
+.ряд.бьёт .точка { border-color: var(--синий-свет); box-shadow: 0 0 1.1rem rgba(143,214,255,.8); }
+
+/* Мёртвая строка не вспыхивает: серый след, и это ровно то, о чём
+   просил клиент - «там где нету, молния потухшая, серый след». */
+.ряд.нет.бьёт {
+  background: rgba(255,255,255,.012);
+  border-color: rgba(150,158,176,.3);
   box-shadow: none;
 }
 .ряд.нет.бьёт .пинг { color: var(--мёртвый); text-shadow: none; }
 .ряд.нет.бьёт .точка { border-color: rgba(150,158,176,.4); box-shadow: none; }
 
-/* Пока идёт разряд, весь столбец пингов слегка подсвечен: так
-   электричество ощущается в кадре, а не только на одной строке. */
-html.разряд .список::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(28% 100% at 80% 50%, rgba(47,123,255,.13), transparent 70%);
+/* ── ЧИПЫ СОРТИРОВКИ ────────────────────────────────────────────── */
+.чипы { display: flex; gap: .7rem; flex: none; }
+.чип {
+  padding: .7rem 1.2rem; border-radius: 1.1rem;
+  border: 1px solid var(--стекло-край); background: rgba(255,255,255,.04);
+  color: var(--тихий); font-family: inherit; font-size: 1.12rem; font-weight: 600;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: color .24s ease, border-color .24s ease, background .24s ease, box-shadow .24s ease;
+}
+.чип.тут {
+  color: var(--лёд);
+  border-color: rgba(110,180,255,.7);
+  background: rgba(47,123,255,.18);
+  box-shadow: 0 0 1.2rem rgba(47,123,255,.5), inset 0 1px 0 rgba(255,255,255,.22);
 }
 
-/* ── ОТКЛИК НА НАЖАТИЕ ──────────────────────────────────────────
-   Круг от точки касания. Это то, что человек ждёт от нажатия на
-   телефоне: палец попал сюда, и отсюда пошла волна. */
-.нажимается { position: relative; }
-.волна {
-  position: absolute; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(143,214,255,.38), rgba(47,123,255,.14) 55%, transparent 72%);
-  transform: scale(.2); opacity: .9;
-  animation: волна-идёт .6s cubic-bezier(.2,.7,.3,1) forwards;
+/* ── КАРТОЧКИ ПРОФИЛЯ И ПОДПИСКИ ────────────────────────────────── */
+.карточка { border-radius: 1.6rem; flex: none; }
+.группа-настроек { display: flex; flex-direction: column; gap: .7rem; flex: none; }
+
+.аккаунт { display: flex; align-items: center; gap: 1.2rem; padding: 1.4rem 1.5rem; }
+.аватар {
+  width: 4.6rem; height: 4.6rem; border-radius: 1.5rem; flex: none;
+  display: grid; place-items: center;
+  background: linear-gradient(157deg, rgba(47,123,255,.6), rgba(47,123,255,.2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 0 1.6rem rgba(47,123,255,.4);
+  font-size: 2rem; font-weight: 700;
 }
-@keyframes волна-идёт { to { transform: scale(1); opacity: 0 } }
+.аккаунт-текст { flex: 1; display: flex; flex-direction: column; gap: .2rem; }
+.аккаунт-текст b { font-size: 1.6rem; font-weight: 700; }
+.аккаунт-текст i { font-style: normal; font-size: 1.1rem; color: var(--тихий); }
+.метка-тариф {
+  padding: .35rem .8rem; border-radius: .8rem; flex: none;
+  font-size: 1rem; font-weight: 700; letter-spacing: .08em;
+  color: #2a1c00; background: linear-gradient(180deg, #ffe08a, var(--золото));
+  box-shadow: 0 0 1.2rem rgba(255,207,92,.55);
+}
 
-.полоса:active, .плитка:active, .кругляш:active { transform: scale(.975); }
-.полоса, .плитка, .кругляш, .ряд, .вкладка { transition: transform .16s cubic-bezier(.2,.9,.3,1.2), background .22s ease, box-shadow .22s ease; }
-.ряд:active { transform: scale(.99); }
-.вкладка:active { transform: scale(.92); }
+.ряд-настройки {
+  display: flex; align-items: center; gap: 1.1rem;
+  padding: 1.1rem 1.4rem; width: 100%;
+  cursor: pointer; color: var(--бумага); text-align: left;
+  font-family: inherit; text-decoration: none;
+}
+.настр-знак {
+  width: 3.2rem; height: 3.2rem; border-radius: 1rem; flex: none;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.07); color: var(--бумага);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
+}
+.настр-знак svg { width: 1.5rem; height: auto; fill: currentColor; }
+.настр-знак.жёлтый { background: rgba(255,207,92,.16); color: var(--золото); }
+.настр-знак.синий  { background: rgba(47,123,255,.2);  color: var(--синий-свет); }
+.настр-текст { flex: 1; display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.настр-текст b { font-size: 1.3rem; font-weight: 600; }
+.настр-текст i { font-style: normal; font-size: 1.05rem; color: var(--тихий); }
 
-/* ── НИЖНЯЯ НАВИГАЦИЯ ───────────────────────────────────────────── */
+.кнопка-выход {
+  margin-top: .4rem; flex: none;
+  height: 4.6rem; border-radius: 1.6rem;
+  border: 1px solid rgba(255,90,110,.32); background: rgba(255,90,110,.1);
+  color: #ff9aa8; font-family: inherit; font-size: 1.3rem; font-weight: 600;
+  cursor: pointer; position: relative; overflow: hidden;
+}
+
+.текущая { padding: 1.4rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.текущая-верх { display: flex; align-items: center; gap: 1.1rem; }
+.текущая-имя { display: flex; flex-direction: column; gap: .15rem; }
+.текущая-имя b { font-size: 1.5rem; font-weight: 700; }
+.текущая-имя i { font-style: normal; font-size: 1.1rem; color: var(--тихий); }
+.полоска { height: .7rem; border-radius: .4rem; background: rgba(255,255,255,.1); overflow: hidden; }
+.полоска span {
+  display: block; height: 100%; border-radius: .4rem;
+  background: linear-gradient(90deg, var(--синий), var(--синий-свет));
+  box-shadow: 0 0 1.2rem rgba(47,123,255,.8);
+}
+.текущая-низ { display: flex; justify-content: space-between; font-size: 1.1rem; color: var(--тихий); }
+
+.тарифы { display: flex; flex-direction: column; gap: .8rem; flex: none; }
+.тариф {
+  position: relative; border-radius: 1.6rem;
+  padding: 1.2rem 1.5rem;
+  display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto;
+  align-items: center; gap: .2rem 1rem;
+  cursor: pointer; color: var(--бумага); font-family: inherit; text-align: left;
+}
+.тариф b { font-size: 1.4rem; font-weight: 600; }
+.тариф i { font-style: normal; font-size: 1.05rem; color: var(--тихий); grid-column: 1; }
+.тариф .цена { grid-row: 1 / span 2; grid-column: 2; font-size: 1.8rem; font-weight: 700; font-family: "Плекс", monospace; }
+.тариф.выгодный { border-color: rgba(110,180,255,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 0 1.8rem rgba(47,123,255,.32), 0 .7rem 2.2rem rgba(0,0,0,.45); }
+.тариф.выбран {
+  border-color: rgba(61,220,151,.75);
+  box-shadow: 0 0 .4rem rgba(61,220,151,.6), 0 0 1.8rem rgba(61,220,151,.4), inset 0 1px 0 rgba(255,255,255,.26);
+}
+.бирка {
+  position: absolute; top: -.7rem; right: 1.4rem;
+  padding: .25rem .7rem; border-radius: .7rem;
+  font-size: .95rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: #04220f; background: linear-gradient(180deg, #7cf3bd, var(--хорошо));
+  box-shadow: 0 0 1rem rgba(61,220,151,.7);
+}
+
+.плюсы { list-style: none; display: flex; flex-direction: column; gap: .6rem; flex: none; padding: .4rem .4rem 0; }
+.плюсы li { position: relative; padding-left: 2.2rem; font-size: 1.2rem; color: rgba(238,243,252,.8); }
+.плюсы li::before {
+  content: ""; position: absolute; left: .4rem; top: .45rem;
+  width: .9rem; height: .5rem; border-left: .18rem solid var(--хорошо); border-bottom: .18rem solid var(--хорошо);
+  transform: rotate(-45deg);
+}
+
+.кнопка-главная {
+  height: 5rem; border-radius: 1.6rem; flex: none; margin-top: .4rem;
+  border: 1px solid rgba(110,180,255,.6);
+  background: linear-gradient(180deg, #3d84ff, #1f5ed8);
+  color: #fff; font-family: inherit; font-size: 1.4rem; font-weight: 700;
+  cursor: pointer; position: relative; overflow: hidden;
+  box-shadow: 0 0 1.8rem rgba(47,123,255,.6), inset 0 1px 0 rgba(255,255,255,.34);
+}
+
+/* ── НИЖНЯЯ НАВИГАЦИЯ ──────────────────────────────────────────── */
 .низ {
-  position: relative; z-index: 4;
+  position: relative; z-index: 6; flex: none;
   height: 7.6rem;
   display: grid; grid-template-columns: repeat(3, 1fr);
   align-items: start;
   padding: 1.1rem 1.8rem 0;
-  border-top: 1px solid rgba(255,255,255,.06);
-  background: linear-gradient(180deg, rgba(5,7,15,0), rgba(5,7,15,.88) 42%);
-  backdrop-filter: blur(1.4rem);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid rgba(255,255,255,.07);
+  background: linear-gradient(180deg, rgba(3,5,11,0), rgba(3,5,11,.9) 42%);
+  -webkit-backdrop-filter: blur(1.6rem); backdrop-filter: blur(1.6rem);
 }
 .вкладка {
   border: 0; background: none; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: .55rem;
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
   color: var(--тихий); font-family: inherit;
   border-radius: 1.2rem; padding: .4rem 0;
+  position: relative; overflow: hidden;
+  transition: color .24s ease, transform .16s cubic-bezier(.2,.9,.3,1.2);
 }
+.вкладка:active { transform: scale(.92); }
 .вкладка svg { width: 2rem; height: 1.9rem; fill: currentColor; }
-.вкладка span { font-size: 1.08rem; font-weight: 500; }
-.вкладка.тут { color: var(--синий); }
-.вкладка.тут svg { filter: drop-shadow(0 0 1rem rgba(47,123,255,.9)); }
+.вкладка span { font-size: 1.06rem; font-weight: 500; }
+.вкладка.тут { color: var(--синий-свет); }
+.вкладка.тут svg { filter: drop-shadow(0 0 1rem rgba(47,123,255,1)); }
 
-/* Уважаем системную просьбу убрать движение: у части людей от него
-   кружится голова, и приложение, которое эту просьбу игнорирует, они
-   удаляют. Разряд при этом остаётся, он короткий и по делу. */
+/* ── БОКОВОЕ МЕНЮ ──────────────────────────────────────────────── */
+.штора {
+  position: absolute; inset: 0; z-index: 8;
+  background: rgba(2,4,10,.62);
+  -webkit-backdrop-filter: blur(.4rem); backdrop-filter: blur(.4rem);
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+html.ящик-открыт .штора { opacity: 1; pointer-events: auto; }
+
+.ящик {
+  position: absolute; left: 0; top: 0; bottom: 0; z-index: 9;
+  width: min(30rem, 82vw);
+  padding: 2rem 1.4rem;
+  padding-top: max(2rem, env(safe-area-inset-top));
+  display: flex; flex-direction: column; gap: .3rem;
+  background: linear-gradient(157deg, rgba(14,20,38,.95), rgba(6,9,20,.96));
+  border-right: 1px solid rgba(255,255,255,.1);
+  box-shadow: 2rem 0 5rem rgba(0,0,0,.6), inset -1px 0 0 rgba(255,255,255,.06);
+  -webkit-backdrop-filter: blur(2rem); backdrop-filter: blur(2rem);
+  transform: translateX(-104%);
+  pointer-events: none;
+  transition: transform .34s cubic-bezier(.3,.9,.3,1);
+}
+html.ящик-открыт .ящик { transform: none; pointer-events: auto; }
+.ящик-шапка { display: flex; align-items: center; gap: .7rem; padding: 0 .6rem 1.6rem; }
+.ящик-шапка .кругляш { margin-left: auto; width: 3.4rem; height: 3.4rem; }
+.ящик-шапка .кругляш svg { width: 1.4rem; }
+.пункт {
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: 1.25rem 1.2rem; border-radius: 1.3rem;
+  border: 0; background: none; color: rgba(238,243,252,.86);
+  font-family: inherit; font-size: 1.32rem; font-weight: 500;
+  cursor: pointer; text-decoration: none;
+  position: relative; overflow: hidden;
+  transition: background .2s ease, color .2s ease;
+}
+.пункт svg { width: 1.8rem; height: 1.8rem; fill: currentColor; color: var(--синий-свет); flex: none; }
+.пункт:active { background: rgba(255,255,255,.06); }
+.ящик-черта { height: 1px; background: rgba(255,255,255,.08); margin: 1rem 1.2rem; }
+.ящик-низ { margin-top: auto; padding: 1.2rem; font-size: 1.05rem; color: var(--тихий); }
+
+/* ── ВСПЛЫВАЮЩАЯ ПОДСКАЗКА ─────────────────────────────────────
+   Нажатие, у которого нет видимого ответа, человек повторяет ещё
+   дважды, а потом считает кнопку сломанной. */
+.всплывашка {
+  position: absolute; left: 50%; bottom: 9.6rem; z-index: 10;
+  transform: translate(-50%, 1.2rem);
+  max-width: 82vw;
+  padding: 1rem 1.6rem; border-radius: 1.4rem;
+  background: linear-gradient(157deg, rgba(18,26,48,.96), rgba(8,12,26,.96));
+  border: 1px solid rgba(110,180,255,.4);
+  box-shadow: 0 0 1.6rem rgba(47,123,255,.4), 0 1rem 2.4rem rgba(0,0,0,.55);
+  font-size: 1.2rem; font-weight: 500; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  opacity: 0; pointer-events: none;
+  transition: opacity .24s ease, transform .24s cubic-bezier(.2,.9,.3,1.3);
+}
+.всплывашка.видно { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── ОТКЛИК НА НАЖАТИЕ ─────────────────────────────────────────
+   Круг от точки касания: палец попал сюда, и отсюда пошла волна. */
+.волна {
+  position: absolute; border-radius: 50%; pointer-events: none; z-index: 2;
+  background: radial-gradient(circle, rgba(143,214,255,.4), rgba(47,123,255,.14) 55%, transparent 72%);
+  transform: scale(.2); opacity: .9;
+  animation: волна-идёт .6s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes волна-идёт { to { transform: scale(1); opacity: 0 } }
+.полоса:active, .плитка:active, .кругляш:active, .тариф:active,
+.кнопка-главная:active, .кнопка-выход:active, .ряд-настройки:active { transform: scale(.978); }
+.полоса, .плитка, .кругляш, .тариф, .кнопка-главная, .кнопка-выход, .ряд-настройки, .чип, .обновить {
+  transition: transform .16s cubic-bezier(.2,.9,.3,1.2), background .24s ease, box-shadow .24s ease, border-color .24s ease;
+}
+
+/* ── КОГДА ДВИЖЕНИЕ ВЫКЛЮЧЕНО ──────────────────────────────────
+   Уважаем и системную просьбу, и свой тумблер в профиле: у части людей
+   от движения кружится голова, и приложение, которое эту просьбу
+   игнорирует, они удаляют. */
+html.без-движения .кора, html.без-движения .огни, html.без-движения .облака,
+html.без-движения .бегунок, html.без-движения .волна-круг, html.без-движения .ореол,
+html.без-движения .сияние, html.без-движения .звёзды { animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .кора, .огни, .облака, .бегунок, .волна-круг, .ореол, .сияние, .звёзды { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ТРИ ТЕМЫ: ПЛАНЕТА, РАКЕТА, ОКЕАН
+   ═══════════════════════════════════════════════════════════════════
+
+   Клиент попросил несколько видов оформления, а тему следа подсказал
+   сам: «впринципе тоже самое можно сделать и с огнем или водой для
+   прикола». Значит тема это не перекрашенная кнопка, а другое явление
+   на экране: молния, пламя, поток.
+
+   Что меняется в теме и что не меняется никогда:
+
+     меняется    фон, герой экрана, палитра, след замера, значок строки
+     НЕ меняется вёрстка, размеры, расположение, логика, тексты
+
+   Второе важнее первого. Тема, которая двигает строки, ломает макет
+   на каждой правке: поправил одну, две другие уехали. Герой всех трёх
+   тем занимает один и тот же круг, а след идёт по одной и той же оси.
+
+   ── ПАЛИТРА ────────────────────────────────────────────────────── */
+
+:root[data-тема="ракета"] {
+  --синий:      #ff6a2c;   /* «синий» здесь имя роли, а не цвета:   */
+  --синий-свет: #ffc073;   /* это акцент темы, и он везде один      */
+  --лёд:        #ffe9d2;
+  --хорошо:     #ffb648;
+  --средне:     #ff7a3d;
+  --неон:       255, 106, 44;
+}
+:root[data-тема="океан"] {
+  --синий:      #12b5c9;
+  --синий-свет: #7fe8f5;
+  --лёд:        #d8fbff;
+  --хорошо:     #3ee0b4;
+  --средне:     #59c8ff;
+  --неон:       18, 181, 201;
+}
+:root { --неон: 47, 123, 255; }
+
+/* Свечения по всему экрану собраны из трёх чисел темы, поэтому смена
+   палитры доходит и до теней, а не красит один текст. */
+:root[data-тема="ракета"] { --стекло-тень:
+    inset 0 1px 0 rgba(255,255,255,.26),
+    inset 0 -1px 0 rgba(255,255,255,.05),
+    inset 0 0 2.4rem rgba(255,150,90,.06),
+    0 .7rem 2.2rem rgba(0,0,0,.5); }
+:root[data-тема="океан"] { --стекло-тень:
+    inset 0 1px 0 rgba(255,255,255,.26),
+    inset 0 -1px 0 rgba(255,255,255,.05),
+    inset 0 0 2.4rem rgba(90,220,255,.07),
+    0 .7rem 2.2rem rgba(0,0,0,.45); }
+
+/* ── КАКОЙ МИР ПОКАЗАН ───────────────────────────────────────────
+   Скрытый мир снят через display:none, а не спрятан прозрачностью.
+   Прозрачный слой продолжает считать свои анимации: три фона разом
+   на телефоне это втрое больше работы за то же самое. */
+.мир { position: absolute; inset: 0; }
+.мир-ракета, .мир-океан { display: none; }
+:root[data-тема="ракета"] .мир-планета,
+:root[data-тема="океан"]  .мир-планета { display: none; }
+:root[data-тема="ракета"] .мир-ракета   { display: block; }
+:root[data-тема="океан"]  .мир-океан    { display: block; }
+
+:root[data-тема="ракета"] .небо { background: #08050a; }
+:root[data-тема="океан"]  .небо { background: #01090f; }
+
+/* ── МИР «РАКЕТА»: НОЧНОЙ СТАРТ ──────────────────────────────────
+   Низ экрана раскалён, верх остаётся ночью. Свет идёт снизу вверх,
+   и это единственный источник: вторая точка света читалась бы как
+   ошибка сборки. */
+.жар {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(70% 34% at 50% 104%, rgba(255,138,52,.55), rgba(255,86,24,.2) 42%, transparent 74%),
+    radial-gradient(120% 56% at 50% 112%, rgba(255,58,12,.3), transparent 70%),
+    linear-gradient(180deg, #07040a 0%, #0c0710 44%, #1a0a0c 76%, #2b0f0a 100%);
+}
+.дым-старта {
+  position: absolute; left: -20%; right: -20%; bottom: -14%; height: 74%;
+  background:
+    radial-gradient(38% 42% at 24% 76%, rgba(120,98,110,.3), transparent 72%),
+    radial-gradient(44% 38% at 74% 84%, rgba(140,110,108,.26), transparent 72%),
+    radial-gradient(30% 34% at 50% 96%, rgba(190,150,130,.24), transparent 70%);
+  filter: blur(1.8rem);
+  animation: клубится 19s ease-in-out infinite;
+}
+@keyframes клубится {
+  0%,100% { transform: translate3d(0,0,0) scale(1);      opacity: .8 }
+  50%     { transform: translate3d(1.6rem,-1.2rem,0) scale(1.07); opacity: 1 }
+}
+
+/* Искры летят ВВЕРХ и гаснут по дороге: снизу их много и они яркие,
+   к середине экрана остаются единицы. Точками градиента, как звёзды:
+   на третьей плотности точка остаётся точкой. */
+.искры {
+  position: absolute; left: 0; right: 0; bottom: -22%; height: 122%;
+  background:
+    radial-gradient(1.7px 1.7px at 14% 92%, rgba(255,214,140,1),  transparent 60%),
+    radial-gradient(1.4px 1.4px at 29% 78%, rgba(255,168,74,.95), transparent 60%),
+    radial-gradient(2px   2px   at 46% 88%, rgba(255,232,180,1),  transparent 60%),
+    radial-gradient(1.3px 1.3px at 61% 70%, rgba(255,150,60,.85), transparent 60%),
+    radial-gradient(1.6px 1.6px at 76% 84%, rgba(255,198,120,.95),transparent 60%),
+    radial-gradient(1.2px 1.2px at 88% 66%, rgba(255,140,52,.8),  transparent 60%),
+    radial-gradient(1.5px 1.5px at 37% 58%, rgba(255,186,96,.7),  transparent 60%),
+    radial-gradient(1.2px 1.2px at 68% 46%, rgba(255,160,70,.55), transparent 60%),
+    radial-gradient(1.4px 1.4px at 22% 40%, rgba(255,200,130,.5), transparent 60%),
+    radial-gradient(1.1px 1.1px at 82% 32%, rgba(255,170,90,.4),  transparent 60%);
+  animation: вверх 8.5s linear infinite;
+}
+.искры.поздние {
+  background:
+    radial-gradient(1.3px 1.3px at 9%  86%, rgba(255,180,90,.8),  transparent 60%),
+    radial-gradient(1.6px 1.6px at 34% 94%, rgba(255,222,160,.9), transparent 60%),
+    radial-gradient(1.2px 1.2px at 55% 74%, rgba(255,150,60,.7),  transparent 60%),
+    radial-gradient(1.5px 1.5px at 71% 90%, rgba(255,205,135,.85),transparent 60%),
+    radial-gradient(1.1px 1.1px at 92% 78%, rgba(255,160,70,.6),  transparent 60%),
+    radial-gradient(1.3px 1.3px at 45% 52%, rgba(255,190,110,.5), transparent 60%),
+    radial-gradient(1.1px 1.1px at 16% 34%, rgba(255,170,90,.38), transparent 60%);
+  animation: вверх 13s linear infinite;
+  opacity: .82;
+}
+@keyframes вверх { from { transform: translate3d(0,0,0) } to { transform: translate3d(0,-52%,0) } }
+
+/* Марево: воздух над соплом дрожит. Слабое и медленное - сильное
+   читается рябью на экране, а не жаром. */
+.марево {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 46%;
+  background: repeating-linear-gradient(0deg,
+    rgba(255,150,70,.028) 0 .5rem, transparent .5rem 1.3rem);
+  filter: blur(.25rem);
+  animation: дрожит 3.4s ease-in-out infinite;
+}
+@keyframes дрожит {
+  0%,100% { transform: translate3d(0,0,0) scaleY(1) }
+  50%     { transform: translate3d(0,-.5rem,0) scaleY(1.05) }
+}
+
+/* ── МИР «ОКЕАН»: ГЛУБИНА ────────────────────────────────────────
+   Свет идёт сверху и слабеет ко дну, поэтому низ экрана почти чёрный.
+   Это и держит читаемость нижнего меню без отдельной подложки. */
+.толща {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(90% 44% at 50% -8%, rgba(120,235,255,.3), transparent 66%),
+    linear-gradient(180deg, #06384d 0%, #04283a 26%, #021a29 56%, #010c15 82%, #00060c 100%);
+}
+
+/* Лучи: узкие полосы света сверху, наклонённые и дышащие вразнобой.
+   Каждый второй сдвинут по фазе, иначе они мигают хором и выглядят
+   мерцанием лампы, а не водой. */
+.лучи {
+  position: absolute; left: -30%; right: -30%; top: -20%; height: 96%;
+  transform: rotate(9deg);
+  background:
+    linear-gradient(97deg, transparent 6%,  rgba(180,245,255,.11) 9%,  transparent 13%),
+    linear-gradient(94deg, transparent 20%, rgba(150,230,255,.16) 24%, transparent 29%),
+    linear-gradient(99deg, transparent 38%, rgba(190,250,255,.09) 41%, transparent 45%),
+    linear-gradient(92deg, transparent 54%, rgba(160,235,255,.14) 58%, transparent 63%),
+    linear-gradient(98deg, transparent 72%, rgba(175,245,255,.1)  75%, transparent 80%),
+    linear-gradient(95deg, transparent 86%, rgba(150,230,255,.12) 90%, transparent 95%);
+  filter: blur(.7rem);
+  animation: качает 11s ease-in-out infinite;
+}
+@keyframes качает {
+  0%,100% { opacity: .72; transform: rotate(9deg)  translate3d(0,0,0) }
+  50%     { opacity: 1;   transform: rotate(6.5deg) translate3d(2.4rem,0,0) }
+}
+
+/* Блики дна: сетка из пересекающихся пятен, медленно плывёт. Это то,
+   что глаз читает водой, даже когда всё остальное просто синее. */
+.блики {
+  position: absolute; inset: -14%;
+  background:
+    radial-gradient(18% 9% at 22% 28%, rgba(190,250,255,.12), transparent 72%),
+    radial-gradient(14% 7% at 58% 18%, rgba(160,235,255,.1),  transparent 72%),
+    radial-gradient(20% 10% at 78% 44%, rgba(200,250,255,.09), transparent 72%),
+    radial-gradient(16% 8% at 36% 58%, rgba(170,240,255,.1),  transparent 72%),
+    radial-gradient(22% 11% at 66% 76%, rgba(150,230,255,.08), transparent 72%),
+    radial-gradient(15% 7% at 12% 82%, rgba(190,250,255,.07), transparent 72%);
+  filter: blur(1.1rem);
+  animation: течёт 16s ease-in-out infinite;
+}
+@keyframes течёт {
+  0%,100% { transform: translate3d(0,0,0)        scale(1) }
+  50%     { transform: translate3d(-2rem,1.4rem,0) scale(1.09) }
+}
+
+.пузыри {
+  position: absolute; left: 0; right: 0; bottom: -24%; height: 124%;
+  background:
+    radial-gradient(2.4px 2.4px at 17% 90%, rgba(215,250,255,.6), transparent 62%),
+    radial-gradient(1.6px 1.6px at 33% 76%, rgba(190,245,255,.5), transparent 62%),
+    radial-gradient(3px   3px   at 52% 86%, rgba(225,252,255,.55),transparent 62%),
+    radial-gradient(1.8px 1.8px at 69% 68%, rgba(180,240,255,.45),transparent 62%),
+    radial-gradient(2.2px 2.2px at 84% 82%, rgba(210,250,255,.5), transparent 62%),
+    radial-gradient(1.5px 1.5px at 44% 54%, rgba(190,245,255,.35),transparent 62%),
+    radial-gradient(2px   2px   at 25% 44%, rgba(205,250,255,.3), transparent 62%);
+  animation: всплывает 15s linear infinite;
+}
+.пузыри.редкие {
+  background:
+    radial-gradient(3.4px 3.4px at 8%  88%, rgba(225,252,255,.42), transparent 62%),
+    radial-gradient(2.6px 2.6px at 41% 94%, rgba(200,248,255,.38), transparent 62%),
+    radial-gradient(4px   4px   at 74% 84%, rgba(215,250,255,.34), transparent 62%),
+    radial-gradient(2.2px 2.2px at 92% 70%, rgba(190,245,255,.3),  transparent 62%),
+    radial-gradient(3px   3px   at 58% 60%, rgba(205,250,255,.22), transparent 62%);
+  animation: всплывает 24s linear infinite;
+  opacity: .8;
+}
+@keyframes всплывает { from { transform: translate3d(0,0,0) } to { transform: translate3d(0,-54%,0) } }
+
+/* ── ГЕРОЙ ЭКРАНА ПО ТЕМАМ ───────────────────────────────────────
+   Все трое занимают один круг .планета-место, поэтому смена темы не
+   двигает ни кнопку, ни список. */
+.герой-океан { display: none; position: absolute; inset: 0; }
+/* В теме огня круг героя пустует: ракета живёт в фоне, за списком.
+   Пустой круг это не потеря - его место занимает свечение кнопки,
+   которое в этой теме оранжевое и само по себе читается пламенем. */
+:root[data-тема="ракета"] .герой-планета { display: none; }
+:root[data-тема="океан"]  .герой-планета { display: none; }
+:root[data-тема="океан"]  .герой-океан   { display: block; }
+
+:root[data-тема="ракета"] .ореол {
+  background: radial-gradient(50% 50% at 50% 62%, rgba(255,120,40,.3), rgba(255,90,20,.08) 52%, transparent 70%);
+}
+:root[data-тема="океан"] .ореол {
+  background: radial-gradient(50% 50% at 50% 50%, rgba(18,181,201,.26), rgba(18,181,201,.07) 52%, transparent 70%);
+}
+
+/* ── РАКЕТА В ФОНЕ ───────────────────────────────────────────────
+   Корпус поднимается снизу и доходит носом до карточки подписки.
+   Всё, что выше, отдано кнопке: ракета туда не лезет.
+
+   Числа: экран 93.2 рем. Корпус 17.4 рем шириной, значит 37.7 рем
+   высотой (развёртка 120 на 260). Верх на 34 рем - это сразу под
+   карточкой подписки. Сопло стоит на 79% корпуса, то есть на 63.8
+   рем, оттуда и растёт факел вниз до 83 рем, где начинается нижнее
+   меню. Ничего не наезжает друг на друга, и это посчитано, а не
+   подобрано на глаз.
+
+   Ракета стоит на месте и еле дышит. Летящая по кругу отвлекала бы
+   от списка серверов, ради которого экран и открыли. */
+.старт { position: absolute; inset: 0; }
+.корпус {
+  position: absolute; left: 50%; top: 34rem;
+  width: 17.4rem; height: 37.7rem;
+  transform: translateX(-50%);
+  animation: дышит-корпус 5.2s ease-in-out infinite;
+  /* Приглушена намеренно. В полную силу корпус светлее карточек, и
+     названия стран поверх него не читались: «Польша» и «Германия»
+     стояли белым по белому. Фон обязан оставаться фоном - читают
+     здесь список серверов, а не ракету. */
+  filter: drop-shadow(0 .6rem 1.6rem rgba(0,0,0,.6)) brightness(.62) saturate(.95);
+  opacity: .44;
+}
+@keyframes дышит-корпус {
+  0%,100% { transform: translate3d(-50%,0,0) }
+  50%     { transform: translate3d(-50%,-.55rem,0) }
+}
+.корпус .крыло { fill: #c2452a; }
+.корпус .пояс  { fill: rgba(30,36,50,.7); }
+.корпус .сопло { fill: #1d222f; }
+.корпус .иллюминатор { filter: drop-shadow(0 0 .5rem rgba(90,190,255,.9)); }
+
+/* Факел: два слоя, широкий оранжевый и узкое белое ядро. Один слой
+   даёт ровное пятно, а огонь узнают именно по горячей сердцевине. */
+.факел {
+  position: absolute; left: 50%; top: 63.8rem;
+  width: 9.6rem; height: 19rem;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 42% at 50% 4%,
+    rgba(255,238,200,.5) 0%, rgba(255,166,64,.42) 22%,
+    rgba(255,96,26,.26) 48%, rgba(190,40,10,.1) 72%, transparent 88%);
+  filter: blur(.5rem);
+  animation: пляшет .42s ease-in-out infinite alternate;
+  transform-origin: 50% 0;
+}
+.факел.сердце {
+  width: 4rem; height: 11rem;
+  background: radial-gradient(50% 44% at 50% 2%,
+    rgba(255,255,255,.62) 0%, rgba(255,246,214,.5) 26%,
+    rgba(255,196,110,.3) 56%, transparent 84%);
+  filter: blur(.28rem);
+  animation-duration: .29s;
+}
+@keyframes пляшет {
+  from { transform: translateX(-50%) scaleY(.92) scaleX(1.03) }
+  to   { transform: translateX(-50%) scaleY(1.08) scaleX(.95) }
+}
+.подставка {
+  position: absolute; left: 50%; top: 78rem;
+  width: 24rem; height: 5rem;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(255,140,60,.34), transparent 72%);
+  filter: blur(.9rem);
+}
+
+/* ОКЕАН: ядро из воды. Три течения крутятся с разной скоростью и в
+   разные стороны - одинаковая скорость дала бы крутящуюся картинку.
+
+   Имя «вода-ядро», а не «ядро»: класс .ядро уже занят сердцевиной
+   кнопки подключения, и первый сбор их столкнул - правило водяного
+   шара переехало кнопку на всех трёх темах разом. */
+.вода-ядро {
+  position: absolute; inset: 4%;
+  border-radius: 50%; overflow: hidden;
+  background: radial-gradient(70% 70% at 34% 26%, #1fa8bd 0%, #0a6285 40%, #05293c 76%, #01131c 100%);
+  box-shadow: inset -1.4rem -.8rem 3.6rem rgba(0,0,0,.66), inset .6rem .5rem 2.4rem rgba(127,232,245,.26);
+}
+.течение {
+  position: absolute; inset: -30%;
+  background:
+    radial-gradient(30% 11% at 30% 34%, rgba(225,253,255,.6), transparent 66%),
+    radial-gradient(36% 13% at 68% 56%, rgba(130,232,250,.5), transparent 68%),
+    radial-gradient(26% 9%  at 46% 78%, rgba(195,248,255,.44), transparent 66%);
+  filter: blur(.22rem);
+  animation: крутит 26s linear infinite;
+}
+.течение.второе {
+  background:
+    radial-gradient(24% 8%  at 62% 26%, rgba(240,255,255,.5), transparent 66%),
+    radial-gradient(32% 12% at 26% 62%, rgba(100,215,245,.46), transparent 68%);
+  animation: крутит 38s linear infinite reverse;
+}
+.течение.третье {
+  background:
+    radial-gradient(18% 8% at 44% 44%, rgba(255,255,255,.28), transparent 70%),
+    radial-gradient(26% 12% at 74% 82%, rgba(140,235,250,.26), transparent 72%);
+  animation: крутит 52s linear infinite;
+}
+@keyframes крутит { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+/* Каустика: сетка бликов на поверхности шара, дышит вместе с лучами. */
+.каустика {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(12% 5% at 34% 22%, rgba(255,255,255,.4), transparent 70%),
+    radial-gradient(9% 4%  at 58% 36%, rgba(255,255,255,.3), transparent 70%),
+    radial-gradient(14% 6% at 44% 62%, rgba(255,255,255,.26),transparent 70%);
+  mix-blend-mode: screen;
+  animation: качает-блик 6.4s ease-in-out infinite;
+}
+@keyframes качает-блик {
+  0%,100% { opacity: .6; transform: translate3d(0,0,0) }
+  50%     { opacity: 1;  transform: translate3d(.5rem,-.4rem,0) }
+}
+.вода-ядро .кромка {
+  box-shadow: inset 0 0 1.3rem rgba(127,232,245,.8), inset 0 0 3.6rem rgba(18,181,201,.4);
+}
+
+/* ── СЛЕД ЗАМЕРА ПО ТЕМАМ ────────────────────────────────────────
+   Пять обводок остаются пятью: меняется только цвет. Молния белая с
+   синим ореолом, пламя белое с оранжевым, поток белый с бирюзовым.
+   Сердцевина у всех троих почти белая: горячее и яркое читается
+   светлым, каким бы ни был цвет вокруг. */
+:root[data-тема="ракета"] .нить.дым     { stroke: rgba(255,106,44,.12); stroke-width: 19; }
+:root[data-тема="ракета"] .нить.дальний { stroke: rgba(255,120,40,.22); stroke-width: 12.5; }
+:root[data-тема="ракета"] .нить.средний { stroke: rgba(255,160,70,.4);  stroke-width: 7; }
+:root[data-тема="ракета"] .нить.ближний { stroke: rgba(255,214,150,.8); stroke-width: 3.4; }
+:root[data-тема="ракета"] .нить.жила    { stroke: #fff6e2; }
+
+:root[data-тема="океан"] .нить.дым     { stroke: rgba(18,181,201,.11); stroke-width: 18; }
+:root[data-тема="океан"] .нить.дальний { stroke: rgba(30,195,215,.2);  stroke-width: 12; }
+:root[data-тема="океан"] .нить.средний { stroke: rgba(90,220,240,.38); stroke-width: 7; }
+:root[data-тема="океан"] .нить.ближний { stroke: rgba(190,248,255,.8); stroke-width: 3.3; }
+:root[data-тема="океан"] .нить.жила    { stroke: #eafdff; }
+
+/* ── ЗНАЧОК СТРОКИ ПО ТЕМАМ ──────────────────────────────────────
+   Клиент про значок: «на тех серверах где есть пинг - молния
+   переливается, там где нет пинга остался серый силуэт молнии будто
+   было но погасло». В теме огня это язык пламени, в теме воды -
+   капля. Правило одно: живой переливается, мёртвый серый. */
+:root[data-тема="ракета"] .заряд {
+  --фигура: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 22'><path d='M8.6 0c.5 3.4-.7 5.2-2.3 6.9C4.2 9 2 11 2 14.4 2 18.6 4.9 22 8.4 22S15 18.7 15 14.6c0-2.6-1.2-4.6-2.6-6.2-.5 1.2-1.2 2-2.1 2.4.6-2.4.6-6.1-1.7-8.8z'/></svg>");
+}
+:root[data-тема="ракета"] .ряд.заряжен .заряд {
+  background: linear-gradient(112deg, #b03a10 0%, #ff8a2c 26%, #fff1d2 44%, #ff8a2c 62%, #b03a10 100%);
+  background-size: 260% 100%;
+  filter: drop-shadow(0 0 .7rem rgba(255,150,60,.9));
+}
+:root[data-тема="ракета"] .ряд.середина.заряжен .заряд {
+  background: linear-gradient(112deg, #8f3a06 0%, #ff9f3a 26%, #ffe6bb 44%, #ff9f3a 62%, #8f3a06 100%);
+  background-size: 260% 100%;
+  filter: drop-shadow(0 0 .7rem rgba(255,170,80,.8));
+}
+
+:root[data-тема="океан"] .заряд {
+  --фигура: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 22'><path d='M8 0C8 0 1 9.1 1 14.6 1 18.7 4.1 22 8 22s7-3.3 7-7.4C15 9.1 8 0 8 0z'/></svg>");
+}
+:root[data-тема="океан"] .ряд.заряжен .заряд {
+  background: linear-gradient(112deg, #0b6f86 0%, #3ee0b4 26%, #eaffff 44%, #3ee0b4 62%, #0b6f86 100%);
+  background-size: 260% 100%;
+  filter: drop-shadow(0 0 .7rem rgba(62,224,180,.85));
+}
+:root[data-тема="океан"] .ряд.середина.заряжен .заряд {
+  background: linear-gradient(112deg, #0a5f8a 0%, #59c8ff 26%, #e2f8ff 44%, #59c8ff 62%, #0a5f8a 100%);
+  background-size: 260% 100%;
+  filter: drop-shadow(0 0 .7rem rgba(89,200,255,.8));
+}
+
+/* Строка под ударом светится цветом темы: синий отсвет в огне читался
+   бы чужим слоем поверх пламени. */
+:root[data-тема="ракета"] .ряд.бьёт {
+  border-color: rgba(255,190,120,.75);
+  box-shadow: 0 0 .4rem rgba(255,190,120,.7), 0 0 1.8rem rgba(255,106,44,.55),
+              inset 0 0 1.6rem rgba(255,106,44,.16);
+}
+:root[data-тема="океан"] .ряд.бьёт {
+  border-color: rgba(150,240,255,.75);
+  box-shadow: 0 0 .4rem rgba(150,240,255,.7), 0 0 1.8rem rgba(18,181,201,.55),
+              inset 0 0 1.6rem rgba(18,181,201,.16);
+}
+
+/* ── ВЫБОР ТЕМЫ В ПРОФИЛЕ ────────────────────────────────────────
+   Каждая тема показана собой: кружок с её фоном и её героем в
+   миниатюре. Подпись словом тут вторична - человек узнаёт глазом. */
+.темы { display: block; padding: 1.5rem 1.4rem 1.3rem; }
+.темы-шапка { margin-bottom: 1.2rem; }
+.темы-шапка b { display: block; font-size: 1.46rem; font-weight: 600; }
+.темы-шапка i { display: block; font-style: normal; font-size: 1.14rem; color: var(--тихий); margin-top: .2rem; }
+.темы-ряд { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9rem; }
+.тема-кнопка {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  padding: 1rem .5rem .9rem; border-radius: 1.4rem;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: inherit; font-family: inherit; cursor: pointer;
+  transition: border-color .22s ease, background .22s ease, transform .18s cubic-bezier(.2,.9,.3,1.4);
+}
+.тема-кнопка:active { transform: scale(.95); }
+.тема-кнопка b { font-size: 1.24rem; font-weight: 600; }
+.тема-кнопка i { font-style: normal; font-size: 1.04rem; color: var(--тихий); }
+.тема-кнопка.выбрана {
+  border-color: rgba(var(--неон), .85);
+  background: rgba(var(--неон), .1);
+  box-shadow: 0 0 1.4rem rgba(var(--неон), .28), inset 0 0 1.2rem rgba(var(--неон), .12);
+}
+.тема-кнопка.выбрана b { color: var(--синий-свет); }
+
+.тема-вид {
+  position: relative; width: 4.6rem; height: 4.6rem;
+  border-radius: 50%; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.тема-вид u { position: absolute; display: block; }
+.вид-планета { background: radial-gradient(60% 60% at 30% 24%, #123a6e, #050a18 72%); }
+.вид-планета u {
+  left: 18%; top: 22%; width: 64%; height: 64%; border-radius: 50%;
+  background: radial-gradient(70% 70% at 34% 28%, #4a9cff 0%, #1b5fae 42%, #07203f 78%);
+  box-shadow: inset -.3rem -.2rem .6rem rgba(0,0,0,.5), 0 0 .5rem rgba(90,170,255,.55);
+}
+.вид-ракета { background: linear-gradient(180deg, #100812 0%, #2a0f0a 72%, #4a1608 100%); }
+.вид-ракета u {
+  left: 50%; top: 20%; width: 26%; height: 62%;
+  transform: translateX(-50%);
+  border-radius: 46% 46% 20% 20%;
+  background: linear-gradient(180deg, #ff9a3c 0%, #ffe6bb 34%, #ff6a2c 68%, #b03a10 100%);
+  box-shadow: 0 0 .7rem rgba(255,120,40,.85);
+}
+.вид-океан { background: linear-gradient(180deg, #06384d 0%, #021a29 68%, #00060c 100%); }
+.вид-океан u {
+  left: 22%; top: 20%; width: 56%; height: 62%;
+  border-radius: 50% 50% 46% 46%;
+  background: radial-gradient(70% 70% at 36% 26%, #7fe8f5 0%, #12b5c9 44%, #05384f 82%);
+  box-shadow: 0 0 .6rem rgba(127,232,245,.6);
+}
+
+/* ── ЧЕЛОВЕК ПРОСИЛ НЕ ДВИГАТЬ ────────────────────────────────────
+   Система умеет сказать, что анимации человеку мешают. Фоны всех трёх
+   тем тогда замирают: дышащее оформление при такой настройке это не
+   красота, а помеха. */
+@media (prefers-reduced-motion: reduce) {
+  .искры, .пузыри, .лучи, .блики, .дым-старта, .марево,
+  .течение, .каустика, .факел, .корпус, .звёзды, .ореол {
+    animation: none !important;
+  }
+}
+
+/* ── КНОПКА ПОДКЛЮЧЕНИЯ ИДЁТ ЦВЕТОМ ТЕМЫ ─────────────────────────
+   Синяя кнопка посреди огня читается чужим слоем: экран собран из
+   двух разных приложений. Состояния «подключаемся» и «подключено»
+   остаются жёлтым и зелёным во всех темах - это не украшение, а
+   светофор, и он обязан значить одно и то же везде. */
+:root[data-тема="ракета"] .сияние,
+:root[data-тема="океан"]  .сияние {
+  background:
+    radial-gradient(42% 50% at 50% 50%, rgba(var(--неон),.34), rgba(var(--неон),.1) 48%, transparent 72%),
+    radial-gradient(26% 34% at 50% 18%, rgba(var(--неон),.3), transparent 70%),
+    radial-gradient(26% 34% at 50% 82%, rgba(var(--неон),.26), transparent 70%);
+}
+:root[data-тема="ракета"] .кольцо,
+:root[data-тема="океан"]  .кольцо {
+  border-color: var(--синий-свет);
+  box-shadow:
+    0 0 .5rem var(--синий-свет),
+    0 0 1.6rem rgba(var(--неон),.8),
+    0 0 4.4rem rgba(var(--неон),.42),
+    inset 0 0 1.2rem rgba(var(--неон),.55);
+}
+:root[data-тема="ракета"] .ядро,
+:root[data-тема="океан"]  .ядро {
+  background:
+    radial-gradient(72% 72% at 50% 22%, rgba(var(--неон),.44), rgba(4,7,16,.95) 74%),
+    rgba(4,7,16,.92);
+  border-color: rgba(var(--неон),.5);
+  box-shadow: inset 0 .4rem 2.4rem rgba(var(--неон),.2), inset 0 1px 0 rgba(255,255,255,.2);
+}
+:root[data-тема="ракета"] .рубильник,
+:root[data-тема="океан"]  .рубильник {
+  color: var(--лёд);
+  filter: drop-shadow(0 0 .8rem rgba(var(--неон),1));
+}
+:root[data-тема="ракета"] .пуск-слово,
+:root[data-тема="океан"]  .пуск-слово { text-shadow: 0 0 1.4rem rgba(var(--неон),.6); }
+:root[data-тема="ракета"] .волна-круг,
+:root[data-тема="океан"]  .волна-круг { border-color: rgba(var(--неон),.55); }
+:root[data-тема="ракета"] .бегунок,
+:root[data-тема="океан"]  .бегунок {
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 250deg,
+    rgba(255,255,255,.12) 286deg, #ffffff 342deg, rgba(var(--неон),.3) 352deg, transparent 360deg);
+}
+
+/* ── ВУАЛЬ ПО ТЕМАМ ──────────────────────────────────────────────
+   Вуаль защищает надписи от пёстрого фона, и в космосе ей положено
+   быть плотной снизу: там под ней ничего нет. В теме огня под ней
+   ЕСТЬ содержание - раскалённый низ и факел, - и плотная вуаль
+   съедала его целиком. Первый сбор дал ровно это: ракету не было
+   видно вовсе, на экране осталось тёмное пятно под кнопкой.
+
+   Сверху вуаль остаётся плотной у всех трёх: слово владельца
+   «чтобы не перекрывала название сверху» про то, что герой не должен
+   лезть на «Rocket VPN». */
+:root[data-тема="ракета"] .вуаль {
+  background: linear-gradient(180deg,
+    rgba(8,5,10,.97) 0%, rgba(8,5,10,.95) 13%, rgba(8,5,10,.82) 21%,
+    rgba(8,5,10,.44) 27%, rgba(8,5,10,.14) 32%, rgba(8,5,10,0) 37%,
+    rgba(8,5,10,0) 86%, rgba(8,5,10,.3) 94%, rgba(8,5,10,.6) 100%);
+}
+:root[data-тема="океан"] .вуаль {
+  background: linear-gradient(180deg,
+    rgba(1,9,15,.96) 0%, rgba(1,9,15,.94) 14%, rgba(1,9,15,.8) 22%,
+    rgba(1,9,15,.48) 28%, rgba(1,9,15,.18) 33%, rgba(1,9,15,0) 38%,
+    rgba(1,9,15,0) 80%, rgba(1,9,15,.4) 91%, rgba(1,9,15,.78) 100%);
+}
+
+/* ── РАКЕТА ВИДНА, А НЕ УГАДЫВАЕТСЯ ──────────────────────────────
+   Первый сбор поставил корпус шириной 7.8 рем, а кнопка подключения
+   13.6 рем: ракета целиком спряталась ЗА кнопкой, и на снимке от неё
+   остался один отсвет. Корпус расширен до 12.4 рем, и кнопка теперь
+   не закрывает его, а опоясывает - обод кнопки читается кольцом
+   двигателя вокруг корпуса. Нос выходит выше кнопки, факел ниже. */
+
+/* Шар воды крупнее: у Земли диаметр во весь круг, и маленькое ядро
+   рядом с ней читалось бы другим экраном, а не другой темой. */
+/* Шар притушен фильтром, а не уменьшен. Полной яркостью он светлее
+   карточки подписки, и строка «Осталось дней: 138» тонула в нём. */
+:root[data-тема="океан"] .вода-ядро { inset: 3%; filter: brightness(.72) saturate(1.06); }
+
+/* ── НА ТЕКСТОВЫХ ЭКРАНАХ ФОН УХОДИТ НА ВТОРОЙ ПЛАН ──────────────
+   Главная и Серверы это список карточек с воздухом между ними, и
+   планета за стеклом там украшает. Профиль и Подписка это плотный
+   текст в несколько строк на карточку, и тот же Юпитер садится ровно
+   на «Автоподключение» и «Блокировка без VPN», гася их значки.
+
+   Фон не выключается, а притухает: выключенный читался бы другим
+   приложением, а тема обязана быть узнаваемой на всех экранах. */
+:root[data-экран="профиль"] .далёкая,
+:root[data-экран="подписка"] .далёкая,
+:root[data-экран="профиль"] .старт,
+:root[data-экран="подписка"] .старт,
+:root[data-экран="профиль"] .искры,
+:root[data-экран="подписка"] .искры,
+:root[data-экран="профиль"] .пузыри,
+:root[data-экран="подписка"] .пузыри {
+  opacity: .28;
+  transition: opacity .32s ease;
+}
+:root[data-экран="профиль"] .планета-место,
+:root[data-экран="подписка"] .планета-место { opacity: .3; }

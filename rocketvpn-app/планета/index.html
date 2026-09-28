@@ -3,31 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#05070f">
+<meta name="theme-color" content="#04060d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Rocket VPN - тема «Планета»</title>
+<title>Rocket VPN</title>
 
 <!-- ── ЭКРАН СОБРАН ВЁРСТКОЙ, А НЕ НАРИСОВАН КАРТИНКОЙ ──────────────
-     Сетевой Администратор о прежних макетах: «качество изображений
+     Владелец Rocket VPN о прежних макетах: «качество изображений
      низкое, при увеличении расплывается». Так и будет с любым
      нарисованным экраном: растр тянется и мылится, а в приложении его
      увидят на экранах от 320 до 1290 точек шириной.
 
-     Поэтому экран здесь настоящий: текст это текст, иконки это контуры,
-     флаги это прямоугольники. При любом увеличении и на любом телефоне
-     всё остаётся резким, потому что рисуется заново под размер.
-     Растровых картинок ровно две: знак Rocket VPN и карта Земли, и обе
-     работают с запасом по разрешению.
+     Здесь экран настоящий: текст это текст, иконки это контуры, флаги
+     это фигуры. Растровых картинок ровно семь, и все с запасом по
+     разрешению: знак Rocket VPN, три карты Земли и четыре планеты фона.
 
      Он же о том, зачем всё это: «пользователи в приложение ВПН могут
      заходить несколько раз на дню... все вот эти Happ или incy они
-     скучные, тупо несут только функцию подключения». Значит экран
-     обязан быть живым при каждом открытии, а не один раз красивым.
-
-     Состав экрана взят с его коллажа и не менялся: те же кнопки, те же
-     надписи, те же страны и те же числа пинга. Тема меняет только
-     внешность. -->
+     скучные, тупо несут только функцию подключения». -->
 
 <link rel="stylesheet" href="стиль.css">
 </head>
@@ -35,86 +28,107 @@
 
 <div class="телефон" id="телефон">
 
-  <!-- ── ФОН: ГАЛАКТИКА НА ВЕСЬ ЭКРАН ─────────────────────────────
-       Слово Даниэля: «пускай на фоне всего экрана будет космос красивый
-       из игры и планеты вдалеке разные, как галактика, вселенная с
-       планетами разными, очень красиво оформленная».
+  <!-- ── ФОН: ТРИ МИРА, ПОКАЗЫВАЕТ ОДИН ─────────────────────────────
+       Клиент попросил три темы, и они сделаны не тремя копиями
+       приложения, а тремя слоями фона под общей вёрсткой. Копии
+       разошлись бы на первой же правке: поправил кнопку в одной,
+       забыл в двух других. Здесь кнопка одна на все три.
 
-       Космос собран слоями, от дальнего к ближнему:
-         млечный      наклонная полоса галактики, размытая;
-         туманность   два цветных облака, холодное и тёплое;
-         звёзды       три россыпи разной величины и яркости;
-         далёкие      четыре планеты из космоса игры Rocket CDN.
-
-       Планеты стоят ДАЛЕКО и намеренно тусклые. Фон обязан оставаться
-       фоном: яркий Юпитер посреди списка серверов будет спорить с
-       пингами за внимание, а человек пришёл сюда нажать одну кнопку.
-       Зато когда по строке бьёт разряд, её заливка почти исчезает, и
-       планета за ней проступает. Об этом Даниэль и просил: «когда
-       молния по ним бьёт, на фоне лучше становится видно планеты». -->
+       Показывает слой атрибут data-тема на html. Скрытые слои стоят
+       с display:none, значит их анимации не считаются вовсе. -->
   <div class="небо">
-    <div class="млечный"></div>
-    <div class="туманность"></div>
-    <div class="звёзды"></div>
-    <div class="звёзды мелкие"></div>
+    <!-- ПЛАНЕТА: космос, галактика, планеты вдалеке -->
+    <div class="мир мир-планета">
+      <div class="млечный"></div>
+      <div class="туманность"></div>
+      <div class="звёзды"></div>
+      <div class="звёзды мелкие"></div>
 
-    <div class="далёкая юпитер"><i></i></div>
-    <div class="далёкая сатурн"><i></i><u></u></div>
-    <div class="далёкая марс"><i></i></div>
-    <div class="далёкая нептун"><i></i></div>
-  </div>
-
-  <div class="планета-место">
-    <!-- ── ПЛАНЕТА СОБРАНА ИЗ СНИМКОВ NASA ──────────────────────
-         Слово Даниэля: «планету тогда из NASA возьми крутую или из
-         игры космоса какую-то». Взято и то, и другое разом: в космосе
-         игры Rocket CDN лежат именно снимки NASA, и они уже в
-         репозитории, проверены и сжаты.
-
-           земля-день.webp   Blue Marble, 4096 x 2048
-           земля-ночь.webp   Black Marble, огни городов
-           облака.webp       облачный покров с прозрачностью
-
-         Ночная сторона это не затемнённый день, а отдельный снимок
-         городских огней. Шар поворачивается, материк уходит за
-         терминатор и загорается сетью городов. Для приложения, которое
-         продаёт доступ к глобальной сети, это буквальная картинка
-         товара, и стоит она ноль: снимки NASA в общественном достоянии. -->
-    <div class="планета">
-      <div class="огни"></div>
-      <div class="кора"></div>
-      <div class="облака"></div>
-      <div class="тень"></div>
-      <div class="кромка"></div>
+      <div class="далёкая юпитер"><i></i></div>
+      <div class="далёкая сатурн"><i></i><u></u></div>
+      <div class="далёкая марс"><i></i></div>
+      <div class="далёкая нептун"><i></i></div>
     </div>
-    <div class="ореол"></div>
+
+    <!-- РАКЕТА: ночной старт, пламя снизу, искры вверх -->
+    <div class="мир мир-ракета">
+      <div class="жар"></div>
+
+      <!-- ── РАКЕТА СТОИТ ЗА СПИСКОМ, А НЕ ЗА КНОПКОЙ ─────────────
+           Первый сбор поставил её в круг героя, по центру кнопки
+           подключения, и снимок показал цену: кнопка 13.6 рем шириной
+           закрыла корпус целиком, наружу торчали два красных крыла
+           из-под карточки подписки. Читалось это поломкой вёрстки.
+
+           Здесь ракета в ФОНЕ, за стеклянными карточками списка.
+           Карточки полупрозрачные, корпус виден сквозь них силуэтом,
+           а когда огонь бьёт по строке, стекло на миг проясняется и
+           ракета проступает. Это та же механика, за которую клиент
+           похвалил тему с планетами: «когда молния по ним бьёт, на
+           фоне лучше становится видно планеты». -->
+      <div class="старт">
+          <svg class="корпус" viewBox="0 0 120 260" aria-hidden="true">
+            <defs>
+              <linearGradient id="мет" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0"    stop-color="#3b4356"/>
+                <stop offset=".22"  stop-color="#aeb9cf"/>
+                <stop offset=".44"  stop-color="#f2f6ff"/>
+                <stop offset=".64"  stop-color="#9aa6bd"/>
+                <stop offset="1"    stop-color="#2b3040"/>
+              </linearGradient>
+              <linearGradient id="нос" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0"   stop-color="#8a2f24"/>
+                <stop offset=".34" stop-color="#ff7a53"/>
+                <stop offset=".62" stop-color="#d84a2c"/>
+                <stop offset="1"   stop-color="#63231a"/>
+              </linearGradient>
+              <linearGradient id="стекло-иллюм" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0"   stop-color="#dff2ff"/>
+                <stop offset=".5"  stop-color="#4aa8ff"/>
+                <stop offset="1"   stop-color="#0d2947"/>
+              </linearGradient>
+            </defs>
+            <path class="крыло" d="M32 168 L10 226 L32 216z"/>
+            <path class="крыло" d="M88 168 L110 226 L88 216z"/>
+            <path class="бак" d="M60 6c16 22 26 54 26 92v86H34V98C34 60 44 28 60 6z" fill="url(#мет)"/>
+            <path class="колпак" d="M60 6c10 14 17 32 21 52H39c4-20 11-38 21-52z" fill="url(#нос)"/>
+            <circle class="иллюминатор" cx="60" cy="112" r="15" fill="url(#стекло-иллюм)"/>
+            <circle class="ободок" cx="60" cy="112" r="15" fill="none" stroke="#cfd9ea" stroke-width="3"/>
+            <rect class="пояс" x="34" y="150" width="52" height="7" rx="3.5"/>
+            <rect class="пояс" x="34" y="164" width="52" height="4" rx="2"/>
+            <path class="сопло" d="M40 184h40l7 22H33z"/>
+          </svg>
+        <div class="факел"></div>
+        <div class="факел сердце"></div>
+        <div class="подставка"></div>
+      </div>
+
+      <div class="дым-старта"></div>
+      <div class="искры"></div>
+      <div class="искры поздние"></div>
+      <div class="марево"></div>
+    </div>
+
+    <!-- ОКЕАН: глубина, лучи сверху, блики дна, пузыри -->
+    <div class="мир мир-океан">
+      <div class="толща"></div>
+      <div class="лучи"></div>
+      <div class="блики"></div>
+      <div class="пузыри"></div>
+      <div class="пузыри редкие"></div>
+    </div>
   </div>
 
-  <!-- ── ВУАЛЬ НАД ПЛАНЕТОЙ ───────────────────────────────────────
-       Первый сбор показал беду, которую в вёрстке не видно, а в кадре
-       видно сразу: шар стоял прямо под шапкой, и логотип с слоганом
-       легли НА материк. Белый текст на облаках не читается, синий на
-       океане тоже.
-
-       Вуаль это тёмный градиент поверх шара: гуще у верхней кромки
-       экрана и у нижней, прозрачный посередине. Шар от этого не
-       тускнеет там, где на него смотрят, а надписи ложатся на тёмное.
-       Так же гасится и низ шара, чтобы он уходил в темноту до карточки
-       подписки, а не обрезался о неё краем. -->
-  <div class="вуаль"></div>
-
-  <!-- ── СТАТУСБАР ────────────────────────────────────────────────── -->
+  <!-- ── СТАТУСБАР ──────────────────────────────────────────────── -->
   <div class="статус">
-    <span class="часы">13:19</span>
+    <span class="часы" id="часы">13:19</span>
     <span class="статус-право">
       <svg class="знак" viewBox="0 0 18 14" aria-hidden="true">
         <path d="M9 12.4 6.6 9.9a3.4 3.4 0 0 1 4.8 0zM9 8.1a5.4 5.4 0 0 0-3.8 1.6L3.8 8.3a7.4 7.4 0 0 1 10.4 0l-1.4 1.4A5.4 5.4 0 0 0 9 8.1zM9 4.2a9.3 9.3 0 0 0-6.6 2.7L1 5.5a11.3 11.3 0 0 1 16 0l-1.4 1.4A9.3 9.3 0 0 0 9 4.2z"/>
       </svg>
       <svg class="знак" viewBox="0 0 18 14" aria-hidden="true">
-        <rect x="0" y="9" width="3" height="5" rx="1"/>
-        <rect x="5" y="6.5" width="3" height="7.5" rx="1"/>
-        <rect x="10" y="3.5" width="3" height="10.5" rx="1"/>
-        <rect x="15" y="0" width="3" height="14" rx="1"/>
+        <rect x="0" y="9" width="3" height="5" rx="1"/><rect x="5" y="6.5" width="3" height="7.5" rx="1"/>
+        <rect x="10" y="3.5" width="3" height="10.5" rx="1"/><rect x="15" y="0" width="3" height="14" rx="1"/>
       </svg>
       <svg class="знак батарея" viewBox="0 0 26 14" aria-hidden="true">
         <rect x="0.6" y="0.6" width="22" height="12.8" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/>
@@ -124,26 +138,25 @@
     </span>
   </div>
 
-  <!-- ── ШАПКА ───────────────────────────────────────────────────── -->
+  <!-- ── ШАПКА ──────────────────────────────────────────────────── -->
   <header class="шапка">
-    <button class="кругляш" aria-label="Меню">
+    <button class="кругляш" id="бургер" aria-label="Меню">
       <svg viewBox="0 0 20 14" aria-hidden="true">
-        <rect x="0" y="0" width="20" height="2" rx="1"/>
-        <rect x="0" y="6" width="20" height="2" rx="1"/>
+        <rect x="0" y="0" width="20" height="2" rx="1"/><rect x="0" y="6" width="20" height="2" rx="1"/>
         <rect x="0" y="12" width="20" height="2" rx="1"/>
       </svg>
     </button>
 
     <div class="знак-места">
       <!-- Знак настоящий: вырезан из фирменного rv-mark.webp клиента,
-           пропорции не тронуты. Рядом идёт наборная строка, потому что
-           в исходном файле буквы VPN и подпись запечены в картинку и на
-           высоте шапки превращаются в грязь. -->
+           пропорции не тронуты. Рядом наборная строка, потому что в
+           исходном файле буквы VPN запечены в картинку и на высоте
+           шапки превращаются в грязь. -->
       <img class="лого" src="ассеты/знак-rv.webp" alt="Rocket VPN">
       <span class="имя"><b>Rocket</b><i>VPN</i></span>
     </div>
 
-    <button class="кругляш корона" aria-label="Подписка">
+    <button class="кругляш корона" data-к-экрану="подписка" aria-label="Подписка">
       <svg viewBox="0 0 22 18" aria-hidden="true">
         <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
         <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
@@ -151,159 +164,381 @@
     </button>
   </header>
 
-  <p class="слоган">Интернет доступен как электричество в розетке</p>
+  <main class="экраны" id="экраны">
 
-  <!-- ── КНОПКА ПОДКЛЮЧЕНИЯ ──────────────────────────────────────── -->
-  <div class="пуск-место">
-    <!-- Купол света над кнопкой и под ней. Лежит отдельным узлом, а не
-         тенью кнопки: тень обрезалась бы её же размером, а свет обязан
-         уходить выше и ниже, к слогану и к карточке подписки. -->
-    <div class="сияние"></div>
-    <button class="пуск" id="пуск">
-      <span class="волна-круг"></span>
-      <span class="волна-круг вторая"></span>
-      <span class="кольцо"></span>
-      <span class="бегунок"></span>
-      <span class="ядро">
-        <svg class="рубильник" viewBox="0 0 26 28" aria-hidden="true">
-          <path d="M13 1v12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <path d="M5.7 6.4a10.5 10.5 0 1 0 14.6 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-        </svg>
-        <span class="пуск-слово">Подключиться</span>
-        <span class="пуск-сноска">VPN</span>
-      </span>
-    </button>
-  </div>
+    <!-- ══ ГЛАВНАЯ ═══════════════════════════════════════════════ -->
+    <section class="экран тут" data-экран="главная">
 
-  <!-- ── ЛИСТ С УПРАВЛЕНИЕМ ──────────────────────────────────────── -->
-  <div class="лист">
+      <p class="слоган">Интернет доступен как электричество в розетке</p>
 
-    <button class="полоса подписка">
-      <span class="корона-мелкая">
-        <svg viewBox="0 0 22 18" aria-hidden="true">
-          <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
-          <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
-        </svg>
-      </span>
-      <span class="подписка-текст">
-        <b>Подписка &middot; Rocket VPN</b>
-        <i>Осталось дней: 138 &middot; Трафик: 959.1 ГБ</i>
-      </span>
-      <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true">
-        <path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
+      <!-- ── ПЛАНЕТА СОБРАНА ИЗ СНИМКОВ NASA ──────────────────────
+           Слово Даниэля: «планету тогда из NASA возьми крутую или из
+           игры космоса какую-то». Взято и то, и другое разом: в космосе
+           игры Rocket CDN лежат именно снимки NASA.
 
-    <div class="пара">
-      <div class="плитка">
-        <span class="плитка-знак">
-          <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M8 0 0 10h5l-1 8 8-10H7z"/></svg>
-        </span>
-        <span class="плитка-текст"><b>Автовыбор</b><i>Лучший сервер</i></span>
-        <span class="тумблер вкл"><span class="шарик"></span></span>
+             земля-день.webp   Blue Marble, 4096 x 2048
+             земля-ночь.webp   Black Marble, огни городов
+             облака.webp       облачный покров с прозрачностью
+
+           Ночная сторона это не затемнённый день, а отдельный снимок
+           городских огней. Шар поворачивается, материк уходит за
+           терминатор и загорается сетью городов. -->
+      <!-- ── ГЕРОЙ ЭКРАНА: У КАЖДОЙ ТЕМЫ СВОЙ ──────────────────────
+           Место одно и то же: шар стоит ровно по центру кнопки пуска.
+           Меняется то, ЧТО в этом месте живёт. Земля, ракета на
+           старте и водяное ядро занимают один и тот же круг, поэтому
+           смена темы не двигает ни одну строку макета. -->
+      <div class="планета-место">
+        <div class="планета герой-планета">
+          <div class="огни"></div>
+          <div class="кора"></div>
+          <div class="облака"></div>
+          <div class="тень"></div>
+          <div class="кромка"></div>
+        </div>
+
+        <!-- ОКЕАН: ядро из воды. Три слоя течения крутятся вразнобой,
+             иначе шар читается одной крутящейся картинкой. -->
+        <div class="герой-океан">
+          <div class="вода-ядро">
+            <div class="течение"></div>
+            <div class="течение второе"></div>
+            <div class="течение третье"></div>
+            <div class="каустика"></div>
+            <div class="тень"></div>
+            <div class="кромка"></div>
+          </div>
+        </div>
+
+        <div class="ореол"></div>
       </div>
-      <div class="плитка">
-        <span class="плитка-знак">
-          <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 0a7 7 0 0 0-7 7c0 5.2 7 11 7 11s7-5.8 7-11a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 9.6 7 2.6 2.6 0 0 1 7 9.6z"/></svg>
-        </span>
-        <span class="плитка-текст"><b>Оптимальный сервер</b><i>Минимальный пинг</i></span>
-        <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true">
-          <path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <div class="вуаль"></div>
+
+      <div class="пуск-место">
+        <div class="сияние"></div>
+        <button class="пуск" id="пуск">
+          <span class="волна-круг"></span>
+          <span class="волна-круг вторая"></span>
+          <span class="кольцо"></span>
+          <span class="бегунок"></span>
+          <span class="ядро">
+            <svg class="рубильник" viewBox="0 0 26 28" aria-hidden="true">
+              <path d="M13 1v12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <path d="M5.7 6.4a10.5 10.5 0 1 0 14.6 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <span class="пуск-слово" id="пуск-слово">Подключиться</span>
+            <span class="пуск-сноска" id="пуск-сноска">VPN</span>
+          </span>
+        </button>
       </div>
-    </div>
 
-    <div class="поиск">
-      <svg class="лупа" viewBox="0 0 16 16" aria-hidden="true">
-        <circle cx="6.8" cy="6.8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M10.9 10.9 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-      <span class="подсказка">Поиск страны или сервера...</span>
-      <svg class="ползунки" viewBox="0 0 16 14" aria-hidden="true">
-        <path d="M0 3h16M0 11h16" stroke="currentColor" stroke-width="1.6" fill="none"/>
-        <circle cx="5" cy="3" r="2.4" fill="currentColor"/>
-        <circle cx="11" cy="11" r="2.4" fill="currentColor"/>
-      </svg>
-    </div>
+      <div class="лист">
+        <button class="полоса подписка стекло" data-к-экрану="подписка">
+          <span class="корона-мелкая">
+            <svg viewBox="0 0 22 18" aria-hidden="true">
+              <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+              <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+            </svg>
+          </span>
+          <span class="подписка-текст">
+            <b>Подписка &middot; Rocket VPN</b>
+            <i>Осталось дней: 138 &middot; Трафик: 959.1 ГБ</i>
+          </span>
+          <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true">
+            <path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
 
-    <!-- ── СПИСОК СЕРВЕРОВ И МОЛНИЯ ПО НЕМУ ─────────────────────────
-         Слово клиента: «есть желание пинг сделать, будто молния
-         прошивает все серверы сверху вниз, и те серверы которые есть
-         пинг молния светится на них, а там где нету молния потухшая
-         (серый след)».
+        <div class="пара">
+          <button class="плитка стекло" id="плитка-авто">
+            <span class="плитка-знак">
+              <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M8 0 0 10h5l-1 8 8-10H7z"/></svg>
+            </span>
+            <span class="плитка-текст"><b>Автовыбор</b><i>Лучший сервер</i></span>
+            <span class="тумблер вкл" id="тумблер-авто"><span class="шарик"></span></span>
+          </button>
+          <button class="плитка стекло" id="плитка-лучший">
+            <span class="плитка-знак">
+              <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 0a7 7 0 0 0-7 7c0 5.2 7 11 7 11s7-5.8 7-11a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 9.6 7 2.6 2.6 0 0 1 7 9.6z"/></svg>
+            </span>
+            <span class="плитка-текст"><b>Оптимальный сервер</b><i>Минимальный пинг</i></span>
+            <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true">
+              <path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
 
-         Молния лежит ОТДЕЛЬНЫМ слоем поверх списка и ничего в нём не
-         двигает: строки только меняют подсветку. Так ряд не дёргается
-         под пальцем, и список остаётся списком, а не анимацией.
+        <div class="строка-поиска">
+          <label class="поиск стекло">
+            <svg class="лупа" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.8" cy="6.8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M10.9 10.9 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="поиск-главная" placeholder="Поиск страны или сервера..." autocomplete="off">
+          </label>
+          <!-- ── ЗАМЕР ЗАПУСКАЕТ ЧЕЛОВЕК ────────────────────────────
+               Слово Даниэля: «молнии должны быть не всегда, а по смыслу,
+               на какой-то клик или действие». Разряд это замер связи, и
+               у замера есть своя кнопка. Он же идёт при подключении и
+               один раз при открытии. Сам по себе, по кругу, он больше не
+               бьёт: эффект, который повторяется без повода, через день
+               перестают замечать, а батарею он тратит каждый раз. -->
+          <button class="обновить стекло" id="обновить" aria-label="Обновить пинг">
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M9 2.4A6.6 6.6 0 1 0 15.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 0v5l3.4-2.5z"/>
+            </svg>
+          </button>
+        </div>
 
-         Две последние страны стоят без ответа намеренно: без них
-         «потухший серый след» показать не на чем. Числа у остальных
-         восьми те же, что на коллаже. -->
-    <div class="список" id="список">
-      <svg class="молния" id="молния" viewBox="0 0 361 430" preserveAspectRatio="none" aria-hidden="true">
-        <!-- ── РАЗМЫТИЕ ТОЛЬКО СВОИМ ФИЛЬТРОМ SVG ──────────────────
-             Свечение сперва делалось свойством CSS filter: blur() прямо
-             на путях. Замер рамок показал, во что это обходится: слой
-             сияния рисовался на x 99..171, а его же ореол и жила, у
-             которых ТОТ ЖЕ путь, на x 296..368. В кадре это выглядело
-             синим пятном посреди списка, будто там что-то лишнее.
+        <!-- ── СПИСОК СЕРВЕРОВ И РАЗРЯД ПО НЕМУ ───────────────────
+             Клиент прислал снимок чужого приложения, обвёл зелёным
+             столбец миллисекунд и спросил: «Это же пинги? И по ним
+             молнию да?». Ствол идёт по этому столбцу.
 
-             Причина в том, что размытие из CSS считается в своих
-             координатах и при растянутом холсте (preserveAspectRatio
-             none) попадает мимо. Собственный фильтр SVG с явной
-             областью такой вольности не имеет: он привязан к рамке
-             самого пути. -->
-        <defs>
-          <filter id="мягко" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="5"/>
-          </filter>
-          <filter id="чуть" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="1.6"/>
-          </filter>
-          <filter id="искра" x="-300%" y="-300%" width="700%" height="700%">
-            <feGaussianBlur stdDeviation="4" result="р"/>
-            <feMerge>
-              <feMergeNode in="р"/><feMergeNode in="р"/><feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <g id="слой-ствол"></g>
-        <g id="слой-ветки"></g>
-        <!-- Голова разряда. Без неё молния выглядит нарисованной
-             линией: глаз не видит, что она ИДЁТ. Точка светится и
-             бежит впереди самой линии. -->
-        <circle id="голова" class="голова" r="4.2" cx="-50" cy="-50"/>
-      </svg>
+             Строки рисует код из одного списка данных: тот же список
+             кормит экран «Серверы», и разойтись им негде. -->
+        <div class="список" id="список-главная" data-список="главная">
+          <svg class="молния" preserveAspectRatio="none" aria-hidden="true">
+            <g class="слой-ствол"></g>
+            <g class="слой-ветки"></g>
+            <circle class="голова" r="4.2" cx="-50" cy="-50"/>
+          </svg>
+        </div>
+      </div>
+    </section>
 
-      <div class="ряд" data-пинг="28"><span class="точка"></span><span class="флаг ф-ru"></span><span class="страна">Россия</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">28 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="42"><span class="точка"></span><span class="флаг ф-nl"></span><span class="страна">Нидерланды</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">42 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="56"><span class="точка"></span><span class="флаг ф-pl"></span><span class="страна">Польша</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">56 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="63"><span class="точка"></span><span class="флаг ф-de"></span><span class="страна">Германия</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">63 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="78"><span class="точка"></span><span class="флаг ф-tr"></span><span class="страна">Турция</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">78 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="112"><span class="точка"></span><span class="флаг ф-us"></span><span class="страна">США</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">112 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="128"><span class="точка"></span><span class="флаг ф-sg"></span><span class="страна">Сингапур</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">128 мс</span><span class="звезда"></span></div>
-      <div class="ряд" data-пинг="142"><span class="точка"></span><span class="флаг ф-jp"></span><span class="страна">Япония</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">142 мс</span><span class="звезда"></span></div>
-      <div class="ряд нет" data-пинг=""><span class="точка"></span><span class="флаг ф-fr"></span><span class="страна">Франция</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">н/д</span><span class="звезда"></span></div>
-      <div class="ряд нет" data-пинг=""><span class="точка"></span><span class="флаг ф-ae"></span><span class="страна">ОАЭ</span><span class="заряд"><svg viewBox="0 0 14 20" aria-hidden="true"><path d="M8.4 0 0 11.6h4.6L5.6 20 14 8.4H9.4z"/></svg></span><span class="пинг">н/д</span><span class="звезда"></span></div>
-    </div>
-  </div>
+    <!-- ══ СЕРВЕРЫ ═══════════════════════════════════════════════ -->
+    <section class="экран" data-экран="серверы">
+      <div class="лист лист-полный">
+        <div class="шапка-экрана">
+          <h2>Серверы</h2>
+          <span class="счёт" id="счёт-серверов"></span>
+        </div>
 
-  <!-- ── НИЖНЯЯ НАВИГАЦИЯ ────────────────────────────────────────── -->
+        <div class="строка-поиска">
+          <label class="поиск стекло">
+            <svg class="лупа" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.8" cy="6.8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M10.9 10.9 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="поиск-серверы" placeholder="Поиск страны или города..." autocomplete="off">
+          </label>
+          <button class="обновить стекло" id="обновить-2" aria-label="Обновить пинг">
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M9 2.4A6.6 6.6 0 1 0 15.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 0v5l3.4-2.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="чипы" id="чипы">
+          <button class="чип тут" data-сорт="пинг">По пингу</button>
+          <button class="чип" data-сорт="имя">По названию</button>
+          <button class="чип" data-сорт="избранные">Избранные</button>
+        </div>
+
+        <div class="список длинный" id="список-серверы" data-список="серверы">
+          <svg class="молния" preserveAspectRatio="none" aria-hidden="true">
+            <g class="слой-ствол"></g>
+            <g class="слой-ветки"></g>
+            <circle class="голова" r="4.2" cx="-50" cy="-50"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ПРОФИЛЬ ═══════════════════════════════════════════════ -->
+    <section class="экран" data-экран="профиль">
+      <div class="лист лист-полный">
+        <div class="шапка-экрана"><h2>Профиль</h2></div>
+
+        <div class="карточка стекло аккаунт">
+          <div class="аватар"><span>Д</span></div>
+          <div class="аккаунт-текст">
+            <b>Даниэль</b>
+            <i>id 7 041 288 &middot; тариф «Космос»</i>
+          </div>
+          <span class="метка-тариф">PRO</span>
+        </div>
+
+        <button class="карточка стекло ряд-настройки" data-к-экрану="подписка">
+          <span class="настр-знак жёлтый">
+            <svg viewBox="0 0 22 18" aria-hidden="true">
+              <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+              <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+            </svg>
+          </span>
+          <span class="настр-текст"><b>Подписка</b><i>Осталось 138 дней</i></span>
+          <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <!-- ── ВЫБОР ТЕМЫ ────────────────────────────────────────
+             Три темы, и каждая показана собой, а не словом: человек
+             выбирает глазами. Список подписан тем, что в теме меняется
+             по-настоящему - каким следом идёт замер отклика. -->
+        <div class="карточка стекло темы">
+          <div class="темы-шапка">
+            <b>Оформление</b>
+            <i>Три темы. Меняется фон и след замера</i>
+          </div>
+          <div class="темы-ряд">
+            <button class="тема-кнопка" data-тема-выбор="планета">
+              <span class="тема-вид вид-планета"><u></u></span>
+              <b>Планета</b><i>Молния</i>
+            </button>
+            <button class="тема-кнопка" data-тема-выбор="ракета">
+              <span class="тема-вид вид-ракета"><u></u></span>
+              <b>Ракета</b><i>Огонь</i>
+            </button>
+            <button class="тема-кнопка" data-тема-выбор="океан">
+              <span class="тема-вид вид-океан"><u></u></span>
+              <b>Океан</b><i>Вода</i>
+            </button>
+          </div>
+        </div>
+
+        <div class="группа-настроек">
+          <button class="карточка стекло ряд-настройки" data-тумблер="автозапуск">
+            <span class="настр-знак"><svg viewBox="0 0 14 18" aria-hidden="true"><path d="M8 0 0 10h5l-1 8 8-10H7z"/></svg></span>
+            <span class="настр-текст"><b>Автоподключение</b><i>При запуске устройства</i></span>
+            <span class="тумблер вкл"><span class="шарик"></span></span>
+          </button>
+          <button class="карточка стекло ряд-настройки" data-тумблер="блокировка">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 0 1 3.4v5.2C1 13.2 4.4 17.2 9 18c4.6-.8 8-4.8 8-9.4V3.4z"/></svg></span>
+            <span class="настр-текст"><b>Блокировка без VPN</b><i>Обрывать трафик при разрыве</i></span>
+            <span class="тумблер"><span class="шарик"></span></span>
+          </button>
+          <button class="карточка стекло ряд-настройки" data-тумблер="звук">
+            <span class="настр-знак"><svg viewBox="0 0 18 16" aria-hidden="true"><path d="M0 5.2h3.6L8.4 1v14L3.6 10.8H0zM11.4 4.6a5.6 5.6 0 0 1 0 6.8l1.5 1.2a7.5 7.5 0 0 0 0-9.2zM13.9 1.8a9.3 9.3 0 0 1 0 12.4l1.5 1.2a11.2 11.2 0 0 0 0-14.8z"/></svg></span>
+            <span class="настр-текст"><b>Звук интерфейса</b><i>Щелчки, подключение, разряд</i></span>
+            <span class="тумблер вкл" id="тумблер-звук"><span class="шарик"></span></span>
+          </button>
+          <button class="карточка стекло ряд-настройки" data-тумблер="движение">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4v5l3.4 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span class="настр-текст"><b>Анимации</b><i>Вращение планеты и разряд</i></span>
+            <span class="тумблер вкл" id="тумблер-движение"><span class="шарик"></span></span>
+          </button>
+        </div>
+
+        <div class="группа-настроек">
+          <a class="карточка стекло ряд-настройки" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">
+            <span class="настр-знак синий"><svg viewBox="0 0 18 16" aria-hidden="true"><path d="M17.8 1.4 15.2 14c-.2.9-.7 1.1-1.5.7l-4-3-1.9 1.9c-.2.2-.4.4-.8.4l.3-4.1L14.7 3c.3-.3-.1-.4-.5-.2L5.1 8.6 1.1 7.4c-.9-.3-.9-.9.2-1.3L16.6.5c.7-.3 1.4.2 1.2.9z"/></svg></span>
+            <span class="настр-текст"><b>Поддержка</b><i>Телеграм-бот, отвечаем круглосуточно</i></span>
+            <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <button class="карточка стекло ряд-настройки" id="о-приложении">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="7.4" width="2" height="6" rx="1"/><circle cx="9" cy="4.8" r="1.2"/></svg></span>
+            <span class="настр-текст"><b>О приложении</b><i id="подпись-темы">Версия 1.0 &middot; тема «Планета»</i></span>
+            <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <button class="кнопка-выход" id="выход">Выйти из аккаунта</button>
+      </div>
+    </section>
+
+    <!-- ══ ПОДПИСКА ══════════════════════════════════════════════ -->
+    <section class="экран" data-экран="подписка">
+      <div class="лист лист-полный">
+        <div class="шапка-экрана с-назад">
+          <button class="назад" data-назад aria-label="Назад">
+            <svg viewBox="0 0 8 14" aria-hidden="true"><path d="M7 1 1 7l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <h2>Подписка</h2>
+        </div>
+
+        <div class="карточка стекло текущая">
+          <div class="текущая-верх">
+            <span class="корона-мелкая">
+              <svg viewBox="0 0 22 18" aria-hidden="true">
+                <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+                <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+              </svg>
+            </span>
+            <div class="текущая-имя"><b>Тариф «Космос»</b><i>Активен до 14 февраля 2027</i></div>
+          </div>
+          <div class="полоска"><span style="width:76%"></span></div>
+          <div class="текущая-низ"><span>Осталось 138 дней</span><span>959.1 ГБ трафика</span></div>
+        </div>
+
+        <div class="тарифы">
+          <button class="тариф стекло" data-тариф="1 месяц">
+            <b>1 месяц</b><span class="цена">199 ₽</span><i>199 ₽ в месяц</i>
+          </button>
+          <button class="тариф стекло выгодный" data-тариф="12 месяцев">
+            <span class="бирка">выгодно</span>
+            <b>12 месяцев</b><span class="цена">1 490 ₽</span><i>124 ₽ в месяц</i>
+          </button>
+          <button class="тариф стекло" data-тариф="6 месяцев">
+            <b>6 месяцев</b><span class="цена">890 ₽</span><i>148 ₽ в месяц</i>
+          </button>
+        </div>
+
+        <ul class="плюсы">
+          <li>Без ограничения скорости и трафика</li>
+          <li>До пяти устройств на одном ключе</li>
+          <li>Серверы в десяти странах</li>
+          <li>Без журналов подключений</li>
+        </ul>
+
+        <button class="кнопка-главная" id="продлить">Продлить подписку</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── НИЖНЯЯ НАВИГАЦИЯ ─────────────────────────────────────────
+       Отступ снизу считается от безопасной области: на телефонах с
+       жестовой полосой нижние сорок точек перекрыты системой, и кнопка
+       под ними просто не нажимается. -->
   <nav class="низ">
-    <button class="вкладка тут">
+    <button class="вкладка тут" data-к-экрану="главная">
       <svg viewBox="0 0 20 18" aria-hidden="true"><path d="M10 0 0 8h2.6v10h5.1v-5.6h4.6V18h5.1V8H20z"/></svg>
       <span>Главная</span>
     </button>
-    <button class="вкладка">
+    <button class="вкладка" data-к-экрану="серверы">
       <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="0" y="0" width="7.6" height="7.6" rx="2"/><rect x="10.4" y="0" width="7.6" height="7.6" rx="2"/><rect x="0" y="10.4" width="7.6" height="7.6" rx="2"/><rect x="10.4" y="10.4" width="7.6" height="7.6" rx="2"/></svg>
       <span>Серверы</span>
     </button>
-    <button class="вкладка">
+    <button class="вкладка" data-к-экрану="профиль">
       <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="5" r="4.4"/><path d="M9 11c-5 0-9 3-9 6.4V18h18v-.6C18 14 14 11 9 11z"/></svg>
       <span>Профиль</span>
     </button>
   </nav>
 
+  <!-- ── БОКОВОЕ МЕНЮ ───────────────────────────────────────────── -->
+  <div class="штора" id="штора"></div>
+  <aside class="ящик" id="ящик">
+    <div class="ящик-шапка">
+      <img class="лого" src="ассеты/знак-rv.webp" alt="">
+      <span class="имя"><b>Rocket</b><i>VPN</i></span>
+      <button class="кругляш" id="закрыть-ящик" aria-label="Закрыть">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1l14 14M15 1L1 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <button class="пункт" data-к-экрану="главная">
+      <svg viewBox="0 0 20 18" aria-hidden="true"><path d="M10 0 0 8h2.6v10h5.1v-5.6h4.6V18h5.1V8H20z"/></svg><span>Главная</span>
+    </button>
+    <button class="пункт" data-к-экрану="серверы">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="0" y="0" width="7.6" height="7.6" rx="2"/><rect x="10.4" y="0" width="7.6" height="7.6" rx="2"/><rect x="0" y="10.4" width="7.6" height="7.6" rx="2"/><rect x="10.4" y="10.4" width="7.6" height="7.6" rx="2"/></svg><span>Серверы</span>
+    </button>
+    <button class="пункт" data-к-экрану="подписка">
+      <svg viewBox="0 0 22 18" aria-hidden="true"><path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/><rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/></svg><span>Подписка</span>
+    </button>
+    <button class="пункт" data-к-экрану="профиль">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="5" r="4.4"/><path d="M9 11c-5 0-9 3-9 6.4V18h18v-.6C18 14 14 11 9 11z"/></svg><span>Профиль</span>
+    </button>
+    <div class="ящик-черта"></div>
+    <a class="пункт" href="https://t.me/rocketvpnnews" target="_blank" rel="noopener">
+      <svg viewBox="0 0 18 16" aria-hidden="true"><path d="M17.8 1.4 15.2 14c-.2.9-.7 1.1-1.5.7l-4-3-1.9 1.9c-.2.2-.4.4-.8.4l.3-4.1L14.7 3c.3-.3-.1-.4-.5-.2L5.1 8.6 1.1 7.4c-.9-.3-.9-.9.2-1.3L16.6.5c.7-.3 1.4.2 1.2.9z"/></svg><span>Канал обновлений</span>
+    </a>
+    <a class="пункт" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="7.4" width="2" height="6" rx="1"/><circle cx="9" cy="4.8" r="1.2"/></svg><span>Поддержка</span>
+    </a>
+    <p class="ящик-низ" id="подпись-темы-2">Версия 1.0 &middot; тема «Планета»</p>
+  </aside>
+
+  <div class="всплывашка" id="всплывашка"></div>
 </div>
 
 <script src="экран.js"></script>

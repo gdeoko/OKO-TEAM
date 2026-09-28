@@ -33,6 +33,10 @@ const РАЗМЕРЫ = [
   { имя: "1440x3120", w: 360, h: 780, dpr: 4 }    /* Android плотный */
 ];
 
+/* Три темы снимаются одним прогоном: клиент выбирает из них глазами,
+   и показывать ему надо все три в одном письме, а не по одной. */
+const ТЕМЫ = ["планета", "ракета", "океан"];
+
 const один = process.argv[2];
 const список = один ? РАЗМЕРЫ.filter((р) => р.имя === один) : РАЗМЕРЫ;
 if (!список.length) { console.log("нет такого размера"); process.exit(1); }
@@ -54,8 +58,14 @@ for (const р of список) {
   await стр.waitForFunction(() => window.ЭКРАН_ГОТОВ && window.ЭКРАН_ГОТОВ(), null, { timeout: 30000 });
   await стр.waitForTimeout(700);
 
-  await стр.screenshot({ path: join(КУДА, "планета-" + р.имя + ".png") });
-  console.log("снято  планета-" + р.имя + ".png");
+  for (const т of ТЕМЫ) {
+    await стр.evaluate((и) => window.ТЕМА(и), т);
+    await стр.waitForTimeout(600);
+    await стр.screenshot({ path: join(КУДА, т + "-" + р.имя + ".png") });
+    console.log("снято  " + т + "-" + р.имя + ".png");
+  }
+  await стр.evaluate(() => window.ТЕМА("планета"));
+  await стр.waitForTimeout(500);
 
   /* Раскадровка удара только для главного размера: двенадцать кадров
      от первой искры до последней строки. */
@@ -67,13 +77,17 @@ for (const р of список) {
        пробитых строки. Ставим удар на заданную долю и снимаем: кадры
        выходят одинаковые от прогона к прогону. */
     const ДОЛИ = [0.06, 0.16, 0.26, 0.36, 0.46, 0.56, 0.66, 0.76, 0.86, 0.94, 1.0];
-    for (let i = 0; i < ДОЛИ.length; i++) {
-      const ок = await стр.evaluate((д) => window.СТОП_УДАР(д), ДОЛИ[i]);
-      if (!ок) { console.log("удар не поставился"); break; }
-      await стр.waitForTimeout(140);
-      await стр.screenshot({ path: join(КУДА, "молния-" + String(i).padStart(2, "0") + ".png") });
+    for (const т of ТЕМЫ) {
+      await стр.evaluate((и) => window.ТЕМА(и), т);
+      await стр.waitForTimeout(600);
+      for (let i = 0; i < ДОЛИ.length; i++) {
+        const ок = await стр.evaluate((д) => window.СТОП_УДАР(д), ДОЛИ[i]);
+        if (!ок) { console.log("след не поставился, тема " + т); break; }
+        await стр.waitForTimeout(140);
+        await стр.screenshot({ path: join(КУДА, "след-" + т + "-" + String(i).padStart(2, "0") + ".png") });
+      }
+      console.log("снято  раскадровка следа «" + т + "», " + ДОЛИ.length + " кадров");
     }
-    console.log("снято  раскадровка молнии, " + ДОЛИ.length + " кадров");
   }
 
   await стр.close();
