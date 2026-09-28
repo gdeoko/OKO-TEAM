@@ -52,7 +52,11 @@ import numpy as np
 # Насколько переписывать зону. 0.40 подобрано так, чтобы черты
 # остались, а фактура появилась: ниже 0.30 кроп возвращается почти
 # неизменным, выше 0.55 модель рисует другое лицо.
-DENOISE = float(os.environ.get("ROCKET_ZONE_DENOISE", "0.40"))
+DENOISE = float(os.environ.get("ROCKET_ZONE_DENOISE", "0.90"))
+
+# CFG прохода по зоне. Единица означает, что негативную ветку ComfyUI
+# не считает вовсе, и весь НЕГАТИВ ниже - мёртвый текст.
+CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
 
 # Запас вокруг зоны. Без запаса модель не видит, к чему зона крепится,
 # и рисует сосок на пустом фоне, а лицо без линии челюсти.
@@ -194,12 +198,18 @@ def доработать(путь, референс=None, какие=("лицо"
     if not найдено:
         print("детейлер: зон не нашлось", flush=True)
         return путь
-    if карта is None:
-        import gpu
-        карта = gpu.Gpu(os.environ.get("ROCKET_GPU_URL", ""),
-                        os.environ.get("ROCKET_GPU_USER", "rocket"),
-                        os.environ.get("ROCKET_GPU_PASS", ""))
-        карта.выбрать("фото")
+    # Свой клиент с большим таймаутом, даже когда карта передана
+    # снаружи. У боевого клиента он тридцать секунд, а детейлер идёт
+    # СРАЗУ после основной генерации, когда карта ещё разгребает
+    # очередь: первая же пачка 28.09.2026 потеряла доработку на всех
+    # кадрах с «The read operation timed out», и кадры молча уходили
+    # недоработанными.
+    import gpu
+    карта = gpu.Gpu(os.environ.get("ROCKET_GPU_URL", ""),
+                    os.environ.get("ROCKET_GPU_USER", "rocket"),
+                    os.environ.get("ROCKET_GPU_PASS", ""),
+                    timeout=int(os.environ.get("ROCKET_ZONE_TIMEOUT", "180")))
+    карта.выбрать("фото")
     # Лицу отдельным референсом идёт кроп лица с исходного снимка: в
     # проходе по зоне весь бюджет энкодера достаётся одному лицу.
     реф_лица = None
@@ -219,7 +229,8 @@ def доработать(путь, референс=None, какие=("лицо"
                                        open(реф_лица, "rb").read()))
         try:
             jid, _ = карта.start(
-                prompt=ПРОМПТЫ[имя], size="sq", steps=8, cfg=1.0, seed=зерно,
+                prompt=ПРОМПТЫ[имя], size="sq", steps=8, seed=зерно,
+                cfg_свой=CFG,
                 neg=НЕГАТИВ, denoise=float(denoise or DENOISE), mode="photo",
                 images=снимки, _лист=[ЛИСТ, ЛИСТ])
             готово = карта.wait(jid, limit=600)

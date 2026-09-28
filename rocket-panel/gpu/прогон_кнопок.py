@@ -37,6 +37,7 @@ import gpu                                              # noqa: E402
 import лицо_реф                                         # noqa: E402
 import места                                            # noqa: E402
 import prompts                                          # noqa: E402
+import детейлер                                         # noqa: E402
 
 # Вход по умолчанию - тот же кадр Ники, на котором владелец смотрел
 # пробы: одетая, в пол роста, лицом в камеру.
@@ -140,6 +141,15 @@ def прогнать(карта, сцена, вход_на_карте, мест�
     os.makedirs(КУДА, exist_ok=True)
     путь = os.path.join(КУДА, f"{сцена.key}.png")
     open(путь, "wb").write(данные)
+    # Доработка зоны идёт СРАЗУ: мерить надо то, что получит человек, а
+    # не промежуточный кадр. Отключается переменной NODETAIL.
+    if not os.environ.get("NODETAIL"):
+        try:
+            готово = детейлер.доработать(путь, ВХОД, ("лицо",), карта=карта)
+            if готово and готово != путь:
+                os.replace(готово, путь)
+        except Exception as e:                          # noqa: BLE001
+            print(f"детейлер не отработал: {str(e)[:140]}", flush=True)
     return путь, time.time() - т, None
 
 

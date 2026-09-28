@@ -478,13 +478,15 @@ def _опора(g,w,h,имя,сила,до,вид=None):
 
 def wf_photo(p,w,h,seed,images=None,neg=None,denoise=1.0,
              опора=None,опора_сила=None,опора_до=None,ключ_опоры="",
-             опора_вид=None,плоскость=0.0,nag=None):
+             опора_вид=None,плоскость=0.0,nag=None,cfg=None):
     """Текст в фото и фото в фото — один граф, разница в наличии снимков."""
     # Без снимков стартового латента нет вовсе, и частичный denoise
     # означал бы недосчитанный шум вместо картинки.
     if not images:
         denoise=1.0
     g=_фото_база(p,neg,seed,images,denoise)
+    if cfg:
+        g["7"]["inputs"]["cfg"]=max(1.0,min(8.0,float(cfg)))
     g=_лора(g,ЛОРА_ПЛОСКАЯ,плоскость)
     if опора:
         своя=ОПОРА_СВОЯ.get(ключ_опоры or "",{})
@@ -910,7 +912,7 @@ SZ={"photo":{"vert":(768,1344),"sq":(1024,1024),"horiz":(1344,768)},
 # NAG работает не через CFG, а в пространстве внимания, и придуман
 # ровно под дистиллированные сборки. Значит негатив начинает звучать,
 # а свет и фон остаются свои.
-NAG_СИЛА = float(os.environ.get("ROCKET_NAG", "5.0"))
+NAG_СИЛА = float(os.environ.get("ROCKET_NAG", "0"))
 NAG_АЛЬФА = float(os.environ.get("ROCKET_NAG_ALPHA", "0.5"))
 NAG_ТАУ = float(os.environ.get("ROCKET_NAG_TAU", "1.5"))
 
@@ -1062,7 +1064,7 @@ def gen():
                    d.get("опора_сила"),d.get("опора_до"),ключ_оп,вид_оп,
                    плоскость(d.get("плоскость"),images,
                              int(d.get("женский_снимок",0) or 0)),
-                   d.get("nag"))
+                   d.get("nag"),d.get("cfg_свой"))
     else:
         if len(images)>2:
             return jsonify(error="Видео берёт не больше двух снимков"),400
