@@ -264,12 +264,19 @@ def плоскость(сложение):
     # не оставлен на догадку.
     "Real skin with visible pores. Her skin "
     "is CLEAN: no scattered dark specks, no soot, no dirt on it. "
+    # ОДЕЖДА НЕ НАЗЫВАЕТСЯ ЗДЕСЬ НИ ОДНИМ СЛОВОМ, и это правка
+    # 29.09.2026 по собственной ошибке. Тут стояло «no bikini marks,
+    # no swimsuit marks» - то есть В ПОЛОЖИТЕЛЬНОМ тексте были названы
+    # купальник и бикини. Диффузия рисует названное, отрицание она
+    # слышит плохо: сказать «без бикини» значит позвать бикини. Отсюда
+    # и кружевные отпечатки на коже, которые я потом искала в опоре.
+    # Запрет на вещи живёт в НЕГАТИВЕ, где ему и место, а здесь
+    # говорится только про ровный тон.
     "HER TAN IS COMPLETELY EVEN over her entire body: the same colour "
     "on her chest, her breasts, her belly, her hips and her thighs as "
-    "on her arms and shoulders. There are NO TAN LINES anywhere, no "
-    "bikini marks, no swimsuit marks, no paler untanned patches, no "
-    "white strips or triangles of lighter skin, no two-tone skin. She "
-    "was never wearing anything that left a mark. "
+    "on her arms and shoulders. One single even skin tone everywhere, "
+    "with no paler strips, no lighter triangles, no untanned patches "
+    "and no two-tone skin anywhere on her. "
     "Any mole or freckle she already has on the reference photo stays "
     "exactly where it is - nothing is added and nothing is removed. "
     "No plastic smoothing, no airbrushing. The skin is MATTE and DRY — "
@@ -390,7 +397,13 @@ def плоскость(сложение):
     # негатив при низком CFG почти не слышен, работает абзац про
     # ровный загар в КОЖА. Обе меры вместе, потому что поодиночке
     # ни одна не сняла пятна целиком.
-    "tan lines, tan line, bikini marks, swimsuit marks, bikini tan, "
+    # СЛОВ «bikini» И «swimsuit» ЗДЕСЬ НЕТ, и это не небрежность.
+    # Запрет на саму вещь живёт ниже, в `ОДЕТЫЕ`, и подклеивается
+    # ТОЛЬКО когда человек одежду не называл сам. А эти слова стояли в
+    # ПОСТОЯННОЙ части негатива и запрещали бикини даже тому, кто
+    # написал «сними с неё бикини». Следы загара описываются без
+    # названия вещи - смысл от этого не теряется.
+    "tan lines, tan line, tan line marks, untanned strips, "
     "untanned patches, pale untanned skin, white strips of skin, "
     "two-tone skin, uneven tan, sunburn line, ghost of underwear, "
     "translucent clothing remnants, leftover clothing outline, "
@@ -795,6 +808,57 @@ def мужчина_в_кадре(промпт):
     "voluptuous, curvy, breast implants, boob job, heavy chest, "
     "cleavage added, push-up effect, thickened waist"
 )
+
+
+# НЕГАТИВ РОЛИКА. Отдельный, и вот почему.
+#
+# Ролику доставался ФОТОГРАФИЧЕСКИЙ негатив, со словами про статуи,
+# мрамор, гипс и следы загара - запреты, выведенные из жалоб на
+# неподвижный кадр. Дефекты ролика другие: мигание, дрожь, уплывающее
+# лицо, конечности, перетекающие между кадрами, рывки и подмена
+# человека к середине.
+#
+# Родной негатив сборки Wan написан по-китайски, и он не декорация: на
+# нём её учили, и он ловит то, чего английские слова не ловят. Поэтому
+# свои запреты ДОПИСЫВАЮТСЯ к родному, а не заменяют его - ровно этой
+# заменой ролик и терял защиту.
+#
+# Оговорка честности: при CFG 1.0 негативная ветка не считается вовсе,
+# и весь этот текст мёртвый. Он оживёт, когда замер покажет, что ролик
+# держит CFG выше единицы; величина стала параметром запроса ради
+# этого замера.
+WAN_РОДНОЙ = (
+    "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，"
+    "整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，"
+    "画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，"
+    "静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走")
+
+НЕГАТИВ_ВИДЕО_СВОЙ = (
+    "flickering, strobing, frame jitter, temporal noise, "
+    "morphing face, face drifting between frames, identity change "
+    "mid-clip, different person appearing, "
+    "melting limbs, limbs merging between frames, hands turning into "
+    "blobs, fingers fusing, warping anatomy, "
+    "duplicated torso, two bodies merged, second body appearing, "
+    "camera shake, jerky motion, stuttering, frozen frame, "
+    "oiled skin, wet shiny skin, glossy plastic skin, "
+    "pubic hair, body hair, tan lines, bikini marks, "
+    "cartoon, anime, 3d render, cgi, doll, plastic skin, "
+    "watermark, subtitles, text, logo")
+
+
+def негатив_видео(промпт=""):
+    """Негатив ролика: родной китайский плюс наши запреты по движению.
+
+    Промпт принимается ради единообразия с `негатив` и на будущее: у
+    парных роликов запреты отличаются так же, как у парных снимков.
+    """
+    свои = [НЕГАТИВ_ВИДЕО_СВОЙ]
+    пара_видна = ("EXACTLY TWO bodies" in промпт
+                  or "Exactly two people in the frame" in промпт)
+    if not пара_видна:
+        свои.append(ТОЛЬКО_ОДИН)
+    return ", ".join([WAN_РОДНОЙ] + свои)
 
 
 def негатив(промпт):

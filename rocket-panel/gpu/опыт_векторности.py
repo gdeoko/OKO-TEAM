@@ -47,12 +47,12 @@ sys.path.insert(0, ДОМ)
 import panel                                            # noqa: E402
 
 COMFY = os.environ.get("ROCKET_COMFY", "http://127.0.0.1:8188")
-КУДА = os.environ.get("КУДА", "/root/опыт")
+КУДА = os.environ.get("KUDA", "/root/опыт")
 ЗЕРНО = 4242
 
 # Вход и промпт берутся из боевого прогона: тот же кадр, та же кнопка.
-ВХОД = os.environ.get("ВХОД", "ника-одета-полроста.jpg")
-ПРОМПТ_ФАЙЛ = os.environ.get("ПРОМПТ", os.path.join(ДОМ, "опыт_промпт.json"))
+ВХОД = os.environ.get("VHOD", "ника-одета-полроста.jpg")
+ПРОМПТ_ФАЙЛ = os.environ.get("PROMPT", os.path.join(ДОМ, "опыт_промпт.json"))
 
 
 def варианты():
