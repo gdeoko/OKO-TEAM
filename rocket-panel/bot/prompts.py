@@ -1443,3 +1443,31 @@ def свой(текст, вид, обязательное=None, фон="новы
     вместе = "\n\n".join(x for x in (строка, обяз) if x)
     return собрать(вид, Блок(откровенное=вместе), фон=фон, пара=пара,
                    сложение=сложение)
+
+# ТЕКСТ ВТОРОГО ПРОХОДА. Короткий нарочно.
+#
+# Основной промпт описывает сцену на две-три тысячи знаков, и про кожу
+# там один абзац среди интерьера, позы и ракурса. Второй проход сцену
+# уже не строит - он идёт по готовому кадру на малой силе, и всё, что
+# от него нужно, это ПОВЕРХНОСТЬ. Короткий текст про одну поверхность
+# сборка слышит несравнимо лучше.
+#
+# Бьёт по двум жалобам владельца сразу: «намасленные тела» и «всё
+# замазано, детализации нет при приближении». Сказано УТВЕРЖДЕНИЯМИ, а
+# не запретами: при CFG полтора негативная ветка почти не звучит, а
+# выше полутора эта сборка ломается (замер 29.09.2026: при 3.5 заливка
+# 56 % против 11 при полутора).
+ТЕКСТ_ПРОХОДА = (
+    "Photorealistic skin surface, shot on a full-frame camera with an "
+    "85mm lens at f/4. Real human skin with fine visible pores and "
+    "natural micro-texture over the whole body: the face, the chest, "
+    "the belly, the hips, the thighs, the arms and the back. The skin "
+    "is MATTE and DRY - a soft diffuse sheen at most, never oiled, "
+    "never wet, never glistening, no specular highlights on the "
+    "thighs, the buttocks or the chest, no baby oil, no body oil. "
+    "Even clean complexion with no scattered dark specks and no "
+    "added blemishes. Soft even daylight, gentle shadows, natural "
+    "colour, sharp critical focus, fine photographic grain. "
+    "No airbrushing, no plastic smoothing, no wax, no beauty filter."
+)
+
