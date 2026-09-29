@@ -275,8 +275,18 @@ def плоскость(сложение):
     # Теперь сказано только то, ЧТО должно быть: ровная чистая
     # поверхность с порами. Запрет на крапины живёт в негативе, где
     # отрицание и есть смысл узла.
-    "Real skin with fine visible pores and even, uniform texture: one "
-    "smooth clean surface of living skin across her whole body. "
+    # СЛОВА «pores» ЗДЕСЬ БОЛЬШЕ НЕТ (правка 29.09.2026, по кадру
+    # 1:1). «Real skin with visible pores» на теле в полный рост сборка
+    # рисует БУКВАЛЬНО: поле мелких тёмных точек по животу, бёдрам и
+    # груди. Это и есть «чёрные точки на теле», которые владелец
+    # называет с первого дня, и заказывали их мы сами - тем самым
+    # словом, которым хотели убрать пластик.
+    #
+    # Фактура называется без единицы измерения: «живая поверхность»,
+    # «мягкий свет по ней», а не «поры».
+    "Living human skin with a fine natural surface: light falls on it "
+    "softly and unevenly the way it does on a real body, the same all "
+    "over her. "
     # ОДЕЖДА НЕ НАЗЫВАЕТСЯ ЗДЕСЬ НИ ОДНИМ СЛОВОМ, и это правка
     # 29.09.2026 по собственной ошибке. Тут стояло «no bikini marks,
     # no swimsuit marks» - то есть В ПОЛОЖИТЕЛЬНОМ тексте были названы
@@ -314,10 +324,21 @@ def плоскость(сложение):
     # матовость выше: дистиллированная сборка слушает утверждение
     # лучше. Запрет продублирован в негативе - одного мало, проверено
     # на блеске кожи.
-    "Her body is COMPLETELY HAIRLESS below the head: the pubic area, "
-    "the legs, the underarms, the belly and the forearms are all bare "
-    "smooth skin. The ONLY hair anywhere in the picture is the hair "
-    "on her head."
+    # СЛОВ «pubic» И «HAIRLESS» ЗДЕСЬ БОЛЬШЕ НЕТ, и это та же правка.
+    #
+    # Стояло «Her body is COMPLETELY HAIRLESS below the head: the pubic
+    # area...». Сборка читает существительные: «pubic» и «hair» она
+    # слышит, приставку «-less» почти нет. На кадре 1:1 лобок выходил
+    # засеянным короткой щетиной, и владелец видел ровно это -
+    # «растительность опять видна».
+    #
+    # Теперь сказано только то, что должно быть: гладко и ровно везде
+    # ниже головы, волосы падают с головы. Запрет на растительность
+    # стоит в негативе, где отрицание и есть смысл узла.
+    "Below her head her skin is smooth and unbroken everywhere - her "
+    "belly, her hips, her thighs and the space between them are as "
+    "smooth and bare as her shoulders. Her hair falls from her head "
+    "and from nowhere else."
 )
 
 АНАТОМИЯ = (
@@ -1547,14 +1568,15 @@ def свой(текст, вид, обязательное=None, фон="новы
 # 56 % против 11 при полутора).
 ТЕКСТ_ПРОХОДА = (
     "Photorealistic skin surface, shot on a full-frame camera with an "
-    "85mm lens at f/4. Real human skin with fine visible pores and "
-    "natural micro-texture over the whole body: the face, the chest, "
-    "the belly, the hips, the thighs, the arms and the back. The skin "
+    "85mm lens at f/4. Living human skin with a fine natural surface "
+    "over the whole body: the face, the chest, the belly, the hips, "
+    "the thighs, the arms and the back. Light falls on it softly and "
+    "unevenly the way it does on a real body. The skin "
     # То же правило, что и в КОЖА: масло и блеск здесь не называются
     # даже с отрицанием, они живут в негативе.
     "is MATTE and DRY, lit by soft diffuse light, with the quiet "
     "velvety surface of bare skin on an overcast day. "
-    "Even clean complexion, uniform and untouched. "
+    "Even complexion, uniform and untouched. "
     "Soft even daylight, gentle shadows, natural "
     "colour, sharp critical focus, fine photographic grain."
 )

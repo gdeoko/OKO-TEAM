@@ -101,8 +101,10 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
              "reference: her exact eyes, her exact nose, her exact lips, "
              "her exact eyebrows, her exact jawline and face shape. Keep "
              "the head angle, the lighting and the skin tone of the FIRST "
-             "image. Real human skin with visible pores, individual "
-             "separated eyelashes, natural lip texture. "
+             # «visible pores» убрано (29.09.2026): сборка рисует их
+             # буквально тёмными точками, и лицо выходит в крапинах.
+             "image. Living human skin with a fine natural surface, "
+             "individual separated eyelashes, natural lip texture. "
              # Ровный тон назван ПРЯМО. На проходе с denoise 0.90 зона
              # переписывается почти целиком, и слова про поры и пушок
              # модель поняла как приглашение: первая боевая пачка
@@ -119,20 +121,27 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
              # и есть смысл узла.
              "Her complexion is EVEN, CLEAR and uniform, a single "
              "smooth tone across her whole face. "
-             "Sharp critical focus, 85mm lens, "
-             "neutral daylight. Matte skin, no gloss, no oil, no "
-             "airbrushing, no plastic smoothing."),
+             # Дефекты не называются даже с отрицанием: стояло «no
+             # gloss, no oil, no airbrushing, no plastic smoothing», и
+             # лицо возвращалось с жирными бликами на лбу и щеках.
+             "Sharp critical focus, 85mm lens, neutral daylight, "
+             "MATTE skin with the quiet velvety surface of bare skin "
+             "on an overcast day."),
     "грудь": ("A close-up photograph of a woman's bare chest, anatomically "
               "correct natural breasts with correctly shaped round areolae "
-              "and nipples, soft natural shape. Real human skin with "
-              "visible pores and fine texture. Sharp focus, neutral "
-              "daylight, matte skin, no gloss, no oil, no plastic "
-              "smoothing."),
+              "and nipples, soft natural shape. Living human skin with "
+              "a fine natural surface. Sharp focus, neutral daylight, "
+              "MATTE skin with the quiet velvety surface of bare skin "
+              "on an overcast day."),
+    # «completely hairless» и «visible pores» убраны 29.09.2026: на
+    # кадре 1:1 эта зона возвращалась с щетиной по лобку и полем
+    # тёмных крапин. Сборка читает «hair» и «pores» как заказ.
     "пах": ("A close-up photograph of a woman's bare hips and groin, "
-            "anatomically correct female anatomy, completely hairless "
-            "skin. Real human skin with visible pores and fine texture. "
-            "Sharp focus, neutral daylight, matte skin, no gloss, no "
-            "oil, no plastic smoothing."),
+            "anatomically correct female anatomy, the skin there as "
+            "smooth and bare as her thighs. Living human skin with a "
+            "fine natural surface. Sharp focus, neutral daylight, "
+            "MATTE skin with the quiet velvety surface of bare skin "
+            "on an overcast day."),
 }
 
 # МУЖСКИЕ ЗОНЫ. Жалоба владельца дословно: «у женщин мужские члены, у
@@ -143,15 +152,16 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
 ПРОМПТЫ["пах_м"] = (
     "A close-up photograph of a man's bare hips and groin, anatomically "
     "correct MALE anatomy: a penis and a scrotum, nothing else. This is "
-    "a man. Completely hairless skin. Real human skin with visible pores "
-    "and fine texture. Sharp focus, neutral daylight, matte skin, no "
-    "gloss, no oil, no plastic smoothing.")
+    "a man. The skin there is as smooth and bare as his thighs. Living "
+    "human skin with a fine natural surface. Sharp focus, neutral "
+    "daylight, MATTE skin with the quiet velvety surface of bare skin "
+    "on an overcast day.")
 ПРОМПТЫ["грудь_м"] = (
     "A close-up photograph of a man's bare chest, anatomically correct "
     "MALE chest: flat pectoral muscles and small flat male nipples. This "
-    "is a man, he has no breasts. Real human skin with visible pores and "
-    "fine texture. Sharp focus, neutral daylight, matte skin, no gloss, "
-    "no oil, no plastic smoothing.")
+    "is a man. Living human skin with a fine natural surface. Sharp "
+    "focus, neutral daylight, MATTE skin with the quiet velvety "
+    "surface of bare skin on an overcast day.")
 # ПЛИТКА. Текст нарочно про ПОВЕРХНОСТЬ, а не про сцену: плитка это
 # кусок кадра без понятия о том, что на нём - бедро, спина или простыня.
 # Длинное описание сцены заставило бы её дорисовывать содержимое, а нам
@@ -159,10 +169,11 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
 # правило дня, см. prompts.КОЖА.
 ПРОМПТЫ["плитка"] = (
     "A photograph of real human skin at close range, shot on a "
-    "full-frame camera with an 85mm lens. Fine visible pores and "
-    "natural micro-texture, the quiet velvety surface of bare skin "
-    "under soft diffuse light. Even uniform tone, sharp critical "
-    "focus, fine photographic grain, natural colour.")
+    "full-frame camera with an 85mm lens. A fine natural surface with "
+    "light falling on it softly and unevenly the way it does on a real "
+    "body, the quiet velvety surface of bare skin under soft diffuse "
+    "light. Even uniform tone, sharp critical focus, fine photographic "
+    "grain, natural colour.")
 ПРОМПТЫ["плитка_ж"] = ПРОМПТЫ["плитка"]
 ПРОМПТЫ["плитка_м"] = ПРОМПТЫ["плитка"]
 
