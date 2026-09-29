@@ -50,6 +50,9 @@ for (const тема of ТЕМЫ) {
   const стр = await ктx.newPage();
   стр.on("pageerror", e => беды.push(тема + ": ОШИБКА JS: " + String(e).slice(0, 200)));
   стр.on("console", m => { if (m.type() === "error") беды.push(тема + ": КОНСОЛЬ: " + m.text().slice(0, 160)); });
+  /* Голое «Failed to load resource» не говорит, какого файла нет: адрес
+     печатает только ответ сервера. Без него 404 ищется вслепую. */
+  стр.on("response", о => { if (о.status() >= 400 && !/favicon/.test(о.url())) беды.push(тема + ": НЕТ ФАЙЛА " + о.status() + " " + decodeURIComponent(о.url()).split("/планета/").pop()); });
 
   await стр.goto(АДРЕС, { waitUntil: "load" });
   await стр.waitForTimeout(2400);
