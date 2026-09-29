@@ -202,12 +202,81 @@ def прогнать(карта, сцена, вход_на_карте, мест�
             рефы = list(файлы_рефов or [ВХОД])[:len(полы)]
             рефы += [рефы[-1]] * (len(полы) - len(рефы))
             готово = детейлер.доработать(путь, рефы[0], зоны, карта=карта,
-                                         рефы=рефы, полы=полы)
+                                         рефы=рефы, полы=полы,
+                                         сзади=catalog.вид_сзади(сцена.key))
             if готово and готово != путь:
                 os.replace(готово, путь)
         except Exception as e:                          # noqa: BLE001
             print(f"детейлер не отработал: {str(e)[:140]}", flush=True)
     return путь, time.time() - т, None
+
+
+def _раздеть(карта, путь, имя_на_карте):
+    """Снять одежду по маске. Новое имя на карте или None.
+
+    Тот же шаг, что делает бот (`bot._снять_одежду`), но своим кодом:
+    проба живёт в другом процессе и модуль бота сюда не тянется.
+    """
+    import tempfile
+    try:
+        import cv2
+        import одежда as _од
+        кадр = cv2.imread(путь)
+        if кадр is None:
+            return None
+        м = _од.маска(кадр)
+        if м is None or _од.доля(м) < 0.03:
+            print("одежды на входе почти нет, раздевать нечего")
+            return None
+        with tempfile.TemporaryDirectory() as врем:
+            п = os.path.join(врем, "maska.png")
+            cv2.imwrite(п, м)
+            имя_маски = карта.upload("maska.png", open(п, "rb").read())
+        т = time.time()
+        # Глубина 0.82, а не единица. На единице модель не видит, что
+        # было под маской, вовсе, и форму ног ей взять неоткуда: первый
+        # заход дорисовал на месте штанов второе тело. Ниже 0.7 ткань
+        # проступает обратно.
+        jid, _ = карта.start(mode="inpaint", image=имя_на_карте,
+                             images=[имя_на_карте], mask=имя_маски,
+                             prompt=ПРОМПТ_РАЗДЕТЬ,
+                             neg=prompts.негатив(ПРОМПТ_РАЗДЕТЬ) + ", "
+                                 + НЕГАТИВ_РАЗДЕТЬ,
+                             denoise=float(os.environ.get("RAZDET_DEN", "0.82")),
+                             seed=ЗЕРНО, feather=20, grow=10)
+        готово = карта.wait(jid, limit=600)
+        файлы = готово.get("files") or []
+        if not файлы:
+            return None
+        новое = карта.upload(файлы[0], карта.fetch(файлы[0]))
+        print(f"раздевание по маске: одежды было "
+              f"{_од.доля(м) * 100:.1f} %, {time.time() - т:.0f} с")
+        return новое
+    except Exception as e:                                  # noqa: BLE001
+        print("раздевание по маске не отработало:", str(e)[:160])
+    return None
+
+
+# ПРОМПТ НАЗЫВАЕТ ТЕЛО, А НЕ КОЖУ. Первый заход просил «bare naked
+# human skin» и получил ровно это: на месте кроссовок и штанов модель
+# нарисовала кожу - в виде второго человека, лежащего на полу, со
+# сросшимися с первой ногами. Пустое место в маске надо чем-то занять,
+# и если не сказать чем, занято будет чем попало.
+ПРОМПТ_РАЗДЕТЬ = (
+    "The SAME single person, now bare. Her own body continues "
+    "naturally where the clothing was: her own chest and belly under "
+    "the removed top, her own hips and her own two legs under the "
+    "removed trousers, her own two bare feet where the shoes were. "
+    "ONE person only, ONE body, exactly two arms and exactly two legs, "
+    "each limb growing from its own place on her own torso. Nothing is "
+    "worn: no clothing, no fabric, no shoes, no straps. The bare skin "
+    "carries the same tone and the same light as the skin already "
+    "visible in the frame. Real skin texture, matte skin, photographic. "
+    "The floor behind her stays empty floor.")
+НЕГАТИВ_РАЗДЕТЬ = (
+    "second person, extra person, duplicate body, extra limbs, extra "
+    "legs, extra arms, merged bodies, person lying on the floor, "
+    "clothing, fabric, shoes, sneakers, socks, underwear")
 
 
 def главное():
@@ -223,6 +292,11 @@ def главное():
                     os.environ.get("ROCKET_GPU_PASS", ""))
     карта.выбрать("фото")
     вход = карта.upload(os.path.basename(ВХОД), open(ВХОД, "rb").read())
+    # РАЗДЕВАНИЕ ПО МАСКЕ идёт до всякой сцены, ровно как у бота.
+    # Проба без него 30.09.2026 оставила штаны и кроссовки на кнопке «в
+    # полный рост», а парная сцена осталась одетой целиком.
+    if (os.environ.get("RAZDET", "1") or "") != "0":
+        вход = _раздеть(карта, ВХОД, вход) or вход
     лицо = None
     # Кроп лица отключается переменной, чтобы мерить его вклад ОТДЕЛЬНО
     # от разрешения: первый заход менял и то, и другое разом, и понять,

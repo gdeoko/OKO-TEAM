@@ -423,6 +423,83 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
 # клиентом уплывает, на нуле не делает ничего.
 ЛИЦО_СИЛА = float(os.environ.get("ROCKET_LICO_SILA", "0.5"))
 
+# РАЗДЕВАНИЕ ПО МАСКЕ. Проба 30.09.2026 на трёх разных кнопках: «в
+# полный рост» сняла свитер и оставила штаны и кроссовки, парная сцена
+# оставила одежду целиком. Причина не в промпте - он всё это называет
+# прямо, - а в том, что чем больше одежды в кадре, тем крепче её держит
+# исходник на нашей глубине правки. Внутри маски глубина полная, и
+# выбора у модели не остаётся.
+РАЗДЕТЬ = (os.environ.get("ROCKET_RAZDET", "1") or "") != "0"
+# Ниже этой доли не зовём карту вовсе: лишний проход стоит минуты, а
+# пара процентов ткани по краю кадра уйдёт и в общем проходе.
+РАЗДЕТЬ_ОТ = float(os.environ.get("ROCKET_RAZDET_OT", "0.03"))
+# ПРОМПТ НАЗЫВАЕТ ТЕЛО, А НЕ КОЖУ. Первый заход просил «bare naked
+# human skin» и получил ровно это: на месте кроссовок и штанов модель
+# нарисовала кожу - в виде второго человека, лежащего на полу, со
+# сросшимися с первой ногами. Пустое место в маске надо чем-то занять,
+# и если не сказать чем, занято будет чем попало.
+ПРОМПТ_РАЗДЕТЬ = (
+    "The SAME single person, now bare. Her own body continues "
+    "naturally where the clothing was: her own chest and belly under "
+    "the removed top, her own hips and her own two legs under the "
+    "removed trousers, her own two bare feet where the shoes were. "
+    "ONE person only, ONE body, exactly two arms and exactly two legs, "
+    "each limb growing from its own place on her own torso. Nothing is "
+    "worn: no clothing, no fabric, no shoes, no straps. The bare skin "
+    "carries the same tone and the same light as the skin already "
+    "visible in the frame. Real skin texture, matte skin, photographic. "
+    "The floor behind her stays empty floor.")
+НЕГАТИВ_РАЗДЕТЬ = (
+    "second person, extra person, duplicate body, extra limbs, extra "
+    "legs, extra arms, merged bodies, person lying on the floor, "
+    "clothing, fabric, shoes, sneakers, socks, underwear")
+# Глубина правки. На единице модель не видит, что было под маской,
+# вовсе, и форму ног ей взять неоткуда. Ниже 0.7 ткань проступает назад.
+РАЗДЕТЬ_ГЛУБИНА = float(os.environ.get("ROCKET_RAZDET_DEN", "0.82"))
+
+
+def _снять_одежду(свои, photos, на_тик=None):
+    """Раздеть присланный снимок по маске одежды. Новый список photos.
+
+    Маску считает сервер бота по ЛОКАЛЬНОМУ файлу, переписывает область
+    карта. Ошибка тут не роняет заказ: без этого шага кадр просто выйдет
+    таким, каким выходил до сих пор.
+    """
+    import tempfile
+    if not свои or not photos:
+        return photos
+    try:
+        import cv2
+        import одежда as _од
+        кадр = cv2.imread(свои[0])
+        if кадр is None:
+            return photos
+        м = _од.маска(кадр)
+        if м is None or _од.доля(м) < РАЗДЕТЬ_ОТ:
+            return photos
+        with tempfile.TemporaryDirectory() as врем:
+            п = os.path.join(врем, "maska.png")
+            cv2.imwrite(п, м)
+            имя_маски = gpu.upload("maska.png", open(п, "rb").read())
+        gid, _ = gpu.start(mode="inpaint", image=photos[0],
+                           images=[photos[0]], mask=имя_маски,
+                           prompt=ПРОМПТ_РАЗДЕТЬ,
+                           neg=prompts.негатив(ПРОМПТ_РАЗДЕТЬ) + ", "
+                               + НЕГАТИВ_РАЗДЕТЬ,
+                           denoise=РАЗДЕТЬ_ГЛУБИНА, seed=0,
+                           feather=20, grow=10)
+        res = gpu.wait(gid, limit=600, on_tick=на_тик)
+        файлы = res.get("files") or []
+        if not файлы:
+            return photos
+        новое = gpu.upload(файлы[0], gpu.fetch(файлы[0]))
+        print("раздевание по маске: одежды было %.1f%%" % (_од.доля(м) * 100),
+              flush=True)
+        return [новое] + list(photos[1:])
+    except Exception as e:                                  # noqa: BLE001
+        print("раздевание по маске не отработало:", str(e)[:160], flush=True)
+    return photos
+
 
 def _починить_лицо(данные, имя):
     """Вылечить лица восстановителем НА КАРТЕ. Новые байты или None.
@@ -520,8 +597,10 @@ def _доработать_зоны(данные, имя, photos, scene=None):
                     рефы.append(п)
                 except Exception:                           # noqa: BLE001
                     рефы.append(None)
-            готово = детейлер.доработать(кадр, рефы[0] if рефы else None,
-                                         ЗОНЫ, рефы=рефы, полы=полы)
+            готово = детейлер.доработать(
+                кадр, рефы[0] if рефы else None, ЗОНЫ, рефы=рефы,
+                полы=полы,
+                сзади=bool(scene and catalog.вид_сзади(scene)))
             if готово and os.path.exists(готово):
                 return open(готово, "rb").read()
     except Exception as e:                                  # noqa: BLE001
@@ -681,12 +760,19 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
         m = send(chat, ui.ожидание(шаг, 0, я))
         mid = m.get("result", {}).get("message_id")
 
-        def tick(sec):
+        def tick(sec):                                      # noqa: D401
             # Раз в пять секунд, а не раз в десять: строка на экране
             # ожидания теперь живая, и десять секунд неподвижности она
             # читается как зависший бот.
             if mid and sec and sec % 5 == 0:
                 edit(chat, mid, ui.ожидание(шаг, sec, я))
+
+        # РАЗДЕВАНИЕ ИДЁТ ПЕРВЫМ, до всякой сцены. Раздеть уже
+        # построенный кадр нечем: поза, свет и обстановка на нём наши, и
+        # правка по маске пошла бы поверх выдуманной ткани. Снимок
+        # клиента, наоборот, настоящий, и маска на нём точная.
+        if РАЗДЕТЬ and (kind or "").startswith("i2i") and photos:
+            photos = _снять_одежду(свои, photos, tick)
 
         if цепочка:
             # Первый проход. Его результат человеку НЕ отдаётся и в

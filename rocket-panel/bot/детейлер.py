@@ -221,6 +221,37 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "1.5"))
 ПРОМПТЫ["плитка_ж"] = ПРОМПТЫ["плитка"]
 ПРОМПТЫ["плитка_м"] = ПРОМПТЫ["плитка"]
 
+# ВИД СЗАДИ. Зоны такой не было вовсе, хотя кнопок со спины в каталоге
+# одиннадцать, а владелец назвал эту область прямо в списке того, что
+# обязано выйти таким же чётким, как лицо. На сценах сзади в зону паха
+# попадали ягодицы, а промпт описывал вульву спереди: модель получала
+# заказ на то, чего в кадре нет, и дорисовывала это поверх.
+# Промпт описывает ОБЕ стороны сразу, а не выбирает одну. На кадрах
+# сзади видно и ягодицы, и вульву между бёдер: «her vulva shows between
+# her thighs FROM BEHIND» стоит прямо в тексте сцены. Промпт про одни
+# ягодицы заказал бы модели стереть вульву, промпт про одну вульву
+# оставил бы ягодицы такими, какими они выходили до сих пор.
+ПРОМПТЫ["зад"] = (
+    "A close-up photograph of a woman's bare hips seen FROM BEHIND, "
+    "anatomically correct: two natural buttocks with the natural cleft "
+    "between them and her own anus at its centre, correctly placed and "
+    "correctly shaped; below and between her thighs her own vulva shows "
+    "from behind. The skin there is as smooth and bare as her thighs, "
+    "with the natural fold where the buttock meets the thigh. Living "
+    "human skin with a fine natural surface. Sharp focus, neutral "
+    "daylight, MATTE skin with the quiet velvety surface of bare skin "
+    "on an overcast day.")
+ПРОМПТЫ["зад_м"] = (
+    "A close-up photograph of a man's bare hips seen FROM BEHIND, "
+    "anatomically correct: two natural buttocks with the natural cleft "
+    "between them and his own anus at its centre, correctly placed and "
+    "correctly shaped. This is a man. The skin there is as smooth and "
+    "bare as his thighs, with the natural fold where the buttock meets "
+    "the thigh. Living human skin with a fine natural surface. Sharp "
+    "focus, neutral daylight, MATTE skin with the quiet velvety surface "
+    "of bare skin on an overcast day.")
+ПРОМПТЫ["зад_ж"] = ПРОМПТЫ["зад"]
+
 ПРОМПТЫ["пах_ж"] = ПРОМПТЫ["пах"]
 ПРОМПТЫ["грудь_ж"] = ПРОМПТЫ["грудь"]
 ПРОМПТЫ["лицо_м"] = ПРОМПТЫ["лицо"].replace("the woman from the SECOND",
@@ -575,7 +606,8 @@ def вклеить(кадр, кусок, место, мягкость=0.12):
 
 
 def доработать(путь, референс=None, какие=("лицо",), карта=None,
-               куда=None, denoise=None, зерно=7, рефы=None, полы=None):
+               куда=None, denoise=None, зерно=7, рефы=None, полы=None,
+               сзади=False):
     """Пересчитать зоны крупно и вклеить. Возвращает путь к готовому.
 
     Зоны считаются каждая своим запросом: одна общая генерация на весь
@@ -583,6 +615,13 @@ def доработать(путь, референс=None, какие=("лицо"
 
     `рефы` и `полы` включают разбор ПО ЛЮДЯМ. Без них кадр считается
     одним человеком, как раньше, и одиночные сцены идут прежним путём.
+
+    `сзади` меняет промпт зоны паха на тот, что описывает вид сзади.
+    Область та же самая - скелет даёт её одинаково с любой стороны, -
+    а вот что в ней находится, зависит от сцены: спереди вульва, сзади
+    ягодицы, складка и анус. До 30.09.2026 промпт был всегда передний,
+    и на шести кнопках со спины модель получала заказ на то, чего в
+    кадре нет.
     """
     кадр = cv2.imread(путь)
     if кадр is None:
@@ -655,7 +694,8 @@ def доработать(путь, референс=None, какие=("лицо"
         cv2.imwrite(врем, кусок, [cv2.IMWRITE_JPEG_QUALITY, 97])
         # Промпт и негатив по полу ЭТОГО человека. Ключа по полу может
         # не быть (зона общая) - тогда берётся общий.
-        промпт = ПРОМПТЫ.get(f"{имя}_{пол}") or ПРОМПТЫ[имя]
+        зона = "зад" if (сзади and имя == "пах") else имя
+        промпт = ПРОМПТЫ.get(f"{зона}_{пол}") or ПРОМПТЫ[зона]
         # У рук свой негатив и он НЕ зависит от пола: там важны число
         # пальцев и длина ногтей, а не анатомия низа.
         негатив = (НЕГАТИВ_РУКИ if имя == "руки"
