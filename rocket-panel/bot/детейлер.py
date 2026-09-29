@@ -47,7 +47,13 @@ import numpy as np
 
 # Сторона кропа, который уходит на пересчёт. 1024 - лист, на котором
 # модель работает штатно; меньше нет смысла, больше упирается во время.
-ЛИСТ = int(os.environ.get("ROCKET_ZONE_SIZE", "1024"))
+# 640, а не 1024. Замер 29.09.2026 на трёх зонах:
+#     лист зоны 1024   заливка 8.3 %   117 с на кадр... нет, 149
+#     лист зоны 768    заливка 4.8 %   117 с
+#     лист зоны 640    заливка 4.1 %   107 с
+# Меньший лист зоны оказался и быстрее, и чище: на 1024 модель
+# начинает дорисовывать сверх того, что в зоне есть.
+ЛИСТ = int(os.environ.get("ROCKET_ZONE_SIZE", "640"))
 
 # Насколько переписывать зону. 0.40 подобрано так, чтобы черты
 # остались, а фактура появилась: ниже 0.30 кроп возвращается почти
@@ -57,6 +63,10 @@ DENOISE = float(os.environ.get("ROCKET_ZONE_DENOISE", "0.90"))
 # CFG прохода по зоне. Единица означает, что негативную ветку ComfyUI
 # не считает вовсе, и весь НЕГАТИВ ниже - мёртвый текст.
 CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
+
+# Шаги прохода по зоне. Зона считается на каждый кадр трижды, поэтому
+# её цена умножается на три и стоит перебора.
+ШАГИ = int(os.environ.get("ROCKET_ZONE_STEPS", "8"))
 
 # Запас вокруг зоны. Без запаса модель не видит, к чему зона крепится,
 # и рисует сосок на пустом фоне, а лицо без линии челюсти.
@@ -226,40 +236,55 @@ def доработать(путь, референс=None, какие=("лицо"
     if референс and "лицо" in найдено:
         import лицо_реф
         реф_лица = лицо_реф.кроп_лица(референс)
-    for имя, (x, y, бок) in найдено.items():
+    # Зоны считаются ПАРАЛЛЕЛЬНО. Каждая это мегапиксель, и три таких
+    # помещаются на карте разом, а по очереди они стоили сто секунд из
+    # ста пятидесяти четырёх - больше, чем сам кадр.
+    #
+    # Вклейка идёт потом и по очереди: она правит один и тот же массив,
+    # и параллельная запись затёрла бы соседнюю зону.
+    def посчитать(имя, место):
+        x, y, бок = место
         кусок = кадр[y:y + бок, x:x + бок]
         if кусок.size == 0:
-            continue
+            return имя, место, None
         кусок = cv2.resize(кусок, (ЛИСТ, ЛИСТ), interpolation=cv2.INTER_CUBIC)
         врем = f"/tmp/зона_{имя}_{os.getpid()}.jpg"
         cv2.imwrite(врем, кусок, [cv2.IMWRITE_JPEG_QUALITY, 97])
-        снимки = [карта.upload(os.path.basename(врем), open(врем, "rb").read())]
-        if имя == "лицо" and реф_лица:
-            снимки.append(карта.upload(os.path.basename(реф_лица),
-                                       open(реф_лица, "rb").read()))
         try:
+            снимки = [карта.upload(os.path.basename(врем),
+                                   open(врем, "rb").read())]
+            if имя == "лицо" and реф_лица:
+                снимки.append(карта.upload(os.path.basename(реф_лица),
+                                           open(реф_лица, "rb").read()))
             jid, _ = карта.start(
-                prompt=ПРОМПТЫ[имя], size="sq", steps=8, seed=зерно,
-                cfg_свой=CFG,
-                neg=НЕГАТИВ, denoise=float(denoise or DENOISE), mode="photo",
+                prompt=ПРОМПТЫ[имя], size="sq", steps=ШАГИ, seed=зерно,
+                cfg_свой=CFG, neg=НЕГАТИВ, шаги=ШАГИ,
+                denoise=float(denoise or DENOISE), mode="photo",
                 images=снимки, _лист=[ЛИСТ, ЛИСТ])
-            готово = карта.wait(jid, limit=600)
+            готово = карта.wait(jid, limit=900)
             файлы = готово.get("files") or []
             if not файлы:
                 print(f"детейлер {имя}: карта не вернула кадр", flush=True)
-                continue
-            новый = cv2.imdecode(np.frombuffer(карта.fetch(файлы[0]), np.uint8),
-                                 cv2.IMREAD_COLOR)
+                return имя, место, None
+            return имя, место, cv2.imdecode(
+                np.frombuffer(карта.fetch(файлы[0]), np.uint8),
+                cv2.IMREAD_COLOR)
         except Exception as e:                              # noqa: BLE001
             print(f"детейлер {имя}: {str(e)[:140]}", flush=True)
-            continue
+            return имя, место, None
         finally:
             if os.path.exists(врем):
                 os.remove(врем)
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=len(найдено)) as пул:
+        готовые = list(пул.map(lambda п: посчитать(*п), найдено.items()))
+    for имя, место, новый in готовые:
         if новый is None:
             continue
-        кадр = вклеить(кадр, новый, (x, y, бок))
-        print(f"детейлер {имя}: зона {бок}px пересчитана на {ЛИСТ}", flush=True)
+        кадр = вклеить(кадр, новый, место)
+        print(f"детейлер {имя}: зона {место[2]}px пересчитана на {ЛИСТ}",
+              flush=True)
     куда = куда or os.path.splitext(путь)[0] + ".детейл.png"
     cv2.imwrite(куда, кадр)
     return куда
