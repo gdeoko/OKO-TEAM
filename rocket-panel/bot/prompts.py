@@ -432,9 +432,13 @@ def плоскость(сложение):
 # владелец.
 КАЧЕСТВО = (
     "A real photograph taken on a full-frame camera, 50mm lens at "
-    "f/2.8, ISO 200, available daylight from a window. Colour negative "
-    "film, fine photographic grain, true-to-life colour, ordinary "
-    "amateur snapshot straight out of camera, unretouched."
+    "f/2.8, ISO 200, available daylight from a window. True-to-life "
+    "colour, ordinary amateur snapshot straight out of camera, "
+    # СЛОВА «grain» ЗДЕСЬ НЕТ, и это правка 29.09.2026 по кадру от
+    # владельца. Зерно плёнки эта сборка рисует не зерном, а КРАПИНАМИ:
+    # тёмные точки ложатся по телу и даже по полу. Тот же случай, что с
+    # «visible pores» - мы просим фактуру, а получаем грязь.
+    "unretouched."
 )
 
 # Негатив сторожит ровно то, что просил владелец: результат обязан
@@ -1594,6 +1598,6 @@ def свой(текст, вид, обязательное=None, фон="новы
     "velvety surface of bare skin on an overcast day. "
     "Even complexion, uniform and untouched. "
     "Soft even daylight, gentle shadows, natural "
-    "colour, sharp critical focus, fine photographic grain."
+    "colour, sharp critical focus."
 )
 

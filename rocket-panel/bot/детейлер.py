@@ -172,8 +172,7 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
     "full-frame camera with an 85mm lens. A fine natural surface with "
     "light falling on it softly and unevenly the way it does on a real "
     "body, the quiet velvety surface of bare skin under soft diffuse "
-    "light. Even uniform tone, sharp critical focus, fine photographic "
-    "grain, natural colour.")
+    "light. Even uniform tone, sharp critical focus, natural colour.")
 ПРОМПТЫ["плитка_ж"] = ПРОМПТЫ["плитка"]
 ПРОМПТЫ["плитка_м"] = ПРОМПТЫ["плитка"]
 
