@@ -325,6 +325,15 @@ def шаги_под_denoise(denoise):
 ЛОРА_РЕАЛИЗМ=os.environ.get("ROCKET_LORA_REAL","anything2real.safetensors")
 РЕАЛИЗМ_СИЛА=float(os.environ.get("ROCKET_REAL","1.0"))
 
+# SAGEATTENTION НЕ ВКЛЮЧАТЬ. Проба 30.09.2026: ComfyUI с
+# `--use-sage-attention` поднимается и считает быстрее, но выдаёт ЧЁРНЫЙ
+# КАДР - в логе `invalid value encountered in cast`, то есть NaN по
+# всему тензору. Флаг снят, sageattention и triton на карте остались.
+#
+# Вместе с этим выяснилось, что ComfyUI держался на версии `av`, которой
+# нет на PyPI: перезапуск после установки любой оттуда валит его с
+# `cannot import name ColorPrimaries`. Рабочая граница - av 17 и выше.
+
 # СВОЯ ЛОРА КОЖИ. `anything2real` сняла «кашу» с органов, но тело
 # осталось тем, на что владелец жалуется словами «всё как нарисовано
 # кистью, точки, царапины»: чужая лора училась на своём материале, а не
