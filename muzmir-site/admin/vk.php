@@ -66,9 +66,22 @@ function vkadm_probe(string $token): array {
         $names = array_map(static fn(array $p): string => (string) $p['name'], $r['response']['permissions']);
         return ['ok' => true, 'msg' => 'права: ' . implode(', ', $names), 'perms' => $names];
     }
+    /* У ЛИЧНОГО КЛЮЧА ПРАВА СПРАШИВАЮТ ДРУГИМ МЕТОДОМ.
+     *
+     * groups.getTokenPermissions — метод для ключей сообщества, личному он
+     * отвечает отказом. Без этой ветки рабочий личный ключ показывался бы на
+     * странице как сломанный, и владелец менял бы его впустую. */
+    $u = vk_api_with('account.getAppPermissions', [], $token, 'vk_probe');
+    if (isset($u['response'])) {
+        return ['ok' => true, 'msg' => 'личный ключ, маска прав: ' . (int) $u['response']];
+    }
     $e = $r['error'] ?? [];
-    return ['ok' => false, 'msg' => 'ВК: ' . ($e['error_msg'] ?? 'нет ответа')
-                                  . (isset($e['error_code']) ? ' (код ' . (int) $e['error_code'] . ')' : '')];
+    $e2 = $u['error'] ?? [];
+    // Показываем ту причину, которая говорит по делу: отказ личного метода
+    // информативнее, когда ключ личный.
+    $msg = (string) ($e2['error_msg'] ?? $e['error_msg'] ?? 'нет ответа');
+    $code = (int) ($e2['error_code'] ?? $e['error_code'] ?? 0);
+    return ['ok' => false, 'msg' => 'ВК: ' . $msg . ($code ? ' (код ' . $code . ')' : '')];
 }
 
 /**
@@ -198,7 +211,11 @@ ob_start(); ?>
       <?= csrf_field() ?><input type="hidden" name="do" value="connect">
       <div class="field" style="margin:0 0 10px">
         <label>Адрес с белой страницы</label>
-        <input type="text" name="paste" placeholder="https://oauth.vk.ru/blank.html#access_token_<?= $gid ?>=vk1.a...." autocomplete="off">
+        <input type="text" name="paste" placeholder="https://oauth.vk.ru/blank.html#access_token...=vk1.a...." autocomplete="off">
+      </div>
+      <div class="field" style="margin:0 0 10px">
+        <p class="small muted" style="margin:0">Подойдёт и ключ сообщества (<code>access_token_<?= $gid ?>=</code>),
+           и личный ключ владельца (<code>access_token=</code>) — страница разберёт сама и проверит одинаково: публикацией.</p>
       </div>
       <button class="btn btn--primary">Проверить и подключить</button>
       <p class="small muted" style="margin:10px 0 0">
