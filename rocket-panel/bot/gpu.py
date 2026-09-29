@@ -137,6 +137,15 @@ class Gpu:
                     f'Content-Disposition: form-data; name="{name}"; filename="{fname}"\r\n'
                     f"Content-Type: application/octet-stream\r\n\r\n".encode() + content + b"\r\n"
                 )
+            # Обычные поля рядом с файлом. Без них `data` при отправке
+            # файла молча терялась, и сила восстановителя на карту не
+            # доезжала - там всегда бралось умолчание.
+            for имя, знач in (data or {}).items():
+                parts.append(
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="{имя}"\r\n\r\n'
+                    f"{знач}\r\n"
+                )
             body = b"".join(p if isinstance(p, bytes) else p.encode() for p in parts)
             body += f"--{boundary}--\r\n".encode()
             headers["Content-Type"] = f"multipart/form-data; boundary={boundary}"
@@ -217,3 +226,16 @@ class Gpu:
     def fetch(self, filename):
         """Забрать готовый файл."""
         return self._req(f"file/{urllib.parse.quote(filename)}")
+
+    def лицо(self, filename, content, сила=0.5):
+        """Вылечить лица на кадре восстановителем НА КАРТЕ.
+
+        Модель обучена на настоящих лицах и живёт рядом с генерацией.
+        Возвращает новые байты кадра или None: без неё кадр просто хуже,
+        ронять из-за этого заказ незачем.
+        """
+        r = self._req("api/face", files={"file": (filename, content)},
+                      data={"сила": str(сила)})
+        if not isinstance(r, dict) or not r.get("file"):
+            return None
+        return self.fetch(r["file"])

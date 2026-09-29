@@ -1340,6 +1340,61 @@ def upload():
     f.save(os.path.join(IN,name))
     return jsonify(name=name)
 
+_ЛИЦЕВОЙ=[None]
+
+
+def _лицевой():
+    """Восстановитель лица. Грузится один раз и живёт в памяти.
+
+    Обучен на настоящих лицах, поэтому достраивает то, чего генерация не
+    умеет: поры, волокна радужки, отдельные ресницы. Владелец о кадре
+    после него: «лицо хорошо, сохрани как ты это сделала».
+
+    basicsr зовёт модуль, переименованный в новых torchvision, поэтому
+    перед импортом кладём алиас - иначе падает на ровном месте.
+    """
+    if _ЛИЦЕВОЙ[0] is None:
+        import sys,types
+        import torchvision.transforms.functional as _F
+        _m=types.ModuleType("torchvision.transforms.functional_tensor")
+        _m.rgb_to_grayscale=_F.rgb_to_grayscale
+        sys.modules.setdefault("torchvision.transforms.functional_tensor",_m)
+        from gfpgan import GFPGANer
+        _ЛИЦЕВОЙ[0]=GFPGANer(
+            model_path="/root/ComfyUI/models/facerestore_models/GFPGANv1.4.pth",
+            upscale=1,arch="clean",channel_multiplier=2,bg_upsampler=None)
+    return _ЛИЦЕВОЙ[0]
+
+
+# Путь ЛАТИНИЦЕЙ: urllib не кодирует кириллицу в пути и падает
+# «ascii codec can't encode characters» ещё до отправки запроса.
+@app.post("/api/face")
+def лицо_починить():
+    """Вылечить лица на присланном кадре. Файл туда, файл обратно.
+
+    Сила по умолчанию половинная: на единице восстановитель начинает
+    подменять черты и сходство с клиентом уплывает, на нуле не делает
+    ничего. Половина снимает мазок и оставляет человека собой.
+    """
+    f=request.files.get("file")
+    if not f: return jsonify(error="нет файла"),400
+    сила=float(request.form.get("сила") or 0.5)
+    import cv2,numpy as np
+    данные=np.frombuffer(f.read(),np.uint8)
+    кадр=cv2.imdecode(данные,cv2.IMREAD_COLOR)
+    if кадр is None: return jsonify(error="кадр не читается"),400
+    try:
+        _,_,готово=_лицевой().enhance(
+            кадр,has_aligned=False,only_center_face=False,
+            paste_back=True,weight=сила)
+    except Exception as e:
+        return jsonify(error=str(e)[:200]),500
+    имя=f"lico_{uuid.uuid4().hex[:8]}.png"
+    путь=os.path.join(OUT,имя)
+    cv2.imwrite(путь,готово)
+    return jsonify(file=имя)
+
+
 @app.get("/in/<path:n>")
 def infile(n):
     p=os.path.join(IN,n); return send_file(p) if os.path.exists(p) else ("нет",404)
