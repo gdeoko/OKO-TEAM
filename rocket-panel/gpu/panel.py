@@ -325,6 +325,17 @@ def шаги_под_denoise(denoise):
 ЛОРА_РЕАЛИЗМ=os.environ.get("ROCKET_LORA_REAL","anything2real.safetensors")
 РЕАЛИЗМ_СИЛА=float(os.environ.get("ROCKET_REAL","1.0"))
 
+# ПОЛНАЯ МОДЕЛЬ ВМЕСТО ДИСТИЛЛЯТА. Пока за флагом: она втрое медленнее,
+# и пускать её в бой можно только после сравнения на живых кнопках.
+# Шаги и подсказка у неё свои: дистиллят обучен на 8 шагах при CFG 1.5
+# и на большем ломается, полная наоборот требует простора.
+ПОЛНАЯ=(os.environ.get("ROCKET_FULL","") or "")not in("","0")
+UNET_ПОЛНЫЙ=os.environ.get("ROCKET_UNET","qwen_image_edit_2509_fp8.safetensors")
+CLIP_ПОЛНЫЙ=os.environ.get("ROCKET_CLIP","qwen_2.5_vl_7b_fp8_scaled.safetensors")
+VAE_ПОЛНЫЙ=os.environ.get("ROCKET_VAE","qwen_image_vae.safetensors")
+ШАГИ_ПОЛНОЙ=int(os.environ.get("ROCKET_FULL_STEPS","24"))
+CFG_ПОЛНОЙ=float(os.environ.get("ROCKET_FULL_CFG","3.0"))
+
 _ЛОРЫ_КЭШ={"когда":0.0,"список":frozenset()}
 
 
@@ -443,27 +454,48 @@ def _фото_база(p, neg, seed, images=None, denoise=1.0):
     При denoise<1 исходник переживает часть шагов, и обстановка, поза и
     сложение остаются узнаваемыми. Это и есть «фон с референса».
     """
-    g={
-     "1":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_PHOTO}},
-     "5":{"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":neg or PHOTO_NEG}},
-     "7":{"class_type":"KSampler","inputs":{"model":["1",0],"positive":["4",0],"negative":["5",0],
-          "seed":seed,"steps":шаги_под_denoise(denoise),"cfg":CFG_ФОТО,
-          "sampler_name":"euler","scheduler":"simple",
-          "denoise":max(0.05,min(1.0,float(denoise)))}},
-     "8":{"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}},
-    }
+    g={}
+    if ПОЛНАЯ:
+        # ПОЛНАЯ МОДЕЛЬ. Дистиллят собран «всё в одном» и грузится одним
+        # узлом, полная - тремя раздельными: веса, кодировщик, vae.
+        #
+        # Зачем она. Дистиллят считает 4-8 шагов и физически не успевает
+        # положить микрорельеф: он заменяет его обобщением, и кадр
+        # выходит живописью. Владелец и сетевой администратор сказали об
+        # этом одними словами - «как кистью», «мона лиза». Полная модель
+        # идёт двадцать-тридцать шагов, и фактура появляется именно на
+        # поздних, которые дистиллят пропускает.
+        g["1a"]={"class_type":"UNETLoader","inputs":{
+            "unet_name":UNET_ПОЛНЫЙ,"weight_dtype":"default"}}
+        g["1b"]={"class_type":"CLIPLoader","inputs":{
+            "clip_name":CLIP_ПОЛНЫЙ,"type":"qwen_image"}}
+        g["1c"]={"class_type":"VAELoader","inputs":{"vae_name":VAE_ПОЛНЫЙ}}
+        МОДЕЛЬ,КЛИП,ВАЕ=["1a",0],["1b",0],["1c",0]
+        шагов=ШАГИ_ПОЛНОЙ
+        cfg=CFG_ПОЛНОЙ
+    else:
+        g["1"]={"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_PHOTO}}
+        МОДЕЛЬ,КЛИП,ВАЕ=["1",0],["1",1],["1",2]
+        шагов=шаги_под_denoise(denoise)
+        cfg=CFG_ФОТО
+    g["5"]={"class_type":"CLIPTextEncode","inputs":{"clip":КЛИП,"text":neg or PHOTO_NEG}}
+    g["7"]={"class_type":"KSampler","inputs":{"model":МОДЕЛЬ,"positive":["4",0],
+        "negative":["5",0],"seed":seed,"steps":шагов,"cfg":cfg,
+        "sampler_name":"euler","scheduler":"simple",
+        "denoise":max(0.05,min(1.0,float(denoise)))}}
+    g["8"]={"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":ВАЕ}}
     images=[x for x in (images or []) if x][:MAX_REF]
     if images:
         # Снимки идут в УСЛОВИЕ: так модель держит лицо и сложение.
         # Каркас кадра (обстановка, поза) приходит не отсюда, а из
         # стартового латента — и только при denoise<1, см. `_фото_база`.
-        узел={"clip":["1",1],"prompt":p,"vae":["1",2]}
+        узел={"clip":КЛИП,"prompt":p,"vae":ВАЕ}
         for i,имя in enumerate(images,1):
             g[f"3{i}"]={"class_type":"LoadImage","inputs":{"image":имя,"upload":"image"}}
             узел[f"image{i}"]=[f"3{i}",0]
         g["4"]={"class_type":"TextEncodeQwenImageEditPlus","inputs":узел}
     else:
-        g["4"]={"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":p}}
+        g["4"]={"class_type":"CLIPTextEncode","inputs":{"clip":КЛИП,"text":p}}
     return g
 
 
