@@ -4609,3 +4609,77 @@ class ТолькоЛичка(unittest.TestCase):
                 "chat": {"id": -1004431962780, "type": "supergroup"},
                 "from": {"id": 6547482131}}})
         self.assertEqual(ушло, [])
+
+
+class РаздеваниеПоМаске(unittest.TestCase):
+    """Правила, написанные ночью 30.09.2026 ценой трёх проб подряд."""
+
+    def test_промпт_называет_тело_а_не_кожу(self):
+        """Первый заход просил «bare naked human skin» и получил ровно
+        это: на месте кроссовок модель нарисовала кожу в виде второго
+        человека, лежащего на полу. Пустое место в маске надо чем-то
+        занять, и если не сказать чем, занято будет чем попало."""
+        import bot
+        т = bot.ПРОМПТ_РАЗДЕТЬ.lower()
+        self.assertIn("one person only", т)
+        self.assertIn("two legs", т)
+        self.assertIn("bare feet", т)
+
+    def test_второй_человек_запрещён_негативом(self):
+        import bot
+        н = bot.НЕГАТИВ_РАЗДЕТЬ.lower()
+        for слово in ("second person", "extra limbs", "merged bodies"):
+            self.assertIn(слово, н)
+
+    def test_глубина_не_единица(self):
+        """На единице модель не видит, что было под маской, и форму ног
+        ей взять неоткуда. Ниже 0.7 ткань проступает назад."""
+        import bot
+        self.assertGreaterEqual(bot.РАЗДЕТЬ_ГЛУБИНА, 0.7)
+        self.assertLess(bot.РАЗДЕТЬ_ГЛУБИНА, 1.0)
+
+    def test_лицо_и_волосы_не_снимаются(self):
+        """Причёску и лицо держат свои механизмы, и маска одежды к ним
+        не должна прикасаться: класс «Face» это 11, «Hair» это 2."""
+        import одежда
+        self.assertNotIn(2, одежда.СНЯТЬ)
+        self.assertNotIn(11, одежда.СНЯТЬ)
+
+    def test_обувь_снимается_по_умолчанию(self):
+        """Проба оставила босые ноги в кроссовках ровно потому, что
+        обувь в маску не попадала."""
+        import одежда
+        self.assertTrue(одежда.ОБУВЬ <= set(одежда.СНЯТЬ))
+
+
+class ЗонаВидаСзади(unittest.TestCase):
+    def test_шесть_кнопок_со_спины_находятся(self):
+        """Зоны вида сзади не было вовсе, и ягодицы попадали в зону
+        паха, чей промпт описывает вульву спереди."""
+        сзади = [с.key for с in catalog.все_сценарии()
+                 if catalog.вид_сзади(с.key)]
+        self.assertGreaterEqual(len(сзади), 5)
+        self.assertIn("un_back", сзади)
+
+    def test_промпт_зада_описывает_обе_стороны(self):
+        """На этих кадрах видно и ягодицы, и вульву между бёдер:
+        выбирать там нечего."""
+        import детейлер
+        т = детейлер.ПРОМПТЫ["зад"].lower()
+        self.assertIn("buttocks", т)
+        self.assertIn("anus", т)
+        self.assertIn("vulva", т)
+
+    def test_мужской_зад_без_вульвы(self):
+        import детейлер
+        self.assertNotIn("vulva", детейлер.ПРОМПТЫ["зад_м"].lower())
+
+
+class ПорядокСнимковПары(unittest.TestCase):
+    def test_у_мж_первым_идёт_мужчина(self):
+        """Ловили 22.09.2026 и записали в комментарий, а не в код -
+        вернулось 30.09.2026 той же самой бедой."""
+        self.assertEqual(catalog.полы("pf_mf_close")[0], "м")
+
+    def test_у_жж_оба_женщины(self):
+        self.assertEqual(catalog.полы("pf_ff_close"), ("ж", "ж"))
