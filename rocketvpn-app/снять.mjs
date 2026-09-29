@@ -18,9 +18,12 @@ import { chromium } from "/home/user/OKO-TEAM/rocketvpn/node_modules/playwright/
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { поднятьСервер } from "./сервер.mjs";
 
 const КОРЕНЬ = dirname(fileURLToPath(import.meta.url));
-const СТРАНИЦА = "file://" + join(КОРЕНЬ, "планета", "index.html");
+/* по http: с file:// браузер не отдаёт текстуры 3D-сцен (CORS) */
+const сервер = await поднятьСервер(join(КОРЕНЬ, "планета"));
+const СТРАНИЦА = сервер.адрес + "/index.html";
 const КУДА = join(КОРЕНЬ, "кадры");
 mkdirSync(КУДА, { recursive: true });
 
@@ -43,7 +46,8 @@ if (!список.length) { console.log("нет такого размера"); p
 
 const бр = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-  args: ["--force-color-profile=srgb", "--font-render-hinting=none"]
+  args: ["--force-color-profile=srgb", "--font-render-hinting=none",
+         "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
 });
 
 for (const р of список) {
@@ -94,3 +98,4 @@ for (const р of список) {
 }
 
 await бр.close();
+сервер.закрыть();

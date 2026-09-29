@@ -20,6 +20,9 @@
 
 import { appendFileSync, writeFileSync } from "node:fs";
 import { chromium } from "/home/user/OKO-TEAM/rocketvpn/node_modules/playwright/index.mjs";
+import { поднятьСервер } from "./сервер.mjs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 const ЖУРНАЛ = process.argv[2] || "/tmp/приёмка.log";
 writeFileSync(ЖУРНАЛ, "");
@@ -29,9 +32,15 @@ writeFileSync(ЖУРНАЛ, "");
 const скажи = (с) => { appendFileSync(ЖУРНАЛ, с + "\n"); process.stdout.write(с + "\n"); };
 
 const ТЕМЫ = ["планета", "ракета", "океан"];
-const АДРЕС = "file://" + new URL("планета/index.html", import.meta.url).pathname;
+/* Страница идёт по http, а не file://: 3D-сцены грузят текстуры, и с
+   адреса file:// браузер их в WebGL не отдаёт (CORS, источник null). */
+const сервер = await поднятьСервер(join(dirname(fileURLToPath(import.meta.url)), "планета"));
+const АДРЕС = сервер.адрес + "/index.html";
 
-const бр = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+/* WebGL включён программно (SwiftShader): приёмка обязана гонять кнопки
+   поверх живого 3D-мира, а не поверх запасного нарисованного фона. */
+const бр = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 const беды = [];
 
 for (const тема of ТЕМЫ) {
@@ -77,6 +86,12 @@ for (const тема of ТЕМЫ) {
     const с = getComputedStyle(у);
     return с.display !== "none" && parseFloat(с.opacity) > 0;
   }, тема));
+  await шаг("3D-мир темы живой", async () => await стр.evaluate(т =>
+    window.МИР && window.МИР.жив && window.МИР.текущая() === т ? "сцена «" + т + "»" : false, тема));
+  await шаг("исток следа на экране", async () => await стр.evaluate(() => {
+    const и = window.МИР.источник();
+    return и && и.x > 0 && и.x < innerWidth && и.y > 0 && и.y < innerHeight ? Math.round(и.x) + "," + Math.round(и.y) : false;
+  }));
   await шаг("чужих миров на экране нет", async () => await стр.evaluate(т => {
     return ["планета", "ракета", "океан"]
       .filter(и => и !== т)
@@ -172,4 +187,5 @@ for (const тема of ТЕМЫ) {
 
 скажи(беды.length ? "\nБЕДЫ (" + беды.length + "):\n" + беды.join("\n") : "\nВСЁ ЗЕЛЁНОЕ, ошибок нет");
 await бр.close();
+сервер.закрыть();
 process.exit(беды.length ? 1 : 0);

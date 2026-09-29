@@ -1847,3 +1847,320 @@ html.без-движения .сияние, html.без-движения .звё
     0 .2rem .6rem rgba(0,0,0,.4);
   transition-duration: .08s;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   3D-ФОН
+   ═══════════════════════════════════════════════════════════════════
+   Холст мира лежит самым нижним слоем. Пока он жив, нарисованные
+   градиентами миры спрятаны: они остаются запасным путём для телефона,
+   где WebGL нет или его отняла система. */
+.мир-холст {
+  position: absolute; left: 0; top: 0; z-index: 0;
+  display: block; pointer-events: none;
+}
+html.мир-живой .небо,
+html.мир-живой .планета-место,
+html.мир-живой .вуаль { display: none; }
+/* Стеклянное ядро кнопки рисует мир: линза с настоящим преломлением.
+   Своя заливка ядра закрыла бы её целиком. */
+html.мир-живой .ядро {
+  background: transparent;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ЖИДКОЕ СТЕКЛО APPLE
+   ═══════════════════════════════════════════════════════════════════
+   Слово владельца: «сделай реально крутой визуал с крутым стилем
+   стекла Apple и неоновым свечением крутым».
+
+   Прежнее стекло было МАТОВЫМ: плотное размытие 1.8 рем и молочная
+   заливка. Мир под ним превращался в цветное пятно, и связи с фоном не
+   было - карточки лежали на фоне, а не в нём. Жидкое стекло iOS 26
+   устроено наоборот: пластина почти прозрачная, мир сквозь неё
+   читается, а стекло узнаётся по КРОМКЕ. Кромка светлая сверху слева,
+   где на неё падает свет, гаснет к середине и снова загорается снизу
+   справа цветом мира. Так глаз видит толщину, хотя заливки почти нет.
+
+   Кромка рисуется кольцом шириной в один пиксель: градиент под маской,
+   которая вырезает середину. Рамка border такого не умеет - у неё
+   один цвет на сторону, а здесь цвет течёт по периметру.
+
+   Легибельность держит не заливка, а три вещи: мир под пластиной чуть
+   притушен (brightness .8 внутри backdrop-filter), у текста тонкая тень,
+   а сама сцена в нижней половине экрана темнее, чем в герое. */
+
+:root { --неон: 92, 124, 255; --неон2: 139, 92, 255; }
+:root[data-тема="океан"]  { --неон: 63, 224, 255;  --неон2: 255, 210, 122; }
+:root[data-тема="ракета"] { --неон: 255, 106, 44;  --неон2: 255, 192, 115; }
+
+.стекло, .кругляш, .назад, .тема-кнопка, .чип {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,.082) 0%, rgba(255,255,255,.026) 46%, rgba(255,255,255,.046) 100%);
+  border-color: transparent;
+  box-shadow:
+    inset 0 0 1.8rem rgba(var(--неон), .045),
+    0 1px 1px rgba(0,0,0,.32),
+    0 .8rem 2.2rem rgba(0,0,0,.30);
+  -webkit-backdrop-filter: blur(.85rem) saturate(190%) brightness(.8);
+          backdrop-filter: blur(.85rem) saturate(190%) brightness(.8);
+}
+/* Верхний глянец внутри пластины: узкий, у самой кромки. Широкий
+   отсвет на половину карточки и был той самой «мутью». */
+.стекло::before {
+  background: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,0) 26%);
+}
+.стекло::after, .кругляш::after, .назад::after, .тема-кнопка::after, .чип::after, .низ::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; z-index: 2;
+  padding: 1px;
+  background: linear-gradient(142deg,
+    rgba(255,255,255,.78) 0%, rgba(255,255,255,.26) 16%, rgba(255,255,255,.07) 40%,
+    rgba(255,255,255,.035) 62%, rgba(var(--неон), .30) 86%, rgba(255,255,255,.42) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+}
+
+/* Текст на прозрачном стекле: вес средний, как в интерфейсе Apple,
+   и тонкая тень. Жирный вес на прозрачной пластине кричит. */
+.страна b { font-weight: 500; font-size: 1.38rem; }
+.пинг { font-weight: 500; }
+.подписка-текст b, .плитка-текст b, .настр-текст b { font-weight: 500; }
+.ряд, .плитка, .полоса, .поиск, .карточка { text-shadow: 0 1px 2px rgba(0,0,0,.38); }
+
+/* ── ВЫБРАННАЯ СТРОКА: НЕОН ТОНКОЙ ЛИНИЕЙ ───────────────────────────
+   Неон это линия и плотный свет вплотную к ней. Кромка выбранной
+   строки перекрашивается целиком в цвет темы и становится на полпикселя
+   толще; снаружи два тесных слоя свечения, внутри отсвет по краю -
+   свет проходит сквозь пластину. */
+.ряд.выбран {
+  box-shadow:
+    inset 0 0 1.5rem rgba(var(--неон), .16),
+    0 0 .55rem rgba(var(--неон), .55),
+    0 0 1.9rem rgba(var(--неон), .26),
+    0 .8rem 2.2rem rgba(0,0,0,.30);
+}
+.ряд.выбран::after {
+  padding: 1.5px;
+  background: linear-gradient(142deg, rgba(255,255,255,.95) 0%, rgba(var(--неон), .95) 22%,
+    rgba(var(--неон), .7) 55%, rgba(var(--неон), .95) 100%);
+}
+.ряд.выбран .точка {
+  border-color: rgb(var(--неон));
+  background: radial-gradient(circle, rgb(var(--неон)) 0 40%, transparent 43%);
+  box-shadow: 0 0 1rem rgba(var(--неон), .9);
+}
+.тумблер.вкл {
+  background: linear-gradient(180deg, rgba(var(--неон), 1), rgba(var(--неон), .72));
+  box-shadow: 0 0 1.1rem rgba(var(--неон), .7), inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ── ШАПКА ─────────────────────────────────────────────────────────
+   Знак крупнее: в концептах он главный объект шапки, а не значок
+   рядом со словом. «VPN» всегда в фирменном индиго логотипа, в любой
+   теме - это имя бренда, а не акцент темы. */
+.кругляш { width: 4.4rem; height: 4.4rem; border-radius: 1.45rem; }
+.лого { width: 3.8rem; height: 3.8rem; }
+.имя { font-size: 2.55rem; font-weight: 700; letter-spacing: -.015em; }
+.имя b { color: #fff; }
+.имя i {
+  background: linear-gradient(95deg, #3f4be0 0%, #6c78f4 55%, #9aa4ff 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 1.1rem rgba(108,120,244,.55));
+}
+.кругляш.корона {
+  background: linear-gradient(180deg, rgba(255,207,92,.16), rgba(255,207,92,.04));
+  box-shadow: inset 0 0 1.4rem rgba(255,207,92,.16), 0 0 1.6rem rgba(255,207,92,.22), 0 .8rem 2.2rem rgba(0,0,0,.3);
+}
+
+/* ── КНОПКА: ЛИНЗА ВО ВСЮ ШИРИНУ КОЛЬЦА ─────────────────────────────
+   В концептах кнопка это ОДНА толстая линза, неоновый обод лежит прямо
+   на её кромке. Прежняя кнопка была кольцом вокруг тёмного диска: тёмный
+   диск закрывал мир, и кнопка выглядела дыркой в фоне. Теперь ядро
+   занимает весь круг, а стекло с настоящим преломлением рисует мир. */
+.пуск { width: 14.8rem; height: 14.8rem; }
+.ядро {
+  position: absolute; inset: 0;
+  width: auto; height: auto;
+}
+.кольцо, :root[data-тема="ракета"] .кольцо, :root[data-тема="океан"] .кольцо {
+  border: .16rem solid rgba(var(--неон), .95);
+  box-shadow:
+    0 0 .35rem rgba(var(--неон), .95),
+    0 0 1.3rem rgba(var(--неон), .55),
+    0 0 3.4rem rgba(var(--неон), .22),
+    inset 0 0 .6rem rgba(var(--неон), .55);
+}
+.бегунок, :root[data-тема="ракета"] .бегунок, :root[data-тема="океан"] .бегунок {
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg,
+    rgba(255,255,255,.1) 285deg, #ffffff 343deg, rgba(var(--неон), .35) 353deg, transparent 360deg);
+  -webkit-mask: radial-gradient(circle, transparent calc(50% - .22rem), #000 calc(50% - .22rem));
+          mask: radial-gradient(circle, transparent calc(50% - .22rem), #000 calc(50% - .22rem));
+}
+.волна-круг, :root[data-тема="ракета"] .волна-круг, :root[data-тема="океан"] .волна-круг {
+  inset: -1.2rem; border-width: .1rem;
+  border-color: rgba(var(--неон), .45);
+}
+.рубильник, :root[data-тема="ракета"] .рубильник, :root[data-тема="океан"] .рубильник {
+  width: 4.2rem; color: #fff; margin-bottom: .5rem;
+  filter: drop-shadow(0 0 .9rem rgba(var(--неон), .95)) drop-shadow(0 1px 1px rgba(0,0,0,.5));
+}
+.пуск-слово, :root[data-тема="ракета"] .пуск-слово, :root[data-тема="океан"] .пуск-слово {
+  font-size: 1.85rem; font-weight: 500; letter-spacing: .005em;
+  text-shadow: 0 0 1.2rem rgba(var(--неон), .55), 0 1px 2px rgba(0,0,0,.5);
+}
+.пуск-сноска { font-size: 1.12rem; letter-spacing: .34em; color: rgba(238,243,252,.62); }
+/* Живой мир светит сам: цветная дымка вокруг кнопки поверх настоящего
+   света читалась бы туманом, от которого владелец уже отказывался. */
+html.мир-живой .сияние { display: none; }
+
+/* Светофор подключения сильнее темы: жёлтый и зелёный значат одно и то
+   же в любой теме. Раньше правило темы перебивало его по весу, и в огне
+   и в океане подключённая кнопка оставалась цвета темы. */
+:root.подключаемся .пуск .кольцо {
+  border-color: rgba(255,207,92,.95);
+  box-shadow: 0 0 .35rem rgba(255,207,92,.95), 0 0 1.4rem rgba(255,180,60,.6), 0 0 3.4rem rgba(255,180,60,.24), inset 0 0 .6rem rgba(255,220,150,.5);
+}
+:root.подключено .пуск .кольцо {
+  border-color: rgba(61,220,151,.95);
+  box-shadow: 0 0 .35rem rgba(61,220,151,.95), 0 0 1.4rem rgba(61,220,151,.6), 0 0 3.6rem rgba(61,220,151,.26), inset 0 0 .6rem rgba(150,255,210,.5);
+}
+:root.подключено .пуск .рубильник { color: #c8ffe6; filter: drop-shadow(0 0 1rem rgba(61,220,151,1)); }
+:root.подключаемся .пуск .рубильник { color: #ffe6b3; filter: drop-shadow(0 0 1rem rgba(255,207,92,1)); }
+
+/* ── НИЖНЯЯ ПАНЕЛЬ КАПСУЛОЙ ─────────────────────────────────────────
+   Панель iOS 26 это плавающая стеклянная капсула, а не полоса во всю
+   ширину с тёмной подложкой. Активная вкладка - своя пилюля внутри неё
+   с неоном темы. Высота панели прежняя, 7.6 рем: список над ней не
+   теряет ни одной строки. */
+.низ {
+  background: none; border-top: 0;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  padding: .5rem 2.3rem 1.3rem;
+  padding-bottom: max(1.3rem, env(safe-area-inset-bottom));
+  align-items: stretch;
+}
+.низ::before {
+  content: ""; position: absolute; left: 1.8rem; right: 1.8rem; top: .5rem;
+  bottom: max(1.3rem, env(safe-area-inset-bottom));
+  border-radius: 3rem;
+  background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.03));
+  box-shadow: inset 0 0 1.8rem rgba(var(--неон), .05), 0 1rem 2.6rem rgba(0,0,0,.42);
+  -webkit-backdrop-filter: blur(1rem) saturate(190%) brightness(.72);
+          backdrop-filter: blur(1rem) saturate(190%) brightness(.72);
+}
+.низ::after {
+  left: 1.8rem; right: 1.8rem; top: .5rem;
+  bottom: max(1.3rem, env(safe-area-inset-bottom));
+  border-radius: 3rem;
+}
+.вкладка {
+  z-index: 1; justify-content: center; gap: .35rem;
+  border-radius: 2.4rem; margin: .45rem .2rem;
+  transition: color .24s ease, background .3s ease, box-shadow .3s ease, transform .16s cubic-bezier(.2,.9,.3,1.2);
+}
+.вкладка.тут {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(var(--неон), .26), rgba(var(--неон), .08));
+  box-shadow: inset 0 0 0 1px rgba(var(--неон), .55), inset 0 1px 0 rgba(255,255,255,.35),
+    0 0 1.4rem rgba(var(--неон), .35);
+}
+.вкладка.тут svg { color: rgb(var(--неон)); filter: drop-shadow(0 0 .7rem rgba(var(--неон), 1)); }
+/* Карточки профиля и подписки весят больше (.карточка.стекло), и без
+   этой строки у них остались бы старое матовое размытие и косой блик
+   вместо кромки. */
+.карточка.стекло {
+  -webkit-backdrop-filter: blur(.85rem) saturate(190%) brightness(.8);
+          backdrop-filter: blur(.85rem) saturate(190%) brightness(.8);
+}
+.карточка.стекло::after {
+  padding: 1px;
+  background: linear-gradient(142deg,
+    rgba(255,255,255,.78) 0%, rgba(255,255,255,.26) 16%, rgba(255,255,255,.07) 40%,
+    rgba(255,255,255,.035) 62%, rgba(var(--неон), .30) 86%, rgba(255,255,255,.42) 100%);
+}
+.ряд.выбран { border-color: transparent; }
+/* Канал следа: звезда отступает от числа, и между ними остаётся
+   просвет в три рема. В концептах след идёт своей дорожкой и не
+   касается ни числа, ни звезды. */
+.звезда { margin-left: 1.5rem; }
+
+/* ── ПОДВОД СЛЕДА ИЗ ФОНА ───────────────────────────────────────────
+   Слой лежит между миром и интерфейсом: над 3D-сценой, но ПОД
+   стеклянными карточками. Поэтому след, идущий от грозы или солнечной
+   дорожки к списку, виден сквозь пластины, как свет за стеклом, и
+   выходит поверх только на самом списке. */
+.подвод {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  z-index: 3; pointer-events: none; overflow: visible;
+}
+.подвод .голова { fill: #fff; }
+
+/* ── СТЕКЛО ОБЯЗАНО ВИДЕТЬ МИР ──────────────────────────────────────
+   Поймано на снимке с живым 3D: вода под карточками была резкой, как
+   будто стекла нет. Причина в анимации появления раздела: она шла с
+   заливкой forwards и оставляла на разделе opacity. Элемент с opacity
+   Chrome считает КОРНЕМ ПОДЛОЖКИ, и backdrop-filter карточек внутри
+   него видит только сам раздел - прозрачный, без мира. Размытие,
+   насыщенность и притенение молча не работали.
+
+   Теперь анимация идёт без заливки: полсекунды раздел вплывает, а
+   потом на нём не остаётся ни opacity, ни transform, и стекло снова
+   видит мир целиком. */
+.экран.тут { opacity: 1; animation: вплывает .28s ease; }
+/* Линза кнопки видна только если своя заливка ядра снята. Правило темы
+   (:root[data-тема] .ядро) весит больше, чем html.мир-живой .ядро, и в
+   огне и океане ядро оставалось тёмным диском поверх настоящей линзы. */
+:root.мир-живой .пуск .ядро {
+  background: transparent;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: none; border-color: transparent;
+}
+
+/* Миниатюры тем - кадры самих концептов: мир и линза кнопки вместе.
+   Нарисованный кружок говорил «синий шар» и «оранжевая капсула», а
+   человек выбирает между тремя мирами и должен их узнать. */
+.тема-вид { background-size: cover; background-position: center; border-color: rgba(255,255,255,.2); }
+.тема-вид u { display: none; }
+.вид-планета { background-image: url("ассеты/значки-тем/планета.webp"); }
+.вид-ракета  { background-image: url("ассеты/значки-тем/ракета.webp"); }
+.вид-океан   { background-image: url("ассеты/значки-тем/океан.webp"); }
+.тема-кнопка.выбрана .тема-вид { box-shadow: 0 0 0 2px rgba(var(--неон), .9), 0 0 1.2rem rgba(var(--неон), .5); }
+
+/* ── КРАЙ ПОД ШАПКОЙ, КАК В iOS 26 ──────────────────────────────────
+   В iOS 26 у верхнего края экрана стоит мягкое затемнение с размытием:
+   под ним уезжает содержимое, а заголовок остаётся читаемым на любом
+   фоне. Здесь та же задача, только фон живой: в океане над логотипом
+   горит закатное небо, и белое «Rocket» на нём терялось. Полоса не
+   рисует границу - она гаснет в ноль к низу шапки, и глаз её не видит,
+   видит только, что знак читается. */
+.шапка::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0;
+  height: calc(100% + 3.2rem);
+  z-index: -1; pointer-events: none;
+  /* Полоса лёгкая: в океане прямо под шапкой встаёт солнце, главный
+     предмет темы, и плотная тень погасила бы его. */
+  background: linear-gradient(180deg, rgba(2,4,10,.42) 0%, rgba(2,4,10,.16) 45%, rgba(2,4,10,0) 100%);
+  -webkit-backdrop-filter: blur(.35rem); backdrop-filter: blur(.35rem);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 42%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 0%, #000 42%, transparent 100%);
+}
+.имя b { text-shadow: 0 1px 2px rgba(0,0,0,.45), 0 0 1.4rem rgba(0,0,0,.35); }
+
+/* Главная кнопка действия (Продлить подписку, Подключить) идёт цветом
+   темы: синяя заливка в огне и в океане читалась кнопкой из другого
+   приложения. Стекло с заливкой неона снизу вверх и тонкой кромкой. */
+.кнопка-главная {
+  border: 1px solid rgba(var(--неон), .75);
+  background: linear-gradient(180deg, rgba(var(--неон), .92), rgba(var(--неон), .62));
+  box-shadow: 0 0 1.6rem rgba(var(--неон), .45), 0 .8rem 2rem rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(0,0,0,.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+  font-weight: 600;
+}
