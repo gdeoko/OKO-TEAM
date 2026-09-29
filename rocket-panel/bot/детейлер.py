@@ -149,7 +149,17 @@ _ОБЩИЙ_НЕГАТИВ = ("freckles, moles, dark spots, skin blemishes, spec
                   "malformed, extra limb, missing limb, plastic skin, "
                   "waxy skin, poreless, airbrushed, oiled skin, "
                   "wet shiny skin, glossy, cartoon, illustration, "
-                  "painting, 3d render, cgi, doll, watermark, text")
+                  "painting, 3d render, cgi, doll, watermark, text, "
+                  # БЕЛЫЙ УЗОР НА КОЖЕ. Проба 29.09.2026: кроп паха,
+                  # посчитанный отдельно, возвращался с декоративными
+                  # белыми завитками по бёдрам - глиттер, стразы,
+                  # боди-арт. Без зоны кожа чистая, значит рисует их
+                  # ровно этот проход: сборке 18+ дай крупный план
+                  # паха, и она дорисовывает украшения.
+                  "glitter, body glitter, rhinestones, sequins, body "
+                  "art, body paint, henna, decorative swirls, white "
+                  "swirls, patterns drawn on skin, lace pattern on "
+                  "skin, jewellery, piercing, tattoo, stickers")
 
 # Негатив зоны зависит от пола ЭТОГО человека, а не кадра. Женской зоне
 # запрещён член, мужской - вульва и грудь. Без разделения один общий
