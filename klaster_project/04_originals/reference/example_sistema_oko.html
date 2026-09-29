@@ -1,0 +1,2671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ТЗ Система Роста — OKO TEAM v3.0 ФИНАЛ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000;--bg2:#080808;--bg3:#0f0f0f;--bg4:#161616;--bg5:#1c1c1c;
+  --lime:#9AFF00;--lime2:rgba(154,255,0,0.1);--lime3:rgba(154,255,0,0.04);--lime4:rgba(154,255,0,0.06);
+  --w:#fff;--w8:rgba(255,255,255,0.8);--w6:rgba(255,255,255,0.6);--w4:rgba(255,255,255,0.35);--w2:rgba(255,255,255,0.1);--w1:rgba(255,255,255,0.05);
+  --border:rgba(154,255,0,0.22);--border2:rgba(255,255,255,0.1);--border3:rgba(255,255,255,0.05);
+  --r:10px;--r2:8px;--r3:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--w);line-height:1.7;font-size:14px}
+#bg-c{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.4}
+
+.layout{display:flex;min-height:100vh;position:relative;z-index:1}
+
+/* SIDEBAR */
+.sidebar{width:280px;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;background:rgba(0,0,0,0.97);border-right:1px solid var(--border3);z-index:10;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
+.sb-logo{padding:18px 20px 14px;border-bottom:1px solid var(--border3);flex-shrink:0}
+.sb-logo-oko{font-size:9px;font-weight:800;letter-spacing:3px;color:var(--lime);text-transform:uppercase;margin-bottom:3px}
+.sb-logo-title{font-size:11px;font-weight:700;color:var(--w6)}
+.sb-logo-ver{font-size:9px;color:var(--w4);margin-top:2px}
+.sb-search{padding:10px 16px;border-bottom:1px solid var(--border3);flex-shrink:0}
+.sb-search input{width:100%;background:var(--bg3);border:1px solid var(--border3);border-radius:6px;padding:7px 12px;font-size:11px;color:var(--w);font-family:'Inter',sans-serif;outline:none}
+.sb-search input:focus{border-color:var(--border)}
+.sb-search input::placeholder{color:var(--w4)}
+.sb-nav{padding:6px 0;flex:1;overflow-y:auto}
+.sb-nav::-webkit-scrollbar{width:2px}
+.sb-nav::-webkit-scrollbar-thumb{background:var(--border3)}
+.sb-cat{padding:12px 20px 4px;font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--w4)}
+.sb-item{display:flex;align-items:flex-start;gap:8px;padding:6px 20px;font-size:10.5px;color:var(--w6);text-decoration:none;transition:all 0.15s;border-left:2px solid transparent;cursor:pointer;line-height:1.4}
+.sb-item:hover,.sb-item.active{color:var(--lime);background:var(--lime3);border-left-color:var(--lime)}
+.sb-num{color:var(--w4);flex-shrink:0;font-size:9px;font-weight:700;min-width:22px;padding-top:1px}
+.sb-item.active .sb-num{color:var(--lime)}
+.sb-footer{padding:14px 20px;border-top:1px solid var(--border3);flex-shrink:0}
+.sb-footer-text{font-size:9px;color:var(--w4);line-height:1.6}
+
+/* MAIN */
+.main{margin-left:280px;flex:1;min-width:0}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:9;background:rgba(0,0,0,0.93);backdrop-filter:blur(20px);border-bottom:1px solid var(--border3);padding:10px 36px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-badge{font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#000;background:var(--lime);padding:3px 9px;border-radius:4px}
+.topbar-title{font-size:11px;color:var(--w4)}
+.topbar-actions{display:flex;gap:8px}
+.tb-btn{padding:6px 14px;background:var(--bg4);border:1px solid var(--border3);border-radius:6px;font-size:10px;font-weight:600;color:var(--w6);cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif}
+.tb-btn:hover{border-color:var(--lime);color:var(--lime)}
+
+/* HERO */
+.doc-hero{padding:48px 36px 36px;background:linear-gradient(180deg,rgba(154,255,0,0.06) 0%,transparent 100%);border-bottom:1px solid var(--border3)}
+.hero-ey{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:14px}
+.hero-title{font-size:clamp(26px,4vw,42px);font-weight:900;line-height:1.1;margin-bottom:10px;letter-spacing:-0.5px}
+.hero-title span{color:var(--lime)}
+.hero-sub{font-size:13px;color:var(--w6);line-height:1.8;max-width:600px}
+.hero-meta{display:flex;gap:20px;margin-top:22px;flex-wrap:wrap}
+.hero-meta-item{font-size:11px;color:var(--w4);display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg2);border:1px solid var(--border3);border-radius:6px}
+.hero-meta-item strong{color:var(--lime)}
+
+/* TOC */
+.toc{margin:24px 36px;padding:22px 26px;background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r)}
+.toc-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:14px}
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:5px}
+.toc-item{display:flex;gap:8px;padding:5px 8px;font-size:11px;color:var(--w6);border-radius:4px;transition:background 0.15s;cursor:pointer}
+.toc-item:hover{background:var(--lime3);color:var(--lime)}
+.cl-b{width:14px;height:14px;border:1px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;margin-top:3px;transition:all 0.15s}
+.cl-b.on{background:var(--lime);border-color:var(--lime);color:#000;font-weight:800}
+.cl-b.on::after{content:'✓'}
+.cli{display:flex;gap:9px;padding:5px 6px;font-size:12px;color:var(--w6);align-items:flex-start;cursor:pointer;border-radius:4px;transition:background 0.1s;line-height:1.6}
+.cli:hover{background:rgba(255,255,255,0.025)}
+.cli.done span{color:var(--w4);text-decoration:line-through}
+.toc-num{color:var(--lime);font-weight:700;flex-shrink:0;font-size:10px;min-width:26px}
+
+/* CONTENT */
+.content{padding:0 36px 80px}
+
+/* PART HEADER */
+.part-header{margin:56px 0 4px;padding:18px 0 14px;border-bottom:2px solid rgba(154,255,0,0.25);scroll-margin-top:60px}
+.part-eyebrow{font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--w4);margin-bottom:8px}
+.part-title{font-size:clamp(16px,2.5vw,22px);font-weight:900;color:var(--lime);letter-spacing:-0.2px}
+.part-desc{font-size:12px;color:var(--w4);margin-top:8px;line-height:1.6}
+
+h2{font-size:13px;font-weight:700;color:var(--w);margin:28px 0 10px;padding:8px 0 8px 14px;border-left:3px solid var(--lime);background:rgba(154,255,0,0.025);border-radius:0 4px 4px 0;line-height:1.4;scroll-margin-top:60px}
+h3{font-size:12.5px;font-weight:700;color:var(--w8);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+h3::before{content:'';width:6px;height:6px;background:var(--lime);border-radius:50%;flex-shrink:0}
+h4{font-size:12px;font-weight:600;color:var(--w6);margin:12px 0 6px}
+
+p{font-size:12.5px;color:var(--w6);line-height:1.8;margin:6px 0}
+p strong{color:var(--w);font-weight:600}
+p em{color:var(--lime);font-style:normal;font-weight:500}
+
+/* LIST ITEMS */
+.li{display:flex;gap:9px;padding:3px 0;font-size:12.5px;color:var(--w6);align-items:flex-start;line-height:1.7}
+.li-dot{color:var(--lime);font-size:8px;flex-shrink:0;margin-top:5px}
+.li-ok{color:#4ade80;font-size:9px;flex-shrink:0;margin-top:4px;font-weight:700}
+.li-no{color:#f87171;font-size:9px;flex-shrink:0;margin-top:4px;font-weight:700}
+.ni{display:flex;gap:10px;padding:4px 0;font-size:12.5px;color:var(--w6);line-height:1.7}
+.ni-n{color:var(--lime);font-weight:700;flex-shrink:0;min-width:20px;font-size:11px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r);padding:18px 22px;margin:10px 0}
+.card.accent{border-color:rgba(154,255,0,0.2);background:rgba(154,255,0,0.03)}
+.card.warn{border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.03)}
+.card.info{border-color:rgba(96,165,250,0.25);background:rgba(96,165,250,0.03)}
+.card-title{font-size:11px;font-weight:700;color:var(--lime);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.card.warn .card-title{color:#f87171}
+.card.info .card-title{color:#60a5fa}
+
+/* RULE BLOCKS */
+.rule-block{margin:14px 0;border-radius:var(--r2);overflow:hidden}
+.rule-head{padding:8px 16px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.rule-head.ok{background:rgba(74,222,128,0.12);color:#4ade80}
+.rule-head.no{background:rgba(248,113,113,0.12);color:#f87171}
+.rule-head.note{background:rgba(250,204,21,0.1);color:#facc15}
+.rule-body{padding:10px 16px;background:var(--bg3);font-size:12px;color:var(--w6);line-height:1.7}
+.rule-eg{font-size:11px;color:var(--w4);margin-top:6px;font-style:italic}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:11.5px}
+.tbl th{padding:8px 14px;background:rgba(154,255,0,0.08);color:var(--lime);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border:1px solid var(--border3);text-align:left}
+.tbl td{padding:8px 14px;border:1px solid var(--border3);color:var(--w6);vertical-align:top;line-height:1.6}
+.tbl tr:hover td{background:var(--w1)}
+.tbl td strong{color:var(--w)}
+.tbl td .tag{display:inline-block;padding:2px 8px;background:var(--lime2);color:var(--lime);border-radius:10px;font-size:10px;font-weight:600}
+.tbl td .tag.red{background:rgba(248,113,113,0.12);color:#f87171}
+.tbl td .tag.blue{background:rgba(96,165,250,0.12);color:#60a5fa}
+.tbl td .tag.yellow{background:rgba(250,204,21,0.1);color:#facc15}
+
+/* CODE */
+.code-block{margin:12px 0;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border3)}
+.code-lang{padding:5px 14px;background:rgba(154,255,0,0.07);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);border-bottom:1px solid var(--border3)}
+pre{overflow-x:auto;padding:14px 16px;background:var(--bg2)}
+pre code{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--w6);white-space:pre;line-height:1.7}
+code.ic{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--lime);background:rgba(154,255,0,0.08);padding:1px 5px;border-radius:3px;border:1px solid rgba(154,255,0,0.15)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border3);margin:28px 0}
+.divider-label{display:flex;align-items:center;gap:12px;margin:28px 0}
+.divider-label::before,.divider-label::after{content:'';flex:1;height:1px;background:var(--border3)}
+.divider-label span{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--w4)}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.badge.lime{background:var(--lime2);color:var(--lime);border:1px solid var(--border)}
+.badge.red{background:rgba(248,113,113,0.12);color:#f87171;border:1px solid rgba(248,113,113,0.2)}
+.badge.blue{background:rgba(96,165,250,0.12);color:#60a5fa;border:1px solid rgba(96,165,250,0.2)}
+.badge.yellow{background:rgba(250,204,21,0.08);color:#facc15;border:1px solid rgba(250,204,21,0.2)}
+.badge.gray{background:var(--w1);color:var(--w4);border:1px solid var(--border3)}
+
+/* STEP FLOW */
+.step-flow{display:flex;flex-direction:column;gap:0}
+.step-item{display:flex;gap:16px;position:relative;padding-bottom:0}
+.step-item:not(:last-child)::after{content:'';position:absolute;left:14px;top:32px;bottom:0;width:1px;background:var(--border3)}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(154,255,0,0.12);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--lime);flex-shrink:0;margin-top:4px}
+.step-content{padding:4px 0 20px;flex:1}
+.step-title{font-size:12.5px;font-weight:700;color:var(--w);margin-bottom:4px}
+.step-desc{font-size:12px;color:var(--w6);line-height:1.7}
+
+/* ETAP CARD */
+.etap-card{background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r);padding:18px 22px;margin:8px 0;transition:border-color 0.2s}
+.etap-card:hover{border-color:rgba(154,255,0,0.15)}
+.etap-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.etap-num{width:32px;height:32px;background:var(--lime);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000;flex-shrink:0}
+.etap-name{font-size:13px;font-weight:700;color:var(--w)}
+.etap-tag{margin-left:auto;font-size:9px;font-weight:700;color:var(--w4);background:var(--bg4);border:1px solid var(--border3);padding:3px 9px;border-radius:10px}
+.etap-desc{font-size:12px;color:var(--w6);line-height:1.7}
+.etap-out{margin-top:10px;padding:10px 14px;background:rgba(154,255,0,0.04);border-radius:6px;border:1px solid rgba(154,255,0,0.1)}
+.etap-out-label{font-size:9px;font-weight:700;color:var(--lime);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.etap-out-items{display:flex;flex-wrap:wrap;gap:6px}
+.etap-out-tag{font-size:10px;color:var(--w6);background:var(--bg3);border:1px solid var(--border3);padding:3px 9px;border-radius:10px}
+
+/* CALLOUT */
+.callout{display:flex;gap:12px;padding:14px 18px;border-radius:var(--r2);margin:14px 0}
+.callout.lime{background:rgba(154,255,0,0.05);border:1px solid rgba(154,255,0,0.2)}
+.callout.red{background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.2)}
+.callout.blue{background:rgba(96,165,250,0.05);border:1px solid rgba(96,165,250,0.2)}
+.callout.yellow{background:rgba(250,204,21,0.05);border:1px solid rgba(250,204,21,0.2)}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-body{flex:1}
+.callout-title{font-size:11px;font-weight:700;color:var(--w);margin-bottom:4px}
+.callout-text{font-size:12px;color:var(--w6);line-height:1.7}
+
+/* FORMAT CARD */
+.fmt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin:12px 0}
+.fmt-card{background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r);padding:16px 18px;transition:border-color 0.2s}
+.fmt-card:hover{border-color:rgba(154,255,0,0.18)}
+.fmt-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fmt-badge{font-size:11px;font-weight:900;color:#000;background:var(--lime);width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fmt-name{font-size:12px;font-weight:700;color:var(--w)}
+.fmt-type{font-size:10px;color:var(--w4);margin-top:1px}
+.fmt-desc{font-size:11.5px;color:var(--w6);line-height:1.7;margin-bottom:8px}
+.fmt-rules{display:flex;flex-direction:column;gap:4px}
+.fmt-rule{font-size:11px;color:var(--w4);display:flex;gap:6px;align-items:flex-start;line-height:1.5}
+.fmt-rule-dot{color:var(--lime);flex-shrink:0;font-size:8px;margin-top:3px}
+
+/* GENERATOR SPEC */
+.gen-spec{background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r);overflow:hidden;margin:14px 0}
+.gen-spec-head{padding:14px 20px;background:rgba(154,255,0,0.05);border-bottom:1px solid var(--border3);display:flex;align-items:center;gap:12px}
+.gen-spec-icon{font-size:20px}
+.gen-spec-name{font-size:13px;font-weight:800;color:var(--w)}
+.gen-spec-meta{font-size:10px;color:var(--w4);margin-top:2px}
+.gen-spec-body{padding:16px 20px}
+.gen-spec-section{margin-bottom:14px}
+.gen-spec-section:last-child{margin-bottom:0}
+.gen-spec-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .content,.doc-hero{padding-left:20px;padding-right:20px}
+  .toc{margin:16px 20px}
+  .topbar{padding:10px 20px}
+  .fmt-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-c"></canvas>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-oko">OKO TEAM</div>
+    <div class="sb-logo-title">Техническое задание</div>
+    <div class="sb-logo-ver">Система Роста — v3.0 ФИНАЛ</div>
+  </div>
+  <div class="sb-search"><input type="text" placeholder="Поиск по ТЗ..." id="sb-search" oninput="searchTZ(this.value)"></div>
+  <div class="sb-nav" id="sb-nav">
+    <div class="sb-cat">Базовые принципы</div>
+    <div class="sb-item active" onclick="scrollTo('p0')"><span class="sb-num">00</span>Перед началом работы</div>
+    <div class="sb-item" onclick="scrollTo('p1')"><span class="sb-num">01</span>Архитектура файла</div>
+    <div class="sb-item" onclick="scrollTo('p2')"><span class="sb-num">02</span>Дизайн-система</div>
+    <div class="sb-item" onclick="scrollTo('p3')"><span class="sb-num">03</span>Canvas-анимация фона</div>
+    
+    <div class="sb-cat">Разделы системы</div>
+    <div class="sb-item" onclick="scrollTo('p4')"><span class="sb-num">04</span>Главная страница (Home)</div>
+    <div class="sb-item" onclick="scrollTo('p5')"><span class="sb-num">05</span>Контент-план</div>
+    <div class="sb-item" onclick="scrollTo('p6')"><span class="sb-num">06</span>Бизнес-план (17+ блоков)</div>
+    <div class="sb-item" onclick="scrollTo('p7')"><span class="sb-num">07</span>Чек-лист</div>
+    <div class="sb-item" onclick="scrollTo('p8')"><span class="sb-num">08</span>Материалы</div>
+    <div class="sb-item" onclick="scrollTo('p9')"><span class="sb-num">09</span>Визуал</div>
+    <div class="sb-item" onclick="scrollTo('p10')"><span class="sb-num">10</span>Перспективы</div>
+    
+    <div class="sb-cat">Сложные функции</div>
+    <div class="sb-item" onclick="scrollTo('p11')"><span class="sb-num">11</span>CRM — логика и структура</div>
+    <div class="sb-item" onclick="scrollTo('p12')"><span class="sb-num">12</span>Трекер роста</div>
+    <div class="sb-item" onclick="scrollTo('p13')"><span class="sb-num">13</span>Генератор КП</div>
+    <div class="sb-item" onclick="scrollTo('p14')"><span class="sb-num">14</span>Генератор договора</div>
+    <div class="sb-item" onclick="scrollTo('p15')"><span class="sb-num">15</span>Генератор партнёрства</div>
+    <div class="sb-item" onclick="scrollTo('p16')"><span class="sb-num">16</span>Лид-магниты</div>
+    <div class="sb-item" onclick="scrollTo('p17')"><span class="sb-num">17</span>Лендинги продуктов</div>
+    <div class="sb-item" onclick="scrollTo('p18')"><span class="sb-num">18</span>SMMBot воронки</div>
+    
+    <div class="sb-cat">Контент и тексты</div>
+    <div class="sb-item" onclick="scrollTo('p19')"><span class="sb-num">19</span>Форматы видео Ф1–Ф8</div>
+    <div class="sb-item" onclick="scrollTo('p20')"><span class="sb-num">20</span>Кодовые слова и воронка</div>
+    <div class="sb-item" onclick="scrollTo('p21')"><span class="sb-num">21</span>Промпты — детальные правила</div>
+    <div class="sb-item" onclick="scrollTo('p22')"><span class="sb-num">22</span>Правила языка и стиля</div>
+    
+    <div class="sb-cat">Этапы создания</div>
+    <div class="sb-item" onclick="scrollTo('p23')"><span class="sb-num">23</span>Анализ конкурентов и трендов</div>
+    <div class="sb-item" onclick="scrollTo('p24')"><span class="sb-num">24</span>Этапы создания по сессиям</div>
+    <div class="sb-item" onclick="scrollTo('p25')"><span class="sb-num">25</span>Чеклист готовности</div>
+
+    <div class="sb-cat">Тексты и контент</div>
+    <div class="sb-item" onclick="scrollTo('p26')"><span class="sb-num">26</span>Правила полных текстов</div>
+    <div class="sb-item" onclick="scrollTo('p27')"><span class="sb-num">27</span>Навигация из чек-листа</div>
+    <div class="sb-item" onclick="scrollTo('p28')"><span class="sb-num">28</span>Аналитика-цикл</div>
+    <div class="sb-item" onclick="scrollTo('p29')"><span class="sb-num">29</span>Структура генераторов</div>
+    <div class="sb-item" onclick="scrollTo('p30')"><span class="sb-num">30</span>Промпты — универсальное правило</div>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-footer-text">OKO TEAM © 2025<br>Универсальное ТЗ для любой ниши<br>На основе анкеты клиента</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-badge">v3.0 ФИНАЛ</span>
+    <span class="topbar-title">ТЗ Система Роста — OKO TEAM</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="tb-btn" onclick="window.print()">Печать</button>
+    <button class="tb-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Меню</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="doc-hero">
+  <div class="hero-ey">Техническое задание · Универсальная версия</div>
+  <div class="hero-title">Система Роста<br><span>OKO TEAM</span></div>
+  <div class="hero-sub">Полное техническое задание для создания персонализированной HTML Системы Роста для любого клиента в любой нише. Всё что нужно Claude чтобы создать систему с 1 раза без доп корректировок.</div>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><strong>30</strong> частей</div>
+    <div class="hero-meta-item"><strong>6</strong> разделов системы</div>
+    <div class="hero-meta-item"><strong>17+</strong> блоков бизнес-плана</div>
+    <div class="hero-meta-item"><strong>8</strong> форматов видео</div>
+    <div class="hero-meta-item"><strong>5</strong> генераторов</div>
+    <div class="hero-meta-item"><strong>На основе</strong> анкеты клиента</div>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Содержание</div>
+  <div class="toc-grid">
+    <div class="toc-item" onclick="scrollTo('p0')"><span class="toc-num">00</span>Перед началом работы</div>
+    <div class="toc-item" onclick="scrollTo('p1')"><span class="toc-num">01</span>Архитектура файла</div>
+    <div class="toc-item" onclick="scrollTo('p2')"><span class="toc-num">02</span>Дизайн-система</div>
+    <div class="toc-item" onclick="scrollTo('p3')"><span class="toc-num">03</span>Canvas-анимация</div>
+    <div class="toc-item" onclick="scrollTo('p4')"><span class="toc-num">04</span>Главная страница</div>
+    <div class="toc-item" onclick="scrollTo('p5')"><span class="toc-num">05</span>Контент-план</div>
+    <div class="toc-item" onclick="scrollTo('p6')"><span class="toc-num">06</span>Бизнес-план</div>
+    <div class="toc-item" onclick="scrollTo('p7')"><span class="toc-num">07</span>Чек-лист</div>
+    <div class="toc-item" onclick="scrollTo('p8')"><span class="toc-num">08</span>Материалы</div>
+    <div class="toc-item" onclick="scrollTo('p9')"><span class="toc-num">09</span>Визуал</div>
+    <div class="toc-item" onclick="scrollTo('p10')"><span class="toc-num">10</span>Перспективы</div>
+    <div class="toc-item" onclick="scrollTo('p11')"><span class="toc-num">11</span>CRM</div>
+    <div class="toc-item" onclick="scrollTo('p12')"><span class="toc-num">12</span>Трекер роста</div>
+    <div class="toc-item" onclick="scrollTo('p13')"><span class="toc-num">13</span>Генератор КП</div>
+    <div class="toc-item" onclick="scrollTo('p14')"><span class="toc-num">14</span>Генератор договора</div>
+    <div class="toc-item" onclick="scrollTo('p15')"><span class="toc-num">15</span>Генератор партнёрства</div>
+    <div class="toc-item" onclick="scrollTo('p16')"><span class="toc-num">16</span>Лид-магниты</div>
+    <div class="toc-item" onclick="scrollTo('p17')"><span class="toc-num">17</span>Лендинги</div>
+    <div class="toc-item" onclick="scrollTo('p18')"><span class="toc-num">18</span>SMMBot воронки</div>
+    <div class="toc-item" onclick="scrollTo('p19')"><span class="toc-num">19</span>Форматы видео Ф1–Ф8</div>
+    <div class="toc-item" onclick="scrollTo('p20')"><span class="toc-num">20</span>Кодовые слова</div>
+    <div class="toc-item" onclick="scrollTo('p21')"><span class="toc-num">21</span>Промпты — детальные правила</div>
+    <div class="toc-item" onclick="scrollTo('p22')"><span class="toc-num">22</span>Правила языка и стиля</div>
+    <div class="toc-item" onclick="scrollTo('p23')"><span class="toc-num">23</span>Анализ конкурентов и трендов</div>
+    <div class="toc-item" onclick="scrollTo('p24')"><span class="toc-num">24</span>Этапы создания по сессиям</div>
+    <div class="toc-item" onclick="scrollTo('p25')"><span class="toc-num">25</span>Чеклист готовности</div>
+    <div class="toc-item" onclick="scrollTo('p26')"><span class="toc-num">26</span>Правила полных текстов</div>
+    <div class="toc-item" onclick="scrollTo('p27')"><span class="toc-num">27</span>Навигация из чек-листа</div>
+    <div class="toc-item" onclick="scrollTo('p28')"><span class="toc-num">28</span>Аналитика-цикл</div>
+    <div class="toc-item" onclick="scrollTo('p29')"><span class="toc-num">29</span>Структура генераторов</div>
+    <div class="toc-item" onclick="scrollTo('p30')"><span class="toc-num">30</span>Промпты — универсальное правило</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 0 — ПЕРЕД НАЧАЛОМ РАБОТЫ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p0">
+  <div class="part-eyebrow">Часть 00</div>
+  <div class="part-title">ПЕРЕД НАЧАЛОМ РАБОТЫ</div>
+  <div class="part-desc">Что Claude обязан прочитать, понять и подтвердить до создания первой строчки кода</div>
+</div>
+
+<h2>Что даётся на вход каждой сессии</h2>
+<p>Каждая сессия создания системы начинается с передачи 4 файлов:</p>
+<div class="card">
+  <div class="ni"><span class="ni-n">1</span><span><strong>Анкета клиента (заполненная)</strong> — HTML файл с ответами на 8 разделов (64 вопроса). Это главный источник данных о клиенте. Вся система строится на основе анкеты.</span></div>
+  <div class="ni"><span class="ni-n">2</span><span><strong>Данное ТЗ</strong> — полная инструкция как строить систему. Обязательно к прочтению целиком.</span></div>
+  <div class="ni"><span class="ni-n">3</span><span><strong>HTML файл предыдущего этапа</strong> — то что уже создано. Claude продолжает, не переделывает.</span></div>
+  <div class="ni"><span class="ni-n">4</span><span><strong>TXT-отчёт предыдущей сессии</strong> — что сделано, что делать дальше, переменные клиента, выявленные корректировки.</span></div>
+</div>
+
+<div class="callout lime">
+  <span class="callout-icon">📌</span>
+  <div class="callout-body">
+    <div class="callout-title">Первая сессия — исключение</div>
+    <div class="callout-text">В первой сессии HTML и TXT-отчёт ещё нет. Есть только анкета и ТЗ. Первая сессия начинается с анализа анкеты + веб-поиска конкурентов и трендов ниши.</div>
+  </div>
+</div>
+
+<h2>Обязательный алгоритм перед стартом</h2>
+<div class="step-flow">
+  <div class="step-item">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Прочитать анкету полностью</div>
+      <div class="step-desc">Все 8 разделов, все 64 вопроса. Зафиксировать: ниша, продукты, имя клиента, цвета бренда, цели, период, соцсети, аудитория. Именно из анкеты берутся все данные для персонализации.</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Прочитать TXT-отчёт (если есть)</div>
+      <div class="step-desc">Что уже сделано. Какие переменные зафиксированы. Что делать в этой сессии. Корректировки которые нужно учесть.</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Подтвердить понимание Даниэлю</div>
+      <div class="step-desc">Коротко: ниша клиента, период, что создаём в этой сессии, какой результат будет на выходе. Ждать команду «старт».</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <div class="step-title">Только после «старта» — начинать</div>
+      <div class="step-desc">Не начинать создавать что-либо до явной команды Даниэля. Это правило без исключений.</div>
+    </div>
+  </div>
+</div>
+
+<h2>Переменные клиента — как извлекать из анкеты</h2>
+<p>Из анкеты нужно извлечь и зафиксировать в переменные:</p>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Переменная</th><th>Откуда в анкете</th><th>Использование</th></tr>
+  <tr><td><code class="ic">{{ИМЯКЛИЕНТА}}</code></td><td>Раздел 1: ФИО / Имя бренда</td><td>Заголовки, обращения, договор</td></tr>
+  <tr><td><code class="ic">{{НИША}}</code></td><td>Раздел 1: сфера деятельности</td><td>Всё содержание системы</td></tr>
+  <tr><td><code class="ic">{{ПЕРИОД}}</code></td><td>Раздел 1: период системы</td><td>Количество дней в контент-плане и чек-листе</td></tr>
+  <tr><td><code class="ic">{{ЦВЕТ1}}</code><code class="ic">{{ЦВЕТ2}}</code></td><td>Раздел 7: цвета бренда</td><td>CSS переменные дизайн-системы</td></tr>
+  <tr><td><code class="ic">{{ЛОГОТИП}}</code></td><td>Раздел 7: логотип/аватар</td><td>Header, лид-магниты, КП</td></tr>
+  <tr><td><code class="ic">{{ПРОДУКТЫ}}</code></td><td>Раздел 3: продукты/услуги</td><td>CRM, кодовые слова, лид-магниты</td></tr>
+  <tr><td><code class="ic">{{АУДИТОРИЯ}}</code></td><td>Раздел 2: целевая аудитория</td><td>Тексты, хуки, темы контента</td></tr>
+  <tr><td><code class="ic">{{СОЦСЕТИ}}</code></td><td>Раздел 4: активные соцсети</td><td>Трекер, контент-план, CRM</td></tr>
+  <tr><td><code class="ic">{{ЦЕЛИ}}</code></td><td>Раздел 1: цели на период</td><td>Трекер, бизнес-план, перспективы</td></tr>
+  <tr><td><code class="ic">{{КОНКУРЕНТЫ}}</code></td><td>Раздел 5: конкуренты + веб-поиск</td><td>Анализ конкурентов, дорожная карта</td></tr>
+  <tr><td><code class="ic">{{РЕКВИЗИТЫ}}</code></td><td>Раздел 8: ФИО, ИНН, адрес</td><td>Договор</td></tr>
+  <tr><td><code class="ic">{{ОПЛАТА}}</code></td><td>Раздел 8: способы оплаты</td><td>КП, лид-магниты, воронка</td></tr>
+</table>
+</div>
+
+<div class="callout yellow">
+  <span class="callout-icon">⚠️</span>
+  <div class="callout-body">
+    <div class="callout-title">Если данных в анкете недостаточно</div>
+    <div class="callout-text">Не придумывать. Использовать разумные заглушки формата <code class="ic">[УТОЧНИТЬ: цвет бренда]</code> и отметить в TXT-отчёте что нужно уточнить у клиента. Никогда не блокировать работу из-за одного пропущенного поля.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 1 — АРХИТЕКТУРА ФАЙЛА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p1">
+  <div class="part-eyebrow">Часть 01</div>
+  <div class="part-title">АРХИТЕКТУРА ФАЙЛА</div>
+  <div class="part-desc">Структура единого HTML файла — один файл, все 6 разделов, вся логика внутри</div>
+</div>
+
+<h2>Принцип «один файл»</h2>
+<p>Вся Система Роста — это <strong>один HTML файл</strong>. Внутри: весь CSS, весь JavaScript, все данные клиента, все тексты, все генераторы. Никаких внешних файлов, никаких зависимостей кроме Google Fonts и Lucide Icons CDN.</p>
+
+<div class="card accent">
+  <div class="card-title">Разрешённые внешние ресурсы</div>
+  <div class="li"><span class="li-dot">▸</span><span>Google Fonts: Inter, JetBrains Mono — через link в head</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Lucide Icons: <code class="ic">https://unpkg.com/lucide@latest/dist/umd/lucide.min.js</code></span></div>
+  <div class="li"><span class="li-ok">✓</span><span>Всё остальное — inline в файле</span></div>
+</div>
+
+<h2>Структура HTML документа</h2>
+<div class="code-block">
+  <div class="code-lang">HTML структура</div>
+  <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="ru"&gt;
+&lt;head&gt;
+  &lt;!-- META, TITLE, FONTS --&gt;
+  &lt;!-- CSS Variables (дизайн-система клиента) --&gt;
+  &lt;!-- Все стили --&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;canvas id="bg-canvas"&gt;&lt;/canvas&gt;    &lt;!-- анимфон --&gt;
+  
+  &lt;!-- HEADER (фиксированный, лого клиента) --&gt;
+  &lt;header id="main-header"&gt;...&lt;/header&gt;
+  
+  &lt;!-- НАВИГАЦИЯ по 6 разделам --&gt;
+  &lt;nav id="main-nav"&gt;...&lt;/nav&gt;
+  
+  &lt;!-- 6 РАЗДЕЛОВ --&gt;
+  &lt;div id="section-home"   class="section"&gt;...&lt;/div&gt;
+  &lt;div id="section-content" class="section"&gt;...&lt;/div&gt;
+  &lt;div id="section-business" class="section"&gt;...&lt;/div&gt;
+  &lt;div id="section-checklist" class="section"&gt;...&lt;/div&gt;
+  &lt;div id="section-materials" class="section"&gt;...&lt;/div&gt;
+  &lt;div id="section-visual"  class="section"&gt;...&lt;/div&gt;
+  &lt;div id="section-future"  class="section"&gt;...&lt;/div&gt;
+  
+  &lt;!-- МОДАЛЬНЫЕ ОКНА (генераторы, KP, договор и тд) --&gt;
+  &lt;div id="modals-container"&gt;...&lt;/div&gt;
+  
+  &lt;!-- JAVASCRIPT (все функции в конце) --&gt;
+  &lt;script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"&gt;&lt;/script&gt;
+  &lt;script&gt;
+    // Все переменные клиента
+    // Canvas анимация
+    // Навигация
+    // Логика каждого раздела
+    // Генераторы
+    // CRM и Трекер
+    // Утилиты (копирование, скачивание, печать)
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+</div>
+
+<h2>Навигация между 6 разделами</h2>
+<p>Навигационная панель фиксированная (sticky), 6 кнопок — по одной на раздел. Активный раздел подсвечен цветом акцента. При клике — плавный переход (или скрытие/показ секций).</p>
+
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>#</th><th>ID раздела</th><th>Иконка (Lucide)</th><th>Название в nav</th></tr>
+  <tr><td>0</td><td><code class="ic">section-home</code></td><td>home</td><td>Главная</td></tr>
+  <tr><td>1</td><td><code class="ic">section-content</code></td><td>calendar-days</td><td>Контент-план</td></div></td></tr>
+  <tr><td>2</td><td><code class="ic">section-business</code></td><td>briefcase</td><td>Бизнес-план</td></tr>
+  <tr><td>3</td><td><code class="ic">section-checklist</code></td><td>check-square</td><td>Чек-лист</td></tr>
+  <tr><td>4</td><td><code class="ic">section-materials</code></td><td>layers</td><td>Материалы</td></tr>
+  <tr><td>5</td><td><code class="ic">section-visual</code></td><td>palette</td><td>Визуал</td></tr>
+  <tr><td>6</td><td><code class="ic">section-future</code></td><td>trending-up</td><td>Перспективы</td></tr>
+</table>
+</div>
+
+<h2>Принцип адаптации под период</h2>
+<p>Период системы берётся из анкеты клиента и определяет количество дней в контент-плане и чек-листе:</p>
+<div class="card">
+  <div class="ni"><span class="ni-n">1 мес</span><span>30 дней контент-план, 30 дней чек-лист</span></div>
+  <div class="ni"><span class="ni-n">3 мес</span><span>90 дней контент-план (заполняется по 10 дней за сессию), 90 дней чек-лист</span></div>
+  <div class="ni"><span class="ni-n">6 мес</span><span>180 дней, создаются структуры-заглушки, заполняются поэтапно</span></div>
+  <div class="ni"><span class="ni-n">12 мес</span><span>365 дней, аналогично</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 2 — ДИЗАЙН-СИСТЕМА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p2">
+  <div class="part-eyebrow">Часть 02</div>
+  <div class="part-title">ДИЗАЙН-СИСТЕМА</div>
+  <div class="part-desc">CSS переменные, цвета, типографика, компоненты — всё адаптировано под бренд клиента из анкеты</div>
+</div>
+
+<h2>CSS переменные — основа дизайна</h2>
+<p>Вся система строится на CSS переменных в <code class="ic">:root</code>. Цвета берутся из анкеты клиента (раздел 7 — визуал и бренд). Если клиент не указал цвета — используется дефолтная тема OKO.</p>
+
+<div class="code-block">
+  <div class="code-lang">CSS — переменные дизайн-системы</div>
+  <pre><code>:root {
+  /* Фоны — берутся из анкеты или дефолт OKO */
+  --bg:    #080808;     /* основной фон */
+  --bg2:   #0f0f0f;     /* фон карточек */
+  --bg3:   #161616;     /* фон вложенных элементов */
+  --bg4:   #1e1e1e;     /* hover фоны */
+  
+  /* Акцентный цвет — ИЗ АНКЕТЫ клиента */
+  --accent: #9AFF00;    /* цвет бренда клиента */
+  --accent2: rgba(ACCENT_RGB, 0.12);   /* фон с акцентом */
+  --accent3: rgba(ACCENT_RGB, 0.06);   /* лёгкий фон */
+  --accent4: rgba(ACCENT_RGB, 0.03);   /* очень лёгкий */
+  
+  /* Второй акцент (если есть в анкете) */
+  --accent-b: #00D4FF;   /* второй цвет бренда */
+  
+  /* Текст */
+  --w:   #ffffff;
+  --w8:  rgba(255,255,255,0.8);
+  --w6:  rgba(255,255,255,0.6);
+  --w4:  rgba(255,255,255,0.35);
+  --w2:  rgba(255,255,255,0.12);
+  --w1:  rgba(255,255,255,0.06);
+  
+  /* Границы */
+  --border:  rgba(ACCENT_RGB, 0.22);
+  --border2: rgba(255,255,255,0.1);
+  --border3: rgba(255,255,255,0.05);
+  
+  /* Радиусы */
+  --r:  12px;   /* карточки */
+  --r2: 8px;    /* кнопки */
+  --r3: 6px;    /* мелкие элементы */
+}</code></pre>
+</div>
+
+<div class="callout lime">
+  <span class="callout-icon">🎨</span>
+  <div class="callout-body">
+    <div class="callout-title">Адаптация цветов под клиента</div>
+    <div class="callout-text">Если клиент указал в анкете свои цвета бренда — <code class="ic">--accent</code> меняется на его цвет. Все остальные акцентные переменные пересчитываются из этого цвета. Фоны остаются тёмными — это нельзя менять (это стиль OKO).</div>
+  </div>
+</div>
+
+<h2>Типографика</h2>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Элемент</th><th>Шрифт</th><th>Вес</th><th>Размер</th></tr>
+  <tr><td>Основной текст</td><td>Inter</td><td>400</td><td>14px</td></tr>
+  <tr><td>Заголовки блоков</td><td>Inter</td><td>700–800</td><td>16–24px</td></tr>
+  <tr><td>Hero заголовки</td><td>Inter</td><td>900</td><td>clamp(24px,4vw,40px)</td></tr>
+  <tr><td>Метки, badge</td><td>Inter</td><td>700</td><td>9–11px, letter-spacing</td></tr>
+  <tr><td>Код, промпты</td><td>JetBrains Mono</td><td>400</td><td>11–12px</td></tr>
+</table>
+</div>
+
+<h2>Компоненты UI — правила</h2>
+<div class="rule-block">
+  <div class="rule-head ok">✓ ИКОНКИ — только Lucide SVG</div>
+  <div class="rule-body">Никаких эмодзи в интерфейсе. Все иконки — монолинейные Lucide SVG, цвет акцента. Вызов через <code class="ic">lucide.createIcons()</code> или inline SVG.<br>
+  <span class="rule-eg">Примеры: calendar-days, briefcase, check-square, layers, palette, trending-up, copy, download, send, eye, star, zap</span></div>
+</div>
+<div class="rule-block">
+  <div class="rule-head ok">✓ КНОПКИ — единый стиль</div>
+  <div class="rule-body">Primary: фон акцент, текст чёрный. Secondary: прозрачный фон, граница border2, текст w6. При hover — легкий подъём transform translateY(-1px), тень с акцентом.<br>
+  <span class="rule-eg">Размеры: маленькие 8px 16px, средние 10px 22px, большие 13px 28px</span></div>
+</div>
+<div class="rule-block">
+  <div class="rule-head ok">✓ КАРТОЧКИ — тёмный фон с лёгкой границей</div>
+  <div class="rule-body">Background bg2, border border3, border-radius --r. Hover: border-color rgba(accent, 0.2). При активности — border-color --border.</div>
+</div>
+<div class="rule-block">
+  <div class="rule-head no">✗ ЗАПРЕЩЕНО</div>
+  <div class="rule-body">Светлые фоны. Эмодзи в интерфейсе. Bootstrap или любые CSS фреймворки. Внешние JS библиотеки кроме Lucide. Всплывающие окна (alert, confirm) — только кастомные модалки.</div>
+</div>
+
+<h2>Логотип в Header</h2>
+<p>Хедер фиксированный (sticky). Содержит: логотип/аватар клиента (из анкеты — ссылка или заглушка глаза OKO), имя клиента/бренда, навигация по разделам.</p>
+<div class="callout yellow">
+  <span class="callout-icon">⚠️</span>
+  <div class="callout-body">
+    <div class="callout-title">Глаз OKO — только если нет логотипа клиента</div>
+    <div class="callout-text">Если в анкете нет ссылки на логотип — используется анимированный глаз OKO (моргает каждые 3–4 сек). Если есть — используем логотип клиента через img или CSS background.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 3 — CANVAS АНИМАЦИЯ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p3">
+  <div class="part-eyebrow">Часть 03</div>
+  <div class="part-title">CANVAS-АНИМАЦИЯ ФОНА</div>
+  <div class="part-desc">Технические правила анимированного фона — где применяется, как реализуется</div>
+</div>
+
+<h2>Где используется анимфон</h2>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Файл / экран</th><th>Анимфон</th><th>Комментарий</th></tr>
+  <tr><td>Основная система (все 6 разделов)</td><td><span class="tag">ДА</span></td><td>Canvas на всю страницу, opacity 0.35–0.5</td></tr>
+  <tr><td>Генератор КП</td><td><span class="tag">ДА</span></td><td>Внутри модалки или отдельной страницы</td></tr>
+  <tr><td>Генератор партнёрства</td><td><span class="tag">ДА</span></td><td>Аналогично КП</td></tr>
+  <tr><td>Лид-магниты</td><td><span class="tag">ДА</span></td><td>Каждый лид-магнит с анимфоном</td></tr>
+  <tr><td>Лендинги продуктов</td><td><span class="tag">ДА</span></td><td>Каждый лендинг с анимфоном</td></tr>
+  <tr><td><strong>Генератор договора</strong></td><td><span class="tag red">НЕТ</span></td><td>Белый фон. Это юридический документ для подписи.</td></tr>
+</table>
+</div>
+
+<h2>Технический код анимации</h2>
+<div class="code-block">
+  <div class="code-lang">JavaScript — Canvas анимация</div>
+  <pre><code>// Canvas background — частицы цвета акцента клиента
+function initCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Цвет частиц = акцент клиента из CSS переменной
+  const accentRGB = getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent').trim();
+  
+  let particles = [];
+  const PARTICLE_COUNT = 60;
+  
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.4;
+      this.speedY = (Math.random() - 0.5) * 0.4;
+      this.opacity = Math.random() * 0.4 + 0.1;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x &lt; 0 || this.x > canvas.width ||
+          this.y &lt; 0 || this.y > canvas.height) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = accentRGB;
+      ctx.globalAlpha = this.opacity;
+      ctx.fill();
+    }
+  }
+  
+  // Инициализация частиц
+  for (let i = 0; i &lt; PARTICLE_COUNT; i++) {
+    particles.push(new Particle());
+  }
+  
+  // Линии между близкими частицами
+  function drawConnections() {
+    for (let i = 0; i &lt; particles.length; i++) {
+      for (let j = i + 1; j &lt; particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist &lt; 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = accentRGB;
+          ctx.globalAlpha = (1 - dist/120) * 0.08;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+  
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawConnections();
+    requestAnimationFrame(animate);
+  }
+  
+  window.addEventListener('resize', resize);
+  resize();
+  animate();
+}
+
+// Вызов при загрузке
+window.addEventListener('load', initCanvas);</code></pre>
+</div>
+
+<div class="callout blue">
+  <span class="callout-icon">💡</span>
+  <div class="callout-body">
+    <div class="callout-title">Canvas в генераторах (КП, лид-магниты и тд)</div>
+    <div class="callout-text">В каждом отдельном HTML генераторе (КП, партнёрство, лид-магниты, лендинги) Canvas инициализируется аналогичным кодом. Цвет частиц берётся из бренда клиента. Opacity: 0.3–0.4 чтобы не перекрывать контент.</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 4 — ГЛАВНАЯ СТРАНИЦА (HOME) -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p4">
+  <div class="part-eyebrow">Часть 04</div>
+  <div class="part-title">ГЛАВНАЯ СТРАНИЦА (HOME)</div>
+  <div class="part-desc">Первый экран системы — hero, сводка, быстрые действия, навигация по системе</div>
+</div>
+
+<h2>Что входит в главную страницу</h2>
+<p>Главная — это дашборд. Клиент заходит и сразу видит общую картину: прогресс, сегодняшний контент, ключевые метрики, быстрые кнопки.</p>
+
+<h3>Блок 1 — Hero (приветствие)</h3>
+<div class="card accent">
+  <div class="li"><span class="li-dot">▸</span><span>Имя клиента / название бренда (из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Период системы (например «Система Роста · 90 дней»)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Дата старта и дата окончания периода</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Прогресс-бар периода: сколько дней прошло / осталось (авто-расчёт от текущей даты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Лого/аватар клиента или глаз OKO</span></div>
+</div>
+
+<h3>Блок 2 — Сегодня</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Текущая дата (JS: <code class="ic">new Date()</code>)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Тема контента на сегодня — кликабельная ссылка → переход в Контент-план → нужный день</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Задачи чек-листа на сегодня — краткий список топ-3, ссылка → Чек-лист → нужный день</span></div>
+</div>
+
+<h3>Блок 3 — Быстрые действия (кнопки)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>«Открыть контент-план» → section-content</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>«Открыть чек-лист» → section-checklist (на текущую дату)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>«CRM — добавить сделку» → section-business → блок CRM</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>«Трекер — внести данные» → section-business → блок Трекер</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>«Создать КП» → Материалы → Генератор КП</span></div>
+</div>
+
+<h3>Блок 4 — Сводка по системе</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>6 карточек-плиток: Контент-план, Бизнес-план, Чек-лист, Материалы, Визуал, Перспективы</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Каждая плитка: иконка, название, краткое описание что внутри, кнопка «Открыть»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Клик по плитке = переход в нужный раздел</span></div>
+</div>
+
+<h3>Блок 5 — Ключевые цели клиента</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>3–5 главных целей из анкеты (раздел 1: цели на период)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Каждая цель: иконка, формулировка, измеримый результат (если указан в анкете)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Визуально выделено — это то ради чего создавалась вся система</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 5 — КОНТЕНТ-ПЛАН -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p5">
+  <div class="part-eyebrow">Часть 05</div>
+  <div class="part-title">КОНТЕНТ-ПЛАН</div>
+  <div class="part-desc">Визуальный календарь → клик на дату → список форматов → тема → полный текст → кнопки действий</div>
+</div>
+
+<h2>Структура контент-плана</h2>
+<p>Контент-план — сердце системы. Он работает как 3-уровневое раскрытие:</p>
+<div class="step-flow">
+  <div class="step-item">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Уровень 1 — Календарь месяцев</div>
+      <div class="step-desc">Визуальный календарь: строки = недели, колонки = дни. Каждый день-ячейка показывает: номер дня, количество контент-единиц, индикатор (точка/линия цвета акцента если есть контент). Клик на день → раскрывается уровень 2 прямо под ячейкой (НЕ всплывающее окно).</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Уровень 2 — Список контент-единиц дня</div>
+      <div class="step-desc">Для каждой единицы дня: иконка формата (Ф1-Ф8 + карусель + TG пост + сторис), краткая тема (1 строка), бейдж типа (виральный / кодовое слово / лид-магнит). Клик на строку → раскрывается уровень 3.</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Уровень 3 — Полный контент единицы</div>
+      <div class="step-desc">Текст ролика / карусели / поста полностью. Описание. Кодовое слово (если есть). Кнопки действий (детально ниже).</div>
+    </div>
+  </div>
+</div>
+
+<h2>Кнопки на уровне 3 (под каждой единицей)</h2>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Тип контента</th><th>Кнопки</th></tr>
+  <tr><td>Живьём (Ф1, Ф2, Ф4, Ф5б, Ф6б, Ф8)</td><td>«Копировать текст»</td></tr>
+  <tr><td>ИИ-аватар (Ф5, Ф6)</td><td>«Копировать текст» + «Создать видео (HeyGen)»</td></tr>
+  <tr><td>Стоковое (Ф3, Ф7)</td><td>«Копировать текст» + «Промпт для фона» → Материалы→Промпты→нужная дата + «Создать видео (Gemini)»</td></tr>
+  <tr><td>Карусель</td><td>«Копировать текст слайдов» + «Открыть промпты» → Материалы→Промпты→нужная дата</td></tr>
+  <tr><td>TG пост</td><td>«Копировать пост» + «Скопировать промпт картинки»</td></tr>
+  <tr><td>Сторис (С1-С5)</td><td>«Копировать текст» (для С1,С2,С3,С4) + «Промпт фона» (для С1,С4,С5)</td></tr>
+</table>
+</div>
+
+<h2>Кнопка перехода в Чек-лист</h2>
+<p>На уровне 2 (список дня) — кнопка «Открыть чек-лист этого дня» → переходит в раздел Чек-лист → открывает нужную дату автоматически (передаёт параметр дня через URL hash или JS переменную).</p>
+
+<h2>Фазы публикации (из анкеты)</h2>
+<p>Количество контент-единиц в день берётся из анкеты клиента:</p>
+<div class="card">
+  <div class="ni"><span class="ni-n">Фаза 1</span><span>6 единиц в день: 3 виральных + 2 с кодовым на продукт + 1 с лид-магнитом</span></div>
+  <div class="ni"><span class="ni-n">Фаза 2</span><span>12 единиц в день: 6 виральных + 4 с кодовым + 2 с лид-магнитом</span></div>
+  <div class="ni"><span class="ni-n">Фаза 3</span><span>18 единиц в день: 9 виральных + 6 с кодовым + 3 с лид-магнитом</span></div>
+</div>
+
+<h2>Правило тёплого окружения</h2>
+<div class="callout lime">
+  <span class="callout-icon">📌</span>
+  <div class="callout-body">
+    <div class="callout-title">Продающий ролик всегда окружён виральными</div>
+    <div class="callout-text">Каждый ролик с кодовым словом на продукт окружён виральными роликами с обеих сторон. Порядок в день: виральный → кодовое → виральный → кодовое → виральный. Никогда два продающих подряд.</div>
+  </div>
+</div>
+
+<h2>Заглушки и заполнение по сессиям</h2>
+<p>Контент-план заполняется поэтапно — по 10 дней за сессию (Этапы 6, 7, 8...). До заполнения дни показываются как заглушки:</p>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Заглушка: «День X — будет заполнен в следующей сессии»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Визуально отличается от заполненных (пунктирная граница, пониженная яркость)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Структура дня создаётся сразу (ячейка в календаре), только контент пуст</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 6 — БИЗНЕС-ПЛАН -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p6">
+  <div class="part-eyebrow">Часть 06</div>
+  <div class="part-title">БИЗНЕС-ПЛАН (17+ БЛОКОВ)</div>
+  <div class="part-desc">Полная бизнес-документация клиента — все блоки детально, логика навигации, содержание каждого</div>
+</div>
+
+<h2>Навигация внутри бизнес-плана</h2>
+<p>Бизнес-план содержит 17+ блоков. При 4+ блоках внутри подраздела — появляется блок-меню (карточки с иконками). Каждый блок имеет кнопку «Назад» в меню бизнес-плана.</p>
+
+<h2>Все 17+ блоков бизнес-плана</h2>
+
+<h3>Блок 1 — Точка А (стартовая позиция)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Текущая ниша и позиционирование (из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Текущий доход (из анкеты раздел 3)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Текущие соцсети и подписчики (из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Сильные стороны (из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Слабые места / точки роста (из анкеты + анализ)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Вывод: с чего стартуем и что меняем</span></div>
+</div>
+
+<h3>Блок 2 — Финансовый план</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Цель по выручке за период (из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Разбивка по месяцам (прогрессия: M1→M2→M3...)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Источники дохода (по каждому продукту из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>KPI по выручке: план/факт таблица (интерактивная, клиент вносит факт)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Визуализация: график роста выручки по месяцам (SVG или CSS chart)</span></div>
+</div>
+
+<h3>Блок 3 — Продуктовая линейка</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Все продукты/услуги из анкеты (раздел 3)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Для каждого: название, описание, цена, кому, какую проблему решает</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Рекомендованные кодовые слова под каждый продукт</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Апселл-цепочка (логика продаж от дешёвого к дорогому)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Какие продукты в фокусе в какой месяц (из анализа конкурентов и трендов)</span></div>
+</div>
+
+<h3>Блок 4 — Воронка продаж</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Схема воронки: Ролик/пост → кодовое слово → SMMBot → прогрев → продажа</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Конверсии на каждом этапе (прогноз из анализа ниши)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ключевые триггеры и офферы на каждом этапе</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Схема автоворонки через SMMBot (подробнее в блоке SMMBot)</span></div>
+</div>
+
+<h3>Блок 5 — KPI и метрики</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Ключевые метрики из анкеты (просмотры, подписчики, продажи, выручка)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Таблица план/факт по каждой метрике за период</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Интерактивность: клиент вносит факт руками, система считает дельту и % выполнения</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Связь с Трекером роста (кнопка перейти)</span></div>
+</div>
+
+<h3>Блок 6 — Команда</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Текущая команда (из анкеты раздел 6)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Роли и зоны ответственности</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кого нужно нанять / привлечь для выполнения плана</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>OKO Team как часть команды — что делает, за что отвечает</span></div>
+</div>
+
+<h3>Блок 7 — Анализ конкурентов</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Топ-5 конкурентов в нише (из веб-поиска + анкеты раздел 5)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>По каждому: соцсети, подписчики, форматы контента, продукты, цены, сильные/слабые стороны</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Залётные форматы в нише (что залетает у конкурентов прямо сейчас)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Дифференциация: чем клиент будет отличаться</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Таблица сравнения: клиент vs конкуренты по 8–10 параметрам</span></div>
+</div>
+
+<h3>Блок 8 — Партнёрства</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Кто является потенциальными партнёрами в нише (из анализа)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Форматы партнёрств: коллаборации, взаимные репосты, совместные продукты, аффилиаты</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Шаблон оффера для партнёра (кнопка → Генератор партнёрства)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Список конкретных кандидатов для контакта (имена/бренды из ниши)</span></div>
+</div>
+
+<h3>Блок 9 — Риски и решения</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Топ-5 рисков для данной ниши (из анализа конкурентов и трендов)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Для каждого риска: вероятность, влияние, план митигации</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Операционные, маркетинговые, финансовые, репутационные риски</span></div>
+</div>
+
+<h3>Блок 10 — Дорожная карта</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Интерактивная timeline по месяцам периода</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ключевые события: запуски продуктов, выходы на новые площадки, коллаборации, вехи по подписчикам</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Этапы по фазам контента (Фаза 1→2→3)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Визуально: горизонтальная лента с точками и подписями</span></div>
+</div>
+
+<h3>Блок 11 — Рассылки и автоматизация</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Стратегия рассылок: TG бот, email (если есть), SMMBot воронки</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Сегменты аудитории: холодные/тёплые/горячие — разные сообщения</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка → Материалы → Скрипты рассылок</span></div>
+</div>
+
+<h3>Блок 12 — Психология и позиционирование</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Архетип бренда клиента (из анкеты раздел 2)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Тон голоса и стиль коммуникации</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Уникальное торговое предложение (УТП)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Боли и триггеры целевой аудитории (из анкеты + анализа)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Фирменные фразы клиента (из анкеты)</span></div>
+</div>
+
+<h3>Блок 13 — CRM (детально — см. Часть 11)</h3>
+<div class="callout blue">
+  <span class="callout-icon">🔗</span>
+  <div class="callout-body">
+    <div class="callout-title">Полная логика CRM описана в Части 11</div>
+    <div class="callout-text">CRM — главный блок бизнес-плана. Выделяется визуально. Кнопка «CRM» в главном меню системы ведёт прямо сюда.</div>
+  </div>
+</div>
+
+<h3>Блок 14 — Трекер роста (детально — см. Часть 12)</h3>
+<div class="callout blue">
+  <span class="callout-icon">🔗</span>
+  <div class="callout-body">
+    <div class="callout-title">Полная логика Трекера описана в Части 12</div>
+    <div class="callout-text">Трекер роста — ввод подписчиков по платформам, авто-дата, дельта, SVG-график, прогноз.</div>
+  </div>
+</div>
+
+<h3>Блок 15 — Академия (база знаний)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Материалы для обучения команды клиента</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Гайды и инструкции по инструментам (SMMBot, HeyGen, Gemini, Nano Banana)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ссылки на ключевые ресурсы ниши</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>FAQ по работе с системой</span></div>
+</div>
+
+<h3>Блок 16 — Стратегия аналитики</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Что отслеживаем: просмотры, досмотр %, кодовые в комментах, подписки, сохранения, клики</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Цикл аналитики: публикуем → 5-7 дней → анализ → корректируем → повторяем</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Инструменты: LiveDune / аналог для платформ клиента, встроенная аналитика соцсетей</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Правила корректировок (подробно в Части 30 — Аналитика)</span></div>
+</div>
+
+<h3>Блок 17 — Ресурсы и бюджет</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Бюджет на продвижение (из анкеты раздел 3)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Необходимые сервисы и их стоимость: SMMBot, HeyGen, Gemini Pro, Nano Banana, LiveDune</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Оборудование (камера, свет, микрофон — рекомендации из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Время в день на контент (из анкеты)</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 7 — ЧЕК-ЛИСТ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p7">
+  <div class="part-eyebrow">Часть 07</div>
+  <div class="part-title">ЧЕК-ЛИСТ</div>
+  <div class="part-desc">Визуальный ежедневный чек-лист с категориями, прогресс-баром и связью с контент-планом</div>
+</div>
+
+<h2>Структура чек-листа</h2>
+<p>Чек-лист — ежедневный список задач. Работает как Контент-план: сначала календарь, клик на день → задачи дня.</p>
+
+<h3>Календарь дней</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Аналогичен контент-плану: сетка дней с индикатором выполнения</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Цвет ячейки: серый = нет данных, оранжевый = частично, зелёный = выполнен</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Текущий день — выделен акцентом, авто-открывается</span></div>
+</div>
+
+<h3>Задачи дня — категории</h3>
+<p>Задачи группируются по категориям. Состав категорий адаптируется под нишу клиента из анкеты:</p>
+<div class="card">
+  <div class="li"><span class="li-ok">✓</span><span><strong>Контент</strong> — снять, смонтировать, опубликовать, написать описания, ответить на комментарии</span></div>
+  <div class="li"><span class="li-ok">✓</span><span><strong>Бизнес</strong> — задачи из бизнес-плана на этот день, встречи, звонки</span></div>
+  <div class="li"><span class="li-ok">✓</span><span><strong>Маркетинг</strong> — рассылки, реклама, коллаборации</span></div>
+  <div class="li"><span class="li-ok">✓</span><span><strong>Продажи</strong> — обработать заявки, написать потенциальным клиентам, закрыть сделки в CRM</span></div>
+  <div class="li"><span class="li-ok">✓</span><span><strong>Аналитика</strong> — проверить метрики, внести в трекер</span></div>
+  <div class="li"><span class="li-ok">✓</span><span><strong>Развитие</strong> — обучение, нетворкинг, партнёрства</span></div>
+</div>
+
+<h3>Прогресс-бар</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Общий прогресс дня: % выполненных задач</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Прогресс по периоду: сколько дней полностью завершено</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Анимация прогресс-бара при отметке задачи</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Сохранение состояния в localStorage браузера</span></div>
+</div>
+
+<h3>Связь с Контент-планом</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Открыть контент этого дня» → Контент-план → нужный день</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Задача «Опубликовать контент» кликабельна → открывает нужный день контент-плана</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 8 — МАТЕРИАЛЫ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p8">
+  <div class="part-eyebrow">Часть 08</div>
+  <div class="part-title">МАТЕРИАЛЫ</div>
+  <div class="part-desc">Промпты, скрипты, генераторы, лид-магниты, база знаний — всё в одном разделе</div>
+</div>
+
+<h2>Подразделы Материалов</h2>
+<p>Раздел «Материалы» содержит 5 подразделов с блок-меню навигации:</p>
+
+<h3>Подраздел 1 — Промпты (календарь)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Промпты организованы по датам — как контент-план</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Промпт» в контент-плане ведёт сюда к нужной дате автоматически</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Каждый промпт в отдельном блоке с кнопкой «Копировать»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Типы промптов: для Ф3/Ф7 (видео-фон), для карусели (отдельно на каждый слайд), для TG картинок, для сторис</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Все промпты на АНГЛИЙСКОМ (правила промптов — Часть 21)</span></div>
+</div>
+
+<h3>Подраздел 2 — Скрипты продаж</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Скрипт входящей заявки (кодовое слово → ответ бота → диалог до продажи)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Скрипт закрытия на созвон</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Скрипт обработки возражений (топ-5 возражений ниши из анализа)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Скрипт дожима (для тех кто думает)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Скрипт холодного обращения (для партнёров/коллаборов)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Все скрипты кастомизированы под нишу и продукты клиента из анкеты</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Копировать» на каждом скрипте</span></div>
+</div>
+
+<h3>Подраздел 3 — Генераторы (кнопки)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Создать КП» → открывает Генератор КП (Часть 13)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Создать договор» → открывает Генератор договора (Часть 14)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Создать оффер партнёрства» → открывает Генератор партнёрства (Часть 15)</span></div>
+</div>
+
+<h3>Подраздел 4 — Лид-магниты</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Список всех лид-магнитов системы (детальнее в Части 16)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Открыть» → открывает лид-магнит в новой вкладке или модалке</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Скачать HTML» → скачивает файл лид-магнита</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кодовое слово лид-магнита и инструкция куда вставить в SMMBot</span></div>
+</div>
+
+<h3>Подраздел 5 — База знаний</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>FAQ: ответы на частые вопросы клиентов ниши (генерируется на основе анализа)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Инструкции по сервисам: SMMBot, HeyGen, Gemini Pro, Nano Banana</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Гайд «Как публиковать контент» (для каждой соцсети клиента)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ссылки на полезные ресурсы ниши</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 9 — ВИЗУАЛ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p9">
+  <div class="part-eyebrow">Часть 09</div>
+  <div class="part-title">ВИЗУАЛ</div>
+  <div class="part-desc">Брендбук, оформление соцсетей, форматы сторис, SMMBot воронки</div>
+</div>
+
+<h2>Подразделы Визуала</h2>
+
+<h3>Подраздел 1 — Брендбук клиента</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Цветовая палитра бренда (из анкеты + дополненная)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Типографика: основной шрифт, акцентный, моно</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Логотип и правила использования (описание, если файл не загружен)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Визуальный стиль карусели: цвета, шрифты, иконки, неизменные элементы</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Визуальный стиль сторис</span></div>
+</div>
+
+<h3>Подраздел 2 — Оформление профилей</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Шапка профиля для каждой соцсети (адаптированная под платформу)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Bio-текст для каждой соцсети (кнопка «Копировать»)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Pinned-пост / закреплённое видео — что и зачем</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ссылка в профиле: что ставим, куда ведём</span></div>
+</div>
+
+<h3>Подраздел 3 — Форматы сторис С1–С5</h3>
+<p>Детальное описание каждого формата сторис (аналогично форматам видео). Для каждого: промпт фона, полный текст что говорить, технические требования.</p>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Формат</th><th>Описание</th><th>Промпт фона</th><th>Текст</th></tr>
+  <tr><td><strong>С1</strong> Утренний инсайт</td><td>Анонс ролика дня. Самодостаточная, точка входа для нового подписчика</td><td>Нужен</td><td>Полный текст</td></tr>
+  <tr><td><strong>С2</strong> Закулисье</td><td>Живое видео. Процесс работы, закулисье бизнеса</td><td>Не нужен</td><td>Полный текст что говорить</td></tr>
+  <tr><td><strong>С3</strong> Вопрос-ответ</td><td>Ответ на вопрос подписчика, 30–40 сек</td><td>Не нужен</td><td>Полный текст</td></tr>
+  <tr><td><strong>С4</strong> Прогрев</td><td>Текст на фоне, всегда с кодовым словом на продукт</td><td>Нужен</td><td>Полный текст</td></tr>
+  <tr><td><strong>С5</strong> Опрос</td><td>Фон БЕЗ текста (виджет в редакторе), вопрос + варианты</td><td>Нужен (без текста)</td><td>Вопрос + варианты</td></tr>
+</table>
+</div>
+
+<h3>Подраздел 4 — SMMBot воронки (кнопка → Часть 18)</h3>
+<h3>Подраздел 5 — Лендинги продуктов (кнопка → Часть 17)</h3>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 10 — ПЕРСПЕКТИВЫ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p10">
+  <div class="part-eyebrow">Часть 10</div>
+  <div class="part-title">ПЕРСПЕКТИВЫ</div>
+  <div class="part-desc">Дорожная карта, прогноз выручки, масштабирование, видение на 3 года</div>
+</div>
+
+<h2>Блоки раздела Перспективы</h2>
+
+<h3>Блок 1 — Интерактивная дорожная карта</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Горизонтальная timeline по месяцам периода + 6 месяцев после</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Точки: запуск продуктов, выход на новые соцсети, коллаборации, найм команды, масштабирование</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Клик на точку → подробное описание что делаем на этом этапе</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Текущий момент помечен маркером «Вы здесь»</span></div>
+</div>
+
+<h3>Блок 2 — Прогноз выручки</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>SVG-график: прогноз роста выручки по месяцам</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>3 сценария: консервативный / реалистичный / оптимистичный</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Цифры рассчитаны на основе продуктов клиента, среднего чека и прогнозной конверсии</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Привязка к количеству подписчиков: при каком кол-ве подписчиков достигается каждая ступень выручки</span></div>
+</div>
+
+<h3>Блок 3 — Масштабирование</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Следующий продукт/услуга которую стоит запустить после периода (из анализа трендов)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Новые соцсети / платформы для выхода</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Возможные партнёрства для масштабирования</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Трансформация от услуг к продуктам (инфопродукты, курсы, автоворонки)</span></div>
+</div>
+
+<h3>Блок 4 — Видение на 3 года</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Описание идеального состояния бизнеса через 3 года (из анкеты + дополненное)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ключевые шаги к этому видению</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Мотивационный блок — почему это достижимо (факты и кейсы из ниши)</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 11 — CRM -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p11">
+  <div class="part-eyebrow">Часть 11</div>
+  <div class="part-title">CRM — ЛОГИКА И СТРУКТУРА</div>
+  <div class="part-desc">Полная техническая реализация CRM: поля, логика, авто-дата, статусы, сводная статистика</div>
+</div>
+
+<h2>Место CRM в системе</h2>
+<div class="callout lime">
+  <span class="callout-icon">⭐</span>
+  <div class="callout-body">
+    <div class="callout-title">CRM — главный блок бизнес-плана</div>
+    <div class="callout-text">CRM выделяется визуально (рамка акцента, иконка звезды). Кнопка быстрого доступа с главной страницы и из хедера. Это инструмент ежедневной работы клиента.</div>
+  </div>
+</div>
+
+<h2>Структура CRM таблицы</h2>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Поле</th><th>Тип</th><th>Логика</th></tr>
+  <tr><td><strong>ID сделки</strong></td><td>Авто</td><td>Генерируется автоматически: CRM-001, CRM-002...</td></tr>
+  <tr><td><strong>Дата добавления</strong></td><td>Авто</td><td><code class="ic">new Date().toLocaleDateString('ru-RU')</code> — вставляется при создании, не редактируется</td></tr>
+  <tr><td><strong>Имя клиента</strong></td><td>Text input</td><td>ФИО или название компании</td></tr>
+  <tr><td><strong>Контакт</strong></td><td>Text input</td><td>Телефон / TG / email</td></tr>
+  <tr><td><strong>Продукт</strong></td><td>Select</td><td>Список продуктов клиента из анкеты (автоматически подставляется)</td></tr>
+  <tr><td><strong>Сумма</strong></td><td>Number input</td><td>В рублях или валюте клиента</td></tr>
+  <tr><td><strong>Статус</strong></td><td>Select + цвет</td><td>5 статусов (ниже)</td></tr>
+  <tr><td><strong>Источник</strong></td><td>Select</td><td>Откуда пришёл: кодовое слово, реклама, рекомендация, сайт, соцсеть</td></tr>
+  <tr><td><strong>Дата последнего контакта</strong></td><td>Date или Авто</td><td>При изменении статуса — авто-обновляется</td></tr>
+  <tr><td><strong>Следующий шаг</strong></td><td>Text input</td><td>Что сделать с этим лидом</td></tr>
+  <tr><td><strong>Примечание</strong></td><td>Textarea</td><td>Свободный текст</td></tr>
+</table>
+</div>
+
+<h2>5 статусов сделки</h2>
+<div class="card">
+  <div class="ni"><span class="ni-n" style="color:#60a5fa">Новый</span><span>Лид только добавлен, ещё не обработан. Синий цвет.</span></div>
+  <div class="ni"><span class="ni-n" style="color:#facc15">В работе</span><span>Ведётся диалог, идёт прогрев. Жёлтый цвет.</span></div>
+  <div class="ni"><span class="ni-n" style="color:#fb923c">Думает</span><span>Клиент думает, нужен дожим. Оранжевый цвет.</span></div>
+  <div class="ni"><span class="ni-n" style="color:var(--lime)">Оплатил</span><span>Сделка закрыта, деньги получены. Лаймовый цвет.</span></div>
+  <div class="ni"><span class="ni-n" style="color:#f87171">Отказ</span><span>Не купил. Красный цвет. Причина в примечании.</span></div>
+</div>
+
+<h2>Сводная статистика CRM</h2>
+<p>Над таблицей — 4 карточки сводной статистики, обновляются в реальном времени:</p>
+<div class="card">
+  <div class="ni"><span class="ni-n">1</span><span><strong>Всего лидов</strong> — общее количество строк в CRM</span></div>
+  <div class="ni"><span class="ni-n">2</span><span><strong>В работе</strong> — статусы «Новый» + «В работе» + «Думает»</span></div>
+  <div class="ni"><span class="ni-n">3</span><span><strong>Оплатили</strong> — количество закрытых сделок</span></div>
+  <div class="ni"><span class="ni-n">4</span><span><strong>Общая выручка</strong> — сумма по всем строкам со статусом «Оплатил»</span></div>
+</div>
+
+<h2>Фильтры и поиск</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Фильтр по статусу (кнопки-переключатели)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Фильтр по продукту (select из списка)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Поиск по имени клиента (text input)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кнопка «Экспорт CSV» — скачивает таблицу как CSV файл</span></div>
+</div>
+
+<h2>Сохранение данных</h2>
+<div class="callout yellow">
+  <span class="callout-icon">💾</span>
+  <div class="callout-body">
+    <div class="callout-title">localStorage для хранения данных CRM</div>
+    <div class="callout-text">Все данные CRM сохраняются в <code class="ic">localStorage</code> под ключом <code class="ic">crm_data_[ID клиента]</code>. При обновлении страницы данные не теряются. Кнопка «Экспорт CSV» позволяет создать бэкап.</div>
+  </div>
+</div>
+
+<h2>Код логики добавления сделки</h2>
+<div class="code-block">
+  <div class="code-lang">JavaScript — добавление сделки в CRM</div>
+  <pre><code>function addCRMDeal(formData) {
+  const deals = JSON.parse(localStorage.getItem('crm_data') || '[]');
+  
+  const newDeal = {
+    id: 'CRM-' + String(deals.length + 1).padStart(3, '0'),
+    dateAdded: new Date().toLocaleDateString('ru-RU'),   // авто-дата
+    dateUpdated: new Date().toLocaleDateString('ru-RU'),
+    name: formData.name,
+    contact: formData.contact,
+    product: formData.product,  // из списка продуктов клиента
+    amount: parseFloat(formData.amount) || 0,
+    status: 'new',              // всегда начинается как Новый
+    source: formData.source,
+    nextStep: formData.nextStep,
+    note: formData.note
+  };
+  
+  deals.push(newDeal);
+  localStorage.setItem('crm_data', JSON.stringify(deals));
+  renderCRM();    // перерисовываем таблицу
+  updateCRMStats(); // обновляем статистику
+}
+
+function updateDealStatus(id, newStatus) {
+  const deals = JSON.parse(localStorage.getItem('crm_data') || '[]');
+  const deal = deals.find(d => d.id === id);
+  if (deal) {
+    deal.status = newStatus;
+    deal.dateUpdated = new Date().toLocaleDateString('ru-RU'); // авто-дата обновления
+    localStorage.setItem('crm_data', JSON.stringify(deals));
+    renderCRM();
+    updateCRMStats();
+  }
+}</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 12 — ТРЕКЕР РОСТА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p12">
+  <div class="part-eyebrow">Часть 12</div>
+  <div class="part-title">ТРЕКЕР РОСТА</div>
+  <div class="part-desc">Ввод подписчиков, авто-дата, автоматическая дельта, SVG-график, прогноз роста</div>
+</div>
+
+<h2>Логика трекера — подробно</h2>
+<p>Трекер роста — ключевой инструмент аналитики. Клиент вносит данные раз в день/неделю. Система считает всё остальное автоматически.</p>
+
+<h3>Форма ввода данных</h3>
+<div class="step-flow">
+  <div class="step-item">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <div class="step-title">Выбор платформы</div>
+      <div class="step-desc">Select с платформами клиента из анкеты (например: TikTok, Instagram, YouTube, Telegram, VK). Только те платформы которые клиент указал в анкете раздел 4.</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <div class="step-title">Ввод текущего числа подписчиков</div>
+      <div class="step-desc">Только одно поле: «Сколько подписчиков сейчас». Number input. Не нужно считать прирост руками — система считает сама.</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <div class="step-title">Авто-дата</div>
+      <div class="step-desc">Дата вносится автоматически: <code class="ic">new Date().toLocaleDateString('ru-RU')</code>. Клиент НЕ вводит дату вручную.</div>
+    </div>
+  </div>
+  <div class="step-item">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <div class="step-title">Нажать «Добавить запись»</div>
+      <div class="step-desc">Запись сохраняется в localStorage. Система пересчитывает дельту и прогноз.</div>
+    </div>
+  </div>
+</div>
+
+<h3>Авто-расчёт дельты</h3>
+<div class="code-block">
+  <div class="code-lang">JavaScript — расчёт дельты</div>
+  <pre><code>function addTrackerEntry(platform, currentCount) {
+  const key = 'tracker_' + platform;
+  const entries = JSON.parse(localStorage.getItem(key) || '[]');
+  
+  const prevCount = entries.length > 0 ? entries[entries.length - 1].count : currentCount;
+  const delta = currentCount - prevCount;    // авто-дельта
+  const deltaPercent = prevCount > 0 ? ((delta / prevCount) * 100).toFixed(1) : 0;
+  
+  entries.push({
+    date: new Date().toLocaleDateString('ru-RU'),  // авто-дата
+    timestamp: Date.now(),
+    count: currentCount,
+    delta: delta,             // прирост от предыдущей записи
+    deltaPercent: deltaPercent
+  });
+  
+  localStorage.setItem(key, JSON.stringify(entries));
+  renderTracker(platform);
+  renderTrackerChart(platform);
+  updateTrackerForecast(platform);
+}</code></pre>
+</div>
+
+<h3>SVG-график</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Линейный SVG-график роста подписчиков по датам</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Цвет линии = акцент клиента</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Точки на графике кликабельны: показывают дату, число и дельту</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Если платформ несколько — отдельный график для каждой + сводный</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Область под линией залита градиентом от акцента к прозрачному</span></div>
+</div>
+
+<h3>Прогноз роста</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Рассчитывается на основе среднего дневного прироста за последние 7 записей</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Прогноз на конец периода: сколько подписчиков будет</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Прогноз на 3 цели из анкеты: когда будет 10K / 50K / 100K подписчиков (при текущем темпе)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Если темп замедляется — показывается предупреждение</span></div>
+</div>
+
+<h3>Сводная карточка по каждой платформе</h3>
+<div class="card">
+  <div class="ni"><span class="ni-n">→</span><span>Иконка платформы (SVG)</span></div>
+  <div class="ni"><span class="ni-n">→</span><span>Название платформы</span></div>
+  <div class="ni"><span class="ni-n">→</span><span>Текущее число подписчиков</span></div>
+  <div class="ni"><span class="ni-n">→</span><span>Прирост за последний период (дельта)</span></div>
+  <div class="ni"><span class="ni-n">→</span><span>% прироста</span></div>
+  <div class="ni"><span class="ni-n">→</span><span>Цель из анкеты и % выполнения</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 13 — ГЕНЕРАТОР КП -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p13">
+  <div class="part-eyebrow">Часть 13</div>
+  <div class="part-title">ГЕНЕРАТОР КОММЕРЧЕСКОГО ПРЕДЛОЖЕНИЯ</div>
+  <div class="part-desc">Полная спецификация генератора КП — структура, поля формы, выходной документ</div>
+</div>
+
+<h2>Общие параметры</h2>
+<div class="gen-spec">
+  <div class="gen-spec-head">
+    <span class="gen-spec-icon">📄</span>
+    <div>
+      <div class="gen-spec-name">Генератор КП</div>
+      <div class="gen-spec-meta">2–3 страницы · С анимфоном · Скачивание HTML · Тёмный фон OKO · Брендирование клиента</div>
+    </div>
+  </div>
+  <div class="gen-spec-body">
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Структура документа КП</div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Страница 1:</strong> Hero — логотип клиента, имя клиента, заголовок КП, дата, имя получателя. Подзаголовок: суть предложения одной фразой.</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Страница 1 (продолжение):</strong> «Почему сейчас» — актуальность предложения, боль которую решает. «Что предлагаем» — название продукта, описание, что входит (список).</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Страница 2:</strong> «Как это работает» — 3–5 шагов. «Что получите» — измеримые результаты (цифры). «Наши кейсы» — 2–3 кейса из анкеты (раздел 6).</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Страница 2–3:</strong> «Инвестиция» — блок с ценой (НЕ ценой в лоб, а «ваша инвестиция»). «Что включено» — итоговый список. «Гарантия» — если есть в анкете. CTA кнопка с контактом клиента.</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Подвал:</strong> Контакты клиента, ссылки на соцсети, дата действия КП.</span></div>
+    </div>
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Форма генерации</div>
+      <div class="li"><span class="li-dot">▸</span><span>Имя получателя КП</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Выбор продукта (из списка продуктов клиента — авто)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Цена (поле ввода)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Срок действия КП (дата)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Дополнительный оффер (поле для спецусловия)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Сгенерировать КП»</span></div>
+    </div>
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Вывод и действия</div>
+      <div class="li"><span class="li-dot">▸</span><span>КП рендерится прямо на странице в красивом HTML</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Скачать HTML» — скачивает готовое КП как отдельный файл</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Печать / PDF» — вызывает window.print() с правильными стилями для печати</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Создать новое КП» — очищает форму</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 14 — ГЕНЕРАТОР ДОГОВОРА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p14">
+  <div class="part-eyebrow">Часть 14</div>
+  <div class="part-title">ГЕНЕРАТОР ДОГОВОРА</div>
+  <div class="part-desc">Юридический договор, белый фон, 5–10 страниц, конвертируется в PDF для подписи</div>
+</div>
+
+<h2>КРИТИЧЕСКИ ВАЖНО: договор без анимфона</h2>
+<div class="callout red">
+  <span class="callout-icon">🚫</span>
+  <div class="callout-body">
+    <div class="callout-title">Договор = белый фон, деловой стиль</div>
+    <div class="callout-text">Договор — это юридический документ. Его распечатывают и подписывают. Поэтому: белый фон (#ffffff), чёрный текст (#111111), классические шрифты (Arial/Times), никакого анимфона, никакого Canvas. Это НЕ дизайн OKO, это официальный документ.</div>
+  </div>
+</div>
+
+<h2>Структура договора</h2>
+<div class="gen-spec">
+  <div class="gen-spec-head">
+    <span class="gen-spec-icon">⚖️</span>
+    <div>
+      <div class="gen-spec-name">Генератор договора</div>
+      <div class="gen-spec-meta">5–10 страниц · Белый фон · PDF-совместимый · Юридический стиль</div>
+    </div>
+  </div>
+  <div class="gen-spec-body">
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Разделы договора (адаптируются под нишу)</div>
+      <div class="ni"><span class="ni-n">1.</span><span><strong>Преамбула:</strong> «Исполнитель» (данные клиента из анкеты: ФИО/ИП/ООО, ИНН, адрес) и «Заказчик» (заполняется в форме генерации)</span></div>
+      <div class="ni"><span class="ni-n">2.</span><span><strong>Предмет договора:</strong> что именно делает исполнитель (из выбранного продукта)</span></div>
+      <div class="ni"><span class="ni-n">3.</span><span><strong>Права и обязанности сторон:</strong> что обязан исполнитель, что должен заказчик</span></div>
+      <div class="ni"><span class="ni-n">4.</span><span><strong>Стоимость и порядок оплаты:</strong> сумма (из формы), способы оплаты (из анкеты раздел 8)</span></div>
+      <div class="ni"><span class="ni-n">5.</span><span><strong>Сроки выполнения:</strong> даты из формы генерации</span></div>
+      <div class="ni"><span class="ni-n">6.</span><span><strong>Ответственность сторон:</strong> стандартные юридические формулировки</span></div>
+      <div class="ni"><span class="ni-n">7.</span><span><strong>Конфиденциальность:</strong> NDA-блок</span></div>
+      <div class="ni"><span class="ni-n">8.</span><span><strong>Разрешение споров:</strong> досудебный порядок, судебная юрисдикция</span></div>
+      <div class="ni"><span class="ni-n">9.</span><span><strong>Расторжение:</strong> условия досрочного прекращения</span></div>
+      <div class="ni"><span class="ni-n">10.</span><span><strong>Реквизиты и подписи:</strong> 2 колонки, место для подписей и печатей</span></div>
+    </div>
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Форма генерации</div>
+      <div class="li"><span class="li-dot">▸</span><span>ФИО/название Заказчика</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Реквизиты Заказчика (ИНН, адрес)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Выбор продукта/услуги из списка клиента</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Сумма договора</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Срок выполнения (дата начала + дата окончания)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Сгенерировать договор»</span></div>
+    </div>
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Вывод и действия</div>
+      <div class="li"><span class="li-dot">▸</span><span>Договор рендерится с белым фоном</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Скачать PDF» — вызывает <code class="ic">window.print()</code> со стилями <code class="ic">@media print</code> (белый фон, чёрный текст, скрыть хедер системы)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Кнопка «Скачать HTML» — скачивает договор для отправки по email</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 15 — ГЕНЕРАТОР ПАРТНЁРСТВА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p15">
+  <div class="part-eyebrow">Часть 15</div>
+  <div class="part-title">ГЕНЕРАТОР ОФФЕРА ПАРТНЁРСТВА</div>
+  <div class="part-desc">Документ для привлечения партнёров — коллаборации, совместные запуски, аффилиатная программа</div>
+</div>
+
+<div class="gen-spec">
+  <div class="gen-spec-head">
+    <span class="gen-spec-icon">🤝</span>
+    <div>
+      <div class="gen-spec-name">Генератор партнёрства</div>
+      <div class="gen-spec-meta">2–3 страницы · С анимфоном · Тёмный стиль OKO · Скачивание HTML</div>
+    </div>
+  </div>
+  <div class="gen-spec-body">
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Структура документа партнёрства</div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Hero:</strong> «Предложение о партнёрстве» + логотип клиента + имя компании-адресата</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Кто мы:</strong> краткое позиционирование клиента (из анкеты), цифры (подписчики, кейсы, результаты)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Почему вам это выгодно:</strong> конкретные выгоды для партнёра (цифры, охваты, аудитория)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Что предлагаем:</strong> формат партнёрства из формы (коллаборация / взаимный промоушн / совместный продукт / аффилиат)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Условия:</strong> что делает каждая сторона, как делится доход/охват</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>CTA:</strong> контакт, кнопка ответить</span></div>
+    </div>
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Форма генерации</div>
+      <div class="li"><span class="li-dot">▸</span><span>Имя/название партнёра</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Тип партнёрства (select: коллаборация, взаимный промоушн, совместный продукт, аффилиат)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Конкретное предложение (textarea)</span></div>
+      <div class="li"><span class="ni-n">→</span><span>Кнопка «Создать оффер»</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 16 — ЛИД-МАГНИТЫ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p16">
+  <div class="part-eyebrow">Часть 16</div>
+  <div class="part-title">ЛИД-МАГНИТЫ</div>
+  <div class="part-desc">Количество, структура, стиль, связь с кодовыми словами и SMMBot</div>
+</div>
+
+<h2>Количество лид-магнитов</h2>
+<div class="card accent">
+  <div class="li"><span class="li-ok">✓</span><span>Минимум столько лид-магнитов, сколько продуктов у клиента (из анкеты раздел 3)</span></div>
+  <div class="li"><span class="li-ok">✓</span><span>Если продуктов мало (1–2) — делаем по 2 лид-магнита на каждый продукт</span></div>
+  <div class="li"><span class="li-ok">✓</span><span>Итого: если 3 продукта — минимум 3 лид-магнита; если 1 продукт — 2 лид-магнита</span></div>
+  <div class="li"><span class="li-ok">✓</span><span>Каждый лид-магнит имеет уникальное кодовое слово (НЕ совпадает с кодовыми продуктов)</span></div>
+</div>
+
+<h2>Параметры каждого лид-магнита</h2>
+<div class="gen-spec">
+  <div class="gen-spec-head">
+    <span class="gen-spec-icon">🧲</span>
+    <div>
+      <div class="gen-spec-name">Лид-магнит</div>
+      <div class="gen-spec-meta">3–5 страниц · С анимфоном · Тёмный стиль OKO · Отдельный HTML файл · Кнопка скачать</div>
+    </div>
+  </div>
+  <div class="gen-spec-body">
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Структура лид-магнита</div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Обложка (стр. 1):</strong> Название лид-магнита (по теме), иконка/визуал, кодовое слово (крупно), логотип клиента</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Введение:</strong> Зачем этот материал, что получит читатель</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Основной контент (стр. 2–4):</strong> Полезный материал по теме. Конкретные действия, список, чек-лист или пошаговая инструкция. Всё адаптировано под нишу клиента.</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Финальная страница:</strong> «Хочешь большего?» — прогрев на продукт. Кнопка с контактом клиента (Telegram/сайт). Ссылка на основной сайт/сервисы клиента.</span></div>
+    </div>
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Связь с кодовыми словами и SMMBot</div>
+      <div class="li"><span class="li-dot">▸</span><span>Каждый лид-магнит имеет своё уникальное кодовое слово</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>В системе — раздел «Как настроить в SMMBot»: инструкция куда вставить кодовое слово и какую ссылку на лид-магнит отправлять</span></div>
+      <div class="li"><span class="li-dot">▸</span><span>Лид-магнит скачивается с системы → загружается на хостинг клиента → ссылка вставляется в SMMBot</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 17 — ЛЕНДИНГИ ПРОДУКТОВ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p17">
+  <div class="part-eyebrow">Часть 17</div>
+  <div class="part-title">ЛЕНДИНГИ ПРОДУКТОВ</div>
+  <div class="part-desc">Персональные лендинги для каждого продукта клиента — структура, стиль, конверсионные элементы</div>
+</div>
+
+<h2>Параметры лендинга</h2>
+<div class="gen-spec">
+  <div class="gen-spec-head">
+    <span class="gen-spec-icon">🌐</span>
+    <div>
+      <div class="gen-spec-name">Лендинг продукта</div>
+      <div class="gen-spec-meta">3–5 страниц (прокрутки) · С анимфоном · Отдельный HTML файл · Скачать и разместить на хостинге</div>
+    </div>
+  </div>
+  <div class="gen-spec-body">
+    <div class="gen-spec-section">
+      <div class="gen-spec-label">Структура лендинга</div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Hero-секция:</strong> Заголовок (главная боль и решение), подзаголовок (что получит), CTA-кнопка «Получить / Купить / Записаться», фото/визуал клиента или продукта</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Для кого:</strong> Портрет целевой аудитории (3–4 портрета из анкеты)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Что получите:</strong> Список результатов/выгод (6–8 пунктов с иконками Lucide)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Как это работает:</strong> 3–5 шагов с визуализацией</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Отзывы/кейсы:</strong> 2–3 кейса из анкеты (раздел 6)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>О авторе:</strong> Краткое позиционирование клиента, цифры, авторитет</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Цена и оффер:</strong> Блок с ценой, что включено, ограниченное предложение (дедлайн)</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>FAQ:</strong> 5–7 вопросов из анализа возражений ниши</span></div>
+      <div class="li"><span class="li-dot">▸</span><span><strong>Финальный CTA:</strong> Повторная кнопка с контактом, способы оплаты из анкеты</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 18 — SMMBOT ВОРОНКИ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p18">
+  <div class="part-eyebrow">Часть 18</div>
+  <div class="part-title">SMMBOT ВОРОНКИ</div>
+  <div class="part-desc">5 веток воронки для каждого продукта — сообщения, кнопки, логика автоматизации</div>
+</div>
+
+<h2>Структура воронки SMMBot</h2>
+<p>Для каждого кодового слова (продукт или лид-магнит) создаётся воронка из 5 веток.</p>
+<div class="tbl-wrap" style="overflow-x:auto">
+<table class="tbl">
+  <tr><th>Ветка</th><th>Триггер</th><th>Сообщение</th><th>Кнопки</th></tr>
+  <tr><td><strong>Ветка 1</strong><br>Первый ответ</td><td>Кодовое слово в комментарии</td><td>Привет [имя]! Твой [название лид-магнита/материал] уже готов. Вот ссылка: [ссылка]. Это бесплатно — пользуйся!</td><td>«Хочу ещё» → Ветка 2</td></tr>
+  <tr><td><strong>Ветка 2</strong><br>Прогрев</td><td>Нажал «Хочу ещё»</td><td>Если хочешь разобрать твой случай лично — напиши РАЗБОР (или кодовое на конкретный продукт)</td><td>«Да, хочу разбор» → Ветка 3 | «Нет, спасибо» → Ветка 5</td></tr>
+  <tr><td><strong>Ветка 3</strong><br>Оффер</td><td>Нажал «Да»</td><td>Описание продукта (2–3 предложения), главная выгода, цена не указывается. «Напиши мне, расскажу детали: [контакт клиента]»</td><td>«Написать» → ссылка на TG/переписку | «Расскажи подробнее» → Ветка 4</td></tr>
+  <tr><td><strong>Ветка 4</strong><br>Детали</td><td>Нажал «Подробнее»</td><td>Подробное описание продукта, что входит, результаты. Ссылка на лендинг продукта.</td><td>«Хочу попробовать» → контакт | «Подумаю» → Ветка 5</td></tr>
+  <tr><td><strong>Ветка 5</strong><br>Дожим</td><td>«Нет» / «Подумаю»</td><td>«Хорошо! Когда будешь готов — напиши [кодовое слово] и я тебя найду. Держи ещё один полезный материал: [ссылка на другой лид-магнит]»</td><td>—</td></tr>
+</table>
+</div>
+
+<div class="callout lime">
+  <span class="callout-icon">📌</span>
+  <div class="callout-body">
+    <div class="callout-title">Воронка адаптируется под нишу клиента</div>
+    <div class="callout-text">Все тексты веток пишутся в стиле и тоне клиента (из анкеты раздел 2: тон голоса, фирменные фразы). Кодовые слова — из списка продуктов и лид-магнитов. Контакт — из анкеты раздел 8.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 19 — ФОРМАТЫ ВИДЕО Ф1–Ф8 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p19">
+  <div class="part-eyebrow">Часть 19</div>
+  <div class="part-title">ФОРМАТЫ ВИДЕО Ф1–Ф8</div>
+  <div class="part-desc">Детальные правила каждого формата с примерами, антипримерами и логикой выбора под клиента</div>
+</div>
+
+<h2>Как выбирать форматы под клиента</h2>
+<p>Форматы подбираются на основе анализа анкеты: готовность сниматься (один/команда), ниша, стиль общения, наличие HeyGen/Fliki, тип контента который уже заходил. Не обязательно использовать все 8 — лучше 3–4 но постоянно.</p>
+
+<div class="card accent" style="margin-bottom:16px">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Ф1–Ф4</strong> — классические форматы с живым присутствием автора</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Ф5, Ф5б</strong> — ИИ-аватар (HeyGen) — автор не снимается вообще</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Ф6, Ф6б</strong> — смешанный: текст/скрин/демонстрация + закадровый голос или субтитры</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Ф7</strong> — стоковые видео (Fliki) — без автора и без ИИ</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Ф8</strong> — гибрид: живое + ИИ-элементы</span></div>
+</div>
+
+<h3>Ф1 — Говорящая голова (лицо в кадре)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> Автор говорит напрямую в камеру, без монтажных склеек или с минимумом</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Где снимать:</strong> дома, на кухне, в студии, в офисе — везде где есть смысловая связь с нишей</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Хук:</strong> первые 1–2 сек — захватить взгляд. Движение в кадре, жест, резкая фраза</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 15–60 секунд. Оптимум 30–45 сек</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Субтитры:</strong> обязательно. Крупные, акцентные слова выделены цветом</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Кодовое:</strong> произносится в ролике ИЛИ в первом комментарии — никогда в обоих местах</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Пример применения:</strong> Экспертный совет, разбор ошибки, личная история, ответ на вопрос</span></div>
+</div>
+<div class="card">
+  <div class="callout-title" style="font-size:10px;font-weight:700;color:var(--lime);margin-bottom:6px">✅ ПРАВИЛЬНО</div>
+  <div class="li"><span class="li-dot">▸</span><span>«Три ошибки в хуке которые убивают ролик» — говоришь стоя на кухне, субтитры крупные</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Хук: начинаешь с действия — режешь овощ, показываешь блюдо — потом говоришь</span></div>
+</div>
+<div class="card" style="border-color:rgba(255,80,80,0.25)">
+  <div class="callout-title" style="font-size:10px;font-weight:700;color:#ff5555;margin-bottom:6px">❌ НЕПРАВИЛЬНО</div>
+  <div class="li"><span class="li-dot">▸</span><span>Стоишь статично, просто говоришь — нет движения, нет субтитров</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Кодовое слово и в ролике И в описании — нарушение правила</span></div>
+</div>
+
+<h3>Ф2 — Процесс / behind-the-scenes</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> Съёмка процесса работы, закулисья, подготовки — без прямого обращения в камеру</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Нарезка:</strong> быстрый монтаж 3–5 коротких клипов, музыка в ритм, текст/стикеры поверх</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 15–30 сек</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Когда использовать:</strong> показ кухни, студии, процесса создания продукта, подготовки к мероприятию</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Виральность:</strong> высокая — люди любят смотреть за кулисы</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Кодовое:</strong> обычно нет — это виральный формат, кодовое убьёт органику</span></div>
+</div>
+
+<h3>Ф3 — Слайд-видео / Fliki</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> Стоковые видео или изображения + закадровый текст/ИИ-голос. Автор не появляется</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Инструмент:</strong> Fliki.ai — вставляешь текст, выбираешь голос, Fliki подбирает стоковые клипы</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 30–90 сек</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Промпт:</strong> в системе генерируется EN промпт для поиска стоковых клипов в Fliki</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Когда:</strong> клиент не хочет/не может сниматься на начальном этапе. Информационный контент</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Минус:</strong> меньше личной связи с аудиторией, но хорошо для начала</span></div>
+</div>
+
+<h3>Ф4 — Карусель (публикуется как видео-слайдшоу)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> 6–10 слайдов, каждый — изображение с текстом. Размер 1080×1350 (4:5)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Слайды:</strong> Обложка (хук) → 4–8 слайдов контента → финальный (CTA + кодовое)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Промпт:</strong> отдельный EN-промпт на КАЖДЫЙ слайд — включает размер, фон, шрифт, цвета, иконки</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Кодовое:</strong> на каждом слайде — где-то мелко, на финальном крупно</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Сохранения:</strong> самый сохраняемый формат — делать полезными (чек-листы, инструкции, топы)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Инструмент:</strong> Canva или Gemini по промпту</span></div>
+</div>
+
+<h3>Ф5 — HeyGen (ИИ-аватар говорящий)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> Аватар клиента говорит его голосом. Клиент не снимается — пишет текст, HeyGen генерирует видео</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Требования:</strong> клиент должен заранее записать клонирование голоса и внешности в HeyGen</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Промпт системы:</strong> готовый текст сценария — клиент только вставляет в HeyGen</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Лучшие темы:</strong> обучающий, экспертный контент где важна подача но не живые эмоции</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 30–90 сек</span></div>
+</div>
+
+<h3>Ф5б — HeyGen аватар на фоне презентации</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Аватар + фоновые слайды. Аватар слева/справа, справа — данные, цифры, схемы</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Промпт системы: сценарий + промпты для каждого фонового слайда</span></div>
+</div>
+
+<h3>Ф6 — Скринкаст / демонстрация экрана</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> Запись экрана с закадровым голосом или субтитрами. Показываешь что-то на экране</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Когда:</strong> обучающий контент, «как сделать X за 3 шага», показываешь сервис/инструмент</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 30–120 сек</span></div>
+</div>
+
+<h3>Ф6б — Текст на экране (text-based video)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что:</strong> Тёмный фон + крупный белый текст который появляется. Голос необязателен</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Стиль:</strong> минималистично, текст быстро меняется, музыка под настроение</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Когда:</strong> провокационные факты, цитаты, неожиданные утверждения, мнение</span></div>
+</div>
+
+<h3>Ф7 — Полностью стоковый (Fliki без голоса)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Красивые стоковые клипы по теме + текстовый оверлей + музыка. Без голоса</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Хорошо для эстетики, атмосферы, lifestyle-контента по нише</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Промпт: детальный EN-запрос для поиска клипов с описанием эмоции и атмосферы</span></div>
+</div>
+
+<h3>Ф8 — Гибрид (живое + ИИ-элементы)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Живая съёмка автора + вставки ИИ-сгенерированных иллюстраций или HeyGen-аватара</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Сложнее в монтаже, но высокая уникальность и привлечение внимания</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 20 — КОДОВЫЕ СЛОВА И ВОРОНКИ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p20">
+  <div class="part-eyebrow">Часть 20</div>
+  <div class="part-title">КОДОВЫЕ СЛОВА — ПРАВИЛА И ЛОГИКА</div>
+  <div class="part-desc">Как выбирать, куда ставить, правило тёплого окружения, запреты</div>
+</div>
+
+<h2>Что такое кодовое слово</h2>
+<p>Кодовое слово — слово которое зритель пишет в комментарии или директ, и SMMBot автоматически отвечает с нужной ссылкой/материалом. Это основа автоворонки.</p>
+
+<h2>Правила кодовых слов</h2>
+<div class="card accent">
+  <div class="li"><span class="li-dot">▸</span><span><strong>ЛИБО в ролике ЛИБО в описании</strong> — никогда в обоих. Дублирование убивает органику</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Максимум 1 кодовое слово в день на 1 продукт</strong> — не спамить</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>В описании — формат:</strong> первая строка — кодовое, вторая — ссылка (или в закреп-комментарий)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>В ролике — формат:</strong> произносится естественно в конце: «Напиши [слово] — и я пришлю...»</span></div>
+</div>
+
+<h2>Правило тёплого окружения</h2>
+<div class="card">
+  <p>Продающие ролики (с кодовым словом) должны окружать виральные (без кодового). Соотношение: на каждый продающий — минимум 2 виральных вокруг него.</p>
+  <div class="li"><span class="li-dot">▸</span><span>Виральный → Виральный → <strong>Продающий</strong> → Виральный → Виральный → <strong>Продающий</strong></span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Виральные — без кодовых слов, направлены на максимальный охват</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Продающие — с кодовым + ссылка. Не более 30–40% контента</span></div>
+</div>
+
+<h2>Как подбирать кодовые слова</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Связь с темой ролика: если ролик про пасту — кодовое «ПАСТА», если про завтраки — «ЗАВТРАК»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Лид-магниты: кодовое = название лид-магнита («РЕЦЕПТ», «ГАЙД», «ПЛАН»)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Продукты: уникальное слово связанное с продуктом («КЛУБ», «АКАДЕМИЯ», «УЖИН»)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Можно добавить цифру: «РЕЦЕПТ3», «КЛУБ2» — для разных лид-магнитов одной категории</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 21 — ПРОМПТЫ — ДЕТАЛЬНЫЕ ПРАВИЛА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p21">
+  <div class="part-eyebrow">Часть 21</div>
+  <div class="part-title">ПРОМПТЫ — ДЕТАЛЬНЫЕ ПРАВИЛА</div>
+  <div class="part-desc">Язык, минимальный объём, структура, отдельный промпт на каждый слайд, обложки</div>
+</div>
+
+<h2>Ключевые требования к промптам</h2>
+<div class="card accent">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Только EN (английский)</strong> — Gemini, Midjourney, Fliki работают лучше на английском</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Минимум 2500 символов</strong> — чем детальнее тем точнее результат</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Отдельный промпт на каждый слайд карусели</strong> — не один общий</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Отдельный промпт для обложки рилса</strong></span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Отдельный промпт для каждой сторис</strong> где нужна картинка</span></div>
+</div>
+
+<h2>Структура промпта для изображения</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Блок</th><th>Что писать</th><th>Пример</th></tr>
+  <tr><td>1. Canvas size</td><td>Размер в пикселях</td><td>1080x1350px, aspect ratio 4:5</td></tr>
+  <tr><td>2. Background</td><td>Фон подробно</td><td>Deep black background #000000 with subtle dark texture, slight vignette</td></tr>
+  <tr><td>3. Main subject</td><td>Главный объект</td><td>Professional chef's knife centered, studio lighting, shallow depth of field</td></tr>
+  <tr><td>4. Typography</td><td>Текст, шрифт, позиция</td><td>Large white Inter bold text "3 ОШИБКИ" at top center, 120px, letter-spacing -2px</td></tr>
+  <tr><td>5. Colors</td><td>Цвета из бренда клиента</td><td>Accent color gold #C9A84C for highlights and underline elements</td></tr>
+  <tr><td>6. Icons/elements</td><td>Дополнительные элементы</td><td>Three numbered circles (1,2,3) on left side in gold color</td></tr>
+  <tr><td>7. Mood/style</td><td>Стиль и атмосфера</td><td>Professional, premium, luxury food photography aesthetic</td></tr>
+  <tr><td>8. Technical</td><td>Технические требования</td><td>Ultra high quality, no artifacts, sharp edges, print-ready</td></tr>
+</table>
+</div>
+
+<h2>Промпт для Fliki (стоковые видео)</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Fliki-промпт описывает движущийся стоковый клип, не изображение</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Включить: тип движения камеры, что происходит в кадре, освещение, настроение</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Пример: «Slow motion close-up of fresh pasta being rolled by hands on flour-dusted wooden table, warm natural light, steam rising, golden hour atmosphere, 4K quality»</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 22 — ПРАВИЛА ЯЗЫКА И СТИЛЯ ТЕКСТОВ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p22">
+  <div class="part-eyebrow">Часть 22</div>
+  <div class="part-title">ПРАВИЛА ЯЗЫКА И СТИЛЯ ТЕКСТОВ</div>
+  <div class="part-desc">Живой язык, запрещённые конструкции, структура описаний, хуки, адаптация под нишу</div>
+</div>
+
+<h2>Главный принцип — живой язык</h2>
+<div class="card accent">
+  <p>Все тексты (сценарии, посты, описания, скрипты) пишутся как живая речь — так, как говорит сам клиент. Не как учебник, не как ChatGPT, не как рекламный буклет.</p>
+</div>
+
+<h2>Запрещённые конструкции</h2>
+<div class="card" style="border-color:rgba(255,80,80,0.25)">
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Тире в середине предложения — заменять на «и», «или», «но», «а»</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Противопоставления «Однако», «Тем не менее», «Несмотря на» — убирать</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>ИИ-штампы: «В мире где», «На современном этапе», «Как никогда актуально» — удалять</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Списки через запятую в середине предложения — разбивать на отдельные мысли через «и»</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>«Не только... но и» — заменять на прямое утверждение</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Пассивный залог: «было сделано», «является» — заменять на активный</span></div>
+</div>
+
+<h2>Обязательные правила</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Единый поток мысли</strong> — не разрывать на тезисы, если это пост или сценарий</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Перечисление через «и»</strong> — «фокус и системность и результат», не «фокус, системность, результат»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Конкретные цифры</strong> — «за 3 недели» вместо «за короткое время»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Глаголы действия</strong> — «получишь, сделаешь, узнаешь» вместо «будет возможность получить»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>«Ты» — обращение</strong> — не «вы», не «аудитория» — только «ты» если нет причин для «вы»</span></div>
+</div>
+
+<h2>Структура хука (первые 3 сек видео / первые 2 строки поста)</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Ключевые слова — <strong>в начало</strong>. Не «сегодня я расскажу» а сразу суть</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Конкретный результат или цифра: «За 30 дней +10К подписчиков», «5 техник которые...»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Триггеры: деньги / подписчики / просмотры / время / страх потери / эксклюзив</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Соотношение хуков: 50% широкие (любой человек зацепится) + 50% нишевые (только ЦА)</span></div>
+</div>
+
+<h2>Структура описания к ролику</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Строка 1:</strong> кодовое слово (если продающий) ИЛИ цепляющая фраза-продолжение хука</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Строка 2:</strong> ссылка на оплату или лид-магнит (если продающий)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Далее:</strong> развёрнутый текст поста — раскрытие темы ролика, дополнительная ценность</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>В конце:</strong> ссылка на TG канал</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Финальная строка:</strong> «Для поиска:» + 15–30 ключевых слов через пробел</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Никаких цен в описании. Никаких @никнеймов TG в соцсетях (только ссылки)</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 23 — АНАЛИЗ КОНКУРЕНТОВ И ТРЕНДОВ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p23">
+  <div class="part-eyebrow">Часть 23</div>
+  <div class="part-title">АНАЛИЗ КОНКУРЕНТОВ И ТРЕНДОВ НИШИ</div>
+  <div class="part-desc">Обязательный этап в начале работы. Веб-поиск, форматы которые залетают, бизнес-модели, топ конкурентов</div>
+</div>
+
+<h2>Что такое анализ и зачем он нужен</h2>
+<p>Анализ проводится в Сессии 1 — до создания контент-плана. Его результаты напрямую влияют на темы роликов, форматы, кодовые слова и бизнес-план. Без анализа система будет создана в вакууме.</p>
+
+<div class="callout lime">
+  <span class="callout-icon">🔍</span>
+  <div class="callout-body">
+    <div class="callout-title">Используй веб-поиск прямо в процессе создания</div>
+    <div class="callout-text">Claude имеет доступ к веб-поиску. В Сессии 1 — использовать его активно: искать конкурентов, залётные форматы, тренды. Данные актуальны на момент создания системы.</div>
+  </div>
+</div>
+
+<h2>Что нужно найти и проанализировать</h2>
+
+<h3>1. Топ конкурентов в нише клиента</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>5–10 конкурентов: из анкеты клиента + найденные через поиск «[ниша] [город/страна] Instagram/TikTok/YouTube»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Для каждого: аудитория, форматы видео, кодовые слова (если видны), продукты и цены</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Что делают хорошо и что плохо — честный анализ</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Где пустое место на рынке — что никто не делает но аудитория хочет</span></div>
+</div>
+
+<h3>2. Залётные форматы роликов в нише прямо сейчас</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Поиск: «[ниша] reels viral 2025/2026», «[ниша] тренды контент»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Какие хуки работают — первые 3 секунды самых популярных роликов</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Какие темы набирают 100K+ в нише — зафиксировать 10–15 таких тем</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Какие форматы вирусятся: Ф1/Ф2/Ф3/другое — что доминирует в нише</span></div>
+</div>
+
+<h3>3. Трендовые темы в нише на текущий момент</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Поиск: «тренды [ниша] 2026», «что актуально в [ниша]»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Новости и изменения в нише за последние 3–6 месяцев</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Что сейчас больше всего спрашивает аудитория в нише</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Сезонные и событийные темы на период системы клиента</span></div>
+</div>
+
+<h3>4. Актуальные бизнес-модели в нише</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Что хорошо продаётся в нише прямо сейчас — курсы, клубы, менторинг, мероприятия, продукты</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Ценовые диапазоны — что считается дорогим, средним, доступным в нише</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Новые бизнес-модели которых ещё не было год назад</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Сравнить с продуктами клиента — что нужно добавить / изменить / убрать</span></div>
+</div>
+
+<h2>Как результаты анализа попадают в систему</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Результат анализа</th><th>Где используется в системе</th></tr>
+  <tr><td>Залётные форматы и темы</td><td>Первые 10–15 тем в контент-плане (самые актуальные вперёд)</td></tr>
+  <tr><td>Конкуренты и их слабые места</td><td>Блок «Конкуренты» в бизнес-плане + позиционирование клиента</td></tr>
+  <tr><td>Актуальные бизнес-модели</td><td>Блок «Продуктовая линейка» + раздел «Перспективы»</td></tr>
+  <tr><td>Ценовые диапазоны</td><td>Финансовый план + генераторы КП</td></tr>
+  <tr><td>Хуки которые работают</td><td>Структура хуков в сценариях роликов</td></tr>
+  <tr><td>Сезонные темы</td><td>Распределение тем по месяцам контент-плана</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 24 — ЭТАПЫ СОЗДАНИЯ ПО СЕССИЯМ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p24">
+  <div class="part-eyebrow">Часть 24</div>
+  <div class="part-title">ЭТАПЫ СОЗДАНИЯ ПО СЕССИЯМ</div>
+  <div class="part-desc">Что делается в каждой сессии, входные данные, выходные данные, TXT-отчёт</div>
+</div>
+
+<h2>Входные данные каждой сессии</h2>
+<div class="card accent">
+  <div class="li"><span class="li-dot">▸</span><span>HTML-файл предыдущей сессии (или пустой шаблон для Сессии 1)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>ТЗ (этот документ)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Анкета клиента (заполненный TXT)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>TXT-отчёт предыдущей сессии (для сессий 2+)</span></div>
+</div>
+
+<h2>Формат TXT-отчёта между сессиями</h2>
+<div class="card">
+  <p>После каждой сессии Claude сам генерирует TXT-отчёт. Даниэль сохраняет его и прикладывает к следующей сессии.</p>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что сделано:</strong> список реализованных блоков/разделов</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Состояние файла:</strong> что готово, что заглушки, что пропущено</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что делать дальше:</strong> точный список задач следующей сессии</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Переменные клиента:</strong> имя, ниша, акцент-цвет HEX, продукты с ценами, подписчики стартовые, период, TG никнейм, ссылки оплаты</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Выявленные корректировки:</strong> что нужно изменить в правилах/подходе для этого клиента</span></div>
+</div>
+
+<h2>Этапы — таблица по сессиям</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Сессия</th><th>Что делается</th><th>Точки подтверждения</th></tr>
+  <tr>
+    <td><strong>1</strong></td>
+    <td>
+      Анализ анкеты → веб-поиск конкурентов и трендов ниши → 
+      дизайн-система (цвета, шрифт, стиль) → Canvas-фон → 
+      Header + навигация + Home-страница → каркас всех 6 разделов (пустые секции) → 
+      TXT-отчёт с переменными клиента
+    </td>
+    <td>✅ Подтвердить палитру цветов до начала кода</td>
+  </tr>
+  <tr>
+    <td><strong>2</strong></td>
+    <td>
+      Бизнес-план: все 17+ блоков с наполнением на основе анкеты → 
+      CRM (полный код + продукты клиента) → 
+      Трекер (стартовые значения из анкеты) → 
+      Блок Конкурентов (данные из анализа Сессии 1)
+    </td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><strong>3</strong></td>
+    <td>
+      Контент-план: темы-заглушки всего периода (данные DAYS с title, без полных текстов) → 
+      Чек-лист: все задачи всего периода → 
+      Промпт-календарь: заглушки промптов
+    </td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><strong>4</strong></td>
+    <td>
+      Материалы: скрипты продаж (5 штук) → 
+      Визуал: брендбук, оформление соцсетей, ТЗ для монтажёра → 
+      Перспективы: дорожная карта, прогноз выручки, масштабирование, видение 3 года → 
+      Воронки SMMBot (все ветки для всех продуктов)
+    </td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><strong>5</strong></td>
+    <td>
+      Генератор КП (все продукты клиента) → 
+      Генератор договора (5–10 стр, белый фон) → 
+      Генератор партнёрства → 
+      Генератор обложек (7 типов) → 
+      Лид-магниты (по количеству продуктов, минимум 2) → 
+      Лендинги продуктов (по одному на каждый продукт)
+    </td>
+    <td>✅ Запросить ФИО и город для договора если не в анкете</td>
+  </tr>
+  <tr>
+    <td><strong>6</strong></td>
+    <td>
+      Полные тексты: дни 1–10 контент-плана (сценарии, описания, промпты, сторис, клуб-посты)
+    </td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td><strong>7–N</strong></td>
+    <td>
+      По 10 дней полных текстов за сессию. Продолжается до заполнения всего периода.
+    </td>
+    <td>—</td>
+  </tr>
+</table>
+</div>
+
+<h2>Количество сессий по периодам</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Период</th><th>Дней контента</th><th>Сессий на тексты</th><th>Всего сессий</th></tr>
+  <tr><td>1 месяц</td><td>30</td><td>3</td><td>≈ 8</td></tr>
+  <tr><td>3 месяца</td><td>90</td><td>9</td><td>≈ 14</td></tr>
+  <tr><td>6 месяцев</td><td>180</td><td>18</td><td>≈ 23</td></tr>
+  <tr><td>12 месяцев</td><td>365</td><td>36</td><td>≈ 41</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 25 — ЧЕКЛИСТ ГОТОВНОСТИ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p25">
+  <div class="part-eyebrow">Часть 25</div>
+  <div class="part-title">ЧЕКЛИСТ ГОТОВНОСТИ</div>
+  <div class="part-desc">Проверь перед сдачей каждого этапа — что должно быть сделано и работать</div>
+</div>
+
+<h2>После Сессии 1 — Фундамент</h2>
+<div class="card">
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Дизайн-система: цвет подтверждён, CSS-переменные заданы правильно</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Canvas-анимация работает, цвет частиц совпадает с акцентом клиента</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Header с навигацией: 6 кнопок разделов, логотип/аватар клиента</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Home-страница: приветствие, сегодняшний контент, быстрые кнопки</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Переключение страниц работает без перезагрузки</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Мобильная версия: гамбургер открывается/закрывается</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>TXT-отчёт сгенерирован с переменными клиента</span></div>
+</div>
+
+<h2>После Сессии 2 — Бизнес-план</h2>
+<div class="card">
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Все 17+ блоков бизнес-плана присутствуют и заполнены данными из анкеты</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>CRM: добавление клиента работает, дата авто, статистика пересчитывается</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>CRM: данные сохраняются в localStorage, при перезагрузке не теряются</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Трекер: добавление записи работает, дельта считается автоматически</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Трекер: стартовые значения из анкеты подставлены</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Featured-блоки (CRM, Трекер) визуально выделены</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Блок Конкурентов заполнен данными из веб-анализа</span></div>
+</div>
+
+<h2>После Сессии 3 — Контент и чек-лист</h2>
+<div class="card">
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Все дни периода присутствуют в DAYS с темами-заглушками</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Визуальный календарь рендерится правильно (дни недели совпадают)</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Клик на дату открывает модалку, темы раскрываются</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Кнопки навигации в модалке: Чек-лист, Промпт — ведут куда нужно</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Чек-лист: все задачи дня отображаются по категориям</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Галочки: отмеченные сохраняются в localStorage</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Прогресс-бар дня корректно обновляется</span></div>
+</div>
+
+<h2>После Сессии 5 — Генераторы</h2>
+<div class="card">
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Генератор КП: форма заполняется, HTML скачивается с анимфоном</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Договор: белый фон, структура 5–10 страниц, ФИО из анкеты вписано</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Лид-магниты: по одному на каждый продукт (минимум 2 всего), скачиваются</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Лендинги: по одному на каждый продукт, скачиваются</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Генератор обложек: 7 типов, промпт генерируется на основе данных формы</span></div>
+</div>
+
+<h2>После сессий с текстами (6+)</h2>
+<div class="card">
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Сценарий каждого ролика: минимум 200 слов, структура хук → тело → CTA</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Описание (caption): структура выдержана — кодовое / ссылка / текст / TG / «Для поиска:»</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Промпты: только EN, минимум 2500 символов, отдельный на каждый слайд карусели</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Кодовое слово: ЛИБО в ролике ЛИБО в описании — не в обоих</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Правило тёплого окружения: минимум 2 виральных вокруг каждого продающего</span></div>
+  <div class="cli" onclick="togCl(this)"><div class="cl-b"></div><span>Язык: живой, без тире, без ИИ-штампов, без противопоставлений</span></div>
+</div>
+
+<h2>Глоссарий ключевых терминов</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Термин</th><th>Значение</th></tr>
+  <tr><td>Анимфон</td><td>Canvas-анимация фона — частицы и линии в акцентном цвете клиента</td></tr>
+  <tr><td>Featured-блок</td><td>Выделенный блок с акцентной подсветкой (CRM, Трекер, главный продукт)</td></tr>
+  <tr><td>Highlight-flash</td><td>Мигание элемента при навигации к нему из другого раздела</td></tr>
+  <tr><td>Кодовое слово</td><td>Слово в контенте → написал в директ → SMMBot отвечает автоматически</td></tr>
+  <tr><td>Заглушка</td><td>Placeholder-контент (только заголовок без полного текста) на ранних этапах</td></tr>
+  <tr><td>TXT-отчёт</td><td>Документ с итогами сессии и данными клиента — передаётся в следующую сессию</td></tr>
+  <tr><td>Ф1–Ф8</td><td>Форматы видео: Ф1 говорящая голова, Ф2 процесс, Ф3 Fliki, Ф4 карусель, Ф5 HeyGen, Ф6 скрин, Ф7 стоковый, Ф8 гибрид</td></tr>
+  <tr><td>Трипваер</td><td>Дешёвый входной продукт (до 2000₽) для первого касания аудитории</td></tr>
+  <tr><td>Апселл</td><td>Предложение следующего продукта клиенту после покупки текущего</td></tr>
+  <tr><td>Период системы</td><td>1 / 3 / 6 / 12 месяцев — определяет объём контент-плана</td></tr>
+</table>
+</div>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 26 — ПРАВИЛА ПОЛНЫХ ТЕКСТОВ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p26">
+  <div class="part-eyebrow">Часть 26</div>
+  <div class="part-title">ПРАВИЛА ПОЛНЫХ ТЕКСТОВ</div>
+  <div class="part-desc">Сценарии роликов, ТГ-посты, карусели, сторис — структура, логика, объёмы. Всё адаптируется под клиента.</div>
+</div>
+
+<div class="callout lime">
+  <span class="callout-icon">📌</span>
+  <div class="callout-body">
+    <div class="callout-title">Главный принцип — анализ клиента определяет всё</div>
+    <div class="callout-text">Длина текстов, тон, стиль, темп, юмор, глубина — всё зависит от ниши, возраста, характера, локации, пола и аудитории клиента. Шеф-повар из Бангкока говорит иначе чем финансовый аналитик из Москвы. Правила ниже — это универсальный каркас. Наполнение всегда индивидуальное.</div>
+  </div>
+</div>
+
+<h2>1. Сценарий ролика (видео)</h2>
+<p>Структура универсальная, длина и стиль — под клиента.</p>
+
+<h3>Структура: Хук → Тело → CTA</h3>
+<div class="card accent">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Хук (первые 2–4 сек):</strong> одна фраза. Ключевые слова в начало. Конкретный результат или цифра. Триггер (деньги / подписчики / страх / эксклюзив). Задача — остановить скролл.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Тело (60–80% хронометража):</strong> раскрытие обещания хука. Польза / доказательство / история / инструмент. Делится на 2–4 смысловых блока без явных разрывов — единый поток. В виральных роликах: 100% польза. В продающих: 70% польза + подготовка к CTA.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>CTA (последние 3–8 сек):</strong> одно конкретное действие. Для продающих — кодовое слово. Для виральных — призыв подписаться / сохранить / поделиться. Никогда двух CTA одновременно.</span></div>
+</div>
+
+<h3>Длина сценария по форматам</h3>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Тип ролика</th><th>Хронометраж</th><th>Объём сценария</th><th>Особенности под клиента</th></tr>
+  <tr><td>Стоп-скролл / шок-факт</td><td>7–15 сек</td><td>30–60 слов</td><td>Максимально адаптировать под триггеры ЦА клиента — что шокирует именно их аудиторию</td></tr>
+  <tr><td>Прямая польза (говорящая голова)</td><td>30–60 сек</td><td>80–150 слов</td><td>Стиль речи = тон голоса клиента из анкеты. Молодой аудитории — короче и динамичнее.</td></tr>
+  <tr><td>Разоблачение / провокация</td><td>30–45 сек</td><td>70–120 слов</td><td>Под нишу: что именно «скрывают» в этой сфере. Адаптировать под локацию (рынок РФ vs зарубеж)</td></tr>
+  <tr><td>Обучающий / пошаговый</td><td>45–90 сек</td><td>120–220 слов</td><td>Количество шагов = сложность аудитории. Эксперты — меньше объяснений, новички — больше.</td></tr>
+  <tr><td>HeyGen аватар</td><td>30–90 сек</td><td>80–220 слов</td><td>Текст пишется под дикцию аватара — без сложных оборотов, короткие предложения</td></tr>
+  <tr><td>Fliki / стоковый</td><td>15–60 сек</td><td>Закадровый текст 40–120 слов</td><td>Стиль — нейтральный, информационный. Под нишу клиента.</td></tr>
+</table>
+</div>
+
+<h2>2. Описание к ролику (caption)</h2>
+<div class="card accent">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Строка 1:</strong> кодовое слово (если продающий) ИЛИ продолжение хука ролика — зацепить тех кто дочитал</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Строка 2:</strong> ссылка на продукт / лид-магнит (если продающий)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Основной текст:</strong> развёрнутое раскрытие темы ролика — дополнительная польза которой нет в видео. 70% польза, 30% контекст и призыв.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Предпоследняя строка:</strong> ссылка на TG канал</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Последняя строка:</strong> «Для поиска:» + 15–30 ключевых слов через пробел — релевантные нише и теме ролика</span></div>
+</div>
+<div class="card" style="border-color:rgba(255,80,80,0.2)">
+  <div class="callout-title" style="font-size:10px;font-weight:700;color:#ff5555;margin-bottom:6px">❌ ЗАПРЕЩЕНО в описаниях</div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Цены — никогда. Ни в одном описании ни одного формата.</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>@никнейм TG в тексте — только ссылка t.me/...</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Кодовое слово одновременно в ролике И в описании</span></div>
+  <div class="li"><span class="li-dot" style="color:#ff5555">✗</span><span>Два продающих ролика подряд в один день</span></div>
+</div>
+
+<h2>3. ТГ-пост</h2>
+<p>Тип поста определяется на основе анализа клиента и его контент-плана. Три базовых типа:</p>
+
+<h3>Тип 1 — Экспертный пост</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Зачин (1–2 строки):</strong> утверждение или факт который удивляет или противоречит ожиданиям аудитории</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Раскрытие (основной текст):</strong> объяснение, доказательство, личный опыт или кейс. 3–5 смысловых абзацев. Единый поток без списков.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Вывод + CTA:</strong> что делать с этим знанием. Ссылка или кодовое слово если продающий.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 600–1200 символов. Адаптируется под возраст аудитории — молодая читает короче.</span></div>
+</div>
+
+<h3>Тип 2 — Кейс / цифры</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Заголовок:</strong> результат цифрой — «0 рублей на рекламу и 200 заявок», «За 30 дней +8К подписчиков»</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Контекст:</strong> кто клиент (без имени), с чего начали, что было до</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Что сделали:</strong> конкретные шаги — 3–5 действий. Каждое действие понятно и применимо.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Результат + CTA:</strong> цифра которую обещал заголовок + следующий шаг</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 500–900 символов</span></div>
+</div>
+
+<h3>Тип 3 — Оффер / продающий</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Зачин:</strong> кодовое слово + проблема которую решает продукт</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Описание продукта:</strong> что получит человек, конкретно и ёмко. Без перечисления «входит то и это» — только результат.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Социальное доказательство:</strong> одна фраза — сколько клиентов, какой результат</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>CTA:</strong> одно действие — написать кодовое / перейти по ссылке. Цены нет.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Длина:</strong> 300–600 символов — короче, конкретнее</span></div>
+</div>
+
+<div class="callout lime">
+  <span class="callout-icon">📌</span>
+  <div class="callout-body">
+    <div class="callout-title">Адаптация ТГ-постов под клиента</div>
+    <div class="callout-text">Тип поста, длина, тон — на основе анализа: аудитория клиента молодая или зрелая? Ниша серьёзная (финансы, медицина) или лёгкая (еда, lifestyle)? Клиент говорит «ты» или «вы»? Локация влияет на культурный контекст примеров и кейсов. Всё это определяет стиль каждого поста.</div>
+  </div>
+</div>
+
+<h2>4. Карусель (6–10 слайдов, 1080×1350px, 4:5)</h2>
+<h3>Логика слайдов</h3>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Слайд</th><th>Содержание</th><th>Задача</th></tr>
+  <tr><td><strong>1 — Обложка-хук</strong></td><td>Заголовок-триггер. Никакого лишнего текста. Максимум 8–10 слов.</td><td>Остановить скролл, заставить листать дальше</td></tr>
+  <tr><td><strong>2–3 — Проблема / контекст</strong></td><td>Обозначить боль или ситуацию которую знает ЦА. 2–4 строки текста.</td><td>Узнавание — «это про меня»</td></tr>
+  <tr><td><strong>4–7 — Польза / решение</strong></td><td>Каждый слайд = один инструмент / шаг / факт. Заголовок слайда + 2–3 строки раскрытия.</td><td>Ценность которую сохраняют</td></tr>
+  <tr><td><strong>8–9 — Углубление или кейс</strong></td><td>Конкретный результат / пример / цифра. Необязательно если карусель короткая (6 слайдов).</td><td>Доказательство</td></tr>
+  <tr><td><strong>Последний — CTA</strong></td><td>Кодовое слово крупно + одна строка что получит человек + ссылка.</td><td>Конверсия</td></tr>
+</table>
+</div>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Текст на слайде:</strong> максимум 30–40 слов. Один слайд — одна мысль. Никаких стен текста.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Промпт:</strong> отдельный EN-промпт на каждый слайд. Не один общий.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Тема каруселей:</strong> чек-листы, инструкции, топы, сравнения — всё что сохраняют. Самый высокосохраняемый формат.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Адаптация:</strong> количество слайдов зависит от глубины темы. 6 — простая инструкция. 10 — сложный гайд. Под нишу клиента.</span></div>
+</div>
+
+<h2>5. Сторис С1–С5</h2>
+<p>Размер 1080×1920 (9:16). Для каждого типа: промпт фона + полный текст что говорить.</p>
+
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Тип</th><th>Структура текста</th><th>Промпт фона</th><th>Адаптация под клиента</th></tr>
+  <tr>
+    <td><strong>С1 — Экспертная</strong></td>
+    <td>Тезис (1 фраза) → объяснение (2–3 фразы) → вывод + призыв писать в директ или ответить на вопрос</td>
+    <td>EN-промпт: тёмный фон в цветах бренда, минималистичный, акцент на типографике, без лиц</td>
+    <td>Тон и тема — на основе ниши. Финансы: строгий. Lifestyle: живой и личный.</td>
+  </tr>
+  <tr>
+    <td><strong>С2 — За кулисами</strong></td>
+    <td>«Покажу...» или «Сегодня...» → показ процесса голосом (30–40 сек) → CTA написать реакцию</td>
+    <td>Живое видео клиента, промпт не нужен</td>
+    <td>Место съёмки должно совпадать с нишей. Повар на кухне, тренер в зале.</td>
+  </tr>
+  <tr>
+    <td><strong>С3 — Вопрос-ответ</strong></td>
+    <td>Зачитать вопрос из директа → 30–45 сек ответ по существу → «Ещё вопросы — пиши»</td>
+    <td>Фон с виджетом вопроса или минималистичный тёмный</td>
+    <td>Вопросы — из реальных директов клиента. Если нет — придумать типичные для ниши.</td>
+  </tr>
+  <tr>
+    <td><strong>С4 — Прогрев</strong></td>
+    <td>Упоминание продукта косвенно → личная история или наблюдение → кодовое слово как ответ</td>
+    <td>EN-промпт: атмосферный фон в стиле бренда, эмоциональный, тёплый</td>
+    <td>Стиль прогрева зависит от продукта. Дорогой продукт — мягче. Массовый — прямее.</td>
+  </tr>
+  <tr>
+    <td><strong>С5 — Опрос / вовлечение</strong></td>
+    <td>Вопрос аудитории (без текста — только виджет опроса) → реакция на результаты в следующей сторис</td>
+    <td>Фон БЕЗ текста — только виджет опроса в редакторе соцсети</td>
+    <td>Тема опроса — из болей аудитории клиента. На основе анализа ЦА из анкеты.</td>
+  </tr>
+</table>
+</div>
+
+<h2>6. Правило 70/30 — соотношение пользы и CTA</h2>
+<div class="card accent">
+  <p><strong>В любом тексте:</strong> 70% — польза, инструменты, знание, история. 30% — контекст продукта, кодовое слово, ссылка, CTA.</p>
+  <div class="li"><span class="li-dot">▸</span><span>Виральный контент: 100% польза. Без CTA на продукт. Максимум — призыв подписаться/сохранить.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Продающий контент: 70% польза + 30% продажа. Польза всегда первая — CTA в конце.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Никогда два продающих подряд. Минимум 2 виральных между продающими.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Лид-магнитный контент: 80% польза + 20% «хочешь больше — напиши слово»</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 27 — НАВИГАЦИЯ ИЗ ЧЕК-ЛИСТА -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p27">
+  <div class="part-eyebrow">Часть 27</div>
+  <div class="part-title">НАВИГАЦИЯ ИЗ ЧЕК-ЛИСТА — ПОЛНАЯ ЦЕПОЧКА</div>
+  <div class="part-desc">Как кнопка в чек-листе открывает нужный материал в другом разделе — полная техническая цепочка</div>
+</div>
+
+<h2>Принцип навигации</h2>
+<p>Каждая задача в чек-листе может иметь кнопку «Открыть материал» которая ведёт точно к нужному контенту. Не просто к разделу — а к конкретному блоку, подблоку, раскрытому аккордеону с подсветкой нужного элемента.</p>
+
+<h2>Полная цепочка</h2>
+<div class="card accent">
+  <div class="li"><span class="li-n">1</span><span><strong>showPage(section)</strong> — переключить страницу (content / biz / materials / visual / persp)</span></div>
+  <div class="li"><span class="li-n">2</span><span><strong>setTimeout(300мс)</strong> — подождать пока страница отрендерится</span></div>
+  <div class="li"><span class="li-n">3</span><span><strong>openBlock(blockId)</strong> — открыть нужный блок (карточку в меню блоков)</span></div>
+  <div class="li"><span class="li-n">4</span><span><strong>setTimeout(200мс)</strong> — подождать анимацию открытия блока</span></div>
+  <div class="li"><span class="li-n">5</span><span><strong>openSubBlock(subId)</strong> — открыть подблок внутри блока (если есть вложенность)</span></div>
+  <div class="li"><span class="li-n">6</span><span><strong>toggleCI(itemId)</strong> — раскрыть аккордеон / CI элемент (промпт, сценарий, описание)</span></div>
+  <div class="li"><span class="li-n">7</span><span><strong>el.scrollIntoView({behavior: 'smooth', block: 'center'})</strong> — прокрутить к элементу</span></div>
+  <div class="li"><span class="li-n">8</span><span><strong>highlight-flash 1.8 сек</strong> — подсветить элемент мигающей лаймовой обводкой</span></div>
+</div>
+
+<h2>Технический код навигации</h2>
+<div class="card">
+<pre style="font-size:11px;line-height:1.6;color:var(--w8);overflow-x:auto"><code>function navToItem(page, blockId, subBlockId, itemId) {
+  showPage(page);
+  setTimeout(function() {
+    if (blockId) openBlock(blockId);
+    setTimeout(function() {
+      if (subBlockId) openSubBlock(subBlockId);
+      if (itemId) {
+        setTimeout(function() {
+          toggleCI(itemId);
+          var el = document.getElementById(itemId);
+          if (el) {
+            el.scrollIntoView({behavior: 'smooth', block: 'center'});
+            el.classList.add('highlight-flash');
+            setTimeout(function() {
+              el.classList.remove('highlight-flash');
+            }, 1800);
+          }
+        }, 300);
+      }
+    }, 200);
+  }, 300);</code></pre>
+</div>
+
+<h2>CSS для highlight-flash</h2>
+<div class="card">
+<pre style="font-size:11px;line-height:1.6;color:var(--w8)"><code>.highlight-flash {
+  animation: hflash 1.8s ease-out;
+}
+@keyframes hflash {
+  0%   { box-shadow: 0 0 0 3px rgba(154,255,0,0); }
+  20%  { box-shadow: 0 0 0 3px rgba(154,255,0,0.8); }
+  60%  { box-shadow: 0 0 0 3px rgba(154,255,0,0.5); }
+  100% { box-shadow: 0 0 0 3px rgba(154,255,0,0); }
+}</code></pre>
+</div>
+
+<h2>Правило отсутствия дублей между разделами</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span>Если блок «Боты и воронки» существует в разделе Визуал — он не дублируется в Материалах. Ссылка из чек-листа ведёт именно в Визуал.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Если промпты для сторис существуют в Контент-плане — они не дублируются в Материалах. Раздел Материалы ссылается на них.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Принцип: каждый материал живёт в одном месте. Навигация везде, контент один.</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 28 — АНАЛИТИКА-ЦИКЛ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p28">
+  <div class="part-eyebrow">Часть 28</div>
+  <div class="part-title">АНАЛИТИКА-ЦИКЛ</div>
+  <div class="part-desc">Раз в месяц: LiveDune + трекеры → корректировки контент-плана, бизнес-плана и задач</div>
+</div>
+
+<h2>Три источника данных</h2>
+<div class="card accent">
+  <div class="li"><span class="li-n">1</span><span><strong>Файл LiveDune</strong> — выгрузка аналитики соцсетей за месяц. Охваты, просмотры, подписки/отписки, сохранения, комментарии, переходы в профиль по каждому посту/ролику.</span></div>
+  <div class="li"><span class="li-n">2</span><span><strong>Трекер аудитории</strong> (внутри системы) — клиент ведёт ежедневно: количество подписчиков в каждой соцсети на конец дня (+/-). 30 строк за месяц.</span></div>
+  <div class="li"><span class="li-n">3</span><span><strong>Трекер продаж / CRM</strong> (внутри системы) — каждая сделка, по каждому продукту, с датой. Откуда пришёл клиент (кодовое слово / ролик / директ).</span></div>
+</div>
+
+<h2>Алгоритм ежемесячной корректировки</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Шаг</th><th>Что анализируем</th><th>Что корректируем</th></tr>
+  <tr><td><strong>1. Топ роликов</strong></td><td>Какие 3–5 роликов дали максимальный рост аудитории и/или продаж? Какой тип, тема, хук, формат?</td><td>Контент-план следующего месяца: больше похожих тем и форматов</td></tr>
+  <tr><td><strong>2. Антилидеры</strong></td><td>Какие ролики дали 0 или отток? Тема / формат / время публикации?</td><td>Убираем повторение этих тем/форматов. Корректируем время публикации.</td></tr>
+  <tr><td><strong>3. Кодовые слова</strong></td><td>Какое кодовое слово принесло больше всего заявок? Из каких роликов?</td><td>Больше роликов с этим кодовым. Кодовые которые не сработали — меняем слово или формат.</td></tr>
+  <tr><td><strong>4. Динамика аудитории</strong></td><td>В какие дни трекер показывал рост? Что было опубликовано в эти дни? В какие дни отток?</td><td>Оптимизация расписания. Корректировка соотношения типов контента.</td></tr>
+  <tr><td><strong>5. Продажи по продуктам</strong></td><td>Какой продукт продавался лучше? Откуда приходили покупатели?</td><td>Корректировка воронки SMMBot. Возможно увеличить промо самого продаваемого продукта.</td></tr>
+  <tr><td><strong>6. Финансовый план</strong></td><td>Факт vs план. Отклонение в %.</td><td>Пересчёт плана на следующий месяц. Корректировка KPI в бизнес-плане.</td></tr>
+</table>
+</div>
+
+<h2>Что меняется по итогам анализа</h2>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Контент-план:</strong> темы, форматы, соотношение виральных/продающих, расписание</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Чек-лист:</strong> задачи следующего месяца на основе нового контент-плана</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Бизнес-план:</strong> финансовый план, KPI, план по продуктам</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Воронки SMMBot:</strong> кодовые слова, тексты веток — на основе того что сработало</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Промпты:</strong> если визуал определённого типа давал лучший результат — вшить его стиль</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 29 — СТРУКТУРА ГЕНЕРАТОРОВ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p29">
+  <div class="part-eyebrow">Часть 29</div>
+  <div class="part-title">ДЕТАЛЬНАЯ СТРУКТУРА ГЕНЕРАТОРОВ</div>
+  <div class="part-desc">КП, договор, партнёрство, лид-магниты, лендинги — что входит в каждый, объём, стиль</div>
+</div>
+
+<div class="callout lime">
+  <span class="callout-icon">📌</span>
+  <div class="callout-body">
+    <div class="callout-title">Все генераторы адаптируются под клиента</div>
+    <div class="callout-text">Структура — универсальная. Содержание — всегда на основе анализа: ниша, возраст аудитории, локация, тип продукта, стиль речи клиента. 60-летний коллекционер монет из Лондона и 28-летний агент недвижимости в Бангкоке получат разные КП, разные лид-магниты и разные лендинги — при одной и той же структуре.</div>
+  </div>
+</div>
+
+<h2>Генератор КП (2–3 страницы, анимфон)</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Блок</th><th>Содержание</th><th>Примечание</th></tr>
+  <tr><td>1. Обращение</td><td>Обращение по имени получателя. Краткое представление автора — 1–2 факта об экспертизе.</td><td>Из анкеты: имя клиента, его достижения и регалии</td></tr>
+  <tr><td>2. Боль получателя</td><td>Описание ситуации/проблемы которую испытывает ЦА. Узнавание.</td><td>На основе ЦА из анкеты и ниши клиента</td></tr>
+  <tr><td>3. Продукт</td><td>Название продукта. Что входит — список. Формат работы. Длительность.</td><td>Из анкеты: продукты П1–П10</td></tr>
+  <tr><td>4. Причины выбрать</td><td>3–4 конкретных преимущества. Цифры, факты, уникальность. Без общих слов.</td><td>На основе анализа конкурентов — что клиент делает лучше</td></tr>
+  <tr><td>5. Результаты клиентов</td><td>2–3 коротких кейса или цифры. Без имён если нет согласия.</td><td>Придумываются на основе ниши и типичных результатов</td></tr>
+  <tr><td>6. Гарантии</td><td>Что гарантирует клиент. Конкретно и честно. Не «100% результат» а конкретное обязательство.</td><td>На основе ниши и типа продукта</td></tr>
+  <tr><td>7. CTA</td><td>Кнопка с действием + ссылка оплаты + TG контакт клиента</td><td>Из анкеты: ссылки оплаты и TG</td></tr>
+</table>
+</div>
+
+<h2>Генератор договора (5–10 страниц, белый фон)</h2>
+<div class="card">
+  <p>Стандартный договор оказания услуг + два приложения которые меняются под продукт и нишу клиента.</p>
+</div>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Раздел договора</th><th>Содержание</th></tr>
+  <tr><td>Преамбула</td><td>Стороны договора. ФИО клиента (исполнитель) и шаблонное поле для данных заказчика. Дата.</td></tr>
+  <tr><td>1. Предмет договора</td><td>Ссылка на Приложение 1. «Исполнитель оказывает услуги согласно Приложению 1»</td></tr>
+  <tr><td>2. Права и обязанности сторон</td><td>Стандартный блок. Обязанности исполнителя (оказать в срок, соблюдать конфиденциальность). Обязанности заказчика (оплатить, предоставить материалы).</td></tr>
+  <tr><td>3. Стоимость и порядок оплаты</td><td>«Стоимость услуг составляет ____». Порядок оплаты (предоплата / рассрочка / постоплата). Адаптируется под нишу.</td></tr>
+  <tr><td>4. Сроки</td><td>Дата начала. Дата окончания или формулировка «до выполнения условий».</td></tr>
+  <tr><td>5. Конфиденциальность</td><td>Стандартный блок NDA. Адаптируется под нишу (важно для медицины, финансов, юридических услуг).</td></tr>
+  <tr><td>6. Ответственность сторон</td><td>Стандартный блок. Ограничение ответственности исполнителя — важно для ниш где результат зависит от клиента.</td></tr>
+  <tr><td>7. Порядок изменений и расторжения</td><td>Стандартный блок.</td></tr>
+  <tr><td>8. Реквизиты сторон</td><td>Поля для заполнения обеих сторон.</td></tr>
+  <tr><td><strong>Приложение 1 — Описание услуги</strong></td><td>Детальное описание конкретного продукта из линейки клиента. Что входит, что не входит, формат, этапы. Меняется под каждый продукт.</td></tr>
+  <tr><td><strong>Приложение 2 — Акт оказания услуг</strong></td><td>Шаблон акта. Стороны, описание оказанных услуг, дата, подписи.</td></tr>
+</table>
+</div>
+
+<h2>Генератор оффера партнёрства (2–3 страницы, анимфон)</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Блок</th><th>Содержание</th></tr>
+  <tr><td>1. Кто такой клиент</td><td>Факты об аккаунте: охваты, аудитория, ниша, количество подписчиков. Цифры вперёд.</td></tr>
+  <tr><td>2. Аудитория</td><td>Портрет ЦА клиента — кто смотрит, возраст, интересы, платёжеспособность</td></tr>
+  <tr><td>3. Форматы сотрудничества</td><td>Что предлагаем бренду: интеграция в ролик / выделенный ролик / сторис / карусель / TG пост. С примерами как это выглядит.</td></tr>
+  <tr><td>4. Что получит бренд</td><td>Конкретные результаты: охват, заявки из кодового слова, трафик. Цифры на основе текущей аналитики.</td></tr>
+  <tr><td>5. Условия</td><td>Форматы, сроки, требования к ТЗ от бренда. Без цен в документе.</td></tr>
+  <tr><td>6. Кейсы</td><td>Если есть — 1–2 примера прошлых коллабораций с результатами. Если нет — пропустить.</td></tr>
+  <tr><td>7. CTA</td><td>«Обсудить детали» + TG контакт клиента.</td></tr>
+</table>
+</div>
+
+<h2>Лид-магниты (3–5 страниц, анимфон, по одному на продукт)</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Блок</th><th>Содержание</th></tr>
+  <tr><td>1. Обложка</td><td>Название лид-магнита — цепляющее, с триггером. Подзаголовок — что получит читатель конкретно.</td></tr>
+  <tr><td>2. Проблема</td><td>Описание ситуации/боли которую знает ЦА. 1 страница максимум. Читатель должен узнать себя.</td></tr>
+  <tr><td>3. Частичное решение</td><td>3–5 конкретных инструментов / шагов / советов. Реально полезных. НЕ всё решение — только часть.</td></tr>
+  <tr><td>4. Ценность продукта</td><td>«Если хочешь получить полное решение...» — плавный переход к продукту. Без давления.</td></tr>
+  <tr><td>5. CTA</td><td>Кодовое слово продукта + что получит человек написав его. Без цены.</td></tr>
+</table>
+</div>
+
+<h2>Лендинги продуктов (3–5 страниц, анимфон, один на продукт)</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Блок</th><th>Содержание</th><th>Примечание</th></tr>
+  <tr><td>1. Hero секция</td><td>Заголовок — главный триггер/обещание. Подзаголовок — для кого и что получат. Кнопка CTA.</td><td>Адаптируется под аудиторию продукта</td></tr>
+  <tr><td>2. Проблема</td><td>«Тебе знакома эта ситуация?» — 3–4 боли целевой аудитории. Список.</td><td>На основе ЦА из анкеты</td></tr>
+  <tr><td>3. Прогрев / история</td><td>Личная история клиента или кейс клиента — путь от проблемы к решению</td><td>В стиле речи клиента из анкеты</td></tr>
+  <tr><td>4. Что внутри продукта</td><td>Список что входит. Формат подачи: иконка + название + 1 строка описания каждого элемента.</td><td>Из анкеты: описание продукта</td></tr>
+  <tr><td>5. Для кого</td><td>«Это для тебя если...» — 3–5 портретов идеального клиента</td><td>На основе ЦА из анкеты</td></tr>
+  <tr><td>6. Отзывы</td><td>2–3 отзыва. Придумываются на основе типичных результатов в нише. Реалистичные, без гиперболизации.</td><td>Имена — нейтральные. Результаты — достижимые.</td></tr>
+  <tr><td>7. Гарантии</td><td>Конкретная гарантия. Не «100% результат» а честное обязательство.</td><td>На основе ниши</td></tr>
+  <tr><td>8. Финальный CTA</td><td>Кнопки: «Написать» → TG + «Оплатить» → ссылка оплаты. Без цены на странице.</td><td>Из анкеты: контакты и ссылки</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ЧАСТЬ 30 — ПРОМПТЫ: УНИВЕРСАЛЬНОЕ ПРАВИЛО -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="part-header" id="p30">
+  <div class="part-eyebrow">Часть 30</div>
+  <div class="part-title">ПРОМПТЫ — УНИВЕРСАЛЬНОЕ ПРАВИЛО</div>
+  <div class="part-desc">Где нужен визуал — там всегда есть промпт. Детальный, на основе бренда клиента, EN, 2500+ символов.</div>
+</div>
+
+<h2>Главное правило промптов</h2>
+<div class="card accent">
+  <p>В любом месте системы где создаётся визуальный контент — всегда присутствует готовый промпт для Gemini/Midjourney. Рядом с промптом — две кнопки: «Копировать» и «Открыть Gemini».</p>
+</div>
+
+<h2>Где промпты обязательны</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Место в системе</th><th>Тип промпта</th><th>На основе чего</th></tr>
+  <tr><td>Контент-план → каждый ролик</td><td>Обложка 9:16 для видео</td><td>Заголовок ролика + бренд клиента</td></tr>
+  <tr><td>Контент-план → каждая карусель</td><td>Отдельный промпт на каждый слайд</td><td>Текст слайда + бренд клиента</td></tr>
+  <tr><td>Контент-план → каждая сторис</td><td>Фон сторис 9:16</td><td>Тема сторис + бренд клиента</td></tr>
+  <tr><td>Контент-план → ТГ-пост с картинкой</td><td>Картинка 1:1 или 16:9</td><td>Заголовок поста → размер авто</td></tr>
+  <tr><td>Визуал → Оформление соцсетей</td><td>Актуальные / highlights обложки</td><td>Тематика актуального + бренд</td></tr>
+  <tr><td>Материалы → Воронки SMMBot</td><td>Изображение для каждой ветки где нужно</td><td>Тема ветки + бренд клиента</td></tr>
+  <tr><td>Материалы → Генератор КП</td><td>Баннер/обложка КП 16:9</td><td>Название продукта + бренд</td></tr>
+  <tr><td>Материалы → Лид-магниты</td><td>Обложка лид-магнита</td><td>Название + тема + бренд</td></tr>
+  <tr><td>Материалы → Лендинги</td><td>Hero-баннер лендинга</td><td>Название продукта + бренд</td></tr>
+  <tr><td>Визуал → Генератор обложек видео</td><td>Обложки под каждый формат и продукт</td><td>Заголовок / продукт + бренд</td></tr>
+</table>
+</div>
+
+<h2>Структура промпта (обязательные блоки)</h2>
+<div class="tbl-wrap">
+<table class="tbl">
+  <tr><th>Блок</th><th>Содержание</th><th>Пример</th></tr>
+  <tr><td>1. Canvas size</td><td>Точный размер в пикселях и соотношение</td><td>1080x1920px vertical 9:16 aspect ratio</td></tr>
+  <tr><td>2. Background</td><td>Фон — цвет из бренда клиента, текстура, вignette</td><td>Deep black background #000000 with subtle dark grain texture</td></tr>
+  <tr><td>3. Brand colors</td><td>Акцентные цвета клиента (из анкеты)</td><td>Accent: [HEX из анкеты], secondary: rgba([HEX],0.15)</td></tr>
+  <tr><td>4. Typography</td><td>Шрифт, размер, позиция, текст (если есть)</td><td>Inter Black 88px uppercase letter-spacing -2px, text: "[заголовок]"</td></tr>
+  <tr><td>5. Main subject</td><td>Главный визуальный объект. Адаптируется под тему контента.</td><td>На основе анализа заголовка/темы</td></tr>
+  <tr><td>6. Additional elements</td><td>Доп. элементы: иконки, геометрия, частицы, линии</td><td>На основе бренда клиента</td></tr>
+  <tr><td>7. Watermark</td><td>Никнейм клиента как водяной знак</td><td>@[никнейм клиента из анкеты] монохром 15% opacity bottom-right</td></tr>
+  <tr><td>8. Mood & style</td><td>Настроение, стиль съёмки/графики, атмосфера</td><td>На основе ниши и характера клиента из анкеты</td></tr>
+  <tr><td>9. Technical</td><td>Технические требования</td><td>Ultra high quality, no artifacts, print-ready, no faces unless client</td></tr>
+</table>
+</div>
+
+<h2>Генератор обложек видео и ТГ-постов</h2>
+<h3>Обложки видео (9:16)</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Клиент вводит заголовок</strong> → система генерирует промпт где визуал, ракурс, объект, фон и доп. элементы подобраны на основе смысла заголовка</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Вшито в промпт навсегда:</strong> акцент-цвет бренда, шрифт, никнейм-водяной знак, стиль (тёмный/светлый из анкеты)</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Генерируется автоматически:</strong> главный объект, атмосфера, настроение — на основе анализа заголовка</span></div>
+  <div class="li"><span class="li-dot">▸</span><span><strong>Отдельные промпты под каждый продукт</strong> — баннеры 16:9 без заголовков, с готовыми триггерами и гарантиями. Цены не указываются нигде.</span></div>
+</div>
+
+<h3>ТГ-посты с картинкой</h3>
+<div class="card">
+  <div class="li"><span class="li-dot">▸</span><span><strong>Размер определяется автоматически:</strong> если заголовок поста короткий и фактический — 1:1. Если заголовок длинный и нарративный — 16:9. Логика на основе типа поста.</span></div>
+  <div class="li"><span class="li-dot">▸</span><span>Промпт генерируется так же как для обложек — на основе заголовка + бренд клиента</span></div>
+</div>
+
+
+</div><!-- end .content -->
+</div><!-- end .main -->
+</div><!-- end .layout -->
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>
+// Canvas background init
+(function(){
+  const c = document.getElementById('bg-c');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  let pts = [];
+  const N = 50;
+  function resize(){ c.width=window.innerWidth; c.height=window.innerHeight; }
+  function Pt(){
+    this.x=Math.random()*c.width; this.y=Math.random()*c.height;
+    this.vx=(Math.random()-.5)*.3; this.vy=(Math.random()-.5)*.3;
+    this.s=Math.random()*1.5+.5; this.o=Math.random()*.3+.05;
+  }
+  Pt.prototype.tick=function(){
+    this.x+=this.vx; this.y+=this.vy;
+    if(this.x<0||this.x>c.width||this.y<0||this.y>c.height){
+      this.x=Math.random()*c.width; this.y=Math.random()*c.height;
+    }
+  };
+  for(let i=0;i<N;i++) pts.push(new Pt());
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    for(let i=0;i<pts.length;i++){
+      pts[i].tick();
+      ctx.beginPath(); ctx.arc(pts[i].x,pts[i].y,pts[i].s,0,6.28);
+      ctx.fillStyle='#9AFF00'; ctx.globalAlpha=pts[i].o; ctx.fill();
+      for(let j=i+1;j<pts.length;j++){
+        const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<100){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle='#9AFF00'; ctx.globalAlpha=(1-d/100)*.06; ctx.lineWidth=.5; ctx.stroke(); }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize); resize(); draw();
+})();
+
+// Checklist toggle (Part 25 readiness checklist)
+function togCl(el){
+  var box=el.querySelector('.cl-b');
+  if(!box) return;
+  var on=box.classList.toggle('on');
+  el.classList.toggle('done', on);
+}
+
+// Scroll to section
+function scrollTo(id){
+  const el = document.getElementById(id);
+  if(el){ el.scrollIntoView({behavior:'smooth', block:'start'});
+    document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+    document.querySelectorAll('.sb-item').forEach(i=>{
+      if(i.getAttribute('onclick')&&i.getAttribute('onclick').includes("'"+id+"'")) i.classList.add('active');
+    });
+  }
+}
+
+// Search
+function searchTZ(q){
+  q = q.toLowerCase().trim();
+  if(!q){ document.querySelectorAll('.part-header,.content h2,.content h3').forEach(el=>el.closest('.part-header,.content > *')||el).length; return; }
+  // Highlight matching items in sidebar
+  document.querySelectorAll('.sb-item').forEach(item=>{
+    item.style.opacity = item.textContent.toLowerCase().includes(q) ? '1' : '0.3';
+  });
+}
+
+// Lucide icons
+if(typeof lucide !== 'undefined') lucide.createIcons();
+</script>
+</body>
+</html>
