@@ -232,10 +232,13 @@ def плоскость(сложение):
     "bone structure, same eyes, same nose, same lips, same marks — both "
     "instantly recognisable. Each keeps their own hair, skin tone "
     "and build. They share one light, one floor and "
-    "one perspective, touching where the scenario says they touch — no "
-    "collage, no floating second figure, honest scale between them. "
-    "TWO different people, and the two faces stay two faces: never "
-    "blended into one face and never swapped between the bodies."
+    "one perspective, touching where the scenario says they touch, "
+    "both standing on the same floor at honest scale to each other. "
+    # «collage» и «floating second figure» отсюда убраны: это
+    # существительные, которые сборка умеет нарисовать, а отрицание
+    # перед ними слышит слабо. Запрет на них стоит в негативе.
+    "TWO different people with TWO different faces, each face his or "
+    "her own and taken from its own reference photograph."
 )
 
 # Про кожу сказано ДВАЖДЫ и по-разному: «настоящая» — и отдельно
@@ -262,8 +265,18 @@ def плоскость(сложение):
     # Одного удаления мало: следы загара модель рисует и по привычке,
     # потому что тело загорелое. Поэтому ровный загар назван прямо, а
     # не оставлен на догадку.
-    "Real skin with visible pores. Her skin "
-    "is CLEAN: no scattered dark specks, no soot, no dirt on it. "
+    # ДЕФЕКТ НЕ НАЗЫВАЕТСЯ ДАЖЕ С ОТРИЦАНИЕМ. Правка 29.09.2026, та же
+    # по природе, что и с бикини ниже. Здесь стояло «no scattered dark
+    # specks, no soot, no dirt on it», и владелец продолжал видеть
+    # чёрные точки: диффузия читает существительные, а «no» перед ними
+    # слышит слабо. Мы сами перечисляли ей сажу, грязь и крапины, а
+    # потом искали, откуда они берутся.
+    #
+    # Теперь сказано только то, ЧТО должно быть: ровная чистая
+    # поверхность с порами. Запрет на крапины живёт в негативе, где
+    # отрицание и есть смысл узла.
+    "Real skin with fine visible pores and even, uniform texture: one "
+    "smooth clean surface of living skin across her whole body. "
     # ОДЕЖДА НЕ НАЗЫВАЕТСЯ ЗДЕСЬ НИ ОДНИМ СЛОВОМ, и это правка
     # 29.09.2026 по собственной ошибке. Тут стояло «no bikini marks,
     # no swimsuit marks» - то есть В ПОЛОЖИТЕЛЬНОМ тексте были названы
@@ -274,26 +287,37 @@ def плоскость(сложение):
     # говорится только про ровный тон.
     "HER TAN IS COMPLETELY EVEN over her entire body: the same colour "
     "on her chest, her breasts, her belly, her hips and her thighs as "
-    "on her arms and shoulders. One single even skin tone everywhere, "
-    "with no paler strips, no lighter triangles, no untanned patches "
-    "and no two-tone skin anywhere on her. "
+    "on her arms and shoulders: ONE single continuous skin tone from "
+    "her shoulders to her ankles, uninterrupted everywhere. "
     "Any mole or freckle she already has on the reference photo stays "
     "exactly where it is - nothing is added and nothing is removed. "
-    "No plastic smoothing, no airbrushing. The skin is MATTE and DRY — "
-    "soft diffuse sheen at most, never oiled, never wet-looking, never "
-    # «chest», а не «breasts»: этот кусок общий, он достаётся и мужским
-    # сценам, где про грудь говорить нечего (тест «у двух мужчин про
-    # грудь молчим»).
-    "glistening, no baby-oil highlights on the chest, belly or thighs. "
+    # МАСЛО БОЛЬШЕ НЕ УПОМИНАЕТСЯ ЗДЕСЬ ВОВСЕ (правка 29.09.2026).
+    #
+    # Стояло «never oiled, never wet-looking, never glistening, no
+    # baby-oil highlights on the chest, belly or thighs» - четыре
+    # упоминания масла и блеска в ПОЛОЖИТЕЛЬНОМ тексте. Владелец при
+    # этом видел ровно намасленные тела. Диффузия читает
+    # существительные, а «never» перед ними слышит слабо: перечисляя
+    # масло, мы его заказывали.
+    #
+    # Правило, к которому пришли за день: положительный текст говорит
+    # ТОЛЬКО ТО, ЧТО ДОЛЖНО БЫТЬ. Запреты живут в негативе, где
+    # отрицание и есть смысл узла. Слова про масло там стоят и никуда
+    # не делись.
+    #
+    # «chest», а не «breasts»: кусок общий, он достаётся и мужским
+    # сценам, где про грудь говорить нечего.
+    "The skin is MATTE and DRY, lit by soft diffuse light, with the "
+    "quiet velvety surface of bare skin on an overcast day. "
     # ЖЁСТКОЕ ПРАВИЛО ВЛАДЕЛЬЦА 28.09.2026: волосы только на голове.
     # Сказано утверждением, а не запретом, по той же причине, что и
     # матовость выше: дистиллированная сборка слушает утверждение
     # лучше. Запрет продублирован в негативе - одного мало, проверено
     # на блеске кожи.
-    "Her body is COMPLETELY HAIRLESS below the head: the pubic area is "
-    "bare smooth skin with no hair at all, and so are the legs, the "
-    "underarms, the belly and the forearms. The ONLY hair anywhere in "
-    "the picture is the hair on her head."
+    "Her body is COMPLETELY HAIRLESS below the head: the pubic area, "
+    "the legs, the underarms, the belly and the forearms are all bare "
+    "smooth skin. The ONLY hair anywhere in the picture is the hair "
+    "on her head."
 )
 
 АНАТОМИЯ = (
@@ -1526,12 +1550,12 @@ def свой(текст, вид, обязательное=None, фон="новы
     "85mm lens at f/4. Real human skin with fine visible pores and "
     "natural micro-texture over the whole body: the face, the chest, "
     "the belly, the hips, the thighs, the arms and the back. The skin "
-    "is MATTE and DRY - a soft diffuse sheen at most, never oiled, "
-    "never wet, never glistening, no specular highlights on the "
-    "thighs, the buttocks or the chest, no baby oil, no body oil. "
-    "Even clean complexion with no scattered dark specks and no "
-    "added blemishes. Soft even daylight, gentle shadows, natural "
-    "colour, sharp critical focus, fine photographic grain. "
-    "No airbrushing, no plastic smoothing, no wax, no beauty filter."
+    # То же правило, что и в КОЖА: масло и блеск здесь не называются
+    # даже с отрицанием, они живут в негативе.
+    "is MATTE and DRY, lit by soft diffuse light, with the quiet "
+    "velvety surface of bare skin on an overcast day. "
+    "Even clean complexion, uniform and untouched. "
+    "Soft even daylight, gentle shadows, natural "
+    "colour, sharp critical focus, fine photographic grain."
 )
 

@@ -103,9 +103,17 @@ CFG = float(os.environ.get("ROCKET_ZONE_CFG", "2.5"))
              # 28.09.2026 вернула лицо, усыпанное веснушками, которых
              # на референсе нет вовсе. Сходство по эмбеддингу при этом
              # осталось 0.908 - мера крапин не видит, а глаз видит сразу.
-             "Her complexion is EVEN and CLEAN: no freckles, no moles, "
-             "no dark spots, no blemishes, no speckles, no scattered "
-             "dots on her face. Sharp critical focus, 85mm lens, "
+             # ДЕФЕКТ НЕ НАЗЫВАЕТСЯ ДАЖЕ С ОТРИЦАНИЕМ (правка
+             # 29.09.2026). Здесь стояло «no freckles, no moles, no
+             # dark spots, no blemishes, no speckles, no scattered
+             # dots» - шесть существительных подряд, и лицо возвращалось
+             # усыпанным крапинами. Диффузия читает существительные, а
+             # «no» перед ними слышит слабо: перечисляя дефект, мы его
+             # заказываем. Запрет живёт в негативе зоны, где отрицание
+             # и есть смысл узла.
+             "Her complexion is EVEN, CLEAR and uniform, a single "
+             "smooth tone across her whole face. "
+             "Sharp critical focus, 85mm lens, "
              "neutral daylight. Matte skin, no gloss, no oil, no "
              "airbrushing, no plastic smoothing."),
     "грудь": ("A close-up photograph of a woman's bare chest, anatomically "
