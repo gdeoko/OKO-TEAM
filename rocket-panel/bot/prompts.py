@@ -417,8 +417,24 @@ def плоскость(сложение):
     "elbow and knee bends forwards only, never backwards."
 )
 
+# КАЧЕСТВО. Переписано 29.09.2026 после разбора кадра 1:1.
+#
+# Стояло «Photorealistic photograph, not a render, not a painting, not
+# CGI» - три отрицания подряд, то есть по правилу дня три заказа. И
+# слабо само по себе: «photorealistic» на сборке 18+ означает глянец
+# коммерческого порно, а не фотографию.
+#
+# Теперь названы ЯКОРЯ, а не запреты. Камера, объектив, диафрагма,
+# плёнка и «неотретушированный снимок» тянут сборку к обычной
+# фотографии сильнее любого «не рисунок»: эти слова она видела рядом с
+# настоящими снимками, а не с рендерами. «Amateur» и «unretouched»
+# здесь главные - они снимают ровно тот глянец, на который жалуется
+# владелец.
 КАЧЕСТВО = (
-    "Photorealistic photograph, not a render, not a painting, not CGI."
+    "A real photograph taken on a full-frame camera, 50mm lens at "
+    "f/2.8, ISO 200, available daylight from a window. Colour negative "
+    "film, fine photographic grain, true-to-life colour, ordinary "
+    "amateur snapshot straight out of camera, unretouched."
 )
 
 # Негатив сторожит ровно то, что просил владелец: результат обязан
