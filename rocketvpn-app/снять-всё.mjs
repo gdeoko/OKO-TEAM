@@ -28,8 +28,11 @@ const ПОРЫ = (флаги.поры || "утро,вечер").split(",");
 const ВИДЫ = ["главная", "серверы", "профиль", "подписка", "меню"];
 
 const сервер = await поднятьСервер(join(КОРЕНЬ, "планета"));
+/* Отрисовка через swiftshader: без неё Chromium рисует программно и не
+   размывает крупный постер под backdrop-filter, оставляя под стеклом
+   резкую притенённую копию сцены. Кадры тогда врут про стекло. */
 const бр = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-  args: ["--force-color-profile=srgb", "--font-render-hinting=none"] });
+  args: ["--force-color-profile=srgb", "--font-render-hinting=none", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const беды = [];
 
 for (const пора of ПОРЫ) {
