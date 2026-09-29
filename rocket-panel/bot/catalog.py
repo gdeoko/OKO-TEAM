@@ -2275,6 +2275,11 @@ def лист(ключ_сцены):
 # человеку не ту позу, которую он нажал.
 С_ОПОРОЙ = frozenset((
     "un_close", "un_full", "un_back", "un_three", "un_sit", "un_lie",
+    # Карты поз для этих двух лежали на карте с самого начала, а в
+    # списке их не было: свод 30.09.2026 показал тридцать кнопок без
+    # опоры, и у двух из них файл нашёлся готовым. Кнопка шла без опоры
+    # зря, то есть позу ей держал один текст.
+    "un_low", "un_over",
     "ph_close", "ph_side", "ph_above", "ph_below", "ph_push",
     "pf_mf_near", "pf_mf_face", "pf_mf_behind", "pf_mf_pov",
     "pf_ff_near", "pf_ff_face", "pf_ff_behind", "pf_ff_close", "pf_ff_pov",
