@@ -2164,3 +2164,101 @@ html.мир-живой .сияние { display: none; }
   text-shadow: 0 1px 2px rgba(0,0,0,.35);
   font-weight: 600;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ЖИВОЙ ФОН: ВИДЕО
+   ═══════════════════════════════════════════════════════════════════
+   Два видеослоя: новый клип проявляется поверх старого за секунду,
+   поэтому смена темы и смена утра на вечер идут без чёрного кадра.
+   Размер и сдвиг ставит фон.js: кадр прибит к кнопке, а не к экрану. */
+.фон-видео {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+  pointer-events: none; background: #02040a;
+  transition: filter .9s ease;
+}
+.фон-клип {
+  position: absolute; left: 0; top: 0; display: block;
+  object-fit: fill; transform-origin: 0 0;
+  opacity: 0; transition: opacity 1.1s ease;
+  will-change: opacity, transform;
+}
+.фон-клип.виден { opacity: 1; }
+html.фон-живой .небо,
+html.фон-живой .планета-место,
+html.фон-живой .вуаль,
+html.фон-живой .сияние { display: none; }
+/* Удар по серверам: фон на мгновение вспыхивает светом самой сцены. */
+@keyframes фон-вспышка {
+  0% { filter: brightness(1) saturate(1); }
+  18% { filter: brightness(1.28) saturate(1.18); }
+  100% { filter: brightness(1) saturate(1); }
+}
+.фон-видео.вспышка { animation: фон-вспышка .9s ease-out; }
+.фон-видео.подключён { filter: brightness(1.08) saturate(1.1); }
+/* Низ экрана под списком чуть притемнён: белый текст строк обязан
+   читаться и на светлом дневном океане, и на ярком факеле. */
+.фон-видео::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 38%, rgba(2,6,16,.22) 60%, rgba(2,6,16,.38) 100%);
+}
+
+/* Неон у утра и вечера свой, как на концептах: утренний космос светит
+   зелёным сиянием, вечерний океан золотом заката, утренний полёт
+   холодной синевой рассвета. Цвет берётся из самой сцены. */
+:root[data-тема="планета"][data-пора="утро"]  { --неон: 61, 255, 176;  --неон2: 170, 110, 255; }
+:root[data-тема="планета"][data-пора="вечер"] { --неон: 108, 128, 255; --неон2: 170, 120, 255; }
+:root[data-тема="океан"][data-пора="утро"]    { --неон: 63, 224, 255;  --неон2: 255, 243, 208; }
+:root[data-тема="океан"][data-пора="вечер"]   { --неон: 255, 170, 64;  --неон2: 255, 110, 80; }
+:root[data-тема="ракета"][data-пора="утро"]   { --неон: 120, 160, 255; --неон2: 255, 225, 190; }
+:root[data-тема="ракета"][data-пора="вечер"]  { --неон: 255, 118, 44;  --неон2: 255, 192, 115; }
+
+/* Кнопка на живом фоне - прозрачная линза, а не тёмный диск: сквозь
+   неё видно солнце, сияние и воду, как на концептах. Объём дают
+   светлый край сверху, тень толщины снизу и блик по дуге. */
+:root.фон-живой .пуск .ядро {
+  background:
+    radial-gradient(120% 90% at 50% 8%, rgba(255,255,255,.26), rgba(255,255,255,0) 46%),
+    radial-gradient(80% 60% at 50% 100%, rgba(var(--неон), .22), rgba(var(--неон), 0) 70%),
+    rgba(10, 16, 32, .10);
+  -webkit-backdrop-filter: blur(.18rem) saturate(165%) brightness(1.06);
+          backdrop-filter: blur(.18rem) saturate(165%) brightness(1.06);
+  border: 1px solid rgba(255,255,255,.42);
+  box-shadow:
+    inset 0 .12rem .1rem rgba(255,255,255,.55),
+    inset 0 -.9rem 1.8rem rgba(0, 6, 20, .28),
+    inset 0 0 2.6rem rgba(var(--неон), .22),
+    0 1.2rem 2.6rem rgba(0, 4, 14, .35);
+}
+:root.фон-живой .пуск .ядро::after {
+  content: ""; position: absolute; inset: 5% 12% auto 12%; height: 38%;
+  border-radius: 50% / 60% 60% 40% 40%; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,0));
+  opacity: .55;
+}
+:root.фон-живой .рубильник {
+  color: #fff;
+  filter: drop-shadow(0 0 .7rem rgba(var(--неон), .9)) drop-shadow(0 .1rem .2rem rgba(0,0,0,.55));
+}
+:root.фон-живой .пуск-слово { text-shadow: 0 0 1rem rgba(var(--неон), .55), 0 .08rem .25rem rgba(0,0,0,.65); }
+:root.фон-живой .пуск-сноска { color: rgba(255,255,255,.72); text-shadow: 0 .06rem .2rem rgba(0,0,0,.6); }
+
+/* След, заряженный значок и строка под ударом берут цвет из неона
+   времени суток: голубая вода по золотой дорожке заката читалась бы
+   чужим слоем. Сердцевина следа остаётся почти белой - это свет. */
+:root[data-тема][data-пора] .нить.дым     { stroke: rgba(var(--неон), .12); }
+:root[data-тема][data-пора] .нить.дальний { stroke: rgba(var(--неон), .24); }
+:root[data-тема][data-пора] .нить.средний { stroke: rgba(var(--неон), .45); }
+:root[data-тема][data-пора] .нить.ближний { stroke: rgba(var(--неон2), .82); }
+:root[data-тема][data-пора] .нить.жила    { stroke: #fffaf0; }
+:root[data-тема][data-пора] .голова { stroke: rgba(var(--неон), .6); }
+:root[data-тема][data-пора] .ряд.заряжен .заряд,
+:root[data-тема][data-пора] .ряд.середина.заряжен .заряд {
+  background: linear-gradient(112deg, rgba(var(--неон), .75) 0%, rgb(var(--неон)) 26%, #ffffff 44%, rgb(var(--неон)) 62%, rgba(var(--неон), .75) 100%);
+  background-size: 260% 100%;
+  filter: drop-shadow(0 0 .7rem rgba(var(--неон), .85));
+}
+:root[data-тема][data-пора] .ряд.бьёт {
+  border-color: rgba(var(--неон2), .75);
+  box-shadow: 0 0 .4rem rgba(var(--неон2), .7), 0 0 1.8rem rgba(var(--неон), .55),
+              inset 0 0 1.6rem rgba(var(--неон), .16);
+}

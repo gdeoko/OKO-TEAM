@@ -69,34 +69,36 @@ for (const тема of ТЕМЫ) {
 
   await шаг("тема встала", async () =>
     await стр.evaluate(() => document.documentElement.getAttribute("data-тема")));
-  await шаг("фон темы показан", async () => {
-    const видно = await стр.evaluate(т => {
-      const м = document.querySelector(".мир-" + т);
-      return м ? getComputedStyle(м).display !== "none" : false;
-    }, тема);
-    return видно;
-  });
-  /* У огня герой стоит не в круге под кнопкой, а в фоне за списком:
-     кнопка шириной 13.6 рем закрывала корпус целиком. Поэтому и
-     смотрим разные узлы. */
-  await шаг("герой темы показан", async () => await стр.evaluate(т => {
-    const где = { планета: ".герой-планета", ракета: ".мир-ракета .старт", океан: ".герой-океан" }[т];
-    const у = document.querySelector(где);
-    if (!у) return false;
-    const с = getComputedStyle(у);
-    return с.display !== "none" && parseFloat(с.opacity) > 0;
+  /* Фон темы - живое видео (фон.js). Проверяем, что встал клип своей
+     темы и своего времени суток, что постер или кадр видео доехал, и
+     что кадр закрывает экран без щелей. */
+  await шаг("живой фон темы", async () => await стр.evaluate(т => {
+    const клип = window.МИР && window.МИР.жив && window.МИР.клип();
+    const ждём = { планета: "космос", океан: "океан", ракета: "полёт" }[т];
+    return клип && клип.indexOf(ждём + "-") === 0 ? клип : false;
   }, тема));
-  await шаг("3D-мир темы живой", async () => await стр.evaluate(т =>
-    window.МИР && window.МИР.жив && window.МИР.текущая() === т ? "сцена «" + т + "»" : false, тема));
+  await шаг("клип по времени суток", async () => await стр.evaluate(() => {
+    const клип = window.МИР.клип(), пора = window.МИР.пора();
+    return клип.endsWith("-" + пора) && document.documentElement.getAttribute("data-пора") === пора ? пора : false;
+  }));
+  await шаг("кадр фона доехал", async () => await стр.evaluate(async () => {
+    const в = document.querySelector(".фон-клип.виден");
+    if (!в) return false;
+    if (в.readyState >= 2) return "видео " + в.videoWidth + "x" + в.videoHeight;
+    const к = new Image(); к.src = в.poster;
+    await new Promise(r => { к.onload = к.onerror = r; setTimeout(r, 3000); });
+    return к.naturalWidth > 0 ? "постер " + к.naturalWidth + "x" + к.naturalHeight : false;
+  }));
+  await шаг("фон закрывает экран", async () => await стр.evaluate(() => {
+    const в = document.querySelector(".фон-клип.виден"), т = document.getElementById("телефон");
+    if (!в) return false;
+    const r = в.getBoundingClientRect(), R = т.getBoundingClientRect();
+    return r.left <= R.left + 1 && r.top <= R.top + 1 && r.right >= R.right - 1 && r.bottom >= R.bottom - 1;
+  }));
   await шаг("исток следа на экране", async () => await стр.evaluate(() => {
     const и = window.МИР.источник();
     return и && и.x > 0 && и.x < innerWidth && и.y > 0 && и.y < innerHeight ? Math.round(и.x) + "," + Math.round(и.y) : false;
   }));
-  await шаг("чужих миров на экране нет", async () => await стр.evaluate(т => {
-    return ["планета", "ракета", "океан"]
-      .filter(и => и !== т)
-      .every(и => getComputedStyle(document.querySelector(".мир-" + и)).display === "none");
-  }, тема));
 
   await шаг("строки нарисованы", async () => (await стр.locator(".ряд").count()) + " строк");
   await шаг("нижнее меню видно", async () => await стр.locator(".низ").isVisible());

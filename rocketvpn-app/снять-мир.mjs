@@ -9,6 +9,7 @@
 
    --без-интерфейса  прячет карточки, чтобы увидеть мир целиком
    --удар=0.6        ставит след замера на заданную долю (как раскадровка)
+   --пора=утро       время суток фона (утро/вечер), иначе по часам
 */
 import { chromium } from "/home/user/OKO-TEAM/rocketvpn/node_modules/playwright/index.mjs";
 import { mkdirSync } from "node:fs";
@@ -41,7 +42,7 @@ const беды = [];
 
 /* по http, а не file://: иначе браузер не отдаёт текстуры в WebGL (CORS) */
 const сервер = await поднятьСервер(join(КОРЕНЬ, "планета"));
-await стр.goto(сервер.адрес + "/index.html", { waitUntil: "load" });
+await стр.goto(сервер.адрес + "/index.html" + (флаги.пора ? "?пора=" + encodeURIComponent(флаги.пора) : ""), { waitUntil: "load" });
 await стр.waitForFunction(() => window.МИР && window.ЭКРАН_ГОТОВ && window.ЭКРАН_ГОТОВ(), null, { timeout: 30000 });
 await стр.evaluate((т) => window.ТЕМА(т), тема);
 await стр.waitForTimeout(2500);
@@ -55,7 +56,7 @@ for (const t of времена) {
      отрисует хотя бы три кадра с новым временем */
   await стр.evaluate(() => new Promise(r => { let n = 0; const f = () => (++n >= 3 ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); }));
   await стр.waitForTimeout(400);
-  const имя = join(куда, `${тема}-t${t.toFixed(2)}${флаги["без-интерфейса"] ? "-мир" : ""}${флаги.удар ? "-удар" + флаги.удар : ""}.png`);
+  const имя = join(куда, `${тема}-t${t.toFixed(2)}${флаги["без-интерфейса"] ? "-мир" : ""}${флаги.удар ? "-удар" + флаги.удар : ""}${флаги.пора ? "-" + флаги.пора : ""}.png`);
   await стр.screenshot({ path: имя });
   console.log("снято", имя);
 }
