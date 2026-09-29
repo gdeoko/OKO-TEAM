@@ -121,7 +121,7 @@ try {
             ],
         ]) : '';
 
-        if ($html !== '' && reminder_enqueue((string) $a['email'], $name, 'Оплатите участие - «' . $a['comp_name'] . '»', $html)) {
+        if ($html !== '' && reminder_enqueue((string) $a['email'], $name, 'Оплатите участие — «' . $a['comp_name'] . '»', $html)) {
             audit('reminder_payment', 'application', $id, ['competition' => $a['comp_name']]);
             // In-app уведомление участнику
             if (!empty($a['user_id']) && function_exists('notify_user')) {
@@ -242,7 +242,7 @@ try {
                 ]) : '';
                 if ($html !== '' && reminder_enqueue(
                     (string) $s['email'], (string) ($s['name'] ?? ''),
-                    'Осталось ' . $days . ' дн. до конца приёма заявок - «' . $c['name'] . '»', $html,
+                    'Осталось ' . $days . ' дн. до конца приёма заявок — «' . $c['name'] . '»', $html,
                     true      // письмо всей базе: только через рассылочный ящик
                 )) {
                     $queued++;

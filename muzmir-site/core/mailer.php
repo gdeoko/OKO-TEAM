@@ -88,7 +88,7 @@ function mm_email_layout(string $inner, array $opt = []): string {
     $vkUrl  = h((string) cfgv('org_vk', 'https://vk.com/music_world.online'));
     $maxUrl = h((string) cfgv('org_max', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I'));
     $social = '<div style="margin-top:18px;">'
-        . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Подпишитесь на наши каналы - анонсы конкурсов, результаты и полезное:</div>'
+        . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Подпишитесь на наши каналы — анонсы конкурсов, результаты и полезное:</div>'
         . '<a href="' . $vkUrl . '" style="display:inline-block;margin:0 8px 8px 0;padding:9px 18px;background:' . $navy . ';color:#FFFFFF;text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">ВКонтакте</a>'
         . '<a href="' . $maxUrl . '" style="display:inline-block;margin:0 8px 8px 0;padding:9px 18px;background:' . $gold . ';color:' . $navy . ';text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">Канал в MAX</a>'
         . '</div>';
@@ -237,12 +237,12 @@ function mm_email_tx(string $inner, array $opt = []): string {
     $hero  = (string) ($opt['hero'] ?? '');
     $actions = mm_actions_row((array) ($opt['actions'] ?? []));
     $promo = (($opt['promo'] ?? true)) ? mm_promo_block() : '';
-    $thanks = !empty($opt['thanks']) ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 0;background:' . MM_CARD . ';border:1px solid ' . $line . ';border-radius:12px;"><tr><td style="width:4px;background:' . $gold . ';border-radius:12px 0 0 12px;"></td><td style="padding:14px 20px;font-size:14px;color:' . $ink . ';line-height:1.6;">Благодарим Вас за участие. Желаем новых творческих побед - и ждём Вас на конкурсах центра!</td></tr></table>' : '';
+    $thanks = !empty($opt['thanks']) ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 0;background:' . MM_CARD . ';border:1px solid ' . $line . ';border-radius:12px;"><tr><td style="width:4px;background:' . $gold . ';border-radius:12px 0 0 12px;"></td><td style="padding:14px 20px;font-size:14px;color:' . $ink . ';line-height:1.6;">Благодарим Вас за участие. Желаем новых творческих побед — и ждём Вас на конкурсах центра!</td></tr></table>' : '';
 
     $vkUrl  = h((string) cfgv('org_vk', 'https://vk.com/music_world.online'));
     $maxUrl = h((string) cfgv('org_max', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I'));
     $social = (($opt['social'] ?? true)) ? ('<div style="margin-top:16px;padding-top:14px;border-top:1px solid ' . $line . ';">'
-        . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Мы в соцсетях - анонсы конкурсов, результаты, полезное:</div>'
+        . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Мы в соцсетях — анонсы конкурсов, результаты, полезное:</div>'
         . '<a href="' . $vkUrl . '" style="display:inline-block;margin:0 8px 6px 0;padding:9px 18px;background:' . $navy . ';color:#fff;text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">ВКонтакте</a>'
         . '<a href="' . $maxUrl . '" style="display:inline-block;margin:0 8px 6px 0;padding:9px 18px;background:' . $gold . ';color:' . $navy . ';text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">Канал в MAX</a>'
         . '</div>') : '';

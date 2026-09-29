@@ -70,7 +70,7 @@ if (PHP_SAPI === 'cli' && in_array('--render-test', $argv, true)) {
             $real['_img_url'] = $imgUrl;
             $html = _diploma_email_html((array)$real);
             if ($pdfAbs) $opt['attach'] = $pdfAbs;
-            $subj = 'Ваш диплом конкурса «' . ($real['comp_name'] ?? '') . '» - № ' . ($real['number'] ?? '');
+            $subj = 'Ваш диплом конкурса «' . ($real['comp_name'] ?? '') . '» — № ' . ($real['number'] ?? '');
             echo "используем реальный диплом id=" . $real['id'] . " pdf=" . ($pdfAbs?'да':'нет') . " png=" . ($imgUrl?'да':'нет') . "\n";
         } else {
             $subj = 'Ваш диплом — «' . $sample['comp_name'] . '» (' . $sample['result'] . ')';
@@ -359,7 +359,7 @@ foreach ($groups as $appId => $items) {
     // Правило владельца: наградную бумагу называем наградным материалом, а не
     // документом. «Документ» участник читает как справку из канцелярии.
     $subject = ($cnt > 1 ? 'Ваши наградные материалы конкурса «' : 'Ваш наградной материал конкурса «')
-             . $first['comp_name'] . '» - заявка № ' . $first['app_number'];
+             . $first['comp_name'] . '» — заявка № ' . $first['app_number'];
     $html = _diploma_group_html($blocks, (string)$first['full_name'], (string)$first['comp_name']);
 
     // ОДИН ЯЩИК — ОДНА ТОЧКА ОТКАЗА, И ЭТО УЖЕ СТОИЛО ЛЮДЯМ ДИПЛОМОВ.

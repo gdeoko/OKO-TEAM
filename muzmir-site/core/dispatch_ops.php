@@ -184,7 +184,7 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
 
     $cnt  = count($send);
     $subj = ($cnt > 1 ? 'Ваши наградные материалы конкурса «' : 'Ваш наградной материал конкурса «')
-          . (string) ($a['comp_name'] ?? '') . '» - заявка № ' . (string) ($a['number'] ?? '');
+          . (string) ($a['comp_name'] ?? '') . '» — заявка № ' . (string) ($a['number'] ?? '');
     $html = function_exists('_diploma_group_html')
         ? _diploma_group_html($blocks, (string) ($a['full_name'] ?? ''), (string) ($a['comp_name'] ?? ''))
         : '<p>Ваш наградной материал во вложении.</p>';

@@ -14,7 +14,7 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 <h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:25px;color:#17307A;font-weight:700;line-height:1.25;">Спасибо за регистрацию!</h1>
 <p style="margin:0 0 14px;"><?= $hello ?></p>
 <p style="margin:0 0 16px;">Мы рады, что Вы присоединились к культурному центру «Музыкальный Мир». Ваш аккаунт создан, и теперь Вы в кругу наших участников.</p>
-<p style="margin:0 0 20px;">Следите за конкурсами - мы будем сообщать Вам об открытии приёма заявок, новых номинациях и результатах. Впереди много музыки и ярких творческих событий.</p>
+<p style="margin:0 0 20px;">Следите за конкурсами — мы будем сообщать Вам об открытии приёма заявок, новых номинациях и результатах. Впереди много музыки и ярких творческих событий.</p>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
   <tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">
