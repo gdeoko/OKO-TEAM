@@ -1,0 +1,234 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · шлюз, оформление
+
+   Две корпусные створки поверх кадра. Всё движение задаёт одна
+   переменная --al-k из rc-airlock.js: ноль - дверь закрыта,
+   единица - створки ушли за края и мы в салоне. Оверлей не ловит
+   ни курсор, ни палец: страница под ним живёт как жила.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Оверлей на весь экран, но сама дверь - сегмент борта по центру:
+   вокруг неё виден корабль, к которому мы подошли. Кривизну корпуса
+   дают затемнения по краям сегмента. */
+.rc-airlock {
+  position: fixed; inset: 0; z-index: 58;
+  pointer-events: none;
+  opacity: 0; visibility: hidden;
+  transition: opacity .45s linear, visibility 0s linear .45s;
+}
+/* Прозрачность ведёт скролл, а не таймер: --al-in растёт по мере
+   подхода к борту (RC_APPROACH), поэтому дверь материализуется на
+   растущей ракете постепенно и честно откатывается назад */
+.rc-airlock.on {
+  opacity: var(--al-in, 1); visibility: visible;
+  transition: opacity .25s linear;
+}
+/* Борт: колонна корпуса во всю высоту кадра. За её краями кадр
+   мягко затемняется - взгляд упирается в корабль. */
+.rc-airlock .al-hull {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: min(58vw, 640px);
+  transform: translateX(-50%);
+  overflow: hidden;
+  /* Фон борта прозрачный: металл несут сами створки и косяки по
+     краям. Иначе разъехавшаяся дверь открывала «фон борта», а не
+     салон за ним - именно это ловил клиент на скринах */
+  box-shadow:
+    inset 22px 0 34px -18px rgba(20,36,54,.55),
+    inset -22px 0 34px -18px rgba(20,36,54,.55),
+    0 0 90px rgba(2,6,12,.8);
+}
+/* Косяки проёма: узкие полосы того же корпусного металла с фирменной
+   синей полосой. Стоят над створками - лист двери уезжает ЗА косяк,
+   как в настоящем шлюзе */
+.rc-airlock .al-hull::before,
+.rc-airlock .al-hull::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 8%;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, transparent 0 39%, #5BC4EA 39%, #0A5897 46%, transparent 46% 100%),
+    linear-gradient(90deg, #7E8FA1 0%, #DDE6F0 45%, #C9D6E4 70%, #8FA2B5 100%);
+  box-shadow: inset 0 0 26px rgba(30,58,86,.35);
+}
+.rc-airlock .al-hull::before { left: 0; }
+.rc-airlock .al-hull::after {
+  right: 0;
+  background:
+    linear-gradient(180deg, transparent 0 39%, #5BC4EA 39%, #0A5897 46%, transparent 46% 100%),
+    linear-gradient(90deg, #8FA2B5 0%, #C9D6E4 30%, #DDE6F0 55%, #7E8FA1 100%);
+}
+/* Пространство за бортом: пока дверь закрыта, вокруг темно - взгляд
+   упирается в корабль. По мере открытия темнота тает: салон, что
+   ждёт за дверью, «разрастается» вокруг нас - мы вошли */
+.rc-airlock::before {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(3,7,13,.78);
+  opacity: calc(1 - var(--al-k, 0) * .85);
+}
+.rc-airlock:not(.on) .al-hull { scale: 1.06; }
+.rc-airlock.on .al-hull { scale: 1; transition: scale .8s var(--ease, ease); }
+
+/* Тёплый свет салона в проёме: ширится вместе с дверью */
+.rc-airlock .al-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse calc(14% + var(--al-k, 0) * 70%) 68% at 50% 52%,
+              rgba(255,214,160,calc(.28 * (1 - var(--al-k, 0)) + .04)) 0%,
+              rgba(66,178,220,calc(.14 * (1 - var(--al-k, 0)))) 45%,
+              transparent 75%);
+}
+
+/* Створки: корпусной металл с рёбрами жёсткости. Расходятся чуть
+   быстрее доли, чтобы на единице гарантированно уйти за края. */
+.rc-airlock .al-door {
+  position: absolute; top: -2%; bottom: -2%; width: 51%;
+  /* Створка - лист того же корпуса внутри сегмента борта */
+  /* Светлый металл корпуса ракеты - той самой, к которой мы только
+     что подошли: тот же градиент обшивки и синяя фирменная полоса,
+     что нарисованы на её текстуре. Дверь читается дверью ЭТОГО
+     корабля, а не воротами из ниоткуда. */
+  background:
+    linear-gradient(90deg, rgba(120,142,168,.28) 0 2px, transparent 2px 100%) 0 0/12.5% 100% repeat-x,
+    linear-gradient(180deg, transparent 0 39%, #5BC4EA 39%, #0A5897 46%, transparent 46% 100%),
+    linear-gradient(168deg, #C9D6E4 0%, #F4F8FC 30%, #DDE6F0 58%, #B7C6D6 100%);
+  box-shadow: inset 0 0 70px rgba(30,58,86,.35), inset 0 -30px 60px rgba(70,96,122,.25);
+  will-change: transform;
+}
+.rc-airlock .al-l {
+  left: 0;
+  transform: translate3d(calc(var(--al-k, 0) * -108%), 0, 0);
+}
+.rc-airlock .al-r {
+  right: 0;
+  transform: translate3d(calc(var(--al-k, 0) * 108%), 0, 0);
+}
+
+/* Светящаяся кромка у стыка: сигнальная лента шлюза */
+.rc-airlock .al-door i {
+  position: absolute; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg,
+    rgba(66,178,220,.2), #42B2DC 18%, #9FE0F6 50%, #42B2DC 82%, rgba(66,178,220,.2));
+  box-shadow: 0 0 22px rgba(66,178,220,.9), 0 0 60px rgba(66,178,220,.45);
+}
+.rc-airlock .al-l i { right: 0; }
+.rc-airlock .al-r i { left: 0; }
+
+/* Горизонтальные пояса на створках: дверь - не плоский лист */
+.rc-airlock .al-door::before {
+  content: ''; position: absolute; left: 0; right: 0;
+  top: 30%; height: 1px;
+  background: rgba(120,142,168,.35);
+  box-shadow: 0 1px 0 rgba(255,255,255,.5), 0 34vh 0 rgba(120,142,168,.35), 0 calc(34vh + 1px) 0 rgba(255,255,255,.5);
+}
+/* Предупредительная разметка вдоль стыка: короткие диагональные
+   жёлто-чёрные полосы по краю каждой створки, приглушённые - краска
+   на технике, а не дорожный знак */
+.rc-airlock .al-door::after {
+  content: ''; position: absolute; top: 5%; bottom: 5%; width: 13px;
+  background: repeating-linear-gradient(45deg,
+    rgba(180,120,20,.30) 0 9px, rgba(40,50,66,.5) 9px 18px);
+  box-shadow: inset 0 0 6px rgba(0,0,0,.25);
+}
+/* Отступ больше нахлёста створок (2%), чтобы при закрытой двери
+   были видны обе ленты, а не одна поверх другой */
+.rc-airlock .al-l::after { right: calc(2% + 10px); }
+.rc-airlock .al-r::after { left: calc(2% + 10px); }
+
+/* Иллюминатор на левой створке: тёмное стекло с бликом в
+   металлическом ободе. Только градиенты и тени, без картинок */
+.rc-airlock .al-port {
+  position: absolute; right: 15%; top: 33%;
+  width: clamp(44px, 5vw, 78px); height: clamp(44px, 5vw, 78px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(215,240,252,.42) 0 4%, rgba(160,205,232,.12) 11%, transparent 26%),
+    radial-gradient(circle at 68% 80%, rgba(66,178,220,.12), transparent 45%),
+    radial-gradient(circle at 50% 115%, rgba(255,214,160,.08), transparent 55%),
+    radial-gradient(circle, #0e2033 0%, #0a1727 46%, #030810 78%, #02060c 100%);
+  border: 3px solid #8FA3B5;
+  box-shadow:
+    inset 0 4px 10px rgba(0,0,0,.9),
+    inset 0 -2px 8px rgba(66,178,220,.08),
+    inset 0 0 0 2px rgba(4,8,14,.9),
+    0 0 0 2px #6d8296,
+    0 0 0 6px #A9BACD,
+    0 0 0 7px rgba(207,233,245,.08),
+    0 1px 0 8px rgba(0,0,0,.35),
+    0 4px 14px rgba(0,0,0,.65);
+}
+
+/* Трафаретная маркировка: как краска через трафарет на корпусе */
+.rc-airlock .al-stencil {
+  position: absolute; top: 62%;
+  font: 700 clamp(11px, 1.4vw, 18px)/1 'Golos Text', system-ui, sans-serif;
+  letter-spacing: .58em; text-indent: .58em;
+  color: rgba(10,88,151,.25);
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+  white-space: nowrap;
+}
+.rc-airlock .al-l .al-stencil { right: 12%; }
+.rc-airlock .al-r .al-stencil { left: 12%; }
+
+/* Табло над стыком: сегментный индикатор состояния шлюза. Два слоя -
+   янтарный «заперто» и циановый «открыто» - перетекают по --al-k;
+   на полном раскрытии табло уходит вместе с дверью в затемнение */
+.rc-airlock .al-board {
+  position: absolute; left: 50%; top: 10%;
+  transform: translateX(-50%);
+  width: clamp(66px, 8vw, 112px); height: 12px;
+  border-radius: 3px;
+  background: #070d15;
+  border: 1px solid #223040;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6), inset 0 1px 3px rgba(0,0,0,.8);
+  opacity: calc(2.4 - var(--al-k, 0) * 2.6); /* clamp сам прижмёт к 0..1 */
+}
+.rc-airlock .al-board span {
+  position: absolute; inset: 2px; border-radius: 2px;
+}
+.rc-airlock .al-amber {
+  background: repeating-linear-gradient(90deg, rgba(240,180,60,.85) 0 6px, transparent 6px 10px);
+  box-shadow: 0 0 10px rgba(240,180,60,.45);
+  opacity: calc(1 - var(--al-k, 0) * 1.5);
+}
+.rc-airlock .al-cyan {
+  background: repeating-linear-gradient(90deg, rgba(66,178,220,.9) 0 6px, transparent 6px 10px);
+  box-shadow: 0 0 10px rgba(66,178,220,.55);
+  opacity: calc(var(--al-k, 0) * 1.5 - .12);
+}
+
+/* «Отдача» замков: короткий микросдвиг створок внутрь и обратно в
+   самом начале открытия. Анимируем свойство translate - оно живёт
+   отдельно от transform с --al-k и не спорит с ним */
+.rc-airlock.al-unlock .al-l { animation: al-jolt-l .3s ease-out; }
+.rc-airlock.al-unlock .al-r { animation: al-jolt-r .3s ease-out; }
+@keyframes al-jolt-l {
+  0% { translate: 0 0; } 35% { translate: 3px 0; } 100% { translate: 0 0; }
+}
+@keyframes al-jolt-r {
+  0% { translate: 0 0; } 35% { translate: -3px 0; } 100% { translate: 0 0; }
+}
+
+/* Телефон: корпус подошедшей ракеты занимает почти весь узкий экран,
+   и сегмент борта шириной 58vw читался щелью. Дверь во всю ширину
+   с полями-косяками по краям. */
+@media (max-width: 700px) {
+  .rc-airlock .al-hull { width: 92vw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-airlock { display: none !important; }
+}
+
+
+/* Пока дверь в кадре, канвас 3D-ракеты плавно гаснет: крупный план
+   корпуса передаёт эстафету створкам - «мы упёрлись в борт». Без
+   этого сквозь дверь просвечивала вторая ракета. */
+html.rc-doors #rocketCanvas {
+  opacity: 0 !important;
+  transition: opacity .55s linear;
+}
+
+/* Пока шлюз в кадре, тёмный тамбур интерьера не показывается: две
+   пары дверей поверх друг друга давали чёрный экран вместо входа */
+html.rc-albay .rc-int-lock {
+  opacity: 0 !important;
+}

@@ -1,0 +1,12 @@
+import { ЭКРАНЫ, браузер, страница, вИгру } from "./общее.mjs";
+const b = await браузер();
+const { pg, беды } = await страница(b, ЭКРАНЫ["ПК"]);
+pg.on("crash", () => console.log("!!! СТРАНИЦА УПАЛА"));
+const ok = await вИгру(pg);
+console.log("вошли:", ok);
+console.log(JSON.stringify(await pg.evaluate(() => window.RC_FLIGHT._state()), null, 1));
+const s = await pg.evaluate(() => window.RC_FLIGHT._pick());
+console.log("pickables:", s.всего, "уни", s.вселенная);
+s.тела.forEach(t => console.log(" ", JSON.stringify(t)));
+console.log("беды:", беды);
+await b.close();
