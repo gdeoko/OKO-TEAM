@@ -822,6 +822,27 @@ def _сколько_людей(данные, имя):
     другой проверкой, которая не смогла.
     """
     import tempfile
+    # ДЕТЕКТОР ЛИЦ, А НЕ СЕГМЕНТАЦИЯ. Класс «Face» сегментации дробил одно
+    # лицо прядью волос на два пятна и принимал за лицо соски и губы:
+    # прогон 30.09.2026 насчитал на одиночных кадрах двоих, троих и шесть
+    # человек, и приёмка переснимала годные кадры, а на третьей попытке
+    # отдавала какой попало. insightface находит лицо целиком.
+    try:
+        import cv2
+        import numpy as np
+        кадр = cv2.imdecode(np.frombuffer(данные, np.uint8), cv2.IMREAD_COLOR)
+        if кадр is not None:
+            if _ЛИЦА_ДЕТ[0] is None:
+                from insightface.app import FaceAnalysis
+                fa = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+                fa.prepare(ctx_id=-1, det_size=(640, 640))
+                _ЛИЦА_ДЕТ[0] = fa
+            ш = кадр.shape[1]
+            лица = [f for f in _ЛИЦА_ДЕТ[0].get(кадр)
+                    if f.det_score >= 0.6 and (f.bbox[2] - f.bbox[0]) >= ш * 0.04]
+            return len(лица)
+    except Exception as e:                                  # noqa: BLE001
+        print("детектор лиц не отработал:", str(e)[:120], flush=True)
     try:
         import cv2
         import одежда as _од
@@ -835,7 +856,10 @@ def _сколько_людей(данные, имя):
     return None
 
 
-ВОЗРАСТ_ВЫХОД = float(os.environ.get("ROCKET_AGE_OUT", "0.30"))
+# 0.40, а не 0.30: у самой героини 20 лет на снимке 0.21-0.23, и на
+# 0.30 годные кадры с её же лицом браковались (прогон 30.09.2026). Всё
+# равно строже входного заслона (0.46).
+ВОЗРАСТ_ВЫХОД = float(os.environ.get("ROCKET_AGE_OUT", "0.40"))
 
 
 def _младше18(данные):
