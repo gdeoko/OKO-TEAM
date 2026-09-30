@@ -24,6 +24,7 @@ import запрет
 import возраст_фото
 import предупреждения
 import места
+import текст_эталона
 import примеры
 import безлимит
 import оферта
@@ -375,6 +376,9 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
 
     if зерно:
         params["seed"] = зерно
+    # Негатив эталона к его же тексту: они подбирались вместе.
+    if ЭТАЛОН_ТЕКСТ and not видео and scene and prompt == текст_эталона.промпт(scene):
+        params["neg"] = текст_эталона.негатив(scene) or params["neg"]
     gid, _seed = gpu.start(**params)
     res = gpu.wait(gid, limit=ЖДЁМ.get(kind, 900), on_tick=на_тик)
     files = res.get("files") or []
@@ -650,6 +654,42 @@ def _починить_лицо(данные, имя):
     except Exception as e:                                  # noqa: BLE001
         print("восстановитель лица не отработал:", str(e)[:160], flush=True)
     return None
+
+
+ЛИЦО_ВТОРЫМ = (os.environ.get("ROCKET_LICO2", "1") or "") != "0"
+ЭТАЛОН_ТЕКСТ = (os.environ.get("ROCKET_ETALON_TEXT", "1") or "") != "0"
+ПРО_ЛИЦО = (" The second reference image is a close-up of her face: her face in "
+            "this photo must be exactly that face - the same eye shape, eyelids, "
+            "nose, lips, jaw and fringe.")
+
+
+def _кроп_лица(путь):
+    """Крупный квадрат лица со снимка клиента, PNG-байты. None, если лица нет."""
+    try:
+        import cv2
+        from insightface.app import FaceAnalysis
+        if _ЛИЦА_ДЕТ[0] is None:
+            fa = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+            fa.prepare(ctx_id=-1, det_size=(640, 640))
+            _ЛИЦА_ДЕТ[0] = fa
+        кадр = cv2.imread(путь)
+        лица = _ЛИЦА_ДЕТ[0].get(кадр) if кадр is not None else []
+        if not лица:
+            return None
+        f = max(лица, key=lambda f: f.bbox[2] - f.bbox[0])
+        x0, y0, x1, y1 = f.bbox
+        cx, cy, r = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0) * 1.1
+        H, W = кадр.shape[:2]
+        к = кадр[int(max(0, cy - r)):int(min(H, cy + r)), int(max(0, cx - r)):int(min(W, cx + r))]
+        к = cv2.resize(к, (768, 768), interpolation=cv2.INTER_LANCZOS4)
+        ok, буф = cv2.imencode(".png", к)
+        return буф.tobytes() if ok else None
+    except Exception as e:                                  # noqa: BLE001
+        print("кроп лица не вышел:", str(e)[:120], flush=True)
+        return None
+
+
+_ЛИЦА_ДЕТ = [None]
 
 
 def _дорисовать_тело(данные, имя, scene=None):
@@ -976,6 +1016,24 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
                 and ((kind or "").startswith("i2i") or цепочка)
                 and not _одежда_в_кадре(scene)):
             photos = _снять_одежду(свои, photos, tick)
+
+        # ЛИЦО ВТОРЫМ РЕФЕРЕНСОМ. На снимке в полный рост лицо занимает
+        # восемьдесят точек, и Qwen рисует «её типаж», но не её. Крупный
+        # кроп того же лица вторым снимком поднял сходство с 0.44 до 0.55
+        # при потолке 0.57 у самого эталона (замер 30.09.2026).
+        if (ЛИЦО_ВТОРЫМ and photos and len(photos) == 1 and свои
+                and ((kind or "").startswith("i2i") or цепочка)
+                and len(catalog.полы(scene) if scene else ("ж",)) == 1):
+            кроп = _кроп_лица(свои[0])
+            if кроп:
+                try:
+                    photos = list(photos) + [gpu.upload("лицо_" + os.path.basename(свои[0]), кроп)]
+                    if цепочка:
+                        prompt_фото = (prompt_фото or prompt) + ПРО_ЛИЦО
+                    else:
+                        prompt = prompt + ПРО_ЛИЦО
+                except Exception as e:                      # noqa: BLE001
+                    print("лицо вторым не ушло:", str(e)[:120], flush=True)
 
         if цепочка:
             # Первый проход. Его результат человеку НЕ отдаётся и в
@@ -1691,9 +1749,18 @@ def пустить_сценарий(chat, u, sc, фото, место=None):
     """Запуск кнопки каталога. Двухшаговость решает сам сценарий."""
     место = место or места.КАК_НА_ФОТО
     сл = store.сложение(u) or None
-    launch(chat, u, sc.job, sc.промпт(место=место, сложение=сл), фото,
+    промпт, промпт_фото = sc.промпт(место=место, сложение=сл), sc.prompt_фото(место, сл)
+    # ТЕКСТ ЭТАЛОНА вместо собранного, где эталон есть (текст_эталона.py):
+    # он держит позу и руки лучше, а внешность в нём заменена на «как на
+    # снимке». У ролика это текст его первого прохода - фотографии.
+    эт = текст_эталона.промпт(sc.key) if ЭТАЛОН_ТЕКСТ else None
+    if эт and sc.двухшаговый:
+        промпт_фото = эт
+    elif эт and (sc.job or "").startswith("i2i"):
+        промпт = эт
+    launch(chat, u, sc.job, промпт, фото,
            scene=sc.key, цепочка=sc.двухшаговый,
-           prompt_фото=sc.prompt_фото(место, сл),
+           prompt_фото=промпт_фото,
            denoise=DENOISE_ФОН if sc.фон_с_референса(место) else 1.0,
            плоскость=prompts.плоскость(сл))
 
