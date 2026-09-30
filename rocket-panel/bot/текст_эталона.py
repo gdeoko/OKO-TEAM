@@ -177,5 +177,9 @@ def негатив(ключ):
                     break
     except Exception:                                   # noqa: BLE001
         н = None
+    # Татуировки: на «На коленях» у героини без единой татуировки на
+    # предплечье появился рисунок. Эталонный негатив их не называл.
+    if н and "tattoo" not in н:
+        н = н + ", tattoos, tattoo, ink drawings on skin"
     _КЭШ[ключ] = н
     return н
