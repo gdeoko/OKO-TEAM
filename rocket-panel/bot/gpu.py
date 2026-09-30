@@ -239,3 +239,20 @@ class Gpu:
         if not isinstance(r, dict) or not r.get("file"):
             return None
         return self.fetch(r["file"])
+
+    def тело(self, filename, content, кожа=None, зоны=None, сзади=False):
+        """Дорисовать кожу и органы SDXL НА КАРТЕ (см. gpu/telo.py).
+
+        Кадр возвращается вдвое больше. None при любой неудаче: без
+        доработки кадр хуже, но ронять из-за неё заказ незачем.
+        """
+        поля = {"сзади": "1" if сзади else "0"}
+        if кожа is not None:
+            поля["кожа"] = str(кожа)
+        if зоны is not None:
+            поля["зоны"] = str(зоны)
+        r = self._req("api/telo", files={"file": (filename, content)},
+                      data=поля, timeout=600)
+        if not isinstance(r, dict) or not r.get("file"):
+            return None
+        return self.fetch(r["file"])

@@ -1113,7 +1113,16 @@ def run(jid, graph):
 #
 # ЦЕНА - ВРЕМЯ. Кадр считается около двух минут вместо сорока секунд, с
 # доработкой зоны дольше. Уронить обратно можно одной цифрой здесь.
-SZ={"photo":{"vert":(1536,2688),"sq":(1536,1536),"horiz":(2688,1536)},
+#
+# ОБРАТНО НА РОДНОЙ 30.09.2026, но разрешение отдаётся то же. Замер на
+# «Крупном плане» 1:1: лист 1536 давал коже мазки маслом, белые штрихи и
+# тёмные царапины - модель рисует вдвое выше обучающего размера. Теперь
+# Qwen считает в родном 768x1344 (чище и вчетверо быстрее), а вдвое кадр
+# поднимает SDXL, которая заодно дорисовывает кожу и органы (telo.py).
+# ROCKET_PHOTO_BIG=1 возвращает прежний лист.
+SZ={"photo":({"vert":(1536,2688),"sq":(1536,1536),"horiz":(2688,1536)}
+             if os.environ.get("ROCKET_PHOTO_BIG","0")=="1" else
+             {"vert":(768,1344),"sq":(1024,1024),"horiz":(1344,768)}),
     "video":{"vert":(704,1280),"sq":(960,960),"horiz":(1280,704)},
     # ДЛИННЫЙ РОЛИК СЧИТАЕТСЯ МЕЛЬЧЕ, И ЭТО НЕ ЭКОНОМИЯ.
     #
@@ -1577,6 +1586,29 @@ def лицо_починить():
     путь=os.path.join(OUT,имя)
     cv2.imwrite(путь,готово)
     return jsonify(file=имя)
+
+
+# ТЕЛО. Кадр туда, кадр вдвое больше обратно: кожу и органы поверх
+# кадра Qwen дорисовывает SDXL LUSTIFY (см. telo.py). Путь латиницей по
+# той же причине, что и у /api/face.
+@app.post("/api/telo")
+def тело_дорисовать():
+    f=request.files.get("file")
+    if not f: return jsonify(error="нет файла"),400
+    import cv2,numpy as np
+    import telo
+    кадр=cv2.imdecode(np.frombuffer(f.read(),np.uint8),cv2.IMREAD_COLOR)
+    if кадр is None: return jsonify(error="кадр не читается"),400
+    т=time.time()
+    try:
+        готово=telo.дорисовать(кадр,request.form.get("кожа"),request.form.get("зоны"),
+                               int(request.form.get("зерно") or 11),
+                               (request.form.get("сзади") or "")=="1")
+    except Exception as e:
+        return jsonify(error=str(e)[:300]),500
+    имя=f"telo_{uuid.uuid4().hex[:8]}.png"
+    cv2.imwrite(os.path.join(OUT,имя),готово)
+    return jsonify(file=имя,sec=round(time.time()-т,1))
 
 
 @app.get("/in/<path:n>")
