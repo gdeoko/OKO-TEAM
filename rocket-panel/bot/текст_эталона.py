@@ -87,11 +87,13 @@ _НАЧАЛО = "Photorealistic explicit photograph, matte dry skin, correct han
                "leaning back on one straight arm, one shoulder forward, her face "
                "turned UP to the lens. Her bare breasts and her bare vulva are in "
                "view. ",
-    "un_lean": "THREE-QUARTER SHOT from her head to her knees, camera at chest "
-               "height. She STANDS LEANING BACK against the black wall, shoulder "
-               "blades and hips touching it, one foot flat against the wall so that "
-               "knee comes forward, both arms down along the wall. Her bare breasts "
-               "and her bare vulva are in view, her eyes to the lens. ",
+    "un_lean": "FRONT VIEW, THREE-QUARTER SHOT from her head to her knees, camera "
+               "straight in front of her at chest height. She FACES THE CAMERA "
+               "SQUARELY with her back flat against the black wall behind her, "
+               "shoulder blades and hips touching it, one foot raised flat against "
+               "the wall so that knee comes forward and her thighs open, both arms "
+               "down along the wall. Her bare breasts and her bare vulva face the "
+               "lens, her eyes to the lens. Not in profile. ",
     "ph_pov": "POINT-OF-VIEW SHOT: the camera is the eyes of someone standing at her "
               "feet and looking down at her. She LIES ON HER BACK on the floor with "
               "her legs spread wide towards the camera, one hand between her thighs "
@@ -181,5 +183,10 @@ def негатив(ключ):
     # предплечье появился рисунок. Эталонный негатив их не называл.
     if н and "tattoo" not in н:
         н = н + ", tattoos, tattoo, ink drawings on skin"
+    # На «Сверху вниз» в промежности женщины вырос отросток, а на полу
+    # валялась сброшенная одежда. Оба запрета называются прямо.
+    if н and "discarded clothes" not in н:
+        н = н + (", penis, testicles, male genitals on a woman, extra genitals, "
+                 "discarded clothes, underwear lying on the floor")
     _КЭШ[ключ] = н
     return н
