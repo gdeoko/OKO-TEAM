@@ -35,9 +35,32 @@
 верить. Не совпало - он не годится, и это надо сказать прямо, а не
 подгонять вопрос под ответ.
 
-    python3 kritik.py <кадр.png>            разбор одного кадра
-    python3 kritik.py <кадр.png> --зоны     плюс разбор по кропам
-    python3 kritik.py --проверка            сверка с вердиктами владельца
+    python3 kritik.py <кадр.png>                   разбор одного кадра
+    python3 kritik.py <кадр.png> --зоны            плюс разбор по зонам тела
+    python3 kritik.py <кадр.png> --реф <реф.jpg>   лицо сверяется с референсом
+    python3 kritik.py --проверка                   сверка с вердиктами владельца
+
+## Три поломки, найденные на первом живом прогоне (30.09.2026, un_close)
+
+1. ЗАЦИКЛИВАНИЕ. Зона «пах» выдала «Missing skin texture» двадцать раз
+   подряд и оборвалась на лимите. Без штрафа за повтор жадная выборка
+   (`do_sample=False`) застревает в одной строке. Теперь
+   `repetition_penalty` и запрет повторять пятёрки слов, плюс чистка
+   одинаковых пунктов после модели и потолок в восемь пунктов.
+
+2. ЗОНЫ ДОЛЯМИ КАДРА. Рамка «кисти рук» (0.02-0.98 по ширине, 0.38-0.80
+   по высоте) на кадре с разведёнными ногами легла на пах, и критик
+   описал органы вместо рук. А там, где рук в кадре нет вовсе, он их
+   выдумал: «кисти срослись с бёдрами». Теперь зоны строятся по скелету
+   (mediapipe, 33 точки) и по найденному лицу (RetinaFace). Узел,
+   которого не видно (видимость ниже 0.5), зоной не становится: в отчёт
+   идёт «не в кадре», и модель про него не спрашивают вовсе.
+
+3. ЛИЦО БЕЗ РЕФЕРЕНСА. Зона «лицо» ответила «нет дефектов», а владелец
+   на двух кропах показал, что лицо ДРУГОЕ: круглее, другой нос и разрез
+   глаз. Модель смотрела лицо результата в одиночку, и нарисованное чисто
+   чужое лицо дефектом не выглядит. Теперь при референсе она получает
+   ОБА лица рядом и первой строкой отвечает, тот же ли это человек.
 
 Из другого кода:
 
@@ -49,15 +72,17 @@ import os
 import sys
 
 МОДЕЛЬ = os.environ.get("ROCKET_KRITIK", "/root/models/kritik")
-# Кроп мелкой детали обязателен отдельным вопросом. Модель смотрит кадр в
-# своём разрешении, и вульва на вертикали 768x1344 занимает у неё
-# несколько десятков точек - столько же, сколько у меня на превью. Ровно
-# поэтому я и не видела того, что видел владелец на увеличении.
-ЗОНЫ = {
-    "низ живота и пах": (0.24, 0.50, 0.76, 0.92),
-    "кисти рук": (0.02, 0.38, 0.98, 0.80),
-    "лицо": (0.28, 0.02, 0.72, 0.36),
-}
+МОДЕЛЬ_ПОЗЫ = os.environ.get("ROCKET_POSE_TASK",
+                             "/root/models/pose_landmarker_heavy.task")
+ССЫЛКА_ПОЗЫ = ("https://storage.googleapis.com/mediapipe-models/"
+               "pose_landmarker/pose_landmarker_heavy/float16/latest/"
+               "pose_landmarker_heavy.task")
+
+# Видимость узла скелета, ниже которой считаем, что его в кадре нет.
+# На кадре un_close кисти дали 0.01 - рук там нет, а критик их «видел».
+ВИДНО_ОТ = 0.5
+# Больше пунктов в ответе не бывает осмысленных: дальше идут повторы.
+ПУНКТОВ_МАКС = 8
 
 ВОПРОС = (
     "You are a quality inspector for AI-generated photographs. Look at "
@@ -83,15 +108,53 @@ import sys
     "skip that category entirely. Do not praise the image. Do not "
     "describe the scene. Only defects.")
 
-ВОПРОС_ЗОНЫ = (
-    "This is a magnified crop of an AI-generated photograph. List every "
-    "anatomical defect you can see in it, specifically and literally: "
-    "fused or missing or extra fingers, limbs merging into each other or "
-    "into the body, blurred or melted genitals, missing anatomy, unwanted "
-    "hair, visible editing seams. Plain numbered list of defects only, "
-    "nothing else. If there is no defect, answer exactly: НЕТ ДЕФЕКТОВ.")
+ВОПРОСЫ_ЗОН = {
+    "пах": (
+        "This is a magnified crop of the GENITAL AREA of an AI-generated "
+        "photo of a woman. List only real, visible defects of the female "
+        "genitals and the skin right around them: melted or blurred "
+        "shapes, fused folds, anatomy that is missing or in the wrong "
+        "place, male organs, painted-on fluid, plastic or waxy skin, "
+        "unnatural dots or grid pattern on the skin. Do not list things "
+        "that are simply not visible. At most 6 items, a short plain "
+        "numbered list, no repeats. If there is no defect, answer "
+        "exactly: НЕТ ДЕФЕКТОВ."),
+    "грудь": (
+        "This is a magnified crop of the CHEST of an AI-generated photo of "
+        "a woman. List only real, visible defects of the breasts, nipples "
+        "and chest skin: wrong or mismatched shape, melted nipples, "
+        "extra or missing nipples, seams, plastic skin, dots, streaks. "
+        "At most 6 items, short numbered list, no repeats. If there is no "
+        "defect, answer exactly: НЕТ ДЕФЕКТОВ."),
+    "кисть": (
+        "This is a magnified crop of ONE HAND of an AI-generated photo. "
+        "Count the fingers and list only real, visible defects: fused, "
+        "extra or missing fingers, fingers bent the wrong way, the hand "
+        "merging into the body or another object, hair on the hand. "
+        "At most 6 items, short numbered list, no repeats. If there is no "
+        "defect, answer exactly: НЕТ ДЕФЕКТОВ."),
+    "лицо": (
+        "This is a magnified crop of the FACE of an AI-generated photo. "
+        "List only real, visible defects: asymmetric or mismatched eyes, "
+        "melted or smeared features, wrong teeth, cracks, plastic skin. "
+        "At most 6 items, short numbered list, no repeats. If there is no "
+        "defect, answer exactly: НЕТ ДЕФЕКТОВ."),
+}
+
+ВОПРОС_ЛИЦО_ПАРА = (
+    "IMAGE 1 is the face of a real reference woman. IMAGE 2 is the face "
+    "from an AI-generated result that is supposed to be THE SAME woman.\n"
+    "First line, exactly one of: ТОТ ЖЕ ЧЕЛОВЕК: ДА / ТОТ ЖЕ ЧЕЛОВЕК: НЕТ / "
+    "ТОТ ЖЕ ЧЕЛОВЕК: ПОХОЖЕ.\n"
+    "Then a short numbered list of the concrete differences of IMAGE 2 "
+    "from IMAGE 1: face shape and width, jaw and chin, nose shape and "
+    "width, eye shape and eyelids, eyebrows, lips, fringe and hairline. "
+    "Then any visible defects of IMAGE 2 itself (asymmetric eyes, melted "
+    "features, plastic skin). At most 8 items, no repeats.")
 
 _МОД = [None, None]
+_ПОЗА = [None]
+_ЛИЦА = [None]
 
 
 def _поднять():
@@ -108,50 +171,259 @@ def _поднять():
     return _МОД
 
 
-def спросить(путь, вопрос=ВОПРОС, максимум=700):
-    """Ответ модели по одному изображению."""
+def _чистить(текст):
+    """Снять повторы, которые модель всё же выдала, и лишний хвост.
+
+    Страховка поверх штрафа за повтор: одинаковый пункт второй раз ничего
+    не сообщает, а читающий принимает двадцать одинаковых строк за
+    двадцать разных бед.
+    """
+    import re
+    было, строки = set(), []
+    for с in текст.splitlines():
+        ключ = re.sub(r"^\s*\d+[.)]\s*", "", с).strip().lower()
+        if ключ and ключ in было:
+            continue
+        было.add(ключ)
+        строки.append(с)
+    пунктов, итог = 0, []
+    for с in строки:
+        if re.match(r"^\s*\d+[.)]", с):
+            пунктов += 1
+            if пунктов > ПУНКТОВ_МАКС:
+                continue
+        итог.append(с)
+    return "\n".join(итог).strip()
+
+
+def спросить(путь, вопрос=None, максимум=700):
+    """Ответ модели по одному изображению или по списку изображений."""
     import torch
     from PIL import Image
     мод, проц = _поднять()
-    изо = Image.open(путь).convert("RGB")
-    сообщения = [{"role": "user", "content": [
-        {"type": "image"}, {"type": "text", "text": вопрос}]}]
-    текст = проц.apply_chat_template(сообщения, tokenize=False,
-                                     add_generation_prompt=True)
-    вход = проц(text=[текст], images=[изо], return_tensors="pt").to(мод.device)
+    пути = путь if isinstance(путь, (list, tuple)) else [путь]
+    изо = [Image.open(п).convert("RGB") for п in пути]
+    сод = [{"type": "image"} for _ in изо]
+    сод.append({"type": "text", "text": вопрос or ВОПРОС})
+    текст = проц.apply_chat_template([{"role": "user", "content": сод}],
+                                     tokenize=False, add_generation_prompt=True)
+    вход = проц(text=[текст], images=изо, return_tensors="pt").to(мод.device)
     with torch.inference_mode():
-        # Без выборки: приёмка обязана отвечать одинаково на один кадр,
-        # иначе два прогона дадут два разных списка дефектов и спорить
-        # будет не о чем.
-        вых = мод.generate(**вход, max_new_tokens=максимум, do_sample=False)
+        # Без выборки: приёмка обязана отвечать одинаково на один кадр.
+        # Но жадная выборка без штрафа застревает в одной строке -
+        # «Missing skin texture» двадцать раз (прогон 30.09.2026).
+        # `no_repeat_ngram_size` здесь НЕЛЬЗЯ: он считает n-граммы вместе с
+        # текстом вопроса, и модель не может повторить фразу из задания -
+        # вердикт выходил вразрядку «Т О Т  Ж Е  Ч Е Л О В Е К». Повторы
+        # держат штраф и `_чистить`.
+        вых = мод.generate(**вход, max_new_tokens=максимум, do_sample=False,
+                           repetition_penalty=1.15)
     новое = вых[0][вход["input_ids"].shape[1]:]
-    return проц.decode(новое, skip_special_tokens=True).strip()
+    return _чистить(проц.decode(новое, skip_special_tokens=True))
 
 
-def кроп(путь, доли, куда):
-    """Кусок кадра, увеличенный вдвое без сглаживания."""
+# ------------------------------------------------ где на кадре что лежит
+
+def _поза_модель():
+    if _ПОЗА[0] is not None:
+        return _ПОЗА[0]
+    if not os.path.exists(МОДЕЛЬ_ПОЗЫ):
+        import urllib.request
+        urllib.request.urlretrieve(ССЫЛКА_ПОЗЫ, МОДЕЛЬ_ПОЗЫ)
+    from mediapipe.tasks.python import BaseOptions, vision
+    опц = vision.PoseLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=МОДЕЛЬ_ПОЗЫ),
+        running_mode=vision.RunningMode.IMAGE, num_poses=1,
+        min_pose_detection_confidence=0.3)
+    _ПОЗА[0] = vision.PoseLandmarker.create_from_options(опц)
+    return _ПОЗА[0]
+
+
+def _закрыть_позу():
+    if _ПОЗА[0] is not None:
+        try:
+            _ПОЗА[0].close()
+        except Exception:                                   # noqa: BLE001
+            pass
+        _ПОЗА[0] = None
+
+
+import atexit                                               # noqa: E402
+atexit.register(_закрыть_позу)
+
+
+def скелет(путь):
+    """Узлы скелета в пикселях: {номер: (x, y, видимость)}. Нет - None."""
+    import mediapipe as mp
+    от = _поза_модель().detect(mp.Image.create_from_file(путь))
+    if not от.pose_landmarks:
+        return None
+    from PIL import Image
+    ш, в = Image.open(путь).size
+    return {i: (т.x * ш, т.y * в, т.visibility)
+            for i, т in enumerate(от.pose_landmarks[0])}
+
+
+def лицо_рамка(путь):
+    """Рамка самого крупного лица (RetinaFace). Нет лица - None."""
     import cv2
+    import torch
+    if _ЛИЦА[0] is None:
+        from facexlib.detection import init_detection_model
+        _ЛИЦА[0] = init_detection_model("retinaface_resnet50", half=False,
+                                        device="cuda")
     к = cv2.imread(путь)
-    в, ш = к.shape[:2]
-    x0, y0, x1, y1 = доли
-    кус = к[int(в * y0):int(в * y1), int(ш * x0):int(ш * x1)]
-    кус = cv2.resize(кус, None, fx=2.0, fy=2.0,
-                     interpolation=cv2.INTER_NEAREST)
-    cv2.imwrite(куда, кус)
+    with torch.no_grad():
+        лица = _ЛИЦА[0].detect_faces(к, 0.8)
+    if лица is None or len(лица) == 0:
+        return None
+    л = max(лица, key=lambda x: (x[2] - x[0]) * (x[3] - x[1]))
+    return [float(v) for v in л[:4]]
+
+
+def _рамка(точки, поля, ш, в, мин=96):
+    """Прямоугольник вокруг точек с полями, в пределах кадра."""
+    xs = [p[0] for p in точки]
+    ys = [p[1] for p in точки]
+    x0, x1 = min(xs) - поля, max(xs) + поля
+    y0, y1 = min(ys) - поля, max(ys) + поля
+    if x1 - x0 < мин:
+        c = (x0 + x1) / 2
+        x0, x1 = c - мин / 2, c + мин / 2
+    if y1 - y0 < мин:
+        c = (y0 + y1) / 2
+        y0, y1 = c - мин / 2, c + мин / 2
+    return [max(0, int(x0)), max(0, int(y0)), min(ш, int(x1)), min(в, int(y1))]
+
+
+def зоны_по_скелету(путь):
+    """{зона: рамка} для того, что в кадре есть, и {зона: почему} для нет.
+
+    Рамки строятся от узлов тела, а не от долей кадра. Рост в кадре берётся
+    от плеч до бёдер: им мерятся поля, чтобы на крупном и на общем плане
+    зона захватывала одинаковую часть тела.
+    """
+    from PIL import Image
+    ш, в = Image.open(путь).size
+    т = скелет(путь)
+    рамки, нет = {}, {}
+
+    лицо = лицо_рамка(путь)
+    if лицо:
+        x0, y0, x1, y1 = лицо
+        dx, dy = (x1 - x0) * 0.35, (y1 - y0) * 0.35
+        рамки["лицо"] = [max(0, int(x0 - dx)), max(0, int(y0 - dy)),
+                         min(ш, int(x1 + dx)), min(в, int(y1 + dy))]
+    else:
+        нет["лицо"] = "лицо не найдено"
+
+    if not т:
+        нет["тело"] = "скелет не найден"
+        return рамки, нет
+
+    def вид(*k):
+        return all(т[i][2] >= ВИДНО_ОТ for i in k)
+
+    плечи = (11, 12)
+    бёдра = (23, 24)
+    торс = None
+    if вид(*плечи) and вид(*бёдра):
+        торс = abs((т[23][1] + т[24][1]) / 2 - (т[11][1] + т[12][1]) / 2) or None
+    ширина_бёдер = abs(т[23][0] - т[24][0]) if вид(*бёдра) else None
+    мера = торс or ширина_бёдер or min(ш, в) * 0.3
+
+    if торс:
+        верх = min(т[11][1], т[12][1])
+        грудь = [(т[11][0], верх + 0.10 * торс), (т[12][0], верх + 0.10 * торс),
+                 (т[11][0], верх + 0.60 * торс), (т[12][0], верх + 0.60 * торс)]
+        рамки["грудь"] = _рамка(грудь, 0.18 * мера, ш, в)
+    else:
+        нет["грудь"] = "плечи или бёдра не видны"
+
+    if вид(*бёдра):
+        cx = (т[23][0] + т[24][0]) / 2
+        cy = (т[23][1] + т[24][1]) / 2
+        половина = max(0.8 * (ширина_бёдер or 0), 0.35 * мера)
+        рамки["пах"] = _рамка([(cx - половина, cy - 0.3 * половина),
+                               (cx + половина, cy + 1.3 * половина)],
+                              0, ш, в)
+    else:
+        нет["пах"] = "бёдра не видны"
+
+    for имя, запястье, пальцы in (("кисть левая", 15, (17, 19, 21)),
+                                  ("кисть правая", 16, (18, 20, 22))):
+        if т[запястье][2] >= ВИДНО_ОТ:
+            точки = [т[запястье][:2]] + [т[k][:2] for k in пальцы]
+            рамки[имя] = _рамка(точки, 0.22 * мера, ш, в)
+        else:
+            нет[имя] = "не в кадре (видимость %.2f)" % т[запястье][2]
+    return рамки, нет
+
+
+def кроп(путь, рамка, куда, длинная=896):
+    """Кусок кадра, увеличенный плавно до `длинная` по длинной стороне.
+
+    Раньше увеличение шло «ближайшим соседом», вдвое: на коже это само
+    рисует ступеньки и зерно, и критик мог принять их за дефект кадра.
+    """
+    from PIL import Image
+    и = Image.open(путь).convert("RGB").crop(tuple(рамка))
+    м = длинная / float(max(и.size))
+    if м > 1:
+        и = и.resize((int(и.size[0] * м), int(и.size[1] * м)), Image.LANCZOS)
+    и.save(куда, quality=95)
     return куда
 
 
-def разобрать(путь, зоны=False):
-    """Дефекты кадра словами. С `зоны` - ещё и по увеличенным кускам."""
-    итог = {"кадр": спросить(путь)}
-    if зоны:
-        import tempfile
-        with tempfile.TemporaryDirectory() as д:
-            for имя, доли in ЗОНЫ.items():
-                п = кроп(путь, доли, os.path.join(д, "z.png"))
-                итог[имя] = спросить(п, ВОПРОС_ЗОНЫ, 400)
-    return итог
+def чего_нет(нет):
+    """Приписка к общему вопросу: каких частей тела в кадре нет.
 
+    Без неё модель на общем вопросе оценивает и отсутствующее: на un_close
+    она написала «руки с пятью пальцами по бокам», хотя кистей в кадре нет,
+    а скелет это знал (видимость 0.01).
+    """
+    части = {"кисть левая": "the left hand", "кисть правая": "the right hand",
+             "лицо": "the face", "грудь": "the chest", "пах": "the genital area"}
+    нету = [части[к] for к in нет if к in части]
+    if not нету:
+        return ""
+    return ("\n\nIMPORTANT: a body pose detector found that these parts are NOT "
+            "visible in the inspected image: " + ", ".join(нету) + ". Do not "
+            "describe or judge them at all, do not guess about them.")
+
+
+def разобрать(путь, зоны=False, референс=None):
+    """Дефекты кадра словами. С `зоны` - ещё и по зонам тела.
+
+    `референс` - кадр того же человека в одежде: тогда лицо результата
+    сверяется с его лицом, а не разглядывается в одиночку.
+    """
+    if not зоны:
+        return {"кадр": спросить(путь)}
+    import tempfile
+    рамки, нет = зоны_по_скелету(путь)
+    итог = {"кадр": спросить(путь, ВОПРОС + чего_нет(нет))}
+    with tempfile.TemporaryDirectory() as д:
+        for имя, рамка in рамки.items():
+            п = кроп(путь, рамка, os.path.join(д, "z_%s.jpg" % len(итог)))
+            if имя == "лицо" and референс:
+                рр = лицо_рамка(референс)
+                if рр:
+                    x0, y0, x1, y1 = рр
+                    dx, dy = (x1 - x0) * 0.35, (y1 - y0) * 0.35
+                    from PIL import Image
+                    ш, в = Image.open(референс).size
+                    пр = кроп(референс, [max(0, int(x0 - dx)), max(0, int(y0 - dy)),
+                                         min(ш, int(x1 + dx)), min(в, int(y1 + dy))],
+                              os.path.join(д, "реф_лицо.jpg"))
+                    итог["лицо против референса"] = спросить([пр, п],
+                                                             ВОПРОС_ЛИЦО_ПАРА, 500)
+                    continue
+            вопрос = ВОПРОСЫ_ЗОН["кисть" if имя.startswith("кисть") else имя]
+            итог[имя] = спросить(п, вопрос, 400)
+    for имя, почему in нет.items():
+        итог[имя] = "не проверялось: " + почему
+    return итог
 
 # ВЕРДИКТЫ ВЛАДЕЛЬЦА - мера правдивости критика.
 #
@@ -190,7 +462,10 @@ if __name__ == "__main__":
     if "--проверка" in sys.argv:
         проверка()
     elif len(sys.argv) > 1:
-        о = разобрать(sys.argv[1], зоны="--зоны" in sys.argv)
+        реф = None
+        if "--реф" in sys.argv:
+            реф = sys.argv[sys.argv.index("--реф") + 1]
+        о = разобрать(sys.argv[1], зоны="--зоны" in sys.argv, референс=реф)
         print(json.dumps(о, ensure_ascii=False, indent=1))
     else:
         sys.exit(__doc__)
