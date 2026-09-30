@@ -403,6 +403,11 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
     # доработка каждого стоила бы дороже самого ролика.
     if (kind or "").startswith("i2i") and photos and ЗОНЫ and данные:
         данные = _доработать_зоны(данные, files[0], photos, scene) or данные
+    # НАЧАЛО РОЛИКА. Первый кадр у Wan выходит мутным и блёклым: резкость
+    # 37 против 73-90 уже со второго кадра (замер 01.10.2026, «Крупный
+    # план»). Человек видит это как вспышку тумана в начале ролика.
+    if видео and данные and ОБРЕЗАТЬ_НАЧАЛО > 0:
+        данные = _обрезать_начало(данные) or данные
     # ТЕЛО. Кожу и органы дорисовывает SDXL LUSTIFY поверх кадра Qwen и
     # заодно поднимает его вдвое (gpu/telo.py). Заменяет доработку зон:
     # та перерисовывала грудь и пах тем же дистиллятом и оставляла на
@@ -692,6 +697,28 @@ def _кроп_лица(путь):
 
 
 _ЛИЦА_ДЕТ = [None]
+
+
+ОБРЕЗАТЬ_НАЧАЛО = float(os.environ.get("ROCKET_VIDEO_TRIM", "0.13"))
+
+
+def _обрезать_начало(данные):
+    """Срезать мутные первые кадры ролика. Новые байты или None."""
+    import subprocess
+    import tempfile
+    try:
+        with tempfile.TemporaryDirectory() as врем:
+            вх, вых = os.path.join(врем, "a.mp4"), os.path.join(врем, "b.mp4")
+            open(вх, "wb").write(данные)
+            subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-y",
+                            "-ss", str(ОБРЕЗАТЬ_НАЧАЛО), "-i", вх,
+                            "-c:v", "libx264", "-crf", "17", "-preset", "fast",
+                            "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                            "-c:a", "copy", вых], check=True, timeout=120)
+            return open(вых, "rb").read()
+    except Exception as e:                                  # noqa: BLE001
+        print("начало ролика не обрезано:", str(e)[:120], flush=True)
+        return None
 
 
 def _дорисовать_тело(данные, имя, scene=None):
