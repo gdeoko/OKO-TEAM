@@ -341,6 +341,11 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
     # ролика другие: мигание, дрожь, уплывающее лицо, конечности,
     # перетекающие между кадрами.
     видео = prompts.семейство(kind) not in ("t2i", "i2i", "inpaint")
+    # ТЕЛО В РОЛИКЕ ТО ЖЕ, ЧТО НА ПЕРВОМ КАДРЕ. Прогон 01.10.2026: Wan
+    # увеличивал грудь против кадра, а на «Сверху» развернул её так, что
+    # видны сразу и ягодицы сзади, и грудь спереди.
+    if видео and prompt and ПРО_ТЕЛО_В_РОЛИКЕ not in prompt:
+        prompt = prompt + " " + ПРО_ТЕЛО_В_РОЛИКЕ
     params = {"prompt": prompt, "size": лист,
               "steps": 4, "cfg": 1.0, "seed": 0,
               "neg": (prompts.негатив_видео(prompt) if видео
@@ -699,6 +704,10 @@ def _кроп_лица(путь):
 _ЛИЦА_ДЕТ = [None]
 
 
+ПРО_ТЕЛО_В_РОЛИКЕ = ("Her body stays exactly as in the first frame for the whole clip: "
+                     "the same breast size and shape, the same face, the same hips; "
+                     "her torso does not twist or turn around, she keeps her position "
+                     "and only the described motion happens.")
 ОБРЕЗАТЬ_НАЧАЛО = float(os.environ.get("ROCKET_VIDEO_TRIM", "0.13"))
 
 
