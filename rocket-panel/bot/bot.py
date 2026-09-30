@@ -2063,6 +2063,13 @@ def on_callback(cb):
 
     if data == "unlim:stars":
         answer(cid)
+        # ЗВЁЗДЫ ВЫКЛЮЧЕНЫ ФЛАГОМ, И ПРОВЕРКА СТОИТ ЗДЕСЬ, А НЕ ТОЛЬКО
+        # В МЕНЮ. Кнопка живёт в истории переписки у каждого, кто
+        # открывал оплату раньше, и без этой строки она продолжила бы
+        # выставлять счета в звёздах спустя месяцы после выключения.
+        if not ui.звёзды_вкл():
+            send(chat, t("оп.способ_снят", я), ui.меню_безлимита(я))
+            return
         сч = payments.счёт_звёздами_безлимита()
         tg("sendInvoice", chat_id=chat,
            **{k: (json.dumps(v) if k == "prices" else v)
@@ -2091,6 +2098,9 @@ def on_callback(cb):
 
     if data == "fr:stars":
         answer(cid)
+        if not ui.звёзды_вкл():
+            send(chat, t("оп.способ_снят", я), ui.меню_способов_франшизы(я))
+            return
         сч = payments.счёт_звёздами_франшизы()
         tg("sendInvoice", chat_id=chat,
            **{k: (json.dumps(v) if k == "prices" else v)
@@ -2137,7 +2147,22 @@ def on_callback(cb):
 
     if data.startswith("pay:stars:"):
         answer(cid)
-        сч = payments.счёт_звёздами(data.rsplit(":", 1)[1])
+        pid = data.rsplit(":", 1)[1]
+        if not ui.звёзды_вкл():
+            # Вместе с отказом сразу даём рабочую кнопку оплаты, а не
+            # одно «способ снят»: человек пришёл платить, и упереться
+            # ему тут не во что.
+            p = pricing.pack(pid)
+            адрес, ид_счёта = ("", "")
+            if p:
+                адрес, ид_счёта = _счёт_заранее(
+                    u, pid, p["rub"],
+                    "%d %s" % (p["coins"], t("оп.коины", я)))
+            send(chat, t("оп.способ_снят", я),
+                 ui.меню_способов(pid, я, адрес,
+                                  f"bchk:{ид_счёта}" if ид_счёта else ""))
+            return
+        сч = payments.счёт_звёздами(pid)
         tg("sendInvoice", chat_id=chat, **{k: (json.dumps(v) if k == "prices" else v)
                                            for k, v in сч.items()})
         return
