@@ -56,6 +56,63 @@ _ЗАМЕНЫ = [
 
 _КЭШ = {}
 
+# КНОПКИ БЕЗ ПРИНЯТОГО ЭТАЛОНА. Их собранный текст - полторы страницы
+# общих правил, и строка позы тонет в нём: на прогоне 30.09.2026 шесть
+# кнопок (на коленях, снизу, сверху, опираясь, от первого лица, общий
+# план) нарисовали одну и ту же позу «лёжа, руки за головой». Здесь
+# текст сложен так же, как у принятых эталонов: сперва план и поза
+# словами, которые нельзя прочитать двояко, потом кто она, потом тело
+# одним куском, потом место. Место то же, что у эталонов.
+_ОБЩЕЕ = ("This is the woman from the reference photo: her face unchanged, "
+          + СВОЯ_ВНЕШНОСТЬ + ". Her whole face is inside the frame. She is "
+          "completely nude. ONE single continuous body: one head on her own neck, "
+          "one torso, two arms growing from her own shoulders, two legs growing "
+          "from her own hips - two hands and two feet in all, every one traceable "
+          "back along its own limb. Only one person in the frame. Black studio set "
+          "with hot pink neon tubes glowing on the wall behind her, glossy black "
+          "floor, soft white light from the front.")
+_НАЧАЛО = "Photorealistic explicit photograph, matte dry skin, correct hands. "
+СВОИ = {
+    "un_kneel": "FULL-LENGTH SHOT, camera level with her chest. She KNEELS upright "
+                "on the floor facing the camera, her knees wide apart, sitting back "
+                "on her heels, back straight, both hands resting flat on her own "
+                "thighs. Her bare breasts and her bare vulva between her open knees "
+                "are both in plain view. Her face is to the lens. ",
+    "un_low": "LOW-ANGLE SHOT: the camera is low, just above her knees, tilted up "
+              "at her. She STANDS facing the camera, feet apart, both hands on her "
+              "own hips. Her bare vulva, belly, breasts and face are all in view, "
+              "and she looks down into the lens. ",
+    "un_over": "HIGH-ANGLE SHOT: the camera looks DOWN at her from above at about "
+               "sixty degrees. She SITS on the floor with her legs bent to one side, "
+               "leaning back on one straight arm, one shoulder forward, her face "
+               "turned UP to the lens. Her bare breasts and her bare vulva are in "
+               "view. ",
+    "un_lean": "THREE-QUARTER SHOT from her head to her knees, camera at chest "
+               "height. She STANDS LEANING BACK against the black wall, shoulder "
+               "blades and hips touching it, one foot flat against the wall so that "
+               "knee comes forward, both arms down along the wall. Her bare breasts "
+               "and her bare vulva are in view, her eyes to the lens. ",
+    "ph_pov": "POINT-OF-VIEW SHOT: the camera is the eyes of someone standing at her "
+              "feet and looking down at her. She LIES ON HER BACK on the floor with "
+              "her legs spread wide towards the camera, one hand between her thighs "
+              "with two fingers on her own vulva, the other hand on her own breast, "
+              "looking straight into the lens. No other person and no other hands. ",
+    "ph_pull": "WIDE SHOT: the whole of her body and a good part of the studio are "
+               "in the frame, camera at hip height. She SITS on the floor leaning "
+               "back on one hand, knees up and wide apart, the other hand between "
+               "her thighs touching her own vulva. Her face is to the lens. ",
+    "ph_mirror": "She KNEELS on the floor with her back to the camera in front of a "
+                 "tall mirror that fills most of the frame. The mirror shows a TRUE "
+                 "reflection of her front: her face, her bare breasts and her own "
+                 "hand between her thighs on her vulva. Same body, same pose, "
+                 "reversed correctly. The camera is off to one side and never "
+                 "appears in the glass. No second person. ",
+    "ph_slow": "CLOSE SHOT from her face down to her hips, 85mm, one large soft "
+               "light. She LIES ON HER SIDE facing the camera, top leg raised and "
+               "bent, her own hand resting between her thighs on her vulva, her "
+               "bare breasts in view, eyes half closed towards the lens. ",
+}
+
 
 def _одиночная(ключ):
     return str(ключ or "").startswith(("un_", "ph_", "ac_"))
@@ -83,7 +140,11 @@ def промпт(ключ):
     except Exception:                                   # noqa: BLE001
         return None
     if not з or not з.get("промпт"):
-        return None
+        к = str(ключ)
+        свой = СВОИ.get(к) or (СВОИ.get("ph_" + к[3:]) if к.startswith("ac_") else None)
+        if not свой:
+            return None
+        з = {"промпт": _НАЧАЛО + свой + _ОБЩЕЕ}
     т = з["промпт"]
     for было, стало in _ЗАМЕНЫ:
         т = re.sub(было, стало, т)
@@ -103,6 +164,9 @@ def негатив(ключ):
     try:
         import промпты_эталонов as ПЭ
         з = _эталон(ключ)
+        if not (з and з.get("файл")):
+            # Своим текстам - негатив самого проверенного эталона.
+            з = _эталон("un_close")
         if з and з.get("файл"):
             г = ПЭ.граф(os.path.join(ПЭ.ЭТАЛОНЫ, з["файл"])) or {}
             for у in г.values():
