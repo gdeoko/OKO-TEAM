@@ -68,15 +68,39 @@ def опора_на_диске(ключ):
         return "кнопка без опоры"
     # Спрашиваем саму карту, а не диск сервера бота: опоры лежат НА
     # КАРТЕ, и промах по пути виден только оттуда.
+    # Адрес карты берём из /etc/amberry-card.env, куда его пишет
+    # `переезд_vast.py подключить`. Раньше читались только переменные
+    # окружения, а на сервере их нет: ssh уходил на пустой адрес, падал,
+    # и проба писала «НЕТ НА КАРТЕ» при опоре, лежащей на месте. Так
+    # 30.09.2026 владельцу дважды сказали, что у un_close поза ничем не
+    # держится, хотя панель брала опору всё это время.
+    адрес = {"VAST_HOST": os.environ.get("VAST_HOST", ""),
+             "VAST_PORT": os.environ.get("VAST_PORT", "")}
+    if not (адрес["VAST_HOST"] and адрес["VAST_PORT"]):
+        try:
+            for с in open("/etc/amberry-card.env", encoding="utf-8"):
+                к, _, з = с.strip().partition("=")
+                if к in адрес and з and not адрес[к]:
+                    адрес[к] = з.strip()
+        except OSError:
+            pass
+    if not (адрес["VAST_HOST"] and адрес["VAST_PORT"]):
+        return "не проверено: адрес карты неизвестен"
     try:
         import subprocess
         р = subprocess.run(
             ["ssh", "-i", "/root/.ssh/vast_amberry", "-o",
-             "StrictHostKeyChecking=no", "-p", os.environ.get("VAST_PORT", ""),
-             os.environ.get("VAST_HOST", ""),
+             "StrictHostKeyChecking=no", "-o", "LogLevel=ERROR",
+             "-p", адрес["VAST_PORT"], адрес["VAST_HOST"],
              "ls /root/ГЛУБИНА/%s.png" % ключ],
             capture_output=True, text=True, timeout=60)
-        return "есть на карте" if р.returncode == 0 else "НЕТ НА КАРТЕ"
+        if р.returncode == 0:
+            return "есть на карте"
+        # Отличаем «файла нет» от «до карты не достучались»: второе
+        # опорой не является и так называться не должно.
+        if "No such file" in (р.stderr or ""):
+            return "НЕТ НА КАРТЕ"
+        return "не проверено: ssh %s" % (р.stderr or "").strip()[:80]
     except Exception as e:
         return "не проверено (%s)" % type(e).__name__
 
