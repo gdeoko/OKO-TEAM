@@ -2472,6 +2472,14 @@ html.мир-живой .сияние { display: none; }
   will-change: opacity, transform;
 }
 .фон-клип.виден { opacity: 1; }
+/* Холст летающей ракеты (полёт.js): над клипами, под притенением низа
+   и под стеклом интерфейса. Гаснет плавно, когда тема не «Полёт» или
+   движение нельзя. */
+.фон-полёт {
+  position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none;
+  opacity: 0; transition: opacity .6s ease;
+}
+.фон-полёт.виден { opacity: 1; }
 html.фон-живой .небо,
 html.фон-живой .планета-место,
 html.фон-живой .вуаль,
