@@ -103,16 +103,19 @@ _НАЧАЛО = "Photorealistic explicit photograph, matte dry skin, correct han
                "in the frame, camera at hip height. She SITS on the floor leaning "
                "back on one hand, knees up and wide apart, the other hand between "
                "her thighs touching her own vulva. Her face is to the lens. ",
-    "ph_mirror": "She KNEELS on the floor with her back to the camera in front of a "
-                 "tall mirror that fills most of the frame. The mirror shows a TRUE "
-                 "reflection of her front: her face, her bare breasts and her own "
-                 "hand between her thighs on her vulva. Same body, same pose, "
-                 "reversed correctly. The camera is off to one side and never "
-                 "appears in the glass. No second person. ",
+    "ph_mirror": "MIRROR SELFIE: the whole photograph is ONE reflection in a large "
+                 "wall mirror - we see only her mirror image, never her real body "
+                 "and never two copies of her. She kneels facing the mirror, knees "
+                 "apart, one hand between her thighs on her own vulva, the other "
+                 "hand resting on her thigh. Her face, her bare breasts and her "
+                 "vulva are in view in the reflection. Exactly ONE woman in the "
+                 "picture. No phone, no camera visible. ",
     "ph_slow": "CLOSE SHOT from her face down to her hips, 85mm, one large soft "
-               "light. She LIES ON HER SIDE facing the camera, top leg raised and "
-               "bent, her own hand resting between her thighs on her vulva, her "
-               "bare breasts in view, eyes half closed towards the lens. ",
+               "light, camera above her chest looking down along her body. She "
+               "LIES ON HER BACK with her knees up and apart, one hand between her "
+               "thighs with her fingers on her own vulva, the other hand resting "
+               "on her belly. Her bare breasts are in view, eyes half closed "
+               "towards the lens. ",
 }
 
 
