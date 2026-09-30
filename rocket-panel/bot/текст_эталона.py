@@ -51,8 +51,9 @@ _ЗАМЕНЫ = [
     (r"\bpetite\b", ""),
 ]
 
-ВЗРОСЛАЯ = ("She is an adult woman in her twenties with a mature adult face "
-            "and a fully developed adult body.")
+ВЗРОСЛАЯ = ("She is an adult woman of about twenty-five with a mature adult face "
+            "and a fully developed adult woman's body with womanly hips and "
+            "natural adult breasts; she is not skinny and her ribs do not show.")
 
 _КЭШ = {}
 
@@ -103,13 +104,13 @@ _НАЧАЛО = "Photorealistic explicit photograph, matte dry skin, correct han
                "in the frame, camera at hip height. She SITS on the floor leaning "
                "back on one hand, knees up and wide apart, the other hand between "
                "her thighs touching her own vulva. Her face is to the lens. ",
-    "ph_mirror": "MIRROR SELFIE: the whole photograph is ONE reflection in a large "
-                 "wall mirror - we see only her mirror image, never her real body "
-                 "and never two copies of her. She kneels facing the mirror, knees "
-                 "apart, one hand between her thighs on her own vulva, the other "
-                 "hand resting on her thigh. Her face, her bare breasts and her "
-                 "vulva are in view in the reflection. Exactly ONE woman in the "
-                 "picture. No phone, no camera visible. ",
+    "ph_mirror": "She KNEELS on the floor facing the camera, knees apart, one hand "
+                 "between her thighs on her own vulva, the other on her thigh. "
+                 "Directly BEHIND her stands a tall mirror that shows ONLY her bare "
+                 "back and buttocks from behind - the back of the same one woman. "
+                 "Her face, her bare breasts and her vulva face the lens. Exactly ONE "
+                 "woman, whose back is seen in the mirror; no second face anywhere, "
+                 "no phone. ",
     "ph_slow": "CLOSE SHOT from her face down to her hips, 85mm, one large soft "
                "light, camera above her chest looking down along her body. She "
                "LIES ON HER BACK with her knees up and apart, one hand between her "
