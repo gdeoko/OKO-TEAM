@@ -657,11 +657,20 @@ def wf_photo(p,w,h,seed,images=None,neg=None,denoise=1.0,
     return g
 
 
-def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None):
+def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None,кожа=None):
     """Правка по области: белое в маске переписывается, остальное остаётся
     пиксель в пиксель. Композит в конце обязателен — без него модель
-    подменяет и то, что не просили."""
+    подменяет и то, что не просили.
+
+    ЛОРА КОЖИ ЗДЕСЬ БЫЛА НУЖНА, А ЕЁ НЕ БЫЛО ВОВСЕ: `_фото_база` лор не
+    цепляет, их вешает `wf_photo` уже поверх. Правка по маске - это
+    раздевание, то есть проход, который и ПЕЧАТАЕТ кожу; проба
+    30.09.2026 показала, что мокрую пластмассу делает именно он, а не
+    общая генерация. Композицию лора тут сломать не может: область
+    держит маска."""
     g=_фото_база(p,neg,seed,[image])
+    g=_лора(g,ЛОРА_РЕАЛИЗМ,РЕАЛИЗМ_СИЛА,узел="21")
+    g=_лора(g,ЛОРА_КОЖА,КОЖА_СИЛА if кожа is None else кожа,узел="22")
     g["20"]={"class_type":"LoadImage","inputs":{"image":mask,"upload":"image"}}
     g["21"]={"class_type":"ImageToMask","inputs":{"image":["20",0],"channel":"red"}}
     g["22"]={"class_type":"GrowMask","inputs":{"mask":["21",0],"expand":int(grow),
@@ -1309,7 +1318,8 @@ def gen():
         if not images or not d.get("mask"):
             return jsonify(error="Нужны фото и обведённая область"),400
         g=wf_inpaint(p,seed,images[0],d["mask"],
-                     int(d.get("feather",24)),int(d.get("grow",8)),neg)
+                     int(d.get("feather",24)),int(d.get("grow",8)),neg,
+                     d.get("кожа"))
         w=h=0
     elif mode=="photo":
         if len(images)>MAX_REF:
