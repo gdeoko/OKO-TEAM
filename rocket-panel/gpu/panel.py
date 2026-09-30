@@ -672,6 +672,110 @@ def wf_photo(p,w,h,seed,images=None,neg=None,denoise=1.0,
     return g
 
 
+# РЕЦЕПТ ПРИНЯТЫХ ЭТАЛОНОВ
+# ────────────────────────
+# Владелец 30.09.2026 про старые кадры: «на тех кадрах как будто лучше и
+# кожа, и всё остальное: позы, ракурсы, лица, гениталии». Кадры те его
+# же, приняты им самим, и рецепт их лежал прямо в метаданных PNG -
+# ComfyUI пишет туда весь граф.
+#
+# Граф оказался короче нашего вчетверо:
+#
+#     CheckpointLoaderSimple -> TextEncodeQwenImageEditPlus
+#     -> VAEEncode -> KSampler(8 шагов, CFG 2.0, euler/simple, denoise 1)
+#     -> VAEDecode -> SaveImage
+#
+# Ни одной надстройки: ни опоры, ни лор, ни второго прохода, ни
+# апскейла, ни детейлера по зонам, ни раздевания маской. И размер
+# РОДНОЙ - 768x1344. Мы считали 1536x2688, вдвое выше родного, и оттуда
+# «мазки и каша»: на чужом разрешении модель не кладёт микрорельеф, а
+# сочиняет его, а второй проход и апскейл потом размножают сочинённое.
+#
+# Замер на одном снимке, наш путь против рецепта:
+#
+#     резкость зоны органов   443  ->  118   (у живых эталонов 239)
+#     шум                    4.51  ->  2.46  (у живых 2.77)
+#     расхождение позы       0.231 ->  0.085 (порог 0.12)
+#     время кадра             265с ->   12с
+#
+# Раздевание рецепт делает сам, без маски: одежды на кадре 19.5% -> 3.9%.
+#
+# Надстройки не удалены: боевой путь остаётся как был, а этот режим
+# включается ключом `эталон` в запросе. Сравнивать их надо кадрами, а
+# не рассуждением, и для этого оба должны быть живы одновременно.
+ЭТАЛОН_ШАГИ=int(os.environ.get("ROCKET_ET_STEPS","8"))
+ЭТАЛОН_CFG=float(os.environ.get("ROCKET_ET_CFG","2.0"))
+ЭТАЛОН_ЛИСТ=(768,1344)
+
+
+def wf_эталон(p,seed,images=None,neg=None,w=None,h=None,
+              шаги=None,cfg=None,denoise=1.0,только_латент=False):
+    """Граф один в один с принятыми эталонами. Надстроек нет намеренно.
+
+    `только_латент` - снимок идёт СТАРТОВЫМ ЛАТЕНТОМ, но НЕ в текстовое
+    условие. Разница решающая, и вот почему.
+
+    Qwen-Image-Edit это модель ПРАВКИ: снимок в
+    `TextEncodeQwenImageEditPlus` она читает как «вот кадр, сохрани
+    его», и сохраняет честно. Замер 30.09.2026 на зоне вульвы: кроп
+    подан и латентом, и в условие, denoise 0.8, восемь шагов - выход
+    отличается от входа на 6.45 из 255. То есть проход по зоне шёл
+    вхолостую, и никакие правки его промпта ничего не меняли: их
+    перебивало условие «оставь как было».
+
+    Для доводки зоны это ровно наоборот тому, что нужно: там кроп
+    обязан ПЕРЕРИСОВАТЬСЯ по тексту, а от исходника должны остаться
+    только композиция и цвет - их держит латент.
+
+    Для основного кадра режим не годится: там снимок в условии и есть
+    то, чем модель держит лицо и тело клиента.
+    """
+    ш,в=(w or ЭТАЛОН_ЛИСТ[0]),(h or ЭТАЛОН_ЛИСТ[1])
+    images=[x for x in (images or []) if x][:MAX_REF]
+    g={}
+    g["1"]={"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":CKPT_PHOTO}}
+    g["5"]={"class_type":"CLIPTextEncode","inputs":{
+        "clip":["1",1],"text":neg or PHOTO_NEG}}
+    if images:
+        for i,имя in enumerate(images,1):
+            g[f"3{i}"]={"class_type":"LoadImage","inputs":{
+                "image":имя,"upload":"image"}}
+        if только_латент:
+            g["4"]={"class_type":"CLIPTextEncode","inputs":{
+                "clip":["1",1],"text":p}}
+        else:
+            узел={"clip":["1",1],"prompt":p,"vae":["1",2]}
+            for i in range(1,len(images)+1):
+                узел[f"image{i}"]=[f"3{i}",0]
+            g["4"]={"class_type":"TextEncodeQwenImageEditPlus","inputs":узел}
+        # Стартовый латент из первого снимка, как в эталоне. При
+        # denoise=1 он стирается целиком и влияет только размером, зато
+        # при denoise<1 держит обстановку - это и есть «фон с референса».
+        g["40"]={"class_type":"ImageScale","inputs":{
+            "image":["31",0],"width":ш,"height":в,
+            "upscale_method":"lanczos","crop":"center"}}
+        g["41"]={"class_type":"VAEEncode","inputs":{
+            "pixels":["40",0],"vae":["1",2]}}
+        латент=["41",0]
+    else:
+        g["4"]={"class_type":"CLIPTextEncode","inputs":{"clip":["1",1],"text":p}}
+        g["6"]={"class_type":"EmptySD3LatentImage","inputs":{
+            "width":ш,"height":в,"batch_size":1}}
+        латент=["6",0]
+        denoise=1.0
+    g["7"]={"class_type":"KSampler","inputs":{
+        "model":["1",0],"positive":["4",0],"negative":["5",0],
+        "latent_image":латент,"seed":seed,
+        "steps":max(2,min(30,int(шаги or ЭТАЛОН_ШАГИ))),
+        "cfg":max(1.0,min(8.0,float(cfg or ЭТАЛОН_CFG))),
+        "sampler_name":"euler","scheduler":"simple",
+        "denoise":max(0.05,min(1.0,float(denoise)))}}
+    g["8"]={"class_type":"VAEDecode","inputs":{"samples":["7",0],"vae":["1",2]}}
+    g["9"]={"class_type":"SaveImage","inputs":{
+        "images":["8",0],"filename_prefix":"etalon"}}
+    return g
+
+
 def wf_inpaint(p,seed,image,mask,feather=24,grow=8,neg=None,кожа=None):
     """Правка по области: белое в маске переписывается, остальное остаётся
     пиксель в пиксель. Композит в конце обязателен — без него модель
@@ -1341,6 +1445,20 @@ def gen():
                      int(d.get("feather",24)),int(d.get("grow",8)),neg,
                      d.get("кожа"))
         w=h=0
+    elif mode=="photo" and d.get("эталон"):
+        # РЕЖИМ ЭТАЛОНА. Всё, что панель накрутила поверх, здесь
+        # отключено разом - см. `wf_эталон`. Размер тоже родной, и
+        # `_лист` его перекрывает только нарочно, для замера.
+        if len(images)>MAX_REF:
+            return jsonify(error=f"Модель берёт не больше {MAX_REF} снимков"),400
+        w,h=ЭТАЛОН_ЛИСТ
+        свой=d.get("_лист")
+        if isinstance(свой,(list,tuple)) and len(свой)==2:
+            w,h=[max(512,min(4096,int(ч)))//8*8 for ч in свой]
+        g=wf_эталон(p,seed,images,neg,w,h,
+                    d.get("шаги"),d.get("cfg_свой"),
+                    max(0.3,min(1.0,float(d.get("denoise",1.0)))),
+                    bool(d.get("только_латент")))
     elif mode=="photo":
         if len(images)>MAX_REF:
             return jsonify(error=f"Модель берёт не больше {MAX_REF} снимков"),400
