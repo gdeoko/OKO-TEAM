@@ -660,7 +660,9 @@ def _починить_лицо(данные, имя):
 ЭТАЛОН_ТЕКСТ = (os.environ.get("ROCKET_ETALON_TEXT", "1") or "") != "0"
 ПРО_ЛИЦО = (" The second reference image is a close-up of her face: her face in "
             "this photo must be exactly that face - the same eye shape, eyelids, "
-            "nose, lips, jaw and fringe.")
+            "nose, lips, jaw and fringe. It is only a reference for her face: that "
+            "close-up must NOT appear in the picture, there is one single photo "
+            "with one person, no inset, no collage, no second face.")
 
 
 def _кроп_лица(путь):
