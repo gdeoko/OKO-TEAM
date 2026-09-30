@@ -738,7 +738,8 @@ def _дорисовать_тело(данные, имя, scene=None):
                          os.environ.get("ROCKET_GPU_USER", "rocket"),
                          os.environ.get("ROCKET_GPU_PASS", ""))
         готово = карта.тело(имя, данные,
-                            сзади=bool(scene and catalog.вид_сзади(scene)))
+                            сзади=bool(scene and catalog.вид_сзади(scene)),
+                            пара=bool(scene and len(catalog.полы(scene)) > 1))
         if готово:
             return готово
     except Exception as e:                                  # noqa: BLE001

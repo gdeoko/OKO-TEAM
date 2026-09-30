@@ -1603,7 +1603,8 @@ def тело_дорисовать():
     try:
         готово=telo.дорисовать(кадр,request.form.get("кожа"),request.form.get("зоны"),
                                int(request.form.get("зерно") or 11),
-                               (request.form.get("сзади") or "")=="1")
+                               (request.form.get("сзади") or "")=="1",
+                               (request.form.get("пара") or "")=="1")
     except Exception as e:
         return jsonify(error=str(e)[:300]),500
     имя=f"telo_{uuid.uuid4().hex[:8]}.png"

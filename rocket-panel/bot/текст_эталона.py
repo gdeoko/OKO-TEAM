@@ -124,6 +124,15 @@ def _одиночная(ключ):
     return str(ключ or "").startswith(("un_", "ph_", "ac_"))
 
 
+def _пара(ключ):
+    """Пары МЖ и ЖЖ. У МM принятых эталонов нет вовсе."""
+    return str(ключ or "").startswith(("pf_mf_", "pf_ff_", "pr_mf_", "pr_ff_"))
+
+
+def _поддержана(ключ):
+    return _одиночная(ключ) or _пара(ключ)
+
+
 def _эталон(ключ):
     import промпты_эталонов as ПЭ
     з = ПЭ.загрузить()
@@ -134,17 +143,95 @@ def _эталон(ключ):
     # под движение.
     if к.startswith("ac_"):
         return з.get("ph_" + к[3:])
+    if к.startswith("pr_"):
+        return з.get("pf_" + к[3:])
     return з.get(к)
+
+
+# ПАРЫ. Эталоны пар писались под Нику-блондинку, мужчину и
+# темноволосую Алессу, и люди в них названы по внешности: «the blonde»,
+# «the dark-haired one». У клиента внешность своя, поэтому люди
+# называются по номеру снимка, а внешность - «как на снимке».
+_ЗАМЕНЫ_ПАРЫ = [
+    (r"is the blonde from", "is the woman from"),
+    (r"her light-blonde hair,\s*her petite body(,| with a)? small almost flat chest",
+     "her own hair exactly as in that photo, her own body and breast size as in that photo"),
+    (r"long light-blonde hair, petite, small almost flat chest",
+     "her own hair and body exactly as in that photo"),
+    (r"her light-blonde hair", "her own hair exactly as in that photo"),
+    (r"(her )?long dark( brown)? hair", "her own hair exactly as in that photo"),
+    (r"his short hair", "his own hair as in that photo"),
+    (r"his (lean )?athletic build", "his own build as in that photo"),
+    (r"\bTHE BLONDE\b", "THE FIRST WOMAN"),
+    (r"\bThe blonde\b", "The first woman"),
+    (r"\bthe blonde\b", "the first woman"),
+    (r"\bTHE DARK-HAIRED ONE\b", "THE SECOND WOMAN"),
+    (r"\bThe dark-haired one\b", "The second woman"),
+    (r"\bthe dark-haired one\b", "the second woman"),
+    (r"\blight-blonde\b", ""),
+    (r"\bpetite\b", ""),
+    (r"\byoung\b", "adult"),
+]
+ВЗРОСЛЫЕ = ("Both people are adults in their twenties with mature adult faces and "
+            "fully developed adult bodies.")
+
+
+def _порядок_эталона(ключ):
+    """Полы людей в порядке снимков, на которых считался эталон."""
+    try:
+        import промпты_эталонов as ПЭ
+        з = _эталон(ключ) or {}
+        г = ПЭ.граф(os.path.join(ПЭ.ЭТАЛОНЫ, з.get("файл", ""))) or {}
+        энк = next((у for у in г.values()
+                    if у.get("class_type") == "TextEncodeQwenImageEditPlus"), None)
+        полы = []
+        for и in range(1, 4):
+            ссылка = (энк or {}).get("inputs", {}).get(f"image{и}")
+            if not ссылка:
+                continue
+            имя = ((г.get(str(ссылка[0])) or {}).get("inputs", {}).get("image") or "")
+            полы.append("м" if "muzh" in имя or "_м" in имя else "ж")
+        return tuple(полы)
+    except Exception:                                   # noqa: BLE001
+        return ()
+
+
+def _текст_пары(ключ, т):
+    # В паре МЖ женщина одна, и «the blonde» там значит просто «она».
+    if "_mf_" in ключ:
+        т = re.sub(r"\bTHE BLONDE\b", "THE WOMAN", т)
+        т = re.sub(r"\b[Tt]he blonde is the woman", "The woman is the woman", т)
+        т = re.sub(r"\bThe blonde\b", "The woman", т)
+        т = re.sub(r"\bthe blonde\b", "the woman", т)
+    for было, стало in _ЗАМЕНЫ_ПАРЫ:
+        т = re.sub(было, стало, т)
+    # Снимки в заказе идут в порядке catalog.полы (у МЖ мужчина первый),
+    # а эталон МЖ в трёх случаях из четырёх считался с женщиной первой.
+    # Номера снимков в тексте меняются местами, иначе модель берёт лицо
+    # женщины с фото мужчины.
+    try:
+        import catalog
+        наш = tuple(catalog.полы(ключ.replace("pr_", "pf_", 1)))
+    except Exception:                                   # noqa: BLE001
+        наш = ()
+    эт = _порядок_эталона(ключ)
+    if наш and эт and len(наш) == len(эт) == 2 and наш != эт:
+        т = (т.replace("first reference", "\0").replace("second reference", "first reference")
+              .replace("\0", "second reference"))
+    т = re.sub(r"\s{2,}", " ", т).strip()
+    return т + " " + ВЗРОСЛЫЕ
 
 
 def промпт(ключ):
     """Текст эталона под клиента или None, если эталона нет."""
-    if not _одиночная(ключ):
+    if not _поддержана(ключ):
         return None
     try:
         з = _эталон(ключ)
     except Exception:                                   # noqa: BLE001
         return None
+    if _пара(ключ):
+        return _текст_пары(str(ключ), з["промпт"]) if з and з.get("промпт") else None
     if not з or not з.get("промпт"):
         к = str(ключ)
         свой = СВОИ.get(к) or (СВОИ.get("ph_" + к[3:]) if к.startswith("ac_") else None)
@@ -162,7 +249,7 @@ def промпт(ключ):
 
 def негатив(ключ):
     """Негатив из графа эталона. Он там свой, длинный и проверенный."""
-    if not _одиночная(ключ):
+    if not _поддержана(ключ):
         return None
     if ключ in _КЭШ:
         return _КЭШ[ключ]
@@ -189,7 +276,7 @@ def негатив(ключ):
         н = н + ", tattoos, tattoo, ink drawings on skin"
     # На «Сверху вниз» в промежности женщины вырос отросток, а на полу
     # валялась сброшенная одежда. Оба запрета называются прямо.
-    if н and "discarded clothes" not in н:
+    if н and "discarded clothes" not in н and "_mf_" not in str(ключ):
         н = н + (", penis, testicles, male genitals on a woman, extra genitals, "
                  "discarded clothes, underwear lying on the floor")
     _КЭШ[ключ] = н

@@ -240,13 +240,13 @@ class Gpu:
             return None
         return self.fetch(r["file"])
 
-    def тело(self, filename, content, кожа=None, зоны=None, сзади=False):
+    def тело(self, filename, content, кожа=None, зоны=None, сзади=False, пара=False):
         """Дорисовать кожу и органы SDXL НА КАРТЕ (см. gpu/telo.py).
 
         Кадр возвращается вдвое больше. None при любой неудаче: без
         доработки кадр хуже, но ронять из-за неё заказ незачем.
         """
-        поля = {"сзади": "1" if сзади else "0"}
+        поля = {"сзади": "1" if сзади else "0", "пара": "1" if пара else "0"}
         if кожа is not None:
             поля["кожа"] = str(кожа)
         if зоны is not None:

@@ -164,6 +164,21 @@ def _зоны(кадр):
 _ЛИЦА = [None]
 
 
+def _лица(кадр):
+    """Рамки всех уверенных лиц (RetinaFace). Пустой список, если нет."""
+    try:
+        import torch
+        if _ЛИЦА[0] is None:
+            from facexlib.detection import init_detection_model
+            _ЛИЦА[0] = init_detection_model("retinaface_resnet50", half=False, device="cuda")
+        with torch.no_grad():
+            лица = _ЛИЦА[0].detect_faces(кадр, 0.8)
+        return [] if лица is None else [л[:4] for л in лица]
+    except Exception as e:                                  # noqa: BLE001
+        print("тело: лица не нашлись:", str(e)[:120], flush=True)
+        return []
+
+
 def _лицо(кадр):
     """Рамка крупнейшего лица (RetinaFace) или None."""
     try:
@@ -181,7 +196,7 @@ def _лицо(кадр):
         return None
 
 
-def дорисовать(кадр, кожа=None, зоны=None, зерно=11, сзади=False):
+def дорисовать(кадр, кожа=None, зоны=None, зерно=11, сзади=False, пара=False):
     """Кадр BGR -> кадр BGR вдвое больше, с кожей и органами от SDXL."""
     кожа = КОЖА if кожа is None else float(кожа)
     зоны_сила = ЗОНЫ if зоны is None else float(зоны)
@@ -200,7 +215,9 @@ def дорисовать(кадр, кожа=None, зоны=None, зерно=11, 
                 кус = большой[y:y + T, x:x + T]
                 _вклеить(холст, _comfy(кус, ТЕКСТ_КОЖА, кожа, зерно + x + y), x, y, 64)
 
-    if зоны_сила > 0:
+    # У пары зон нет: скелет находит одного человека, и текст «vulva»
+    # лёг бы на промежность мужчины.
+    if зоны_сила > 0 and not пара:
         for имя, ц, р, текст in _зоны(кадр):
             if сзади and имя == "грудь":
                 continue
@@ -214,9 +231,9 @@ def дорисовать(кадр, кожа=None, зоны=None, зерно=11, 
                              (р, р), interpolation=cv2.INTER_AREA)
             _вклеить(холст, нов, x0, y0, max(24, р // 6))
 
-    # Лицо обратно исходное: сходство держит Qwen, а не SDXL.
-    р = _лицо(большой)
-    if р is not None:
+    # Лица обратно исходные - ВСЕ, у пары оба: сходство держит Qwen, а
+    # не SDXL.
+    for р in _лица(большой):
         x0, y0, x1, y1 = [float(v) for v in р]
         cx, cy, r = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0) * 0.8
         м = np.zeros((H, W), np.float32)
