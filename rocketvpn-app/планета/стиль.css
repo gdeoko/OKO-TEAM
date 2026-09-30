@@ -1562,10 +1562,13 @@ html.без-движения *, html.без-движения *::before, html.б�
 /* ── ЗНАЧОК СТРОКИ ПО ТЕМАМ ──────────────────────────────────────
    Клиент про значок: «на тех серверах где есть пинг - молния
    переливается, там где нет пинга остался серый силуэт молнии будто
-   было но погасло». В теме огня это язык пламени, в теме воды -
-   капля. Правило одно: живой переливается, мёртвый серый. */
+   было но погасло». В теме полёта это ракета с факелом (клиент:
+   «где ракета, должна быть иконка ракеты»; язык пламени читался
+   огнём, а не полётом), в теме воды - капля. Правило одно: живой
+   переливается, мёртвый серый. Иллюминатор вырезан (evenodd), чтобы
+   силуэт узнавался и в сером. */
 :root[data-тема="ракета"] .заряд {
-  --фигура: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 22'><path d='M8.6 0c.5 3.4-.7 5.2-2.3 6.9C4.2 9 2 11 2 14.4 2 18.6 4.9 22 8.4 22S15 18.7 15 14.6c0-2.6-1.2-4.6-2.6-6.2-.5 1.2-1.2 2-2.1 2.4.6-2.4.6-6.1-1.7-8.8z'/></svg>");
+  --фигура: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 22'><path fill-rule='evenodd' d='M8 0c2.7 2 3.7 5.3 3.7 8.8v4.9H4.3V8.8C4.3 5.3 5.3 2 8 0zm1.7 7.1a1.7 1.7 0 1 0-3.4 0 1.7 1.7 0 0 0 3.4 0zM4.3 10.2 1.3 13.6V16l3-1.4zm7.4 0 3 3.4V16l-3-1.4zM5.9 14.8h4.2c0 2.6-1 4.9-2.1 7.2-1.1-2.3-2.1-4.6-2.1-7.2z'/></svg>");
 }
 :root[data-тема="ракета"] .ряд.заряжен .заряд {
   background: linear-gradient(112deg, #b03a10 0%, #ff8a2c 26%, #fff1d2 44%, #ff8a2c 62%, #b03a10 100%);
@@ -1609,6 +1612,30 @@ html.без-движения *, html.без-движения *::before, html.б�
 .темы-шапка b { display: block; font-size: 1.6rem; font-weight: 600; }
 .темы-шапка i { display: block; font-style: normal; font-size: 1.1rem; color: var(--тихий); margin-top: .2rem; }
 .темы-ряд { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+
+/* ── АВТО / ДЕНЬ / НОЧЬ ──────────────────────────────────────────
+   Сегменты под миниатюрами тем. Выбранный лежит на стекле с кантом
+   цвета темы (--неон), остальные тихие. */
+.пора-выбор {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem;
+  margin-top: 1.1rem; padding: .4rem; border-radius: 1.3rem;
+  background: rgba(4,8,20,.38); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 0 1px rgba(255,255,255,.07);
+}
+.пора-кнопка {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  height: 3.6rem; border: 0; border-radius: 1rem; cursor: pointer;
+  background: transparent; color: rgba(255,255,255,.62);
+  font-family: inherit; font-size: 1.25rem; font-weight: 600; letter-spacing: .01em;
+  transition: background .24s ease, color .24s ease, box-shadow .24s ease, transform .18s cubic-bezier(.2,.8,.2,1);
+}
+.пора-кнопка:active { transform: scale(.96); }
+.пора-кнопка svg { width: 1.6rem; height: 1.6rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.пора-кнопка.выбрана {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 0 0 1px rgba(var(--неон, 140,170,255), .55), 0 0 1.4rem rgba(var(--неон, 140,170,255), .28);
+}
+.пора-кнопка.выбрана svg { filter: drop-shadow(0 0 .5rem rgba(var(--неон, 140,170,255), .8)); }
 .тема-кнопка {
   position: relative; aspect-ratio: 3 / 4;
   display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch;
