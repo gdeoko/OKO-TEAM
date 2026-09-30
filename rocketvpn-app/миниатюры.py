@@ -28,19 +28,23 @@ for клип, (ах, ау) in sorted(ЯКОРЯ.items()):
     лево = max(0, min(Ш - ш, round(ах * Ш - ш / 2)))
     мини = кадр.crop((лево, верх, лево + ш, верх + в))
     if клип.startswith("полёт"):
+        # ракета слева от центра, нос чуть вправо: правый верхний угол
+        # занят галочкой выбранной темы
         р = Image.open(ФОН / "ракета.webp").convert("RGBA")
-        h = round(в * .46); р = р.resize((round(р.width * h / р.height), h), Image.LANCZOS).rotate(-18, expand=True, resample=Image.BICUBIC)
-        # мягкое свечение факела под соплами
-        свет = Image.new("RGBA", мини.size, (0, 0, 0, 0))
-        цвет = (255, 190, 110, 150) if клип.endswith("утро") else (255, 120, 50, 170)
-        x, y = round(ш * .56), round(в * .05)
-        пятно = Image.new("RGBA", (round(р.width * 1.1), round(р.height * .5)), цвет)
-        маска = Image.new("L", пятно.size, 0)
+        h = round(в * .44); р = р.resize((round(р.width * h / р.height), h), Image.LANCZOS)
+        # короткий факел под соплами: мягкий овал, светлее к центру
         from PIL import ImageDraw
-        ImageDraw.Draw(маска).ellipse((0, 0) + пятно.size, fill=255)
-        пятно.putalpha(маска.filter(ImageFilter.GaussianBlur(пятно.width / 5)))
-        свет.alpha_composite(пятно, (x - round(р.width * .25), y + round(р.height * .72)))
-        мини = Image.alpha_composite(мини, свет)
-        мини.alpha_composite(р, (x, y))
+        цвет = (255, 200, 130) if клип.endswith("утро") else (255, 130, 60)
+        фш, фв = round(р.width * .9), round(h * .34)
+        факел = Image.new("RGBA", (фш * 3, фв * 2), (0, 0, 0, 0))
+        д = ImageDraw.Draw(факел)
+        for к in range(12, 0, -1):
+            д.ellipse((фш * 1.5 - фш * к / 24, 0, фш * 1.5 + фш * к / 24, фв * к / 12 * 1.6), fill=цвет + (int(255 * (1 - к / 13) ** 1.5),))
+        факел = факел.filter(ImageFilter.GaussianBlur(фш / 12))
+        ракета = Image.new("RGBA", (факел.width, h + фв * 2), (0, 0, 0, 0))
+        ракета.alpha_composite(факел, (0, h - round(фв * .15)))
+        ракета.alpha_composite(р, ((факел.width - р.width) // 2, 0))
+        ракета = ракета.rotate(-16, expand=True, resample=Image.BICUBIC)
+        мини.alpha_composite(ракета, (round(ш * .5 - ракета.width * .62), round(в * .02)))
     мини.convert("RGB").resize((330, 440), Image.LANCZOS).save(ТЕМЫ / (клип + ".webp"), quality=88, method=6)
     print("миниатюра", клип, "якорь", ах, ау)

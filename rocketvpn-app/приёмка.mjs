@@ -111,8 +111,13 @@ for (const тема of ТЕМЫ) {
     return (await стр.locator("#список-серверы .ряд").first().textContent()).slice(0, 20); });
   await шаг("поиск по серверам", async () => { await стр.fill("#поиск-серверы", "гер"); await стр.waitForTimeout(300);
     const н = await стр.locator("#список-серверы .ряд").count(); await стр.fill("#поиск-серверы", ""); return н + " найдено"; });
-  await шаг("замер на Серверах", async () => { await стр.click("#обновить-2"); await стр.waitForTimeout(600);
-    return (await стр.locator("#список-серверы .нить").count()) >= 5; });
+  /* Нити следа живут меньше секунды, и когда они появятся, зависит от
+     длины подвода (у каждой темы свой исток). Поэтому ждём их появления,
+     а не смотрим в одну миллисекунду: снимок в 600 мс то ловил хвост,
+     то уже пустоту. */
+  await шаг("замер на Серверах", async () => { await стр.click("#обновить-2");
+    try { await стр.waitForFunction(() => document.querySelectorAll("#список-серверы .нить").length >= 5, null, { timeout: 1500, polling: 30 }); return true; }
+    catch (о) { return false; } });
 
   await шаг("вкладка Профиль", async () => { await стр.click('.вкладка[data-к-экрану="профиль"]'); await стр.waitForTimeout(500);
     return await стр.locator('.экран[data-экран="профиль"].тут').count() === 1; });
