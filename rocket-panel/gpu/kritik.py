@@ -78,6 +78,12 @@ import sys
                "pose_landmarker/pose_landmarker_heavy/float16/latest/"
                "pose_landmarker_heavy.task")
 
+МОДЕЛЬ_РУК = os.environ.get("ROCKET_HAND_TASK",
+                            "/root/models/hand_landmarker.task")
+ССЫЛКА_РУК = ("https://storage.googleapis.com/mediapipe-models/"
+              "hand_landmarker/hand_landmarker/float16/latest/"
+              "hand_landmarker.task")
+
 # Видимость узла скелета, ниже которой считаем, что его в кадре нет.
 # На кадре un_close кисти дали 0.01 - рук там нет, а критик их «видел».
 ВИДНО_ОТ = 0.5
@@ -155,6 +161,7 @@ import sys
 _МОД = [None, None]
 _ПОЗА = [None]
 _ЛИЦА = [None]
+_РУКИ = [None]
 
 
 def _поднять():
@@ -240,12 +247,13 @@ def _поза_модель():
 
 
 def _закрыть_позу():
-    if _ПОЗА[0] is not None:
-        try:
-            _ПОЗА[0].close()
-        except Exception:                                   # noqa: BLE001
-            pass
-        _ПОЗА[0] = None
+    for ящик in (_ПОЗА, _РУКИ):
+        if ящик[0] is not None:
+            try:
+                ящик[0].close()
+            except Exception:                               # noqa: BLE001
+                pass
+            ящик[0] = None
 
 
 import atexit                                               # noqa: E402
@@ -262,6 +270,37 @@ def скелет(путь):
     ш, в = Image.open(путь).size
     return {i: (т.x * ш, т.y * в, т.visibility)
             for i, т in enumerate(от.pose_landmarks[0])}
+
+
+def _руки_модель():
+    if _РУКИ[0] is not None:
+        return _РУКИ[0]
+    if not os.path.exists(МОДЕЛЬ_РУК):
+        import urllib.request
+        urllib.request.urlretrieve(ССЫЛКА_РУК, МОДЕЛЬ_РУК)
+    from mediapipe.tasks.python import BaseOptions, vision
+    опц = vision.HandLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=МОДЕЛЬ_РУК),
+        running_mode=vision.RunningMode.IMAGE, num_hands=4,
+        min_hand_detection_confidence=0.3, min_hand_presence_confidence=0.3)
+    _РУКИ[0] = vision.HandLandmarker.create_from_options(опц)
+    return _РУКИ[0]
+
+
+def кисти(путь):
+    """Кисти отдельным детектором: [[(x, y), ...21 точка], ...] в пикселях.
+
+    Видимости кисти по скелету верить нельзя. На кадре «показ4», где
+    владелец написал «руки вросли в письку», обе руки лежат на паху, а
+    скелет дал им видимость 0.01 и 0.03 - и зона кистей выпала ровно там,
+    где дефект. Скелет тела ищет руку на конце вытянутой конечности; рука,
+    прижатая к телу, для него пропадает. Детектор кистей ищет саму кисть.
+    """
+    import mediapipe as mp
+    from PIL import Image
+    ш, в = Image.open(путь).size
+    от = _руки_модель().detect(mp.Image.create_from_file(путь))
+    return [[(т.x * ш, т.y * в) for т in рука] for рука in (от.hand_landmarks or [])]
 
 
 def лицо_рамка(путь):
@@ -350,13 +389,24 @@ def зоны_по_скелету(путь):
     else:
         нет["пах"] = "бёдра не видны"
 
-    for имя, запястье, пальцы in (("кисть левая", 15, (17, 19, 21)),
-                                  ("кисть правая", 16, (18, 20, 22))):
-        if т[запястье][2] >= ВИДНО_ОТ:
-            точки = [т[запястье][:2]] + [т[k][:2] for k in пальцы]
-            рамки[имя] = _рамка(точки, 0.22 * мера, ш, в)
-        else:
-            нет[имя] = "не в кадре (видимость %.2f)" % т[запястье][2]
+    # Кисти: сначала детектор кистей, скелет - только запасной путь.
+    найдено = []
+    try:
+        найдено = кисти(путь)
+    except Exception as e:                                  # noqa: BLE001
+        print("детектор кистей не встал:", str(e)[:120], flush=True)
+    if найдено:
+        for i, рука in enumerate(sorted(найдено, key=lambda р: р[0][0])):
+            рамки["кисть %d" % (i + 1)] = _рамка(рука, 0.12 * мера, ш, в)
+    else:
+        for имя, запястье, пальцы in (("кисть левая", 15, (17, 19, 21)),
+                                      ("кисть правая", 16, (18, 20, 22))):
+            if т[запястье][2] >= ВИДНО_ОТ:
+                точки = [т[запястье][:2]] + [т[k][:2] for k in пальцы]
+                рамки[имя] = _рамка(точки, 0.22 * мера, ш, в)
+            else:
+                нет[имя] = ("не в кадре: детектор кистей не нашёл, "
+                            "скелет - видимость %.2f" % т[запястье][2])
     return рамки, нет
 
 
@@ -383,6 +433,7 @@ def чего_нет(нет):
     а скелет это знал (видимость 0.01).
     """
     части = {"кисть левая": "the left hand", "кисть правая": "the right hand",
+             "кисти": "the hands",
              "лицо": "the face", "грудь": "the chest", "пах": "the genital area"}
     нету = [части[к] for к in нет if к in части]
     if not нету:
