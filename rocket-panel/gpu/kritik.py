@@ -158,6 +158,27 @@ import sys
     "Then any visible defects of IMAGE 2 itself (asymmetric eyes, melted "
     "features, plastic skin). At most 8 items, no repeats.")
 
+# СРАВНЕНИЕ С ЖИВЫМ вместо перечня дефектов (владелец 30.09.2026: «на
+# живых фото и наших генерациях всё ей давать, и чтобы говорила, что не
+# реалистично у нас»). Зона нашего кадра идёт рядом с той же зоной живого
+# фото. В вопросе НЕТ списка видов дефектов: с ним модель повторяла список
+# слово в слово на любом кадре, включая принятый владельцем.
+ЧТО_ЗОНА = {"пах": "genital area", "грудь": "chest and breasts",
+            "кисть": "hand"}
+
+ВОПРОС_СРАВНИ = (
+    "IMAGE 1 is a crop from a REAL photograph of a real woman: the {что}. "
+    "IMAGE 2 is the same body area from an AI-generated image.\n"
+    "Find what in IMAGE 2 looks LESS REAL than IMAGE 1. Look at skin "
+    "texture and pores, light and shine, shape and anatomy, edges and "
+    "folds, small details. Differences of pose, angle, skin tone, light "
+    "colour and person are allowed - do not mention them. Name only what "
+    "you can actually see in IMAGE 2.\n"
+    "Short numbered list, at most 6 items. If IMAGE 2 looks as real as "
+    "IMAGE 1, answer exactly: КАК ЖИВОЕ.\n"
+    "Last line exactly: РЕАЛИЗМ x/10 - how real IMAGE 2 looks next to "
+    "IMAGE 1.")
+
 _МОД = [None, None]
 _ПОЗА = [None]
 _ЛИЦА = [None]
@@ -443,7 +464,41 @@ def чего_нет(нет):
             "describe or judge them at all, do not guess about them.")
 
 
-def разобрать(путь, зоны=False, референс=None):
+_ЗОНЫ_ЭТАЛОНОВ = {}
+
+
+def зона_эталона(эталоны, зона):
+    """(путь, рамка) самой крупной такой же зоны среди живых фото.
+
+    Крупнее - значит больше настоящей фактуры для сравнения. Кисти у
+    эталонов называются «кисть 1», «кисть 2» - берётся любая.
+    """
+    лучшее, площадь = None, 0
+    for п in эталоны:
+        if п not in _ЗОНЫ_ЭТАЛОНОВ:
+            try:
+                _ЗОНЫ_ЭТАЛОНОВ[п] = зоны_по_скелету(п)[0]
+            except Exception:                               # noqa: BLE001
+                _ЗОНЫ_ЭТАЛОНОВ[п] = {}
+        for имя, р in _ЗОНЫ_ЭТАЛОНОВ[п].items():
+            if имя == зона or (зона == "кисть" and имя.startswith("кисть")):
+                s = (р[2] - р[0]) * (р[3] - р[1])
+                if s > площадь:
+                    лучшее, площадь = (п, р), s
+    return лучшее
+
+
+def сравнить_с_живым(кроп_наш, эталоны, зона, куда):
+    """Зона нашего кадра рядом с той же зоной живого фото. None - не с чем."""
+    н = зона_эталона(эталоны, зона)
+    if not н:
+        return None
+    живой = кроп(н[0], н[1], куда)
+    return спросить([живой, кроп_наш],
+                    ВОПРОС_СРАВНИ.format(что=ЧТО_ЗОНА[зона]), 450)
+
+
+def разобрать(путь, зоны=False, референс=None, эталоны=None):
     """Дефекты кадра словами. С `зоны` - ещё и по зонам тела.
 
     `референс` - кадр того же человека в одежде: тогда лицо результата
@@ -470,8 +525,14 @@ def разобрать(путь, зоны=False, референс=None):
                     итог["лицо против референса"] = спросить([пр, п],
                                                              ВОПРОС_ЛИЦО_ПАРА, 500)
                     continue
-            вопрос = ВОПРОСЫ_ЗОН["кисть" if имя.startswith("кисть") else имя]
-            итог[имя] = спросить(п, вопрос, 400)
+            вид = "кисть" if имя.startswith("кисть") else имя
+            if эталоны and вид in ЧТО_ЗОНА:
+                ответ = сравнить_с_живым(п, эталоны, вид,
+                                         os.path.join(д, "живой.jpg"))
+                if ответ is not None:
+                    итог[имя + " против живого"] = ответ
+                    continue
+            итог[имя] = спросить(п, ВОПРОСЫ_ЗОН[вид], 400)
     for имя, почему in нет.items():
         итог[имя] = "не проверялось: " + почему
     return итог
