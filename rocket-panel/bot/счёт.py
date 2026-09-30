@@ -42,6 +42,7 @@
 import base64
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -156,7 +157,15 @@ def _wata_заголовки():
             "Accept": "application/json"}
 
 
+# Сколько живёт ссылка. Без срока она не протухает НИКОГДА, и оплата по
+# ней может прийти через полгода - когда заказа давно нет, а коины
+# начислять всё равно придётся. Сутки это с запасом: человек либо платит
+# сразу, либо возвращается в меню и берёт новую.
+_WATA_ЧАСОВ = int(os.environ.get("AMBERRY_PAY_WATA_HOURS", "24"))
+
+
 def _wata_выставить(рублей, описание, назначение, возврат):
+    до = time.gmtime(time.time() + _WATA_ЧАСОВ * 3600)
     о = _зов(_WATA_API + "/links", {
         "amount": round(float(рублей), 2),
         "currency": "RUB",
@@ -164,6 +173,7 @@ def _wata_выставить(рублей, описание, назначени�
         "orderId": назначение[:128],
         "successRedirectUrl": возврат,
         "failRedirectUrl": возврат,
+        "expirationDateTime": time.strftime("%Y-%m-%dT%H:%M:%SZ", до),
     }, _wata_заголовки())
     адрес = о.get("url") or о.get("paymentUrl")
     if not адрес:
@@ -172,18 +182,55 @@ def _wata_выставить(рублей, описание, назначени�
 
 
 def _wata_состояние(ид):
+    """Оплачена ли ссылка. Смотрим ТРАНЗАКЦИИ, а не статус ссылки.
+
+    ЭТО НЕ ПРИДИРКА, А ДЕНЬГИ. У ссылки всего два состояния -
+    `Opened` и `Closed` (`PaymentLinkStatus` в схеме, docs/wata-openapi.json).
+    `Closed` означает «больше не принимает оплату» и ставится ОБОИМ:
+    и оплаченной ссылке, и протухшей по `expirationDateTime`. Первая
+    редакция этой функции считала `Closed` оплатой, и человек, чья
+    ссылка просто истекла, получил бы коины даром.
+
+    Настоящий ответ живёт в транзакции: `TransactionStatus` бывает
+    `Created`, `Paid`, `Pending`, `Declined`. Спрашиваем транзакции по
+    этой ссылке и ищем среди них `Paid`.
+
+    Порядок именно такой - сперва транзакции, потом ссылка:
+    транзакция появляется в момент попытки оплаты, а до неё список
+    пуст, и это честное «ждём».
+    """
     try:
-        о = _зов(f"{_WATA_API}/links/{ид}", None, _wata_заголовки())
+        о = _зов(f"{_WATA_API}/v2/transactions?PaymentLinkIds={ид}"
+                 "&MaxResultCount=10", None, _wata_заголовки())
     except ОшибкаОплаты as e:
         # 429 это «спрашиваете чаще, чем раз в 45 секунд», а не поломка.
         # Человек жмёт «я оплатил» подряд, и ругаться на него нельзя.
         if "429" in str(e):
             return "ждём"
         raise
-    с = str(о.get("status") or "").lower()
-    if с in ("paid", "closed", "success", "succeeded"):
+    сделки = о.get("items") or []
+    статусы = {str((с or {}).get("status") or "").lower() for с in сделки
+               # Возврат это тоже транзакция по той же ссылке, и его
+               # `Paid` означает «возврат прошёл», а не «нам заплатили».
+               if str((с or {}).get("kind") or "Payment").lower() == "payment"}
+    if "paid" in статусы:
         return "оплачен"
-    if с in ("canceled", "cancelled", "declined", "expired", "failed"):
+    if статусы and статусы <= {"declined"}:
+        # Все попытки отклонены. Ссылка ещё открыта, человек может
+        # попробовать другой картой, поэтому не «отменён», а «ждём»:
+        # закрывать заказ по неудачной попытке нельзя.
+        return "ждём"
+    if статусы:
+        return "ждём"
+    # Транзакций нет вовсе: человек ещё не платил. Осталось понять,
+    # жива ли сама ссылка - протухшую надо выставлять заново.
+    try:
+        л = _зов(f"{_WATA_API}/links/{ид}", None, _wata_заголовки())
+    except ОшибкаОплаты as e:
+        if "429" in str(e):
+            return "ждём"
+        raise
+    if str(л.get("status") or "").lower() == "closed":
         return "отменён"
     return "ждём"
 

@@ -1,0 +1,2635 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Wata Acquiring API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/h2h/finance/balance": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "Get balance",
+        "operationId": "Finance_GetBalance_GET",
+        "parameters": [
+          {
+            "name": "Date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Balance returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Finance.Dto.H2HFinanceBalanceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/payments/card-crypto": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Pay by card crypto",
+        "operationId": "Payment_PayByCardCrypto_POST",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.Pay.CardCrypto.PayByCardCryptoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Payment result returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "transactionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "transactionStatus": {
+                      "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "kind": {
+                      "$ref": "#/components/schemas/TransactionKind"
+                    },
+                    "errorCode": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "errorDescription": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "threeDsData": {
+                      "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.Pay.CardCrypto.ThreeDs.ThreeDsDataDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/payments/sbp": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Pay by sbp",
+        "operationId": "Payment_PayBySbp_POST",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.Pay.Sbp.PayBySbpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Payment result returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "transactionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "transactionStatus": {
+                      "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "kind": {
+                      "$ref": "#/components/schemas/TransactionKind"
+                    },
+                    "sbpLink": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "errorCode": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "errorDescription": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/payments/tpay": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "summary": "Pay by tpay",
+        "operationId": "Payment_PayByTPay_POST",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.Pay.TPay.PayByTPayDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Payment result returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "transactionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "transactionStatus": {
+                      "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "kind": {
+                      "$ref": "#/components/schemas/TransactionKind"
+                    },
+                    "tPayLink": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "errorCode": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "errorDescription": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/links": {
+      "post": {
+        "tags": [
+          "PaymentLinks"
+        ],
+        "summary": "Create",
+        "operationId": "PaymentLinks_Create_POST",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.PaymentLinks.Dto.H2HCreatePaymentLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Payment link created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkWithDetailsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      },
+      "get": {
+        "tags": [
+          "PaymentLinks"
+        ],
+        "summary": "Find",
+        "operationId": "PaymentLinks_Find_GET",
+        "parameters": [
+          {
+            "name": "OrderId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "CreationTimeFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "CreationTimeTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "AmountFrom",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "AmountTo",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "Currencies",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Currency"
+              }
+            }
+          },
+          {
+            "name": "Statuses",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PaymentLinkStatus"
+              }
+            }
+          },
+          {
+            "name": "Sorting",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SkipCount",
+            "in": "query",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "MaxResultCount",
+            "in": "query",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Payment links returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Application.Dtos.PagedResultDto\u00601[[Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkDto, Wata.Payment.Application.Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/links/{id}": {
+      "get": {
+        "tags": [
+          "PaymentLinks"
+        ],
+        "summary": "Get",
+        "operationId": "PaymentLinks_Get_GET",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Payment link returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkWithDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment link not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/public-key": {
+      "get": {
+        "tags": [
+          "PublicKey"
+        ],
+        "summary": "Get",
+        "operationId": "PublicKey_Get_GET",
+        "responses": {
+          "200": {
+            "description": "Public key returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.HttpApi.Host.Models.PublicKeyDto"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/h2h/subscriptions": {
+      "get": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "summary": "Find",
+        "operationId": "Subscriptions_Find_GET",
+        "parameters": [
+          {
+            "name": "Statuses",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SubscriptionStatus"
+              }
+            }
+          },
+          {
+            "name": "OrderId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MaxResultCount",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CursorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "CursorDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.H2HSubscriptionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/subscriptions/{id}": {
+      "get": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "summary": "Get",
+        "operationId": "Subscriptions_Get_GET",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.SubscriptionDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/subscriptions/{id}/statuses": {
+      "post": {
+        "tags": [
+          "Subscriptions"
+        ],
+        "summary": "Change status",
+        "operationId": "Subscriptions_ChangeStatus_POST",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "status"
+                ],
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "Completed"
+                    ],
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/transactions/{id}": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get",
+        "operationId": "Transactions_Get_GET",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Transaction returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.H2HTransactionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/transactions/refunds": {
+      "post": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Create refund",
+        "operationId": "Transactions_CreateRefund_POST",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Refund.CreateRefundDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Refund creation result returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "transactionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "originalTransactionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "transactionStatus": {
+                      "$ref": "#/components/schemas/TransactionStatus"
+                    },
+                    "kind": {
+                      "$ref": "#/components/schemas/TransactionKind"
+                    },
+                    "errorCode": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "errorDescription": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/api/h2h/v2/transactions": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Find",
+        "operationId": "Transactions_Find_GET",
+        "parameters": [
+          {
+            "name": "CursorAmount",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "OrderId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "CreationTimeFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "CreationTimeTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "AmountFrom",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "AmountTo",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "Currencies",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Currency"
+              }
+            }
+          },
+          {
+            "name": "PaymentLinkIds",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          {
+            "name": "SubscriptionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Statuses",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TransactionStatus"
+              }
+            }
+          },
+          {
+            "name": "Sorting",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MaxResultCount",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "CursorId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "CursorDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "200": {
+            "description": "Transactions returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.H2HTransactionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Currency": {
+        "enum": [
+          "RUB",
+          "USD",
+          "EUR",
+          "GBP",
+          "BYN"
+        ],
+        "type": "string"
+      },
+      "PaymentLinkStatus": {
+        "enum": [
+          "Opened",
+          "Closed"
+        ],
+        "type": "string"
+      },
+      "PaymentLinkType": {
+        "enum": [
+          "OneTime",
+          "ManyTime"
+        ],
+        "type": "string"
+      },
+      "ProductType": {
+        "enum": [
+          "Acquiring",
+          "AcquiringWithSteam",
+          "AcquiringWithDigitalGoods",
+          "AcquiringWithStars",
+          "Payout",
+          "DepositWithSteam",
+          "DepositWithDigitalGoods",
+          "Stars"
+        ],
+        "type": "string"
+      },
+      "SubscriptionInterval": {
+        "enum": [
+          "Test",
+          "Week",
+          "Month"
+        ],
+        "type": "string"
+      },
+      "SubscriptionStatus": {
+        "enum": [
+          "Active",
+          "Completed",
+          "Failed"
+        ],
+        "type": "string"
+      },
+      "TestRecurringPaymentScenario": {
+        "enum": [
+          "FirstPaid",
+          "FirstDeclined",
+          "AllDeclined"
+        ],
+        "type": "string"
+      },
+      "TransactionKind": {
+        "enum": [
+          "Payment",
+          "Refund"
+        ],
+        "type": "string"
+      },
+      "TransactionStatus": {
+        "enum": [
+          "Created",
+          "Paid",
+          "Pending",
+          "Declined"
+        ],
+        "type": "string"
+      },
+      "TransactionType": {
+        "enum": [
+          "CardCrypto",
+          "SBP",
+          "TPay",
+          "Token"
+        ],
+        "type": "string"
+      },
+      "Volo.Abp.Application.Dtos.PagedResultDto\u00601[[Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkDto, Wata.Payment.Application.Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkDto"
+            },
+            "nullable": true
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Volo.Abp.Http.RemoteServiceErrorInfo": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "details": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "validationErrors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceValidationErrorInfo"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Volo.Abp.Http.RemoteServiceErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/Volo.Abp.Http.RemoteServiceErrorInfo"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Volo.Abp.Http.RemoteServiceValidationErrorInfo": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Banks.Dto.BankDto": {
+        "required": [
+          "bankNumber",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "bankNumber": {
+            "type": "string",
+            "nullable": false
+          },
+          "name": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.CurrencyRates.Dto.CurrencyRateDto": {
+        "required": [
+          "currencyFrom",
+          "currencyTo",
+          "date",
+          "rate"
+        ],
+        "type": "object",
+        "properties": {
+          "currencyFrom": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "currencyTo": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Finance.Dto.H2HFinanceBalanceResponseDto": {
+        "required": [
+          "balance",
+          "currency",
+          "date",
+          "terminalPublicId"
+        ],
+        "type": "object",
+        "properties": {
+          "terminalPublicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "balance": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.PaymentLinks.Dto.CreateDigitalGoodsDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Wata.Payment.Domain.Shared.PaymentLinks.DigitalGoods.IDigitalGoodAdditionalData"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.PaymentLinks.Dto.DigitalGoodsDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "baseAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "currencyRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "dataType": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.PaymentLinks.Dto.H2HCreatePaymentLinkDto": {
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "successRedirectUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "failRedirectUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "expirationDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "digitalGood": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.PaymentLinks.Dto.CreateDigitalGoodsDto"
+          },
+          "isArbitraryAmountAllowed": {
+            "type": "boolean",
+            "default": false
+          },
+          "arbitraryAmountPrompts": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "default": "OneTime"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkDto": {
+        "required": [
+          "amount",
+          "arbitraryAmounts",
+          "creationTime",
+          "currency",
+          "expirationDateTime",
+          "isArbitraryAmountAllowed",
+          "status",
+          "terminalName",
+          "terminalPublicId",
+          "type",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentLinkStatus"
+          },
+          "url": {
+            "type": "string",
+            "nullable": false
+          },
+          "terminalName": {
+            "type": "string",
+            "nullable": false
+          },
+          "terminalPublicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PaymentLinkType"
+          },
+          "lastModificationTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscriptionData": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto"
+          },
+          "expirationDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isArbitraryAmountAllowed": {
+            "type": "boolean"
+          },
+          "arbitraryAmounts": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": false
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.PaymentLinks.Dto.PaymentLinkWithDetailsDto": {
+        "required": [
+          "amount",
+          "arbitraryAmounts",
+          "creationTime",
+          "currency",
+          "expirationDateTime",
+          "isArbitraryAmountAllowed",
+          "status",
+          "terminalName",
+          "terminalPublicId",
+          "type",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentLinkStatus"
+          },
+          "url": {
+            "type": "string",
+            "nullable": false
+          },
+          "terminalName": {
+            "type": "string",
+            "nullable": false
+          },
+          "terminalPublicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "$ref": "#/components/schemas/PaymentLinkType"
+          },
+          "lastModificationTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "subscriptionData": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto"
+          },
+          "expirationDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "digitalGood": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.PaymentLinks.Dto.DigitalGoodsDto"
+          },
+          "isArbitraryAmountAllowed": {
+            "type": "boolean"
+          },
+          "arbitraryAmounts": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "nullable": false
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "successRedirectUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "failRedirectUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Payouts.Dto.H2HCardPayoutDto": {
+        "required": [
+          "amount",
+          "cardCrypto",
+          "currency",
+          "firstName",
+          "lastName",
+          "orderId"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": false
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardCrypto": {
+            "type": "string",
+            "nullable": false
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": false
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": false
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Payouts.Dto.H2HSbpPayoutDto": {
+        "required": [
+          "amount",
+          "bankNumber",
+          "currency",
+          "firstName",
+          "lastName",
+          "orderId",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": false
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": false
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": false
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": false
+          },
+          "bankNumber": {
+            "type": "string",
+            "nullable": false
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Subscriptions.Dto.ChangeSubscriptionStatusDto": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto": {
+        "required": [
+          "interval",
+          "maxPeriods",
+          "period"
+        ],
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/SubscriptionInterval"
+          },
+          "maxPeriods": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "testRecurringPaymentScenario": {
+            "$ref": "#/components/schemas/TestRecurringPaymentScenario"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Subscriptions.Dto.H2HSubscriptionsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.SubscriptionDto"
+            },
+            "nullable": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "default": false
+          },
+          "nextCursorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "nextCursorDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Subscriptions.Dto.SubscriptionDetailDto": {
+        "required": [
+          "amount",
+          "creationTime",
+          "currency",
+          "email",
+          "initialTransactionId",
+          "initialTransactionType",
+          "interval",
+          "ip",
+          "maxPeriods",
+          "paidPeriods",
+          "period",
+          "status",
+          "terminalName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "terminalName": {
+            "type": "string",
+            "nullable": false
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "period": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/SubscriptionInterval"
+          },
+          "maxPeriods": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": false
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "paidPeriods": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastPaymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nextPaymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "initialTransactionType": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "initialTransactionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "maskedCardNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Subscriptions.Dto.SubscriptionDto": {
+        "required": [
+          "amount",
+          "creationTime",
+          "currency",
+          "email",
+          "interval",
+          "maxPeriods",
+          "paidPeriods",
+          "period",
+          "status",
+          "terminalName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "terminalName": {
+            "type": "string",
+            "nullable": false
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "period": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/SubscriptionInterval"
+          },
+          "maxPeriods": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": false
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "paidPeriods": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastPaymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nextPaymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Terminals.Dto.H2HTerminalDto": {
+        "required": [
+          "isEnabled",
+          "name",
+          "productType",
+          "publicId",
+          "rates"
+        ],
+        "type": "object",
+        "properties": {
+          "publicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": false
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "webHookUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "successPageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "failPageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/ProductType"
+          },
+          "isNegativeMerchantRevenueAllowed": {
+            "type": "boolean",
+            "default": false
+          },
+          "equalizeSteamAndMerchantAmount": {
+            "type": "boolean",
+            "default": false
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Terminals.Dto.WataRateItemDto"
+            },
+            "nullable": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Terminals.Dto.WataRateItemDto": {
+        "type": "object",
+        "properties": {
+          "transactionType": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
+          },
+          "minimalCommission": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.DeviceDataDto": {
+        "type": "object",
+        "properties": {
+          "browserAcceptHeader": {
+            "type": "string",
+            "nullable": true
+          },
+          "browserLanguage": {
+            "type": "string",
+            "nullable": true
+          },
+          "browserJavaEnabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "browserJavaScriptEnabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "browserColorDepth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "browserScreenHeight": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "browserScreenWidth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "challengeWindowWidth": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "challengeWindowHeight": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "browserTZ": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "browserTZName": {
+            "type": "string",
+            "nullable": true
+          },
+          "browserIp": {
+            "type": "string",
+            "nullable": true
+          },
+          "browserUserAgent": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.H2HTransactionDto": {
+        "required": [
+          "amount",
+          "creationTime",
+          "currency",
+          "kind",
+          "status",
+          "terminalName",
+          "terminalPublicId",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "terminalName": {
+            "type": "string",
+            "nullable": false
+          },
+          "terminalPublicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TransactionKind"
+          },
+          "originalTransactionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TransactionStatus"
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paymentLinkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "subscriptionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "payerData": {
+            "$ref": "#/components/schemas/Wata.Payment.Domain.Transactions.PayerData"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.H2HTransactionsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.H2HTransactionDto"
+            },
+            "nullable": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "default": false
+          },
+          "nextCursorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "nextCursorDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nextCursorAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.Pay.CardCrypto.PayByCardCryptoDto": {
+        "required": [
+          "amount",
+          "cardCrypto",
+          "currency",
+          "deviceData",
+          "ip",
+          "returnUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceData": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.DeviceDataDto"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": false
+          },
+          "returnUrl": {
+            "type": "string",
+            "nullable": false
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "cardCrypto": {
+            "type": "string",
+            "nullable": false
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.Pay.CardCrypto.ThreeDs.ThreeDsDataDto": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "nullable": false
+          },
+          "method": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.Pay.Sbp.PayBySbpDto": {
+        "required": [
+          "amount",
+          "deviceData",
+          "ip",
+          "returnUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceData": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.DeviceDataDto"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": false
+          },
+          "returnUrl": {
+            "type": "string",
+            "nullable": false
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.Pay.TPay.PayByTPayDto": {
+        "required": [
+          "amount",
+          "deviceData",
+          "ip",
+          "returnUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceData": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.DeviceDataDto"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": false
+          },
+          "returnUrl": {
+            "type": "string",
+            "nullable": false
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Subscriptions.Dto.CreateSubscriptionDto"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Dto.PaymentResultDto": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "originalTransactionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "transactionStatus": {
+            "$ref": "#/components/schemas/TransactionStatus"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TransactionKind"
+          },
+          "sbpLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "tPayLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "sberPayLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalLink": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "threeDsData": {
+            "$ref": "#/components/schemas/Wata.Payment.Application.Contracts.Transactions.Dto.Pay.CardCrypto.ThreeDs.ThreeDsDataDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Application.Contracts.Transactions.Refund.CreateRefundDto": {
+        "required": [
+          "amount",
+          "originalTransactionId"
+        ],
+        "type": "object",
+        "properties": {
+          "originalTransactionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.Domain.Shared.PaymentLinks.DigitalGoods.IDigitalGoodAdditionalData": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Wata.Payment.Domain.Transactions.PayerData": {
+        "type": "object",
+        "properties": {
+          "payerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Wata.Payment.HttpApi.Host.Models.PublicKeyDto": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "jwt_bearer": {
+        "type": "http",
+        "description": "JWT Authorization header using the Bearer scheme.",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Finance"
+    },
+    {
+      "name": "Payment"
+    },
+    {
+      "name": "PaymentLinks"
+    },
+    {
+      "name": "PublicKey"
+    },
+    {
+      "name": "Subscriptions"
+    },
+    {
+      "name": "Transactions"
+    }
+  ]
+}
