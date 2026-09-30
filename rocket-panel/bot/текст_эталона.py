@@ -41,7 +41,18 @@ _ЗАМЕНЫ = [
     (r"\blight-blonde\b", ""),
     (r"\bthe blonde\b", "the woman"),
     (r"\bThe blonde\b", "The woman"),
+    # ВОЗРАСТ. Эталоны писались словами «petite young body, almost flat
+    # chest», и на героине 20 лет «Крупный план» вышел с лицом заметно
+    # моложе референса. Ни одного слова, которое модель может прочитать
+    # как юность, в тексте не остаётся; грудь и сложение - как на снимке.
+    (r"\b(small )?almost flat chest", "her own breast size as in the reference photo"),
+    (r"\bpetite young\b", "adult"),
+    (r"\byoung\b", "adult"),
+    (r"\bpetite\b", ""),
 ]
+
+ВЗРОСЛАЯ = ("She is an adult woman in her twenties with a mature adult face "
+            "and a fully developed adult body.")
 
 _КЭШ = {}
 
@@ -76,7 +87,10 @@ def промпт(ключ):
     т = з["промпт"]
     for было, стало in _ЗАМЕНЫ:
         т = re.sub(было, стало, т)
-    return re.sub(r"\s{2,}", " ", т).strip()
+    т = re.sub(r"\s{2,}", " ", т).strip()
+    # Сразу после первой фразы (про фотореализм), до описания сцены.
+    т = re.sub(r"^([^.]*\.)", r"\1 " + ВЗРОСЛАЯ, т, count=1)
+    return т
 
 
 def негатив(ключ):
