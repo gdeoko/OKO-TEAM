@@ -59,9 +59,9 @@ CKPT = os.environ.get("ROCKET_TELO_CKPT", "lustify_v20.safetensors")
        "smooth waxy skin, blurry, lowres, jpeg artifacts, banding, "
        "posterization, deformed, extra fingers, text, watermark, clothes, "
        "underwear, abs, six pack, muscular belly, horizontal skin folds, "
-       "wrinkled belly, creases")
-ТЕКСТ_КОЖА = ("raw amateur photo of a nude young woman, real skin with fine "
-              "pores and natural texture, subtle skin imperfections, natural "
+       "wrinkled belly, creases, tattoo, tattoos, ink drawings on skin")
+ТЕКСТ_КОЖА = ("raw amateur photo of a nude adult woman, real skin with fine "
+              "pores and natural texture, clean skin without tattoos, natural "
               "soft light, sharp focus, photorealistic")
 ТЕКСТ_ГРУДЬ = ("close-up photo of natural breasts, realistic nipples and "
                "areolae with fine skin texture and bumps, real skin pores")
