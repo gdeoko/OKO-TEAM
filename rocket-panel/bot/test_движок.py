@@ -1055,3 +1055,68 @@ class ОпознаниеНеЗапрещаетДетализацию(unittest.Te
                         and "sharp true detail" not in готово):
                     плохо.append((сц.key, "нет детализации"))
         self.assertEqual(плохо, [])
+
+class ВыборМоделиВАдминке(unittest.TestCase):
+    """Качество кадра — решение про деньги: кадр на `pro` дороже вдвое,
+    ролик на 2K в семь раз. Поэтому модель и качество лежат настройкой
+    в базе и переключаются владельцем, а не правкой кода."""
+
+    class Склад:
+        def __init__(self):
+            self.д = {}
+
+        def настройка(self, ключ, умолч=None):
+            return self.д.get(ключ, умолч)
+
+        def настройка_записать(self, ключ, знач):
+            self.д[ключ] = знач
+
+    def setUp(self):
+        import apimodels
+        self.m = apimodels
+        self.склад = self.Склад()
+        self.api = apimodels.Api(key="x", store=self.склад)
+
+    def test_умолчания_не_меняются_сами(self):
+        в = self.api.выбор()
+        self.assertEqual(в["фото"], "qwen3-image")
+        self.assertEqual(в["видео"], "minimax-h3-lite")
+        self.assertEqual(в["качество"], "768p")
+
+    def test_выбор_владельца_запоминается(self):
+        self.api.выбрать_модель(фото="qwen3-image-pro")
+        self.assertEqual(self.api.модель_фото, "qwen3-image-pro")
+
+    def test_чужая_модель_не_принимается(self):
+        self.api.выбрать_модель(фото="z-image-spicy")
+        # У spicy нет входа для референса вовсе: лицо клиента ей не
+        # передать. Такую модель принимать нельзя.
+        self.assertEqual(self.api.модель_фото, "qwen3-image")
+
+    def test_качество_переезжает_вместе_с_моделью(self):
+        """768p есть у lite и нет у wan: оставить чужое слово значит
+        получить отказ за наши деньги."""
+        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy")
+        self.assertEqual(self.api.модель_видео, "wan-2.7-i2v-spicy")
+        self.assertIn(self.api.качество_видео, ("720p", "1080p"))
+
+    def test_качество_только_своё(self):
+        self.api.выбрать_модель(видео="minimax-h3")
+        self.api.выбрать_модель(качество="1080p")   # у h3 такого нет
+        self.assertIn(self.api.качество_видео, ("768p", "2K"))
+        self.api.выбрать_модель(качество="2K")
+        self.assertEqual(self.api.качество_видео, "2K")
+
+    def test_качество_уходит_в_запрос(self):
+        self.api.выбрать_модель(видео="minimax-h3", качество="2K")
+        вид, тело = self.api._запрос(
+            {"mode": "video", "prompt": "p", "size": "vert", "secs": 5})
+        self.assertEqual(вид, "video")
+        self.assertEqual(тело["model"], "minimax-h3")
+        self.assertEqual(тело["resolution"], "2K")
+
+    def test_без_склада_работают_умолчания(self):
+        а = self.m.Api(key="x")
+        self.assertEqual(а.модель_фото, "qwen3-image")
+        self.assertEqual(а.выбрать_модель(фото="qwen3-image-pro")["фото"],
+                         "qwen3-image")

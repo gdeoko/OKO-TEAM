@@ -68,7 +68,10 @@ store = Store(os.environ.get("ROCKET_DB", "rocket_bot.db"),
 КАРТА = Gpu(os.environ.get("ROCKET_GPU_URL", ""),
             os.environ.get("ROCKET_GPU_USER", "rocket"),
             os.environ.get("ROCKET_GPU_PASS", ""))
-АПИ = Api()
+# store отдан клиенту API затем же, зачем переключателю движка: модель
+# и качество выбирает владелец в админке, и выбор живёт в базе, а не в
+# переменных окружения — перевыкладка для смены модели не нужна.
+АПИ = Api(store=store)
 gpu = _движок.Выбор(КАРТА, АПИ, store)
 
 # Какие обновления слушаем. pre_checkout_query обязателен: без него
