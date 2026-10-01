@@ -784,7 +784,10 @@ class ОбязательноеНеТеряется(unittest.TestCase):
                        "one man and one woman, his penis, her thighs",
                        "Both people are men, one from each reference"):
             о = self.p.обязательные(запрос)
-            self.assertIn("FILLS the frame", о)
+            # У мужской сцены те же правила своими словами: «They FILL
+            # the frame» — женские слова приводили женщину в кадр.
+            self.assertTrue("FILLS the frame" in о or "FILL the frame" in о,
+                            запрос[:40])
             self.assertIn("f/8", о)
             self.assertIn("no soft focus", о)
 
@@ -802,8 +805,14 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         self.assertIn("anatomical detail", мж)
         self.assertIn("His penis and scrotum", мж)
         мм = self.p.обязательные("Both people are men, one from each")
-        self.assertIn("sharp true detail", мм)
+        # Мужская строка теперь самостоятельная: у ММ женской перед ней
+        # нет, и «такая же детализация» висело бы в воздухе.
+        self.assertIn("sharp true anatomical detail", мм)
         self.assertNotIn("Her vulva", мм)
+        # И ни одного женского слова: они приводили женщину в мужской
+        # кадр («she FILLS the frame», «between her thighs»).
+        for слово in ("she ", "her ", "woman"):
+            self.assertNotIn(слово, мм.lower())
 
     def test_роликовая_сборка_мужчину_называет_иначе(self):
         """Ролик не говорит «the man», он раздаёт референсы. На этом 24
@@ -1249,11 +1258,15 @@ class ПодПредел(unittest.TestCase):
                        or "build a new frame" in низ)
                 if not фон:
                     бед.append("фон")
-                for что, метка in (("not in that photo", "опознание"),
-                                   ("f/8", "фокус"),
-                                   ("fills the frame", "плотный кадр")):
-                    if что not in низ:
-                        бед.append(метка)
+                # У мужской сцены то же правило во множественном числе:
+                # «not in those photos».
+                if ("not in that photo" not in низ
+                        and "not in those photos" not in низ):
+                    бед.append("опознание")
+                if "f/8" not in низ:
+                    бед.append("фокус")
+                if "fills the frame" not in низ and "fill the frame" not in низ:
+                    бед.append("плотный кадр")
                 if ("anatomical detail" not in низ
                         and "sharp true detail" not in низ):
                     бед.append("детализация")
@@ -1425,3 +1438,64 @@ class ОплаченноеМестоДоезжает(unittest.TestCase):
                 if поза[:60] not in г:
                     плохо.append((сц.key, м.key))
         self.assertEqual(плохо, [])
+
+class СборкаВедётСебяПредсказуемо(unittest.TestCase):
+    """Проверка свойствами, а не примерами: сборка под предел обязана
+    держать три обещания на ЛЮБОМ входе, а не только на каталожном.
+
+    Ночь 01→02.10.2026 показала, почему это нужно: три раза подряд
+    правка, верная на одном промпте, ломала другой — то парную
+    постановку рубило до 202 знаков, то позу до 86, то оплаченное место
+    выбрасывало совсем."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def _входы(self):
+        из_каталога = []
+        try:
+            import catalog, места
+            for сц in catalog.все_сценарии():
+                if catalog.скрыт(сц.key) or сц.двухшаговый:
+                    continue
+                из_каталога.append(сц.промпт(место=места.КАК_НА_ФОТО))
+        except Exception:                                   # noqa: BLE001
+            pass
+        самодельные = [
+            "",
+            "короткая работа",
+            "РАБОТА " + "x" * 5000,
+            "\n\n".join(["РАБОТА " + "y" * 800] * 9),
+            self.p.ПО_ВИДУ["i2i_фон"] + " THE FRAME TO BUILD IS THIS: акт",
+            "\n\n".join([self.p.ПО_ВИДУ["i2i_пара"], "поза " * 400]),
+        ]
+        return из_каталога + самодельные
+
+    def test_предел_соблюдается_всегда(self):
+        for предел in (800, 1500, 2900, 4000):
+            for вход in self._входы():
+                г = self.p.под_предел(вход, предел)
+                self.assertLessEqual(len(г), предел,
+                                     "предел %d пробит" % предел)
+
+    def test_детализация_фокус_и_плотный_кадр_всегда(self):
+        """Это три вещи, которых не говорит ни одна постановка, — за
+        ними мы и пришли. Теряться они не имеют права ни на чём."""
+        for вход in self._входы():
+            г = self.p.под_предел(вход, 2900).lower()
+            self.assertIn("anatomical detail", г)
+            self.assertIn("f/8", г)
+            self.assertIn("fill the frame" if "fill the frame" in г
+                          else "fills the frame", г)
+
+    def test_работа_кнопки_не_рубится_в_огрызок(self):
+        """У парной кнопки весь промпт — один блок. Когда его резали
+        целиком, от 1884 знаков оставалось 202."""
+        for вход in self._входы():
+            if len(вход) < 600 or len(вход) > 2300:
+                continue
+            г = self.p.под_предел(вход, 2900)
+            своё = len(г) - len(self.p.обязательные(г))
+            self.assertGreater(своё, len(вход) * 0.5,
+                               "от работы осталась четверть: %s" % вход[:60])

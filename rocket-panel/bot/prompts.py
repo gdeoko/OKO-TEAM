@@ -1943,9 +1943,12 @@ def по_фразе(текст, предел):
     "detail - separate lit forms with clean edges and real shadow, in "
     "focus, never a blurred patch and never a flat smear of skin.")
 
+# Строка самостоятельная: у мужской кнопки ММ женской строки перед ней
+# нет, и «the same detail» висело бы в воздухе — «такая же», как что?
 ДЕТАЛИ_МУЖСКИЕ = (
-    "His penis and scrotum are the same sharp true detail: separate "
-    "forms with clean edges, in focus, never a smear.")
+    "His penis and scrotum are drawn in sharp true anatomical detail - "
+    "separate forms with clean edges, in focus, never a smear and never "
+    "a blurred patch.")
 
 # ПЛОТНЫЙ КАДР — ЭТО ПРЯМАЯ ПРИБАВКА ПИКСЕЛЕЙ НА ТЕЛЕ, а не вкусовщина.
 #
@@ -1963,6 +1966,14 @@ def по_фразе(текст, предел):
     "She FILLS the frame, with no empty space above her head, below her "
     "feet or at her sides.")
 
+# У мужской кнопки ММ женщины в кадре нет, и «she fills the frame»,
+# «between her thighs» приводили её туда словами — та же ошибка, что
+# когда-то с мужчиной в женской ветке, только наоборот. Поймано
+# проверкой свойствами 02.10.2026.
+ПЛОТНЫЙ_КАДР_МУЖ = (
+    "They FILL the frame, with no empty space above their heads, below "
+    "their feet or at their sides.")
+
 # ФОКУС — ТОЖЕ НЕ В БЛОКЕ КАМЕРЫ, И ПО ТОЙ ЖЕ ПРИЧИНЕ.
 #
 # Правка f/8 и «всё тело в глубине резкости» легла в блоки камеры —
@@ -1974,6 +1985,10 @@ def по_фразе(текст, предел):
     "Shot at f/8: her whole body is in focus and equally sharp, from her "
     "face to between her thighs, with no soft focus and no skin "
     "smoothing.")
+
+ФОКУС_ВЕЗДЕ_МУЖ = (
+    "Shot at f/8: both bodies are in focus and equally sharp from head to "
+    "knee, with no soft focus and no skin smoothing.")
 
 
 # ЧТО ЕЩЁ ОБЯЗАНО ДОЖИТЬ ДО МОДЕЛИ (замер на проде 01.10.2026).
@@ -2007,6 +2022,20 @@ def по_фразе(текст, предел):
 КРАТКО_РИСУЙ_ЗАКРЫТОЕ = (
     "What the clothes covered is NOT in that photo: draw it in FULL SHARP "
     "DETAIL at her own proportions.")
+
+КРАТКО_РИСУЙ_ЗАКРЫТОЕ_МУЖ = (
+    "What the clothes covered is NOT in those photos: draw it in FULL "
+    "SHARP DETAIL at their own proportions.")
+
+КРАТКО_ОПОЗНАНИЕ_ОБЯЗ_МУЖ = (
+    "They are the men from those photos: their faces, their hair, their "
+    "adult age, and their bodies' size and shape read from them - nothing "
+    "beautified.")
+
+КРАТКО_ЦЕЛО_ОБЯЗ_МУЖ = (
+    "Each body is whole: one head on its own neck, two arms from its own "
+    "shoulders, two legs, five fingers per hand; their clothes are "
+    "ALREADY OFF.")
 
 КРАТКО_ЦЕЛО_ОБЯЗ = (
     "One body: one head on her neck, two arms from her shoulders, two "
@@ -2095,16 +2124,24 @@ def обязательные(промпт, фон_с_фото=None):
         # Место выбрал человек — «фон как на присланном фото» здесь
         # противоречит оплаченному выбору, и мы о фоне молчим.
         куски.append((КРАТКО_ФОН_ОБЯЗ, УЖЕ_ФОН))
-    куски += [(КРАТКО_ОПОЗНАНИЕ_ОБЯЗ, УЖЕ_ОПОЗНАНИЕ),
-              (КРАТКО_РИСУЙ_ЗАКРЫТОЕ, УЖЕ_РИСУЙ_ЗАКРЫТОЕ),
-              (КРАТКО_ЦЕЛО_ОБЯЗ, УЖЕ_ЦЕЛО)]
+    одни_мужчины = есть_м and not есть_ж
+    куски += [(КРАТКО_ОПОЗНАНИЕ_ОБЯЗ_МУЖ if одни_мужчины
+               else КРАТКО_ОПОЗНАНИЕ_ОБЯЗ, УЖЕ_ОПОЗНАНИЕ),
+              (КРАТКО_РИСУЙ_ЗАКРЫТОЕ_МУЖ if одни_мужчины
+               else КРАТКО_РИСУЙ_ЗАКРЫТОЕ, УЖЕ_РИСУЙ_ЗАКРЫТОЕ),
+              (КРАТКО_ЦЕЛО_ОБЯЗ_МУЖ if одни_мужчины
+               else КРАТКО_ЦЕЛО_ОБЯЗ, УЖЕ_ЦЕЛО)]
     if есть_ж or not есть_м:
         куски += [(ЗАПРЕТ_ВОЛОСЫ, УЖЕ_ВОЛОСЫ),
                   (ЗАПРЕТ_ЖЕНСКОЕ_ТЕЛО, УЖЕ_ЖЕНСКОЕ),
                   (ДЕТАЛИ_ЖЕНСКИЕ, ())]
     if есть_м:
         куски += [(ЗАПРЕТ_МУЖСКОЕ_ТЕЛО, УЖЕ_МУЖСКОЕ), (ДЕТАЛИ_МУЖСКИЕ, ())]
-    куски += [(ПЛОТНЫЙ_КАДР, ()), (ФОКУС_ВЕЗДЕ, ())]
+    # Женские слова в мужской сцене приводят в кадр женщину — говорим о
+    # тех, кто в кадре есть.
+    одни_мужчины = есть_м and not есть_ж
+    куски += [(ПЛОТНЫЙ_КАДР_МУЖ if одни_мужчины else ПЛОТНЫЙ_КАДР, ()),
+              (ФОКУС_ВЕЗДЕ_МУЖ if одни_мужчины else ФОКУС_ВЕЗДЕ, ())]
     низ = промпт.lower()
     итог = [текст for текст, уже in куски
             if not any(с in низ for с in уже)]
