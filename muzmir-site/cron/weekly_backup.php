@@ -37,6 +37,19 @@ const RETENTION_DAYS = 7;
 $__needGb = ((float) (@filesize((string) cfgv('db_path')) ?: 0)
            + (float) cron_dir_size(BASE_PATH . '/public/diplomas')
            + (float) cron_dir_size(BASE_PATH . '/public/uploads')) / 1073741824;
+/* СТАРЫЕ НЕДЕЛЬНЫЕ АРХИВЫ ЧИСТИМ ДО ПРОВЕРКИ МЕСТА, А НЕ ПОСЛЕ.
+ * Раньше ротация шла только после успешного нового архива. 21 и 28.09.2026
+ * места на новый не хватило, архив не собрался, и старые (по 5 ГБ) не
+ * удалились вовсе — к 01.10 диск заполнился до нуля, сайт перестал бы писать
+ * заявки. Теперь перед сборкой оставляем только самый свежий архив: он
+ * страхует, пока собирается новый, а после успеха уйдёт по обычной ротации. */
+(static function (): void {
+    $zips = glob(BASE_PATH . '/data/backups/muzmir_weekly_*.zip') ?: [];
+    usort($zips, static fn($a, $b) => filemtime($b) <=> filemtime($a));
+    foreach (array_slice($zips, 1) as $old) {
+        if (@unlink($old)) cron_log(JOB, 'до сборки удалён старый архив: ' . basename($old));
+    }
+})();
 if (!cron_disk_ok(JOB, max(1.0, $__needGb * 1.2))) exit(0);
 
 if (!cron_lock(JOB, 3600 * 12)) {
