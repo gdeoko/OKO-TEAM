@@ -72,19 +72,19 @@ function mm_attachments(array $free): array {
          * Собираем нормальный PDF из эталона. Не вышло — прикладываем DOCX,
          * он тоже утверждённый. Ничего не вышло — идём без вложения: лучше
          * письмо без положения, чем письмо с выдуманным положением. */
-        $pdf = BASE_PATH . '/public/uploads/regulations/' . $slug . '.pdf';
+        /* С 01.10.2026 (слово владельца) положение уходит ТОЛЬКО эталонным DOCX,
+         * как в сентябре. PDF-перегонка давала кривую вёрстку, и её убрали совсем. */
+        $pdf = BASE_PATH . '/public/uploads/regulations/' . $slug . '.docx';
         if (!is_file($pdf)) {
             $pdf = '';
             try {
-                require_once BASE_PATH . '/core/regulation_pdf.php';
-                $made = regulation_pdf($c);
-                if (is_file($made)) $pdf = $made;
+                require_once BASE_PATH . '/core/regulation_gen.php';
+                if (function_exists('regulation_generate')) {
+                    $made = regulation_generate((int) ($c['id'] ?? 0));
+                    if (is_string($made) && is_file($made)) $pdf = $made;
+                }
             } catch (\Throwable $e) {
                 error_log('ministry_mailing: положение не собралось для ' . $slug . ' — ' . $e->getMessage());
-            }
-            if ($pdf === '') {
-                $docx = BASE_PATH . '/public/uploads/regulations/' . $slug . '.docx';
-                if (is_file($docx)) $pdf = $docx;
             }
         }
         if ($pdf !== '' && is_file($pdf)) $out[] = $pdf;

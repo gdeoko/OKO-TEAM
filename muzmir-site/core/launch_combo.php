@@ -437,3 +437,118 @@ function lc_perk(string $title, string $note): string {
          . '<div style="font:13px/1.5 Arial,sans-serif;color:' . MM_MUTED . '">' . h($note) . '</div>'
          . '</td></tr>';
 }
+
+/* =====================================================================
+ *  НАПОМИНАНИЯ «ОСТАЛОСЬ 3 ДНЯ» И «ПОСЛЕДНИЙ ДЕНЬ» — ТЕПЕРЬ И ПИСЬМОМ.
+ *
+ *  Слово владельца от 01.10.2026: напоминания идут не только в кабинет и ВК,
+ *  но и по почте, той же базе, что письмо запуска (участники, news@ через
+ *  сервис рассылок). Раньше правило было обратным, и почта о сроках молчала:
+ *  человек, открывший письмо запуска 1-го числа, о закрытии приёма узнавал
+ *  уже после него.
+ *
+ *  Устроено как письмо запуска: в очередь кладётся рецепт, письмо собирается
+ *  в момент отправки (nl_build_body, kind=reminder). Поэтому «осталось N дней»
+ *  в теме и в тексте всегда верное, даже если волна растянулась на сутки.
+ * ===================================================================== */
+
+/** Дней до конца приёма ближайшего из открытых конкурсов и сама дата. */
+function launch_reminder_left(): array {
+    $end = (string) (scalar("SELECT MIN(end_date) FROM competitions WHERE status='open' AND COALESCE(club_only,0)=0") ?? '');
+    $days = $end !== '' ? (int) floor((strtotime(substr($end, 0, 10) . ' 23:59:59') - time()) / 86400) : -1;
+    return [$days, $end];
+}
+
+function launch_reminder_subject(string $wave): string {
+    $ov = trim((string) setting('launch_mail_subject:' . $wave, ''));
+    if ($ov !== '') return $ov;
+    if (!function_exists('plural_ru') && is_file(BASE_PATH . '/core/chat_priority.php')) require_once BASE_PATH . '/core/chat_priority.php';
+    [$d, ] = launch_reminder_left();
+    if ($d <= 0) return 'Сегодня последний день приёма заявок на конкурсы';
+    if ($d === 1) return 'Завтра последний день приёма заявок на конкурсы';
+    return 'Осталось ' . $d . ' ' . plural_ru($d, 'день', 'дня', 'дней') . ' до конца приёма заявок на конкурсы';
+}
+
+function launch_reminder_body(string $wave): string {
+    $navy = MM_NAVY; $ink = MM_INK; $muted = MM_MUTED;
+    $base = mmc_base();
+    try {
+        $comps = all("SELECT id, name, slug, cover, type, is_paid, price, end_date, COALESCE(club_only,0) club_only
+                        FROM competitions WHERE status='open' AND COALESCE(club_only,0)=0
+                       ORDER BY is_paid ASC, sort ASC, id ASC");
+    } catch (\Throwable $e) { $comps = []; }
+    [$d, $end] = launch_reminder_left();
+    $endRu = $end !== '' ? (function_exists('ru_date') ? ru_date(substr($end, 0, 10)) : date('d.m.Y', strtotime($end))) : '';
+    $head = $d <= 0 ? 'Сегодня последний день приёма заявок'
+          : ($d === 1 ? 'Завтра последний день приёма заявок'
+          : 'До конца приёма заявок осталось ' . $d . ' ' . plural_ru($d, 'день', 'дня', 'дней'));
+    $p = fn(string $t) => '<p style="margin:0 0 14px;font:16px/1.65 Arial,sans-serif;color:' . $ink . '">' . $t . '</p>';
+
+    $out = '<h1 style="margin:0 0 6px;font:700 24px/1.3 Georgia,\'Times New Roman\',serif;color:' . $navy . '">Здравствуйте, {{name}}!</h1>'
+         . '<div style="font:16px/1.6 Arial,sans-serif;color:' . $navy . ';margin:0 0 18px"><b>' . h($head) . '</b>'
+         . ($endRu !== '' ? '<span style="color:' . $muted . '"> - приём до ' . h($endRu) . ' включительно.</span>' : '') . '</div>';
+    $out .= $p('Успейте подать заявку и пройти аттестацию компетентного жюри. Участие дистанционное: '
+        . 'работа принимается видеозаписью или изображением по ссылке, без ограничений по возрасту и номинации.');
+    $free = array_values(array_filter($comps, fn($c) => (int) ($c['is_paid'] ?? 0) !== 1));
+    if ($free) {
+        $names = array_map(fn($c) => '«' . (string) $c['name'] . '»', $free);
+        $out .= $p('<b>Участие в ' . h(implode(', ', $names)) . ' - бесплатное.</b>');
+    }
+    $out .= mm_email_btn($base . '/apply', 'Подать заявку', 'gold');
+    foreach ($comps as $c) $out .= mmc_competition_card($c);
+    $out .= mm_email_btn($base . '/apply', 'Подать заявку', 'gold');
+    return $out;
+}
+
+/** Поставить напоминание в очередь всей базе участников (та же аудитория, что у запуска). */
+function launch_reminder_enqueue(string $wave, bool $dry = false, int $limit = 20000): array {
+    if (!in_array($wave, ['d3', 'last'], true)) return ['queued' => 0, 'skipped' => 0, 'newsletter_id' => 0];
+    nl_ensure_campaign_type_col();
+    $subject = launch_reminder_subject($wave);
+    $tag = 'remind:' . $wave . ':' . date('Y-m');
+    $nl  = one("SELECT * FROM newsletters WHERE audience = ? ORDER BY id ASC LIMIT 1", [$tag]);
+    $nid = (int) ($nl['id'] ?? 0);
+    if (!$nid && !$dry) {
+        $nid = (int) insert('newsletters', ['subject' => $subject, 'body' => '(собирается в момент отправки)',
+            'audience' => $tag, 'campaign_type' => 'konkurs', 'status' => 'sending']);
+    }
+    $recips = all(
+        "SELECT email, name FROM (
+             SELECT LOWER(s.email) AS email, s.name AS name FROM subscribers s WHERE s.active = 1
+             UNION
+             SELECT LOWER(u.email) AS email, u.full_name AS name FROM users u
+              WHERE COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0
+                AND COALESCE(u.notify_email,1) = 1
+                AND COALESCE(u.role,'user') NOT IN ('owner','admin','orgcom')
+         )
+         WHERE email NOT IN (SELECT LOWER(i.email) FROM institutions i
+              WHERE COALESCE(i.email,'') <> '' AND COALESCE(i.status,'') IN ('new','invited','partner'))
+         ORDER BY email LIMIT ?", [max(1, $limit)]);
+    $own = [];
+    if (function_exists('inbox_own_emails')) {
+        foreach (inbox_own_emails() as $o) {
+            $o = mb_strtolower(trim((string) $o)); if ($o === '') continue;
+            $own[$o] = true; if (function_exists('mail_addr_ascii')) $own[mb_strtolower(mail_addr_ascii($o))] = true;
+        }
+    }
+    $queued = 0; $skipped = 0;
+    foreach ($recips as $r) {
+        $email = mb_strtolower(trim((string) $r['email']));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || isset($own[$email])) { $skipped++; continue; }
+        [, $active] = nl_ensure_subscriber($email, (string) ($r['name'] ?? ''), 'newsletter');
+        if (!$active) { $skipped++; continue; }
+        if ($nid && one("SELECT id FROM mail_queue WHERE newsletter_id = ? AND to_email = ?", [$nid, $email])) { $skipped++; continue; }
+        if ($dry) { $queued++; continue; }
+        try {
+            insert('mail_queue', [
+                'to_email' => $email, 'to_name' => person_greeting_name($email, (string) ($r['name'] ?? '')),
+                'subject' => $subject, 'body' => '',
+                'build' => json_encode(['kind' => 'reminder', 'wave' => $wave, 'nlid' => $nid], JSON_UNESCAPED_UNICODE),
+                'newsletter_id' => $nid, 'campaign_type' => 'konkurs', 'status' => 'queued', 'priority' => 5,
+            ]);
+            $queued++;
+        } catch (\Throwable $e) {}
+    }
+    if (!$dry && $queued && function_exists('audit')) audit('launch_reminder_enqueue', 'newsletter', $nid, ['wave' => $wave, 'queued' => $queued, 'skipped' => $skipped]);
+    return ['queued' => $queued, 'skipped' => $skipped, 'newsletter_id' => $nid];
+}

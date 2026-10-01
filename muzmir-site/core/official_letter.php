@@ -59,6 +59,10 @@ function ol_migrate(): void {
         db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_kind   ON official_letters(kind)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_season ON official_letters(season)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_status ON official_letters(status)");
+        // Без него mm_sync_sent() перебирал весь реестр на каждое отправленное
+        // письмо: 01.10.2026 при 117 тыс. строк реестра отметка шла больше часа
+        // на 96% процессора, и собрать обращения в ведомства было невозможно.
+        db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_queue ON official_letters(queue_id)");
     } catch (\Throwable $e) {}
 }
 

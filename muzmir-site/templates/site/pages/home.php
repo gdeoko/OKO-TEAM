@@ -160,7 +160,7 @@ ob_start(); ?>
               <?php if ($isOpen): ?>
                 <a class="btn btn--primary btn--sm" href="<?= url('/apply') . '?competition=' . rawurlencode($c['slug']) ?>">Подать заявку</a>
               <?php endif; ?>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>">Положение</a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
             </div>
           </div>
         </div>

@@ -300,7 +300,7 @@ function grade_reject_application(int $appId, string $reason, string $source = '
                    здесь: положение хранится в разделе «Положения конкурсов» два
                    месяца после закрытия — столько же, сколько заказ наград. */
                 . '<div style="margin-top:12px;font-size:13px;line-height:1.6;">'
-                . '<a href="' . url('/competition/' . rawurlencode((string) ($comp['slug'] ?? '')) . '/regulation.pdf')
+                . '<a href="' . url('/competition/' . rawurlencode((string) ($comp['slug'] ?? '')) . '/regulation.docx')
                 . '" style="color:' . RM_NAVY . ';">Открыть положение конкурса</a>'
                 . ' &middot; <a href="' . url('/regulations') . '" style="color:' . RM_MUTED . ';">все положения</a>'
                 . '</div></td></tr></table>'

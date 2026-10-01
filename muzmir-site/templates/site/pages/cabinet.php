@@ -1136,7 +1136,7 @@ ob_start(); ?>
                            документ остаётся только в разделе «Положения конкурсов» —
                            два месяца, столько же, сколько заказ наград. */ ?>
                   <p style="margin:0 0 10px;font-size:.88rem">
-                    <a href="<?= h(url('/competition/' . rawurlencode((string) ($a['comp_slug'] ?? '')) . '/regulation.pdf')) ?>"
+                    <a href="<?= h(url('/competition/' . rawurlencode((string) ($a['comp_slug'] ?? '')) . '/regulation.docx')) ?>"
                        target="_blank" rel="noopener">Открыть положение конкурса</a>
                     <span style="color:var(--muted)"> · </span>
                     <a href="<?= h(url('/regulations')) ?>" style="color:var(--muted)">все положения</a>

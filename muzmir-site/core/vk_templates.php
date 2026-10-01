@@ -13,7 +13,7 @@
  *    открытым конкурсам. Волна «результаты» — только для длинного (list).
  *
  * Короткие ссылки (301-редиректы в public/index.php):
- *  /konkurs-<slug> — подача, /polozhenie-<slug> — положение (PDF), /obrazci-<slug> — награды.
+ *  /konkurs-<slug> — подача, /polozhenie-<slug> — положение (DOCX), /obrazci-<slug> — награды.
  */
 declare(strict_types=1);
 

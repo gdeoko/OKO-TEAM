@@ -410,7 +410,7 @@ ob_start(); ?>
                 <input type="checkbox" name="competition_ids[]" value="<?= (int)$c['id'] ?>"
                   data-slug="<?= h($c['slug']) ?>" data-name="<?= h($c['name']) ?>"
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
-                  data-reg="<?= url('/competition/'.$c['slug'].'/regulation.pdf') ?>" data-code="<?= h($c['code']) ?>"
+                  data-reg="<?= url('/competition/'.$c['slug'].'/regulation.docx') ?>" data-code="<?= h($c['code']) ?>"
                   data-club-only="<?= (int)$c['club_only'] ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
                 <?php

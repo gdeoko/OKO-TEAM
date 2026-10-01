@@ -170,16 +170,12 @@ foreach ($etalons as $f) {
 if ($live) {
     echo "\n  Пересборка положений открытых конкурсов:\n";
     require_once BASE_PATH . '/core/regulation_gen.php';
-    require_once BASE_PATH . '/core/regulation_pdf.php';
+    // PDF положений больше не собираем (слово владельца 01.10.2026): только эталонный DOCX.
     foreach (all("SELECT * FROM competitions WHERE status='open' ORDER BY id") as $c) {
         try {
             $docx = regulation_generate((int) $c['id']);
-            // Ключ кэша PDF учитывает время правки эталона, поэтому старый PDF
-            // тут же признаётся устаревшим и собирается заново.
-            $c2 = one("SELECT * FROM competitions WHERE id=?", [(int) $c['id']]);
-            $pdf = regulation_pdf((array) $c2);
-            printf("    #%-3d %-26s docx %s, pdf %s\n", (int) $c['id'], mb_substr((string) $c['name'], 0, 26),
-                   is_file($docx) ? 'ок' : 'СБОЙ', is_file($pdf) && filesize($pdf) > 1000 ? 'ок' : 'СБОЙ');
+            printf("    #%-3d %-26s docx %s\n", (int) $c['id'], mb_substr((string) $c['name'], 0, 26),
+                   is_file($docx) ? 'ок' : 'СБОЙ');
         } catch (\Throwable $e) {
             printf("    #%-3d %-26s ОШИБКА: %s\n", (int) $c['id'], mb_substr((string) $c['name'], 0, 26), $e->getMessage());
         }

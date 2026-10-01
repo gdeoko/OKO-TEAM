@@ -463,7 +463,7 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
         $links .= '<tr><td style="padding:4px 0;font-size:14px;line-height:1.5">'
                 . '<b>' . h($nm) . '</b> — '
                 . '<a href="' . h($base . '/competition/' . $slug) . '" style="color:#8B6F1F">афиша и условия</a>'
-                . ' · <a href="' . h($base . '/competition/' . $slug . '/regulation.pdf') . '" style="color:#8B6F1F">положение (PDF)</a>'
+                . ' · <a href="' . h($base . '/competition/' . $slug . '/regulation.docx') . '" style="color:#8B6F1F">положение (DOCX)</a>'
                 . '</td></tr>';
     }
     if ($links !== '') {

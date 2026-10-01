@@ -317,7 +317,10 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     // Правило владельца: «осталось 3 дня / последний день / приём закрыт» НЕ идут на почту —
     // только in-app всем + пост ВКонтакте (с авто-сторис) + рассылка в личку. На почту идёт
     // только открытие конкурсов и Элитный клуб (и результаты длинного — участникам).
-    if (in_array($wave, ['d3', 'last', 'closed'], true)) {
+    /* С 01.10.2026 (слово владельца) «осталось 3 дня» и «последний день» идут
+     * и письмом по базе участников. «Приём закрыт» по-прежнему без почты:
+     * звать подавать заявку уже некуда. */
+    if ($wave === 'closed') {
         $channels = array_values(array_diff($channels, ['email']));
         if (!$channels) $channels = ['inapp', 'vk_wall'];
     }
@@ -519,6 +522,12 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                     $report['email'] = 'кампания «Элитный клуб»: в очередь ' . (int) $queued;
                 } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
             }
+        } elseif ($wave === 'd3' || $wave === 'last') {
+            if (!function_exists('launch_reminder_enqueue')) require_once BASE_PATH . '/core/launch_combo.php';
+            try {
+                $res = launch_reminder_enqueue($wave, $dry);
+                $report['email'] = ($dry ? 'напоминание письмом → получателей: ' : 'напоминание письмом: в очередь ') . $res['queued'];
+            } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
         } else {
             // Открытие (launch/launch_mail) — ОДНО ОБЪЕДИНЁННОЕ письмо на человека:
             // конкурсы месяца + личный кабинет с логином/паролем (только тем, кто ни разу
@@ -575,6 +584,11 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         foreach ($toShow as $sc) {
             update('competitions', ['launched' => 1, 'launched_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => (int) $sc['id']]);
         }
+        /* Приём открыт заново. Флаг «приём закрыт» ставит закрытие 25-го, а снимать
+         * его было некому: 01.10.2026 новые конкурсы уже шли, а главная писала
+         * «Приём заявок этого месяца завершён», и письма о конкурсах отбрасывались
+         * при отправке как устаревшие (nl_letter_expired). */
+        if (function_exists('set_setting')) set_setting('intake_closed', '0');
     }
 
     if (!$dry && function_exists('audit')) audit('launch_fire', 'competition', $compId, ['wave' => $wave, 'channels' => $channels, 'report' => $report]);

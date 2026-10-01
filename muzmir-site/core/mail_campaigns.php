@@ -155,7 +155,7 @@ function mmc_competition_card(array $c): string {
     $applyUrl = $slug !== ''
         ? $base . '/apply?competition=' . rawurlencode($slug)
         : $base . '/apply?comp=' . (int) ($c['id'] ?? 0);
-    $regUrl   = $base . '/competition/' . rawurlencode($slug) . '/regulation.pdf';
+    $regUrl   = $base . '/competition/' . rawurlencode($slug) . '/regulation.docx';
 
     $img = $cover !== ''
         ? '<img src="' . h($cover) . '" alt="' . h($name) . '" width="516" style="display:block;width:100%;max-width:516px;height:auto;border-radius:14px 14px 0 0;">'

@@ -82,8 +82,8 @@ ob_start(); ?>
             </div>
             <div class="reg-item__acts">
               <a class="btn btn--primary btn--sm"
-                 href="<?= url('/competition/' . rawurlencode((string) $c['slug']) . '/regulation.pdf') ?>"
-                 target="_blank" rel="noopener">Открыть положение</a>
+                 href="<?= url('/competition/' . rawurlencode((string) $c['slug']) . '/regulation.docx') ?>"
+                 target="_blank" rel="noopener">Скачать положение</a>
               <a class="btn btn--ghost btn--sm"
                  href="<?= url('/competition/' . rawurlencode((string) $c['slug']) . '/regulation.docx') ?>">Скачать DOCX</a>
             </div>

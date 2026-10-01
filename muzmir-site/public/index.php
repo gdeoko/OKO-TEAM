@@ -120,8 +120,8 @@ if (preg_match('#^/obrazci-([a-z0-9\-]+)$#', $route, $m)) {
     $c = one("SELECT id FROM competitions WHERE slug=?", [$m[1]]);
     header('Location: ' . url($c ? '/awards?comp=' . (int)$c['id'] : '/awards'), true, 301); exit;
 }
-if (preg_match('#^/polozhenie-([a-z0-9\-]+)$#', $route, $m)) {   // положение КОНКРЕТНОГО конкурса (PDF инлайн)
-    header('Location: ' . url('/competition/' . $m[1] . '/regulation.pdf'), true, 301); exit;
+if (preg_match('#^/polozhenie-([a-z0-9\-]+)$#', $route, $m)) {   // положение КОНКРЕТНОГО конкурса (эталонный DOCX)
+    header('Location: ' . url('/competition/' . $m[1] . '/regulation.docx'), true, 301); exit;
 }
 
 // Карта сайта: статические маршруты + конкурсы по slug.
@@ -137,7 +137,7 @@ if ($route === '/sitemap.xml') {
         echo '  <url><loc>' . htmlspecialchars($baseUrl . $p, ENT_XML1) . '</loc></url>' . "\n";
     }
     $slugs = [];
-    try { $slugs = all("SELECT slug FROM competitions"); } catch (\Throwable $e) { $slugs = []; }
+    try { $slugs = all("SELECT slug FROM competitions WHERE status <> 'draft'"); } catch (\Throwable $e) { $slugs = []; }
     foreach ($slugs as $row) {
         $s = is_array($row) ? ($row['slug'] ?? '') : (string) $row;
         if ($s === '') continue;
@@ -242,64 +242,18 @@ if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) {
 // Скачивание положения конкурса (DOCX 1:1 из эталона; генерирует при первом запросе).
 // Старые ссылки .../regulation.pdf продолжают работать и отдают актуальный файл.
 if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, $m)) {
-    $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);
+    $c = one("SELECT * FROM competitions WHERE slug=? AND status <> 'draft'", [$m[1]]);
     if ($c) {
         try {
             $reqExt = strtolower($m[2]);
             // PDF-запрос (по умолчанию для «Открыть положение») — отдаём ИНЛАЙН,
             // чтобы положение ОТКРЫВАЛОСЬ в браузере, а не скачивалось.
+            /* ПОЛОЖЕНИЕ — ТОЛЬКО ЭТАЛОННЫЙ DOCX. Слово владельца от 01.10.2026:
+             * «эталоны у нас в docx как в сентябре, а кривые pdf удали навсегда».
+             * Перегонка через LibreOffice сбивала вёрстку бланка. Старые ссылки
+             * .../regulation.pdf ведут на тот же документ в DOCX. */
             if ($reqExt === 'pdf') {
-                // 1:1 с эталоном DOCX через LibreOffice (шапка, печать, подпись, гербы).
-                $pdfData = '';
-                try {
-                    require_once BASE_PATH . '/core/regulation_pdf.php';
-                    $pdfPath = regulation_pdf($c);
-                    if (is_file($pdfPath)) $pdfData = (string) file_get_contents($pdfPath);
-                } catch (\Throwable $ePdf) {
-                    error_log('regulation_pdf (soffice) failed: ' . $ePdf->getMessage());
-                }
-                /* ПРЕЖНИЙ ФАЙЛ ЛУЧШЕ САМОДЕЛЬНОГО.
-                 *
-                 * Здесь стоял фолбэк на старый рисованный генератор
-                 * (core/pdf_regulation.php) — «чтобы ссылка не падала». Цена
-                 * этой страховки выяснилась 25.08.2026: файлы положений
-                 * оказались с чужим владельцем, пересобрать их php-fpm не мог,
-                 * и участники вместо утверждённого документа получали
-                 * самодельный PDF с наложениями текста и гербов. Владелец
-                 * увидел его на боевом конкурсе и назвал отсебятиной — и был
-                 * прав: официальный документ подменялся молча.
-                 *
-                 * Порядок теперь такой: не собралось — отдаём ПРЕЖНИЙ готовый
-                 * файл, он утверждён и лежит рядом. Нет и его — честная ошибка,
-                 * а не выдуманный документ. */
-                if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
-                    $prev = BASE_PATH . '/public/uploads/regulations/' . $c['slug'] . '.pdf';
-                    if (is_file($prev) && filesize($prev) > 1000) {
-                        $prevData = (string) file_get_contents($prev);
-                        if (strncmp($prevData, '%PDF', 4) === 0) {
-                            $pdfData = $prevData;
-                            error_log('regulation: отдан прежний PDF, пересобрать не удалось — ' . $c['slug']);
-                        }
-                    }
-                }
-                if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
-                    throw new \RuntimeException('Не удалось сформировать PDF положения.');
-                }
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
-                header('Content-Length: ' . (string) strlen($pdfData));
-                // ПОЛОЖЕНИЕ НЕ КЭШИРУЕМ.
-                //
-                // Адрес у документа постоянный, а содержимое меняется: оргвзнос,
-                // сроки приёма, пункты правил. Браузер и промежуточные прокси
-                // держали прежний файл, и владелец, открыв ссылку после смены цены
-                // с 500 на 1000 ₽, снова видел 500 — при том, что сервер отдавал
-                // уже новый документ. Участник в этот момент читает сумму, по
-                // которой платит, поэтому свежесть здесь важнее экономии трафика.
-                header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-                header('Pragma: no-cache');
-                header('ETag: "' . md5($pdfData) . '"');
-                echo $pdfData;
+                header('Location: ' . url('/competition/' . $c['slug'] . '/regulation.docx'), true, 301);
                 exit;
             }
             // Явный .docx-запрос — по-прежнему отдаём файлом (для редактирования).

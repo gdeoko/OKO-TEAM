@@ -1405,6 +1405,25 @@ function nl_build_body(array $row): ?array {
     $email = mb_strtolower(trim((string) $row['to_email']));
     if ($email === '') return null;
 
+    // Напоминание о сроках приёма (d3/last): одно письмо всем, собирается свежим.
+    if ($kind === 'reminder') {
+        foreach (['launch_combo', 'person_name', 'mail_campaigns'] as $m) {
+            $p = BASE_PATH . '/core/' . $m . '.php';
+            if (is_file($p)) require_once $p;
+        }
+        if (!function_exists('launch_reminder_body')) return null;
+        $wave  = (string) ($spec['wave'] ?? 'd3');
+        $name  = function_exists('person_greeting_name') ? person_greeting_name($email, (string) ($row['to_name'] ?? '')) : (string) ($row['to_name'] ?? '');
+        $inner = str_replace('{{name}}', h($name !== '' ? $name : 'участник'), launch_reminder_body($wave));
+        $nid   = (int) ($spec['nlid'] ?? 0);
+        $token = $nid ? nl_track_token($nid) : '';
+        $pixel = $token !== '' ? nl_open_pixel($token) : '';
+        if ($token !== '') $inner = nl_rewrite_links($inner, $token);
+        [$unsubToken, ] = nl_ensure_subscriber($email, $name, 'newsletter');
+        $unsub = rtrim((string) cfgv('base_url'), '/') . '/api/v1/unsubscribe.php?token=' . urlencode((string) $unsubToken);
+        $body  = nl_wrap_email($inner, $unsub, $pixel, mb_substr(trim(strip_tags($inner)), 0, 120), []);
+        return ['subject' => launch_reminder_subject($wave), 'body' => $body, 'after' => null];
+    }
     if ($kind !== 'combo') return null;
 
     foreach (['launch_combo', 'person_name', 'kabinet_onboarding', 'mail_campaigns'] as $m) {
