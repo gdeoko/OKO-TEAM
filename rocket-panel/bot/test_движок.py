@@ -739,9 +739,30 @@ class ОбязательноеНеТеряется(unittest.TestCase):
             self.assertNotIn(слово, т.lower())
 
     def test_блок_короткий(self):
-        """Он дописывается последним и обязан влезать вместе со всем."""
+        """Он дописывается последним и обязан влезать вместе со всем.
+        Мерить надо САМЫЙ ДЛИННЫЙ вариант — женский: у него, кроме
+        запретов, ещё и требование детализации."""
         пара = self.p.обязательные("one man and one woman, his penis")
-        self.assertLess(len(пара), 500)
+        одна = self.p.обязательные("a naked woman alone, her thighs")
+        самый = max(len(пара), len(одна))
+        self.assertLess(самый, 700, "блок съедает место у самой работы")
+
+    def test_детализация_требуется_и_не_режется(self):
+        """Владелец 01.10.2026: «генералии — плохо, каша, нету
+        детализации». В собранном промпте не оставалось ни одного слова
+        про детализацию: блок кожи выбрасывался, а про пах говорилось
+        только «кожа ровная и гладкая, как на плечах» — фраза против
+        растительности, которую модель читает и как «без подробностей»."""
+        одна = self.p.обязательные("a naked woman alone, her thighs")
+        self.assertIn("anatomical detail", одна)
+        self.assertIn("never a blurred or melted patch", одна)
+        мж = self.p.обязательные(
+            "one man and one woman, his penis, her thighs")
+        self.assertIn("anatomical detail", мж)
+        self.assertIn("His penis and scrotum", мж)
+        мм = self.p.обязательные("Both people are men, one from each")
+        self.assertIn("sharp true detail", мм)
+        self.assertNotIn("Her vulva", мм)
 
     def test_роликовая_сборка_мужчину_называет_иначе(self):
         """Ролик не говорит «the man», он раздаёт референсы. На этом 24
