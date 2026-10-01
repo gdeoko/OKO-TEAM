@@ -52,9 +52,11 @@
 import base64
 import json
 import os
+import subprocess
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from gpu import GpuError
@@ -99,6 +101,28 @@ from gpu import GpuError
 # Сколько секунд верим прошлому ответу про баланс. `alive()` бот
 # спрашивает перед каждой кнопкой, и гонять за этим сеть незачем.
 БАЛАНС_ЖИВЁТ = 30
+
+# ЧЕМ ПРЕДСТАВЛЯЕМСЯ, КОГДА ЗАБИРАЕМ ГОТОВЫЙ ФАЙЛ.
+#
+# Задача считается на стороне сервиса, а готовый файл лежит на раздаче, и
+# раздача - это не API: ключ ей не нужен, зато она смотрит, кто пришёл.
+# `urllib` по умолчанию представляется `Python-urllib/3.12`, и такому
+# гостю раздача отвечает 403 - ровно это и поймал владелец 01.10.2026 на
+# первой же кнопке: кадр посчитался за 85 секунд, деньги за него списаны,
+# а файл не отдали. Наш же контент-завод всё это время качал результаты
+# `curl`-ом и не знал беды - у него другое имя гостя, вот и вся разница.
+БРАУЗЕР = {
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"),
+    "Accept": "image/avif,image/webp,image/*,video/*,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+# Сколько раз пробуем забрать файл. Отказ раздачи бывает и мгновенным
+# (не понравился гость), и случайным - у края сети, через который нас
+# пустили. Первый лечится заголовками, второй - повтором; обходятся они
+# одинаково дёшево, а несчитанный кадр стоит уже уплаченных денег.
+СКАЧАТЬ_ПОПЫТОК = int(os.environ.get("ROCKET_API_FETCH_TRIES", "3"))
 
 
 class Api:
@@ -306,16 +330,56 @@ class Api:
                 расш = гадать
                 break
         имя = "out_%s%s" % (str(tid)[:16], расш)
-        try:
-            with urllib.request.urlopen(ссылка, timeout=self.timeout) as р:
-                данные = р.read()
-        except Exception as e:                              # noqa: BLE001
-            raise GpuError("результат не скачался: %s" % str(e)[:150]) from None
-        if not данные:
-            raise GpuError("результат пустой")
+        данные = self._скачать(ссылка)
         with self._замок:
             self._положить(имя, данные)
         return имя
+
+    def _скачать(self, ссылка):
+        """Забрать файл с раздачи. Байты или своя ошибка с разбором.
+
+        Два разных способа подряд, и это не перестраховка. Кадр к этому
+        моменту УЖЕ ПОСЧИТАН И ОПЛАЧЕН: не донеся его, мы теряем деньги
+        и отдаём человеку осечку за них же. `curl` ходит своей
+        библиотекой TLS и со своими умолчаниями - там, где споткнулся
+        питон, он часто проходит, и наоборот.
+
+        В ошибку кладётся ХОЗЯИН ссылки и причина каждой попытки:
+        «403 от раздачи» и «сеть не пустила» лечатся по-разному, а общее
+        «не скачался» их не различает. Сама ссылка подписанная и длинная,
+        целиком её в переписку не тащим.
+        """
+        хозяин = urllib.parse.urlsplit(ссылка).netloc or "?"
+        заголовки = dict(БРАУЗЕР)
+        # Своей же раздаче показываем ключ: часть ответов сервиса лежит
+        # за той же дверью, что и API.
+        if хозяин.endswith("apimodels.app"):
+            заголовки["Authorization"] = "Bearer " + self.key
+        беды = []
+        for попытка in range(1, СКАЧАТЬ_ПОПЫТОК + 1):
+            try:
+                з = urllib.request.Request(ссылка, headers=заголовки)
+                with urllib.request.urlopen(з, timeout=self.timeout) as р:
+                    данные = р.read()
+                if данные:
+                    return данные
+                беды.append("%d/питон: пусто" % попытка)
+            except Exception as e:                          # noqa: BLE001
+                беды.append("%d/питон: %s" % (попытка, str(e)[:90]))
+            try:
+                п = subprocess.run(
+                    ["curl", "-sL", "--max-time", str(self.timeout),
+                     "-A", БРАУЗЕР["User-Agent"], ссылка],
+                    capture_output=True, timeout=self.timeout + 30)
+                if п.returncode == 0 and п.stdout:
+                    return п.stdout
+                беды.append("%d/curl: код %s" % (попытка, п.returncode))
+            except Exception as e:                          # noqa: BLE001
+                беды.append("%d/curl: %s" % (попытка, str(e)[:90]))
+            if попытка < СКАЧАТЬ_ПОПЫТОК:
+                time.sleep(2)
+        raise GpuError("результат не скачался с %s: %s"
+                       % (хозяин, "; ".join(беды)[:300]))
 
     @staticmethod
     def _цена(о):

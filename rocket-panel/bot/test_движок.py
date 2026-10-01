@@ -166,6 +166,118 @@ class Задача(unittest.TestCase):
             self.а.poll("не-наша")
 
 
+class ЗаборГотовогоФайла(unittest.TestCase):
+    """01.10.2026: кадр посчитался за 85 секунд, деньги списаны, а файл
+    раздача не отдала - 403 на `Python-urllib/3.12`. Человек получил
+    осечку за наши уплаченные деньги.
+
+    Поэтому здесь проверяется не «скачалось», а чем именно мы
+    представляемся и что делаем, когда первый способ не прошёл.
+    """
+
+    def setUp(self):
+        self.а = apimodels.Api(key="k")
+        self.а.timeout = 1
+
+    def _открыть(self, данные=b"FILE", ошибка=None):
+        """Поддельный urlopen, который запоминает запрос."""
+        схвачено = {}
+
+        def открыть(запрос, timeout=None):
+            схвачено["заголовки"] = dict(запрос.headers)
+            схвачено["url"] = запрос.full_url
+            if ошибка:
+                raise ошибка
+            ответ = mock.MagicMock()
+            ответ.__enter__.return_value.read.return_value = данные
+            return ответ
+        return открыть, схвачено
+
+    def test_представляемся_браузером(self):
+        открыть, схвачено = self._открыть()
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть):
+            self.assertEqual(self.а._скачать("https://cdn.example/x.png"),
+                             b"FILE")
+        # Заголовки urllib приводит к Capitalized-Case.
+        строкой = " ".join(схвачено["заголовки"]).lower()
+        self.assertIn("user-agent", строкой)
+        self.assertIn("Mozilla", str(схвачено["заголовки"]))
+        self.assertNotIn("python-urllib", str(схвачено["заголовки"]).lower())
+
+    def test_ключ_только_своей_раздаче(self):
+        открыть, схвачено = self._открыть()
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть):
+            self.а._скачать("https://files.apimodels.app/x.png")
+        self.assertIn("Bearer k", str(схвачено["заголовки"]))
+
+    def test_чужой_раздаче_ключ_не_показываем(self):
+        открыть, схвачено = self._открыть()
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть):
+            self.а._скачать("https://cdn.чужой.net/x.png")
+        self.assertNotIn("Bearer", str(схвачено["заголовки"]))
+
+    def test_curl_подхватывает_после_отказа(self):
+        """Там, где споткнулся питон, часто проходит curl."""
+        открыть, _ = self._открыть(ошибка=OSError("403 Forbidden"))
+        готово = mock.MagicMock(returncode=0, stdout=b"CHEREZ-CURL")
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть), \
+             mock.patch.object(apimodels.subprocess, "run",
+                               return_value=готово) as бег:
+            self.assertEqual(self.а._скачать("https://cdn.example/x.png"),
+                             готово.stdout)
+        позвали = бег.call_args[0][0]
+        self.assertEqual(позвали[0], "curl")
+        self.assertIn("-A", позвали)
+
+    def test_пустой_ответ_не_считается_файлом(self):
+        открыть, _ = self._открыть(данные=b"")
+        пусто = mock.MagicMock(returncode=0, stdout=b"")
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть), \
+             mock.patch.object(apimodels.subprocess, "run", return_value=пусто), \
+             mock.patch.object(apimodels.time, "sleep", lambda _с: None):
+            with self.assertRaises(_gpu.GpuError):
+                self.а._скачать("https://cdn.example/x.png")
+
+    def test_в_ошибке_хозяин_и_обе_причины(self):
+        """«403 от раздачи» и «сеть не пустила» лечатся по-разному."""
+        открыть, _ = self._открыть(ошибка=OSError("HTTP Error 403: Forbidden"))
+        упал = mock.MagicMock(returncode=22, stdout=b"")
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть), \
+             mock.patch.object(apimodels.subprocess, "run", return_value=упал), \
+             mock.patch.object(apimodels.time, "sleep", lambda _с: None):
+            try:
+                self.а._скачать("https://cdn.example/x.png")
+                self.fail("ошибки не было")
+            except _gpu.GpuError as e:
+                текст = str(e)
+            self.assertIn("cdn.example", текст)
+            self.assertIn("403", текст)
+            self.assertIn("curl", текст)
+
+    def test_подписанную_ссылку_целиком_не_тащим(self):
+        открыть, _ = self._открыть(ошибка=OSError("403"))
+        упал = mock.MagicMock(returncode=22, stdout=b"")
+        подпись = "X-Amz-Signature=деадбиф" * 4
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть), \
+             mock.patch.object(apimodels.subprocess, "run", return_value=упал), \
+             mock.patch.object(apimodels.time, "sleep", lambda _с: None):
+            try:
+                self.а._скачать("https://cdn.example/x.png?" + подпись)
+            except _gpu.GpuError as e:
+                self.assertNotIn("X-Amz-Signature", str(e))
+
+    def test_пробуем_не_один_раз(self):
+        открыть, _ = self._открыть(ошибка=OSError("403"))
+        упал = mock.MagicMock(returncode=22, stdout=b"")
+        with mock.patch.object(apimodels.urllib.request, "urlopen", открыть), \
+             mock.patch.object(apimodels.subprocess, "run",
+                               return_value=упал) as бег, \
+             mock.patch.object(apimodels.time, "sleep", lambda _с: None):
+            with self.assertRaises(_gpu.GpuError):
+                self.а._скачать("https://cdn.example/x.png")
+        self.assertEqual(бег.call_count, apimodels.СКАЧАТЬ_ПОПЫТОК)
+
+
 class Переключатель(unittest.TestCase):
     class Хранилище:
         def __init__(self):
