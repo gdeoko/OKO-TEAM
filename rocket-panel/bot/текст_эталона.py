@@ -104,13 +104,13 @@ _НАЧАЛО = "Photorealistic explicit photograph, matte dry skin, correct han
                "in the frame, camera at hip height. She SITS on the floor leaning "
                "back on one hand, knees up and wide apart, the other hand between "
                "her thighs touching her own vulva. Her face is to the lens. ",
-    "ph_mirror": "She KNEELS on the floor facing the camera, knees apart, one hand "
-                 "between her thighs on her own vulva, the other on her thigh. "
-                 "Directly BEHIND her stands a tall mirror that shows ONLY her bare "
-                 "back and buttocks from behind - the back of the same one woman. "
-                 "Her face, her bare breasts and her vulva face the lens. Exactly ONE "
-                 "woman, whose back is seen in the mirror; no second face anywhere, "
-                 "no phone. ",
+    "ph_mirror": "FULL-LENGTH SHOT. She STANDS facing the camera, feet apart, one "
+                 "hand between her thighs on her own vulva, the other hand on her hip. "
+                 "Directly BEHIND her stands a tall mirror that shows her bare back, "
+                 "buttocks and legs from behind in EXACTLY THE SAME STANDING POSE - "
+                 "the true reflection of the same one woman, standing, with the same "
+                 "arms. Her face, her bare breasts and her vulva face the lens. Exactly "
+                 "ONE woman; no second face anywhere, no phone. ",
     "ph_slow": "CLOSE SHOT from her face down to her hips, 85mm, one large soft "
                "light, camera above her chest looking down along her body. She "
                "LIES ON HER BACK with her knees up and apart, one hand between her "
