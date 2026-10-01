@@ -86,12 +86,24 @@ class Запросы(unittest.TestCase):
         for лишнее in ("image", "image_url", "first_frame_image"):
             self.assertNotIn(лишнее, тело)
 
-    def test_негатив_не_уходит(self):
-        """Поля негатива в этом API нет, а лишнее поле часть моделей
-        отбивает четырёхсотой."""
+    def test_негатив_уходит_вместе_с_промптом(self):
+        """В негативе кнопки лежит список «не одевай её»: clothed,
+        dressed, bra, panties, bikini, swimsuit. Первая версия клиента
+        его выбрасывала — и боевые кнопки вернули одетые кадры."""
         _вид, тело = self.а._запрос({"mode": "photo", "prompt": "т",
-                                     "neg": "мусор, швы"})
+                                     "neg": "clothed, bra, panties"})
+        self.assertEqual(тело["negative_prompt"], "clothed, bra, panties")
+        # Имя поля бота наружу не уходит, уходит имя сервиса.
         self.assertNotIn("neg", тело)
+
+    def test_негатив_и_у_видео(self):
+        _вид, тело = self.а._запрос({"mode": "video", "prompt": "т",
+                                     "neg": "мигание, дрожь"})
+        self.assertEqual(тело["negative_prompt"], "мигание, дрожь")
+
+    def test_пустой_негатив_не_шлём(self):
+        _вид, тело = self.а._запрос({"mode": "photo", "prompt": "т",
+                                     "neg": ""})
         self.assertNotIn("negative_prompt", тело)
 
     def test_маска_не_для_api(self):
@@ -104,6 +116,67 @@ class Запросы(unittest.TestCase):
         with self.assertRaises(_gpu.GpuError):
             self.а._запрос({"mode": "photo", "prompt": "т",
                             "images": ["нет_такого.png"]})
+
+
+class СервисНеЗнаетНегатива(unittest.TestCase):
+    """Модель, которая поля не знает, отвечает четырёхсотой. Отказ стоит
+    ноль и кадра не тратит, поэтому спросить дешевле, чем решить за
+    сервис заранее — ровно на таком «решении за сервис» и вышли одетые
+    кадры на боевом."""
+
+    def setUp(self):
+        self.а = apimodels.Api(key="k")
+        self.звонки = []
+
+    def _зов(self, отказ_на_негатив):
+        def зов(путь, тело=None):
+            self.звонки.append(dict(тело or {}))
+            if тело and "negative_prompt" in тело and отказ_на_негатив:
+                raise _gpu.GpuError(
+                    "400: {\"msg\":\"Unknown parameter: negative_prompt\"}")
+            return {"taskId": "t1"}
+        return зов
+
+    def test_повтор_без_негатива(self):
+        self.а._зов = self._зов(True)
+        задача, _ = self.а.start(mode="photo", prompt="т", neg="clothed")
+        self.assertEqual(задача, "t1")
+        self.assertIn("negative_prompt", self.звонки[0])
+        self.assertNotIn("negative_prompt", self.звонки[1])
+
+    def test_второй_раз_уже_не_предлагаем(self):
+        self.а._зов = self._зов(True)
+        self.а.start(mode="photo", prompt="т", neg="clothed")
+        было = len(self.звонки)
+        self.а.start(mode="photo", prompt="т", neg="clothed")
+        self.assertEqual(len(self.звонки) - было, 1, "спросили повторно")
+        self.assertNotIn("negative_prompt", self.звонки[-1])
+
+    def test_берёт_негатив_значит_шлём(self):
+        self.а._зов = self._зов(False)
+        self.а.start(mode="photo", prompt="т", neg="clothed")
+        self.assertEqual(len(self.звонки), 1)
+        self.assertIn("negative_prompt", self.звонки[0])
+
+    def test_чужой_отказ_не_повторяем(self):
+        """На «кончились деньги» повтор без негатива значит заплатить
+        второй раз за тот же отказ и получить одетый кадр."""
+        def зов(путь, тело=None):
+            self.звонки.append(dict(тело or {}))
+            raise _gpu.GpuError("402: insufficient balance")
+        self.а._зов = зов
+        with self.assertRaises(_gpu.GpuError):
+            self.а.start(mode="photo", prompt="т", neg="clothed")
+        self.assertEqual(len(self.звонки), 1, "повторили чужой отказ")
+
+    def test_модерация_не_путается_с_негативом(self):
+        def зов(путь, тело=None):
+            self.звонки.append(dict(тело or {}))
+            raise _gpu.GpuError("400: content policy violation")
+        self.а._зов = зов
+        with self.assertRaises(_gpu.GpuError):
+            self.а.start(mode="photo", prompt="т", neg="clothed")
+        self.assertEqual(len(self.звонки), 1)
 
 
 class Задача(unittest.TestCase):
