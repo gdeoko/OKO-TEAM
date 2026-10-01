@@ -1241,8 +1241,15 @@ class ПодПредел(unittest.TestCase):
                 бед = []
                 if len(г) > 2900:
                     бед.append("длинно %d" % len(г))
-                for что, метка in (("keep the place", "фон"),
-                                   ("not in that photo", "опознание"),
+                # Фон: либо сказано нашими словами, либо своими у
+                # парной сборки, либо место выбрано человеком — и тогда
+                # о фоне со снимка говорить нельзя вовсе.
+                фон = ("keep the place" in низ
+                       or "the same room, the same light" in низ
+                       or "build a new frame" in низ)
+                if not фон:
+                    бед.append("фон")
+                for что, метка in (("not in that photo", "опознание"),
                                    ("f/8", "фокус"),
                                    ("fills the frame", "плотный кадр")):
                     if что not in низ:
@@ -1316,3 +1323,53 @@ class ПарнуюПостановкуНеРежемВТриФразы(unittest.
             if своё < len(сырой) * 0.5:
                 плохо.append((сц.key, len(сырой), своё))
         self.assertEqual(плохо, [])
+
+class ВыбранноеМестоНеСпоритСФоном(unittest.TestCase):
+    """Человек заплатил за гостиничный номер — и получал в том же
+    промпте наше «фон такой же, как на присланном фото». Противоречие
+    моё: правило фона я положила в необрезаемый блок, не спросив,
+    выбрано ли место (аудит прода 01.10.2026)."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_место_выбрано_фон_с_фото_не_требуем(self):
+        с_местом = ("Take the person from the reference photographs and "
+                    "build a new frame. A high-floor hotel room at night. "
+                    "her thighs")
+        self.assertNotIn("KEEP THE PLACE", self.p.обязательные(с_местом))
+
+    def test_места_нет_фон_с_фото_требуем(self):
+        """Сборка сама говорит «keep the PLACE», когда обстановка берётся
+        со снимка. По этому слову и видно, что правило о фоне уместно."""
+        # Правило о фоне дописывается, когда оно УМЕСТНО (обстановка со
+        # снимка) и в тексте его уже не осталось — ровно случай, который
+        # поймал аудит: блок «keep the PLACE» при укорачивании выбросили.
+        self.assertIn("KEEP THE PLACE",
+                      self.p.обязательные("her thighs", фон_с_фото=True))
+        # А пока он в тексте есть, повтора не добавляем.
+        со_снимка = self.p.ПО_ВИДУ["i2i_фон"] + " her thighs"
+        self.assertNotIn("KEEP THE PLACE", self.p.обязательные(со_снимка))
+        # Парная сборка говорит то же СВОИМИ словами — и тогда наше
+        # предложение не дописывается: повтор отнимал бы место у
+        # постановки. Правило при этом в промпте есть.
+        пара = ("the same room, the same light. Only the people change. "
+                "her thighs")
+        self.assertNotIn("KEEP THE PLACE", self.p.обязательные(пара))
+        self.assertIn("the same room, the same light",
+                      self.p.под_предел(пара, 2900))
+
+    def test_на_живых_кнопках_с_местом_противоречия_нет(self):
+        import catalog, места
+        место = [м for м in места.ВСЕ if not catalog.скрыт(м.key)][0]
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key) or сц.двухшаговый:
+                continue
+            г = self.p.под_предел(сц.промпт(место=место), 2900)
+            свой_фон = "KEEP THE PLACE from the supplied photo" in г
+            взяли_место = (место.обстановка or "")[:40] in г
+            if свой_фон and взяли_место:
+                плохо.append(сц.key)
+        self.assertEqual(плохо, [], "просим и выбранное место, и фон с фото")
