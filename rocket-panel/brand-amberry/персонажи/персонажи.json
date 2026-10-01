@@ -15,7 +15,11 @@
     "",
     "Поле 'шапка_запас' - формулировка без слов про раздевание. Держим её",
     "наготове: первая строка оффера прямо называет то, за что Instagram и",
-    "TikTok сносят аккаунт по первой жалобе. Меняем по слову владельца."
+    "TikTok сносят аккаунт по первой жалобе. Меняем по слову владельца.",
+    "",
+    "СНЯТЫ ВЛАДЕЛЬЦЕМ 01.10.2026: Mira и Saya. Остаются Nika, Eva, Yuki -",
+    "три лица вместо пяти. Их материалы лежат в _снято/ и заново не",
+    "заводятся; аккаунты под них не регистрируются."
   ],
   "ника": {
     "имя": "Nika",
@@ -45,34 +49,6 @@
       "📲 First one free ↓"
     ],
     "описание_yt": "Here I show as much as they let me — the rest is in the bot.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_nika\nFirst one is free."
-  },
-  "мира": {
-    "имя": "Mira",
-    "внешность": "чёрные волны, изумрудные глаза, аристократичные черты",
-    "характер": "властная, немногословная, смотрит как на подчинённого",
-    "о_чём": "вечер, дорогие интерьеры, взгляд сверху вниз",
-    "ник": "mira_amberry",
-    "имя_аккаунта": "Mira 🩷 Amberry",
-    "имя_аккаунта_без_эмодзи": "Mira • Amberry",
-    "почта": "",
-    "пароль": "mira_amberry_(@)8",
-    "метка": "ad_mira",
-    "ссылка": "https://t.me/theamberrybot?start=ad_mira",
-    "шапка_ig": [
-      "🩷 I decide who sees what. In the bot you decide",
-      "🫦 Takes off the extra and brings any photo to life",
-      "📲 First one free — link below ↓"
-    ],
-    "шапка_tiktok": [
-      "🫦 Takes off the extra and brings any photo to life",
-      "📲 First one free ↓"
-    ],
-    "шапка_запас": [
-      "🩷 I decide who sees what. In the bot you decide",
-      "🫦 Any photo starts moving — yours, mine, anyone's",
-      "📲 First one free ↓"
-    ],
-    "описание_yt": "I decide who sees what. In the bot you decide.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_mira\nFirst one is free."
   },
   "ева": {
     "имя": "Eva",
@@ -129,33 +105,5 @@
       "📲 First one free ↓"
     ],
     "описание_yt": "I'm quiet on camera only. Everything else stayed in the bot.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_yuki\nFirst one is free."
-  },
-  "сая": {
-    "имя": "Saya",
-    "внешность": "латина, бронзовая кожа, тёмные кудри, карамельные пряди",
-    "характер": "громкая, весёлая, флиртует открыто",
-    "о_чём": "танец, движение, жара - самая динамичная, под TikTok",
-    "ник": "saya_amberry",
-    "имя_аккаунта": "Saya 🩷 Amberry",
-    "имя_аккаунта_без_эмодзи": "Saya • Amberry",
-    "почта": "",
-    "пароль": "saya_amberry_(@)8",
-    "метка": "ad_saya",
-    "ссылка": "https://t.me/theamberrybot?start=ad_saya",
-    "шапка_ig": [
-      "🩷 The dance doesn't end where the video cuts off",
-      "🫦 Takes off the extra and brings any photo to life",
-      "📲 First one free — link below ↓"
-    ],
-    "шапка_tiktok": [
-      "🫦 Takes off the extra and brings any photo to life",
-      "📲 First one free ↓"
-    ],
-    "шапка_запас": [
-      "🩷 The dance doesn't end where the video cuts off",
-      "🫦 Any photo starts moving — yours, mine, anyone's",
-      "📲 First one free ↓"
-    ],
-    "описание_yt": "The dance doesn't end where the video cuts off.\n\nIn the bot any photo comes to life — yours, mine, anyone's: a still turns into a short video in a few minutes. Girls like me are built there from scratch too.\n\nBot: t.me/theamberrybot?start=ad_saya\nFirst one is free."
   }
 }
