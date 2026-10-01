@@ -743,6 +743,56 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         пара = self.p.обязательные("one man and one woman, his penis")
         self.assertLess(len(пара), 500)
 
+    def test_роликовая_сборка_мужчину_называет_иначе(self):
+        """Ролик не говорит «the man», он раздаёт референсы. На этом 24
+        замера мужских кнопок уходили в женскую ветку и теряли правило
+        «у мужчины нет женских органов»."""
+        для_мж = self.p.обязательные(
+            "The person from the first reference is a man; the person "
+            "from the second reference is a woman.")
+        self.assertIn("The man has a man's body", для_мж)
+        self.assertIn("a woman's body and only a woman's body", для_мж)
+
+    def test_у_мужской_кнопки_женских_строк_нет(self):
+        """ММ: женщины в кадре нет, и «у неё тело женщины» привело бы её
+        в кадр — та же ошибка, что с мужчиной, только наоборот."""
+        мм = self.p.обязательные(
+            "Both people are men, one from each reference. They must "
+            "stay two clearly different men.")
+        self.assertIn("The man has a man's body", мм)
+        self.assertNotIn("a woman's body", мм)
+        self.assertNotIn("Hair grows on her head only", мм)
+
+    def test_женские_строки_остаются_по_умолчанию(self):
+        """У многих женских кнопок слова «woman» в тексте нет вовсе."""
+        т = self.p.обязательные(
+            "Explicit photograph from the reference, kneeling by the bed.")
+        self.assertIn("a woman's body and only a woman's body", т)
+        self.assertNotIn("The man has a man's body", т)
+
+    def test_other_не_считается_женщиной(self):
+        """«her » — подстрока слова «other», и мужская кнопка ММ ловилась
+        на «each other»."""
+        self.assertFalse(self.p.женщина_в_кадре("they face each other"))
+
+    def test_все_кнопки_получают_правила_по_полу(self):
+        """Сквозной замер: у каждой кнопки каталога ровно те правила,
+        которые её полу положены — с выбранным местом и без."""
+        import catalog
+        места = [м for м in catalog.места.ВСЕ if not catalog.скрыт(м.key)]
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key):
+                continue
+            полы = catalog.полы(сц.key) or ("ж",)
+            for подпись, место in (("без места", None), ("место", места[0])):
+                о = self.p.обязательные(сц.промпт(место=место))
+                есть = ("only a woman's body" in о, "only a man's body" in о)
+                надо = ("ж" in полы, "м" in полы)
+                if есть != надо:
+                    плохо.append((сц.key, подпись, полы, есть))
+        self.assertEqual(плохо, [])
+
 
 class ДеталиНеТеряются(unittest.TestCase):
     """Владелец 01.10.2026: уложиться в три тысячи знаков, но детали
