@@ -669,7 +669,8 @@ def _починить_лицо(данные, имя):
 ЛИЦО_ВТОРЫМ = (os.environ.get("ROCKET_LICO2", "1") or "") != "0"
 ПРО_ЛИЦО_ПАРЫ = (" The third reference image is a close-up of the face of the woman from "
                  "the {} reference photo: her face in this photo must be exactly that face. "
-                 "That close-up is only a reference and must NOT appear in the picture.")
+                 "That close-up is only a reference for her face and must NOT appear in the "
+                 "picture; it says nothing about clothes - she is completely naked.")
 ЭТАЛОН_ТЕКСТ = (os.environ.get("ROCKET_ETALON_TEXT", "1") or "") != "0"
 ПРО_ЛИЦО = (" The second reference image is a close-up of her face: her face in "
             "this photo must be exactly that face - the same eye shape, eyelids, "
@@ -678,7 +679,7 @@ def _починить_лицо(данные, имя):
             "with one person, no inset, no collage, no second face.")
 
 
-def _кроп_лица(путь):
+def _кроп_лица(путь, запас=1.1):
     """Крупный квадрат лица со снимка клиента, PNG-байты. None, если лица нет."""
     try:
         import cv2
@@ -693,7 +694,7 @@ def _кроп_лица(путь):
             return None
         f = max(лица, key=lambda f: f.bbox[2] - f.bbox[0])
         x0, y0, x1, y1 = f.bbox
-        cx, cy, r = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0) * 1.1
+        cx, cy, r = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0) * запас
         H, W = кадр.shape[:2]
         к = кадр[int(max(0, cy - r)):int(min(H, cy + r)), int(max(0, cx - r)):int(min(W, cx + r))]
         к = cv2.resize(к, (768, 768), interpolation=cv2.INTER_LANCZOS4)
@@ -1122,7 +1123,9 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
                 and len(полы_сц) == 2 and "ж" in полы_сц
                 and ((kind or "").startswith("i2i") or цепочка)):
             н = полы_сц.index("ж")
-            кроп = _кроп_лица(свои[н])
+            # Тесно, одно лицо: с запасом 1.1 в кроп попадали бретели и
+            # жемчуг, и героиня в паре выходила ОДЕТОЙ (прогон 01.10.2026).
+            кроп = _кроп_лица(свои[н], 0.62)
             if кроп:
                 try:
                     photos = list(photos) + [gpu.upload("лицо_" + os.path.basename(свои[н]), кроп)]
