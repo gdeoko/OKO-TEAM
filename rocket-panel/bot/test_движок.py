@@ -276,12 +276,39 @@ class Задача(unittest.TestCase):
         self.assertEqual(self.а.poll("t2")["state"], "ok")
 
     def test_отказ_модерации_доносится_словами(self):
+        """Причина лежит в `failMsg`. Первая версия искала `failReason`,
+        которого у сервиса нет, и человек получал голое «failed» —
+        сообщение, в котором модерация неотличима от пустого счёта."""
         self.ответы = [{"taskId": "t3"},
-                       {"state": "failed", "failReason": "content policy"}]
+                       {"state": "failed", "failMsg": "content policy",
+                        "failCode": 451}]
         self.а.start(mode="photo", prompt="т")
         итог = self.а.poll("t3")
         self.assertEqual(итог["state"], "err")
         self.assertIn("content policy", итог["error"])
+        self.assertIn("451", итог["error"])
+        self.assertIn("t3", итог["error"], "без номера задачи её не найти")
+
+    def test_старое_имя_поля_тоже_читаем(self):
+        self.ответы = [{"taskId": "t5"},
+                       {"state": "failed", "failReason": "너무 길다"}]
+        self.а.start(mode="photo", prompt="т")
+        self.assertIn("너무 길다", self.а.poll("t5")["error"])
+
+    def test_сервис_промолчал_остаётся_номер_задачи(self):
+        """Даже когда объяснять нечем, задачу должно быть видно в консоли."""
+        self.ответы = [{"taskId": "t6"}, {"state": "failed"}]
+        self.а.start(mode="photo", prompt="т")
+        итог = self.а.poll("t6")
+        self.assertIn("t6", итог["error"])
+        self.assertIn("failed", итог["error"])
+
+    def test_слово_состояния_не_дублируется(self):
+        self.ответы = [{"taskId": "t7"},
+                       {"state": "failed", "msg": "failed"}]
+        self.а.start(mode="photo", prompt="т")
+        итог = self.а.poll("t7")
+        self.assertEqual(итог["error"].count("failed"), 1)
 
     def test_повторный_опрос_не_качает_второй_раз(self):
         self.ответы = [{"taskId": "t4"},

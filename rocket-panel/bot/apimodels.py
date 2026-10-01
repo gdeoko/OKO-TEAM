@@ -257,6 +257,8 @@ class Api:
                 о, ensure_ascii=False)[:200])
         with self._замок:
             self._задачи[tid] = {"вид": вид, "т0": time.time(), "готово": None}
+        print("APIMODELS %s: задача %s, модель %s"
+              % (вид, tid, тело.get("model")), flush=True)
         return tid, params.get("seed") or 0
 
     def poll(self, job_id):
@@ -289,9 +291,8 @@ class Api:
                 self._задачи[job_id]["готово"] = итог
             return итог
         if сост in ПРОВАЛ:
-            почему = (о.get("failReason") or о.get("error")
-                      or о.get("msg") or сост)
-            return {"state": "err", "sec": сек, "error": str(почему)[:300]}
+            return {"state": "err", "sec": сек,
+                    "error": _почему(о, job_id, сост)}
         return {"state": сост or "run", "sec": сек}
 
     def wait(self, job_id, limit=900, on_tick=None):
@@ -527,6 +528,38 @@ def время_прошло(когда):
 # упрощать: «кончились деньги» и «модерация» сюда не попадают нарочно.
 ПРО_ПОЛЕ = ("400", "unknown", "unsupported", "invalid", "unexpected",
             "not allowed", "required", "missing", "must be")
+
+
+# ГДЕ СЕРВИС ДЕРЖИТ ПРИЧИНУ ОТКАЗА. Полей несколько и называются они
+# по-разному; первая версия искала `failReason`, которого нет, и человек
+# получал голое слово состояния — «движок api: failed». Такое сообщение
+# не отличает модерацию от пустого счёта, а лечатся они по-разному.
+ПОЧЕМУ_ПОЛЯ = ("failMsg", "fail_msg", "failReason", "fail_reason",
+               "errorMessage", "error_message", "error", "msg", "message",
+               "detail")
+
+
+def _почему(ответ, задача, состояние):
+    """Причина отказа словами, и всегда с номером задачи.
+
+    Номер нужен не для красоты: по нему задачу видно в консоли сервиса
+    целиком — с промптом, параметрами и списанием. Без него жалоба
+    «не вышло» ни к чему не привязана.
+    """
+    куски = []
+    for к in ПОЧЕМУ_ПОЛЯ:
+        з = ответ.get(к)
+        if з and str(з).strip() and str(з).strip().lower() != состояние:
+            куски.append(str(з).strip())
+            break
+    код = ответ.get("failCode") or ответ.get("fail_code")
+    if код and str(код) not in " ".join(куски):
+        куски.append("код %s" % код)
+    if not куски:
+        # Совсем пусто — отдаём состояние, но хотя бы с номером задачи.
+        куски.append(состояние or "без объяснения")
+    куски.append("задача %s" % задача)
+    return " · ".join(куски)[:300]
 
 
 def _про_поле(ошибка, имя):
