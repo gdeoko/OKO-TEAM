@@ -737,8 +737,10 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         self.p = prompts
 
     def test_волосы_и_женское_тело_всегда(self):
-        т = self.p.обязательные("a naked woman alone in a room")
-        self.assertIn("Hair grows on her head only", т)
+        """Проверяем ПРАВИЛО, а не букву: оно может прийти и из нашего
+        блока, и из постановки кадра — важно, что в промпте оно есть."""
+        т = self.p.обязательные("a naked woman alone in a room").lower()
+        self.assertIn("hair grows on her head only", т)
         self.assertIn("a woman's body and only a woman's body", т)
 
     def test_мужская_строка_только_когда_мужчина_есть(self):
@@ -754,6 +756,9 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         т = self.p.обязательные("one man and one woman, his penis")
         for слово in ("pubic", "hairless"):
             self.assertNotIn(слово, т.lower())
+        т2 = self.p.обязательные("a naked woman alone, her thighs")
+        for слово in ("pubic", "hairless"):
+            self.assertNotIn(слово, т2.lower())
 
     def test_блок_короткий(self):
         """Он дописывается последним и обязан влезать вместе со всем.
@@ -763,11 +768,14 @@ class ОбязательноеНеТеряется(unittest.TestCase):
             "one man and one woman, his penis, her thighs")
         одна = self.p.обязательные("a naked woman alone, her thighs")
         самый = max(len(пара), len(одна))
+        # Полный блок — это случай, когда постановка не сказала НИЧЕГО
+        # из обязательного. На живых кнопках он всегда короче: повторы
+        # снимаются (см. `ПодПредел.test_повтора_не_дописываем`).
         # Парный вариант самый длинный: запреты и детализация идут за
         # двоих плюс требование плотного кадра. Парные промпты сырыми
         # около 1900 знаков, так что места хватает; предел здесь — чтобы
         # блок не разросся и не начал вытеснять постановку.
-        self.assertLess(самый, 1200, "блок съедает место у самой работы")
+        self.assertLess(самый, 1500, "блок съедает место у самой работы")
 
     def test_плотный_кадр_требуется_всегда(self):
         """Пустое место над головой и под ногами отнимает точки у тела,
@@ -778,7 +786,7 @@ class ОбязательноеНеТеряется(unittest.TestCase):
             о = self.p.обязательные(запрос)
             self.assertIn("FILLS the frame", о)
             self.assertIn("f/8", о)
-            self.assertIn("no blurred areas", о)
+            self.assertIn("no soft focus", о)
 
     def test_детализация_требуется_и_не_режется(self):
         """Владелец 01.10.2026: «генералии — плохо, каша, нету
@@ -788,7 +796,7 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         растительности, которую модель читает и как «без подробностей»."""
         одна = self.p.обязательные("a naked woman alone, her thighs")
         self.assertIn("anatomical detail", одна)
-        self.assertIn("never a blurred or melted patch", одна)
+        self.assertIn("never a blurred patch", одна)
         мж = self.p.обязательные(
             "one man and one woman, his penis, her thighs")
         self.assertIn("anatomical detail", мж)
@@ -830,8 +838,13 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         self.assertFalse(self.p.женщина_в_кадре("they face each other"))
 
     def test_все_кнопки_получают_правила_по_полу(self):
-        """Сквозной замер: у каждой кнопки каталога ровно те правила,
-        которые её полу положены — с выбранным местом и без."""
+        """Сквозной замер: в ГОТОВОМ промпте каждой кнопки есть ровно те
+        правила, которые её полу положены.
+
+        Мерим по готовому тексту, а не по нашему блоку: правило может
+        прийти и из постановки кадра («her anatomy is female only»), и
+        тогда блок его не повторяет — повтор отнимал бы место у работы.
+        """
         import catalog
         места = [м for м in catalog.места.ВСЕ if not catalog.скрыт(м.key)]
         плохо = []
@@ -840,11 +853,14 @@ class ОбязательноеНеТеряется(unittest.TestCase):
                 continue
             полы = catalog.полы(сц.key) or ("ж",)
             for подпись, место in (("без места", None), ("место", места[0])):
-                о = self.p.обязательные(сц.промпт(место=место))
-                есть = ("only a woman's body" in о, "only a man's body" in о)
-                надо = ("ж" in полы, "м" in полы)
-                if есть != надо:
-                    плохо.append((сц.key, подпись, полы, есть))
+                г = self.p.под_предел(сц.промпт(место=место), 2900).lower()
+                жен = ("only a woman's body" in г
+                       or "anatomy is female only" in г
+                       or "both people are women" in г)
+                муж = ("a man's body only" in г or "anatomy is male only" in г
+                       or "his penis" in г or "are men" in г)
+                if ("ж" in полы and not жен) or ("м" in полы and not муж):
+                    плохо.append((сц.key, подпись, полы, жен, муж))
         self.assertEqual(плохо, [])
 
 
@@ -1195,3 +1211,108 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         self.assertEqual(а.модель_фото, "qwen3-image-pro")
         self.assertEqual(а.выбрать_модель(фото="qwen3-image")["фото"],
                          "qwen3-image-pro")
+
+class ПодПредел(unittest.TestCase):
+    """Сборка под предел: укороченный промпт плюс то из обязательного,
+    чего в нём не осталось.
+
+    Аудит прода 01.10.2026 поймал, из-за чего это понадобилось. На проде
+    сырой промпт 7000-7700 знаков (у владельца подробные тексты), в
+    модель влезает 2800, и выбрасывалось ВСЁ наше: «фон как на
+    присланном фото», опознание, «одно тело, пять пальцев», «одежда уже
+    снята». Места не хватало честно: работа кнопки 1975 знаков плюс
+    обязательный блок 1178, и на общие блоки оставалось 120."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_правила_доезжают_все_и_предел_соблюдён(self):
+        import catalog, места
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key):
+                continue
+            for м in (None, места.КАК_НА_ФОТО):
+                сырой = (сц.prompt_фото(м or места.КАК_НА_ФОТО, None)
+                         if сц.двухшаговый else сц.промпт(место=м))
+                г = self.p.под_предел(сырой, 2900)
+                низ = г.lower()
+                бед = []
+                if len(г) > 2900:
+                    бед.append("длинно %d" % len(г))
+                for что, метка in (("keep the place", "фон"),
+                                   ("not in that photo", "опознание"),
+                                   ("f/8", "фокус"),
+                                   ("fills the frame", "плотный кадр")):
+                    if что not in низ:
+                        бед.append(метка)
+                if ("anatomical detail" not in низ
+                        and "sharp true detail" not in низ):
+                    бед.append("детализация")
+                поза = (getattr(сц.блок, "жёстко", "") or "").strip()
+                if поза and поза[:60] not in г:
+                    бед.append("поза")
+                if бед:
+                    плохо.append((сц.key, "; ".join(бед)))
+        self.assertEqual(плохо, [])
+
+    def test_повтора_не_дописываем(self):
+        """Каждый знак обязательного отнимается у работы кнопки, поэтому
+        то, что постановка уже сказала своими словами, не повторяется."""
+        сказано = ("keep the PLACE, not in that photo, one head on her own "
+                   "neck, her anatomy is female only, hair grows on her "
+                   "head only, her thighs")
+        полный = self.p.обязательные("her thighs")
+        краткий = self.p.обязательные(сказано)
+        self.assertLess(len(краткий), len(полный) // 2)
+        # А вот эти три не снимаются никогда: таких слов не говорит ни
+        # одна постановка, за ними мы и пришли.
+        self.assertIn("anatomical detail", краткий)
+        self.assertIn("f/8", краткий)
+        self.assertIn("FILLS the frame", краткий)
+
+    def test_предел_соблюдён_на_огромном_промпте(self):
+        огромный = "\n\n".join(["WORK " + "x" * 900] * 12)
+        г = self.p.под_предел(огромный, 2900)
+        self.assertLessEqual(len(г), 2900)
+        self.assertIn("f/8", г)
+
+class ПарнуюПостановкуНеРежемВТриФразы(unittest.TestCase):
+    """Укорачивание ужимало вступление «сохрани комнату» до трёх фраз —
+    и делало это с ЛЮБЫМ первым блоком. У парной кнопки весь промпт это
+    один блок: от 1884 знаков «Секса раком» оставалось 202, вся
+    постановка пары исчезала. Пока обязательный блок был коротким,
+    парные промпты влезали целиком и беда не всплывала."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_один_чужой_блок_режется_по_фразе_а_не_в_три(self):
+        парный = ("Explicit photograph of the two people from the reference "
+                  "photos. " + "The man kneels behind her. " * 60)
+        к = self.p.коротко(парный, 1200)
+        self.assertGreater(len(к), 900, "от постановки остались обрывки")
+        self.assertLessEqual(len(к), 1200)
+
+    def test_наше_вступление_ужимается_как_раньше(self):
+        текст = "\n\n".join([self.p.ПО_ВИДУ["i2i_фон"].strip(),
+                              "РАБОТА " + "y" * 2000])
+        к = self.p.коротко(текст, 1500)
+        self.assertLessEqual(len(к), 1500)
+
+    def test_парные_кнопки_доносят_постановку(self):
+        import catalog
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key) or not сц.пара:
+                continue
+            сырой = сц.промпт()
+            г = self.p.под_предел(сырой, 2900)
+            # Постановка пары — это и есть работа кнопки: если от неё
+            # осталась четверть, человек получил не ту сцену.
+            своё = len(г) - len(self.p.обязательные(г))
+            if своё < len(сырой) * 0.5:
+                плохо.append((сц.key, len(сырой), своё))
+        self.assertEqual(плохо, [])

@@ -1768,8 +1768,14 @@ def коротко(текст, предел=3000):
 
     # Всё ещё длинно — ужимаем вступление «сохрани комнату»: первые три
     # фразы несут правило, остальное их поясняет.
+    #
+    # ТОЛЬКО ЕСЛИ ПЕРВЫЙ БЛОК ДЕЙСТВИТЕЛЬНО НАШЕ ВСТУПЛЕНИЕ. Без этой
+    # проверки обрезались ЛЮБЫЕ первые блоки, а у парной кнопки весь
+    # промпт — один блок: от 1884 знаков «Секса раком» оставалось 202,
+    # то есть вся постановка пары исчезала. Пока обязательный блок был
+    # коротким, парные промпты влезали целиком и беда не всплывала.
     итог = разрыв.join(блоки)
-    if len(итог) > предел and блоки:
+    if len(итог) > предел and блоки and наш_блок(блоки[0]):
         фразы = блоки[0].split(". ")
         if len(фразы) > 3:
             блоки[0] = ". ".join(фразы[:3]).rstrip(".") + "."
@@ -1811,8 +1817,15 @@ def коротко(текст, предел=3000):
     if набрано > предел:
         # Одной работы кнопки уже больше предела — режем по фразе, но
         # финальную проверку сохраняем.
-        своё = разрыв.join([блоки[i] for i in свои])
         место = предел - len(хвост) - len(разрыв)
+        if место < 200:
+            # Даже один последний блок длиннее предела: резать по фразе
+            # приходится его самого. Иначе возвращался текст ДЛИННЕЕ
+            # предела, и сервис отбивал его целиком (UPSTREAM_FAILED),
+            # то есть человек не получал ничего вместо «почти всего».
+            return по_фразе(разрыв.join([блоки[i] for i in свои] + [хвост]),
+                            предел)
+        своё = разрыв.join([блоки[i] for i in свои])
         return разрыв.join([по_фразе(своё, место), хвост])
     взять = set(свои)
     for i, б in enumerate(блоки[:-1]):
@@ -1865,17 +1878,17 @@ def по_фразе(текст, предел):
 # в предел длины вместе со всем остальным.
 
 ЗАПРЕТ_ВОЛОСЫ = (
-    "Below the head her skin is smooth and unbroken everywhere: her "
-    "belly, her hips, her thighs and the space between them are as "
-    "smooth and bare as her shoulders. Hair grows on her head only.")
+    "Below the head her skin is as smooth and bare as her shoulders - "
+    "her belly, her hips, her thighs and the space between them; hair "
+    "grows on her head only.")
 
 ЗАПРЕТ_ЖЕНСКОЕ_ТЕЛО = (
     "She has a woman's body and only a woman's body: a vulva between "
     "her thighs and nothing else there.")
 
 ЗАПРЕТ_МУЖСКОЕ_ТЕЛО = (
-    "The man has a man's body and only a man's body: his crotch is "
-    "never smooth or blank, and he has no breasts and no vulva.")
+    "The man has a man's body only: his crotch is never smooth or blank, "
+    "and he has no breasts and no vulva.")
 
 # ДЕТАЛИЗАЦИЯ ОТКРОВЕННОГО — отдельной строкой и тоже без права на срез.
 #
@@ -1892,14 +1905,13 @@ def по_фразе(текст, предел):
 # «hairless» лобок выходил со щетиной. Поэтому не замена, а добавка:
 # сразу после «гладкая» сказано, что место при этом ПОДРОБНОЕ.
 ДЕТАЛИ_ЖЕНСКИЕ = (
-    "Her vulva, her nipples and her anus are drawn in sharp true "
-    "anatomical detail: separate lit forms with clean edges and real "
-    "shadow between them, in focus, never a blurred or melted patch "
-    "and never a flat smear of skin.")
+    "Her vulva, nipples and anus are drawn in sharp true anatomical "
+    "detail - separate lit forms with clean edges and real shadow, in "
+    "focus, never a blurred patch and never a flat smear of skin.")
 
 ДЕТАЛИ_МУЖСКИЕ = (
-    "His penis and scrotum are drawn in the same sharp true detail: "
-    "separate forms with clean edges, in focus, never a smear.")
+    "His penis and scrotum are the same sharp true detail: separate "
+    "forms with clean edges, in focus, never a smear.")
 
 # ПЛОТНЫЙ КАДР — ЭТО ПРЯМАЯ ПРИБАВКА ПИКСЕЛЕЙ НА ТЕЛЕ, а не вкусовщина.
 #
@@ -1914,8 +1926,8 @@ def по_фразе(текст, предел):
 # короткий двойник — пустая строка, то есть на API он выбрасывается
 # первым.
 ПЛОТНЫЙ_КАДР = (
-    "She FILLS the frame: the crop sits close to her, with no wide empty "
-    "space above her head, below her feet or at her sides.")
+    "She FILLS the frame, with no empty space above her head, below her "
+    "feet or at her sides.")
 
 # ФОКУС — ТОЖЕ НЕ В БЛОКЕ КАМЕРЫ, И ПО ТОЙ ЖЕ ПРИЧИНЕ.
 #
@@ -1925,9 +1937,66 @@ def по_фразе(текст, предел):
 # 01.10.2026 это и показала. Поэтому требование фокуса стоит здесь,
 # рядом с детализацией и плотным кадром.
 ФОКУС_ВЕЗДЕ = (
-    "Shot at f/8 with deep depth of field: her whole body is inside the "
-    "focus and equally sharp from her face to between her thighs, with "
-    "no soft focus and no blurred areas anywhere.")
+    "Shot at f/8: her whole body is in focus and equally sharp, from her "
+    "face to between her thighs, with no soft focus and no skin "
+    "smoothing.")
+
+
+# ЧТО ЕЩЁ ОБЯЗАНО ДОЖИТЬ ДО МОДЕЛИ (замер на проде 01.10.2026).
+#
+# Аудит сорока живых кнопок показал, что на проде сырой промпт 7000-7700
+# знаков (у владельца подробные тексты), в модель влезает 2800, и
+# выбрасывается ВСЁ наше, включая:
+#
+#   * «EDIT THIS PHOTOGRAPH: keep the PLACE» (837) — то есть правило
+#     владельца «фон такой же, как на присланном фото» пропадало;
+#   * опознание «она с референса, пропорции с фото» (483) вместе с
+#     разрешением рисовать закрытое одеждой;
+#   * «одно тело, пять пальцев» (271);
+#   * «одежда уже снята» (129).
+#
+# Места не хватало честно: работа кнопки занимает около 2000 знаков,
+# обязательный блок 805, и на наши общие блоки оставалось 120.
+#
+# Поэтому всё, что терять нельзя, сказано ЗДЕСЬ и коротко. Длинные
+# версии остаются для карты и для коротких промптов — там они доходят
+# целиком и говорят то же подробнее.
+КРАТКО_ФОН_ОБЯЗ = (
+    "KEEP THE PLACE from the supplied photo: same room or backdrop, same "
+    "light; only her pose, the camera angle and the crop change.")
+
+КРАТКО_ОПОЗНАНИЕ_ОБЯЗ = (
+    "She is the woman from that photo: her face, her hair, her adult age, "
+    "and her body's size and shape read from it - a flat chest stays "
+    "flat, nothing beautified. What the clothes covered is NOT in that "
+    "photo: draw it in FULL SHARP DETAIL at her own proportions.")
+
+КРАТКО_ЦЕЛО_ОБЯЗ = (
+    "One body: one head on her neck, two arms from her shoulders, two "
+    "legs, five fingers per hand; her clothes are ALREADY OFF.")
+
+
+# ПО ЧЕМУ ВИДНО, ЧТО ПРАВИЛО В ПРОМПТЕ УЖЕ ЕСТЬ.
+#
+# Обязательный блок не режется, и поэтому каждый его знак отнимается у
+# работы кнопки. Повторять то, что постановка кадра уже сказала своими
+# словами, — значит обрезать саму постановку ради повтора. Замер на
+# проде 01.10.2026: у «Крупного плана» работа занимает 1975 знаков, и
+# полный блок на 1178 не оставлял места ни на что.
+#
+# Поэтому блок дописывает ТОЛЬКО НЕДОСТАЮЩЕЕ. Считать надо по УЖЕ
+# УКОРОЧЕННОМУ тексту, а не по сырому: в сыром правило может быть, а
+# после укорачивания исчезнуть (см. `bot._проход`).
+#
+# Детализация, фокус и плотный кадр не снимаются никогда: таких слов не
+# говорит ни одна постановка, за ними мы и пришли.
+УЖЕ_ФОН = ("keep the place", "same place as", "copy the room")
+УЖЕ_ОПОЗНАНИЕ = ("not in that photo", "not in that photograph")
+УЖЕ_ЦЕЛО = ("one head on her own neck", "one head on her neck")
+УЖЕ_ВОЛОСЫ = ("hair grows on her head only",
+               "her hair falls from her head and from nowhere else")
+УЖЕ_ЖЕНСКОЕ = ("anatomy is female only", "only a woman's body")
+УЖЕ_МУЖСКОЕ = ("a man's body only", "anatomy is male only")
 
 
 def обязательные(промпт):
@@ -1946,13 +2015,55 @@ def обязательные(промпт):
     промпт = промпт or ""
     есть_м = мужчина_в_кадре(промпт)
     есть_ж = женщина_в_кадре(промпт)
-    куски = []
+    куски = [(КРАТКО_ФОН_ОБЯЗ, УЖЕ_ФОН),
+             (КРАТКО_ОПОЗНАНИЕ_ОБЯЗ, УЖЕ_ОПОЗНАНИЕ),
+             (КРАТКО_ЦЕЛО_ОБЯЗ, УЖЕ_ЦЕЛО)]
     if есть_ж or not есть_м:
-        куски += [ЗАПРЕТ_ВОЛОСЫ, ЗАПРЕТ_ЖЕНСКОЕ_ТЕЛО, ДЕТАЛИ_ЖЕНСКИЕ]
+        куски += [(ЗАПРЕТ_ВОЛОСЫ, УЖЕ_ВОЛОСЫ),
+                  (ЗАПРЕТ_ЖЕНСКОЕ_ТЕЛО, УЖЕ_ЖЕНСКОЕ),
+                  (ДЕТАЛИ_ЖЕНСКИЕ, ())]
     if есть_м:
-        куски += [ЗАПРЕТ_МУЖСКОЕ_ТЕЛО, ДЕТАЛИ_МУЖСКИЕ]
-    куски += [ПЛОТНЫЙ_КАДР, ФОКУС_ВЕЗДЕ]
-    return " ".join(куски)
+        куски += [(ЗАПРЕТ_МУЖСКОЕ_ТЕЛО, УЖЕ_МУЖСКОЕ), (ДЕТАЛИ_МУЖСКИЕ, ())]
+    куски += [(ПЛОТНЫЙ_КАДР, ()), (ФОКУС_ВЕЗДЕ, ())]
+    низ = промпт.lower()
+    итог = [текст for текст, уже in куски
+            if not any(с in низ for с in уже)]
+    return " ".join(итог)
+
+
+def под_предел(сырой, предел):
+    """Готовый текст для модели: укороченный промпт плюс то из
+    обязательного, чего в нём не осталось. Никогда не длиннее предела.
+
+    ДВА ПРОХОДА, И ЭТО НЕ ПЕРЕСТРАХОВКА. Обязательное считается по уже
+    укороченному тексту: в сыром промпте правило может быть, а после
+    укорачивания исчезнуть, и наоборот — правило, которое доехало, не
+    нужно повторять. Первый проход только оценивает, сколько места
+    отложить; второй считает по тому, что реально доехало, и если
+    обязательного вышло меньше, освободившееся место возвращается самой
+    работе кнопки.
+    """
+    сырой = сырой or ""
+    обяз = обязательные(сырой)
+    текст = ""
+    # Схождение: чем короче текст, тем больше правил в нём пропало и тем
+    # длиннее обязательное; чем длиннее обязательное, тем короче текст.
+    # Движение в одну сторону, поэтому хватает нескольких шагов. Правило
+    # считается ПО ТЕКСТУ, который реально уедет, — иначе выходит то, что
+    # поймал аудит прода: блок решил «про фон уже сказано», а сказавший
+    # это абзац при укорачивании выбросили.
+    for _ in range(4):
+        текст = коротко(сырой, max(300, предел - len(обяз) - 2))
+        новый = обязательные(текст)
+        if новый == обяз:
+            break
+        обяз = новый
+    else:
+        # Не сошлось за четыре шага — берём полный блок: лишнее правило
+        # промпту не вредит, а пропавшее меняет кадр.
+        обяз = обязательные("")
+        текст = коротко(сырой, max(300, предел - len(обяз) - 2))
+    return (текст + "\n\n" + обяз).strip()[:предел]
 
 
 # ---------------------------------------------------------------------

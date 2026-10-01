@@ -442,13 +442,11 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
         # волосы только на голове, у женщины нет мужских органов, у
         # мужчины нет женских. Место под них отнимается у предела, а не
         # у них самих.
-        обяз = prompts.обязательные(params["prompt"])
-        место = max(400, КОРОТКИЙ_ПРЕДЕЛ - len(обяз) - 2)
-        params["prompt"] = prompts.коротко(params["prompt"], место)
-        params["prompt"] += "\n\n" + обяз
+        params["prompt"] = prompts.под_предел(params["prompt"],
+                                              КОРОТКИЙ_ПРЕДЕЛ)
         if len(params["prompt"]) != было:
-            print("промпт: %d -> %d знаков (обязательное %d)"
-                  % (было, len(params["prompt"]), len(обяз)), flush=True)
+            print("промпт: %d -> %d знаков"
+                  % (было, len(params["prompt"])), flush=True)
         if params.get("neg"):
             params["neg"] = prompts.коротко(params["neg"], КОРОТКИЙ_ПРЕДЕЛ)
     # ПОВТОР НА СБОЕ КАНАЛА, А НЕ НА ЛЮБОМ ОТКАЗЕ.
