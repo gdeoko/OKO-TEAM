@@ -1815,18 +1815,31 @@ def коротко(текст, предел=3000):
     for i in свои:
         набрано += len(блоки[i]) + len(разрыв)
     if набрано > предел:
-        # Одной работы кнопки уже больше предела — режем по фразе, но
-        # финальную проверку сохраняем.
-        место = предел - len(хвост) - len(разрыв)
-        if место < 200:
-            # Даже один последний блок длиннее предела: резать по фразе
-            # приходится его самого. Иначе возвращался текст ДЛИННЕЕ
-            # предела, и сервис отбивал его целиком (UPSTREAM_FAILED),
-            # то есть человек не получал ничего вместо «почти всего».
+        # Работы кнопки больше предела — укорачиваем, но ПОБЛОЧНО.
+        #
+        # Раньше все блоки склеивались и резались по фразе разом, и
+        # обрезка приходилась не туда: у «Вида сзади» с выбранным местом
+        # от позы (749 знаков) оставалось 25 — «The camera is BEHIND
+        # HER.» — при том что не влезало всего 54 знака. Теперь целые
+        # блоки сохраняются, а укорачивается ровно тот, который не
+        # влез, и ровно настолько.
+        осталось = предел - len(хвост) - len(разрыв)
+        if осталось < 200:
             return по_фразе(разрыв.join([блоки[i] for i in свои] + [хвост]),
                             предел)
-        своё = разрыв.join([блоки[i] for i in свои])
-        return разрыв.join([по_фразе(своё, место), хвост])
+        собрано = []
+        for i in свои:
+            б = блоки[i]
+            if len(б) + len(разрыв) <= осталось:
+                собрано.append(б)
+                осталось -= len(б) + len(разрыв)
+                continue
+            if осталось > 300:
+                собрано.append(по_фразе(б, осталось - len(разрыв)))
+            осталось = 0
+            break
+        return разрыв.join(собрано + [хвост]) if собрано else по_фразе(
+            разрыв.join([блоки[i] for i in свои] + [хвост]), предел)
     взять = set(свои)
     for i, б in enumerate(блоки[:-1]):
         if i in взять:
@@ -2020,9 +2033,12 @@ def по_фразе(текст, предел):
 # здесь, и снимается только по своим же словам.
 УЖЕ_ОПОЗНАНИЕ = ("not in that photo", "not in that photograph",
                  "resembles the reference", "face preserved exactly",
-                 "no difference from the reference")
+                 "no difference from the reference",
+                 "the two people from the reference photos",
+                 "faces of both", "faces are also clearly visible")
 УЖЕ_РИСУЙ_ЗАКРЫТОЕ = ("not in that photo", "not in that photograph")
-УЖЕ_ЦЕЛО = ("one head on her own neck", "one head on her neck")
+УЖЕ_ЦЕЛО = ("one head on her own neck", "one head on her neck",
+             "one head on his own neck", "two clearly different")
 УЖЕ_ВОЛОСЫ = ("hair grows on her head only",
                "hair falls from her head and from nowhere else")
 УЖЕ_ЖЕНСКОЕ = ("anatomy is female only", "only a woman's body")
