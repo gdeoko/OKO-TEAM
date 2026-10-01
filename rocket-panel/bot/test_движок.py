@@ -1131,6 +1131,35 @@ class ВыборМоделиВАдминке(unittest.TestCase):
              "images": ["к"]})
         self.assertIn("images", тело)
 
+    def test_два_снимка_считает_модель_которая_их_умеет(self):
+        """У кнопок «оживить фото» человек вправе прислать первый и
+        последний кадр и платит за это. `wan` берёт ровно один — на нём
+        второй снимок пропал бы молча. Поэтому два снимка считает
+        `lite`, которая умеет оба."""
+        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy", качество="1080p")
+        a = self.api.upload("a.png", b"\x89PNG-1")
+        b = self.api.upload("b.png", b"\x89PNG-2")
+        _, тело = self.api._запрос(
+            {"mode": "video", "prompt": "p", "size": "vert", "secs": 5,
+             "images": [a, b]})
+        self.assertEqual(тело["model"], "minimax-h3-lite")
+        self.assertIn("first_frame_url", тело)
+        self.assertIn("last_frame_url", тело)
+        # Качество обязано стать СВОИМ для подменённой модели: 1080p у
+        # lite нет, и чужое слово означало бы отказ за наши деньги.
+        self.assertIn(тело["resolution"], ("480p", "768p"))
+
+    def test_один_снимок_считает_выбранная_модель(self):
+        """Подмена работает ТОЛЬКО на двух снимках: иначе это была бы
+        тихая подмена качества за спиной владельца."""
+        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy", качество="720p")
+        a = self.api.upload("a.png", b"\x89PNG-1")
+        _, тело = self.api._запрос(
+            {"mode": "video", "prompt": "p", "size": "vert", "secs": 5,
+             "images": [a]})
+        self.assertEqual(тело["model"], "wan-2.7-i2v-spicy")
+        self.assertEqual(тело["resolution"], "720p")
+
     def test_модель_с_модерацией_в_список_не_берём(self):
         """`minimax-h3` (та, что умеет 2K) отбила наш контент обоими
         полями кадра: «Content did not pass the safety review». Дать её
