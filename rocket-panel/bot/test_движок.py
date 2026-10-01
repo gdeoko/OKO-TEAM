@@ -70,9 +70,11 @@ class Запросы(unittest.TestCase):
                                      "size": "horiz"})
         self.assertEqual(тело["aspect_ratio"], "16:9")
 
-    def test_видео_кадр_только_полем_images(self):
-        """Поля image / image_url / first_frame_image сервис молча
-        выбрасывает и снимает ролик с нуля — это стоило 0,12."""
+    def test_один_снимок_уходит_референсом(self):
+        """Режиму кадров нужны ОБА. С одним сервис не ругается, а молча
+        считает текст-в-видео — проба вернула modelType TEXT_TO_VIDEO,
+        кадр пропал совсем. Референс хуже первого кадра, но лучше, чем
+        ничего: лицо хотя бы своё."""
         имя = self.а.upload("кадр.png", b"\x89PNG")
         вид, тело = self.а._запрос({"mode": "video", "prompt": "движение",
                                     "size": "vert", "secs": 10,
@@ -83,8 +85,32 @@ class Запросы(unittest.TestCase):
         self.assertEqual(тело["resolution"], "768p")
         self.assertEqual(тело["ratio"], "9:16")
         self.assertIn("images", тело)
+        self.assertNotIn("first_frame_url", тело)
         for лишнее in ("image", "image_url", "first_frame_image"):
             self.assertNotIn(лишнее, тело)
+
+    def test_два_снимка_это_режим_кадров(self):
+        """У `i2v` бот принимает 1-2 снимка: «можно задать и последний
+        кадр» (pricing.py). Двух хватает на настоящий режим кадров."""
+        первый = self.а.upload("a.png", b"\x89PNG-1")
+        последний = self.а.upload("b.png", b"\x89PNG-2")
+        _вид, тело = self.а._запрос({"mode": "video", "prompt": "т",
+                                     "images": [первый, последний]})
+        self.assertIn("first_frame_url", тело)
+        self.assertIn("last_frame_url", тело)
+        self.assertNotEqual(тело["first_frame_url"], тело["last_frame_url"])
+        self.assertNotIn("images", тело)
+
+    def test_квадрат_у_видео_выпрямляется(self):
+        """У `minimax-h3-lite` только 16:9 и 9:16; квадрат она отобьёт."""
+        _вид, тело = self.а._запрос({"mode": "video", "prompt": "т",
+                                     "size": "sq"})
+        self.assertEqual(тело["ratio"], "9:16")
+
+    def test_видео_без_снимка_это_текст_в_видео(self):
+        _вид, тело = self.а._запрос({"mode": "video", "prompt": "т"})
+        self.assertNotIn("first_frame_url", тело)
+        self.assertNotIn("images", тело)
 
     def test_негатив_уходит_вместе_с_промптом(self):
         """В негативе кнопки лежит список «не одевай её»: clothed,
@@ -157,6 +183,38 @@ class СервисНеЗнаетНегатива(unittest.TestCase):
         self.а.start(mode="photo", prompt="т", neg="clothed")
         self.assertEqual(len(self.звонки), 1)
         self.assertIn("negative_prompt", self.звонки[0])
+
+    def test_нет_первого_кадра_уходим_в_референс(self):
+        """Ролик всё равно должен выйти: сцену модель сочинит свою, но
+        человек получит работу, а не осечку за свои деньги."""
+        def зов(путь, тело=None):
+            self.звонки.append(dict(тело or {}))
+            if тело and "first_frame_url" in тело:
+                raise _gpu.GpuError(
+                    "400: {\"msg\":\"Unknown parameter: first_frame_url\"}")
+            return {"taskId": "t9"}
+        self.а._зов = зов
+        a = self.а.upload("a.png", b"\x89PNG-1")
+        b = self.а.upload("b.png", b"\x89PNG-2")
+        задача, _ = self.а.start(mode="video", prompt="т", images=[a, b])
+        self.assertEqual(задача, "t9")
+        self.assertIn("first_frame_url", self.звонки[0])
+        self.assertIn("images", self.звонки[1])
+        self.assertNotIn("first_frame_url", self.звонки[1])
+
+    def test_про_первый_кадр_спрашиваем_один_раз(self):
+        def зов(путь, тело=None):
+            self.звонки.append(dict(тело or {}))
+            if тело and "first_frame_url" in тело:
+                raise _gpu.GpuError("400: invalid first_frame_url")
+            return {"taskId": "t9"}
+        self.а._зов = зов
+        a = self.а.upload("a.png", b"\x89PNG-1")
+        b = self.а.upload("b.png", b"\x89PNG-2")
+        self.а.start(mode="video", prompt="т", images=[a, b])
+        было = len(self.звонки)
+        self.а.start(mode="video", prompt="т", images=[a, b])
+        self.assertEqual(len(self.звонки) - было, 1, "спросили повторно")
 
     def test_чужой_отказ_не_повторяем(self):
         """На «кончились деньги» повтор без негатива значит заплатить
