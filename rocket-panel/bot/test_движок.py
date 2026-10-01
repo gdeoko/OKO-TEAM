@@ -750,7 +750,7 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         # двоих плюс требование плотного кадра. Парные промпты сырыми
         # около 1900 знаков, так что места хватает; предел здесь — чтобы
         # блок не разросся и не начал вытеснять постановку.
-        self.assertLess(самый, 1000, "блок съедает место у самой работы")
+        self.assertLess(самый, 1200, "блок съедает место у самой работы")
 
     def test_плотный_кадр_требуется_всегда(self):
         """Пустое место над головой и под ногами отнимает точки у тела,
@@ -758,7 +758,10 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         for запрос in ("a naked woman alone, her thighs",
                        "one man and one woman, his penis, her thighs",
                        "Both people are men, one from each reference"):
-            self.assertIn("FILLS the frame", self.p.обязательные(запрос))
+            о = self.p.обязательные(запрос)
+            self.assertIn("FILLS the frame", о)
+            self.assertIn("f/8", о)
+            self.assertIn("no blurred areas", о)
 
     def test_детализация_требуется_и_не_режется(self):
         """Владелец 01.10.2026: «генералии — плохо, каша, нету
