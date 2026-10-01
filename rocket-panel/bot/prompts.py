@@ -361,8 +361,10 @@ def плоскость(сложение):
 )
 
 КАМЕРА_ОБЩЕЕ = (
-    "Shot on a full-frame camera: sharp on the eyes, natural depth of "
-    "field, no digital zoom look."
+    "Shot on a full-frame camera at f/8: THE WHOLE BODY IS INSIDE THE "
+    "DEPTH OF FIELD AND EQUALLY SHARP - her face, her chest, her belly "
+    "and between her thighs are all in focus together. No soft focus "
+    "anywhere, no blurred areas, no digital zoom look."
 )
 
 ЦВЕТ = (
@@ -435,8 +437,10 @@ def плоскость(сложение):
 # владелец.
 КАЧЕСТВО = (
     "A real photograph taken on a full-frame camera, 50mm lens at "
-    "f/2.8, ISO 200, available daylight from a window. True-to-life "
-    "colour, ordinary amateur snapshot straight out of camera, "
+    "f/8, ISO 200, available daylight from a window. Everything from "
+    "her face to her thighs is in focus and sharp, with NO SKIN "
+    "SMOOTHING anywhere. True-to-life "
+    "colour, straight out of camera with no glamour retouching, "
     # СЛОВА «grain» ЗДЕСЬ НЕТ, и это правка 29.09.2026 по кадру от
     # владельца. Зерно плёнки эта сборка рисует не зерном, а КРАПИНАМИ:
     # тёмные точки ложатся по телу и даже по полу. Тот же случай, что с
@@ -1231,7 +1235,7 @@ def собрать_пару(блок, сложение=None, своя_строк
 #     КОМПОЗИЦИЯ:  Whole subject inside the frame, nothing cropped away
 #
 #     эталон:  чёрная студия, розовый неон, мягкий свет спереди
-#     КАЧЕСТВО:  50mm f/2.8, available daylight from a window, overcast day
+#     КАЧЕСТВО:  50mm f/8, available daylight from a window, overcast day
 #
 # Плюс описание сцены стояло дважды дословно, «одно тело» трижды, «тело
 # как на референсе» четырежды. Модель читает всё это по порядку и
@@ -1973,9 +1977,10 @@ def обязательные(промпт):
     "fingers per hand, joints that bend the right way, symmetric eyes.")
 
 КРАТКО_КАМЕРА = (
-    "A real unretouched photograph on a full-frame camera, 50mm at f/2.8, "
-    "available daylight: sharp on the eyes, natural depth of field, "
-    "true-to-life colour, the whole subject inside the frame.")
+    "A real unretouched photograph on a full-frame camera, 50mm at f/8, "
+    "available daylight: the whole body in focus and equally sharp, "
+    "true-to-life colour, no skin smoothing, the whole subject inside "
+    "the frame.")
 
 КРАТКО_ДЕЙСТВИЕ = (
     "Any garment named in the action is ALREADY OFF: the action is shown "

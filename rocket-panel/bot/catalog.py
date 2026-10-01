@@ -1289,7 +1289,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
         поза="Kneeling, sitting back on the heels, spine long, "
              "shoulders open, hands resting on the thighs. Chin "
              "level, eyes to the lens.",
-        камера="50mm at f/2.8, lens at her chest height so the angle "
+        камера="50mm at f/8, lens at her chest height so the angle "
                "is level with her rather than looking down at her."),
 
     _СЦ_РАЗДЕТЬ("un_low", "Снизу вверх",
@@ -1317,7 +1317,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
              "raised, the other leg long, one arm above the head, "
              "the other across the ribs. Head turned toward the lens, "
              "hair spread out on the surface under her.",
-        камера="35mm at f/2.8, directly above her and square to the "
+        камера="35mm at f/8, directly above her and square to the "
                "body, so the frame reads as a clean horizontal. Lens "
                "roughly a metre and a half up, held level."),
 
@@ -1367,7 +1367,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
 
     _ФОТО_ЗЕРКАЛО("ph_side", "ac_side", "Сбоку",
         "Профиль, силуэт читается по контуру",
-        камера="50mm at f/2.8, square to her side so the whole body "
+        камера="50mm at f/8, square to her side so the whole body "
                "reads in profile. Camera at chest height.",
         свет="Strong backlight from behind her so the profile is drawn "
              "as a bright contour against a dark background, with only "
@@ -1405,7 +1405,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
 
     _ФОТО_ЗЕРКАЛО("ph_mirror", "ac_mirror", "В зеркале",
         "Отражение и спина одновременно",
-        камера="50mm at f/2.8, off-axis so the lens never appears in "
+        камера="50mm at f/8, off-axis so the lens never appears in "
                "the glass.",
         обстановка="A tall mirror filling most of the frame.",
         ещё="The mirror shows a TRUE reflection: same body, same pose, "
@@ -1454,7 +1454,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
 
     _СЦ_ОЖИВИТЬ("ac_side", "Сбоку",
         "Профиль, силуэт читается по контуру",
-        камера="50mm at f/2.8, square to her side so the whole body "
+        камера="50mm at f/8, square to her side so the whole body "
                "reads in profile. Camera at chest height, static.",
         свет="Strong backlight from behind her so the profile is "
              "drawn as a bright contour against a dark background, "
@@ -1553,7 +1553,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
                "the nearer one half a step forward so neither is "
                "hidden behind the other. Both heads turned toward "
                "the lens.",
-          камера="50mm at f/2.8, square to the pair, lens at chest "
+          камера="50mm at f/8, square to the pair, lens at chest "
                  "height, framed from mid-thigh up with both faces "
                  "fully in frame.")),
 
@@ -1578,7 +1578,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
                "one turned out from behind the shoulder so it is not "
                "hidden. The rear one's arms come around the front "
                "one where the scenario says so.",
-          камера="50mm at f/2.8, square to them, lens at chest "
+          камера="50mm at f/8, square to them, lens at chest "
                  "height, framed from mid-thigh up.")),
 
     ("above", "Сверху", "Съёмка с высокой точки",
@@ -1586,7 +1586,7 @@ def _ФОТО_ЗЕРКАЛО(key, зеркало, title, подпись, **по�
                "frame, heads at the same end, bodies close and in "
                "contact along their length, both faces turned up "
                "toward the lens.",
-          камера="35mm at f/2.8, directly above them and square to "
+          камера="35mm at f/8, directly above them and square to "
                  "the line of the bodies, roughly two metres up, "
                  "held level. Both people fully inside the frame.",
           свет="An overhead source just behind the camera so the "
@@ -1656,7 +1656,7 @@ def _пара(состав_key, состав_рус, состав_англ, ра
 # первого лица»: там камера стоит на месте одного из двоих, и это не
 # выбор объектива, а точка съёмки.
 ПАРЫ_КАМЕРА_ФОТО = (
-    "50mm at f/2.8, square to the pair, lens at chest height, framed so "
+    "50mm at f/8, square to the pair, lens at chest height, framed so "
     "both people are fully inside the frame with both faces readable. "
     "Focus on the nearer person's eye, the second face still clearly "
     "resolved."
@@ -2115,7 +2115,7 @@ def _пара(состав_key, состав_рус, состав_англ, ра
            "their face is never seen.",
     "close": "85mm at f/2, very close, lens at their eye level, the two "
              "faces filling the frame. Focus on the nearer eye.",
-    "above": "35mm at f/2.8, directly above them and square to the line "
+    "above": "35mm at f/8, directly above them and square to the line "
              "of the bodies, roughly two metres up, held level.",
 }
 
