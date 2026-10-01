@@ -333,6 +333,58 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
             'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 32, 'script_color' => '#FFD98F',
         ],
+        /* ОКТЯБРЬ 2026. Четыре конкурса - четыре разных почерка: у каждого
+         * своя гарнитура названия, своё звание и свой рукописный шрифт, от его
+         * лого. Цвета здесь - под тёмную подложку, под светлую бумагу их
+         * перекрашивает diploma_theme_on_light(). */
+        // Мировой акцент: международный, сапфир и золото, строгая античная капитель.
+        'akcent' => [
+            'ff_degree' => "'Tenor Sans',sans-serif", 'ls_degree' => '4px',
+            'ls_name' => '.5px', 'sh_comp' => '0 0 16px rgba(80,160,255,.30)',
+            'fonts'   => 'Cormorant+Unicase:wght@700&family=Tenor+Sans',
+            'ff_comp' => "'Cormorant Unicase',serif", 'fam_comp' => 'Cormorant Unicase', 'ls_comp' => '3px', 'w_comp' => 0.74,
+            'grad_comp'   => 'linear-gradient(180deg,#FFF6D6 0%,#FFE39A 28%,#E8B84A 55%,#B88620 70%,#FFE7A3 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFFFF 0%,#DCEBFF 35%,#8FC2FF 65%,#E8F2FF 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#EAF4FF 0%,#B9DCFF 34%,#5FA8F5 68%,#E3F0FF 100%)',
+            'name_color' => '#FFE7A3', 'ff_name' => "'Tenor Sans',sans-serif",
+            'script_font' => 'Great+Vibes', 'ff_script' => "'Great Vibes',cursive", 'script_fs' => 36, 'script_color' => '#FFE7A3',
+        ],
+        // Гордость поколения: триколор и лавр, русская плакатная антиква.
+        'pokolenie' => [
+            'ff_degree' => "'Philosopher',sans-serif", 'ls_degree' => '3px',
+            'ls_name' => '.5px', 'sh_comp' => '0 1px 0 rgba(255,240,200,.5)',
+            'fonts'   => 'Ruslan+Display&family=Philosopher:wght@700',
+            'ff_comp' => "'Ruslan Display',serif", 'fam_comp' => 'Ruslan Display', 'ls_comp' => '2px', 'w_comp' => 0.86,
+            'grad_comp'   => 'linear-gradient(180deg,#FFF3C4 0%,#FFD766 25%,#E3A93A 50%,#B97A16 65%,#FFE49A 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFFFF 0%,#D9E4FF 40%,#7FA4F0 70%,#EEF3FF 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFF0EC 0%,#FFC2BC 32%,#E8434F 66%,#FFE1DC 100%)',
+            'name_color' => '#FFE49A', 'ff_name' => "'Philosopher',sans-serif",
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 33, 'script_color' => '#FFE49A',
+        ],
+        // Территория таланта: движение и спорт, современный рубленый шрифт.
+        'territoriya' => [
+            'ff_degree' => "'Exo 2',sans-serif", 'ls_degree' => '3px',
+            'ls_name' => '.5px', 'sh_comp' => '0 0 16px rgba(63,195,255,.30)',
+            'fonts'   => 'Russo+One&family=Exo+2:ital,wght@0,700;1,700',
+            'ff_comp' => "'Russo One',sans-serif", 'fam_comp' => 'Russo One', 'ls_comp' => '2px', 'w_comp' => 0.80,
+            'grad_comp'   => 'linear-gradient(180deg,#FFFBE0 0%,#FFE680 28%,#F0BE3C 55%,#C98E14 70%,#FFEB99 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFFFF 0%,#D8F4FF 35%,#6FD3FF 65%,#E6F8FF 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#E8FAFF 0%,#A6E6FF 34%,#3FC3FF 68%,#DDF6FF 100%)',
+            'name_color' => '#FFFFFF', 'ff_name' => "'Exo 2',sans-serif",
+            'script_font' => 'Caveat:wght@600', 'ff_script' => "'Caveat',cursive", 'script_fs' => 38, 'script_color' => '#FFE680',
+        ],
+        // Вершина творчества: горы и кубок, гравированная классика.
+        'vershina' => [
+            'ff_degree' => "'Lora',serif", 'ls_degree' => '4px',
+            'ls_name' => '1px', 'sh_comp' => '0 1px 0 rgba(255,240,210,.45)',
+            'fonts'   => 'Oranienbaum&family=Lora:wght@700',
+            'ff_comp' => "'Oranienbaum',serif", 'fam_comp' => 'Oranienbaum', 'ls_comp' => '4px', 'w_comp' => 0.64,
+            'grad_comp'   => 'linear-gradient(180deg,#FFF6D6 0%,#FFE49A 28%,#E2B13C 55%,#A97A14 70%,#FFE9A8 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFFFF 0%,#E6EEF8 35%,#A9C1E2 65%,#F2F6FC 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#DDE8F6 34%,#8FAED6 68%,#F0F5FC 100%)',
+            'name_color' => '#FFE9A8', 'ff_name' => "'Lora',serif",
+            'script_font' => 'Bad+Script', 'ff_script' => "'Bad Script',cursive", 'script_fs' => 34, 'script_color' => '#FFE49A',
+        ],
         // Классика эталона (фолбэк).
         'classic' => [
             'ff_degree' => "'Playfair Display',serif", 'ls_degree' => '3px',
@@ -406,6 +458,38 @@ function diploma_theme_on_light(array $T): array {
             'name_color'  => '#5C1219', 'script_color' => '#7A1B22',
             'sh_comp'     => '0 0 14px rgba(184,134,43,.25)',
         ],
+        // Мировой акцент на светлой бумаге: сапфировая синь, звание - золото.
+        'akcent' => [
+            'grad_comp'   => 'linear-gradient(180deg,#2F5FB5 0%,#1B3F8F 45%,#0B2A66 75%,#2A58AA 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#C79A2E 0%,#9C6B1A 30%,#6B4F0A 60%,#B8862A 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#D9A93C 0%,#B07D1A 45%,#7E5610 78%,#C89A34 100%)',
+            'name_color'  => '#0B2A66', 'script_color' => '#163A80',
+            'sh_comp'     => '0 0 12px rgba(201,150,46,.22)',
+        ],
+        // Гордость поколения: золото названия, звание - алый триколора, имя - синий.
+        'pokolenie' => [
+            'grad_comp'   => 'linear-gradient(180deg,#E7C468 0%,#C08C1E 30%,#8E5B10 58%,#B57F1B 80%,#E0BB5C 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#2F5FC8 0%,#1C4FB8 40%,#123A8C 70%,#2A5BC4 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#E8515E 0%,#D7262E 42%,#A81A26 74%,#DC414E 100%)',
+            'name_color'  => '#0B2A66', 'script_color' => '#123A8C',
+            'sh_comp'     => '0 0 14px rgba(184,134,43,.22)',
+        ],
+        // Территория таланта: ярко-синее название, звание - насыщенное золото.
+        'territoriya' => [
+            'grad_comp'   => 'linear-gradient(180deg,#3A7BE0 0%,#1A55C8 40%,#0A3DB0 70%,#2F6FD8 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#E3A82A 0%,#C48A14 40%,#93650C 70%,#D9A030 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#F0B43A 0%,#D9921C 42%,#A86A0E 74%,#E5A532 100%)',
+            'name_color'  => '#06216B', 'script_color' => '#0A3DB0',
+            'sh_comp'     => '0 0 12px rgba(58,123,224,.20)',
+        ],
+        // Вершина творчества: ледяная синь гор, звание - золото рассвета.
+        'vershina' => [
+            'grad_comp'   => 'linear-gradient(180deg,#3E7FCC 0%,#2C6FC2 35%,#174E99 65%,#0E3A7A 85%,#3570BE 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#C79A2E 0%,#9C6B1A 30%,#6B4F0A 60%,#B8862A 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#E2B13C 0%,#C28F1F 42%,#8C5F12 74%,#D6A436 100%)',
+            'name_color'  => '#0E2E5E', 'script_color' => '#174E99',
+            'sh_comp'     => '0 0 12px rgba(44,111,194,.18)',
+        ],
         // Классика: тёмный кофейный с золотом.
         'classic' => [
             'grad_comp'   => 'linear-gradient(180deg,#E4BF5F 0%,#B9881D 28%,#85550F 56%,#AD7B19 78%,#DDB654 100%)',
@@ -431,6 +515,18 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $edit   = !empty($opt['edit']);
     // ЧИСТЫЙ оригинал: без подписей и печатей (их ставят живьём), НО с номером+QR.
     $clean  = !empty($opt['clean']);
+
+    /* СВОЙ ФОН У БЛАГОДАРНОСТИ (с октября 2026).
+     * Диплом и благодарность одного конкурса теперь разные листы: свой рисунок,
+     * своя подача, иногда и светлый лист против тёмного. Фон благодарности
+     * лежит в diploma_template.thanks_bg, а её собственные настройки
+     * (поля, тёмный верх, подсветка) - в diploma_template.thanks: они
+     * перекрывают общие только для благодарности. Нет thanks_bg - всё как
+     * раньше, благодарность печатается на фоне диплома. */
+    if ($thanks && !empty($tpl['thanks_bg'])) {
+        $c['diploma_bg'] = (string) $tpl['thanks_bg'];
+        if (!empty($tpl['thanks']) && is_array($tpl['thanks'])) $tpl = array_merge($tpl, $tpl['thanks']);
+    }
 
     $base   = rtrim(cfgv('base_url'), '/');
     $imgDip = $base . '/assets/img/diploma';
@@ -794,6 +890,12 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $HALO_D = 'none';
 
     $E = static fn(string $k) => _dh_cfg($tpl, $k);
+    /* ПОТОЛОК КЕГЛЯ СЛОВА ДИПЛОМ / БЛАГОДАРНОСТЬ (diploma_template.dtype_max, pt).
+     * Подгонка в браузере растит эту строку до 58 pt (48 у благодарности), и
+     * на листе с высоким рисунком сверху колонке не хватало высоты: ровный
+     * шаг между строками сжимался почти в ноль, звание садилось на
+     * «награждается». У таких конкурсов строку ограничиваем. */
+    $DTYPE_MAX = (float) ($tpl['dtype_max'] ?? ($thanks ? 48 : 58));
     $D = static fn(string $k) => $edit ? ' data-el="' . $k . '"' : '';
 
     ob_start(); ?>
@@ -806,7 +908,11 @@ function diploma_html(array $c, array $a, array $opt = []): string {
 <title><?= h($dtype) ?> — <?= h($compName) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script<?= $T['fonts'] !== '' ? '&family=' . $T['fonts'] : '' ?><?= ($T['script_font'] ?? '') !== '' && $T['script_font'] !== 'Marck+Script' ? '&family=' . $T['script_font'] : '' ?>&display=swap" rel="stylesheet">
+<?php $FONTS_URL = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script'
+    . ($T['fonts'] !== '' ? '&family=' . $T['fonts'] : '')
+    . (($T['script_font'] ?? '') !== '' && $T['script_font'] !== 'Marck+Script' ? '&family=' . $T['script_font'] : '')
+    . '&display=swap'; ?>
+<link href="<?= $FONTS_URL ?>" rel="stylesheet">
 <style>
 /* ===== 1:1 из эталона diplom_laureat2.html / blagodarnost1.html ===== */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -877,7 +983,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .support-line{text-align:center;font-family:'Playfair Display',serif;font-size:10.2pt;font-weight:700;
   line-height:1.28;margin:0 -<?= max(0, round($PAD_X - 11, 1)) ?>mm var(--u) -<?= max(0, round($PAD_X - 11, 1)) ?>mm;
   padding:0;color:<?= $FIT['muted'] ?>}
-.diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
+.diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $DTYPE_MAX ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:5px;margin-bottom:var(--u);line-height:1}
@@ -1031,7 +1137,9 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
              Культурного центра «Музыкальный Мир» (центр) — Союз композиторов — Минобразования —
              Нацпроекты «Культура». Всего 7. */ ?>
     <div class="logos-row"<?= $D('logos') . _dh_style($e) ?>>
-      <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prokultura.png" alt="">
+      <?php /* У лого «Про Культура» белая буква К: на светлом верху листа она
+               пропадала, оставалось одно красное «PRO». На светлом - тёмная К. */ ?>
+      <img class="logo logo-prok" src="<?= $imgDip ?>/<?= !empty($FIT['dark_top']) ? 'logo_prokultura.png' : 'logo_prokultura_dark.png' ?>" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minprosvet.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minkult.png" alt="">
       <img class="logo logo-center" src="<?= $imgDip ?>/logo_mm_badge.png" alt="">
@@ -1196,7 +1304,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     fitOne('.diploma-degree', 13, <?= round(40 * $CSCALE * max(0.5, min(1.5, (float)($tpl['degree_k'] ?? 1.0))), 1) ?>);
     /* Слово ДИПЛОМ короткое и всегда влезало, а вот БЛАГОДАРНОСТЬ на бланке с
        узкими полями обрезалась краем листа - подгоняем и её. */
-    fitOne('.diploma-type', 22, <?= $thanks ? 48 : 58 ?>);
+    fitOne('.diploma-type', 22, <?= $DTYPE_MAX ?>);
     /* ФИО в благодарности - рукописной строкой: она бывает длинной («Константинопольская
        Александра Владимировна»), и жёсткий кегль её либо обрезал, либо ронял на две
        строки. Подгоняем по ширине, как название конкурса. */
@@ -1376,7 +1484,22 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   }
   /* Метку готовности снимаем ТОЛЬКО после полной загрузки шрифтов — тогда ритм
      посчитан по верным метрикам, и мост снимает уже ровный лист. */
-  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(finish); }
+  /* ШРИФТ НАЗВАНИЯ ОБЯЗАН ДОЕХАТЬ ДО СНИМКА.
+     Шрифты бланка берутся с Google в момент печати. Если таблица стилей не
+     пришла (сбой сети на мосту), fonts.ready разрешается сразу, и лист уходил
+     в печать запасным Times: название, ДИПЛОМ и рукописное ФИО без своей
+     гарнитуры. Поэтому перед меткой готовности проверяем шрифт названия и,
+     если его нет, перезапрашиваем таблицу стилей, до трёх раз. */
+  var FAM=<?= json_encode((string) ($T['fam_comp'] ?? ''), JSON_UNESCAPED_UNICODE) ?>, FURL=<?= json_encode($FONTS_URL, JSON_UNESCAPED_SLASHES) ?>;
+  function fontsOk(){ try{ return !FAM || document.fonts.check('40px "'+FAM+'"'); }catch(e){ return true; } }
+  function ensureFonts(n){
+    if(fontsOk() || n<=0){ finish(); return; }
+    var l=document.createElement('link'); l.rel='stylesheet'; l.href=FURL+'&r='+n;
+    var next=function(){ document.fonts.load('40px "'+FAM+'"').then(function(){ ensureFonts(n-1); }, function(){ ensureFonts(n-1); }); };
+    l.onload=next; l.onerror=function(){ setTimeout(function(){ ensureFonts(n-1); }, 700); };
+    document.head.appendChild(l);
+  }
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ ensureFonts(3); }); }
   else { window.addEventListener('load', finish); }
   window.addEventListener('load',fitTitle);
   /* Прогон ритма до загрузки шрифтов (предварительно, без метки) + жёсткая

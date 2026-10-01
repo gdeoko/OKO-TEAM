@@ -44,6 +44,12 @@ function afisha_find_placeholders(string $file, array $opt = []): array {
     $y0 = (int) ($H * (float) ($opt['from'] ?? 0.55));
     $y1 = (int) ($H * (float) ($opt['to']   ?? 0.98));
     $step = max(2, (int) round($W / 480));          // шаг сетки: точность против скорости
+    if (!empty($opt['step'])) $step = max(1, (int) $opt['step']);
+    /* Соседи по диагонали. На тёмной афише они нужны: пятно заглушки сплошное.
+     * На СВЕТЛОЙ афише заглушка того же цвета, что и фон, и отделяет её от фона
+     * только тонкое золотое кольцо в два-три пикселя: через диагональ обход
+     * просачивается наружу, и круг сливается с полотном. */
+    $diag = empty($opt['conn4']);
 
     /* Светлым считаем тёплый кремовый тон заглушки. Границы взяты с живой
      * генерации: просили #F6F1E4, нейросеть отдала #FBEAC7 — заметно теплее.
@@ -80,6 +86,7 @@ function afisha_find_placeholders(string $file, array $opt = []): array {
             for ($dy = -$step; $dy <= $step; $dy += $step) {
                 for ($dx = -$step; $dx <= $step; $dx += $step) {
                     if (!$dx && !$dy) continue;
+                    if (!$diag && $dx && $dy) continue;
                     $nk = (($cy + $dy) << 16) | ($cx + $dx);
                     if (isset($cols[$nk]) && !isset($seen[$nk])) { $seen[$nk] = true; $queue[] = $nk; }
                 }
@@ -123,6 +130,12 @@ function afisha_find_placeholders(string $file, array $opt = []): array {
  */
 function afisha_fill_emblems(string $src, array $logos, string $dst): array {
     $spots = afisha_find_placeholders($src);
+    /* Второй проход для светлой афиши (см. conn4 выше): мелкий шаг, только
+     * прямые соседи. На тёмных афишах первый проход и так находит все шесть. */
+    if (count($spots) < count($logos)) {
+        $fine = afisha_find_placeholders($src, ['step' => 2, 'conn4' => true]);
+        if (count($fine) > count($spots)) $spots = $fine;
+    }
     if (!$spots) return ['ok' => false, 'found' => 0, 'placed' => 0, 'error' => 'заглушки не найдены'];
 
     $info = @getimagesize($src);
