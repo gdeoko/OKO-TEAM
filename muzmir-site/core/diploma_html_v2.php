@@ -364,14 +364,17 @@ function diploma_theme_pick(array $c, array $tpl): array {
         // Территория таланта: движение и спорт, современный рубленый шрифт.
         'territoriya' => [
             'ff_degree' => "'Exo 2',sans-serif", 'ls_degree' => '3px',
-            'ls_name' => '.5px', 'sh_comp' => '0 0 16px rgba(63,195,255,.30)',
+            'ls_name' => '.5px', 'sh_comp' => '0 0 16px rgba(255,200,120,.25)',
             'fonts'   => 'Russo+One&family=Exo+2:ital,wght@0,700;1,700',
             'ff_comp' => "'Russo One',sans-serif", 'fam_comp' => 'Russo One', 'ls_comp' => '2px', 'w_comp' => 0.80,
             'grad_comp'   => 'linear-gradient(180deg,#FFFBE0 0%,#FFE680 28%,#F0BE3C 55%,#C98E14 70%,#FFEB99 100%)',
-            'grad_dtype'  => 'linear-gradient(180deg,#FFFFFF 0%,#D8F4FF 35%,#6FD3FF 65%,#E6F8FF 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#E8FAFF 0%,#A6E6FF 34%,#3FC3FF 68%,#DDF6FF 100%)',
+            /* Лист рубиново-бордовый (решение владельца 01.10.2026: не синий и
+             * не светлый). Голубые звание и ДИПЛОМ на бордовом гасли, поэтому
+             * они в слоновой кости и шампани, название остаётся золотым. */
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFFFF 0%,#FFF6E6 35%,#EAD7B4 65%,#FFF8EC 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFF6E8 0%,#F6DDB0 34%,#E2B878 68%,#FFF1DC 100%)',
             'name_color' => '#FFFFFF', 'ff_name' => "'Exo 2',sans-serif",
-            'script_font' => 'Caveat:wght@600', 'ff_script' => "'Caveat',cursive", 'script_fs' => 38, 'script_color' => '#FFE680',
+            'script_font' => 'Caveat:wght@600', 'ff_script' => "'Caveat',cursive", 'script_fs' => 38, 'script_color' => '#F6DDB0',
         ],
         // Вершина творчества: горы и кубок, гравированная классика.
         'vershina' => [
