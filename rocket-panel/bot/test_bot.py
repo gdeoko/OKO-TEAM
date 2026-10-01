@@ -3900,55 +3900,72 @@ class ПриёмкаНаКарте(unittest.TestCase):
         self.assertEqual(len(спрашивали), 1)
 
 
-class РоликОтБылоКСтало(unittest.TestCase):
-    """Решение владельца 01.10.2026. На руках у нас ДВА кадра, и оба
-    бесплатны: присланный снимок (одета) и наш принятый кадр (раздета).
-    Движок API умеет считать ролик от первого кадра к последнему — тогда
-    раздевание и есть само видео, а кончается оно ровно на кадре,
-    который прошёл приёмку.
+class РоликРаздетСПервогоКадра(unittest.TestCase):
+    """Правило владельца 01.10.2026. Кнопка продаёт РАЗДЕТЫЙ ролик, а не
+    процесс раздевания: ролик оживляет только наш принятый кадр.
 
-    На карте такого режима нет: там `start_image` один, и в заводе
-    снятие собирали ТРЕМЯ заданиями с трёх кадров. Поэтому пара
-    отдаётся только тому движку, который её понимает."""
+    Была попытка отдать видео два кадра — присланный снимок первым, наш
+    последним. Для завода это верно, там снятие и есть содержание
+    Формата 2. Для бота брак: первые секунды показывали бы одежду, а на
+    пятисекундном ролике это заметная часть оплаченного."""
 
     def setUp(self):
         import bot
         self.bot = bot
 
-    def test_на_api_и_раздевающей_кнопке_пара(self):
-        with mock.patch.object(self.bot, "на_карте", lambda: False), \
-             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
-            self.assertTrue(self.bot._пара_кадров(["снимок"], "ph_full"))
-
-    def test_на_карте_только_наш_кадр(self):
-        """У карты режима «первый кадр в последний» нет вовсе."""
-        with mock.patch.object(self.bot, "на_карте", lambda: True), \
-             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
-            self.assertFalse(self.bot._пара_кадров(["снимок"], "ph_full"))
-
-    def test_одетая_кнопка_пары_не_просит(self):
-        """«Было» и «стало» там различаются одной позой."""
-        with mock.patch.object(self.bot, "на_карте", lambda: False), \
-             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: True):
-            self.assertFalse(self.bot._пара_кадров(["снимок"], "ph_below"))
-
-    def test_без_снимка_пары_не_бывает(self):
-        with mock.patch.object(self.bot, "на_карте", lambda: False), \
-             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
-            self.assertFalse(self.bot._пара_кадров([], "ph_full"))
-
-    def test_выключатель_слушается(self):
-        with mock.patch.object(self.bot, "ДВА_КАДРА", False), \
-             mock.patch.object(self.bot, "на_карте", lambda: False), \
-             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
-            self.assertFalse(self.bot._пара_кадров(["снимок"], "ph_full"))
-
-    def test_порядок_кадров_не_перепутан(self):
-        """Первый — присланный (одета), последний — наш (раздета).
-        Наоборот ролик показал бы ОДЕВАНИЕ."""
+    def test_в_видео_уходит_один_наш_кадр(self):
         import inspect
         и = inspect.getsource(self.bot.run_job)
-        self.assertIn("[вход[0], наш] if пара else [наш]", и)
+        self.assertIn("photos = [gpu.upload(имя, кадр)]", и)
+
+    def test_присланный_снимок_в_ролик_не_подмешивается(self):
+        import inspect
+        и = inspect.getsource(self.bot.run_job)
+        self.assertNotIn("[вход[0], наш]", и)
+
+
+class ФонБерётсяСоСнимка(unittest.TestCase):
+    """Владелец 01.10.2026: «если не поменял фон по кнопке, то фон такой
+    же как на фото».
+
+    Эталонный текст описывает НАШУ студию — чёрный пол, розовый неон, —
+    и, подменяя собой собранный промпт, он выносил оттуда блок
+    `i2i_фон`: тот самый, который велит скопировать комнату со снимка и
+    ничего не выдумывать. Человек фон не менял, а получал студию.
+
+    На карте это сглаживал стартовый латент (`DENOISE_ФОН`), на API
+    латента нет вовсе — комнату держат только слова."""
+
+    def setUp(self):
+        import bot
+        self.bot = bot
+
+    def test_место_не_выбрано_эталон_не_берём(self):
+        self.assertFalse(self.bot.не_студия("длинный эталон", своё_место=True))
+
+    def test_место_выбрано_эталон_берём(self):
+        self.assertTrue(self.bot.не_студия("длинный эталон", своё_место=False))
+
+    def test_эталона_нет_нечего_и_брать(self):
+        self.assertFalse(self.bot.не_студия(None, своё_место=False))
+        self.assertFalse(self.bot.не_студия("", своё_место=True))
+
+    def test_глубина_идёт_за_текстом_а_не_за_наличием_эталона(self):
+        """Собранный промпт велит сохранить комнату — гасить латент до
+        единицы значит выбросить её сразу после этого."""
+        import inspect
+        и = inspect.getsource(self.bot.пустить_сценарий)
+        self.assertIn("1.0 if эталонный else", и)
+        self.assertNotIn("1.0 if эт else", и)
+
+    def test_собранный_промпт_велит_копировать_комнату(self):
+        """Текст существует и выбирается, когда место не выбрано."""
+        import prompts
+        т = prompts.ТЕКСТЫ["i2i_фон"] if hasattr(prompts, "ТЕКСТЫ") else None
+        if т is None:
+            import inspect
+            т = inspect.getsource(prompts)
+        self.assertIn("COPIED from the photograph and not invented", т)
 
 
 class ПересъёмкиБольшеНет(unittest.TestCase):
