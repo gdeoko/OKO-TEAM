@@ -904,3 +904,67 @@ class ПозаНеСпоритСамаССобой(unittest.TestCase):
             готово = prompts.коротко(сырой, 2900 - len(обяз) - 2)
             self.assertIn("HANDS AND KNEES", готово, ключ)
             self.assertIn("HIGH ABOVE HER", готово, ключ)
+
+class РаботаКнопкиНеВыбрасывается(unittest.TestCase):
+    """Укорачивание имеет право выбрасывать ТОЛЬКО наши общие блоки.
+    Постановка кадра, откровенная строка владельца и свет сцены — это
+    сама работа, за которую человек нажал кнопку.
+
+    Отчёт владельца 01.10.2026: «сделал интим раком, не сделала —
+    стоит». Набор шёл с начала до первого не влезшего блока и там
+    обрывался, а постановка позы (1271 знак) стояла шестой из
+    семнадцати: её выкидывало вместе со всем хвостом, и в модель уходило
+    1779 знаков при пределе 2614 — место было, позы не было."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def _длинный(self, поза):
+        return "\n\n".join([
+            self.p.ПО_ВИДУ["i2i_фон"].strip() + " THE FRAME TO BUILD IS THIS: x",
+            self.p.ЯКОРЬ_ЛИЧНОСТИ.strip(),
+            self.p.ОДНО_ТЕЛО.strip(),
+            поза,
+            self.p.КОЖА.strip(),
+            self.p.КОМПОЗИЦИЯ.strip(),
+            self.p.КАМЕРА_ОБЩЕЕ.strip(),
+            self.p.ЦВЕТ.strip(),
+            self.p.КАЧЕСТВО.strip(),
+            "FINAL CHECK, outranking every word above: " + self.p.ТЕЛО_ПО_ФОТО.strip(),
+        ])
+
+    def test_поза_остаётся_даже_когда_она_самая_большая(self):
+        поза = "SHE IS DOWN ON HER HANDS AND KNEES. " + "detail of the pose. " * 60
+        к = self.p.коротко(self._длинный(поза), 2600)
+        self.assertLessEqual(len(к), 2600)
+        self.assertIn("HANDS AND KNEES", к)
+
+    def test_место_не_простаивает(self):
+        """Раньше первый не влезший блок обрывал набор: выброшенным
+        оказывалось и то, что ещё влезало. Теперь выброшенный блок
+        обязан быть таким, что обратно он уже не поместится."""
+        поза = "SHE IS DOWN ON HER HANDS AND KNEES. " + "detail. " * 150
+        предел = 2600
+        сырой = self._длинный(поза)
+        к = self.p.коротко(сырой, предел)
+        ушли = [б for б in self.p.ужать(сырой).split("\n\n")
+                if б.strip() and б.strip() not in к]
+        for б in ушли:
+            self.assertGreater(len(к) + len(б) + 2, предел,
+                               "блок выброшен, хотя влезал: " + б[:60])
+
+    def test_финальная_проверка_на_месте(self):
+        поза = "SHE IS DOWN ON HER HANDS AND KNEES. " + "detail. " * 200
+        к = self.p.коротко(self._длинный(поза), 2600)
+        self.assertLessEqual(len(к), 2600)
+        self.assertIn("FINAL CHECK", к)
+        self.assertIn("HANDS AND KNEES", к)
+
+    def test_наш_блок_узнаётся_а_чужой_нет(self):
+        self.assertTrue(self.p.наш_блок(self.p.КОЖА))
+        self.assertTrue(self.p.наш_блок(self.p.КАМЕРА_ОБЩЕЕ))
+        self.assertFalse(self.p.наш_блок(
+            "She is down on her hands and knees on the floor, doggy style."))
+        self.assertFalse(self.p.наш_блок(
+            "She masturbates her wet pussy in a doggy style position."))
