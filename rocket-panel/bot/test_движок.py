@@ -1093,6 +1093,32 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         # передать. Такую модель принимать нельзя.
         self.assertEqual(self.api.модель_фото, "qwen3-image")
 
+    def test_у_каждой_модели_своё_поле_кадра(self):
+        """Чужое поле сервис молча выбрасывает: ответ 200, задача
+        принята, ролик снят с нуля — другая женщина, другая комната,
+        деньги списаны. Проба 01.10.2026: `lite` берёт кадр полем
+        `images`, `wan-2.7-i2v-spicy` — полем `image`."""
+        self.api._байты["к"] = b"x"
+        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy", качество="720p")
+        _, тело = self.api._запрос(
+            {"mode": "video", "prompt": "p", "size": "vert", "secs": 5,
+             "images": ["к"]})
+        self.assertIn("image", тело)
+        self.assertNotIn("images", тело)
+        self.api.выбрать_модель(видео="minimax-h3-lite", качество="768p")
+        _, тело = self.api._запрос(
+            {"mode": "video", "prompt": "p", "size": "vert", "secs": 5,
+             "images": ["к"]})
+        self.assertIn("images", тело)
+
+    def test_модель_с_модерацией_в_список_не_берём(self):
+        """`minimax-h3` (та, что умеет 2K) отбила наш контент обоими
+        полями кадра: «Content did not pass the safety review». Дать её
+        владельцу кнопкой значило бы сломать каждую кнопку бота."""
+        self.assertNotIn("minimax-h3", self.m.ВИДЕО_МОДЕЛИ)
+        self.api.выбрать_модель(видео="minimax-h3")
+        self.assertEqual(self.api.модель_видео, "minimax-h3-lite")
+
     def test_качество_переезжает_вместе_с_моделью(self):
         """768p есть у lite и нет у wan: оставить чужое слово значит
         получить отказ за наши деньги."""
@@ -1101,19 +1127,19 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         self.assertIn(self.api.качество_видео, ("720p", "1080p"))
 
     def test_качество_только_своё(self):
-        self.api.выбрать_модель(видео="minimax-h3")
-        self.api.выбрать_модель(качество="1080p")   # у h3 такого нет
-        self.assertIn(self.api.качество_видео, ("768p", "2K"))
-        self.api.выбрать_модель(качество="2K")
-        self.assertEqual(self.api.качество_видео, "2K")
+        self.api.выбрать_модель(видео="minimax-h3-lite")
+        self.api.выбрать_модель(качество="1080p")   # у lite такого нет
+        self.assertIn(self.api.качество_видео, ("480p", "768p"))
+        self.api.выбрать_модель(качество="480p")
+        self.assertEqual(self.api.качество_видео, "480p")
 
     def test_качество_уходит_в_запрос(self):
-        self.api.выбрать_модель(видео="minimax-h3", качество="2K")
+        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy", качество="1080p")
         вид, тело = self.api._запрос(
             {"mode": "video", "prompt": "p", "size": "vert", "secs": 5})
         self.assertEqual(вид, "video")
-        self.assertEqual(тело["model"], "minimax-h3")
-        self.assertEqual(тело["resolution"], "2K")
+        self.assertEqual(тело["model"], "wan-2.7-i2v-spicy")
+        self.assertEqual(тело["resolution"], "1080p")
 
     def test_без_склада_работают_умолчания(self):
         а = self.m.Api(key="x")
