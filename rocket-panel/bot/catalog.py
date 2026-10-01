@@ -978,30 +978,45 @@ class Узел:
         "one head on her own neck, two arms growing from her own "
         "shoulders, two legs. Only one person in the frame."),
     # «Мастурбация раком» — кадр pR9_ac_above__777.
-    # ПЕРЕПИСАНО 23.09.2026 ПО ПРИНЯТОМУ КАДРУ.
+    # ПЕРЕПИСАНО 01.10.2026 НА ПОЗУ РАКОМ. Отчёт владельца: «сделал
+    # интим раком, не сделала — стоит».
     #
-    # Текст описывал не тот кадр, который владелец принял: «стоит на
-    # четвереньках боком к камере, правая рука из-под живота». На
-    # принятом кадре она СТОИТ НА НОГАХ, нагнувшись от пояса, камера
-    # сзади и низко, обе руки заведены назад. Опора по глубине держала
-    # принятую позу, текст тянул в другую - и выходила третья, сидя.
-    # Из 21 кнопки промахивались ровно эти две, и обе по одной причине.
+    # 23.09.2026 постановку привели к кадру, который владелец принял
+    # ТОГДА: она стояла на ногах, нагнувшись от пояса, камера сзади и
+    # низко. После этого кнопка названа «Мастурбация раком» с подписью
+    # «Съёмка сверху вниз» — и постановка стала спорить сразу с тремя
+    # вещами: с именем кнопки, с подписью и с собственным ДВИЖЕНИЕМ той
+    # же кнопки ниже («rocks back and forward ON HER KNEES», «the hand
+    # reaching UNDER HER BELLY»). Фотография ставила на ноги, ролик
+    # ставил на колени — одна кнопка, две разные позы.
+    #
+    # Своим текстом владелец этого починить НЕ МОГ: жёсткая постановка
+    # заменяет строку каталога целиком (см. prompts.собрать), и его
+    # «in a doggy style position» до модели не доходило вовсе.
+    #
+    # Теперь поза одна во всех четырёх местах: на коленях и ладонях,
+    # камера сверху, рука из-под живота — как в движении.
     "ph_above": (
         "She is completely naked: nothing on her breasts, nothing on her "
-        "hips, bare skin everywhere. SHE STANDS ON BOTH FEET WITH HER LEGS "
-        "STRAIGHT AND WIDE APART AND HAS BENT FORWARD FROM THE WAIST, her "
-        "back roughly level with the floor. THE CAMERA IS BEHIND HER AND "
-        "LOW, at the height of her hips: her bare buttocks fill the CENTRE "
-        "of the frame and her own bare vulva is open to the lens between "
-        "her thighs from behind, with nothing in front of it but her own "
-        "fingers. BOTH OF HER ARMS COME DOWN BEHIND HER OWN BACK, past her "
-        "own buttocks, and both hands meet between her thighs from behind: "
-        "the arms are visible from her shoulders to her hands. Her head is "
-        "turned back over her own shoulder at the top of the frame, and her "
-        "whole face is inside the frame and looking into the lens. She is a "
-        "woman, her anatomy is female only. One whole unbroken body, one "
-        "head on her own neck, two arms growing from her own shoulders, two "
-        "legs. Only one person in the frame."),
+        "hips, bare skin everywhere. SHE IS DOWN ON HER HANDS AND KNEES ON "
+        "THE FLOOR, DOGGY STYLE: both knees on the floor and apart, her "
+        "shins and the tops of her feet lying back along the floor behind "
+        "her, her back arched down and her bare buttocks RAISED HIGH — the "
+        "highest part of her body. SHE IS NOT STANDING AND HER FEET ARE NOT "
+        "UNDER HER: her weight is on her knees and on one palm. THE CAMERA "
+        "IS HIGH ABOVE HER AND LOOKING DOWN, a little behind her raised "
+        "buttocks and tilted down along the line of her back: her raised "
+        "buttocks are at the CENTRE of the frame and her own bare vulva is "
+        "open to the lens between her thighs from behind. ONE OF HER ARMS "
+        "REACHES UNDER HER OWN BELLY from the front, her own fingers on her "
+        "own vulva and nothing else in front of it — that arm is visible "
+        "from her shoulder to her hand; HER OTHER PALM STAYS FLAT ON THE "
+        "FLOOR in front of her and carries her weight. Her head is low "
+        "between her shoulders and turned back and up over her own "
+        "shoulder toward the lens, and her whole face is inside the frame. "
+        "She is a woman, her anatomy is female only. One whole unbroken "
+        "body, one head on her own neck, two arms growing from her own "
+        "shoulders, two legs. Only one person in the frame."),
     # «Снимает лифчик (майку)» — кадр pZ3_ac_below__4242.
     # ПЕРЕПИСАНО 23.09.2026 ПО ПРИНЯТОМУ КАДРУ, см. «ph_above» выше.
     #

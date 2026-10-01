@@ -847,3 +847,60 @@ class ДеталиНеТеряются(unittest.TestCase):
                               self.p.КАМЕРА_ОБЩЕЕ, self.p.ЦВЕТ,
                               self.p.КАЧЕСТВО])
         self.assertLess(len(self.p.ужать(длинно)), len(длинно) / 2)
+
+class ПозаНеСпоритСамаССобой(unittest.TestCase):
+    """У кнопки ролика поза написана в ДВУХ местах: в постановке кадра
+    (фотография, первый проход) и в движении (второй проход). Если они
+    расходятся, человек получает не то, что нажал.
+
+    Отчёт владельца 01.10.2026: «сделал интим раком, не сделала —
+    стоит». У «Мастурбация раком» постановка говорила «SHE STANDS ON
+    BOTH FEET», а движение той же кнопки — «rocks back and forward ON
+    HER KNEES». Фотография ставила на ноги, ролик на колени.
+
+    Своим текстом владелец это починить не мог: жёсткая постановка
+    заменяет строку каталога целиком, см. `prompts.собрать`."""
+
+    НА_КОЛЕНЯХ = ("on her knees", "hands and knees", "on all fours",
+                  "under her belly")
+    НА_НОГАХ = ("stands on both feet", "stands upright on her feet")
+
+    def setUp(self):
+        import catalog
+        self.c = catalog
+
+    def test_постановка_и_движение_об_одной_позе(self):
+        плохо = []
+        for сц in self.c.все_сценарии():
+            if self.c.скрыт(сц.key):
+                continue
+            пост = (getattr(сц.блок, "жёстко", "") or "").lower()
+            дв = (self.c.движение(сц.key) or "").lower()
+            if not пост or not дв:
+                continue
+            колени = any(с in дв for с in self.НА_КОЛЕНЯХ)
+            ноги = any(с in пост for с in self.НА_НОГАХ)
+            if колени and ноги:
+                плохо.append(сц.key)
+        self.assertEqual(плохо, [], "движение на коленях, постановка на ногах")
+
+    def test_раком_поставлено_раком(self):
+        """«Мастурбация раком», подпись «Съёмка сверху вниз»."""
+        пост = self.c.ЖЁСТКАЯ_ОДИНОЧНАЯ["ph_above"]
+        self.assertIn("HANDS AND KNEES", пост)
+        self.assertIn("DOGGY STYLE", пост)
+        self.assertIn("HIGH ABOVE HER", пост)
+        self.assertNotIn("stands on both feet", пост.lower())
+
+    def test_поза_доживает_до_модели(self):
+        """Укорачивание до 2900 не имеет права съесть позу — ни у
+        фотографии, ни у фотографического прохода ролика."""
+        import prompts, места
+        for ключ in ("ph_above", "ac_above"):
+            сц = [s for s in self.c.все_сценарии() if s.key == ключ][0]
+            сырой = (сц.prompt_фото(места.КАК_НА_ФОТО, None)
+                     if сц.двухшаговый else сц.промпт(место=места.КАК_НА_ФОТО))
+            обяз = prompts.обязательные(сырой)
+            готово = prompts.коротко(сырой, 2900 - len(обяз) - 2)
+            self.assertIn("HANDS AND KNEES", готово, ключ)
+            self.assertIn("HIGH ABOVE HER", готово, ключ)
