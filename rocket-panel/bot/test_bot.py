@@ -3863,10 +3863,14 @@ class ПриёмкаНаКарте(unittest.TestCase):
         self.assertEqual(вердикт["ок"], True)
 
     def test_брак_с_карты_переснимается(self):
+        """Механизм пересъёмки цел — он просто выключен числом попыток
+        (см. `ПересъёмкиБольшеНет`). Включают его обратно одной
+        переменной окружения, и тогда он обязан работать как работал."""
         import bot
         карта = self.Карта([{"ок": False, "причины": ["одежда в кадре"]},
                             {"ок": True, "причины": ["годен"]}])
-        with mock.patch.object(bot, "gpu", карта):
+        with mock.patch.object(bot, "gpu", карта), \
+             mock.patch.object(bot, "ПОПЫТОК", 3):
             bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
         self.assertEqual(карта.звали, 2, "брак не пересняли")
 
@@ -3876,6 +3880,7 @@ class ПриёмкаНаКарте(unittest.TestCase):
         спрашивали = []
         карта = self.Карта([{"ок": True, "причины": ["годен"]}])
         with mock.patch.object(bot, "gpu", карта), \
+             mock.patch.object(bot, "ПОПЫТОК", 3), \
              mock.patch.object(bot.контроль, "проверить",
                                lambda *a: спрашивали.append(a) or (True, "")):
             bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
@@ -3887,11 +3892,87 @@ class ПриёмкаНаКарте(unittest.TestCase):
         карта = self.Карта([None])
         спрашивали = []
         with mock.patch.object(bot, "gpu", карта), \
+             mock.patch.object(bot, "ПОПЫТОК", 3), \
              mock.patch.object(bot.контроль, "включена", lambda: True), \
              mock.patch.object(bot.контроль, "проверить",
                                lambda *a: спрашивали.append(a) or (True, "")):
             bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
         self.assertEqual(len(спрашивали), 1)
+
+
+class ПересъёмкиБольшеНет(unittest.TestCase):
+    """Решение владельца 01.10.2026. На своей карте лишний проход стоил
+    только времени — она оплачена помесячно. На API каждый пересъём это
+    второй оплаченный кадр и вторые полторы минуты ожидания живого
+    человека: худший случай выходил четыре минуты и три кадра там, где
+    продан один.
+
+    Отдельно и жёстко: проверка возраста готового кадра этим НЕ
+    отменяется. Она не переснимает, она отказывает, и без второй попытки
+    сомнительный кадр не отдаётся вовсе — строже, чем было."""
+
+    class Движок(ПриёмкаНаКарте.Карта):
+        pass
+
+    def test_по_умолчанию_одна_попытка(self):
+        import bot
+        self.assertEqual(bot.ПОПЫТОК, 1)
+
+    def test_брак_отдаётся_как_есть(self):
+        import bot
+        движок = self.Движок([{"ок": False, "причины": ["одежда в кадре"]},
+                              {"ок": True, "причины": ["годен"]}])
+        with mock.patch.object(bot, "gpu", движок):
+            итог = bot._фото_с_приёмкой("i2i", "т", ["a.png"],
+                                        scene="pf_mf_near")
+        self.assertEqual(движок.звали, 1, "кадр пересняли за наши деньги")
+        self.assertIsNotNone(итог)
+
+    def test_облако_не_спрашиваем_вовсе(self):
+        """Вердикт качества решал ровно одно — переснимать ли. Решать
+        нечего, а ключ с квотой и секунды тратились бы."""
+        import bot
+        спрашивали = []
+        движок = self.Движок([None])
+        with mock.patch.object(bot, "gpu", движок), \
+             mock.patch.object(bot.контроль, "включена", lambda: True), \
+             mock.patch.object(bot.контроль, "проверить",
+                               lambda *a: спрашивали.append(a) or (True, "")):
+            bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
+        self.assertEqual(спрашивали, [])
+
+    def test_людей_в_кадре_не_считаем(self):
+        """Счёт людей гоняет модель на нашем процессоре, а применить его
+        вывод теперь некуда."""
+        import bot
+        считали = []
+        движок = self.Движок([None])
+        with mock.patch.object(bot, "gpu", движок), \
+             mock.patch.object(bot, "_сколько_людей",
+                               lambda *a: считали.append(a) or 7):
+            bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
+        self.assertEqual(считали, [])
+
+    def test_возраст_проверяем_и_отказываем_сразу(self):
+        """Без второй попытки сомнительный кадр не отдаётся вовсе."""
+        import bot
+        движок = self.Движок([None])
+        with mock.patch.object(bot, "gpu", движок), \
+             mock.patch.object(bot, "_младше18", lambda *a: 0.99), \
+             mock.patch.object(bot, "ВОЗРАСТ_ВЫХОД", 0.5):
+            with self.assertRaises(bot.GpuError):
+                bot._фото_с_приёмкой("i2i", "т", ["a.png"], scene="pf_mf_near")
+        self.assertEqual(движок.звали, 1)
+
+    def test_взрослый_кадр_доезжает(self):
+        import bot
+        движок = self.Движок([None])
+        with mock.patch.object(bot, "gpu", движок), \
+             mock.patch.object(bot, "_младше18", lambda *a: 0.01), \
+             mock.patch.object(bot, "ВОЗРАСТ_ВЫХОД", 0.5):
+            итог = bot._фото_с_приёмкой("i2i", "т", ["a.png"],
+                                        scene="pf_mf_near")
+        self.assertIsNotNone(итог)
 
 
 if __name__ == "__main__":
