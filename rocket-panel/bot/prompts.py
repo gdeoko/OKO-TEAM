@@ -2208,8 +2208,20 @@ def под_предел(сырой, предел):
 # нужен в самом конце — модель внимательна к началу и к концу, а
 # провисает в середине (разбор владельца в `последнее`), — поэтому
 # первый уходит, а второй остаётся, но коротким.
+# Вступления «собери новый кадр» тоже наши, и к ним тоже приклеен хвост
+# — откровенная строка владельца («THE FRAME TO BUILD IS THIS: ...»).
+# На проде такой блок весит 568 знаков, из которых наших 182, и пока он
+# не узнавался, не ужималось вообще ничего: у «Вида сзади» с выбранным
+# местом из-за 54 лишних знаков выбрасывало всю позу.
 ПО_НАЧАЛУ = (
     ("EDIT THIS PHOTOGRAPH: keep the PLACE", КРАТКО_ФОН),
+    ("Take the person from the reference photographs",
+     "Build a new frame around the person from the reference photos as "
+     "described below: only the person carries over, and the pose, the "
+     "framing and the surroundings are the scenario's."),
+    ("Two references, one person in each",
+     "Two references, one person in each: build ONE new frame with both of "
+     "them, posed as the scenario says. Neither original frame is kept."),
     ("HER BODY IS COPIED FROM THE REFERENCE PHOTOGRAPH", None),
     ("FINAL CHECK, outranking every word above",
      "FINAL CHECK, outranking everything above: her face and the "
