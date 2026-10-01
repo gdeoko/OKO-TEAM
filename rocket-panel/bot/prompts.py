@@ -1691,6 +1691,13 @@ def коротко(текст, предел=3000):
     if not текст or len(текст) <= предел:
         return текст
     разрыв = "\n\n"
+    # СНАЧАЛА УЖИМАЕМ, И ТОЛЬКО ПОТОМ ВЫБРАСЫВАЕМ. У каждого нашего
+    # длинного блока есть короткий двойник с теми же правилами; замена
+    # ничего не теряет, а выбрасывание теряет. Владелец 01.10.2026:
+    # уложиться в три тысячи, но детали сохранить.
+    текст = ужать(текст)
+    if len(текст) <= предел:
+        return текст
     блоки = [б for б in текст.split(разрыв) if б.strip()]
     лишние = {б.strip() for б in КОРОТКО_ЛИШНИЕ if б}
     блоки = [б for б in блоки if б.strip() not in лишние]
@@ -1799,3 +1806,97 @@ def обязательные(промпт):
     if мужчина_в_кадре(промпт or ""):
         куски.append(ЗАПРЕТ_МУЖСКОЕ_ТЕЛО)
     return " ".join(куски)
+
+
+# ---------------------------------------------------------------------
+# КОРОТКИЕ ДВОЙНИКИ ОБЩИХ БЛОКОВ (01.10.2026)
+#
+# Владелец: промпты должны укладываться в три тысячи знаков, и при этом
+# НЕ ТЕРЯТЬ ДЕТАЛЕЙ. Прежнее укорачивание выбрасывало блоки целиком —
+# вместе с правилами внутри. Здесь другой путь: у каждого длинного блока
+# есть короткий двойник, в котором сказано ТО ЖЕ САМОЕ, но без воды.
+#
+# Сверка по правилам, чтобы при правке было видно, что нельзя потерять:
+#   ФОН        комната копируется, поза и кадр — из сценария
+#   ЛИЧНОСТЬ   она сама, её возраст, грудь не увеличивать
+#   КОЖА       ровный загар, родинки с референса, матовость
+#   ТЕЛО_ЦЕЛО  одно тело, конечности от своих мест, пять пальцев
+#   КАМЕРА     настоящий снимок, целиком в кадре, живой цвет
+#   ДЕЙСТВИЕ   одежда уже снята, действие показано завершённым
+#
+# Длинные версии остаются как есть: на карте работают они.
+
+КРАТКО_ФОН = (
+    "EDIT THIS PHOTOGRAPH: keep the PLACE, change the POSE. Copied from "
+    "the photo and not invented: the room or backdrop behind her, its "
+    "colour and material, the objects in it, the light and the direction "
+    "it comes from. No new room and no furniture that was not there. "
+    "Changed by the scenario below: her clothes come off entirely, and "
+    "the pose, the position in frame, the camera angle and the crop are "
+    "the scenario's to set - they must clearly differ from the photo.")
+
+КРАТКО_ЛИЧНОСТЬ = (
+    "The woman from the reference photograph, one to one: her face, her "
+    "hair, her body and her own age - an adult, no younger and no older, "
+    "never another woman and never a generic model. What is under the "
+    "clothes is read out of that photo, not invented: a small or flat "
+    "chest stays small. Do not beautify, slim, enlarge or age her. Any "
+    "departure from the reference is a defect, even a flattering one.")
+
+КРАТКО_КОЖА = (
+    "Living skin with a fine natural surface, matte and dry, softly lit. "
+    "Her tan is completely even - one single skin tone from her shoulders "
+    "to her ankles, the same on her chest, breasts, belly, hips and "
+    "thighs. Every mole and freckle from the reference stays exactly "
+    "where it is; none are added and none removed.")
+
+КРАТКО_ТЕЛО_ЦЕЛО = (
+    "One single continuous body: one head on her own neck, one torso, two "
+    "arms from her own shoulders, two legs from her own hips - two hands "
+    "and two feet in all, each traceable to the place it grows from. Five "
+    "fingers per hand, joints that bend the right way, symmetric eyes.")
+
+КРАТКО_КАМЕРА = (
+    "A real unretouched photograph on a full-frame camera, 50mm at f/2.8, "
+    "available daylight: sharp on the eyes, natural depth of field, "
+    "true-to-life colour, the whole subject inside the frame.")
+
+КРАТКО_ДЕЙСТВИЕ = (
+    "Any garment named in the action is ALREADY OFF: the action is shown "
+    "at its END, the clothing discarded, nothing left on her body.")
+
+# Чем заменяем. Четыре мелких блока (композиция, камера, цвет, качество)
+# схлопываются в один: порознь они повторяли друг друга словами.
+ДВОЙНИКИ = {
+    ПО_ВИДУ["i2i_фон"].strip(): КРАТКО_ФОН,
+    ЯКОРЬ_ЛИЧНОСТИ.strip(): КРАТКО_ЛИЧНОСТЬ,
+    ТЕЛО.strip(): "",
+    КОЖА.strip(): КРАТКО_КОЖА,
+    ОДНО_ТЕЛО.strip(): КРАТКО_ТЕЛО_ЦЕЛО,
+    АНАТОМИЯ.strip(): "",
+    КОМПОЗИЦИЯ.strip(): "",
+    КАМЕРА_ОБЩЕЕ.strip(): "",
+    ЦВЕТ.strip(): "",
+    КАЧЕСТВО.strip(): КРАТКО_КАМЕРА,
+    ДЕЙСТВИЕ_ЗАВЕРШЕНО.strip(): КРАТКО_ДЕЙСТВИЕ,
+}
+
+
+def ужать(текст):
+    """Длинные общие блоки -> их короткие двойники. Детали сохраняются.
+
+    Блоки владельца (сцена, действие, свет) не трогаются вовсе: они
+    описывают саму работу, и сокращать их не мне.
+    """
+    if not текст:
+        return текст
+    разрыв = "\n\n"
+    итог = []
+    for б in текст.split(разрыв):
+        к = б.strip()
+        if к in ДВОЙНИКИ:
+            if ДВОЙНИКИ[к]:
+                итог.append(ДВОЙНИКИ[к])
+        elif к:
+            итог.append(б)
+    return разрыв.join(итог)

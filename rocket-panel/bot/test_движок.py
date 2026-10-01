@@ -728,3 +728,58 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         """Он дописывается последним и обязан влезать вместе со всем."""
         пара = self.p.обязательные("one man and one woman, his penis")
         self.assertLess(len(пара), 500)
+
+
+class ДеталиНеТеряются(unittest.TestCase):
+    """Владелец 01.10.2026: уложиться в три тысячи знаков, но детали
+    сохранить. Прежнее укорачивание выбрасывало блоки целиком — вместе с
+    правилами внутри. Теперь у каждого длинного блока есть короткий
+    двойник, и сперва идёт замена, а выбрасывание — только если и после
+    неё длинно."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_двойник_заменяет_а_не_выбрасывает(self):
+        т = "\n\n".join([self.p.КОЖА, "сцена " + "x" * 2200])
+        к = self.p.коротко(т, 3000)
+        self.assertIn("one single skin tone", к)
+        self.assertNotIn(self.p.КОЖА.strip(), к)
+
+    def test_правила_кожи_пережили_сокращение(self):
+        к = self.p.КРАТКО_КОЖА
+        for правило in ("even", "mole", "freckle", "matte"):
+            self.assertIn(правило, к.lower(), правило)
+
+    def test_правила_личности_пережили_сокращение(self):
+        к = self.p.КРАТКО_ЛИЧНОСТЬ.lower()
+        for правило in ("reference", "age", "flat chest stays small",
+                        "do not beautify"):
+            self.assertIn(правило, к, правило)
+
+    def test_правила_фона_пережили_сокращение(self):
+        к = self.p.КРАТКО_ФОН.lower()
+        for правило in ("keep the place", "not invented", "no new room",
+                        "clothes come off", "camera angle"):
+            self.assertIn(правило, к, правило)
+
+    def test_целость_тела_пережила_сокращение(self):
+        к = self.p.КРАТКО_ТЕЛО_ЦЕЛО.lower()
+        for правило in ("one head", "two arms", "two legs", "five fingers"):
+            self.assertIn(правило, к, правило)
+
+    def test_блоки_владельца_не_трогаем(self):
+        """Сцена, действие и свет описывают саму работу — сокращать их
+        не мне."""
+        своё = "She lies on her side on the floor, her body along the frame."
+        к = self.p.ужать("\n\n".join([self.p.КОЖА, своё]))
+        self.assertIn(своё, к)
+
+    def test_ужатие_короче_вдвое(self):
+        длинно = "\n\n".join([self.p.ПО_ВИДУ["i2i_фон"], self.p.ЯКОРЬ_ЛИЧНОСТИ,
+                              self.p.ТЕЛО, self.p.КОЖА, self.p.ОДНО_ТЕЛО,
+                              self.p.АНАТОМИЯ, self.p.КОМПОЗИЦИЯ,
+                              self.p.КАМЕРА_ОБЩЕЕ, self.p.ЦВЕТ,
+                              self.p.КАЧЕСТВО])
+        self.assertLess(len(self.p.ужать(длинно)), len(длинно) / 2)
