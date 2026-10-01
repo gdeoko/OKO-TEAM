@@ -242,8 +242,11 @@ function cron_rotate_dir(string $dir, string $pattern, int $days): int {
  * Поэтому перед началом смотрим свободное место и сравниваем с прикидкой
  * «сколько займёт», плюс запас $reserveGb на текущую работу сайта.
  */
-function cron_disk_ok(string $job, float $needGb, float $reserveGb = 2.0): bool {
-    $free = @disk_free_space(BASE_PATH);
+/* $path — на каком диске меряем. С 01.10.2026 копии живут на отдельном диске
+ * (data/backups смонтирован с /dev/sdb), и мерить их место по диску сайта
+ * значило бы пропускать копию на переполненный диск или зря отказывать. */
+function cron_disk_ok(string $job, float $needGb, float $reserveGb = 2.0, string $path = ''): bool {
+    $free = @disk_free_space($path !== '' ? $path : BASE_PATH);
     if ($free === false) return true;          // не смогли измерить — не мешаем работать
     $freeGb = $free / 1073741824;
     if ($freeGb >= $needGb + $reserveGb) return true;

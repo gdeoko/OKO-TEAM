@@ -27,7 +27,7 @@ const RETENTION_DAYS = 30;
 /* Копия базы весит примерно столько же, сколько сама база; сжатие идёт уже
    после, поэтому на пике нужен полный объём. */
 $__dbGb = (float) (@filesize((string) cfgv('db_path')) ?: 0) / 1073741824;
-if (!cron_disk_ok(JOB, max(0.5, $__dbGb * 1.1))) exit(0);
+if (!cron_disk_ok(JOB, max(0.5, $__dbGb * 1.1), 0.5, BASE_PATH . '/data/backups')) exit(0);   // копия ложится на диск копий
 
 if (!cron_lock(JOB, 3600 * 6)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');

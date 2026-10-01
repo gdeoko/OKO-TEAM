@@ -50,7 +50,11 @@ $__needGb = ((float) (@filesize((string) cfgv('db_path')) ?: 0)
         if (@unlink($old)) cron_log(JOB, 'до сборки удалён старый архив: ' . basename($old));
     }
 })();
-if (!cron_disk_ok(JOB, max(1.0, $__needGb * 1.2))) exit(0);
+/* Два диска: временный снимок базы ложится в /tmp на диск сайта, архив —
+ * на отдельный диск копий. Проверяем каждый своим объёмом. */
+$__dbGbW = (float) (@filesize((string) cfgv('db_path')) ?: 0) / 1073741824;
+if (!cron_disk_ok(JOB, max(0.5, $__dbGbW * 1.1), 2.0, sys_get_temp_dir())) exit(0);
+if (!cron_disk_ok(JOB, max(1.0, $__needGb), 0.5, BASE_PATH . '/data/backups')) exit(0);
 
 if (!cron_lock(JOB, 3600 * 12)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');
