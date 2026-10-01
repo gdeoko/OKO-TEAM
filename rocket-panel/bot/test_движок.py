@@ -692,3 +692,39 @@ class ПределСоблюдаетсяВсегда(unittest.TestCase):
     def test_уложившееся_не_трогаем(self):
         т = "раз\n\nдва\n\nтри"
         self.assertEqual(self.p.коротко(т, 2900), т)
+
+
+class ОбязательноеНеТеряется(unittest.TestCase):
+    """У qwen3 нет негатива: поле принимают и молча выбрасывают. Три
+    жёстких правила владельца жили именно там — волосы только на голове,
+    у женщины нет мужских органов, у мужчины нет женских. Первое было
+    продублировано утверждением в блоке КОЖА, но КОЖА выбрасывается при
+    укорачивании: обе половины правила пропали разом."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_волосы_и_женское_тело_всегда(self):
+        т = self.p.обязательные("a naked woman alone in a room")
+        self.assertIn("Hair grows on her head only", т)
+        self.assertIn("a woman's body and only a woman's body", т)
+
+    def test_мужская_строка_только_когда_мужчина_есть(self):
+        одна = self.p.обязательные("a naked woman alone")
+        пара = self.p.обязательные("one man and one woman, his penis")
+        self.assertNotIn("The man has a man's body", одна)
+        self.assertIn("The man has a man's body", пара)
+
+    def test_запретных_слов_не_употребляем(self):
+        """«pubic» и «hairless» сборка слышит существительным и почти не
+        слышит приставку -less: от такой формулировки лобок выходил
+        засеянным щетиной (разбор владельца 28.09.2026)."""
+        т = self.p.обязательные("one man and one woman, his penis")
+        for слово in ("pubic", "hairless"):
+            self.assertNotIn(слово, т.lower())
+
+    def test_блок_короткий(self):
+        """Он дописывается последним и обязан влезать вместе со всем."""
+        пара = self.p.обязательные("one man and one woman, his penis")
+        self.assertLess(len(пара), 500)
