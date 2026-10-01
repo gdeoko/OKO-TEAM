@@ -49,10 +49,18 @@ class ЗеркалоКарты(unittest.TestCase):
 
 
 class Запросы(unittest.TestCase):
-    """Тело запроса — то самое, которым проверено на живом сервисе."""
+    """Тело запроса — то самое, которым проверено на живом сервисе.
+
+    Модель видео закреплена на `minimax-h3-lite` НАРОЧНО: режим «первый
+    плюс последний кадр» — её особенность, а умолчание бота с
+    01.10.2026 другое (`wan-2.7-i2v-spicy`, у него своё поле одного
+    кадра). Без закрепления тест проверял бы не то, что описывает.
+    """
 
     def setUp(self):
         self.а = apimodels.Api(key="k")
+        self.а._умолч_видео = "minimax-h3-lite"
+        self.а._кэш_настроек = (None, 0.0)
 
     def test_фото_рефом_двумя_полями(self):
         имя = self.а.upload("своё.png", b"\x89PNG")
@@ -80,7 +88,7 @@ class Запросы(unittest.TestCase):
                                     "size": "vert", "secs": 10,
                                     "images": [имя]})
         self.assertEqual(вид, "video")
-        self.assertEqual(тело["model"], apimodels.МОДЕЛЬ_ВИДЕО)
+        self.assertEqual(тело["model"], "minimax-h3-lite")
         self.assertEqual(тело["duration"], 10)
         self.assertEqual(тело["resolution"], "768p")
         self.assertEqual(тело["ratio"], "9:16")
@@ -152,6 +160,10 @@ class СервисНеЗнаетНегатива(unittest.TestCase):
 
     def setUp(self):
         self.а = apimodels.Api(key="k")
+        # Режим «первый плюс последний кадр» — особенность lite, а
+        # умолчание бота с 01.10.2026 другое. Закрепляем явно.
+        self.а._умолч_видео = "minimax-h3-lite"
+        self.а._кэш_настроек = (None, 0.0)
         self.звонки = []
 
     def _зов(self, отказ_на_негатив):
@@ -183,6 +195,11 @@ class СервисНеЗнаетНегатива(unittest.TestCase):
         self.а.start(mode="photo", prompt="т", neg="clothed")
         self.assertEqual(len(self.звонки), 1)
         self.assertIn("negative_prompt", self.звонки[0])
+
+    def _только_lite(self):
+        """Режим «первый плюс последний» — особенность lite."""
+        self.а._умолч_видео = "minimax-h3-lite"
+        self.а._кэш_настроек = (None, 0.0)
 
     def test_нет_первого_кадра_уходим_в_референс(self):
         """Ролик всё равно должен выйти: сцену модель сочинит свою, но
@@ -1079,19 +1096,22 @@ class ВыборМоделиВАдминке(unittest.TestCase):
 
     def test_умолчания_не_меняются_сами(self):
         в = self.api.выбор()
-        self.assertEqual(в["фото"], "qwen3-image")
-        self.assertEqual(в["видео"], "minimax-h3-lite")
-        self.assertEqual(в["качество"], "768p")
+        # Умолчания с 01.10.2026 выбраны замером, а не вкусом: pro
+        # детальнее базовой на 37-51%, wan берёт наш кадр почти
+        # дословно (отклонение 3.8 против 10.2) и втрое быстрее.
+        self.assertEqual(в["фото"], "qwen3-image-pro")
+        self.assertEqual(в["видео"], "wan-2.7-i2v-spicy")
+        self.assertEqual(в["качество"], "720p")
 
     def test_выбор_владельца_запоминается(self):
-        self.api.выбрать_модель(фото="qwen3-image-pro")
-        self.assertEqual(self.api.модель_фото, "qwen3-image-pro")
+        self.api.выбрать_модель(фото="qwen3-image")
+        self.assertEqual(self.api.модель_фото, "qwen3-image")
 
     def test_чужая_модель_не_принимается(self):
         self.api.выбрать_модель(фото="z-image-spicy")
         # У spicy нет входа для референса вовсе: лицо клиента ей не
         # передать. Такую модель принимать нельзя.
-        self.assertEqual(self.api.модель_фото, "qwen3-image")
+        self.assertEqual(self.api.модель_фото, "qwen3-image-pro")
 
     def test_у_каждой_модели_своё_поле_кадра(self):
         """Чужое поле сервис молча выбрасывает: ответ 200, задача
@@ -1117,14 +1137,14 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         владельцу кнопкой значило бы сломать каждую кнопку бота."""
         self.assertNotIn("minimax-h3", self.m.ВИДЕО_МОДЕЛИ)
         self.api.выбрать_модель(видео="minimax-h3")
-        self.assertEqual(self.api.модель_видео, "minimax-h3-lite")
+        self.assertEqual(self.api.модель_видео, "wan-2.7-i2v-spicy")
 
     def test_качество_переезжает_вместе_с_моделью(self):
         """768p есть у lite и нет у wan: оставить чужое слово значит
         получить отказ за наши деньги."""
-        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy")
-        self.assertEqual(self.api.модель_видео, "wan-2.7-i2v-spicy")
-        self.assertIn(self.api.качество_видео, ("720p", "1080p"))
+        self.api.выбрать_модель(видео="minimax-h3-lite")
+        self.assertEqual(self.api.модель_видео, "minimax-h3-lite")
+        self.assertIn(self.api.качество_видео, ("480p", "768p"))
 
     def test_качество_только_своё(self):
         self.api.выбрать_модель(видео="minimax-h3-lite")
@@ -1143,6 +1163,6 @@ class ВыборМоделиВАдминке(unittest.TestCase):
 
     def test_без_склада_работают_умолчания(self):
         а = self.m.Api(key="x")
-        self.assertEqual(а.модель_фото, "qwen3-image")
-        self.assertEqual(а.выбрать_модель(фото="qwen3-image-pro")["фото"],
-                         "qwen3-image")
+        self.assertEqual(а.модель_фото, "qwen3-image-pro")
+        self.assertEqual(а.выбрать_модель(фото="qwen3-image")["фото"],
+                         "qwen3-image-pro")
