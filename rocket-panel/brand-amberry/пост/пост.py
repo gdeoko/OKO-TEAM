@@ -40,7 +40,7 @@ from PIL import Image, ImageFilter
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БРЕНД = os.path.dirname(ТУТ)
 БАЗА = "https://api.apimodels.app/v1"
-МОДЕЛЬ = "gpt-image-2"
+МОДЕЛЬ = "gpt-image-2.5-sunburst"
 ЗНАК = os.path.join(БРЕНД, "amberry-icon-512-alpha.png")
 ФОРМАТЫ = {"4:3": (1440, 1080), "16:9": (1920, 1080)}
 ФОРМАТ = "4:3"
@@ -159,6 +159,7 @@ def оправа(ключ, имя="оправа"):
     if not з:
         тело = json.dumps({"model": МОДЕЛЬ, "prompt": текст,
                            "aspect_ratio": ФОРМАТ,
+                           "resolution": "2K", "quality": "high",
                            "image": [знак_датой()], "image_urls": [знак_датой()]})
         п = subprocess.run(
             ["curl", "-s", "-m", "180", "-H", "Authorization: Bearer " + ключ,

@@ -25,7 +25,7 @@ import time
 
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БАЗА = "https://api.apimodels.app/v1"
-МОДЕЛЬ = "gpt-image-2"
+МОДЕЛЬ = "gpt-image-2.5-sunburst"
 
 # Референсы уже выложены публично: API берёт их только ссылкой, не файлом.
 ЛОГО = "https://okoteam.top/gen-ref/ref-logo-12569.png"
@@ -247,7 +247,7 @@ def сделать(формат, заголовок, подзаголовок, �
     п = промпт(заголовок, подзаголовок, ник)
     print("промпт %d знаков (норма от 3000)" % len(п), flush=True)
     тело = {"model": МОДЕЛЬ, "prompt": п, "aspect_ratio": "9:16",
-            "resolution": "2K", "quality": "high",
+            "resolution": "1K", "quality": "low",
             # Лого ПЕРВЫМ, кадр из ролика вторым: порядок референсов - правило.
             "image_urls": [ЛОГО, КАДРЫ[str(формат)]]}
     д = зов(["-X", "POST", БАЗА + "/images/generations", "-d", json.dumps(тело)])
@@ -257,7 +257,7 @@ def сделать(формат, заголовок, подзаголовок, �
     print("задача", задача, flush=True)
 
     было = ""
-    до = time.time() + 900          # gpt-image-2 в high отвечает до 9 минут
+    до = time.time() + 900          # gpt-image-2.5 в low отвечает быстрее, запас тот же
     while time.time() < до:
         д = зов([БАЗА + "/images/generations?task_id=" + задача], 40)
         сост = (д.get("state") or "").lower()
