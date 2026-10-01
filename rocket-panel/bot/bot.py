@@ -667,6 +667,9 @@ def _починить_лицо(данные, имя):
 
 
 ЛИЦО_ВТОРЫМ = (os.environ.get("ROCKET_LICO2", "1") or "") != "0"
+ПРО_ЛИЦО_ПАРЫ = (" The third reference image is a close-up of the face of the woman from "
+                 "the {} reference photo: her face in this photo must be exactly that face. "
+                 "That close-up is only a reference and must NOT appear in the picture.")
 ЭТАЛОН_ТЕКСТ = (os.environ.get("ROCKET_ETALON_TEXT", "1") or "") != "0"
 ПРО_ЛИЦО = (" The second reference image is a close-up of her face: her face in "
             "this photo must be exactly that face - the same eye shape, eyelids, "
@@ -1109,6 +1112,27 @@ def run_job(chat, u, kind, prompt, photos=None, scene=None,
                 and ((kind or "").startswith("i2i") or цепочка)
                 and not _одежда_в_кадре(scene)):
             photos = _снять_одежду(свои, photos, tick)
+
+        # ЛИЦО ЖЕНЩИНЫ ТРЕТЬИМ СНИМКОМ У ПАРЫ. На прогоне 01.10.2026 у
+        # пар МЖ лицо героини выходило чужим: на снимке в рост оно мелкое,
+        # а второго референса, как у одиночных, у пары не было. Слот у
+        # Qwen один свободный (до трёх снимков) - отдаём его женщине.
+        полы_сц = catalog.полы(scene) if scene else ("ж",)
+        if (ЛИЦО_ВТОРЫМ and photos and len(photos) == 2 and len(свои) == 2
+                and len(полы_сц) == 2 and "ж" in полы_сц
+                and ((kind or "").startswith("i2i") or цепочка)):
+            н = полы_сц.index("ж")
+            кроп = _кроп_лица(свои[н])
+            if кроп:
+                try:
+                    photos = list(photos) + [gpu.upload("лицо_" + os.path.basename(свои[н]), кроп)]
+                    про = ПРО_ЛИЦО_ПАРЫ.format(("first", "second")[н])
+                    if цепочка:
+                        prompt_фото = (prompt_фото or prompt) + про
+                    else:
+                        prompt = prompt + про
+                except Exception as e:                      # noqa: BLE001
+                    print("лицо третьим не ушло:", str(e)[:120], flush=True)
 
         # ЛИЦО ВТОРЫМ РЕФЕРЕНСОМ. На снимке в полный рост лицо занимает
         # восемьдесят точек, и Qwen рисует «её типаж», но не её. Крупный

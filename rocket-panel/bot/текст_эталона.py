@@ -176,6 +176,43 @@ _ЗАМЕНЫ_ПАРЫ = [
             "fully developed adult bodies.")
 
 
+# ПАРЫ БЕЗ ПРИНЯТОГО ЭТАЛОНА. Их собранный текст на прогоне 01.10.2026
+# дал «Крупный план» МЖ с двумя мужскими головами по краям кадра и
+# девушкой между ними. Тексты сложены как у эталонов; порядок снимков
+# здесь сразу наш (catalog.полы: у МЖ мужчина первый).
+_ПАРА_МЖ = ("The man is the man from the first reference photo — his face, his own "
+            "hair and his own build as in that photo. The woman is the woman from the "
+            "second reference photo — her face, her own hair exactly as in that photo, "
+            "her own body and breast size as in that photo. Exactly one man and one "
+            "woman, nobody else, no extra heads. ")
+_ПАРА_ЖЖ = ("The first woman is the woman from the first reference photo and the second "
+            "woman is the woman from the second reference photo — each with her own "
+            "face, her own hair and her own body exactly as in her photo. Exactly two "
+            "women, nobody else, no extra heads. ")
+_ПАРА_КОНЕЦ = ("Two separate whole bodies, four arms and four legs in all, every limb "
+               "traceable to the one body it grows from. Both completely naked. Black "
+               "studio with hot pink neon tubes on the wall behind them. "
+               "Photorealistic explicit photograph, matte skin, correct hands.")
+СВОИ_ПАРЫ = {
+    "pf_mf_above": "TOP-DOWN SHOT from directly above the bed, both whole bodies inside "
+                   "the frame, both faces turned UP to the lens. THE WOMAN lies on her "
+                   "back with her knees up and apart, her bare breasts and her vulva in "
+                   "view. THE MAN lies on his side close beside her, his head next to hers "
+                   "on the same end of the bed, one of his hands between her thighs with "
+                   "his fingers on her vulva. ",
+    "pf_mf_close": "CLOSE SHOT of their two heads and upper bodies, camera at their eye "
+                   "level: they kiss, his face and her face side by side and both clearly "
+                   "visible, filling the upper half of the frame. Her bare breasts are in "
+                   "view below, his hand cups one of her breasts. Only these two heads in "
+                   "the picture. ",
+    "pf_ff_above": "TOP-DOWN SHOT from directly above the bed, both whole bodies inside "
+                   "the frame. THE TWO WOMEN lie on their backs side by side, heads at the "
+                   "same end, both faces turned UP to the lens; each one's hand rests "
+                   "between the other's thighs on her vulva; their bare breasts are in "
+                   "view. ",
+}
+
+
 def _порядок_эталона(ключ):
     """Полы людей в порядке снимков, на которых считался эталон."""
     try:
@@ -231,7 +268,13 @@ def промпт(ключ):
     except Exception:                                   # noqa: BLE001
         return None
     if _пара(ключ):
-        return _текст_пары(str(ключ), з["промпт"]) if з and з.get("промпт") else None
+        if з and з.get("промпт"):
+            return _текст_пары(str(ключ), з["промпт"])
+        к = str(ключ).replace("pr_", "pf_", 1)
+        if к in СВОИ_ПАРЫ:
+            кто = _ПАРА_МЖ if "_mf_" in к else _ПАРА_ЖЖ
+            return "Explicit photograph. " + СВОИ_ПАРЫ[к] + кто + _ПАРА_КОНЕЦ + " " + ВЗРОСЛЫЕ
+        return None
     if not з or not з.get("промпт"):
         к = str(ключ)
         свой = СВОИ.get(к) or (СВОИ.get("ph_" + к[3:]) if к.startswith("ac_") else None)
@@ -258,8 +301,11 @@ def негатив(ключ):
         import промпты_эталонов as ПЭ
         з = _эталон(ключ)
         if not (з and з.get("файл")):
-            # Своим текстам - негатив самого проверенного эталона.
-            з = _эталон("un_close")
+            # Своим текстам - негатив самого проверенного эталона того же
+            # состава: у пары МЖ одиночный запрещал бы мужские органы.
+            к = str(ключ)
+            з = _эталон("pf_mf_near" if "_mf_" in к else
+                        "pf_ff_near" if "_ff_" in к else "un_close")
         if з and з.get("файл"):
             г = ПЭ.граф(os.path.join(ПЭ.ЭТАЛОНЫ, з["файл"])) or {}
             for у in г.values():

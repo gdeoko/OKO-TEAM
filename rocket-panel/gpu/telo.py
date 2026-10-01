@@ -63,6 +63,10 @@ CKPT = os.environ.get("ROCKET_TELO_CKPT", "lustify_v20.safetensors")
 ТЕКСТ_КОЖА = ("raw amateur photo of a nude adult woman, real skin with fine "
               "pores and natural texture, clean skin without tattoos, natural "
               "soft light, sharp focus, photorealistic")
+ТЕКСТ_КОЖА_ПАРА = ("raw amateur photo of two nude adults, real skin with fine pores "
+                   "and natural texture, every person keeps exactly their own body and "
+                   "sex as drawn, clean skin without tattoos, natural soft light, sharp "
+                   "focus, photorealistic")
 ТЕКСТ_ГРУДЬ = ("close-up photo of natural breasts, realistic nipples and "
                "areolae with fine skin texture and bumps, real skin pores")
 ТЕКСТ_ПАХ = ("close-up explicit photo of a real shaved vulva, detailed natural "
@@ -205,6 +209,11 @@ def дорисовать(кадр, кожа=None, зоны=None, зерно=11, 
     H, W = большой.shape[:2]
     холст = большой.astype(np.float32)
 
+    # У пары текст кожи общий и сила ниже: плитка с мужчиной под словами
+    # «nude woman» получала грудь (прогон 01.10.2026, «Один позади»).
+    текст_кожи = ТЕКСТ_КОЖА_ПАРА if пара else ТЕКСТ_КОЖА
+    if пара:
+        кожа = min(кожа, 0.30)
     if кожа > 0:
         T, НАХ = 1024, 192
         xs = list(range(0, max(1, W - T) + 1, T - НАХ))
@@ -213,7 +222,7 @@ def дорисовать(кадр, кожа=None, зоны=None, зерно=11, 
         for y in ys:
             for x in xs:
                 кус = большой[y:y + T, x:x + T]
-                _вклеить(холст, _comfy(кус, ТЕКСТ_КОЖА, кожа, зерно + x + y), x, y, 64)
+                _вклеить(холст, _comfy(кус, текст_кожи, кожа, зерно + x + y), x, y, 64)
 
     # У пары зон нет: скелет находит одного человека, и текст «vulva»
     # лёг бы на промежность мужчины.
