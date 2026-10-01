@@ -1,0 +1,87 @@
+{
+ "doubao-seedream-5-0-pro": {
+  "итог": "готово",
+  "сек": 97,
+  "кредиты": 0.06,
+  "кб": 404,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/doubao-seedream-5-0-pro.png"
+ },
+ "doubao-seedream-5-0-260128": {
+  "итог": "готово",
+  "сек": 47,
+  "кредиты": 0.055,
+  "кб": 411,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/doubao-seedream-5-0-260128.png"
+ },
+ "doubao-seedream-5-0-flash": {
+  "итог": "готово",
+  "сек": 31,
+  "кредиты": 0.03,
+  "кб": 473,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/doubao-seedream-5-0-flash.png"
+ },
+ "doubao-seedream-4-5-251128": {
+  "итог": "готово",
+  "сек": 47,
+  "кредиты": 0.05,
+  "кб": 1221,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/doubao-seedream-4-5-251128.png"
+ },
+ "z-image-spicy": {
+  "итог": "без задачи",
+  "сырьё": "{\"code\":400,\"msg\":\"z-image-spicy is text-to-image only: it does not accept reference images (image / image_urls / mask)\"}"
+ },
+ "z-image-spicy-pro": {
+  "итог": "без задачи",
+  "сырьё": "{\"code\":400,\"msg\":\"z-image-spicy-pro is text-to-image only: it does not accept reference images (image / image_urls / mask)\"}"
+ },
+ "grok-imagine-image-2": {
+  "итог": "готово",
+  "сек": 25,
+  "кредиты": 0.045,
+  "кб": 275,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/grok-imagine-image-2.png"
+ },
+ "grok-imagine-image-pro": {
+  "итог": "готово",
+  "сек": 31,
+  "кредиты": 0.12,
+  "кб": 742,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/grok-imagine-image-pro.png"
+ },
+ "qwen3-image-pro": {
+  "итог": "готово",
+  "сек": 146,
+  "кредиты": 0.041,
+  "кб": 158,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/qwen3-image-pro.png"
+ },
+ "nanobanana-2-beta": {
+  "итог": "отказ",
+  "код": "CONTENT_MODERATION",
+  "почему": "Upstream API error 451: Request rejected by the upstream model provider. Check the request content and try again."
+ },
+ "gemini-3-pro-image": {
+  "итог": "отказ",
+  "код": "CONTENT_MODERATION",
+  "почему": "Upstream API error 451: Request rejected by the upstream model provider. Check the request content and try again."
+ },
+ "kling-multi-image": {
+  "итог": "без задачи",
+  "сырьё": "{\"code\":400,\"msg\":\"subject_image_list is required\"}"
+ },
+ "sparkpix-image-edit": {
+  "итог": "готово",
+  "сек": 14,
+  "кредиты": 0.013,
+  "кб": 193,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/sparkpix-image-edit.png"
+ },
+ "flux-2-klein-4b": {
+  "итог": "готово",
+  "сек": 15,
+  "кредиты": 0.0075,
+  "кб": 517,
+  "файл": "/tmp/claude-0/-home-user-OKO-TEAM/021412e7-3366-5637-9b20-09fcd6a0f3ab/scratchpad/kadr/flux-2-klein-4b.png"
+ }
+}

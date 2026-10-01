@@ -37,7 +37,11 @@ sys.path.insert(0, os.path.join(БРЕНД, "персонажи"))
 
 КЛЮЧ = os.environ.get("APIMODELS_KEY", "")
 БАЗА = "https://api.apimodels.app/v1"
-МОДЕЛЬ = os.environ.get("AMBERRY_IMG_MODEL", "doubao-seedream-5-0-pro")
+# Замер 01.10.2026 на листе ракурсов, четырнадцать моделей одним промптом.
+# flash против прежней pro: 31 секунда против 97, 0,03 против 0,06, и кадр
+# крупнее (1536x2720 против 1440x2560). Лицо держит так же. Дешёвые
+# (flux-2-klein-4b за 0,0075) лицо теряют - в серии это подмена человека.
+МОДЕЛЬ = os.environ.get("AMBERRY_IMG_MODEL", "doubao-seedream-5-0-flash")
 
 from сделать_аватарки import ПЕРСОНАЖИ                        # noqa: E402
 
