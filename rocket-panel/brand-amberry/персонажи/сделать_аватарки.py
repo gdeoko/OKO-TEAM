@@ -97,16 +97,6 @@ import time
         "slightly teasing, the look of someone who knows exactly how good "
         "she looks."
     ),
-    "мира": (
-        "A striking 25 year old woman with voluminous jet black hair in "
-        "soft glossy waves cascading over one shoulder, deep espresso "
-        "tones with violet neon highlights riding the curls. Intense "
-        "emerald green eyes, dark thick lashes, a smoky sultry gaze. "
-        "Olive-toned porcelain skin, strong elegant brows, a small "
-        "straight nose, full burgundy-tinted lips, an aristocratic long "
-        "neck and sharp jawline. Her expression is cool, composed and "
-        "magnetic, a hint of challenge in the eyes."
-    ),
     "ева": (
         "A captivating 23 year old woman with long copper red hair, "
         "naturally wavy and voluminous, individual strands glowing amber "
@@ -128,20 +118,26 @@ import time
         "tone, elegant slender neck. Her expression is serene, mysterious "
         "and quietly confident."
     ),
-    # Формулировки нарочно сдержанные: первая редакция ("breathtaking",
-    # "openly flirtatious" на смуглой девушке) уходила в отказ по фильтру
-    # безопасности у gpt-image и намертво вешала задачу у doubao. Смысл
-    # персонажа - радость и движение, а не откровенность.
-    "сая": (
-        "A beautiful 25 year old Latina woman with long, thick, dark "
-        "chocolate brown hair in loose bouncy curls, sun-kissed caramel "
-        "highlights catching the neon. Large expressive hazel-brown eyes "
-        "with long lashes and a bright friendly gaze. Warm bronze skin "
-        "with a healthy natural glow, full lips in a deep rose tone, high "
-        "round cheekbones, a soft feminine jawline. She is a dancer: her "
-        "expression is joyful and full of energy, a wide genuine smile, "
-        "the look of someone in the middle of a good night out with "
-        "friends."
+    # Mira и Saya сняты владельцем 01.10.2026, на их места встали Maria и
+    # Julia. У этих двоих лицо уже зафиксировано листом ракурсов, поэтому
+    # лист уходит референсом (см. `лист`), а текст ниже только напоминает
+    # модели, кого держать: без листа выйдет похожая, но другая женщина.
+    "мария": (
+        "A beautiful 19 year old woman with long warm chestnut hair in soft "
+        "natural waves, coppery highlights catching the neon, parted in the "
+        "middle. Green-hazel eyes with a calm direct gaze, thick even brows, "
+        "a light scattering of freckles kept visible. Fair skin with a faint "
+        "natural warmth - light, never bronzed. A narrow face with high "
+        "cheekbones, a straight nose, medium-full lips. Her expression is "
+        "soft and quiet, friendly without challenge."
+    ),
+    "юлия": (
+        "A beautiful 20 year old woman with long thick dark brown hair, "
+        "almost brunette, in loose waves with the front strands swept back "
+        "and pinned. Light brown eyes with a green cast, bright and lively, "
+        "freckles across the cheekbones kept visible. Fair even skin, a "
+        "narrow face, full lips, a warm easy half-smile. Her expression is "
+        "light and open, the look of someone laughing a second ago."
     ),
 }
 
@@ -155,9 +151,9 @@ def зов(аргументы):
     доли секунды.
     """
     р = subprocess.run(
-        ["curl", "-s", "-m", "90", "-H", "Authorization: Bearer " + КЛЮЧ,
+        ["curl", "-s", "-m", "180", "-H", "Authorization: Bearer " + КЛЮЧ,
          "-H", "Content-Type: application/json"] + аргументы,
-        capture_output=True, timeout=120)
+        capture_output=True, timeout=210)
     if р.returncode:
         raise RuntimeError("curl: " + р.stderr.decode()[-200:])
     о = json.loads(р.stdout or b"{}")
@@ -168,12 +164,49 @@ def зов(аргументы):
     return о.get("data") or {}
 
 
+def лист(имя):
+    """Лист ракурсов лица как data-URI, или пусто.
+
+    У лиц, заведённых по готовым снимкам (Maria, Julia), внешность уже
+    зафиксирована листом, и описанием её не повторить: выйдет похожая, но
+    другая женщина, а аватарка и кадры ролика должны быть одним человеком.
+    У нарисованных с нуля (Nika, Eva, Yuki) листа в этот момент может не
+    быть - тогда работает только текст, как раньше.
+    """
+    import base64
+    п = os.path.join(ТУТ, имя, "%s-ракурсы.jpg" % имя)
+    if not os.path.exists(п):
+        return ""
+    with open(п, "rb") as ф:
+        return "data:image/jpeg;base64," + base64.b64encode(ф.read()).decode()
+
+
 def сделать(имя):
     промпт = ОБЩЕЕ + " " + ПЕРСОНАЖИ[имя]
-    print("%s: промпт %d знаков, отправляю..." % (имя, len(промпт)), flush=True)
-    тело = json.dumps({"model": МОДЕЛЬ, "prompt": промпт,
-                       "aspect_ratio": "1:1", "resolution": "2K"})
-    д = зов(["-X", "POST", БАЗА + "/images/generations", "-d", тело])
+    реф = лист(имя)
+    if реф:
+        промпт += (" IDENTITY: the attached reference file is a character "
+                   "sheet of this exact woman seen from several angles. "
+                   "Build her face from it and keep it identical - same "
+                   "features, same hair colour, same eyes. Never show the "
+                   "sheet itself, never show a grid or several copies of "
+                   "her: exactly ONE woman in the finished portrait.")
+    print("%s: промпт %d знаков%s, отправляю..." % (
+        имя, len(промпт), ", лист ракурсов референсом" if реф else ""), flush=True)
+    тело = {"model": МОДЕЛЬ, "prompt": промпт,
+            "aspect_ratio": "1:1", "resolution": "2K"}
+    if реф:
+        тело["image"] = [реф]
+        тело["image_urls"] = [реф]
+    # Тело уходит ФАЙЛОМ, а не аргументом: лист ракурсов в base64 весит под
+    # мегабайт, и `curl -d <строка>` падает с «Argument list too long».
+    врем = "/tmp/amberry-ava-%s.json" % имя
+    with open(врем, "w") as ф:
+        json.dump(тело, ф)
+    try:
+        д = зов(["-X", "POST", БАЗА + "/images/generations", "-d", "@" + врем])
+    finally:
+        os.remove(врем)
     задача = д.get("taskId")
     if not задача:
         print("  не приняли задачу:", str(д)[:300])
