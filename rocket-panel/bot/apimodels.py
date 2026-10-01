@@ -291,9 +291,27 @@ class Api:
                 self._задачи[job_id]["готово"] = итог
             return итог
         if сост in ПРОВАЛ:
+            with self._замок:
+                if job_id in self._задачи:
+                    self._задачи[job_id]["отказ"] = о
             return {"state": "err", "sec": сек,
                     "error": _почему(о, job_id, сост)}
         return {"state": сост or "run", "sec": сек}
+
+    def повторяемый(self, job_id):
+        """Отказ был на канале до провайдера, а не по делу.
+
+        Сервис помечает такие сам (`retryable`) и денег за них не берёт:
+        у пробы 01.10.2026 `UPSTREAM_FAILED` стоил ноль кредитов. Повтор
+        бесплатен, а человек иначе получает осечку на ровном месте.
+        """
+        with self._замок:
+            з = self._задачи.get(job_id) or {}
+        о = з.get("отказ") or {}
+        if о.get("retryable") is True:
+            return True
+        код = str(о.get("failCode") or о.get("fail_code") or "").upper()
+        return код in ПОВТОРИТЬ_КОДЫ
 
     def wait(self, job_id, limit=900, on_tick=None):
         """Ждать результат. on_tick(секунд) — чтобы бот показывал счёт."""
@@ -534,6 +552,11 @@ def время_прошло(когда):
 # по-разному; первая версия искала `failReason`, которого нет, и человек
 # получал голое слово состояния — «движок api: failed». Такое сообщение
 # не отличает модерацию от пустого счёта, а лечатся они по-разному.
+# Коды отказов, которые лечатся повтором: беда не в нашем запросе, а в
+# канале до провайдера. Сервис помечает их `retryable` и не берёт денег.
+ПОВТОРИТЬ_КОДЫ = ("UPSTREAM_FAILED", "UPSTREAM_TIMEOUT", "TIMEOUT",
+                  "INTERNAL_ERROR", "SERVICE_UNAVAILABLE")
+
 ПОЧЕМУ_ПОЛЯ = ("failMsg", "fail_msg", "failReason", "fail_reason",
                "errorMessage", "error_message", "error", "msg", "message",
                "detail")

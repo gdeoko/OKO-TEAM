@@ -149,6 +149,9 @@ class Выбор:
     def fetch(self, filename):
         return self._кем().fetch(filename)
 
+    def повторяемый(self, job_id):
+        return self._кем().повторяемый(job_id)
+
     def лицо(self, filename, content, сила=0.5):
         return self._кем().лицо(filename, content, сила)
 

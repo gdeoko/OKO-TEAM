@@ -547,3 +547,98 @@ class Разбор(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ПовторНаСбоеКанала(unittest.TestCase):
+    """`UPSTREAM_FAILED` — сервис не дождался ответа от провайдера. Наш
+    запрос дошёл целиком, денег не списали (у пробы 01.10.2026 ноль
+    кредитов), и сам сервис помечает такое `retryable`. Повторять надо
+    ровно это и не надо всё остальное: ответ на модерацию и на пустой
+    счёт будет тот же, а ожидание вырастет вдвое."""
+
+    def setUp(self):
+        self.а = apimodels.Api(key="k")
+
+    def _отказ(self, тело):
+        def зов(путь, тело_=None):
+            if тело_ is not None:
+                return {"taskId": "t1"}
+            return dict(тело, state="failed")
+        self.а._зов = зов
+        self.а.start(mode="photo", prompt="т")
+        self.а.poll("t1")
+
+    def test_сбой_канала_повторяем(self):
+        self._отказ({"failCode": "UPSTREAM_FAILED", "retryable": True,
+                     "failMsg": "upstream request failed (no response)"})
+        self.assertTrue(self.а.повторяемый("t1"))
+
+    def test_код_без_пометки_тоже_узнаём(self):
+        self._отказ({"failCode": "UPSTREAM_TIMEOUT"})
+        self.assertTrue(self.а.повторяемый("t1"))
+
+    def test_модерацию_не_повторяем(self):
+        self._отказ({"failCode": "CONTENT_POLICY", "failMsg": "blocked"})
+        self.assertFalse(self.а.повторяемый("t1"))
+
+    def test_пустой_счёт_не_повторяем(self):
+        self._отказ({"failCode": "INSUFFICIENT_BALANCE"})
+        self.assertFalse(self.а.повторяемый("t1"))
+
+    def test_чужую_задачу_не_повторяем(self):
+        self.assertFalse(self.а.повторяемый("не-наша"))
+
+    def test_карта_не_повторяет_никогда(self):
+        """Её отказы про саму работу, повтор их не лечит."""
+        к = _gpu.Gpu("http://карта", "r", "x")
+        self.assertFalse(к.повторяемый("любая"))
+
+    def test_движок_передаёт_вопрос_дальше(self):
+        в = _движок.Выбор(_gpu.Gpu("", "r", "x"), self.а)
+        self.assertTrue(callable(в.повторяемый))
+
+
+class КороткийПромпт(unittest.TestCase):
+    """Владелец 01.10.2026: «длинные как правило дают сбои от 1500 до
+    3000 символов». Режем ПОВТОРЫ, не слова: блок либо остаётся целиком,
+    либо выбрасывается."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_короткое_не_трогаем(self):
+        т = "одна строка"
+        self.assertEqual(self.p.коротко(т, 3000), т)
+
+    def test_дубли_опознания_схлопываются_в_последний(self):
+        б1 = "A 1:1 person resembles the reference. " + "x" * 400
+        б2 = "HER BODY IS COPIED FROM THE REFERENCE PHOTOGRAPH " + "y" * 400
+        б3 = ("FINAL CHECK: HER BODY IS COPIED FROM THE REFERENCE "
+              "PHOTOGRAPH " + "z" * 400)
+        дело = "сама работа " + "w" * 2000
+        т = "\n\n".join([дело, б1, б2, б3])
+        к = self.p.коротко(т, 3000)
+        self.assertIn("FINAL CHECK", к)
+        self.assertNotIn("resembles the reference", к)
+        self.assertNotIn("y" * 400, к)
+        self.assertIn("сама работа", к)
+
+    def test_наши_общие_блоки_уходят_целиком(self):
+        т = "\n\n".join(["дело " + "x" * 3000, self.p.КОЖА, self.p.ЦВЕТ])
+        к = self.p.коротко(т, 3000)
+        self.assertNotIn(self.p.КОЖА.strip(), к)
+        self.assertNotIn(self.p.ЦВЕТ.strip(), к)
+
+    def test_слова_не_переписываются(self):
+        """Каждый оставшийся блок обязан совпасть с исходным дословно."""
+        блоки = ["дело " + "x" * 2000, self.p.КОЖА, "хвост " + "y" * 900]
+        к = self.p.коротко("\n\n".join(блоки), 3000)
+        for б in к.split("\n\n"):
+            self.assertTrue(any(б == и or и.startswith(б.rstrip(".")[:40])
+                                for и in блоки), "блок переписан: %s" % б[:60])
+
+    def test_резать_нечего_отдаём_как_есть(self):
+        """Лучше длинный промпт, чем покалеченный."""
+        т = "неделимое " + "x" * 5000
+        self.assertEqual(self.p.коротко(т, 3000), т)
