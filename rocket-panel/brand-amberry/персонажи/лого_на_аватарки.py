@@ -25,31 +25,34 @@ import time
 
 КЛЮЧ = os.environ.get("APIMODELS_KEY", "")
 БАЗА = "https://api.apimodels.app/v1"
-МОДЕЛЬ = os.environ.get("AMBERRY_IMG_MODEL", "gpt-image-2.5-sunburst")
+# Знак и слово в кадре - это текст, а текст в проекте делает только
+# gpt-image-2 (правило владельца 01.10.2026): 2.5 отбивает такие
+# промпты модерацией и хуже держит кириллицу и вёрстку.
+МОДЕЛЬ = os.environ.get("AMBERRY_IMG_MODEL", "gpt-image-2")
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БРЕНД = os.path.dirname(ТУТ)
 ЛОГО = os.path.join(БРЕНД, "amberry-icon-512.png")
 
 ЛИЦА = {
-    "ника": "warm ash blonde hair, grey-blue eyes, golden tan",
-    "мира": "jet black wavy hair, emerald green eyes, olive skin",
-    "ева":  "copper red hair, freckles, jade green eyes, fair skin",
-    "юки":  "straight jet black hair with curtain bangs, dark brown eyes",
-    "сая":  "dark brown curls with caramel highlights, hazel eyes, bronze skin",
+    "ника":  "long straight ash blonde hair, grey-blue eyes, fair light skin",
+    "ева":   "copper red hair, freckles, jade green eyes, fair skin",
+    "юки":   "straight jet black hair with curtain bangs, dark brown eyes",
+    "мария": "warm chestnut wavy hair, green-hazel eyes, fair skin, light freckles",
+    "юлия":  "dark brown wavy hair swept back, light brown eyes, freckles, fair skin",
 }
 
 ПРОМПТ = """
 Take the woman from the FIRST attached reference and keep her EXACTLY as she
 is: same face, same bone structure, same eyes, same hair colour and cut, same
-skin tone, same makeup, same magenta strap top, same pose and framing, same
-neon lighting and black background. She is %s. Do not restyle her, do not
+skin tone, same makeup, same clothing, same pose and framing, same lighting and
+same background, whatever they are. She is %s. Do not restyle her, do not
 change her age, do not swap her for a different model. This is the same
 person, the same photograph - only one thing is added.
 
 ADD THE BRAND MARK. The AMBERRY raspberry from the SECOND attached reference
 - a glossy three dimensional berry of rounded magenta spheres with one leaf on
 top and a drop at the bottom - glows as a small neon sign in the LOWER CENTRE
-of the square, over her shoulder and the dark background, sized about one
+of the square, over her shoulder and the background behind her, sized about one
 tenth of the frame width. Directly beneath it, the word "AMBERRY" in a wide
 geometric sans serif, all capitals, letterspaced, built as a real neon tube in
 hot magenta #FF0A8C with a white hot inner core and a soft bloom, no wider
