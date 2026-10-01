@@ -989,3 +989,53 @@ class РаботаКнопкиНеВыбрасывается(unittest.TestCase):
             "She is down on her hands and knees on the floor, doggy style."))
         self.assertFalse(self.p.наш_блок(
             "She masturbates her wet pussy in a doggy style position."))
+
+class ОпознаниеНеЗапрещаетДетализацию(unittest.TestCase):
+    """Промпт говорил «что под одеждой — не выдумывай, это читается с
+    фотографии». Для РАЗМЕРА груди это верно, а для самих мест —
+    невыполнимо: на присланном фото человек одет, читать там нечего.
+    Самая громкая строка промпта («FINAL CHECK, outranking everything
+    above») требовала того же. Модель слушалась и рисовала размытое.
+
+    Теперь разделено: пропорции — с фотографии, закрытое одеждой —
+    рисуется целиком и подробно, в тех же пропорциях."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_пропорции_с_фото_а_закрытое_рисуется(self):
+        for блок in (self.p.ТЕЛО_ПО_ФОТО, self.p.КРАТКО_ЛИЧНОСТЬ):
+            низ = блок.lower()
+            self.assertIn("not in that photo", низ)
+            self.assertIn("detail", низ)
+            self.assertNotIn("what is under the clothes is not yours", низ)
+
+    def test_финальная_проверка_не_запрещает_рисовать(self):
+        замена = dict((н, з) for н, з in self.p.ПО_НАЧАЛУ if з)
+        финал = замена["FINAL CHECK, outranking every word above"]
+        self.assertIn("proportions", финал)
+        self.assertIn("full sharp detail", финал)
+
+    def test_всё_доживает_до_модели(self):
+        """Сквозной прогон по каталогу: у каждой кнопки в итоговом
+        промпте есть и требование детализации, и разрешение рисовать
+        закрытое одеждой; и всё это укладывается в предел."""
+        import catalog, места
+        места_ = [м for м in catalog.места.ВСЕ if not catalog.скрыт(м.key)]
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key):
+                continue
+            for м in (None, места_[0]):
+                сырой = (сц.prompt_фото(м or места.КАК_НА_ФОТО, None)
+                         if сц.двухшаговый else сц.промпт(место=м))
+                обяз = self.p.обязательные(сырой)
+                готово = (self.p.коротко(сырой, 2900 - len(обяз) - 2)
+                          + "\n\n" + обяз)
+                if len(готово) > 2900:
+                    плохо.append((сц.key, "длинно %d" % len(готово)))
+                if ("anatomical detail" not in готово
+                        and "sharp true detail" not in готово):
+                    плохо.append((сц.key, "нет детализации"))
+        self.assertEqual(плохо, [])
