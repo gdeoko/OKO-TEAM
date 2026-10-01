@@ -611,17 +611,31 @@ class КороткийПромпт(unittest.TestCase):
         т = "одна строка"
         self.assertEqual(self.p.коротко(т, 3000), т)
 
-    def test_дубли_опознания_схлопываются_в_последний(self):
-        б1 = "A 1:1 person resembles the reference. " + "x" * 400
+    def test_повтор_опознания_убирается_ужатием(self):
+        """«HER BODY IS COPIED…» повторяет КРАТКО_ЛИЧНОСТЬ в третий раз
+        и уходит при ужатии, ещё до всякого выбрасывания."""
         б2 = "HER BODY IS COPIED FROM THE REFERENCE PHOTOGRAPH " + "y" * 400
-        б3 = ("FINAL CHECK: HER BODY IS COPIED FROM THE REFERENCE "
-              "PHOTOGRAPH " + "z" * 400)
         дело = "сама работа " + "w" * 2000
-        т = "\n\n".join([дело, б1, б2, б3])
-        к = self.p.коротко(т, 3000)
-        self.assertIn("FINAL CHECK", к)
-        self.assertNotIn("resembles the reference", к)
+        к = self.p.ужать("\n\n".join([дело, б2]))
         self.assertNotIn("y" * 400, к)
+        self.assertIn("сама работа", к)
+
+    def test_финальная_проверка_остаётся_но_короткой(self):
+        """Она нужна именно в конце: модель внимательна к началу и к
+        концу, а провисает в середине."""
+        длинная = ("FINAL CHECK, outranking every word above: HER BODY IS "
+                   "COPIED FROM THE REFERENCE PHOTOGRAPH " + "z" * 400)
+        к = self.p.ужать("дело\n\n" + длинная)
+        self.assertIn("FINAL CHECK", к)
+        self.assertLess(len(к), len(длинная))
+
+    def test_дубли_схлопываются_когда_ужатия_мало(self):
+        б1 = "A 1:1 person resembles the reference. " + "x" * 500
+        б3 = ("FINAL CHECK: HER BODY IS COPIED FROM THE REFERENCE "
+              "PHOTOGRAPH " + "z" * 500)
+        дело = "сама работа " + "w" * 2100
+        к = self.p.коротко("\n\n".join([дело, б1, б3]), 3000)
+        self.assertNotIn("resembles the reference", к)
         self.assertIn("сама работа", к)
 
     def test_наши_общие_блоки_уходят_целиком(self):
