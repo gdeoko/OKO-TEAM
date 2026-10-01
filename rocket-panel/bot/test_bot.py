@@ -3900,6 +3900,57 @@ class ПриёмкаНаКарте(unittest.TestCase):
         self.assertEqual(len(спрашивали), 1)
 
 
+class РоликОтБылоКСтало(unittest.TestCase):
+    """Решение владельца 01.10.2026. На руках у нас ДВА кадра, и оба
+    бесплатны: присланный снимок (одета) и наш принятый кадр (раздета).
+    Движок API умеет считать ролик от первого кадра к последнему — тогда
+    раздевание и есть само видео, а кончается оно ровно на кадре,
+    который прошёл приёмку.
+
+    На карте такого режима нет: там `start_image` один, и в заводе
+    снятие собирали ТРЕМЯ заданиями с трёх кадров. Поэтому пара
+    отдаётся только тому движку, который её понимает."""
+
+    def setUp(self):
+        import bot
+        self.bot = bot
+
+    def test_на_api_и_раздевающей_кнопке_пара(self):
+        with mock.patch.object(self.bot, "на_карте", lambda: False), \
+             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
+            self.assertTrue(self.bot._пара_кадров(["снимок"], "ph_full"))
+
+    def test_на_карте_только_наш_кадр(self):
+        """У карты режима «первый кадр в последний» нет вовсе."""
+        with mock.patch.object(self.bot, "на_карте", lambda: True), \
+             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
+            self.assertFalse(self.bot._пара_кадров(["снимок"], "ph_full"))
+
+    def test_одетая_кнопка_пары_не_просит(self):
+        """«Было» и «стало» там различаются одной позой."""
+        with mock.patch.object(self.bot, "на_карте", lambda: False), \
+             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: True):
+            self.assertFalse(self.bot._пара_кадров(["снимок"], "ph_below"))
+
+    def test_без_снимка_пары_не_бывает(self):
+        with mock.patch.object(self.bot, "на_карте", lambda: False), \
+             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
+            self.assertFalse(self.bot._пара_кадров([], "ph_full"))
+
+    def test_выключатель_слушается(self):
+        with mock.patch.object(self.bot, "ДВА_КАДРА", False), \
+             mock.patch.object(self.bot, "на_карте", lambda: False), \
+             mock.patch.object(self.bot, "_одежда_в_кадре", lambda с: False):
+            self.assertFalse(self.bot._пара_кадров(["снимок"], "ph_full"))
+
+    def test_порядок_кадров_не_перепутан(self):
+        """Первый — присланный (одета), последний — наш (раздета).
+        Наоборот ролик показал бы ОДЕВАНИЕ."""
+        import inspect
+        и = inspect.getsource(self.bot.run_job)
+        self.assertIn("[вход[0], наш] if пара else [наш]", и)
+
+
 class ПересъёмкиБольшеНет(unittest.TestCase):
     """Решение владельца 01.10.2026. На своей карте лишний проход стоил
     только времени — она оплачена помесячно. На API каждый пересъём это
