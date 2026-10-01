@@ -477,13 +477,14 @@ function diploma_theme_on_light(array $T): array {
             'name_color'  => '#0B2A66', 'script_color' => '#123A8C',
             'sh_comp'     => '0 0 14px rgba(184,134,43,.22)',
         ],
-        // Территория таланта: ярко-синее название, звание - насыщенное золото.
+        // Территория таланта на светлом золотистом листе: рубиновое название
+        // (в тон бордовой афише), звание - тёмная бронза, ДИПЛОМ - глубокое золото.
         'territoriya' => [
-            'grad_comp'   => 'linear-gradient(180deg,#3A7BE0 0%,#1A55C8 40%,#0A3DB0 70%,#2F6FD8 100%)',
-            'grad_dtype'  => 'linear-gradient(180deg,#E3A82A 0%,#C48A14 40%,#93650C 70%,#D9A030 100%)',
-            'grad_degree' => 'linear-gradient(180deg,#F0B43A 0%,#D9921C 42%,#A86A0E 74%,#E5A532 100%)',
-            'name_color'  => '#06216B', 'script_color' => '#0A3DB0',
-            'sh_comp'     => '0 0 12px rgba(58,123,224,.20)',
+            'grad_comp'   => 'linear-gradient(180deg,#C0283E 0%,#9E1B32 40%,#6E0F22 72%,#B02238 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#B8862A 0%,#96681A 38%,#6B4F0A 66%,#A87A22 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#B5602A 0%,#94481A 42%,#6E3010 74%,#A85624 100%)',
+            'name_color'  => '#3A0711', 'script_color' => '#6E0F22',
+            'sh_comp'     => '0 0 12px rgba(201,150,46,.22)',
         ],
         // Вершина творчества: ледяная синь гор, звание - золото рассвета.
         'vershina' => [
