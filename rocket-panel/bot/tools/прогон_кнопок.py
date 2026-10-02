@@ -21,6 +21,12 @@
 
     PROBA_PLACE=ref|sc_hotel   какое место подставить (умолчание ref)
     PROBA_PHOTO=qwen3-image    модель
+    PROBA_MODE=новый|старый    новый — как шлёт бот сейчас; старый —
+                               собранный промпт без эталона, то есть то,
+                               что уходило до 02.10.2026. Нужен, чтобы
+                               сравнивать на ОДНОМ И ТОМ ЖЕ снимке: «до»,
+                               снятое на другом референсе, не сравнение.
+    PROBA_REF=/путь/ref.jpg    снимок клиентки
     python3 прогон_кнопок.py фото [кнопка,кнопка]
 """
 import base64, io, json, os, subprocess, sys, time, urllib.request
@@ -33,6 +39,8 @@ from PIL import Image, ImageFilter, ImageStat
 КЛЮЧ = os.environ["APIMODELS_KEY"]
 МОДЕЛЬ_ФОТО = os.environ.get("PROBA_PHOTO", "qwen3-image")
 МЕСТО_КЛЮЧ = os.environ.get("PROBA_PLACE", "ref")
+РЕЖИМ = os.environ.get("PROBA_MODE", "новый")
+СНИМОК = os.environ.get("PROBA_REF", "/root/proba/ref_klientka.jpg")
 КНОПКИ = sys.argv[2].split(",") if len(sys.argv) > 2 else None
 ОТЧЁТ = os.environ.get("PROBA_REPORT", "/root/proba/poza.csv")
 ЛАПЛАС = ImageFilter.Kernel((3, 3), [0, 1, 0, 1, -4, 1, 0, 1, 0], scale=1)
@@ -68,10 +76,10 @@ def дождаться(tid, попыток=100):
 
 
 реф = "data:image/jpeg;base64," + base64.b64encode(
-    io.open("/root/proba/ref.jpg", "rb").read()).decode()
-_вт = "/root/proba/ref2.jpg"
+    io.open(СНИМОК, "rb").read()).decode()
+_вт = os.path.splitext(СНИМОК)[0] + "_2.jpg"
 if not os.path.exists(_вт):
-    Image.open("/root/proba/ref.jpg").transpose(
+    Image.open(СНИМОК).transpose(
         Image.FLIP_LEFT_RIGHT).save(_вт, "JPEG", quality=90)
 реф2 = "data:image/jpeg;base64," + base64.b64encode(
     io.open(_вт, "rb").read()).decode()
@@ -79,14 +87,18 @@ if not os.path.exists(_вт):
 кнопки = [s for s in catalog.все_сценарии()
           if not s.скрыт and s.наполнен
           and not s.двухшаговый and (not КНОПКИ or s.key in КНОПКИ)]
-print("прогон: кнопок %d · %s · место %s" % (len(кнопки), МОДЕЛЬ_ФОТО, МЕСТО.key),
+print("прогон «%s»: кнопок %d · %s · место %s · снимок %s"
+      % (РЕЖИМ, len(кнопки), МОДЕЛЬ_ФОТО, МЕСТО.key, os.path.basename(СНИМОК)),
       flush=True)
 отчёт = io.open(ОТЧЁТ, "a", encoding="utf-8")
 потрачено = 0.0
 for сц in кнопки:
     имя = catalog.имя(сц.key, сц.title, "", "ru")
-    # РОВНО ТО, ЧТО ШЛЁТ БОТ.
-    промпт, _, _ = БОТ.тексты_кнопки(сц, МЕСТО, None)
+    # РОВНО ТО, ЧТО ШЛЁТ БОТ (или то, что слал до фикса).
+    if РЕЖИМ == "старый":
+        промпт = сц.промпт(место=МЕСТО, сложение=None)
+    else:
+        промпт, _, _ = БОТ.тексты_кнопки(сц, МЕСТО, None)
     промпт = БОТ.prompts.под_предел(промпт, БОТ.КОРОТКИЙ_ПРЕДЕЛ)
     т0 = time.time()
     рефы = [реф, реф2] if сц.пара else [реф]
@@ -105,7 +117,7 @@ for сц in кнопки:
         стр = "%s;%s;ОТКАЗ;%s;%d;%d;;" % (сц.key, имя, причина, len(промпт),
                                           time.time() - т0)
         print(стр, flush=True); отчёт.write(стр + "\n"); отчёт.flush(); continue
-    путь = "/root/proba/p_%s_%s_%s.png" % (МОДЕЛЬ_ФОТО, МЕСТО.key, сц.key)
+    путь = "/root/proba/%s_%s_%s.png" % (РЕЖИМ, МЕСТО.key, сц.key)
     subprocess.run(["curl", "-sL", "-A", "Mozilla/5.0", "-o", путь, ссылка], check=True)
     им = Image.open(путь)
     ш, в = им.size
