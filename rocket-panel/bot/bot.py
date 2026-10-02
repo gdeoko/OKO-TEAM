@@ -43,6 +43,7 @@ import brand
 from store import Store, NotEnoughCoins
 from gpu import Gpu, GpuError
 from apimodels import Api
+from runware import Runware
 import движок as _движок
 
 TOKEN = os.environ.get("ROCKET_BOT_TOKEN", "")
@@ -72,7 +73,13 @@ store = Store(os.environ.get("ROCKET_DB", "rocket_bot.db"),
 # и качество выбирает владелец в админке, и выбор живёт в базе, а не в
 # переменных окружения — перевыкладка для смены модели не нужна.
 АПИ = Api(store=store)
-gpu = _движок.Выбор(КАРТА, АПИ, store)
+# RUNWARE — третий движок, и только для ФОТО. Откровенные кнопки он
+# считает лучше всех: промпт в 1680 знаков не режется, органы настоящие,
+# два прохода за 24 секунды. Видео там не проверяли вовсе, и
+# переключатель сам оставляет ролики на API. Ключа нет — движок не
+# берёт работу, и бот считает как раньше.
+РВ = Runware(store=store)
+gpu = _движок.Выбор(КАРТА, АПИ, store, рв=РВ)
 
 # Какие обновления слушаем. pre_checkout_query обязателен: без него
 # оплата звёздами отменяется через 10 секунд.
@@ -414,6 +421,12 @@ def _проход(kind, prompt, photos, на_тик=None, denoise=1.0, лист=
     if photos:
         params["images"] = list(photos)
         params["image"] = photos[0]      # совместимость со старой панелью
+    # КЛЮЧ КНОПКИ УХОДИТ В ДВИЖОК. Runware по нему решает, нужен ли
+    # второй проход: пах крупно есть у интимного соло и у пар, а у «ню в
+    # полный рост» его нет, и правка по маске там только портит кадр.
+    # Карта и APIMODELS лишнее поле не читают.
+    if scene:
+        params["сцена"] = scene
 
     if зерно:
         params["seed"] = зерно
@@ -3082,9 +3095,12 @@ def on_update(up):
                 gpu.записать("api")
             elif хочу in ("карта", "card", "gpu"):
                 gpu.записать("карта")
+            elif хочу in ("runware", "рунвар", "rw"):
+                gpu.записать("runware")
             else:
-                send(chat, "Так: <code>/движок api</code> или "
-                           "<code>/движок карта</code>"); return
+                send(chat, "Так: <code>/движок api</code>, "
+                           "<code>/движок карта</code> или "
+                           "<code>/движок runware</code>"); return
         send(chat, движок_словами()); return
 
     if text == "/stats":
@@ -3108,8 +3124,9 @@ def движок_словами():
     Остаток API спрашивается с кэшем (`apimodels.БАЛАНС_ЖИВЁТ`), поэтому
     команду можно жать подряд, не гоняя сеть на каждое нажатие.
     """
-    строки = ["<b>Движок:</b> " + ("API (APIMODELS)" if gpu.желание() == "api"
-                                   else "своя карта")]
+    КАК_ЗОВУТ = {"api": "API (APIMODELS)", "карта": "своя карта",
+                 "runware": "Runware (фото 18+ в два прохода, видео на API)"}
+    строки = ["<b>Движок:</b> " + КАК_ЗОВУТ.get(gpu.желание(), gpu.желание())]
     остаток = None
     try:
         остаток = АПИ.баланс() if АПИ.настроена else None
@@ -3128,9 +3145,17 @@ def движок_словами():
                       f"очередь {очередь}")
     except GpuError:
         строки.append("Карта: не отвечает (в простое это норма)")
+    # Остатка у Runware нет в API вовсе (`cost` приходит `null`), поэтому
+    # про него честно говорится одно: отвечает ключ или нет.
+    if РВ.настроена:
+        строки.append("Runware: " + ("ключ отвечает" if РВ.alive()
+                                     else "ключ не отвечает"))
+    else:
+        строки.append("Runware не подключён: нет RUNWARE_KEY")
     строки.append("")
     строки.append("Переключить: <code>/движок api</code> · "
-                  "<code>/движок карта</code>")
+                  "<code>/движок карта</code> · "
+                  "<code>/движок runware</code>")
     return "\n".join(строки)
 
 
