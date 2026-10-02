@@ -77,7 +77,7 @@ if not os.path.exists(_вт):
     io.open(_вт, "rb").read()).decode()
 
 кнопки = [s for s in catalog.все_сценарии()
-          if not catalog.скрыт(s.key) and s.наполнен
+          if not s.скрыт and s.наполнен
           and not s.двухшаговый and (not КНОПКИ or s.key in КНОПКИ)]
 print("прогон: кнопок %d · %s · место %s" % (len(кнопки), МОДЕЛЬ_ФОТО, МЕСТО.key),
       flush=True)

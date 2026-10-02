@@ -4106,6 +4106,31 @@ class ФонБерётсяСоСнимка(unittest.TestCase):
         self.assertIn("COPIED from the photograph and not invented",
                       inspect.getsource(self.prompts))
 
+    def test_каждая_видимая_кнопка_собирается_во_всех_местах(self):
+        """Сухой прогон всего каталога: ни одна кнопка не падает.
+
+        Поймал бы опечатку, которая 02.10.2026 уронила прогон на первой
+        же кнопке (`сл` вместо `сложение` после выноса функции). Такое
+        не ловится точечным тестом на три кнопки: падает то, до чего
+        тест не дошёл, и узнаёт об этом живой человек."""
+        import catalog
+        отель = [м for м in self.места.ВСЕ if м.key == "sc_hotel"][0]
+        кнопки = [с for у in catalog.УЗЛЫ for с in (у.scenes or ())
+                  if not с.скрыт and с.наполнен]
+        self.assertGreater(len(кнопки), 20, "каталог вдруг опустел")
+        беды = []
+        for сц in кнопки:
+            for м in (self.места.КАК_НА_ФОТО, отель):
+                for сл in (None, "пышная"):
+                    try:
+                        п, пф, _ = self.bot.тексты_кнопки(сц, м, сл)
+                    except Exception as e:                  # noqa: BLE001
+                        беды.append("%s/%s/%s: %s" % (сц.key, м.key, сл, e))
+                        continue
+                    if not (п or пф):
+                        беды.append("%s/%s/%s: пусто" % (сц.key, м.key, сл))
+        self.assertFalse(беды, "кнопки не собрались: %s" % беды[:5])
+
 
 class ПересъёмкиБольшеНет(unittest.TestCase):
     """Решение владельца 01.10.2026. На своей карте лишний проход стоил
