@@ -1550,3 +1550,69 @@ class ОплаченнаяФормаФигурыДоезжает(unittest.TestCa
         self.assertEqual(self.p.фигура_из("... a cup at most ..."), "стройная")
         self.assertEqual(self.p.фигура_из("... curvy build ..."), "пышная")
         self.assertIsNone(self.p.фигура_из("просто текст"))
+
+class ЗвукРоликаПросимСловами(unittest.TestCase):
+    """Правило владельца 02.10.2026: «липсинк не нужен, нужны стоны и
+    соответствующие звуки».
+
+    `minimax-h3-lite` делает звук сама, из промпта. А в наших видео-
+    промптах про звук не было НИ ОДНОГО СЛОВА — проверено на всех
+    видеокнопках, — и модель ставила что ей вздумается: комнатный шум,
+    музыку, иногда чужую речь."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_у_каждой_видеокнопки_сказано_про_звук(self):
+        import catalog, места
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key):
+                continue
+            if self.p.семейство(сц.job) not in ("i2v", "sound"):
+                continue
+            г = self.p.под_предел(сц.промпт(место=места.КАК_НА_ФОТО), 2900)
+            низ = г.lower()
+            бед = []
+            if "sound:" not in низ:
+                бед.append("нет блока звука")
+            if "moan" not in низ:
+                бед.append("нет стонов")
+            if "no music" not in низ:
+                бед.append("музыка не запрещена")
+            if "no words" not in низ and "no speech" not in низ:
+                бед.append("слова не запрещены")
+            if бед:
+                плохо.append((сц.key, "; ".join(бед)))
+        self.assertEqual(плохо, [])
+
+    def test_у_пары_слышно_обоих(self):
+        import catalog
+        г = self.p.под_предел(catalog.scene("pr_mf_near").промпт(), 2900)
+        self.assertIn("his lower breathing", г)
+
+    def test_у_одиночки_только_она(self):
+        import catalog
+        г = self.p.под_предел(catalog.scene("ac_close").промпт(), 2900)
+        self.assertNotIn("his lower breathing", г)
+
+    def test_звук_подбирается_по_акту(self):
+        класс = type("Б", (), {})
+        б = класс()
+        б.движение = "his hips move forward and back against her buttocks"
+        б.откровенное = ""
+        б.ещё = ""
+        self.assertIn("Skin meets skin", self.p.звук(б))
+        б.движение = "her fingers work between her thighs"
+        self.assertIn("her own fingers", self.p.звук(б))
+        б.движение = "her tongue works on her vulva"
+        self.assertIn("Wet mouth sounds", self.p.звук(б))
+
+    def test_липсинка_не_просим(self):
+        """Он не нужен и стоит качества: модель начинает двигать губами
+        вместо того, чтобы стонать."""
+        import catalog
+        г = self.p.под_предел(catalog.scene("ac_close").промпт(), 2900).lower()
+        for слово in ("lip sync", "lipsync", "lips must match"):
+            self.assertNotIn(слово, г)

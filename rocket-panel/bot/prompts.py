@@ -1296,6 +1296,9 @@ def собрать(вид, блок, фон="новый", пара=False, сло
     if сем not in ПО_ВИДУ:
         raise KeyError(f"неизвестный вид работы: {вид}")
     if сем in ("i2v", "sound"):
+        # ЗВУК ПРОСИТСЯ СЛОВАМИ, ИНАЧЕ МОДЕЛЬ ПРИДУМАЕТ СВОЙ.
+        # См. `звук()`: до 02.10.2026 в видео-промптах не было ни одного
+        # слова про звук, и `minimax-h3-lite` ставила что угодно.
         # Короткая сборка: см. комментарий у ключа «i2v» выше.
         #
         # ДВИЖЕНИЕ КНОПКИ ВЫТЕСНЯЕТ ОБЩУЮ ФРАЗУ ПРО ДЫХАНИЕ. Она верна
@@ -1311,6 +1314,7 @@ def собрать(вид, блок, фон="новый", пара=False, сло
             куски.append(блок.откровенное.strip())
         if блок.ещё:
             куски.append(блок.ещё.strip())
+        куски.append(звук(блок))
         куски.append(ВИДЕО_ДЕРЖАТЬ)
         return "\n\n".join(куски)
     if фон not in ("новый", "референс"):
@@ -2138,6 +2142,63 @@ def фигура_из(промпт):
         if any(с in низ for с in слова):
             return имя
     return None
+
+
+# ЗВУК РОЛИКА — ПРОСИТСЯ СЛОВАМИ (02.10.2026, правило владельца:
+# «липсинк не нужен, нужны стоны и соответствующие звуки»).
+#
+# `minimax-h3-lite` делает звук сама, из промпта. А в наших видео-
+# промптах про звук не было НИ ОДНОГО СЛОВА — проверено на всех
+# видеокнопках, — и модель ставила что ей вздумается: комнатный шум,
+# музыку, иногда чужую речь. Человек платит за откровенный ролик и
+# получает немую возню с посторонним шумом.
+#
+# Запреты здесь важнее просьб. «Без музыки» и «без слов» сказаны прямо:
+# модель охотно добавляет и то, и другое, а слова в нашем жанре звучат
+# как чужой голос за кадром и портят весь ролик.
+ЗВУК_ОСНОВА = (
+    "SOUND: her own voice and her own body only - NO music, NO words, NO "
+    "speech, NO narration, no room noise and no other people. Her "
+    "breathing is audible from the first second and quickens with the "
+    "movement.")
+
+ЗВУК_СТОНЫ = (
+    "She moans softly and unevenly IN TIME with the movement - real "
+    "involuntary moans that get louder as the clip goes on, with small "
+    "gasps when the movement is sharper.")
+
+ЗВУК_СТОНЫ_ДВОЕ = (
+    "Both of them are heard: her moans in time with the movement, louder "
+    "as the clip goes on, and his lower breathing under them - no words "
+    "from either.")
+
+# Что ещё слышно, по самому акту. Подбирается по словам движения и
+# откровенной строки, а не по ключу кнопки: движение владелец правит в
+# админке, и ключи у ролика и его фотографии разные.
+ЗВУК_ПО_АКТУ = (
+    (("hips", "thrust", "pushes", "against her buttocks", "entering"),
+     "Skin meets skin in the same rhythm, with the wet sound of their "
+     "bodies where they join."),
+    (("fingers", "her own hand", "rubbing", "masturbat"),
+     "The quiet wet sound of her own fingers working between her thighs."),
+    (("tongue", "licking", "mouth", "sucking", "lips around"),
+     "Wet mouth sounds, soft and close to the microphone."),
+)
+
+
+def звук(блок):
+    """Что должно быть слышно в ролике. Собирается из акта кнопки."""
+    текст = " ".join(
+        (getattr(блок, п, "") or "") for п in ("движение", "откровенное", "ещё")
+    ).lower()
+    двое = any(с in текст for с in ("one man and one woman", "both people",
+                                    "the man", "his hips", "two women"))
+    куски = [ЗВУК_ОСНОВА, ЗВУК_СТОНЫ_ДВОЕ if двое else ЗВУК_СТОНЫ]
+    for слова, фраза in ЗВУК_ПО_АКТУ:
+        if any(с in текст for с in слова):
+            куски.append(фраза)
+            break
+    return " ".join(куски)
 
 
 def обязательные(промпт, фон_с_фото=None, фигура=None):
