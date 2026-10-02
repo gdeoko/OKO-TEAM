@@ -846,6 +846,49 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         на «each other»."""
         self.assertFalse(self.p.женщина_в_кадре("they face each other"))
 
+    def test_у_ролика_своё_необрезаемое(self):
+        """Ролик оживляет готовый кадр, и фотографическое в нём уже
+        решено (`ВИДЕО_ДЕРЖАТЬ`: то же лицо, тело, грудь, комната,
+        свет). Фотографический блок отнимал у ролика 700-900 знаков, и у
+        четырёх кнопок из-за этого выбрасывался ЗВУК.
+
+        Осталось то, что портит именно движение: звук, целость тела,
+        органы по полу и детализация — каждый кадр ролика
+        перерисовывается заново."""
+        import catalog, места
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key):
+                continue
+            if self.p.семейство(сц.job) not in ("i2v", "sound"):
+                continue
+            г = self.p.под_предел(сц.промпт(место=места.КАК_НА_ФОТО), 2900)
+            низ = г.lower()
+            полы = catalog.полы(сц.key) or ("ж",)
+            бед = []
+            if "sound:" not in низ:
+                бед.append("звук")
+            if "no joint ever bends" not in г:
+                бед.append("анатомия движения")
+            if "anatomical detail" not in низ:
+                бед.append("детализация")
+            if "ж" in полы and not ("only a woman's body" in низ
+                                   or "anatomy is female only" in низ):
+                бед.append("женское тело")
+            if "м" in полы and not ("a man's body only" in низ
+                                   or "anatomy is male only" in низ):
+                бед.append("мужское тело")
+            # А вот этого в ролике быть НЕ ДОЛЖНО: кадр уже снят.
+            for что, метка in (("f/8", "f/8 в ролике"),
+                               ("fills the frame", "плотный кадр в ролике"),
+                               ("keep the place from the supplied photo",
+                                "фон со снимка в ролике")):
+                if что in низ:
+                    бед.append(метка)
+            if бед:
+                плохо.append((сц.key, "; ".join(бед)))
+        self.assertEqual(плохо, [])
+
     def test_все_кнопки_получают_правила_по_полу(self):
         """Сквозной замер: в ГОТОВОМ промпте каждой кнопки есть ровно те
         правила, которые её полу положены.
@@ -859,6 +902,9 @@ class ОбязательноеНеТеряется(unittest.TestCase):
         плохо = []
         for сц in catalog.все_сценарии():
             if catalog.скрыт(сц.key):
+                continue
+            # У ролика своё необрезаемое, см. тест выше.
+            if self.p.семейство(сц.job) in ("i2v", "sound"):
                 continue
             полы = catalog.полы(сц.key) or ("ж",)
             for подпись, место in (("без места", None), ("место", места[0])):
