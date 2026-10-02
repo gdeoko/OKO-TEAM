@@ -1593,9 +1593,18 @@ class ОплаченнаяФормаФигурыДоезжает(unittest.TestCa
         self.assertNotIn("A cup at most", о)
 
     def test_форма_узнаётся_по_сырому_промпту(self):
+        # Приметы сменились 02.10.2026 вместе с текстами кнопок: полноты
+        # («curvy build», «full, soft») в них больше нет вовсе, «пышная»
+        # теперь опознаётся по размеру груди, а не по полноте тела.
         self.assertEqual(self.p.фигура_из("... a cup at most ..."), "стройная")
-        self.assertEqual(self.p.фигура_из("... curvy build ..."), "пышная")
+        self.assertEqual(
+            self.p.фигура_из("... large full natural breasts ..."), "пышная")
+        self.assertEqual(
+            self.p.фигура_из("... medium natural breasts ..."), "средняя")
         self.assertIsNone(self.p.фигура_из("просто текст"))
+        # И обратно: старая полнота НЕ должна опознаваться ничем, иначе
+        # прежний текст тихо вернётся через чужую ветку.
+        self.assertIsNone(self.p.фигура_из("... curvy build ..."))
 
 class ЗвукРоликаПросимСловами(unittest.TestCase):
     """Правило владельца 02.10.2026: «липсинк не нужен, нужны стоны и

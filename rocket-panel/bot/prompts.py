@@ -75,6 +75,16 @@
 #
 # Правильный конец этой истории — кнопка «Фигура» на экране варианта,
 # три положения. Пока её нет, работает умолчание.
+# Общий каркас тела для ВСЕХ кнопок сложения. Правило владельца от
+# 02.10.2026: меняется только грудь и ягодицы, худоба не меняется никогда.
+СТРОЙНЫЙ_КАРКАС = (
+    "She is SLIM AND PETITE and stays slim in every version: narrow "
+    "shoulders, a narrow ribcage, a narrow waist, narrow hips, a flat "
+    "lean stomach with no fold and no roll, slender arms and slender "
+    "thighs, a light small frame, a young adult face. She is never "
+    "heavy, never thick, never chubby and never middle-aged."
+)
+
 СЛОЖЕНИЕ = {
     "стройная": (
         "Petite and slim with a SMALL, ALMOST FLAT CHEST: tiny natural "
@@ -86,16 +96,32 @@
         # каждом кадре с кнопкой «стройная». Нужный смысл — «худая»,
         # он и остался.
         "roundness, no weight to them — a slender narrow ribcage, "
-        "a flat stomach and narrow hips. If the result shows a handful, "
-        "it is wrong."
+        "a flat stomach and narrow hips, and a small neat bottom. If the "
+        "result shows a handful, it is wrong."
     ),
+    # ПРАВИЛО ВЛАДЕЛЬЦА ОТ 02.10.2026, ПОСТОЯННОЕ: РЕЗУЛЬТАТ ВСЕГДА
+    # СТРОЙНЫЙ, НИКОГДА ПОЛНЫЙ. Три кнопки меняют ТОЛЬКО размер груди и
+    # ягодиц, каркас тела у всех трёх один и тот же: узкие плечи, узкие
+    # бёдра, плоский живот, тонкие руки и ноги.
+    #
+    # Цена прежней редакции известна: у «пышной» стояло «wide hips and a
+    # soft belly», а у «как на фото» — «a soft belly stays a soft belly».
+    # На модели-двадцатилетней это давало полную женщину лет тридцати:
+    # клиент выбирал грудь побольше, а получал другое телосложение.
     "средняя": (
-        "An average, natural build with medium natural breasts — neither "
-        "slimmed down nor enlarged."
+        СТРОЙНЫЙ_КАРКАС + " On that slim frame she has medium natural "
+        "breasts, a B to C cup, and a softly rounded bottom. The chest "
+        "and the bottom are the ONLY things fuller than on the slim "
+        "setting; the waist, the stomach, the hips, the arms and the "
+        "legs stay exactly as slender."
     ),
     "пышная": (
-        "A full, soft, curvy build with large natural breasts, wide hips "
-        "and a soft belly."
+        СТРОЙНЫЙ_КАРКАС + " On that slim frame she has large full natural "
+        "breasts, a D cup or more, and a full round bottom. The chest and "
+        "the bottom are the ONLY things enlarged; she keeps the same "
+        "narrow waist, the same flat stomach, the same narrow hips and "
+        "the same slender arms and legs. She is a slim girl with a large "
+        "bust, NOT a heavy woman."
     ),
     # ПО УМОЛЧАНИЮ С 24.09.2026 — «как на фото».
     #
@@ -1107,10 +1133,19 @@ def первое_предложение_акта(блок):
 
 # Сложение одной фразой: в короткий промпт абзац на 319 знаков не
 # влезает, а размер груди владелец называет первым делом.
+# Краткие двойники — те же три кнопки в тесном промпте. Правило
+# владельца от 02.10.2026 держится и здесь: слово «slim» стоит во всех
+# трёх, различается только грудь и ягодицы.
 СЛОЖЕНИЕ_КРАТКО = {
-    "стройная": "She is petite with a small, almost flat chest.",
-    "средняя": "She has an average build with medium natural breasts.",
-    "пышная": "She is full and curvy with large natural breasts.",
+    "стройная": ("She is slim and petite with a small, almost flat chest "
+                 "and a small neat bottom; flat stomach, narrow hips."),
+    "средняя": ("She is slim and petite with medium natural breasts and a "
+                "softly rounded bottom; flat stomach, narrow hips, slender "
+                "arms and legs."),
+    "пышная": ("She is slim and petite with large full natural breasts and "
+               "a full round bottom, but her waist, stomach, hips, arms and "
+               "legs stay slender — a slim girl with a large bust, not a "
+               "heavy woman."),
     # У парной сборки жёсткий лимит длины, поэтому здесь коротко — но
     # про то же самое: тело не сочиняем, а читаем со снимка.
     # Те же слова, что и в длинном: без «build», «weight» и прочего
@@ -2142,19 +2177,31 @@ def по_фразе(текст, предел):
 # Чинится тем же приёмом, что фон и поза: форма узнаётся по СЫРОМУ
 # промпту (после укорачивания узнавать уже нечего) и, если из текста
 # пропала, дописывается коротко в необрезаемый блок.
+# Приметы, по которым тест ловит, доехала ли форма до модели. Обновлены
+# 02.10.2026 вместе с самими текстами: «curvy build» и «full, soft» из
+# них убраны, потому что полноты в кнопках больше нет вовсе.
 ФИГУРА_ПРИЗНАК = {
     "стройная": ("almost flat chest", "a cup at most", "small, almost flat"),
-    "средняя": ("average, natural build", "medium natural breasts"),
-    "пышная": ("curvy build", "large natural breasts", "full, soft"),
+    "средняя": ("medium natural breasts",),
+    "пышная": ("large full natural breasts", "large natural breasts"),
 }
 
+# ТРЕТЬЯ КОПИЯ ТЕХ ЖЕ ТРЁХ КНОПОК — для самой тесной сборки. Правило
+# владельца от 02.10.2026 держится и здесь: тело всегда стройное,
+# растут только грудь и ягодицы. Проверять ВСЕ ТРИ места разом
+# (СЛОЖЕНИЕ, СЛОЖЕНИЕ_КРАТКО, ФИГУРА_КОРОТКО) — текст тут живёт в трёх
+# редакциях, и прошлый раз полнота осталась ровно в той, что забыли.
 ФИГУРА_КОРОТКО = {
-    "стройная": "Her chest is SMALL and almost flat - an A cup at most, "
-                "small nipples, and a slim petite build.",
-    "средняя": "An average natural build with medium natural breasts - "
-               "neither slimmed down nor enlarged.",
-    "пышная": "A full soft curvy build with large natural breasts, wide "
-              "hips and a soft belly.",
+    "стройная": "Slim petite build - flat stomach, narrow hips, small neat "
+                "bottom. Her chest is SMALL and almost flat, an A cup at "
+                "most, with small nipples.",
+    "средняя": "Slim petite build - flat stomach, narrow hips, slender arms "
+               "and legs. On that slim frame, medium natural breasts and a "
+               "softly rounded bottom.",
+    "пышная": "Slim petite build - narrow waist, flat stomach, narrow hips, "
+              "slender arms and legs. On that slim frame, large full "
+              "natural breasts and a full round bottom. A slim girl with a "
+              "large bust, never a heavy woman.",
 }
 
 
