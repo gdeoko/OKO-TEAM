@@ -4106,6 +4106,27 @@ class ФонБерётсяСоСнимка(unittest.TestCase):
         self.assertIn("COPIED from the photograph and not invented",
                       inspect.getsource(self.prompts))
 
+    def test_оплаченное_место_переживает_укорачиватель(self):
+        """Доезжать должно до МОДЕЛИ, а не до сборщика.
+
+        Полное описание отеля (349 знаков тремя блоками) укорачиватель
+        резал по фразе, и из шести слов обстановки доходили два: комната
+        называлась, свет пропадал. Человек платил за свет и вид из окна.
+        Проверяем ровно то, что уйдёт в запрос."""
+        import catalog, prompts
+        отель = [м for м in self.места.ВСЕ if м.key == "sc_hotel"][0]
+        кнопки = [с for у in catalog.УЗЛЫ for с in (у.scenes or ())
+                  if not с.скрыт and с.наполнен and not с.двухшаговый]
+        беды = []
+        for сц in кнопки:
+            п, _, _ = self.bot.тексты_кнопки(сц, отель, None)
+            финал = prompts.под_предел(п, self.bot.КОРОТКИЙ_ПРЕДЕЛ).lower()
+            if "hotel room at night" not in финал:
+                беды.append(сц.key + ": комната")
+            elif "lamplight" not in финал:
+                беды.append(сц.key + ": свет")
+        self.assertFalse(беды, "место не доехало: %s" % беды[:6])
+
     def test_каждая_видимая_кнопка_собирается_во_всех_местах(self):
         """Сухой прогон всего каталога: ни одна кнопка не падает.
 
