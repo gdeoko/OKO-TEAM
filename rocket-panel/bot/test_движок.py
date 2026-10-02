@@ -1124,19 +1124,22 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         # Умолчания с 01.10.2026 выбраны замером, а не вкусом: pro
         # детальнее базовой на 37-51%, wan берёт наш кадр почти
         # дословно (отклонение 3.8 против 10.2) и втрое быстрее.
-        self.assertEqual(в["фото"], "qwen3-image-pro")
-        self.assertEqual(в["видео"], "wan-2.7-i2v-spicy")
-        self.assertEqual(в["качество"], "720p")
+        # Решение владельца 02.10.2026: он назвал модели сам —
+        # qwen3-image 2K и minimax-h3-lite 768p (у неё синхронная речь
+        # с попаданием в губы).
+        self.assertEqual(в["фото"], "qwen3-image")
+        self.assertEqual(в["видео"], "minimax-h3-lite")
+        self.assertEqual(в["качество"], "768p")
 
     def test_выбор_владельца_запоминается(self):
-        self.api.выбрать_модель(фото="qwen3-image")
-        self.assertEqual(self.api.модель_фото, "qwen3-image")
+        self.api.выбрать_модель(фото="qwen3-image-pro")
+        self.assertEqual(self.api.модель_фото, "qwen3-image-pro")
 
     def test_чужая_модель_не_принимается(self):
         self.api.выбрать_модель(фото="z-image-spicy")
         # У spicy нет входа для референса вовсе: лицо клиента ей не
         # передать. Такую модель принимать нельзя.
-        self.assertEqual(self.api.модель_фото, "qwen3-image-pro")
+        self.assertEqual(self.api.модель_фото, "qwen3-image")
 
     def test_у_каждой_модели_своё_поле_кадра(self):
         """Чужое поле сервис молча выбрасывает: ответ 200, задача
@@ -1191,17 +1194,16 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         владельцу кнопкой значило бы сломать каждую кнопку бота."""
         self.assertNotIn("minimax-h3", self.m.ВИДЕО_МОДЕЛИ)
         self.api.выбрать_модель(видео="minimax-h3")
-        self.assertEqual(self.api.модель_видео, "wan-2.7-i2v-spicy")
+        self.assertEqual(self.api.модель_видео, "minimax-h3-lite")
 
     def test_качество_переезжает_вместе_с_моделью(self):
         """768p есть у lite и нет у wan: оставить чужое слово значит
         получить отказ за наши деньги."""
-        self.api.выбрать_модель(видео="minimax-h3-lite")
-        self.assertEqual(self.api.модель_видео, "minimax-h3-lite")
-        self.assertIn(self.api.качество_видео, ("480p", "768p"))
+        self.api.выбрать_модель(видео="wan-2.7-i2v-spicy")
+        self.assertEqual(self.api.модель_видео, "wan-2.7-i2v-spicy")
+        self.assertIn(self.api.качество_видео, ("720p", "1080p"))
 
     def test_качество_только_своё(self):
-        self.api.выбрать_модель(видео="minimax-h3-lite")
         self.api.выбрать_модель(качество="1080p")   # у lite такого нет
         self.assertIn(self.api.качество_видео, ("480p", "768p"))
         self.api.выбрать_модель(качество="480p")
@@ -1217,9 +1219,9 @@ class ВыборМоделиВАдминке(unittest.TestCase):
 
     def test_без_склада_работают_умолчания(self):
         а = self.m.Api(key="x")
-        self.assertEqual(а.модель_фото, "qwen3-image-pro")
-        self.assertEqual(а.выбрать_модель(фото="qwen3-image")["фото"],
-                         "qwen3-image-pro")
+        self.assertEqual(а.модель_фото, "qwen3-image")
+        self.assertEqual(а.выбрать_модель(фото="qwen3-image-pro")["фото"],
+                         "qwen3-image")
 
 class ПодПредел(unittest.TestCase):
     """Сборка под предел: укороченный промпт плюс то из обязательного,
