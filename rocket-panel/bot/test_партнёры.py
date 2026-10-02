@@ -185,7 +185,12 @@ class КассаБезКлючей(unittest.TestCase):
         import ui
         self.счёт.МАГАЗИН, self.счёт.КЛЮЧ = "", ""
         importlib.reload(ui)
-        кн = [к["callback_data"] for р in ui.меню_способов("s")["inline_keyboard"]
+        # КНОПКА-ССЫЛКА НЕ ИМЕЕТ `callback_data`, И ЭТО НЕ ПОЛОМКА.
+        # В меню оплаты добавилась ссылка на поддержку (`url=`), а тест
+        # брал callback_data у КАЖДОЙ кнопки и падал с KeyError — на
+        # ровном месте, при полностью рабочей кассе. Проверяем то, что
+        # проверяли: какие способы оплаты показаны.
+        кн = [к.get("callback_data") for р in ui.меню_способов("s")["inline_keyboard"]
               for к in р]
         self.assertIn("pay:stars:s", кн)
         self.assertNotIn("pay:bill:s", кн)
@@ -195,7 +200,12 @@ class КассаБезКлючей(unittest.TestCase):
         выручка за наши генерации оседала бы у партнёра."""
         import ui
         self.счёт.МАГАЗИН, self.счёт.КЛЮЧ = "123", "test_ключ"
-        кн = [к["callback_data"] for р in ui.меню_способов("s")["inline_keyboard"]
+        # КНОПКА-ССЫЛКА НЕ ИМЕЕТ `callback_data`, И ЭТО НЕ ПОЛОМКА.
+        # В меню оплаты добавилась ссылка на поддержку (`url=`), а тест
+        # брал callback_data у КАЖДОЙ кнопки и падал с KeyError — на
+        # ровном месте, при полностью рабочей кассе. Проверяем то, что
+        # проверяли: какие способы оплаты показаны.
+        кн = [к.get("callback_data") for р in ui.меню_способов("s")["inline_keyboard"]
               for к in р]
         self.assertIn("pay:bill:s", кн)
         self.assertNotIn("pay:stars:s", кн)
