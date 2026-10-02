@@ -257,6 +257,54 @@ def _текст_пары(ключ, т):
     return т + " " + ВЗРОСЛЫЕ
 
 
+# ФОН ЭТАЛОНА ВЫРЕЗАЕТСЯ, А НЕ ПЕРЕБИВАЕТСЯ.
+#
+# Правило владельца 02.10.2026: «фон берётся либо с референса, если не
+# выбрали фон, либо по кнопкам фонов — другого не может быть». Наша
+# студия в этот список не входит, а описана она была во ВСЕХ 34
+# эталонах прямым текстом: «Black studio set with hot pink neon tubes
+# glowing on the wall behind her, glossy black floor». Приказ «эта
+# комната перебивает названную выше» слабее подробного описания: модель
+# видит неон словами и рисует неон.
+#
+# Поэтому фон вырезается из текста, и в промпте остаётся ровно одна
+# комната — со снимка или выбранная.
+#
+# МЕБЕЛЬ ПОД ПОЗОЙ — НЕ ФОН. «Вдвоём раком» это поза НА КРОВАТИ, и без
+# кровати её не существует. Кровать остаётся, цвет белья и стена с
+# неоном уходят.
+_БЕЗ_ФОНА = [
+    # Отдельные фразы, которые целиком про нашу студию.
+    (r"Black studio set[^.]*?glossy black floor[^.]*\.\s*", ""),
+    (r"Black studio set[^.]*?neon[^.]*\.\s*", ""),
+    (r"Black studio with hot pink neon tubes[^.]*\.\s*", ""),
+    # Фразы, где вместе со студией названа кровать: кровать оставляем.
+    (r"Black studio, hot pink neon tubes glowing on the wall behind them, "
+     r"DARK bedding[^.]*\.\s*", "A wide bed with bedding and pillows. "),
+    (r"Black studio, hot pink neon tubes glowing behind them, dark bedding\.\s*",
+     "A wide bed with bedding. "),
+    (r"A white bed with white sheets and pillows; behind it a black wall "
+     r"with hot pink neon tubes glowing\.\s*",
+     "A wide bed with sheets and pillows. "),
+    # Пол назван внутри фразы о позе — вырезать фразу нельзя, поза в ней.
+    (r"\bthe black floor\b", "the floor"),
+    (r"\bthe glossy black floor\b", "the floor"),
+    (r"\bdark bedding\b", "the bedding"),
+    (r"\bblack sheets\b", "the sheets"),
+    # Подстраховка: что угодно оставшееся со словом neon — это фон.
+    (r"[^.]*\bneon\b[^.]*\.\s*", ""),
+    (r"[^.]*\bblack studio\b[^.]*\.\s*", ""),
+]
+
+
+def без_фона(текст):
+    """Текст эталона без НАШЕЙ комнаты. Поза и мебель под ней целы."""
+    т = текст or ""
+    for было, стало in _БЕЗ_ФОНА:
+        т = re.sub(было, стало, т, flags=re.I)
+    return re.sub(r"\s{2,}", " ", т).strip()
+
+
 def промпт(ключ):
     """Текст эталона под клиента или None, если эталона нет."""
     if not _поддержана(ключ):
@@ -266,12 +314,16 @@ def промпт(ключ):
     except Exception:                                   # noqa: BLE001
         return None
     if _пара(ключ):
+        # ЧЕРЕЗ `без_фона` ТОЖЕ. Парная ветка возвращается раньше общей,
+        # и забыть её значит оставить неон ровно на тех кнопках, где
+        # людей двое и описание комнаты самое подробное.
         if з and з.get("промпт"):
-            return _текст_пары(str(ключ), з["промпт"])
+            return без_фона(_текст_пары(str(ключ), з["промпт"]))
         к = str(ключ).replace("pr_", "pf_", 1)
         if к in СВОИ_ПАРЫ:
             кто = _ПАРА_МЖ if "_mf_" in к else _ПАРА_ЖЖ
-            return "Explicit photograph. " + СВОИ_ПАРЫ[к] + кто + _ПАРА_КОНЕЦ + " " + ВЗРОСЛЫЕ
+            return без_фона("Explicit photograph. " + СВОИ_ПАРЫ[к] + кто
+                            + _ПАРА_КОНЕЦ + " " + ВЗРОСЛЫЕ)
         return None
     if not з or not з.get("промпт"):
         к = str(ключ)
@@ -285,7 +337,7 @@ def промпт(ключ):
     т = re.sub(r"\s{2,}", " ", т).strip()
     # Сразу после первой фразы (про фотореализм), до описания сцены.
     т = re.sub(r"^([^.]*\.)", r"\1 " + ВЗРОСЛАЯ, т, count=1)
-    return т
+    return без_фона(т)
 
 
 def негатив(ключ):
