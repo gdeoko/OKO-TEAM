@@ -115,31 +115,18 @@ Ultra-подписка безлимит), детальный промпт, га�
   Модель: `~/.u2net/u2net.onnx`, качать с
   `https://huggingface.co/tomjackson2023/rembg/resolve/main/u2net.onnx` (github 403).
 
-### APIMODELS — картинки постов и афиш (ПЛАТНО, ключ в vault, раздел APIMODELS)
-Агрегатор, 60–95% дешевле официала. Аккаунт `okoteam.top@gmail.com`, консоль
-`apimodels.app/console/credits`. Ключ `APIMODELS_KEY` — в vault на VPS, в git не класть.
-Генерация картинки 2k high стоит ~0.04 кредита, то есть пачка постов обходится в копейки,
-но это ДЕНЬГИ: правило 8 CLAUDE.md действует, спрашивать Даниэля перед прогоном.
-
-- **Запуск:** `POST https://api.apimodels.app/v1/images/generations`,
-  тело `{model, prompt, aspect_ratio, resolution:"2k", quality:"high", image_urls:[...]}`.
-  Модели: `gpt-image-2.5-flare` (рабочая для постов), `gpt-image-2`, `gemini-3-pro-image`.
-- **Логотип рефересом** — URL в `image_urls`, живой:
+### APIMODELS для постов МузМира (основной раздел — ниже, «APIMODELS», там же грабли видео)
+Картинки постов: `gpt-image-2.5-flare`, `aspect_ratio` по теме, `resolution:"2k"`,
+`quality:"high"`, рендер около минуты, ~0,04 кредита за кадр. Это ДЕНЬГИ, правило 8
+CLAUDE.md действует.
+- **Логотип подаём референсом** — живой URL в `image_urls`:
   `https://xn----7sbugdeiegh1b0a9hen.xn--p1ai/assets/img/logo_muzmir_main.png`.
-  Так эмблема выходит настоящей и встроенной в сцену, а не дорисованной.
-- **Грабли 1.** `taskId` лежит в `data.taskId`, а НЕ в корне ответа. Читать из корня —
-  задачи уходят в никуда, вернуть их нечем: ручки «мои задачи» у API нет.
-- **Грабли 2.** Готовый результат лежит в `data.resultUrls[0]`, а НЕ в
-  `data.output.image_urls` и не в `data.image_urls`. Опрос, который смотрит не туда,
-  молча крутится до таймаута, хотя картинки давно готовы.
-- **Грабли 3.** Терминальный статус в `data.state` — это строка `"completed"`,
-  не `"success"`.
-- **Грабли 4.** Скачивание с `r2.apimodels.app` под `urllib` отдаёт 403. Берём `curl`.
-- **Проверка:** `curl -s "https://api.apimodels.app/v1/images/generations?task_id=<id>"
-  -H "Authorization: Bearer $APIMODELS_KEY"` — в ответе `state` и `resultUrls`.
-- Рендер 16:9 2k занимает около минуты. Правила промптов и форматов — в
-  `muzmir-site/docs/CONTENT_RULES.md`, §9; рабочие образцы промптов —
-  `muzmir-site/docs/content_samples/`.
+  Эмблема выходит настоящей и встроенной в сцену, а не дорисованной.
+- **`taskId` лежит в `data.taskId`, не в корне ответа.** Читать из корня — задачи
+  уходят в никуда: ручки «мои задачи» у API нет, вернуть их нечем.
+- **Скачивание с `r2.apimodels.app` под `urllib` отдаёт 403.** Берём `curl`.
+- Правила промптов и форматов — `muzmir-site/docs/CONTENT_RULES.md`, §9;
+  рабочие образцы — `muzmir-site/docs/content_samples/`.
 
 ### Генерации ZeroGPU (HF_TOKEN, gradio_client, SSL_CERT_FILE=/root/.ccr/ca-bundle.crt)
 - `black-forest-labs/FLUX.1-schnell` — кадры 768x1344, steps=4, api `/infer`.
