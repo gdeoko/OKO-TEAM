@@ -21,6 +21,8 @@
 Резкость НЕ блокирует: эталоны сняты в студии и резче любого комнатного
 света, строгий порог жёг круги на кадрах без единого дефекта.
 """
+import threading
+
 import cv2
 import numpy as np
 
@@ -30,6 +32,10 @@ except Exception:                                           # noqa: BLE001
     mp = None
 
 _поз = _дет = _сег = None
+# Mediapipe НЕ ПОТОКОБЕЗОПАСЕН: кнопки считаются параллельно, и два
+# одновременных вызова одного графа валят его с `CalculatorGraph::Run()
+# failed`. Один замок на все три модели - считают они доли секунды.
+_замок = threading.Lock()
 
 
 def _модели():
@@ -60,8 +66,9 @@ def силуэт(кадр):
     _, _, сег = _модели()
     if сег is None:
         return None
-    м = сег.process(cv2.cvtColor(cv2.resize(кадр, (416, 608)),
-                                 cv2.COLOR_BGR2RGB))
+    with _замок:
+        м = сег.process(cv2.cvtColor(cv2.resize(кадр, (416, 608)),
+                                     cv2.COLOR_BGR2RGB))
     return cv2.resize(м.segmentation_mask, (208, 304)) > 0.5
 
 
@@ -77,8 +84,9 @@ def людей(кадр, доля=0.035):
     _, _, сег = _модели()
     if сег is None:
         return 1
-    м = (сег.process(cv2.cvtColor(кадр, cv2.COLOR_BGR2RGB))
-         .segmentation_mask > 0.6).astype(np.uint8)
+    with _замок:
+        м = (сег.process(cv2.cvtColor(кадр, cv2.COLOR_BGR2RGB))
+             .segmentation_mask > 0.6).astype(np.uint8)
     n, _, стат, _ = cv2.connectedComponentsWithStats(м, 8)
     порог = кадр.shape[0] * кадр.shape[1] * доля
     return sum(1 for и in range(1, n) if стат[и, cv2.CC_STAT_AREA] > порог)
@@ -89,7 +97,8 @@ def лицо(кадр):
     _, дет, _ = _модели()
     if дет is None:
         return None
-    ф = дет.process(cv2.cvtColor(кадр, cv2.COLOR_BGR2RGB))
+    with _замок:
+        ф = дет.process(cv2.cvtColor(кадр, cv2.COLOR_BGR2RGB))
     if not ф.detections:
         return None
     b = max(ф.detections, key=lambda d: d.location_data
@@ -104,7 +113,8 @@ def кривые_суставы(кадр):
     поз, _, _ = _модели()
     if поз is None:
         return []
-    р = поз.process(cv2.cvtColor(кадр, cv2.COLOR_BGR2RGB))
+    with _замок:
+        р = поз.process(cv2.cvtColor(кадр, cv2.COLOR_BGR2RGB))
     if not р.pose_landmarks:
         return []
     л = р.pose_landmarks.landmark
