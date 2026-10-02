@@ -1499,3 +1499,52 @@ class СборкаВедётСебяПредсказуемо(unittest.TestCase):
             своё = len(г) - len(self.p.обязательные(г))
             self.assertGreater(своё, len(вход) * 0.5,
                                "от работы осталась четверть: %s" % вход[:60])
+
+class ОплаченнаяФормаФигурыДоезжает(unittest.TestCase):
+    """Человек нажал «стройная» и заплатил. Замер на проде 02.10.2026: у
+    четырёх кнопок с самым длинным текстом (7100-7400 знаков) строка
+    сложения в сыром промпте есть, а в итоговом её нет — уходила при
+    укорачивании. Модель о выборе не узнавала."""
+
+    def setUp(self):
+        import prompts
+        self.p = prompts
+
+    def test_форма_доезжает_у_всех_женских_кнопок(self):
+        import catalog, места
+        место = [м for м in места.ВСЕ if not catalog.скрыт(м.key)][0]
+        плохо = []
+        for сц in catalog.все_сценарии():
+            if catalog.скрыт(сц.key):
+                continue
+            полы = catalog.полы(сц.key) or ("ж",)
+            if "ж" not in полы:
+                continue            # у двух мужчин про грудь молчим
+            for сл in self.p.ФИГУРА_ПРИЗНАК:
+                for м in (места.КАК_НА_ФОТО, место):
+                    сырой = (сц.prompt_фото(м, сл) if сц.двухшаговый
+                             else сц.промпт(место=м, сложение=сл))
+                    г = self.p.под_предел(сырой, 2900).lower()
+                    if not any(с in г for с in self.p.ФИГУРА_ПРИЗНАК[сл]):
+                        плохо.append((сц.key, сл, м.key))
+        self.assertEqual(плохо, [])
+
+    def test_у_двух_мужчин_форму_не_дописываем(self):
+        """Иначе женская грудь появляется в мужской сцене словами."""
+        мм = self.p.обязательные(
+            "Both people are men, one from each reference", фигура="пышная")
+        # «no breasts and no vulva» в мужском правиле — это как раз то,
+        # что нужно. Проверяем, что не дописана САМА ФОРМА ФИГУРЫ.
+        self.assertNotIn("large natural breasts", мм.lower())
+        self.assertNotIn("curvy build", мм.lower())
+        self.assertNotIn("wide hips", мм.lower())
+
+    def test_повтора_формы_не_дописываем(self):
+        сказано = ("a cup at most, small nipples, her thighs")
+        о = self.p.обязательные(сказано, фигура="стройная")
+        self.assertNotIn("A cup at most", о)
+
+    def test_форма_узнаётся_по_сырому_промпту(self):
+        self.assertEqual(self.p.фигура_из("... a cup at most ..."), "стройная")
+        self.assertEqual(self.p.фигура_из("... curvy build ..."), "пышная")
+        self.assertIsNone(self.p.фигура_из("просто текст"))
