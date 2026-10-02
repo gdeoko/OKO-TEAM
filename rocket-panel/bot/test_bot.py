@@ -4070,7 +4070,7 @@ class ФонБерётсяСоСнимка(unittest.TestCase):
     def test_эталон_не_подставляется_сырым(self):
         """Корень обеих поломок: `промпт = эт` мимо сборщика."""
         import inspect
-        и = inspect.getsource(self.bot.пустить_сценарий)
+        и = inspect.getsource(self.bot.тексты_кнопки)
         self.assertIn("prompts.собрать_эталонно(эт", и)
 
     def test_развилки_по_месту_больше_нет(self):
@@ -4084,6 +4084,13 @@ class ФонБерётсяСоСнимка(unittest.TestCase):
         и = inspect.getsource(self.bot.пустить_сценарий)
         self.assertIn("DENOISE_ФОН if своё_место else 1.0", и)
         self.assertNotIn("1.0 if эталонный else", и)
+
+    def test_сборка_промпта_в_одном_месте(self):
+        """Прогон кнопок собирал промпт своей копией этих строк — и
+        поэтому не увидел поломку, которую мерил. Копий больше нет."""
+        import inspect
+        self.assertIn("тексты_кнопки(sc, место, сл)",
+                      inspect.getsource(self.bot.пустить_сценарий))
 
     def test_негатив_эталона_сверяется_по_началу(self):
         """Сборщик дописывает хвост, и точное равенство стало ложью
