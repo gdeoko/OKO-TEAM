@@ -57,7 +57,23 @@ fi
 step "Питон"
 [ -d "$HOME_DIR/.venv" ] || python3 -m venv "$HOME_DIR/.venv"
 "$HOME_DIR/.venv/bin/pip" install -q --upgrade pip
-"$HOME_DIR/.venv/bin/pip" install -q requests
+"$HOME_DIR/.venv/bin/pip" install -q requests \
+    opencv-python-headless numpy mediapipe
+# Приёмка кадра считает скелеты: без неё бот отдаёт клиентке кадры со
+# сросшимися телами и лишними руками, и приёмщиком работает она сама.
+# Торч ставится ТОЛЬКО для процессора: видеокарты на этой машине нет, а
+# полная сборка тянет три гигабайта драйверов CUDA впустую.
+"$HOME_DIR/.venv/bin/pip" install -q \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    torch torchvision ultralytics
+
+# Распознавание лиц живёт в ОТДЕЛЬНОМ окружении: insightface тянет onnx
+# с protobuf шестым, а mediapipe требует младше пятого. В одном venv
+# уживается только один, второй падает на импорте.
+[ -d "$HOME_DIR/.venv-face" ] || python3 -m venv "$HOME_DIR/.venv-face"
+"$HOME_DIR/.venv-face/bin/pip" install -q --upgrade pip
+"$HOME_DIR/.venv-face/bin/pip" install -q \
+    insightface onnxruntime opencv-python-headless numpy
 
 step "Настройки"
 # Файл с ключами кладётся отдельно и сюда не попадает: в git секретам
@@ -101,7 +117,10 @@ for KV in \
     "AMBERRY_ADMIN_USER=amberry" \
     "AMBERRY_ADMIN_PASS=" \
     "AMBERRY_ADMIN_PORT=8090" \
-    "AMBERRY_ADMIN_URL="
+    "AMBERRY_ADMIN_URL=" \
+    "OKO_FACE_PY=$HOME_DIR/.venv-face/bin/python" \
+    "RUNWARE_KEY=" \
+    "APIMODELS_KEY="
 do
     K=${KV%%=*}
     grep -q "^$K=" /etc/amberry.env || { echo "$KV" >> /etc/amberry.env
