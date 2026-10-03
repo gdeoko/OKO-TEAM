@@ -239,10 +239,8 @@ def job_note(job, яз):
                      "He stands, she kneels in front of him"),
     "pr_ff_near":   ("Going down on her",
                      "One sits on the edge of the bed, the other kneels"),
-    "pr_ff_face":   ("From behind, lying",
-                     "One lies on her side, the other behind her"),
-    "pr_ff_behind": ("Both on all fours",
-                     "Both on all fours, camera behind and low"),
+    "pr_ff_69":     ("Going down on her, 69",
+                     "One on all fours above, the other under her"),
     "pr_ff_close":  ("From behind, standing",
                      "One bent over, the other behind, side view"),
     "pr_ff_pov":    ("Going down on her, lying",
@@ -252,6 +250,8 @@ def job_note(job, яз):
 # Расстановки пар: ключ расстановки -> (название, подпись). Состав
 # приписывается отдельно, поэтому здесь его нет.
 РАССТАНОВКИ_EN = {
+    "69":     ("Going down on her, 69",
+               "One on all fours above, the other under her"),
     "near":   ("Side by side", "The two of them side by side, camera facing"),
     "face":   ("Face to face", "Facing each other, profiles"),
     "behind": ("One behind", "The second one behind, both toward the camera"),

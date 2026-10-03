@@ -112,20 +112,17 @@ import urllib.request
         "One sits on the edge of the bed with her knees apart; the other "
         "kneels on the floor between them with her face at her vulva.",
     ],
-    "ff_face": [
+    # «Куни 69» — новая кнопка ЖЖ от 03.10.2026, пришла на замену двум
+    # снятым владельцем позам («отлизывает сзади лёжа», «вдвоём раком»).
+    "ff_69": [
         "There are two women and no man. Neither of them has a penis.",
-        "One lies on her side with her buttocks turned toward the camera "
-        "and the other's face is pressed between them from behind.",
+        "One is on all fours with her hips lifted; the other lies on her "
+        "back underneath her with her face up at her vulva.",
     ],
     "ff_close": [
         "There are two women and no man. Neither of them has a penis.",
         "One stands bent far forward with her buttocks raised; the other is "
         "down on the floor behind her with her mouth at her vulva.",
-    ],
-    "ff_behind": [
-        "There are two women and no man. Neither of them has a penis.",
-        "Both are on all fours side by side, facing away from the camera, "
-        "not touching each other, and both look back over their shoulders.",
     ],
     "ff_pov": [
         "There are two women and no man. Neither of them has a penis.",

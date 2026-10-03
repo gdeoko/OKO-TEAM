@@ -401,7 +401,8 @@ class Каталог(unittest.TestCase):
                              ("vi_ff", "две женщины"),
                              ("vi_mm", "двое мужчин")):
             сцены = catalog.узел(ключ).scenes
-            self.assertEqual(len(сцены), 6)
+            # У ЖЖ пять: две позы сняты владельцем, одна добавлена.
+            self.assertEqual(len(сцены), 5 if ключ == "vi_ff" else 6)
             self.assertEqual({s.пара for s in сцены}, {состав})
 
     def test_в_подразделе_не_меньше_пяти_вариантов(self):
@@ -1314,7 +1315,10 @@ class ПарныеСцены(unittest.TestCase):
     def test_три_состава_по_шесть_расстановок(self):
         for ключ in ("vi_group", "un_group"):
             у = catalog.узел(ключ)
-            self.assertEqual(len(у.все_сцены), 18)
+            # СЕМНАДЦАТЬ, А НЕ ВОСЕМНАДЦАТЬ. У ЖЖ 03.10.2026 сняты две
+            # позы и добавлена одна: владелец вернул «отлизывает сзади
+            # лёжа» и «вдвоём раком», а «Куни 69» принял по кадру.
+            self.assertEqual(len(у.все_сцены), 17)
             self.assertEqual(len(у.дети), 3)
         составы = {s.состав_коротко for s in catalog.узел("vi_group").все_сцены}
         self.assertEqual(составы, {"МЖ", "ЖЖ", "ММ"})
@@ -2161,7 +2165,7 @@ class ЖёсткаяПостановка(unittest.TestCase):
         # У ролика лист тот же: он начинается с кадра.
         self.assertEqual(catalog.лист("pr_mf_near"), "horiz")
         # ЖЖ: три кнопки поперёк листа, две вдоль.
-        for ключ in ("pf_ff_face", "pf_ff_behind", "pf_ff_pov"):
+        for ключ in ("pf_ff_69", "pf_ff_pov"):
             self.assertEqual(catalog.лист(ключ), "horiz", ключ)
         # Кнопка без принятого кадра - прежняя вертикаль.
         for ключ in ("un_close", "pf_ff_near", "pf_mm_above"):
@@ -2180,15 +2184,14 @@ class ЖёсткаяПостановка(unittest.TestCase):
         self.assertNotIn("THE TOP OF HER HEAD",
                          catalog.scene("pf_ff_pov").prompt)
 
-    def test_у_всех_пяти_кнопок_ЖЖ_своя_постановка(self):
-        """Раздел ЖЖ владелец принял 22.09 целиком: пять кнопок, пять
-        отобранных кадров. До 23.09 в боте не стояло ни одной — кнопки
-        собирались общей геометрией и давали «что-то похожее»."""
+    def test_у_кнопок_ЖЖ_своя_постановка(self):
+        """Раздел ЖЖ владелец принял 22.09 целиком, а 03.10.2026 снял
+        две позы из пяти: «отлизывает сзади лёжа» и «вдвоём раком» он
+        вернул словами «не надо так». Их кнопок больше нет вовсе, и
+        проверять у них нечего. Вместо них одна новая, «Куни 69»."""
         якоря = {
             "pf_ff_near": "SITS ON THE EDGE OF THE BED",
-            "pf_ff_face": "rolled onto her side",
             "pf_ff_close": "HAS BENT FAR FORWARD",
-            "pf_ff_behind": "PARALLEL and NOT TOUCHING",
             "pf_ff_pov": "lies flat on her stomach between those open thighs",
         }
         for ключ, якорь in якоря.items():
@@ -2220,7 +2223,7 @@ class ЖёсткаяПостановка(unittest.TestCase):
             self.assertIn(self.ЯКОРЬ_К, catalog.scene(ключ).prompt_фото(), ключ)
 
     def test_кунилингус_не_протёк_в_женскую_и_мужскую_пару(self):
-        for ключ in ("pf_ff_behind", "pf_mm_behind", "pf_mf_near"):
+        for ключ in ("pf_ff_69", "pf_mm_behind", "pf_mf_near"):
             self.assertNotIn(self.ЯКОРЬ_К, catalog.scene(ключ).prompt, ключ)
 
     def test_у_кунилингуса_мужчина_не_запрещён(self):
@@ -3105,7 +3108,7 @@ class НегативПоКадру(unittest.TestCase):
         self.assertIn("third person", n, "третий лишний и у пары")
 
     def test_в_голой_сцене_одежда_запрещена(self):
-        for ключ in ("un_close", "pf_mf_pov", "pf_ff_face"):
+        for ключ in ("un_close", "pf_mf_pov"):
             self.assertIn("bikini", catalog.scene(ключ).negative, ключ)
 
     def test_если_одежда_названа_её_не_запрещаем(self):
@@ -4235,7 +4238,7 @@ class ФонБерётсяСоСнимка(unittest.TestCase):
         """«Вдвоём раком» это поза НА КРОВАТИ: без кровати её нет.
         Вырезая фон, легко унести и мебель, на которой человек стоит."""
         import текст_эталона
-        for ключ in ("pf_ff_behind", "pf_ff_face", "pf_ff_close", "pf_mf_near"):
+        for ключ in ("pf_ff_69", "pf_ff_close", "pf_mf_near"):
             т = (текст_эталона.промпт(ключ) or "").lower()
             if not т:
                 continue
@@ -4324,7 +4327,7 @@ class ПозуМеряемУВсехКогоВидно(unittest.TestCase):
 
     def test_в_парном_эталоне_видно_двоих(self):
         """Ради этого всё и переписывалось."""
-        for ключ in ("pf_ff_near", "pf_mf_near", "pf_ff_behind"):
+        for ключ in ("pf_ff_near", "pf_mf_near", "pf_ff_69"):
             к = self._кадр(ключ)
             с = self.П.сверить(ключ, к)
             self.assertEqual(с.get("людей_эталон"), 2, "%s: %s" % (ключ, с))
