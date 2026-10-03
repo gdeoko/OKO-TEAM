@@ -110,13 +110,13 @@ CFG = 3.5
     # вернулись в вертикаль, mf_near держится вписыванием с полями.
     "ff_close": ("carnival", 0.65, "верт"),
     "ff_near": ("carnival", 0.50, "верт"),
-    "mf_face": ("pixelwave", 0.35, "верт"),
+    "mf_face": ("pixelwave", 0.50, "верт"),
     "mf_pov": ("pixelwave", 0.50, "верт"),
     "ff_behind": ("stoiqo", 0.65, "верт"),
     "ff_face": ("stoiqo", 0.35, "верт"),
     "ff_pov": ("stoiqo", 0.50, "верт"),
-    "mf_behind": ("pixelwave", 0.35, "верт"),
-    "mf_near": ("pixelwave", 0.35, "гориз_поля"),
+    "mf_behind": ("pixelwave", 0.50, "верт"),
+    "mf_near": ("pixelwave", 0.50, "гориз_поля"),
 }
 ПО_УМОЛЧАНИЮ = ("stoiqo", 0.35, "верт")
 

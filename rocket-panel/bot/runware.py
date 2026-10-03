@@ -64,6 +64,7 @@ APIMODELS считает быстро и дёшево, но режет откр�
     python3 -m bot.runware проба <снимок.png> [кнопка]
 """
 import base64
+import hashlib
 import io
 import json
 import os
@@ -174,6 +175,7 @@ class Runware:
         self._задачи = {}
         self._поток = threading.local()
         self._жив = (None, 0.0)
+        self._лица_память = {}
 
     # ---------- то же, что у карты и у APIMODELS ----------
 
@@ -387,12 +389,21 @@ class Runware:
     def _найти_лица(self, кадр):
         """Лица отдельным процессом: своё окружение, свой protobuf.
 
+        Ответ запоминается по кадру. Приёмка спрашивает лица у каждого
+        зерна, а потом их спрашивает ещё и сборка лиц: без памяти это
+        четыре запуска распознавателя на одну кнопку, каждый со своей
+        загрузкой весов. Запоминаем немного: кадры тяжёлые.
+
         Переменной `OKO_FACE_PY` нет - шаг молча пропускается, и кадр
         уходит с одним лицом. Это хуже, но это кадр, а не осечка.
         """
         питон = os.environ.get("OKO_FACE_PY")
         if not питон or not os.path.exists(питон):
             return []
+        метка = hashlib.md5(cv2.imencode(".png", кадр)[1].tobytes()).hexdigest()
+        если_помним = self._лица_память.get(метка)
+        if если_помним is not None:
+            return если_помним
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as ф:
             cv2.imwrite(ф.name, кадр)
             путь = ф.name
@@ -402,7 +413,11 @@ class Runware:
                                      "лица_процесс.py"), путь],
                 capture_output=True, timeout=180)
             строки = (о.stdout or b"").decode().strip().splitlines()
-            return json.loads(строки[-1]) if строки else []
+            найдено = json.loads(строки[-1]) if строки else []
+            if len(self._лица_память) > 16:
+                self._лица_память.clear()
+            self._лица_память[метка] = найдено
+            return найдено
         except Exception as e:                              # noqa: BLE001
             print("RUNWARE: лица не разобрались: %s" % str(e)[:140],
                   flush=True)
