@@ -54,7 +54,7 @@ def маска_рук(кадр, скелеты, запас=0.55):
     return cv2.GaussianBlur(м, (31, 31), 0)
 
 
-def починить(кадр, скелеты, рв, сила=0.85, шаги=26):
+def починить(кадр, скелеты, рв, сила=0.85, шаги=26, зерно=101):
     м = маска_рук(кадр, скелеты)
     if м is None:
         return кадр, "рук на скелете не видно"
@@ -62,7 +62,7 @@ def починить(кадр, скелеты, рв, сила=0.85, шаги=26)
     т = {"taskType": "imageInference", "taskUUID": str(uuid.uuid4()),
          "model": FILL, "positivePrompt": ТЕКСТ, "negativePrompt": НЕГ,
          "width": ш, "height": в, "steps": шаги, "CFGScale": 3.5,
-         "numberResults": 1, "seed": 101, "strength": сила,
+         "numberResults": 1, "seed": int(зерно), "strength": сила,
          "outputType": "URL", "outputFormat": "PNG",
          "seedImage": runware._дата_ури(cv2.imencode(".png", кадр)[1].tobytes()),
          "maskImage": runware._дата_ури(cv2.imencode(".png", м)[1].tobytes())}
