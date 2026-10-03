@@ -67,6 +67,8 @@ import base64
 import io
 import json
 import os
+import subprocess
+import tempfile
 import threading
 import time
 import urllib.error
@@ -88,6 +90,17 @@ except Exception as _e:                                     # noqa: BLE001
           flush=True)
     конвейер = None
     лицо_выбор = None
+
+try:
+    import кнопка_сборка as сборка_кнопки
+except Exception as _e2:                                    # noqa: BLE001
+    # Новая сборка требует ultralytics: без него бот считает кадры
+    # прежним путём, а не падает при старте. Прежний путь хуже - он не
+    # ловит сросшиеся тела и ставит одно лицо на парной кнопке, - но
+    # это работающий бот вместо неработающего.
+    print("RUNWARE: новая сборка кнопки недоступна: %s" % str(_e2)[:160],
+          flush=True)
+    сборка_кнопки = None
 
 БАЗА = os.environ.get("RUNWARE_URL", "https://api.runware.ai/v1")
 КЛЮЧ_СРЕДЫ = "RUNWARE_KEY"
@@ -303,7 +316,10 @@ class Runware:
     def _работа(self, tid, params):
         """Фоновая часть задания: кадр кнопки от начала до конца."""
         try:
-            if конвейер is not None and конвейер.есть_гайд(
+            if сборка_кнопки is not None and конвейер is not None \
+                    and конвейер.есть_гайд(params.get("сцена") or ""):
+                кадр = self._новой_сборкой(params)
+            elif конвейер is not None and конвейер.есть_гайд(
                     params.get("сцена") or ""):
                 кадр = self._по_эталону(params)
             else:
@@ -330,6 +346,69 @@ class Runware:
         except Exception as e:                              # noqa: BLE001
             with self._замок:
                 self._задачи[tid]["отказ"] = str(e)[:400]
+
+
+    # ---------- кадр новой сборкой ----------
+
+    def _новой_сборкой(self, params):
+        """Кадр кнопки сборкой, собранной прогоном семисот кадров.
+
+        Отличия от `_по_эталону`, и каждое стоит замера:
+        модель, вес гайда и кадрирование у каждой кнопки свои; приёмка
+        считает скелеты, а не маску силуэта; поза сверяется с силуэтом
+        карты глубины; на парной кнопке ставятся ДВА лица - клиентки и
+        нашего партнёра; голова встраивается по градиенту, а не
+        вставляется эллипсом.
+
+        Старый путь остаётся рядом и работает: он включается, если
+        новая сборка не поднялась (нет ultralytics или моделей лиц).
+        """
+        ключ = params.get("сцена") or ""
+        рефы = self._рефы(params)
+        кнп = self._кнопка()
+        осн = кнп.основа(ключ)
+        if осн["дефекты"]:
+            print("RUNWARE %s: отдаю лучшую основу, осталось: %s"
+                  % (ключ, "; ".join(осн["дефекты"])), flush=True)
+        if not рефы:
+            return осн["байты"]
+        готово, беда = кнп.поставить_лица(ключ, осн["байты"], осн["кадр"],
+                                          рефы[0], self._найти_лица)
+        if беда:
+            print("RUNWARE %s: лица не встали (%s), отдаю основу"
+                  % (ключ, беда), flush=True)
+        return cv2.imencode(".png", готово)[1].tobytes()
+
+    def _кнопка(self):
+        if getattr(self, "_кнп", None) is None:
+            self._кнп = сборка_кнопки.Кнопка(рв=self)
+        return self._кнп
+
+    def _найти_лица(self, кадр):
+        """Лица отдельным процессом: своё окружение, свой protobuf.
+
+        Переменной `OKO_FACE_PY` нет - шаг молча пропускается, и кадр
+        уходит с одним лицом. Это хуже, но это кадр, а не осечка.
+        """
+        питон = os.environ.get("OKO_FACE_PY")
+        if not питон or not os.path.exists(питон):
+            return []
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as ф:
+            cv2.imwrite(ф.name, кадр)
+            путь = ф.name
+        try:
+            о = subprocess.run(
+                [питон, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "лица_процесс.py"), путь],
+                capture_output=True, timeout=180)
+            строки = (о.stdout or b"").decode().strip().splitlines()
+            return json.loads(строки[-1]) if строки else []
+        except Exception as e:                              # noqa: BLE001
+            print("RUNWARE: лица не разобрались: %s" % str(e)[:140],
+                  flush=True)
+            return []
+        finally:
+            os.unlink(путь)
 
     # ---------- кадр по принятому эталону ----------
 
