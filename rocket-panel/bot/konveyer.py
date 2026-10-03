@@ -95,6 +95,15 @@ def попыток_лица(доля_лица):
                 "camera, her whole body upright in the FOREGROUND filling "
                 "the centre of the picture, her breasts and her face "
                 "plainly visible above him. "),
+    # На `mf_face` модель рисовала ДВУХ ЖЕНЩИН: мужчина назван в
+    # середине длинного текста эталона, и до него она не дочитывает.
+    # Кто теряется, того называем первым - на `mf_near` это уже
+    # сработало, там пропадала женщина.
+    "mf_face": ("A NAKED ADULT MAN kneels upright between her open thighs: "
+                "he has a man's face with a strong jaw and short hair, a "
+                "flat male chest with no breasts at all, male shoulders, "
+                "and his own erect penis between his legs. He is clearly "
+                "male and clearly different from her. "),
 }
 
 ГОЛАЯ = (" She is COMPLETELY NAKED: no top, no bra, no underwear, nothing "
