@@ -645,7 +645,23 @@ def плоскость(сложение):
     # Поэтому у i2v собирается только: этот блок, строка владельца и
     # запрет на подмену. Ни сохранения лица, ни сложения, ни кожи с
     # анатомией — всё это уже в кадре, который оживляют.
+    # КАМЕРА ПРИБИТА К ШТАТИВУ, И ЭТО СЛОВО ВЛАДЕЛЦА 03.10.2026:
+    # «камера не двигается никуда, только модели двигаются на видео в
+    # нужном ракурсе и позе с фото». На пробе ролик уезжал целиком -
+    # камера отъезжала и меняла точку, комната дорисовывалась лампой и
+    # диваном, у женщины отрастали волосы и появлялись трусы, которых
+    # на фото не было. Половину этого чинит подача кадра
+    # (`apimodels`: один снимок уходит и первым, и последним), вторую
+    # половину - вот этот запрет.
     "i2v": (
+        "THE CAMERA IS LOCKED OFF ON A TRIPOD AND DOES NOT MOVE AT "
+        "ALL: no zoom, no push in, no pull out, no pan, no tilt, no "
+        "dolly, no handheld shake, no change of angle. The framing, the "
+        "room, the furniture, the bedding and the light stay exactly as "
+        "in the first frame; nothing is added to the room and nothing "
+        "disappears from it. Hair length and colour do not change and no "
+        "clothing appears on anyone. ONLY THE PEOPLE MOVE, and they keep "
+        "the pose and the camera angle of the first frame. "
         "Animate the supplied photograph into a vertical clip, 9:16. The "
         "first frame is that photograph itself, unchanged. If a second "
         "image is supplied it is the LAST frame, and the motion must "
@@ -671,6 +687,12 @@ def плоскость(сложение):
 # фраза спорит с актом и выигрывает — сборка охотнее делает маленькое
 # движение, чем большое.
 ВИДЕО_БЕЗ_ДЫХАНИЯ = (
+    "THE CAMERA IS LOCKED OFF ON A TRIPOD AND DOES NOT MOVE AT ALL: no "
+    "zoom, no push in, no pull out, no pan, no tilt, no dolly, no "
+    "handheld shake, no change of angle. The framing, the room and the "
+    "light stay exactly as in the first frame, and no clothing appears "
+    "on anyone. ONLY THE PEOPLE MOVE, keeping the pose and the camera "
+    "angle of the first frame. "
     "Animate the supplied photograph into a clip. The first frame is "
     "that photograph itself, unchanged, and everything that follows "
     "grows out of it without a cut. The face must stay the same face in "
@@ -958,6 +980,13 @@ WAN_РОДНОЙ = (
     "melting limbs, limbs merging between frames, hands turning into "
     "blobs, fingers fusing, warping anatomy, "
     "duplicated torso, two bodies merged, second body appearing, "
+    # Камера прибита к штативу (слово владельца 03.10.2026). На пробе
+    # ролик отъезжал и менял точку, а комната дорисовывалась мебелью.
+    "camera zoom, zoom in, zoom out, push in, pull out, camera pan, "
+    "camera tilt, dolly, crane, orbit, parallax, changing framing, "
+    "changing camera angle, new furniture, room changing, "
+    "clothing appearing, panties appearing, underwear appearing, "
+    "hair growing longer, hairstyle change, "
     "camera shake, jerky motion, stuttering, frozen frame, "
     "oiled skin, wet shiny skin, glossy plastic skin, "
     "pubic hair, body hair, tan lines, bikini marks, "

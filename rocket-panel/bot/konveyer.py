@@ -117,17 +117,31 @@ def попыток_лица(доля_лица):
 ГОЛАЯ = (" She is COMPLETELY NAKED: no top, no bra, no underwear, nothing "
          "on her body.")
 ХВОСТ_СОЛО = (" She is alone, the only person in the picture, exactly two "
-              "arms and two legs, all of them hers. Her whole head and her "
+              "arms and two legs, all of them hers. BOTH OF HER ARMS AND "
+              "BOTH OF HER HANDS ARE IN THE PICTURE and plainly visible, "
+              "each arm joined to her own shoulder. She has ONE pair of "
+              "hips and ONE pair of buttocks, nothing of her body is "
+              "repeated twice. Her whole head and her "
               "face are INSIDE the frame, nothing of her head is cut off by "
               "the edge. Razor sharp focus, visible skin pores, natural "
               "light on her face.")
 ХВОСТ_ПАРА = (" THERE ARE TWO PEOPLE IN THIS PICTURE, BOTH FULLY VISIBLE: "
               "two separate human beings, two heads, four arms and four "
-              "legs in total. Neither of them is missing or hidden. "
+              "legs in total. Neither of them is missing or hidden. EVERY "
+              "ARM IS JOINED TO ITS OWN SHOULDER and every hand is visible; "
+              "each person has ONE pair of hips, nothing is repeated twice. "
               "Photorealistic, razor sharp focus, visible skin pores.")
+# Негатив писан по пересмотру двадцати готовых кадров. Прежний запрещал
+# ЛИШНЕЕ и молчал про недостачу, а чаще всего пропадали именно руки: на
+# `ff_face` их не было у обеих женщин, на `un_three` не было левой. Там
+# же нашлись дубли низа тела - второй таз под бёдрами.
 НЕГ_ОБЩИЙ = ("neon, neon tubes, black studio, stage, outdoors, street, "
              "garden, grass, deformed, extra limbs, extra legs, extra arms, "
              "fused limbs, merged bodies, cropped head, face out of frame, "
+             "missing arms, missing hands, armless, hidden arms, "
+             "amputated limb, floating hand, disconnected limb, "
+             "duplicated hips, second pelvis, extra torso, extra buttocks, "
+             "extra feet, fused toes, asymmetric breasts, "
              "blurry, soft focus, doll anatomy, plastic skin, text, "
              "watermark")
 НЕГ_ОДЕЖДА = "clothed, dressed, shirt, top, bra, underwear, panties, "
