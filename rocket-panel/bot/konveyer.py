@@ -99,6 +99,14 @@ def попыток_лица(доля_лица):
     # середине длинного текста эталона, и до него она не дочитывает.
     # Кто теряется, того называем первым - на `mf_near` это уже
     # сработало, там пропадала женщина.
+    # На `mf_behind` модель рисовала их сидящими в обнимку: эталон
+    # описывает позу в середине длинного текста, и до неё она не
+    # дочитывает. Главное про постановку выносим в первую фразу.
+    "mf_behind": ("A naked woman is ON ALL FOURS on the bed, on her hands "
+                  "and knees, her back arched and her bare buttocks raised "
+                  "toward a naked man who STANDS ON HIS KNEES BEHIND HER "
+                  "and holds her hips. The camera is at their side, far "
+                  "enough back that BOTH HEADS are inside the frame. "),
     "mf_face": ("A NAKED ADULT MAN kneels upright between her open thighs: "
                 "he has a man's face with a strong jaw and short hair, a "
                 "flat male chest with no breasts at all, male shoulders, "
