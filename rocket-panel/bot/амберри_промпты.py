@@ -152,10 +152,19 @@ def РАМА(чья):
 # вместо паха; на `mf_behind` он сводил двоих в кадр и тела срастались.
 # А без этого требования на `mf_near` у мужчины срезало голову.
 # Значит кадрировка называется отдельно под каждую геометрию.
-КАДР_ШИРЕ = ("FRAMING: the shot is wide enough that the kneeling man's "
-             "whole head is well inside the top of the picture with "
-             "empty wall above it, and her head is inside the left part "
-             "of the picture; neither head touches any edge. ")
+# МЕСТО ГОЛОВЫ НАЗЫВАЕТСЯ ЧЕТВЕРТЬЮ КАДРА, А НЕ СЛОВОМ «ЦЕЛИКОМ».
+#
+# «Оба в кадре» и «с запасом над головой» движок на этой кнопке не
+# исполнял: мужчина стоит на коленях, он выше всех, и голову ему резало
+# верхним краем три прогона подряд. Помогает координата: голова в
+# верхней ПРАВОЙ ЧЕТВЕРТИ картинки, кровать в нижних двух третях, над
+# головой стена.
+КАДР_ШИРЕ = ("FRAMING: the picture is framed wide and tall enough that "
+             "the kneeling man's whole head sits in the upper right "
+             "quarter of the picture with bare wall visible above his "
+             "hair, his face from chin to hairline fully inside the "
+             "frame; the bed fills the lower two thirds and her head is "
+             "in the left third; no head touches any edge. ")
 КАДР_Т = ("FRAMING: her whole body and her face are inside the frame "
           "with space above her head. His head is at the centre of the "
           "picture between her open thighs and his face is clearly "
