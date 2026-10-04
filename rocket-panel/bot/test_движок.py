@@ -68,7 +68,10 @@ class Запросы(unittest.TestCase):
                                     "size": "vert", "images": [имя]})
         self.assertEqual(вид, "images")
         self.assertEqual(тело["model"], apimodels.МОДЕЛЬ_ФОТО)
-        self.assertEqual(тело["aspect_ratio"], "9:16")
+        # У `z-image` размер задаётся ТОЧКАМИ: пропорции он не понимает,
+        # а числа выбраны пределом апскейлера (см. `Z_РАЗМЕРЫ`).
+        self.assertEqual(тело["size"], "1024x1536")
+        self.assertNotIn("aspect_ratio", тело)
         # Референс уходит и `image`, и `image_urls`, оба списками.
         self.assertEqual(тело["image"], тело["image_urls"])
         self.assertTrue(тело["image"][0].startswith("data:image"))
@@ -76,7 +79,7 @@ class Запросы(unittest.TestCase):
     def test_горизонталь(self):
         _вид, тело = self.а._запрос({"mode": "photo", "prompt": "т",
                                      "size": "horiz"})
-        self.assertEqual(тело["aspect_ratio"], "16:9")
+        self.assertEqual(тело["size"], "1536x1024")
 
     def test_один_снимок_уходит_референсом(self):
         """Режиму кадров нужны ОБА. С одним сервис не ругается, а молча
@@ -1171,9 +1174,11 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         # детальнее базовой на 37-51%, wan берёт наш кадр почти
         # дословно (отклонение 3.8 против 10.2) и втрое быстрее.
         # Решение владельца 02.10.2026: он назвал модели сам —
-        # qwen3-image 2K и minimax-h3-lite 768p (у неё синхронная речь
-        # с попаданием в губы).
-        self.assertEqual(в["фото"], "qwen3-image")
+        # minimax-h3-lite 768p (у неё синхронная речь с попаданием в
+        # губы). Фото с 03.10.2026 считает `z-image-spicy-pro`: он
+        # единственный, кто слушается подробного текста и рисует
+        # органы, а внешность клиентки несёт описатель словами.
+        self.assertEqual(в["фото"], "z-image-spicy-pro")
         self.assertEqual(в["видео"], "minimax-h3-lite")
         self.assertEqual(в["качество"], "768p")
 
@@ -1182,10 +1187,10 @@ class ВыборМоделиВАдминке(unittest.TestCase):
         self.assertEqual(self.api.модель_фото, "qwen3-image-pro")
 
     def test_чужая_модель_не_принимается(self):
-        self.api.выбрать_модель(фото="z-image-spicy")
-        # У spicy нет входа для референса вовсе: лицо клиента ей не
-        # передать. Такую модель принимать нельзя.
-        self.assertEqual(self.api.модель_фото, "qwen3-image")
+        self.api.выбрать_модель(фото="выдуманная-модель")
+        # Модели вне списка не принимаются вовсе: опечатка в админке не
+        # должна уводить все кнопки в несуществующий движок.
+        self.assertEqual(self.api.модель_фото, "z-image-spicy-pro")
 
     def test_у_каждой_модели_своё_поле_кадра(self):
         """Чужое поле сервис молча выбрасывает: ответ 200, задача
@@ -1265,9 +1270,9 @@ class ВыборМоделиВАдминке(unittest.TestCase):
 
     def test_без_склада_работают_умолчания(self):
         а = self.m.Api(key="x")
-        self.assertEqual(а.модель_фото, "qwen3-image")
+        self.assertEqual(а.модель_фото, "z-image-spicy-pro")
         self.assertEqual(а.выбрать_модель(фото="qwen3-image-pro")["фото"],
-                         "qwen3-image")
+                         "z-image-spicy-pro")
 
 class ПодПредел(unittest.TestCase):
     """Сборка под предел: укороченный промпт плюс то из обязательного,
