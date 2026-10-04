@@ -82,9 +82,8 @@ def попыток_лица(доля_лица):
     "mf_face": "a bedroom with white linen and soft warm front light",
     "mf_pov": "a bedroom with a bed and a lamp, soft light from the front",
     "ff_near": "a bedroom with a wide bed and soft daylight from the front",
-    "ff_face": "a bedroom with rumpled linen and warm front light",
     "ff_close": "a bedroom with a bed and a window in front of them",
-    "ff_behind": "a bedroom with a bed and soft warm light from the front",
+    "ff_69": "a bedroom with a wide bed and warm bedside light",
     "ff_pov": "a bedroom with white sheets and daylight from the front",
 }
 
