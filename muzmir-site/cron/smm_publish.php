@@ -59,7 +59,7 @@ try {
         cron_unlock(JOB); exit(0);
     }
 
-    update('smm_posts', ['attempts' => (int) $post['attempts'] + 1], 'id = ?', [$post['id']]);
+    update('smm_posts', ['attempts' => (int) $post['attempts'] + 1], 'id=:id', ['id' => (int) $post['id']]);
 
     [$ok, $info] = smm_publish($post, $force);
 
@@ -68,7 +68,7 @@ try {
         update('smm_posts', [
             'error'  => (string) $info,
             'status' => $attempts >= 5 ? 'failed' : 'ready',
-        ], 'id = ?', [$post['id']]);
+        ], 'id=:id', ['id' => (int) $post['id']]);
         cron_log(JOB, "пост #{$post['id']} не ушёл: {$info} (попытка {$attempts})");
 
         /* Исчерпали попытки — владелец должен узнать сам, а не обнаружить
@@ -94,7 +94,7 @@ try {
         'vk_link'        => $vk,
         'error'          => '',
         'published_at'   => date('Y-m-d H:i:s'),
-    ], 'id = ?', [$post['id']]);
+    ], 'id=:id', ['id' => (int) $post['id']]);
 
     cron_log(JOB, "опубликован #{$post['id']}: {$post['topic']}" . ($vk !== '' ? " — {$vk}" : ''));
 

@@ -138,14 +138,14 @@ try {
                 'image_path'   => $imgOk ? $path : '',
                 'image_cost'   => $imgOk ? $cost : 0,
                 'error'        => $imgOk ? '' : (string) $imgErr,
-            ], 'id = ?', [$id]);
+            ], 'id=:id', ['id' => $id]);
             if (!$imgOk) cron_log(JOB, "  картинка не вышла: {$imgErr}");
         }
 
         /* Пост без картинки в очередь не ставим: текстовая простыня без
            изображения в ленте проигрывает и читается как объявление. Он остаётся
            черновиком, виден в админке, и его можно доснять руками. */
-        update('smm_posts', ['status' => $imgOk ? 'ready' : 'draft'], 'id = ?', [$id]);
+        update('smm_posts', ['status' => $imgOk ? 'ready' : 'draft'], 'id=:id', ['id' => $id]);
 
         cron_log(JOB, "  готово: {$topic['topic']}" . ($imgOk ? '' : ' (без картинки, остаётся черновиком)'));
         $done++;

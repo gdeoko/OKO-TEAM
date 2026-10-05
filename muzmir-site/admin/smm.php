@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save') {
         flash('Текст не прошёл проверку: ' . implode('; ', $err), 'error');
         admin_redirect('smm');
     }
-    update('smm_posts', ['body' => $body, 'text_full' => $full, 'error' => ''], 'id = ?', [$id]);
+    update('smm_posts', ['body' => $body, 'text_full' => $full, 'error' => ''], 'id=:id', ['id' => $id]);
     audit('smm_edit', 'smm_post', $id, []);
     flash('Текст сохранён.');
     admin_redirect('smm');
@@ -87,11 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), ['pu
     if (!$post) { flash('Пост не найден.', 'error'); admin_redirect('smm'); }
 
     if (input('do') === 'skip') {
-        update('smm_posts', ['status' => 'skipped'], 'id = ?', [$id]);
+        update('smm_posts', ['status' => 'skipped'], 'id=:id', ['id' => $id]);
         audit('smm_skip', 'smm_post', $id, []);
         flash('Пост снят с очереди.');
     } elseif (input('do') === 'ready') {
-        update('smm_posts', ['status' => 'ready', 'error' => ''], 'id = ?', [$id]);
+        update('smm_posts', ['status' => 'ready', 'error' => ''], 'id=:id', ['id' => $id]);
         flash('Пост поставлен в очередь.');
     } else {
         [$ok, $info] = smm_publish($post);
@@ -101,11 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), ['pu
             update('smm_posts', [
                 'status' => 'published', 'hooppy_post_id' => (int) $info,
                 'vk_link' => $vk, 'error' => '', 'published_at' => date('Y-m-d H:i:s'),
-            ], 'id = ?', [$id]);
+            ], 'id=:id', ['id' => $id]);
             audit('smm_publish', 'smm_post', $id, ['hooppy' => $info]);
             flash('Опубликовано.' . ($vk !== '' ? ' ' . $vk : ''));
         } else {
-            update('smm_posts', ['error' => (string) $info], 'id = ?', [$id]);
+            update('smm_posts', ['error' => (string) $info], 'id=:id', ['id' => $id]);
             flash('Не ушло: ' . $info, 'error');
         }
     }
