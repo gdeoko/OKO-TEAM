@@ -192,9 +192,9 @@ ob_start(); ?>
                 <span class="badge badge--intl"><?= $c['type'] === 'international' ? 'Международный' : 'Всероссийский' ?></span>
                 <?php $ccFull = (int) $c['price']; $ccMy = $clubPrice($ccFull); ?>
                 <span class="cc-fee<?= $isPaid ? '' : ' cc-fee--free' ?><?= ($isPaid && $ccMy < $ccFull) ? ' cc-fee--club' : '' ?>">
-                  <?= $icoCoin ?><?php if (!$isPaid): ?>Участие бесплатное
-                  <?php elseif ($ccMy < $ccFull): ?>Взнос <s><?= $ccFull ?> ₽</s> <b><?= $ccMy ?> ₽</b>
-                  <?php else: ?>Взнос <?= $ccFull ?> ₽<?php endif; ?>
+                  <?= $icoCoin ?><?php if (!$isPaid): ?>Бесплатное участие
+                  <?php elseif ($ccMy < $ccFull): ?>Оргвзнос <s><?= money($ccFull) ?></s> <b><?= money($ccMy) ?></b>
+                  <?php else: ?>Оргвзнос <?= money($ccFull) ?><?php endif; ?>
                 </span>
                 <?php if ($isPaid && $ccMy < $ccFull): ?>
                   <span class="cc-clubtag">−<?= (int) $clubPct ?>% Клуб</span>
@@ -208,6 +208,15 @@ ob_start(); ?>
                 <?php elseif (!empty($c['start_date'])): ?>
                   <span class="cc-date"><?= $icoCal ?>приём с <?= h(ru_date($c['start_date'])) ?></span>
                 <?php endif; ?>
+              </div>
+              <?php /* СРОК АТТЕСТАЦИИ СТОИТ РЯДОМ СО СРОКОМ ПРИЁМА.
+                       Взнос на этой афише был и раньше, а вот когда ждать итогов —
+                       человек не знал и писал об этом в сообщество. У длинного
+                       конкурса здесь дата и площадки оглашения, у короткого —
+                       5 рабочих дней. Строку собирает comp_terms(). */ ?>
+              <?php $ct = comp_terms($c); ?>
+              <div class="cc-meta cc-meta--res">
+                <span class="cc-date"><?= $icoCal ?><?= h($ct['results']) ?></span>
               </div>
               <div class="cc-actions">
                 <a class="btn btn--primary" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>">Подать заявку <?= $icoArrow ?></a>
@@ -287,6 +296,9 @@ ob_start(); ?>
 .cc-fee--club{white-space:nowrap}
 .cc-fee--club s{opacity:.6;font-weight:700;text-decoration-thickness:1.5px}
 .cc-fee--club b{font-weight:900}
+/* Срок аттестации отдельной строкой под сроком приёма: у длинного конкурса
+   это дата и площадки оглашения, у короткого — 5 рабочих дней. */
+.cc-meta--res{margin-top:-6px}
 .cc-clubtag{display:inline-flex;align-items:center;font-size:.62rem;font-weight:900;letter-spacing:.06em;
   text-transform:uppercase;padding:4px 9px;border-radius:999px;color:var(--gold-fg,#fff);background:var(--grad-gold);
   box-shadow:0 4px 12px rgba(199,147,34,.28)}

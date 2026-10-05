@@ -20,7 +20,7 @@ require_once BASE_PATH . '/core/orders.php';
    выше, прошлые опускаются и исчезают сами, когда два месяца истекают. */
 $regs = array_values(array_filter(
     all("SELECT id, slug, name, type, direction, is_paid, price, status,
-                start_date, end_date, results_date, results_mode
+                start_date, end_date, results_date, results_mode, duration
            FROM competitions
           WHERE COALESCE(launched,0) = 1 AND status <> 'draft'
        ORDER BY CASE WHEN status='open' THEN 0 ELSE 1 END, end_date DESC, sort, id"),
@@ -59,7 +59,7 @@ ob_start(); ?>
         <?php foreach ($regs as $c):
           $open   = (string) $c['status'] === 'open';
           $until  = awards_window_end((array) $c);
-          $free   = (int) ($c['is_paid'] ?? 0) === 0; ?>
+          $ct     = comp_terms((array) $c); ?>
           <article class="reg-item">
             <div class="reg-item__main">
               <h3 class="reg-item__name"><?= h((string) $c['name']) ?></h3>
@@ -67,7 +67,7 @@ ob_start(); ?>
                 <?php if ($dt($c['start_date']) !== '' || $dt($c['end_date']) !== ''): ?>
                   Приём заявок: <?= h(trim($dt($c['start_date']) . ' — ' . $dt($c['end_date']), ' —')) ?>.
                 <?php endif; ?>
-                <?= $free ? 'Участие бесплатное.' : 'Участие ' . h(number_format((int) $c['price'], 0, '.', ' ')) . ' ₽.' ?>
+                <?= h($ct['fee']) ?>. <?= h($ct['results']) ?>.
               </p>
               <p class="reg-item__note">
                 <?php if ($open): ?>

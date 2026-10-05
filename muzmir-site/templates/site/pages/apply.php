@@ -13,7 +13,10 @@ require_once BASE_PATH . '/core/loyalty.php';
  * замок стоит на сервере (api/v1/apply.php). */
 /* Конкурс Элитного клуба стоит ПЕРВЫМ: он с призовым фондом, и именно его участник
    должен увидеть раньше остальных, а не искать в конце списка. */
+/* results_date и duration нужны comp_terms(): без них длинный конкурс читается как
+   короткий и обещает «результаты за 5 рабочих дней» вместо даты оглашения. */
 $comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg,cover,end_date,
+                     results_date,duration,
                      COALESCE(club_only,0) club_only
               FROM competitions
               WHERE status='open' AND COALESCE(launched,0) = 1
@@ -189,6 +192,10 @@ ob_start(); ?>
 .co-body--cover .co-main b{color:#fff;font-size:1.3rem;text-shadow:0 2px 12px rgba(0,0,0,.7)}
 .co-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .co-tags .badge{font-size:.7rem;padding:4px 9px;letter-spacing:.04em}
+/* Сроки приёма и аттестации строкой под метками. На обложке поверх орнамента
+   нужна тень, иначе текст тонет в рисунке бланка. */
+.co-terms{display:block;margin-top:8px;font-size:.78rem;line-height:1.35;color:var(--muted)}
+.co-body--cover .co-terms{color:rgba(255,255,255,.92);text-shadow:0 1px 8px rgba(0,0,0,.75)}
 /* Метки поверх орнамента: плотная подложка, иначе тонут в рисунке. */
 .co-body--cover .badge{background:rgba(10,16,34,.72) !important;color:#fff !important;
   border:1px solid rgba(255,255,255,.35) !important;backdrop-filter:blur(6px);text-shadow:none}
@@ -438,15 +445,22 @@ ob_start(); ?>
                         $apMy   = ((int) $jsCfg['clubPct'] > 0) ? (int) max(0, round($apFull * (100 - (int) $jsCfg['clubPct']) / 100)) : $apFull;
                       ?>
                       <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?php
-                        if ((int)$c['club_only']) { echo 'Бесплатно'; }
-                        elseif (!(int)$c['is_paid']) { echo 'Бесплатный'; }
-                        elseif ($apMy < $apFull) { echo '<s style="opacity:.6">' . $apFull . ' ₽</s> ' . $apMy . ' ₽'; }
-                        else { echo $apFull . ' ₽'; }
+                        if ((int)$c['club_only']) { echo 'Бесплатно для клуба'; }
+                        elseif (!(int)$c['is_paid']) { echo 'Бесплатное участие'; }
+                        elseif ($apMy < $apFull) { echo 'Оргвзнос <s style="opacity:.6">' . money($apFull) . '</s> ' . money($apMy); }
+                        else { echo 'Оргвзнос ' . money($apFull); }
                       ?></span>
                       <?php if ((int)$c['club_only']): ?>
                         <span class="badge badge--vip">Только для Элитного клуба</span>
                       <?php endif; ?>
                     </span>
+                    <?php /* СРОКИ ПРЯМО НА КАРТОЧКЕ ВЫБОРА.
+                             Человек отмечает конкурс галочкой и до этой правки не
+                             видел ни дедлайна приёма, ни того, когда ждать итогов:
+                             оба числа лежали только на афише, с которой он сюда и
+                             не заходил. Строки те же, что на всех афишах сайта. */ ?>
+                    <?php $ct = comp_terms($c); ?>
+                    <span class="co-terms"><?= h($ct['intake_short']) ?> · <?= h($ct['results_short']) ?></span>
                     <?php if ((int)$c['club_only']): ?>
                       <span class="co-fund">ПРИЗОВОЙ ФОНД: <b>100 000 ₽</b></span>
                     <?php endif; ?>

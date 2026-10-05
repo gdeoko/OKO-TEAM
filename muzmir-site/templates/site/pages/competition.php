@@ -267,7 +267,7 @@ ob_start(); ?>
       </div>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['wallet'] ?></span>
-        <div><b>Участие</b><span><?= $c['is_paid'] ? $priceHtml((int)$c['price']) . ' за заявку' : 'Бесплатно' ?><?= ($c['is_paid'] && $clubPct > 0) ? ' <small style="color:var(--gold-ink)">(−'.(int)$clubPct.'% Клуб)</small>' : '' ?></span></div>
+        <div><b>Участие</b><span><?= $c['is_paid'] ? 'Оргвзнос ' . $priceHtml((int)$c['price']) . ' за заявку' : 'Бесплатное участие' ?><?= ($c['is_paid'] && $clubPct > 0) ? ' <small style="color:var(--gold-ink)">(−'.(int)$clubPct.'% Клуб)</small>' : '' ?></span></div>
       </div>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['cal'] ?></span>
@@ -277,9 +277,15 @@ ob_start(); ?>
         <span class="comp-info__ic"><?= $ic['star'] ?></span>
         <div><b>Тематика</b><span><?= h($thematics) ?></span></div>
       </div>
+      <?php /* ИТОГИ: КОГДА И ГДЕ, А НЕ ПРОСТО ЧИСЛО.
+               Здесь стояла голая дата, и участник длинного конкурса не понимал,
+               ждать ли письма или идти смотреть список. Теперь строка прямо
+               называет площадки оглашения (ВКонтакте и сайт центра), а у
+               короткого конкурса — срок и то, что диплом придёт на почту. */ ?>
+      <?php $ct = comp_terms($c); ?>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['flag'] ?></span>
-        <div><b>Срок аттестации</b><span><?= !empty($c['results_date']) ? h(ru_date($c['results_date'])) : 'В течение 5 рабочих дней' ?></span></div>
+        <div><b>Результаты</b><span><?= h($ct['results_full']) ?></span></div>
       </div>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['list'] ?></span>
