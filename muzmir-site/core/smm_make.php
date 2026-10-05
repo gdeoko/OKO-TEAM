@@ -358,11 +358,27 @@ function smm_text_fact_check(string $body): array {
  * ------------------------------------------------------------------ */
 
 /**
- * Промпт картинки. Требование владельца: от 2000 знаков, по-английски, с описанием
- * света, оптики, фактур, композиции и свободного места под текст. Короткий промпт
- * даёт «нейросетевую» картинку, которую видно сразу и которая обесценивает пост.
+ * Промпт картинки — ОДНА ГЕНЕРАЦИЯ НА ВСЁ.
+ *
+ * Требование владельца: кадр, заголовок и логотип рождаются вместе, в одном
+ * вызове. Ничего не доклеивается после.
+ *
+ * Почему именно так, а не наложением. Наложенный поверх логотип и подписанный
+ * сверху заголовок всегда читаются как наклейка на фотографии: у них свой свет,
+ * своя резкость, своя геометрия, и кадр распадается на картинку и стикер.
+ * Когда же надпись и эмблема описаны внутри сцены — краска на бетонной стене
+ * коридора, латунная табличка у двери репетиционной, буквы на белёной стене
+ * студии, — на них ложится тот же свет, та же пыль и та же перспектива, и кадр
+ * остаётся единым. Образцы владельца сделаны именно так.
+ *
+ * Логотип при этом идёт в генерацию референсом (image_urls) и описывается как
+ * предмет, который в сцене уже существует: его не перерисовывают заново, его
+ * вешают на стену.
  */
-function smm_make_image_prompt(array $topic, string $ratio): ?string {
+function smm_make_image_prompt(array $topic, string $ratio, string $title = '', string $subtitle = ''): ?string {
+    $title    = trim($title);
+    $subtitle = trim($subtitle);
+
     $prompt = "Write a highly detailed image generation prompt in ENGLISH for a social media "
         . "post of a Russian cultural centre that runs online arts competitions.\n\n"
         . "Post topic: " . $topic['topic'] . "\n"
@@ -372,21 +388,43 @@ function smm_make_image_prompt(array $topic, string $ratio): ?string {
         . "- a real, specific, emotionally warm scene with real people or real objects "
         . "(never abstract shapes, never collage, never text-only design);\n"
         . "- authentic Russian setting: a home, a music school corridor, a rehearsal room, "
-        . "a stage, a kitchen table — plausible and lived-in, not a glossy stock studio;\n"
+        . "a backstage, a kitchen table - plausible and lived-in, not a glossy stock studio;\n"
         . "- exact materials and textures: worn wood, wool knit, matte paper, brass, dust in air;\n"
         . "- lighting: source, direction, softness, colour temperature, time of day;\n"
         . "- lens and depth of field: focal length, aperture, what is sharp and what falls away;\n"
-        . "- composition and camera angle, with clear NEGATIVE SPACE on one side for a headline;\n"
+        . "- composition and camera angle;\n"
         . "- a restrained cinematic colour palette, warm and natural;\n"
         . "- mood and the exact story the frame tells;\n"
-        . "- quality markers: 8K, ultra sharp, photorealistic, commercial editorial photography.\n\n"
-        /* Запрет на логотипы и вывески обязателен: кадр с «гербом на стене»
-           модель рисует охотно, а настоящий логотип ставится поверх отдельно. */
-        . "STRICTLY FORBIDDEN in the prompt: any rendered text, lettering, captions, "
-        . "signage, posters with words, plaques, emblems, crests, medallions, badges, "
-        . "logos or watermarks anywhere in the scene — the real logo is composited on "
-        . "top afterwards and a drawn one ruins the frame. Also forbidden: collage, "
-        . "surreal distortion, extra fingers, plastic skin.\n\n"
+        . "- quality markers: 8K, ultra sharp, photorealistic, commercial editorial photography.\n\n";
+
+    if ($title !== '') {
+        /* Текст передаётся дословно и в кавычках: пересказанный своими словами,
+           он возвращается с выдуманной орфографией и лишними буквами. */
+        $prompt .= "THE HEADLINE LIVES INSIDE THE SCENE. The prompt MUST place this exact "
+            . "Russian text as a real physical element of the room, never as an overlay "
+            . "or a caption bar:\n"
+            . "Headline, exactly these characters: \"" . $title . "\"\n"
+            . ($subtitle !== '' ? ("Subtitle, exactly these characters: \"" . $subtitle . "\"\n") : '')
+            . "Describe HOW it exists in the room: large clean sans-serif lettering painted "
+            . "on the plaster or concrete wall, or set on the wall beside the subject, on a "
+            . "flat empty surface that faces the camera. It must sit on the same plane as "
+            . "that wall, carry the same light, shadows, texture and perspective as the "
+            . "surface it lives on, and be fully legible and correctly spelled in Russian. "
+            . "The headline is large and dominant; the subtitle sits under it, much smaller, "
+            . "in two short lines. Leave the wall area around them clear so the lettering "
+            . "reads easily. The people and objects must not cover the lettering.\n\n";
+    }
+
+    $prompt .= "THE LOGO LIVES INSIDE THE SCENE TOO. A reference image of the centre's real "
+        . "round golden emblem is supplied. The prompt MUST ask to place THAT EXACT emblem, "
+        . "reproduced faithfully with its own artwork and its own circular lettering "
+        . "untouched, as a physical object in the room: a brass medallion or a round plaque "
+        . "mounted on the wall, lit by the same light as the scene, correct perspective, "
+        . "perfectly circular, never stretched, never redrawn, never re-lettered, never "
+        . "invented anew. Put it in a calm corner of the frame where nothing overlaps it.\n\n"
+        . "FORBIDDEN: any other text, captions, signage, posters with words, watermarks, "
+        . "other logos or emblems beyond the two elements above; collage; surreal "
+        . "distortion; extra fingers; plastic skin.\n\n"
         . "Return strictly JSON: {\"prompt\":\"...\"}";
 
     $r = smm_ask_json($prompt, 120);
@@ -415,20 +453,18 @@ function smm_make_image(string $prompt, string $ratio, string $saveTo): array {
     $cost = (float) setting('smm_image_cost', '0.04');
     if (!smm_budget_ok($cost)) return [false, 'дневной предел расхода на картинки исчерпан', 0.0];
 
-    /* ЛОГОТИП В ГЕНЕРАЦИЮ НЕ ОТДАЁМ.
-     *
-     * Переданный референсом, он возвращается перерисованным: модель вписывает
-     * его в сцену как табличку на стене и заново рисует надпись по кругу —
-     * получается похожий герб с нечитаемыми буквами. Правило владельца
-     * однозначно: логотип только настоящий, не перерисованный и не растянутый.
-     * Поэтому кадр генерируется чистым, а настоящий файл накладывается поверх
-     * в smm_brand_stamp(). */
+    /* Логотип идёт референсом в ту же генерацию: кадр, надпись и эмблема
+       рождаются вместе и живут в одном свете. Ничего не доклеивается после. */
+    $logo = (string) (cfgv('smm_logo_url')
+        ?: 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai/assets/img/logo_muzmir_main.png');
+
     $body = json_encode([
         'model'        => (string) (cfgv('apimodels_model') ?: 'gemini-3-pro-image'),
         'prompt'       => $prompt,
         'aspect_ratio' => $ratio,
         'resolution'   => '2k',
         'quality'      => 'high',
+        'image_urls'   => [$logo],
     ], JSON_UNESCAPED_UNICODE);
 
     $base = rtrim((string) (cfgv('apimodels_base') ?: 'https://api.apimodels.app/v1'), '/');
@@ -494,62 +530,7 @@ function smm_make_image(string $prompt, string $ratio, string $saveTo): array {
     @mkdir(dirname($saveTo), 0775, true);
     if (file_put_contents($saveTo, $img) === false) return [false, 'картинка не сохранилась', 0.0];
 
-    smm_brand_stamp($saveTo);
-
     return [true, '', $cost];
-}
-
-/**
- * Поставить на кадр настоящий логотип центра.
- *
- * Пропорции не трогаются: ширина задаётся долей кадра, высота считается от неё.
- * Угол выбирается по яркости — логотип золотой на тёмном круге и на светлой
- * стене теряется, поэтому из четырёх углов берётся самый тёмный.
- */
-function smm_brand_stamp(string $path, float $share = 0.13, int $pad = 44): bool {
-    $logoFile = (string) (cfgv('smm_logo_file') ?: BASE_PATH . '/public/assets/img/logo_muzmir_main.png');
-    if (!is_file($logoFile) || !is_file($path)) return false;
-    if (!function_exists('imagecreatefromjpeg')) return false;
-
-    $base = @imagecreatefromjpeg($path);
-    $logo = @imagecreatefrompng($logoFile);
-    if (!$base || !$logo) return false;
-
-    $bw = imagesx($base); $bh = imagesy($base);
-    $lw = imagesx($logo); $lh = imagesy($logo);
-
-    $nw = (int) round($bw * $share);
-    $nh = (int) round($lh * ($nw / $lw));          // высота строго по пропорции
-
-    /* Самый тёмный угол: считаем среднюю яркость четырёх областей под логотип. */
-    $spots = [
-        [$pad, $pad],
-        [$bw - $nw - $pad, $pad],
-        [$pad, $bh - $nh - $pad],
-        [$bw - $nw - $pad, $bh - $nh - $pad],
-    ];
-    $best = 0; $bestLum = PHP_INT_MAX;
-    foreach ($spots as $i => [$sx, $sy]) {
-        $sum = 0; $n = 0;
-        for ($x = $sx; $x < $sx + $nw; $x += 12) {
-            for ($y = $sy; $y < $sy + $nh; $y += 12) {
-                if ($x < 0 || $y < 0 || $x >= $bw || $y >= $bh) continue;
-                $c = imagecolorat($base, $x, $y);
-                $sum += (($c >> 16 & 255) * 299 + ($c >> 8 & 255) * 587 + ($c & 255) * 114) / 1000;
-                $n++;
-            }
-        }
-        $lum = $n > 0 ? $sum / $n : 255;
-        if ($lum < $bestLum) { $bestLum = $lum; $best = $i; }
-    }
-    [$dx, $dy] = $spots[$best];
-
-    imagealphablending($base, true);
-    imagecopyresampled($base, $logo, (int) $dx, (int) $dy, 0, 0, $nw, $nh, $lw, $lh);
-
-    $ok = imagejpeg($base, $path, 92);
-    imagedestroy($base); imagedestroy($logo);
-    return (bool) $ok;
 }
 
 /* ------------------------------------------------------------------ *

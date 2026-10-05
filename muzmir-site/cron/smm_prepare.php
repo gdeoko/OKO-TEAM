@@ -128,7 +128,13 @@ try {
 
         /* Картинка — последней: она платная, и тратиться имеет смысл только на
            пост, который уже прошёл все проверки текста. */
-        $prompt = smm_make_image_prompt($topic, $ratio);
+        /* Заголовок и подзаголовок уходят в ту же генерацию: они часть кадра,
+           а не подпись поверх него. */
+        $prompt = smm_make_image_prompt(
+            $topic, $ratio,
+            (string) ($topic['title'] ?? ''),
+            (string) ($topic['subtitle'] ?? '')
+        );
         $imgOk  = false;
         if ($prompt) {
             $path = BASE_PATH . '/data/smm/' . $date . '_' . $hour . '.jpg';
