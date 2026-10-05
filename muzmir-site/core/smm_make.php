@@ -380,8 +380,13 @@ function smm_make_image_prompt(array $topic, string $ratio): ?string {
         . "- a restrained cinematic colour palette, warm and natural;\n"
         . "- mood and the exact story the frame tells;\n"
         . "- quality markers: 8K, ultra sharp, photorealistic, commercial editorial photography.\n\n"
-        . "Forbidden in the prompt: any rendered text or lettering inside the image, logos, "
-        . "watermarks, collage, surreal distortion, extra fingers, plastic skin.\n\n"
+        /* Запрет на логотипы и вывески обязателен: кадр с «гербом на стене»
+           модель рисует охотно, а настоящий логотип ставится поверх отдельно. */
+        . "STRICTLY FORBIDDEN in the prompt: any rendered text, lettering, captions, "
+        . "signage, posters with words, plaques, emblems, crests, medallions, badges, "
+        . "logos or watermarks anywhere in the scene — the real logo is composited on "
+        . "top afterwards and a drawn one ruins the frame. Also forbidden: collage, "
+        . "surreal distortion, extra fingers, plastic skin.\n\n"
         . "Return strictly JSON: {\"prompt\":\"...\"}";
 
     $r = smm_ask_json($prompt, 120);
@@ -410,16 +415,20 @@ function smm_make_image(string $prompt, string $ratio, string $saveTo): array {
     $cost = (float) setting('smm_image_cost', '0.04');
     if (!smm_budget_ok($cost)) return [false, 'дневной предел расхода на картинки исчерпан', 0.0];
 
-    $logo = (string) (cfgv('smm_logo_url')
-        ?: 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai/assets/img/logo_muzmir_main.png');
-
+    /* ЛОГОТИП В ГЕНЕРАЦИЮ НЕ ОТДАЁМ.
+     *
+     * Переданный референсом, он возвращается перерисованным: модель вписывает
+     * его в сцену как табличку на стене и заново рисует надпись по кругу —
+     * получается похожий герб с нечитаемыми буквами. Правило владельца
+     * однозначно: логотип только настоящий, не перерисованный и не растянутый.
+     * Поэтому кадр генерируется чистым, а настоящий файл накладывается поверх
+     * в smm_brand_stamp(). */
     $body = json_encode([
-        'model'        => (string) (cfgv('apimodels_model') ?: 'google/nano-banana-pro'),
+        'model'        => (string) (cfgv('apimodels_model') ?: 'gemini-3-pro-image'),
         'prompt'       => $prompt,
         'aspect_ratio' => $ratio,
         'resolution'   => '2k',
         'quality'      => 'high',
-        'image_urls'   => [$logo],
     ], JSON_UNESCAPED_UNICODE);
 
     $base = rtrim((string) (cfgv('apimodels_base') ?: 'https://api.apimodels.app/v1'), '/');
@@ -485,7 +494,62 @@ function smm_make_image(string $prompt, string $ratio, string $saveTo): array {
     @mkdir(dirname($saveTo), 0775, true);
     if (file_put_contents($saveTo, $img) === false) return [false, 'картинка не сохранилась', 0.0];
 
+    smm_brand_stamp($saveTo);
+
     return [true, '', $cost];
+}
+
+/**
+ * Поставить на кадр настоящий логотип центра.
+ *
+ * Пропорции не трогаются: ширина задаётся долей кадра, высота считается от неё.
+ * Угол выбирается по яркости — логотип золотой на тёмном круге и на светлой
+ * стене теряется, поэтому из четырёх углов берётся самый тёмный.
+ */
+function smm_brand_stamp(string $path, float $share = 0.13, int $pad = 44): bool {
+    $logoFile = (string) (cfgv('smm_logo_file') ?: BASE_PATH . '/public/assets/img/logo_muzmir_main.png');
+    if (!is_file($logoFile) || !is_file($path)) return false;
+    if (!function_exists('imagecreatefromjpeg')) return false;
+
+    $base = @imagecreatefromjpeg($path);
+    $logo = @imagecreatefrompng($logoFile);
+    if (!$base || !$logo) return false;
+
+    $bw = imagesx($base); $bh = imagesy($base);
+    $lw = imagesx($logo); $lh = imagesy($logo);
+
+    $nw = (int) round($bw * $share);
+    $nh = (int) round($lh * ($nw / $lw));          // высота строго по пропорции
+
+    /* Самый тёмный угол: считаем среднюю яркость четырёх областей под логотип. */
+    $spots = [
+        [$pad, $pad],
+        [$bw - $nw - $pad, $pad],
+        [$pad, $bh - $nh - $pad],
+        [$bw - $nw - $pad, $bh - $nh - $pad],
+    ];
+    $best = 0; $bestLum = PHP_INT_MAX;
+    foreach ($spots as $i => [$sx, $sy]) {
+        $sum = 0; $n = 0;
+        for ($x = $sx; $x < $sx + $nw; $x += 12) {
+            for ($y = $sy; $y < $sy + $nh; $y += 12) {
+                if ($x < 0 || $y < 0 || $x >= $bw || $y >= $bh) continue;
+                $c = imagecolorat($base, $x, $y);
+                $sum += (($c >> 16 & 255) * 299 + ($c >> 8 & 255) * 587 + ($c & 255) * 114) / 1000;
+                $n++;
+            }
+        }
+        $lum = $n > 0 ? $sum / $n : 255;
+        if ($lum < $bestLum) { $bestLum = $lum; $best = $i; }
+    }
+    [$dx, $dy] = $spots[$best];
+
+    imagealphablending($base, true);
+    imagecopyresampled($base, $logo, (int) $dx, (int) $dy, 0, 0, $nw, $nh, $lw, $lh);
+
+    $ok = imagejpeg($base, $path, 92);
+    imagedestroy($base); imagedestroy($logo);
+    return (bool) $ok;
 }
 
 /* ------------------------------------------------------------------ *
