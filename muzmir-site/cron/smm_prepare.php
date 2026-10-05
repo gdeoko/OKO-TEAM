@@ -65,11 +65,19 @@ try {
             /* Одна попытка переписать: модель часто промахивается по длине, и это
                чинится повтором, а не ручной правкой. */
             cron_log(JOB, '  текст не прошёл проверку: ' . implode('; ', $err) . ' — переписываю');
-            $body = smm_make_body($topic, $layer, $stage);
-            if (!$body) { cron_log(JOB, '  второй заход не дал текста — пропуск'); continue; }
-            $full = smm_compose($body);
-            $err  = smm_validate($body, $full);
-            if ($err) { cron_log(JOB, '  текст снова не прошёл: ' . implode('; ', $err) . ' — пропуск'); continue; }
+
+            /* Три захода, и каждому говорится, чем плох предыдущий. Без этого
+               модель повторяет ту же ошибку слово в слово: на требование длины
+               она устойчиво отдаёт 1100–1300 знаков, пока ей прямо не скажешь,
+               что вышло коротко и насколько. */
+            for ($try = 0; $try < 3 && $err; $try++) {
+                $retry = smm_make_body($topic, $layer, $stage, implode('; ', $err));
+                if (!$retry) continue;
+                $body = $retry;
+                $full = smm_compose($body);
+                $err  = smm_validate($body, $full);
+            }
+            if ($err) { cron_log(JOB, '  текст так и не прошёл: ' . implode('; ', $err) . ' — пропуск'); continue; }
         }
 
         if ($dry) {

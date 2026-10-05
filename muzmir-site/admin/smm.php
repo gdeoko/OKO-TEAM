@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'settings') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('smm'); }
 
     set_setting('smm_enabled', input('enabled') ? '1' : '0');
+    set_setting('smm_autopublish', input('autopublish') ? '1' : '0');
     set_setting('smm_image_budget_day', (string) (float) input('budget'));
     $pages = trim((string) input('pages'));
     if ($pages !== '') set_setting('smm_pages', $pages);
@@ -113,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), ['pu
 
 /* ---------- Данные экрана ---------- */
 $enabled = (int) setting('smm_enabled', '0') === 1;
+$autopub = (int) setting('smm_autopublish', '0') === 1;
 $budget  = (float) setting('smm_image_budget_day', '0.5');
 $pagesS  = (string) setting('smm_pages', '2543792,2561963');
 $spent   = smm_spent_today();
@@ -153,6 +155,11 @@ ob_start(); ?>
       <b>Конвейер включён</b>
     </label>
 
+    <label style="display:flex;gap:8px;align-items:center" title="Без галочки готовые посты ждут Вашего нажатия">
+      <input type="checkbox" name="autopublish" value="1"<?= $autopub ? ' checked' : '' ?>>
+      <b>Публиковать само</b>
+    </label>
+
     <label style="display:flex;flex-direction:column;gap:4px">
       <span style="font-size:.82rem;color:var(--muted)">Предел расхода на картинки в сутки</span>
       <input class="inp" name="budget" value="<?= h((string) $budget) ?>" style="max-width:120px">
@@ -169,6 +176,9 @@ ob_start(); ?>
   <p style="margin:14px 0 0;font-size:.86rem;color:var(--muted)">
     Потрачено сегодня: <b><?= number_format($spent, 2, ',', ' ') ?></b> из <?= number_format($budget, 2, ',', ' ') ?>.
     Всего опубликовано: <b><?= $totalPublished ?></b>.
+    <?php if ($enabled && !$autopub): ?>
+      <br>Посты собираются, но наружу сами не уходят — каждый ждёт Вашего нажатия «Опубликовать сейчас».
+    <?php endif; ?>
     <?php if ($budget <= 0): ?>
       <br>Предел нулевой — картинки не генерируются, посты остаются черновиками.
     <?php endif; ?>
