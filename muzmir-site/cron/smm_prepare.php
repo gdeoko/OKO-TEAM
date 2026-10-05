@@ -28,7 +28,10 @@ $days  = isset($opts['days'])  ? max(0, (int) $opts['days'])  : 3;
 $limit = isset($opts['limit']) ? max(1, (int) $opts['limit']) : 2;
 $dry   = isset($opts['dry']);
 
-if (!cron_lock(JOB, 3600)) { cron_log(JOB, 'предыдущий запуск ещё идёт — выход'); exit(0); }
+/* Полчаса, не час: подготовка трёх постов укладывается в пятнадцать минут, а
+   замок с часовым сроком после упавшего процесса держит конвейер мёртвым до
+   следующего часа и съедает слот. */
+if (!cron_lock(JOB, 1800)) { cron_log(JOB, 'предыдущий запуск ещё идёт — выход'); exit(0); }
 
 try {
     if ((int) setting('smm_enabled', '0') !== 1) {
@@ -70,6 +73,19 @@ try {
                модель повторяет ту же ошибку слово в слово: на требование длины
                она устойчиво отдаёт 1100–1300 знаков, пока ей прямо не скажешь,
                что вышло коротко и насколько. */
+            /* Перелёт по длине чиним сокращением, а не переписыванием: на просьбу
+               написать заново модель сочиняет новый текст и снова мажет мимо. */
+            $tooLong = (bool) preg_grep('~длинн~u', $err);
+            if ($tooLong) {
+                $short = smm_shrink($body, SMM_BODY_MAX);
+                if ($short !== null) {
+                    $body = $short;
+                    $full = smm_compose($body);
+                    $err  = smm_validate($body, $full);
+                    cron_log(JOB, '  сокращено до ' . mb_strlen($body, 'UTF-8') . ' знаков');
+                }
+            }
+
             for ($try = 0; $try < 3 && $err; $try++) {
                 $retry = smm_make_body($topic, $layer, $stage, implode('; ', $err));
                 if (!$retry) continue;
@@ -87,19 +103,24 @@ try {
             cron_log(JOB, '  в тексте сомнительные факты: ' . implode('; ', array_slice($factProblems, 0, 2)) . ' — переписываю');
             $hint = 'в тексте недостоверные утверждения: ' . implode('; ', $factProblems)
                   . '. Убери их совсем или замени на проверяемые. Не выдумывай замену.';
-            $retry = smm_make_body($topic, $layer, $stage, $hint);
-            if ($retry) {
+            /* Две попытки, и длина по пути чинится сокращением: одного захода мало,
+               а бросать тему из-за одной неудачной формулировки расточительно —
+               слот тогда остаётся пустым. */
+            $fixed = false;
+            for ($t = 0; $t < 2 && !$fixed; $t++) {
+                $retry = smm_make_body($topic, $layer, $stage, $hint);
+                if (!$retry) continue;
+
+                if (mb_strlen($retry, 'UTF-8') > SMM_BODY_MAX) {
+                    $short = smm_shrink($retry, SMM_BODY_MAX);
+                    if ($short !== null) $retry = $short;
+                }
                 $full2 = smm_compose($retry);
                 if (!smm_validate($retry, $full2) && !smm_text_fact_check($retry)) {
-                    $body = $retry; $full = $full2;
-                } else {
-                    cron_log(JOB, '  переписанный текст тоже с проблемами — пропуск');
-                    continue;
+                    $body = $retry; $full = $full2; $fixed = true;
                 }
-            } else {
-                cron_log(JOB, '  переписать не удалось — пропуск');
-                continue;
             }
+            if (!$fixed) { cron_log(JOB, '  текст не удалось очистить от выдумок — пропуск'); continue; }
         }
 
         if ($dry) {
