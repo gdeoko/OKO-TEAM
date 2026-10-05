@@ -190,6 +190,18 @@ return [
     'unisender_api_key' => cfg('MUZMIR_UNISENDER_KEY', ''),
     'unisender_from'    => cfg('MUZMIR_UNISENDER_FROM', 'news@xn----7sbugdeiegh1b0a9hen.xn--p1ai'),
     'unisender_api_url' => cfg('MUZMIR_UNISENDER_URL', 'https://go2.unisender.ru/ru/transactional/api/v1'),
+    // Hooppy — планировщик соцсетей центра. Через него идёт ВСЯ публикация в
+    // ленту: сообщество ВКонтакте, канал МАКС, видеоплощадки. Цели публикации
+    // (страницы) берутся из его же API, GET /accounts/pages — в /accounts их нет.
+    'hooppy_token' => cfg('HOOPPY_API_TOKEN', ''),
+    'hooppy_base'  => cfg('HOOPPY_API_BASE', 'https://api.hooppy.ru/api'),
+
+    // apimodels — генерация картинок к постам. Платная, расход ограничен
+    // настройкой smm_image_budget_day (см. core/smm.php).
+    'apimodels_key'   => cfg('APIMODELS_KEY', ''),
+    'apimodels_base'  => cfg('APIMODELS_BASE', 'https://api.apimodels.app/v1'),
+    'apimodels_model' => cfg('APIMODELS_MODEL', 'google/nano-banana-pro'),
+
     'gemini_api_key'  => cfg('MUZMIR_GEMINI_KEY', ''),
     // Несколько ключей через запятую: бесплатная квота у каждого маленькая, и
     // упёршийся в лимит уступает следующему — иначе бот замолкает в час пик.
