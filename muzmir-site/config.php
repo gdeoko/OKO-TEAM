@@ -200,7 +200,10 @@ return [
     // настройкой smm_image_budget_day (см. core/smm.php).
     'apimodels_key'   => cfg('APIMODELS_KEY', ''),
     'apimodels_base'  => cfg('APIMODELS_BASE', 'https://api.apimodels.app/v1'),
-    'apimodels_model' => cfg('APIMODELS_MODEL', 'google/nano-banana-pro'),
+    // Имя модели у apimodels своё: «nano banana pro» там зовётся gemini-3-pro-image,
+    // а google/nano-banana-pro отвечает 404 «Model not found». Полный список
+    // выдаёт сам API, если послать заведомо неверное имя модели.
+    'apimodels_model' => cfg('APIMODELS_MODEL', 'gemini-3-pro-image'),
 
     'gemini_api_key'  => cfg('MUZMIR_GEMINI_KEY', ''),
     // Несколько ключей через запятую: бесплатная квота у каждого маленькая, и

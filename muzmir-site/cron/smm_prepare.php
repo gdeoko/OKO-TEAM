@@ -80,6 +80,28 @@ try {
             if ($err) { cron_log(JOB, '  текст так и не прошёл: ' . implode('; ', $err) . ' — пропуск'); continue; }
         }
 
+        /* Текст написан и прошёл правила центра — теперь проверяем, не дописала ли
+           модель собственных «исследований» поверх проверенного факта. */
+        $factProblems = smm_text_fact_check($body);
+        if ($factProblems) {
+            cron_log(JOB, '  в тексте сомнительные факты: ' . implode('; ', array_slice($factProblems, 0, 2)) . ' — переписываю');
+            $hint = 'в тексте недостоверные утверждения: ' . implode('; ', $factProblems)
+                  . '. Убери их совсем или замени на проверяемые. Не выдумывай замену.';
+            $retry = smm_make_body($topic, $layer, $stage, $hint);
+            if ($retry) {
+                $full2 = smm_compose($retry);
+                if (!smm_validate($retry, $full2) && !smm_text_fact_check($retry)) {
+                    $body = $retry; $full = $full2;
+                } else {
+                    cron_log(JOB, '  переписанный текст тоже с проблемами — пропуск');
+                    continue;
+                }
+            } else {
+                cron_log(JOB, '  переписать не удалось — пропуск');
+                continue;
+            }
+        }
+
         if ($dry) {
             cron_log(JOB, "  [сухой прогон] тема: {$topic['topic']}, тело " . mb_strlen($body, 'UTF-8') . ' знаков');
             $done++;
