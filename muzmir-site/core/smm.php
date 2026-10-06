@@ -406,11 +406,22 @@ function smm_due_post(): ?array {
     $date = $now->format('Y-m-d');
     $hour = (int) $now->format('G');
 
+    /* ПРОСРОЧЕННЫЙ ПОСТ НЕ ПРОПАДАЕТ, А УХОДИТ СЛЕДУЮЩИМ.
+     *
+     * Выборка смотрела только на сегодняшний день, и пост, чей час прошёл не по
+     * своей вине — выключенная автопубликация, нерабочее воскресенье, лежачий
+     * сервер, — назавтра уже никто не подбирал: он оставался в «готов» навсегда,
+     * а труд и деньги на картинку пропадали. Два поста 6 октября так и повисли.
+     *
+     * Берём самый старый невыпущенный: лента идёт по порядку, и вчерашний текст
+     * не устаревает — темы у нас не новостные. Один за раз, чтобы накопившийся
+     * хвост не вывалился в ленту пачкой: по два поста в день он разойдётся сам. */
     $row = one(
         "SELECT * FROM smm_posts
-          WHERE status = 'ready' AND slot_date = ? AND slot_hour <= ? AND attempts < 5
-       ORDER BY slot_hour DESC LIMIT 1",
-        [$date, $hour]
+          WHERE status = 'ready' AND attempts < 5
+            AND (slot_date < ? OR (slot_date = ? AND slot_hour <= ?))
+       ORDER BY slot_date, slot_hour LIMIT 1",
+        [$date, $date, $hour]
     );
     return $row ?: null;
 }
