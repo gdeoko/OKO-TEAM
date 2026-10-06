@@ -75,7 +75,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* --------------------- ДАННЫЕ + выбор конкурса ----------------------- */
 $longComps = all("SELECT * FROM competitions WHERE results_mode='list' ORDER BY sort, name");
 $comp = (int) input('competition');
-if (!$comp && $longComps) $comp = (int) $longComps[0]['id'];
+/* ОТКРЫВАЕМСЯ НА ДЕЙСТВУЮЩЕМ КОНКУРСЕ, А НЕ НА ПЕРВОМ ПО СОРТИРОВКЕ.
+ *
+ * Раздел брал $longComps[0] — то есть самый ранний по sort. В октябре это
+ * «Наследие России»: сентябрьский, закрытый, итоги по нему опубликованы 30.09.
+ * Владелец открывал раздел, видел прошлый конкурс и решал, что заявки на
+ * «Гордость поколения» вообще не доходят, — а их было сорок семь, просто на
+ * второй вкладке. Приоритет: идёт приём → оценка → всё остальное. */
+if (!$comp && $longComps) {
+    foreach (['open', 'judging'] as $want) {
+        foreach ($longComps as $lc) {
+            if ((string) ($lc['status'] ?? '') === $want) { $comp = (int) $lc['id']; break 2; }
+        }
+    }
+    if (!$comp) $comp = (int) $longComps[0]['id'];
+}
 $current = $comp ? one("SELECT * FROM competitions WHERE id=? AND results_mode='list'", [$comp]) : null;
 
 /* ------- Помощник: строка «страна/город» и «участник/коллектив» ------- */
@@ -117,8 +131,20 @@ ob_start(); ?>
   <input type="hidden" name="p" value="longcomp">
   <div class="field"><label>Конкурс</label>
     <select name="competition" onchange="this.form.submit()">
-      <?php foreach ($longComps as $c): ?>
-        <option value="<?= (int)$c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?></option>
+      <?php foreach ($longComps as $c):
+        /* В списке одни названия, и закрытый прошлый конкурс неотличим от
+           идущего. Показываем состояние и число заявок прямо в строке: иначе
+           снова выйдет «заявки не доходят», когда они лежат на соседней вкладке. */
+        $cnt = (int) (scalar("SELECT COUNT(*) FROM applications WHERE competition_id=? AND is_paid=1 AND status<>'rejected'",
+                             [(int) $c['id']]) ?? 0);
+        $mark = match ((string) ($c['status'] ?? '')) {
+            'open'    => 'идёт приём',
+            'judging' => 'на аттестации',
+            'closed'  => 'закрыт',
+            default   => (string) ($c['status'] ?? ''),
+        }; ?>
+        <option value="<?= (int)$c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?=
+          h($c['name']) ?> — <?= h($mark) ?>, заявок <?= $cnt ?></option>
       <?php endforeach; ?>
     </select>
   </div>
