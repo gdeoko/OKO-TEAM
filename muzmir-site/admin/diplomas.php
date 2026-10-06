@@ -348,8 +348,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
 }
 
 $comps = all("SELECT id,name,status FROM competitions ORDER BY sort,name");
-// По умолчанию — первый конкурс (без пустой страницы «Выберите…»).
-if (!$comp && $comps) $comp = (int) $comps[0]['id'];
+// По умолчанию — действующий конкурс, а не первый по сортировке (см. admin/_boot.php).
+$comp = admin_default_competition($comps, $comp);
 $current = $comp ? one("SELECT * FROM competitions WHERE id=?", [$comp]) : null;
 $tab = input('tab') ?: 'ready';
 

@@ -75,21 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* --------------------- ДАННЫЕ + выбор конкурса ----------------------- */
 $longComps = all("SELECT * FROM competitions WHERE results_mode='list' ORDER BY sort, name");
 $comp = (int) input('competition');
-/* ОТКРЫВАЕМСЯ НА ДЕЙСТВУЮЩЕМ КОНКУРСЕ, А НЕ НА ПЕРВОМ ПО СОРТИРОВКЕ.
- *
- * Раздел брал $longComps[0] — то есть самый ранний по sort. В октябре это
- * «Наследие России»: сентябрьский, закрытый, итоги по нему опубликованы 30.09.
- * Владелец открывал раздел, видел прошлый конкурс и решал, что заявки на
- * «Гордость поколения» вообще не доходят, — а их было сорок семь, просто на
- * второй вкладке. Приоритет: идёт приём → оценка → всё остальное. */
-if (!$comp && $longComps) {
-    foreach (['open', 'judging'] as $want) {
-        foreach ($longComps as $lc) {
-            if ((string) ($lc['status'] ?? '') === $want) { $comp = (int) $lc['id']; break 2; }
-        }
-    }
-    if (!$comp) $comp = (int) $longComps[0]['id'];
-}
+// Действующий конкурс, а не первый по сортировке — правило общее (admin/_boot.php).
+$comp = admin_default_competition($longComps, $comp);
 $current = $comp ? one("SELECT * FROM competitions WHERE id=? AND results_mode='list'", [$comp]) : null;
 
 /* ------- Помощник: строка «страна/город» и «участник/коллектив» ------- */
