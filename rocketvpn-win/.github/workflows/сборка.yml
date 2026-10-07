@@ -1,0 +1,131 @@
+# Сборка клиента Rocket VPN для Windows 7/8/10/11.
+#
+# ПОЧЕМУ ЯДРО СОБИРАЕТСЯ ЗДЕСЬ, А НЕ БЕРЁТСЯ ГОТОВЫМ. Готовые сборки
+# Xray с гитхаба собраны свежим Go, а Go с версии 1.21 требует
+# Windows 10: на семёрке такой файл не запускается вовсе. Поэтому ядро
+# собирается тут же, компилятором Go 1.20 - последним, который умеет
+# Windows 7. Версию Xray держим на теге, который этим Go собирается.
+#
+# Запуск: пуш тега вида v1.0.0 делает релиз, кнопка «Run workflow»
+# собирает архивы без релиза.
+
+name: Сборка
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GO_ВЕРСИЯ: "1.20.14"
+  XRAY_ТЕГ: "v1.8.4"
+
+jobs:
+  собрать:
+    runs-on: windows-latest
+
+    steps:
+      - name: Забрать исходники
+        uses: actions/checkout@v4
+
+      - name: Поставить Go 1.20
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_ВЕРСИЯ }}
+          check-latest: false
+
+      - name: Поставить .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Номер версии
+        id: версия
+        shell: pwsh
+        run: |
+          $тег = "${{ github.ref_name }}"
+          if ($тег -match '^v\d+\.\d+\.\d+$') { $в = $тег.TrimStart('v') } else { $в = "0.0.$($env:GITHUB_RUN_NUMBER)" }
+          "номер=$в" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "версия сборки $в"
+
+      - name: Собрать ядро Xray под Windows 7
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch $env:XRAY_ТЕГ https://github.com/XTLS/Xray-core.git ядро
+          Push-Location ядро
+          New-Item -ItemType Directory -Force -Path ..\готово\x64, ..\готово\x86 | Out-Null
+          $env:CGO_ENABLED = "0"
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          go build -o ..\готово\x64\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
+          $env:GOARCH = "386"
+          go build -o ..\готово\x86\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
+          Pop-Location
+          Get-ChildItem готово -Recurse -Filter xray.exe | ForEach-Object { Write-Host $_.FullName ([math]::Round($_.Length/1MB,1)) "МБ" }
+
+      - name: Базы geoip и geosite
+        shell: pwsh
+        run: |
+          $б = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download"
+          foreach ($ф in @("geoip.dat", "geosite.dat")) {
+            Invoke-WebRequest "$б/$ф" -OutFile "готово\x64\$ф"
+            Copy-Item "готово\x64\$ф" "готово\x86\$ф"
+          }
+
+      - name: Собрать клиент
+        shell: pwsh
+        run: |
+          dotnet build src\RocketVPN\RocketVPN.csproj -c Release `
+            -p:Version=${{ steps.версия.outputs.номер }} `
+            -p:AssemblyVersion=${{ steps.версия.outputs.номер }}.0 `
+            -p:FileVersion=${{ steps.версия.outputs.номер }}.0
+          Get-ChildItem src\RocketVPN\bin\Release\net48
+
+      - name: Прогнать пробу логики
+        shell: pwsh
+        run: |
+          dotnet build проба\проба.csproj -c Release
+          & проба\bin\Release\net48\проба.exe
+          if ($LASTEXITCODE -ne 0) { throw "проба не прошла" }
+
+      - name: Сложить архивы
+        shell: pwsh
+        run: |
+          $в = "${{ steps.версия.outputs.номер }}"
+          foreach ($р in @("x64", "x86")) {
+            $п = "сборка\$р"
+            New-Item -ItemType Directory -Force -Path $п | Out-Null
+            Copy-Item src\RocketVPN\bin\Release\net48\RocketVPN.exe $п
+            if (Test-Path src\RocketVPN\bin\Release\net48\RocketVPN.exe.config) {
+              Copy-Item src\RocketVPN\bin\Release\net48\RocketVPN.exe.config $п
+            }
+            Copy-Item "готово\$р\*" $п
+            Copy-Item ЧИТАЙ.txt $п -ErrorAction SilentlyContinue
+            $архив = "RocketVPN-$в-win-$р.zip"
+            Compress-Archive -Path "$п\*" -DestinationPath $архив -Force
+            # Сумма обязательна: по ней клиент проверяет, что скачал наше.
+            (Get-FileHash $архив -Algorithm SHA256).Hash.ToLower() | Out-File "$архив.sha256" -Encoding ascii -NoNewline
+            Write-Host $архив
+          }
+
+      - name: Отдать архивы
+        uses: actions/upload-artifact@v4
+        with:
+          name: RocketVPN-${{ steps.версия.outputs.номер }}
+          path: |
+            RocketVPN-*.zip
+            RocketVPN-*.zip.sha256
+
+      - name: Выложить релиз
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" `
+            (Get-ChildItem RocketVPN-*.zip, RocketVPN-*.zip.sha256 | ForEach-Object { $_.FullName }) `
+            --title "Rocket VPN ${{ github.ref_name }}" `
+            --notes "Клиент Rocket VPN для Windows 7, 8, 10 и 11.`n`nx64 для обычной системы, x86 для 32-битной. Распакуйте папку целиком и запустите RocketVPN.exe."
