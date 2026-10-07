@@ -963,6 +963,57 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   .rc-chat-btn svg { width: 24px; height: 24px; }
 }
 
+/* ── Кнопка чата: плашка с надписью + пульсация ─────────────
+   Выбор владельца от 07.10.2026 (вариант «1 + 2»). На компьютере
+   кнопка становится плашкой «Напишите нам сообщение», от неё
+   расходится волна, облачко изредка покачивается. На телефоне плашка
+   закрывала бы текст страницы, поэтому там кнопка остаётся круглой,
+   но тоже пульсирует. Волна повторяется 8 раз и затихает, чтобы не
+   мешать читать. Блок стоит ПОСЛЕ правил выше и перекрывает их. */
+.rc-chat-btn {
+  width: auto; height: 52px;
+  padding: 0 22px 0 16px;
+  border-radius: 26px;
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1;
+  white-space: nowrap;
+  animation:
+    rc-chat-in .34s cubic-bezier(.2, .9, .3, 1.2) both,
+    rc-chat-ring 2.4s ease-out 3s 8;
+}
+.rc-chat-btn svg {
+  width: 24px; height: 24px; flex: none;
+  animation: rc-chat-wiggle 6s ease-in-out 4s infinite;
+}
+.rc-chat-dot { top: 4px; right: 8px; }
+
+@keyframes rc-chat-ring {
+  0%   { box-shadow: 0 10px 26px -8px rgba(10,88,151,.8), 0 0 0 0    rgba(37,140,230,.55); }
+  70%  { box-shadow: 0 10px 26px -8px rgba(10,88,151,.8), 0 0 0 18px rgba(37,140,230,0); }
+  100% { box-shadow: 0 10px 26px -8px rgba(10,88,151,.8), 0 0 0 0    rgba(37,140,230,0); }
+}
+@keyframes rc-chat-wiggle {
+  0%, 90%, 100% { transform: rotate(0); }
+  92% { transform: rotate(-12deg); }
+  94% { transform: rotate(10deg); }
+  96% { transform: rotate(-6deg); }
+}
+
+/* Телефон: снова круг, подпись спрятана */
+@media (max-width: 768px) {
+  .rc-chat-btn {
+    width: 52px; padding: 0;
+    border-radius: 50%; justify-content: center;
+  }
+  .rc-chat-label { display: none; }
+  .rc-chat-dot { top: 6px; right: 6px; }
+}
+
+/* Кто отключил анимации в системе, тот видит кнопку без движения */
+@media (prefers-reduced-motion: reduce) {
+  .rc-chat-btn, .rc-chat-btn svg { animation: none; }
+}
+
 /* Строка в шторке меню. Лежит в разметке всегда, чтобы её перевёл
    словарь, а показывается только когда чату есть что открыть: мёртвая
    строка меню хуже отсутствующей. */

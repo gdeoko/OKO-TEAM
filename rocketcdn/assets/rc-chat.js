@@ -65,6 +65,12 @@
     return запас;
   }
 
+  /* Подпись кнопки одной строкой: её видно на кнопке и её же слышит
+     голосовое управление в aria-label. */
+  function подписьКнопки() {
+    return слово("chat.cta", английский ? "Send us a message" : "Напишите нам сообщение");
+  }
+
   /* Настройки читает сам пакет при запуске, поэтому ставим их ДО него. */
   g.chatwootSettings = {
     locale: английский ? "en" : "ru",
@@ -100,14 +106,33 @@
     к.type = "button";
     к.id = "rcЧат";
     к.className = "rc-chat-btn";
-    var подпись = слово("chat.open", английский ? "Message a manager" : "Написать менеджеру");
-    к.setAttribute("aria-label", подпись);
-    к.setAttribute("title", подпись);
+    /* Видимая подпись плашки. На телефоне её прячет стиль, кнопка
+       остаётся круглой. aria-label совпадает с видимым текстом, чтобы
+       голосовое управление находило кнопку по тому, что написано. */
+    var текст = подписьКнопки();
+    к.setAttribute("aria-label", текст);
+    к.setAttribute("title", текст);
     /* Огонёк «мы на месте» рисуется рядом со значком, а не поверх него:
        поверх он садился бы на третью точку облачка. */
-    к.innerHTML = ЗНАЧОК + '<span class="rc-chat-dot" aria-hidden="true"></span>';
+    к.innerHTML = ЗНАЧОК +
+      '<span class="rc-chat-label">' + текст + '</span>' +
+      '<span class="rc-chat-dot" aria-hidden="true"></span>';
     к.addEventListener("click", открыть);
     d.body.appendChild(к);
+    /* Язык на сайте переключается без перезагрузки (rc:lang из
+       rc-app.js), а подпись теперь видно глазами: оставить её старой
+       значило бы держать на экране русскую плашку поверх английской
+       страницы. Пока подписи не было, расхождение прятал aria-label. */
+    d.addEventListener("rc:lang", function (со) {
+      try {
+        английский = (((со.detail && со.detail.lang) || корень.getAttribute("lang") || "ru") + "").slice(0, 2) === "en";
+      } catch (eЛ) {}
+      var новый = подписьКнопки();
+      к.setAttribute("aria-label", новый);
+      к.setAttribute("title", новый);
+      var п = к.querySelector(".rc-chat-label");
+      if (п) п.textContent = новый;
+    });
   }
 
   function открыть() {
