@@ -16,7 +16,22 @@ namespace RocketVPN
 {
     internal static class Конфиг
     {
+        /* Режимы маршрутизации, как в знакомых клиентах:
+           0 - весь трафик через VPN,
+           1 - умный: российские адреса и своя сеть идут напрямую.
+           Умный стоит по умолчанию. Через туннель банк видит чужую
+           страну и закрывает вход, а сетевой принтер и домашний роутер
+           просто перестают отвечать - человек решает, что VPN сломал
+           ему компьютер. */
+        public const int ВесьТрафик = 0;
+        public const int Умный = 1;
+
         public static string Собрать(Узел у, int портSocks, int портHttp)
+        {
+            return Собрать(у, портSocks, портHttp, Умный);
+        }
+
+        public static string Собрать(Узел у, int портSocks, int портHttp, int режим)
         {
             Dictionary<string, object> корень = new Dictionary<string, object>();
 
@@ -35,22 +50,32 @@ namespace RocketVPN
                 new Dictionary<string, object> { { "protocol", "blackhole" }, { "tag", "block" } }
             };
 
-            /* Своя сеть мимо туннеля. Без этого правила перестают
-               открываться принтер, роутер и сетевые папки, и человек
-               считает, что VPN сломал ему офис. */
+            /* Своя сеть мимо туннеля всегда, в обоих режимах. Без
+               этого правила перестают открываться принтер, роутер и
+               сетевые папки, и человек считает, что VPN сломал ему
+               офис. */
+            List<object> правила = new List<object>
+            {
+                new Dictionary<string, object>
+                {
+                    { "type", "field" },
+                    { "ip", new List<object> { "geoip:private" } },
+                    { "outboundTag", "direct" }
+                }
+            };
+            if (режим == Умный)
+            {
+                правила.Add(new Dictionary<string, object>
+                {
+                    { "type", "field" },
+                    { "ip", new List<object> { "geoip:ru" } },
+                    { "outboundTag", "direct" }
+                });
+            }
             корень["routing"] = new Dictionary<string, object>
             {
                 { "domainStrategy", "IPIfNonMatch" },
-                { "rules", new List<object>
-                    {
-                        new Dictionary<string, object>
-                        {
-                            { "type", "field" },
-                            { "ip", new List<object> { "geoip:private" } },
-                            { "outboundTag", "direct" }
-                        }
-                    }
-                }
+                { "rules", правила }
             };
 
             корень["dns"] = new Dictionary<string, object>

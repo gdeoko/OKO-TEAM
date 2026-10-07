@@ -89,11 +89,93 @@ namespace RocketVPN
             Так("открытый текст разобран, два узла", изТекста.Count == 2);
 
             List<Узел> json = Подписка.РазобратьТело("{\"outbounds\":[]}", out ч);
-            Так("json честно отбит", json.Count == 0 && ч.Contains("sing-box"));
+            Так("пустой json: ноль узлов и причина словами", json.Count == 0 && ч.Length > 10);
             List<Узел> yaml = Подписка.РазобратьТело("proxies:\n  - name: a", out ч);
-            Так("yaml честно отбит", yaml.Count == 0 && ч.Contains("Clash"));
+            Так("yaml без годных узлов: причина словами", yaml.Count == 0 && ч.Contains("Clash"));
+            Так("битый json не роняет программу",
+                Подписка.РазобратьТело("{это не json", out ч).Count == 0);
             Подписка.РазобратьТело("   ", out ч);
             Так("пустая подписка названа", ч.Length > 0);
+
+            Console.WriteLine("\nCLASH YAML");
+            string clash = string.Join("\n", new string[] {
+                "port: 7890",
+                "proxies:",
+                "  - name: \"Москва 1\"",
+                "    type: vless",
+                "    server: 10.0.0.1",
+                "    port: 443",
+                "    uuid: uuid-1",
+                "    tls: true",
+                "    servername: www.ms.com",
+                "    client-fingerprint: chrome",
+                "    flow: xtls-rprx-vision",
+                "    reality-opts:",
+                "      public-key: PBK123",
+                "      short-id: ab12",
+                "  - name: Вторая",
+                "    type: trojan",
+                "    server: 10.0.0.2",
+                "    port: 8443",
+                "    password: секрет",
+                "    sni: a.example.com",
+                "  - {name: Третья, type: ss, server: 10.0.0.3, port: 8388, cipher: aes-128-gcm, password: пп}",
+                "  - name: Четвёртая",
+                "    type: vmess",
+                "    server: 10.0.0.4",
+                "    port: 80",
+                "    uuid: uuid-4",
+                "    alterId: 0",
+                "    network: ws",
+                "    ws-opts:",
+                "      path: /путь",
+                "      headers:",
+                "        Host: front.example.com",
+                "  - name: Пропустить",
+                "    type: hysteria2",
+                "    server: 10.0.0.9",
+                "    port: 443",
+                "proxy-groups:",
+                "  - name: авто",
+                ""});
+            List<Узел> ясно = Подписка.РазобратьТело(clash, out ч);
+            Так("clash: четыре понятных узла", ясно.Count == 4);
+            if (ясно.Count == 4)
+            {
+                Так("clash: имя в кавычках", ясно[0].Имя == "Москва 1");
+                Так("clash: reality", ясно[0].Защита == "reality" && ясно[0].Ключ == "PBK123" && ясно[0].Короткий == "ab12");
+                Так("clash: sni", ясно[0].Sni == "www.ms.com");
+                Так("clash: поток", ясно[0].Поток == "xtls-rprx-vision");
+                Так("clash: trojan с паролем", ясно[1].Протокол == "trojan" && ясно[1].Ид == "секрет");
+                Так("clash: однострочный ss", ясно[2].Протокол == "shadowsocks" && ясно[2].Метод == "aes-128-gcm" && ясно[2].Порт == 8388);
+                Так("clash: vmess по ws", ясно[3].Сеть == "ws" && ясно[3].Путь == "/путь");
+                Так("clash: заголовок хоста", ясно[3].ЗаголовокХост == "front.example.com");
+            }
+            Так("clash: чужой протокол пропущен",
+                ясно.FindIndex(delegate (Узел z) { return z.Адрес == "10.0.0.9"; }) < 0);
+
+            string вБазе = Convert.ToBase64String(Encoding.UTF8.GetBytes(clash));
+            Так("clash внутри base64 тоже читается", Подписка.РазобратьТело(вБазе, out ч).Count == 4);
+
+            Console.WriteLine("\nSING-BOX JSON");
+            string sb = "{\"outbounds\":[" +
+                "{\"type\":\"vless\",\"tag\":\"Питер\",\"server\":\"20.0.0.1\",\"server_port\":443," +
+                "\"uuid\":\"u-1\",\"flow\":\"xtls-rprx-vision\"," +
+                "\"tls\":{\"enabled\":true,\"server_name\":\"ya.ru\",\"utls\":{\"fingerprint\":\"firefox\"}," +
+                "\"reality\":{\"enabled\":true,\"public_key\":\"KEY\",\"short_id\":\"ff\"}}}," +
+                "{\"type\":\"trojan\",\"tag\":\"Тр\",\"server\":\"20.0.0.2\",\"server_port\":443,\"password\":\"p\"," +
+                "\"transport\":{\"type\":\"ws\",\"path\":\"/w\",\"headers\":{\"Host\":\"h.example\"}}}," +
+                "{\"type\":\"selector\",\"tag\":\"выбор\",\"outbounds\":[\"Питер\"]}," +
+                "{\"type\":\"direct\",\"tag\":\"прямо\"}]}";
+            List<Узел> изSb = Подписка.РазобратьТело(sb, out ч);
+            Так("sing-box: два узла из четырёх", изSb.Count == 2);
+            if (изSb.Count == 2)
+            {
+                Так("sing-box: имя из tag", изSb[0].Имя == "Питер");
+                Так("sing-box: reality", изSb[0].Защита == "reality" && изSb[0].Ключ == "KEY");
+                Так("sing-box: отпечаток", изSb[0].Отпечаток == "firefox");
+                Так("sing-box: ws у trojan", изSb[1].Сеть == "ws" && изSb[1].ЗаголовокХост == "h.example");
+            }
 
             Console.WriteLine("\nКОНФИГ ЯДРА");
             string к = Конфиг.Собрать(у, 10808, 10809);
@@ -112,6 +194,14 @@ namespace RocketVPN
 
             string кss = Конфиг.Собрать(ss, 1, 2);
             Так("ss собрался", кss.Contains("shadowsocks") && кss.Contains("aes-256-gcm"));
+
+            Console.WriteLine("\nРЕЖИМЫ МАРШРУТИЗАЦИИ");
+            string умный = Конфиг.Собрать(у, 1, 2, Конфиг.Умный);
+            string весь = Конфиг.Собрать(у, 1, 2, Конфиг.ВесьТрафик);
+            Так("умный: российские напрямую", умный.Contains("geoip:ru"));
+            Так("весь трафик: без исключения для России", !весь.Contains("geoip:ru"));
+            Так("своя сеть напрямую в обоих", умный.Contains("geoip:private") && весь.Contains("geoip:private"));
+            Так("по умолчанию умный", Конфиг.Собрать(у, 1, 2).Contains("geoip:ru"));
 
             Console.WriteLine("\nвсего " + всего + ", плохо " + упало);
             Environment.Exit(упало == 0 ? 0 : 1);

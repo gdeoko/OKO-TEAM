@@ -53,7 +53,16 @@ namespace RocketVPN
 
         public static List<Узел> Загрузить(string адрес, out string почему)
         {
+            string сырое;
+            return ЗагрузитьСТелом(адрес, out почему, out сырое);
+        }
+
+        /* То же самое, но отдаёт и сырой ответ: его сохраняют в
+           настройках, чтобы список серверов открывался и без сети. */
+        public static List<Узел> ЗагрузитьСТелом(string адрес, out string почему, out string сырое)
+        {
             почему = "";
+            сырое = "";
             if (!ДоменСвой(адрес, out почему)) return new List<Узел>();
 
             string тело;
@@ -79,6 +88,7 @@ namespace RocketVPN
 
             List<Узел> узлы = РазобратьТело(тело, out почему);
             if (узлы.Count == 0 && почему == "") почему = "В подписке нет серверов.";
+            if (узлы.Count > 0) сырое = тело;
             return узлы;
         }
 
@@ -90,20 +100,38 @@ namespace RocketVPN
 
             string т = тело.Trim();
 
-            /* Формат, которого мы пока не читаем, называем вслух: иначе
-               человек увидит пустой список и решит, что сломан клиент. */
+            /* Три формата, и какой придёт, решает панель, а не клиент.
+               Узнаём по первым знакам: json начинается со скобки, Clash
+               с раздела proxies, список ссылок содержит «://» или лежит
+               в base64. */
             if (т.StartsWith("{", StringComparison.Ordinal) || т.StartsWith("[", StringComparison.Ordinal))
             {
-                почему = "Подписка в формате JSON (sing-box) пока не читается. Нужен список ссылок vless.";
+                try { узлы.AddRange(ФорматыПодписки.ИзSingBox(т)); }
+                catch (Exception е) { почему = "Подписка json не разобралась: " + е.Message; }
+                if (узлы.Count == 0 && почему == "")
+                    почему = "В подписке json нет серверов, которые понимает ядро.";
                 return узлы;
             }
             if (т.StartsWith("proxies:", StringComparison.Ordinal) || т.Contains("\nproxies:"))
             {
-                почему = "Подписка в формате Clash yaml пока не читается. Нужен список ссылок vless.";
+                try { узлы.AddRange(ФорматыПодписки.ИзClash(т)); }
+                catch (Exception е) { почему = "Подписка Clash не разобралась: " + е.Message; }
+                if (узлы.Count == 0 && почему == "")
+                    почему = "В подписке Clash нет серверов, которые понимает ядро.";
                 return узлы;
             }
 
-            if (!т.Contains("://")) т = ИзBase64(т);
+            if (!т.Contains("://"))
+            {
+                т = ИзBase64(т);
+                /* Внутри base64 мог лежать не список, а тот же Clash или
+                   json: панели это делают. Разбираем раскодированное
+                   тем же разбором, один раз. */
+                string в = т.TrimStart();
+                if (в.StartsWith("{", StringComparison.Ordinal) || в.StartsWith("[", StringComparison.Ordinal) ||
+                    в.StartsWith("proxies:", StringComparison.Ordinal) || в.Contains("\nproxies:"))
+                    return РазобратьТело(т, out почему);
+            }
 
             string[] строки = т.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             foreach (string с in строки)
