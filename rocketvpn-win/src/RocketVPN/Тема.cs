@@ -27,6 +27,31 @@ namespace RocketVPN
         public static readonly Color Удача = ЦветИз("#35E08F");
         public static readonly Color Тревога = ЦветИз("#FF6A3C");
 
+        /* ── МАСШТАБ ЭКРАНА ──────────────────────────────────────────
+           Правка по живому запуску у сетевого администратора: на его
+           машине текст вылезал из кнопок и обрезался со всех сторон.
+           Причина в том, что разметка была в жёстких точках, а шрифт
+           задан в пунктах: при увеличении экрана на 125 или 150
+           процентов буквы растут, а коробки под ними нет.
+
+           Теперь каждое число разметки проходит через М(): оно растёт
+           вместе с буквами. Коэффициент берётся у самого экрана один
+           раз при запуске. Единица это обычные 96 точек на дюйм. */
+        public static float К = 1f;
+
+        public static int М(int точек) { return (int)Math.Round(точек * К); }
+
+        public static void ИзмеритьЭкран()
+        {
+            try
+            {
+                using (Graphics г = Graphics.FromHwnd(IntPtr.Zero))
+                    К = г.DpiX / 96f;
+                if (К < .5f || К > 4f) К = 1f;
+            }
+            catch { К = 1f; }
+        }
+
         public static Font Шрифт(float кегль, FontStyle стиль = FontStyle.Regular)
         {
             return new Font("Segoe UI", кегль, стиль, GraphicsUnit.Point);

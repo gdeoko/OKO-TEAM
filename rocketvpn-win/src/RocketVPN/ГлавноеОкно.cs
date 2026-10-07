@@ -53,6 +53,7 @@ namespace RocketVPN
 
         public ГлавноеОкно(bool свёрнуто)
         {
+            Тема.ИзмеритьЭкран();
             Построить();
             ПоднятьСохранённое();
             if (свёрнуто) { WindowState = FormWindowState.Minimized; ShowInTaskbar = false; Hide(); }
@@ -66,7 +67,7 @@ namespace RocketVPN
             Text = "Rocket VPN";
             FormBorderStyle = FormBorderStyle.None;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(Ширина, Высота);
+            ClientSize = new Size(М(Ширина), М(Высота));
             BackColor = Тема.Фон;
             ForeColor = Тема.Текст;
             Font = Тема.Шрифт(9f);
@@ -77,19 +78,33 @@ namespace RocketVPN
             Тело();
             СлойНастроек();
             Трей();
+            ПодогнатьНадписи();
 
             ядро.Упало += delegate { ВПотоке(ЯдроУпало); };
         }
 
+        /* Надписи кнопок меряются по тексту уже на собранном окне:
+           до показа шрифт уже известен, а обрезать слово нельзя. */
+        private void ПодогнатьНадписи()
+        {
+            int край = М(Ширина) - М(Поля);
+            кнопкаЗагрузить.ПоТексту(край);
+            кнопкаЗамерить.ПоТексту(край);
+            кнопкаБыстрый.ПоТексту(кнопкаЗамерить.Left - М(8));
+            кнопкаОбновить.ПоТексту(край);
+            кнопкаЖурнал.ПоТексту(кнопкаОбновить.Left - М(10));
+            кнопкаНазад.ПоТексту(край);
+        }
+
         private void Шапка()
         {
-            Panel шапка = new Panel { Bounds = new Rectangle(0, 0, Ширина, 54), BackColor = Тема.Подложка };
+            Panel шапка = new Panel { Bounds = new Rectangle(0, 0, М(Ширина), М(54)), BackColor = Тема.Подложка };
             шапка.MouseDown += ТащитьОкно;
             Controls.Add(шапка);
 
             PictureBox знак = new PictureBox
             {
-                Bounds = new Rectangle(16, 13, 28, 28),
+                Bounds = new Rectangle(М(16), М(13), М(28), М(28)),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.Transparent,
                 Image = КартинкаЗнака()
@@ -100,7 +115,7 @@ namespace RocketVPN
             Label имя = new Label
             {
                 Text = "ROCKET VPN",
-                Bounds = new Rectangle(54, 16, 180, 22),
+                Bounds = new Rectangle(М(54), М(16), М(180), М(22)),
                 Font = Тема.Шрифт(11.5f, FontStyle.Bold),
                 ForeColor = Тема.Текст,
                 BackColor = Color.Transparent
@@ -121,13 +136,13 @@ namespace RocketVPN
             Controls.Add(Подпись("Ссылка подписки " + Подписка.Домен, Поля, 70, ш, Тема.ТекстТихо, 9f));
 
             полеСсылки = new Поле("https://" + Подписка.Домен + "/sub/...")
-            { Bounds = new Rectangle(Поля, 92, ш - 108, 40) };
+            { Bounds = new Rectangle(М(Поля), М(92), М(ш - 108), М(40)) };
             полеСсылки.Текст.Width = полеСсылки.Width - 24;
             полеСсылки.Текст.KeyDown += delegate (object о, KeyEventArgs е)
             { if (е.KeyCode == Keys.Enter) { е.SuppressKeyPress = true; ЗагрузитьПодписку(false); } };
             Controls.Add(полеСсылки);
 
-            кнопкаЗагрузить = new Тихая("Загрузить") { Bounds = new Rectangle(Поля + ш - 100, 92, 100, 40) };
+            кнопкаЗагрузить = new Тихая("Загрузить") { Bounds = new Rectangle(М(Поля + ш - 100), М(92), М(100), М(40)) };
             кнопкаЗагрузить.Click += delegate { ЗагрузитьПодписку(false); };
             Controls.Add(кнопкаЗагрузить);
 
@@ -137,23 +152,23 @@ namespace RocketVPN
             подписьСерверов = Подпись("Серверы", Поля, 162, 160, Тема.ТекстТихо, 9f);
             Controls.Add(подписьСерверов);
 
-            кнопкаБыстрый = new Тихая("Быстрый") { Bounds = new Rectangle(Поля + ш - 182, 160, 80, 22) };
+            кнопкаБыстрый = new Тихая("Быстрый") { Bounds = new Rectangle(М(Поля + ш - 182), М(160), М(80), М(22)) };
             кнопкаБыстрый.Click += delegate { ВзятьБыстрый(); };
             Controls.Add(кнопкаБыстрый);
 
-            кнопкаЗамерить = new Тихая("Замерить") { Bounds = new Rectangle(Поля + ш - 95, 160, 95, 22) };
+            кнопкаЗамерить = new Тихая("Замерить") { Bounds = new Rectangle(М(Поля + ш - 95), М(160), М(95), М(22)) };
             кнопкаЗамерить.Click += delegate { Замерить(null); };
             Controls.Add(кнопкаЗамерить);
 
-            Рамка рамка = new Рамка { Bounds = new Rectangle(Поля, 184, ш, 210) };
+            Рамка рамка = new Рамка { Bounds = new Rectangle(М(Поля), М(184), М(ш), М(210)) };
             Controls.Add(рамка);
 
-            список = new СписокУзлов { Bounds = new Rectangle(1, 6, ш - 2, 198) };
+            список = new СписокУзлов { Bounds = new Rectangle(М(1), М(6), М(ш - 2), М(198)) };
             список.SelectedIndexChanged += delegate { ЗапомнитьВыбор(); };
             список.DoubleClick += delegate { if (!подключены) Подключить(null); };
             рамка.Controls.Add(список);
 
-            пуск = new КнопкаПуска { Bounds = new Rectangle(Поля, 410, ш, 56) };
+            пуск = new КнопкаПуска { Bounds = new Rectangle(М(Поля), М(410), М(ш), М(56)) };
             пуск.Click += delegate { if (подключены || идётПодключение) Отключить(); else Подключить(null); };
             Controls.Add(пуск);
 
@@ -175,12 +190,12 @@ namespace RocketVPN
             };
             Controls.Add(автозапуск);
 
-            кнопкаЖурнал = new Тихая("Журнал") { Bounds = new Rectangle(Поля + ш - 190, 548, 70, 24) };
+            кнопкаЖурнал = new Тихая("Журнал") { Bounds = new Rectangle(М(Поля + ш - 190), М(548), М(70), М(24)) };
             кнопкаЖурнал.Цвет = Тема.ТекстТихо;
             кнопкаЖурнал.Click += delegate { ОткрытьЖурнал(); };
             Controls.Add(кнопкаЖурнал);
 
-            кнопкаОбновить = new Тихая("Обновления") { Bounds = new Rectangle(Поля + ш - 110, 548, 110, 24) };
+            кнопкаОбновить = new Тихая("Обновления") { Bounds = new Rectangle(М(Поля + ш - 110), М(548), М(110), М(24)) };
             кнопкаОбновить.Click += delegate { ПроверитьОбновления(true); };
             Controls.Add(кнопкаОбновить);
         }
@@ -190,7 +205,7 @@ namespace RocketVPN
             int ш = Ширина - Поля * 2;
             слойНастроек = new Panel
             {
-                Bounds = new Rectangle(0, 54, Ширина, Высота - 54),
+                Bounds = new Rectangle(0, М(54), М(Ширина), М(Высота) - М(54)),
                 BackColor = Тема.Фон,
                 Visible = false
             };
@@ -199,7 +214,7 @@ namespace RocketVPN
 
             слойНастроек.Controls.Add(Подпись("Настройки", Поля, 16, 200, Тема.Текст, 12f));
 
-            кнопкаНазад = new Тихая("Готово") { Bounds = new Rectangle(Поля + ш - 80, 16, 80, 24) };
+            кнопкаНазад = new Тихая("Готово") { Bounds = new Rectangle(М(Поля + ш - 80), М(16), М(80), М(24)) };
             кнопкаНазад.Click += delegate { ПоказатьНастройки(false); };
             слойНастроек.Controls.Add(кнопкаНазад);
 
@@ -287,9 +302,11 @@ namespace RocketVPN
 
         // ── ОРГАНЫ ПОМЕЛЬЧЕ ────────────────────────────────────────
 
+        private static int М(int п) { return Тема.М(п); }
+
         private Label Подпись(string текст, int x, int y, int ш, Color цвет, float кегль)
         {
-            return Подпись(текст, x, y, ш, цвет, кегль, 20);
+            return Подпись(текст, x, y, ш, цвет, кегль, 24);
         }
 
         private Label Подпись(string текст, int x, int y, int ш, Color цвет, float кегль, int в)
@@ -297,7 +314,7 @@ namespace RocketVPN
             return new Label
             {
                 Text = текст,
-                Bounds = new Rectangle(x, y, ш, в),
+                Bounds = new Rectangle(М(x), М(y), М(ш), М(в)),
                 ForeColor = цвет,
                 BackColor = Color.Transparent,
                 Font = Тема.Шрифт(кегль),
@@ -307,7 +324,7 @@ namespace RocketVPN
 
         private Тихая ЗнакОкна(string подпись, int x, EventHandler что)
         {
-            Тихая к = new Тихая(подпись) { Bounds = new Rectangle(x, 15, 24, 24) };
+            Тихая к = new Тихая(подпись) { Bounds = new Rectangle(М(x), М(15), М(24), М(24)) };
             к.Цвет = Тема.ТекстТихо;
             к.Font = Тема.Шрифт(11f);
             к.Click += что;
@@ -319,7 +336,7 @@ namespace RocketVPN
             return new CheckBox
             {
                 Text = подпись,
-                Bounds = new Rectangle(x, y, ш, 24),
+                Bounds = new Rectangle(М(x), М(y), М(ш), М(24)),
                 ForeColor = Тема.ТекстТихо,
                 BackColor = Тема.Фон,
                 FlatStyle = FlatStyle.Flat,
@@ -333,7 +350,7 @@ namespace RocketVPN
             return new RadioButton
             {
                 Text = подпись,
-                Bounds = new Rectangle(x, y, ш, 24),
+                Bounds = new Rectangle(М(x), М(y), М(ш), М(24)),
                 ForeColor = Тема.ТекстТихо,
                 BackColor = Тема.Фон,
                 FlatStyle = FlatStyle.Flat,
@@ -344,7 +361,7 @@ namespace RocketVPN
 
         private Поле ПолеЧисла(int значение, int x, int y)
         {
-            Поле п = new Поле("") { Bounds = new Rectangle(x, y, 100, 36) };
+            Поле п = new Поле("") { Bounds = new Rectangle(М(x), М(y), М(100), М(36)) };
             п.Текст.Text = значение.ToString();
             п.Текст.Width = 76;
             return п;
@@ -368,7 +385,7 @@ namespace RocketVPN
             }
             protected override void OnPaint(PaintEventArgs е)
             {
-                Тема.Плитой(е.Graphics, new Rectangle(0, 0, Width - 1, Height - 1), 12, Тема.Подложка, Тема.Кромка);
+                Тема.Плитой(е.Graphics, new Rectangle(М(0), М(0), М(Width - 1), М(Height - 1)), 12, Тема.Подложка, Тема.Кромка);
             }
         }
 
@@ -565,11 +582,6 @@ namespace RocketVPN
         {
             Узел у = какой ?? (список.SelectedItem as Узел);
             if (у == null) { Сказать("Сначала загрузите подписку и выберите сервер.", Тема.Тревога); return; }
-            if (!ядро.ЕстьЯдро)
-            {
-                Сказать("Рядом с программой нет xray.exe. Распакуйте папку целиком.", Тема.Тревога);
-                return;
-            }
 
             текущий = у;
             int моё = ++поколение;

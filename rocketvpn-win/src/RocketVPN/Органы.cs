@@ -27,7 +27,7 @@ namespace RocketVPN
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             Cursor = Cursors.Hand;
-            Height = 56;
+            Height = Тема.М(56);
             часы.Interval = 40;
             часы.Tick += delegate { фаза = (фаза + 6) % 360; Invalidate(); };
         }
@@ -119,7 +119,7 @@ namespace RocketVPN
         public СписокУзлов()
         {
             DrawMode = DrawMode.OwnerDrawFixed;
-            ItemHeight = 38;
+            ItemHeight = Тема.М(38);
             BorderStyle = BorderStyle.None;
             BackColor = Тема.Подложка;
             ForeColor = Тема.Текст;
@@ -138,15 +138,15 @@ namespace RocketVPN
             bool выбран = (е.State & DrawItemState.Selected) == DrawItemState.Selected;
 
             г.FillRectangle(new SolidBrush(Тема.Подложка), е.Bounds);
-            Rectangle р = new Rectangle(е.Bounds.X + 4, е.Bounds.Y + 3, е.Bounds.Width - 9, е.Bounds.Height - 6);
+            Rectangle р = new Rectangle(е.Bounds.X + Тема.М(4), е.Bounds.Y + Тема.М(3), е.Bounds.Width - Тема.М(9), е.Bounds.Height - Тема.М(6));
             if (выбран)
-                Тема.Плитой(г, р, 10, Color.FromArgb(46, 48, 72, 168), Тема.Кромка);
+                Тема.Плитой(г, р, Тема.М(10), Color.FromArgb(46, 48, 72, 168), Тема.Кромка);
 
             using (SolidBrush т = new SolidBrush(выбран ? Тема.Текст : Тема.ТекстТихо))
             using (StringFormat ф = new StringFormat
             { LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter, FormatFlags = StringFormatFlags.NoWrap })
                 г.DrawString(у.Подпись, Font, т,
-                    new RectangleF(р.X + 12, р.Y, р.Width - 86, р.Height), ф);
+                    new RectangleF(р.X + Тема.М(12), р.Y, р.Width - Тема.М(86), р.Height), ф);
 
             string задержка;
             Color цвет;
@@ -162,7 +162,7 @@ namespace RocketVPN
             using (StringFormat ф = new StringFormat
             { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center })
                 г.DrawString(задержка, Font, т,
-                    new RectangleF(р.X, р.Y, р.Width - 12, р.Height), ф);
+                    new RectangleF(р.X, р.Y, р.Width - Тема.М(12), р.Height), ф);
         }
     }
 
@@ -176,15 +176,15 @@ namespace RocketVPN
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint |
                      ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             BackColor = Тема.Фон;
-            Height = 40;
+            Height = Тема.М(40);
             Текст.BorderStyle = BorderStyle.None;
             Текст.BackColor = Тема.Подложка;
             Текст.ForeColor = Тема.Текст;
             Текст.Font = Тема.Шрифт(9.5f);
-            Текст.Location = new Point(12, 11);
+            Текст.Location = new Point(Тема.М(12), Тема.М(11));
             Controls.Add(Текст);
             Подсказка = подсказка;
-            Resize += delegate { Текст.Width = Width - 24; };
+            Resize += delegate { Текст.Width = Width - Тема.М(24); };
         }
 
         public string Подсказка { get; set; }
@@ -193,10 +193,10 @@ namespace RocketVPN
         {
             base.OnPaint(е);
             Rectangle р = new Rectangle(0, 0, Width - 1, Height - 1);
-            Тема.Плитой(е.Graphics, р, 10, Тема.Подложка, Тема.Кромка);
+            Тема.Плитой(е.Graphics, р, Тема.М(10), Тема.Подложка, Тема.Кромка);
             if (Текст.Text.Length == 0 && !Текст.Focused && !string.IsNullOrEmpty(Подсказка))
                 using (SolidBrush т = new SolidBrush(Тема.ТекстОченьТихо))
-                    е.Graphics.DrawString(Подсказка, Текст.Font, т, 12, 11);
+                    е.Graphics.DrawString(Подсказка, Текст.Font, т, Тема.М(12), Тема.М(11));
         }
     }
 
@@ -213,7 +213,25 @@ namespace RocketVPN
             Text = подпись;
             Cursor = Cursors.Hand;
             Font = Тема.Шрифт(9f);
-            Height = 24;
+            Height = Тема.М(24);
+        }
+
+        /* Ширина по самой надписи, а не по числу из разметки. Правка по
+           живому запуску: при увеличенном экране «Загрузить» и
+           «Обновления» обрезались до «Загрузи» и «Обновле». Теперь
+           кнопка не может оказаться уже своего слова, а правый край
+           держится там, где его поставили. */
+        public void ПоТексту(int правыйКрай)
+        {
+            using (Graphics г = CreateGraphics())
+            {
+                int нужно = (int)Math.Ceiling(г.MeasureString(Text, Font).Width) + Тема.М(10);
+                if (нужно > Width)
+                {
+                    Left = правыйКрай - нужно;
+                    Width = нужно;
+                }
+            }
         }
 
         protected override void OnMouseEnter(EventArgs е) { подНосом = true; Invalidate(); base.OnMouseEnter(е); }

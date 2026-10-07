@@ -1,13 +1,19 @@
 # Сборка клиента Rocket VPN для Windows 7/8/10/11.
 #
+# НА ВЫХОДЕ ОДИН ФАЙЛ. Слово владельца: «одна кнопка, чисто перейти
+# нажать». Поэтому ядро Xray обеих разрядностей и базы адресов
+# укладываются в архив и вшиваются внутрь программы: человек скачивает
+# RocketVPN.exe и запускает, распаковывать нечего и терять нечего.
+#
 # ПОЧЕМУ ЯДРО СОБИРАЕТСЯ ЗДЕСЬ, А НЕ БЕРЁТСЯ ГОТОВЫМ. Готовые сборки
 # Xray с гитхаба собраны свежим Go, а Go с версии 1.21 требует
 # Windows 10: на семёрке такой файл не запускается вовсе. Поэтому ядро
-# собирается тут же, компилятором Go 1.20 - последним, который умеет
-# Windows 7. Версию Xray держим на теге, который этим Go собирается.
+# собирается тут же компилятором Go 1.20, последним, который умеет
+# Windows 7. В заголовке готового файла стоит минимальная система 6.1,
+# это и есть семёрка.
 #
 # Запуск: пуш тега вида v1.0.0 делает релиз, кнопка «Run workflow»
-# собирает архивы без релиза.
+# собирает файл без релиза.
 
 name: Сборка
 
@@ -57,26 +63,47 @@ jobs:
       - name: Собрать ядро Xray под Windows 7
         shell: pwsh
         run: |
-          git clone --depth 1 --branch $env:XRAY_ТЕГ https://github.com/XTLS/Xray-core.git ядро
-          Push-Location ядро
-          New-Item -ItemType Directory -Force -Path ..\готово\x64, ..\готово\x86 | Out-Null
+          git clone --depth 1 --branch $env:XRAY_ТЕГ https://github.com/XTLS/Xray-core.git ядро-исходники
+          Push-Location ядро-исходники
+          New-Item -ItemType Directory -Force -Path ..\ядро\x64, ..\ядро\x86 | Out-Null
           $env:CGO_ENABLED = "0"
           $env:GOOS = "windows"
           $env:GOARCH = "amd64"
-          go build -o ..\готово\x64\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
+          go build -o ..\ядро\x64\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
           $env:GOARCH = "386"
-          go build -o ..\готово\x86\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
+          go build -o ..\ядро\x86\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
           Pop-Location
-          Get-ChildItem готово -Recurse -Filter xray.exe | ForEach-Object { Write-Host $_.FullName ([math]::Round($_.Length/1MB,1)) "МБ" }
+
+      - name: Проверить, что ядро для Windows 7
+        shell: pwsh
+        run: |
+          # В заголовке PE лежит минимальная версия системы. Go 1.20
+          # ставит 6.1 (семёрка), Go 1.21 уже 10.0. Проверяем числом, а
+          # не на слово: ошибка здесь всплыла бы только у человека.
+          foreach ($ф in @("ядро\x64\xray.exe", "ядро\x86\xray.exe")) {
+            $д = [IO.File]::ReadAllBytes($ф)
+            $e = [BitConverter]::ToInt32($д, 0x3C)
+            $осн = [BitConverter]::ToUInt16($д, $e + 24 + 40)
+            $осм = [BitConverter]::ToUInt16($д, $e + 24 + 42)
+            Write-Host "$ф минимальная система $осн.$осм"
+            if ($осн -gt 6 -or ($осн -eq 6 -and $осм -gt 1)) { throw "$ф не запустится на Windows 7" }
+          }
 
       - name: Базы geoip и geosite
         shell: pwsh
         run: |
           $б = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download"
           foreach ($ф in @("geoip.dat", "geosite.dat")) {
-            Invoke-WebRequest "$б/$ф" -OutFile "готово\x64\$ф"
-            Copy-Item "готово\x64\$ф" "готово\x86\$ф"
+            Invoke-WebRequest "$б/$ф" -OutFile "ядро\$ф"
           }
+
+      - name: Уложить ядро внутрь программы
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src\RocketVPN\ядро | Out-Null
+          Compress-Archive -Path ядро\* -DestinationPath src\RocketVPN\ядро\ядро.zip -CompressionLevel Optimal -Force
+          $р = (Get-Item src\RocketVPN\ядро\ядро.zip).Length / 1MB
+          Write-Host ("архив ядра {0:F1} МБ" -f $р)
 
       - name: Собрать клиент
         shell: pwsh
@@ -85,7 +112,6 @@ jobs:
             -p:Version=${{ steps.версия.outputs.номер }} `
             -p:AssemblyVersion=${{ steps.версия.outputs.номер }}.0 `
             -p:FileVersion=${{ steps.версия.outputs.номер }}.0
-          Get-ChildItem src\RocketVPN\bin\Release\net48
 
       - name: Прогнать пробу логики
         shell: pwsh
@@ -94,33 +120,24 @@ jobs:
           & проба\bin\Release\net48\проба.exe
           if ($LASTEXITCODE -ne 0) { throw "проба не прошла" }
 
-      - name: Сложить архивы
+      - name: Сложить выпуск
         shell: pwsh
         run: |
-          $в = "${{ steps.версия.outputs.номер }}"
-          foreach ($р in @("x64", "x86")) {
-            $п = "сборка\$р"
-            New-Item -ItemType Directory -Force -Path $п | Out-Null
-            Copy-Item src\RocketVPN\bin\Release\net48\RocketVPN.exe $п
-            if (Test-Path src\RocketVPN\bin\Release\net48\RocketVPN.exe.config) {
-              Copy-Item src\RocketVPN\bin\Release\net48\RocketVPN.exe.config $п
-            }
-            Copy-Item "готово\$р\*" $п
-            Copy-Item ЧИТАЙ.txt $п -ErrorAction SilentlyContinue
-            $архив = "RocketVPN-$в-win-$р.zip"
-            Compress-Archive -Path "$п\*" -DestinationPath $архив -Force
-            # Сумма обязательна: по ней клиент проверяет, что скачал наше.
-            (Get-FileHash $архив -Algorithm SHA256).Hash.ToLower() | Out-File "$архив.sha256" -Encoding ascii -NoNewline
-            Write-Host $архив
-          }
+          Copy-Item src\RocketVPN\bin\Release\net48\RocketVPN.exe .\RocketVPN.exe -Force
+          $р = (Get-Item RocketVPN.exe).Length / 1MB
+          Write-Host ("RocketVPN.exe {0:F1} МБ" -f $р)
+          if ($р -lt 20) { throw "в файле нет вшитого ядра: слишком маленький" }
+          # Сумма обязательна: по ней клиент проверяет, что скачал наше.
+          (Get-FileHash RocketVPN.exe -Algorithm SHA256).Hash.ToLower() |
+            Out-File "RocketVPN.exe.sha256" -Encoding ascii -NoNewline
 
-      - name: Отдать архивы
+      - name: Отдать файл
         uses: actions/upload-artifact@v4
         with:
           name: RocketVPN-${{ steps.версия.outputs.номер }}
           path: |
-            RocketVPN-*.zip
-            RocketVPN-*.zip.sha256
+            RocketVPN.exe
+            RocketVPN.exe.sha256
 
       - name: Выложить релиз
         if: startsWith(github.ref, 'refs/tags/v')
@@ -128,7 +145,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" `
-            (Get-ChildItem RocketVPN-*.zip, RocketVPN-*.zip.sha256 | ForEach-Object { $_.FullName }) `
+          # Имя файла постоянное, поэтому постоянна и ссылка «скачать
+          # последнюю версию»: .../releases/latest/download/RocketVPN.exe
+          gh release create "${{ github.ref_name }}" RocketVPN.exe RocketVPN.exe.sha256 `
             --title "Rocket VPN ${{ github.ref_name }}" `
-            --notes "Клиент Rocket VPN для Windows 7, 8, 10 и 11.`n`nx64 для обычной системы, x86 для 32-битной. Распакуйте папку целиком и запустите RocketVPN.exe."
+            --notes "Клиент Rocket VPN для Windows 7, 8, 10 и 11.`n`nСкачайте RocketVPN.exe и запустите. Устанавливать и распаковывать нечего, ядро внутри."

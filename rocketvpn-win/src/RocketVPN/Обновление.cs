@@ -4,9 +4,14 @@
    последний и сравнивает с собой. Качает архив, проверяет сумму,
    раскладывает поверх себя и перезапускается.
 
+   ОДИН ФАЙЛ. Программа едет одним exe со вшитым ядром, поэтому и
+   обновление это один файл: скачали, сверили, заменили себя. Имя
+   выпуска постоянное (RocketVPN.exe), и ссылка на последнюю версию у
+   гитхаба тоже постоянная - её можно давать людям как «скачать».
+
    ПОЧЕМУ ЧЕРЕЗ ПОМОЩНИКА. Заменить свой же exe работающая программа не
    может: файл занят. Поэтому пишем маленький cmd, он ждёт выхода
-   программы по её номеру, копирует файлы и запускает её заново.
+   программы по её номеру, подменяет файл и запускает её заново.
 
    СУММА ОБЯЗАТЕЛЬНА. Если в релизе лежит файл имя.zip.sha256, его
    читаем и сверяем. Нет файла сумм - ставить не будем: подменённый по
@@ -15,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -40,6 +44,18 @@ namespace RocketVPN
            откуда попало. */
         public const string Владелец = "gdeoko";
         public const string Репозиторий = "rocketvpn-win";
+        public const string ИмяВыпуска = "RocketVPN.exe";
+
+        /* Постоянная ссылка «скачать последнюю версию». Её и дают
+           людям: она не меняется от выпуска к выпуску. */
+        public static string СсылкаНаСкачивание
+        {
+            get
+            {
+                return "https://github.com/" + Владелец + "/" + Репозиторий +
+                       "/releases/latest/download/" + ИмяВыпуска;
+            }
+        }
 
         public static Version Своя
         {
@@ -86,20 +102,17 @@ namespace RocketVPN
                 {
                     object[] список = сырые as object[];
                     if (список != null)
-                    {
-                        string хвост = Environment.Is64BitProcess ? "x64.zip" : "x86.zip";
                         foreach (object о in список)
                         {
                             Dictionary<string, object> а = о as Dictionary<string, object>;
                             if (а == null) continue;
                             string имя = Строка(а, "name");
                             string урл = Строка(а, "browser_download_url");
-                            if (имя.EndsWith(хвост, StringComparison.OrdinalIgnoreCase)) с.АдресАрхива = урл;
-                            if (имя.EndsWith(хвост + ".sha256", StringComparison.OrdinalIgnoreCase)) с.АдресСуммы = урл;
+                            if (имя.Equals(ИмяВыпуска, StringComparison.OrdinalIgnoreCase)) с.АдресАрхива = урл;
+                            if (имя.Equals(ИмяВыпуска + ".sha256", StringComparison.OrdinalIgnoreCase)) с.АдресСуммы = урл;
                         }
-                    }
                 }
-                if (с.АдресАрхива == "") почему = "В релизе нет сборки под эту разрядность.";
+                if (с.АдресАрхива == "") почему = "В релизе нет файла " + ИмяВыпуска + ".";
             }
             catch (Exception е)
             {
@@ -128,31 +141,22 @@ namespace RocketVPN
                 if (Directory.Exists(врем)) Directory.Delete(врем, true);
                 Directory.CreateDirectory(врем);
 
-                string архив = Path.Combine(врем, "сборка.zip");
+                string новый = Path.Combine(врем, ИмяВыпуска);
                 Сеть.ВключитьСовременныйTLS();
                 using (WebClient в = new WebClient())
                 {
                     в.Headers.Add("User-Agent", Сеть.Представление);
-                    в.DownloadFile(с.АдресАрхива, архив);
+                    в.DownloadFile(с.АдресАрхива, новый);
                     string ждали = в.DownloadString(с.АдресСуммы).Trim().Split(' ')[0].ToLowerInvariant();
-                    string вышло = Сумма(архив);
+                    string вышло = Сумма(новый);
                     if (ждали != вышло)
-                    { почему = "Сумма архива не сошлась, установка отменена."; return false; }
+                    { почему = "Сумма файла не сошлась, установка отменена."; return false; }
                 }
 
-                string распак = Path.Combine(врем, "файлы");
-                ZipFile.ExtractToDirectory(архив, распак);
-
-                /* Архив может быть с папкой внутри и без неё: берём ту
-                   ветку, где лежит сам exe. */
-                string откуда = File.Exists(Path.Combine(распак, "RocketVPN.exe"))
-                    ? распак
-                    : ПервыйУровеньСExe(распак);
-                if (откуда == null) { почему = "В архиве нет RocketVPN.exe."; return false; }
-
-                string куда = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+                string своё = Assembly.GetExecutingAssembly().Location;
                 string cmd = Path.Combine(врем, "обновить.cmd");
-                File.WriteAllText(cmd, Сценарий(Process.GetCurrentProcess().Id, откуда, куда), Encoding.GetEncoding(866));
+                File.WriteAllText(cmd, Сценарий(Process.GetCurrentProcess().Id, новый, своё),
+                    Encoding.GetEncoding(866));
 
                 Process.Start(new ProcessStartInfo
                 {
@@ -177,17 +181,27 @@ namespace RocketVPN
             return null;
         }
 
-        private static string Сценарий(int номер, string откуда, string куда)
+        /* Ждём выхода программы по её номеру, подменяем файл и
+           запускаем заново. Старый exe переименовываем, а не удаляем:
+           если копирование сорвётся, человек останется с рабочей
+           прежней версией, а не с пустым местом. */
+        private static string Сценарий(int номер, string новый, string своё)
         {
+            string запас = своё + ".прежний";
             StringBuilder с = new StringBuilder();
             с.AppendLine("@echo off");
             с.AppendLine("chcp 866 > nul");
             с.AppendLine(":ждём");
             с.AppendLine("tasklist /fi \"PID eq " + номер + "\" | find \"" + номер + "\" > nul");
             с.AppendLine("if not errorlevel 1 ( ping -n 2 127.0.0.1 > nul & goto ждём )");
-            с.AppendLine("xcopy \"" + откуда + "\\*\" \"" + куда + "\\\" /e /y /i > nul");
-            с.AppendLine("start \"\" \"" + Path.Combine(куда, "RocketVPN.exe") + "\"");
-            с.AppendLine("rmdir /s /q \"" + Path.GetDirectoryName(откуда) + "\"");
+            с.AppendLine("if exist \"" + запас + "\" del /q \"" + запас + "\"");
+            с.AppendLine("move /y \"" + своё + "\" \"" + запас + "\" > nul");
+            с.AppendLine("copy /y \"" + новый + "\" \"" + своё + "\" > nul");
+            с.AppendLine("if errorlevel 1 move /y \"" + запас + "\" \"" + своё + "\" > nul");
+            с.AppendLine("start \"\" \"" + своё + "\"");
+            с.AppendLine("ping -n 3 127.0.0.1 > nul");
+            с.AppendLine("del /q \"" + запас + "\" 2> nul");
+            с.AppendLine("rmdir /s /q \"" + Path.GetDirectoryName(новый) + "\"");
             return с.ToString();
         }
 

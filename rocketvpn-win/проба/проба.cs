@@ -203,8 +203,68 @@ namespace RocketVPN
             Так("своя сеть напрямую в обоих", умный.Contains("geoip:private") && весь.Contains("geoip:private"));
             Так("по умолчанию умный", Конфиг.Собрать(у, 1, 2).Contains("geoip:ru"));
 
+            Console.WriteLine("\nРАЗМЕТКА НА РАЗНЫХ ЭКРАНАХ");
+            Разметка();
+
             Console.WriteLine("\nвсего " + всего + ", плохо " + упало);
             Environment.Exit(упало == 0 ? 0 : 1);
+        }
+
+
+        /* Влезает ли текст в свою коробку, когда экран увеличен.
+           Правка по живому запуску: при 150 процентах подписи кнопок
+           обрезались до «Загрузи» и «Обновле». Теперь разметка растёт
+           вместе с буквами, и это проверяется числом.
+
+           Шрифта Segoe UI на машине сборки может не быть, подставится
+           более широкий. Проверка от этого только строже. */
+        private static void Разметка()
+        {
+            using (System.Drawing.Bitmap б = new System.Drawing.Bitmap(8, 8))
+            using (System.Drawing.Graphics г = System.Drawing.Graphics.FromImage(б))
+            {
+                float[] масштабы = { 1f, 1.25f, 1.5f, 2f };
+                string[,] строки =
+                {
+                    { "шапка", "ROCKET VPN", "11.5", "жирный", "180", "0" },
+                    { "подпись подписки", "Ссылка подписки rocketconfig.top", "9", "", "394", "0" },
+                    { "отказ по домену", "Клиент работает только со ссылками rocketconfig.top.", "8.5", "", "394", "0" },
+                    { "состояние", "Переподключаем", "11", "жирный", "394", "0" },
+                    { "подробность", "Москва 1  ·  203.0.113.7  ·  NL", "8.5", "", "394", "0" },
+                    { "галка автозапуска", "Запускать с Windows", "9", "", "190", "22" },
+                    { "выбор режима", "Умный: российские сайты напрямую", "9", "", "394", "22" },
+                    { "галка проверки", "Проверять соединение после подключения", "9", "", "394", "22" },
+                    { "строка списка", "Нидерланды · Амстердам 2", "10", "", "308", "0" },
+                    { "кнопка пуска", "Подключить", "13", "жирный", "394", "0" }
+                };
+
+                foreach (float к in масштабы)
+                {
+                    int не_влезло = 0;
+                    for (int i = 0; i < строки.GetLength(0); i++)
+                    {
+                        float кегль = float.Parse(строки[i, 2], System.Globalization.CultureInfo.InvariantCulture);
+                        bool жирный = строки[i, 3] == "жирный";
+                        int коробка = int.Parse(строки[i, 4]);
+                        int запас = int.Parse(строки[i, 5]);
+                        using (System.Drawing.Font ш = new System.Drawing.Font(
+                            System.Drawing.FontFamily.GenericSansSerif, кегль * к,
+                            жирный ? System.Drawing.FontStyle.Bold : System.Drawing.FontStyle.Regular,
+                            System.Drawing.GraphicsUnit.Point))
+                        {
+                            int надо = (int)Math.Ceiling(г.MeasureString(строки[i, 1], ш).Width)
+                                       + (int)Math.Round(запас * к);
+                            int есть = (int)Math.Round(коробка * к);
+                            if (надо > есть)
+                            {
+                                не_влезло++;
+                                Console.WriteLine("    не влезло: " + строки[i, 0] + " надо " + надо + ", есть " + есть);
+                            }
+                        }
+                    }
+                    Так("при " + (int)(к * 100) + "% весь текст влезает", не_влезло == 0);
+                }
+            }
         }
 
         public static void Main() { Главная(); }

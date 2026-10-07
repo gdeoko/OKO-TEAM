@@ -38,11 +38,22 @@
     <!-- JavaScriptSerializer: разбор JSON без единого стороннего пакета,
          чтобы в релизе лежал ровно один exe. -->
     <Reference Include="System.Web.Extensions" />
+    <!-- ZipArchive: вшитое ядро лежит архивом и распаковывается при
+         первом запуске. В наборе по умолчанию этой сборки его нет. -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="ресурсы\знак.png" />
     <EmbeddedResource Include="ресурсы\значок.ico" />
+    <!-- Ядро Xray обеих разрядностей и базы адресов одним архивом.
+         Кладёт его сборка перед компиляцией, в репозитории его нет:
+         двадцать четыре мегабайта двоичного файла в истории git это
+         история, которую потом никто не склонирует. Архива нет -
+         собирается обычный клиент, которому нужен xray.exe рядом. -->
+    <EmbeddedResource Include="ядро\ядро.zip" LogicalName="RocketVPN.ядро.zip"
+                      Condition="Exists('ядро\ядро.zip')" />
   </ItemGroup>
 
   <ItemGroup>
