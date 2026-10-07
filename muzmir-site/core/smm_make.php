@@ -697,7 +697,16 @@ function smm_publish(array $post, bool $force = false): array {
  * с боевого сервера — правило о российском адресе без прокси.
  */
 function smm_vk_last_link(): string {
-    $token = trim((string) (cfgv('vk_group_token') ?: cfgv('MUZMIR_VK_GROUP_TOKEN') ?: ''));
+    /* ЧИТАЕТ СТЕНУ ЛИЧНЫЙ КЛЮЧ, А НЕ КЛЮЧ СООБЩЕСТВА.
+     *
+     * Ключу сообщества wall.get недоступен вовсе: ВК отвечает «error 27, method
+     * is unavailable with group auth». Функция молча возвращала пустоту, и у
+     * трёх опубликованных постов ссылки в базе не оказалось. Чтение чужой и
+     * своей стены — ровно тот случай, для которого личный ключ и оставлен
+     * запасным (правило о ключах от 11.09.2026); писать в сообщество
+     * по-прежнему обязан ключ сообщества. */
+    $token = trim((string) (cfgv('vk_token') ?: cfgv('MUZMIR_VK_TOKEN') ?: ''));
+    if ($token === '') $token = trim((string) (cfgv('vk_group_token') ?: ''));
     $owner = (int) (cfgv('vk_group_id') ?: 211325055);
     if ($token === '' || $owner === 0) return '';
 
