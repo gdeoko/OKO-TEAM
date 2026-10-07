@@ -66,8 +66,15 @@ for (const экран of все) {
     const текст = (э.innerText || '').trim();
     const картинок = э.querySelectorAll('img').length;
     const кнопок = э.querySelectorAll('button, .btn, [role=button]').length;
-    return { экран:имя, знаков:текст.length, картинок, кнопок,
-             беда: текст.length < 40 && картинок === 0 ? 'пусто' : null };
+    // С каждого экрана должна быть дорога назад: своя стрелка либо нижнее меню.
+    const вкладки = ['home', 'games', 'chats', 'lessons', 'profile'];
+    const нав = document.getElementById('nav');
+    const менюВидно = !!нав && getComputedStyle(нав).display !== 'none';
+    const стрелка = э.querySelector('.child-back, .cv-head__back, [data-back]');
+    const назад = вкладки.includes(имя) ? менюВидно : (!!стрелка || менюВидно);
+    return { экран:имя, знаков:текст.length, картинок, кнопок, назад,
+             беда: текст.length < 40 && картинок === 0 ? 'пусто'
+               : (!назад ? 'некуда вернуться' : null) };
   }, { имя: экран, кодСтроки: `(${как.toString()})()` });
   if (r.беда) { плохо++; console.log(`✗ ${r.экран}: ${r.беда}`); }
   else console.log(`  ${r.экран}: ${r.знаков} знаков, ${r.картинок} картинок, ${r.кнопок} кнопок`);

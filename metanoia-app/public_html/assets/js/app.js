@@ -327,8 +327,37 @@ function feedCard(item, idx) {
   </article>`;
 }
 
+/* Карточки уроков в ленте были прибиты к первому и второму уроку: ребёнок
+   дошёл до тридцатого, а на главной его всё звали в «Новый урок 1». Теперь
+   они идут за его настоящим местом в программе. Текущий урок не повторяем:
+   он уже стоит выше, в блоке «Сегодня», с кнопкой «Перейти». */
+function обновитьЛентуУроков() {
+  const порядок = lessonOrder();
+  const место = порядок.findIndex((x) => x.n === nextOpenLesson());
+  const дальше = [порядок[место + 1], порядок[место + 2]].map((x) => (x ? x.n : null));
+  const карточки = DEMO.feed.filter((к) => к.type === 'lesson');
+  дальше.forEach((n, i) => {
+    const к = карточки[i];
+    if (!к) return;
+    const м = n === null ? null : lessonMeta(n);
+    if (!м) { к.скрыта = true; return; }
+    к.скрыта = false;
+    к.n = n;
+    к.title = 'Урок ' + (м.l.cn || n) + '. ' + м.l.title;
+    к.coverImg = lessonCover(n);
+    const содержание = lessonContent(n);
+    const какЧитаем = содержание && содержание.needsVoice
+      ? ' · читаем и выполняем задание' : ' · читаем, слушаем, выполняем задание';
+    к.label = i === 0 ? 'Следующий урок' : 'А потом';
+    к.meta = м.block.title.replace(/^Глава \d+ · /, 'Глава ' + (м.bi + 1) + ' · ')
+      + (isLessonOpen(n) ? какЧитаем : ' · откроется после предыдущего урока');
+  });
+}
+
 function renderFeed() {
-  $('#feed').innerHTML = DEMO.feed.map((item, i) => feedCard(item, i)).join('');
+  обновитьЛентуУроков();
+  $('#feed').innerHTML = DEMO.feed.filter((item) => !item.скрыта)
+    .map((item) => feedCard(item, DEMO.feed.indexOf(item))).join('');
   $$('#feed [data-act="like"]').forEach((el) => {
     const id = Number(el.dataset.post);
     const base = DEMO.feed[id].likes;
@@ -1696,12 +1725,25 @@ function openLesson(n) {
   window.scrollTo({ top: 0 });
 }
 
+/* Страницы для читалки. У уроков Екатерины страницы свои, с её
+   иллюстрациями. Остальные уроки раньше шли одной простынёй текста: читать
+   её с телефона тяжело, глазу не за что зацепиться. Текст не трогаем, он
+   совпадает с озвучкой, а просто разрезаем по абзацам и ставим в середину
+   вторую картинку урока. */
+function страницыЧтения(n, c) {
+  if (c && c.pages && c.pages.length) return c.pages;
+  const рассказ = (c && c.story) || [];
+  if (!рассказ.length) return [];
+  const середина = Math.min(2, рассказ.length - 1);
+  return рассказ.map((текст, i) => ({ img: i === середина ? lessonPic(n) : null, text: текст }));
+}
+
 /* Иллюстрированная читалка урока: одна история, страница за страницей,
    картинка Екатерины и её текст. Листается свайпом, стрелками и точками. */
 function lessonPagerHTML(pages) {
   const slides = pages.map((p, i) => `
     <figure class="lp-slide" data-i="${i}">
-      ${p.img ? `<img class="lp-img" src="${p.img}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+      ${p.img ? `<img class="lp-img" src="${p.img}" alt="" loading="lazy" onerror="this.remove();if(window.__lpFix)window.__lpFix()">` : ''}
       <figcaption class="lp-text">${p.text}</figcaption>
     </figure>`).join('');
   const dots = pages.map((_, i) => `<button class="lp-dot${i === 0 ? ' on' : ''}" data-to="${i}" aria-label="Страница ${i + 1}"></button>`).join('');
@@ -1725,14 +1767,42 @@ function wirePager() {
   const prev = pager.querySelector('.lp-btn[data-dir="-1"]');
   const next = pager.querySelector('.lp-btn[data-dir="1"]');
   const total = dots.length || 1;
+  const slides = Array.prototype.slice.call(pager.querySelectorAll('.lp-slide'));
   const idx = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  // Высота трека идёт за открытой страницей. Иначе её задаёт самая высокая
+  // страница с картинкой, и под коротким текстом остаётся пустое поле в
+  // полэкрана: ребёнок видит три строчки и пустоту.
+  const подогнатьВысоту = (i) => {
+    const с = slides[Math.min(total - 1, Math.max(0, i === undefined ? idx() : i))];
+    if (с && с.offsetHeight) track.style.height = с.offsetHeight + 'px';
+  };
   const upd = () => {
     const i = Math.min(total - 1, Math.max(0, idx()));
     if (cur) cur.textContent = i + 1;
     dots.forEach((d, j) => { d.classList.toggle('on', j === i); d.setAttribute('aria-current', j === i ? 'true' : 'false'); });
     if (prev) prev.disabled = i <= 0;
     if (next) next.disabled = i >= total - 1;
+    подогнатьВысоту(i);
   };
+  // Картинки приходят позже текста и меняют высоту страницы под собой.
+  // Та же ручка нужна разметке: если картинки нет, она убирает себя сама.
+  window.__lpFix = () => подогнатьВысоту();
+  pager.querySelectorAll('.lp-img').forEach((и) => {
+    if (и.complete) return;
+    и.addEventListener('load', () => подогнатьВысоту(), { once: true });
+  });
+  if (!window.__lpResize) {
+    window.__lpResize = true;
+    window.addEventListener('resize', () => {
+      const pg = document.getElementById('lessonPager');
+      if (!pg) return;
+      const tr = pg.querySelector('.lp-track');
+      const сл = pg.querySelectorAll('.lp-slide');
+      const i = Math.round(tr.scrollLeft / Math.max(1, tr.clientWidth));
+      const с = сл[Math.min(сл.length - 1, Math.max(0, i))];
+      if (с && с.offsetHeight) tr.style.height = с.offsetHeight + 'px';
+    });
+  }
   const goto = (i) => {
     i = Math.min(total - 1, Math.max(0, i));
     if (cur) cur.textContent = i + 1;                 // мгновенно, не ждём конца прокрутки
@@ -1794,11 +1864,13 @@ function renderLesson(n) {
 
   // Картинка в тексте одна на урок: обложка уже стоит сверху, вторая иллюстрация
   // в середине даёт передышку глазам. Ставим её ближе к середине рассказа.
+  // Простынёй текст показываем только если страниц не собралось вовсе.
   const местоКартинки = Math.min(2, Math.max(0, story.length - 1));
   const рассказ = story.map((p, i) => {
     const абзац = `<p>${p}</p>`;
     return i === местоКартинки ? абзац + картинка(0, '') : абзац;
   }).join('');
+  const страницы = страницыЧтения(n, c);
 
   // Помощники школы: Милана в начале, Еммануил в середине, Эван в конце.
   // Еммануил берёт первый вопрос урока — свой, а не придуманный за неё.
@@ -1841,7 +1913,7 @@ function renderLesson(n) {
     </article>
 
     <h2 class="section-title">${c && c.pages ? 'Урок' : 'Детский пересказ'}</h2>
-    ${c && c.pages && c.pages.length ? lessonPagerHTML(c.pages) : `<div class="card lesson-text lesson-story">${рассказ}</div>`}
+    ${страницы.length ? lessonPagerHTML(страницы) : `<div class="card lesson-text lesson-story">${рассказ}</div>`}
 
     ${помощник('еммануил', вопросЕммануила)}
 
@@ -1961,7 +2033,7 @@ function повторениеПрошлого(n) {
   const прошлый = (window.SLOVAR || {})[n - 1];
   if (!прошлый || !прошлый.length || !isLessonDone(n - 1)) return '';
   return `<div class="card povtor">
-    <div class="povtor__t">Вспомним урок ${n - 1}</div>
+    <div class="povtor__t">Вспомним урок <span>${n - 1}</span></div>
     <div class="povtor__row">${прошлый.map((с) =>
       `<span class="povtor__w">${безопасно(с.слово)}<i>${безопасно(с.коротко)}</i></span>`).join('')}</div>
   </div>`;
@@ -3637,7 +3709,10 @@ function initGamesHub() {
 }
 
 /* ── Превью игры ── */
-function gameByKey(k) { return [...GAMES.free, ...GAMES.premium, ...GAMES.daily].find((g) => g.key === k); }
+// Список игр давно стал плоским, а здесь оставались старые полки free/premium/daily.
+// Перечисление несуществующих полок валило весь экран профиля, если в памяти
+// ребёнка лежало пожелание игры от старой версии приложения.
+function gameByKey(k) { return (Array.isArray(GAMES) ? GAMES : []).find((g) => g.key === k); }
 
 function openGamePreview(k) {
   const g = gameByKey(k); if (!g) return;
@@ -6037,6 +6112,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initVerseGame();
   initPet();
   applyLang();
+  следитьЗаЯзыком();
   initJourney();
   initBook();
   initGamesHub();
@@ -6230,10 +6306,65 @@ const ПЕРЕВОД = {
   'Ещё раз, сложнее': 'Otra vez, más difícil', 'Хватит на сегодня': 'Basta por hoy',
   'Профиль ребёнка': 'Perfil del niño', 'Профиль родителя': 'Perfil del padre',
   'Назад': 'Atrás', 'К играм': 'A los juegos', 'Отлично!': '¡Muy bien!',
+
+  // Знакомство, вход и согласия
+  'Пропустить': 'Omitir', 'Начать': 'Empezar', 'Добро пожаловать!': '¡Bienvenido!',
+  'Бесплатные уроки': 'Lecciones gratuitas', 'Игры, награды, рейтинг': 'Juegos, premios, ranking',
+  'Общайся с педагогом и семьями': 'Habla con la maestra y con las familias',
+  'Послушать приветствие Екатерины': 'Escuchar el saludo de Ekaterina',
+  'Войти': 'Entrar', 'Забыли пароль?': '¿Olvidaste la contraseña?',
+  'Войти через Google': 'Entrar con Google', 'Войти через Telegram': 'Entrar con Telegram',
+  'Посмотреть демо без регистрации': 'Ver la demo sin registrarse',
+  'пользовательское соглашение': 'los términos de uso',
+  'Пользовательское соглашение': 'Términos de uso',
+  'политику конфиденциальности': 'la política de privacidad',
+  'Прислать письмо ещё раз': 'Enviar el correo otra vez',
+  'Удаление аккаунта': 'Eliminación de la cuenta',
+  'Имя ребёнка': 'Nombre del niño', 'Выбери аватар': 'Elige un avatar',
+
+  // Общие кнопки и действия
+  'Отмена': 'Cancelar', 'Закрыть': 'Cerrar', 'Удалить': 'Eliminar', 'Копировать': 'Copiar',
+  'Ответить': 'Responder', 'Пожаловаться': 'Denunciar', 'Заблокировать': 'Bloquear',
+  'Сбросить': 'Reiniciar', 'Проверить': 'Comprobar', 'Скачать': 'Descargar',
+  'Прочитать все': 'Leer todo', 'Написать сообщение': 'Escribir un mensaje',
+  'Написать родителю': 'Escribir a los padres', 'Комментарии': 'Comentarios',
+  'Опрос': 'Encuesta', 'Фото или видео из галереи': 'Foto o vídeo de la galería',
+
+  // Уроки и чтение
+  'Урок': 'Lección', 'Сердце урока': 'El corazón de la lección',
+  'Наши открытия': 'Nuestros descubrimientos', 'Познакомимся': 'Conozcámonos',
+  'Вспомни перед тестом': 'Recuerda antes del test', 'Вспомним урок': 'Repasemos la lección',
+  'Подумай': 'Piensa', 'Творческая миссия': 'Misión creativa',
+  'Вопрос дня': 'La pregunta del día', 'Мысль дня': 'El pensamiento del día',
+  'Спросите за ужином': 'Pregunten en la cena',
+  'Послушать урок голосом Екатерины': 'Escuchar la lección con la voz de Ekaterina',
+  'Прочитано ✓': 'Leído ✓', 'Пройден на 100%': 'Completada al 100%',
+  'Пройдено': 'Completado', 'Можно проходить': 'Se puede empezar',
+  'Что дальше': 'Qué sigue',
+  'Прочитал(а) · получить +5 очков': 'Leído · recibir +5 puntos',
+  'Файл (PDF, DOC — до 20 МБ)': 'Archivo (PDF, DOC, hasta 20 MB)',
+  'Ещё подсказка (−5 очков)': 'Otra pista (−5 puntos)',
+  'Проверить порядок': 'Comprobar el orden',
+
+  // Вкладки поиска и фильтры
+  'Всё': 'Todo', 'Видео': 'Vídeo', 'Игра': 'Juego', 'Молитва': 'Oración', 'Притчи': 'Parábolas',
+  'Новый Завет': 'Nuevo Testamento', 'Ветхий Завет': 'Antiguo Testamento',
+  '6–8 лет': '6–8 años', '9–11 лет': '9–11 años',
+  'Лёгкий': 'Fácil', 'Средний': 'Medio', 'Сложный': 'Difícil',
+
+  // Профиль, школа и поддержка
+  'Что получает ребёнок': 'Qué recibe el niño', 'Школа в сети': 'La escuela en la red',
+  'Для кого школа': 'Para quién es la escuela', 'Что значит «Метанойя»': 'Qué significa «Metanoia»',
+  'Пригласить семью в школу': 'Invitar a la familia a la escuela',
+  'Желания ребёнка': 'Deseos del niño', 'Попросить у родителей': 'Pedir a los padres',
+  'Выберите вклад в месяц': 'Elige tu aporte mensual', 'Выберите сумму': 'Elige el importe',
+  'Поддержать с любовью': 'Apoyar con amor', 'Поздравление': 'Felicitación',
+  'Мы уже работаем над ней': 'Ya estamos trabajando en ello',
+  'Бросить камень': 'Lanzar la piedra',
 };
 
-function собратьТекстовыеУзлы() {
-  const ходок = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+function собратьТекстовыеУзлы(корень) {
+  const ходок = document.createTreeWalker(корень || document.body, NodeFilter.SHOW_TEXT, {
     acceptNode(n) {
       const t = (n.nodeValue || '').trim();
       if (!t) return NodeFilter.FILTER_REJECT;
@@ -6248,14 +6379,16 @@ function собратьТекстовыеУзлы() {
   return узлы;
 }
 
-function applyLang() {
+function applyLang(корень) {
   const l = текущийЯзык();
-  document.documentElement.lang = l;
-  document.documentElement.dataset.lang = l;
-  const tag = document.getElementById('mLangTag');
-  if (tag) tag.textContent = ЯЗЫКИ[l];
+  if (!корень) {
+    document.documentElement.lang = l;
+    document.documentElement.dataset.lang = l;
+    const tag = document.getElementById('mLangTag');
+    if (tag) tag.textContent = ЯЗЫКИ[l];
+  }
 
-  собратьТекстовыеУзлы().forEach((узел) => {
+  собратьТекстовыеУзлы(корень).forEach((узел) => {
     const было = узел.nodeValue;
     const ключ = было.trim();
     if (l === 'es') {
@@ -6266,7 +6399,7 @@ function applyLang() {
     }
   });
 
-  document.querySelectorAll('input[placeholder], [aria-label]').forEach((el) => {
+  (корень || document).querySelectorAll('input[placeholder], [aria-label]').forEach((el) => {
     ['placeholder', 'aria-label'].forEach((атр) => {
       const v = el.getAttribute(атр);
       if (!v) return;
@@ -6279,6 +6412,41 @@ function applyLang() {
       }
     });
   });
+}
+
+/* Экраны собираются на ходу: урок, книга, магазин, шторки. Раньше перевод
+   прогонялся только при переключении языка и на двух экранах, поэтому в
+   испанском режиме заголовки урока оставались русскими. Теперь следим за
+   появлением новой разметки и переводим её сами.
+
+   Переводим только то, что появилось, а не всё тело: в играх разметка
+   меняется десятки раз в секунду, и полный обход на каждое изменение
+   подтормаживал бы игру. Правки копим и прогоняем раз в 80 мс. */
+function следитьЗаЯзыком() {
+  if (следитьЗаЯзыком.включено) return;
+  следитьЗаЯзыком.включено = true;
+  let таймер = null;
+  let новые = [];
+  const наблюдатель = new MutationObserver((правки) => {
+    if (текущийЯзык() !== 'es') return;
+    правки.forEach((п) => {
+      // Текстовый узел сам по себе обойти нельзя, берём его родителя:
+      // так переведётся и `кнопка.textContent = 'Проверить'`.
+      (п.addedNodes || []).forEach((у) => {
+        const цель = у.nodeType === 1 ? у : (у.nodeType === 3 ? у.parentElement : null);
+        if (цель) новые.push(цель);
+      });
+    });
+    if (!новые.length) return;
+    clearTimeout(таймер);
+    таймер = setTimeout(() => {
+      const пачка = новые; новые = [];
+      наблюдатель.disconnect();
+      пачка.forEach((у) => { if (у.isConnected) applyLang(у); });
+      наблюдатель.observe(document.body, { childList: true, subtree: true });
+    }, 80);
+  });
+  наблюдатель.observe(document.body, { childList: true, subtree: true });
 }
 
 /* ───────── КОНЕЦ ИГРЫ: продолжение и усложнение ─────────

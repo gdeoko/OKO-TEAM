@@ -29,12 +29,23 @@ const собранныеПути = await p.evaluate(async () => {
     словарь: э.querySelectorAll('.slovar__w').length,
     кроссворд: э.querySelectorAll('[data-word-in]').length,
   };
+  // Обычный урок: страницы читалки и наш словарь должны попасть в файл тоже.
+  openLesson(20);
+  await new Promise((r) => setTimeout(r, 900));
+  const о = document.querySelector('[data-screen="lesson"]');
+  итог.страницДвадцатого = о.querySelectorAll('.lp-slide').length;
+  итог.словарьДвадцатого = о.querySelectorAll('.slovar__w').length;
+
   openGame('quiz');
   await new Promise((r) => setTimeout(r, 800));
   const игра = document.querySelector('.screen--active .game-art img');
   итог.картинкаИгры = игра ? игра.getAttribute('src') : '';
   return итог;
 });
+console.log('ВИТРИНА, УРОК 20: страниц=' + собранныеПути.страницДвадцатого
+  + ', словарь=' + собранныеПути.словарьДвадцатого);
+if (собранныеПути.страницДвадцатого < 3) errs.push('обычный урок в витрине без страниц');
+if (собранныеПути.словарьДвадцатого < 4) errs.push('словарь обычного урока в витрину не попал');
 const вшито = (s) => typeof s === 'string' && s.startsWith('data:');
 console.log('ВИТРИНА, УРОК 1: помощников=' + собранныеПути.помощников
   + ', словарь=' + собранныеПути.словарь + ', кроссворд=' + собранныеПути.кроссворд);
