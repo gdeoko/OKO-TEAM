@@ -1,0 +1,21 @@
+A cinematic 16:9 key art frame of a renovated conference hall on the fourth floor of an administrative building at a working Moscow industrial park, early morning, empty and ready before an event, premium campaign photography. Warm, expensive, inviting. Photoreal, a high end architectural render married to a documentary photograph.
+
+CAMERA. Full frame, 35mm, f/2.8, 1/125s, ISO 400, camera 1.4m high at the back of the hall on grey carpet, level, looking forward down the rows of empty black chairs toward a large bright presentation screen and a wall of tall windows. Shallow depth: the nearest chair backs soft, critical focus on the middle rows, the screen a soft glow. Anamorphic character: horizontal flare off the window light, oval bokeh on the far glass.
+
+THE SCENE. A clean renovated hall: white walls with one accent wall in brand amber, black framed glazed partitions along one side, grey carpet, rows of black conference chairs receding toward the front, a linear ceiling light running the length of the room. A wall of tall windows on the right floods the room with cool morning light; beyond the glass, soft out of focus, the pale grey production blocks of the park. On a side table near the front, a neat stack of printed floor plans and a carafe of water catch the light. The room is empty, waiting, immaculate.
+
+FOUR DEPTH PLANES. Near foreground, lower corner, the back of the nearest black chair and the edge of the side table with the stack of plans, soft. Subject, the rows of chairs and the amber accent wall. Mid ground, the bright screen and the linear ceiling light drawing the eye forward. Dissolving background, the wall of windows and the blurred park beyond.
+
+WHAT IS HAPPENING. Fine dust drifts in the shaft of window light. Steam rises from a single cup of coffee left on the side table. The morning light very slowly warms. Quiet, poised, about to begin.
+
+LIGHT. 5600K cool morning daylight flooding from the right windows as key, a warm 3000K bounce off the amber accent wall lifting the room, the cool glow of the presentation screen at the front, the linear ceiling light as a soft line. Never flat. Deep blacks at 6 of 255, rich warm film grade, fine grain.
+
+MATERIALS AND PHYSICS. Grey carpet at roughness 0.9, black chair frames at 0.3 with soft speculars, glass partitions at 0.05, the amber accent wall matte at 0.6, water carafe glass at 0.02. Believable soft contact shadows, gentle caustics through the carafe.
+
+TYPOGRAPHY. In the lower third, set on the dark carpet zone, a headline in dimensional brushed aluminium standing letters, faces warm white #F5F1E8, extruded side walls catching amber #E8A400, real contact shadows on the carpet, reading exactly, character by character, the Russian line «СЕГОДНЯ В 11:00». Below it, small in warm white condensed capitals at one third of the headline cap height, reading exactly «6-Я РАДИАЛЬНАЯ, 17 · 4 ЭТАЖ · СБОР С 10:40». Headline spans at least sixty percent of the frame width, cap height no less than a twelfth of the frame height, reads at a thumbnail, warm white on the dark carpet, contrast set not hoped for, faces camera square, baseline horizontal, never rotated. The brand mark «КЛАСТЕР» sits once, small, etched into a brushed steel plate beside the screen, under a seventh of the frame width, its own light and shadow.
+
+BRAND PALETTE. Graphite #14171C shadows, warm white #F5F1E8 walls, daylight and type, amber #E8A400 accent wall, letter side walls, muted gold #C9A233 warm bounce, grey carpet neutral.
+
+FORBIDDEN. No people, no clutter, no dark perforated cladding, no interface elements on the real screen, no extra text or numbers beyond the two given lines, no watermark, no timestamp, no second logo, no Latin placeholder, no emoji, no illustration or painterly look, no clip art, no sharpening halo, no italic, no rotated type, no substituted Cyrillic glyphs. Every Cyrillic letter, digit, punctuation and the letter Ё reproduced exactly.
+
+FINISH. 8K detail in the plane of focus, deliberate composition down the rows to the screen, patient and expensive, a warm inviting opening frame that says the room is ready for you.

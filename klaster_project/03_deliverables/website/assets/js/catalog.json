@@ -1,0 +1,136 @@
+[
+ {
+  "title": "Производственный блок А",
+  "status": "Свободно",
+  "img": "/assets/img/real/gates-900.jpg",
+  "params": [
+   "420 м²",
+   "потолки 9 м",
+   "100 кВт",
+   "отдельный вход + ворота"
+  ],
+  "price": "по запросу",
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod"
+  ],
+  "area": 420,
+  "height": 9,
+  "power": 100,
+  "gate": true,
+  "crane": false,
+  "ramp": false
+ },
+ {
+  "title": "Склад с зоной погрузки",
+  "status": "Свободно",
+  "img": "/assets/img/real/gates_side-900.jpg",
+  "params": [
+   "800 м²",
+   "потолки 8 м",
+   "кран-балка",
+   "рампа"
+  ],
+  "price": "по запросу",
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "ware"
+  ],
+  "area": 800,
+  "height": 8,
+  "power": 100,
+  "gate": true,
+  "crane": true,
+  "ramp": true
+ },
+ {
+  "title": "Производство + офис",
+  "status": "Свободно",
+  "img": "/assets/img/real/street_inner-900.jpg",
+  "params": [
+   "650 м²",
+   "1 этаж",
+   "мощность увеличивается",
+   "с/у и офис"
+  ],
+  "price": "по запросу",
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod",
+   "office"
+  ],
+  "area": 650,
+  "height": 8,
+  "power": 150,
+  "gate": true,
+  "crane": false,
+  "ramp": false
+ },
+ {
+  "title": "Лёгкое производство",
+  "status": "Свободно",
+  "img": "/assets/img/real/complex_front-900.jpg",
+  "params": [
+   "260 м²",
+   "потолки 6 м",
+   "готов к заезду",
+   "отдельный вход"
+  ],
+  "price": "по запросу",
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod"
+  ],
+  "area": 260,
+  "height": 6,
+  "power": 60,
+  "gate": true,
+  "crane": false,
+  "ramp": false
+ },
+ {
+  "title": "Офисное помещение",
+  "status": "Свободно",
+  "img": "/assets/img/real/meeting_room-900.jpg",
+  "params": [
+   "120 м²",
+   "ремонт",
+   "переговорная",
+   "паркинг"
+  ],
+  "price": "по запросу",
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "office"
+  ],
+  "area": 120,
+  "height": 3,
+  "power": 20,
+  "gate": false,
+  "crane": false,
+  "ramp": false
+ },
+ {
+  "title": "Большой производственный цех",
+  "status": "По запросу",
+  "img": "/assets/img/real/facade_long-900.jpg",
+  "params": [
+   "до 3 000 м²",
+   "потолки 12 м",
+   "до 500 кВт",
+   "2 лифта 5 т"
+  ],
+  "price": "по запросу",
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod",
+   "ware"
+  ],
+  "area": 3000,
+  "height": 12,
+  "power": 500,
+  "gate": true,
+  "crane": true,
+  "ramp": true
+ }
+]
