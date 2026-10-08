@@ -48,7 +48,11 @@ import sys
 
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БРЕНД = os.path.dirname(ТУТ)
-ФОНТЫ = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts"
+_ШРИФТЫ_ГДЕ = ("/opt/amberry/.claude/skills/reels-machine/fonts",
+                "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts")
+# Путь ИЩЕТСЯ: литерал одной машины ломает другую, и ломает молча -
+# до первой сборки этого не видно.
+ФОНТЫ = next((п for п in _ШРИФТЫ_ГДЕ if os.path.isdir(п)), _ШРИФТЫ_ГДЕ[0])
 ЛОГО = os.path.join(БРЕНД, "amberry-icon-512-alpha.png")
 
 # Те же призывы, что у Формата 1 и у хвоста: ведём в бота, слова разные.
@@ -215,7 +219,7 @@ def html_карточки(призыв, ш, в, фон=False, рамка=True):
   <div class="имя">Amberry</div>
   <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО</div>
   <div class="free">ПЕРВОЕ ФОТО <span>БЕСПЛАТНО</span></div>
-  <div class="tgline">{ТГ_ЗНАК}<span class="nk">@theamberrybot</span></div>
+  <div class="tgline">{ТГ_ЗНАК}<span class="nk">@theamberry_bot</span></div>
   <div class="cta">{призыв}</div>
 </div>
 <script>
