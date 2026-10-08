@@ -66,13 +66,41 @@ $hello   = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Зд�
 </p>
 <?php endif; ?>
 
-<?php if ($items): ?>
+<?php
+/* В ПОСЫЛКЕ — ТОЛЬКО ТО, ЧТО В НЕЙ ЛЕЖИТ.
+ *
+ * Здесь перечислялся весь состав заказа подряд, без разбора на бумажное и
+ * электронное. Человек, заказавший медаль и электронный диплом, читал «в
+ * посылке: медаль, основной диплом» — и ждал в коробке документ, который
+ * давно пришёл ему файлом на почту. Десять таких писем уже ушло.
+ *
+ * Электронные позиции не выбрасываем, а называем своим именем: они оплачены,
+ * и человек вправе видеть их в отчёте о заказе. */
+$inBox = $byMail = [];
+foreach ($items as $it) {
+    if (!is_array($it)) continue;
+    $title = trim((string) ($it['item'] ?? ''));
+    if ($title === '') continue;
+    if ((string) ($it['kind'] ?? '') === 'digital') $byMail[] = $title;
+    else $inBox[] = $title;
+}
+?>
+<?php if ($inBox): ?>
 <p style="margin:0 0 8px;font-size:15px;"><b>В посылке:</b></p>
 <ul style="margin:0 0 16px;padding-left:20px;font-size:15px;">
-  <?php foreach ($items as $it): if (!is_array($it)) continue; ?>
-    <li><?= h((string) ($it['item'] ?? '')) ?></li>
-  <?php endforeach; ?>
+  <?php foreach ($inBox as $t): ?><li><?= h($t) ?></li><?php endforeach; ?>
 </ul>
+<?php endif; ?>
+
+<?php if ($byMail): ?>
+<p style="margin:0 0 8px;font-size:15px;"><b>Уже отправлено на Вашу электронную почту:</b></p>
+<ul style="margin:0 0 16px;padding-left:20px;font-size:15px;">
+  <?php foreach ($byMail as $t): ?><li><?= h($t) ?> — в электронном виде</li><?php endforeach; ?>
+</ul>
+<p style="margin:0 0 16px;font-size:14px;color:#6B7280;">
+  Эти документы приходили отдельным письмом и всегда доступны в личном кабинете.
+  В посылке их нет.
+</p>
 <?php endif; ?>
 
 <?php if ($keep !== ''): ?>

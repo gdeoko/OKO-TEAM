@@ -456,7 +456,7 @@ $groups = og_groups($orders);
        Если человек одним заказом взял и медаль, и электронную благодарность,
        в коробку едет медаль; файл уходит письмом из раздела электронных, и
        путать эти две работы нельзя. */
-    $items = []; $cleans = []; $postSum = 0; $digiCnt = 0;
+    $items = []; $cleans = []; $postSum = 0; $digiCnt = 0; $paperDocs = false;
     foreach ($gr['orders'] as $go) {
         foreach (order_items_parse($go) as $p) {
             if ((string) ($p['kind'] ?? '') !== 'original') { $digiCnt += max(1, (int) $p['count']); continue; }
@@ -476,6 +476,10 @@ $groups = og_groups($orders);
             $p['ord_id']   = (int) $go['id'];
             $p['ord_when'] = (string) ($go['created_at'] ?? '');
             $items[] = $p;
+            /* Бланки печатаются только у бумажных ДОКУМЕНТОВ. Медаль, кубок и
+               статуэтка — изделия, печатать для них нечего, и блок «бланки для
+               печати» у такого заказа не нужен вовсе. */
+            if ((string) ($p['dtype'] ?? '') !== '') $paperDocs = true;
             $postSum += (int) ($p['price'] ?? 0) * max(1, (int) $p['count']);
         }
         foreach (order_clean_pdfs($go) as $c) {
@@ -662,7 +666,7 @@ $groups = og_groups($orders);
                окне печати браузера, «Скачать» сохраняет файл. Раньше кнопка
                печати вела на производственный лист — белую страницу с номером
                заказа, а самой благодарности взять было негде. */ ?>
-      <?php if ($cleans || $needAddr): ?>
+      <?php if ($cleans || $paperDocs): ?>
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--a-line);">
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
             Бланки для печати в посылку (чистые, с номером и QR)
@@ -682,7 +686,7 @@ $groups = og_groups($orders);
               </div>
             <?php endforeach; ?>
             <?php if (!$cleans): ?>
-              <span class="small muted">Ещё не подготовлены — нажмите «Подготовить».</span>
+              <span class="small muted">Бланки ещё не собраны — нажмите «Подготовить».</span>
             <?php endif; ?>
             <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
               <input type="hidden" name="do" value="regen"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
