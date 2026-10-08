@@ -27,6 +27,12 @@ import datetime, json, os, subprocess, sys, time, urllib.request, urllib.error
 АРКИ = os.path.join(ТУТ, "сериалы.json")
 КАДРОВ = 18
 СЕКУНД_КАДРА = 3
+# ЧАСТОТА КАДРОВ НАЗЫВАЕТСЯ ЯВНО. Титр и брендовый экран подаются
+# картинками (`-loop 1`), частоты у картинки нет, и фильтр `concat` берёт
+# своё умолчание - 25. Проба монтажа дала ровно это: 18 клипов по 30 к/с
+# склеились в ролик 25 к/с, а канон держит 30. Расхождение тихое: длина
+# сходится, файл читается, и видно только замером.
+FPS = 30
 КАДРОВ_НА_МОМЕНТ = 3
 # У каждого вида кадра своя оптика и своя композиция: без них три кадра
 # одного момента выходят одним кадром с разной подписью. Промпт кинокадру
@@ -134,25 +140,40 @@ def музыка(промпт, выход, секунд=70):
     if е is None:
         return {"ок": False, "почему": почему}
     ключ = е["APIMODELS_KEY"]
-    тело = json.dumps({"model": МОДЕЛЬ_МУЗЫКИ, "prompt": промпт,
-                       "duration": int(секунд)}).encode()
-    зап = urllib.request.Request(БАЗА + "/audio/generations", data=тело,
-                                 method="POST")
-    зап.add_header("Authorization", "Bearer " + ключ)
-    зап.add_header("Content-Type", "application/json")
+    # ЗАПРОС ИДЁТ ПОЛНЫМ, А НА ОТКАЗ ПО ПОЛЮ УПРОЩАЕТСЯ. Поле `duration`
+    # у этой модели не замерено живым вызовом (вызов = трата), и если
+    # сервис его не знает, полный запрос умрёт отказом, а серия останется
+    # без музыки на все пять пачек. Спросить дешевле, чем решить за
+    # сервис: отказ стоит нуля, а второй заход уже без спорного поля.
     т0 = time.time()
-    try:
-        with urllib.request.urlopen(зап, timeout=300) as о:
-            д = json.loads(о.read().decode("utf-8", "replace"))
-    except urllib.error.HTTPError as e:
-        тело_о = ""
+    д, последняя = None, ""
+    for поля in ({"model": МОДЕЛЬ_МУЗЫКИ, "prompt": промпт, "duration": int(секунд)},
+                 {"model": МОДЕЛЬ_МУЗЫКИ, "prompt": промпт}):
+        зап = urllib.request.Request(
+            БАЗА + "/audio/generations",
+            data=json.dumps(поля).encode(), method="POST")
+        зап.add_header("Authorization", "Bearer " + ключ)
+        зап.add_header("Content-Type", "application/json")
         try:
-            тело_о = e.read().decode("utf-8", "replace")[:300]
-        except Exception:
-            pass
-        return {"ок": False, "почему": "код %s: %s" % (e.code, тело_о or e.reason)}
-    except Exception as e:
-        return {"ок": False, "почему": "%s: %s" % (type(e).__name__, e)}
+            with urllib.request.urlopen(зап, timeout=300) as о:
+                д = json.loads(о.read().decode("utf-8", "replace"))
+            break
+        except urllib.error.HTTPError as e:
+            тело_о = ""
+            try:
+                тело_о = e.read().decode("utf-8", "replace")[:300]
+            except Exception:
+                pass
+            последняя = "код %s: %s" % (e.code, тело_о or e.reason)
+            # Упрощаемся только на отказе ПО ЗАПРОСУ. Пятисотая, отказ по
+            # деньгам или по правам вторым заходом не лечатся, и повторять
+            # их значит ждать впустую.
+            if e.code != 400:
+                return {"ок": False, "почему": последняя}
+        except Exception as e:
+            return {"ок": False, "почему": "%s: %s" % (type(e).__name__, e)}
+    if д is None:
+        return {"ок": False, "почему": последняя or "сервис не принял запрос"}
     задача = д.get("taskId") or д.get("task_id") or д.get("id")
     ссылки = д.get("resultUrls") or ([д["resultUrl"]] if д.get("resultUrl") else [])
     # Задача бывает длинной: спрашиваем, пока не отдаст ссылку.
@@ -288,8 +309,8 @@ def собрать(план_, папка, api, трек=None):
     основа = os.path.join(папка, "osnova.mp4")
     subprocess.run([_ffmpeg(), "-y", "-hide_banner", "-loglevel", "error",
                     "-nostdin", "-f", "concat", "-safe", "0", "-i", список,
-                    "-c:v", "libx264", "-crf", "19", "-preset", "fast",
-                    "-pix_fmt", "yuv420p", "-an", основа],
+                    "-r", str(FPS), "-c:v", "libx264", "-crf", "19",
+                    "-preset", "fast", "-pix_fmt", "yuv420p", "-an", основа],
                    capture_output=True, text=True)
     if not os.path.exists(основа):
         return {"ок": False, "почему": "склейка не дала файла", "$факт": потрачено}
@@ -297,19 +318,23 @@ def собрать(план_, папка, api, трек=None):
     if ф.get("ок"):
         # Титр, размытие и бренд приклеиваются ОДНИМ проходом: отдельные
         # проходы на каждый кусок трижды перекодируют один и тот же файл.
+        # fps НА КАЖДОМ входе и -r на выходе: `concat` сводит потоки с
+        # одной частотой, и молча берёт 25, если её не назвать.
         фильтр = (
-            "[0:v]scale=1080:1920,setsar=1[v0];"
+            "[0:v]scale=1080:1920,setsar=1,fps=%d[v0];"
             "[1:v]scale=1080:1920,setsar=1,loop=loop=%d:size=1:start=0,"
-            "trim=duration=%.2f,setpts=PTS-STARTPTS[t];"
+            "trim=duration=%.2f,setpts=PTS-STARTPTS,fps=%d[t];"
             "[2:v]scale=1080:1920,setsar=1,loop=loop=%d:size=1:start=0,"
-            "trim=duration=%.2f,setpts=PTS-STARTPTS[b];"
+            "trim=duration=%.2f,setpts=PTS-STARTPTS,fps=%d[b];"
             "[v0][t][b]concat=n=3:v=1:a=0[v]"
-            % (int(ТИТР_СЕК * 30), ТИТР_СЕК, int(БРЕНД_СЕК * 30), БРЕНД_СЕК))
+            % (FPS, int(ТИТР_СЕК * FPS), ТИТР_СЕК, FPS,
+               int(БРЕНД_СЕК * FPS), БРЕНД_СЕК, FPS))
         subprocess.run([_ffmpeg(), "-y", "-hide_banner", "-loglevel", "error",
                         "-nostdin", "-i", основа, "-loop", "1", "-i", ф["титр"],
                         "-loop", "1", "-i", ф["бренд"], "-filter_complex",
-                        фильтр, "-map", "[v]", "-c:v", "libx264", "-crf", "19",
-                        "-preset", "fast", "-pix_fmt", "yuv420p", выход],
+                        фильтр, "-map", "[v]", "-r", str(FPS), "-c:v",
+                        "libx264", "-crf", "19", "-preset", "fast",
+                        "-pix_fmt", "yuv420p", выход],
                        capture_output=True, text=True)
     if not os.path.exists(выход):
         # Финал не встал - эпизод всё равно есть, и это надо сказать, а не

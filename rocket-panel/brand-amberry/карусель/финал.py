@@ -38,7 +38,12 @@ sys.path.insert(0, os.path.join(БРЕНД, "ролик-снятие"))
 
 Ш, В = 1080, 1350
 КАРТА_В = В                # карточка на весь лист
-ШРИФТ_Ж = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts/montserrat-v31-cyrillic_latin-900.ttf"
+# Путь ИЩЕТСЯ: литерал одной машины ломает другую, и ломает молча.
+_ШРИФТЫ_ГДЕ = ("/opt/amberry/.claude/skills/reels-machine/fonts",
+                "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts")
+ШРИФТ_Ж = os.path.join(
+    next((п for п in _ШРИФТЫ_ГДЕ if os.path.isdir(п)), _ШРИФТЫ_ГДЕ[0]),
+    "montserrat-v31-cyrillic_latin-900.ttf")
 
 # Настоящий результат бота для Ники. Наружу резким не уходит никогда -
 # маска `результат-*` лежит в .gitignore, и здесь он только под мутью.
