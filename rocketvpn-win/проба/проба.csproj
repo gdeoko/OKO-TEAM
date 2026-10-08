@@ -12,6 +12,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../src/RocketVPN/Тема.cs" />
     <Compile Include="../src/RocketVPN/Узел.cs" />
     <Compile Include="../src/RocketVPN/Подписка.cs" />
     <Compile Include="../src/RocketVPN/ФорматыПодписки.cs" />

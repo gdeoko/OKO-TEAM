@@ -54,6 +54,10 @@ namespace RocketVPN
         public ГлавноеОкно(bool свёрнуто)
         {
             Тема.ИзмеритьЭкран();
+            /* Экран берём тот, где стоит указатель: на двух мониторах
+               с разным масштабом окно откроется на том, куда смотрит
+               человек, а не на том, который система считает главным. */
+            Тема.Вместить(Ширина, Высота, РабочаяОбласть());
             Построить();
             ПоднятьСохранённое();
             if (свёрнуто) { WindowState = FormWindowState.Minimized; ShowInTaskbar = false; Hide(); }
@@ -79,6 +83,7 @@ namespace RocketVPN
             СлойНастроек();
             Трей();
             ПодогнатьНадписи();
+            Shown += delegate { ВпихнутьВЭкран(); };
 
             ядро.Упало += delegate { ВПотоке(ЯдроУпало); };
         }
@@ -303,6 +308,23 @@ namespace RocketVPN
         // ── ОРГАНЫ ПОМЕЛЬЧЕ ────────────────────────────────────────
 
         private static int М(int п) { return Тема.М(п); }
+
+        private static Rectangle РабочаяОбласть()
+        {
+            try { return Screen.FromPoint(Cursor.Position).WorkingArea; }
+            catch { return Screen.PrimaryScreen.WorkingArea; }
+        }
+
+        /* Окно целиком внутри экрана. CenterScreen ставит по главному
+           монитору, а мы могли ужаться под другой; к тому же на
+           нестандартной панели задач центр уезжает под неё. */
+        private void ВпихнутьВЭкран()
+        {
+            Rectangle р = РабочаяОбласть();
+            int x = Math.Max(р.Left, Math.Min(Left, р.Right - Width));
+            int y = Math.Max(р.Top, Math.Min(Top, р.Bottom - Height));
+            if (x != Left || y != Top) Location = new Point(x, y);
+        }
 
         private Label Подпись(string текст, int x, int y, int ш, Color цвет, float кегль)
         {
