@@ -8,7 +8,7 @@
 
     РАЗДЕНЬ И ОЖИВИ ЛЮБОЕ ФОТО
     ПЕРВОЕ ФОТО БЕСПЛАТНО
-    значок Telegram + @theamberrybot
+    значок Telegram + @theamberry_bot
 
     python3 верх.py [выход.png]
 """
@@ -19,7 +19,11 @@ import sys
 
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БРЕНД = os.path.dirname(ТУТ)
-ФОНТЫ = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts"
+_ШРИФТЫ_ГДЕ = ("/opt/amberry/.claude/skills/reels-machine/fonts",
+                "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts")
+# Путь ИЩЕТСЯ: литерал одной машины ломает другую, и ломает молча -
+# до первой сборки этого не видно.
+ФОНТЫ = next((п for п in _ШРИФТЫ_ГДЕ if os.path.isdir(п)), _ШРИФТЫ_ГДЕ[0])
 
 ТГ_ЗНАК = ('<svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 '
            '256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 '
@@ -63,7 +67,7 @@ def разметка(ш, в):
             "</style></head><body>"
             "<div class=\"заг\">Раздень <i>и&nbsp;оживи</i><br>любое фото</div>"
             "<div class=\"бес\">ПЕРВОЕ ФОТО <b>БЕСПЛАТНО</b></div>"
-            "<div class=\"ник\">%s<span>@theamberrybot</span></div>"
+            "<div class=\"ник\">%s<span>@theamberry_bot</span></div>"
             "</body></html>"
             % (шрифт("montserrat-v31-cyrillic_latin-900.ttf"),
                шрифт("montserrat-v31-cyrillic_latin-700.ttf"),

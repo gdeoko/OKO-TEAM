@@ -48,7 +48,11 @@ import sys
 
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БРЕНД = os.path.dirname(ТУТ)
-ФОНТЫ = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts"
+_ШРИФТЫ_ГДЕ = ("/opt/amberry/.claude/skills/reels-machine/fonts",
+                "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts")
+# Путь ИЩЕТСЯ: литерал одной машины ломает другую, и ломает молча -
+# до первой сборки этого не видно.
+ФОНТЫ = next((п for п in _ШРИФТЫ_ГДЕ if os.path.isdir(п)), _ШРИФТЫ_ГДЕ[0])
 ЛОГО = os.path.join(БРЕНД, "amberry-icon-512-alpha.png")
 
 # Те же призывы, что у Формата 1 и у хвоста: ведём в бота, слова разные.
@@ -201,7 +205,12 @@ body{display:flex;align-items:center;justify-content:center}
            '17.2 19.5z"/></svg>')
 
 
-def html_карточки(призыв, ш, в, фон=False, рамка=True):
+ЗАГОЛОВОК_RU = 'РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО'
+ДАРОМ_RU = 'ПЕРВОЕ ФОТО <span>БЕСПЛАТНО</span>'
+
+
+def html_карточки(призыв, ш, в, фон=False, рамка=True,
+                  заголовок=None, даром=None):
     стиль = (КАРТОЧКА.replace("__M9__", шрифт("montserrat-v31-cyrillic_latin-900.ttf"))
              .replace("__M7__", шрифт("montserrat-v31-cyrillic_latin-700.ttf"))
              .replace("__Ш__", str(ш)).replace("__В__", str(в)))
@@ -213,9 +222,9 @@ def html_карточки(призыв, ш, в, фон=False, рамка=True):
 <div id="блок">
   <img class="lg" src="{b64(ЛОГО, 'image/png')}">
   <div class="имя">Amberry</div>
-  <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО</div>
-  <div class="free">ПЕРВОЕ ФОТО <span>БЕСПЛАТНО</span></div>
-  <div class="tgline">{ТГ_ЗНАК}<span class="nk">@theamberrybot</span></div>
+  <div class="headline">{заголовок or ЗАГОЛОВОК_RU}</div>
+  <div class="free">{даром or ДАРОМ_RU}</div>
+  <div class="tgline">{ТГ_ЗНАК}<span class="nk">@theamberry_bot</span></div>
   <div class="cta">{призыв}</div>
 </div>
 <script>
@@ -311,10 +320,19 @@ def ряд(каталог, призыв=None, кадров=26, секунд=1.25
                                   каталог, кадров, секунд, ш, в))
 
 
-def карточка(выход, призыв=None, ш=1080, в=1920, фон=False, рамка=True):
-    """фон=True - вид Формата 1 (тёмный неон), фон=False - Формата 2 (прозрачно)."""
+def карточка(выход, призыв=None, ш=1080, в=1920, фон=False, рамка=True,
+             заголовок=None, даром=None):
+    """фон=True - вид Формата 1 (тёмный неон), фон=False - Формата 2 (прозрачно).
+
+    ЯЗЫК КАРТОЧКИ ЗАДАЁТ ЗОВУЩИЙ, А НЕ ШАБЛОН. Состав остаётся прежним
+    (лого, заголовок, строка «даром», ник, призыв) - меняются только
+    слова: лента пяти пачек английская, и русский призыв на её слайде
+    читается как чужой контент. Умолчание русское, чтобы своё
+    использование бота правка не задела.
+    """
     призыв = призыв or ПРИЗЫВЫ[0]
-    return asyncio.run(снять(html_карточки(призыв, ш, в, фон, рамка),
+    return asyncio.run(снять(html_карточки(призыв, ш, в, фон, рамка,
+                                           заголовок, даром),
                              выход, ш, в))
 
 

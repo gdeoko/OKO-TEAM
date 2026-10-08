@@ -24,7 +24,11 @@ import sys
 
 ТУТ = os.path.dirname(os.path.abspath(__file__))
 БРЕНД = os.path.dirname(ТУТ)
-ФОНТЫ = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts"
+_ШРИФТЫ_ГДЕ = ("/opt/amberry/.claude/skills/reels-machine/fonts",
+                "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts")
+# Путь ИЩЕТСЯ: литерал одной машины ломает другую, и ломает молча -
+# до первой сборки этого не видно.
+ФОНТЫ = next((п for п in _ШРИФТЫ_ГДЕ if os.path.isdir(п)), _ШРИФТЫ_ГДЕ[0])
 АВАТАР = os.path.join(БРЕНД, "amberry-avatar-256.png")
 ЛОГО = os.path.join(БРЕНД, "amberry-icon-512-alpha.png")
 
@@ -225,7 +229,7 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#0a0710;font-fam
   <img class="lg" src="__ЛОГО__">
   <div class="headline">РАЗДЕНЬ <span class="hi">И&nbsp;ОЖИВИ</span> ЛЮБОЕ ФОТО</div>
   <div class="free">ПЕРВОЕ ФОТО <span>БЕСПЛАТНО</span></div>
-  <div class="tgline"><svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"/></svg><span class="nk">@theamberrybot</span></div>
+  <div class="tgline"><svg viewBox="0 0 496 512"><path fill="#2AABEE" d="M248 8C111 8 0 119 0 256s111 248 248 248 248-111 248-248S385 8 248 8zm121.8 169.9l-40.7 191.8c-3 13.6-11.1 16.9-22.4 10.5l-62-45.7-29.9 28.8c-3.3 3.3-6.1 6.1-12.5 6.1l4.4-63.1 114.9-103.8c5-4.4-1.1-6.9-7.7-2.5l-142 89.4-61.2-19.1c-13.3-4.2-13.6-13.3 2.8-19.7l239.1-92.2c11.1-4 20.8 2.7 17.2 19.5z"/></svg><span class="nk">@theamberry_bot</span></div>
   <div class="cta">__CTA__</div>
 </div>
 <script>
@@ -278,7 +282,7 @@ async function main(){
     <div class="reswrap hide" id="rw"><img src="__РЕЗ__">
       <div class="frame"></div>
       <div class="cap"><img class="lg" src="__ЛОГО__">
-        <div class="t">ПРОДОЛЖЕНИЕ В БОТЕ</div><div class="h">@theamberrybot</div></div>
+        <div class="t">ПРОДОЛЖЕНИЕ В БОТЕ</div><div class="h">@theamberry_bot</div></div>
     </div></div>`);
   scroll();await sleep(400);scroll();
   await sleep(4000);            // замазанный результат держим в кадре

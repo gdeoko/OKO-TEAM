@@ -1,0 +1,397 @@
+{
+ "_о_файле": [
+  "Три сериала по десять серий: одна серия в сутки, серия идёт на ВСЕ пять",
+  "пачек одним файлом - разная только музыка, обложка, хук и кодовое слово.",
+  "У сериала СВОИ персонажи, лица лент тут не участвуют (решение владельца).",
+  "Моменты - это биты серии. Каждый разворачивается в 2-3 кадра (общий,",
+  "деталь, реакция), и 18 кадров по 3 секунды дают серию около минуты.",
+  "Арки написаны сессией: мозг завода это сессия, а не серверная модель."
+ ],
+ "mirror": {
+  "имя": "The Mirror Account",
+  "героиня": "Lena, 24, photo retoucher, lives alone in a rented studio flat",
+  "внешность": "dark blonde hair to the shoulders, grey eyes, thin silver chain",
+  "мир": "a rainy northern city, late autumn, neon shop signs, old tram lines",
+  "завязка": "She finds a social account that posts photos of her she never took.",
+  "серии": [
+   {
+    "тема": "She sees the first photo of herself",
+    "моменты": [
+     "phone screen in the dark, a notification from an unknown account",
+     "the photo on screen is her own kitchen, taken from inside",
+     "she looks up at the real kitchen, the same angle, empty",
+     "she checks the window latch, it is closed",
+     "a new notification arrives while she stands there",
+     "the second photo shows her standing exactly like this"
+    ],
+    "клиффхэнгер": "The newest photo was taken seconds ago."
+   },
+   {
+    "тема": "She tries to find who posted it",
+    "моменты": [
+     "morning, she scrolls the account on a tram",
+     "every photo is from a place only she has been",
+     "the account has no name and no followers",
+     "she writes a message, it is read instantly",
+     "the reply is a photo of her on this tram",
+     "she looks up at the other passengers"
+    ],
+    "клиффхэнгер": "Nobody on the tram is holding a phone."
+   },
+   {
+    "тема": "She asks a friend for help",
+    "моменты": [
+     "a cafe, she shows the account to her friend Mia",
+     "Mia says the photos look edited, not taken",
+     "they compare two shots of the same room, the light differs",
+     "Mia finds a watermark corner nobody cropped",
+     "the watermark is a bot handle",
+     "Lena opens the bot for the first time"
+    ],
+    "клиффхэнгер": "The bot already knows her name."
+   },
+   {
+    "тема": "The bot answers her",
+    "моменты": [
+     "she types one question into the chat",
+     "the bot sends back a photo of her from a year ago",
+     "she never uploaded that photo anywhere",
+     "she asks where it came from, the chat goes quiet",
+     "a new image appears, her flat from the ceiling",
+     "she looks up at the ceiling corner"
+    ],
+    "клиффхэнгер": "There is a small dark circle in the plaster."
+   },
+   {
+    "тема": "She searches her own flat",
+    "моменты": [
+     "night, she stands on a chair with a torch",
+     "the circle is a hole, drilled from above",
+     "the upstairs flat has been empty for months",
+     "she goes up the stairwell, the door is unlocked",
+     "inside the empty flat there is one chair facing the floor",
+     "beside the chair, a phone on a charger"
+    ],
+    "клиффхэнгер": "The phone screen lights up with her face."
+   },
+   {
+    "тема": "She takes the phone",
+    "моменты": [
+     "she carries the phone down to her own flat",
+     "the gallery holds thousands of photos of her",
+     "the earliest one is from three years ago, another city",
+     "she was not living here three years ago",
+     "the newest one is from this minute, and she is in it",
+     "she turns around slowly"
+    ],
+    "клиффхэнгер": "The hole in her ceiling is gone, plastered over."
+   },
+   {
+    "тема": "Nobody believes her",
+    "моменты": [
+     "a police desk, she shows the phone",
+     "the officer scrolls and finds the gallery empty",
+     "on her own screen the photos are still there",
+     "she photographs the screen, the copy comes out blank",
+     "outside, Mia is waiting with bad news",
+     "Mia has started getting the photos too"
+    ],
+    "клиффхэнгер": "In Mia's photos, Lena is the one taking them."
+   },
+   {
+    "тема": "She follows the trail",
+    "моменты": [
+     "an address written on the back of a printed photo",
+     "a storage unit at the edge of the city",
+     "inside, printed photos cover every wall",
+     "the walls follow her whole life in order",
+     "the last wall is empty except one pinned note",
+     "the note has tomorrow's date"
+    ],
+    "клиффхэнгер": "The date is in her own handwriting."
+   },
+   {
+    "тема": "The day on the note",
+    "моменты": [
+     "morning, she goes back to the storage unit",
+     "the empty wall is now covered with today",
+     "every photo shows her walking here, step by step",
+     "the final photo shows her reaching for the light switch",
+     "she reaches for the light switch anyway",
+     "behind the door, a second room she has not seen"
+    ],
+    "клиффхэнгер": "The second room is her own flat, rebuilt exactly."
+   },
+   {
+    "тема": "Who was taking them",
+    "моменты": [
+     "in the rebuilt flat, the ceiling has the same hole",
+     "she climbs up and looks through it",
+     "through the hole she sees herself, asleep in her real bed",
+     "the phone in her hand takes a photo by itself",
+     "the photo posts to the account instantly",
+     "she understands who has been posting"
+    ],
+    "клиффхэнгер": "Season two: the account now has a second follower."
+   }
+  ]
+ },
+ "thirty": {
+  "имя": "Thirty Seconds",
+  "героиня": "Ira, 27, night shift nurse, sharp, tired, practical",
+  "внешность": "black hair in a low bun, brown eyes, hospital scrubs off duty",
+  "мир": "a coastal city in summer, hospital corridors, empty beaches at dawn",
+  "завязка": "Every photo the bot returns shows what happens thirty seconds later.",
+  "серии": [
+   {
+    "тема": "The first wrong photo",
+    "моменты": [
+     "hospital locker room, she sends a selfie to the bot",
+     "the photo comes back with a spilled coffee on her sleeve",
+     "her sleeve is clean, she laughs and closes the chat",
+     "half a minute later a passing trolley hits her arm",
+     "coffee spreads across the same sleeve",
+     "she stares at the photo again"
+    ],
+    "клиффхэнгер": "The photo matches the stain exactly."
+   },
+   {
+    "тема": "She tests it",
+    "моменты": [
+     "a stairwell, she sends another photo on purpose",
+     "the result shows her holding the rail, looking down",
+     "she decides not to hold the rail",
+     "someone bumps her, she grabs the rail anyway",
+     "she looks down the stairwell, exactly as in the photo",
+     "a new result arrives unasked"
+    ],
+    "клиффхэнгер": "In it, she is standing in the rain at night."
+   },
+   {
+    "тема": "The rain photo",
+    "моменты": [
+     "end of shift, the sky is clear",
+     "she walks home the long way to avoid it",
+     "a sprinkler system bursts over the pavement",
+     "she stands soaked under the water, exactly framed",
+     "the bot sends the next one before she dries off",
+     "this one shows a hospital bed with someone in it"
+    ],
+    "клиффхэнгер": "She cannot see the face."
+   },
+   {
+    "тема": "Thirty seconds is not enough",
+    "моменты": [
+     "night shift, the bed from the photo is empty",
+     "she waits beside it, phone in hand",
+     "an alarm goes off in another wing",
+     "she runs, and the new photo arrives mid-run",
+     "it shows the bed again, now occupied",
+     "she turns back"
+    ],
+    "клиффхэнгер": "The patient in the bed is her colleague."
+   },
+   {
+    "тема": "She tells someone",
+    "моменты": [
+     "break room, she shows the bot to a doctor",
+     "he sends his own photo as a joke",
+     "the result shows him dropping his badge",
+     "he holds the badge tightly and laughs",
+     "the badge clip snaps on its own",
+     "he stops laughing"
+    ],
+    "клиффхэнгер": "He asks her to send one more, about tonight."
+   },
+   {
+    "тема": "Thirty seconds of someone else",
+    "моменты": [
+     "she photographs the corridor, not herself",
+     "the result shows a stretcher coming through the doors",
+     "the doors stay shut for a long moment",
+     "then they open exactly as pictured",
+     "she looks at the patient and recognises the face",
+     "it is the man from the break room"
+    ],
+    "клиффхэнгер": "He left the hospital an hour ago."
+   },
+   {
+    "тема": "She tries to change it",
+    "моменты": [
+     "she calls him, no answer",
+     "she photographs the exit, the result shows an empty road",
+     "she runs to the road, a car is already stopped",
+     "the driver is on the phone, unhurt",
+     "behind the car, the photo's empty road is still empty",
+     "the bot sends one she did not request"
+    ],
+    "клиффхэнгер": "It shows her own hospital room."
+   },
+   {
+    "тема": "Her own room",
+    "моменты": [
+     "dawn, she sits in the pictured room",
+     "nothing happens for a long time",
+     "she falls asleep in the chair",
+     "the phone keeps sending while she sleeps",
+     "each new photo is thirty seconds further ahead",
+     "the last one is hours away"
+    ],
+    "клиффхэнгер": "In it, the chair is empty and the bed is not."
+   },
+   {
+    "тема": "Thirty seconds back",
+    "моменты": [
+     "she wakes to a full gallery",
+     "she scrolls backwards instead of forwards",
+     "an older photo shows the locker room, day one",
+     "in that photo, someone is standing behind her",
+     "she zooms in on the figure",
+     "the figure is holding a phone up"
+    ],
+    "клиффхэнгер": "The figure is wearing her scrubs."
+   },
+   {
+    "тема": "Who sends them",
+    "моменты": [
+     "she returns to the locker room at the same hour",
+     "she stands where the figure stood",
+     "her own reflection lifts a phone it is not holding",
+     "she takes one photo of the mirror",
+     "the result arrives with no delay at all",
+     "it shows the corridor, empty, and a door closing"
+    ],
+    "клиффхэнгер": "Season two: the delay is gone."
+   }
+  ]
+ },
+ "guest": {
+  "имя": "The Other Guest",
+  "героиня": "Dasha, 22, travel blogger, bright on camera, nervous off it",
+  "внешность": "copper hair, freckles, camera strap always on her shoulder",
+  "мир": "an off-season seaside hotel, long corridors, half-empty restaurant",
+  "завязка": "Someone in the hotel is sending her photos from inside her room.",
+  "серии": [
+   {
+    "тема": "Check-in",
+    "моменты": [
+     "reception, she is the only guest arriving",
+     "room 408, the key is an old metal one",
+     "she films a quick clip for her feed",
+     "a photo arrives from an unknown number",
+     "it is her room, filmed from the wardrobe",
+     "she opens the wardrobe"
+    ],
+    "клиффхэнгер": "Inside, the hangers are still swinging."
+   },
+   {
+    "тема": "The second photo",
+    "моменты": [
+     "morning, empty restaurant, she eats alone",
+     "a photo arrives of her table from the doorway",
+     "the doorway is empty when she looks",
+     "she asks the waiter who else is staying",
+     "the waiter says nobody, for two weeks",
+     "a third photo shows the waiter's back"
+    ],
+    "клиффхэнгер": "In the photo, the waiter is looking at her."
+   },
+   {
+    "тема": "She moves rooms",
+    "моменты": [
+     "she asks for another room, gets 212",
+     "she checks the wardrobe first this time",
+     "nothing, and she almost relaxes",
+     "the next photo is from under the bed",
+     "she lifts the bedspread with one hand",
+     "a phone is taped to the slats"
+    ],
+    "клиффхэнгер": "The phone is recording."
+   },
+   {
+    "тема": "The phone under the bed",
+    "моменты": [
+     "she takes the taped phone to the lobby",
+     "no signal, no password, no owner",
+     "the gallery has rooms, not people",
+     "every room in the hotel, in order",
+     "408 and 212 are both there",
+     "the last folder is tonight"
+    ],
+    "клиффхэнгер": "Tonight's folder is already full."
+   },
+   {
+    "тема": "Tonight",
+    "моменты": [
+     "she sits awake with the lights on",
+     "the folder updates as the hours pass",
+     "each photo is from a different corner",
+     "she covers every corner with towels",
+     "the next photo is from above the towels",
+     "she looks up at the smoke detector"
+    ],
+    "клиффхэнгер": "The detector has no battery in it."
+   },
+   {
+    "тема": "She leaves the hotel",
+    "моменты": [
+     "the bus stop, off-season timetable",
+     "no bus for four hours, she waits anyway",
+     "a photo arrives of the bus stop bench",
+     "it was taken from the hotel roof",
+     "she walks back and goes up to the roof",
+     "the roof door is open"
+    ],
+    "клиффхэнгер": "On the roof, her own camera is set on a tripod."
+   },
+   {
+    "тема": "Her own camera",
+    "моменты": [
+     "she recognises the strap and the dent",
+     "her camera is still in her bag downstairs",
+     "both cameras exist and both are hers",
+     "the roof camera is full of her last two years",
+     "cities she filmed, rooms she stayed in",
+     "the newest file is from this roof, this minute"
+    ],
+    "клиффхэнгер": "She is not in that frame."
+   },
+   {
+    "тема": "The guest book",
+    "моменты": [
+     "the reception desk at night, nobody there",
+     "she opens the old paper guest book",
+     "her name is written in it twice",
+     "the second entry is dated next week",
+     "the handwriting is the same both times",
+     "she turns the page"
+    ],
+    "клиффхэнгер": "Every page after is her name."
+   },
+   {
+    "тема": "Room 408 again",
+    "моменты": [
+     "she goes back to the first room",
+     "the key still turns, the room is made up",
+     "her things are unpacked on the shelf",
+     "she never unpacked them here",
+     "the wardrobe door stands slightly open",
+     "she looks inside properly this time"
+    ],
+    "клиффхэнгер": "There is a corridor behind the wardrobe."
+   },
+   {
+    "тема": "The other guest",
+    "моменты": [
+     "the corridor runs the length of the hotel",
+     "peepholes open into every room",
+     "a chair sits before the one into 408",
+     "on the chair, a phone and a folded coat",
+     "the coat is the one she travelled in",
+     "through the peephole she sees her room, and herself in it"
+    ],
+    "клиффхэнгер": "Season two: the chair is still warm."
+   }
+  ]
+ }
+}
