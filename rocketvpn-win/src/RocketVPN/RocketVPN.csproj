@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ПОЧЕМУ .NET Framework 4.8, А НЕ СОВРЕМЕННЫЙ .NET
+       Windows 7 и 8 выброшены из всех свежих стеков: .NET 5 и новее
+       требуют Windows 10, Electron снял их поддержку в 2023 году.
+       Framework 4.8 идёт от Windows 7 SP1 до Windows 11 одной сборкой,
+       и он уже стоит почти на каждой живой семёрке. Другого пути сделать
+       родной клиент под эту пару систем сегодня нет.
+
+       Пакет ReferenceAssemblies нужен, чтобы проект собирался и там, где
+       не установлена студия: сборка идёт в GitHub Actions. -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <AssemblyName>RocketVPN</AssemblyName>
+    <RootNamespace>RocketVPN</RootNamespace>
+    <Company>Rocket VPN</Company>
+    <Product>Rocket VPN</Product>
+    <AssemblyTitle>Rocket VPN</AssemblyTitle>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Copyright>Rocket VPN</Copyright>
+    <ApplicationIcon>ресурсы\значок.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- Исходники в UTF-8: в них русские имена и строки. -->
+    <CodePage>65001</CodePage>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <!-- JavaScriptSerializer: разбор JSON без единого стороннего пакета,
+         чтобы в релизе лежал ровно один exe. -->
+    <Reference Include="System.Web.Extensions" />
+    <!-- ZipArchive: вшитое ядро лежит архивом и распаковывается при
+         первом запуске. В наборе по умолчанию этой сборки его нет. -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="ресурсы\знак.png" />
+    <EmbeddedResource Include="ресурсы\значок.ico" />
+    <!-- Ядро Xray обеих разрядностей и базы адресов одним архивом.
+         Кладёт его сборка перед компиляцией, в репозитории его нет:
+         двадцать четыре мегабайта двоичного файла в истории git это
+         история, которую потом никто не склонирует. Архива нет -
+         собирается обычный клиент, которому нужен xray.exe рядом. -->
+    <EmbeddedResource Include="ядро\ядро.zip" LogicalName="RocketVPN.ядро.zip"
+                      Condition="Exists('ядро\ядро.zip')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

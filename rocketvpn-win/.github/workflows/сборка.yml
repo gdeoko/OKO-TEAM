@@ -1,0 +1,152 @@
+# Сборка клиента Rocket VPN для Windows 7/8/10/11.
+#
+# НА ВЫХОДЕ ОДИН ФАЙЛ. Слово владельца: «одна кнопка, чисто перейти
+# нажать». Поэтому ядро Xray обеих разрядностей и базы адресов
+# укладываются в архив и вшиваются внутрь программы: человек скачивает
+# RocketVPN.exe и запускает, распаковывать нечего и терять нечего.
+#
+# ПОЧЕМУ ЯДРО СОБИРАЕТСЯ ЗДЕСЬ, А НЕ БЕРЁТСЯ ГОТОВЫМ. Готовые сборки
+# Xray с гитхаба собраны свежим Go, а Go с версии 1.21 требует
+# Windows 10: на семёрке такой файл не запускается вовсе. Поэтому ядро
+# собирается тут же компилятором Go 1.20, последним, который умеет
+# Windows 7. В заголовке готового файла стоит минимальная система 6.1,
+# это и есть семёрка.
+#
+# Запуск: пуш тега вида v1.0.0 делает релиз, кнопка «Run workflow»
+# собирает файл без релиза.
+
+name: Сборка
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GO_ВЕРСИЯ: "1.20.14"
+  # v1.8.3 это последний тег Xray, чей go.mod объявляет go 1.20.
+  # Начиная с v1.8.4 там стоит 1.21, и сборка компилятором 1.20 падает
+  # сразу: «go.mod requires go >= 1.21». Проверено сборкой обеих.
+  XRAY_ТЕГ: "v1.8.3"
+
+jobs:
+  собрать:
+    runs-on: windows-latest
+
+    steps:
+      - name: Забрать исходники
+        uses: actions/checkout@v4
+
+      - name: Поставить Go 1.20
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_ВЕРСИЯ }}
+          check-latest: false
+
+      - name: Поставить .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Номер версии
+        id: версия
+        shell: pwsh
+        run: |
+          $тег = "${{ github.ref_name }}"
+          if ($тег -match '^v\d+\.\d+\.\d+$') { $в = $тег.TrimStart('v') } else { $в = "0.0.$($env:GITHUB_RUN_NUMBER)" }
+          "номер=$в" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "версия сборки $в"
+
+      - name: Собрать ядро Xray под Windows 7
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch $env:XRAY_ТЕГ https://github.com/XTLS/Xray-core.git ядро-исходники
+          Push-Location ядро-исходники
+          New-Item -ItemType Directory -Force -Path ..\ядро\x64, ..\ядро\x86 | Out-Null
+          $env:CGO_ENABLED = "0"
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          go build -o ..\ядро\x64\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
+          $env:GOARCH = "386"
+          go build -o ..\ядро\x86\xray.exe -trimpath -ldflags "-s -w -buildid=" ./main
+          Pop-Location
+
+      - name: Проверить, что ядро для Windows 7
+        shell: pwsh
+        run: |
+          # В заголовке PE лежит минимальная версия системы. Go 1.20
+          # ставит 6.1 (семёрка), Go 1.21 уже 10.0. Проверяем числом, а
+          # не на слово: ошибка здесь всплыла бы только у человека.
+          foreach ($ф in @("ядро\x64\xray.exe", "ядро\x86\xray.exe")) {
+            $д = [IO.File]::ReadAllBytes($ф)
+            $e = [BitConverter]::ToInt32($д, 0x3C)
+            $осн = [BitConverter]::ToUInt16($д, $e + 24 + 40)
+            $осм = [BitConverter]::ToUInt16($д, $e + 24 + 42)
+            Write-Host "$ф минимальная система $осн.$осм"
+            if ($осн -gt 6 -or ($осн -eq 6 -and $осм -gt 1)) { throw "$ф не запустится на Windows 7" }
+          }
+
+      - name: Базы geoip и geosite
+        shell: pwsh
+        run: |
+          $б = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download"
+          foreach ($ф in @("geoip.dat", "geosite.dat")) {
+            Invoke-WebRequest "$б/$ф" -OutFile "ядро\$ф"
+          }
+
+      - name: Уложить ядро внутрь программы
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path src\RocketVPN\ядро | Out-Null
+          Compress-Archive -Path ядро\* -DestinationPath src\RocketVPN\ядро\ядро.zip -CompressionLevel Optimal -Force
+          $р = (Get-Item src\RocketVPN\ядро\ядро.zip).Length / 1MB
+          Write-Host ("архив ядра {0:F1} МБ" -f $р)
+
+      - name: Собрать клиент
+        shell: pwsh
+        run: |
+          dotnet build src\RocketVPN\RocketVPN.csproj -c Release `
+            -p:Version=${{ steps.версия.outputs.номер }} `
+            -p:AssemblyVersion=${{ steps.версия.outputs.номер }}.0 `
+            -p:FileVersion=${{ steps.версия.outputs.номер }}.0
+
+      - name: Прогнать пробу логики
+        shell: pwsh
+        run: |
+          dotnet build проба\проба.csproj -c Release
+          & проба\bin\Release\net48\проба.exe
+          if ($LASTEXITCODE -ne 0) { throw "проба не прошла" }
+
+      - name: Сложить выпуск
+        shell: pwsh
+        run: |
+          Copy-Item src\RocketVPN\bin\Release\net48\RocketVPN.exe .\RocketVPN.exe -Force
+          $р = (Get-Item RocketVPN.exe).Length / 1MB
+          Write-Host ("RocketVPN.exe {0:F1} МБ" -f $р)
+          if ($р -lt 20) { throw "в файле нет вшитого ядра: слишком маленький" }
+          # Сумма обязательна: по ней клиент проверяет, что скачал наше.
+          (Get-FileHash RocketVPN.exe -Algorithm SHA256).Hash.ToLower() |
+            Out-File "RocketVPN.exe.sha256" -Encoding ascii -NoNewline
+
+      - name: Отдать файл
+        uses: actions/upload-artifact@v4
+        with:
+          name: RocketVPN-${{ steps.версия.outputs.номер }}
+          path: |
+            RocketVPN.exe
+            RocketVPN.exe.sha256
+
+      - name: Выложить релиз
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Имя файла постоянное, поэтому постоянна и ссылка «скачать
+          # последнюю версию»: .../releases/latest/download/RocketVPN.exe
+          gh release create "${{ github.ref_name }}" RocketVPN.exe RocketVPN.exe.sha256 `
+            --title "Rocket VPN ${{ github.ref_name }}" `
+            --notes "Клиент Rocket VPN для Windows 7, 8, 10 и 11.`n`nСкачайте RocketVPN.exe и запустите. Устанавливать и распаковывать нечего, ядро внутри."

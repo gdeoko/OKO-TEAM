@@ -1,0 +1,10 @@
+import { ЭКРАНЫ, браузер, страница } from "./общее.mjs";
+const b = await браузер();
+const t0=Date.now(); const от=()=>((Date.now()-t0)/1000).toFixed(1);
+const { pg } = await страница(b, ЭКРАНЫ["телефон"]); console.log("загрузка", от());
+console.log("eval1", await pg.evaluate(()=>Math.round(scrollY)), от());
+await pg.exposeFunction("отдай", (o)=>{ console.log("ОТДАЛ", o, от()); });
+console.log("expose", от());
+await pg.evaluate(async ()=>{ await window.отдай(1); await new Promise(r=>setTimeout(r,1000)); await window.отдай(2); });
+console.log("готово", от());
+await b.close();

@@ -1,0 +1,14 @@
+{
+  "name": "Rocket CDN",
+  "short_name": "RocketCDN",
+  "description": "Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050C15",
+  "theme_color": "#050C15",
+  "lang": "ru",
+  "icons": [
+    { "src": "assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
