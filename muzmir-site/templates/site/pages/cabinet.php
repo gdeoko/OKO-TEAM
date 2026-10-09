@@ -363,7 +363,23 @@ $diplomas = all("SELECT d.*, a.full_name, a.result AS app_result, c.name AS comp
 $diplomasPending = (int) scalar(
     "SELECT COUNT(*) FROM diplomas d JOIN applications a ON a.id=d.application_id
       WHERE a.user_id=? AND (d.sent_at IS NULL OR d.sent_at='')", [$uid]);
-$orders = all("SELECT * FROM awards_orders WHERE user_id=? ORDER BY created_at DESC", [$uid]);
+/* ЗАКАЗ ИЩЕТСЯ И ПО ПОЧТЕ, А НЕ ТОЛЬКО ПО НОМЕРУ АККАУНТА.
+ *
+ * Выборка шла строго по user_id, а он у заказа проставляется не всегда: оплата
+ * оформляется с формы, где человек просто вписывает почту, и заказ остаётся без
+ * владельца. Таких в базе 29 — их хозяева не видели в кабинете ни одной своей
+ * покупки, хотя документы по ним получили. Савкина так потеряла третий заказ:
+ * оплатила с другого адреса, и он не связался с аккаунтом.
+ *
+ * Поэтому ищем по номеру аккаунта ИЛИ по его почте. Почта у аккаунта
+ * подтверждённая, так что чужого человек не увидит. */
+$uEmail = mb_strtolower(trim((string) ($user['email'] ?? '')));
+$orders = all(
+    "SELECT * FROM awards_orders
+      WHERE user_id = ? OR (? <> '' AND lower(trim(email)) = ?)
+   ORDER BY created_at DESC",
+    [$uid, $uEmail, $uEmail]
+);
 $students = [];
 $refCodes = []; $refUses = 0; $refReward = 0;
 if ($isTeacher && ($user['full_name'] ?? '') !== '') {
@@ -591,8 +607,12 @@ foreach ($apps as $a) {
 $totalPaid = (int) (scalar("SELECT COALESCE(SUM(p.amount),0) FROM payments p
                              JOIN applications a ON a.id=p.application_id
                             WHERE a.user_id=? AND p.status IN ('succeeded','paid')", [$uid]) ?? 0);
+/* Та же пара условий, что и в списке заказов: иначе «потрачено» не сходится с
+   тем, что человек видит в списке, и он идёт искать пропавшие деньги. */
 $totalPaid += (int) (scalar("SELECT COALESCE(SUM(amount),0) FROM awards_orders
-                              WHERE user_id=? AND status IN ('paid','made','shipped','delivered')", [$uid]) ?? 0);
+                              WHERE (user_id=? OR (? <> '' AND lower(trim(email))=?))
+                                AND status IN ('paid','made','shipped','delivered')",
+                            [$uid, $uEmail, $uEmail]) ?? 0);
 // Пустые статусы в разбивке не показываем — иначе колонки-нули засоряют график.
 $byStatus = array_filter($byStatus, fn($v) => $v > 0);
 ksort($byMonth);
