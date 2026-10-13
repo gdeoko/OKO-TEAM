@@ -26,6 +26,9 @@ function vc_db(): PDO {
     $sql = file_get_contents(__DIR__ . '/../db/schema.sql');
     $pdo->exec($sql);
   }
+  // Мелкие доработки схемы доезжают сами: база клиента живёт дольше кода.
+  try { $pdo->exec("ALTER TABLE blocks ADD COLUMN cover TEXT NOT NULL DEFAULT ''"); }
+  catch (Throwable $e) { /* столбец уже есть */ }
   return $pdo;
 }
 

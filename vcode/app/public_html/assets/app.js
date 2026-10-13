@@ -6,7 +6,12 @@
 'use strict';
 
 const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-const API = '/api/';
+// Приложение живёт и в корне домена, и в подпапке: базу считаем от адреса.
+const BASE = location.pathname.replace(/[^/]*$/, '');
+// Запросы идут прямо в index.php: приложение так живёт в любой подпапке и не
+// требует правил переписывания в nginx.
+const API = BASE + 'api/index.php?r=';
+const apiUrl = (path) => API + path.replace('?', '&');
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -50,7 +55,7 @@ const ico = (name, size = 20, stroke = 1.7) =>
 const icoFill = (name, size = 20) =>
   `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor">${ICON[name] || ''}</svg>`;
 
-const LOGO = `<img src="/assets/img/icon-256.png" alt="V.LIONOFF" width="28" height="28"
+const LOGO = `<img src="${BASE}assets/img/icon.png" alt="V.LIONOFF" width="28" height="28"
   style="border-radius:9px;display:block">`;
 
 
@@ -149,7 +154,7 @@ async function api(path, body, method) {
   if (S.token) opt.headers['Authorization'] = 'Bearer ' + S.token;
   if (TG && TG.initData) opt.headers['X-TG-Init'] = TG.initData;
   if (body) opt.body = JSON.stringify(body);
-  const res = await fetch(API + path, opt);
+  const res = await fetch(apiUrl(path), opt);
   let data;
   try { data = await res.json(); } catch (e) { data = { ok: false, error: 'сервер ответил не JSON' }; }
   if (!data.ok && data.error) { toast(data.error); }
@@ -316,7 +321,7 @@ SCREENS.home = async () => {
 
     ${d.feed.length ? `<div class="section-title"><h2>Лента</h2></div>
     ${d.feed.map(p => `<article class="card">
-      ${p.cover ? `<img src="${esc(p.cover)}" alt="" style="border-radius:12px;margin-bottom:10px">` : ''}
+      ${p.cover ? `<img src="${BASE}${esc(p.cover)}" alt="" loading="lazy" style="border-radius:12px;margin-bottom:10px">` : ''}
       <h3 style="font-size:16px;margin-bottom:6px">${esc(p.title)}</h3>
       <div class="small muted">${esc(p.text).slice(0, 220)}</div>
       ${p.link ? `<a class="btn sm ghost mt16" href="${esc(p.link)}" target="_blank">Открыть</a>` : ''}
@@ -331,7 +336,7 @@ const ORDER_KIND = { reels: 'Рилс', obzor: 'Обзор', prodakshn: 'Про�
 function courseCard(c) {
   return `<article class="course-card tap reveal" data-course="${esc(c.slug)}">
     <div class="course-art">
-      ${c.cover ? `<img src="${esc(c.cover)}" alt="">` : ''}
+      ${c.cover ? `<img src="${BASE}${esc(c.cover)}" alt="" loading="lazy">` : ''}
       <div class="mark">
         <span class="tiny" style="color:#fff;opacity:.72">V.LIONOFF · ${esc(c.level)}</span>
         <b>${esc(c.title)}</b>
@@ -373,7 +378,7 @@ SCREENS.course = async (p) => {
   mount(`${head(c.title, { back: true })}
   <div class="screen">
     <div class="course-art" style="border-radius:20px;margin-bottom:14px;aspect-ratio:16/9">
-      ${c.cover ? `<img src="${esc(c.cover)}" alt="">` : ''}
+      ${c.cover ? `<img src="${BASE}${esc(c.cover)}" alt="" loading="lazy">` : ''}
       <div class="mark"><span class="tiny" style="color:#fff;opacity:.7">V.LIONOFF</span><b>${esc(c.title)}</b></div>
     </div>
     <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:14px">
@@ -386,7 +391,7 @@ SCREENS.course = async (p) => {
     ${c.done ? `<div class="card flat">
       <div class="row between"><b>Прогресс</b><span>${c.done}/${c.lessons}</span></div>
       <div class="progress mt16"><i style="width:${c.percent}%"></i></div></div>` : ''}
-    ${d.certificate ? `<div class="cert"><div class="num">${esc(d.certificate.number)}</div>
+    ${d.certificate ? `<div class="cert" style="background-image:url('${BASE}assets/img/cert.jpg');background-size:cover;background-position:center"><div class="num">${esc(d.certificate.number)}</div>
       <b style="display:block;margin:6px 0">Сертификат получен</b>
       <span class="small muted">${esc(d.certificate.issued_at)}</span></div>` : ''}
     ${!c.opened ? `<div class="card" style="border-color:var(--accent)">
@@ -394,8 +399,11 @@ SCREENS.course = async (p) => {
       <p class="small muted" style="margin:6px 0 12px">Первые уроки бесплатны — попробуйте, прежде чем платить.</p>
       <button class="btn primary" data-go="wallet">Открыть доступ</button></div>` : ''}
 
-    ${d.blocks.map((b, bi) => `<section style="margin-top:18px">
-      <div class="section-title"><h2>${bi + 1}. ${esc(b.title)}</h2></div>
+    ${d.blocks.map((b, bi) => `<section style="margin-top:18px" class="reveal">
+      ${b.cover ? `<div class="course-art" style="border-radius:16px;aspect-ratio:16/7;margin-bottom:10px">
+        <img src="${BASE}${esc(b.cover)}" alt="" loading="lazy">
+        <div class="mark"><b style="font-size:17px">${bi + 1}. ${esc(b.title)}</b></div></div>`
+      : `<div class="section-title"><h2>${bi + 1}. ${esc(b.title)}</h2></div>`}
       ${b.descr ? `<p class="small muted" style="margin:-4px 2px 10px">${esc(b.descr)}</p>` : ''}
       ${b.lessons.map((l, li) => `<button class="card tap row between" data-lesson="${l.id}" style="width:100%;text-align:left">
         <span class="row" style="gap:12px">
@@ -879,7 +887,7 @@ SCREENS.profile = async () => {
       <span class="row" style="gap:10px">${ico('share', 18)} Поддержка</span>
       <span class="muted small">${esc(S.app.support || '')}</span>
     </button>
-    ${u.is_admin ? `<a class="card tap row between" href="/admin/" style="width:100%">
+    ${u.is_admin ? `<a class="card tap row between" href="${BASE}admin/" style="width:100%">
       <span class="row" style="gap:10px">${ico('gear', 18)} Админ-панель</span>${ico('arrow', 16)}</a>` : ''}
     <p class="small muted center" style="margin-top:18px">V.LIONOFF · версия 1.0</p>
   </div>`);
@@ -920,7 +928,7 @@ SCREENS.site = async () => {
   mount(`${head('V.LIONOFF')}
   <div class="screen" style="max-width:980px">
     <section class="hero reveal" style="padding:0;overflow:hidden">
-      <img src="/assets/img/hero.jpg" alt="" style="width:100%;display:block;opacity:.9"
+      <img src="${BASE}assets/img/hero.jpg" alt="" style="width:100%;display:block;opacity:.9"
         onerror="this.style.display='none'">
       <div style="padding:22px">
         <h1 style="font-size:28px;line-height:1.08">Снимайте ролики,<br>которые приносят заявки</h1>

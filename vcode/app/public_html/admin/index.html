@@ -6,7 +6,7 @@
 <title>V.LIONOFF · админ-панель</title>
 <meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/app.css?v=1">
+<link rel="stylesheet" href="../assets/app.css?v=1">
 <style>
   body { padding-bottom: 40px; }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 16px; }
@@ -45,7 +45,7 @@ const money = n => new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
 let PASS = localStorage.getItem('vc_admin') || '';
 
 async function api(path, body, method) {
-  const r = await fetch('/api/admin/' + path, {
+  const r = await fetch('../api/index.php?r=admin/' + path.replace('?', '&'), {
     method: method || (body ? 'POST' : 'GET'),
     headers: { 'Content-Type': 'application/json', 'X-VCODE-ADMIN': PASS },
     body: body ? JSON.stringify(body) : undefined,
@@ -71,7 +71,7 @@ function shell() {
   $('#root').innerHTML = `
     <div class="row between" style="margin-bottom:10px">
       <h1 style="font-size:20px">V.LIONOFF · панель</h1>
-      <a class="btn sm ghost" href="/">В приложение</a>
+      <a class="btn sm ghost" href="../">В приложение</a>
     </div>
     <div class="nav">${TABS.map(([id, t]) => `<button data-t="${id}" class="${TAB === id ? 'on' : ''}">${t}</button>`).join('')}</div>
     <div id="view"><div class="skeleton" style="height:220px"></div></div>`;

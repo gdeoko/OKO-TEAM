@@ -228,7 +228,7 @@ case 'course': {
       ];
     }
     $blocks[] = ['id' => (int)$b['id'], 'slug' => $b['slug'], 'title' => $b['title'],
-                 'descr' => $b['descr'], 'lessons' => $lessons];
+                 'descr' => $b['descr'], 'cover' => $b['cover'] ?? '', 'lessons' => $lessons];
   }
   $cert = $u ? vc_one('SELECT * FROM certificates WHERE user_id=? AND course_id=?',
                       [$u['id'], $c['id']]) : null;

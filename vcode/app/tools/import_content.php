@@ -35,7 +35,8 @@ foreach ($files as $file) {
   $bs = 0; $ls = 0;
   foreach (($data['blocks'] ?? []) as $bi => $b) {
     $block = ['course_id' => $courseId, 'slug' => $b['slug'] ?? ('b' . ($bi + 1)),
-              'title' => $b['title'] ?? '', 'descr' => $b['descr'] ?? '', 'sort' => (int)($b['sort'] ?? $bi)];
+              'title' => $b['title'] ?? '', 'descr' => $b['descr'] ?? '',
+              'cover' => $b['cover'] ?? '', 'sort' => (int)($b['sort'] ?? $bi)];
     $have = vc_one('SELECT id FROM blocks WHERE course_id=? AND slug=?', [$courseId, $block['slug']]);
     if ($have) { $blockId = (int)$have['id']; vc_update('blocks', $block, 'id=?', [$blockId]); }
     else { $blockId = vc_insert('blocks', $block); }

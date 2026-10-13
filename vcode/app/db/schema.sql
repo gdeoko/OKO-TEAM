@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS blocks (
   slug        TEXT NOT NULL,
   title       TEXT NOT NULL,
   descr       TEXT NOT NULL DEFAULT '',
+  cover       TEXT NOT NULL DEFAULT '',
   sort        INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_blocks_course ON blocks(course_id);
