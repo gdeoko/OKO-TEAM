@@ -6,6 +6,9 @@
 'use strict';
 
 const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+// Скрипт Телеграма определяет WebApp на любой странице, поэтому «внутри
+// Телеграма» узнаём по подписанным данным запуска, а не по наличию объекта.
+const INSIDE_TG = !!(TG && TG.initData);
 // Приложение живёт и в корне домена, и в подпапке: базу считаем от адреса.
 const BASE = location.pathname.replace(/[^/]*$/, '');
 // Запросы идут прямо в index.php: приложение так живёт в любой подпапке и не
@@ -260,7 +263,7 @@ function parseHash() {
 }
 
 function draw() {
-  if (TG) { S.screen === 'home' ? TG.BackButton.hide() : TG.BackButton.show(); }
+  if (INSIDE_TG) { S.screen === 'home' ? TG.BackButton.hide() : TG.BackButton.show(); }
   const fn = SCREENS[S.screen] || SCREENS.home;
   fn(S.params);
 }
@@ -1030,7 +1033,7 @@ async function boot() {
     }
   }
   const st = parseHash();
-  if (!TG && !location.hash) { st.screen = 'site'; }
+  if (!INSIDE_TG && !location.hash) { st.screen = 'site'; }
   S.screen = st.screen; S.params = st.params;
   history.replaceState({ screen: S.screen, params: S.params }, '', location.hash || '#home');
   draw();
