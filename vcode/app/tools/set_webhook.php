@@ -1,7 +1,7 @@
 <?php
 /**
  * Подключить вебхук бота: php tools/set_webhook.php [--delete]
- * Адрес берётся из настроек: <base_url>/api/bot
+ * Адрес берётся из настроек: <base_url>/api/bot.php
  */
 require_once __DIR__ . '/../core/telegram.php';
 $cfg = vc_cfg();
@@ -9,7 +9,9 @@ if (in_array('--delete', $argv, true)) {
   print_r(vc_tg('deleteWebhook', ['drop_pending_updates' => true]));
   exit;
 }
-$url = rtrim($cfg['base_url'], '/') . '/api/bot';
+// Прямой файл, а не /api/bot: приложение живёт в подпапке, где правил
+// переписывания nginx нет, и красивый адрес отдал бы index.html.
+$url = rtrim($cfg['base_url'], '/') . '/api/bot.php';
 $r = vc_tg('setWebhook', [
   'url' => $url,
   'secret_token' => $cfg['bot_secret'],
