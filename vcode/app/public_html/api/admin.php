@@ -45,14 +45,23 @@ function vc_admin_route(string $route): void {
     if (!in_array($папка, ['uroki', 'audio', 'img'], true)) { vc_fail('папка только uroki, audio или img'); }
     $сырое = base64_decode($данные, true);
     if ($сырое === false || strlen($сырое) < 64) { vc_fail('данные не разобрались'); }
-    if (strlen($сырое) > 96 * 1024 * 1024) { vc_fail('файл больше 96 МБ'); }
+    if (strlen($сырое) > 32 * 1024 * 1024) { vc_fail('кусок больше 32 МБ'); }
     $куда = __DIR__ . '/../' . ($папка === 'uroki' ? 'uroki' : 'assets/' . $папка);
     if (!is_dir($куда)) { @mkdir($куда, 0775, true); }
     $путь = $куда . '/' . $имя;
-    if (file_put_contents($путь, $сырое) === false) { vc_fail('не записалось: нет прав на папку', 500); }
+    // Урок на одиннадцать минут весит больше, чем проходит одним запросом,
+    // поэтому ролик приезжает кусками: первый кусок создаёт файл, остальные
+    // дописываются в конец. Так же приедет и любой длинный урок дальше.
+    $дописать = (int) vc_in('append', 0) === 1;
+    if ($дописать && !is_file($путь)) { vc_fail('дописывать нечего: файла нет'); }
+    if (!$дописать && is_file($путь)) { @unlink($путь); }
+    $записано = $дописать
+      ? file_put_contents($путь, $сырое, FILE_APPEND)
+      : file_put_contents($путь, $сырое);
+    if ($записано === false) { vc_fail('не записалось: нет прав на папку', 500); }
     @chmod($путь, 0644);
     $адрес = ($папка === 'uroki' ? 'uroki/' : 'assets/' . $папка . '/') . $имя;
-    vc_out(['ok' => true, 'path' => $адрес, 'bytes' => strlen($сырое),
+    vc_out(['ok' => true, 'path' => $адрес, 'bytes' => (int) @filesize($путь),
             'url' => rtrim($cfg['base_url'], '/') . '/' . $адрес]);
   }
 
@@ -61,7 +70,9 @@ function vc_admin_route(string $route): void {
     $id = (int) vc_in('id', 0);
     $слаг = (string) vc_in('slug', '');
     $поле = (string) vc_in('field', 'video');
-    if (!in_array($поле, ['video', 'audio'], true)) { vc_fail('поле только video или audio'); }
+    if (!in_array($поле, ['video', 'audio', 'cover'], true)) {
+      vc_fail('поле только video, audio или cover');
+    }
     $путь = (string) vc_in('path', '');
     if (!$id && $слаг !== '') {
       // Конвейер роликов знает урок по слагу: номера он не видит.

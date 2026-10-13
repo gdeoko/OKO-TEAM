@@ -13,7 +13,7 @@ $данные = [];
 foreach ($курсы as $c) {
   $блоки = [];
   foreach (vc_all('SELECT * FROM blocks WHERE course_id=? ORDER BY sort, id', [$c['id']]) as $b) {
-    $уроки = vc_all("SELECT id, slug, title, summary, minutes, video, audio, free
+    $уроки = vc_all("SELECT id, slug, title, summary, minutes, video, audio, free, cover
                      FROM lessons WHERE block_id=? AND status='published' ORDER BY sort, id",
                     [$b['id']]);
     foreach ($уроки as $u) { $всего++; if ($u['video']) { $сроликом++; } }
@@ -36,13 +36,13 @@ $е = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
   .top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
   .top img { width: 40px; height: 40px; }
   .top h1 { font-size: 24px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 18px; }
   .vid { border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
          background: var(--surface); }
-  .vid video { width: 100%; display: block; background: #000; aspect-ratio: 9/16; }
+  .vid video { width: 100%; display: block; background: #000; aspect-ratio: 16/9; }
   .vid .body { padding: 12px 14px 14px; }
   .vid h3 { font-size: 15px; margin-bottom: 6px; font-family: Inter, sans-serif; font-weight: 650; }
-  .nope { display: grid; place-items: center; aspect-ratio: 9/16; color: var(--muted);
+  .nope { display: grid; place-items: center; aspect-ratio: 16/9; color: var(--muted);
           background: var(--surface-2); font-size: 13px; text-align: center; padding: 20px; }
   .sum { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 26px; }
 </style>
@@ -53,8 +53,9 @@ $е = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
     <img src="assets/img/logo.png" alt="">
     <h1>Ролики уроков</h1>
   </div>
-  <p class="muted">Каждый ролик, это один урок академии: голос автора, кадры в фирменном
-    стиле, субтитры. Смотрите подряд и говорите, что переснять.</p>
+  <p class="muted">Каждый ролик, это один урок академии целиком: голос автора, живые кадры,
+    анимация по смыслу речи, субтитры и музыка. Формат 1920x1080. Смотрите подряд и
+    говорите, что переснять.</p>
   <div class="sum">
     <span class="pill accent"><?= $сроликом ?> из <?= $всего ?> уроков с роликом</span>
     <span class="pill"><?= date('d.m.Y') ?></span>
@@ -72,7 +73,7 @@ $е = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
           <div class="vid">
             <?php if ($u['video']): ?>
               <video controls preload="none" src="<?= $е($u['video']) ?>"
-                     poster="assets/img/course-creator.jpg"></video>
+                     poster="<?= $е($u['cover'] ?: 'assets/img/course-creator.jpg') ?>"></video>
             <?php else: ?>
               <div class="nope">ролик собирается</div>
             <?php endif; ?>

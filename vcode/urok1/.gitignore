@@ -1,0 +1,7 @@
+remotion/node_modules/
+remotion/out/
+remotion/public/kadr/
+remotion/public/zvuk/
+remotion/public/muzyka.mp3
+remotion/public/montazh.json
+golos/*.wav
