@@ -110,6 +110,7 @@ function vc_course_row(array $c, ?array $u): array {
     'level' => $c['level'], 'duration' => $c['duration'], 'author' => $c['author'],
     'cert' => (int)$c['cert'] === 1, 'status' => $c['status'],
     'lessons' => $total, 'blocks' => $blocks, 'done' => $done,
+    'free_lessons' => (int) vc_val("SELECT COUNT(*) FROM lessons WHERE course_id=? AND free=1 AND status='published'", [$c['id']]),
     'percent' => $total ? (int) round($done * 100 / $total) : 0,
     'opened' => vc_has_access($u, $c),
   ];

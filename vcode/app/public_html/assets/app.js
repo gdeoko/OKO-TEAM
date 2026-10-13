@@ -341,12 +341,14 @@ function courseCard(c) {
         <span class="tiny" style="color:#fff;opacity:.72">V.LIONOFF · ${esc(c.level)}</span>
         <b>${esc(c.title)}</b>
       </div>
-      ${c.opened ? '' : `<span class="lock">${ico('lock', 15)}</span>`}
+      ${(c.opened || c.free_lessons) ? '' : `<span class="lock">${ico('lock', 15)}</span>`}
     </div>
     <div class="course-body">
       <div class="row between" style="margin-bottom:8px">
-        <span class="pill ${c.access === 'free' ? 'ok' : 'accent'}">
-          ${c.access === 'free' ? 'бесплатно' : (c.access === 'pro' ? 'по подписке' : money(c.price) + ' ₽')}
+        <span class="pill ${c.access === 'free' || (!c.opened && c.free_lessons) ? 'ok' : 'accent'}">
+          ${c.access === 'free' ? 'бесплатно'
+            : (!c.opened && c.free_lessons ? `${c.free_lessons} ${plural(c.free_lessons, 'урок', 'урока', 'уроков')} бесплатно`
+            : (c.access === 'pro' ? 'по подписке' : money(c.price) + ' ₽'))}
         </span>
         <span class="small muted">${c.lessons} ${plural(c.lessons, 'урок', 'урока', 'уроков')}</span>
       </div>
@@ -364,7 +366,7 @@ SCREENS.academy = async () => {
   mount(`${head('Академия')}
   <div class="screen">
     <p class="muted small" style="margin:0 2px 14px">
-      Курсы полного формата: слайды, конспект, тест и практика. За направление — сертификат.</p>
+      Курсы полного формата: слайды, конспект, тест и практика. За направление, сертификат.</p>
     ${d.courses.map(courseCard).join('')}
   </div>`);
   bindCommon();
@@ -396,7 +398,7 @@ SCREENS.course = async (p) => {
       <span class="small muted">${esc(d.certificate.issued_at)}</span></div>` : ''}
     ${!c.opened ? `<div class="card" style="border-color:var(--accent)">
       <b>Курс открывается тарифом PRO</b>
-      <p class="small muted" style="margin:6px 0 12px">Первые уроки бесплатны — попробуйте, прежде чем платить.</p>
+      <p class="small muted" style="margin:6px 0 12px">Первые уроки бесплатны, попробуйте, прежде чем платить.</p>
       <button class="btn primary" data-go="wallet">Открыть доступ</button></div>` : ''}
 
     ${d.blocks.map((b, bi) => `<section style="margin-top:18px" class="reveal">
@@ -432,7 +434,7 @@ SCREENS.lesson = async (p) => {
       <div class="card center" style="padding:36px 20px">
         <div style="color:var(--muted);margin-bottom:12px">${ico('lock', 30)}</div>
         <h2 style="font-size:19px;margin-bottom:8px">Урок закрыт</h2>
-        <p class="muted small">Он входит в полный курс. Откройте доступ — и продолжите с этого места.</p>
+        <p class="muted small">Он входит в полный курс. Откройте доступ, и продолжите с этого места.</p>
         <button class="btn primary mt16" data-go="wallet">Открыть доступ</button>
       </div></div>`);
     bindCommon(); return;
@@ -498,7 +500,7 @@ SCREENS.lesson = async (p) => {
     mount(`${head('Тест', { back: true })}
     <div class="screen">
       <h1 style="font-size:19px;margin-bottom:4px">${esc(L.title)}</h1>
-      <p class="small muted" style="margin:0 0 18px">Проходной результат — 70%. Можно пересдать.</p>
+      <p class="small muted" style="margin:0 0 18px">Проходной результат, 70%. Можно пересдать.</p>
       <div id="quiz">${L.quiz.map((q, qi) => `
         <div class="quiz-q" data-q="${qi}">
           <h4>${qi + 1}. ${esc(q.q)}</h4>
@@ -546,7 +548,7 @@ SCREENS.lesson = async (p) => {
       mount(`${head('Тест', { back: true })}
       <div class="screen">
         <div class="card center" style="padding:30px 20px">
-          <h2 style="font-size:20px;margin-bottom:8px">${r.score}% — пока мало</h2>
+          <h2 style="font-size:20px;margin-bottom:8px">${r.score}%, пока мало</h2>
           <p class="muted small">Нужно 70%. Вернитесь к конспекту и попробуйте снова: это не экзамен, а тренировка.</p>
           <button class="btn primary mt16" id="again">Пройти ещё раз</button>
           <button class="btn ghost" style="margin-top:8px" id="notes2">Открыть конспект</button>
@@ -605,9 +607,9 @@ SCREENS.orders = async () => {
           <span class="pill">${x.responses} ${plural(+x.responses, 'отклик', 'отклика', 'откликов')}</span>
           ${x.my_response ? `<span class="pill ok">вы откликнулись</span>` : ''}
         </div>
-      </div>`).join('') : empty('Заявок пока нет', 'Как появятся — они будут здесь и в боте.'))
+      </div>`).join('') : empty('Заявок пока нет', 'Как появятся, они будут здесь и в боте.'))
     : (c.items && c.items.length ? c.items.map(personCard).join('')
-       : empty('Исполнителей пока нет', 'Пройдите курс и заполните профиль — попадёте в каталог.'))}
+       : empty('Исполнителей пока нет', 'Пройдите курс и заполните профиль, попадёте в каталог.'))}
   </div>`);
   document.querySelectorAll('[data-tab2]').forEach(b => b.onclick = () => go('orders', { tab: b.dataset.tab2 }, true));
   $('#add').onclick = orderForm;
@@ -659,7 +661,7 @@ SCREENS.order = async (p) => {
       </div>`).join('')}` : ''}
     <button class="btn primary mt16" id="resp">Откликнуться</button>
     <p class="small muted center" style="margin-top:10px">
-      Сервис берёт ${S.app.fee || 20}% с оплаченного заказа. Общение и сдача работы — внутри сделки.</p>
+      Сервис берёт ${S.app.fee || 20}% с оплаченного заказа. Общение и сдача работы, внутри сделки.</p>
   </div>`);
   $('#resp').onclick = () => respondForm(o.id);
   bindCommon();
@@ -805,7 +807,7 @@ function payForm(product) {
     else {
       sheet(`<h2 style="font-size:18px;margin-bottom:8px">Счёт на ${money(r.amount)} ₽</h2>
         <p class="small muted">Онлайн-касса подключается. Пока напишите в поддержку
-        ${esc(S.app.support || '')} — пришлём ссылку на оплату и откроем доступ.</p>
+        ${esc(S.app.support || '')}, пришлём ссылку на оплату и откроем доступ.</p>
         <button class="btn primary mt16" id="p-sup">Написать в поддержку</button>
         <button class="btn ghost" style="margin-top:8px" data-close>Закрыть</button>`);
       $('#p-sup').onclick = () => {
@@ -1012,7 +1014,9 @@ async function boot() {
     try { TG.setHeaderColor && TG.setHeaderColor('#08090C'); } catch (e) {}
     try { TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) {}
     TG.BackButton.onClick(() => history.back());
-    if (TG.colorScheme === 'light' && !saved) document.documentElement.dataset.vcTheme = 'light';
+    if (TG.initData && TG.colorScheme === 'light' && !saved) {
+      document.documentElement.dataset.vcTheme = 'light';
+    }
   }
   const start = TG && TG.initDataUnsafe ? (TG.initDataUnsafe.start_param || '') : '';
   const r = await api('auth', { initData: TG ? TG.initData : '', start });

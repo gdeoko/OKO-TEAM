@@ -93,13 +93,13 @@ function vc_bot_message(array $m): void {
   // Любой другой текст: короткий ответ по делу и кнопка приложения.
   vc_bot_lead($from);
   vc_tg_send($chat,
-    "Я бот V.LIONOFF. Обучение, заявки от заказчиков и тариф живут в приложении — "
+    "Я бот V.LIONOFF. Обучение, заявки от заказчиков и тариф живут в приложении, "
     . "откройте кнопкой ниже.\n\nЕсли вопрос живой, напишите " . $cfg['support'] . ".",
     array_merge(vc_tg_app_button(), [[['text' => 'Что внутри', 'callback_data' => 'about']]]));
 }
 
 function vc_bot_welcome(int $chat): void {
-  $text = "<b>V.LIONOFF</b> — школа контент-креаторов и биржа заказов.\n\n"
+  $text = "<b>V.LIONOFF</b>, школа контент-креаторов и биржа заказов.\n\n"
     . "Здесь вы учитесь снимать и монтировать ролики, которые приносят заявки, "
     . "а потом берёте заказы прямо в приложении.\n\n"
     . "• Курс полного формата: слайды, конспект, тест, практика\n"
@@ -123,24 +123,24 @@ function vc_bot_course(int $chat): void {
   foreach ($rows as $c) {
     $cena = $c['access'] === 'free' ? 'бесплатно'
           : ($c['access'] === 'pro' ? 'по подписке' : (int)$c['price'] . ' ₽');
-    $t .= "• <b>" . htmlspecialchars($c['title']) . "</b> — " . htmlspecialchars($c['subtitle'])
+    $t .= "• <b>" . htmlspecialchars($c['title']) . "</b>, " . htmlspecialchars($c['subtitle'])
        . " (" . $cena . ")\n";
   }
-  $t .= "\nУроки идут блоками: слайды, конспект, тест и практика. В конце — сертификат.";
+  $t .= "\nУроки идут блоками: слайды, конспект, тест и практика. В конце, сертификат.";
   vc_tg_send($chat, $t, vc_tg_app_button('Начать учиться'));
 }
 
 function vc_bot_orders(int $chat): void {
   $rows = vc_all("SELECT title, city, budget FROM orders WHERE status='open' ORDER BY id DESC LIMIT 5");
   if (!$rows) {
-    vc_tg_send($chat, "Сейчас открытых заявок нет. Как появятся — пришлю.", vc_tg_app_button('Биржа'));
+    vc_tg_send($chat, "Сейчас открытых заявок нет. Как появятся, пришлю.", vc_tg_app_button('Биржа'));
     return;
   }
   $t = "<b>Свежие заявки</b>\n\n";
   foreach ($rows as $o) {
     $t .= "• " . htmlspecialchars($o['title'])
        . ($o['city'] ? ', ' . htmlspecialchars($o['city']) : '')
-       . ($o['budget'] ? ' — ' . (int)$o['budget'] . ' ₽' : '') . "\n";
+       . ($o['budget'] ? ', ' . (int)$o['budget'] . ' ₽' : '') . "\n";
   }
   vc_tg_send($chat, $t, vc_tg_app_button('Откликнуться'));
 }
@@ -148,18 +148,18 @@ function vc_bot_orders(int $chat): void {
 function vc_bot_price(int $chat): void {
   $cfg = vc_cfg();
   $t = "<b>Тарифы V.LIONOFF</b>\n\n"
-    . "• <b>Старт</b> — бесплатно. Первый блок курса, биржа на просмотр.\n"
-    . "• <b>PRO</b> — " . $cfg['plan_price']['pro'] . " ₽ в месяц. Весь курс, сертификат, "
+    . "• <b>Старт</b>, бесплатно. Первый блок курса, биржа на просмотр.\n"
+    . "• <b>PRO</b>, " . $cfg['plan_price']['pro'] . " ₽ в месяц. Весь курс, сертификат, "
     . "отклики на заявки, место в каталоге исполнителей.\n"
-    . "• <b>Наставник</b> — " . $cfg['plan_price']['mentor'] . " ₽ в месяц. PRO плюс разбор ваших роликов и ведение.\n\n"
+    . "• <b>Наставник</b>, " . $cfg['plan_price']['mentor'] . " ₽ в месяц. PRO плюс разбор ваших роликов и ведение.\n\n"
     . "Оплата внутри приложения, картой РФ и зарубежной.";
   vc_tg_send($chat, $t, vc_tg_app_button('Оформить'));
 }
 
 function vc_bot_help(int $chat): void {
   $cfg = vc_cfg();
-  vc_tg_send($chat, "Команды:\n/app — приложение\n/course — программа\n/orders — заявки\n"
-    . "/price — тарифы\n/my — мой прогресс\n\nЖивой человек: " . $cfg['support'],
+  vc_tg_send($chat, "Команды:\n/app, приложение\n/course, программа\n/orders, заявки\n"
+    . "/price, тарифы\n/my, мой прогресс\n\nЖивой человек: " . $cfg['support'],
     vc_tg_app_button());
 }
 
@@ -194,10 +194,10 @@ function vc_bot_callback(array $q): void {
   if ($data === 'orders') { vc_bot_orders($chat); return; }
   if ($data === 'about') {
     vc_tg_send($chat,
-      "Внутри приложения:\n\n1. Академия — курс по съёмке, монтажу, сценарию и продвижению.\n"
-      . "2. Биржа — заявки от бизнеса: обзоры, рилс, продакшн.\n"
-      . "3. Профиль — ваша витрина для заказчика: город, услуги, цена, портфолио.\n"
-      . "4. Партнёрка — своя ссылка и доля с тех, кого привели.",
+      "Внутри приложения:\n\n1. Академия, курс по съёмке, монтажу, сценарию и продвижению.\n"
+      . "2. Биржа, заявки от бизнеса: обзоры, рилс, продакшн.\n"
+      . "3. Профиль, ваша витрина для заказчика: город, услуги, цена, портфолио.\n"
+      . "4. Партнёрка, своя ссылка и доля с тех, кого привели.",
       vc_tg_app_button());
   }
 }
