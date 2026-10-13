@@ -180,9 +180,12 @@ function vc_bot_callback(array $q): void {
     case 'uroki': vc_bot_courses($chat, $tgId); return;
     case 'c': vc_bot_blocks($chat, $tgId, (int)($части[1] ?? 0)); return;
     case 'b': vc_bot_lessons($chat, $tgId, (int)($части[1] ?? 0)); return;
-    case 'l': vc_bot_slide($chat, $tgId, (int)($части[1] ?? 0), 0, $from); return;
+    case 'l':
+      vc_bot_video($chat, $tgId, (int)($части[1] ?? 0), true);
+      vc_bot_slide($chat, $tgId, (int)($части[1] ?? 0), 0, $from); return;
     case 's': vc_bot_slide($chat, $tgId, (int)($части[1] ?? 0), (int)($части[2] ?? 0), $from); return;
     case 'n': vc_bot_notes($chat, $tgId, (int)($части[1] ?? 0)); return;
+    case 'v': vc_bot_video($chat, $tgId, (int)($части[1] ?? 0)); return;
     case 'q': vc_bot_quiz($chat, $tgId, (int)($части[1] ?? 0), (int)($части[2] ?? 0)); return;
     case 'a': vc_bot_answer($chat, $tgId, (int)($части[1] ?? 0), (int)($части[2] ?? 0),
                             (int)($части[3] ?? 0)); return;
@@ -297,6 +300,38 @@ function vc_bot_slide(int $chat, int $tgId, int $lessonId, int $idx, array $from
   vc_tg_send($chat, $текст, [$ряд, [['text' => 'К урокам', 'callback_data' => 'b:' . $l['block_id']]]]);
 }
 
+/**
+ * Ролик урока прямо в чат.
+ *
+ * Первый раз Телеграм забирает файл по ссылке с сайта, и это единственный
+ * медленный заход: `file_id` из ответа кладётся в настройки, дальше тот же
+ * ролик уходит мгновенно и трафик сервера не тратится. При входе в урок
+ * (`$тихо`) молчим, если ролика нет: человек просто идёт по слайдам.
+ */
+function vc_bot_video(int $chat, int $tgId, int $lessonId, bool $тихо = false): void {
+  $u = vc_bot_user($tgId);
+  $полный = vc_lesson_full($lessonId, $u);
+  if (!$полный || !$полный['open']) { return; }
+  $l = $полный['lesson'];
+  if (!$l['video']) {
+    if (!$тихо) { vc_tg_send($chat, 'Ролик этого урока ещё собирается. Слайды и конспект уже готовы.'); }
+    return;
+  }
+  $ключ = 'video_file:' . $l['id'];
+  $сохранённый = (string) vc_setting($ключ, '');
+  $источник = $сохранённый ?: rtrim(vc_cfg()['base_url'], '/') . '/' . ltrim($l['video'], '/');
+  $ответ = vc_tg('sendVideo', [
+    'chat_id' => $chat, 'video' => $источник, 'supports_streaming' => true,
+    'parse_mode' => 'HTML',
+    'caption' => '<b>' . htmlspecialchars($l['title']) . "</b>\n"
+                 . htmlspecialchars($l['summary']),
+    'reply_markup' => ['inline_keyboard' => [
+      [['text' => 'Слайды урока', 'callback_data' => 's:' . $l['id'] . ':0'],
+       ['text' => 'Конспект', 'callback_data' => 'n:' . $l['id']]]]]]);
+  $новый = $ответ['result']['video']['file_id'] ?? '';
+  if (!$сохранённый && $новый) { vc_setting_set($ключ, $новый); }
+}
+
 /** Конспект и озвучка. */
 function vc_bot_notes(int $chat, int $tgId, int $lessonId): void {
   $u = vc_bot_user($tgId);
@@ -318,6 +353,7 @@ function vc_bot_notes(int $chat, int $tgId, int $lessonId): void {
   if ($quiz) { $кнопки[] = [['text' => 'Пройти тест', 'callback_data' => "q:$lessonId:0"]]; }
   $кнопки[] = [['text' => 'Слайды заново', 'callback_data' => "s:$lessonId:0"],
                ['text' => 'К урокам', 'callback_data' => 'b:' . $l['block_id']]];
+  if ($l['video']) { $кнопки[] = [['text' => 'Ролик урока', 'callback_data' => "v:$lessonId"]]; }
   vc_tg_send($chat, mb_substr($текст, 0, 3800), $кнопки);
   if ($l['audio']) {
     $url = rtrim(vc_cfg()['base_url'], '/') . '/' . ltrim($l['audio'], '/');
