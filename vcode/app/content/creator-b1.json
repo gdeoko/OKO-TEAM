@@ -24,7 +24,7 @@
      "slug": "b1-l1",
      "title": "Кто такой контент-креатор и за что ему платят",
      "summary": "Разбираем рынок: кому нужны ролики и откуда берутся деньги.",
-     "minutes": 7,
+     "minutes": 11,
      "xp": 15,
      "free": 1,
      "slides": [
@@ -139,7 +139,8 @@
       }
      ],
      "audio": "assets/audio/b1-l1.mp3",
-     "video": "uroki/b1-l1.mp4"
+     "video": "uroki/b1-l1.mp4",
+     "cover": "assets/img/b1-l1.jpg"
     },
     {
      "slug": "b1-l2",

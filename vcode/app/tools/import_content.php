@@ -54,6 +54,7 @@ foreach ($files as $file) {
         'notes' => $l['notes'] ?? '', 'practice' => $l['practice'] ?? '',
         'quiz' => json_encode($l['quiz'] ?? [], JSON_UNESCAPED_UNICODE),
         'audio' => $l['audio'] ?? '', 'video' => $l['video'] ?? '',
+        'cover' => $l['cover'] ?? '',
         'free' => (int)($l['free'] ?? 0), 'sort' => (int)($l['sort'] ?? $li),
         'status' => $l['status'] ?? 'published',
       ];
