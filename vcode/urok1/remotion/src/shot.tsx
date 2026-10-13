@@ -17,15 +17,18 @@ const кегль = (ш: any, база: number) => {
 const знак = (s: string, k = "") => (сид(s, k) > 0.5 ? 1 : -1);
 
 /** Вход и выход шота: вместе дают рез, а не плавное болото. */
-export const жизнь = (frame: number, всего: number) => {
-  const вх = interpolate(frame, [0, 6], [0, 1], { easing: РЕЗКО, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const ух = interpolate(frame, [всего - 6, всего], [1, 0], { easing: РЕЗКО, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return Math.min(вх, ух);
-};
+export const жизнь = (frame: number, всего: number) => 1;
+
+/** Удар на входе шота: кадр влетает за три кадра и тормозит. */
+export const удар = (frame: number, з: number) => ({
+  scale: interpolate(frame, [0, 5], [1.08, 1], { easing: РЕЗКО, extrapolateRight: "clamp" }),
+  translate: `${interpolate(frame, [0, 6], [40 * з, 0], { easing: РЕЗКО, extrapolateRight: "clamp" })}px 0px`,
+});
 
 /** Фон шота: своё состояние на каждый рез, поэтому склейка видна. */
 const Фон: React.FC<{ ш: any; тон?: string }> = ({ ш, тон = Т.акцент }) => {
   const frame = useCurrentFrame();
+  const светлый = (ш["№"] || 0) % 3 === 1;
   const { width, height, durationInFrames } = useVideoConfig();
   const нx = сид(ш.id, "fx") * 100;
   const нy = сид(ш.id, "fy") * 100;
@@ -36,8 +39,8 @@ const Фон: React.FC<{ ш: any; тон?: string }> = ({ ш, тон = Т.акц
     <AbsoluteFill style={{ backgroundColor: Т.фон, overflow: "hidden" }}>
       <AbsoluteFill style={{
         background:
-          `radial-gradient(42% 46% at ${нx + ход * з * 14}% ${нy + ход * 8}%, ${тон}4D 0%, transparent 70%),` +
-          `radial-gradient(38% 42% at ${100 - нx}% ${100 - нy - ход * 10}%, ${Т.акцент2}33 0%, transparent 72%)`,
+          `radial-gradient(${светлый ? 58 : 42}% ${светлый ? 60 : 46}% at ${нx + ход * з * 14}% ${нy + ход * 8}%, ${тон}${светлый ? "80" : "4D"} 0%, transparent ${светлый ? 78 : 70}%),` +
+          `radial-gradient(38% 42% at ${100 - нx}% ${100 - нy - ход * 10}%, ${Т.акцент2}${светлый ? "4D" : "33"} 0%, transparent 72%)`,
       }} />
       <AbsoluteFill style={{
         opacity: 0.13,
@@ -238,7 +241,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
       <Фон ш={ш} тон={тон} />
       {текстовый ? <Контур ш={ш} тон={тон} /> : null}
       {текстовый && сид(ш.id, "plita") > 0.45 ? <Плита ш={ш} тон={тон} /> : null}
-      <AbsoluteFill style={camera_умолч(камера, ход, з)}>
+      <AbsoluteFill style={{ ...camera_умолч(камера, ход, з), ...удар(frame, з) }}>
         {текстовый && ш.тип !== "цифра" ? (
           <Спутник ш={ш} тон={тон} сторона={з > 0 ? "право" : "лево"} />
         ) : null}
