@@ -3,6 +3,8 @@ import { Composition, staticFile } from "remotion";
 import { Urok } from "./Urok";
 import { Urok2 } from "./Urok2";
 import { ПЕРЕХОД, Urok3 } from "./Urok3";
+import { Urok4 } from "./Urok4";
+import лист from "../public/shoty.json";
 import монтаж from "../public/montazh.json";
 import монтаж2 from "../public/montazh2.json";
 
@@ -13,6 +15,15 @@ export const RemotionRoot: React.FC = () => {
   const всего2 = (монтаж2 as any).сцены.reduce((с: number, х: any) => с + х.кадров, 0);
   return (
     <>
+    <Composition
+      id="Urok4"
+      component={Urok4}
+      durationInFrames={(лист as any).всего}
+      fps={КАДРЫ}
+      width={1920}
+      height={1080}
+      defaultProps={{}}
+    />
     <Composition
       id="Urok3"
       component={Urok3}
