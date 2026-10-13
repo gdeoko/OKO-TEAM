@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS lessons (
   practice    TEXT NOT NULL DEFAULT '',             -- задание
   quiz        TEXT NOT NULL DEFAULT '[]',           -- JSON вопросов
   audio       TEXT NOT NULL DEFAULT '',             -- озвучка конспекта
+  video       TEXT NOT NULL DEFAULT '',             -- ролик урока, вертикаль
   free        INTEGER NOT NULL DEFAULT 0,           -- доступен без оплаты
   sort        INTEGER NOT NULL DEFAULT 0,
   status      TEXT NOT NULL DEFAULT 'published'

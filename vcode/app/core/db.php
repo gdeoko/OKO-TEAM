@@ -27,8 +27,10 @@ function vc_db(): PDO {
     $pdo->exec($sql);
   }
   // Мелкие доработки схемы доезжают сами: база клиента живёт дольше кода.
-  try { $pdo->exec("ALTER TABLE blocks ADD COLUMN cover TEXT NOT NULL DEFAULT ''"); }
-  catch (Throwable $e) { /* столбец уже есть */ }
+  foreach (["ALTER TABLE blocks ADD COLUMN cover TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE lessons ADD COLUMN video TEXT NOT NULL DEFAULT ''"] as $шаг) {
+    try { $pdo->exec($шаг); } catch (Throwable $e) { /* столбец уже есть */ }
+  }
   return $pdo;
 }
 

@@ -30,6 +30,43 @@ function vc_admin_route(string $route): void {
   case 'ping':
     vc_out(['ok' => true, 'admin' => true, 'name' => $me['first_name']]);
 
+  case 'upload': {
+    // Загрузка медиа в приложение: озвучка, ролики уроков, картинки ленты.
+    // Нужна, потому что файлы рождаются вне сервера (озвучка и монтаж идут
+    // там, где есть выход к нейросетям), а жить должны рядом с приложением.
+    $имя = basename((string) vc_in('name', ''));
+    $папка = (string) vc_in('dir', 'uroki');
+    $данные = (string) vc_in('data', '');
+    if ($имя === '' || $данные === '') { vc_fail('нужны name и data'); }
+    if (!preg_match('/^[a-zA-Z0-9._-]+$/', $имя)) { vc_fail('имя файла только латиницей'); }
+    $разрешено = ['mp4', 'mp3', 'm4a', 'ogg', 'jpg', 'jpeg', 'png', 'webp', 'vtt', 'srt'];
+    $расш = strtolower(pathinfo($имя, PATHINFO_EXTENSION));
+    if (!in_array($расш, $разрешено, true)) { vc_fail('такие файлы не принимаем: ' . $расш); }
+    if (!in_array($папка, ['uroki', 'audio', 'img'], true)) { vc_fail('папка только uroki, audio или img'); }
+    $сырое = base64_decode($данные, true);
+    if ($сырое === false || strlen($сырое) < 64) { vc_fail('данные не разобрались'); }
+    if (strlen($сырое) > 96 * 1024 * 1024) { vc_fail('файл больше 96 МБ'); }
+    $куда = __DIR__ . '/../' . ($папка === 'uroki' ? 'uroki' : 'assets/' . $папка);
+    if (!is_dir($куда)) { @mkdir($куда, 0775, true); }
+    $путь = $куда . '/' . $имя;
+    if (file_put_contents($путь, $сырое) === false) { vc_fail('не записалось: нет прав на папку', 500); }
+    @chmod($путь, 0644);
+    $адрес = ($папка === 'uroki' ? 'uroki/' : 'assets/' . $папка . '/') . $имя;
+    vc_out(['ok' => true, 'path' => $адрес, 'bytes' => strlen($сырое),
+            'url' => rtrim($cfg['base_url'], '/') . '/' . $адрес]);
+  }
+
+  case 'lesson/media': {
+    // Привязать загруженный файл к уроку: ролик или озвучку.
+    $id = (int) vc_in('id', 0);
+    $поле = (string) vc_in('field', 'video');
+    if (!in_array($поле, ['video', 'audio'], true)) { vc_fail('поле только video или audio'); }
+    $путь = (string) vc_in('path', '');
+    if (!$id) { vc_fail('нужен id урока'); }
+    vc_update('lessons', [$поле => $путь], 'id=?', [$id]);
+    vc_out(['ok' => true]);
+  }
+
   case 'stats': {
     $day = date('Y-m-d');
     $since7 = date('Y-m-d', strtotime('-7 day'));

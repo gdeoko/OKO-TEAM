@@ -460,6 +460,9 @@ SCREENS.lesson = async (p) => {
       </div>
       <h1 style="font-size:20px;margin-bottom:14px">${esc(L.title)}</h1>
 
+      ${L.video ? `<video class="urok-video" controls playsinline preload="metadata"
+        poster="${BASE}assets/img/course-creator.jpg" src="${BASE}${esc(L.video)}"></video>` : ''}
+
       <div class="slide" id="slide">
         <div class="kicker">слайд ${i + 1} из ${total}</div>
         <h2>${esc(s.title || L.title)}</h2>

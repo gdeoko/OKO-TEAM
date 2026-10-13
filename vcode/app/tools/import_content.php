@@ -53,7 +53,7 @@ foreach ($files as $file) {
         'slides' => json_encode($l['slides'] ?? [], JSON_UNESCAPED_UNICODE),
         'notes' => $l['notes'] ?? '', 'practice' => $l['practice'] ?? '',
         'quiz' => json_encode($l['quiz'] ?? [], JSON_UNESCAPED_UNICODE),
-        'audio' => $l['audio'] ?? '',
+        'audio' => $l['audio'] ?? '', 'video' => $l['video'] ?? '',
         'free' => (int)($l['free'] ?? 0), 'sort' => (int)($l['sort'] ?? $li),
         'status' => $l['status'] ?? 'published',
       ];

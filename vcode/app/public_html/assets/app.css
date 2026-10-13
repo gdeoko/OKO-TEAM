@@ -482,3 +482,10 @@ body::after {
 :root[data-vc-theme="light"] .head .brand img {
   filter: drop-shadow(0 0 8px rgba(124, 92, 255, .35));
 }
+
+/* ролик урока: вертикаль, не растягиваем на весь экран */
+.urok-video {
+  width: 100%; max-height: 62vh; border-radius: 18px; display: block;
+  margin-bottom: 14px; background: #000; border: 1px solid var(--line);
+  box-shadow: 0 18px 46px -28px rgba(0,0,0,.9);
+}

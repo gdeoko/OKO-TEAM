@@ -247,6 +247,7 @@ case 'lesson': {
       'minutes' => (int)$l['minutes'], 'xp' => (int)$l['xp'],
       'slides' => vc_j($l['slides']), 'notes' => $l['notes'],
       'practice' => $l['practice'], 'quiz' => vc_j($l['quiz']), 'audio' => $l['audio'],
+      'video' => $l['video'] ?? '',
       'state' => $p['state'] ?? 'new', 'slide' => (int)($p['slide'] ?? 0),
       'score' => (int)($p['score'] ?? 0),
     ],
