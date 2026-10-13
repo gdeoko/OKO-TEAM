@@ -485,7 +485,10 @@ SCREENS.lesson = async (p) => {
     <div class="screen">
       <h1 style="font-size:20px;margin-bottom:6px">${esc(L.title)}</h1>
       <div class="tiny" style="margin-bottom:14px">конспект урока</div>
-      ${L.audio ? `<audio controls src="${esc(L.audio)}" style="width:100%;margin-bottom:14px"></audio>` : ''}
+      ${L.audio ? `<div class="card flat" style="padding:12px">
+        <div class="tiny" style="margin-bottom:8px">конспект голосом автора</div>
+        <audio controls preload="none" src="${BASE}${esc(L.audio)}" style="width:100%"></audio>
+      </div>` : ''}
       <div class="card">${mdToHtml(L.notes)}</div>
       ${L.practice ? `<div class="card" style="border-color:var(--accent)">
         <div class="tiny" style="color:var(--accent)">практика</div>
