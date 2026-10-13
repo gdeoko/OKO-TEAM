@@ -69,7 +69,7 @@ $закрытый = $платный ? дай($api . 'lesson&id=' . $платны
 проверка('платный урок закрыт для гостя', $закрытый && !empty($закрытый['locked']));
 
 // Картинки.
-foreach (['assets/img/icon.png', 'assets/img/course-creator.jpg',
+foreach (['assets/img/logo.png', 'assets/img/course-creator.jpg',
           'assets/img/block-b1.jpg', 'assets/app.css', 'assets/app.js'] as $файл) {
   $h = @get_headers($база . $файл);
   проверка('файл ' . $файл, $h && strpos($h[0], '200') !== false);
