@@ -463,3 +463,22 @@ body::after {
 
 /* неоновая подсветка активной вкладки */
 .tabbar button.on svg { filter: drop-shadow(0 0 7px rgba(124,92,255,.75)); }
+
+/* знак и слово в шапке: лого светится, слово залито градиентом */
+.head .brand { display: flex; align-items: center; gap: 10px; }
+.head .brand img {
+  display: block; width: 30px; height: 30px; object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(124, 92, 255, .55));
+  animation: markIn .5s cubic-bezier(.2,.8,.2,1) both;
+}
+.head .brand b {
+  font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 16px;
+  letter-spacing: .06em;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@keyframes markIn { from { opacity: 0; transform: translateY(-4px) scale(.9); }
+                    to { opacity: 1; transform: none; } }
+:root[data-vc-theme="light"] .head .brand img {
+  filter: drop-shadow(0 0 8px rgba(124, 92, 255, .35));
+}

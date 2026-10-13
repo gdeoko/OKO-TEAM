@@ -58,8 +58,10 @@ const ico = (name, size = 20, stroke = 1.7) =>
 const icoFill = (name, size = 20) =>
   `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor">${ICON[name] || ''}</svg>`;
 
-const LOGO = `<img src="${BASE}assets/img/icon.png" alt="V.LIONOFF" width="28" height="28"
-  style="border-radius:9px;display:block">`;
+const LOGO = `<span class="brand">
+  <img src="${BASE}assets/img/logo.png" alt="" width="30" height="30">
+  <b>V.LIONOFF</b>
+</span>`;
 
 
 // ─────────────────────────── инфографика кодом ───────────────────────────
@@ -205,9 +207,9 @@ function renderTabs() {
 
 function head(title, opts = {}) {
   return `<header class="head">
-    ${opts.back ? `<button class="icon-btn" data-act="back">${ico('back', 20)}</button>`
-                : `<span class="logo">${LOGO}</span>`}
-    <span class="title">${esc(title)}</span>
+    ${opts.back ? `<button class="icon-btn" data-act="back">${ico('back', 20)}</button>
+                   <span class="title">${esc(title)}</span>`
+                : LOGO}
     <span class="spacer"></span>
     ${opts.right || ''}
     <button class="icon-btn" data-act="theme">${ico('sun', 19)}</button>
