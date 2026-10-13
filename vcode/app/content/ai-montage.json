@@ -129,8 +129,7 @@
        "why": "Один человек начинает выпускать объём небольшой студии."
       }
      ],
-     "audio": "assets/audio/ai-b1-l1.mp3",
-     "video": "uroki/ai-b1-l1.mp4"
+     "audio": "assets/audio/ai-b1-l1.mp3"
     },
     {
      "slug": "ai-b1-l2",
