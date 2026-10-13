@@ -160,7 +160,7 @@ async function api(path, body, method) {
   const res = await fetch(apiUrl(path), opt);
   let data;
   try { data = await res.json(); } catch (e) { data = { ok: false, error: 'сервер ответил не JSON' }; }
-  if (!data.ok && data.error) { toast(data.error); }
+  if (!data.ok && data.error && res.status !== 401) { toast(data.error); }
   return data;
 }
 
@@ -636,6 +636,17 @@ function personCard(p) {
   </div>`;
 }
 
+function guestStub(title, text) {
+  const bot = 'https://t.me/' + (S.app.bot || 'vcodemedia_bot');
+  return `<div class="card center reveal" style="padding:34px 20px">
+    <div style="color:var(--accent);margin-bottom:10px">${ico('lock', 28)}</div>
+    <h2 style="font-size:19px;margin-bottom:8px">${esc(title)}</h2>
+    <p class="muted small" style="margin-bottom:16px">${esc(text)}</p>
+    <a class="btn primary" href="${bot}">Открыть в Telegram</a>
+    <button class="btn ghost" style="margin-top:8px" data-go="academy">Посмотреть программу</button>
+  </div>`;
+}
+
 function empty(title, text) {
   return `<div class="empty">${ico('cases', 34)}<h3 style="font-size:16px;margin-bottom:6px">${esc(title)}</h3>
     <p class="small">${esc(text)}</p></div>`;
@@ -719,7 +730,11 @@ function orderForm() {
 SCREENS.wallet = async () => {
   loading();
   const d = await api('wallet');
-  if (!d.ok) { return; }
+  if (!d.ok) {
+    mount(`${head('Тариф')}<div class="screen">${guestStub('Тариф и партнёрка',
+      'Оплата, подписка и партнёрская ссылка живут внутри приложения Telegram: там видно, кто вы.')}</div>`);
+    bindCommon(); return;
+  }
   const price = d.plan.price || {};
   mount(`${head('Тариф')}
   <div class="screen">
@@ -825,7 +840,11 @@ function payForm(product) {
 SCREENS.profile = async () => {
   loading();
   const [p, c] = await Promise.all([api('profile'), api('certificates')]);
-  if (!p.ok) return;
+  if (!p.ok) {
+    mount(`${head('Профиль')}<div class="screen">${guestStub('Профиль креатора',
+      'Витрина для заказчика, сертификаты и настройки открываются после входа через Telegram.')}</div>`);
+    bindCommon(); return;
+  }
   const u = p.user;
   S.me = u;
   mount(`${head('Профиль')}
