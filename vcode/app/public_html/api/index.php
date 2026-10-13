@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../core/db.php';
 require_once __DIR__ . '/../../core/auth.php';
 require_once __DIR__ . '/../../core/telegram.php';
+require_once __DIR__ . '/../../core/lessons.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -72,31 +73,10 @@ function vc_user_public(array $u): array {
   ];
 }
 
-function vc_level_of(int $xp): array {
-  $steps = [0, 100, 250, 500, 900, 1500, 2300, 3400, 5000, 7200, 10000];
-  $lvl = 1;
-  foreach ($steps as $i => $need) { if ($xp >= $need) { $lvl = $i + 1; } }
-  $next = $steps[min($lvl, count($steps) - 1)] ?? end($steps);
-  $prev = $steps[$lvl - 1] ?? 0;
-  $names = ['Новичок','Старт','Съёмщик','Монтажёр','Автор','Креатор','Продюсер',
-            'Мастер','Эксперт','Наставник','Легенда'];
-  return ['level' => $lvl, 'name' => $names[$lvl - 1] ?? 'Легенда',
-          'xp' => $xp, 'from' => $prev, 'to' => max($next, $prev + 1)];
-}
+// Счёт уровня и серии живёт в core/lessons.php: там же его берёт бот.
+function vc_level_of(int $xp): array { return vc_levels($xp); }
 
-/** Зачесть день в серию и выдать XP. */
-function vc_touch_streak(array $u, int $xp = 0): array {
-  $today = date('Y-m-d');
-  $streak = (int)$u['streak'];
-  if ($u['streak_day'] !== $today) {
-    $streak = ($u['streak_day'] === date('Y-m-d', strtotime('-1 day'))) ? $streak + 1 : 1;
-  }
-  $newXp = (int)$u['xp'] + $xp;
-  $lvl = vc_level_of($newXp);
-  vc_update('users', ['streak' => $streak, 'streak_day' => $today, 'xp' => $newXp,
-                      'level' => $lvl['level']], 'id=?', [$u['id']]);
-  return ['streak' => $streak, 'xp' => $newXp, 'level' => $lvl];
-}
+function vc_touch_streak(array $u, int $xp = 0): array { return vc_streak_touch($u, $xp); }
 
 function vc_course_row(array $c, ?array $u): array {
   $total = (int) vc_val('SELECT COUNT(*) FROM lessons WHERE course_id=? AND status="published"', [$c['id']]);
@@ -290,53 +270,11 @@ case 'lesson/quiz': {
   $u = vc_need_user();
   $id = (int) vc_in('id', 0);
   $answers = vc_in('answers', []);
-  $l = vc_one("SELECT * FROM lessons WHERE id=? AND status='published'", [$id]);
-  if (!$l) { vc_fail('урок не найден', 404); }
-  $c = vc_one('SELECT * FROM courses WHERE id=?', [$l['course_id']]);
-  if (!vc_has_access($u, $c, $l)) { vc_fail('урок закрыт тарифом', 403); }
-  $quiz = vc_j($l['quiz']);
-  $right = 0; $detail = [];
-  foreach ($quiz as $i => $q) {
-    $ok = isset($answers[$i]) && (int)$answers[$i] === (int)$q['answer'];
-    if ($ok) { $right++; }
-    $detail[] = ['right' => (int)$q['answer'], 'ok' => $ok, 'why' => $q['why'] ?? ''];
-  }
-  $score = $quiz ? (int) round($right * 100 / count($quiz)) : 100;
-  $passed = $score >= 70;
-  $prev = vc_one('SELECT * FROM progress WHERE user_id=? AND lesson_id=?', [$u['id'], $id]);
-  $wasDone = $prev && $prev['state'] === 'done';
-  vc_q('INSERT INTO progress(user_id,lesson_id,course_id,state,score,attempts) VALUES(?,?,?,?,?,1)
-        ON CONFLICT(user_id,lesson_id) DO UPDATE SET
-          state=CASE WHEN ? THEN "done" ELSE progress.state END,
-          score=MAX(progress.score, ?), attempts=progress.attempts+1,
-          updated_at=datetime("now")',
-       [$u['id'], $id, $l['course_id'], $passed ? 'done' : 'opened', $score,
-        $passed ? 1 : 0, $score]);
-  $gain = ($passed && !$wasDone) ? (int)$l['xp'] : 0;
-  $streak = vc_touch_streak($u, $gain);
-  vc_event((int)$u['id'], 'quiz', ['lesson' => $id, 'score' => $score]);
-
-  // Сертификат, когда все уроки курса закрыты.
-  $cert = null;
-  $total = (int) vc_val("SELECT COUNT(*) FROM lessons WHERE course_id=? AND status='published'", [$l['course_id']]);
-  $done = (int) vc_val("SELECT COUNT(*) FROM progress WHERE user_id=? AND course_id=? AND state='done'",
-                       [$u['id'], $l['course_id']]);
-  if ($total > 0 && $done >= $total && (int)$c['cert'] === 1) {
-    $have = vc_one('SELECT * FROM certificates WHERE user_id=? AND course_id=?', [$u['id'], $l['course_id']]);
-    if (!$have) {
-      $number = 'VC-' . date('Y') . '-' . str_pad((string)$u['id'], 4, '0', STR_PAD_LEFT)
-                . '-' . str_pad((string)$l['course_id'], 2, '0', STR_PAD_LEFT);
-      vc_insert('certificates', ['user_id' => $u['id'], 'course_id' => $l['course_id'], 'number' => $number]);
-      $have = vc_one('SELECT * FROM certificates WHERE user_id=? AND course_id=?', [$u['id'], $l['course_id']]);
-      vc_tg_notify_admins("Сертификат выдан: " . trim($u['first_name'].' '.$u['last_name'])
-                          . " — " . $c['title']);
-    }
-    $cert = $have;
-  }
-  vc_out(['ok' => true, 'score' => $score, 'passed' => $passed, 'detail' => $detail,
-          'xp_gain' => $gain, 'streak' => $streak['streak'], 'xp' => $streak['xp'],
-          'level' => $streak['level'], 'certificate' => $cert,
-          'course_done' => $total > 0 && $done >= $total]);
+  $полный = vc_lesson_full($id, $u);
+  if (!$полный) { vc_fail('урок не найден', 404); }
+  if (!$полный['open']) { vc_fail('урок закрыт тарифом', 403); }
+  $итог = vc_quiz_apply($u, $полный['lesson'], (array)$answers);
+  vc_out(['ok' => true] + $итог);
 }
 
 case 'certificates': {

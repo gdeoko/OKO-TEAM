@@ -25,6 +25,7 @@ print_r(vc_tg('setChatMenuButton', ['menu_button' => [
 print_r(vc_tg('setMyCommands', ['commands' => [
   ['command' => 'start', 'description' => 'Начать'],
   ['command' => 'app', 'description' => 'Открыть приложение'],
+  ['command' => 'uroki', 'description' => 'Учиться прямо в чате'],
   ['command' => 'course', 'description' => 'Программа обучения'],
   ['command' => 'orders', 'description' => 'Заявки заказчиков'],
   ['command' => 'price', 'description' => 'Тарифы'],
