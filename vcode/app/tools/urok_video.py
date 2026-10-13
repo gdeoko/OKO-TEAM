@@ -310,7 +310,8 @@ def главное() -> int:
     окружение = читать_окружение(арг.env) if арг.env else {}
     окружение.setdefault("OKO_POSTER_URL", os.environ.get("OKO_POSTER_URL", ""))
     окружение.setdefault("OKO_POSTER_TOKEN", os.environ.get("OKO_POSTER_TOKEN", ""))
-    окружение.setdefault("VLIONOFF_ADMIN", os.environ.get("VLIONOFF_ADMIN", "lionoff-panel-2026"))
+    # Пароль панели в репозиторий не кладём: он приезжает окружением.
+    окружение.setdefault("VLIONOFF_ADMIN", os.environ.get("VLIONOFF_ADMIN", ""))
     if окружение.get("HF_TOKEN"):
         os.environ["HF_TOKEN"] = окружение["HF_TOKEN"]
     os.makedirs(арг.папка, exist_ok=True)
