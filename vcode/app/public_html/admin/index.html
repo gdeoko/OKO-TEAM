@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ru" data-vc-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>V.LIONOFF · админ-панель</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css?v=1">
+<style>
+  body { padding-bottom: 40px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 16px; }
+  .nav { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 14px; }
+  .nav button { white-space: nowrap; padding: 9px 15px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; }
+  .nav button.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; font-size: 11.5px;
+       text-transform: uppercase; letter-spacing: .04em; padding: 8px 10px; }
+  td { padding: 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  tr:hover td { background: var(--surface-2); }
+  .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .kpi .card { margin: 0; }
+  .kpi b { font-family: 'Unbounded'; font-size: 24px; display: block; }
+  .scroll { overflow-x: auto; }
+  .bar { height: 8px; background: var(--grad); border-radius: 4px; }
+  .login { max-width: 360px; margin: 14vh auto; }
+  code { font-size: 12px; color: var(--accent-2); }
+</style>
+</head>
+<body>
+<div class="wrap" id="root">
+  <div class="login card">
+    <h1 style="font-size:20px;margin-bottom:6px">V.LIONOFF · панель</h1>
+    <p class="small muted">Вход для владельца. Из Телеграма администратор заходит без пароля.</p>
+    <input id="pass" type="password" placeholder="Пароль панели" style="margin-top:14px">
+    <button class="btn primary mt16" id="go">Войти</button>
+    <p class="small muted center" style="margin-top:12px" id="err"></p>
+  </div>
+</div>
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => new Intl.NumberFormat('ru-RU').format(Math.round(n || 0));
+let PASS = localStorage.getItem('vc_admin') || '';
+
+async function api(path, body, method) {
+  const r = await fetch('/api/admin/' + path, {
+    method: method || (body ? 'POST' : 'GET'),
+    headers: { 'Content-Type': 'application/json', 'X-VCODE-ADMIN': PASS },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return r.json();
+}
+
+$('#go').onclick = async () => {
+  PASS = $('#pass').value;
+  const r = await api('ping');
+  if (r.ok) { localStorage.setItem('vc_admin', PASS); shell(); }
+  else { $('#err').textContent = 'Пароль не подошёл'; }
+};
+
+const TABS = [
+  ['stats', 'Сводка'], ['users', 'Люди'], ['courses', 'Курсы'], ['lessons', 'Уроки'],
+  ['orders', 'Заявки'], ['payments', 'Оплаты'], ['promos', 'Промокоды'],
+  ['posts', 'Лента'], ['leads', 'Воронка'], ['broadcast', 'Рассылка'],
+];
+let TAB = 'stats';
+
+function shell() {
+  $('#root').innerHTML = `
+    <div class="row between" style="margin-bottom:10px">
+      <h1 style="font-size:20px">V.LIONOFF · панель</h1>
+      <a class="btn sm ghost" href="/">В приложение</a>
+    </div>
+    <div class="nav">${TABS.map(([id, t]) => `<button data-t="${id}" class="${TAB === id ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div id="view"><div class="skeleton" style="height:220px"></div></div>`;
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; shell(); });
+  VIEW[TAB]();
+}
+
+const VIEW = {};
+
+VIEW.stats = async () => {
+  const d = await api('stats');
+  if (!d.ok) return;
+  const s = d.stats;
+  const max = Math.max(1, ...d.by_day.map(x => +x.n));
+  $('#view').innerHTML = `
+    <div class="kpi">
+      ${[['Пользователей', s.users], ['Сегодня пришли', s.users_today], ['Активны сегодня', s.active_today],
+         ['На тарифе', s.pro], ['Уроков пройдено', s.lessons_done], ['Сертификатов', s.certificates],
+         ['Заявок', s.orders], ['На модерации', s.orders_new], ['Откликов', s.responses],
+         ['Выручка всего', money(s.revenue) + ' ₽'], ['Выручка за месяц', money(s.revenue_month) + ' ₽'],
+         ['Лидов в боте', s.leads]]
+        .map(([t, v]) => `<div class="card"><b>${v}</b><span class="tiny">${t}</span></div>`).join('')}
+    </div>
+    <div class="card mt16"><h3 style="font-size:15px;margin-bottom:12px">Регистрации, 14 дней</h3>
+      ${d.by_day.map(x => `<div class="row" style="gap:10px;margin-bottom:6px">
+        <span class="small muted" style="width:86px">${x.d}</span>
+        <span class="bar" style="width:${Math.round(+x.n * 100 / max)}%"></span>
+        <b class="small">${x.n}</b></div>`).join('') || '<span class="muted small">пока пусто</span>'}
+    </div>
+    <div class="card"><h3 style="font-size:15px;margin-bottom:12px">Воронка</h3>
+      ${Object.entries(d.funnel).map(([k, v]) => `<div class="row between" style="margin-bottom:8px">
+        <span class="muted">${esc(k)}</span><b>${v}</b></div>`).join('')}
+    </div>`;
+};
+
+VIEW.users = async () => {
+  const d = await api('users');
+  $('#view').innerHTML = `<div class="card scroll"><table>
+    <tr><th>#</th><th>Имя</th><th>Город</th><th>Роль</th><th>Тариф</th><th>Уроков</th><th>XP</th><th>Пришёл</th><th></th></tr>
+    ${(d.items || []).map(u => `<tr>
+      <td>${u.id}</td>
+      <td><b>${esc(u.name)}</b><br><span class="muted small">${u.username ? '@' + esc(u.username) : u.tg_id}</span></td>
+      <td>${esc(u.city)}</td><td>${esc(u.role)}</td>
+      <td>${esc(u.plan)}</td><td>${u.done}</td><td>${u.xp}</td>
+      <td class="small muted">${String(u.created_at).slice(0, 10)}</td>
+      <td><button class="btn sm" data-u="${u.id}" data-plan="${u.plan === 'free' ? 'pro' : 'free'}">
+        ${u.plan === 'free' ? 'дать PRO' : 'снять PRO'}</button></td>
+    </tr>`).join('')}
+  </table></div>`;
+  document.querySelectorAll('[data-u]').forEach(b => b.onclick = async () => {
+    await api('user/save', { id: +b.dataset.u, plan: b.dataset.plan,
+      plan_until: b.dataset.plan === 'pro' ? new Date(Date.now() + 2592e6).toISOString().slice(0, 19).replace('T', ' ') : '' });
+    VIEW.users();
+  });
+};
+
+VIEW.courses = async () => {
+  const d = await api('courses');
+  $('#view').innerHTML = `${(d.items || []).map(c => `<div class="card">
+      <div class="row between"><b>${esc(c.title)}</b><span class="pill">${esc(c.status)}</span></div>
+      <div class="small muted" style="margin:6px 0">${esc(c.subtitle)}</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <span class="pill">${c.lessons} уроков</span>
+        <span class="pill">${esc(c.access)}${c.price ? ' · ' + money(c.price) + ' ₽' : ''}</span>
+        <code>${esc(c.slug)}</code>
+      </div>
+      <div class="row" style="gap:8px;margin-top:12px">
+        <button class="btn sm" data-edit="${c.id}">Изменить</button>
+        <button class="btn sm" data-pub="${c.id}" data-st="${c.status === 'published' ? 'draft' : 'published'}">
+          ${c.status === 'published' ? 'Снять' : 'Опубликовать'}</button>
+      </div>
+      <div id="ed-${c.id}" hidden style="margin-top:12px">
+        <input data-f="title" value="${esc(c.title)}" placeholder="Название">
+        <input data-f="subtitle" style="margin-top:8px" value="${esc(c.subtitle)}" placeholder="Подзаголовок">
+        <textarea data-f="descr" style="margin-top:8px" placeholder="Описание">${esc(c.descr)}</textarea>
+        <div class="grid2" style="margin-top:8px">
+          <select data-f="access">${['free', 'pro', 'paid'].map(a => `<option ${c.access === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
+          <input data-f="price" type="number" value="${c.price}" placeholder="Цена, ₽">
+        </div>
+        <button class="btn primary sm" style="margin-top:10px" data-save="${c.id}">Сохранить</button>
+      </div>
+    </div>`).join('')}`;
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+    const box = $('#ed-' + b.dataset.edit); box.hidden = !box.hidden;
+  });
+  document.querySelectorAll('[data-pub]').forEach(b => b.onclick = async () => {
+    await api('course/save', { id: +b.dataset.pub, status: b.dataset.st }); VIEW.courses();
+  });
+  document.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
+    const box = $('#ed-' + b.dataset.save); const body = { id: +b.dataset.save };
+    box.querySelectorAll('[data-f]').forEach(i => body[i.dataset.f] = i.value);
+    await api('course/save', body); VIEW.courses();
+  });
+};
+
+VIEW.lessons = async () => {
+  const c = await api('courses');
+  const first = (c.items || [])[0];
+  $('#view').innerHTML = `<div class="card">
+      <select id="pick">${(c.items || []).map(x => `<option value="${x.id}">${esc(x.title)}</option>`).join('')}</select>
+    </div><div id="list"></div>`;
+  const load = async (id) => {
+    const d = await api('lessons?course_id=' + id);
+    $('#list').innerHTML = `<div class="card scroll"><table>
+      <tr><th>#</th><th>Блок</th><th>Урок</th><th>Мин</th><th>XP</th><th>Бесплатно</th><th></th></tr>
+      ${(d.items || []).map(l => `<tr>
+        <td>${l.id}</td><td class="small muted">${esc(l.block)}</td>
+        <td><b>${esc(l.title)}</b><br><span class="small muted">${esc(l.summary || '')}</span></td>
+        <td>${l.minutes}</td><td>${l.xp}</td><td>${+l.free ? 'да' : '—'}</td>
+        <td><button class="btn sm" data-l="${l.id}">Открыть</button></td>
+      </tr>`).join('')}
+    </table></div><div id="one"></div>`;
+    document.querySelectorAll('[data-l]').forEach(b => b.onclick = () => openLesson(+b.dataset.l));
+  };
+  const openLesson = async (id) => {
+    const r = await api('lesson?id=' + id);
+    const l = r.lesson;
+    $('#one').innerHTML = `<div class="card">
+      <h3 style="font-size:16px;margin-bottom:10px">Урок #${l.id}</h3>
+      <input id="t" value="${esc(l.title)}">
+      <input id="s" style="margin-top:8px" value="${esc(l.summary)}" placeholder="Одной строкой">
+      <label class="tiny mt16">Слайды (JSON)</label>
+      <textarea id="sl" style="min-height:180px;font-family:monospace;font-size:12px">${esc(l.slides)}</textarea>
+      <label class="tiny mt16">Конспект</label>
+      <textarea id="n" style="min-height:140px">${esc(l.notes)}</textarea>
+      <label class="tiny mt16">Практика</label>
+      <textarea id="p">${esc(l.practice)}</textarea>
+      <label class="tiny mt16">Тест (JSON)</label>
+      <textarea id="q" style="min-height:140px;font-family:monospace;font-size:12px">${esc(l.quiz)}</textarea>
+      <button class="btn primary mt16" id="sv">Сохранить урок</button>
+    </div>`;
+    $('#sv').onclick = async () => {
+      const r2 = await api('lesson/save', { id, title: $('#t').value, summary: $('#s').value,
+        slides: $('#sl').value, notes: $('#n').value, practice: $('#p').value, quiz: $('#q').value });
+      alert(r2.ok ? 'Сохранено' : 'Ошибка: ' + r2.error);
+    };
+  };
+  $('#pick').onchange = (e) => load(e.target.value);
+  if (first) load(first.id);
+};
+
+VIEW.orders = async () => {
+  const d = await api('orders');
+  $('#view').innerHTML = `<div class="card scroll"><table>
+    <tr><th>#</th><th>Заявка</th><th>Город</th><th>Бюджет</th><th>Откликов</th><th>Статус</th><th></th></tr>
+    ${(d.items || []).map(o => `<tr>
+      <td>${o.id}</td>
+      <td><b>${esc(o.title)}</b><br><span class="small muted">${esc((o.descr || '').slice(0, 120))}</span></td>
+      <td>${esc(o.city)}</td><td>${money(o.budget)} ₽</td><td>${o.responses}</td>
+      <td>${esc(o.status)}</td>
+      <td>${['open', 'in_work', 'done', 'closed'].map(s => `<button class="btn sm" data-o="${o.id}" data-s="${s}">${s}</button>`).join(' ')}</td>
+    </tr>`).join('')}
+  </table></div>`;
+  document.querySelectorAll('[data-o]').forEach(b => b.onclick = async () => {
+    await api('order/save', { id: +b.dataset.o, status: b.dataset.s }); VIEW.orders();
+  });
+};
+
+VIEW.payments = async () => {
+  const d = await api('payments');
+  $('#view').innerHTML = `<div class="card scroll"><table>
+    <tr><th>#</th><th>Кто</th><th>Продукт</th><th>Сумма</th><th>Статус</th><th>Когда</th><th></th></tr>
+    ${(d.items || []).map(p => `<tr>
+      <td>${p.id}</td><td>${esc(p.first_name || '')} ${p.username ? '@' + esc(p.username) : ''}</td>
+      <td>${esc(p.product)}</td><td>${money(p.amount)} ₽</td><td>${esc(p.status)}</td>
+      <td class="small muted">${String(p.created_at).slice(0, 16)}</td>
+      <td>${p.status !== 'paid' ? `<button class="btn sm" data-p="${p.id}">Отметить оплату</button>` : ''}</td>
+    </tr>`).join('')}
+  </table></div>`;
+  document.querySelectorAll('[data-p]').forEach(b => b.onclick = async () => {
+    if (!confirm('Отметить платёж оплаченным и открыть доступ?')) return;
+    await api('payment/mark', { id: +b.dataset.p }); VIEW.payments();
+  });
+};
+
+VIEW.promos = async () => {
+  const d = await api('promos');
+  $('#view').innerHTML = `<div class="card">
+      <div class="grid2"><input id="c" placeholder="КОД"><input id="pc" type="number" placeholder="Скидка, %"></div>
+      <div class="grid2" style="margin-top:8px"><input id="fx" type="number" placeholder="Скидка, ₽">
+        <input id="lim" type="number" placeholder="Лимит"></div>
+      <button class="btn primary mt16" id="add">Создать</button>
+    </div>
+    <div class="card scroll"><table>
+      <tr><th>Код</th><th>%</th><th>₽</th><th>Лимит</th><th>Использован</th></tr>
+      ${(d.items || []).map(p => `<tr><td><b>${esc(p.code)}</b></td><td>${p.percent}</td>
+        <td>${p.fixed}</td><td>${p.limit_count || '∞'}</td><td>${p.used}</td></tr>`).join('')}
+    </table></div>`;
+  $('#add').onclick = async () => {
+    await api('promos', { code: $('#c').value, percent: +$('#pc').value || 0,
+      fixed: +$('#fx').value || 0, limit_count: +$('#lim').value || 0 });
+    VIEW.promos();
+  };
+};
+
+VIEW.posts = async () => {
+  const d = await api('posts');
+  $('#view').innerHTML = `<div class="card">
+      <input id="t" placeholder="Заголовок"><textarea id="x" style="margin-top:8px" placeholder="Текст"></textarea>
+      <div class="grid2" style="margin-top:8px"><input id="cv" placeholder="Обложка /assets/img/...">
+        <input id="lk" placeholder="Ссылка"></div>
+      <button class="btn primary mt16" id="add">Опубликовать</button>
+    </div>
+    ${(d.items || []).map(p => `<div class="card"><b>${esc(p.title)}</b>
+      <div class="small muted">${esc((p.text || '').slice(0, 200))}</div></div>`).join('')}`;
+  $('#add').onclick = async () => {
+    await api('posts', { title: $('#t').value, text: $('#x').value, cover: $('#cv').value, link: $('#lk').value });
+    VIEW.posts();
+  };
+};
+
+VIEW.leads = async () => {
+  const d = await api('leads');
+  $('#view').innerHTML = `<div class="card scroll"><table>
+    <tr><th>#</th><th>Кто</th><th>Стадия</th><th>Шаг</th><th>Следующее касание</th><th>Пришёл</th></tr>
+    ${(d.items || []).map(l => `<tr><td>${l.id}</td>
+      <td>${esc(l.name)} ${l.username ? '@' + esc(l.username) : ''}</td>
+      <td>${esc(l.stage)}</td><td>${l.step}</td>
+      <td class="small muted">${l.next_at || '—'}</td>
+      <td class="small muted">${String(l.created_at).slice(0, 10)}</td></tr>`).join('')}
+  </table></div>`;
+};
+
+VIEW.broadcast = async () => {
+  $('#view').innerHTML = `<div class="card">
+    <h3 style="font-size:16px;margin-bottom:10px">Рассылка по боту</h3>
+    <textarea id="t" placeholder="Текст сообщения. HTML: <b>жирный</b>"></textarea>
+    <label class="tiny mt16">Кому</label>
+    <select id="a">
+      <option value="all">всем</option><option value="free">без тарифа</option>
+      <option value="pro">с тарифом</option><option value="creators">исполнителям</option>
+      <option value="clients">заказчикам</option>
+    </select>
+    <button class="btn primary mt16" id="go">Отправить</button>
+    <p class="small muted" style="margin-top:10px">Отправка идёт с паузами: Телеграм не любит пачки.</p>
+    <div id="res" class="mt16"></div>
+  </div>`;
+  $('#go').onclick = async () => {
+    if (!confirm('Отправить рассылку?')) return;
+    $('#res').textContent = 'Отправляю…';
+    const r = await api('broadcast', { text: $('#t').value, audience: $('#a').value });
+    $('#res').textContent = r.ok ? `Отправлено ${r.sent} из ${r.total}` : 'Ошибка: ' + r.error;
+  };
+};
+
+(async () => { if (PASS) { const r = await api('ping'); if (r.ok) shell(); } })();
+</script>
+</body>
+</html>
