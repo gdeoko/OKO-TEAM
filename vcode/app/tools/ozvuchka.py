@@ -46,8 +46,14 @@ def текст_конспекта(урок: dict) -> str:
     return "%s. %s" % (урок.get("title", ""), текст)
 
 
-def кусками(текст: str, предел: int = 600):
-    """OmniVoice давится длинным текстом: режем по предложениям."""
+def кусками(текст: str, предел: int = 220):
+    """Режем по предложениям короткими кусками.
+
+    Предел маленький нарочно: на длинном тексте OmniVoice сам делит его внутри
+    и на каждом своём стыке вставляет лишнее слово («мягко»), которое слышно в
+    середине записи и обрезкой начала не лечится. Короткий кусок модель читает
+    одним куском, а стартовый призвук снимает `обрезать_призвук`.
+    """
     куски, текущий = [], ""
     for часть in re.split(r"(?<=[.!?])\s+", текст):
         if len(текущий) + len(часть) > предел and текущий:
@@ -69,6 +75,41 @@ def сказать(текст: str, куда_wav: str) -> None:
     shutil.copy(r[0] if isinstance(r, (list, tuple)) else r, куда_wav)
 
 
+def _норм(слово: str) -> str:
+    return re.sub(r"[^а-яёa-z0-9]", "", слово.lower())
+
+
+def обрезать_призвук(wav: str, текст: str) -> str:
+    """OmniVoice начинает кусок лишним словом («мягко», «стиль»).
+
+    Канон роликов режет его по словам whisper, здесь то же самое: без обрезки
+    в конспекте каждые несколько фраз звучит чужое слово. Возвращает путь к
+    тому, что класть в монтаж: обрезанный файл или исходный, если резать нечего.
+    """
+    try:
+        from faster_whisper import WhisperModel
+        м = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=4)
+        куски, _ = м.transcribe(wav, language="ru", vad_filter=True, word_timestamps=True)
+        слова = [w for к in куски for w in (к.words or [])]
+        if not слова:
+            return wav
+        if _норм(слова[0].word) == _норм(текст.split()[0]):
+            сдвиг = max(0.0, слова[0].start - 0.05)
+        elif len(слова) > 1:
+            сдвиг = max(0.0, слова[1].start - 0.05)
+        else:
+            сдвиг = max(0.0, слова[0].end)
+    except Exception as e:
+        print("  призвук режем вслепую (%s)" % type(e).__name__)
+        сдвиг = 1.3
+    if сдвиг <= 0.02:
+        return wav
+    чистый = wav[:-4] + "_cut.wav"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", "%.2f" % сдвиг,
+                    "-i", wav, чистый], check=True)
+    return чистый
+
+
 def собрать(куски_wav: list, куда_mp3: str) -> None:
     список = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
     for п in куски_wav:
@@ -80,8 +121,28 @@ def собрать(куски_wav: list, куда_mp3: str) -> None:
     os.unlink(список.name)
 
 
+def подхватить_ключ(аргументы: list) -> list:
+    """`--env файл`: взять HF_TOKEN из файла окружения, не светя его в команде.
+
+    Без токена HuggingFace даёт анонимную квоту ZeroGPU, которой хватает на
+    ноль секунд: озвучка молча не идёт.
+    """
+    if "--env" not in аргументы:
+        return аргументы
+    i = аргументы.index("--env")
+    путь = аргументы[i + 1] if len(аргументы) > i + 1 else ""
+    try:
+        for строка in open(путь, encoding="utf-8"):
+            if строка.startswith("HF_TOKEN="):
+                os.environ["HF_TOKEN"] = строка.split("=", 1)[1].strip().strip("\"'")
+                break
+    except OSError as e:
+        print("файл окружения не прочитался: %s" % e)
+    return аргументы[:i] + аргументы[i + 2:]
+
+
 def главное() -> int:
-    нужны = set(sys.argv[1:])
+    нужны = set(подхватить_ключ(sys.argv[1:]))
     os.makedirs(КУДА, exist_ok=True)
     сделано = 0
     for файл in sorted(glob.glob(os.path.join(КОРЕНЬ, "content", "creator-*.json"))
@@ -103,20 +164,24 @@ def главное() -> int:
                     continue
                 текст = текст_конспекта(урок)
                 print("озвучка %s: %d знаков" % (слаг, len(текст)), flush=True)
-                временные = []
+                части, мусор = [], []
                 try:
                     for i, кусок in enumerate(кусками(текст)):
                         w = os.path.join(tempfile.gettempdir(), "%s_%d.wav" % (слаг, i))
                         сказать(кусок, w)
-                        временные.append(w)
-                    собрать(временные, путь)
+                        мусор.append(w)
+                        чистый = обрезать_призвук(w, кусок)
+                        if чистый != w:
+                            мусор.append(чистый)
+                        части.append(чистый)
+                    собрать(части, путь)
                 except Exception as e:
                     print("  не вышло: %r" % e)
                     continue
                 finally:
-                    for w in временные:
-                        if os.path.exists(w):
-                            os.unlink(w)
+                    for ф in мусор:
+                        if os.path.exists(ф):
+                            os.unlink(ф)
                 урок["audio"] = "assets/audio/" + имя
                 менялось = True
                 сделано += 1
