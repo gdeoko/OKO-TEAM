@@ -74,7 +74,10 @@ def есть(путь: str) -> bool:
 def главное() -> int:
     сценарий = json.load(open(os.path.join(КОРЕНЬ, "scenario2.json"), encoding="utf-8"))
     голос = json.load(open(os.path.join(ГОЛОС, "golos.json"), encoding="utf-8"))
-    os.makedirs(os.path.join(ПУБЛИКА, "zvuk"), exist_ok=True)
+    # Папка звука у второго урока СВОЯ: сцены называются так же (s01, s02),
+    # и при общей папке сюда ложилась озвучка прошлого урока, а новая не
+    # копировалась, потому что файл «уже есть». Ролик уехал со старым голосом.
+    os.makedirs(os.path.join(ПУБЛИКА, "zvuk2"), exist_ok=True)
     os.makedirs(os.path.join(ПУБЛИКА, "kadr"), exist_ok=True)
 
     логотип = os.path.join(КОРЕНЬ, "..", "app", "public_html", "assets", "img", "logo.png")
@@ -91,13 +94,13 @@ def главное() -> int:
         длина = г["длительность"] + float(с.get("пауза") or ХВОСТ)
         кадров = max(KADR_MIN, int(round(длина * КАДРЫ_В_СЕК)))
         звук_из = os.path.join(ГОЛОС, ид + ".wav")
-        звук_в = os.path.join(ПУБЛИКА, "zvuk", ид + ".wav")
-        if os.path.exists(звук_из) and not os.path.exists(звук_в):
-            shutil.copy(звук_из, звук_в)
+        звук_в = os.path.join(ПУБЛИКА, "zvuk2", ид + ".wav")
+        if os.path.exists(звук_из):
+            shutil.copy(звук_из, звук_в)   # всегда поверх, без «уже есть»
         кусок = dict(с)
         кусок["кадров"] = кадров
         кусок["слова"] = по_сценарию(с["текст"], г["слова"])
-        кусок["звук"] = "zvuk/%s.wav" % ид
+        кусок["звук"] = "zvuk2/%s.wav" % ид
         кусок["титул"] = сценарий["титул"]
         кусок["курс"] = сценарий["курс"]
         кусок["блок"] = сценарий["блок"]

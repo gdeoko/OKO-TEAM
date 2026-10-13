@@ -124,11 +124,31 @@ export const Предмет: React.FC<{
         background: `radial-gradient(circle, ${тон}55 0%, transparent 68%)`,
         filter: "blur(28px)", transform: `scale(${1 + Math.sin(t) * 0.06})`,
       }} />
-      <Img src={staticFile(файл)} style={{
-        width: размер, height: размер, objectFit: "contain",
+      <div style={{
+        position: "relative", width: размер, height: размер,
         transform: `rotateY(${качание + поворот * Math.sin(t * 0.33)}deg) rotateX(${кивок}deg) scale(${масштаб})`,
-        filter: `drop-shadow(0 26px 40px rgba(0,0,0,0.7)) drop-shadow(0 0 30px ${тон}44)`,
-      }} />
+      }}>
+        <Img src={staticFile(файл)} style={{
+          width: размер, height: размер, objectFit: "contain", display: "block",
+          filter: `drop-shadow(0 26px 40px rgba(0,0,0,0.7)) drop-shadow(0 0 30px ${тон}44)`,
+        }} />
+        {/* Блик идёт по силуэту предмета: маска это он сам, поэтому свет
+            остаётся на корпусе и никогда не вылезает прямоугольником. */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          maskImage: `url(${staticFile(файл)})`,
+          WebkitMaskImage: `url(${staticFile(файл)})`,
+          maskSize: "contain", WebkitMaskSize: "contain",
+          maskRepeat: "no-repeat", WebkitMaskRepeat: "no-repeat",
+          maskPosition: "center", WebkitMaskPosition: "center",
+          background: `linear-gradient(${105 + Math.sin(t * 0.4) * 20}deg,
+            transparent ${((t * 16) % 170) - 30}%,
+            rgba(255,255,255,0.40) ${((t * 16) % 170) - 12}%,
+            ${тон}55 ${((t * 16) % 170) - 4}%,
+            transparent ${((t * 16) % 170) + 14}%)`,
+          mixBlendMode: "screen",
+        }} />
+      </div>
     </div>
   );
 };

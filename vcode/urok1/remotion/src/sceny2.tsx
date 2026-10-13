@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { Метка, Оживший, Предмет, Сцена, Строка, Т, ходКамеры } from "./stage";
+import { Метка, Предмет, Сцена, Строка, Т, ходКамеры } from "./stage";
 import { Глубина, Диафрагма, КропКадр, Матрицы, Таблица, УголОбзора, Частота, Экспозиция, Выдержка } from "./graf";
 
 type Св = { с: any; слова: any[] };
@@ -88,11 +88,8 @@ export const Вступление: React.FC<Св> = ({ с }) => {
   return (
     <Рама тон={Т.акцент} сид={3}>
       <AbsoluteFill style={{ transform: `scale(${наезд})` }}>
-        {с.оживший ? (
-          <Оживший файл={с.оживший} ширина={980} x={880} y={190} />
-        ) : (
-          <Предмет файл={с.предмет || "kadr/u2_kamera.png"} размер={760} x={1020} y={150} сид={2} />
-        )}
+        <Предмет файл={с.предмет || "kadr/u2_kamera.png"} размер={820} x={1000} y={130}
+                 сид={2} поворот={22} />
       </AbsoluteFill>
       <AbsoluteFill style={{ padding: `${Т.поле}px`, display: "flex", flexDirection: "column",
                              justifyContent: "center" }}>
@@ -211,7 +208,8 @@ export const Разбор: React.FC<Св> = ({ с }) => {
       <div style={{ display: "flex", gap: 36, alignItems: "center", position: "relative" }}>
         <Диафрагма размер={360} />
         <Глубина />
-        <Оживший файл="kadr/u2_obyektiv_mov.mp4" ширина={430} x={700} y={-300} />
+        <Предмет файл="kadr/u2_obyektiv.png" размер={330} x={760} y={-330} сид={8}
+                 поворот={26} тон={Т.акцент2} />
       </div>
     ),
     экспозиция: <Экспозиция />,
@@ -252,7 +250,7 @@ export const Финал: React.FC<Св> = ({ с }) => {
   return (
     <Рама тон={Т.акцент} сид={17}>
       <AbsoluteFill style={{ transform: `scale(${уход})` }}>
-        <Оживший файл="kadr/u2_kamera_mov.mp4" ширина={880} x={980} y={240} />
+        <Предмет файл="kadr/u2_kamera.png" размер={700} x={1080} y={200} сид={6} поворот={20} />
       </AbsoluteFill>
       <AbsoluteFill style={{ padding: `${Т.поле}px`, display: "flex", flexDirection: "column",
                              justifyContent: "center" }}>
