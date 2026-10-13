@@ -386,7 +386,7 @@ SCREENS.course = async (p) => {
     <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <span class="pill">${c.blocks} ${plural(c.blocks, 'блок', 'блока', 'блоков')}</span>
       <span class="pill">${c.lessons} ${plural(c.lessons, 'урок', 'урока', 'уроков')}</span>
-      <span class="pill">${esc(c.duration || c.level)}</span>
+      <span class="pill">${esc(c.level)}</span>
       ${c.cert ? `<span class="pill accent">${ico('cert', 13)} сертификат</span>` : ''}
     </div>
     <p class="muted" style="margin:0 2px 16px">${esc(c.descr)}</p>
