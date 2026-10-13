@@ -59,10 +59,16 @@ function vc_admin_route(string $route): void {
   case 'lesson/media': {
     // Привязать загруженный файл к уроку: ролик или озвучку.
     $id = (int) vc_in('id', 0);
+    $слаг = (string) vc_in('slug', '');
     $поле = (string) vc_in('field', 'video');
     if (!in_array($поле, ['video', 'audio'], true)) { vc_fail('поле только video или audio'); }
     $путь = (string) vc_in('path', '');
-    if (!$id) { vc_fail('нужен id урока'); }
+    if (!$id && $слаг !== '') {
+      // Конвейер роликов знает урок по слагу: номера он не видит.
+      $row = vc_one('SELECT id FROM lessons WHERE slug=?', [$слаг]);
+      $id = $row ? (int)$row['id'] : 0;
+    }
+    if (!$id) { vc_fail('нужен id или slug урока'); }
     vc_update('lessons', [$поле => $путь], 'id=?', [$id]);
     vc_out(['ok' => true]);
   }

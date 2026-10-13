@@ -262,13 +262,13 @@ def отправить(файл: str, имя: str, окружение: dict) -> 
     return ответ["path"]
 
 
-def привязать(lesson_id: int, путь: str, окружение: dict) -> None:
+def привязать(слаг: str, путь: str, окружение: dict) -> None:
     адрес = окружение.get("VLIONOFF_URL", "https://okoteam.top/vlionoff/")
     subprocess.run(["curl", "-sS", "--cacert", "/root/.ccr/ca-bundle.crt", "-m", "60",
                     "-X", "POST", адрес + "api/index.php?r=admin/lesson/media",
                     "-H", "Content-Type: application/json",
                     "-H", "X-VCODE-ADMIN: " + окружение.get("VLIONOFF_ADMIN", ""),
-                    "--data-binary", json.dumps({"id": lesson_id, "field": "video",
+                    "--data-binary", json.dumps({"slug": слаг, "field": "video",
                                                  "path": путь})],
                    capture_output=True, text=True)
 
@@ -360,6 +360,7 @@ def главное() -> int:
               % (готовый, длительность(готовый), os.path.getsize(готовый) // 1024))
         путь = отправить(готовый, "%s.mp4" % слаг, окружение)
         if путь:
+            привязать(слаг, путь, окружение)
             print("  в приложении: %s" % путь)
             данные = json.load(open(файл, encoding="utf-8"))
             for блок in данные.get("blocks", []):
