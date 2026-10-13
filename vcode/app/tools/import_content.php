@@ -13,6 +13,8 @@ require_once __DIR__ . '/../core/db.php';
 
 $files = array_slice($argv, 1);
 if (!$files) { $files = glob(__DIR__ . '/../content/*.json') ?: []; }
+// posts.json это лента, а не курс: обрабатывается отдельно и первым.
+$files = array_values(array_filter($files, fn($f) => basename($f) !== 'posts.json'));
 if (!$files) { fwrite(STDERR, "нет файлов курса\n"); exit(1); }
 
 foreach ($files as $file) {
@@ -64,11 +66,21 @@ foreach ($files as $file) {
   printf("%s: курс «%s», блоков %d, уроков %d\n", basename($file), $course['title'], $bs, $ls);
 }
 
-// Стартовые настройки и тексты ленты, если база пустая.
-if ((int) vc_val('SELECT COUNT(*) FROM posts') === 0) {
-  vc_insert('posts', ['title' => 'V.LIONOFF открылся',
-    'text' => 'Первый блок курса открыт бесплатно. Проходите уроки, собирайте профиль — '
-            . 'и откликайтесь на заявки заказчиков прямо здесь.',
-    'pinned' => 1]);
+// Лента: тексты лежат в content/posts.json и обновляются по заголовку.
+$лента = __DIR__ . '/../content/posts.json';
+if (is_file($лента)) {
+  $д = json_decode(file_get_contents($лента), true) ?: [];
+  foreach (($д['posts'] ?? []) as $пост) {
+    $есть = vc_one('SELECT id FROM posts WHERE title=?', [$пост['title']]);
+    $поле = ['title' => $пост['title'], 'text' => $пост['text'] ?? '',
+             'cover' => $пост['cover'] ?? '', 'link' => $пост['link'] ?? '',
+             'pinned' => (int)($пост['pinned'] ?? 0), 'status' => 'published'];
+    if ($есть) { vc_update('posts', $поле, 'id=?', [$есть['id']]); }
+    else { vc_insert('posts', $поле); }
+  }
+  printf("лента: %d записей\n", count($д['posts'] ?? []));
 }
+// Старая запись первой сборки, когда бренд ещё звался иначе.
+vc_q("DELETE FROM posts WHERE title='V.CODE открылся' OR title='V.LIONOFF открылся'");
+
 echo "готово\n";
