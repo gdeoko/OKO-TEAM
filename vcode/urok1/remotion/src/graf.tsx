@@ -15,7 +15,7 @@ export const Матрицы: React.FC<{ подсветка?: number }> = ({ по
   ];
   const масштаб = 14;
   return (
-    <div style={{ position: "relative", width: 36 * масштаб + 60, height: 24 * масштаб + 120 }}>
+    <div style={{ position: "relative", width: 36 * масштаб + 60, height: 24 * масштаб + 200 }}>
       {данные.map((м, i) => {
         const п = 16 + i * 22;
         const д = interpolate(frame, [п, п + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -23,23 +23,36 @@ export const Матрицы: React.FC<{ подсветка?: number }> = ({ по
         const активна = подсветка === i;
         return (
           <div key={i} style={{
-            position: "absolute", left: 0, bottom: 60,
+            position: "absolute", left: 0, bottom: 130,
             width: м.ш * масштаб * д * дых, height: м.в * масштаб * д * дых,
             border: `3px solid ${м.цвет}`, borderRadius: 8,
             background: `linear-gradient(135deg, ${м.цвет}22, transparent 70%)`,
             boxShadow: активна ? `0 0 46px ${м.цвет}aa` : `0 0 22px ${м.цвет}44`,
             opacity: д,
           }}>
-            <div style={{ position: "absolute", left: 14, bottom: 12, whiteSpace: "nowrap",
-                          fontFamily: Т.корпус, fontSize: 24, color: м.цвет,
-                          textShadow: "0 2px 14px rgba(0,0,0,0.9)" }}>
-              {м.имя}
-              <span style={{ color: "rgba(244,245,247,0.65)", marginLeft: 10 }}>
-                {м.ш} × {м.в} мм</span>
-            </div>
+
           </div>
         );
       })}
+      <div style={{ position: "absolute", left: 0, bottom: 0, display: "flex",
+                    gap: 28, flexWrap: "wrap" }}>
+        {данные.map((м, i) => {
+          const п = 20 + i * 22;
+          const д = interpolate(frame, [п, п + 16], [0, 1],
+                                { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10,
+                                  opacity: д, transform: `translateY(${(1 - д) * 18}px)` }}>
+              <span style={{ width: 16, height: 16, borderRadius: 4, background: м.цвет,
+                             boxShadow: `0 0 16px ${м.цвет}` }} />
+              <span style={{ fontFamily: Т.корпус, fontSize: 24, color: Т.текст,
+                             whiteSpace: "nowrap" }}>{м.имя}</span>
+              <span style={{ fontFamily: Т.корпус, fontSize: 22, color: "rgba(244,245,247,0.6)",
+                             whiteSpace: "nowrap" }}>{м.ш} × {м.в}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -274,7 +287,7 @@ export const Экспозиция: React.FC = () => {
         {ползунок("Диафрагма", "f/" + диафрагма, interpolate(диафрагма, [1.4, 8], [1, 0]), Т.акцент, 2)}
       </div>
       <div>
-        <div style={{ position: "relative", width: 560, height: 340, borderRadius: 16,
+        <div style={{ position: "relative", width: 520, height: 280, borderRadius: 16,
                       overflow: "hidden", border: `1px solid ${Т.линия}` }}>
           <div style={{ position: "absolute", inset: 0,
             background: "linear-gradient(135deg, #24405f, #4b6c92 40%, #8aa6c4 70%, #d6e2ef)",
@@ -288,11 +301,11 @@ export const Экспозиция: React.FC = () => {
             {яркость < 0.6 ? "недосвет" : яркость > 1.05 ? "пересвет" : "норма"}
           </div>
         </div>
-        <svg width="560" height="104" style={{ marginTop: 14, display: "block" }}>
+        <svg width="520" height="88" style={{ marginTop: 12, display: "block" }}>
           {new Array(48).fill(0).map((_, i) => {
             const центр = interpolate(яркость, [0.35, 1.15], [8, 40]);
-            const в = Math.exp(-Math.pow(i - центр, 2) / 70) * 94;
-            return <rect key={i} x={i * 11.6} y={104 - в} width="9" height={в} rx="2"
+            const в = Math.exp(-Math.pow(i - центр, 2) / 70) * 80;
+            return <rect key={i} x={i * 10.8} y={88 - в} width="8" height={в} rx="2"
                          fill={i < 6 || i > 42 ? Т.тревога : Т.акцент2} opacity="0.85" />;
           })}
         </svg>
