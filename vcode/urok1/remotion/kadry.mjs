@@ -9,7 +9,7 @@ fs.mkdirSync(куда, { recursive: true });
 const кадры = process.argv[2].split(",").map(Number);
 
 const url = await bundle({ entryPoint: path.join(корень, "src/index.ts"), publicDir: path.join(корень, "public") });
-const comp = await selectComposition({ serveUrl: url, id: "Urok5", inputProps: {} });
+const comp = await selectComposition({ serveUrl: url, id: "Urok6", inputProps: {} });
 for (const f of кадры) {
   await renderStill({
     composition: comp, serveUrl: url, frame: f,

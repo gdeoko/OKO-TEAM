@@ -5,8 +5,10 @@ import { Urok2 } from "./Urok2";
 import { ПЕРЕХОД, Urok3 } from "./Urok3";
 import { Urok4 } from "./Urok4";
 import { Urok5 } from "./Urok5";
+import { Urok6 } from "./Urok6";
 import лист from "../public/shoty.json";
 import лист5 from "../public/shoty2.json";
+import лист6 from "../public/shoty3.json";
 import монтаж from "../public/montazh.json";
 import монтаж2 from "../public/montazh2.json";
 
@@ -17,6 +19,15 @@ export const RemotionRoot: React.FC = () => {
   const всего2 = (монтаж2 as any).сцены.reduce((с: number, х: any) => с + х.кадров, 0);
   return (
     <>
+    <Composition
+      id="Urok6"
+      component={Urok6}
+      durationInFrames={(лист6 as any).всего}
+      fps={КАДРЫ}
+      width={1920}
+      height={1080}
+      defaultProps={{}}
+    />
     <Composition
       id="Urok5"
       component={Urok5}

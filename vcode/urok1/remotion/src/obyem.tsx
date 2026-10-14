@@ -69,9 +69,10 @@ export const Плиты: React.FC<{ ш: any; тон: string; дети: React.Rea
 export const Коридор: React.FC<{ ш: any; тон: string; слово: string }> = ({ ш, тон, слово }) => {
   const frame = useCurrentFrame();
   const п = подача(ш);
-  const шт = 14;
+  const шт = 16;
   return (
     <AbsoluteFill style={{ perspective: 760, overflow: "hidden" }}>
+      <AbsoluteFill style={{ background: `radial-gradient(42% 42% at 50% 50%, ${тон}3D, transparent 72%)` }} />
       <AbsoluteFill style={{ transformStyle: "preserve-3d" }}>
         {new Array(шт).fill(0).map((_, i) => {
           const z = ((frame * 26 + i * 240) % (шт * 240)) - 2600;
@@ -80,7 +81,8 @@ export const Коридор: React.FC<{ ш: any; тон: string; слово: str
             <div key={i} style={{
               position: "absolute", left: "50%", top: "50%", width: 1000, height: 600,
               marginLeft: -500, marginTop: -300, borderRadius: 24,
-              border: `2px solid ${i % 3 === 0 ? Т.акцент2 : тон}${i % 2 ? "4D" : "26"}`,
+              border: `3px solid ${i % 3 === 0 ? Т.акцент2 : тон}${i % 2 ? "AA" : "66"}`,
+              boxShadow: `0 0 40px ${i % 3 === 0 ? Т.акцент2 : тон}33`,
               transform: `translateZ(${z}px) rotate(${i * 7 + frame * 0.2}deg)`,
               opacity: д,
             }} />
@@ -140,7 +142,6 @@ export const Карусель: React.FC<{ ш: any; тон: string; файлы: s
     <div style={{ perspective: 1500, width: 1500, height: 520 }}>
       <div style={{
         position: "relative", width: "100%", height: "100%", transformStyle: "preserve-3d",
-        transformStyle: "preserve-3d",
         transform: `translateZ(-${R - 120}px) rotateX(-6deg) rotateY(${frame * 0.7}deg)`,
       }}>
         {файлы.map((ф, i) => (
