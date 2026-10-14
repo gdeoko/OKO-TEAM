@@ -71,9 +71,9 @@ const камера_шота = (вид: string, ход: number, з: number): Reac
 /** Кегль подбирается под короб: строка не вылезет и не повиснет мелочью. */
 const под_короб = (знаков: number, к: Короб, п: any, макс: number) => {
   for (let s = макс; s > 30; s -= 2) {
-    const в_строке = Math.max(1, Math.floor(к.w / (s * 0.6)));
+    const в_строке = Math.max(1, Math.floor(к.w / (s * (п.ш || 0.62))));
     const строк = Math.ceil(Math.max(1, знаков) / в_строке);
-    if (строк * s * п.межстрочный * 1.18 <= к.h) return s;
+    if (строк * s * п.межстрочный * 1.2 <= к.h) return s;
   }
   return 30;
 };
@@ -425,7 +425,11 @@ const Текст: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
       );
 
     case "сетка": {
-      const кол = слова.length > 6 ? 3 : 2;
+      const кол = к.w > 1100 ? (слова.length > 6 ? 3 : 2) : 2;
+      const длинное = Math.max(...слова.map((с: any) => с.слово.length), 3);
+      const кегль_ячейки = Math.min(размер * 0.62,
+                                    (к.w / кол - 56) / (длинное * (п.ш || 0.62)),
+                                    (к.h / Math.ceil(слова.length / кол)) * 0.5);
       return (
         <Короб к={к} стиль={{ display: "grid", gridTemplateColumns: `repeat(${кол}, 1fr)`, gap: 16,
                               alignContent: "center", width: к.w }} дети={<>
@@ -437,7 +441,7 @@ const Текст: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
               <div key={i} style={{
                 border: `1px solid ${i % 2 ? Т.акцент2 : тон}55`, borderRadius: 14, padding: "14px 18px",
                 background: `linear-gradient(${40 + i * 40}deg, ${тон}1A, transparent)`,
-                fontFamily: п.семья, fontWeight: п.вес, fontSize: Math.min(размер * 0.62, 58),
+                fontFamily: п.семья, fontWeight: п.вес, fontSize: кегль_ячейки,
                 letterSpacing: п.разрядка, color: Т.текст, display: "flex",
                 alignItems: "center", justifyContent: "center", opacity: д,
                 transform: `perspective(900px) rotateX(${(1 - д) * -80}deg)`, transformOrigin: "50% 0%",
