@@ -571,7 +571,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
     case "график_деталь":
       return обёртка(
         <AbsoluteFill style={{ display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          <div style={{ transform: `scale(${1.5 + ход * 0.12}) translate(${з * (120 - ход * 90)}px, ${-120 + ход * 26}px)` }}>
+          <div style={{ transform: `scale(${1.42 + ход * 0.1}) translate(${з * (110 - ход * 80)}px, ${-34 + ход * 22}px)` }}>
             <Графика ш={ш} />
           </div>
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: `34px ${П}px 48px`,
