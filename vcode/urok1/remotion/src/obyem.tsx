@@ -177,12 +177,12 @@ export const Орбита: React.FC<{ ш: any; тон: string; файл: string;
           transform: `rotateX(72deg) rotateZ(${frame * (0.6 - i * 0.14)}deg)`,
         }} />
       ))}
-      <div style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -200, marginTop: -200 }}>
-        <Предмет файл={"kadr/m/" + файл} размер={400} ш={ш} тон={тон} />
+      <div style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -170, marginTop: -170 }}>
+        <Предмет файл={"kadr/m/" + файл} размер={340} ш={ш} тон={тон} />
       </div>
       {метки.filter(Boolean).slice(0, 3).map((м, i) => {
         const угол = frame * 0.9 + i * 120;
-        const r = 330;
+        const r = 390;
         const x = Math.cos((угол * Math.PI) / 180) * r;
         const y = Math.sin((угол * Math.PI) / 180) * r * 0.32;
         return (
@@ -191,6 +191,7 @@ export const Орбита: React.FC<{ ш: any; тон: string; файл: string;
             fontFamily: п.семья, fontWeight: п.вес, fontSize: 26, letterSpacing: "0.08em",
             color: Т.текст, background: "rgba(6,7,10,0.68)", border: `1px solid ${тон}55`,
             padding: "8px 16px", borderRadius: 10, whiteSpace: "nowrap",
+            maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis",
           }}>{текстом(м, п)}</div>
         );
       })}

@@ -322,3 +322,179 @@ export const Шум: React.FC = () => {
     </div>
   );
 };
+
+/** Правило третей: сетка кадра и герой, который встаёт на пересечение. */
+export const Третей: React.FC = () => {
+  const frame = useCurrentFrame();
+  const ф = туда_обратно(цикл(frame, 130));
+  const x = interpolate(ф, [0, 1], [0.5, 0.333]);
+  const y = interpolate(ф, [0, 1], [0.62, 0.333]);
+  return (
+    <div style={{ width: 880, height: 500, position: "relative", borderRadius: 16,
+                  border: `2px solid ${Т.акцент2}55`, overflow: "hidden",
+                  boxShadow: `0 0 60px ${Т.акцент}22`,
+                  background: `linear-gradient(160deg, ${Т.акцент}3D, ${Т.акцент2}1A 55%, rgba(10,12,18,0.85))` }}>
+      {[1, 2].map((i) => (
+        <div key={"v" + i} style={{ position: "absolute", left: `${(i * 100) / 3}%`, top: 0, bottom: 0,
+                                    width: 2, background: "rgba(255,255,255,0.45)" }} />
+      ))}
+      {[1, 2].map((i) => (
+        <div key={"h" + i} style={{ position: "absolute", top: `${(i * 100) / 3}%`, left: 0, right: 0,
+                                    height: 2, background: "rgba(255,255,255,0.45)" }} />
+      ))}
+      <div style={{ position: "absolute", left: `${x * 100}%`, top: `${y * 100}%`,
+                    width: 110, height: 110, marginLeft: -55, marginTop: -55, borderRadius: 999,
+                    background: `radial-gradient(circle, ${Т.акцент2}CC, ${Т.акцент2}22 60%, transparent 72%)`,
+                    border: `2px solid ${Т.акцент2}` }} />
+      <div style={{ position: "absolute", left: 24, bottom: 18, fontFamily: корпус, fontSize: 24,
+                    color: Т.текст, opacity: 0.85 }}>
+        {ф > 0.6 ? "герой на пересечении" : "герой по центру"}
+      </div>
+    </div>
+  );
+};
+
+/** Баланс белого: шкала кельвинов и как уезжает цвет кадра. */
+export const Кельвины: React.FC = () => {
+  const frame = useCurrentFrame();
+  const ф = туда_обратно(цикл(frame, 150));
+  const k = Math.round(interpolate(ф, [0, 1], [2700, 8000]));
+  const цвет = ф < 0.5 ? `rgba(255, ${170 + ф * 80}, 110, 0.5)` : `rgba(${190 - ф * 60}, 220, 255, 0.5)`;
+  return (
+    <div style={{ width: 880, height: 420, display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ height: 230, borderRadius: 16, border: `1px solid ${Т.линия}`, position: "relative",
+                    overflow: "hidden", background: "#1A1D26" }}>
+        <div style={{ position: "absolute", inset: 0, background: цвет }} />
+        <div style={{ position: "absolute", left: 60, top: 50, width: 150, height: 130, borderRadius: 12,
+                      background: "rgba(245,245,248,0.9)" }} />
+        <div style={{ position: "absolute", left: 250, top: 70, width: 110, height: 110,
+                      borderRadius: 999, background: "rgba(120,130,150,0.9)" }} />
+        <div style={{ position: "absolute", right: 28, top: 24, fontFamily: шапка, fontSize: 54,
+                      fontWeight: 800, color: Т.текст }}>{k} K</div>
+      </div>
+      <div style={{ height: 26, borderRadius: 8, position: "relative",
+                    background: "linear-gradient(90deg, #FF9A4D, #FFD9A6, #FFFFFF, #BFE0FF, #7FB6FF)" }}>
+        <div style={{ position: "absolute", top: -8, left: `${interpolate(ф, [0, 1], [2, 96])}%`,
+                      width: 6, height: 42, borderRadius: 4, background: Т.текст,
+                      boxShadow: "0 0 18px rgba(255,255,255,0.8)" }} />
+      </div>
+    </div>
+  );
+};
+
+/** Стабилизация: одна и та же проводка с рук и на стабилизаторе. */
+export const Стабилизация: React.FC = () => {
+  const frame = useCurrentFrame();
+  const точки = 60;
+  const линия = (дрожь: number) => new Array(точки).fill(0).map((_, i) => {
+    const x = (i / (точки - 1)) * 820;
+    const y = 60 + Math.sin(i / 7 + frame / 12) * 10 * дрожь
+      + (дрожь > 0.5 ? Math.sin(i * 2.3 + frame / 3) * 16 : 0);
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <div style={{ width: 860, height: 380, display: "flex", flexDirection: "column", gap: 28 }}>
+      {[{ имя: "с рук", др: 1, цвет: Т.тревога }, { имя: "на стабилизаторе", др: 0.2, цвет: Т.акцент2 }].map((р) => (
+        <div key={р.имя} style={{ borderRadius: 14, border: `1px solid ${Т.линия}`, padding: "12px 18px",
+                                  background: "rgba(255,255,255,0.03)" }}>
+          <div style={{ fontFamily: корпус, fontSize: 24, color: р.цвет, marginBottom: 6 }}>{р.имя}</div>
+          <svg width="820" height="120">
+            <polyline points={линия(р.др)} fill="none" stroke={р.цвет} strokeWidth="3" />
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** Кодеки и битрейт: сколько весит минута у разных режимов записи. */
+export const Кодеки: React.FC = () => {
+  const frame = useCurrentFrame();
+  const строки = [
+    { имя: "H.264 100 Мбит", доля: 0.32, вес: "0,7 ГБ / мин", цвет: Т.акцент2 },
+    { имя: "H.265 150 Мбит", доля: 0.48, вес: "1,1 ГБ / мин", цвет: Т.акцент },
+    { имя: "ProRes 880 Мбит", доля: 1.0, вес: "6,6 ГБ / мин", цвет: Т.тёплый },
+  ];
+  return (
+    <div style={{ width: 880, height: 400, display: "flex", flexDirection: "column", gap: 26 }}>
+      {строки.map((с, i) => {
+        const д = interpolate(frame, [8 + i * 12, 36 + i * 12], [0, 1],
+                              { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+        return (
+          <div key={с.имя}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontFamily: корпус, fontSize: 24, color: Т.тихий }}>{с.имя}</span>
+              <span style={{ fontFamily: корпус, fontSize: 24, color: с.цвет, opacity: д }}>{с.вес}</span>
+            </div>
+            <div style={{ height: 32, borderRadius: 10, background: "rgba(255,255,255,0.05)",
+                          border: `1px solid ${Т.линия}`, overflow: "hidden" }}>
+              <div style={{ width: `${с.доля * д * 100}%`, height: "100%",
+                            background: `linear-gradient(90deg, ${с.цвет}, ${с.цвет}44)` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+/** Автофокус: точки ведут героя по кадру и цепляются за него. */
+export const Автофокус: React.FC = () => {
+  const frame = useCurrentFrame();
+  const ф = цикл(frame, 120);
+  const x = 0.25 + Math.sin(ф * Math.PI * 2) * 0.22;
+  const y = 0.45 + Math.cos(ф * Math.PI * 2) * 0.12;
+  return (
+    <div style={{ width: 880, height: 480, position: "relative", borderRadius: 16,
+                  border: `1px solid ${Т.линия}`, overflow: "hidden",
+                  background: `linear-gradient(140deg, ${Т.акцент}14, rgba(0,0,0,0.55))` }}>
+      {new Array(35).fill(0).map((_, i) => {
+        const кx = (i % 7) / 6, кy = Math.floor(i / 7) / 4;
+        const близко = Math.hypot(кx - x, кy - y) < 0.16;
+        return (
+          <div key={i} style={{ position: "absolute", left: `${8 + кx * 84}%`, top: `${12 + кy * 74}%`,
+                                width: 40, height: 30, marginLeft: -20, marginTop: -15, borderRadius: 5,
+                                border: `2px solid ${близко ? Т.акцент2 : "rgba(255,255,255,0.18)"}`,
+                                background: близко ? `${Т.акцент2}22` : "transparent" }} />
+        );
+      })}
+      <div style={{ position: "absolute", left: `${8 + x * 84}%`, top: `${12 + y * 74}%`,
+                    width: 130, height: 130, marginLeft: -65, marginTop: -65, borderRadius: 999,
+                    background: `radial-gradient(circle, rgba(240,245,255,0.5), transparent 68%)` }} />
+    </div>
+  );
+};
+
+/** Монтажный стол: дорожки видео, звука и титров идут по таймлайну. */
+export const Дорожки: React.FC = () => {
+  const frame = useCurrentFrame();
+  const бег = (frame * 2.2) % 820;
+  const дорожки = [
+    { имя: "видео", куски: [[0, 240], [260, 420], [450, 820]], цвет: Т.акцент },
+    { имя: "звук", куски: [[0, 500], [520, 820]], цвет: Т.акцент2 },
+    { имя: "титры", куски: [[120, 300], [540, 700]], цвет: Т.тёплый },
+  ];
+  return (
+    <div style={{ width: 880, height: 380, position: "relative" }}>
+      {дорожки.map((д, i) => (
+        <div key={д.имя} style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: корпус, fontSize: 22, color: Т.тихий, marginBottom: 6 }}>{д.имя}</div>
+          <div style={{ position: "relative", height: 62, borderRadius: 10,
+                        background: "rgba(255,255,255,0.04)", border: `1px solid ${Т.линия}` }}>
+            {д.куски.map(([a, b], j) => {
+              const п = interpolate(frame, [6 + i * 8 + j * 6, 24 + i * 8 + j * 6], [0, 1],
+                                    { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+              return (
+                <div key={j} style={{ position: "absolute", left: a, width: (b - a) * п, top: 6, bottom: 6,
+                                      borderRadius: 8, background: `linear-gradient(90deg, ${д.цвет}99, ${д.цвет}44)`,
+                                      border: `1px solid ${д.цвет}` }} />
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div style={{ position: "absolute", left: бег, top: 24, bottom: 0, width: 2,
+                    background: Т.текст, boxShadow: `0 0 14px ${Т.текст}` }} />
+    </div>
+  );
+};

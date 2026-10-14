@@ -7,8 +7,8 @@ import { Т } from "./dvizh";
 import { Фон } from "./fon";
 import { Глубина, Диафрагма, КропКадр, Матрицы, Таблица, УголОбзора, Частота, Экспозиция, Выдержка } from "./graf";
 import {
-  ЗвукУровень, КартаСкорость, Мягкость, НаборСхема, Направленность, Путь, Сравнение,
-  СхемаСвета, Чеклист, Шум,
+  Автофокус, Дорожки, ЗвукУровень, Кельвины, Кодеки, КартаСкорость, Мягкость, НаборСхема,
+  Направленность, Путь, Сравнение, Стабилизация, СхемаСвета, Третей, Чеклист, Шум,
 } from "./graf2";
 import { Карточка, Карусель, Коридор, Куб, Орбита, Плиты, Предмет } from "./obyem";
 import { ПОДАЧИ, ВЫХОД, РЕЗКО, Слова, Строка, знак, подача, сид, текстом } from "./tipo";
@@ -25,10 +25,10 @@ type Короб = { x: number; y: number; w: number; h: number; центр?: boo
  */
 export const МАКЕТЫ: Record<string, { текст?: Короб; медиа?: Короб }> = {
   центр:        { текст: { x: 230, y: 210, w: 1460, h: 660, центр: true } },
-  центр_сверху: { медиа: { x: 380, y: 80, w: 1160, h: 470 },
-                  текст: { x: 230, y: 600, w: 1460, h: 360, центр: true } },
-  центр_снизу:  { текст: { x: 230, y: 110, w: 1460, h: 330, центр: true },
-                  медиа: { x: 380, y: 480, w: 1160, h: 500 } },
+  центр_сверху: { медиа: { x: 320, y: 60, w: 1280, h: 520 },
+                  текст: { x: 230, y: 610, w: 1460, h: 350, центр: true } },
+  центр_снизу:  { текст: { x: 230, y: 100, w: 1460, h: 330, центр: true },
+                  медиа: { x: 320, y: 460, w: 1280, h: 540 } },
   лево:         { текст: { x: 110, y: 180, w: 780, h: 720 },
                   медиа: { x: 950, y: 110, w: 870, h: 860 } },
   право:        { медиа: { x: 100, y: 110, w: 870, h: 860 },
@@ -96,6 +96,8 @@ const ЕСТЕСТВЕННЫЕ: Record<string, [number, number]> = {
   набор: [860, 520], сравнение: [880, 420], звук: [860, 420], направленность: [840, 430],
   свет: [860, 470], мягкость: [820, 390], карта: [860, 360], чеклист: [780, 390],
   путь: [920, 270], шум: [760, 460], глубина: [860, 460],
+  третей: [880, 500], кельвины: [880, 420], стабилизация: [860, 380],
+  кодеки: [880, 400], автофокус: [880, 480], дорожки: [880, 380],
 };
 
 const Графика: React.FC<{ вид: string; ш: any }> = ({ вид, ш }) => {
@@ -120,6 +122,12 @@ const Графика: React.FC<{ вид: string; ш: any }> = ({ вид, ш }) =
     case "чеклист": return <Чеклист пункты={ш.пункты} />;
     case "путь": return <Путь />;
     case "шум": return <Шум />;
+    case "третей": return <Третей />;
+    case "кельвины": return <Кельвины />;
+    case "стабилизация": return <Стабилизация />;
+    case "кодеки": return <Кодеки />;
+    case "автофокус": return <Автофокус />;
+    case "дорожки": return <Дорожки />;
     default: return null;
   }
 };
@@ -287,7 +295,7 @@ const Текст: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
 
     case "акцент": {
       const кл = ш.ключ || слова[0]?.слово || "";
-      const кегль_ключа = Math.min(к.h * 0.46, (к.w / Math.max(4, кл.length)) * 1.55);
+      const кегль_ключа = Math.min(к.h * 0.46, к.w / (Math.max(4, кл.length) * (п.ш || 0.68)));
       return (
         <Короб к={к} стиль={{ flexDirection: "column", alignItems: к.центр ? "center" : "flex-start",
                               justifyContent: "center", gap: 18 }} дети={<>
@@ -358,27 +366,6 @@ const Текст: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
         </>} />
       );
 
-    case "вертикаль": {
-      const кегль = Math.min(к.h * 0.52, (к.w / Math.max(2, слова.length)) * 1.1, 96);
-      return (
-        <Короб к={к} стиль={{ justifyContent: "center", gap: 26, alignItems: "center" }} дети={<>
-          {слова.slice(0, 7).map((с: any, i: number) => {
-            const t = frame / fps;
-            const д = interpolate(t, [с.старт - 0.05, с.старт + 0.2], [0, 1],
-                                  { easing: ВЫХОД, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-            return (
-              <div key={i} style={{ writingMode: "vertical-rl", fontFamily: п.семья, fontWeight: п.вес,
-                                    fontSize: кегль, letterSpacing: "0.02em", opacity: д,
-                                    color: i % 3 === 2 ? тон : Т.текст,
-                                    transform: `translateY(${(1 - д) * (i % 2 ? 70 : -70)}px)` }}>
-                {текстом(с.слово, п)}
-              </div>
-            );
-          })}
-        </>} />
-      );
-    }
-
     case "смесь":
       return (
         <Короб к={к} стиль={{ flexWrap: "wrap", alignContent: "center", alignItems: "baseline",
@@ -405,7 +392,7 @@ const Текст: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
     case "диагональ":
       return (
         <Короб к={к} стиль={{ justifyContent: "center" }} дети={
-          <div style={{ transform: `rotate(${-7 * з}deg)`, width: к.w * 0.92 }}>
+          <div style={{ width: к.w * 0.92 }}>
             {слова.map((с: any, i: number) => {
               const t = frame / fps;
               const д = interpolate(t, [с.старт - 0.05, с.старт + 0.2], [0, 1],
@@ -460,7 +447,8 @@ const Текст: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
                               alignItems: "stretch" }} дети={<>
           <div style={{ overflow: "hidden", padding: "10px 0", background: `${тон}1A`,
                         borderTop: `1px solid ${тон}66`, borderBottom: `1px solid ${тон}66`,
-                        transform: `rotate(${-2 * з}deg)` }}>
+                        maskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)",
+                        WebkitMaskImage: "linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)" }}>
             <div style={{ whiteSpace: "nowrap", fontFamily: п.семья, fontWeight: п.вес,
                           fontSize: Math.min(размер * 0.8, 76), letterSpacing: "0.02em",
                           color: Т.текст, opacity: 0.92,
