@@ -49,8 +49,8 @@ export const Плиты: React.FC<{ ш: any; тон: string; дети: React.Rea
           return (
             <div key={i} style={{
               position: "absolute", left: "8%", right: "8%", top: "18%", bottom: "18%",
-              transform: `translateZ(${z}px) translateX(${(i - 3) * 90 * з}px)`,
-              border: `1px solid ${i % 2 ? Т.акцент2 : тон}${яркая ? "88" : "33"}`,
+              transform: `translateZ(${z}px) translateX(${(i - 3) * 130 * з}px) rotateY(${(i - 3) * 2 * з}deg)`,
+              border: `2px solid ${i % 2 ? Т.акцент2 : тон}${яркая ? "AA" : "4D"}`,
               borderRadius: 18,
               background: яркая
                 ? `linear-gradient(${120 + i * 30}deg, ${тон}3D, rgba(255,255,255,0.05))`
@@ -66,7 +66,9 @@ export const Плиты: React.FC<{ ш: any; тон: string; дети: React.Rea
 };
 
 /** Коридор: рамки несутся на зрителя, в конце стоит слово. */
-export const Коридор: React.FC<{ ш: any; тон: string; слово: string }> = ({ ш, тон, слово }) => {
+export const Коридор: React.FC<{ ш: any; тон: string; слово: string; файл?: string }> = ({
+  ш, тон, слово, файл,
+}) => {
   const frame = useCurrentFrame();
   const п = подача(ш);
   const шт = 16;

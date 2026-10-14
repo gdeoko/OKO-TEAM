@@ -222,7 +222,7 @@ const Медиа: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
     return (
       <div style={{ position: "absolute", left: к.x, top: к.y, width: к.w, height: к.h }}>
         <Плиты ш={ш} тон={тон} дети={
-          <Предмет файл={"kadr/m/" + (ш.вещь || "u2_kamera.png")} размер={Math.min(бок * 0.5, 320)}
+          <Предмет файл={"kadr/m/" + (ш.вещь || "u2_kamera.png")} размер={Math.min(бок * 0.72, 420)}
                    ш={ш} тон={тон} />} />
       </div>
     );
@@ -232,7 +232,7 @@ const Медиа: React.FC<{ ш: any; к: Короб; тон: string }> = ({ ш,
     return (
       <div style={{ position: "absolute", left: к.x, top: к.y, width: к.w, height: к.h,
                     overflow: "hidden" }}>
-        <Коридор ш={ш} тон={тон} слово="" />
+        <Коридор ш={ш} тон={тон} слово="" файл={ш.вещь} />
       </div>
     );
   }
