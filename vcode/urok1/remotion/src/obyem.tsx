@@ -15,13 +15,13 @@ export const Предмет: React.FC<{ файл: string; размер: number; 
   const путь = staticFile(файл);
   return (
     <div style={{ position: "relative", width: размер, height: размер, perspective: 1400 }}>
-      <div style={{ position: "absolute", inset: "12%", borderRadius: "50%",
-                    background: `radial-gradient(circle, ${тон}55 0%, transparent 68%)`,
-                    filter: "blur(30px)", scale: 1 + Math.sin(t * 1.5) * 0.08 }} />
+      <div style={{ position: "absolute", inset: "-6%", borderRadius: "50%",
+                    background: `radial-gradient(circle, ${тон}4D 0%, ${тон}1A 42%, transparent 70%)`,
+                    scale: 1 + Math.sin(t * 1.5) * 0.08 }} />
       <div style={{ position: "relative", width: размер, height: размер,
                     transform: `rotateY(${пов}deg) translateY(${Math.sin(t * 1.1) * 10}px)` }}>
         <Img src={путь} style={{ width: размер, height: размер, objectFit: "contain", display: "block",
-             filter: `drop-shadow(0 26px 40px rgba(0,0,0,0.72)) drop-shadow(0 0 30px ${тон}44)` }} />
+             filter: `drop-shadow(0 20px 26px rgba(0,0,0,0.7))` }} />
         <div style={{ position: "absolute", inset: 0, maskImage: `url(${путь})`,
           WebkitMaskImage: `url(${путь})`, maskSize: "contain", WebkitMaskSize: "contain",
           maskRepeat: "no-repeat", WebkitMaskRepeat: "no-repeat", maskPosition: "center",
@@ -150,7 +150,7 @@ export const Карусель: React.FC<{ ш: any; тон: string; файлы: s
             transform: `rotateY(${(360 / n) * i}deg) translateZ(${R}px)`,
             backfaceVisibility: "hidden",
           }}>
-            <Предмет файл={"kadr/" + ф} размер={340} ш={ш} тон={i % 2 ? Т.акцент2 : тон} ключ={"k" + i} />
+            <Предмет файл={"kadr/m/" + ф} размер={340} ш={ш} тон={i % 2 ? Т.акцент2 : тон} ключ={"k" + i} />
           </div>
         ))}
       </div>
@@ -175,7 +175,7 @@ export const Орбита: React.FC<{ ш: any; тон: string; файл: string;
         }} />
       ))}
       <div style={{ position: "absolute", left: "50%", top: "50%", marginLeft: -200, marginTop: -200 }}>
-        <Предмет файл={"kadr/" + файл} размер={400} ш={ш} тон={тон} />
+        <Предмет файл={"kadr/m/" + файл} размер={400} ш={ш} тон={тон} />
       </div>
       {метки.filter(Boolean).slice(0, 3).map((м, i) => {
         const угол = frame * 0.9 + i * 120;
@@ -209,7 +209,7 @@ export const Карточка: React.FC<{ ш: any; тон: string; файл: str
       border: `1px solid ${тон}55`, boxShadow: `0 40px 90px rgba(0,0,0,0.6), 0 0 70px ${тон}22`,
       transform: `perspective(1400px) rotateY(${з * (7 - ход * 12)}deg) rotateX(${2 - ход * 4}deg)`,
     }}>
-      <Img src={staticFile("kadr/" + файл)} style={{
+      <Img src={staticFile("kadr/m/" + файл)} style={{
         position: "absolute", width: "120%", height: "120%", objectFit: "cover",
         left: `${-10 + з * ход * 8}%`, top: `${-10 + ход * 5}%`,
         transform: `scale(${1 + ход * 0.08})`, filter: "contrast(1.1) saturate(1.08) brightness(1.3)",

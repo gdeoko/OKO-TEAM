@@ -51,7 +51,7 @@ const Волны: React.FC<{ ш: any; тон: string; frame: number; з: number 
 
 const Соты: React.FC<{ ш: any; тон: string; frame: number; з: number }> = ({ ш, тон, frame, з }) => (
   <AbsoluteFill style={{ opacity: 0.26 }}>
-    {new Array(30).fill(0).map((_, i) => {
+    {new Array(18).fill(0).map((_, i) => {
       const кол = 6;
       const x = (i % кол) * 17 + (Math.floor(i / кол) % 2 ? 8 : 0);
       const y = Math.floor(i / кол) * 19;
@@ -85,7 +85,7 @@ const Искры: React.FC<{ ш: any; тон: string; frame: number; з: number 
   const { width, height } = useVideoConfig();
   return (
     <AbsoluteFill>
-      {new Array(34).fill(0).map((_, i) => {
+      {new Array(22).fill(0).map((_, i) => {
         const x = сид(ш.id, "ix" + i) * width;
         const ск = 0.7 + сид(ш.id, "iv" + i) * 2.6;
         const y = ((сид(ш.id, "iy" + i) * height + frame * ск * з * 2.4) % (height + 120)) - 60;
@@ -136,11 +136,11 @@ const Шторы: React.FC<{ ш: any; тон: string; frame: number; з: number 
 /** Ключ-арт как фактура: сильно затемнён, двоится в цвет и всегда движется. */
 const Фактура: React.FC<{ ш: any; тон: string; ход: number; з: number }> = ({ ш, тон, ход, з }) => (
   <AbsoluteFill style={{ overflow: "hidden", opacity: 0.82 }}>
-    <Img src={staticFile("kadr/" + ш.фактура)} style={{
+    <Img src={staticFile("kadr/m/" + ш.фактура)} style={{
       position: "absolute", width: "128%", height: "128%", objectFit: "cover",
       left: `${-14 + з * ход * 7}%`, top: `${-14 - ход * 6}%`,
       transform: `scale(${1.02 + ход * 0.07})`,
-      filter: "grayscale(0.4) contrast(1.2) brightness(0.72)",
+      filter: "contrast(1.12) brightness(0.74) saturate(0.7)",
     }} />
     <AbsoluteFill style={{ background: `linear-gradient(${120 + сид(ш.id, "dg") * 120}deg, ${тон}5C, ${Т.акцент2}3D)`, mixBlendMode: "color" }} />
     <AbsoluteFill style={{ background: `radial-gradient(76% 76% at 50% 50%, ${Т.фон}55 10%, ${Т.фон}E6 100%)` }} />

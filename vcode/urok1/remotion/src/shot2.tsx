@@ -73,7 +73,7 @@ const Спутник: React.FC<{ ш: any; тон: string; сторона: "ле�
       top: 150 + сид(ш.id, "sy") * 260, opacity: д * 0.92,
       transform: `rotate(${interpolate(frame, [0, durationInFrames], [-9 * з, 9 * з])}deg) scale(${0.9 + ход * 0.14})`,
     } as any}>
-      <Предмет файл={"kadr/" + ш.спутник} размер={400} ш={ш} тон={тон} />
+      <Предмет файл={"kadr/m/" + ш.спутник} размер={400} ш={ш} тон={тон} />
     </div>
   );
 };
@@ -253,7 +253,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
           <div style={{
             fontFamily: п.семья, fontWeight: п.вес, fontSize: кегль(ш, 104), letterSpacing: п.разрядка,
             lineHeight: 1.04, textAlign: "center", maxWidth: 1400,
-            backgroundImage: `url(${staticFile("kadr/" + (ш.ключ_арт || "u1_s18.jpg"))})`,
+            backgroundImage: `url(${staticFile("kadr/m/" + (ш.ключ_арт || "u1_s18.jpg"))})`,
             backgroundSize: "140%",
             backgroundPosition: `${40 + ход * 20}% ${45 + ход * 10}%`,
             WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
@@ -405,7 +405,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
         <AbsoluteFill style={{ padding: П, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <div style={{ position: "absolute", left: 0, right: 0, top: "34%", display: "flex", justifyContent: "center",
                         transform: `translateX(${interpolate(frame, [0, durationInFrames], [760 * з, -760 * з])}px) rotate(${interpolate(frame, [0, durationInFrames], [-14, 14]) * з}deg)` }}>
-            <Предмет файл={"kadr/" + (ш.предмет?.файл || "u2_kamera.png")} размер={470} ш={ш} тон={тон} />
+            <Предмет файл={"kadr/m/" + (ш.предмет?.файл || "u2_kamera.png")} размер={470} ш={ш} тон={тон} />
           </div>
           <Слова ш={ш} размер={кегль(ш, 66)} ширина={880} />
         </AbsoluteFill>, false);
@@ -419,7 +419,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
             <Слова ш={ш} размер={кегль(ш, 46)} ширина={660} цвет="rgba(244,245,247,0.86)" />
           </div>
           <div style={{ flex: 1, display: "flex", justifyContent: "center", transform: `scale(${1 + ход * 0.1})` }}>
-            <Предмет файл={"kadr/" + (ш.предмет?.файл || "u2_kamera.png")} размер={520} ш={ш} тон={тон} />
+            <Предмет файл={"kadr/m/" + (ш.предмет?.файл || "u2_kamera.png")} размер={520} ш={ш} тон={тон} />
           </div>
         </AbsoluteFill>, false);
 
@@ -432,7 +432,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
               return (
                 <div key={i} style={{ opacity: свой ? 1 : 0.6,
                                       transform: `scale(${свой ? 1.16 : 0.92}) translateY(${свой ? -18 : 12}px)` }}>
-                  <Предмет файл={"kadr/" + ф} размер={свой ? 330 : 260} ш={ш} ключ={"n" + i}
+                  <Предмет файл={"kadr/m/" + ф} размер={свой ? 330 : 260} ш={ш} ключ={"n" + i}
                            тон={i % 2 ? Т.акцент2 : тон} />
                 </div>
               );
@@ -449,7 +449,7 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
         <AbsoluteFill style={{ padding: П, display: "flex", flexDirection: "column",
                                alignItems: "center", justifyContent: "center" }}>
           <div style={{ position: "relative" }}>
-            <Предмет файл={"kadr/" + (ш.предмет?.файл || "u2_obyektiv.png")} размер={540} ш={ш} тон={тон} />
+            <Предмет файл={"kadr/m/" + (ш.предмет?.файл || "u2_obyektiv.png")} размер={540} ш={ш} тон={тон} />
             {метки.map((м, i) => {
               const д = interpolate(frame, [8 + i * 8, 22 + i * 8], [0, 1],
                                     { easing: ВЫХОД, extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -482,9 +482,9 @@ export const Шот: React.FC<{ ш: any }> = ({ ш }) => {
     case "предмет_силуэт":
       return обёртка(
         <AbsoluteFill style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", opacity: 0.4, filter: `blur(1px) saturate(0.4)`,
+          <div style={{ position: "absolute", opacity: 0.4, filter: "saturate(0.4)",
                         transform: `scale(${2.1 + ход * 0.25}) translateX(${(ход - 0.5) * 60 * з}px)` }}>
-            <Предмет файл={"kadr/" + (ш.спутник || "u2_obyektiv.png")} размер={520} ш={ш} тон={тон} />
+            <Предмет файл={"kadr/m/" + (ш.спутник || "u2_obyektiv.png")} размер={520} ш={ш} тон={тон} />
           </div>
           <AbsoluteFill style={{ padding: П, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Слова ш={ш} размер={кегль(ш, 86)} ширина={1250} центр стиль={{ textShadow: "0 8px 40px rgba(0,0,0,0.8)" }} />
