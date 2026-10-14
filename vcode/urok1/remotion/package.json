@@ -1,0 +1,17 @@
+{
+  "name": "vlionoff-urok1",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "render": "remotion render src/index.ts Urok out/urok.mp4"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.407",
+    "@remotion/cli": "4.0.407",
+    "@remotion/renderer": "4.0.407",
+    "@remotion/transitions": "^4.0.407",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "remotion": "4.0.407"
+  }
+}

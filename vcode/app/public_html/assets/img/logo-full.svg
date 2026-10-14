@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" width="340" height="72">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="340" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <path d="M8 16 L26 52 L44 16" fill="none" stroke="url(#g2)" stroke-width="7"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 16 L27 36" fill="none" stroke="url(#g2)" stroke-width="2.4"
+        stroke-linecap="round" opacity=".75"/>
+  <text x="58" y="47" font-family="Unbounded, Montserrat, sans-serif" font-size="30"
+        font-weight="700" fill="#EDEFF5" letter-spacing="1">V.LIONOFF</text>
+  <text x="60" y="62" font-family="Inter, sans-serif" font-size="9"
+        fill="#8C93A8" letter-spacing="4.2">СТУДИЯ ВИДЕО И ОБУЧЕНИЯ</text>
+</svg>

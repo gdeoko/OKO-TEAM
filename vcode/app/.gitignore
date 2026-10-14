@@ -1,0 +1,6 @@
+data/
+public_html/uploads/
+core/config.local.php
+*.db
+*.db-wal
+*.db-shm
