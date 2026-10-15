@@ -17,7 +17,7 @@ umask(0002);
 $RC = [
     /* Сайт */
     'site_url'    => 'https://rocketcdn.ru',
-    'lk_url'      => 'https://lk.rocketcdn.ru',
+    'lk_url'      => 'https://my.rocketcdn.ru',
     'brand'       => 'Rocket CDN',
 
     /* Админка: пароль входа. Обязательно сменить на боевом. */

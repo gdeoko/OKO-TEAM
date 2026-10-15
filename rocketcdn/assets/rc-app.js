@@ -12,7 +12,7 @@ var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
 var $  = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var API = "api.php";
-var LK  = "https://lk.rocketcdn.ru";
+var LK  = "https://my.rocketcdn.ru";
 
 /* Мерки блоков - через общий кэш. Прямой вопрос браузеру о месте
    блока заставляет его досчитать вёрстку немедленно, а спрашиваем мы
@@ -1312,7 +1312,7 @@ function boot() {
   })();
 
   /* Клики по регистрации и внешним ссылкам */
-  $$('a[href*="lk.rocketcdn"], .js-reg').forEach(function (a) {
+  $$('a[href*="my.rocketcdn"], a[href*="lk.rocketcdn"], .js-reg').forEach(function (a) {
     a.addEventListener("click", function () { track("register", a.dataset.place || "link"); });
   });
   $$(".js-connect").forEach(function (a) {
