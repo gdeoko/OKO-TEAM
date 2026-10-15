@@ -1,0 +1,37 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><title>просмотр модели</title>
+<style>html,body{margin:0;background:#070A18;height:100%;overflow:hidden}canvas{display:block}</style>
+<body>
+<script src="../../assets/vendor/three.min.js"></script>
+<script src="../../assets/rv-glb.js"></script>
+<script>
+/* Стендовая страница просмотра одной модели: ?m=адрес&az=градусы&el=градусы.
+   Тот же three, тот же загрузчик, что на сайте, и близкий свет. Нужна,
+   чтобы смотреть кандидатов до того, как они попадут в акт. */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var адрес = q.get("m"), az = (+q.get("az") || 30) * Math.PI / 180, el = (+q.get("el") || 18) * Math.PI / 180;
+  var T = THREE, w = innerWidth, h = innerHeight;
+  var r = new T.WebGLRenderer({ antialias: true }); r.setSize(w, h); r.setPixelRatio(devicePixelRatio || 1);
+  r.outputColorSpace = T.SRGBColorSpace; r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
+  document.body.appendChild(r.domElement);
+  var сц = new T.Scene(); сц.background = new T.Color(0x070A18);
+  var кам = new T.PerspectiveCamera(35, w / h, 0.1, 1000);
+  var ключ = new T.DirectionalLight(0xEAEFFF, 3.2); ключ.position.set(-3, 4, 6); сц.add(ключ);
+  var контр = new T.DirectionalLight(0x6E7EE0, 2.2); контр.position.set(4, -3, -3); сц.add(контр);
+  var зап = new T.DirectionalLight(0x9FB0E8, 0.8); зап.position.set(0, 1, 9); сц.add(зап);
+  сц.add(new T.HemisphereLight(0x2A3A8C, 0x0A0C1A, 1.2));
+  var env = new T.PMREMGenerator(r);
+  сц.environment = env.fromScene(new T.Scene(), 0.04).texture;
+  window.готово = false;
+  RV_GLB.взятьМодель(адрес, { отражения: 1.2, анизотропия: 8 }).then(function (г) {
+    сц.add(г); г.updateMatrixWorld(true);
+    var к = new T.Box3().setFromObject(г); var центр = к.getCenter(new T.Vector3()); var р = к.getSize(new T.Vector3()).length() / 2;
+    г.position.sub(центр);
+    var d = р / Math.tan(кам.fov * Math.PI / 360) * 1.15;
+    кам.position.set(d * Math.cos(el) * Math.sin(az), d * Math.sin(el), d * Math.cos(el) * Math.cos(az));
+    кам.lookAt(0, 0, 0);
+    window.сведения = { материалов: г.материалы.length, размер: к.getSize(new T.Vector3()).toArray().map(function (x) { return +x.toFixed(2); }) };
+    r.render(сц, кам); window.готово = true;
+  }).catch(function (e) { window.ошибка = String(e); window.готово = true; });
+})();
+</script></html>

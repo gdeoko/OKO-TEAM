@@ -1,0 +1,451 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN - прибор горизонтальной ленты
+   ───────────────────────────────────────────────────────────
+   Один и тот же прибор на телефоне и на мониторе: полоса хода,
+   счётчик «2 / 6» и точки-переключатели. Раньше на телефоне не
+   было ничего - лента листалась, но человек не знал ни сколько
+   в ней карточек, ни где он сейчас.
+   ═══════════════════════════════════════════════════════════ */
+
+.hs-bar {
+  display: flex; align-items: center; gap: clamp(12px, 2vw, 22px);
+}
+.hs-bar i { flex: 1 1 auto; }
+
+.rail-nav {
+  flex: none; display: flex; align-items: center; gap: clamp(10px, 1.4vw, 16px);
+}
+
+/* ── Точки ─────────────────────────────────────────────────
+   Кнопка большая (палец), сама точка маленькая (глаз). */
+.rail-dots { display: flex; align-items: center; gap: 2px; }
+.rail-dot {
+  width: 22px; height: 26px; padding: 0; border: 0; background: none;
+  display: grid; place-items: center; cursor: pointer;
+  /* Зона нажатия выше самой кнопки. Точек в ряду до десятка, и в
+     ширину раздать их до тридцати четырёх нельзя - ряд не влезет в
+     узкий экран, а перекрывающиеся зоны хуже маленьких: палец начнёт
+     попадать в соседа. Поэтому раздаём вверх и вниз, до соседней
+     точки по горизонтали и не дальше. */
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.rail-dot::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  /* Ширина ровно по кнопке, а не жёстким числом. Стояло 24 при
+     кнопке 22 на широком экране и 26 на узком: на узком добавка
+     оказывалась УЖЕ самой кнопки и не давала ничего. По ширине
+     раздавать всё равно некуда - соседняя точка в двух пикселях,
+     зона в тридцать четыре налезла бы на неё с обеих сторон, а
+     перекрытые зоны хуже маленьких.
+
+     Зато по вертикали место свободно: ряд горизонтальный, над и под
+     ним ничего нет. Сорок четыре точки это тот самый палец, ради
+     которого правило и написано. Замер до правки: 26x30. */
+  width: 100%; height: 44px; transform: translate(-50%, -50%);
+}
+.rail-dot i {
+  display: block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--line-2); transition: all .26s var(--ease);
+}
+.rail-dot:hover i { background: var(--tx-3); transform: scale(1.25); }
+.rail-dot.on i {
+  width: 20px; border-radius: 3px; background: var(--grad);
+  box-shadow: 0 0 12px rgba(66, 178, 220, .45);
+}
+.rail-dot:focus-visible { outline: none; }
+.rail-dot:focus-visible i {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent-tx);
+}
+
+/* ── Счётчик ───────────────────────────────────────────────
+   Моноширинные цифры: номер меняется на каждой карточке, и без
+   табличных цифр строка дёргалась бы по ширине. */
+.rail-cnt {
+  display: flex; align-items: baseline; gap: 3px;
+  font-size: var(--fs-2); line-height: 1; color: var(--tx-3);
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+  letter-spacing: .02em;
+}
+.rail-cnt b { color: var(--tx); font-weight: 700; }
+.rail-cnt s { text-decoration: none; opacity: .5; }
+.rail-cnt s::before { content: '/'; }
+.rail-cnt em { font-style: normal; }
+
+/* ── Телефон ───────────────────────────────────────────────
+   Прибор остаётся тот же: полоса хода уступает место точкам,
+   потому что ходом здесь правит палец, а не прокрутка страницы. */
+@media (max-width: 900px) {
+  .hs-bar {
+    display: flex !important;
+    justify-content: center; margin-top: 14px;
+  }
+  .hs-bar i { display: none; }
+  .rail-nav { gap: 14px; }
+  .rail-dot { width: 26px; height: 30px; }
+  .rail-dot i { width: 7px; height: 7px; }
+  .rail-dot.on i { width: 22px; }
+
+  /* Подсказка, что лента листается: край карточек уходит под
+     мягкую тень, а стрелка один раз качается вбок. Как только
+     человек доехал до второй карточки, всё это снимается. */
+  .hs-view { position: relative; }
+  .hs .hs-view::after {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+    width: clamp(34px, 9vw, 56px); pointer-events: none; z-index: 3;
+    background: linear-gradient(90deg, rgba(5, 12, 21, 0) 0%, var(--bg) 96%);
+    opacity: .9; transition: opacity .45s var(--ease);
+  }
+  .hs.rail-used .hs-view::after { opacity: 0; }
+
+  .rail-nav::before {
+    content: ''; width: 15px; height: 15px; flex: none;
+    background: currentColor; color: var(--tx-3); opacity: .8;
+    -webkit-mask: var(--rail-swipe) center / contain no-repeat;
+    mask: var(--rail-swipe) center / contain no-repeat;
+    animation: railSwipe 2.6s var(--ease) infinite;
+  }
+  .hs.rail-used .rail-nav::before { display: none; }
+}
+
+/* Стрелка листания рисуется знаком, а не картинкой: лишний запрос
+   ради пятнадцати пикселей не нужен */
+:root {
+  --rail-swipe: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+@keyframes railSwipe {
+  0%, 62%, 100% { transform: translateX(0); opacity: .55; }
+  76% { transform: translateX(5px); opacity: 1; }
+  88% { transform: translateX(0); opacity: .75; }
+}
+
+/* Светлая тема: затемнение у края превращается в засветление */
+html[data-theme="light"] .hs .hs-view::after {
+  background: linear-gradient(90deg, rgba(243, 247, 251, 0) 0%, var(--bg) 96%);
+}
+
+/* Кому движение мешает - стрелка не качается */
+@media (prefers-reduced-motion: reduce) {
+  .rail-nav::before { animation: none; }
+  .rail-dot i { transition: none; }
+}
+
+/* Внутри корабля ленты уже за кадром: прибор не должен светиться
+   поверх рубки */
+html.rc-inside .rail-nav { opacity: 0; }
+
+/* ═══ Копирование контактов ═════════════════════════════════
+   Кнопка живёт внутри строки контакта и не мешает самой ссылке:
+   почта по нажатию по-прежнему открывает почтовик. */
+.contact-list a { position: relative; }
+.copy-btn {
+  margin-left: 8px; width: 28px; height: 28px; flex: none; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--line-2); border-radius: var(--r-xs);
+  background: var(--bg-2); color: var(--tx-3);
+  opacity: 0; transform: scale(.85);
+  transition: opacity .2s var(--ease), transform .2s var(--ease),
+              color .2s var(--ease), border-color .2s var(--ease);
+}
+.contact-list a:hover .copy-btn,
+.contact-list a:focus-within .copy-btn,
+.copy-btn:focus-visible { opacity: 1; transform: none; }
+.copy-btn:hover { color: var(--accent-tx); border-color: var(--accent-tx); }
+/* Знак копирования - два наложенных листа, рисуется маской: внутри
+   строки контакта не должно быть второго svg, иначе строка считает,
+   что её собственная иконка уже стоит */
+.copy-btn::before {
+  content: ''; width: 14px; height: 14px; background: currentColor;
+  -webkit-mask: var(--copy-ico) center / contain no-repeat;
+  mask: var(--copy-ico) center / contain no-repeat;
+}
+.copy-btn.done::before {
+  -webkit-mask-image: var(--check-ico);
+  mask-image: var(--check-ico);
+}
+:root {
+  --copy-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='11' height='11' rx='2'/%3E%3Cpath d='M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E");
+  --check-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5 10-11'/%3E%3C/svg%3E");
+}
+.copy-btn.done {
+  color: var(--accent-tx); border-color: var(--accent-tx);
+  box-shadow: 0 0 0 3px rgba(66, 178, 220, .16);
+}
+
+/* На телефоне наведения нет: кнопка видна всегда и крупнее пальца */
+@media (hover: none), (max-width: 900px) {
+  .copy-btn { opacity: .85; transform: none; width: 34px; height: 34px; }
+  .copy-btn::before { width: 16px; height: 16px; }
+}
+
+/* ═══ Подтверждение действия ════════════════════════════════
+   Одна строка внизу экрана вместо окна: она не отбирает фокус и
+   не перекрывает то, что человек читает. */
+.rc-toast {
+  position: fixed; left: 50%; bottom: calc(24px + var(--safe-b, 0px));
+  transform: translate(-50%, 16px); z-index: 3000;
+  max-width: min(92vw, 460px); padding: 12px 18px;
+  border-radius: var(--r-sm); border: 1px solid var(--line-2);
+  background: var(--bg-2); color: var(--tx);
+  font-size: var(--fs-3); line-height: var(--lh-cap); text-align: center;
+  box-shadow: var(--shadow); backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .26s var(--ease), transform .26s var(--ease);
+}
+.rc-toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-toast, .copy-btn { transition: opacity .2s linear; }
+}
+
+/* ═══ Кнопка в работе ═══════════════════════════════════════
+   Пока заявка уходит, кнопка занята и это видно: без признака
+   работы человек жмёт второй раз, и заявка дублируется. */
+.btn.is-sending { cursor: progress; opacity: .9; }
+.btn-spin {
+  width: 15px; height: 15px; flex: none; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent;
+  opacity: .85; animation: btnSpin .72s linear infinite;
+}
+@keyframes btnSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  /* Кому вращение мешает - точка просто мигает */
+  .btn-spin { animation: btnPulse 1.1s ease-in-out infinite; border-right-color: currentColor; }
+  @keyframes btnPulse { 50% { opacity: .3; } }
+}
+
+/* Последний кадр стойки: остаётся на её месте, когда объёмная сцена
+   уступила контекст главной. Кадр честный - снят с самого холста */
+.rack-still {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; pointer-events: none;
+}
+
+/* ═══ Обход к содержимому ═══════════════════════════════════
+   Прячем не display:none - иначе фокус её не найдёт. Уводим за
+   верхний край и возвращаем, когда до неё дошли клавишей. */
+.skip {
+  position: fixed; left: 50%; top: 0; z-index: 4000;
+  transform: translate(-50%, -140%);
+  padding: 12px 22px; border-radius: 0 0 var(--r-sm) var(--r-sm);
+  background: var(--bg-2); color: var(--tx); border: 1px solid var(--line-2);
+  border-top: 0; font-size: var(--fs-3); font-weight: 700;
+  box-shadow: var(--shadow);
+  transition: transform .22s var(--ease);
+}
+.skip:focus, .skip:focus-visible {
+  transform: translate(-50%, 0); outline: none;
+  box-shadow: var(--shadow), 0 0 0 3px var(--accent-tx);
+}
+
+/* ═══ Незаполненное согласие ════════════════════════════════
+   Класс на строке согласия ставился, а правила под него не было:
+   человек жал «Отправить заявку» и не видел вообще ничего.
+   Теперь строка краснеет, а флажок обведён. */
+/* Внутри рубки палитра формы своя (rc-cockpit.css красит подписи
+   бортовым светом) и перебивает обычный цвет ошибки. Здесь важнее
+   ошибка: без неё человек не понимает, почему кнопка молчит. */
+html .consent.bad,
+html[data-act="console"] .consent.bad,
+html.rc-inside .consent.bad { color: #F87171 !important; }
+.consent.bad input {
+  outline: 2px solid #F87171; outline-offset: 2px; border-radius: 3px;
+}
+.consent.bad a { color: inherit; }
+
+/* ═══ Флажок согласия ═══════════════════════════════════════
+   Системный флажок в тёмной теме рисуется сплошным белым, а в
+   светлой - сплошным тёмным квадратом: приёмка прочитала оба как
+   «галочка уже стоит». Рисуем сами: пустой контур, пока не
+   отмечено, фирменная заливка с галочкой - когда отмечено. */
+.consent input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 18px; height: 18px; margin-top: 1px; flex: none;
+  /* Обязательная галочка - орган управления, её граница держит 3:1 */
+  border: 1.5px solid var(--line-ui); border-radius: 5px;
+  background: transparent; cursor: pointer;
+  display: grid; place-items: center;
+  transition: border-color .18s var(--ease), background .18s var(--ease);
+}
+.consent input[type="checkbox"]:hover { border-color: var(--accent-tx); }
+.consent input[type="checkbox"]::before {
+  content: ''; width: 11px; height: 11px;
+  background: #fff; transform: scale(0);
+  transition: transform .16s var(--ease);
+  -webkit-mask: var(--check-ico) center / contain no-repeat;
+  mask: var(--check-ico) center / contain no-repeat;
+}
+.consent input[type="checkbox"]:checked {
+  background: var(--grad); border-color: transparent;
+}
+.consent input[type="checkbox"]:checked::before { transform: scale(1); }
+.consent.bad input[type="checkbox"] { border-color: #F87171; }
+
+@media (max-width: 900px) {
+  /* Палец крупнее курсора: увеличиваем цель, рисунок тот же */
+  .consent input[type="checkbox"] { width: 22px; height: 22px; }
+  .consent input[type="checkbox"]::before { width: 14px; height: 14px; }
+}
+
+/* ═══ Светлая тема: подсказки в полях ═══════════════════════
+   Приёмка замерила ~2:1 у плейсхолдеров и у выбранного значения
+   списка на белом фоне. Подсказка обязана читаться, а выбранное
+   значение - это вообще данные, а не подсказка. */
+html[data-theme="light"] .field input::placeholder,
+html[data-theme="light"] .field textarea::placeholder,
+html[data-theme="light"] .search input::placeholder {
+  color: rgba(9, 19, 32, .58);
+}
+html[data-theme="light"] .field select { color: var(--tx); }
+
+/* ═══ Мелочи оформления по приёмке ══════════════════════════ */
+
+/* Кнопка «наверх» единственная на сайте не отвечала на наведение */
+.totop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -8px rgba(10, 88, 151, .95);
+}
+.totop:active { transform: translateY(0) scale(.94); }
+
+/* Активный сегмент пилюли тоже живой: правило .on стоит после
+   :hover и перебивало его - наведение на выбранный язык, тему или
+   звук не давало никакого отклика */
+.pill button.on:hover, .pill button.on:focus-visible { color: #fff; filter: brightness(1.12); }
+.pill button:hover svg, .pill button:focus-visible svg { transform: scale(1.08); }
+.pill button svg { transition: transform .18s var(--ease); }
+
+/* Кольцо фокуса везде одного цвета: у переключателя темы оно было
+   тёмно-синим и в тёмной теме не читалось вовсе */
+.js-theme:focus-visible, .pill button:focus-visible {
+  outline: 2px solid var(--cyan, #42B2DC); outline-offset: 3px;
+}
+
+/* Фокус не должен вставать под шапкой */
+:where(a, button, input, textarea, select, [tabindex]) { scroll-margin-top: 96px; }
+
+/* Длинные слова в узких колонках переносятся, а не разрываются */
+html[lang="ru"] .card p, html[lang="ru"] .sec-p, html[lang="ru"] .faq-a p {
+  hyphens: auto; -webkit-hyphens: auto;
+}
+
+/* ═══ Индикатор звука ═══════════════════════════════════════
+   Три ровные полоски в выключенном состоянии читались как
+   многоточие - кнопка «ещё», а не звук. Добавляем к ним динамик:
+   он и говорит, о чём кнопка, и показывает состояние. */
+/* Значок и полоски стоят В СТРОКУ. У кнопок капсулы базовый
+   display: grid, а это одна колонка: значок динамика вставал первой
+   строкой, полоски эквалайзера второй - центр полосок оказывался на
+   14 точек ниже центра кнопки, а низ на две точки вылезал за кромку
+   капсулы. Владелец назвал это «кнопки меню кривые». */
+.pill.snd .js-sound {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.pill.snd .js-sound::before {
+  content: ''; width: 15px; height: 15px; flex: none;
+  background: currentColor;
+  -webkit-mask: var(--snd-off-ico) center / contain no-repeat;
+  mask: var(--snd-off-ico) center / contain no-repeat;
+  transition: opacity .2s var(--ease);
+  opacity: .7;
+}
+html.snd-on .pill.snd .js-sound::before {
+  -webkit-mask-image: var(--snd-on-ico);
+  mask-image: var(--snd-on-ico);
+  opacity: 1;
+}
+/* Полоски равномерными остаются только пока звука нет: тогда они
+   читаются как ровная черта у динамика, а не как «ещё» */
+html:not(.snd-on) .pill.snd .eq { opacity: .5; }
+
+:root {
+  --snd-on-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9H4Z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7'/%3E%3C/svg%3E");
+  --snd-off-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9H4Z'/%3E%3Cpath d='m17 10 4 4M21 10l-4 4'/%3E%3C/svg%3E");
+}
+
+/* ═══ Ширина кадра на больших экранах ═══════════════════════
+   На 1920 макет в 1200 пикселей плавает в окне: заголовок героя
+   уходит в три строки, между текстом и глобусом остаётся четверть
+   экрана пустоты. Даём кадру дышать - раскладка та же, меняются
+   только величины, как и требует приёмка. */
+/* Кадр расширяется там же, где в шапке появляется капсула языка.
+   Пока порог стоял на 1600, между 1241 и 1599 строка шапки не
+   вмещала себя: навигация обрезалась на 71 точку, «Контакты» уходили
+   под капсулу «RU EN», а надпись «Регистрация» вылезала за кнопку.
+   Полоса эта не редкая: 1280, 1366 и 1440 без всякого увеличения, а
+   ещё 1920 при 150 процентах и 2560 при 175. */
+@media (min-width: 1300px) {
+  :root { --maxw: 1360px; }
+}
+@media (min-width: 1600px) {
+  :root { --maxw: 1400px; }
+}
+@media (min-width: 1900px) {
+  :root { --maxw: 1520px; }
+}
+
+/* Четыре колонки продуктов на 1440 дают строки по два-три слова -
+   вдвое ниже собственного норматива читаемости. Колонка появляется
+   только тогда, когда ей есть куда встать. */
+@media (min-width: 1100px) and (max-width: 1599px) {
+  #products .g-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ═══ Ряды карточек по одной линии ══════════════════════════
+   Приёмка замерила три разные высоты в одном ряду ленты «Как это
+   работает» (179 / 204 / 228) и разнобой по низу у карточек с
+   разной длиной текста. Карточка тянется на всю ячейку, а её
+   последний блок прижимается к низу. */
+.hs-track > * { align-self: stretch; }
+.hs-track > .card, .hs-track > .case-card { height: 100%; }
+.card > p:last-child, .viz-card > p:last-child { margin-top: auto; }
+
+/* Средняя карточка ряда теряла четыре пикселя ширины и два высоты:
+   наклон под курсором писался прямо в элемент сетки, и браузер
+   округлял его размеры. Наклон переносим на свой слой. */
+.g-3 > *, .g-4 > * { transform-style: preserve-3d; }
+
+/* Мёртвая полоса между лентой шагов и панелью маршрута: коннектор
+   остался недоделанным, оставляем ему ровно высоту линии */
+#route .viz-card { margin-top: 0; }
+
+/* Пропуск невидимых секций (content-visibility) пробовали: выигрыш
+   вышел небольшим - около сотни миллисекунд на кадр, - а высота
+   страницы начала плавать на четыре сотни пикселей. От высоты
+   считается вся раскладка фильма: где какой акт, где оборот в
+   рубке, где подъезд к пульту. Ради ста миллисекунд ломать
+   раскладку нельзя, поэтому приём снят. */
+
+/* Правовые ссылки в меню: мельче пунктов навигации, они справочные */
+.drawer .drawer-law {
+  font-size: var(--fs-2, 13px);
+  opacity: .72;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.drawer .drawer-law:hover { opacity: 1; }
+
+/* Копирайт и подпись к картам планет: это не ссылки, а мелкий текст.
+   Подчёркивания и нажатия им не нужно, зато нужна переносимая
+   строка - подпись к картам длинная. */
+.drawer .drawer-fine {
+  display: block;
+  font-size: var(--fs-1, 11px);
+  line-height: 1.45;
+  opacity: .55;
+  cursor: default;
+  white-space: normal;
+}
+
+/* ── Подвал не входит в кадр корабля ─────────────────────────
+   Внутри корабля человек сидит в кресле и смотрит в остекление.
+   Правовая строка, лежащая поперёк этого кадра, читается наклейкой
+   поверх сцены - владелец назвал это «поверх налеплено криво».
+   Внутри её нет. Всё содержимое подвала до единой строки живёт в
+   меню: обе правовые ссылки, условия SLA, копирайт и обязательная
+   по лицензии подпись к картам планет. */
+html.rc-inside .legal { display: none; }

@@ -1,0 +1,248 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · оформление внутреннего акта
+
+   Холст рубки лежит под содержимым, а не над ним: текст, вопросы
+   и форма остаются обычной вёрсткой, с которой работают клавиатура,
+   автозаполнение и экранная читалка. Трёхмерная сцена только даёт
+   им пространство, в котором они висят.
+
+   Раскладку карточек по кругу салона держит rc-cinema.css: здесь
+   только материал - стекло панелей, свет тамбура, вид пульта.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Холст рубки ─────────────────────────────────────────── */
+.rc-int-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  opacity: 0; pointer-events: none;
+  transition: opacity .5s var(--ease);
+}
+.rc-int-canvas.on { opacity: 1; }
+html.rc-reduced .rc-int-canvas { display: none !important; }
+
+/* ── Воздух рубки ────────────────────────────────────────────
+   Один композитный слой поверх холста. Он делает три вещи, ради
+   которых иначе пришлось бы заводить постобработку - а это второй
+   проход по всем пикселям на телефоне, где рубка и так живёт в
+   одном контексте.
+
+   Первая: виньетка. Объём в кадре читается по перепаду яркости от
+   середины к углам, и без неё круглая комната упирается в ровные
+   светлые края экрана.
+   Вторая: тёплый подмес снизу. Весь свет в рубке холодный, и одна
+   тёплая нота у пола не даёт кадру уйти в мертвенную синеву.
+   Третья: холодный отсвет сверху, от потолочного плафона.
+
+   Оба нижних отсвета разгораются вместе с подъездом к пульту
+   (--int-con приходит из rc-interior.js): чем ближе панель, тем
+   сильнее её свет снизу. Одно число ведёт и лампу в сцене, и этот
+   слой, поэтому они не могут разойтись. */
+.rc-int-air {
+  position: fixed; inset: 0; z-index: 0;
+  display: block; pointer-events: none;
+  opacity: 0; transition: opacity .5s var(--ease);
+  background:
+    /* тёплый разлив от пульта: растёт вместе с подъездом */
+    radial-gradient(120% 62% at 50% 108%,
+      rgba(138,89,246, calc(.10 + var(--int-con, 0) * .16)) 0%,
+      rgba(138,89,246,0) 62%),
+    /* холодный отсвет потолочного плафона */
+    radial-gradient(90% 46% at 50% -8%,
+      rgba(207,233,245,.11) 0%, rgba(207,233,245,0) 70%),
+    /* виньетка: она и даёт кадру объём */
+    radial-gradient(112% 92% at 50% 46%,
+      rgba(5,12,21,0) 38%, rgba(5,12,21,.42) 78%, rgba(3,8,14,.72) 100%);
+  mix-blend-mode: normal;
+}
+.rc-int-air.on { opacity: 1; }
+/* Слабая машина: от слоя остаётся только виньетка, отсветы уходят */
+.rc-int-air.flat {
+  background: radial-gradient(112% 92% at 50% 46%,
+    rgba(5,12,21,0) 42%, rgba(5,12,21,.4) 82%, rgba(3,8,14,.66) 100%);
+}
+html.rc-reduced .rc-int-air { display: none !important; }
+
+/* Ракета припаркована: наружная сцена отдала свой слот интерьеру.
+   Специфичность здесь нарочно высокая: правила видимости холста
+   в основном файле стоят на классе has-rocket и на теме, и без
+   двойного селектора мы бы им проиграли. */
+html.rc-rocket-parked.has-rocket #rocketCanvas,
+html.rc-rocket-parked #rocketCanvas,
+html[data-theme="light"].rc-rocket-parked.has-rocket #rocketCanvas {
+  /* Та же длительность, что у появления рубки: иначе на пороге
+     входа один кадр уже погас, а второй ещё не разгорелся. */
+  opacity: 0 !important; transition: opacity .7s var(--ease);
+}
+
+/* ── Тамбур ──────────────────────────────────────────────────
+   Две створки люка сходятся к центру, между ними полоса света.
+   Ровно под этим перекрытием меняются сцены.
+
+   Створок мало, чтобы вход читался как вход: закрытая дверь -
+   это ещё не «я прошёл внутрь». Поэтому весь тамбур наезжает на
+   зрителя вместе с камерой, которая в этот момент действительно
+   едет вперёд (--int-enter приходит из rc-interior.js: ноль -
+   мы снаружи, единица - мы в центре рубки). Створки растут,
+   свет по стыку разгорается, и движение говорит то же, что и
+   звук: это проход, а не склейка. */
+.rc-int-lock {
+  position: fixed; inset: 0; z-index: 950; pointer-events: none;
+  opacity: 0; transition: opacity .18s linear;
+  perspective: 900px;
+}
+.rc-int-lock.on { opacity: 1; }
+.rc-lock-l, .rc-lock-r {
+  position: absolute; top: 0; bottom: 0; width: 52%;
+  background:
+    linear-gradient(90deg, #050C15 0%, #0B1725 76%, #12283C 100%),
+    repeating-linear-gradient(0deg, rgba(226,232,240,.05) 0 2px, transparent 2px 26px);
+  box-shadow: 0 0 60px 10px rgba(0,0,0,.8);
+  transform: translateX(-102%);
+  transition: transform .4s cubic-bezier(.55,0,.25,1);
+}
+.rc-lock-r { right: 0; transform: translateX(102%);
+  background:
+    linear-gradient(270deg, #050C15 0%, #0B1725 76%, #12283C 100%),
+    repeating-linear-gradient(0deg, rgba(226,232,240,.05) 0 2px, transparent 2px 26px);
+}
+.rc-lock-l { left: 0; }
+/* Проход. Владелец описал этот кадр дословно: «при открытии внутри
+   должен уже быть виден салон, а не появляться после вспышки».
+
+   Раньше створки только наезжали на зрителя, а салон открывался
+   тем, что весь слой разом гас, - отсюда и ощущение вспышки, за
+   которой «вдруг» оказалась комната. Теперь они расходятся: салон
+   уже нарисован за ними и открывается ровно настолько, насколько
+   разошлась дверь. Заодно обшивка по-прежнему наезжает - камера в
+   этот момент действительно едет вперёд, и одно движение не
+   отменяет другое. */
+.rc-int-lock.on .rc-lock-l {
+  transform:
+    translateX(calc(var(--int-enter, 0) * -104%))
+    scale(calc(1 + var(--int-enter, 0) * .16));
+  transform-origin: 22% 50%;
+}
+.rc-int-lock.on .rc-lock-r {
+  transform:
+    translateX(calc(var(--int-enter, 0) * 104%))
+    scale(calc(1 + var(--int-enter, 0) * .16));
+  transform-origin: 78% 50%;
+}
+/* Уплотнители: пока створки сомкнуты, по стыку идёт живая полоса
+   света. Если интерьер задержался, человек видит работу механизма,
+   а не зависшую страницу. */
+.rc-int-lock::after {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+  /* Полоса света живёт на стыке: створки разошлись - её уже нет,
+     иначе посреди открытого салона висел бы светящийся шов */
+  opacity: calc(1 - var(--int-enter, 0) * 3);
+  width: calc(3px + var(--int-enter, 0) * 26px);
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, var(--cyan), rgba(138,89,246,.8), transparent);
+  opacity: 0; animation: rcSeal 1.1s ease-in-out infinite;
+  filter: blur(calc(var(--int-enter, 0) * 6px));
+}
+.rc-int-lock.on::after { opacity: calc((1 - var(--int-enter, 0) * 3) * .9); }
+@keyframes rcSeal {
+  0%, 100% { filter: brightness(.7); transform: translateX(-50%) scaleY(.92) }
+  50%      { filter: brightness(1.5); transform: translateX(-50%) scaleY(1) }
+}
+/* Гравировка на внутренней стороне люка. Она уезжает вместе с
+   проходом: буквы уходят за спину, как надпись над дверью. */
+.rc-lock-tx {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(calc(1 + var(--int-enter, 0) * .5));
+  font-size: 11px; letter-spacing: .42em; font-weight: 600;
+  color: rgba(226,232,240,.30);
+  text-shadow: 0 1px 0 rgba(0,0,0,.9), 0 -1px 0 rgba(226,232,240,.10);
+  white-space: nowrap;
+  opacity: calc(1 - var(--int-enter, 0) * .8);
+}
+
+/* ── Внутри рубки ────────────────────────────────────────────
+   Содержимое второй половины страницы получает настоящее стекло
+   панелей. Живой фильтр здесь оправдан: под ним действительно
+   движется сцена.
+
+   Анкеты здесь нет намеренно. Экран пульта целиком принадлежит
+   rc-console.css: раньше эти два файла красили .form-card
+   наперегонки, правило отсюда выигрывало по весу селектора и
+   стирало фаску экрана - анкета получалась стеклянной карточкой
+   поверх фона вместо врисованного в панель прибора. */
+html.rc-inside #reliability .card,
+html.rc-inside #faq .faq {
+  background: linear-gradient(158deg, rgba(12,26,42,.72), rgba(8,17,28,.62));
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .22);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .16),
+    0 30px 60px -34px rgba(0,0,0,.9),
+    0 0 50px -26px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+html[data-theme="light"].rc-inside #reliability .card,
+html[data-theme="light"].rc-inside #faq .faq {
+  background: linear-gradient(158deg, rgba(255,255,255,.9), rgba(240,246,252,.82));
+  border-color: rgba(10,88,151,.2);
+}
+
+/* Панели салона стоят друг за другом по кругу, и настоящее
+   размытие фона под каждой из них - это четыре полноэкранных
+   фильтра на кадр. Здесь оно и не нужно: за панелью не страница,
+   а наша же сцена, свет которой мы задаём сами. Поэтому стекло
+   тут рисованное - подложка цветом сцены, светлая грань сверху,
+   косой блик. Заодно возвращается объём: backdrop-filter
+   схлопывает слои внутри карточки в плоскость. */
+html.rc-inside #reliability .cin-item,
+#reliability .cin-world > .cin-item {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background:
+    linear-gradient(158deg, rgba(16,33,52,.93), rgba(8,17,28,.9));
+  border-color: rgba(66,178,220,.26);
+  box-shadow:
+    inset 0 1px 0 rgba(226,232,240,.16),
+    0 30px 60px -34px rgba(0,0,0,.92);
+}
+html[data-theme="light"] #reliability .cin-world > .cin-item {
+  background: linear-gradient(158deg, rgba(255,255,255,.95), rgba(238,245,252,.9));
+  border-color: rgba(10,88,151,.22);
+}
+/* Косой блик по верхнему ребру: стекло, а не крашеная плита */
+#reliability .cin-world > .cin-item::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 34%, rgba(207,233,245,.10) 48%, transparent 60%);
+  opacity: var(--cin-vis, 1);
+}
+
+/* Пока мы внутри, фон страницы уступает место сцене */
+html.rc-inside #spaceBg { opacity: .25; transition: opacity .6s var(--ease); }
+html.rc-inside section { position: relative; z-index: 1; }
+
+/* ── Пульт: форма заявки в носу корабля ──────────────────────
+   Сам экран пульта нарисован в rc-console.css - там же, где живёт
+   вся секция контактов, чтобы у прибора был один хозяин. Здесь
+   остаётся только поведение рубки, пока человек печатает.
+
+   Раньше рубка в этот момент гасла до трети яркости, и это как раз
+   и давало «анкета стеклянной карточкой поверх фото»: комната
+   выцветала, и форма оставалась висеть в сером. Теперь комната
+   держится почти в полную силу, а замирает движение - дрейф камеры
+   и дыхание диодов останавливает rc-interior.js по этому же классу.
+
+   Правило железное: transform на предке активной формы не ставим
+   никогда, иначе ломается позиционирование при подъёме клавиатуры
+   на телефоне. Фаски и подсветка сделаны фоном, тенями и
+   псевдоэлементами. */
+html.rc-form-active .rc-int-canvas { opacity: .82; }
+html.rc-form-active .rc-int-air { opacity: .7; }
+
+@media (max-width: 860px) {
+  /* На телефоне живой фильтр на длинных блоках слишком дорог */
+  html.rc-inside #faq .faq { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg-3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-int-lock, .rc-int-canvas, .rc-int-air { display: none !important; }
+}

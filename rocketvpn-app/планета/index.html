@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="ru" data-экран="главная">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<link rel="icon" href="ассеты/значок.png" type="image/png">
+<link rel="apple-touch-icon" href="ассеты/значок.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#04060d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Rocket VPN</title>
+
+<!-- ── ЭКРАН СОБРАН ВЁРСТКОЙ ─────────────────────────────────────────
+     Владелец Rocket VPN о прежних макетах: «качество изображений
+     низкое, при увеличении расплывается». Так и будет с любым
+     нарисованным экраном: растр тянется и мылится, а в приложении его
+     увидят на экранах от 320 до 1290 точек шириной.
+
+     Здесь экран настоящий: текст это текст, иконки это контуры, флаги
+     это фигуры. Растр остался там, где без него нельзя: знак Rocket
+     VPN, кадры фона и миниатюры тем, все с запасом по разрешению.
+
+     Он же о том, зачем всё это: «пользователи в приложение ВПН могут
+     заходить несколько раз на дню... все вот эти Happ или incy они
+     скучные, тупо несут только функцию подключения». -->
+
+<link rel="stylesheet" href="стиль.css?v=202609301620">
+</head>
+<body>
+
+<div class="телефон" id="телефон">
+
+  <!-- ── ФОН: ТРИ МИРА, ПОКАЗЫВАЕТ ОДИН ─────────────────────────────
+       Клиент попросил три темы, и они сделаны тремя слоями
+       фона под общей вёрсткой. Копии
+       разошлись бы на первой же правке: поправил кнопку в одной,
+       забыл в двух других. Здесь кнопка одна на все три.
+
+       Показывает слой атрибут data-тема на html. Скрытые слои стоят
+       с display:none, значит их анимации не считаются вовсе. -->
+  <div class="небо">
+    <!-- ПЛАНЕТА: космос, галактика, планеты вдалеке -->
+    <div class="мир мир-планета">
+      <div class="млечный"></div>
+      <div class="туманность"></div>
+      <div class="звёзды"></div>
+      <div class="звёзды мелкие"></div>
+
+      <div class="далёкая юпитер"><i></i></div>
+      <div class="далёкая сатурн"><i></i><u></u></div>
+      <div class="далёкая марс"><i></i></div>
+      <div class="далёкая нептун"><i></i></div>
+    </div>
+
+    <!-- РАКЕТА: ночной старт, пламя снизу, искры вверх -->
+    <div class="мир мир-ракета">
+      <div class="жар"></div>
+
+      <!-- ── РАКЕТА СТОИТ ЗА СПИСКОМ ─────────────────────────────
+           Первый сбор поставил её в круг героя, по центру кнопки
+           подключения, и снимок показал цену: кнопка 13.6 рем шириной
+           закрыла корпус целиком, наружу торчали два красных крыла
+           из-под карточки подписки. Читалось это поломкой вёрстки.
+
+           Здесь ракета в ФОНЕ, за стеклянными карточками списка.
+           Карточки полупрозрачные, корпус виден сквозь них силуэтом,
+           а когда огонь бьёт по строке, стекло на миг проясняется и
+           ракета проступает. Это та же механика, за которую клиент
+           похвалил тему с планетами: «когда молния по ним бьёт, на
+           фоне лучше становится видно планеты». -->
+      <div class="старт">
+          <svg class="корпус" viewBox="0 0 120 260" aria-hidden="true">
+            <defs>
+              <linearGradient id="мет" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0"    stop-color="#3b4356"/>
+                <stop offset=".22"  stop-color="#aeb9cf"/>
+                <stop offset=".44"  stop-color="#f2f6ff"/>
+                <stop offset=".64"  stop-color="#9aa6bd"/>
+                <stop offset="1"    stop-color="#2b3040"/>
+              </linearGradient>
+              <linearGradient id="нос" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0"   stop-color="#8a2f24"/>
+                <stop offset=".34" stop-color="#ff7a53"/>
+                <stop offset=".62" stop-color="#d84a2c"/>
+                <stop offset="1"   stop-color="#63231a"/>
+              </linearGradient>
+              <linearGradient id="стекло-иллюм" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0"   stop-color="#dff2ff"/>
+                <stop offset=".5"  stop-color="#4aa8ff"/>
+                <stop offset="1"   stop-color="#0d2947"/>
+              </linearGradient>
+            </defs>
+            <path class="крыло" d="M32 168 L10 226 L32 216z"/>
+            <path class="крыло" d="M88 168 L110 226 L88 216z"/>
+            <path class="бак" d="M60 6c16 22 26 54 26 92v86H34V98C34 60 44 28 60 6z" fill="url(#мет)"/>
+            <path class="колпак" d="M60 6c10 14 17 32 21 52H39c4-20 11-38 21-52z" fill="url(#нос)"/>
+            <circle class="иллюминатор" cx="60" cy="112" r="15" fill="url(#стекло-иллюм)"/>
+            <circle class="ободок" cx="60" cy="112" r="15" fill="none" stroke="#cfd9ea" stroke-width="3"/>
+            <rect class="пояс" x="34" y="150" width="52" height="7" rx="3.5"/>
+            <rect class="пояс" x="34" y="164" width="52" height="4" rx="2"/>
+            <path class="сопло" d="M40 184h40l7 22H33z"/>
+          </svg>
+        <div class="факел"></div>
+        <div class="факел сердце"></div>
+        <div class="подставка"></div>
+      </div>
+
+      <div class="дым-старта"></div>
+      <div class="искры"></div>
+      <div class="искры поздние"></div>
+      <div class="марево"></div>
+    </div>
+
+    <!-- ОКЕАН: глубина, лучи сверху, блики дна, пузыри -->
+    <div class="мир мир-океан">
+      <div class="толща"></div>
+
+      <!-- Лучи остаются в фоне: им надо разойтись на весь экран. Сам
+           диск живёт в круге героя, и лучи сходятся ровно в его
+           центре - иначе свет идёт мимо солнца. -->
+      <div class="лучи"></div>
+      <div class="блики"></div>
+      <div class="пузыри"></div>
+      <div class="пузыри редкие"></div>
+    </div>
+  </div>
+
+  <!-- ── ШАПКА ──────────────────────────────────────────────────── -->
+  <header class="шапка">
+    <button class="кругляш" id="бургер" aria-label="Меню">
+      <svg viewBox="0 0 20 14" aria-hidden="true">
+        <rect x="0" y="0" width="20" height="2" rx="1"/><rect x="0" y="6" width="20" height="2" rx="1"/>
+        <rect x="0" y="12" width="20" height="2" rx="1"/>
+      </svg>
+    </button>
+
+    <div class="знак-места">
+      <!-- Знак настоящий: вырезан из фирменного rv-mark.webp клиента,
+           пропорции не тронуты. Рядом наборная строка, потому что в
+           исходном файле буквы VPN запечены в картинку и на высоте
+           шапки превращаются в грязь. -->
+      <img class="лого" src="ассеты/знак-rv.webp" alt="Rocket VPN">
+      <span class="имя"><b>Rocket</b><i>VPN</i></span>
+    </div>
+
+    <button class="кругляш корона" data-к-экрану="подписка" aria-label="Подписка">
+      <svg viewBox="0 0 22 18" aria-hidden="true">
+        <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+        <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="экраны" id="экраны">
+
+    <!-- ══ ГЛАВНАЯ ═══════════════════════════════════════════════ -->
+    <section class="экран тут" data-экран="главная">
+
+      <!-- ── ПЛАНЕТА СОБРАНА ИЗ СНИМКОВ NASA ──────────────────────
+           Слово Даниэля: «планету тогда из NASA возьми крутую или из
+           игры космоса какую-то». Взято и то, и другое разом: в космосе
+           игры Rocket CDN лежат именно снимки NASA.
+
+             земля-день.webp   Blue Marble, 4096 x 2048
+             земля-ночь.webp   Black Marble, огни городов
+             облака.webp       облачный покров с прозрачностью
+
+           Ночная сторона это отдельный снимок городских огней. Шар поворачивается, материк уходит за
+           терминатор и загорается сетью городов. -->
+      <!-- ── ГЕРОЙ ЭКРАНА: У КАЖДОЙ ТЕМЫ СВОЙ ──────────────────────
+           Место одно и то же: шар стоит ровно по центру кнопки пуска.
+           Меняется то, ЧТО в этом месте живёт. Земля, ракета на
+           старте и водяное ядро занимают один и тот же круг, поэтому
+           смена темы не двигает ни одну строку макета. -->
+      <div class="планета-место">
+        <div class="планета герой-планета">
+          <div class="огни"></div>
+          <div class="кора"></div>
+          <div class="облака"></div>
+          <div class="тень"></div>
+          <div class="кромка"></div>
+        </div>
+
+        <!-- ОКЕАН: солнце сквозь толщу воды. Слово владельца: «где
+             океан можно солнце сделать вдалеке, ну как объект
+             центровой сверху».
+
+             Диск ШИРЕ кнопки подключения: 21 рем против 13.6. Кнопка
+             встаёт на нём затмением, и по краям виден настоящий диск
+             с резкой кромкой. Диск уже кнопки спрятался бы за ней
+             целиком, а свет без видимого источника читается засветкой
+             объектива.
+
+             Солнце снято ИЗ-ПОД воды, и оттого оно не жёлтое: толща
+             съедает красную часть спектра первой. Жёлтый кружок на
+             синем выглядел бы наклейкой. -->
+        <div class="герой-океан">
+          <div class="солнце">
+            <div class="корона-солнца"></div>
+            <div class="диск"></div>
+            <div class="рябь"></div>
+          </div>
+        </div>
+
+        <div class="ореол"></div>
+      </div>
+      <div class="вуаль"></div>
+
+      <div class="пуск-место">
+        <div class="сияние"></div>
+        <button class="пуск" id="пуск">
+          <span class="волна-круг"></span>
+          <span class="волна-круг вторая"></span>
+          <span class="кольцо"></span>
+          <span class="бегунок"></span>
+          <span class="ядро">
+            <svg class="рубильник" viewBox="0 0 26 28" aria-hidden="true">
+              <path d="M13 1v12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <path d="M5.7 6.4a10.5 10.5 0 1 0 14.6 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <span class="пуск-слово" id="пуск-слово">Подключиться</span>
+            <span class="пуск-сноска" id="пуск-сноска">VPN</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="лист">
+        <button class="полоса подписка стекло" data-к-экрану="подписка">
+          <span class="корона-мелкая">
+            <svg viewBox="0 0 22 18" aria-hidden="true">
+              <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+              <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+            </svg>
+          </span>
+          <span class="подписка-текст">
+            <b>Подписка &middot; Rocket VPN</b>
+            <i>Осталось дней: 138 &middot; Трафик: 959,1 ГБ</i>
+          </span>
+          <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true">
+            <path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="пара">
+          <button class="плитка стекло" id="плитка-авто">
+            <span class="плитка-знак">
+              <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M8 0 0 10h5l-1 8 8-10H7z"/></svg>
+            </span>
+            <span class="плитка-текст"><b>Автовыбор</b><i>Лучший сервер</i></span>
+            <span class="тумблер вкл" id="тумблер-авто"><span class="шарик"></span></span>
+          </button>
+          <button class="плитка стекло" id="плитка-лучший">
+            <span class="плитка-знак">
+              <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 0a7 7 0 0 0-7 7c0 5.2 7 11 7 11s7-5.8 7-11a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 9.6 7 2.6 2.6 0 0 1 7 9.6z"/></svg>
+            </span>
+            <span class="плитка-текст"><b>Оптимальный сервер</b><i>Минимальный пинг</i></span>
+            <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true">
+              <path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="строка-поиска">
+          <label class="поиск стекло">
+            <svg class="лупа" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.8" cy="6.8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M10.9 10.9 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="поиск-главная" placeholder="Поиск страны или сервера…" autocomplete="off">
+          </label>
+          <!-- ── ЗАМЕР ЗАПУСКАЕТ ЧЕЛОВЕК ────────────────────────────
+               Слово Даниэля: «молнии должны быть не всегда, а по смыслу,
+               на какой-то клик или действие». Разряд это замер связи, и
+               у замера есть своя кнопка. Он же идёт при подключении и
+               один раз при открытии. Сам по себе, по кругу, он больше не
+               бьёт: эффект, который повторяется без повода, через день
+               перестают замечать, а батарею он тратит каждый раз. -->
+          <button class="обновить стекло" id="обновить" aria-label="Обновить пинг">
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M9 2.4A6.6 6.6 0 1 0 15.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 0v5l3.4-2.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- ── СПИСОК СЕРВЕРОВ И РАЗРЯД ПО НЕМУ ───────────────────
+             Клиент прислал снимок чужого приложения, обвёл зелёным
+             столбец миллисекунд и спросил: «Это же пинги? И по ним
+             молнию да?». Ствол идёт по этому столбцу.
+
+             Строки рисует код из одного списка данных: тот же список
+             кормит экран «Серверы», и разойтись им негде. -->
+        <div class="список" id="список-главная" data-список="главная">
+          <svg class="молния" preserveAspectRatio="none" aria-hidden="true">
+            <g class="слой-ствол"></g>
+            <g class="слой-ветки"></g>
+            <circle class="голова" r="4.2" cx="-50" cy="-50"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ СЕРВЕРЫ ═══════════════════════════════════════════════ -->
+    <section class="экран" data-экран="серверы">
+      <div class="лист лист-полный">
+        <div class="шапка-экрана">
+          <h2>Серверы</h2>
+          <span class="счёт" id="счёт-серверов"></span>
+        </div>
+
+        <div class="строка-поиска">
+          <label class="поиск стекло">
+            <svg class="лупа" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.8" cy="6.8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M10.9 10.9 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="поиск-серверы" placeholder="Поиск страны или города…" autocomplete="off">
+          </label>
+          <button class="обновить стекло" id="обновить-2" aria-label="Обновить пинг">
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M9 2.4A6.6 6.6 0 1 0 15.3 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 0v5l3.4-2.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="чипы" id="чипы">
+          <button class="чип тут" data-сорт="пинг">По пингу</button>
+          <button class="чип" data-сорт="имя">По названию</button>
+          <button class="чип" data-сорт="избранные">Избранные</button>
+        </div>
+
+        <div class="список длинный" id="список-серверы" data-список="серверы">
+          <svg class="молния" preserveAspectRatio="none" aria-hidden="true">
+            <g class="слой-ствол"></g>
+            <g class="слой-ветки"></g>
+            <circle class="голова" r="4.2" cx="-50" cy="-50"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ПРОФИЛЬ ═══════════════════════════════════════════════ -->
+    <section class="экран" data-экран="профиль">
+      <div class="лист лист-полный">
+        <div class="шапка-экрана"><h2>Профиль</h2></div>
+
+        <div class="карточка стекло аккаунт">
+          <div class="аватар"><span>Д</span></div>
+          <div class="аккаунт-текст">
+            <b>Даниэль</b>
+            <i>id 7 041 288 &middot; до 14 февраля 2027</i>
+          </div>
+          <span class="метка-тариф">PRO</span>
+        </div>
+
+        <button class="карточка стекло ряд-настройки" data-к-экрану="подписка">
+          <span class="настр-знак жёлтый">
+            <svg viewBox="0 0 22 18" aria-hidden="true">
+              <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+              <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+            </svg>
+          </span>
+          <span class="настр-текст"><b>Подписка</b><i>Осталось 138 дней</i></span>
+          <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <!-- ── ВЫБОР ТЕМЫ ────────────────────────────────────────
+             Три темы, и каждая показана кадром своего фона: человек
+             выбирает глазами. Миниатюра это кадр самого фона без
+             интерфейса, и у утра и вечера он свой, как и в приложении.
+             Имена для человека (Космос, Океан, Полёт) живут только в
+             подписях: data-тема-выбор хранит прежние ключи, под ними
+             выбор уже лежит в памяти телефонов. -->
+        <div class="карточка стекло темы">
+          <div class="темы-шапка">
+            <b>Оформление</b>
+            <i>Фон и след замера. Утро и вечер сменяются сами</i>
+          </div>
+          <div class="темы-ряд">
+            <button class="тема-кнопка" data-тема-выбор="планета">
+              <span class="тема-вид вид-планета"></span>
+              <span class="тема-подпись"><b>Космос</b><i><span class="утром">Сияние</span><span class="вечером">Гроза</span></i></span>
+              <span class="тема-галка" aria-hidden="true"><svg viewBox="0 0 12 10"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg></span>
+            </button>
+            <button class="тема-кнопка" data-тема-выбор="океан">
+              <span class="тема-вид вид-океан"></span>
+              <span class="тема-подпись"><b>Океан</b><i><span class="утром">Полдень</span><span class="вечером">Закат</span></i></span>
+              <span class="тема-галка" aria-hidden="true"><svg viewBox="0 0 12 10"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg></span>
+            </button>
+            <button class="тема-кнопка" data-тема-выбор="ракета">
+              <span class="тема-вид вид-ракета"></span>
+              <span class="тема-подпись"><b>Полёт</b><i><span class="утром">Рассвет</span><span class="вечером">Ночной старт</span></i></span>
+              <span class="тема-галка" aria-hidden="true"><svg viewBox="0 0 12 10"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg></span>
+            </button>
+          </div>
+          <!-- Время суток: по часам телефона или руками. Сегменты как
+               в iOS, выбранный подсвечен стеклом цвета темы. -->
+          <div class="пора-выбор" role="radiogroup" aria-label="Время суток">
+            <button class="пора-кнопка" data-пора-выбор="авто" role="radio">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.4"/><path d="M9 4.6V9l3 1.8"/></svg>Авто
+            </button>
+            <button class="пора-кнопка" data-пора-выбор="утро" role="radio">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="3.4"/><path d="M9 1.4v2M9 14.6v2M1.4 9h2M14.6 9h2M3.6 3.6l1.4 1.4M13 13l1.4 1.4M3.6 14.4 5 13M13 5l1.4-1.4"/></svg>День
+            </button>
+            <button class="пора-кнопка" data-пора-выбор="вечер" role="radio">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M14.8 11.4A6.6 6.6 0 0 1 6.6 3.2a6.6 6.6 0 1 0 8.2 8.2z"/></svg>Ночь
+            </button>
+          </div>
+        </div>
+
+        <!-- ── НАСТРОЙКИ ОДНОЙ ПЛАСТИНОЙ ──────────────────────────
+             Связанные строки собраны в одну стеклянную пластину с
+             тонкими разделителями, как в настройках iOS. Восемь
+             отдельных плит подряд с восемью бликами на углах читались
+             лоскутами. -->
+        <div class="группа-настроек стекло">
+          <button class="ряд-настройки" data-тумблер="автозапуск">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M10.2 1.2 3.4 10h5l-1 6.8L14.6 8h-5z"/></svg></span>
+            <span class="настр-текст"><b>Автоподключение</b><i>При запуске устройства</i></span>
+            <span class="тумблер вкл"><span class="шарик"></span></span>
+          </button>
+          <button class="ряд-настройки" data-тумблер="блокировка">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.2 2.4 4v4.6c0 4 2.8 7.3 6.6 8.2 3.8-.9 6.6-4.2 6.6-8.2V4z"/><path d="m6.3 9 2 2 3.5-3.8"/></svg></span>
+            <span class="настр-текст"><b>Блокировка без VPN</b><i>Обрывать трафик при разрыве</i></span>
+            <span class="тумблер"><span class="шарик"></span></span>
+          </button>
+          <button class="ряд-настройки" data-тумблер="движение">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.8"/><path d="M7.4 6v6l4.8-3z"/></svg></span>
+            <span class="настр-текст"><b>Анимации</b><i>Живой фон и след замера</i></span>
+            <span class="тумблер вкл" id="тумблер-движение"><span class="шарик"></span></span>
+          </button>
+        </div>
+
+        <div class="группа-настроек стекло">
+          <a class="ряд-настройки" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.4C4.8 1.4 1.4 4.3 1.4 8c0 1.9.9 3.6 2.4 4.8l-.6 3.8 3.7-2c.7.2 1.4.3 2.1.3 4.2 0 7.6-2.9 7.6-6.6S13.2 1.4 9 1.4z"/></svg></span>
+            <span class="настр-текст"><b>Поддержка</b><i>Телеграм-бот, отвечаем круглосуточно</i></span>
+            <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <button class="ряд-настройки" id="о-приложении">
+            <span class="настр-знак"><svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.8"/><path d="M9 8.2v4.6M9 5.4v.1"/></svg></span>
+            <span class="настр-текст"><b>О приложении</b><i id="подпись-темы">Версия 1.0 &middot; тема «Космос»</i></span>
+            <svg class="шеврон" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <button class="кнопка-выход стекло" id="выход">Выйти из аккаунта</button>
+      </div>
+    </section>
+
+    <!-- ══ ПОДПИСКА ══════════════════════════════════════════════ -->
+    <section class="экран" data-экран="подписка">
+      <div class="лист лист-полный">
+        <div class="шапка-экрана с-назад">
+          <button class="назад" data-назад aria-label="Назад">
+            <svg viewBox="0 0 8 14" aria-hidden="true"><path d="M7 1 1 7l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <h2>Подписка</h2>
+        </div>
+
+        <div class="карточка стекло текущая">
+          <div class="текущая-верх">
+            <span class="корона-мелкая">
+              <svg viewBox="0 0 22 18" aria-hidden="true">
+                <path d="M2 15h18l1.4-9.6-5.2 3.4L11 1.6 5.8 8.8.6 5.4z"/>
+                <rect x="2" y="15.6" width="18" height="2.2" rx="1.1"/>
+              </svg>
+            </span>
+            <div class="текущая-имя"><b>Тариф PRO</b><i>Активен до 14 февраля 2027</i></div>
+          </div>
+          <!-- Полоска показывает остаток срока, как и подпись под ней слева:
+             138 дней из 365 годового тарифа. -->
+          <div class="полоска"><span style="width:38%"></span></div>
+          <div class="текущая-низ"><span>Осталось 138 дней</span><span>Использовано 959,1 ГБ</span></div>
+        </div>
+
+        <ul class="плюсы карточка стекло">
+          <li><svg viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg>Без ограничения скорости и трафика</li>
+          <li><svg viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg>До пяти устройств на одном ключе</li>
+          <li><svg viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg>Серверы в десяти странах</li>
+          <li><svg viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.2 4.3 8.4 11 1.6"/></svg>Без журналов подключений</li>
+        </ul>
+
+        <!-- ── ТАРИФЫ ЛЕСЕНКОЙ ────────────────────────────────────
+             Срок растёт сверху вниз, цена за месяц падает. Самый
+             выгодный стоит последним, прямо над кнопкой, и выбран
+             сразу: глаз идёт по лесенке к нему и дальше к оплате.
+             Бирка несёт число экономии: 124 против 199 рублей в
+             месяц это минус 38 процентов. Слово «выгодно» не говорило
+             ничего.
+
+             data-до хранит дату, до которой продлится подписка с этим
+             тарифом: активна до 14 февраля 2027, срок прибавляется к
+             ней. Её показывает строка под кнопкой. -->
+        <div class="тарифы">
+          <button class="тариф стекло" data-тариф="1 месяц" data-до="14 марта 2027">
+            <span class="точка"></span><b>1 месяц</b><span class="цена">199<small>&#8239;₽</small></span><i>199 ₽ в месяц</i>
+          </button>
+          <button class="тариф стекло" data-тариф="6 месяцев" data-до="14 августа 2027">
+            <span class="точка"></span><b>6 месяцев</b><span class="цена">890<small>&#8239;₽</small></span><i>148 ₽ в месяц</i>
+          </button>
+          <button class="тариф стекло выгодный выбран" data-тариф="12 месяцев" data-до="14 февраля 2028">
+            <span class="точка"></span><b>12 месяцев <span class="бирка">&minus;38%</span></b><span class="цена">1&#8239;490<small>&#8239;₽</small></span><i>124 ₽ в месяц</i>
+          </button>
+        </div>
+
+        <button class="кнопка-главная" id="продлить">Продлить за 1&nbsp;490<small>&#8239;₽</small></button>
+        <p class="условия" id="продлится">Подписка продлится до 14&nbsp;февраля 2028</p>
+
+        <!-- Нижняя строка экрана оплаты, как у платёжных экранов Apple:
+             стоит у панели вкладок, и колонка не обрывается на двух
+             третях экрана. Ведёт в ту же поддержку, что и профиль:
+             строка рабочая, по ней пишут в Телеграм. -->
+        <a class="подписка-помощь" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">Вопрос по оплате? <b>Поддержка в Телеграме</b></a>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── НИЖНЯЯ НАВИГАЦИЯ ─────────────────────────────────────────
+       Отступ снизу считается от безопасной области: на телефонах с
+       жестовой полосой нижние сорок точек перекрыты системой, и кнопка
+       под ними просто не нажимается.
+
+       Значки контурные, одной толщины линии: залитые силуэты рядом с
+       тонким стеклом читались тяжёлыми штампами. «Серверы» нарисованы
+       глобусом: сетка из четырёх квадратов читалась «приложениями». -->
+  <nav class="низ">
+    <button class="вкладка тут" data-к-экрану="главная">
+      <svg viewBox="0 0 20 19" aria-hidden="true"><path d="M2 8.4 10 1.8l8 6.6v8.4a1.2 1.2 0 0 1-1.2 1.2h-4v-5.2H7.2V18h-4A1.2 1.2 0 0 1 2 16.8z"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="вкладка" data-к-экрану="серверы">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8"/><path d="M1 9h16M9 1c2.4 2.2 3.6 4.9 3.6 8s-1.2 5.8-3.6 8c-2.4-2.2-3.6-4.9-3.6-8S6.6 3.2 9 1z"/></svg>
+      <span>Серверы</span>
+    </button>
+    <button class="вкладка" data-к-экрану="профиль">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="5.3" r="3.9"/><path d="M1.6 17.2c.7-3.5 3.7-5.8 7.4-5.8s6.7 2.3 7.4 5.8"/></svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+
+  <!-- ── БОКОВОЕ МЕНЮ ─────────────────────────────────────────────
+       Меню это такая же стеклянная пластина, что и карточки, только
+       плавающая: с отступом от краёв и скруглением. Плоский тёмный
+       лист во всю высоту был единственным экраном другого материала.
+       Текущий раздел отмечен, иначе меню не отвечает на вопрос «где
+       я сейчас». -->
+  <div class="штора" id="штора"></div>
+  <aside class="ящик" id="ящик">
+    <div class="ящик-шапка">
+      <img class="лого" src="ассеты/знак-rv.webp" alt="">
+      <span class="имя"><b>Rocket</b><i>VPN</i></span>
+      <button class="кругляш" id="закрыть-ящик" aria-label="Закрыть">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1l14 14M15 1L1 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <button class="ящик-аккаунт" data-к-экрану="профиль">
+      <span class="аватар"><span>Д</span></span>
+      <span class="аккаунт-текст"><b>Даниэль</b><i>PRO &middot; осталось 138 дней</i></span>
+    </button>
+    <!-- Разделы собраны в такую же пластину, как ссылки ниже: у главного
+         и второстепенного один вес, и сетка ящика идёт ровно. -->
+    <div class="ящик-группа разделы">
+    <button class="пункт тут" data-к-экрану="главная">
+      <svg viewBox="0 0 20 19" aria-hidden="true"><path d="M2 8.4 10 1.8l8 6.6v8.4a1.2 1.2 0 0 1-1.2 1.2h-4v-5.2H7.2V18h-4A1.2 1.2 0 0 1 2 16.8z"/></svg><span>Главная</span>
+    </button>
+    <button class="пункт" data-к-экрану="серверы">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8"/><path d="M1 9h16M9 1c2.4 2.2 3.6 4.9 3.6 8s-1.2 5.8-3.6 8c-2.4-2.2-3.6-4.9-3.6-8S6.6 3.2 9 1z"/></svg><span>Серверы</span>
+    </button>
+    <button class="пункт" data-к-экрану="подписка">
+      <svg viewBox="0 0 22 19" aria-hidden="true"><path d="M3 14.6h16l1.6-9-5 3.2L11 2 6.4 8.8l-5-3.2z"/><path d="M3.4 17.6h15.2"/></svg><span>Подписка</span>
+    </button>
+    <button class="пункт" data-к-экрану="профиль">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="5.3" r="3.9"/><path d="M1.6 17.2c.7-3.5 3.7-5.8 7.4-5.8s6.7 2.3 7.4 5.8"/></svg><span>Профиль</span>
+    </button>
+    </div>
+    <div class="ящик-группа">
+      <a class="пункт" href="https://t.me/rocketvpnnews" target="_blank" rel="noopener">
+        <svg viewBox="0 0 18 17" aria-hidden="true"><path d="M16.8 1.4 1.3 7.5l5.4 1.9 1.7 5.9 3-3.4 4.1 3z"/><path d="m6.7 9.4 10.1-8"/></svg><span>Канал обновлений</span>
+      </a>
+      <a class="пункт" href="https://t.me/RocketCompanyVPN_bot" target="_blank" rel="noopener">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.4C4.8 1.4 1.4 4.3 1.4 8c0 1.9.9 3.6 2.4 4.8l-.6 3.8 3.7-2c.7.2 1.4.3 2.1.3 4.2 0 7.6-2.9 7.6-6.6S13.2 1.4 9 1.4z"/></svg><span>Поддержка</span>
+      </a>
+    </div>
+    <p class="ящик-низ" id="подпись-темы-2">Версия 1.0 &middot; тема «Космос»</p>
+  </aside>
+
+  <div class="всплывашка" id="всплывашка"></div>
+</div>
+
+<!-- Живой фон: видеоклип темы и поры суток под вёрсткой, звука нет.
+     Файлы лежат рядом, без внешней сети: приложение обязано
+     открываться и там, где CDN недоступен. -->
+<script src="полёт.js?v=202609301620"></script>
+<script src="фон.js?v=202609301620"></script>
+<script src="экран.js?v=202609301620"></script>
+</body>
+</html>

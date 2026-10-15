@@ -1,0 +1,61 @@
+# Rocket CDN · настройки веб-сервера
+#
+# ВАЖНО: боевой сайт отдаёт nginx 1.24, а он .htaccess не читает
+# вовсе. Проверено живьём: служебные файлы закрыты (config.php,
+# data/, cron.php, bot.php - все 403), но закрывает их собственная
+# конфигурация nginx, а не этот файл. Значит правила отсюда на
+# боевом НЕ действуют, и всё, что нужно на самом деле, должно быть
+# продублировано в /etc/nginx/sites-enabled/rocketcdn.
+#
+# Файл оставлен на случай переезда на Apache и как опись того, что
+# сайту нужно от сервера.
+#
+# Не перенесено в nginx на сегодня: тип для .webmanifest. Сейчас
+# паспорт приложения уходит как application/octet-stream. Нужная
+# строка для nginx:
+#   location ~* \.webmanifest$ { default_type application/manifest+json; }
+Options -Indexes
+ServerSignature Off
+AddDefaultCharset UTF-8
+DirectoryIndex index.html
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Кэш статики
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png              "access plus 1 month"
+  ExpiresByType image/jpeg             "access plus 1 month"
+  ExpiresByType image/svg+xml          "access plus 1 month"
+  ExpiresByType image/webp             "access plus 1 month"
+  ExpiresByType font/woff2             "access plus 1 year"
+  ExpiresByType audio/mpeg             "access plus 1 year"
+  ExpiresByType text/css               "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
+
+# Шрифты отдаём с правильным типом
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+  # Без этого сервер отдаёт паспорт приложения как поток байтов, и
+  # браузер его просто не читает: ни имени, ни иконок, ни цвета.
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Служебные файлы наружу не отдаём
+<FilesMatch "^(config\.php|config\.local\.php|lib_report\.php|cron\.php|bot\.php|.*\.log|.*\.json)$">
+  Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^data/ - [F,L]
+</IfModule>
