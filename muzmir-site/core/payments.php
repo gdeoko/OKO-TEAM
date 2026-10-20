@@ -746,6 +746,13 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
         // Клубное членство — активируем при успешной оплате (годовая подписка).
         $ordRow = one("SELECT user_id, email, items FROM awards_orders WHERE id=?", [(int) $orderId]);
         if ($ordRow && strpos((string) ($ordRow['items'] ?? ''), '"kind":"club"') !== false) {
+            // У ПОДПИСКИ НЕЧЕГО ИЗГОТАВЛИВАТЬ — И ЖДАТЬ УЧАСТНИКУ НЕЧЕГО.
+            // Оплаченный заказ висел в 'paid', а кабинет показывает эту стадию как
+            // «Изготовление»: человек месяцами видел, будто над его подпиской ещё
+            // работают. Членство выдаётся тут же, ниже, поэтому заказ закрываем
+            // сразу (правка владельца 20.10.2026, заказы 137, 444, 638).
+            update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')],
+                   'id=:id', ['id' => (int) $orderId]);
             if (!function_exists('club_grant') && is_file(__DIR__ . '/club.php')) require_once __DIR__ . '/club.php';
             $cuid = (int) ($ordRow['user_id'] ?? 0);
             if (!$cuid && !empty($ordRow['email'])) {
