@@ -103,6 +103,37 @@ register_shutdown_function(static function (): void {
         foreach (['club_members', 'sessions'] as $t) {
             try { q("DELETE FROM $t WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
         }
+        /* ЗАЯВКИ, ПОДАННЫЕ ЧЕРЕЗ ЖИВУЮ ДВЕРЬ, УНОСИМ ВМЕСТЕ С ИХ БУМАГАМИ.
+         *
+         * Строка ниже сносила заявку, а дипломы и заказы по ней оставались:
+         * в `$__audit_apps` попадают только заявки, заведённые прямо в базе
+         * (`audit_actor_app`), а сквозной прогон подаёт их через `/api/v1/apply.php`
+         * и получает НАСТОЯЩИЙ номер. Найдено замером 15.10.2026: после прогонов
+         * в реестре остался сиротский `AUDIT-2026-10022-E1` без заявки, и его
+         * честно показал аудит правила 67 («у диплома без заявки обязан быть
+         * снимок») - то есть проверка краснела на мусоре проверок. */
+        try {
+            foreach (all("SELECT id, COALESCE(number,'') num FROM applications WHERE user_id=?", [(int) $u]) as $__ua) {
+                foreach (['diplomas', 'awards_orders', 'payments'] as $t) {
+                    try { q("DELETE FROM $t WHERE application_id=?", [(int) $__ua['id']]); } catch (\Throwable $e) {}
+                }
+                /* БЛАНКИ ПРОГОНА СНИМАЕМ И С ДИСКА, А НЕ ТОЛЬКО ИЗ РЕЕСТРА.
+                 *
+                 * Заказ по проверочной заявке доходит до изготовления, и PDF ложится
+                 * в `public/diplomas`. Строки мы убираем, а файлы оставались: к
+                 * 15.10.2026 их накопилось двенадцать, и ни на один не ссылалась ни
+                 * одна запись базы. Шаблон привязан к НОМЕРУ проверочной заявки
+                 * (`AUDIT-…`) - у настоящих конкурсов такого слага нет, и под руку
+                 * живой бланк не попадёт. */
+                $__nm = mb_strtolower(trim((string) $__ua['num']));
+                if ($__nm !== '' && strncmp($__nm, 'audit-', 6) === 0) {
+                    foreach (glob(BASE_PATH . '/public/diplomas/diploma_' . $__nm . '*') ?: [] as $__f) {
+                        if (is_file($__f)) @unlink($__f);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
+        try { q("DELETE FROM awards_orders WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
         try { q("DELETE FROM applications WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
         try { q("DELETE FROM users WHERE id=?", [(int) $u]); } catch (\Throwable $e) {}
     }

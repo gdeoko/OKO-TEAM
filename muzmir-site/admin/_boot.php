@@ -28,6 +28,20 @@ require_once BASE_PATH . '/core/mailer.php';
 if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
 // Клуб: членство и галочки участников (vip_kind/vip_mark) — их зовут почти все разделы.
 if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
+/* ПРИОРИТЕТ ЗАЯВКИ ВИДЕН ВО ВСЕЙ АДМИНКЕ (правка владельца 14.10.2026).
+   Партнёр и Элитный клуб ждут меньше общего срока, и оператор обязан знать это
+   до того, как возьмёт заявку в работу. Файл один на все разделы и на оба
+   расчёта срока (крон результата и изготовление по заказу). */
+if (is_file(BASE_PATH . '/core/prioritet.php')) require_once BASE_PATH . '/core/prioritet.php';
+/* Серая галочка «не забрал посылку» — один источник на всю админку
+   (правка владельца 15.10.2026, core/nenadezhnyi.php). */
+if (is_file(BASE_PATH . '/core/nenadezhnyi.php')) require_once BASE_PATH . '/core/nenadezhnyi.php';
+if (!function_exists('nenadezhnyi_metka')) {
+    /* Файла нет — галочки нет. Заглушка нужна, чтобы в двенадцати шаблонах
+       рядом с именем не стояло двенадцать `function_exists`: имя у галочки одно,
+       и второго названия для неё в проекте быть не должно. */
+    function nenadezhnyi_metka(int $uid, string $email = '', int $appId = 0): string { return ''; }
+}
 if (is_file(BASE_PATH . '/core/telegram.php')) require_once BASE_PATH . '/core/telegram.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
@@ -333,6 +347,139 @@ function admin_same_work_box(array $rows): string {
  * @param string $back раздел, куда возвращаться после действия ('grading' | 'longcomp')
  * @param array  $keep параметры адреса, которые надо сохранить при возврате
  */
+/**
+ * ДЛИНА СТРАНИЦЫ СПИСКА: 50 строк по умолчанию, выбор 50 / 100 / 200.
+ *
+ * Пятьдесят стоит первым нарочно. Раздел открывают с телефона, и страница на
+ * 100 строк весит под 900 КБ: она доезжает, но долго. Кому нужен длинный
+ * разворот для поиска глазами, тот ставит 200, а весь список целиком всё равно
+ * отдают кнопки DOCX, CSV и «HTML для печати».
+ */
+function admin_na_stranice(): int {
+    $n = (int) input('na', '50');
+    return in_array($n, [50, 100, 200], true) ? $n : 50;
+}
+
+/** Поле выбора длины страницы для формы фильтров (той же формы GET). */
+function admin_na_stranice_pole(): string {
+    $n = admin_na_stranice();
+    $o = '';
+    foreach ([50, 100, 200] as $v) {
+        $o .= '<option value="' . $v . '"' . ($n === $v ? ' selected' : '') . '>' . $v . ' строк</option>';
+    }
+    return '<div class="field"><label>Строк на странице</label>'
+         . '<select name="na" onchange="this.form.submit()">' . $o . '</select></div>';
+}
+
+/**
+ * ПОСТРАНИЧНОСТЬ ДЛИННЫХ СПИСКОВ АДМИНКИ.
+ *
+ * Список, который печатается целиком, перестаёт открываться: «Оценка длинных»
+ * по «Величию России» отдавала 4,5 МБ разметки на 1215 строк, 2217 форм и 942
+ * выпадающих списка - с телефона страница не доезжала до конца. Полный список
+ * при этом никуда не девается: он уходит в DOCX, CSV и «HTML для печати» теми
+ * же кнопками сверху раздела.
+ *
+ * ПОДПИСЬ «ПОКАЗАНЫ N-M ИЗ T» ОБЯЗАТЕЛЬНА. Молча урезанный список выглядит как
+ * полный, и ровно так 351 разобранная заявка «Величия России» пропала из архива
+ * под потолком LIMIT 500, не оставив ни строки о том, что её не показали.
+ *
+ * @param string $param имя своего параметра страницы: у каждого списка на одной
+ *                      странице он свой, иначе листание одного сбрасывает другие
+ * @param string $anchor метка на странице, чтобы после перехода не улетать вверх
+ */
+function admin_stranicy(int $total, int $page, int $per, string $back, array $keep,
+                        string $param, string $anchor = ''): string {
+    $per   = max(1, $per);
+    $pages = max(1, (int) ceil($total / $per));
+    $page  = max(1, min($page, $pages));
+    $from  = $total ? ($page - 1) * $per + 1 : 0;
+    $to    = min($total, $page * $per);
+    $lnk = static function (int $i) use ($back, $keep, $param, $anchor): string {
+        $q = $keep;
+        if ($i > 1) { $q[$param] = $i; } else { unset($q[$param]); }
+        return a_link($back, $q) . ($anchor !== '' ? '#' . $anchor : '');
+    };
+    /* Номера - окном вокруг текущей страницы вместе с первой и последней. Полный
+       ряд на сорока страницах сам становится полотном, которое с телефона не
+       читается, а именно телефоном раздел и открывают. */
+    $nums = [1, $pages];
+    for ($i = $page - 2; $i <= $page + 2; $i++) { if ($i >= 1 && $i <= $pages) $nums[] = $i; }
+    $nums = array_values(array_unique($nums));
+    sort($nums);
+
+    ob_start(); ?>
+<div class="pager" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px">
+  <span class="small muted" style="margin-right:6px">Показаны <b><?= $from ?>-<?= $to ?></b> из <b><?= $total ?></b></span>
+  <?php if ($pages > 1): ?>
+    <?php if ($page > 1): ?><a class="btn btn--ghost btn--sm" href="<?= $lnk($page - 1) ?>">Назад</a><?php endif; ?>
+    <?php $prev = 0; foreach ($nums as $i): ?>
+      <?php if ($prev && $i > $prev + 1): ?><span class="small muted">&hellip;</span><?php endif; ?>
+      <a class="btn btn--sm <?= $i === $page ? 'btn--navy' : 'btn--ghost' ?>" href="<?= $lnk($i) ?>"><?= $i ?></a>
+      <?php $prev = $i; endforeach; ?>
+    <?php if ($page < $pages): ?><a class="btn btn--ghost btn--sm" href="<?= $lnk($page + 1) ?>">Вперёд</a><?php endif; ?>
+  <?php endif; ?>
+</div>
+<?php return (string) ob_get_clean();
+}
+
+/**
+ * КАРТОЧКИ ВМЕСТО ТАБЛИЦЫ НА УЗКОМ ЭКРАНЕ - ОДИН СТИЛЬ НА ВСЮ АДМИНКУ.
+ *
+ * В списке «Заявок» восемь колонок, в очереди «Отправок» пять, а ширина
+ * телефона 390 точек. `.table-wrap` прокручивается вбок, и на экран попадает
+ * ПЕРВАЯ колонка: конкурс, оценка, статус, сумма, дата и все кнопки уезжают
+ * за правый край. Со стороны это читается ровно так, как сказал владелец:
+ * «страница отображается не полностью». Прокрутку вбок человек не ищет - он
+ * видит пустое место справа от имени и считает страницу сломанной.
+ *
+ * Поэтому до 820 точек строка перестаёт быть строкой и становится карточкой:
+ * шапка прячется, каждая ячейка идёт своей строкой и сама называет себя
+ * подписью из `data-label`. Ничего не теряется и ничего не надо прокручивать.
+ * На широком экране таблица остаётся таблицей: правило живёт только внутри
+ * медиазапроса.
+ *
+ * ПОДПИСЬ СТОИТ НАД ЗНАЧЕНИЕМ, А НЕ СЛЕВА ОТ НЕГО, И ЭТО НЕ ВКУС. В ячейках
+ * лежит разметка в несколько строк: «имя<br>почта<br>№ заявки», плашки сроков,
+ * ряд кнопок. Выложи ячейку в ряд (flex) - и каждый кусок станет отдельной
+ * колонкой этого ряда, то есть разметка рассыплется. Блочная раскладка
+ * оставляет её целой.
+ *
+ * СТИЛЬ ОТДАЁТСЯ В САМУ СТРАНИЦУ, А НЕ В admin.css: правка общего файла
+ * доезжает до владельца только после сброса кэша браузера, то есть выглядит
+ * как «ничего не изменилось» (урок правила 73б).
+ *
+ * Включается ДВУМЯ классами: `table-wrap table-wrap--cards` у обёртки и
+ * `tbl tbl--cards` у таблицы. Класс у обёртки обязателен: у неё своя рамка,
+ * белый фон и прокрутка вбок, и без него карточки лежали бы внутри белого
+ * ящика с ненужной полосой прокрутки.
+ *
+ * Отдаётся один раз на страницу, сколько бы таблиц её ни звало.
+ */
+function admin_cards_css(): string {
+    static $дано = false;
+    if ($дано) return '';
+    $дано = true;
+    return <<<'CSS'
+<style>
+@media (max-width:820px){
+  .table-wrap--cards{overflow-x:visible;border:0;background:transparent;border-radius:0}
+  table.tbl--cards,table.tbl--cards tbody,table.tbl--cards tr,table.tbl--cards td{display:block}
+  table.tbl--cards thead{display:none}
+  table.tbl--cards tr{border:1px solid var(--a-line);border-radius:var(--a-radius);
+    background:var(--a-white);padding:10px 13px;margin-bottom:10px}
+  table.tbl--cards tbody tr:hover{background:var(--a-white)}
+  table.tbl--cards td{border-bottom:1px dashed var(--a-line);padding:8px 0}
+  table.tbl--cards tbody tr td:last-child{border-bottom:none}
+  table.tbl--cards td[data-label]:not([data-label=""])::before{content:attr(data-label);
+    display:block;margin-bottom:3px;font-size:.7rem;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--a-navy-2);opacity:.65}
+  table.tbl--cards td:empty{display:none}
+}
+</style>
+CSS;
+}
+
 function admin_graded_table(array $rows, string $back = 'grading', array $keep = []): string {
     if (!$rows) {
         return '<p class="muted small">Пока ничего не оценено и не отклонено.</p>';
@@ -347,7 +494,7 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
 <div class="table-wrap"><table class="tbl gl-tbl">
   <thead><tr>
     <th>Участник</th><th>Конкурсный номер</th><th>Разобрана</th>
-    <th>Решение</th><th>Отправка</th><th style="width:230px"></th>
+    <th>Решение</th><th>Отправка</th><th>Действие</th>
   </tr></thead>
   <tbody>
   <?php foreach ($rows as $a):
@@ -361,8 +508,9 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
   ?>
     <tr<?= $rej ? ' class="gl-rej"' : '' ?>>
       <td>
-        <b><?= h($who) ?></b><?= vip_mark((int) ($a['user_id'] ?? 0), '', (string) ($a['email'] ?? '')) ?>
+        <b><?= h($who) ?></b><?= vip_mark((int) ($a['user_id'] ?? 0), '', (string) ($a['email'] ?? '')) ?><?= nenadezhnyi_metka((int) ($a['user_id'] ?? 0), (string) ($a['email'] ?? ''), $aid) ?>
         <div class="small muted"><?= h((string) ($a['number'] ?: '#' . $aid)) ?> · <?= h((string) $a['comp']) ?></div>
+        <?php if (function_exists('prioritet_zayavki')): ?><div><?= prioritet_plashka(prioritet_zayavki($a)) ?></div><?php endif; ?>
       </td>
       <td class="small"><?= h((string) $a['work_title']) ?></td>
       <td class="small"><?= h(date('d.m.y H:i', strtotime($when))) ?></td>
@@ -465,6 +613,22 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
 <style>
 .gl-tbl td{vertical-align:top}
 .gl-tbl .gl-rej{background:rgba(190,60,60,.05)}
+/* ПРИЖАТАЯ КОЛОНКА ДЕЙСТВИЙ (слово владельца 16.10.2026, та же мера, что в
+   очереди оценки - правило 73б). Колонок шесть, с телефона они не влезают,
+   .table-wrap прокручивается вбок, и кнопки «Изменить», «Заявка» и «Ещё»
+   уезжали за край вместе с последней колонкой. */
+.gl-tbl thead th{z-index:4}
+.gl-tbl th:last-child,.gl-tbl td:last-child{position:sticky;right:0;
+        background:var(--a-card,#fff);box-shadow:-10px 0 12px -10px rgba(20,26,51,.22)}
+.gl-tbl th:last-child{width:230px;background:var(--a-parchment,#F6F1E6);z-index:5}
+/* СВОЕГО z-index У ПРИЖАТОЙ ЯЧЕЙКИ НЕТ НАРОЧНО, И ДОБАВЛЯТЬ ЕГО НЕЛЬЗЯ:
+   он сделал бы ячейку отдельным слоем, и выпадающее меню «Ещё» верхней строки
+   ушло бы ПОД прижатые ячейки строк ниже. Без него меню остаётся в общем слое
+   страницы и рисуется поверх всего. Шапка стоит выше ячеек своим z-index. */
+/* У ОТКЛОНЁННОЙ СТРОКИ СВОЙ ОТТЕНОК, и прижатая ячейка со своим белым фоном его
+   потеряла бы: цвет посчитан из rgba(190,60,60,.05) поверх белого. */
+.gl-tbl tr.gl-rej td:last-child{background:#FCF5F5}
+.gl-tbl tbody tr:hover td:last-child{background:var(--a-cream,#FFFCF5)}
 .gl-more{position:relative;display:inline-block}
 .gl-more summary{list-style:none;cursor:pointer}
 .gl-more summary::-webkit-details-marker{display:none}
@@ -478,7 +642,24 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
          width:100%;box-sizing:border-box;font-family:inherit}
 .gl-menu textarea{resize:vertical;min-height:64px}
 .gl-menu{min-width:290px}
-@media (max-width:820px){.gl-menu{position:static;box-shadow:none;min-width:0}}
+@media (max-width:820px){
+  /* МЕНЮ «ЕЩЁ» НА ТЕЛЕФОНЕ СТАНОВИТСЯ ЛИСТОМ СНИЗУ, А НЕ БЛОКОМ В ЯЧЕЙКЕ.
+     Раскрытое внутри колонки, оно требовало держать колонку в 230 пикселей
+     ради своих форм - пол-экрана телефона под три кнопки, из-за чего колонку и
+     нельзя было прижать. Лист снизу от ширины колонки не зависит вовсе.
+     position:fixed обрезкой .table-wrap не ограничен: его держит окно. */
+  .gl-menu{position:fixed;left:8px;right:8px;bottom:8px;top:auto;z-index:60;
+           min-width:0;max-height:72vh;overflow:auto;
+           box-shadow:0 -10px 32px rgba(0,0,0,.22)}
+  /* КОЛОНКА ПО ШИРИНЕ САМОЙ ШИРОКОЙ КНОПКИ, А НЕ ПО ВПИСАННОМУ ЧИСЛУ: кнопки
+     встают столбиком и сами называют нужную ширину. */
+  .gl-tbl th:last-child{width:auto}
+  .gl-tbl td:last-child > .btn,.gl-tbl td:last-child > .gl-more,
+  .gl-tbl td:last-child > .gl-more > summary{display:block;width:100%;
+           box-sizing:border-box;text-align:center}
+  .gl-tbl td:last-child > .btn + .btn,
+  .gl-tbl td:last-child > .gl-more{margin-top:4px}
+}
 </style>
 <?php
     return (string) ob_get_clean();

@@ -101,6 +101,17 @@ function already_notified(string $action, string $entity, int $entityId): bool {
 function agent_notify(string $event, array $payload = []): bool {
     $url = trim((string) (function_exists('cfgv') ? cfgv('agent_url', '') : ''));
     if ($url === '') return false;
+
+    /* ДВЕРЬ, КОТОРАЯ НЕ ПРИНИМАЕТ СОБЫТИЯ, НЕ ДОЛЖНА КРАСНЕТЬ КАЖДЫЙ РАЗ.
+       Замер 13.10.2026: `agent_url` показывает на `/chatbrain` - дверь ЧАТ-мозга
+       агента, она ждёт поле `text` и на наше событие отвечает 400 «empty text».
+       Других дверей у агента нет (пробы /notify, /event, /hook, /webhook - 403).
+       То есть уведомления не доходили НИ РАЗУ, а в журнал при каждой публикации
+       падала строка FAIL и прятала настоящие беды. Адрес живёт в переменной
+       окружения MUZMIR_AGENT_URL, снять его из кода нельзя, поэтому при отказе
+       «дверь не та» (400, 403, 404, 405) уведомления умолкают на сутки и
+       говорят об этом ОДИН раз. */
+    if (function_exists('setting') && (int) setting('agent_notify_off', '0') > time()) return false;
     $token = (string) cfgv('agent_token', '');
 
     $ch = curl_init($url);
@@ -126,9 +137,19 @@ function agent_notify(string $event, array $payload = []): bool {
     curl_close($ch);
 
     if ($err || $resp === false || $code >= 400) {
-        cron_log('agent_notify', "FAIL event=$event curl#$err http=$code");
+        $дверьНеТа = in_array($code, [400, 403, 404, 405], true);
+        if ($дверьНеТа && function_exists('set_setting')) {
+            set_setting('agent_notify_off', (string) (time() + 86400));
+            cron_log('agent_notify', "дверь агента не принимает события (http=$code, "
+                . mb_substr(trim((string) $resp), 0, 60) . '); молчу сутки. Нужен адрес ручки '
+                . 'уведомлений вместо ' . $url);
+        } else {
+            cron_log('agent_notify', "FAIL event=$event curl#$err http=$code");
+        }
         return false;
     }
+    /* Дверь ответила - значит отказ был временный, метку снимаем. */
+    if (function_exists('set_setting')) set_setting('agent_notify_off', '0');
     return true;
 }
 
