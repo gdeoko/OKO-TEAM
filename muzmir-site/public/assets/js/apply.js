@@ -337,6 +337,59 @@
   function fieldOf(input) { return input.closest ? input.closest('.field') : null; }
   function setErr(input, on) { var f = fieldOf(input); if (f) f.classList.toggle('error', !!on); }
 
+  /* СЕРВЕР НАЗЫВАЕТ ПРИЧИНУ — ЗНАЧИТ ЕЁ НАДО ПОКАЗАТЬ.
+   *
+   * Отказ приходит с разбором по полям: {"video_url": "Ссылка ведёт на папку
+   * Google Диска, а не на саму работу…"}. Форма этот разбор выбрасывала и
+   * писала одно общее «Не удалось отправить заявку» внизу последнего шага —
+   * причём на шаге согласия, где ни одного поля нет и подсвечивать нечего.
+   * Человек видел красную строчку без единого объяснения и подавал снова: 20
+   * октября так было шестнадцать попыток подряд у одной участницы и жалобы
+   * ещё от четверых, все с одним текстом — «ни одно поле не подсвечивается».
+   *
+   * Теперь текст сервера встаёт под своим полем, форма возвращается на тот шаг,
+   * где это поле живёт, и курсор ставится в него. */
+  function showServerFieldErrors(fields) {
+    var firstEl = null, firstMsg = '', firstStep = null;
+    Object.keys(fields).forEach(function (name) {
+      var msg = String(fields[name] || '');
+      var el = form.querySelector('[name="' + name + '"]') || document.getElementById(name);
+      if (!el) return;
+      var fld = fieldOf(el);
+      if (fld) {
+        fld.classList.add('error');
+        var box = fld.querySelector('.err-msg');
+        if (box && msg) box.textContent = msg;
+      }
+      if (!firstEl) {
+        firstEl = el;
+        firstMsg = msg;
+        var sec = el.closest ? el.closest('.astep') : null;
+        firstStep = sec ? sec.getAttribute('data-step') : null;
+      }
+    });
+    // Поля на странице не нашлось (например, ошибка по конкурсу) — хотя бы текст.
+    if (!firstMsg) { for (var k in fields) { if (fields[k]) { firstMsg = String(fields[k]); break; } } }
+    if (firstStep && firstStep !== current) show(firstStep, 'prev');
+    flashFormError(firstMsg || 'Проверьте заполнение формы.');
+    notify(firstMsg || 'Проверьте заполнение формы', 'error');
+    if (firstEl) {
+      try {
+        firstEl.focus({ preventScroll: true });
+        firstEl.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' });
+      } catch (e) { /* старый браузер — достаточно подсветки */ }
+    }
+  }
+
+  /* Человек правит поле — снимаем отметку об ошибке сервера, иначе красное
+     остаётся висеть до следующей отправки и сбивает с толку. */
+  document.addEventListener('input', function (ev) {
+    var t = ev.target;
+    if (!t || !t.name) return;
+    var f = fieldOf(t);
+    if (f && f.classList.contains('error')) f.classList.remove('error');
+  }, true);
+
   /* ---------- Номинация → подраздел ---------- */
   function fillSubgroups() {
     var nom = $('#nomination').value;
@@ -473,8 +526,15 @@
     var nom = nomEl ? (nomEl.value || '').trim() : '';
     var ask = function () {
       attempt++;
+      // Конкурсы шлём вместе со ссылкой: занятость ссылки считается внутри
+      // конкурса, и без них живая проверка пропустила бы уже поданную работу,
+      // а отправка её отбила бы — то самое расхождение, из-за которого человек
+      // видел зелёное «принята» и отказ в конце.
+      var compIds = $$('input[name="competition_ids[]"]:checked')
+        .map(function (c) { return encodeURIComponent(c.value); })
+        .map(function (id) { return '&competition_ids[]=' + id; }).join('');
       return fetch(CFG.videoCheck + '?url=' + encodeURIComponent(v)
-                   + (nom ? '&nomination=' + encodeURIComponent(nom) : ''),
+                   + (nom ? '&nomination=' + encodeURIComponent(nom) : '') + compIds,
                    { headers: { 'X-Requested-With': 'fetch' }, signal: ctrl ? ctrl.signal : undefined })
         .then(function (r) { return r.json(); })
         .catch(function (e) {
@@ -795,6 +855,11 @@
             '<br><a class="btn btn--primary" style="margin-top:10px" href="' + (d.club_url || CFG.clubUrl || '/club') + '">Вступить в Клуб</a>';
           cbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
           notify('Нужно членство в Клубе', 'error');
+        } else if (d.fields && typeof d.fields === 'object' && Object.keys(d.fields).length) {
+          // Сервер разобрал отказ по полям — показываем это человеку (см. showServerFieldErrors).
+          clearSubmitLoading();
+          submitting = false;
+          showServerFieldErrors(d.fields);
         } else {
           throw new Error(d.message || d.error || 'Не удалось отправить заявку.');
         }
