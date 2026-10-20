@@ -205,8 +205,24 @@ function chat_cancel_pending_bot(string $sessionKey): int {
  *
  * Вернуть прежнее поведение — chat_answer_offhours=0.
  */
-function chat_offhours_hold(): bool {
+function chat_offhours_hold(?int $userId = null): bool {
     if ((string) setting('chat_answer_offhours', '1') === '1') return false;
+
+    /* КЛУБУ ОТВЕЧАЕМ ВСЕГДА — ЭТО ЕМУ ПРОДАНО.
+     *
+     * В условиях Элитного клуба написано: моментальный ответ в поддержке, чат
+     * отвечает вне очереди. А бот отвечал клубному участнику тем же шаблоном
+     * «сейчас нерабочее время, вернусь в 9:00», что и всем. Хромова написала
+     * прямо: «почему мне не отвечают, даже с учётом того что я в клубе и
+     * написано что обрабатывают в течение 15 минут» — и снова получила шаблон.
+     * Человек заплатил именно за это, так что график на него не действует. */
+    if ($userId !== null) {
+        if (!function_exists('chat_is_vip') && is_file(BASE_PATH . '/core/chat_priority.php')) {
+            require_once BASE_PATH . '/core/chat_priority.php';
+        }
+        if (function_exists('chat_is_vip') && chat_is_vip($userId)) return false;
+    }
+
     return !chat_is_working_hours();
 }
 

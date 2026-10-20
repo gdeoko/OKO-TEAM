@@ -335,6 +335,26 @@ if (!$errors) {
 }
 
 if ($errors) {
+    /* ОТКАЗ ФОРМЫ ПИШЕМ В ЖУРНАЛ.
+     *
+     * Человек видит «Проверьте заполнение формы» и подписи у полей, а у центра
+     * не остаётся ничего: ни что именно не прошло, ни сколько раз. Хромова
+     * написала в чат «уже раз десять оформляла заявку, проверяю каждую букву» —
+     * и выяснить, на чём её разворачивало, оказалось нечем. Пишем, какие поля
+     * не прошли и с какой формулировкой; содержимое полей не пишем, кроме
+     * почты — по ней находят человека, который не смог подать заявку. */
+    try {
+        $logDir = BASE_PATH . '/data/logs';
+        if (!is_dir($logDir)) @mkdir($logDir, 0775, true);
+        $who = trim((string) ($email ?? '')) !== '' ? (string) $email : 'гость';
+        @file_put_contents($logDir . '/apply_rejects.log',
+            sprintf("[%s] %s | поля: %s\n", date('Y-m-d H:i:s'), $who,
+                    implode('; ', array_map(
+                        static fn($k, $v) => $k . ' — ' . $v,
+                        array_keys($errors), array_values($errors)))),
+            FILE_APPEND);
+    } catch (\Throwable $e) {}
+
     json_out(['ok' => false, 'error' => 'Проверьте заполнение формы', 'fields' => $errors], 422);
 }
 

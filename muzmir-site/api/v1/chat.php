@@ -13,9 +13,26 @@ require_once BASE_PATH . '/core/chat_priority.php'; // очередь: Клуб�
 require_once BASE_PATH . '/core/chat_ops.php';     // состояние диалога: бот/оператор/график
 require_post();
 
-$action     = input('action', 'send');
-$uid        = current_user()['id'] ?? null;
-$sessionKey = $_SESSION['chat_key'] ?? ($_SESSION['chat_key'] = bin2hex(random_bytes(8)));
+$action = input('action', 'send');
+$uid    = current_user()['id'] ?? null;
+
+/* ПЕРЕПИСКА ДЕРЖИТСЯ ЗА АККАУНТ, А НЕ ЗА ВКЛАДКУ БРАУЗЕРА.
+ *
+ * Ключ чата лежал только в PHP-сессии, и на каждый новый вход выписывался
+ * новый: переписка оставалась в старом ключе, а человек видел пустое окно.
+ * У Хромовой за сутки набралось ТРИ ключа — утренний вопрос, дневное
+ * «Здравствуйте» и вечерний, — и ответы на первые два она не увидела вовсе.
+ * Со стороны участника это выглядит ровно так: «до меня не доходят сообщения».
+ *
+ * Для вошедшего в кабинет ключ теперь постоянный и выводится из номера
+ * аккаунта: одна переписка на человека, с любого устройства и после любого
+ * выхода. Гость по-прежнему живёт на сессионном ключе — другого у него нет. */
+if ($uid) {
+    $sessionKey = 'u' . (int) $uid;
+    $_SESSION['chat_key'] = $sessionKey;
+} else {
+    $sessionKey = $_SESSION['chat_key'] ?? ($_SESSION['chat_key'] = bin2hex(random_bytes(8)));
+}
 
 chat_ensure_schema();
 
@@ -28,16 +45,19 @@ if ($action === 'history') {
     $since = (int) input('since', 0);
     $rows = [];
     try {
+        /* У вошедшего берём переписку по номеру аккаунта, а не только по ключу:
+           в старых ключах лежат его прежние сообщения, и терять их нельзя. */
+        $own  = $uid ? ' OR user_id = ' . (int) $uid : '';
         $rows = $since > 0
             // role IN (...) отсекает служебные пометки и, главное, ответы бота,
             // снятые оператором (bot_cancelled): человек не должен получить то,
             // что уже отменили, ответив ему живьём.
             ? all("SELECT id, role, text, file, created_at FROM chat_messages
-                    WHERE session_key=? AND id>? AND role IN ('user','assistant')
+                    WHERE (session_key=?{$own}) AND id>? AND role IN ('user','assistant')
                       AND (COALESCE(visible_at,'') = '' OR visible_at <= datetime('now','localtime'))
                     ORDER BY id ASC LIMIT 100", [$sessionKey, $since])
             : all("SELECT id, role, text, file, created_at FROM chat_messages
-                    WHERE session_key=? AND role IN ('user','assistant')
+                    WHERE (session_key=?{$own}) AND role IN ('user','assistant')
                       AND (COALESCE(visible_at,'') = '' OR visible_at <= datetime('now','localtime'))
                     ORDER BY id DESC LIMIT 100", [$sessionKey]);
         if ($since <= 0) $rows = array_reverse($rows);   // последние 100, в прямом порядке
@@ -103,7 +123,7 @@ if ($action === 'upload') {
      * с текстом, — «сейчас нерабочее время». Сначала ответили, потом сказали, что
      * не работаем: со стороны участника это поломка. Вложение — такое же
      * обращение, как текст, и на него распространяется то же расписание. */
-    if ($derived === '' && chat_offhours_hold()) {
+    if ($derived === '' && chat_offhours_hold($uid)) {
         $first = (int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) !== 1;
         $tpl   = $first ? chat_offhours_template($greetName) : '';
         if ($first) {
@@ -125,7 +145,7 @@ if ($action === 'upload') {
                   'understood' => true, 'reply' => '', 'muted' => $muted]);
     }
     // Вне рабочего времени — шаблон, вопрос сохранён (ответим утром).
-    if (chat_offhours_hold()) {
+    if (chat_offhours_hold($uid)) {
         $tpl = chat_offhours_template($greetName);
         if ((int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) !== 1) {
             chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s')]);
@@ -218,7 +238,7 @@ if (($muted = chat_bot_muted($sessionKey)) !== '') {
 }
 
 // --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон, вопрос сохранён ---
-if (chat_offhours_hold()) {
+if (chat_offhours_hold($uid)) {
     /* ШАБЛОН ПРО НЕРАБОЧЕЕ ВРЕМЯ — ОДИН РАЗ ЗА ВЕЧЕР, А НЕ НА КАЖДУЮ РЕПЛИКУ.
      *
      * Флаг pending_offhours выставлялся под условием, а вот отправка шаблона

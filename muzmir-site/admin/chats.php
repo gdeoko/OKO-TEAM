@@ -67,8 +67,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Кладём в историю как сообщение ассистента (участник видит его как ответ центра).
         // И помечаем как написанное человеком: такие ответы потом служат ассистенту
         // образцом того, как в центре разговаривают на самом деле.
+        /* У ОТВЕТА ОПЕРАТОРА ТОЖЕ ЕСТЬ АДРЕСАТ.
+         *
+         * Здесь стояло user_id => null, и ответ человека оставался ничьим: по
+         * аккаунту участника он не находился, а жил только в том ключе сессии,
+         * из которого пришёл вопрос. Хромовой оператор ответил дважды, 19
+         * октября в 10:46 и 10:50, — а она вечером написала «почему мне не
+         * отвечают»: к тому времени у неё была уже другая сессия, и оба ответа
+         * остались в прежних. Берём владельца из переписки этой сессии. */
+        $ownerId = (int) (scalar("SELECT user_id FROM chat_messages
+                                   WHERE session_key=? AND COALESCE(user_id,0)>0
+                                ORDER BY id DESC LIMIT 1", [$sk]) ?? 0);
         try {
-            $mid = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sk,
+            $mid = (int) insert('chat_messages', ['user_id' => $ownerId ?: null, 'session_key' => $sk,
                                                   'role' => 'assistant', 'text' => $text, 'file' => '']);
             if (function_exists('chat_learn_mark_operator')) chat_learn_mark_operator($mid);
         } catch (\Throwable $e) {}
