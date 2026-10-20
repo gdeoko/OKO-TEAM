@@ -82,6 +82,7 @@ if ($q !== '') {
 }
 
 $rowsRaw = all("SELECT d.*, a.id AS app_id, a.number AS app_number, a.full_name, a.group_name,
+                       a.result AS app_result,
                        a.is_group, a.email, a.phone, a.user_id, a.created_at AS app_created,
                        c.name AS comp_name, c.is_paid AS comp_paid, c.results_mode
                   FROM diplomas d
@@ -207,11 +208,18 @@ ob_start(); ?>
         <div style="min-width:0">
           <b><?= h($who ?: '—') ?></b>
           <?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
+          <?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int) $aid) ?>
           <div class="small muted">
             <?= h((string)$a['comp_name']) ?> · заявка <?= h((string)$a['app_number']) ?> ·
             <?= h((string)$a['email']) ?>
             <?= (int)($a['comp_paid'] ?? 0) === 1 ? ' · <span class="badge badge--paid small">платный</span>' : ' · <span class="badge badge--muted small">бесплатный</span>' ?>
           </div>
+          <?php /* Срок ИЗГОТОВЛЕНИЯ, а не результата: раздел про наградной
+                   материал, и отсчёт у него от оплаты заказа. У партнёра срок
+                   тут общий, плашка говорит это прямо. */
+                if (function_exists('prioritet_zayavki')): ?>
+            <div><?= prioritet_plashka(prioritet_zayavki(['id' => (int) $aid, 'user_id' => (int) ($a['user_id'] ?? 0)]), 'изготовление') ?></div>
+          <?php endif; ?>
           <?php
           /* ЗДЕСЬ ВАЖНА ДАТА ЗАКАЗА НАГРАД, А НЕ ДАТА ЗАЯВКИ НА УЧАСТИЕ.
            *
@@ -282,8 +290,19 @@ ob_start(); ?>
         <?php foreach ($g['items'] as $d):
           $s = trim((string)($d['sent_at'] ?? '')); $p = trim((string)($d['scheduled_at'] ?? '')); ?>
           <tr>
-            <td class="small"><b><?= h($DIG_LBL[(string)$d['type']] ?? (string)$d['type']) ?></b></td>
-            <td class="small"><?= h((string)($d['result'] ?? '—')) ?></td>
+            <?php /* ИМЯ С БЛАНКА - В «МАТЕРИАЛ», ЗВАНИЕ - В «ЗВАНИЕ».
+                     У именного диплома и у благодарности в поле result лежит
+                     человек, а не звание (см. dops_diploma_person). Печатая его
+                     в колонку звания, админка показывала фамилию ребёнка там,
+                     где владелец ждал «ДИПЛОМАНТ I СТЕПЕНИ». */
+              $__person = dops_diploma_person($d);
+              $__rank   = dops_diploma_rank($d, (string) ($d['app_result'] ?? '')); ?>
+            <td class="small"><b><?= h($DIG_LBL[(string)$d['type']] ?? (string)$d['type']) ?></b>
+              <?php if ($__person !== ''): ?>
+                <div class="muted">на имя: <?= h($__person) ?></div>
+              <?php endif; ?>
+            </td>
+            <td class="small"><?= h($__rank !== '' ? $__rank : '—') ?></td>
             <td class="small"><?= h((string)$d['number']) ?></td>
             <td class="small">
               <?php if ($s !== ''): ?><span class="badge badge--made">Отправлен <?= h(dops_dt($s)) ?></span>

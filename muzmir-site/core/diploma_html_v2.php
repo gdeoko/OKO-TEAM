@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Dip\V2;
+require_once __DIR__ . '/diploma_fio.php';   // разбор ФИО на людей (общий)
 // АВТОСБОРКА диспетчером diploma_html.php: замороженный движок бланка (868989a).
 // Правки вносить в исходную версию и пересобирать, не редактировать вручную.
 /**
@@ -138,9 +139,28 @@ function _dh_one_person(string $raw, int $idx = 0): string {
  */
 function _dh_fit_block(string $text, float $maxPt, float $minPt, float $emW,
                        float $availMm, float $lsPx = 0.0, int $maxLines = 2,
-                       int $wrapMinWords = 2): array {
+                       int $wrapMinWords = 2, ?array $gotovye = null): array {
     $text = trim($text);
     if ($text === '') return ['html' => '', 'css' => 'font-size:' . $maxPt . 'pt;'];
+
+    /* ГОТОВЫЕ СТРОКИ (ФИО нескольких человек): перенос уже решён разбором, здесь
+       подбирается только кегль. Балансировка по словам тут недопустима - она
+       режет человека пополам: «Криволапов Максим / Вячеславович». */
+    if ($gotovye) {
+        $parts = array_values(array_filter(array_map('trim', $gotovye), static fn($x) => $x !== ''));
+        if ($parts) {
+            $pt = $minPt;
+            for ($p = $maxPt; $p >= $minPt - 0.01; $p -= 0.5) {
+                $vse = true;
+                foreach ($parts as $s) { if (_dh_text_mm($s, $p, $emW, $lsPx) > $availMm) { $vse = false; break; } }
+                if ($vse) { $pt = $p; break; }
+            }
+            return [
+                'html' => implode('<br>', array_map('h', $parts)),
+                'css'  => 'font-size:' . round($pt, 1) . 'pt;line-height:1.06;white-space:normal;',
+            ];
+        }
+    }
 
     // Короткие строки (ФИО человека — обычно три слова) НЕ переносим: «Мельникова /
     // Анастасия Вадимовна» читается как две разные строки. Такие ужимаем кеглем и
@@ -721,7 +741,13 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     // (длинное ФИО лучше перенести, чем ужать до нечитаемого).
     // 4 слова — порог переноса: ФИО (Фамилия Имя Отчество) остаётся в одну строку,
     // длинное название коллектива переносится на вторую.
-    $nameBlk  = _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2, 4);
+    /* ФИО нескольких человек в одном поле: перенос обязан падать МЕЖДУ людьми
+       (слово владельца 18.10.2026). Разбор общий - core/diploma_fio.php; он
+       молчит, когда делить не берётся, и тогда всё как было. */
+    $лица = \diploma_fio_lyudi($name);
+    $nameBlk  = count($лица) > 1
+        ? _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, count($лица), 2, $лица)
+        : _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2, 4);
     $nameHtml = $nameBlk['html'];
     $nameCss  = $nameBlk['css'];
 
@@ -1300,6 +1326,61 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     el.style.fontSize=best.toFixed(1)+'pt';
     if(!fits) el.style.whiteSpace='normal';
   }
+  /* ФИО НАГРАЖДАЕМОГО: КАЖДАЯ СТРОКА МЕРЯЕТСЯ ОТДЕЛЬНО.
+     Блок .awarded-name единственный из крупных остался без подгонки в браузере,
+     и это стоило живого документа: у дуэта (заявка TT-2026-00043) PHP верно
+     разложил два человека по строкам, но второй строке нужно 604 точки при поле
+     596 - не хватило восьми, и «Владимировна» уехала третьей строкой, разорвав
+     фамилию с отчеством. Оценка в PHP (_dh_text_mm, 0.56em при поле 180 мм)
+     считала 149 мм и была довольна: поле на листе на самом деле 157,7 мм, а Exo 2
+     весом 900 шире 0,56em. Такие расхождения и чинит браузер.
+     fitOne здесь не годится: он меряет весь textContent одной строкой и склеил бы
+     двух человек в одну («...ИльиничнаМариева...»), ужав кегль вдвое. Поэтому
+     строки разбираются по <br>, меряется САМАЯ ШИРОКАЯ, а white-space:nowrap
+     оставляет переносы только там, где их поставил PHP. Не влезло и минимальным
+     кеглем - возвращаем обычный перенос: лучше три строки, чем обрезанное слово. */
+  function fitLines(sel, loPt){
+    var el=document.querySelector(sel);
+    if(!el) return;
+    var max=el.clientWidth-2;
+    if(max<=0) return;
+    var parts=el.innerHTML.split(/<br\s*\/?>/i).map(function(s){
+      var d=document.createElement('div'); d.innerHTML=s; return (d.textContent||'').trim();
+    }).filter(function(s){ return s!==''; });
+    if(!parts.length) return;
+    var cs=getComputedStyle(el);
+    var cur=parseFloat(cs.fontSize)*0.75;            // px -> pt, кегль, выбранный PHP
+    if(!(cur>0)) return;
+    el.style.whiteSpace='nowrap';
+    var probe=document.createElement('span');
+    probe.style.cssText='position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;padding:0;margin:0';
+    probe.style.fontFamily=cs.fontFamily; probe.style.fontWeight=cs.fontWeight;
+    probe.style.fontStyle=cs.fontStyle;   probe.style.letterSpacing=cs.letterSpacing;
+    probe.style.textTransform=cs.textTransform;
+    document.body.appendChild(probe);
+    function wide(fs){
+      probe.style.fontSize=fs+'pt';
+      var w=0;
+      for(var i=0;i<parts.length;i++){
+        probe.textContent=parts[i];
+        var x=probe.getBoundingClientRect().width;
+        if(x>w) w=x;
+      }
+      return w;
+    }
+    /* Влезает как есть - НИЧЕГО НЕ ТРОГАЕМ. Иначе подгонка меняла бы кегль на
+       каждом бланке на десятые доли без всякой нужды. */
+    if(wide(cur)<=max){ probe.parentNode.removeChild(probe); return; }
+    var lo=loPt, hi=cur, best=lo;
+    for(var i=0;i<26 && hi-lo>0.1;i++){
+      var mid=(lo+hi)/2;
+      if(wide(mid)<=max){ best=mid; lo=mid; } else { hi=mid; }
+    }
+    var fits=wide(best)<=max;
+    probe.parentNode.removeChild(probe);
+    el.style.fontSize=best.toFixed(1)+'pt';
+    if(!fits) el.style.whiteSpace='normal';
+  }
   function fitTitle(){
     fitOne('.competition-name', <?= max(18, (int)round($COMP_FS * 0.6)) ?>, <?= (int)round(min(46, max(34, $COMP_FS * 2.6))) ?>);
     /* Звание тоже подгоняется: у дополнительного диплома это не «Лауреат I
@@ -1313,6 +1394,9 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
        Александра Владимировна»), и жёсткий кегль её либо обрезал, либо ронял на две
        строки. Подгоняем по ширине, как название конкурса. */
     fitOne('.awarded-name-script', 13, <?= (float)$T['script_fs'] ?>);
+    /* Имя награждаемого: подгонка ПОСТРОЧНАЯ (см. fitLines выше). Минимум тот
+       же, что у подгонки в PHP, - 14pt: ниже документ перестаёт читаться. */
+    fitLines('.awarded-name', 14);
     fitOne('.extra-award', 9, 15);
     /* Уравнивание просветов считает границы букв через canvas по ФАКТИЧЕСКОМУ
        шрифту. Если шрифт названия (Prata, Alegreya SC) ещё не догрузился, canvas

@@ -204,7 +204,10 @@ function app_fields_normalize(array $in, array $cur = []): array {
     }
     if ($has('formation')) {
         $v = $raw('formation');
-        $ok = function_exists('FORMATIONS_FOR') ? FORMATIONS_FOR($nom) : [];
+        // Подраздел сужает набор форм, и чистка обязана судить тем же набором,
+        // что форма подачи: иначе сайт показывает одно, а сервер принимает другое.
+        $subNow = (string) ($data['subgroup'] ?? ($cur['subgroup'] ?? ''));
+        $ok = function_exists('FORMATIONS_FOR') ? FORMATIONS_FOR($nom, $subNow) : [];
         if ($v !== '' && $ok && !in_array($v, $ok, true)) $err['formation'] = 'Такой формы исполнения нет в положении.';
         else $data['formation'] = $cut('formation', $v);
     }

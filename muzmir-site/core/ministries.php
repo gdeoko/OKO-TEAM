@@ -90,6 +90,12 @@ function min_migrate(): void {
         // вовсе. Слать им почтой бессмысленно и невежливо — адрес закрываем и
         // показываем владельцу ссылку на приёмную (подача руками).
         ['portal_only',      "INTEGER DEFAULT 0"],
+        // ЖЁСТКИЙ ЗАПРЕТ ОТПРАВКИ. Ставится только человеком и автоматикой НЕ
+        // переписывается — в отличие от status, который меняет каждый ответ
+        // ведомства (min_mark_replied). Причина обязательна словами: «письмо не
+        // ушло» без объяснения читается как сбой канала.
+        ['no_send',          "INTEGER DEFAULT 0"],
+        ['no_send_reason',   "TEXT DEFAULT ''"],
     ] as [$col, $type]) {
         try { db()->exec("ALTER TABLE ministries ADD COLUMN $col $type"); } catch (\Throwable $e) {}
     }
@@ -344,7 +350,12 @@ function min_add(array $d): int {
         if ($k === 'email' || $v === '') continue;
         if (trim((string) ($row[$k] ?? '')) === '') $upd[$k] = $v;
     }
-    if ($upd) { try { update('ministries', $upd, 'id=?', [(int) $row['id']]); } catch (\Throwable $e) {} }
+    /* УСЛОВИЕ ТОЛЬКО ИМЕНОВАННОЙ ПОДСТАНОВКОЙ. `update()` склеивает SET через
+       `:поле` и отдаёт в execute() один массив, поэтому `'id=?'` не совпадает
+       ни с одной строкой: запрос проходит, rowCount равен нулю, и дополнение
+       записи ведомства молча не делалось. Ни ошибки, ни следа - тут ещё и
+       catch глушил бы её, если бы она была. */
+    if ($upd) { try { update('ministries', $upd, 'id=:wid', ['wid' => (int) $row['id']]); } catch (\Throwable $e) {} }
     return 0;
 }
 
@@ -480,6 +491,78 @@ function min_mark_sent(int $id, string $number): void {
              last_sent_at=datetime('now','localtime'), last_number=?, sent_count=sent_count+1 WHERE id=?",
           [$number, $id]);
     } catch (\Throwable $e) {}
+}
+
+/* ═══════════ ЖЁСТКИЙ ЗАПРЕТ ОТПРАВКИ (слово владельца 14.10.2026) ═══════════
+ *
+ * «В дальнейшем письма любого содержания (о поддержке, и т.п.) в центральные
+ * Министерства культуры и образования города Москвы не отправлять в
+ * автоматизации никогда.»
+ *
+ * ПОЧЕМУ ЗАПРЕТ, А НЕ СТАТУС. Статус ведомства переписывает сама автоматика:
+ * `min_mark_replied()` ставит replied/supported/declined по каждому ответу, и
+ * поставленный руками «declined» слетел бы на следующем письме от ведомства.
+ * Поэтому запрет живёт ДВУМЯ слоями: колонка `no_send` в базе (её автоматика
+ * не трогает) и список в коде — он держит даже тогда, когда запись в базе
+ * пересоздали, завели второй ящик того же министерства или почистили таблицу.
+ *
+ * ДОМЕНОМ ЗАКРЫТЫ ТОЛЬКО ТЕ, ГДЕ ЖИВУТ ОДНИ МИНИСТЕРСТВА. Замер 14.10.2026:
+ * на `culture.mos.ru` сидят 129 УЧРЕЖДЕНИЙ Москвы (ДМШ № 66, «Класс-Центр»,
+ * ДШИ «Исток», Дом культуры «Чертаново» …), на `mos.ru` ещё два, и центр
+ * законно пишет им приглашения в партнёрку — 342 письма уже ушло. Закрой домен
+ * целиком, и вместе с департаментом замолчала бы вся московская партнёрка.
+ * Поэтому департаменты Москвы закрыты ПОАДРЕСНО.
+ */
+const MIN_NO_SEND_DOMAINS = [
+    'culture.gov.ru',        // Минкультуры России
+    'mkrf.ru',               // Минкультуры России, портальный ящик
+    'edu.gov.ru',            // Минпросвещения России
+    'minobrnauki.gov.ru',    // Минобрнауки России
+];
+const MIN_NO_SEND_EMAILS = [
+    'priemnaja@culture.mos.ru',   // Департамент культуры г. Москвы, приёмная
+    'donm@mos.ru',                // Департамент образования и науки г. Москвы
+    'donm-press@mos.ru',          // он же, пресс-служба
+];
+
+/**
+ * Запрещена ли отправка на этот адрес. Возвращает ПРИЧИНУ словами или ''.
+ *
+ * Причина нужна в журнале: «письмо не ушло» без объяснения читается как сбой
+ * канала, и следующая сессия полезет чинить почту (так уже было с Яндексом,
+ * правило 26).
+ */
+function min_send_forbidden(string $email): string {
+    $e = mb_strtolower(trim($email));
+    if ($e === '') return '';
+
+    if (in_array($e, MIN_NO_SEND_EMAILS, true)) {
+        return 'центральное ведомство Москвы в списке запрета (слово владельца 14.10.2026)';
+    }
+    $dom = substr($e, (int) strrpos($e, '@') + 1);
+    if ($dom !== '' && in_array($dom, MIN_NO_SEND_DOMAINS, true)) {
+        return 'центральное министерство (' . $dom . ') в списке запрета (слово владельца 14.10.2026)';
+    }
+    try {
+        $r = one("SELECT COALESCE(no_send,0) ns, COALESCE(no_send_reason,'') r
+                    FROM ministries WHERE LOWER(email)=? LIMIT 1", [$e]);
+        if ($r && (int) $r['ns'] === 1) {
+            return (string) ($r['r'] !== '' ? $r['r'] : 'ведомству отправка запрещена вручную');
+        }
+    } catch (\Throwable $e2) { /* колонки может не быть на старой базе — список в коде остаётся */ }
+
+    return '';
+}
+
+/** Поставить или снять запрет отправки ведомству. Пустая причина снимает. */
+function min_set_no_send(string $email, string $reason): void {
+    min_migrate();
+    $e = mb_strtolower(trim($email));
+    if ($e === '') return;
+    try {
+        q("UPDATE ministries SET no_send=?, no_send_reason=? WHERE LOWER(email)=?",
+          [$reason !== '' ? 1 : 0, $reason, $e]);
+    } catch (\Throwable $ex) {}
 }
 
 function min_mark_replied(string $email, string $status = 'replied'): void {

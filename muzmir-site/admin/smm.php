@@ -38,6 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'settings') {
     set_setting('smm_enabled', input('enabled') ? '1' : '0');
     set_setting('smm_autopublish', input('autopublish') ? '1' : '0');
     set_setting('smm_image_budget_day', (string) (float) input('budget'));
+    /* ЗАПАСНОЙ МОЗГ — ОТДЕЛЬНЫЙ ВЫКЛЮЧАТЕЛЬ, ПОТОМУ ЧТО ЭТО ДЕНЬГИ.
+     * Основной мозг (Gemini) бесплатный до двадцати запросов в сутки; когда норма
+     * выбрана, темы и тексты может писать apimodels — тот же счёт, на котором
+     * собираются картинки. Включает это владелец, а не конвейер сам. */
+    set_setting('smm_brain_fallback', input('fallback') ? '1' : '0');
+    if (trim((string) input('brainlimit')) !== '') {
+        set_setting('smm_brain_fallback_limit', (string) max(0, (int) input('brainlimit')));
+    }
     $pages = trim((string) input('pages'));
     if ($pages !== '') set_setting('smm_pages', $pages);
 
@@ -117,6 +125,19 @@ $enabled = (int) setting('smm_enabled', '0') === 1;
 $autopub = (int) setting('smm_autopublish', '0') === 1;
 $budget  = (float) setting('smm_image_budget_day', '0.5');
 $pagesS  = (string) setting('smm_pages', '2543792,2561963');
+$fallback = (int) setting('smm_brain_fallback', '0') === 1;
+$fbModel  = (string) setting('smm_brain_fallback_model', 'claude-haiku-5-5');
+$fbLimit  = (int) setting('smm_brain_fallback_limit', '60');
+$fbDay    = json_decode((string) setting('smm_brain_day', '{}'), true);
+if (!is_array($fbDay) || ($fbDay['date'] ?? '') !== date('Y-m-d')) $fbDay = ['calls' => 0, 'in' => 0, 'out' => 0];
+/* Отдых ключей основного мозга: когда норма Gemini выбрана, в журнале это видно,
+   а на пульте не было видно вовсе — владелец смотрел на пустую очередь и гадал. */
+$brainRest = 0;
+$__rest = json_decode((string) setting('smm_brain_rest', '{}'), true);
+if (is_array($__rest) && $__rest) {
+    $__live = array_filter(array_map('intval', $__rest), static fn(int $t): bool => $t > time());
+    if (count($__live) === count($__rest)) $brainRest = min($__live);
+}
 $spent   = smm_spent_today();
 
 $queue = all("SELECT * FROM smm_posts WHERE status IN ('draft','ready','failed')
@@ -160,9 +181,19 @@ ob_start(); ?>
       <b>Публиковать само</b>
     </label>
 
+    <label style="display:flex;gap:8px;align-items:center" title="Когда дневная норма Gemini выбрана, темы и тексты пишет apimodels — тот же платный счёт, что у картинок">
+      <input type="checkbox" name="fallback" value="1"<?= $fallback ? ' checked' : '' ?>>
+      <b>Запасной мозг</b>
+    </label>
+
     <label style="display:flex;flex-direction:column;gap:4px">
       <span style="font-size:.82rem;color:var(--muted)">Предел расхода на картинки в сутки</span>
       <input class="inp" name="budget" value="<?= h((string) $budget) ?>" style="max-width:120px">
+    </label>
+
+    <label style="display:flex;flex-direction:column;gap:4px">
+      <span style="font-size:.82rem;color:var(--muted)">Вызовов запасного мозга в сутки</span>
+      <input class="inp" name="brainlimit" value="<?= (int) $fbLimit ?>" style="max-width:110px">
     </label>
 
     <label style="display:flex;flex-direction:column;gap:4px">
@@ -182,6 +213,19 @@ ob_start(); ?>
     <?php if ($budget <= 0): ?>
       <br>Предел нулевой — картинки не генерируются, посты остаются черновиками.
     <?php endif; ?>
+    <?php if ($brainRest > 0): ?>
+      <br>Дневная норма Gemini выбрана, он отдыхает до <b><?= h(date('H:i', $brainRest)) ?></b>.
+      <?= $fallback
+            ? 'Темы и тексты пока пишет запасной мозг (' . h($fbModel) . '), счёт apimodels.'
+            : 'Запасной мозг выключен — до этого часа новые темы не придумываются.' ?>
+    <?php endif; ?>
+    <?php if ($fallback): ?>
+      <br>Запасной мозг включён: <b><?= h($fbModel) ?></b> на счёте apimodels. Он вступает,
+      только когда основной упёрся в норму.
+      Сегодня им сделано <b><?= (int) $fbDay['calls'] ?></b> вызовов из <?= (int) $fbLimit ?>
+      (<?= number_format(((int) $fbDay['in'] + (int) $fbDay['out']) / 1000, 1, ',', ' ') ?> тыс. токенов).
+      Один пост обходится примерно в восемь вызовов.
+    <?php endif; ?>
   </p>
 </div>
 
@@ -199,7 +243,7 @@ ob_start(); ?>
       <?= $badge((string) $p['status']) ?>
       <span><?= h((string) $p['topic']) ?></span>
       <span style="color:var(--muted);font-size:.82rem">
-        <?= h((string) $p['layer']) ?> · ступень <?= (int) $p['stage'] ?> · <?= h((string) $p['ratio']) ?>
+        <?= h((string) ($p['kind'] ?? 'совет')) ?><?php if ((string) ($p['povod'] ?? '') !== ''): ?> · <?= h((string) $p['povod']) ?><?php endif; ?> · <?= h((string) ($p['age_group'] ?? '')) ?> · <?= h((string) $p['layer']) ?> · ступень <?= (int) $p['stage'] ?> · <?= h((string) $p['ratio']) ?><?php if ((string) ($p['keyart'] ?? '') !== ''): ?> · плакат: <?= h((string) $p['keyart']) ?><?php endif; ?>
       </span>
     </summary>
 
@@ -250,7 +294,7 @@ ob_start(); ?>
   <div class="card" style="margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <b style="min-width:150px"><?= h((string) $p['published_at']) ?></b>
     <span style="flex:1 1 240px"><?= h((string) $p['topic']) ?></span>
-    <span style="color:var(--muted);font-size:.82rem"><?= h((string) $p['layer']) ?></span>
+    <span style="color:var(--muted);font-size:.82rem"><?= h(trim((string) ($p['kind'] ?? '') . ' · ' . (string) ($p['age_group'] ?? '') . ' · ' . (string) $p['layer'], ' ·')) ?></span>
     <?php if ((string) $p['vk_link'] !== ''): ?>
       <a href="<?= h((string) $p['vk_link']) ?>" target="_blank" rel="noopener" class="btn btn--sm">ВКонтакте</a>
     <?php endif; ?>

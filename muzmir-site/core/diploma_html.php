@@ -21,6 +21,7 @@ declare(strict_types=1);
  *   _dh_teachers(string $raw): array   (используется core/pdf_diploma.php)
  */
 
+require_once __DIR__ . '/diploma_fio.php';   // разбор ФИО на людей, общий на все движки
 require_once __DIR__ . '/diploma_html_v1.php';
 require_once __DIR__ . '/diploma_html_v2.php';
 // Кандидат-движки для сверки новых конкурсов с утверждёнными эталонами.

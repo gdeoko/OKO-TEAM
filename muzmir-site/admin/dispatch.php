@@ -385,8 +385,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = function_exists('order_mark_shipped_parcel') ? order_mark_shipped_parcel($pids, $track) : false;
             $note = count($pids) > 1 ? (' Одной посылкой с заказ' . (count($pids) > 2 ? 'ами' : 'ом') . ' №'
                                         . implode(', №', array_slice($pids, 1)) . '.') : '';
+            /* ПРИЧИНУ ОТКАЗА НАЗЫВАЕМ СЛОВАМИ. «Статус обновлён, письмо не ушло»
+             * было неправдой при удержании посылки: статус как раз НЕ обновлён,
+             * и человек, прочитав это, считал заказ отправленным. */
+            $почему = (string) ($GLOBALS['ORDER_SHIP_ERROR'] ?? '');
             disp_done($ok, $ok ? ('Заказ №' . $id . ' отправлен, участнику ушло письмо с трек-номером.' . $note)
-                               : 'Статус обновлён, письмо не ушло.', ['remove' => $ok]);
+                               : ($почему !== '' ? $почему : 'Статус обновлён, письмо не ушло.'), ['remove' => $ok]);
         } elseif ($do === 'redispatch') {
             update('awards_orders', ['dispatched_at' => ''], 'id=:id', ['id' => $id]);
             $ok = function_exists('order_dispatch_production') ? order_dispatch_production($id) : false;
@@ -486,7 +490,11 @@ $resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group,
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.result <> '' AND COALESCE(a.result_send_at,'') <> ''
                      AND COALESCE(a.result_sent_at,'') = ''
-                     AND COALESCE(c.results_mode,'') <> 'list'
+                   /* ЗАЯВКА ДЛИННОГО КОНКУРСА С НАЗНАЧЕННЫМ СРОКОМ СТОЯЛА БЫ
+                      ЗДЕСЬ, А НЕ В СПИСКЕ ОЖИДАЮЩИХ ОГЛАШЕНИЯ. Назначать его
+                      больше некому (правило 73к), и блок просто не находит таких
+                      строк. Условия двух блоков не пересекаются - иначе одна
+                      строка печаталась бы дважды и с разным временем. */
                    ORDER BY a.result_send_at ASC LIMIT " . ($takeD + 1));
 $moreD = $moreD || count($resultsRaw) > $takeD; if (count($resultsRaw) > $takeD) array_pop($resultsRaw);
 /* ---- 4б) Оценённые работы конкурса с оглашением списком ----
@@ -500,6 +508,7 @@ $listRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.
                 FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                 WHERE a.result <> '' AND COALESCE(a.result_sent_at,'') = ''
                   AND COALESCE(c.results_mode,'') = 'list'
+                  AND COALESCE(a.result_send_at,'') = ''
                   AND COALESCE(c.results_published_at,'') = ''
                 ORDER BY c.results_date ASC, a.id ASC LIMIT " . ($takeD + 1));
 $moreD = $moreD || count($listRaw) > $takeD; if (count($listRaw) > $takeD) array_pop($listRaw);
@@ -520,14 +529,59 @@ $moreD = $moreD || count($sentRaw) > $takeD; if (count($sentRaw) > $takeD) array
 $failedRaw = all("SELECT * FROM mail_queue WHERE status='failed' ORDER BY id DESC LIMIT " . ($takeD + 1));
 $moreD = $moreD || count($failedRaw) > $takeD; if (count($failedRaw) > $takeD) array_pop($failedRaw);
 
-/* ---- Состояние почтового канала (диагностика в одну строку) ---- */
-$smtpUser = (string) cfgv('smtp_user', '');
-$smtpPass = (string) cfgv('smtp_pass', '');
-$mailReady = $smtpUser !== '' && $smtpPass !== '';
-$lastSent  = (string) (scalar("SELECT sent_at FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC LIMIT 1") ?? '');
+/* ---- Состояние почтового канала (диагностика в одну строку) ----
+ *
+ * ГОТОВНОСТЬ ПОЧТЫ СПРАШИВАЕМ У ТОГО, КТО ОТПРАВЛЯЕТ.
+ * Раньше здесь стояла проверка одного ящика smtp_user/smtp_pass. Отправкой она не
+ * управляет уже давно: письмо уходит по ПУЛУ (mail_fallback_accounts) — Unisender,
+ * kc@, news@, novosti@, nagradi.on@, у каждого типа письма свой. Проверка жила
+ * отдельной жизнью от кода и в обе стороны врала: пустой старый ящик давал красное
+ * «письма не отправляются» при исправной почте, а заполненный — зелёное
+ * «настроена», даже если у нужного пула не осталось ни одного ящика. И отправитель
+ * в строке показывался тот самый старый ящик, а не настоящий.
+ */
+$mailBoxes = [];
+foreach (['tx' => 'личные и уведомления', 'awards' => 'наградные',
+          'news' => 'рассылка по участникам', 'cold' => 'учреждения'] as $pool => $title) {
+    $chain = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], $pool) : [];
+    $from  = [];
+    foreach ($chain as $acc) {
+        $a = is_array($acc) ? (string) ($acc['from_addr'] ?? $acc['user'] ?? '') : (string) $acc;
+        if ($a !== '' && !in_array($a, $from, true)) $from[] = $a;
+    }
+    $mailBoxes[] = ['pool' => $pool, 'title' => $title, 'n' => count($chain), 'from' => $from];
+}
+$poolsEmpty = array_values(array_filter($mailBoxes, static fn(array $b): bool => $b['n'] === 0));
+$mailReady  = $poolsEmpty === [];
+$smtpUser   = implode(', ', array_unique(array_merge(...array_map(
+    static fn(array $b): array => $b['from'], $mailBoxes
+)) ?: []));
+
+$lastSent  = (string) (scalar("SELECT MAX(sent_at) FROM mail_queue WHERE status='sent' AND sent_at IS NOT NULL") ?? '');
 $cntQueued = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'") ?? 0);
-$cntFailed = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'") ?? 0);
-$lastErr   = (string) (scalar("SELECT error FROM mail_queue WHERE status='failed' AND error<>'' ORDER BY id DESC LIMIT 1") ?? '');
+
+/* СВЕЖИЕ ОТКАЗЫ И ИТОГ ЗА ВСЁ ВРЕМЯ — ДВА РАЗНЫХ ЧИСЛА.
+   Один счётчик «всех failed с первого дня» красил пульт в тревогу навсегда:
+   полторы тысячи отказов, накопленных с августа по мёртвым адресам, читались как
+   «сейчас ничего не уходит». */
+$cntFailed    = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'
+                                AND COALESCE(sent_at, created_at) >= datetime('now','localtime','-1 day')") ?? 0);
+$cntFailedAll = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'") ?? 0);
+$sentDay      = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent'
+                                AND sent_at >= datetime('now','localtime','-1 day')") ?? 0);
+
+/* Доставку показываем по ответам получателей, а не по своей отметке «отдано шлюзу». */
+$deliv24 = (int) (scalar("SELECT COUNT(*) FROM mail_events WHERE status='delivered'
+                           AND event_time >= datetime('now','localtime','-1 day')") ?? 0);
+$gate24  = (int) (scalar("SELECT COUNT(*) FROM mail_events WHERE status='sent'
+                           AND event_time >= datetime('now','localtime','-1 day')") ?? 0);
+
+/* Последняя ошибка — ВСЕГДА с датой. Без даты отказ недельной давности читается
+   как случившийся минуту назад. */
+$lastErrRow = one("SELECT error, COALESCE(sent_at, created_at) AS t FROM mail_queue
+                    WHERE status='failed' AND error<>'' ORDER BY id DESC LIMIT 1");
+$lastErr    = (string) ($lastErrRow['error'] ?? '');
+$lastErrAt  = (string) ($lastErrRow['t'] ?? '');
 
 /* ---- Нормализация в единый список ---- */
 $queue = [];
@@ -613,28 +667,93 @@ foreach ($ordersRaw as $o) {
     $itemsText = '';
     $decoded = json_decode((string) ($o['items'] ?? '[]'), true);
     if (is_array($decoded)) $itemsText = implode(', ', array_map(fn($it) => (string) ($it['item'] ?? ''), $decoded));
+    /* ЭЛЕКТРОННЫЙ ЗАКАЗ НЕ ЕДЕТ ПОЧТОЙ.
+     *
+     * Строка подписывалась «Заказ оригиналов» и получала срок доставки
+     * «оформление + N рабочих дней» независимо от вида заказа. Заказ №440 по
+     * заявке VR-2026-00039 - шесть ЭЛЕКТРОННЫХ бланков на 2400 рублей - стоял
+     * в пульте как посылка с датой отправки по почте, хотя уходит он письмом
+     * вместе с дипломами. Вид берём у заказа, а срок у его же наградных
+     * материалов: это та самая дата, в которую участник получит письмо. */
+    $__digital = (string) ($o['kind'] ?? '') === 'digital';
+    $__when = disp_add_workdays($anchor, $shipDays);
+    if ($__digital) {
+        $__when = (string) (scalar("SELECT MIN(scheduled_at) FROM diplomas
+                                     WHERE application_id=? AND COALESCE(sent_at,'')=''
+                                       AND COALESCE(scheduled_at,'')<>''", [(int) ($o['application_id'] ?? 0)]) ?? '');
+    }
     $queue[] = [
         'kind' => 'order', 'id' => (int) $o['id'], 'mtype' => '',
-        'type_label' => 'Заказ оригиналов',
+        'type_label' => $__digital ? 'Заказ электронных наград' : 'Заказ оригиналов',
         'who' => (string) $o['full_name'], 'email' => (string) ($o['email'] ?? ''), 'phone' => (string) ($o['phone'] ?? ''),
         'comp' => (string) ($o['competition'] ?? ''), 'number' => (string) $o['id'],
         'title' => (string) ($o['result'] ?? '') . ($itemsText !== '' ? ' · ' . $itemsText : ''),
-        'when' => disp_add_workdays($anchor, $shipDays),
+        'when' => $__when,
         'status' => (string) $o['status'],
         'search' => mb_strtolower(trim("{$o['full_name']} {$o['email']} {$o['phone']} {$o['competition']} {$o['result']} {$itemsText} №{$o['id']}")),
         'raw' => $o + ['_anchor' => $anchor],
     ];
 }
 
+/**
+ * ПРИОРИТЕТ СТРОКИ ОЧЕРЕДИ И ВИД ЕГО СРОКА - ОДНО МЕСТО НА СОРТИРОВКУ И ПЛАШКУ.
+ *
+ * Вид берётся ПО ВИДУ СТРОКИ: у заказа и письма с дипломами это срок
+ * ИЗГОТОВЛЕНИЯ (отсчёт от оплаты заказа), у результата - срок аттестации.
+ * Назвать обоим один срок нельзя: у партнёра они разные, короткий только у
+ * результата (правило 47). У строки ЗАКАЗА в очереди нет поля `user_id` вовсе,
+ * поэтому клуб плательщика берётся из самой строки заказа.
+ *
+ * Своей второй копии этого разбора в файле быть не должно: плашка и порядок
+ * строк обязаны думать одинаково, а копии расходятся молча.
+ *
+ * @return array{0:array,1:string} приоритет и вид срока
+ */
+function disp_prioritet(array $it): array {
+    if (!function_exists('prioritet_zayavki')) return [[], 'заявка'];
+    $k = (string) ($it['kind'] ?? '');
+    if ($k === 'order') {
+        return [prioritet_zakaza((array) ($it['raw'] ?? [])), 'изготовление'];
+    }
+    if ($k === 'diploma') {
+        return [prioritet_zayavki(['id' => (int) ($it['app'] ?? 0),
+                                   'user_id' => (int) ($it['user_id'] ?? 0)]), 'изготовление'];
+    }
+    if ($k === 'result') {
+        return [prioritet_zayavki(['id' => (int) ($it['id'] ?? 0),
+                                   'user_id' => (int) ($it['user_id'] ?? 0)]), 'заявка'];
+    }
+    // Письмо из очереди: заявки за ним может не стоять вовсе, срока лестницы нет.
+    return [[], 'заявка'];
+}
+
+/** Вес строки очереди: 0 срочная (клуб), 1 партнёр, 2 обычная. */
+function disp_ves(array $it): int {
+    if (!function_exists('prioritet_ves')) return 2;
+    [$п, $вид] = disp_prioritet($it);
+    return $п ? prioritet_ves($п, $вид) : 2;
+}
+
 /* ---- Применяем фильтр + поиск ---- */
 $queueF = array_values(array_filter($queue, fn($it) => $matchType($it) && $matchSearch($it)));
-/* Сортировка очереди по плановому времени (просроченные и «сразу» — вверху). */
+/* Сортировка очереди по плановому времени (просроченные и «сразу» — вверху).
+ *
+ * ПЛАНОВОЕ ВРЕМЯ ГЛАВНЕЕ ПРИОРИТЕТА, И ЭТО НЕ НЕДОРАБОТКА. Срок у строки уже
+ * ПОСЧИТАН по лестнице (результат берёт `result_send_at`, дипломы - свой
+ * `scheduled_at`, и оба ставит код через prioritet_zayavki): клубная строка
+ * стоит выше ровно потому, что её срок наступает раньше. Поднять клуб над
+ * письмом, которое просрочено или уходит сегодня, значит задержать то, что
+ * обязано уйти первым.
+ *
+ * ПРИ РАВНОМ СРОКЕ ВПЕРЁД ИДЁТ СРОЧНАЯ СТРОКА: у двух писем на один и тот же
+ * час порядок иначе случайный, а запас у клубного срока меньше. */
 usort($queueF, function ($a, $b) {
     $ta = strtotime($a['when'] ?: '') ?: 0;
     $tb = strtotime($b['when'] ?: '') ?: 0;
     if ($ta === 0 && $tb !== 0) return -1;
     if ($tb === 0 && $ta !== 0) return 1;
-    return $ta <=> $tb;
+    if ($ta !== $tb) return $ta <=> $tb;
+    return disp_ves($a) <=> disp_ves($b);
 });
 
 /* ---- Архив: нормализация + фильтр/поиск ---- */
@@ -660,6 +779,15 @@ $archiveF = array_values(array_filter($archive, fn($it) => $archiveKeep($it) && 
 
 $countQueue = count($queueF);
 $countArch  = count($archiveF);
+/* СКОЛЬКО В ОЧЕРЕДИ СРОЧНЫХ - ЧИСЛОМ. Строки с коротким сроком стоят по своему
+   плановому времени, но знать, сколько их ждёт сейчас, оператору нужно сразу:
+   пересчитывать плашки руками он не станет. Вес считает тот же disp_ves. */
+$срочныхQ = 0;
+$партнёрQ = 0;
+foreach ($queueF as $__it) {
+    $__v = disp_ves($__it);
+    if ($__v === 0) $срочныхQ++; elseif ($__v === 1) $партнёрQ++;
+}
 
 /* ---- Хелперы рендера строки очереди ---- */
 $rowWhen = function (array $it): string {
@@ -721,27 +849,48 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   <p class="muted small">Единый список всего, что уходит автоматически: дипломы после оценки, письма из очереди, оригиналы наград после оплаты. Фильтр и поиск — сверху. Действия применяются без перезагрузки страницы.</p>
 </div>
 
-<!-- Состояние почтового канала: сразу видно, почему письма не уходят. -->
-<div class="card" style="margin-bottom:16px;border-left:4px solid <?= $mailReady ? ($cntFailed > 0 ? '#C79322' : '#1E9E5A') : '#C0392B' ?>">
+<!-- Состояние почтового канала. Первой строкой — ДОШЛИ ЛИ ПИСЬМА за сутки:
+     именно на этот вопрос здесь смотрят, и именно его плашка раньше не отвечала. -->
+<?php
+// Красное — только когда почта действительно встала. Жёлтое — свежие отказы при
+// живой отправке (часть адресов в базе мёртвая, это шум рассылки, а не поломка).
+$mailStop  = $mailReady && $sentDay === 0 && $cntQueued > 0;
+$mailAlarm = !$mailReady || $mailStop;
+$mailWarn  = !$mailAlarm && $cntFailed > 0;
+?>
+<div class="card" style="margin-bottom:16px;border-left:4px solid <?= $mailAlarm ? '#C0392B' : ($mailWarn ? '#C79322' : '#1E9E5A') ?>">
   <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between">
     <div>
-      <b><?= $mailReady ? 'Почта настроена' : 'Почта НЕ настроена — письма не отправляются' ?></b>
+      <b><?php
+        if (!$mailReady)      echo 'Почта НЕ настроена — письма не отправляются';
+        elseif ($mailStop)    echo 'Письма не уходят: за сутки не отправлено ни одного';
+        elseif ($gate24 > 0)  echo 'Письма доходят: доставлено за сутки ' . $deliv24 . ' из ' . $gate24;
+        elseif ($sentDay > 0) echo 'Почта работает: за сутки отправлено ' . $sentDay;
+        else                  echo 'Почта настроена, отправлять нечего';
+      ?></b>
       <div class="small muted" style="margin-top:4px">
         <?php if (!$mailReady): ?>
-          В окружении не заданы <code>MUZMIR_SMTP_USER</code> / <code>MUZMIR_SMTP_PASS</code>.
-          Пока их нет, любая отправка (в том числе «Отправить сейчас») будет падать, а письма копиться в очереди.
+          Не осталось ни одного ящика у типов писем:
+          <?= h(implode(', ', array_map(static fn(array $b): string => $b['title'], $poolsEmpty))) ?>.
+          Пока это так, отправка таких писем будет падать, а письма копиться в очереди.
         <?php else: ?>
-          Отправитель: <?= h($smtpUser) ?> · последняя успешная отправка:
+          Отправители: <?= h($smtpUser) ?> · последняя успешная отправка:
           <?= $lastSent !== '' ? h(disp_dt($lastSent)) : 'ещё не было' ?>
         <?php endif; ?>
       </div>
-      <?php if ($cntFailed > 0 && $lastErr !== ''): ?>
-        <div class="small" style="margin-top:6px;color:#C0392B">Последняя ошибка: <?= h(mb_strimwidth($lastErr, 0, 160, '…')) ?></div>
+      <?php if ($lastErr !== ''): ?>
+        <?php // Дата у ошибки обязательна: без неё отказ недельной давности читается как свежий. ?>
+        <div class="small" style="margin-top:6px;color:<?= $cntFailed > 0 ? '#C0392B' : '#6B7699' ?>">
+          <?= $cntFailed > 0 ? 'Последняя ошибка' : 'Последняя ошибка (старая, за сутки сбоев нет)' ?><?php
+            ?><?= $lastErrAt !== '' ? ', ' . h(disp_dt($lastErrAt)) : '' ?>:
+          <?= h(mb_strimwidth($lastErr, 0, 160, '…')) ?>
+        </div>
       <?php endif; ?>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <span class="badge badge--new">В очереди: <?= $cntQueued ?></span>
-      <?php if ($cntFailed > 0): ?><span class="badge badge--rejected">Не отправлено: <?= $cntFailed ?></span><?php endif; ?>
+      <?php if ($cntFailed > 0): ?><span class="badge badge--rejected">Сбоев за сутки: <?= $cntFailed ?></span><?php endif; ?>
+      <?php if ($cntFailedAll > $cntFailed): ?><span class="badge badge--muted">За всё время: <?= $cntFailedAll ?></span><?php endif; ?>
     </div>
   </div>
 </div>
@@ -762,6 +911,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   <?php if ($q !== '' || $f !== 'all'): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch') ?>">Сброс</a><?php endif; ?>
 </form>
 
+<?= admin_cards_css() ?>
 <div class="tabs" style="margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap;">
   <a class="tag active" href="#queue" style="padding:7px 13px;border-radius:10px;">В очереди · <?= $countQueue ?></a>
   <a class="tag" href="#arch" style="padding:7px 13px;border-radius:10px;">Архив отправленных · <?= $countArch ?></a>
@@ -769,29 +919,60 @@ tr.disp-row.gone{opacity:0;transition:.4s}
 
 <!-- ============ ЕДИНАЯ ОЧЕРЕДЬ ============ -->
 <div class="card" id="queue" style="margin-bottom:20px;">
-  <div class="section-title" style="margin-bottom:8px"><h3>В очереди</h3></div>
+  <div class="section-title" style="margin-bottom:8px"><h3>В очереди
+    <?php if ($срочныхQ || $партнёрQ): ?><span class="small muted" style="font-weight:400" title="Строки с коротким сроком: у Элитного клуба 3 рабочих дня, у партнёров 4 на аттестацию. Очередь идёт по плановому времени, а при равном сроке срочная строка стоит выше">· с коротким сроком: Элитный клуб <?= (int) $срочныхQ ?>, партнёры <?= (int) $партнёрQ ?></span><?php endif; ?>
+  </h3></div>
   <p class="small muted" style="margin:-4px 0 12px">По каждой строке: изменить дату/время, отправить сейчас, отменить, а письма — отредактировать (кнопка «✎»). Всё сохраняется на месте.</p>
   <?php if (!$queueF): ?>
     <p class="muted">По этому фильтру в очереди пусто.</p>
   <?php else: ?>
-  <div class="table-wrap"><table class="tbl">
+  <div class="table-wrap table-wrap--cards"><table class="tbl tbl--cards">
     <thead><tr><th>Тип</th><th>Кому</th><th>Что</th><th>Когда</th><th>Действия</th></tr></thead>
     <tbody>
     <?php foreach ($queueF as $it): $k = $it['kind']; $iid = $it['id']; $rid = "row-$k-$iid"; ?>
       <tr class="disp-row" id="<?= $rid ?>">
-        <td>
+        <td data-label="Тип">
           <span class="disp-typechip k-<?= $k ?>"><?= h($it['type_label']) ?></span>
           <?php if ($k === 'mail'): ?><br><span class="badge <?= ($it['priority']??0)===0?'badge--paid':'badge--muted' ?> small" style="margin-top:4px"><?= ($it['priority']??0)===0?'транз.':'массов.' ?></span><?php endif; ?>
         </td>
-        <td class="small">
-          <b><?= h($it['who'] ?: '—') ?></b><?= vip_mark((int)($it['user_id'] ?? 0), '', (string)($it['email'] ?? '')) ?>
+        <td class="small" data-label="Кому">
+          <b><?= h($it['who'] ?: '—') ?></b><?= vip_mark((int)($it['user_id'] ?? 0), '', (string)($it['email'] ?? '')) ?><?php
+            /* СЕРАЯ ГАЛОЧКА «НЕ ЗАБРАЛ ПОСЫЛКУ». Номер заявки у каждой строки
+               лежит в своём поле: у результата это сам `id`, у бланка `app`, у
+               заказа — его строка. Молча передать ноль нельзя: галочка пропала
+               бы ровно там, где посылка и застряла. */
+            $__nap = $k === 'result' ? (int) $iid
+                   : ($k === 'order' ? (int) ($it['raw']['application_id'] ?? 0) : (int) ($it['app'] ?? 0));
+            echo nenadezhnyi_metka((int)($it['user_id'] ?? 0), (string)($it['email'] ?? ''), $__nap); ?>
           <?php if ($it['email']): ?><br><span class="muted"><?= h($it['email']) ?></span><?php endif; ?>
           <?php if (!empty($it['number']) && $k !== 'order'): ?><br><span class="muted">№<?= h($it['number']) ?></span><?php endif; ?>
           <?php if ($k === 'order'): ?><br><span class="muted">Заказ №<?= h($it['number']) ?></span><?php endif; ?>
+          <?php /* УДЕРЖАНИЕ ПОСЫЛКИ ВИДНО В ОЧЕРЕДИ, А НЕ ТОЛЬКО В ОТКАЗЕ.
+                   Дверь отправки придержанный заказ не пропустит (order_mark_shipped_parcel),
+                   но узнавать об этом по отказу уже после нажатия - плохой способ:
+                   причина должна читаться сразу, вместе с номером заказа. */
+                 $__hold = $k === 'order' ? trim((string) ($it['raw']['hold_reason'] ?? '')) : ''; ?>
+          <?php if ($__hold !== ''): ?>
+            <br><span class="badge badge--closed small" style="margin-top:4px">придержано</span>
+            <br><span class="small" style="color:#C0392B"><?= h($__hold) ?></span>
+          <?php endif; ?>
+          <?php /* ПРИОРИТЕТ В ОЧЕРЕДИ ОТПРАВОК, И БЕРЁТСЯ ОН ПО ВИДУ СТРОКИ.
+                   У заказа и письма с дипломами это срок ИЗГОТОВЛЕНИЯ (отсчёт от
+                   оплаты заказа), у результата - срок аттестации. Назвать обоим
+                   один срок нельзя: у партнёра они разные, короткий только у
+                   результата.
+
+                   У строки ЗАКАЗА в очереди нет поля user_id вовсе - поэтому и
+                   синей галочки клуба на ней никогда не было видно. Клуб
+                   плательщика берём из самой строки заказа ($it['raw']). */
+                [$__пр, $__что] = disp_prioritet($it);
+                if ($__пр && prioritet_est($__пр)): ?>
+            <div><?= prioritet_plashka($__пр, $__что) ?></div>
+          <?php endif; ?>
         </td>
-        <td class="small"><?= h(mb_strimwidth($it['title'], 0, 70, '…')) ?><?php if ($it['comp']): ?><br><span class="muted"><?= h($it['comp']) ?></span><?php endif; ?></td>
-        <td><span class="disp-when-cell"><?= $rowWhen($it) ?></span></td>
-        <td>
+        <td class="small" data-label="Что"><?= h(mb_strimwidth($it['title'], 0, 70, '…')) ?><?php if ($it['comp']): ?><br><span class="muted"><?= h($it['comp']) ?></span><?php endif; ?></td>
+        <td data-label="Когда"><span class="disp-when-cell"><?= $rowWhen($it) ?></span></td>
+        <td data-label="Действия">
           <div class="disp-acts">
           <?php if ($k === 'result'): ?>
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
@@ -837,16 +1018,16 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   <?php if (!$archiveF): ?>
     <p class="muted">По этому фильтру в архиве пусто.</p>
   <?php else: ?>
-  <div class="table-wrap"><table class="tbl">
+  <div class="table-wrap table-wrap--cards"><table class="tbl tbl--cards">
     <thead><tr><th>Тип</th><th>Кому</th><th>Тема</th><th>Отправлено</th><th>Действия</th></tr></thead>
     <tbody>
     <?php foreach ($archiveF as $it): $iid = $it['id']; $rid = "arch-$iid"; ?>
       <tr class="disp-row" id="<?= $rid ?>">
-        <td><span class="disp-typechip k-mail"><?= h($it['type_label']) ?></span></td>
-        <td class="small"><?= h($it['email']) ?><?= $it['who'] ? '<br><span class="muted">'.h($it['who']).'</span>' : '' ?></td>
-        <td class="small"><?= h(mb_strimwidth($it['title'], 0, 66, '…')) ?></td>
-        <td class="small muted"><?= h($it['sent_at']) ?></td>
-        <td>
+        <td data-label="Тип"><span class="disp-typechip k-mail"><?= h($it['type_label']) ?></span></td>
+        <td class="small" data-label="Кому"><?= h($it['email']) ?><?= $it['who'] ? '<br><span class="muted">'.h($it['who']).'</span>' : '' ?><?= nenadezhnyi_metka(0, (string)($it['email'] ?? '')) ?></td>
+        <td class="small" data-label="Тема"><?= h(mb_strimwidth($it['title'], 0, 66, '…')) ?></td>
+        <td class="small muted" data-label="Отправлено"><?= h($it['sent_at']) ?></td>
+        <td data-label="Действия">
           <div class="disp-acts">
             <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>$iid]) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Просмотр</a>
             <button class="btn btn--navy btn--sm" data-act="editdup" data-id="<?= $iid ?>"><?= admin_icon('edit') ?>Изменить и дублировать</button>
@@ -865,16 +1046,16 @@ tr.disp-row.gone{opacity:0;transition:.4s}
 <div class="card" id="failed" style="margin-bottom:20px;border-left:4px solid #C0392B">
   <div class="section-title" style="margin-bottom:8px"><h3>Не отправлены · <?= count($failedRaw) ?></h3></div>
   <p class="small muted" style="margin:-4px 0 12px">Письма, которые не удалось отправить после нескольких попыток. Причина указана в строке. Исправьте причину и нажмите «Повторить» — письмо вернётся в очередь.</p>
-  <div class="table-wrap"><table class="tbl">
+  <div class="table-wrap table-wrap--cards"><table class="tbl tbl--cards">
     <thead><tr><th>Кому</th><th>Тема</th><th>Причина</th><th>Попыток</th><th>Действия</th></tr></thead>
     <tbody>
     <?php foreach ($failedRaw as $m): $rid = 'fail-' . (int) $m['id']; ?>
       <tr class="disp-row" id="<?= $rid ?>">
-        <td class="small"><?= h((string) $m['to_email']) ?></td>
-        <td class="small"><?= h(mb_strimwidth((string) $m['subject'], 0, 60, '…')) ?></td>
-        <td class="small" style="color:#C0392B"><?= h(mb_strimwidth((string) ($m['error'] ?? ''), 0, 90, '…')) ?></td>
-        <td class="small"><?= (int) ($m['tries'] ?? 0) ?></td>
-        <td>
+        <td class="small" data-label="Кому"><?= h((string) $m['to_email']) ?></td>
+        <td class="small" data-label="Тема"><?= h(mb_strimwidth((string) $m['subject'], 0, 60, '…')) ?></td>
+        <td class="small" style="color:#C0392B" data-label="Причина"><?= h(mb_strimwidth((string) ($m['error'] ?? ''), 0, 90, '…')) ?></td>
+        <td class="small" data-label="Попыток"><?= (int) ($m['tries'] ?? 0) ?></td>
+        <td data-label="Действия">
           <div class="disp-acts">
             <button class="btn btn--primary btn--sm" data-act="retry" data-kind="mail" data-id="<?= (int) $m['id'] ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Повторить</button>
             <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>(int)$m['id']]) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?></a>

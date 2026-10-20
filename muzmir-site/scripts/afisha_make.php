@@ -28,9 +28,17 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/afisha_prompt.php';
 require_once BASE_PATH . '/core/afisha_emblems.php';
+require_once BASE_PATH . '/core/bastion_cdp.php';
 
 $cid = (int) ($argv[1] ?? 0);
 $dry = in_array('--dry', $argv, true);
+/* ПЛАТНАЯ ДОРОГА (слово владельца 16.10.2026, $0.04 за кадр).
+   Бесплатный путь - браузер ChatGPT на бастионе, у него суточный потолок
+   картинок бесплатного тарифа; 16.10 он кончился на пятой афише. С ключом
+   --api лист рисует apimodels той же дверью, что и кадры ленты
+   (`smm_make_image`), а всё после генерации - гербы, обрезка, карточка
+   конкурса - идёт прежним общим путём. */
+$viaApi = in_array('--api', $argv, true);
 $withDiploma = in_array('--diploma', $argv, true);
 if ($cid <= 0) { fwrite(STDERR, "Укажите id конкурса\n"); exit(1); }
 
@@ -46,7 +54,7 @@ if ($dry) { echo "\n----- ПРОМПТ -----\n$prompt\n"; exit(0); }
 $poster = rtrim((string) cfgv('poster_url'), '/');
 $token  = (string) cfgv('poster_token');
 $sshPas = (string) cfgv('vps_ssh_pass');
-if ($poster === '' || $token === '' || $sshPas === '') {
+if (!$viaApi && ($poster === '' || $token === '' || $sshPas === '')) {
     fwrite(STDERR, "Нет доступов к бастиону (poster_url / poster_token / vps_ssh_pass)\n");
     exit(1);
 }
@@ -85,6 +93,41 @@ $tag = 'afisha_' . $cid . '_' . substr(bin2hex(random_bytes(3)), 0, 6);
 $rawRemote = '/opt/oko-poster/' . $tag . '.png';
 $rawLocal  = $dirAbs . '/gen_' . $tag . '.png';
 
+if ($viaApi) {
+    /* ПЛАТНАЯ ДОРОГА. Дверь к apimodels одна на весь центр - `smm_make_image()`
+       (кадры ленты), и второй копии разговора со службой тут не заводится.
+       Референсов нет вовсе: в промпте афиши знака центра не просят, а лишняя
+       картинка просится моделью в кадр наклейкой. */
+    require_once BASE_PATH . '/core/smm.php';
+    require_once BASE_PATH . '/core/smm_make.php';
+
+    /* У АФИШИ СВОЙ КОШЕЛЁК, И ЭТО НЕ ПЕДАНТИЗМ. Расход ленты считается по
+       колонке smm_posts.image_cost, а у афиши строки в ленте нет вовсе: её
+       трата не видна нигде, и «дорого вышло» выяснялось бы по счёту в конце
+       месяца. Поэтому свой предел на сутки и свой счётчик в настройках. */
+    $__день  = date('Y-m-d');
+    $__цена  = (float) setting('smm_image_cost', '0.04');
+    $__пред  = (float) setting('afisha_budget_day', '0.5');
+    $__было  = (float) (setting('afisha_rashod_' . $__день, '0') ?: 0);
+    if ($__было + $__цена > $__пред) {
+        fwrite(STDERR, "Суточный предел расхода на афиши исчерпан: потрачено $"
+            . number_format($__было, 2) . " при пределе $" . number_format($__пред, 2) . "\n");
+        exit(1);
+    }
+
+    echo "Рисую через apimodels (2K high, $", number_format($__цена, 2), ")…\n";
+    [$__ok, $__err] = smm_make_image($prompt, '16:9', $rawLocal, '', []);
+    if (!$__ok) {
+        fwrite(STDERR, "Картинка не собралась: {$__err}\n");
+        exit(1);
+    }
+    @chmod($rawLocal, 0664);
+    set_setting('afisha_rashod_' . $__день, (string) round($__было + $__цена, 4));
+    clearstatcache(true, $rawLocal);
+    echo "  готово: ", (int) round((int) @filesize($rawLocal) / 1024), " КБ · на афиши за сутки $",
+         number_format($__было + $__цена, 2), "\n";
+} else {
+
 /* Промпт кладём на бастион файлом: он длинный, в командную строку не влезает,
  * а драйвер и так читает его из файла (правило проекта — от 2000 знаков). */
 echo "Отправляю промпт на бастион…\n";
@@ -95,14 +138,15 @@ echo "  промпт на месте: ", trim($put), " байт\n";
 /* Генерация идёт две-пять минут — запускаем отвязанно и ждём файл, иначе мост
  * рвёт соединение по таймауту и мы теряем уже начатую работу. */
 echo "Запускаю генерацию…\n";
-/* ПОРТ БРАУЗЕРА УКАЗЫВАЕМ ЯВНО.
+/* ПОРТ БРАУЗЕРА СПРАШИВАЕМ У БАСТИОНА (core/bastion_cdp.php).
  *
- * На бастионе живут два браузера: 9222 - профиль центра, где выполнен вход в
- * ChatGPT, и 9333 - браузер соседнего проекта. По умолчанию gpt_image.mjs идёт
- * на 9333, вкладки ChatGPT там нет, и генерация падала по таймауту ожидания
- * поля ввода. Остальные скрипты центра (gen_zak.sh, kartinki.sh) передают порт
- * так же. */
-$bastion('cd /opt/oko-poster && CDP_URL=http://127.0.0.1:9222 nohup node gpt_image.mjs ' . $tag . '.txt ' . $rawRemote
+ * По умолчанию gpt_image.mjs идёт на 9333, вкладки ChatGPT там нет, и генерация
+ * падает по таймауту ожидания поля ввода - поэтому порт передаём явно. Вписан
+ * он был числом 9222, и 16.10.2026 это оказалось неправдой: порты развели, вход
+ * живёт на 9280, а на 9222 браузера нет вовсе. Шесть минут ожидания кончились
+ * словами «Не дождался картинки», и настоящая причина нашлась только в логе
+ * бастиона. Теперь порт ищется по факту: у кого открыт chatgpt.com, тот и наш. */
+$bastion('cd /opt/oko-poster && CDP_URL=' . bastion_cdp_url($bastion) . ' nohup node gpt_image.mjs ' . $tag . '.txt ' . $rawRemote
        . ' 420 > /tmp/' . $tag . '.log 2>&1 & echo started', 60);
 
 $ready = false;
@@ -129,6 +173,8 @@ if (!str_contains($scp, 'COPY_OK') || !is_file($rawLocal)) {
     exit(1);
 }
 @chmod($rawLocal, 0664);
+
+}   /* конец бесплатной дороги через бастион */
 
 echo "Вписываю гербы…\n";
 $logos = [
@@ -157,7 +203,7 @@ if (!$res['ok']) {
     echo "Афиша в карточке конкурса: $outRel\n";
 }
 
-$bastion('rm -f ' . escapeshellarg($rawRemote) . ' /opt/oko-poster/' . $tag . '.txt', 30);
+if (!$viaApi) $bastion('rm -f ' . escapeshellarg($rawRemote) . ' /opt/oko-poster/' . $tag . '.txt', 30);
 
 if ($withDiploma) {
     echo "\nФон диплома пока делается отдельной командой — см. scripts/diploma_bg_make.php\n";

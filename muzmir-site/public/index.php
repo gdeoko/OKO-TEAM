@@ -299,6 +299,15 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.(pdf|jpg|png)$#', $route, $m)) {
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
     if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
     $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+    /* ЗАЯВКИ МОЖЕТ НЕ БЫТЬ, А БЛАНК У ЧЕЛОВЕКА НА РУКАХ (дубль, просьба участника,
+       чистка в админке). Без снимка лист собирался из пустоты и открывался без
+       имени, номинации и города - свой же документ человек видел пустым. Снимок
+       кладёт в диплом дверь удаления `app_delete()`. */
+    if (!$app) {
+        require_once BASE_PATH . '/core/app_status.php';
+        $app = diploma_app_from_snapshot((array) $d);
+        if (!$app) $app = null;
+    }
 
     // ЧУЖОЙ ДИПЛОМ ПО ССЫЛКЕ НЕ СКАЧИВАЕТСЯ.
     // Номера идут строго подряд (MM-2026-00001, -00002, …), а свой номер участник
@@ -344,7 +353,9 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.(pdf|jpg|png)$#', $route, $m)) {
         $rendered = diploma_pdf_html($app, $rOpt);
         if ($rendered && is_file($rendered)) {
             $file = $rendered;
-            update('diplomas', ['pdf_path' => '/diplomas/' . basename($rendered)], 'id=:id', ['id' => (int) $d['id']]);
+            // Мерка общая (diploma_store_path), а не своё basename: см. причину
+            // в scripts/diploma_refresh_all.php - подпапка терялась бы молча.
+            update('diplomas', ['pdf_path' => diploma_store_path($rendered)], 'id=:id', ['id' => (int) $d['id']]);
         }
     }
     /* GD-ПОДМЕНЫ ЗДЕСЬ БОЛЬШЕ НЕТ.
@@ -400,6 +411,15 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
     if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
     $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+    /* ЗАЯВКИ МОЖЕТ НЕ БЫТЬ, А БЛАНК У ЧЕЛОВЕКА НА РУКАХ (дубль, просьба участника,
+       чистка в админке). Без снимка лист собирался из пустоты и открывался без
+       имени, номинации и города - свой же документ человек видел пустым. Снимок
+       кладёт в диплом дверь удаления `app_delete()`. */
+    if (!$app) {
+        require_once BASE_PATH . '/core/app_status.php';
+        $app = diploma_app_from_snapshot((array) $d);
+        if (!$app) $app = null;
+    }
 
     // Тот же замок, что и на PDF: это полный бланк с ФИО, учреждением и городом,
     // а номера перебираются подряд. Открыт владельцу, сотруднику и подписанной
@@ -425,11 +445,42 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     require_once BASE_PATH . '/core/diploma_html.php';
     // Тип диплома → правильная награда: основной=result, доп=спец-номинация,
     // именной=ФИО участника, благодарность=ФИО педагога.
+    /* ПРОСМОТР СОБИРАЕТСЯ ТЕМИ ЖЕ КЛЮЧАМИ, ЧТО И PDF.
+     *
+     * Движок бланка берёт имя человека из $opt['person'], а без него откатывается
+     * на ФИО заявки и дальше на название коллектива. Здесь передавался только
+     * флаг 'named' без имени, и все пять именных дипломов заявки VR-2026-00039
+     * показывались в «Смотреть» одним и тем же «Театральная студия „Редкий
+     * кадр“» - при том, что PDF, JPG и PNG по тем же кнопкам были верны: их
+     * собирает другой путь, и он имя передаёт. То же у благодарности: вместо
+     * одного педагога подставлялся весь список из заявки.
+     *
+     * Имя человека лежит в реестре в diplomas.result (см. правило 30), номер
+     * бланка там же и обязан совпасть с номером в QR: у именных он -N, -N2… */
     $opt = [];
     $dtype = (string) ($d['type'] ?? 'main');
-    if ($dtype === 'thanks') { $opt['thanks'] = true; if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; }
+    $__who = trim((string) ($d['result'] ?? ''));
+    // Движок читает номер из $opt['number'] (ключ 'diploma_number' - для сборки PDF).
+    // Без него на всех именных стоял базовый номер заявки, и QR с пяти разных
+    // бланков вёл на одну и ту же страницу проверки.
+    if ((string) ($d['number'] ?? '') !== '') $opt['number'] = (string) $d['number'];
+    if ($app) $app['diploma_number'] = (string) ($d['number'] ?? '');
+    if ($dtype === 'thanks') {
+        $opt['thanks'] = true;
+        if ($__who !== '') {
+            $opt['person'] = $__who;
+            if (!function_exists('diploma_person_index') && is_file(BASE_PATH . '/core/pdf_diploma.php')) {
+                require_once BASE_PATH . '/core/pdf_diploma.php';
+            }
+            if (function_exists('diploma_person_index')) {
+                $opt['person_idx'] = diploma_person_index((string) ($app['teacher'] ?? ''), $__who);
+            }
+        } elseif (!empty($app['teacher'])) {
+            $app['full_name'] = $app['teacher'];
+        }
+    }
     elseif ($dtype === 'extra') { $opt['extra'] = true; }
-    elseif ($dtype === 'named') { $opt['named'] = true; }
+    elseif ($dtype === 'named') { $opt['named'] = true; if ($__who !== '') $opt['person'] = $__who; }
     echo diploma_html($c ?: [], $app ?: [], $opt);
     exit;
 }

@@ -22,6 +22,7 @@ define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/bastion_cdp.php';
 
 $rel = trim((string) ($argv[1] ?? ''));
 $what = trim((string) ($argv[2] ?? ''));
@@ -117,7 +118,7 @@ PROMPT;
 $bastion('cat > /opt/oko-poster/' . $tag . '.txt <<\'PROMPT_EOF\'' . "\n" . $prompt . "\nPROMPT_EOF", 60);
 
 echo "Генерирую…\n";
-$bastion('cd /opt/oko-poster && CDP_URL=http://127.0.0.1:9222 nohup node gpt_image2.mjs '
+$bastion('cd /opt/oko-poster && CDP_URL=' . bastion_cdp_url($bastion) . ' nohup node gpt_image2.mjs '
        . $tag . '.txt ' . $outRem . ' 600 ' . $inRem . ' > /tmp/' . $tag . '.log 2>&1 & echo started', 60);
 
 $ready = false;

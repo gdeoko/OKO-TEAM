@@ -121,7 +121,13 @@ if (function_exists('all')) {
     $dueRes = all("SELECT a.id, a.user_id FROM applications a
                      JOIN competitions c ON c.id = a.competition_id
                     WHERE a.result IS NOT NULL AND a.result <> '' AND a.status <> 'rejected'
-                      AND (c.results_mode IS NULL OR c.results_mode <> 'list')
+                      /* ДЛИННЫЙ КОНКУРС СЮДА НЕ ПОПАДАЕТ: у его заявок
+                         result_send_at пуст, и назначить его некому (правило
+                         73к) - письма уходят пакетом в день оглашения.
+                         Отбор всё равно идёт по САМОМУ СРОКУ, а не по режиму
+                         конкурса: сроком распоряжается тот, кто его поставил, и
+                         если строка с ним однажды появится, письмо уйдёт, а не
+                         застрянет молча. */
                       AND a.result_send_at <> '' AND a.result_send_at <= ?
                       AND (a.result_sent_at IS NULL OR a.result_sent_at = '')
                     ORDER BY a.result_send_at ASC LIMIT 30", [$now->format('Y-m-d H:i:s')]);
@@ -305,7 +311,10 @@ if ($__hold === '1') {
 }
 
 // 3) Шлём то, что подошло по расписанию (окно ±60 сек), интервал 1 мин между заявками.
-$dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name AS comp_name
+$dueList = all("SELECT d.*, a.email, a.full_name, a.is_group, a.group_name, a.number AS app_number, c.name AS comp_name,
+                       -- звание ЗАЯВКИ: у именного диплома и благодарности в d.result
+                       -- лежит человек, а не звание (см. dops_diploma_person)
+                       a.result AS app_result
                 FROM diplomas d
                 JOIN applications a ON a.id = d.application_id
                 JOIN competitions c ON c.id = a.competition_id
@@ -340,7 +349,9 @@ foreach ($groups as $appId => $items) {
     foreach ($items as $it) {
         [$pdfAbs, $imgUrl] = _diploma_files((array)$it);
         if ($pdfAbs) $attachments[] = $pdfAbs;
-        $blocks[] = ['type' => (string)($it['type'] ?? 'main'), 'result' => (string)($it['result'] ?? ''), 'number' => (string)($it['number'] ?? ''), 'img' => $imgUrl];
+        $blocks[] = ['type' => (string)($it['type'] ?? 'main'), 'result' => (string)($it['result'] ?? ''),
+                     'app_result' => (string)($it['app_result'] ?? ''),
+                     'number' => (string)($it['number'] ?? ''), 'img' => $imgUrl];
     }
     // НЕ ОТПРАВЛЯЕМ ПУСТОЙ КОНВЕРТ. Если ни одного PDF собрать не удалось (бастион
     // рендера недоступен, ключ доступа не подхватился, файл не создан), то письмо
@@ -360,7 +371,13 @@ foreach ($groups as $appId => $items) {
     // документом. «Документ» участник читает как справку из канцелярии.
     $subject = ($cnt > 1 ? 'Ваши наградные материалы конкурса «' : 'Ваш наградной материал конкурса «')
              . $first['comp_name'] . '» — заявка № ' . $first['app_number'];
-    $html = _diploma_group_html($blocks, (string)$first['full_name'], (string)$first['comp_name']);
+    /* У КОЛЛЕКТИВА ИМЕНИ В full_name НЕТ.
+     * Заявка ансамбля подаётся на название коллектива, личное поле пустое, и
+     * письмо открывалось безличным «Здравствуйте!» - по VR-2026-00039 именно
+     * так и ушло бы «Театральной студии „Редкий кадр"». */
+    $__who = (int)($first['is_group'] ?? 0) === 1 && trim((string)($first['group_name'] ?? '')) !== ''
+        ? (string)$first['group_name'] : (string)$first['full_name'];
+    $html = _diploma_group_html($blocks, $__who, (string)$first['comp_name']);
 
     // ОДИН ЯЩИК — ОДНА ТОЧКА ОТКАЗА, И ЭТО УЖЕ СТОИЛО ЛЮДЯМ ДИПЛОМОВ.
     //
@@ -431,23 +448,42 @@ function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime 
     // Точка отсчёта — плановое время результата; если его нет — момент аттестации, иначе подача.
     $base = trim((string)($a['result_send_at'] ?? '')) !== '' ? (string)$a['result_send_at']
           : (trim((string)($a['graded_at'] ?? '')) !== '' ? (string)$a['graded_at'] : (string)($a['created_at'] ?? 'now'));
-    $wDays = 5;
-    if (!empty($a['user_id']) && function_exists('club_is_active') && club_is_active((int)$a['user_id'])) $wDays = 3;
-    // УЧАСТНИК ОТ УЧРЕЖДЕНИЯ-ПАРТНЁРА ЖДЁТ МЕНЬШЕ.
-    //
-    // Ускоренная выдача записана в условиях партнёрства и в поле
-    // institutions.partner_priority_days (по умолчанию 4 рабочих дня), но в самом
-    // расчёте срока её не было: обещание жило в письме и в базе, а дипломы шли
-    // общим сроком. Клубный срок при этом остаётся самым коротким: за него платят.
-    $instId = (int) ($a['institution_id'] ?? 0);
-    if ($instId > 0 && $wDays > 3) {
-        try {
-            $pd = one("SELECT COALESCE(partner_priority_days,0) d FROM institutions
-                        WHERE id=? AND partner_status='accepted'", [$instId]);
-            $pDays = (int) ($pd['d'] ?? 0);
-            if ($pDays > 0 && $pDays < $wDays) $wDays = $pDays;
-        } catch (\Throwable $e) {}
-    }
+    /* ЛЕСТНИЦА СРОКОВ СЧИТАЕТСЯ В ОДНОМ МЕСТЕ — core/prioritet.php.
+     *
+     * Здесь стоял сам счёт: обычный 5, клуб 3, учреждение-партнёр
+     * institutions.partner_priority_days (4), и партнёр опускал только то, что
+     * выше трёх, потому что за клубный срок платят. Счёт верный, но с 14.10.2026
+     * ту же лестницу показывает оператору админка (правка владельца: заявку
+     * партнёра и участника клуба надо видеть, у них другие сроки). Две копии
+     * одних условий расходятся МОЛЧА, и тогда плашка торопит к числу, которого
+     * код не держит. Поэтому счёт вынесен в prioritet_zayavki(), а здесь
+     * остаётся его вызов: админка и крон обязаны думать одинаково.
+     *
+     * Ускоренная выдача партнёру была обещана в письме и в базе, а в расчёте
+     * срока её когда-то не было вовсе - дипломы шли общим сроком. */
+    require_once BASE_PATH . '/core/prioritet.php';
+    /* НАГРАДНОЙ МАТЕРИАЛ СЧИТАЕТСЯ ПО СРОКУ ИЗГОТОВЛЕНИЯ, А НЕ ПО СРОКУ РЕЗУЛЬТАТА.
+     *
+     * Слово владельца 16.10.2026: «Срок 4 дня для партнёров касается только
+     * сроков аттестационных результатов, изготовление электронного наградного
+     * материала остаётся прежним 5 дней». Здесь стоял `дней_результат`, и
+     * заявка от учреждения-партнёра получала на дипломы ЧЕТВЁРТЫЙ рабочий день,
+     * хотя центр обещает общий пятый, и ровно это говорила плашка в админке
+     * («изготовление в общий срок»).
+     *
+     * Клуб не задет: у него и результат, и изготовление три рабочих дня, за
+     * клубный срок платят (правило 37). Лестница аттестации не тронута:
+     * `grade_apply.php` по-прежнему берёт `дней_результат`, и партнёрская
+     * четвёрка живёт там. */
+    $wDays = (int) prioritet_zayavki($a)['дней_изготовление'];
+    /* НОЛЬ ЗНАЧИТ «СРОК ЗАДАЁТ ДАТА ОГЛАШЕНИЯ», а не «ноль дней»: так помечен
+       ДЛИННЫЙ конкурс (слово владельца 14.10.2026, итоги списком). Сюда длинные
+       не доходят - их отсекает запрос $fresh, - но подставить ноль в
+       working_days_add() значит отправить диплом сию минуту, и такая ошибка не
+       кричит, а просто уходит человеку. Поэтому общий срок последним рубежом. */
+    /* У изготовления ноля не бывает вовсе (клуб 3, остальные 5), но рубеж
+       оставлен: он дешёвый, а тихо ушедший «сию минуту» диплом не кричит. */
+    if ($wDays <= 0) $wDays = PRIORITET_SROK_OBSHIY;
     $planned = working_days_add($base, $wDays);                                  // результат + N раб.дней, 09:0x
     $soonest = next_working_slot(new DateTime($now->format('Y-m-d H:i:s')));     // ближайшее рабочее окно
     return $planned > $soonest ? $planned : $soonest;
@@ -500,7 +536,7 @@ function _diploma_email_html(array $d): string {
         . ' · проверка подлинности по QR и на сайте.</td></tr></table>'
         . '<p style="margin:0 0 6px;font-weight:600;color:' . MM_NAVY . ';">Оригиналы наград — Почтой России:</p>'
         . '<p style="margin:0 0 14px;font-size:14px;color:' . MM_INK . ';line-height:1.6;">По Вашему результату доступны к заказу: <b>' . $award . '</b>, а также благодарность педагогу за подготовку. '
-        . 'Оригиналы — на плотной дизайнерской бумаге, с голографическими логотипами, живыми подписями и печатями.</p>';
+        . 'Оригиналы — на плотной дизайнерской бумаге, с голографическими логотипами, оригинальной подписью и печатью.</p>';
 
     return mm_email_tx($inner, [
         'preheader' => 'Ваш диплом готов' . ($res !== '' ? ' — «' . $res . '»' : '') . '. Скачайте и закажите наградной материал.',
@@ -525,8 +561,17 @@ function _diploma_group_html(array $blocks, string $name, string $comp): string 
     $labels = ['main' => 'Основной диплом', 'extra' => 'Дополнительный диплом (спецноминация)', 'named' => 'Именной диплом', 'thanks' => 'Благодарность'];
 
     // Рекомендованный оригинал по результату (по основному диплому).
+    // ЗАПАСНОЙ ВАРИАНТ БЕРЁМ У ЗАЯВКИ, А НЕ У ПЕРВОГО БЛОКА.
+    // Основного диплома в письме может не быть (куплены только именные), и тогда
+    // первым блоком стоит именной, у которого в result имя ребёнка: по «Тимонина
+    // София» центр предлагал «оригинал диплома» вместо медали дипломанта.
     $mainRes = '';
     foreach ($blocks as $b) { if (($b['type'] ?? '') === 'main') { $mainRes = (string)$b['result']; break; } }
+    if ($mainRes === '' && $blocks) {
+        foreach ($blocks as $b) {
+            if (trim((string)($b['app_result'] ?? '')) !== '') { $mainRes = (string)$b['app_result']; break; }
+        }
+    }
     if ($mainRes === '' && $blocks) $mainRes = (string)$blocks[0]['result'];
     $rU = mb_strtoupper($mainRes);
     $award = mb_strpos($rU, 'ГРАН') !== false ? 'кубок Гран-при'
@@ -536,8 +581,25 @@ function _diploma_group_html(array $blocks, string $name, string $comp): string 
     $cards = '';
     foreach ($blocks as $b) {
         $lbl = $labels[$b['type'] ?? 'main'] ?? 'Диплом';
-        $meta = ($b['type'] ?? '') === 'thanks' ? 'Педагогу за подготовку участника'
-              : (($b['type'] ?? '') === 'extra' ? ('Спецноминация: ' . h((string)$b['result'])) : ('Звание: ' . h((string)$b['result'])));
+        /* ЧЕЙ ЭТО БЛАНК - НЕ ВСЕГДА ЗВАНИЕ.
+         *
+         * У основного диплома в result звание, у дополнительного номинация, а у
+         * ИМЕННОГО и у БЛАГОДАРНОСТИ там ЧЕЛОВЕК: ребёнок из коллектива и педагог.
+         * Подпись собиралась одной веткой, и участнику уходило «Звание: Тимонина
+         * София» - по заказу VR-2026-00039 так ушло бы пять раз подряд. Звание у
+         * именного общее, коллектива, и берётся из заявки. */
+        $__type = (string)($b['type'] ?? 'main');
+        $__res  = trim((string)($b['result'] ?? ''));
+        $__rank = trim((string)($b['app_result'] ?? ''));
+        if ($__type === 'thanks') {
+            $meta = 'Педагогу за подготовку участника' . ($__res !== '' ? ': ' . h($__res) : '');
+        } elseif ($__type === 'named') {
+            $meta = 'На имя: ' . h($__res) . ($__rank !== '' ? ' · Звание: ' . h($__rank) : '');
+        } elseif ($__type === 'extra') {
+            $meta = 'Спецноминация: ' . h($__res);
+        } else {
+            $meta = 'Звание: ' . h($__res !== '' ? $__res : $__rank);
+        }
         $img = !empty($b['img'])
             ? '<img src="' . h((string)$b['img']) . '" alt="' . h($lbl) . '" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:12px;border:1px solid ' . MM_LINE . ';box-shadow:0 6px 20px rgba(23,48,122,.16);">'
             : '';
@@ -552,7 +614,7 @@ function _diploma_group_html(array $blocks, string $name, string $comp): string 
         . '<p style="margin:0 0 20px;">По итогам аттестации компетентного жюри конкурса «' . h($comp) . '» подготовлены Ваши наградные материалы. Каждый — с номером и QR-кодом проверки подлинности; официальные PDF-файлы прикреплены к письму.</p>'
         . $cards
         . '<p style="margin:6px 0 6px;font-weight:600;color:' . MM_NAVY . ';">Оригиналы наград — Почтой России:</p>'
-        . '<p style="margin:0 0 8px;font-size:14px;color:' . MM_INK . ';line-height:1.6;">По Вашему результату доступны к заказу: <b>' . $award . '</b>, оригинал диплома на дизайнерской бумаге и благодарность педагогу — с голографическими логотипами, живыми подписями и печатями.</p>';
+        . '<p style="margin:0 0 8px;font-size:14px;color:' . MM_INK . ';line-height:1.6;">По Вашему результату доступны к заказу: <b>' . $award . '</b>, оригинал диплома на дизайнерской бумаге и благодарность педагогу — с голографическими логотипами, оригинальной подписью и печатью.</p>';
 
     return mm_email_tx($inner, [
         'preheader' => 'Ваши наградные материалы конкурса «' . $comp . '» готовы. Файлы во вложении.',

@@ -219,9 +219,22 @@ function mm_queue_all(bool $activate = false, int $limit = 0): array {
     $rows = min_recipients();
     if ($limit > 0) $rows = array_slice($rows, 0, $limit);
 
-    $queued = 0; $skipped = 0;
+    $queued = 0; $skipped = 0; $запрещено = 0;
     foreach ($rows as $r) {
         $email = (string) $r['email'];
+
+        /* ЗАПРЕЩЁННОЕ ВЕДОМСТВО НЕ ПОПАДАЕТ ДАЖЕ В ОЧЕРЕДЬ.
+         * Отправку держит и сама дверь (mail_send_failover), но письмо, которое
+         * заведомо не уйдёт, незачем заводить в реестр обращений: оно встанет
+         * там «отправлено» и будет годами числиться ждущим ответа. */
+        if (function_exists('min_send_forbidden')) {
+            $почему = min_send_forbidden($email);
+            if ($почему !== '') {
+                $запрещено++; $skipped++;
+                if (function_exists('nl_log')) nl_log('обращение не заведено: ' . $email . ' — ' . $почему);
+                continue;
+            }
+        }
 
         // Дважды за сезон одному адресу не пишем: ведомство одно, конкурсы те же.
         $dup = (int) scalar(
@@ -296,7 +309,7 @@ function mm_queue_all(bool $activate = false, int $limit = 0): array {
     }
 
     unset($attJson);
-    return ['queued' => $queued, 'skipped' => $skipped, 'attachments' => count($att), 'status' => $status];
+    return ['queued' => $queued, 'skipped' => $skipped, 'запрещено' => $запрещено, 'attachments' => count($att), 'status' => $status];
 }
 
 /**

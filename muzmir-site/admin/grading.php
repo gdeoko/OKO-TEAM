@@ -99,6 +99,14 @@ function recalc_score(int $appId): void {
 /**
  * Очередь оценивания: ВСЕ неоценённые заявки автоматически (без ручных переносов
  * статусов), старые -> новые, заявки одного участника (email ИЛИ телефон) — подряд.
+ *
+ * В САМОМ НАЧАЛЕ ОЧЕРЕДИ ВСЕГДА КЛУБ, ЗА НИМ ПАРТНЁРЫ (слово владельца
+ * 16.10.2026). У участника Элитного клуба срок аттестации 3 рабочих дня, у
+ * заявки от учреждения-партнёра 4, у всех остальных 5 (правило 37), и пропустить
+ * короткий срок нельзя: результат уходит письмом по расчёту кода, а не по
+ * готовности оператора. Пока очередь шла просто по дате подачи, срочная заявка
+ * могла лежать за сотней обычных и ждать своего часа ровно столько, сколько
+ * оператор до неё добирался.
  */
 function grading_queue_rows(int $comp = 0, string $order = 'old', string $q = ''): array {
     // ГЕЙТ ПО ОПЛАТЕ: в очередь оценивания попадают только принятые заявки —
@@ -139,6 +147,41 @@ function grading_queue_rows(int $comp = 0, string $order = 'old', string $q = ''
         $groups[$key][] = $r;
     }
     if ($order === 'new') $orderKeys = array_reverse($orderKeys);
+
+    /* КЛУБ И ПАРТНЁР ПОДНИМАЮТСЯ В НАЧАЛО, А ВЫБРАННЫЙ ПОРЯДОК ОСТАЁТСЯ ВНУТРИ.
+     *
+     * Сортируем ГРУППЫ, а не строки: заявки одного участника обязаны идти
+     * подряд (на этом стоит и переход «следующая заявка» после оценки), и
+     * порознь поднятая клубная заявка разорвала бы его собственную пачку.
+     * Вес группы берётся по самой срочной заявке в ней: у клубного участника
+     * одна заявка может прийти по партнёрской ссылке, другая нет, а срок
+     * аттестации у него всё равно клубный.
+     *
+     * УСЛОВИЙ ЗДЕСЬ СВОИХ НЕТ: вес отдаёт `prioritet_ves()` из единого источника
+     * `core/prioritet.php` - того же, что считает срок и рисует плашку. Своя
+     * копия «кто клуб, кто партнёр» разошлась бы молча, и строка стояла бы в
+     * начале очереди с плашкой обычного участника (грабля правил 33, 35, 45, 47).
+     *
+     * ДЛИННЫХ КОНКУРСОВ ЭТО НЕ КАСАЕТСЯ ПО ПОСТРОЕНИЮ: они отобраны выше
+     * (`results_mode <> 'list'`) и живут в своём разделе, а там итоги оглашаются
+     * списком в одну дату на всех, и короткого срока ни у клуба, ни у партнёра
+     * нет вовсе (правило 47). */
+    if (!function_exists('prioritet_ves') && is_file(BASE_PATH . '/core/prioritet.php')) {
+        require_once BASE_PATH . '/core/prioritet.php';
+    }
+    if (function_exists('prioritet_ves')) {
+        $вес = [];
+        foreach ($orderKeys as $i => $k) {
+            $v = 2;
+            foreach ($groups[$k] as $r) {
+                $v = min($v, prioritet_ves(prioritet_zayavki($r)));
+                if ($v === 0) break;                 // клубный вес самый срочный, искать дальше нечего
+            }
+            $вес[$k] = [$v, $i];                     // второй ключ держит прежний порядок внутри группы веса
+        }
+        usort($orderKeys, static fn($a, $b) => $вес[$a] <=> $вес[$b]);
+    }
+
     $out = [];
     foreach ($orderKeys as $k) {
         $n = count($groups[$k]);
@@ -321,7 +364,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         $isLongComp = (string) ($curMode['results_mode'] ?? '') === 'list';
         $compPaid   = (int) ($curMode['is_paid'] ?? 0) === 1;
         if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
-        $wdays = (!empty($cur['user_id']) && function_exists('club_is_active') && club_is_active((int) $cur['user_id'])) ? 3 : 5;
+        /* ЧИСЛО В СООБЩЕНИИ ОПЕРАТОРУ БЕРЁТ ЕДИНЫЙ ИСТОЧНИК, А НЕ СВОЮ КОПИЮ.
+         * Здесь стояло своё «клуб 3, иначе 5», и заявке от учреждения-партнёра
+         * оно обещало пятый рабочий день, хотя `_plan_send_at()` ставит ей
+         * четвёртый (`institutions.partner_priority_days`). Это была ЧЕТВЁРТАЯ
+         * копия лестницы сроков, и расходилась она молча: оператор читал в
+         * сообщении одно, а письмо участнику уходило по другому расчёту
+         * (правило 47, заслон от третьей копии её не видел - он читал
+         * grade_apply, send_diplomas и orders, а не админку).
+         * Ноль бывает только у длинного конкурса, где срок задаёт дата
+         * оглашения, а это сообщение печатается лишь у короткого; общий срок
+         * стоит последним рубежом на тот же случай, что и в самом расчёте. */
+        require_once BASE_PATH . '/core/prioritet.php';
+        $wdays = (int) prioritet_zayavki($cur)['дней_результат'] ?: PRIORITET_SROK_OBSHIY;
 
         /* СОХРАНЕНИЕ ИТОГА ЖИВЁТ В ОДНОМ МЕСТЕ — core/grade_apply.php.
          *
@@ -349,7 +404,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         $dsyncMsg     = $ap['dsync'];
 
         // Журнал ведёт сама grade_apply_result — второй записи не нужно.
-        $flashWhen = $isLongComp ? 'публикуется пакетом'
+        /* У ДЛИННОГО КОНКУРСА ВСЕГДА «ПАКЕТОМ»: персонального срока ему не
+           назначает никто (правило 73к), поэтому $resultSendAt у него пуст.
+           Условие оставлено как есть - оно называет то, что правда произойдёт,
+           а не то, что мы помним о режиме конкурса. */
+        $flashWhen = ($isLongComp && $resultSendAt === '') ? 'публикуется пакетом'
             : ($ap['sent'] ? 'результат отправлен сейчас'
                            : ('результат ' . ($resultSendAt !== '' ? date('d.m.Y H:i', strtotime($resultSendAt)) : 'по расписанию')));
         // Обещаем наградные дипломы только там, где центр действительно выдаёт их
@@ -489,7 +548,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
      * аттестация, когда снимает работу за нарушение положения, и разойтись они
      * не должны: участнику всё равно, кто принял решение. */
     require_once BASE_PATH . '/core/grade_apply.php';
-    $rj = grade_reject_application($appId, $reason, 'jury');
+    /* ВРЕМЯ ПИСЬМА ВЫБИРАЕТСЯ ТОЛЬКО ЗДЕСЬ (правило 73к). Галочка снята, а дата
+       не указана - это не повод выдумывать время: уходит как раньше, в
+       ближайшее рабочее. */
+    $rjWhen = input('reject_auto_send') === '1' ? '' : trim((string) input('reject_send_at'));
+    $rj = grade_reject_application($appId, $reason, 'jury',
+        $rjWhen !== '' ? ['письмо_в' => $rjWhen] : []);
     if (!$rj['ok']) {
         flash('Не удалось отклонить заявку: ' . $rj['msg'], 'error');
         admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
@@ -550,7 +614,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
 
 /* ================= РЕЖИМ ОЦЕНКИ ОДНОЙ ЗАЯВКИ ================= */
 if ($id = (int) input('id')) {
-    $a = one("SELECT a.*, c.name comp, c.is_paid comp_paid, c.results_mode FROM applications a
+    /* `results_date` НУЖНА САМОЙ КАРТОЧКЕ: у длинного конкурса выбор «когда
+       отправить результат» называет день оглашения, а не счёт рабочих дней
+       (правило 73и). Без неё подпись молча осталась бы без даты. */
+    $a = one("SELECT a.*, c.name comp, c.is_paid comp_paid, c.results_mode, c.results_date FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
     // Длинный конкурс оценивается той же карточкой; результат не уходит моментально (копится в список).
@@ -690,7 +757,16 @@ if ($id = (int) input('id')) {
           <span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></div>
         <dl class="kv">
           <dt>Конкурс</dt><dd><?= h($a['comp']) ?></dd>
-          <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?></dd>
+          <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int)$a['id']) ?></dd>
+          <?php /* СРОК РАЗБОРА ЭТОЙ ЗАЯВКИ — ОТДЕЛЬНОЙ СТРОКОЙ, А НЕ ГАЛОЧКОЙ.
+                   Синяя галочка клуба рядом с именем стояла и раньше, но по ней
+                   оператор не знал, сколько у него дней, а у партнёра её не было
+                   вовсе. Здесь решение и принимается, поэтому плашка тут обязана
+                   быть. */
+                $__пр = function_exists('prioritet_zayavki') ? prioritet_zayavki($a) : [];
+                if ($__пр && prioritet_est($__пр)): ?>
+            <dt>Приоритет</dt><dd><?= prioritet_plashka($__пр) ?></dd>
+          <?php endif; ?>
           <?php if ($a['is_group']): ?><dt>Контактное лицо</dt><dd><?= h($a['full_name']) ?></dd><?php endif; ?>
           <dt>Конкурсный номер</dt><dd><b><?= h($a['work_title']) ?></b></dd>
           <dt>Номинация</dt><dd><?= h($a['nomination']) ?><?= $a['subgroup'] ? ' · '.h($a['subgroup']) : '' ?></dd>
@@ -891,6 +967,15 @@ if ($id = (int) input('id')) {
             <textarea name="jury_comment" placeholder="Например: яркое, эмоциональное выступление"><?= h($a['jury_comment'] ?? '') ?></textarea>
           </div>
           <?php $ovr = trim((string)($a['send_at_override'] ?? '')); ?>
+          <?php /* КОГДА ОТПРАВИТЬ РЕЗУЛЬТАТ — У КОРОТКОГО КОНКУРСА ЗДЕСЬ, У
+                   ДЛИННОГО В ОТКЛОНЕНИИ. Слово владельца 16.10.2026 (правило
+                   73к) сузило правку того же дня: «во всех остальных случаях
+                   оценки результат должен уходить как и всем остальным
+                   участникам, согласно списку», а выбор времени открывается
+                   только кнопкой «Отклонить заявку». Поэтому у длинного
+                   конкурса здесь не выбор, а объяснение: письма уходят каждому
+                   одним пакетом в день оглашения, и выбирать нечего. Кнопка,
+                   которая ничего не меняет, хуже отсутствующей. */ ?>
           <?php if (empty($isLongView)): ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
             <div style="font-weight:700;margin-bottom:6px">Когда отправить результат участнику?</div>
@@ -909,8 +994,10 @@ if ($id = (int) input('id')) {
             </div>
           </div>
           <?php else: ?>
+          <?php $__rd = trim((string) ($a['results_date'] ?? '')); ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
-            <span class="small muted">Длинный конкурс: результат сохраняется в общий список и публикуется пакетом в дату публикации. Персональных писем «в течение 5 рабочих дней» здесь нет — участники увидят звания после публикации итогов.</span>
+            <div style="font-weight:700;margin-bottom:6px">Когда уйдёт результат участнику</div>
+            <span class="small muted">Длинный конкурс: письмо с результатом уходит каждому участнику одним пакетом в день оглашения итогов<?= $__rd !== '' ? ' — ' . h(date('d.m.Y', strtotime($__rd))) : '' ?>, вместе со списком. Персонального срока здесь нет, и выбирать время не нужно.<br>Отдельное письмо с выбором времени бывает только при отклонении заявки — кнопка «Отклонить заявку…» ниже.</span>
           </div>
           <?php endif; ?>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
@@ -948,6 +1035,33 @@ if ($id = (int) input('id')) {
             <div class="field">
               <textarea name="reject_reason" id="rejectReason" rows="3" placeholder="Причина отклонения (пункт положения)"><?= h((string)($a['reject_reason'] ?? '')) ?></textarea>
             </div>
+            <?php if (!empty($isLongView) && !$isRejected): ?>
+            <?php /* КОГДА ОТПРАВИТЬ РЕЗУЛЬТАТ — ТОЛЬКО ЗДЕСЬ (правило 73к).
+                     Оценка длинного конкурса уходит пакетом со списком, а
+                     отклонённая заявка в список не попадает вовсе: письмо ей
+                     нужно своё, и время у него выбирает человек. Заявка при этом
+                     отклоняется сразу - ждёт только письмо. */ ?>
+            <div class="field" style="margin:0 0 10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
+              <div style="font-weight:700;margin-bottom:6px">Когда отправить результат участнику?</div>
+              <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:8px">
+                <input type="checkbox" name="reject_auto_send" id="rjAutoChk" value="1" checked style="margin-top:3px">
+                <span>Сразу <b>(по умолчанию)</b><br><span class="small muted">Письмо с причиной уходит в ближайшее рабочее время: пн-сб, с 9:00 МСК. Ночью и в воскресенье наружу ничего не уходит.</span></span>
+              </label>
+              <div id="rjWhenBox" style="display:none;padding-left:26px;border-left:2px solid var(--a-line)">
+                <label style="display:flex;align-items:center;gap:8px">
+                  <input type="datetime-local" name="reject_send_at" id="rjAtInp" style="max-width:220px">
+                  <span class="small muted">— отправить письмо в это время</span>
+                </label>
+                <div class="small muted" style="margin-top:6px">Время вне окна 9:00–19:00 и воскресенье сдвигаются на ближайшее рабочее утро. Поле пустое — письмо уйдёт сразу.</div>
+              </div>
+            </div>
+            <script>(function(){
+              var c=document.getElementById('rjAutoChk'),b=document.getElementById('rjWhenBox'),d=document.getElementById('rjAtInp');
+              if(!c) return;
+              function s(){ if(b) b.style.display = c.checked ? 'none':'block'; if(c.checked && d) d.value=''; }
+              c.addEventListener('change',s); s();
+            })();</script>
+            <?php endif; ?>
             <?php if ($isRejected): ?>
               <label class="small" style="display:block;margin:0 0 8px">
                 <input type="checkbox" name="notify" value="1"> сообщить участнику об уточнении причины
@@ -982,8 +1096,9 @@ if ($id = (int) input('id')) {
             });
             var tog=document.getElementById('rejectToggle'), panel=document.getElementById('rejectPanel');
             tog.addEventListener('click',function(){ panel.classList.toggle('show'); });
-            var chk=document.getElementById('autoSendChk'), box=document.getElementById('sendAtBox');
-            if(chk) chk.addEventListener('change',function(){ box.style.display = chk.checked ? 'none' : 'block'; });
+            // Галочкой «авто» управляет свой скрипт рядом с самим блоком. Здесь
+            // жил второй слушатель с несуществующим sendAtBox: он падал на каждом
+            // переключении галочки и не делал ничего (правило 73к).
           })();
         </script>
         <style>
@@ -1078,7 +1193,26 @@ $qSearch = trim(input('q'));
 // сегодняшнюю очередь, было нельзя. Поиск общий — ищем по обоим спискам сразу.
 $rows       = grading_queue_rows($comp, $order, $qSearch);
 $qTotal     = count($rows);
-$gradedRows = graded_rows($comp, $qSearch, input('gorder') === 'old' ? 'old' : 'new', 'short');
+/* СКОЛЬКО СРОЧНЫХ СТОИТ В НАЧАЛЕ - ЧИСЛОМ, А НЕ НА ГЛАЗ. Оператор видит, сколько
+   заявок с коротким сроком ждёт его прямо сейчас, не пересчитывая плашки руками.
+   Вес берёт тот же единый источник, что и сама сортировка очереди. */
+$qКлуб = 0; $qПарт = 0;
+if (function_exists('prioritet_ves')) {
+    foreach ($rows as $__r) {
+        $__v = prioritet_ves(prioritet_zayavki($__r));
+        if ($__v === 0) $qКлуб++; elseif ($__v === 1) $qПарт++;
+    }
+}
+/* АРХИВ ЛИСТАЕТСЯ ТЕМ ЖЕ ПОМОЩНИКОМ, ЧТО И В «ОЦЕНКЕ ДЛИННЫХ».
+   Внутри graded_rows стоял потолок LIMIT 500 без счётчика и без подписи: на
+   длинных конкурсах он уже сработал и спрятал 351 разобранную заявку «Величия
+   России», а здесь разобранных 439 - до того же молчаливого обрыва оставалось
+   шестьдесят. Потолок снят у источника, длину страницы задаёт раздел. */
+$gPer       = admin_na_stranice();
+$gTotal     = graded_rows_count($comp, $qSearch, 'short');
+$gPage      = max(1, min((int) input('gstr', '1'), (int) ceil(max(1, $gTotal) / $gPer)));
+$gradedRows = graded_rows($comp, $qSearch, input('gorder') === 'old' ? 'old' : 'new', 'short',
+                          $gPer, ($gPage - 1) * $gPer);
 
 /* Панель «Итоги конкурса» отсюда убрана: она про длинный конкурс и живёт в
    разделе «Оценка длинных» (admin/longcomp.php), где есть и прогресс оценки, и
@@ -1089,20 +1223,22 @@ foreach ($rows as $r) { $firstId = (int)$r['id']; break; }
 
 ob_start(); ?>
 <div class="section-title">
-  <h2>Оценка коротких <span class="small muted">(в очереди: <?= $qTotal ?> · разобрано: <?= count($gradedRows) ?>)</span></h2>
+  <h2>Оценка коротких <span class="small muted">(в очереди: <?= $qTotal ?> · разобрано: <?= $gTotal ?>)</span></h2>
   <?php if ($firstId): ?>
     <a class="btn btn--primary" href="<?= a_link('grading', array_filter(['id'=>$firstId,'competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('grading') ?>Начать оценку</a>
   <?php endif; ?>
 </div>
 <p class="small muted" style="margin:-6px 0 14px">Сверху — очередь на аттестацию, снизу — всё, что уже разобрано, вместе с отклонёнными. Новые заявки попадают в очередь автоматически, ручные переносы статусов не нужны.</p>
+<p class="small muted" style="margin:-8px 0 14px">В начале очереди всегда стоят заявки участников Элитного клуба, за ними заявки от учреждений-партнёров: у них срок аттестации 3 и 4 рабочих дня против общих 5, и пропустить его нельзя. Выбранный порядок подачи работает внутри каждой из трёх групп.</p>
 
 <form method="get" class="filters">
   <input type="hidden" name="p" value="grading">
   <div class="field"><label>Поиск по обоим спискам</label><input name="q" value="<?= h($qSearch) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер, звание"></div>
+  <?= admin_na_stranice_pole() ?>
   <div class="field"><label>Конкурс</label><select name="competition" onchange="this.form.submit()"><option value="">Все конкурсы</option>
     <?php foreach ($comps as $c): ?><option value="<?= $c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?></option><?php endforeach; ?>
   </select></div>
-  <div class="field"><label>Очередь</label><select name="order" onchange="this.form.submit()">
+  <div class="field"><label title="Клуб и партнёры всегда идут первыми: у них короче срок аттестации. Этот выбор работает внутри каждой группы">Очередь (внутри групп)</label><select name="order" onchange="this.form.submit()">
     <option value="old" <?= $order==='old'?'selected':'' ?>>Старые → новые</option>
     <option value="new" <?= $order==='new'?'selected':'' ?>>Новые → старые</option>
   </select></div>
@@ -1120,11 +1256,28 @@ ob_start(); ?>
 .gq-tbl td{vertical-align:middle}
 .gq-tbl .gq-grp{border-left:3px solid var(--a-gold,#8B6F1F)}
 .gq-tbl .gq-badge{font-size:.7rem}
+/* КОЛОНКА «ДЕЙСТВИЕ» ВИДНА ВСЕГДА, ДАЖЕ КОГДА ТАБЛИЦА УЕХАЛА ВБОК.
+   Правка владельца 16.10.2026: «не видна колонка „Действие" и отсутствует
+   кнопка „оценить"». Кнопка была на месте у КАЖДОЙ строки (замерено: 122 кнопки
+   на 122 строки), но колонок семь, с телефона они не влезают, `.table-wrap`
+   прокручивается вбок - и последняя колонка оказывалась за краем экрана. Шапка у
+   неё была ПУСТАЯ, поэтому и догадаться, что там кнопка, было нельзя.
+   Прижимаем колонку к правому краю. Свой фон обязателен: без него под прижатой
+   колонкой просвечивают уезжающие строки. Тень слева показывает, что за ней
+   прокрутка. */
+.gq-tbl th:last-child,.gq-tbl td:last-child{position:sticky;right:0;z-index:2;
+  background:#fff;box-shadow:-10px 0 12px -10px rgba(20,26,51,.22)}
+.gq-tbl thead th{z-index:4}
+.gq-tbl th:last-child{background:var(--a-parchment,#F6F1E6);z-index:5}
+.gq-tbl tbody tr:hover td:last-child{background:var(--a-cream,#FFFCF5)}
+.gq-tbl td:last-child .btn{white-space:nowrap}
 </style>
 
 <!-- СПИСОК 1: ОЧЕРЕДЬ НА АТТЕСТАЦИЮ -->
 <div class="section-title" style="margin:18px 0 8px">
-  <h3>На аттестации <span class="badge badge--muted"><?= $qTotal ?></span></h3>
+  <h3>На аттестации <span class="badge badge--muted"><?= $qTotal ?></span>
+    <?php if ($qКлуб || $qПарт): ?><span class="small muted" style="font-weight:400" title="Эти заявки стоят в начале очереди: у Элитного клуба срок аттестации 3 рабочих дня, у партнёров 4, у остальных 5">· сперва срочные: Элитный клуб <?= $qКлуб ?>, партнёры <?= $qПарт ?></span><?php endif; ?>
+  </h3>
 </div>
 <?php
 /* ПОДСКАЗКА АТТЕСТАЦИИ ВИДНА ПРЯМО В ОЧЕРЕДИ.
@@ -1161,19 +1314,20 @@ if ($rows) {
 <div class="table-wrap">
   <table class="tbl gq-tbl">
     <thead><tr>
-      <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Подсказка</th><th>Статус</th><th></th>
+      <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Подсказка</th><th>Статус</th><th>Действие</th>
     </tr></thead>
     <tbody>
       <?php if (!$rows): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Очередь пуста — все заявки разобраны</td></tr><?php endif; ?>
       <?php foreach ($rows as $a): ?>
         <tr class="<?= (int)$a['grp_count'] > 1 ? 'gq-grp' : '' ?>">
-          <td><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
+          <td><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int)$a['id']) ?>
             <?php if ((int)$a['grp_count'] > 1 && (int)$a['grp_pos'] === 0): ?>
               <span class="badge badge--gold gq-badge">участник <?= (int)$a['grp_count'] ?> заявок</span>
             <?php elseif ((int)$a['grp_count'] > 1): ?>
               <span class="badge badge--muted gq-badge"><?= (int)$a['grp_pos']+1 ?>/<?= (int)$a['grp_count'] ?></span>
             <?php endif; ?>
             <div class="small muted"><?= h($a['number'] ?: '#'.$a['id']) ?></div>
+            <?php if (function_exists('prioritet_zayavki')): ?><div><?= prioritet_plashka(prioritet_zayavki($a)) ?></div><?php endif; ?>
           </td>
           <td class="small"><?= h($a['comp']) ?></td>
           <td class="small"><?= h($a['work_title']) ?></td>
@@ -1213,14 +1367,21 @@ if ($rows) {
 
 <!-- СПИСОК 2: РАЗОБРАННЫЕ (оценённые + отклонённые) -->
 <div class="section-title" id="graded" style="margin:26px 0 8px">
-  <h3>Оценённые и отклонённые <span class="badge badge--gold"><?= count($gradedRows) ?></span></h3>
+  <h3>Оценённые и отклонённые <span class="badge badge--gold"><?= $gTotal ?></span></h3>
 </div>
 <p class="small muted" style="margin:-4px 0 12px">
   Всё, что уже разобрано. Видно, когда участник узнает результат и когда получит наградные материалы.
   «Изменить» открывает ту же карточку оценки — там правится и результат, и сама заявка.
 </p>
-<?= admin_graded_table($gradedRows, 'grading',
-      array_filter(['competition' => $comp, 'order' => $order, 'q' => $qSearch])) ?>
+<?php
+/* Таблице отдаём номер страницы, постраничности - нет: у таблицы ссылка
+   «Изменить» обязана вернуть на ту же страницу, а помощник свой номер
+   подставляет сам. */
+$gKeep = array_filter(['competition' => $comp, 'order' => $order, 'q' => $qSearch,
+                       'na' => admin_na_stranice() !== 50 ? admin_na_stranice() : '']);
+?>
+<?= admin_graded_table($gradedRows, 'grading', $gKeep + ($gPage > 1 ? ['gstr' => $gPage] : [])) ?>
+<?= admin_stranicy($gTotal, $gPage, $gPer, 'grading', $gKeep, 'gstr', 'graded') ?>
 <?php
 $content = ob_get_clean();
 admin_layout('Оценка коротких', $content, 'grading');

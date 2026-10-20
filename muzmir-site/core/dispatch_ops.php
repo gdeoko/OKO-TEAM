@@ -147,6 +147,38 @@ function dops_diplomas(int $appId): array {
 }
 
 /**
+ * ЧТО ЗНАЧИТ `diplomas.result` - ЗАВИСИТ ОТ ВИДА ДОКУМЕНТА.
+ *
+ * У основного диплома в этом поле звание («ЛАУРЕАТ II СТЕПЕНИ»), у
+ * дополнительного - номинация («ЗА АРТИСТИЗМ»), а у ИМЕННОГО и у БЛАГОДАРНОСТИ
+ * там ЧЕЛОВЕК: ребёнок из коллектива и педагог. Поле одно, смысл разный.
+ *
+ * Админка про эту разницу не знала и печатала содержимое поля в колонку
+ * «Звание / номинация» как есть. По заказу VR-2026-00039 владелец видел пять
+ * строк «Именной диплом · Тимонина София» на месте звания и читал это как
+ * ошибку сборщика - при том, что все шесть бланков собраны верно: на именном
+ * стоит имя ребёнка, название коллектива «Театральная студия „Редкий кадр“» и
+ * звание коллектива ДИПЛОМАНТ I СТЕПЕНИ.
+ *
+ * dops_diploma_person() - чьё имя стоит на бланке (пусто, если документ не
+ *                         именной и не благодарность).
+ * dops_diploma_rank()   - что писать в колонке звания: у именного и
+ *                         благодарности это звание ЗАЯВКИ, а не своё поле.
+ */
+function dops_diploma_person(array $d): string {
+    return in_array((string) ($d['type'] ?? ''), ['named', 'thanks'], true)
+        ? trim((string) ($d['result'] ?? ''))
+        : '';
+}
+
+function dops_diploma_rank(array $d, string $appResult = ''): string {
+    $own = trim((string) ($d['result'] ?? ''));
+    $app = trim($appResult);
+    if (dops_diploma_person($d) !== '') return $app;
+    return $own !== '' ? $own : $app;
+}
+
+/**
  * Отправить наградные материалы заявки ОДНИМ письмом прямо сейчас.
  * $duplicate=true — повторная отправка уже отправленных.
  * Используется общий рендер письма из cron/send_diplomas.php (тот же вид, что у участника).
@@ -179,14 +211,19 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
         if (function_exists('_diploma_files')) [$pdfAbs, $imgUrl] = _diploma_files((array) $d);
         if ($pdfAbs !== '') $attachments[] = $pdfAbs;
         $blocks[] = ['type' => (string) ($d['type'] ?? 'main'), 'result' => (string) ($d['result'] ?? ''),
+                     // звание заявки: у именного и благодарности своё поле занято человеком
+                     'app_result' => (string) ($a['result'] ?? ''),
                      'number' => (string) ($d['number'] ?? ''), 'img' => $imgUrl];
     }
 
     $cnt  = count($send);
     $subj = ($cnt > 1 ? 'Ваши наградные материалы конкурса «' : 'Ваш наградной материал конкурса «')
           . (string) ($a['comp_name'] ?? '') . '» — заявка № ' . (string) ($a['number'] ?? '');
+    // У коллектива личного имени нет - здороваемся названием коллектива.
+    $__who = (int) ($a['is_group'] ?? 0) === 1 && trim((string) ($a['group_name'] ?? '')) !== ''
+        ? (string) $a['group_name'] : (string) ($a['full_name'] ?? '');
     $html = function_exists('_diploma_group_html')
-        ? _diploma_group_html($blocks, (string) ($a['full_name'] ?? ''), (string) ($a['comp_name'] ?? ''))
+        ? _diploma_group_html($blocks, $__who, (string) ($a['comp_name'] ?? ''))
         : '<p>Ваш наградной материал во вложении.</p>';
 
     $opt = [];

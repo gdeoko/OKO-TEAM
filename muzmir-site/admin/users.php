@@ -384,7 +384,7 @@ if (input('action') === 'profile') {
         </label>
       </form>
       <div class="up-head-info">
-        <div class="up-name"><?= h($pu['full_name'] ?: '(без имени)') ?><?php if ($isVip): ?> <?= vip_badge($vipKind) ?><?php endif; ?></div>
+        <div class="up-name"><?= h($pu['full_name'] ?: '(без имени)') ?><?php if ($isVip): ?> <?= vip_badge($vipKind) ?><?php endif; ?><?= nenadezhnyi_metka((int)$pu['id'], (string)($pu['email'] ?? '')) ?></div>
         <div class="up-sub"><?= h($pu['email']) ?><?= $pu['phone'] ? ' · ' . h($pu['phone']) : '' ?></div>
         <div class="up-badges">
           <span class="badge badge--<?= role_badge_class((string)$pu['role']) ?>"><?= h($pu['role']) ?></span>
@@ -650,7 +650,7 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
           <td>
             <div class="u-idcell">
               <span class="u-avatar"><?php if(trim((string)$u['avatar'])!==''): ?><img src="<?= h($u['avatar']) ?>" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('<?= h($ini) ?>'))"><?php else: ?><?= h($ini) ?><?php endif; ?></span>
-              <span><b><a href="<?= a_link('users', ['action'=>'profile','id'=>$u['id']]) ?>" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(0,0,0,.25)"><?= h($u['full_name'] ?: '—') ?></a><?= vip_mark((int)$u['id'], (string)($u['role'] ?? ''), (string)($u['email'] ?? '')) ?><?php if($u['id']==$meId): ?> <span class="u-me">вы</span><?php endif; ?><?php if($isBlocked): ?> <span class="badge badge--muted">заблокирован</span><?php endif; ?></b><span class="small muted"><?= h($u['email']) ?></span></span>
+              <span><b><a href="<?= a_link('users', ['action'=>'profile','id'=>$u['id']]) ?>" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(0,0,0,.25)"><?= h($u['full_name'] ?: '—') ?></a><?= vip_mark((int)$u['id'], (string)($u['role'] ?? ''), (string)($u['email'] ?? '')) ?><?= nenadezhnyi_metka((int)$u['id'], (string)($u['email'] ?? '')) ?><?php if($u['id']==$meId): ?> <span class="u-me">вы</span><?php endif; ?><?php if($isBlocked): ?> <span class="badge badge--muted">заблокирован</span><?php endif; ?></b><span class="small muted"><?= h($u['email']) ?></span></span>
             </div>
           </td>
           <td class="small"><?= h($u['phone'] ?: '—') ?></td>

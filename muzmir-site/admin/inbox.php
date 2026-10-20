@@ -44,8 +44,20 @@ if ($q !== '') {
     $w[] = '(from_email LIKE ? OR subject LIKE ? OR body_text LIKE ?)';
     array_push($args, "%$q%", "%$q%", "%$q%");
 }
-$rows = all("SELECT * FROM inbox_messages WHERE " . implode(' AND ', $w)
-          . " ORDER BY received_at DESC, id DESC LIMIT 300", $args);
+/* ПОСТРАНИЧНОСТЬ ВМЕСТО ПОТОЛКА.
+   Здесь стоял голый LIMIT 300 без счётчика и без подписи: в обычном виде
+   писем 358, то есть 58 не показывались НИКОГДА, а со служебными - 4161 из
+   4161 видно триста. Список при этом выглядел полным, и дойти до остальных
+   было нельзя (та же беда стоила 351 заявки в оценке длинных, правило 58).
+   Счёт идёт ТЕМ ЖЕ условием, что и выборка: копия условия в счётчике
+   разошлась бы молча, и подпись врала бы ровно там, где её читают. */
+$where = implode(' AND ', $w);
+$per   = admin_na_stranice();
+$page  = max(1, (int) input('st', '1'));
+$total = (int) ((one("SELECT COUNT(*) n FROM inbox_messages WHERE $where", $args)['n']) ?? 0);
+$page  = min($page, max(1, (int) ceil($total / $per)));
+$rows  = all("SELECT * FROM inbox_messages WHERE $where
+              ORDER BY received_at DESC, id DESC LIMIT " . $per . ' OFFSET ' . (($page - 1) * $per), $args);
 
 $stat = [];
 foreach (all("SELECT mailbox, COUNT(*) n,
@@ -70,13 +82,26 @@ $handledRu = [
     '' => 'ждёт разбора', 'bot' => 'ответил помощник', 'auto_accept' => 'принят партнёром',
     'auto_decline' => 'удалён из базы', 'dedup' => 'повтор', 'human' => 'взял оператор', 'skip' => 'без ответа',
 ];
-$boxRu = ['news' => 'news@ своя база', 'novosti' => 'novosti@ учреждения',
-          'kc' => 'kc@ ведомства', 'nagradi' => 'nagradi@ награды'];
+/* ЯЩИКОВ У ЦЕНТРА ШЕСТЬ, И ДВА ИЗ НИХ ЗДЕСЬ НЕ ПОКАЗЫВАЛИСЬ ВОВСЕ.
+   Читаются шесть (inbox_boxes(), правило 9): кроме четырёх своих это
+   исторический публичный mail.ru, напечатанный на старых бланках, и gmail,
+   с которого уходят письма сайта при закрытом SMTP Яндекса. На 19.10.2026
+   их писем 632, карточки у них не было, и фильтр их не предлагал: выбрать
+   ящик было нельзя. Список берём у читателя почты, а не вписываем своим:
+   заведут седьмой ящик - он появится здесь сам. */
+$boxImena = ['news' => 'news@ своя база', 'novosti' => 'novosti@ учреждения',
+             'kc' => 'kc@ ведомства', 'nagradi' => 'nagradi@ награды',
+             'mailru' => 'mail.ru прежний адрес', 'gmail' => 'gmail письма сайта'];
+$boxRu = [];
+foreach (array_keys(inbox_boxes()) as $bk) { $boxRu[$bk] = $boxImena[$bk] ?? $bk; }
+/* Ящик, который читали прежде и сняли из списка, в базе остаётся: без этой
+   строки его письма висели бы в ленте без своей карточки. */
+foreach (array_keys($stat) as $bk) { if (!isset($boxRu[$bk])) $boxRu[$bk] = $boxImena[$bk] ?? $bk; }
 
 ob_start(); ?>
 <div class="page-head">
   <h1>Входящие письма</h1>
-  <p class="muted small">Всё, что пришло на четыре ящика центра, включая папку «Спам».
+  <p class="muted small">Всё, что пришло на <?= count($boxRu) ?> <?= _ru_plural(count($boxRu), ['ящик', 'ящика', 'ящиков']) ?> центра, включая папку «Спам».
     Ждут разбора: <b><?= $waitTotal ?></b>. Служебные письма и автоответчики скрыты,
     показать их можно фильтром.</p>
 </div>
@@ -114,13 +139,15 @@ ob_start(); ?>
       <option value="">скрыть</option>
       <option value="1" <?= $showAll ? 'selected' : '' ?>>показать</option>
     </select></div>
+  <?= admin_na_stranice_pole() ?>
   <button class="btn btn--primary btn--sm">Показать</button>
 </form>
 
-<div class="table-wrap">
-  <table class="tbl">
+<?= admin_cards_css() ?>
+<div class="table-wrap table-wrap--cards">
+  <table class="tbl tbl--cards">
     <thead><tr>
-      <th>Когда</th><th>Ящик</th><th>От кого</th><th>Письмо</th><th>О чём</th><th>Состояние</th><th></th>
+      <th>Когда</th><th>Ящик</th><th>От кого</th><th>Письмо</th><th>О чём</th><th>Состояние</th><th>Действие</th>
     </tr></thead>
     <tbody>
     <?php if (!$rows): ?>
@@ -133,27 +160,29 @@ ob_start(); ?>
       elseif ((int) $r['user_id'] > 0) $who = 'участник';
       ?>
       <tr>
-        <td class="small" style="white-space:nowrap"><?= h(date('d.m H:i', strtotime((string) $r['received_at']))) ?>
+        <td class="small" data-label="Когда" style="white-space:nowrap"><?= h(date('d.m H:i', strtotime((string) $r['received_at']))) ?>
           <?php if ((string) $r['folder'] === 'Spam'): ?><div class="small" style="color:#b34">из спама</div><?php endif; ?></td>
-        <td class="small"><?= h((string) $r['mailbox']) ?></td>
-        <td class="small"><b><?= h(mb_substr((string) $r['from_email'], 0, 38)) ?></b>
+        <td class="small" data-label="Ящик"><?= h((string) $r['mailbox']) ?></td>
+        <td class="small" data-label="От кого"><b><?= h(mb_substr((string) $r['from_email'], 0, 38)) ?></b>
           <?php if ($who !== ''): ?><div class="small muted"><?= h($who) ?></div><?php endif; ?></td>
-        <td class="small" style="max-width:420px">
+        <td class="small" data-label="Письмо" style="max-width:420px">
           <b><?= h(mb_substr((string) $r['subject'], 0, 70) ?: '(без темы)') ?></b>
           <div class="muted"><?= h(mb_substr((string) $r['body_text'], 0, 150)) ?></div>
           <?php if (trim((string) $r['reply_text']) !== ''): ?>
             <div class="small" style="color:#1E7A46;margin-top:4px">Ответ: <?= h(mb_substr((string) $r['reply_text'], 0, 150)) ?></div>
           <?php endif; ?>
         </td>
-        <td class="small"><?= h($kindRu[(string) $r['kind']] ?? (string) $r['kind']) ?>
+        <td class="small" data-label="О чём"><?= h($kindRu[(string) $r['kind']] ?? (string) $r['kind']) ?>
           <?php if ((int) $r['is_auto'] === 1): ?><div class="small muted">робот</div><?php endif; ?></td>
-        <td class="small"><?= h($handledRu[(string) $r['handled_by']] ?? (string) $r['handled_by']) ?></td>
-        <td>
+        <td class="small" data-label="Состояние"><?= h($handledRu[(string) $r['handled_by']] ?? (string) $r['handled_by']) ?></td>
+        <td data-label="Действие">
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline"><?= csrf_field() ?>
             <input type="hidden" name="p" value="inbox">
             <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
             <input type="hidden" name="box" value="<?= h($box) ?>">
             <input type="hidden" name="all" value="<?= $showAll ? '1' : '' ?>">
+            <input type="hidden" name="kind" value="<?= h($kind) ?>">
+            <input type="hidden" name="na" value="<?= (int) $per ?>">
             <?php if ((string) $r['handled_by'] === ''): ?>
               <button class="btn btn--ghost btn--sm" name="do" value="human">Беру на себя</button>
               <button class="btn btn--ghost btn--sm" name="do" value="skip">Без ответа</button>
@@ -167,6 +196,10 @@ ob_start(); ?>
     </tbody>
   </table>
 </div>
+<?= admin_stranicy($total, $page, $per, 'inbox',
+      array_filter(['box' => $box, 'kind' => $kind, 'q' => $q,
+                    'all' => $showAll ? '1' : '', 'na' => $per === 50 ? '' : (string) $per]),
+      'st') ?>
 <?php
 $content = ob_get_clean();
 admin_layout('Входящие письма', $content, 'inbox');

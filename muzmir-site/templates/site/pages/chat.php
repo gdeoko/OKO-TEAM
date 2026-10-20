@@ -3,6 +3,12 @@
  *  подсказки-чипы, история в localStorage + на сервере (api/v1/chat.php). */
 $u = current_user();
 
+/* КТО ОТВЕЧАЕТ СЕГОДНЯ. Имя берётся по ключу разговора, поэтому окно чата и
+   ответы помощника называют одно и то же имя весь день, а завтра — другое
+   (список и правило в core/chat_brain.php, CHAT_OPERATORS). */
+require_once BASE_PATH . '/core/chat_brain.php';
+$__chatOp = (string) chat_operator(chat_web_session_key())['имя'];
+
 ob_start(); ?>
 <section class="chat-screen">
   <div class="chat-wrap">
@@ -13,8 +19,8 @@ ob_start(); ?>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.8a8.3 8.3 0 0 1-8.5 8.2 8.9 8.9 0 0 1-3.8-.8l-5.2 1.2 1.2-4.9a8.1 8.1 0 0 1-1.2-4.2A8.3 8.3 0 0 1 12 3.5a8.3 8.3 0 0 1 9 8.3z"/></svg>
         </span>
         <span>
-          <b>Помощник «Музыкальный Мир»</b>
-          <i><span class="chat-dot" aria-hidden="true"></span>онлайн, отвечает сразу</i>
+          <b><?= h($__chatOp) ?></b>
+          <i><span class="chat-dot" aria-hidden="true"></span>оператор «Музыкального Мира», отвечает сразу</i>
         </span>
       </div>
     </div>
@@ -23,8 +29,8 @@ ob_start(); ?>
       <?php /* Первое сообщение помощника - всегда приветствие + подсказки-чипы */ ?>
       <div class="msg agent">
         <div class="msg-b">
-          <b class="msg-name">Помощник «Музыкальный Мир»</b>
-          <p>Здравствуйте! Я помощник Культурного центра «Музыкальный Мир». Подскажу по конкурсам, заявкам, результатам и наградам - выберите вопрос или напишите свой.</p>
+          <b class="msg-name">Музыкальный Мир</b>
+          <p>Здравствуйте! Меня зовут <?= h($__chatOp) ?>, я оператор Культурного центра «Музыкальный Мир». Отвечу на Ваши вопросы по конкурсам, заявкам, результатам и наградам - выберите вопрос или напишите свой.</p>
           <div class="chat-chips">
             <button type="button" class="chat-chip" data-q="Как подать заявку?">Как подать заявку</button>
             <button type="button" class="chat-chip" data-q="Сколько стоит участие?">Стоимость участия</button>
@@ -213,7 +219,7 @@ body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
     var b = document.createElement('div');
     b.className = 'msg-b';
     var inner = '';
-    if (item.r !== 'u') inner += '<b class="msg-name">Помощник «Музыкальный Мир»</b>';
+    if (item.r !== 'u') inner += '<b class="msg-name">Музыкальный Мир</b>';
     if (item.f) {
       inner += (item.k === 'video')
         ? '<video class="msg-media" src="' + esc(item.f) + '" controls playsinline preload="metadata"></video>'

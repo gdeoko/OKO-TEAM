@@ -14,6 +14,15 @@
  * культуры. Вместо них в промпте просится ряд ПУСТЫХ круглых заглушек, а
  * настоящие эмблемы вписываются потом (core/afisha_emblems.php).
  *
+ * ДЛИННОЕ СЛОВО, ВТИСНУТОЕ В ОДНУ СТРОКУ, МОДЕЛЬ СОКРАЩАЕТ. 16.10.2026 строка
+ * «Всероссийский многожанровый онлайн-конкурс культуры и искусства» впервые
+ * встала на афише одной строкой - и слово «искусства» вышло «искусспва» у
+ * «Гордости поколения» и «искуства» у «Территории таланта», то есть дважды
+ * подряд. В октябрьских афишах 01.10 та же строка переносилась на две и была
+ * верна. Поэтому в промпте стоит и список трудных слов побуквенно, и прямое
+ * разрешение перенести строку, но не ужимать слово. Орфографию на кадре ловит
+ * только глаз (правило 57а), никакая мерка её не видит.
+ *
  * Промпт строится от НАЗВАНИЯ конкурса: «Мировые Таланты» получает золотой
  * глобус и мировую сцену, «Величие России» — Кремль и триколор. Без этого все
  * афиши года выходят одинаковыми, меняется только надпись.
@@ -105,15 +114,32 @@ function afisha_prompt(array $c): string {
     $res   = afisha_date((string) ($c['results_date'] ?? ''));
     $year  = date('Y', strtotime((string) ($c['start_date'] ?? '')) ?: time());
     $terms = afisha_terms($c);
+    $plus  = afisha_plus($c);   // строка достоинств; денежных премий на афише нет (слово владельца 16.10.2026)
     $scene = afisha_scene_for((string) ($c['name'] ?? ''));
     $pal   = afisha_palette_for($t);
 
     $srok = $end !== '' ? ('Приём заявок до ' . $end) : '';
     if ($res !== '')      $srok .= ($srok !== '' ? ' · ' : '') . 'Результаты ' . $res;
-    elseif ($srok !== '') $srok .= ' · Результаты в течение 5 рабочих дней';
+    /* СРОК БЕРЁТСЯ У `comp_terms()`, А НЕ ВПИСЫВАЕТСЯ ЗАНОВО. Афишу рисуют один
+       раз, а висит она у конкурса месяцами, и срок аттестации меняется словом
+       владельца: у конкурса с приёмом только для членов Клуба это 3 рабочих дня,
+       а не 5 (правило 72, слово владельца 16.10.2026). Копия расходится молча, и
+       16.10.2026 так и вышло: страница конкурса говорила 3 дня, а в напечатанной
+       афише осталась пятёрка - её видно только глазами (правила 33, 35, 45, 47,
+       56а, 64). Ту же строку берёт HTML-эталон афиши. */
+    elseif ($srok !== '') {
+        if (!function_exists('comp_terms') && is_file(__DIR__ . '/countdown.php')) {
+            require_once __DIR__ . '/countdown.php';
+        }
+        $__ct = function_exists('comp_terms') ? comp_terms($c) : [];
+        $srok .= ' · ' . (trim((string) ($__ct['results'] ?? '')) !== ''
+               ? (string) $__ct['results'] : 'Результаты в течение 5 рабочих дней');
+    }
 
-    /* Приписка про положение — только у конкурса Клуба: сумма фонда на ленте без
-     * неё читается как приз каждому участнику каждый месяц. */
+    /* Приписка под лентой условий: у конкурса Клуба оговорка про фонд, у платного
+     * с приёмом только для членов - само условие приёма, у платного открытого -
+     * что входит в оргвзнос, у бесплатного - что наградные материалы заказываются
+     * отдельно (слово владельца 16.10.2026). Текст один на HTML-эталон и промпт. */
     $note = function_exists('afisha_note') ? afisha_note($c) : '';
     $noteLine = $note !== ''
         ? "Line 6a, directly under the ribbon banner, small, light weight, subdued, centred: «{$note}»\n\n"
@@ -124,7 +150,7 @@ Create a complete, finished, print-ready HORIZONTAL POSTER in 16:9 aspect ratio 
 
 THEME AND SUBJECT. The competition is called «{$name}». Build the visual world around that idea: {$scene}. The overall impression must be prestigious, solemn and festive — a state-level arts award, not a commercial advertisement. Rich, deep, layered, luxurious.
 
-EXACT TEXT TO RENDER, in Russian Cyrillic, spelled precisely as given, no invented words, no misspellings, no Latin letters substituted for Cyrillic characters, no extra lines:
+EXACT TEXT TO RENDER, in Russian Cyrillic, spelled precisely as given, no invented words, no misspellings, no Latin letters substituted for Cyrillic characters, no extra lines. SPELLING IS CRITICAL for these long words — copy them letter for letter: «искусства», «многожанровый», «Квалифицированная», «Зарегистрирован», «Роскомнадзоре», «информационной». EVERY NUMBER AND ABBREVIATION IN LINE 1 MUST BE RENDERED IN FULL, as digits and capitals: «24.06.2025», «№094084», «ГК РФ» (both letters capital), «Глава 57» — the numeral 57 must be visible and must not turn into a dash or a blur. If a line is too long for the width, WRAP IT ONTO TWO CENTRED LINES — never squeeze, condense or shorten a word to make it fit. The « » around each line below are DELIMITERS that show where the line starts and ends: do NOT draw those outer quotation marks on the poster. Print only the quotation marks that belong to the text itself, as in the centre's name «Музыкальный Мир»:
 
 Line 1, small, across the very top, light weight, subdued: «Зарегистрирован в Роскомнадзоре от 24.06.2025 №094084 · ГК РФ Глава 57 — публичный конкурс»
 
@@ -140,7 +166,7 @@ Line 6, inside a deep burgundy ribbon banner with a thin gold border, bold white
 
 {$noteLine}Line 7, bold, clearly readable: «{$srok}»
 
-Line 8, regular weight: «Компетентное жюри · Квалифицированная оценка · Денежные премии»
+Line 8, regular weight: «{$plus}»
 
 Line 9, at the very bottom, small: «Российская Федерация, город Москва — {$year} год»
 

@@ -55,7 +55,7 @@ function curator_split_teachers(string $raw): array {
         $fios = array_values(array_filter(array_map(
             static fn($m) => trim($m['fio']), mentors_parse($s)
         )));
-        if ($fios) return $fios;
+        if ($fios) return curator_strip_roles($fios);
     }
 
     // Явные разделители — самый частый и самый надёжный случай.
@@ -63,12 +63,12 @@ function curator_split_teachers(string $raw): array {
         $parts = preg_split('~\s*[,;/]\s*|\s+и\s+~u', $s) ?: [];
         $out = [];
         foreach ($parts as $p) { $p = trim($p); if (mb_strlen($p) >= 5) $out[] = $p; }
-        if ($out) return $out;
+        if ($out) return curator_strip_roles($out);
     }
 
     // Сплошная строка: собираем слова, закрывая человека на отчестве.
     $words = preg_split('~ ~u', $s) ?: [];
-    if (count($words) < 6) return [$s];              // один человек — делить нечего
+    if (count($words) < 6) return curator_strip_roles([$s]);  // один человек — делить нечего
 
     $out = []; $buf = [];
     foreach ($words as $w) {
@@ -81,7 +81,37 @@ function curator_split_teachers(string $raw): array {
         if ($out) $out[count($out) - 1] .= ' ' . implode(' ', $buf);
         else      $out[] = implode(' ', $buf);
     }
-    return $out ?: [$s];
+    return curator_strip_roles($out ?: [$s]);
+}
+
+/**
+ * ОСТАТОЧНЫЙ ЯРЛЫК ДОЛЖНОСТИ СНИМАЕТСЯ ПОСЛЕДНИМ ШАГОМ.
+ *
+ * `mentors_parse()` узнаёт должность до 40 знаков, и этого хватает «Педагогу»,
+ * «Руководителю», «Хормейстеру». Люди пишут и длиннее: «Руководитель
+ * творческой студии "Диковина": Ковальчук Диана Викторовна». Такая строка в
+ * разбор не попадает и уезжает в имя целиком, а оттуда в ОБРАЩЕНИЕ письма.
+ * Замер по живой базе: таких заявок 9 из 1614.
+ *
+ * ПОЧЕМУ НЕ ПОДНЯТ ПРЕДЕЛ В `mentors_parse`, И ЭТО НАРОЧНО: тем же разбором
+ * печатается ПЕДАГОГ НА БЛАНКЕ (`diploma_html_v1`, `v4`). В поле попадаются не
+ * должности, а фразы на 87 знаков с двумя людьми внутри, и широкий предел молча
+ * выбросил бы из бланка одного из них.
+ *
+ * Берём то, что ПОСЛЕ последнего двоеточия, и только когда это похоже на имя:
+ * не короче пяти знаков и хотя бы два слова. Иначе оставляем как есть.
+ */
+function curator_strip_roles(array $names): array {
+    $out = [];
+    foreach ($names as $one) {
+        $one = trim((string) $one);
+        if ($one !== '' && str_contains($one, ':')) {
+            $tail = trim((string) mb_substr($one, (int) mb_strrpos($one, ':') + 1));
+            if (mb_strlen($tail) >= 5 && count(preg_split('~\s+~u', $tail) ?: []) >= 2) $one = $tail;
+        }
+        if ($one !== '') $out[] = $one;
+    }
+    return $out;
 }
 
 function curator_key(string $teacher): string {

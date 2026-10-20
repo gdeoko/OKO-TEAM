@@ -41,6 +41,14 @@ try {
 
     smm_migrate();
 
+    /* МЕСТО ПОД ПОВОД ОСВОБОЖДАЕМ ДО НАБОРА СЛОТОВ, А НЕ ПОСЛЕ.
+     *
+     * Слот в базе уникален, и забитый советами день с поводом не оставляет
+     * афише ни одной щели. Освободить его надо раньше, чем smm_pending_slots
+     * пересчитает свободные слоты, иначе афиша встанет в очередь только через
+     * час, а при близком поводе этого часа может не быть. */
+    foreach (smm_osvobodit_pod_povod() as $шаг) cron_log(JOB, $шаг);
+
     $slots = smm_pending_slots($days);
     if (!$slots) { cron_log(JOB, 'очередь заполнена, свободных слотов нет'); cron_unlock(JOB); exit(0); }
 
@@ -50,20 +58,75 @@ try {
 
         $date  = $slot['date'];
         $hour  = $slot['hour'];
-        $layer = smm_pick_layer($date, $hour);
+        /* ВОЗРАСТ ВЫБИРАЕТСЯ ПЕРВЫМ, И РОЛЬ ПОДЧИНЯЕТСЯ ЕМУ (правка владельца
+           13.10.2026). Два поста одного дня - из разных половин: один детский
+           или подростковый, другой взрослый или старшего поколения. */
+        /* ВИД ПОСТА ВЫБИРАЕТСЯ ПЕРВЫМ: афиша привязана к дате и отменить её
+           нельзя, а совет и история подстраиваются. */
+        $кв     = smm_pick_kind($date, $hour);
+        $вид    = (string) $кв['вид'];
+        $повод  = (array) $кв['повод'];
+        $сюжет  = (string) ($кв['подвид'] ?? '');
+
+        /* ДАТА АФИШИ СВЕРЯЕТСЯ ДО ВСЯКОЙ ТРАТЫ. Календарь собран руками, а
+           поздравление не с тем числом - публичная ошибка центра. Не сошлось
+           или мозг молчит - слот спокойно забирает обычный пост. */
+        if ($вид === 'афиша') {
+            $св = smm_kal_проверить($повод);
+            if (empty($св['ок'])) {
+                cron_log(JOB, '  афиша «' . smm_kal_строка($повод) . '» отменена: '
+                    /* ПРИЧИНУ ПИШЕМ НАСТОЯЩУЮ. Здесь на любое «молчит» стояла
+                       одна строка «мозг молчит, дату не сверить», и под ней
+                       прятались два разных случая: мозг правда не ответил и
+                       заслон не стал переспрашивать (отдых четыре часа, правило
+                       52). В ночь на 15.10 по журналу было не различить, и час
+                       ушёл на поиск там, где причина названа в самой мерке. */
+                    . (!empty($св['молчит'])
+                        ? ((string) ($св['почему'] ?? '') !== ''
+                            ? (string) $св['почему'] : 'мозг молчит, дату не сверить')
+                        : (string) $св['почему']));
+                /* ВИД ПОСЛЕ ОТМЕНЫ АФИШИ СЧИТАЕТ ТОТ ЖЕ ИСТОЧНИК, а не строка
+                   «совет» на месте: с 19.10.2026 утренний слот принадлежит
+                   истории, и жёсткое «совет» подменило бы правило владельца
+                   молча - ровно в том случае, когда афиша сорвалась. */
+                $квОтмена = smm_vid_po_slotu($date, $hour);
+                $вид   = (string) $квОтмена['вид'];
+                $сюжет = (string) ($квОтмена['подвид'] ?? '');
+                $повод = [];
+            }
+        }
+
+        $age   = smm_pick_age($date, $hour);
+        $layer = smm_pick_layer($date, $hour, $age);
         $stage = smm_pick_stage($hour);
         $ratio = smm_pick_ratio();
 
-        cron_log(JOB, "готовлю {$date} {$hour}:00 — слой {$layer}, ступень {$stage}, формат {$ratio}");
+        /* ОСИ ТЕМЫ (правка владельца 19.10.2026): направление центра у совета и
+           у истории, сторона - только у совета. У афиши своей темы нет вовсе:
+           её задаёт повод календаря. */
+        $напр    = $вид === 'афиша' ? '' : smm_pick_os('napravlenie', SMM_NAPRAVLENIYA, $date, $hour);
+        $сторона = $вид === 'совет' ? smm_pick_os('storona', SMM_SOVET_STORONY, $date, $hour, 0, 5) : '';
 
-        $topic = smm_make_topic($layer, $stage);
-        if (!$topic) { cron_log(JOB, "  тема не нашлась (все попытки повторяли вышедшее) — пропуск"); continue; }
+        cron_log(JOB, "готовлю {$date} {$hour}:00 — {$вид}"
+                    . ($сюжет !== '' ? (' · ' . $сюжет) : '')
+                    . ($повод ? (' («' . smm_kal_строка($повод) . '»)') : '')
+                    . ($напр !== '' ? (' · ' . $напр) : '')
+                    . ($сторона !== '' ? (' · ' . $сторона) : '')
+                    . ", возраст {$age}, слой {$layer}, ступень {$stage}, формат {$ratio}");
 
-        $body = smm_make_body($topic, $layer, $stage);
+        $topic = smm_make_topic($layer, $stage, $age, 6, $вид, $повод, $сюжет, $напр, $сторона);
+        if (!$topic) {
+            $why = array_slice((array) ($GLOBALS['SMM_TOPIC_REJECTS'] ?? []), 0, 6);
+            cron_log(JOB, '  тема не нашлась, причины по заходам: '
+                . ($why ? implode(' | ', $why) : 'не записаны') . ' — пропуск');
+            continue;
+        }
+
+        $body = smm_make_body($topic, $layer, $stage, '', $age, $вид, $повод, $сюжет);
         if (!$body) { cron_log(JOB, "  текст не собрался — пропуск"); continue; }
 
         $full = smm_compose($body);
-        $err  = smm_validate($body, $full);
+        $err  = smm_validate($body, $full, $вид);
         if ($err) {
             /* Одна попытка переписать: модель часто промахивается по длине, и это
                чинится повтором, а не ручной правкой. */
@@ -81,17 +144,17 @@ try {
                 if ($short !== null) {
                     $body = $short;
                     $full = smm_compose($body);
-                    $err  = smm_validate($body, $full);
+                    $err  = smm_validate($body, $full, $вид);
                     cron_log(JOB, '  сокращено до ' . mb_strlen($body, 'UTF-8') . ' знаков');
                 }
             }
 
             for ($try = 0; $try < 3 && $err; $try++) {
-                $retry = smm_make_body($topic, $layer, $stage, implode('; ', $err));
+                $retry = smm_make_body($topic, $layer, $stage, implode('; ', $err), $age, $вид, $повод, $сюжет);
                 if (!$retry) continue;
                 $body = $retry;
                 $full = smm_compose($body);
-                $err  = smm_validate($body, $full);
+                $err  = smm_validate($body, $full, $вид);
             }
             if ($err) { cron_log(JOB, '  текст так и не прошёл: ' . implode('; ', $err) . ' — пропуск'); continue; }
         }
@@ -108,7 +171,7 @@ try {
                слот тогда остаётся пустым. */
             $fixed = false;
             for ($t = 0; $t < 2 && !$fixed; $t++) {
-                $retry = smm_make_body($topic, $layer, $stage, $hint);
+                $retry = smm_make_body($topic, $layer, $stage, $hint, $age, $вид, $повод, $сюжет);
                 if (!$retry) continue;
 
                 if (mb_strlen($retry, 'UTF-8') > SMM_BODY_MAX) {
@@ -116,7 +179,7 @@ try {
                     if ($short !== null) $retry = $short;
                 }
                 $full2 = smm_compose($retry);
-                if (!smm_validate($retry, $full2) && !smm_text_fact_check($retry)) {
+                if (!smm_validate($retry, $full2, $вид) && !smm_text_fact_check($retry)) {
                     $body = $retry; $full = $full2; $fixed = true;
                 }
             }
@@ -129,6 +192,20 @@ try {
             continue;
         }
 
+        /* ПОРТРЕТ ИЩЕМ ОДИН РАЗ И ТОЛЬКО ТАМ, ГДЕ ПОСТ О ЧЕЛОВЕКЕ. Нет
+           свободного портрета - это не беда: кадр соберётся без лица. */
+        $персона = trim((string) ($topic['person'] ?? ''));
+        $портрет = '';
+        if ($персона !== '') {
+            $п = smm_portret(trim((string) ($topic['wiki'] ?? '')) ?: $персона);
+            if (!empty($п['url'])) {
+                $портрет = (string) $п['url'];
+                cron_log(JOB, '  портрет: ' . $персона . ' — ' . (string) $п['лицензия']);
+            } else {
+                cron_log(JOB, '  портрета нет (' . (string) ($п['нет'] ?? '?') . '), кадр без лица');
+            }
+        }
+
         $id = insert('smm_posts', [
             'slot_date' => $date,
             'slot_hour' => $hour,
@@ -139,6 +216,13 @@ try {
             'fact_key'  => smm_key((string) ($topic['fact'] ?? '')),
             'source'    => (string) ($topic['source'] ?? ''),
             'layer'     => $layer,
+            'age_group' => $age,
+            'kind'      => $вид,
+            'napravlenie' => $напр,
+            'storona'     => $сторона,
+            'povod'     => $повод ? smm_kal_строка($повод) : '',
+            'person'    => $персона,
+            'portret'   => $портрет,
             'stage'     => $stage,
             'ratio'     => $ratio,
             'title'     => (string) ($topic['title'] ?? ''),
@@ -154,12 +238,32 @@ try {
         $prompt = smm_make_image_prompt(
             $topic, $ratio,
             (string) ($topic['title'] ?? ''),
-            (string) ($topic['subtitle'] ?? '')
+            (string) ($topic['subtitle'] ?? ''),
+            $age,
+            $date . '_' . $hour,
+            $портрет !== '' ? $персона : '',
+            $вид
         );
+        if (!$prompt && (string) ($GLOBALS['SMM_KA_ALARM'] ?? '') !== '') {
+            cron_log(JOB, '  плакат не собрался: ' . (string) $GLOBALS['SMM_KA_ALARM']);
+        }
+        $ka = (array) ($GLOBALS['SMM_KA_LAST'] ?? []);
+        if ($ka) {
+            cron_log(JOB, '  плакат: ' . ($ka['монтаж'] ?? '') . ' / ' . ($ka['типографика'] ?? '')
+                        . ' / ' . ($ka['цвет'] ?? '') . ' / ' . ($ka['приём'] ?? '')
+                        . ', промпт ' . (int) ($ka['знаков'] ?? 0)
+                        . ' знаков' . ((string) ($ka['вне_коридора'] ?? '') !== ''
+                            ? (' — ВНЕ КОРИДОРА: ' . $ka['вне_коридора']) : ''));
+            update('smm_posts', ['keyart' => trim(($ka['монтаж'] ?? '') . ' / '
+                . ($ka['типографика'] ?? '') . ' / ' . ($ka['цвет'] ?? '')
+                . ' / ' . ($ka['приём'] ?? ''))], 'id=:id', ['id' => $id]);
+        }
         $imgOk  = false;
         if ($prompt) {
-            $path = BASE_PATH . '/data/smm/' . $date . '_' . $hour . '.jpg';
-            [$imgOk, $imgErr, $cost] = smm_make_image($prompt, $ratio, $path);
+            // Имя по НОМЕРУ поста: слот переносится, и имя по слоту затирало
+            // картинку чужого поста (см. smm_image_path).
+            $path = smm_image_path($id);
+            [$imgOk, $imgErr, $cost] = smm_make_image($prompt, $ratio, $path, $портрет);
             update('smm_posts', [
                 'image_prompt' => $prompt,
                 'image_path'   => $imgOk ? $path : '',

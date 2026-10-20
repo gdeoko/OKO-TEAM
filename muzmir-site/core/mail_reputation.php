@@ -291,14 +291,46 @@ function mrep_domain_day_cap(string $domain): int {
     // и норма режется вдвое — то есть служба наказывает нас за то, что сама же
     // отпустила через три часа. Берём вторую половину окна: она показывает, как
     // домен ведёт себя, когда отправитель для него уже не новичок.
-    $st = one("SELECT SUM(status='delivered') dl, SUM(status='hard_bounced') hb
-                 FROM mail_events
-                WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) IN ($in)
-                  AND date(created_at) = date(?)
-                  AND time(created_at) >= '12:00:00'", array_merge($family, [$when]));
-    $dl = (int) ($st['dl'] ?? 0);
-    $hb = (int) ($st['hb'] ?? 0);
-    $tot = $dl + $hb;
+    $sample = static function (string $day, array $fam, string $ph, bool $afternoonOnly): array {
+        $sql = "SELECT SUM(status='delivered') dl, SUM(status='hard_bounced') hb
+                  FROM mail_events
+                 WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) IN ($ph)
+                   AND date(created_at) = date(?)"
+             . ($afternoonOnly ? " AND time(created_at) >= '12:00:00'" : '');
+        $r = one($sql, array_merge($fam, [$day]));
+        $dl = (int) ($r['dl'] ?? 0);
+        $hb = (int) ($r['hb'] ?? 0);
+        return [$dl, $hb, $dl + $hb];
+    };
+
+    [$dl, $hb, $tot] = $sample($when, $family, $in, true);
+
+    /* ОКНО ЗАМЕРА ОБЯЗАНО ПОПАДАТЬ В ТО ВРЕМЯ, КОГДА МЫ ОТПРАВЛЯЕМ.
+     *
+     * Вторая половина суток выбрана не случайно: утром служба придерживает первую
+     * порцию от молчавшего ночью отправителя и отбивает её пачкой, и судить по
+     * утру — наказывать себя за чужую придержку. Но отправка с тех пор переехала
+     * в утро: суточная норма mail.ru (800 писем) уходит одним залпом в девять, к
+     * полудню отправлять уже нечего, и после двенадцати в замер попадает две-три
+     * записи вместо восьмисот. Дальше срабатывает «мало данных — стоим на месте»,
+     * и норма замирает НАВСЕГДА: писем мало, потому что норма низкая, а норма
+     * низкая, потому что писем мало.
+     *
+     * Ровно этот замкнутый круг стоил пробной норме её возврата (правило «норма
+     * домена обязана уметь вернуться»): там его разорвали коротким счётом пробы,
+     * здесь разрываем окном. Если после полудня наблюдений не набралось,
+     * пересматриваем норму по ВСЕМУ дню. Доля отказов от этого честнее не
+     * становится и не портится — она просто наконец считается, а защита темпа
+     * (пополам при 25% отказов, проба при полной стене) остаётся на месте.
+     *
+     * Цена молчания известна: 12.10.2026 mail.ru принял 800 писем из 800 и не
+     * отбил ни одного, а норма седьмой день стояла на полу — 13 751 письмо своей
+     * базы ждало в очереди больше двух недель при открытой двери. */
+    if ($tot < 50) {
+        [$dlAll, $hbAll, $totAll] = $sample($when, $family, $in, false);
+        if ($totAll > $tot) { $dl = $dlAll; $hb = $hbAll; $tot = $totAll; }
+    }
+
     $pct = $tot > 0 ? $hb * 100 / $tot : 0;
 
     // НИЖНЯЯ ГРАНИЦА ОБЯЗАТЕЛЬНА.
@@ -381,21 +413,31 @@ function mrep_domain_day_cap(string $domain): int {
     // по себе ничего не значит (у разной аудитории она разная), а вот втрое
     // меньшая, чем у соседней службы на ТОЙ ЖЕ рассылке, значит «Спам».
     if ($dl >= 200) {
-        $rate = static function (string $service, string $day): float {
+        /* МЕРИЛОМ МОЖЕТ БЫТЬ ТОЛЬКО СЛУЖБА С СОПОСТАВИМЫМ ОБЪЁМОМ.
+         *
+         * Свою сторону сравнения код защищает порогом $dl >= 200, а сторону
+         * соседа — ничем. На живых числах это ломалось так: 12.10.2026 у mail.ru
+         * 825 доставленных и 123 открытия (15%), а у gmail.com — 14 доставленных
+         * и 8 открытий, то есть «57%». Четырнадцать писем открываемости не
+         * показывают, но именно они становились эталоном, mail.ru признавался
+         * «похоже на Спам» и норма шла вниз вместо роста. Поэтому у соседа тот же
+         * порог, что и у нас: меньше 200 доставленных — не мерило, а шум. */
+        $rate = static function (string $service, string $day, int $minDeliv = 0): float {
             $fam = mrep_services()[$service] ?? [$service];
             $ph  = implode(',', array_fill(0, count($fam), '?'));
             $r = one("SELECT SUM(status='delivered') dl, SUM(status='opened') op
                         FROM mail_events
                        WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) IN ($ph)
                          AND date(created_at) = date(?)", array_merge($fam, [$day]));
-            $d = (int) ($r['dl'] ?? 0);
-            return $d > 0 ? ((int) ($r['op'] ?? 0)) / $d : 0.0;
+            $dlv = (int) ($r['dl'] ?? 0);
+            if ($dlv < $minDeliv) return -1.0;          // объёма не хватает, чтобы судить
+            return $dlv > 0 ? ((int) ($r['op'] ?? 0)) / $dlv : 0.0;
         };
         $mine = $rate($d, $when);
         $best = 0.0;
         foreach (array_keys(mrep_services()) as $other) {
             if ($other === $d) continue;
-            $best = max($best, $rate($other, $when));
+            $best = max($best, $rate($other, $when, 200));
         }
         if ($best > 0.02 && $mine < $best * 0.4) {
             $new = (int) min($cap, max($floor, min($new, $cap / 2)));   // наказание не повышает норму
@@ -512,6 +554,33 @@ function mrep_requeue_last(string $email, string $why): bool {
                            WHERE LOWER(to_email)=? AND status IN ('queued','paused')
                              AND COALESCE(priority,0)>0", [$e]) ?? 0);
     if ($has > 0) return false;
+
+    /* ПОВОД ПИСЬМА МОГ УЖЕ ПРОЙТИ, И ТОГДА ПОВТОР ЭТО НЕ ПОЧИНКА, А ОШИБКА.
+     *
+     * Повторяется ПОСЛЕДНЕЕ ушедшее массовое письмо, и 15.10.2026 в 07:30 этим
+     * путём встали в очередь 98 приглашений на конкурс «Мировые Таланты»,
+     * закрытый 25.08: волна ушла 14.10 по недосмотру (правило 49), её отбитые
+     * адреса попали в «ложные отказы», и крон честно поставил им копию. Снятые
+     * мной письма вернулись бы в очередь на следующее же утро.
+     *
+     * Судим ПО ТЕКСТУ, а не по дате и не по галочке: заслон это факт, галочка
+     * это намерение человека (правило 49). Письмо об итогах закрытого конкурса
+     * повторяется как прежде - запрещён только зов на кончившийся приём. */
+    $масс = (int) ($row['newsletter_id'] ?? 0) > 0
+         || trim((string) ($row['campaign_type'] ?? '')) !== '';
+    if ($масс && is_file(BASE_PATH . '/core/comp_now.php')) {
+        require_once BASE_PATH . '/core/comp_now.php';
+        if (function_exists('comp_pismo_zovet_na_zakrytyi')) {
+            $почему = comp_pismo_zovet_na_zakrytyi((string) ($row['subject'] ?? ''),
+                                                   (string) ($row['body'] ?? ''));
+            if ($почему !== '') {
+                if (function_exists('nl_log')) {
+                    nl_log('повтор не поставлен для ' . $e . ': ' . $почему);
+                }
+                return false;
+            }
+        }
+    }
 
     try {
         insert('mail_queue', [

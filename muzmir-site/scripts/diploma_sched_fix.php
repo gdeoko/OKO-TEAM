@@ -39,7 +39,8 @@ $holdTs = $hold !== '' ? (strtotime($hold) ?: 0) : 0;
  * СРОК СЧИТАЕТСЯ ОТ ДАТЫ ЗАКАЗА, А НЕ ОТ ОЦЕНКИ ЗАЯВКИ.
  *
  * Правило владельца: наградной материал приходит в течение пяти рабочих дней
- * СО ДНЯ ЗАКАЗА (участникам клуба три, от партнёрского учреждения — быстрее).
+ * СО ДНЯ ЗАКАЗА (участникам клуба три; у учреждения-партнёра срок ОБЩИЙ -
+ * слово владельца 16.10.2026, его четвёрка только на аттестацию).
  * Здесь база бралась от результата — и дозаказ, оплаченный 4 сентября,
  * оказывался «просрочен» и уходил 5-го, на четыре дня раньше обещанного.
  *
@@ -56,17 +57,17 @@ function dsf_plan(array $a): DateTime {
           : (trim((string) ($a['result_send_at'] ?? '')) !== '' ? (string) $a['result_send_at']
           : (trim((string) ($a['graded_at'] ?? '')) !== '' ? (string) $a['graded_at']
           : (string) ($a['created_at'] ?? 'now')));
-    $wDays = 5;
-    if (!empty($a['user_id']) && function_exists('club_is_active') && club_is_active((int) $a['user_id'])) $wDays = 3;
-    $instId = (int) ($a['institution_id'] ?? 0);
-    if ($instId > 0 && $wDays > 3) {
-        try {
-            $pd = one("SELECT COALESCE(partner_priority_days,0) d FROM institutions
-                        WHERE id=? AND partner_status='accepted'", [$instId]);
-            $pDays = (int) ($pd['d'] ?? 0);
-            if ($pDays > 0 && $pDays < $wDays) $wDays = $pDays;
-        } catch (\Throwable $e) {}
-    }
+    /* СРОК БЕРЁТ ЕДИНЫЙ ИСТОЧНИК, А НЕ СВОЯ КОПИЯ ЛЕСТНИЦЫ.
+     *
+     * Здесь стоял свой счёт: 5, клубу 3, партнёру его `partner_priority_days`
+     * (4). Со словом владельца 16.10.2026 партнёрская четвёрка касается ТОЛЬКО
+     * аттестационного результата, а изготовление наградного материала у него
+     * общее, 5 рабочих дней. Копия условий расходится молча, поэтому счёт
+     * спрашивается у `prioritet_zayavki()` - того же, что считает срок в
+     * `cron/send_diplomas.php` и в `core/orders.php` (правила 33, 35, 45, 47). */
+    require_once BASE_PATH . '/core/prioritet.php';
+    $wDays = (int) prioritet_zayavki($a)['дней_изготовление'];
+    if ($wDays <= 0) $wDays = PRIORITET_SROK_OBSHIY;
     $planned = working_days_add($base, $wDays);
     $soonest = next_working_slot(new DateTime('now'));
     return $planned > $soonest ? $planned : $soonest;

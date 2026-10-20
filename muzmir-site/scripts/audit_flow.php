@@ -14,7 +14,7 @@ if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
 
 define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
-foreach (['db','helpers','app_status','send_timing','club','orders'] as $m) require_once BASE_PATH . '/core/' . $m . '.php';
+foreach (['db','helpers','app_status','send_timing','club','orders','club_free'] as $m) require_once BASE_PATH . '/core/' . $m . '.php';
 db();
 
 const AUDIT_HOST = 'xn----7sbugdeiegh1b0a9hen.xn--p1ai';
@@ -117,14 +117,58 @@ chk('до запуска конкурсы на сайте не показыва�
 
 q("UPDATE competitions SET launched=1 WHERE status='open'");
 $r = http($AJAR, $BASE . '/competitions');
-chk('после запуска конкурсы появились в афише', stripos($r['body'], 'Мировые Таланты') !== false);
+/* ЖДЁМ ЖИВОЙ КОНКУРС, А НЕ ВПИСАННОЕ ИМЯ. Здесь стояло «Мировые Таланты» -
+   конкурс, закрытый с 25.08.2026: с витрины он снят по правилу 49, и проверка
+   краснела на правильной работе сайта. Мерка, которая ждёт вчерашнее значение,
+   ломается ровно в день правки (правило 61). */
+$__жив = one("SELECT name FROM competitions WHERE status='open' AND COALESCE(launched,0)=1
+               AND (end_date IS NULL OR end_date='' OR date(end_date) >= date('now','localtime'))
+             ORDER BY id DESC LIMIT 1");
+chk('после запуска конкурсы появились в афише',
+    $__жив && stripos($r['body'], (string) $__жив['name']) !== false,
+    (string) ($__жив['name'] ?? 'идущих конкурсов нет'));
 
 /* ───────────── 2. Подача заявок ───────────── */
 sec('Подача заявки участником (платный и бесплатный конкурс)');
-$paid = one("SELECT * FROM competitions WHERE is_paid=1 AND status='open' ORDER BY sort LIMIT 1");
+/* ПЛАТНЫЙ КОНКУРС БЕРЁМ ОТКРЫТЫЙ ВСЕМ, ЕСЛИ ТАКОЙ ЕСТЬ.
+   С 16.10.2026 платный конкурс может принимать заявки только от членов Клуба
+   (правило 72), и прогон от обычного участника упёрся бы в этот заслон на самой
+   первой подаче - то есть восемьдесят проверок платного пути не выполнились бы
+   вовсе. Порядок отбора ставит открытый всем первым, а если открытых всем нет,
+   ниже заводится членство. */
+$paid = one("SELECT * FROM competitions WHERE is_paid=1 AND status='open'
+          ORDER BY COALESCE(club_entry_only,0), COALESCE(club_only,0), sort LIMIT 1");
 $free = one("SELECT * FROM competitions WHERE is_paid=0 AND status='open' ORDER BY sort LIMIT 1");
 chk('в базе есть платный конкурс', (bool) $paid, (string) ($paid['name'] ?? ''));
 chk('в базе есть бесплатный конкурс', (bool) $free, (string) ($free['name'] ?? ''));
+
+/* ПРИЁМ ТОЛЬКО ДЛЯ ЧЛЕНОВ КЛУБА: ЗАВОДИМ ЧЛЕНСТВО И ЗАНИМАЕМ СЛОТЫ ЛЬГОТЫ.
+ *
+ * Членства мало. У члена Клуба первые три заявки месяца принимаются БЕЗ
+ * оргвзноса (правила 64, 65), и дверь применяет льготу сама: заявка выходит
+ * оплаченной (`is_paid=1`, `club_free=1`), а дальше проверяется ПЛАТНЫЙ путь -
+ * «заявка помечена неоплаченной», оплата, появление в списках. Поэтому слоты
+ * месяца занимаем заранее, записями самого ВРЕМЕННОГО участника: живых заявок
+ * это не касается, счёт льготы идёт по человеку и месяцу.
+ *
+ * Членство и эти записи убираются при любом исходе (_audit_actors.php). */
+if ($paid && club_vhod_tolko_chlenam($paid)) {
+    insert('club_members', [
+        'user_id' => (int) $USR['id'], 'started_at' => date('Y-m-d H:i:s'),
+        'expires_at' => date('Y-m-d H:i:s', strtotime('+1 month')),
+        'source' => 'audit', 'active' => 1, 'period' => 'month', 'auto_renew' => 0,
+    ]);
+    chk('членство временному участнику выдано', club_is_active((int) $USR['id']),
+        (string) ($paid['name'] ?? ''));
+    for ($__i = 0; $__i < club_free_limit(); $__i++) {
+        audit_actor_app((int) $USR['id'], [
+            'competition_id' => (int) $paid['id'], 'club_free' => 1,
+            'is_paid' => 1, 'amount_paid' => 0,
+        ]);
+    }
+    chk('слоты льготы Клуба заняты, платный путь проверяется деньгами',
+        club_free_left((int) $USR['id']) === 0, 'осталось ' . club_free_left((int) $USR['id']));
+}
 
 /**
  * ЗАЯВКА ПРОВЕРКИ ПОДАЁТСЯ ОТ ВРЕМЕННОГО УЧАСТНИКА, А НЕ ОТ ПОЧТЫ ЦЕНТРА.
@@ -135,18 +179,47 @@ chk('в базе есть бесплатный конкурс', (bool) $free, (s
  * оргкомитета: владелец увидел «участницу», которая никакого членства не покупала.
  * Теперь заявки подаются от временного участника и удаляются после проверки.
  */
-function submit_app(string $jar, array $comp, string $fio, string $title): array {
+/* ССЫЛКА НА ВИДЕО В ЦЕНТРЕ УНИКАЛЬНА (core/link_unique.php), И ПРОВЕРКА ОБ ЭТО
+   СПОТЫКАЛАСЬ. Здесь стоял ОДИН вписанный адрес на все подачи: первая заявка
+   проходила, а вторая в тот же конкурс отбивалась как дубль ссылки. Из-за этого
+   заявка с автосроком не создавалась, `$idAuto` оставался нулём, и дальше
+   проверка падала насмерть - то есть всё после оценки не проверялось вовсе.
+   Берём настоящие записи своего сообщества, по одной на подачу. */
+function flow_video(): string {
+    static $пул = [
+        'https://vk.com/video-211325055_456239810',
+        'https://vk.com/video-211325055_456239541',
+        'https://vk.com/video-211325055_456239540',
+        'https://vk.com/video-211325055_456239537',
+        'https://vk.com/video-211325055_456239536',
+        'https://vk.com/video-211325055_456239519',
+        'https://vk.com/video-211325055_456239499',
+        'https://vk.com/video-211325055_456239496',
+    ];
+    static $i = 0;
+    $u = $пул[$i % count($пул)];
+    $i++;
+    return $u;
+}
+
+function submit_app(string $jar, array $comp, string $fio, string $title, string $group = ''): array {
     global $BASE, $USR;
     $tok = csrf($jar, '/apply?competition=' . $comp['slug']);
+    /* КОЛЛЕКТИВ ПОДАЁТСЯ ОТДЕЛЬНЫМ ПРИЗНАКОМ. Именной диплом положен ТОЛЬКО
+       участнику коллектива (слово владельца 15.10.2026, правило 30), и проверить
+       его заказ на заявке СОЛИСТА нельзя: сервер такую позицию и не должен
+       пропускать. У заявки коллектива сервер очищает ФИО и держит имя в
+       `group_name` - поэтому и ищем её ниже по названию коллектива. */
     $r = http($jar, $BASE . '/api/v1/apply.php', [
         '_csrf' => $tok, 'csrf' => $tok,
         'competition_id' => (string) $comp['id'], 'competition' => (string) $comp['slug'],
+        'is_group' => $group !== '' ? '1' : '0', 'group_name' => $group,
         'full_name' => $fio, 'email' => (string) $USR['email'], 'phone' => '+79995048899',
         'age_category' => '13-15 лет',
         'nomination' => 'Хореография', 'subgroup' => 'Народный танец', 'formation' => 'Соло',
         'work_title' => $title, 'teacher' => 'Петрова Анна Сергеевна',
         'institution' => 'ДШИ №1', 'city' => 'Москва',
-        'video_url' => 'https://vk.com/video-211325055_456239017',
+        'video_url' => flow_video(),
         'agree_rules' => '1', 'agree_reg' => '1', 'agree_pd' => '1',
     ]);
     $j = json_decode($r['body'], true);
@@ -155,8 +228,11 @@ function submit_app(string $jar, array $comp, string $fio, string $title): array
     // конкурса», и если подача не прошла, проверка оценивала и рассылала результат
     // по заявке ЖИВОГО участника: человек получал письмо с оценкой, которой жюри
     // ему не ставило.
-    $made = one("SELECT id FROM applications WHERE competition_id=? AND full_name=? ORDER BY id DESC LIMIT 1",
-                [(int) $comp['id'], $fio]);
+    $made = $group !== ''
+        ? one("SELECT id FROM applications WHERE competition_id=? AND group_name LIKE ? ORDER BY id DESC LIMIT 1",
+              [(int) $comp['id'], '%' . mb_substr($group, 0, 20) . '%'])
+        : one("SELECT id FROM applications WHERE competition_id=? AND full_name=? ORDER BY id DESC LIMIT 1",
+              [(int) $comp['id'], $fio]);
     $newId = 0;
     if ($made && ($j['ok'] ?? false) === true) {
         $newId = (int) $made['id'];
@@ -203,7 +279,14 @@ insert('payments', ['application_id' => $idPaid, 'amount' => (int) $paid['price'
                     'method' => 'test', 'purpose' => 'application', 'created_at' => date('Y-m-d H:i:s')]);
 $r = http($AJAR, $BASE . '/admin/?p=applications');
 chk('после оплаты заявка появилась в «Заявках»', strpos($r['body'], (string) $appPaid['number']) !== false);
-chk('в списке видна сумма оплаты', strpos($r['body'], (string) (int) $paid['price']) !== false, $paid['price'] . ' ₽');
+/* СУММУ ИЩЕМ В ТОМ ВИДЕ, В КАКОМ ЕЁ ПЕЧАТАЮТ. Проверка искала «1000», а админка
+   пишет «1 000 ₽» через пробел-разделитель разрядов - красное было в мерке. */
+$__сум = (int) $paid['price'];
+chk('в списке видна сумма оплаты',
+    strpos($r['body'], number_format($__сум, 0, '.', ' ')) !== false
+    || strpos($r['body'], number_format($__сум, 0, '.', ' ')) !== false
+    || strpos($r['body'], (string) $__сум) !== false,
+    number_format($__сум, 0, '.', ' ') . ' ₽');
 $r = http($AJAR, $BASE . '/admin/?p=applications');
 chk('бесплатная заявка помечена «Бесплатно»', stripos($r['body'], 'Бесплатно') !== false);
 
@@ -241,7 +324,15 @@ q("UPDATE applications SET is_paid=1 WHERE id=?", [$idAuto]);
 $tok = csrf($AJAR, '/admin/?p=grading&id=' . $idAuto);
 http($AJAR, $BASE . '/admin/?p=grading', ['_csrf' => $tok, 'do' => 'grade_result', 'id' => (string) $idAuto,
         'result' => 'ДИПЛОМАНТ II СТЕПЕНИ', 'extra_diploma' => '', 'auto_send' => '1']);
-$appAuto = one("SELECT * FROM applications WHERE id=?", [$idAuto]);
+/* Повторное чтение без охраны и убивало проверку: при `$idAuto = 0` сюда
+   приходил null, и `app_state(null)` валил скрипт насмерть. Охрана выше (строкой
+   239) была, а здесь её не было - значит её не было вовсе. */
+$appAuto = $idAuto ? one("SELECT * FROM applications WHERE id=?", [$idAuto]) : null;
+if (!$appAuto) {
+    bad('заявка с автосроком не создалась - блок оценки с автосроком пропущен');
+    $appAuto = ['id' => 0, 'number' => '', 'result_send_at' => '', 'result' => '',
+                'result_sent_at' => '', 'status' => 'new'];
+}
 $planAt  = trim((string) $appAuto['result_send_at']);
 chk('план отправки проставлен', $planAt !== '', $planAt);
 chk('план не в прошлом', $planAt === '' || strtotime($planAt) >= time() - 60, $planAt);
@@ -368,20 +459,86 @@ chk('старый адрес заказа ведёт в раздел награ�
     in_array($r['code'], [301, 302], true)
     && str_contains((string) ($r['head'] ?? ''), 'app=' . $idPaid), (string) $r['code']);
 
-sec('Заказ электронной награды: попадает в «Заказы электронных»');
-$tok = csrf($UJAR, '/awards?comp=' . (int) $paid['id'] . '&app=' . $idPaid);
-$r = http($UJAR, $BASE . '/api/v1/order.php', [
-    '_csrf' => $tok, 'csrf' => $tok, 'application_id' => (string) $idPaid,
-    'competition' => (string) $paid['slug'], 'result' => 'ЛАУРЕАТ I СТЕПЕНИ',
-    'items' => json_encode([['item' => 'Именной диплом', 'kind' => 'digital']], JSON_UNESCAPED_UNICODE),
-    'full_name' => 'Смирнова Ольга Ивановна', 'email' => 'okoteam.top@gmail.com', 'phone' => '+79995048899',
-    'amount' => '400',
-]);
-$j = json_decode($r['body'], true);
-chk('заказ электронного именного диплома принят', ($j['ok'] ?? false) === true,
-    ($j['error'] ?? $j['message'] ?? substr($r['body'], 0, 200)));
-$ord = one("SELECT * FROM awards_orders WHERE application_id=? ORDER BY id DESC LIMIT 1", [$idPaid]);
-chk('заказ сохранён', (bool) $ord, 'id=' . ($ord['id'] ?? '-'));
+sec('Заказ электронной награды: именной - коллективу и на ОДНОГО участника');
+/* ПРОВЕРКА БЫЛА УСТАРЕВШЕЙ И КРАСНЕЛА НА ПРАВИЛЬНОЙ РАБОТЕ СЕРВЕРА.
+ *
+ * Она заказывала ИМЕННОЙ диплом на заявку СОЛИСТА и без ФИО получателя - сервер
+ * отбивал обе вещи и был прав: именной выписывается на одного участника
+ * КОЛЛЕКТИВА (слово владельца 15.10.2026; правила 30 и 31), а без имени печатать
+ * нечего. Теперь заявка коллектива заводится здесь же, и проверяется ровно то,
+ * что обещано людям на витрине: «Для одного из участников коллектива». */
+$aGrp = submit_app($UJAR, $paid, 'Иванова Мария Петровна', 'Хоровод', 'Ансамбль «Проверка Потока»');
+$idGrp = (int) ($aGrp['id'] ?? 0);
+chk('заявка коллектива принята', $idGrp > 0,
+    json_encode($aGrp['json']['fields'] ?? ($aGrp['json']['error'] ?? $aGrp['raw']), JSON_UNESCAPED_UNICODE));
+if ($idGrp > 0) {
+    q("UPDATE applications SET is_paid=1 WHERE id=?", [$idGrp]);
+    $tok = csrf($AJAR, '/admin/?p=grading&id=' . $idGrp);
+    http($AJAR, $BASE . '/admin/?p=grading', ['_csrf' => $tok, 'do' => 'grade_result',
+        'id' => (string) $idGrp, 'result' => 'ЛАУРЕАТ I СТЕПЕНИ', 'extra_diploma' => '',
+        'jury_comment' => 'Проверка потока', 'send_now' => '1']);
+
+    $заказ = static function (array $items, string $amount) use ($UJAR, $BASE, $paid, $idGrp): array {
+        $tok = csrf($UJAR, '/awards?comp=' . (int) $paid['id'] . '&app=' . $idGrp);
+        $r = http($UJAR, $BASE . '/api/v1/order.php', [
+            '_csrf' => $tok, 'csrf' => $tok, 'application_id' => (string) $idGrp,
+            'competition' => (string) $paid['slug'], 'result' => 'ЛАУРЕАТ I СТЕПЕНИ',
+            'items' => json_encode($items, JSON_UNESCAPED_UNICODE),
+            'full_name' => 'Иванова Мария Петровна', 'email' => 'okoteam.top@gmail.com',
+            'phone' => '+79995048899', 'amount' => $amount,
+            /* ТРИ СОГЛАСИЯ ОБЯЗАТЕЛЬНЫ, И БЕЗ НИХ ПРОВЕРКА СЛЕПА. Сервер держит
+               их в `$agreeMap` (api/v1/order.php) и отбивает заказ ДО разбора
+               позиций - первый прогон получил «подтвердите, что ознакомились с
+               положением» и записал это себе в зачёт как отказ по именному
+               диплому. Отказ был, да только по другой причине. */
+            'ord_agree_reg' => '1', 'ord_agree_pd' => '1', 'ord_agree_terms' => '1',
+        ]);
+        $j = json_decode($r['body'], true);
+        return ['json' => is_array($j) ? $j : [], 'raw' => substr($r['body'], 0, 220)];
+    };
+
+    // Без ФИО получателя печатать нечего - сервер обязан отбить.
+    $бф = $заказ([['item' => 'Именной диплом', 'kind' => 'digital']], '400');
+    chk('именной без ФИО получателя отбит', ($бф['json']['ok'] ?? true) === false,
+        substr((string) ($бф['json']['error'] ?? $бф['raw']), 0, 140));
+
+    /* ДВОЕ В ОДНОМ ПОЛЕ: ЗАКАЗ ПРОХОДИТ, А ВЛАДЕЛЬЦУ ГОВОРЯТ СЛОВАМИ. Это не
+       поблажка, а решение правила 30: позиция оплачена, а между выдачей и
+       отправкой лежит пять рабочих дней - их хватает, чтобы поправить имя до
+       того, как документ уйдёт. Поэтому проверяем не отказ, которого нет, а
+       заслон, который есть: `named_fio_problem()` обязан назвать беду. Ждать
+       здесь отказа значит требовать от кода обратного тому, что решил
+       владелец. */
+    $дв = $заказ([['item' => 'Именной диплом', 'kind' => 'digital',
+                   'fio' => 'Петров Иван Сергеевич, Сидорова Анна Ивановна']], '400');
+    chk('именной на двоих в одном поле принят (деньги уже взяты)',
+        ($дв['json']['ok'] ?? false) === true,
+        substr((string) ($дв['json']['error'] ?? $дв['raw']), 0, 140));
+    require_once BASE_PATH . '/core/orders.php';
+    $бедаДв = named_fio_problem('Петров Иван Сергеевич, Сидорова Анна Ивановна',
+        ['group_name' => 'Ансамбль «Проверка Потока»']);
+    chk('двое в одном поле названы владельцу словами', $бедаДв !== '', $бедаДв);
+    chk('один участник бедой не считается',
+        named_fio_problem('Петров Иван Сергеевич', ['group_name' => 'Ансамбль «Проверка Потока»']) === '');
+
+    // А вот ОДИН участник коллектива - ровно то, что положено.
+    $ок = $заказ([['item' => 'Именной диплом', 'kind' => 'digital',
+                   'fio' => 'Петров Иван Сергеевич']], '400');
+    chk('именной на одного участника коллектива принят', ($ок['json']['ok'] ?? false) === true,
+        substr((string) ($ок['json']['error'] ?? $ок['raw']), 0, 160));
+    $ord = one("SELECT * FROM awards_orders WHERE application_id=? ORDER BY id DESC LIMIT 1", [$idGrp]);
+    chk('заказ сохранён', (bool) $ord, 'id=' . ($ord['id'] ?? '-'));
+    // Имя получателя обязано лежать в составе заказа: по нему печатается бланк.
+    chk('в заказе сохранено ФИО одного участника',
+        strpos((string) ($ord['items'] ?? ''), 'Петров Иван Сергеевич') !== false,
+        mb_substr((string) ($ord['items'] ?? ''), 0, 160));
+    /* Отдельного списка заказов для уборки НЕ заводим: уборка в
+       `_audit_actors.php` снимает `awards_orders` ПО НОМЕРУ ЗАЯВКИ, а заявка
+       коллектива в этом списке уже стоит (её положил `submit_app`). Второй
+       список значил бы вторую запись одного и того же - они расходятся молча. */
+} else {
+    bad('заявка коллектива не создалась - проверка именного пропущена');
+}
 
 sec('Сервер отклоняет запрещённый состав наград (подмена запроса)');
 $tok = csrf($UJAR, '/awards?comp=' . (int) $paid['id'] . '&app=' . $idPaid);

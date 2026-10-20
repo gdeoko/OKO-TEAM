@@ -62,7 +62,7 @@ function mm_email_layout(string $inner, array $opt = []): string {
     $logo  = h(mm_logo_url());
     $org   = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
     $addr  = h((string) cfgv('org_address', ''));
-    $phone = h((string) cfgv('org_phone', '+7 (999) 504-88-99'));
+    $phone = h((string) cfgv('org_phone', '+7(999)504-88-99'));
     $email = h((string) cfgv('org_email', ''));
     $hours = h((string) cfgv('org_hours', ''));
     $year  = (int) cfgv('year', (int) date('Y'));
@@ -229,7 +229,7 @@ function mm_email_tx(string $inner, array $opt = []): string {
     $navy = MM_NAVY; $navy2 = MM_NAVY2; $gold = MM_GOLD; $ink = MM_INK; $muted = MM_MUTED; $line = MM_LINE;
     $logo  = h(mm_logo_url());
     $org   = 'Культурный центр «Музыкальный Мир»';
-    $phone = h((string) cfgv('org_phone', '+7 (999) 504-88-99'));
+    $phone = h((string) cfgv('org_phone', '+7(999)504-88-99'));
     $email = h((string) cfgv('org_email', ''));
     $addr  = h((string) cfgv('org_address', ''));
     $year  = (int) cfgv('year', (int) date('Y'));
@@ -332,7 +332,6 @@ function mm_vip_card(array $opt = []): string {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 6px;">'
         . '<tr><td style="border-radius:16px;padding:18px 18px 16px;'
         . 'background:' . $gold . ';background:linear-gradient(135deg,' . $gold2 . ' 0%,' . $gold . ' 55%,#B8892B 100%);">'
-        . '<div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:' . $navy . ';font-weight:700;opacity:.75;">Закрытый клуб центра</div>'
         . '<div style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:' . $navy . ';margin:3px 0 0;line-height:1.25;">Элитный клуб «Музыкальный&nbsp;Мир»</div>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:11px 0 0;">' . $rows . '</table>'
         . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:13px 0 0;"><tr>'
@@ -608,7 +607,7 @@ function mail_pool_names(string $pool): array {
         // Яндекса. Получатель видит ту же почту центра. Это НЕ рассылка: сюда
         // попадают только письма с приоритетом 0, поштучно, и только когда
         // собственный ящик отказал (пул перебирается по порядку).
-        'awards'   => $gmailFirst ? ['nagradi', 'main', 'kc'] : ['nagradi', 'kc', 'unisender-kc'],
+        'awards'   => $gmailFirst ? ['nagradi', 'main', 'kc', 'unisender-kc'] : ['nagradi', 'kc', 'unisender-kc'],
         // Обращения в ведомства — ТОЛЬКО с российского домена. Gmail сюда не
         // ставим ни при каких условиях: 12.08.2026 ведомства отбили письма с
         // формулировками «принимаем письма только с доменов .RU и .SU» и
@@ -947,6 +946,30 @@ function mail_stop_kind(string $email): string {
 }
 
 function mail_send_failover(string $to, string $subject, string $html, array $opt = []): bool {
+    /* ЗАПРЕЩЁННОМУ АДРЕСАТУ НЕ ПИШЕМ НИЧЕГО И НИКОГДА.
+     *
+     * Слово владельца 14.10.2026: в центральные Министерства культуры и
+     * образования и в департаменты Москвы автоматика не пишет писем ЛЮБОГО
+     * содержания. Заслон стоит здесь, в единственной двери отправки, а не
+     * только в отборе ведомств: путей, ставящих письмо в очередь, несколько
+     * (обращения, ответы на ответы, благодарности), и проверка в одном из них
+     * оставила бы остальные открытыми — та же грабля, что с отправкой заказов
+     * из двух пультов (правило 45).
+     */
+    if (!function_exists('min_send_forbidden') && is_file(BASE_PATH . '/core/ministries.php')) {
+        require_once BASE_PATH . '/core/ministries.php';
+    }
+    if (function_exists('min_send_forbidden')) {
+        $__why = min_send_forbidden($to);
+        if ($__why !== '') {
+            if (function_exists('nl_log')) {
+                nl_log('письмо НЕ отправлено: ' . mb_strtolower(trim($to)) . ' — ' . $__why);
+            }
+            error_log('mail_send_failover: отправка запрещена (' . $to . '): ' . $__why);
+            return false;
+        }
+    }
+
     // На адреса зоны .test письма не отправляем НИКОГДА: она не маршрутизируется,
     // и каждая попытка вернулась бы отказом, а отказы бьют по репутации домена и
     // по доставке дипломов. Такие адреса бывают только у сквозных проверок.

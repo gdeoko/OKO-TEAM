@@ -55,6 +55,20 @@ if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
     exit(0);
 }
 
+// ОКНО НАРУЖУ: пн-сб 09:00-19:00 МСК (правило владельца). Проверки здесь не было
+// вовсе, а блок 1 «запуск конкурсов» работает в ЛЮБОЙ час и постит на стену
+// сообщества плюс рассылку подписчикам ВК — немедленно, минуя очередь писем.
+// Ночная запись о новом конкурсе читается как рассылка робота.
+//
+// Волна не отменяется, а ЖДЁТ: антидубль mailing_log ставится только после
+// успеха, крон идёт каждый час, и первый час внутри окна доделает работу. Чтобы
+// выходные не съели анонс, окно отбора запуска ниже расширено до трёх суток.
+require_once BASE_PATH . '/core/outreach_window.php';
+if (!outreach_window_ok()) {
+    cron_log(JOB, 'вне рабочего окна (' . outreach_window_reason() . ') — наружу ничего не отправляем, волна ждёт окна');
+    exit(0);
+}
+
 /** Размер батча вставок в mail_queue (одна транзакция на батч). */
 const MAILINGS_BATCH = 200;
 
@@ -386,11 +400,19 @@ try {
     // created_at — SQL-дефолт datetime('now','localtime'), UTC (см. соглашение в cron/_lib.php).
     $launch = array_values(array_filter(
         all(
+            // launched = 1: запуск объявляет владелец, незапущенного конкурса для
+            // людей не существует. end_date >= сегодня: анонс «открыт приём заявок»
+            // по конкурсу с кончившимся приёмом — это приглашение в закрытую дверь,
+            // и ровно так 14.10.2026 по всей базе ушло письмо о «Мировых Талантах».
+            // Трое суток вместо одних: суббота-воскресенье не должны съедать анонс,
+            // пока крон стоит вне рабочего окна.
             "SELECT * FROM competitions
               WHERE status = 'open'
-                AND (date(start_date) = ? OR created_at >= datetime('now','localtime','-1 day'))
+                AND COALESCE(launched, 0) = 1
+                AND (COALESCE(end_date, '') = '' OR date(end_date) >= ?)
+                AND (date(start_date) = ? OR created_at >= datetime('now','localtime','-3 days'))
            ORDER BY id ASC",
-            [$today]
+            [$today, $today]
         ),
         static fn(array $c): bool => !mailing_sent('comp_launch', (string) (int) $c['id'])
     ));
@@ -435,11 +457,16 @@ try {
     /* ============ 1а. СВОДКА МЕСЯЦА (1 числа, 10:00 мск) ============ */
     // Календарь владельца: 1-го — рассылка «запущены новые конкурсы» всей базе,
     // даже если событийная рассылка по какому-то конкурсу уже была.
-    if ($day === 1 && $hour === 10) {
+    // Число 1-3, а не ровно первое: 1-е может прийтись на воскресенье, и сводка
+    // пропала бы вовсе. Повтора нет — антидубль идёт по месяцу (month_launch_Y-m).
+    if ($day <= 3 && $hour === 10) {
         $kindMonth = 'month_launch_' . date('Y-m');
         $monthly = array_values(array_filter(
             all("SELECT * FROM competitions
-                  WHERE status = 'open' ORDER BY sort, id ASC"),
+                  WHERE status = 'open'
+                    AND COALESCE(launched, 0) = 1
+                    AND (COALESCE(end_date, '') = '' OR date(end_date) >= date('now','localtime'))
+               ORDER BY sort, id ASC"),
             static fn(array $c): bool => !mailing_sent($kindMonth, (string) (int) $c['id'])
         ));
         if ($monthly) {
@@ -466,14 +493,22 @@ try {
 
     /* ============ 2. «Осталось 3 дня до конца приёма» (22 числа / end_date-3, 10:00 мск) ============ */
     if ($hour === 10) {
+        // Ветка «22 числа» не сверяла дату приёма ВООБЩЕ: брались все конкурсы со
+        // status='open', и пост «осталось 3 дня» вышел бы по конкурсу, приём
+        // которого кончился в августе, и по незапущенному. Теперь приём обязан
+        // идти и кончаться в пределах пяти дней: 22-е это календарь владельца
+        // (приём 01-25), а не доказательство того, что конкурс правда на исходе.
+        $soonBase = "status = 'open' AND COALESCE(launched, 0) = 1
+                      AND end_date IS NOT NULL AND end_date <> ''
+                      AND date(end_date) >= ?";
         $soonWhere = $day === 22
-            ? "status = 'open' AND end_date IS NOT NULL AND end_date <> ''"
-            : "status = 'open' AND end_date IS NOT NULL AND end_date <> '' AND date(end_date, '-3 days') = ?";
+            ? "$soonBase AND date(end_date) <= date(?, '+5 days')"
+            : "$soonBase AND date(end_date, '-3 days') = ?";
         $soon = array_values(array_filter(
             all(
                 "SELECT * FROM competitions
                   WHERE $soonWhere ORDER BY id ASC",
-                $day === 22 ? [] : [$today]
+                [$today, $today]
             ),
             static fn(array $c): bool => !mailing_sent('deadline_3', (string) (int) $c['id'])
         ));
@@ -502,14 +537,21 @@ try {
 
     /* ============ 3. «Последний день приёма» (25 числа / end_date, 9:00 мск) ============ */
     if ($hour === 9) {
+        // Та же беда, что в блоке 2: 25 числа брались все открытые конкурсы без
+        // сверки с end_date. «Сегодня последний день приёма» о конкурсе, который
+        // кончается в декабре, торопит человека зря, а о закрытом в августе —
+        // зовёт в закрытую дверь.
+        $lastBase = "status = 'open' AND COALESCE(launched, 0) = 1
+                      AND end_date IS NOT NULL AND end_date <> ''
+                      AND date(end_date) >= ?";
         $lastWhere = $day === 25
-            ? "status = 'open' AND end_date IS NOT NULL AND end_date <> ''"
-            : "status = 'open' AND end_date IS NOT NULL AND end_date <> '' AND date(end_date) = ?";
+            ? "$lastBase AND date(end_date) <= date(?, '+1 day')"
+            : "$lastBase AND date(end_date) = ?";
         $last = array_values(array_filter(
             all(
                 "SELECT * FROM competitions
                   WHERE $lastWhere ORDER BY id ASC",
-                $day === 25 ? [] : [$today]
+                [$today, $today]
             ),
             static fn(array $c): bool => !mailing_sent('deadline_last', (string) (int) $c['id'])
         ));
@@ -538,11 +580,17 @@ try {
 
     /* ============ 3б. «Приём заявок закрыт» (26 числа / end_date+1, 10:00 мск) ============ */
     if ($hour === 10) {
+        // Ветка «26 числа» брала ВСЮ прошлую историю: любой конкурс с прошедшим
+        // end_date, по которому поста ещё не было, — то есть и августовские. Пост
+        // «приём заявок закрыт» о конкурсе двухмесячной давности это новость из
+        // прошлого года. Неделя — предел свежести: позже объявлять нечего.
+        $closedBase = "status IN ('open','judging') AND COALESCE(launched, 0) = 1
+                        AND end_date IS NOT NULL AND end_date <> ''";
         $closedWhere = $day === 26
-            ? "status IN ('open','judging') AND end_date IS NOT NULL AND end_date <> '' AND date(end_date) < ?"
-            : "status IN ('open','judging') AND end_date IS NOT NULL AND end_date <> '' AND date(end_date, '+1 day') = ?";
+            ? "$closedBase AND date(end_date) < ? AND date(end_date) >= date(?, '-7 days')"
+            : "$closedBase AND date(end_date, '+1 day') = ? AND date(end_date) >= date(?, '-7 days')";
         $closedComps = array_values(array_filter(
-            all("SELECT * FROM competitions WHERE $closedWhere ORDER BY id ASC", [$today]),
+            all("SELECT * FROM competitions WHERE $closedWhere ORDER BY id ASC", [$today, $today]),
             static fn(array $c): bool => !mailing_sent('closed_post', (string) (int) $c['id'])
         ));
         if ($closedComps) {

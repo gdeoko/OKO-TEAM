@@ -8,6 +8,10 @@
 declare(strict_types=1);
 
 require_once BASE_PATH . '/core/orders.php';
+/* ОТМЕТКА «ЗАБРАЛ» И ПАПКА «ЗАБРАЛИ» ЖИВУТ ЗДЕСЬ, И ЗАВИСИМОСТЬ НАЗВАНА ПРЯМО.
+ * Значения отметки (PICKUP_ZABRAL) берём из единственного источника, а не
+ * вписываем строкой: вторая копия расходится молча. */
+require_once BASE_PATH . '/core/nenadezhnyi.php';
 orders_migrate();
 
 /* --------- ПИСЬМО ОБ ОТПРАВКЕ: ПОКАЗАТЬ ТО, ЧТО ПОЛУЧИЛ УЧАСТНИК ---------
@@ -224,8 +228,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
          * читал, что ему выслали только два диплома. Теперь состав письма
          * собирается по всем заказам посылки. */
         $ok = order_mark_shipped_parcel($ids, $track);
+        /* Придержанная посылка не отправляется, и об этом надо сказать словами:
+           прежний текст уверял, что статус обновлён, а он не менялся. */
+        $почему = (string) ($GLOBALS['ORDER_SHIP_ERROR'] ?? '');
         flash($ok ? ('Отправлено, участнику ушло письмо с трек-номером' . $manyNote($ids) . '.')
-                  : ('Статус обновлён, но письмо участнику не ушло (проверьте почту заказа).'), $ok ? 'success' : 'error');
+                  : ($почему !== '' ? $почему
+                                    : 'Статус обновлён, но письмо участнику не ушло (проверьте почту заказа).'),
+              $ok ? 'success' : 'error');
         admin_redirect('orders');
     }
     if ($do === 'delivered' && $ids) {
@@ -262,6 +271,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               'success');
         admin_redirect('orders');
     }
+    if (in_array($do, ['pickup_taken', 'pickup_missed'], true) && $ids) {
+        /* «ЗАБРАЛ» И «НЕ ЗАБРАЛ» — РУЧНОЕ УПРАВЛЕНИЕ (правка владельца 15.10.2026).
+         *
+         * Отметка ставится на ВСЮ ПОСЫЛКУ сразу, как трек-номер и письмо об
+         * отправке: едет она одной коробкой и забирается целиком.
+         *
+         * «НЕ ЗАБРАЛ» зажигает серую галочку «ненадёжный» у этого участника во
+         * всех его заявках, «ЗАБРАЛ» её снимает. Ничего третьего нажимать не
+         * нужно: признака в `users` нет, галочка считается от самой отметки
+         * (core/nenadezhnyi.php), поэтому и управление ею здесь ручное и
+         * обратимое — ошиблись, нажали другую кнопку. */
+        $сост = $do === 'pickup_taken' ? PICKUP_ZABRAL : PICKUP_NE_ZABRAL;
+        $готово = []; $отказ = [];
+        foreach ($ids as $i) {
+            if (order_pickup_set($i, $сост)) $готово[] = $i;
+            else $отказ[] = '№' . $i . ' — ' . ((string) ($GLOBALS['ORDER_PICKUP_ERROR'] ?? '') ?: 'не отмечено');
+        }
+        $имя = trim((string) (scalar("SELECT COALESCE(full_name,'') FROM awards_orders WHERE id=?", [$ids[0]]) ?? ''));
+        $хвост = $отказ ? (' Не отмечено: ' . implode('; ', $отказ) . '.') : '';
+        if ($готово && $сост === PICKUP_NE_ZABRAL) {
+            flash('Отмечено: посылку не забрали' . $manyNote($готово) . '. У участника '
+                . ($имя !== '' ? $имя . ' ' : '') . 'во всех заявках теперь стоит серая галочка «ненадёжный».'
+                . $хвост, 'success');
+        } elseif ($готово) {
+            flash('Отмечено: посылку забрали' . $manyNote($готово)
+                . '. Серая галочка «ненадёжный» по этой посылке снята.' . $хвост, 'success');
+        } else {
+            flash('Не отмечено: ' . implode('; ', $отказ), 'error');
+        }
+        audit('order_pickup', 'awards_orders', $oid, ['отметка' => $сост, 'orders' => $готово, 'отказ' => $отказ]);
+        /* ВОЗВРАЩАЕМСЯ НА ТУ ЖЕ ВКЛАДКУ, А НЕ «В РАБОТЕ».
+         *
+         * Отметки ставятся пачкой: оператор открыл «Отправлено» и проходит по
+         * посылкам подряд. Общий `admin_redirect('orders')` уводит на вкладку
+         * «В работе», где отправленных посылок НЕ ВИДНО ВОВСЕ, - и после
+         * каждого нажатия пришлось бы заново открывать «Отправлено». Вкладку
+         * приносит сама форма: в POST её иначе нет. */
+        admin_redirect('orders', array_filter(['status' => trim((string) input('tab'))]));
+    }
+
     if ($do === 'redispatch' && $oid) {
         $order = one("SELECT * FROM awards_orders WHERE id=?", [$oid]);
         if ($order) update('awards_orders', ['dispatched_at' => ''], 'id=:id', ['id' => $oid]);
@@ -348,10 +397,30 @@ $filter = input('status');   // '', paid, made, shipped, delivered, new
  * «Заказы электронных наград» — там их выдача и срок в пять рабочих дней. */
 $where  = "items NOT LIKE '%\"kind\":\"club\"%' AND items LIKE '%\"kind\":\"original\"%'";
 $params = [];
+/* «ЗАБРАЛИ» — ОТДЕЛЬНАЯ ПАПКА, И ОНА ЗАНЯЛА МЕСТО «ОЖИДАЕТ ОПЛАТЫ»
+ * (правка владельца 15.10.2026).
+ *
+ * Отмеченная кнопкой «ЗАБРАЛ» посылка уходит из «Доставлено» сюда. «Доставлено»
+ * значит «дошла до отделения и ждёт человека», и пока в этой папке лежат уже
+ * полученные, оператор не видит, по каким посылкам работа ещё не кончилась: на
+ * 15.10.2026 из 342 доставленных забрали 25, и все они мешались в общем списке.
+ * Из «Отправлено» забранные уходят по той же причине: отметка о получении
+ * означает, что дорога кончилась, и держать такую посылку среди едущих нельзя.
+ * «НЕ ЗАБРАЛ» из «Доставлено» НЕ убираем намеренно: это и есть то, что требует
+ * внимания, и рядом с ним стоит серая галочка ненадёжного (правило 63).
+ * «Архив» остаётся сводным взглядом на всё, что уехало, забранные в нём есть. */
+$ZABRALI = "COALESCE(pickup,'') = '" . PICKUP_ZABRAL . "'";
 if ($filter === 'archive') {
     // АРХИВ: заказ, по которому введён трек-номер, уходит из работы сюда.
     $where .= " AND status IN ('shipped','delivered')";
-} elseif (in_array($filter, ['new','paid','made','shipped','delivered','canceled'], true)) {
+} elseif ($filter === PICKUP_ZABRAL) {
+    $where .= " AND status IN ('shipped','delivered') AND $ZABRALI";
+} elseif (in_array($filter, ['shipped','delivered'], true)) {
+    $where .= " AND status=? AND NOT ($ZABRALI)"; $params[] = $filter;
+} elseif (in_array($filter, ['new','paid','made','canceled'], true)) {
+    /* «Ожидает оплаты» своей вкладки больше не имеет — её место занял «Забрали».
+     * Ссылка ?status=new оставлена живой: неоплаченные находятся поиском и по
+     * строке под вкладками, и терять их молча нельзя. */
     $where .= " AND status=?"; $params[] = $filter;
 } else {
     // РАБОЧИЙ СПИСОК (правило владельца): только то, что реально нужно сделать —
@@ -391,14 +460,33 @@ if ($qOrd !== '') {
     $where .= ' AND (' . implode(' OR ', $or) . ')';
     $params = array_merge($params, $oa);
 }
-$orders = all("SELECT * FROM awards_orders WHERE $where ORDER BY (status='paid') DESC, id DESC LIMIT 300", $params);
+/* ПОТОЛОК СПИСКА НАЗВАН ЧИСЛОМ И СЧИТАЕТСЯ ТЕМ ЖЕ УСЛОВИЕМ.
+ *
+ * Здесь стоял голый `LIMIT 300` без счётчика: на 301-м заказе раздел молча
+ * показал бы триста и выглядел бы полным - ровно та беда, что уже стоила
+ * центру 351 потерянной заявки в оценке длинных (правило 58). Сегодня под
+ * отбор подходит 65 заказов, то есть обрыва нет, и это видно строкой под
+ * вкладками, а не на веру. Счёт идёт ТЕМ ЖЕ `$where`: копия условия в
+ * счётчике разошлась бы с выборкой молча. */
+const ORD_LIMIT = 300;
+$ordTotal = (int) (scalar("SELECT COUNT(*) FROM awards_orders WHERE $where", $params) ?? 0);
+$orders = all("SELECT * FROM awards_orders WHERE $where ORDER BY (status='paid') DESC, id DESC LIMIT " . ORD_LIMIT, $params);
 
-// Счётчики по статусам (только оригинальные заказы).
-$counts = [];
-foreach (all("SELECT status, COUNT(*) c FROM awards_orders
+/* СЧЁТЧИКИ ВКЛАДОК. Считаем вместе со отметкой получения: число на вкладке
+ * обязано равняться тому, что в ней правда лежит, иначе «Доставлено · 342»
+ * обещает список, в котором 25 строк отобраны в «Забрали». */
+$counts = [];      // всего по состоянию
+$zabPo  = [];      // из них с отметкой «забрал»
+$zabrali = 0;
+foreach (all("SELECT status, COALESCE(pickup,'') pk, COUNT(*) c FROM awards_orders
                WHERE items NOT LIKE '%\"kind\":\"club\"%' AND items LIKE '%\"kind\":\"original\"%'
-            GROUP BY status") as $r) {
-    $counts[(string)$r['status']] = (int)$r['c'];
+            GROUP BY status, pk") as $r) {
+    $st_ = (string) $r['status']; $c_ = (int) $r['c'];
+    $counts[$st_] = ($counts[$st_] ?? 0) + $c_;
+    if ((string) $r['pk'] === PICKUP_ZABRAL && in_array($st_, ['shipped','delivered'], true)) {
+        $zabPo[$st_] = ($zabPo[$st_] ?? 0) + $c_;
+        $zabrali += $c_;
+    }
 }
 $STAT = ['paid'=>'К изготовлению','made'=>'Изготовлено','shipped'=>'Отправлено','delivered'=>'Доставлено','new'=>'Ожидает оплаты','canceled'=>'Отменён'];
 $STEPS = ['paid'=>1,'made'=>2,'shipped'=>3,'delivered'=>4];
@@ -420,17 +508,42 @@ ob_start(); ?>
 
 <div class="tabs" style="margin-bottom:18px;display:flex;gap:6px;flex-wrap:wrap;">
   <?php
-  // «В работе» — то, что нужно распечатать и отправить. После ввода трек-номера
-  // заказ уходит в «Архив» и в рабочем списке больше не мешается.
-  $TABS = ['' => 'В работе'] + $STAT + ['archive' => 'Архив'];
+  /* «В работе» — то, что нужно распечатать и отправить. После ввода трек-номера
+     заказ уходит в «Архив» и в рабочем списке больше не мешается.
+     СПИСОК ВКЛАДОК СОБИРАЕТСЯ ОТДЕЛЬНО ОТ $STAT, И ЭТО НЕ ЛИШНИЙ МАССИВ: $STAT
+     печатает подпись состояния на самой карточке, и выбросить из него «Ожидает
+     оплаты» значит оставить неоплаченный заказ без названия. Вкладок меньше, чем
+     состояний, и у «Забрали» своего состояния нет вовсе — это отметка получения
+     поверх «Отправлено» и «Доставлено». */
+  $TABS = ['' => 'В работе', 'paid' => $STAT['paid'], 'made' => $STAT['made'],
+           'shipped' => $STAT['shipped'], 'delivered' => $STAT['delivered'],
+           PICKUP_ZABRAL => 'Забрали', 'canceled' => $STAT['canceled'], 'archive' => 'Архив'];
   foreach ($TABS as $k => $lbl):
-      $n = $k === ''        ? (($counts['paid'] ?? 0) + ($counts['made'] ?? 0))
-         : ($k === 'archive' ? (($counts['shipped'] ?? 0) + ($counts['delivered'] ?? 0))
-         : ($counts[$k] ?? 0)); ?>
+      $n = $k === ''             ? (($counts['paid'] ?? 0) + ($counts['made'] ?? 0))
+         : ($k === 'archive'      ? (($counts['shipped'] ?? 0) + ($counts['delivered'] ?? 0))
+         : ($k === PICKUP_ZABRAL  ? $zabrali
+         : (($counts[$k] ?? 0) - ($zabPo[$k] ?? 0)))); ?>
     <a class="tag <?= $filter === $k ? 'active' : '' ?>" href="<?= a_link('orders', $k === '' ? [] : ['status' => $k]) ?>"
        style="padding:7px 13px;border-radius:10px;<?= $filter===$k?'background:var(--a-navy);color:#fff;':'' ?>"><?= h($lbl) ?> · <?= $n ?></a>
   <?php endforeach; ?>
 </div>
+
+<?php /* НЕОПЛАЧЕННЫЕ НЕ ПОТЕРЯНЫ ВМЕСТЕ СО СВОЕЙ ВКЛАДКОЙ. Папки у них больше нет
+         (её место занял «Забрали»), но молчать о них нельзя: заказ существует, и
+         человек мог оплатить его через час. Ссылка ведёт на тот же список. */
+if (($counts['new'] ?? 0) > 0): ?>
+  <p class="muted small" style="margin:-10px 0 16px">Неоплаченных заказов: <?= (int) $counts['new'] ?> —
+    <a href="<?= a_link('orders', ['status' => 'new']) ?>">открыть списком</a>, они же находятся поиском.</p>
+<?php endif; ?>
+
+<?php /* СКОЛЬКО ЗАКАЗОВ ВИДНО И СКОЛЬКО ИХ ВСЕГО. Урезанный список молча
+         выглядит полным, поэтому обрыв называется словами и красным. */
+if ($ordTotal > ORD_LIMIT): ?>
+  <p class="small" style="margin:-10px 0 16px;color:#C0392B">Показаны первые <b><?= ORD_LIMIT ?></b>
+    заказов из <b><?= $ordTotal ?></b>. Остальные найдутся поиском или по вкладке состояния.</p>
+<?php elseif ($ordTotal > 0): ?>
+  <p class="muted small" style="margin:-10px 0 16px">Показаны все <b><?= $ordTotal ?></b> заказа по этому отбору.</p>
+<?php endif; ?>
 
 <?php
 /* ЗАКАЗЫ ОДНОГО ПОЛУЧАТЕЛЯ — ОДНОЙ КАРТОЧКОЙ.
@@ -440,6 +553,23 @@ ob_start(); ?>
    получателю: оригиналы по адресу, электронные по почте (core/order_group.php). */
 require_once BASE_PATH . '/core/order_group.php';
 $groups = og_groups($orders);
+
+/* ВКЛАДКА ОТБИРАЕТ ПО СОСТОЯНИЮ, А ПОСЫЛКА БЫВАЕТ РАЗНОСОСТОЯННОЙ.
+ *
+ * Отбор идёт запросом, то есть ДО группировки. У посылки 448+626 один заказ
+ * изготовлен, другой только оплачен - и на вкладке «К изготовлению» карточка
+ * показывает ОДИН заказ из двух, со своим листом для посылки и своими
+ * бланками. Напечатать и отправить половину коробки после этого проще
+ * простого, а участник получит документ без второго.
+ *
+ * Поэтому рядом с заголовком называется то, чего на вкладке не видно. Полный
+ * состав посылок считается ОДНИМ запросом на всю страницу: og_parcel_ids у
+ * каждой карточки дал бы до трёхсот запросов (урок правила 75 про скорость). */
+$полныеПосылки = [];
+foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','made','shipped')")) as $__g) {
+    $__ids = array_map('intval', (array) $__g['ids']);
+    foreach ($__ids as $__i) $полныеПосылки[$__i] = $__ids;
+}
 ?>
 <?php if (!$groups): ?>
   <p class="muted">Заказов пока нет.</p>
@@ -516,6 +646,16 @@ $groups = og_groups($orders);
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
+        <?php /* Часть посылки на другой вкладке - говорим об этом словами. */
+        $__скрыты = array_values(array_diff($полныеПосылки[$oid] ?? [], array_map('intval', $ids)));
+        if ($__скрыты): ?>
+          <div class="small" style="margin-top:4px;color:#8B2F2F">
+            Едет одной посылкой с заказ<?= count($__скрыты) > 1 ? 'ами' : 'ом' ?>
+            №<?= implode(', №', $__скрыты) ?> — на этой вкладке
+            <?= count($__скрыты) > 1 ? 'их не видно' : 'его не видно' ?>, печатать и отправлять вместе:
+            <a href="<?= a_link('orders') ?>">вкладка «В работе»</a>.
+          </div>
+        <?php endif; ?>
         <?php
         /* СРОКИ ВИДНЫ СРАЗУ, БЕЗ ЗАХОДА В ЗАЯВКУ.
          *
@@ -568,7 +708,8 @@ $groups = og_groups($orders);
         <!-- Получатель -->
         <div>
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Получатель</div>
-          <div><b><?= h((string)$o['full_name']) ?></b><?= vip_mark((int)($o['user_id'] ?? 0)) ?></div>
+          <div><b><?= h((string)$o['full_name']) ?></b><?= vip_mark((int)($o['user_id'] ?? 0)) ?><?= nenadezhnyi_metka((int)($o['user_id'] ?? 0), (string)($o['email'] ?? ''), (int)($o['application_id'] ?? 0)) ?></div>
+          <?php if (function_exists('prioritet_zakaza')): ?><div><?= prioritet_plashka(prioritet_zakaza($o), 'изготовление') ?></div><?php endif; ?>
           <?php if ($needAddr): ?>
             <div class="small">📍 <?= $gr['address'] !== ''
               ? h($gr['address'])
@@ -725,6 +866,58 @@ $groups = og_groups($orders);
         <?php endif; ?>
         <?php if ($st === 'delivered'): ?>
           <span class="small" style="color:#1E9E5A;font-weight:700;">✓ Доставлено<?= !empty($o['delivered_at']) ? ' · '.h((string)$o['delivered_at']) : '' ?></span>
+          <?php /* ОТСЛЕЖИВАНИЕ ЖИВЁТ И ПОСЛЕ «ДОСТАВЛЕНО» — правка владельца
+                   15.10.2026: «в подразделе „доставлено", перед кнопками
+                   „ЗАБРАЛ" „НЕ ЗАБРАЛ", создай кнопку „отследить"».
+                   «Доставлено» у нас значит «посылка дошла до отделения», а не
+                   «получена на руки»: дальше оператор как раз и смотрит по
+                   трек-номеру, забрал человек посылку или она ушла обратно
+                   (правила 63, 68). Раньше трек пропадал с карточки ровно в тот
+                   момент, когда он нужнее всего, и за ним приходилось идти в
+                   «Отправлено» или в архив.
+                   Ссылка та же, что на «Отправлено»: `order_pochta_url()`, один
+                   источник адреса на обе папки. Трека нет — кнопки нет: у всех
+                   51 доставленной посылки раздела он есть, но у заказа без
+                   почтовой отправки её обещать нечем. */ ?>
+          <?php if ((string)($o['tracking'] ?? '') !== ''): ?>
+            <span class="small">Трек: <b><?= h((string)$o['tracking']) ?></b></span>
+          <?php endif; ?>
+          <?php if ($trackUrl): ?><a class="btn btn--ghost btn--sm" href="<?= h($trackUrl) ?>" target="_blank" title="Открыть отслеживание Почты России в новой вкладке">Отследить</a><?php endif; ?>
+        <?php endif; ?>
+        <?php if (in_array($st, ['shipped','delivered'], true) && $needAddr
+                  && function_exists('nenadezhnyi_sostoyanie_posylki')): ?>
+          <?php /* ЗАБРАЛ ЛИ ЧЕЛОВЕК ПОСЫЛКУ С ПОЧТЫ (правка владельца 15.10.2026).
+                   Кнопки стоят и на «Отправлено», и на «Доставлено», и это не
+                   вольность: «Доставлено» значит «посылка дошла до отделения» и
+                   письмо «забрать до такого-то числа» уже ушло, а забрал человек
+                   или нет, выясняется ПОСЛЕ этого — по той же посылке. Будь
+                   кнопки только на «Отправлено», отметка о получении исчезала бы
+                   ровно в тот момент, когда её и надо ставить. */
+                $__pick     = nenadezhnyi_sostoyanie_posylki($gr['orders']);
+                $__pickWhen = nenadezhnyi_kogda_posylki($gr['orders']); ?>
+          <span class="small muted" style="flex-basis:100%;margin:6px 0 -2px">Забрал ли посылку с почты:</span>
+          <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
+            <input type="hidden" name="do" value="pickup_taken"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
+            <input type="hidden" name="tab" value="<?= h($filter) ?>">
+            <button class="btn <?= $__pick === PICKUP_ZABRAL ? 'btn--navy' : 'btn--ghost' ?> btn--sm" type="submit"
+                    title="Посылка получена участником. Серая галочка «ненадёжный» по ней снимается">ЗАБРАЛ</button>
+          </form>
+          <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
+            <input type="hidden" name="do" value="pickup_missed"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
+            <input type="hidden" name="tab" value="<?= h($filter) ?>">
+            <button class="btn btn--ghost btn--sm" type="submit"
+                    style="<?= $__pick === PICKUP_NE_ZABRAL
+                        ? 'background:' . NENADEZHNYI_CVET . ';color:#fff;border-color:' . NENADEZHNYI_CVET . ';'
+                        : 'color:' . NENADEZHNYI_CVET . ';' ?>"
+                    title="Посылка не получена. У участника во всех его заявках встанет серая галочка «ненадёжный»">НЕ ЗАБРАЛ</button>
+          </form>
+          <?php if ($__pick === PICKUP_NE_ZABRAL): ?>
+            <span class="small" style="color:<?= NENADEZHNYI_CVET ?>;font-weight:700">не забрал<?php
+              echo $__pickWhen !== '' ? ' · ' . h(nenadezhnyi_data($__pickWhen)) : ''; ?> · участник ненадёжный</span>
+          <?php elseif ($__pick === PICKUP_ZABRAL): ?>
+            <span class="small" style="color:#1E9E5A;font-weight:700">✓ забрал<?php
+              echo $__pickWhen !== '' ? ' · ' . h(nenadezhnyi_data($__pickWhen)) : ''; ?></span>
+          <?php endif; ?>
         <?php endif; ?>
         <?php if ($st === 'canceled'): ?>
           <span class="small" style="color:#8B2F2F;font-weight:700;">✕ Отменён<?= !empty($o['canceled_at']) ? ' · '.h((string)$o['canceled_at']) : '' ?><?php if ((int)($o['refund_amount'] ?? 0) > 0): ?> · возврат <?= (int)$o['refund_amount'] ?> ₽<?php endif; ?></span>

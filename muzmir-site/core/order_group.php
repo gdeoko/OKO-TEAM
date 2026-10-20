@@ -248,6 +248,10 @@ function og_groups(array $orders): array {
         $put($g, 'solo:' . (int) ($o['id'] ?? 0), $o);
     }
 
+    // 3. Союз посылок одной заявки на один адрес (og_sliy_po_zayavke): личность
+    //    заказчика и окно в пять дней делят верно не всегда.
+    og_sliy_po_zayavke($g);
+
     // Вид группы уточняем по фактическому составу: так «оригиналы и электронные»
     // не появляется там, где всё электронное, и наоборот.
     foreach ($g as $k => $grp) {
@@ -260,6 +264,98 @@ function og_groups(array $orders): array {
         $g[$k]['kind'] = $orig && $digi ? 'mixed' : ($orig ? 'original' : 'digital');
     }
     return $g;
+}
+
+/**
+ * ОДНА ЗАЯВКА, ОДИН АДРЕС, НИЧЕГО НЕ УЕХАЛО — ЭТО ОДНА ПОСЫЛКА.
+ *
+ * Личность заказчика и окно в пять дней делят посылки верно почти всегда, но
+ * на заявке 2368 они ошиблись оба: дополнительный диплом заказал педагог со
+ * своего аккаунта 08.10, а основной — тот же участник гостем с другой почты
+ * 18.10. Вышли две группы, то есть две коробки, два трек-номера и два письма
+ * на один дом по одному ребёнку.
+ *
+ * Поэтому поверх первого разбора стоит союз: группы с ОБЩЕЙ ЗАЯВКОЙ и ОДНИМ
+ * адресом становятся одной посылкой. Условий ровно три, и каждое нужно:
+ *  - общая заявка. Это один участник и один наградной набор, поэтому слить их
+ *    всегда верно. Одного адреса МАЛО: у заявки 2411 два именных диплома
+ *    разным детям коллектива и два разных адреса в Москве, и слить их значило
+ *    бы отправить обоим одну коробку;
+ *  - один адрес (og_addr_same). По заявке можно заказать награду и себе домой,
+ *    и в школу - это законно две посылки;
+ *  - ничего из группы НЕ УЕХАЛО. Окно в пять дней написано под случай «первую
+ *    давно отправили», и это правда: отправленную посылку не догнать. Здесь же
+ *    обе ждут изготовления, и десять дней между заказами значат лишь, что
+ *    человек доплатил позже.
+ */
+function og_sliy_po_zayavke(array &$g): void {
+    $norm = static function (array $o): string {
+        $n = trim((string) ($o['addr_key'] ?? ''));
+        return $n !== '' ? $n : og_norm_address((string) ($o['address'] ?? ''));
+    };
+
+    $kand = [];
+    foreach ($g as $k => $grp) {
+        if (strncmp((string) $k, 'post:', 5) !== 0) continue;   // сливаются только посылки
+        $uehalo = false; $apps = []; $addr = '';
+        foreach ((array) ($grp['orders'] ?? []) as $o) {
+            $st = (string) ($o['status'] ?? '');
+            if ($st === 'shipped' || $st === 'delivered') { $uehalo = true; break; }
+            $a = (int) ($o['application_id'] ?? 0); if ($a > 0) $apps[$a] = true;
+            if ($addr === '') $addr = $norm($o);
+        }
+        $ids = array_map('intval', (array) ($grp['ids'] ?? []));
+        if ($uehalo || !$apps || $addr === '' || !$ids) continue;
+        $kand[$k] = ['apps' => $apps, 'addr' => $addr, 'min' => min($ids)];
+    }
+    if (count($kand) < 2) return;
+
+    $parent = [];
+    $find = static function (string $x) use (&$parent): string {
+        while (($parent[$x] ?? $x) !== $x) $x = (string) $parent[$x];
+        return $x;
+    };
+    $list = array_keys($kand);
+    foreach ($list as $i => $a) {
+        for ($j = $i + 1, $n = count($list); $j < $n; $j++) {
+            $b = $list[$j];
+            if (!array_intersect_key($kand[$a]['apps'], $kand[$b]['apps'])) continue;
+            if (!og_addr_same($kand[$a]['addr'], $kand[$b]['addr'])) continue;
+            $ra = $find((string) $a); $rb = $find((string) $b);
+            if ($ra === $rb) continue;
+            // Остаётся группа с самым ранним заказом: ключ посылки не должен
+            // прыгать от порядка перебора.
+            if ($kand[$ra]['min'] <= $kand[$rb]['min']) $parent[$rb] = $ra; else $parent[$ra] = $rb;
+        }
+    }
+    if (!$parent) return;
+
+    foreach ($list as $k) {
+        $k = (string) $k;
+        $root = $find($k);
+        if ($root === $k || !isset($g[$k], $g[$root])) continue;
+        foreach ((array) $g[$k]['orders'] as $o)     $g[$root]['orders'][] = $o;
+        foreach ((array) $g[$k]['ids'] as $i)        $g[$root]['ids'][]    = (int) $i;
+        foreach ((array) $g[$k]['items'] as $it)     $g[$root]['items'][]  = $it;
+        foreach (array_keys((array) $g[$k]['statuses']) as $s) $g[$root]['statuses'][(string) $s] = true;
+        $g[$root]['amount'] += (int) ($g[$k]['amount'] ?? 0);
+        if (trim((string) ($g[$root]['address'] ?? '')) === '') {
+            $g[$root]['address'] = (string) ($g[$k]['address'] ?? '');
+        }
+        unset($g[$k]);
+    }
+
+    // Внутри посылки заказы по возрастанию номера: оператор печатает по порядку,
+    // и по тому же порядку собран состав коробки в письме об отправке.
+    foreach ($g as $k => $grp) {
+        $ids = array_values(array_unique(array_map('intval', (array) ($grp['ids'] ?? []))));
+        if (count($ids) < 2) continue;
+        sort($ids);
+        $g[$k]['ids'] = $ids;
+        $ord = (array) ($grp['orders'] ?? []);
+        usort($ord, static fn(array $a, array $b): int => ((int) ($a['id'] ?? 0)) <=> ((int) ($b['id'] ?? 0)));
+        $g[$k]['orders'] = $ord;
+    }
 }
 
 /**
@@ -280,13 +376,25 @@ function og_parcel_ids(int $orderId): array {
 
     $uid   = (int) ($o['user_id'] ?? 0);
     $mail  = trim((string) ($o['email'] ?? ''));
-    $where = $uid > 0 ? 'user_id = ?' : 'LOWER(email) = LOWER(?)';
-    $arg   = $uid > 0 ? $uid : $mail;
-    if ($uid <= 0 && $mail === '') return [$orderId];
+    $app   = (int) ($o['application_id'] ?? 0);
+    if ($uid <= 0 && $mail === '' && $app <= 0) return [$orderId];
+
+    /* ОТБОР ШИРЕ ЛИЧНОСТИ ЗАКАЗЧИКА: ИНАЧЕ СОСЕД ПО ПОСЫЛКЕ НЕ ЗАГРУЗИТСЯ.
+     *
+     * Заказы одной заявки бывают оформлены с разных почт и из разных учётных
+     * записей (заявка 2368: дополнительный диплом заказал педагог со своего
+     * аккаунта, основной - участник гостем с другой почты). Собирает их в одну
+     * посылку og_groups, но до неё дело не дойдёт, если сюда их не принести:
+     * отбор по одной личности второго заказа не видел вовсе. Лишние строки не
+     * опасны - решает всё равно группировка. */
+    $cond = []; $args = [];
+    if ($uid > 0)     { $cond[] = 'user_id = ?';             $args[] = $uid; }
+    if ($mail !== '') { $cond[] = 'LOWER(email) = LOWER(?)'; $args[] = $mail; }
+    if ($app > 0)     { $cond[] = 'application_id = ?';      $args[] = $app; }
 
     $rows = all("SELECT * FROM awards_orders
-                  WHERE $where AND status IN ('paid','made','shipped')
-               ORDER BY id ASC LIMIT 200", [$arg]);
+                  WHERE (" . implode(' OR ', $cond) . ") AND status IN ('paid','made','shipped')
+               ORDER BY id ASC LIMIT 200", $args);
     foreach (og_groups($rows) as $grp) {
         if (in_array($orderId, array_map('intval', $grp['ids']), true)) {
             $ids = array_values(array_unique(array_map('intval', $grp['ids'])));

@@ -111,9 +111,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
              * найден» — человек с настоящим бланком выглядит обманщиком. */
             if (!function_exists('app_split_deletable')) require_once BASE_PATH . '/core/app_status.php';
             [$canDel, $keep, $docs] = app_split_deletable($ids);
+            /* ПАЧКОЙ, НО ТОЙ ЖЕ ДВЕРЬЮ. Одним запросом `DELETE ... IN (...)` быстрее,
+               но мимо двери, а она снимает снимок заявки в её дипломы. Пачка это
+               десятки строк, а не десятки тысяч: скорость тут ничего не решает. */
+            $удалено = [];
+            foreach ($canDel as $__id) {
+                if (app_delete((int) $__id, 'удалена оператором пачкой из админки')) $удалено[] = (int) $__id;
+            }
+            $canDel = $удалено;
             if ($canDel) {
-                $inDel = implode(',', array_fill(0, count($canDel), '?'));
-                q("DELETE FROM applications WHERE id IN ($inDel)", $canDel);
                 audit('applications_bulk', 'application', null, ['action'=>'delete','ids'=>$canDel]);
             }
             $msg = $canDel ? ('Удалено заявок: ' . count($canDel) . '.') : 'Ничего не удалено.';
@@ -191,9 +197,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'delete_app') {
                 . implode(', ', $issued) . '). Наградной материал на руках у участника, и в реестре'
                 . ' он должен остаться проверяемым.', 'error');
         } else {
-            q("DELETE FROM applications WHERE id=?", [$id]);
-            audit('application_delete', 'application', $id, []);
-            flash('Заявка удалена.', 'success');
+            // Удаление идёт ТОЛЬКО через дверь: она же снимет снимок заявки в её
+            // дипломы, иначе страница подлинности у бланка на руках опустеет.
+            if (app_delete($id, 'удалена оператором из админки')) {
+                flash('Заявка удалена.', 'success');
+            } else {
+                flash('Заявку удалить не удалось: ' . (string) ($GLOBALS['APP_DELETE_ERROR'] ?? ''), 'error');
+            }
         }
     }
     admin_redirect('applications');
@@ -728,6 +738,13 @@ if ($id = (int) input('id')) {
           <span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></div>
         <dl class="kv">
           <dt>Конкурс</dt><dd><?= h($a['comp']) ?></dd>
+          <?php /* От кого заявка и какой у неё срок. Партнёр и клуб ждут меньше
+                   общего срока, и это нужно видеть до начала работы, а не узнавать
+                   из жалобы. */
+                $__пр = function_exists('prioritet_zayavki') ? prioritet_zayavki($a) : [];
+                if ($__пр && prioritet_est($__пр)): ?>
+            <dt>Приоритет</dt><dd><?= prioritet_plashka($__пр) ?></dd>
+          <?php endif; ?>
           <?php if ($acc): ?>
           <dt>Аккаунт</dt><dd style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <?php $__av = trim((string)($acc['avatar'] ?? '')); ?>
@@ -737,14 +754,14 @@ if ($id = (int) input('id')) {
               <?php else: ?><?= h(mb_strtoupper(mb_substr(trim((string)($acc['full_name'] ?? '?')), 0, 1))) ?><?php endif; ?>
             </span>
             <a href="<?= a_link('users', ['action'=>'profile','id'=>(int)$acc['id']]) ?>"><?= h($acc['full_name'] ?: $acc['email']) ?></a>
-            <?= vip_mark((int)$acc['id'], (string)($acc['role'] ?? ''), (string)($acc['email'] ?? '')) ?>
+            <?= vip_mark((int)$acc['id'], (string)($acc['role'] ?? ''), (string)($acc['email'] ?? '')) ?><?= nenadezhnyi_metka((int)$acc['id'], (string)($acc['email'] ?? ''), (int)$a['id']) ?>
             <?php if (trim((string)$acc['full_name']) !== '' && trim((string)$a['full_name']) !== ''
                       && mb_strtolower(trim((string)$acc['full_name'])) !== mb_strtolower(trim((string)$a['full_name']))): ?>
               <span class="small muted">(в заявке подано «<?= h((string)$a['full_name']) ?>» — в дипломе печатается оно)</span>
             <?php endif; ?>
           </dd>
           <?php endif; ?>
-          <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></dd>
+          <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?><?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int)$a['id']) ?></dd>
           <?php if ($a['is_group']): ?><dt>Контактное лицо</dt><dd><?= h($a['full_name']) ?></dd><?php endif; ?>
           <dt>Номинация</dt><dd><?= h($a['nomination']) ?><?= $a['subgroup'] ? ' · '.h($a['subgroup']) : '' ?></dd>
           <dt>Форма</dt><dd><?= h($a['formation']) ?></dd>
@@ -852,7 +869,7 @@ if ($id = (int) input('id')) {
                нет — заявка не сохранялась. Списки зависят от номинации: у
                вокала это хор, у инструментов оркестр, у театра коллектив. */
             $nomNow  = (string) ($a['nomination'] ?? '');
-            $formsOk = FORMATIONS_FOR($nomNow);
+            $formsOk = FORMATIONS_FOR($nomNow, (string) ($a['subgroup'] ?? ''));
             $subsOk  = (array) (NOMINATIONS()[$nomNow] ?? []);
             ?>
             <?php if ($subsOk): ?>
@@ -967,8 +984,9 @@ ob_start(); ?>
     <button class="btn btn--navy btn--sm" onclick="return confirm('Применить к выбранным заявкам?')"><?= admin_icon('check') ?>Применить</button>
   </div>
 
-  <div class="table-wrap">
-    <table class="tbl">
+  <?= admin_cards_css() ?>
+  <div class="table-wrap table-wrap--cards">
+    <table class="tbl tbl--cards">
       <thead><tr>
         <th class="checkbox-cell"><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th>
         <th>От кого</th><th>Конкурсный номер</th><th>Конкурс</th><th>Оценка</th><th>Статус</th><th>Сумма</th><th>Подана</th>
@@ -1001,16 +1019,17 @@ ob_start(); ?>
         ?>
           <tr>
             <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>
-            <td>
+            <td data-label="От кого">
               <a href="<?= a_link('applications', ['id'=>$a['id']]) ?>"><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b></a>
-              <?= vip_mark((int)($a['user_id']??0), (string)($a['user_role']??''), (string)($a['email']??'')) ?>
+              <?= vip_mark((int)($a['user_id']??0), (string)($a['user_role']??''), (string)($a['email']??'')) ?><?= nenadezhnyi_metka((int)($a['user_id']??0), (string)($a['email']??''), (int)$a['id']) ?>
               <?= $a['flag'] ? ' <span class="badge badge--rejected small">'.h($a['flag']).'</span>' : '' ?>
               <br><span class="small muted"><?= h($a['number'] ?: '#'.$a['id']) ?><?= $a['is_group'] ? ' · коллектив' : '' ?></span>
+              <?php if (function_exists('prioritet_zayavki')): ?><div><?= prioritet_plashka(prioritet_zayavki($a)) ?></div><?php endif; ?>
             </td>
-            <td class="small"><?= h($a['work_title'] ?: '—') ?>
+            <td class="small" data-label="Конкурсный номер"><?= h($a['work_title'] ?: '—') ?>
               <?php if (!empty($a['nomination'])): ?><br><span class="muted"><?= h($a['nomination']) ?></span><?php endif; ?></td>
-            <td class="small"><?= h($a['comp']) ?></td>
-            <td class="small">
+            <td class="small" data-label="Конкурс"><?= h($a['comp']) ?></td>
+            <td class="small" data-label="Оценка">
               <?php if (trim((string) $a['result']) !== ''): ?>
                 <span class="badge badge--gold"><?= h($a['result']) ?></span>
                 <?php if (trim((string) ($a['extra_diploma'] ?? '')) !== ''): ?>
@@ -1018,9 +1037,9 @@ ob_start(); ?>
                 <?php endif; ?>
               <?php else: ?><span class="muted">—</span><?php endif; ?>
             </td>
-            <td><span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></td>
-            <td class="small"><?= $sumHtml ?></td>
-            <td class="small"><?= h(date('d.m.Y', strtotime($a['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime($a['created_at']))) ?></span></td>
+            <td data-label="Статус"><span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></td>
+            <td class="small" data-label="Сумма"><?= $sumHtml ?></td>
+            <td class="small" data-label="Подана"><?= h(date('d.m.Y', strtotime($a['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime($a['created_at']))) ?></span></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -1028,13 +1047,14 @@ ob_start(); ?>
   </div>
 </form>
 
-<?php if ($pages > 1): ?>
-<div class="toolbar" style="margin-top:16px;justify-content:center">
-  <?php for ($i=1;$i<=$pages;$i++): ?>
-    <a class="btn btn--sm <?= $i===$page?'btn--primary':'btn--ghost' ?>" href="<?= $qs(['pg'=>$i]) ?>"><?= $i ?></a>
-  <?php endfor; ?>
-</div>
-<?php endif; ?>
+<?php /* ПОСТРАНИЧНОСТЬ ОДНА НА АДМИНКУ, И ОНА НАЗЫВАЕТ ЧИСЛО.
+         Здесь печатался весь ряд номеров подряд: на 1784 заявках это тридцать
+         шесть кнопок внизу страницы, и ни слова о том, сколько заявок видно
+         сейчас и сколько всего. admin_stranicy() даёт подпись «показаны N-M из
+         T» и номера окном вокруг текущей страницы (урок правила 58). */
+      $keepPg = array_filter($_GET, fn($v, $k) => $v !== '' && $v !== null && $k !== 'p' && $k !== 'pg',
+                             ARRAY_FILTER_USE_BOTH); ?>
+<?= admin_stranicy($total, $page, $per, 'applications', $keepPg, 'pg') ?>
 <?php
 $content = ob_get_clean();
 admin_layout('Заявки', $content, 'applications');

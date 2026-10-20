@@ -20,7 +20,8 @@ require_once BASE_PATH . '/core/orders.php';
    выше, прошлые опускаются и исчезают сами, когда два месяца истекают. */
 $regs = array_values(array_filter(
     all("SELECT id, slug, name, type, direction, is_paid, price, status,
-                start_date, end_date, results_date, results_mode, duration
+                start_date, end_date, results_date, results_mode, duration,
+                COALESCE(club_entry_only,0) club_entry_only, COALESCE(club_only,0) club_only
            FROM competitions
           WHERE COALESCE(launched,0) = 1 AND status <> 'draft'
        ORDER BY CASE WHEN status='open' THEN 0 ELSE 1 END, end_date DESC, sort, id"),

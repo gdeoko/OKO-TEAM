@@ -67,7 +67,10 @@ if ($action === 'delete') {
     }
     try { yukassa_cancel_open_for_app($holder); } catch (\Throwable $e) {}
 
-    q("DELETE FROM applications WHERE id=? AND user_id=? AND is_paid=0", [$appId, $uid]);
+    // Через дверь: оба прежних условия (свой и неоплаченная) остались в опциях.
+    if (!function_exists('app_delete')) require_once BASE_PATH . '/core/app_status.php';
+    app_delete((int) $appId, 'участник отказался от заявки в кабинете',
+        ['только_неоплаченную' => true, 'владелец' => (int) $uid]);
 
     if ($siblings) {
         $in = implode(',', array_map(fn($s) => (int) $s['id'], $siblings));

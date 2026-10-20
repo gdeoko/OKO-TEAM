@@ -31,6 +31,25 @@ if (!$d) {
 
 update('diplomas', ['verified_count' => (int) $d['verified_count'] + 1], 'id=:id', ['id' => $d['id']]);
 
+/* ЗАЯВКИ МОЖЕТ НЕ БЫТЬ, А БЛАНК У ЧЕЛОВЕКА ЕСТЬ. Заявку удаляют (дубль, просьба
+   участника), и соединение выше отдаёт пустоту: страница честно говорила
+   «подлинный», но без имени, конкурса и номинации - человек читает это как
+   подделку. Поэтому у диплома лежит снимок заявки, снятый дверью удаления
+   (`app_delete`), и он подставляется ровно в пустые поля. */
+if (function_exists('diploma_snapshot_read')
+    || is_file(BASE_PATH . '/core/app_status.php')) {
+    require_once BASE_PATH . '/core/app_status.php';
+    if ((string) ($d['competition_name'] ?? '') === '' && trim((string) ($d['full_name'] ?? '')) === '') {
+        $снимок = diploma_snapshot_read($d);
+        foreach (['full_name', 'group_name', 'is_group', 'nomination', 'work_title',
+                  'city', 'age_category', 'teacher', 'competition_name'] as $поле) {
+            if (trim((string) ($d[$поле] ?? '')) === '' && isset($снимок[$поле])) {
+                $d[$поле] = $снимок[$поле];
+            }
+        }
+    }
+}
+
 // Отображаемое имя: для коллектива — название коллектива, иначе ФИО.
 $recipient = ((int)($d['is_group'] ?? 0) === 1 && trim((string)($d['group_name'] ?? '')) !== '')
     ? (string) $d['group_name']

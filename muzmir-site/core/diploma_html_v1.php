@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Dip\V1;
+require_once __DIR__ . '/diploma_fio.php';   // разбор ФИО на людей (общий)
 // АВТОСБОРКА диспетчером diploma_html.php: замороженный движок бланка (37bec99).
 // Правки вносить в исходную версию и пересобирать, не редактировать вручную.
 /**
@@ -138,9 +139,28 @@ function _dh_one_person(string $raw, int $idx = 0): string {
  */
 function _dh_fit_block(string $text, float $maxPt, float $minPt, float $emW,
                        float $availMm, float $lsPx = 0.0, int $maxLines = 2,
-                       int $wrapMinWords = 2): array {
+                       int $wrapMinWords = 2, ?array $gotovye = null): array {
     $text = trim($text);
     if ($text === '') return ['html' => '', 'css' => 'font-size:' . $maxPt . 'pt;'];
+
+    /* ГОТОВЫЕ СТРОКИ (ФИО нескольких человек): перенос уже решён разбором, здесь
+       подбирается только кегль. Балансировка по словам тут недопустима - она
+       режет человека пополам: «Криволапов Максим / Вячеславович». */
+    if ($gotovye) {
+        $parts = array_values(array_filter(array_map('trim', $gotovye), static fn($x) => $x !== ''));
+        if ($parts) {
+            $pt = $minPt;
+            for ($p = $maxPt; $p >= $minPt - 0.01; $p -= 0.5) {
+                $vse = true;
+                foreach ($parts as $s) { if (_dh_text_mm($s, $p, $emW, $lsPx) > $availMm) { $vse = false; break; } }
+                if ($vse) { $pt = $p; break; }
+            }
+            return [
+                'html' => implode('<br>', array_map('h', $parts)),
+                'css'  => 'font-size:' . round($pt, 1) . 'pt;line-height:1.06;white-space:normal;',
+            ];
+        }
+    }
 
     // Короткие строки (ФИО человека — обычно три слова) НЕ переносим: «Мельникова /
     // Анастасия Вадимовна» читается как две разные строки. Такие ужимаем кеглем и
@@ -391,7 +411,13 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     // (длинное ФИО лучше перенести, чем ужать до нечитаемого).
     // 4 слова — порог переноса: ФИО (Фамилия Имя Отчество) остаётся в одну строку,
     // длинное название коллектива переносится на вторую.
-    $nameBlk  = _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2, 4);
+    /* ФИО нескольких человек в одном поле: перенос обязан падать МЕЖДУ людьми
+       (слово владельца 18.10.2026). Разбор общий - core/diploma_fio.php; он
+       молчит, когда делить не берётся, и тогда всё как было. */
+    $лица = \diploma_fio_lyudi($name);
+    $nameBlk  = count($лица) > 1
+        ? _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, count($лица), 2, $лица)
+        : _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2, 4);
     $nameHtml = $nameBlk['html'];
     $nameCss  = $nameBlk['css'];
 

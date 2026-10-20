@@ -92,11 +92,35 @@ try {
      * ответа, и час суток тут ни при чём. Массовым считаем то, что привязано к
      * рассылке или помечено типом кампании. */
     $massWait = '';
+    $massOff  = false;
     if (is_file(BASE_PATH . '/core/outreach_window.php')) {
         require_once BASE_PATH . '/core/outreach_window.php';
         if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
             $massWait = " AND COALESCE(newsletter_id,0) = 0 AND COALESCE(campaign_type,'') = ''";
         }
+    }
+
+    /* РУБИЛЬНИК МАССОВЫХ ОСТАНАВЛИВАЕТ И ТО, ЧТО УЖЕ В ОЧЕРЕДИ.
+     *
+     * У функции `mass_sending_enabled()` в `core/newsletter.php` написано:
+     * «Пока settings.mass_sending = '0' наружу не уходит НИЧЕГО массового». Код
+     * этого не держал: рубильник смотрели постановщики писем и
+     * `publish_scheduled_posts`, а САМ ОТПРАВЩИК очереди - нет. Опущенный
+     * рубильник останавливал только НОВЫЕ волны, а поставленные ранее десятки
+     * тысяч писем продолжали уходить ежеминутно.
+     *
+     * Замерено 14.10.2026 на живой беде: волна по закрытому конкурсу «Мировые
+     * Таланты» поставила в очередь 8052 письма, 5943 успели уйти. Остановить их
+     * рубильником было НЕЛЬЗЯ - только отменять записи в очереди руками, что и
+     * пришлось сделать. Аварийная ручка, которая не останавливает аварию, хуже
+     * отсутствующей: на неё надеются.
+     *
+     * Личные письма рубильник не трогает (как и окно): код входа, подтверждение
+     * заявки, результат и наградные материалы человек ждёт сам. */
+    if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+    if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
+        $massOff  = true;
+        $massWait = " AND COALESCE(newsletter_id,0) = 0 AND COALESCE(campaign_type,'') = ''";
     }
 
     /* ПИСЬМО МОЖЕТ ЖДАТЬ СВОЕГО ЧАСА.
@@ -110,14 +134,46 @@ try {
                   WHERE status='queued'
                     AND (COALESCE(scheduled_at,'') = '' OR datetime(scheduled_at) <= datetime('now','localtime'))
                     $massWait
-               ORDER BY created_at ASC LIMIT ?", [$take]);
+               /* СРОЧНОЕ ВПЕРЁД, ОСТАЛЬНОЕ ПО ОЧЕРЕДИ.
+                *
+                * Здесь стояло только «по времени постановки», и колонка
+                * priority не читалась вовсе. Пока очередь короткая, разницы
+                * нет. Но с 25 августа в ней лежат двадцать две тысячи писем на
+                * адреса Mail.ru, которые почтовая служба не принимает, — и
+                * любое новое срочное письмо оказывалось за ними. 9 сентября так
+                * застряло письмо в abuse-службу Mail.ru: поставлено на 09:05,
+                * в 09:50 всё ещё не тронуто, при том что от него зависит,
+                * когда эти двадцать две тысячи наконец уйдут.
+                *
+                * Порядок теперь: сначала по важности (у кода входа она 5, у
+                * обычного письма 0), внутри одной важности — по времени. */
+               ORDER BY COALESCE(priority,0) DESC, created_at ASC LIMIT ?", [$take]);
     if ($massWait !== '' && !$rows) {
-        cron_log(JOB, 'массовые письма ждут окна: ' . outreach_window_reason());
+        cron_log(JOB, $massOff
+            ? 'массовые письма стоят: опущен рубильник массовых рассылок (settings.mass_sending=0)'
+            : 'массовые письма ждут окна: ' . outreach_window_reason());
     }
 
     $sent = 0;
     $failed = 0;
     foreach ($rows as $row) {
+        /* Тот же заслон, что в core/newsletter.php: эта упрощённая ветка живёт
+           на случай, когда полный модуль рассылок не подключился, и оставить её
+           без заслона значит оставить вторую дверь открытой (правила 45, 54). */
+        if (is_file(BASE_PATH . '/core/comp_now.php')
+            && ((int) ($row['newsletter_id'] ?? 0) > 0
+                || trim((string) ($row['campaign_type'] ?? '')) !== '')) {
+            require_once BASE_PATH . '/core/comp_now.php';
+            if (function_exists('comp_pismo_zovet_na_zakrytyi')) {
+                $почему = comp_pismo_zovet_na_zakrytyi((string) $row['subject'], (string) $row['body']);
+                if ($почему !== '') {
+                    update('mail_queue', ['status' => 'cancelled', 'error' => 'снято заслоном: ' . $почему],
+                           'id=:wid', ['wid' => $row['id']]);
+                    cron_log(JOB, 'письмо #' . $row['id'] . ' снято: ' . $почему);
+                    continue;
+                }
+            }
+        }
         $ok = false;
         try {
             $ok = mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], [

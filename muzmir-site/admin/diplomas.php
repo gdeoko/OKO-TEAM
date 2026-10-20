@@ -492,6 +492,32 @@ ob_start(); ?>
       // Именной / спец-награда: любые оценённые заявки (можно выдать поверх основного).
       $ready = all("SELECT a.* FROM applications a WHERE a.competition_id=? AND a.result<>'' ORDER BY a.id", [$comp]);
     }
+
+    /* СРОЧНЫЕ БЛАНКИ СТОЯТ В НАЧАЛЕ СПИСКА (слово владельца 16.10.2026).
+     *
+     * Список шёл просто по номеру заявки, а бланки оператор собирает сверху
+     * вниз: у участника Элитного клуба изготовление 3 рабочих дня вместо 5
+     * (правило 37), и за сотней обычных строк его срок виден только в плашке.
+     *
+     * ВЕС БЕРЁТ ЕДИНЫЙ ИСТОЧНИК И ИМЕННО ТОТ, ЧТО НАПИСАН НА СТРОКЕ: здесь у
+     * плашки вид «изготовление», значит и подъём считается по нему. Партнёра он
+     * не поднимает намеренно - у него срок изготовления общий, и строка рядом
+     * честно говорит то же (правило 47). Своей копии условий тут нет: копии
+     * расходятся молча (правила 33, 35, 45, 47).
+     *
+     * Второй ключ сортировки держит прежний порядок внутри одного веса -
+     * иначе номера заявок перемешались бы без всякой пользы. */
+    $dipСрочных = 0;
+    if (function_exists('prioritet_ves')) {
+        $пары = [];
+        foreach ($ready as $i => $a) {
+            $v = prioritet_ves(prioritet_zayavki($a), 'изготовление');
+            if ($v < 2) $dipСрочных++;
+            $пары[] = [$v, $i, $a];
+        }
+        usort($пары, static fn($x, $y) => [$x[0], $x[1]] <=> [$y[0], $y[1]]);
+        $ready = array_column($пары, 2);
+    }
   ?>
     <div class="card" style="margin-bottom:14px">
       <div class="section-title" style="margin-bottom:8px"><h3>Тип диплома</h3></div>
@@ -520,6 +546,11 @@ ob_start(); ?>
       <?php endif; ?>
       <div class="toolbar">
         <span class="small muted">Кандидатов (<?= h($dtypeLabels[$dtype]) ?>): <?= count($ready) ?></span>
+        <?php /* Сколько срочных ждёт - числом, а не на глаз: оператор видит это
+                 до того, как начнёт собирать бланки сверху вниз. */
+              if (!empty($dipСрочных)): ?>
+          <span class="small muted" title="Эти бланки стоят в начале списка: у участника Элитного клуба наградной материал изготавливается 3 рабочих дня вместо 5">· сперва срочные: Элитный клуб <?= (int) $dipСрочных ?></span>
+        <?php endif; ?>
         <?php if ($approved): ?>
           <button class="btn btn--primary btn--sm" onclick="return confirm('Сгенерировать дипломы для выбранных?')"><?= admin_icon('diplomas') ?>Сгенерировать выбранные</button>
         <?php else: ?>
@@ -534,7 +565,8 @@ ob_start(); ?>
           <?php if (!$ready): ?><tr><td colspan="5" class="muted" style="text-align:center;padding:26px">Нет оценённых заявок без диплома. Дипломы генерируются после закрытия оценивания.</td></tr><?php endif; ?>
           <?php foreach ($ready as $a): ?>
             <tr><td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>
-              <td><?= h($a['is_group']?$a['group_name']:$a['full_name']) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?></td>
+              <td><?= h($a['is_group']?$a['group_name']:$a['full_name']) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int)$a['id']) ?>
+                <?php if (function_exists('prioritet_zayavki')): ?><div><?= prioritet_plashka(prioritet_zayavki($a), 'изготовление') ?></div><?php endif; ?></td>
               <td class="small"><?= h($a['nomination']) ?></td>
               <td><?= h((string)$a['score']) ?></td>
               <td><span class="badge badge--gold"><?= h($a['result']) ?></span></td></tr>
@@ -544,7 +576,19 @@ ob_start(); ?>
     </form>
 
   <?php else:
-    $dips = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.user_id
+    /* ИМЯ С БЛАНКА И ЗВАНИЕ БЕРЁМ У ОБЩЕГО РАЗБОРА (правило 31), И ЕГО НАДО
+     * ПОДКЛЮЧИТЬ.
+     *
+     * `dops_diploma_person()` и `dops_diploma_rank()` живут в core/dispatch_ops.php,
+     * а он подключался в этом файле только в обработчиках POST. С 13.10.2026, когда
+     * таблица начала печатать имя отдельной строкой, вкладка «Готовые и отправка»
+     * падала с «Call to undefined function dops_diploma_person()» и отдавала 500 у
+     * КАЖДОГО конкурса, где есть хоть один диплом. Замечено 14.10.2026 аудитом
+     * приоритета: проверка открыла вкладку и получила пятисотку. Сам раздел молчал
+     * - в журнале ошибка была, а на странице просто белый лист. */
+    if (!function_exists('dops_diploma_person')) require_once BASE_PATH . '/core/dispatch_ops.php';
+    $dips = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.user_id,
+                        a.result AS app_result
                  FROM diplomas d JOIN applications a ON a.id=d.application_id
                  WHERE a.competition_id=? ORDER BY d.id DESC", [$comp]); ?>
     <form method="post" action="<?= url('/admin/') ?>">
@@ -567,8 +611,24 @@ ob_start(); ?>
             <tr>
               <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="dids[]" value="<?= $d['id'] ?>"></td>
               <td class="small"><?= h($d['number']) ?></td>
-              <td><?= h($d['is_group']?$d['group_name']:$d['full_name']) ?><?= vip_mark((int)($d['user_id'] ?? 0), '', (string)($d['email'] ?? '')) ?><br><span class="small muted"><?= h($d['email']) ?></span></td>
-              <td><span class="badge badge--gold"><?= h($d['result']) ?></span></td>
+              <td><?= h($d['is_group']?$d['group_name']:$d['full_name']) ?><?= vip_mark((int)($d['user_id'] ?? 0), '', (string)($d['email'] ?? '')) ?><?= nenadezhnyi_metka((int)($d['user_id'] ?? 0), (string)($d['email'] ?? ''), (int)($d['application_id'] ?? 0)) ?><br><span class="small muted"><?= h($d['email']) ?></span>
+                <?php /* Срок ИЗГОТОВЛЕНИЯ: реестр про наградной материал. Заявку
+                         берём по application_id диплома - колонки institution_id в
+                         этом запросе нет, и помощник найдёт её сам. */
+                      if (function_exists('prioritet_zayavki')): ?>
+                  <div><?= prioritet_plashka(prioritet_zayavki(['id' => (int) ($d['application_id'] ?? 0),
+                                                                'user_id' => (int) ($d['user_id'] ?? 0)]), 'изготовление') ?></div>
+                <?php endif; ?></td>
+              <?php /* В золотой плашке - ЗВАНИЕ. У именного диплома и благодарности
+                       в поле result стоит имя человека, и плашка показывала фамилию
+                       вместо звания; имя печатаем отдельной строкой под ней. */
+                $__p = dops_diploma_person($d);
+                $__r = dops_diploma_rank($d, (string) ($d['app_result'] ?? '')); ?>
+              <td><span class="badge badge--gold"><?= h($__r !== '' ? $__r : '—') ?></span>
+                <?php if ($__p !== ''): ?>
+                  <div class="small muted"><?= (string) $d['type'] === 'thanks' ? 'благодарность: ' : 'именной: ' ?><?= h($__p) ?></div>
+                <?php endif; ?>
+              </td>
               <?php /* ФАЙЛ В ТРЁХ ФОРМАТАХ. Ссылка ведёт не на путь в public, а на
                        маршрут выдачи: он же проверяет права и умеет отдать тот же
                        лист картинкой (JPG, PNG), собранной из этого самого PDF. */ ?>

@@ -121,16 +121,30 @@ if (!$bad) $say('  чисто: все ключевые задания отчит
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 $head('6. ДЕНЬГИ УЧАСТНИКА: ОПЛАЧЕНО, НО ЗАЯВКА НЕ ОТМЕЧЕНА');
-$bad = 0;
-foreach (all("SELECT a.number, a.email, a.amount_paid, a.is_paid, c.name cname, c.price
+/* СУДИМ ПО КАССЕ, А НЕ ПО `amount_paid`. В этом поле лежит сумма ПОПЫТКИ, и она
+   остаётся там после отмены и после возврата: по нему пять заявок годами читались
+   как «деньги внесены, отметки нет», хотя три возвращены пачкой 31.08.2026, а две
+   это отменённые попытки того же дня. Красное на ровном месте прячет настоящие
+   отказы (правило 47), а деньги участника как раз та строка, которую нельзя
+   приучаться пролистывать. Беда это УДАЧНЫЙ и НЕ возвращённый платёж при
+   незакрытом взносе - остальное печатается справкой. */
+$bad = 0; $попыток = 0;
+foreach (all("SELECT a.number, a.email, a.amount_paid, a.is_paid, a.status, c.name cname, c.price,
+                     (SELECT COUNT(*) FROM payments p WHERE p.application_id = a.id
+                        AND p.status = 'succeeded' AND COALESCE(p.refunds,'') IN ('','[]')) успешных
                 FROM applications a JOIN competitions c ON c.id=a.competition_id
                WHERE c.is_paid=1 AND COALESCE(a.amount_paid,0) > 0 AND COALESCE(a.is_paid,0) = 0
-               LIMIT 15") as $r) {
-    $bad++; $problems++;
-    printf("  %-16s %-28s внесено %s ₽, заявка числится неоплаченной\n",
-        (string) $r['number'], mb_substr((string) $r['email'], 0, 28), (string) $r['amount_paid']);
+               LIMIT 30") as $r) {
+    if ((int) $r['успешных'] > 0) {
+        $bad++; $problems++;
+        printf("  %-16s %-28s в кассе %s ₽ принято, заявка числится неоплаченной\n",
+            (string) $r['number'], mb_substr((string) $r['email'], 0, 28), (string) $r['amount_paid']);
+    } else {
+        $попыток++;
+    }
 }
-if (!$bad) $say('  чисто: расхождений «деньги есть, отметки нет» не найдено');
+if (!$bad) $say('  чисто: принятых кассой денег без отметки в заявке нет');
+if ($попыток) $say('  справка: заявок с суммой попытки без удачного платежа (отменён или возвращён) — ' . $попыток);
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 $head('7. ОДНА ССЫЛКА В ОДНОМ КОНКУРСЕ У РАЗНЫХ ЗАЯВОК (п. 8.1)');
@@ -197,5 +211,157 @@ foreach (all("SELECT id, name, status, end_date, results_date, results_mode, res
 if (!$bad) $say('  чисто: сроки конкурсов согласованы');
 
 $say("\n$line");
+/* ─────────────────────────────────────────────────────────────────────────── */
+$head('14. ВЫЗОВЫ update() С ПОЗИЦИОННОЙ ПОДСТАНОВКОЙ (меняют НОЛЬ строк молча)');
+$плохо = 0;
+$свой  = realpath(__FILE__);
+foreach (['core', 'cron', 'admin', 'api', 'scripts', 'templates', 'public'] as $dir) {
+    $путь = BASE_PATH . '/' . $dir;
+    if (!is_dir($путь)) continue;
+    $это = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($путь, FilesystemIterator::SKIP_DOTS));
+    foreach ($это as $f) {
+        if (!$f->isFile() || strtolower($f->getExtension()) !== 'php') continue;
+        if (realpath($f->getPathname()) === $свой) continue;   // в разборе ниже сам шаблон написан кодом
+        $src = (string) @file_get_contents($f->getPathname());
+        if (strpos($src, "update(") === false) continue;
+        /* Пояснения снимаем лексером, а не регуляркой: в админке «/*» живёт и в
+           строках, и в CSS, и вырезка «от звёздочки до звёздочки» съедает живой
+           код (правило 63). */
+        $чисто = '';
+        foreach (token_get_all($src) as $t) {
+            if (is_array($t) && in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true)) continue;
+            $чисто .= is_array($t) ? $t[1] : $t;
+        }
+        $поз = 0;
+        while (($поз = strpos($чисто, 'update(', $поз)) !== false) {
+            $до = $поз > 0 ? $чисто[$поз - 1] : ' ';
+            if (preg_match('~[A-Za-z0-9_$>]~', $до)) { $поз += 7; continue; }  // _update(, ->update(
+            /* Условие это ТРЕТИЙ аргумент, а во втором лежит массив со своими
+               запятыми и скобками - поэтому идём по скобкам, а не шаблоном. */
+            $i = $поз + 7; $гл = 1; $арг = ''; $части = [];
+            $len = strlen($чисто);
+            while ($i < $len && $гл > 0) {
+                $c = $чисто[$i];
+                if ($c === '(' || $c === '[') $гл++;
+                elseif ($c === ')' || $c === ']') { $гл--; if ($гл === 0) break; }
+                elseif ($c === "'" || $c === '"') {        // строку перескакиваем целиком
+                    $кав = $c; $арг .= $c; $i++;
+                    while ($i < $len) {
+                        if ($чисто[$i] === '\\') { $арг .= substr($чисто, $i, 2); $i += 2; continue; }
+                        $арг .= $чисто[$i];
+                        if ($чисто[$i] === $кав) break;
+                        $i++;
+                    }
+                    $i++; continue;
+                }
+                if ($c === ',' && $гл === 1) { $части[] = $арг; $арг = ''; $i++; continue; }
+                $арг .= $c; $i++;
+            }
+            $части[] = $арг;
+            $усл = isset($части[2]) ? trim($части[2]) : '';
+            if ($усл !== '' && strpos($усл, '?') !== false) {
+                $стр = substr_count(substr($чисто, 0, $поз), "\n") + 1;
+                $say('  ОШИБКА ' . $dir . '/' . $f->getFilename() . ' (около строки ' . $стр
+                     . '): условие ' . trim($усл) . ' - поменяет ноль строк молча');
+                $плохо++;
+            }
+            $поз += 7;
+        }
+    }
+}
+if ($плохо === 0) {
+    $say('  ok: все вызовы update() идут именованными подстановками');
+} else {
+    $problems += $плохо;
+}
+/* И сам помощник обязан падать, а не молчать. */
+try {
+    update('settings', ['value' => 'x'], 'key=?', ['нет-такого-ключа']);
+    $say('  ОШИБКА: update() принял «?» в условии - заслон в core/db.php снят');
+    $problems++;
+} catch (\Throwable $e) {
+    $say('  ok: update() отказывается работать с «?» в условии');
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+$head('15. БЛАНК БЕЗ ЗАЯВКИ: КАРТОЧКА ПОДЛИННОСТИ ОБЯЗАНА ОСТАТЬСЯ ПОЛНОЙ');
+require_once BASE_PATH . '/core/app_status.php';
+$сироты = all("SELECT d.id, d.number, COALESCE(d.snapshot,'') snap, COALESCE(d.sent_at,'') sent
+                 FROM diplomas d
+                WHERE COALESCE(d.application_id,0) > 0
+                  AND NOT EXISTS(SELECT 1 FROM applications a WHERE a.id = d.application_id)
+             ORDER BY d.id");
+$безСнимка = 0;
+foreach ($сироты as $d) {
+    $имя = (string) (diploma_snapshot_read(['snapshot' => $d['snap']])['full_name'] ?? '');
+    if (trim((string) $d['snap']) === '') {
+        $say('  ОШИБКА ' . $d['number'] . ': заявки нет и снимка нет - страница подлинности'
+             . ' ответит «подлинный» с пустой карточкой');
+        $безСнимка++;
+    } else {
+        $say('  ok   ' . $d['number'] . ': заявки нет, но снимок на месте (' . ($имя !== '' ? $имя : 'без имени') . ')');
+    }
+}
+if (!$сироты) $say('  чисто: дипломов без заявки нет');
+$problems += $безСнимка;
+
+/* Дверь удаления одна, и мимо неё не удаляют. Скрипты-инструменты и проверки в
+   обход ходить могут - они не живой путь человека. */
+$мимо = 0;
+foreach (['core', 'cron', 'admin', 'api', 'templates', 'public'] as $dir) {
+    $путь = BASE_PATH . '/' . $dir;
+    if (!is_dir($путь)) continue;
+    $это = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($путь, FilesystemIterator::SKIP_DOTS));
+    foreach ($это as $f) {
+        if (!$f->isFile() || strtolower($f->getExtension()) !== 'php') continue;
+        $src = (string) @file_get_contents($f->getPathname());
+        if (stripos($src, 'DELETE FROM applications') === false) continue;
+        $чисто = '';
+        foreach (token_get_all($src) as $t) {
+            if (is_array($t) && in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true)) continue;
+            $чисто .= is_array($t) ? $t[1] : $t;
+        }
+        if (stripos($чисто, 'DELETE FROM applications') === false) continue;
+        // Сама дверь удаляет по праву - она и есть то место.
+        if (strpos($чисто, 'function app_delete(') !== false) continue;
+        $say('  ОШИБКА ' . $dir . '/' . $f->getFilename() . ': удаляет заявку мимо двери app_delete()');
+        $мимо++;
+    }
+}
+if ($мимо === 0) $say('  ok   все живые места удаляют заявку через app_delete()');
+$problems += $мимо;
+
+$двер = (string) @file_get_contents(BASE_PATH . '/core/app_status.php');
+if (strpos($двер, 'diploma_snapshot_save($id)') === false) {
+    $say('  ОШИБКА: дверь удаления больше не снимает снимок - карточки опустеют молча');
+    $problems++;
+} else {
+    $say('  ok   дверь снимает снимок ДО удаления');
+}
+$бланк = (string) @file_get_contents(BASE_PATH . '/public/index.php');
+$скольк = substr_count($бланк, 'diploma_app_from_snapshot(');
+if ($скольк < 2) {
+    $say('  ОШИБКА: маршруты бланка (просмотр и файл) не собирают заявку из снимка - лист выйдет пустым');
+    $problems++;
+} else {
+    $say('  ok   оба маршрута бланка собирают заявку из снимка');
+}
+$вер = (string) @file_get_contents(BASE_PATH . '/api/v1/verify.php');
+if (strpos($вер, 'diploma_snapshot_read') === false) {
+    $say('  ОШИБКА: проверка подлинности не читает снимок');
+    $problems++;
+} else {
+    $say('  ok   проверка подлинности читает снимок');
+}
+/* Заказы без заявки оставлены историей - слово владельца 15.10.2026. Это
+   справка, а не провал: деньги по ним закрыты, и строка нужна как память. */
+$зак = all("SELECT o.id, o.full_name, COALESCE(o.status,'') st FROM awards_orders o
+             WHERE COALESCE(o.application_id,0) > 0
+               AND NOT EXISTS(SELECT 1 FROM applications a WHERE a.id = o.application_id) ORDER BY o.id");
+foreach ($зак as $o) {
+    $say('  справка: заказ №' . $o['id'] . ' (' . $o['full_name'] . ', ' . $o['st']
+         . ') без заявки - оставлен историей по слову владельца 15.10.2026');
+}
+
 printf("ИТОГ: проблем найдено — %d\n", $problems);
 $say($line);

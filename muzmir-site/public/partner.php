@@ -248,7 +248,7 @@ function partner_layout_dashboard(string $base, array $p, array $s, string $acti
 
       <footer class="p-ftr">
         © Культурный центр «Музыкальный Мир» ·
-        <a href="mailto:kc@музыкальный-мир.рф">kc@музыкальный-мир.рф</a> · +7 (999) 504-88-99 ·
+        <a href="mailto:kc@музыкальный-мир.рф">kc@музыкальный-мир.рф</a> · +7(999)504-88-99 ·
         <a href="<?= h($base) ?>/">на сайт</a>
       </footer>
     </div>
@@ -298,7 +298,7 @@ function partner_view_overview(string $base, array $p, array $s): void {
         <a href="<?= h($base) ?>/partner?a=cert" class="btn btn--gold btn--sm" style="margin-top:6px">Скачать PDF</a></div>
       <div class="card"><b>Помощь</b><br>
         <span class="muted">По любым вопросам:<br>
-        <a href="mailto:kc@музыкальный-мир.рф">kc@музыкальный-мир.рф</a> · +7 (999) 504-88-99</span></div>
+        <a href="mailto:kc@музыкальный-мир.рф">kc@музыкальный-мир.рф</a> · +7(999)504-88-99</span></div>
     </div>
     <?php
 }

@@ -29,6 +29,25 @@ if (!cron_lock(JOB, 300)) exit(0);
 
 try {
     if (!vk_configured()) { cron_unlock(JOB); exit(0); }
+    /* НАРУЖУ НИЧЕГО НЕ УХОДИТ НОЧЬЮ И В ВОСКРЕСЕНЬЕ (правило владельца).
+     *
+     * Воркер идёт КАЖДУЮ МИНУТУ круглосуточно, а проверки окна у него не было
+     * вовсе: очередь, набитая вечером, уходила бы людям в личные сообщения
+     * ночью и в воскресенье. Сейчас выключатель `vk_dm_enabled` стоит в нуле и
+     * очередь пуста, поэтому беды не случилось - но держать это на одном
+     * выключателе нельзя: включат рассылку в пятницу вечером, и в субботу в три
+     * ночи центр постучится к людям в личку.
+     *
+     * Проверка та же, что у писем и записей в сообщества - одна на все наружные
+     * каналы (`core/outreach_window.php`). */
+    if (is_file(BASE_PATH . '/core/outreach_window.php')) {
+        require_once BASE_PATH . '/core/outreach_window.php';
+        if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
+            cron_log(JOB, 'личные сообщения ждут окна: ' . outreach_window_reason());
+            cron_unlock(JOB);
+            exit(0);
+        }
+    }
     if ((string) scalar("SELECT value FROM settings WHERE key='vk_dm_enabled'") === '0') {
         cron_unlock(JOB);
         exit(0);

@@ -122,6 +122,53 @@ foreach ($users as $u) {
     echo PHP_EOL;
 }
 
+
+/* ═══════════ ПРИЧИНА ОТКЛОНЕНИЯ ВИДНА УЧАСТНИКУ ═══════════
+ *
+ * Слово владельца 16.10.2026: «Дописать туда причину словами». Подпись под
+ * шкалой была одна на все отклонения, и человек читал отказ, не зная, за что.
+ * Тот же текст он уже получил письмом - кабинет и письмо обязаны говорить одно.
+ */
+echo str_repeat('─', 72) . PHP_EOL;
+echo "Причина отклонения видна участнику" . PHP_EOL;
+
+$__otkl = all("SELECT a.*, c.name AS comp_name, c.results_mode AS comp_results_mode,
+                      c.results_published_at AS comp_results_pub
+                 FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
+                WHERE a.status='rejected' ORDER BY a.id");
+$__бездПрич = []; $__немые = [];
+foreach ($__otkl as $__a) {
+    $__пр = trim((string) ($__a['reject_reason'] ?? ''));
+    if ($__пр === '') { $__бездПрич[] = (string) $__a['number']; continue; }
+    $__d = (string) (app_state($__a)['detail'] ?? '');
+    if (mb_strpos($__d, $__пр) === false) $__немые[] = (string) $__a['number'];
+}
+chk('у каждой отклонённой заявки с причиной она напечатана в подписи',
+    $__немые === [], count($__otkl) . ' шт., молчат: ' . (implode(', ', array_slice($__немые, 0, 5)) ?: 'нет'));
+if ($__бездПрич) echo "  --   без причины в базе: " . count($__бездПрич) . " ("
+                    . implode(', ', array_slice($__бездПрич, 0, 5)) . ")" . PHP_EOL;
+
+/* НЕПОЛНЫЙ SELECT ПРИЧИНУ НЕ ПРЯЧЕТ (урок правила 47): в половине разделов
+   строка приходит укороченной, и подпись пропала бы молча. */
+$__узк = $__otkl ? one("SELECT id, status, competition_id, is_paid FROM applications WHERE id=?",
+                       [(int) $__otkl[0]['id']]) : null;
+chk('причина подтягивается и при неполном SELECT',
+    $__узк !== null && mb_strpos((string) app_state($__узк)['detail'], 'Причина:') !== false);
+
+/* ПУСТАЯ ПРИЧИНА НЕ ДАЁТ ХВОСТА «Причина:» - пустое двоеточие читается как
+   потерянный текст. Судим на подставном массиве: аудит в базу не пишет. */
+$__пусто = app_state(['id' => 0, 'status' => 'rejected', 'reject_reason' => '']);
+chk('без причины подпись прежняя, без висящего «Причина:»',
+    (string) $__пусто['detail'] === 'Заявка отклонена оргкомитетом.', (string) $__пусто['detail']);
+
+/* Подпись печатается в кабинете и экранируется: функция может отдавать верный
+   текст, а строки в шаблоне не быть вовсе (урок правила 47). */
+$__каб = (string) @file_get_contents(BASE_PATH . '/templates/site/pages/cabinet.php');
+chk('кабинет печатает подпись состояния',
+    mb_strpos($__каб, "\$stDetail = trim((string)(\$a['_state']['detail']") !== false
+    && mb_strpos($__каб, 'h($stDetail)') !== false);
+
+echo PHP_EOL;
 echo str_repeat('─', 72) . PHP_EOL;
 echo "PASS: $passes  FAIL: $fails" . PHP_EOL;
 exit($fails ? 1 : 0);

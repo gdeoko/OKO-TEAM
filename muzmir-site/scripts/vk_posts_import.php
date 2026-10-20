@@ -82,6 +82,10 @@ foreach ($args as $a) {
     }
     if ($title === '') $title = 'Запись #' . $postId;
 
+    /* Контактный хвост берём из настроек центра, а не из записи: см.
+       vkp_osvezhit_kontakty() в core/vk_promo.php. */
+    $text = vkp_osvezhit_kontakty($text);
+
     q("INSERT INTO vk_posts (slot, kind, title, text, attachment, source_post_id, active)
        VALUES (:s,'competition',:t,:x,:a,:p,1)
        ON CONFLICT(slot) DO UPDATE SET

@@ -173,6 +173,9 @@ function rm_award_hint(string $result): string {
  * Возвращает true, если письмо поставлено в очередь.
  */
 function result_mail_send(int $appId): bool {
+    if (!function_exists('ao_is_group') && is_file(BASE_PATH . '/core/award_offer.php')) {
+        require_once BASE_PATH . '/core/award_offer.php';
+    }
     $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
     if (!$a) return false;
     $c = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: [];
@@ -280,7 +283,7 @@ function result_mail_send(int $appId): bool {
             . ' Награда с Вашим именем - памятное подтверждение успеха для дома, сцены и портфолио.</p>'
             // Дальше не описание словами, а сами награды: снимки того, что придёт
             // по почте, и цены по этому званию.
-            . ao_block((int) $a['competition_id'], $result, $awardsUrl);
+            . ao_block((int) $a['competition_id'], $result, $awardsUrl, ao_is_group($a));
         $hero = mm_cta_primary($awardsUrl, 'Заказать награды', 'По результату: ' . rm_award_name($result));
         // Кнопки как в ручном письме центра: Образцы наград ЭТОГО конкурса / Сроки / Отзыв.
         $awardsSamplesUrl = url('/awards') . '?comp=' . (int) $a['competition_id'];
@@ -439,6 +442,9 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
  * Без «Подать заявку».
  */
 function results_long_mail_html_multi(array $apps, array $c, string $vkUrl = '', string $docxUrl = '', string $posterUrl = ''): array {
+    if (!function_exists('ao_any_group') && is_file(BASE_PATH . '/core/award_offer.php')) {
+        require_once BASE_PATH . '/core/award_offer.php';
+    }
     $apps = array_values(array_filter($apps, static fn($x): bool => is_array($x) && trim((string) ($x['result'] ?? '')) !== ''));
     if (!$apps) $apps = [['result' => 'ЛАУРЕАТ I СТЕПЕНИ']];
     $a = $apps[0];
@@ -553,7 +559,7 @@ function results_long_mail_html_multi(array $apps, array $c, string $vkUrl = '',
     // Витрина одна на письмо. Когда заявок несколько, берём высшее из званий —
     // по нему положен самый весомый трофей, а дипломы и благодарность доступны
     // при любом. Именной диплом показываем, если хоть одна заявка коллективная.
-    $isGroup = false; $topResult = trim((string) ($a['result'] ?? ''));
+    $isGroup = ao_any_group($apps); $topResult = trim((string) ($a['result'] ?? ''));
     $rank = static function (string $r): int {
         $r = mb_strtoupper($r);
         if (str_contains($r, 'ГРАН-ПРИ'))  return 3;
@@ -562,7 +568,6 @@ function results_long_mail_html_multi(array $apps, array $c, string $vkUrl = '',
         return 0;
     };
     foreach ($apps as $ap) {
-        if (trim((string) ($ap['group_name'] ?? '')) !== '') $isGroup = true;
         if ($rank((string) ($ap['result'] ?? '')) > $rank($topResult)) $topResult = trim((string) $ap['result']);
     }
     if (!function_exists('ao_block') && is_file(BASE_PATH . '/core/award_offer.php')) {

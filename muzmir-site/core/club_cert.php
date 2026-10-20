@@ -125,15 +125,22 @@ function club_cert_html(array $user, array $status): string {
 
   <div class="content">
     <img class="logo" src="<?= h($logo) ?>" alt="">
+    <?php if (!function_exists('club_free_limit') && is_file(BASE_PATH . '/core/club_free.php')) require_once BASE_PATH . '/core/club_free.php'; ?>
     <div class="org">Культурный центр «Музыкальный&nbsp;Мир»</div>
     <div class="title">Сертификат</div>
     <div class="subtitle">участника Клуба постоянных участников</div>
     <div class="rule"></div>
     <div class="lead">Настоящим удостоверяется, что</div>
     <div class="name"><?= h($name) ?></div>
+    <?php /* ЗДЕСЬ БЫЛО СНЯТОЕ ОБЕЩАНИЕ. Привилегию «закрытые конкурсы Клуба» владелец
+             снял 15.10.2026 (правило 69) и заменил заявками без оргвзноса, но в сертификате
+             она осталась - а это документ, который человек получает на руки. Число льготных
+             заявок берём у club_free_limit(): вписанная копия устареет молча. */ ?>
     <div class="desc">является участником Клуба постоянных участников Культурного центра «Музыкальный Мир»
       и пользуется всеми привилегиями Клуба: скидкой <?= (int) $pct ?>% на все платные услуги, ускоренной
-      аттестацией конкурсных работ, приоритетной поддержкой и доступом к закрытым конкурсам Клуба.</div>
+      аттестацией конкурсных работ, приоритетной поддержкой и правом подать до
+      <?= (int) (function_exists('club_free_limit') ? club_free_limit() : 3) ?> заявок в месяц
+      без организационного взноса в платном конкурсе.</div>
     <div class="facts">
       <div class="fact"><b><?= h($cardNo) ?></b><span>номер карты</span></div>
       <?php if ($since !== ''): ?><div class="fact"><b><?= h($since) ?></b><span>в клубе с</span></div><?php endif; ?>

@@ -14,14 +14,14 @@
 declare(strict_types=1);
 
 /**
- * Оценённые и отклонённые заявки конкурса.
+ * ОТБОР РАЗОБРАННЫХ - ОДИН НА ВСЕ МЕРКИ: и на строки, и на их число.
  *
  * @param int    $comp  конкурс; 0 — все
  * @param string $q     поисковая строка (многословная, регистронезависимая)
- * @param string $order 'new' — новые сверху, иначе старые сверху
  * @param string $scope 'short' — только короткие, 'long' — только длинные, '' — любые
+ * @return array{0:string,1:array} условие WHERE и его значения
  */
-function graded_rows(int $comp = 0, string $q = '', string $order = 'new', string $scope = ''): array {
+function graded_rows_where(int $comp, string $q, string $scope): array {
     // Разобранная заявка — это либо выставленный результат, либо отклонение.
     $w = "(COALESCE(a.result,'') <> '' OR a.status = 'rejected')";
     $args = [];
@@ -36,19 +36,61 @@ function graded_rows(int $comp = 0, string $q = '', string $order = 'new', strin
                                   'a.extra_diploma','c.name'], $q);
         if ($sq !== '') { $w .= " AND ($sq)"; $args = array_merge($args, $sa); }
     }
+    return [$w, $args];
+}
+
+/**
+ * СКОЛЬКО РАЗОБРАННЫХ ЗАЯВОК ЕСТЬ НА САМОМ ДЕЛЕ.
+ *
+ * Отбор берётся у graded_rows_where(), а не повторяется здесь: копия условия
+ * расходится с выборкой МОЛЧА, и тогда подпись «показаны 1-100 из 715» врёт
+ * ровно в том месте, где её читают. Эта грабля в проекте оплачена трижды
+ * (правила 33, 35, 45).
+ */
+function graded_rows_count(int $comp = 0, string $q = '', string $scope = ''): int {
+    [$w, $args] = graded_rows_where($comp, $q, $scope);
+    return (int) (scalar("SELECT COUNT(*)
+                            FROM applications a
+                            LEFT JOIN competitions c ON c.id = a.competition_id
+                           WHERE $w", $args) ?? 0);
+}
+
+/**
+ * Страница разобранных заявок.
+ *
+ * ПОТОЛОК «LIMIT 500» СНЯТ, И ЭТО НЕ РИСК, А ПОЧИНКА. Он стоял здесь без
+ * счётчика и без подписи: у «Величия России» разобранных 851, раздел показывал
+ * 500 и ставил на плашку то же число - то есть 351 заявка пропадала из архива,
+ * не оставив ни строки о том, что список урезан. Длину страницы теперь задаёт
+ * вызывающий ($limit/$offset), а ноль значит «без потолка» - так ходят проверки,
+ * которым нужен весь список.
+ *
+ * @param int    $comp   конкурс; 0 — все
+ * @param string $q      поисковая строка (многословная, регистронезависимая)
+ * @param string $order  'new' — новые сверху, иначе старые сверху
+ * @param string $scope  'short' — только короткие, 'long' — только длинные, '' — любые
+ * @param int    $limit  длина страницы; 0 — без потолка
+ * @param int    $offset сколько строк пропустить
+ */
+function graded_rows(int $comp = 0, string $q = '', string $order = 'new', string $scope = '',
+                     int $limit = 0, int $offset = 0): array {
+    [$w, $args] = graded_rows_where($comp, $q, $scope);
 
     // Сортируем по МОМЕНТУ РАЗБОРА, а не по подаче: администратор ищет здесь то,
     // что оценил только что, — «новые оценённые» сверху. Отклонённые метки времени
     // не имеют, для них берём дату подачи.
     $dir = $order === 'old' ? 'ASC' : 'DESC';
+    // Числа подставляются в текст запроса, поэтому приводим их сами: строка,
+    // уехавшая в SQL, роняет запрос, а catch отдаёт пустоту - и список слепнет
+    // молча (правило 55).
+    $lim = $limit > 0 ? ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, (int) $offset) : '';
     return all(
         "SELECT a.*, c.name comp, c.results_mode, c.results_date, c.results_published_at,
                 c.is_paid comp_is_paid, c.slug comp_slug
            FROM applications a
            LEFT JOIN competitions c ON c.id = a.competition_id
           WHERE $w
-          ORDER BY COALESCE(NULLIF(a.graded_at,''), a.created_at) $dir, a.id $dir
-          LIMIT 500", $args);
+          ORDER BY COALESCE(NULLIF(a.graded_at,''), a.created_at) $dir, a.id $dir" . $lim, $args);
 }
 
 /**

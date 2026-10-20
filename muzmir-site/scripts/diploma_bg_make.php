@@ -27,6 +27,7 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/afisha_prompt.php';
+require_once BASE_PATH . '/core/bastion_cdp.php';
 
 $cid = (int) ($argv[1] ?? 0);
 $dry = in_array('--dry', $argv, true);
@@ -99,7 +100,7 @@ echo "Отправляю промпт…\n";
 $bastion('cat > /opt/oko-poster/' . $tag . '.txt <<\'PROMPT_EOF\'' . "\n" . $prompt . "\nPROMPT_EOF\necho ok", 60);
 echo "Генерирую фон A4…\n";
 // Порт браузера с входом в ChatGPT — см. пояснение в scripts/afisha_make.php.
-$bastion('cd /opt/oko-poster && CDP_URL=http://127.0.0.1:9222 nohup node gpt_image.mjs ' . $tag . '.txt ' . $remote
+$bastion('cd /opt/oko-poster && CDP_URL=' . bastion_cdp_url($bastion) . ' nohup node gpt_image.mjs ' . $tag . '.txt ' . $remote
        . ' 420 > /tmp/' . $tag . '.log 2>&1 & echo started', 60);
 
 $ready = false;

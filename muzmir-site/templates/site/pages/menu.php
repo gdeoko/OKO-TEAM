@@ -72,7 +72,7 @@ ob_start(); ?>
       <input type="search" id="menuSearchInput" placeholder="Поиск раздела…" autocomplete="off" aria-label="Поиск раздела">
     </div>
 
-    <a class="vip-banner reveal" href="<?= url('/club') ?>" aria-label="Закрытый Элитный клуб — привилегии, скидки и закрытые конкурсы">
+    <a class="vip-banner reveal" href="<?= url('/club') ?>" aria-label="Элитный клуб «Музыкальный Мир» — привилегии, скидки и заявки без оргвзноса">
       <span class="vip-shine" aria-hidden="true"></span>
       <span class="vip-banner-ic" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -80,8 +80,8 @@ ob_start(); ?>
         </svg>
       </span>
       <span class="vip-banner-txt">
-        <span class="vip-banner-title">Закрытый Элитный клуб</span>
-        <span class="vip-banner-sub">Привилегии, скидки и закрытые конкурсы для участников клуба</span>
+        <span class="vip-banner-title">Элитный клуб «Музыкальный&nbsp;Мир»</span>
+        <span class="vip-banner-sub">Привилегии, скидки и заявки без оргвзноса для участников клуба</span>
       </span>
       <svg class="vip-banner-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </a>

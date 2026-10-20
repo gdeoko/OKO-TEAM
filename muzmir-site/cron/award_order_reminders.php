@@ -254,8 +254,11 @@ function award_missing_kinds(array $apps, array $owned): array {
 
 /** Есть ли среди заявок коллективная — тогда предлагаем и именной диплом. */
 function award_any_group(array $apps): bool {
-    foreach ($apps as $a) if (trim((string) ($a['group_name'] ?? '')) !== '') return true;
-    return false;
+    // Признак коллектива у центра один — ao_any_group() в core/award_offer.php.
+    if (!function_exists('ao_any_group') && is_file(BASE_PATH . '/core/award_offer.php')) {
+        require_once BASE_PATH . '/core/award_offer.php';
+    }
+    return function_exists('ao_any_group') ? ao_any_group($apps) : false;
 }
 
 /** Перечень результатов адресата — когда заявок несколько. */

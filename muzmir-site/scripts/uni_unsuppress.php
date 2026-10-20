@@ -64,9 +64,23 @@ function uu_call(string $url, array $payload): ?array {
     return is_array($d) ? $d : null;
 }
 
-/* Список адресов. Либо один названный, либо очередь по типу кампании. */
+/* Список адресов. Либо один названный, либо очередь по типу кампании.
+ *
+ * --all-queued: ВСЕ адреса, которым мы должны письмо, без оглядки на домен и тип
+ * кампании. Суточного запаса снятий у сервиса около полусотни, и его целиком
+ * съедает ночная чистка скользящего окна в 07:15. Пометкам старше десяти дней
+ * окно не достаёт никогда — так шесть обращений в ведомства (.gov.ru, пометки
+ * от 01.09 и 15.09) остались бы запертыми навсегда: домен не mail.ru, возраст
+ * вне окна. Поэтому запас сначала тратится на тех, кому письмо уже выписано и
+ * лежит в очереди, и только потом на профилактику.
+ */
 if ($only !== '') {
     $emails = [$only];
+} elseif (isset($opt['all-queued'])) {
+    $rows = all("SELECT DISTINCT lower(to_email) e FROM mail_queue
+                  WHERE status='queued' AND COALESCE(to_email,'')<>''
+                  ORDER BY e LIMIT ?", [$limit]);
+    $emails = array_map(fn($r) => (string) $r['e'], $rows);
 } else {
     $rows = all("SELECT DISTINCT lower(to_email) e FROM mail_queue
                   WHERE status='queued' AND campaign_type=?

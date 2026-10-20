@@ -3,7 +3,7 @@
  * ПЕРЕРИСОВКА УЖЕ ВЫДАННЫХ НАГРАДНЫХ МАТЕРИАЛОВ ПОД ВЫВЕРЕННЫЙ БЛАНК.
  *
  *   php scripts/diploma_refresh_all.php [--dry] [--limit=N] [--type=main,extra,named,thanks]
- *                                       [--comp=18,21] [--clean] [--from=ID]
+ *                                       [--comp=18,21] [--clean] [--from=ID] [--app=ID]
  *
  * Зачем. Бланк выверен: просветы между разделами выровнены, длинные строки не
  * режутся краем, текст благодарности не лезет на подписи. Но у участников на
@@ -40,6 +40,12 @@ foreach (array_slice($argv, 1) as $arg) {
 $dry     = isset($opt['dry']);
 $limit   = (int) ($opt['limit'] ?? 0);
 $fromId  = (int) ($opt['from'] ?? 0);
+/* --app=ID: перерисовать наградные материалы ОДНОЙ заявки.
+ * Пересборка всей базы идёт час, а чаще всего чинят один заказ: поправили ФИО
+ * на именном, переписали конкурсный номер - и надо перевыпустить шесть бланков
+ * этой заявки, не трогая остальные. Через --from/--limit это делалось счётом
+ * по номерам строк и промахивалось. */
+$appOnly = (int) ($opt['app'] ?? 0);
 $types   = array_filter(array_map('trim', explode(',', (string) ($opt['type'] ?? ''))));
 $comps   = array_filter(array_map('intval', explode(',', (string) ($opt['comp'] ?? ''))));
 $doClean = isset($opt['clean']);
@@ -77,6 +83,7 @@ $args  = [];
 if ($types)  { $where[] = 'd.type IN (' . implode(',', array_fill(0, count($types), '?')) . ')'; $args = array_merge($args, $types); }
 if ($comps)  { $where[] = 'a.competition_id IN (' . implode(',', array_fill(0, count($comps), '?')) . ')'; $args = array_merge($args, $comps); }
 if ($fromId) { $where[] = 'd.id >= ?'; $args[] = $fromId; }
+if ($appOnly) { $where[] = 'd.application_id = ?'; $args[] = $appOnly; }
 
 $rows = all("SELECT d.*, a.competition_id, a.number app_number
              FROM diplomas d JOIN applications a ON a.id = d.application_id
@@ -115,8 +122,14 @@ foreach ($onlyClean ? [] : $rows as $i => $d) {
         printf("  [%d/%d] №%s %-6s — НЕ СОБРАЛСЯ\n", $i + 1, count($rows), (string) $d['number'], $type);
         continue;
     }
-    // Путь в базе хранится веб-адресом (/diplomas/...), а рендер отдаёт файл на диске.
-    $web = '/diplomas/' . basename((string) $new);
+    /* Путь в базе хранится веб-адресом (/diplomas/...), а рендер отдаёт файл на
+     * диске. Мерку берём ОБЩУЮ - `diploma_store_path()`, ту же, что у всех
+     * остальных точек записи. Своё `'/diplomas/' . basename()` давало тот же
+     * ответ, но теряет подпапку: положи рендер файл в `public/diplomas/2026/`,
+     * и путь в реестре стал бы неверным, а ссылка «файл» перестала открываться
+     * молча. Заодно это снимает разночтение: одна мерка легко проверяется
+     * аудитом, восемь похожих строк - нет. */
+    $web = diploma_store_path((string) $new);
     if ($web !== $old) {
         update('diplomas', ['pdf_path' => $web], 'id=:id', ['id' => (int) $d['id']]);
         $ok++;

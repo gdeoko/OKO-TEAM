@@ -100,8 +100,35 @@ $cronMtime = is_file($cronLog) ? (int) @filemtime($cronLog) : 0;
 $cronAgeM  = $cronMtime ? (int) floor((time() - $cronMtime) / 60) : null;
 $cronOk    = $cronAgeM !== null && $cronAgeM < 90;
 
-$mailFailed   = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'");
+/* ПОЧТА: СОСТОЯНИЕ ЗА СУТКИ, А НЕ ИТОГ ЗА ВСЮ ЖИЗНЬ.
+   Раньше здесь считались ВСЕ письма со status='failed' с самого первого дня, и
+   строка красилась в «Сбой» при любом ненулевом счёте. Один отказ в августе
+   держал панель красной в октябре: владелец читал «ошибок: 1566» как «письма
+   никому не доходят», хотя почта в этот момент отдавала 842 доставленных из 852
+   за сутки. Теперь состояние считается по живому окну, а итог за всё время
+   остаётся рядом подписью истории. */
+$mailFailed     = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'
+                                 AND COALESCE(sent_at, created_at) >= datetime('now','localtime','-1 day')");
+$mailFailedAll  = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'");
+$mailSentDay    = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent'
+                                 AND sent_at >= datetime('now','localtime','-1 day')");
 $mailLastSent = scalar("SELECT MAX(sent_at) FROM mail_queue WHERE status='sent' AND sent_at IS NOT NULL");
+
+/* Доходят ли письма — спрашиваем у событий доставки, а не у своей очереди.
+   status='sent' значит «мы отдали письмо шлюзу», и ничего больше. Ответ
+   получателя лежит в mail_events: delivered / hard_bounced. */
+$mailDeliv24 = (int) scalar("SELECT COUNT(*) FROM mail_events WHERE status='delivered'
+                              AND event_time >= datetime('now','localtime','-1 day')");
+$mailGate24  = (int) scalar("SELECT COUNT(*) FROM mail_events WHERE status='sent'
+                              AND event_time >= datetime('now','localtime','-1 day')");
+$mailBounce24= (int) scalar("SELECT COUNT(*) FROM mail_events WHERE status='hard_bounced'
+                              AND event_time >= datetime('now','localtime','-1 day')");
+/* Писем, готовых уйти прямо сейчас: очередь из 15 тысяч холодных писем, разложенная
+   по дневной норме домена, это НЕ затор. Затором было бы «готово к отправке, а не
+   уходит». */
+$mailReadyNow = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'
+                               AND (scheduled_at IS NULL OR scheduled_at = ''
+                                    OR scheduled_at <= datetime('now','localtime'))");
 
 $payReady   = trim((string) cfgv('yukassa_shop', '')) !== '' && trim((string) cfgv('yukassa_secret', '')) !== '';
 $payPending = (int) scalar("SELECT COUNT(*) FROM payments WHERE status='pending'");
@@ -465,10 +492,32 @@ if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
             $cronAgeM === null ? 'Журнал запусков пуст' : ('Последний запуск ' . ($cronAgeM < 1 ? 'только что' : $cronAgeM . ' мин назад')),
             $cronOk ? 'ok' : ($cronAgeM === null ? 'off' : 'warn'));
 
-        $mailSub = 'В очереди: ' . $queue_wait . ($mailFailed ? ' · ошибок: ' . $mailFailed : '')
-                 . ($mailLastSent ? ' · последнее ' . h(date('d.m H:i', strtotime((string)$mailLastSent))) : '');
-        echo dash_sys_row('newsletter', 'Почтовая рассылка', $mailSub,
-            $mailFailed > 0 ? 'err' : ($queue_wait > 50 ? 'warn' : 'ok'));
+        /* Главное в строке — ДОШЛИ ЛИ ПИСЬМА за сутки, а не сколько их в очереди.
+           Отказы за сутки показываются рядом, итог за всё время — подписью
+           «за всё время», чтобы его нельзя было прочитать как сегодняшнюю беду. */
+        $mailParts = [];
+        if ($mailGate24 > 0) {
+            $mailParts[] = 'доставлено за сутки: ' . $mailDeliv24 . ' из ' . $mailGate24;
+        } elseif ($mailSentDay > 0) {
+            $mailParts[] = 'отправлено за сутки: ' . $mailSentDay . ' (ответ шлюза ещё не пришёл)';
+        } else {
+            $mailParts[] = 'за сутки не отправлено ни одного';
+        }
+        if ($mailBounce24 > 0) $mailParts[] = 'не принято адресатами: ' . $mailBounce24;
+        if ($mailFailed > 0)   $mailParts[] = 'сбоев отправки за сутки: ' . $mailFailed;
+        $mailParts[] = 'в очереди: ' . $queue_wait;
+        if ($mailLastSent) $mailParts[] = 'последнее ' . date('d.m H:i', strtotime((string) $mailLastSent));
+        if ($mailFailedAll > $mailFailed) $mailParts[] = 'за всё время сбоев: ' . $mailFailedAll;
+        $mailSub = implode(' · ', $mailParts);
+
+        /* «Сбой» ставим только там, где почта ДЕЙСТВИТЕЛЬНО встала: есть что
+           отправлять, а за сутки не ушло ничего. Свежие единичные отказы при
+           живой отправке — это «Внимание», а не сбой: часть адресов в базе
+           мёртвая, и это нормальный шум рассылки. */
+        $mailMuch  = $mailGate24 > 0 ? $mailFailed > $mailGate24 * 0.2 : $mailFailed > 0;
+        $mailState = ($mailReadyNow > 0 && $mailSentDay === 0) ? 'err'
+                   : (($mailMuch || $queue_wait > 50000) ? 'warn' : 'ok');
+        echo dash_sys_row('newsletter', 'Почтовая рассылка', $mailSub, $mailState);
 
         $paySub = $payReady
             ? ('ЮKassa подключена' . ($payPending ? ' · ожидают: ' . $payPending : '') . ($payLast ? ' · оплата ' . h(date('d.m', strtotime((string)$payLast))) : ''))

@@ -103,7 +103,27 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
     // пять рабочих дней с того дня, когда отправил работу, и ускорение оценки
     // машиной не должно превращаться в письмо через час после подачи.
     if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
-    $wdays = (!empty($cur['user_id']) && function_exists('club_is_active') && club_is_active((int) $cur['user_id'])) ? 3 : 5;
+    /* ЛЕСТНИЦА СРОКОВ СЧИТАЕТСЯ В ОДНОМ МЕСТЕ — core/prioritet.php: обычный 5,
+     * учреждение-партнёр 4, Элитный клуб 3 (правило 37, подтверждено владельцем
+     * 13.10.2026). Тем же источником живут админка и срок наградных дипломов.
+     *
+     * ЗДЕСЬ СТОЯЛО ТОЛЬКО «клуб 3, иначе 5», И ПАРТНЁРСКАЯ ЧЕТВЁРКА НЕ
+     * ПРИМЕНЯЛАСЬ К РЕЗУЛЬТАТУ ВОВСЕ. Это была не экономия, а расхождение
+     * обещания с кодом: «Приоритетная аттестация, результаты за 4 рабочих дня
+     * вместо 5» стоит в письме о партнёрстве, в холодном охвате учреждений и в
+     * посте про статус партнёра, а `partner_priority_days` читал один
+     * `cron/send_diplomas.php` - то есть срок НАГРАДНЫХ ДИПЛОМОВ короткого
+     * ПЛАТНОГО конкурса. Партнёрских заявок в платных конкурсах на 14.10.2026
+     * ноль, значит обещанная четвёрка не действовала нигде ни разу, а результат
+     * 41 принятому учреждению шёл общим пятидневным сроком.
+     *
+     * У ДЛИННОГО конкурса счёта дней нет вовсе: итоги оглашаются списком в
+     * объявленную дату (`results_date`), и prioritet отдаёт ноль. Ветка ниже и
+     * так работает только при `!$isLong`, но общий срок последним рубежом стоит:
+     * ноль в working_days_add() отправил бы результат сию минуту. */
+    require_once BASE_PATH . '/core/prioritet.php';
+    $wdays = (int) prioritet_zayavki($cur)['дней_результат'];
+    if ($wdays <= 0) $wdays = PRIORITET_SROK_OBSHIY;
     $submitted = (string) ($cur['created_at'] ?? '');
 
     $mode = (string) ($opt['send_mode'] ?? 'auto');
@@ -115,6 +135,20 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
             default => result_plan_at($submitted, true, '', $wdays),
         };
     }
+    /* У ДЛИННОГО КОНКУРСА ПЕРСОНАЛЬНОГО СРОКА НЕТ ВОВСЕ, И ЭТО СЛОВО ВЛАДЕЛЬЦА.
+     *
+     * 16.10.2026 он сузил правку того же дня (правило 73и): «во всех остальных
+     * случаях оценки результат должен уходить как и всем остальным участникам,
+     * согласно списку», а выбор времени нужен только там, где нажата кнопка
+     * «Отклонить заявку» (правило 73к). Поэтому $resultAt у длинного конкурса
+     * остаётся пустым при ЛЮБОМ режиме: итоги копятся и уходят каждому
+     * участнику одним пакетом в день оглашения (cron/publish_results_vk.php).
+     *
+     * ОБЕЩАНИЕ ДЕРЖИТ КОД, А НЕ ОТСУТСТВИЕ ПОЛЯ В ФОРМЕ. Убрать выбор только из
+     * карточки оценки значило бы оставить живую ветку, до которой доходит любой
+     * POST с send_now=1, и следующая правка формы включила бы её молча.
+     * Время письма ОТКЛОНЁННОМУ участнику живёт в grade_reject_application():
+     * у отказа своя дорога, своё письмо и своя очередь. */
     $resultSendAt = $resultAt ? $resultAt->format('Y-m-d H:i:s') : '';
     $out['send_at'] = $resultSendAt;
 
@@ -148,7 +182,21 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
     // Срок наступил — письмо уходит сейчас; иначе его отправит cron/send_diplomas
     // по result_send_at. У длинного конкурса письма нет: итоги публикуются списком.
     $dueNow = $resultAt && $resultAt <= new DateTime('now');
-    if (!$isLong && ($firstGrade || $changed) && $dueNow) {
+    /* ПИСЬМО УХОДИТ ТАМ, ГДЕ СРОК НАЗНАЧЕН И НАСТУПИЛ. У длинного конкурса в
+     * режиме auto срока нет вовсе ($resultAt === null), и условие само его не
+     * берёт - проверка на $isLong тут больше не нужна и мешала бы выбору
+     * оператора «отправить сейчас» у КОРОТКОГО конкурса (правила 73и, 73к). */
+    /* «ОТПРАВИТЬ СЕЙЧАС» ОБЯЗАНО ОТПРАВИТЬ СЕЙЧАС, А НЕ ЖДАТЬ КРОНА.
+     *
+     * Условие было «первая оценка или итог изменился», и у заявки, которую уже
+     * оценили тем же званием, кнопка «Отправить сейчас (моментально)» письма не
+     * слала вовсе: срок ставился в прошлое, и письмо уходило очередным заходом
+     * крона - до десяти минут позже, а оператор читал «результат отправлен» и
+     * считал дело сделанным. Теперь явный выбор человека равен поводу отправить,
+     * но ТОЛЬКО пока письма не было: повторная отправка того же результата это
+     * второе письмо об одном и том же (правило 55). */
+    $ещёНеУшло = trim((string) ($cur['result_sent_at'] ?? '')) === '';
+    if (($firstGrade || $changed || ($mode === 'now' && $ещёНеУшло)) && $dueNow) {
         if (is_file(BASE_PATH . '/core/result_mail.php'))   require_once BASE_PATH . '/core/result_mail.php';
         if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
         if (function_exists('result_mail_send')) {
@@ -198,7 +246,7 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
     }
 
     $out['ok'] = true;
-    $out['msg'] .= $isLong
+    $out['msg'] .= ($isLong && $resultSendAt === '')
         ? 'Итог сохранён, публикуется списком 28-го числа.'
         : ($out['sent'] ? 'Итог сохранён, результат отправлен участнику.'
                         : 'Итог сохранён, результат уйдёт ' . ($resultSendAt !== '' ? date('d.m.Y H:i', strtotime($resultSendAt)) : 'по расписанию') . '.');
@@ -218,10 +266,23 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
  *
  * @param string $reason  причина 1:1 из положения (см. REJECT_REASONS)
  * @param string $source  'jury' | 'ai'
+ * @param array  $opt     'без_возврата' => true  - деньги не трогать вовсе;
+ *                        'без_письма'   => true  - своё письмо не отправлять.
+ *
+ * ЗАЧЕМ ЭТИ ДВА КЛЮЧА. Оба шага двери необратимы и оба про человека: возврат
+ * уходит в кассу, письмо - на почту. Бывает снятие, где владелец возвращает
+ * деньги САМ руками (правило 8а: движение денег клиента только его словом, и
+ * агент их не двигает никогда) и где причина снятия не отказ жюри, а наша
+ * ошибка - тогда нужно своё письмо, а не шаблон «не принята к участию» с
+ * пунктом положения. Так было 16.10.2026 с заявками в «Мировой акцент»
+ * (правило 72). Ключи выключены по умолчанию: все прежние вызывающие
+ * передают три аргумента, и поведение двери для них не изменилось.
+ * Обходить дверь прямым UPDATE нельзя: за отклонением тянется снятие
+ * наградных материалов и возврат партнёрской скидки.
  * @return array{ok:bool,msg:string,mailed:bool,refunded:int,refund_error:string}
  */
-function grade_reject_application(int $appId, string $reason, string $source = 'jury'): array {
-    $out = ['ok' => false, 'msg' => '', 'mailed' => false, 'refunded' => 0, 'refund_error' => ''];
+function grade_reject_application(int $appId, string $reason, string $source = 'jury', array $opt = []): array {
+    $out = ['ok' => false, 'msg' => '', 'mailed' => false, 'refunded' => 0, 'refund_error' => '', 'mail_at' => ''];
     $reason = trim($reason);
     if ($appId <= 0 || $reason === '') { $out['msg'] = 'нужны заявка и причина'; return $out; }
 
@@ -243,7 +304,7 @@ function grade_reject_application(int $appId, string $reason, string $source = '
 
     // Оргвзнос платной заявки возвращается автоматически (п. 7.6.1 положения).
     $refunded = false;
-    if ((int) ($a['is_paid'] ?? 0) === 1) {
+    if ((int) ($a['is_paid'] ?? 0) === 1 && empty($opt['без_возврата'])) {
         require_once BASE_PATH . '/core/payments.php';
         try {
             $r = refund_application($appId, $reason);
@@ -257,7 +318,7 @@ function grade_reject_application(int $appId, string $reason, string $source = '
     }
 
     // Письмо участнику: причина, возврат и — пока идёт приём — приглашение подать заново.
-    if (trim((string) $a['email']) !== '' && is_file(BASE_PATH . '/core/result_mail.php')) {
+    if (empty($opt['без_письма']) && trim((string) $a['email']) !== '' && is_file(BASE_PATH . '/core/result_mail.php')) {
         require_once BASE_PATH . '/core/result_mail.php';
         try {
             $name  = trim((string) $a['full_name']);
@@ -327,11 +388,23 @@ function grade_reject_application(int $appId, string $reason, string $source = '
              * Теперь нерабочее время сдвигает отправку на ближайшее рабочее:
              * пн-сб, с девяти утра. Работа при этом отклоняется сразу — ждёт
              * только письмо. */
+            /* ВРЕМЯ ПИСЬМА ВЫБИРАЕТ ЧЕЛОВЕК, А ОКНО ПРОВЕРЯЕТ КОД (правило 73к).
+             * В «Оценке длинных» выбор «когда отправить результат участнику»
+             * живёт ровно здесь - в отклонении: оценка уходит пакетом со
+             * списком, а отклонённая заявка в список не попадает вовсе, и
+             * письмо ей нужно своё. Назначенное время проходит через то же
+             * окно отправки: оператор мог поставить воскресенье или полночь, а
+             * наружу ночью ничего не уходит (правило 7). Выбора нет - как
+             * раньше, ближайшее рабочее время. */
+            $когда = trim((string) ($opt['письмо_в'] ?? ''));
+            $стамп = $когда !== '' ? (int) strtotime($когда) : 0;
+            $план  = $стамп > 0 ? ga_next_worktime($стамп) : ga_next_worktime();
+            $out['mail_at'] = $план;
             $out['mailed'] = mail_queue((string) $a['email'], $name,
                 $canReapply
                     ? 'Заявка №' . (string) $a['number'] . ' — устраните причину и подайте заново'
                     : 'Заявка №' . (string) $a['number'] . ' не принята к участию',
-                $html, '', ga_next_worktime()) > 0;
+                $html, '', $план) > 0;
         } catch (\Throwable $e) { /* письмо не должно ломать отклонение */ }
     }
 
@@ -343,9 +416,17 @@ function grade_reject_application(int $appId, string $reason, string $source = '
 
     $out['ok']  = true;
     $out['msg'] = 'Заявка отклонена.'
-        . ($out['mailed'] ? ' Участнику отправлено письмо с причиной и предложением подать заново.' : '')
+        . ($out['mailed']
+              ? ($out['mail_at'] !== ''
+                    /* «Отправлено» и «поставлено на 17.10 09:00» это разные вещи, и
+                       оператор обязан прочитать ту, которая правда произошла. */
+                    ? ' Письмо участнику с причиной поставлено в очередь на ' . date('d.m.Y H:i', strtotime($out['mail_at'])) . '.'
+                    : ' Участнику отправлено письмо с причиной и предложением подать заново.')
+              : '')
         . ($out['refunded'] > 0 ? ' Возврат ' . $out['refunded'] . ' ₽ отправлен в ЮKassa.' : '')
-        . ($out['refund_error'] !== '' ? ' ВНИМАНИЕ: автовозврат не прошёл (' . $out['refund_error'] . ') — верните вручную в ЛК ЮKassa.' : '');
+        . ($out['refund_error'] !== '' ? ' ВНИМАНИЕ: автовозврат не прошёл (' . $out['refund_error'] . ') — верните вручную в ЛК ЮKassa.' : '')
+        . (!empty($opt['без_возврата']) && (int) ($a['is_paid'] ?? 0) === 1
+              ? ' Оргвзнос автоматически НЕ возвращён: возврат проводится вручную.' : '');
     return $out;
 }
 
@@ -358,13 +439,21 @@ function grade_reject_application(int $appId, string $reason, string $source = '
  *
  * @return string 'Y-m-d H:i:s' или '' — если сейчас рабочее время и ждать нечего.
  */
-function ga_next_worktime(): string {
+function ga_next_worktime(int $ts = 0): string {
     $from = (int) (function_exists('cfgv') ? cfgv('OUTREACH_HOUR_FROM', 9) : 9);
     $to   = (int) (function_exists('cfgv') ? cfgv('OUTREACH_HOUR_TO', 19) : 19);
-    $now  = time();
+    /* ОДНО ОКНО НА ВЕСЬ ЦЕНТР, И ОНО ЖЕ СУДИТ НАЗНАЧЕННОЕ ЧЕЛОВЕКОМ ВРЕМЯ.
+     *
+     * Без аргумента - «когда можно отправить сейчас»: пусто значит сразу.
+     * С меткой времени - «можно ли в это время»: внутри окна возвращается оно
+     * само, вне окна и в воскресенье ближайшее рабочее утро после него. Вторая
+     * копия условия про часы и воскресенье разошлась бы молча (правила 33, 45,
+     * 54), а письма людям в час ночи уже уходили - ровно за это тут и стоит
+     * окно (правило 7). */
+    $now  = $ts > 0 ? $ts : time();
     $h    = (int) date('G', $now);
     $dow  = (int) date('N', $now);
-    if ($dow !== 7 && $h >= $from && $h < $to) return '';      // сейчас можно
+    if ($dow !== 7 && $h >= $from && $h < $to) return $ts > 0 ? date('Y-m-d H:i:s', $ts) : '';
 
     for ($i = 0; $i < 8; $i++) {
         $d = strtotime('+' . $i . ' day', $now);

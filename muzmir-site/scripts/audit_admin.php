@@ -127,12 +127,47 @@ chk('есть вкладки состояния', stripos($r['body'], 'f=') !== 
 $dig = (int) scalar("SELECT COUNT(*) FROM awards_orders WHERE items LIKE '%\"kind\":\"digital\"%'");
 ok('электронных заказов в базе', (string) $dig);
 if ($dig > 0) {
-    $o = one("SELECT * FROM awards_orders WHERE items LIKE '%\"kind\":\"digital\"%' ORDER BY id DESC LIMIT 1");
-    chk('заказ виден в разделе', strpos($r['body'], (string) ($o['full_name'] ?? '')) !== false
-        || strpos($r['body'], '№' . (int) $o['id']) !== false, 'заказ #' . (int) $o['id']);
-    $r2 = http($AJAR, $BASE . '/admin/?p=digital&q=' . rawurlencode(mb_substr((string) $o['full_name'], 0, 8)));
-    chk('поиск в разделе работает', $r2['code'] === 200
-        && strpos($r2['body'], (string) $o['full_name']) !== false);
+    /* БЕРЁМ ЗАКАЗ, КОТОРОМУ В РАЗДЕЛЕ ПРАВДА ЕСТЬ ЧТО ПОКАЗАТЬ. Раздел «Заказы
+       электронных наград» построен на ВЫДАННЫХ бланках (`diplomas`), а у свежего
+       НЕОПЛАЧЕННОГО заказа их ещё нет: он честно не виден, и проверка краснела на
+       исправном сайте. Так случилось 15.10.2026 с заказом №521 (NR-2026-00098,
+       оформлен в 15:36, взнос не закрыт) - красное на ровном месте, а оно прячет
+       настоящие отказы (правило 47). Поэтому ищем последний заказ С БЛАНКАМИ. */
+    $o = one("SELECT o.* FROM awards_orders o
+               WHERE o.items LIKE '%\"kind\":\"digital\"%'
+                 AND EXISTS(SELECT 1 FROM diplomas d WHERE d.application_id = o.application_id)
+            ORDER BY o.id DESC LIMIT 1");
+    if (!$o) $o = one("SELECT * FROM awards_orders WHERE items LIKE '%\"kind\":\"digital\"%' ORDER BY id DESC LIMIT 1");
+    /* ИМЯ ИЩЕМ ТО, КОТОРОЕ РАЗДЕЛ ПРАВДА ПЕЧАТАЕТ.
+     *
+     * В заказе лежит ФИО плательщика, а раздел у заявки КОЛЛЕКТИВА показывает
+     * название коллектива: у такой заявки `full_name` пуст вовсе. Заказ №475
+     * (хор «Сельчаночка», оформила Путилина Н. А.) из-за этого числился
+     * «невидимым в разделе», и поиск «не работал» - при живом разделе и верном
+     * списке. Красное на ровном месте опасно: именно так в этом же файле не был
+     * замечен настоящий отказ вкладки «Готовые и отправка». */
+    $oApp = one("SELECT full_name, group_name, is_group, number FROM applications WHERE id=?",
+                [(int) ($o['application_id'] ?? 0)]);
+    $oWho = trim((string) ($oApp['is_group'] ?? 0 ? ($oApp['group_name'] ?? '') : ($oApp['full_name'] ?? '')));
+    if ($oWho === '') $oWho = trim((string) ($o['full_name'] ?? ''));
+    /* НА СТРАНИЦЕ ИМЯ ЭКРАНИРОВАНО. У этого коллектива в названии стоят прямые
+       кавычки («Народный коллектив" хор "Сельчаночка»), и в HTML они выходят как
+       &quot;: поиск сырой строки не находил ЖИВУЮ строку списка. Сверяем так,
+       как страница и печатает. */
+    $oWhoH = $oWho !== '' ? htmlspecialchars($oWho, ENT_QUOTES, 'UTF-8') : '';
+    $oNum  = (string) ($oApp['number'] ?? '');
+    $виден = static fn(string $body): bool
+        => ($oWhoH !== '' && strpos($body, $oWhoH) !== false)
+        || ($oNum !== '' && strpos($body, $oNum) !== false);
+    /* Смотрим на вкладке «все»: у раздела по умолчанию стоит «ждут отправки», и
+       уже отправленный бланк на ней законно не показывается. */
+    $rAll = http($AJAR, $BASE . '/admin/?p=digital&f=all');
+    chk('заказ виден в разделе', $виден($r['body']) || $виден($rAll['body']),
+        'заказ #' . (int) $o['id'] . ', ' . $oNum);
+    /* Ищем по номеру заявки: он печатается всегда и не зависит ни от кавычек в
+       названии коллектива, ни от того, чьё ФИО стоит в заказе. */
+    $r2 = http($AJAR, $BASE . '/admin/?p=digital&q=' . rawurlencode($oNum));
+    chk('поиск в разделе работает', $r2['code'] === 200 && $виден($r2['body']), $oNum);
 }
 
 /* ───────── галочки Элитного клуба ───────── */
@@ -203,11 +238,24 @@ $sections = [
     'Электронные заказы' => '/admin/?p=digital&f=all',
     'Пользователи'       => '/admin/?p=users',
 ];
-if ($dipComp > 0) $sections['Дипломы'] = '/admin/?p=diplomas&competition=' . $dipComp . '&tab=made';
+/* ВКЛАДКУ НАЗЫВАЕМ ТАК, КАК ЕЁ ЗОВЁТ САМ РАЗДЕЛ. Здесь стояло `tab=made`,
+   а вкладок у «Дипломов» две - `ready` и `sent`; неизвестное имя раздел молча
+   читал как `ready`, и проверка годами открывала СПИСОК ЗАЯВОК БЕЗ ДИПЛОМА
+   вместо реестра готовых бланков. Из-за этого не был замечен живой отказ: с
+   13.10.2026 вкладка «Готовые и отправка» падала в 500 у каждого конкурса с
+   дипломами («Call to undefined function dops_diploma_person()»), и ни один
+   аудит на неё не заходил. Проверяем ОБЕ вкладки. */
+if ($dipComp > 0) {
+    $sections['Дипломы · к генерации']   = '/admin/?p=diplomas&competition=' . $dipComp . '&tab=ready';
+    $sections['Дипломы · готовые']       = '/admin/?p=diplomas&competition=' . $dipComp . '&tab=sent';
+}
 $withMark = 0;
 foreach ($sections as $title => $path) {
     $r = http($AJAR, $BASE . $path);
     chk("«{$title}» открывается", $r['code'] === 200, (string) $r['code']);
+    chk("«{$title}»: без фатальных ошибок и предупреждений PHP",
+        stripos($r['body'], 'Fatal error') === false && stripos($r['body'], 'Warning:') === false
+        && stripos($r['body'], 'undefined function') === false);
     $n = substr_count($r['body'], 'title="Участник Элитного клуба"');
     if ($n > 0) $withMark++;
     ok("«{$title}»: синих галочек Элитного клуба", (string) $n);
@@ -244,8 +292,10 @@ $pv = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_pa
 chk('оплаченная без чека — считается оплаченной', $pv['paid'] === true);
 chk('сумма берётся с заявки', $pv['amount'] === 400, (string) $pv['amount']);
 chk('видно, что отметили вручную', (bool) array_filter($pv['lines'], fn($l) => str_contains($l, 'вручную')));
+/* Падеж в строке живой: «скидка 20% - участник ЭлитногО клубА». Проверка ждала
+   именительный и краснела на верном тексте. Ищем корень. */
 chk('в расшифровке названа причина скидки',
-    (bool) array_filter($pv['lines'], fn($l) => str_contains($l, 'Элитный клуб')), implode(' | ', $pv['lines']));
+    (bool) array_filter($pv['lines'], fn($l) => mb_stripos($l, 'Элитн') !== false), implode(' | ', $pv['lines']));
 
 // 2) Скидка за достижения профиля и реферальный промокод — тоже подписаны.
 $pv2 = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 1,
@@ -332,7 +382,22 @@ if (count($appsForBatch) === 3) {
 } else { ok('в базе меньше 3 заявок — пропуск'); }
 
 sec('Цена конкурса: сохраняется и не откатывается сама');
-$compForPrice = one("SELECT id, name, slug, code, price, is_paid FROM competitions WHERE is_paid=1 LIMIT 1");
+/* БЕРЁМ ДЕЙСТВУЮЩИЙ КОНКУРС, А НЕ ПЕРВЫЙ ПЛАТНЫЙ В ТАБЛИЦЕ.
+ *
+ * Здесь стояло просто «первый платный», и это был конкурс №18 «Мировые
+ * Таланты» - закрытый с 25.08. Проверка сохраняла его форму со статусом open
+ * (см. ниже), админка читала это как ЗАПУСК закрытого конкурса и 14.10.2026 в
+ * 14:14 разослала по всей базе 5943 письма «Открыт приём заявок: Мировые
+ * Таланты», ещё 1847 остались в очереди. Проверка обязана проверять, а не
+ * звать восемь тысяч человек на конкурс, который кончился полтора месяца
+ * назад. Платный и идущий сейчас конкурс для той же проверки ничем не хуже. */
+$compForPrice = one("SELECT id, name, slug, code, price, is_paid, status, results_mode, type, direction, duration, sort
+                       FROM competitions
+                      WHERE is_paid=1 AND status='open' AND COALESCE(launched,0)=1
+                        AND (COALESCE(end_date,'')='' OR date(end_date) >= date('now','localtime'))
+                   ORDER BY sort, id LIMIT 1")
+    ?: one("SELECT id, name, slug, code, price, is_paid, status, results_mode, type, direction, duration, sort
+              FROM competitions WHERE is_paid=1 ORDER BY (status='open') DESC, id DESC LIMIT 1");
 if (!$compForPrice) { ok('в базе нет платных конкурсов — пропуск'); }
 else {
     $cid = (int) $compForPrice['id']; $oldPrice = (int) $compForPrice['price'];
@@ -366,7 +431,13 @@ else {
             'slug' => (string) $compForPrice['slug'], 'code' => (string) $compForPrice['code'],
             'name' => (string) $compForPrice['name'], 'type' => 'international',
             'direction' => 'multi', 'duration' => 'short', 'is_paid' => '1',
-            'price' => (string) $tp, 'results_mode' => 'email', 'status' => 'open', 'sort' => '0',
+            /* СТАТУС ОТПРАВЛЯЕМ ТОТ, ЧТО УЖЕ СТОИТ В БАЗЕ.
+             * Жёсткое 'open' здесь и было спусковым крючком рассылки: форма
+             * админки читает переход closed->open как ЗАПУСК конкурса и зовёт
+             * всю базу письмом. Проверке нужна цена, статус она трогать не
+             * должна вовсе. */
+            'price' => (string) $tp, 'results_mode' => 'email',
+            'status' => (string) ($__compSnap['status'] ?? 'open'), 'sort' => '0',
         ]);
         $now = (int) scalar("SELECT price FROM competitions WHERE id=?", [$cid]);
         chk("после сохранения price={$tp}: в базе {$now}", $now === $tp, (string) $now);
@@ -385,7 +456,8 @@ else {
         'slug' => (string) $compForPrice['slug'], 'code' => (string) $compForPrice['code'],
         'name' => (string) $compForPrice['name'], 'type' => 'international',
         'direction' => 'multi', 'duration' => 'short', 'is_paid' => '1',
-        'price' => (string) $oldPrice, 'results_mode' => 'email', 'status' => 'open', 'sort' => '0',
+        'price' => (string) $oldPrice, 'results_mode' => 'email',
+        'status' => (string) ($__compSnap['status'] ?? 'open'), 'sort' => '0',
     ]);
     $restored = (int) scalar("SELECT price FROM competitions WHERE id=?", [$cid]);
     chk('цена восстановлена', $restored === $oldPrice, (string) $restored);
@@ -669,6 +741,668 @@ chk('стадии заказа: Изготовление → Отправка �
     str_contains($cabSrc, "'Изготовление', 'Отправка', 'Прибыло'"));
 
 
+/* ───────── ДЛИННЫЕ СПИСКИ ОТКРЫВАЮТСЯ ЦЕЛИКОМ И НЕ ВРУТ ПРО ДЛИНУ ─────────
+ *
+ * «Оценка длинных» по «Величию России» отдавала 4,5 МБ разметки на 1215 строк и
+ * с телефона открывалась наполовину, а архив молча обрывался на 500-й заявке из
+ * 852: 351 разобранная заявка пропадала, и плашка показывала то же урезанное
+ * число. Ни один аудит на длину страницы не смотрел.
+ *
+ * Проверяем ровно то, что сломалось: подпись «показаны N-M из T» есть и T равно
+ * настоящему числу; страница не весит как прежняя; каждую заявку можно
+ * доглядеть, пролистав до конца; номер за пределами списка не отдаёт пустоту. */
+sec('Длинные списки оценки');
+require_once BASE_PATH . '/core/graded_list.php';
+
+$подпись = static function (string $b): array {
+    $o = [];
+    if (preg_match_all('~Показаны <b>(\d+)-(\d+)</b> из <b>(\d+)</b>~u', $b, $m, PREG_SET_ORDER)) {
+        foreach ($m as $x) $o[] = ['от' => (int) $x[1], 'до' => (int) $x[2], 'всего' => (int) $x[3]];
+    }
+    return $o;
+};
+
+// Берём САМЫЙ ДЛИННЫЙ длинный конкурс: на коротком списке обрыв не виден вовсе.
+$lcId = 0; $lcN = -1;
+foreach (all("SELECT id FROM competitions WHERE results_mode='list'") as $c) {
+    $n = graded_rows_count((int) $c['id'], '', 'long');
+    if ($n > $lcN) { $lcN = $n; $lcId = (int) $c['id']; }
+}
+if ($lcId > 0) {
+    $r = http($AJAR, $BASE . '/admin/?p=longcomp&competition=' . $lcId);
+    chk('«Оценка длинных» открывается', $r['code'] === 200, (string) $r['code']);
+    chk('«Оценка длинных»: без фатальных ошибок и предупреждений PHP',
+        stripos($r['body'], 'Fatal error') === false && stripos($r['body'], 'Warning:') === false
+        && stripos($r['body'], 'undefined function') === false);
+    chk('страница закрыта целиком', stripos($r['body'], '</html>') !== false);
+    $пп = $подпись($r['body']);
+    chk('под списками стоит подпись «показаны N-M из T»', count($пп) >= 2, 'подписей: ' . count($пп));
+    // Самая дорогая проверка: плашка и подпись обязаны называть НАСТОЯЩЕЕ число.
+    $нашлось = false;
+    foreach ($пп as $x) if ($x['всего'] === $lcN) $нашлось = true;
+    chk('подпись архива называет настоящее число разобранных', $нашлось,
+        'в базе ' . $lcN . ', на странице: ' . implode('/', array_column($пп, 'всего')));
+    chk('плашка архива равна настоящему числу',
+        str_contains($r['body'], 'Оценённые и отклонённые <span class="badge badge--gold">' . $lcN . '</span>'),
+        (string) $lcN);
+    // Вес страницы. Прежняя отдавала 4,5 МБ; полтора мегабайта это уже «не
+    // открывается», и с телефона раздел читают именно так.
+    chk('страница не тяжелее 1,5 МБ', strlen($r['body']) < 1572864,
+        round(strlen($r['body']) / 1024) . ' КБ');
+
+    /* КОЛОНКА ДЕЙСТВИЙ ПРИЖАТА И ЗДЕСЬ (слово владельца 16.10.2026, правило
+       73д). Таблиц у раздела три: очередь и список итогов свои (.lc-tbl), а
+       архив рисует admin_graded_table() - он прижат своим .gl-tbl. */
+    chk('«Оценка длинных»: колонка действий прижата к правому краю',
+        (bool) preg_match('~\.lc-tbl th:last-child\s*,\s*\.lc-tbl td:last-child\{[^}]*position:sticky~u',
+                          $r['body']));
+    chk('«Оценка длинных»: у прижатой колонки свой фон',
+        (bool) preg_match('~\.lc-tbl th:last-child\s*,\s*\.lc-tbl td:last-child\{[^}]*background:~u',
+                          $r['body']));
+    chk('«Оценка длинных»: прижатая ячейка не делает своего слоя',
+        !preg_match('~\.lc-tbl th:last-child\s*,\s*\.lc-tbl td:last-child\{[^}]*z-index~u',
+                    $r['body']));
+    chk('«Оценка длинных»: шапка стоит над прижатыми ячейками',
+        (bool) preg_match('~\.lc-tbl thead th\{[^}]*z-index:4~u', $r['body']));
+    chk('«Оценка длинных»: на телефоне колонка по ширине кнопок',
+        (bool) preg_match('~\.lc-tbl th:last-child\{width:auto\}~u', $r['body']));
+    /* ВПИСАННАЯ В ШАПКУ ШИРИНА НЕПЕРЕБИВАЕМА: style="width:280px" сильнее любого
+       медиазапроса, и на телефоне колонка осталась бы в пол-экрана. */
+    chk('«Оценка длинных»: ширина колонки не вписана в шапку',
+        strpos($r['body'], 'width:280px">Действия') === false);
+
+    /* ФАКТ ПО СТРОКАМ. Строки считаем ВНУТРИ <tbody>: снаружи лежит строка
+       шапки. Очередь берём у конкурса, где она НЕ пуста - на самом длинном
+       (его и смотрит проверка выше) все заявки давно оценены, и список 1 там
+       не печатается вовсе. */
+    $кусокLC = static function (string $b, string $от, string $до = ''): string {
+        $i = mb_strpos($b, $от);
+        if ($i === false) return '';
+        $j = $до !== '' ? mb_strpos($b, $до, $i) : false;
+        return $j === false ? mb_substr($b, $i) : mb_substr($b, $i, $j - $i);
+    };
+    $счётLC = static function (string $блок, string $имя) use (&$кусокLC): void {
+        if ($блок === '') { ok($имя . ': списка сейчас нет, считать нечего'); return; }
+        chk($имя . ': таблица помечена как прижатая', mb_strpos($блок, 'tbl lc-tbl') !== false);
+        $тело = preg_match('~<tbody>(.*?)</tbody>~us', $блок, $m) ? $m[1] : '';
+        $стр  = preg_match_all('~<tr[\s>]~u', $тело);
+        $кн   = preg_match_all('~[?&](?:amp;)?p=grading&(?:amp;)?id=\d+~u', $тело);
+        if ($стр === 0) { ok($имя . ': список сейчас пуст, кнопки проверять не на чем'); return; }
+        chk($имя . ': кнопка действия есть у каждой строки', $кн === $стр,
+            'кнопок ' . $кн . ' при ' . $стр . ' строках');
+        chk($имя . ': кнопка удаления есть у каждой строки',
+            preg_match_all('~class="lc-del"~u', $тело) === $стр);
+    };
+    $счётLC($кусокLC($r['body'], 'СПИСОК 3'), 'список итогов');
+    $lcQ = one("SELECT c.id FROM competitions c
+                  JOIN applications a ON a.competition_id=c.id
+                       AND COALESCE(a.result,'')='' AND a.status<>'rejected'
+                 WHERE c.results_mode='list'
+              GROUP BY c.id ORDER BY COUNT(a.id) DESC LIMIT 1");
+    if (!$lcQ) { ok('очереди нет ни у одного длинного конкурса, проверять нечего'); }
+    else {
+        $rQ = http($AJAR, $BASE . '/admin/?p=longcomp&competition=' . (int) $lcQ['id']);
+        chk('«Оценка длинных» с живой очередью открывается', $rQ['code'] === 200, (string) $rQ['code']);
+        $счётLC($кусокLC($rQ['body'], 'СПИСОК 1', 'СПИСОК 2'), 'очередь длинного');
+    }
+    /* ВЕСЬ АРХИВ ДОГЛЯДЫВАЕТСЯ ДО КОНЦА, И СЧИТАЕМ МЫ СТРОКИ, А НЕ ПОДПИСЬ.
+       Первая сборка этой проверки складывала числа из подписи «показаны N-M из T»
+       - и осталась ЗЕЛЁНОЙ, когда я нарочно вернул потолок LIMIT 500: подпись
+       считается от номера страницы и общего числа, а строки при обрезке на всех
+       страницах были ОДНИ И ТЕ ЖЕ. Мерка показывала беду мерки. Теперь берём
+       номера заявок из самой таблицы архива и складываем РАЗНЫЕ. */
+    $per = 50;
+    $изАрхива = static function (string $b): array {
+        // Только блок архива: на странице есть ещё очередь и список итогов со
+        // своими ссылками на те же заявки.
+        $a = strpos($b, 'id="graded"');
+        $z = strpos($b, 'id="results-preview"');
+        if ($a === false) return [];
+        $кусок = $z !== false && $z > $a ? substr($b, $a, $z - $a) : substr($b, $a);
+        preg_match_all('~[?&](?:amp;)?id=(\d+)~', $кусок, $m);
+        return array_map('intval', $m[1] ?? []);
+    };
+    $видно = [];
+    for ($i = 1; $i <= (int) ceil(max(1, $lcN) / $per); $i++) {
+        $rp = http($AJAR, $BASE . '/admin/?p=longcomp&competition=' . $lcId . '&st2=' . $i);
+        foreach ($изАрхива($rp['body']) as $id) $видно[$id] = 1;
+    }
+    chk('архив доглядывается до последней заявки (по номерам строк, не по подписи)',
+        count($видно) === $lcN, 'разных заявок в архиве ' . count($видно) . ' из ' . $lcN);
+    // Номер за пределами списка приводит на последнюю страницу, а не в пустоту.
+    $rx = http($AJAR, $BASE . '/admin/?p=longcomp&competition=' . $lcId . '&st2=9999');
+    $ппx = $подпись($rx['body']);
+    $конец = false;
+    foreach ($ппx as $x) if ($x['всего'] === $lcN && $x['до'] === $lcN) $конец = true;
+    chk('страница за пределами списка приводит на последнюю, а не в пустоту', $конец);
+    // Возврат из карточки оценки обязан помнить страницу.
+    $rb = http($AJAR, $BASE . '/admin/?p=longcomp&competition=' . $lcId . '&st2=2');
+    chk('ссылки архива уносят номер страницы (возврат не в начало)',
+        str_contains($rb['body'], 'st2=2'), 'st2=2');
+} else { ok('длинных конкурсов нет — пропуск'); }
+
+// Тот же потолок стоял и у «Оценки коротких»: разобранных 439, до обрыва
+// оставалось шестьдесят. Заслон тут, пока это ещё не стоило ни одной заявки.
+$shortN = graded_rows_count(0, '', 'short');
+$rs = http($AJAR, $BASE . '/admin/?p=grading');
+chk('«Оценка коротких» открывается', $rs['code'] === 200, (string) $rs['code']);
+$ппs = $подпись($rs['body']);
+chk('в «Оценке коротких» архив тоже листается и называет настоящее число',
+    (bool) array_filter($ппs, static fn($x) => $x['всего'] === $shortN),
+    'в базе ' . $shortN . ', на странице: ' . implode('/', array_column($ппs, 'всего')));
+chk('плашка архива коротких равна настоящему числу',
+    str_contains($rs['body'], 'Оценённые и отклонённые <span class="badge badge--gold">' . $shortN . '</span>'),
+    (string) $shortN);
+
+/* ПОТОЛОК ВНУТРИ ВЫБОРКИ БОЛЬШЕ НЕ ЗАВОДИМ. Он и был причиной: обрезка без
+   счётчика и без подписи выглядит как полный список. Длину страницы задаёт
+   раздел, выборка отдаёт ровно то, что попросили. */
+/* Пояснения вырезаем ПЕРЕД поиском. В комментарии снятый потолок назван
+   НАРОЧНО, чтобы следующая сессия не вернула его вслепую, и первый прогон
+   честно покраснел на моём же разборе - пятый раз эта грабля в проекте
+   (правила 40, 48, 56, 57а). */
+$glSrc = (string) file_get_contents(BASE_PATH . '/core/graded_list.php');
+$glКод = (string) preg_replace(['~/\*.*?\*/~su', '~//[^\n]*~u', '~^\s*\*.*$~mu'], '', $glSrc);
+chk('в graded_rows нет вписанного потолка LIMIT 500',
+    !preg_match('~LIMIT\s+500~i', $glКод));
+chk('у graded_rows есть длина страницы и смещение',
+    (bool) preg_match('~function graded_rows\([^)]*int \$limit[^)]*int \$offset~s', $glКод));
+chk('счётчик берёт отбор у graded_rows_where, а не повторяет условие',
+    (bool) preg_match('~function graded_rows_count\(.*?graded_rows_where\(~s', $glКод));
+
+/* ───────── КОЛОНКА ДЕЙСТВИЯ НАЗВАНА И ДОСТУПНА С ТЕЛЕФОНА ─────────
+ *
+ * Правка владельца 16.10.2026: «в „оценке коротких" не видна колонка „Действие"
+ * и отсутствует кнопка „оценить"». Кнопка была у КАЖДОЙ строки, но колонок семь,
+ * с телефона они не влезают, список прокручивается вбок, а шапка у последней
+ * колонки была ПУСТОЙ - узнать, что там кнопка, было нельзя.
+ *
+ * Проверяем ровно то, что сломалось: колонка названа словом, кнопок столько же,
+ * сколько строк, и колонка прижата к правому краю (иначе с телефона до неё
+ * опять не добраться). Пустую шапку тоже ловим: её легко вернуть вслепую. */
+sec('Колонка «Действие» в оценке коротких');
+$rAct = http($AJAR, $BASE . '/admin/?p=grading');
+chk('«Оценка коротких» открывается', $rAct['code'] === 200, (string) $rAct['code']);
+chk('без фатальных ошибок и предупреждений PHP',
+    stripos($rAct['body'], 'Fatal error') === false && stripos($rAct['body'], 'Warning:') === false);
+$actН = mb_strpos($rAct['body'], 'СПИСОК 1');
+$actК = mb_strpos($rAct['body'], 'СПИСОК 2');
+if ($actН === false || $actК === false || $actК <= $actН) {
+    bad('в разметке не нашлись границы очереди и архива');
+} else {
+    $актОч = mb_substr($rAct['body'], $actН, $actК - $actН);
+    $актАр = mb_substr($rAct['body'], $actК);
+    foreach (['очередь' => $актОч, 'архив' => $актАр] as $имя => $блок) {
+        $шапка = preg_match('~<thead>.*?</thead>~us', $блок, $m) ? $m[0] : '';
+        chk($имя . ': колонка действия названа словом',
+            $шапка !== '' && (bool) preg_match('~<th[^>]*>\s*Действие\s*</th>\s*</tr>~us', $шапка));
+        chk($имя . ': пустой шапки у последней колонки нет',
+            $шапка !== '' && !preg_match('~<th[^>]*>\s*</th>\s*</tr>~us', $шапка));
+    }
+    /* КНОПКА ОБЯЗАНА БЫТЬ У КАЖДОЙ СТРОКИ, А НЕ «ГДЕ-ТО НА СТРАНИЦЕ». */
+    $строк  = preg_match_all('~<tr class="~u', $актОч);
+    /* СЧИТАЕМ ССЫЛКИ ДЕЙСТВИЯ, А НЕ СЛОВО НА КНОПКЕ. Мерка, которая ждёт
+       вчерашнее написание, краснеет на верном коде ровно в день правки (правила
+       56, 61, 72): переименуют кнопку - проверка обязана остаться зелёной.
+       Ссылка на карточку оценки в строке очереди ровно одна. */
+    $кнопок = preg_match_all('~[?&](?:amp;)?p=grading&(?:amp;)?id=\d+~u', $актОч);
+    if ($строк === 0) { ok('очередь сейчас пуста, кнопки проверять не на чем'); }
+    else {
+        chk('у каждой строки очереди есть кнопка действия', $кнопок === $строк,
+            'кнопок ' . $кнопок . ' при ' . $строк . ' строках');
+        chk('у кнопки есть видимая подпись',
+            mb_stripos($актОч, 'оценить') !== false);
+    }
+    /* ПРИЖАТАЯ КОЛОНКА: стиль едет вместе с разметкой, поэтому ищем его на самой
+       странице, а не в файле - так проверка видит то же, что браузер. */
+    chk('колонка действия прижата к правому краю',
+        (bool) preg_match('~\.gq-tbl th:last-child\s*,\s*\.gq-tbl td:last-child\{[^}]*position:sticky~u',
+                          $rAct['body']));
+    chk('у прижатой колонки свой фон',
+        (bool) preg_match('~\.gq-tbl th:last-child\s*,\s*\.gq-tbl td:last-child\{[^}]*background:~u',
+                          $rAct['body']));
+    chk('очередь: шапка стоит над прижатыми ячейками',
+        (bool) preg_match('~\.gq-tbl thead th\{[^}]*z-index:4~u', $rAct['body']));
+
+    /* АРХИВ «Оценённые и отклонённые»: кнопка у каждой строки и та же прижатая
+       колонка (слово владельца 16.10.2026). Строки считаем ВНУТРИ <tbody>:
+       снаружи лежит строка шапки, и по «<tr» их выходило бы на одну больше. */
+    $телоА = preg_match('~<tbody>(.*?)</tbody>~us', $актАр, $mТА) ? $mТА[1] : '';
+    $строкА = preg_match_all('~<tr[\s>]~u', $телоА);
+    $кнопокА = preg_match_all('~[?&](?:amp;)?p=grading&(?:amp;)?id=\d+~u', $телоА);
+    if ($строкА === 0) { ok('архив сейчас пуст, кнопки проверять не на чем'); }
+    else {
+        chk('у каждой строки архива есть кнопка действия', $кнопокА === $строкА,
+            'кнопок ' . $кнопокА . ' при ' . $строкА . ' строках');
+        chk('у каждой строки архива есть и кнопка «Заявка»',
+            preg_match_all('~[?&](?:amp;)?p=applications&(?:amp;)?id=\d+~u', $телоА) === $строкА);
+    }
+    chk('архив: колонка действия прижата к правому краю',
+        (bool) preg_match('~\.gl-tbl th:last-child\s*,\s*\.gl-tbl td:last-child\{[^}]*position:sticky~u',
+                          $rAct['body']));
+    chk('архив: у прижатой колонки свой фон',
+        (bool) preg_match('~\.gl-tbl th:last-child\s*,\s*\.gl-tbl td:last-child\{[^}]*background:~u',
+                          $rAct['body']));
+    /* СВОЕГО СЛОЯ У ПРИЖАТОЙ ЯЧЕЙКИ БЫТЬ НЕ ДОЛЖНО: с z-index она становится
+       отдельным слоем, и выпадающее меню «Ещё» верхней строки уходит ПОД
+       прижатые ячейки строк ниже. Проверка держит это от правки вслепую. */
+    chk('архив: прижатая ячейка не делает своего слоя (иначе меню «Ещё» уйдёт под нижние строки)',
+        !preg_match('~\.gl-tbl th:last-child\s*,\s*\.gl-tbl td:last-child\{[^}]*z-index~u',
+                    $rAct['body']));
+    chk('архив: шапка стоит над прижатыми ячейками',
+        (bool) preg_match('~\.gl-tbl thead th\{[^}]*z-index:4~u', $rAct['body']));
+    chk('архив: у отклонённой строки прижатая ячейка со своим оттенком',
+        (bool) preg_match('~\.gl-tbl tr\.gl-rej td:last-child\{[^}]*background:~u', $rAct['body']));
+    /* ВПИСАННАЯ В ШАПКУ ШИРИНА НЕПЕРЕБИВАЕМА: style="width:230px" сильнее любого
+       медиазапроса, и на телефоне колонка осталась бы в пол-экрана. */
+    chk('архив: ширина колонки задана стилем, а не в самой шапке',
+        strpos($rAct['body'], 'width:230px">Действие') === false);
+    chk('архив: на телефоне колонка по ширине кнопок, а не по вписанному числу',
+        (bool) preg_match('~\.gl-tbl th:last-child\{width:auto\}~u', $rAct['body']));
+    chk('архив: меню «Ещё» на телефоне не зависит от ширины колонки',
+        (bool) preg_match('~\.gl-menu\{position:fixed~u', $rAct['body']));
+}
+
+/* ─── КОГДА ОТПРАВИТЬ РЕЗУЛЬТАТ: У КОРОТКОГО В ОЦЕНКЕ, У ДЛИННОГО В ОТКАЗЕ ──
+   Слово владельца 16.10.2026 (правило 73к) сузило правку того же дня (73и): в
+   «Оценке длинных» выбор времени открывается ТОЛЬКО кнопкой «Отклонить
+   заявку», а всякая другая оценка уходит пакетом вместе со списком.
+   Проверяется и ПИКСЕЛЬ (в карточке длинного конкурса выбора нет, а в панели
+   отклонения он есть), и МЕХАНИКА: обещание «уходит списком» держит КОД, а не
+   отсутствие поля в форме, и выбранное время письма правда доходит до очереди
+   через окно отправки. */
+sec('Когда отправить результат: у короткого в оценке, у длинного в отказе');
+/* Пояснения снимаем лексером: в них снятое названо нарочно, и поиск по сырому
+   файлу краснел бы на нашем же разборе (правила 63, 70). */
+$__код = static function (string $p): string {
+    $out = '';
+    foreach (token_get_all((string) @file_get_contents($p)) as $t) {
+        if (is_array($t)) { if ($t[0] === T_COMMENT || $t[0] === T_DOC_COMMENT) continue; $out .= $t[1]; }
+        else $out .= $t;
+    }
+    return $out;
+};
+$__gr = $__код(BASE_PATH . '/admin/grading.php');
+$__ga = $__код(BASE_PATH . '/core/grade_apply.php');
+$__sd = $__код(BASE_PATH . '/cron/send_diplomas.php');
+$__as = $__код(BASE_PATH . '/core/app_status.php');
+$__cg = $__код(BASE_PATH . '/core/chat_gate.php');
+$__dp = $__код(BASE_PATH . '/admin/dispatch.php');
+
+chk('в карточке оценки выбор времени закрыт от длинного конкурса',
+    (bool) preg_match('~if \(empty\(\$isLongView\)\): \?>\s*<div class="field"~u', $__gr));
+chk('длинному конкурсу сказано, что результат уходит пакетом со списком',
+    strpos($__gr, 'одним пакетом в день оглашения итогов') !== false
+    && strpos($__gr, 'Персонального срока здесь нет') !== false);
+chk('сказано, где время всё-таки выбирается',
+    strpos($__gr, 'только при отклонении заявки') !== false);
+chk('короткий конкурс выбор сохранил целиком',
+    strpos($__gr, 'Автоматически по сроку') !== false
+    && strpos($__gr, 'name="send_now"') !== false
+    && strpos($__gr, 'name="send_at"') !== false);
+chk('прежней подписи «вместе с оглашением итогов» в выборе больше нет',
+    strpos($__gr, 'Вместе с оглашением итогов') === false);
+chk('карточка берёт дату оглашения из конкурса',
+    strpos($__gr, 'c.results_date FROM applications a') !== false
+    && strpos($__gr, "\$a['results_date']") !== false);
+/* ЛЕКСЕР СНИМАЕТ ТОЛЬКО PHP-ПОЯСНЕНИЯ, А ЭТО JS. Первая сборка искала само
+   слово sendAtBox и покраснела на нашем же комментарии в <script>: для
+   token_get_all он не комментарий, а T_INLINE_HTML. Ищем сам мёртвый вызов -
+   его в пояснении нет (девятый раз эта грабля: правила 40, 48, 56, 57а, 58,
+   63, 70, 72). */
+chk('мёртвого слушателя sendAtBox в карточке нет',
+    strpos($__gr, "getElementById('sendAtBox')") === false);
+
+/* МЕХАНИКА: ОБЕЩАНИЕ «УХОДИТ СПИСКОМ» ДЕРЖИТ КОД. Отрезок читается целиком:
+   «ветки нет где-то» зеленело бы и при обнулённом условии (правила 72а, 72б). */
+chk('у длинного конкурса срок не назначается ни при каком режиме',
+    !preg_match('~elseif \(\$mode === .now.~u', $__ga)
+    && (bool) preg_match('~\$resultAt = null;\s*if \(!\$isLong\) \{~u', $__ga));
+chk('у короткого «отправить сейчас» отправляет сразу, пока письма не было',
+    (bool) preg_match('~\(\$firstGrade \|\| \$changed \|\| \(\$mode === .now. && \$ещёНеУшло\)\) && \$dueNow~u', $__ga));
+chk('у отправки письма нет прежнего запрета по длинному конкурсу',
+    !preg_match('~if \(!\$isLong && \(\$firstGrade~u', $__ga));
+
+/* ВРЕМЯ ПИСЬМА ОТКЛОНЁННОМУ УЧАСТНИКУ: выбор человека доходит до очереди, но
+   через окно отправки - письма людям в час ночи уже уходили (правило 7). */
+chk('дверь отклонения принимает выбранное время письма',
+    (bool) preg_match('~\$opt\[.письмо_в.\]~u', $__ga));
+chk('окно отправки умеет судить назначенное время, а не только «сейчас»',
+    (bool) preg_match('~function ga_next_worktime\(int \$ts = 0\)~u', $__ga)
+    && (bool) preg_match("~return \\\$ts > 0 \\? date\('Y-m-d H:i:s', \\\$ts\) : '';~u", $__ga));
+chk('выбранное время проходит через это окно, а не мимо',
+    (bool) preg_match('~ga_next_worktime\(\$стамп\)~u', $__ga));
+chk('письмо ставится в очередь ровно на посчитанное время',
+    (bool) preg_match('~\$html, .., \$план\) > 0~u', $__ga));
+chk('второго окна отправки рядом не завелось',
+    substr_count($__ga, 'OUTREACH_HOUR_FROM') === 1);
+chk('панель отклонения передаёт выбор в дверь отклонения',
+    (bool) preg_match('~.письмо_в. => \$rjWhen~u', $__gr));
+chk('без выбранной даты чужое время не выдумывается',
+    (bool) preg_match('~\$rjWhen !== .. \? \[.письмо_в. => \$rjWhen\] : \[\]~u', $__gr));
+chk('оператор читает, на какое время поставлено письмо',
+    strpos($__ga, 'поставлено в очередь на') !== false);
+
+/* СЕТЬ НА СЛУЧАЙ, КОГДА РАССЫЛКА ПРОШЛА, А ПУБЛИКАЦИЯ СОРВАЛАСЬ: своё письмо
+   открывает результат этому участнику и в кабинете, и у бота. */
+chk('своё письмо открывает результат участнику длинного конкурса',
+    (bool) preg_match("~results_mode,''\) =  'list' AND \(COALESCE\(\\\$c\.results_published_at,''\) <> ''\s*OR COALESCE\(\\\$a\.result_sent_at,''\)~u", $__as));
+chk('бот называет результат тому, кому письмо уже ушло',
+    (bool) preg_match('~if \(\$sentAt !== .. && \$result !== ..\) \{\s*\$out\[.may_result.\] = true;~u', $__cg)
+    && strpos($__cg, 'Аттестационный результат отправлен Вам на почту') !== false);
+chk('отбор крона идёт по самому сроку, а не по режиму конкурса',
+    !preg_match('~results_mode IS NULL OR c\.results_mode <> .list.~u', $__sd)
+    && strpos($__sd, "a.result_send_at <> '' AND a.result_send_at <= ?") !== false);
+chk('в очереди отправок заявка с назначенным сроком стоит ровно в одном блоке',
+    !preg_match("~COALESCE\(a\.result_send_at,''\) <> ''\s*AND COALESCE\(a\.result_sent_at,''\) = ''\s*AND COALESCE\(c\.results_mode,''\) <> 'list'~u", $__dp)
+    && (bool) preg_match("~COALESCE\(c\.results_mode,''\) = 'list'\s*AND COALESCE\(a\.result_send_at,''\) = ''~u", $__dp));
+
+/* ПИКСЕЛИ: у длинного конкурса выбора в оценке НЕТ, а в панели отклонения ЕСТЬ;
+   у короткого всё наоборот. Функция может отдавать верный HTML, а строки в
+   шаблоне не быть вовсе (урок правила 47). */
+$__appL = one("SELECT a.id, c.results_date FROM applications a JOIN competitions c ON c.id=a.competition_id
+                WHERE COALESCE(c.results_mode,'')='list' AND COALESCE(a.status,'')<>'rejected'
+                ORDER BY a.id DESC LIMIT 1");
+$__appS = one("SELECT a.id FROM applications a JOIN competitions c ON c.id=a.competition_id
+                WHERE COALESCE(c.results_mode,'')<>'list' AND COALESCE(a.status,'')<>'rejected'
+                ORDER BY a.id DESC LIMIT 1");
+if (!$__appL) { ok('заявок длинного конкурса нет, пиксели проверять нечем'); }
+else {
+    $rL = http($AJAR, $BASE . '/admin/?p=grading&id=' . (int) $__appL['id']);
+    chk('длинный: в карточке оценки выбора времени нет',
+        strpos($rL['body'], 'name="auto_send"') === false
+        && strpos($rL['body'], 'name="send_now"') === false
+        && strpos($rL['body'], 'name="send_at"') === false, 'заявка ' . (int) $__appL['id']);
+    chk('длинный: сказано, что результат уходит пакетом со списком',
+        strpos($rL['body'], 'одним пакетом в день оглашения итогов') !== false);
+    $__rd = trim((string) ($__appL['results_date'] ?? ''));
+    chk('длинный: названа дата оглашения',
+        $__rd === '' || strpos($rL['body'], date('d.m.Y', strtotime($__rd))) !== false, $__rd);
+    chk('длинный: сказано, где выбирается время письма',
+        strpos($rL['body'], 'только при отклонении заявки') !== false);
+    chk('длинный: кнопка «Отклонить заявку…» на месте',
+        strpos($rL['body'], 'Отклонить заявку') !== false);
+    chk('длинный: в панели отклонения выбор времени напечатан',
+        strpos($rL['body'], 'Когда отправить результат участнику?') !== false
+        && strpos($rL['body'], 'name="reject_auto_send"') !== false
+        && strpos($rL['body'], 'name="reject_send_at"') !== false);
+}
+if (!$__appS) { ok('заявок короткого конкурса нет, пиксели проверять нечем'); }
+else {
+    $rS = http($AJAR, $BASE . '/admin/?p=grading&id=' . (int) $__appS['id']);
+    chk('короткий: выбор в карточке оценки на месте и подпись прежняя',
+        strpos($rS['body'], 'Когда отправить результат участнику?') !== false
+        && strpos($rS['body'], 'name="auto_send"') !== false
+        && strpos($rS['body'], 'name="send_now"') !== false
+        && strpos($rS['body'], 'Автоматически по сроку') !== false, 'заявка ' . (int) $__appS['id']);
+    chk('короткий: своего выбора времени в отклонении не завелось',
+        strpos($rS['body'], 'name="reject_auto_send"') === false);
+}
+
+
+/* ═════ ТАБЛИЦЫ «ЗАЯВОК» И «ОТПРАВОК» ЧИТАЮТСЯ С ТЕЛЕФОНА ═════
+ *
+ * Владелец читает админку с телефона, и обе страницы он назвал «отображается
+ * не полностью». Замер показал ровно это: при ширине 390 точек в списке
+ * заявок видна ОДНА колонка из восьми, в очереди отправок одна из пяти -
+ * остальные уезжают за правый край `.table-wrap`. Проверка смотрит и
+ * исходники, и ФАКТ по живым страницам: разметка может быть верной, а
+ * подписи у ячеек не напечататься.
+ *
+ * Проверка ТОЛЬКО ЧИТАЕТ: ни одной записи в базу (правила 49, 51). */
+sec('Таблицы «Заявок» и «Отправок» читаются с телефона');
+
+/** Исходник без пояснений: в них снятое названо нарочно (правила 40, 48, 63). */
+$__чисто = static function (string $file): string {
+    $src = (string) @file_get_contents(BASE_PATH . '/' . $file);
+    if ($src === '') return '';
+    $out = '';
+    foreach (token_get_all($src) as $t) {
+        if (is_array($t) && in_array($t[0], [T_COMMENT, T_DOC_COMMENT], true)) continue;
+        $out .= is_array($t) ? $t[1] : $t;
+    }
+    return $out;
+};
+
+$__boot = $__чисто('admin/_boot.php');
+chk('общий стиль карточек заведён одной функцией',
+    substr_count($__boot, 'function admin_cards_css(') === 1);
+chk('стиль отдаётся один раз на страницу',
+    (bool) preg_match('~function admin_cards_css\(\).{0,200}?static \$\S+ = false;~su', $__boot));
+chk('карточки включаются до 820 точек',
+    str_contains($__boot, '@media (max-width:820px)') && str_contains($__boot, '.tbl--cards'));
+chk('шапка таблицы в карточках прячется',
+    (bool) preg_match('~table\.tbl--cards thead\{display:none\}~', $__boot));
+chk('подпись ячейки берётся из data-label',
+    str_contains($__boot, 'content:attr(data-label)'));
+chk('обёртка теряет прокрутку вбок',
+    (bool) preg_match('~\.table-wrap--cards\{[^}]*overflow-x:visible~', $__boot));
+
+/** У каждой ячейки строки своя подпись: столько же, сколько колонок у шапки.
+ *
+ * Шапка берётся ИЗ ИСХОДНИКА по метке, а не из самой метки: считать колонки в
+ * строке, которую сюда передали, значит считать то, что написал проверяющий.
+ * И закрывающая скобка у `<th` обязательна - `<th` совпадает и с `<thead>`,
+ * отчего колонок выходило на одну больше, а проверка краснела на верном коде. */
+$__podpisi = static function (string $src, string $метка): array {
+    $i = strpos($src, $метка);
+    if ($i === false) return [-1, -1];
+    $th1 = strpos($src, '<thead', $i);
+    $th2 = $th1 === false ? false : strpos($src, '</thead>', $th1);
+    if ($th1 === false || $th2 === false) return [-2, -2];
+    $кол = preg_match_all('~<th[\s>]~i', substr($src, $th1, $th2 - $th1));
+    $end = strpos($src, '</table>', $th2);
+    $кусок = substr($src, $th2, ($end === false ? 6000 : $end - $th2));
+    return [$кол, preg_match_all('~<td[^>]*data-label="[^"]+"~i', $кусок)];
+};
+
+$__apps = $__чисто('admin/applications.php');
+chk('«Заявки»: обёртка и таблица помечены карточками',
+    str_contains($__apps, 'class="table-wrap table-wrap--cards"')
+    && str_contains($__apps, 'class="tbl tbl--cards"'));
+chk('«Заявки»: стиль карточек отдаётся', str_contains($__apps, 'admin_cards_css()'));
+[$__k, $__d] = $__podpisi($__apps, 'class="tbl tbl--cards"');
+// Чекбокс подписи не несёт: над ним нечего называть.
+chk('«Заявки»: подписана каждая колонка строки', $__k > 0 && $__d === $__k - 1, "колонок $__k, подписей $__d");
+chk('«Заявки»: постраничность общая, своего ряда номеров нет',
+    str_contains($__apps, 'admin_stranicy(')
+    && !preg_match('~for \(\$i=1;\$i<=\$pages;\$i\+\+\)~', $__apps));
+
+$__disp = $__чисто('admin/dispatch.php');
+chk('«Отправки»: стиль карточек отдаётся', str_contains($__disp, 'admin_cards_css()'));
+chk('«Отправки»: все три таблицы помечены карточками',
+    substr_count($__disp, 'class="table-wrap table-wrap--cards"') === 3
+    && substr_count($__disp, 'class="tbl tbl--cards"') === 3,
+    'обёрток ' . substr_count($__disp, 'class="table-wrap table-wrap--cards"'));
+foreach ([
+    'очередь'        => '<thead><tr><th>Тип</th><th>Кому</th><th>Что</th><th>Когда</th><th>Действия</th></tr></thead>',
+    'архив'          => '<thead><tr><th>Тип</th><th>Кому</th><th>Тема</th><th>Отправлено</th><th>Действия</th></tr></thead>',
+    'не отправлены'  => '<thead><tr><th>Кому</th><th>Тема</th><th>Причина</th><th>Попыток</th><th>Действия</th></tr></thead>',
+] as $__имя => $__th) {
+    [$__k, $__d] = $__podpisi($__disp, $__th);
+    chk("«Отправки»: подписана каждая колонка ($__имя)", $__k > 0 && $__d === $__k, "колонок $__k, подписей $__d");
+}
+
+/* ---- СКОРОСТЬ: индекс под архив отправленных ---- */
+$__db = $__чисто('core/db.php');
+chk('индекс под архив отправленных заведён в миграциях',
+    (bool) preg_match('~CREATE INDEX IF NOT EXISTS \S+\s+ON mail_queue\(status, sent_at, id\)~', $__db));
+$__живой = (string) (scalar("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='mail_queue'
+                              AND sql LIKE '%status, sent_at, id%'") ?? '');
+chk('индекс есть в живой базе', $__живой !== '', $__живой);
+$__план = '';
+foreach (all("EXPLAIN QUERY PLAN SELECT id FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 61") as $__p)
+    $__план .= ' ' . (string) ($__p['detail'] ?? '');
+/* ВРЕМЕННОЕ ДЕРЕВО - ЭТО И ЕСТЬ ТЕ ВОСЕМЬ С ПОЛОВИНОЙ СЕКУНД: база сортирует
+   все 145 тысяч отправленных строк ради шестидесяти. Проверяем план, а не
+   время: на пустой базе время зелёное при том же дефекте. */
+chk('архив берётся индексом, без временного дерева',
+    !str_contains($__план, 'TEMP B-TREE'), trim($__план));
+
+/* ---- ФАКТ: что правда напечатано на живых страницах ---- */
+$__fakt = static function (string $body, string $имя) use (&$FAIL, &$OK): void {
+    chk("$имя: стиль карточек напечатан один раз",
+        substr_count($body, 'table.tbl--cards thead{display:none}') === 1);
+    $всего = preg_match_all('~<table class="tbl tbl--cards"~', $body);
+    $вобёртке = preg_match_all('~class="table-wrap table-wrap--cards">\s*<table class="tbl tbl--cards"~', $body);
+    chk("$имя: каждая таблица карточек лежит в своей обёртке", $всего > 0 && $вобёртке >= $всего,
+        "таблиц $всего, в обёртке $вобёртке");
+    /* У КАЖДОЙ ЯЧЕЙКИ ТЕЛА ТАБЛИЦЫ ОБЯЗАНА БЫТЬ ПОДПИСЬ. Без неё на телефоне
+       значение стоит голым: человек видит дату и не знает, это «подана» или
+       «отправлено». Чекбокс и строка-заглушка («по фильтру пусто») подписи не
+       несут намеренно. */
+    $без = 0; $есть = 0;
+    if (preg_match_all('~<table class="tbl tbl--cards".*?</table>~s', $body, $mm)) {
+        foreach ($mm[0] as $tbl) {
+            if (!preg_match('~<tbody>(.*?)</tbody>~s', $tbl, $tb)) continue;
+            foreach ((array) (preg_match_all('~<td([^>]*)>~i', $tb[1], $td) ? $td[1] : []) as $attr) {
+                if (str_contains($attr, 'colspan') || str_contains($attr, 'checkbox-cell')) continue;
+                if (preg_match('~data-label="[^"]+"~', $attr)) $есть++; else $без++;
+            }
+        }
+    }
+    chk("$имя: все ячейки строк подписаны", $есть > 0 && $без === 0, "подписано $есть, без подписи $без");
+};
+
+$__t0 = microtime(true);
+$rApps = http($AJAR, $BASE . '/admin/?p=applications');
+$__secApps = microtime(true) - $__t0;
+$__fakt($rApps['body'], '«Заявки»');
+chk('«Заявки»: названо, сколько строк видно и сколько всего',
+    (bool) preg_match('~Показаны <b>\d+-\d+</b> из <b>\d+</b>~u', $rApps['body']));
+/* ПОЛНЫЙ РЯД НОМЕРОВ САМ СТАНОВИТСЯ ПОЛОТНОМ: на 1784 заявках это 36 кнопок
+   внизу страницы, и читает их человек с телефона (урок правила 58). */
+chk('«Заявки»: номера страниц идут окном, а не всем рядом',
+    preg_match_all('~href="[^"]*[?&]pg=\d+~', $rApps['body']) <= 9,
+    'кнопок ' . preg_match_all('~href="[^"]*[?&]pg=\d+~', $rApps['body']));
+
+$__t0 = microtime(true);
+$rDisp = http($AJAR, $BASE . '/admin/?p=dispatch');
+$__secDisp = microtime(true) - $__t0;
+$__fakt($rDisp['body'], '«Отправки»');
+/* Раздел открывался 13 секунд. Порог с запасом: беда была в плане запроса,
+   и он проверен выше отдельно, а здесь ловится всё остальное разом. */
+chk('«Отправки»: раздел открывается быстрее трёх секунд',
+    $__secDisp < 3.0, sprintf('%.2f с', $__secDisp));
+ok('время «Заявок»', sprintf('%.2f с', $__secApps));
+
+sec('Разносостоянная посылка: вкладка называет вторую половину');
+/* ВКЛАДКИ ОТБИРАЮТ ПО СОСТОЯНИЮ ДО ГРУППИРОВКИ. У посылки, где один заказ
+   изготовлен, а другой только оплачен, карточка на вкладке показывает половину
+   состава - со своим листом и своими бланками. Проверяем ПИКСЕЛИ: функция
+   может отдавать верный состав, а строки в шаблоне не быть вовсе (урок
+   правила 47). */
+require_once BASE_PATH . '/core/order_group.php';
+$__живые = all("SELECT * FROM awards_orders WHERE status IN ('paid','made','shipped')");
+$__поС = [];
+foreach ($__живые as $__o) $__поС[(int) $__o['id']] = (string) $__o['status'];
+$__разн = null;
+foreach (og_groups($__живые) as $__g) {
+    $__ids = array_map('intval', (array) $__g['ids']);
+    if (count($__ids) < 2) continue;
+    $__st = array_unique(array_map(static fn(int $i): string => $__поС[$i] ?? '', $__ids));
+    if (count($__st) < 2) continue;                      // посылка в одном состоянии - вкладка её не рвёт
+    $__разн = ['ids' => $__ids, 'st' => array_values($__st)];
+    break;
+}
+if ($__разн === null) {
+    echo "  факт разносостоянных посылок сейчас нет, строку проверяет исходник audit_zakazy\n";
+} else {
+    $__вкл = $__разн['st'][0];
+    $__r = http($AJAR, $BASE . '/admin/?p=orders&status=' . rawurlencode($__вкл));
+    $__свои = [];
+    foreach ($__разн['ids'] as $__i) if (($__поС[$__i] ?? '') === $__вкл) $__свои[] = $__i;
+    $__чужие = array_values(array_diff($__разн['ids'], $__свои));
+    $__естьСтрока = str_contains($__r['body'], 'Едет одной посылкой');
+    $__названы = true;
+    foreach ($__чужие as $__i) if (!preg_match('~Едет одной посылкой[^<]*№' . $__i . '~u', $__r['body'])) $__названы = false;
+    chk('на вкладке «' . $__вкл . '» карточка говорит про вторую половину посылки', $__естьСтрока,
+        'посылка ' . implode('+', $__разн['ids']));
+    chk('названы номера заказов, которых на вкладке не видно', $__названы,
+        'ждали №' . implode(', №', $__чужие));
+}
+
+/* ───────── «Входящие письма»: читаются с телефона и список не обрезан ───────── */
+sec('Входящие письма: карточки на телефоне и честная постраничность');
+$ibSrc = file_get_contents(BASE_PATH . '/admin/inbox.php');
+$ibCode = (static function (string $src): string {
+    $out = '';
+    foreach (token_get_all($src) as $t) {
+        if (is_array($t)) { if ($t[0] === T_COMMENT || $t[0] === T_DOC_COMMENT) { $out .= "\n"; continue; } $out .= $t[1]; }
+        else { $out .= $t; }
+    }
+    return $out;
+})($ibSrc);
+
+/* ИСХОДНИК. Потолок без счётчика возвращается одной строкой, поэтому запрет
+   стоит ОТРИЦАНИЕМ, а рядом требуется счёт ТЕМ ЖЕ условием, что и выборка. */
+chk('вписанного потолка списка не осталось', !preg_match('~LIMIT\s+300~i', $ibCode));
+chk('счёт идёт тем же условием, что выборка', str_contains($ibCode, 'COUNT(*) n FROM inbox_messages WHERE $where'));
+chk('подпись «показаны N-M из T» печатается', str_contains($ibCode, 'admin_stranicy('));
+chk('длину страницы выбирает оператор', str_contains($ibCode, 'admin_na_stranice_pole()'));
+chk('стиль карточек подключён', str_contains($ibCode, 'admin_cards_css()'));
+chk('обёртка и таблица помечены карточками',
+    str_contains($ibCode, 'table-wrap table-wrap--cards') && str_contains($ibCode, 'tbl tbl--cards'));
+chk('колонка действия названа словом',
+    str_contains($ibCode, '<th>Действие</th>') && !preg_match('~<th>\s*</th>~', $ibCode));
+/* Список ящиков берём у читателя почты: вписанный свой устарел в день, когда
+   центр начал читать mail.ru и gmail, и два ящика пропали из фильтра молча. */
+chk('список ящиков берётся у inbox_boxes()', str_contains($ibCode, 'inbox_boxes()'));
+$ibTh = preg_match_all('~<th[\s>]~', $ibCode);
+$ibLb = preg_match_all('~<td[^>]*data-label=~', $ibCode);
+chk('у каждой колонки есть подпись ячейки', $ibTh > 0 && $ibLb >= $ibTh, "колонок $ibTh, подписей $ibLb");
+
+/* ПИКСЕЛИ. Проверка функции не доказывает, что строки напечатаны. */
+$ibR = http($AJAR, $BASE . '/admin/?p=inbox');
+chk('раздел отвечает', $ibR['code'] === 200, 'код ' . $ibR['code'] . ', ' . strlen($ibR['body']) . ' байт');
+if ($ibR['code'] === 200) {
+    $ibBody = static function (string $b): string {
+        $t = explode('</tbody>', explode('<tbody>', $b)[1] ?? '')[0] ?? ''; return $t;
+    };
+    $ibRows = substr_count($ibBody($ibR['body']), '<tr');
+    $ibPer  = 50;
+    preg_match('~Показаны <b>(\d+)-(\d+)</b> из <b>(\d+)</b>~u', $ibR['body'], $ibPg);
+    $ibTotal = (int) ($ibPg[3] ?? -1);
+    $ibDb = (int) (scalar("SELECT COUNT(*) FROM inbox_messages
+                            WHERE kind NOT IN ('service','bounce','auto') AND is_auto=0") ?? 0);
+    chk('подпись называет полное число писем', $ibTotal === $ibDb, "на странице $ibTotal, в базе $ibDb");
+    chk('на странице не больше строк, чем длина страницы', $ibRows > 0 && $ibRows <= $ibPer, "строк $ibRows");
+    $ibCells = preg_match_all('~<td[^>]*data-label="[^"]+"~', $ibBody($ibR['body']));
+    chk('у всех ячеек есть непустая подпись', $ibCells === $ibRows * 7, "подписано $ibCells при строках $ibRows");
+    chk('классы карточек напечатаны в разметке',
+        preg_match('~class="table-wrap table-wrap--cards"~', $ibR['body']) === 1
+        && preg_match('~class="tbl tbl--cards"~', $ibR['body']) === 1);
+
+    /* Каждый читаемый ящик имеет свою карточку: без неё его писем в разделе не
+       видно вовсе, а фильтр его не предлагает (так было у mail.ru и gmail). */
+    require_once BASE_PATH . '/core/inbox_reader.php';
+    $ibNet = [];
+    foreach (array_keys(inbox_boxes()) as $ibB) {
+        if (!preg_match('~<option value="' . preg_quote($ibB, '~') . '"~', $ibR['body'])) $ibNet[] = $ibB;
+    }
+    chk('каждый ящик есть в фильтре', $ibNet === [], $ibNet ? implode(', ', $ibNet) : count(inbox_boxes()) . ' ящиков');
+    $ibIzBazy = array_column(all("SELECT DISTINCT mailbox FROM inbox_messages WHERE COALESCE(mailbox,'')<>''"), 'mailbox');
+    $ibNetK = [];
+    foreach ($ibIzBazy as $ibB) {
+        if (!preg_match('~box=' . preg_quote((string) $ibB, '~') . '[&"\']~', $ibR['body'])) $ibNetK[] = (string) $ibB;
+    }
+    chk('у каждого ящика из базы есть карточка', $ibNetK === [], $ibNetK ? implode(', ', $ibNetK) : implode(', ', $ibIzBazy));
+
+    /* ВТОРАЯ СТРАНИЦА ОБЯЗАНА ПОКАЗЫВАТЬ ДРУГИЕ ПИСЬМА. Подпись сходится и на
+       обрезанном списке - ровно так соврала проверка полноты в правиле 58,
+       поэтому сверяем сами строки, а не числа. */
+    if ($ibTotal > $ibPer) {
+        $ibR2 = http($AJAR, $BASE . '/admin/?p=inbox&st=2');
+        preg_match_all('~name="id" value="(\d+)"~', $ibBody($ibR['body']), $m1);
+        preg_match_all('~name="id" value="(\d+)"~', $ibBody($ibR2['body']), $m2);
+        $ibПересе = array_intersect($m1[1] ?? [], $m2[1] ?? []);
+        chk('вторая страница показывает другие письма',
+            ($m2[1] ?? []) !== [] && $ibПересе === [],
+            'на первой ' . count($m1[1] ?? []) . ', на второй ' . count($m2[1] ?? []) . ', общих ' . count($ibПересе));
+    } else {
+        echo "  справка: писем меньше одной страницы, вторую проверять не на чем\n";
+    }
+}
 echo "\n" . str_repeat('─', 60) . "\n";
 echo ($FAIL === 0 ? "АДМИНКА И ПРАВИЛА ЧИСТО" : "ПРОВАЛОВ: $FAIL") . ", пройдено: $OK\n";
 exit($FAIL === 0 ? 0 : 1);

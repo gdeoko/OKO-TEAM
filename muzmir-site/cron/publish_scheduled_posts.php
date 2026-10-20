@@ -32,6 +32,17 @@ if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
     exit(0);
 }
 
+/* ОКНО: афиша это публикация наружу, и час суток тут решает.
+ * Крон идёт каждые пять минут круглосуточно; стоп-кран массовых выше есть, а
+ * проверки окна не было - заведённая вечером афиша ушла бы в соцсети ночью. */
+if (is_file(BASE_PATH . '/core/outreach_window.php')) {
+    require_once BASE_PATH . '/core/outreach_window.php';
+    if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
+        cron_log(JOB, 'афиши ждут окна: ' . outreach_window_reason());
+        exit(0);
+    }
+}
+
 if (!cron_lock(JOB, 1800)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');
     exit(0);

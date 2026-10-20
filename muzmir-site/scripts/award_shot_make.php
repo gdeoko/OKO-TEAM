@@ -27,6 +27,7 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/afisha_prompt.php';
+require_once BASE_PATH . '/core/bastion_cdp.php';
 
 $cid  = (int) ($argv[1] ?? 0);
 $only = (string) ($argv[2] ?? 'all');
@@ -182,7 +183,7 @@ foreach ($todo as $kind) {
     $bastion('cat > /opt/oko-poster/' . $tag . '.txt <<\'PROMPT_EOF\'' . "\n" . $prompt . "\nPROMPT_EOF", 60);
 
     echo "    генерирую…\n";
-    $bastion('cd /opt/oko-poster && CDP_URL=http://127.0.0.1:9222 nohup node gpt_image2.mjs '
+    $bastion('cd /opt/oko-poster && CDP_URL=' . bastion_cdp_url($bastion) . ' nohup node gpt_image2.mjs '
            . $tag . '.txt ' . $outRem . ' 600 ' . $refRem
            . ' > /tmp/' . $tag . '.log 2>&1 & echo started', 60);
 

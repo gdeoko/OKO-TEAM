@@ -49,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 . implode(', ', $issued) . '). Наградной материал на руках у участника.', 'error');
             admin_redirect('longcomp', ['competition' => $cid]);
         }
-        q("DELETE FROM applications WHERE id=? AND competition_id=?", [$aid, $cid]);
+        // Через дверь: снимок заявки в её дипломы и отказ при выданных документах.
+        app_delete($aid, 'удалена оператором из оценки длинного конкурса');
         /* Печатный бланк из реестра не вычёркиваем: он уже напечатан и на руках,
          * а без записи QR с него ведёт в «документ не найден». */
         q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL
@@ -136,6 +137,7 @@ ob_start(); ?>
     </select>
   </div>
   <div class="field"><label>Поиск по обоим спискам</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер, звание"></div>
+  <?= admin_na_stranice_pole() ?>
   <div class="field"><label>Сортировка очереди на аттестацию</label><select name="order" onchange="this.form.submit()">
     <option value="old" <?= input('order')!=='new'?'selected':'' ?>>Сначала старые заявки (по дате подачи)</option>
     <option value="new" <?= input('order')==='new'?'selected':'' ?>>Сначала новые заявки (по дате подачи)</option>
@@ -180,7 +182,39 @@ ob_start(); ?>
   // действий. Эталон-таблица результатов ниже строится отдельно и только из
   // оценённых: отклонённой заявке в списке итогов конкурса делать нечего.
   // Архив всегда «последние оценённые сверху» — переключатель убран, см. фильтры выше.
-  $gradedRows = graded_rows($comp, $qLong, 'new', 'long');
+  /* ТРИ СПИСКА ЛИСТАЮТСЯ, И У КАЖДОГО СВОЙ НОМЕР СТРАНИЦЫ.
+     Раздел печатал все три целиком: по «Величию России» это 4,5 МБ разметки,
+     1215 строк, 2217 форм и 942 выпадающих списка - страница открывалась
+     наполовину и с телефона до конца не доезжала. Полный список остаётся в
+     DOCX, CSV и «HTML для печати» кнопками выше.
+     Общий номер страницы на три списка не годится: листание очереди сбрасывало
+     бы архив и наоборот, поэтому у каждого свой (st1, st2, st3). */
+  $per = admin_na_stranice();
+  $archTotal = graded_rows_count($comp, $qLong, 'long');
+  $стр = static function (string $имя, int $всего) use ($per): int {
+      $страниц = max(1, (int) ceil(max(1, $всего) / $per));
+      return max(1, min((int) input($имя, '1'), $страниц));
+  };
+  $st1 = $стр('st1', count($toGrade));
+  $st2 = $стр('st2', $archTotal);
+  $st3 = $стр('st3', count($graded));
+  /* Номера ДРУГИХ списков уносим в ссылку, иначе переход по страницам одного
+     списка молча возвращает соседние на первую страницу.
+     $кроме = '' отдаёт номера ВСЕХ трёх: так уходит ссылка «Изменить» в карточку
+     оценки, и возврат приводит на ту страницу, с которой ушли, а не в начало
+     списка. Для самой постраничности свой номер убирается: он подставляется. */
+  $keepFor = static function (string $кроме = '') use ($comp, $qLong, $qOrder, $st1, $st2, $st3): array {
+      $q = array_filter(['competition' => $comp, 'q' => $qLong,
+                         'order' => $qOrder === 'new' ? 'new' : '',
+                         'na' => admin_na_stranice() !== 50 ? admin_na_stranice() : '']);
+      foreach (['st1' => $st1, 'st2' => $st2, 'st3' => $st3] as $k => $v) {
+          if ($k !== $кроме && $v > 1) $q[$k] = $v;
+      }
+      return $q;
+  };
+  $toGradeShown = array_slice($toGrade, ($st1 - 1) * $per, $per);
+  $gradedShown  = array_slice($graded,  ($st3 - 1) * $per, $per);
+  $gradedRows   = graded_rows($comp, $qLong, 'new', 'long', $per, ($st2 - 1) * $per);
   $tot = count($all); $done = count($graded);
   $pct = $tot ? (int) round($done / $tot * 100) : 0;
   $published = trim((string)($current['results_published_at'] ?? '')) !== '';
@@ -240,7 +274,7 @@ ob_start(); ?>
     ob_start(); ?>
       <a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['id'=>$aid]) ?>"><?= admin_icon('grading') ?>Оценить</a>
       <?php // Отклонить — только ВНУТРИ заявки (после просмотра), в списке кнопки нет. ?>
-      <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Удалить заявку безвозвратно?')"><?= csrf_field() ?>
+      <form method="post" action="<?= url('/admin/') ?>" class="lc-del" onsubmit="return confirm('Удалить заявку безвозвратно?')"><?= csrf_field() ?>
         <input type="hidden" name="do" value="delete"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="id" value="<?= $aid ?>">
         <button class="btn btn--ghost btn--sm">Удалить</button>
       </form>
@@ -258,8 +292,10 @@ ob_start(); ?>
      Один запрос на весь список: разборы берём пачкой, а не по строке. */
   $agHints = [];
   $agFails = [];
-  if ($toGrade) {
-      $ids = implode(',', array_map(static fn($r) => (int) $r['id'], $toGrade));
+  if ($toGradeShown) {
+      // По показанной сотне, а не по всей очереди: на «Величии России» список
+      // «IN (…)» разрастался до семисот номеров ради строк, которых на странице нет.
+      $ids = implode(',', array_map(static fn($r) => (int) $r['id'], $toGradeShown));
       try {
           foreach (all("SELECT application_id, title, total, reject_hint FROM grading_runs
                          WHERE status='ok' AND application_id IN ($ids)
@@ -280,20 +316,21 @@ ob_start(); ?>
       } catch (\Throwable $e) { $agFails = []; }
   }
   ?>
-  <div class="card" style="margin-bottom:16px">
+  <div class="card" id="na-attestacii" style="margin-bottom:16px">
     <div class="section-title" style="margin-bottom:8px"><h3>На аттестации <span class="badge badge--muted"><?= count($toGrade) ?></span></h3></div>
     <?php if (!$toGrade): ?>
       <p class="muted small">Все заявки оценены.</p>
     <?php else: ?>
-    <div class="table-wrap"><table class="tbl">
+    <div class="table-wrap"><table class="tbl lc-tbl">
       <thead><tr>
-        <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Подсказка</th><th>Статус</th><th style="width:280px">Действия</th>
+        <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Подсказка</th><th>Статус</th><th>Действия</th>
       </tr></thead>
       <tbody>
-        <?php foreach ($toGrade as $a): ?>
+        <?php foreach ($toGradeShown as $a): ?>
           <tr>
-            <td><b><?= h($whoName($a)) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
+            <td><b><?= h($whoName($a)) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int)$a['id']) ?>
               <div class="small muted"><?= h((string)$a['number']) ?><?php $pl = $whoPlace($a); echo $pl !== '' ? ' · ' . h($pl) : ''; ?></div>
+              <?php if (function_exists('prioritet_zayavki')): ?><div><?= prioritet_plashka(prioritet_zayavki($a)) ?></div><?php endif; ?>
             </td>
             <td class="small"><?= h((string)$current['name']) ?></td>
             <td class="small"><?= h((string)$a['work_title']) ?></td>
@@ -325,19 +362,21 @@ ob_start(); ?>
         <?php endforeach; ?>
       </tbody>
     </table></div>
+    <?= admin_stranicy(count($toGrade), $st1, $per, 'longcomp', $keepFor('st1'), 'st1', 'na-attestacii') ?>
     <?php endif; ?>
   </div>
 
   <!-- СПИСОК 2: РАЗОБРАННЫЕ (оценённые + отклонённые), полный набор действий -->
   <div class="card" id="graded" style="margin-bottom:16px">
     <div class="section-title" style="margin-bottom:8px">
-      <h3>Оценённые и отклонённые <span class="badge badge--gold"><?= count($gradedRows) ?></span></h3>
+      <h3>Оценённые и отклонённые <span class="badge badge--gold"><?= $archTotal ?></span></h3>
     </div>
     <p class="small muted" style="margin:-4px 0 12px">
       Всё, что уже разобрано. Отклонённые остаются здесь — решение по заявке принято, и проверить его
       должно быть где. «Изменить» открывает карточку оценки: там правится и результат, и сама заявка.
     </p>
-    <?= admin_graded_table($gradedRows, 'longcomp', array_filter(['competition' => $comp, 'q' => $qLong])) ?>
+    <?= admin_graded_table($gradedRows, 'longcomp', $keepFor()) ?>
+    <?= admin_stranicy($archTotal, $st2, $per, 'longcomp', $keepFor('st2'), 'st2', 'graded') ?>
   </div>
 
   <!-- СПИСОК 3: ЭТАЛОН-ТАБЛИЦА ИТОГОВ (то, что уйдёт в DOCX и в пост) -->
@@ -347,12 +386,13 @@ ob_start(); ?>
       <p class="muted small">Оценённых заявок пока нет.</p>
     <?php else: ?>
     <p class="small muted" style="margin:0 0 10px">Ровно то, что попадёт в DOCX и в пост с итогами. Отклонённых здесь нет.</p>
-    <div class="table-wrap"><table class="tbl">
-      <thead><tr><th>Ф.И.О. участника / коллектив</th><th>Название конкурсного номера</th><th>Страна / город</th><th>Аттестационный результат</th><th style="width:280px">Действия</th></tr></thead>
+    <div class="table-wrap"><table class="tbl lc-tbl">
+      <thead><tr><th>Ф.И.О. участника / коллектив</th><th>Название конкурсного номера</th><th>Страна / город</th><th>Аттестационный результат</th><th>Действия</th></tr></thead>
       <tbody>
-        <?php foreach ($graded as $a): ?>
+        <?php foreach ($gradedShown as $a): ?>
           <tr>
-            <td><?= h($whoName($a)) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span></td>
+            <td><?= h($whoName($a)) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><?= nenadezhnyi_metka((int)($a['user_id'] ?? 0), (string)($a['email'] ?? ''), (int)$a['id']) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span>
+              <?php if (function_exists('prioritet_zayavki')): ?><div><?= prioritet_plashka(prioritet_zayavki($a)) ?></div><?php endif; ?></td>
             <td class="small"><?= h((string)$a['work_title']) ?></td>
             <td class="small"><?= h($whoPlace($a)) ?></td>
             <td><span class="badge badge--gold"><?= h((string)$a['result']) ?></span>
@@ -362,9 +402,39 @@ ob_start(); ?>
         <?php endforeach; ?>
       </tbody>
     </table></div>
+    <?= admin_stranicy(count($graded), $st3, $per, 'longcomp', $keepFor('st3'), 'st3', 'results-preview') ?>
     <?php endif; ?>
   </div>
 <?php endif; ?>
+<style>
+/* ПРИЖАТАЯ КОЛОНКА ДЕЙСТВИЙ (слово владельца 16.10.2026; та же мера, что в
+   оценке коротких - правила 73б и 73г). В очереди длинного конкурса семь
+   колонок, в списке итогов пять, с телефона они не влезают, .table-wrap
+   прокручивается вбок - и колонка с кнопками «Оценить» и «Удалить» уезжала за
+   край вместе с правой стороной таблицы. Архив этого раздела рисует
+   admin_graded_table(), он прижат своим стилем (.gl-tbl), поэтому здесь только
+   свои две таблицы. Стиль живёт в самой странице, а не в admin.css: правка в
+   общем файле доехала бы до владельца только после сброса кэша браузера. */
+.lc-tbl thead th{z-index:4}
+.lc-tbl th:last-child,.lc-tbl td:last-child{position:sticky;right:0;
+        background:var(--a-card,#fff);box-shadow:-10px 0 12px -10px rgba(20,26,51,.22)}
+.lc-tbl th:last-child{width:280px;background:var(--a-parchment,#F6F1E6);z-index:5}
+.lc-tbl tbody tr:hover td:last-child{background:var(--a-cream,#FFFCF5)}
+/* СВОЕГО z-index У ПРИЖАТОЙ ЯЧЕЙКИ НЕТ НАРОЧНО (правило 73г): с ним ячейка
+   становится отдельным слоем, и всё всплывающее внутри строки уходит ПОД
+   прижатые ячейки строк ниже. Шапка стоит выше ячеек своим числом. */
+.lc-del{display:inline-block}
+@media (max-width:820px){
+  /* КОЛОНКА ПО ШИРИНЕ КНОПОК, А НЕ ПО ВПИСАННОМУ ЧИСЛУ: 280 пикселей это
+     больше половины экрана телефона. Кнопки встают столбиком и сами называют
+     нужную ширину. */
+  .lc-tbl th:last-child{width:auto}
+  .lc-tbl td:last-child > .btn,.lc-tbl td:last-child .lc-del,
+  .lc-tbl td:last-child .lc-del > .btn{display:block;width:100%;
+        box-sizing:border-box;text-align:center}
+  .lc-tbl td:last-child .lc-del{margin-top:4px}
+}
+</style>
 <?php
 $content = ob_get_clean();
 admin_layout('Оценка длинных', $content, 'longcomp');
