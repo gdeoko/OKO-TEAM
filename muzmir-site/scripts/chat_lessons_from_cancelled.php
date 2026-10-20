@@ -59,6 +59,16 @@ foreach ($rows as $r) {
     // Если человек написал то же самое — учиться нечему, ответ сняли по другой причине.
     if (mb_substr(mb_strtolower($bad), 0, 60) === mb_substr(mb_strtolower($good), 0, 60)) { $skip++; continue; }
 
+    /* ПРИГЛАШЕНИЕ НА САЙТ ОБРАЗЦОМ «КАК НАДО» НЕ СТАНОВИТСЯ.
+     * Оператор вставляет его из буфера вместе с ответом по делу, и урок
+     * получался такой: «на любой вопрос отвечай приглашением». Правило
+     * владельца от 20.10.2026 — один раз за переписку (core/chat_once.php). */
+    if (!function_exists('chat_invite_present')) require_once BASE_PATH . '/core/chat_once.php';
+    if (chat_invite_present($good)) {
+        $good = chat_invite_cut($good);
+        if (mb_strlen(trim($good)) < 30) { $skip++; continue; }
+    }
+
     $dup = (int) (scalar("SELECT COUNT(*) FROM chat_lessons WHERE question=? AND good=?", [$q, $good]) ?? 0);
     if ($dup > 0) { $skip++; continue; }
 

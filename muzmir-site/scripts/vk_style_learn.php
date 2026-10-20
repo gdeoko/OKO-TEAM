@@ -221,6 +221,17 @@ while (($line = fgets($fh)) !== false) {
         if (vsl_has_personal($ac)) { $drop['личные данные в ответе'] = ($drop['личные данные в ответе'] ?? 0) + 1; continue; }
         if (vsl_has_personal($qc)) { $drop['личные данные в вопросе'] = ($drop['личные данные в вопросе'] ?? 0) + 1; continue; }
         if (vsl_weight($ac) < 40) { $drop['мало сути'] = ($drop['мало сути'] ?? 0) + 1; continue; }
+        /* ПРИГЛАШЕНИЕ НА САЙТ В ОБУЧЕНИЕ НЕ ИДЁТ.
+         * Оно отправляется один раз за переписку (core/chat_once.php), а в
+         * выгрузке ВК встречается чаще любого другого текста — именно поэтому
+         * модель считала его образцовым ответом на что угодно и подставляла по
+         * третьему разу. Вырезаем блок, и если без него ответа не остаётся,
+         * эталон не берём вовсе. */
+        if (!function_exists('chat_invite_present')) require_once BASE_PATH . '/core/chat_once.php';
+        if (chat_invite_present($ac)) {
+            $ac = chat_invite_cut($ac);
+            if (mb_strlen(trim($ac)) < 40) { $drop['приглашение на сайт'] = ($drop['приглашение на сайт'] ?? 0) + 1; continue; }
+        }
 
         $topic = vsl_topic($qc, $ac);
         $byTopic[$topic][] = ['q' => mb_substr($qc, 0, 400), 'a' => mb_substr($ac, 0, 900),

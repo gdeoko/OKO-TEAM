@@ -78,6 +78,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ownerId = (int) (scalar("SELECT user_id FROM chat_messages
                                    WHERE session_key=? AND COALESCE(user_id,0)>0
                                 ORDER BY id DESC LIMIT 1", [$sk]) ?? 0);
+
+        /* ПРИГЛАШЕНИЕ НА САЙТ — ОДИН РАЗ ЗА ПЕРЕПИСКУ, И ДЛЯ ОПЕРАТОРА ТОЖЕ.
+         *
+         * Правило владельца от 20.10.2026. Руками этот блок вставляли чаще, чем
+         * его писал бот: 88 отправок из 108. Вставляется он из буфера вместе с
+         * ответом по делу, поэтому не отклоняем сообщение целиком — вырезаем
+         * повтор, остальное отправляем и говорим оператору, что убрали. */
+        if (!function_exists('chat_invite_guard')) require_once BASE_PATH . '/core/chat_once.php';
+        $inviteCut = false;
+        $g = chat_invite_guard($text, $sk, $ownerId ?: null);
+        if ($g['cut']) {
+            $inviteCut = true;
+            $text = $g['text'];
+            if (trim($text) === '') {
+                flash('Не отправлено: это приглашение зарегистрироваться на сайте, участник его уже получал. '
+                    . 'Повторно оно не отправляется — ни ботом, ни вручную.', 'error');
+                admin_redirect('chats', $back);
+            }
+        }
         try {
             $mid = (int) insert('chat_messages', ['user_id' => $ownerId ?: null, 'session_key' => $sk,
                                                   'role' => 'assistant', 'text' => $text, 'file' => '']);
@@ -93,7 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         audit('chat_admin_reply', 'chat', 0, ['session' => $sk]);
         $mins = function_exists('chat_takeover_minutes') ? chat_takeover_minutes() : 30;
         $tail = ' Бот в этот диалог не заходит ' . $mins . ' минут.'
-              . ($cancelled > 0 ? ' Снят подготовленный ответ бота (' . $cancelled . ').' : '');
+              . ($cancelled > 0 ? ' Снят подготовленный ответ бота (' . $cancelled . ').' : '')
+              . ($inviteCut ? ' Из ответа убрано приглашение зарегистрироваться на сайте: участник его уже получал.' : '');
         flash(chats_channel($sk) === 'vk'
             /* ПРИЧИНУ НАЗЫВАЕМ НАСТОЯЩУЮ.
              * Здесь на любой отказ писалось «проверьте токен сообщества», и это

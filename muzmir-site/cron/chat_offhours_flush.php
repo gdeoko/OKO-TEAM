@@ -109,6 +109,11 @@ foreach ($dialogs as $d) {
     $prefix = trim($name) !== '' ? ('Доброе утро, ' . trim($name) . '! ') : 'Доброе утро! ';
     $reply  = $prefix . 'Возвращаюсь к Вашему вопросу.' . "\n\n" . chat_wrap_reply($sessionKey, $core, '', false, false);
 
+    // Приглашение зарегистрироваться на сайте — один раз за всю переписку.
+    if (!function_exists('chat_invite_guard')) require_once BASE_PATH . '/core/chat_once.php';
+    $reply = chat_invite_guard($reply, $sessionKey, $uid ?: null)['text'];
+    if (trim($reply) === '') { chat_dialog_set($sessionKey, ['pending_offhours' => 0]); continue; }
+
     /* В историю ответ кладём в обоих каналах — это и есть ответ для веба. Очередь
      * пяти минут здесь не нужна: человек и так ждал всю ночь. */
     try {

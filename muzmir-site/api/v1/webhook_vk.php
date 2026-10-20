@@ -305,6 +305,16 @@ function vk_cb_ack_then_process(string $type): void {
             $short = true;
         }
 
+        /* ПРИГЛАШЕНИЕ НА САЙТ — ОДИН РАЗ ЗА ПЕРЕПИСКУ (core/chat_once.php).
+         * Режем до записи в историю: ниже по коду отправляется именно $reply,
+         * поэтому очищенный здесь текст уходит очищенным и во ВКонтакте. */
+        if (!function_exists('chat_invite_guard')) require_once BASE_PATH . '/core/chat_once.php';
+        $reply = chat_invite_guard($reply, $sessionKey, null)['text'];
+        if (trim($reply) === '') {
+            _vk_log('invite-only reply peer=' . $peer . ': приглашение уже отправляли — молчим');
+            return;
+        }
+
         // Сразу фиксируем ответ в истории (состояние диалога корректно тут же).
         $replyRowId = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
         if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа, чтобы следующий диалог снова здоровался

@@ -11,6 +11,7 @@ require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/chat_brain.php';   // общий «мозг» (общий с ботом ВК)
 require_once BASE_PATH . '/core/chat_priority.php'; // очередь: Клубу моментально, остальным в срок
 require_once BASE_PATH . '/core/chat_ops.php';     // состояние диалога: бот/оператор/график
+require_once BASE_PATH . '/core/chat_once.php';    // приглашение на сайт — один раз за переписку
 require_post();
 
 $action = input('action', 'send');
@@ -166,7 +167,12 @@ if ($action === 'upload') {
         if ($tail !== '') $core = trim($core . "\n\n" . $tail);
     }
     $reply = chat_wrap_reply($sessionKey, $core, $greetName, $greet, false);
-    try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']); } catch (\Throwable $e) {}
+    // Приглашение зарегистрироваться на сайте уходит человеку ОДИН раз за всю
+    // переписку: на второй раз блок вырезается, остальной ответ доходит целиком.
+    $reply = chat_invite_guard($reply, $sessionKey, $uid ? (int) $uid : null)['text'];
+    if (trim($reply) !== '') {
+        try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']); } catch (\Throwable $e) {}
+    }
     chat_maybe_escalate($derived, $uid, $sessionKey, $greetName);
 
     $actions = chat_actions($derived, $uid, $sessionKey);
@@ -300,10 +306,14 @@ if (chat_is_closing($text)) {
 $delay = chat_reply_delay_sec($uid);
 $visibleAt = $delay > 0 ? date('Y-m-d H:i:s', time() + $delay) : '';
 
-try {
-    insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
-                             'text' => $reply, 'file' => '', 'visible_at' => $visibleAt]);
-} catch (\Throwable $e) {}
+// Приглашение зарегистрироваться на сайте — один раз за всю переписку.
+$reply = chat_invite_guard($reply, $sessionKey, $uid ? (int) $uid : null)['text'];
+if (trim($reply) !== '') {
+    try {
+        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
+                                 'text' => $reply, 'file' => '', 'visible_at' => $visibleAt]);
+    } catch (\Throwable $e) {}
+}
 if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа
 
 // --- Эскалация оператору в Телеграм (тихо для пользователя) ---
