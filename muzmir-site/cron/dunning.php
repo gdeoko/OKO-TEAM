@@ -163,15 +163,42 @@ try {
     }
 
     /* ─────────── ЗАКАЗЫ НАГРАД (не оплачены, status='new') ─────────── */
+    /* ПОДПИСКА НА КЛУБ СЮДА НЕ ВХОДИТ.
+     *
+     * Выборка брала любой неоплаченный заказ, и подписка на Клуб уезжала в
+     * дожим с заголовком «Оплатите заказ наград №…» — человек получал счёт за
+     * награды, которых не заказывал. Второй дожим (order_unpaid_reminder)
+     * клубные заказы исключает по решению владельца; делаем так же. */
     $ords = all(
         "SELECT * FROM awards_orders
-          WHERE status='new' AND email <> '' AND created_at >= datetime('now','localtime','-4 days')"
+          WHERE status='new' AND email <> ''
+            AND COALESCE(items,'') NOT LIKE '%\"kind\":\"club\"%'
+            AND created_at >= datetime('now','localtime','-4 days')"
     );
     foreach ($ords as $o) {
         $id = (int) $o['id'];
         $created = (string) $o['created_at'];
         $name = trim((string) ($o['full_name'] ?? ''));
         $uid  = (int) ($o['user_id'] ?? 0);
+
+        /* ЗА УЖЕ ОПЛАЧЕННОЕ СЧЁТ НЕ ВЫСТАВЛЯЕМ.
+         *
+         * К оплате подходят не с первого раза: касса отбивает, человек
+         * возвращается и платит заново. Прежние попытки остаются висеть в
+         * «новых», и дожим слал по ним напоминания за услугу, которая уже
+         * оплачена и выдана. Хромова так получила семь писем «Оплатите заказ
+         * наград» за неделю, оплатив всё с третьего захода. Если по этому же
+         * адресу есть оплаченный заказ с тем же составом — молчим. */
+        $sameItems = trim((string) ($o['items'] ?? ''));
+        if ($sameItems !== '') {
+            $paidTwin = (int) (scalar(
+                "SELECT COUNT(*) FROM awards_orders
+                  WHERE email = ? AND id <> ? AND items = ?
+                    AND status IN ('paid','made','shipped','delivered')",
+                [(string) $o['email'], $id, $sameItems]
+            ) ?? 0);
+            if ($paidTwin > 0) continue;
+        }
 
         if (dun_sent($id, 'dun_ord_24h') && dun_age_ok($created, $DELETE_AFTER)) {
             if (!dun_sent($id, 'dun_ord_deleted')) {
