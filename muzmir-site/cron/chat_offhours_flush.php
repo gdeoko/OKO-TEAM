@@ -111,7 +111,7 @@ foreach ($dialogs as $d) {
 
     // Приглашение зарегистрироваться на сайте — один раз за всю переписку.
     if (!function_exists('chat_invite_guard')) require_once BASE_PATH . '/core/chat_once.php';
-    $reply = chat_invite_guard($reply, $sessionKey, $uid ?: null)['text'];
+    $reply = chat_persona_fix(chat_invite_guard($reply, $sessionKey, $uid ?: null)['text']);
     if (trim($reply) === '') { chat_dialog_set($sessionKey, ['pending_offhours' => 0]); continue; }
 
     /* В историю ответ кладём в обоих каналах — это и есть ответ для веба. Очередь

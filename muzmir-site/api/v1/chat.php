@@ -169,7 +169,7 @@ if ($action === 'upload') {
     $reply = chat_wrap_reply($sessionKey, $core, $greetName, $greet, false);
     // Приглашение зарегистрироваться на сайте уходит человеку ОДИН раз за всю
     // переписку: на второй раз блок вырезается, остальной ответ доходит целиком.
-    $reply = chat_invite_guard($reply, $sessionKey, $uid ? (int) $uid : null)['text'];
+    $reply = chat_persona_fix(chat_invite_guard($reply, $sessionKey, $uid ? (int) $uid : null)['text']);
     if (trim($reply) !== '') {
         try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']); } catch (\Throwable $e) {}
     }
@@ -307,7 +307,7 @@ $delay = chat_reply_delay_sec($uid);
 $visibleAt = $delay > 0 ? date('Y-m-d H:i:s', time() + $delay) : '';
 
 // Приглашение зарегистрироваться на сайте — один раз за всю переписку.
-$reply = chat_invite_guard($reply, $sessionKey, $uid ? (int) $uid : null)['text'];
+$reply = chat_persona_fix(chat_invite_guard($reply, $sessionKey, $uid ? (int) $uid : null)['text']);
 if (trim($reply) !== '') {
     try {
         insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',

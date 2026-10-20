@@ -309,7 +309,7 @@ function vk_cb_ack_then_process(string $type): void {
          * Режем до записи в историю: ниже по коду отправляется именно $reply,
          * поэтому очищенный здесь текст уходит очищенным и во ВКонтакте. */
         if (!function_exists('chat_invite_guard')) require_once BASE_PATH . '/core/chat_once.php';
-        $reply = chat_invite_guard($reply, $sessionKey, null)['text'];
+        $reply = chat_persona_fix(chat_invite_guard($reply, $sessionKey, null)['text']);
         if (trim($reply) === '') {
             _vk_log('invite-only reply peer=' . $peer . ': приглашение уже отправляли — молчим');
             return;
