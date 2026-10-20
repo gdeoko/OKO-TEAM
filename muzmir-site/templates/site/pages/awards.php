@@ -103,6 +103,7 @@ $order = ['Кубок Гран-при','Статуэтка лауреата','М
 $myApps = [];
 if ($u) {
     $myApps = all("SELECT a.id, a.number, a.competition_id, a.full_name, a.result, a.status, a.is_group,
+                          COALESCE(a.club_free,0) club_free,
                           c.name AS comp_name, c.slug AS comp_slug,
                           c.results_mode AS comp_rmode, c.results_published_at AS comp_rpub
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
@@ -158,6 +159,37 @@ if ($appId > 0 && $u) {
                 $cmp  = all("SELECT item, kind, price FROM awards_prices WHERE competition_id=? ORDER BY price DESC", [$compId]);
                 foreach ($gen as $p) { $it = aw_canon_item((string) $p['item']); if ($it !== '') $catalog[$it][$p['kind']] = (int) $p['price']; }
                 foreach ($cmp as $p) { $it = aw_canon_item((string) $p['item']); if ($it !== '') $catalog[$it][$p['kind']] = (int) $p['price']; }
+            }
+        }
+    }
+}
+
+/* ВИТРИНА ДУМАЕТ КАК СЕРВЕР: ПО ЛЬГОТНОЙ ЗАЯВКЕ ЭЛЕКТРОННЫЕ ДОКУМЕНТЫ БЕСПЛАТНЫ.
+ *
+ * Слово владельца 15.10.2026: по заявкам, принятым без оргвзноса, ЭЛЕКТРОННЫЕ
+ * основной и дополнительный дипломы и благодарственное письмо бесплатны, а
+ * оригиналы на бланках идут по прайсу со клубной скидкой. Решает
+ * `core/club_free.php`, он же решает в двери заказа - если показать здесь цену,
+ * а в кассе взять ноль, человек первым делом решит, что его обманули (урок
+ * правил 45 и 64, только в обратную сторону).
+ *
+ * Считается это только при ВЫБРАННОЙ заявке (`?app=`): так сюда ведут кнопка из
+ * кабинета и письмо с результатом. Когда заявку выбирают из списка на самой
+ * странице, цены стоят общие, а под списком напечатана строка про льготу -
+ * подставлять ноль «на всякий случай» нельзя, заявка может быть и обычной. */
+$clubFreeApp = false;
+if ($appLock) {
+    if (!function_exists('club_free_zayavka') && is_file(BASE_PATH . '/core/club_free.php')) {
+        require_once BASE_PATH . '/core/club_free.php';
+    }
+    if (function_exists('club_free_zayavka') && club_free_zayavka((int) $appLock['id'])) {
+        $clubFreeApp = true;
+        foreach ($catalog as $__it => $__kinds) {
+            if (!function_exists('club_free_award_item') || !club_free_award_item((string) $__it)) continue;
+            foreach (array_keys($__kinds) as $__k) {
+                // Обнуляем ТОЛЬКО электронный вид: оригинал на бланке платный.
+                if (function_exists('club_free_award_kind') && !club_free_award_kind((string) $__k)) continue;
+                $catalog[$__it][$__k] = 0;
             }
         }
     }
@@ -501,7 +533,10 @@ ob_start(); ?>
             <option selected><?= h((string) $appLock['number']) ?> (<?= h($appLockResult) ?>)</option>
           </select>
           <input type="hidden" name="application_id" value="<?= (int) $appLock['id'] ?>">
-          <div class="hint">Состав наград ограничен результатом этой заявки.</div>
+          <div class="hint">Состав наград ограничен результатом этой заявки.<?php
+            if (!empty($clubFreeApp)): ?> Заявка принята без оргвзноса по Элитному клубу,
+            поэтому электронные основной и дополнительный дипломы и благодарственное
+            письмо по ней — бесплатно; оригиналы на бланках по прайсу со скидкой.<?php endif; ?></div>
         </div>
         <?php elseif ($compApps): ?>
         <div class="field">
@@ -512,6 +547,18 @@ ob_start(); ?>
               <option value="<?= (int)$a['id'] ?>" <?= $selApp === (int)$a['id'] ? 'selected' : '' ?>><?= h($a['number']) ?><?= $a['result']?' ('.h($a['result']).')':'' ?></option>
             <?php endforeach; ?>
           </select>
+          <?php /* ЛЬГОТНАЯ ЗАЯВКА В СПИСКЕ - ГОВОРИМ СЛОВАМИ, А НЕ МОЛЧА.
+                   Цены в каталоге общие: какая заявка выбрана, страница узнаёт уже
+                   в браузере. Сумму пересчитает сервер (api/v1/order.php), и
+                   человек не должен узнавать о бесплатном дипломе из чека. */
+            $__естьЛьготная = false;
+            foreach ($compApps as $__a) { if ((int) ($__a['club_free'] ?? 0) === 1) { $__естьЛьготная = true; break; } }
+            if ($__естьЛьготная): ?>
+            <div class="hint">По Вашей заявке, принятой без оргвзноса по Элитному клубу,
+              электронные основной и дополнительный дипломы и благодарственное письмо —
+              бесплатно (оригиналы на бланках по прайсу со скидкой): сумма пересчитается
+              при оформлении.</div>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
       <?php else: ?>
@@ -590,9 +637,17 @@ ob_start(); ?>
         </label>
         <label style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5">
           <input type="checkbox" name="ord_agree_terms" id="ord_agree_terms" value="1" style="margin-top:3px">
+          <?php /* СРОКИ БЕРЁМ У ЕДИНОГО ИСТОЧНИКА, А НЕ ВПИСЫВАЕМ.
+                   Здесь стояло «электронные - 5 рабочих дней» без клубного срока,
+                   а участнику Клуба код делает их за три (слово владельца
+                   16.10.2026, правило 73з). Человек подписывался под сроком, из
+                   которого половина правды. */
+                 if (!function_exists('prioritet_fraza_izgotovleniya') && is_file(BASE_PATH . '/core/prioritet.php')) {
+                     require_once BASE_PATH . '/core/prioritet.php';
+                 } ?>
           <span>Я ознакомился со сроками изготовления и доставки наградного материала:
-            электронные - 5 рабочих дней с момента оплаты, оригиналы - 7 рабочих дней на изготовление
-            и до 14 рабочих дней на доставку Почтой России.</span>
+            <?= h(function_exists('prioritet_fraza_izgotovleniya') ? prioritet_fraza_izgotovleniya()
+                 : 'электронные - 5 рабочих дней с момента оплаты заказа, у участников Элитного клуба - 3 рабочих дня; оригиналы на бланках и изделия - 7 рабочих дней на изготовление, срок одинаковый для всех, и до 14 рабочих дней на доставку Почтой России.') ?></span>
         </label>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>
@@ -651,6 +706,9 @@ ob_start(); ?>
           }
       }
   }
+  /* По льготной заявке Клуба бесплатен ЭЛЕКТРОННЫЙ основной диплом — и на кнопке
+     «добавить» тоже. Оригинал на бланке остаётся по прайсу (слово владельца 15.10.2026). */
+  if (!empty($clubFreeApp)) $basePrice['digital'] = 0;
   $mma = [
       'compId'       => (int)$selComp['id'],
       'compName'     => (string)$selComp['name'],
@@ -761,8 +819,9 @@ ob_start(); ?>
 
   /* ДОПОЛНЕНИЯ — ТОЛЬКО ВМЕСТЕ С ОСНОВНЫМ ДИПЛОМОМ.
    *
-   * Правило центра: дополнительный диплом, благодарность педагогу и трофеи —
-   * это дополнения к главной награде участника, отдельно они не изготавливаются.
+   * Правило центра: дополнительный диплом (и электронный, и оригинал),
+   * благодарность педагогу и трофеи — это дополнения к главной награде
+   * участника, отдельно они не изготавливаются.
    * Сервер это проверяет и откажет, но отказ после нажатия «Оплатить» — плохой
    * способ объяснять правила. Поэтому объясняем здесь и сразу предлагаем выход:
    * одна кнопка добавляет недостающий диплом в корзину.
@@ -779,10 +838,10 @@ ob_start(); ?>
     var hasBase=false, blocked=null, needOriginal=false;
     cart.forEach(function(c){
       if(isBaseItem(c.item)){ hasBase=true; return; }
-      // Дополнительный диплом — самостоятельная награда жюри, заказывается
-      // отдельно от основного (правило владельца, серверная проверка —
-      // award_base_required в core/orders.php).
-      if(/дополнительн/i.test(c.item)) return;
+      // Дополнительный диплом ТОЖЕ требует основного (слово владельца
+      // 14.10.2026, отменяет прежнее исключение). Витрина обязана думать так же,
+      // как сервер: иначе человек соберёт корзину, нажмёт «Оплатить» и получит
+      // отказ от award_base_required в core/orders.php.
       if(!blocked) blocked=c.item;
       if(c.kind!=='digital') needOriginal=true;
     });
@@ -978,6 +1037,20 @@ ob_start(); ?>
     fetch('<?= url('/api/v1/order') ?>',{method:'POST',credentials:'same-origin',body:fd})
       .then(function(r){return r.json();})
       .then(function(d){
+        /* КНОПКУ ОТПУСКАЕМ ТОЛЬКО ТОГДА, КОГДА ЧЕЛОВЕК ОСТАЁТСЯ НА СТРАНИЦЕ.
+         *
+         * Здесь кнопка разблокировалась первой же строкой - до перехода на
+         * кассу. Переход занимает секунду, и за эту секунду успевал пройти
+         * второй клик: создавался второй заказ и второй платёж. Так 20 октября
+         * у Снеговой появились заказы №675 и №676 с разницей в одну секунду,
+         * а у Буланова - два платежа в одну секунду по заказу №674. За месяц
+         * таких пар три. Разблокировка переехала в ветки, где мы действительно
+         * ждём от человека следующего действия. */
+        if(d && d.ok && d.confirmation_url){
+          btn.textContent='Переходим к оплате…';
+          location.href=d.confirmation_url;
+          return;
+        }
         btn.disabled=false; btn.textContent='Оплатить';
         // Сервер отказал из-за отсутствия основного диплома — показываем то же
         // окно с кнопкой. Сюда попадают случаи, которых страница знать не могла:

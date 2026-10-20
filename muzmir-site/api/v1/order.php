@@ -264,6 +264,56 @@ if (!$isClubOrder) {
     }
 }
 
+/* ЛЬГОТНАЯ ЗАЯВКА КЛУБА: ДИПЛОМЫ ПО НЕЙ БЕСПЛАТНЫ (слово владельца 15.10.2026).
+ *
+ * «3 заявки на участие бесплатно (без оргвзноса). Бесплатно дипломы,
+ * дополнительные дипломы, благодарственные письма, по этим заявкам на участие.»
+ * Этой привилегией владелец заменил снятые «закрытые конкурсы Клуба».
+ *
+ * РЕШАЕТ ОДИН ИСТОЧНИК - `core/club_free.php`: здесь только применяем. Вторая
+ * копия условия (какие документы, по каким заявкам) разошлась бы с витриной и с
+ * ботом молча - грабля оплачена правилами 33, 35, 45, 47, 56а, 64.
+ *
+ * БЕСПЛАТЕН ТОЛЬКО ЭЛЕКТРОННЫЙ ВИД (слово владельца 15.10.2026: «бесплатны
+ * только электронные, оригиналы по прайсу со скидкой»).
+ *
+ * СЧИТАЕМ ПОСЛЕ СБОРКИ СУММЫ И ДО СКИДОК: обнулённая позиция в скидку уже не
+ * попадает, а всё остальное (оригиналы на бланках, именной диплом, кубок,
+ * статуэтка, медаль) идёт со клубными процентами как раньше.
+ *
+ * ЗАЯВКА НУЖНА ИМЕННО ЭТА. Отметка стоит на самой заявке (`club_free`), поэтому
+ * льгота не переносится ни на четвёртую заявку месяца, ни на чужую: заказ по
+ * чужой заявке сервер и так не принимает (проверка выше). */
+if (!$isClubOrder && $applicationId && $amount > 0) {
+    if (!function_exists('club_free_award_besplatno') && is_file(BASE_PATH . '/core/club_free.php')) {
+        require_once BASE_PATH . '/core/club_free.php';
+    }
+    if (function_exists('club_free_award_besplatno')) {
+        $__снято = [];
+        foreach ($normItems as $__i => $__ni) {
+            if ((int) ($__ni['price'] ?? 0) <= 0) continue;
+            /* ВИД ОБЯЗАТЕЛЬНО: бесплатен только электронный (слово владельца
+               15.10.2026). Оригинал на бланке печатают и везут почтой - он платный,
+               со клубной скидкой, и обнулять его нельзя. */
+            if (!club_free_award_besplatno($applicationId, (string) ($__ni['item'] ?? ''),
+                                           (string) ($__ni['kind'] ?? ''))) continue;
+            $__снято[] = (string) $__ni['item'] . ' / ' . (string) ($__ni['kind'] ?? '')
+                       . ' (' . (int) $__ni['price'] . ')';
+            $normItems[$__i]['price'] = 0;
+            /* Отметка в составе заказа: по ней в админке и в письме видно, что
+               ноль - это привилегия Клуба, а не ошибка прайса. */
+            $normItems[$__i]['club_free'] = 1;
+        }
+        if ($__снято) {
+            $serverAmount = 0;
+            foreach ($normItems as $__ni) $serverAmount += (int) ($__ni['price'] ?? 0);
+            $amount = $serverAmount;
+            audit('order_club_free_awards', 'awards_orders', null,
+                  ['application_id' => $applicationId, 'бесплатно' => $__снято]);
+        }
+    }
+}
+
 // Заявку привело учреждение-партнёр — скидка положена и без промокода: обещание
 // в письме и в кабинете партнёра звучит как «скидка на заказ наградного
 // материала», а не «скидка тому, кто помнит код».
@@ -417,6 +467,16 @@ if (!$isClubOrder) {
 
 // Индекс заказа: у электронных его нет и быть не должно — им никуда не ехать.
 $addrPostal = '';
+/* КАНОНИЧЕСКИЙ АДРЕС ОБЪЯВЛЯЕТСЯ ЗДЕСЬ, А НЕ ВНУТРИ ВЕТКИ ОРИГИНАЛОВ.
+ *
+ * Он заполняется только когда в корзине есть оригинал (справочник адресов
+ * спрашивают там), а ЧИТАЕТСЯ ниже у КАЖДОГО заказа. У электронного заказа
+ * переменной не было вовсе, и строка `$addrCanon !== '' ? ... : input('address')`
+ * брала первую ветку: `null !== ''` это ИСТИНА, и в адрес ложился null вместо
+ * введённого. Сегодня электронному заказу адрес не нужен и никто ничего не
+ * терял, но PHP писал предупреждение в журнал сервера ДВАЖДЫ на каждый заказ -
+ * ровно тот шум, что прячет настоящие отказы (урок правила 42). */
+$addrCanon  = '';
 if ($hasOriginal) {
     $addr = trim((string) input('address'));
     $hasHouse  = (bool) preg_match('~(^|[\s,.])(д(ом)?\.?\s*)?\d+~iu', $addr);
@@ -479,6 +539,66 @@ if ($hasOriginal) {
     }
 }
 
+/* ДВА НАЖАТИЯ - ОДИН ЗАКАЗ.
+ *
+ * Кнопка «Оплатить» на странице наград блокировалась, но отпускалась раньше,
+ * чем браузер успевал уйти на кассу, и второй клик в ту же секунду создавал
+ * второй заказ со вторым платежом. 20 октября так появились заказы №675 и
+ * №676 у Снеговой (разница одна секунда) и два платежа по заказу №674 у
+ * Буланова; за месяц таких пар три. Кнопку починили, но полагаться на браузер
+ * здесь нельзя: клик приходит и из второй вкладки, и после «назад».
+ *
+ * Если тот же человек минуту назад создал точно такой же неоплаченный заказ -
+ * отдаём его же и новую ссылку на оплату. Человек попадает на кассу, а не
+ * заводит себе второй счёт на те же дипломы. */
+$__itemsJson = json_encode($normItems, JSON_UNESCAPED_UNICODE);
+$__emailNorm = mb_strtolower(trim((string) input('email')));
+if ($__emailNorm !== '' || $uid) {
+    $__w = $uid ? 'COALESCE(user_id,0) = ' . (int) $uid : 'lower(trim(email)) = ?';
+    try {
+        $__dup = one("SELECT id FROM awards_orders
+                       WHERE status = 'new' AND items = ?
+                         AND $__w
+                         AND created_at >= datetime('now','localtime','-90 seconds')
+                    ORDER BY id DESC LIMIT 1",
+                    $uid ? [$__itemsJson] : [$__itemsJson, $__emailNorm]);
+    } catch (\Throwable $e) { $__dup = null; }
+    if ($__dup && (int) $__dup['id'] > 0) {
+        $__dupId  = (int) $__dup['id'];
+        $__dupRow = one("SELECT id, amount, email, kind FROM awards_orders WHERE id=?", [$__dupId]);
+        if (function_exists('audit')) audit('order_duplicate_click', 'awards_orders', $__dupId, []);
+
+        // Платёж заводим на тот же заказ - тем же путём, что и ниже для нового.
+        $__pay = null;
+        try {
+            $__isClub = (string) ($__dupRow['kind'] ?? '') === 'club';
+            $__pay = yukassa_create_payment(
+                (int) ($__dupRow['amount'] ?? 0),
+                $__isClub ? 'Членство в Элитном клубе «Музыкальный Мир»' : ('Наградные материалы, заказ №' . $__dupId),
+                ['order_id' => $__dupId, 'email' => (string) ($__dupRow['email'] ?? ''), 'save_payment_method' => $__isClub]
+            );
+        } catch (\Throwable $e) { $__pay = null; }
+
+        if ($__pay && !empty($__pay['id'])) {
+            update('awards_orders', ['payment_id' => $__pay['id']], 'id=:id', ['id' => $__dupId]);
+            if (function_exists('tbl_exists') && tbl_exists('payments')) {
+                try {
+                    insert('payments', [
+                        'order_id'   => $__dupId,
+                        'amount'     => (int) ($__dupRow['amount'] ?? 0),
+                        'method'     => 'yukassa',
+                        'status'     => $__pay['status'] ?? 'pending',
+                        'yukassa_id' => $__pay['id'],
+                        'purpose'    => 'order',
+                    ]);
+                } catch (\Throwable $e) { /* запись платежа не должна рушить оплату */ }
+            }
+        }
+        json_out(['ok' => true, 'order_id' => $__dupId, 'duplicate' => true]
+            + (!empty($__pay['confirmation_url']) ? ['confirmation_url' => (string) $__pay['confirmation_url']] : []));
+    }
+}
+
 $orderId = insert('awards_orders', [
     'application_id' => $applicationId ?: null,
     'user_id'        => $uid,
@@ -525,7 +645,14 @@ $orderId = insert('awards_orders', [
     'status'         => 'new',
 ]);
 
-// --- заглушка создания платежа ЮKassa (сумма — серверная) ---
+/* БЕСПЛАТНЫЙ ЗАКАЗ ПЛАТЕЖА НЕ СОЗДАЁТ ВОВСЕ.
+ *
+ * При нулевой сумме `yukassa_create_payment` возвращает заглушку со статусом
+ * `pending`, и в `payments` ложилась строка «ждём 0 ₽». Дожим неоплаченных
+ * (cron/order_unpaid_reminder.php) читает такой заказ как неоплаченный и пишет
+ * человеку «оплатите» - за то, что центр сам объявил бесплатным. */
+$payment = null;
+if ($amount > 0) {
 $payment = yukassa_create_payment(
     $amount,
     $isClubOrder ? 'Членство в Элитном клубе «Музыкальный Мир»' : ('Наградные материалы, заказ №' . $orderId),
@@ -537,6 +664,7 @@ $payment = yukassa_create_payment(
         'save_payment_method' => $isClubOrder,
     ]
 );
+}
 if ($payment && !empty($payment['id'])) {
     update('awards_orders', ['payment_id' => $payment['id']], 'id=:id', ['id' => $orderId]);
     if (tbl_exists('payments')) {
@@ -571,6 +699,28 @@ $itemsText  = implode(', ', array_map(
 $orderIsFree = ($amount <= 0);
 
 if ($orderIsFree) {
+    /* БЕСПЛАТНЫЙ ЗАКАЗ ИСПОЛНЯЕТСЯ СРАЗУ: ПЛАТЕЖА, КОТОРЫЙ ЕГО ОТКРОЕТ, НЕ БУДЕТ.
+     *
+     * Изготовление запускает `core/payments.php` в момент подтверждения оплаты:
+     * статус `paid`, производственный пакет оригиналов и выдача электронных. У
+     * заказа на нулевую сумму платежа нет, и он остался бы в `new` НАВСЕГДА: в
+     * разделе «Заказы оригиналов» такого не видно (там `paid` и `made`), бланки
+     * не выдаются, а человек ждёт обещанный бесплатный диплом. Делаем ровно то,
+     * что делает оплата, и теми же функциями - второй сборки производства в
+     * проекте быть не должно. */
+    update('awards_orders', ['status' => 'paid'], 'id=:id', ['id' => (int) $orderId]);
+    if (is_file(BASE_PATH . '/core/orders.php')) {
+        require_once BASE_PATH . '/core/orders.php';
+        if (function_exists('order_dispatch_production')) {
+            try { order_dispatch_production((int) $orderId); }
+            catch (\Throwable $e) { error_log('order_dispatch_production: ' . $e->getMessage()); }
+        }
+        if (function_exists('order_fulfill_digital')) {
+            try { order_fulfill_digital((int) $orderId); }
+            catch (\Throwable $e) { error_log('order_fulfill_digital: ' . $e->getMessage()); }
+        }
+    }
+
     // --- уведомление админу (по образцу apply.php) ---
     if (function_exists('tg_notify_admin')) {
         tg_notify_admin(
