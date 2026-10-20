@@ -17,7 +17,8 @@ require_once BASE_PATH . '/core/loyalty.php';
    короткий и обещает «результаты за 5 рабочих дней» вместо даты оглашения. */
 $comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg,cover,end_date,
                      results_date,duration,
-                     COALESCE(club_only,0) club_only
+                     COALESCE(club_only,0) club_only,
+                     COALESCE(club_entry_only,0) club_entry_only
               FROM competitions
               WHERE status='open' AND COALESCE(launched,0) = 1
               ORDER BY COALESCE(club_only,0) DESC, sort");
@@ -78,6 +79,9 @@ $jsCfg = [
     'nominations'  => $noms,
     // Формы исполнения строго по номинации (apply.js перестраивает селект при выборе).
     'formations'   => FORMATIONS_MAP(),
+    // Второй уровень: у подраздела бывает свой набор форм, и он сильнее набора
+    // номинации (слово владельца 18.10.2026 про смешанный оркестр).
+    'formationsSub' => FORMATIONS_SUB_MAP(),
     // Скидка Элитного клуба — цены в форме показываются перечёркнутыми.
     'clubPct'      => (function () {
         $u = current_user();
@@ -111,6 +115,30 @@ $jsCfg = [
             'total'    => (int) $d['total'],
             'cap'      => (int) $d['cap'],
         ];
+    })(),
+    /* БЕСПЛАТНЫЕ ЗАЯВКИ ЭЛИТНОГО КЛУБА (правило владельца 15.10.2026).
+     *
+     * Витрина обязана думать как сервер. Без этого участник Клуба видел бы на
+     * шаге «Проверка» счёт на 800 ₽, нажимал «Подать» и получал заявку, принятую
+     * бесплатно: цена в форме и правда в кассе расходятся, а человек первым делом
+     * решает, что его обманули в одну из сторон. Эта грабля в проекте оплачена
+     * заслоном на дополнительный диплом (правило 45): там витрина пропускала
+     * корзину, которую сервер отбивал.
+     *
+     * Остаток ОДИН на месяц (слово владельца 15.10.2026: «не более 3 заявок за
+     * месяц»), считает его тот же `club_free_left()`, что и дверь подачи. */
+    'clubFreeLimit' => (function () {
+        if (!function_exists('club_free_limit') && is_file(BASE_PATH . '/core/club_free.php')) {
+            require_once BASE_PATH . '/core/club_free.php';
+        }
+        return function_exists('club_free_limit') ? club_free_limit() : 0;
+    })(),
+    'clubFreeLeft' => (function () use ($applyInClub, $applyUid) {
+        if (!$applyInClub || (int) $applyUid <= 0) return 0;
+        if (!function_exists('club_free_left') && is_file(BASE_PATH . '/core/club_free.php')) {
+            require_once BASE_PATH . '/core/club_free.php';
+        }
+        return function_exists('club_free_left') ? club_free_left((int) $applyUid) : 0;
     })(),
     'formationsDefault' => FORMATIONS_FOR(''),
     'allowed'   => ALLOWED_PLATFORMS(),
@@ -419,6 +447,7 @@ ob_start(); ?>
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
                   data-reg="<?= url('/competition/'.$c['slug'].'/regulation.docx') ?>" data-code="<?= h($c['code']) ?>"
                   data-club-only="<?= (int)$c['club_only'] ?>"
+                  data-club-entry="<?= (int)$c['club_entry_only'] ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
                 <?php
                   /* ФОН КАРТОЧКИ — БЛАНК ДИПЛОМА. На афише название конкурса уже
@@ -452,6 +481,12 @@ ob_start(); ?>
                       ?></span>
                       <?php if ((int)$c['club_only']): ?>
                         <span class="badge badge--vip">Только для Элитного клуба</span>
+                      <?php elseif ((int)$c['club_entry_only']): ?>
+                        <?php /* ПРИЁМ ТОЛЬКО ОТ ЧЛЕНОВ КЛУБА, А ЦЕНА ПРЕЖНЯЯ.
+                                 Поэтому плашка стоит РЯДОМ с оргвзносом, а не
+                                 вместо него: «Бесплатно для клуба» тут была бы
+                                 неправдой (слово владельца 16.10.2026). */ ?>
+                        <span class="badge badge--vip">Приём только от членов Клуба</span>
                       <?php endif; ?>
                     </span>
                     <?php /* СРОКИ ПРЯМО НА КАРТОЧКЕ ВЫБОРА.

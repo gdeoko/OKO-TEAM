@@ -936,15 +936,26 @@
       var p = document.getElementById('mzClubPop');
       if (p) p.hidden = true;
     }
-    function clubPopShow(name){
+    function clubPopShow(name, entryOnly){
       var p = document.getElementById('mzClubPop');
       if (!p) return;
       var t = document.getElementById('mzClubPopTxt');
       if (t) {
-        t.textContent = 'Конкурс «' + name + '» проводится только для участников Клуба. '
-          + 'Отдельный организационный взнос за него не взимается: участие входит в членство. '
-          + 'У конкурсов Клуба общий призовой фонд 100 000 ₽ — он вручается раз в год '
-          + 'на очном гала-концерте в Москве.';
+        /* ДВА РАЗНЫХ УСЛОВИЯ — ДВА РАЗНЫХ ТЕКСТА.
+         *
+         * Конкурс Клуба (club_only) входит в членство: взноса за него нет.
+         * «Мировой акцент» (club_entry_only) — платный конкурс, у которого
+         * членством ограничена только дверь подачи (слово владельца
+         * 16.10.2026). Сказать про него «взнос не взимается» значит соврать на
+         * тысячу рублей, поэтому текст свой. */
+        t.textContent = entryOnly
+          ? 'Заявки на конкурс «' + name + '» принимаются только от участников Элитного клуба. '
+            + 'Организационный взнос за участие прежний. Членство даёт до трёх заявок в месяц '
+            + 'без взноса, остальные — по прайсу со клубной скидкой.'
+          : 'Конкурс «' + name + '» проводится только для участников Клуба. '
+            + 'Отдельный организационный взнос за него не взимается: участие входит в членство. '
+            + 'У конкурсов Клуба общий призовой фонд 100 000 ₽ — он вручается раз в год '
+            + 'на очном гала-концерте в Москве.';
       }
       p.hidden = false;
     }
@@ -955,14 +966,22 @@
     function clubNotice(checked){
       var inClub = String(CFG.inClub || 0) === '1';
       if (inClub) return;
-      var hit = null;
-      checked.forEach(function(c){ if (!hit && c.getAttribute('data-club-only') === '1') hit = c; });
+      var hit = null, entryOnly = false;
+      // Дверь закрыта обоими признаками: конкурс Клуба и конкурс, куда пускают
+      // только членов (data-club-entry, «Мировой акцент»). Раньше здесь
+      // спрашивался только первый, и человек узнавал об отказе от сервера —
+      // после того, как заполнил всю форму.
+      checked.forEach(function(c){
+        if (hit) return;
+        if (c.getAttribute('data-club-only') === '1') { hit = c; entryOnly = false; }
+        else if (c.getAttribute('data-club-entry') === '1') { hit = c; entryOnly = true; }
+      });
       if (!hit) return;
       // Снимаем выбор: конкурс недоступен, и сумма с шагами не должны его учитывать.
       hit.checked = false;
       var lbl = hit.closest('label');
       var nm  = lbl ? (lbl.querySelector('.comp-name') || lbl).textContent.trim() : 'Высшая лига';
-      clubPopShow(nm.split('\n')[0].trim());
+      clubPopShow(nm.split('\n')[0].trim(), entryOnly);
       // Пересчитываем сумму и шаги уже без снятого конкурса. Повторного захода
       // сюда не будет: галочка снята, и клубный конкурс больше не найдётся.
       recomputePaid();
