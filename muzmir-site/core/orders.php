@@ -1266,6 +1266,31 @@ function order_ship_email(array $order, array $parcel = []): string {
  * @return array{app_date:string, ordered:string, paid_at:string, due:string,
  *               queue:int, queue_total:int, overdue:bool}
  */
+/**
+ * ЗАКАЗ ОПЛАЧЕН? ОДИН ОТВЕТ НА ВЕСЬ ПРОЕКТ.
+ *
+ * Статуса мало: 'new' — это «ждём оплату», а не «денег нет никогда», и
+ * наоборот, у доставленного заказа платёж мог быть возвращён. Поэтому
+ * спрашиваем кассовую запись: успешный платёж (или уже возвращённый —
+ * возвращают только то, что было оплачено) значит «деньги приходили».
+ *
+ * Зачем понадобилось. В админке заголовок состава посылки писал «оплачено»
+ * всегда, и неоплаченный заказ №683 выглядел оплаченным. Хуже того, отмена
+ * такого заказа слала участнику письмо «возврат средств» с обещанием «вернём
+ * деньги вручную» — за то, чего он не платил. Про деньги нельзя говорить
+ * наугад: человек начинает ждать перевод, которого не будет.
+ */
+function order_is_paid(array $o): bool {
+    $st = (string) ($o['status'] ?? '');
+    if (in_array($st, ['paid', 'made', 'shipped', 'delivered'], true)) return true;
+    $oid = (int) ($o['id'] ?? 0);
+    if (!$oid) return false;
+    try {
+        return (int) (scalar("SELECT COUNT(*) FROM payments
+                               WHERE order_id=? AND status IN ('succeeded','refunded')", [$oid]) ?? 0) > 0;
+    } catch (\Throwable $e) { return false; }
+}
+
 function order_timeline(array $o): array {
     $out = ['app_date' => '', 'ordered' => '', 'paid_at' => '', 'due' => '',
             'queue' => 0, 'queue_total' => 0, 'overdue' => false];

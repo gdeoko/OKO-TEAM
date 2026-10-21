@@ -355,7 +355,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'error'     => $refund['error'] ?? null,
         ]);
 
-        // Письмо участнику о возврате.
+        /* ПИСЬМО УЧАСТНИКУ — ПРО ТО, ЧТО ПРАВДА ПРОИЗОШЛО.
+         *
+         * Письмо уходило с темой «отменён — возврат средств» ЛЮБОМУ, и человеку,
+         * который ничего не оплачивал, обещали «вернём деньги вручную и напишем
+         * отдельно». Он после такого ждёт перевода, которого не будет, и пишет
+         * в поддержку. По неоплаченному заказу говорим ровно одно: заказ снят,
+         * оплаты по нему не было. */
+        if (!function_exists('order_is_paid') && is_file(BASE_PATH . '/core/orders.php')) {
+            require_once BASE_PATH . '/core/orders.php';
+        }
+        $былаОплата = function_exists('order_is_paid') ? order_is_paid($order) : ((int) ($order['amount'] ?? 0) > 0);
         if (!function_exists('mail_send_failover') && is_file(BASE_PATH . '/core/mailer.php')) {
             require_once BASE_PATH . '/core/mailer.php';
         }
@@ -366,14 +376,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       . (trim((string) ($order['full_name'] ?? '')) !== '' ? ', ' . h((string) $order['full_name']) : '')
                       . '!</p><p>Заказ наградных материалов <b>№' . $oid . '</b> отменён'
                       . ($reason !== '' ? ' по причине: <i>' . h($reason) . '</i>' : '') . '.</p>';
-                if (!empty($refund['ok']) && (int) $refund['amount'] > 0) {
+                if (!$былаОплата) {
+                    $body .= '<p>Заказ не был оплачен, поэтому возвращать нечего — списаний по нему не было.</p>'
+                           . '<p>Оформить награды заново можно в любой момент на странице «Награды» нашего сайта.</p>';
+                } elseif (!empty($refund['ok']) && (int) $refund['amount'] > 0) {
                     $body .= '<p>Сумма <b>' . (int) $refund['amount'] . ' ₽</b> возвращена на ту же карту/способ оплаты. Зачисление обычно занимает до 3 рабочих дней (срок зависит от банка).</p>';
                 } elseif (!empty($refund['already'])) {
                     $body .= '<p>Возврат по этому заказу уже был выполнен ранее.</p>';
-                } elseif ((int) ($order['amount'] ?? 0) > 0) {
+                } else {
                     $body .= '<p><b>Внимание:</b> автоматический возврат не прошёл. Мы вернём деньги вручную и напишем вам отдельно.</p>';
                 }
-                mail_send_failover($to, 'Заказ №' . $oid . ' отменён — возврат средств', $body, ['pool' => 'tx']);
+                mail_send_failover($to,
+                    'Заказ №' . $oid . ($былаОплата ? ' отменён — возврат средств' : ' отменён'),
+                    $body, ['pool' => 'tx']);
             }
         }
 
@@ -620,6 +635,22 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
     // Сумма посылки — по оригинальным позициям. Оплата заказа может включать и
     // электронные материалы, которые почтой не поедут.
     if ($postSum <= 0) $postSum = (int) $gr['amount'];
+    /* СУММА ПОСЫЛКИ — ТА, ЧТО В КАССЕ, А НЕ ПРАЙСОВАЯ.
+     *
+     * $postSum складывается из прайсовых цен позиций, а в кассе с заказа берут
+     * меньше: действует скидка Клуба или партнёра. Выходила бессмыслица:
+     * «Сумма посылки: 800 ₽ · было 800 ₽, скидка 20%» — одно и то же число по
+     * обе стороны от слова «было». Считаем обе величины: полную и к оплате. */
+    $postPay = $postSum;
+    $__pct = (int) ($o['discount_pct'] ?? 0);
+    if ($__pct > 0 && $postSum > 0) {
+        $postPay = function_exists('loyalty_apply')
+            ? (int) loyalty_apply($postSum, $__pct)
+            : (int) max(0, round($postSum * (100 - $__pct) / 100));
+    }
+    // Оплачен ли заказ — решает единый источник (core/orders.php), не статус на глаз.
+    $__оплачен = function_exists('order_is_paid') ? order_is_paid($o)
+               : in_array((string) ($o['status'] ?? ''), ['paid','made','shipped','delivered'], true);
     $trackUrl = order_pochta_url((string)($o['tracking'] ?? ''));
 ?>
   <div class="card" style="margin-bottom:16px;border:1px solid var(--a-line);border-radius:14px;overflow:hidden;">
@@ -718,11 +749,11 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
             <div class="small" style="color:#1E7A46">Только электронные материалы — уходят письмом на почту</div>
           <?php endif; ?>
           <div class="small">📞 <?= h((string)$o['phone']) ?> · ✉ <?= h((string)$o['email']) ?></div>
-          <div class="small muted" style="margin-top:4px;">Сумма посылки: <b><?= number_format($postSum, 0, '.', ' ') ?> ₽</b><?php
+          <div class="small muted" style="margin-top:4px;">Сумма посылки: <b><?= number_format($postPay, 0, '.', ' ') ?> ₽</b><?php
             // Заказ мог быть оформлен со скидкой участника Клуба — показываем, с какой
             // суммы и на сколько, иначе непонятно, почему в кассе меньше прайса.
-            $ofull = (int)($o['amount_full'] ?? 0); $opct = (int)($o['discount_pct'] ?? 0);
-            if ($ofull > (int)$o['amount']): ?> · было <s><?= number_format($ofull, 0, '.', ' ') ?> ₽</s><?php
+            $ofull = $postSum; $opct = (int)($o['discount_pct'] ?? 0);
+            if ($ofull > $postPay): ?> · было <s><?= number_format($ofull, 0, '.', ' ') ?> ₽</s><?php
               if ($opct > 0): ?>, скидка <?= $opct ?>%<?= vip_kind((int)($o['user_id'] ?? 0)) === 'club' ? ' — участник Элитного клуба' : '' ?><?php endif;
             endif; ?></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
@@ -740,9 +771,14 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
         </div>
         <!-- Состав с фото -->
         <div>
+          <?php /* «Оплачено» — только когда оплачено. Слово стояло здесь всегда,
+                   и неоплаченный заказ выглядел оплаченным (№683, 21.10.2026):
+                   бейдж сверху честно писал «Ожидает оплаты», а строка состава
+                   под ним — «ОПЛАЧЕНО 800 ₽». */ ?>
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">
-            Состав посылки (что изготовить) · оплачено
-            <b style="color:var(--a-navy);font-size:13px"><?= number_format($postSum, 0, '.', ' ') ?> ₽</b>
+            Состав посылки (что изготовить) · <?= $__оплачен ? 'оплачено' : 'к оплате' ?>
+            <b style="color:<?= $__оплачен ? 'var(--a-navy)' : '#8B2F2F' ?>;font-size:13px"><?= number_format($postPay, 0, '.', ' ') ?> ₽</b>
+            <?php if (!$__оплачен): ?><b style="color:#8B2F2F;font-size:13px"> · не оплачен</b><?php endif; ?>
           </div>
           <?php /* РАЗДЕЛ ОРИГИНАЛОВ — ТОЛЬКО ПРО ПОСЫЛКУ.
                    Здесь перечислялись и электронные позиции заказа: «в этом же
@@ -933,19 +969,26 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
           <!-- Отмена заказа с автоматическим возвратом средств в ЮKassa.
                Если заказ уже отправлен/доставлен — кнопка не показывается: возврат
                после отправки Почтой — только вручную по обращению. -->
+          <?php /* У НЕОПЛАЧЕННОГО ЗАКАЗА ВОЗВРАЩАТЬ НЕЧЕГО.
+                   Кнопка звалась «Отменить с возвратом» для любого заказа, и
+                   окно подтверждения спрашивало «вернуть 640 ₽ в ЮKassa?» там,
+                   где в кассу не поступало ни рубля. Слова про деньги должны
+                   совпадать с тем, что на самом деле произошло. */ ?>
           <button type="button" class="btn btn--ghost btn--sm" style="color:#8B2F2F;border-color:#EBC7C7"
                   onclick="var f=document.getElementById('cr<?= $oid ?>');f.style.display=f.style.display==='none'?'flex':'none'">
-            <?= admin_icon('trash') ?>Отменить с возвратом
+            <?= admin_icon('trash') ?><?= $__оплачен ? 'Отменить с возвратом' : 'Отменить заказ' ?>
           </button>
           <form method="post" action="<?= url('/admin/') ?>" id="cr<?= $oid ?>"
                 style="display:none;flex-basis:100%;flex-wrap:wrap;gap:6px;margin-top:8px;padding:12px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:10px"
-                onsubmit="return confirm('Отменить заказ №<?= $oid ?> и вернуть <?= (int)$o['amount'] ?> ₽ в ЮKassa? Возврат необратим.');">
+                onsubmit="return confirm(<?= $__оплачен
+                    ? json_encode('Отменить заказ №' . $oid . ' и вернуть ' . (int) $o['amount'] . ' ₽ в ЮKassa? Возврат необратим.', JSON_UNESCAPED_UNICODE)
+                    : json_encode('Отменить неоплаченный заказ №' . $oid . '? Денег в кассе по нему нет, возврат не потребуется.', JSON_UNESCAPED_UNICODE) ?>);">
             <?= csrf_field() ?>
             <input type="hidden" name="do" value="cancel_refund">
             <input type="hidden" name="order" value="<?= $oid ?>">
             <input type="text" name="cancel_reason" placeholder="Причина отмены (для участника и в audit)" required
                    style="flex:1;padding:8px 12px;border:1px solid #EBC7C7;border-radius:9px;min-width:260px;background:#fff">
-            <button class="btn btn--danger btn--sm" type="submit">Отменить и вернуть <?= (int)$o['amount'] ?> ₽</button>
+            <button class="btn btn--danger btn--sm" type="submit"><?= $__оплачен ? 'Отменить и вернуть ' . (int) $o['amount'] . ' ₽' : 'Отменить заказ' ?></button>
           </form>
         <?php endif; ?>
       </div>
