@@ -79,8 +79,50 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
     $err = curl_errno($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    if ($err || !$resp) return null;
+    /* ОБРЫВ СВЯЗИ С КАССОЙ НЕ ДОЛЖЕН БЫТЬ НЕМЫМ.
+     * Здесь стоял голый `return null`: заказ создавался, человек не попадал на
+     * оплату и не понимал почему, а у центра не оставалось ни строчки. */
+    if ($err || !$resp) {
+        @error_log('[yukassa] создание платежа: нет ответа (cURL #' . $err . ', http ' . $code . ')');
+        return null;
+    }
     $data = yk_answer($resp, $code, 'создание платежа');
+
+    /* МАГАЗИН НЕ УМЕЕТ АВТОСПИСАНИЯ — ЗНАЧИТ БЕРЁМ ОПЛАТУ БЕЗ НИХ.
+     *
+     * Подписка Элитного клуба просит кассу сохранить способ оплаты, чтобы
+     * следующий период списался сам. Магазин центра рекуррентные платежи не
+     * поддерживает, и касса отвечает «403 forbidden — This store can't make
+     * recurring payments»: платёж не создаётся ВООБЩЕ. Из-за этого вступить в
+     * клуб со страницы /club было нельзя — 21 октября два заказа подряд
+     * (№679 и №680) остались без единого платежа, человек просто не попал на
+     * кассу. Из кабинета оплата при этом проходила: там запрос уходит без
+     * сохранения способа.
+     *
+     * Повторяем запрос без save_payment_method: человек платит и вступает в
+     * клуб, просто следующий период придётся оплатить так же, руками.
+     * Автопродление всё равно не работало — у подписки vpotselovkina@yandex.ru
+     * три неудачных списания подряд и членство закончилось молча. */
+    if (!$data && !empty($body['save_payment_method'])
+        && (str_contains((string) $resp, 'recurring payments') || $code === 403)) {
+        @error_log('[yukassa] магазин без автосписаний — повторяю платёж без сохранения способа оплаты');
+        $body['save_payment_method'] = false;
+        $ch2 = curl_init('https://api.yookassa.ru/v3/payments');
+        curl_setopt_array($ch2, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_UNICODE),
+            CURLOPT_USERPWD        => $shop . ':' . $secret,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Idempotence-Key: ' . bin2hex(random_bytes(16))],
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $resp2 = curl_exec($ch2);
+        $err2  = curl_errno($ch2);
+        $code2 = (int) curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+        curl_close($ch2);
+        if (!$err2 && $resp2) $data = yk_answer($resp2, $code2, 'создание платежа (без автосписания)');
+    }
+
     if (!$data) return null;
     return [
         'id'               => $data['id'],

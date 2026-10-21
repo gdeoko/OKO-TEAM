@@ -54,9 +54,17 @@ $r = video_verify($url, $nomination);
  * зависит), с ними — и занятость ссылки. */
 if (($r['ok'] ?? false) && is_file(BASE_PATH . '/core/link_unique.php')) {
     require_once BASE_PATH . '/core/link_unique.php';
-    $ids = input('competition_ids');
-    if (!is_array($ids)) $ids = $ids !== null && $ids !== '' ? preg_split('~[^0-9]+~', (string) $ids) : [];
-    $ids = array_values(array_filter(array_map('intval', (array) $ids)));
+    /* СПИСОК КОНКУРСОВ ЧИТАЕМ НАПРЯМУЮ, А НЕ ЧЕРЕЗ input().
+     *
+     * input() объявлен как возвращающий строку и приводит к ней что угодно:
+     * массив competition_ids[] превращался в слово «Array» (с предупреждением
+     * «Array to string conversion» на каждой проверке ссылки в журнале), номера
+     * конкурсов терялись, и занятость ссылки живая проверка не проверяла вовсе.
+     * Папку облака она при этом ловила — та от конкурса не зависит, — поэтому
+     * снаружи поломка была не видна. */
+    $raw = $_POST['competition_ids'] ?? $_GET['competition_ids'] ?? [];
+    if (!is_array($raw)) $raw = $raw !== '' ? preg_split('~[^0-9]+~', (string) $raw) ?: [] : [];
+    $ids = array_values(array_filter(array_map('intval', $raw)));
     if (function_exists('lu_check')) {
         foreach ($ids ?: [0] as $cid) {
             $lu = lu_check($url, (int) $cid, 0, $nomination);

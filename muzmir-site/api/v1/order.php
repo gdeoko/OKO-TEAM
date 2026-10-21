@@ -555,11 +555,23 @@ $__itemsJson = json_encode($normItems, JSON_UNESCAPED_UNICODE);
 $__emailNorm = mb_strtolower(trim((string) input('email')));
 if ($__emailNorm !== '' || $uid) {
     $__w = $uid ? 'COALESCE(user_id,0) = ' . (int) $uid : 'lower(trim(email)) = ?';
+    /* У ПОДПИСКИ КЛУБА ОКНА НЕТ ВОВСЕ.
+     *
+     * Полторы минуты ловят двойной клик, но не человека, который вернулся
+     * через пять минут и начал заново: 21 октября Мухамадеева оформила
+     * вступление дважды с разницей в четыре минуты (№679 и №680) — два счёта
+     * на одно и то же членство. Вступить в клуб дважды нельзя, поэтому любой
+     * неоплаченный клубный заказ того же человека переиспользуется. */
+    $__isClubOrder = false;
+    foreach ((array) $normItems as $__it) {
+        if (is_array($__it) && (string) ($__it['kind'] ?? '') === 'club') { $__isClubOrder = true; break; }
+    }
+    $__age = $__isClubOrder ? '-30 days' : '-90 seconds';
     try {
         $__dup = one("SELECT id FROM awards_orders
                        WHERE status = 'new' AND items = ?
                          AND $__w
-                         AND created_at >= datetime('now','localtime','-90 seconds')
+                         AND created_at >= datetime('now','localtime','$__age')
                     ORDER BY id DESC LIMIT 1",
                     $uid ? [$__itemsJson] : [$__itemsJson, $__emailNorm]);
     } catch (\Throwable $e) { $__dup = null; }
