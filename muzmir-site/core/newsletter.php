@@ -325,7 +325,16 @@ function newsletter_enqueue(int $newsletterId): int {
     $bodyRaw  = (string) ($n['body'] ?? '');
     $token    = nl_track_token($newsletterId);
     $base     = rtrim((string) cfgv('base_url'), '/');
-    $preheader = mb_substr(trim(strip_tags($bodyRaw)), 0, 120);
+    /* ПРЕДПРОСМОТР СТРОИМ ПО ТЕКСТУ БЕЗ ТОКЕНОВ.
+     *
+     * Preheader — невидимая строка, которую почтовая программа показывает в
+     * списке писем рядом с темой. Она бралась из СЫРОГО тела, а тело
+     * начинается с подстановки приветствия — и в списке писем у всей базы
+     * стояло бы «{{greeting}} Культурный центр «Музыкальный Мир» рад...».
+     * Имени здесь быть не может (preheader один на рассылку), поэтому
+     * токены просто вырезаем вместе с лишними пробелами. */
+    $preheaderSrc = preg_replace('~\{\{[^}]*\}\}~u', ' ', strip_tags($bodyRaw)) ?? '';
+    $preheader = mb_substr(trim(preg_replace('~\s+~u', ' ', $preheaderSrc) ?? ''), 0, 120);
 
     // Идемпотентность: убираем прежние НЕотправленные письма этой рассылки —
     // и поставленные, и приостановленные (paused раньше оставался и потом уходил
@@ -370,16 +379,33 @@ function newsletter_enqueue(int $newsletterId): int {
             // запуска. Обращение «уважаемый участник» стояло здесь заглушкой и
             // читалось как обращение к никому: у половины базы имя есть прямо в
             // адресе, и не воспользоваться им — значит писать безлично без нужды.
-            $nm = trim((string) ($r['name'] ?? ''));
-            if ($nm === '' && function_exists('person_greeting_name')) {
-                $nm = trim(person_greeting_name($email, ''));
-            }
-            $nm   = $nm !== '' ? $nm : 'уважаемый участник';
+            /* ИМЯ РАЗБИРАЕТ person_greeting_name — И ЕМУ ПЕРЕДАЁТСЯ ВСЯ СТРОКА.
+             *
+             * Раньше сохранённое имя подставлялось как есть, а разбор звался
+             * только когда поля не было вовсе. В базе же лежит и «Ольга
+             * Павловна Медведева», и «Актёрское трио» — и письмо уходило с
+             * «Здравствуйте, Ольга Павловна Медведева!» или вовсе с названием
+             * коллектива вместо человека. Теперь строку всегда разбирают, и
+             * при сомнении имя не подставляется.
+             *
+             * Заглушки «уважаемый участник» больше нет: это обращение к
+             * никому. Вместо неё — готовая строка приветствия {{greeting}}:
+             * «Здравствуйте, Мария!» либо просто «Здравствуйте!». Запятую
+             * шаблон поставить не может, поэтому её ставит код. */
+            $nmRaw = trim((string) ($r['name'] ?? ''));
+            $nm = function_exists('person_greeting_name')
+                ? trim(person_greeting_name($email, $nmRaw))
+                : $nmRaw;
+            $greeting = function_exists('person_greeting_line')
+                ? person_greeting_line($email, $nmRaw)
+                : ($nm !== '' ? 'Здравствуйте, ' . $nm . '!' : 'Здравствуйте!');
             $tok2 = ['{{name}}', '{{имя}}'];
+            $subject = str_replace(['{{greeting}}', '{{приветствие}}'], $greeting, $subject);
             $subject = str_replace($tok2, $nm, $subject);
 
             $unsubUrl = $base . '/api/v1/unsubscribe.php?token=' . urlencode($unsubToken);
-            $body = nl_rewrite_links(str_replace($tok2, h($nm), $bodyRaw), $token);
+            $body = str_replace(['{{greeting}}', '{{приветствие}}'], h($greeting), $bodyRaw);
+            $body = nl_rewrite_links(str_replace($tok2, h($nm), $body), $token);
             $body = nl_wrap_email($body, $unsubUrl, nl_open_pixel($token), $preheader);
 
             insert('mail_queue', [
