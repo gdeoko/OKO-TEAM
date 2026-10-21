@@ -1094,7 +1094,19 @@ var VK_CHECK_URL = <?= json_encode(url('/api/v1/vk_sub_check')) ?>;
       }
     }
     var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++){var it={item:c.item,kind:c.kind};var f=(c.fios||[])[i];if(f&&f.trim())it.fio=f.trim();items.push(it);}});
+    sendOrder(items, false);
+  });
+
+  /* ОТПРАВКА ЗАКАЗА — ОТДЕЛЬНОЙ ФУНКЦИЕЙ.
+     Нужна повторяемость: если сервер нашёл прежний заказ по этой же заявке и
+     человек подтвердил, что второй экземпляр ему правда нужен, тот же запрос
+     уходит ещё раз с пометкой confirm_duplicate. Собирать форму второй раз
+     руками значило бы разойтись с первой сборкой при любой будущей правке. */
+  function sendOrder(items, confirmDup){
+    var form=$('#orderForm'), err=$('#orderErr'), btn=$('#orderSubmit');
+    err.hidden=true; btn.disabled=true; btn.textContent='Создаём заказ…';
     var fd=new FormData(form); fd.set('items',JSON.stringify(items));
+    if(confirmDup) fd.set('confirm_duplicate','1');
     fetch('<?= url('/api/v1/order') ?>',{method:'POST',credentials:'same-origin',body:fd})
       .then(function(r){return r.json();})
       .then(function(d){
@@ -1125,11 +1137,33 @@ var VK_CHECK_URL = <?= json_encode(url('/api/v1/vk_sub_check')) ?>;
             [baseBtn(nb.kind,true), baseBtn(alt,false), {label:'Вернуться в корзину',onClick:awPopClose}]);
           return;
         }
+        /* ПО ЭТОЙ ЗАЯВКЕ ТАКАЯ НАГРАДА УЖЕ ЗАКАЗАНА.
+           Разговор, а не глухой отказ: человеку называют номер, дату и состав
+           прежнего заказа и дают выйти из положения — открыть кабинет,
+           закончить неоплаченный заказ или осознанно взять второй экземпляр. */
+        if(!d.ok && d.duplicate_warn){
+          var w=d.duplicate_warn, кнопки=[];
+          if(w.hard){
+            кнопки.push({label:'Открыть личный кабинет',primary:true,href:'<?= url('/cabinet') ?>#awards'});
+          } else if(w.paid){
+            кнопки.push({label:'Да, нужен второй экземпляр',primary:true,onClick:function(){
+              awPopClose(); sendOrder(items, true);
+            }});
+          } else {
+            кнопки.push({label:'Открыть мои заказы',primary:true,href:'<?= url('/cabinet') ?>#awards'});
+            кнопки.push({label:'Всё равно оформить новый',onClick:function(){
+              awPopClose(); sendOrder(items, true);
+            }});
+          }
+          кнопки.push({label:'Вернуться в корзину',onClick:awPopClose});
+          awPop(w.paid ? 'Эта награда уже заказана' : 'Прежний заказ не оплачен', d.error||'', кнопки);
+          return;
+        }
         if(!d.ok){err.textContent=d.error||'Не удалось оформить заказ';err.hidden=false;return;}
         if(d.confirmation_url){location.href=d.confirmation_url;return;}
         location.href='<?= url('/cabinet') ?>#awards';
       }).catch(function(){btn.disabled=false;btn.textContent='Оплатить';err.textContent='Ошибка сети, попробуйте ещё раз';err.hidden=false;});
-  });
+  }
 
   /* ПОИСК СВОЕЙ ЗАЯВКИ (гость).
      Человек вводит что помнит, мы показываем найденное и — после выбора —
