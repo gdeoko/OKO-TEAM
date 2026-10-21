@@ -236,3 +236,8 @@ MAILTO=""
 
 # Сторож файлов: что правили на сервере мимо репозитория (scripts/integrity_watch.php).
 50 6 * * * cd /var/www/muzmir && php scripts/integrity_watch.php >> data/logs/cron.log 2>&1
+
+# Напоминание о конкурсах следующего месяца: с 24-го числа, пока не заведены.
+# Крон открытия месяца сообщает о пропаже только 1-го числа, когда исправлять
+# поздно — афишу, положение и бланк за утро не сделать.
+0 11 24-31 * * cd /var/www/muzmir && php cron/next_month_check.php >> data/logs/cron.log 2>&1
