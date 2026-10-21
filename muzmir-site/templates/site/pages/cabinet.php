@@ -522,7 +522,7 @@ $vkHint = static function () use ($vkBonusPct, $vkSubbed, $vkLinked, $vkGroupUrl
     $gr = h($vkGroupUrl);
     if ($vkSubbed) {
         return '<div class="cab-vip-hint cab-vip-hint--on"><div class="cab-vip-hint__txt">'
-             . '<b>Вы подписаны на наше сообщество</b>'
+             . '<b>Вы подписаны на наше сообщество ВКонтакте</b>'
              . '<span>Скидка ' . $vkBonusPct . '% на электронные наградные документы применяется в заказе сама.</span>'
              . '</div><a class="btn btn--ghost btn--sm" href="' . $gr . '" target="_blank" rel="noopener">Открыть</a></div>';
     }
@@ -533,7 +533,7 @@ $vkHint = static function () use ($vkBonusPct, $vkSubbed, $vkLinked, $vkGroupUrl
         ? 'Ваш аккаунт связан с ВКонтакте. Подпишитесь на сообщество и нажмите «Я подписался» — проверим сразу.'
         : 'Подпишитесь на сообщество и свяжите аккаунт с ВКонтакте — скидка встанет в цены сама.';
     return '<div class="cab-vip-hint"><div class="cab-vip-hint__txt">'
-         . '<b>Подписчикам сообщества — &minus;' . $vkBonusPct . '% на электронные документы</b>'
+         . '<b>Подписчикам сообщества ВКонтакте — &minus;' . $vkBonusPct . '% на электронные документы</b>'
          . '<span>' . $why . ' Итоги, дипломы победителей и анонсы приёма заявок выходят там раньше всего.</span>'
          . '</div><div style="display:flex;gap:8px;flex-wrap:wrap">'
          . '<a class="btn btn--ghost btn--sm" href="' . $gr . '" target="_blank" rel="noopener">Открыть сообщество</a>'
@@ -968,7 +968,7 @@ ob_start(); ?>
         <?php if ($__vkПроцент > 0): ?>
           <p class="cab-welcome__vk">Загляните в наше сообщество ВКонтакте: итоги конкурсов, дипломы
             победителей и анонсы приёма заявок выходят там раньше всего.
-            <b>Подписчикам — скидка <?= (int) $__vkПроцент ?>% на электронные наградные документы.</b></p>
+            <b>Подписчикам сообщества ВКонтакте — скидка <?= (int) $__vkПроцент ?>% на электронные наградные документы.</b></p>
         <?php else: ?>
           <p class="cab-welcome__vk">Загляните в наше сообщество ВКонтакте: итоги конкурсов, дипломы
             победителей и анонсы приёма заявок выходят там раньше всего.</p>

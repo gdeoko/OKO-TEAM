@@ -1941,7 +1941,15 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
 .shop-cart-empty{text-align:center;color:var(--muted);padding:30px 10px}
 .shop-checkout{margin-top:14px}
 .shop-total{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:8px;border-top:2px solid var(--gold-soft)}
-.shop-total span{font-weight:600;color:var(--muted)}
+/* «Итого» — одной строкой. Подпись со списком скидок («Элитный клуб −20% ·
+   Подписчик сообщества ВКонтакте −2% на электронные») живёт внутри правого
+   блока и при длинном тексте сжимала левую колонку до «Ито/го». */
+.shop-total>span{font-weight:600;color:var(--muted);white-space:nowrap;flex:0 0 auto;align-self:flex-start;padding-top:4px}
+.shop-total>b{text-align:right;flex:1 1 auto;min-width:0;padding-left:12px}
+/* Подпись со скидками лежит ВНУТРИ правого блока и обязана переноситься:
+   «>» в селекторах выше не случаен — без него nowrap доставался и ей, и строка
+   «Элитный клуб −20% · Подписчик сообщества ВКонтакте −2%...» уезжала за край. */
+.shop-total>b span{white-space:normal;display:block}
 .shop-total b{font-family:var(--ff-display);font-size:1.5rem;background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
 .shop-hint{background:var(--gold-soft);border-radius:12px;padding:12px 14px;font-size:.86rem;color:var(--text)}
 .shop-err{color:#e63946;font-weight:600;font-size:.86rem;margin-top:10px;text-align:center}

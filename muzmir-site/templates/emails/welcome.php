@@ -48,7 +48,7 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
           require_once BASE_PATH . '/core/vk_subscriber.php';
       }
       if (function_exists('vk_sub_bonus_pct')) $__vkPct = (int) vk_sub_bonus_pct();
-      if ($__vkPct > 0): ?> <b style="color:#17307A;">Подписчикам — скидка <?= $__vkPct ?>% на электронные наградные документы:</b> свяжите аккаунт с ВКонтакте в личном кабинете, и она применится сама.<?php endif; ?></div>
+      if ($__vkPct > 0): ?> <b style="color:#17307A;">Подписчикам сообщества ВКонтакте — скидка <?= $__vkPct ?>% на электронные наградные документы:</b> свяжите аккаунт с ВКонтакте в личном кабинете, и она применится сама.<?php endif; ?></div>
     <a href="<?= h((string) (function_exists('cfgv') ? cfgv('org_vk', 'https://vk.com/music_world.online') : 'https://vk.com/music_world.online')) ?>"
        style="display:inline-block;padding:11px 26px;background:#17307A;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:14px;border-radius:10px;">Подписаться на сообщество</a>
   </td></tr>

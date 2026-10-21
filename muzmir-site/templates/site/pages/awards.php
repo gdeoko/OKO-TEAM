@@ -312,7 +312,7 @@ ob_start(); ?>
                   padding:14px 16px;margin:0 0 14px;border-radius:14px;
                   background:rgba(23,48,122,.06);border:1px solid rgba(23,48,122,.16)">
         <div style="min-width:220px;flex:1">
-          <b style="display:block;font-size:.95rem">Подписчикам сообщества — &minus;<?= (int) $vkBonusPctShow ?>% на электронные документы</b>
+          <b style="display:block;font-size:.95rem">Подписчикам сообщества ВКонтакте — &minus;<?= (int) $vkBonusPctShow ?>% на электронные документы</b>
           <span style="color:var(--muted);font-size:.85rem">
             <?= $__vkLinked
                 ? 'Ваш аккаунт связан с ВКонтакте — подпишитесь на сообщество, и скидка встанет в цены сама.'
@@ -1013,7 +1013,7 @@ var VK_CHECK_URL = <?= json_encode(url('/api/v1/vk_sub_check')) ?>;
        прайса, а почему — не сказано. */
     var marks=[];
     if(CLUB_PCT>0) marks.push('Элитный клуб \u2212'+CLUB_PCT+'%');
-    if(VK_PCT>0)   marks.push('Подписчик сообщества \u2212'+VK_PCT+'% на электронные');
+    if(VK_PCT>0)   marks.push('Подписчик сообщества ВКонтакте \u2212'+VK_PCT+'% на электронные');
     totalEl.innerHTML = (totalFull>total)
       ? '<s style="opacity:.55;font-weight:400;margin-right:8px">'+totalFull.toLocaleString('ru-RU')+' \u20BD</s>'+total.toLocaleString('ru-RU')+' \u20BD'+
         (marks.length?'<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">'+marks.join(' \u00B7 ')+'</span>':'')
