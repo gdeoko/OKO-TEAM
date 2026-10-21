@@ -73,24 +73,37 @@ foreach (all("SELECT id, status, items, application_id, full_name, created_at
     if (!$allDigital) { $skipped++; continue; }
 
     /* Считаем по видам: сколько оплачено и сколько ОТПРАВЛЕНО. Выданный, но не
-     * ушедший документ заказ не закрывает — человек его ещё не получил. */
+     * ушедший документ заказ не закрывает — человек его ещё не получил.
+     *
+     * Именной диплом и благодарность сверяются ПО ИМЕНИ. Счёт шёл только по
+     * «заявка + вид», и одна отправленная бумага закрывала все заказы на эту
+     * заявку: педагог заказал именные дипломы на шестерых детей одного
+     * коллектива, ушёл первый (Багаева) — и заказы на Волкову и Букову тоже
+     * стали «вручён», хотя их дипломы стояли в очереди на 22 и 24 октября
+     * (заказы 561 и 669, 21.10.2026). Имя лежит в позиции (fio) и в
+     * diplomas.result. */
     $want = [];
     foreach ($items as $it) {
         $type = OCD_MAP[mb_strtolower(trim((string) ($it['item'] ?? '')))] ?? '';
         if ($type === '') continue;
         $aid = ocd_app_id((array) $o, (array) $it);
         if ($aid <= 0) continue;
-        $k = $aid . '|' . $type;
+        $fio = in_array($type, ['named', 'thanks'], true) ? mb_strtolower(trim((string) ($it['fio'] ?? ''))) : '';
+        $k = $aid . '|' . $type . '|' . $fio;
         $want[$k] = ($want[$k] ?? 0) + max(1, (int) ($it['count'] ?? 1));
     }
     if (!$want) { $skipped++; continue; }
 
     $done = true;
     foreach ($want as $k => $n) {
-        [$aid, $type] = explode('|', $k);
-        $sent = (int) (scalar("SELECT COUNT(*) FROM diplomas
-                                WHERE application_id=? AND type=? AND COALESCE(sent_at,'')<>''",
-                              [(int) $aid, $type]) ?? 0);
+        [$aid, $type, $fio] = explode('|', $k, 3);
+        // Имя сравниваем в PHP: lower() в SQLite не знает кириллицы.
+        $sent = 0;
+        foreach (all("SELECT result FROM diplomas
+                       WHERE application_id=? AND type=? AND COALESCE(sent_at,'')<>''",
+                     [(int) $aid, $type]) as $d) {
+            if ($fio === '' || mb_strtolower(trim((string) $d['result'])) === $fio) $sent++;
+        }
         if ($sent < $n) { $done = false; break; }
     }
     if (!$done) { $skipped++; continue; }

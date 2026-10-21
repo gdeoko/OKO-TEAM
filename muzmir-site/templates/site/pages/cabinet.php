@@ -380,11 +380,15 @@ $uEmail = mb_strtolower(trim((string) ($user['email'] ?? '')));
  * а брошенные попытки остаются в базе. Для учёта они нужны, для участника —
  * нет: в кабинете он видит рядом с оплаченным заказом два «отменён» на ту же
  * сумму и идёт выяснять, не списали ли с него трижды. Хромова оплатила клуб с
- * третьего захода, и в кабинете у неё висели все три. */
+ * третьего захода, и в кабинете у неё висели все три.
+ *
+ * Кроме отменённого С ВОЗВРАТОМ: за него человек платил, и деньги ему
+ * возвращали — он должен видеть, что заказ снят и возврат ушёл. Иначе
+ * оплаченная покупка просто исчезает из кабинета (заказ 691, 22.10.2026). */
 $orders = all(
     "SELECT * FROM awards_orders
       WHERE (user_id = ? OR (? <> '' AND lower(trim(email)) = ?))
-        AND COALESCE(status,'') <> 'canceled'
+        AND (COALESCE(status,'') <> 'canceled' OR COALESCE(refund_amount,0) > 0)
    ORDER BY created_at DESC",
     [$uid, $uEmail, $uEmail]
 );
@@ -1427,13 +1431,46 @@ ob_start(); ?>
             if ($isCanceledOrder) $ocur = -1;
             $track = trim((string)($o['tracking'] ?? ''));
             $trackUrl = $track !== '' ? 'https://www.pochta.ru/tracking#' . rawurlencode($track) : '';
-            $isClubOrder = strpos((string)($o['items'] ?? ''), '"kind":"club"') !== false; ?>
+            $isClubOrder = strpos((string)($o['items'] ?? ''), '"kind":"club"') !== false;
+            /* НА ЧЬЁ ИМЯ И КАКОЙ НОМЕР.
+               Педагог заказывает именные дипломы на весь коллектив, и в кабинете
+               стояли восемь одинаковых карточек «Именной диплом (оригинал) —
+               Территория таланта — ЛАУРЕАТ II» без имени и без номера. Отличить
+               заказ на Коробьянц от заказа на Шарипова было нельзя, а письма и
+               ответы центра называют заказ по номеру (21.10.2026). */
+            $__items = json_decode((string)($o['items'] ?? ''), true);
+            if (is_array($__items) && isset($__items['item'])) $__items = [$__items];
+            if (!is_array($__items)) $__items = [];
+            $__fios = [];
+            foreach ($__items as $__it) {
+                $__f = is_array($__it) ? trim((string)($__it['fio'] ?? '')) : '';
+                if ($__f !== '' && !in_array($__f, $__fios, true)) $__fios[] = $__f;
+            }
+            /* ЭЛЕКТРОННОМУ ЗАКАЗУ — СВОИ СТАДИИ.
+               Почты у него нет, и «Отправка → Прибыло» под электронным дипломом
+               читается как посылка, которую надо ждать. Документ уходит письмом
+               в назначенный день — эту дату и показываем. */
+            $__allDigital = $__items !== [];
+            foreach ($__items as $__it) if (!is_array($__it) || (string)($__it['kind'] ?? '') !== 'digital') { $__allDigital = false; break; }
+            if ($__allDigital && (string)$o['status'] === 'delivered') $sl = 'Отправлен';
+            $__digDate = '';
+            if ($__allDigital && !$isCanceledOrder && (string)$o['status'] !== 'delivered' && (int)($o['application_id'] ?? 0) > 0) {
+                $__want = array_map('mb_strtolower', $__fios);
+                foreach (all("SELECT result, scheduled_at FROM diplomas
+                               WHERE application_id=? AND COALESCE(sent_at,'')='' AND COALESCE(scheduled_at,'')<>''
+                            ORDER BY scheduled_at DESC", [(int)$o['application_id']]) as $__d) {
+                    if ($__want && !in_array(mb_strtolower(trim((string)$__d['result'])), $__want, true)) continue;
+                    $__digDate = (string)$__d['scheduled_at'];
+                    break;
+                }
+            } ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
               <div class="cab-row">
                 <div style="min-width:0">
                   <span class="cab-ttl"><?= h(order_items_label($o['items'] ?? '')) ?></span>
+                  <?php if ($__fios): ?><p class="cab-meta">На имя: <strong><?= h(implode(', ', $__fios)) ?></strong></p><?php endif; ?>
                   <p class="cab-meta"><?= h($o['competition'] ?: '') ?><?php if ($o['result']): ?> - <?= h($o['result']) ?><?php endif; ?></p>
-                  <p class="cab-meta">Заказ от <?= h(ru_datetime((string)$o['created_at'])) ?><?php if ($o['amount']): ?> - <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
+                  <p class="cab-meta">Заказ №<?= (int)$o['id'] ?> от <?= h(ru_datetime((string)$o['created_at'])) ?><?php if ($o['amount']): ?> - <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
                   <?php if ($track !== ''): ?><p class="cab-meta">Трек-номер: <strong><?= h($track) ?></strong></p><?php endif; ?>
                 </div>
                 <div style="text-align:right"><?= $badge($sl,$st) ?></div>
@@ -1443,12 +1480,35 @@ ob_start(); ?>
                 <p class="cab-meta" style="margin-top:12px">
                   Заказ отменён<?php
                     $__cr = trim((string) ($o['cancel_reason'] ?? ''));
-                    if ($__cr !== '') echo ': ' . h($__cr);
                     $__ra = (int) ($o['refund_amount'] ?? 0);
+                    // «оплата возвращена полностью» и следом «Возврат 500 ₽ отправлен» — одно и то же дважды.
+                    if ($__ra > 0 && mb_stripos($__cr, 'возвра') !== false) $__cr = '';
+                    if ($__cr !== '') echo ': ' . h($__cr);
                     if ($__ra > 0) echo '. Возврат ' . $__ra . ' ₽ отправлен на карту, которой Вы оплачивали — банк зачисляет его до нескольких рабочих дней';
                     elseif ((int) ($o['amount'] ?? 0) > 0) echo '. Если оплата проходила, деньги возвращены на карту';
                   ?>.
                 </p>
+              <?php elseif ($__allDigital):
+                $__dDone = (string)$o['status'] === 'delivered';
+                $__dCur  = $__dDone ? 1 : ((string)$o['status'] === 'new' ? -1 : 0); ?>
+                <div class="cab-steps" style="margin-top:14px">
+                  <?php foreach (['Изготовление', 'Отправлен на почту'] as $pi => $pl): ?>
+                    <div class="cab-step <?= $pi <= $__dCur ? 'done' : '' ?> <?= $pi === $__dCur ? 'here' : '' ?>"><span class="cab-dot"></span><small><?= h($pl) ?></small></div>
+                  <?php endforeach; ?>
+                </div>
+                <div class="cab-bar"><i data-w="<?= (int)round((($__dCur+1)/2)*100) ?>"></i></div>
+                <?php if ($__dDone): ?>
+                  <p class="cab-meta" style="margin-top:10px">Документ отправлен на почту и лежит во вкладке «Мои дипломы» — там его можно скачать в PDF, JPG или PNG.</p>
+                <?php elseif ((string)$o['status'] !== 'new'): ?>
+                  <p class="cab-meta" style="margin-top:10px">Электронный документ придёт на почту, указанную в заявке,
+                    <?= $__digDate !== '' ? h(ru_date(substr($__digDate, 0, 10))) : 'в течение пяти рабочих дней' ?>,
+                    и сразу появится во вкладке «Мои дипломы».</p>
+                <?php else: ?>
+                  <div class="cab-order-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" class="btn btn--primary btn--sm" data-order-pay="<?= (int)$o['id'] ?>">Оплатить заказ</button>
+                    <button type="button" class="btn btn--ghost btn--sm" data-order-del="<?= (int)$o['id'] ?>" style="color:var(--error,#c0392b)">Удалить заказ</button>
+                  </div>
+                <?php endif; ?>
               <?php elseif (!$isClubOrder): ?>
                 <div class="cab-steps" style="margin-top:14px">
                   <?php foreach ($orderPipeL as $pi => $pl): ?>
