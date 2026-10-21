@@ -594,7 +594,10 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
     $ids  = $gr['ids'];
     $idsS = implode(',', $ids);
     $st   = og_group_status($gr);
-    $step = $STEPS[$st] ?? ($st === 'new' ? 0 : 1);
+    /* У ОТМЕНЁННОГО ЗАКАЗА ШКАЛА ПУСТАЯ.
+       'canceled' в $STEPS нет, и запасное значение зажигало «Оплачено» —
+       отменённый заказ с возвращёнными деньгами выглядел оплаченным и живым. */
+    $step = $STEPS[$st] ?? (in_array($st, ['new', 'canceled'], true) ? 0 : 1);
     $gkind = $gr['kind'];
     $needAddr = in_array($gkind, ['original','mixed'], true);
     /* Состав и бланки собираем по всем заказам посылки — но ТОЛЬКО ОРИГИНАЛЫ.
@@ -775,10 +778,24 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
                    и неоплаченный заказ выглядел оплаченным (№683, 21.10.2026):
                    бейдж сверху честно писал «Ожидает оплаты», а строка состава
                    под ним — «ОПЛАЧЕНО 800 ₽». */ ?>
+          <?php
+          /* ОТМЕНЁННЫЙ ЗАКАЗ НЕ «ОПЛАЧЕН» — ПО НЕМУ ДЕНЬГИ ВЕРНУЛИ.
+             order_is_paid() честно считает возвращённый платёж оплатой (вернуть
+             можно только то, что приходило), но для сборщика это читалось как
+             «оплачено, изготавливай»: у заказа №691 деньги вернули, а строка
+             обещала 500 ₽ и бланк на печать. */
+          $__отменён = $st === 'canceled';
+          $__возврат = (int) ($o['refund_amount'] ?? 0);
+          ?>
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">
-            Состав посылки (что изготовить) · <?= $__оплачен ? 'оплачено' : 'к оплате' ?>
-            <b style="color:<?= $__оплачен ? 'var(--a-navy)' : '#8B2F2F' ?>;font-size:13px"><?= number_format($postPay, 0, '.', ' ') ?> ₽</b>
-            <?php if (!$__оплачен): ?><b style="color:#8B2F2F;font-size:13px"> · не оплачен</b><?php endif; ?>
+            Состав посылки (что изготовить) · <?= $__отменён ? 'заказ отменён' : ($__оплачен ? 'оплачено' : 'к оплате') ?>
+            <?php if ($__отменён): ?>
+              <?php if ($__возврат > 0): ?><b style="color:#8B2F2F;font-size:13px"> · возвращено <?= number_format($__возврат, 0, '.', ' ') ?> ₽</b><?php endif; ?>
+              <b style="color:#8B2F2F;font-size:13px"> · НЕ ИЗГОТАВЛИВАТЬ</b>
+            <?php else: ?>
+              <b style="color:<?= $__оплачен ? 'var(--a-navy)' : '#8B2F2F' ?>;font-size:13px"><?= number_format($postPay, 0, '.', ' ') ?> ₽</b>
+              <?php if (!$__оплачен): ?><b style="color:#8B2F2F;font-size:13px"> · не оплачен</b><?php endif; ?>
+            <?php endif; ?>
           </div>
           <?php /* РАЗДЕЛ ОРИГИНАЛОВ — ТОЛЬКО ПРО ПОСЫЛКУ.
                    Здесь перечислялись и электронные позиции заказа: «в этом же
@@ -843,7 +860,10 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
                окне печати браузера, «Скачать» сохраняет файл. Раньше кнопка
                печати вела на производственный лист — белую страницу с номером
                заказа, а самой благодарности взять было негде. */ ?>
-      <?php if ($cleans || $paperDocs): ?>
+      <?php /* Бланки отменённого заказа не печатаем: документ не изготавливается,
+               а кнопка «Печать» рядом с возвращёнными деньгами — прямой путь
+               к тому, чтобы отправить человеку оплаченное и возвращённое. */ ?>
+      <?php if (($cleans || $paperDocs) && $st !== 'canceled'): ?>
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--a-line);">
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
             Бланки для печати в посылку (чистые, с номером и QR)
@@ -961,10 +981,12 @@ foreach (og_groups(all("SELECT * FROM awards_orders WHERE status IN ('paid','mad
             <span class="small muted" style="width:100%;margin-top:4px">Причина: <?= h((string)$o['cancel_reason']) ?></span>
           <?php endif; ?>
         <?php endif; ?>
+        <?php if ($st !== 'canceled'): /* отменённое в производство не отправляем */ ?>
         <form method="post" action="<?= url('/admin/') ?>" style="display:inline;margin-left:auto;"><?= csrf_field() ?>
           <input type="hidden" name="do" value="redispatch"><input type="hidden" name="order" value="<?= $oid ?>">
           <button class="btn btn--ghost btn--sm" type="submit"><?= admin_icon('send') ?>В Telegram-производство</button>
         </form>
+        <?php endif; ?>
         <?php if (in_array($st, ['paid','made','new'], true)): ?>
           <!-- Отмена заказа с автоматическим возвратом средств в ЮKassa.
                Если заказ уже отправлен/доставлен — кнопка не показывается: возврат
