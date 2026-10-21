@@ -1599,6 +1599,29 @@ ob_start(); ?>
                   <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                 </a>
                 <?php endif; ?>
+                <?php
+                /* Отмена автопродления — ВТОРОЙ раз, здесь.
+                 *
+                 * Первая кнопка стоит в «Моих заявках», рядом со статусом
+                 * членства, но панели кабинета скрыты, пока раздел не открыт:
+                 * человек, который ищет «отменить подписку», идёт в Настройки
+                 * и кнопки там не находит. Обработчик висит на document —
+                 * вторая кнопка работает тем же кодом, сообщение подменяет
+                 * этот же абзац. */
+                $__renewOn2 = !empty($club['active']) && empty($club['staff']) && !empty($club['auto_renew']);
+                if ($__renewOn2): ?>
+                  <p class="cab-meta" style="margin:10px 12px 2px">
+                    Подписка продлевается автоматически.
+                    <button type="button" class="btn btn--ghost btn--sm" data-club-cancel
+                            style="margin-left:8px">Отключить автопродление</button>
+                  </p>
+                <?php elseif (!empty($club['active']) && empty($club['staff']) && !empty($club['expires_local'])): ?>
+                  <p class="cab-meta" style="margin:10px 12px 2px">
+                    Автопродление отключено — членство действует до
+                    <?= h(ru_date(substr((string) $club['expires_local'], 0, 10))) ?>,
+                    дальше продлевается по Вашему решению.
+                  </p>
+                <?php endif; ?>
               </div>
             </div>
 
