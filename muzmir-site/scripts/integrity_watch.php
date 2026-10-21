@@ -52,7 +52,9 @@ const IW_LAST = IW_DIR . '/last_report.txt';
 function iw_scan(): array {
     $out = [];
     $skipDirs = ['/data/', '/public/uploads/', '/vendor/', '/node_modules/', '/.git/', '/tmp/'];
-    $exts = ['php' => 1, 'js' => 1, 'css' => 1, 'json' => 1, 'md' => 1, 'sql' => 1];
+    // .txt здесь не мелочь: в scripts/crontab.txt лежит эталон расписания,
+    // по которому крон восстанавливают после переустановки сервера.
+    $exts = ['php' => 1, 'js' => 1, 'css' => 1, 'json' => 1, 'md' => 1, 'sql' => 1, 'txt' => 1];
     $it = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator(BASE_PATH, FilesystemIterator::SKIP_DOTS),
         RecursiveIteratorIterator::SELF_FIRST

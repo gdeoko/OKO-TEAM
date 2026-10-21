@@ -166,7 +166,8 @@ MAILTO=""
 # а письма «проба» продолжали приходить владельцу каждый час.
 # Понадобится снова (почтовик закрыл ящик) — запускать вручную:
 #   php scripts/mail_unblock_watch.php
-# 35 * * * * php /var/www/muzmir/scripts/mail_unblock_watch.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+# Задание включено и работает на сервере (сверено 21.10.2026).
+35 * * * * php /var/www/muzmir/scripts/mail_unblock_watch.php >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Убирает из головы очереди адреса, которые сервис рассылок всё равно не отправит.
 10 7 * * * php /var/www/muzmir/scripts/hold_suppressed.php --apply >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Снятие ложных подавлений у сервиса. Окно скользящее: зашитая дата через месяц
@@ -197,3 +198,41 @@ MAILTO=""
 0 12 * * 1-6 php /var/www/muzmir/cron/order_address_request.php --send >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Разбор расхождений с жюри: пересмотр записи и урок на будущее.
 */15 * * * * php /var/www/muzmir/cron/grade_learn.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+
+# ═══ Внесено 21.10.2026 по факту сервера ════════════════════════════════════
+# Эти задания добавлялись прямо на сервере и в эталон не попадали, поэтому
+# сторож расписания каждое утро сообщал о двадцати «непрописанных» заданиях —
+# и в этом шуме тонула единственная настоящая пропажа (monthly_launch).
+# Строки приведены ровно так, как стоят в crontab боевого сервера.
+
+# Конвейер постов: подготовка, публикация, добор картинок, плакаты, переписывание.
+15 * * * * cd /var/www/muzmir && php cron/smm_prepare.php >> data/logs/smm.log 2>&1
+*/10 9-19 * * 1-6 cd /var/www/muzmir && php cron/smm_publish.php >> data/logs/smm.log 2>&1
+35 * * * * cd /var/www/muzmir && php cron/smm_image_retry.php >> data/logs/smm.log 2>&1
+45 * * * * cd /var/www/muzmir && php cron/smm_keyart_refresh.php --сколько=2 >> data/logs/smm.log 2>&1
+25 * * * * cd /var/www/muzmir && php cron/smm_perepisat.php >> data/logs/smm.log 2>&1
+
+# ВКонтакте: имена собеседников, синхронизация стены, дослать застрявший ответ.
+23 * * * * php /var/www/muzmir/cron/vk_names_fill.php >/dev/null 2>&1
+40 5 * * * php /var/www/muzmir/cron/vk_posts_sync.php >/dev/null 2>&1
+* * * * * /usr/bin/php /var/www/muzmir/cron/vk_resend_stuck.php >/dev/null 2>&1
+
+# Обучение чат-бота: выгрузка диалогов и уроки из снятых владельцем ответов.
+20 3 * * * cd /var/www/muzmir && php scripts/chat_lessons_from_cancelled.php --apply --days=45 >> data/logs/chat_learn.log 2>&1
+40 3 * * * cd /var/www/muzmir && php scripts/vk_dialogs_export.php --days=45 --out=data/vk_dialogs.jsonl >> data/logs/chat_learn.log 2>&1 && php scripts/vk_style_learn.php --apply >> data/logs/chat_learn.log 2>&1
+
+# Заказы и почта: закрытие электронных, трек Почты России, дожим неоплаченных.
+25 * * * * cd /var/www/muzmir && php cron/orders_close_digital.php >/dev/null 2>&1
+20 10,14,18 * * * cd /var/www/muzmir && php cron/pochta_track.php >> data/logs/cron.log 2>&1
+0 10,15 * * 1-6 php /var/www/muzmir/cron/order_unpaid_reminder.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+
+# Доставляемость: проба mail.ru в рабочие часы и снятие подавления Unisender.
+5 9-19 * * * cd /var/www/muzmir && php cron/mailru_probe.php >/dev/null 2>&1
+5 7 * * * php /var/www/muzmir/scripts/uni_unsuppress.php --all-queued --apply >> /var/www/muzmir/data/logs/cron.log 2>&1
+
+# Партнёрская статистика и ежедневный аудит системы.
+7 * * * * php /var/www/muzmir/cron/partner_ab_stats.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+35 9 * * * cd /var/www/muzmir && php cron/audit_watch.php >> data/logs/cron.log 2>&1
+
+# Сторож файлов: что правили на сервере мимо репозитория (scripts/integrity_watch.php).
+50 6 * * * cd /var/www/muzmir && php scripts/integrity_watch.php >> data/logs/cron.log 2>&1
