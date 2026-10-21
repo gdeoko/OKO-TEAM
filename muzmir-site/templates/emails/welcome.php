@@ -31,4 +31,18 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
   </td></tr>
 </table>
 
+<?php /* Сообщество ВКонтакте. Подписать человека за него нельзя — ВКонтакте не
+         даёт сообществу ни одного способа добавить себе подписчика, это всегда
+         действие самого человека. Поэтому зовём словами и ссылкой, в письме,
+         которое новый участник открывает в первый же день. В подвале письма
+         значок сообщества тоже есть, но его не замечают. */ ?>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
+  <tr><td style="padding:18px 24px;font-size:14px;line-height:1.7;color:#33406B;">
+    <div style="font-weight:600;color:#17307A;margin-bottom:6px;">Мы ВКонтакте</div>
+    <div style="margin-bottom:12px;">Итоги конкурсов, дипломы победителей и анонсы приёма заявок выходят в нашем сообществе раньше, чем где-либо ещё. Там же можно задать вопрос и получить ответ в тот же день.</div>
+    <a href="<?= h((string) (function_exists('cfgv') ? cfgv('org_vk', 'https://vk.com/music_world.online') : 'https://vk.com/music_world.online')) ?>"
+       style="display:inline-block;padding:11px 26px;background:#17307A;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:14px;border-radius:10px;">Подписаться на сообщество</a>
+  </td></tr>
+</table>
+
 <p style="margin:18px 0 0;font-size:13px;color:#6B7699;">Если Вы не регистрировались на нашем сайте, просто оставьте это письмо без внимания.</p>
