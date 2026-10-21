@@ -361,7 +361,10 @@ if (input('action') === 'profile') {
     $logins = [];
     if (!empty($pu['email'])) $logins[] = 'почта';
     if (!empty($pu['phone']) && (int)($pu['phone_verified']??0)===1) $logins[] = 'телефон';
-    if (!empty($pu['vk_id'])) $logins[] = 'ВК';
+    /* Подписка на сообщество — рядом со способами входа: по ней даётся бонус на
+       электронные награды, и при разборе «почему у меня другая сумма» это первое,
+       что надо видеть. Признак обновляет суточная сверка cron/vk_subs_sync.php. */
+    if (!empty($pu['vk_id'])) $logins[] = 'ВК' . ((int) ($pu['vk_sub'] ?? 0) === 1 ? ' (подписан на сообщество)' : '');
     if (!empty($pu['max_id'])) $logins[] = 'МАКС';
     if (!empty($pu['google_id'])) $logins[] = 'Google';
     $stMap = ['new'=>'Новая','paid'=>'Оплачена','judging'=>'На оценке','graded'=>'Оценена','sent'=>'Отправлена','rejected'=>'Отклонена'];

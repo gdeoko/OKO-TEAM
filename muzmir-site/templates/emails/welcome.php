@@ -39,7 +39,16 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
   <tr><td style="padding:18px 24px;font-size:14px;line-height:1.7;color:#33406B;">
     <div style="font-weight:600;color:#17307A;margin-bottom:6px;">Мы ВКонтакте</div>
-    <div style="margin-bottom:12px;">Итоги конкурсов, дипломы победителей и анонсы приёма заявок выходят в нашем сообществе раньше, чем где-либо ещё. Там же можно задать вопрос и получить ответ в тот же день.</div>
+    <div style="margin-bottom:12px;">Итоги конкурсов, дипломы победителей и анонсы приёма заявок выходят в нашем сообществе раньше, чем где-либо ещё. Там же можно задать вопрос и получить ответ в тот же день.<?php
+      /* Бонус подписчика — ровно тем размером, который сейчас стоит в настройках
+         (vk_sub_bonus_pct). Писать «2%» руками нельзя: поменяют настройку —
+         письмо останется обещать старое. */
+      $__vkPct = 0;
+      if (!function_exists('vk_sub_bonus_pct') && defined('BASE_PATH') && is_file(BASE_PATH . '/core/vk_subscriber.php')) {
+          require_once BASE_PATH . '/core/vk_subscriber.php';
+      }
+      if (function_exists('vk_sub_bonus_pct')) $__vkPct = (int) vk_sub_bonus_pct();
+      if ($__vkPct > 0): ?> <b style="color:#17307A;">Подписчикам — скидка <?= $__vkPct ?>% на электронные наградные документы:</b> свяжите аккаунт с ВКонтакте в личном кабинете, и она применится сама.<?php endif; ?></div>
     <a href="<?= h((string) (function_exists('cfgv') ? cfgv('org_vk', 'https://vk.com/music_world.online') : 'https://vk.com/music_world.online')) ?>"
        style="display:inline-block;padding:11px 26px;background:#17307A;color:#FFFFFF;text-decoration:none;font-weight:600;font-size:14px;border-radius:10px;">Подписаться на сообщество</a>
   </td></tr>

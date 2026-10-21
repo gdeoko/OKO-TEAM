@@ -54,6 +54,15 @@ foreach ($items as $it) {
     <?php endforeach; ?>
     <?php if ($result !== ''): ?><div style="margin-top:8px;"><span style="color:#6B7699;">Аттестационный результат:</span> <b style="color:#17307A;"><?= h($result) ?></b></div><?php endif; ?>
     <?php if ($amount > 0): ?><div><span style="color:#6B7699;">Оплачено:</span> <?= $amount ?> ₽</div><?php endif; ?>
+    <?php /* Бонус подписчика — называем словами. Человек видит сумму меньше
+             прайса и должен понимать, за что: иначе скидка выглядит ошибкой
+             счёта, а не подарком центра. */
+      $__vkРуб = (int) ($o['vk_bonus_rub'] ?? 0);
+      $__vkПроц = (int) ($o['vk_bonus_pct'] ?? 0);
+      if ($__vkРуб > 0 && $__vkПроц > 0): ?>
+      <div style="margin-top:4px;color:#2E7D32;">Скидка подписчика сообщества ВКонтакте
+        (&minus;<?= $__vkПроц ?>% на электронные документы): &minus;<?= $__vkРуб ?> ₽</div>
+    <?php endif; ?>
   </td></tr>
 </table>
 

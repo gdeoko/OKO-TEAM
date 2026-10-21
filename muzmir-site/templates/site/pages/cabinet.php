@@ -502,6 +502,43 @@ $club = function_exists('club_status') ? club_status($uid) : ['active' => false,
 $isVip = !empty($club['active']);
 // Показываем местное время: expires_at хранится в UTC (см. core/club.php).
 $clubUntil = $isVip && !empty($club['expires_local']) ? ru_date(substr((string)$club['expires_local'], 0, 10)) : '';
+
+/* --- Подписка на сообщество ВКонтакте и бонус за неё (2% на электронные) ---
+ * Признак читается ИЗ БАЗЫ: в ВКонтакте во время отрисовки страницы не ходим
+ * (на этом уже обжигались подписи диалогов). Обновляют его суточная сверка
+ * cron/vk_subs_sync.php и кнопка «Я подписался». */
+if (is_file(BASE_PATH . '/core/vk_subscriber.php')) require_once BASE_PATH . '/core/vk_subscriber.php';
+$vkBonusPct = function_exists('vk_sub_bonus_pct') ? (int) vk_sub_bonus_pct() : 0;
+$vkSubbed   = function_exists('vk_sub_is') && vk_sub_is($uid);
+$vkLinked   = trim((string) ($user['vk_id'] ?? '')) !== '';
+$vkGroupUrl = function_exists('vk_sub_group_url') ? vk_sub_group_url() : 'https://vk.com/music_world.online';
+
+/* Полоса-приглашение. Общая разметка на оба места, где она стоит: вкладка
+ * «Мои заявки» (там человек видит свои награды) и «Настройки» (туда идут
+ * искать всё, что про аккаунт). Подписчику её не показываем вовсе — ему
+ * нечего делать, скидка уже в ценах. */
+$vkHint = static function () use ($vkBonusPct, $vkSubbed, $vkLinked, $vkGroupUrl): string {
+    if ($vkBonusPct <= 0) return '';
+    $gr = h($vkGroupUrl);
+    if ($vkSubbed) {
+        return '<div class="cab-vip-hint cab-vip-hint--on"><div class="cab-vip-hint__txt">'
+             . '<b>Вы подписаны на наше сообщество</b>'
+             . '<span>Скидка ' . $vkBonusPct . '% на электронные наградные документы применяется в заказе сама.</span>'
+             . '</div><a class="btn btn--ghost btn--sm" href="' . $gr . '" target="_blank" rel="noopener">Открыть</a></div>';
+    }
+    $action = $vkLinked
+        ? '<button type="button" class="btn btn--primary btn--sm" data-vk-sub-check>Я подписался</button>'
+        : '<a class="btn btn--primary btn--sm" href="' . h(url('/api/v1/oauth_vk?bind=1')) . '">Связать с ВКонтакте</a>';
+    $why = $vkLinked
+        ? 'Ваш аккаунт связан с ВКонтакте. Подпишитесь на сообщество и нажмите «Я подписался» — проверим сразу.'
+        : 'Подпишитесь на сообщество и свяжите аккаунт с ВКонтакте — скидка встанет в цены сама.';
+    return '<div class="cab-vip-hint"><div class="cab-vip-hint__txt">'
+         . '<b>Подписчикам сообщества — &minus;' . $vkBonusPct . '% на электронные документы</b>'
+         . '<span>' . $why . ' Итоги, дипломы победителей и анонсы приёма заявок выходят там раньше всего.</span>'
+         . '</div><div style="display:flex;gap:8px;flex-wrap:wrap">'
+         . '<a class="btn btn--ghost btn--sm" href="' . $gr . '" target="_blank" rel="noopener">Открыть сообщество</a>'
+         . $action . '</div></div>';
+};
 // Золотая SVG-галочка верификации (круглый бейдж) — рядом с именем в шапке кабинета.
 $vipBadge = '<span class="cab-vip" title="Участник Клуба"><svg viewBox="0 0 24 24" role="img" aria-label="Участник Клуба">'
     . '<circle cx="12" cy="12" r="11" fill="#C79322"/><circle cx="12" cy="12" r="11" fill="url(#mmVipG)"/>'
@@ -737,6 +774,14 @@ ob_start(); ?>
 .cab.is-section .cab-menu{display:none}
 :root:not([data-theme="dark"]) .cab-back{color:var(--gold-ink)}
 /* --- Панели / карточки --- */
+/* Экран «Спасибо за регистрацию» — показывается один раз, по метке new=1. */
+.cab-welcome{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 20%,transparent),transparent 72%),var(--panel);
+  border:1px solid var(--glass-brd,rgba(255,255,255,.14));border-radius:18px;padding:20px 22px;margin:0 0 14px}
+.cab-welcome h2{margin:0 0 8px;font-family:var(--ff-display);font-size:clamp(1.25rem,4.4vw,1.6rem);letter-spacing:.01em}
+.cab-welcome p{margin:0 0 10px;color:var(--muted);font-size:.9rem;line-height:1.55}
+.cab-welcome__vk b{color:var(--text);font-weight:700}
+.cab-welcome__btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+@media (max-width:560px){.cab-welcome{padding:17px 16px}.cab-welcome__btns .btn{width:100%}}
 .cab-vip-hint{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
   margin:0 0 16px;padding:14px 18px;border-radius:var(--radius-sm);
   background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 16%,transparent),transparent 70%),var(--panel);
@@ -905,6 +950,36 @@ ob_start(); ?>
         </div>
       </div>
 
+      <?php
+      /* ЭКРАН «СПАСИБО ЗА РЕГИСТРАЦИЮ» — ОДИН РАЗ, СРАЗУ ПОСЛЕ СОЗДАНИЯ АККАУНТА.
+       *
+       * Показывается по метке new=1, которую ставят все четыре двери регистрации
+       * (почта с паролем, почта кодом, телефон, соц-вход). Это тот единственный
+       * момент, когда человек точно смотрит на экран и готов сделать ещё одно
+       * действие, — поэтому здесь и зовём в сообщество, крупно и с поводом.
+       * Вернувшемуся участнику блок не показывается: метки в адресе нет. */
+      $__новичок = (string) (input('new') ?? '') === '1';
+      if ($__новичок):
+        $__vkПроцент = $vkBonusPct;
+      ?>
+      <div class="cab-welcome reveal">
+        <h2>Спасибо за регистрацию!</h2>
+        <p>Ваш аккаунт создан — заявки, дипломы и награды теперь собираются здесь.</p>
+        <?php if ($__vkПроцент > 0): ?>
+          <p class="cab-welcome__vk">Загляните в наше сообщество ВКонтакте: итоги конкурсов, дипломы
+            победителей и анонсы приёма заявок выходят там раньше всего.
+            <b>Подписчикам — скидка <?= (int) $__vkПроцент ?>% на электронные наградные документы.</b></p>
+        <?php else: ?>
+          <p class="cab-welcome__vk">Загляните в наше сообщество ВКонтакте: итоги конкурсов, дипломы
+            победителей и анонсы приёма заявок выходят там раньше всего.</p>
+        <?php endif; ?>
+        <div class="cab-welcome__btns">
+          <a class="btn btn--primary" href="<?= h($vkGroupUrl) ?>" target="_blank" rel="noopener">Подписаться на сообщество</a>
+          <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Перейти в кабинет</a>
+        </div>
+      </div>
+      <?php endif; ?>
+
       <!-- Меню кабинета (вертикальные группы, как в настройках Telegram) -->
       <nav class="cab-menu" id="cabMenu" aria-label="Разделы кабинета">
         <?php foreach ($menuGroups as [$gTitle, $gItems]): ?>
@@ -990,6 +1065,11 @@ ob_start(); ?>
               </p>
             <?php endif; ?>
           <?php endif; ?>
+
+          <?php /* Сообщество ВКонтакте и бонус за подписку — сразу под блоком клуба:
+                    это второй повод, по которому заказ наград обходится дешевле. */
+                 echo $vkHint(); ?>
+
           <?php if (!$apps): ?>
             <div class="cab-card cab-empty">
               <?= $icons['apps'] ?>
@@ -1625,6 +1705,16 @@ ob_start(); ?>
               </div>
             </div>
 
+            <!-- Сообщество ВКонтакте -->
+            <?php if ($vkBonusPct > 0): ?>
+            <div class="cab-group">
+              <div class="cab-group-ttl">Сообщество ВКонтакте</div>
+              <div class="cab-group-card" style="padding:12px">
+                <?= $vkHint() ?>
+              </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Профиль -->
             <div class="cab-group">
               <div class="cab-group-ttl">Профиль</div>
@@ -2003,6 +2093,24 @@ ob_start(); ?>
                   }
                 })
                 .catch(function(){ clubOff.disabled = false; clubOff.textContent = 'Отключить автопродление';
+                                   alert('Сбой сети, попробуйте ещё раз.'); });
+              return; }
+            /* «Я подписался» — сверяем подписку немедленно и перечитываем страницу:
+               полоса и цены собраны на сервере, иначе человек не увидит, что
+               скидка встала, и решит, что бонус выдуман. */
+            var vkChk = e.target.closest('[data-vk-sub-check]');
+            if (vkChk) { e.preventDefault();
+              vkChk.disabled = true; var vkWas = vkChk.textContent; vkChk.textContent = 'Проверяем…';
+              var fdV = new FormData(); fdV.append('_csrf', csrf());
+              fetch('<?= url('/api/v1/vk_sub_check') ?>', {method:'POST', body:fdV, headers:{'X-Requested-With':'fetch'}, credentials:'same-origin'})
+                .then(function(r){ return r.json().catch(function(){return{};}); })
+                .then(function(d){
+                  if (d && d.ok && d.subscribed) { location.reload(); return; }
+                  vkChk.disabled = false; vkChk.textContent = vkWas;
+                  if (d && d.need_bind && d.bind_url) { location.href = d.bind_url; return; }
+                  alert((d && (d.message || d.error)) || 'Не удалось проверить подписку, попробуйте позже.');
+                })
+                .catch(function(){ vkChk.disabled = false; vkChk.textContent = vkWas;
                                    alert('Сбой сети, попробуйте ещё раз.'); });
               return; }
             // Запрос комментария и рекомендации жюри (только Элитный клуб).

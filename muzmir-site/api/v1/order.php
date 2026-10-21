@@ -346,6 +346,46 @@ if ($discPctOrder > 0 && $amount > 0) {
         : (int) round($amount * (100 - $discPctOrder) / 100);
 }
 
+/* БОНУС ПОДПИСЧИКА СООБЩЕСТВА ВКОНТАКТЕ — 2% НА ЭЛЕКТРОННЫЕ ДОКУМЕНТЫ.
+ *
+ * Решение владельца от 21.10.2026. Бонус складывается с клубной или
+ * партнёрской скидкой (в отличие от них двоих между собой): те обещаны «на
+ * наградной материал» целиком и потому спорят друг с другом, а этот даётся за
+ * другое действие и только на один вид позиций — электронные документы
+ * (kind='digital'). Поэтому он считается ОТДЕЛЬНО, от уже уценённой стоимости
+ * именно этих позиций, и к оригиналам, изделиям и членству в клубе отношения
+ * не имеет.
+ *
+ * Считаем ПОСЛЕ основной скидки и после обнуления клубных бесплатных позиций:
+ * бесплатная позиция в бонус уже не попадает (её цена ноль).
+ *
+ * Подписка проверяется по базе, а не запросом в ВК: признак обновляет суточная
+ * сверка (cron/vk_subs_sync.php) и кнопка «Я подписался» в кабинете. Точечный
+ * запрос здесь делается только если запись устарела, и его отказ ничего не
+ * ломает — человек просто получит бонус в следующий раз. */
+$vkBonusPct = 0;
+$vkBonusRub = 0;
+if (!$isClubOrder && $uid && $amount > 0) {
+    if (!function_exists('vk_sub_user_pct') && is_file(BASE_PATH . '/core/vk_subscriber.php')) {
+        require_once BASE_PATH . '/core/vk_subscriber.php';
+    }
+    if (function_exists('vk_sub_user_pct')) {
+        if (function_exists('vk_sub_check')) { try { vk_sub_check((int) $uid); } catch (\Throwable $e) {} }
+        $vkBonusPct = (int) vk_sub_user_pct((int) $uid);
+        $digitalSum = $vkBonusPct > 0 ? (int) vk_sub_digital_sum($normItems) : 0;
+        if ($digitalSum > 0) {
+            // Электронные позиции уже уценены основной скидкой — бонус берём от их
+            // фактической стоимости, иначе он оказался бы больше обещанного.
+            $digitalAfter = $discPctOrder > 0 && function_exists('loyalty_apply')
+                ? loyalty_apply($digitalSum, $discPctOrder)
+                : $digitalSum;
+            $vkBonusRub = (int) round($digitalAfter * $vkBonusPct / 100);
+            if ($vkBonusRub > 0) $amount = (int) max(0, $amount - $vkBonusRub);
+        }
+        if ($vkBonusRub <= 0) $vkBonusPct = 0;   // бонуса фактически не было — не обещаем его в чеке
+    }
+}
+
 // --- ПРАВИЛА СОСТАВА НАГРАД (сервер — источник истины) ---
 // Трофей строго по аттестационному результату ЗАЯВКИ (не по тому, что прислал клиент);
 // электронные основной/дополнительный в платном конкурсе не заказываются.
@@ -611,6 +651,14 @@ if ($__emailNorm !== '' || $uid) {
     }
 }
 
+/* Колонки бонуса подписчика заводятся лениво — обязательно ДО записи заказа и
+   независимо от того, считался бонус или нет: поля идут в insert всегда, и без
+   колонок упал бы любой заказ (гостевой, клубный, на нулевую сумму). */
+if (!function_exists('vk_sub_order_boot') && is_file(BASE_PATH . '/core/vk_subscriber.php')) {
+    require_once BASE_PATH . '/core/vk_subscriber.php';
+}
+if (function_exists('vk_sub_order_boot')) vk_sub_order_boot();
+
 $orderId = insert('awards_orders', [
     'application_id' => $applicationId ?: null,
     'user_id'        => $uid,
@@ -624,6 +672,10 @@ $orderId = insert('awards_orders', [
     // скидку, которая реально применена: клубную или партнёрскую, что выгоднее.
     'amount_full'    => $amountBeforeDiscount,
     'discount_pct'   => $discPctOrder,
+    // Бонус подписчика сообщества ВКонтакте — отдельной строкой: он живёт по
+    // своим правилам (только электронные позиции) и складывается с основной.
+    'vk_bonus_pct'   => $vkBonusPct,
+    'vk_bonus_rub'   => $vkBonusRub,
     'email'          => mb_strtolower(input('email')),
     'phone'          => input('phone'),
     // По России — канонический вид из справочника (см. проверку выше); зарубежье
@@ -808,6 +860,9 @@ json_out([
     'ok'       => true,
     'order_id' => $orderId,
     'amount'   => $amount,
+    // Бонус подписчика — чтобы страница могла сказать, за что сумма меньше.
+    'vk_bonus_pct' => $vkBonusPct,
+    'vk_bonus_rub' => $vkBonusRub,
     'confirmation_url' => $payment['confirmation_url'] ?? null,
     'payment'  => $payment ? [
         'id'               => $payment['id'],

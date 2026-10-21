@@ -140,4 +140,6 @@ audit('login_max', 'user', $uid, ['max_id' => $extId]);
 if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
     mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
 }
-redirect('/cabinet?auth=ok');
+/* Новому участнику — экран «Спасибо» с приглашением в сообщество
+   (кабинет показывает его по метке new=1). Вернувшемуся он не нужен. */
+redirect('/cabinet?auth=ok' . ($isNewUser ? '&new=1' : ''));

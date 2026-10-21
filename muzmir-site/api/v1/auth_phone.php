@@ -124,7 +124,7 @@ if ($action === 'verify') {
         ]);
     }
 
-    json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);
+    json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok' . ($isNewUser ? '&new=1' : '')]);
 }
 
 json_out(['ok' => false, 'error' => 'Неизвестное действие'], 400);

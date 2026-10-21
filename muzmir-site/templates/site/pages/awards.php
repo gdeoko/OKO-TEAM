@@ -93,9 +93,27 @@ if ($u && is_file(BASE_PATH . '/core/club.php')) {
     require_once BASE_PATH . '/core/club.php';
     if (function_exists('club_discount_percent')) $clubPct = (int) club_discount_percent((int) $u['id']);
 }
-/** Цена для участника клуба. */
-$clubPrice = static function (int $p) use ($clubPct): int {
-    return $clubPct > 0 ? (int) max(0, round($p * (100 - $clubPct) / 100)) : $p;
+/* БОНУС ПОДПИСЧИКА СООБЩЕСТВА — 2% И ТОЛЬКО НА ЭЛЕКТРОННЫЕ ДОКУМЕНТЫ.
+ *
+ * Складывается с клубной и партнёрской скидкой: те даются за другое и на весь
+ * наградной материал, этот — за подписку и лишь на электронные позиции.
+ * Считает сервер (api/v1/order.php); здесь то же самое, чтобы человек видел в
+ * корзине ту сумму, которую у него и спросят. */
+$vkPct = 0;
+if ($u && is_file(BASE_PATH . '/core/vk_subscriber.php')) {
+    require_once BASE_PATH . '/core/vk_subscriber.php';
+    if (function_exists('vk_sub_user_pct')) $vkPct = (int) vk_sub_user_pct((int) $u['id']);
+}
+$vkBonusPctShow = function_exists('vk_sub_bonus_pct') ? (int) vk_sub_bonus_pct() : 2;
+$vkGroupUrl     = function_exists('vk_sub_group_url') ? vk_sub_group_url() : 'https://vk.com/music_world.online';
+
+/** Цена для участника клуба. $kind='digital' — с бонусом подписчика сверху. */
+$clubPrice = static function (int $p, string $kind = '') use ($clubPct, $vkPct): int {
+    $out = $clubPct > 0 ? (int) max(0, round($p * (100 - $clubPct) / 100)) : $p;
+    if ($vkPct > 0 && $kind === 'digital' && $out > 0) {
+        $out = (int) max(0, $out - (int) round($out * $vkPct / 100));
+    }
+    return $out;
 };
 $order = ['Кубок Гран-при','Статуэтка лауреата','Медаль дипломанта','Основной диплом','Дополнительный диплом','Именной диплом','Благодарность'];
 
@@ -279,6 +297,39 @@ ob_start(); ?>
       ?></p>
     </div>
 
+    <?php
+    /* БОНУС ПОДПИСЧИКА — ГОВОРИМ ТАМ, ГДЕ ЧЕЛОВЕК СМОТРИТ ЦЕНЫ.
+     *
+     * Показываем только тому, кто вошёл и бонуса ещё не получает: гостю эта
+     * полоса ничего не даст (без привязки ВКонтакте мы не отличим подписчика
+     * от любого другого), а подписчику не нужна — у него цены уже со скидкой.
+     * Тем, кто вошёл, но ВК не привязал, предлагаем привязку: это ровно то
+     * действие, которого не хватает. */
+    $__vkShow = $u && $vkPct === 0 && $vkBonusPctShow > 0;
+    $__vkLinked = $u && trim((string) ($u['vk_id'] ?? '')) !== '';
+    if ($__vkShow): ?>
+      <div class="reveal" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between;
+                  padding:14px 16px;margin:0 0 14px;border-radius:14px;
+                  background:rgba(23,48,122,.06);border:1px solid rgba(23,48,122,.16)">
+        <div style="min-width:220px;flex:1">
+          <b style="display:block;font-size:.95rem">Подписчикам сообщества — &minus;<?= (int) $vkBonusPctShow ?>% на электронные документы</b>
+          <span style="color:var(--muted);font-size:.85rem">
+            <?= $__vkLinked
+                ? 'Ваш аккаунт связан с ВКонтакте — подпишитесь на сообщество, и скидка встанет в цены сама.'
+                : 'Подпишитесь на сообщество и свяжите аккаунт с ВКонтакте — скидка встанет в цены сама.' ?>
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn--ghost btn--sm" href="<?= h($vkGroupUrl) ?>" target="_blank" rel="noopener">Открыть сообщество</a>
+          <?php if ($__vkLinked): ?>
+            <button type="button" class="btn btn--primary btn--sm" data-vk-sub-check>Я подписался</button>
+          <?php else: ?>
+            <a class="btn btn--primary btn--sm" href="<?= url('/api/v1/oauth_vk?bind=1') ?>">Связать с ВКонтакте</a>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <?php if ($appLock): ?>
       <div class="aw-applock reveal">
         <span class="aw-applock-ic">
@@ -388,7 +439,7 @@ ob_start(); ?>
           <?php endif; ?>
           <div class="aw-kinds">
             <?php $first=true; foreach ($kinds as $kind => $price): ?>
-              <?php $my = $clubPrice((int) $price); ?>
+              <?php $my = $clubPrice((int) $price, (string) $kind); ?>
               <label class="aw-kind">
                 <input type="radio" name="kind_<?= md5($item) ?>" value="<?= h($kind) ?>" data-price="<?= $my ?>" data-full="<?= (int)$price ?>" <?= $first?'checked':'' ?>>
                 <span><?= h($kindLabel[$kind] ?? $kind) ?></span>
@@ -753,9 +804,12 @@ ob_start(); ?>
 <?php endif; ?>
 
 <script>
+var VK_CSRF = <?= json_encode(csrf_token()) ?>;
+var VK_CHECK_URL = <?= json_encode(url('/api/v1/vk_sub_check')) ?>;
 (function(){
   var KIND_LABEL = {"original":"Оригинал","digital":"Электронный","club":"Клуб"};
   var CLUB_PCT = <?= (int) $clubPct ?>;   // скидка Элитного клуба, %
+  var VK_PCT   = <?= (int) $vkPct ?>;     // бонус подписчика сообщества, % (только электронные)
   var cart = [];
   var $ = function(s,r){return (r||document).querySelector(s);};
   var fab=$('#cartFab'), sheet=$('#cartSheet'), itemsBox=$('#cartItems'), emptyBox=$('#cartEmpty'),
@@ -952,10 +1006,17 @@ ob_start(); ?>
         }
       }
     });
-    // Итог для участника клуба: перечёркнутая полная сумма и цена со скидкой.
-    totalEl.innerHTML = (CLUB_PCT>0 && totalFull>total)
+    /* Итог со скидками: перечёркнутая полная сумма и цена к оплате.
+       Подпись называет ВСЕ применённые скидки поимённо — клубную и бонус
+       подписчика сообщества. Раньше условие смотрело только на клуб, и у
+       подписчика без клуба скидка молча терялась из виду: сумма меньше
+       прайса, а почему — не сказано. */
+    var marks=[];
+    if(CLUB_PCT>0) marks.push('Элитный клуб \u2212'+CLUB_PCT+'%');
+    if(VK_PCT>0)   marks.push('Подписчик сообщества \u2212'+VK_PCT+'% на электронные');
+    totalEl.innerHTML = (totalFull>total)
       ? '<s style="opacity:.55;font-weight:400;margin-right:8px">'+totalFull.toLocaleString('ru-RU')+' \u20BD</s>'+total.toLocaleString('ru-RU')+' \u20BD'+
-        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">Элитный клуб \u2212'+CLUB_PCT+'%</span>'
+        (marks.length?'<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">'+marks.join(' \u00B7 ')+'</span>':'')
       : total.toLocaleString('ru-RU')+' \u20BD';
     countEl.textContent=count; fab.hidden=count===0; emptyBox.hidden=count>0; form.hidden=count===0;
     // Адрес доставки нужен ТОЛЬКО если в корзине есть оригинал (кубок/статуэтка/медаль/оригинал диплома).
@@ -1150,6 +1211,28 @@ ob_start(); ?>
   // Если корзину перенесли с другого конкурса — показываем её сразу.
   if(cart.length){ render(); openCart(); }
 })();
+
+/* «Я ПОДПИСАЛСЯ» — ПРОВЕРЯЕМ СРАЗУ И ПЕРЕЗАГРУЖАЕМ ЦЕНЫ.
+   Цены в карточках собраны на сервере, поэтому после подтверждённой подписки
+   страницу надо перечитать: иначе человек видит старые суммы и не верит, что
+   скидка встала. */
+document.addEventListener('click', function(e){
+  var b = e.target.closest('[data-vk-sub-check]');
+  if (!b) return;
+  e.preventDefault();
+  b.disabled = true; var was = b.textContent; b.textContent = 'Проверяем…';
+  var fd = new FormData(); fd.append('_csrf', VK_CSRF);
+  fetch(VK_CHECK_URL, {method:'POST', body:fd, headers:{'X-Requested-With':'fetch'}, credentials:'same-origin'})
+    .then(function(r){ return r.json().catch(function(){return{};}); })
+    .then(function(d){
+      if (d && d.ok && d.subscribed) { location.reload(); return; }
+      b.disabled = false; b.textContent = was;
+      if (d && d.need_bind && d.bind_url) { location.href = d.bind_url; return; }
+      alert((d && (d.message || d.error)) || 'Не удалось проверить подписку, попробуйте позже.');
+    })
+    .catch(function(){ b.disabled = false; b.textContent = was;
+                       alert('Сбой сети, попробуйте ещё раз.'); });
+});
 </script>
 <?php endif; ?>
 <?php
