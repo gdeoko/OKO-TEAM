@@ -1291,6 +1291,62 @@ function order_is_paid(array $o): bool {
     } catch (\Throwable $e) { return false; }
 }
 
+/**
+ * ПО ЭТОЙ ЗАЯВКЕ ТАКОЙ ЖЕ ДОКУМЕНТ УЖЕ ОПЛАЧЕН?
+ *
+ * Возвращает оплаченный заказ-близнец (та же заявка, пересекающийся состав)
+ * или null. Нужен в ДВУХ дверях, и это главное: заслон при оформлении нового
+ * заказа закрывает только одну из них.
+ *
+ * Как это стоило денег. 21.10.2026 Николай оформил заказ №690 (именной диплом
+ * для Коробьянц Евы по заявке 2632), до кассы не дошёл, через четыре минуты
+ * оформил то же самое заново — №691 — и оплатил. А ещё через два часа вернулся
+ * к брошенному №690 и оплатил и его: страница оплаты смотрела только на статус
+ * САМОГО заказа («ещё не оплачен — значит можно»). Итог: 1 000 ₽ за один
+ * диплом. Писем-напоминаний ему не уходило, дожим как раз промолчал правильно —
+ * дыра была именно в оплате уже созданного счёта.
+ *
+ * ФИО В КЛЮЧЕ ОБЯЗАТЕЛЬНО. Именной диплом и благодарность выписываются на
+ * конкретного человека, и по одной заявке коллектива их заказывают на каждого
+ * ребёнка отдельно: «Дети Арбата» — это именной диплом Ивановой, именной
+ * Шарипова, именной Коробьянц. Без ФИО в ключе все они выглядят одним
+ * документом, и честный заказ на второго ребёнка был бы заблокирован как
+ * дубль. Где ФИО нет (кубок, медаль, основной диплом) — сравниваем по виду.
+ */
+function order_paid_twin(array $o): ?array {
+    $aid = (int) ($o['application_id'] ?? 0);
+    $oid = (int) ($o['id'] ?? 0);
+    if ($aid <= 0 || $oid <= 0) return null;
+
+    $items = json_decode((string) ($o['items'] ?? '[]'), true);
+    if (!is_array($items) || !$items) return null;
+    // Клубное членство здесь не рассматриваем — у него свои правила.
+    foreach ($items as $it) if (is_array($it) && (string) ($it['kind'] ?? '') === 'club') return null;
+
+    $ключ = static fn(array $it): string =>
+        mb_strtolower(trim((string) ($it['item'] ?? ''))) . '|' . (string) ($it['kind'] ?? '')
+        . '|' . mb_strtolower(trim((string) ($it['fio'] ?? '')));
+    $мои = [];
+    foreach ($items as $it) if (is_array($it)) $мои[$ключ($it)] = true;
+    if (!$мои) return null;
+
+    try {
+        $кандидаты = all("SELECT id, items, created_at, status FROM awards_orders
+                           WHERE application_id = ? AND id <> ?
+                             AND status IN ('paid','made','shipped','delivered')
+                        ORDER BY id", [$aid, $oid]);
+    } catch (\Throwable $e) { return null; }
+
+    foreach ($кандидаты as $к) {
+        $его = json_decode((string) ($к['items'] ?? '[]'), true);
+        if (!is_array($его)) continue;
+        foreach ($его as $it) {
+            if (is_array($it) && isset($мои[$ключ($it)])) return $к;
+        }
+    }
+    return null;
+}
+
 function order_timeline(array $o): array {
     $out = ['app_date' => '', 'ordered' => '', 'paid_at' => '', 'due' => '',
             'queue' => 0, 'queue_total' => 0, 'overdue' => false];
