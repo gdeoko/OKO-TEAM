@@ -110,6 +110,7 @@ foreach ($valid as $row) {
     $numbers[] = $number;
     $appIds[] = $appId;
     audit('teacher_group', 'applications', $appId, ['number' => $number, 'competition' => $comp['slug']]);
+    if (function_exists('ls_log')) ls_log('Заявка ' . $number . ' (групповая) — «' . (string) $comp['name'] . '»');
 }
 
 // --- единый платёж со скидкой за коллектив ---

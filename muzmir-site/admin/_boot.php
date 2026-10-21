@@ -132,6 +132,9 @@ function admin_modules(): array {
         'analytics'    => ['Аналитика',    'moderator', 'chart'],
         'cms'          => ['Контент',      'moderator', 'cms'],
         'users'        => ['Пользователи', 'admin',     'users'],
+        // Вход в кабинет участника с его согласия: помочь оформить заявку или
+        // заказ, когда человек не справляется сам (core/ls_access.php).
+        'ls_access'    => ['ВХОД В ЛС',    'admin',     'eye'],
         'settings'     => ['Настройки',    'admin',     'settings'],
     ];
 }

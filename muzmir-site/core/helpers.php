@@ -287,6 +287,8 @@ function client_ip(): string {
 }
 
 function audit(string $action, string $entity = '', ?int $entity_id = null, array $meta = []): void {
+    // Действие в кабинете участника от имени администратора — помечаем, кто на самом деле.
+    if (function_exists('ls_current') && ($__ls = ls_current())) $meta['ls_admin'] = (int) $__ls['admin']['id'];
     insert('audit_log', [
         // В CLI-кронах (реконсилер платежей) core/auth.php не подключён — current_user() может отсутствовать.
         'user_id' => (function_exists('current_user') ? (current_user()['id'] ?? null) : null),

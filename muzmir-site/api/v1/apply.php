@@ -558,6 +558,7 @@ foreach ($comps as $ci) {
     // счётчик заявок учреждения стоит на нуле, и пороги партнёрской программы —
     // пять заявок на благодарности, десять на промокод — не наступают никогда.
     if ($partnerInstId > 0) partner_attach_application((int) $aid, $partnerInstId);
+    if (function_exists('ls_log')) ls_log('Заявка ' . $num . ' — «' . (string) $ci['name'] . '»');
 
     $numbers[] = $num;
     $appIds[]  = $aid;

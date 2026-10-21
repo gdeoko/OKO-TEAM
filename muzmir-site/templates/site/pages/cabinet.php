@@ -19,6 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once BASE_PATH . '/core/mailer.php';
     }
     $action = input('action');
+    // Под администратором (core/ls_access.php) — только правка заявки и повтор диплома на почту.
+    if (function_exists('ls_active') && ls_active()) {
+        if (!ls_cabinet_action_allowed($action)) {
+            flash('Это участник меняет сам: профиль, почта, пароль и способы входа недоступны администратору.', 'warning');
+            redirect('/cabinet');
+        }
+        ls_log($action === 'edit_app' ? 'Правка заявки №' . (int) input('app_id') : 'Повтор диплома ' . input('number') . ' на почту');
+    }
     if (!csrf_check()) {
         // Не оставляем человека на месте с ощущением «кнопка не работает»: говорим
         // прямо, что сохранить не удалось, и возвращаем к его заявкам.
@@ -1721,6 +1729,37 @@ ob_start(); ?>
           <h2>Настройки</h2>
           <div class="cab-sets">
 
+            <?php
+            /* ДОСТУП АДМИНИСТРАТОРА К КАБИНЕТУ — что и когда было сделано.
+               Писем об этом не шлём (слово владельца), поэтому отчёт лежит
+               здесь: человек видит каждое согласие и каждое действие. */
+            $__lsHist = [];
+            if (function_exists('ls_boot')) {
+                ls_boot();
+                $__lsHist = all("SELECT * FROM ls_access WHERE user_id=? AND answered_at<>'' AND status IN ('granted','closed')
+                                  ORDER BY id DESC LIMIT 10", [$uid]);
+            }
+            if ($__lsHist): ?>
+            <div class="cab-group">
+              <div class="cab-group-ttl">Доступ администратора к кабинету</div>
+              <div class="cab-group-card" style="padding:14px 16px">
+                <?php foreach ($__lsHist as $__h): $__log = json_decode((string) $__h['log'], true) ?: []; ?>
+                  <div style="padding:8px 0;border-bottom:1px solid var(--line,rgba(0,0,0,.08))">
+                    <b><?= h(ru_datetime((string) $__h['answered_at'])) ?></b> — Вы разрешили доступ на <?= (int) LS_GRANT_MIN ?> минут<?=
+                      (string) $__h['status'] === 'granted' ? ', открыт до ' . h(substr((string) $__h['granted_until'], 11, 5)) : '' ?>.
+                    <?php if ($__log): ?>
+                      <ul class="cab-meta" style="margin:6px 0 0 18px;padding:0">
+                        <?php foreach ($__log as $__e): ?><li><?= h((string) ($__e['t'] ?? '')) ?> · <?= h((string) ($__e['a'] ?? '')) ?></li><?php endforeach; ?>
+                      </ul>
+                    <?php else: ?>
+                      <p class="cab-meta" style="margin:4px 0 0">В кабинет не входили.</p>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Клуб постоянных участников -->
             <div class="cab-group">
               <div class="cab-group-ttl">Клуб постоянных участников</div>
@@ -2453,6 +2492,60 @@ ob_start(); ?>
   });
 })();
 </script>
+<?php if (!(function_exists('ls_active') && ls_active())): ?>
+<?php /* ЗАПРОС ДОСТУПА ОТ АДМИНИСТРАТОРА (core/ls_access.php).
+         Кабинет раз в несколько секунд спрашивает, не просит ли администратор
+         доступ: всё идёт в реальном времени, пока человек здесь. В кабинете,
+         открытом администратором, этого блока нет — согласие даёт только сам
+         участник. */ ?>
+<div id="lsAsk" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(10,16,40,.55);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card,#fff);color:var(--ink,#17307A);max-width:440px;width:100%;border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <b style="font-size:18px;display:block;margin-bottom:8px">Запрос доступа к Вашему кабинету</b>
+    <p style="margin:0 0 10px;line-height:1.5"><span id="lsWho"></span> Культурного центра «Музыкальный Мир»<span id="lsWhoEnd"></span> просит доступ к Вашему личному кабинету на <b id="lsMin"></b> минут, чтобы помочь оформить заявку или заказ.</p>
+    <p class="cab-meta" style="margin:0 0 16px;line-height:1.5">Оплату, почту, пароль и настройки администратор менять не сможет. Всё, что он сделает, появится в «Настройках». Закрыть доступ можно в любой момент.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn btn--primary" data-ls-answer="1">Согласен</button>
+      <button type="button" class="btn btn--ghost" data-ls-answer="0">Отказать</button>
+    </div>
+    <p class="cab-meta" id="lsAskMsg" style="margin:10px 0 0"></p>
+  </div>
+</div>
+<div id="lsOpen" style="display:none;position:sticky;top:0;z-index:9999;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;padding:9px 16px;background:#17307A;color:#fff;font:600 13px/1.35 Montserrat,system-ui,sans-serif;text-align:center">
+  <span>Доступ к кабинету открыт администратору до <b id="lsUntil"></b>.</span>
+  <button type="button" data-ls-close style="background:#fff;color:#17307A;border:0;border-radius:8px;padding:5px 12px;font:inherit;cursor:pointer">Закрыть доступ</button>
+</div>
+<script>
+(function(){
+  var API=<?= json_encode(url('/api/v1/ls_access')) ?>, CSRF=<?= json_encode(csrf_token()) ?>;
+  var ask=document.getElementById('lsAsk'), bar=document.getElementById('lsOpen'), cur=null, grant=null, busy=false;
+  if(bar) document.body.insertBefore(bar, document.body.firstChild);
+  function post(data){ data._csrf=CSRF; return fetch(API,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data)}).then(function(r){return r.json();}); }
+  function poll(){
+    if(document.hidden||busy) return;
+    fetch(API,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok||d.impersonating) return;
+      cur=d.pending; grant=d.granted;
+      if(cur){ document.getElementById('lsWho').textContent=cur.who?cur.who+', администратор':'Администратор'; document.getElementById('lsWhoEnd').textContent=cur.who?',':''; document.getElementById('lsMin').textContent=cur.minutes; ask.style.display='flex'; }
+      else ask.style.display='none';
+      if(grant){ document.getElementById('lsUntil').textContent=grant.until; bar.style.display='flex'; } else bar.style.display='none';
+    }).catch(function(){});
+  }
+  ask.addEventListener('click',function(e){
+    var b=e.target.closest('[data-ls-answer]'); if(!b||!cur) return;
+    busy=true; post({action:'answer',id:cur.id,agree:b.getAttribute('data-ls-answer')}).then(function(d){
+      document.getElementById('lsAskMsg').textContent=d&&d.ok?'':((d&&d.error)||'Не получилось, попробуйте ещё раз.');
+      if(d&&d.ok) ask.style.display='none';
+    }).finally(function(){busy=false;poll();});
+  });
+  bar.addEventListener('click',function(e){
+    if(!e.target.closest('[data-ls-close]')||!grant) return;
+    busy=true; post({action:'close',id:grant.id}).finally(function(){busy=false;poll();});
+  });
+  poll(); setInterval(poll,4000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) poll(); });
+})();
+</script>
+<?php endif; ?>
 <?php
 $content = ob_get_clean();
 render_page('Личный кабинет', $content, ['active' => '/cabinet', 'meta' => 'Личный кабинет участника Культурного центра «Музыкальный Мир»: заявки, дипломы, награды, настройки.']);

@@ -153,6 +153,10 @@ $uid = current_user()['id'] ?? null;
 // Признак «покупается само членство в клубе» — нужен и здесь (скидка на него не
 // распространяется), и ниже в проверках состава заказа.
 $isClubOrder = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
+// Вступление в клуб — платная подписка с автосписанием: только сам участник.
+if ($isClubOrder && function_exists('ls_active') && ls_active()) {
+    json_out(['ok' => false, 'error' => 'Вступление в Элитный клуб участник оформляет сам: это подписка с оплатой с его карты.'], 403);
+}
 
 // СКИДКА ЭЛИТНОГО КЛУБА НА НАГРАДЫ (её здесь не было вовсе — клубная скидка работала
 // только при подаче заявки). Членство даёт 20% на весь наградной материал.
@@ -863,6 +867,7 @@ if ($payment && !empty($payment['id'])) {
     }
 }
 audit('order', 'awards_orders', $orderId, ['amount' => $amount]);
+if (function_exists('ls_log')) ls_log('Заказ наград №' . $orderId . ' на ' . money($amount) . ($amount > 0 ? ' — ждёт оплаты участником' : ''));
 
 // --- Данные заказа для уведомлений ---
 $buyerName  = input('full_name');

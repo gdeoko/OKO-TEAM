@@ -38,6 +38,43 @@ $route = $route === '' ? '/' : $route;
 // Заголовки безопасности (CSP/HSTS/anti-clickjacking) — на все ответы, кроме встраиваемого виджета.
 security_headers($route);
 
+/* ВХОД В КАБИНЕТ УЧАСТНИКА С ЕГО СОГЛАСИЯ (core/ls_access.php).
+ *
+ * /ls-exit — выход администратора из чужого кабинета: доступ закрывается,
+ * администратор возвращается в раздел «ВХОД В ЛС» под своей сессией.
+ * Пока доступ открыт, сайт пускает только туда, где оформляют заявки и
+ * заказы; вход, регистрация, оплата, клуб, чат и всё личное — закрыто. */
+require_once BASE_PATH . '/core/ls_access.php';
+if ($route === '/ls-exit') {
+    $__ls = ls_current();
+    if ($__ls) {
+        ls_log_for((int) $__ls['row']['id'], 'Выход из кабинета');
+        ls_close((int) $__ls['row']['id'], 'admin');
+    }
+    ls_drop_cookie();
+    header('Location: ' . url('/admin/?p=ls_access' . ($__ls ? '&done=' . (int) $__ls['row']['id'] : '')), true, 302);
+    exit;
+}
+if (ls_active()) {
+    $__isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+    if (preg_match('#^/api/v1/([a-z0-9_]+)(?:\.php)?$#', $route, $__m)) {
+        if (!ls_api_allowed($__m[1])) {
+            json_out(['ok' => false, 'error' => 'Это действие участник выполняет сам: в его кабинете от имени администратора оно недоступно.'], 403);
+        }
+        if ($__isPost && ($__lbl = ls_api_label($__m[1])) !== '') ls_log($__lbl);
+    } elseif ($route === '/logout') {
+        header('Location: ' . url('/ls-exit'), true, 302);
+        exit;
+    } elseif (in_array($route, ['/login', '/register', '/forgot', '/reset-password', '/verify-email',
+                                '/enter', '/pay', '/club', '/chat', '/partner', '/partner-join', '/tma'], true)) {
+        flash($route === '/pay'
+            ? 'Оплату проводит сам участник: заказ ждёт его в кабинете, раздел «Награды и заказы» → «Оплатить заказ».'
+            : 'Этот раздел недоступен в кабинете участника от имени администратора.', 'warning');
+        header('Location: ' . url('/cabinet'), true, 302);
+        exit;
+    }
+}
+
 /* ВХОД ПО КЛЮЧУ ИЗ ПИСЬМА.
  *
  * Письмо с результатом зовёт открыть кабинет, а приводило на форму входа: пароль

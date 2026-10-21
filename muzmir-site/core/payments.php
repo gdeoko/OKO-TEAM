@@ -33,6 +33,10 @@ function yk_answer(?string $resp, int $code, string $where): ?array {
  * Если ключи не заданы — возвращает stub. Все ошибки cURL — тихий фолбэк на null.
  */
 function yukassa_create_payment(int $amount, string $description, array $meta = []): ?array {
+    /* ДЕНЬГИ — ТОЛЬКО ДЕЙСТВИЕ УЧАСТНИКА. Под администратором в чужом кабинете
+     * (core/ls_access.php) платёж не создаётся: заказ остаётся «ожидает оплаты»,
+     * участник оплачивает его сам из своего кабинета. */
+    if (function_exists('ls_active') && ls_active()) return null;
     $shop = cfgv('yukassa_shop');
     $secret = cfgv('yukassa_secret');
     if (!$shop || !$secret || $amount <= 0) {

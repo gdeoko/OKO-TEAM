@@ -153,6 +153,7 @@ html body{padding-top:0 !important}
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
+<?= function_exists('ls_banner_html') ? ls_banner_html() : '' /* администратор в кабинете участника — core/ls_access.php */ ?>
 <div class="app-bg" aria-hidden="true">
   <?php /* Тёмная тема: видео-фон. Здесь стоял /assets/video/bg/earth.mp4 — файла и
            каталога не существовало никогда: браузер получал 404 на КАЖДОЙ странице

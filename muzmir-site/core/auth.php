@@ -6,6 +6,14 @@ function current_user(): ?array {
     static $u = false;
     if ($u !== false) return $u;
     $u = null;
+    /* ВХОД В КАБИНЕТ УЧАСТНИКА С ЕГО СОГЛАСИЯ (core/ls_access.php).
+     * Пока администратор работает в чужом кабинете, сайт видит участника; в
+     * админке кука не действует, и там он остаётся собой. */
+    if (!empty($_COOKIE['muzmir_ls']) && is_file(BASE_PATH . '/core/ls_access.php')) {
+        require_once BASE_PATH . '/core/ls_access.php';
+        $__ls = ls_current();
+        if ($__ls) { $u = $__ls['user']; return $u; }
+    }
     $token = $_COOKIE['muzmir_sess'] ?? '';
     if ($token) {
         // ЗАБЛОКИРОВАННЫЙ АККАУНТ НЕ АВТОРИЗУЕТСЯ. Здесь не было условия по blocked,
@@ -21,6 +29,9 @@ function current_user(): ?array {
 }
 
 function login_user(int $userId, bool $remember = true): void {
+    // Из чужого кабинета ни в какой аккаунт не входим: новая кука сменила бы
+    // сессию администратора.
+    if (function_exists('ls_active') && ls_active()) return;
     $token = bin2hex(random_bytes(32));
     insert('sessions', [
         'token' => $token, 'user_id' => $userId,
@@ -36,6 +47,14 @@ function login_user(int $userId, bool $remember = true): void {
 }
 
 function logout_user(): void {
+    /* «Выйти» в кабинете участника закрывает доступ к нему, а не сессию
+     * администратора — иначе он вылетел бы и из админки. */
+    if (function_exists('ls_active') && ls_active()) {
+        $__c = ls_current();
+        ls_close((int) $__c['row']['id'], 'admin');
+        ls_drop_cookie();
+        return;
+    }
     $token = $_COOKIE['muzmir_sess'] ?? '';
     if ($token) q("DELETE FROM sessions WHERE token=?", [$token]);
     setcookie('muzmir_sess', '', ['expires' => time() - 3600, 'path' => '/']);
