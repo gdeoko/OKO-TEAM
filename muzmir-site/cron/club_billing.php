@@ -39,6 +39,36 @@ $renewed = 0; $failed = 0; $expired = 0;
 try {
     club_boot();
 
+    /* ---------- 0) Предупреждение за три дня ----------
+       Человек должен узнать о расходе ДО того, как он случится. Письмо уходит
+       один раз на период (метка в settings), текст зависит от того, будет ли
+       списание автоматическим: где списывать нечем, обещать этого нельзя. */
+    $autoOn = (string) setting('club_auto_renew', '0') === '1';
+    foreach (all(
+        "SELECT m.*, u.email, u.full_name
+           FROM club_members m JOIN users u ON u.id = m.user_id
+          WHERE m.active = 1 AND COALESCE(m.expires_at,'') <> ''
+            AND m.expires_at > datetime('now','localtime')
+            AND m.expires_at <= datetime('now','localtime','+3 days')
+          ORDER BY m.expires_at ASC LIMIT 100") as $m) {
+        $uid = (int) $m['user_id'];
+        if (club_is_staff($uid)) continue;                 // бессрочный доступ оргкомитета
+        $exp = (string) $m['expires_at'];
+        $markKey = 'club_soon:' . $uid . ':' . substr($exp, 0, 10);
+        if ((string) setting($markKey, '') !== '') continue;
+
+        $per    = (string) ($m['period'] ?? 'month') === 'year' ? 'year' : 'month';
+        $price  = $per === 'year' ? (int) setting('club_price_year', '10000') : (int) setting('club_price', '1000');
+        $willAuto = $autoOn && (int) ($m['auto_renew'] ?? 0) === 1
+                 && trim((string) ($m['payment_method_id'] ?? '')) !== '';
+        $when = function_exists('ru_date') ? ru_date(substr($exp, 0, 10)) : substr($exp, 0, 10);
+
+        club_billing_notify((string) ($m['email'] ?? ''), (string) ($m['full_name'] ?? ''),
+                            $willAuto ? 'soon_auto' : 'soon_manual', $per, $price, $when);
+        set_setting($markKey, date('Y-m-d H:i:s'));
+        cron_log(JOB, "предупреждение за 3 дня: user #$uid, " . ($willAuto ? 'спишем сами' : 'продление вручную'));
+    }
+
     /* ---------- 1) Автосписание ---------- */
     foreach (club_due_for_charge(50) as $m) {
         $uid    = (int) $m['user_id'];
@@ -125,7 +155,8 @@ try {
  * Письмо участнику о состоянии подписки.
  * $kind: renewed | retry | stopped | expired | manual
  */
-function club_billing_notify(string $email, string $name, string $kind, string $period, int $price): void {
+function club_billing_notify(string $email, string $name, string $kind, string $period,
+                             int $price, string $when = ''): void {
     $email = trim($email);
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return;
     $base = rtrim((string) cfgv('base_url', ''), '/');
@@ -162,6 +193,21 @@ function club_billing_notify(string $email, string $name, string $kind, string $
         'comeback_d14' => ['Последнее напоминание о Элитном клубе',
                       'Больше писать об этом не будем. Если решите вернуться — клуб открыт: скидка ' . mm_vip_discount() . '%, ускоренные сроки, заявки без оргвзноса с бесплатными электронными дипломами и поддержка в приоритете.',
                       'Открыть Элитный клуб'],
+        /* ПРЕДУПРЕЖДЕНИЕ ЗА ТРИ ДНЯ, А НЕ ПОСЛЕ ФАКТА.
+         *
+         * Раньше первое письмо о деньгах приходило, когда списание уже не
+         * прошло, или когда срок уже вышел. Человек узнавал о расходе постфактум
+         * — это и нечестно, и ЮKassa при подключении автоплатежей требует
+         * предупреждать заранее. Текст зависит от того, есть ли автосписание:
+         * обещать «спишем сами» там, где списывать нечем, нельзя. */
+        'soon_auto'   => ['Через 3 дня продлим членство в Элитном клубе',
+                      'Подписка на ' . $per . ' продлевается ' . $when . ': спишем ' . $price . ' ₽ тем же способом оплаты. '
+                      . 'Если продлевать не нужно — отключите автопродление в личном кабинете, это занимает одно нажатие.',
+                      'Личный кабинет'],
+        'soon_manual' => ['Через 3 дня заканчивается членство в Элитном клубе',
+                      'Оплаченный период заканчивается ' . $when . '. Списаний без Вашего участия не будет: '
+                      . 'чтобы привилегии не прерывались, продлите подписку на ' . $per . ' — ' . $price . ' ₽.',
+                      'Продлить членство'],
         default   => ['Продлите членство в Элитном клубе',
                       'Срок членства подошёл к концу, а сохранённого способа оплаты нет — продлите подписку вручную.',
                       'Продлить членство'],

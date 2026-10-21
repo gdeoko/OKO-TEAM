@@ -966,6 +966,29 @@ ob_start(); ?>
               </div>
               <a class="btn btn--ghost btn--sm" href="<?= url('/club') ?>">Мои привилегии</a>
             </div>
+            <?php
+            /* ОТМЕНА АВТОПРОДЛЕНИЯ — ТАМ, ГДЕ ЕЁ ОБЕЩАЛИ.
+             *
+             * Страница клуба писала «отменить можно в любое время в личном
+             * кабинете», а кнопки в кабинете не было вовсе: функция
+             * club_cancel_auto_renew() существовала и никем не вызывалась.
+             * Человеку оставалось звонить в колл-центр. Показываем кнопку
+             * только тем, у кого автопродление реально включено — у доступа
+             * оргкомитета и у отменённой подписки отменять нечего. */
+            $__renewOn = empty($club['staff']) && !empty($club['auto_renew']);
+            if ($__renewOn): ?>
+              <p class="cab-meta" style="margin:8px 0 0">
+                Подписка продлевается автоматически.
+                <button type="button" class="btn btn--ghost btn--sm" data-club-cancel
+                        style="margin-left:8px">Отключить автопродление</button>
+              </p>
+            <?php elseif (empty($club['staff']) && !empty($club['expires_local'])): ?>
+              <p class="cab-meta" style="margin:8px 0 0">
+                Автопродление отключено — членство действует до
+                <?= h(ru_date(substr((string) $club['expires_local'], 0, 10))) ?>,
+                дальше продлевается по Вашему решению.
+              </p>
+            <?php endif; ?>
           <?php endif; ?>
           <?php if (!$apps): ?>
             <div class="cab-card cab-empty">
@@ -1937,6 +1960,28 @@ ob_start(); ?>
                 if(d&&d.ok&&d.deleted){var card=adel.closest('.cab-card');if(card)card.remove();}
                 else{adel.disabled=false;alert((d&&d.error)||'Не удалось удалить заявку.');}
               });return;}
+            /* Отключение автопродления подписки — то самое «отменить можно в
+               любое время в личном кабинете», которого на экране не было. */
+            var clubOff = e.target.closest('[data-club-cancel]');
+            if (clubOff) { e.preventDefault();
+              if (!confirm('Отключить автопродление? Членство продолжит действовать до конца оплаченного периода.')) return;
+              clubOff.disabled = true; clubOff.textContent = 'Отключаем…';
+              var fdC = new FormData(); fdC.append('action','off'); fdC.append('_csrf', csrf());
+              fetch('<?= url('/api/v1/club_renew') ?>', {method:'POST', body:fdC, headers:{'X-Requested-With':'fetch'}, credentials:'same-origin'})
+                .then(function(r){ return r.json().catch(function(){return{};}); })
+                .then(function(d){
+                  if (d && d.ok) {
+                    var box = clubOff.closest('p');
+                    if (box) { box.textContent = d.message || 'Автопродление отключено.'; }
+                    else { alert(d.message || 'Автопродление отключено.'); }
+                  } else {
+                    clubOff.disabled = false; clubOff.textContent = 'Отключить автопродление';
+                    alert((d && d.error) || 'Не удалось отключить автопродление.');
+                  }
+                })
+                .catch(function(){ clubOff.disabled = false; clubOff.textContent = 'Отключить автопродление';
+                                   alert('Сбой сети, попробуйте ещё раз.'); });
+              return; }
             // Запрос комментария и рекомендации жюри (только Элитный клуб).
             var jreq=e.target.closest('[data-jury-req]');
             if(jreq){e.preventDefault();var jid=jreq.getAttribute('data-jury-req');jreq.disabled=true;jreq.textContent='Отправляем…';
