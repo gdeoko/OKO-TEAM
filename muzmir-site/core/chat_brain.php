@@ -2626,13 +2626,72 @@ function chat_vk_kabinet_est(int $peer): bool {
         $t = trim((string) (scalar("SELECT title FROM chat_dialogs WHERE session_key=?",
                                    ['vk_' . $peer]) ?: ''));
         $w = preg_split('~\s+~u', $t, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        if (count($w) < 2) return false;
-        $rows = all("SELECT u.id FROM users u
-                      WHERE u.full_name LIKE ? AND u.full_name LIKE ?
-                        AND EXISTS (SELECT 1 FROM applications a WHERE a.user_id = u.id)
-                      LIMIT 3", ['%' . $w[0] . '%', '%' . $w[1] . '%']);
-        return count($rows) === 1;
+        if (count($w) >= 2) {
+            $rows = all("SELECT u.id FROM users u
+                          WHERE u.full_name LIKE ? AND u.full_name LIKE ?
+                            AND EXISTS (SELECT 1 FROM applications a WHERE a.user_id = u.id)
+                          LIMIT 3", ['%' . $w[0] . '%', '%' . $w[1] . '%']);
+            if (count($rows) === 1) return true;
+        }
+        return chat_vk_kabinet_po_perepiske('vk_' . $peer);
     } catch (\Throwable $e) { return false; }
+}
+
+/**
+ * КАБИНЕТ УЗНАЁТСЯ ПО САМОЙ ПЕРЕПИСКЕ.
+ *
+ * Имени страницы часто нет: у Николая Буланова (аккаунт 9883, девять заявок,
+ * пятнадцать заказов) страница ВК подписана одним словом «Николай», и
+ * 22.10.2026 бот пригласил его «зарегистрироваться на сайте». Зато в
+ * разговоре почти всегда есть то, что однозначно ведёт к аккаунту:
+ *   • почта или телефон, которые человек написал сам;
+ *   • номер заявки (TT-2026-00096) или заказа («заказ №690»), названный в
+ *     диалоге кем угодно — участником, ботом или оператором.
+ * Подходит, если по признаку нашёлся аккаунт с заявками или заказами.
+ *
+ * Правило то же, что у сверки по имени: ответ — только «да/нет», чтобы
+ * ПРОМОЛЧАТЬ о регистрации. Номер аккаунта наружу не отдаём: педагог мог
+ * написать почту ученика, и раскрывать по ней чьи-то данные нельзя.
+ */
+function chat_vk_kabinet_po_perepiske(string $sessionKey): bool {
+    try {
+        $rows = all("SELECT role, text FROM chat_messages
+                      WHERE session_key=? AND text<>''
+                        AND created_at > datetime('now','localtime','-90 days')
+                   ORDER BY id DESC LIMIT 300", [$sessionKey]);
+    } catch (\Throwable $e) { return false; }
+    $emails = $phones = $apps = $orders = [];
+    foreach ($rows as $r) {
+        $tx = (string) $r['text'];
+        if (preg_match_all('~[A-Za-z]{2,4}-20\d\d-\d{4,5}~u', $tx, $m)) foreach ($m[0] as $x) $apps[mb_strtoupper($x)] = 1;
+        if (preg_match_all('~заказ\w*\s*(?:№|N|#)\s*(\d{2,6})~ui', $tx, $m)) foreach ($m[1] as $x) $orders[(int) $x] = 1;
+        // Почту и телефон берём только из слов самого участника: в ответах
+        // центра стоят адреса и номера центра.
+        if ((string) $r['role'] !== 'user') continue;
+        if (preg_match_all('~[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}~u', $tx, $m)) foreach ($m[0] as $x) $emails[mb_strtolower($x)] = 1;
+        if (preg_match_all('~(?:\+7|8)[\s\-(]*\d{3}[\s\-)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}~u', $tx, $m)) {
+            foreach ($m[0] as $x) { $d = preg_replace('~\D~', '', $x); if (strlen($d) >= 10) $phones[substr($d, -10)] = 1; }
+        }
+    }
+    $has = "(EXISTS (SELECT 1 FROM applications a WHERE a.user_id = u.id)
+             OR EXISTS (SELECT 1 FROM awards_orders o WHERE o.user_id = u.id))";
+    try {
+        foreach (array_slice(array_keys($emails), 0, 10) as $e) {
+            if ((int) (scalar("SELECT u.id FROM users u WHERE lower(trim(u.email))=? AND $has LIMIT 1", [$e]) ?: 0) > 0) return true;
+        }
+        foreach (array_slice(array_keys($apps), 0, 10) as $n) {
+            if ((int) (scalar("SELECT COALESCE(user_id,0) FROM applications WHERE UPPER(number)=? LIMIT 1", [$n]) ?: 0) > 0) return true;
+        }
+        foreach (array_slice(array_keys($orders), 0, 10) as $id) {
+            if ((int) (scalar("SELECT COALESCE(user_id,0) FROM awards_orders WHERE id=?", [$id]) ?: 0) > 0) return true;
+        }
+        foreach (array_slice(array_keys($phones), 0, 5) as $p) {
+            // Телефон в базе пишут как придётся — сверяем по последним десяти цифрам.
+            $cand = all("SELECT u.id, u.phone FROM users u WHERE u.phone LIKE ? AND $has LIMIT 5", ['%' . substr($p, -4)]);
+            foreach ($cand as $c) if (substr(preg_replace('~\D~', '', (string) $c['phone']), -10) === $p) return true;
+        }
+    } catch (\Throwable $e) { return false; }
+    return false;
 }
 
 function chat_said_in_dialogue(string $sessionKey, string $re): bool {
@@ -2693,8 +2752,12 @@ function chat_limit_repeat_offers(string $answer, string $sessionKey, ?int $uid 
         $снять[] = '~[^.!?\n]*положени\w*[^.!?\n]{0,120}https?://[^\s.!?]+[^.!?\n]*[.!?]?~ui';
         $снять[] = '~[^.!?\n]*https?://[^\s.!?]*/regulations[^\s.!?]*[^.!?\n]*[.!?]?~ui';
     }
-    /* Регистрация: вошедшему - никогда, гостю - один раз за разговор. */
-    $зарегистрирован = (int) $uid > 0;
+    /* Регистрация: вошедшему - никогда, гостю - один раз за разговор.
+       Во ВКонтакте аккаунт известен только по привязке vk_id, а она есть у
+       немногих - поэтому там спрашиваем ещё и chat_vk_kabinet_est (имя
+       страницы, почта, телефон, номер заявки или заказа из переписки). */
+    $зарегистрирован = (int) $uid > 0
+        || (str_starts_with($sessionKey, 'vk_') && chat_vk_kabinet_est((int) substr($sessionKey, 3)));
     if (!$спросил_регистрацию && ($зарегистрирован || chat_signup_offered($sessionKey))) {
         $снять[] = '~[^.!?\n]*(?:зарегистрир\w+|регистраци\w+\s+на\s+(?:нашем|сайте)|'
                  . 'завед\w+\s+(?:личный\s+)?кабинет|создайте\s+(?:личный\s+)?кабинет)'
