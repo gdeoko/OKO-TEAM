@@ -388,7 +388,8 @@ ob_start(); ?>
         <p style="color:var(--muted)">Новые конкурсы откроются <b><?= h($__reopenTxt) ?></b>, тогда же снова заработает эта форма.
           Афиша и календарь конкурсов — в разделе <a href="<?= url('/competitions') ?>">«Конкурсы»</a>.
           Заказать наградной материал по уже прошедшим конкурсам можно в разделе
-          <a href="<?= url('/awards') ?>">«Награды»</a> в течение двух месяцев после закрытия приёма.</p>
+          <a href="<?= url('/awards') ?>">«Награды»</a>.
+          <?php if (!function_exists('award_window_text')) require_once BASE_PATH . '/core/award_window.php'; ?><?= h(award_window_text()) ?></p>
         <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <a class="btn btn--primary" href="<?= url('/awards') ?>">Заказать награды</a>
           <a class="btn btn--ghost" href="<?= url('/competitions') ?>">Афиша конкурсов</a>

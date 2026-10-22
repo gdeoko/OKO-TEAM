@@ -456,6 +456,7 @@ ob_start(); ?>
           <div class="comp-callout">
             <span class="comp-callout__ic"><?= $ic['award'] ?></span>
             <p>Дополнительный наградной материал (кубок, статуэтка, медаль, благодарственное письмо, именные дипломы) оформляется по желанию после оглашения результатов. Доставка оплачивается отдельно при получении (наложенный платёж). Оргвзнос за аттестованный материал возврату не подлежит.</p>
+            <?php if (!function_exists('award_window_text')) require_once BASE_PATH . '/core/award_window.php'; ?><p style="margin-top:8px"><?= h(award_window_text()) ?></p>
           </div>
         <?php else: ?>
           <h3><span class="comp-h3ic"><?= $ic['check'] ?></span>Что входит в бесплатное участие</h3>

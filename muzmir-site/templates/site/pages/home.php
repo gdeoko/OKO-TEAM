@@ -193,7 +193,8 @@ ob_start(); ?>
           <h3 style="margin:0 0 10px">Приём заявок этого месяца завершён</h3>
           <p style="color:var(--muted);margin:0">Новые конкурсы откроются <b><?= h($__reopenTxt) ?></b>.
             Наградной материал по прошедшим конкурсам заказывается в разделе
-            <a href="<?= url('/awards') ?>">«Награды»</a> ещё два месяца после закрытия приёма.</p>
+            <a href="<?= url('/awards') ?>">«Награды»</a>.
+            <?php if (!function_exists('award_window_text')) require_once BASE_PATH . '/core/award_window.php'; ?><?= h(award_window_text()) ?></p>
           <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
             <a class="btn btn--primary" href="<?= url('/awards') ?>">Заказать награды</a>
             <a class="btn btn--ghost" href="<?= url('/competitions') ?>">Афиша конкурсов</a>

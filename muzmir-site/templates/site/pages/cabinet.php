@@ -1132,16 +1132,11 @@ ob_start(); ?>
             // задолго до публикации списка, и окно заказа таяло бы ещё до того, как
             // участник узнал звание. Точка отсчёта — день, когда результат стал ему
             // известен: публикация списка или письмо, а graded_at только запасной.
+            // Счёт и текст — общие с заказом и письмами (core/award_window.php).
+            if (!function_exists('award_window_open')) require_once BASE_PATH . '/core/award_window.php';
             $canOrder = !empty($a['result']);
-            if ($canOrder && $hasGradedAt) {
-                $since = trim((string) ($a['comp_results_pub'] ?? '')) !== ''
-                    ? (string) $a['comp_results_pub']
-                    : (trim((string) ($a['result_sent_at'] ?? '')) !== ''
-                        ? (string) $a['result_sent_at']
-                        : (string) ($a['graded_at'] ?? ''));
-                $gts = $since !== '' ? strtotime($since) : false;
-                if ($gts !== false && (time() - $gts) > 60 * 86400) $canOrder = false;
-            } ?>
+            $orderUntil = $canOrder ? award_window_until((array) $a) : 0;
+            if ($canOrder && $hasGradedAt && !award_window_open((array) $a)) $canOrder = false; ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
               <div class="cab-row">
                 <div style="min-width:0">
@@ -1331,8 +1326,9 @@ ob_start(); ?>
                     <a class="btn btn--primary" href="<?= url('/awards') ?>?comp=<?= (int)$a['competition_id'] ?>&app=<?= (int)$a['id'] ?>">Заказать награды</a>
                     <span class="hint" style="align-self:center">Данные подставятся из заявки — вводить заново не нужно.</span>
                   </div>
+                  <p class="cab-meta" style="margin-top:8px"><?= h(award_window_text()) ?><?= $orderUntil > 0 ? ' По этой заявке — до ' . h(ru_date(date('Y-m-d', $orderUntil))) . ' включительно.' : '' ?></p>
                 <?php else: ?>
-                  <p class="cab-order-gone">Срок заказа наград по этой заявке истёк (60 дней после оценки).</p>
+                  <p class="cab-order-gone">Срок подачи заявки на изготовление наградного материала по этой заявке истёк: <?= (int) AWARD_ORDER_DAYS ?> дней после оглашения аттестационного результата.</p>
                 <?php endif; ?>
               <?php elseif (!empty($a['_long_hidden'])): ?>
                 <?php $ld = trim((string)($a['comp_results_date'] ?? '')); ?>

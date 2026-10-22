@@ -283,7 +283,8 @@ function result_mail_send(int $appId): bool {
             . ' Награда с Вашим именем - памятное подтверждение успеха для дома, сцены и портфолио.</p>'
             // Дальше не описание словами, а сами награды: снимки того, что придёт
             // по почте, и цены по этому званию.
-            . ao_block((int) $a['competition_id'], $result, $awardsUrl, ao_is_group($a));
+            . ao_block((int) $a['competition_id'], $result, $awardsUrl, ao_is_group($a))
+            . rm_award_window_p();
         $hero = mm_cta_primary($awardsUrl, 'Заказать награды', 'По результату: ' . rm_award_name($result));
         // Кнопки как в ручном письме центра: Образцы наград ЭТОГО конкурса / Сроки / Отзыв.
         $awardsSamplesUrl = url('/awards') . '?comp=' . (int) $a['competition_id'];
@@ -479,7 +480,7 @@ function results_long_mail_html_multi(array $apps, array $c, string $vkUrl = '',
     if ($posterUrl !== '') {
         $inner .= '<div style="margin:0 0 18px;text-align:center;"><img src="' . h($posterUrl) . '" alt="Результаты конкурса" style="display:block;width:100%;max-width:536px;height:auto;border-radius:14px;border:1px solid ' . RM_LINE . ';"></div>';
     }
-    $inner .= $orderBtn;
+    $inner .= $orderBtn . rm_award_window_p();
     $inner .= '<p style="margin:18px 0 18px;">Культурный центр «Музыкальный Мир» подвёл итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
         . ($many
             ? 'С радостью объявляем результаты по всем Вашим заявкам — их ' . count($apps) . '.'
@@ -597,4 +598,10 @@ function results_long_mail_html_multi(array $apps, array $c, string $vkUrl = '',
         'thanks'    => true,
     ]);
     return [$subject, $html];
+}
+
+/** Срок подачи заявки на изготовление — абзацем под кнопкой заказа (core/award_window.php). */
+function rm_award_window_p(): string {
+    if (!function_exists('award_window_text')) require_once BASE_PATH . '/core/award_window.php';
+    return '<p style="margin:12px 0 0;font-size:13px;color:#6B7699;line-height:1.6;">' . h(award_window_text()) . '</p>';
 }

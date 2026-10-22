@@ -69,6 +69,7 @@ foreach ($items as $it) {
 <?php /* СРОКИ — ОТДЕЛЬНО ПО ВИДАМ. В одном заказе бывают оба, и путать их нельзя:
          электронное приходит письмом к названной дате, оригинал едет посылкой. */ ?>
 <p style="margin:0 0 10px;font-weight:700;color:#17307A;font-size:16px;">Сроки</p>
+<?php if (!function_exists('award_window_text')) require_once BASE_PATH . '/core/award_window.php'; ?>
 
 <?php if ($hasDigital): ?>
   <p style="margin:0 0 14px;">
@@ -95,5 +96,7 @@ foreach ($items as $it) {
     </table>
   <?php endif; ?>
 <?php endif; ?>
+
+<p style="margin:0 0 14px;font-size:13px;color:#6B7699;line-height:1.6;"><?= h(award_window_text()) ?></p>
 
 <p style="margin:0 0 6px;">Статус заказа виден в личном кабинете — там же появятся готовые файлы<?= $hasOriginal ? ' и трек-номер отправления' : '' ?>.</p>

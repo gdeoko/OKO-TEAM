@@ -436,8 +436,29 @@ function named_fio_problem(string $fio, array $app): string
 function awards_window_end(array $c): string {
     $base = trim((string) ($c['end_date'] ?? ''));
     if ($base === '') return '';
-    try { return (new \DateTime($base))->modify('+' . AWARDS_WINDOW_MONTHS . ' months')->format('Y-m-d'); }
+    try { $end = (new \DateTime($base))->modify('+' . AWARDS_WINDOW_MONTHS . ' months')->format('Y-m-d'); }
     catch (\Throwable $e) { return ''; }
+    /* ОКНО КОНКУРСА НЕ КОРОЧЕ ОКНА ПОСЛЕДНЕЙ ЗАЯВКИ (правило владельца 22.10.2026).
+     * Участнику обещано: заявку на изготовление можно подать в течение 60 дней
+     * после оглашения ЕГО результата (core/award_window.php). Два месяца от
+     * закрытия приёма бывают короче: у длинного конкурса итоги 28-го, у
+     * короткого письмо с результатом уходит через несколько дней после подачи.
+     * Поэтому конкурс остаётся на витрине, пока не истекли 60 дней у последнего
+     * объявленного результата; точный срок каждой заявки проверяет заказ. */
+    if (!empty($c['id'])) {
+        try {
+            if (!function_exists('award_window_until')) require_once BASE_PATH . '/core/award_window.php';
+            $pub  = (string) (scalar("SELECT COALESCE(results_published_at,'') FROM competitions WHERE id=?", [(int) $c['id']]) ?: '');
+            $last = $pub !== '' ? $pub
+                  : (string) (scalar("SELECT MAX(COALESCE(NULLIF(result_sent_at,''), graded_at)) FROM applications
+                                      WHERE competition_id=? AND COALESCE(result,'')<>''", [(int) $c['id']]) ?: '');
+            if ($last !== '' && ($t = strtotime($last))) {
+                $byApp = date('Y-m-d', $t + AWARD_ORDER_DAYS * 86400);
+                if ($byApp > $end) $end = $byApp;
+            }
+        } catch (\Throwable $e) { /* без базы — остаётся два месяца */ }
+    }
+    return $end;
 }
 
 /** Открыт ли заказ наград по конкурсу прямо сейчас. */

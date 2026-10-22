@@ -260,11 +260,23 @@ if (!$isClubOrder) {
     // не изготавливаются, и принимать деньги за них нельзя (core/orders.php).
     if (!function_exists('awards_window_open')) require_once BASE_PATH . '/core/orders.php';
     $__win = ['status' => (string) ($appRow['comp_status'] ?? ''), 'end_date' => (string) ($appRow['end_date'] ?? '')];
-    if (!awards_window_open($__win)) {
+    /* ГЛАВНЫЙ СРОК — 60 ДНЕЙ ПОСЛЕ ОГЛАШЕНИЯ РЕЗУЛЬТАТА ЭТОЙ ЗАЯВКИ
+       (правило владельца 22.10.2026, core/award_window.php). Срок конкурса
+       ниже остаётся запасным — на случай, если даты оглашения у заявки нет. */
+    if (!function_exists('award_window_until')) require_once BASE_PATH . '/core/award_window.php';
+    $__appWin = ['competition_id' => (int) ($appRow['comp_id'] ?? 0), 'comp_results_pub' => (string) ($appRow['results_published_at'] ?? ''),
+                 'result_sent_at' => (string) ($appRow['result_sent_at'] ?? ''), 'graded_at' => (string) (scalar("SELECT COALESCE(graded_at,'') FROM applications WHERE id=?", [(int) $appRow['id']]) ?: '')];
+    $__appUntil = award_window_until($__appWin);
+    if ($__appUntil > 0 && time() > $__appUntil) {
+        json_out(['ok' => false, 'error' => 'Срок подачи заявки на изготовление по этому результату истёк '
+            . date('d.m.Y', $__appUntil) . '. ' . award_window_text()], 422);
+    }
+    $__win['id'] = (int) ($appRow['comp_id'] ?? 0);
+    if ($__appUntil === 0 && !awards_window_open($__win)) {
         $__end = awards_window_end($__win);
         json_out(['ok' => false, 'error' => 'Срок заказа наградного материала по этому конкурсу истёк'
             . ($__end !== '' ? ' ' . date('d.m.Y', strtotime($__end)) : '')
-            . '. Награды изготавливаются в течение двух месяцев после закрытия приёма заявок.'], 422);
+            . '. ' . award_window_text()], 422);
     }
 }
 

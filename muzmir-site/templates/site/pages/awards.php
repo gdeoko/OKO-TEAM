@@ -15,6 +15,7 @@ $u = current_user();
 // дате закрытия приёма — свежие сверху, прошлые уходят вниз и исчезают сами,
 // когда окно заказа истекает.
 require_once BASE_PATH . '/core/orders.php';
+require_once BASE_PATH . '/core/award_window.php';
 $comps = array_values(array_filter(
     all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status, COALESCE(club_only,0) club_only
            FROM competitions
@@ -225,6 +226,7 @@ ob_start(); ?>
                перед заказом, поэтому стоит отдельным абзацем и заметнее второй. */ ?>
       <p style="color:var(--ink);margin:0 0 6px;font-size:.95rem;font-weight:600">Перед оформлением заявки на изготовление, внимательно ознакомьтесь с образцами наградного материала.</p>
       <p style="color:var(--muted);margin:0;font-size:.92rem">«Эксклюзивная наградная продукция (кубки, статуэтки, медали), изготовлены по современным технологиям 3D-печати из прочного и экологичного пластика».</p>
+      <?php if (!function_exists('award_window_text')) require_once BASE_PATH . '/core/award_window.php'; ?><p style="color:var(--ink);margin:8px 0 0;font-size:.92rem"><?= h(award_window_text()) ?></p>
     </div>
 
     <div class="aw-comp-list">
@@ -698,7 +700,8 @@ ob_start(); ?>
                  } ?>
           <span>Я ознакомился со сроками изготовления и доставки наградного материала:
             <?= h(function_exists('prioritet_fraza_izgotovleniya') ? prioritet_fraza_izgotovleniya()
-                 : 'электронные - 5 рабочих дней с момента оплаты заказа, у участников Элитного клуба - 3 рабочих дня; оригиналы на бланках и изделия - 7 рабочих дней на изготовление, срок одинаковый для всех, и до 14 рабочих дней на доставку Почтой России.') ?></span>
+                 : 'электронные - 5 рабочих дней с момента оплаты заказа, у участников Элитного клуба - 3 рабочих дня; оригиналы на бланках и изделия - 7 рабочих дней на изготовление, срок одинаковый для всех, и до 14 рабочих дней на доставку Почтой России.') ?>
+            <?= h(award_window_text()) ?></span>
         </label>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>
