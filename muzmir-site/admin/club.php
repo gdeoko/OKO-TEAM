@@ -167,7 +167,7 @@ if ($viewUid > 0) {
           <?php if ($left === null): ?>без срока
           <?php elseif ($left >= 0): ?>осталось <?= (int) $left ?> дн.
           <?php else: ?>истекло <?= abs((int) $left) ?> дн. назад<?php endif; ?>
-          · автопродление: <?= !empty($st['auto_renew']) ? 'включено' : 'выключено' ?>
+          · продление: <?= !empty($st['auto_renew']) ? 'автоматическое' : (!empty($st['declined']) ? 'участник отказался' : 'вручную, по письму за 3 дня') ?>
         </div>
       </div>
       <div class="card">
@@ -411,7 +411,7 @@ foreach ($rows as $r) {
       <td class="small">
         <?= h(match ((string) ($r['period'] ?? 'month')) {
             'year' => 'годовой', 'month' => 'месячный', default => (string) ($r['period'] ?? '') }) ?>
-        <div class="small muted">автопродление: <?= (int) ($r['auto_renew'] ?? 0) === 1 ? 'да' : 'нет' ?></div>
+        <div class="small muted">продление: <?= trim((string) ($r['cancelled_at'] ?? '')) !== '' ? 'отказался' : ((function_exists('club_autorenew_enabled') && club_autorenew_enabled() && (int) ($r['auto_renew'] ?? 0) === 1) ? 'авто' : 'вручную') ?></div>
       </td>
       <td class="small">
         всего <?= $apps ?>

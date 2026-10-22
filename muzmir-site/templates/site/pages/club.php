@@ -307,8 +307,66 @@ html{scroll-behavior:smooth}
           Сертификат участника Клуба
         </a>
       </div>
-      <p class="club-note">Членство продлевается ежемесячно. Скидка <?= (int) $discount ?>%
-        применяется ко всем платежам автоматически.</p>
+      <?php
+      /* ПРОДЛЕНИЕ — ВРУЧНУЮ, ПРЯМО ЗДЕСЬ (слово владельца 22.10.2026).
+       *
+       * Письмо за 3 дня до конца срока ведёт сюда кнопкой «Продлить членство», а
+       * действующему участнику страница показывала только статус — оплатить
+       * продление было негде. Оплата идёт тем же заказом, что и вступление;
+       * новый срок прибавляется к текущему (club_grant), оплаченные дни целы. */
+      $__staff    = !empty($status['staff']);
+      $__declined = !empty($status['declined']);
+      if (!$__staff): ?>
+      <div class="club-renew" id="club-renew" style="margin-top:22px;text-align:center">
+        <p class="club-note" style="margin:0 0 12px">Продление — по Вашему решению: за 3 дня до окончания срока
+          придёт письмо со ссылкой на продление, списаний без Вашего участия нет. Новый срок прибавляется
+          к текущему — оплаченные дни не теряются.</p>
+        <div class="club-actions">
+          <button type="button" class="btn btn--primary" data-club-renew="month" data-price="<?= (int) $price ?>">Продлить на месяц — <?= h(money($price)) ?></button>
+          <button type="button" class="btn btn--ghost" data-club-renew="year" data-price="<?= (int) $priceYear ?>">Продлить на год — <?= h(money($priceYear)) ?></button>
+        </div>
+        <p class="club-note" id="crMsg" style="margin-top:10px"></p>
+        <?php if ($__declined): ?>
+          <p class="club-note">Вы отказались от продления: писем о продлении не будет. Оплатите продление — и отказ снимется сам.</p>
+        <?php elseif (function_exists('club_decline_url')): ?>
+          <p class="club-note"><a href="<?= h(club_decline_url($uid)) ?>" data-no-spa>Отказаться от продления</a></p>
+        <?php endif; ?>
+      </div>
+      <script>
+      (function () {
+        var msg = document.getElementById('crMsg');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-club-renew]'), function (b) {
+          b.addEventListener('click', function () {
+            var period = b.getAttribute('data-club-renew'), price = b.getAttribute('data-price');
+            var all = document.querySelectorAll('[data-club-renew]');
+            Array.prototype.forEach.call(all, function (x) { x.disabled = true; });
+            msg.textContent = 'Переходим к оплате…';
+            var body = new URLSearchParams();
+            body.set('full_name', <?= json_encode((string) ($u['full_name'] ?? ''), JSON_UNESCAPED_UNICODE) ?>);
+            body.set('email', <?= json_encode((string) ($u['email'] ?? ''), JSON_UNESCAPED_UNICODE) ?>);
+            body.set('phone', <?= json_encode((string) ($u['phone'] ?? ''), JSON_UNESCAPED_UNICODE) ?>);
+            body.set('competition', 'Клуб постоянных участников');
+            body.set('amount', String(price));
+            body.set('_csrf', <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>);
+            body.set('items', JSON.stringify([{ item: period === 'year' ? 'Клуб постоянных участников — годовая подписка'
+                                                         : 'Клуб постоянных участников — месячная подписка', kind: 'club', period: period }]));
+            fetch(<?= json_encode(url('/api/v1/order'), JSON_UNESCAPED_SLASHES) ?>, { method: 'POST', body: body })
+              .then(function (r) { return r.json(); })
+              .then(function (d) {
+                var url = (d && d.payment && d.payment.confirmation_url) || (d && d.confirmation_url);
+                if (d && d.ok && url) { window.location.href = url; return; }
+                Array.prototype.forEach.call(all, function (x) { x.disabled = false; });
+                msg.textContent = (d && d.ok) ? ('Заказ продления №' + d.order_id + ' оформлен, ссылка на оплату придёт на почту.')
+                                              : ((d && d.error) || 'Не удалось оформить продление.');
+              })
+              .catch(function () { Array.prototype.forEach.call(all, function (x) { x.disabled = false; });
+                                   msg.textContent = 'Не удалось оформить продление, проверьте соединение.'; });
+          });
+        });
+      })();
+      </script>
+      <?php endif; ?>
+      <p class="club-note">Скидка <?= (int) $discount ?>% применяется ко всем платежам автоматически.</p>
     </div>
   </div>
 </section>

@@ -85,14 +85,42 @@ function club_grant(int $userId, int $months = 1, string $source = 'payment', ar
             [$userId, $months, $source]
         );
     }
-    // Настройки автопродления: следующее списание — в день окончания оплаченного срока.
-    $upd = ['period' => $period, 'auto_renew' => 1, 'charge_fails' => 0, 'cancelled_at' => '',
+    // Настройки продления. Автосписания нет (касса не принимает рекуррентные
+    // платежи, слово владельца 22.10.2026 — продление вручную по напоминанию),
+    // поэтому флаг автопродления ставится, только если его включат настройкой.
+    // Новая оплата снимает прежний отказ от продления: человек сам продлил.
+    $upd = ['period' => $period, 'auto_renew' => club_autorenew_enabled() ? 1 : 0, 'charge_fails' => 0, 'cancelled_at' => '',
             'last_charge_at' => date('Y-m-d H:i:s')];
     if ($pmId !== '') $upd['payment_method_id'] = $pmId;
     update('club_members', $upd, 'user_id=:uid', ['uid' => $userId]);
     q("UPDATE club_members SET next_charge_at = COALESCE(expires_at,'') WHERE user_id=?", [$userId]);
 
     return club_status($userId);
+}
+
+/**
+ * ПРОДЛЕНИЕ — ВРУЧНУЮ, ПО НАПОМИНАНИЮ (слово владельца 22.10.2026).
+ *
+ * Сайт обещал автопродление, а карта не сохранялась ни у одного участника:
+ * магазин не принимает рекуррентные платежи. Подписка Поцеловкиной 30.09
+ * не продлилась после трёх неудачных списаний. Теперь так: за 3 дня до конца
+ * срока письмо с двумя кнопками — «Продлить» и «Отказаться от продления»;
+ * отказ доступен и в кабинете. Отказавшемуся больше не пишем о клубе.
+ * Автосписание вернётся само, если поставить настройку club_auto_renew=1.
+ */
+function club_autorenew_enabled(): bool {
+    return function_exists('setting') && (string) setting('club_auto_renew', '0') === '1';
+}
+
+/** Подпись ссылки отказа от продления: без входа в кабинет, прямо из письма. */
+function club_decline_sig(int $userId): string {
+    $key = (string) (function_exists('setting') ? setting('paylink_secret', '') : '');
+    if ($key === '') $key = (string) cfgv('base_url', 'muzmir');
+    return substr(hash_hmac('sha256', 'club_decline|' . $userId, $key), 0, 24);
+}
+
+function club_decline_url(int $userId): string {
+    return rtrim((string) cfgv('base_url', ''), '/') . '/api/v1/club_decline.php?u=' . $userId . '&t=' . club_decline_sig($userId);
 }
 
 /**
@@ -128,8 +156,8 @@ function club_expired(int $limit = 100): array {
            FROM club_members m JOIN users u ON u.id = m.user_id
           WHERE m.active = 1
             AND m.expires_at IS NOT NULL AND m.expires_at <= datetime('now','localtime')
-            AND (COALESCE(m.auto_renew,0) = 0 OR COALESCE(m.charge_fails,0) >= 3)
-          ORDER BY m.expires_at ASC LIMIT ?", [$limit]
+            AND (? = 0 OR COALESCE(m.auto_renew,0) = 0 OR COALESCE(m.charge_fails,0) >= 3)
+          ORDER BY m.expires_at ASC LIMIT ?", [club_autorenew_enabled() ? 1 : 0, $limit]
     );
 }
 
@@ -207,7 +235,8 @@ function club_status(int $userId): array {
     }
     $row = one("SELECT * FROM club_members WHERE user_id=?", [$userId]);
     if (!$row) return $out;
-    $out['auto_renew'] = (int) ($row['auto_renew'] ?? 0) === 1;
+    $out['auto_renew'] = club_autorenew_enabled() && (int) ($row['auto_renew'] ?? 0) === 1;
+    $out['declined']   = trim((string) ($row['cancelled_at'] ?? '')) !== '';
     $out['period']     = (string) ($row['period'] ?? 'month');
     $exp = $row['expires_at'] ?? null;
     // ВАЖНО про время: expires_at пишется SQL-функцией datetime('now','localtime') — это UTC
@@ -302,3 +331,26 @@ function vip_mark(?int $uid, string $role = '', string $email = ''): string {
     $k = vip_kind($uid, $role, $email);
     return $k === '' ? '' : vip_badge($k);
 }
+
+/**
+ * Строка о продлении в кабинете (вкладки «Мои заявки» и «Настройки»).
+ * Кнопка data-club-cancel обрабатывается одним кодом на document.
+ */
+function club_cabinet_renew_html(array $club, string $style = ''): string {
+    if (empty($club['active']) || !empty($club['staff'])) return '';
+    $until = trim((string) ($club['expires_local'] ?? ''));
+    $d = $until !== '' && function_exists('ru_date') ? ru_date(substr($until, 0, 10)) : '';
+    $p = '<p class="cab-meta" style="' . h($style) . '">';
+    if (!empty($club['auto_renew'])) {
+        return $p . 'Подписка продлевается автоматически.'
+             . ' <button type="button" class="btn btn--ghost btn--sm" data-club-cancel style="margin-left:8px">Отказаться от продления</button></p>';
+    }
+    if (!empty($club['declined'])) {
+        return $p . 'Вы отказались от продления. Членство действует' . ($d !== '' ? ' до ' . h($d) : ' до конца оплаченного периода')
+             . ', напоминаний о продлении не будет. Передумаете — продлить можно на <a href="' . h(url('/club')) . '">странице клуба</a>.</p>';
+    }
+    return $p . 'Членство действует' . ($d !== '' ? ' до ' . h($d) : '') . '. Продление — по Вашему решению: за 3 дня до окончания придёт письмо'
+         . ' со ссылкой на продление, списаний без Вашего участия нет.'
+         . ' <button type="button" class="btn btn--ghost btn--sm" data-club-cancel style="margin-left:8px">Отказаться от продления</button></p>';
+}
+

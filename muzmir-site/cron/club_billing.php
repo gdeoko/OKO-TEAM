@@ -1,6 +1,10 @@
 <?php
 /**
- * CRON: биллинг Элитного клуба — автопродление подписки и снятие привилегий.
+ * CRON: биллинг Элитного клуба — напоминание о продлении и снятие привилегий.
+ *
+ * С 22.10.2026 продление ВРУЧНУЮ (слово владельца): за 3 дня письмо с кнопками
+ * «Продлить» и «Отказаться от продления», автосписание (шаг 1) работает только
+ * при настройке club_auto_renew=1. Отказавшимся о клубе больше не пишем.
  *
  * Что делает раз в час:
  *   1) АВТОСПИСАНИЕ. По членствам, у которых наступил срок (expires_at <= сейчас)
@@ -53,6 +57,7 @@ try {
           ORDER BY m.expires_at ASC LIMIT 100") as $m) {
         $uid = (int) $m['user_id'];
         if (club_is_staff($uid)) continue;                 // бессрочный доступ оргкомитета
+        if (trim((string) ($m['cancelled_at'] ?? '')) !== '') continue;   // отказался от продления — не пишем
         $exp = (string) $m['expires_at'];
         $markKey = 'club_soon:' . $uid . ':' . substr($exp, 0, 10);
         if ((string) setting($markKey, '') !== '') continue;
@@ -64,13 +69,16 @@ try {
         $when = function_exists('ru_date') ? ru_date(substr($exp, 0, 10)) : substr($exp, 0, 10);
 
         club_billing_notify((string) ($m['email'] ?? ''), (string) ($m['full_name'] ?? ''),
-                            $willAuto ? 'soon_auto' : 'soon_manual', $per, $price, $when);
+                            $willAuto ? 'soon_auto' : 'soon_manual', $per, $price, $when, $uid);
         set_setting($markKey, date('Y-m-d H:i:s'));
         cron_log(JOB, "предупреждение за 3 дня: user #$uid, " . ($willAuto ? 'спишем сами' : 'продление вручную'));
     }
 
-    /* ---------- 1) Автосписание ---------- */
-    foreach (club_due_for_charge(50) as $m) {
+    /* ---------- 1) Автосписание ----------
+       Только если автоплатежи включены настройкой: с 22.10.2026 продление
+       вручную, по письму за 3 дня (слово владельца), и попытки списать
+       несохранённой картой с письмами «не удалось продлить» не нужны. */
+    foreach ($autoOn ? club_due_for_charge(50) : [] as $m) {
         $uid    = (int) $m['user_id'];
         $period = (string) ($m['period'] ?? 'month') === 'year' ? 'year' : 'month';
         $months = $period === 'year' ? 12 : 1;
@@ -113,8 +121,10 @@ try {
     foreach (club_expired(100) as $m) {
         $uid = (int) $m['user_id'];
         update('club_members', ['active' => 0], 'user_id=:uid', ['uid' => $uid]);
-        club_billing_notify((string) ($m['email'] ?? ''), (string) $m['full_name'], 'expired',
-                            (string) ($m['period'] ?? 'month'), 0);
+        // Отказавшемуся от продления об окончании не пишем: он сам так решил.
+        if (trim((string) ($m['cancelled_at'] ?? '')) === '')
+            club_billing_notify((string) ($m['email'] ?? ''), (string) $m['full_name'], 'expired',
+                                (string) ($m['period'] ?? 'month'), 0);
         cron_log(JOB, "членство истекло, привилегии сняты: user #$uid");
         $expired++;
     }
@@ -137,6 +147,7 @@ try {
             "SELECT m.*, u.email, u.full_name
                FROM club_members m JOIN users u ON u.id = m.user_id
               WHERE m.active = 0 AND COALESCE(m.expires_at,'') <> ''
+                AND COALESCE(m.cancelled_at,'') = ''          -- отказался от продления: «вернитесь» не шлём
                 AND date(m.expires_at) BETWEEN date('now','localtime', '-' || ? || ' days')
                                            AND date('now','localtime', '-' || ? || ' days')
                 AND COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0
@@ -165,7 +176,7 @@ try {
  * $kind: renewed | retry | stopped | expired | manual
  */
 function club_billing_notify(string $email, string $name, string $kind, string $period,
-                             int $price, string $when = ''): void {
+                             int $price, string $when = '', int $uid = 0): void {
     $email = trim($email);
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return;
     $base = rtrim((string) cfgv('base_url', ''), '/');
@@ -215,7 +226,8 @@ function club_billing_notify(string $email, string $name, string $kind, string $
                       'Личный кабинет'],
         'soon_manual' => ['Через 3 дня заканчивается членство в Элитном клубе',
                       'Оплаченный период заканчивается ' . $when . '. Списаний без Вашего участия не будет: '
-                      . 'чтобы привилегии не прерывались, продлите подписку на ' . $per . ' — ' . $price . ' ₽.',
+                      . 'чтобы привилегии не прерывались, продлите подписку на ' . $per . ' — ' . $price . ' ₽. '
+                      . 'Если продлевать не нужно, нажмите «Отказаться от продления» — больше писем о продлении не будет.',
                       'Продлить членство'],
         default   => ['Продлите членство в Элитном клубе',
                       'Срок членства подошёл к концу, а сохранённого способа оплаты нет — продлите подписку вручную.',
@@ -224,6 +236,13 @@ function club_billing_notify(string $email, string $name, string $kind, string $
 
     $inner = '<p style="margin:0 0 12px;">Здравствуйте' . ($name !== '' ? ', ' . h($name) : '') . '!</p>'
            . '<p style="margin:0 0 16px;line-height:1.65;">' . h($text) . '</p>';
+    /* Кнопка отказа — в письме за 3 дня (слово владельца 22.10.2026). Ведёт на
+       страницу с подтверждением: одним переходом отказ не ставится. */
+    if (in_array($kind, ['soon_manual', 'soon_auto'], true) && $uid > 0 && function_exists('club_decline_url')) {
+        $inner .= '<p style="margin:4px 0 0;text-align:center;"><a href="' . h(club_decline_url($uid)) . '" '
+                . 'style="display:inline-block;padding:11px 26px;border-radius:10px;border:1.5px solid #c9a27a;'
+                . 'color:#7a2e1e;text-decoration:none;font-weight:600;font-size:15px;">Отказаться от продления</a></p>';
+    }
     $html  = function_exists('mm_email_tx')
         ? mm_email_tx($inner, [
             'preheader' => $subject,

@@ -1062,20 +1062,10 @@ ob_start(); ?>
              * Человеку оставалось звонить в колл-центр. Показываем кнопку
              * только тем, у кого автопродление реально включено — у доступа
              * оргкомитета и у отменённой подписки отменять нечего. */
-            $__renewOn = empty($club['staff']) && !empty($club['auto_renew']);
-            if ($__renewOn): ?>
-              <p class="cab-meta" style="margin:8px 0 0">
-                Подписка продлевается автоматически.
-                <button type="button" class="btn btn--ghost btn--sm" data-club-cancel
-                        style="margin-left:8px">Отключить автопродление</button>
-              </p>
-            <?php elseif (empty($club['staff']) && !empty($club['expires_local'])): ?>
-              <p class="cab-meta" style="margin:8px 0 0">
-                Автопродление отключено — членство действует до
-                <?= h(ru_date(substr((string) $club['expires_local'], 0, 10))) ?>,
-                дальше продлевается по Вашему решению.
-              </p>
-            <?php endif; ?>
+            /* С 22.10.2026 продление вручную (core/club.php, club_autorenew_enabled):
+               строку и кнопку отказа собирает club_cabinet_renew_html(). */
+            echo function_exists('club_cabinet_renew_html') ? club_cabinet_renew_html($club, 'margin:8px 0 0') : '';
+            ?>
           <?php endif; ?>
 
           <?php /* Сообщество ВКонтакте и бонус за подписку — сразу под блоком клуба:
@@ -1783,20 +1773,8 @@ ob_start(); ?>
                  * и кнопки там не находит. Обработчик висит на document —
                  * вторая кнопка работает тем же кодом, сообщение подменяет
                  * этот же абзац. */
-                $__renewOn2 = !empty($club['active']) && empty($club['staff']) && !empty($club['auto_renew']);
-                if ($__renewOn2): ?>
-                  <p class="cab-meta" style="margin:10px 12px 2px">
-                    Подписка продлевается автоматически.
-                    <button type="button" class="btn btn--ghost btn--sm" data-club-cancel
-                            style="margin-left:8px">Отключить автопродление</button>
-                  </p>
-                <?php elseif (!empty($club['active']) && empty($club['staff']) && !empty($club['expires_local'])): ?>
-                  <p class="cab-meta" style="margin:10px 12px 2px">
-                    Автопродление отключено — членство действует до
-                    <?= h(ru_date(substr((string) $club['expires_local'], 0, 10))) ?>,
-                    дальше продлевается по Вашему решению.
-                  </p>
-                <?php endif; ?>
+                echo function_exists('club_cabinet_renew_html') ? club_cabinet_renew_html($club, 'margin:10px 12px 2px') : '';
+                ?>
               </div>
             </div>
 
@@ -2172,22 +2150,22 @@ ob_start(); ?>
                любое время в личном кабинете», которого на экране не было. */
             var clubOff = e.target.closest('[data-club-cancel]');
             if (clubOff) { e.preventDefault();
-              if (!confirm('Отключить автопродление? Членство продолжит действовать до конца оплаченного периода.')) return;
-              clubOff.disabled = true; clubOff.textContent = 'Отключаем…';
+              if (!confirm('Отказаться от продления? Членство продолжит действовать до конца оплаченного периода, напоминаний о продлении больше не будет.')) return;
+              clubOff.disabled = true; clubOff.textContent = 'Сохраняем…';
               var fdC = new FormData(); fdC.append('action','off'); fdC.append('_csrf', csrf());
               fetch('<?= url('/api/v1/club_renew') ?>', {method:'POST', body:fdC, headers:{'X-Requested-With':'fetch'}, credentials:'same-origin'})
                 .then(function(r){ return r.json().catch(function(){return{};}); })
                 .then(function(d){
                   if (d && d.ok) {
                     var box = clubOff.closest('p');
-                    if (box) { box.textContent = d.message || 'Автопродление отключено.'; }
-                    else { alert(d.message || 'Автопродление отключено.'); }
+                    if (box) { box.textContent = d.message || 'Вы отказались от продления.'; }
+                    else { alert(d.message || 'Вы отказались от продления.'); }
                   } else {
-                    clubOff.disabled = false; clubOff.textContent = 'Отключить автопродление';
-                    alert((d && d.error) || 'Не удалось отключить автопродление.');
+                    clubOff.disabled = false; clubOff.textContent = 'Отказаться от продления';
+                    alert((d && d.error) || 'Не удалось сохранить отказ от продления.');
                   }
                 })
-                .catch(function(){ clubOff.disabled = false; clubOff.textContent = 'Отключить автопродление';
+                .catch(function(){ clubOff.disabled = false; clubOff.textContent = 'Отказаться от продления';
                                    alert('Сбой сети, попробуйте ещё раз.'); });
               return; }
             /* «Я подписался» — сверяем подписку немедленно и перечитываем страницу:

@@ -647,7 +647,7 @@ if ($__emailNorm !== '' || $uid) {
             $__pay = yukassa_create_payment(
                 (int) ($__dupRow['amount'] ?? 0),
                 $__isClub ? 'Членство в Элитном клубе «Музыкальный Мир»' : ('Наградные материалы, заказ №' . $__dupId),
-                ['order_id' => $__dupId, 'email' => (string) ($__dupRow['email'] ?? ''), 'save_payment_method' => $__isClub]
+                ['order_id' => $__dupId, 'email' => (string) ($__dupRow['email'] ?? ''), 'save_payment_method' => $__isClub && function_exists('club_autorenew_enabled') && club_autorenew_enabled()]
             );
         } catch (\Throwable $e) { $__pay = null; }
 
@@ -861,7 +861,8 @@ $payment = yukassa_create_payment(
         'email'    => mb_strtolower(input('email')),
         // Для подписки клуба просим сохранить способ оплаты — следующие периоды
         // спишутся автоматически (ежемесячно либо раз в год).
-        'save_payment_method' => $isClubOrder,
+        // Карту для автосписания просим сохранить, только если автоплатежи включены (с 22.10.2026 — нет).
+        'save_payment_method' => $isClubOrder && function_exists('club_autorenew_enabled') && club_autorenew_enabled(),
     ]
 );
 }
