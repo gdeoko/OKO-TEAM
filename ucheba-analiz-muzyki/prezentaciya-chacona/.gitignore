@@ -6,3 +6,5 @@ media/fon/
 media/audio/src_*.mp3
 slajdy/gotovye/
 sborka/*.pptx
+sborka/html/
+sborka/prezentaciya_odnim_faylom.html
