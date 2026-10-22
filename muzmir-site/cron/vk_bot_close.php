@@ -86,6 +86,17 @@ try {
         // «есть ли ещё вопросы?» больше нет, см. пояснение в шапке файла.
         // 'assistant_followup' оставлен в условии ради диалогов, где этот вопрос
         // успел уйти до правки: их тоже надо довести до конца.
+        /* ОТЛОЖЕННЫЙ ОТВЕТ ЕЩЁ НЕ УШЁЛ — ПРОЩАТЬСЯ РАНО.
+           Ответ, написанный ночью, ждёт утра (vk_send_at), а created_at у него
+           ночной. Сторож считал молчание от created_at и 22.10.2026 в 09:00
+           попрощался с Николаем раньше, чем в 09:02 ушёл сам ответ: человек
+           получил «благодарим за обращение» до ответа на свой вопрос. Пока в
+           диалоге есть неотправленное — ждём; после отправки молчание
+           считаем от момента отправки. */
+        if ((int) (scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=?
+                             AND COALESCE(vk_send_at,'')<>'' AND COALESCE(vk_sent,0)=0", [$sk]) ?: 0) > 0) continue;
+        $__sendAt = (string) (scalar("SELECT COALESCE(vk_send_at,'') FROM chat_messages WHERE id=?", [(int) $r['id']]) ?: '');
+        if ($__sendAt !== '' && (time() - (int) strtotime($__sendAt)) < 30 * 60) continue;
         if (($role === 'assistant' || $role === 'assistant_followup') && $ageOk((string) $r['created_at'])) {
             $hasUser = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='user' AND text<>''", [$sk]);
             if (!$hasUser) continue;
