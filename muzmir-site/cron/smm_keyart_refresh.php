@@ -71,7 +71,9 @@ foreach ($ряд as $p) {
         else                            $age = smm_pick_age((string) $p['slot_date'], (int) $p['slot_hour']);
     }
 
-    $topic = ['topic' => (string) $p['topic'], 'angle' => (string) $p['subtitle']];
+    // Факт и герой поста — в задание сцены: кадр обязан показывать то, о чём текст.
+    $topic = ['topic' => (string) $p['topic'], 'angle' => (string) $p['subtitle'],
+              'fact' => (string) ($p['fact'] ?? ''), 'person' => (string) ($p['person'] ?? '')];
     /* Пост о человеке - кадр собирается от портрета, а не от возрастной группы. */
     $персона = trim((string) ($p['person'] ?? ''));
     $портрет = trim((string) ($p['portret'] ?? ''));
@@ -87,7 +89,9 @@ foreach ($ряд as $p) {
         $age,
         (string) $p['slot_date'] . '_' . (int) $p['slot_hour'],
         $портрет !== '' ? $персона : '',
-        (string) ($p['kind'] ?? 'совет')
+        (string) ($p['kind'] ?? 'совет'),
+        '',
+        $персона
     );
     if (!$prompt) {
         cron_log(JOB, "#{$id}: плакат не собрался — "

@@ -217,6 +217,18 @@ const SMM_KA_HERO = 'THE HERO. The people are %s: real Russian faces and ages in
     . 'hair, glad and alive - easy smiles, movement. Everyone in frame is of this age.';
 
 /**
+ * ГЕРОЙ ИСТОРИИ ПРО ПРОШЛОЕ, КОГДА ПОРТРЕТА НЕТ.
+ *
+ * 22.10.2026 пост про «Неоконченную» симфонию Шуберта (Вена, 1822) вышел с
+ * кадром «студенты 20-25 лет в современном классе»: портрета не нашлось, и
+ * сюда встала возрастная группа поста с «modern clothes». Люди в кадре
+ * исторического поста — люди ТОЙ эпохи, а лицо настоящего человека без
+ * портрета не выдумываем: только со спины, силуэтом или вдали.
+ */
+const SMM_KA_HERO_ERA = 'THE HERO. The people belong to the era and country of the story: period-true faces, clothes, '
+    . 'hair and objects, busy and alive. %s';
+
+/**
  * ГЕРОЙ-ЧЕЛОВЕК ВМЕСТО ВОЗРАСТНОЙ ГРУППЫ.
  *
  * У поста-истории и у праздничной афиши в кадре не «взрослые 30-45», а
@@ -479,7 +491,8 @@ function smm_ka_prompt(
     string $тег,
     string $заголовок,
     string $подзаголовок,
-    string $персона = ''
+    string $персона = '',
+    string $герой_эпохи = ''          // историческая персона без портрета: люди той эпохи
 ): array {
     $сцена = trim(preg_replace('~\s+~u', ' ', $сцена) ?? '');
     $сцена = rtrim($сцена, " .");
@@ -520,7 +533,10 @@ function smm_ka_prompt(
         'THE MONTAGE. ' . $сцена . '. Built this way: ' . $м . '. Shot like this: ' . $п . '.',
         $персона !== ''
             ? sprintf(SMM_KA_PORTRAIT, $персона)
-            : sprintf(SMM_KA_HERO, $герой !== '' ? $герой : 'real people of the age the post is about'),
+            : ($герой_эпохи !== ''
+                ? sprintf(SMM_KA_HERO_ERA, $герой_эпохи === '-' ? ''
+                    : ($герой_эпохи . ' may appear only from behind, in silhouette or at a distance - never a clear face: no real portrait is supplied.'))
+                : sprintf(SMM_KA_HERO, $герой !== '' ? $герой : 'real people of the age the post is about')),
         SMM_KA_PRILICHIE,
         smm_ka_text_blocks($тег, $заголовок, $подзаголовок, $т),
         'COLOUR. ' . $ц . '. ' . SMM_KA_COLOUR_RULE,

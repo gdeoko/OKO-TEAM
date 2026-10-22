@@ -967,11 +967,17 @@ function smm_mesyac_en(string $ключСлота): string {
 function smm_make_image_prompt(array $topic, string $ratio, string $title = '',
                                string $subtitle = '', string $age = '', string $чем = '',
                                string $персона = '', string $вид = 'совет',
-                               string $сюжет = ''): ?string {
+                               string $сюжет = '', string $человек = ''): ?string {
     $title    = trim($title);
     $subtitle = trim($subtitle);
     $герой    = (string) (SMM_AGES[$age]['кадр'] ?? '');
     $персона  = trim($персона);
+    /* $персона — человек, ПОРТРЕТ которого нашёлся (лицо по референсу);
+       $человек — герой рассказа вообще, с портретом или без. Раньше эпоху
+       определял только портрет: у Шуберта 22.10.2026 его не нашлось, и пост про
+       Вену 1822 года получил кадр «студенты в современном классе». */
+    $человек  = trim($человек) !== '' ? trim($человек) : trim((string) ($topic['person'] ?? ''));
+    if ($человек === '') $человек = $персона;
 
     /* ШАГ 1. СЦЕНУ НАЗЫВАЕТ МОЗГ, И ТОЛЬКО ЕЁ.
        Остальное - формат, монтаж, типографика, цвет, знак, запреты - собирает
@@ -991,8 +997,12 @@ function smm_make_image_prompt(array $topic, string $ratio, string $title = '',
      * про прошлое и у афиши с портретом место и приметы берутся у ЭПОХИ.
      * Яркость, свет и живость остаются в обоих случаях: они про качество
      * кадра, а не про век. */
-    $историческое = $персона !== ''
-        || in_array($сюжет, ['деятель', 'мир-музыки-прошлое'], true);
+    $факт = trim((string) ($topic['fact'] ?? ''));
+    $историческое = $персона !== '' || $человек !== ''
+        || in_array($сюжет, ['деятель', 'мир-музыки-прошлое'], true)
+        /* История с датой прошлого века и раньше — тоже про прошлое, даже без героя. */
+        || ($вид === 'история' && preg_match('~\b(1[0-8]\d\d|19[0-8]\d)\b~', $факт . ' ' . (string) ($topic['topic'] ?? '')));
+    $безПортрета = $историческое && $персона === '';
 
     $__место = $историческое
         ? ("- the place and every object must belong to the ERA AND COUNTRY OF THE STORY above, "
@@ -1019,12 +1029,23 @@ function smm_make_image_prompt(array $topic, string $ratio, string $title = '',
         . "theatre, drawing and painting, crafts, circus.\n\n"
         . "Post topic: " . (string) ($topic['topic'] ?? '') . "\n"
         . "Angle: " . (string) ($topic['angle'] ?? '') . "\n"
+        /* ФАКТ ПОСТА — В ЗАДАНИЕ СЦЕНЫ. Мозг видел только тему и сочинял свою
+           историю: к посту о «Неоконченной» вышли друзья, которые «доиграют её до
+           конца». Сцена обязана показывать то, о чём рассказывает текст. */
+        . ($факт !== '' ? ("What the post actually tells (the scene must show THIS): " . mb_substr($факт, 0, 600) . "\n") : '')
+        . ($title !== '' ? ("Headline of the post: " . $title . ($subtitle !== '' ? ' - ' . $subtitle : '') . "\n") : '')
         . "Aspect ratio of the sheet: " . $ratio . "\n"
+        . ($безПортрета && $человек !== ''
+            ? ("The story is about a real person of the past: " . $человек . ". Show THEIR place, THEIR time "
+             . "and THEIR work from the story - the room, the hall, the manuscript, the instrument, the people "
+             . "around them in that era. We have NO portrait, so the person is seen only from behind, in "
+             . "silhouette or far away, never a clear face. Never today's people re-enacting the story.\n")
+            : '')
         . ($персона !== ''
             ? ("The frame is about a real person: " . $персона . ". Name the place and the era "
              . "around them - their room, their stage, their instrument, their time - and do NOT "
              . "describe their face: a real portrait of them is supplied as a reference.\n")
-            : ($герой !== '' ? ("People who must be in the frame: " . $герой . ".\n") : ''))
+            : ((!$историческое && $герой !== '') ? ("People who must be in the frame: " . $герой . ".\n") : ''))
         /* АФИША ЭТО ПОЗДРАВЛЕНИЕ, А НЕ ПАМЯТНАЯ ДОСКА.
            Куплено живым кадром в ночь на 15.10.2026: на афише к 212-летию
            Лермонтова мозг положил на стол ДУЭЛЬНЫЙ ПИСТОЛЕТ в открытом футляре
@@ -1099,7 +1120,9 @@ function smm_make_image_prompt(array $topic, string $ratio, string $title = '',
         (string) setting('smm_ka_tag', 'МУЗЫКАЛЬНЫЙ МИР'),
         $title,
         $subtitle,
-        $персона
+        $персона,
+        // История без портрета: в кадре люди той эпохи, а не возрастная группа поста.
+        $безПортрета ? ($человек !== '' ? $человек : '-') : ''
     );
     if (empty($пл['ок'])) {
         $GLOBALS['SMM_KA_ALARM'] = (string) ($пл['почему'] ?? 'плакат не собрался');
