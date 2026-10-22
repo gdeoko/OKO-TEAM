@@ -327,7 +327,7 @@ function afisha_html(array $c, array $opt = []): string {
             require_once BASE_PATH . '/core/countdown.php';
         }
         $__ct  = function_exists('comp_terms') ? comp_terms($c) : [];
-        $srok .= ' • ' . (string) ($__ct['results'] ?? 'Результаты в течение 5 рабочих дней');
+        $srok .= ' • ' . (string) ($__ct['results'] ?? 'Результаты через 5 рабочих дней');
     }
 
     $h = static fn($s) => htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');

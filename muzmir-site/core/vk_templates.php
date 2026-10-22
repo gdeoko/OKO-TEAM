@@ -81,7 +81,7 @@ function vkt_srok_korotkih(array $comps): string {
     $сроки = array_keys($сроки);
     sort($сроки);
     return count($сроки) === 1
-        ? 'в течение ' . (int) $сроки[0] . ' рабочих дней с даты подачи заявки'
+        ? 'через ' . (function_exists('prioritet_dney') ? prioritet_dney((int) $сроки[0]) : (int) $сроки[0] . ' рабочих дней') . ' с даты подачи заявки'
         : 'в срок, указанный на странице каждого конкурса';
 }
 

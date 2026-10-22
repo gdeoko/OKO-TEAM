@@ -133,7 +133,7 @@ function afisha_prompt(array $c): string {
         }
         $__ct = function_exists('comp_terms') ? comp_terms($c) : [];
         $srok .= ' · ' . (trim((string) ($__ct['results'] ?? '')) !== ''
-               ? (string) $__ct['results'] : 'Результаты в течение 5 рабочих дней');
+               ? (string) $__ct['results'] : 'Результаты через 5 рабочих дней');
     }
 
     /* Приписка под лентой условий: у конкурса Клуба оговорка про фонд, у платного

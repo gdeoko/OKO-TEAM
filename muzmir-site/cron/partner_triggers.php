@@ -164,7 +164,7 @@ function partner_email_5apps_body(array $p): string {
 <p style="text-align:center;margin:22px 0">
 <a href="' . $lk . '?a=thanks" style="display:inline-block;background:linear-gradient(135deg,#C79322,#E9CE84);color:#2A1E06;font-weight:800;padding:14px 28px;border-radius:6px;text-decoration:none">Оформить благодарности</a>
 </p>
-<p style="font-size:13px;color:#666">Форма в личном кабинете партнёра. Заказ приходит на почту в течение <b>3 рабочих дней</b> единым письмом.</p>
+<p style="font-size:13px;color:#666">Форма в личном кабинете партнёра. Заказ приходит на почту через <b>3 рабочих дня</b> единым письмом.</p>
 <p style="margin-top:22px">С уважением, Оргкомитет Культурного центра «Музыкальный Мир»</p>
 </div>';
 }

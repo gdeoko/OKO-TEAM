@@ -205,7 +205,7 @@ function grade_apply_result(int $appId, string $result, array $opt = []): array 
         if ($out['sent']) q("UPDATE applications SET result_sent_at=? WHERE id=?", [date('Y-m-d H:i:s'), $appId]);
         if (!empty($cur['user_id']) && function_exists('notify_user')) {
             $tail = $compPaid
-                ? 'Наградные материалы придут на почту из заявки в течение ' . $wdays . ' рабочих дней.'
+                ? 'Наградные материалы придут на почту из заявки через ' . (function_exists('prioritet_dney') ? prioritet_dney((int) $wdays) : $wdays . ' рабочих дней') . '.'
                 : 'Наградные материалы можно заказать в разделе «Награды и заказы».';
             notify_user((int) $cur['user_id'], 'Ваш результат готов',
                 'Жюри подвело итоги: ' . $result . '. ' . $tail, url('/cabinet'), 'award');

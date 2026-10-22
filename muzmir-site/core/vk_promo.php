@@ -216,7 +216,7 @@ function vkp_osvezhit_kontakty(string $text): string {
  * записи названы конкурсы с разными сроками - там одной цифрой не обойтись.
  */
 function vkp_srok_attestacii(string $text): string {
-    if (trim($text) === '' || !preg_match('~в течение \d+ рабочих дн~u', $text)) return $text;
+    if (trim($text) === '' || !preg_match('~(?:в течение|через) \d+ рабоч\w* дн~u', $text)) return $text;
     if (!function_exists('comp_slugs_in_text'))      require_once BASE_PATH . '/core/comp_now.php';
     if (!function_exists('prioritet_dnei_konkursa')) require_once BASE_PATH . '/core/prioritet.php';
 
@@ -235,8 +235,10 @@ function vkp_srok_attestacii(string $text): string {
        склоняет для именительного («срок 3 рабочих дня»), а после «в течение»
        нужен родительный («в течение 3 рабочих дней») - подставив её ответ
        целиком, мы бы сами внесли в запись ошибку. */
-    return (string) preg_replace('~(в течение )\d+( рабочих дн(?:ей|я))~u',
+    $text = (string) preg_replace('~(в течение )\d+( рабочих дн(?:ей|я))~u',
         '${1}' . (int) $дни[0] . '${2}', $text);
+    // После «через» число и слово согласуются: «через 3 рабочих дня», «через 5 рабочих дней».
+    return (string) preg_replace('~через \d+ рабоч\w* дн(?:ей|я|ь)~u', 'через ' . prioritet_dney((int) $дни[0]), $text);
 }
 
 function vkp_uslovie_priyoma(string $text): string {
