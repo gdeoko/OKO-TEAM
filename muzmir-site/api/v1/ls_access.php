@@ -22,11 +22,8 @@ $u = current_user();
 if (!$u) json_out(['ok' => false, 'error' => 'Требуется вход в кабинет'], 401);
 $uid = (int) $u['id'];
 
-$who = static function (int $adminId): string {
-    $a = one("SELECT full_name FROM users WHERE id=?", [$adminId]);
-    $n = trim((string) ($a['full_name'] ?? ''));
-    return $n;
-};
+// Имя администратора участнику не показываем (слово владельца 22.10.2026):
+// окно говорит «Администратор колл-центра Культурного центра».
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!csrf_check()) json_out(['ok' => false, 'error' => 'Сессия устарела, обновите страницу'], 403);
@@ -55,12 +52,12 @@ $g = ls_granted_for($uid);
 json_out([
     'ok' => true,
     'pending' => $p ? [
-        'id' => (int) $p['id'], 'who' => $who((int) $p['admin_id']),
+        'id' => (int) $p['id'],
         'left' => max(0, (int) strtotime((string) $p['pending_until']) - time()),
         'minutes' => LS_GRANT_MIN,
     ] : null,
     'granted' => $g ? [
-        'id' => (int) $g['id'], 'who' => $who((int) $g['admin_id']),
+        'id' => (int) $g['id'],
         'until' => substr((string) $g['granted_until'], 11, 5),
         'entered' => (string) $g['entered_at'] !== '',
     ] : null,

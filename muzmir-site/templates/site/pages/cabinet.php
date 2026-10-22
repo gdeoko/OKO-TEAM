@@ -2501,7 +2501,7 @@ ob_start(); ?>
 <div id="lsAsk" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(10,16,40,.55);align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--card,#fff);color:var(--ink,#17307A);max-width:440px;width:100%;border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <b style="font-size:18px;display:block;margin-bottom:8px">Запрос доступа к Вашему кабинету</b>
-    <p style="margin:0 0 10px;line-height:1.5"><span id="lsWho"></span> Культурного центра «Музыкальный Мир»<span id="lsWhoEnd"></span> просит доступ к Вашему личному кабинету на <b id="lsMin"></b> минут, чтобы помочь оформить заявку или заказ.</p>
+    <p style="margin:0 0 10px;line-height:1.5">Администратор колл-центра Культурного центра «Музыкальный Мир» просит доступ к Вашему личному кабинету на <b id="lsMin"></b> минут, чтобы помочь оформить заявку или заказ.</p>
     <p class="cab-meta" style="margin:0 0 16px;line-height:1.5">Оплату, почту, пароль и настройки администратор менять не сможет. Всё, что он сделает, появится в «Настройках». Закрыть доступ можно в любой момент.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn btn--primary" data-ls-answer="1">Согласен</button>
@@ -2525,7 +2525,7 @@ ob_start(); ?>
     fetch(API,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
       if(!d||!d.ok||d.impersonating) return;
       cur=d.pending; grant=d.granted;
-      if(cur){ document.getElementById('lsWho').textContent=cur.who?cur.who+', администратор':'Администратор'; document.getElementById('lsWhoEnd').textContent=cur.who?',':''; document.getElementById('lsMin').textContent=cur.minutes; ask.style.display='flex'; }
+      if(cur){ document.getElementById('lsMin').textContent=cur.minutes; ask.style.display='flex'; }
       else ask.style.display='none';
       if(grant){ document.getElementById('lsUntil').textContent=grant.until; bar.style.display='flex'; } else bar.style.display='none';
     }).catch(function(){});
