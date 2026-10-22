@@ -1338,13 +1338,30 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     // уходит по HTTP API, а не через почтовый порт.
     $accT = is_array($opt['account'] ?? null) ? $opt['account'] : [];
     if ((string) ($accT['transport'] ?? '') === 'unisender') {
-        return mail_send_unisender($to, $subject, $html, [
-            'attach'          => $opt['attach'] ?? null,
+        /* ВЛОЖЕНИЯ — ВСЕ, А НЕ ОДНО ПОЛЕ.
+         * Отправка дипломов кладёт PDF в 'attachments', а сюда передавалось
+         * только 'attach'. Когда наградный ящик не отвечал и письмо уходило
+         * резервным каналом Unisender, участник получал «PDF во вложении» без
+         * единого файла: 19.08 так ушло 7 писем, 12.10 — ещё 5. */
+        $okU = mail_send_unisender($to, $subject, $html, [
+            'attach'          => $opt['attachments'] ?? ($opt['attach'] ?? null),
             'from_addr'       => $accT['from_addr'] ?? null,
             'from_name'       => $opt['from_name'] ?? ($accT['from_name'] ?? null),
             'unsubscribe_url' => $opt['unsubscribe_url'] ?? '',
             'reply_to'        => $opt['reply_to'] ?? '',
         ]);
+        /* Личное письмо, ушедшее резервным каналом, тоже в журнале «Письма
+         * участникам»: иначе там оставалась только неудачная попытка основного
+         * ящика, и письмо, которое на деле дошло, выглядело недоставленным. */
+        if (empty($opt['from_queue'])) {
+            if (!function_exists('mail_archive_store') && is_file(BASE_PATH . '/core/mail_archive.php')) {
+                require_once BASE_PATH . '/core/mail_archive.php';
+            }
+            if (function_exists('mail_archive_store')) {
+                mail_archive_store($to, $subject, $html, $opt, $okU, $okU ? '' : (function_exists('mail_last_error') ? mail_last_error() : ''));
+            }
+        }
+        return $okU;
     }
     $to = mail_addr_ascii(trim($to));
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {

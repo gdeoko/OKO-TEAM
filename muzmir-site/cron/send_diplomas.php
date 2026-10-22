@@ -600,13 +600,20 @@ function _diploma_group_html(array $blocks, string $name, string $comp): string 
         } else {
             $meta = 'Звание: ' . h($__res !== '' ? $__res : $__rank);
         }
+        if (!function_exists('diploma_link') && is_file(BASE_PATH . '/core/paylink.php')) require_once BASE_PATH . '/core/paylink.php';
+        $dl  = function_exists('diploma_link') && (string)($b['number'] ?? '') !== '' ? diploma_link((string)$b['number']) : '';
         $img = !empty($b['img'])
             ? '<img src="' . h((string)$b['img']) . '" alt="' . h($lbl) . '" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:12px;border:1px solid ' . MM_LINE . ';box-shadow:0 6px 20px rgba(23,48,122,.16);">'
             : '';
         $cards .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;">'
             . '<tr><td style="padding:0 0 8px;"><div style="font-family:Georgia,serif;font-weight:700;color:' . MM_NAVY . ';font-size:17px;">' . h($lbl) . '</div>'
             . '<div style="font-size:13px;color:' . MM_MUTED . ';">' . $meta . ' · № ' . h((string)$b['number']) . ' · QR проверки подлинности · PDF во вложении</div></td></tr>'
-            . '<tr><td align="center">' . $img . '</td></tr></table>';
+            . '<tr><td align="center">' . $img . '</td></tr>'
+            /* Ссылка на сам файл — на случай, если вложение не дошло: почтовые
+               службы режут крупные PDF, а резервный канал до 22.10.2026 вложений
+               не передавал вовсе. Ссылка подписанная, открывается без входа. */
+            . ($dl !== '' ? '<tr><td align="center" style="padding:10px 0 0;"><a href="' . h($dl) . '" style="color:' . MM_NAVY . ';font-weight:700;">Скачать PDF</a></td></tr>' : '')
+            . '</table>';
     }
 
     $inner = '<h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">Ваши наградные материалы</h1>'
