@@ -464,7 +464,14 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 $gid = (int) cfgv('vk_group_id', 211325055);
                 if ($pid > 0 && $gid > 0) $vkPostUrl = 'https://vk.com/wall-' . $gid . '_' . $pid;
             }
-            if ($ok && $cover) { $s = vk_story_photo($cover, url('/competition/' . (string) $c['slug'])); $report['vk_story'] = empty($s['error']) ? 'сторис опубликована' : ('сторис: ' . ($s['error']['error_msg'] ?? '?')); }
+            // Сторис — вертикальный кадр: широкий постер в нём срезался бы, поэтому
+            // для общих волн и итогов своя картинка 9:16 с афишами целиком.
+            $storyImg = $cover;
+            if (in_array($tplWave, ['d3', 'last', 'closed', 'results'], true) && function_exists('launch_story_poster')) {
+                $storyImg = launch_story_poster($tplWave, $tplWave === 'results' ? [$c] : $siblings,
+                                                $tplWave === 'results' ? (string) ($c['name'] ?? '') : '') ?: $cover;
+            }
+            if ($ok && $storyImg) { $s = vk_story_photo($storyImg, url('/competition/' . (string) $c['slug'])); $report['vk_story'] = empty($s['error']) ? 'сторис опубликована' : ('сторис: ' . ($s['error']['error_msg'] ?? '?')); }
         }
     }
     // ---- МАКС: канал центра ----

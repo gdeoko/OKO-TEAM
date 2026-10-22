@@ -63,6 +63,97 @@ function lp_load_cover(array $c) {
 }
 
 /**
+ * ВЕРТИКАЛЬНАЯ КАРТИНКА ДЛЯ СТОРИС (1080×1920).
+ *
+ * Сторис ВК — кадр 9:16, и широкий постер волны в нём либо срезается по
+ * краям, либо съёживается до полоски с нечитаемыми гербами. Здесь афиши стоят
+ * одна под другой, каждая целиком, под той же золотой плашкой-заголовком.
+ * Слово владельца 22.10.2026: афиши везде видны полностью, с рядом гербов.
+ */
+function launch_story_poster(string $wave, array $comps, string $extra = ''): ?string {
+    if (!function_exists('imagecreatetruecolor') || !function_exists('imagettftext')) return null;
+    $font = lp_font_bold();
+    $caption = lp_wave_caption($wave);
+    if ($font === '' || $caption === '') return null;
+
+    $sig = 'story-v3|' . $wave . '|' . $extra;
+    foreach ($comps as $c) $sig .= '|' . ($c['id'] ?? '') . ':' . ($c['cover'] ?? '') . ':' . @filemtime(BASE_PATH . '/public/' . ltrim(preg_replace('~^https?://[^/]+~i', '', (string) ($c['cover'] ?? '')), '/'));
+    $dir = BASE_PATH . '/public/uploads/launch/';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    // JPEG, не PNG: сторис со ссылкой ВК в PNG не берёт — «error_code 4603, Upload failed»
+    // приходит внутри upload_result, проверено 22.10.2026; без ссылки PNG проходит.
+    $out = $dir . 'story_' . $wave . '_' . substr(md5($sig), 0, 16) . '.jpg';
+    if (is_file($out)) return $out;
+
+    $covers = [];
+    foreach ($comps as $c) { $g0 = lp_load_cover($c); if ($g0) $covers[] = $g0; }
+    $n = min(count($covers), 4);
+    if ($n === 0) return null;
+
+    $W = 1080; $H = 1920;
+    /* Безопасные поля: сверху ВК кладёт полосу просмотра и имя сообщества,
+       снизу — кнопку ссылки и поле ответа. В них ни текста, ни гербов. */
+    $safeTop = 120; $safeBot = 180;
+    $capH = 190; $gap = 10; $pad = 16;
+    $botH = $extra !== '' ? 90 : 0;
+    $img = imagecreatetruecolor($W, $H);
+    for ($y = 0; $y < $H; $y++) {
+        $t = $y / $H;
+        imageline($img, 0, $y, $W, $y, imagecolorallocate($img, (int) (12 + $t * 10), (int) (18 + $t * 20), (int) (44 + $t * 46)));
+    }
+    $navy = imagecolorallocate($img, 12, 22, 58);
+    $gold = imagecolorallocate($img, 224, 190, 92);
+
+    // Афиши столбиком: ширина — сколько позволяет высота, но не шире кадра.
+    $availH = $H - $safeTop - $capH - $botH - $safeBot - $pad * 2 - $gap * ($n - 1);
+    $maxW = $W - $pad * 2;
+    $sumAr = 0.0;
+    for ($i = 0; $i < $n; $i++) $sumAr += imagesy($covers[$i]) / max(1, imagesx($covers[$i]));
+    $wFit = (int) floor(min($maxW, $availH / max(0.01, $sumAr)));
+    $y = $safeTop + $capH + $pad + (int) (($availH - $wFit * $sumAr) / 2);
+    for ($i = 0; $i < $n; $i++) {
+        $src = $covers[$i]; $sw = imagesx($src); $sh = imagesy($src);
+        $dw = $wFit; $dh = (int) round($sh * $dw / $sw);
+        $x = (int) (($W - $dw) / 2);
+        imagefilledrectangle($img, $x - 3, $y - 3, $x + $dw + 2, $y + $dh + 2, $gold);
+        imagecopyresampled($img, $src, $x, $y, 0, 0, $dw, $dh, $sw, $sh);
+        $y += $dh + $gap;
+        imagedestroy($src);
+    }
+
+    // Плашка-заголовок.
+    $goldA = [212, 175, 55]; $goldB = [176, 138, 44];
+    for ($yy = 0; $yy < $capH; $yy++) {
+        $t = $yy / $capH;
+        imageline($img, 0, $safeTop + $yy, $W, $safeTop + $yy, imagecolorallocate($img,
+            (int) ($goldA[0] + ($goldB[0] - $goldA[0]) * $t), (int) ($goldA[1] + ($goldB[1] - $goldA[1]) * $t), (int) ($goldA[2] + ($goldB[2] - $goldA[2]) * $t)));
+    }
+    imagefilledrectangle($img, 0, $safeTop, $W, $safeTop + 5, $navy);
+    imagefilledrectangle($img, 0, $safeTop + $capH - 6, $W, $safeTop + $capH - 1, $navy);
+    $size = 60;
+    $lines = lp_wrap($caption, $font, $size, $W - 90);
+    while (count($lines) > 2 && $size > 36) { $size -= 4; $lines = lp_wrap($caption, $font, $size, $W - 90); }
+    $lh = (int) ($size * 1.2);
+    $ty = $safeTop + (int) (($capH - $lh * count($lines)) / 2);
+    foreach ($lines as $ln) {
+        $bb = imagettfbbox($size, 0, $font, $ln);
+        imagettftext($img, $size, 0, (int) (($W - abs($bb[2] - $bb[0])) / 2), $ty + $size, $navy, $font, $ln);
+        $ty += $lh;
+    }
+    if ($botH > 0) {
+        $s2 = 40; $ln = lp_wrap($extra, $font, $s2, $W - 100)[0] ?? $extra;
+        $bb = imagettfbbox($s2, 0, $font, $ln);
+        imagettftext($img, $s2, 0, (int) (($W - abs($bb[2] - $bb[0])) / 2), $H - $safeBot - (int) (($botH - $s2) / 2), $gold, $font, $ln);
+    }
+
+    $tmp = $out . '.tmp' . getmypid();
+    $ok = @imagejpeg($img, $tmp, 92);
+    imagedestroy($img);
+    if ($ok && is_file($tmp)) { @chmod($tmp, 0664); if (@rename($tmp, $out)) return $out; @unlink($tmp); }
+    return is_file($out) ? $out : null;
+}
+
+/**
  * Композит-афиша для общего поста (d3/last/closed) или результатов.
  * @param string $wave  d3|last|closed|results
  * @param array  $comps конкурсы, чьи афиши включить (открытые — для общих; [конкурс] — для результатов)
