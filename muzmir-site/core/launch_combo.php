@@ -470,6 +470,12 @@ function launch_reminder_subject(string $wave): string {
 }
 
 function launch_reminder_body(string $wave): string {
+    /* plural_ru живёт в chat_priority.php. Подключалось оно только в теме
+       письма, а тема с ручным текстом (launch_mail_subject:<волна>) выходит
+       раньше — и 22.10.2026 с 09:02 очередь рассылок падала каждую минуту на
+       «Call to undefined function plural_ru()»: встали напоминание «осталось
+       3 дня» и остаток рассылки №6. */
+    if (!function_exists('plural_ru') && is_file(BASE_PATH . '/core/chat_priority.php')) require_once BASE_PATH . '/core/chat_priority.php';
     $navy = MM_NAVY; $ink = MM_INK; $muted = MM_MUTED;
     $base = mmc_base();
     try {
