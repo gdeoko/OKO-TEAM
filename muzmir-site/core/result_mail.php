@@ -277,7 +277,7 @@ function result_mail_send(int $appId): bool {
             ? auth_link_url('/awards', $__uid) . (str_contains(auth_link_url('/awards', $__uid), '?') ? '&' : '?')
             : url('/awards') . '?')
             . 'comp=' . (int) $a['competition_id'] . '&app=' . $appId;
-        $inner .= '<p style="margin:0 0 14px;">Наградные дипломы придут на эту почту в течение '
+        $inner .= '<p style="margin:0 0 14px;">Наградные дипломы придут на эту почту через '
             . '<b style="color:' . $navy . ';">5 рабочих дней</b> и появятся в личном кабинете.</p>'
             . '<p style="margin:0 0 8px;font-size:14px;color:' . RM_INK . ';line-height:1.65;">' . h(rm_award_hint($result))
             . ' Награда с Вашим именем - памятное подтверждение успеха для дома, сцены и портфолио.</p>'
