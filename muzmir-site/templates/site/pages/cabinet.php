@@ -2502,7 +2502,8 @@ ob_start(); ?>
   <div style="background:var(--card,#fff);color:var(--ink,#17307A);max-width:440px;width:100%;border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <b style="font-size:18px;display:block;margin-bottom:8px">Запрос доступа к Вашему кабинету</b>
     <p style="margin:0 0 10px;line-height:1.5">Администратор колл-центра Культурного центра «Музыкальный Мир» просит доступ к Вашему личному кабинету на <b id="lsMin"></b> минут, чтобы помочь оформить заявку или заказ.</p>
-    <p class="cab-meta" style="margin:0 0 16px;line-height:1.5">Оплату, почту, пароль и настройки администратор менять не сможет. Всё, что он сделает, появится в «Настройках». Закрыть доступ можно в любой момент.</p>
+    <p style="margin:0 0 10px;line-height:1.5">Администратор будет видеть экран Вашего кабинета и страниц нашего сайта, чтобы подсказывать, что делать, и сможет показать меткой, куда нажать.</p>
+    <p class="cab-meta" style="margin:0 0 16px;line-height:1.5">Оплату, почту, пароль и настройки администратор менять не сможет. Страницу оплаты банка и пароли он не видит. Всё, что он сделает, появится в «Настройках». Закрыть доступ можно в любой момент.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn btn--primary" data-ls-answer="1">Согласен</button>
       <button type="button" class="btn btn--ghost" data-ls-answer="0">Отказать</button>
@@ -2510,36 +2511,41 @@ ob_start(); ?>
     <p class="cab-meta" id="lsAskMsg" style="margin:10px 0 0"></p>
   </div>
 </div>
-<div id="lsOpen" style="display:none;position:sticky;top:0;z-index:9999;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center;padding:9px 16px;background:#17307A;color:#fff;font:600 13px/1.35 Montserrat,system-ui,sans-serif;text-align:center">
-  <span>Доступ к кабинету открыт администратору до <b id="lsUntil"></b>.</span>
-  <button type="button" data-ls-close style="background:#fff;color:#17307A;border:0;border-radius:8px;padding:5px 12px;font:inherit;cursor:pointer">Закрыть доступ</button>
-</div>
 <script>
 (function(){
   var API=<?= json_encode(url('/api/v1/ls_access')) ?>, CSRF=<?= json_encode(csrf_token()) ?>;
-  var ask=document.getElementById('lsAsk'), bar=document.getElementById('lsOpen'), cur=null, grant=null, busy=false;
-  if(bar) document.body.insertBefore(bar, document.body.firstChild);
+  var LW=<?= json_encode(function_exists('ls_watch_config') ? ls_watch_config() : null, JSON_UNESCAPED_SLASHES) ?>;
+  var ask=document.getElementById('lsAsk'), cur=null, busy=false;
+  /* Окно — прямо в body: внутри разметки кабинета у него свой слой, и на узком
+     телефоне плашка про cookie (z-index 945) перекрывала кнопку «Согласен». */
+  document.body.appendChild(ask);
+  /* Доступ открыт — полосу «открыт до …», показ экрана и указку ведёт
+     /assets/js/ls_watch.js. Шапка сайта подключает его сама, а сразу после
+     «Согласен» страница ещё старая — подключаем здесь. */
+  function watchOn(){
+    if(!LW||window.__lsWatch) return;
+    window.LS_WATCH=LW;
+    var go=function(){ var s=document.createElement('script'); s.src=LW.js; document.body.appendChild(s); };
+    if(window.rrweb) return go();
+    var l=document.createElement('script'); l.src=LW.lib; l.onload=go; document.body.appendChild(l);
+  }
   function post(data){ data._csrf=CSRF; return fetch(API,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data)}).then(function(r){return r.json();}); }
   function poll(){
     if(document.hidden||busy) return;
     fetch(API,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
       if(!d||!d.ok||d.impersonating) return;
-      cur=d.pending; grant=d.granted;
+      cur=d.pending;
       if(cur){ document.getElementById('lsMin').textContent=cur.minutes; ask.style.display='flex'; }
       else ask.style.display='none';
-      if(grant){ document.getElementById('lsUntil').textContent=grant.until; bar.style.display='flex'; } else bar.style.display='none';
+      if(d.granted) watchOn();
     }).catch(function(){});
   }
   ask.addEventListener('click',function(e){
     var b=e.target.closest('[data-ls-answer]'); if(!b||!cur) return;
     busy=true; post({action:'answer',id:cur.id,agree:b.getAttribute('data-ls-answer')}).then(function(d){
       document.getElementById('lsAskMsg').textContent=d&&d.ok?'':((d&&d.error)||'Не получилось, попробуйте ещё раз.');
-      if(d&&d.ok) ask.style.display='none';
+      if(d&&d.ok){ ask.style.display='none'; if(d.granted) watchOn(); }
     }).finally(function(){busy=false;poll();});
-  });
-  bar.addEventListener('click',function(e){
-    if(!e.target.closest('[data-ls-close]')||!grant) return;
-    busy=true; post({action:'close',id:grant.id}).finally(function(){busy=false;poll();});
   });
   poll(); setInterval(poll,4000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden) poll(); });

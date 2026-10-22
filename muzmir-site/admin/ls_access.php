@@ -30,6 +30,30 @@ if (input('ajax') === 'state') {
     ]);
 }
 
+/* ─────────── Показ экрана: кадры и указка ─────────── */
+ls_watch_boot();
+if (input('ajax') === 'frames' || input('ajax') === 'point') {
+    $r = ls_row((int) input('id'));
+    if (!$r || (int) $r['admin_id'] !== $meId) json_out(['ok' => false], 404);
+    if ((string) $r['status'] !== 'granted') json_out(['ok' => true, 'status' => (string) $r['status'], 'frames' => []]);
+    if (input('ajax') === 'point') {
+        if (!csrf_check()) json_out(['ok' => false, 'error' => 'csrf'], 403);
+        ls_point_set((int) $r['id'], (float) input('x'), (float) input('y'), (string) input('path'));
+        ls_log_for((int) $r['id'], 'Указка: «нажмите сюда»');
+        json_out(['ok' => true]);
+    }
+    ls_watch_touch((int) $r['id']);
+    // Пачки уже лежат JSON-текстом — вставляем как есть, без второго разбора.
+    $parts = [];
+    foreach (ls_frames_since((int) $r['id'], (int) input('after')) as $f) {
+        $parts[] = '{"id":' . (int) $f['id'] . ',"full":' . (int) $f['full'] . ',"ev":' . $f['data'] . '}';
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo '{"ok":true,"status":"granted","left":' . max(0, (int) strtotime((string) $r['granted_until']) - time())
+        . ',"frames":[' . implode(',', $parts) . ']}';
+    exit;
+}
+
 /* ─────────── Действия ─────────── */
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела, обновите страницу.', 'error'); admin_redirect('ls_access'); }
@@ -59,6 +83,92 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if ($r && (int) $r['admin_id'] === $meId) { ls_close($id, 'admin'); audit('ls_cancel', 'user', (int) $r['user_id'], ['ls_id' => $id]); }
         admin_redirect('ls_access');
     }
+}
+
+/* ─────────── Окно просмотра экрана участника ─────────── */
+$watch = (int) input('watch') > 0 ? ls_row((int) input('watch')) : null;
+if ($watch && (int) $watch['admin_id'] === $meId) {
+    $wu = one("SELECT full_name, email FROM users WHERE id=?", [(int) $watch['user_id']]);
+    $wid = (int) $watch['id'];
+    ob_start(); ?>
+<link rel="stylesheet" href="<?= h(asset('css/rrweb-all.min.css')) ?>">
+<div class="page-head">
+  <h1>Экран участника</h1>
+  <p class="muted small"><b><?= h((string) ($wu['full_name'] ?? '')) ?></b> · <?= h((string) ($wu['email'] ?? '')) ?> ·
+    доступ до <b><?= h(substr((string) $watch['granted_until'], 11, 5)) ?></b>.
+    Нажмите на экран участника в том месте, куда ему нужно нажать, — у него там загорится метка «Нажмите сюда».</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+    <a class="btn btn--ghost btn--sm" href="<?= a_link('ls_access', ['id' => $wid]) ?>">Назад</a>
+    <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="do" value="enter"><input type="hidden" name="id" value="<?= $wid ?>">
+      <button class="btn btn--primary btn--sm">Войти в кабинет участника</button></form>
+    <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="do" value="cancel"><input type="hidden" name="id" value="<?= $wid ?>">
+      <button class="btn btn--ghost btn--sm">Закрыть доступ</button></form>
+  </div>
+</div>
+<div class="card" style="padding:12px">
+  <p class="small" id="lsvState" style="margin:0 0 10px">Ждём экран участника… Он должен быть на нашем сайте, страница открыта.</p>
+  <div id="lsvBox" style="position:relative;overflow:hidden;background:#0f1730;border-radius:12px;min-height:200px">
+    <div id="lsvRoot" style="transform-origin:0 0;position:absolute;left:0;top:0"></div>
+  </div>
+</div>
+<script src="<?= h(asset('js/vendor/rrweb-all.min.js')) ?>"></script>
+<script>
+(function(){
+  var ID=<?= $wid ?>, CSRF=<?= json_encode(csrf_token()) ?>, after=0, rep=null, path='/', W=0, H=0, scale=1, dead=false;
+  var box=document.getElementById('lsvBox'), root=document.getElementById('lsvRoot'), st=document.getElementById('lsvState');
+  function fit(){
+    if(!W||!H) return;
+    var maxH=Math.max(320, window.innerHeight-260);
+    scale=Math.min(box.clientWidth/W, maxH/H, 1);
+    root.style.transform='scale('+scale+')';
+    root.style.left=Math.max(0,Math.round((box.clientWidth-W*scale)/2))+'px';
+    box.style.height=Math.round(H*scale)+'px';
+  }
+  window.addEventListener('resize', fit);
+  function make(first){
+    rep=new rrweb.Replayer([], {root:root, liveMode:true, unpackFn:rrweb.unpack, mouseTail:false, showWarning:false});
+    rep.on('resize', function(d){ W=d.width; H=d.height; fit(); });
+    rep.startLive(first.timestamp-800);
+    /* Слой поверх экрана: ловит нажатие администратора для указки. */
+    var wrap=root.querySelector('.replayer-wrapper');
+    var ov=document.createElement('div');
+    ov.style.cssText='position:absolute;inset:0;z-index:10;cursor:crosshair';
+    (wrap||root).appendChild(ov);
+    ov.addEventListener('click', function(e){
+      var r=ov.getBoundingClientRect(), x=(e.clientX-r.left)/scale, y=(e.clientY-r.top)/scale;
+      var win=rep.iframe&&rep.iframe.contentWindow, sx=win?win.scrollX||0:0, sy=win?win.scrollY||0:0;
+      var m=document.createElement('div');
+      m.style.cssText='position:absolute;left:'+(x-18)+'px;top:'+(y-18)+'px;width:36px;height:36px;border-radius:50%;border:4px solid #E53935;pointer-events:none';
+      ov.appendChild(m); setTimeout(function(){m.remove();},2500);
+      fetch('?p=ls_access&ajax=point&id='+ID,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:new URLSearchParams({x:x+sx,y:y+sy,path:path,_csrf:CSRF})});
+    });
+  }
+  function feed(evs){
+    for(var i=0;i<evs.length;i++){
+      var e=evs[i], u=null;
+      try{ u=typeof e==='string'?rrweb.unpack(e):e; }catch(x){ continue; }
+      if(u.type===4 && u.data && u.data.href){ try{ path=new URL(u.data.href).pathname; }catch(x){} }
+      if(!rep){ if(u.type!==4 && u.type!==2) continue; make(u); }
+      rep.addEvent(e);
+    }
+  }
+  function poll(){
+    if(dead) return;
+    fetch('?p=ls_access&ajax=frames&id='+ID+'&after='+after,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok){ setTimeout(poll,3000); return; }
+      if(d.status!=='granted'){ dead=true; st.textContent='Доступ закрыт.'; return; }
+      (d.frames||[]).forEach(function(f){ after=Math.max(after,f.id); feed(f.ev||[]); });
+      if(rep) st.textContent='Экран участника — вживую. Страница: '+path+' · осталось '+Math.ceil(d.left/60)+' мин.';
+      setTimeout(poll,1000);
+    }).catch(function(){ setTimeout(poll,3000); });
+  }
+  poll();
+})();
+</script>
+<?php
+    admin_layout('Экран участника', ob_get_clean(), 'ls_access');
+    exit;
 }
 
 /* ─────────── Данные страницы ─────────── */
@@ -121,6 +231,7 @@ ob_start(); ?>
       <p style="margin:0 0 10px"><b style="color:#2E7D32">Участник согласился.</b> Доступ открыт до <b data-until></b>.</p>
       <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="do" value="enter"><input type="hidden" name="id" value="<?= (int) $cur['id'] ?>">
         <button class="btn btn--primary">Войти в кабинет участника</button></form>
+      <a class="btn btn--navy" style="margin-left:6px" href="<?= a_link('ls_access', ['watch' => (int) $cur['id']]) ?>">Смотреть экран участника</a>
       <form method="post" style="display:inline;margin-left:6px"><?= csrf_field() ?><input type="hidden" name="do" value="cancel"><input type="hidden" name="id" value="<?= (int) $cur['id'] ?>">
         <button class="btn btn--ghost btn--sm">Закрыть доступ</button></form>
     </div>
@@ -185,6 +296,7 @@ ob_start(); ?>
       <td class="small"><?= h((string) ($r['admin_name'] ?: '—')) ?></td>
       <td class="small"><span class="badge <?= h($sc) ?>"><?= h($sl) ?></span>
         <?php if ((string) $r['answered_at'] !== '' && (string) $r['status'] !== 'denied'): ?><br><span class="muted">согласие <?= h(substr((string) $r['answered_at'], 11, 5)) ?>, IP <?= h((string) $r['consent_ip']) ?></span><?php endif; ?>
+        <?php if ((int) ($r['watched_sec'] ?? 0) > 0): ?><br><span class="muted">показ экрана: <?= max(1, (int) round((int) $r['watched_sec'] / 60)) ?> мин</span><?php endif; ?>
         <?php if ((string) $r['closed_by'] !== '' && (string) $r['status'] === 'closed'): ?><br><span class="muted">закрыт <?= h($byRu[(string) $r['closed_by']] ?? '') ?></span><?php endif; ?></td>
       <td class="small"><?php if ($lg): ?><?php foreach ($lg as $e): ?><?= h((string) $e['t']) ?> · <?= h((string) $e['a']) ?><br><?php endforeach; ?><?php else: ?><span class="muted">—</span><?php endif; ?></td>
     </tr>

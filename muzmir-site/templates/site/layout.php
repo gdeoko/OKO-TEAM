@@ -154,6 +154,13 @@ html body{padding-top:0 !important}
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
 <?= function_exists('ls_banner_html') ? ls_banner_html() : '' /* администратор в кабинете участника — core/ls_access.php */ ?>
+<?php /* Участник дал согласие и доступ открыт — подключаем показ экрана (core/ls_access.php).
+         В браузере администратора, зашедшего в чужой кабинет, не подключаем: он показывал бы сам себя. */
+if ($u && function_exists('ls_granted_light') && !ls_active() && ls_granted_light((int) $u['id'])): $__lw = ls_watch_config(); ?>
+<script>window.LS_WATCH=<?= json_encode($__lw, JSON_UNESCAPED_SLASHES) ?>;</script>
+<script src="<?= h($__lw['lib']) ?>" defer></script>
+<script src="<?= h($__lw['js']) ?>" defer></script>
+<?php endif; ?>
 <div class="app-bg" aria-hidden="true">
   <?php /* Тёмная тема: видео-фон. Здесь стоял /assets/video/bg/earth.mp4 — файла и
            каталога не существовало никогда: браузер получал 404 на КАЖДОЙ странице

@@ -110,6 +110,9 @@ function ls_answer(int $id, int $userId, bool $agree): bool {
     $r = ls_row($id);
     if (!$r || (int) $r['user_id'] !== $userId || (string) $r['status'] !== 'pending') return false;
     $now = ls_now();
+    // Новое согласие заменяет прежний открытый доступ: открытым бывает один.
+    if ($agree) q("UPDATE ls_access SET status='closed', closed_at=?, closed_by='user'
+                    WHERE user_id=? AND status='granted' AND id<>?", [$now, $userId, $id]);
     update('ls_access', [
         'status'        => $agree ? 'granted' : 'denied',
         'answered_at'   => $now,
@@ -127,6 +130,8 @@ function ls_close(int $id, string $by): void {
     ls_boot();
     q("UPDATE ls_access SET status='closed', closed_at=?, closed_by=?
         WHERE id=? AND status IN ('granted','pending')", [ls_now(), $by, $id]);
+    // Кадры показа экрана живут только пока доступ открыт.
+    try { q("DELETE FROM ls_frames WHERE ls_id=?", [$id]); } catch (\Throwable $e) { /* таблицы ещё нет */ }
 }
 
 /** Админская сессия этого браузера — напрямую из sessions, мимо current_user(). */
@@ -263,4 +268,115 @@ function ls_banner_html(): string {
         . '</div>'
         . '<script>(function(){var u=' . (int) strtotime((string) $c['row']['granted_until']) . '*1000,e=document.getElementById("lsLeft");'
         . 'setInterval(function(){var m=Math.ceil((u-Date.now())/60000);if(m<=0){location.href=' . json_encode(url('/ls-exit')) . ';return;}if(e)e.textContent=m;},15000);})();</script>';
+}
+
+/* =====================================================================
+ *  ПОКАЗ ЭКРАНА УЧАСТНИКА АДМИНИСТРАТОРУ (решение владельца 22.10.2026).
+ *
+ *  Администратор диктует по телефону и видит, что человек делает на сайте.
+ *  Согласие то же, общее: «Согласен» в окне запроса открывает и вход в
+ *  кабинет, и показ экрана (слово владельца — одно согласие на оба режима).
+ *
+ *  Как устроено. В браузере участника работает rrweb (запись страницы как
+ *  дерева элементов, не видео): включается ТОЛЬКО когда администратор
+ *  открыл окно просмотра (ls_access.watch_at свежее LS_WATCH_ALIVE секунд),
+ *  и шлёт события пачками раз в секунду (api/v1/ls_stream.php). Окно
+ *  просмотра в админке забирает их и проигрывает вживую.
+ *  Указка: администратор нажимает место в окне просмотра — у участника на
+ *  этом месте страницы на несколько секунд загорается метка «нажмите сюда».
+ *
+ *  Чего не видно: чужие сайты (касса ЮKassa, банк, ВКонтакте, почта) — запись
+ *  живёт только на страницах нашего сайта. Пароли закрыты точками.
+ *  Кадры не хранятся: живут минуты (LS_FRAME_TTL) и стираются вместе с
+ *  закрытием доступа.
+ * ===================================================================== */
+const LS_WATCH_ALIVE = 15;     // сколько секунд после последнего опроса окна просмотра считаем, что смотрят
+const LS_FRAME_TTL   = 300;    // сколько секунд живёт пачка событий
+
+function ls_watch_boot(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    ls_boot();
+    foreach (['watch_at' => "TEXT DEFAULT ''", 'point' => "TEXT DEFAULT ''", 'watched_sec' => "INTEGER DEFAULT 0"] as $c => $d) {
+        try { db()->exec("ALTER TABLE ls_access ADD COLUMN $c $d"); } catch (\Throwable $e) { /* уже есть */ }
+    }
+    db()->exec("CREATE TABLE IF NOT EXISTS ls_frames (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        ls_id      INTEGER NOT NULL,
+        full       INTEGER DEFAULT 0,        -- в пачке есть полный снимок страницы
+        data       TEXT NOT NULL,            -- JSON-массив упакованных событий rrweb
+        created_at INTEGER NOT NULL          -- unix-время, чтобы чистить без разбора дат
+    )");
+    db()->exec("CREATE INDEX IF NOT EXISTS ls_frames_ls ON ls_frames(ls_id, id)");
+}
+
+/** Смотрит ли администратор прямо сейчас. */
+function ls_watching(array $r): bool {
+    $w = (string) ($r['watch_at'] ?? '');
+    return $w !== '' && (time() - (int) strtotime($w)) <= LS_WATCH_ALIVE;
+}
+
+/** Пачка событий от участника. Старое и закрытое — стираем тут же. */
+function ls_frames_push(int $lsId, bool $full, string $json): void {
+    ls_watch_boot();
+    insert('ls_frames', ['ls_id' => $lsId, 'full' => $full ? 1 : 0, 'data' => $json, 'created_at' => time()]);
+    q("DELETE FROM ls_frames WHERE created_at < ?", [time() - LS_FRAME_TTL]);
+    q("DELETE FROM ls_frames WHERE ls_id NOT IN (SELECT id FROM ls_access WHERE status='granted')");
+}
+
+/**
+ * События для окна просмотра. С нуля — начиная с последнего полного снимка:
+ * без него проигрывать нечего.
+ */
+function ls_frames_since(int $lsId, int $after): array {
+    ls_watch_boot();
+    if ($after <= 0) {
+        $from = (int) (scalar("SELECT MAX(id) FROM ls_frames WHERE ls_id=? AND full=1", [$lsId]) ?: 0);
+        if ($from <= 0) return [];
+        return all("SELECT id, full, data FROM ls_frames WHERE ls_id=? AND id>=? ORDER BY id LIMIT 200", [$lsId, $from]);
+    }
+    return all("SELECT id, full, data FROM ls_frames WHERE ls_id=? AND id>? ORDER BY id LIMIT 200", [$lsId, $after]);
+}
+
+/** Окно просмотра живо: отмечаем и копим время показа для журнала. */
+function ls_watch_touch(int $lsId): void {
+    ls_watch_boot();
+    $r = ls_row($lsId);
+    if (!$r) return;
+    $prev = (string) ($r['watch_at'] ?? '');
+    $add = 0;
+    if ($prev !== '') { $d = time() - (int) strtotime($prev); if ($d > 0 && $d <= LS_WATCH_ALIVE) $add = $d; }
+    else ls_log_for($lsId, 'Показ экрана участника');
+    q("UPDATE ls_access SET watch_at=?, watched_sec=COALESCE(watched_sec,0)+? WHERE id=?", [ls_now(), $add, $lsId]);
+}
+
+/** Указка администратора: место на странице участника. */
+function ls_point_set(int $lsId, float $x, float $y, string $path): void {
+    ls_watch_boot();
+    $p = ['x' => round($x), 'y' => round($y), 'path' => mb_substr($path, 0, 200), 't' => (int) round(microtime(true) * 1000)];
+    q("UPDATE ls_access SET point=? WHERE id=?", [json_encode($p, JSON_UNESCAPED_UNICODE), $lsId]);
+}
+
+function ls_point_get(array $r): ?array {
+    $p = json_decode((string) ($r['point'] ?? ''), true);
+    return is_array($p) ? $p : null;
+}
+
+/**
+ * Открыт ли доступ к кабинету участника — лёгкое чтение для шапки сайта.
+ * ls_granted_for() попутно гасит просроченное (запись в базу), а шапка
+ * рисуется на каждой странице у каждого вошедшего: там нужно только читать.
+ */
+function ls_granted_light(int $userId): bool {
+    try {
+        return (int) (scalar("SELECT id FROM ls_access WHERE user_id=? AND status='granted' AND granted_until > ? LIMIT 1",
+                             [$userId, ls_now()]) ?: 0) > 0;
+    } catch (\Throwable $e) { return false; }   // таблицы ещё нет — доступов не было
+}
+
+/** Скрипты показа экрана для страницы участника (шапка сайта, кабинет после согласия). */
+function ls_watch_config(): array {
+    return ['api' => url('/api/v1/ls_stream'), 'close' => url('/api/v1/ls_access'), 'csrf' => csrf_token(),
+            'lib' => asset('js/vendor/rrweb-all.min.js'), 'js' => asset('js/ls_watch.js')];
 }
