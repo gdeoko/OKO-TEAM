@@ -1,0 +1,8 @@
+# Тяжелое в репозиторий не кладем: отдается файлами и ссылкой на хранилище
+media/video/
+media/video_gotovo/
+media/video_dlya_sborki/
+media/fon/
+media/audio/src_*.mp3
+slajdy/gotovye/
+sborka/*.pptx
