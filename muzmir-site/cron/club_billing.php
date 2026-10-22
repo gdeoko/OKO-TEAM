@@ -124,14 +124,23 @@ try {
        Каждое напоминание отправляется однократно (метка в settings), тон мягкий:
        показываем, что человек теряет, и даём кнопку вернуться. */
     $dunned = 0;
-    foreach ([1 => 'd1', 3 => 'd3', 7 => 'd7', 14 => 'd14'] as $day => $tag) {
+    /* НОЧЬЮ И В ВОСКРЕСЕНЬЕ НЕ ШЛЁМ (правило владельца № 7). Дожим — не личное
+       уведомление, а зазывание обратно: до 22.10.2026 все четыре таких письма
+       ушли ровно в 00:00 — дата окончания сменялась в полночь, и первый же
+       ночной запуск находил человека. Теперь ждём окна, а за пропущенный день
+       (воскресенье) догоняем на следующий: окно отбора — два дня, повтор
+       не даёт метка club_dun. */
+    if (!function_exists('outreach_window_ok') && is_file(BASE_PATH . '/core/outreach_window.php')) require_once BASE_PATH . '/core/outreach_window.php';
+    $dunOpen = !function_exists('outreach_window_ok') || outreach_window_ok();
+    foreach ($dunOpen ? [1 => 'd1', 3 => 'd3', 7 => 'd7', 14 => 'd14'] : [] as $day => $tag) {
         $rows = all(
             "SELECT m.*, u.email, u.full_name
                FROM club_members m JOIN users u ON u.id = m.user_id
               WHERE m.active = 0 AND COALESCE(m.expires_at,'') <> ''
-                AND date(m.expires_at) = date('now','localtime', '-' || ? || ' days')
+                AND date(m.expires_at) BETWEEN date('now','localtime', '-' || ? || ' days')
+                                           AND date('now','localtime', '-' || ? || ' days')
                 AND COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0
-              LIMIT 100", [$day]
+              LIMIT 100", [$day + 1, $day]
         );
         foreach ($rows as $m) {
             $uid = (int) $m['user_id'];
