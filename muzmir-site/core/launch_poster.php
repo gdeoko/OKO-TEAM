@@ -77,7 +77,7 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
     if ($caption === '') return null;
 
     // Кэш по хэшу (волна + список афиш + подпись).
-    $sig = 'contain-v2|' . $wave . '|' . $extra;   // v2: афиши целиком, без обрезки
+    $sig = 'contain-v3|' . $wave . '|' . $extra;   // v3: афиши целиком, без обрезки, холст 2400
     foreach ($comps as $c) $sig .= '|' . ($c['id'] ?? '') . ':' . ($c['cover'] ?? '') . ':' . @filemtime(BASE_PATH . '/public/' . ltrim(preg_replace('~^https?://[^/]+~i', '', (string) ($c['cover'] ?? '')), '/'));
     $key = substr(md5($sig), 0, 16);
     $dir = BASE_PATH . '/public/uploads/launch/';
@@ -102,13 +102,16 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
     $ar = $ars ? $ars[(int) floor((count($ars) - 1) / 2)] : 16 / 9;   // медиана пропорций
     $ar = max(1.0, min(2.4, $ar));
 
-    $W = 1200;
-    $capH  = 132;                         // высота верхней золотой плашки-заголовка
+    /* Холст вдвое крупнее прежнего: мелкие строки афиш и гербы при 1200 px
+       расплывались, а ВК и МАКС берут картинку до 2560 px. Все размеры — через $k. */
+    $k = 2;
+    $W = 1200 * $k;
+    $capH  = 132 * $k;                         // высота верхней золотой плашки-заголовка
     $cols  = $n <= 1 ? 1 : 2;
     $rows  = max(1, (int) ceil($n / $cols));
     $cellW = (int) ($W / $cols);
     $cellH = (int) round($cellW / $ar);
-    $botH  = $extra !== '' ? 84 : 0;      // полоса подписи (название конкурса у итогов)
+    $botH  = $extra !== '' ? 84 * $k : 0;      // полоса подписи (название конкурса у итогов)
     $areaY = $capH;
     $H = $capH + $rows * $cellH + $botH;
 
@@ -143,22 +146,22 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
     // Тонкие золотые разделители между афишами.
     if ($n >= 2) {
         $vEnd = $n === 3 ? $areaY + $cellH : $areaY + $rows * $cellH;
-        imagefilledrectangle($img, (int) ($W / 2) - 1, $areaY, (int) ($W / 2), $vEnd, $gold);
+        imagefilledrectangle($img, (int) ($W / 2) - $k, $areaY, (int) ($W / 2) + $k - 1, $vEnd, $gold);
         for ($r = 1; $r < $rows; $r++) {
             $yy = $areaY + $r * $cellH;
-            imagefilledrectangle($img, 0, $yy - 1, $W, $yy, $gold);
+            imagefilledrectangle($img, 0, $yy - $k, $W, $yy + $k - 1, $gold);
         }
         if ($n === 3) {
             $x3 = $rects[2][0];
-            imagefilledrectangle($img, $x3 - 1, $areaY + $cellH, $x3, $areaY + 2 * $cellH, $gold);
-            imagefilledrectangle($img, $x3 + $cellW - 1, $areaY + $cellH, $x3 + $cellW, $areaY + 2 * $cellH, $gold);
+            imagefilledrectangle($img, $x3 - $k, $areaY + $cellH, $x3 + $k - 1, $areaY + 2 * $cellH, $gold);
+            imagefilledrectangle($img, $x3 + $cellW - $k, $areaY + $cellH, $x3 + $cellW + $k - 1, $areaY + 2 * $cellH, $gold);
         }
     }
 
     // Полоса подписи под афишами.
     if ($botH > 0) {
         imagefilledrectangle($img, 0, $H - $botH, $W, $H, imagecolorallocate($img, 8, 12, 30));
-        imagefilledrectangle($img, 0, $H - $botH, $W, $H - $botH + 2, $gold);
+        imagefilledrectangle($img, 0, $H - $botH, $W, $H - $botH + 2 * $k, $gold);
     }
 
     // === ВЕРХ: золотая плашка-заголовок (текст тёмно-синим, высокий контраст, не поверх афиш) ===
@@ -169,12 +172,12 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
         $b = (int) ($goldA[2] + ($goldB[2] - $goldA[2]) * $t);
         imageline($img, 0, $y, $W, $y, imagecolorallocate($img, $r, $g, $b));
     }
-    imagefilledrectangle($img, 0, $capH - 4, $W, $capH - 1, $navy);   // нижняя грань плашки
+    imagefilledrectangle($img, 0, $capH - 4 * $k, $W, $capH - 1, $navy);   // нижняя грань плашки
 
-    $size = 52;
-    $lines = lp_wrap($caption, $font, $size, $W - 120);
-    while (count($lines) > 2 && $size > 30) { $size -= 4; $lines = lp_wrap($caption, $font, $size, $W - 120); }
-    if (count($lines) === 1) { while ($size < 62) { $t2 = lp_wrap($caption, $font, $size + 2, $W - 120); if (count($t2) > 1) break; $size += 2; } }
+    $size = 52 * $k;
+    $lines = lp_wrap($caption, $font, $size, $W - 120 * $k);
+    while (count($lines) > 2 && $size > 30 * $k) { $size -= 4 * $k; $lines = lp_wrap($caption, $font, $size, $W - 120 * $k); }
+    if (count($lines) === 1) { while ($size < 62 * $k) { $t2 = lp_wrap($caption, $font, $size + 2 * $k, $W - 120 * $k); if (count($t2) > 1) break; $size += 2 * $k; } }
     $lh = (int) ($size * 1.18);
     $blockH = $lh * count($lines);
     $ty = (int) (($capH - $blockH) / 2);
@@ -187,7 +190,7 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
 
     // Нижняя подпись (название конкурса для результатов) — золотом по центру над низом.
     if ($extra !== '') {
-        $s2 = 34; $el = lp_wrap($extra, $font, $s2, $W - 160);
+        $s2 = 34 * $k; $el = lp_wrap($extra, $font, $s2, $W - 160 * $k);
         $ln = $el[0] ?? $extra;
         $bb = imagettfbbox($s2, 0, $font, $ln); $tw = abs($bb[2] - $bb[0]);
         imagettftext($img, $s2, 0, (int) (($W - $tw) / 2), $H - (int) (($botH - $s2) / 2), $gold, $font, $ln);
