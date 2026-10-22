@@ -438,9 +438,13 @@ function reg_sroki_izgotovleniya(array $c): array {
  */
 function reg_fraza_izgotovleniya(array $c): string {
     $с = reg_sroki_izgotovleniya($c);
+    /* Срок подачи заявки на изготовление — тем же абзацем, рядом со сроками
+       изготовления (правило владельца 22.10.2026, core/award_window.php). */
+    if (!function_exists('award_window_text') && defined('BASE_PATH')) require_once BASE_PATH . '/core/award_window.php';
     return 'Электронные дипломы и другой наградной материал в электронном виде изготавливаются'
          . ' и направляются на электронную почту, указанную в заявке, '
-         . $с['общий'] . $с['оговорка'] . '.';
+         . $с['общий'] . $с['оговорка'] . '.'
+         . (function_exists('award_window_text') ? ' ' . award_window_text() : '');
 }
 
 /**
