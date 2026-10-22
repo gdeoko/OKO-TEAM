@@ -41,7 +41,50 @@ function launch_channels(): array {
         'vk_dm'   => 'ВК: рассылка в личку',
         'email'   => 'Email по базе (прогрев)',
         'inapp'   => 'In-app всем пользователям',
+        'max'     => 'МАКС: канал центра',
     ];
+}
+
+/**
+ * ОБЪЯВЛЕНИЯ О КОНКУРСАХ ИДУТ И В КАНАЛ МАКС.
+ *
+ * До 22.10.2026 у пульта не было этого канала вовсе: в МАКС уходили только
+ * просветительские посты раздела «Соцсети», а «осталось 3 дня», «последний
+ * день», «приём закрыт» и итоги — ни разу. Своего API у канала нет, публикуем
+ * тем же Hooppy, что и раздел «Соцсети» (smm_hooppy_call), но ТОЛЬКО на
+ * страницу МАКС: стена ВК у пульта своя (vk_wall), иначе пост вышел бы дважды.
+ * Страница — настройка launch_max_page (2561963 = max.ru/channel_muzmir;
+ * 2561964 — тот же канал от имени телефона владельца, туда не публикуем).
+ */
+function launch_max_post(string $text, string $cover = ''): array {
+    if (!function_exists('smm_hooppy_call') && is_file(__DIR__ . '/smm_make.php')) require_once __DIR__ . '/smm_make.php';
+    if (!function_exists('smm_hooppy_call')) return ['ok' => false, 'error' => 'нет модуля Hooppy'];
+    if (function_exists('outreach_window_ok') && !outreach_window_ok()) {
+        return ['ok' => false, 'error' => 'вне окна публикаций' . (function_exists('outreach_window_reason') ? ': ' . outreach_window_reason() : '')];
+    }
+    $page = (int) (function_exists('setting') ? setting('launch_max_page', '2561963') : 2561963);
+    if ($page <= 0) return ['ok' => false, 'error' => 'не задана страница МАКС (launch_max_page)'];
+
+    // Разметка ВКонтакте ([club1|Название], @club1) в МАКС не превращается в ссылку.
+    $text = preg_replace('~\[(?:club|public|id)\d+\|([^\]]+)\]~u', '$1', $text) ?? $text;
+    if (trim($text) === '') return ['ok' => false, 'error' => 'пустой текст'];
+
+    $attachments = []; $note = '';
+    if ($cover !== '' && is_file($cover)) {
+        $up = smm_hooppy_call('files/media/upload', 'POST', ['file_id' => bin2hex(random_bytes(16))], $cover);
+        if (is_array($up['photo'] ?? null)) $attachments[] = ['type' => 'photos', 'data' => [$up['photo']]];
+        else $note = 'БЕЗ АФИШИ: картинка не загрузилась в Hooppy';
+    }
+    $res = smm_hooppy_call('posts', 'POST', [
+        'publication_when_type' => 1,
+        'publication_how_type'  => 1,
+        'selected_pages_ids'    => [$page],
+        'texts'                 => [['text' => $text, 'source_id' => 0]],
+        'attachments'           => $attachments,
+    ]);
+    $id = (int) ($res['id'] ?? 0);
+    if ($id <= 0) return ['ok' => false, 'error' => 'Hooppy не принял пост'];
+    return ['ok' => true, 'id' => $id, 'note' => $note];
 }
 
 /** Нормализация записи конкурса для эталонов (длинный/короткий — строго по results_mode). */
@@ -326,7 +369,7 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     }
     // launch_vk — только ВК (стена/сторис/личка), по конкретному конкурсу.
     if ($wave === 'launch_vk') {
-        $channels = array_values(array_intersect($channels, ['vk_wall', 'vk_dm'])) ?: ['vk_wall'];
+        $channels = array_values(array_intersect($channels, ['vk_wall', 'vk_dm', 'max'])) ?: ['vk_wall'];
     }
     // launch_mail — общее письмо + in-app (ВК идёт отдельными персональными постами launch_vk).
     if ($wave === 'launch_mail') {
@@ -422,6 +465,16 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 if ($pid > 0 && $gid > 0) $vkPostUrl = 'https://vk.com/wall-' . $gid . '_' . $pid;
             }
             if ($ok && $cover) { $s = vk_story_photo($cover, url('/competition/' . (string) $c['slug'])); $report['vk_story'] = empty($s['error']) ? 'сторис опубликована' : ('сторис: ' . ($s['error']['error_msg'] ?? '?')); }
+        }
+    }
+    // ---- МАКС: канал центра ----
+    if (in_array('max', $channels, true)) {
+        if ($dry) {
+            $report['max'] = 'пост в канал МАКС' . ($cover ? ' + афиша' : ' (без афиши)') . ', ' . mb_strlen($text) . ' симв.';
+        } else {
+            $r = launch_max_post($text, $cover);
+            $report['max'] = $r['ok'] ? ('опубликовано в МАКС (Hooppy #' . $r['id'] . ')' . ($r['note'] !== '' ? ' — ' . $r['note'] : ''))
+                                      : ('ошибка: ' . $r['error']);
         }
     }
     // ---- ВК рассылка в личку ----
@@ -715,7 +768,7 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     // $channels из пульта используется как глобальный выключатель: канал уходит из наборов,
     // только если он явно снят в пульте (по умолчанию включены все).
     $enabled  = fn(array $set) => array_values(array_intersect($set, $channels)) ?: [];
-    $vkAll    = $enabled(['vk_wall', 'vk_dm']);          // стена+сторис + рассылка в личку
+    $vkAll    = $enabled(['vk_wall', 'vk_dm', 'max']);   // стена+сторис + рассылка в личку + канал МАКС
     $hasVk    = (bool) $vkAll;
     $vkCh     = $vkAll ?: ['vk_wall'];
     $hasEmail = in_array('email', $channels, true);
@@ -759,7 +812,7 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
 
     // 4) Общие посты месяца — стена+сторис + рассылка ВК в личку + in-app (БЕЗ e-mail).
     $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
-    $commonCh = $enabled(['vk_wall', 'vk_dm', 'inapp']) ?: ['vk_wall', 'inapp'];
+    $commonCh = $enabled(['vk_wall', 'vk_dm', 'max', 'inapp']) ?: ['vk_wall', 'inapp'];
     // Предупреждения при попадании на воскресенье уходят в субботу (сказать раньше
     // можно, позже нельзя), объявление о закрытии — в понедельник.
     $d3     = launch_workday_at($ly, $lm, 22, 9, 0, 'back');
@@ -776,7 +829,7 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     // не сработает, оглашение всё равно состоится в обещанный час, а не на час раньше.
     $results = launch_workday_at($ly, $lm, 28, 10, 0);
     // Результаты: стена+сторис + рассылка ВК + персональные письма участникам + in-app/колокольчик.
-    $resCh = $enabled(['vk_wall', 'vk_dm', 'email', 'inapp']) ?: ['email'];
+    $resCh = $enabled(['vk_wall', 'vk_dm', 'max', 'email', 'inapp']) ?: ['email'];
     $longIds = [];
     foreach ($comps as $c) {
         if (function_exists('vkt_is_long') ? vkt_is_long($c) : (($c['results_mode'] ?? '') === 'list')) {
@@ -855,8 +908,8 @@ function launch_panel_html(): string {
     $defDate   = (string) (function_exists('setting') ? setting('launch_plan_date', '2026-08-08') : '2026-08-08');
     if ($defDate === '') $defDate = '2026-08-08';
     $defTime   = (string) (function_exists('setting') ? setting('launch_plan_time', '09:00') : '09:00');
-    $savedCh   = array_filter(explode(',', (string) (function_exists('setting') ? setting('launch_plan_channels', 'vk_wall,vk_dm,email,inapp') : 'vk_wall,vk_dm,email,inapp')));
-    if (!$savedCh) $savedCh = ['vk_wall', 'vk_dm', 'email', 'inapp'];
+    $savedCh   = array_filter(explode(',', (string) (function_exists('setting') ? setting('launch_plan_channels', 'vk_wall,vk_dm,max,email,inapp') : 'vk_wall,vk_dm,max,email,inapp')));
+    if (!$savedCh) $savedCh = ['vk_wall', 'vk_dm', 'max', 'email', 'inapp'];
     $jobs = all("SELECT j.*, c.name comp FROM launch_jobs j LEFT JOIN competitions c ON c.id=j.competition_id
                  WHERE j.status IN ('scheduled','done') ORDER BY j.run_at ASC LIMIT 200");
     $sched = array_values(array_filter($jobs, fn($j) => $j['status'] === 'scheduled'));

@@ -150,7 +150,7 @@ if ($already > 0) {
 } elseif ($DRY) {
     $say('поставили бы план волн на ' . $start . ' 10:00');
 } else {
-    $channels = ['vk_wall', 'vk_dm', 'email', 'inapp'];
+    $channels = ['vk_wall', 'vk_dm', 'max', 'email', 'inapp'];
     $saved = trim((string) setting('launch_channels', ''));
     if ($saved !== '') {
         $list = array_values(array_filter(array_map('trim', explode(',', $saved))));
