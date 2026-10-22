@@ -256,9 +256,10 @@ ob_start(); ?>
 /* На телефонах (в т.ч. крупных 430px) кнопки СТЕКОМ на всю ширину — иначе длинное
    «Подать заявку» не влезает в половину карточки и ломается по буквам вертикально. */
 @media (max-width:600px){.cc-actions{flex-direction:column}.cc-actions .btn{width:100%}}
-.comp-card .cc-cover .cc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:2;display:block}
+/* contain, а не cover: афиша целиком, с гербами внизу (слово владельца 22.10.2026). */
+.comp-card .cc-cover .cc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;z-index:2;display:block;background:#0b1330}
 .cc-scrim{position:absolute;inset:0;z-index:3;pointer-events:none;
-  background:linear-gradient(180deg,rgba(18,12,2,.42) 0,rgba(18,12,2,0) 26%,rgba(18,12,2,0) 60%,rgba(18,12,2,.34) 100%)}
+  background:linear-gradient(180deg,rgba(18,12,2,.42) 0,rgba(18,12,2,0) 26%)}  /* низ не затемняем: там гербы */
 .cc-fallback{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:16px;overflow:hidden;text-align:center;padding:18px;
   background:radial-gradient(125% 92% at 50% -12%,rgba(255,255,255,.34),transparent 55%),

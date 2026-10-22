@@ -18,7 +18,9 @@
  */
 declare(strict_types=1);
 
-const BASTION_CDP_PORTS = '9280 9222 9333 9281 9223';
+/* 9334 - браузер службы oko-gpt-browser (оплаченный кабинет ChatGPT, запасной
+   мозг чат-бота). 22.10.2026 на 9280 браузера не оказалось, вход жил только там. */
+const BASTION_CDP_PORTS = '9280 9334 9222 9333 9281 9223';
 
 function bastion_cdp_url(callable $bastion): string {
     static $найден = null;

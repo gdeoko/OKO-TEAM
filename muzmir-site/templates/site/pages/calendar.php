@@ -513,8 +513,8 @@ ob_start(); ?>
 .calx-card{display:flex;flex-direction:column;padding:24px 24px 24px 27px;scroll-margin-top:110px;position:relative;overflow:hidden}
 /* Афиша конкурса 16:9 — вся информация на ней, клик ведёт на подачу заявки */
 .calx-poster{display:block;margin:-24px -24px 16px -27px;aspect-ratio:16/9;overflow:hidden;background:var(--gold-soft)}
-.calx-poster img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
-@media(hover:hover){.calx-card:hover .calx-poster img{transform:scale(1.04)}}
+/* Афиша целиком и без увеличения при наведении: зум срезал ряд гербов. */
+.calx-poster img{width:100%;height:100%;object-fit:contain;display:block;background:#0b1330}
 /* Левая фазовая полоса-акцент (жизненный цикл конкурса) */
 .calx-accent{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);border-radius:0 3px 3px 0;opacity:.85}
 .calx-card--open .calx-accent,.calx-card--ending .calx-accent,.calx-card--last .calx-accent{background:var(--mint)}
